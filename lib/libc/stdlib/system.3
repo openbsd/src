@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: system.3,v 1.5 1996/12/11 23:09:53 tholo Exp $
+.\"     $OpenBSD: system.3,v 1.6 1999/06/29 18:36:24 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt SYSTEM 3
@@ -70,18 +70,18 @@ pointer,
 will return non-zero.
 Otherwise,
 .Fn system
-returns the termination status of the shell in the format specified by 
+returns the termination status of the shell in the format specified by
 .Xr waitpid 2 .
-.Sh RETURN VALUES 
+.Sh RETURN VALUES
 If a child process cannot be created, or the termination status of
-the shell cannot be obtained, 
+the shell cannot be obtained,
 .Fn system
-returns -1 and sets
+returns \-1 and sets
 .Va errno
 to indicate the error.
-If execution of the shell fails, 
+If execution of the shell fails,
 .Fn system
-returns the termination status for a program that terminates with a call of 
+returns the termination status for a program that terminates with a call of
 .Fn exit 127 .
 .Sh SEE ALSO
 .Xr sh 1 ,
@@ -93,6 +93,6 @@ The
 .Fn system
 function
 conforms to
-.St -ansiC 
+.St -ansiC
 and
 .St -p1003.2-92 .

@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: radixsort.3,v 1.4 1998/06/15 17:55:08 mickey Exp $
+.\"	$OpenBSD: radixsort.3,v 1.5 1999/06/29 18:36:22 aaron Exp $
 .\"
 .Dd January 27, 1994
 .Dt RADIXSORT 3
@@ -62,8 +62,7 @@ is denoted by the user-specified value
 Applications may specify a sort order by providing the
 .Fa table
 argument.
-If
-.Pf non- Dv NULL , 
+If non-null,
 .Fa table
 must reference an array of
 .Dv UCHAR_MAX
@@ -80,7 +79,9 @@ equally, for example, providing a table with the same weights
 for A-Z as for a-z will result in a case-insensitive sort.
 If
 .Fa table
-is NULL, the contents of the array are sorted in ascending order
+is
+.Dv NULL ,
+the contents of the array are sorted in ascending order
 according to the
 .Tn ASCII
 order of the byte strings they reference and
@@ -106,7 +107,7 @@ particular, see D.E. Knuth's Algorithm R and section 5.2.5, exercise 10.
 They take linear time relative to the number of bytes in the strings.
 .Sh RETURN VALUES
 Upon successful completion 0 is returned.
-Otherwise, \-1 is returned and the global variable 
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

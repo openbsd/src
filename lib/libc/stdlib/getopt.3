@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.8 1999/05/27 13:09:09 aaron Exp $
+.\"	$OpenBSD: getopt.3,v 1.9 1999/06/29 18:36:20 aaron Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETOPT 3
@@ -132,22 +132,25 @@ When all options have been processed (i.e., up to the first non-option
 argument),
 .Fn getopt
 returns \-1.
+.Sh SEE ALSO
+.Xr getopt 1 ,
+.Xr getsubopt 3
 .Sh DIAGNOSTICS
 If the
 .Fn getopt
 function encounters a character not found in the string
 .Va optstring
 or detects
-a missing option argument it writes an error message to 
-.Em stderr 
+a missing option argument it writes an error message to
+.Em stderr
 and returns
 .Ql ? .
 Setting
 .Va opterr
 to a zero will disable these error messages.
 If
-.Va optstring 
-has a leading 
+.Va optstring
+has a leading
 .Ql \&:
 then a missing option argument causes a
 .Ql \&:
@@ -202,17 +205,17 @@ function appeared
 The
 .Fn getopt
 function was once specified to return
-.Dv EOF 
+.Dv EOF
 instead of \-1.
 This was changed by
 .St -p1003.2-92
-to decouple 
+to decouple
 .Fn getopt
-from 
+from
 .Pa <stdio.h> .
 .Pp
 A single dash
-.Dq Li -
+.Pq Ql -
 may be specified as a character in
 .Fa optstring ,
 however it should
@@ -221,7 +224,7 @@ have an argument associated with it.
 This allows
 .Fn getopt
 to be used with programs that expect
-.Dq Li -
+.Ql -
 as an option flag.
 This practice is wrong, and should not be used in any current development.
 It is provided for backward compatibility

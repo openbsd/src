@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tsearch.3,v 1.4 1999/05/10 17:56:28 aaron Exp $
+.\"	$OpenBSD: tsearch.3,v 1.5 1999/06/29 18:36:24 aaron Exp $
 .\"
 .Dd June 15, 1997
 .Dt TSEARCH 3
@@ -58,7 +58,8 @@ searches for the datum matched by the argument
 .Fa key
 in the binary tree rooted at
 .Fa rootp ,
-returning a pointer to the datum if it is found and NULL
+returning a pointer to the datum if it is found and
+.Dv NULL
 if it is not.
 .Pp
 .Fn tsearch
@@ -68,7 +69,7 @@ except that if no match is found,
 .Fa key
 is inserted into the tree and a pointer to it is returned.  If
 .Fa rootp
-points to a NULL value a new binary search tree is created.
+points to a null value a new binary search tree is created.
 .Pp
 .Fn tdelete
 deletes a node from the specified binary search tree and returns
@@ -89,7 +90,7 @@ and calls the function
 on each node.
 .Fa action
 is called with three arguments: a pointer to the current node,
-a value from the enum 
+a value from the enum
 .Sy "typedef enum { preorder, postorder, endorder, leaf } VISIT;"
 specifying the traversal type, and a node level (where level
 zero is the root of the tree).
@@ -99,16 +100,22 @@ zero is the root of the tree).
 .Sh RETURN VALUES
 The
 .Fn tsearch
-function returns NULL if allocation of a new node fails (usually
+function returns
+.Dv NULL
+if allocation of a new node fails (usually
 due to a lack of free memory).
 .Pp
 .Fn tfind ,
 .Fn tsearch ,
 and
 .Fn tdelete
-return NULL if
+return
+.Dv NULL
+if
 .Fa rootp
-is NULL or the datum cannot be found.
+is
+.Dv NULL
+or the datum cannot be found.
 .Pp
 The
 .Fn twalk

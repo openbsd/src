@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.14 1999/05/27 20:49:35 aaron Exp $
+.\"	$OpenBSD: malloc.3,v 1.15 1999/06/29 18:36:21 aaron Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -113,9 +113,9 @@ If
 is a null pointer, the
 .Fn realloc
 function behaves like the
-.Fn malloc 
+.Fn malloc
 function for the specified size.
-If the space cannot be allocated, the object 
+If the space cannot be allocated, the object
 pointed to by
 .Fa ptr
 is unchanged.
@@ -137,7 +137,7 @@ if ((p = realloc(p, nsize)) == NULL)
 .Pp
 In most cases, this will result in a leak of memory.
 As stated earlier, a return value of
-.Fa NULL
+.Dv NULL
 indicates that the old object still remains allocated.
 Better code looks like this:
 .Bd -literal -offset indent
@@ -163,7 +163,7 @@ Flags are single letters, uppercase means on, lowercase means off.
 ``abort'' malloc will coredump the process, rather than tolerate failure.
 This is a very handy debugging aid, since the core file will represent the
 time of failure,
-rather than when the NULL pointer was accessed.
+rather than when the null pointer was accessed.
 .Pp
 .It D
 ``dump'' malloc will dump statistics in a file called ``malloc.out'' at exit.
@@ -195,7 +195,7 @@ for all operations.
 Consult the source for this one.
 .Pp
 .It X
-``xmalloc'' 
+``xmalloc''
 rather than return failure,
 .Xr abort 3
 the program with a diagnostic message on stderr.
@@ -244,15 +244,15 @@ The
 function a pointer to the possibly moved allocated space;
 otherwise a null pointer is returned.
 .Sh MESSAGES
-If 
+If
 .Fn malloc ,
 .Fn free
-or 
+or
 .Fn realloc
 detects an error or warning condition,
 a message will be printed to filedescriptor
 2 (not using stdio).
-Errors will always result in the process being 
+Errors will always result in the process being
 .Xr abort 3 'ed.
 If the ``A'' option has been specified, warnings will also
 .Xr abort 3
@@ -267,9 +267,10 @@ fishy in there.  Consult sources and or wizards.
 ``allocation failed''
 if the ``A'' option is specified it is an error for
 .Fn malloc
-or 
+or
 .Fn realloc
-to return NULL.
+to return
+.Dv NULL .
 .Pp
 ``mmap(2) failed, check limits.''
 This is a rather weird condition that is most likely to mean that
@@ -287,7 +288,7 @@ A pointer to a free chunk is attempted freed again.
 The pointer doesn't make sense.  It's above the area of memory that
 malloc knows something about.
 This could be a pointer from some
-.Xr mmap 2 'ed 
+.Xr mmap 2 'ed
 memory.
 .Pp
 ``junk pointer, too low to make sense.''
@@ -344,7 +345,7 @@ secondary.
 .Pp
 The main difference from other malloc implementations are believed to be that
 the free pages are not accessed until allocated.
-Most malloc implementations will store a data structure containing a, 
+Most malloc implementations will store a data structure containing a,
 possibly double-, linked list in the free chunks of memory, used to tie
 all the free memory together.
 That is a quite suboptimal thing to do.

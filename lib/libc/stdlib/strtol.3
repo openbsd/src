@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.3 1996/08/19 08:33:51 tholo Exp $
+.\"	$OpenBSD: strtol.3,v 1.4 1999/06/29 18:36:23 aaron Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOL 3
@@ -59,7 +59,7 @@ function
 converts the string in
 .Fa nptr
 to a
-.Em long
+.Li long
 value.
 The
 .Fn strtoq
@@ -67,7 +67,7 @@ function
 converts the string in
 .Fa nptr
 to a
-.Em quad_t
+.Li quad_t
 value.
 The conversion is done according to the given
 .Fa base ,
@@ -95,7 +95,7 @@ is taken as 10 (decimal) unless the next character is
 in which case it is taken as 8 (octal).
 .Pp
 The remainder of the string is converted to a
-.Em long
+.Li long
 value in the obvious manner,
 stopping at the first character which is not a valid digit
 in the given base.

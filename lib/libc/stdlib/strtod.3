@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtod.3,v 1.3 1999/05/27 20:49:35 aaron Exp $
+.\"	$OpenBSD: strtod.3,v 1.4 1999/06/29 18:36:23 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOD 3
@@ -50,11 +50,11 @@ string to double
 .Sh DESCRIPTION
 The
 .Fn strtod
-function converts the initial portion of the string 
+function converts the initial portion of the string
 pointed to by
 .Fa nptr
 to
-.Em double
+.Li double
 representation.
 .Pp
 The expected form of the string is an optional plus (``+'') or minus
@@ -93,7 +93,7 @@ is stored in
 If the correct value would cause underflow, zero is
 returned and
 .Dv ERANGE
-is stored in 
+is stored in
 .Va errno .
 .Sh ERRORS
 .Bl -tag -width Er

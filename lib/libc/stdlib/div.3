@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: div.3,v 1.3 1999/05/16 19:55:14 alex Exp $
+.\"	$OpenBSD: div.3,v 1.4 1999/06/29 18:36:19 aaron Exp $
 .\"
 .Dd April 19, 1991
 .Dt DIV 3
@@ -48,11 +48,11 @@ The
 .Fn div
 function
 computes the value
-.Fa num/denom
+.Fa num Ns No / Ns Fa denom
 and returns the quotient and remainder in a structure named
 .Fa div_t
 that contains two
-.Em int
+.Li int
 members named
 .Fa quot
 and

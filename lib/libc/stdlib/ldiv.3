@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ldiv.3,v 1.3 1999/05/16 19:55:15 alex Exp $
+.\"	$OpenBSD: ldiv.3,v 1.4 1999/06/29 18:36:21 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt LDIV 3
@@ -50,15 +50,15 @@ The
 .Fn ldiv
 function
 computes the value
-.Ar num/denom
+.Fa num Ns No / Ns Fa denom
 and returns the quotient and remainder in a structure named
-.Ar ldiv_t
+.Li ldiv_t
 that contains two
-.Em long integer
+.Li long integer
 members named
-.Ar quot
+.Fa quot
 and
-.Ar rem .
+.Fa rem .
 .Sh SEE ALSO
 .Xr div 3 ,
 .Xr math 3 ,

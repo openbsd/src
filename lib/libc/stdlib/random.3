@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.7 1999/05/23 14:11:03 aaron Exp $
+.\"	$OpenBSD: random.3,v 1.8 1999/06/29 18:36:23 aaron Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -42,7 +42,7 @@
 .Nd better random number generator; routines for changing generators
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
-.Ft long 
+.Ft long
 .Fn random void
 .Ft void
 .Fn srandom "unsigned int seed"
@@ -96,7 +96,7 @@ however,
 will by default produce a sequence of numbers that can be duplicated
 by calling
 .Fn srandom
-with 
+with
 .Ql 1
 as the seed.
 .Pp
@@ -167,16 +167,16 @@ messages are printed on the standard error output.
 .Xr rand 3
 .Sh STANDARDS
 The
-.Fn random ,                                                           
-.Fn srandom ,                                                           
-.Fn initstate ,                                                           
+.Fn random ,
+.Fn srandom ,
+.Fn initstate ,
 and
 .Fn setstate
 functions conform to
 .St -xpg4.2 .
 .Sh HISTORY
 These
-functions appeared in 
+functions appeared in
 .Bx 4.2 .
 .Sh BUGS
 About 2/3 the speed of
