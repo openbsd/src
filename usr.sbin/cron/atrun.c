@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.10 2003/06/17 21:56:26 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.11 2004/05/13 14:22:18 millert Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.10 2003/06/17 21:56:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.11 2004/05/13 14:22:18 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -351,7 +351,7 @@ run_job(atjob *job, char *atfile)
 	cp = ep + 5;
 	errno = 0;
 	ngid = strtol(cp, &ep, 10);
-	if (errno == ERANGE || (uid_t)ngid > GID_MAX || cp == ep || *ep != '\n')
+	if (errno == ERANGE || (gid_t)ngid > GID_MAX || cp == ep || *ep != '\n')
 		goto bad_file;
 
 	/* Pull out mailto user (and always_mail flag) */
