@@ -1,6 +1,6 @@
-# Makefile for MicroEMACS.
-# Is there a better way to do the rebuilds, other than using
-# the links?
+# $OpenBSD: Makefile,v 1.4 2000/02/27 17:29:50 millert Exp $
+
+PROG=	mg
 
 LDADD+=	-lcurses
 DPADD+=	${LIBCURSES}
@@ -16,15 +16,12 @@ DPADD+=	${LIBCURSES}
 #	PREFIXREGION	-- enable function "prefix-region"
 #	REGEX		-- create regular expression functions
 #
-CDEFS	=  -DDO_METAKEY
-CDEFS+=	-DDO_METAKEY -DPREFIXREGION -DXKEYS -DFKEYS -DBACKUP
-CFLAGS+=$(CDEFS)
+CFLAGS+=-DDO_METAKEY -DPREFIXREGION -DXKEYS -DFKEYS -DBACKUP
 
 SRCS=	cinfo.c fileio.c spawn.c ttyio.c tty.c ttykbd.c \
 	basic.c dir.c dired.c file.c line.c match.c paragraph.c \
 	random.c region.c search.c version.c window.c word.c \
 	buffer.c display.c echo.c extend.c help.c kbd.c keymap.c \
 	macro.c main.c modes.c regex.c re_search.c
-PROG=	mg
 
 .include <bsd.prog.mk>
