@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.13 2000/09/26 23:28:46 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.14 2000/09/27 00:09:54 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -370,10 +370,6 @@ keynote_env_cleanup(struct environment **table, u_int hashsize)
 static int
 keynote_init_environment(void)
 {
-#ifdef CRYPTO
-    RAND_set_rand_method(RAND_SSLeay());
-#endif /* CRYPTO */
-
     memset(keynote_current_session->ks_env_table, 0,
 	   HASHTABLESIZE * sizeof(struct environment *));
     memset(keynote_current_session->ks_assertion_table, 0,

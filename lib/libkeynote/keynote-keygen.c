@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.10 2000/09/26 23:28:46 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.11 2000/09/27 00:09:54 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -175,8 +175,6 @@ keynote_keygen(int argc, char *argv[])
 	fprintf(stderr, "Invalid specified keysize %d\n", len);
 	exit(-1);
     }
-
-    RAND_set_rand_method(RAND_SSLeay());
 
     if ((alg == KEYNOTE_ALGORITHM_DSA) &&
 	(ienc == INTERNAL_ENC_ASN1) &&
