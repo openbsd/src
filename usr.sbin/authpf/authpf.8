@@ -1,4 +1,4 @@
-\" $OpenBSD: authpf.8,v 1.7 2002/04/05 03:06:52 beck Exp $
+.\" $OpenBSD: authpf.8,v 1.8 2002/04/05 20:35:52 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -96,18 +96,18 @@ which is defined to the connecting ip address whenever
 is run.
 .Pp
 Filter and nat rules will be searched for first in
-.Pa $HOME/.authpf/
+.Pa /etc/authpf/users/$USER/
 and then in 
 .Pa /etc/authpf/ .
 Per-user rules from the   
-.Pa $HOME/.authpf/
+.Pa /etc/authpf/users/$USER/
 directory are intended to be used when non-default rules
 are needed on an individual user basis. It is important to ensure
 that a user can not write or change these configuration files in
 this case.
 .Pp
 Filter rules are loaded from the file
-.Pa $HOME/.authpf/authpf.rules .
+.Pa /etc/authpf/users/$USER/authpf.rules .
 If this file does not exist the file
 .Pa /etc/authpf/authpf.rules
 is used.
@@ -123,7 +123,7 @@ and be writable only to root or
 will not run.
 .Pp
 Translation rules are loaded from the file
-.Pa $HOME/.authpf/authpf.nat .
+.Pa /etc/authpf/users/$USER/authpf.nat .
 If this file does not exist the file
 .Pa /etc/authpf/authpf.nat
 is used.
@@ -175,7 +175,7 @@ authenticated to
 .Xr ssh 1
 and deny access to only a few troublesome individuals.
 This is done by creating a file with the banned user's login name in
-.Pa /var/authpf/banned .
+.Pa /etc/authpf/banned .
 The contents of this file will be displayed to a banned user, thus providing
 a method for informing the user that they have been banned, and where they can
 go and how to get there if they want to have their service restored.
@@ -247,7 +247,7 @@ as their shell, the regular users should be prevented from running
 by using the
 .Pa /etc/authpf/authpf.allow
 or
-.Pa /var/authpf/banned/
+.Pa /etc/authpf/banned/
 facilities.
 .Pp
 .Nm
@@ -272,16 +272,16 @@ Normally, as long as bob can authenticate himself, the
 .Nm
 program will load the appropriate rules.
 Enter the
-.Pa /var/authpf/banned/
+.Pa /etc/authpf/banned/
 directory.
 If bob has somehow fallen from grace in the eyes of the
 powers-that-be, they can prohibit him from using the gateway by creating
 the file
-.Pa /var/authpf/banned/bob
+.Pa /etc/authpf/banned/bob
 containing a message about why he has been banned from using the network.
 Once bob has done suitable pennance, his access may be restored by moving or
 removing the file
-.Pa /var/authpf/banned/bob.
+.Pa /etc/authpf/banned/bob.
 .Pp
 Now consider a workgroup containing alice, bob, carol and dave.
 They have a
@@ -296,7 +296,7 @@ Adding and removing users from
 the work group is a simple matter of maintaining a list of allowed userids.
 If bob once again manages to annoy the powers-that-be, they can ban him from
 using the gateway by creating the familiar
-.Pa /var/authpf/banned/bob
+.Pa /etc/authpf/banned/bob
 file.
 Though bob is listed in the allow file, he is prevented from using
 this gateway due to the existence of a ban file.

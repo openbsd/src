@@ -1,3 +1,5 @@
+/*	$OpenBSD: authpf.c,v 1.7 2002/04/05 20:35:52 deraadt Exp $	*/
+
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
  *
@@ -92,7 +94,6 @@ static int	changefilter(int, char *, char *);
 static void	authpf_kill_states(void);
 static void	terminator(int s);
 static __dead void	go_away(void);
-static int	secure_fullpath(char *);
 
 /*
  * authpf:
@@ -298,10 +299,6 @@ read_config(void)
 	f = fopen(configfile, "r");
 	if (f == NULL) 
 		exit(1); /* exit silently if we have no config file */
-
-	if (secure_fullpath(configfile) != 0)
-		/* config file exists, but is not secure */
-		exit(1);
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	
@@ -557,7 +554,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	struct pfctl		pf;
 	int rcount, wcount;
 	FILE *fin = NULL;
-	char *cp;
 
 	memset (&pf, 0, sizeof(pf));
 	memset (&pr, 0, sizeof(pr));
@@ -591,12 +587,8 @@ changefilter(int add, char *luser, char *ipsrc)
 
 	fflush(fin);
 
-	if ((cp = getenv("HOME")) == NULL) {
-		syslog(LOG_ERR, "No Home Directory!");
-		goto error;
-	}
-	if (snprintf(rulesfile, sizeof rulesfile, "%s/.authpf/authpf.rules",
-	    cp) >= sizeof rulesfile) {
+	if (snprintf(rulesfile, sizeof rulesfile, "%s/%s/authpf.rules",
+	    PATH_USER_DIR, luser) >= sizeof rulesfile) {
 		syslog(LOG_ERR, "homedir path too long, exiting");
 		goto error;
 	}
@@ -619,10 +611,6 @@ changefilter(int add, char *luser, char *ipsrc)
 		}
 	}
 
-	if (secure_fullpath(rulesfile) != 0)
-		/* rules file exists, but is not secure */
-		goto error;
-	
 	while ((rcount = read(from_fd, buf, sizeof(buf))) > 0) {
 		wcount = write(tmpfile, buf, rcount);
 		if (rcount != wcount || wcount == -1) {
@@ -671,13 +659,8 @@ changefilter(int add, char *luser, char *ipsrc)
 		goto error;
 	}
 
-	/* now, for NAT, if we have some */
-	if ((cp = getenv("HOME")) == NULL) {
-		syslog(LOG_ERR, "No Home Directory!");
-		goto error;
-	}
-	if (snprintf(natfile, sizeof natfile, "%s/.authpf/authpf.nat", cp) >=
-	    sizeof natfile) {
+	if (snprintf(natfile, sizeof natfile, "%s/%s/authpf.nat",
+	    PATH_USER_DIR, luser) >= sizeof natfile) {
 		syslog(LOG_ERR, "homedir path too long, exiting");
 		goto error;
 	}
@@ -704,10 +687,7 @@ changefilter(int add, char *luser, char *ipsrc)
 			}
 		}
 	}
-	if (from_fd != -1 && secure_fullpath(natfile) != 0) 
-		/* nat file exists, but is not secure */
-		goto error;
-	
+
 	tmpfile = mkstemp(template2);
 	if (tmpfile == -1) {
 		syslog(LOG_ERR, "Can't open temp file %s (%m)",
@@ -852,47 +832,6 @@ go_away(void)
 		ret = 1;
 	}
 	exit(ret);
-}
-
-/*
- * secure_fullpath:
- * akin to secure_path, but for a directory - needed to ensure
- * users can't get something they aren't supposed to by moveing
- * files aside or linking other directories, such as the default
- * one.
- */
-static int
-secure_fullpath(char *path)
-{
-	struct stat sb;
-	char *cp;
-
-	if (secure_path(path) < 0)
-		return(-1);
-
-	cp = path;
-
-	do {
-		cp = dirname(cp);
-		memset(&sb, 0, sizeof(sb)); 
-		/*
-		 * if it's owned or writable by someone
-		 * other than root, it's bad. since these are directories,
-		 * not the end path, they are allowed to be symbolic links
-		 * and other such things (unlike the file itself). 
-		 */
-		if (lstat(cp, &sb) < 0) {
-			syslog(LOG_ERR, "cannot stat %s: %m", cp);
-			return (-1);
-		} else if (sb.st_uid != 0) {
-			syslog(LOG_ERR, "%s: not owned by root", cp);
-			return (-1);
-		} else if (sb.st_mode & (S_IWGRP | S_IWOTH)) {
-			syslog(LOG_ERR, "%s: writeable by non-root", cp);
-			return (-1);
-		}
-	} while (strlen(cp) > 1);
-        return (0);
 }
 
 /*

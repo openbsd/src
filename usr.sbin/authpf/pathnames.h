@@ -1,3 +1,5 @@
+/*	$OpenBSD: pathnames.h,v 1.2 2002/04/05 20:35:52 deraadt Exp $	*/
+
 /*
  * Copyright (C) 2002 Chris Kuethe (ckuethe@ualberta.ca)
  *
@@ -32,7 +34,8 @@
 #define PATH_NATRULES	"/etc/authpf/authpf.nat"
 #define PATH_PROBLEM	"/etc/authpf/authpf.problem"
 #define PATH_MESSAGE	"/etc/authpf/authpf.message"
-#define PATH_BAN_DIR	"/var/authpf/banned"
+#define PATH_USER_DIR	"/etc/authpf/users"
+#define PATH_BAN_DIR	"/etc/authpf/banned"
 #define PATH_DEVFILE	"/dev/pf"
 #define PATH_PIDFILE	"/var/run/authpf"
 #define PATH_USERFILE	"/var/authpf"
