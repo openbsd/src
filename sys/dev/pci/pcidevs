@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.95 1998/10/10 07:03:13 deraadt Exp $
+$OpenBSD: pcidevs,v 1.96 1998/10/21 01:51:36 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -272,7 +272,7 @@ vendor AMCIRCUITS	0x10e8	Applied Micro Circuits
 vendor ALPSELECTIC	0x10e9	Alps Electric
 vendor INTERGRAPHICS	0x10ea	Integraphics Systems
 vendor ARTISTSGRAPHICS	0x10eb	Artists Graphics
-vendor REALTEK		0x10ec	Realtek Semiconductor
+vendor REALTEK		0x10ec	Realtek Semi
 vendor ASCIICORP	0x10ed	ASCII Corporation
 vendor XILINX		0x10ee	Xilinx
 vendor RACORE		0x10ef	Racore Computer Products
@@ -482,6 +482,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
+vendor REALTEK2		0x1211	RealTek (2nd ID)
 vendor 2MICRO		0x1217	2 Micro Inc
 vendor 3DFX		0x121a	3DFX Interactive
 vendor ARIEL		0x1220	Ariel
@@ -613,9 +614,9 @@ product	ALLIANCE AT24		0x6424	AT24
 product APPLE BANDIT		0x0001	PCI Controller
 
 /* AMD products */
-product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE Ethernet
+product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
 product AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
-product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ether+SCSI
 
 /* Apple products */
 product APPLE BANDIT		0x0001	PCI Controller
@@ -704,7 +705,7 @@ product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
 	
 /* Cogent Data Technologies products */
-product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
+product COGENT EM110TX		0x1400 EX110TX
 
 /* Compaq products */
 product	COMPAQ PCI_EISA_BRIDGE	0x0001	PCI-EISA Bridge
@@ -729,7 +730,7 @@ product	COMPAQ NF3P		0xf130	NetFlex 3/P
 product	COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 
 /* Compex */
-product COMPEX COMPEXE		0x1401	Compex Ethernet
+product COMPEX COMPEXE		0x1401	Ethernet
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -837,10 +838,10 @@ product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
 product INTEL SAA7116		0x1223	SAA7116
-product INTEL 82596		0x1226	82596 Ethernet
-product INTEL EEPRO100		0x1227	EE Pro 100 10/100 Fast Ethernet
-product INTEL EEPRO100S		0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
-product INTEL 82557		0x1229	82557 Fast Ethernet
+product INTEL 82596		0x1226	82596
+product INTEL EEPRO100		0x1227	EE Pro 100
+product INTEL EEPRO100S		0x1228	EE Pro 100 Smart
+product INTEL 82557		0x1229	82557
 product INTEL 82437FX		0x122d	82437FX (Triton) PCI, Cache, and DRAM Controller
 product INTEL 82371		0x122e	82371FB (Triton) PCI-ISA Bridge
 product INTEL 82438		0x1230	82438 (Triton) IDE controller
@@ -871,7 +872,7 @@ product ITT AGX016		0x0001	AGX016
 product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
 
 /* KTI */
-product KTI KTIE		0x3000	KTI Ethernet
+product KTI KTIE		0x3000	KTI
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
@@ -903,7 +904,7 @@ product MYLEX 960P		0x0001	DAC960P RAID controller
 product MUTECH MV1000		0x0001	MV1000
 
 /* National Semiconductor products */
-product NS DP83810		0x0001	DP83810 10/100 Ethernet
+product NS DP83810		0x0001	DP83810 10/100
 product NS NS87410		0xd001	NS87410
 
 /* NEC */
@@ -933,7 +934,7 @@ product	SYMBIOS	895		0x000c	53c895
 product	SYMBIOS	896		0x000b	53c896
 
 /* Packet Engines products */
-product	SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC Ethernet
+product	SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
 
 /* NexGen products */
 product NEXGEN NX82C501		0x4e78	NX82C501 Host-PCI Bridge
@@ -977,8 +978,12 @@ product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Realtek (Creative Labs?) products */
-product	REALTEK	RT8029		0x8029	Ethernet
-product	REALTEK	RT8139		0x8139	100Mb Ethernet
+product REALTEK RT8029		0x8029	8029
+product REALTEK RT8129		0x8129	8129
+product REALTEK RT8139		0x8139	8139
+
+/* RealTek (2nd ID) */
+product REALTEK2 RT8139		0x1211	8139
 
 /* S3 products */
 product S3 VIRGE		0x5631	ViRGE
@@ -1040,7 +1045,7 @@ product SIS 6205		0x6205	6205
 /* SMC products */
 product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
-product SMC 83C170		0x0005	83C170 (EPIC/100) Fast Ethernet
+product SMC 83C170		0x0005	83C170 (EPIC/100)
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
@@ -1133,7 +1138,7 @@ product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
 product VIATECH VT82C595	0x0595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT82C597PCI	0x0597	VT82C597 (Apollo VP3) Host-PCI Bridge
 product VIATECH VT82C598PCI	0x0598	VT82C598 (Apollo MVP3) Host-PCI Bridge
-product VIATECH VT86C926	0x0926	VT86C926 Amazon Ethernet
+product VIATECH VT86C926	0x0926	VT86C926 Amazon
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
