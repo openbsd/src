@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.10 1998/08/06 19:34:42 csapuntz Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.11 1998/08/06 21:28:45 csapuntz Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -500,10 +500,11 @@ null_lock(v)
 
 #if 0
 	vop_generic_lock(ap);
+#endif
 	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
 		return (0);
 	ap->a_flags &= ~LK_INTERLOCK;
-#endif
+
 	return (null_bypass((struct vop_generic_args *)ap));
 }
 
@@ -514,8 +515,9 @@ null_unlock(v)
 	struct vop_unlock_args *ap = v;
 #if 0
 	vop_generic_unlock(ap);
-	ap->a_flags &= ~LK_INTERLOCK;
 #endif
+	ap->a_flags &= ~LK_INTERLOCK;
+
 	return (null_bypass((struct vop_generic_args *)ap));
 }
 
