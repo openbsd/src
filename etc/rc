@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.218 2003/02/14 16:00:58 cedric Exp $
+#	$OpenBSD: rc,v 1.219 2003/03/04 18:42:52 danh Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -204,10 +204,10 @@ if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
 	pflogd ${pflogd_flags}
 fi
 
-if [ -x /usr/sbin/rndc-confgen -a ! -f /etc/rndc.key ]; then
+if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
 	echo -n "rndc-confgen: generating new shared secret... "
-	if /usr/sbin/rndc-confgen -a; then
-		install -c -o root -g named -m 640 /etc/rndc.key /var/named/etc
+	if /usr/sbin/rndc-confgen -a -t /var/named >/dev/null 2>&1; then
+		chmod 0640 /var/named/etc/rndc.key >/dev/null 2>&1
 		echo done.
 	else
 		echo failed.
