@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.5 1999/07/25 04:42:31 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.6 1999/07/30 00:17:37 deraadt Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ pciide_attach(parent, self, aux)
 		if (sc->sc_pp == &default_product_desc &&
 		    (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags &
 		    PCIIDE_OPTIONS_DMA) == 0) {
-			printf(" (unsupported) ");
+			printf(" (unsupported)");
 			sc->sc_dma_ok = 0;
 		} else {
 			sc->sc_dma_ok = (pci_mapreg_map(pa,
@@ -521,7 +521,7 @@ pciide_attach(parent, self, aux)
 			    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
 			sc->sc_dmat = pa->pa_dmat;
 			if (sc->sc_dma_ok == 0) {
-				printf(" (unuseable) ");
+				printf(" (unuseable)");
 			} else {
 				if (sc->sc_pp == &default_product_desc)
 					printf(" (partial support) ");
