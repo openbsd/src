@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.7 2003/02/10 22:31:01 jason Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.8 2003/02/14 21:05:12 henric Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -250,10 +250,14 @@ hmeattach_pci(parent, self, aux)
 		return;
 	}
 	sc->sc_seb = hsc->hsc_memh;
-	sc->sc_etx = hsc->hsc_memh + 0x2000;
-	sc->sc_erx = hsc->hsc_memh + 0x4000;
-	sc->sc_mac = hsc->hsc_memh + 0x6000;
-	sc->sc_mif = hsc->hsc_memh + 0x7000;
+	bus_space_subregion(sc->sc_bustag, hsc->hsc_memh, 0x2000, 0x2000,
+	    &sc->sc_etx);
+	bus_space_subregion(sc->sc_bustag, hsc->hsc_memh, 0x4000, 0x2000,
+	    &sc->sc_erx);
+	bus_space_subregion(sc->sc_bustag, hsc->hsc_memh, 0x6000, 0x1000,
+	    &sc->sc_mac);
+	bus_space_subregion(sc->sc_bustag, hsc->hsc_memh, 0x7000, 0x1000,
+	    &sc->sc_mif);
 
 	if (hme_pci_enaddr(sc, pa) == 0)
 		gotenaddr = 1;
