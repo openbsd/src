@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.15 2002/01/25 21:31:53 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.16 2002/01/25 21:42:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -117,7 +117,7 @@ pdc_init()
 		pzd->pz_layers[3], pzd->pz_layers[4], pzd->pz_layers[5],
 		pzd->pz_hpa);
 #endif
-		conaddr = (u_long)pzd->pz_hpa;
+		conaddr = (u_long)pzd->pz_hpa + IOMOD_DEVOFFSET;
 		conunit = 0;
 		/* TODO detect the baud rate */
 		comdefaultrate = 9600;
