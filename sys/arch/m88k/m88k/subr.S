@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.1 2004/04/29 14:33:27 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.2 2004/07/07 21:18:11 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -717,7 +717,7 @@ ENTRY(kcopy)
  */
 	cmp 	r9,r2,r3	/* compare source address to destination */
 	bb1	eq,r9,_ASM_LABEL(kcopy_out)	/* nothing to do if equal */
-	bb1	lo,r9,_ASM_LABEL(kcopy_revers)e	/* reverse copy if src < dest */
+	bb1	lo,r9,_ASM_LABEL(kcopy_reverse)	/* reverse copy if src < dest */
 /*
  *	source address is greater than destination address, copy forward
  */
