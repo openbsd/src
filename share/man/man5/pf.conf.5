@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.114 2002/11/24 17:27:49 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.115 2002/11/24 17:41:53 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -49,7 +49,7 @@ For each packet inspected by the translator, the set of rules is evaluated
 from top to bottom, and the first matching rule decides what action is
 performed.
 In short: filters are last match, nat is first match.
-Rules must be in order: options, scrub, nat, filter.
+Rules must be in order: options, scrub, nat, queue, filter.
 .Sh FILTER RULES
 While filter rules are typically manipulated using
 .Xr pfctl 8
@@ -250,7 +250,7 @@ Example:
 .Ss require-order
 By default
 .Xr pfctl 8
-enforces an ordering of the ruleset to: options, scrub, nat, filter.
+enforces an ordering of the ruleset to: options, scrub, nat, queue, filter.
 Setting this option to
 .Em no
 disables this enforcement.
