@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.31 2003/06/11 03:16:12 henric Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.32 2003/06/11 04:00:11 henric Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -96,6 +96,8 @@ int iommu_iomap_unload_map(struct iommu_state *, struct iommu_map_state *);
 struct iommu_map_state *iommu_iomap_create(int);
 void iommu_iomap_destroy(struct iommu_map_state *);
 void iommu_iomap_clear_pages(struct iommu_map_state *);
+void _iommu_dvmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
+    bus_addr_t, bus_size_t, int);
 
 /*
  * Initiate an STC entry flush.
@@ -1467,7 +1469,7 @@ iommu_dvmamap_print_map(bus_dma_tag_t t, struct iommu_state *is,
 }
 
 void
-iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
+_iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	bus_addr_t offset, bus_size_t len, int ops)
 {
 	struct iommu_state *is;
@@ -1476,26 +1478,8 @@ iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	bus_size_t count;
 	int i, needsflush = 0;
 
-#ifdef DEBUG
-	if (ims == NULL)
-		panic("iommu_dvmamap_sync: null map state");
-	if (ims->ims_sb == NULL)
-                panic("iommu_dvmamap_sync: null sb");
-        if (ims->ims_sb->sb_iommu == NULL)
-                panic("iommu_dvmamap_sync: null iommu");
-#endif /* DEBUG */
-
 	sb = ims->ims_sb;
 	is = sb->sb_iommu;
-
-	if ((ims->ims_flags & IOMMU_MAP_STREAM) == 0 || (len == 0))
-		return;
-
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTWRITE))
-		return;
-
-	if ((ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE)) == 0)
-		return;
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		if (offset < map->dm_segs[i].ds_len)
@@ -1514,11 +1498,41 @@ iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		len -= count;
 	}
 
+#ifdef DIAGNOSTIC
 	if (i == map->dm_nsegs && len > 0)
 		panic("iommu_dvmamap_sync: leftover %lu", len);
+#endif
 
 	if (needsflush)
 		iommu_strbuf_flush_done(ims);
+}
+
+void
+iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
+    bus_addr_t offset, bus_size_t len, int ops)
+{
+	struct iommu_map_state *ims = map->_dm_cookie;
+
+#ifdef DIAGNOSTIC
+	if (ims == NULL)
+		panic("iommu_dvmamap_sync: null map state");
+	if (ims->ims_sb == NULL)
+		panic("iommu_dvmamap_sync: null sb");
+	if (ims->ims_sb->sb_iommu == NULL)
+		panic("iommu_dvmamap_sync: null iommu");
+#endif
+	if (len == 0)
+		return;
+
+	if (ops & BUS_DMASYNC_PREWRITE)
+		membar(MemIssue);
+
+	if ((ims->ims_flags & IOMMU_MAP_STREAM) &&
+	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE)))
+		_iommu_dvmamap_sync(t, t0, map, offset, len, ops);
+
+	if (ops & BUS_DMASYNC_POSTREAD)
+		membar(MemIssue);
 }
 
 /*
