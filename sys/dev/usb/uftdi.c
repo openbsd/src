@@ -1,5 +1,5 @@
-/*	$OpenBSD: uftdi.c,v 1.6 2002/06/18 00:59:16 nate Exp $ 	*/
-/*	$NetBSD: uftdi.c,v 1.6 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$OpenBSD: uftdi.c,v 1.7 2002/07/10 02:56:53 nate Exp $ 	*/
+/*	$NetBSD: uftdi.c,v 1.10 2002/05/08 18:10:19 scw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,21 +89,28 @@ struct uftdi_softc {
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
+	enum uftdi_type		sc_type;
+	u_int			sc_hdrlen;
+
 	u_char			sc_msr;
 	u_char			sc_lsr;
 
 	device_ptr_t		sc_subdev;
 
 	u_char			sc_dying;
+
+	u_int			last_lcr;
 };
 
 Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
 Static void	uftdi_set(void *, int, int, int);
 Static int	uftdi_param(void *, int, struct termios *);
 Static int	uftdi_open(void *sc, int portno);
-Static void	uftdi_read(void *sc, int portno, u_char **ptr,u_int32_t *count);
+Static void	uftdi_read(void *sc, int portno, u_char **ptr,
+			   u_int32_t *count);
 Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
 			    u_int32_t *count);
+Static void	uftdi_break(void *sc, int portno, int onoff);
 
 struct ucom_methods uftdi_methods = {
 	uftdi_get_status,
@@ -129,7 +136,8 @@ USB_MATCH(uftdi)
 		     uaa->vendor, uaa->product));
 
 	if (uaa->vendor == USB_VENDOR_FTDI &&
-	    uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX)
+	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
+	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM))
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
@@ -174,6 +182,21 @@ USB_ATTACH(uftdi)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
+	switch (uaa->product) {
+	case USB_PRODUCT_FTDI_SERIAL_8U100AX:
+		sc->sc_type = UFTDI_TYPE_SIO;
+		sc->sc_hdrlen = 1;
+		break;
+
+	case USB_PRODUCT_FTDI_SERIAL_8U232AM:
+		sc->sc_type = UFTDI_TYPE_8U232AM;
+		sc->sc_hdrlen = 0;
+		break;
+
+	default:		/* Can't happen */
+		goto bad;
+	}
+
 	uca.bulkin = uca.bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		int addr, dir, attr;
@@ -210,9 +233,9 @@ USB_ATTACH(uftdi)
 	uca.portno = FTDI_PIT_SIOA;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UFTDIIBUFSIZE;
-	uca.obufsize = UFTDIOBUFSIZE - 1;
+	uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
 	uca.ibufsizepad = UFTDIIBUFSIZE;
-	uca.opkthdrlen = 1;
+	uca.opkthdrlen = sc->sc_hdrlen;
 	uca.device = dev;
 	uca.iface = iface;
 	uca.methods = &uftdi_methods;
@@ -349,13 +372,17 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 Static void
 uftdi_write(void *vsc, int portno, u_char *to, u_char *from, u_int32_t *count)
 {
+	struct uftdi_softc *sc = vsc;
+
 	DPRINTFN(10,("uftdi_write: sc=%p, port=%d count=%u data[0]=0x%02x\n",
 		     vsc, portno, *count, from[0]));
 
 	/* Make length tag and copy data */
-	*to = FTDI_OUT_TAG(*count, portno);
-	memcpy(to+1, from, *count);
-	++*count;
+	if (sc->sc_hdrlen > 0)
+		*to = FTDI_OUT_TAG(*count, portno);
+
+	memcpy(to + sc->sc_hdrlen, from, *count);
+	*count += sc->sc_hdrlen;
 }
 
 Static void
@@ -376,7 +403,7 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 		ctl = onoff ? FTDI_SIO_SET_RTS_HIGH : FTDI_SIO_SET_RTS_LOW;
 		break;
 	case UCOM_SET_BREAK:
-		/* XXX how do we set break? */
+		uftdi_break(sc, portno, onoff);
 		return;
 	default:
 		return;
@@ -405,19 +432,43 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	if (sc->sc_dying)
 		return (EIO);
 
-	switch (t->c_ospeed) {
-	case 300: rate = ftdi_sio_b300; break;
-	case 600: rate = ftdi_sio_b600; break;
-	case 1200: rate = ftdi_sio_b1200; break;
-	case 2400: rate = ftdi_sio_b2400; break;
-	case 4800: rate = ftdi_sio_b4800; break;
-	case 9600: rate = ftdi_sio_b9600; break;
-	case 19200: rate = ftdi_sio_b19200; break;
-	case 38400: rate = ftdi_sio_b38400; break;
-	case 57600: rate = ftdi_sio_b57600; break;
-	case 115200: rate = ftdi_sio_b115200; break;
-	default:
-		return (EINVAL);
+	switch (sc->sc_type) {
+	case UFTDI_TYPE_SIO:
+		switch (t->c_ospeed) {
+		case 300: rate = ftdi_sio_b300; break;
+		case 600: rate = ftdi_sio_b600; break;
+		case 1200: rate = ftdi_sio_b1200; break;
+		case 2400: rate = ftdi_sio_b2400; break;
+		case 4800: rate = ftdi_sio_b4800; break;
+		case 9600: rate = ftdi_sio_b9600; break;
+		case 19200: rate = ftdi_sio_b19200; break;
+		case 38400: rate = ftdi_sio_b38400; break;
+		case 57600: rate = ftdi_sio_b57600; break;
+		case 115200: rate = ftdi_sio_b115200; break;
+		default:
+			return (EINVAL);
+		}
+		break;
+
+	case UFTDI_TYPE_8U232AM:
+		switch(t->c_ospeed) {
+		case 300: rate = ftdi_8u232am_b300; break;
+		case 600: rate = ftdi_8u232am_b600; break;
+		case 1200: rate = ftdi_8u232am_b1200; break;
+		case 2400: rate = ftdi_8u232am_b2400; break;
+		case 4800: rate = ftdi_8u232am_b4800; break;
+		case 9600: rate = ftdi_8u232am_b9600; break;
+		case 19200: rate = ftdi_8u232am_b19200; break;
+		case 38400: rate = ftdi_8u232am_b38400; break;
+		case 57600: rate = ftdi_8u232am_b57600; break;
+		case 115200: rate = ftdi_8u232am_b115200; break;
+		case 230400: rate = ftdi_8u232am_b230400; break;
+		case 460800: rate = ftdi_8u232am_b460800; break;
+		case 921600: rate = ftdi_8u232am_b921600; break;
+		default:
+			return (EINVAL);
+		}
+		break;
 	}
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BAUD_RATE;
@@ -456,6 +507,8 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		data |= FTDI_SIO_SET_DATA_BITS(8);
 		break;
 	}
+	sc->last_lcr = data;
+
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_DATA;
 	USETW(req.wValue, data);
@@ -483,4 +536,28 @@ uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 		*msr = sc->sc_msr;
 	if (lsr != NULL)
 		*lsr = sc->sc_lsr;
+}
+
+void
+uftdi_break(void *vsc, int portno, int onoff)
+{
+	struct uftdi_softc *sc = vsc;
+	usb_device_request_t req;
+	int data;
+
+	DPRINTF(("uftdi_break: sc=%p, port=%d onoff=%d\n", vsc, portno,
+		  onoff)); 
+
+	if (onoff) {
+		data = sc->last_lcr | FTDI_SIO_SET_BREAK;
+	} else {
+		data = sc->last_lcr;
+	}
+
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = FTDI_SIO_SET_DATA;
+	USETW(req.wValue, data);
+	USETW(req.wIndex, portno);
+	USETW(req.wLength, 0);
+	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }

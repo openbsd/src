@@ -1,5 +1,5 @@
-/*	$OpenBSD: uftdireg.h,v 1.5 2002/05/07 18:29:18 nate Exp $ 	*/
-/*	$NetBSD: uftdireg.h,v 1.3 2001/06/12 14:59:28 wiz Exp $ */
+/*	$OpenBSD: uftdireg.h,v 1.6 2002/07/10 02:56:53 nate Exp $ 	*/
+/*	$NetBSD: uftdireg.h,v 1.5 2002/05/08 18:10:19 scw Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter - 
@@ -32,6 +32,11 @@
 #define FTDI_PIT_SIOA		1 /* SIOA */
 #define FTDI_PIT_SIOB		2 /* SIOB */
 #define FTDI_PIT_PARALLEL	3 /* Parallel */
+
+enum uftdi_type {
+	UFTDI_TYPE_SIO,
+	UFTDI_TYPE_8U232AM
+};
 
 /*
  * BmRequestType:  0100 0000B
@@ -86,6 +91,21 @@ enum {
 	ftdi_sio_b115200 = 9
 };
 
+enum {
+	ftdi_8u232am_b300 = 0x2710,
+	ftdi_8u232am_b600 = 0x1388,
+	ftdi_8u232am_b1200 = 0x09c4,
+	ftdi_8u232am_b2400 = 0x04e2,
+	ftdi_8u232am_b4800 = 0x0271,
+	ftdi_8u232am_b9600 = 0x4138,
+	ftdi_8u232am_b19200 = 0x809c,
+	ftdi_8u232am_b38400 = 0xc04e,
+	ftdi_8u232am_b57600 = 0x0034,
+	ftdi_8u232am_b115200 = 0x001a,
+	ftdi_8u232am_b230400 = 0x000d,
+	ftdi_8u232am_b460800 = 0x4006,
+	ftdi_8u232am_b921600 = 0x8003
+};
 
 /*
  * BmRequestType:  0100 0000B 
@@ -121,6 +141,7 @@ enum {
 #define FTDI_SIO_SET_DATA_STOP_BITS_1 (0x0 << 11)
 #define FTDI_SIO_SET_DATA_STOP_BITS_15 (0x1 << 11)
 #define FTDI_SIO_SET_DATA_STOP_BITS_2 (0x2 << 11)
+#define FTDI_SIO_SET_BREAK (0x1 << 14)
 
 
 /* 
