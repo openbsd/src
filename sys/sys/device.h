@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.27 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: device.h,v 1.28 2004/11/17 14:12:59 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -211,6 +211,9 @@ void device_unref(struct device *);
 #ifdef __HAVE_DEVICE_REGISTER
 void device_register(struct device *, void *);
 #endif
+
+int loadfirmware(const char *name, u_char **bufp, size_t *buflen);
+#define FIRMWARE_MAX	5*1024*1024
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)

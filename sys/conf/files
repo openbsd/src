@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.318 2004/11/02 02:45:36 reyk Exp $
+#	$OpenBSD: files,v 1.319 2004/11/17 14:12:59 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -18,6 +18,9 @@ define	midisyn
 define	radiobus {}
 define	i2cbus {}
 define	gpiobus {}
+
+# filesystem firmware loading attribute
+define firmload
 
 # audio device attributes
 define	mulaw
@@ -468,6 +471,7 @@ file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/cons.c
+file dev/firmload.c			firmload
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
 file dev/ic/pdq.c			pdq
