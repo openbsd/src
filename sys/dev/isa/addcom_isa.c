@@ -1,4 +1,4 @@
-/*	$OpenBSD: addcom_isa.c,v 1.4 2001/07/21 04:24:13 jason Exp $	*/
+/*	$OpenBSD: addcom_isa.c,v 1.5 2001/08/22 05:26:37 jason Exp $	*/
 /*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
@@ -86,9 +86,9 @@ struct addcom_softc {
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;
-	int sc_iobase;
+	bus_addr_t sc_iobase;
 
-	int sc_alive;			/* mask of slave units attached */
+	int sc_alive[NSLAVES];
 	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 	bus_space_handle_t sc_statusioh;
@@ -136,10 +136,6 @@ addcomprobe(parent, self, aux)
 	 * means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
-
-	/* Disallow wildcard interrupt. */
-	if (ia->ia_irq == IRQUNK)
-		return (0);
 
 	/* Disallow wildcarded i/o address. */
 	if (ia->ia_iobase == -1 /* ISACF_PORT_DEFAULT */)
@@ -206,6 +202,12 @@ addcomattach(parent, self, aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
+	/* Disallow wildcard interrupt. */
+	if (ia->ia_irq == IRQUNK) {
+		printf(": wildcard interrupt not supported\n");
+		return;
+	}
+
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, addcomintr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
@@ -245,7 +247,7 @@ addcomattach(parent, self, aux)
 
 		sc->sc_slaves[i] = config_found(self, &ca, addcomprint);
 		if (sc->sc_slaves[i] != NULL)
-			sc->sc_alive |= 1 << i;
+			sc->sc_alive[i] = 1;
 	}
 
 }
@@ -259,13 +261,11 @@ addcomintr(arg)
 
 	do {
 		intrd = 0;
-		for (i = 0; i < NSLAVES; i++) {
-			if (sc->sc_alive & (1 << i) &&
-			    comintr(sc->sc_slaves[i])) {
+		for (i = 0; i < NSLAVES; i++)
+			if (sc->sc_alive[i] && comintr(sc->sc_slaves[i])) {
 				r = 1;
 				intrd = 1;
 			}
-		}
 	} while (intrd);
 
 	return (r);
