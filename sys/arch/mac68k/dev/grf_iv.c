@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.15 1997/04/21 00:58:14 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.16 1998/04/27 02:04:34 gene Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ grfiv_match(parent, vcf, aux)
 			panic("failed to map space for DAFB regs.\n");
 		}
 
-		if (bus_probe(oa->oa_tag, bsh, 0x1C, 4) == 0) {
+		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1C, 4) == 0) {
 			bus_space_unmap(oa->oa_tag, bsh, 0x1000);
 			found = 0;
 			goto nodafb;

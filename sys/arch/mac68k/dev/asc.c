@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.6 1997/03/08 16:16:48 briggs Exp $	*/
+/*	$OpenBSD: asc.c,v 1.7 1998/04/27 02:04:32 gene Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ ascmatch(parent, vcf, aux)
 	if (bus_space_map(oa->oa_tag, addr, MAC68K_ASC_LEN, 0, &bsh))
 		return (0);
 
-	if (bus_probe(oa->oa_tag, bsh, 0, 1))
+	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 1))
 		rval = 1;
 	else
 		rval = 0;

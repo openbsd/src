@@ -157,7 +157,7 @@ sn_obio_getaddr(sc, lladdr)
 		return (-1);
 	}
 
-	if (!bus_probe(sc->sc_regt, bsh, 0, 1)) {
+	if (!mac68k_bus_space_probe(sc->sc_regt, bsh, 0, 1)) {
 		bus_space_unmap(sc->sc_regt, bsh, NBPG);
 		return (-1);
 	}
