@@ -1,20 +1,22 @@
 /*
  * OpenBSD/i386 machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.2 1998/11/09 03:13:13 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.3 1999/01/10 22:59:33 d Exp $
  */
+
+#include <machine/reg.h>
 
 /* save the floating point state of a thread */
 #define _thread_machdep_save_float_state(thr) 		\
 	{						\
-	    char *fdata = (char*)((thr)->_machdep.saved_fp);	\
+	    char *fdata = (char*)(&(thr)->_machdep.saved_fp);	\
 	    __asm__("fsave %0"::"m" (*fdata));		\
 	}
 
 /* restore the floating point state of a thread */
 #define _thread_machdep_restore_float_state(thr) 	\
 	{						\
-	    char *fdata = (char*)((thr)->_machdep.saved_fp);	\
+	    char *fdata = (char*)(&(thr)->_machdep.saved_fp);	\
 	    __asm__("frstor %0"::"m" (*fdata));		\
 	}
 
@@ -33,6 +35,6 @@
 #define	_thread_machdep_setjmp(a)	setjmp(a)
 
 struct _machdep_struct {
-        char            saved_fp[108];
+	struct fpreg	saved_fp;
 };
 
