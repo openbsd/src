@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.6 1999/07/25 07:09:19 csapuntz Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.7 2000/02/21 08:18:31 mjacob Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -203,6 +203,7 @@ struct scsi_changedef {
 
 #define T_CHANGER	8
 #define T_COMM		9
+#define	T_ENCLOSURE	13
 
 #define T_REMOV		1
 #define	T_FIXED		0
@@ -236,7 +237,7 @@ struct scsi_inquiry_data {
 	char	vendor[8];
 	char	product[16];
 	char	revision[4];
-	u_int8_t extra[8];
+	u_int8_t extra[14];
 };
 
 struct scsi_sense_data_unextended {
