@@ -1,0 +1,28 @@
+.\" $OpenBSD: amdpm.4,v 1.1 2002/06/06 22:01:27 mickey Exp $
+.\"
+.Dd June 6, 2002
+.Dt AMDPM 4
+.Os
+.Sh NAME
+.Nm amdpm
+.Nd AMD768 Power Management
+.Sh SYNOPSIS
+.Cd "amdpm*  at pci? dev ? function ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the
+.Tn AMD 768 Power Management
+controller, in particular, only the RNG function is supported
+at this time.
+The data generated get fed into the pool of the
+.Xr random 4
+device.
+.Sh SEE ALSO
+.Xr pci 4 ,
+.Xr random 4
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Ox 3.2 .
