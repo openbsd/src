@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.6 1997/01/16 09:25:45 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.7 1997/05/13 16:09:47 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
 
 /*
@@ -45,6 +45,11 @@ cdev_decl(fd);
 cdev_decl(grf);
 
 cdev_decl(ipl);
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
 
 cdev_decl(ite);
 
@@ -65,7 +70,7 @@ cdev_decl(msc);
 cdev_decl(par);
 
 bdev_decl(rd);
-/* no cdev for rd */
+cdev_decl(rd);
 
 cdev_decl(random);
 
