@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.25 2000/01/30 20:52:20 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.107 2000/01/30 20:17:47 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.26 2000/01/30 21:01:49 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.108 2000/01/30 21:03:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -161,18 +161,19 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  LC (RSA_free, (key));
 	  return 0;
 	}
-      princ2 = calloc(strlen(principal) + strlen("rsa-hex:") + 1, sizeof(char));
+      princ2 = calloc (strlen (principal) + strlen ("rsa-hex:") + 1,
+		       sizeof (char));
       if (princ2 == NULL)
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
-	  free(principal);
+	  free (principal);
 	  LC (RSA_free, (key));
 	  return 0;
 	}
 
-      strcpy(princ2, "rsa-hex:");
-      strcpy(princ2 + strlen("rsa-hex:"), principal);
-      free(principal);
+      strcpy (princ2, "rsa-hex:");
+      strcpy (princ2 + strlen ("rsa-hex:"), principal);
+      free (principal);
       LC (RSA_free, (key));
       principal = princ2;
       princ2 = NULL;
@@ -226,7 +227,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 
   /*
    * XXX Currently, check_policy() is only called from message_negotiate_sa(),
-   *     and so this log message reflects this. Change to somethine better?
+   *     and so this log message reflects this. Change to something better?
    */
   if (result == 0)  
     log_print ("check_policy: negotiated SA failed policy check");
