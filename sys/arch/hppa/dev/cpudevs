@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.25 2003/06/02 22:03:28 mickey Exp $
+$OpenBSD: cpudevs,v 1.26 2003/08/20 18:52:40 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -312,7 +312,7 @@ bus	ROPES	15	Ropes
 bus	MERCED	16	Merced
 
 cpu	SOFTEMU	0x01	Software Emulation
-cpu	PCXT	0x0b	Tornado
+cpu	PCXT2	0x0b	PA7200
 cpu	PCXL	0x0d	PA7100LC
 cpu	PCXUP	0x0e	PA8000
 cpu	PCXL2	0x0f	PA7300LC
@@ -328,7 +328,7 @@ fpu	FPCB	0x07	FPC (NMOS-III w/Bit)
 fpu	PCXS	0x08	PCXS (Timex-II)
 fpu	PCXT	0x09	PCXT (Rolex - CMOS-26B)
 fpu	HARP	0x0a	HARP-I
-fpu	TORNADO	0x0b	Tornado
+fpu	PCXT2	0x0b	PCXT' (Tornado)
 fpu	PA50	0x0c	PA-50 (Hitachi)
 fpu	PCXL	0x0d	PCXL (CMOS-26B)
 fpu	PCXU	0x0e	PCXU/PCXU+
