@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.46 2003/10/01 08:07:28 jmc Exp $
+.\"	$OpenBSD: mount.8,v 1.47 2004/01/02 06:14:14 david Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -221,14 +221,14 @@ For example, the
 .Nm
 command:
 .Bd -literal -offset indent
-# mount -t mfs -o nosuid,-N,-s=4000 /dev/dk0b /tmp
+# mount -t mfs -o nosuid,-s=4000 /dev/sd0b /tmp
 .Ed
 .Pp
 causes
 .Nm
 to execute the equivalent of:
 .Bd -literal -offset indent
-# /sbin/mount_mfs -o nosuid -N -s 4000 /dev/dk0b /tmp
+# /sbin/mount_mfs -o nosuid -s 4000 /dev/sd0b /tmp
 .Ed
 .It Fl r
 The file system is to be mounted read-only.
