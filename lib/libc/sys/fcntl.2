@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.23 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: fcntl.2,v 1.24 2004/05/05 20:47:23 millert Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -181,6 +181,13 @@ when
 .Tn I/O
 is possible, e.g.,
 upon availability of data to be read.
+.It Dv O_SYNC
+Cause writes to be syncronous.
+Data will be written to the physical device instead of
+just being stored in the buffer cache; corresponds to the
+.Dv O_SYNC
+flag of
+.Xr open 2 .
 .El
 .Pp
 Several commands are available for doing advisory file locking;
