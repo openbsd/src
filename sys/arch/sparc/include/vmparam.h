@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 1999/05/27 23:56:39 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 1999/05/29 14:53:27 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -147,7 +147,7 @@
 #define MACHINE_NEW_NONCONTIG
 #endif
 
-#ifndef MACHINE_NEW_NONCONTG
+#ifndef MACHINE_NEW_NONCONTIG
 #define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
 #endif
 
