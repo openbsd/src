@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.24 2003/03/12 18:15:55 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.25 2003/04/17 14:10:47 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.24 2003/03/12 18:15:55 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.25 2003/04/17 14:10:47 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -54,10 +54,10 @@ static const char *ecodes[] =
 		"out of memory"
 	};
 
-static char	get_list(bitstr_t *, int, int, const char *[], char, FILE *),
-		get_range(bitstr_t *, int, int, const char *[], char, FILE *),
-		get_number(int *, int, const char *[], char, FILE *, const char *);
-static int	set_element(bitstr_t *, int, int, int);
+static int	get_list(bitstr_t *, int, int, const char *[], int, FILE *),
+		get_range(bitstr_t *, int, int, const char *[], int, FILE *),
+		get_number(int *, int, const char *[], int, FILE *, const char *),
+		set_element(bitstr_t *, int, int, int);
 
 void
 free_entry(entry *e) {
@@ -397,9 +397,9 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	return (NULL);
 }
 
-static char
+static int
 get_list(bitstr_t *bits, int low, int high, const char *names[],
-	 char ch, FILE *file)
+	 int ch, FILE *file)
 {
 	int done;
 
@@ -441,9 +441,9 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 }
 
 
-static char
+static int
 get_range(bitstr_t *bits, int low, int high, const char *names[],
-	  char ch, FILE *file)
+	  int ch, FILE *file)
 {
 	/* range = number | number "-" number [ "/" number ]
 	 */
@@ -525,8 +525,8 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 	return (ch);
 }
 
-static char
-get_number(int *numptr, int low, const char *names[], char ch, FILE *file,
+static int
+get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
     const char *terms) {
 	char temp[MAX_TEMPSTR], *pc;
 	int len, i;
