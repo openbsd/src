@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.34 2000/01/06 03:37:57 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.35 2000/01/07 21:36:39 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -531,6 +531,8 @@ The currently defined protocols and names are:
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
 .It ip4	allow	integer	yes
+.It gre	allow	integer	yes
+.It mobileip	allow	integer	yes
 .It etherip	allow	integer	yes
 .It icmp	maskrepl	integer	yes
 .It tcp	rfc1323	integer	yes
@@ -569,6 +571,12 @@ This value applies to normal transport protocols, not to
 .Tn ICMP .
 .It Li ip4.allow
 If set to 0, incoming IPv4-in-IPv4 packets will not be processed.
+If set to any other value, processing will occur.
+.It Li gre.allow
+If set to 0, incoming GRE packets will not be processed.
+If set to any other value, processing will occur.
+.It Li mobileip.allow
+If set to 0, incoming MobileIP encapsulated packets (RFC 2004) will not be processed.
 If set to any other value, processing will occur.
 .It Li etherip.allow
 If set to 0, incoming Ethernet-in-IPv4 packets will not be processed.
