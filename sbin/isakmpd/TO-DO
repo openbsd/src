@@ -1,8 +1,7 @@
-$OpenBSD: TO-DO,v 1.16 1999/07/18 09:33:06 niklas Exp $
-$EOM: TO-DO,v 1.42 1999/07/18 09:12:57 niklas Exp $
+$OpenBSD: TO-DO,v 1.17 1999/08/05 22:41:53 niklas Exp $
+$EOM: TO-DO,v 1.43 1999/08/05 14:58:14 niklas Exp $
 
-This file is pretty lame as it should really contain a lot more given that
-the program is far from ready in any area.
+This file mixes small nitpicks with large projects to be done.
 
 * Add debugging messages, maybe possible to control asynchronously. [done]
 
@@ -135,3 +134,9 @@ the program is far from ready in any area.
 * Specify extra certificates to send somehow.
 
 * Handle CERTs anywhere in an exchange.
+
+* Add a way to do multiple configuration commands via ui.
+
+* Replace ui's fifo with a slightly more versatile interface.
+
+* Report current configuration.

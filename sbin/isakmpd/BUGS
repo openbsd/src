@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.10 1999/05/02 19:20:30 niklas Exp $
-$EOM: BUGS,v 1.31 1999/05/02 12:49:00 niklas Exp $
+$OpenBSD: BUGS,v 1.11 1999/08/05 22:41:53 niklas Exp $
+$EOM: BUGS,v 1.32 1999/08/05 14:58:14 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -76,3 +76,5 @@ file:
   readable even when nothing is there after one read has succeeded.
 
 * I have seen INITIAL-CONTACT sent on the second Main Mode.
+
+* When ID mismatches occur, coredumps may follow, investigate!
