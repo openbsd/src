@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.8 2002/04/07 16:31:27 frantzen Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.9 2002/04/08 16:12:49 mpech Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -414,6 +414,7 @@ allowed_luser(char *luser)
 	char *buf, *lbuf;
 	size_t len;
 	FILE *f;
+       int matched;
 
 	if ((f = fopen(allowfile, "r")) == NULL) {
 		if (errno == ENOENT) {
@@ -453,13 +454,15 @@ allowed_luser(char *luser)
 				buf = lbuf;
 			}
 
-			if (strcmp(luser, buf) == 0 || strcmp("*", buf) == 0)
-				return(1); /* matched an allowed username */
+                       matched = strcmp(luser, buf) == 0 || strcmp("*", buf) == 0;
 
 			if (lbuf != NULL) {
 				free(lbuf);
 				lbuf = NULL;
 			}
+
+                       if (matched)
+                               return(1); /* matched an allowed username */
 		}
 		syslog(LOG_INFO, "Denied access to %s: not listed in %s",
 		    luser, allowfile);
