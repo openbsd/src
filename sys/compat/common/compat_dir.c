@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_dir.c,v 1.1 2001/01/23 05:48:04 csapuntz Exp $	*/
+/* 	$OpenBSD: compat_dir.c,v 1.2 2001/04/10 17:35:40 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 2000 Constantine Sapuntzakis
@@ -52,7 +52,7 @@ readdir_with_callback(fp, off, nbytes, appendfunc, arg)
 	int buflen;
 	struct uio auio;
 	struct iovec aiov;
-	int eofflag;
+	int eofflag = 0;
 	u_long *cookiebuf = NULL, *cookie;
 	int ncookies = 0;
 	int error, len, reclen;
@@ -94,14 +94,14 @@ again:
 	if (error)
 		goto out;
 
-	if (!cookiebuf && !eofflag) {
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;	
+
+	if (cookiebuf == NULL) {
 		error = EPERM;
 		goto out;
 	}
 
-	if ((len = buflen - auio.uio_resid) == 0)
-		goto eof;
-	
 	cookie = cookiebuf;
 	inp = buf;
 
