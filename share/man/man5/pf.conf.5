@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.254 2003/06/07 20:31:13 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.255 2003/06/10 16:59:49 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2204,9 +2204,9 @@ tableaddr      = hostname | ipv4-dotted-quad | ipv6-coloned-hex |
                  interface-name | "self"
 
 altq-rule      = "altq on" interface-name queueopts-list
-                 "queue" queue-list
+                 "queue" subqueue
 queue-rule     = "queue" string [ "on" interface-name ] queueopts-list
-                 queue-list
+                 subqueue
 
 anchor-rule    = "anchor" string [ ( "in" | "out" ) ] [ "on" ifspec ]
                  [ af ] [ "proto" ] [ protospec ] [ hosts ]
