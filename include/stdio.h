@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.27 2003/06/26 18:35:13 avsm Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.28 2003/06/26 19:34:17 avsm Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -214,14 +214,12 @@ int	 ferror(FILE *);
 int	 fflush(FILE *);
 int	 fgetc(FILE *);
 int	 fgetpos(FILE *, fpos_t *);
-char	*fgets(char *, int, FILE *)
-		__attribute__((__bounded__ (__string__,1,2)));
+char	*fgets(char *, int, FILE *);
 FILE	*fopen(const char *, const char *);
 int	 fprintf(FILE *, const char *, ...);
 int	 fputc(int, FILE *);
 int	 fputs(const char *, FILE *);
-size_t	 fread(void *, size_t, size_t, FILE *)
-		__attribute__((__bounded__ (__size__,1,3,2)));
+size_t	 fread(void *, size_t, size_t, FILE *);
 FILE	*freopen(const char *, const char *, FILE *);
 int	 fscanf(FILE *, const char *, ...);
 int	 fseek(FILE *, long, int);
@@ -229,8 +227,7 @@ int	 fseeko(FILE *, off_t, int);
 int	 fsetpos(FILE *, const fpos_t *);
 long	 ftell(FILE *);
 off_t	 ftello(FILE *);
-size_t	 fwrite(const void *, size_t, size_t, FILE *)
-		__attribute__((__bounded__ (__size__,1,3,2)));
+size_t	 fwrite(const void *, size_t, size_t, FILE *);
 int	 getc(FILE *);
 int	 getchar(void);
 char	*gets(char *);
@@ -316,15 +313,13 @@ int	 setlinebuf(FILE *);
 char	*tempnam(const char *, const char *);
 int	 snprintf(char *, size_t, const char *, ...)
 		__attribute__((__format__ (printf, 3, 4)))
-		__attribute__((__nonnull__ (3)))
-		__attribute__((__bounded__ (__string__,1,2)));
+		__attribute__((__nonnull__ (3)));
 int	 vasprintf(char **, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (printf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
 int	 vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (printf, 3, 0)))
-		__attribute__((__nonnull__ (3)))
-		__attribute__((__bounded__(__string__,1,2)));
+		__attribute__((__nonnull__ (3)));
 int	 vscanf(const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (scanf, 1, 0)))
 		__attribute__((__nonnull__ (1)));

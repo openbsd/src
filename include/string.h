@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.11 2003/06/26 18:35:13 avsm Exp $	*/
+/*	$OpenBSD: string.h,v 1.12 2003/06/26 19:34:17 avsm Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -54,14 +54,9 @@ typedef	_BSD_SIZE_T_	size_t;
 __BEGIN_DECLS
 void	*memchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
-void	*memcpy(void *, const void *, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,3)))
-		__attribute__ ((__bounded__(__buffer__,2,3)));
-void	*memmove(void *, const void *, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,3)))
-		__attribute__ ((__bounded__(__buffer__,2,3)));
-void	*memset(void *, int, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,3)));
+void	*memcpy(void *, const void *, size_t);
+void	*memmove(void *, const void *, size_t);
+void	*memset(void *, int, size_t);
 char	*strcat(char *, const char *);
 char	*strchr(const char *, int);
 int	 strcmp(const char *, const char *);
@@ -69,41 +64,32 @@ int	 strcoll(const char *, const char *);
 char	*strcpy(char *, const char *);
 size_t	 strcspn(const char *, const char *);
 char	*strerror(int);
-int	 strerror_r(int, char *, size_t)
-		__attribute__ ((__bounded__(__string__,2,3)));
+int	 strerror_r(int, char *, size_t);
 size_t	 strlen(const char *);
-char	*strncat(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
+char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
-char	*strncpy(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
+char	*strncpy(char *, const char *, size_t);
 char	*strpbrk(const char *, const char *);
 char	*strrchr(const char *, int);
 size_t	 strspn(const char *, const char *);
 char	*strstr(const char *, const char *);
 char	*strtok(char *, const char *);
 char	*strtok_r(char *, const char *, char **);
-size_t	 strxfrm(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strxfrm(char *, const char *, size_t);
 
 /* Nonstandard routines */
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 int	 bcmp(const void *, const void *, size_t);
-void	 bcopy(const void *, void *, size_t)
-		__attribute__ ((__bounded__(__buffer__,2,3)));
-void	 bzero(void *, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,2)));
+void	 bcopy(const void *, void *, size_t);
+void	 bzero(void *, size_t);
 int	 ffs(int);
 char	*index(const char *, int);
-void	*memccpy(void *, const void *, int, size_t)
-		__attribute__ ((__bounded__(__buffer__,1,4)));
+void	*memccpy(void *, const void *, int, size_t);
 char	*rindex(const char *, int);
 int	 strcasecmp(const char *, const char *);
 char	*strdup(const char *);
-size_t	 strlcat(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
-size_t	 strlcpy(char *, const char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strlcat(char *, const char *, size_t);
+size_t	 strlcpy(char *, const char *, size_t);
 void	 strmode(int, char *);
 int	 strncasecmp(const char *, const char *, size_t);
 char	*strsep(char **, const char *);
