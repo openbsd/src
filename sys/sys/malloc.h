@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.57 2002/06/11 05:56:52 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.58 2002/06/21 12:14:21 itojun Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -151,10 +151,10 @@
 #define M_MEMDESC	105	/* Memory range */
 #define M_UFS_EXTATTR	106	/* Extended Attributes */
 /* 107 - free */
-#define M_CRYPTO_DATA   108	/* Crypto framework data buffers (keys etc.) */
+#define M_CRYPTO_DATA	108	/* Crypto framework data buffers (keys etc.) */
 /* 109 - free */
-#define M_CREDENTIALS   110	/* IPsec-related credentials and ID info */
-#define M_PACKET_TAGS   111	/* Packet-attached information */
+#define M_CREDENTIALS	110	/* IPsec-related credentials and ID info */
+#define M_PACKET_TAGS	111	/* Packet-attached information */
 /* 112-122 - free */
 
 /* KAME IPv6 */
@@ -163,7 +163,7 @@
 #define	M_IP6RR		125	/* IPv6 Router Renumbering Prefix */
 #define	M_RR_ADDR	126	/* IPv6 Router Renumbering Ifid */
 #define	M_TEMP		127	/* misc temporary data buffers */
-#define M_LAST          128     /* Must be last type + 1 */
+#define M_LAST		128	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -241,7 +241,7 @@
 	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
 	"EXT2FS node",	/* 72 M_EXT2FSNODE */ \
 	NULL, \
-	"pfkey data",   /* 74 M_PFKEY */ \
+	"pfkey data",	/* 74 M_PFKEY */ \
 	"tdb",		/* 75 M_TDB */ \
 	"xform_data",	/* 76 M_XDATA */ \
 	NULL, \
