@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.10 2000/01/08 04:51:16 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.11 2000/04/18 22:40:15 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -195,6 +195,13 @@ DISK_getmetrics(disk, user)
 		return (0);
 	}
 
+	/* If we have BIOS geometry, use that */
+	if (disk->bios) {
+		disk->real = disk->bios;
+		return (0);
+	}
+
+
 	/* If we have a label, use that */
 	if (!disk->real && disk->label)
 		disk->real = disk->label;
@@ -202,18 +209,6 @@ DISK_getmetrics(disk, user)
 	/* Can not get geometry, punt */
 	if (disk->real == NULL)
 		return (1);
-
-	/* If we have a bios, use that (if label looks bogus)
-	 *
-	 * XXX - This needs to be fixed!!!!
-	 * Currently machdep.bios.biosdev is USELESS
-	 * It needs to be, at least, a BSD device.
-	 * Or we need a mapping from biosdev -> BSD universe.
-	 */
-	if (disk->bios)
-		if (disk->real->cylinders > 262144 || disk->real->heads > 256 ||
-		    disk->real->sectors > 63)
-			disk->real = disk->bios;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.24 2000/02/04 18:09:36 kjell Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.25 2000/04/18 22:40:15 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -213,7 +213,8 @@ Xselect(cmd, disk, mbr, tt, offset)
 	off = mbr->part[pn].bs;
 
 	/* Sanity checks */
-	if (mbr->part[pn].id != DOSPTYP_EXTEND) {
+	if ((mbr->part[pn].id != DOSPTYP_EXTEND) &&
+	    (mbr->part[pn].id != DOSPTYP_EXTENDL)) {
 		printf("Partition %d is not an extended partition.\n", pn);
 		return (CMD_CONT);
 	}
