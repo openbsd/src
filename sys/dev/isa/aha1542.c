@@ -758,7 +758,9 @@ aha_free_ccb(aha, ccb, flags)
 			*hashccb = (*hashccb)->nexthash;
 			break;
 		}
-		(*hashccb) = (*hashccb)->nexthash;
+		hashccb = &(*hashccb)->nexthash;
+ 	}
+ 
 	}
 
 	ccb->flags = CCB_FREE;
