@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.7 2000/11/06 23:53:47 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.8 2001/01/08 21:38:25 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.7 2000/11/06 23:52:58 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.8 2001/01/08 21:38:04 mickey Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -70,6 +70,7 @@
 #define	CARDBUS_PRODUCT_3COM_3CCFEM656B	0x6562		/* 3CCFEM656B */
 #define	CARDBUS_PRODUCT_3COM_MODEM56	0x6563		/* 56k Modem */
 #define	CARDBUS_PRODUCT_3COM_3CCFEM656C	0x6564		/* 3CCFEM656C */
+#define	CARDBUS_PRODUCT_3COM_GLOBALMODEM56	0x6565		/* 56k Global Modem */
 
 /* ADMtek products */
 #define	CARDBUS_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 */
