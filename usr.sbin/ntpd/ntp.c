@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.44 2004/12/13 12:39:15 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.45 2004/12/22 05:34:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,7 +90,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		fatal("getservbyname");
 
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
-		fatal(NULL);
+		fatal("getpwnam");
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);
