@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.18 2005/01/11 09:12:09 jmc Exp $
+.\"	$OpenBSD: vnd.4,v 1.19 2005/02/01 03:47:19 jaredy Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -48,29 +48,33 @@ This is useful for a variety of applications, including swap files and
 building miniroot or floppy disk images.
 There are two variants, the traditional
 .Nm
-that bypasses the buffercache and thus is suitable for swap on files, but
+that bypasses the buffer cache and thus is suitable for swap on files, but
 not for building disk-images, and the
 .Nm svnd
-("safe"
-.Nm vnd )
+.Po
+.Dq safe
+.Nm
+.Pc
 variant that goes
-through the buffercache, thereby maintaining cache-coherency after the
+through the buffer cache, thereby maintaining cache-coherency after the
 block-device is closed which makes it suitable for creating disk images.
 The latter is not good for swapping on, though.
 .Pp
-This document assumes that you're familiar with how to generate kernels,
+This document assumes familiarity with how to generate kernels and
 how to properly configure disks and pseudo-devices in a kernel
 configuration file.
 .Pp
-In order to compile in support for the
-.Nm vnd ,
-you must add a line similar
-to the following to your kernel configuration file:
+In order to compile in support for
+.Nm vnd
+devices, a line similar to the following must be present in the kernel
+configuration file:
 .Bd -unfilled -offset indent
 pseudo-device	vnd	4	# vnode disk driver
 .Ed
 .Pp
-The count argument is how many
+The
+.Ar count
+argument is how many
 .Nm vnds
 memory is allocated for at boot time.
 In this example, no more than 4
@@ -82,7 +86,7 @@ There is a run-time utility that is used for configuring
 See
 .Xr vnconfig 8
 for more information.
-.Pp
+.Sh IOCTL INTERFACE
 The following
 .Xr ioctl 2
 calls are defined in
@@ -99,10 +103,9 @@ specified in
 of length
 .Va vnd_keylen .
 Encryption only works with
-.Nm svnd .
-The size of the configured
-.Nm
-device is returned in
+.Nm svnd
+devices.
+The size of the configured device is returned in
 .Va vnd_size .
 .Bd -literal -offset indent
 struct vnd_ioctl {
@@ -113,11 +116,11 @@ struct vnd_ioctl {
 };
 .Ed
 .It Dv VNDIOCCLR Fa "struct vnd_ioctl *"
-Deassociate a
+Disassociate a
 .Nm
 device.
 .It Dv VNDIOCGET Fa "struct vnd_user *"
-Get the associated file name, device, inode, and unit number of a
+Get the associated file name, device, inode number, and unit number of a
 .Nm
 device.
 If
@@ -132,10 +135,9 @@ Otherwise,
 may contain the unit number of another
 .Nm
 device.
-This allows for opening just vnd0 and querying all available
-.Nm
-devices, as is done in
-.Xr vnconfig 8 .
+This allows for opening just
+.Li vnd0
+and querying all available devices.
 .Bd -literal -offset indent
 struct vnd_user {
 	char	vnufile[VNDNLEN];
@@ -161,7 +163,11 @@ and
 They are documented in
 .Xr sd 4 .
 .Sh FILES
-/dev/{,r}{,s}vnd* \- vnd device special files.
+.Bl -tag -width /dev/{,r}{,s}vnd* -compact
+.It Pa /dev/{,r}{,s}vnd*
+.Nm
+device special files
+.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr sd 4 ,
