@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.11 1999/05/18 00:26:16 alex Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.12 1999/05/24 12:09:04 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1151,7 +1151,7 @@ The
 .Ql \&.Ic
 macro designates an interactive or internal command.
 .Pp
-.Dl Usage: .Li argument ... \*(Pu
+.Dl Usage: .Ic argument ... \*(Pu
 .Bl -tag -width ".Ic setenv , unsetenvxx" -compact -offset 14n
 .It Li \&.Ic :wq
 .Ic :wq
@@ -2201,7 +2201,7 @@ This macro is parsed, but it is not callable.
 .Dl Fl ldghfstru
 .Pp
 The above was produced by:
-.Li \&.Dl Fl ldghfstru .
+.Li \&.Dl \&Fl ldghfstru .
 .It Li \&.Dl
 (D-ell)
 Display one line of indented
@@ -2220,7 +2220,7 @@ It is not callable however.
 .Pp
 .Dl % ls -ldg /usr/local/bin
 .Pp
-The above was produced by
+The above was produced by:
 .Li \&.Dl % ls -ldg /usr/local/bin .
 .It Li \&.Bd
 Begin-display.
