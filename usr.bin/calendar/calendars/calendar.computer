@@ -1,7 +1,7 @@
 /*
  * Computer
  *
- * $OpenBSD: calendar.computer,v 1.6 2001/01/09 15:47:41 pjanzen Exp $
+ * $OpenBSD: calendar.computer,v 1.7 2003/06/23 15:15:46 mickey Exp $
  */
 
 #ifndef _calendar_computer_
@@ -48,7 +48,6 @@
 06/15	UNIVAC I delivered to the Census Bureau, 1951
 06/16	First programming error at Census Bureau, 1951 (apocryphal)
 06/23	IBM unbundles software, 1969
-06/23	Turing's Birthday, 1912
 06/30	First advanced degree on computer related topic: to H. Karamanian,
 	Temple Univ., Phila, 1948, for symbolic differentiation on the ENIAC
 07/08	Bell Telephone Co. formed (predecessor of AT&T), 1877
