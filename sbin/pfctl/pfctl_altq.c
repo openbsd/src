@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.24 2002/12/17 11:29:04 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.25 2002/12/17 20:06:05 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -203,7 +203,8 @@ print_queue(const struct pf_altq *a, unsigned level)
 	for (i = 0; i < level; ++i)
 		printf(" ");
 	printf("%s ", a->qname);
-	printf("bandwidth %s ", rate2str((double)a->bandwidth));
+	if (a->scheduler == ALTQT_CBQ || a->scheduler == ALTQT_HFSC)
+		printf("bandwidth %s ", rate2str((double)a->bandwidth));
 	if (a->priority != DEFAULT_PRIORITY)
 		printf("priority %u ", a->priority);
 	if (a->qlimit != DEFAULT_QLIMIT)
@@ -320,18 +321,22 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 	if (pa->qlimit == 0)
 		pa->qlimit = DEFAULT_QLIMIT;
 
-	if (bw_absolute > 0)
-		pa->bandwidth = bw_absolute;
-	else if (bw_percent > 0 && parent != NULL)
-		pa->bandwidth = parent->bandwidth / 100 * bw_percent;
-	else
-		errx(1, "bandwidth for %s invalid (%d / %d)", pa->qname,
-		    bw_absolute, bw_percent);
+	if (pa->scheduler == ALTQT_CBQ || pa->scheduler == ALTQT_HFSC) {
+		if (bw_absolute > 0)
+			pa->bandwidth = bw_absolute;
+		else if (bw_percent > 0 && parent != NULL)
+			pa->bandwidth = parent->bandwidth / 100 * bw_percent;
+		else
+			errx(1, "bandwidth for %s invalid (%d / %d)", pa->qname,
+			    bw_absolute, bw_percent);
 
-	if (pa->bandwidth > pa->ifbandwidth)
-		errx(1, "bandwidth for %s higher than interface", pa->qname);
-	if (parent != NULL && pa->bandwidth > parent->bandwidth)
-		errx(1, "bandwidth for %s higher than parent", pa->qname);
+		if (pa->bandwidth > pa->ifbandwidth)
+			errx(1, "bandwidth for %s higher than interface",
+			    pa->qname);
+		if (parent != NULL && pa->bandwidth > parent->bandwidth)
+			errx(1, "bandwidth for %s higher than parent",
+			    pa->qname);
+	}
 
 	switch (pa->scheduler) {
 	case ALTQT_CBQ:
@@ -552,10 +557,6 @@ eval_pfqueue_priq(struct pfctl *pf, struct pf_altq *pa)
 {
 	struct pf_altq	*altq;
 
-	if (pa->parent[0] == 0)
-		/* this is for dummy root */
-		return (0);
-
 	if (pa->priority >= PRIQ_MAXPRI) {
 		warnx("priority out of range: max %d", PRIQ_MAXPRI - 1);
 		return (-1);
@@ -563,16 +564,12 @@ eval_pfqueue_priq(struct pfctl *pf, struct pf_altq *pa)
 	/* the priority should be unique for the interface */
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(altq->ifname, pa->ifname, IFNAMSIZ) == 0 &&
-		    altq->qname[0] != 0 && altq->parent[0] != 0 &&
-		    altq->priority == pa->priority) {
+		    altq->qname[0] != 0 && altq->priority == pa->priority) {
 			warnx("%s and %s have the same priority",
 			    altq->qname, pa->qname);
 			return (-1);
 		}
 	}
-
-	if (pa->bandwidth != pa->ifbandwidth)
-		warnx("priq does not have a bandwidth parameter -- ignored");
 
 	return (0);
 }
@@ -592,8 +589,6 @@ check_commit_priq(int dev, int opts, struct pf_altq *pa)
 		if (strncmp(altq->ifname, pa->ifname, IFNAMSIZ) != 0)
 			continue;
 		if (altq->qname[0] == 0)  /* this is for interface */
-			continue;
-		if (altq->parent[0] == 0)  /* dummy root */
 			continue;
 		if (altq->pq_u.priq_opts.flags & PRCF_DEFAULTCLASS)
 			default_class++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.260 2002/12/17 12:36:59 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.261 2002/12/17 20:06:05 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -165,14 +165,16 @@ struct node_queue {
 	char			 queue[PF_QNAME_SIZE];
 	char			 parent[PF_QNAME_SIZE];
 	char			 ifname[IFNAMSIZ];
+	int			 scheduler;
 	struct node_queue	*next;
 	struct node_queue	*tail;
 }	*queues = NULL;
 
 struct node_queue_opt {
 	int			 qtype;
-	union {	/* options for other schedulers will follow */
-		struct cbq_opts		 cbq_opts;
+	union {
+		struct cbq_opts		cbq_opts;
+		struct priq_opts	priq_opts;
 	}			 data;
 };
 
@@ -380,7 +382,7 @@ typedef struct {
 %token	REQUIREORDER YES
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
-%token	ALTQ CBQ BANDWIDTH TBRSIZE
+%token	ALTQ CBQ PRIQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
 %token	DEFAULT CONTROL BORROW RED ECN RIO
 %token	<v.string>		STRING
@@ -417,6 +419,7 @@ typedef struct {
 %type	<v.queue>		qassign qassign_list qassign_item
 %type	<v.queue_options>	scheduler
 %type	<v.number>		cbqflags_list cbqflags_item
+%type	<v.number>		priqflags_list priqflags_item
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
@@ -747,6 +750,10 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 				a.pq_u.cbq_opts =
 				    $3.scheduler.data.cbq_opts;
 				break;
+			case ALTQT_PRIQ:
+				a.pq_u.priq_opts =
+				    $3.scheduler.data.priq_opts;
+				break;
 			default:
 				break;
 			}
@@ -790,6 +797,10 @@ queuespec	: QUEUE STRING queue_opts qassign {
 			case ALTQT_CBQ:
 				a.pq_u.cbq_opts =
 				    $3.scheduler.data.cbq_opts;
+				break;
+			case ALTQT_PRIQ:
+				a.pq_u.priq_opts =
+				    $3.scheduler.data.priq_opts;
 				break;
 			default:
 				break;
@@ -916,6 +927,14 @@ scheduler	: CBQ				{
 			$$.qtype = ALTQT_CBQ;
 			$$.data.cbq_opts.flags = $3;
 		}
+		| PRIQ				{
+			$$.qtype = ALTQT_PRIQ;
+			$$.data.priq_opts.flags = 0;
+		}
+		| PRIQ '(' priqflags_list ')'	{
+			$$.qtype = ALTQT_PRIQ;
+			$$.data.priq_opts.flags = $3;
+		}
 		;
 
 cbqflags_list	: cbqflags_item				{ $$ |= $1; }
@@ -928,6 +947,16 @@ cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
 		| RED		{ $$ = CBQCLF_RED; }
 		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
 		| RIO		{ $$ = CBQCLF_RIO; }
+		;
+
+priqflags_list	: priqflags_item			{ $$ |= $1; }
+		| priqflags_list comma priqflags_item	{ $$ |= $3; }
+		;
+
+priqflags_item	: DEFAULT	{ $$ = PRCF_DEFAULTCLASS; }
+		| RED		{ $$ = PRCF_RED; }
+		| ECN		{ $$ = PRCF_RED|PRCF_ECN; }
+		| RIO		{ $$ = PRCF_RIO; }
 		;
 
 qassign		: /* empty */		{ $$ = NULL; }
@@ -2873,9 +2902,12 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
 					err(1, "expand_altq: calloc");
-				strlcpy(n->parent, qname, PF_QNAME_SIZE);
+				if (pa.scheduler == ALTQT_CBQ)
+					strlcpy(n->parent, qname,
+					    PF_QNAME_SIZE);
 				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
 				strlcpy(n->ifname, interface->ifname, IFNAMSIZ);
+				n->scheduler = pa.scheduler;
 				n->next = NULL;
 				n->tail = n;
 				if (queues == NULL)
@@ -2905,6 +2937,33 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
 			/* found ourselve in queues */
 			found++;
+
+			if (a->scheduler != ALTQT_NONE &&
+			    a->scheduler != tqueue->scheduler) {
+				yyerror("exactly one scheduler type per "
+				   "interface allowed");
+				return (1);
+			}
+			a->scheduler = tqueue->scheduler;
+
+			/* scheduler dependent error checking */
+			switch (a->scheduler) {
+			case ALTQT_PRIQ:
+				if (nqueues != NULL) {
+					yyerror("priq queues cannot have "
+					    "child queues");
+					return (1);
+				}
+				if (bwspec.bw_absolute > 0 ||
+				    bwspec.bw_percent < 100) {
+					yyerror("priq doesn't take bandwidth");
+					return (1);
+				}
+				break;
+			default:
+				break;
+			}
+
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
@@ -2912,6 +2971,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 				strlcpy(n->parent, a->qname, PF_QNAME_SIZE);
 				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
 				strlcpy(n->ifname, tqueue->ifname, IFNAMSIZ);
+				n->scheduler = a->scheduler;
 				n->next = NULL;
 				n->tail = n;
 				if (queues == NULL)
@@ -3341,6 +3401,7 @@ lookup(char *s)
 		{ "pass",		PASS},
 		{ "port",		PORT},
 		{ "priority",		PRIORITY},
+		{ "priq",		PRIQ},
 		{ "proto",		PROTO},
 		{ "qlimit",		QLIMIT},
 		{ "queue",		QUEUE},
