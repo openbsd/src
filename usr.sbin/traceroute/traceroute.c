@@ -1,5 +1,5 @@
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
-/*	$OpenBSD: traceroute.c,v 1.18 1997/06/09 21:31:01 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.19 1997/06/09 21:55:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -367,7 +367,8 @@ main(argc, argv)
 				pent = getprotobyname(optarg);
 				if (pent)
 					proto = pent->p_proto;
-				errx(1, "proto must be >=0, or a name.");
+				else
+					errx(1, "proto must be >=0, or a name.");
 			}
 			break;
 		case 'q':
