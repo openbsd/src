@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.9 1999/05/26 19:26:11 brad Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.10 1999/07/04 18:37:19 espie Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct bpf_version {
  * BPF ioctls
  *
  * The first set is for compatibility with Sun's pcc style
- * header files.  If your using gcc, we assume that you
+ * header files.  If you're using gcc, we assume that you
  * have run fixincludes so the latter set should work.
  */
 #if (defined(sun) || defined(ibm032)) && !defined(__GNUC__)
@@ -186,7 +186,7 @@ struct bpf_hdr {
 #define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
 
 /*
- * The instruction encondings.
+ * The instruction encodings.
  */
 /* instruction classes */
 #define BPF_CLASS(code) ((code) & 0x07)
