@@ -355,38 +355,20 @@ static int chrtoblktbl[] = {
     /* 24 */        24,
     /* 25 */        25,
     /* 26 */        26,
-    /* 27 */        NODEV,
-    /* 28 */        NODEV,
-    /* 29 */        NODEV,
-    /* 30 */        NODEV,
-    /* 31 */        NODEV,
-    /* 32 */        NODEV,
-    /* 33 */        NODEV,
-    /* 34 */        NODEV,
-    /* 35 */        NODEV,
-    /* 36 */        NODEV,
-    /* 37 */        NODEV,
-    /* 38 */        NODEV,
-    /* 39 */        NODEV,
-    /* 40 */        NODEV,
-    /* 41 */        NODEV,
-    /* 42 */        NODEV,
-    /* 43 */        NODEV,
 };
 
 /*
  * Convert a character device number to a block device number.
  */
- 
 dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
 	int blkmaj;
                   
-	if (major(dev) >= nchrdev)
+	if (major(dev) >= MAXDEV ||
+	    major(dev) > sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
 		return (NODEV);
-
 	blkmaj = chrtoblktbl[major(dev)];
 	if (blkmaj == NODEV)
 		return (NODEV);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1997/11/23 05:22:00 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 1998/07/07 03:02:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.4 1997/11/23 05:22:00 mickey Exp $
+ *      $Id: conf.c,v 1.5 1998/07/07 03:02:51 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -249,41 +249,8 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	10,
-	/* 23 */	NODEV,
-	/* 24 */	NODEV,
-	/* 25 */	NODEV,
-	/* 26 */	NODEV,
-	/* 27 */	NODEV,
-	/* 28 */	NODEV,
-	/* 29 */	NODEV,
-	/* 30 */	NODEV,
-	/* 31 */	NODEV,
-	/* 32 */	NODEV,
-	/* 33 */	NODEV,
-	/* 34 */	NODEV,
-	/* 35 */	NODEV,
-	/* 36 */	NODEV,
-	/* 37 */	NODEV,
-	/* 38 */	NODEV,
-	/* 39 */	NODEV,
-	/* 40 */	NODEV,
-	/* 41 */	NODEV,
-	/* 42 */	NODEV,
-	/* 43 */	NODEV,
-	/* 44 */	NODEV,
-	/* 45 */	NODEV,
-	/* 46 */	NODEV,
-	/* 47 */	NODEV,
-	/* 48 */	NODEV,
-	/* 49 */	NODEV,
-	/* 50 */	NODEV,
-	/* 51 */	NODEV,
-	/* 52 */	NODEV,
-	/* 53 */	NODEV,
-	/* 54 */	NODEV,
-	/* 55 */	NODEV,
-	/* 56 */	NODEV,
 };
+
 /*
  * Routine to convert from character to block device number.
  *
@@ -294,7 +261,11 @@ chrtoblk(dev)
 {
 	int blkmaj;
 
-	if (major(dev) >= MAXDEV || (blkmaj = chrtoblktbl[major(dev)]) == NODEV)
+	if (major(dev) >= MAXDEV ||
+	    major(dev) > sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
+		return (NODEV);
+	blkmaj = chrtoblktbl[major(dev)];
+	if (blkmaj == NODEV)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }

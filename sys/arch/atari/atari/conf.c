@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1997/11/23 05:21:54 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 1998/07/07 03:02:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -259,7 +259,6 @@ static int chrtoblktab[] = {
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	13,
-	/* 28 */	NODEV,
 };
 
 /*
@@ -271,11 +270,12 @@ chrtoblk(dev)
 {
 	int blkmaj;
 
-	if (major(dev) >= nchrdev)
-		return(NODEV);
-	blkmaj = chrtoblktab[major(dev)];
+	if (major(dev) >= MAXDEV ||
+	    major(dev) > sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
+		return (NODEV);
+	blkmaj = chrtoblktbl[major(dev)];
 	if (blkmaj == NODEV)
-		return(NODEV);
+		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 1997/11/23 05:21:53 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 1998/07/07 03:02:29 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -245,7 +245,6 @@ static int chrtoblktbl[] = {
 	/* 35 */	NODEV,
 	/* 36 */	0,
 	/* 37 */	4,
-	/* 38 */	NODEV,
 };
 
 /*
@@ -257,7 +256,8 @@ chrtoblk(dev)
 {
 	int blkmaj;
 
-	if (major(dev) >= nchrdev)
+	if (major(dev) >= MAXDEV ||
+	    major(dev) > sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
 		return (NODEV);
 	blkmaj = chrtoblktbl[major(dev)];
 	if (blkmaj == NODEV)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 1998/05/29 04:15:38 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.8 1998/07/07 03:02:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -232,29 +232,6 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	17,
-	/* 18 */	NODEV,
-	/* 19 */	NODEV,
-	/* 20 */	NODEV,
-	/* 21 */	NODEV,
-	/* 22 */	NODEV,
-	/* 23 */	NODEV,
-	/* 24 */	NODEV,
-	/* 25 */	NODEV,
-	/* 26 */	NODEV,
-	/* 27 */	NODEV,
-	/* 28 */	NODEV,
-	/* 29 */	NODEV,
-	/* 30 */	NODEV,
-	/* 31 */	NODEV,
-	/* 32 */	NODEV,
-	/* 33 */	NODEV,
-	/* 34 */	NODEV,
-	/* 35 */	NODEV,
-	/* 36 */	NODEV,
-	/* 37 */	NODEV,
-	/* 38 */	NODEV,
-	/* 39 */	NODEV,
-	/* 40 */	NODEV,
 };
 
 /*
@@ -266,11 +243,13 @@ chrtoblk(dev)
 {
 	int major;
 	
-	if ((major = major(dev)) >= nchrdev)
-		return NODEV;
-	if ((major = chrtoblktbl[major]) == NODEV)
-		return NODEV;
-	return makedev(major, minor(dev));
+	if (major(dev) >= MAXDEV ||
+	    major(dev) > sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
+		return (NODEV);
+	blkmaj = chrtoblktbl[major(dev)];
+	if (blkmaj == NODEV)
+		return (NODEV);
+	return (makedev(blkmaj, minor(dev)));
 }
 
 /*
