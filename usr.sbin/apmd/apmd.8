@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apmd.8,v 1.14 2001/03/22 05:24:03 angelos Exp $
+.\"	$Id: apmd.8,v 1.15 2001/03/22 06:06:27 deraadt Exp $
 .\"
 .Dd March 24, 1996
 .Dt APMD 8
@@ -154,27 +154,20 @@ flushing the buffer cache.
 .Pp
 Actions can be configured for the three transitions:
 .Cm suspend ,
-.Cm standby ,
-.Cm resume ,
-.Cm powerup
+.Cm standby
 and
-.Cm powerdown .
+.Cm resume .
 The suspend and standby actions are run prior to
 .Nm
 performing any other actions (such as disk syncs) and entering the new
 mode.
 The resume program is run after resuming from a stand-by or
 suspended state.
-The powerup and powerdown programs are run after the power status (AC
-connected or not) changes, as well as after a resume (if the power
-status changed in the mean time).
 .Sh FILES
 .Pa /etc/apm/suspend ,
-.Pa /etc/apm/standby ,
-.Pa /etc/apm/resume ,
-.Pa /etc/apm/powerup
+.Pa /etc/apm/standby
 and
-.Pa /etc/apm/powerdown
+.Pa /etc/apm/resume
 are the files that contain the host's customized actions.
 Each file must be an executable binary or shell script suitable
 for execution by the
@@ -186,10 +179,8 @@ may determine which transition is in progress by examining its
 which is set to one of
 .Ar suspend ,
 .Ar standby ,
-.Ar resume ,
-.Ar powerup
-and
-.Ar powerdown .
+or
+.Ar resume .
 .Pp
 .Pa /var/run/apmdev
 is the default UNIX-domain socket used for communication with
