@@ -1070,6 +1070,8 @@ case ${target} in
   *-*-openbsd*)
     cat >>e${EMULATION_NAME}.c <<EOF
   string = gld${EMULATION_NAME}_search_dir(search->name, filename);
+  if (string == NULL)
+    return false;
 EOF
    ;;
   *)
