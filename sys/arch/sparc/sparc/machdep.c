@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.28 1997/08/25 08:38:48 downsj Exp $	*/
-/*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
+/*	$OpenBSD: machdep.c,v 1.29 1997/09/17 06:47:20 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

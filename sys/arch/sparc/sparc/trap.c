@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/08/08 08:27:46 downsj Exp $	*/
-/*	$NetBSD: trap.c,v 1.57 1997/07/29 09:42:15 fair Exp $ */
+/*	$OpenBSD: trap.c,v 1.12 1997/09/17 06:47:22 downsj Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1104,7 +1104,9 @@ syscall(code, tf, pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 	error = (*callp->sy_call)(p, &args, rval);
-	if (error == 0) {
+
+	switch (error) {
+	case 0:
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval[0];
 		tf->tf_out[1] = rval[1];
@@ -1122,8 +1124,15 @@ syscall(code, tf, pc)
 		}
 		tf->tf_pc = i;
 		tf->tf_npc = i + 4;
-	} else if (error > 0 /*error != ERESTART && error != EJUSTRETURN*/) {
-bad:
+		break;
+
+	case ERESTART:
+	case EJUSTRETURN:
+		/* nothing to do */
+		break;
+
+	default:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
@@ -1131,9 +1140,8 @@ bad:
 		i = tf->tf_npc;
 		tf->tf_pc = i;
 		tf->tf_npc = i + 4;
+		break;
 	}
-	/* else if (error == ERESTART || error == EJUSTRETURN) */
-		/* nothing to do */
 
 	userret(p, pc, sticks);
 #ifdef KTRACE

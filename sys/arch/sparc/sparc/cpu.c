@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.c,v 1.8 1997/09/11 20:31:33 deraadt Exp $	*/
-/*	$NetBSD: cpu.c,v 1.52 1997/07/29 09:41:58 fair Exp $ */
+/*	$OpenBSD: cpu.c,v 1.9 1997/09/17 06:47:16 downsj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -302,8 +302,8 @@ cache_print(sc)
 		       ci->c_totalsize/1024, ci->c_linesize);
 	} else {
 		/* combined, virtual */
-		printf(" %d byte write-%s, %d bytes/line, %cw flush ",
-		       ci->c_totalsize,
+		printf(" %dK byte write-%s, %d bytes/line, %cw flush ",
+		       ci->c_totalsize/1024,
 		       (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		       ci->c_linesize,
 		       ci->c_hwflush ? 'h' : 's');
@@ -459,21 +459,21 @@ cpumatch_sun4(sc, mp, node)
 		sc->classlvl = 100;
 		sc->mmu_ncontext = 8;
 		sc->mmu_nsegment = 256;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 14280000;
 		break;
 	case ID_SUN4_200:
 		sc->cpu_type = CPUTYP_4_200;
 		sc->classlvl = 200;
 		sc->mmu_nsegment = 512;
 		sc->mmu_ncontext = 16;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 16670000;
 		break;
 	case ID_SUN4_300:
 		sc->cpu_type = CPUTYP_4_300;
 		sc->classlvl = 300;
 		sc->mmu_nsegment = 256;
 		sc->mmu_ncontext = 16;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 25000000;
 		break;
 	case ID_SUN4_400:
 		sc->cpu_type = CPUTYP_4_400;
@@ -481,7 +481,7 @@ cpumatch_sun4(sc, mp, node)
 		sc->mmu_nsegment = 1024;
 		sc->mmu_ncontext = 64;
 		sc->mmu_nregion = 256;
-/*XXX*/		sc->hz = 0;
+/*XXX*/		sc->hz = 33000000;
 		sc->sun4_mmu3l = 1;
 		break;
 	}
@@ -575,7 +575,7 @@ sun4_hotfix(sc)
 {
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
-		printf("cache chip bug; trap page uncached ");
+		printf(": cache chip bug; trap page uncached");
 	}
 
 }
@@ -713,7 +713,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	VAC_WRITETHROUGH,
 	0,
 	getcacheinfo_obp,
-	0,
+	0, /* was swift_hotfix, */
 	0,
 	swift_cache_enable,
 	256,
@@ -846,7 +846,7 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_line
+	srmmu_pcache_flush_line
 };
 
 void
@@ -856,11 +856,13 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
+	printf("warning: hypersparc support still under construction\n");
 }
 
 void
 hypersparc_mmu_enable()
 {
+#if 0
 	int pcr;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
@@ -868,6 +870,7 @@ hypersparc_mmu_enable()
 	pcr &= ~HYPERSPARC_PCR_CE;
 
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+#endif
 }
 
 /* Cypress 605 */
@@ -991,7 +994,8 @@ struct cpu_conf {
 	{ CPU_SUN4M, 1, 1, 1, 0xc, "CY7C601/605 (v.c)", &module_cypress },
 	{ CPU_SUN4M, 1, 1, 1, 0xf, "CY7C601/605 (v.f)", &module_cypress },
 	{ CPU_SUN4M, 1, 3, 1, ANY, "CY7C611", &module_cypress },
-	{ CPU_SUN4M, 1, 0xf, 1, 1, "RT620/625", &module_hypersparc },
+	{ CPU_SUN4M, 1, 0xe, 1, 7, "RT620/625", &module_hypersparc },
+	{ CPU_SUN4M, 1, 0xf, 1, 7, "RT620/625", &module_hypersparc },
 	{ CPU_SUN4M, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55", &module_viking },
 	{ CPU_SUN4M, 4, 1, 0, ANY, "TMS390Z50 v1", &module_viking },
 	{ CPU_SUN4M, 4, 1, 4, ANY, "TMS390S10", &module_ms1 },
@@ -1164,6 +1168,7 @@ static struct info fpu_types[] = {
 	 * Vendor 1, IU ROSS0/1 or Pinnacle.
 	 */
 	{ 1, 0x1, 0xf, 0, "on-chip" },		/* Pinnacle */
+	{ 1, 0x1, 0xe, 0, "on-chip" },		/* Hypersparc RT 625/626 */
 	{ 1, 0x1, ANY, 0, "L64812 or ACT8847" },
 	{ 1, 0x1, ANY, 1, "L64814" },
 	{ 1, 0x1, ANY, 2, "TMS390C602A" },

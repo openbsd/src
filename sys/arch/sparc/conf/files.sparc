@@ -1,5 +1,5 @@
-#	$OpenBSD: files.sparc,v 1.13 1997/08/25 08:38:43 downsj Exp $
-#	$NetBSD: files.sparc,v 1.40 1997/07/07 21:53:43 pk Exp $
+#	$OpenBSD: files.sparc,v 1.14 1997/09/17 06:47:05 downsj Exp $
+#	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -101,8 +101,8 @@ device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 
-device audio
-attach audio at mainbus, obio, sbus
+device audioamd: audio
+attach audioamd at mainbus, obio, sbus
 file	arch/sparc/dev/amd7930.c	audio
 file	arch/sparc/sparc/amd7930intr.s	audio
 
@@ -211,7 +211,7 @@ file	arch/sparc/sparc/conf.c
 file	arch/sparc/sparc/emul.c
 file	arch/sparc/sparc/in_cksum.c
 file	arch/sparc/sparc/intr.c
-file	arch/sparc/sparc/kgdb_stub.c
+file	arch/sparc/sparc/kgdb_machdep.c	kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
 file	arch/sparc/sparc/locore2.c
@@ -230,7 +230,7 @@ file	arch/sparc/sparc/disksubr.c
 
 file	kludge_for_in_proto.c		hy needs-flag
 
-file	arch/sparc/sparc/db_interface.c	ddb
+file	arch/sparc/sparc/db_interface.c	ddb | kgdb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
 

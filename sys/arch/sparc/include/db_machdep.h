@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 1997/08/08 08:26:13 downsj Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.9 1997/06/26 01:27:00 thorpej Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.5 1997/09/17 06:47:13 downsj Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.10 1997/08/31 21:23:40 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -47,20 +47,25 @@ typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct {
-	struct trapframe ddb_tf;
-	struct frame	 ddb_fr;
+	struct trapframe db_tf;
+	struct frame	 db_fr;
 } db_regs_t;
 
 db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
-#define	DDB_TF		(&ddb_regs.ddb_tf)
-#define	DDB_FR		(&ddb_regs.ddb_fr)
+#define	DDB_TF		(&ddb_regs.db_tf)
+#define	DDB_FR		(&ddb_regs.db_fr)
 
 #if defined(lint)
-#define	PC_REGS(regs)	((regs)->ddb_tf.tf_pc)
+#define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
 #else
-#define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
+#define	PC_REGS(regs)	((db_addr_t)(regs)->db_tf.tf_pc)
 #endif
+#define	PC_ADVANCE(regs) do {				\
+	int n = (regs)->db_tf.tf_npc;			\
+	(regs)->db_tf.tf_pc = n;			\
+	(regs)->db_tf.tf_npc = n + 4;			\
+} while(0)
 
 #define	BKPT_INST	0x91d02001	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
@@ -69,7 +74,8 @@ db_regs_t		ddb_regs;	/* register state */
 #define	db_clear_single_step(regs)	(void) (0)
 #define	db_set_single_step(regs)	(void) (0)
 
-#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
+#define	IS_BREAKPOINT_TRAP(type, code)	\
+	((type) == T_BREAKPOINT || (type) == T_KGDB_EXEC)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)
 
 #define	inst_trap_return(ins)	((ins)&0)
@@ -87,5 +93,13 @@ int kdb_trap __P((int, struct trapframe *));
  * We use a.out symbols in DDB.
  */
 #define	DB_AOUT_SYMBOLS
+
+
+/*
+ * KGDB definitions
+ */
+typedef u_long		kgdb_reg_t;
+#define KGDB_NUMREGS	72
+#define KGDB_BUFLEN	1024
 
 #endif	/* _SPARC_DB_MACHDEP_H_ */

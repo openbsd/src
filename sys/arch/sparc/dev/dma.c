@@ -1,5 +1,5 @@
-/*	$OpenBSD: dma.c,v 1.8 1997/08/08 08:24:57 downsj Exp $	*/
-/*	$NetBSD: dma.c,v 1.45 1997/07/29 09:58:06 fair Exp $ */
+/*	$OpenBSD: dma.c,v 1.9 1997/09/17 06:47:08 downsj Exp $	*/
+/*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.

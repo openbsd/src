@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.18 1997/08/08 08:47:10 downsj Exp $
-# 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
+#	$OpenBSD: GENERIC,v 1.19 1997/09/17 06:47:03 downsj Exp $
+# 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -40,9 +40,9 @@ vmel0	at mainbus0				# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
-audio0	at mainbus0				# sun4c
-audio0	at obio0				# sun4m
-audio0	at sbus0 slot ? offset ?		# sun4m
+audioamd0 at mainbus0				# sun4c
+audioamd0 at obio0				# sun4m
+audioamd0 at sbus0 slot ? offset ?		# sun4m
 
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m

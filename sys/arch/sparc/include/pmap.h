@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.h,v 1.5 1997/08/08 08:26:38 downsj Exp $	*/
-/*	$NetBSD: pmap.h,v 1.29 1997/07/06 23:57:16 pk Exp $ */
+/*	$OpenBSD: pmap.h,v 1.6 1997/09/17 06:47:14 downsj Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -279,9 +279,8 @@ void		kvm_uncache __P((caddr_t, int));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
 int		mmu_pagein __P((struct pmap *pm, int, int));
-#ifdef DEBUG
-int		mmu_pagein4m __P((struct pmap *pm, int, int));
-#endif
+void		pmap_writetext __P((unsigned char *, int));
+
 
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */

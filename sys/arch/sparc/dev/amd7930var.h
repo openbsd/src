@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930var.h,v 1.3 1997/08/08 08:24:38 downsj Exp $	*/
+/*	$OpenBSD: amd7930var.h,v 1.4 1997/09/17 06:47:07 downsj Exp $	*/
 /*	$NetBSD: amd7930var.h,v 1.3 1996/02/01 22:32:25 mycroft Exp $ */
 
 /*

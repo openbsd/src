@@ -1,5 +1,5 @@
-/*	$OpenBSD: cgsix.c,v 1.8 1997/08/08 08:24:51 downsj Exp $	*/
-/*	$NetBSD: cgsix.c,v 1.32 1997/07/29 09:58:04 fair Exp $ */
+/*	$OpenBSD: cgsix.c,v 1.9 1997/09/17 06:47:07 downsj Exp $	*/
+/*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -142,8 +142,12 @@ static struct fbdriver cg6_fbdriver = {
 
 /*
  * Unlike the bw2 and cg3 drivers, we do not need to provide an rconsole
- * interface, as the cg6 is fast enough.
+ * interface, as the cg6 is fast enough.. but provide a knob to turn it
+ * on anyway.
  */
+#ifdef RASTERCONSOLE
+int cgsix_use_rasterconsole = 0;
+#endif
 
 extern int fbnode;
 
@@ -324,9 +328,12 @@ cgsixattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		sc->sc_fb.fb_pixels = (caddr_t)
-			mapiodev(ca->ca_ra.ra_reg, O(cg6_ram[0]), ramsize);
-		fbrcons_init(&sc->sc_fb);
+		if (cgsix_use_rasterconsole) {
+			sc->sc_fb.fb_pixels = (caddr_t)
+				mapiodev(ca->ca_ra.ra_reg,
+					 O(cg6_ram[0]), ramsize);
+			fbrcons_init(&sc->sc_fb);
+		}
 #endif
 	} else
 		printf("\n");

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.14 1997/08/08 09:56:05 downsj Exp $
+#	$OpenBSD: SUN4M,v 1.15 1997/09/17 06:47:04 downsj Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -32,8 +32,8 @@ obio0	at mainbus0				# sun4 and sun4m
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
-audio0	at obio0				# sun4m
-audio0	at sbus0 slot ? offset ?		# sun4m
+audioamd0 at obio0				# sun4m
+audioamd0 at sbus0 slot ? offset ?		# sun4m
 
 auxreg0	at obio0				# sun4m
 

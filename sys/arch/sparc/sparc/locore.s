@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.17 1997/08/08 08:27:27 downsj Exp $	*/
-/*	$NetBSD: locore.s,v 1.72 1997/07/07 20:06:42 pk Exp $	*/
+/*	$OpenBSD: locore.s,v 1.18 1997/09/17 06:47:19 downsj Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3222,7 +3222,7 @@ dostart:
 	 *
 	 * We have been loaded in low RAM, at some address which
 	 * is page aligned (0x4000 actually) rather than where we
-	 * want to run (0xf8004000).  Until we get everything set,
+	 * want to run (KERNBASE+0x4000).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
 
@@ -3233,16 +3233,36 @@ dostart:
 	 * that know nothing about DDB symbol loading conventions.
 	 * Note: we don't touch %o1-%o3; SunOS bootloaders seem to use them
 	 * for their own mirky business.
+	 *
+	 * Pre-NetBSD 1.3 bootblocks had KERNBASE compiled in, and used
+	 * it to compute the value of `_esym'. In order to successfully
+	 * boot a kernel built with a different value for KERNBASE using
+	 * old bootblocks, we fixup `_esym' here by the difference between
+	 * KERNBASE and the old value (known to be 0xf8000000) compiled
+	 * into pre-1.3 bootblocks.
+	 * We use the magic number passed as the sixth argument to
+	 * distinguish bootblock versions.
 	 */
-	set	0x44444230, %l3
+	mov	%g0, %l4
+	set	0x44444231, %l3
 	cmp	%o5, %l3		! chk magic
-	bne	1f
+	be	1f
+
+	set	0x44444230, %l3
+	cmp	%o5, %l3		! chk compat magic
+	bne	2f
+
+	set	KERNBASE, %l4		! compat magic found
+	set	0xf8000000, %l5		! compute correction term:
+	sub	%l5, %l4, %l4		!  old KERNBASE (0xf8000000 ) - KERNBASE
+
+1:
 	tst	%o4			! do we have the symbols?
-	bz	1f
-	 nop
+	bz	2f
+	 sub	%o4, %l4, %o4		! apply compat correction
 	sethi	%hi(_esym - KERNBASE), %l3	! store _esym
 	st	%o4, [%l3 + %lo(_esym - KERNBASE)]
-1:
+2:
 #endif
 	/*
 	 * Sun4 passes in the `load address'.  Although possible, its highly

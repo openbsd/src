@@ -1,5 +1,5 @@
-/*	$OpenBSD: esp.c,v 1.10 1997/08/08 08:25:00 downsj Exp $	*/
-/*	$NetBSD: esp.c,v 1.68 1997/07/19 21:57:01 pk Exp $	*/
+/*	$OpenBSD: esp.c,v 1.11 1997/09/17 06:47:08 downsj Exp $	*/
+/*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: zs.c,v 1.16 1997/08/25 08:38:45 downsj Exp $	*/
-/*	$NetBSD: zs.c,v 1.48 1997/07/29 09:58:18 fair Exp $ */
+/*	$OpenBSD: zs.c,v 1.17 1997/09/17 06:47:12 downsj Exp $	*/
+/*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@
 #include <sparc/dev/zsvar.h>
 
 #ifdef KGDB
+#include <sys/kgdb.h>
 #include <machine/remote-sl.h>
 #endif
 
@@ -171,7 +172,7 @@ static int zsrint __P((struct zs_chanstate *, volatile struct zschan *));
 static int zsxint __P((struct zs_chanstate *, volatile struct zschan *));
 static int zssint __P((struct zs_chanstate *, volatile struct zschan *));
 
-void zsabort __P((void));
+void zsabort __P((int));
 static void zsoverrun __P((int, long *, char *));
 
 static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
@@ -902,7 +903,7 @@ zsrint(cs, zc)
 		else if (c == (KBD_L1|KBD_UP))
 			conk->conk_l1 = 0;	/* L1 went up */
 		else if (c == KBD_A && conk->conk_l1) {
-			zsabort();
+			zsabort(cs->cs_unit);
 			conk->conk_l1 = 0;	/* we never see the up */
 			goto clearit;		/* eat the A after L1-A */
 		}
@@ -1006,17 +1007,20 @@ zssint(cs, zc)
 			while (zc->zc_csr & ZSRR0_BREAK)
 				ZS_DELAY();
 		}
-		zsabort();
+		zsabort(cs->cs_unit);
 		return (0);
 	}
 	return (ZRING_MAKE(ZRING_SINT, rr0));
 }
 
 void
-zsabort()
+zsabort(unit)
+	int unit;
 {
 
-#ifdef DDB
+#if defined(KGDB)
+	zskgdb(unit);
+#elif defined(DDB)
 	Debugger();
 #else
 	printf("stopping on keyboard abort\n");

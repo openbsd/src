@@ -1,5 +1,5 @@
-/*	$OpenBSD: si.c,v 1.10 1997/08/08 08:25:29 downsj Exp $	*/
-/*	$NetBSD: si.c,v 1.37 1997/07/29 09:58:13 fair Exp $	*/
+/*	$OpenBSD: si.c,v 1.11 1997/09/17 06:47:11 downsj Exp $	*/
+/*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pte.h,v 1.3 1997/08/08 08:26:42 downsj Exp $	*/
-/*	$NetBSD: pte.h,v 1.18 1997/05/15 22:25:45 pk Exp $ */
+/*	$OpenBSD: pte.h,v 1.4 1997/09/17 06:47:14 downsj Exp $	*/
+/*	$NetBSD: pte.h,v 1.19 1997/08/05 11:00:10 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -240,7 +240,7 @@ extern int mmu_has_hole;
 #if defined(SUN4M)		/* Optimization: sun4m, sun4c have same page */
 #if defined(SUN4)		/* size, so they're used interchangeably */
 #define VA_VPG(va)	(cputyp==CPU_SUN4 ? VA_SUN4_VPG(va) : VA_SUN4C_VPG(va))
-#define VA_OFF(VA)	(cputyp==CPU_SUN4 ? VA_SUN4_OFF(va) : VA_SUN4C_OFF(va))
+#define VA_OFF(va)	(cputyp==CPU_SUN4 ? VA_SUN4_OFF(va) : VA_SUN4C_OFF(va))
 #else
 #define VA_VPG(va)	VA_SUN4M_VPG(va)
 #define VA_OFF(va)	VA_SUN4M_OFF(va)

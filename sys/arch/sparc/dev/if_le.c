@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.7 1997/08/08 08:25:12 downsj Exp $	*/
-/*	$NetBSD: if_le.c,v 1.49 1997/07/07 16:28:44 pk Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.8 1997/09/17 06:47:09 downsj Exp $	*/
+/*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -102,9 +102,19 @@ myleintr(arg)
 	void	*arg;
 {
 	register struct le_softc *lesc = arg;
+static int dodrain=0;
 
-	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND)
+	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND) {
+		dodrain = 1;
 		return ledmaintr(lesc->sc_dma);
+	}
+
+	if (dodrain) {	/* XXX - is this necessary with D_DSBL_WRINVAL on? */
+#define E_DRAIN 0x400 /* XXX: fix dmareg.h */
+		int i = 10;
+		while (i-- > 0 && (lesc->sc_dma->sc_regs->csr & D_DRAINING))
+			delay(1);
+	}
 
 	return (am7990_intr(arg));
 }
@@ -277,6 +287,9 @@ lehwreset(sc)
 		DMA_RESET(lesc->sc_dma);
 		lesc->sc_dma->sc_regs->en_bar = lesc->sc_laddr & 0xff000000;
 		DMA_ENINTR(lesc->sc_dma);
+#define D_DSBL_WRINVAL D_DSBL_SCSI_DRN	/* XXX: fix dmareg.h */
+		/* Disable E-cache invalidates on chip writes */
+		lesc->sc_dma->sc_regs->csr |= D_DSBL_WRINVAL;
 	}
 #endif
 }
