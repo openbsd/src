@@ -1618,7 +1618,7 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
     while (1) {
 /* create temporary filename */
 #ifndef TPF
-#define TMPFILESTR    "/tmpXXXXXX"
+#define TMPFILESTR    "/tmpXXXXXXXXXX"
         if (conf->cache.root == NULL) {
             c = ap_proxy_cache_error(c);
             break;

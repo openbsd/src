@@ -563,7 +563,7 @@ int main(int argc, char *argv[])
      * to add or update.  Let's do it..
      */
     errno = 0;
-    strlcpy(tempfilename, "/tmp/htpasswd-XXXXXX", sizeof(tempfilename));
+    strlcpy(tempfilename, "/tmp/htpasswd-XXXXXXXXXX", sizeof(tempfilename));
     tfd = mkstemp(tempfilename);
     if (tfd == -1 || (ftemp = fdopen(tfd, "w+")) == NULL) {
 	fprintf(stderr, "%s: unable to create temporary file '%s'\n", argv[0],

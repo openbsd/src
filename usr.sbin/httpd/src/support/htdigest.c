@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     else if (argc != 4)
 	usage();
 
-    strlcpy(tn, "/tmp/htdigest-XXXXXX", sizeof(tn));
+    strlcpy(tn, "/tmp/htdigest-XXXXXXXXXX", sizeof(tn));
     tfd = mkstemp(tn);
     if (tfd == -1 || (tfp = fdopen(tfd, "w")) == NULL) {
 	fprintf(stderr, "Could not create temp file.\n");
