@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.68 2003/07/19 08:02:43 cedric Exp $
+$OpenBSD: usbdevs,v 1.69 2003/09/01 17:56:47 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -345,6 +345,7 @@ vendor DMI		0x0c0b	DMI
 vendor EASYDISK		0x0c76	EasyDisk
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
+vendor MSI		0x0db0	Micro Star International
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
 vendor MOTOROLA		0x1063	Motorola
@@ -1002,6 +1003,9 @@ product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
+
+/* Micro Star International products */
+product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
 
 /* Microsoft products */
 product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
