@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.12 1998/06/03 08:10:17 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.13 1998/07/27 05:18:29 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.12 1998/06/03 08:10:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.13 1998/07/27 05:18:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$OpenBSD: pax.c,v 1.12 1998/06/03 08:10:17 deraadt Exp $"
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include "pax.h"
