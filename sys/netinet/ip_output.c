@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.108 2001/06/23 06:13:42 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.109 2001/06/23 06:42:37 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -53,6 +53,8 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
 #ifdef vax
 #include <machine/mtpr.h>
@@ -105,6 +107,7 @@ ip_output(m0, va_alist)
 	struct ip_moptions *imo;
 	va_list ap;
 	u_int8_t sproto = 0, donerouting = 0;
+	short csums;
 #ifdef IPSEC
 	union sockaddr_union sdst;
 	u_int32_t sspi;
@@ -336,13 +339,17 @@ ip_output(m0, va_alist)
 		 */ 
 		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
 		    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
-			/* XXX Compute TCP checksum */
+			csums = in4_cksum(m, IPPROTO_TCP, 0, m->m_pkthdr.len);
+			m_copydata(m, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(short), (caddr_t)&csums);
 			m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
 		}
 
 		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
 		    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
-			/* XXX Compute UDP checksum */
+			csums = in4_cksum(m, IPPROTO_UDP, 0, m->m_pkthdr.len);
+			m_copydata(m, hlen + offsetof(struct udphdr, uh_sum),
+			    sizeof(short), (caddr_t)&csums);
 			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 		}
 
@@ -605,13 +612,17 @@ sendit:
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
 	    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
-		/* XXX Compute TCP checksum */
+		csums = in4_cksum(m, IPPROTO_TCP, 0, m->m_pkthdr.len);
+		m_copydata(m, hlen + offsetof(struct tcphdr, th_sum),
+		    sizeof(short), (caddr_t)&csums);
 		m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
 	}
 
 	if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT &&
 	    !(ifp->if_capabilities & IFCAP_CSUM_UDPv4)) {
-		/* XXX Compute UDP checksum */
+		csums = in4_cksum(m, IPPROTO_UDP, 0, m->m_pkthdr.len);
+		m_copydata(m, hlen + offsetof(struct udphdr, uh_sum),
+		    sizeof(short), (caddr_t)&csums);
 		m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
 	}
 
