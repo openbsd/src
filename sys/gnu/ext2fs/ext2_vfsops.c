@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.12 1996/10/18 15:23:39 mickey Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.13 1996/11/01 08:31:58 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -917,11 +917,12 @@ ext2_vget(mp, ino, vpp)
 	struct buf *bp;
 	struct vnode *vp;
 	dev_t dev;
-	int error;
+	int i, error;
 	int used_blocks;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
+
 	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 		return (0);
 
@@ -984,8 +985,6 @@ ext2_vget(mp, ino, vpp)
 	   although for regular files and directories only
 	*/
 	if(S_ISDIR(ip->i_mode) || S_ISREG(ip->i_mode)) {
-		int i;
-
 		used_blocks = (ip->i_size+fs->s_blocksize-1) / fs->s_blocksize;
 		for(i = used_blocks; i < EXT2_NDIR_BLOCKS; i++)
 			ip->i_db[i] = 0;

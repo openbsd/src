@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_inode_cnv.c,v 1.1 1996/06/24 03:34:56 downsj Exp $	*/
+/*	$OpenBSD: ext2_inode_cnv.c,v 1.2 1996/11/01 08:31:57 downsj Exp $	*/
 
 /*
  * Copyright (c) 1995 The University of Utah and
@@ -64,7 +64,7 @@ ext2_print_dinode( di )
 	printf( /* "Inode: %5d" */
 		" Type: %10s Mode: 0x%o Flags: 0x%x  Version: %d\n",
 		"n/a", di->di_mode, di->di_flags, di->di_gen);
-	printf( "User: %5d Group: %5d  Size: %d\n",
+	printf( "User: %5d Group: %5d  Size: %qu\n",
 		di->di_uid, di->di_gid, di->di_size);
 	printf( "Links: %3d Blockcount: %d\n",
 		di->di_nlink, di->di_blocks);

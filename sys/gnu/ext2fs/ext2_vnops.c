@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vnops.c,v 1.5 1996/10/18 16:02:09 mickey Exp $	*/
+/*	$OpenBSD: ext2_vnops.c,v 1.6 1996/11/01 08:31:59 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -81,8 +81,7 @@ int ext2_write __P((void *));
 
 /* Global vfs data structures for ext2fs. */
 int (**ext2_vnodeop_p) __P((void *));
-#ifdef notdef
-static struct vnodeopv_entry_desc ext2_vnodeop_entries[] = {
+struct vnodeopv_entry_desc ext2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, ext2_lookup },	/* lookup */
 	{ &vop_create_desc, ufs_create },	/* create */
@@ -127,13 +126,11 @@ static struct vnodeopv_entry_desc ext2_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },	/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
 };
-static struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
+struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 	{ &ext2_vnodeop_p, ext2_vnodeop_entries };
-#endif
 
 int (**ext2_specop_p) __P((void *));
-#ifdef notdef
-static struct vnodeopv_entry_desc ext2_specop_entries[] = {
+struct vnodeopv_entry_desc ext2_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },	/* lookup */
 	{ &vop_create_desc, spec_create },	/* create */
@@ -178,14 +175,12 @@ static struct vnodeopv_entry_desc ext2_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },	/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-static struct vnodeopv_desc ext2fs_specop_opv_desc =
+struct vnodeopv_desc ext2fs_specop_opv_desc =
 	{ &ext2_specop_p, ext2_specop_entries };
-#endif
 
 #ifdef FIFO
 int (**ext2_fifoop_p) __P((void *));
-#ifdef notdef
-static struct vnodeopv_entry_desc ext2_fifoop_entries[] = {
+struct vnodeopv_entry_desc ext2_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },	/* lookup */
 	{ &vop_create_desc, fifo_create },	/* create */
@@ -230,10 +225,9 @@ static struct vnodeopv_entry_desc ext2_fifoop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },	/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
-static struct vnodeopv_desc ext2fs_fifoop_opv_desc =
+struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 	{ &ext2_fifoop_p, ext2_fifoop_entries };
 #endif /* FIFO */
-#endif
 
 #ifdef DEBUG
 #ifndef FFS
@@ -251,8 +245,8 @@ extern int doclusterwrite;
 #endif
 #else
 /* XXX for ufs_readwrite */
-#define doclusterread 1
-#define doclusterwrite 1
+#define doclusterread 0
+#define doclusterwrite 0
 #endif
 
 #define EXT2_READWRITE

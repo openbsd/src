@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_lookup.c,v 1.3 1996/10/18 15:23:38 mickey Exp $	*/
+/*	$OpenBSD: ext2_lookup.c,v 1.4 1996/11/01 08:31:57 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -106,6 +106,9 @@ ext2_dirconv2ffs( e2dir, ffsdir)
 		de.d_reclen += 4;
 
 	de.d_type = DT_UNKNOWN;		/* don't know more here */
+	if (de.d_name == NULL) panic("ext2: de.d_name\n");
+	if (e2dir->name == NULL) panic("ext2: e2dir->name\n");
+	if (e2dir->name_len > 500) panic("ext2: e2dir->name_len\n");
 	strncpy(de.d_name, e2dir->name, e2dir->name_len);
 	de.d_name[de.d_namlen] = '\0';
 	/* Godmar thinks: since e2dir->rec_len can be big and means 
