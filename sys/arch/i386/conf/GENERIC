@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.100 1999/01/11 04:35:42 jason Exp $
+#	$OpenBSD: GENERIC,v 1.101 1999/01/11 13:09:01 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -80,16 +80,16 @@ ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 pccom*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #pccom*	at boca? slave ?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cars
 #pccom*	at rtfps? slave ?
-pccom*	at pcmcia? function ?		# PCMCIA modem cards
+pccom*	at pcmcia? function ?		# PCMCIA modems/serial ports
 pccom*	at isapnp?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
-cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
-#cy*	at pci?				# PCI cyclom card
+cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
+#cy*	at pci?				# PCI cyclom serial card
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
@@ -118,7 +118,7 @@ scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
-aic*	at pcmcia? function ?		# PCMCIA based aic cards
+aic*	at pcmcia? function ?		# PCMCIA based aic SCSI controllers
 scsibus* at aic?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
@@ -158,43 +158,44 @@ acd*	at atapibus? drive?
 
 wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
 we*	at isapnp?
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
-ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
-ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
-ne*	at isapnp?				# NE[12]000 PnP ethernet cards
-eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ep*	at isapnp?				# 3C509 PnP ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet
+ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet
+ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
+ne*	at isapnp?				# NE[12]000 PnP ethernet
+eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet
+el0	at isa? port 0x300 irq 9		# 3C501 ethernet
+ep0	at isa? port ? irq ?			# 3C509 ethernet
+ep*	at isapnp?				# 3C509 PnP ethernet
+ep*	at isa? port ? irq ?			# 3C509 ethernet
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
-ep*	at eisa? slot ?				# 3C579 ethernet cards
-fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
-le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+ep*	at eisa? slot ?				# 3C579 ethernet
+fea*	at eisa? slot ?				# DEC DEFEA FDDI
+le*	at pci? dev ? function ?		# PCnet-PCI based ethernet
 le*	at isapnp?
-de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
-fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
-ep0	at pci? dev ? function ?		# 3C59x ethernet cards
-ep*	at pci? dev ? function ?		# 3C59x ethernet cards
-ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
-ep*	at pcmcia? function ?			# PCMCIA based 3C5xx cards
-sm*	at pcmcia? function ?			# PCMCIA based sm cards
-fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
-xl*	at pci? dev ? function ?		# 3c9xx Ethernet
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet
+fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
+ne*	at pci? dev ? function ?		# NE2000-compat ethernet
+ep0	at pci? dev ? function ?		# 3C59x ethernet
+ep*	at pci? dev ? function ?		# 3C59x ethernet
+ne*	at pcmcia? function ?			# PCMCIA based NE2000 ethernet
+ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
+sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
+fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
+xl*	at pci? dev ? function ?		# 3c9xx ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
-tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
-tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
-mx*	at pci? dev ? function ?		# Macronix PMAC ethernet cards
-vr*	at pci? dev ? function ?		# VIA Rhine ethernet cards
-pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet cards
+tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
+tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
+mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
@@ -208,16 +209,16 @@ rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 #mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# sound port driver
 
 eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
 sb*	at isapnp?
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 drq2 6 # Gravis UltraSound (drq2 is record drq)
+wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
+pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
+gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
 ym*	at isapnp?
 
 # OPL[23] FM syntheziers
@@ -248,5 +249,7 @@ bktr0   at pci? dev ? function ?
 #joy0	at isa? port 0x201
 joy*	at isapnp?
 
-pseudo-device	pctr	1
+pseudo-device	pctr		1
+pseudo-device	sequencer	1
+
 #option DEBUG_ISAPNP
