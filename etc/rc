@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.128 2000/01/30 02:17:00 mickey Exp $
+#	$OpenBSD: rc,v 1.129 2000/01/30 02:45:51 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -108,10 +108,17 @@ fi
 if [ -f /etc/sysctl.conf ]; then
 (
 	# delete comments and blank lines
-	set -- `sed -e 's/#.*$//' -e '/^$/d' /etc/sysctl.conf`
+	# we use ed here because /usr may not be mounted yet.
+	set -- `
+	ed -s /etc/sysctl.conf <<EOF
+1,\\\$s/#.*$//
+g/^..*/p
+Q
+EOF
+`
 	while [ $# -ge 1 ] ; do
 		sysctl -w $1
-		shift 1
+		shift
 	done
 )
 fi
