@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.4 2003/12/15 07:11:30 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.5 2003/12/15 07:28:25 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -110,8 +110,8 @@ struct pfsync_state_clr {
 
 #ifdef _KERNEL
 
-union sc_sp {	
-	struct pfsync_state	*s;	
+union sc_sp {
+	struct pfsync_state	*s;
 	struct pfsync_state_upd	*u;
 	struct pfsync_state_del	*d;
 	struct pfsync_state_clr	*c;
@@ -126,7 +126,7 @@ struct pfsync_softc {
 	struct mbuf		*sc_mbuf;	/* current cummulative mbuf */
 	struct mbuf		*sc_mbuf_net;	/* current cummulative mbuf */
 	union sc_sp		 sc_sp;
-	union sc_sp		 sc_sp_net;			
+	union sc_sp		 sc_sp_net;
 	int			 sc_maxcount;	/* number of states in mtu */
 	int			 sc_maxupdates;	/* number of updates/state */
 };
@@ -141,7 +141,7 @@ struct pfsync_header {
 #define	PFSYNC_ACT_CLR		0	/* clear all states */
 #define	PFSYNC_ACT_INS		1	/* insert state */
 #define	PFSYNC_ACT_UPD		2	/* update state */
-#define	PFSYNC_ACT_DEL		3	/* delete state */	
+#define	PFSYNC_ACT_DEL		3	/* delete state */
 #define	PFSYNC_ACT_UPD_C	4	/* "compressed" state update */
 #define	PFSYNC_ACT_DEL_C	5	/* "compressed" state delete */
 #define	PFSYNC_ACT_INS_F	6	/* insert fragment */
@@ -155,7 +155,7 @@ struct pfsync_header {
 	"CLR ST", "INS ST", "UPD ST", "DEL ST", \
 	"UPD ST COMP", "DEL ST COMP", "INS FR", "DEL FR"
 
-#define PFSYNC_DFLTTL             255
+#define PFSYNC_DFLTTL		255
 
 struct pfsyncstats {
 	u_long	pfsyncs_ipackets;	/* total input packets, IPv4 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.90 2003/12/15 07:11:30 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.91 2003/12/15 07:28:25 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1514,7 +1514,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		old_limit = pf_pool_limits[pl->index].limit;
 		pf_pool_limits[pl->index].limit = pl->limit;
-		if (pl->index == PF_LIMIT_SRC_NODES) 
+		if (pl->index == PF_LIMIT_SRC_NODES)
 			pf_default_rule.max_src_nodes = pl->limit;
 		pl->limit = old_limit;
 		break;

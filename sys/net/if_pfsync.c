@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.8 2003/12/15 07:11:30 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.9 2003/12/15 07:28:25 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -280,16 +280,16 @@ pfsync_input(struct mbuf *m, ...)
 			return;
 		}
 
-		s = splsoftnet();	
-		cp = (void *)((char *)mp->m_data + iplen + PFSYNC_HDRLEN); 
+		s = splsoftnet();
+		cp = (void *)((char *)mp->m_data + iplen + PFSYNC_HDRLEN);
 		creatorid = cp->creatorid;
 
-                RB_FOREACH(st, pf_state_tree_ext_gwy, &tree_ext_gwy) {
+		RB_FOREACH(st, pf_state_tree_ext_gwy, &tree_ext_gwy) {
 			if (st->creatorid == creatorid)
-                        	st->timeout = PFTM_PURGE;
+				st->timeout = PFTM_PURGE;
 		}
-                pf_purge_expired_states();
-                splx(s);
+		pf_purge_expired_states();
+		splx(s);
 		break;
 	}
 	case PFSYNC_ACT_INS:
@@ -299,13 +299,13 @@ pfsync_input(struct mbuf *m, ...)
 			return;
 		}
 
-		s = splsoftnet();	
+		s = splsoftnet();
 		for (i = 0, sp = (void *)((char *)mp->m_data +
 		    iplen + PFSYNC_HDRLEN); i < count; i++, sp++) {
 			if ((error = pfsync_insert_net_state(sp))) {
 				if (error == ENOMEM) {
 					splx(s);
-                       			goto done;
+					goto done;
 				}
 				continue;
 			}
@@ -323,8 +323,8 @@ pfsync_input(struct mbuf *m, ...)
 			pfsyncstats.pfsyncs_badlen++;
 			return;
 		}
-		
-		s = splsoftnet();	
+
+		s = splsoftnet();
 		for (i = 0, sp = (void *)((char *)mp->m_data +
 		    iplen + PFSYNC_HDRLEN); i < count; i++, sp++) {
 			key.id = sp->id;
@@ -353,8 +353,8 @@ pfsync_input(struct mbuf *m, ...)
 			pfsyncstats.pfsyncs_badlen++;
 			return;
 		}
-		
-		s = splsoftnet();	
+
+		s = splsoftnet();
 		for (i = 0, sp = (void *)((char *)mp->m_data +
 		    iplen + PFSYNC_HDRLEN); i < count; i++, sp++) {
 			key.id = sp->id;
@@ -366,7 +366,7 @@ pfsync_input(struct mbuf *m, ...)
 				continue;
 			}
 			/*
-			 * XXX 
+			 * XXX
 			 * pf_purge_expired_states() is expensive,
 			 * we really want to purge the state directly.
 			 */
@@ -382,8 +382,8 @@ pfsync_input(struct mbuf *m, ...)
 			pfsyncstats.pfsyncs_badlen++;
 			return;
 		}
-		
-		s = splsoftnet();	
+
+		s = splsoftnet();
 		for (i = 0, up = (void *)((char *)mp->m_data +
 		    iplen + PFSYNC_HDRLEN); i < count; i++, up++) {
 			key.id = up->id;
@@ -412,8 +412,8 @@ pfsync_input(struct mbuf *m, ...)
 			pfsyncstats.pfsyncs_badlen++;
 			return;
 		}
-		
-		s = splsoftnet();	
+
+		s = splsoftnet();
 		for (i = 0, dp = (void *)((char *)mp->m_data +
 		    iplen + PFSYNC_HDRLEN); i < count; i++, dp++) {
 			key.id = dp->id;
@@ -425,7 +425,7 @@ pfsync_input(struct mbuf *m, ...)
 				continue;
 			}
 			/*
-			 * XXX 
+			 * XXX
 			 * pf_purge_expired_states() is expensive,
 			 * we really want to purge the state directly.
 			 */
@@ -440,7 +440,7 @@ pfsync_input(struct mbuf *m, ...)
 		/* not implemented */
 		break;
 	}
-	
+
 done:
 	if (m)
 		m_freem(m);
@@ -482,18 +482,18 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifr->ifr_mtu > MCLBYTES)
 			ifr->ifr_mtu = MCLBYTES;
 		s = splnet();
-		if (ifr->ifr_mtu < ifp->if_mtu) 
+		if (ifr->ifr_mtu < ifp->if_mtu)
 			pfsync_sendout(sc);
 		pfsync_setmtu(sc, ifr->ifr_mtu);
 		splx(s);
 		break;
 	case SIOCGETPFSYNC:
 		bzero(&pfsyncr, sizeof(pfsyncr));
-		if (sc->sc_sync_ifp) 
+		if (sc->sc_sync_ifp)
 			strlcpy(pfsyncr.pfsyncr_syncif,
 			    sc->sc_sync_ifp->if_xname, IFNAMSIZ);
 		pfsyncr.pfsyncr_maxupdates = sc->sc_maxupdates;
-                if ((error = copyout(&pfsyncr, ifr->ifr_data, sizeof(pfsyncr))))
+		if ((error = copyout(&pfsyncr, ifr->ifr_data, sizeof(pfsyncr))))
 			return (error);
 		break;
 	case SIOCSETPFSYNC:
@@ -505,7 +505,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (pfsyncr.pfsyncr_maxupdates > 255)
 			return (EINVAL);
 		sc->sc_maxupdates = pfsyncr.pfsyncr_maxupdates;
-                
+
 		if (pfsyncr.pfsyncr_syncif[0] == 0) {
 			sc->sc_sync_ifp = NULL;
 			break;
@@ -517,14 +517,14 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		s = splnet();
 		if (sifp->if_mtu < sc->sc_if.if_mtu ||
-		    (sc->sc_sync_ifp != NULL && 
+		    (sc->sc_sync_ifp != NULL &&
 		    sifp->if_mtu < sc->sc_sync_ifp->if_mtu) ||
 		    sifp->if_mtu < MCLBYTES - sizeof(struct ip))
 			pfsync_sendout(sc);
 		sc->sc_sync_ifp = sifp;
-		
+
 		pfsync_setmtu(sc, sc->sc_if.if_mtu);
-		
+
 		if (imo->imo_num_memberships > 0) {
 			in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
 			imo->imo_multicast_ifp = NULL;
@@ -545,7 +545,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			imo->imo_multicast_loop = 0;
 		}
 		splx(s);
-		
+
 		break;
 
 	default:
@@ -563,7 +563,7 @@ pfsync_setmtu(struct pfsync_softc *sc, int mtu_req)
 	if (sc->sc_sync_ifp && sc->sc_sync_ifp->if_mtu < mtu_req)
 		mtu = sc->sc_sync_ifp->if_mtu;
 	else
-		mtu = mtu_req; 
+		mtu = mtu_req;
 
 	sc->sc_maxcount = (mtu - sizeof(struct pfsync_header)) /
 	    sizeof(struct pfsync_state);
@@ -614,7 +614,7 @@ pfsync_get_mbuf(struct pfsync_softc *sc, u_int8_t action, void **sp)
 			return (NULL);
 		}
 		m->m_data += (MCLBYTES - len) &~ (sizeof(long) - 1);
-	} else 
+	} else
 		MH_ALIGN(m, len);
 
 	m->m_pkthdr.rcvif = NULL;
@@ -691,7 +691,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 	if (sp == NULL) {
 		/* not a "duplicate" update */
 		sp = sc->sc_sp.s++;
-		sc->sc_mbuf->m_pkthdr.len = 
+		sc->sc_mbuf->m_pkthdr.len =
 		    sc->sc_mbuf->m_len += sizeof(struct pfsync_state);
 		h->count++;
 		bzero(sp, sizeof(*sp));
@@ -750,7 +750,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 			break;
 		}
 	}
-		
+
 	if (newaction) {
 		if (sc->sc_mbuf_net == NULL) {
 			if ((sc->sc_mbuf_net = pfsync_get_mbuf(sc, newaction,
@@ -760,7 +760,7 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st)
 			}
 		}
 		h_net = mtod(sc->sc_mbuf_net, struct pfsync_header *);
-		
+
 		switch (newaction) {
 		case PFSYNC_ACT_UPD_C:
 			if (i < h->count) {

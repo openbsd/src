@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.409 2003/12/15 07:11:30 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.410 2003/12/15 07:28:25 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -516,7 +516,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 	}
 	if (*sn == NULL) {
 		if (!rule->max_src_nodes ||
-		    rule->src_nodes < rule->max_src_nodes) 
+		    rule->src_nodes < rule->max_src_nodes)
 			(*sn) = pool_get(&pf_src_tree_pl, PR_NOWAIT);
 		if ((*sn) == NULL)
 			return (-1);
@@ -702,14 +702,14 @@ pf_src_tree_remove_state(struct pf_state *s)
 {
 	u_int32_t timeout;
 
-	if (s->src_node != NULL) {           
+	if (s->src_node != NULL) {
 		if (--s->src_node->states <= 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
-			if (!timeout)           
-				timeout = pf_default_rule.timeout[PFTM_SRC_NODE];                                               
+			if (!timeout)
+				timeout = pf_default_rule.timeout[PFTM_SRC_NODE];
 			s->src_node->expire = time.tv_sec + timeout;
 		}
-	}             
+	}
 	if (s->nat_src_node != s->src_node && s->nat_src_node != NULL) {
 		if (--s->nat_src_node->states <= 0) {
 			timeout = s->rule.ptr->timeout[PFTM_SRC_NODE];
@@ -2496,12 +2496,12 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) && 
-		    pf_insert_src_node(&sn, r, saddr, af) != 0) 
+	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
 		if (nr != NULL && (nr->rpool.opts & PF_POOL_STICKYADDR) &&
-		    ((direction == PF_OUT && 
+		    ((direction == PF_OUT &&
 		    pf_insert_src_node(&nsn, nr, &pd->baddr, af) != 0) ||
 		    (pf_insert_src_node(&nsn, nr, saddr, af) != 0)))
 			goto cleanup;
@@ -2829,12 +2829,12 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) && 
-		    pf_insert_src_node(&sn, r, saddr, af) != 0) 
+	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
 		if (nr != NULL && (nr->rpool.opts & PF_POOL_STICKYADDR) &&
-		    ((direction == PF_OUT && 
+		    ((direction == PF_OUT &&
 		    pf_insert_src_node(&nsn, nr, &pd->baddr, af) != 0) ||
 		    (pf_insert_src_node(&nsn, nr, saddr, af) != 0)))
 			goto cleanup;
@@ -2982,7 +2982,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
-		if ((nr = pf_get_translation(pd, m, off, PF_OUT, ifp, &nsn, 
+		if ((nr = pf_get_translation(pd, m, off, PF_OUT, ifp, &nsn,
 		    saddr, 0, daddr, 0, &pd->naddr, NULL)) != NULL) {
 			PF_ACPY(&pd->baddr, saddr, af);
 			switch (af) {
@@ -3110,12 +3110,12 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) && 
-		    pf_insert_src_node(&sn, r, saddr, af) != 0) 
+	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
 		if (nr != NULL && (nr->rpool.opts & PF_POOL_STICKYADDR) &&
-		    ((direction == PF_OUT && 
+		    ((direction == PF_OUT &&
 		    pf_insert_src_node(&nsn, nr, &pd->baddr, af) != 0) ||
 		    (pf_insert_src_node(&nsn, nr, saddr, af) != 0)))
 			goto cleanup;
@@ -3372,12 +3372,12 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) && 
-		    pf_insert_src_node(&sn, r, saddr, af) != 0) 
+	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
 		if (nr != NULL && (nr->rpool.opts & PF_POOL_STICKYADDR) &&
-		    ((direction == PF_OUT && 
+		    ((direction == PF_OUT &&
 		    pf_insert_src_node(&nsn, nr, &pd->baddr, af) != 0) ||
 		    (pf_insert_src_node(&nsn, nr, saddr, af) != 0)))
 			goto cleanup;
@@ -5673,7 +5673,7 @@ done:
 			if (s->src_node != NULL) {
 				s->src_node->packets++;
 				s->src_node->bytes += pd.tot_len;
-	                }
+			}
 			if (s->nat_src_node != NULL) {
 				s->nat_src_node->packets++;
 				s->nat_src_node->bytes += pd.tot_len;
