@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.4 1996/08/19 08:16:18 tholo Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.5 1999/01/19 01:38:53 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 /*
@@ -48,16 +48,16 @@
  * v0 == pid of child in parent, v0 == pid of parent in child.
  */
 
-LEAF(vfork)
+SYSLEAF(vfork)
 	.set	reorder
 	li	v0, SYS_vfork		# system call number for vfork
 	syscall
 	beq	a3, zero, 1f		# jump if no errors
-	la	t9, cerror
+	la	t9, _C_LABEL(cerror)
 	jr	t9
 1:
 	beq	v1, zero, 2f		# parent process ?
 	move	v0, zero		# return zero in child
 2:
 	j	ra
-END(vfork)
+SYSEND(vfork)

@@ -38,10 +38,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: pipe.S,v 1.4 1996/08/19 08:16:22 tholo Exp $"
+	.asciz "$OpenBSD: pipe.S,v 1.5 1999/01/19 01:38:53 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
-LEAF(pipe)
+SYSLEAF(pipe)
 	.set	reorder
 	li	v0, SYS_pipe	# pipe(fildes) int fildes[2];
 	syscall
@@ -53,4 +53,4 @@ LEAF(pipe)
 1:
 	la	t9, _C_LABEL(cerror)
 	jr	t9
-END(pipe)
+SYSEND(pipe)

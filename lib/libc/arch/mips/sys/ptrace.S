@@ -38,10 +38,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: ptrace.S,v 1.4 1996/08/19 08:16:23 tholo Exp $"
+	.asciz "$OpenBSD: ptrace.S,v 1.5 1999/01/19 01:38:53 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
-LEAF(ptrace)
+SYSLEAF(ptrace)
 	.set	reorder
 	sw	zero, _C_LABEL(errno)
 	li	v0, SYS_ptrace
@@ -51,4 +51,4 @@ LEAF(ptrace)
 1:
 	la	t9, _C_LABEL(cerror)
 	jr	t9
-END(ptrace)
+SYSEND(ptrace)

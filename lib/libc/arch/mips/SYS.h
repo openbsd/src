@@ -33,48 +33,50 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.4 1996/08/19 08:15:49 tholo Exp $ 
+ *      $OpenBSD: SYS.h,v 1.5 1999/01/19 01:38:54 d Exp $ 
  */
 
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
 #ifdef __STDC__
-#define RSYSCALL(x)      \
-			LEAF(x);		\
+# define __ENTRY(p,x)	ENTRY(p ## x)
+# define __DO_SYSCALL(x)	\
 			li	v0,SYS_ ## x;	\
-			syscall;		\
-			bne	a3,zero,err;	\
-			j	ra;		\
-			err: la t9, cerror;	\
-			jr t9;			\
-			END(x);
-#define PSEUDO(x,y)     \
-			LEAF(x);		\
-			li	v0,SYS_ ## y;	\
-			syscall;		\
-			bne	a3,zero,err;	\
-			j	ra;		\
-			err: la t9, cerror;	\
-			jr t9;			\
-			END(x);
+			syscall
+# define __LEAF2(p,x)	LEAF(p ## x)
+# define __END2(p,x)	END(p ## x)
+# define __CLABEL2(p,x)	_C_LABEL(p ## x)
 #else
-#define RSYSCALL(x)     \
-			LEAF(x);		\
+# define __ENTRY(p,x)	ENTRY(p/**/x)
+# define __DO_SYSCALL(x)	\
 			li	v0,SYS_/**/x;	\
-			syscall;		\
-			bne	a3,zero,err;	\
-			j	ra;		\
-			err: la t9, cerror;	\
-			jr	t9;		\
-			END(x);
-#define PSEUDO(x,y)     \
-			LEAF(x);		\
-			li	v0,SYS_/**/y;	\
-			syscall;		\
-			bne	a3,zero,err;	\
-			j	ra;		\
-			err: la t9, cerror;	\
-			jr t9;			\
-			END(x);
+			syscall
+# define __LEAF2(p,x)	LEAF(p/**/x)
+# define __END2(p,x)	END(p/**/x)
+# define __CLABEL2(p,x)	_C_LABEL(p/**/x)
 #endif
+
+#define __PSEUDO(p,x,y)   				\
+		__LEAF2(p,x);				\
+			__DO_SYSCALL(y);		\
+			bne	a3,zero,err;	\
+			j	ra;		\
+		err:	la	t9,_C_LABEL(cerror);	\
+			jr	t9;		\
+		__END2(p,x)
+
+#define __RSYSCALL(p,x)   __PSEUDO(p,x,x)
+
+#ifdef _THREAD_SAFE
+# define RSYSCALL(x)	__RSYSCALL(_thread_sys_,x)
+# define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
+# define SYSLEAF(x)	__LEAF2(_thread_sys_,x)
+# define SYSEND(x)	__END2(_thread_sys_,x)
+#else _THREAD_SAFE
+# define RSYSCALL(x)	__RSYSCALL(,x)
+# define PSEUDO(x,y)	__PSEUDO(,x,y)
+# define SYSLEAF(x)	__LEAF2(,x)
+# define SYSEND(x)	__END2(,x)
+#endif _THREAD_SAFE
+

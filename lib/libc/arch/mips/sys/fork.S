@@ -38,10 +38,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: fork.S,v 1.4 1996/08/19 08:16:22 tholo Exp $"
+	.asciz "$OpenBSD: fork.S,v 1.5 1999/01/19 01:38:53 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
-LEAF(fork)
+SYSLEAF(fork)
 	.set	reorder
 	li	v0, SYS_fork	# pid = fork()
 	syscall
@@ -53,4 +53,4 @@ LEAF(fork)
 2:
 	la	t9, _C_LABEL(cerror)
 	jr	t9
-END(fork)
+SYSEND(fork)
