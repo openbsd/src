@@ -1,6 +1,6 @@
 pass in all
 pass in from any to any
 
-block in proto tcp from any to any flags FUP
+block in proto tcp from any to any flags FUPEW
 block in proto tcp from any to any flags SF/SFRA
-block in proto tcp from any to any flags /SFRA
+block in proto tcp from any to any flags /SFRAW
