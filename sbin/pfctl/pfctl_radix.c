@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.25 2004/04/09 12:42:06 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.26 2004/06/14 20:44:22 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -389,44 +389,6 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		return (-1);
 	if (nmatch)
 		*nmatch = io.pfrio_nmatch;
-	return (0);
-}
-
-int
-pfr_ina_begin(struct pfr_table *trs, int *ticket, int *ndel, int flags)
-{
-	struct pfioc_table io;
-
-	bzero(&io, sizeof io);
-	if (trs != NULL)
-		io.pfrio_table = *trs;
-	io.pfrio_flags = flags;
-	if (ioctl(dev, DIOCRINABEGIN, &io))
-		return (-1);
-	if (ndel != NULL)
-		*ndel = io.pfrio_ndel;
-	if (ticket != NULL)
-		*ticket = io.pfrio_ticket;
-	return (0);
-}
-
-int
-pfr_ina_commit(struct pfr_table *trs, int ticket, int *nadd, int *nchange,
-    int flags)
-{
-	struct pfioc_table io;
-
-	bzero(&io, sizeof io);
-	if (trs != NULL)
-		io.pfrio_table = *trs;
-	io.pfrio_flags = flags;
-	io.pfrio_ticket = ticket;
-	if (ioctl(dev, DIOCRINACOMMIT, &io))
-		return (-1);
-	if (nadd != NULL)
-		*nadd = io.pfrio_nadd;
-	if (nchange != NULL)
-		*nchange = io.pfrio_nchange;
 	return (0);
 }
 
