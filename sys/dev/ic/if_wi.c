@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.86 2002/10/18 03:46:35 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.87 2002/10/27 14:46:30 markus Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.86 2002/10/18 03:46:35 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.87 2002/10/27 14:46:30 markus Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -166,6 +166,9 @@ STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 STATIC int wi_get_debug(struct wi_softc *, struct wi_req *);
 STATIC int wi_set_debug(struct wi_softc *, struct wi_req *);
+
+STATIC void wi_do_hostencrypt(struct wi_softc *, caddr_t, int);                
+STATIC int wi_do_hostdecrypt(struct wi_softc *, caddr_t, int);
 
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
@@ -1909,7 +1912,7 @@ static const u_int32_t crc32_tab[] = {
 #define RC4SWAP(x,y) \
     do { u_int8_t t = state[x]; state[x] = state[y]; state[y] = t; } while(0)
 
-static void
+STATIC void
 wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 {
 	u_int32_t i, crc, klen;
@@ -1982,6 +1985,74 @@ wi_do_hostencrypt(struct wi_softc *sc, caddr_t buf, int len)
 		RC4SWAP(x, y);
 		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
 	}
+}
+
+STATIC int
+wi_do_hostdecrypt(struct wi_softc *sc, caddr_t buf, int len)
+{
+	u_int32_t i, crc, klen, kid;
+	u_int8_t state[RC4STATE], key[RC4KEYLEN];
+	u_int8_t x, y, *dat;
+
+	if (len < IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
+	    IEEE80211_WEP_CRCLEN)
+		return -1;
+	len -= (IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
+	    IEEE80211_WEP_CRCLEN);
+
+	dat = buf;
+
+	bzero(key, sizeof(key));
+	key[0] = dat[0];
+	key[1] = dat[1];
+	key[2] = dat[2];
+	kid = (dat[3] >> 6) % 4;
+	dat += 4;
+
+	klen = sc->wi_keys.wi_keys[kid].wi_keylen;
+	bcopy((char *)&sc->wi_keys.wi_keys[kid].wi_keydat,
+	    (char *)key + IEEE80211_WEP_IVLEN, klen);
+	klen = (klen > IEEE80211_WEP_KEYLEN) ? RC4KEYLEN : RC4KEYLEN / 2;
+
+	/* rc4 keysetup */
+	x = y = 0;
+	for (i = 0; i < RC4STATE; i++)
+		state[i] = i;
+	for (i = 0; i < RC4STATE; i++) {
+		y = (key[x] + state[i] + y) % RC4STATE;
+		RC4SWAP(i, y);
+		x = (x + 1) % klen;
+	}
+
+	/* compute rc4 over data, crc32 over data */
+	crc = ~0;
+	x = y = 0;
+	for (i = 0; i < len; i++) {
+		x = (x + 1) % RC4STATE;
+		y = (state[x] + y) % RC4STATE;
+		RC4SWAP(x, y);
+		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
+		crc = crc32_tab[(crc ^ dat[i]) & 0xff] ^ (crc >> 8);
+	}
+	crc = ~crc;
+	dat += len;
+
+	/* append little-endian crc32 and encrypt */
+	for (i = 0; i < IEEE80211_WEP_CRCLEN; i++) {
+		x = (x + 1) % RC4STATE;
+		y = (state[x] + y) % RC4STATE;
+		RC4SWAP(x, y);
+		dat[i] ^= state[(state[x] + state[y]) % RC4STATE];
+	}
+	if ((dat[0] != crc) && (dat[1] != crc >> 8) &&
+	    (dat[2] != crc >> 16) && (dat[3] != crc >> 24)) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf(WI_PRT_FMT ": wi_do_hostdecrypt: iv mismatch\n",
+			    WI_PRT_ARG(sc));
+		return -1;
+	}
+
+	return 0;
 }
 
 STATIC void
