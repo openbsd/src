@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.4 1997/07/25 21:14:04 mickey Exp $	*/
+/*	$OpenBSD: str.c,v 1.5 1998/12/07 18:23:29 deraadt Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.4 1997/07/25 21:14:04 mickey Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.5 1998/12/07 18:23:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -167,7 +167,7 @@ static CLASS classes[] = {
 	{ "digit",  isdigit,  },
 	{ "graph",  isgraph,  },
 	{ "lower",  islower,  },
-	{ "print",  isupper,  },
+	{ "print",  isprint,  },
 	{ "punct",  ispunct,  },
 	{ "space",  isspace,  },
 	{ "upper",  isupper,  },
