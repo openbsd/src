@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fga.4,v 1.4 2001/08/03 15:21:16 mpech Exp $
+.\"     $OpenBSD: fga.4,v 1.5 2002/07/09 18:26:15 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -86,7 +86,7 @@ The
 device responds to the following
 .Xr ioctl 2
 calls defined in <machine/fgaio.h>:
-.Bl -tag -width
+.Bl -tag -width FGAIOCSEM
 .It Dv FGAIOCSEM
 .Pq Li "struct fga_sem"
 Clear (release) the semaphore
