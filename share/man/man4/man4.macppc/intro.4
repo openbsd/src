@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.2 2001/09/02 19:36:55 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.3 2001/10/04 22:03:46 miod Exp $
 .\"
 .\" Copyright (c) 2001 Peter Valchev.
 .\" All rights reserved.
@@ -69,8 +69,7 @@ device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
-Character and block
-devices are accessed through files in the file
+Block and character devices are accessed through files in the file
 system of a special type; see
 .Xr mknod 8 .
 Network interfaces are indirectly accessed through the interprocess
@@ -85,114 +84,71 @@ and, if found, enable the software support for it.
 If a device does not respond at autoconfiguration
 time it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure,
-the system must be rebooted.
+the system will have to be rebooted.
 .Pp
+The configuration system is described in
+.Xr autoconf 4 .
 A list of the supported devices is given below.
+.Sh LIST OF DEVICES
+The devices listed below are supported in this incarnation of
+the system.  Pseudo-devices are not listed.
+Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Pp
+.Bl -tag -width usscanner -compact -offset indent
+.It abtn
+ADB button.
+.It aed
+ADB Event Device.
+.It akbd
+ADB keyboard.
+.It ams
+ADB mouse.
+.It an
+Cisco/Aironet.
+.It aue
+USB ethernet.
+.It awacs
+Apple audio device.
+.It bm
+BMAC ethernet.
+.It gm
+GMAC ethernet.
+.It gpio
+PMU interrupt router.
+.It iop
+I2O processor, arrays, SCSI pass-through.
+.It kue
+Kawasaki KL5KUSB101B.
+.It ohci
+Open Host Controller, Opti RM861HA.
+.It ugen
+USB Generic Driver.
+.It uhid
+USB Generic HID devices.
+.It ukbd
+USB HID Keyboard devices.
+.It ulpt
+USB Printer.
+.It umass
+USB Mass Storage Device.
+.It ums
+USB Mice.
+.It uscanner
+USB Scanner.
+.It usscanner
+USB SCSI Scanner.
+.It vgafb
+PCI VGA graphics.
+.It wi
+WaveLAN.
+.El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr config 8
-.Sh SUPPORTED SYSTEMS
-The following MacPPC models are 
-.Em supported:
-.Pp
-PowerMac G4
-.br
-PowerMac Dual G4
-.br
-PowerMac G4 Cube
-.br
-iMac Rev A
-.br
-iMac Rev B
-.br
-iMac Rev C
-.br
-iMac DV
-.br
-iMac DV+
-.br
-PowerBook G3 (FireWire)
-.br
-PowerBook G4
-.br
-iBook (only limited testing)
-.br
-StarMax (development in progress)
-.Pp
-The following are 
-.Em not supported:
-.Pp
-Support for older PREP style machines has been removed; lack of availability
-of the hardware and relatively slow speed compared to more recent machines has
-contributed to this decision.
-.Pp
-Apple PowerMac systems with a 601 processor or lack OpenFirmware will likely
-never be supported.
-.Pp
-At the current time, older OpenFirmware machines are not supported. This is
-mostly due to lack of developer resources to work onthe support in addition
-to limited availability of hardware.
-.Sh LIST OF DEVICES
-The devices listed below are supported in this incarnation of
-the system.  Devices are indicated by their functional interface.
-Not all supported devices are listed.
-.Pp
-.Bl -tag -width adb/mouse
-.It abtn
-ADB button
-.It aed
-ADB Event Device
-.It akbd
-ADB keyboard
-.It ams
-ADB mouse
-.It an
-Cisco/Aironet
-.It aue
-USB ethernet
-.It awacs
-Apple audio device
-.It bm
-BMAC ethernet
-.It gm
-GMAC ethernet
-.It gpio
-PMU interrupt router
-.It iop
-I2O processor, arrays, SCSI pass-through
-.It kue
-Kawasaki KL5KUSB101B
-.It ohci
-Open Host Controller, Opti RM861HA
-.It ugen
-USB Generic Driver
-.It uhid
-USB Generic HID devices
-.It ukbd
-USB HID Keyboard devices
-.It ulpt
-USB Printer
-.It umass
-USB Mass Storage Device
-.It ums
-USB Mice
-.It uscanner
-USB Scanner
-.It usscanner
-USB SCSI Scanner
-.It vgafb
-PCI VGA graphics
-.It wi
-WaveLAN
-.El
-.Sh UNSUPPORTED DEVICES
-The following are recognized, but not supported:
-.Bl -tag -width macppc
-.It Texas Instruments TSB12LV23 FireWire
-.El
 .Sh HISTORY
 The
 MacPPC
 .Nm
-first appeared with
+first appeared in
 .Ox 3.0 .

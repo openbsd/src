@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.7 2001/08/22 12:15:46 heko Exp $
+.\"	$OpenBSD: intro.4,v 1.8 2001/10/04 22:03:46 miod Exp $
 .\"	$NetBSD: intro.4,v 1.3 1996/03/03 17:13:44 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -60,7 +60,13 @@ due to errors in device operation;
 see
 .Xr syslogd 8
 for more information.
-.Sh VAX DEVICE SUPPORT
+.Pp
+This section contains both devices
+which may be configured into the system
+and network related information.
+The networking support is introduced in
+.Xr netintro 4 .
+.Sh DEVICE SUPPORT
 This section describes the hardware supported on the
 .Tn DEC
 .Tn VAX .
@@ -80,63 +86,34 @@ A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then compiled
 into the system.  When the resultant system is booted, the
 autoconfiguration facilities in the system probe for the device
-and, if found, enable the software
-support for it.  If a
-.Tn UNIBUS
-device does not respond at autoconfiguration
-time it is not accessible at any time afterwards.  To
-enable a
-.Tn UNIBUS
-device which did not autoconfigure, the system will have to
-be rebooted.  If a
-.Tn MASSBUS
-device comes
-.Dq on-line
-after the autoconfiguration sequence
-it will be dynamically autoconfigured into the running system.
+and, if found, enable the software support for it.
+If a device does not respond at autoconfiguration
+time it is not accessible at any time afterwards.
+To enable a device which did not autoconfigure,
+the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
-.Sh SEE ALSO
-.Xr autoconf 4 ,
-.Xr intro 4 ,
-.Xr netintro 4 ,
-.Xr config 8
-.Rs
-.%T "Building 4.3 BSD UNIX Systems with Config"
-.%B SMM
-.%N 2
-.Re
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.  Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
-If second vendor products provide functionally identical interfaces
-they should be usable with the supplied software.
-.Bf -symbolic
-Beware,
-however, that we promise the software works
-ONLY with the hardware indicated on the appropriate manual page.
-.Ef
-Occasionally, new devices of a similar type may be added
-simply by creating appropriate table entries in the driver.
+Not all supported devices are listed.
 .Pp
-.Bl -tag -width mscpbus -offset indent -compact
+.Bl -tag -width mscpbus -compact -offset indent
 .It dz
 DZ-11 terminal multiplexer.
 .It ibus
-Internal bus on MicroVAX, VAX 4000 series, and others
+Internal bus on MicroVAX, VAX 4000 series, and others.
 .It le
 LANCE ethernet interface.
-.It mem
-Main memory interface.
 .It mscpbus
 Mass Storage Control Protocol interface.
 .It mt
 MSCP tape drive interface.
 .It ncr
-NCR 5380 SCSI controller
+NCR 5380 SCSI controller.
 .It rx
 DEC floppy interface.
 .It vsbus
@@ -145,8 +122,12 @@ VAXstation internal
 .It ze
 SGEC ethernet interface.
 .El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
 .Sh HISTORY
-The section 4
+The
+.Tn VAX
 .Nm intro
-appeared in
+first appeared in
 .Bx 4.1 .

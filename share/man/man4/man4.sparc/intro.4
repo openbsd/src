@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.18 2001/08/22 12:15:46 heko Exp $
+.\"     $OpenBSD: intro.4,v 1.19 2001/10/04 22:03:46 miod Exp $
 .\"	$NetBSD: intro.4,v 1.5 1998/02/06 06:07:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
@@ -70,8 +70,7 @@ device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
-Character and block
-devices are accessed through files in the file
+Block and character devices are accessed through files in the file
 system of a special type; see
 .Xr mknod 8 .
 Network interfaces are indirectly accessed through the interprocess
@@ -86,164 +85,75 @@ and, if found, enable the software support for it.
 If a device does not respond at autoconfiguration
 time it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure,
-the system must be rebooted.
+the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
-.Sh SEE ALSO
-.Xr autoconf 4 ,
-.Xr config 8
-.Sh SUPPORTED SYSTEMS
-The following Sun SPARC system architectures and models are supported:
-.Bl -tag -width speaker
-.It sun4
-first generation SPARC systems on VMEbus:
-.br
-Sun 4/100 series (14.28 MHz)
-.br
-Sun 4/200 series (16.67 MHz)
-.br
-Sun 4/300 series (25 MHz)
-.It sun4c
-desktop SPARC systems with SBus:
-.br
-SPARCstation 1 (20 MHz)
-.br
-SPARCstation 1+ (25 MHz)
-.br
-SPARCstation 2 (40 MHz)
-.br
-SPARCstation SLC (20 MHz)
-.br
-SPARCstation ELC (33 MHz)
-.br
-SPARCstation IPC (25 MHz)
-.br
-SPARCstation IPX (40 MHz).
-.It sun4m
-desktop SPARC systems with Mbus for CPUs, and SBus:
-.br
-SPARC Classic (50 Mhz microSPARC I)
-.br
-SPARC LX (50 MHz microSPARC I)
-.br
-SPARCstation 4 (70 Mhz microSPARC II)
-.br
-SPARCstation 5 (70, 85, 110 MHz microSPARC II)
-.br
-SPARCstation 5 (170 MHz TurboSPARC)
-.br
-SPARCstation 10M (36 MHz SuperSPARC I)
-.br
-SPARCstation 20M (50 MHz SuperSPARC I)
-.br
-SPARCstation 10 (Mbus modules)
-.br
-SPARCstation 20 (Mbus modules)
-.br
-Tadpole SPARCbook 3GS
-.br
-Tadpole SPARCbook 3GX
-.El
-.Pp
-The SPARCstation 2 and IPX can be upgraded with a Weitek PowerUP CPU
-that is clock-doubled (i.e. internally it runs at 80 MHz).
-.Ox
-supports this configuration.
-.Pp
-Hardware level clones of these systems from other manufacturers
-will likely work (e.g. Force, Xerox, Tatung, Axil, Cycle);
-other systems which have a SPARC CPU but do not
-use Sun's hardware architecture (e.g. Solbourne) will likely not work.
-.Pp
-The Sun 4/400 series, sun4d (SPARC Center 1000, 1000E, and 2000),
-and sun4u (UltraSPARC) architectures are not yet supported.
-.Pp
-The sun4m architecture with Mbus modules for the CPUs is supported
-with the following modules with only one CPU:
-.Bl -tag -width speaker
-.It SM41
-40 Mhz SuperSPARC I with 1MB SuperCACHE
-.It SM51
-50 Mhz SuperSPARC I with 1MB SuperCACHE
-.It SM61
-60 Mhz SuperSPARC I with 1MB SuperCACHE
-.It SM71
-75 Mhz SuperSPARC II with 1MB SuperCACHE
-.It SM81
-85 Mhz SuperSPARC II with 1MB SuperCACHE
-.It SM100
-Dual 40Mhz Cypress CY7C605/601 (only one processor will be used)
-.It HyperSPARC
-ROSS HyperSPARC Mbus modules
-.El
-.Pp
-.Ox
-does not yet support multiprocessor systems.
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.  Devices are indicated by their functional interface.
+the system.  Pseudo-devices are not listed.
+Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width le/lebuffer
+.Bl -tag -width le/lebuffer -compact -offset indent
 .It audioamd
-AMD 79C30 obio (sun4c and SPARC Classic) audio controller
+AMD 79C30 obio (sun4c and SPARC Classic) audio controller.
 .It audiocs
-CS4231 based audio found in some sun4c and sun4m models
+CS4231 based audio found in some sun4c and sun4m models.
 .It be
-10BaseT/100BaseTX SBus Ethernet controller
+10BaseT/100BaseTX SBus Ethernet controller.
 .It bwtwo
-black and white obio frame buffer
+black and white obio frame buffer.
 .It cgeight
-24 bit VMEbus color frame buffer
+24 bit VMEbus color frame buffer.
 .It cgfour
-8 bit obio (sun4 P4 bus) color graphics frame buffer
+8 bit obio (sun4 P4 bus) color graphics frame buffer.
 .It cgfourteen
-24 bit SBus color frame buffer
+24 bit SBus color frame buffer.
 .It cgsix
-8 bit obio (sun4c & sun4m), SBus color graphics frame buffer
+8 bit obio (sun4c & sun4m), SBus color graphics frame buffer.
 .It cgthree
-8 bit VMEbus, SBus, and obio (sun4m) color graphics frame buffer
+8 bit VMEbus, SBus, and obio (sun4m) color graphics frame buffer.
 .It cgtwo
-8 bit VMEbus color frame buffer
+8 bit VMEbus color frame buffer.
 .It eeprom
-Sun non-volatile configuration RAM driver
+Sun non-volatile configuration RAM driver.
 .It esp
-NCR53C90 ESP100 (Sun 4/300),
+NCR53C90 ESP100 (Sun 4/300),.
 .br
 ESP100A (sun4c),
 .br
 ESP200 (sun4m) SCSI controller,
 .br
-FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet SBus controller
+FSBE/S (X1053A, part # 501-2015) Fast SCSI-2/Buffered Ethernet SBus controller.
 .It fd
 Intel 82072 obio (sun4c) or Intel 82077 obio (sun4m)
-floppy disk drive controller
+floppy disk drive controller.
 .It fga
-Force FGA5000 SBus/VME bridge
+Force FGA5000 SBus/VME bridge.
 .It hme
-SBus HME Ethernet controllers (SunSwift)
+SBus HME Ethernet controllers (SunSwift).
 .It ie
-Intel 82586 Ethernet controller (Sun 4/100)
+Intel 82586 Ethernet controller (Sun 4/100).
 .It isp
-Qlogic ISP SBus SCSI controller
+Qlogic ISP SBus SCSI controller.
 .It kbd
-Sun type 2, type 3, type 4, and type 5 keyboards (on zs)
+Sun type 2, type 3, type 4, and type 5 keyboards (on zs).
 .It le/lebuffer
-AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, SBus)
+AMD 7990 LANCE ethernet controller (Sun 4/200, 4/300, sun4c, sun4m, SBus).
 .It led
-diagnostic LED display on sun4 and sun4m (4/600) machines
+diagnostic LED display on sun4 and sun4m (4/600) machines.
 .It magma
-Magma serial/parallel communication boards
+Magma serial/parallel communication boards.
 .It ms
-Sun mouse (on zs)
+Sun mouse (on zs).
 .It openprom
-Sun Open boot PROM (what became IEEE 1275) configuration driver
+Sun Open boot PROM (what became IEEE 1275) configuration driver.
 .It pnozz
-Weitek Power9100 frame buffer found on Tadpole SPARCbook 3GS and 3GX
+Weitek Power9100 frame buffer found on Tadpole SPARCbook 3GS and 3GX.
 .It qe
-Quad 10BaseT SBus Ethernet controller
+Quad 10BaseT SBus Ethernet controller.
 .It qec
 Supported as a carrier for the
 .Nm be
@@ -251,44 +161,30 @@ or
 .Nm qe
 Ethernet controllers.
 .It qfe
-SBus QuadFastEthernet controllers
+SBus QuadFastEthernet controllers.
 .It si
-NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller
+NCR5380 "SCSI-2" VMEbus (Sun 4/200, Sun 4/400) SCSI controller.
 .It sw
-NCR5380 obio (Sun 4/100) "SCSI Weird" SCSI controller
+NCR5380 obio (Sun 4/100) "SCSI Weird" SCSI controller.
 .It tctrl
-Tadpole microcontroller interface
+Tadpole microcontroller interface.
 .It tcx
-8 or 24 bit SBus color graphics frame buffer
+8 or 24 bit SBus color graphics frame buffer.
 .It xbox
-SBus Expansion Subsystem
+SBus Expansion Subsystem.
 .It xd
-Xylogics 753/7053 VMEbus SMD disk controller
+Xylogics 753/7053 VMEbus SMD disk controller.
 .It xy
-Xylogics 450/451 VMEbus SMD disk controller
+Xylogics 450/451 VMEbus SMD disk controller.
 .It zs
-Zilog 8530 serial controller
+Zilog 8530 serial controller.
 .El
-.Sh UNSUPPORTED DEVICES
-The following devices are not supported, due to unavailability of
-either documentation or sample hardware:
-.Bl -tag -width hypersparc
-.It bpp
-Bi-directional Parallel port
-.It dbri
-Dual Basic Rate Interface (BRI) ISDN (SPARC LX & SPARCstation 10)
-.It audio
-sun4m audio that is dependent on the dbri
-.It power
-sun4m power management is recognized but unused
-.It fas
-SBus wide ESP scsi controller
-.It antares
-SBus Antares serial board
-.El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
 .Sh HISTORY
 The
 sparc
 .Nm
-first appeared with
+first appeared in
 .Ox 2.3 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.24 2001/08/22 12:15:46 heko Exp $
+.\"	$OpenBSD: intro.4,v 1.25 2001/10/04 22:03:45 miod Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -63,8 +63,8 @@ The networking support is introduced in
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the i386
 (PC-clone) platform.
-Software support for these devices comes in two forms.
-A hardware device may be supported with a character or block
+Software support for these devices comes in two forms.  A hardware
+device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
@@ -77,27 +77,24 @@ communication facilities provided by the system; see
 .Pp
 A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then compiled
-into the system.
-When the resultant system is booted, the autoconfiguration facilities in the
-system probe for the device and, if found, enable the software support for it.
+into the system.  When the resultant system is booted, the
+autoconfiguration facilities in the system probe for the device
+and, if found, enable the software support for it.
 If a device does not respond at autoconfiguration
 time it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure,
-the system must be rebooted.
+the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
 A list of the supported devices is given below.
-.Sh SEE ALSO
-.Xr autoconf 4 ,
-.Xr config 8
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.
+the system.  Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width speaker -offset xxxx -compact
+.Bl -tag -width speaker -compact -offset indent
 .It aac
 Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid) RAID controllers.
 .It aha
@@ -105,11 +102,11 @@ Adaptec 154x ISA SCSI adapter boards.
 .It ahb
 Adaptec 1742 EISA SCSI adapter boards.
 .It ahc
-Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards
+Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards.
 .It adv
-AdvanSys PCI narrow SCSI Host Adapters
+AdvanSys PCI narrow SCSI Host Adapters.
 .It adw
-AdvanSys PCI wide SCSI Host Adapters
+AdvanSys PCI wide SCSI Host Adapters.
 .It aic
 Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
 .It ami
@@ -119,7 +116,7 @@ Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
 .It apm
 advanced power management.
 .It aria
-Sierra Semiconductor Aria 16 sound cards
+Sierra Semiconductor Aria 16 sound cards.
 .It ast
 multiplexing serial communications card first made by AST.
 .It auich
@@ -127,7 +124,7 @@ Intel 82801AA/AB/BA and 440MX PCI audio.
 .It auvia
 VIA VT82C686A integrated AC'97 audio device.
 .It ax
-ASIX AX88104A and AX88141 based PCI Ethernet adapters
+ASIX AX88104A and AX88141 based PCI Ethernet adapters.
 .It bktr
 Brooktree video capture.
 .It boca
@@ -142,9 +139,9 @@ communications.
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications.
 .It dc
-DEC tulip clone ethernet cards (Macronix, Lite-On, Davicom, ADMtek)
+DEC tulip clone ethernet cards (Macronix, Lite-On, Davicom, ADMtek).
 .It de
-DEC tulip-based ethernet cards
+DEC tulip-based ethernet cards.
 .It dpt
 DPT SmartCache/SmartRAID III and IV SCSI controllers.
 .It ec
@@ -158,13 +155,14 @@ DPT SmartCache/SmartRAID III and IV SCSI controllers.
 .It ep
 3Com Etherlink III Ethernet (3C5x9, 3C59x).
 .It ex
-Intel EtherExpress PRO/10 ethernet cards
-.It
+Intel EtherExpress PRO/10 ethernet cards.
+.It gdt
 ICP-Vortex GDT RAID controllers.
 .It hifn
-Hi/Fn 7751 Encryption Accelerator
+Hi/Fn 7751 Encryption Accelerator.
 .It ie
-AT&T StarLAN 10, EN100, StarLan Fiber, and 3Com 3c507 Ethernet.
+.At StarLAN 10 ,
+EN100, StarLan Fiber, and 3Com 3c507 Ethernet.
 .It iha
 Initio INIC-940 and INIC-950 based SCSI interfaces.
 .It iop
@@ -174,9 +172,9 @@ Pijnenburg PCC-ISES hardware crypto accelerator.
 .It isp
 QLogic PCI SCSI controllers.
 .It iy
-Ether-Express PRO/10
+Ether-Express PRO/10.
 .It joy
-Joystick
+Joystick.
 .It le
 BICC Isolan, Novell NE2100, and Digital DEPCA Ethernet.
 .It lms
@@ -185,8 +183,6 @@ Logitech-style bus mouse.
 Parallel port.
 .It mcd
 Mitsumi CD-ROM drives.
-.It mem
-Main memory interface.
 .It mms
 Microsoft-style bus mouse.
 .It ncr
@@ -196,13 +192,13 @@ Novell NE1000 and 2000 Ethernet interface.
 .It npx
 Numeric Processing Extension coprocessor and emulator.
 .It pctr
-CPU performance counter registers
+CPU performance counter registers.
 .It pms
 PS/2 auxiliary port mouse.
 .It pn
 Lite-On 82c168/82c169 PNIC ethernet.
 .It rtfps
-another multiplexing serial communications card.
+Another multiplexing serial communications card.
 .It rl
 RealTek 8129/8139 Ethernet.
 .It sb
@@ -221,8 +217,8 @@ Texas Instruments ThunderLAN ethernet
 .It twe
 3ware Escalade RAID controller.
 .It tx
-SMC 9432 10/100 Mbps Ethernet cards
-.It
+SMC 9432 10/100 Mbps Ethernet cards.
+.It ubsec
 Broadcom Bluesteelnet uBsec 5501, 5601, 5805, and 5820.
 .It uha
 Ultrastor ISA and EISA SCSI adapter cards.
@@ -246,5 +242,14 @@ QIC-02 and QIC-36.
 .It wx
 Intel 82452 Pro/1000 Gigabit Ethernet.
 .It xl
-3COM Etherlink XL and Fast Etherlink XL (3c9xx)
+3COM Etherlink XL and Fast Etherlink XL (3c9xx).
 .El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
+.Sh HISTORY
+The
+i386
+.Nm intro
+first appeared in
+.Nx 1.0 .

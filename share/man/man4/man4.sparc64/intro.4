@@ -1,10 +1,10 @@
-.\"     $OpenBSD: intro.4,v 1.6 2001/10/04 22:03:40 miod Exp $
+.\"     $OpenBSD: intro.4,v 1.1 2001/10/04 22:03:46 miod Exp $
 .\"
-.\" Copyright (c) 1998 The OpenBSD Project
+.\" Copyright (c) 2001 The OpenBSD Project
 .\" All Rights Reserved.
 .\"
-.Dd March 7, 1998
-.Dt INTRO 4 alpha
+.Dd October 4, 2001
+.Dt INTRO 4 sparc64
 .Os
 .Sh NAME
 .Nm intro
@@ -37,7 +37,7 @@ The networking support is introduced in
 .Xr netintro 4 .
 .Sh DEVICE SUPPORT
 This section describes the hardware supported on the
-Alpha
+sparc64
 platform.
 Software support for these devices comes in two forms.  A hardware
 device may be supported with a character or block
@@ -63,19 +63,31 @@ the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
-.\" A list of the supported devices is given below.
-.\" .Sh LIST OF DEVICES
-.\" The devices listed below are supported in this incarnation of
-.\" the system.  Pseudo-devices are not listed.
-.\" Devices are indicated by their functional interface.
-.\" Not all supported devices are listed.
-.\" .Pp
+A list of the supported devices is given below.
+.Sh LIST OF DEVICES
+The devices listed below are supported in this incarnation of
+the system.  Pseudo-devices are not listed.
+Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Pp
+.Bl -tag -width le/lebuffer -compact -offset indent
+.It audiocs
+CS4231 based audio.
+.It esp
+ESP SCSI controller.
+.It hme
+SBus HME Ethernet controllers (SunSwift).
+.It le/lebuffer
+AMD 7990 LANCE ethernet controller.
+.It openprom
+Sun Open boot PROM (what became IEEE 1275) configuration driver.
+.El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr config 8
 .Sh HISTORY
 The
-Alpha
+sparc64
 .Nm intro
 first appeared in
-.Ox 2.3 .
+.Ox 3.0 .
