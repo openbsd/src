@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.c,v 1.7 1999/04/30 11:46:48 niklas Exp $	*/
-/*	$EOM: transport.c,v 1.38 1999/04/30 11:05:41 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.8 1999/04/30 22:33:09 niklas Exp $	*/
+/*	$EOM: transport.c,v 1.39 1999/04/30 11:59:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -213,7 +213,6 @@ transport_send_messages (fd_set *fds)
   struct message *msg;
   struct exchange *exchange;
   struct timeval expiration;
-  struct sa *sa;
   int expiry, ok_to_drop_message;
 
   /* Reference all transports first so noone will disappear while in use.  */
