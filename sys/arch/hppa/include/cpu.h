@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 1999/09/18 20:02:42 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2000/01/25 12:52:51 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -75,10 +75,6 @@ int	copy_on_fault __P((void));
 void child_return __P((struct proc *p));
 void	switch_trampoline __P((void));
 void	switch_exit __P((struct proc *p));
-#define	cpu_wait(p)	/* so, nobody uses it nomore */
-#if 0
-#define	cpu_swapin(p)	/* nothing */
-#endif
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((void));
 #endif
