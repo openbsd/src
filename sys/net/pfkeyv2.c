@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.53 2000/12/15 20:32:09 provos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.54 2000/12/24 04:18:42 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -81,8 +81,8 @@ int pfkeyv2_policy(struct ipsec_acquire *, void **, void **);
 int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
-int pfkeyv2_dump_walker(struct tdb *, void *);
-int pfkeyv2_flush_walker(struct tdb *, void *);
+int pfkeyv2_dump_walker(struct tdb *, void *, int);
+int pfkeyv2_flush_walker(struct tdb *, void *, int);
 int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
 
 int pfdatatopacket(void *, int, struct mbuf **);
@@ -1026,7 +1026,7 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
  * Dump a TDB.
  */
 int
-pfkeyv2_dump_walker(struct tdb *sa, void *state)
+pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 {
     struct dump_state *dump_state = (struct dump_state *) state;
     void *headers[SADB_EXT_MAX+1], *buffer;
@@ -1042,6 +1042,9 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
 	/* Get the information from the TDB to a PFKEYv2 message */
 	if ((rval = pfkeyv2_get(sa, headers, &buffer)) != 0)
 	  return rval;
+
+	if (last)
+	  ((struct sadb_msg *)headers[0])->sadb_msg_seq = 0;
 
 	/* Send the message to the specified socket */
 	rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_UNICAST,
@@ -1059,7 +1062,7 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
  * Delete an SA.
  */
 int 
-pfkeyv2_flush_walker(struct tdb *sa, void *satype_vp)
+pfkeyv2_flush_walker(struct tdb *sa, void *satype_vp, int last)
 {
     if (!(*((u_int8_t *) satype_vp)) ||
 	sa->tdb_satype == *((u_int8_t *) satype_vp))
