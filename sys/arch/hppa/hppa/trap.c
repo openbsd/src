@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.82 2004/12/06 20:12:24 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.83 2005/01/17 19:01:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -191,7 +191,6 @@ trap(type, frame)
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
-		/* what is the vftype for the T_ITLBMISSNA ??? XXX */
 		if (va == frame->tf_iioq_head)
 			vftype = UVM_PROT_EXEC;
 		else if (inst_store(opcode))
@@ -362,6 +361,46 @@ trap(type, frame)
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
 
+	case T_ITLBMISSNA:
+	case T_ITLBMISSNA | T_USER:
+	case T_DTLBMISSNA:
+	case T_DTLBMISSNA | T_USER:
+		if (space == HPPA_SID_KERNEL)
+			map = kernel_map;
+		else {
+			vm = p->p_vmspace;
+			map = &vm->vm_map;
+		}
+
+		/* dig probe[rw]i? insns */
+		if ((opcode & 0xfc001f80) == 0x04001180) {
+			int pl;
+
+			if (opcode & 0x2000)
+				pl = (opcode >> 16) & 3;
+			else
+				pl = frame_regmap(frame,
+				    (opcode >> 16) & 0x1f) & 3;
+
+			if ((type & T_USER && space == HPPA_SID_KERNEL) ||
+			    (frame->tf_iioq_head & 3) != pl ||
+			    (type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
+			    uvm_fault(map, hppa_trunc_page(va), fault,
+			     opcode & 0x40? UVM_PROT_WRITE : UVM_PROT_READ)) {
+				frame_regmap(frame, opcode & 0x1f) = 0;
+				frame->tf_ipsw |= PSL_N;
+			}
+		} else if (type & T_USER) {
+			sv.sival_int = va;
+			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLTRP, sv);
+		} else
+			panic("trap: %s @ 0x%x:0x%x for 0x%x:0x%x irr 0x%08x\n",
+			    tts, frame->tf_iisq_head, frame->tf_iioq_head,
+			    space, va, opcode);
+		break;
+
+	case T_TLB_DIRTY:
+	case T_TLB_DIRTY | T_USER:
 	case T_DATACC:
 	case T_DATACC | T_USER:
 		fault = VM_FAULT_PROTECT;
@@ -369,24 +408,6 @@ trap(type, frame)
 	case T_ITLBMISS | T_USER:
 	case T_DTLBMISS:
 	case T_DTLBMISS | T_USER:
-	case T_ITLBMISSNA:
-	case T_ITLBMISSNA | T_USER:
-	case T_DTLBMISSNA:
-	case T_DTLBMISSNA | T_USER:
-	case T_TLB_DIRTY:
-	case T_TLB_DIRTY | T_USER:
-		/*
-		 * user faults out of user addr space are always a fail,
-		 * this happens on va >= VM_MAXUSER_ADDRESS, where
-		 * space id will be zero and therefore cause
-		 * a misbehave lower in the code.
-		 */
-		if (type & T_USER && va >= VM_MAXUSER_ADDRESS) {
-			sv.sival_int = va;
-			trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
-			break;
-		}
-
 		/*
 		 * it could be a kernel map for exec_map faults
 		 */
@@ -397,21 +418,22 @@ trap(type, frame)
 			map = &vm->vm_map;
 		}
 
-		if (type & T_USER && map->pmap->pm_space != space) {
+		/*
+		 * user faults out of user addr space are always a fail,
+		 * this happens on va >= VM_MAXUSER_ADDRESS, where
+		 * space id will be zero and therefore cause
+		 * a misbehave lower in the code.
+		 *
+		 * also check that faulted space id matches the curproc.
+		 */
+		if ((type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
+		   (type & T_USER && map->pmap->pm_space != space)) {
 			sv.sival_int = va;
 			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 			break;
 		}
 
 		ret = uvm_fault(map, hppa_trunc_page(va), fault, vftype);
-
-		/* dig probe insn */
-		if (ret && trapnum == T_DTLBMISSNA &&
-		    (opcode & 0xfc001f80) == 0x04001180) {
-			frame_regmap(frame, opcode & 0x1f) = 0;
-			frame->tf_ipsw |= PSL_N;
-			break;
-		}
 
 		/*
 		 * If this was a stack access we keep track of the maximum

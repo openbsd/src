@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.143 2004/12/24 22:50:29 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.144 2005/01/17 19:01:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1197,18 +1197,18 @@ EXIT(TLABEL(emu))
 #endif
 
 #if defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU)
-#define	TLB_PULL(bits)							! \
+#define	TLB_PULL(bits,lbl)							! \
 	/* space:pgaddr -- r8:r9 */					! \
 	mfctl	vtop, r16						! \
 	ldwax,s	r8(r16), r17		/* space -> page directory */	! \
 	extru	r9, 9, 10, r25						! \
-	combt,=,n r0, r17, TLABEL(all)					! \
+	combt,=,n r0, r17, lbl						! \
 	ldwax,s	r25(r17), r24		/* page -> page table */	! \
 	extru	r9, 19, 10, r16						! \
-	combt,=,n r0, r24, TLABEL(all)					! \
+	combt,=,n r0, r24, lbl						! \
 	ldwax,s	r16(r24), r17		/* va -> pa:prot */		! \
 	sh2addl	r16, r24, r25						! \
-	combt,=,n r0, r17, TLABEL(all)					! \
+	combt,=,n r0, r17, lbl						! \
 	copy	r17, r16						! \
 	depi	(bits), 21+bits, 1+bits, r17				! \
 	sub,=	r16, r17, r0		/* do not store if unchanged */	! \
@@ -1223,7 +1223,7 @@ EXIT(TLABEL(emu))
 $tlbd_s
 $tlbd_t
 	TLB_STATS_PRE(tlbd)
-	TLB_PULL(1)
+	TLB_PULL(1, TLABEL(all))
 	mfsp	sr1, r16
 	mtsp	r8, sr1
 	idtlba	r17,(sr1, r9)
@@ -1234,11 +1234,9 @@ $tlbd_t
 	nop
 
 $itlb_s
-$itlbna_s
 $itlb_t
-$itlbna_t
 	TLB_STATS_PRE(itlb)
-	TLB_PULL(0)
+	TLB_PULL(0, TLABEL(all))
 	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
 	depi	0, 30, 15, r25
 	mfsp	sr1, r16
@@ -1251,11 +1249,9 @@ $itlbna_t
 	nop
 
 $dtlb_s
-$dtlbna_s
 $dtlb_t
-$dtlbna_t
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL(0)
+	TLB_PULL(0, TLABEL(all))
 	mfsp	sr1, r16
 	mtsp	r8, sr1
 	idtlba	r17,(sr1, r9)
@@ -1264,6 +1260,44 @@ $dtlbna_t
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+
+$itlbna_s
+$dtlbna_s
+$itlbna_t
+$dtlbna_t
+	TLB_STATS_PRE(dtlb)
+	TLB_PULL(0, $dtlbna_t_fake)
+	mfsp	sr1, r16
+	mtsp	r8, sr1
+	idtlba	r17,(sr1, r9)
+	idtlbp	r25,(sr1, r9)
+	mtsp	r16, sr1
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
+$dtlbna_s_fake
+$dtlbna_t_fake
+	/* parse prober/w insns, have to decent to trap() to set regs proper */
+	mfctl	iir, r16
+	extru	r16, 6, 6, r24
+	comib,=,n 1, r24, TLABEL(all)
+	extru	r16, 24, 6, r24
+	subi,<>	0x23, r24, r0
+	b	TLABEL(all)
+	/* otherwise generate a flush-only tlb entry */
+	copy	r0, r17
+	zdep	r8, 30, 15, r25
+	depi	-13, 11, 7, r25
+	ldo	2(r25), r25   /* 3? */
+	mfsp	sr1, r16
+	mtsp	r8, sr1
+	idtlba	r17,(sr1, r9)
+	idtlbp	r25,(sr1, r9)
+	mtsp	r16, sr1
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
+
 #endif /*  defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU) */
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
@@ -1278,18 +1312,18 @@ $dtlbna_t
  *	change pte to reduce number of shifts
  *	reorder to reduce stalls
  */
-#define	TLB_PULL_L(bits)						! \
+#define	TLB_PULL_L(bits,lbl)						! \
 	/* space:pgaddr -- r8:r9 */					! \
 	mfctl	vtop, r16						! \
 	ldwx,s	r8(r16), r17		/* space -> page directory */	! \
 	extru	r9, 9, 10, r25						! \
-	combt,=,n r0, r17, TLABEL(all)					! \
+	combt,=,n r0, r17, lbl						! \
 	ldwx,s	r25(r17), r24		/* page -> page table */	! \
 	extru	r9, 19, 10, r16						! \
-	combt,=,n r0, r24, TLABEL(all)					! \
+	combt,=,n r0, r24, lbl						! \
 	ldwx,s	r16(r24), r17		/* va -> pa:prot */		! \
 	sh2addl	r16, r24, r25						! \
-	combt,=,n r0, r17, TLABEL(all)					! \
+	combt,=,n r0, r17, lbl						! \
 	copy	r17, r16						! \
 	depi	(bits), 21+bits, 1+bits, r17				! \
 	sub,=	r16, r17, r0		/* do not store if unchanged */	! \
@@ -1304,7 +1338,7 @@ $dtlbna_t
 	.align	32
 $tlbd_l
 	TLB_STATS_PRE(tlbd)
-	TLB_PULL_L(1)
+	TLB_PULL_L(1, TLABEL(all))
 	IDTLBAF(17)
 	IDTLBPF(25)
 #ifdef USE_HPT
@@ -1325,9 +1359,8 @@ $tlbd_l
 	 * unreliable for the itlb miss handler
 	 */
 $itlb_l
-$itlbna_l
 	TLB_STATS_PRE(itlb)
-	TLB_PULL_L(0)
+	TLB_PULL_L(0, TLABEL(all))
 	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
 	depi	0, 30, 15, r25
 	IITLBAF(17)
@@ -1335,18 +1368,38 @@ $itlbna_l
 	TLB_STATS_AFT(itlb)
 	rfir
 	nop
+
+$itlbna_l
 $dtlbna_l
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL_L(0)
+	TLB_PULL_L(0, $dtlbna_l_fake)
 	IDTLBAF(17)
 	IDTLBPF(25)
-	/* figure out later if it's worth caching mappings here as well */
 	TLB_STATS_AFT(dtlb)
 	rfir
 	nop
+$dtlbna_l_fake
+	/* parse prober/w insns, have to decent to trap() to set regs proper */
+	mfctl	iir, r16
+	extru	r16, 6, 6, r24
+	comib,=,n 1, r24, TLABEL(all)
+	extru	r16, 24, 6, r24
+	subi,<>	0x23, r24, r0
+	b	TLABEL(all)
+	/* otherwise generate a flush-only tlb entry */
+	copy	r0, r17
+	zdep	r8, 30, 15, r25
+	depi	-13, 11, 7, r25
+	ldo	2(r25), r25   /* 3? */
+	IDTLBAF(17)
+	IDTLBPF(25)
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
+
 $dtlb_l
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL_L(0)
+	TLB_PULL_L(0, TLABEL(all))
 	IDTLBAF(17)
 	IDTLBPF(25)
 #ifdef USE_HPT
@@ -1417,7 +1470,7 @@ $dtlb_done_l
 
 $tlbd_u
 	TLB_STATS_PRE(tlbd)
-	TLB_PULL_L(1)
+	TLB_PULL_L(1, TLABEL(all))
 	TLB_PCX2PCXU
 	idtlbt	r17, r25
 	TLB_STATS_AFT(tlbd)
@@ -1425,9 +1478,8 @@ $tlbd_u
 	nop
 
 $itlb_u
-$itlbna_u
 	TLB_STATS_PRE(itlb)
-	TLB_PULL_L(0)
+	TLB_PULL_L(0, TLABEL(all))
 	extru,=	r25, 5, 1, r0	/* gate needs a kernel pid */
 	depi	0, 30, 15, r25
 	TLB_PCX2PCXU
@@ -1436,10 +1488,36 @@ $itlbna_u
 	rfir
 	nop
 
+$itlbna_u
 $dtlbna_u
+	TLB_STATS_PRE(dtlb)
+	TLB_PULL_L(0, $dtlbna_u_fake)
+	TLB_PCX2PCXU
+	idtlbt	r17, r25
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
+$dtlbna_u_fake
+	/* parse prober/w insns, have to decent to trap() to set regs proper */
+	mfctl	iir, r16
+	extru	r16, 6, 6, r24
+	comib,=,n 1, r24, TLABEL(all)
+	extru	r16, 24, 6, r24
+	subi,<>	0x23, r24, r0
+	b	TLABEL(all)
+	/* otherwise generate a flush-only tlb entry */
+	copy	r0, r17
+	zdep	r8, 30, 15, r25
+	depi	-13, 11, 7, r25
+	ldo	2(r25), r25   /* 3? */
+	idtlbt	r17, r25
+	TLB_STATS_AFT(dtlb)
+	rfir
+	nop
+
 $dtlb_u
 	TLB_STATS_PRE(dtlb)
-	TLB_PULL_L(0)
+	TLB_PULL_L(0, TLABEL(all))
 	TLB_PCX2PCXU
 	idtlbt	r17, r25
 	TLB_STATS_AFT(dtlb)
@@ -1719,18 +1797,19 @@ $trapnowvirt
 
 	/* see if curproc have changed */
 	ldw	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF+TF_FLAGS(sp), arg0
-	bb,>=,n	arg0, TFF_LAST_POS, $syscall_return
 	ldo	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF(sp), t3
+	extru,<> arg0, TFF_LAST_POS, 1, r0
+	b	$syscall_return
 
 	/* see if curproc have really changed */
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
-	comb,=,n r0, t2, $syscall_return
-	ldo	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF(sp), t3
+	sub,<>	r0, t2, r0
+	ldw	P_MD_REGS(t2), t3
 
 	/* means curproc have actually changed */
 	b	$syscall_return
-	ldw	P_MD_REGS(t2), t3
+	nop
 
 	.export	$trap$all$end, entry
 $trap$all$end
