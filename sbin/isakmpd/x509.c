@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.86 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: x509.c,v 1.87 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -522,7 +522,7 @@ x509_generate_kn (int id, X509 *cert)
 static u_int16_t
 x509_hash (u_int8_t *id, size_t len)
 {
-  int i;
+  size_t i;
   u_int16_t bucket = 0;
 
   /* XXX We might resize if we are crossing a certain threshold.  */
@@ -1492,8 +1492,7 @@ x509_printable (void *cert)
 {
   char *s;
   u_int8_t *data;
-  u_int32_t datalen;
-  int i;
+  u_int32_t datalen, i;
 
   x509_serialize (cert, &data, &datalen);
   if (!data)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2003/12/14 14:50:23 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.36 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ u_int8_t *
 getrandom (u_int8_t *buf, size_t len)
 {
   u_int32_t tmp = 0;
-  int i;
+  size_t i;
 
   for (i = 0; i < len; i++)
     {
@@ -293,7 +293,7 @@ text2sockaddr (char *address, char *port, struct sockaddr **sa)
   if (!sp)
     {
       lport = strtol (port, &ep, 10);
-      if (ep == port || lport < 0 || lport > USHRT_MAX)
+      if (ep == port || lport < 0 || lport > (long)USHRT_MAX)
 	{
 	  free (*sa);
 	  return -1;
@@ -373,7 +373,7 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 		return -1;
 	      }
 	    val = strtol (token, &ep, 10);
-	    if (ep == token || val < 0 || val > UCHAR_MAX)
+	    if (ep == token || val < (long)0 || val > (long)UCHAR_MAX)
 	      {
 		free (*address);
 		return -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.36 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: ui.c,v 1.37 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ ui_handler (void)
   static char *p;
   static size_t sz;
   static size_t resid;
-  size_t n;
+  ssize_t n;
   char *new_buf;
 
   /* If no buffer, set it up.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.75 2004/02/27 10:16:26 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.76 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -432,9 +432,10 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   size_t proposal_len = 0, proposals_len = 0, sa_len;
   size_t **transform_len = 0, **new_transform_len;
   size_t *transforms_len = 0, *new_transforms_len;
-  int *transform_cnt = 0, *new_transform_cnt;
-  int i, suite_no, prop_no, prot_no, xf_no, value, update_nextp, protocol_num;
-  int prop_cnt = 0, proto_id;
+  u_int32_t *transform_cnt = 0, *new_transform_cnt;
+  u_int32_t suite_no, prop_no, prot_no, xf_no, prop_cnt = 0;
+  u_int32_t i;
+  int value, update_nextp, protocol_num, proto_id;
   struct proto *proto;
   struct conf_list *suite_conf, *prot_conf = 0, *xf_conf = 0, *life_conf;
   struct conf_list_node *suite, *prot, *xf, *life;
@@ -1804,7 +1805,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
   u_int8_t *buf;
   int initiator = exchange->initiator;
   char header[80];
-  int i;
+  u_int32_t i;
   u_int8_t *id;
   size_t sz;
 

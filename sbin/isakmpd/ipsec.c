@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.87 2004/03/10 23:08:48 hshoexer Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.88 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1505,7 +1505,7 @@ ipsec_save_g_x (struct message *msg)
   ie->g_x_len = GET_ISAKMP_GEN_LENGTH (kep->p) - ISAKMP_KE_DATA_OFF;
 
   /* Check that the given length matches the group's expectancy.  */
-  if (ie->g_x_len != dh_getlen (ie->group))
+  if (ie->g_x_len != (size_t)dh_getlen (ie->group))
     {
       /* XXX Is this a good notify type?  */
       message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
@@ -1878,7 +1878,7 @@ ipsec_get_id (char *section, int *id, struct sockaddr **addr,
  * we cannot fit the information in the supplied buffer.
  */
 static void
-ipsec_decode_id (char *buf, int size, u_int8_t *id, size_t id_len,
+ipsec_decode_id (char *buf, size_t size, u_int8_t *id, size_t id_len,
 		 int isakmpform)
 {
   int id_type;
@@ -2210,7 +2210,7 @@ ipsec_fill_in_hash (struct message *msg)
   struct prf *prf;
   struct payload *payload;
   u_int8_t *buf;
-  int i;
+  u_int32_t i;
   char header[80];
 
   /* If no SKEYID_a, we need not do anything.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.69 2004/03/10 23:08:49 hshoexer Exp $	*/
+/*	$OpenBSD: message.c,v 1.70 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -122,9 +122,9 @@ static u_int16_t min_payload_lengths[] = {
  * numbers.
  */
 static u_int8_t *last_sa = 0;
-static int last_prop_no;
+static u_int32_t last_prop_no;
 static u_int8_t *last_prop = 0;
-static int last_xf_no;
+static u_int32_t last_xf_no;
 
 /*
  * Allocate a message structure bound to transport T, and with a first
@@ -190,7 +190,7 @@ message_alloc_reply (struct message *msg)
 void
 message_free (struct message *msg)
 {
-  int i;
+  u_int32_t i;
   struct payload *payload, *next;
 
   LOG_DBG ((LOG_MESSAGE, 20, "message_free: freeing %p", msg));
@@ -468,7 +468,7 @@ message_validate_delete (struct message *msg, struct payload *p)
   struct sockaddr *dst, *dst_isa;
   u_int32_t nspis = GET_ISAKMP_DELETE_NSPIS (p->p);
   u_int8_t *spis = (u_int8_t *)p->p + ISAKMP_DELETE_SPI_OFF;
-  int i;
+  u_int32_t i;
   char *addr;
 
   doi = doi_lookup (GET_ISAKMP_DELETE_DOI (p->p));
@@ -1759,7 +1759,7 @@ message_drop (struct message *msg, int notify, struct proto *proto,
 void
 message_dump_raw (char *header, struct message *msg, int class)
 {
-  int i, j, k = 0;
+  u_int32_t i, j, k = 0;
   char buf[80], *p = buf;
 
   LOG_DBG ((class, 70, "%s: message %p", header, msg));
@@ -1820,9 +1820,8 @@ static int
 message_encrypt (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
-  size_t sz = 0;
+  size_t i, sz = 0;
   u_int8_t *buf;
-  int i;
 
   /* If no payloads, nothing to do.  */
   if (msg->iovlen == 1)
@@ -2312,8 +2311,8 @@ message_add_sa_payload (struct message *msg)
 u_int8_t *
 message_copy (struct message *msg, size_t offset, size_t *szp)
 {
-  int i, skip = 0;
-  size_t sz = 0;
+  int skip = 0;
+  size_t i, sz = 0;
   ssize_t start = -1;
   u_int8_t *buf, *p;
 

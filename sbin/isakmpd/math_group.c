@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.c,v 1.19 2003/12/15 10:06:42 hshoexer Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.20 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
@@ -448,13 +448,13 @@ group_init (void)
 }
 
 struct group *
-group_get (int id)
+group_get (u_int32_t id)
 {
   struct group *new, *clone;
 
   if (id < 1 || id > (sizeof (groups) / sizeof (groups[0])))
     {
-      log_print ("group_get: group ID (%d) out of range", id);
+      log_print ("group_get: group ID (%u) out of range", id);
       return 0;
     }
 

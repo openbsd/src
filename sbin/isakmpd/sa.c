@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.78 2004/04/07 20:04:34 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.79 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -474,7 +474,7 @@ report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 {
 #define SBUFSZ (2 * 32 + 9)
   char s[SBUFSZ];
-  int i, j;
+  size_t i, j;
 
   for (i = j = 0; i < sz;)
     {
@@ -917,7 +917,8 @@ sa_validate_proto_xf (struct proto *match, struct payload *xf, int phase)
 {
   struct proto_attr *pa;
   struct attr_validation_state *avs;
-  int i, found = 0;
+  int found = 0;
+  size_t i;
   u_int8_t xf_id;
 
   if (!match->xf_cnt)
@@ -1190,7 +1191,7 @@ sa_flag (char *attr)
     { "__ondemand", SA_FLAG_ONDEMAND },
     { "ikecfg", SA_FLAG_IKECFG },
   };
-  int i;
+  size_t i;
 
   for (i = 0; i < sizeof sa_flag_map / sizeof sa_flag_map[0]; i++)
     if (strcasecmp (attr, sa_flag_map[i].name) == 0)

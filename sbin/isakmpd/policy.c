@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.68 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: policy.c,v 1.69 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -94,7 +94,7 @@ my_inet_ntop4 (const in_addr_t *src, char *dst, size_t size, int normalize)
 
   if (snprintf (tmp, sizeof tmp, fmt, ((u_int8_t *) &src2)[0],
 		((u_int8_t *) &src2)[1], ((u_int8_t *) &src2)[2],
-		((u_int8_t *) &src2)[3]) > size)
+		((u_int8_t *) &src2)[3]) > (int)size)
     {
       errno = ENOSPC;
       return 0;
@@ -111,7 +111,7 @@ my_inet_ntop6 (const unsigned char *src, char *dst, size_t size)
 
   if (snprintf (tmp, sizeof tmp, fmt, src[0], src[1], src[2], src[3], src[4],
 		src[5], src[6], src[7], src[8], src[9], src[10], src[11],
-		src[12], src[13], src[14], src[15]) > size)
+		src[12], src[13], src[14], src[15]) > (int)size)
     {
       errno = ENOSPC;
       return 0;
@@ -130,7 +130,8 @@ policy_callback (char *name)
   struct sockaddr *sin;
   struct ipsec_exch *ie;
   struct ipsec_sa *is;
-  int fmt, i, lifetype = 0;
+  size_t i;
+  int fmt, lifetype = 0;
   in_addr_t net, subnet;
   u_int16_t len, type;
   time_t tt;
@@ -908,8 +909,9 @@ policy_callback (char *name)
 	  if (!remote_id)
 	    {
 	      log_error ("policy_callback: calloc (%lu, %lu) failed",
-		 2 * ((unsigned long)id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) + 1,
-		 (unsigned long)sizeof (char));
+			 2 * ((unsigned long)id_sz - ISAKMP_ID_DATA_OFF
+			      + ISAKMP_GEN_SZ) + 1,
+			 (unsigned long)sizeof (char));
 	      goto bad;
 	    }
 	  /* Does it contain any non-printable characters ? */
@@ -1840,8 +1842,8 @@ policy_init (void)
 {
   char *ptr, *policy_file;
   char **asserts;
-  size_t sz;
-  int fd, len, i;
+  size_t sz, len;
+  int fd, i;
 
   LOG_DBG ((LOG_POLICY, 30, "policy_init: initializing"));
 
@@ -2127,7 +2129,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       return 0;
     }
 
-  if (read (fd, *cert, size) != size)
+  if (read (fd, *cert, size) != (int)size)
     {
       LOG_DBG ((LOG_POLICY, 30, "keynote_cert_obtain: failed to read %lu "
 		"bytes from \"%s\"", (unsigned long)size, file));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.67 2004/03/29 16:32:19 deraadt Exp $	*/
+/*	$OpenBSD: udp.c,v 1.68 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
    * XXX Use getservbyname too.
    */
   lport = strtol (port, &ep, 10);
-  if (*ep != '\0' || lport < 0 || lport > USHRT_MAX)
+  if (*ep != '\0' || lport < (long)0 || lport > (long)USHRT_MAX)
     {
       log_print ("udp_bind_if: "
 		 "port string \"%s\" not convertible to in_port_t", port);
@@ -671,7 +671,7 @@ udp_init (void)
    * XXX Use getservbyname too.
    */
   lport = strtol (port, &ep, 10);
-  if (*ep != '\0' || lport < 0 || lport > USHRT_MAX)
+  if (*ep != '\0' || lport < (long)0 || lport > (long)USHRT_MAX)
     {
       log_print ("udp_init: port string \"%s\" not convertible to in_port_t",
 		 port);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_2n.c,v 1.12 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.13 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	*/
 
 /*
@@ -114,8 +114,8 @@ b2n_clear (b2n_ptr n)
 int
 b2n_resize (b2n_ptr n, unsigned int chunks)
 {
-  int old = n->chunks;
-  int size;
+  size_t old = n->chunks;
+  size_t size;
   CHUNK_TYPE *new;
 
   if (chunks == 0)
@@ -273,7 +273,8 @@ b2n_print (b2n_ptr n)
 int
 b2n_snprint (char *buf, size_t sz, b2n_ptr n)
 {
-  int i, k, j, w, flag = 0;
+  int i, j, w, flag = 0;
+  size_t k;
   int left;
   char buffer[2 * CHUNK_BYTES];
   CHUNK_TYPE tmp;
@@ -480,7 +481,7 @@ b2n_rshift (b2n_ptr d, b2n_ptr n, unsigned int s)
   min = (CHUNK_BITS - (s & CHUNK_MASK)) & CHUNK_MASK;
   if (min)
     {
-      if ((b2n_sigbit (n) & CHUNK_MASK) > min)
+      if ((b2n_sigbit (n) & CHUNK_MASK) > (u_int32_t)min)
 	newsize++;
 
       if (b2n_lshift (d, n, min))
@@ -628,7 +629,8 @@ b2n_div_r (b2n_ptr r, b2n_ptr n, b2n_ptr m)
 int
 b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 {
-  int sn, sm, i, j, len, bits;
+  int i, j, len, bits;
+  u_int32_t sm, sn;
   b2n_t nenn, div, shift, mask;
 
   /* If Teiler > Zaehler, the result is 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.41 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: log.c,v 1.42 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
   time_t t;
 
   len = vsnprintf (buffer, sizeof buffer, fmt, ap);
-  if (len > 0 && len < sizeof buffer - 1 && error)
+  if (len > 0 && len < (int)sizeof buffer - 1 && error)
     snprintf (buffer + len, sizeof buffer - len, ": %s", strerror (errno));
   if (log_output)
     {
@@ -266,7 +266,7 @@ log_debug_buf (int cls, int level, const char *header, const u_int8_t *buf,
 	       size_t sz)
 {
   char s[73];
-  int i, j;
+  size_t i, j;
 
   /*
    * If we are not debugging this class, or the level is too low, just return.
@@ -679,7 +679,7 @@ udp_cksum (struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
     sum += phu.pa[i/2];
 
   sp = (u_int16_t *)u;
-  for (i = 0; i < sizeof (struct udphdr); i += 2)
+  for (i = 0; i < (int)sizeof (struct udphdr); i += 2)
     sum += *sp++;
 
   sp = d;

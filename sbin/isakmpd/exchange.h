@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.h,v 1.23 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.24 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ struct exchange {
 
   /* Crypto info needed to encrypt/decrypt packets in this exchange.  */
   struct crypto_xf *crypto;
-  int key_length;
+  size_t key_length;
   struct keystate *keystate;
 
   /* Used only by KeyNote, to cache the key used to authenticate Phase 1 */

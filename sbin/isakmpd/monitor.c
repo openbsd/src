@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.17 2004/03/31 10:53:10 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.18 2004/04/07 22:45:49 ho Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -1014,7 +1014,7 @@ m_priv_local_sanitize_path (char *path, size_t pmax, int flags)
     goto bad_path;
 
   /* Any path containing '..' is invalid.  */
-  for (p = path; *p && (p - path) < pmax; p++)
+  for (p = path; *p && (p - path) < (int)pmax; p++)
     if (*p == '.' && *(p + 1) == '.')
       goto bad_path;
 

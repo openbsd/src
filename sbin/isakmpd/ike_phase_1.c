@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.44 2004/02/27 10:16:26 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.45 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -76,7 +76,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   size_t *transform_len = 0;
   struct conf_list *conf, *life_conf;
   struct conf_list_node *xf, *life;
-  int i, value, update_nextp;
+  int value, update_nextp;
+  size_t i;
   struct payload *p;
   struct proto *proto;
   struct proto_attr *pa;
@@ -936,7 +937,8 @@ ike_phase_1_recv_ID (struct message *msg)
   char header[80], *rs = 0, *rid = 0, *p;
   int initiator = exchange->initiator;
   u_int8_t **id, id_type;
-  size_t *id_len, sz;
+  size_t *id_len;
+  ssize_t sz;
   struct sockaddr *sa;
 
   payload = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);

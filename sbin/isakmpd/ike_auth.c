@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.84 2004/03/31 10:54:46 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.85 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -884,7 +884,7 @@ rsa_sig_decode_hash (struct message *msg)
   exchange->recv_key = key;
   exchange->recv_keytype = ISAKMP_KEY_RSA;
 
-  if (len != hashsize)
+  if (len != (int)hashsize)
     {
       free (*hash_p);
       *hash_p = 0;
@@ -942,6 +942,7 @@ rsa_sig_encode_hash (struct message *msg)
   u_int8_t *id;
   size_t id_len;
   int idtype;
+  int32_t sigsize;
   void *sent_key;
 
   id = initiator ? exchange->id_i : exchange->id_r;
@@ -1058,7 +1059,7 @@ rsa_sig_encode_hash (struct message *msg)
     {
       key_from_printable (ISAKMP_KEY_RSA, ISAKMP_KEYTYPE_PRIVATE, (char *)buf,
 			  &data, &datalen);
-      if (!data || datalen == -1)
+      if (!data)
 	{
 	  log_print ("rsa_sig_encode_hash: badly formatted RSA private key");
 	  return 0;
@@ -1153,9 +1154,9 @@ rsa_sig_encode_hash (struct message *msg)
       return -1;
     }
 
-  datalen = RSA_private_encrypt (hashsize, buf, data, sent_key,
+  sigsize = RSA_private_encrypt (hashsize, buf, data, sent_key,
 				 RSA_PKCS1_PADDING);
-  if (datalen == -1)
+  if (sigsize == -1)
     {
       log_print ("rsa_sig_encode_hash: RSA_private_encrypt () failed");
       if (data)
@@ -1164,6 +1165,7 @@ rsa_sig_encode_hash (struct message *msg)
       RSA_free (sent_key);
       return -1;
     }
+  datalen = (u_int32_t)sigsize;
 
   free (buf);
 
@@ -1254,7 +1256,8 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
   if (!fstr)
     fstr = CONF_DFLT_PUBKEY_DIR;
 
-  if (snprintf (filename, sizeof filename, "%s/", fstr) > sizeof filename - 1)
+  if (snprintf (filename, sizeof filename, "%s/", fstr)
+      > (int)sizeof filename - 1)
     return -1;
 
   fstr = ipsec_id_string (id, id_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.h,v 1.8 2003/12/15 10:06:42 hshoexer Exp $	*/
+/*	$OpenBSD: math_group.h,v 1.9 2004/04/07 22:45:49 ho Exp $	*/
 /*	$EOM: math_group.h,v 1.7 1999/04/17 23:20:40 niklas Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct modp_dscr {
 
 void group_init (void);
 void group_free (struct group *);
-struct group *group_get (int);
+struct group *group_get (u_int32_t);
 
 void ec2n_free (struct group *);
 struct group *ec2n_clone (struct group *, struct group *);

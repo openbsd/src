@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptotest.c,v 1.12 2004/02/25 16:01:29 hshoexer Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.13 2004/04/07 22:45:50 ho Exp $	*/
 /*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 void test_crypto (enum transform);
 
-#define SET_KEY(x,y) {int i; for (i=0; i < (y); i++) (x)[i] = i;}
+#define SET_KEY(x,y) {size_t i; for (i=0; i < (y); i++) (x)[i] = i;}
 
 int
 verify_buf (u_int8_t *buf, u_int16_t len)
@@ -132,10 +132,10 @@ main (void)
   return 1;
 }
 
- void
+void
 dump_buf (u_int8_t *buf, size_t len)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < len; i++)
     printf ("%02x ", buf[i]);

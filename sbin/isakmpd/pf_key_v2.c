@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.138 2004/03/10 09:28:46 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.139 2004/04/07 22:45:49 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ pf_key_v2_read (u_int32_t seq)
 	  goto cleanup;
 	}
 
-      if ((size_t)n != hdr.sadb_msg_len * PF_KEY_V2_CHUNK)
+      if (n != hdr.sadb_msg_len * PF_KEY_V2_CHUNK)
 	{
 	  log_print ("pf_key_v2_read: read (%d, ...) returned short packet "
 		     "(%lu bytes)", pf_key_v2_socket, (unsigned long)n);
@@ -366,7 +366,8 @@ pf_key_v2_read (u_int32_t seq)
       /* We drop all messages that is not what we expect.  */
       msg = (struct sadb_msg *)buf;
       if (msg->sadb_msg_version != PF_KEY_V2
-	  || (msg->sadb_msg_pid != 0 && msg->sadb_msg_pid != getpid ()))
+	  || (msg->sadb_msg_pid != 0
+	      && msg->sadb_msg_pid != (u_int32_t)getpid ()))
 	{
 	  if (seq)
 	    {
@@ -398,7 +399,8 @@ pf_key_v2_read (u_int32_t seq)
 	pf_key_v2_msg_add (ret, ext, 0);
 
       /* If the message is not the one we are waiting for, queue it up.  */
-      if (seq && (msg->sadb_msg_pid != getpid () || msg->sadb_msg_seq != seq))
+      if (seq && (msg->sadb_msg_pid != (u_int32_t)getpid ()
+		  || msg->sadb_msg_seq != seq))
 	{
 	  gettimeofday (&tv, 0);
 	  timer_add_event ("pf_key_v2_notify",
