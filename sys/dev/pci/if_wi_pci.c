@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.32 2003/01/31 21:19:03 jason Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.33 2003/04/10 17:07:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -167,7 +167,7 @@ wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	bus_space_handle_t commandh, localh, ioh;
 	bus_space_tag_t commandt, localt;
 	bus_space_tag_t iot = pa->pa_iot;
-	bus_size_t commandsize;
+	bus_size_t commandsize, localsize, iosize;
 	int i;
 
 	if (pci_mapreg_map(pa, WI_ACEX_CMDRES, PCI_MAPREG_TYPE_IO,
@@ -177,16 +177,19 @@ wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	}
 
 	if (pci_mapreg_map(pa, WI_ACEX_LOCALRES, PCI_MAPREG_TYPE_IO,
-	    0, &localt, &localh, NULL, NULL, 0) != 0) {
+	    0, &localt, &localh, NULL, &localsize, 0) != 0) {
 		printf(": can't map local I/O space\n");
+		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
 	}
 	sc->wi_ltag = localt;
 	sc->wi_lhandle = localh;
 
 	if (pci_mapreg_map(pa, WI_TMD_IORES, PCI_MAPREG_TYPE_IO,
-	    0, &iot, &ioh, NULL, NULL, 0) != 0) {
+	    0, &iot, &ioh, NULL, &iosize, 0) != 0) {
 		printf(": can't map I/O space\n");
+		bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
 	}
 	sc->wi_btag = iot;
@@ -197,6 +200,9 @@ wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	 */
 	if (bus_space_read_4(commandt, commandh, 0) & 1) {
 		printf(": bridge not ready\n");
+		bus_space_unmap(iot, ioh, iosize);
+		bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
 	}
 	bus_space_write_4(commandt, commandh, 2, 0x118);
@@ -210,17 +216,27 @@ wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	}
 	if (i == 30) {
 		printf(": bridge timeout\n");
+		bus_space_unmap(iot, ioh, iosize);
+		bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
 	}
 	if ((bus_space_read_4(localt, localh, 0xe0) & 1) ||
 	    (bus_space_read_4(localt, localh, 0xe2) & 1) ||
 	    (bus_space_read_4(localt, localh, 0xe4) & 1)) {
 		printf(": failed bridge setup\n");
+		bus_space_unmap(iot, ioh, iosize);
+		bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
 	}
 
-	if (wi_pci_common_attach(pa, sc) != 0)
+	if (wi_pci_common_attach(pa, sc) != 0) {
+		bus_space_unmap(iot, ioh, iosize);
+		bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
+	}
 
 	/* 
 	 * Enable I/O mode and level interrupts on the embedded PCMCIA
@@ -260,11 +276,11 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_addr_t localbase;
-	bus_size_t localsize;
+	bus_size_t localsize, memsize, iosize;
 	u_int32_t intcsr;
 
 	if (pci_mapreg_map(pa, WI_PLX_MEMRES, PCI_MAPREG_TYPE_MEM, 0,
-	    &memt, &memh, NULL, NULL, 0) != 0) {
+	    &memt, &memh, NULL, &memsize, 0) != 0) {
 		printf(": can't map mem space\n");
 		return (ENXIO);
 	}
@@ -272,8 +288,9 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	sc->wi_lhandle = memh;
 
 	if (pci_mapreg_map(pa, WI_PLX_IORES,
-	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL, 0) != 0) {
+	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, &iosize, 0) != 0) {
 		printf(": can't map I/O space\n");
+		bus_space_unmap(memt, memh, memsize);
 		return (ENXIO);
 	}
 	sc->wi_btag = iot;
@@ -302,8 +319,13 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 		}
 	}
 
-	if (wi_pci_common_attach(pa, sc) != 0)
+	if (wi_pci_common_attach(pa, sc) != 0) {
+		if (localsize)
+			bus_space_unmap(localt, localh, localsize);
+		bus_space_unmap(iot, ioh, iosize);
+		bus_space_unmap(memt, memh, memsize);
 		return (ENXIO);
+	}
 
 	if (localsize != 0) {
 		intcsr = bus_space_read_4(localt, localh,
@@ -319,6 +341,11 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 		if (intcsr & WI_PLX_LINT1STAT) {
 			printf("\n%s: no PCMCIA card detected in bridge card\n",
 			    WI_PRT_ARG(sc));
+			pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+			if (localsize)
+				bus_space_unmap(localt, localh, localsize);
+			bus_space_unmap(iot, ioh, iosize);
+			bus_space_unmap(memt, memh, memsize);
 			return (ENXIO);
 		}
 
@@ -353,6 +380,11 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 		if (CSR_READ_2(sc, WI_SW0) != WI_DRVR_MAGIC) {
 			printf("\n%s: no PCMCIA card detected in bridge card\n",
 			    WI_PRT_ARG(sc));
+			pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+			if (localsize)
+				bus_space_unmap(localt, localh, localsize);
+			bus_space_unmap(iot, ioh, iosize);
+			bus_space_unmap(memt, memh, memsize);
 			return (ENXIO);
 		}
 
@@ -384,7 +416,7 @@ wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	bus_space_handle_t localh, ioh;
 	bus_space_tag_t localt;
 	bus_space_tag_t iot = pa->pa_iot;
-	bus_size_t localsize;
+	bus_size_t localsize, iosize;
 
 	if (pci_mapreg_map(pa, WI_TMD_LOCALRES, PCI_MAPREG_TYPE_IO,
 	    0, &localt, &localh, NULL, &localsize, 0) != 0) {
@@ -395,15 +427,19 @@ wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	sc->wi_lhandle = localh;
 
 	if (pci_mapreg_map(pa, WI_TMD_IORES, PCI_MAPREG_TYPE_IO,
-	    0, &iot, &ioh, NULL, NULL, 0) != 0) {
+	    0, &iot, &ioh, NULL, &iosize, 0) != 0) {
 		printf(": can't map I/O space\n");
+		bus_space_unmap(localt, localh, localsize);
 		return (ENXIO);
 	}
 	sc->wi_btag = iot;
 	sc->wi_bhandle = ioh;
 
-	if (wi_pci_common_attach(pa, sc) != 0)
+	if (wi_pci_common_attach(pa, sc) != 0) {
+		bus_space_unmap(iot, ioh, iosize);
+		bus_space_unmap(localt, localh, localsize);
 		return (ENXIO);
+	}
 
 	/* 
 	 * Enable I/O mode and level interrupts on the embedded PCMCIA
@@ -420,9 +456,10 @@ wi_pci_native_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 {
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot = pa->pa_iot;
+	bus_size_t iosize;
 
 	if (pci_mapreg_map(pa, WI_PCI_CBMA, PCI_MAPREG_TYPE_MEM,
-	    0, &iot, &ioh, NULL, NULL, 0) != 0) {
+	    0, &iot, &ioh, NULL, &iosize, 0) != 0) {
 		printf(": can't map mem space\n");
 		return (ENXIO);
 	}
@@ -432,8 +469,10 @@ wi_pci_native_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 	sc->wi_bhandle = ioh;
 	sc->sc_pci = 1;
 
-	if (wi_pci_common_attach(pa, sc) != 0)
+	if (wi_pci_common_attach(pa, sc) != 0) {
+		bus_space_unmap(iot, ioh, iosize);
 		return (ENXIO);
+	}
 
 	/* Do a soft reset of the HFA3842 MAC core */
 	bus_space_write_2(iot, ioh, WI_PCI_COR_OFFSET, WI_COR_SOFT_RESET);
