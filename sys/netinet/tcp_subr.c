@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.31 2000/09/18 22:06:38 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.32 2000/09/20 17:00:23 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -427,8 +427,9 @@ tcp_newtcpcb(inp)
 		return ((struct tcpcb *)0);
 	bzero((char *) tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
-	tp->t_maxseg = tp->t_maxopd = tcp_mssdflt;
-
+	tp->t_maxseg = tcp_mssdflt;
+	tp->t_maxopd = 0;
+  
 #ifdef TCP_SACK
 	tp->sack_disable = tcp_do_sack ? 0 : 1;
 #endif
@@ -864,17 +865,9 @@ tcp_mtudisc(inp, errno)
 					return;
 			}
 
-			/*
-			 * Slow start out of the error condition.  We
-			 * use the MTU because we know it's smaller
-			 * than the previously transmitted segment.
-			 *
-			 * Note: This is more conservative than the
-			 * suggestion in RFC 2414
-			 */
 			if (rt->rt_rmx.rmx_mtu != 0) {
+				/* also takes care of congestion window */
 				tcp_mss(tp, -1);
-				tp->snd_cwnd = rt->rt_rmx.rmx_mtu;
 			}
 		}
 	    

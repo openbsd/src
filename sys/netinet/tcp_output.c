@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.32 2000/09/18 22:06:38 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.33 2000/09/20 17:00:22 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -512,9 +512,13 @@ send:
 
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
-			mss = htons((u_int16_t) tcp_mss(tp, 0));
+			mss = htons((u_int16_t) tcp_mss(tp, flags & TH_ACK ? 
+							tp->t_maxopd : 0));
 			bcopy((caddr_t)&mss, (caddr_t)(opt + 2), sizeof(mss));
 			optlen = 4;
+
+			if (flags & TH_ACK)
+				tcp_mss_update(tp);
 #ifdef TCP_SACK
 			/* 
 			 * If this is the first SYN of connection (not a SYN 

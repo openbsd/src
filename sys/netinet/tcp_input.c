@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.73 2000/09/19 18:10:59 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.74 2000/09/20 17:00:22 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1764,7 +1764,7 @@ trimthenstep6:
 #if defined (TCP_SACK)
 		if (tp->t_dupacks < tcprexmtthresh)
 #endif
-		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
+		tp->snd_cwnd = ulmin(cw + incr, TCP_MAXWIN<<tp->snd_scale);
 		}
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
@@ -2220,8 +2220,12 @@ tcp_dooptions(tp, cp, cnt, th, ts_present, ts_val, ts_ecr)
 		}
 	}
 	/* Update t_maxopd and t_maxseg after all options are processed */
-	if (th->th_flags & TH_SYN)
+	if (th->th_flags & TH_SYN) {
 		(void) tcp_mss(tp, mss);	/* sets t_maxseg */
+
+		if (mss)
+			tcp_mss_update(tp);
+	}
 }
 
 #if defined(TCP_SACK)
@@ -2769,68 +2773,34 @@ tcp_xmit_timer(tp, rtt)
  * that we can send maxseg amount of data even when the options
  * are present.  Store the upper limit of the length of options plus
  * data in maxopd.
+ *
+ * NOTE: offer == -1 indicates that the maxseg size changed due to
+ * Path MTU discovery.
  */
 int
 tcp_mss(tp, offer)
 	register struct tcpcb *tp;
 	int offer;
 {
-	struct route *ro;
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	struct ifnet *ifp;
-	register int rtt, mss, mssopt;
-	u_long bufsize;
+	int mss, mssopt;
 	int iphlen;
 #ifdef INET6
 	int is_ipv6 = 0;
 #endif
 	struct inpcb *inp;
-	struct socket *so;
 
 	inp = tp->t_inpcb;
-	ro = &inp->inp_route;
-	so = inp->inp_socket;
-
-	if ((rt = ro->ro_rt) == (struct rtentry *)0) {
-		/* No route yet, so try to acquire one */
-#ifdef INET6
-		bzero(ro, sizeof(struct route_in6));
-#else
-		bzero(ro, sizeof(struct route));
-#endif
-		/*
-		 * Get a new IPv6 route if an IPv6 destination, otherwise, get
-		 * and IPv4 route (including those pesky IPv4-mapped addresses).
-		 */
-		switch (sotopf(so)) {
-#ifdef INET6
-		case AF_INET6:
-			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
-				break;
-			ro->ro_dst.sa_family = AF_INET6;
-			ro->ro_dst.sa_len = sizeof(struct sockaddr_in6);
-			((struct sockaddr_in6 *) &ro->ro_dst)->sin6_addr =
-			    inp->inp_faddr6;
-			rtalloc(ro);
-			break;
-#endif /* INET6 */
-		case AF_INET:
-			if (inp->inp_faddr.s_addr == INADDR_ANY)
-				break;
-			ro->ro_dst.sa_family = AF_INET;
-			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-			rtalloc(ro);
-			break;
-		}
-		if ((rt = ro->ro_rt) == (struct rtentry *)0) {
-			tp->t_maxopd = tp->t_maxseg = tcp_mssdflt;
-			return (tcp_mssdflt);
-		}
-	}
-	ifp = rt->rt_ifp;
 
 	mssopt = mss = tcp_mssdflt;
+
+	rt = in_pcbrtentry(inp);
+
+	if (rt == NULL)
+		goto out;
+
+	ifp = rt->rt_ifp;
 
 	switch (tp->pf) {
 #ifdef INET6
@@ -2847,34 +2817,7 @@ tcp_mss(tp, offer)
 		goto out;
 	}
 
-#ifdef RTV_MTU	/* if route characteristics exist ... */
-	/*
-	 * While we're here, check if there's an initial rtt
-	 * or rttvar.  Convert from the route-table units
-	 * to scaled multiples of the slow timeout timer.
-	 */
-	if (tp->t_srtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
-		/*
-		 * XXX the lock bit for MTU indicates that the value
-		 * is also a minimum value; this is subject to time.
-		 */
-		if (rt->rt_rmx.rmx_locks & RTV_RTT)
-			TCPT_RANGESET(tp->t_rttmin,
-			    rtt / (RTM_RTTUNIT / PR_SLOWHZ),
-			    TCPTV_MIN, TCPTV_REXMTMAX);
-		tp->t_srtt = rtt / (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
-		if (rt->rt_rmx.rmx_rttvar)
-			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
-			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTTVAR_SCALE));
-		else
-			/* default variation is +- 1 rtt */
-			tp->t_rttvar =
-			    tp->t_srtt * TCP_RTTVAR_SCALE / TCP_RTT_SCALE;
-		TCPT_RANGESET((long) tp->t_rxtcur,
-		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1,
-		    tp->t_rttmin, TCPTV_REXMTMAX);
-	}
-
+#ifdef RTV_MTU
 	/*
 	 * if there's an mtu associated with the route and we support
 	 * path MTU discovery for the underlying protocol family, use it.
@@ -2921,17 +2864,6 @@ tcp_mss(tp, offer)
 
  out:
 	/*
-	 * The current mss, t_maxseg, is initialized to the default value.
-	 * If we compute a smaller value, reduce the current mss.
-	 * If we compute a larger value, return it for use in sending
-	 * a max seg size option, but don't store it for use
-	 * unless we received an offer at least that large from peer.
-	 * However, do not accept offers under 32 bytes.
-	 */
-	if (offer && offer != -1)
-		mss = min(mss, offer);
-	mss = max(mss, 64);		/* sanity - at least max opt. space */
-	/*
 	 * maxopd stores the maximum length of data AND options
 	 * in a segment; maxseg is the amount of data in a normal
 	 * segment.  We need to store this value (maxopd) apart
@@ -2944,13 +2876,93 @@ tcp_mss(tp, offer)
 	    (tp->t_flags & TF_RCVD_TSTMP) == TF_RCVD_TSTMP)
 		mss -= TCPOLEN_TSTAMP_APPA;
 
-#if	(MCLBYTES & (MCLBYTES - 1)) == 0
-		if (mss > MCLBYTES)
-			mss &= ~(MCLBYTES-1);
-#else
-		if (mss > MCLBYTES)
-			mss = mss / MCLBYTES * MCLBYTES;
+	/*
+	 * The current mss, t_maxseg, is initialized to the default value.
+	 * If we compute a smaller value, reduce the current mss.
+	 * If we compute a larger value, return it for use in sending
+	 * a max seg size option, but don't store it for use
+	 * unless we received an offer at least that large from peer.
+	 * However, do not accept offers under 32 bytes.
+	 */
+	if (offer && offer != -1)
+		mss = min(mss, offer);
+	mss = max(mss, 64);		/* sanity - at least max opt. space */
+
+	if (offer == -1) {
+		/* mss changed due to Path MTU discovery */
+		if (mss < tp->t_maxseg) {
+			/*
+			 * Follow suggestion in RFC 2414 to reduce the
+			 * congestion window by the ratio of the old
+			 * segment size to the new segment size.
+			 */
+			tp->snd_cwnd = ulmax((tp->snd_cwnd / tp->t_maxseg) *
+					     mss, mss);
+		} 
+	} else
+		tp->snd_cwnd = mss;
+
+	tp->t_maxseg = mss;
+
+	return (offer != -1 ? mssopt : mss);
+}
+
+/*
+ * Set connection variables based on the effective MSS.
+ * We are passed the TCPCB for the actual connection.  If we
+ * are the server, we are called by the compressed state engine
+ * when the 3-way handshake is complete.  If we are the client,
+ * we are called when we recieve the SYN,ACK from the server.
+ *
+ * NOTE: The t_maxseg value must be initialized in the TCPCB
+ * before this routine is called!
+ */
+void
+tcp_mss_update(tp)
+	struct tcpcb *tp;
+{
+	int mss, rtt;
+	u_long bufsize;
+	struct rtentry *rt;
+	struct socket *so;
+
+	so = tp->t_inpcb->inp_socket;
+	mss = tp->t_maxseg;
+
+	rt = in_pcbrtentry(tp->t_inpcb);
+
+	if (rt == NULL)
+		return;
+
+#ifdef RTV_MTU	/* if route characteristics exist ... */
+	/*
+	 * While we're here, check if there's an initial rtt
+	 * or rttvar.  Convert from the route-table units
+	 * to scaled multiples of the slow timeout timer.
+	 */
+	if (tp->t_srtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
+		/*
+		 * XXX the lock bit for MTU indicates that the value
+		 * is also a minimum value; this is subject to time.
+		 */
+		if (rt->rt_rmx.rmx_locks & RTV_RTT)
+			TCPT_RANGESET(tp->t_rttmin,
+			    rtt / (RTM_RTTUNIT / PR_SLOWHZ),
+			    TCPTV_MIN, TCPTV_REXMTMAX);
+		tp->t_srtt = rtt / (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
+		if (rt->rt_rmx.rmx_rttvar)
+			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
+			    (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTTVAR_SCALE));
+		else
+			/* default variation is +- 1 rtt */
+			tp->t_rttvar =
+			    tp->t_srtt * TCP_RTTVAR_SCALE / TCP_RTT_SCALE;
+		TCPT_RANGESET((long) tp->t_rxtcur,
+		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1,
+		    tp->t_rttmin, TCPTV_REXMTMAX);
+	}
 #endif
+
 	/*
 	 * If there's a pipesize, change the socket buffer
 	 * to that size.  Make the socket buffers an integral
@@ -2961,15 +2973,16 @@ tcp_mss(tp, offer)
 	if ((bufsize = rt->rt_rmx.rmx_sendpipe) == 0)
 #endif
 		bufsize = so->so_snd.sb_hiwat;
-	if (bufsize < mss)
+	if (bufsize < mss) {
 		mss = bufsize;
-	else {
+		/* Update t_maxseg and t_maxopd */
+		tcp_mss(tp, mss);
+	} else {
 		bufsize = roundup(bufsize, mss);
 		if (bufsize > sb_max)
 			bufsize = sb_max;
 		(void)sbreserve(&so->so_snd, bufsize);
 	}
-	tp->t_maxseg = mss;
 
 #ifdef RTV_RPIPE
 	if ((bufsize = rt->rt_rmx.rmx_recvpipe) == 0)
@@ -2985,7 +2998,6 @@ tcp_mss(tp, offer)
 			tcp_rscale(tp, so->so_rcv.sb_hiwat);
 #endif
 	}
-	tp->snd_cwnd = mss;
 
 #ifdef RTV_SSTHRESH
 	if (rt->rt_rmx.rmx_ssthresh) {
@@ -2998,8 +3010,6 @@ tcp_mss(tp, offer)
 		tp->snd_ssthresh = max(2 * mss, rt->rt_rmx.rmx_ssthresh);
 	}
 #endif /* RTV_MTU */
-
-	return (offer != -1 ? mssopt : mss);
 }
 #endif /* TUBA_INCLUDE */
 
