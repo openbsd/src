@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.699 2003/12/17 16:49:29 jason Exp 
+ *	OpenBSD: pcidevs,v 1.700 2003/12/17 17:25:22 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3955,6 +3955,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "i740 PCI",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2,
+	    "SKv2",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
 	    "MGA PX2085 (Atlas)",
 	},
@@ -7641,6 +7645,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_OMEGA,
 	    "Omega Micro",
+	},
+	{
+	    PCI_VENDOR_MARVELL,
+	    "Marvell",
 	},
 	{
 	    PCI_VENDOR_LITEON,

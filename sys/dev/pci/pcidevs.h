@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.699 2003/12/17 16:49:29 jason Exp 
+ *	OpenBSD: pcidevs,v 1.700 2003/12/17 17:25:22 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -166,6 +166,7 @@
 #define	PCI_VENDOR_ACARD	0x1191		/* Acard */
 #define	PCI_VENDOR_ZEINET	0x1193		/* Zeinet */
 #define	PCI_VENDOR_OMEGA	0x119b		/* Omega Micro */
+#define	PCI_VENDOR_MARVELL	0x11ab		/* Marvell */
 #define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On */
 #define	PCI_VENDOR_V3	0x11b0		/* V3 Semiconductor */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
@@ -1475,6 +1476,9 @@
 
 /* Martin-Marietta */
 #define	PCI_PRODUCT_MARTINMARIETTA_I740	0x00d1		/* i740 PCI */
+
+/* Marvell products */
+#define	PCI_PRODUCT_MARVELL_SK_V2	0x4320		/* SKv2 */
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (Atlas) */
