@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.h,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_rmclass.h,v 1.2 2002/02/13 08:07:57 kjc Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
 
 /*
@@ -81,8 +81,8 @@ struct red;
 	if ((xxs = (a)->tv_sec - (b)->tv_sec)) { \
 		switch (xxs) { \
 		default: \
-			if (xxs < 0) \
-				printf("rm_class: bogus time values\n"); \
+			/* if (xxs < 0) \
+				printf("rm_class: bogus time values\n"); */ \
 			delta = 0; \
 			/* fall through */ \
 		case 2: \
