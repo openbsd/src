@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.51 2005/02/12 10:21:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.52 2005/02/24 21:05:09 brad Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -444,10 +444,11 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Complex RL-100TX
 			NDC Communications SOHOware SFA110A
 			SVEC PN102-TX Fast Ethernet card
-		National Semiconductor DP83815-based PCI adapters (sis),
+		National Semiconductor DP83815/DP83816-based PCI adapters (sis),
 		  including: [*]
-			NetGear FA311
-			NetGear FA312
+			Netgear FA311
+			Netgear FA312
+			Netgear FA331
 		RealTek RTL8150L based USB adapters, including: [G]
 		    Melco Inc. LUA-KTX
 		    GreenHouse GH-USB100B

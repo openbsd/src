@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.34 2005/02/21 22:01:20 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.35 2005/02/24 21:05:09 brad Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -342,9 +342,11 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    NDC Communications SOHOware SFA110A
 		    SVEC PN102-TX Fast Ethernet card
 		Myson Technologies MTD803 3-in-1 Fast Ethernet adapters
-		National Semiconductor DP83815-based PCI adapters,
+		National Semiconductor DP83815/DP83816-based PCI adapters,
 		  including:
-		    Netgear FA311/FA312
+		    Netgear FA311
+		    Netgear FA312
+		    Netgear FA331
 		Novell NE1000, NE2000
 		RealTek 8129, RealTek 8139 Ethernet adapters, including:
 		    Accton MPX 5030/5038
