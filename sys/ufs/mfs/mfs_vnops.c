@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.9 1999/01/11 05:12:39 millert Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.10 1999/01/12 04:24:10 millert Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ int
 mfs_open(v)
 	void *v;
 {
+#ifdef DIAGNOSTIC
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
@@ -125,7 +126,6 @@ mfs_open(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-#ifdef DIAGNOSTIC
 	if (ap->a_vp->v_type != VBLK) {
 		panic("mfs_open not VBLK");
 		/* NOTREACHED */
@@ -308,9 +308,9 @@ mfs_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
+#ifdef DIAGNOSTIC
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-#ifdef DIAGNOSTIC
 	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			mfsp->mfs_buflist);
