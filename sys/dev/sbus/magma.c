@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.2 2002/01/12 21:30:56 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.3 2002/01/12 21:41:17 jason Exp $	*/
 /*
  * magma.c
  *
@@ -438,8 +438,8 @@ magma_attach(parent, dev, aux)
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
 		if (bus_space_subregion(sc->sc_bustag, sc->sc_iohandle,
-		    card->mb_cd1190[chip], CD1400_REGMAPSIZE, &cd->cd_regh)) {
-			printf(": failed to map cd1400 regs\n");
+		    card->mb_cd1190[chip], CD1190_REGMAPSIZE, &cd->cd_regh)) {
+			printf(": failed to map cd1190 regs\n");
 			return;
 		}
 		cd->cd_regt = sc->sc_bustag;
