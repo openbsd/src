@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.6 2001/03/25 13:11:56 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.7 2001/05/01 00:07:25 csapuntz Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ struct ata_drive_datas {
 #define DRIVE_DMAERR	0x0100 /* Udma transfer had crc error, don't try DMA */
 #define DRIVE_DSCBA	0x0200 /* DSC in buffer availability mode */
 #define DRIVE_DSCWAIT	0x0400 /* In wait for DSC to be asserted */
-
+#define DRIVE_DEVICE_RESET 0x0800 /* Drive supports DEVICE RESET command */
     /*
      * Current setting of drive's PIO, DMA and UDMA modes.
      * Is initialised by the disks drivers at attach time, and may be
@@ -79,6 +79,9 @@ struct ata_drive_datas {
     /* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
     u_int8_t atapi_cap;
 
+    /* Keeps track of the number of resets that have occured in a row
+       without a succesful command completion. */
+    u_int8_t n_resets;
     u_int8_t n_dmaerrs;
     u_int32_t n_xfers;
 #define NERRS_MAX 4
