@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2002/05/30 06:51:46 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2002/11/08 03:30:17 fgsch Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ void	intr(void);
 int	isurl(const char *);
 void	list_vertical(StringList *);
 void	lcd(int, char **);
-int	login(const char *, char *, char *);
+int	ftp_login(const char *, char *, char *);
 void	lostpeer(void);
 void	lpwd(int, char **);
 void	ls(int, char **);

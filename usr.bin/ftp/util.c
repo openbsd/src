@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2002/07/12 00:25:30 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2002/11/08 03:30:17 fgsch Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.30 2002/07/12 00:25:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.31 2002/11/08 03:30:17 fgsch Exp $";
 #endif /* not lint */
 
 /*
@@ -152,7 +152,7 @@ setpeer(argc, argv)
 		curtype = TYPE_A;
 		type = 0;
 		if (autologin)
-			(void)login(argv[1], NULL, NULL);
+			(void)ftp_login(argv[1], NULL, NULL);
 
 #if (defined(unix) || defined(BSD)) && NBBY == 8
 /*
@@ -207,7 +207,7 @@ setpeer(argc, argv)
  * login to remote host, using given username & password if supplied
  */
 int
-login(host, user, pass)
+ftp_login(host, user, pass)
 	const char *host;
 	char *user, *pass;
 {
