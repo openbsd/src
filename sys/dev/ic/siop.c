@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.14 2001/10/08 01:25:06 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.15 2001/10/26 02:20:22 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -212,6 +212,8 @@ siop_attach(sc)
 	    sc->sc_dev.dv_xname, (int)sizeof(siop_script),
 	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script);
 #endif
+	/* Start with one page worth of commands */
+	siop_morecbd(sc);
 
 	/*
 	 * sc->sc_link is the template for all device sc_link's
@@ -1249,7 +1251,7 @@ siop_scsicmd(xs)
 {
 	struct siop_softc *sc = (struct siop_softc *)xs->sc_link->adapter_softc;
 	struct siop_cmd *siop_cmd;
-	int s, error, i;
+	int s, error, i, j;
 	const int target = xs->sc_link->target;
 	const int lun = xs->sc_link->lun;
 
@@ -1258,19 +1260,9 @@ siop_scsicmd(xs)
 	printf("starting cmd 0x%02x for %d:%d\n", xs->cmd->opcode, target, lun);
 #endif
 	siop_cmd = TAILQ_FIRST(&sc->free_list);
-	if (siop_cmd) {
+	if (siop_cmd != NULL) {
 		TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
 	} else {
-		if (siop_morecbd(sc) == 0) {
-			siop_cmd = TAILQ_FIRST(&sc->free_list);
-#ifdef DIAGNOSTIC
-			if (siop_cmd == NULL)
-				panic("siop_morecbd succeed and does nothing");
-#endif
-			TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
-		}
-	}
-	if (siop_cmd == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		splx(s);
 		return(TRY_AGAIN_LATER);
@@ -1379,6 +1371,15 @@ siop_scsicmd(xs)
 				    && (xs->error == XS_NOERROR)) {
 					error = ((struct scsi_inquiry_data *)xs->data)->device & SID_QUAL;
 					if (error != SID_QUAL_BAD_LU) {
+						/* 
+						 * Allocate enough commands to hold at least max openings
+						 * worth of commands. Do this statically now 'cuz 
+						 * a) We can't rely on the upper layers to ask for more
+						 * b) Doing it dynamically in siop_startcmd may cause 
+						 *    calls to bus_dma* functions in interrupt context
+						 */
+						for (j = 0; j < SIOP_NTAG; j += SIOP_NCMDPB)
+							siop_morecbd(sc);
 						if (sc->targets[target]->status == TARST_PROBING)
 							sc->targets[target]->status = TARST_ASYNC;
 						/* Can't do lun 0 here, because flags not set yet */
@@ -1608,7 +1609,7 @@ siop_timeout(v)
 	int s;
 
 	sc_print_addr(siop_cmd->xs->sc_link);
-	printf("command timeout\n");
+	printf("timeout on SCSI command 0x%x\n", siop_cmd->xs->cmd->opcode);
 
 	s = splbio();
 	/* reset the scsi bus */
@@ -1705,7 +1706,7 @@ siop_morecbd(sc)
 	printf("%s: alloc newcdb at PHY addr 0x%lx\n", sc->sc_dev.dv_xname,
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
-	
+
 	for (i = 0; i < SIOP_NCMDPB; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SIOP_NSG,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
