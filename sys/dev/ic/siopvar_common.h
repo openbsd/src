@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.13 2003/02/11 19:20:27 mickey Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.14 2003/07/01 17:15:06 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $ */
 
 /*
@@ -48,23 +48,23 @@ typedef struct scr_table {
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
- * transfer. 
- * If you change something here, don't forget to update offsets in {s,es}iop.ss
+ * transfer. If you change something here, don't forget to update offsets in
+ * {s,es}iop.ss
  */
 struct siop_common_xfer {
-	u_int8_t msg_out[16];	/* 0 */
-	u_int8_t msg_in[16];	/* 16 */
-	u_int32_t status;	/* 32 */
-	u_int32_t pad1;		/* 36 */
-	u_int32_t id;		/* 40 */
-	u_int32_t pad2;		/* 44 */
-	scr_table_t t_msgin;	/* 48 */
-	scr_table_t t_extmsgin;	/* 56 */
-	scr_table_t t_extmsgdata; /* 64 */
-	scr_table_t t_msgout;	/* 72 */
-	scr_table_t cmd;	/* 80 */
-	scr_table_t t_status;	/* 88 */
-	scr_table_t data[SIOP_NSG]; /* 96 */
+	u_int8_t msg_out[16];		/*   0 */
+	u_int8_t msg_in[16];		/*  16 */
+	u_int32_t status;		/*  32 */
+	u_int32_t pad1;			/*  36 */
+	u_int32_t id;			/*  40 */
+	struct scsi_generic xscmd; 	/*  44 */
+	scr_table_t t_msgin;		/*  56 */
+	scr_table_t t_extmsgin;		/*  64 */
+	scr_table_t t_extmsgdata; 	/*  72 */
+	scr_table_t t_msgout;		/*  80 */
+	scr_table_t cmd;		/*  88 */
+	scr_table_t t_status;		/*  96 */
+	scr_table_t data[SIOP_NSG]; 	/* 104 */
 } __attribute__((__packed__));
 
 /* status can hold the SCSI_* status values, and 2 additionnal values: */
@@ -79,9 +79,7 @@ struct siop_common_cmd {
 	struct siop_common_target *siop_target; /* pointer to our target def */
 	struct scsi_xfer *xs; /* xfer from the upper level */
 	struct siop_common_xfer *siop_tables; /* tables for this cmd */
-	struct scsi_sense rs_cmd; /* request sense command buffer */
 	bus_addr_t	dsa; /* DSA value to load */
-	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
 	int status;
 	int flags;

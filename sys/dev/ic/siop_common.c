@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.15 2002/10/09 23:43:11 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.16 2003/07/01 17:15:06 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
@@ -312,10 +312,6 @@ siop_setuptables(siop_cmd)
 	siop_cmd->siop_tables->status =
 	    htole32(SCSI_SIOP_NOSTATUS); /* set invalid status */
 
-	siop_cmd->siop_tables->cmd.count =
-	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
-	siop_cmd->siop_tables->cmd.addr =
-	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_addr);
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) ||
 	    siop_cmd->status == CMDST_SENSE) {
 		for (i = 0; i < siop_cmd->dmamap_data->dm_nsegs; i++) {
@@ -419,7 +415,7 @@ siop_ppr_neg(siop_cmd)
 	int i;
 
 #ifdef DEBUG_NEG
-	printf("%s: anserw on ppr negotiation:", sc->sc_dev.dv_xname);
+	printf("%s: answer on ppr negotiation:", sc->sc_dev.dv_xname);
 	for (i = 0; i < 8; i++)
 		printf(" 0x%x", tables->msg_in[i]);
 	printf("\n");
@@ -729,7 +725,7 @@ siop_sdp(siop_cmd)
 	table = &siop_cmd->siop_tables->data[offset];
 #ifdef DEBUG_DR
 	printf("sdp: offset %d count=%d addr=0x%x ", offset,
-	    table->count, table->addr);
+	    letoh32(table->count), letoh32(table->addr));
 #endif
 	dbc = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DBC) & 0x00ffffff;
 	if (siop_cmd->xs->flags & SCSI_DATA_OUT) {
@@ -771,7 +767,8 @@ siop_sdp(siop_cmd)
 	    htole32(letoh32(table->addr) + letoh32(table->count) - dbc);
 	table->count = htole32(dbc);
 #ifdef DEBUG_DR
-	printf("now count=%d addr=0x%x\n", table->count, table->addr);
+	printf("now count=%d addr=0x%x\n",
+	    letoh32(table->count), letoh32(table->addr));
 #endif
 }
 
