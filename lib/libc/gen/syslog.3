@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.13 2001/10/24 08:16:42 jjbg Exp $
+.\"	$OpenBSD: syslog.3,v 1.14 2001/11/05 09:48:30 jjbg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -354,6 +354,13 @@ setlogmask(LOG_UPTO(LOG_ERR));
 syslog(LOG_INFO, "Connection from host %d", CallingHost);
 
 syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
+.Pp
+.Ed
+For the reentrant functions:
+.Bd -literal -offset indent -compact
+struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+syslog_r(LOG_INFO|LOG_LOCAL2, &sdata, "foobar error: %m");
 .Ed
 .Sh SEE ALSO
 .Xr logger 1 ,
@@ -382,3 +389,13 @@ Always be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 syslog("%s", string);
 .Ed
+.Pp
+.Fn syslog_r 
+and the other reentrant functions should only be used where 
+reentrancy is required (for instance in a signal handler).
+.Fn syslog
+being not reentrant, only 
+.Fn syslog_r 
+should be used here. For more information about reentrancy and signal
+handlers, see 
+.Xr signal 3 .
