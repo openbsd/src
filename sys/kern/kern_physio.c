@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.9 2000/11/09 16:46:52 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.10 2001/05/07 22:16:35 art Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	if (uio->uio_segflg == UIO_USERSPACE)
 		for (i = 0; i < uio->uio_iovcnt; i++)
 #if defined(UVM) /* XXXCDC: map not locked, rethink */
+			/* XXX - obsolete now that vslock can error? */
 			if (!uvm_useracc(uio->uio_iov[i].iov_base,
 				     uio->uio_iov[i].iov_len,
 				     (flags == B_READ) ? B_WRITE : B_READ))
@@ -184,8 +185,13 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 */
 			PHOLD(p);
 #if defined(UVM)
-                        uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
-				VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ);
+			if (uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
+			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ) !=
+			    KERN_SUCCESS) {
+				bp->b_flags |= B_ERROR;
+				bp->b_error = EFAULT;
+				goto after_unlock;
+			}
 #else
 			vslock(bp->b_data, todo);
 #endif
@@ -221,6 +227,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			vunmapbuf(bp, todo);
 #if defined(UVM)
 			uvm_vsunlock(p, bp->b_data, todo);
+after_unlock:
 #else
 			vsunlock(bp->b_data, todo);
 #endif
