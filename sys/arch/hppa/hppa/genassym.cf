@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 1999/02/02 15:13:57 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.6 1999/04/20 20:39:13 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -36,6 +36,7 @@
 #
 
 include <sys/param.h>
+include <sys/systm.h>
 include <sys/buf.h>
 include <sys/map.h>
 include <sys/proc.h>
@@ -44,7 +45,7 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
 
-include <vm/vm.h>
+include <uvm/uvm.h>
 
 include	<machine/types.h>
 include <machine/cpu.h>
@@ -64,6 +65,8 @@ define	PGSHIFT			PGSHIFT
 define	USRSTACK		USRSTACK
 define	INTSTACK_SIZE		INTSTACK_SIZE
 define	HPPA_PID_KERNEL		HPPA_PID_KERNEL
+define	HPPA_SID_KERNEL		HPPA_SID_KERNEL
+define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
 # pte things
 define	TLB_REF_POS		TLB_REF_POS
@@ -106,62 +109,62 @@ member	m_data
 
 # saved state fields
 define	TF_SIZE		sizeof(struct trapframe)
-define	TF_FLAGS	offsetof(struct trapframe, flags)
-define	TF_R1		offsetof(struct trapframe, r1)
-define	TF_R2		offsetof(struct trapframe, rp)
-define	TF_GOTO		offsetof(struct trapframe, rp)
-define	TF_R3		offsetof(struct trapframe, r3)
-define	TF_R4		offsetof(struct trapframe, r4)
-define	TF_R5		offsetof(struct trapframe, r5)
-define	TF_R6		offsetof(struct trapframe, r6)
-define	TF_R7		offsetof(struct trapframe, r7)
-define	TF_R8		offsetof(struct trapframe, r8)
-define	TF_R9		offsetof(struct trapframe, r9)
-define	TF_R10		offsetof(struct trapframe, r10)
-define	TF_R11		offsetof(struct trapframe, r11)
-define	TF_R12		offsetof(struct trapframe, r12)
-define	TF_R13		offsetof(struct trapframe, r13)
-define	TF_R14		offsetof(struct trapframe, r14)
-define	TF_R15		offsetof(struct trapframe, r15)
-define	TF_R16		offsetof(struct trapframe, r16)
-define	TF_R17		offsetof(struct trapframe, r17)
-define	TF_R18		offsetof(struct trapframe, r18)
-define	TF_R19		offsetof(struct trapframe, t4)
-define	TF_R20		offsetof(struct trapframe, t3)
-define	TF_R21		offsetof(struct trapframe, t2)
-define	TF_R22		offsetof(struct trapframe, t1)
-define	TF_R23		offsetof(struct trapframe, arg3)
-define	TF_R24		offsetof(struct trapframe, arg2)
-define	TF_R25		offsetof(struct trapframe, arg1)
-define	TF_R26		offsetof(struct trapframe, arg0)
-define	TF_R27		offsetof(struct trapframe, dp)
-define	TF_R28		offsetof(struct trapframe, ret0)
-define	TF_R29		offsetof(struct trapframe, ret1)
-define	TF_R30		offsetof(struct trapframe, sp)
-define	TF_R31		offsetof(struct trapframe, r31)
-define	TF_CR0		offsetof(struct trapframe, rctr)
-define	TF_IIOQH	offsetof(struct trapframe, iioq_head)
-define	TF_IIOQT	offsetof(struct trapframe, iioq_tail)
-define	TF_IISQH	offsetof(struct trapframe, iisq_head)
-define	TF_IISQT	offsetof(struct trapframe, iisq_tail)
-define	TF_CR8		offsetof(struct trapframe, pidr1)
-define	TF_CR9		offsetof(struct trapframe, pidr2)
-define	TF_CR11		offsetof(struct trapframe, sar)
-define	TF_CR12		offsetof(struct trapframe, pidr3)
-define	TF_CR13		offsetof(struct trapframe, pidr4)
-define	TF_CR15		offsetof(struct trapframe, eiem)
-define	TF_CR19		offsetof(struct trapframe, iir)
-define	TF_CR20		offsetof(struct trapframe, isr)
-define	TF_CR21		offsetof(struct trapframe, ior)
-define	TF_CR22		offsetof(struct trapframe, ipsw)
-define	TF_SR0		offsetof(struct trapframe, sr0)
-define	TF_SR1		offsetof(struct trapframe, sr1)
-define	TF_SR2		offsetof(struct trapframe, sr2)
-define	TF_SR3		offsetof(struct trapframe, sr3)
-define	TF_SR4		offsetof(struct trapframe, sr4)
-define	TF_SR5		offsetof(struct trapframe, sr5)
-define	TF_SR6		offsetof(struct trapframe, sr6)
-define	TF_SR7		offsetof(struct trapframe, sr7)
+define	TF_FLAGS	offsetof(struct trapframe, tf_flags)
+define	TF_R1		offsetof(struct trapframe, tf_r1)
+define	TF_R2		offsetof(struct trapframe, tf_rp)
+define	TF_GOTO		offsetof(struct trapframe, tf_rp)
+define	TF_R3		offsetof(struct trapframe, tf_r3)
+define	TF_R4		offsetof(struct trapframe, tf_r4)
+define	TF_R5		offsetof(struct trapframe, tf_r5)
+define	TF_R6		offsetof(struct trapframe, tf_r6)
+define	TF_R7		offsetof(struct trapframe, tf_r7)
+define	TF_R8		offsetof(struct trapframe, tf_r8)
+define	TF_R9		offsetof(struct trapframe, tf_r9)
+define	TF_R10		offsetof(struct trapframe, tf_r10)
+define	TF_R11		offsetof(struct trapframe, tf_r11)
+define	TF_R12		offsetof(struct trapframe, tf_r12)
+define	TF_R13		offsetof(struct trapframe, tf_r13)
+define	TF_R14		offsetof(struct trapframe, tf_r14)
+define	TF_R15		offsetof(struct trapframe, tf_r15)
+define	TF_R16		offsetof(struct trapframe, tf_r16)
+define	TF_R17		offsetof(struct trapframe, tf_r17)
+define	TF_R18		offsetof(struct trapframe, tf_r18)
+define	TF_R19		offsetof(struct trapframe, tf_t4)
+define	TF_R20		offsetof(struct trapframe, tf_t3)
+define	TF_R21		offsetof(struct trapframe, tf_t2)
+define	TF_R22		offsetof(struct trapframe, tf_t1)
+define	TF_R23		offsetof(struct trapframe, tf_arg3)
+define	TF_R24		offsetof(struct trapframe, tf_arg2)
+define	TF_R25		offsetof(struct trapframe, tf_arg1)
+define	TF_R26		offsetof(struct trapframe, tf_arg0)
+define	TF_R27		offsetof(struct trapframe, tf_dp)
+define	TF_R28		offsetof(struct trapframe, tf_ret0)
+define	TF_R29		offsetof(struct trapframe, tf_ret1)
+define	TF_R30		offsetof(struct trapframe, tf_sp)
+define	TF_R31		offsetof(struct trapframe, tf_r31)
+define	TF_CR0		offsetof(struct trapframe, tf_rctr)
+define	TF_IIOQH	offsetof(struct trapframe, tf_iioq_head)
+define	TF_IIOQT	offsetof(struct trapframe, tf_iioq_tail)
+define	TF_IISQH	offsetof(struct trapframe, tf_iisq_head)
+define	TF_IISQT	offsetof(struct trapframe, tf_iisq_tail)
+define	TF_CR8		offsetof(struct trapframe, tf_pidr1)
+define	TF_CR9		offsetof(struct trapframe, tf_pidr2)
+define	TF_CR11		offsetof(struct trapframe, tf_sar)
+define	TF_CR12		offsetof(struct trapframe, tf_pidr3)
+define	TF_CR13		offsetof(struct trapframe, tf_pidr4)
+define	TF_CR15		offsetof(struct trapframe, tf_eiem)
+define	TF_CR19		offsetof(struct trapframe, tf_iir)
+define	TF_CR20		offsetof(struct trapframe, tf_isr)
+define	TF_CR21		offsetof(struct trapframe, tf_ior)
+define	TF_CR22		offsetof(struct trapframe, tf_ipsw)
+define	TF_SR0		offsetof(struct trapframe, tf_sr0)
+define	TF_SR1		offsetof(struct trapframe, tf_sr1)
+define	TF_SR2		offsetof(struct trapframe, tf_sr2)
+define	TF_SR3		offsetof(struct trapframe, tf_sr3)
+define	TF_SR4		offsetof(struct trapframe, tf_sr4)
+define	TF_SR5		offsetof(struct trapframe, tf_sr5)
+define	TF_SR6		offsetof(struct trapframe, tf_sr6)
+define	TF_SR7		offsetof(struct trapframe, tf_sr7)
 
 # proc fields and values
 struct	proc
@@ -177,11 +180,19 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
-# VM structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
+struct	pcb
+member	pcb_tf
+member	pcb_onfault
+member	pcb_space
+
+struct	user
+member	u_pcb
+
+struct	vmspace
+member	vm_pmap
 
 # interrupt/fault metering
-define	V_INTR			offsetof(struct vmmeter, v_intr)
+#define	V_INTR			offsetof(struct vmmeter, v_intr)
 
 # system calls
 define	SYS_exit		SYS_exit
