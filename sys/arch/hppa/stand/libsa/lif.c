@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.5 1999/05/06 02:26:49 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.6 1999/05/31 02:41:11 todd Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -98,8 +98,8 @@ lif_open (path, f)
 		fp->f_isdir = 0;
 		err = ENOENT;
 		for (dp = fp->f_ld; dp < &fp->f_ld[fp->f_nfiles]; dp++) {
-			if (debug)
 #ifdef LIFDEBUG
+			if (debug)
 				printf("lif_open: "
 				       "%s <--> '%c%c%c%c%c%c%c%c%c%c'\n",
 				       path, dp->dir_name[0], dp->dir_name[1], 
