@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.5 1999/11/26 17:47:42 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -131,7 +131,8 @@ ie_gsc_reset(sc, what)
 		ie_gsc_attend(sc);
 
 		for (i = 9000; i-- && ie_gsc_read16(sc, IE_ISCP_BUSY(sc->iscp));
-		     DELAY(100));
+		     DELAY(100))
+			pdcache(0, sc->sc_maddr + sc->iscp, IE_ISCP_SZ);
 
 #ifdef I82596_DEBUG
 		if (i < 0) {
@@ -221,6 +222,7 @@ ie_gsc_read16(sc, offset)
 	struct ie_softc *sc;
 	int offset;
 {
+	pdcache(0, sc->bh + offset, 2);
 	return *(volatile u_int16_t *)(sc->bh + offset);
 }
 
@@ -231,6 +233,7 @@ ie_gsc_write16(sc, offset, v)
 	u_int16_t v;
 {
 	*(volatile u_int16_t *)(sc->bh + offset) = v;
+	fdcache(0, sc->bh + offset, 2);
 }
 
 void
@@ -241,6 +244,7 @@ ie_gsc_write24(sc, offset, addr)
 {
 	*(volatile u_int16_t *)(sc->bh + offset + 0) = (addr      ) & 0xffff;
 	*(volatile u_int16_t *)(sc->bh + offset + 2) = (addr >> 16) & 0xffff;
+	fdcache(0, sc->bh + offset, 4);
 }
 
 void
@@ -250,6 +254,7 @@ ie_gsc_memcopyin(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
+	pdcache(0, sc->bh + offset, size);
 	bcopy ((void *)((u_long)sc->bh + offset), p, size);
 }
 
@@ -261,6 +266,7 @@ ie_gsc_memcopyout(sc, p, offset, size)
 	size_t size;
 {
 	bcopy (p, (void *)((u_long)sc->bh + offset), size);
+	fdcache(0, sc->bh + offset, size);
 }
 
 
@@ -284,11 +290,12 @@ ie_gsc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	static char mem[IE_SIZE+16];
 	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 	register struct ie_softc *sc = (struct ie_softc *)self;
 	register struct gsc_attach_args *ga = aux;
-	bus_dma_segment_t seg;
-	int rseg;
+	/*bus_dma_segment_t seg;
+	int rseg;*/
 	int rv;
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
@@ -300,6 +307,7 @@ ie_gsc_attach(parent, self, aux)
 		sc->sc_flags |= IEGSC_GECKO;
 
 	sc->sc_msize = IE_SIZE;
+#if 0
 	if (bus_dmamem_alloc(ga->ga_dmatag, sc->sc_msize, NBPG, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf (": cannot allocate %d bytes of DMA memory\n",
@@ -316,8 +324,12 @@ ie_gsc_attach(parent, self, aux)
 	bzero((void *)sc->bh, sc->sc_msize);
 	sc->sc_maddr = kvtop((caddr_t)sc->bh);
 
-	sc->sysbus = 0x40 | IE_SYSBUS_82586 |
-		       IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE;
+#else
+	bzero(mem, sizeof(mem));
+	sc->bh = ((u_int)&mem + 15) & ~0xf;
+#endif
+	sc->sc_maddr = kvtop((caddr_t)sc->bh);
+	sc->sysbus = 0x40 | IE_SYSBUS_82586 | IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE;
 
 	sc->iot = sc->bt = ga->ga_iot;
 	sc->ioh = ga->ga_hpa;
@@ -336,9 +348,13 @@ ie_gsc_attach(parent, self, aux)
 	sc->intrhook = NULL;
 #endif
 
+#ifdef I82596_DEBUG
+	printf(" mem %x[%p]/%x", sc->bh, sc->sc_maddr, sc->sc_msize);
+	sc->sc_debug = IED_ALL;
+#endif
 	rv = i82596_probe(sc);
 	if (!rv) {
-		bus_dmamem_free(ga->ga_dmatag, &seg, sc->sc_msize);
+		/*bus_dmamem_free(ga->ga_dmatag, &seg, sc->sc_msize);*/
 	}
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
@@ -353,10 +369,6 @@ ie_gsc_attach(parent, self, aux)
 	else
 		bcopy(pdc_mac.addr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-#ifdef I82596_DEBUG
-	printf(" mem %x[%p]/%x", sc->bh, sc->sc_maddr, sc->sc_msize);
-	sc->sc_debug = IED_ALL;
-#endif
 	printf(": ");
 
 	sc->iscp = 0;
