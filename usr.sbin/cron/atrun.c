@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.3 2002/08/07 23:22:41 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.4 2002/08/08 18:17:50 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.3 2002/08/07 23:22:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.4 2002/08/08 18:17:50 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -401,9 +401,8 @@ run_job(atjob *job, char *atfile)
 		/* Write log message now that we have our real pid. */
 		log_it(pw->pw_name, getpid(), "ATJOB", atfile);
 
-#ifdef SYSLOG
-		closelog();
-#endif
+		/* Close log file (or syslog) */
+		log_close();
 
 		/* Connect grandchild's stdin to the at job file. */
 		if (lseek(fd, (off_t) 0, SEEK_SET) < 0) {

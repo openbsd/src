@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.22 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.23 2002/08/08 18:17:50 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.22 2002/07/15 19:13:29 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.23 2002/08/08 18:17:50 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -45,6 +45,10 @@ static char const rcsid[] = "$OpenBSD: misc.c,v 1.22 2002/07/15 19:13:29 millert
 #endif
 
 static int LogFD = ERR;
+
+#if defined(SYSLOG)
+static int syslog_open = FALSE;
+#endif
 
 /*
  * glue_strings is the overflow-safe equivalent of
@@ -486,10 +490,6 @@ log_it(const char *username, PID_T xpid, const char *event, const char *detail) 
 	struct tm *t = localtime(&now);
 #endif /*LOG_FILE*/
 
-#if defined(SYSLOG)
-	static int syslog_open = 0;
-#endif
-
 #if defined(LOG_FILE)
 	/* we assume that MAX_TEMPSTR will hold the date, time, &punctuation.
 	 */
@@ -558,6 +558,10 @@ log_close(void) {
 		close(LogFD);
 		LogFD = ERR;
 	}
+#if defined(SYSLOG)
+	closelog();
+	syslog_open = FALSE;
+#endif /*SYSLOG*/
 }
 
 /* char *first_word(char *s, char *t)

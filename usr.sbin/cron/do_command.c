@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.21 2002/07/15 22:38:36 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.22 2002/08/08 18:17:50 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.21 2002/07/15 22:38:36 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.22 2002/08/08 18:17:50 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -160,9 +160,7 @@ child_process(entry *e, user *u) {
 
 		/* that's the last thing we'll log.  close the log files.
 		 */
-#ifdef SYSLOG
-		closelog();
-#endif
+		log_close();
 
 		/* get new pgrp, void tty, etc.
 		 */
