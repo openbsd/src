@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/08/24 00:20:14 espie Exp $
 
 EGCS_DIR= $(.CURDIR)/..
 .if defined(OBJMACHINE)
@@ -141,16 +141,5 @@ config.status: Makefile.in configure
 includes:
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.CURDIR}/f2c.h ${DESTDIR}/usr/include
-
-.if (${MACHINE_ARCH} == "m68k")
-.for _I in libF77/r_nint libF77/d_nint libF77/i_dnnt libF77/i_nint \
-	libF77/h_dnnt libF77/h_nint
-${_I}.so: ${_I}.c
-	@echo "${COMPILE.c} ${PICFLAGS} -O1 -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${PICFLAGS} -O1 -DPIC ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-.endfor
-.endif
 
 .include <bsd.lib.mk>
