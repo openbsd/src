@@ -1,6 +1,0 @@
-# Define USG as -DUSG if you are using a System V operating system.
-# No version of System V release 3 has TIOCGWINSZ, but release 3.2
-# defines it anyway.
-USG = -DUSG -DTIOCGWINSZ_BROKEN
-RANLIB = true
-INSTALL = cp

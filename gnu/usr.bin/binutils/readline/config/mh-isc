@@ -1,4 +1,0 @@
-# Interactive System V release 3.2
-RANLIB = true
-INSTALL = cp
-USG = -DUSG -D_POSIX_SOURCE=1 -D_POSIX_VERSION=1

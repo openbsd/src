@@ -1,3 +1,0 @@
-# This is probably in the wrong place, but readline configuration stuff is so
-# messed up that it will have to do.
-USG = -DHAVE_UNISTD_H
