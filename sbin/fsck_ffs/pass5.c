@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.8 2001/03/02 08:33:55 art Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.9 2001/03/02 14:45:30 art Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.8 2001/03/02 08:33:55 art Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.9 2001/03/02 14:45:30 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ pass5()
 		mapsize = &ocg->cg_free[howmany(fs->fs_fpg, NBBY)] -
 			(u_char *)&ocg->cg_iused[0];
 		blkmapsize = howmany(fs->fs_fpg, NBBY);
-		inomapsize = &ocg->cg_magic - (u_char *)&ocg->cg_iused[0];
+		inomapsize = (u_char *)&ocg->cg_magic - (u_char *)&ocg->cg_iused[0];
 		ocg->cg_magic = CG_MAGIC;
 		savednrpos = fs->fs_nrpos;
 		fs->fs_nrpos = 8;
