@@ -2,18 +2,20 @@ Installation is supported from several media types, including:
 
 	CDROM
 	FFS partitions
-	HFS partitions (bootloader only, in conjuction with another media)
+	HFS partitions (bootloader/kernel only, using another media for D/L)
 	Tape
-	Remote NFS partition
 	FTP
 	HTTP
 
 OpenBSDXferShortPrelude
 
-Unless the machine already has openbsd installed on it, and
-the bootloader can be loaded from local disk, the bootloader will
-need to be loaded from the network (netboot), but from then
-the system can be installed from any of the above sources.
+OpenBSD now can be booted from a CDROM by holding down the 'c' key
+during reboot. If ofwboot and bsd.rd is copied to a HFS partition, it
+is possible to boot from those files.  Then install the rest of the files
+from any of the above sources.
+
+Note: Once a OpenBSD partition exists, it is not possible to load the
+kernel (bsd.rd) from a HFS paritition on that disk.
 
 
 OpenBSDXferBareTape(xbase xfont xserv xshare)

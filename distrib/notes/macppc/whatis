@@ -1,3 +1,5 @@
 For MACHINE, OpenBSD OSREV adds support for more machines, PowerBook G3,
 PowerBook G4, iBooks and newer iMac systems. System stability is greatly
-improved. Sharing of disks between OpenBSD/MACHINE and MacOS is now supported.
+improved. Sharing of disks between OpenBSD/MACHINE and MacOS is supported.
+Booting OpenBSD from CD and automatically rebooting into OpenBSD is now
+supported, with proper Open Firmware settings.

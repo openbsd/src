@@ -6,12 +6,12 @@ on the whole disk or share the disk with MacOS.
 For stand-alone (No MacOS installed) or dedicated disks, the MBR
 installation method should be chosen and no additional prep is necessary.
 
-If it is to shared the disk with MacOS a partition must be preallocated
+If the disk is to be shared with MacOS a partition must be preallocated
 by the MacOS partition editor and MacOS installed to the proper partition.
 This expects that the HFS partition will be the first partition on
 the disk, and then the OpenBSD partition will follow.
-This may require the disk be reformatted and reinstalled under MacOS
-using the "Drive Setup" application.
+This may require the disk be reformatted using the "Drive Setup" application
+and reinstalled under MacOS.
 
 OpenBSDInstallPart2
 
@@ -24,8 +24,10 @@ OpenBSDInstallPart2
 	if the process is followed carefully. Currently it is
 	necessary to use OpenFirmware commands to dual boot between
 	OS's, or multiple drives may be used with each OS owning drive(s).
-	Note that on many of the systems is it not possible to
-	automatically boot OpenBSD at this time.
+	It is also possible on some newer models to set up the system
+	to auto boot OpenBSD and if MacOS is desired, choose it using
+	the firmware boot selector by holding down the <option> key
+	during reboot and selecting the MacOS Disk icon.
 
 	(Refer to "Preparing your System for OpenBSD Installation" above
 	 for information on how to access and boot from Open Firmware)

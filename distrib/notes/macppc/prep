@@ -62,7 +62,7 @@ setenv auto-boot? false
 		(force the machine to wait at Open Firmware
 		for user input at next reboot; options are true/false)
 
-setenv boot-device ide:,ofwboot /bsd
+setenv boot-device ide:,ofwboot
 		(force the machine to boot into OpenBSD
 		automatically at next reboot)
 
@@ -81,16 +81,16 @@ available.
 
 Sharing a disk with MacOS:
 
-OpenBSD/MACHINE is now capable of booting either from a dedicated
-disk using a MBR partitioned disk or sharing a disk with MacOS.
+OpenBSD/MACHINE is capable of booting either from a dedicated disk using
+a MBR partitioned disk or sharing a disk with MacOS.
 
 If the disk is to be shared between MacOS and OpenBSD, it is necessary
 to reformat and install the MacOS partitions first, using "Drive Setup",
 leaving space on the disk as an "Unused" partition.
-If the disk was previously partitioned, it is possible to reuse a Pariti on
-for OpenBSD, as long as it is not the first Pariti on on the disk.
-The bootloader is expected to be found in that first (HFS) Pariti on.
+If the disk was previously partitioned, it is possible to reuse a Partition
+for OpenBSD, as long as it is not the first Partition on the disk.
+The bootloader is expected to be found in that first (HFS) Partition.
 
 For dedicated disks, MACHINE port boots off a boot program in
-an MSDOS filesystem. This is now set up by the install program
+an MSDOS filesystem. This is set up by the install program
 and no special setup is required.
