@@ -4,15 +4,15 @@ ai1: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv www
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host 127.0.0.1 serv http
 ai1: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv www
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host localhost serv http
-ai1: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv www cname "localhost"
-ai2: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv www cname "localhost"
+ai1: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv www
+ai2: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv www
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host ::1 serv tftp
 ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv 69
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host 127.0.0.1 serv tftp
 ai1: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 69
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host localhost serv tftp
-ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv 69 cname "localhost"
-ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 69 cname "localhost"
+ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv 69
+ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 69
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host ::1 serv echo
 ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv echo
 ai2: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv echo
@@ -20,16 +20,16 @@ arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host 127.0.0.1 serv echo
 ai1: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv echo
 ai2: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv echo
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host localhost serv echo
-ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv echo cname "localhost"
-ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv echo cname "localhost"
-ai3: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv echo cname "localhost"
-ai4: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv echo cname "localhost"
+ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv echo
+ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv echo
+ai3: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv echo
+ai4: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv echo
 
 == specific address family
 arg: flags 0x2 family 2 socktype 0 protocol 0 addrlen 0 host localhost serv http
-ai1: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv www cname "localhost"
+ai1: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv www
 arg: flags 0x2 family 24 socktype 0 protocol 0 addrlen 0 host localhost serv http
-ai1: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv www cname "localhost"
+ai1: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv www
 
 == empty hostname
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv http
@@ -44,7 +44,7 @@ arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv tftp
 ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv 69
 ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 69
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv 80
-service not supported for ai_socktype
+servname not supported for ai_socktype
 arg: flags 0x3 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv http
 ai1: flags 0x3 family 24 socktype 1 protocol 6 addrlen 28 host :: serv www
 ai2: flags 0x3 family 2 socktype 1 protocol 6 addrlen 16 host 0.0.0.0 serv www
@@ -57,7 +57,7 @@ arg: flags 0x3 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv tftp
 ai1: flags 0x3 family 24 socktype 2 protocol 17 addrlen 28 host :: serv 69
 ai2: flags 0x3 family 2 socktype 2 protocol 17 addrlen 16 host 0.0.0.0 serv 69
 arg: flags 0x3 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv 80
-service not supported for ai_socktype
+servname not supported for ai_socktype
 arg: flags 0x2 family 0 socktype 1 protocol 0 addrlen 0 host (empty) serv 80
 ai1: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv www
 ai2: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv www
@@ -73,24 +73,24 @@ arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host 127.0.0.1 serv (emp
 ai1: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 0
 ai2: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv 0
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host localhost serv (empty)
-ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv 0 cname "localhost"
-ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 0 cname "localhost"
-ai3: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv 0 cname "localhost"
-ai4: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv 0 cname "localhost"
+ai1: flags 0x2 family 24 socktype 2 protocol 17 addrlen 28 host ::1 serv 0
+ai2: flags 0x2 family 2 socktype 2 protocol 17 addrlen 16 host 127.0.0.1 serv 0
+ai3: flags 0x2 family 24 socktype 1 protocol 6 addrlen 28 host ::1 serv 0
+ai4: flags 0x2 family 2 socktype 1 protocol 6 addrlen 16 host 127.0.0.1 serv 0
 arg: flags 0x2 family 0 socktype 0 protocol 0 addrlen 0 host (empty) serv (empty)
-name or service is not known
+hostname nor servname provided, or not known
 
 == sock_raw
 arg: flags 0x2 family 0 socktype 3 protocol 0 addrlen 0 host localhost serv (empty)
-ai1: flags 0x2 family 24 socktype 3 protocol 0 addrlen 28 host ::1 serv 0 cname "localhost"
-ai2: flags 0x2 family 2 socktype 3 protocol 0 addrlen 16 host 127.0.0.1 serv 0 cname "localhost"
+ai1: flags 0x2 family 24 socktype 3 protocol 0 addrlen 28 host ::1 serv 0
+ai2: flags 0x2 family 2 socktype 3 protocol 0 addrlen 16 host 127.0.0.1 serv 0
 arg: flags 0x2 family 0 socktype 3 protocol 59 addrlen 0 host localhost serv (empty)
-ai1: flags 0x2 family 24 socktype 3 protocol 59 addrlen 28 host ::1 serv 0 cname "localhost"
-ai2: flags 0x2 family 2 socktype 3 protocol 59 addrlen 16 host 127.0.0.1 serv 0 cname "localhost"
+ai1: flags 0x2 family 24 socktype 3 protocol 59 addrlen 28 host ::1 serv 0
+ai2: flags 0x2 family 2 socktype 3 protocol 59 addrlen 16 host 127.0.0.1 serv 0
 arg: flags 0x2 family 0 socktype 3 protocol 59 addrlen 0 host localhost serv 80
-service not supported for ai_socktype
+servname not supported for ai_socktype
 arg: flags 0x2 family 0 socktype 3 protocol 59 addrlen 0 host localhost serv www
-service not supported for ai_socktype
+servname not supported for ai_socktype
 arg: flags 0x2 family 0 socktype 3 protocol 59 addrlen 0 host ::1 serv (empty)
 ai1: flags 0x2 family 24 socktype 3 protocol 59 addrlen 28 host ::1 serv 0
 
