@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.8 2000/07/22 20:23:28 brad Exp $
+.\"	$OpenBSD: release.8,v 1.9 2000/08/03 13:45:23 brad Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -313,7 +313,7 @@ the build process is:
 .It
 .Li "mkdir -p X11BLD"
 .It
-.Li "cd X11BLD && lndir X11SRC && nice DESTDIR=/ make build"
+.Li "cd X11BLD && lndir X11SRC && nice make DESTDIR=/ build"
 .El
 .Pp
 .Sy Note :
