@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.8 1996/08/13 22:26:18 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.9 1996/08/14 23:16:38 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
@@ -1119,16 +1119,6 @@ vm_object_collapse_aux(object)
 		 *	can discard it right away.  Otherwise we need to
 		 *	move the page to the shadowing object, perhaps
 		 *	waking up waiters for "fake" pages first.
-		 *
-		 *	XXX There is a condition I'm unsure about, both
-		 *	if it exists and if I handle it right.  The
-		 *	case that worries me is if an object can hold
-		 *	"fake" pages at the same time a real one is
-		 *	paged out.  To me it sounds as this condition
-		 *	can't exist.  Does anyone know?  The way the
-		 *	condition below is done, "fake" pages are
-		 *	handled suboptimally if pagers are guaranteed
-		 *	not to have such pages in store.
 		 */
 		if (backing_page->offset < backing_offset ||
 		    (offset = backing_page->offset - backing_offset) >= size ||
@@ -1154,9 +1144,6 @@ vm_object_collapse_aux(object)
 				vm_page_unlock_queues();
 			}
 
-			/*	Move the page up front.	*/
-			vm_page_rename(backing_page, object, offset);
-
 			/*
 			 *	If the backing page was ever paged out, it was
 			 *	due to it being dirty at one point.  Unless we
@@ -1167,8 +1154,12 @@ vm_object_collapse_aux(object)
 			 */
 			if (object->pager != NULL &&
 			    vm_object_remove_from_pager(backing_object,
-			    backing_offset, backing_offset + PAGE_SIZE))
+			    backing_page->offset,
+			    backing_page->offset + PAGE_SIZE))
 				backing_page->flags &= ~PG_CLEAN;
+
+			/*	Move the page up front.	*/
+			vm_page_rename(backing_page, object, offset);
 		}
 	}
 
@@ -1225,8 +1216,6 @@ vm_object_collapse_aux(object)
 			 *
 			 *	XXX Would clustering several pages at a time
 			 *	be a win in this situation?
-			 *
-			 *	XXX Is the "fake" page handling correct???
 			 */
 			if (((page = vm_page_lookup(object,
 			    offset - backing_offset)) == NULL ||
@@ -1239,9 +1228,6 @@ vm_object_collapse_aux(object)
 				 *	and then remove the page.
 				 */
 				if (page) {
-#ifdef DIAGNOSTIC
-					printf("fake page blown away\n");
-#endif
 					PAGE_WAKEUP(page);
 					vm_page_lock_queues();
 					vm_page_free(page);
@@ -1299,7 +1285,7 @@ vm_object_collapse_aux(object)
 				 *	sure it will be paged out in the
 				 *	front pager by dirtying it.
 				 */
-				backing_page->flags &= ~PG_CLEAN;
+				backing_page->flags &= ~(PG_FAKE|PG_CLEAN);
 
 				/*
 				 *	Fourth, move it up front, and wake up
