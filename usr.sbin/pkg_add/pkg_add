@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.67 2004/10/11 12:33:59 espie Exp $
+# $OpenBSD: pkg_add,v 1.68 2004/10/11 12:39:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -698,7 +698,10 @@ sub manpages_index
 
 sub really_add($$)
 {
-	my ($handle, $destdir) = @_;
+	my ($handle, $state) = @_;
+	my $destdir = $state->{destdir};
+	my $verbose = $state->{verbose};
+	my $not = $state->{not};
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
@@ -716,13 +719,13 @@ sub really_add($$)
 		$interrupted = 1;
 	};
 
-	do_script($plist, $dir, REQUIRE, "Require", $pkgname, "INSTALL", $opt_v, $opt_n);
+	do_script($plist, $dir, REQUIRE, "Require", $pkgname, "INSTALL", $verbose, $not);
 
-	do_script($plist, $dir, INSTALL, "Install", $pkgname, "PRE-INSTALL", $opt_v, $opt_n) unless $opt_I;
+	do_script($plist, $dir, INSTALL, "Install", $pkgname, "PRE-INSTALL", $verbose, $not) unless $opt_I;
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
-		eval { $item->install($handle, $destdir, $opt_v, $opt_n); };
+		eval { $item->install($handle, $destdir, $verbose, $not); };
 		if ($@) {
 			Warn $@;
 			$errors++;
@@ -736,7 +739,7 @@ sub really_add($$)
 	$handle->close();
 
 	if (!$opt_I && !$interrupted) {
-		eval { do_script($plist, $dir, INSTALL, "Install", $pkgname, "POST-INSTALL", $opt_v, $opt_n) };
+		eval { do_script($plist, $dir, INSTALL, "Install", $pkgname, "POST-INSTALL", $verbose, $not) };
 		if ($@) {
 			Warn $@;
 			$errors++;
@@ -744,7 +747,7 @@ sub really_add($$)
 	}
 
 	unlink($dir.CONTENTS);
-	if (!$opt_n) {
+	if (!$not) {
 		if ($interrupted || $errors) {
 			borked_installation($plist, $dir);
 		}
@@ -820,7 +823,7 @@ sub install_package
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
-	really_add($handle, $state->{destdir});
+	really_add($handle, $state);
 	$state->{conflict_list}->{$plist->pkgname()} = $handle->{conflicts};
 	return ();
 }
