@@ -4,6 +4,16 @@ out as follows:
 
 .../2.2/mac68k/
 		INSTALL.mac68k	This file
+
+		CKSUM		Output of the cksum(1) and md5(1) programs
+		MD5		usable for verification of the correctness
+				of downloaded files.
+
+		*.tar.gz	mac68k binary distribution sets;
+				see below.
+
+		bsd-generic*	mac68k kernel binary.  You MUST install one.
+
 		utils/		The mac68k installation utilities for MacOS.
 
 The OpenBSD/mac68k binary distribution sets contain all the binaries which
@@ -12,18 +22,18 @@ distribution sets.  The binary distribution sets can be found in the
 "mac68k/" of the OpenBSD 2.2 distribution tree, and
 are as follows:
 
-	bsd22.tar.gz	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
+	bsd-generic.tar.gz	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
-		[ 1.2MB uncompressed ]
+		[ 1.4M uncompressed ]
 
-	bsd22-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
+	bsd-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
 		identical in every way to bsd22.tar.gz accept that
 		it enables a different SCSI driver which may allow
 		some otherwise incompatible SCSI disks to function
 		with OpenBSD/mac68k.  You must install either this
 		or bsd22.tar.gz.
-		[ 1.2MB uncompressed ]
+		[ 1.4M uncompressed ]
 
 	base22.tar.gz	The OpenBSD/mac68k 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
@@ -31,7 +41,7 @@ are as follows:
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 11.6MB gzipped, 35.8MB uncompressed ]
+		[ 11.1M gzipped, 33.7M uncompressed ]
 
 	comp22.tar.gz	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
@@ -44,7 +54,7 @@ are as follows:
 		call and library manual pages.  It is very almost a must
 		to install this set if one wants an even minimally
 		functional system.
-		[ 7.4MB gzipped, 23.8MB uncompressed ]
+		[ 7.0M gzipped, 22.5M uncompressed ]
 
 	etc22.tar.gz	This distribution set contains the system
 		configuration files that reside in /etc and in several
@@ -53,18 +63,18 @@ are as follows:
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ 90K gzipped, 450K uncompressed ]
+		[ 93K gzipped, 490K uncompressed ]
 
 	game22.tar.gz	This set includes the BSD games and their manual pages.
 		It's installation is optional.
-		[ 2.8MB gzipped, 6.9MB uncompressed ]
+		[ 2.7M gzipped, 6.7M uncompressed ]
 
 	man22.tar.gz	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.  Installation of
 		this set is completely optional but is highly recommended.
-		[ 2.4MB gzipped, 9.3MB uncompressed ]
+		[ 2.4M gzipped, 9.1M uncompressed ]
 
 	misc22.tar.gz	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
@@ -73,31 +83,31 @@ are as follows:
 		many other sundry system files and programs.  This set
 		is not necessarry but will improve the functionallity
 		of many system programs.
-		[ 1.7MB gzipped, 6.1MB uncompressed ]
+		[ 1.7M gzipped, 5.9M uncompressed ]
 
 	text22.tar.gz	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.  This set is highly recommended as
 		these programs are depended upon for such basic 
 		system functions as reading manual pages.
-		[ 0.9MB gzipped, 3.6MB uncompressed ]
+		[ 945K gzipped, 3.5M uncompressed ]
 
 The directory '../2.2/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:
 
-	booter.sea.hqx
+	Booter1.11.0.sea.hqx
 		This MacOS program is used to load the OpenBSD kernel and
 		start the operating system.  In all cases, you will need to
 		download this file.
 
-	installer.hqx
+	Installer_1.1f.sea.hqx
 		This is the MacOS program used to install downloaded sets (such
 		as those from the bins directory) onto a BSD partition.  It
 		is necessarry in either the case of a fresh install or an
 		upgrade.
 
-	mkfs.hqx
+	Mkfs_1.45.sea.hqx
 		A MacOS program to build BSD filesystems on various
 		partitions you have created (see below).  You will need this
 		if you are performing a new installation.
