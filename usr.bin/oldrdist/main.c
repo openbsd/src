@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2002/06/18 23:49:15 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2003/04/05 17:18:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.15 2002/06/18 23:49:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.16 2003/04/05 17:18:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -69,7 +69,7 @@ FILE	*fin = NULL;	/* input file pointer */
 int	rem = -1;	/* file descriptor to remote source/sink process */
 char	host[32];	/* host name */
 int	nerrs;		/* number of errors while sending/receiving */
-char	user[10];	/* user's name */
+char	user[40];	/* user's name */
 char	homedir[128];	/* user's home directory */
 uid_t	userid;		/* user's user ID */
 gid_t	groupid;	/* user's group ID */
@@ -94,12 +94,12 @@ main(argc, argv)
 		fprintf(stderr, "%s: Who are you?\n", argv[0]);
 		exit(1);
 	}
-	strcpy(user, pw->pw_name);
-	strcpy(homedir, pw->pw_dir);
+	strlcpy(user, pw->pw_name, sizeof user);
+	strlcpy(homedir, pw->pw_dir, sizeof homedir);
 	groupid = pw->pw_gid;
 	gethostname(host, sizeof(host));
-	strcpy(tempfile, _PATH_TMP);
-	strcat(tempfile, _RDIST_TMP);
+	strlcpy(tempfile, _PATH_TMP, sizeof tempfile);
+	strlcat(tempfile, _RDIST_TMP, sizeof tempfile);
 	tempname = basename(tempfile);
 
 	while (--argc > 0) {

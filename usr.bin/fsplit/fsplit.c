@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.10 2002/02/25 00:04:09 deraadt Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.11 2003/04/05 17:18:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.10 2002/02/25 00:04:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.11 2003/04/05 17:18:46 deraadt Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: fsplit.c,v 1.10 2002/02/25 00:04:09 deraadt Exp
 
 void badparms();
 void get_name(char *, int);
-int lname(char *);
+int lname(char *, size_t);
 int getline(void);
 int lend(void);
 int scan_name(char *, char *);
@@ -183,7 +183,7 @@ main(argc, argv)
 			if (lend())	/* look for an 'end' statement */
 				break;
 			if (nflag == 0)	/* if no name yet, try and find one */
-				nflag = lname(name);
+				nflag = lname(name, sizeof name);
 		}
 		fclose(ofp);
 		if (rv == 0) {	/* no lines in file, forget the file */
@@ -320,8 +320,9 @@ lend()
 		name and put in arg string. invent name for unnamed
 		block datas and main programs.		*/
 int
-lname(s)
+lname(s, len)
 	char   *s;
+	size_t len;
 {
 #define LINESIZE 80
 	char *ptr, *p;
@@ -356,28 +357,25 @@ lname(s)
 	    (ptr = functs(line)) != 0) {
 		if (scan_name(s, ptr))
 			return (1);
-		strcpy(s, x);
-	} else
-		if ((ptr = look(line, "program")) != 0) {
-			if (scan_name(s, ptr))
-				return (1);
-			get_name(mainp, 4);
-			strcpy(s, mainp);
-		} else
-			if ((ptr = look(line, "blockdata")) != 0) {
-				if (scan_name(s, ptr))
-					return (1);
-				get_name(blkp, 6);
-				strcpy(s, blkp);
-			} else
-				if ((ptr = functs(line)) != 0) {
-					if (scan_name(s, ptr))
-						return (1);
-					strcpy(s, x);
-				} else {
-					get_name(mainp, 4);
-					strcpy(s, mainp);
-				}
+		strlcpy(s, x, len);
+	} else if ((ptr = look(line, "program")) != 0) {
+		if (scan_name(s, ptr))
+			return (1);
+		get_name(mainp, 4);
+		strlcpy(s, mainp, len);
+	} else if ((ptr = look(line, "blockdata")) != 0) {
+		if (scan_name(s, ptr))
+			return (1);
+		get_name(blkp, 6);
+		strlcpy(s, blkp, len);
+	} else if ((ptr = functs(line)) != 0) {
+		if (scan_name(s, ptr))
+			return (1);
+		strlcpy(s, x, len);
+	} else {
+		get_name(mainp, 4);
+		strlcpy(s, mainp, len);
+	}
 	return (1);
 }
 

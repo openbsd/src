@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.20 2002/06/23 03:07:21 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.21 2003/04/05 17:18:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.20 2002/06/23 03:07:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.21 2003/04/05 17:18:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -305,7 +305,7 @@ install(src, dest, destdir, opts)
 	 * hardlink info.
 	 */
 	if (destdir || (src && dest && strcmp(src, dest))) {
-		strcpy(destcopy, dest);
+		strlcpy(destcopy, dest, sizeof destcopy);
 		Tdest = destcopy;
 	}
 	sendf(rname, opts);
@@ -841,7 +841,7 @@ recvf(cmd, type)
 		(void) snprintf(tp, sizeof(target) - (tp - target), "/%s", cp);
 	cp = strrchr(target, '/');
 	if (cp == NULL)
-		strcpy(new, tempname);
+		strlcpy(new, tempname, sizeof new);
 	else if (cp == target)
 		(void) snprintf(new, sizeof(new), "/%s", tempname);
 	else {
