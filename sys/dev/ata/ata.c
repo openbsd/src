@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.13 2001/09/21 17:55:43 miod Exp $      */
+/*      $OpenBSD: ata.c,v 1.14 2002/12/19 16:32:59 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -49,9 +49,10 @@
 #define DEBUG_PROBE  0x10
 #ifdef WDCDEBUG
 extern int wdcdebug_mask; /* init'ed in wdc.c */
-#define WDCDEBUG_PRINT(args, level) \
-        if (wdcdebug_mask & (level)) \
-		printf args
+#define WDCDEBUG_PRINT(args, level) do {	\
+	if ((wdcdebug_mask & (level)) != 0)	\
+		printf args;			\
+} while (0)
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif

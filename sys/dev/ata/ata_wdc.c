@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.16 2002/10/12 01:09:44 krw Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.17 2002/12/19 16:32:59 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -99,9 +99,10 @@
 
 #ifdef WDCDEBUG
 int wdcdebug_wd_mask = 0;
-#define WDCDEBUG_PRINT(args, level) \
-	if (wdcdebug_wd_mask & (level)) \
-		printf args
+#define WDCDEBUG_PRINT(args, level) do {	\
+	if ((wdcdebug_wd_mask & (level)) != 0)	\
+		printf args;			\
+} while (0)
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.101 2002/12/10 11:47:47 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.102 2002/12/19 16:32:59 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -82,8 +82,10 @@
 
 #ifdef WDCDEBUG
 int wdcdebug_pciide_mask = 0;
-#define WDCDEBUG_PRINT(args, level) \
-	if (wdcdebug_pciide_mask & (level)) printf args
+#define WDCDEBUG_PRINT(args, level) do {		\
+	if ((wdcdebug_pciide_mask & (level)) != 0)	\
+		printf args;				\
+} while (0)
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif
