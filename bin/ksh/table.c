@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.9 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.10 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -65,11 +65,11 @@ texpand(struct table *tp, int nsize)
 	afree((void*)otblp, tp->areap);
 }
 
+/* table */
+/* name to enter */
+/* hash(n) */
 struct tbl *
 tsearch(struct table *tp, const char *n, unsigned int h)
-	                 	/* table */
-	              		/* name to enter */
-	               		/* hash(n) */
 {
 	struct tbl **pp, *p;
 
@@ -88,11 +88,11 @@ tsearch(struct table *tp, const char *n, unsigned int h)
 	return NULL;
 }
 
+/* table */
+/* name to enter */
+/* hash(n) */
 struct tbl *
 tenter(struct table *tp, const char *n, unsigned int h)
-	                 	/* table */
-	              		/* name to enter */
-	               		/* hash(n) */
 {
 	struct tbl **pp, *p;
 	int len;

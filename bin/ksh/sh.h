@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.26 2005/02/21 16:01:58 otto Exp $	*/
+/*	$OpenBSD: sh.h,v 1.27 2005/03/28 21:33:04 deraadt Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -224,8 +224,8 @@ EXTERN	char	newline [] I__("\n");
 EXTERN	char	slash [] I__("/");
 
 enum temp_type {
-    TT_HEREDOC_EXP,	/* expanded heredoc */
-    TT_HIST_EDIT	/* temp file used for history editing (fc -e) */
+	TT_HEREDOC_EXP,	/* expanded heredoc */
+	TT_HIST_EDIT	/* temp file used for history editing (fc -e) */
 };
 typedef enum temp_type Temp_type;
 /* temp/heredoc files.  The file is removed when the struct is freed. */
@@ -295,10 +295,10 @@ extern	Trap	sigtraps[NSIG+1];
  */
 /* values for ksh_tmout_state */
 enum tmout_enum {
-		TMOUT_EXECUTING	= 0,	/* executing commands */
-		TMOUT_READING,		/* waiting for input */
-		TMOUT_LEAVING		/* have timed out */
-	};
+	TMOUT_EXECUTING	= 0,	/* executing commands */
+	TMOUT_READING,		/* waiting for input */
+	TMOUT_LEAVING		/* have timed out */
+};
 EXTERN unsigned int ksh_tmout;
 EXTERN enum tmout_enum ksh_tmout_state I__(TMOUT_EXECUTING);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.19 2005/01/27 16:25:06 danh Exp $	*/
+/*	$OpenBSD: vi.c,v 1.20 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -28,7 +28,7 @@ struct edstate {
 
 
 static int	vi_hook(int);
-static void 	vi_reset(char *, size_t);
+static void	vi_reset(char *, size_t);
 static int	nextstate(int);
 static int	vi_insert(int);
 static int	vi_cmd(int, const char *);
@@ -60,8 +60,8 @@ static void	ed_mov_opt(int, char *);
 static int	expand_word(int);
 static int	complete_word(int, int);
 static int	print_expansions(struct edstate *, int);
-static int 	char_len(int);
-static void 	x_vi_zotc(int);
+static int	char_len(int);
+static void	x_vi_zotc(int);
 static void	vi_pprompt(int);
 static void	vi_error(void);
 static void	vi_macro_reset(void);
@@ -141,9 +141,9 @@ const unsigned char	classify[128] = {
 
 static char		undocbuf[CMDLEN];
 
-static struct edstate 	*save_edstate(struct edstate *old);
+static struct edstate	*save_edstate(struct edstate *old);
 static void		restore_edstate(struct edstate *old, struct edstate *new);
-static void 		free_edstate(struct edstate *old);
+static void		free_edstate(struct edstate *old);
 
 static struct edstate	ebuf;
 static struct edstate	undobuf = { 0, undocbuf, CMDLEN, 0, 0 };

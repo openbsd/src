@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.9 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: tree.h,v 1.10 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  * command trees for compile/execute
@@ -22,7 +22,7 @@ struct op {
 	char  **args;			/* arguments to a command */
 	char  **vars;			/* variable assignments */
 	struct ioword	**ioact;	/* IO actions (eg, < > >>) */
-	struct op *left, *right; 	/* descendents */
+	struct op *left, *right;	/* descendents */
 	char   *str;			/* word for case; identifier for for,
 					 * select, and functions;
 					 * path to execute for TEXEC;

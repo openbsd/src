@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.23 2005/02/02 07:53:01 otto Exp $	*/
+/*	$OpenBSD: var.c,v 1.25 2005/03/28 21:33:04 deraadt Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -85,29 +85,29 @@ initvar(void)
 		const char *name;
 		int v;
 	} names[] = {
-			{ "COLUMNS",		V_COLUMNS },
-			{ "IFS",		V_IFS },
-			{ "OPTIND",		V_OPTIND },
-			{ "PATH",		V_PATH },
-			{ "POSIXLY_CORRECT",	V_POSIXLY_CORRECT },
-			{ "TMPDIR",		V_TMPDIR },
+		{ "COLUMNS",		V_COLUMNS },
+		{ "IFS",		V_IFS },
+		{ "OPTIND",		V_OPTIND },
+		{ "PATH",		V_PATH },
+		{ "POSIXLY_CORRECT",	V_POSIXLY_CORRECT },
+		{ "TMPDIR",		V_TMPDIR },
 #ifdef HISTORY
-			{ "HISTFILE",		V_HISTFILE },
-			{ "HISTSIZE",		V_HISTSIZE },
+		{ "HISTFILE",		V_HISTFILE },
+		{ "HISTSIZE",		V_HISTSIZE },
 #endif /* HISTORY */
 #ifdef EDIT
-			{ "EDITOR",		V_EDITOR },
-			{ "VISUAL",		V_VISUAL },
+		{ "EDITOR",		V_EDITOR },
+		{ "VISUAL",		V_VISUAL },
 #endif /* EDIT */
-			{ "MAIL",		V_MAIL },
-			{ "MAILCHECK",		V_MAILCHECK },
-			{ "MAILPATH",		V_MAILPATH },
-			{ "RANDOM",		V_RANDOM },
-			{ "SECONDS",		V_SECONDS },
-			{ "TMOUT",		V_TMOUT },
-			{ "LINENO",		V_LINENO },
-			{ (char *) 0,	0 }
-		};
+		{ "MAIL",		V_MAIL },
+		{ "MAILCHECK",		V_MAILCHECK },
+		{ "MAILPATH",		V_MAILPATH },
+		{ "RANDOM",		V_RANDOM },
+		{ "SECONDS",		V_SECONDS },
+		{ "TMOUT",		V_TMOUT },
+		{ "LINENO",		V_LINENO },
+		{ (char *) 0,	0 }
+	};
 	int i;
 	struct tbl *tp;
 
@@ -426,12 +426,12 @@ getint(struct tbl *vp, long int *nump, bool arith)
 	num = 0;
 	neg = 0;
 	if (arith && *s == '0' && *(s+1)) {
-	    	s++;
+		s++;
 		if (*s == 'x' || *s == 'X') {
-		    	s++;
+			s++;
 			base = 16;
 		} else
-		    	base = 8;
+			base = 8;
 		have_base++;
 	}
 	for (c = *s++; c ; c = *s++) {

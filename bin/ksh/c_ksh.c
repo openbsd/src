@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.25 2005/02/02 07:53:01 otto Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.26 2005/03/28 21:33:04 deraadt Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -866,8 +866,8 @@ c_alias(char **wp)
 	/* "hash -r" means reset all the tracked aliases.. */
 	if (rflag) {
 		static const char *const args[] = {
-			    "unalias", "-ta", (const char *) 0
-			};
+			"unalias", "-ta", (const char *) 0
+		};
 
 		if (!tflag || *wp) {
 			shprintf(

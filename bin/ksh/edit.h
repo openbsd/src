@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.h,v 1.7 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: edit.h,v 1.8 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -44,12 +44,12 @@ EXTERN X_chars edchars;
 #define XCF_COMMAND_FILE (XCF_COMMAND|XCF_FILE)
 
 /* edit.c */
-int 	x_getc(void);
-void 	x_flush(void);
-void 	x_putc(int);
-void 	x_puts(const char *);
-bool 	x_mode(bool);
-int 	promptlen(const char *, const char **);
+int	x_getc(void);
+void	x_flush(void);
+void	x_putc(int);
+void	x_puts(const char *);
+bool	x_mode(bool);
+int	promptlen(const char *, const char **);
 int	x_do_comment(char *, int, int *);
 void	x_print_expansions(int, char *const *, int);
 int	x_cf_glob(int, const char *, int, int, int *, int *, char ***, int *);
@@ -58,11 +58,11 @@ int	x_basename(const char *, const char *);
 void	x_free_words(int, char **);
 int	x_escape(const char *, size_t, int (*)(const char *, size_t));
 /* emacs.c */
-int 	x_emacs(char *, size_t);
-void 	x_init_emacs(void);
+int	x_emacs(char *, size_t);
+void	x_init_emacs(void);
 void	x_emacs_keys(X_chars *);
 /* vi.c */
-int 	x_vi(char *, size_t);
+int	x_vi(char *, size_t);
 
 
 #ifdef DEBUG

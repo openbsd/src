@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.15 2005/02/02 07:53:01 otto Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.16 2005/03/28 21:33:04 deraadt Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -505,8 +505,8 @@ ptest_isa(Test_env *te, Test_meta meta)
 {
 	/* Order important - indexed by Test_meta values */
 	static const char *const tokens[] = {
-				"-o", "-a", "!", "(", ")"
-			};
+		"-o", "-a", "!", "(", ")"
+	};
 	int ret;
 
 	if (te->pos.wp >= te->wp_end)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.32 2005/02/25 11:21:16 deraadt Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.33 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  * Process and job control
@@ -791,7 +791,6 @@ j_njobs(void)
 int
 j_jobs(const char *cp, int slp,
     int nflag)		/* 0: short, 1: long, 2: pgrp */
-	   	      
 {
 	Job	*j, *tmp;
 	int	how;

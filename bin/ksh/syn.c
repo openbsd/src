@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.20 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.21 2005/03/28 21:33:04 deraadt Exp $	*/
 
 /*
  * shell parser (C version)
@@ -807,9 +807,9 @@ static const char dbtest_not[] = { CHAR, '!', EOS };
 static const char dbtest_oparen[] = { CHAR, '(', EOS };
 static const char dbtest_cparen[] = { CHAR, ')', EOS };
 const char *const dbtest_tokens[] = {
-			dbtest_or, dbtest_and, dbtest_not,
-			dbtest_oparen, dbtest_cparen
-		};
+	dbtest_or, dbtest_and, dbtest_not,
+	dbtest_oparen, dbtest_cparen
+};
 const char db_close[] = { CHAR, ']', CHAR, ']', EOS };
 const char db_lthan[] = { CHAR, '<', EOS };
 const char db_gthan[] = { CHAR, '>', EOS };

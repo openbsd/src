@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.26 2004/12/22 17:18:51 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.27 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -119,7 +119,7 @@ const struct option options[] = {
 	{ "braceexpand",  0,		OF_ANY }, /* non-standard */
 #endif
 	{ "bgnice",	  0,		OF_ANY },
-	{ (char *) 0, 	'c',	    OF_CMDLINE },
+	{ (char *) 0,	'c',	    OF_CMDLINE },
 	{ "csh-history",  0,		OF_ANY }, /* non-standard */
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
@@ -160,8 +160,8 @@ const struct option options[] = {
 	{ "vi",		  0,		OF_ANY },
 	{ "viraw",	  0,		OF_ANY }, /* no effect */
 	{ "vi-show8",	  0,		OF_ANY }, /* non-standard */
-	{ "vi-tabcomplete",  0, 	OF_ANY }, /* non-standard */
-	{ "vi-esccomplete",  0, 	OF_ANY }, /* non-standard */
+	{ "vi-tabcomplete",  0,		OF_ANY }, /* non-standard */
+	{ "vi-esccomplete",  0,		OF_ANY }, /* non-standard */
 #endif
 	{ "xtrace",	'x',		OF_ANY },
 	/* Anonymous flags: used internally by shell only

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.39 2004/12/22 18:57:28 otto Exp $	*/
+/*	$OpenBSD: exec.c,v 1.40 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  * execute command tree
@@ -18,7 +18,7 @@ static void	scriptexec(struct op *, char **);
 static int	call_builtin(struct tbl *, char **);
 static int	iosetup(struct ioword *, struct tbl *);
 static int	herein(const char *, int);
-static char 	*do_selectargs(char **, bool);
+static char	*do_selectargs(char **, bool);
 static int	dbteste_isa(Test_env *, Test_meta);
 static const char *dbteste_getopnd(Test_env *, Test_op, int);
 static int	dbteste_eval(Test_env *, Test_op, const char *, const char *,
@@ -809,8 +809,6 @@ builtin(const char *name, int (*func) (char **))
  */
 struct tbl *
 findcom(const char *name, int flags)
-	                 
-	   	      		/* FC_* */
 {
 	static struct tbl temp;
 	unsigned int h = hash(name);
@@ -907,8 +905,7 @@ findcom(const char *name, int flags)
  * flush executable commands with relative paths
  */
 void
-flushcom(int all)
-	        		/* just relative or all */
+flushcom(int all)	/* just relative or all */
 {
 	struct tbl *tp;
 	struct tstate ts;

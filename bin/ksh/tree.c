@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.15 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: tree.c,v 1.16 2005/03/28 21:28:22 deraadt Exp $	*/
 
 /*
  * command tree climbing
@@ -9,8 +9,8 @@
 #define INDENT	4
 
 #define tputc(c, shf)	shf_putchar(c, shf);
-static void 	ptree(struct op *, int, struct shf *);
-static void 	pioact(struct shf *, int, struct ioword *);
+static void	ptree(struct op *, int, struct shf *);
+static void	pioact(struct shf *, int, struct ioword *);
 static void	tputC(int, struct shf *);
 static void	tputS(char *, struct shf *);
 static void	vfptreef(struct shf *, int, const char *, va_list);
@@ -284,7 +284,7 @@ tputS(char *wp, struct shf *shf)
 	 *	'foo' -> "foo"
 	 * could change encoding to:
 	 *	OQUOTE ["'] ... CQUOTE ["']
-	 * 	COMSUB [(`] ...\0	(handle $ ` \ and maybe " in `...` case)
+	 *	COMSUB [(`] ...\0	(handle $ ` \ and maybe " in `...` case)
 	 */
 	while (1)
 		switch ((c = *wp++)) {
