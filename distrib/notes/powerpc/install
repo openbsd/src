@@ -23,13 +23,16 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	At this time the system can be installed from the supplied
-	CD boot image or by network loading the bootloader.  Once
+	At this time, the system can be installed from the supplied
+	CD boot image, by network loading the bootloader or loading
+	the bootloader and kernel from a HFS partition.  Once
 	the bootloader is installed on the local hard drive, the
-	system can boot from it.  Although currently OpenBSD
-	cannot share the same drive as Mac OS due to partitioning
-	issues, systems that support more than one physical drive
-	can dual boot using Open Firmware commands.
+	system can boot from it. OpenBSD may share a drive with MacOS
+	if the process is followed carefully. Currently it is
+	necessary to use OpenFirmware commands to dual boot between
+	OS's, or multiple drives may be used with each OS owning drive(s).
+	Note that on many of the systems is it not possible to
+	automatically boot OpenBSD at this time.
 
 	(Refer to "OpenBSD OSREV Release Contents" above for information
 	on how to access and boot from Open Firmware)
@@ -37,7 +40,7 @@ process again from scratch.
 	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them, to determine your
 	disk's name and geometry.  Its name will be something like
-	"sd0" and the geometry will be printed on a line that
+	"wd0" or "sd0" and the geometry will be printed on a line that
 	begins with its name.  As mentioned above, you will need your
 	disk's geometry when creating OpenBSD's partitions.  You will
 	also need to know the name, to tell the install tools what
@@ -51,25 +54,89 @@ process again from scratch.
 	completely normal.  When you reach the prompt asking you for a
 	shell name, just hit return.
 
-	You will be presented with a welcome message and a prompt.  At
-	this time you should enter the command "install" to start the
-	installation process.
+	Now you will be asked whether you wish to do an "install"
+	or an "upgrade".  Enter 'i' for a fresh install or 'u' to
+	upgrade an existing installation.
 
-	You will be asked which terminal type to use, vt100 will work
-	almost acceptably, however no terminal type quite works correctly)
+	You will be presented with a welcome message and asked if
+	you really wish to install (or upgrade).  Assuming you
+	answered yes, you will be asked which terminal type to use.
+	You should just hit return to select the default (vt220).
 
 	The install program will then tell you which disks of that
 	type it can install on, and ask you which it should use.  The
-	name of the disk is typically "wd0" for IDE drives.  Reply
-	with the name of your disk. 
+	name of the disk is typically "wd0" for IDE/ATA drives or
+	"sd0" for SCSI drives.  Reply with the name of your disk.
 
 	Next you will have to edit or create a disklabel for the disk
 	OpenBSD is being installed on.  If there are any existing
 	partitions defined (for any operating system), and a disk label
 	is not found, you will first be given an opportunity to run
-	fdisk and create an OpenBSD partition.
+	fdisk (MBR paritioned disk) or pdisk (HFS paritioned disk)
+	and create an OpenBSD partition.
 
-	If fdisk is being invoked on your behalf, it will start by
+	If pdisk is being invoked, It will issue a prompt which will
+	allow one to delete the Unused parition, then using the "C"
+	command create a new parition. It is necessary to display
+	the parition table, either before deleting the free parition
+	or after, to know the start and size of the partition.
+
+	An example Parition map:The parition map may look like the following
+	Before editing the table, it looks like:
+
+	 #:                type name             length   base    ( size )
+	 1: Apple_partition_map Apple                63 @ 1      
+	 2:      Apple_Driver43*Macintosh            54 @ 64     
+	 3:      Apple_Driver43*Macintosh            74 @ 118    
+	 4:    Apple_Driver_ATA*Macintosh            54 @ 192    
+	 5:    Apple_Driver_ATA*Macintosh            74 @ 246    
+	 6:      Apple_FWDriver Macintosh           200 @ 320    
+	 7:  Apple_Driver_IOKit Macintosh           512 @ 520    
+	 8:       Apple_Patches Patch Partition     512 @ 1032   
+	 9:           Apple_HFS untitled        2142310 @ 1544    (  1.0G)
+	10:           Apple_HFS untitled 2      4120589 @ 2143854 (  2.0G)
+	11:              Unused untitled 3      6330517 @ 6264443 (  3.0G)
+
+	After editing the table, it should look like:
+	 #:                type name             length   base    ( size )
+	 1: Apple_partition_map Apple                63 @ 1      
+	 2:      Apple_Driver43*Macintosh            54 @ 64     
+	 3:      Apple_Driver43*Macintosh            74 @ 118    
+	 4:    Apple_Driver_ATA*Macintosh            54 @ 192    
+	 5:    Apple_Driver_ATA*Macintosh            74 @ 246    
+	 6:      Apple_FWDriver Macintosh           200 @ 320    
+	 7:  Apple_Driver_IOKit Macintosh           512 @ 520    
+	 8:       Apple_Patches Patch Partition     512 @ 1032   
+	 9:           Apple_HFS untitled        2142310 @ 1544    (  1.0G)
+	10:           Apple_HFS untitled 2      4120589 @ 2143854 (  2.0G)
+	11:             OpenBSD OpenBSD         6330517 @ 6264443 (  3.0G)
+
+	This will likely be different based on the number of paritions
+	created on the disk by the Apple partition editor.
+	It is _VERY_ important to not change the start or sizes of paritions
+	other than the ones that are to be used by OpenBSD, including
+	the Apple_Driver.* and Apple_partition_map.
+
+	---
+	Command (? for help): p
+	<output is in the before example above>
+	Command (? for help): d 11
+	Command (? for help): C
+	First block: 6264443
+	Length in blocks: 6330517
+	Name of partition: OpenBSD
+	Type of partition: OpenBSD
+	Command (? for help): p
+	<output is in the after example above>
+	---
+
+	After the parition is deleted, if the parition is printed,
+	it will show up as:
+	...
+	11:          Apple_Free Extra           6330517 @ 6264443 (  3.0G)
+	...
+
+	If fdisk is being invoked, it will start by
 	displaying the current partitions defined and then allow you
 	to modify this information, add new partitions and change
 	which partition to boot from by default.  If you make a mistake,
@@ -149,7 +216,7 @@ process again from scratch.
 
 	After these preparatory steps has been completed, you will be
 	able to extract the distribution sets onto your system.  There
-	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
+	are several install methods supported; FTP, HTTP, tape, CD-ROM
 	or a local disk partition.  To install from a tape, the distrib-
 	ution sets must have been written to tape prior to running the
 	installation program, either as tar images or as gzipped tar
@@ -164,8 +231,6 @@ OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 		
-OpenBSDNFSInstall
-
 OpenBSDDISKInstall(,,{:- or MS-DOS-:})
 		
 OpenBSDCommonFS

@@ -1,2 +1,11 @@
-The MACHINE port boots off a boot program in an MSDOS filesystem. 
-This is now set up by the install program and no special setup is required.
+OpenBSD/MACHINE is now capable of booting either from a dedicated
+disk using a MBR partitioned disk or sharing a disk with MacOS.
+
+If the disk is to be shared between MacOS and OpenBSD, it is necessary
+to reformat and install the MacOS partitions first, using the MacOS tools,
+leaving space on the disk as an "Unused" partition or as another partition
+that is reused for OpenBSD.
+
+For dedicated disks, MACHINE port boots off a boot program in
+an MSDOS filesystem. This is now set up by the install program
+and no special setup is required.

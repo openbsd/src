@@ -2,11 +2,10 @@ Installation is supported from several media types, including:
 
 	CDROM
 	FFS partitions
+	HFS partitions (bootloader only, in conjuction with FTP/HTTP/tape)
 	Tape
-	Remote NFS partition
 	FTP
 	HTTP
-	rsh & restore
 
 Unless the machine already has openbsd installed on it, and
 the bootloader can be loaded from local disk the bootloader will
@@ -55,37 +54,6 @@ following:
 	installing OpenBSD from scratch, go to the section on preparing
 	your hard disk, below.  If you're upgrading an existing
 	installation, go directly to the section on upgrading.
-
-To install or upgrade OpenBSD using a remote partition, mounted via
-NFS, you must do the following:
-
-	NOTE:	This method of installation is recommended only for
-		those already familiar with using BSD network
-		configuration and management commands.  If you aren't,
-		this documentation should help, but is not intended to
-		be all-encompassing.
-
-	Place the OpenBSD distribution sets you wish to install into a
-	directory on an NFS server, and make that directory mountable
-	by the machine on which you are installing or upgrading OpenBSD.
-	This will probably require modifying the /etc/exports file on
-	of the NFS server and resetting its mount daemon (mountd).
-	(Both of these actions will probably require superuser
-	privileges on the server.)
-
-	You need to know the the numeric IP address of the NFS server,
-	and, if the server is not on a network directly connected to
-	the machine on which you're installing or upgrading OpenBSD,
-	you need to know the numeric IP address of the router closest
-	to the OpenBSD machine.  Finally, you need to know the numeric
-	IP address of the OpenBSD machine itself.
-
-	Once the NFS server is set up properly and you have the
-	information mentioned above, you can proceed to the next step
-	in the installation or upgrade process.  If you're installing
-	OpenBSD from scratch, go to the section on preparing your hard
-	disk, below.  If you're upgrading an existing installation, go
-	directly to the section on upgrading.
 
 If you are upgrading OpenBSD, you also have the option of installing
 OpenBSD by putting the new distribution sets somewhere in your existing

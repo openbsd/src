@@ -88,12 +88,8 @@ words		(show methods of items at current location in the device tree)
 
 
 NOTES:
-	The powerpc port does not currently support sharing the disk with MacOS
-	This is an important fact on the iMac which does not support more than
-	one disk.
-
-	The powerpc port does not currently support booting from the Zip drive,
-	if installed.
+	The powerpc port does not currently support booting from a USB
+	Zip drive, if installed.
 
 	To reset a Power Macintosh to the factory-configure Open Firmware
 	settings, simultaneously hold down the Command, Option, P, R keys
@@ -102,23 +98,23 @@ NOTES:
 
 DistributionDescription
 
-OpenBSDbase(23.8M,71.4M)
+OpenBSDbase(23.4M,70.8M)
 
-OpenBSDcomp(19.1M,65.5M)
+OpenBSDcomp(19.7M,68.0M)
 
-OpenBSDetc(1.0M,3.3M)
+OpenBSDetc(1.0M,3.5M)
 
-OpenBSDgame(2.7M,6.3M)
+OpenBSDgame(2.7M,6.4M)
 
-OpenBSDman(5.2M,19.5M)
+OpenBSDman(5.4M,20.9M)
 
-OpenBSDmisc(5.6M,5.6M)
+OpenBSDmisc(1.6M,5.7M)
 
-OpenBSDxbase(4.4M,12.1M)
+OpenBSDxbase(7.2M,12.1M)
 
-OpenBSDxshare(1.5M,8.1M)
+OpenBSDxshare(1.7M,8.1M)
 
-OpenBSDxfont(6.2M,7.3M)
+OpenBSDxfont(11.6M,7.3M)
 
-OpenBSDxserv(2.1M,5.4M)
+OpenBSDxserv(4.4M,5.4M)
 

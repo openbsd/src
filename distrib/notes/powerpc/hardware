@@ -1,19 +1,20 @@
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
-as possibly some other G3 Macintosh systems.  Older ADB-based systems
-will not work, only USB keyboard is supported.
+As PowerBook and iBook machines.
 
-Has been tested on iMac Rev A/233MHz and Rev C/333MHz machines, several
+Machines with older firmware: 6xxx, 7xxx 8xxx, and 9xxx machines are
+not supported.  PowerMac G3 Beige and B&W G3 are unknown. 
+
+Has been tested on iMac Revs A-C as well as on iMac DV(+) machines, several
 Power Macintosh G4 systems (single and dual processor), as well as the
-G4 Cube.  Some success has been reported on a PowerBook, however this
-is not well supported.
+G4 Cube. For portables, PowerBook G3, PowerBook G4 have been tested,
+iBook minimally tested.  Note that power saving features on portables
+are very limited, no power managment features are available, suspend/sleep
+is not supported.
 
-Some code has been written to work better on the B&W G3, but has never
-been retested.  Hardware availability is currently limiting development on
-these systems.
 
 Supported devices {:-include-:}:
 
-	IDE hard disk controllers. iMac/G4 onboard supported.
+	IDE hard disk controllers. onboard controllers supported.
 	SCSI host adapters:
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 
@@ -25,21 +26,25 @@ Supported devices {:-include-:}:
 	Ethernet adapters:
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			Znyx ZX34X
-		Onboard iMac 10-100Mbs Ethernet, 100Mbs untested.
-		Onboard G4 (gm) ethernet.
+		Onboard Older iMac 10-100Mbs (bm) Ethernet. 
+		Onboard G4/Powerbook/Newer iMac (gm) ethernet.
 
 	Tape drives:
 		SCSI Tape drives
 
 	CD-ROM drives:
 		SCSI CD-ROM drives
+		SCSI CD-RW drives
 		Atapi CD-ROM drives
+		Atapi DVD-ROM drives
+		Atapi DVD-RAM drives (read-only)
+		Atapi CD-RW drives.
 
 	Mice:
 		USB Mice.
 
 	Sound Cards:
-		NONE
+		AWACS supported, but not enabled due to performance issue.
 
 	Miscellaneous:
 		USB Hubs.
