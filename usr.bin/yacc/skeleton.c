@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.14 2000/01/26 22:37:24 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.15 2000/01/27 21:34:23 deraadt Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ char *banner[] =
     "#if __GNUC__ == 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ == 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.14 2000/01/26 22:37:24 deraadt Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.15 2000/01/27 21:34:23 deraadt Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -171,7 +171,8 @@ char *body[] =
     "            free(yyss);",
     "    if (yyvs)",
     "            free(yyvs);",
-    "    yyss = yyssp = yyvs = yyvsp = NULL;",
+    "    yyss = yyssp = NULL;",
+    "    yyvs = yyvsp = NULL;",
     "    yystacksize = 0;",
     "    return -1;",
     "}",
