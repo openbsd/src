@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.3 1996/10/26 06:22:38 downsj Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.4 1996/10/26 08:07:26 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -206,6 +206,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, fdcintr, fdc, fdc->sc_dev.dv_xname);
 
+#if defined(i386)
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
@@ -213,6 +214,7 @@ fdcattach(parent, self, aux)
 	if (fdc->sc_dev.dv_unit == 0)
 		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
 	else
+#endif
 		type = -1;
 
 	/* physical limit: four drives per controller. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.24 1996/10/26 06:22:37 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.25 1996/10/26 08:07:24 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -74,7 +74,6 @@
 #include <dev/isa/fdreg.h>
 
 #if defined(i386)
-#include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
 #endif
 
@@ -276,6 +275,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	char *fdc;
 	int nvraminfo, drive;
 {
+#if defined(i386)
 	int type;
 
 	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
@@ -298,6 +298,9 @@ fd_nvtotype(fdc, nvraminfo, drive)
 		    fdc, drive, type);
 		return NULL;
 	}
+#else
+	return NULL;
+#endif
 }
 
 __inline struct fd_type *
