@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.14 2003/06/26 21:36:39 deraadt Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.15 2003/11/21 09:11:25 djm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static const char rcsid[] = "$OpenBSD: kvm_mkdb.c,v 1.14 2003/06/26 21:36:39 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: kvm_mkdb.c,v 1.15 2003/11/21 09:11:25 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static const char rcsid[] = "$OpenBSD: kvm_mkdb.c,v 1.14 2003/06/26 21:36:39 der
 #include "extern.h"
 
 void usage(void);
-int kvm_mkdb(int, char *, char *, int);
+int kvm_mkdb(int, const char *, char *, char *, int);
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -81,6 +81,7 @@ main(int argc, char *argv[])
 	struct rlimit rl;
 	int fd, rval, ch, verbose = 0;
 	char *nlistpath, *nlistname;
+	char dbdir[MAXPATHLEN];
 
 	/* Increase our data size to the max if we can. */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
@@ -89,10 +90,19 @@ main(int argc, char *argv[])
 			warn("can't set rlimit data size");
 	}
 
-	while ((ch = getopt(argc, argv, "v")) != -1)
+	strlcpy(dbdir, _PATH_VARDB, sizeof(dbdir));
+	while ((ch = getopt(argc, argv, "vo:")) != -1)
 		switch (ch) {
 		case 'v':
 			verbose = 1;
+			break;
+		case 'o':
+			rval = strlcpy(dbdir, optarg, sizeof(dbdir));
+			if (rval == 0 || rval + 1 >= sizeof(dbdir))
+				errx(1, "Invalid directory");
+			/* Make sure there is a '/' at the end of the path */
+			if (dbdir[strlen(dbdir) - 1] != '/')
+				strlcat(dbdir, "/", sizeof(dbdir));
 			break;
 		default:
 			usage();
@@ -109,33 +119,45 @@ main(int argc, char *argv[])
 		nlistname = basename(nlistpath);
 		if ((fd = open(nlistpath, O_RDONLY, 0)) == -1)
 			err(1, "can't open %s", nlistpath);
-		rval = kvm_mkdb(fd, nlistpath, nlistname, verbose);
+		rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, verbose);
 	} else {
 		nlistname = basename(_PATH_UNIX);
 		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY, 0)) == -1 ||
-		    (rval = kvm_mkdb(fd, nlistpath, nlistname, verbose)) != 0) {
+		    (rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, 
+		    verbose)) != 0) {
 			if (fd == -1) 
 				warnx("can't open %s", _PATH_KSYMS);
 			else
 				warnx("will try again using %s instead", _PATH_UNIX);
 			if ((fd = open((nlistpath = _PATH_UNIX), O_RDONLY, 0)) == -1)
 				err(1, "can't open %s", nlistpath);
-			rval = kvm_mkdb(fd, nlistpath, nlistname, verbose);
+			rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, 
+			    verbose);
 		}
 	}
 	exit(rval);
 }
 
 int
-kvm_mkdb(int fd, char *nlistpath, char *nlistname, int verbose)
+kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname, 
+    int verbose)
 {
 	DB *db;
 	char dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	int r;
 
-	(void)snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
-	    _PATH_VARDB, nlistname);
-	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
-	    _PATH_VARDB, nlistname);
+	r = snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
+	    dbdir, nlistname);
+	if (r < 0 || r > sizeof(dbtemp)) {
+		warnx("Directory name too long");
+		return (1);
+	}
+	r = snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
+	    dbdir, nlistname);
+	if (r < 0 || r > sizeof(dbtemp)) {
+		warnx("Directory name too long");
+		return (1);
+	}
 
 	/* If the existing db file matches the currently running kernel, exit */
 	if (testdb(dbname)) {
@@ -174,6 +196,6 @@ kvm_mkdb(int fd, char *nlistpath, char *nlistname, int verbose)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: kvm_mkdb [-v] [file]\n");
+	(void)fprintf(stderr, "usage: kvm_mkdb [-v] [-o directory] [file]\n");
 	exit(1);
 }

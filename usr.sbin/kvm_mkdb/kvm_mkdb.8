@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_mkdb.8,v 1.9 2003/06/12 12:59:51 jmc Exp $
+.\"	$OpenBSD: kvm_mkdb.8,v 1.10 2003/11/21 09:11:25 djm Exp $
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -37,6 +37,7 @@
 .Sh SYNOPSIS
 .Nm kvm_mkdb
 .Op Fl v
+.Op Fl o Ar directory
 .Op Ar file
 .Sh DESCRIPTION
 .Nm kvm_mkdb
@@ -59,9 +60,17 @@ function.
 However, in the future the database may contain other static
 information about the current system.
 .Pp
-The
-.Fl v
-option yields slightly more verbose operation.
+The options are as follows:
+.Bl -tag -width "-o directory"
+.It Fl o Ar directory
+Allows the specification of a
+.Ar directory
+other than
+.Pa /var/db
+for the database to be created in.
+.It Fl v
+Yields slightly more verbose operation.
+.El
 .Sh FILES
 .Bl -tag -width /var/db/kvm_bsd.db -compact
 .It Pa /bsd
