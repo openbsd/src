@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.3 1998/08/22 08:56:00 pjanzen Exp $	*/
+/*	$OpenBSD: robots.h,v 1.4 1999/12/18 11:18:13 pjanzen Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -36,15 +36,15 @@
  *	@(#)robots.h	8.1 (Berkeley) 5/31/93
  */
 
-#include	<sys/ttydefaults.h>
+#include	<sys/param.h>
 #include	<sys/types.h>
+#include	<sys/time.h>
 #include	<ctype.h>
 #include	<curses.h>
 #include	<err.h>
 #include	<errno.h>
 #include	<fcntl.h>
 #include	<pwd.h>
-#include	<setjmp.h>
 #include	<signal.h>
 #include	<string.h>
 #include	<stdlib.h>
@@ -68,8 +68,6 @@
 #define	Y_PROMPT	(Y_FIELDSIZE - 1)
 #define	X_PROMPT	(X_FIELDSIZE + 2)
 #define	MAXSCORES	(Y_SIZE - 2)
-#define	MAXNAME		16
-#define	MS_NAME		"Ten"
 
 /*
  * characters on screen
@@ -90,7 +88,7 @@ typedef struct {
 typedef struct {
 	uid_t	s_uid;
 	int	s_score;
-	char	s_name[MAXNAME];
+	char	s_name[MAXLOGNAME];
 } SCORE;
 
 typedef struct passwd	PASSWD;
@@ -112,9 +110,11 @@ extern char	Cnt_move, Field[Y_FIELDSIZE][X_FIELDSIZE], *Next_move,
 extern int	Count, Level, Num_robots, Num_scores, Score,
 		Start_level, Wait_bonus;
 
+extern fd_set	rset;
+extern struct timeval	tv;
+
 extern COORD	Max, Min, My_pos, Robots[];
 
-extern jmp_buf	End_move;
 
 /*
  * functions types
@@ -125,12 +125,11 @@ bool	another __P((void));
 int	cmp_sc __P((const void *, const void *));
 bool	do_move __P((int, int));
 bool	eaten __P((COORD *));
-void	flush_in __P((void));
 void	get_move __P((void));
 void	init_field __P((void));
 bool	jumping __P((void));
 void	make_level __P((void));
-void	move_robots __P((int));
+void	move_robots __P((void));
 bool	must_telep __P((void));
 void	play_level __P((void));
 int	query __P((char *));
@@ -142,3 +141,4 @@ void	score __P((int));
 void	set_name __P((SCORE *));
 void	show_score __P((void));
 int	sign __P((int));
+void	usage __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.2 1998/07/09 04:34:12 pjanzen Exp $	*/
+/*	$OpenBSD: extern.c,v 1.3 1999/12/18 11:18:12 pjanzen Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/04/22 10:08:49 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: extern.c,v 1.2 1998/07/09 04:34:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: extern.c,v 1.3 1999/12/18 11:18:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,10 @@ int	Score;			/* Current score */
 int	Start_level = 1;	/* Level on which to start */
 int	Wait_bonus;		/* bonus for waiting */
 
+fd_set	rset;			/* Needed if Real_time */
+struct timeval	tv;		/* how long to wait; could be an option */
+
 COORD	Max;			/* Max area robots take up */
 COORD	Min;			/* Min area robots take up */
 COORD	My_pos;			/* Player's current position */
 COORD	Robots[MAXROBOTS];	/* Robots' current positions */
-
-jmp_buf	End_move;		/* Jump to on Real_time */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.5 1998/08/22 08:56:01 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.6 1999/12/18 11:18:13 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.5 1998/08/22 08:56:01 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.6 1999/12/18 11:18:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ set_name(scp)
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
 		pp->pw_name = "???";
-	strncpy(scp->s_name, pp->pw_name, MAXNAME);
+	strlcpy(scp->s_name, pp->pw_name, MAXLOGNAME);
 }
 
 /*

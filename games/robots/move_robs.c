@@ -1,4 +1,4 @@
-/*	$OpenBSD: move_robs.c,v 1.2 1998/07/09 04:34:19 pjanzen Exp $	*/
+/*	$OpenBSD: move_robs.c,v 1.3 1999/12/18 11:18:13 pjanzen Exp $	*/
 /*	$NetBSD: move_robs.c,v 1.3 1995/04/22 10:08:59 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move_robs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move_robs.c,v 1.2 1998/07/09 04:34:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move_robs.c,v 1.3 1999/12/18 11:18:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,13 +49,10 @@ static char rcsid[] = "$OpenBSD: move_robs.c,v 1.2 1998/07/09 04:34:19 pjanzen E
  *	Move the robots around
  */
 void
-move_robots(was_sig)
-	bool	was_sig;
+move_robots()
 {
 	register COORD	*rp;
 
-	if (Real_time)
-		signal(SIGALRM, move_robots);
 # ifdef DEBUG
 	move(Min.y, Min.x);
 	addch(inch());
@@ -109,12 +106,6 @@ move_robots(was_sig)
 				Max.x = rp->x;
 		}
 
-	if (was_sig) {
-		refresh();
-		if (Dead || Num_robots <= 0)
-			longjmp(End_move, 0);
-	}
-
 # ifdef DEBUG
 	standout();
 	move(Min.y, Min.x);
@@ -123,8 +114,6 @@ move_robots(was_sig)
 	addch(inch());
 	standend();
 # endif DEBUG
-	if (Real_time)
-		alarm(3);
 }
 
 /*

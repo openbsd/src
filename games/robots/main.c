@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1998/08/22 08:55:54 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1999/12/18 11:18:12 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -44,23 +44,33 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1998/08/22 08:55:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1999/12/18 11:18:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include	"robots.h"
+
+void
+usage()
+{
+	fprintf(stderr, "usage: robots [-sjtar] [scorefile]\n");
+	exit(1);
+}
 
 int
 main(ac, av)
 	int	ac;
 	char	**av;
 {
-	register char	*sp;
-	register bool	bad_arg;
 	register bool	show_only;
 	extern char	*Scorefile;
 	int		score_wfd;     /* high score writable file descriptor */
 	int		score_err = 0; /* hold errno from score file open */
+	int		ch;
+	extern int	optind;
+#ifdef FANCY
+	register char	*sp;
+#endif
 
 	if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
 		score_err = errno;
@@ -70,54 +80,54 @@ main(ac, av)
 	setgid(getgid());
 
 	show_only = FALSE;
-	if (ac > 1) {
-		bad_arg = FALSE;
-		for (++av; ac > 1 && *av[0]; av++, ac--)
-			if (av[0][0] != '-') {
-				Scorefile = av[0];
-				if (score_wfd >= 0)
-					close(score_wfd);
-			/* This file requires no special privileges. */
-				if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
-					score_err = errno;
-#ifdef	FANCY
-				sp = strrchr(Scorefile, '/');
-				if (sp == NULL)
-					sp = Scorefile;
-				if (strcmp(sp, "pattern_roll") == 0)
-					Pattern_roll = TRUE;
-				else if (strcmp(sp, "stand_still") == 0)
-					Stand_still = TRUE;
-				if (Pattern_roll || Stand_still)
-					Teleport = TRUE;
-#endif
-			} else
-				for (sp = &av[0][1]; *sp; sp++)
-					switch (*sp) {
-					  case 's':
-						show_only = TRUE;
-						break;
-					  case 'r':
-						Real_time = TRUE;
-						break;
-					  case 'a':
-						Start_level = 4;
-						break;
-					  case 'j':
-						Jump = TRUE;
-						break;
-					  case 't':
-						Teleport = TRUE;
-						break;
-					  default:
-						warnx("unknown option: %c", *sp);
-						bad_arg = TRUE;
-						break;
-					}
-		if (bad_arg) {
-			exit(1);
-			/* NOTREACHED */
+	while ((ch = getopt(ac, av, "srajt")) != -1)
+		switch (ch) {
+		case 's':
+			show_only = TRUE;
+			break;
+		case 'r':
+			Real_time = TRUE;
+			/* Could be a command-line option */
+			tv.tv_sec = 3;
+			tv.tv_usec = 0;
+			FD_ZERO(&rset);
+			break;
+		case 'a':
+			Start_level = 4;
+			break;
+		case 'j':
+			Jump = TRUE;
+			break;
+		case 't':
+			Teleport = TRUE;
+			break;
+		case '?':
+		default:
+			usage();
 		}
+	ac -= optind;
+	av += optind;
+
+	if (ac > 1)
+		usage();
+	if (ac == 1) {
+		Scorefile = av[0];
+		if (score_wfd >= 0)
+			close(score_wfd);
+		/* This file requires no special privileges. */
+		if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
+			score_err = errno;
+#ifdef	FANCY
+		sp = strrchr(Scorefile, '/');
+		if (sp == NULL)
+			sp = Scorefile;
+		if (strcmp(sp, "pattern_roll") == 0)
+			Pattern_roll = TRUE;
+		else if (strcmp(sp, "stand_still") == 0)
+			Stand_still = TRUE;
+		if (Pattern_roll || Stand_still)
+			Teleport = TRUE;
+#endif
 	}
 
 	if (show_only) {
@@ -125,9 +135,11 @@ main(ac, av)
 		exit(0);
 	}
 
-	if (score_wfd < 0)
+	if (score_wfd < 0) {
 		warnx("%s: %s; no scores will be saved", Scorefile,
 			strerror(score_err));
+		sleep(1);
+	}
 
 	initscr();
 	signal(SIGINT, quit);
@@ -144,8 +156,6 @@ main(ac, av)
 	}
 
 	srandom(getpid());
-	if (Real_time)
-		signal(SIGALRM, move_robots);
 	do {
 		init_field();
 		for (Level = Start_level; !Dead; Level++) {
@@ -178,7 +188,6 @@ quit(dummy)
 {
 	endwin();
 	exit(0);
-	/* NOTREACHED */
 }
 
 /*
