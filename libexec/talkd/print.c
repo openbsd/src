@@ -1,3 +1,5 @@
+/*	$OpenBSD: print.c,v 1.2 1996/04/28 23:56:19 mickey Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.1.1.1 1995/10/18 08:43:23 deraadt Exp $";
+static char rcsid[] = "$Id: print.c,v 1.2 1996/04/28 23:56:19 mickey Exp $";
 #endif /* not lint */
 
 /* debug print routines */
@@ -43,6 +45,7 @@ static char rcsid[] = "$Id: print.c,v 1.1.1.1 1995/10/18 08:43:23 deraadt Exp $"
 #include <protocols/talkd.h>
 #include <syslog.h>
 #include <stdio.h>
+#include "talkd.h"
 
 static	char *types[] =
     { "leave_invite", "look_up", "delete", "announce" };
@@ -52,6 +55,7 @@ static	char *answers[] =
       "unknown_request", "badversion", "badaddr", "badctladdr" };
 #define	NANSWERS	(sizeof (answers) / sizeof (answers[0]))
 
+void
 print_request(cp, mp)
 	char *cp;
 	register CTL_MSG *mp;
@@ -67,6 +71,7 @@ print_request(cp, mp)
 	    cp, tp, mp->id_num, mp->l_name, mp->r_name, mp->r_tty);
 }
 
+void
 print_response(cp, rp)
 	char *cp;
 	register CTL_RESPONSE *rp;

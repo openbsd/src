@@ -1,3 +1,5 @@
+/*	$OpenBSD: announce.c,v 1.2 1996/04/28 23:56:18 mickey Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.1.1.1 1995/10/18 08:43:22 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.2 1996/04/28 23:56:18 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,8 +53,9 @@ static char rcsid[] = "$Id: announce.c,v 1.1.1.1 1995/10/18 08:43:22 deraadt Exp
 #include <string.h>
 #include <vis.h>
 #include <paths.h>
+#include "talkd.h"
 
-extern char hostname[];
+static void	print_mesg __P((FILE *,CTL_MSG *,char *));
 
 /*
  * Announce an invitation to talk.
@@ -61,6 +64,7 @@ extern char hostname[];
  * process to any terminal that it writes on, we must fork a child
  * to protect ourselves
  */
+int
 announce(request, remote_machine)
 	CTL_MSG *request;
 	char *remote_machine;
@@ -94,6 +98,7 @@ announce(request, remote_machine)
  * See if the user is accepting messages. If so, announce that 
  * a talk is requested.
  */
+int
 announce_proc(request, remote_machine)
 	CTL_MSG *request;
 	char *remote_machine;
@@ -133,6 +138,7 @@ announce_proc(request, remote_machine)
  * try to keep the message in one piece if the recipient
  * in in vi at the time
  */
+static void
 print_mesg(tf, request, remote_machine)
 	FILE *tf;
 	CTL_MSG *request;

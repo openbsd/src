@@ -1,3 +1,5 @@
+/*	$OpenBSD: table.c,v 1.2 1996/04/28 23:56:20 mickey Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.1.1.1 1995/10/18 08:43:23 deraadt Exp $";
+static char rcsid[] = "$Id: table.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -53,12 +55,12 @@ static char rcsid[] = "$Id: table.c,v 1.1.1.1 1995/10/18 08:43:23 deraadt Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "talkd.h"
 
 #define MAX_ID 16000	/* << 2^15 so I don't have sign troubles */
 
 #define NIL ((TABLE_ENTRY *)0)
 
-extern	int debug;
 struct	timeval tp;
 struct	timezone txp;
 
@@ -70,10 +72,9 @@ struct table_entry {
 	TABLE_ENTRY *next;
 	TABLE_ENTRY *last;
 };
+TABLE_ENTRY	*table = NIL;
 
-TABLE_ENTRY *table = NIL;
-CTL_MSG *find_request();
-CTL_MSG *find_match();
+static void	delete __P((register TABLE_ENTRY *));
 
 /*
  * Look in the table for an invitation that matches the current
@@ -106,6 +107,9 @@ find_match(request)
 		     ptr->request.type == LEAVE_INVITE)
 			return (&ptr->request);
 	}
+	if (debug)
+		syslog(LOG_DEBUG, "find_match: not found\n");
+
 	return ((CTL_MSG *)0);
 }
 
@@ -151,6 +155,7 @@ find_request(request)
 	return ((CTL_MSG *)0);
 }
 
+void
 insert_table(request, response)
 	CTL_MSG *request;
 	CTL_RESPONSE *response;
@@ -158,6 +163,8 @@ insert_table(request, response)
 	register TABLE_ENTRY *ptr;
 	time_t current_time;
 
+	if (debug)
+		print_request( "insert_table", request );
 	gettimeofday(&tp, &txp);
 	current_time = tp.tv_sec;
 	request->id_num = new_id();
@@ -180,7 +187,8 @@ insert_table(request, response)
 /*
  * Generate a unique non-zero sequence number
  */
-new_id()
+int
+new_id(void)
 {
 	static int current_id = 0;
 
@@ -194,6 +202,7 @@ new_id()
 /*
  * Delete the invitation with id 'id_num'
  */
+int
 delete_invite(id_num)
 	int id_num;
 {
@@ -218,6 +227,7 @@ delete_invite(id_num)
 /*
  * Classic delete from a double-linked list
  */
+static void
 delete(ptr)
 	register TABLE_ENTRY *ptr;
 {

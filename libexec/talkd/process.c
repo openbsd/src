@@ -1,3 +1,5 @@
+/*	$OpenBSD: process.c,v 1.2 1996/04/28 23:56:20 mickey Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.1.1.1 1995/10/18 08:43:23 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.2 1996/04/28 23:56:20 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -48,22 +50,21 @@ static char rcsid[] = "$Id: process.c,v 1.1.1.1 1995/10/18 08:43:23 deraadt Exp 
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <protocols/talkd.h>
 #include <netdb.h>
 #include <syslog.h>
 #include <stdio.h>
 #include <string.h>
 #include <paths.h>
+#include "talkd.h"
 
-CTL_MSG *find_request();
-CTL_MSG *find_match();
-
+void
 process_request(mp, rp)
 	register CTL_MSG *mp;
 	register CTL_RESPONSE *rp;
 {
 	register CTL_MSG *ptr;
-	extern int debug;
 
 	rp->vers = TALK_VERSION;
 	rp->type = mp->type;
@@ -74,20 +75,28 @@ process_request(mp, rp)
 		return;
 	}
 	mp->id_num = ntohl(mp->id_num);
-	mp->addr.sa_family = ntohs(mp->addr.sa_family);
-	if (mp->addr.sa_family != AF_INET) {
+	if (ntohs(mp->addr.sa_family) != AF_INET) {
 		syslog(LOG_WARNING, "Bad address, family %d",
-		    mp->addr.sa_family);
+		    ntohs(mp->addr.sa_family));
 		rp->answer = BADADDR;
 		return;
 	}
-	mp->ctl_addr.sa_family = ntohs(mp->ctl_addr.sa_family);
-	if (mp->ctl_addr.sa_family != AF_INET) {
+	if (ntohs(mp->ctl_addr.sa_family) != AF_INET) {
 		syslog(LOG_WARNING, "Bad control address, family %d",
-		    mp->ctl_addr.sa_family);
+		    ntohs(mp->ctl_addr.sa_family));
 		rp->answer = BADCTLADDR;
 		return;
 	}
+	if (memcmp(&satosin(&rp->addr)->sin_addr,
+		   &satosin(&mp->ctl_addr)->sin_addr,
+		   sizeof(struct in_addr))) {
+		char	buf1[32], buf2[32];
+		strcpy(buf1, inet_ntoa(satosin(&rp->addr)->sin_addr));
+		strcpy(buf2, inet_ntoa(satosin(&mp->ctl_addr)->sin_addr));
+		syslog(LOG_WARNING, "addresses are different, %s != %s\n",
+		       buf1, buf2);
+	}
+	rp->addr.sa_family = 0;
 	mp->pid = ntohl(mp->pid);
 	if (debug)
 		print_request("process_request", mp);
@@ -111,7 +120,7 @@ process_request(mp, rp)
 		if (ptr != (CTL_MSG *)0) {
 			rp->id_num = htonl(ptr->id_num);
 			rp->addr = ptr->addr;
-			rp->addr.sa_family = htons(ptr->addr.sa_family);
+			rp->addr.sa_family = ptr->addr.sa_family;
 			rp->answer = SUCCESS;
 		} else
 			rp->answer = NOT_HERE;
@@ -129,6 +138,7 @@ process_request(mp, rp)
 		print_response("process_request", rp);
 }
 
+void
 do_announce(mp, rp)
 	register CTL_MSG *mp;
 	CTL_RESPONSE *rp;
@@ -143,7 +153,6 @@ do_announce(mp, rp)
 		rp->answer = result;
 		return;
 	}
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
 	hp = gethostbyaddr((char *)&satosin(&mp->ctl_addr)->sin_addr,
 		sizeof (struct in_addr), AF_INET);
 	if (hp == (struct hostent *)0) {
@@ -176,6 +185,7 @@ do_announce(mp, rp)
 /*
  * Search utmp for the local user
  */
+int
 find_user(name, tty)
 	char *name, *tty;
 {
