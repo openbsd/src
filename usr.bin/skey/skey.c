@@ -1,12 +1,13 @@
-/* * $OpenBSD: skey.c,v 1.14 1999/12/04 21:27:18 deraadt Exp $*/
+/*	$OpenBSD: skey.c,v 1.15 2001/06/20 17:12:30 millert Exp $	*/
 /*
- * S/KEY v1.1b (skey.c)
+ * OpenBSD S/Key (skey.c)
  *
  * Authors:
  *          Neil M. Haller <nmh@thumper.bellcore.com>
  *          Philip R. Karn <karn@chicago.qualcomm.com>
  *          John S. Walden <jsw@thumper.bellcore.com>
  *          Scott Chasin <chasin@crimelab.com>
+ *          Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *
  * Stand-alone program for computing responses to S/Key challenges.
@@ -41,9 +42,9 @@ main(argc, argv)
 
 	/* If we were called as otp-METHOD, set algorithm based on that */
 	if ((slash = strrchr(argv[0], '/')))
-	    slash++;
+		slash++;
 	else
-	    slash = argv[0];
+		slash = argv[0];
 	if (strncmp(slash, "otp-", 4) == 0) {
 		slash += 4;
 		if (skey_set_algorithm(slash) == NULL)
@@ -55,14 +56,14 @@ main(argc, argv)
 			/* Single character switch */
 			switch (argv[i][1]) {
 			case 'n':
-				if (i + 1 == argc)
+				if (++i == argc)
 					usage(argv[0]);
-				cnt = atoi(argv[++i]);
+				cnt = atoi(argv[i]);
 				break;
 			case 'p':
-				if (i + 1 == argc)
+				if (++i == argc)
 					usage(argv[0]);
-				if (strlcpy(passwd, argv[++i], sizeof(passwd)) >=
+				if (strlcpy(passwd, argv[i], sizeof(passwd)) >=
 				    sizeof(passwd))
 					errx(1, "Password too long");
 				pass = 1;
@@ -149,7 +150,7 @@ main(argc, argv)
 
 void
 usage(s)
-	char   *s;
+	char *s;
 {
 	(void)fprintf(stderr, "Usage: %s [-x] [-md4|-md5|-sha1|-rmd160] [-n count] [-p password] <sequence#>[/] key\n", s);
 	exit(1);
