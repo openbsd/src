@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.7 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: touch.c,v 1.8 2003/01/10 11:42:00 henning Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.7 2002/02/16 21:27:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.8 2003/01/10 11:42:00 henning Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -218,7 +218,7 @@ stime_arg1(arg, tvp)
 	case 12:			/* CCYYMMDDhhmm */
 		t->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
-		/* FALLTHOUGH */
+		/* FALLTHROUGH */
 	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
 			yearset = ATOI2(arg);
