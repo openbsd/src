@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls_43.c,v 1.3 1996/04/18 21:21:36 niklas Exp $	*/
+/*	$OpenBSD: uipc_syscalls_43.c,v 1.4 1998/08/05 16:05:16 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls_43.c,v 1.5 1996/03/14 19:31:50 christos Exp $	*/
 
 /*
@@ -219,12 +219,11 @@ compat_43_sys_recvmsg(p, v, retval)
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen >= UIO_MAXIOV)
+	if (msg.msg_iovlen >= UIO_SMALLIOV) {
+		if (msg.msg_iovlen >= UIO_MAXIOV)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
-		      sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
-		      M_WAITOK);
+		      sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
 	msg.msg_flags = SCARG(uap, flags) | MSG_COMPAT;
@@ -292,12 +291,11 @@ compat_43_sys_sendmsg(p, v, retval)
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen >= UIO_MAXIOV)
+	if (msg.msg_iovlen >= UIO_SMALLIOV) {
+		if (msg.msg_iovlen >= UIO_MAXIOV)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
-		      sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV, 
-		      M_WAITOK);
+		      sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
 	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,

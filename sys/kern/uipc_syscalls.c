@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.10 1998/07/28 19:47:08 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.11 1998/08/05 16:05:18 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -387,12 +387,11 @@ sys_sendmsg(p, v, retval)
 		return (error);
 	if (msg.msg_iovlen <= 0)
 		return (EINVAL);
-	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen >= UIO_MAXIOV)
+	if (msg.msg_iovlen >= UIO_SMALLIOV) {
+		if (msg.msg_iovlen >= UIO_MAXIOV)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
-		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
-		       M_WAITOK);
+		       sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
 	if (msg.msg_iovlen &&
@@ -573,12 +572,11 @@ sys_recvmsg(p, v, retval)
 		return (error);
 	if (msg.msg_iovlen <= 0)
 		return (EINVAL);
-	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen >= UIO_MAXIOV)
+	if (msg.msg_iovlen >= UIO_SMALLIOV) {
+		if (msg.msg_iovlen >= UIO_MAXIOV)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
-		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
-		       M_WAITOK);
+		       sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
 #ifdef COMPAT_OLDSOCK
