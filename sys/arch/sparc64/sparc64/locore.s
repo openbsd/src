@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.28 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: locore.s,v 1.29 2003/02/28 21:27:42 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4224,15 +4224,15 @@ _C_LABEL(sparc_interrupt):
 	sethi	%hi(_C_LABEL(intrcnt)), %l4
 	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l6, LNGSHFT, %l3
+	sll	%l6, 2, %l3
 	or	%l4, %lo(_C_LABEL(intrcnt)), %l4	! intrcnt[intlev]++;
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
-	LDULNG	[%l4 + %l3], %o0
+	ld	[%l4 + %l3], %o0
 	add	%l4, %l3, %l4
 	clr	%l5			! Zero handled count
 	mov	1, %l3			! Ack softint
 	inc	%o0	
-	STULNG	%o0, [%l4]
+	st	%o0, [%l4]
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
 	sethi	%hi(_C_LABEL(handled_intr_level)), %l4
@@ -11914,7 +11914,7 @@ _C_LABEL(intrnames):
 _C_LABEL(eintrnames):
 	_ALIGN
 _C_LABEL(intrcnt):
-	.space	16 * LNGSZ
+	.space	16 * 4
 _C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(curproc), PTRSZ
