@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.55 2004/12/22 23:40:28 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.56 2005/01/01 07:11:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -992,6 +992,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = EINVAL;
 		else {
 			ifp->if_mtu = ifr->ifr_mtu;
+			ifp->if_flags &= ~IFF_RUNNING;
 			sk_init(sc_if);
 		}
 		break;
@@ -1717,6 +1718,7 @@ sk_watchdog(struct ifnet *ifp)
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
+	ifp->if_flags &= ~IFF_RUNNING;
 	sk_init(sc_if);
 }
 
@@ -2478,6 +2480,11 @@ sk_init(void *xsc_if)
 	DPRINTFN(2, ("sk_init\n"));
 
 	s = splimp();
+
+	if (ifp->if_flags & IFF_RUNNING) {
+		splx(s);
+		return;
+	}
 
 	/* Cancel pending I/O and free all RX/TX buffers. */
 	sk_stop(sc_if);
