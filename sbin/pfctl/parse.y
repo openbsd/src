@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.100 2002/06/15 19:19:09 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.101 2002/06/16 23:22:18 aaron Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -259,7 +259,7 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 			struct pf_rule r;
 			
 			if (rulestate > PFCTL_STATE_SCRUB) {
-				yyerror("Rules must in order: "
+				yyerror("Rules must be in order: "
 				    "scrub, nat, filter");
 				YYERROR;
 			}
@@ -293,7 +293,7 @@ pfrule		: action dir log quick interface route af proto fromto
 			struct node_state_opt *o;
 
 			if (rulestate > PFCTL_STATE_FILTER) {
-				yyerror("Rules must in order: "
+				yyerror("Rules must be in order: "
 				    "scrub, nat, filter");
 				YYERROR;
 			}
@@ -1207,7 +1207,7 @@ natrule		: no NAT interface af proto fromto redirection
 			struct pf_nat nat;
 
 			if (rulestate > PFCTL_STATE_NAT) {
-				yyerror("Rules must in order: "
+				yyerror("Rules must be in order: "
 				    "scrub, nat, filter");
 				YYERROR;
 			}
@@ -1275,7 +1275,7 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 			struct pf_binat binat;
 
 			if (rulestate > PFCTL_STATE_NAT) {
-				yyerror("Rules must in order: "
+				yyerror("Rules must be in order: "
 				    "scrub, nat, filter");
 				YYERROR;
 			}
@@ -1385,7 +1385,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 			struct pf_rdr rdr;
 
 			if (rulestate > PFCTL_STATE_NAT) {
-				yyerror("Rules must in order: "
+				yyerror("Rules must be in order: "
 				    "scrub, nat, filter");
 				YYERROR;
 			}
