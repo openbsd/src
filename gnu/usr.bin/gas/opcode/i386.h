@@ -1,4 +1,4 @@
-/* $OpenBSD: i386.h,v 1.4 1998/02/15 18:50:02 niklas Exp $ */
+/* $OpenBSD: i386.h,v 1.5 1998/07/03 18:43:34 weingart Exp $ */
 /* i386-opcode.h -- Intel 80386 opcode table
    Copyright (C) 1989, 1991, Free Software Foundation.
 
@@ -741,22 +741,22 @@ static const template i386_optab[] = {
 /* Pentium Pro extensions */
 {"rdpmc", 0, 0x0f33, _, NoModrm, 0, 0, 0},
 
-{"cmovo",  2, 0x0f40, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovno", 2, 0x0f41, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovb",  2, 0x0f42, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovae", 2, 0x0f43, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmove",  2, 0x0f44, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovne", 2, 0x0f45, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovbe", 2, 0x0f46, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmova",  2, 0x0f47, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovs",  2, 0x0f48, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovns", 2, 0x0f49, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovp",  2, 0x0f4a, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovnp", 2, 0x0f4b, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovl",  2, 0x0f4c, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovge", 2, 0x0f4d, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovle", 2, 0x0f4e, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
-{"cmovg",  2, 0x0f4f, _, W|Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovo",  2, 0x0f40, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovno", 2, 0x0f41, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovb",  2, 0x0f42, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovae", 2, 0x0f43, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmove",  2, 0x0f44, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovne", 2, 0x0f45, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovbe", 2, 0x0f46, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmova",  2, 0x0f47, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovs",  2, 0x0f48, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovns", 2, 0x0f49, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovp",  2, 0x0f4a, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovnp", 2, 0x0f4b, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovl",  2, 0x0f4c, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovge", 2, 0x0f4d, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovle", 2, 0x0f4e, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
+{"cmovg",  2, 0x0f4f, _, Modrm|ReverseRegRegmem, WordReg|WordMem, WordReg, 0},
 
 {"fcmovb", 2, 0xdac0, _, ShortForm, FloatReg, FloatAcc, 0},
 {"fcmove", 2, 0xdac8, _, ShortForm, FloatReg, FloatAcc, 0},
