@@ -136,8 +136,6 @@ main(int argc, char **argv)
     int optind = 0;
     int master_key_set = 0;
     
-    setprogname(argv[0]);
-
     if(getarg(args, num_args, argc, argv, &optind))
 	krb5_std_usage(1, args, num_args);
 

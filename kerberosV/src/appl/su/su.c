@@ -292,8 +292,6 @@ main(int argc, char **argv)
     int ok = 0;
     int kerberos_error=1;
 
-    setprogname (argv[0]);
-
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
 	usage(1);
 

@@ -264,8 +264,6 @@ main(int argc, char **argv)
 
     int optind = 0;
 
-    setprogname (argv[0]);
-
     /* detach from any tickets and tokens */
     {
 #ifdef KRB4

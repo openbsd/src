@@ -98,8 +98,6 @@ main(int argc, char **argv)
     krb5_log_facility *logf;
     krb5_keytab keytab;
 
-    setprogname(argv[0]);
-
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);

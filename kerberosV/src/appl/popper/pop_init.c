@@ -254,10 +254,8 @@ pop_init(POP *p,int argcount,char **argmessage)
     /*  Initialize the POP parameter block */
     memset (p, 0, sizeof(POP));
 
-    setprogname(argmessage[0]);
-
     /*  Save my name in a global variable */
-    p->myname = (char*)getprogname();
+    p->myname = __progname;
 
     /*  Get the name of our host */
     gethostname(p->myhost,MaxHostNameLen);

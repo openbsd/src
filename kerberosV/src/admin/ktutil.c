@@ -154,7 +154,7 @@ main(int argc, char **argv)
 {
     int optind = 0;
     krb5_error_code ret;
-    setprogname(argv[0]);
+
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);

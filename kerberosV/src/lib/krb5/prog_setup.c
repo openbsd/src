@@ -55,7 +55,6 @@ krb5_program_setup(krb5_context *context, int argc, char **argv,
     if(usage == NULL)
 	usage = krb5_std_usage;
 
-    setprogname(argv[0]);
     ret = krb5_init_context(context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);

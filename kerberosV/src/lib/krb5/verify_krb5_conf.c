@@ -324,8 +324,6 @@ main(int argc, char **argv)
     krb5_config_section *tmp_cf;
     int optind = 0;
 
-    setprogname (argv[0]);
-
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed");

@@ -86,7 +86,7 @@ get_config_bool (krb5_context context,
 
 /*
  * set all the values in `opt' to the appropriate values for
- * application `appname' (default to getprogname() if NULL), and realm
+ * application `appname' (default to __progname if NULL), and realm
  * `realm'.  First looks in [appdefaults] but falls back to
  * [realms] or [libdefaults] for some of the values.
  */

@@ -48,7 +48,6 @@ int
 main(int argc, char **argv)
 {
     krb5_error_code ret;
-    setprogname(argv[0]);
     
     ret = krb5_init_context(&context);
     if (ret)

@@ -146,7 +146,6 @@ main(int argc, char **argv)
 {
     int optind = 0;
 
-    setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
 	usage(1);
     if (help_flag)

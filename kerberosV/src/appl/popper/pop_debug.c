@@ -215,8 +215,6 @@ main(int argc, char **argv)
     int ret = 1;
     int optind = 0;
 
-    setprogname(argv[0]);
-
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))
 	usage (1);

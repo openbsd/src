@@ -669,8 +669,6 @@ main(int argc, char **argv)
     int ask = 1;
     struct sigaction sa;
     
-    setprogname(argv[0]);
-
 #ifdef KRB5
     {
 	krb5_error_code ret;

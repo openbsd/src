@@ -493,8 +493,6 @@ siad_chg_password (sia_collect_func_t *collect,
     char new_pw2[MAX_KPW_LEN+1];
     static struct et_list *et_list;
 
-    setprogname(argv[0]);
-
     SIA_DEBUG(("DEBUG", "siad_chg_password"));
     if(collect == NULL)
 	return SIADFAIL;

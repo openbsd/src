@@ -46,8 +46,6 @@ main(int argc, char **argv)
 	char homedir[MaxPathLen];
 	struct servent *sp;
 
-	setprogname(argv[0]);
-
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
 		errx(1, "ftp/tcp: unknown service");
@@ -127,7 +125,7 @@ main(int argc, char **argv)
 		exit(0);
 	    signal(SIGINT, intr);
 	    signal(SIGPIPE, lostpeer);
-	    xargv[0] = (char*)getprogname();
+	    xargv[0] = __progname;
 	    xargv[1] = argv[0];
 	    xargv[2] = argv[1];
 	    xargv[3] = argv[2];

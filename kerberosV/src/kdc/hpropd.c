@@ -213,8 +213,6 @@ main(int argc, char **argv)
     int fd_out = -1;
 #endif
 
-    setprogname(argv[0]);
-
     ret = krb5_init_context(&context);
     if(ret)
 	exit(1);

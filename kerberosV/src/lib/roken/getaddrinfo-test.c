@@ -46,6 +46,8 @@ static int socktype;
 static int version_flag;
 static int help_flag;
 
+extern char *__progname;
+
 static struct getargs args[] = {
     {"flags",	0,	arg_integer,	&flags,		"flags",	NULL},
     {"family",	0,	arg_integer,	&family,	"family",	NULL},
@@ -112,8 +114,6 @@ main(int argc, char **argv)
     int optind = 0;
     int i;
 
-    setprogname (argv[0]);
-
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))
 	usage (1);
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	usage (0);
 
     if (version_flag) {
-	fprintf (stderr, "%s from %s-%s)\n", getprogname(), PACKAGE, VERSION);
+	fprintf (stderr, "%s from %s-%s)\n", __progname, PACKAGE, VERSION);
 	return 0;
     }
 

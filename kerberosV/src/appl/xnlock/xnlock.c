@@ -199,7 +199,7 @@ get_words(void)
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s [options] [message]\n", getprogname());
+    fprintf(stderr, "usage: %s [options] [message]\n", __progname);
     fprintf(stderr, "-fg color     foreground color\n");
     fprintf(stderr, "-bg color     background color\n");
     fprintf(stderr, "-rv           reverse foreground/background colors\n");
@@ -940,8 +940,6 @@ main (int argc, char **argv)
     int i;
     Widget override;
     XGCValues gcvalues;
-
-    setprogname (argv[0]);
 
     /*
      * Must be setuid root to read /etc/shadow, copy encrypted

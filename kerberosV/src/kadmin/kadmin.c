@@ -225,8 +225,6 @@ main(int argc, char **argv)
     kadm5_config_params conf;
     int optind = 0;
 
-    setprogname(argv[0]);
-
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);

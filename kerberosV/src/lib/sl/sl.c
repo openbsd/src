@@ -39,6 +39,8 @@ RCSID("$KTH: sl.c,v 1.29 2001/02/20 01:44:55 assar Exp $");
 #include "sl_locl.h"
 #include <setjmp.h>
 
+extern char *__progname;
+
 static size_t
 print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
     __attribute__ ((unused));
@@ -76,8 +78,8 @@ mandoc_template(SL_cmd *cmds,
     t = time(NULL);
     strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
     printf(".Dd %s\n", timestr);
-    p = strrchr(getprogname(), '/');
-    if(p) p++; else p = getprogname();
+    p = strrchr(__progname, '/');
+    if(p) p++; else p = __progname;
     strncpy(cmd, p, sizeof(cmd));
     cmd[sizeof(cmd)-1] = '\0';
     strupr(cmd);
