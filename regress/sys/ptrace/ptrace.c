@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.3 2004/03/03 22:45:22 miod Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.4 2004/03/03 23:13:49 miod Exp $	*/
 /*
  * Copyright (c) 2004, Mark Kettenis.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -63,7 +63,9 @@ main(void)
 		 * and sparc64 before sparc.
 		 */
 
-#if defined(__x86_64__)
+#if defined(__alpha__)
+		regs.r_regs[R_ZERO]|= 0x07;
+#elif defined(__x86_64__)
 		regs.r_rip |= 0x07;
 #elif defined(__arm__)
 		regs.r_pc |= 0x03;
