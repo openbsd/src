@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail8.nr,v 1.4 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail8.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ A collection of messages.  Often used in the phrase,
 .q "Have you read your mail?"
 .ip "\fImailbox\fP"
 The place where your mail is stored, typically in the directory
-/usr/spool/mail.
+/var/mail.
 .ip "\fImessage\fP"
 A single letter from someone, initially stored in your
 .i mailbox .

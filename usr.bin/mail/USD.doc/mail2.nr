@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail2.nr,v 1.4 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail2.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@ command:
 % Mail root
 .)l
 then type your message.  When you reach the end of the message, type
-an EOT (control\-d) at the beginning of a line, which will cause
+an EOT (Control-D) at the beginning of a line, which will cause
 .i Mail
 to echo \*(lqEOT\*(rq and return you to the Shell.  When the user you sent mail
 to next logs in, he will receive the message:
@@ -54,7 +54,7 @@ to alert him to the existence of your message.
 .pp
 If, while you are composing the message
 you decide that you do not wish to send it after all, you can
-abort the letter with a \s-2RUBOUT\s0.  Typing a single \s-2RUBOUT\s0
+abort the letter with a <Control-C>.  Typing a single <Control-C>
 causes
 .i Mail
 to print
@@ -62,7 +62,7 @@ to print
 (Interrupt -- one more to kill letter)
 .)l
 Typing a second
-\s-2RUBOUT\s0 causes
+<Control-C> causes
 .i Mail
 to save your partial letter on the file
 .q dead.letter
@@ -82,7 +82,7 @@ Thus,
 .(l
 % Mail sam bob john
 Tuition fees are due next Friday.  Don't forget!!
-<Control\-d>
+<Control-D>
 EOT
 %
 .)l
@@ -171,7 +171,7 @@ as your first command to
 .i Mail
 to type the first message.
 .pp
-If, after typing a message, you wish to immediately send a reply,
+If, after reading a message, you wish to immediately send a reply,
 you can do so with the
 .b reply
 command.
@@ -181,7 +181,7 @@ like
 takes a message number as an argument.
 .i Mail
 then begins a message addressed to the user who sent you the message.
-You may then type in your letter in reply, followed by a <control-d>
+You may then type in your letter in reply, followed by a <Control-D>
 at the beginning of a line, as before.
 .i Mail
 will type EOT, then type the ampersand prompt to indicate its readiness
@@ -200,7 +200,7 @@ and waiting for you to enter your letter.
 You are now in the message collection mode described at the beginning
 of this section and
 .i Mail
-will gather up your message up to a control\-d.
+will gather up your message up to a <Control-D>.
 Note that it copies the subject
 header from the original message.  This is useful in that correspondence
 about a particular matter will tend to retain the same subject heading,
@@ -210,7 +210,7 @@ For example, if the letter had a
 .q "To:"
 header listing several recipients,
 .i Mail
-would arrange to send your replay to the same people as well.
+would arrange to send your reply to the same people as well.
 Similarly, if the original message contained a
 .q "Cc:"
 (carbon copies to) field,
@@ -382,7 +382,9 @@ set crt=24
 .)l
 to paginate messages that will not fit on their screens.
 In the default state, \fImore\fP (default paginator) prints a screenful of
-information, then types --More--.  Type a space to see the next screenful.
+information, then types ``byte XXX'', where `XXX' represents the number
+of bytes paginated.
+Type a space to see the next screenful.
 .pp
 Another adaptation to user needs that
 .i Mail
@@ -433,7 +435,7 @@ To make them more convenient to use,
 .i Mail
 always looks for two files when it is invoked.  It first reads
 a system wide file
-.q /usr/lib/Mail.rc,
+.q /etc/mail.rc,
 then a user specific file,
 .q .mailrc,
 which is found in the user's home directory.
@@ -462,9 +464,9 @@ at the system-wide level
 by the mail delivery
 system
 .i sendmail .
-These aliases are stored in the file /usr/lib/aliases and are
+These aliases are stored in the file /etc/mail/aliases and are
 accessible to all users of the system.
-The lines in /usr/lib/aliases are of
+The lines in /etc/mail/aliases are of
 the form:
 .(l
 alias: name\*<1\*>, name\*<2\*>, name\*<3\*>
@@ -475,9 +477,10 @@ is the mailing list name and the
 .i name\*<i\*>
 are the members of the list.  Long lists can be continued onto the next
 line by starting the next line with a space or tab.  Remember that you
-must execute the shell command
+must execute the command
 .i newaliases
-after editing /usr/lib/aliases since the delivery system
+(as superuser)
+after editing /etc/mail/aliases since the delivery system
 uses an indexed file created by
 .i newaliases .
 .pp
@@ -486,7 +489,7 @@ We have seen that
 can be invoked with command line arguments which are people
 to send the message to, or with no arguments to read mail.
 Specifying the
-.rb \-f
+.rb -f
 flag on the command line causes
 .i Mail
 to read messages from a file other than your system mailbox.
@@ -497,7 +500,7 @@ you can use
 .i Mail
 to read them with:
 .(l
-% Mail \-f letters
+% Mail -f letters
 .)l
 You can use all
 the
@@ -517,7 +520,7 @@ in your home directory by default, you can read
 .i mbox
 in your home directory by using simply
 .(l
-% Mail \-f
+% Mail -f
 .)l
 .pp
 Normally, messages that you examine using the

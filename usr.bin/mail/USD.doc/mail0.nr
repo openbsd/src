@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail0.nr,v 1.3 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail0.nr,v 1.4 2004/06/04 00:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,6 +29,10 @@
 .\"
 .\"	@(#)mail0.nr	8.1 (Berkeley) 6/8/93
 .\"
+.if n \{\
+.po 5n
+.ll 70n
+.\}
 .eh 'USD:7-%''Mail Reference Manual'
 .oh 'Mail Reference Manual''USD:7-%'
 .if n \

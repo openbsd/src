@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail3.nr,v 1.3 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail3.nr,v 1.4 2004/06/04 00:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,11 +52,11 @@ begin with a `/,'
 .i Mail
 will assume that your folder directory is to be found starting from
 your home directory.  Thus, if your home directory is
-.b /usr/person
+.b /home/person
 the above example told
 .i Mail
 to find your folder directory in
-.b /usr/person/letters .
+.b /home/person/letters .
 .pp
 Anywhere a file name is expected, you can use a folder name, preceded
 with `+.'  For example, to put a message into a folder with the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail4.nr,v 1.4 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail4.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 While typing in a message to be sent to others, it is often
 useful to be able to invoke the text editor on the partial message,
 print the message, execute a shell command, or do some other
-auxiliary function. 
+auxiliary function.
 .i Mail
 provides these capabilities through
 .i "tilde escapes" ,
@@ -49,8 +49,8 @@ which will print a line of dashes, the recipients of your message, and
 the text of the message so far.
 Since
 .i Mail
-requires two consecutive \s-2RUBOUT\s0's to abort a letter, you
-can use a single \s-2RUBOUT\s0 to abort the output of ~p or any other
+requires two consecutive <Control-C>'s to abort a letter, you
+can use a single <Control-C> to abort the output of ~p or any other
 ~ escape without killing your letter.
 .pp
 If you are dissatisfied with the message as
@@ -60,7 +60,7 @@ it stands, you can invoke the text editor on it using the escape
 .)l
 which causes the message to be copied into a temporary file and an
 instance of the editor to be spawned.  After modifying the message to
-your satisfaction, write it out and quit the editor. 
+your satisfaction, write it out and quit the editor.
 .i Mail
 will respond
 by typing
@@ -68,20 +68,23 @@ by typing
 (continue)
 .)l
 after which you may continue typing text which will be appended to your
-message, or type <control-d> to end the message.
+message, or type <Control-D> to end the message.
 A standard text editor is provided by
 .i Mail .
 You can override this default by setting the valued option
 .q EDITOR
 to something else.  For example, you might prefer:
 .(l
-set EDITOR=/usr/ucb/ex
+set EDITOR=/bin/ed
 .)l
 .pp
 Many systems offer a screen editor as an alternative to the standard
 text editor, such as the
 .i vi
-editor from UC Berkeley.
+editor from UC Berkeley,
+or
+.i mg ,
+an emacs-like editor.
 To use the screen, or
 .i visual
 editor, on your current message, you can use the escape,
@@ -101,7 +104,7 @@ file in your message; the escape
 ~r filename
 .)l
 is provided for this purpose, and causes the named file to be appended
-to your current message. 
+to your current message.
 .i Mail
 complains if the file doesn't exist
 or can't be read.  If the read is successful, the number of lines and
@@ -118,13 +121,13 @@ reads in the file
 in your home directory.  This is often useful since
 .i Mail
 copies the text
-of your message there when you abort a message with \s-2RUBOUT\s0.
+of your message there when you abort a message with <Control-C>.
 .pp
 To save the current text of your message on a file you may use the
 .(l
 ~w filename
 .)l
-escape. 
+escape.
 .i Mail
 will print out the number of lines and characters written
 to the file, after which you may continue appending text to your message.
@@ -206,10 +209,10 @@ characters, they are appended to the end of the current list of
 recipients.  You can also use your erase character to erase back into
 the list of recipients, or your kill character to erase them altogether.
 Thus, for example, if your erase and kill characters are the standard
-(on printing terminals) # and @ symbols,
+(on printing terminals) <Control-H> and <Control-U> keys,
 .(l
 ~h
-To: root kurt####bill
+To: root kurt^H^H^H^Hbill
 .)l
 would change the initial recipients
 .q "root kurt"
@@ -308,8 +311,8 @@ Changing the escape character removes the special meaning of ~.
 This section describes how to send mail to people on other machines.
 Recall that sending to a plain login name sends mail to that person
 on your machine.  If your machine is directly (or sometimes, even,
-indirectly) connected to the Arpanet, you can send messages to people
-on the Arpanet using a name of the form
+indirectly) connected to the Internet, you can send messages to people
+on the Internet using a name of the form
 .(l
 name@host.domain
 .)l
@@ -317,8 +320,8 @@ where
 .i name
 is the login name of the person you're trying to reach,
 .i host
-is the name of the machine on the Arpanet,
-and 
+is the name of the machine on the Internet,
+and
 .i domain
 is the higher-level scope within which the hostname is known, e.g. EDU (for educational
 institutions), COM (for commercial entities), GOV (for governmental agencies),

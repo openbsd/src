@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail5.nr,v 1.4 2003/06/03 02:56:11 millert Exp $
+.\"	$OpenBSD: mail5.nr,v 1.5 2004/06/04 00:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,8 +58,8 @@ consists of a list of message numbers, ranges, and names,
 separated by spaces or tabs.  Message numbers may be either
 decimal numbers, which directly specify messages, or one of the
 special characters
-.q \(ua
-.q "."
+.q "^" ,
+.q "." ,
 or
 .q "$"
 to specify the first relevant, current, or last
@@ -154,17 +154,17 @@ Used to preface a command to be executed by the shell.
 Like
 .b print ,
 but also print out ignored header fields.  See also
-\fBprint\fP, \fBignore\fP and \fBretain\fP.
+\fBprint\fP, \fBignore\fP, and \fBretain\fP.
 \fBPrint\fP can be abbreviated to \fBP\fP.
 .ip "\fBReply\fP or \fBRespond\fP\ \ "
 Note the capital \fBR\fP in the name.
-Frame a reply to a one or more messages.
+Frame a reply to one or more messages.
 The reply (or replies if you are using this on multiple messages)
 will be sent ONLY to the person who sent you the message
 (respectively, the set of people who sent the messages you are
 replying to).
 You can
-add people using the \fB~t\fP, \fB~c\fP and \fB~b\fP
+add people using the \fB~t\fP, \fB~c\fP, and \fB~b\fP
 tilde escapes.  The subject in your reply is formed by prefacing the
 subject in the original message with
 .q "Re:"
@@ -206,7 +206,7 @@ If one argument is given, that alias is printed (if it exists).
 \fBAlias\fP can be abbreviated to \fBa\fP.
 .ip "\fBalternates\fP\ \ "
 If you have accounts on several machines, you may find it convenient
-to use the /usr/lib/aliases on all the machines except one to direct
+to use /etc/mail/aliases on all the machines except one to direct
 your mail to a single account.
 The
 .b alternates
@@ -256,7 +256,7 @@ command.
 These
 commands delete the current message and print the next message.
 They are useful for quickly reading and disposing of mail.
-If there is no next message, \fImail\fP says ``at EOF.''
+If there is no next message, \fIMail\fP says ``No more messages.''
 .ip "\fBedit\fP\ \ "
 To edit individual messages using the text editor, the
 .b edit
@@ -291,7 +291,7 @@ statement.
 .ip "\fBexit\fP or \fBxit\fP\ \ "
 Leave
 .i Mail
-without updating the system mailbox or the file your were reading.
+without updating the system mailbox or the file you were reading.
 Thus, if you accidentally delete several messages, you can use
 .b exit
 to avoid scrambling your mailbox.
@@ -366,17 +366,16 @@ command (and thus the initial header listing)
 only lists the first so many message headers.
 The number of headers listed depends on the speed of your
 terminal.
-This can be overridden by specifying the number of headers you
-want with the
-.i window
-option.
 .i Mail
 maintains a notion of the current
 .q window
 into your messages for the purposes of printing headers.
 Use the
 .b z
-command to move forward and back a window.
+command to move forward a window,
+and
+.b z-
+to move back a window.
 You can move
 .i Mail's
 notion of the current window directly to a particular message by
@@ -387,17 +386,14 @@ headers 40
 to move
 .i Mail's
 attention to the messages around message 40.
-If a ``+'' argument is given, then the next screenful of message headers is
-printed, and if a ``\-'' argument is given, the previous screenful of message
-headers is printed.
 \fBHeaders\fP can be abbreviated to \fBh\fP.
 .ip "\fBhelp\fP\ \ "
 Print a brief and usually out of date help message about the commands
 in
 .i Mail .
-The 
+The
 .i man
-page for 
+page for
 .i mail
 is usually more up-to-date than either the help message or this manual.
 It is also a synonym for \fB?\fP.
@@ -440,7 +436,7 @@ and
 .b N.B.:
 .i Ignore
 has been superseded by
-.i retain.
+.i retain .
 .br
 Add the list of header fields named to the
 .i "ignore list" .
@@ -457,6 +453,12 @@ ignored fields.
 If
 .b ignore
 is executed with no arguments, it lists the current set of ignored fields.
+.ip "\fBinc\fP\ \ "
+Incorporate any new messages that have arrived while mail is being read.
+The new messages are added to the end of the message list,
+and the current message is reset to be the first new mail message.
+This does not renumber the existing message list, nor does it
+cause any changes made so far to be saved.
 .ip "\fBlist\fP\ \ "
 List the valid
 .i Mail
@@ -496,10 +498,10 @@ option set,
 will prompt you for a subject to your message.  Then you
 can type in your message, using tilde escapes as described in
 section 4 to edit, print, or modify your message.  To signal your
-satisfaction with the message and send it, type control-d at the
+satisfaction with the message and send it, type <Control-D> at the
 beginning of a line, or a . alone on a line if you set the option
 .i dot .
-To abort the message, type two interrupt characters (\s-2RUBOUT\s0
+To abort the message, type two interrupt characters (Control-C
 by default) in a row or use the
 .b ~q
 escape.
@@ -513,6 +515,8 @@ action for messages if you do
 have the
 .i hold
 option set.
+.ip "\fBmore\fP\ \ "
+Takes a message list and invokes the pager on that list.
 .ip "\fBnext\fP or \fB+\fP\ \ "
 The
 .b next
@@ -555,12 +559,12 @@ variable is set, messages longer than the number of lines it indicates
 are paged through the command specified by the \fBPAGER\fP variable.
 The \fBprint\fP command can be abbreviated to \fBp\fP.
 .ip "\fBquit\fP\ \ "
-Terminates the session, saving all undeleted, unsaved and unwritten messages 
+Terminates the session, saving all undeleted, unsaved and unwritten messages
 in the user's \fImbox\fP file in their login directory
 (messages marked as having been read), preserving all
 messages marked with \fBhold\fP or \fBpreserve\fP or never referenced
 in their system mailbox.
-Any messages that were deleted, saved, written or saved to \fImbox\fP are
+Any messages that were deleted, saved, written, or saved to \fImbox\fP are
 removed from their system mailbox.
 If new mail has arrived during the session, the message
 ``You have new mail'' is given.  If given while editing a mailbox file
@@ -573,7 +577,7 @@ Frame a reply to a single message.
 The reply will be sent to the
 person who sent you the message (to which you are replying), plus all
 the people who received the original message, except you.  You can
-add people using the \fB~t\fP, \fB~c\fP and \fB~b\fP
+add people using the \fB~t\fP, \fB~c\fP, and \fB~b\fP
 tilde escapes.  The subject in your reply is formed by prefacing the
 subject in the original message with
 .q "Re:"
@@ -628,6 +632,17 @@ at quit time, nor are they selected by the
 .b next
 command described above, unless explicitly specified.
 \fBSave\fP can be abbreviated to \fBs\fP.
+.ip "\fBsaveignore\fP\ \ "
+\fBsaveignore\fP is to \fBsave\fP what \fBignore\fP is to \fBprint\fP
+and \fBtype\fR.
+Header fields thus marked are filtered out when saving a message
+by \fBsave\fP or when automatically saving to \fImbox\fP.
+.ip "\fBsaveretain\fP\ \ "
+\fBsaveretain\fP is to \fBsave\fP what \fBretain\fP is to \fBprint\fP
+and \fBtype\fR.
+Header fields thus marked are the only ones saved with a message
+when saving by \fBsave\fP or when automatically saving to \fImbox\fP.
+\fBsaveretain\fP overrides \fBsaveignore\fP.
 .ip "\fBset\fP\ \ "
 Set an option or give an option a value.  Used to customize
 .i Mail .
@@ -709,6 +724,10 @@ might be preferred.
 Same as \fBprint\fP.
 Takes a message list and types out each message on the terminal.
 The \fBtype\fP command can be abbreviated to \fBt\fP.
+.ip "\fBunalias\fP \ \"
+Takes a list of names defined by \fBalias\fP commands and
+discards the remembered groups of users.
+The group names no longer have any significance.
 .ip "\fBundelete\fP \ \"
 Takes a message list and marks each message as \fInot\fP
 being deleted.
@@ -720,7 +739,7 @@ having been read.
 \fBUnread\fP can be abbreviated to \fBU\fP.
 .ip "\fBunset\fP\ \ "
 Takes a list of option names and discards their remembered values;
-the inverse of \fBset\fP .
+the inverse of \fBset\fP.
 .ip "\fBvisual\fP\ \ "
 It is often useful to be able to invoke one of two editors,
 based on the type of terminal one is using.  To invoke
@@ -737,14 +756,22 @@ Both the
 .b edit
 and
 .b visual
-commands assume some default text editors.  These default editors
-can be overridden by the valued options
+commands assume some default text editors.
+The default for
+.q EDITOR
+is
+.i /usr/bin/ex .
+The default for
+.q VISUAL
+is
+.i /usr/bin/vi .
+These default editors can be overridden by the valued options
 .q EDITOR
 and
 .q VISUAL
 for the standard and screen editors.  You might want to do:
 .(l
-set EDITOR=/usr/ucb/ex VISUAL=/usr/ucb/vi
+set EDITOR=/bin/ed VISUAL=/usr/bin/mg
 .)l
 \fBVisual\fP can be abbreviated to \fBv\fP.
 .ip "\fBwrite\fP\ \ "
@@ -768,8 +795,8 @@ As suggested by this example, the
 .b write
 command is useful for such tasks as sending and receiving
 source program text over the message system.
-The filename in quotes, followed by the line
-count and character count is echoed on the user's terminal.
+The filename in quotes, followed by additional file information,
+is echoed on the user's terminal.
 .ip "\fBz\fP\ \ "
 .i Mail
 presents message headers in windowfuls as described under
@@ -806,7 +833,17 @@ The valued option
 .q EDITOR
 defines the pathname of the text editor to be used in the
 .b edit
-command and ~e.  If not defined, a standard editor is used.
+command and ~e escape.
+If not defined,
+.i /usr/bin/ex
+is used.
+.ip "\fBLISTER\fP\ \ "
+Pathname of the directory lister to use in the \fBfolders\fP command.
+Default is \fI/bin/ls\fP.
+.ip "\fBMBOX\fP\ \ "
+The name of the \fImbox\fP file.
+It can be the name of a folder.
+The default is ``mbox'' in the user's home directory.
 .ip "\fBPAGER\fP\ \ "
 Pathname of the program to use for paginating output when
 it exceeds \fIcrt\fP lines.
@@ -824,7 +861,10 @@ The valued option
 defines the pathname of the screen editor to be used in the
 .b visual
 command
-and ~v escape.  A standard screen editor is used if you do not define one.
+and ~v escape.
+If not defined,
+.i /usr/bin/vi
+is used.
 .ip "\fBappend\fP\ \ "
 The
 .q append
@@ -846,12 +886,22 @@ causes
 .i Mail
 to prompt you for the subject of each message you send.
 If you respond with simply a newline, no subject field will be sent.
+.ip "\fBaskbcc\fP\ \ "
+.q Askbcc
+is a binary option which
+causes you to be prompted for additional blind carbon copy recipients at the
+end of each message.  Responding with a newline shows your
+satisfaction with the current list.
 .ip "\fBaskcc\fP\ \ "
 .q Askcc
 is a binary option which
 causes you to be prompted for additional carbon copy recipients at the
 end of each message.  Responding with a newline shows your
 satisfaction with the current list.
+.ip "\fBautoinc\fP\ \ "
+Causes new mail to be automatically incorporated when it arrives.
+Setting this is similar to issuing the \fBinc\fP command at each prompt,
+except that the current message is not reset when new mail arrives.
 .ip "\fBautoprint\fP\ \ "
 .q Autoprint
 is a binary option which
@@ -905,8 +955,8 @@ being automatically swept into your \fImbox\fP file.
 .ip "\fBignore\fP\ \ "
 The binary option
 .q ignore
-causes \s-2RUBOUT\s0 characters from your terminal to be ignored and echoed
-as @'s while you are sending mail.  \s-2RUBOUT\s0 characters retain their
+causes <Control-C> characters from your terminal to be ignored and echoed
+as @'s while you are sending mail.  <Control-C> characters retain their
 original meaning in
 .i Mail
 command mode.
@@ -919,14 +969,18 @@ flag on the command line as described in section 6.
 An option related to
 .q dot
 is
-.q ignoreeof
+.q ignoreeof ,
 which makes
 .i Mail
-refuse to accept a control\-d as the end of a message.
+refuse to accept a <Control-D> as the end of a message.
 .q Ignoreeof
 also applies to
 .i Mail
 command mode.
+.ip "\fBindentprefix\fP\ \ "
+String used by the \fB~m\fP tilde escape for indenting messages,
+in place of the normal tab character (`^I').
+Be sure to quote the value if it contains spaces or tabs.
 .ip "\fBkeep\fP\ \ "
 The
 .q keep
@@ -936,7 +990,7 @@ to truncate your system mailbox instead of deleting it when it
 is empty.  This is useful if you elect to protect your mailbox, which
 you would do with the shell command:
 .(l
-chmod 600 /usr/spool/mail/yourname
+chmod 600 /var/mail/yourname
 .)l
 where
 .i yourname
@@ -970,7 +1024,7 @@ is first invoked. Setting this option is the same as using
 on the command line.
 .ip "\fBnosave\fP\ \ "
 Normally,
-when you abort a message with two \s-2RUBOUTs\s0,
+when you abort a message with two <Control-C>'s,
 .i Mail
 copies the partial letter to the file
 .q dead.letter
@@ -1013,6 +1067,17 @@ specifies how many message headers you want printed.
 This number is also used for scrolling with the
 .b z
 command.
+.ip "\fBsearchheaders\fP\ \ "
+If this option is set, then a message-list specifier in the form
+``/x:y'' will expand to all messages containing the substring
+`y' in the header field `x'.
+The string search is case insensitive.
+If `x' is omitted, it will default to the ``Subject'' header field.
+The form ``/to:y'' is a special case, and will expand
+to all messages containing the substring `y' in the ``To'', ``Cc'',
+or ``Bcc'' header fields.
+The check for ``to'' is case sensitive, so that ``/To:y''
+can be used to limit the search for `y' to just the ``To:'' field.
 .ip "\fBsendmail\fP\ \ "
 To use an alternate mail delivery system, set the
 .q sendmail
@@ -1027,7 +1092,7 @@ command will print out instead of the default five lines.
 .ip "\fBverbose\fP\ \ "
 The binary option "verbose" causes
 .i Mail
-to invoke sendmail with the 
+to invoke sendmail with the
 .b \-v
 flag, which causes it to go into verbose mode and announce expansion
 of aliases, etc. Setting the "verbose" option is equivalent to
