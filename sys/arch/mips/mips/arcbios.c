@@ -1,7 +1,7 @@
-/*	$OpenBSD: arcbios.c,v 1.1 1998/01/28 12:12:06 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.2 1998/03/16 09:03:19 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
- * Copyright (c) 1996 Per Fogelstrom.  All rights reserved.
+ * Copyright (c) 1996, 1997, 1998 Per Fogelstrom.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,6 +66,7 @@ static struct systypes {
 	int  sys_type;
 } sys_types[] = {
     { NULL,		"PICA-61",			ACER_PICA_61 },
+    { NULL,		"NEC-R94",			ACER_PICA_61 },
     { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE }, 
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },

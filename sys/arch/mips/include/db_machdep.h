@@ -1,6 +1,7 @@
-/*	$OpenBSD: archtype.h,v 1.2 1998/03/16 09:02:59 pefo Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.1 1998/03/16 09:03:05 pefo Exp $ */
+
 /*
- * Copyright (c) 1997 Per Fogelstrom
+ * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +14,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom.
+ *	Per Fogelstrom, Opsycon AB, Sweden.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -31,27 +32,49 @@
  *
  */
 
-#ifndef _MACHINE_ARCHTYPE_H_
-#define _MACHINE_ARCHTYPE_H_
+#ifndef	_MACHINE_DB_MACHDEP_H_
+#define	_MACHINE_DB_MACHDEP_H_
+
+#include <machine/regnum.h>
+#include <machine/frame.h>
+#include <machine/trap.h>
+#include <vm/vm_param.h>
+
+#define	MID_MACHINE 0		/* XXX booo... */
+
+typedef struct trap_frame db_regs_t;
+db_regs_t           ddb_regs;
+
+typedef	int         db_expr_t;
+typedef vm_offset_t db_addr_t;
+
+#define	SOFTWARE_SSTEP		/* Need software single step */
+#define	SOFTWARE_SSTEP_EMUL	/* next_instr_address() emulates 100% */
+db_addr_t	next_instr_address __P((db_addr_t, boolean_t));
+#define	BKPT_SIZE   (4)
+#define	BKPT_SET(ins)	(BREAK_DDB)
+#define	DB_VALID_BREAKPOINT(addr)	(((addr) & 3) == 0)
+
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
+#define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */
+
+#define	PC_REGS(regs)	((db_addr_t)(regs)->reg[PC])
+#define DDB_REGS	(&ddb_regs)
+
 /*
- * Define architectural identitys for the different Mips machines.
+ *  Test of instructions to see class.
  */
-#define	ARC_CLASS		0x00	/* Arch class ARC */
-#define	ACER_PICA_61		0x01	/* Acer Labs Pica 61 */
-#define	MAGNUM			0x02	/* Mips MAGNUM R4000 */
-#define	DESKSTATION_RPC44	0x03	/* Deskstation xxx */
-#define	DESKSTATION_TYNE	0x04	/* Deskstation xxx */
-#define	NKK_AQUARIUS		0x05	/* NKK R4{67}00 PC */
-#define NEC_R94			0x06	/* NEC Magnum class */
-#define	SNI_RM200		0x07	/* Siemens Nixdorf RM200 */
+#define	IT_CALL		0x01
+#define	IT_BRANCH	0x02
+#define	IT_LOAD		0x03
+#define	IT_STORE	0x04
 
-#define	SGI_CLASS		0x10	/* Silicon Graphics Class */
-#define	SGI_INDY		0x11	/* Silicon Graphics Indy */
+#define	inst_branch(i)	(db_inst_type(i) == IT_BRANCH)
+#define	inst_trap_return(i)	((i) & 0)
+#define	inst_call(i)	(db_inst_type(i) == IT_CALL)
+#define	inst_return(i)	((i) == 0x03e00008)
+#define	inst_load(i)	(db_inst_type(i) == IT_LOAD)
+#define	inst_store(i)	(db_inst_type(i) == IT_STORE)
 
-#define	ALGOR_CLASS		0x20	/* Algorithmics Class */
-#define	ALGOR_P4032		0x21	/* ALGORITHMICS P-4032 */
-#define	ALGOR_P5064		0x22	/* ALGORITHMICS P-5064 */
-
-extern int system_type;		/* Global system type indicator */
-
-#endif /* _MACHINE_ARCHTYPE_H_ */
+int db_inst_type __P((int));
+#endif	/* _MACHINE_DB_MACHDEP_H_ */

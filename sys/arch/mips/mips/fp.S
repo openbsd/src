@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.S,v 1.1 1998/01/29 15:06:23 pefo Exp $	*/
+/*	$OpenBSD: fp.S,v 1.2 1998/03/16 09:03:31 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.1 1998/01/29 15:06:23 pefo Exp $
+ *      $Id: fp.S,v 1.2 1998/03/16 09:03:31 pefo Exp $
  */
 
 /*
@@ -44,6 +44,7 @@
 
 #include <machine/regdef.h>
 #include <machine/asm.h>
+#include <machine/regnum.h>
 #include <machine/cpu.h>
 
 #include "assym.h"

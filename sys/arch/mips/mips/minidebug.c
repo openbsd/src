@@ -1,4 +1,4 @@
-/*	$OpenBSD: minidebug.c,v 1.1 1998/01/28 12:12:09 pefo Exp $	*/
+/*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.1 1998/01/28 12:12:09 pefo Exp $
+ *      $Id: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $
  */
 
 /*
@@ -138,6 +138,7 @@ static char *c0_reg[32] = {
 
 extern u_int mdbpeek __P((int));
 extern void mdbpoke __P((int, int));
+extern void cpu_setwatch __P((int, int));
 extern void trapDump __P((char *));
 extern void stacktrace __P((void));
 extern u_int MipsEmulateBranch __P((int *, int, int, u_int));
@@ -568,6 +569,23 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			}
 			break;
 			
+		case 'w':
+			printf("watch ");
+			c = gethex(&newaddr, newaddr);
+			size = 3;
+			if(c == ',') {
+				c = cngetc();
+				cnputc(c);
+				if(c == 'r')
+					size = 2;
+				else if(c == 'w')
+					size = 1;
+				else
+					size = 0;
+			}
+			cpu_setwatch(0, (newaddr & ~7) | size);
+			break;
+
 		default:
 			cnputc('\a');
 			break;

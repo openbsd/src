@@ -1,4 +1,4 @@
-/*	$OpenBSD: varargs.h,v 1.1 1998/01/28 11:14:59 pefo Exp $	*/
+/*	$OpenBSD: varargs.h,v 1.2 1998/03/16 09:03:16 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,26 +43,12 @@
 #ifndef _MACHINE_VARARGS_H_
 #define	_MACHINE_VARARGS_H_
 
-#include <machine/ansi.h>
-
-typedef _BSD_VA_LIST_	va_list;
+#include <machine/stdarg.h>
 
 #define	va_dcl	int va_alist; ...
 
+#undef  va_start
 #define	va_start(ap) \
 	ap = (char *)&va_alist
-
-#ifdef _KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
-#else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) == sizeof(int) ? sizeof(type) : \
-		sizeof(type) > sizeof(int) ? \
-		(-(int)(ap) & (sizeof(type) - 1)) + sizeof(type) : \
-		(abort(), 0)))[-1]
-#endif
-
-#define	va_end(ap)	((void) 0)
 
 #endif /* !_MACHINE_VARARGS_H_ */

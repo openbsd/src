@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 1998/01/28 12:12:07 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.2 1998/03/16 09:03:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -125,8 +125,8 @@ cpuattach(parent, dev, aux)
 	case MIPS_R3TOSH:
 		printf("Toshiba R3000 based CPU");
 		break;
-	case MIPS_RM5230:
-		printf("QED RM5230 based CPU");
+	case MIPS_RM52X0:
+		printf("QED RM52X0 CPU");
 		break;
 	case MIPS_UNKC2:
 	default:
@@ -180,8 +180,8 @@ cpuattach(parent, dev, aux)
 	case MIPS_R5000:
 		printf("MIPS R5000 based FPC");
 		break;
-	case MIPS_RM5230:
-		printf("QED RM5230 based FPC");
+	case MIPS_RM52X0:
+		printf("QED RM52X0 FPC");
 		break;
 	case MIPS_UNKF1:
 	default:

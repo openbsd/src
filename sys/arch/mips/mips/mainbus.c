@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 1998/01/28 12:12:08 pefo Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 1998/03/16 09:03:34 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.
@@ -101,14 +101,16 @@ mbattach(parent, self, aux)
 	config_found(self, &nca, mbprint);
 
 #ifdef arc
-	if (system_type == ACER_PICA_61) {
+	if (system_type == ACER_PICA_61 ||
+	    system_type == MAGNUM) {
 		nca.ca_name = "pica";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
 	}
-	if (system_type == ALGOR_P4032) {
+	if (system_type == ALGOR_P4032 ||
+	    system_type == ALGOR_P5064) {
 		nca.ca_name = "algor";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
@@ -117,7 +119,8 @@ mbattach(parent, self, aux)
 	}
 
 	/* The following machines have a PCI bus */
-	if (system_type == ALGOR_P4032) {
+	if (system_type == ALGOR_P4032 ||
+	    system_type == ALGOR_P5064) {
 		nca.ca_name = "pbcpcibr";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;

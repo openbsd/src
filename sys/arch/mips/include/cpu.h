@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 1998/01/28 11:14:38 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 1998/03/16 09:03:04 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -176,10 +176,12 @@
 #define BREAK_SSTEP_VAL		513
 #define BREAK_BRKPT_VAL		514
 #define BREAK_SOVER_VAL		515
+#define BREAK_DDB_VAL		516
 #define BREAK_KDB	(BREAK_INSTR | (BREAK_KDB_VAL << BREAK_VAL_SHIFT))
 #define BREAK_SSTEP	(BREAK_INSTR | (BREAK_SSTEP_VAL << BREAK_VAL_SHIFT))
 #define BREAK_BRKPT	(BREAK_INSTR | (BREAK_BRKPT_VAL << BREAK_VAL_SHIFT))
 #define BREAK_SOVER	(BREAK_INSTR | (BREAK_SOVER_VAL << BREAK_VAL_SHIFT))
+#define BREAK_DDB	(BREAK_INSTR | (BREAK_DDB_VAL << BREAK_VAL_SHIFT))
 
 /*
  * Mininum and maximum cache sizes.
@@ -375,7 +377,7 @@ union cpuprid {
 #define	MIPS_R4700	0x21	/* QED R4700 Orion		ISA III */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based CPU	ISA I	*/
 #define	MIPS_R5000	0x23	/* MIPS R5000 based CPU		ISA IV  */
-#define	MIPS_RM5230	0x28	/* QED RM5230 based CPU		ISA IV  */
+#define	MIPS_RM52X0	0x28	/* QED RM52X0 based CPU		ISA IV  */
 
 /*
  * MIPS FPU types
@@ -395,7 +397,7 @@ union cpuprid {
 #define	MIPS_R3SONY	0x21	/* Sony R3000 based FPU		ISA I   */
 #define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
 #define	MIPS_R5010	0x23	/* MIPS R5000 based FPU		ISA IV  */
-#define	MIPS_RM5230	0x28	/* QED RM5230 based FPU		ISA IV  */
+#define	MIPS_RM5230	0x28	/* QED RM52X0 based FPU		ISA IV  */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 union	cpuprid cpu_id;
@@ -431,9 +433,6 @@ void	savectx __P((struct user *, int));
 int	copykstack __P((struct user *));
 void	switch_exit __P((void));
 void	MipsSaveCurFPState __P((struct proc *));
-#ifdef DEBUG
-void	mdbpanic __P((void));
-#endif
 
 extern u_int32_t cpu_counter_interval;  /* Number of counter ticks/tick */
 extern u_int32_t cpu_counter_last;      /* Last compare value loaded    */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: regnum.h,v 1.1 1998/01/28 11:14:54 pefo Exp $	*/
+/*	$OpenBSD: regnum.h,v 1.2 1998/03/16 09:03:14 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,9 +41,12 @@
  *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
 
+#define STAND_ARG_SIZE		16
+#define STAND_FRAME_SIZE	24
+#define STAND_RA_OFFSET		20  
+
 /*
- * Location of the users' stored
- * registers relative to ZERO.
+ * Location of the saved registers relative to ZERO.
  * Usage is p->p_regs[XX].
  */
 #define ZERO	0
@@ -85,6 +88,8 @@
 #define BADVADDR 35
 #define CAUSE	36
 #define	PC	37
+
+#define	NUMSAVEREGS 38		/* Number of registers saved in trap */
 
 #define FPBASE	38
 #define F0	(FPBASE+0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 1998/01/29 14:55:54 pefo Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 1998/03/16 09:03:21 pefo Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.2 1998/01/29 14:55:54 pefo Exp $
+ *      $Id: clock.c,v 1.3 1998/03/16 09:03:21 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -117,6 +117,7 @@ clockmatch(parent, cfdata, aux)
 
 #ifdef arc
 	case ACER_PICA_61:
+	case MAGNUM:
 		/* make sure that we're looking for this type of device. */
 		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
 			return (0);
@@ -126,6 +127,7 @@ clockmatch(parent, cfdata, aux)
 	case DESKSTATION_RPC44:
 	case DESKSTATION_TYNE:
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		break;
 
 #endif
@@ -159,7 +161,9 @@ clockattach(parent, self, aux)
 
 #ifdef arc
 	case ACER_PICA_61:
+	case MAGNUM:
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		BUS_INTR_ESTABLISH((struct confargs *)aux,
 			(intr_handler_t)hardclock, self);
 		set_intr(SOFT_INT_MASK_0 << 7, int5_dummy, 1);
