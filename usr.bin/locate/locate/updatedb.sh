@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: updatedb.sh,v 1.9 1997/04/03 00:57:49 michaels Exp $
+#	$OpenBSD: updatedb.sh,v 1.10 1997/12/13 20:06:14 deraadt Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,7 +28,7 @@
 #
 # updatedb - update locate database for local mounted filesystems
 #
-# $Id: updatedb.sh,v 1.9 1997/04/03 00:57:49 michaels Exp $
+# $Id: updatedb.sh,v 1.10 1997/12/13 20:06:14 deraadt Exp $
 
 LOCATE_CONFIG="/etc/locate.rc"
 if [ -f "$LOCATE_CONFIG" -a -r "$LOCATE_CONFIG" ]; then
@@ -37,7 +37,7 @@ fi
 
 # The directory containing locate subprograms
 : ${LIBEXECDIR=/usr/libexec}; export LIBEXECDIR
-: ${TMPDIR=/tmp}; export TMPDIR
+TMPDIR=${TMPDIR:-/tmp}; export TMPDIR;
 
 PATH=$LIBEXECDIR:/bin:/usr/bin:$PATH; export PATH
 

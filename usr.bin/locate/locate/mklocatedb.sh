@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: mklocatedb.sh,v 1.5 1997/04/02 08:35:00 deraadt Exp $
+#	$OpenBSD: mklocatedb.sh,v 1.6 1997/12/13 20:06:13 deraadt Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # 
 # usage: mklocatedb [-presort] < filelist > database
 #
-# $Id: mklocatedb.sh,v 1.5 1997/04/02 08:35:00 deraadt Exp $
+# $Id: mklocatedb.sh,v 1.6 1997/12/13 20:06:13 deraadt Exp $
 
 
 # The directory containing locate subprograms
@@ -40,7 +40,7 @@ PATH=$LIBEXECDIR:/bin:/usr/bin:$PATH; export PATH
 
 umask 077			# protect temp files
 
-: ${TMPDIR=/tmp}; export TMPDIR; 
+TMPDIR=${TMPDIR:-/tmp}; export TMPDIR;
 if test X"$TMPDIR" = X -o ! -d "$TMPDIR"; then
 	TMPDIR=/tmp; export TMPDIR
 fi

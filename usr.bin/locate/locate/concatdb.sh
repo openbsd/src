@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: concatdb.sh,v 1.5 1997/04/02 08:34:59 deraadt Exp $
+# $OpenBSD: concatdb.sh,v 1.6 1997/12/13 20:06:12 deraadt Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -32,7 +32,7 @@
 #
 # Sequence of databases is important.
 #
-# $Id: concatdb.sh,v 1.5 1997/04/02 08:34:59 deraadt Exp $
+# $Id: concatdb.sh,v 1.6 1997/12/13 20:06:12 deraadt Exp $
 
 # The directory containing locate subprograms
 : ${LIBEXECDIR=/usr/libexec}; export LIBEXECDIR
@@ -41,7 +41,7 @@ PATH=$LIBEXECDIR:/bin:/usr/bin:$PATH; export PATH
 
 umask 077			# protect temp files
 
-: ${TMPDIR=/tmp}; export TMPDIR; 
+TMPDIR=${TMPDIR:-/tmp}; export TMPDIR;
 if test X"$TMPDIR" = X -o ! -d "$TMPDIR"; then
 	TMPDIR=/tmp; export TMPDIR
 fi
