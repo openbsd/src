@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.65 2003/12/17 01:56:45 millert Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.66 2004/01/04 00:29:50 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -29,6 +29,7 @@ option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 
 option		INET		# IP + ICMP + TCP + UDP
+option		INET6		# IPv6 (needs INET)
 
 option		BOOT_CONFIG	# boot-time kernel config
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.18 2003/09/04 08:19:02 henning Exp $
+#	$OpenBSD: list,v 1.19 2004/01/04 00:29:51 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -38,8 +38,10 @@ LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping
+LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/restore
+LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep

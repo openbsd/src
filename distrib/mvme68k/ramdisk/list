@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.24 2003/02/16 16:36:45 deraadt Exp $
+#	$OpenBSD: list,v 1.25 2004/01/04 00:29:51 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -38,6 +38,8 @@ LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping
+LINK	instbin					sbin/ping6
+LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep

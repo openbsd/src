@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2003/12/27 23:58:08 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2004/01/04 00:29:50 deraadt Exp $
 
 machine		mvme88k
 
@@ -28,6 +28,7 @@ option		NFSCLIENT
 option		CD9660
 option		FIFO
 option		INET
+option		INET6
 option		BOOT_CONFIG
 
 config		bsd		root rd0 swap on rd0b
