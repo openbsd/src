@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.151 2002/12/13 21:54:31 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.152 2002/12/13 22:30:20 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -484,7 +484,7 @@ below).
     queue  ssh_interactive priority 7
     queue  ssh_bulk priority 0
 
-    block return out on $ext_if inet all queue std
+    block return out on dc0 inet all queue std
     pass out on dc0 inet proto tcp from $developerhosts to any port 80 \\
 	keep state queue developers
     pass out on dc0 inet proto tcp from $employeehosts to any port 80 \\
