@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.124 2003/04/02 22:33:13 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.125 2003/04/19 21:59:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -95,10 +95,10 @@ int	ubsec_newsession(u_int32_t *, struct cryptoini *);
 int	ubsec_freesession(u_int64_t);
 int	ubsec_process(struct cryptop *);
 void	ubsec_callback(struct ubsec_softc *, struct ubsec_q *);
-int	ubsec_feed(struct ubsec_softc *);
+void	ubsec_feed(struct ubsec_softc *);
 void	ubsec_mcopy(struct mbuf *, struct mbuf *, int, int);
 void	ubsec_callback2(struct ubsec_softc *, struct ubsec_q2 *);
-int	ubsec_feed2(struct ubsec_softc *);
+void	ubsec_feed2(struct ubsec_softc *);
 void	ubsec_rng(void *);
 int	ubsec_dma_malloc(struct ubsec_softc *, bus_size_t,
     struct ubsec_dma_alloc *, int);
@@ -466,7 +466,7 @@ ubsec_intr(arg)
  * ubsec_feed() - aggregate and post requests to chip
  *		  It is assumed that the caller set splnet()
  */
-int
+void
 ubsec_feed(sc)
 	struct ubsec_softc *sc;
 {
@@ -489,7 +489,7 @@ ubsec_feed(sc)
 			ubsec_totalreset(sc);
 			ubsecstats.hst_dmaerr++;
 		}
-		return (0);
+		return;
 	}
 
 #ifdef UBSEC_DEBUG
@@ -536,7 +536,7 @@ ubsec_feed(sc)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	WRITE_REG(sc, BS_MCR1, q->q_dma->d_alloc.dma_paddr +
 	    offsetof(struct ubsec_dmachunk, d_mcr));
-	return (0);
+	return;
 
 feed1:
 	while (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
@@ -569,7 +569,6 @@ feed1:
 		--sc->sc_nqueue;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
 	}
-	return (0);
 }
 
 /*
@@ -1354,7 +1353,7 @@ ubsec_mcopy(srcm, dstm, hoffset, toffset)
 /*
  * feed the key generator, must be called at splnet() or higher.
  */
-int
+void
 ubsec_feed2(sc)
 	struct ubsec_softc *sc;
 {
@@ -1377,7 +1376,6 @@ ubsec_feed2(sc)
 		--sc->sc_nqueue2;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip2, q, q_next);
 	}
-	return (0);
 }
 
 /*
