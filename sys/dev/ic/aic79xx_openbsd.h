@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.11 2004/12/16 01:33:26 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.12 2004/12/18 18:29:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -283,12 +283,4 @@ void	ahd_platform_flushwork(struct ahd_softc *ahd);
 void	  ahd_done(struct ahd_softc *, struct scb *);
 void	  ahd_send_async(struct ahd_softc *, char /*channel*/,
 			 u_int /*target*/, u_int /*lun*/, ac_code, void *arg);
-/************************ SCSI task management **************************/
-#define SIU_TASKMGMT_NONE               0x00
-#define SIU_TASKMGMT_ABORT_TASK         0x01
-#define SIU_TASKMGMT_ABORT_TASK_SET     0x02
-#define SIU_TASKMGMT_CLEAR_TASK_SET     0x04
-#define SIU_TASKMGMT_LUN_RESET          0x08
-#define SIU_TASKMGMT_TARGET_RESET       0x20
-#define SIU_TASKMGMT_CLEAR_ACA          0x40
 #endif  /* _AIC79XX_OPENBSD_H_ */
