@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.14 2000/02/21 16:01:04 deraadt Exp $	*/
+/*	$OpenBSD: ld.c,v 1.15 2000/02/21 16:56:56 art Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -1882,6 +1882,7 @@ digest_pass1()
 	FOR_EACH_SYMBOL(i, sp) {
 		symbol *spsave;
 		struct localsymbol *lsp;
+		struct nlist	*q = NULL;
 		int             defs = 0;
 
 		if (!(sp->flags & GS_REFERENCED)) {
@@ -2029,6 +2030,11 @@ digest_pass1()
 					common_defined_global_count--;
 					undefined_global_sym_count++;
 				}
+		/* Let WEAK symbols take precedence over second class */
+				if (q != NULL && N_ISWEAK(q) && 
+					(lsp->entry->flags & E_SECONDCLASS))
+					continue;
+				q = p;
 
 				sp->def_lsp = lsp;
 				sp->so_defined = type;
