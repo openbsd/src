@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.55 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.hppa,v 1.56 2004/10/14 19:46:35 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -117,7 +117,7 @@ attach	uturn at gedoens
 file	arch/hppa/dev/uturn.c		uturn
 
 # 1FT1-0002, 1FU2-0002
-# as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
+# as goes w/ 7100LC, 7300LC, 7200 and some of 8000, 8200, 8500
 device	lasi: gscbus
 attach	lasi at gedoens
 file	arch/hppa/dev/lasi.c		lasi
@@ -152,10 +152,6 @@ file	arch/hppa/dev/com_dino.c	com_dino
 #device	epic: pcibus
 #attach	epic at gedoens
 #file	arch/hppa/dev/epic.c		epic
-
-# Astro, integrated Runway to Ropes bridge, Memory controller, and IOA.
-
-# Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
 
 attach	sti at gedoens with sti_gedoens
 file	arch/hppa/dev/sti_sgc.c		sti_gedoens
