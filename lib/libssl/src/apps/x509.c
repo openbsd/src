@@ -1030,7 +1030,7 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 
 	len = ((serialfile == NULL)
 		?(strlen(CAfile)+strlen(POSTFIX)+1)
-		:(strlen(serialfile)))+1);
+		:(strlen(serialfile)))+1;
 	buf=OPENSSL_malloc(len);
 	if (buf == NULL) { BIO_printf(bio_err,"out of mem\n"); goto end; }
 	if (serialfile == NULL)
