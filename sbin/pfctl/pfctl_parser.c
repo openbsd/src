@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.66 2002/04/24 18:10:25 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.67 2002/05/05 21:40:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -657,7 +657,10 @@ print_state(struct pf_state *s, int opts)
 		s->expire /= 60;
 		hrs = s->expire;
 		printf(", expires in %.2u:%.2u:%.2u", hrs, min, sec);
-		printf(", %u pkts, %u bytes\n", s->packets, s->bytes);
+		printf(", %u pkts, %u bytes", s->packets, s->bytes);
+		if (s->rule.nr != USHRT_MAX)
+			printf(", rule %u", s->rule.nr);
+		printf("\n");
 	}
 }
 

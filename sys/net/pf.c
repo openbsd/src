@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.204 2002/04/24 18:10:25 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.205 2002/05/05 21:40:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1332,7 +1332,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		 */
 		for (n = pf_tree_first(tree_ext_gwy); n != NULL;
 		    n = pf_tree_next(n))
-			n->state->rule = NULL;
+			n->state->rule.ptr = NULL;
 		old_rules = pf_rules_active;
 		pf_rules_active = pf_rules_inactive;
 		pf_rules_inactive = old_rules;
@@ -1474,8 +1474,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			for (n = pf_tree_first(tree_ext_gwy); n != NULL;
 			    n = pf_tree_next(n))
-				if (n->state->rule == oldrule)
-					n->state->rule = NULL;
+				if (n->state->rule.ptr == oldrule)
+					n->state->rule.ptr = NULL;
 			TAILQ_REMOVE(pf_rules_active, oldrule, entries);
 			pf_dynaddr_remove(&oldrule->src.addr);
 			pf_dynaddr_remove(&oldrule->dst.addr);
@@ -2253,7 +2253,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		s = splsoftnet();
 		bcopy(&ps->state, state, sizeof(struct pf_state));
-		state->rule = NULL;
+		state->rule.ptr = NULL;
 		state->creation = time.tv_sec;
 		state->expire += state->creation;
 		state->packets = 0;
@@ -2281,6 +2281,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(n->state, &ps->state, sizeof(struct pf_state));
+		if (n->state->rule.ptr == NULL)
+			ps->state.rule.nr = -1;
+		else
+			ps->state.rule.nr = n->state->rule.ptr->nr;
 		splx(s);
 		secs = time.tv_sec;
 		ps->state.creation = secs - ps->state.creation;
@@ -2317,6 +2321,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			int secs = time.tv_sec;
 
 			bcopy(n->state, &pstore, sizeof(pstore));
+			if (n->state->rule.ptr == NULL)
+				pstore.rule.nr = -1;
+			else
+				pstore.rule.nr = n->state->rule.ptr->nr;
 			pstore.creation = secs - pstore.creation;
 			if (pstore.expire <= secs)
 				pstore.expire = 0;
@@ -3334,7 +3342,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			return (PF_DROP);
 		}
 
-		s->rule = *rm;
+		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = IPPROTO_TCP;
@@ -3562,7 +3570,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			return (PF_DROP);
 		}
 
-		s->rule = *rm;
+		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = IPPROTO_UDP;
@@ -3818,7 +3826,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		if (s == NULL)
 			return (PF_DROP);
 
-		s->rule = *rm;
+		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = pd->proto;
@@ -4018,7 +4026,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		if (s == NULL)
 			return (PF_DROP);
 
-		s->rule = *rm;
+		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
 		s->log = *rm && ((*rm)->log & 2);
 		s->proto = pd->proto;
@@ -4398,9 +4406,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 	}
 
-	if ((*state)->rule != NULL) {
-		(*state)->rule->packets++;
-		(*state)->rule->bytes += pd->tot_len;
+	if ((*state)->rule.ptr != NULL) {
+		(*state)->rule.ptr->packets++;
+		(*state)->rule.ptr->bytes += pd->tot_len;
 	}
 	return (PF_PASS);
 }
@@ -4463,9 +4471,9 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 	}
 
-	if ((*state)->rule != NULL) {
-		(*state)->rule->packets++;
-		(*state)->rule->bytes += pd->tot_len;
+	if ((*state)->rule.ptr != NULL) {
+		(*state)->rule.ptr->packets++;
+		(*state)->rule.ptr->bytes += pd->tot_len;
 	}
 	return (PF_PASS);
 }
@@ -5019,9 +5027,9 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 			}
 	}
 
-	if ((*state)->rule != NULL) {
-		(*state)->rule->packets++;
-		(*state)->rule->bytes += pd->tot_len;
+	if ((*state)->rule.ptr != NULL) {
+		(*state)->rule.ptr->packets++;
+		(*state)->rule.ptr->bytes += pd->tot_len;
 	}
 	return (PF_PASS);
 }
@@ -5443,7 +5451,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			break;
 		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, dir, ifp, m, 0, off, h, &pd);
@@ -5461,7 +5469,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, dir, ifp, m, 0, off, h, &pd);
@@ -5479,7 +5487,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			if (r != NULL) {
 				r->packets++;
 				r->bytes += h->ip_len;
@@ -5493,7 +5501,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	default:
 		action = pf_test_state_other(&s, dir, ifp, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_other(&r, dir, ifp, m, h, &pd);
@@ -5624,7 +5632,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			break;
 		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, dir, ifp, m, 0, off, h, &pd);
@@ -5642,7 +5650,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, dir, ifp, m, 0, off, h, &pd);
@@ -5660,7 +5668,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
-			r = s->rule;
+			r = s->rule.ptr;
 			if (r != NULL) {
 				r->packets++;
 				r->bytes += h->ip6_plen;
