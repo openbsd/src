@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.66 2003/05/10 17:52:17 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.67 2004/01/12 18:27:28 tedu Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -31,7 +31,7 @@ SRCS+=	stack_protector.c
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	chown.o chroot.o clock_gettime.o clock_settime.o clock_getres.o \
-	close.o connect.o dup.o dup2.o execve.o fchdir.o \
+	close.o closefrom.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o getdirentries.o getegid.o geteuid.o \
@@ -208,8 +208,8 @@ LintSysPseudoNoerr.c: ${LIBCSRCDIR}/sys/makelintstub.sh \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
-	chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 connect.2 dup.2 \
-	execve.2 _exit.2 fcntl.2 fhopen.2 \
+	chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 closefrom.2 connect.2 \
+	dup.2 execve.2 _exit.2 fcntl.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getdirentries.2 \
 	getfh.2 getfsstat.2 getgid.2 getgroups.2 getitimer.2 getlogin.2 \
 	getpeername.2 getpeereid.2 getpgrp.2 \
