@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.118 2002/02/01 04:53:28 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.119 2002/02/01 05:02:49 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.118 2002/02/01 04:53:28 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.119 2002/02/01 05:02:49 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -605,7 +605,7 @@ main(argc, argv, envp)
 	/* Make sure hostname is fully qualified. */
 	hp = gethostbyname(hostname);
 	if (hp != NULL)
-		strcpy(hostname, hp->h_name);
+		strlcpy(hostname, hp->h_name, sizeof(hostname));
 
 	if (multihome) {
 		getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
@@ -1012,7 +1012,7 @@ pass(passwd)
 					  pw->pw_dir, hostname);
 			}
 		} else
-			strcpy(rootdir, pw->pw_dir);
+			strlcpy(rootdir, pw->pw_dir, sizeof(rootdir));
 	}
 	if (guest) {
 		/*
@@ -2896,8 +2896,8 @@ copy_dir(dir, pw)
 			free(user);		
 			return (NULL);
 		}
-		strcpy(newdir, pw->pw_dir);
-		strcat(newdir, cp);
+		strlcpy(newdir, pw->pw_dir, dirsiz);
+		strlcat(newdir, cp, dirsiz);
 	}
 
 	if (user)
