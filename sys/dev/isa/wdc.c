@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.17 1996/11/29 22:55:09 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.18 1997/02/24 05:50:46 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -144,7 +144,7 @@ wdcprobe(parent, match, aux)
 
 	wdc->sc_iot = iot = ia->ia_iot;
 	if (bus_space_map(iot, ia->ia_iobase, 8, 0, &ioh))
-		return (0);
+		return 0;
 	wdc->sc_ioh = ioh;
 
 	/* Check if we have registers that work. */
@@ -163,14 +163,14 @@ wdcprobe(parent, match, aux)
 		bus_space_write_1(iot, ioh, wd_cyl_lo, 0xa5);
 		if (bus_space_read_1(iot, ioh, wd_error) == 0x5a ||
 		    bus_space_read_1(iot, ioh, wd_cyl_lo) != 0xa5)
-			return 0;
+			goto nomatch;
 		wdc->sc_flags |= WDCF_ONESLAVE;
 	}
 
 	if (wdcreset(wdc) != 0) {
 		delay(500000);
 		if (wdcreset(wdc) != 0)
-			return 0;
+			goto nomatch;
 	}
 
 	/* Select drive 0 or ATAPI slave device */
@@ -181,18 +181,26 @@ wdcprobe(parent, match, aux)
 
 	/* Wait for controller to become ready. */
 	if (wait_for_unbusy(wdc) < 0)
-		return 0;
+		goto nomatch;
     
 	/* Start drive diagnostics. */
 	bus_space_write_1(iot, ioh, wd_command, WDCC_DIAGNOSE);
 
 	/* Wait for command to complete. */
 	if (wait_for_unbusy(wdc) < 0)
-		return 0;
+		goto nomatch;
 
 	ia->ia_iosize = 8;
 	ia->ia_msize = 0;
+#ifdef notyet
+	/* when we are ready for it... */
+	bus_space_unmap(iot, ioh, 8);
+#endif
 	return 1;
+
+nomatch:
+	bus_space_unmap(iot, ioh, 8);
+	return 0;
 }
 
 int
@@ -694,8 +702,8 @@ wdcintr(arg)
 			printf("wdcintr: inactive controller, "
 			    "punting st=%02x er=%02x irr=%02x\n", s, e, i);
 #else
-			(void)bus_space_read_1(iot, ioh, wd_error);
-			(void)bus_space_read_1(iot, ioh, wd_seccnt);
+			bus_space_read_1(iot, ioh, wd_error);
+			bus_space_read_1(iot, ioh, wd_seccnt);
 #endif
 
 			if (s & WDCS_DRQ) {
@@ -703,10 +711,9 @@ wdcintr(arg)
 				    wd_cyl_hi) +
 				    bus_space_read_1(iot, ioh, wd_cyl_lo);
 #ifdef ATAPI_DEBUG_WDC
-				printf ("wdcintr: clearing up %d bytes\n",
-				    len);
+				printf("wdcintr: clearing up %d bytes\n", len);
 #endif
-				wdcbit_bucket (wdc, len);
+				wdcbit_bucket(wdc, len);
 			}
 		}
 		return 0;
@@ -717,7 +724,7 @@ wdcintr(arg)
 	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 	xfer = wdc->sc_xfer.tqh_first;
 	if (xfer->c_flags & C_ATAPI) {
-		(void) wdc_atapi_intr(wdc, xfer);
+		(void)wdc_atapi_intr(wdc, xfer);
 		return 0;
 	} else {
 		return wdc_ata_intr(wdc, xfer);
@@ -747,7 +754,8 @@ wdc_ata_intr(wdc,xfer)
 			/* The drive is busy.  Wait. */
 			return 1;
 		}
-		WDDEBUG_PRINT(("wdc_ata_start from wdc_ata_intr(open) flags %d\n",
+		WDDEBUG_PRINT(
+		    ("wdc_ata_start from wdc_ata_intr(open) flags %d\n",
 		    wdc->sc_flags));
 		wdc_ata_start(wdc,xfer);
 		return 1;
@@ -1580,6 +1588,10 @@ wdc_atapi_send_command_packet(ab_link, acp)
 			}
 		}
 
+		/* Turn off interrupts.  */
+		bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT | WDCTL_IDS);
+		delay(1000);
+
 		if (wdccommand((struct wd_link*)ab_link,
 		    ATAPI_PACKET_COMMAND, acp->drive, acp->data_size,
 		    0, 0, 0) != 0) {
@@ -1591,7 +1603,8 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		/* Wait for cmd i/o phase. */
 		phase = wait_for_phase(wdc, PHASE_CMDOUT);
 		if (phase != PHASE_CMDOUT)
-			printf("wdc_atapi_intr: got wrong phase (0x%x)\n",
+			printf("wdc_atapi_send_command_packet: "
+			    "got wrong phase (0x%x) wanted cmd I/O\n",
 			    phase);
 
 		bus_space_write_raw_multi_2(iot, ioh, wd_data, acp->command,
@@ -1600,18 +1613,26 @@ wdc_atapi_send_command_packet(ab_link, acp)
 		/* Wait for data i/o phase. */
 		phase = wait_for_unphase(wdc, PHASE_CMDOUT);
 		if (phase == PHASE_CMDOUT)
-			printf("wdc_atapi_intr: got wrong phase (0x%x)\n",
+			printf("wdc_atapi_send_command_packet: "
+			    "got wrong phase (0x%x) wanted data I/O\n",
 			    phase);
 		
 		while (wdc_atapi_intr(wdc, xfer)) {
-			for (i = 2000; i > 0; --i)
+			for (i = 2000; i > 0; --i) {
 				if ((bus_space_read_1(iot, ioh, wd_status) &
 				    WDCS_DRQ) == 0)
 					break;
+				delay(10);
+			}
 #ifdef ATAPI_DEBUG_WDC
-			printf("wdc_atapi_intr: i = %d\n", i);
+			printf("wdc_atapi_send_command_packet: i = %d\n", i);
 #endif
 		}
+
+		/* Turn on interrupts again. */
+		bus_space_write_1(iot, ioh, wd_ctlr, WDCTL_4BIT);
+		delay(1000);
+
 		wdc->sc_flags &= ~(WDCF_IRQ_WAIT | WDCF_SINGLE | WDCF_ERROR);
 		wdc->sc_errors = 0;
 		xfer->c_skip = 0;
@@ -1656,7 +1677,7 @@ wdcbit_bucket(wdc, size)
 	} 
 
 	if (size % 2)
-		(void)bus_space_read_1(iot, ioh, wd_data);
+		bus_space_read_1(iot, ioh, wd_data);
 }
 
 int
@@ -1705,6 +1726,7 @@ again:
 		{
 			int i;
 			char *c = (char *)acp->command;   
+
 			printf("wdc_atapi_intr: cmd ");
 			for (i = 0; i < acp->command_size; i++)
 				printf("0x%x ", c[i]);
@@ -1760,8 +1782,7 @@ again:
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
 			bus_space_read_raw_multi_2(iot, ioh, wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount);
+			    xfer->databuf + xfer->c_skip, xfer->c_bcount);
 			wdcbit_bucket(wdc, len - xfer->c_bcount);
 			xfer->c_bcount = 0;
 			return 1;
