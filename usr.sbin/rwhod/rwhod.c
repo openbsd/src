@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.13 2000/06/28 23:57:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.14 2000/12/23 02:19:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,17 +179,19 @@ main(argc, argv)
 		int cc, whod, len = sizeof(from);
 
 		cc = recvfrom(s, (char *)&wd, sizeof(struct whod), 0,
-			(struct sockaddr *)&from, &len);
+		    (struct sockaddr *)&from, &len);
 		if (cc <= 0) {
 			if (cc < 0 && errno != EINTR)
 				syslog(LOG_WARNING, "recv: %m");
 			continue;
 		}
 		if (from.sin_port != sp->s_port) {
-			syslog(LOG_WARNING, "%d: bad from port",
-				ntohs(from.sin_port));
+			syslog(LOG_WARNING, "%d: bad source port from %s",
+			    ntohs(from.sin_port), inet_ntoa(from.sin_addr));
 			continue;
 		}
+		if (cc < WHDRSIZE)
+			continue;
 		if (wd.wd_vers != WHODVERSION)
 			continue;
 		if (wd.wd_type != WHODTYPE_STATUS)
@@ -280,6 +282,7 @@ void
 onalrm(signo)
 	int signo;
 {
+	int save_errno = errno;
 	register struct neighbor *np;
 	register struct whoent *we = mywd.wd_we, *wlast;
 	register int i;
@@ -358,13 +361,14 @@ onalrm(signo)
 	mywd.wd_type = WHODTYPE_STATUS;
 	for (np = neighbors; np != NULL; np = np->n_next)
 		(void)sendto(s, (char *)&mywd, cc, 0,
-				np->n_addr, np->n_addrlen);
+		    np->n_addr, np->n_addrlen);
 	if (utmpent && chdir(_PATH_RWHODIR)) {
 		syslog(LOG_ERR, "chdir(%s): %m", _PATH_RWHODIR);
 		exit(1);
 	}
 done:
 	(void) alarm(AL_INTERVAL);
+	errno = save_errno;
 }
 
 void
@@ -507,9 +511,10 @@ Sendto(s, buf, cc, flags, to, tolen)
 	register struct whoent *we;
 	struct sockaddr_in *sin = (struct sockaddr_in *)to;
 
-	printf("sendto %x.%d\n", ntohl(sin->sin_addr), ntohs(sin->sin_port));
+	printf("sendto %s.%d\n", inet_ntoa(sin->sin_addr),
+	    ntohs(sin->sin_port));
 	printf("hostname %s %s\n", w->wd_hostname,
-	   interval(ntohl(w->wd_sendtime) - ntohl(w->wd_boottime), "  up"));
+	    interval(ntohl(w->wd_sendtime) - ntohl(w->wd_boottime), "  up"));
 	printf("load %4.2f, %4.2f, %4.2f\n",
 	    ntohl(w->wd_loadav[0]) / 100.0, ntohl(w->wd_loadav[1]) / 100.0,
 	    ntohl(w->wd_loadav[2]) / 100.0);
@@ -517,9 +522,9 @@ Sendto(s, buf, cc, flags, to, tolen)
 	for (we = w->wd_we, cc /= sizeof(struct whoent); cc > 0; cc--, we++) {
 		time_t t = ntohl(we->we_utmp.out_time);
 		printf("%-8.8s %s:%s %.12s",
-			we->we_utmp.out_name,
-			w->wd_hostname, we->we_utmp.out_line,
-			ctime(&t)+4);
+		    we->we_utmp.out_name,
+		    w->wd_hostname, we->we_utmp.out_line,
+		    ctime(&t)+4);
 		we->we_idle = ntohl(we->we_idle) / 60;
 		if (we->we_idle) {
 			if (we->we_idle >= 100*60)
