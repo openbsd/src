@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.333 2003/02/27 04:16:28 david Exp $	*/
+/*	$OpenBSD: parse.y,v 1.334 2003/03/02 12:37:49 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -357,7 +357,7 @@ typedef struct {
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
-%token	DEFAULT CONTROL BORROW RED ECN RIO
+%token	DEFAULT BORROW RED ECN RIO
 %token	<v.string>		STRING
 %token	<v.i>			PORTUNARY PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
@@ -1029,7 +1029,6 @@ cbqflags_list	: cbqflags_item				{ $$ |= $1; }
 		;
 
 cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
-		| CONTROL	{ $$ = CBQCLF_CTLCLASS; }
 		| BORROW	{ $$ = CBQCLF_BORROW; }
 		| RED		{ $$ = CBQCLF_RED; }
 		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
@@ -3413,7 +3412,6 @@ lookup(char *s)
 		{ "borrow",		BORROW},
 		{ "cbq",		CBQ},
 		{ "code",		CODE},
-		{ "control",		CONTROL},
 		{ "crop",		FRAGCROP},
 		{ "default",		DEFAULT},
 		{ "drop",		DROP},
