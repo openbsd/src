@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tp.4,v 1.16 2003/04/11 04:32:27 jmc Exp $
+.\"	$OpenBSD: tp.4,v 1.17 2003/04/14 07:29:08 jmc Exp $
 .\"	$NetBSD: tp.4,v 1.4 1994/11/30 16:22:38 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -598,13 +598,14 @@ error values as defined in
 .Aq Pa sys/errno.h
 and
 .Aq Pa netiso/iso_errno.h .
-User programs may print messages associated with these value by
-using an expanded version of
-.Xr perror 3
-found in the
-.Tn ISO
-library,
-.Pa libisodir.a .
+.\" User programs may print messages associated with these value by
+.\" using an expanded version of
+.\" .Xr perror 3
+.\" found in the
+.\" .Tn ISO
+.\" library,
+.\" .Pa libisodir.a .
+.br
 .Pp
 If the
 .Tn TP
