@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.26 1999/07/25 07:09:20 csapuntz Exp $	*/
+/*	$OpenBSD: st.c,v 1.27 1999/09/05 20:58:03 niklas Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -684,6 +684,7 @@ st_mount_tape(dev, flags)
 	 */
 	if ((error = st_mode_sense(st, 0)) != 0)
 		return error;
+
 	/*
 	 * If we have gained a permanent density from somewhere,
 	 * then use it in preference to the one supplied by
@@ -758,11 +759,19 @@ st_decide_mode(st, first_read)
 	struct st_softc *st;
 	boolean	first_read;
 {
-#ifdef SCSIDEBUG
 	struct scsi_link *sc_link = st->sc_link;
-#endif
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("starting block mode decision\n"));
+
+	/* ATAPI tapes are always fixed blocksize. */
+	if (sc_link->flags & SDEV_ATAPI) {
+		st->flags |= ST_FIXEDBLOCKS;
+		if (st->media_blksize > 0)
+			st->blksize = st->media_blksize;
+		else
+			st->blksize = DEF_FIXED_BSIZE;
+		goto done;
+	}
 
 	/*
 	 * If the drive can only handle fixed-length blocks and only at
