@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.13 1997/02/03 12:04:44 deraadt Exp $
+#	$OpenBSD: netstart,v 1.14 1997/02/11 18:46:08 deraadt Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -108,6 +108,12 @@ fi
 # set the address for the loopback interface
 ifconfig lo0 inet localhost
 
+# /etc/mygate, if it exists, contains the name of my gateway host
+# that name must be in /etc/hosts.
+if [ -f /etc/mygate ]; then
+	route add default `cat /etc/mygate`
+fi
+
 # use loopback, not the wire
 route add $hostname localhost
 route add -net 127 127.0.0.1 -reject
@@ -115,8 +121,3 @@ route add -net 127 127.0.0.1 -reject
 # default multicast route
 route add -net 224.0.0.0 -interface $hostname
 
-# /etc/mygate, if it exists, contains the name of my gateway host
-# that name must be in /etc/hosts.
-if [ -f /etc/mygate ]; then
-	route add default `cat /etc/mygate`
-fi
