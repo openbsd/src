@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.286 2000/07/19 22:04:17 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.287 2000/07/19 22:45:57 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1679,10 +1679,16 @@ product	XIRCOM X3201_3		0x0002	X3201-3
 product	XIRCOM X3201_3_21143	0x0003	X3201-3 (21143)
 
 /* Yamaha products */
-product YAMAHA YMF724E_V	0x0004	724 Audio
-product YAMAHA YMF724		0x000d	DS-1 Audio
-product YAMAHA YMF740		0x000d	DS-1L Audio
-product YAMAHA YMF744		0x0010	DS-1S Audio
+product YAMAHA YMF724		0x0004	724
+product YAMAHA YMF724F		0x000d	724F
+product YAMAHA YMF734		0x0005	734
+product YAMAHA YMF737		0x0008	737
+product YAMAHA YMF738		0x0020	738
+product YAMAHA YMF740		0x000a	740
+product YAMAHA YMF740C		0x000c	740C
+product YAMAHA YMF744		0x0010	744
+product YAMAHA YMF754		0x0012	754
+product YAMAHA YMF738_TEG	0x0006	738
 
 /* Zeinet products */
 product ZEINET 1221		0x0001	1221
