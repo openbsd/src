@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.22 2004/09/14 23:26:41 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.23 2004/09/14 23:41:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -370,7 +370,7 @@ check_tty_name(char *tty, size_t ttylen)
 
 bad_path:
 	warnx ("%s: invalid attempt to open %s: rewriting to /dev/null",
-	    __func__, tty);
+	    "check_tty_name", tty);
 	strlcpy(tty, "/dev/null", ttylen);
 }
 
@@ -412,7 +412,7 @@ check_log_name(char *lognam, size_t loglen)
 
 bad_path:
 	warnx("%s: invalid attempt to open %s: rewriting to /dev/null",
-	    __func__, lognam);
+	    "check_log_name", lognam);
 	strlcpy(lognam, "/dev/null", loglen);
 }
 
@@ -436,7 +436,7 @@ priv_open_tty(const char *tty)
 	size_t path_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
+		errx(1, "%s: called from privileged portion", "priv_open_tty");
 
 	if (strlcpy(path, tty, sizeof path) >= sizeof(path))
 		return -1;
@@ -459,7 +459,7 @@ priv_open_log(const char *lognam)
 	size_t path_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged child", __func__);
+		errx(1, "%s: called from privileged child", "priv_open_log");
 
 	if (strlcpy(path, lognam, sizeof path) >= sizeof(path))
 		return -1;
@@ -481,7 +481,7 @@ priv_open_utmp(void)
 	FILE *fp;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
+		errx(1, "%s: called from privileged portion", "priv_open_utmp");
 
 	cmd = PRIV_OPEN_UTMP;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -507,7 +507,7 @@ priv_open_config(void)
 	FILE *fp;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
+		errx(1, "%s: called from privileged portion", "priv_open_config");
 
 	cmd = PRIV_OPEN_CONFIG;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -532,7 +532,8 @@ priv_config_modified(void)
 	int cmd, res;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
+		errx(1, "%s: called from privileged portion",
+		    "priv_config_modified");
 
 	cmd = PRIV_CONFIG_MODIFIED;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -550,7 +551,8 @@ priv_config_parse_done(void)
 	int cmd;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
+		errx(1, "%s: called from privileged portion",
+		    "priv_config_parse_done");
 
 	cmd = PRIV_DONE_CONFIG_PARSE;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -567,13 +569,13 @@ priv_gethostserv(char *host, char *serv, struct sockaddr *addr,
 	size_t hostname_len, servname_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
+		errx(1, "%s: called from privileged portion", "priv_gethostserv");
 
 	if (strlcpy(hostcpy, host, sizeof hostcpy) >= sizeof(hostcpy))
-		errx(1, "%s: overflow attempt in hostname", __func__);
+		errx(1, "%s: overflow attempt in hostname", "priv_gethostserv");
 	hostname_len = strlen(hostcpy) + 1;
 	if (strlcpy(servcpy, serv, sizeof servcpy) >= sizeof(servcpy))
-		errx(1, "%s: overflow attempt in servname", __func__);
+		errx(1, "%s: overflow attempt in servname", "priv_gethostserv");
 	servname_len = strlen(servcpy) + 1;
 
 	cmd = PRIV_GETHOSTSERV;
@@ -592,7 +594,7 @@ priv_gethostserv(char *host, char *serv, struct sockaddr *addr,
 
 	/* Make sure we aren't overflowing the passed in buffer */
 	if (addr_len < ret_len)
-		errx(1, "%s: overflow attempt in return", __func__);
+		errx(1, "%s: overflow attempt in return", "priv_gethostserv");
 
 	/* Read the resolved address and make sure we got all of it */
 	memset(addr, '\0', addr_len);
@@ -609,7 +611,7 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 	int cmd, ret_len;
 
 	if (priv_fd < 0)
-		errx(1, "%s called from privileged portion", __func__);
+		errx(1, "%s called from privileged portion", "priv_gethostbyaddr");
 
 	cmd = PRIV_GETHOSTBYADDR;
 	must_write(priv_fd, &cmd, sizeof(int));
@@ -626,7 +628,7 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 
 	/* Check we don't overflow the passed in buffer */
 	if (res_len < ret_len)
-		errx(1, "%s: overflow attempt in return", __func__);
+		errx(1, "%s: overflow attempt in return", "priv_gethostbyaddr");
 
 	/* Read the resolved hostname */
 	must_read(priv_fd, res, ret_len);

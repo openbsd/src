@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_fdpass.c,v 1.3 2004/08/13 02:51:48 djm Exp $	*/
+/*	$OpenBSD: privsep_fdpass.c,v 1.4 2004/09/14 23:41:29 deraadt Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -76,10 +76,10 @@ send_fd(int sock, int fd)
 	msg.msg_iovlen = 1;
 
 	if ((n = sendmsg(sock, &msg, 0)) == -1)
-		warn("%s: sendmsg(%d)", __func__, sock);
+		warn("%s: sendmsg(%d)", "send_fd", sock);
 	if (n != sizeof(int))
 		warnx("%s: sendmsg: expected sent 1 got %ld",
-		    __func__, (long)n);
+		    "send_fd", (long)n);
 }
 
 int
@@ -102,18 +102,18 @@ receive_fd(int sock)
 	msg.msg_controllen = sizeof(tmp);
 
 	if ((n = recvmsg(sock, &msg, 0)) == -1)
-		warn("%s: recvmsg", __func__);
+		warn("%s: recvmsg", "receive_fd");
 	if (n != sizeof(int))
 		warnx("%s: recvmsg: expected received 1 got %ld",
-		    __func__, (long)n);
+		    "receive_fd", (long)n);
 	if (result == 0) {
 		cmsg = CMSG_FIRSTHDR(&msg);
 		if (cmsg == NULL) {
-			warnx("%s: no message header", __func__);
+			warnx("%s: no message header", "receive_fd");
 			return (-1);
 		}
 		if (cmsg->cmsg_type != SCM_RIGHTS)
-			warnx("%s: expected type %d got %d", __func__,
+			warnx("%s: expected type %d got %d", "receive_fd",
 			    SCM_RIGHTS, cmsg->cmsg_type);
 		fd = (*(int *)CMSG_DATA(cmsg));
 		return fd;
