@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.5 2003/02/18 00:38:56 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.6 2003/02/18 02:40:51 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -252,31 +252,40 @@ hilkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 void
 hilkbd_cngetc(void *v, u_int *type, int *data)
 {
-	struct hil_softc *sc = v;
+	struct hilkbd_softc *sc = v;
 	u_int8_t c, stat;
 
-	/* XXX This should really filter on keyboard events only */
 	for (;;) {
-		if (hil_poll_data(sc, &stat, &c) != -1)
+		while (hil_poll_data((struct hil_softc *)sc->sc_dev.dv_parent,
+		    sc->sc_code, &stat, &c) != 0)
+			;
+
+		/*
+		 * Disregard keyboard data packet header.
+		 * Note that no key generates it, so we're safe.
+		 */
+		if (c != HIL_KBDDATA)
 			break;
 	}
+
 	hilkbd_decode(stat, c, type, data);
 }
 
 void
 hilkbd_cnpollc(void *v, int on)
 {
-	struct hil_softc *sc = v;
+	struct hilkbd_softc *sc = v;
 
-	hil_set_poll(sc, on);
+	hil_set_poll((struct hil_softc *)sc->sc_dev.dv_parent, on);
 }
 
 void
 hilkbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
-	struct hil_softc *sc = v;
+	struct hilkbd_softc *sc = v;
 
-	hilkbd_bell(sc, pitch, period, volume);
+	hilkbd_bell((struct hil_softc *)sc->sc_dev.dv_parent,
+	    pitch, period, volume);
 }
 
 void

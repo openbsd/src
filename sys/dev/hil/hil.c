@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.4 2003/02/15 23:45:52 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.5 2003/02/18 02:40:51 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -97,6 +97,7 @@ struct cfdriver hil_cd = {
 void	hilconfig(struct hil_softc *);
 int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
+int	hil_process_poll(struct hil_softc *, u_int8_t, u_int8_t);
 void	polloff(struct hil_softc *);
 void	pollon(struct hil_softc *);
 
@@ -361,6 +362,63 @@ hil_process_int(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
 }
 
 /*
+ * Same as above, but in polled mode: return data as it gets seen, instead
+ * of buffering it.
+ */
+int
+hil_process_poll(struct hil_softc *sc, u_int8_t stat, u_int8_t c)
+{
+	switch ((stat >> HIL_SSHIFT) & HIL_SMASK) {
+	case HIL_STATUS:
+		if (c & HIL_ERROR) {
+		  	sc->sc_cmddone = 1;
+			if (c == HIL_RECONFIG) {
+				/*
+				 * XXX We should remember if a configuration
+				 * event occured and invoke hilconfig() upon
+				 * leaving polled mode...
+				 */
+			}
+			break;
+		}
+		if (c & HIL_COMMAND) {
+		  	if (!(c & HIL_POLLDATA)) {
+				/* End of command */
+			  	sc->sc_cmdending = 1;
+			}
+			sc->sc_actdev = 0;
+		} else {
+		  	if (c & HIL_POLLDATA) {
+				/* Start of polled data */
+				sc->sc_actdev = (c & HIL_DEVMASK);
+				sc->sc_pollbp = sc->sc_pollbuf;
+			} else {
+				/* Start of command - should not happen */
+				if (sc->sc_cmddev == (c & HIL_DEVMASK)) {
+					sc->sc_cmdbp = sc->sc_cmdbuf;
+					sc->sc_actdev = 0;
+				}
+			}
+		}
+	        break;
+	case HIL_DATA:
+		if (sc->sc_actdev != 0)	/* Collecting poll data */
+			return 1;
+		else {
+			if (sc->sc_cmddev != 0) {  /* Discarding cmd data */
+				if (sc->sc_cmdending) {
+					sc->sc_cmddone = 1;
+					sc->sc_cmdending = 0;
+				}
+		        }
+		}
+		break;
+	}
+
+	return 0;
+}
+
+/*
  * Called after the loop has reconfigured.  Here we need to:
  *	- determine how many devices are on the loop
  *	  (some may have been added or removed)
@@ -534,6 +592,9 @@ polloff(struct hil_softc *sc)
 		hildatawait(sc);
 		db = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_DATA);
 	} while (db & BSY_LOOPBUSY);
+
+	sc->sc_cmddone = 0;
+	sc->sc_cmddev = 0;
 }
 
 void
@@ -573,16 +634,24 @@ hil_set_poll(struct hil_softc *sc, int on)
 }
 
 int
-hil_poll_data(struct hil_softc *sc, u_int8_t *stat, u_int8_t *data)
+hil_poll_data(struct hil_softc *sc, u_int code, u_int8_t *stat, u_int8_t *data)
 {
-	u_int8_t s;
+	u_int8_t s, c;
 
 	s = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_STAT);
 	if ((s & HIL_DATA_RDY) == 0)
 		return -1;
 
-	*stat = s;
-	*data = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_DATA);
+	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh, HILP_DATA);
 
-	return 0;
+	if (hil_process_poll(sc, s, c)) {
+		/* Discard any data not for us */
+		if (sc->sc_actdev == code) {
+			*stat = s;
+			*data = c;
+			return 0;
+		}
+	}
+
+	return -1;
 }
