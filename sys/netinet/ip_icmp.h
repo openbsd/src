@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.4 1997/01/30 07:01:45 kstailey Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.5 1997/01/30 17:05:46 kstailey Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -142,6 +142,8 @@ struct icmp {
 #define		ICMP_UNREACH_TOSNET	11		/* bad tos for net */
 #define		ICMP_UNREACH_TOSHOST	12		/* bad tos for host */
 #define		ICMP_UNREACH_ADM_PROHIB	13		/* prohibited access */
+#define		ICMP_UNREACH_PREC_VIOLATN 14		/* precedence violat'n*/
+#define		ICMP_UNREACH_PREC_CUTOFF 15		/* precedence cutoff */
 #define	ICMP_SOURCEQUENCH	4		/* packet lost, slow down */
 #define	ICMP_REDIRECT		5		/* shorter route, codes: */
 #define		ICMP_REDIRECT_NET	0		/* for network */
