@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.7 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.8 2004/02/07 14:03:48 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -102,13 +102,6 @@ int no_daemon;
 int save_scripts;
 int onetry = 0;
 int unknown_ok = 1;
-
-static char copyright[] =
-"Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
-static char arr[] = "All rights reserved.";
-static char message[] = "Internet Software Consortium DHCP Client";
-static char contrib[] = "Please contribute if you find this software useful.";
-static char url[] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
 static void usage(char *);
 
@@ -402,14 +395,6 @@ main(int argc, char *argv[])
 static void
 usage(char *appname)
 {
-	note("%s", message);
-	note("%s", copyright);
-	note("%s", arr);
-	note("%s", "");
-	note("%s", contrib);
-	note("%s", url);
-	note("%s", "");
-
 	warn("Usage: %s [-c1u] [-p <port>] [-lf lease-file]", appname);
 	error("       [-pf pidfile] [interface]");
 }
