@@ -1,4 +1,4 @@
-/*	$OpenBSD: ydsreg.h,v 1.2 2001/07/08 06:43:26 fgsch Exp $	*/
+/*	$OpenBSD: ydsreg.h,v 1.3 2003/02/20 00:26:17 jason Exp $	*/
 /*	$NetBSD$	*/
 
 /*
@@ -78,6 +78,7 @@
 # define YDS_PCI_EX_LEGACY_JSIO_205	(0x00c0 << 16)
 # define YDS_PCI_EX_LEGACY_MAIM		(0x0100 << 16)
 # define YDS_PCI_EX_LEGACY_SBMOD_PCI	(0x0000 << 16)
+# define YDS_PCI_EX_LEGACY_SBMOD_XXX	(0x0800 << 16)
 # define YDS_PCI_EX_LEGACY_SBMOD_DDMA	(0x1000 << 16)
 # define YDS_PCI_EX_LEGACY_SBVER_3	(0x0000 << 16)
 # define YDS_PCI_EX_LEGACY_SBVER_2	(0x2000 << 16)
