@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.33 2000/10/10 15:41:10 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.34 2000/11/08 21:49:44 aaron Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2191,12 +2191,12 @@ cmdrc(char *m1, char *m2)
     int gotmachine = 0;
     int l1 = strlen(m1);
     int l2 = strlen(m2);
-    char m1save[64];
+    char m1save[MAXHOSTNAMELEN];
 
     if (skiprc)
 	return;
 
-    strcpy(m1save, m1);
+    strlcpy(m1save, m1, sizeof(m1save));
     m1 = m1save;
 
     if (rcname[0] == 0) {
