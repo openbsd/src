@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 1999/09/23 08:25:01 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.26 2000/01/06 03:34:39 smurph Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -122,7 +122,8 @@
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
 #define	NODEV	(dev_t)(-1)	/* non-existent device */
-
+#define NETDEV	(dev_t)(-2)	/* network device (for nfs swap) */
+	
 /*
  * Clustering of hardware pages on machines with ridiculously small
  * page sizes is done here.  The paging subsystem deals with units of

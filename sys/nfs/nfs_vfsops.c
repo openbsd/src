@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.28 2000/01/01 23:50:59 millert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.29 2000/01/06 03:35:37 smurph Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -346,6 +346,12 @@ nfs_mountroot()
 	 */
 	vp->v_type = VREG;
 	vp->v_flag = 0;
+	/* 
+	 * Next line is a hack to make swapmount() work on NFS swap files. 
+	 * XXX-smurph 
+	 */ 
+	swdevt[0].sw_dev = NETDEV;
+	/* end hack */
 	swdevt[0].sw_vp = vp;
 
 	/*
