@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.52 2001/10/09 14:53:05 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.53 2001/10/26 13:29:26 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -125,8 +125,8 @@ udp_listen_lookup (struct sockaddr *addr)
   struct udp_transport *u;
 
   for (u = LIST_FIRST (&udp_listen_list); u; u = LIST_NEXT (u, link))
-    if (u->src->sa_len == addr->sa_len
-	&& memcmp (u->src, addr, addr->sa_len) == 0)
+    if (sysdep_sa_len (u->src) == sysdep_sa_len (addr)
+	&& memcmp (u->src, addr, sysdep_sa_len (addr)) == 0)
       return u;
   return 0;
 }
@@ -189,7 +189,7 @@ udp_make (struct sockaddr *laddr)
 
   t->transport.vtbl = &udp_transport_vtbl;
   t->src = laddr;
-  if (bind (s, t->src, t->src->sa_len))
+  if (bind (s, t->src, sysdep_sa_len (t->src)))
     {
       char *tstr;
       if (sockaddr2text (t->src, &tstr, 0))
@@ -237,24 +237,24 @@ udp_clone (struct udp_transport *u, struct sockaddr *raddr)
 
   memcpy (u2, u, sizeof *u);
 
-  u2->src = malloc (u->src->sa_len);
+  u2->src = malloc (sysdep_sa_len (u->src));
   if (!u2->src)
     {
-      log_error ("udp_clone: malloc (%d) failed", u->src->sa_len);
+      log_error ("udp_clone: malloc (%d) failed", sysdep_sa_len (u->src));
       free (t);
       return 0;
     }
-  memcpy (u2->src, u->src, u->src->sa_len);
+  memcpy (u2->src, u->src, sysdep_sa_len (u->src));
 
-  u2->dst = malloc (raddr->sa_len);
+  u2->dst = malloc (sysdep_sa_len (raddr));
   if (!u2->dst)
     {
-      log_error ("udp_clone: malloc (%d) failed", raddr->sa_len);
+      log_error ("udp_clone: malloc (%d) failed", sysdep_sa_len (raddr));
       free (u2->src);
       free (t);
       return 0;
     }
-  memcpy (u2->dst, raddr, raddr->sa_len);
+  memcpy (u2->dst, raddr, sysdep_sa_len (raddr));
 
   t->flags &= ~TRANSPORT_LISTEN;
 
@@ -272,12 +272,12 @@ udp_clone (struct udp_transport *u, struct sockaddr *raddr)
 static struct transport *
 udp_bind (const struct sockaddr *addr)
 {
-  struct sockaddr *src = malloc (addr->sa_len);
+  struct sockaddr *src = malloc (sysdep_sa_len ((struct sockaddr *)addr));
 
   if (!src)
     return 0;
 
-  memcpy (src, addr, addr->sa_len);
+  memcpy (src, addr, sysdep_sa_len ((struct sockaddr *)addr));
   return udp_make (src);
 }
 
@@ -303,16 +303,11 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
   /*
    * Well, UDP is an internet protocol after all so drop other ifreqs.
    */
-#ifdef USE_OLD_SOCKADDR
-  if (if_addr->sa_family != AF_INET && if_addr->sa_family != AF_INET6)
-    return;
-#else
   if ((if_addr->sa_family != AF_INET
-       || if_addr->sa_len != sizeof (struct sockaddr_in))
+       || sysdep_sa_len (if_addr) != sizeof (struct sockaddr_in))
       && (if_addr->sa_family != AF_INET6
-	  || if_addr->sa_len != sizeof (struct sockaddr_in6)))
+	  || sysdep_sa_len (if_addr) != sizeof (struct sockaddr_in6)))
     return;
-#endif
 
   /*
    * These special addresses are not useable as they have special meaning
@@ -412,7 +407,7 @@ udp_bind_if (char *ifname, struct sockaddr *if_addr, void *arg)
 	    }
 
 	  /* If found, take the easy way out. */
-	  if (memcmp (addr, if_addr, addr->sa_len) == 0)
+	  if (memcmp (addr, if_addr, sysdep_sa_len (addr)) == 0)
 	    {
 	      free (addr);
 	      break;
@@ -775,7 +770,7 @@ udp_send_message (struct message *msg)
    * given, or else EISCONN will occur.
    */
   m.msg_name = (caddr_t)u->dst;
-  m.msg_namelen = u->dst->sa_len;
+  m.msg_namelen = sysdep_sa_len (u->dst);
   m.msg_iov = msg->iov;
   m.msg_iovlen = msg->iovlen;
   m.msg_control = 0;
@@ -819,7 +814,7 @@ udp_decode_ids (struct transport *t)
 
 #ifdef HAVE_GETNAMEINFO
   if (getnameinfo (((struct udp_transport *)t)->src,
-		   ((struct udp_transport *)t)->src->sa_len,
+		   sysdep_sa_len (((struct udp_transport *)t)->src),
 		   idsrc, sizeof idsrc, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_print ("udp_decode_ids: getnameinfo () failed for 'src'");
@@ -827,7 +822,7 @@ udp_decode_ids (struct transport *t)
     }
 
   if (getnameinfo (((struct udp_transport *)t)->dst,
-		   ((struct udp_transport *)t)->dst->sa_len,
+		   sysdep_sa_len (((struct udp_transport *)t)->dst),
 		   iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_print ("udp_decode_ids: getnameinfo () failed for 'dst'");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.46 2001/10/26 11:37:16 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.47 2001/10/26 13:29:26 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1382,7 +1382,7 @@ message_send_delete (struct sa *sa)
   struct sockaddr *dst;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst);
-  isakmp_sa = sa_isakmp_lookup_by_peer (dst, dst->sa_len);
+  isakmp_sa = sa_isakmp_lookup_by_peer (dst, sysdep_sa_len (dst));
   if (!isakmp_sa)
     {
       /*

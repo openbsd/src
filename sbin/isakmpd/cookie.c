@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.c,v 1.9 2001/06/29 18:52:16 ho Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.10 2001/10/26 13:29:26 ho Exp $	*/
 /*	$EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	*/
 
 /*
@@ -67,9 +67,9 @@ cookie_gen (struct transport *t, struct exchange *exchange, u_int8_t *buf,
 
   hash->Init (hash->ctx);
   (*t->vtbl->get_dst) (t, &name);
-  hash->Update (hash->ctx, (u_int8_t *)name, name->sa_len);
+  hash->Update (hash->ctx, (u_int8_t *)name, sysdep_sa_len (name));
   (*t->vtbl->get_src) (t, &name);
-  hash->Update (hash->ctx, (u_int8_t *)name, name->sa_len);
+  hash->Update (hash->ctx, (u_int8_t *)name, sysdep_sa_len (name));
   if (exchange->initiator == 0)
     hash->Update (hash->ctx, exchange->cookies + ISAKMP_HDR_ICOOKIE_OFF,
 		  ISAKMP_HDR_ICOOKIE_LEN);

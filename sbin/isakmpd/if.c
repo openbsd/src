@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.9 2001/08/13 14:33:35 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.10 2001/10/26 13:29:26 ho Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -147,12 +147,8 @@ if_map (void (*func) (char *, struct sockaddr *, void *), void *arg)
     {
       ifrp = (struct ifreq *)p;
       (*func) (ifrp->ifr_name, &ifrp->ifr_addr, arg);
-#ifdef USE_OLD_SOCKADDR
-      len = sizeof ifrp->ifr_name + sizeof ifrp->ifr_addr;
-#else
       len = sizeof ifrp->ifr_name
-	+ MAX (ifrp->ifr_addr.sa_len, sizeof ifrp->ifr_addr);
-#endif
+	+ MAX (sysdep_sa_len (&ifrp->ifr_addr), sizeof ifrp->ifr_addr);
     }
   free (ifc.ifc_buf);
   return 0;

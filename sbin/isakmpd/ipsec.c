@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.59 2001/10/26 12:03:07 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.60 2001/10/26 13:29:26 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -427,14 +427,18 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       if (!isa->src_net)
 	return -1;
       isa->src_net->sa_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
       isa->src_net->sa_len = sizeof (struct sockaddr_in);
+#endif
 
       isa->src_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->src_mask)
 	return -1;
       isa->src_mask->sa_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
       isa->src_mask->sa_len = sizeof (struct sockaddr_in);
+#endif
       break;
 
     case IPSEC_ID_IPV6_ADDR:
@@ -444,14 +448,18 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       if (!isa->src_net)
 	return -1;
       isa->src_net->sa_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
       isa->src_net->sa_len = sizeof (struct sockaddr_in6);
+#endif
 
       isa->src_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->src_mask)
 	return -1;
       isa->src_mask->sa_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
       isa->src_mask->sa_len = sizeof (struct sockaddr_in6);
+#endif
       break;
     }
 
@@ -491,14 +499,18 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       if (!isa->dst_net)
 	return -1;
       isa->dst_net->sa_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
       isa->dst_net->sa_len = sizeof (struct sockaddr_in);
+#endif
 
       isa->dst_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->dst_mask)
 	return -1;
       isa->dst_mask->sa_family = AF_INET;
+#ifndef USE_OLD_SOCKADDR
       isa->dst_mask->sa_len = sizeof (struct sockaddr_in);
+#endif
       break;
 
     case IPSEC_ID_IPV6_ADDR:
@@ -508,14 +520,18 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       if (!isa->dst_net)
 	return -1;
       isa->dst_net->sa_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
       isa->dst_net->sa_len = sizeof (struct sockaddr_in6);
+#endif
 
       isa->dst_mask = 
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->dst_mask)
 	return -1;
       isa->dst_mask->sa_family = AF_INET6;
+#ifndef USE_OLD_SOCKADDR
       isa->dst_mask->sa_len = sizeof (struct sockaddr_in6);
+#endif
       break;
     }
 
@@ -1624,7 +1640,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	   * non-ready SAs will disappear too.
 	   */
 	  msg->transport->vtbl->get_dst (msg->transport, &dst);
-	  while ((sa = sa_lookup_by_peer (dst, dst->sa_len)) != 0)
+	  while ((sa = sa_lookup_by_peer (dst, sysdep_sa_len (dst))) != 0)
 	    {
 	      /*
 	       * Don't delete the current SA -- we received the notification
@@ -2122,15 +2138,15 @@ ipsec_add_contact (struct message *msg)
       contacts = new_contacts;
     }
   msg->transport->vtbl->get_dst (msg->transport, &dst);
-  addr = malloc (dst->sa_len);
+  addr = malloc (sysdep_sa_len (dst));
   if (!addr)
     {
-      log_error ("ipsec_add_contact: malloc (%d) failed", dst->sa_len);
+      log_error ("ipsec_add_contact: malloc (%d) failed", sysdep_sa_len (dst));
       return -1;
     }
-  memcpy (addr, dst, dst->sa_len);
+  memcpy (addr, dst, sysdep_sa_len (dst));
   contacts[contact_cnt].addr = addr;
-  contacts[contact_cnt++].len = dst->sa_len;
+  contacts[contact_cnt++].len = sysdep_sa_len (dst);
 
   /*
    * XXX There are better algorithms for already mostly-sorted data like
@@ -2147,7 +2163,7 @@ ipsec_contacted (struct message *msg)
   struct contact contact;
 
   msg->transport->vtbl->get_dst (msg->transport, &contact.addr);
-  contact.len = contact.addr->sa_len;
+  contact.len = sysdep_sa_len (contact.addr);
   return contacts
     ? (bsearch (&contact, contacts, contact_cnt, sizeof *contacts, addr_cmp)
        != 0)
