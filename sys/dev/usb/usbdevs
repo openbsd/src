@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.62 2003/05/16 18:21:47 nate Exp $
+$OpenBSD: usbdevs,v 1.63 2003/05/17 03:26:20 nate Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1029,6 +1029,7 @@ product MINDSATWORK DW		0x0001	Digital Wallet
 /* Minolta Co., Ltd. */
 product MINOLTA S304		0x4007	Dimage S304
 product MINOLTA X		0x4009	Dimage X
+product MINOLTA DIMAGE7I	0x400b	Dimage 7i
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
