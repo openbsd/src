@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.62 1998/10/30 18:38:06 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.63 1998/12/19 05:27:38 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1628,7 +1628,7 @@ msgs
 ..
 
 # ./var/named
-named		uname=named gname=bin mode=0755
+named
 
 # ./var/named/dev
 dev
@@ -1638,6 +1638,11 @@ dev
 # ./var/named/etc
 etc
 # ./var/named/etc
+..
+
+# ./var/named/namedb
+namedb		uname=named gname=bin mode=0755
+# ./var/named/namedb
 ..
 
 # ./var/named

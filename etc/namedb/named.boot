@@ -3,10 +3,10 @@
 ; boot file for secondary name server
 ; Note that there should be one primary entry for each SOA record.
 
-; NOTE: if you are not chroot'ing named, change directory to /var/named
+; NOTE: if you are not chroot'ing named, change directory to /var/named/namedb
 ;       OpenBSD chroot's named by default
-;directory	/var/named
-directory	/
+;directory	/var/named/namedb
+directory	/namedb
 
 ; type    domain		source host/file		backup file
 
