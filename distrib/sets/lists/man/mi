@@ -1569,6 +1569,7 @@
 ./usr/share/man/cat5/afsd.conf.0
 ./usr/share/man/cat5/aliases.0
 ./usr/share/man/cat5/alpha
+./usr/share/man/cat5/bgpd.conf.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/bridgename.if.0
@@ -1745,6 +1746,7 @@
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/authpf.0
 ./usr/share/man/cat8/badsect.0
+./usr/share/man/cat8/bgpd.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0
 ./usr/share/man/cat8/bootpd.0
