@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadmavar.h,v 1.13 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.14 2002/06/10 22:27:33 niklas Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.10 1997/08/04 22:13:33 augustss Exp $	*/
 
 /*-
@@ -47,23 +47,6 @@
 
 /* XXX ugly.. but it's a deprecated API that uses it so it will go.. */
 extern struct device *isa_dev;
-
-#define	ISADMA_MAP_WAITOK	0x0001	/* OK for isadma_map to sleep */
-#define	ISADMA_MAP_BOUNCE	0x0002	/* use bounce buffer if necessary */
-#define	ISADMA_MAP_CONTIG	0x0004	/* must be physically contiguous */
-#define	ISADMA_MAP_8BIT		0x0008	/* must not cross 64k boundary */
-#define	ISADMA_MAP_16BIT	0x0010	/* must not cross 128k boundary */
-
-struct isadma_seg {		/* a physical contiguous segment */
-	vm_offset_t addr;	/* address of this segment */
-	vm_size_t length;	/* length of this segment (bytes) */
-	bus_dmamap_t dmam;	/* DMA handle for bus_dma routines. */
-};
-
-int isadma_map(caddr_t, vm_size_t, struct isadma_seg *, int);
-void isadma_unmap(caddr_t, vm_size_t, int, struct isadma_seg *);
-void isadma_copytobuf(caddr_t, vm_size_t, int, struct isadma_seg *);
-void isadma_copyfrombuf(caddr_t, vm_size_t, int, struct isadma_seg *);
 
 #define isadma_acquire(c)		isa_dma_acquire(isa_dev, (c))
 #define isadma_release(c)		isa_dma_release(isa_dev, (c))
