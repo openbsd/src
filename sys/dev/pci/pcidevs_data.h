@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.315 2000/09/14 11:21:36 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.316 2000/09/14 11:52:43 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -627,16 +627,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7896/7 Ultra2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899,
-	    0,
-	    "Adaptec(2)",
-	    "AIC-7899 Ultra160",
-	},
-	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3960D,
 	    0,
 	    "Adaptec(2)",
 	    "AHA-3960D Ultra160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899B,
+	    0,
+	    "Adaptec(2)",
+	    "AIC-7899B",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899D,
+	    0,
+	    "Adaptec(2)",
+	    "AIC-7899D",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899F,
+	    0,
+	    "Adaptec(2)",
+	    "AIC-7899F",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899,
+	    0,
+	    "Adaptec(2)",
+	    "AIC-7899 Ultra160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
@@ -3613,6 +3631,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Reliance Computer",
 	    "IDE",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_USB,
+	    0,
+	    "Reliance Computer",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,
