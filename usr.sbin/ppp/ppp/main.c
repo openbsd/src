@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: main.c,v 1.28 2001/07/04 03:33:41 brian Exp $
+ * $OpenBSD: main.c,v 1.29 2001/07/04 09:32:08 brian Exp $
  */
 
 #include <sys/param.h>
@@ -311,7 +311,7 @@ main(int argc, char **argv)
     return 2;
   }
   for (f = 1; f < sizeof holdfd / sizeof *holdfd; f++)
-    dup2(holdfd[0], holdfd[f]);
+    holdfd[f] = dup(holdfd[0]);
 
   name = strrchr(argv[0], '/');
   log_Open(name ? name + 1 : argv[0]);
