@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.8 1999/09/03 18:55:30 deraadt Exp $
+#       $OpenBSD: install.md,v 1.9 1999/09/26 18:24:52 smurph Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -45,6 +45,26 @@ KERNFSMOUNTED=/tmp/kernfsmounted
 # Machine-dependent install sets
 MDSETS=kernel
 
+md_copy_kernel() {
+	if [ ! -s /mnt/bsd ]; then
+		echo	""
+		echo	"Warning, no kernel installed!"
+		echo	"You did not unpack a file set containing a kernel."
+		echo	"This is needed to boot.  Please note that the install"
+		echo	"install kernel is not suitable for general use."
+		echo -n	"Escape to shell add /mnt/bsd by hand? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				echo "Type 'exit' to return to install."
+				sh
+				;;
+			*)
+				;;
+		esac
+	fi
+}
+
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
@@ -82,7 +102,24 @@ md_questions() {
 }
 
 md_installboot() {
-	echo "Nothing to do."
+	local _rawdev
+
+	if [ "X${1}" = X"" ]; then
+		echo "No disk device specified, you must run installboot manually."
+		return
+	fi
+	_rawdev=/dev/r${1}a
+
+	# use extracted mdec if it exists (may be newer)
+	if [ -d /mnt/usr/mdec ]; then
+		cp /mnt/usr/mdec/bootsd /mnt/bootsd
+		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx _rawdev
+	elif [ -d /usr/mdec ]; then
+		cp /usr/mdec/bootsd /mnt/bootsd
+		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx _rawdev
+	else
+		echo "No boot block prototypes found, you must run installboot manually."
+	fi
 }
 
 md_labeldisk() {
