@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.17 1999/09/03 12:47:12 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.18 1999/09/30 02:10:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -136,8 +136,8 @@ struct bridge_softc bridgectl[NBRIDGE];
 void	bridgeattach __P((int));
 int	bridge_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	bridge_start __P((struct ifnet *));
-struct mbuf *	bridge_broadcast __P((struct bridge_softc *sc,
-    struct ifnet *, struct ether_header *, struct mbuf *));
+void	bridge_broadcast __P((struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *));
 void	bridge_stop __P((struct bridge_softc *));
 void	bridge_init __P((struct bridge_softc *));
 int	bridge_bifconf __P((struct bridge_softc *, struct ifbifconf *));
@@ -795,15 +795,14 @@ bridgeintr(void)
 				continue;
 			}
 #endif
+
 			/*
 			 * If the packet is a multicast or broadcast, then
-			 * forward it and pass it up to our higher layers.
+			 * forward it to all interfaces.
 			 */
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
 				bifp->if_imcasts++;
-				m = bridge_broadcast(sc, src_if, eh, m);
-				if (m != NULL)
-					m_freem(m);
+				bridge_broadcast(sc, src_if, eh, m);
 				continue;
 			}
 
@@ -828,10 +827,8 @@ bridgeintr(void)
 				continue;
 			}
 
-			m = bridge_broadcast(sc, src_if, eh, m);
+			bridge_broadcast(sc, src_if, eh, m);
 			dst_if = NULL;
-			if (m != NULL)
-				m_freem(m);
 		}
 	}
 }
@@ -919,7 +916,7 @@ bridge_input(ifp, eh, m)
  * (except the one it came in on).  This code assumes that it is
  * running at splnet or higher.
  */
-struct mbuf *
+void
 bridge_broadcast(sc, ifp, eh, m)
 	struct bridge_softc *sc;
 	struct ifnet *ifp;
@@ -927,7 +924,8 @@ bridge_broadcast(sc, ifp, eh, m)
 	struct mbuf *m;
 {
 	struct bridge_iflist *p;
-	struct mbuf *mc, *ret;
+	struct mbuf *mc;
+	int used = 0;
 
 	for (p = LIST_FIRST(&sc->sc_iflist); p; p = LIST_NEXT(p, next)) {
 		/*
@@ -952,10 +950,9 @@ bridge_broadcast(sc, ifp, eh, m)
 		/* If last one, reuse the passed-in mbuf */
 		if (LIST_NEXT(p, next) == NULL) {
 			mc = m;
-			ret = NULL;
+			used = 1;
 		}
 		else {
-			ret = m;
 			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
@@ -973,7 +970,8 @@ bridge_broadcast(sc, ifp, eh, m)
 			(*p->ifp->if_start)(p->ifp);
 	}
 
-	return (ret);
+	if (!used)
+		m_freem(m);
 }
 
 struct ifnet *
