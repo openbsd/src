@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.10 1997/01/11 11:58:11 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.11 1997/04/19 19:34:29 millert Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -179,9 +179,9 @@
 # REQUIRES_MOTIF - Set this in your port if it requires Motif.  It will  be
 #				  built only if HAVE_MOTIF is set.
 # HAVE_MOTIF	- If set, means system has Motif.  Typically set in
-#				  /etc/make.conf.
+#				  /etc/mk.conf.
 # MOTIF_STATIC	- If set, link libXm statically; otherwise, link it
-#				  dynamically.  Typically set in /etc/make.conf.
+#				  dynamically.  Typically set in /etc/mk.conf.
 # MOTIFLIB		- Set automatically to appropriate value depending on
 #				  ${MOTIF_STATIC}.  Substitute references to -lXm with 
 #				  patches to make your port conform to our standards.
