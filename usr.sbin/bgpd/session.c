@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.194 2004/10/05 11:47:41 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.195 2004/10/07 13:39:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1527,22 +1527,21 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 {
 	struct mrt		*mrt;
 	u_char			*p;
-	u_char			 one = 0xff;
-	int			 i;
 	u_int16_t		 olen;
+	static const u_int8_t	 marker[MSGSIZE_HEADER_MARKER] = { 0xff, 0xff,
+				    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+				    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 	/* caller MUST make sure we are getting 19 bytes! */
 	p = data;
-	for (i = 0; i < 16; i++) {
-		if (memcmp(p, &one, 1)) {
-			log_peer_warnx(&peer->conf, "sync error");
-			session_notification(peer, ERR_HEADER, ERR_HDR_SYNC,
-			    NULL, 0);
-			bgp_fsm(peer, EVNT_CON_FATAL);
-			return (-1);
-		}
-		p++;
+	if (memcmp(p, marker, sizeof(marker))) {
+		log_peer_warnx(&peer->conf, "sync error");
+		session_notification(peer, ERR_HEADER, ERR_HDR_SYNC, NULL, 0);
+		bgp_fsm(peer, EVNT_CON_FATAL);
+		return (-1);
 	}
+	p += MSGSIZE_HEADER_MARKER;
+
 	memcpy(&olen, p, 2);
 	*len = ntohs(olen);
 	p += 2;
