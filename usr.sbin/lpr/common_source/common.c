@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.20 2002/06/08 18:19:34 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.21 2002/06/09 03:44:50 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.20 2002/06/08 18:19:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.21 2002/06/09 03:44:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -311,14 +311,13 @@ errdone:
  * Compare modification times.
  */
 static int
-compar(p1, p2)
-	const void *p1, *p2;
+compar(v1, v2)
+	const void *v1, *v2;
 {
-	if ((*(struct queue **)p1)->q_time < (*(struct queue **)p2)->q_time)
-		return(-1);
-	if ((*(struct queue **)p1)->q_time > (*(struct queue **)p2)->q_time)
-		return(1);
-	return(0);
+	struct queue *p1 = *(struct queue **)v1;
+	struct queue *p2 = *(struct queue **)v2;
+
+	return(p1->q_time - p2->q_time);
 }
 
 /*

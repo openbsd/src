@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.19 2002/06/08 23:23:24 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.20 2002/06/09 03:44:50 millert Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.19 2002/06/08 23:23:24 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.20 2002/06/09 03:44:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,15 +81,14 @@ static int	col;		/* column on screen */
 static char	current[NAME_MAX]; /* current file being printed */
 static char	file[NAME_MAX];	/* print file name */
 static int	first;		/* first file in ``files'' column? */
-static int	garbage;	/* # of garbage cf files */
 static int	lflag;		/* long output option */
-static int	rank;		/* order to be printed (-1=none, 0=active) */
 static off_t	totsize;	/* total print job size in bytes */
 
 static const char *head0 = "Rank   Owner      Job  Files";
 static const char *head1 = "Total Size\n";
 
 static void	alarmer(int);
+static void	inform(char *, int);
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
@@ -116,7 +115,6 @@ displayq(int format)
 
 	lflag = format;
 	totsize = 0;
-	rank = -1;
 	if ((i = cgetent(&bp, printcapdb, printer)) == -2)
 		fatal("can't open printer description file");
 	else if (i == -1)
@@ -233,7 +231,11 @@ displayq(int format)
 			header();
 		for (i = 0; i < nitems; i++) {
 			q = queue[i];
-			inform(q->q_name);
+			/* active == 0, otherwise count starts at 1 */
+			if (strcmp(current, q->q_name) == 0)
+				inform(q->q_name, 0);
+			else
+				inform(q->q_name, i + 1);
 			free(q);
 		}
 		free(queue);
@@ -330,8 +332,8 @@ header(void)
 	printf(head1);
 }
 
-void
-inform(char *cf)
+static void
+inform(char *cf, int rank)
 {
 	int fd, j;
 	FILE *cfp = NULL;
@@ -349,10 +351,6 @@ inform(char *cf)
 		return;
 	}
 
-	if (rank < 0)
-		rank = 0;
-	if (remote || garbage || strcmp(cf, current))
-		rank++;
 	j = 0;
 	while (getline(cfp)) {
 		switch (line[0]) {
