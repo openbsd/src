@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.27 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.28 2003/06/19 06:26:19 pvalchev Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -101,8 +101,6 @@ SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare)
 extern int userpolicy;
 
 static char policydir[MAXPATHLEN];
-static char *groupnames[NGROUPS_MAX];
-static int ngroups;
 
 struct tmplqueue templates;
 
@@ -137,27 +135,8 @@ systrace_setupdir(char *path)
 int
 systrace_initpolicy(char *file, char *path)
 {
-	gid_t groups[NGROUPS_MAX];
-	int i;
-
 	SPLAY_INIT(&policyroot);
 	SPLAY_INIT(&polnrroot);
-
-	/* Find out group names for current user */
-	if ((ngroups = getgroups(NGROUPS_MAX, groups)) == -1)
-		err(1, "getgroups");
-
-	for (i = 0; i < ngroups; i++) {
-		struct group *gr;
-
-		if ((gr = getgrgid(groups[i])) != NULL) {
-			if ((groupnames[i] = strdup(gr->gr_name)) == NULL)
-				err(1, "strdup(%s)", gr->gr_name);
-		} else {
-			if (asprintf(&groupnames[i], "%u", groups[i]) == -1)
-				errx(1, "asprintf: cannot allocate memory");
-		}
-	}
 
 	if (userpolicy) {
 		systrace_setupdir(path);
