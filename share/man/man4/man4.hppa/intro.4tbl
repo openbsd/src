@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.17 2003/12/30 10:47:13 jmc Exp $
+.\" $OpenBSD: intro.4tbl,v 1.18 2004/01/14 09:43:31 mickey Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -124,14 +124,14 @@ EISA Adapters:
 .It i82350 (Mongoose)
 .It WAX-EISA
 .El
-.\" .It
-.\" PCI Adapters:
-.\" .Bl -tag -compact -width DINO
-.\" .It Dino
-.\" GSC-PCI bridge
-.\" .It Cujo
-.\" GSC-PCI 64bit bridge
-.\" .El
+.It
+PCI Adapters:
+.Bl -tag -compact -width DINO
+.It Dino
+GSC-PCI bridge
+.It Cujo
+GSC-PCI 64bit bridge
+.El
 .It
 Human Interface Loop
 .Tn (HIL)
