@@ -30,5 +30,6 @@ PREFIX(sigprocmask)
 	beq+	.L_sigprocmask_done
 	stw	3, 0(5)
 .L_sigprocmask_done:
+	li	3, 0
 	addi	1, 1, 16
 	blr
