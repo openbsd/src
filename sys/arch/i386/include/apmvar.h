@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.13 2001/08/18 06:08:08 mickey Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.14 2001/12/14 17:07:40 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -51,6 +51,7 @@
 #define	APM_MINOR(f)		((f) & 0xff)
 #define	APM_VERMASK		0x0000ffff
 #define	APM_NOCLI		0x00010000
+#define	APM_BEBATT		0x00020000
 
 /* APM error codes */
 #define	APM_ERR_CODE(regs)	(((regs)->ax & 0xff00) >> 8)
