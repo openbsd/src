@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.50 2001/03/08 21:41:42 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.51 2001/03/22 03:34:18 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -863,7 +863,8 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "srcid") && iscmd(mode, FLOW) &&
+	if (!strcmp(argv[i] + 1, "srcid") && (iscmd(mode, FLOW) ||
+					      isencauth(mode)) &&
 	    (i + 1 < argc))
 	{
 	    if (srcid != NULL)
@@ -885,7 +886,8 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "dstid") && iscmd(mode, FLOW) &&
+	if (!strcmp(argv[i] + 1, "dstid") && (iscmd(mode, FLOW) ||
+					      isencauth(mode)) &&
 	    (i + 1 < argc))
 	{
 	    if (dstid != NULL)
@@ -907,7 +909,8 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "srcid_type") && iscmd(mode, FLOW) &&
+	if (!strcmp(argv[i] + 1, "srcid_type") && (iscmd(mode, FLOW) ||
+						   isencauth(mode)) &&
 	    (i + 1 < argc))
 	{
 	    if (sid1.sadb_ident_type != 0)
@@ -936,7 +939,8 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "dstid_type") && iscmd(mode, FLOW) &&
+	if (!strcmp(argv[i] + 1, "dstid_type") && (iscmd(mode, FLOW) ||
+						   isencauth(mode)) &&
 	    (i + 1 < argc))
 	{
 	    if (sid2.sadb_ident_type != 0)
@@ -1506,6 +1510,26 @@ main(int argc, char **argv)
 	iov[cnt].iov_base = dst;
 	iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
 	smsg.sadb_msg_len += sad2.sadb_address_len;
+
+	if (srcid)
+	{
+	    iov[cnt].iov_base = &sid1;
+	    iov[cnt++].iov_len = sizeof(sid1);
+	    /* SRC identity */
+	    iov[cnt].iov_base = srcid;
+	    iov[cnt++].iov_len = ROUNDUP(strlen(srcid));
+	    smsg.sadb_msg_len += sid1.sadb_ident_len;
+	}
+
+	if (dstid)
+	{
+	    iov[cnt].iov_base = &sid2;
+	    iov[cnt++].iov_len = sizeof(sid2);
+	    /* DST identity */
+	    iov[cnt].iov_base = dstid;
+	    iov[cnt++].iov_len = ROUNDUP(strlen(dstid));
+	    smsg.sadb_msg_len += sid2.sadb_ident_len;
+	}
 
 	if (sad1.sadb_address_exttype)
 	{
