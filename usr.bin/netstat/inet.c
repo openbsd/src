@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.4 1997/01/17 07:12:57 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.5 1997/02/16 10:22:24 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.4 1997/01/17 07:12:57 millert Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.5 1997/02/16 10:22:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,12 +76,16 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.4 1997/01/17 07:12:57 millert Exp $";
 #include <unistd.h>
 #include "netstat.h"
 
+#include <rpc/rpc.h>
+#include <rpc/pmap_prot.h>
+#include <rpc/pmap_clnt.h>
+
 struct	inpcb inpcb;
 struct	tcpcb tcpcb;
 struct	socket sockb;
 
 char	*inetname __P((struct in_addr *));
-void	inetprint __P((struct in_addr *, int, char *));
+void	inetprint __P((struct in_addr *, int, char *, int));
 
 /*
  * Print a summary of connections related to an Internet
@@ -146,8 +150,8 @@ protopr(off, name)
 				printf("%8x ", prev);
 		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
-		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name);
-		inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport, name);
+		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name, 1);
+		inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport, name, 0);
 		if (istcp) {
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
 				printf(" %d", tcpcb.t_state);
@@ -419,18 +423,90 @@ igmp_stats(off, name)
 #undef py
 }
 
+struct rpcnams {
+	struct rpcnams *next;
+	int	port;
+	char	*rpcname;
+};
+
+char *
+getrpcportnam(port)
+	int port;
+{
+	struct sockaddr_in server_addr;
+	register struct hostent *hp;
+	static struct pmaplist *head;
+	int socket = RPC_ANYSOCK;
+	struct timeval minutetimeout;
+	register CLIENT *client;
+	struct rpcent *rpc;
+	static int first;
+	static struct rpcnams *rpcn;
+	struct rpcnams *n;
+	char num[10];
+	
+	if (first == 0) {
+		first = 1;
+		bzero((char *)&server_addr, sizeof server_addr);
+		server_addr.sin_family = AF_INET;
+		if ((hp = gethostbyname("localhost")) != NULL)
+			bcopy(hp->h_addr, (caddr_t)&server_addr.sin_addr,
+			    hp->h_length);
+		else
+			(void) inet_aton("0.0.0.0", &server_addr.sin_addr);
+
+		minutetimeout.tv_sec = 60;
+		minutetimeout.tv_usec = 0;
+		server_addr.sin_port = htons(PMAPPORT);
+		if ((client = clnttcp_create(&server_addr, PMAPPROG,
+		    PMAPVERS, &socket, 50, 500)) == NULL) {
+			clnt_pcreateerror("rpcinfo: can't contact portmapper");
+			exit(1);
+		}
+		if (clnt_call(client, PMAPPROC_DUMP, xdr_void, NULL,
+		    xdr_pmaplist, &head, minutetimeout) != RPC_SUCCESS) {
+			fprintf(stderr, "rpcinfo: can't contact portmapper: ");
+			clnt_perror(client, "rpcinfo");
+			exit(1);
+		}
+		for (; head != NULL; head = head->pml_next) {
+			n = (struct rpcnams *)malloc(sizeof(struct rpcnams));
+			if (n == NULL)
+				continue;
+			n->next = rpcn;
+			rpcn = n;
+			n->port = head->pml_map.pm_port;
+
+			rpc = getrpcbynumber(head->pml_map.pm_prog);
+			if (rpc)
+				n->rpcname = strdup(rpc->r_name);
+			else {
+				sprintf(num, "%d", head->pml_map.pm_prog);
+				n->rpcname = strdup(num);
+			}
+		}
+		clnt_destroy(client);
+	}
+
+	for (n = rpcn; n; n = n->next)
+		if (n->port == port)
+			return (n->rpcname);
+	return (NULL);
+}
+
 /*
  * Pretty print an Internet address (net address + port).
  * If the nflag was specified, use numbers instead of names.
  */
 void
-inetprint(in, port, proto)
+inetprint(in, port, proto, local)
 	register struct in_addr *in;
 	int port;
 	char *proto;
+	int local;
 {
 	struct servent *sp = 0;
-	char line[80], *cp;
+	char line[80], *cp, *nam;
 	int width;
 
 	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
@@ -439,6 +515,8 @@ inetprint(in, port, proto)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
 		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
+	else if (local && (nam = getrpcportnam(ntohs((u_short)port))))
+		sprintf(cp, "%d<%.8s>", ntohs((u_short)port), nam);
 	else
 		sprintf(cp, "%d", ntohs((u_short)port));
 	width = Aflag ? 18 : 22;
