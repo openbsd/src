@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.14 2000/06/20 07:24:36 todd Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.15 2000/06/30 01:04:28 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -108,8 +108,6 @@
 #include <dev/pcmcia/if_wireg.h>
 #include <dev/pcmcia/if_wavelan_ieee.h>
 
-#define TIMEOUT(handle,func,arg,time) timeout((func), (arg), (time))
-#define UNTIMEOUT(func,arg,handle) untimeout((func), (arg))
 #define BPF_MTAP(if,mbuf) bpf_mtap((if)->if_bpf, (mbuf))
 #define BPFATTACH(if_bpf,if,dlt,sz) bpfattach((if_bpf), (if), (dlt), (sz))
 #define STATIC
@@ -135,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.14 2000/06/20 07:24:36 todd Exp $";
+	"$OpenBSD: if_wi.c,v 1.15 2000/06/30 01:04:28 art Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -598,7 +596,7 @@ wi_inquire(xsc)
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
 
-	TIMEOUT(sc->wi_stat_ch, wi_inquire, sc, hz * 60);
+	timeout_add(&sc->sc_timo, hz * 60);
 
 	/* Don't do this while we're transmitting */
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -1277,7 +1275,8 @@ wi_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	TIMEOUT(sc->wi_stat_ch, wi_inquire, sc, hz * 60);
+	timeout_set(&sc->sc_timo, wi_inquire, sc);
+	timeout_add(&sc->sc_timo, hz * 60);
 
 	return;
 }
@@ -1431,7 +1430,7 @@ wi_stop(sc)
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0);
 
-	UNTIMEOUT(wi_inquire, sc, sc->wi_stat_ch);
+	timeout_del(&sc->sc_timo);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 

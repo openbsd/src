@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.5 2000/02/03 00:56:45 angelos Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.6 2000/06/30 01:04:28 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -114,6 +114,7 @@ struct wi_softc	{
 	struct pcmcia_io_handle	sc_pcioh;
 	int			sc_io_window;
 	struct pcmcia_function	*sc_pf;
+	struct timeout		sc_timo;
 };
 
 #define WI_TIMEOUT	65536
