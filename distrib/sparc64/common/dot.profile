@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.1 2001/10/10 04:21:02 deraadt Exp $
+#       $OpenBSD: dot.profile,v 1.2 2001/12/05 19:50:46 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -30,11 +30,7 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
-export HOME=/
-
 umask 022
-
 set -o emacs # emacs-style command line editing
 
 if [ "X${DONEPROFILE}" = "X" ]; then
@@ -45,7 +41,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
-
 
 	# Installing or upgrading?
 	_forceloop=""

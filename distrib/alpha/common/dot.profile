@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.3 2001/06/23 19:44:34 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.4 2001/12/05 19:50:46 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -31,16 +31,8 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
-
 umask 022
-
 set -o emacs # emacs-style command line editing
-
-# XXX
-# the TERM/EDITOR stuff is really well enough parameterized to be moved
-# into install.sub where it could use the routines there and be invoked
-# from the various (semi) MI install and upgrade scripts
 
 # Terminals in termcap, default TERM.
 # This assumes a *small* termcap file.

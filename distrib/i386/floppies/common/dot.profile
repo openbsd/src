@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.6 2001/09/17 14:52:18 millert Exp $
+#	$OpenBSD: dot.profile,v 1.7 2001/12/05 19:50:46 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -32,20 +32,8 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
-
 umask 022
-
 set -o emacs # emacs-style command line editing
-
-# XXX
-# the TERM/EDITOR stuff is really well enough parameterized to be moved
-# into install.sub where it could use the routines there and be invoked
-# from the various (semi) MI install and upgrade scripts
-
-# editors believed to be in $EDITBIN, smart and dumb defaults
-EDITBIN=/bin
-EDITUBIN=/usr/bin
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES

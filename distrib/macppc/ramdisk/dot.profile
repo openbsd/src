@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.3 2001/09/17 14:52:18 millert Exp $
+#       $OpenBSD: dot.profile,v 1.4 2001/12/05 19:50:46 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -30,11 +30,7 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
-export HOME=/
-
 umask 022
-
 set -o emacs # emacs-style command line editing
 
 if [ "X${DONEPROFILE}" = "X" ]; then

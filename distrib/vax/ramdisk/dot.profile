@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.5 2001/09/17 14:52:18 millert Exp $
+#	$OpenBSD: dot.profile,v 1.6 2001/12/05 19:50:46 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -32,10 +32,7 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
-
 umask 022
-
 set -o emacs # emacs-style command line editing
 
 # XXX
@@ -44,7 +41,7 @@ set -o emacs # emacs-style command line editing
 # from the various (semi) MI install and upgrade scripts
 
 # terminals believed to be in termcap, default TERM
-TERMS="sun vt* pc3 dumb"
+TERMS="sun vt* dumb"
 TERM=vt100
 
 if [ "X${DONEPROFILE}" = "X" ]; then

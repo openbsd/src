@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.4 2001/06/23 19:44:44 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.5 2001/12/05 19:50:46 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -32,12 +32,8 @@
 #
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
-export HISTFILE=/.sh_history
 export TERM=vt220
-export HOME=/
-
 umask 022
-
 set -o emacs # emacs-style command line editing
 
 TMPWRITEABLE=/tmp/writeable
