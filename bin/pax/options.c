@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.35 1998/12/07 23:45:46 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.36 1999/04/29 12:59:03 aaron Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.35 1998/12/07 23:45:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.36 1999/04/29 12:59:03 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -926,7 +926,7 @@ cpio_options(argc, argv)
 {
 	register int c, i;
 	size_t len;
-	char *str;
+	char *p, *str;
 	FSUB tmp;
 	FILE *fp;
 
@@ -1164,7 +1164,11 @@ cpio_options(argc, argv)
 			maxflt = 0;
 			while ((str = fgetln(stdin, &len)) != NULL) {
 				str[len - 1] = '\0';
-				ftree_add(strdup(str), NULL);
+				if ((p = strdup(str)) == NULL) {
+					paxwarn(0, "Out of memory.");
+					exit(1);
+				}
+				ftree_add(p, NULL);
 			}
 			break;
 		default:

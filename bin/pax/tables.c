@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.10 1998/07/03 06:01:20 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.11 1999/04/29 12:59:03 aaron Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.10 1998/07/03 06:01:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.11 1999/04/29 12:59:03 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,11 @@ ftime_start()
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	pt = strdup("/tmp/paxXXXXXXXXXX");
+	if ((pt = strdup("/tmp/paxXXXXXXXXXX")) == NULL) {
+		paxwarn(1, "Cannot allocate memory for temporary file name");
+		(void)free((char *)ftab);
+		return(-1);
+	}
 	if ((ffd = mkstemp(pt)) < 0) {
 		syswarn(1, errno, "Unable to create temporary file: %s", pt);
 		free(pt);
@@ -1222,7 +1226,10 @@ dir_start()
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	pt = strdup("/tmp/paxXXXXXXXXXX");
+	if ((pt = strdup("/tmp/paxXXXXXXXXXX")) == NULL) {
+		paxwarn(1, "Cannot allocate memory for temporary filename");
+		return(-1);
+	}
 	if ((dirfd = mkstemp(pt)) >= 0) {
 		(void)unlink(pt);
 		free(pt);
