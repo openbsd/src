@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.7 1998/12/04 06:49:58 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.8 1998/12/22 02:46:18 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.5 1998/11/05 09:12:52 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.7 1998/12/22 02:43:55 niklas Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -188,6 +188,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Megahertz X-JACK Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_QUATECH, PCMCIA_PRODUCT_QUATECH_DSP_225,
+	    PCMCIA_CIS_QUATECH_DSP_225,
+	    0,
+	    "Quatech",
+	    "Quatech Dual Serial Port"	},
+	},
+	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
 	    PCMCIA_CIS_USROBOTICS_WORLDPORT144,
 	    0,
@@ -249,6 +256,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SMC",
 	    "SMC 8016 EtherCard"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_REM56G_100,
+	    PCMCIA_CIS_XIRCOM_REM56G_100,
+	    0,
+	    "Xircom",
+	    "Xircom RealPort Ethernet 10/100 + 56K Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_UNKNOWN_ECARD,
@@ -349,6 +363,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_INTEL, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Intel",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_IBM, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -381,6 +402,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "TDK",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Xircom",
 	    NULL,
 	},
 	{
@@ -419,6 +447,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_QUATECH, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Quatech",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_COMPAQ, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Compaq",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_LINKSYS, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -430,6 +472,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Simple Technology",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_COMPAQ2, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Compaq",
 	    NULL,
 	},
 	{

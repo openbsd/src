@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.7 1998/12/04 06:49:58 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.8 1998/12/22 02:46:18 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.5 1998/11/05 09:12:52 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.7 1998/12/22 02:43:55 niklas Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -45,18 +45,23 @@
 
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia */
+#define	PCMCIA_VENDOR_INTEL	0x0089	/* Intel */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com */
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK */
+#define	PCMCIA_VENDOR_XIRCOM	0x0105	/* Xircom */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* SMC */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics */
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz */
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec */
+#define	PCMCIA_VENDOR_QUATECH	0x0137	/* Quatech */
+#define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
+#define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
@@ -146,6 +151,11 @@
 #define	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK	0x0103
 #define	PCMCIA_STR_MEGAHERTZ2_XJACK	"Megahertz X-JACK Ethernet"
 
+/* Quatech Products */
+#define	PCMCIA_CIS_QUATECH_DSP_225	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_QUATECH_DSP_225	0x0008
+#define	PCMCIA_STR_QUATECH_DSP_225	"Quatech Dual Serial Port"
+
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
@@ -186,6 +196,11 @@
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_8016	0x0105
 #define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
+
+/* Xircom Products */
+#define	PCMCIA_CIS_XIRCOM_REM56G_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_REM56G_100	0x110a
+#define	PCMCIA_STR_XIRCOM_REM56G_100	"Xircom RealPort Ethernet 10/100 + 56K Modem"
 
 /* Unknown Product */
 #define	PCMCIA_CIS_UNKNOWN_ECARD	{ NULL, NULL, NULL, NULL }
