@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.28 2000/04/24 03:30:16 itojun Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.29 2000/05/02 00:54:53 itojun Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.28 2000/04/24 03:30:16 itojun Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.29 2000/05/02 00:54:53 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -102,6 +102,7 @@ url_get(origline, proxyenv, outfile)
 	volatile int s;
 	size_t len;
 	char c, *cp, *ep, *portnum, *path, buf[4096];
+	char pbuf[NI_MAXSERV];
 	const char *savefile;
 	char *line, *proxy, *host, *port;
 	char *hosttail;
@@ -316,6 +317,13 @@ again:
 			continue;
 		}
 
+		/* get port in numeric */
+		if (getnameinfo(res->ai_addr, res->ai_addrlen, NULL, 0,
+		    pbuf, sizeof(pbuf), NI_NUMERICSERV) == 0)
+			port = pbuf;
+		else
+			port = NULL;
+
 		break;
 	}
 	freeaddrinfo(res0);
@@ -337,12 +345,14 @@ again:
 	}
 	if (strchr(host, ':')) {
 		snprintf(buf, sizeof(buf),
-		    "GET %s%s HTTP/1.0\r\nHost: [%s]:%s\r\n\r\n",
-		    proxy ? "" : "/", path, host, port);
+		    "GET %s%s HTTP/1.0\r\nHost: [%s]%s%s\r\n\r\n",
+		    proxy ? "" : "/", path, host,
+		    port ? ":" : "", port ? port : "");
 	} else {
 		snprintf(buf, sizeof(buf),
-		    "GET %s%s HTTP/1.0\r\nHost: %s:%s\r\n\r\n",
-		    proxy ? "" : "/", path, host, port);
+		    "GET %s%s HTTP/1.0\r\nHost: %s%s%s\r\n\r\n",
+		    proxy ? "" : "/", path, host,
+		    port ? ":" : "", port ? port : "");
 	}
 	len = strlen(buf);
 	if (write(s, buf, len) < len) {
