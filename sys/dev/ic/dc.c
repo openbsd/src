@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.37 2001/12/06 16:51:30 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.38 2001/12/06 17:32:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,8 +121,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <uvm/uvm_extern.h>		/* for vtophys */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -953,7 +951,7 @@ void dc_setfilt_21143(sc)
 	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
 	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
 
-	sc->dc_cdata.dc_tx_chain[i] =
+	sc->dc_cdata.dc_tx_chain[i].sd_mbuf =
 	    (struct mbuf *)&sc->dc_ldata->dc_sbuf[0];
 
 	/* If we want promiscuous mode, set the allframes bit. */
@@ -1153,7 +1151,7 @@ void dc_setfilt_xircom(sc)
 	sframe->dc_ctl = DC_SFRAME_LEN | DC_TXCTL_SETUP | DC_TXCTL_TLINK |
 	    DC_FILTER_HASHPERF | DC_TXCTL_FINT;
 
-	sc->dc_cdata.dc_tx_chain[i] =
+	sc->dc_cdata.dc_tx_chain[i].sd_mbuf =
 	    (struct mbuf *)&sc->dc_ldata->dc_sbuf[0];
 
 	/* If we want promiscuous mode, set the allframes bit. */
@@ -1668,16 +1666,19 @@ void dc_attach(sc)
 		return;
 	}
 
-#if 0
 	for (i = 0; i < DC_TX_LIST_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT,
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    DC_TX_LIST_CNT - 5, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->dc_cdata.dc_tx_chain[i].sd_map) != 0) {
 			printf(": can't create tx map\n");
 			return;
 		}
 	}
-#endif
+	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, DC_TX_LIST_CNT - 5,
+	    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_tx_sparemap) != 0) {
+		printf(": can't create tx spare map\n");
+		return;
+	}
 
 	/*
 	 * A 21143 or clone chip was detected. Inform the world.
@@ -1819,7 +1820,7 @@ int dc_list_tx_init(sc)
 		else
 			next +=
 			    offsetof(struct dc_list_data, dc_tx_list[i + 1]);
-		cd->dc_tx_chain[i] = NULL;
+		cd->dc_tx_chain[i].sd_mbuf = NULL;
 		ld->dc_tx_list[i].dc_data = 0;
 		ld->dc_tx_list[i].dc_ctl = 0;
 		ld->dc_tx_list[i].dc_next = next;
@@ -2223,7 +2224,7 @@ void dc_txeof(sc)
 					if (txstat & DC_TXSTAT_ERRSUM)
 						dc_setfilt(sc);
 				}
-				sc->dc_cdata.dc_tx_chain[idx] = NULL;
+				sc->dc_cdata.dc_tx_chain[idx].sd_mbuf = NULL;
 			}
 			DC_INC(idx, DC_TX_LIST_CNT);
 			continue;
@@ -2262,11 +2263,14 @@ void dc_txeof(sc)
 		ifp->if_collisions += (txstat & DC_TXSTAT_COLLCNT) >> 3;
 
 		ifp->if_opackets++;
-		if (sc->dc_cdata.dc_tx_chain[idx] != NULL) {
-			m_freem(sc->dc_cdata.dc_tx_chain[idx]);
-			sc->dc_cdata.dc_tx_chain[idx] = NULL;
+		if (sc->dc_cdata.dc_tx_chain[idx].sd_map->dm_nsegs != 0) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    sc->dc_cdata.dc_tx_chain[idx].sd_map);
 		}
-
+		if (sc->dc_cdata.dc_tx_chain[idx].sd_mbuf != NULL) {
+			m_freem(sc->dc_cdata.dc_tx_chain[idx].sd_mbuf);
+			sc->dc_cdata.dc_tx_chain[idx].sd_mbuf = NULL;
+		}
 		sc->dc_cdata.dc_tx_cnt--;
 		DC_INC(idx, DC_TX_LIST_CNT);
 	}
@@ -2468,47 +2472,53 @@ int dc_encap(sc, m_head, txidx)
 	u_int32_t		*txidx;
 {
 	struct dc_desc		*f = NULL;
-	struct mbuf		*m;
-	int			frag, cur, cnt = 0;
+	int			frag, cur, cnt = 0, i;
+	bus_dmamap_t		map;
 
 	/*
  	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
  	 * of fragments or hit the end of the mbuf chain.
 	 */
-	m = m_head;
+	map = sc->sc_tx_sparemap;
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
+	    m_head, BUS_DMA_NOWAIT) != 0)
+		return (ENOBUFS);
+
 	cur = frag = *txidx;
 
-	for (m = m_head; m != NULL; m = m->m_next) {
-		if (m->m_len != 0) {
-			if (sc->dc_flags & DC_TX_ADMTEK_WAR) {
-				if (*txidx != sc->dc_cdata.dc_tx_prod &&
-				    frag == (DC_TX_LIST_CNT - 1))
-					return(ENOBUFS);
-			}
-			if ((DC_TX_LIST_CNT -
-			    (sc->dc_cdata.dc_tx_cnt + cnt)) < 5)
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if (sc->dc_flags & DC_TX_ADMTEK_WAR) {
+			if (*txidx != sc->dc_cdata.dc_tx_prod &&
+			    frag == (DC_TX_LIST_CNT - 1)) {
+				bus_dmamap_unload(sc->sc_dmat, map);
 				return(ENOBUFS);
-
-			f = &sc->dc_ldata->dc_tx_list[frag];
-			f->dc_ctl = DC_TXCTL_TLINK | m->m_len;
-			if (cnt == 0) {
-				f->dc_status = 0;
-				f->dc_ctl |= DC_TXCTL_FIRSTFRAG;
-			} else
-				f->dc_status = DC_TXSTAT_OWN;
-			f->dc_data = vtophys(mtod(m, vm_offset_t));
-			cur = frag;
-			DC_INC(frag, DC_TX_LIST_CNT);
-			cnt++;
+			}
 		}
+		if ((DC_TX_LIST_CNT -
+		    (sc->dc_cdata.dc_tx_cnt + cnt)) < 5) {
+			bus_dmamap_unload(sc->sc_dmat, map);
+			return(ENOBUFS);
+		}
+
+		f = &sc->dc_ldata->dc_tx_list[frag];
+		f->dc_ctl = DC_TXCTL_TLINK | map->dm_segs[i].ds_len;
+		if (cnt == 0) {
+			f->dc_status = 0;
+			f->dc_ctl |= DC_TXCTL_FIRSTFRAG;
+		} else
+			f->dc_status = DC_TXSTAT_OWN;
+		f->dc_data = map->dm_segs[i].ds_addr;
+		cur = frag;
+		DC_INC(frag, DC_TX_LIST_CNT);
+		cnt++;
 	}
 
-	if (m != NULL)
-		return(ENOBUFS);
-
 	sc->dc_cdata.dc_tx_cnt += cnt;
-	sc->dc_cdata.dc_tx_chain[cur] = m_head;
+	sc->dc_cdata.dc_tx_chain[cur].sd_mbuf = m_head;
+	sc->sc_tx_sparemap = sc->dc_cdata.dc_tx_chain[cur].sd_map;
+	sc->dc_cdata.dc_tx_chain[cur].sd_map = map;
 	sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_LASTFRAG;
 	if (sc->dc_flags & DC_TX_INTR_FIRSTFRAG)
 		sc->dc_ldata->dc_tx_list[*txidx].dc_ctl |= DC_TXCTL_FINT;
@@ -2584,7 +2594,7 @@ void dc_start(ifp)
 
 	idx = sc->dc_cdata.dc_tx_prod;
 
-	while(sc->dc_cdata.dc_tx_chain[idx] == NULL) {
+	while(sc->dc_cdata.dc_tx_chain[idx].sd_mbuf == NULL) {
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
@@ -3018,14 +3028,18 @@ void dc_stop(sc)
 	 * Free the TX list buffers.
 	 */
 	for (i = 0; i < DC_TX_LIST_CNT; i++) {
-		if (sc->dc_cdata.dc_tx_chain[i] != NULL) {
+		if (sc->dc_cdata.dc_tx_chain[i].sd_map->dm_nsegs != 0) {
+			bus_dmamap_unload(sc->sc_dmat,
+			    sc->dc_cdata.dc_tx_chain[i].sd_map);
+		}
+		if (sc->dc_cdata.dc_tx_chain[i].sd_mbuf != NULL) {
 			if (sc->dc_ldata->dc_tx_list[i].dc_ctl &
 			    DC_TXCTL_SETUP) {
-				sc->dc_cdata.dc_tx_chain[i] = NULL;
+				sc->dc_cdata.dc_tx_chain[i].sd_mbuf = NULL;
 				continue;
 			}
-			m_freem(sc->dc_cdata.dc_tx_chain[i]);
-			sc->dc_cdata.dc_tx_chain[i] = NULL;
+			m_freem(sc->dc_cdata.dc_tx_chain[i].sd_mbuf);
+			sc->dc_cdata.dc_tx_chain[i].sd_mbuf = NULL;
 		}
 	}
 

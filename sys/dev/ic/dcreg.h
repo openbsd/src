@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.17 2001/12/06 16:51:30 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.18 2001/12/06 17:32:59 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -468,7 +468,7 @@ struct dc_swdesc {
 
 struct dc_chain_data {
 	struct dc_swdesc	dc_rx_chain[DC_RX_LIST_CNT];
-	struct mbuf		*dc_tx_chain[DC_TX_LIST_CNT];
+	struct dc_swdesc	dc_tx_chain[DC_TX_LIST_CNT];
 	int			dc_tx_prod;
 	int			dc_tx_cons;
 	int			dc_tx_cnt;
@@ -714,6 +714,7 @@ struct dc_softc {
 	int			sc_listnseg;
 	caddr_t			sc_listkva;
 	bus_dmamap_t		sc_rx_sparemap;
+	bus_dmamap_t		sc_tx_sparemap;
 };
 
 #define DC_TX_POLL		0x00000001
@@ -997,11 +998,6 @@ struct dc_eblock_reset {
 	u_int8_t		dc_reset_len;
 /*	u_int16_t		dc_reset_dat[n]; */
 };
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
-#endif
 
 extern void dc_attach	__P((struct dc_softc *));
 extern int dc_detach	__P((struct dc_softc *));
