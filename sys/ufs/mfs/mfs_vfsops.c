@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.13 2001/02/20 01:50:12 assar Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.14 2001/04/12 17:16:52 csapuntz Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -313,4 +313,14 @@ mfs_checkexp(mp, nam, exflagsp, credanonp)
 	struct ucred **credanonp;
 {
 	return (EOPNOTSUPP);
+}
+
+/*
+ * Memory based filesystem initialization.
+ */
+int
+mfs_init(vfsp)
+	struct vfsconf *vfsp;
+{
+	return (ffs_init(vfsp));
 }
