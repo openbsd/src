@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.12 1997/09/16 06:01:03 deraadt Exp $
+#       $OpenBSD: MAKEDEV,v 1.13 1997/10/13 14:45:06 pefo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,7 +86,6 @@ all)
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV rd0
-	sh MAKEDEV grf0 grf1 grf2 grf3 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV tun0 tun1 tun2 tun3
@@ -94,9 +93,9 @@ all)
 	sh MAKEDEV local
 	;;
 
-raminst)
+ramdisk)
 	sh MAKEDEV std
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 st0 st1 cd0 cd1
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
 	sh MAKEDEV rd0
 	sh MAKEDEV tty00 tty01 pty0
 	;;
@@ -131,8 +130,8 @@ fd)
 sd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
-	sd*) name=sd; blk=4; chr=13;;
-	ccd*) name=ccd; blk=16; chr=20;;
+	sd*) name=sd; blk=2; chr=8;;
+	ccd*) name=ccd; blk=16; chr=18;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -285,7 +284,7 @@ pty*)
 st*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	st*) name=st;  chr=14; blk=5;;
+	st*) name=st;  chr=20; blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
@@ -318,7 +317,7 @@ st*)
 ch*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	ch*) name=ch;  chr=17;;
+	ch*) name=ch;  chr=10;;
 	esac
 	rm -f $name$unit
 	case $unit in
@@ -337,7 +336,7 @@ ch*)
 cd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	cd*) name=cd; blk=6; chr=15;;
+	cd*) name=cd; blk=3; chr=9;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -356,19 +355,6 @@ cd*)
 	umask 77
 	;;
 
-grf*)
-	unit=`expr $i : 'grf\(.*\)'`
-	rm -f grf${unit}
-	case ${unit} in
-	0|1|2|3)
-		mknod grf${unit} c 10 ${unit} ; chmod 666 grf${unit}
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
 bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
 	rm -f bpf${unit}
@@ -379,7 +365,7 @@ bpf*)
 tun*)
 	unit=`expr $i : 'tun\(.*\)'`
 	rm -f tun$unit
-	mknod tun$unit c 24 $unit
+	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
 	;;
@@ -399,7 +385,7 @@ rd*)
 
 lkm)
 	rm -f lkm
-	mknod lkm c 25 0
+	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
 	;;
