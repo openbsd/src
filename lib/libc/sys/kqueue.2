@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.4 2000/11/21 22:30:07 provos Exp $
+.\"	$OpenBSD: kqueue.2,v 1.5 2001/03/01 20:56:37 provos Exp $
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.12 2000/07/24 18:03:53 sheldonh Exp $
+.\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
 .Dd April 14, 2000
 .Dt KQUEUE 2
@@ -35,10 +35,12 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/event.h>
+.Fd #include <sys/time.h>
 .Ft int
 .Fn kqueue "void"
 .Ft int
 .Fn kevent "int kq" "const struct kevent *changelist" "int nchanges" "struct kevent *eventlist" "int nevents" "const struct timespec *timeout"
+.Fn EV_SET "&kev" ident filter flags fflags data udata
 .Sh DESCRIPTION
 .Fn kqueue
 provides a generic method of notifying the user when an event
@@ -72,9 +74,9 @@ The queue is not inherited by a child created with
 .Xr fork 2 .
 However, if
 .Xr rfork 2
-is called with the
+is called without the
 .Dv RFFDG
-flag, the descriptor table is shared,
+flag, then the descriptor table is shared,
 which will allow sharing of the kqueue between two processes.
 .Pp
 .Fn kevent
@@ -99,7 +101,7 @@ determines the size of
 If
 .Fa timeout
 is a non-NULL pointer, it specifies a maximum interval to wait
-for an event.  If
+for an event, which will be interpreted as a struct timespec.  If
 .Fa timeout
 is a NULL pointer,
 .Fn kevent
@@ -107,7 +109,14 @@ waits indefinitely.  To effect a poll, the
 .Fa timeout
 argument should be non-NULL, pointing to a zero-valued
 .Va timespec
-structure.
+structure.  The same array may be used for the
+.Fa changelist
+and 
+.Fa eventlist .
+.Pp
+.Fn EV_SET
+is a macro which is provided for ease of initializing a
+kevent structure.
 .Pp
 The
 .Va kevent
@@ -188,13 +197,14 @@ Arguments may be passed to and from the filter via the
 and
 .Va data
 fields in the kevent structure.
-.Bl -tag
+.Bl -tag -width EVFILT_SIGNAL
 .It EVFILT_READ
 Takes a descriptor as the identifier, and returns whenever
 there is data available to read.
 The behavior of the filter is slightly different depending
 on the descriptor type.
-.Bl -tag
+.Pp
+.Bl -tag -width 2n
 .It Sockets
 Sockets which have previously been passed to
 .Fn listen
@@ -203,25 +213,33 @@ return when there is an incoming connection pending.
 contains the size of the listen backlog.
 .Pp
 Other socket descriptors return when there is data to be read,
-subject to the SO_RCVLOWAT value of the socket buffer.
+subject to the
+.Dv SO_RCVLOWAT
+value of the socket buffer.
+This may be overridden with a per-filter low water mark at the
+time the filter is added by setting the 
+NOTE_LOWAT 
+flag in 
+.Va fflags ,
+and specifying the new low water mark in
+.Va data .
+On return,
 .Va data
 contains the number of bytes in the socket buffer.
 .Pp
 If the read direction of the socket has shutdown, then the filter
 also sets EV_EOF in
-.Va flags .
+.Va flags ,
+and returns the socket error (if any) in 
+.Va fflags .
 It is possible for EOF to be returned (indicating the connection is gone)
 while there is still data pending in the socket buffer.
-.El
-.Bl -tag
 .It Vnodes
 Returns when the file pointer is not at the end of file.
 .Va data
 contains the offset from current position to end of file,
 and may be negative.
-.El
-.Bl -tag
-.It Fifos, Pipes
+.It "Fifos, Pipes"
 Returns when the there is data to read;
 .Va data
 contains the number of bytes available.
@@ -232,8 +250,6 @@ This may be cleared by passing in EV_CLEAR, at which point the
 filter will resume waiting for data to become available before
 returning.
 .El
-.El
-.Bl -tag
 .It EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
 it is possible to write to the descriptor.  For sockets, pipes
@@ -243,25 +259,33 @@ will contain the amount of space remaining in the write buffer.
 The filter will set EV_EOF when the reader disconnects, and for
 the fifo case, this may be cleared by use of EV_CLEAR.
 Note that this filter is not supported for vnodes.
-.El
-.Bl -tag
+.Pp
+For sockets, the low water mark and socket error handling is 
+identical to the EVFILT_READ case.
 .It EVFILT_AIO
-A kevent structure is initialized, with
-.Va ident
-containing the descriptor of the kqueue that the event should be
-attached to.  The address of the kevent structure is then placed in the
-.Va aio_lio_opcode
-field of the AIO request, and the aio_* function is then called.
-The event will be registered with the specified kqueue, and the
+The sigevent portion of the AIO request is filled in, with
+.Va sigev_notify_kqueue 
+containing the descriptor of the kqueue that the event should
+be attached to,
+.Va sigev_value
+containing the udata value, and 
+.Va sigev_notify
+set to SIGEV_EVENT.
+When the aio_* function is called, the event will be registered
+with the specified kqueue, and the
 .Va ident
 argument set to the
 .Fa struct aiocb
 returned by the aio_* function.
 The filter returns under the same conditions as aio_error.
 .Pp
-NOTE: this interface is unstable and subject to change.
-.El
-.Bl -tag
+Alternatively, a kevent structure may be initialized, with 
+.Va ident
+containing the descriptor of the kqueue, and the
+address of the kevent structure placed in the
+.Va aio_lio_opcode
+field of the AIO request.  However, this approach will not work on
+architectures with 64-bit pointers, and should be considered depreciated.
 .It EVFILT_VNODE
 Takes a file descriptor as the identifier and the events to watch for in 
 .Va fflags ,
@@ -281,13 +305,15 @@ The file referenced by the descriptor had its attributes changed.
 The link count on the file changed.
 .It NOTE_RENAME
 The file referenced by the descriptor was renamed.
+.It NOTE_REVOKE
+Access to the file was revoked via 
+.Xr revoke 2
+or the underlying fileystem was unmounted.
 .El
 .Pp
 On return,
 .Va fflags
 contains the events which triggered the filter.
-.El
-.Bl -tag
 .It EVFILT_PROC
 Takes the process ID to monitor as the identifier and the events to watch for 
 in
@@ -386,7 +412,7 @@ The
 .Fn kevent
 function fails if:
 .Bl -tag -width Er
-.It Bq Er EACCESS
+.It Bq Er EACCES
 The process does not have permission to register a filter.
 .It Bq Er EFAULT
 There was an error reading or writing the 
