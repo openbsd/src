@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.8 2003/05/03 21:15:11 deraadt Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.9 2003/05/14 08:42:00 canacar Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -172,8 +172,9 @@ pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 int
-pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_short dir,
-    u_short reason, struct pf_rule *rm)
+pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_int8_t dir,
+    u_int8_t reason, struct pf_rule *rm, struct pf_rule *am,
+    struct pf_ruleset *ruleset)
 {
 #if NBPFILTER > 0
 	struct ifnet *ifn;
@@ -183,13 +184,28 @@ pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_short dir,
 	if (ifp == NULL || m == NULL || rm == NULL)
 		return (-1);
 
-	hdr.af = htonl(af);
+	hdr.length = PFLOG_REAL_HDRLEN;
+	hdr.af = af;
+	hdr.action = rm->action;
+	hdr.reason = reason;
 	memcpy(hdr.ifname, ifp->if_xname, sizeof(hdr.ifname));
 
-	hdr.rnr = htons(rm->nr);
-	hdr.reason = htons(reason);
-	hdr.dir = htons(dir);
-	hdr.action = htons(rm->action);
+	if (am == NULL) {
+		hdr.rulenr = htonl(rm->nr);
+		hdr.subrulenr = -1;
+		bzero(hdr.ruleset, sizeof(hdr.ruleset));
+	} else {
+		hdr.rulenr = htonl(am->nr);
+		hdr.subrulenr = htonl(rm->nr);
+		if (ruleset == NULL)
+			bzero(hdr.ruleset, sizeof(hdr.ruleset));
+		else
+			memcpy(hdr.ruleset, ruleset->name,
+			    sizeof(hdr.ruleset));
+
+			
+	}
+	hdr.dir = dir;
 
 #ifdef INET
 	if (af == AF_INET && dir == PF_OUT) {

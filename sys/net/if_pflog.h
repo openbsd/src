@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.7 2002/10/29 19:51:04 mickey Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.8 2003/05/14 08:42:00 canacar Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -31,7 +31,30 @@ struct pflog_softc {
 	struct ifnet	sc_if;  /* the interface */
 };
 
+/* XXX keep in sync with pfvar.h */
+#ifndef PF_RULESET_NAME_SIZE
+#define PF_RULESET_NAME_SIZE	 16
+#endif
+
 struct pfloghdr {
+	u_int8_t	length;
+	sa_family_t	af;
+	u_int8_t	action;
+	u_int8_t	reason;
+	char		ifname[IFNAMSIZ];
+	char		ruleset[PF_RULESET_NAME_SIZE];
+	u_int32_t	rulenr;
+	u_int32_t	subrulenr;
+	u_int8_t	dir;
+	u_int8_t	pad[3];
+};
+
+#define PFLOG_HDRLEN		sizeof(struct pfloghdr)
+/* minus pad, also used as a signature */
+#define PFLOG_REAL_HDRLEN	offsetof(struct pfloghdr, pad);
+
+/* XXX remove later when old format logs are no longer needed */
+struct old_pfloghdr {
 	u_int32_t af;
 	char ifname[IFNAMSIZ];
 	short rnr;
@@ -39,26 +62,25 @@ struct pfloghdr {
 	u_short action;
 	u_short dir;
 };
-
-#define PFLOG_HDRLEN	sizeof(struct pfloghdr)
+#define OLD_PFLOG_HDRLEN	sizeof(struct old_pfloghdr)
 
 #ifdef _KERNEL
 
 #if NPFLOG > 0
-#define	PFLOG_PACKET(i,x,a,b,c,d,e) \
+#define	PFLOG_PACKET(i,x,a,b,c,d,e,f,g) \
 	do { \
 		if (b == AF_INET) { \
 			HTONS(((struct ip *)x)->ip_len); \
 			HTONS(((struct ip *)x)->ip_off); \
-			pflog_packet(i,a,b,c,d,e); \
+			pflog_packet(i,a,b,c,d,e,f,g); \
 			NTOHS(((struct ip *)x)->ip_len); \
 			NTOHS(((struct ip *)x)->ip_off); \
 		} else { \
-			pflog_packet(i,a,b,c,d,e); \
+			pflog_packet(i,a,b,c,d,e,f,g); \
 		} \
 	} while (0)
 #else
-#define	PFLOG_PACKET(i,x,a,b,c,d,e)	((void)0)
+#define	PFLOG_PACKET(i,x,a,b,c,d,e,f,g)	((void)0)
 #endif /* NPFLOG > 0 */
 #endif /* _KERNEL */
 #endif /* _NET_IF_PFLOG_H_ */

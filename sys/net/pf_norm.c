@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.57 2003/05/11 20:44:03 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.58 2003/05/14 08:42:00 canacar Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -972,13 +972,13 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
  no_mem:
 	REASON_SET(reason, PFRES_MEMORY);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 
  drop:
 	REASON_SET(reason, PFRES_NORM);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
 
  bad:
@@ -990,7 +990,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	REASON_SET(reason, PFRES_FRAG);
 	if (r != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, *reason, r, NULL, NULL);
 
 	return (PF_DROP);
 }
@@ -1098,7 +1098,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
  tcp_drop:
 	REASON_SET(&reason, PFRES_NORM);
 	if (rm != NULL && r->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r);
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r, NULL, NULL);
 	return (PF_DROP);
 }
 

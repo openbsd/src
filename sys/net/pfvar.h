@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.147 2003/05/13 17:45:24 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.148 2003/05/14 08:42:00 canacar Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1034,8 +1034,8 @@ int	pf_test(int, struct ifnet *, struct mbuf **);
 int	pf_test6(int, struct ifnet *, struct mbuf **);
 #endif /* INET */
 
-int	pflog_packet(struct ifnet *, struct mbuf *, sa_family_t, u_short,
-	    u_short, struct pf_rule *);
+int	pflog_packet(struct ifnet *, struct mbuf *, sa_family_t, u_int8_t,
+	    u_int8_t, struct pf_rule *, struct pf_rule *, struct pf_ruleset *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, sa_family_t);
 int	pf_match(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
