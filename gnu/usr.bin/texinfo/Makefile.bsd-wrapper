@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.13 1997/07/24 15:24:09 kstailey Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.14 1997/07/24 15:46:17 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -11,14 +11,10 @@ FSFMAKE=	${MAKE} SUBDIRS="$(SUBDIRS)" $(GNUCFLAGS) $(INFODIR) $(INFOPATH)
 
 .include <bsd.own.mk>
 
-.ifndef INSTALL_STRIP
-INST_PROG='/usr/bin/install -c'
-.else
-.if (${INSTALL_STRIP} == "-s")
+.if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
 INST_PROG='/usr/bin/install -cs'
 .else
 INST_PROG='/usr/bin/install -c'
-.endif
 .endif
 
 all:	config.status
