@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.29 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.30 2002/02/23 08:07:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -111,6 +111,8 @@ struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t,
 int	csefree(struct csession *);
 
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
+
+int	usercrypto = 1;		/* userland may do crypto requests */
 
 /* ARGSUSED */
 int
@@ -490,6 +492,8 @@ cryptoopen(dev, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
+	if (usercrypto == 0)
+		return (ENXIO);
 	return (0);
 }
 
