@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.109 2002/12/18 19:40:41 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.110 2002/12/22 15:52:13 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -618,8 +618,12 @@ pfctl_show_nat(int dev, int opts)
 			warn("DIOCGETRULE");
 			return (-1);
 		}
+		if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
+		    pr.ticket, PF_BINAT) != 0)
+			return (-1);
 		print_binat(&pr.rule, opts & PF_OPT_VERBOSE2);
 		pfctl_print_rule_counters(&pr.rule, opts);
+		pfctl_clear_pool(&pr.rule.rpool);
 	}
 	return (0);
 }
