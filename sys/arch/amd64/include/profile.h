@@ -1,5 +1,5 @@
-/*	$OpenBSD: profile.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
-/*	$NetBSD: profile.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
+/*	$OpenBSD: profile.h,v 1.2 2004/05/13 03:27:33 drahn Exp $	*/
+/*	$NetBSD: profile.h,v 1.3 2003/11/28 23:22:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,30 +32,45 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#define	_MCOUNT_DECL static __inline void _mcount
+#define	_MCOUNT_DECL void _mcount
 
-#define MCOUNT_ENTRY	"mcount"
+#ifdef PIC
+#define __MCPLT	"@PLT"
+#else
+#define __MCPLT
+#endif
 
-/*
- * XXXfvdl this is screwed by -fomit-frame-pointer being included in
- * -O.
- */
-#define	MCOUNT \
-extern void mcount __P((void)) __asm__(MCOUNT_ENTRY);			\
-void									\
-mcount()								\
-{									\
-	_mcount((u_long)__builtin_return_address(1),			\
-		(u_long)__builtin_return_address(0)); 			\
-}
+#define	MCOUNT						\
+__asm(" .globl __mcount		\n"			\
+"	.type __mcount,@function\n"			\
+"__mcount:			\n"			\
+"	pushq	%rbp		\n"			\
+"	movq	%rsp,%rbp	\n"			\
+"	subq	$56,%rsp	\n"			\
+"	movq	%rdi,0(%rsp)	\n"			\
+"	movq	%rsi,8(%rsp)	\n"			\
+"	movq	%rdx,16(%rsp)	\n"			\
+"	movq	%rcx,24(%rsp)	\n"			\
+"	movq	%r8,32(%rsp)	\n"			\
+"	movq	%r9,40(%rsp)	\n"			\
+"	movq	%rax,48(%rsp)	\n"			\
+"	movq	0(%rbp),%r11	\n"			\
+"	movq	8(%r11),%rdi	\n"			\
+"	movq	8(%rbp),%rsi	\n"			\
+"	call	_mcount		\n"			\
+"	movq	0(%rsp),%rdi	\n"			\
+"	movq	8(%rsp),%rsi	\n"			\
+"	movq	16(%rsp),%rdx	\n"			\
+"	movq	24(%rsp),%rcx	\n"			\
+"	movq	32(%rsp),%r8	\n"			\
+"	movq	40(%rsp),%r9	\n"			\
+"	movq	48(%rsp),%rax	\n"			\
+"	leave			\n"			\
+"	ret			\n"			\
+"	.size __mcount,.-__mcount");
 
 
 #ifdef _KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define MCOUNT_ENTER	(void)&s; __asm__("cli");
+#define MCOUNT_EXIT	__asm__("sti");
 #endif /* _KERNEL */
-
