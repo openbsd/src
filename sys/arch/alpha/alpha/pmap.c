@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.17 2001/08/12 12:03:02 heko Exp $ */
+/* $OpenBSD: pmap.c,v 1.18 2001/11/09 02:43:09 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -376,9 +376,6 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
  *	* pmap_all_pmaps_slock - This lock protects the global list of
  *	  all pmaps.  Note that a pm_slock must never be held while this
  *	  lock is held.
- *
- *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
- *	  and the virtual_end variable.
  *
  *	* pmap_growkernel_slock - This lock protects pmap_growkernel()
  *	  and the virtual_end variable.
@@ -917,9 +914,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 		lev2map[l2pte_index(VM_MIN_KERNEL_ADDRESS+
 		    (i*PAGE_SIZE*NPTEPG))] = pte;
 	}
-
-	/* Initialize the pmap_growkernel_slock. */
-	simple_lock_init(&pmap_growkernel_slock);
 
 	/* Initialize the pmap_growkernel_slock. */
 	simple_lock_init(&pmap_growkernel_slock);
