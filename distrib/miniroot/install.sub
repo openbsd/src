@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.162 2001/02/23 17:51:09 marc Exp $
+#	$OpenBSD: install.sub,v 1.163 2001/02/23 17:53:10 marc Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -634,7 +634,6 @@ send host-name "$_hostname";
 request subnet-mask, broadcast-address, routers,
        domain-name, domain-name-servers, host-name;
 __EOT
-		> /var/db/dhclient.leases
 		dhclient -1 ${_if_name}
 
 		set -- `ifconfig $_if_name | sed -n '
