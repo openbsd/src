@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.32 2004/04/07 20:14:46 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.33 2004/04/07 20:18:48 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -99,7 +99,6 @@ struct sockaddr_in sockaddr_broadcast;
 
 int		log_priority;
 int		no_daemon;
-int		save_scripts;
 int		unknown_ok = 1;
 int		routefd;
 
@@ -214,16 +213,13 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "c:dDl:qu")) != -1)
+	while ((ch = getopt(argc, argv, "c:dl:qu")) != -1)
 		switch (ch) {
 		case 'c':
 			path_dhclient_conf = optarg;
 			break;
 		case 'd':
 			no_daemon = 1;
-			break;
-		case 'D':
-			save_scripts = 1;
 			break;
 		case 'l':
 			path_dhclient_db = optarg;
