@@ -1,12 +1,10 @@
-#     $OpenBSD: BSD.local.dist,v 1.4 1999/10/04 23:47:33 brad Exp $
+#     $OpenBSD: BSD.local.dist,v 1.5 1999/10/07 18:35:45 turan Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
 /set type=dir uname=root gname=wheel mode=0755
 .
     bin
-    ..
-    etc
     ..
     include
     ..
