@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 1997/01/07 06:51:50 graichen Exp $
+#	$OpenBSD: Makefile,v 1.37 1997/01/21 04:34:32 millert Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -17,7 +17,7 @@ SUBDIR= apply apropos arch asa at aucat awk banner basename bdes biff cal \
 	nfsstat nice nohup oldrdist pagesize passwd paste patch pr printenv \
 	printf quota rdist rdistd renice rev rlogin rpcgen rpcinfo rs \
 	rsh rup ruptime rusers rwall rwho \
-	script sed shar showmount skey skeyinit soelim split \
+	script sed shar showmount skey skeyinit soelim sort split \
 	su sup systat tail talk tcopy tee telnet tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
 	unifdef uniq units unvis users uudecode uuencode \
