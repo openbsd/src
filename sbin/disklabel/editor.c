@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.91 2003/09/24 20:40:19 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.92 2003/12/20 09:29:27 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.91 2003/09/24 20:40:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.92 2003/12/20 09:29:27 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1853,26 +1853,26 @@ editor_help(char *arg)
 		break;
 	default:
 		puts("Available commands:");
-		puts("\tp [unit]  - print label.");
-		puts("\tM         - show entire OpenBSD man page for disklabel.");
-		puts("\te         - edit drive parameters.");
+		puts("\t? [cmnd]  - this message or command specific help.");
 		puts("\ta [part]  - add new partition.");
 		puts("\tb         - set OpenBSD disk boundaries.");
 		puts("\tc [part]  - change partition size.");
-		puts("\td [part]  - delete partition.");
 		puts("\tD         - set label to default.");
-		puts("\tg [d|b]   - Use [d]isk or [b]ios geometry.");
+		puts("\td [part]  - delete partition.");
+		puts("\te         - edit drive parameters.");
+		puts("\tg [b|d|u] - use [b]ios, [d]isk or [u]ser geometry.");
+		puts("\tM         - show entire OpenBSD man page for disklabel.");
 		puts("\tm [part]  - modify existing partition.");
 		puts("\tn [part]  - set the mount point for a partition.");
-		puts("\tr         - recalculate free space.");
-		puts("\tu         - undo last change.");
-		puts("\ts [path]  - save label to file.");
-		puts("\tw         - write label to disk.");
+		puts("\tp [unit]  - print label.");
 		puts("\tq         - quit and save changes.");
-		puts("\tx         - exit without saving changes.");
+		puts("\tr         - recalculate free space.");
+		puts("\ts [path]  - save label to file.");
+		puts("\tu         - undo last change.");
+		puts("\tw         - write label to disk.");
 		puts("\tX         - toggle expert mode.");
+		puts("\tx         - exit without saving changes.");
 		puts("\tz         - zero out partition table.");
-		puts("\t? [cmnd]  - this message or command specific help.");
 		puts(
 "Numeric parameters may use suffixes to indicate units:\n\t"
 "'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t"

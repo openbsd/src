@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.85 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.86 2003/12/20 09:29:27 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.85 2003/07/29 18:38:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.86 2003/12/20 09:29:27 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1721,37 +1721,43 @@ usage(void)
 	char blank[] = "                             ";
 
 #if NUMBOOT == 1
-	boot = " [-B [-b xxboot]]";
+	boot = " [-b boot1]";
 #elif NUMBOOT == 2
-	boot = " [-B [-b xxboot [-s bootxx]]]";
+	boot = " [-b boot1] [-s boot2]";
 #endif
 	blank[strlen(boot)] = '\0';
 
 	fprintf(stderr, "usage:\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-cd] [-p unit] [-t] disk%s (read)\n",
-	    blank);
+	    "  disklabel [-c | -d | -r | -t] [-v] [-p unit] disk\t\t(read)\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-cd] -e disk%s       (edit)\n",
-	    blank);
+	    "  disklabel -w [-c | -d | -r] [-nv] disk disktype [packid]\t(write)\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-cd] [-f temp] -E disk%.*s  (simple editor)\n",
-	    (int)strlen(blank) - 5, blank);
+	    "  disklabel -e [-c | -d | -r] [-nv] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",
+	    "  disklabel -E [-c | -d | -r] [-nv] [-f tempfile] disk\t\t(simple editor)\n");
+	fprintf(stderr,
+	    "  disklabel -R [-nrv] disk protofile\t\t\t\t(restore)\n");
+	fprintf(stderr,
+	    "  disklabel -N | -W [-nv] disk\t\t\t\t\t(protect)\n\n");
+	fprintf(stderr,
+	    "  disklabel -B  [-nv]%s disk [disktype]\t       (boot)\n",
 	    boot);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r]%s -w disk dtab [id] (write)\n",
+	    "  disklabel -Bw [-nv]%s disk disktype [packid]     (write)\n",
 	    boot);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-N|-W] disk%s           (protect)\n", blank);
+	    "  disklabel -BR [-nv]%s disk protofile [disktype]  (restore)\n\n",
+	    boot);
 	fprintf(stderr,
-	    "`disk' may be of the forms: sd0 or /dev/rsd0%c.\n", 'a'+RAW_PART);
+	    "`disk' may be of the form: sd0 or /dev/rsd0%c.\n", 'a'+RAW_PART);
 	fprintf(stderr,
-	    "`dtab' is an entry from %s, see disktab(5) for more info.\n",
+	    "`disktype' is an entry from %s, see disktab(5) for more info.\n",
 	    DISKTAB);
 	fprintf(stderr,
-	    "`proto' is the output from the read cmd form; -R is powerful.\n");
+	    "`packid' is an identification string for the device.\n");
+	fprintf(stderr,
+	    "`protofile' is the output from the read cmd form; -R is powerful.\n");
 #ifdef SEEALSO
 	fprintf(stderr,
 	    "For procedures specific to this architecture see: %s\n", SEEALSO);
