@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkio.h,v 1.3 1998/10/03 22:01:48 millert Exp $	*/
+/*	$OpenBSD: dkio.h,v 1.4 1999/08/10 23:08:09 deraadt Exp $	*/
 /*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
 /*
@@ -61,5 +61,6 @@
 #define DIOCLOCK	_IOW('d', 113, int)	/* lock/unlock pack */
 
 #define DIOCGPDINFO	_IOR('d', 114, struct disklabel)/* get physical */
+#define DIOCRLDINFO	_IO('d', 115)			/* reload disklabel */
 
 #endif /* _SYS_DKIO_H_ */
