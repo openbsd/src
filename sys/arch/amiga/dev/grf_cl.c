@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.14 2000/04/28 15:27:07 espie Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.15 2001/09/13 13:20:22 jj Exp $	*/
 /*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
@@ -972,7 +972,7 @@ cl_setspriteinfo(gp, data)
 
 	if (data->set & GRFSPRSET_SHAPE) {
 
-                short dsx, dsy, i;
+                unsigned short dsx, dsy, i;
                 unsigned long *di, *dm, *si, *sm;
                 unsigned long ssi[128], ssm[128];
                 struct grf_position gpos;
