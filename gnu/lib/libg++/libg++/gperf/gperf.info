@@ -1,5 +1,5 @@
-This is Info file gperf.info, produced by Makeinfo-1.55 from the input
-file /kalessin/giga/bothner/dist/devo/libg++/gperf/gperf.texi.
+This is Info file gperf.info, produced by Makeinfo version 1.68 from
+the input file gperf.texi.
 
 START-INFO-DIR-ENTRY
 * Gperf: (gperf).                Perfect Hash Function Generator.
@@ -1107,21 +1107,21 @@ Foundation, 1989.
 
 
 Tag Table:
-Node: Top1262
-Node: Copying2500
-Node: Contributors15803
-Node: Motivation16903
-Node: Search Structures18170
-Node: Description21723
-Node: Input Format23543
-Node: Declarations24338
-Node: Keywords26645
-Node: Functions28236
-Node: Output Format28730
-Node: Options31200
-Node: Bugs44570
-Node: Projects47257
-Node: Implementation48834
-Node: Bibliography49553
+Node: Top1224
+Node: Copying2462
+Node: Contributors15765
+Node: Motivation16865
+Node: Search Structures18132
+Node: Description21685
+Node: Input Format23505
+Node: Declarations24300
+Node: Keywords26607
+Node: Functions28198
+Node: Output Format28692
+Node: Options31162
+Node: Bugs44532
+Node: Projects47219
+Node: Implementation48796
+Node: Bibliography49515
 
 End Tag Table

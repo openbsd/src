@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper1,v 1.1 1996/03/28 07:31:08 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper1,v 1.2 1998/03/03 21:41:11 millert Exp $
 #
 #	XXX -- GNUism
 #	This file's only purpose to help isolate

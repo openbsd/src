@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1997/04/27 20:55:51 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1998/03/03 21:40:28 millert Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -34,7 +34,7 @@ GXX_OBJDIR!=	if [ -d $(GXX_DIR)/$(OBJDIR) ]; then \
 
 PROG=		gperf
 CC=		g++
-CPPFLAGS+=	-nostdinc++ -I$(.CURDIR)/src -I$(.CURDIR)/../../libio  \
+CPPFLAGS+=	-I$(.CURDIR)/src -I$(.CURDIR)/../../libio  \
 		-I$(.CURDIR)/../../libstdc++ -I$(.CURDIR)/../src \
 		-I$(LIBIO_OBJDIR)
 SRCS=		new.cc options.cc iterator.cc main.cc gen-perf.cc \

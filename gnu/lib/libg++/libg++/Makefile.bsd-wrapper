@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1997/06/06 17:41:29 grr Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1998/03/03 21:40:15 millert Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -22,8 +22,8 @@ LIBIO_OBJDIR!=	if [ -d $(LIBIO_DIR)/$(OBJDIR) ]; then \
 			echo $(LIBIO_DIR); \
 		fi
 
-VERSION = 2.7.1
-LIBG++_DIST_VERSION = 2.7.1
+VERSION = 2.8.0
+LIBG++_DIST_VERSION = 2.8.0
 
 .PATH:		$(.CURDIR)/src
 
@@ -35,15 +35,15 @@ CPPFLAGS+=	-I. -I$(.CURDIR)/src -I$(.CURDIR)/../libio \
 		-I$(.CURDIR)/../libstdc++ -I$(LIBIO_OBJDIR)
 LDADD+=		-lcurses
 
+REGEX_OBJ=
 CXXSRCS=	AllocRing.cc Obstack.cc builtin.cc $(REGEX_OBJ) Regex.cc \
 		String.cc Intdouble.cc Integer.cc Rational.cc Random.cc \
 		BitSet.cc BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \
 		Normal.cc NegExp.cc Weibull.cc Erlang.cc DiscUnif.cc \
 		Uniform.cc Poisson.cc HypGeom.cc Geom.cc Binomial.cc RNG.cc \
 		ACG.cc MLCG.cc  RndInt.cc Fix.cc Fix16.cc Fix24.cc \
-		CursesW.cc GetOpt.cc chr.cc error.cc gcd.cc hash.cc lg.cc \
-		fmtq.cc ioob.cc pow.cc sqrt.cc str.cc compare.cc \
-		SLList.cc DLList.cc
+		CursesW.cc GetOpt.cc error.cc gcd.cc hash.cc lg.cc \
+		fmtq.cc ioob.cc pow.cc sqrt.cc compare.cc SLList.cc DLList.cc
 CXXOBJS=	$(CXXSRCS:N*.h:R:S/$/.o/g)
 CSRCS=		bitand.c bitany.c bitblt.c bitclear.c bitcopy.c bitcount.c \
 		bitinvert.c bitlcomp.c bitset1.c bitxor.c timer.c
@@ -86,6 +86,9 @@ afterinstall:
 		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
 		$$i $(DESTDIR)/usr/share/info/$$i; \
 	done
+
+includes:
+	@-install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++/gen
 	@-cd $(.CURDIR)/src; for i in *.h gen/*.ccP gen/*.hP; do \
 		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
 		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \

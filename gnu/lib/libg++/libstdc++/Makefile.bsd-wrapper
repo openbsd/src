@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1996/06/03 07:36:33 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1998/03/03 21:42:46 millert Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
-STL_DIR=	$(.CURDIR)/stl
 STD_DIR=	$(.CURDIR)/std
 
 .if defined(OBJMACHINE)
@@ -24,15 +23,12 @@ LIBIBERTY_OBJDIR!=if [ -d $(LIBIBERTY_DIR)/$(OBJDIR) ]; then \
 		fi
 
 LIB=		stdc++
-CXXFLAGS+=	-fno-implicit-templates -nostdinc++
-CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio -I$(IO_OBJDIR)
+CXXFLAGS+=	-fno-implicit-templates
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/stl -I$(.CURDIR)/../libio -I$(IO_OBJDIR)
 LDADD+=		-lm
 
-SUBDIR+=	stl
-
 # stdc++ sources/objs
-STD_SRCS=	newi.cc cstringi.cc stddefi.cc stdexcepti.cc typeinfoi.cc \
-		exceptioni.cc cstdlibi.cc cmathi.cc 
+STD_SRCS=	cstringi.cc stdexcepti.cc cstdlibi.cc cmathi.cc stlinst.cc
 SPEC_OBJS=	cstrmain.o cstrio.o fcomplex.o fcomio.o dcomplex.o dcomio.o \
 		ldcomplex.o ldcomio.o
 STD_OBJS=	$(STD_SRCS:N*.h:R:S/$/.o/g) $(SPEC_OBJS)
@@ -60,24 +56,16 @@ LIBIBERTY_OBJS+=strerror.o
 QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_OBJDIR)\//g)
 .endif
 
-STL_OBJDIR!=	if [ -d $(STL_DIR)/$(OBJDIR) ]; then \
-			echo $(STL_DIR)/$(OBJDIR); \
-		else \
-			echo $(STL_DIR); \
-		fi
-
-STL_OBJS=	$(STL_OBJDIR)/tempbuf.o $(STL_OBJDIR)/tree.o \
-		$(STL_OBJDIR)/random.o
-
 SRCS=		$(STD_SRCS)
 
-OBJS=		$(SPEC_OBJS) $(QIO_OBJS) $(QLIBIBERTY_OBJS) $(STL_OBJS)
+OBJS=		$(SPEC_OBJS) $(QIO_OBJS) $(QLIBIBERTY_OBJS)
 
-HEADERS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath \
-		complex csetjmp csignal cstdarg cstddef cstdio cstdlib \
-		cstring ctime cwchar cwctype new stddef string exception \
-		stdexcept typeinfo algorithm deque list map queue set stack \
-		vector utility functional iterator memory numeric
+HEADERS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
+		csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime \
+		cwchar cwctype string stdexcept \
+		algorithm deque functional hash_map hash_set iterator list map \
+		memory numeric pthread_alloc queue rope set slist stack utility \
+		vector fstream iomanip iostream strstream iosfwd
 
 G_CFG_H=	$(IO_OBJDIR)/_G_config.h
 
@@ -95,39 +83,48 @@ clean:	_SUBDIRUSE
 	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${STD_OBJS:.o=.so}
 	rm -f llib-l${LIB}.ln ${STD_OBJS:.o=.ln}
 
-afterinstall:
+includes:
 	install -d -m 755 -o $(BINOWN) -g $(BINGRP) \
 		$(DESTDIR)/usr/include/g++/std
 	@-cd $(.CURDIR); for i in $(HEADERS) *.h std/*.*; do \
-		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
-	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-		 $$i $(DESTDIR)/usr/include/g++/$$i; \
+		if [ -f stl/$$i ]; then \
+			install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+				stl/$$i $(DESTDIR)/usr/include/g++/$$i; \
+		else \
+			install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+				$$i $(DESTDIR)/usr/include/g++/$$i; \
+		fi \
+	done
+	@-cd $(.CURDIR); for i in *.h std/*.*; do \
+	install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$$i $(DESTDIR)/usr/include/g++/$$i; \
+	done
+	@-cd $(.CURDIR)/stl; for i in *.h; do \
+	install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$$i $(DESTDIR)/usr/include/g++/$$i; \
 	done
 #
 # Misc GNU overidden targets.
 #
-$(STL_OBJS) $(STL_OBJS:.o=.po) $(STL_OBJS:.o=.so):
-	cd $(STL_DIR); $(MAKE) -f Makefile.bsd-wrapper
-
 $(QIO_OBJS) $(QIO_OBJS:.o=.po) $(QIO_OBJS:.o=.so):
 	cd $(IO_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
 $(QLIBIBERTY_OBJS) $(QLIBIBERTY_OBJS:.o=.po) $(QLIBIBERTY_OBJS:.o=.so):
 	cd $(LIBIBERTY_DIR); $(MAKE) -f Makefile.bsd-wrapper
 
-stdexcepti.o:	stdexcepti.cc $(.CURDIR)/std/stdexcept.h
+stdexcepti.o:	stdexcepti.cc
 	@echo "${COMPILE.cc} -frtti ${.IMPSRC}"
 	@${COMPILE.cc} -frtti ${.IMPSRC} -frtti -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-stdexcepti.po: stdexcepti.cc $(.CURDIR)/std/stdexcept.h
+stdexcepti.po: stdexcepti.cc
 	@echo "${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-stdexcepti.so: stdexcepti.cc $(.CURDIR)/std/stdexcept.h
+stdexcepti.so: stdexcepti.cc
 	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
@@ -156,9 +153,9 @@ STRFUNCS= 	REP MAIN TRAITS ADDSS ADDPS ADDCS ADDSP ADDSC \
 		LESS LEPS LESP GESS GEPS GESP
 STRIO=		EXTRACT INSERT GETLINE
 COMFUNCS=	MAIN ADDCC ADDCF ADDFC SUBCC SUBCF SUBFC MULCC MULCF MULFC \
-		DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC \
-		ABS ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI \
-		POWFC SIN SINH SQRT
+		DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC ABS \
+		ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI POWFC \
+		SIN SINH SQRT
 COMIO=		EXTRACT INSERT
 
 cstrmain.o: sinst.cc $(STD_DIR)/bastring.h \

@@ -33,9 +33,6 @@
 #endif
 #endif
 
-#if 0
-#define _G_NO_EXTERN_TEMPLATES
-#endif
 #include <std/bastring.cc>
 
 #ifdef C
@@ -49,22 +46,10 @@ typedef wchar_t c;
 template class string_char_traits <c>;
 #endif
 
-#define STRING basic_string <c, string_char_traits <c> >
-typedef class STRING s;
-#define BSREP __bsrep <c, string_char_traits <c> >
-typedef class BSREP r;
-
-#ifdef REP
-template class BSREP;
-r s::nilRep = { 0, 0, 1 };
-#ifdef _G_ALLOC_CONTROL
-bool (*r::excess_slop) (size_t, size_t) = r::default_excess;
-size_t (*r::frob_size) (size_t) = r::default_frob;
-#endif
-#endif
+typedef basic_string <c> s;
 
 #ifdef MAIN
-template class STRING;
+template class basic_string <c>;
 #endif
 
 #ifdef ADDSS

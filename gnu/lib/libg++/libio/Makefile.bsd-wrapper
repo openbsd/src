@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/04/17 08:01:41 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/03/03 21:41:37 millert Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
 LIB=		$(LIBIO)
-CXXFLAGS+=	-fno-implicit-templates -nostdinc++
+CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I$(.CURDIR) -I$(.OBJDIR)
-VERSION=	2.7.1
+VERSION=	2.8.0
 
 IO_SRCS=	filedoalloc.c floatconv.c genops.c fileops.c iovfprintf.c \
 		iovfscanf.c ioignore.c iopadn.c iofgetpos.c iofread.c \
@@ -66,7 +66,7 @@ clean:
 		 $(IOSTREAM_SRCS:.cc=.so)
 	rm -f llib-lib$(LIBIOSTREAM).ln $(IOSTREAM_SRCS:.cc=.ln)
 
-install: _G_config.h
+includes:
 	install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++
 	@-cd $(.CURDIR); for i in $(FILES); do \
 		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
@@ -78,6 +78,8 @@ install: _G_config.h
 	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
 		 $$i $(DESTDIR)/usr/include/g++/$$i; \
 	done
+
+install:
 	@-cd $(.CURDIR); for i in iostream.info* ; do \
 		cmp -s $$i $(DESTDIR)/usr/share/info/$$i || \
 	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
