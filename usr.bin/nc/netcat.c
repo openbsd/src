@@ -86,10 +86,6 @@
 #ifndef INADDR_NONE
 #define INADDR_NONE 0xffffffff
 #endif
-#ifdef MAXHOSTNAMELEN
-#undef MAXHOSTNAMELEN		/* might be too small on aix, so fix it */
-#endif
-#define MAXHOSTNAMELEN 256
 
 struct host_poop {
   char name[MAXHOSTNAMELEN];	/* dns name */
@@ -370,11 +366,13 @@ HINF * gethostpoop (name, numeric)
     if (! hostent)
 /* failure to look up a name is fatal, since we can't do anything with it */
       bail ("%s: forward host lookup failed: ", name);
-    strncpy (poop->name, hostent->h_name, MAXHOSTNAMELEN - 2);
+    strncpy (poop->name, hostent->h_name, MAXHOSTNAMELEN - 1);
+    poop->name[MAXHOSTNAMELEN - 1] = '\0';
     for (x = 0; hostent->h_addr_list[x] && (x < 8); x++) {
       memcpy (&poop->iaddrs[x], hostent->h_addr_list[x], sizeof (IA));
       strncpy (poop->addrs[x], inet_ntoa (poop->iaddrs[x]),
-	sizeof (poop->addrs[0]));
+	sizeof (poop->addrs[0])-1);
+      poop->addrs[x][sizeof (poop->addrs[0]) - 1] = '\0';
     } /* for x -> addrs, part A */
     if (! o_verbose)			/* if we didn't want to see the */
       return (poop);			/* inverse stuff, we're done. */
@@ -392,7 +390,8 @@ HINF * gethostpoop (name, numeric)
 
   } else {  /* not INADDR_NONE: numeric addresses... */
     memcpy (poop->iaddrs, &iaddr, sizeof (IA));
-    strncpy (poop->addrs[0], inet_ntoa (iaddr), sizeof (poop->addrs));
+    strncpy (poop->addrs[0], inet_ntoa (iaddr), sizeof (poop->addrs)-1);
+    poop->addrs[0][sizeof (poop->addrs)-1] = '\0';
     if (numeric)			/* if numeric-only, we're done */
       return (poop);
     if (! o_verbose)			/* likewise if we don't want */
@@ -402,7 +401,8 @@ HINF * gethostpoop (name, numeric)
     if (! hostent)
 	holler ("%s: inverse host lookup failed: ", name);
     else {
-	strncpy (poop->name, hostent->h_name, MAXHOSTNAMELEN - 2);
+	strncpy (poop->name, hostent->h_name, MAXHOSTNAMELEN - 1);
+	poop->name[MAXHOSTNAMELEN-1] = '\0';
 	hostent = gethostbyname (poop->name);
 	if ((! hostent) || (! hostent->h_addr_list[0]))
 	  holler ("Warning: forward host lookup failed for %s: ",
@@ -452,7 +452,8 @@ USHORT getportpoop (pstring, pnum)
       y = ntohs (servent->s_port);
       if (x != y)			/* "never happen" */
 	holler ("Warning: port-bynum mismatch, %d != %d", x, y);
-      strncpy (portpoop->name, servent->s_name, sizeof (portpoop->name));
+      strncpy (portpoop->name, servent->s_name, sizeof (portpoop->name)-1);
+      portpoop->name[sizeof (portpoop->name)-1] = '\0';
     } /* if servent */
     goto gp_finish;
   } /* if pnum */
@@ -471,7 +472,8 @@ USHORT getportpoop (pstring, pnum)
       return (0);
     servent = getservbyname (pstring, whichp);
     if (servent) {
-      strncpy (portpoop->name, servent->s_name, sizeof (portpoop->name));
+      strncpy (portpoop->name, servent->s_name, sizeof (portpoop->name)-1);
+      portpoop->name[sizeof (portpoop->name)-1] = '\0';
       x = ntohs (servent->s_port);
       goto gp_finish;
     } /* if servent */
