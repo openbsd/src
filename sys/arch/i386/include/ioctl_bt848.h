@@ -1,8 +1,9 @@
-/*	$OpenBSD: ioctl_bt848.h,v 1.2 1998/10/10 06:40:21 downsj Exp $	*/
+/*	$OpenBSD: ioctl_bt848.h,v 1.3 1999/08/05 21:18:43 niklas Exp $	*/
+
 /*
  * extensions to ioctl_meteor.h for the bt848 cards
  *
- * $FreeBSD: ioctl_bt848.h,v 1.19 1998/09/30 21:06:55 sos Exp $
+ * $Roger: ioctl_bt848.h,v 1.23 1999/05/18 12:14:39 roger Exp $
  */
 
 /*
@@ -15,8 +16,9 @@
 #define CHNLSET_JPNBCST         5
 #define CHNLSET_JPNCABLE        6
 #define CHNLSET_XUSSR           7
+#define CHNLSET_AUSTRALIA       8
 #define CHNLSET_MIN	        CHNLSET_NABCST
-#define CHNLSET_MAX	        CHNLSET_XUSSR
+#define CHNLSET_MAX	        CHNLSET_AUSTRALIA
 
 
 /*
@@ -102,7 +104,7 @@ struct eeProm {
 #define	TVTUNER_GETSTATUS  _IOR('x', 34, unsigned int)	/* get tuner status */
 #define	TVTUNER_SETFREQ    _IOW('x', 35, unsigned int)	/* set frequency */
 #define	TVTUNER_GETFREQ    _IOR('x', 36, unsigned int)	/* get frequency */
-
+ 
 
 #define BT848_SHUE	_IOW('x', 37, int)		/* set hue */
 #define BT848_GHUE	_IOR('x', 37, int)		/* get hue */
@@ -137,6 +139,24 @@ struct eeProm {
 #define BT848_SLNOTCH	_IOW('x', 55, int)		/* set luma notch */
 #define BT848_GLNOTCH	_IOR('x', 56, int)		/* get luma notch */
 
+/* Read/Write the BT848's I2C bus directly
+ * b7-b0:    data (read/write)
+ * b15-b8:   internal peripheral register (write)   
+ * b23-b16:  i2c addr (write)
+ * b31-b24:  1 = write, 0 = read 
+ */
+#define BT848_I2CWR     _IOWR('x', 57, u_long)    /* i2c read-write */
+
+/* Support for radio tuner */
+#define RADIO_SETMODE	 _IOW('x', 58, unsigned int)  /* set radio modes */
+#define RADIO_GETMODE	 _IOR('x', 58, unsigned char)  /* get radio modes */
+#define   RADIO_AFC	 0x01		/* These modes will probably not */
+#define   RADIO_MONO	 0x02		/*  work on the FRxxxx. It does	 */
+#define   RADIO_MUTE	 0x08		/*  work on the FMxxxx.	*/
+#define RADIO_SETFREQ    _IOW('x', 59, unsigned int)  /* set frequency   */
+#define RADIO_GETFREQ    _IOR('x', 59, unsigned int)  /* set frequency   */
+ /*        Argument is frequency*100MHz  */
+
 /*
  * XXX: more bad magic,
  *      we need to fix the METEORGINPUT to return something public
@@ -145,7 +165,8 @@ struct eeProm {
 #define	METEOR_DEV0		0x00001000
 #define	METEOR_DEV1		0x00002000
 #define	METEOR_DEV2		0x00004000
-
+#define	METEOR_DEV3		0x00008000
+#define	METEOR_DEV_SVIDEO	0x00006000
 /*
  * right now I don't know were to put these, but as they are suppose to be
  * a part of a common video capture interface, these should be relocated to
@@ -217,22 +238,37 @@ struct bktr_capture_area {
 #define BT848_SCAPAREA   _IOW('x', 69, struct bktr_capture_area)
 #define BT848_GCAPAREA   _IOR('x', 69, struct bktr_capture_area)
 
-/* Read/Write the BT848's I2C bus directly
- * b7-b0:    data (read/write)
- * b15-b8:   internal peripheral register (write)   
- * b23-b16:  i2c addr (write)
- * b31-b24:  1 = write, 0 = read 
+
+/* Get channel Set */
+#define BT848_MAX_CHNLSET_NAME_LEN 16
+struct bktr_chnlset {
+       short   index;
+       short   max_channel;
+       char    name[BT848_MAX_CHNLSET_NAME_LEN];
+};
+#define	TVTUNER_GETCHNLSET _IOWR('x', 70, struct bktr_chnlset)
+
+
+
+/* Infra Red Remote Control */
+struct bktr_remote {
+       unsigned char data[3];
+};
+#define	REMOTE_GETKEY      _IOR('x', 71, struct bktr_remote)/*read the remote */
+                                                            /*control receiver*/
+                                                            /*returns raw data*/
+
+ 
+/*
+ * Direct access to GPIO pins. You must add BKTR_GPIO_ACCESS to your kernel
+ * configuration file to use these 
  */
-#define BT848_I2CWR     _IOWR('x', 57, u_long)    /* i2c read-write */
-/* Support for radio tuner */
-#define RADIO_SETMODE	 _IOW('x', 58, unsigned int)  /* set radio modes */
-#define RADIO_GETMODE	 _IOR('x', 58, unsigned char)  /* get radio modes */
-#define   RADIO_AFC	 0x01		/* These modes will probably not */
-#define   RADIO_MONO	 0x02		/*  work on the FRxxxx. It does	 */
-#define   RADIO_MUTE	 0x08		/*  work on the FMxxxx.	*/
-#define RADIO_SETFREQ    _IOW('x', 59, unsigned int)  /* set frequency   */
-#define RADIO_GETFREQ    _IOR('x', 59, unsigned int)  /* set frequency   */
- /*        Argument is frequency*100MHz  */
+#define BT848_GPIO_SET_EN      _IOW('x', 72, int)      /* set gpio_out_en */
+#define BT848_GPIO_GET_EN      _IOR('x', 73, int)      /* get gpio_out_en */
+#define BT848_GPIO_SET_DATA    _IOW('x', 74, int)      /* set gpio_data */
+#define BT848_GPIO_GET_DATA    _IOR('x', 75, int)      /* get gpio_data */
+
+
 
 /*  XXX - Copied from /sys/pci/brktree_reg.h  */
 #define BT848_IFORM_FORMAT              (0x7<<0)
