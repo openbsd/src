@@ -1,10 +1,9 @@
-#	$NetBSD: files.scsi,v 1.3 1996/03/17 00:59:45 thorpej Exp $
+#	$NetBSD: files.scsi,v 1.4 1996/05/16 04:01:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that usee it must provide
 # their own "major" declarations for the appropriate devices.
 
-define	scsi {}
 file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi
