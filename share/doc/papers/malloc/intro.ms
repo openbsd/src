@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" $OpenBSD: intro.ms,v 1.2 1997/01/05 22:18:09 tholo Exp $
+.\" $OpenBSD: intro.ms,v 1.3 2003/08/10 23:43:28 mickey Exp $
 .\"
 .ds RH Introduction
 .NH
@@ -65,7 +65,7 @@ taking an increment to the current end of the heap, but this is merely a
 front for brk(2).
 .PP
 In addition to these two memory resources, modern virtual memory kernels
-provide the mmap(2)/mmunmap(2) interface which allows almost complete
+provide the mmap(2)/munmap(2) interface which allows almost complete
 control over any bit of virtual memory in the process address room.
 .PP
 Because of the generality of the mmap(2) interface and the way the 
