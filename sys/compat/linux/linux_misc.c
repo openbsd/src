@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.16 1998/04/26 10:19:12 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.17 1998/07/04 08:59:08 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -511,15 +511,51 @@ linux_sys_mremap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#ifdef notyet
+
 	struct linux_sys_mremap_args /* {
 		syscallarg(void *) old_address;
 		syscallarg(size_t) old_size;
 		syscallarg(size_t) new_size;
 		syscallarg(u_long) flags;
 	} */ *uap = v;
-#endif
-	return (ENOMEM);
+	struct sys_munmap_args mua;
+	size_t old_size, new_size;
+	int error;
+ 
+	old_size = round_page(SCARG(uap, old_size));
+	new_size = round_page(SCARG(uap, new_size));
+ 
+	/*
+	 * Growing mapped region.
+	 */
+	if (new_size > old_size) {
+		/*
+		 * XXX Implement me.  What we probably want to do is
+		 * XXX dig out the guts of the old mapping, mmap that
+		 * XXX object again with the new size, then munmap
+		 * XXX the old mapping.
+		 */
+		*retval = 0;
+		return (ENOMEM);
+	}
+	/*
+	 * Shrinking mapped region.
+	 */
+	if (new_size < old_size) {
+		SCARG(&mua, addr) = (caddr_t)SCARG(uap, old_address) +
+		    SCARG(uap, new_size);
+		SCARG(&mua, len) = old_size - new_size;
+		error = sys_munmap(p, &mua, retval);
+		*retval = error ? 0 : (register_t)SCARG(uap, old_address);
+		return (error);
+	}
+ 
+	/*
+	 * No change.
+	 */
+	*retval = (register_t)SCARG(uap, old_address);
+	return (0);
+
 }
 
 /*
@@ -797,9 +833,9 @@ again:
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
-         * First we read into the malloc'ed buffer, then
-         * we massage it into user space, one record at a time.
-         */
+	 * First we read into the malloc'ed buffer, then
+	 * we massage it into user space, one record at a time.
+	 */
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &ncookies,
 	    &cookiebuf);
 	if (error)
