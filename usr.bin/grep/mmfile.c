@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.6 2003/06/24 18:43:11 tedu Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.7 2003/09/09 05:04:27 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -60,7 +60,7 @@ mmopen(char *fn, char *mode)
 		goto ouch2;
 	mmf->len = (size_t)st.st_size;
 	mmf->base = mmap(NULL, mmf->len, PROT_READ, MAP_PRIVATE, mmf->fd, (off_t)0);
-	if (mmf->base == NULL)
+	if (mmf->base == MAP_FAILED)
 		goto ouch2;
 	mmf->ptr = mmf->base;
 	mmf->end = mmf->base + mmf->len;
