@@ -1,33 +1,59 @@
-.\" $OpenBSD: skeyprune.8,v 1.6 2001/06/20 22:19:58 millert Exp $
+.\" $OpenBSD: skeyprune.8,v 1.7 2002/05/16 18:27:34 millert Exp $
 .\"
 .\"
-.Dd September 27, 1996
+.Dd May 16, 2002
 .Dt SKEYPRUNE 8
 .Os
 .Sh NAME
 .Nm skeyprune
-.Nd prune commented out and old entries from keys file
+.Nd prune zeroed and old entries from S/Key databse
 .Sh SYNOPSIS
 .Nm skeyprune
 .Op Ar days
 .Sh DESCRIPTION
 .Nm skeyprune
 searches through the S/Key database,
-.Dq Pa /etc/skeykeys ,
-and prunes out invalid entries (including users who have zeroed out their)
-entries via
-.Xr skeyinit 1 )
+.Pa /etc/skey ,
+and prunes out entries that have been zeroed out via
+.Xr skeyinit 1
 as well as entries that have not been modified in
 .Ar days
 days.
 If
 .Ar days
 is not specified, only invalid entries are pruned.
+.Pp
+If a malformed entry is encountered, or if the file mode/type is incorrect,
+an error is printed to the standard error.
+.Sh ERRORS
+The following errors are cause for concern.
+.Bl -tag -width Ds
+.It Can't cd to /etc/skey
+The S/Key database directory,
+.Pa /etc/skey ,
+does not exist.
+The superuser may create it by running
+.Dq skeyinit -E .
+.It Can't open user
+The user's entry was found in
+.Pa /etc/skey
+but it could not be opened.
+.It user is not a regular file
+The user's entry is not a regular file.
+.It Bad mode for user
+The user's entry had a bad file mode (should be 0600).
+.It Bad link count for user.
+The user's entry had a bad link count (should be 1).
+.It Invalid entry for user
+The user's entry was not of the correct format, as specified by
+.Xr skey 5 .
+.El
 .Sh FILES
-.Bl -tag -width /etc/skeykeys -compact
-.It Pa /etc/skeykeys
-S/Key key information database
+.Bl -tag -width /etc/skey
+.It Pa /etc/skey
+directory containing S/Key user entries
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,
-.Xr skeyinit 1
+.Xr skeyinit 1 ,
+.Xr skey 5
