@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.19 2004/01/15 12:27:07 markus Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.20 2004/07/28 14:08:14 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.19 2004/01/15 12:27:07 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.20 2004/07/28 14:08:14 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -429,7 +429,7 @@ tcp_print(register const u_char *bp, register u_int length,
 	}
 
 	length -= hlen;
-	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
+	if (vflag > 1 || length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
 		(void)printf(" %lu:%lu(%d)", (long) seq, (long) (seq + length),
 		    length);
 	if (flags & TH_ACK)
