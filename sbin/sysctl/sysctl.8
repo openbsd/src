@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.91 2002/11/25 03:04:48 wcobb Exp $
+.\"	$OpenBSD: sysctl.8,v 1.92 2002/12/17 23:11:32 millert Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -123,6 +123,7 @@ privilege can change the value.
 .It kern.nchstats	struct	no
 .It kern.forkstat	struct	no
 .It kern.somaxconn	integer	yes
+.It kern.somaxconn	integer	yes
 .It kern.sominconn	integer	yes
 .It kern.usermount	integer	yes
 .It kern.random	struct	no
@@ -153,6 +154,20 @@ privilege can change the value.
 .It kern.ttycount	integer	no
 .It kern.numvnodes	integer	no
 .It kern.mbstat	struct	no
+.It kern.seminfo.semmni	integer	yes
+.It kern.seminfo.semmns	integer	yes
+.It kern.seminfo.semmnu	integer	yes
+.It kern.seminfo.semmsl	integer	yes
+.It kern.seminfo.semopm	integer	yes
+.It kern.seminfo.semume	integer	no
+.It kern.seminfo.semusz	integer	no
+.It kern.seminfo.semvmx	integer	no
+.It kern.seminfo.semaem	integer	no
+.It kern.shminfo.shmmax	integer	yes
+.It kern.shminfo.shmmin	integer	yes
+.It kern.shminfo.shmmni	integer	yes
+.It kern.shminfo.shmseg	integer	yes
+.It kern.shminfo.shmall	integer	yes
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
 .It vm.swapencrypt.enable	integer	yes
@@ -397,6 +412,13 @@ See
 and
 .Xr nfsd 8
 for futher discussion.
+.Pp
+To set the amount of shared memory available in the system and
+the maximum number of shared memory segments:
+.Bd -literal noffset indent
+# sysctl -w kern.shminfo.shmmax=33554432
+# sysctl -w kern.shminfo.shmseg=32
+.Ed
 .Sh FILES
 .Bl -tag -width <ufs/ffs/ffs_extern.h> -compact
 .It Pa <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.13 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: shm.h,v 1.14 2002/12/17 23:11:31 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -39,27 +39,73 @@
 #ifndef _SYS_SHM_H_
 #define _SYS_SHM_H_
 
+#ifndef _SYS_IPC_H_
 #include <sys/ipc.h>
+#endif
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+
+/* shm-specific sysctl variables corresponding to members of struct shminfo */
+#define KERN_SHMINFO_SHMMAX	1	/* int: max shm segment size (bytes) */
+#define KERN_SHMINFO_SHMMIN	2	/* int: min shm segment size (bytes) */
+#define KERN_SHMINFO_SHMMNI	3	/* int: max number of shm identifiers */
+#define KERN_SHMINFO_SHMSEG	4	/* int: max shm segments per process */
+#define KERN_SHMINFO_SHMALL	5	/* int: max amount of shm (pages) */
+#define KERN_SHMINFO_MAXID	6	/* number of valid shared memory ids */
+
+#define CTL_KERN_SHMINFO_NAMES { \
+	{ 0, 0 }, \
+	{ "shmmax", CTLTYPE_INT }, \
+	{ "shmmin", CTLTYPE_INT }, \
+	{ "shmmni", CTLTYPE_INT }, \
+	{ "shmseg", CTLTYPE_INT }, \
+	{ "shmall", CTLTYPE_INT }, \
+}
+
+/*
+ * Old (deprecated) access mode definitions--do not use.
+ * Provided for compatibility with old code only.
+ */
+#define SHM_R		IPC_R
+#define SHM_W		IPC_W
+
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+/*
+ * Shared memory operation flags for shmat(2).
+ */
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
-#define	SHMLBA		PAGE_SIZE /* Segment low boundry address multiple */
 
-/* "official" access mode definitions; somewhat braindead since you have
-   to specify (SHM_* >> 3) for group and (SHM_* >> 6) for world permissions */
-#define SHM_R		(IPC_R)
-#define SHM_W		(IPC_W)
+/*
+ * Shared memory specific control commands for shmctl().
+ * We accept but ignore these (XXX).
+ */
+#define	SHM_LOCK	3	/* Lock segment in memory. */
+#define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
+
+/*
+ * Segment low boundry address multiple
+ * Use PAGE_SIZE for kernel but for userland query the kernel for the value.
+ */
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
+#define	SHMLBA		PAGE_SIZE
+#else
+#define	SHMLBA		(getpagesize())
+#endif /* _KERNEL || _STANDALONE || _LKM */
+
+typedef short		shmatt_t;
 
 struct shmid_ds {
 	struct ipc_perm	shm_perm;	/* operation permission structure */
 	int		shm_segsz;	/* size of segment in bytes */
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
-	short		shm_nattch;	/* number of current attaches */
+	shmatt_t	shm_nattch;	/* number of current attaches */
 	time_t		shm_atime;	/* time of last shmat() */
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
-	void		*shm_internal;	/* sysv stupidity */
+	void		*shm_internal;	/* implementation specific data */
 };
 
 #ifdef _KERNEL
@@ -72,16 +118,11 @@ struct oshmid_ds {
 	time_t		shm_atime;	/* time of last shmat() */
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
-	void		*shm_internal;	/* sysv stupidity */
+	void		*shm_internal;	/* implementation specific data */
 };
 #endif
 
-#ifdef _KERNEL
-
-/* Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl(). */
-#define	SHM_LOCK	3	/* Lock segment in memory. */
-#define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
-
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * System V style catch-all structure for shared memory constants that
  * might be of interest to user programs.  Do we really want/need this?
@@ -98,9 +139,11 @@ struct shm_sysctl_info {
 	struct	shminfo shminfo;
 	struct	shmid_ds shmids[1];
 };
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
+#ifdef _KERNEL
 extern struct shminfo shminfo;
-extern struct shmid_ds *shmsegs;
+extern struct shmid_ds **shmsegs;
 
 /* initial values for machdep.c */
 extern int shmseg;
@@ -112,6 +155,7 @@ void shminit(void);
 void shmfork(struct vmspace *, struct vmspace *);
 void shmexit(struct vmspace *);
 void shmid_n2o(struct shmid_ds *, struct oshmid_ds *);
+int sysctl_sysvshm(int *, u_int, void *, size_t *, void *, size_t);
 
 #else /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.75 2002/09/01 11:35:52 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.76 2002/12/17 23:11:31 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -256,11 +256,22 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 
 	/* all sysctl names at this level are terminal except a ton of them */
-	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
-	    name[0] == KERN_MALLOCSTATS || name[0] == KERN_TTY ||
-	    name[0] == KERN_POOL || name[0] == KERN_SYSVIPC_INFO ||
-	    name[0] == KERN_PROC_ARGS))
-		return (ENOTDIR);		/* overloaded */
+	if (namelen != 1) {
+		switch (name[0]) {
+		case KERN_PROC:
+		case KERN_PROF:
+		case KERN_MALLOCSTATS:
+		case KERN_TTY:
+		case KERN_POOL:
+		case KERN_PROC_ARGS:
+		case KERN_SYSVIPC_INFO:
+		case KERN_SEMINFO:
+		case KERN_SHMINFO:
+			break;
+		default:
+			return (ENOTDIR);	/* overloaded */
+		}
+	}
 
 	switch (name[0]) {
 	case KERN_OSTYPE:
@@ -455,6 +466,16 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_SPLASSERT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &splassert_ctl));
+#ifdef SYSVSEM
+	case KERN_SEMINFO:
+		return (sysctl_sysvsem(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#ifdef SYSVSHM
+	case KERN_SHMINFO:
+		return (sysctl_sysvshm(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1395,12 +1416,20 @@ sysctl_sysvipc(name, namelen, where, sizep)
 #endif
 #ifdef SYSVSEM
 			case KERN_SYSVIPC_SEM_INFO:
-				bcopy(&sema[i], &semsi->semids[i], dssize);
+				if (sema[i] != NULL)
+					bcopy(sema[i], &semsi->semids[i],
+					    dssize);
+				else
+					bzero(&semsi->semids[i], dssize);
 				break;
 #endif
 #ifdef SYSVSHM
 			case KERN_SYSVIPC_SHM_INFO:
-				bcopy(&shmsegs[i], &shmsi->shmids[i], dssize);
+				if (shmsegs[i] != NULL)
+					bcopy(shmsegs[i], &shmsi->shmids[i],
+					    dssize);
+				else
+					bzero(&shmsi->shmids[i], dssize);
 				break;
 #endif
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2002/11/27 21:47:14 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.91 2002/12/17 23:11:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -55,12 +55,6 @@
 #include <sys/extent.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
 #endif
 
 #include <sys/mount.h>
@@ -545,18 +539,6 @@ hppa_init(start)
 
 	valloc(buf, struct buf, nbuf);
 
-#ifdef SYSVSHM
-	shminfo.shmmax = shmmaxpgs;
-	shminfo.shmall = shmmaxpgs;
-	shminfo.shmseg = shmseg;
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
 #ifdef SYSVMSG
 	valloc(msgpool, char, msginfo.msgmax);
 	valloc(msgmaps, struct msgmap, msginfo.msgseg);

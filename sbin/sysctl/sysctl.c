@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.84 2002/07/06 19:14:20 nordin Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.85 2002/12/17 23:11:32 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
+static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.84 2002/07/06 19:14:20 nordin Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.85 2002/12/17 23:11:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.84 2002/07/06 19:14:20 nordin Exp $
 #include <sys/gmon.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
@@ -128,6 +130,8 @@ struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
 struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
 struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
 struct ctlname ttyname[] = CTL_KERN_TTY_NAMES;
+struct ctlname semname[] = CTL_KERN_SEMINFO_NAMES;
+struct ctlname shmname[] = CTL_KERN_SHMINFO_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -199,6 +203,8 @@ int sysctl_forkstat(char *, char **, int *, int, int *);
 int sysctl_tty(char *, char **, int *, int, int *);
 int sysctl_nchstats(char *, char **, int *, int, int *);
 int sysctl_malloc(char *, char **, int *, int, int *);
+int sysctl_seminfo(char *, char **, int *, int, int *);
+int sysctl_shminfo(char *, char **, int *, int, int *);
 #ifdef CPU_CHIPSET
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
@@ -402,6 +408,16 @@ parse(char *string, int flags)
 		case KERN_CPTIME:
 			special |= LONGARRAY;
 			lal = CPUSTATES;
+			break;
+		case KERN_SEMINFO:
+			len = sysctl_seminfo(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_SHMINFO:
+			len = sysctl_shminfo(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
 			break;
 		}
 		break;
@@ -1319,6 +1335,8 @@ struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
 struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
 struct list nchstatslist = { nchstatsname, KERN_NCHSTATS_MAXID };
 struct list ttylist = { ttyname, KERN_TTY_MAXID };
+struct list semlist = { semname, KERN_SEMINFO_MAXID };
+struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -1782,6 +1800,54 @@ sysctl_ipx(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
 	return(4);
+}
+
+/*
+ * Handle SysV semaphore info requests
+ */
+int
+sysctl_seminfo(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &semlist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &semlist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	*typep = CTLTYPE_INT;
+	return(3);
+}
+
+/*
+ * Handle SysV shared memory info requests
+ */
+int
+sysctl_shminfo(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &shmlist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &shmlist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	*typep = CTLTYPE_INT;
+	return(3);
 }
 
 /*

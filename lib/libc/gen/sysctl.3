@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.95 2002/11/25 03:04:48 wcobb Exp $
+.\"	$OpenBSD: sysctl.3,v 1.96 2002/12/17 23:11:32 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -304,6 +304,8 @@ information.
 .It Dv KERN_RND No "	struct rndstats	no"
 .It Dv KERN_SAVED_IDS No "	integer	no"
 .It Dv KERN_SECURELVL No "	integer	raise only"
+.It Dv KERN_SEMINFO No "	node	not applicable"
+.It Dv KERN_SHMINFO No "	node	not applicable"
 .It Dv KERN_SOMINCONN No "	integer	yes"
 .It Dv KERN_SOMAXCONN No "	integer	yes"
 .It Dv KERN_SYSVIPC_INFO No "	node	not applicable"
@@ -535,6 +537,90 @@ Returns 1 if saved set-group-ID and saved set-user-ID are available.
 The system security level.
 This level may be raised by processes with appropriate privileges.
 It may only be lowered by process 1.
+.It Dv KERN_SEMINFO
+Return the elements of
+.Li struct seminfo .
+If the kernel is not compiled with System V style semaphore support,
+attempts to retrieve any of the
+.Dv KERN_SEMINFO
+values will fail with
+.Er EOPNOTSUPP .
+The third level names for the elements of
+.Li struct seminfo
+are detailed below.
+The changeable column shows whether a process with appropriate
+privileges may change the value.
+.Bl -column "KERN_SEMINFO_SEMMNI" "integer" "yes" -offset indent
+.It Sy "Third level name"	Type	Changeable
+.It Dv KERN_SEMINFO_SEMMNI	integer	yes
+.It Dv KERN_SEMINFO_SEMMNS	integer	yes
+.It Dv KERN_SEMINFO_SEMMNU	integer	yes
+.It Dv KERN_SEMINFO_SEMMSL	integer	yes
+.It Dv KERN_SEMINFO_SEMOPM	integer	yes
+.It Dv KERN_SEMINFO_SEMUME	integer	no
+.It Dv KERN_SEMINFO_SEMUSZ	integer	no
+.It Dv KERN_SEMINFO_SEMVMX	integer	no
+.It Dv KERN_SEMINFO_SEMAEM	integer	no
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_SEMINFO_SEMMNI
+The maximum number of semaphore identifiers allowed.
+.It Dv KERN_SEMINFO_SEMMNS
+The maximum number of semaphores allowed in the system.
+.It Dv KERN_SEMINFO_SEMMNU
+The maximum number of semaphore undo structures allowed in the system.
+.It Dv KERN_SEMINFO_SEMMSL
+The maximum number of semaphores allowed per id.
+.It Dv KERN_SEMINFO_SEMOPM
+The maximum number of operations per
+.Xr semop 2
+call.
+.It Dv KERN_SEMINFO_SEMUME
+The maximum number of undo entries per process.
+.It Dv KERN_SEMINFO_SEMUSZ
+The size (in bytes) of the undo structure.
+.It Dv KERN_SEMINFO_SEMVMX
+The semaphore maximum value.
+.It Dv KERN_SEMINFO_SEMAEM
+The adjust on exit maximum value.
+.El
+.It Dv KERN_SHMINFO
+Return the elements of
+.Li struct shminfo .
+If the kernel is not compiled with System V style shared memory support,
+attempts to retrieve any of the
+.Dv KERN_SHMINFO
+values will fail with
+.Er EOPNOTSUPP .
+The third level names for the elements of
+.Li struct shminfo
+are detailed below.
+The changeable column shows whether a process with appropriate
+privileges may change the value.
+.Bl -column "KERN_SHMINFO_SHMMAX" "integer" "yes" -offset indent
+.It Sy "Third level name"	Type	Changeable
+.It Dv KERN_SHMINFO_SHMMAX	integer	yes
+.It Dv KERN_SHMINFO_SHMMIN	integer	yes
+.It Dv KERN_SHMINFO_SHMMNI	integer	yes
+.It Dv KERN_SHMINFO_SHMSEG	integer	yes
+.It Dv KERN_SHMINFO_SHMALL	integer	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_SHMINFO_SHMMAX
+The maximum shared memory segment size (in bytes).
+.It Dv KERN_SHMINFO_SHMMIN
+The minimum shared memory segment size (in bytes).
+.It Dv KERN_SHMINFO_SHMMNI
+The maximum number of shared memory identifiers in the system.
+.It Dv KERN_SHMINFO_SHMSEG
+The maximum number of shared memory segments per process.
+.It Dv KERN_SHMINFO_SHMALL
+The maximum amount of total shared memory allowed in the system (in pages).
+.El
 .It Dv KERN_SOMAXCONN
 Upper bound on the number of half-open connections a process can allow
 to be associated with a socket, using

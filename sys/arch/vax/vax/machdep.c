@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.62 2002/11/08 01:33:28 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.63 2002/12/17 23:11:32 millert Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -80,12 +80,6 @@
 
 #ifdef SYSVMSG
 #include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
 #endif
 
 #include <net/netisr.h>
@@ -798,19 +792,6 @@ allocsys(v)
     register caddr_t v;
 {
 
-#ifdef SYSVSHM
-    shminfo.shmmax = shmmaxpgs;
-    shminfo.shmall = shmmaxpgs;
-    shminfo.shmseg = shmseg;
-    VALLOC(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-    VALLOC(sema, struct semid_ds, seminfo.semmni);
-    VALLOC(sem, struct sem, seminfo.semmns);
-
-    /* This is pretty disgusting! */
-    VALLOC(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
 #ifdef SYSVMSG
     VALLOC(msgpool, char, msginfo.msgmax);
     VALLOC(msgmaps, struct msgmap, msginfo.msgseg);

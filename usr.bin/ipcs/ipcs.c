@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.18 2002/06/15 18:47:50 matthieu Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.19 2002/12/17 23:11:32 millert Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#define _KERNEL
+#define _KERNEL			/* XXX */
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
@@ -523,8 +523,7 @@ shm_sysctl(void)
 	char *buf;
 	int mib[3];
 	size_t len;
-	int i /*, valid */;
-	long valid;
+	int i, valid;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_SYSVSHM;
@@ -568,7 +567,7 @@ shm_sysctl(void)
 		show_shminfo_hdr();
 		for (i = 0; i < shmsi->shminfo.shmmni; i++) {
 			struct shmid_ds *shmptr = &shmsi->shmids[i];
-			if (shmptr->shm_perm.mode & 0x0800)
+			if (shmptr->shm_internal)
 				show_shminfo(shmptr->shm_atime,
 				    shmptr->shm_dtime,
 				    shmptr->shm_ctime,
@@ -639,7 +638,8 @@ sem_sysctl(void)
 		show_seminfo_hdr();
 		for (i = 0; i < semsi->seminfo.semmni; i++) {
 			struct semid_ds *semaptr = &semsi->semids[i];
-			if ((semaptr->sem_perm.mode & SEM_ALLOC) != 0)
+
+			if (semaptr->sem_base != NULL)
 				show_seminfo(semaptr->sem_otime,
 				    semaptr->sem_ctime,
 				    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
@@ -661,11 +661,12 @@ ipcs_kvm(void)
 	struct msginfo msginfo;
 	struct msqid_ds *msqids;
 	struct seminfo seminfo;
-	struct semid_ds *sema;
+	struct semid_ds sem, **sema;
 	struct shminfo shminfo;
-	struct shmid_ds *shmsegs;
-	kvm_t *kd;
+	struct shmid_ds shmseg, **shmsegs;
 	char errbuf[_POSIX2_LINE_MAX];
+	u_long addr;
+	kvm_t *kd;
 	int i;
 	struct nlist symbols[] = {
 		{"_sema"},
@@ -714,17 +715,17 @@ ipcs_kvm(void)
 			show_msgtotal(&msginfo);
 
 		if (display & MSGINFO) {
-			struct msqid_ds *xmsqids;
-
 			if (kvm_read(kd, symbols[X_MSQIDS].n_value,
-			    &msqids, sizeof(msqids)) != sizeof(msqids))
+			    &addr, sizeof(addr)) != sizeof(addr))
 				errx(1, "kvm_read (%s): %s",
 				    symbols[X_MSQIDS].n_name, kvm_geterr(kd));
 
-			xmsqids = malloc(sizeof(struct msqid_ds) *
+			msqids = malloc(sizeof(struct msqid_ds) *
 			    msginfo.msgmni);
+			if (msqids == NULL)
+				err(1, "malloc");
 
-			if (kvm_read(kd, (u_long)msqids, xmsqids,
+			if (kvm_read(kd, addr, msqids,
 			    sizeof(struct msqid_ds) * msginfo.msgmni) !=
 			    sizeof(struct msqid_ds) * msginfo.msgmni)
 				errx(1, "kvm_read (msqids): %s",
@@ -732,7 +733,7 @@ ipcs_kvm(void)
 
 			show_msginfo_hdr();
 			for (i = 0; i < msginfo.msgmni; i++) {
-				struct msqid_ds *msqptr = &xmsqids[i];
+				struct msqid_ds *msqptr = &msqids[i];
 				if (msqptr->msg_qbytes != 0)
 					show_msginfo(msqptr->msg_stime,
 					    msqptr->msg_rtime,
@@ -766,40 +767,45 @@ ipcs_kvm(void)
 			show_shmtotal(&shminfo);
 
 		if (display & SHMINFO) {
-			struct shmid_ds *xshmids;
-
-			if (kvm_read(kd, symbols[X_SHMSEGS].n_value, &shmsegs,
-			    sizeof(shmsegs)) != sizeof(shmsegs))
+			if (kvm_read(kd, symbols[X_SHMSEGS].n_value, &addr,
+			    sizeof(addr)) != sizeof(addr))
 				errx(1, "kvm_read (%s): %s",
 				    symbols[X_SHMSEGS].n_name, kvm_geterr(kd));
 
-			xshmids = malloc(sizeof(struct shmid_ds) *
+			shmsegs = malloc(sizeof(struct shmid_ds *) *
 			    shminfo.shmmni);
+			if (shmsegs == NULL)
+				err(1, "malloc");
 
-			if (kvm_read(kd, (u_long)shmsegs, xshmids,
-			    sizeof(struct shmid_ds) * shminfo.shmmni) !=
-			    sizeof(struct shmid_ds) * shminfo.shmmni)
+			if (kvm_read(kd, addr, shmsegs,
+			    sizeof(struct shmid_ds *) * shminfo.shmmni) !=
+			    sizeof(struct shmid_ds *) * shminfo.shmmni)
 				errx(1, "kvm_read (shmsegs): %s",
 				    kvm_geterr(kd));
 
 			show_shminfo_hdr();
 			for (i = 0; i < shminfo.shmmni; i++) {
-				struct shmid_ds *shmptr = &xshmids[i];
-				if (shmptr->shm_perm.mode & 0x0800)
-					show_shminfo(shmptr->shm_atime,
-					    shmptr->shm_dtime,
-					    shmptr->shm_ctime,
-					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
-					    shmptr->shm_perm.key,
-					    shmptr->shm_perm.mode,
-					    shmptr->shm_perm.uid,
-					    shmptr->shm_perm.gid,
-					    shmptr->shm_perm.cuid,
-					    shmptr->shm_perm.cgid,
-					    shmptr->shm_nattch,
-					    shmptr->shm_segsz,
-					    shmptr->shm_cpid,
-					    shmptr->shm_lpid);
+				if (shmsegs[i] == NULL)
+					continue;
+
+				if (kvm_read(kd, (u_long)shmsegs[i], &shmseg,
+				    sizeof(shmseg)) != sizeof(shmseg))
+					errx(1, "kvm_read (shmseg): %s",
+					    kvm_geterr(kd));
+				show_shminfo(shmseg.shm_atime,
+				    shmseg.shm_dtime,
+				    shmseg.shm_ctime,
+				    IXSEQ_TO_IPCID(i, shmseg.shm_perm),
+				    shmseg.shm_perm.key,
+				    shmseg.shm_perm.mode,
+				    shmseg.shm_perm.uid,
+				    shmseg.shm_perm.gid,
+				    shmseg.shm_perm.cuid,
+				    shmseg.shm_perm.cgid,
+				    shmseg.shm_nattch,
+				    shmseg.shm_segsz,
+				    shmseg.shm_cpid,
+				    shmseg.shm_lpid);
 			}
 			printf("\n");
 		}
@@ -811,42 +817,46 @@ ipcs_kvm(void)
 	if ((display & (SEMINFO | SEMTOTAL)) &&
 	    (kvm_read(kd, symbols[X_SEMINFO].n_value, &seminfo,
 	     sizeof(seminfo)) == sizeof(seminfo))) {
-		struct semid_ds *xsema;
-
 		if (display & SEMTOTAL)
 			show_semtotal(&seminfo);
 
 		if (display & SEMINFO) {
-			if (kvm_read(kd, symbols[X_SEMA].n_value, &sema,
-			    sizeof(sema)) != sizeof(sema))
+			if (kvm_read(kd, symbols[X_SEMA].n_value, &addr,
+			    sizeof(addr)) != sizeof(addr))
 				errx(1, "kvm_read (%s): %s",
 				    symbols[X_SEMA].n_name, kvm_geterr(kd));
 
-			xsema = malloc(sizeof(struct semid_ds) *
+			sema = malloc(sizeof(struct semid_ds *) *
 			    seminfo.semmni);
+			if (sema == NULL)
+				err(1, "malloc");
 
-			if (kvm_read(kd, (u_long)sema, xsema,
-			    sizeof(struct semid_ds) * seminfo.semmni) !=
-			    sizeof(struct semid_ds) * seminfo.semmni)
+			if (kvm_read(kd, addr, sema,
+			    sizeof(struct semid_ds *) * seminfo.semmni) !=
+			    sizeof(struct semid_ds *) * seminfo.semmni)
 				errx(1, "kvm_read (sema): %s",
 				    kvm_geterr(kd));
 
 			show_seminfo_hdr();
 			for (i = 0; i < seminfo.semmni; i++) {
-				struct semid_ds *semaptr = &xsema[i];
-				if ((semaptr->sem_perm.mode & SEM_ALLOC) != 0)
-					show_seminfo(semaptr->sem_otime,
-					    semaptr->sem_ctime,
-					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
-					    semaptr->sem_perm.key,
-					    semaptr->sem_perm.mode,
-					    semaptr->sem_perm.uid,
-					    semaptr->sem_perm.gid,
-					    semaptr->sem_perm.cuid,
-					    semaptr->sem_perm.cgid,
-					    semaptr->sem_nsems);
-			}
+				if (sema[i] == NULL)
+					continue;
 
+				if (kvm_read(kd, (u_long)sema[i], &sem,
+				    sizeof(sem)) != sizeof(sem))
+					errx(1, "kvm_read (sem): %s",
+					    kvm_geterr(kd));
+				show_seminfo(sem.sem_otime,
+				    sem.sem_ctime,
+				    IXSEQ_TO_IPCID(i, sem.sem_perm),
+				    sem.sem_perm.key,
+				    sem.sem_perm.mode,
+				    sem.sem_perm.uid,
+				    sem.sem_perm.gid,
+				    sem.sem_perm.cuid,
+				    sem.sem_perm.cgid,
+				    sem.sem_nsems);
+			}
 			printf("\n");
 		}
 	} else

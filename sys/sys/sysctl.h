@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.59 2002/07/07 22:06:33 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.60 2002/12/17 23:11:31 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -177,7 +177,9 @@ struct ctlname {
 #define KERN_NUMVNODES		58	/* int: number of vnodes in use */
 #define	KERN_MBSTAT		59	/* struct: mbuf statistics */
 #define KERN_USERASYMCRYPTO	60	/* int: usercrypto */
-#define	KERN_MAXID		61	/* number of valid kern ids */
+#define	KERN_SEMINFO		61	/* struct: SysV struct seminfo */
+#define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
+#define	KERN_MAXID		63	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -241,6 +243,8 @@ struct ctlname {
 	{ "numvnodes", CTLTYPE_INT }, \
 	{ "mbstat", CTLTYPE_STRUCT }, \
 	{ "userasymcrypto", CTLTYPE_INT }, \
+	{ "seminfo", CTLTYPE_STRUCT }, \
+	{ "shminfo", CTLTYPE_STRUCT }, \
 }
 
 /*
