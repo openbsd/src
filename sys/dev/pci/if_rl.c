@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.24 2001/02/17 07:52:44 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.25 2001/02/20 19:10:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -180,6 +180,16 @@ u_int8_t rl_calchash	__P((caddr_t));
 void rl_setmulti		__P((struct rl_softc *));
 void rl_reset		__P((struct rl_softc *));
 int rl_list_tx_init	__P((struct rl_softc *));
+
+struct rl_type rl_devs[] = {
+	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030		},
+	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139		},
+	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139		},
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS		},
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129	},
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139	},
+	{ 0, 0 }
+};
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
@@ -1224,29 +1234,15 @@ rl_probe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ACCTON &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ACCTON_5030)
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct rl_type *t;  
+        
+	for (t = rl_devs; t->rl_vid != 0; t++) {
+		if ((PCI_VENDOR(pa->pa_id) == t->rl_vid) &&
+		    (PCI_PRODUCT(pa->pa_id) == t->rl_did))
 			return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADDTRON &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADDTRON_8139)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DELTA &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DELTA_8139)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_REALTEK_RT8129:
-		case PCI_PRODUCT_REALTEK_RT8139:
-			return (1);
-		}
 	}
-
-	return 0;
+	return (0);
 }
 
 void
