@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.18 2003/11/08 16:55:02 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.19 2004/01/12 09:58:22 miod Exp $
 .\"
 .\" Copyright (c) 2001 Peter Valchev.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 8, 2003
+.Dd January 12, 2004
 .Dt INTRO 4 macppc
 .Os
 .Sh NAME
@@ -131,6 +131,10 @@ Hifn 7751 crypto accelerator.
 National DP83840 ethernet cards.
 .It Xr iop 4
 I2O adapter.
+.It Xr kauaiata 4
+ATA100 HD controller on PCI bus.
+.It Xr ki2c 4
+Kauai i2c interface stub.
 .It Xr kue 4
 Kawasaki LSI KL5KUSB101B-based USB ethernet.
 .It Xr lofn 4
@@ -139,6 +143,8 @@ Hifn 6500 crypto accelerator.
 SafeNet SafeXcel 1141/1741.
 .It Xr siop 4
 LSI/Symbios Logic/NCR 53c8xx SCSI adapter boards.
+.It Xr snapper 4
+Apple "snapper" audio device driver.
 .It Xr ti 4
 Alteon Networks Tigon I and II Gigabit Ethernet driver.
 .It Xr uaudio 4
