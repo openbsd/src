@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.49 2002/07/04 10:08:00 jakob Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.50 2003/03/11 04:01:11 itojun Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.49 2002/07/04 10:08:00 jakob Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.50 2003/03/11 04:01:11 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,8 +183,9 @@ hookup(host, port)
 		if (res0->ai_next)	/* if we have multiple possibilities */
 #endif
 		{
-			getnameinfo(res->ai_addr, res->ai_addrlen,
-				hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+			if (getnameinfo(res->ai_addr, res->ai_addrlen,
+			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+				strlcpy(hbuf, "unknown", sizeof(hbuf));
 			fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -199,9 +200,11 @@ hookup(host, port)
 		if (error) {
 			/* this "if" clause is to prevent print warning twice */
 			if (res->ai_next) {
-				getnameinfo(res->ai_addr, res->ai_addrlen,
-					hbuf, sizeof(hbuf), NULL, 0,
-					NI_NUMERICHOST);
+				if (getnameinfo(res->ai_addr, res->ai_addrlen,
+				    hbuf, sizeof(hbuf), NULL, 0,
+				    NI_NUMERICHOST) != 0)
+					strlcpy(hbuf, "(unknown)",
+					    sizeof(hbuf));
 				warn("connect to address %s", hbuf);
 			}
 			cause = "connect";
