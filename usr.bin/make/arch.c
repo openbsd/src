@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.39 2000/11/27 18:43:52 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.40 2000/11/27 18:58:10 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -120,6 +120,7 @@
 #include    <stddef.h>
 #include    <ctype.h>
 #include    <ar.h>
+#include    <assert.h>
 #include    <utime.h>
 #include    <stdio.h>
 #include    <stdlib.h>
@@ -134,7 +135,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.39 2000/11/27 18:43:52 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.40 2000/11/27 18:58:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,8 +153,6 @@ static struct hash 	archives;   /* Archives we've already examined */
 typedef struct Arch_ {
     struct hash	  members;    /* All the members of this archive, as
      			       * struct arch_member entries.  */
-    char	  *fnametab;  /* Extended name table strings */
-    size_t	  fnamesize;  /* Size of the string table */
     char	  name[1];    /* Archive name */
 } Arch;
 
@@ -194,7 +193,17 @@ static void ArchTouch __P((const char *, const char *));
     (defined(__OpenBSD__) && defined(__mips__)) || \
     (defined(__OpenBSD__) && defined(__powerpc))
 #define SVR4ARCHIVES
-static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
+#endif
+
+#ifdef SVR4ARCHIVES
+struct SVR4namelist {
+    char	  *fnametab;  /* Extended name table strings */
+    size_t	  fnamesize;  /* Size of the string table */
+};
+
+static const char *svr4list = "Archive list";
+
+static char *ArchSVR4Entry __P((struct SVR4namelist *, char *, size_t, FILE *));
 #endif
 
 static struct arch_member *
@@ -242,7 +251,6 @@ ArchFree(ap)
     	mem = hash_next(&a->members, &i))
 	free(mem);
 
-    efree(a->fnametab);
     hash_delete(&a->members);
     free(a);
 }
@@ -504,14 +512,17 @@ read_archive(archive, end)
     const char *archive;
     const char *end;
 {
-    FILE *	  arch;	      /* Stream to archive */
-    char	  magic[SARMAG];
-    Arch	  *ar;
-    struct ar_hdr arh;        /* archive-member header for reading archive */
-    int		  size;       /* Size of archive member */
-    char	  memName[MAXPATHLEN+1];
-    	    	    	    /* Current member name while hashing. */
-    char 	  *cp;
+    FILE 		*arch;	/* Stream to archive */
+    char		magic[SARMAG];
+    Arch		*ar;
+    struct ar_hdr 	arh;	/* archive-member header for reading archive */
+    char		*cp;
+
+#ifdef SVR4ARCHIVES
+    struct SVR4namelist list;
+
+    list.fnametab = NULL;
+#endif
 
 #define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
 
@@ -529,13 +540,17 @@ read_archive(archive, end)
     }
 
     ar = hash_create_entry(&arch_info, archive, &end);
-    ar->fnametab = NULL;
-    ar->fnamesize = 0;
     hash_init(&ar->members, 8, &members_info);
 
-    memName[AR_MAX_NAME_LEN] = '\0';
 
     while (fread((char *)&arh, sizeof (struct ar_hdr), 1, arch) == 1) {
+	int		size;	/* Size of archive member */
+	char		buffer[MAXPATHLEN+1];
+	char 		*memName;
+				/* Current member name while hashing. */
+	memName = buffer;
+	memName[AR_MAX_NAME_LEN] = '\0';
+
 	if (strncmp( arh.ar_fmag, ARFMAG, sizeof (arh.ar_fmag)) != 0) {
 	    /*
 	     * The header is bogus, so the archive is bad
@@ -559,21 +574,18 @@ read_archive(archive, end)
 	    cp[1] = '\0';
 
 #ifdef SVR4ARCHIVES
-	    /*
-	     * svr4 names are slash terminated. Also svr4 extended AR format.
+	    /* SVR4 names are slash terminated. Also svr4 extended AR format.
 	     */
 	    if (memName[0] == '/') {
-		/*
-		 * svr4 magic mode; handle it
-		 */
-		switch (ArchSVR4Entry(ar, memName, size, arch)) {
-		case -1:  /* Invalid data */
-		    goto badarch;
-		case 0:	  /* List of files entry */
-		    continue;
-		default:  /* Got the entry */
+		/* SVR4 magic mode.  */
+		memName = ArchSVR4Entry(&list, memName, size, arch);
+		if (memName == NULL) 		/* Invalid data */
 		    break;
-		}
+		else if (memName == svr4list) 	/* List of files entry */
+		    continue;
+		/* Got the entry.  */
+		/* XXX this assumes further processing, such as AR_EFMT1,
+		 * also applies to SVR4ARCHIVES.  */
 	    }
 	    else {
 		if (cp[0] == '/')
@@ -617,7 +629,9 @@ read_archive(archive, end)
 badarch:
     fclose(arch);
     hash_delete(&ar->members);
-    efree(ar->fnametab);
+#ifdef SVR4ARCHIVES
+    efree(list.fnametab);
+#endif
     free(ar);
     return NULL;
 }
@@ -721,54 +735,49 @@ ArchMTimeMember(archive, member, hash)
  *	from offset of a table previously read.
  *
  * Results:
- *	-1: Bad data in archive
- *	 0: A table was loaded from the file
- *	 1: Name was successfully substituted from table
- *	 2: Name was not successfully substituted from table
+ *	svr4list: just read a list of names
+ *	NULL: 	  error occured
+ *	extended name
  *
- * Side Effects:
- *	If a table is read, the file pointer is moved to the next archive
- *	member
- *
+ * Side-effect:
+ *	For a list of names, store the list in l.
  *-----------------------------------------------------------------------
  */
-static int
-ArchSVR4Entry(ar, name, size, arch)
-	Arch *ar;
+static char *
+ArchSVR4Entry(l, name, size, arch)
+	struct SVR4namelist *l;
 	char *name;
 	size_t size;
 	FILE *arch;
 {
-#define ARLONGNAMES1 "//"
-#define ARLONGNAMES2 "/ARFILENAMES"
+#define ARLONGNAMES1 "/"
+#define ARLONGNAMES2 "ARFILENAMES"
     size_t entry;
     char *ptr, *eptr;
 
-    if (strncmp(name, ARLONGNAMES1, sizeof(ARLONGNAMES1) - 1) == 0 ||
-	strncmp(name, ARLONGNAMES2, sizeof(ARLONGNAMES2) - 1) == 0) {
+    assert(name[0] == '/');
+    name++;
 
-	if (ar->fnametab != NULL) {
-	    if (DEBUG(ARCH)) {
+    /* First comes a table of archive names, to be used by subsequent calls.  */
+    if (memcmp(name, ARLONGNAMES1, sizeof(ARLONGNAMES1) - 1) == 0 ||
+	memcmp(name, ARLONGNAMES2, sizeof(ARLONGNAMES2) - 1) == 0) {
+
+	if (l->fnametab != NULL) {
+	    if (DEBUG(ARCH))
 		printf("Attempted to redefine an SVR4 name table\n");
-	    }
-	    return -1;
+	    return NULL;
 	}
 
-	/*
-	 * This is a table of archive names, so we build one for
-	 * ourselves
-	 */
-	ar->fnametab = emalloc(size);
-	ar->fnamesize = size;
+	l->fnametab = emalloc(size);
+	l->fnamesize = size;
 
-	if (fread(ar->fnametab, size, 1, arch) != 1) {
-	    if (DEBUG(ARCH)) {
+	if (fread(l->fnametab, size, 1, arch) != 1) {
+	    if (DEBUG(ARCH))
 		printf("Reading an SVR4 name table failed\n");
-	    }
-	    return -1;
+	    return NULL;
 	}
-	eptr = ar->fnametab + size;
-	for (entry = 0, ptr = ar->fnametab; ptr < eptr; ptr++)
+	eptr = l->fnametab + size;
+	for (entry = 0, ptr = l->fnametab; ptr < eptr; ptr++)
 	    switch (*ptr) {
 	    case '/':
 		entry++;
@@ -781,38 +790,33 @@ ArchSVR4Entry(ar, name, size, arch)
 	    default:
 		break;
 	    }
-	if (DEBUG(ARCH)) {
+	if (DEBUG(ARCH))
 	    printf("Found svr4 archive name table with %lu entries\n", 
 		 	(u_long)entry);
-	}
-	return 0;
+	return (char *)svr4list;
     }
 
-    if (name[1] == ' ' || name[1] == '\0')
-	return 2;
+    /* Then the names themselves are given as offsets in this table.  */
+    if (*name == ' ' || *name == '\0')
+	return NULL;
 
-    entry = (size_t) strtol(&name[1], &eptr, 0);
-    if ((*eptr != ' ' && *eptr != '\0') || eptr == &name[1]) {
-	if (DEBUG(ARCH)) {
+    entry = (size_t) strtol(name, &eptr, 0);
+    if ((*eptr != ' ' && *eptr != '\0') || eptr == name) {
+	if (DEBUG(ARCH))
 	    printf("Could not parse SVR4 name %s\n", name);
-	}
-	return 2;
+	return NULL;
     }
-    if (entry >= ar->fnamesize) {
-	if (DEBUG(ARCH)) {
+    if (entry >= l->fnamesize) {
+	if (DEBUG(ARCH))
 	    printf("SVR4 entry offset %s is greater than %lu\n",
-		   name, (u_long)ar->fnamesize);
-	}
-	return 2;
+		   name, (u_long)l->fnamesize);
+	return NULL;
     }
 
-    if (DEBUG(ARCH)) {
-	printf("Replaced %s with %s\n", name, &ar->fnametab[entry]);
-    }
+    if (DEBUG(ARCH))
+	printf("Replaced %s with %s\n", name, l->fnametab + entry);
 
-    (void) strncpy(name, &ar->fnametab[entry], MAXPATHLEN);
-    name[MAXPATHLEN] = '\0';
-    return 1;
+    return l->fnametab + entry;
 }
 #endif
 
