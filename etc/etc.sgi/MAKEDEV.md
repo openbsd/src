@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2004/08/06 23:15:08 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2004/08/06 23:16:31 mickey Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -46,6 +46,13 @@ _DEV(com, 17)
 _TITLE(pty)
 _DEV(tty, 4)
 _DEV(pty, 5)
+_TITLE(cons)
+_DEV(wscons)
+_DEV(wsdisp, 25)
+_DEV(wskbd, 26)
+_DEV(wsmux, 28)
+_TITLE(point)
+_DEV(wsmouse, 27)
 _TITLE(spec)
 _DEV(bpf, 12)
 _DEV(tun, 40)
@@ -58,8 +65,6 @@ divert(__mddivert)dnl
 dnl
 _std(2, 3, 35, 1, 6)
 	;;
-
-
 dnl
 dnl *** sgimips specific targets
 dnl
