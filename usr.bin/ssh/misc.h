@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.5 2001/05/03 23:09:52 mouring Exp $	*/
+/*	$OpenBSD: misc.h,v 1.6 2001/05/08 19:45:24 mouring Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -32,3 +32,13 @@ int a2port(const char *s);
 /* code from scp.c/rcp.c */
 char *cleanhostname(char *host);
 char *colon(char *cp);
+
+/* function to assist building execv() arguments */
+typedef struct arglist arglist;
+struct arglist {
+        char    **list;
+        int     num;
+        int     nalloc;
+};
+
+void addargs(arglist *args, char *fmt, ...) __attribute__((format(printf, 2, 3)));
