@@ -21,11 +21,7 @@ static const char sccsid[] = "@(#)cl_term.c	10.22 (Berkeley) 9/15/96";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#ifdef USE_OCURSES
-#include <ocurses.h>
-#else
 #include <curses.h>
-#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -451,7 +447,7 @@ noterm:	if (row == 0)
 	return (0);
 }
 
-#ifdef USE_OCURSES
+#ifdef _USE_OLD_CURSES_
 /*
  * cl_putchar --
  *	Function version of putchar, for tputs.

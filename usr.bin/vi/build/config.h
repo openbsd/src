@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.6 1997/09/23 07:12:42 downsj Exp $	*/
+/*	$OpenBSD: config.h,v 1.7 1998/07/24 00:07:35 millert Exp $	*/
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
@@ -52,7 +52,7 @@
 /* #undef HAVE_BROKEN_VDISABLE */
 
 /* Define if you have a BSD version of curses. */
-#ifdef USE_OCURSES
+#ifdef _USE_OLD_CURSES_
 #define HAVE_BSD_CURSES 1
 #endif
 
@@ -60,12 +60,12 @@
 #define HAVE_CURSES_ADDNSTR 1
 
 /* Define if you have the curses(3) beep function. */
-#ifndef USE_OCURSES
+#ifndef _USE_OLD_CURSES_
 #define HAVE_CURSES_BEEP 1
 #endif
 
 /* Define if you have the curses(3) flash function. */
-#ifndef USE_OCURSES
+#ifndef _USE_OLD_CURSES_
 #define HAVE_CURSES_FLASH 1
 #endif
 
@@ -73,22 +73,22 @@
 #define HAVE_CURSES_IDLOK 1
 
 /* Define if you have the curses(3) keypad function. */
-#ifndef USE_OCURSES
+#ifndef _USE_OLD_CURSES_
 #define HAVE_CURSES_KEYPAD 1
 #endif
 
 /* Define if you have the curses(3) newterm function. */
-#ifndef USE_OCURSES
+#ifndef _USE_OLD_CURSES_
 #define HAVE_CURSES_NEWTERM 1
 #endif
 
 /* Define if you have the curses(3) setupterm function. */
-#ifndef USE_OCURSES
+#ifndef _USE_OLD_CURSES_
 #define HAVE_CURSES_SETUPTERM 1
 #endif
 
 /* Define if you have the curses(3) tigetstr/tigetnum functions. */
-#ifndef USE_OCURSES
+#ifndef _USE_OLD_CURSES_
 #define HAVE_CURSES_TIGETSTR 1
 #endif
 

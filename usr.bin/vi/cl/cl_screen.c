@@ -18,11 +18,7 @@ static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 
 #include <bitstring.h>
 #include <errno.h>
-#ifdef USE_OCURSES
-#include <ocurses.h>
-#else
 #include <curses.h>
-#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
