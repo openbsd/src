@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.5 2000/09/18 16:57:34 brad Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.6 2002/01/11 00:11:41 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -271,37 +271,42 @@ cs4231_hwintr(v)
 	}
 
 	regs->dma_csr = csr;
-	if (csr & (CS_DMACSR_PI|CS_DMACSR_PMI|CS_DMACSR_PIE|CS_DMACSR_PD))
-		r = 1;
 
-	if (csr & CS_DMACSR_PM) {
-		u_int32_t nextaddr, togo;
+	if (sc->sc_playing) {
+		if (csr & (CS_DMACSR_PI|CS_DMACSR_PMI|CS_DMACSR_PIE|CS_DMACSR_PD))
+			r = 1;
 
-		p = sc->sc_nowplaying;
-		togo = sc->sc_playsegsz - sc->sc_playcnt;
-		if (togo == 0) {
-			nextaddr = (u_int32_t)p->addr_dva;
-			sc->sc_playcnt = togo = sc->sc_blksz;
-		} else {
-			nextaddr = regs->dma_pnva + sc->sc_blksz;
-			if (togo > sc->sc_blksz)
-				togo = sc->sc_blksz;
-			sc->sc_playcnt += togo;
+		if (csr & CS_DMACSR_PM) {
+			u_int32_t nextaddr, togo;
+
+			p = sc->sc_nowplaying;
+			togo = sc->sc_playsegsz - sc->sc_playcnt;
+			if (togo == 0) {
+				nextaddr = (u_int32_t)p->addr_dva;
+				sc->sc_playcnt = togo = sc->sc_blksz;
+			} else {
+				nextaddr = regs->dma_pnva + sc->sc_blksz;
+				if (togo > sc->sc_blksz)
+					togo = sc->sc_blksz;
+				sc->sc_playcnt += togo;
+			}
+
+			regs->dma_pnva = nextaddr;
+			regs->dma_pnc = togo;
+			if (sc->sc_pintr != NULL)
+				(*sc->sc_pintr)(sc->sc_parg);
+			r = 1;
 		}
-
-		regs->dma_pnva = nextaddr;
-		regs->dma_pnc = togo;
-		if (sc->sc_pintr != NULL)
-			(*sc->sc_pintr)(sc->sc_parg);
-		r = 1;
 	}
 
+#if 0
 	if (csr & CS_DMACSR_CI) {
 		if (sc->sc_rintr != NULL) {
 			r = 1;
 			(*sc->sc_rintr)(sc->sc_rarg);
 		}
 	}
+#endif
 
 	return (r);
 }
@@ -787,6 +792,7 @@ cs4231_halt_output(addr)
 	regs->iar = CS_IAR_IC;
 	regs->idr = r;
 	sc->sc_locked = 0;
+	sc->sc_playing = 0;
 	return (0);
 }
 
@@ -1439,6 +1445,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_locked = 1;
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
+	sc->sc_playing = 1;
 
 	p = sc->sc_dmas;
 	while (p != NULL && p->addr != start)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.3 2001/10/05 17:32:20 jason Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.4 2002/01/11 00:11:41 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -78,6 +78,7 @@ struct cs4231_softc {
 	u_int32_t	sc_blksz;
 	u_int32_t	sc_playcnt;
 	u_int32_t	sc_playsegsz;
+	int		sc_playing;	/* currently playing */
 	struct cs_dma	*sc_dmas;	/* dma list */
 	struct cs_dma	*sc_nowplaying;
 };
