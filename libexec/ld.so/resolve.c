@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.1.1.2 2000/06/13 03:40:07 rahnds Exp $ */
+/*	$OpenBSD: resolve.c,v 1.2 2001/04/02 23:11:21 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -53,13 +53,13 @@ void * _dl_malloc(int);
  */
 
 elf_object_t *
-_dl_add_object(const char *objname, Elf32_Dyn *dynp,
-			     const u_int32_t *dl_data, const int objtype,
-			     const int laddr, const int loff)
+_dl_add_object(const char *objname, Elf_Dyn *dynp,
+			     const u_long *dl_data, const int objtype,
+			     const long laddr, const long loff)
 {
 	elf_object_t *object;
 #if 0
-	_dl_printf("objname [%s], dynp %x, dl_data %x, objtype %x laddr %x, loff %x\n",
+	_dl_printf("objname [%s], dynp %p, dl_data %p, objtype %x laddr %lx, loff %lx\n",
 		objname, dynp, dl_data, objtype, laddr, loff);
 #endif
 
@@ -127,7 +127,7 @@ d_un.d_val;
 	}
 
 	if(dl_data) {
-		object->phdrp = (Elf32_Phdr *) dl_data[AUX_phdr];
+		object->phdrp = (Elf_Phdr *) dl_data[AUX_phdr];
 		object->phdrc = dl_data[AUX_phnum];
 	}
 	object->obj_type = objtype;
@@ -177,15 +177,15 @@ _dl_lookup_object(const char *name)
 }
 
 
-Elf32_Addr
+Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-			const Elf32_Sym **ref, int myself, int warnnotfound)
+			const Elf_Sym **ref, int myself, int warnnotfound)
 {
 	u_int32_t h = 0;
 	const char *p = name;
 	elf_object_t *object;
-	const Elf32_Sym *weak_sym = 0;
-	Elf32_Addr weak_offs = 0;
+	const Elf_Sym *weak_sym = 0;
+	Elf_Addr weak_offs = 0;
 
 	while(*p) {
 		u_int32_t g;
@@ -197,7 +197,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 	}
 
 	for(object = startlook; object; object = (myself ? 0 : object->next)) {
-		const Elf32_Sym *symt;
+		const Elf_Sym *symt;
 		const char	*strt;
 		u_int32_t	si;
 
@@ -206,16 +206,16 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 
 		for(si = object->buckets[h % object->nbuckets];
 			si != STN_UNDEF; si = object->chains[si]) {
-			const Elf32_Sym *sym = symt + si;
+			const Elf_Sym *sym = symt + si;
 
 			if(sym->st_value == 0 ||
 			   sym->st_shndx == SHN_UNDEF) {
 				continue;
 			}
 
-			if(ELF32_ST_TYPE(sym->st_info) != STT_NOTYPE &&
-			   ELF32_ST_TYPE(sym->st_info) != STT_OBJECT &&
-			   ELF32_ST_TYPE(sym->st_info) != STT_FUNC) {
+			if(ELF_ST_TYPE(sym->st_info) != STT_NOTYPE &&
+			   ELF_ST_TYPE(sym->st_info) != STT_OBJECT &&
+			   ELF_ST_TYPE(sym->st_info) != STT_FUNC) {
 				continue;
 			}
 
@@ -223,11 +223,11 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 				continue;
 			}
 
-			if(ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			if(ELF_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				*ref = sym;
 				return(object->load_offs);
 			}
-			else if(ELF32_ST_BIND(sym->st_info) == STB_WEAK) {
+			else if(ELF_ST_BIND(sym->st_info) == STB_WEAK) {
 				if(!weak_sym) {
 					weak_sym = sym;
 					weak_offs = object->load_offs;
@@ -237,7 +237,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 	}
 	if (warnnotfound) {
 		if(!weak_sym &&
-			*ref && ELF32_ST_BIND((*ref)->st_info) != STB_WEAK)
+			*ref && ELF_ST_BIND((*ref)->st_info) != STB_WEAK)
 		{
 			_dl_printf("%s: undefined symbol '%s'\n",
 				_dl_progname, name);

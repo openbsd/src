@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.6 2001/02/03 22:11:41 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.7 2001/04/02 23:11:20 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,7 +54,7 @@
  */
 static void *_dl_malloc_base;
 static void *_dl_malloc_pool = 0;
-static int  *_dl_malloc_free = 0;
+static long  *_dl_malloc_free = 0;
 
 const char *_dl_progname;
 int  _dl_pagesz;
@@ -107,7 +107,7 @@ putstring(char *string, unsigned int off)
 {
 	int len = 0;
 	char * str1;
-	if ((unsigned int) string < 0x10000000) {
+	if ((unsigned long) string < 0x10000000) {
 		string += off;
 	}
 	for ( str1 = string; len < 30 && *str1++ != '\0'; len++);
@@ -125,16 +125,16 @@ putc(char c)
 /*
  *  This is the dynamic loader entrypoint. When entering here, depending
  *  on architecture type, the stack and registers are set up according
- *  to the architectures ABI specification. The first thing requiered
+ *  to the architectures ABI specification. The first thing required
  *  to do is to dig out all information we need to accomplish out task.
  */
-int
-_dl_boot(const char **argv, const char **envp, const int loff,
-	Elf32_Dyn *dynp, int *dl_data)
+unsigned long
+_dl_boot(const char **argv, const char **envp, const long loff,
+	Elf_Dyn *dynp, long *dl_data)
 {
 	int		n;
 	int		brk_addr;
-	Elf32_Phdr	*phdp;
+	Elf_Phdr	*phdp;
 	char		*us = "";
 	elf_object_t	*dynobj;
 	struct elf_object  *exe_obj;	/* Pointer to executable object */
@@ -177,14 +177,14 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 	/*
 	 *  Examine the user application and set up object information.
 	 */
-	phdp = (Elf32_Phdr *) dl_data[AUX_phdr];
+	phdp = (Elf_Phdr *) dl_data[AUX_phdr];
 	for(n = 0; n < dl_data[AUX_phnum]; n++) {
 		if(phdp->p_type == PT_LOAD) {				/*XXX*/
 			if(phdp->p_vaddr + phdp->p_memsz > brk_addr)	/*XXX*/
 				brk_addr = phdp->p_vaddr + phdp->p_memsz;
 		}							/*XXX*/
 		if(phdp->p_type == PT_DYNAMIC) {
-			exe_obj = _dl_add_object("", (Elf32_Dyn *)phdp->p_vaddr,
+			exe_obj = _dl_add_object("", (Elf_Dyn *)phdp->p_vaddr,
 						   dl_data, OBJTYPE_EXE, 0, 0);
 		}
 		if(phdp->p_type == PT_INTERP) {
@@ -226,7 +226,7 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 	 *  so we can use the _dl_ code when serving dl.... calls.
 	 */
 
-	dynp = (Elf32_Dyn *)((int)_DYNAMIC);
+	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
 	dyn_obj = _dl_add_object(us, dynp, 0, OBJTYPE_LDR, dl_data[AUX_base], loff);
 	dyn_obj->status |= STAT_RELOC_DONE;
 
@@ -255,7 +255,7 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
 		debug_map->r_version = 1;
 		debug_map->r_map = (struct link_map *)_dl_objects;
-		debug_map->r_brk = (Elf32_Addr)_dl_debug_state;
+		debug_map->r_brk = (Elf_Addr)_dl_debug_state;
 		debug_map->r_state = RT_CONSISTENT;
 		debug_map->r_ldbase = loff;
 		_dl_debug_map = debug_map;
@@ -265,7 +265,7 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 
 		for(dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_DEBUG) {
-				dynp->d_un.d_ptr = (Elf32_Addr) debug_map;
+				dynp->d_un.d_ptr = (Elf_Addr) debug_map;
 				done = 1;
 				break;
 			}
@@ -282,7 +282,7 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
 		debug_map->r_version = 1;
 		debug_map->r_map = (struct link_map *)_dl_objects;
-		debug_map->r_brk = (Elf32_Addr)_dl_debug_state;
+		debug_map->r_brk = (Elf_Addr)_dl_debug_state;
 		debug_map->r_state = RT_CONSISTENT;
 		debug_map->r_ldbase = loff;
 		_dl_debug_map = debug_map;
@@ -307,12 +307,12 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 
 
 void
-_dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
-	const char **envp, Elf32_Dyn *dynamicp, int *dl_data)
+_dl_boot_bind(const long sp, const long loff,  int argc, const char **argv,
+	const char **envp, Elf_Dyn *dynamicp, long *dl_data)
 {
-	Elf32_Dyn	*dynp;
+	Elf_Dyn	*dynp;
 	int		n;
-	int		*stack;
+	long		*stack;
 	AuxInfo		*auxstack;
 
 	struct elf_object  dynld;	/* Resolver data for the loader */
@@ -326,16 +326,16 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 	 * data vector put after them.
 	 */
 #ifdef _mips_
-	stack = (int *)sp;
+	stack = (long *)sp;
 	argc = *stack++;
 	argv = (const char **)stack;
 	envp = &argv[argc + 1];
 #endif /* _mips_ */
-	stack = (int *)envp;
+	stack = (long *)envp;
 	while(*stack++ != NULL) {};
 
 	/*
-	 * Dig out auxilary data set up by exec call. Move all known
+	 * Dig out auxiliary data set up by exec call. Move all known
 	 * tags to an indexed local table for easy access.
 	 */
 
@@ -356,10 +356,10 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 	 *  Cache the data for easier access.
 	 */
 
-#ifdef __powerpc__
+#if defined(__powerpc__) || defined(__alpha__)
 	dynp = dynamicp;
 #else
-	dynp = (Elf32_Dyn *)((int)_DYNAMIC + loff);
+	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif
 	while(dynp != NULL && dynp->d_tag != DT_NULL) {
 		if(dynp->d_tag < DT_LOPROC) {
@@ -431,24 +431,24 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 	{
 		int	  i;
 		u_int32_t rs;
-		Elf32_Rel  *rp;
+		Elf_Rel  *rp;
 
-		rp = (Elf32_Rel *)(dynld.Dyn.info[DT_REL]);
+		rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
 		rs = dynld.dyn.relsz;
 
-		for(i = 0; i < rs; i += sizeof (Elf32_Rel)) {
-			Elf32_Addr *ra;
-			const Elf32_Sym  *sp;
+		for(i = 0; i < rs; i += sizeof (Elf_Rel)) {
+			Elf_Addr *ra;
+			const Elf_Sym  *sp;
 
 			sp = dynld.dyn.symtab;
-			sp += ELF32_R_SYM(rp->r_info);
+			sp += ELF_R_SYM(rp->r_info);
 #if 1
 			putstring("reloc  ", loff);
 			putstring(((char *)dynld.dyn.strtab) + sp->st_name, 0);
 			putstring(" ", loff);
 #endif
 
-			if(ELF32_R_SYM(rp->r_info) && sp->st_value == 0) {
+			if(ELF_R_SYM(rp->r_info) && sp->st_value == 0) {
 #if 0
 /* cannot printf in this function */
 				_dl_wrstderr("Dynamic loader failure: self bootstrapping impossible.\n");
@@ -459,7 +459,7 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 				_dl_exit(5);
 			}
 
-			ra = (Elf32_Addr *)(rp->r_offset + loff);
+			ra = (Elf_Addr *)(rp->r_offset + loff);
 #if 0
 			put_x((unsigned int)ra);
 			putstring("\n", loff);
@@ -474,15 +474,15 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 	for(n = 0; n < 2; n++) {
 		int	  i;
 		u_int32_t rs;
-		Elf32_Rela  *rp;
+		Elf_RelA  *rp;
 
 		switch (n) {
 		case 0:
-			rp = (Elf32_Rela *)(dynld.Dyn.info[DT_JMPREL]);
+			rp = (Elf_RelA *)(dynld.Dyn.info[DT_JMPREL]);
 			rs = dynld.dyn.pltrelsz;
 			break;
 		case 1:
-			rp = (Elf32_Rela *)(dynld.Dyn.info[DT_RELA]);
+			rp = (Elf_RelA *)(dynld.Dyn.info[DT_RELA]);
 			rs = dynld.dyn.relasz;
 
 			break;
@@ -491,13 +491,13 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 			rs = 0;
 			;
 		}
-		for(i = 0; i < rs; i += sizeof (Elf32_Rela)) {
-			Elf32_Addr *ra;
-			const Elf32_Sym  *sp;
+		for(i = 0; i < rs; i += sizeof (Elf_RelA)) {
+			Elf_Addr *ra;
+			const Elf_Sym  *sp;
 
 			sp = dynld.dyn.symtab;
-			sp += ELF32_R_SYM(rp->r_info);
-			if(ELF32_R_SYM(rp->r_info) && sp->st_value == 0) {
+			sp += ELF_R_SYM(rp->r_info);
+			if(ELF_R_SYM(rp->r_info) && sp->st_value == 0) {
 #if 0
 				_dl_wrstderr("Dynamic loader failure: self bootstrapping impossible.\n");
 				_dl_wrstderr("Undefined symbol: ");
@@ -507,7 +507,7 @@ _dl_boot_bind(const int sp, const int loff,  int argc, const char **argv,
 				_dl_exit(6);
 			}
 
-			ra = (Elf32_Addr *)(rp->r_offset + loff);
+			ra = (Elf_Addr *)(rp->r_offset + loff);
 
 			RELOC_RELA(rp, sp, ra, loff);
 			/*
@@ -552,9 +552,9 @@ _dl_rtld(elf_object_t *object)
 void
 _dl_call_init(elf_object_t *object)
 {
-	Elf32_Addr ooff;
-	const Elf32_Sym  *sym;
-	static void (*_dl_atexit)(Elf32_Addr) = NULL;
+	Elf_Addr ooff;
+	const Elf_Sym  *sym;
+	static void (*_dl_atexit)(Elf_Addr) = NULL;
 
 	if(object->next) {
 		_dl_call_init(object->next);
@@ -642,16 +642,16 @@ _dl_getenv(const char *var, const char **env)
 void *
 _dl_malloc(int size)
 {
-	int *p;
-	int *t, *n;
+	long *p;
+	long *t, *n;
 
 	size = (size + 8 + DL_MALLOC_ALIGN - 1) & ~(DL_MALLOC_ALIGN - 1);
 
 	if((t = _dl_malloc_free) != 0) {	/* Try free list first */
-		n = (int *)&_dl_malloc_free;
+		n = (long *)&_dl_malloc_free;
 		while(t && t[-1] < size) {
 			n = t;
-			t = (int *)*t;
+			t = (long *)*t;
 		}
 		if(t) {
 			*n = *t;
@@ -665,7 +665,7 @@ _dl_malloc(int size)
 						PROT_READ|PROT_WRITE,
 						MAP_ANON|MAP_COPY, -1, 0);
 		if(_dl_malloc_pool == 0 ||
-			_dl_malloc_pool == (void*)0xffffffff )
+			_dl_malloc_pool == MAP_FAILED )
 		{
 			_dl_printf("Dynamic loader failure: malloc.\n");
 			_dl_exit(7);
@@ -682,8 +682,8 @@ _dl_malloc(int size)
 void
 _dl_free(void *p)
 {
-	int *t = (int *)p;
+	long *t = (long *)p;
 
-	*t = (int)_dl_malloc_free;
+	*t = (long)_dl_malloc_free;
 	_dl_malloc_free = p;
 }

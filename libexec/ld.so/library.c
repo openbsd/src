@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.4 2001/03/30 01:35:20 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.5 2001/04/02 23:11:20 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -192,13 +192,13 @@ _dl_tryload_shlib(const char *libname, int type)
 	int	libfile;
 	int	i;
 	char 	hbuf[4096];
-	Elf32_Ehdr *ehdr;
-	Elf32_Phdr *phdp;
-	Elf32_Dyn  *dynp = 0;
-	Elf32_Addr maxva = 0;
-	Elf32_Addr minva = 0x7fffffff;
-	Elf32_Addr libaddr;
-	Elf32_Addr loff;
+	Elf_Ehdr *ehdr;
+	Elf_Phdr *phdp;
+	Elf_Dyn  *dynp = 0;
+	Elf_Addr maxva = 0;
+	Elf_Addr minva = 0x7fffffff;	/* XXX Correct for 64bit? */
+	Elf_Addr libaddr;
+	Elf_Addr loff;
 	int	align = _dl_pagesz - 1;
 	elf_object_t *object;
 	load_list_t *next_load, *load_list = NULL;
@@ -216,7 +216,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	}
 
 	_dl_read(libfile, hbuf, sizeof(hbuf));
-	ehdr = (Elf32_Ehdr *)hbuf;
+	ehdr = (Elf_Ehdr *)hbuf;
 	if(_dl_strncmp(ehdr->e_ident, ELFMAG, SELFMAG) ||
 	   ehdr->e_type != ET_DYN || ehdr->e_machine != MACHID) {
 		_dl_close(libfile);
@@ -229,7 +229,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	 *  Figure out how much VM space we need.
 	 */
 
-	phdp = (Elf32_Phdr *)(hbuf + ehdr->e_phoff);
+	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 	for(i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		switch(phdp->p_type) {
 		case PT_LOAD:
@@ -242,7 +242,7 @@ _dl_tryload_shlib(const char *libname, int type)
 			break;
 
 		case PT_DYNAMIC:
-			dynp = (Elf32_Dyn *)phdp->p_vaddr;
+			dynp = (Elf_Dyn *)phdp->p_vaddr;
 			break;
 
 		default:
@@ -256,7 +256,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	 *  We map the entire area to see that we can get the VM
 	 *  space required. Map it unaccessible to start with.
 	 */
-	libaddr = (Elf32_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
+	libaddr = (Elf_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
 					MAP_COPY|MAP_ANON, -1, 0);
 	if(_dl_check_error(libaddr)) {
 		_dl_printf("%s: rtld mmap failed mapping %s.\n",
@@ -267,7 +267,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	}
 
 	loff = libaddr - minva;
-	phdp = (Elf32_Phdr *)(hbuf + ehdr->e_phoff);
+	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 
 	for(i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if(phdp->p_type == PT_LOAD) {
@@ -319,7 +319,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	}
 	_dl_close(libfile);
 
-	dynp = (Elf32_Dyn *)((int)dynp + loff);
+	dynp = (Elf_Dyn *)((unsigned long)dynp + loff);
 	object = _dl_add_object(libname, dynp, 0, type, libaddr, loff);
 	if(object) {
 		object->load_size = maxva - minva;	/*XXX*/
