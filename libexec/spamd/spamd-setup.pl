@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $OpenBSD: spamd-setup.pl,v 1.1 2003/03/02 19:22:00 beck Exp $
+# $OpenBSD: spamd-setup.pl,v 1.2 2003/03/03 14:49:59 deraadt Exp $
 #
 # Copyright (c) 2003 Bob Beck <beck@openbsd.org>.  All rights reserved.
 #
@@ -52,19 +52,19 @@ sub int2quad
 }
 
 sub valid_addr() {
-    	my @bytes = split(/\./,$_[0]);
+	my @bytes = split(/\./,$_[0]);
 	return undef unless @bytes == 4 && ! grep {!(/\d+$/ && $_<256)} @bytes;
 	return($_[0]);
 }
 
 sub prev_addr() {
-    	my @bytes = split(/\./,$_[0]);
+	my @bytes = split(/\./,$_[0]);
 	return undef unless @bytes == 4 && ! grep {!(/\d+$/ && $_<256)} @bytes;
 	return int2quad (unpack("N",pack("C4",@bytes)) - 1);
 }
 
 sub next_addr() {
-    	my @bytes = split(/\./,$_[0]);
+	my @bytes = split(/\./,$_[0]);
 	return undef unless @bytes == 4 && ! grep {!(/\d+$/ && $_<256)} @bytes;
 	return int2quad (unpack("N",pack("C4",@bytes)) + 1);
 }
@@ -73,14 +73,14 @@ sub next_addr() {
 # arg. Add valid addresses and blocks seen to seen hash (second arg),
 # as well as incrementing and decrementing start/end values in list hash
 # (third arg) for later use in computing where the list actually
-# starts and ends.  
+# starts and ends.
 sub retrieve_lists() { my ($urls, $seen, $list) = @_;
     my $file = shift(@{$urls});
     for (; $file && open (LIST, "ftp -V -o - $file |");
 	$file=shift(@{$urls})) {
 	while (<LIST>) {
 	    my ($block, $start, $end);
-	    # vanna vanna, find me a netblock  we assume one per line 
+	    # vanna vanna, find me a netblock  we assume one per line
 	    chomp;
 	    $start = undef;
 	    $end = undef;
@@ -111,7 +111,7 @@ sub retrieve_lists() { my ($urls, $seen, $list) = @_;
 	    } else  {
 		# skip anything that doesn't look like an IP or netblock.
 		next;
-	    } 
+	    }
 	    if ($start && $end) {
 		${$seen}{"$end"}++;
 		${$seen}{"$start"}++;
@@ -126,7 +126,7 @@ sub retrieve_lists() { my ($urls, $seen, $list) = @_;
 # make a spamd blacklist - retrieve addressen/netblocks from sources
 # in first arg, remove errors or execptions from sources in second
 # arg, return a list of strings, consisting of the actual netblocks to
-# blacklist in CIDR format.  
+# blacklist in CIDR format.
 sub blacklist () { my @args = @_;
 
     my $i;
@@ -159,7 +159,7 @@ sub blacklist () { my @args = @_;
 	$newwhite = $White{$a}?$White{$a}:$whiteval;
 	if ($state == 0 && $newblack > 0) {
 	    $state = 1;
-	} 
+	}
 	elsif ($state == 1 && $newblack == 0) {
 	    $state = 0;
 	}
@@ -172,7 +172,7 @@ sub blacklist () { my @args = @_;
 	}
 	if ($laststate == 1 && $state == 0) {
 	    # end a blacklist
-	    push (@BlackBlocks, ( map {$_->desc()} 
+	    push (@BlackBlocks, ( map {$_->desc()}
 		(range2cidrlist ($blackstart, &prev_addr($a)))));
 	}
 	$laststate = $state;
@@ -183,7 +183,7 @@ sub blacklist () { my @args = @_;
 }
 
 
-# Tell spamd about a blacklist. 
+# Tell spamd about a blacklist.
 # returns list of blacklisted CIDR's, suitable for adding to pf rdr.
 sub addblack () {
     my ($name, $message, @urls) = @_;
@@ -203,7 +203,7 @@ sub addblack () {
 	$line = "$name;$message;".join(";", @blacknets)."\n";
 	print SOCK $line;
 	close (SOCK);
-    } 
+    }
     return(@blacknets); # caller must add to pf table.
 }
 
@@ -266,26 +266,25 @@ while ($_ = shift(@ARGV)) {
 #removelist url
 #removelist url
 while ($file = shift(@ARGV)) {
-    open(SETUP, "<$file") || die ("can't open $file"); 
+    open(SETUP, "<$file") || die ("can't open $file");
     while (<SETUP>) {
 	chomp;
 	next if (/^\s*\#/);
 	if (/^SPAMD_SOURCE;([^;]*);(\".*\")$/) {
 	    if ($state == 1) {
 		# finish off last one.
-		push(@{$Sources{$tag}}, "-w"); 
+		push(@{$Sources{$tag}}, "-w");
 	    }
 	    $state = 1;
 	    $tag = $1;
 	    $Sources{$tag}=[ $tag, $2 ];
 	} elsif ($state > 0) {
-	    
 	    if (/^SPAMD_SOURCE_REMOVE$/) {
-		push(@{$Sources{$tag}}, "-w"); 
+		push(@{$Sources{$tag}}, "-w");
 		$state = 2;
 	    }
 	    else  {
-		push(@{$Sources{$tag}}, $_); 
+		push(@{$Sources{$tag}}, $_);
 	    }
 	}
     }
@@ -299,10 +298,9 @@ foreach  $i (keys %Sources) {
     }
     push (@blacklist, &addblack(@args));
 }
-    
 
 # replace spamd table with new blacklist.
-open (PFCTL, "|pfctl -q -t spamd -T replace -f -") || 
+open (PFCTL, "|pfctl -q -t spamd -T replace -f -") ||
     die ("can't exec pfctl");
 for ($i=0; $i<=$#blacklist; $i++) {
     print PFCTL $blacklist[$i], "\n";
