@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.11 2001/04/19 16:22:17 gluk Exp $	*/
+/*	$OpenBSD: setup.c,v 1.12 2001/05/15 09:01:02 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.11 2001/04/19 16:22:17 gluk Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.12 2001/05/15 09:01:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -329,6 +329,11 @@ setup(dev)
 	 */
 	asked = 0;
 	sblock.fs_csp = calloc(1, sblock.fs_cssize);
+	if (sblock.fs_csp == NULL) {
+		printf("cannot alloc %u bytes for cylinder group summary area\n",
+		    (unsigned)sblock.fs_cssize);
+		goto badsblabel;
+	}
 	for (i = 0, j = 0; i < sblock.fs_cssize; i += sblock.fs_bsize, j++) {
 		size = sblock.fs_cssize - i < sblock.fs_bsize ?
 		    sblock.fs_cssize - i : sblock.fs_bsize;
