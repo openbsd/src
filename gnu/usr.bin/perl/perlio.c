@@ -2875,6 +2875,13 @@ PerlIOStdio_invalidate_fileno(pTHX_ FILE *f)
      */
     f->_file = -1;
     return 1;
+#  elif defined(__OpenBSD__)
+    /* There may be a better way on OpenBSD:
+        - we could insert a dummy func in the _close function entry
+	f->_close = (int (*)(void *)) dummy_close;
+     */
+    f->_file = -1;
+    return 1;
 #  elif defined(__EMX__)
     /* f->_flags &= ~_IOOPEN; */	/* Will leak stream->_buffer */
     f->_handle = -1;
