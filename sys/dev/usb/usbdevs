@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.65 2003/05/18 18:16:51 nate Exp $
+$OpenBSD: usbdevs,v 1.66 2003/05/21 01:17:06 nate Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -351,6 +351,7 @@ vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor JRC		0x1145	Japan Radio Company
+vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor BELKIN2		0x1293	Belkin Components
 vendor MOBILITY		0x1342	Mobility
@@ -1265,6 +1266,9 @@ product SANYO SCP4900 		0x0701	Sanyo SCP-4900 USB Phone
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
+/* Serverworks */
+product SERVERWORKS HUB		0x0000	Root Hub
+
 /* SGI products */
 product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 
@@ -1283,6 +1287,7 @@ product SHUTTLE CF		0x000a	eUSB CompactFlash Adapter
 product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
 product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
+product SHUTTLE SCM		0x1010	SCM Micro
 
 /* Siemens products */
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
