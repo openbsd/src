@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.19 2004/02/27 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.20 2004/07/01 21:37:34 mickey Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -86,7 +86,9 @@ struct exec {
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
-#define	MID_HPUX800	0x20B	/* hp800 HP-UX binary */
+#define	MID_HPUX800	0x20B	/* hp800 HP-UX binary pa1.0 */
+#define	MID_HPPA11	0x210	/* hp700 HP-UX binary pa1.1 */
+#define	MID_HPPA20	0x214	/* hp700 HP-UX binary pa2.0 */
 
 /*
  * a_flags
