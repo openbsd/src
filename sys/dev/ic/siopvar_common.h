@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.2 2001/03/01 17:14:28 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.3 2001/03/06 16:29:32 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
 
 /*
@@ -46,8 +46,11 @@ typedef struct scr_table {
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */
 
-/* Number of tag */
+/* Number of tags, also number of openings if tags are used */
 #define SIOP_NTAG 16
+
+/* Number of openings if tags are not used */
+#define SIOP_OPENINGS 2
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
@@ -191,6 +194,7 @@ void	siop_wdtr_msg __P((struct siop_cmd *, int, int));
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
 
+void	siop_print_info __P((struct siop_softc *, int));
 void	siop_minphys __P((struct buf *));
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));

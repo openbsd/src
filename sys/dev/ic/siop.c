@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.4 2001/03/01 17:14:27 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.5 2001/03/06 16:29:32 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -86,7 +86,6 @@ int	siop_morecbd __P((struct siop_softc *));
 struct siop_lunsw *siop_get_lunsw __P((struct siop_softc *));
 void	siop_add_reselsw __P((struct siop_softc *, int));
 void	siop_update_scntl3 __P((struct siop_softc *, struct siop_target *));
-void	siop_print_info __P((struct siop_softc *, int));
 
 struct cfdriver siop_cd = {
 	NULL, "siop", DV_DULL
@@ -214,7 +213,7 @@ siop_attach(sc)
 #endif
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.openings = 2;
+	sc->sc_link.openings = SIOP_OPENINGS;
 	sc->sc_link.adapter_buswidth =
 	    (sc->features & SF_BUS_WIDE) ? 16 : 8;
 	sc->sc_link.adapter_target = bus_space_read_1(sc->sc_rt,
@@ -432,29 +431,29 @@ siop_intr(v)
 			return 1;
 		}
 		if (dstat & ~(DSTAT_SIR | DSTAT_DFE | DSTAT_SSI)) {
-		printf("DMA IRQ:");
-		if (dstat & DSTAT_IID)
-			printf(" Illegal instruction");
-		if (dstat & DSTAT_ABRT)
-			printf(" abort");
-		if (dstat & DSTAT_BF)
-			printf(" bus fault");
-		if (dstat & DSTAT_MDPE)
-			printf(" parity");
-		if (dstat & DSTAT_DFE)
-			printf(" dma fifo empty");
-		printf(", DSP=0x%x DSA=0x%x: ",
-		    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-		    sc->sc_scriptaddr),
-		    bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA));
-		if (siop_cmd)
-			printf("last msg_in=0x%x status=0x%x\n",
-			    siop_cmd->siop_tables.msg_in[0],
-			    letoh32(siop_cmd->siop_tables.status));
-		else 
-			printf("%s: current DSA invalid\n",
-			    sc->sc_dev.dv_xname);
-		need_reset = 1;
+			printf("DMA IRQ:");
+			if (dstat & DSTAT_IID)
+				printf("Illegal instruction");
+			if (dstat & DSTAT_ABRT)
+				printf(" abort");
+			if (dstat & DSTAT_BF)
+				printf(" bus fault");
+			if (dstat & DSTAT_MDPE)
+				printf(" parity");
+			if (dstat & DSTAT_DFE)
+				printf(" dma fifo empty");
+			printf(", DSP=0x%x DSA=0x%x: ",
+			    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
+				sc->sc_scriptaddr),
+			    bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA));
+			if (siop_cmd)
+				printf("last msg_in=0x%x status=0x%x\n",
+				    siop_cmd->siop_tables.msg_in[0],
+				    letoh32(siop_cmd->siop_tables.status));
+			else 
+				printf("%s: current DSA invalid\n",
+				    sc->sc_dev.dv_xname);
+			need_reset = 1;
 		}
 	}
 	if (istat & ISTAT_SIP) {
@@ -736,6 +735,7 @@ scintr:
 					if ((siop_target->flags & TARF_SYNC)
 					    == 0) {
 						siop_target->status = TARST_OK;
+						siop_print_info(sc, target);
 						/* no table to flush here */
 						CALL_SCRIPT(Ent_msgin_ack);
 						return 1;
@@ -751,6 +751,7 @@ scintr:
 				} else if (msg == MSG_EXTENDED &&
 				    extmsg == MSG_EXT_SDTR) {
 					siop_target->status = TARST_OK;
+					siop_print_info(sc, target);
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
@@ -933,8 +934,12 @@ scintr:
 		}
 		return 1;
 	}
-	/* We just should't get there */
-	panic("siop_intr: I shouldn't be there !");
+	/* We just shouldn't get here */
+	printf("istat = 0x%x, dstat = 0x%x, sist = 0x%x, sstat1 = 0x%x\n", istat, dstat, sist, sstat1);
+	printf("need_reset = %d, irqcode = %d, siop_cmd = %p, siop_target = %p, xs = %p\n");
+	if (siop_cmd != NULL)
+		printf("siop_cmd->status = %d\n", siop_cmd->status);
+	panic("%s: siop_intr: I shouldn't be here!", sc->sc_dev.dv_xname);
 	return 1;
 end:
 	/*
@@ -1046,7 +1051,8 @@ siop_scsicmd_end(siop_cmd)
 		    &siop_cmd->rs_cmd, sizeof(struct scsi_sense),
 		    NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load cmd DMA map: %d",
+			printf("%s: unable to load cmd DMA map "
+			    "(for SENSE): %d\n",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out;
@@ -1055,7 +1061,8 @@ siop_scsicmd_end(siop_cmd)
 		    &xs->sense, sizeof(struct scsi_sense_data),
 		    NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load sense DMA map: %d",
+			printf("%s: unable to load data DMA map "
+			    "(for SENSE): %d\n",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
@@ -1217,41 +1224,11 @@ siop_handle_reset(sc)
 	}
 }
 
-void
-siop_print_info(sc, target)
-	struct siop_softc *sc;
-	int target;
-{
-	const u_int32_t id = sc->targets[target]->id;
-	const u_int8_t scf = ((id >> 24) & SCNTL3_SCF_MASK) >> SCNTL3_SCF_SHIFT;
-	const u_int8_t offset = ((id >> 8) & SXFER_MO_MASK) >> SXFER_MO_SHIFT;
-	const int clock = sc->clock_period;
-	int i;
-
-	printf("%s: target %d using %d bit ", sc->sc_dev.dv_xname, target,
-	    (sc->targets[target]->flags & TARF_ISWIDE) ? 16 : 8);
-
-	if (offset == 0)
-		printf("async ");
-	else {
-		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++)
-			if ((scf_period[i].clock == clock) 
-			    && (scf_period[i].scf == scf)) {
-				printf("%s ", scf_period[i].rate);
-				break;
-			}
-		if (i == sizeof(scf_period) / sizeof(scf_period[0]))
-			printf("? ");
-		printf("MHz %d REQ/ACK offset ", offset);
-	}
-	
-	printf("xfers\n");
-}
-
 int
 siop_scsicmd(xs)
 	struct scsi_xfer *xs;
 {
+	struct scsi_inquiry_data *inqdata;
 	struct siop_softc *sc = (struct siop_softc *)xs->sc_link->adapter_softc;
 	struct siop_cmd *siop_cmd;
 	int s, error, i;
@@ -1260,7 +1237,7 @@ siop_scsicmd(xs)
 
 	s = splbio();
 #ifdef SIOP_DEBUG_SCHED
-	printf("starting cmd for %d:%d\n", target, lun);
+	printf("starting cmd 0x%02x for %d:%d\n", xs->cmd->opcode, target, lun);
 #endif
 	siop_cmd = TAILQ_FIRST(&sc->free_list);
 	if (siop_cmd) {
@@ -1303,12 +1280,7 @@ siop_scsicmd(xs)
 			return(TRY_AGAIN_LATER);
 		}
 		sc->targets[target]->status = TARST_PROBING;
-
-		if (sc->features & SF_BUS_WIDE)
-			sc->targets[target]->flags = TARF_SYNC | TARF_WIDE;
-		else
-			sc->targets[target]->flags = TARF_SYNC;
-			
+		sc->targets[target]->flags  = 0;
 		sc->targets[target]->id = sc->clock_div << 24; /* scntl3 */
 		sc->targets[target]->id |=  target << 16; /* id */
 		/* sc->targets[target]->id |= 0x0 << 8; scxfer is 0 */
@@ -1325,8 +1297,7 @@ siop_scsicmd(xs)
 		for (i=0; i < 8; i++)
 			sc->targets[target]->siop_lun[i] = NULL;
 		siop_add_reselsw(sc, target);
-	} else if (sc->targets[target]->status == TARST_PROBING)
-		sc->targets[target]->status = TARST_ASYNC;
+	}
 
 	if (sc->targets[target]->siop_lun[lun] == NULL) {
 		sc->targets[target]->siop_lun[lun] =
@@ -1350,7 +1321,7 @@ siop_scsicmd(xs)
 	error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_cmd,
 	    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load cmd DMA map: %d",
+		printf("%s: unable to load cmd DMA map: %d\n",
 		    sc->sc_dev.dv_xname, error);
 		xs->error = XS_DRIVER_STUFFUP;
 		splx(s);
@@ -1360,7 +1331,7 @@ siop_scsicmd(xs)
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_data,
 		    xs->data, xs->datalen, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load cmd DMA map: %d",
+			printf("%s: unable to load cmd DMA map: %d\n",
 			    sc->sc_dev.dv_xname, error);
 			xs->error = XS_DRIVER_STUFFUP;
 			bus_dmamap_unload(sc->sc_dmat, siop_cmd->dmamap_cmd);
@@ -1386,8 +1357,25 @@ siop_scsicmd(xs)
 			if (xs->flags & ITSDONE) {
 				if ((xs->cmd->opcode == INQUIRY)
 				    && (xs->sc_link->lun == 0)
-				    && (xs->error == XS_NOERROR))
-					siop_print_info(sc, target);
+				    && (xs->error == XS_NOERROR)) {
+					inqdata = (struct scsi_inquiry_data *)xs->data;
+					if (inqdata->flags & SID_CmdQue) {
+						sc->targets[target]->flags |= TARF_TAG;
+						xs->sc_link->openings += SIOP_NTAG - SIOP_OPENINGS;
+					}
+					if ((inqdata->flags & SID_WBus16) && (sc->features & SF_BUS_WIDE))
+						sc->targets[target]->flags |= TARF_WIDE;
+					if (inqdata->flags & SID_Sync)
+						sc->targets[target]->flags |= TARF_SYNC;
+					if (sc->targets[target]->flags & (TARF_WIDE | TARF_SYNC)) {
+						sc->targets[target]->status = TARST_ASYNC;
+						siop_add_dev(sc, target, lun);
+					}
+					else {
+						sc->targets[target]->status = TARST_OK;
+						siop_print_info(sc, target);
+					}
+				}
 				break;
 			}
 			delay(1000);

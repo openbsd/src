@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.3 2001/03/01 17:14:28 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.4 2001/03/06 16:29:32 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ siop_setuptables(siop_cmd)
 			siop_sdtr_msg(siop_cmd, 1, sc->minsync, sc->maxoff);
 		} else {
 			sc->targets[target]->status = TARST_OK;
+			siop_print_info(sc, target);
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
 	    (sc->targets[target]->flags & TARF_TAG) &&
@@ -180,6 +181,18 @@ siop_wdtr_neg(siop_cmd)
 	int target = siop_cmd->xs->sc_link->target;
 	struct siop_xfer_common *tables = &siop_cmd->siop_xfer->tables;
 
+	/* revert to async until told otherwise */
+	sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
+	sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
+	sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+
+	tables->id = htole32(sc->targets[target]->id);
+	
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
+	    (sc->targets[target]->id >> 24) & 0xff);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
+	    (sc->targets[target]->id >> 8) & 0xff);
+
 	if (siop_target->status == TARST_WIDE_NEG) {
 		/* we initiated wide negotiation */
 		switch (tables->msg_in[3]) {
@@ -204,6 +217,7 @@ siop_wdtr_neg(siop_cmd)
 			printf("%s: rejecting invalid wide negotiation from "
 			    "target %d (%d)\n", sc->sc_dev.dv_xname, target,
 			    tables->msg_in[3]);
+			siop_print_info(sc, target);
 			tables->t_msgout.count= htole32(1);
 			tables->msg_out[0] = MSG_MESSAGE_REJECT;
 			return SIOP_NEG_MSGOUT;
@@ -219,6 +233,7 @@ siop_wdtr_neg(siop_cmd)
 			return SIOP_NEG_MSGOUT;
 		} else {
 			siop_target->status = TARST_OK;
+			siop_print_info(sc, target);
 			return SIOP_NEG_ACK;
 		}
 	} else {
@@ -235,10 +250,12 @@ siop_wdtr_neg(siop_cmd)
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
 		    (sc->targets[target]->id >> 24) & 0xff);
 		/*
-		 * we did reset wide parameters, so fall back to async,
-		 * but don't schedule a sync neg, target should initiate it
+		 * Don't schedule a sync neg, target should initiate it.
 		 */
-		siop_target->status = TARST_OK;
+		if (siop_target->status != TARST_PROBING) {
+			siop_target->status = TARST_OK;
+			siop_print_info(sc, target);
+		}
 		siop_wdtr_msg(siop_cmd, 0, (siop_target->flags & TARF_ISWIDE) ?
 		    MSG_EXT_WDTR_BUS_16_BIT : MSG_EXT_WDTR_BUS_8_BIT);
 		return SIOP_NEG_MSGOUT;
@@ -259,9 +276,13 @@ siop_sdtr_neg(siop_cmd)
 	sync = tables->msg_in[3];
 	offset = tables->msg_in[4];
 
+	/* revert to async until told otherwise */
+	sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
+	sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
+	sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+
 	if (siop_target->status == TARST_SYNC_NEG) {
 		/* we initiated sync negotiation */
-		siop_target->status = TARST_OK;
 #ifdef DEBUG
 		printf("sdtr: sync %d offset %d\n", sync, offset);
 #endif
@@ -274,39 +295,31 @@ siop_sdtr_neg(siop_cmd)
 				continue;
 			if (scf_period[i].period == sync) {
 				/* ok, found it. we now are sync. */
-				sc->targets[target]->id &=
-				    ~(SCNTL3_SCF_MASK << 24);
 				sc->targets[target]->id |= scf_period[i].scf
 				    << (24 + SCNTL3_SCF_SHIFT);
 				if (sync < 25) /* Ultra */
 					sc->targets[target]->id |=
 					    SCNTL3_ULTRA << 24;
-				else
-					sc->targets[target]->id &=
-					    ~(SCNTL3_ULTRA << 24);
-				sc->targets[target]->id &=
-				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
 				    (offset & SXFER_MO_MASK) << 8;
 				goto end;
 			}
 		}
 		/*
-		 * we didn't find it in our table, do async and send reject
-		 * msg
+		 * We didn't find it in our table, so stay async and send reject
+		 * msg.
 		 */
 reject:
 		send_msgout = 1;
 		tables->t_msgout.count= htole32(1);
 		tables->msg_out[0] = MSG_MESSAGE_REJECT;
-		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
-		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
-		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
 	} else { /* target initiated sync neg */
 #ifdef DEBUG
 		printf("sdtr (target): sync %d offset %d\n", sync, offset);
 #endif
-		if (offset == 0 || sync > sc->maxsync) { /* async */
+		if ((sc->targets[target]->flags & TARF_SYNC) == 0
+		    || offset == 0
+		    || sync > sc->maxsync) {
 			goto async;
 		}
 		if (offset > sc->maxoff)
@@ -320,18 +333,11 @@ reject:
 				continue;
 			if (scf_period[i].period == sync) {
 				/* ok, found it. we now are sync. */
-				sc->targets[target]->id &=
-				    ~(SCNTL3_SCF_MASK << 24);
 				sc->targets[target]->id |= scf_period[i].scf
 				    << (24 + SCNTL3_SCF_SHIFT);
 				if (sync < 25) /* Ultra */
 					sc->targets[target]->id |=
 					    SCNTL3_ULTRA << 24;
-				else
-					sc->targets[target]->id &=
-					    ~(SCNTL3_ULTRA << 24);
-				sc->targets[target]->id &=
-				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
 				    (offset & SXFER_MO_MASK) << 8;
 				siop_sdtr_msg(siop_cmd, 0, sync, offset);
@@ -340,11 +346,6 @@ reject:
 			}
 		}
 async:
-		printf("%s: target %d asynchronous\n",
-		    sc->sc_dev.dv_xname, target);
-		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
-		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
-		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
 		siop_sdtr_msg(siop_cmd, 0, 0, 0);
 		send_msgout = 1;
 	}
@@ -357,6 +358,12 @@ end:
 	    (sc->targets[target]->id >> 24) & 0xff);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
 	    (sc->targets[target]->id >> 8) & 0xff);
+
+	if (siop_target->status != TARST_PROBING) {
+		siop_target->status = TARST_OK;
+		siop_print_info(sc, target);
+	}
+
 	if (send_msgout) {
 		return SIOP_NEG_MSGOUT;
 	} else {
@@ -549,4 +556,45 @@ siop_resetbus(sc)
 	/* minimum 25 us, more time won't hurt */
 	delay(100);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
+}
+
+/*
+ * siop_print_info: print the current negotiated wide/sync xfer values for
+ *                  a particular target. This function is called whenever
+ *		    a wide/sync negotiation completes, i.e. whenever
+ *		    target->status is set to TARST_OK.
+ */
+void
+siop_print_info(sc, target)
+	struct siop_softc *sc;
+	int target;
+{
+	struct siop_target *siop_target = sc->targets[target];
+	u_int8_t scf, offset;
+	int clock, i;
+
+	offset = ((siop_target->id >> 8) & SXFER_MO_MASK) >> SXFER_MO_SHIFT;
+	scf = ((siop_target->id >> 24) & SCNTL3_SCF_MASK) >> SCNTL3_SCF_SHIFT;
+	clock = sc->clock_period;
+
+	printf("%s: target %d now using%s%d bit ",
+	    sc->sc_dev.dv_xname, target,
+	    (siop_target->flags & TARF_TAG) ? " tagged " : " ",
+	    (siop_target->flags & TARF_ISWIDE) ? 16 : 8);
+
+	if (offset == 0)
+		printf("async ");
+	else {
+		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++)
+			if ((scf_period[i].clock == clock) 
+			    && (scf_period[i].scf == scf)) {
+				printf("%s ", scf_period[i].rate);
+				break;
+			}
+		if (i == sizeof(scf_period) / sizeof(scf_period[0]))
+			printf("? ");
+		printf("MHz %d REQ/ACK offset ", offset);
+	}
+	
+	printf("xfers\n");
 }
