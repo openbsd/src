@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 1997/09/12 09:21:19 maja Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.4 1997/06/26 01:27:01 thorpej Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.7 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.6 1998/08/10 14:33:33 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,9 +38,10 @@
 #include <sys/param.h>
 #include <vm/vm.h>
 #include <machine/trap.h>
+#include <machine/psl.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 db_regs_t	ddb_regs;	/* register state */
@@ -73,4 +74,10 @@ db_regs_t	ddb_regs;	/* register state */
 
 /* Prototypes */
 void	kdb_trap __P((struct trapframe *));
+
+/*
+ * We use a.out symbols in DDB.
+ */
+#define	DB_AOUT_SYMBOLS
+
 #endif	/* _VAX_DB_MACHDEP_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ioa.h,v 1.4 1997/05/29 00:04:40 niklas Exp $	*/
-/*	$NetBSD: ioa.h,v 1.4 1996/03/07 23:23:58 ragge Exp $	*/
+/*	$OpenBSD: ioa.h,v 1.5 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$NetBSD: ioa.h,v 1.5 1999/04/12 20:57:52 pk Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -53,8 +53,8 @@
  *                                                              *
  *        If the Regents of the University of California or its *
  *   licensees modify the software in a manner creating         *
- *   diriviative copyright rights, appropriate copyright        *
- *   legends may be placed on  the drivative work in addition   *
+ *   derivative copyright rights, appropriate copyright         *
+ *   legends may be placed on  the derivative work in addition  *
  *   to that set forth above.                                   *
  *								*
  ****************************************************************/

@@ -1,5 +1,5 @@
-/*	$OpenBSD: scb.h,v 1.4 1997/05/29 00:04:50 niklas Exp $	*/
-/*	$NetBSD: scb.h,v 1.4 1995/12/13 18:54:56 ragge Exp $	*/
+/*	$OpenBSD: scb.h,v 1.5 2000/04/26 03:08:42 bjc Exp $	*/
+/*	$NetBSD: scb.h,v 1.6 2000/01/24 02:40:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,7 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#ifndef _VAX_SCB_H
+#define	_VAX_SCB_H
 
 /*
  * Definition of the System Control Block. More about it can be
@@ -104,6 +105,16 @@ struct scb {
 	struct	ivec_dsp *scb_nexvec[4][16];	/* Nexus interrupt vectors */
 };
 
+#define	SCB_KSTACK	0
+#define	SCB_ISTACK	1
+
 #ifdef _KERNEL
 extern	struct scb *scb;
-#endif
+
+extern	paddr_t scb_init __P((paddr_t));
+extern	int scb_vecref __P((int *, int *));
+extern	void scb_fake __P((int, int));
+extern	void scb_vecalloc __P((int, void(*)(void *), void *, int));
+#endif /* _KERNEL */
+
+#endif /* _VAX_SCB_H */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: asm.h,v 1.4 1997/05/29 00:04:35 niklas Exp $ */
-/*	$NetBSD: asm.h,v 1.5 1996/11/30 02:49:06 jtc Exp $ */
+/*	$OpenBSD: asm.h,v 1.5 2000/04/26 03:08:40 bjc Exp $ */
+/*	$NetBSD: asm.h,v 1.9 1999/01/15 13:31:28 bouyer Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,31 +54,46 @@
 #ifdef __STDC__
 #ifdef GPROF
 #define	ENTRY(x, regs) \
-	.globl _ ## x ## ; .align 2; _ ## x ## : .word regs; \
+	.globl _ ## x; .type _ ## x,@function ; .align 2; _ ## x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #define	ASENTRY(x, regs) \
-	.globl x; .align 2; x ## : .word regs; \
+	.globl x; .type x,@function; .align 2; x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #else
 #define	ENTRY(x, regs) \
-	.globl _ ## x; .align 2; _ ## x ## : .word regs
+	.globl _ ## x; .type _ ## x,@function; \
+	.align 2; _ ## x : .word regs
 #define	ASENTRY(x, regs) \
-	.globl x; .align 2; x ## : .word regs
+	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
+#define ALTENTRY(x) .globl _ ## x; _ ## x:
 # else
 #ifdef GPROF
 #define ENTRY(x, regs) \
-	.globl _/**/x; .align 2; _/**/x: .word regs; \
+	.globl _/**/x; .type _/**/x,@function; .align 2; _/**/x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #define ASENTRY(x, regs) \
-	.globl x; .align 2; x: .word regs; \
+	.globl x; .type x,@function; .align 2; x: .word regs; \
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
 #else
 #define ENTRY(x, regs) \
-	.globl _/**/x; .align 2; _/**/x: .word regs
+	.globl _/**/x; .type _/**/x,@function; .align 2; _/**/x: .word regs
 #define ASENTRY(x, regs) \
-	.globl x; .align 2; x: .word regs
+	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
+#define ALTENTRY(x) .globl _/**/x; _/**/x:
 #endif
+
+#ifdef __STDC__
+#define	__STRING(x)			#x
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg ## ,30,0,0,0 ;					\
+	.stabs __STRING(_ ## sym) ## ,1,0,0,0
+#else
+#define	__STRING(x)			"x"
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs __STRING(_/**/sym),1,0,0,0
+#endif /* __STDC__ */
 
 #endif

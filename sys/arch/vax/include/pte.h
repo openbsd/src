@@ -1,5 +1,5 @@
-/*      $OpenBSD: pte.h,v 1.5 1997/05/29 00:04:48 niklas Exp $      */
-/*      $NetBSD: pte.h,v 1.10 1996/02/23 17:54:33 ragge Exp $      */
+/*      $OpenBSD: pte.h,v 1.6 2000/04/26 03:08:42 bjc Exp $      */
+/*      $NetBSD: pte.h,v 1.13 1999/08/03 19:53:23 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,10 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/param.h>
+#ifndef _VAX_PTE_H_
+#define _VAX_PTE_H_
 
 #ifndef _LOCORE
-
 /*
  * VAX page table entries
  */
@@ -72,7 +72,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_W            0x00400000
 #define PG_U            0x00200000
 #define PG_FRAME        0x001fffff
-#define	PG_PFNUM(x)	((x) >> PGSHIFT)
+#define	PG_PFNUM(x)	(((unsigned long)(x) & 0x3ffffe00) >> VAX_PGSHIFT)
 
 #ifndef _LOCORE
 extern pt_entry_t *Sysmap;
@@ -81,13 +81,14 @@ extern pt_entry_t *Sysmap;
  */
 #endif
 
-#define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va) & ~KERNBASE) >> PGSHIFT])
+#define	kvtopte(va) (&Sysmap[PG_PFNUM(va)])
 #define	ptetokv(pt) \
-	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + 0x80000000)
+	((((pt_entry_t *)(pt) - Sysmap) << VAX_PGSHIFT) + 0x80000000)
 #define	kvtophys(va) \
-	(((kvtopte(va))->pg_pfn << PGSHIFT) | ((int)(va) & PGOFSET))
+	(((kvtopte(va))->pg_pfn << VAX_PGSHIFT) | ((int)(va) & VAX_PGOFSET))
 #define	uvtopte(va, pcb) \
-	(((unsigned)va < 0x40000000) || ((unsigned)va > 0x80000000) ? \
-	&((pcb->P0BR)[(unsigned)va >> PGSHIFT]) : \
-	&((pcb->P1BR)[((unsigned)va & 0x3fffffff) >> PGSHIFT]))
+	(((unsigned)va < 0x40000000) ? \
+	&((pcb->P0BR)[PG_PFNUM(va)]) : \
+	&((pcb->P1BR)[PG_PFNUM(va)]))
+
+#endif

@@ -1,5 +1,5 @@
-/*      $OpenBSD: trap.h,v 1.9 1997/09/12 09:21:25 maja Exp $     */
-/*      $NetBSD: trap.h,v 1.16 1997/07/28 21:48:36 ragge Exp $     */
+/*      $OpenBSD: trap.h,v 1.10 2000/04/26 03:08:43 bjc Exp $     */
+/*      $NetBSD: trap.h,v 1.17 2000/01/24 02:40:32 matt Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,20 +100,18 @@ struct	trapframe {
  */
 struct ivec_dsp {
 	char	pushr; 		/* pushr */
-	char	pushrarg;	/* $3f */
-	char	pushl; 		/* pushl */
-	char	pushlarg;	/* $? */
-	char	nop;      	/* nop, for foolish gcc */
-	char	calls[3]; 	/* calls $1,? */
-	void	(*hoppaddr) __P((int));	/* jump for calls */
-	char	popr;	  	/* popr $0x3f */
-	char	poprarg;
-	char	rei;      	/* rei */
-	char	pad;		/* sizeof(struct ivec_dsp) == 16 */
+	char	pushrarg;	/* $0x3f */
+	char	jsb;
+	char	mode;
+	long	displacement;
+	void	(*hoppaddr) __P((void *));
+	void	*pushlarg;
 };
 
-extern	struct ivec_dsp idsptch;
+#ifdef _KERNEL
+extern	const struct ivec_dsp idsptch;
+#endif
 
 #endif /* _LOCORE */
 
-#endif _VAX_TRAP_H_
+#endif /* _VAX_TRAP_H_ */

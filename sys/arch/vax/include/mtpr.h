@@ -1,5 +1,5 @@
-/*      $OpenBSD: mtpr.h,v 1.4 1997/05/29 00:04:44 niklas Exp $     */
-/*      $NetBSD: mtpr.h,v 1.9 1996/07/20 17:58:18 ragge Exp $     */
+/*      $OpenBSD: mtpr.h,v 1.5 2000/04/26 03:08:42 bjc Exp $     */
+/*      $NetBSD: mtpr.h,v 1.12 1999/06/06 19:06:29 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,8 +35,6 @@
 
 #ifndef	_VAX_MTPR_H_
 #define	_VAX_MTPR_H_
-
-#include <machine/macros.h>
 
 /******************************************************************************
 
@@ -137,6 +135,17 @@
 #define	PR_BINID  94 /* VAXBI node ID Register (KA820) */
 #define	PR_BISTOP 95 /* VAXBI Stop Register (KA820) */
 
+#define PR_BCBTS  113 /* Backup Cache Tag Store (KA670) */
+#define PR_BCP1TS 114 /* Primary Tag Store 1st half (KA670) */
+#define PR_BCP2TS 115 /* Primary Tag Store 2st half (KA670) */
+#define PR_BCRFR  116 /* Refresh Register (KA670) */
+#define PR_BCIDX  117 /* Index Register (KA670) */
+#define PR_BCSTS  118 /* Status (KA670) */
+#define PR_BCCTL  119 /* Control Register (KA670) */
+#define PR_BCERR  120 /* Error Address (KA670) */
+#define PR_BCFBTS 121 /* Flush backup tag store (KA670) */
+#define PR_BCFPTS 122 /* Flush primary tag store (KA670) */
+
 #define	PR_VINTSR 123 /* vector i/f error status (KA43/KA46) */
 #define PR_PCTAG  124 /* primary cache tag store (KA43/KA46) */
 #define PR_PCIDX  125 /* primary cache index (KA43/KA46) */
@@ -151,7 +160,7 @@
 
 #define mtpr(val,reg)                                   \
 {                                                       \
-        asm __volatile ("mtpr %0,%1"                    \
+        __asm__ __volatile ("mtpr %0,%1"                    \
                         : /* No output */               \
                         : "g" (val), "g" (reg));        \
 }
@@ -159,7 +168,7 @@
 #define mfpr(reg)                                       \
 ({                                                      \
         register int val;                               \
-        asm __volatile ("mfpr %1,%0"                    \
+        __asm__ __volatile ("mfpr %1,%0"                    \
                         : "=g" (val)                    \
                         : "g" (reg));                   \
         val;                                            \

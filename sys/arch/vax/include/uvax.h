@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvax.h,v 1.3 1997/09/10 11:47:11 maja Exp $ */
-/*	$NetBSD: uvax.h,v 1.2 1997/02/19 10:06:07 ragge Exp $ */
+/*	$OpenBSD: uvax.h,v 1.4 2000/04/26 03:08:43 bjc Exp $ */
+/*	$NetBSD: uvax.h,v 1.5 1999/02/02 18:37:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,51 +37,6 @@
 #define _VAX_UVAX_H_
 
 /*
- * generic(?) MicroVAX and VAXstation support
- *
- * There are similarities to struct cpu_calls[] in autoconf.c
- */
-
-/* 
- * Prototypes for autoconf.c
- */
-struct	device;
-void	uvax_conf __P((struct device*, struct device*, void*));
-int	uvax_clock __P((void));
-void	uvax_memerr __P((void));
-int	uvax_mchk __P((caddr_t));
-void	uvax_steal_pages __P((void));
-
-int	uvax_setup __P((int mapen));
-
-struct uvax_calls {
-	u_long	(*uc_memsize) __P((void));
-
-	char	*uc_name;
-
-	void	*le_iomem;		/* base addr of RAM -- CPU's view */
-	u_long	*le_ioaddr;		/* base addr of RAM -- LANCE's view */
-	int	*le_memsize;		/* size of RAM reserved for LANCE */
-
-	void	*uc_physmap;
-	int	uc_vups;		/* used by delay() */
-
-	int	uv_flags;
-	int	vs_flags;
-};		
-
-extern struct uvax_calls guc;		/* Generic uVAX Calls */
-extern struct uvax_calls *ucp;
-
-struct uc_map {
-	u_long	um_base;
-	u_long	um_end;
-	u_long	um_size;
-	u_long	um_virt;
-};
-extern struct uc_map *uc_physmap;
-
-/*
  * Generic definitions common on all MicroVAXen clock chip.
  */
 #define	uVAX_CLKVRT	0200
@@ -103,9 +58,30 @@ extern struct uc_map *uc_physmap;
 #define	uVAX_CLKRSTRT	010
 #define	uVAX_CLKLANG	0360
 
-/* Prototypes */
-int	uvax_clkread __P((time_t));
-void	uvax_clkwrite __P((void));
-void	uvax_fillmap __P((void));
-u_long	uvax_phys2virt __P((u_long));
+/*
+ * Miscellaneous registers common on most VAXststions.
+ */
+struct vs_cpu {
+        u_long  vc_hltcod;      /* Halt Code Register */
+        u_long  vc_410mser;	/* VS2K */
+        u_long  vc_410cear;	/* VS2K */
+	u_char	vc_intmsk;	/* Interrupt mask register */
+	u_char	vc_vdcorg;	/* Mono display origin */
+	u_char	vc_vdcsel;	/* Video interrupt select */
+	u_char	vc_intreq;	/* Interrupt request register */
+#define	vc_intclr vc_intreq
+        u_short vc_diagdsp;     /* Diagnostic display register */
+        u_short pad4;
+        u_long  vc_parctl;      /* Parity Control Register */
+#define	vc_bwf0	vc_parctl
+        u_short pad5;
+        u_short pad6;
+        u_short vc_diagtimu;	/* usecond timer KA46 */
+        u_short vc_diagtme;     /* Diagnostic time register */
+#define	vc_diagtimm vc_diagtme	/* msecond time KA46 */
+};
+#define	PARCTL_DMA	0x1000000
+#define	PARCTL_CPEN	2
+#define	PARCTL_DPEN	1
+
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vsbus.h,v 1.2 1997/05/29 00:04:57 niklas Exp $ */
-/*	$NetBSD: vsbus.h,v 1.1 1996/07/20 17:58:28 ragge Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.3 2000/04/26 03:08:43 bjc Exp $ */
+/*	$NetBSD: vsbus.h,v 1.9 1999/10/22 21:10:13 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,51 +37,97 @@
  * Generic definitions for the (virtual) vsbus. contains common info
  * used by all VAXstations.
  */
-struct confargs {
-	char	ca_name[16];		/* device name */
-	int	ca_intslot;		/* device interrupt-slot */
-	int	ca_intpri;		/* device interrupt "priority" */
-	int	ca_intvec;		/* interrup-vector offset */
-	int	ca_intbit;		/* bit in interrupt-register */
-	int	ca_ioaddr;		/* device hardware I/O address */
 
-	int	ca_aux1;		/* additional info (DMA, etc.) */
-	int	ca_aux2;
-	int	ca_aux3;
-	int	ca_aux4;
-	int	ca_aux5;
-	int	ca_aux6;
-	int	ca_aux7;
-	int	ca_aux8;
+#ifndef _VAX_VSBUS_H_
+#define _VAX_VSBUS_H_
 
-#define ca_recvslot	ca_intslot	/* DC/DZ: Receiver configuration */
-#define ca_recvpri	ca_intpri
-#define ca_recvvec	ca_intvec
-#define ca_recvbit	ca_intbit
-#define ca_xmitslot	ca_aux1		/* DC/DZ: transmitter configuration */
-#define ca_xmitpri	ca_aux2		/* DC/DZ:  */
-#define ca_xmitvec	ca_aux3
-#define ca_xmitbit	ca_aux4
-#define ca_dcflags	ca_aux5
+#include <machine/bus.h>
 
-#define ca_dareg	ca_aux1		/* SCSI: DMA address register */
-#define ca_dcreg	ca_aux2		/* SCSI: DMA byte count register */
-#define ca_ddreg	ca_aux3		/* SCSI: DMA transfer direction */
-#define ca_dbase	ca_aux4		/* SCSI: DMA buffer address */
-#define ca_dsize	ca_aux5		/* SCSI: DMA buffer size */
-#define ca_dflag	ca_aux6		/* SCSI: DMA flags (eg. shared) */
-#define ca_idval	ca_aux7		/* SCSI: host-ID to use/set */
-#define ca_idreg	ca_aux8		/* SCSI: host-ID port register */
-
-#define ca_enaddr	ca_aux1		/* LANCE: Ethernet address in ROM */
-#define ca_leflags	ca_aux2
+struct	vsbus_softc {
+	struct	device sc_dev;
+#if 0
+	volatile struct vs_cpu *sc_cpu;
+#endif
+	u_char	*sc_intmsk;	/* Mask register */
+	u_char	*sc_intclr;	/* Clear interrupt register */
+	u_char	*sc_intreq;	/* Interrupt request register */
+	u_char	sc_mask;	/* Interrupts to enable after autoconf */
 };
 
-int vsbus_intr_register __P((struct confargs *, int(*)(void*), void*));
-int vsbus_intr_enable __P((struct confargs *));
-int vsbus_intr_disable  __P((struct confargs *));
-int vsbus_intr_unregister __P((struct confargs *));
+struct confargs {
+    char    ca_name[16];        /* device name */
+    int ca_intslot;     /* device interrupt-slot */
+    int ca_intpri;      /* device interrupt "priority" */
+    int ca_intvec;      /* interrup-vector offset */
+    int ca_intbit;      /* bit in interrupt-register */
+    int ca_ioaddr;      /* device hardware I/O address */
 
-int vsbus_lockDMA __P((struct confargs *));
-int vsbus_unlockDMA __P((struct confargs *));
+    int ca_aux1;        /* additional info (DMA, etc.) */
+    int ca_aux2;
+    int ca_aux3;
+    int ca_aux4;
+    int ca_aux5;
+    int ca_aux6;
+    int ca_aux7;
+    int ca_aux8;
 
+#define ca_recvslot ca_intslot  /* DC/DZ: Receiver configuration */
+#define ca_recvpri  ca_intpri
+#define ca_recvvec  ca_intvec
+#define ca_recvbit  ca_intbit
+#define ca_xmitslot ca_aux1     /* DC/DZ: transmitter configuration */
+#define ca_xmitpri  ca_aux2     /* DC/DZ:  */
+#define ca_xmitvec  ca_aux3
+#define ca_xmitbit  ca_aux4
+#define ca_dcflags  ca_aux5
+
+#define ca_dareg    ca_aux1     /* SCSI: DMA address register */
+#define ca_dcreg    ca_aux2     /* SCSI: DMA byte count register */
+#define ca_ddreg    ca_aux3     /* SCSI: DMA transfer direction */
+#define ca_dbase    ca_aux4     /* SCSI: DMA buffer address */
+#define ca_dsize    ca_aux5     /* SCSI: DMA buffer size */
+#define ca_dflag    ca_aux6     /* SCSI: DMA flags (eg. shared) */
+#define ca_idval    ca_aux7     /* SCSI: host-ID to use/set */
+#define ca_idreg    ca_aux8     /* SCSI: host-ID port register */
+
+#define ca_enaddr   ca_aux1     /* LANCE: Ethernet address in ROM */
+#define ca_leflags  ca_aux2
+};
+
+struct	vsbus_attach_args {
+	vaddr_t	va_addr;		/* virtual CSR address */
+	paddr_t	va_paddr;		/* physical CSR address */
+
+	void	(*va_ivec) __P((void *));	/* Interrupt routine */
+	void	*va_vecarg;		/* Interrupt routine argument */
+
+	short	va_br;			/* Interrupt level */
+	short	va_cvec;		/* Interrupt vector address */
+	u_char	va_maskno;		/* Interrupt vector in mask */
+	bus_dma_tag_t va_dmat;
+	struct 	confargs *confargs;
+};
+
+/*
+ * Some chip addresses and constants, same on all VAXstations.
+ */
+#define VS_CFGTST	0x20020000      /* config register */
+#define VS_REGS         0x20080000      /* Misc cpu internal regs */
+#define NI_ADDR         0x20090000      /* Ethernet address */
+#define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
+#define VS_CLOCK        0x200b0000      /* clock chip address */
+#define SCA_REGS        0x200c0000      /* disk device addresses */
+#define NI_BASE         0x200e0000      /* LANCE CSRs */
+#define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
+
+/*
+ * Small monochrome graphics framebuffer, present on all machines.
+ */
+#define	SMADDR		0x30000000
+#define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
+
+u_char	vsbus_setmask __P((unsigned char));
+void	vsbus_clrintr __P((unsigned char));
+void	vsbus_copytoproc(struct proc *, caddr_t, caddr_t, int);
+void	vsbus_copyfromproc(struct proc *, caddr_t, caddr_t, int);
+#endif /* _VAX_VSBUS_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka420.h,v 1.2 1997/05/29 00:04:41 niklas Exp $ */
-/*	$NetBSD: ka420.h,v 1.1 1996/07/20 17:58:15 ragge Exp $ */
+/*	$OpenBSD: ka420.h,v 1.3 2000/04/26 03:08:41 bjc Exp $ */
+/*	$NetBSD: ka420.h,v 1.2 1998/06/07 18:34:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -72,6 +72,8 @@
 #define KA420_INTREQ	0x2008000F	/* Interrupt Request register */
 #define KA420_INTCLR	0x2008000F	/* Interrupt Request clear register */
 
+#define KA420_CACR	0x20084000	/* L2 cache ctrl reg */
+
 /*
  * Other fixed addresses which should be mapped
  */
@@ -138,4 +140,34 @@
 #define KA420_SCRLEN	0x200B00B8	/* Number of pages of SCR (1 byte) */
 #define KA420_SCSIPORT	0x200B00BC	/* Tape Controller Port Data */
 #define KA420_RESERVED	0x200B00C0	/* Reserved (16 bytes) */
+
+/* Used bits in the CFGTST (20020000) register */
+#define	KA420_CFG_STCMSK	0xc000	/* Storage controller mask */
+#define	KA420_CFG_RB		0x0000	/* RB (ST506/SCSI) present */
+#define	KA420_CFG_RD		0x4000	/* RD (SCSI/SCSI) present */
+#define	KA420_CFG_NONE		0xc000	/* No storage ctlr present */
+#define	KA420_CFG_MULTU		0x80	/* MicroVAX or VAXstation */
+#define	KA420_CFG_CACHPR	0x40	/* Secondary cache present */
+#define	KA420_CFG_L3CON		0x20	/* Console on line #3 of dc */
+#define	KA420_CFG_CURTEST	0x10	/* Cursor Test (monochrom) */
+#define	KA420_CFG_VIDOPT	0x08	/* Video option present */
+
+/* Primary cache bits (CADR, IPR 37) */
+#define	KA420_CADR_S2E		0x80	/* set 2 enable */
+#define	KA420_CADR_S1E		0x40	/* set 1 enable */
+#define	KA420_CADR_ISE		0x20	/* insn caching enable */
+#define	KA420_CADR_DSE		0x10	/* data caching enable */
+#define	KA420_CADR_WWP		0x02	/* write wrong parity */
+#define	KA420_CADR_DIA		0x01	/* diagnostic mode */
+
+/* Secondary cache bits (CACR, 20084000) */
+#define	KA420_CACR_CP3		0x80000000	/* last parity read */
+#define	KA420_CACR_CP2		0x40000000	/* last parity read */
+#define	KA420_CACR_CP1		0x20000000	/* last parity read */
+#define	KA420_CACR_CP0		0x10000000	/* last parity read */
+#define	KA420_CACR_TPP		0x00100000	/* tag predicted parity */
+#define	KA420_CACR_TGP		0x00080000	/* tag parity read */
+#define	KA420_CACR_TGV		0x00040000	/* valid flag */
+#define	KA420_CACR_TPE		0x00000020	/* tag parity error */
+#define	KA420_CACR_CEN		0x00000010	/* cache enable */
 

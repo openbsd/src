@@ -1,5 +1,5 @@
-/*      $OpenBSD: cpu.h,v 1.9 1999/01/10 13:34:20 niklas Exp $      */
-/*      $NetBSD: cpu.h,v 1.24 1997/07/26 10:12:40 ragge Exp $      */
+/*      $OpenBSD: cpu.h,v 1.10 2000/04/26 03:08:40 bjc Exp $      */
+/*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -31,16 +31,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _VAX_CPU_H_
+#define _VAX_CPU_H_
+#ifdef _KERNEL
+
 #include <sys/cdefs.h>
 #include <sys/device.h>
 
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
 #include <machine/uvax.h>
+#include <machine/psl.h>
 
 #define enablertclock()
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
+#define	cpu_number()			0
+
+void configure       __P((void));
 
 /*
  * All cpu-dependent info is kept in this struct. Pointer to the
@@ -48,20 +56,18 @@
  */
 struct	cpu_dep {
 	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
-	void	(*cpu_clock) __P((void)); /* CPU dep RT clock start */
 	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
 	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
 	    /* Autoconfiguration */
-	void	(*cpu_conf) __P((struct device *, struct device *, void *));
+	void	(*cpu_conf) __P((void));
 	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
 	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
-	int	cpu_vups;	/* speed of cpu */
-	u_char  *cpu_intreq;	/* Used on some VAXstations */
-	u_char  *cpu_intclr;	/* Used on some VAXstations */
-	u_char  *cpu_intmsk;	/* Used on some VAXstations */
-	struct	uc_map *cpu_map; /* Map containing important addresses */
+	short	cpu_vups;	/* speed of cpu */
+	short	cpu_scbsz;	/* (estimated) size of system control block */
 	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
 	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
+	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */
+	void	(*cpu_subconf) __P((struct device *));/*config cpu dep. devs */
 };
 
 extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
@@ -72,7 +78,6 @@ struct clockframe {
 };
 
 extern struct device *booted_from;
-extern int cold;
 extern int mastercpu;
 extern int bootdev;
 
@@ -105,17 +110,32 @@ extern	int     want_resched;   /* resched() was called */
  */
 #define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
 
+/*
+ * This defines the I/O device register space size in pages.
+ */
+#define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
+
+struct device;
+
 /* Some low-level prototypes */
 int	badaddr __P((caddr_t, int));
 void	cpu_swapin __P((struct proc *));
-int	hp_getdev __P((int, int, char **));
+int	hp_getdev __P((int, int, struct device **));
+int	sd_getdev __P((int, int, int, int, char **));
 int	ra_getdev __P((int, int, int, char **));
-void	configure __P((void));
+int	bdevtomaj __P((int));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
-void	setroot __P((void));
-void	setconf __P((void));
 void	swapconf __P((void));
+void	disk_printtype __P((int, int));
+void	disk_reallymapin __P((struct buf *, struct pte *, int, int));
+vaddr_t	vax_map_physmem __P((paddr_t, int));
+void	vax_unmap_physmem __P((vaddr_t, int));
+void	ioaccess __P((vaddr_t, paddr_t, int));
+void	iounaccess __P((vaddr_t, int));
+void	findcpu __P((void));
 #ifdef DDB
 int	kdbrint __P((int));
 #endif
+#endif /* _KERNEL */
+#endif /* _VAX_CPU_H_ */

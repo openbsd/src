@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka630.h,v 1.3 1997/09/12 09:21:20 maja Exp $ */
-/*	$NetBSD: ka630.h,v 1.2 1997/07/26 10:12:41 ragge Exp $ */
+/*	$OpenBSD: ka630.h,v 1.4 2000/04/26 03:08:41 bjc Exp $ */
+/*	$NetBSD: ka630.h,v 1.4 2000/01/24 02:40:32 matt Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,9 @@
  *	@(#)uvaxII.h	7.4 (Berkeley) 5/9/91
  */
 
-#if VAX630 || VAX410
+#ifndef _VAX_INCLUDE_KA630_H_
+#define	_VAX_INCLUDE_KA630_H_
+
 #define UVAXIISID	((u_long *)0x20040004)
 #define UVAXIICPU	((struct uvaxIIcpu *)0x20080000)
 
@@ -62,13 +64,11 @@ struct uvaxIIcpu {
 /* Mem. error address regs. */
 #define	UVAXIICEAR_PG	0x00007fff
 #define	UVAXIIDEAR_PG	0x00007fff
-#endif
 
 /*
  * Definitions specific to the ka630 MicroVAXII Q22 bus cpu card. Includes the
  * tod clock chip and the cpu registers.
  */
-#if VAX630
 #define KA630CLK	((struct ka630clock *)0x200b8000)
 
 /* Bdr register bits */
@@ -119,9 +119,7 @@ struct ka630clock {
 	u_short	csr3;
 	u_short	cpmbx;	/* CPMBX is used by the boot rom. see ka630-ug-3.3.3 */
 };
-
 #endif
-static int ka630_clkread __P((time_t));
-static void ka630_clkwrite __P((void));
 
-#endif
+#endif /* _VAX_INCLUDE_KA630_H_ */
+

@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.h,v 1.3 1997/09/10 11:47:04 maja Exp $ */
-/*	$NetBSD: clock.h,v 1.2 1997/05/04 19:13:33 ragge Exp $ */
+/*	$OpenBSD: clock.h,v 1.4 2000/04/26 03:08:40 bjc Exp $ */
+/*	$NetBSD: clock.h,v 1.4 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,7 +46,7 @@
 #define CLKREAD_BAD	-1
 #define CLKREAD_WARN	-2
 
-#define TODRBASE	(1 << 28) /* Rumours says it comes from VMS */
+#define TODRBASE	(1 << 28) /* Rumours say it comes from VMS */
 
 #define	SEC_OFF		0
 #define	MIN_OFF		2
@@ -65,9 +65,11 @@
 #define	CSRB_DM		0004
 #define	CSRD_VRT	0200
 
+/* Var's used when dealing with clock chip */
+extern	volatile short *clk_page;
+extern	int clk_adrshift, clk_tweak;
+
 /* Prototypes */
-void	generic_clock __P((void));
-void	no_nicr_clock __P((void));
 int	generic_clkread __P((time_t));
 void	generic_clkwrite __P((void));
 int	chip_clkread __P((time_t));

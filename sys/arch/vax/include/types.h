@@ -1,5 +1,5 @@
-/*	$OpenBSD: types.h,v 1.9 1999/01/08 03:04:09 millert Exp $	*/
-/*	$NetBSD: types.h,v 1.10 1996/12/05 00:14:00 cgd Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2000/04/26 03:08:43 bjc Exp $	*/
+/*	$NetBSD: types.h,v 1.14 1998/08/13 02:10:49 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,12 +41,7 @@
 
 #include <sys/cdefs.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-typedef struct _physadr {
-	int r[1];
-} *physadr;
-
-
+#if defined(_KERNEL)
 typedef struct label_t {
 	int val[6];
 } label_t;
@@ -55,26 +50,31 @@ typedef struct label_t {
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 
+typedef vm_offset_t	paddr_t;
+typedef vm_size_t	psize_t;
+typedef vm_offset_t	vaddr_t;
+typedef vm_size_t	vsize_t;
+
 /*
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
 #define __BIT_TYPES_DEFINED__
 typedef __signed char              int8_t;
+typedef unsigned char			  uint8_t;
 typedef unsigned char            u_int8_t;
-typedef unsigned char             uint8_t;
 typedef short                     int16_t;
+typedef unsigned short			 uint16_t;
 typedef unsigned short          u_int16_t;
-typedef unsigned short           uint16_t;
 typedef int                       int32_t;
+typedef unsigned int			 uint32_t;
 typedef unsigned int            u_int32_t;
-typedef unsigned int             uint32_t;
+/* LONGLONG */
 typedef long long                 int64_t;
-typedef unsigned long long      u_int64_t;
+/* LONGLONG */
 typedef unsigned long long       uint64_t;
+typedef unsigned long long      u_int64_t;
 
 typedef int32_t                 register_t;
-
-#define	__BROKEN_INDIRECT_CONFIG
 
 #endif	/* _MACHTYPES_H_ */

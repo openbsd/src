@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.h,v 1.3 1997/09/10 11:47:07 maja Exp $ */
+/*	$OpenBSD: ka43.h,v 1.4 2000/04/26 03:08:41 bjc Exp $ */
 /*	$NetBSD: ka43.h,v 1.2 1997/04/18 18:53:40 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -65,8 +65,8 @@
 #define KA43_IVN_SIZE	      0x20
 
 #define KA43_HLTCOD	0x20080000	/* Halt Code Register */
-/* #define KA43_MSER	0x20080004	/* Memory System Error register */
-/* #define KA43_MEAR	0x20080008	/* Memory Error Address register */
+/* #define KA43_MSER	0x20080004 */	/* Memory System Error register */
+/* #define KA43_MEAR	0x20080008 */	/* Memory Error Address register */
 #define KA43_INTMSK	0x2008000C	/* Interrupt Mask register */
 #define KA43_VDCORG	0x2008000D	/* Video Controller Origin Register */
 #define KA43_VDCSEL	0x2008000E	/* Video Controller Select Register */
@@ -245,7 +245,3 @@ struct ka43_clock {
 	u_long  :2;	u_long	csr3	:8;	u_long  :22;
 	u_long  :2;	u_long	cpmbx	:8;	u_long  :22;
 };
-
-int ka43_setup __P((struct uvax_calls *p, int flags));
-static int ka43_clkread __P((time_t));
-static void ka43_clkwrite __P((void));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sid.h,v 1.5 1997/09/10 11:47:10 maja Exp $	*/
-/*	$NetBSD: sid.h,v 1.9 1997/02/12 17:50:38 ragge Exp $	*/
+/*	$OpenBSD: sid.h,v 1.6 2000/04/26 03:08:42 bjc Exp $	*/
+/*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -79,7 +79,7 @@
 #define VAX_TYP_UV1	7	/* MicroVAX I, VAXstation I */
      /* VAX_TYP_610	7 */
  
-#define VAX_BTYP_610	0x70000000	/* generic MicroVAX-I */
+#define VAX_BTYP_610	0x07000000	/* generic MicroVAX-I */
  
 /*
  * MicroVAX II series (1985)
@@ -104,6 +104,7 @@
 #define VAX_BTYP_9CC	0x0A000002	/* VAX 6000 model 210/310 */
 #define VAX_BTYP_60	0x0A000003	/* VAXstation 3520, 3540 */
 #define VAX_BTYP_420	0x0A000004	/* VAXstation 3100 models 10 - 48 */
+#define	VAX_BTYP_IS1	0x0A000006	/* Infoserver 1000 */
 #define VAX_BTYP_510	0x0A000007	/* VAXft model 110 */
      /* VAX_BTYP_520	0x0A000007	   VAXft model 310 */
 
@@ -168,7 +169,7 @@
 #define VAX_TYP_V14	20
  
 #define VAX_BTYP_660	0x14000001	/* VAX 4000 model 200 */
-#define VAX_BTYP_440	0x14000004	/* VS 4000/30, 3100/30, 3100/40 */
+#define VAX_BTYP_48	0x14000004	/* VAXstation 4000 VLC */
 #define VAX_BTYP_550	0x14000007	/* VAXft model 410, 610 */
  
 /*
@@ -180,7 +181,7 @@
 #define VAX_BTYP_1701	0x17000001
  
 /*
- * Highest Number supported by NetBSD/VAX
+ * Highest Number supported by OpenBSD/VAX
  */
 #define VAX_TYP_MAX	VAX_TYP_RIGEL
 

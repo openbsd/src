@@ -1,5 +1,5 @@
-/*	$OpenBSD: ka820.h,v 1.2 1997/05/29 00:04:43 niklas Exp $	*/
-/*	$NetBSD: ka820.h,v 1.1 1996/07/20 17:33:09 ragge Exp $	*/
+/*	$OpenBSD: ka820.h,v 1.3 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$NetBSD: ka820.h,v 1.3 2000/01/24 02:40:32 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -91,6 +91,9 @@
 #define KA820PORT_CRDCLR	0x00000002	/* clear CRD interrupt */
 #define KA820PORT_CRDINTR	0x00000001	/* CRD interrupt request */
 
+/* interrupt vectors unique for this CPU */
+#define	KA820_INT_RXCD		0x58
+
 /* what the heck */
 #define KA820PORT_BITS \
 "\20\40RSTHALT\37LCONS\36LCONSEN\35BIRESET\34BISTF\33ENBAPT\32STPASS\31RUN\
@@ -137,13 +140,5 @@ struct ka820clock {
 	u_short csr3;
 };
 
-/*
- * Prototypes.
- */
-void	ka820_conf __P((struct device *, struct device *, void *));
-void	ka820_memerr __P((void));
-int	ka820_mchk __P((caddr_t));
-void	ka820_steal_pages __P((void));
-int	ka820_clkread __P((time_t));
-void	ka820_clkwrite __P((void));
+void	crxintr __P((void *arg));
 #endif

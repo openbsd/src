@@ -1,5 +1,5 @@
-/*	$OpenBSD: vmparam.h,v 1.8 1997/09/12 09:21:25 maja Exp $	*/
-/*	$NetBSD: vmparam.h,v 1.15 1997/07/12 16:20:38 perry Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 2000/04/26 03:08:43 bjc Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.27 1999/10/22 21:14:35 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,45 +40,41 @@
  *
  *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
  */
-#ifndef _LOCORE
-#include <vm/vm_param.h>
-#endif
+#ifndef _VMPARAM_H_
+#define _VMPARAM_H_
 
 /*
  * Machine dependent constants for VAX.
  */
 
 /*
- * Virtual address space arrangement. On 386, both user and kernel
- * share the address space, not unlike the vax.
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack. Immediately above the user stack
- * resides the user structure, which is UPAGES long and contains the
- * kernel stack.
+ * resides kernel.
  *
  */
 
-#define	USRTEXT		0x400
-#define	USRSTACK	0x7fffe000 /* XXX */
+#define USRTEXT		NBPG
+#define USRSTACK	KERNBASE
 
 /*
  * Virtual memory related constants, all in bytes
  */
 
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(8*1024*1024)		/* max text size */
+#define MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(24*1024*1024)		/* max data size */
+#define MAXDSIZ		(24*1024*1024)		/* max data size */
 #endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
+#ifndef MAXSSIZ
+#define MAXSSIZ		(8*1024*1024)		/* max stack size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
+#define DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#ifndef DFLSSIZ
+#define DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 
 /*
@@ -87,17 +83,7 @@
  * Note: This is just a hint, if we mmap() more than this the page
  * table will be expanded. (at the cost of speed).
  */
-#define	MMAPSPACE	(24*1024*1024)
-
-/*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- */
-
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
-#define	DMTEXT	1024			/* swap allocation for text */
+#define MMAPSPACE	(8*1024*1024)
 
 /* 
  * Size of shared memory map
@@ -108,21 +94,16 @@
 #endif
 
 /*
- * Size of User Raw I/O map
- */
-#define	USRIOSIZE	300
-
-/*
  * The time for a process to be blocked before being very swappable.
  * This is a number of seconds which the system takes as being a non-trivial
- * amount of real time.  You probably shouldn't change this;
+ * amount of real time.	 You probably shouldn't change this;
  * it is used in subtle ways (fractions and multiples of it are, that is, like
  * half of a ``long time'', almost a long time, etc.)
  * It is related to human patience and other factors which don't really
  * change over time.
  */
 
-#define	MAXSLP 		20
+#define MAXSLP		20
 
 /*
  * A swapped in process is given a small amount of core without being bothered
@@ -136,17 +117,28 @@
  * so we loan each swapped in process memory worth 100$, or just admit
  * that we don't consider it worthwhile and swap it out to disk which costs
  * $30/mb or about $0.75.
- * Update: memory prices have changed recently (9/96). At the current    
+ * Update: memory prices have changed recently (9/96). At the current	 
  * value of $6 per megabyte, we lend each swapped in process memory worth
  * $0.15, or just admit that we don't consider it worthwhile and swap it out
  * to disk which costs $0.20/MB, or just under half a cent. 
  */
 
-#define	SAFERSS		8		/* nominal ``small'' resident set size
+#define SAFERSS		8		/* nominal ``small'' resident set size
 					   protected against replacement */
+#define VM_PHYSSEG_MAX		1
+#define VM_PHYSSEG_NOADD
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH /* XXX */
 
-#define	mapin(pte, v, pfnum, prot) \
-	{(*(int *)(pte) = ((pfnum)<<PGSHIFT) | (prot)) ; }
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
+
+struct pmap_physseg {
+	int	dummy;
+};
+
+/* MD round macros */
+#define	vax_round_page(x) (((vaddr_t)(x) + VAX_PGOFSET) & ~VAX_PGOFSET)
+#define	vax_trunc_page(x) ((vaddr_t)(x) & ~VAX_PGOFSET)
 
 /*
  * Mach derived constants
@@ -154,16 +146,16 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x7FFFE000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0xC0000000)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x80000000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xC0000000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0xC0000000))
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
+#define VM_MBUF_SIZE          (NMBCLUSTERS*MCLBYTES)
 
+#define PMAP_NEW
+#define MACHINE_NEW_NONCONTIG 1
+#endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: stdarg.h,v 1.3 1997/05/29 00:04:53 niklas Exp $	*/
-/*	$NetBSD: stdarg.h,v 1.8 1995/12/25 23:15:37 mycroft Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.4 2000/04/26 03:08:42 bjc Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.11 1999/05/03 16:30:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,15 +43,19 @@
 
 typedef _BSD_VA_LIST_	va_list;
 
+#ifdef __lint__
+#define __builtin_next_arg(t)		((t) ? 0 : 0)
+#endif
+
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define va_start(ap, last) \
-	((ap) = (va_list)&(last) + __va_size(last))
+	((ap) = (va_list)__builtin_next_arg(last))
 
 #define	va_arg(ap, type) \
-	(*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))
+	(*(type *)(void *)((ap) += __va_size(type), (ap) - __va_size(type)))
 
-#define va_end(ap)	((void)0)
+#define va_end(ap)	
 
 #endif /* !_VAX_STDARG_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: limits.h,v 1.5 1998/03/22 21:15:26 millert Exp $	*/
-/*	$NetBSD: limits.h,v 1.6 1995/12/31 15:05:19 ragge Exp $	*/
+/*	$OpenBSD: limits.h,v 1.6 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$NetBSD: limits.h,v 1.9 2000/03/07 19:33:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -63,6 +63,13 @@
 
 #if !defined(_ANSI_SOURCE)
 #define SSIZE_MAX       INT_MAX         /* max value for a ssize_t */
+
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+#define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
+#define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
+#define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
+#endif
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define SIZE_T_MAX      UINT_MAX        /* max value for a size_t */

@@ -1,8 +1,8 @@
-/*	$OpenBSD: macros.h,v 1.7 1997/09/10 11:47:08 maja Exp $	*/
-/*	$NetBSD: macros.h,v 1.11 1997/03/15 15:08:23 ragge Exp $	*/
+/*	$OpenBSD: macros.h,v 1.8 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$NetBSD: macros.h,v 1.17 1998/11/07 17:22:58 ragge Exp $	*/
 
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,96 +33,214 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_) && !defined(STANDALONE) && \
-	(!defined(_LOCORE) && defined(_VAX_INLINE_))
-#define	_VAX_MACROS_H_
+#if !defined(_VAX_MACROS_H_) && !defined(lint)
+#define _VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */
 
-static __inline__ int ffs(int reg){
+static __inline__ int
+ffs(int reg)
+{
 	register int val;
 
-	asm __volatile ("ffs	$0,$32,%1,%0
+	__asm__ __volatile ("ffs	$0,$32,%1,%0
 			bneq	1f
 			mnegl	$1,%0
-		1:	incl    %0"
-			: "&=r" (val)
+		1:	incl	%0"
+			: "=&r" (val)
 			: "r" (reg) );
 	return	val;
 }
 
-static __inline__ void _remque(void*p){
-	asm __volatile ("remque (%0),%0;clrl 4(%0)"
+static __inline__ void 
+_remque(void *p)
+{
+	__asm__ __volatile ("remque (%0),%0;clrl 4(%0)"
 			:
 			: "r" (p)
 			: "memory" );
 }
 
-static __inline__ void _insque(void*p, void*q) {
-        asm __volatile ("insque (%0), (%1)"
-                        :
-                        : "r" (p),"r" (q)
-                        : "memory" );
+static __inline__ void 
+_insque(void *p, void *q)
+{
+	__asm__ __volatile ("insque (%0), (%1)"
+			:
+			: "r" (p),"r" (q)
+			: "memory" );
 }
 
-#define	bitset(bitnr,var)				\
-({	asm __volatile ("bbss %0,%1,1f;1:;"		\
-			:				\
-			: "g" (bitnr), "g" (var));	\
-})
-
-#define	bitclear(bitnr,var)				\
-({      asm __volatile ("bbsc %0,%1,1f;1:;"             \
-                        :                               \
-                        : "g" (bitnr), "g" (var));      \
-})
-
-#define	bitisset(bitnr,var)				\
-({							\
-	register int val;                               \
-	asm __volatile ("clrl %0;bbc %1,%2,1f;incl %0;1:;" \
-			: "=g" (val)			\
-			: "g" (bitnr), "g" (var));	\
-	val;						\
-})
-
-#define bitisclear(bitnr,var)                                \
-({                                                      \
-        register int val;                               \
-        asm __volatile ("clrl %0;bbs %1,%2,1f;incl %0;1:;" \
-                        : "=g" (val)                    \
-                        : "g" (bitnr), "g" (var));      \
-	val;						\
-})
-static __inline__ void bcopy(const void*from, void*toe, u_int len) {
-	asm __volatile ("movc3 %0,(%1),(%2)"
+static __inline__ void *
+memcpy(void *toe, const void *from, u_int len)
+{
+	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
 			: "r" (len),"r" (from),"r"(toe)
-			:"r0","r1","r2","r3","r4","r5");
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	return toe;
+}
+static __inline__ void *
+memmove(void *toe, const void *from, u_int len)
+{
+	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+			:
+			: "r" (len),"r" (from),"r"(toe)
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	return toe;
 }
 
-static __inline__ void bzero(void*block, u_int len){
-	asm __volatile ("movc5 $0,(%0),$0,%1,(%0)"
+#ifdef notnow
+static __inline__ void
+bcopy(const void *from, void *toe, u_int len)
+{
+	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+			:
+			: "r" (len),"r" (from),"r"(toe)
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+}
+#endif
+
+void	blkclr __P((void *, u_int));
+
+static __inline__ void *
+memset(void *block, int c, size_t len)
+{
+	if (len > 65535)
+		blkclr(block, len);
+	else {
+		__asm__ __volatile ("movc5 $0,(%0),%2,%1,(%0)"
+			:
+			: "r" (block), "r" (len), "r"(c)
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	}
+	return block;
+}
+
+static __inline__ void
+bzero(void *block, u_int len)
+{
+	if (len > 65535)
+		blkclr(block, len);
+	else {
+		__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
 			:
 			: "r" (block), "r" (len)
-			:"r0","r1","r2","r3","r4","r5");
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	}
 }
 
-static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
-	register ret;
+/* XXX - the return syntax of memcmp is wrong */
+static __inline__ int
+memcmp(const void *b1, const void *b2, size_t len)
+{
+	register int ret;
 
-	asm __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
+	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
 			: "=r" (ret)
 			: "r" (b1), "r" (b2), "r" (len)
 			: "r0","r1","r2","r3" );
 	return ret;
 }
 
+static __inline__ int
+bcmp(const void *b1, const void *b2, size_t len)
+{
+	register int ret;
+
+	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
+			: "=r" (ret)
+			: "r" (b1), "r" (b2), "r" (len)
+			: "r0","r1","r2","r3" );
+	return ret;
+}
+
+/* Begin nya */
+static __inline__ size_t
+strlen(const char *cp)
+{
+        register size_t ret;
+
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,%0"
+                        : "=r" (ret)
+                        : "r" (cp)
+                        : "r0","r1","cc" );
+        return  ret;
+}
+
+static __inline__ char *
+strcat(char *cp, const char *c2)
+{
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r2;incl r2;
+                            locc $0,$65535,(%0);movc3 r2,(%1),(r1)"
+                        :
+                        : "r" (cp), "r" (c2)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ char *
+strncat(char *cp, const char *c2, size_t count)
+{
+        __asm__ __volatile("locc $0,%2,(%1);subl3 r0,%2,r2;
+                            locc $0,$65535,(%0);movc3 r2,(%1),(r1);movb $0,(r3)"
+                        :
+                        : "r" (cp), "r" (c2), "g"(count)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ char *
+strcpy(char *cp, const char *c2)
+{
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r2;
+                            movc3 r2,(%1),(%0);movb $0,(r3)"
+                        :
+                        : "r" (cp), "r" (c2)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ char *
+strncpy(char *cp, const char *c2, size_t len)
+{
+        __asm__ __volatile("movl %2,r2;locc $0,r2,(%1);beql 1f;subl3 r0,%2,r2;
+                            clrb (%0)[r2];1:;movc3 r2,(%1),(%0)"
+                        :
+                        : "r" (cp), "r" (c2), "g"(len)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ void *
+memchr(const void *cp, int c, size_t len)
+{
+        void *ret;
+        __asm__ __volatile("locc %2,%3,(%1);bneq 1f;clrl r1;1:movl r1,%0"
+                        : "=g"(ret)
+                        : "r" (cp), "r" (c), "g"(len)
+                        : "r0","r1","cc");
+        return  ret;
+}
+
+static __inline__ int
+strcmp(const char *cp, const char *c2)
+{
+        register int ret;
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r0;incl r0;
+                            cmpc3 r0,(%1),(%2);beql 1f;movl $1,r2;
+                            cmpb (r1),(r3);bcc 1f;movl $-1,r2;1:movl r2,%0"
+                        : "=g"(ret)
+                        : "r" (cp), "r" (c2)
+                        : "r0","r1","r2","r3","cc");
+        return  ret;
+}
+/* End nya */
+
 #if 0 /* unused, but no point in deleting it since it _is_ an instruction */
 static __inline__ int locc(int mask, char *cp,u_int size){
 	register ret;
 
-	asm __volatile("locc %1,%2,(%3);movl r0,%0"
+	__asm__ __volatile("locc %1,%2,(%3);movl r0,%0"
 			: "=r" (ret)
 			: "r" (mask),"r"(size),"r"(cp)
 			: "r0","r1" );
@@ -131,86 +249,36 @@ static __inline__ int locc(int mask, char *cp,u_int size){
 #endif
 
 static __inline__ int
-scanc(u_int size, const u_char *cp, const u_char *table, int mask){
-	register ret;
+scanc(u_int size, const u_char *cp, const u_char *table, int mask)
+{
+	register int ret;
 
-	asm __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"
+	__asm__ __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"
 			: "=g"(ret)
 			: "r"(size),"r"(cp),"r"(table),"r"(mask)
 			: "r0","r1","r2","r3" );
 	return ret;
 }
 
-static __inline__ int skpc(int mask, size_t size, u_char *cp){
-	register ret;
+static __inline__ int
+skpc(int mask, size_t size, u_char *cp)
+{
+	register int ret;
 
-	asm __volatile("skpc %1,%2,(%3);movl r0,%0"
+	__asm__ __volatile("skpc %1,%2,(%3);movl r0,%0"
 			: "=g"(ret)
 			: "r"(mask),"r"(size),"r"(cp)
 			: "r0","r1" );
 	return	ret;
 }
-#if 0
-static __inline__ int imin(int a, int b){
-	asm __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
-			: "=r"(a)
-			: "r"(a),"r"(b) );
-	return a;
-}
 
-static __inline__ int imax(int a, int b){
-        asm __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
-                        : "=r"(a)
-                        : "r"(a),"r"(b) );
-        return a;
-}
+#define setrunqueue(p)	\
+	__asm__ __volatile("movl %0,r0;jsb Setrq":: "g"(p):"r0","r1","r2");
 
-static __inline__ int min(int a, int b){
-        asm __volatile("cmpl %0,%2;bleq 1f;movl %2,%0;1:"
-                        : "=r"(a)
-                        : "r"(a),"r"(b) );
-        return a;
-}
+#define remrunqueue(p)	\
+	__asm__ __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
 
-static __inline__ int max(int a, int b){
-        asm __volatile("cmpl %0,%2;bgeq 1f;movl %2,%0;1:"
-                        : "=r"(a)
-                        : "r"(a),"r"(b) );
-        return a;
-}
-#endif
-
-static __inline__ void blkcpy(const void*from, void*to, u_int len) {
-	asm __volatile("
-			movl    %0,r1
-			movl    %1,r3
-			movl	%2,r6
-			jbr 2f
-		1:	subl2   r0,r6
-			movc3   r0,(r1),(r3)
-		2:	movzwl  $65535,r0
-			cmpl    r6,r0
-			jgtr    1b
-			movc3   r6,(r1),(r3)"
-			:
-			: "g" (from), "g" (to), "g" (len)
-			: "r0","r1","r2","r3","r4","r5", "r6" );
-}
-
-static __inline__ void blkclr(void *blk, int len) {
-	asm __volatile("
-			movl	%0, r3
-			movl	%1, r6
-			jbr	2f
-		1:	subl2	r0, r6
-			movc5	$0,(r3),$0,r0,(r3)
-		2:	movzwl	$65535,r0
-			cmpl	r6, r0
-			jgtr	1b
-			movc5	$0,(r3),$0,r6,(r3)"
-			:
-			: "g" (blk), "g" (len)
-			: "r0","r1","r2","r3","r4","r5", "r6" );
-}
-
+#define cpu_switch(p) \
+	__asm__ __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
+	    ::"g"(p):"r0","r1","r2","r3");
 #endif	/* _VAX_MACROS_H_ */
