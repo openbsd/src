@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.3 2004/02/26 08:28:57 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.4 2004/03/01 17:47:07 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -46,10 +46,6 @@ size_t whitecount, whitealloc;
 char **whitelist;
 int pfdev;
 
-DB		*db;
-DBT		dbk, dbd;
-BTREEINFO	btreeinfo;
-
 /* borrowed from dhartmei.. */
 static int
 address_valid_v4(const char *a)
@@ -67,9 +63,12 @@ address_valid_v4(const char *a)
 int
 dbupdate(char *dbname, char *ip, int add)
 {
-	struct gdata gd;
-	time_t now;
-	int r;
+	BTREEINFO	btreeinfo;
+	DBT		dbk, dbd;
+	DB		*db;
+	struct gdata	gd;
+	time_t		now;
+	int		r;
 
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
@@ -159,8 +158,11 @@ dbupdate(char *dbname, char *ip, int add)
 int
 dblist(char *dbname)
 {
-	struct gdata gd;
-	int r;
+	BTREEINFO	btreeinfo;
+	DBT		dbk, dbd;
+	DB		*db;
+	struct gdata	gd;
+	int		r;
 
 	/* walk db, list in text format */
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
@@ -186,7 +188,7 @@ dblist(char *dbname)
 		cp = strchr(a, '\n');
 		if (cp == NULL)
 			/* this is a whitelist entry */
-			printf("WHITE:%s:%d:%d:%d:%d:%d\n", a, gd.first,
+			printf("WHITE:%s:::%d:%d:%d:%d:%d\n", a, gd.first,
 			    gd.pass, gd.expire, gd.bcount, gd.pcount);
 		else {
 			char *from, *to;
@@ -250,13 +252,13 @@ main(int argc, char **argv)
 
 	switch (action) {
 	case 0:
-		dblist("/var/db/spamd");
+		dblist(PATH_SPAMD_DB);
 		break;
 	case 1:
-		dbupdate("/var/db/spamd", ip, 1);
+		dbupdate(PATH_SPAMD_DB, ip, 1);
 		break;
 	case 2:
-		dbupdate("/var/db/spamd", ip, 0);
+		dbupdate(PATH_SPAMD_DB, ip, 0);
 		break;
 	default:
 		errx(-1, "bad action");
