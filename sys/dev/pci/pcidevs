@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.763 2004/09/21 11:31:24 grange Exp $
+$OpenBSD: pcidevs,v 1.764 2004/09/22 09:05:34 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -603,6 +603,7 @@ product APPLE INTREPID_OHCI	0x003f	Intrepid USB
 
 /* Aralion Inc. products */
 product ARALION ARS106S		0x0301	ARS106S
+product ARALION ARS0303D	0x0303	ARS0303D
 
 /* ARC Logic products */
 product ARC USB			0x0003	USB
