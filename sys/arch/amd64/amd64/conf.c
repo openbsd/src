@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2004/02/23 01:19:52 tom Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2004/04/15 00:15:32 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -273,7 +273,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
-	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 67: keyboards */
 	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
