@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.27 1998/01/05 06:20:48 art Exp $	*/
+/*	$OpenBSD: editor.c,v 1.28 1998/01/05 06:45:50 art Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.27 1998/01/05 06:20:48 art Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.28 1998/01/05 06:45:50 art Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ int	partition_cmp __P((const void *, const void *));
 struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
 void	getdisktype __P((struct disklabel *, char *));
 void	find_bounds __P((struct disklabel *));
-void	set_bounds __P((struct disklabel *));
+void	set_bounds __P((struct disklabel *, u_int32_t *));
 struct diskchunk *free_chunks __P((struct disklabel *));
 
 static u_int32_t starting_sector;
@@ -209,7 +209,7 @@ editor(lp, f)
 		case 'b':
 			tmplabel = lastlabel;
 			lastlabel = label;
-			set_bounds(&label);
+			set_bounds(&label, &freesectors);
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
 				lastlabel = tmplabel;
 			break;
@@ -1614,10 +1614,13 @@ getdisktype(lp, banner)
  * XXX - should mention MBR values if DOSLABEL
  */
 void
-set_bounds(lp)
+set_bounds(lp, freep)
 	struct disklabel *lp;
+	u_int32_t *freep;
 {
 	u_int32_t ui, start_temp;
+	int i;
+	struct partition *pp;
 
 	/* Starting sector */
 	do {
@@ -1644,6 +1647,17 @@ set_bounds(lp)
 	} while (ui > lp->d_secperunit - start_temp);
 	ending_sector = start_temp + ui;
 	starting_sector = start_temp;
+	
+	/* Recalculate the free sectors */
+	*freep = ending_sector - starting_sector;
+	for (i = 0; i < lp->d_npartitions; i++) {
+		pp = &lp->d_partitions[i];
+		if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
+		    pp->p_size > 0 && 
+		    pp->p_offset + pp->p_size <= ending_sector &&
+		    pp->p_offset >= starting_sector)
+			*freep -= pp->p_size;
+	}
 }
 
 /*
