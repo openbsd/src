@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.30 2001/05/11 07:55:35 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -25,11 +25,16 @@ major	{ sd = 4 }
 major	{ st = 5 }
 major	{ cd = 6 }
 
+# I2O
+include "dev/i2o/files.i2o"
+
 #
 # MI ATAPI drivers
 #
 #include "dev/atapiscsi/files.atapiscsi"
 #include "dev/ata/files.ata"
+
+include "dev/pckbc/files.pckbc"
 
 #
 # ISA Bus support
@@ -142,8 +147,8 @@ device	hil: tty
 attach	hil at gsc
 file	arch/hppa/gsc/hil.c		hil
 
-#attach	pckbc at gsc with pckbc_gsc
-#file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
+attach	pckbc at gsc with pckbc_gsc
+file	arch/hppa/gsc/pckbc_gsc.c	pckbc_gsc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
 device	aone: audio, mulaw, auconv
