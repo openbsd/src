@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 1997/05/22 17:01:23 johns Exp $
+#	$OpenBSD: install.md,v 1.13 1997/05/29 08:38:57 grr Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,9 +42,12 @@
 #
 
 # Machine-dependent install sets
-MDSETS="xbin xman xinc xcon"
 MSGBUF=/kern/msgbuf
 HOSTNAME=/kern/hostname
+MDSETS="xbin xman xinc xcon"
+if [ ! -f /bsd ]; then
+	MDSETS="kernel ${MDSETS}"
+fi
 
 # an alias for hostname(1)
 hostname() {
@@ -120,7 +123,9 @@ md_get_partition_range() {
 
 md_installboot() {
 	echo "Installing boot block..."
-	/usr/mdec/binstall ffs /mnt
+	cp /usr/mdec/boot /mnt/boot
+	sync; sync; sync
+	installboot -v /mnt/boot /usr/mdec/bootxx /dev/r${1}a
 }
 
 md_native_fstype() {
@@ -216,9 +221,11 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /bsd /mnt/bsd
-	echo "done."
+	if [ -f /bsd ]; then
+		echo -n "Copying kernel..."
+		cp -p /bsd /mnt/bsd
+		echo "done."
+	fi
 }
 
 md_welcome_banner() {
