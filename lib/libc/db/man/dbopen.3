@@ -1,4 +1,7 @@
+.\"	$OpenBSD: dbopen.3,v 1.2 1997/07/28 15:12:00 flipk Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
+.\"
+.\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,25 +36,24 @@
 .\"
 .\"	@(#)dbopen.3	8.5 (Berkeley) 1/2/94
 .\"
-.TH DBOPEN 3 "January 2, 1994"
-.UC 7
-.SH NAME
-dbopen \- database access methods
-.SH SYNOPSIS
-.nf
-.ft B
-#include <sys/types.h>
-#include <limits.h>
-#include <db.h>
-
-DB *
-dbopen(const char *file, int flags, int mode, DBTYPE type,
-.ti +5
-const void *openinfo);
-.ft R
-.fi
-.SH DESCRIPTION
-.IR Dbopen
+.Dd January 2, 1994
+.Os OpenBSD
+.Dt DBOPEN 3
+.Sh NAME
+.Nm dbopen
+.Nd database access methods
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <limits.h>
+.Fd #include <db.h>
+.Fo "DB * dbopen"
+.Fa "const char *file"
+.Fa "int flags"
+.Fa "DBTYPE type"
+.Fa "const void *openinfo"
+.Fc
+.Sh DESCRIPTION
+.Nm
 is the library interface to database files.
 The supported file formats are btree, hashed and UNIX file oriented.
 The btree format is a representation of a sorted, balanced tree structure.
@@ -60,419 +62,437 @@ The flat-file format is a byte stream file with fixed or variable length
 records.
 The formats and file format specific information are described in detail
 in their respective manual pages
-.IR btree (3),
-.IR hash (3)
+.Xr btree 3 ,
+.Xr hash 3 ,
 and
-.IR recno (3).
-.PP
-Dbopen opens
-.I file
+.Xr recno 3 .
+.Pp
+.Nm
+opens
+.Fa file
 for reading and/or writing.
 Files never intended to be preserved on disk may be created by setting
-the file parameter to NULL.
-.PP
+the file parameter to
+.Dv NULL.
+.Pp
 The
-.I flags
+.Fa flags
 and
-.I mode arguments
+.Fa mode
+arguments
 are as specified to the
-.IR open (2)
-routine, however, only the O_CREAT, O_EXCL, O_EXLOCK, O_NONBLOCK,
-O_RDONLY, O_RDWR, O_SHLOCK and O_TRUNC flags are meaningful.
-(Note, opening a database file O_WRONLY is not possible.)
+.Xr open 2
+routine, however, only the
+.Dv O_CREAT ,
+.Dv O_EXCL ,
+.Dv O_EXLOCK ,
+.Dv O_NONBLOCK ,
+.Dv O_RDONLY ,
+.Dv O_RDWR ,
+.Dv O_SHLOCK
+and
+.Dv O_TRUNC
+flags are meaningful.
+(Note, opening a database file
+.Dv O_WRONLY
+is not possible.)
 .\"Three additional options may be specified by
 .\".IR or 'ing
 .\"them into the
 .\".I flags
 .\"argument.
-.\".TP
-.\"DB_LOCK
+.\".Bl -tag -width XXXXX
+.\".It DB_LOCK
 .\"Do the necessary locking in the database to support concurrent access.
 .\"If concurrent access isn't needed or the database is read-only this
 .\"flag should not be set, as it tends to have an associated performance
 .\"penalty.
-.\".TP
-.\"DB_SHMEM
+.\".It DB_SHMEM
 .\"Place the underlying memory pool used by the database in shared
 .\"memory.
 .\"Necessary for concurrent access.
-.\".TP
-.\"DB_TXN
+.\".It DB_TXN
 .\"Support transactions in the database.
 .\"The DB_LOCK and DB_SHMEM flags must be set as well.
-.PP
+.\".El
+.Pp
 The
-.I type
+.Fa type
 argument is of type DBTYPE (as defined in the <db.h> include file) and
-may be set to DB_BTREE, DB_HASH or DB_RECNO.
-.PP
+may be set to
+.Dv DB_BTREE ,
+.Dv DB_HASH
+or
+.Dv DB_RECNO .
+.Pp
 The
-.I openinfo
+.Fa openinfo
 argument is a pointer to an access method specific structure described
 in the access method's manual page.
 If
-.I openinfo
+.Fa openinfo
 is NULL, each access method will use defaults appropriate for the system
 and the access method.
-.PP
-.I Dbopen
+.Pp
+.Nm
 returns a pointer to a DB structure on success and NULL on error.
 The DB structure is defined in the <db.h> include file, and contains at
 least the following fields:
-.sp
-.nf
+.Pp
+.Bl -item -compact
 typedef struct {
-.RS
+.It.
+.Bl -item -compact -inset -offset indent
+.It
 DBTYPE type;
+.It
 int (*close)(const DB *db);
+.It
 int (*del)(const DB *db, const DBT *key, u_int flags);
+.It
 int (*fd)(const DB *db);
+.It
 int (*get)(const DB *db, DBT *key, DBT *data, u_int flags);
-int (*put)(const DB *db, DBT *key, const DBT *data,
-.ti +5
-u_int flags);
+.It
+int (*put)(const DB *db, DBT *key, const DBT *data, u_int flags);
+.It
 int (*sync)(const DB *db, u_int flags);
+.It
 int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
-.RE
+.El
+.It
 } DB;
-.fi
-.PP
+.El
+.Pp
 These elements describe a database type and a set of functions performing
 various actions.
 These functions take a pointer to a structure as returned by
-.IR dbopen ,
+.Nm ,
 and sometimes one or more pointers to key/data structures and a flag value.
-.TP
-type
+.Pp
+.Bl -tag -width XXXXX -offset indent
+.It type
 The type of the underlying access method (and file format).
-.TP
-close
+.It close
 A pointer to a routine to flush any cached information to disk, free any
 allocated resources, and close the underlying file(s).
 Since key/data pairs may be cached in memory, failing to sync the file
 with a
-.I close
+.Fa close
 or
-.I sync
+.Fa sync
 function may result in inconsistent or lost information.
-.I Close
+.Fa Close
 routines return -1 on error (setting
-.IR errno )
+.Va errno )
 and 0 on success.
-.TP
-del
+.It del
 A pointer to a routine to remove key/data pairs from the database.
-.IP
+.Pp
 The parameter
-.I flag
+.Fa flag
 may be set to the following value:
-.RS
-.TP
-R_CURSOR
+.Bl -tag -width XXXXX
+.It R_CURSOR
 Delete the record referenced by the cursor.
 The cursor must have previously been initialized.
-.RE
-.IP
-.I Delete
+.El
+.Pp
+.Fa Delete
 routines return -1 on error (setting
-.IR errno ),
+.Va errno ) ,
 0 on success, and 1 if the specified
-.I key
+.Fa key
 was not in the file.
-.TP
-fd
+.It fd
 A pointer to a routine which returns a file descriptor representative
 of the underlying database.
 A file descriptor referencing the same file will be returned to all
 processes which call
-.I dbopen
+.Nm
 with the same
-.I file
+.Fa file
 name.
 This file descriptor may be safely used as an argument to the
-.IR fcntl (2)
+.Xr fcntl 2
 and
-.IR flock (2)
+.Xr flock 2
 locking functions.
 The file descriptor is not necessarily associated with any of the
 underlying files used by the access method.
 No file descriptor is available for in memory databases.
-.I Fd
+.Fa Fd
 routines return -1 on error (setting
-.IR errno ),
+.Va errno ) ,
 and the file descriptor on success.
-.TP
-get
+.It get
 A pointer to a routine which is the interface for keyed retrieval from
 the database.
 The address and length of the data associated with the specified
-.I key
+.Fa key
 are returned in the structure referenced by
-.IR data .
-.I Get
+.Fa data .
+.Fa Get
 routines return -1 on error (setting
-.IR errno ),
+.Va errno ) ,
 0 on success, and 1 if the
-.I key
+.Fa key
 was not in the file.
-.TP
-put
+.It put
 A pointer to a routine to store key/data pairs in the database.
-.IP
+.Pp
 The parameter
-.I flag
+.Fa flag
 may be set to one of the following values:
-.RS
-.TP
-R_CURSOR
+.Bl -tag -width XXXXX
+.It R_CURSOR
 Replace the key/data pair referenced by the cursor.
 The cursor must have previously been initialized.
-.TP
-R_IAFTER
+.It R_IAFTER
 Append the data immediately after the data referenced by
-.IR key ,
+.Fa key ,
 creating a new key/data pair.
 The record number of the appended key/data pair is returned in the
-.I key
+.Fa key
 structure.
 (Applicable only to the DB_RECNO access method.)
-.TP
-R_IBEFORE
+.It R_IBEFORE
 Insert the data immediately before the data referenced by
-.IR key ,
+.Fa key ,
 creating a new key/data pair.
 The record number of the inserted key/data pair is returned in the
-.I key
+.Fa key
 structure.
 (Applicable only to the DB_RECNO access method.)
-.TP
-R_NOOVERWRITE
+.It R_NOOVERWRITE
 Enter the new key/data pair only if the key does not previously exist.
-.TP
-R_SETCURSOR
+.It R_SETCURSOR
 Store the key/data pair, setting or initializing the position of the
 cursor to reference it.
 (Applicable only to the DB_BTREE and DB_RECNO access methods.)
-.RE
-.IP
+.El
+.Pp
 R_SETCURSOR is available only for the DB_BTREE and DB_RECNO access
 methods because it implies that the keys have an inherent order
 which does not change.
-.IP
+.Pp
 R_IAFTER and R_IBEFORE are available only for the DB_RECNO
 access method because they each imply that the access method is able to
 create new keys.
 This is only true if the keys are ordered and independent, record numbers
 for example.
-.IP
+.Pp
 The default behavior of the
-.I put
+.Fa put
 routines is to enter the new key/data pair, replacing any previously
 existing key.
-.IP
-.I Put
+.Pp
+.Fa Put
 routines return -1 on error (setting
-.IR errno ),
+.Va errno ) ,
 0 on success, and 1 if the R_NOOVERWRITE
-.I flag
+.Fa flag
 was set and the key already exists in the file.
-.TP
-seq
+.It seq
 A pointer to a routine which is the interface for sequential
 retrieval from the database.
 The address and length of the key are returned in the structure
 referenced by
-.IR key ,
+.Fa key ,
 and the address and length of the data are returned in the
 structure referenced
 by
-.IR data .
-.IP
+.Fa data .
+.Pp
 Sequential key/data pair retrieval may begin at any time, and the
 position of the ``cursor'' is not affected by calls to the
-.IR del ,
-.IR get ,
-.IR put ,
+.Fa del ,
+.Fa get ,
+.Fa put ,
 or
-.I sync
+.Fa sync
 routines.
 Modifications to the database during a sequential scan will be reflected
 in the scan, i.e. records inserted behind the cursor will not be returned
 while records inserted in front of the cursor will be returned.
-.IP
+.Pp
 The flag value
-.B must
+.Sy must
 be set to one of the following values:
-.RS
-.TP
-R_CURSOR
+.Bl -tag -width XXXXX
+.It R_CURSOR
 The data associated with the specified key is returned.
 This differs from the
-.I get
+.Fa get
 routines in that it sets or initializes the cursor to the location of
 the key as well.
 (Note, for the DB_BTREE access method, the returned key is not necessarily an
 exact match for the specified key.
 The returned key is the smallest key greater than or equal to the specified
 key, permitting partial key matches and range searches.)
-.TP
-R_FIRST
+.It R_FIRST
 The first key/data pair of the database is returned, and the cursor
 is set or initialized to reference it.
-.TP
-R_LAST
+.It R_LAST
 The last key/data pair of the database is returned, and the cursor
 is set or initialized to reference it.
 (Applicable only to the DB_BTREE and DB_RECNO access methods.)
-.TP
-R_NEXT
+.It R_NEXT
 Retrieve the key/data pair immediately after the cursor.
 If the cursor is not yet set, this is the same as the R_FIRST flag.
-.TP
-R_PREV
+.It R_PREV
 Retrieve the key/data pair immediately before the cursor.
 If the cursor is not yet set, this is the same as the R_LAST flag.
 (Applicable only to the DB_BTREE and DB_RECNO access methods.)
-.RE
-.IP
+.El
+.Pp
 R_LAST and R_PREV are available only for the DB_BTREE and DB_RECNO
 access methods because they each imply that the keys have an inherent
 order which does not change.
-.IP
-.I Seq
+.Pp
+.Fa Seq
 routines return -1 on error (setting
-.IR errno ),
+.Va errno ) ,
 0 on success and 1 if there are no key/data pairs less than or greater
 than the specified or current key.
 If the DB_RECNO access method is being used, and if the database file
 is a character special file and no complete key/data pairs are currently
 available, the
-.I seq
+.Fa seq
 routines return 2.
-.TP
-sync
+.It sync
 A pointer to a routine to flush any cached information to disk.
 If the database is in memory only, the
-.I sync
+.Fa sync
 routine has no effect and will always succeed.
-.IP
+.Pp
 The flag value may be set to the following value:
-.RS
-.TP
-R_RECNOSYNC
+.Bl -tag -width XXXXX
+.It R_RECNOSYNC
 If the DB_RECNO access method is being used, this flag causes
 the sync routine to apply to the btree file which underlies the
 recno file, not the recno file itself.
 (See the
-.I bfname
+.Fa bfname
 field of the
-.IR recno (3)
+.Xr recno 3
 manual page for more information.)
-.RE
-.IP
-.I Sync
+.El
+.Pp
+.Fa Sync
 routines return -1 on error (setting
-.IR errno )
+.Va errno )
 and 0 on success.
-.SH "KEY/DATA PAIRS"
+.Sh KEY/DATA PAIRS
 Access to all file types is based on key/data pairs.
 Both keys and data are represented by the following data structure:
-.PP
+.Pp
+.Bl -item -compact
+.It
 typedef struct {
-.RS
+.It
+.Bl -item -compact -offset indent
+.It
 void *data;
-.br
+.It
 size_t size;
-.RE
+.El
+.It
 } DBT;
-.PP
+.El
+.Pp
 The elements of the DBT structure are defined as follows:
-.TP
-data
+.Bl -tag -width XXXXX
+.It data
 A pointer to a byte string.
-.TP
-size
+.It size
 The length of the byte string.
-.PP
+.El
+.Pp
 Key and data byte strings may reference strings of essentially unlimited
 length although any two of them must fit into available memory at the same
 time.
 It should be noted that the access methods provide no guarantees about
 byte string alignment.
-.SH ERRORS
+.Sh ERRORS
 The
-.I dbopen
+.Nm
 routine may fail and set
-.I errno
+.Va errno
 for any of the errors specified for the library routines
-.IR open (2)
+.Xr open 2
 and
-.IR malloc (3)
+.Xr malloc 3
 or the following:
-.TP
-[EFTYPE]
+.Bl -tag -width XEINVALX
+.It Bq Er EFTYPE
 A file is incorrectly formatted.
-.TP
-[EINVAL]
+.It Bq Er EINVAL
 A parameter has been specified (hash function, pad byte etc.) that is
 incompatible with the current file specification or which is not
 meaningful for the function (for example, use of the cursor without
 prior initialization) or there is a mismatch between the version
 number of file and the software.
-.PP
+.El
+.Pp
 The
-.I close
+.Fa close
 routines may fail and set
-.I errno
+.Va errno
 for any of the errors specified for the library routines
-.IR close (2),
-.IR read (2),
-.IR write (2),
-.IR free (3),
+.Xr close 2 ,
+.Xr read 2 ,
+.Xr write 2 ,
+.Xr free 3 ,
 or
-.IR fsync (2).
-.PP
+.Xr fsync 2 .
+.Pp
 The
-.IR del ,
-.IR get ,
-.I put
+.Fa del ,
+.Fa get ,
+.Fa put ,
 and
-.I seq
+.Fa seq
 routines may fail and set
-.I errno
+.Va errno
 for any of the errors specified for the library routines
-.IR read (2),
-.IR write (2),
-.IR free (3)
+.Xr read 2 ,
+.Xr write 2 ,
+.Xr free 3 ,
 or
-.IR malloc (3).
-.PP
+.Xr malloc 3 .
+.Pp
 The
-.I fd
+.Fa fd
 routines will fail and set
-.I errno
+.Va errno
 to ENOENT for in memory databases.
-.PP
+.Pp
 The
-.I sync
+.Fa sync
 routines may fail and set
-.I errno
+.Va errno
 for any of the errors specified for the library routine
-.IR fsync (2).
-.SH "SEE ALSO"
-.IR btree (3),
-.IR hash (3),
-.IR mpool (3),
-.IR recno (3)
-.sp
-.IR "LIBTP: Portable, Modular Transactions for UNIX" ,
-Margo Seltzer, Michael Olson, USENIX proceedings, Winter 1992.
-.SH BUGS
+.Xr fsync 2 .
+.Sh "SEE ALSO"
+.Xr btree 3 ,
+.Xr hash 3 ,
+.Xr mpool 3 ,
+.Xr recno 3
+.Pp
+.Rs
+.%T "LIBTP: Portable, Modular Transactions for UNIX"
+.%A Margo Seltzer
+.%A Michael Olson
+.%J USENIX proceedings
+.%D Winter 1992
+.Re
+.Sh BUGS
 The typedef DBT is a mnemonic for ``data base thang'', and was used
 because noone could think of a reasonable name that wasn't already used.
-.PP
+.Pp
 The file descriptor interface is a kluge and will be deleted in a
 future version of the interface.
-.PP
+.Pp
 None of the access methods provide any form of concurrent access,
 locking, or transactions.
