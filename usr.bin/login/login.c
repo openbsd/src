@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.4 1996/06/26 05:36:01 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.5 1996/07/20 09:10:59 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.4 1996/06/26 05:36:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.5 1996/07/20 09:10:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -338,6 +338,9 @@ main(argc, argv)
 	if (!rootlogin)
 		checknologin();
 
+	setegid(pwd->pw_gid);
+	seteuid(pwd->pw_uid);
+
 	if (chdir(pwd->pw_dir) < 0) {
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
 		if (chdir("/"))
@@ -347,6 +350,9 @@ main(argc, argv)
 	}
 
 	quietlog = access(_PATH_HUSHLOGIN, F_OK) == 0;
+
+	seteuid(0);
+	setegid(0);	/* XXX use a saved gid instead? */
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
