@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.67 2001/03/08 03:37:16 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.68 2001/03/18 14:58:04 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -297,7 +297,10 @@ wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
-wsmouse*	at	pms?
+wsmouse*	at	pms? mux 0
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device   wsmux           2
 
 # crypto support
 #BROKEN: The following two drivers are broken because of 64-bit issues.
