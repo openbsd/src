@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=4 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.2 2000/02/05 22:15:16 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.3 2000/03/31 15:55:06 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -56,26 +56,133 @@ sub write_uniques
 	chown 0, (getgrnam 'bin')[2], $f;
 }
 
-# handle_unformated($result, $args)
-#
-#	handle a batch of unformated manpages $args,
-#	push the subjects to $result
-#
+sub add_fsubject
+{
+	my $lines = shift;
+	my $toadd = shift;
+	my $section = shift;
+	local $_ = join(' ', @$toadd);
+		# unbreakable spaces
+	s/\\\s+/ /g;
+		# em dashes
+	s/\\\(em\s+/- /g;
+		# font changes
+	s/\\f[BIRP]//g;
+	s/\\-/($section) -/ || s/\s-\s/ ($section) - /;
+		# other dashes
+	s/\\-/-/g;
+		# sequence of spaces
+	s/\s+$//;
+	s/\s+/ /g;
+		# escaped characters
+	s/\\\&(.)/$1/g;
+		# gremlins...
+	s/\\c//g;
+	push(@$lines, $_);
+}
+
 sub handle_unformated
 {
-	my $result = shift;
-	my $args = shift;
+	my $f = shift;
+	my $filename = shift;
+	my @lines = ();
+	my $so_found = 0;
 	local $_;
-	my $cmd;
-
-	$cmd = new IO::File "/usr/libexec/getNAME ".join(" ", @$args)."|";
-	while (<$cmd>) {
-		chomp;
-		s/ [a-zA-Z\d]* \\-/ -/;
-		push(@$result, $_);
+		# retrieve basename of file
+	my ($name, $section) = $filename =~ m|(?:.*/)?(.*)\.([\w\d]+)|;
+		# scan until macro
+	while (<$f>) {
+		next unless m/^\./;
+		if (m/^\.de/) {
+			while (<$f>) {
+				last if m/^\.\./;
+			}
+			next;
+		}
+		$so_found = 1 if m/\.so/;
+		if (m/^\.TH/ || m/^\.th/) {
+			# ($name2, $section2) = m/^\.(?:TH|th)\s+(\S+)\s+(\S+)/;
+			while (<$f>) {
+				next unless m/^\./;
+				if (m/^\.SH/ || m/^\.sh/) {
+					my @subject = ();
+					while (<$f>) {
+						last if m/^\.SH/ || m/^\.sh/ || m/^\.SS/ ||
+							m/^\.ss/ || m/^\.nf/;
+						if (m/^\.PP/ || m/^\.br/ || m/^\.PD/ || /^\.sp/) {
+							add_fsubject(\@lines, \@subject, $section) 
+								if @subject != 0;
+							@subject = ();
+							next;
+						}
+						next if m/^\'/ || m/\.tr\s+/ || m/\.\\\"/;
+						if (m/^\.de/) {
+							while (<$f>) {
+								last if m/^\.\./;
+							}
+							next;
+						}
+						chomp;
+						s/\.(?:B|I|IR|SM)\s+//;
+						push(@subject, $_) unless m/^\s*$/;
+					}
+					add_fsubject(\@lines, \@subject, $section) 
+						if @subject != 0;
+					return \@lines;
+				}
+			}
+			warn "Couldn't find subject in old manpage $filename\n";
+		} elsif (m/^\.Dt/) {
+			$section .= "/$1" if (m/^\.Dt\s+\S+\s+\d\S*\s+(\S+)/);
+			while (<$f>) {
+				next unless m/^\./;
+				if (m/^\.Sh/) {
+					# subject/keep is the only way to deal with Nm/Nd pairs
+					my @subject = ();
+					my @keep = ();
+					my $nd_seen = 0;
+					while (<$f>) {
+						last if m/^\.Sh/;
+						s/\s,/,/g;
+						if (s/^\.(..)\s+//) {
+							my $macro = $1;
+							next if $macro eq "\\\"";
+							s/\"(.*?)\"/$1/g;
+							s/\\-/-/g;
+							$macro eq 'Xr' and s/^(\S+)\s+(\d\S*)/$1 ($2)/;
+							$macro eq 'Ox' and s/^/OpenBSD /;
+							$macro eq 'Nx' and s/^/NetBSD /;
+							if ($macro eq 'Nd') {
+								if (@keep != 0) {
+									add_fsubject(\@lines, \@keep, $section);
+									@keep = ();
+								}
+								push(@subject, "\\-");
+								$nd_seen = 1;
+							}
+							if ($nd_seen && $macro eq 'Nm') {
+								@keep = @subject;
+								@subject = ();
+								$nd_seen = 0;
+							}
+						}
+						push(@subject, $_) unless m/^\s*$/;
+					}
+					unshift(@subject, @keep) if @keep != 0;
+					add_fsubject(\@lines, \@subject, $section)
+						if @subject != 0;
+					return \@lines;
+				}
+			}
+		}
 	}
-	close $cmd;
+	if ($so_found == 0) {
+		warn "Unknown manpage type $filename\n";
+	}
+	return \@lines;
 }
+						
+		
 
 sub add_subject
 {
@@ -121,9 +228,13 @@ sub handle_formated
 			{}
 		if (m/\w[-+.\w\d]*\(([-+.\w\d\/]+)\)/) {
 			$section = $1;
+			# Find architecture
+			if (m/Manual\s+\((.*?)\)/) {
+				$section = "$section/$1";
+			}
 		}
 		# Not all man pages are in english
-		if (m/^(?:NAME|NAMN)\s*$/) {
+		if (m/^(?:NAME|NAMN|Name)\s*$/) {
 			unless (defined $section) {
 				print STDERR "Can't find section in $filename\n";
 				$section='??';
@@ -162,7 +273,7 @@ sub find_manpages
 	$list=[];
 	find(
 	    sub {
-		return unless /(?:\.[0-9]|0\.Z|0\.gz)$/;
+		return unless /\.\d\w*(?:\.Z|\.gz)?$/;
 		return unless -f $_;
 		my $inode = (stat _)[1];
 		return if defined $nodes{$inode};
@@ -180,29 +291,26 @@ sub scan_manpages
 {
 	my $list = shift;
 	local $_;
-	my (@todo, $done);
+	my ($done);
 	$done=[];
 
 	for (@$list) {
 	    my ($file, $subjects);
-	    if (m/\.[1-9]$/) {
-		    push(@todo, $_);
-		    if (@todo > 5000) {
-			    handle_unformated($done, \@todo);
-			    @todo = ();
-		    }
-		    next;
-	    } elsif (m/\.0\.(?:Z|gz)$/) {
+		if (m/\.(?:Z|gz)$/) {
 		    $file = new IO::File "gzip -fdc $_|";
-	    } else {
+			$_ = $`;
+		} else {
 		    $file = new IO::File $_ or die "$0: Can't read $_\n";
+		}
+	    if (m/\.[1-9][^.]*$/) {
+			$subjects = handle_unformated($file, $_);
+	    } elsif (m/\.0$/) {
+			$subjects = handle_formated($file, $_);
+	    } else {
+			warn "Can't find type of $_";
+			next;
 	    }
-
-	    $subjects = handle_formated($file, $_);
 	    push @$done, @$subjects;
-	}
-	if (@todo > 0) {
-		handle_unformated($done, \@todo);
 	}
 	return $done;
 }
@@ -261,6 +369,12 @@ if ($#ARGV == -1) {
 }
 		
 for my $mandir (@ARGV) {
+	if (-f $mandir) {
+		my @l = ($mandir);
+		my $s = scan_manpages(\@l);
+		print join("\n", @$s), "\n";
+		exit 0;
+	}
 	unless (-d $mandir) {
 		die "$0: $mandir: not a directory"
 	}
