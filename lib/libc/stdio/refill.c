@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: refill.c,v 1.3 1996/08/19 08:33:00 tholo Exp $";
+static char rcsid[] = "$OpenBSD: refill.c,v 1.4 1999/08/07 17:35:58 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -75,6 +75,7 @@ __srefill(fp)
 	if ((fp->_flags & __SRD) == 0) {
 		if ((fp->_flags & __SRW) == 0) {
 			errno = EBADF;
+			fp->_flags |= __SERR;
 			return (EOF);
 		}
 		/* switch to reading */

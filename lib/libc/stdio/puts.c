@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: puts.c,v 1.2 1996/08/19 08:32:59 tholo Exp $";
+static char rcsid[] = "$OpenBSD: puts.c,v 1.3 1999/08/07 17:35:58 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$OpenBSD: puts.c,v 1.2 1996/08/19 08:32:59 tholo Exp $";
 /*
  * Write the given string to stdout, appending a newline.
  */
+int
 puts(s)
 	char const *s;
 {

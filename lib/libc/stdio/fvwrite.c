@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.8 1998/11/20 06:13:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: fvwrite.c,v 1.9 1999/08/07 17:35:58 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -111,7 +111,9 @@ __sfvwrite(fp, uio)
 		do {
 			GETIOV(;);
 			if ((fp->_flags & (__SALC | __SSTR)) ==
-			    (__SALC | __SSTR) && fp->_w < len) {
+			    (__SALC | __SSTR) && fp->_w < len &&
+			    ((fp->_flags & __SAMX) == 0 || fp->_bf._size
+			    <= fp->_blksize)) {
 				size_t blen = fp->_p - fp->_bf._base;
 				unsigned char *_base;
 				int _size;
@@ -121,6 +123,9 @@ __sfvwrite(fp, uio)
 				do {
 					_size = (_size << 1) + 1;
 				} while (_size < blen + len);
+				/* Apply maximum if v?asnprintf */
+				if ((fp->_flags & __SAMX))
+					_size = MIN(_size, fp->_blksize);
 				_base = realloc(fp->_bf._base, _size + 1);
 				if (_base == NULL)
 					goto err;
