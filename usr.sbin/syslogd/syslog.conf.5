@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.17 2004/06/03 12:21:08 dhartmei Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.18 2004/06/07 18:37:38 jmc Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -106,11 +106,21 @@ The tag is a line beginning with
 .Em !prog
 and each block will be associated with calls to syslog from that specific
 program.
-When a messages matches multiple blocks, the action of each matching
+When a message matches multiple blocks, the action of each matching
 block is taken.
+If no tag is specified at the beginning of the file,
+every line is checked for a match and acted upon
+.Pq at least until a tag is found .
+.Pp
 .Em !!prog
 causes the subsequent block to abort evaluation when a message matches,
-ensuring that only a single action is taken.
+ensuring that only a single set of actions is taken.
+.Em !*\&
+can be used to ensure that any ensuing blocks are further evaluated
+(i.e. cancelling the effect of a
+.Em !prog
+or
+.Em !!prog ) .
 .Pp
 See
 .Xr syslog 3
