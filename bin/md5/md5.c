@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.10 2001/06/02 20:38:06 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.11 2001/06/02 21:04:53 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -137,11 +137,11 @@ main(int argc, char **argv)
 static void
 digest_string(char *string, struct hash_functions *hf)
 {
-	char *digtest;
+	char *digest;
 
-	digtest = hf->data(string, strlen(string), NULL);
-	(void)printf("%s (\"%s\") = %s\n", hf->name, string, digtest);
-	free(digtest);
+	digest = hf->data(string, strlen(string), NULL);
+	(void)printf("%s (\"%s\") = %s\n", hf->name, string, digest);
+	free(digest);
 }
 
 static void
@@ -220,22 +220,43 @@ digest_time(struct hash_functions *hf)
 static void
 digest_test(struct hash_functions *hf)
 {
+	union ANY_CTX context;
+	int i;
+	char *digest, buf[1000];
+	char *test_strings[] = {
+		"",
+		"a",
+		"abc",
+		"message digest",
+		"abcdefghijklmnopqrstuvwxyz",
+		"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+		    "0123456789",
+		"12345678901234567890123456789012345678901234567890123456789"
+		    "012345678901234567890",
+	};
 
-	/* XXX - different test data for different hashes? */
 	(void)printf("%s test suite:\n", hf->name);
 
-	/* MD5 test suite as per RFC 1321 */
-	digest_string("", hf);
-	digest_string("a", hf);
-	digest_string("abc", hf);
-	digest_string("message digest", hf);
-	digest_string("abcdefghijklmnopqrstuvwxyz", hf);
-	digest_string("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	    "0123456789", hf);
-	digest_string("1234567890123456789012345678901234567890123456789"
-	    "0123456789012345678901234567890", hf);
-	digest_string("abcdbcdecdefdefgefghfghighijhijkijkljklmklmn"
-	    "lmnomnopnopq", hf);
+	for (i = 0; i < 8; i++) {
+		hf->init(&context);
+		hf->update(&context, test_strings[i], strlen(test_strings[i]));
+		digest = hf->end(&context, NULL);
+		(void)printf("%s (\"%s\") = %s\n", hf->name, test_strings[i],
+		    digest);
+		free(digest);
+	}
+
+	/* Now simulate a string of a million 'a' characters. */
+	memset(buf, 'a', sizeof(buf));
+	hf->init(&context);
+	for (i = 0; i < 1000; i++)
+		hf->update(&context, buf, sizeof(buf));
+	digest = hf->end(&context, NULL);
+	(void)printf("%s (one million 'a' characters) = %s\n",
+	    hf->name, digest);
+	free(digest);
+
 }
 
 static void
