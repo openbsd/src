@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.22 2003/02/03 17:46:56 jmc Exp $
+.\"	$Id: inetd.8,v 1.23 2003/04/08 01:26:21 david Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -265,8 +265,6 @@ out and exit when no more connections are active.
 will continue to
 listen on the master socket for connections, so the server should not close
 it when it exits.
-.Xr identd 8
-is usually the only stream server marked as wait.
 .Pp
 The
 .Em user
