@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.27 2004/10/09 20:26:57 mickey Exp $	*/
+/*	$OpenBSD: nm.c,v 1.28 2004/10/10 16:45:00 mickey Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.27 2004/10/09 20:26:57 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.28 2004/10/10 16:45:00 mickey Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -68,11 +68,6 @@ static const char rcsid[] = "$OpenBSD: nm.c,v 1.27 2004/10/09 20:26:57 mickey Ex
 
 /* XXX get shared code to handle a.out byte-order swaps */
 #include "byte.c"
-
-#ifdef MID_MACHINE_OVERRIDE
-#undef MID_MACHINE
-#define	MID_MACHINE	MID_MACHINE_OVERRIDE
-#endif
 
 #define	SYMTABMAG	"/ "
 #define	STRTABMAG	"//"
