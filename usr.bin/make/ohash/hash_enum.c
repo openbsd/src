@@ -1,4 +1,4 @@
-/* $OpenBSD: hash_enum.c,v 1.1 2000/06/23 16:24:50 espie Exp $ */
+/* $OpenBSD: hash_enum.c,v 1.2 2000/06/28 10:12:47 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -34,7 +34,7 @@
 void *
 hash_first(h, pos)
 	struct hash 	*h;
-	unsigned 	*pos;
+	unsigned int 	*pos;
 {
 	*pos = 0;
 	return hash_next(h, pos);
@@ -43,7 +43,7 @@ hash_first(h, pos)
 void *
 hash_next(h, pos)
 	struct hash 	*h;
-	unsigned 	*pos;
+	unsigned int 	*pos;
 {
 	for (; *pos < h->size; (*pos)++) 
 		if (h->t[*pos].p != DELETED && h->t[*pos].p != NULL) 

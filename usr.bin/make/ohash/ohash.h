@@ -1,6 +1,6 @@
 #ifndef OHASH_H
 #define OHASH_H
-/* $OpenBSD: ohash.h,v 1.1 2000/06/23 16:24:51 espie Exp $ */
+/* $OpenBSD: ohash.h,v 1.2 2000/06/28 10:12:49 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -45,19 +45,17 @@ struct hash_info {
 };
 
 struct hash {
-	struct hash_record *t;
-	struct hash_info info;
-	unsigned size;
-	unsigned total;
-	unsigned deleted;
+	struct hash_record 	*t;
+	struct hash_info 	info;
+	unsigned int 		size;
+	unsigned int 		total;
+	unsigned int 		deleted;
 };
 
 struct hash_record {
-	unsigned hv;
-	const char *p;
+	u_int32_t	hv;
+	const char 	*p;
 };
-
-#define hash_to_info(h)	(&(h)->info)
 
 /* For this to be tweakable, we use small primitives, and leave part of the
  * logic to the client application.  e.g., hashing is left to the client
@@ -65,26 +63,26 @@ struct hash_record {
  * a hashing table index (opaque) to be used in find/insert/remove.
  * The keys are stored at a known position in the client data.
  */
+__BEGIN_DECLS
 void hash_init __P((struct hash *, unsigned, struct hash_info *));
 void hash_delete __P((struct hash *));
 
-unsigned hash_lookup_string __P((struct hash *, const char *, u_int32_t));
-unsigned hash_lookup_interval __P((struct hash *, const char *, \
+unsigned int hash_lookup_string __P((struct hash *, const char *, u_int32_t));
+unsigned int hash_lookup_interval __P((struct hash *, const char *, \
 	const char *, u_int32_t));
-unsigned hash_lookup_memory __P((struct hash *, const char *, \
+unsigned int hash_lookup_memory __P((struct hash *, const char *, \
 	size_t, u_int32_t));
-void *hash_find __P((struct hash *, unsigned));
-void *hash_remove __P((struct hash *, unsigned));
-void *hash_insert __P((struct hash *, unsigned, void *));
-void *hash_first __P((struct hash *, unsigned *));
-void *hash_next __P((struct hash *, unsigned *));
-unsigned hash_entries __P((struct hash *));
+void *hash_find __P((struct hash *, unsigned int));
+void *hash_remove __P((struct hash *, unsigned int));
+void *hash_insert __P((struct hash *, unsigned int, void *));
+void *hash_first __P((struct hash *, unsigned int *));
+void *hash_next __P((struct hash *, unsigned int *));
+unsigned int hash_entries __P((struct hash *));
 
 void *hash_create_entry __P((struct hash_info *, const char *, const char **));
 u_int32_t hash_interval __P((const char *, const char **));
 
-unsigned hash_qlookupi __P((struct hash *, const char *, const char **));
-unsigned hash_qlookup __P((struct hash *, const char *));
-
+unsigned int hash_qlookupi __P((struct hash *, const char *, const char **));
+unsigned int hash_qlookup __P((struct hash *, const char *));
+__END_DECLS
 #endif
-

@@ -1,4 +1,4 @@
-/* $OpenBSD: hash_entries.c,v 1.1 2000/06/23 16:24:50 espie Exp $ */
+/* $OpenBSD: hash_entries.c,v 1.2 2000/06/28 10:12:46 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -31,7 +31,7 @@
 
 #include "ohash_int.h"
 
-unsigned
+unsigned int
 hash_entries(h)
 	struct hash	*h;
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: hash_do.c,v 1.1 2000/06/23 16:24:50 espie Exp $ */
+/* $OpenBSD: hash_do.c,v 1.2 2000/06/28 10:12:46 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -38,8 +38,8 @@ hash_resize(h)
 	struct hash 	*h;
 {
 	struct hash_record *n;
-	unsigned 	ns, j;
-	unsigned 	i, incr;
+	unsigned int 	ns, j;
+	unsigned int	i, incr;
 
 	if (4 * h->deleted < h->total)
 		ns = h->size << 1;
@@ -81,7 +81,7 @@ hash_resize(h)
 void *
 hash_remove(h, i)
 	struct hash 	*h;
-	unsigned 	i;
+	unsigned int 	i;
 {
 	void 		*result = (void *)h->t[i].p;
 
@@ -101,7 +101,7 @@ hash_remove(h, i)
 void *
 hash_find(h, i)
 	struct hash 	*h;
-	unsigned 	i;
+	unsigned int 	i;
 {
 	if (h->t[i].p == DELETED)
 		return NULL;
@@ -112,7 +112,7 @@ hash_find(h, i)
 void *
 hash_insert(h, i, p)
 	struct hash 	*h;
-	unsigned 	i;
+	unsigned int 	i;
 	void 		*p;
 {
 #ifdef STATS_HASH

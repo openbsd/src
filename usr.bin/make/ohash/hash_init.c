@@ -1,4 +1,4 @@
-/* $OpenBSD: hash_init.c,v 1.1 2000/06/23 16:24:50 espie Exp $ */
+/* $OpenBSD: hash_init.c,v 1.2 2000/06/28 10:12:47 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -35,7 +35,7 @@
 void 
 hash_init(h, size, info)
 	struct hash 	*h;
-	unsigned 	size;
+	unsigned int 	size;
 	struct hash_info*info;
 {
 	h->size = 1UL << size;

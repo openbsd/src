@@ -1,4 +1,4 @@
-/* $OpenBSD: hash_lookup_memory.c,v 1.1 2000/06/23 16:24:50 espie Exp $ */
+/* $OpenBSD: hash_lookup_memory.c,v 1.2 2000/06/28 10:12:48 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -31,15 +31,15 @@
 
 #include "ohash_int.h"
 
-unsigned 
+unsigned int
 hash_lookup_memory(h, k, size, hv)
 	struct hash 	*h;
 	const char 	*k;
 	size_t		size;
 	u_int32_t	hv;
 {
-	unsigned i, incr;
-	unsigned empty;
+	unsigned int	i, incr;
+	unsigned int	empty;
 	
 #ifdef STATS_HASH
 	STAT_HASH_LOOKUP++;
