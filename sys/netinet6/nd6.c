@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.25 2001/02/16 08:48:06 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.114 2001/02/08 10:57:00 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.26 2001/02/16 16:00:00 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.126 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1797,7 +1797,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	 * XXX: we currently do not make neighbor cache on any interface
 	 * other than ARCnet, Ethernet, FDDI and GIF.
 	 *
-	 * draft-ietf-ngtrans-mech-06.txt says:
+	 * RFC2893 says:
 	 * - unidirectional tunnels needs no ND
 	 */
 	switch (ifp->if_type) {
@@ -1834,7 +1834,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 			/*
 			 * We skip link-layer address resolution and NUD
 			 * if the gateway is not a neighbor from ND point
-			 * of view, regardless the value of the value of
+			 * of view, regardless the value of the
 			 * nd_ifinfo.flags.
 			 * The second condition is a bit tricky: we skip
 			 * if the gateway is our own address, which is

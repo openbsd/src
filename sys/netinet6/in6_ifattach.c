@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.15 2001/02/07 11:43:53 itojun Exp $	*/
-/*	$KAME: in6_ifattach.c,v 1.102 2001/02/07 11:01:29 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.16 2001/02/16 15:59:38 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.112 2001/02/10 15:44:59 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -871,7 +871,14 @@ in6_ifdetach(ifp)
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
 
-	/* remove neighbor management table */
+	/*
+	 * remove neighbor management table.  we call it twice just to make
+	 * sure we nuke everything.  maybe we need just one call.
+	 * XXX: since the first call did not release addresses, some prefixes
+	 * might remain.  We should call nd6_purge() again to release the
+	 * prefixes after removing all addresses above.
+	 * (Or can we just delay calling nd6_purge until at this point?)
+	 */
 	nd6_purge(ifp);
 
 	/* remove route to link-local allnodes multicast (ff02::1) */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_cksum.c,v 1.7 2001/02/16 08:22:05 itojun Exp $	*/
-/*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.8 2001/02/16 15:59:38 itojun Exp $	*/
+/*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
