@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.19 2003/11/07 10:16:45 jmc Exp $     */
+/*	$OpenBSD: subr.s,v 1.20 2004/06/13 21:49:22 niklas Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -306,6 +306,7 @@ noque:	.asciz	"swtch"
 	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
 2:	clrl	4(r2)			# clear proc backpointer
 	clrl	_want_resched		# we are now changing process
+	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC
 	movl	r2,_curproc		# set new process running
 	cmpl	r0,r2			# Same process?
 	bneq	1f			# No, continue

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2004/06/13 21:49:15 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -62,9 +62,6 @@
 #include <machine/specialreg.h>
 
 #include "npx.h"
-#if NNPX > 0
-extern struct proc *npxproc;
-#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -88,37 +85,36 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct switchframe *sf;
 
 #if NNPX > 0
-	/*
-	 * If npxproc != p1, then the npx h/w state is irrelevant and the
-	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps.
-	 *
-	 * If npxproc == p1, then we have to save the npx h/w state to
-	 * p1's pcb so that we can copy it.
-	 */
-	if (npxproc == p1)
-		npxsave();
+	npxsave_proc(p1, 1);
 #endif
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
-	savectx(curpcb);
+	/* Copy pcb from proc p1 to p2. */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	*pcb = p1->p_addr->u_pcb;
+
 	/*
 	 * Preset these so that gdt_compact() doesn't get confused if called
 	 * during the allocations below.
+	 *
+	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
+	 * we run the new process.
 	 */
-	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-	/*
-	 * Activate the addres space.  Note this will refresh pcb_ldt_sel.
-	 */
-	pmap_activate(p2);
+	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
-	tss_alloc(pcb);
+
+	p2->p_md.md_tss_sel = tss_alloc(pcb);
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
@@ -150,8 +146,7 @@ cpu_swapout(p)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	if (npxproc == p)
-		npxsave();
+	npxsave_proc(p, 1);
 #endif
 }
 
@@ -169,8 +164,8 @@ cpu_exit(p)
 {
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (npxproc == p)
-		npxproc = 0;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p, 0);
 #endif
 
 	uvmexp.swtch++;
@@ -181,10 +176,7 @@ void
 cpu_wait(p)
 	struct proc *p;
 {
-	struct pcb *pcb;
-
-	pcb = &p->p_addr->u_pcb;
-	tss_free(pcb);
+	tss_free(p->p_md.md_tss_sel);
 }
 
 /*
@@ -251,6 +243,9 @@ pagemove(from, to, size)
 {
 	pt_entry_t *fpte, *tpte;
 	pt_entry_t ofpte, otpte;
+#ifdef MULTIPROCESSOR
+	u_int32_t cpumask = 0;
+#endif
 
 #ifdef DIAGNOSTIC
 	if ((size & PAGE_MASK) != 0)
@@ -263,23 +258,37 @@ pagemove(from, to, size)
 		otpte = *tpte;
 		*tpte++ = *fpte;
 		*fpte++ = 0;
-#if defined(I386_CPU)
+#if defined(I386_CPU) && !defined(MULTIPROCESSOR)
 		if (cpu_class != CPUCLASS_386)
 #endif
 		{
 			if (otpte & PG_V)
-				pmap_update_pg((vaddr_t) to);
+#ifdef MULTIPROCESSOR
+				pmap_tlb_shootdown(pmap_kernel(), (vaddr_t)to,
+				    otpte, &cpumask);
+#else
+				pmap_update_pg((vaddr_t)to);
+#endif
 			if (ofpte & PG_V)
-				pmap_update_pg((vaddr_t) from);
+#ifdef MULTIPROCESSOR
+				pmap_tlb_shootdown(pmap_kernel(),
+				    (vaddr_t)from, ofpte, &cpumask);
+#else
+				pmap_update_pg((vaddr_t)from);
+#endif
 		}
 
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+#ifdef MULTIPROCESSOR
+	pmap_tlb_shootnow(cpumask);
+#else
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
 		tlbflush();		
+#endif
 #endif
 }
 

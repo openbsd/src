@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.41 2004/06/08 20:13:21 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.42 2004/06/13 21:49:11 niklas Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -387,11 +387,6 @@ u_long	pmap_asn_generation[ALPHA_MAXPROCS]; /* current ASN generation */
 struct lock pmap_main_lock;
 struct simplelock pmap_all_pmaps_slock;
 struct simplelock pmap_growkernel_slock;
-
-#ifdef __OpenBSD__
-#define spinlockinit(lock, name, flags)  lockinit(lock, 0, name, 0, flags)
-#define spinlockmgr(lock, flags, slock) lockmgr(lock, flags, slock, curproc)
-#endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	PMAP_MAP_TO_HEAD_LOCK() \

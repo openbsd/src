@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.16 2003/04/17 03:42:14 drahn Exp $	*/
+/*	$OpenBSD: vector.s,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -30,83 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <i386/isa/icu.h>
+#include <machine/i8259.h>
 #include <dev/isa/isareg.h>
 
-#define ICU_HARDWARE_MASK
-
 #define MY_COUNT _C_LABEL(uvmexp)
-
-/*
- * These macros are fairly self explanatory.  If ICU_SPECIAL_MASK_MODE is
- * defined, we try to take advantage of the ICU's `special mask mode' by only
- * EOIing the interrupts on return.  This avoids the requirement of masking and
- * unmasking.  We can't do this without special mask mode, because the ICU
- * would also hold interrupts that it thinks are of lower priority.
- *
- * Many machines do not support special mask mode, so by default we don't try
- * to use it.
- */
-
-#define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
-#define	IRQ_BYTE(irq_num)	((irq_num) / 8)
-
-#ifdef ICU_SPECIAL_MASK_MODE
-
-#define	ACK1(irq_num)
-#define	ACK2(irq_num) \
-	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
-	outb	%al,$IO_ICU1
-#define	MASK(irq_num, icu)
-#define	UNMASK(irq_num, icu) \
-	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
-	outb	%al,$icu
-
-#else /* ICU_SPECIAL_MASK_MODE */
-
-#ifndef	AUTO_EOI_1
-#define	ACK1(irq_num) \
-	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
-	outb	%al,$IO_ICU1
-#else
-#define	ACK1(irq_num)
-#endif
-
-#ifndef AUTO_EOI_2
-#define	ACK2(irq_num) \
-	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
-	outb	%al,$IO_ICU2		/* do the second ICU first */	;\
-	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
-	outb	%al,$IO_ICU1
-#else
-#define	ACK2(irq_num)
-#endif
-
-#ifdef ICU_HARDWARE_MASK
-
-#define	MASK(irq_num, icu) \
-	movb	_C_LABEL(imen) + IRQ_BYTE(irq_num),%al				;\
-	orb	$IRQ_BIT(irq_num),%al					;\
-	movb	%al,_C_LABEL(imen) + IRQ_BYTE(irq_num)				;\
-	FASTER_NOP							;\
-	outb	%al,$(icu+1)
-#define	UNMASK(irq_num, icu) \
-	cli								;\
-	movb	_C_LABEL(imen) + IRQ_BYTE(irq_num),%al				;\
-	andb	$~IRQ_BIT(irq_num),%al					;\
-	movb	%al,_C_LABEL(imen) + IRQ_BYTE(irq_num)				;\
-	FASTER_NOP							;\
-	outb	%al,$(icu+1)						;\
-	sti
-
-#else /* ICU_HARDWARE_MASK */
-
-#define	MASK(irq_num, icu)
-#define	UNMASK(irq_num, icu)
-
-#endif /* ICU_HARDWARE_MASK */
-
-#endif /* ICU_SPECIAL_MASK_MODE */
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -132,6 +59,16 @@
 
 	.globl	_C_LABEL(isa_strayintr)
 
+#ifdef MULTIPROCESSOR
+#define LOCK_KERNEL	call _C_LABEL(i386_intlock)
+#define UNLOCK_KERNEL	call _C_LABEL(i386_intunlock)
+#else
+#define LOCK_KERNEL
+#define UNLOCK_KERNEL
+#endif
+
+#define voidop(num)
+
 /*
  * Normal vectors.
  *
@@ -148,34 +85,35 @@
  *
  * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
-#define	INTR(irq_num, icu, ack) \
-IDTVEC(recurse/**/irq_num)						;\
+#define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
+IDTVEC(recurse_/**/name/**/num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
 	cli								;\
-_C_LABEL(Xintr)/**/irq_num/**/:						;\
+_C_LABEL(Xintr_/**/name/**/num):					;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
 	MAKE_FRAME							;\
-	MASK(irq_num, icu)		/* mask it in hardware */	;\
-	ack(irq_num)			/* and allow other intrs */	;\
+	mask(num)			/* mask it in hardware */	;\
+	early_ack(num)			/* and allow other intrs */	;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	movl	_C_LABEL(iminlevel) + (irq_num) * 4, %eax		;\
-	movzbl	_C_LABEL(cpl),%ebx					;\
+	movl	_C_LABEL(iminlevel) + (num) * 4, %eax			;\
+	movl	CPL,%ebx						;\
 	cmpl	%eax,%ebx						;\
-	jae	_C_LABEL(Xhold/**/irq_num)/* currently masked; hold it */;\
-_C_LABEL(Xresume)/**/irq_num/**/:					;\
-	movzbl	_C_LABEL(cpl),%eax	/* cpl to restore on exit */	;\
+	jae	_C_LABEL(Xhold_/**/name/**/num)/* currently masked; hold it */;\
+Xresume_/**/name/**/num/**/:						;\
+	movl	CPL,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax							;\
-	movl	_C_LABEL(imaxlevel) + (irq_num) * 4,%eax		;\
-	movl	%eax,_C_LABEL(cpl)	/* block enough for this irq */	;\
+	movl	_C_LABEL(imaxlevel) + (num) * 4,%eax			;\
+	movl	%eax,CPL		/* block enough for this irq */	;\
 	sti				/* safe to take intrs now */	;\
-	movl	_C_LABEL(intrhand) + (irq_num) * 4,%ebx	/* head of chain */	;\
+	movl	_C_LABEL(intrhand) + (num) * 4,%ebx	/* head of chain */ ;\
 	testl	%ebx,%ebx						;\
-	jz	_C_LABEL(Xstray)/**/irq_num	/* no handlears; we're stray */	;\
+	jz	_C_LABEL(Xstray_/**/name/**/num)	/* no handlears; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
+	LOCK_KERNEL							;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
@@ -190,16 +128,18 @@ _C_LABEL(Xresume)/**/irq_num/**/:					;\
 5:	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
+	UNLOCK_KERNEL							;\
 	STRAY_TEST			/* see if it's a stray */	;\
-6:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
+6:	unmask(num)			/* unmask it in hardware */	;\
+	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-IDTVEC(stray/**/irq_num)						;\
-	pushl	$irq_num						;\
+IDTVEC(stray_/**/name/**/num)						;\
+	pushl	$num							;\
 	call	_C_LABEL(isa_strayintr)					;\
 	addl	$4,%esp							;\
 	jmp	6b							;\
-IDTVEC(hold/**/irq_num)							;\
-	orb	$IRQ_BIT(irq_num),_C_LABEL(ipending) + IRQ_BYTE(irq_num)	;\
+IDTVEC(hold_/**/name/**/num)						;\
+	orb	$IRQ_BIT(num),_C_LABEL(ipending) + IRQ_BYTE(num)	;\
 	INTRFASTEXIT
 
 #if defined(DEBUG) && defined(notdef)
@@ -209,7 +149,7 @@ IDTVEC(hold/**/irq_num)							;\
 	orl	%eax,%esi
 #define	STRAY_TEST \
 	testl	%esi,%esi						;\
-	jz	_C_LABEL(Xstray)/**/irq_num
+	jz	_C_LABEL(Xstray_/**/name/**/num)
 #else /* !DEBUG */
 #define	STRAY_INITIALIZE
 #define	STRAY_INTEGRATE
@@ -223,66 +163,92 @@ IDTVEC(hold/**/irq_num)							;\
 #define	MAKE_FRAME
 #endif /* DDB */
 
-INTR(0, IO_ICU1, ACK1)
-INTR(1, IO_ICU1, ACK1)
-INTR(2, IO_ICU1, ACK1)
-INTR(3, IO_ICU1, ACK1)
-INTR(4, IO_ICU1, ACK1)
-INTR(5, IO_ICU1, ACK1)
-INTR(6, IO_ICU1, ACK1)
-INTR(7, IO_ICU1, ACK1)
-INTR(8, IO_ICU2, ACK2)
-INTR(9, IO_ICU2, ACK2)
-INTR(10, IO_ICU2, ACK2)
-INTR(11, IO_ICU2, ACK2)
-INTR(12, IO_ICU2, ACK2)
-INTR(13, IO_ICU2, ACK2)
-INTR(14, IO_ICU2, ACK2)
-INTR(15, IO_ICU2, ACK2)
+#define ICUADDR IO_ICU1
+
+INTRSTUB(legacy,0, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,1, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,2, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,3, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,4, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,5, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,6, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,7, i8259_asm_ack1, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+
+#undef ICUADDR
+#define ICUADDR IO_ICU2
+
+INTRSTUB(legacy,8, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,9, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,10, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,11, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,12, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,13, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,14, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
+INTRSTUB(legacy,15, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
+    voidop)
 
 /*
  * These tables are used by the ISA configuration code.
  */
 /* interrupt service routine entry points */
 IDTVEC(intr)
-	.long   _C_LABEL(Xintr0), _C_LABEL(Xintr1), _C_LABEL(Xintr2)
-	.long	_C_LABEL(Xintr3), _C_LABEL(Xintr4), _C_LABEL(Xintr5)
-	.long	_C_LABEL(Xintr6), _C_LABEL(Xintr7), _C_LABEL(Xintr8)
-	.long	_C_LABEL(Xintr9), _C_LABEL(Xintr10), _C_LABEL(Xintr11)
-	.long	_C_LABEL(Xintr12), _C_LABEL(Xintr13)
-	.long	_C_LABEL(Xintr14), _C_LABEL(Xintr15)
+	.long   _C_LABEL(Xintr_legacy0), _C_LABEL(Xintr_legacy1)
+	.long	_C_LABEL(Xintr_legacy2), _C_LABEL(Xintr_legacy3)
+	.long	_C_LABEL(Xintr_legacy4), _C_LABEL(Xintr_legacy5)
+	.long	_C_LABEL(Xintr_legacy6), _C_LABEL(Xintr_legacy7)
+	.long	_C_LABEL(Xintr_legacy8), _C_LABEL(Xintr_legacy9)
+	.long	_C_LABEL(Xintr_legacy10), _C_LABEL(Xintr_legacy11)
+	.long	_C_LABEL(Xintr_legacy12), _C_LABEL(Xintr_legacy13)
+	.long	_C_LABEL(Xintr_legacy14), _C_LABEL(Xintr_legacy15)
 
 /*
  * These tables are used by Xdoreti() and Xspllower().
  */
 /* resume points for suspended interrupts */
 IDTVEC(resume)
-	.long	_C_LABEL(Xresume0), _C_LABEL(Xresume1)
-	.long	_C_LABEL(Xresume2), _C_LABEL(Xresume3)
-	.long	_C_LABEL(Xresume4), _C_LABEL(Xresume5)
-	.long	_C_LABEL(Xresume6), _C_LABEL(Xresume7)
-	.long	_C_LABEL(Xresume8), _C_LABEL(Xresume9)
-	.long	_C_LABEL(Xresume10), _C_LABEL(Xresume11)
-	.long	_C_LABEL(Xresume12), _C_LABEL(Xresume13)
-	.long	_C_LABEL(Xresume14), _C_LABEL(Xresume15)
+	.long	_C_LABEL(Xresume_legacy0), _C_LABEL(Xresume_legacy1)
+	.long	_C_LABEL(Xresume_legacy2), _C_LABEL(Xresume_legacy3)
+	.long	_C_LABEL(Xresume_legacy4), _C_LABEL(Xresume_legacy5)
+	.long	_C_LABEL(Xresume_legacy6), _C_LABEL(Xresume_legacy7)
+	.long	_C_LABEL(Xresume_legacy8), _C_LABEL(Xresume_legacy9)
+	.long	_C_LABEL(Xresume_legacy10), _C_LABEL(Xresume_legacy11)
+	.long	_C_LABEL(Xresume_legacy12), _C_LABEL(Xresume_legacy13)
+	.long	_C_LABEL(Xresume_legacy14), _C_LABEL(Xresume_legacy15)
 	/* for soft interrupts */
-	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.long	_C_LABEL(Xsofttty), _C_LABEL(Xsoftnet)
 	.long	_C_LABEL(Xsoftclock)
+	.long	0, 0
 /* fake interrupts to resume from splx() */
 IDTVEC(recurse)
-	.long	_C_LABEL(Xrecurse0), _C_LABEL(Xrecurse1)
-	.long	_C_LABEL(Xrecurse2), _C_LABEL(Xrecurse3)
-	.long	_C_LABEL(Xrecurse4), _C_LABEL(Xrecurse5)
-	.long	_C_LABEL(Xrecurse6), _C_LABEL(Xrecurse7)
-	.long	_C_LABEL(Xrecurse8), _C_LABEL(Xrecurse9)
-	.long	_C_LABEL(Xrecurse10), _C_LABEL(Xrecurse11)
-	.long	_C_LABEL(Xrecurse12), _C_LABEL(Xrecurse13)
-	.long	_C_LABEL(Xrecurse14), _C_LABEL(Xrecurse15)
+	.long	_C_LABEL(Xrecurse_legacy0), _C_LABEL(Xrecurse_legacy1)
+	.long	_C_LABEL(Xrecurse_legacy2), _C_LABEL(Xrecurse_legacy3)
+	.long	_C_LABEL(Xrecurse_legacy4), _C_LABEL(Xrecurse_legacy5)
+	.long	_C_LABEL(Xrecurse_legacy6), _C_LABEL(Xrecurse_legacy7)
+	.long	_C_LABEL(Xrecurse_legacy8), _C_LABEL(Xrecurse_legacy9)
+	.long	_C_LABEL(Xrecurse_legacy10), _C_LABEL(Xrecurse_legacy11)
+	.long	_C_LABEL(Xrecurse_legacy12), _C_LABEL(Xrecurse_legacy13)
+	.long	_C_LABEL(Xrecurse_legacy14), _C_LABEL(Xrecurse_legacy15)
 	/* for soft interrupts */
-	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	.long	_C_LABEL(Xsofttty), _C_LABEL(Xsoftnet)
 	.long	_C_LABEL(Xsoftclock)
+	.long	0, 0
 
 /* Some bogus data, to keep vmstat happy, for now. */
 	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)

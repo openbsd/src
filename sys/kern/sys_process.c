@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.27 2004/02/08 00:04:21 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.28 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+#include <sys/sched.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -91,6 +92,7 @@ sys_ptrace(p, v, retval)
 #endif
 	int error, write;
 	int temp;
+	int s;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -353,7 +355,9 @@ sys_ptrace(p, v, retval)
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
+			SCHED_LOCK(s);
 			setrunnable(t);
+			SCHED_UNLOCK(s);
 		} else {
 			if (SCARG(uap, data) != 0)
 				psignal(t, SCARG(uap, data));

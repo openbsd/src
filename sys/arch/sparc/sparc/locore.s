@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.58 2004/06/08 18:06:53 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.59 2004/06/13 21:49:20 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4638,6 +4638,8 @@ Lsw_scan:
 	 * Committed to running process p.
 	 * It may be the same as the one we were running before.
 	 */
+	mov	SONPROC, %o0			! p->p_stat = SONPROC
+	stb	%o0, [%g3 + P_STAT]
 	sethi	%hi(_C_LABEL(want_resched)), %o0
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
 	ld	[%g3 + P_ADDR], %g5		! newpcb = p->p_addr;

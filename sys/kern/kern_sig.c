@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.70 2004/04/06 17:24:11 mickey Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.71 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/ptrace.h>
+#include <sys/sched.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -805,18 +806,29 @@ trapsignal(p, signum, code, type, sigval)
  *     regardless of the signal action (eg, blocked or ignored).
  *
  * Other ignored signals are discarded immediately.
+ *
+ * XXXSMP: Invoked as psignal() or sched_psignal().
  */
 void
-psignal(p, signum)
+psignal1(p, signum, dolock)
 	register struct proc *p;
 	register int signum;
+	int dolock;		/* XXXSMP: works, but icky */
 {
 	register int s, prop;
 	register sig_t action;
 	int mask;
 
+#ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
 		panic("psignal signal number");
+
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_ASSERT_UNLOCKED();
+	else
+		SCHED_ASSERT_LOCKED();
+#endif
 
 	/* Ignore signal if we are exiting */
 	if (p->p_flag & P_WEXIT)
@@ -879,7 +891,10 @@ psignal(p, signum)
 	 */
 	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 || p->p_stat != SSTOP))
 		return;
-	s = splhigh();
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_LOCK(s);
+
 	switch (p->p_stat) {
 
 	case SSLEEP:
@@ -921,7 +936,11 @@ psignal(p, signum)
 			p->p_siglist &= ~mask;
 			p->p_xstat = signum;
 			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
-				psignal(p->p_pptr, SIGCHLD);
+				/*
+				 * XXXSMP: recursive call; don't lock
+				 * the second time around.
+				 */
+				sched_psignal(p->p_pptr, SIGCHLD);
 			proc_stop(p);
 			goto out;
 		}
@@ -1009,7 +1028,9 @@ runfast:
 run:
 	setrunnable(p);
 out:
-	splx(s);
+	/* XXXSMP: works, but icky */
+	if (dolock)
+		SCHED_UNLOCK(s);
 }
 
 /*
@@ -1054,7 +1075,7 @@ issignal(struct proc *p)
 			 */
 			p->p_xstat = signum;
 
-			s = splstatclock();	/* protect mi_switch */
+			SCHED_LOCK(s);	/* protect mi_switch */
 			if (p->p_flag & P_FSTRACE) {
 #ifdef	PROCFS
 				/* procfs debugging */
@@ -1070,6 +1091,7 @@ issignal(struct proc *p)
 				proc_stop(p);
 				mi_switch();
 			}
+			SCHED_ASSERT_UNLOCKED();
 			splx(s);
 
 			/*
@@ -1130,8 +1152,9 @@ issignal(struct proc *p)
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
 				proc_stop(p);
-				s = splstatclock();
+				SCHED_LOCK(s);
 				mi_switch();
+				SCHED_ASSERT_UNLOCKED();
 				splx(s);
 				break;
 			} else if (prop & SA_IGNORE) {
@@ -1179,6 +1202,9 @@ void
 proc_stop(p)
 	struct proc *p;
 {
+#ifdef MULTIPROCESSOR
+	SCHED_ASSERT_LOCKED();
+#endif
 
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
@@ -1205,6 +1231,9 @@ postsig(signum)
 	if (signum == 0)
 		panic("postsig");
 #endif
+
+	KERNEL_PROC_LOCK(p);
+
 	mask = sigmask(signum);
 	p->p_siglist &= ~mask;
 	action = ps->ps_sigact[signum];
@@ -1254,7 +1283,11 @@ postsig(signum)
 		 * mask from before the sigpause is what we want
 		 * restored after the signal processing is completed.
 		 */
+#ifdef MULTIPROCESSOR
+		s = splsched();
+#else
 		s = splhigh();
+#endif
 		if (ps->ps_flags & SAS_OLDMASK) {
 			returnmask = ps->ps_oldmask;
 			ps->ps_flags &= ~SAS_OLDMASK;
@@ -1279,6 +1312,8 @@ postsig(signum)
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code,
 		    type, sigval);
 	}
+
+	KERNEL_PROC_UNLOCK(p);
 }
 
 /*
@@ -1308,7 +1343,6 @@ sigexit(p, signum)
 	register struct proc *p;
 	int signum;
 {
-
 	/* Mark process as going away */
 	p->p_flag |= P_WEXIT;
 

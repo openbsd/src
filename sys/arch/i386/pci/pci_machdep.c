@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.24 2003/05/04 08:01:08 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.25 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -92,6 +92,7 @@
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pio.h>
+#include <machine/i8259.h>
 
 #include "bios.h"
 #if NBIOS > 0
@@ -99,10 +100,16 @@
 extern bios_pciinfo_t *bios_pciinfo;
 #endif
 
-#include <i386/isa/icu.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
 
 #include "pcibios.h"
 #if NPCIBIOS > 0
@@ -408,6 +415,11 @@ pci_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+#if NIOAPIC > 0
+	struct mp_intr_map *mip;
+	int bus, dev, func;
+#endif
+
 #if NPCIBIOS > 0
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
@@ -459,6 +471,49 @@ pci_intr_map(pa, ihp)
 			line = 9;
 		}
 	}
+#if NIOAPIC > 0
+	pci_decompose_tag (pc, intrtag, &bus, &dev, &func);
+
+	if (mp_busses != NULL) {
+		/*
+		 * Assumes 1:1 mapping between PCI bus numbers and
+		 * the numbers given by the MP bios.
+		 * XXX Is this a valid assumption?
+		 */
+		int mpspec_pin = (dev<<2)|(pin-1);
+
+		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
+			if (mip->bus_pin == mpspec_pin) {
+				ihp->line = mip->ioapic_ih | line;
+				return 0;
+			}
+		}
+		if (mip == NULL && mp_isa_bus != -1) {
+			for (mip = mp_busses[mp_isa_bus].mb_intrs; mip != NULL;
+			    mip=mip->next) {
+				if (mip->bus_pin == line) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
+			}
+		}
+		if (mip == NULL && mp_eisa_bus != -1) {
+			for (mip = mp_busses[mp_eisa_bus].mb_intrs;
+			    mip != NULL; mip=mip->next) {
+				if (mip->bus_pin == line) {
+					ihp->line = mip->ioapic_ih | line;
+					return 0;
+				}
+			}
+		}
+		if (mip == NULL) {
+			printf("pci_intr_map: "
+			    "bus %d dev %d func %d pin %d; line %d\n",
+			    bus, dev, func, pin, line);
+			printf("pci_intr_map: no MP mapping found\n");
+		}
+	}
+#endif
 
 	return 0;
 
@@ -472,14 +527,22 @@ pci_intr_string(pc, ih)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[64];
 
-	if (ih.line == 0 || ih.line >= ICU_LEN || ih.line == 2)
+	if (ih.line == 0 || (ih.line  & 0xff) >= ICU_LEN || ih.line == 2)
 		panic("pci_intr_string: bogus handle 0x%x", ih.line);
+
+#if NIOAPIC > 0
+	if (ih.line & APIC_INT_VIA_APIC) {
+		snprintf(irqstr, sizeof irqstr, "apic %d int %d (irq %d)",
+		     APIC_IRQ_APIC(ih.line), APIC_IRQ_PIN(ih.line),
+		     ih.line & 0xff);
+		return (irqstr);
+	}
+#endif
 
 	snprintf(irqstr, sizeof irqstr, "irq %d", ih.line);
 	return (irqstr);
-	
 }
 
 void *
@@ -492,16 +555,21 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 {
 	void *ret;
 
+#if NIOAPIC > 0
+	if (ih.line != -1 && ih.line & APIC_INT_VIA_APIC)
+		return (apic_intr_establish(ih.line, IST_LEVEL, level, func, 
+		    arg, what));
+#endif
 	if (ih.line == 0 || ih.line >= ICU_LEN || ih.line == 2)
 		panic("pci_intr_establish: bogus handle 0x%x", ih.line);
 
-	ret = isa_intr_establish(NULL, ih.line,
-	    IST_LEVEL, level, func, arg, what);
+	ret = isa_intr_establish(NULL, ih.line, IST_LEVEL, level, func, arg,
+	    what);
 #if NPCIBIOS > 0
 	if (ret)
 		pci_intr_route_link(pc, &ih);
 #endif
-	return ret;
+	return (ret);
 }
 
 void
@@ -510,5 +578,5 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 	/* XXX oh, unroute the pci int link? */
-	return isa_intr_disestablish(NULL, cookie);
+	return (isa_intr_disestablish(NULL, cookie));
 }

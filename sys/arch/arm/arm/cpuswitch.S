@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.3 2004/06/13 21:49:13 niklas Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -537,11 +537,9 @@ ENTRY(cpu_switch)
 	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
 
-#if 0
 	/* Process is now on a processor. */
-	mov	r0, #LSONPROC			/* l->l_stat = LSONPROC */
-	str	r0, [r6, #(P_STAT)]
-#endif
+	mov	r0, #SONPROC			/* p->p_stat = SONPROC */
+	strb	r0, [r6, #(P_STAT)]
 
 	/* We have a new curproc now so make a note it */
 	ldr	r7, .Lcurproc

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.11 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: lock.h,v 1.12 2004/06/13 21:49:28 niklas Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -56,11 +56,51 @@ struct lock {
 	int	lk_sharecount;		/* # of accepted shared locks */
 	int	lk_waitcount;		/* # of processes sleeping for lock */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
-	short	lk_prio;		/* priority at which to sleep */
+	short	lk_recurselevel;	/* lvl above which recursion ok */
+
+	/*
+	 * This is the sleep message for sleep locks, and a simple name
+	 * for spin locks.
+	 */
 	char	*lk_wmesg;		/* resource sleeping (for tsleep) */
-	int	lk_timo;		/* maximum sleep time (for tsleep) */
-	pid_t	lk_lockholder;		/* pid of exclusive lock holder */
+
+	union {
+		struct {
+			/* pid of exclusive lock holder */
+			pid_t lk_sleep_lockholder;
+
+			/* priority at which to sleep */
+			int lk_sleep_prio;
+
+			/* maximum sleep time (for tsleep) */
+			int lk_sleep_timo;
+		} lk_un_sleep;
+		struct {
+			/* CPU ID of exclusive lock holder */
+			cpuid_t lk_spin_cpu;
+#if defined(LOCKDEBUG)
+			TAILQ_ENTRY(lock) lk_spin_list;
+#endif
+		} lk_un_spin;
+	} lk_un;
+
+#define	lk_lockholder	lk_un.lk_un_sleep.lk_sleep_lockholder
+#define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
+#define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
+
+#define	lk_cpu		lk_un.lk_un_spin.lk_spin_cpu
+#if defined(LOCKDEBUG)
+#define	lk_list		lk_un.lk_un_spin.lk_spin_list
+#endif
+
+#if defined(LOCKDEBUG)
+	const char *lk_lock_file;
+	const char *lk_unlock_file;
+	int lk_lock_line;
+	int lk_unlock_line;
+#endif
 };
+
 /*
  * Lock request types:
  *   LK_SHARED - get one of many possible shared locks. If a process
@@ -109,12 +149,14 @@ struct lock {
  * or passed in as arguments to the lock manager. The LK_REENABLE flag may be
  * set only at the release of a lock obtained by drain.
  */
-#define LK_EXTFLG_MASK	0x00000770	/* mask of external flags */
+#define LK_EXTFLG_MASK	0x00700070	/* mask of external flags */
 #define LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define LK_CANRECURSE	0x00000040	/* allow recursive exclusive lock */
 #define LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
-#define LK_RECURSEFAIL	0x00000100	/* fail if recursive exclusive lock */
+#define LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
+#define LK_RECURSEFAIL	0x00200000	/* fail if recursive exclusive lock */
+#define LK_SPIN		0x00400000	/* lock spins instead of sleeps */
 /*
  * Internal lock flags.
  *
@@ -131,9 +173,9 @@ struct lock {
  *
  * Non-persistent external flags.
  */
-#define LK_INTERLOCK	0x00100000	/* unlock passed simple lock after
+#define LK_INTERLOCK	0x00010000	/* unlock passed simple lock after
 					   getting lk_interlock */
-#define LK_RETRY	0x00200000	/* vn_lock: retry until locked */
+#define LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 /*
  * Lock return status.
@@ -157,6 +199,7 @@ struct lock {
  */
 #define LK_KERNPROC ((pid_t) -2)
 #define LK_NOPROC ((pid_t) -1)
+#define LK_NOCPU ((cpuid_t) -1)
 
 struct proc;
 
@@ -164,8 +207,31 @@ void	lockinit(struct lock *, int prio, char *wmesg, int timo,
 			int flags);
 int	lockmgr(__volatile struct lock *, u_int flags,
 			struct simplelock *, struct proc *p);
-void    lockmgr_printinfo(struct lock *);
+void	lockmgr_printinfo(__volatile struct lock *);
 int	lockstatus(struct lock *);
+
+#if (0 && defined(MULTIPROCESSOR)) || defined(LOCKDEBUG)
+#define spinlockinit(lkp, name, flags)					\
+	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
+#define spinlockmgr(lkp, flags, intrlk)					\
+	lockmgr((lkp), (flags) | LK_SPIN, (intrlk), curproc)
+#else
+#define spinlockinit(lkp, name, flags)	(void)(lkp)
+#define spinlockmgr(lkp, flags, intrlk)	(0)
+#endif
+
+#if defined(LOCKDEBUG)
+int	_spinlock_release_all(__volatile struct lock *, const char *, int);
+void	_spinlock_acquire_count(__volatile struct lock *, int, const char *,
+	    int);
+
+#define	spinlock_release_all(l)	_spinlock_release_all((l), __FILE__, __LINE__)
+#define	spinlock_acquire_count(l, c) _spinlock_acquire_count((l), (c),	\
+					__FILE__, __LINE__)
+#else
+int	spinlock_release_all(__volatile struct lock *);
+void	spinlock_acquire_count(__volatile struct lock *, int);
+#endif
 
 #ifdef LOCKDEBUG
 #define LOCK_ASSERT(x)	KASSERT(x)
@@ -173,5 +239,37 @@ int	lockstatus(struct lock *);
 #define LOCK_ASSERT(x)	/* nothing */
 #endif
 
-#endif /* !_LOCK_H_ */
+#if defined(MULTIPROCESSOR)
+/*
+ * XXX Instead of using struct lock for the kernel lock and thus requiring us
+ * XXX to implement simplelocks, causing all sorts of fine-grained locks all
+ * XXX over our tree getting activated consuming both time and potentially
+ * XXX introducing locking protocol bugs.
+ */
+#ifdef notyet
 
+extern struct lock kernel_lock;
+
+/*
+ * XXX Simplelock macros used at "trusted" places.
+ */
+#define SIMPLELOCK		simplelock
+#define SIMPLE_LOCK_INIT	simple_lock_init
+#define SIMPLE_LOCK		simple_lock
+#define SIMPLE_UNLOCK		simple_unlock
+
+#endif
+
+#else
+
+/*
+ * XXX Simplelock macros used at "trusted" places.
+ */
+#define SIMPLELOCK		simplelock
+#define SIMPLE_LOCK_INIT	simple_lock_init
+#define SIMPLE_LOCK		simple_lock
+#define SIMPLE_UNLOCK		simple_unlock
+
+#endif
+
+#endif /* !_LOCK_H_ */

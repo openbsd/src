@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti.c,v 1.7 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: opti.c,v 1.8 2004/06/13 21:49:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -41,7 +41,6 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/icu.h>
 #include <dev/isa/isavar.h>
 
 #include <dev/isa/opti.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.25 2004/06/08 22:00:25 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.26 2004/06/13 21:49:14 niklas Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -142,6 +142,7 @@ member	P_MD_FLAGS		p_md.md_flags
 member	P_MD_REGS		p_md.md_regs
 
 export	SRUN
+export	SONPROC
 
 struct	pcb
 member	pcb_fpregs

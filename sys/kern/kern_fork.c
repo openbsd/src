@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.68 2004/06/09 20:18:28 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.69 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	timeout_set(&p2->p_sleep_to, endtsleep, p2);
 	timeout_set(&p2->p_realit_to, realitexpire, p2);
 
-#ifdef __HAVE_CPUINFO
+#if defined(__HAVE_CPUINFO)
 	p2->p_cpu = NULL;
 #endif
 
@@ -339,12 +339,12 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
-	s = splstatclock();
+	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
-	splx(s);
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Now can be swapped.
@@ -399,3 +399,20 @@ pidtaken(pid_t pid)
 			return (1);
 	return (0);
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * XXX This is a slight hack to get newly-formed processes to
+ * XXX acquire the kernel lock as soon as they run.
+ */
+void
+proc_trampoline_mp(void)
+{
+	struct proc *p;
+
+	p = curproc;
+
+	SCHED_ASSERT_UNLOCKED();
+	KERNEL_PROC_LOCK(p);
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.11 2003/10/28 13:22:44 avsm Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.12 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <machine/specialreg.h>
+
 static __inline void invlpg(u_int);
 static __inline void lidt(void *);
 static __inline void lldt(u_short);
@@ -55,6 +57,7 @@ static __inline u_int rcr3(void);
 static __inline void lcr4(u_int);
 static __inline u_int rcr4(void);
 static __inline void tlbflush(void);
+static __inline void tlbflushg(void);
 static __inline void disable_intr(void);
 static __inline void enable_intr(void);
 static __inline u_int read_eflags(void);
@@ -144,6 +147,39 @@ tlbflush(void)
 	u_int val;
 	__asm __volatile("movl %%cr3,%0" : "=r" (val));
 	__asm __volatile("movl %0,%%cr3" : : "r" (val));
+}
+
+static __inline void
+tlbflushg(void)
+{
+	/*
+	 * Big hammer: flush all TLB entries, including ones from PTE's
+	 * with the G bit set.  This should only be necessary if TLB
+	 * shootdown falls far behind.
+	 *
+	 * Intel Architecture Software Developer's Manual, Volume 3,
+	 *	System Programming, section 9.10, "Invalidating the
+	 * Translation Lookaside Buffers (TLBS)":
+	 * "The following operations invalidate all TLB entries, irrespective
+	 * of the setting of the G flag:
+	 * ...
+	 * "(P6 family processors only): Writing to control register CR4 to
+	 * modify the PSE, PGE, or PAE flag."
+	 *
+	 * (the alternatives not quoted above are not an option here.)
+	 *
+	 * If PGE is not in use, we reload CR3 for the benefit of
+	 * pre-P6-family processors.
+	 */
+
+#if defined(I686_CPU)
+	if (cpu_feature & CPUID_PGE) {
+		u_int cr4 = rcr4();
+		lcr4(cr4 & ~CR4_PGE);
+		lcr4(cr4);
+	} else
+#endif
+		tlbflush();
 }
 
 #ifdef notyet

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.43 2004/06/09 20:18:28 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.44 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -192,9 +192,16 @@ hardclock(struct clockframe *frame)
 	if (stathz == 0)
 		statclock(frame);
 
-#ifdef __HAVE_CPUINFO
+#if defined(__HAVE_CPUINFO)
 	if (--ci->ci_schedstate.spc_rrticks <= 0)
 		roundrobin(ci);
+
+	/*
+	 * If we are not the primary CPU, we're not allowed to do
+	 * any more work.
+	 */
+	if (CPU_IS_PRIMARY(ci) == 0)
+		return;
 #endif
 
 	/*
@@ -420,9 +427,10 @@ statclock(struct clockframe *frame)
 		if (psdiv == 1) {
 			setstatclockrate(stathz);
 		} else {
-			setstatclockrate(profhz);                       
+			setstatclockrate(profhz);			
 		}
 	}
+
 /* XXX Kludgey */
 #define pscnt spc->spc_pscnt
 #define cp_time spc->spc_cp_time
@@ -483,7 +491,7 @@ statclock(struct clockframe *frame)
 	pscnt = psdiv;
 
 #ifdef __HAVE_CPUINFO
-#undef pscnt
+#undef psdiv
 #undef cp_time
 #endif
 
@@ -495,7 +503,8 @@ statclock(struct clockframe *frame)
 		 */
 		if (schedhz == 0) {
 #ifdef __HAVE_CPUINFO
-			if ((++curcpu()->ci_schedstate.spc_schedticks & 3) == 0)
+			if ((++curcpu()->ci_schedstate.spc_schedticks & 3) ==
+			    0)
 				schedclock(p);
 #else
 			if ((++schedclk & 3) == 0)

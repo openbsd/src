@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.h,v 1.6 2004/02/01 19:05:23 deraadt Exp $	*/
+/*	$OpenBSD: npx.h,v 1.7 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
 
 /*-
@@ -180,5 +180,8 @@ struct	emcsts {
 
 void    process_xmm_to_s87(const struct savexmm *, struct save87 *);
 void    process_s87_to_xmm(const struct save87 *, struct savexmm *);
+struct cpu_info;
+
+void	npxinit(struct cpu_info *);
 
 #endif /* !_I386_NPX_H_ */

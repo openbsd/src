@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2003/07/10 15:26:54 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2004/06/13 21:49:20 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -75,33 +75,7 @@
 #include <machine/reg.h>
 #include <machine/intr.h>
 
-/*#include <sys/sched.h> */
-
-/*
- * CPU states.
- * XXX Not really scheduler state, but no other good place to put
- * it right now, and it really is per-CPU.
- */
-#define CP_USER         0
-#define CP_NICE         1
-#define CP_SYS          2
-#define CP_INTR         3
-#define CP_IDLE         4
-#define CPUSTATES       5
- 
-/*
- * Per-CPU scheduler state.
- */
-struct schedstate_percpu {
-	struct timeval spc_runtime;     /* time curproc started running */
-	__volatile int spc_flags;       /* flags; see below */
-	u_int spc_schedticks;           /* ticks for schedclock() */
-	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
-	u_char spc_curpriority;         /* usrpri of curproc */
-	int spc_rrticks;                /* ticks until roundrobin() */
-	int spc_pscnt;			/* prof/stat counter */
-	int spc_psdiv;			/* prof/stat divisor */
-};
+#include <sys/proc.h>
 
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
@@ -203,7 +177,7 @@ extern	int want_ast;
  * or after the current trap/syscall if in system mode.
  */
 extern	int want_resched;	/* resched() was called */
-#define	need_resched()		(want_resched = 1, want_ast = 1)
+#define	need_resched(ci)	(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling

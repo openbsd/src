@@ -1,7 +1,12 @@
-/*	$OpenBSD: simplelock.h,v 1.10 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: simplelock.h,v 1.11 2004/06/13 21:49:28 niklas Exp $	*/
 
 #ifndef _SIMPLELOCK_H_
 #define _SIMPLELOCK_H_
+
+#ifdef MULTIPROCESSOR
+#include <machine/lock.h>
+#endif
+
 /*
  * A simple spin lock.
  *
@@ -12,28 +17,26 @@
  * of these locks while a process is sleeping.
  */
 struct simplelock {
+#ifdef MULTIPROCESSOR
+	__cpu_simple_lock_t lock_data;
+#else
 	int	lock_data;
+#endif
 };
 
 #ifdef _KERNEL
 
-#ifndef NCPUS
-#define NCPUS 1
-#endif
-
-#define SLOCK_LOCKED 1
-#define SLOCK_UNLOCKED 0
-
-#define SLOCK_INITIALIZER { SLOCK_UNLOCKED }
-
 /*
  * We can't debug locks when we use them in real life.
  */
-#if (NCPUS != 1) && defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) && defined(LOCKDEBUG)
 #undef LOCKDEBUG
 #endif
 
-#if NCPUS == 1
+#if !defined(MULTIPROCESSOR) || 1
+
+#define SLOCK_LOCKED 1
+#define SLOCK_UNLOCKED 0
 
 #ifndef LOCKDEBUG
 
@@ -42,11 +45,7 @@ struct simplelock {
 #define	simple_unlock(lkp)
 #define simple_lock_assert(lkp)
 
-static __inline void simple_lock_init(struct simplelock *);
-
-static __inline void
-simple_lock_init(lkp)
-	struct simplelock *lkp;
+static __inline void simple_lock_init(struct simplelock *lkp)
 {
 
 	lkp->lock_data = SLOCK_UNLOCKED;
@@ -67,7 +66,7 @@ void simple_lock_init(struct simplelock *);
 
 #endif /* !defined(LOCKDEBUG) */
 
-#else  /* NCPUS >  1 */
+#else  /* MULTIPROCESSOR */
 
 /*
  * The simple-lock routines are the primitives out of which the lock
@@ -78,31 +77,26 @@ void simple_lock_init(struct simplelock *);
  * only be used for exclusive locks.
  */
 
-static __inline void
-simple_lock(lkp)
-	__volatile struct simplelock *lkp;
+static __inline void simple_lock_init(struct simplelock *lkp)
 {
-
-	while (test_and_set(&lkp->lock_data))
-		continue;
+	__cpu_simple_lock_init(&lkp->lock_data);
 }
 
-static __inline int
-simple_lock_try(lkp)
-	__volatile struct simplelock *lkp;
+static __inline void simple_lock(__volatile struct simplelock *lkp)
 {
-
-	return (!test_and_set(&lkp->lock_data))
+	__cpu_simple_lock(&lkp->lock_data);
 }
 
-static __inline void
-simple_unlock(lkp)
-	__volatile struct simplelock *lkp;
+static __inline int simple_lock_try(__volatile struct simplelock *lkp)
 {
-
-	lkp->lock_data = 0;
+	return (__cpu_simple_lock_try(&lkp->lock_data));
 }
-#endif /* NCPUS > 1 */
+
+static __inline void simple_unlock(__volatile struct simplelock *lkp)
+{
+	__cpu_simple_unlock(&lkp->lock_data);
+}
+#endif /* MULTIPROCESSOR */
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.54 2004/01/29 01:36:13 tom Exp $	*/
+/*	$OpenBSD: bios.c,v 1.55 2004/06/13 21:49:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -85,9 +85,12 @@ bios_apminfo_t *apm;
 bios_pciinfo_t *bios_pciinfo;
 #endif
 bios_diskinfo_t *bios_diskinfo;
-bios_memmap_t	*bios_memmap;
+bios_memmap_t  *bios_memmap;
 u_int32_t	bios_cksumlen;
 struct bios32_entry bios32_entry;
+#ifdef MULTIPROCESSOR
+void	       *bios_smpinfo;
+#endif
 
 bios_diskinfo_t *bios_getdiskinfo(dev_t);
 
@@ -324,6 +327,12 @@ bios_getopt()
 				cnset(cdp->consdev);
 			}
 			break;
+#ifdef MULTIPROCESSOR
+		case BOOTARG_SMPINFO:
+			bios_smpinfo = q->ba_arg;
+			printf(" smpinfo %p", bios_smpinfo);
+			break;
+#endif
 
 		default:
 #ifdef BIOS_DEBUG
@@ -356,9 +365,6 @@ bios32_service(service, e, ei)
 	bios32_entry_t e;
 	bios32_entry_info_t ei;
 {
-	extern union descriptor *dynamic_gdt;
-	extern int gdt_get_slot(void);
-
 	u_long pa, endpa;
 	vaddr_t va, sva;
 	u_int32_t base, count, off, ent;
@@ -388,8 +394,7 @@ bios32_service(service, e, ei)
 		return (0);
 
 	slot = gdt_get_slot();
-	setsegment(&dynamic_gdt[slot].sd, (caddr_t)va, BIOS32_END,
-	    SDT_MEMERA, SEL_KPL, 1, 0);
+	setgdt(slot, (caddr_t)va, BIOS32_END, SDT_MEMERA, SEL_KPL, 1, 0);
 
 	for (pa = i386_trunc_page(BIOS32_START),
 	     va += i386_trunc_page(BIOS32_START);

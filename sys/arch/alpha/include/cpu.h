@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.24 2004/06/08 20:13:23 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.25 2004/06/13 21:49:12 niklas Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -105,6 +105,7 @@ typedef union alpha_t_float {
 #ifdef _KERNEL
 
 #include <machine/bus.h>
+#include <sys/device.h>
 
 struct pcb;
 struct proc;
@@ -177,6 +178,7 @@ struct mchkinfo {
 };
 
 struct cpu_info {
+	struct device *ci_dev;		/* pointer to our device */
 	/*
 	 * Public members.
 	 */
@@ -185,12 +187,13 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct proc *ci_curproc;	/* current owner of the processor */
+	struct simplelock ci_slock;	/* lock on this data structure */
+	cpuid_t ci_cpuid;		/* our CPU ID */
 
 	/*
 	 * Private members.
 	 */
 	struct mchkinfo ci_mcinfo;	/* machine check info */
-	cpuid_t ci_cpuid;		/* our CPU ID */
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
@@ -265,15 +268,20 @@ struct clockframe {
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
- *
- * XXXSMP
- * need_resched() needs to take a cpu_info *.
  */
-#define	need_resched()							\
+#ifdef MULTIPROCESSOR
+#define	need_resched(ci)						\
+do {									\
+	ci->ci_want_resched = 1;					\
+	aston(curcpu());						\
+} while (/*CONSTCOND*/0)
+#else
+#define	need_resched(ci)						\
 do {									\
 	curcpu()->ci_want_resched = 1;					\
 	aston(curcpu());						\
 } while (/*CONSTCOND*/0)
+#endif
 
 /*
  * Give a profiling tick to the current process when the user profiling

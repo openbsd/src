@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.44 2004/04/23 04:18:17 marc Exp $	*/
+/*	$OpenBSD: locore.s,v 1.45 2004/06/13 21:49:21 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5879,10 +5879,8 @@ Lsw_scan:
 	 * p->p_cpu = curcpu();
 	 */
 #endif	/* defined(MULTIPROCESSOR) */
-#ifdef notyet
 	mov	SONPROC, %o0			! p->p_stat = SONPROC
 	stb	%o0, [%l3 + P_STAT]
-#endif	/* notyet */
 	sethi	%hi(_C_LABEL(want_resched)), %o0
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
 	ldx	[%l3 + P_ADDR], %l1		! newpcb = p->p_addr;

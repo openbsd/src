@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.52 2003/10/15 03:56:21 david Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.53 2004/06/13 21:49:15 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -61,6 +61,12 @@
 
 #include <dev/cons.h>
 
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
+
 int findblkmajor(struct device *dv);
 char *findblkname(int);
 
@@ -109,6 +115,14 @@ cpu_configure()
 	printf("biomask %x netmask %x ttymask %x\n", (u_short)IMASK(IPL_BIO),
 	    (u_short)IMASK(IPL_NET), (u_short)IMASK(IPL_TTY));
 
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
+
+#ifdef MULTIPROCESSOR
+	/* propagate TSS and LDT configuration to the idle pcb's. */
+	cpu_init_idle_pcbs();
+#endif
 	spl0();
 
 	/*

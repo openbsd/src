@@ -132,6 +132,7 @@ member	p_pid
 member	P_FPSTATE	p_md.md_fpstate
 
 export	SRUN
+export	SONPROC
 
 # user structure fields
 define	USIZ		sizeof(struct user)

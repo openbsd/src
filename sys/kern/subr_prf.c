@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.58 2004/01/03 14:08:53 espie Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.59 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
+#include <sys/simplelock.h>
 #include <sys/tty.h>
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
@@ -96,6 +97,50 @@ extern int uvm_doswapencrypt;
 
 int	 kprintf(const char *, int, void *, char *, va_list);
 void	 kputchar(int, int, struct tty *);
+
+#ifdef MULTIPROCESSOR
+
+#ifdef notdef
+
+struct simplelock kprintf_slock;
+
+#define KPRINTF_MUTEX_ENTER(s)						\
+do {									\
+	(s) = splhigh();						\
+	simple_lock(&kprintf_slock);					\
+} while (/*CONSTCOND*/0)
+
+#define KPRINTF_MUTEX_EXIT(s)						\
+do {									\
+	simple_unlock(&kprintf_slock);					\
+	splx((s));							\
+} while (/*CONSTCOND*/0)
+
+#else
+
+struct __mp_lock kprintf_slock;
+
+#define KPRINTF_MUTEX_ENTER(s)						\
+do {									\
+	(s) = splhigh();						\
+	__mp_lock(&kprintf_slock);					\
+} while (/*CONSTCOND*/0)
+
+#define KPRINTF_MUTEX_EXIT(s)						\
+do {									\
+	__mp_unlock(&kprintf_slock);					\
+	splx((s));							\
+} while (/*CONSTCOND*/0)
+
+#endif
+
+#else
+
+struct simplelock kprintf_slock;
+#define KPRINTF_MUTEX_ENTER(s) (s) = splhigh()
+#define KPRINTF_MUTEX_EXIT(s) splx((s))
+
+#endif /* MULTIPROCESSOR */
 
 /*
  * globals
@@ -506,6 +551,9 @@ printf(const char *fmt, ...)
 {
 	va_list ap;
 	int savintr, retval;
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
 
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
@@ -515,6 +563,9 @@ printf(const char *fmt, ...)
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
+
+	KPRINTF_MUTEX_EXIT(s);
+
 	return(retval);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.15 2004/02/05 01:06:33 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.16 2004/06/13 21:49:15 niklas Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -211,8 +211,7 @@ process_read_fpregs(p, regs)
 		union savefpu *frame = process_fpframe(p);
 
 #if NNPX > 0
-		if (npxproc == p)
-			npxsave();
+		npxsave_proc(p, 1);
 #endif
 
 		if (i386_use_fxsave) {
@@ -249,21 +248,22 @@ process_write_regs(p, regs)
 	} else
 #endif
 	{
+#if 0
 		extern int gdt_size;
-		extern union descriptor *dynamic_gdt;
 
 #define	verr_ldt(slot)	(slot < pcb->pcb_ldt_len && \
 			 (pcb->pcb_ldt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
 			 pcb->pcb_ldt[slot].sd.sd_dpl == SEL_UPL && \
 			 pcb->pcb_ldt[slot].sd.sd_p == 1)
 #define	verr_gdt(slot)	(slot < gdt_size && \
-			 (dynamic_gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
-			 dynamic_gdt[slot].sd.sd_dpl == SEL_UPL && \
-			 dynamic_gdt[slot].sd.sd_p == 1)
+			 (gdt[slot].sd.sd_type & SDT_MEMRO) != 0 && \
+			 gdt[slot].sd.sd_dpl == SEL_UPL && \
+			 gdt[slot].sd.sd_p == 1)
 #define	verr(sel)	(ISLDT(sel) ? verr_ldt(IDXSEL(sel)) : \
 				      verr_gdt(IDXSEL(sel)))
 #define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
 #define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
+#endif
 
 		/*
 		 * Check for security violations.
@@ -272,11 +272,14 @@ process_write_regs(p, regs)
 		    !USERMODE(regs->r_cs, regs->r_eflags))
 			return (EINVAL);
 
+		/* XXX Is this safe to remove. */
+#if 0
 		if ((regs->r_gs != pcb->pcb_gs && \
 		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
 		    (regs->r_fs != pcb->pcb_fs && \
 		     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
 			return (EINVAL);
+#endif
 
 		pcb->pcb_gs = regs->r_gs & 0xffff;
 		pcb->pcb_fs = regs->r_fs & 0xffff;
@@ -308,8 +311,7 @@ process_write_fpregs(p, regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		if (npxproc == p)
-			npxdrop();
+		npxsave_proc(p, 0);
 #endif
 	} else
 		p->p_md.md_flags |= MDP_USEDFPU;

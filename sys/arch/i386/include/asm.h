@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -60,6 +60,16 @@
 
 #define _C_LABEL(name)	name
 #define	_ASM_LABEL(x)	x
+
+#define CVAROFF(x, y)	_C_LABEL(x) + y
+
+#ifdef __STDC__
+# define __CONCAT(x,y)	x ## y
+# define __STRING(x)	#x
+#else
+# define __CONCAT(x,y)	x/**/y
+# define __STRING(x)	"x"
+#endif
 
 /*
  * WEAK ALIAS: create a weak alias

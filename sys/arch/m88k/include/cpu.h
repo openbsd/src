@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.2 2004/06/13 21:49:17 niklas Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -103,7 +103,7 @@ extern int	want_ast;
  * or after the current trap/syscall if in system mode.
  */
 extern int	want_resched;		/* resched() was called */
-#define	need_resched()		(want_resched = 1, want_ast = 1)
+#define	need_resched(ci)		(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling

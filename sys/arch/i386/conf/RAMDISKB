@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.70 2004/06/03 18:22:21 grange Exp $
+#	$OpenBSD: RAMDISKB,v 1.71 2004/06/13 21:49:15 niklas Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -42,7 +42,8 @@ config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
 
-bios0	at mainbus0
+cpu0	at mainbus? apid ?
+bios0	at mainbus0 apid ?
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 #option	APMDEBUG
 pcibios0 at bios0 flags 0x0000

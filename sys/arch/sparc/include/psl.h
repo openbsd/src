@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.18 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: psl.h,v 1.19 2004/06/13 21:49:20 niklas Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -95,6 +95,7 @@
  */
 #define IPL_AUHARD	13		/* hard audio interrupts */
 #define IPL_STATCLOCK	14		/* statclock() */
+#define IPL_HIGH	15		/* splhigh() */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 

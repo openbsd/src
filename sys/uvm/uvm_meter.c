@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.18 2004/05/17 13:08:42 pedro Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.19 2004/06/13 21:49:29 niklas Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ uvm_loadav(avg)
 		/* fall through */
 		case SRUN:
 		case SIDL:
+		case SONPROC:
 			nrun++;
 		}
 	}
@@ -263,6 +264,7 @@ uvm_total(totalp)
 
 		case SRUN:
 		case SIDL:
+		case SONPROC:
 			if (p->p_flag & P_INMEM)
 				totalp->t_rq++;
 			else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.3 2001/06/09 06:16:38 angelos Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.4 2004/06/13 21:49:27 niklas Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -16,11 +16,15 @@
  * }
  */
 
-#ifndef _NET_NETISR_DISPATCH_H_
-#define _NET_NETISR_DISPATCH_H_
-
 #ifndef _NET_NETISR_H_
 #error <net/netisr.h> must be included before <net/netisr_dispatch.h>
+#endif
+
+#ifndef _NET_NETISR_DISPATCH_H_
+#define _NET_NETISR_DISPATCH_H_
+#include "ether.h"
+#include "ppp.h"
+#include "bridge.h"
 #endif
 
 /*
@@ -29,7 +33,6 @@
  */
 
 #ifdef INET
-#include "ether.h"
 #if NETHER > 0
 	DONETISR(NETISR_ARP,arpintr);
 #endif
@@ -59,12 +62,9 @@
 #ifdef NATM
 	DONETISR(NETISR_NATM,natmintr);
 #endif
-#include "ppp.h"
 #if NPPP > 0
 	DONETISR(NETISR_PPP,pppintr);
 #endif
-#include "bridge.h"
 #if NBRIDGE > 0
         DONETISR(NETISR_BRIDGE,bridgeintr);
 #endif
-#endif /* _NET_NETISR_DISPATCH_H_ */

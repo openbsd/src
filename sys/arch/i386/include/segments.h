@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.12 2003/11/16 20:30:06 avsm Exp $	*/
+/*	$OpenBSD: segments.h,v 1.13 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern union descriptor gdt[], ldt[];
+extern union descriptor *gdt, ldt[];
 extern struct gate_descriptor idt_region[];
 extern struct gate_descriptor *idt;
 
@@ -132,6 +132,13 @@ void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, void *, size_t, int, int,
     int, int);
+void unsetgate(struct gate_descriptor *);
+void cpu_init_idt(void);
+
+int idt_vec_alloc(int, int);
+void idt_vec_set(int, void (*)(void));
+void idt_vec_free(int);
+
 #endif /* _KERNEL */
 
 #endif /* !_LOCORE */
@@ -220,7 +227,8 @@ void setsegment(struct segment_descriptor *, void *, size_t, int, int,
 #define	GAPM16CODE_SEL	8	/* 16 bit APM code descriptor */
 #define	GAPMDATA_SEL	9	/* APM data descriptor */
 #define	GICODE_SEL	10	/* Interrupt code descriptor (same as Kernel code) */
-#define	NGDT		11
+#define GCPU_SEL	11	/* per-CPU segment */
+#define	NGDT		12
 
 /*
  * Entries in the Local Descriptor Table (LDT)

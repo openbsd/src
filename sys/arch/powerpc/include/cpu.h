@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2004/02/14 15:09:22 grange Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2004/06/13 21:49:19 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ void	delay(unsigned);
 extern volatile int want_resched;
 extern volatile int astpending;
 
-#define	need_resched()		(want_resched = 1, astpending = 1)
+#define	need_resched(ci)		(want_resched = 1, astpending = 1)
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 

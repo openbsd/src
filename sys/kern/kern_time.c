@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.40 2004/06/09 20:18:28 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.41 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ settime(struct timeval *tv)
 	timersub(tv, &time, &delta);
 	time = *tv;
 	timeradd(&boottime, &delta, &boottime);
-#ifdef __HAVE_CURCPU
+#ifdef __HAVE_CPUINFO
 	/*
 	 * XXXSMP
 	 * This is wrong.  We should traverse a list of all

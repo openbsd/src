@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.10 2004/01/09 21:32:23 brad Exp $ */
+/*	$OpenBSD: aria.c,v 1.11 2004/06/13 21:49:24 niklas Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -76,7 +76,6 @@
 #include <dev/mulaw.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
 
 #include <dev/isa/ariareg.h>
 

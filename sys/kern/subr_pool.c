@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.41 2004/06/02 22:17:22 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.42 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 /*
  * XXX - for now.
  */
-#define SIMPLELOCK_INITIALIZER { SLOCK_UNLOCKED }
 #ifdef LOCKDEBUG
 #define simple_lock_freecheck(a, s) do { /* nothing */ } while (0)
 #define simple_lock_only_held(lkp, str) do { /* nothing */ } while (0)
@@ -86,7 +85,7 @@ int pool_inactive_time = 10;
 static struct pool	*drainpp;
 
 /* This spin lock protects both pool_head and drainpp. */
-struct simplelock pool_head_slock = SIMPLELOCK_INITIALIZER;
+struct simplelock pool_head_slock;
 
 struct pool_item_header {
 	/* Page headers */
@@ -528,6 +527,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		pool_init(&pcgpool, sizeof(struct pool_cache_group), 0, 0,
 		    0, "pcgpool", NULL);
 	}
+
+	simple_lock_init(&pool_head_slock);
 
 	/* Insert this into the list of all pools. */
 	simple_lock(&pool_head_slock);
@@ -2062,9 +2063,9 @@ pool_allocator_drain(struct pool_allocator *pa, struct pool *org, int need)
 		TAILQ_INSERT_TAIL(&pa->pa_list, pp, pr_alloc_list);
 		if (pp == org)
 			continue;
-		simple_unlock(&pa->pa_list);
-		freed = pool_reclaim(pp)
-		simple_lock(&pa->pa_list);
+		simple_unlock(&pa->pa_slock);
+		freed = pool_reclaim(pp);
+		simple_lock(&pa->pa_slock);
 	} while ((pp = TAILQ_FIRST(&pa->pa_list)) != start && (freed < need));
 
 	if (!freed) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.42 2003/11/27 00:31:55 espie Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.43 2004/06/13 21:49:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -192,6 +192,8 @@ typedef struct _bios_consdev {
 	int	conspeed;
 } bios_consdev_t;
 
+#define BOOTARG_SMPINFO 6		/* struct mp_float[] */
+
 #if defined(_KERNEL) || defined (_STANDALONE)
 
 #ifdef _LOCORE
@@ -244,6 +246,8 @@ int  bios32_service(u_int32_t, bios32_entry_t, bios32_entry_info_t);
 
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;
+extern void *bios_smpinfo;
+extern bios_pciinfo_t *bios_pciinfo;
 
 #endif /* _KERNEL */
 #endif /* _LOCORE */

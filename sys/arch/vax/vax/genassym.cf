@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2002/01/23 23:24:40 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2004/06/13 21:49:22 niklas Exp $
 #	$NetBSD: genassym.cf,v 1.10 1999/11/19 22:09:55 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -48,6 +48,9 @@ struct	proc
 member	p_priority
 member	p_addr
 member	p_vmspace
+member	p_stat
+
+export	SONPROC
 
 struct	pcb
 member	P0BR

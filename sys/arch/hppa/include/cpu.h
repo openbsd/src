@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.42 2004/04/08 17:10:18 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.43 2004/06/13 21:49:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -124,7 +124,7 @@ extern int cpu_hvers;
 #define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
 #define	signotify(p)		(setsoftast())
-#define	need_resched()		(want_resched = 1, setsoftast())
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 #ifndef _LOCORE

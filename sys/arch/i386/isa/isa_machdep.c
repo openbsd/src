@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.48 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.49 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -122,18 +122,25 @@
 
 #include <uvm/uvm_extern.h>
 
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
+
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
+#include <machine/i8259.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <i386/isa/isa_machdep.h>
-#include <i386/isa/icu.h>
 
 #include "isadma.h"
 
@@ -250,6 +257,16 @@ isa_defaultirq()
 	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
 }
 
+void
+isa_nodefaultirq()
+{
+	int i;
+
+	/* icu vectors */
+	for (i = 0; i < ICU_LEN; i++)
+		unsetgate(&idt[ICU_OFFSET + i]);
+}
+
 /*
  * Handle a NMI, possibly a machine check.
  * return true to panic system, false to ignore.
@@ -286,6 +303,9 @@ int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 int iminlevel[ICU_LEN], imaxlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
+int imask[NIPL];	/* Bitmask telling what interrupts are blocked. */
+int iunmask[NIPL];	/* Bitmask telling what interrupts are accepted. */
+
 /*
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
@@ -295,24 +315,27 @@ struct intrhand *intrhand[ICU_LEN];
 void
 intr_calculatemasks()
 {
-	int irq, level;
+	int irq, level, unusedirqs;
 	struct intrhand *q;
 
 	/* First, figure out which levels each IRQ uses. */
+	unusedirqs = 0xffff;
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
+		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << IPL(q->ih_level);
 		intrlevel[irq] = levels;
+		if (levels)
+			unusedirqs &= ~(1 << irq);
 	}
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs;
+		imask[level] = irqs | unusedirqs;
 	}
 
 	/*
@@ -331,25 +354,40 @@ intr_calculatemasks()
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
+		int irqs = 1 << irq;
 		int minlevel = IPL_NONE;
 		int maxlevel = IPL_NONE;
 
-		for (q = intrhand[irq]; q; q = q->ih_next) {
-			irqs |= IMASK(q->ih_level);
-			if (minlevel == IPL_NONE || q->ih_level < minlevel)
-				minlevel = q->ih_level;
-			if (q->ih_level > maxlevel)
-				maxlevel = q->ih_level;
+		if (intrhand[irq] == NULL) {
+			maxlevel = IPL_HIGH;
+			irqs = IMASK(IPL_HIGH);
+		} else {
+			for (q = intrhand[irq]; q; q = q->ih_next) {
+				irqs |= IMASK(q->ih_level);
+				if (minlevel == IPL_NONE ||
+				    q->ih_level < minlevel)
+					minlevel = q->ih_level;
+				if (q->ih_level > maxlevel)
+					maxlevel = q->ih_level;
+			}
 		}
+		if (irqs != IMASK(maxlevel))
+			panic("irq %d level %x mask mismatch: %x vs %x", irq,
+			    maxlevel, irqs, IMASK(maxlevel));
+
 		intrmask[irq] = irqs;
 		iminlevel[irq] = minlevel;
 		imaxlevel[irq] = maxlevel;
+
+#if 0
+		printf("irq %d: level %x, mask 0x%x (%x)\n", irq,
+		    imaxlevel[irq], intrmask[irq], IMASK(imaxlevel[irq]));
+#endif
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
 	{
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrhand[irq])
 				irqs |= 1 << irq;
@@ -496,17 +534,48 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
 
+#if NIOAPIC > 0
+	struct mp_intr_map *mip;
+
+ 	if (mp_busses != NULL) {
+ 		int mpspec_pin = irq;
+ 		int bus = mp_isa_bus;
+ 		int airq;
+
+ 		for (mip = mp_busses[bus].mb_intrs; mip != NULL; 
+ 		    mip = mip->next) {
+ 			if (mip->bus_pin == mpspec_pin) {
+ 				airq = mip->ioapic_ih | irq;
+ 				break;
+ 			}
+ 		}
+		if (mip == NULL && mp_eisa_bus != -1) {
+			for (mip = mp_busses[mp_eisa_bus].mb_intrs;
+			    mip != NULL; mip=mip->next) {
+				if (mip->bus_pin == mpspec_pin) {
+					airq = mip->ioapic_ih | irq;
+					break;
+				}
+			}
+		}
+ 		if (mip == NULL)
+			printf("isa_intr_establish: no MP mapping found\n");
+ 		else
+			return (apic_intr_establish(airq, type, level, ih_fun,
+			    ih_arg, ih_what));
+ 	}
+#endif
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL) {
 		printf("%s: isa_intr_establish: can't malloc handler info\n",
 		    ih_what);
-		return NULL;
+		return (NULL);
 	}
 
 	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
-		printf("%s: intr_establish: bogus irq or type\n", ih_what);
-		return NULL;
+		printf("%s: isa_intr_establish: bogus irq or type\n", ih_what);
+		return (NULL);
 	}
 	switch (intrtype[irq]) {
 	case IST_NONE:
@@ -521,7 +590,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
 			    ih_what, isa_intr_typename(intrtype[irq]),
 			    isa_intr_typename(type), irq);*/
-			return NULL;
+			return (NULL);
 		}
 		break;
 	}
@@ -571,8 +640,15 @@ isa_intr_disestablish(ic, arg)
 	int irq = ih->ih_irq;
 	struct intrhand **p, *q;
 
+#if NIOAPIC > 0
+	if (irq & APIC_INT_VIA_APIC) {
+		apic_intr_disestablish(arg);
+		return;
+	}
+#endif
+
 	if (!LEGAL_IRQ(irq))
-		panic("intr_disestablish: bogus irq");
+		panic("intr_disestablish: bogus irq %d", irq);
 
 	/*
 	 * Remove the handler from the chain.

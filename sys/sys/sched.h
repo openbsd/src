@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.5 2004/06/09 20:18:28 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.6 2004/06/13 21:49:28 niklas Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -86,10 +86,11 @@
 #define NICE_WEIGHT 2			/* priorities per nice level */
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
 
-extern int	schedhz;			/* ideally: 16 */
+extern int schedhz;			/* ideally: 16 */
+extern int rrticks_init;		/* ticks per roundrobin() */
 
 #ifdef	_SYS_PROC_H_
-void schedclock(struct proc *p);
+void schedclock(struct proc *);
 #ifdef __HAVE_CPUINFO
 void roundrobin(struct cpu_info *);
 #endif
@@ -118,5 +119,75 @@ scheduler_wait_hook(parent, child)
 	parent->p_estcpu = ESTCPULIM(parent->p_estcpu + child->p_estcpu);
 }
 #endif	/* _SYS_PROC_H_ */
+
+#ifndef splsched
+#define splsched() splhigh()
+#endif
+#ifndef IPL_SCHED
+#define IPL_SCHED IPL_HIGH
+#endif
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#include <sys/lock.h>
+
+/*
+ * XXX Instead of using struct lock for the kernel lock and thus requiring us
+ * XXX to implement simplelocks, causing all sorts of fine-grained locks all
+ * XXX over our tree getting activated consuming both time and potentially
+ * XXX introducing locking protocol bugs.
+ */
+#ifdef notyet
+
+extern struct simplelock sched_lock;
+
+#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
+#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
+
+#define	SCHED_LOCK(s)							\
+do {									\
+	s = splsched();							\
+	simple_lock(&sched_lock);					\
+} while (/* CONSTCOND */ 0)
+
+#define	SCHED_UNLOCK(s)							\
+do {									\
+	simple_unlock(&sched_lock);					\
+	splx(s);							\
+} while (/* CONSTCOND */ 0)
+
+#else
+
+extern struct __mp_lock sched_lock;
+
+#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(__mp_lock_held(&sched_lock))
+#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(__mp_lock_held(&sched_lock) == 0)
+
+#define	SCHED_LOCK(s)							\
+do {									\
+	s = splsched();							\
+	__mp_lock(&sched_lock);						\
+} while (/* CONSTCOND */ 0)
+
+#define	SCHED_UNLOCK(s)							\
+do {									\
+	__mp_unlock(&sched_lock);					\
+	splx(s);							\
+} while (/* CONSTCOND */ 0)
+
+#endif
+
+void	sched_lock_idle(void);
+void	sched_unlock_idle(void);
+
+#else /* ! MULTIPROCESSOR || LOCKDEBUG */
+
+#define	SCHED_ASSERT_LOCKED()		splassert(IPL_SCHED);
+#define	SCHED_ASSERT_UNLOCKED()		/* nothing */
+
+#define	SCHED_LOCK(s)			s = splsched()
+#define	SCHED_UNLOCK(s)			splx(s)
+
+#endif /* MULTIPROCESSOR || LOCKDEBUG */
+
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

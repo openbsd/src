@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2003/06/02 23:27:47 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2004/06/13 21:49:15 niklas Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,12 +57,17 @@ if COMPAT_FREEBSD > 0
 include <machine/freebsd_machdep.h>
 endif
 
+if MULTIPROCESSOR
+include <machine/cpu.h>
+endif
+
 include "isa.h"
 if NISA > 0
 include <i386/isa/isa_machdep.h>
 endif
 
 export	SRUN
+export	SONPROC
 
 # values for page tables
 export	PDSLOT_KERN
@@ -84,6 +89,7 @@ member	p_stat
 member	p_wchan
 member	p_vmspace
 member	p_flag
+member	p_cpu
 
 export	P_SYSTEM
 
@@ -101,8 +107,8 @@ member	pcb_fs
 member	pcb_gs
 member	pcb_cr0
 member	pcb_ldt_sel
-member	pcb_tss_sel
 member	pcb_onfault
+member	pcb_fpcpu
 
 # frame definitions
 struct	trapframe
@@ -169,3 +175,26 @@ member	ih_arg
 member	ih_count
 member	ih_next
 endif
+
+define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
+
+define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
+define	CPU_INFO_NAME		offsetof(struct cpu_info, ci_dev.dv_xname)
+define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
+define	CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
+define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_level)
+define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
+define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
+define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
+define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
+define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
+define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
+define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
+define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
+define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+
+define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)

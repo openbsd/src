@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.21 2003/10/18 20:14:40 jmc Exp $ */
+/* $OpenBSD: locore.s,v 1.22 2004/06/13 21:49:11 niklas Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -891,7 +891,6 @@ cpu_switch_queuescan:
 	 *
 	 * Note: GET_CPUINFO clobbers v0, t0, t8...t11.
 	 */
-#if 0
 #ifdef __alpha_bwx__
 	ldiq	t0, SONPROC			/* p->p_stat = SONPROC */
 	stb	t0, P_STAT(s2)
@@ -904,7 +903,6 @@ cpu_switch_queuescan:
 	or	t0, t1, t0
 	stq_u	t0, 0(t3)
 #endif /* __alpha_bwx__ */
-#endif
 
 	GET_CPUINFO
 	/* p->p_cpu initialized in fork1() for single-processor */

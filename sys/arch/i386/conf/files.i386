@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.122 2004/06/05 15:06:22 grange Exp $
+#	$OpenBSD: files.i386,v 1.123 2004/06/13 21:49:15 niklas Exp $
 #
 # new style config file for i386 architecture
 #
@@ -44,6 +44,10 @@ file	arch/i386/i386/dkcsum.c		bios
 file	lib/libz/adler32.c		!ppp_deflate & !ipsec & !crypto
 file	dev/cons.c
 file	dev/cninit.c
+file	arch/i386/i386/mptramp.s	multiprocessor
+file	arch/i386/i386/lock_machdep.c	multiprocessor
+file	arch/i386/i386/ipifuncs.c	multiprocessor
+file	arch/i386/i386/db_mp.c		multiprocessor
 file	arch/i386/i386/wscons_machdep.c	wsdisplay
 major	{vnd = 14}
 
@@ -78,7 +82,7 @@ include "../../../dev/ata/files.ata"
 # System bus types
 #
 
-define mainbus { }
+define mainbus { apid = -1 }
 device	mainbus: isabus, eisabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
@@ -271,6 +275,28 @@ device	apm
 attach	apm at bios
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.S	apm
+
+# Intel SMP specification 1.4
+define	mpbios
+file	arch/i386/i386/mpbios.c		mpbios needs-flag
+
+# CPUS
+define	cpu { apid = -1 }
+device	cpu
+attach	cpu at mainbus
+file	arch/i386/i386/cpu.c		cpu
+
+# Common APIC support routines
+file	arch/i386/i386/apic.c		ioapic | lapic
+
+# Local APIC (required for multiprocessor)
+define	lapic
+file	arch/i386/i386/lapic.c		lapic needs-flag
+
+# I/O APICs
+device	ioapic: mpbios, lapic
+attach	ioapic at mainbus
+file	arch/i386/i386/ioapic.c		ioapic needs-flag
 
 device	pcibios
 attach	pcibios at bios

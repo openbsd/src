@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.31 2004/02/27 21:07:49 grange Exp $	*/
+/*	$OpenBSD: clock.c,v 1.32 2004/06/13 21:49:16 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -331,7 +331,7 @@ gettick()
  * wave' mode counts at 2:1).
  */
 void
-delay(n)
+i8254_delay(n)
 	int n;
 {
 	int limit, tick, otick;
@@ -458,7 +458,7 @@ calibrate_cyclecounter()
 #endif
 
 void
-cpu_initclocks()
+i8254_initclocks()
 {
 	static struct timeout rtcdrain_timeout;
 	stathz = 128;

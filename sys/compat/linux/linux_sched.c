@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.3 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.4 2004/06/13 21:49:23 niklas Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ linux_sys_sched_yield(cp, v, retval)
 	void *v;
 	register_t *retval;
 {
-	need_resched();
+	need_resched(curcpu());
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.64 2004/03/19 19:03:07 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.65 2004/06/13 21:49:26 niklas Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2098,7 +2098,8 @@ ttyinfo(tp)
 				pick = p;
 
 		ttyprintf(tp, " cmd: %s %d [%s] ", pick->p_comm, pick->p_pid,
-		    pick->p_stat == SRUN ? "running" :
+		    pick->p_stat == SONPROC ? "running" :
+		    pick->p_stat == SRUN ? "runnable" :
 		    pick->p_wmesg ? pick->p_wmesg : "iowait");
 
 		calcru(pick, &utime, &stime, NULL);

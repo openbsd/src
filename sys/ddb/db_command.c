@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.35 2004/04/25 03:21:50 itojun Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.36 2004/06/13 21:49:23 niklas Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -59,6 +59,11 @@
  */
 boolean_t	db_cmd_loop_done;
 label_t		*db_recover;
+
+#ifdef MULTIPROCESSOR
+boolean_t	db_switch_cpu;
+long		db_switch_to_cpu;
+#endif
 
 /*
  * if 'ed' style: 'dot' is set at start of last item printed,
@@ -504,6 +509,11 @@ db_command_loop()
 	label_t		*savejmp;
 	extern int	db_output_line;
 
+#ifdef MULTIPROCESSOR
+	db_switch_cpu = 0;
+	db_enter_ddb();
+#endif /* MULTIPROCESSOR */
+
 	/*
 	 * Initialize 'prev' and 'next' to dot.
 	 */
@@ -517,17 +527,35 @@ db_command_loop()
 	(void) setjmp(&db_jmpbuf);
 
 	while (!db_cmd_loop_done) {
+
 		if (db_print_position() != 0)
 			db_printf("\n");
 		db_output_line = 0;
 
+#ifdef MULTIPROCESSOR
+		db_printf("ddb{%ld}> ", (long)cpu_number());
+#else
 		db_printf("ddb> ");
+#endif
 		(void) db_read_line();
 
 		db_command(&db_last_command, db_command_table);
 	}
 
 	db_recover = savejmp;
+
+#ifdef MULTIPROCESSOR
+	if (db_switch_cpu) {
+		db_printf("Moving ddb to cpu %d\n", db_switch_to_cpu);
+		curcpu()->ci_ddb_paused = CI_DDB_STOPPED;
+		db_movetocpu(db_switch_to_cpu);
+		while (curcpu()->ci_ddb_paused == CI_DDB_SHOULDSTOP
+		    || curcpu()->ci_ddb_paused == CI_DDB_STOPPED)
+			;	/* Do nothing */
+	} else {
+		db_leave_ddb();
+	}
+#endif /* MULTIPROCESSOR */
 }
 
 void

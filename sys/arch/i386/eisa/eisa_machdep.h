@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.5 2002/03/14 03:15:53 millert Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.6 2004/06/13 21:49:15 niklas Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.4 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
 #define	EISA_ID_PADDR		0xfffd9
 
 extern struct i386_bus_dma_tag eisa_bus_dma_tag;
+
+#define ELCR0	0x4d0		/* eisa irq 0-7 */
+#define ELCR1	0x4d1		/* eisa irq 8-15 */
 
 /*
  * Types provided to machine-independent EISA code.
