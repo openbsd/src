@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.21 1999/05/31 17:34:46 millert Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.22 1999/06/08 15:47:39 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -643,7 +643,7 @@ linux_sys_pipe(p, v, retval)
 	int reg_edx = retval[1];
 #endif /* __i386__ */
 
-	if ((error = sys_pipe(p, 0, retval))) {
+	if ((error = sys_opipe(p, 0, retval))) {
 #ifdef __i386__
 		retval[1] = reg_edx;
 #endif /* __i386__ */
@@ -656,6 +656,7 @@ linux_sys_pipe(p, v, retval)
 #ifdef __i386__
 		retval[1] = reg_edx;
 #endif /* __i386__ */
+		/* XXX leaks descriptors */
 		return error;
 	}
 
