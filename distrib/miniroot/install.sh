@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.100 2002/04/30 04:14:18 krw Exp $
+#	$OpenBSD: install.sh,v 1.101 2002/05/15 11:54:34 mpech Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -269,7 +269,7 @@ if [ ! -f /etc/fstab ]; then
 		while read _dev _mp; do
 			case $_mp in
 			"/")	echo /dev/$_dev $_mp ffs rw 1 1;;
-			"/tmp")	echo /dev/$_dev $_mp ffs rw,nosuid,nodev 1 2;;
+			"/tmp"|"/var/tmp") echo /dev/$_dev $_mp ffs rw,nosuid,nodev 1 2;;
 			*)	echo /dev/$_dev $_mp ffs rw 1 2;;
 			esac
 		done
