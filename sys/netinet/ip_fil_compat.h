@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.12 2000/02/01 19:29:58 kjell Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.13 2000/02/16 22:34:18 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $IPFilter: ip_compat.h,v 2.1.2.3 1999/11/18 13:55:26 darrenr Exp $
+ * $IPFilter: ip_compat.h,v 2.1.2.5 2000/02/15 08:02:43 darrenr Exp $
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -92,19 +92,25 @@ struct  ether_addr {
 # ifndef	KERNEL
 #  define	_KERNEL
 #  undef	RES_INIT
+#  if SOLARIS2 >= 8
+#   include <netinet/ip6.h>
+#  endif
 #  include <inet/common.h>
 #  include <inet/ip.h>
 #  include <inet/ip_ire.h>
 #  undef	_KERNEL
 # else /* _KERNEL */
+#  if SOLARIS2 >= 8
+#   include <netinet/ip6.h>
+#  endif
 #  include <inet/common.h>
 #  include <inet/ip.h>
 #  include <inet/ip_ire.h>
 # endif /* _KERNEL */
 # if SOLARIS2 >= 8
-#  include <netinet/ip6.h>
-#  include <inet/ip6.h>
-#  define	ipif_local_addr	ipif_lcl_addr
+#  define	ipif_local_addr		ipif_lcl_addr
+/* Only defined in private include file */
+#  define	V4_PART_OF_V6(v6)	v6.s6_addr32[3]
 # endif
 #else
 # if !defined(__sgi)
@@ -287,6 +293,7 @@ typedef	struct	qif	{
 } qif_t;
 extern	ill_t	*get_unit __P((char *));
 #  define	GETUNIT(n)	get_unit((n))
+#  define	IFNAME(x)	((ill_t *)x)->ill_name
 # else /* SOLARIS */
 #  if defined(__sgi)
 #   define  hz HZ
@@ -333,10 +340,17 @@ typedef struct {
 #  if !SOLARIS
 #   include	<sys/kmem_alloc.h>
 #   define	GETUNIT(n)	ifunit((n), IFNAMSIZ)
+#   define	IFNAME(x)	((struct ifnet *)x)->if_name
 #  endif
 # else
 #  ifndef	linux
 #   define	GETUNIT(n)	ifunit((n))
+#   if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
+	(defined(OpenBSD) && (OpenBSD >= 199603))
+#    define	IFNAME(x)	((struct ifnet *)x)->if_xname
+#   else
+#    define	IFNAME(x)	((struct ifnet *)x)->if_name
+#   endif
 #  endif
 # endif /* sun */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_frag.h,v 1.10 2000/02/01 19:29:58 kjell Exp $	*/
+/*	$OpenBSD: ip_frag.h,v 1.11 2000/02/16 22:34:19 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.

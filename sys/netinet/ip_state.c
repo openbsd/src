@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.18 2000/02/01 19:29:59 kjell Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.19 2000/02/16 22:34:20 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.18 2000/01/27 08:51:30 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.21 2000/02/15 08:04:01 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -372,14 +372,12 @@ u_int flags;
 	}
 	bcopy((char *)&ips, (char *)is, sizeof(*is));
 	hv %= fr_statesize;
-	RW_UPGRADE(&ipf_mutex);
 	is->is_rule = fin->fin_fr;
 	if (is->is_rule != NULL) {
-		is->is_rule->fr_ref++;
+		ATOMIC_INC(is->is_rule->fr_ref);
 		pass = is->is_rule->fr_flags;
 	} else
 		pass = fr_flags;
-	MUTEX_DOWNGRADE(&ipf_mutex);
 	WRITE_ENTER(&ipf_state);
 
 	is->is_rout = pass & FR_OUTQUE ? 1 : 0;
@@ -400,6 +398,10 @@ u_int flags;
 	is->is_flags = fin->fin_fi.fi_fl & FI_CMP;
 	is->is_flags |= FI_CMP << 4;
 	is->is_flags |= flags & (FI_W_DPORT|FI_W_SPORT);
+#ifdef  _KERNEL
+	strncpy(is->is_ifname[fin->fin_out], IFNAME(fin->fin_ifp), IFNAMSIZ);
+#endif
+	is->is_ifname[1 - fin->fin_out][0] = '\0';
 	/*
 	 * add into table.
 	 */
@@ -653,6 +655,12 @@ tcphdr_t *tcp;
 				is->is_ifpout = ifp;
 		}
 	}
+#ifdef  _KERNEL
+	if (ret >= 0) {
+		strncpy(is->is_ifname[out], IFNAME(fin->fin_ifp),
+			sizeof(is->is_ifname[1]));
+	}
+#endif
 	return 1;
 }
 
@@ -902,7 +910,6 @@ retry_tcp:
 						isp = &ips_table[hvm];
 						if (ips_table[hvm] == NULL)
 							ips_stats.iss_inuse--;
-						fr_delstate(is);
 						ips_num--;
 					}
 #endif
@@ -965,6 +972,10 @@ retry_udp:
 	fr = is->is_rule;
 	fin->fin_fr = fr;
 	pass = is->is_pass;
+#ifndef	_KERNEL
+	if (tcp->th_flags & TCP_CLOSE)
+		fr_delstate(is);
+#endif
 	RWLOCK_EXIT(&ipf_state);
 	if (fin->fin_fi.fi_fl & FI_FRAG)
 		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
@@ -1194,10 +1205,16 @@ void *ifp;
 	WRITE_ENTER(&ipf_state);
 	for (i = fr_statesize - 1; i >= 0; i--)
 		for (is = ips_table[i]; is != NULL; is = is->is_next) {
-			if (is->is_ifpin == ifp)
-				is->is_ifpin = NULL;
-			if (is->is_ifpout == ifp)
-				is->is_ifpout = NULL;
+			if (is->is_ifpin == ifp) {
+				is->is_ifpin = GETUNIT(is->is_ifname[0]);
+				if (!is->is_ifpin)
+					is->is_ifpin = (void *)-1;
+			}
+			if (is->is_ifpout == ifp) {
+				is->is_ifpout = GETUNIT(is->is_ifname[1]);
+				if (!is->is_ifpout)
+					is->is_ifpout = (void *)-1;
+			}
 		}
 	RWLOCK_EXIT(&ipf_state);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ftp_pxy.c,v 1.6 2000/02/01 19:29:58 kjell Exp $	*/
+/*	$OpenBSD: ip_ftp_pxy.c,v 1.7 2000/02/16 22:34:19 kjell Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT

@@ -1,4 +1,4 @@
-#	$OpenBSD: HISTORY,v 1.3 2000/02/01 19:29:59 kjell Exp $
+#	$OpenBSD: HISTORY,v 1.4 2000/02/16 22:34:21 kjell Exp $
 #
 # NOTE: Quite a few patches and suggestions come from other sources, to whom
 #       I'm greatly indebted, even if no names are mentioned.
@@ -21,6 +21,29 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.3.9	15/02/2000 - Released
+
+fix scheduling of bad locking in fr_addstate() used when we attach onto
+a filter rule.
+
+fix up ip_statesync() with storing interface names in ipstate_t
+
+fix fr_running for LKM's - Eugene Polovnikov
+
+junk using pullupmsg() for solaris - it's next to useless for what we
+need to do here anyway - and implement what we require.
+
+don't call fr_delstate() in fr_checkstate(), when compiled for a user
+program, early but when we're finished with it (got fr & pass)
+
+ipnat(5) fix from Guido
+
+on solaris2, copy message and use that with filter if there is another
+copy if it being used (db_ref > 1).  bad for performance, but better
+than causing a crash.
+
+patch for solaris8-fcs compile from Casper Dik
+
 3.3.8	01/02/2000 - Released
 
 fix state handling of SYN packets.

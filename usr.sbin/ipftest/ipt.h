@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipt.h,v 1.8 2000/02/01 19:30:02 kjell Exp $	*/
+/*	$OpenBSD: ipt.h,v 1.9 2000/02/16 22:34:24 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
