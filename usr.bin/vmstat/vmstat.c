@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.29 1999/06/23 18:48:12 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.30 1999/06/23 19:25:56 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -126,14 +126,6 @@ struct nlist namelist[] = {
 #define X_END		28
 #else
 #define X_END		14
-#endif
-#ifdef tahoe
-#define	X_VBDINIT	(X_END)
-	{ "_vbdinit" },
-#define	X_CKEYSTATS	(X_END+1)
-	{ "_ckeystats" },
-#define	X_DKEYSTATS	(X_END+2)
-	{ "_dkeystats" },
 #endif
 #if defined(__pc532__)
 #define	X_IVT		(X_END)
@@ -545,18 +537,11 @@ pct(top, bot)
 
 #define	PCT(top, bot) pct((long)(top), (long)(bot))
 
-#if defined(tahoe)
-#include <machine/cpu.h>
-#endif
-
 void
 dosum()
 {
 	struct nchstats nchstats;
 	long nchtotal;
-#if defined(tahoe)
-	struct keystats keystats;
-#endif
 
 #ifdef UVM
 	/*
@@ -640,22 +625,6 @@ dosum()
 	    PCT(nchstats.ncs_badhits, nchtotal),
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
-#if defined(tahoe)
-	kread(X_CKEYSTATS, &keystats, sizeof(keystats));
-	(void)printf("%9d %s (free %d%% norefs %d%% taken %d%% shared %d%%)\n",
-	    keystats.ks_allocs, "code cache keys allocated",
-	    PCT(keystats.ks_allocfree, keystats.ks_allocs),
-	    PCT(keystats.ks_norefs, keystats.ks_allocs),
-	    PCT(keystats.ks_taken, keystats.ks_allocs),
-	    PCT(keystats.ks_shared, keystats.ks_allocs));
-	kread(X_DKEYSTATS, &keystats, sizeof(keystats));
-	(void)printf("%9d %s (free %d%% norefs %d%% taken %d%% shared %d%%)\n",
-	    keystats.ks_allocs, "data cache keys allocated",
-	    PCT(keystats.ks_allocfree, keystats.ks_allocs),
-	    PCT(keystats.ks_norefs, keystats.ks_allocs),
-	    PCT(keystats.ks_taken, keystats.ks_allocs),
-	    PCT(keystats.ks_shared, keystats.ks_allocs));
-#endif
 }
 
 void
