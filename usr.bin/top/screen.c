@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.6 1999/04/26 01:34:04 downsj Exp $	*/
+/*	$OpenBSD: screen.c,v 1.7 2001/07/27 17:13:42 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -283,12 +283,14 @@ char *msg;
     if (smart_terminal)
     {
 	putcap(start_standout);
-	fputs(msg, stdout);
+	if (fputs(msg, stdout) == EOF)
+	    exit(1);
 	putcap(end_standout);
     }
     else
     {
-	fputs(msg, stdout);
+	if (fputs(msg, stdout) == EOF)
+	    exit(1);
     }
 }
 
@@ -317,7 +319,8 @@ int len;
 	{
 	    while (len-- > 0)
 	    {
-		putchar(' ');
+		if (putchar(' ') == EOF)
+			exit(1);
 	    }
 	    return(1);
 	}
@@ -341,6 +344,11 @@ int putstdout(ch)
 int ch;
 
 {
-    return(putchar(ch));
+    int ret;
+
+    ret = putchar(ch);
+    if (ret == EOF)
+	exit(1);
+    return (ret);
 }
 

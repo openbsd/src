@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.4 1999/03/06 20:27:42 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.5 2001/07/27 17:13:42 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -262,13 +262,15 @@ time_t *tod;
     }
     else
     {
-	fputs("    ", stdout);
+	if (fputs("    ", stdout) == EOF)
+	    exit(1);
     }
 #ifdef DEBUG
     {
 	char *foo;
 	foo = ctime(tod);
-	fputs(foo, stdout);
+	if (fputs(foo, stdout) == EOF)
+	    exit(1);
     }
 #endif
     printf("%-8.8s\n", &(ctime(tod)[11]));
@@ -301,12 +303,14 @@ int *brkdn;
     i = digits(total);
     while (i++ < 4)
     {
-	putchar(' ');
+	if (putchar(' ') == EOF)
+		exit(1);
     }
 
     /* format and print the process state summary */
     summary_format(procstates_buffer, brkdn, procstate_names);
-    fputs(procstates_buffer, stdout);
+    if (fputs(procstates_buffer, stdout) == EOF)
+	exit(1);
 
     /* save the numbers for next time */
     memcpy(lprocstates, brkdn, num_procstates * sizeof(int));
@@ -336,12 +340,14 @@ int *brkdn;
 	/* if number of digits differs, rewrite the label */
 	if (digits(total) != digits(ltotal))
 	{
-	    fputs(" processes:", stdout);
+	    if (fputs(" processes:", stdout) == EOF)
+		exit(1);
 	    /* put out enough spaces to get to column 15 */
 	    i = digits(total);
 	    while (i++ < 4)
 	    {
-		putchar(' ');
+		if (putchar(' ') == EOF)
+		    exit(1);
 	    }
 	    /* cursor may end up right where we want it!!! */
 	}
@@ -518,12 +524,14 @@ void i_memory(stats)
 int *stats;
 
 {
-    fputs("\nMemory: ", stdout);
+    if (fputs("\nMemory: ", stdout) == EOF)
+	exit(1);
     lastline++;
 
     /* format and print the memory summary */
     summary_format(memory_buffer, stats, memory_names);
-    fputs(memory_buffer, stdout);
+    if (fputs(memory_buffer, stdout) == EOF)
+	exit(1);
 }
 
 void u_memory(stats)
@@ -562,7 +570,8 @@ void i_message()
 {
     while (lastline < y_message)
     {
-	fputc('\n', stdout);
+	if (fputc('\n', stdout) == EOF)
+	    exit(1);
 	lastline++;
     }
     if (next_msg[0] != '\0')
@@ -600,8 +609,10 @@ char *text;
     header_length = strlen(text);
     if (header_status == ON)
     {
-	putchar('\n');
-	fputs(text, stdout);
+	if (putchar('\n') == EOF)
+	    exit(1);
+	if (fputs(text, stdout) == EOF)
+	    exit(1);
 	lastline++;
     }
     else if (header_status == ERASE)
@@ -618,7 +629,8 @@ char *text;		/* ignored */
 {
     if (header_status == ERASE)
     {
-	putchar('\n');
+	if (putchar('\n') == EOF)
+	    exit(1);
 	lastline++;
 	clear_eol(header_length);
 	header_status = OFF;
@@ -643,7 +655,8 @@ char *thisline;
     /* make sure we are on the correct line */
     while (lastline < y_procs + line)
     {
-	putchar('\n');
+	if (putchar('\n') == EOF)
+	    exit(1);
 	lastline++;
     }
 
@@ -651,7 +664,8 @@ char *thisline;
     thisline[display_width] = '\0';
 
     /* write the line out */
-    fputs(thisline, stdout);
+    if (fputs(thisline, stdout) == EOF)
+	exit(1);
 
     /* copy it in to our buffer */
     base = smart_terminal ? screenbuf + lineindex(line) : screenbuf;
@@ -684,7 +698,8 @@ char *linebuf;
 	/* get positioned on the correct line */
 	if (screen_line - lastline == 1)
 	{
-	    putchar('\n');
+	    if (putchar('\n') == EOF)
+		exit(1);
 	    lastline++;
 	}
 	else
@@ -694,7 +709,8 @@ char *linebuf;
 	}
 
 	/* now write the line */
-	fputs(linebuf, stdout);
+	if (fputs(linebuf, stdout) == EOF)
+	    exit(1);
 
 	/* copy it in to the buffer */
 	optr = strecpy(bufferline, linebuf);
@@ -729,7 +745,8 @@ register int hi;
 		{
 		    while (lastline < screen_line)
 		    {
-			putchar('\n');
+			if (putchar('\n') == EOF)
+			    exit(1);
 			lastline++;
 		    }
 		}
@@ -750,7 +767,8 @@ register int hi;
 		    i = hi;
 		    while ((void) clear_eol(strlen(&screenbuf[lineindex(i++)])), i < last_hi)
 		    {
-			putchar('\n');
+			if (putchar('\n') == EOF)
+			    exit(1);
 		    }
 		}
 	    }
@@ -764,7 +782,8 @@ register int hi;
     else
     {
 	/* separate this display from the next with some vertical room */
-	fputs("\n\n", stdout);
+	if (fputs("\n\n", stdout) == EOF)
+	    exit(1);
     }
 }
 
@@ -805,8 +824,12 @@ caddr_t a1, a2, a3;
 	    i = strlen(next_msg);
 	    if ((type & MT_delayed) == 0)
 	    {
-		type & MT_standout ? standout(next_msg) :
-		                     fputs(next_msg, stdout);
+		if (type & MT_standout)
+		    standout(next_msg);
+		else {
+		    if (fputs(next_msg, stdout) == EOF)
+			exit(1);
+		}
 		(void) clear_eol(msglen - i);
 		msglen = i;
 		next_msg[0] = '\0';
@@ -817,7 +840,12 @@ caddr_t a1, a2, a3;
     {
 	if ((type & MT_delayed) == 0)
 	{
-	    type & MT_standout ? standout(next_msg) : fputs(next_msg, stdout);
+	    if (type & MT_standout)
+		standout(next_msg);
+	    else {
+		if (fputs(next_msg, stdout) == EOF)
+		    exit(1);
+	    }
 	    msglen = strlen(next_msg);
 	    next_msg[0] = '\0';
 	}
@@ -829,7 +857,8 @@ void clear_message()
 {
     if (clear_eol(msglen) == 1)
     {
-	putchar('\r');
+	if (putchar('\r') == EOF)
+	    exit(1);
     }
 }
 
@@ -868,7 +897,8 @@ int  numeric;
 
 	    /* return null string */
 	    *buffer = '\0';
-	    putchar('\r');
+	    if (putchar('\r') == EOF)
+		exit(1);
 	    return(-1);
 	}
 	else if (ch == ch_erase)
@@ -877,11 +907,13 @@ int  numeric;
 	    if (cnt <= 0)
 	    {
 		/* none to erase! */
-		putchar('\7');
+		if (putchar('\7') == EOF)
+		    exit(1);
 	    }
 	    else
 	    {
-		fputs("\b \b", stdout);
+		if (fputs("\b \b", stdout) == EOF)
+		    exit(1);
 		ptr--;
 		cnt--;
 	    }
@@ -891,12 +923,14 @@ int  numeric;
 		!isprint(ch))
 	{
 	    /* not legal */
-	    putchar('\7');
+	    if (putchar('\7') == EOF)
+		exit(1);
 	}
 	else
 	{
 	    /* echo it and store it in the buffer */
-	    putchar(ch);
+	    if (putchar(ch) == EOF)
+		exit(1);
 	    ptr++;
 	    cnt++;
 	    if (cnt > maxcnt)
@@ -914,7 +948,8 @@ int  numeric;
     msglen += overstrike ? maxcnt : cnt;
 
     /* return either inputted number or string length */
-    putchar('\r');
+    if (putchar('\r') == EOF)
+	exit(1);
     return(cnt == 0 ? -1 : numeric ? atoi(buffer) : cnt);
 }
 
@@ -1018,14 +1053,16 @@ int line;
     {
 	if (line - lastline == 1 && start == 0)
 	{
-	    putchar('\n');
+	    if (putchar('\n') == EOF)
+		exit(1);
 	}
 	else
 	{
 	    Move_to(start, line);
 	}
 	cursor_on_line = Yes;
-	putchar(ch);
+	if (putchar(ch) == EOF)
+	    exit(1);
 	*old = ch;
 	lastcol = 1;
     }
@@ -1081,7 +1118,8 @@ int line;
 	    else
 	    {
 		/* write the new character */
-		putchar(ch);
+		if (putchar(ch) == EOF)
+		    exit(1);
 	    }
 	    /* put the new character in the screen buffer */
 	    *old = ch;

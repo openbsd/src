@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.8 2001/07/17 02:23:58 pvalchev Exp $	*/
+/*	$OpenBSD: top.c,v 1.9 2001/07/27 17:13:42 deraadt Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -536,7 +536,8 @@ restart:
 	    }
 	    else
 	    {
-		putchar('\n');
+		if (putchar('\n') == EOF)
+		    exit(1);
 	    }
 	    dostates = Yes;
 	}
@@ -687,7 +688,8 @@ restart:
 		    {
 			/* illegal command */
 			new_message(MT_standout, " Command not understood");
-			putchar('\r');
+			if (putchar('\r') == EOF)
+			    exit(1);
 			no_command = Yes;
 		    }
 		    else
@@ -698,7 +700,8 @@ restart:
 			    /* error */
 			    new_message(MT_standout,
 			    " Command cannot be handled by this terminal");
-			    putchar('\r');
+			    if (putchar('\r') == EOF)
+			        exit(1);
 			    no_command = Yes;
 			}
 			else switch(change)
@@ -737,7 +740,8 @@ restart:
 				{
 				    new_message(MT_standout,
 					" Currently no errors to report.");
-				    putchar('\r');
+				    if (putchar('\r') == EOF)
+				        exit(1);
 				    no_command = Yes;
 				}
 				else
@@ -763,7 +767,8 @@ restart:
 					new_message(MT_standout | MT_delayed,
 					  " This terminal can only display %d processes.",
 					  max_topn);
-					putchar('\r');
+					if (putchar('\r') == EOF)
+					    exit(1);
 				    }
 
 				    if (newval == 0)
@@ -813,7 +818,8 @@ restart:
 				    if ((errmsg = kill_procs(tempbuf2)) != NULL)
 				    {
 					new_message(MT_standout, "%s", errmsg);
-					putchar('\r');
+					if (putchar('\r') == EOF)
+					    exit(1);
 					no_command = Yes;
 				    }
 				}
@@ -830,7 +836,8 @@ restart:
 				    if ((errmsg = renice_procs(tempbuf2)) != NULL)
 				    {
 					new_message(MT_standout, "%s", errmsg);
-					putchar('\r');
+					if (putchar('\r') == EOF)
+					    exit(1);
 					no_command = Yes;
 				    }
 				}
@@ -846,7 +853,8 @@ restart:
 				new_message(MT_standout | MT_delayed,
 				    " %sisplaying idle processes.",
 				    ps.idle ? "D" : "Not d");
-				putchar('\r');
+				if (putchar('\r') == EOF)
+				    exit(1);
 				break;
 
 			    case CMD_user:
@@ -869,7 +877,8 @@ restart:
 				    {
 					ps.uid = i;
 				    }
-				    putchar('\r');
+				    if (putchar('\r') == EOF)
+				        exit(1);
 				}
 				else
 				{
@@ -893,7 +902,8 @@ restart:
 				    {
 					order_index = i;
 				    }
-				    putchar('\r');
+				    if (putchar('\r') == EOF)
+				        exit(1);
 				}
 				else
 				{
@@ -904,7 +914,8 @@ restart:
 	    
 			    default:
 				new_message(MT_standout, " BAD CASE IN SWITCH!");
-				putchar('\r');
+				if (putchar('\r') == EOF)
+				    exit(1);
 			}
 		    }
 
