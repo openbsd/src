@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.18 2001/05/24 07:32:43 aaron Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.19 2001/06/23 02:14:25 csapuntz Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -134,9 +134,7 @@ int	procfs_setattr	__P((void *));
 #define	procfs_write	procfs_rw
 int	procfs_ioctl	__P((void *));
 #define	procfs_select	procfs_badop
-#define	procfs_mmap	procfs_badop
 #define	procfs_fsync	procfs_badop
-#define	procfs_seek	procfs_badop
 #define	procfs_remove	procfs_badop
 int	procfs_link	__P((void *));
 #define	procfs_rename	procfs_badop
@@ -155,11 +153,6 @@ int	procfs_print	__P((void *));
 int	procfs_pathconf	__P((void *));
 #define	procfs_islocked	nullop
 #define	procfs_advlock	procfs_badop
-#define	procfs_blkatoff	procfs_badop
-#define	procfs_valloc	procfs_badop
-#define	procfs_vfree	nullop
-#define	procfs_truncate	procfs_badop
-#define	procfs_update	nullop
 
 static pid_t atopid __P((const char *, u_int));
 
@@ -181,9 +174,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_write_desc, procfs_write },		/* write */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_select_desc, procfs_select },		/* select */
-	{ &vop_mmap_desc, procfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
-	{ &vop_seek_desc, procfs_seek },		/* seek */
 	{ &vop_remove_desc, procfs_remove },		/* remove */
 	{ &vop_link_desc, procfs_link },		/* link */
 	{ &vop_rename_desc, procfs_rename },		/* rename */
@@ -203,11 +194,6 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, procfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, procfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, procfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, procfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, procfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, procfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, procfs_truncate },	/* truncate */
-	{ &vop_update_desc, procfs_update },		/* update */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc procfs_vnodeop_opv_desc =

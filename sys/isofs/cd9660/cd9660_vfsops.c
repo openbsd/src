@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.21 2001/02/20 01:50:09 assar Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.22 2001/06/23 02:14:22 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -842,7 +842,7 @@ retry:
 		ip->iso_start = ino >> imp->im_bshift;
 		if (bp != 0)
 			brelse(bp);
-		if ((error = VOP_BLKATOFF(vp, (off_t)0, NULL, &bp)) != 0) {
+		if ((error = cd9660_bufatoff(ip, (off_t)0, NULL, &bp)) != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -862,10 +862,10 @@ retry:
 	    {
 		struct buf *bp2;
 		int off;
-		if ((imp->im_flags & ISOFSMNT_EXTATT)
-		    && (off = isonum_711(isodir->ext_attr_length)))
-			VOP_BLKATOFF(vp, (off_t)-(off << imp->im_bshift), NULL,
-				     &bp2);
+		if ((imp->im_flags & ISOFSMNT_EXTATT) && 
+		    (off = isonum_711(isodir->ext_attr_length)))
+			cd9660_bufatoff(ip, (off_t)-(off << imp->im_bshift),
+			    NULL, &bp2);
 		else
 			bp2 = NULL;
 		cd9660_defattr(isodir, ip, bp2);

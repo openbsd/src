@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.13 2001/02/23 14:42:38 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.14 2001/06/23 02:14:23 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -582,7 +582,7 @@ cd9660_readdir(v)
 	idp->curroff = uio->uio_offset;
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
-	    (error = VOP_BLKATOFF(vdp, (off_t)idp->curroff, NULL, &bp))) {
+	    (error = cd9660_bufatoff(dp, (off_t)idp->curroff, NULL, &bp))) {
 		FREE(idp, M_TEMP);
 		return (error);
 	}
@@ -597,7 +597,7 @@ cd9660_readdir(v)
 		if ((idp->curroff & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)idp->curroff,
+			error = cd9660_bufatoff(dp, (off_t)idp->curroff,
 					     NULL, &bp);
 			if (error)
 				break;
@@ -1024,9 +1024,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, cd9660_ioctl },	/* ioctl */
 	{ &vop_select_desc, cd9660_select },	/* select */
 	{ &vop_revoke_desc, cd9660_revoke },    /* revoke */
-	{ &vop_mmap_desc, cd9660_mmap },	/* mmap */
 	{ &vop_fsync_desc, cd9660_fsync },	/* fsync */
-	{ &vop_seek_desc, cd9660_seek },	/* seek */
 	{ &vop_remove_desc, cd9660_remove },	/* remove */
 	{ &vop_link_desc, cd9660_link },	/* link */
 	{ &vop_rename_desc, cd9660_rename },	/* rename */
@@ -1046,11 +1044,6 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_islocked_desc, cd9660_islocked },/* islocked */
 	{ &vop_pathconf_desc, cd9660_pathconf },/* pathconf */
 	{ &vop_advlock_desc, cd9660_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, cd9660_blkatoff },/* blkatoff */
-	{ &vop_valloc_desc, cd9660_valloc },	/* valloc */
-	{ &vop_vfree_desc, cd9660_vfree },	/* vfree */
-	{ &vop_truncate_desc, cd9660_truncate },/* truncate */
-	{ &vop_update_desc, cd9660_update },	/* update */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -1077,9 +1070,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_ioctl_desc, spec_ioctl },	/* ioctl */
 	{ &vop_select_desc, spec_select },	/* select */
 	{ &vop_revoke_desc, spec_revoke },    /* revoke */
-	{ &vop_mmap_desc, spec_mmap },		/* mmap */
 	{ &vop_fsync_desc, spec_fsync },	/* fsync */
-	{ &vop_seek_desc, spec_seek },		/* seek */
 	{ &vop_remove_desc, spec_remove },	/* remove */
 	{ &vop_link_desc, spec_link },		/* link */
 	{ &vop_rename_desc, spec_rename },	/* rename */
@@ -1099,11 +1090,6 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_islocked_desc, cd9660_islocked },/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },	/* valloc */
-	{ &vop_vfree_desc, spec_vfree },	/* vfree */
-	{ &vop_truncate_desc, spec_truncate },	/* truncate */
-	{ &vop_update_desc, cd9660_update },	/* update */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -1128,9 +1114,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_ioctl_desc, fifo_ioctl },	/* ioctl */
 	{ &vop_select_desc, fifo_select },	/* select */
 	{ &vop_revoke_desc, fifo_revoke },      /* revoke */
-	{ &vop_mmap_desc, fifo_mmap },		/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },	/* fsync */
-	{ &vop_seek_desc, fifo_seek },		/* seek */
 	{ &vop_remove_desc, fifo_remove },	/* remove */
 	{ &vop_link_desc, fifo_link }	,	/* link */
 	{ &vop_rename_desc, fifo_rename },	/* rename */
@@ -1150,11 +1134,6 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_islocked_desc, cd9660_islocked },/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },	/* valloc */
-	{ &vop_vfree_desc, fifo_vfree },	/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },	/* truncate */
-	{ &vop_update_desc, cd9660_update },	/* update */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.9 2001/03/01 20:54:34 provos Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.10 2001/06/23 02:14:24 csapuntz Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -82,9 +82,7 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_select_desc, fifo_select },		/* select */
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },              /* revoke */
-	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
-	{ &vop_seek_desc, fifo_seek },			/* seek */
 	{ &vop_remove_desc, fifo_remove },		/* remove */
 	{ &vop_link_desc, fifo_link },			/* link */
 	{ &vop_rename_desc, fifo_rename },		/* rename */
@@ -104,11 +102,6 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_islocked_desc, fifo_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
-	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
-	{ &vop_update_desc, fifo_update },		/* update */
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };

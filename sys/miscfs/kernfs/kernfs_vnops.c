@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.19 2000/03/13 04:05:15 millert Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.20 2001/06/23 02:14:25 csapuntz Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -189,9 +189,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, kernfs_ioctl },	/* ioctl */
 	{ &vop_select_desc, kernfs_select },	/* select */
 	{ &vop_revoke_desc, kernfs_revoke },    /* revoke */
-	{ &vop_mmap_desc, kernfs_mmap },	/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },	/* fsync */
-	{ &vop_seek_desc, kernfs_seek },	/* seek */
 	{ &vop_remove_desc, kernfs_remove },	/* remove */
 	{ &vop_link_desc, kernfs_link },	/* link */
 	{ &vop_rename_desc, kernfs_rename },	/* rename */
@@ -211,11 +209,6 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, kernfs_islocked },/* islocked */
 	{ &vop_pathconf_desc, kernfs_pathconf },/* pathconf */
 	{ &vop_advlock_desc, kernfs_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, kernfs_blkatoff },/* blkatoff */
-	{ &vop_valloc_desc, kernfs_valloc },	/* valloc */
-	{ &vop_vfree_desc, kernfs_vfree },	/* vfree */
-	{ &vop_truncate_desc, kernfs_truncate },/* truncate */
-	{ &vop_update_desc, kernfs_update },	/* update */
 	{ &vop_bwrite_desc, kernfs_bwrite },	/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };

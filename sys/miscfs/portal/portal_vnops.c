@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.8 1999/11/10 23:17:39 csapuntz Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.9 2001/06/23 02:14:25 csapuntz Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -85,9 +85,7 @@ int	portal_setattr	__P((void *));
 #define	portal_write	eopnotsupp
 #define	portal_ioctl    (int (*) __P((void *)))enoioctl
 #define	portal_select	eopnotsupp
-#define	portal_mmap	eopnotsupp
 #define	portal_fsync	nullop
-#define	portal_seek	nullop
 #define	portal_remove	eopnotsupp
 int	portal_link	__P((void *));
 #define	portal_rename	eopnotsupp
@@ -107,11 +105,6 @@ int	portal_print	__P((void *));
 #define	portal_islocked	vop_generic_islocked
 int	portal_pathconf	__P((void *));
 #define	portal_advlock	eopnotsupp
-#define	portal_blkatoff	eopnotsupp
-#define	portal_valloc	eopnotsupp
-int	portal_vfree	__P((void *));
-#define	portal_truncate	eopnotsupp
-#define	portal_update	eopnotsupp
 #define	portal_bwrite	eopnotsupp
 
 int (**portal_vnodeop_p) __P((void *));
@@ -130,9 +123,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
 	{ &vop_select_desc, portal_select },		/* select */
 	{ &vop_revoke_desc, portal_revoke },            /* revoke */
-	{ &vop_mmap_desc, portal_mmap },		/* mmap */
 	{ &vop_fsync_desc, portal_fsync },		/* fsync */
-	{ &vop_seek_desc, portal_seek },		/* seek */
 	{ &vop_remove_desc, portal_remove },		/* remove */
 	{ &vop_link_desc, portal_link },		/* link */
 	{ &vop_rename_desc, portal_rename },		/* rename */
@@ -152,11 +143,6 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_islocked_desc, portal_islocked },	/* islocked */
 	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, portal_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, portal_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, portal_valloc },		/* valloc */
-	{ &vop_vfree_desc, portal_vfree },		/* vfree */
-	{ &vop_truncate_desc, portal_truncate },	/* truncate */
-	{ &vop_update_desc, portal_update },		/* update */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -683,15 +669,6 @@ portal_print(v)
 	void *v;
 {
 	printf("tag VT_PORTAL, portal vnode\n");
-	return (0);
-}
-
-/* ARGSUSED */
-int
-portal_vfree(v)
-	void *v;
-{
-
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.30 2001/06/05 21:56:14 provos Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.31 2001/06/23 02:14:26 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -105,9 +105,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_select_desc, nfs_select },	/* select */
 	{ &vop_kqfilter_desc, vop_generic_kqfilter },	/* kqfilter */
 	{ &vop_revoke_desc, nfs_revoke },	/* revoke */
-	{ &vop_mmap_desc, nfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
-	{ &vop_seek_desc, nfs_seek },		/* seek */
 	{ &vop_remove_desc, nfs_remove },	/* remove */
 	{ &vop_link_desc, nfs_link },		/* link */
 	{ &vop_rename_desc, nfs_rename },	/* rename */
@@ -127,12 +125,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, nfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, nfs_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, nfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, nfs_valloc },	/* valloc */
 	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, nfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, nfs_truncate },	/* truncate */
-	{ &vop_update_desc, nfs_update },	/* update */
 	{ &vop_bwrite_desc, nfs_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -159,9 +152,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_ioctl_desc, spec_ioctl },	/* ioctl */
 	{ &vop_select_desc, spec_select },	/* select */
 	{ &vop_revoke_desc, spec_revoke },	/* revoke */
-	{ &vop_mmap_desc, spec_mmap },		/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
-	{ &vop_seek_desc, spec_seek },		/* seek */
 	{ &vop_remove_desc, spec_remove },	/* remove */
 	{ &vop_link_desc, spec_link },		/* link */
 	{ &vop_rename_desc, spec_rename },	/* rename */
@@ -181,12 +172,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },	/* valloc */
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, spec_vfree },	/* vfree */
-	{ &vop_truncate_desc, spec_truncate },	/* truncate */
-	{ &vop_update_desc, nfs_update },	/* update */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -211,9 +197,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_ioctl_desc, fifo_ioctl },	/* ioctl */
 	{ &vop_select_desc, fifo_select },	/* select */
 	{ &vop_revoke_desc, fifo_revoke },	/* revoke */
-	{ &vop_mmap_desc, fifo_mmap },		/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
-	{ &vop_seek_desc, fifo_seek },		/* seek */
 	{ &vop_remove_desc, fifo_remove },	/* remove */
 	{ &vop_link_desc, fifo_link },		/* link */
 	{ &vop_rename_desc, fifo_rename },	/* rename */
@@ -233,12 +217,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },	/* valloc */
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, fifo_vfree },	/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },	/* truncate */
-	{ &vop_update_desc, nfs_update },	/* update */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -2607,28 +2586,6 @@ nfs_strategy(v)
 }
 
 /*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-nfs_mmap(v)
-	void *v;
-{
-#if 0
-	struct vop_mmap_args /* {
-		struct vnode *a_vp;
-		int  a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	return (EINVAL);
-}
-
-/*
  * fsync vnode op. Just call nfs_flush() with commit == 1.
  */
 /* ARGSUSED */
@@ -2908,106 +2865,6 @@ nfs_print(v)
 #endif
 	printf("\n");
 	return (0);
-}
-
-/*
- * NFS directory offset lookup.
- * Currently unsupported.
- */
-int
-nfs_blkatoff(v)
-	void *v;
-{
-#if 0
-	struct vop_blkatoff_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		char **a_res;
-		struct buf **a_bpp;
-	} */ *ap = v;
-#endif
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS flat namespace allocation.
- * Currently unsupported.
- */
-int
-nfs_valloc(v)
-	void *v;
-{
-#if 0
-	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
-#endif
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS flat namespace free.
- * Currently unsupported.
- */
-int
-nfs_vfree(v)
-	void *v;
-{
-#if 0
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
-#endif
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS file truncation.
- */
-int
-nfs_truncate(v)
-	void *v;
-{
-#if 0
-	struct vop_truncate_args /* {
-		struct vnode *a_vp;
-		off_t a_length;
-		int a_flags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	/* Use nfs_setattr */
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS update.
- */
-int
-nfs_update(v)
-	void *v;
-#if 0
-	struct vop_update_args /* {
-		struct vnode *a_vp;
-		struct timespec *a_ta;
-		struct timespec *a_tm;
-		int a_waitfor;
-	} */ *ap = v;
-#endif
-{
-
-	/* Use nfs_setattr */
-	return (EOPNOTSUPP);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.7 1998/11/13 00:31:25 art Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.8 2001/06/23 02:14:23 csapuntz Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -63,9 +63,7 @@ int	dead_read	__P((void *));
 int	dead_write	__P((void *));
 int	dead_ioctl	__P((void *));
 int	dead_select	__P((void *));
-#define dead_mmap	dead_badop
 #define dead_fsync	nullop
-#define dead_seek	nullop
 #define dead_remove	dead_badop
 #define dead_link	dead_badop
 #define dead_rename	dead_badop
@@ -85,11 +83,6 @@ int	dead_print	__P((void *));
 #define dead_islocked	vop_generic_islocked
 #define dead_pathconf	dead_ebadf
 #define dead_advlock	dead_ebadf
-#define dead_blkatoff	dead_badop
-#define dead_valloc	dead_badop
-#define dead_vfree	dead_badop
-#define dead_truncate	nullop
-#define dead_update	nullop
 #define dead_bwrite	nullop
 
 int	chkvnlock __P((struct vnode *));
@@ -110,9 +103,7 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_write_desc, dead_write },	/* write */
 	{ &vop_ioctl_desc, dead_ioctl },	/* ioctl */
 	{ &vop_select_desc, dead_select },	/* select */
-	{ &vop_mmap_desc, dead_mmap },		/* mmap */
 	{ &vop_fsync_desc, dead_fsync },	/* fsync */
-	{ &vop_seek_desc, dead_seek },		/* seek */
 	{ &vop_remove_desc, dead_remove },	/* remove */
 	{ &vop_link_desc, dead_link },		/* link */
 	{ &vop_rename_desc, dead_rename },	/* rename */
@@ -132,11 +123,6 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_islocked_desc, dead_islocked },	/* islocked */
 	{ &vop_pathconf_desc, dead_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, dead_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, dead_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, dead_valloc },	/* valloc */
-	{ &vop_vfree_desc, dead_vfree },	/* vfree */
-	{ &vop_truncate_desc, dead_truncate },	/* truncate */
-	{ &vop_update_desc, dead_update },	/* update */
 	{ &vop_bwrite_desc, dead_bwrite },	/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };

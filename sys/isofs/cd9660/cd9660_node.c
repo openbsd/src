@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.10 1999/04/28 09:28:14 art Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.11 2001/06/23 02:14:22 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -323,7 +323,7 @@ cd9660_defattr(isodir, inop, bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
+		cd9660_bufatoff(inop, (off_t)-(off << imp->im_bshift), NULL,
 			     &bp2);
 		bp = bp2;
 	}
@@ -375,7 +375,7 @@ cd9660_deftstamp(isodir,inop,bp)
 	if (!bp
 	    && ((imp = inop->i_mnt)->im_flags & ISOFSMNT_EXTATT)
 	    && (off = isonum_711(isodir->ext_attr_length))) {
-		VOP_BLKATOFF(ITOV(inop), (off_t)-(off << imp->im_bshift), NULL,
+		cd9660_bufatoff(inop, (off_t)-(off << imp->im_bshift), NULL,
 			     &bp2);
 		bp = bp2;
 	}

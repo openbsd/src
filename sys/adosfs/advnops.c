@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.16 2001/02/23 14:42:37 csapuntz Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.17 2001/06/23 02:14:21 csapuntz Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -85,22 +85,15 @@ int	lease_check __P((void *));
 #else
 #define adosfs_lease_check 	adnullop
 #endif
-#define adosfs_seek 		adnullop
-#define adosfs_vfree 		adnullop
 
-#define adosfs_blkatoff 	adenotsup
 #define adosfs_bwrite 		adenotsup
 #define adosfs_create 		adenotsup
 #define adosfs_mkdir 		adenotsup
 #define adosfs_mknod 		adenotsup
-#define adosfs_mmap 		adenotsup
 #define adosfs_remove 		adenotsup
 #define adosfs_rename 		adenotsup
 #define adosfs_rmdir 		adenotsup
 #define adosfs_setattr 		adenotsup
-#define adosfs_truncate 	adenotsup
-#define adosfs_update 		adenotsup
-#define adosfs_valloc 		adenotsup
 
 struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -117,9 +110,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_select_desc, adosfs_select },		/* select */
-	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */
-	{ &vop_seek_desc, adosfs_seek },		/* seek */
 	{ &vop_remove_desc, adosfs_remove },		/* remove */
 	{ &vop_link_desc, adosfs_link },		/* link */
 	{ &vop_rename_desc, adosfs_rename },		/* rename */
@@ -139,11 +130,6 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_islocked_desc, adosfs_islocked },	/* islocked */
 	{ &vop_pathconf_desc, adosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, adosfs_advlock },		/* advlock */
-	{ &vop_blkatoff_desc, adosfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, adosfs_valloc },		/* valloc */
-	{ &vop_vfree_desc, adosfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, adosfs_truncate },	/* truncate */
-	{ &vop_update_desc, adosfs_update },		/* update */
 	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.12 1998/08/18 07:08:29 deraadt Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.13 2001/06/23 02:14:26 csapuntz Exp $	*/
 /*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
@@ -73,9 +73,7 @@ int union_write		__P((void *));
 int union_lease		__P((void *));
 int union_ioctl		__P((void *));
 int union_select	__P((void *));
-int union_mmap		__P((void *));
 int union_fsync		__P((void *));
-int union_seek		__P((void *));
 int union_remove	__P((void *));
 int union_link		__P((void *));
 int union_rename	__P((void *));
@@ -114,9 +112,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
 	{ &vop_select_desc, union_select },		/* select */
-	{ &vop_mmap_desc, union_mmap },			/* mmap */
 	{ &vop_fsync_desc, union_fsync },		/* fsync */
-	{ &vop_seek_desc, union_seek },			/* seek */
 	{ &vop_remove_desc, union_remove },		/* remove */
 	{ &vop_link_desc, union_link },			/* link */
 	{ &vop_rename_desc, union_rename },		/* rename */
@@ -137,14 +133,6 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_islocked_desc, union_islocked },		/* islocked */
 	{ &vop_pathconf_desc, union_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, union_advlock },		/* advlock */
-#ifdef notdef
-	{ &vop_blkatoff_desc, union_blkatoff },		/* blkatoff */
-	{ &vop_valloc_desc, union_valloc },		/* valloc */
-	{ &vop_vfree_desc, union_vfree },		/* vfree */
-	{ &vop_truncate_desc, union_truncate },		/* truncate */
-	{ &vop_update_desc, union_update },		/* update */
-	{ &vop_bwrite_desc, union_bwrite },		/* bwrite */
-#endif
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc union_vnodeop_opv_desc =
@@ -1012,22 +1000,6 @@ union_select(v)
 }
 
 int
-union_mmap(v)
-	void *v;
-{
-	struct vop_mmap_args /* {
-		struct vnode *a_vp;
-		int  a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	register struct vnode *vp = OTHERVP(ap->a_vp);
-
-	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_mmap), ap));
-}
-
-int
 union_fsync(v)
 	void *v;
 {
@@ -1055,22 +1027,6 @@ union_fsync(v)
 	}
 
 	return (error);
-}
-
-int
-union_seek(v)
-	void *v;
-{
-	struct vop_seek_args /* {
-		struct vnode *a_vp;
-		off_t  a_oldoff;
-		off_t  a_newoff;
-		struct ucred *a_cred;
-	} */ *ap = v;
-	register struct vnode *vp = OTHERVP(ap->a_vp);
-
-	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_seek), ap));
 }
 
 /* a_dvp: directory in which to link

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.7 1998/08/06 19:35:02 csapuntz Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.8 2001/06/23 02:14:27 csapuntz Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -177,9 +177,7 @@ int	nfsfifo_write __P((void *));
 #define nfs_ioctl ((int (*) __P((void *)))enoioctl)
 #define nfs_select ((int (*) __P((void *)))seltrue)
 #define nfs_revoke vop_generic_revoke
-int	nfs_mmap __P((void *));
 int	nfs_fsync __P((void *));
-#define nfs_seek ((int (*) __P((void *)))nullop)
 int	nfs_remove __P((void *));
 int	nfs_link __P((void *));
 int	nfs_rename __P((void *));
@@ -198,15 +196,10 @@ int	nfs_strategy __P((void *));
 int	nfs_print __P((void *));
 int	nfs_pathconf __P((void *));
 int	nfs_advlock __P((void *));
-int	nfs_blkatoff __P((void *));
 int	nfs_bwrite __P((void *));
 int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nfs_valloc __P((void *));
 #define nfs_reallocblks \
 	((int (*) __P((void *)))eopnotsupp)
-int	nfs_vfree __P((void *));
-int	nfs_truncate __P((void *));
-int	nfs_update __P((void *));
 
 /* other stuff */
 int	nfs_removeit __P((struct sillyrename *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.9 2001/02/24 10:37:10 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.10 2001/06/23 02:14:22 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -136,7 +136,8 @@ int	cd9660_strategy __P((void *));
 int	cd9660_print __P((void *));
 int	cd9660_islocked __P((void *));
 int	cd9660_pathconf __P((void *));
-int	cd9660_blkatoff __P((void *));
+
+int	cd9660_bufatoff(struct iso_node *, off_t, char **, struct buf **);
 
 void	cd9660_defattr __P((struct iso_directory_record *, struct iso_node *,
     struct buf *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.9 2001/03/01 20:54:35 provos Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.10 2001/06/23 02:14:26 csapuntz Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -98,9 +98,7 @@ int	spec_write	__P((void *));
 int	spec_ioctl	__P((void *));
 int	spec_select	__P((void *));
 int	spec_kqfilter	__P((void *));
-#define	spec_mmap	spec_badop
 int	spec_fsync	__P((void *));
-#define	spec_seek	spec_badop
 #define	spec_remove	spec_badop
 #define	spec_link	spec_badop
 #define	spec_rename	spec_badop
@@ -120,11 +118,6 @@ int	spec_strategy	__P((void *));
 int	spec_print	__P((void *));
 int	spec_pathconf	__P((void *));
 int	spec_advlock	__P((void *));
-#define	spec_blkatoff	spec_badop
-#define	spec_valloc	spec_badop
 #define	spec_reallocblks spec_badop
-#define	spec_vfree	spec_badop
-#define	spec_truncate	nullop
-#define	spec_update	nullop
 #define	spec_bwrite	vop_generic_bwrite
 #define spec_revoke     vop_generic_revoke

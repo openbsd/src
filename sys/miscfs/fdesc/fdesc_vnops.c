@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.22 2001/05/23 14:34:30 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.23 2001/06/23 02:14:24 csapuntz Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -102,9 +102,7 @@ int	fdesc_read	__P((void *));
 int	fdesc_write	__P((void *));
 int	fdesc_ioctl	__P((void *));
 int	fdesc_select	__P((void *));
-#define	fdesc_mmap	eopnotsupp
 #define	fdesc_fsync	nullop
-#define	fdesc_seek	nullop
 #define	fdesc_remove	eopnotsupp
 #define fdesc_revoke    vop_generic_revoke
 int	fdesc_link	__P((void *));
@@ -124,11 +122,6 @@ int	fdesc_print	__P((void *));
 int	fdesc_pathconf	__P((void *));
 #define	fdesc_islocked	vop_generic_islocked
 #define	fdesc_advlock	eopnotsupp
-#define	fdesc_blkatoff	eopnotsupp
-#define	fdesc_valloc	eopnotsupp
-int	fdesc_vfree	__P((void *));
-#define	fdesc_truncate	eopnotsupp
-#define	fdesc_update	eopnotsupp
 #define	fdesc_bwrite	eopnotsupp
 
 int (**fdesc_vnodeop_p) __P((void *));
@@ -147,9 +140,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, fdesc_ioctl },	/* ioctl */
 	{ &vop_revoke_desc, fdesc_revoke },     /* revoke */
 	{ &vop_select_desc, fdesc_select },	/* select */
-	{ &vop_mmap_desc, fdesc_mmap },		/* mmap */
 	{ &vop_fsync_desc, fdesc_fsync },	/* fsync */
-	{ &vop_seek_desc, fdesc_seek },		/* seek */
 	{ &vop_remove_desc, fdesc_remove },	/* remove */
 	{ &vop_link_desc, fdesc_link },		/* link */
 	{ &vop_rename_desc, fdesc_rename },	/* rename */
@@ -169,11 +160,6 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_islocked_desc, fdesc_islocked },	/* islocked */
 	{ &vop_pathconf_desc, fdesc_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fdesc_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, fdesc_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, fdesc_valloc },	/* valloc */
-	{ &vop_vfree_desc, fdesc_vfree },	/* vfree */
-	{ &vop_truncate_desc, fdesc_truncate },	/* truncate */
-	{ &vop_update_desc, fdesc_update },	/* update */
 	{ &vop_bwrite_desc, fdesc_bwrite },	/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
@@ -928,13 +914,6 @@ fdesc_print(v)
 	void *v;
 {
 	printf("tag VT_NON, fdesc vnode\n");
-	return (0);
-}
-
-int
-fdesc_vfree(v)
-	void *v;
-{
 	return (0);
 }
 
