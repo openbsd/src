@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.78 2004/11/14 13:20:07 espie Exp $
+# $OpenBSD: pkg_delete,v 1.79 2004/11/15 11:39:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -71,6 +71,13 @@ $state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
 $state->{forced} = \%forced;
+$state->{destdir} = $opt_B;
+if ($opt_B eq '') {
+    $state->{destdirname} = '';
+} else {
+    $state->{destdirname} = '${PKG_DESTDIR}';
+}
+
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
 if (!$opt_x && !$state->{beverbose}) {
@@ -147,13 +154,6 @@ if (keys(%extra_rm) != 0) {
 
 if ($bad) {
 	exit(1);
-}
-
-$state->{destdir} = $opt_B;
-if ($opt_B eq '') {
-    $state->{destdirname} = '';
-} else {
-    $state->{destdirname} = '${PKG_DESTDIR}';
 }
 
 eval {
