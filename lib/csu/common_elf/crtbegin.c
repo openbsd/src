@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.9 2004/01/26 20:04:11 espie Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.10 2004/10/10 18:29:15 kettenis Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -44,6 +44,16 @@
 #include "md_init.h"
 #include "os-note-elf.h"
 #include "extern.h"
+
+struct dwarf2_eh_object {
+	void *space[8];
+};
+
+extern void __register_frame_info(const void *,
+    struct dwarf2_eh_object *) __attribute__((weak));
+
+static const char __EH_FRAME_BEGIN__[]
+    __attribute__((section(".eh_frame"), aligned(4))) = { };
 
 static const init_f __CTOR_LIST__[1]
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
@@ -95,6 +105,7 @@ void
 __do_init()
 {
 	static int initialized = 0;
+	static struct dwarf2_eh_object object;
 
 	/*
 	 * Call global constructors.
@@ -102,6 +113,10 @@ __do_init()
 	 */
 	if (!initialized) {
 		initialized = 1;
+
+		if (__register_frame_info != NULL)
+			__register_frame_info(__EH_FRAME_BEGIN__, &object);
+
 		(__ctors)();
 
 		atexit(__fini);
