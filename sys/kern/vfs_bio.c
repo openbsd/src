@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.46 2001/10/28 00:42:43 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.47 2001/10/28 19:19:00 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -524,8 +524,6 @@ brelse(bp)
 	/* Block disk interrupts. */
 	s = splbio();
 
-	KASSERT(ISSET(bp->b_flags, B_BUSY));
-
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
 	 */
@@ -759,7 +757,6 @@ allocbuf(bp, size)
 	if (bp->b_bufsize == desired_size)
 		goto out;
 
-	KASSERT(!ISSET(bp->b_flags, (B_CACHE|B_DONE|B_DELWRI)));
 	/*
 	 * If the buffer is smaller than the desired size, we need to snarf
 	 * it from other buffers.  Get buffers (via getnewbuf()), and
@@ -800,7 +797,7 @@ allocbuf(bp, size)
 	 */
 	if (bp->b_bufsize > desired_size) {
 		s = splbio();
-		if ((nbp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) == NULL) {
+		if ((nbp = bufqueues[BQ_EMPTY].tqh_first) == NULL) {
 			/* No free buffer head */
 			splx(s);
 			goto out;
@@ -875,8 +872,6 @@ start:
 	}
 
 	bremfree(bp);
-
-	KASSERT(!ISSET(bp->b_flags, B_BUSY));
 
 	/* Buffer is no longer on free lists. */
 	SET(bp->b_flags, B_BUSY);
@@ -1046,11 +1041,9 @@ biodone(bp)
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */
 		(*bp->b_iodone)(bp);
 	} else {
-		if (ISSET(bp->b_flags, B_ASYNC)) {
-			/* if async, release it */
+		if (ISSET(bp->b_flags, B_ASYNC)) {/* if async, release it */
 			brelse(bp);
-		} else {
-			/* or just wakeup the buffer */
+		} else {			/* or just wakeup the buffer */
 			CLR(bp->b_flags, B_WANTED);
 			wakeup(bp);
 		}
@@ -1058,63 +1051,6 @@ biodone(bp)
 }
 
 #ifdef DEBUG
-/*
- * Print as much as possible about a buffer.
- */
-void
-buf_print(struct buf *bp)
-{
-	int f = 1;
-
-#define FLAG(fl) if (bp->b_flags & (fl)) { if (!f) printf(", "); else f = 0; printf(#fl); }
-
-	printf("b_proc: %p\n",		bp->b_proc);
-	printf("b_error: %d\n",		bp->b_error);
-	printf("b_bufsize: %ld\n",	bp->b_bufsize);
-	printf("b_bcount: %ld\n",	bp->b_bcount);
-	printf("b_resid: %ld\n",	(long)bp->b_resid);
-	printf("b_dev: (%d,%d)\n",	minor(bp->b_dev), major(bp->b_dev));
-	printf("b_data: %p\n",		bp->b_data);
-	printf("b_blkno: %ld\n",	(long)bp->b_blkno);
-	printf("b_lblkno: %ld\n",	(long)bp->b_lblkno);
-
-	printf("b_flags: ");
-
-	FLAG(B_AGE);
-	FLAG(B_NEEDCOMMIT);
-	FLAG(B_ASYNC);
-	FLAG(B_BAD);
-	FLAG(B_BUSY);
-	FLAG(B_CACHE);
-	FLAG(B_CALL);
-	FLAG(B_DELWRI);
-	FLAG(B_DIRTY);
-	FLAG(B_DONE);
-	FLAG(B_EINTR);
-	FLAG(B_ERROR);
-	FLAG(B_GATHERED);
-	FLAG(B_INVAL);
-	FLAG(B_LOCKED);
-	FLAG(B_NOCACHE);
-	FLAG(B_PAGET);
-	FLAG(B_PGIN);
-	FLAG(B_PHYS);
-	FLAG(B_RAW);
-	FLAG(B_READ);
-	FLAG(B_TAPE);
-	FLAG(B_UAREA);
-	FLAG(B_WANTED);
-	FLAG(B_WRITE);	
-	FLAG(B_WRITEINPROG);
-	FLAG(B_XXX);
-	FLAG(B_DEFERRED);
-	FLAG(B_SCANNED);
-
-	printf("\n");
-
-#undef FLAG
-}
-
 /*
  * Print out statistics on the current allocation of the buffer pool.
  * Can be enabled to print out on every ``sync'' by setting "syncprt"
