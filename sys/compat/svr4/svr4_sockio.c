@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_sockio.c,v 1.8 2002/03/14 01:26:51 millert Exp $	 */
+/*	$OpenBSD: svr4_sockio.c,v 1.9 2004/06/22 23:52:18 jfb Exp $	 */
 /*	$NetBSD: svr4_sockio.c,v 1.10 1996/05/03 17:09:15 christos Exp $	 */
 
 /*
@@ -131,7 +131,7 @@ svr4_sock_ioctl(fp, p, retval, fd, cmd, data)
 			if ((error = copyin(data, &sr, sizeof(sr))) != 0)
 				return error;
 
-			(void) strncpy(br.ifr_name, sr.svr4_ifr_name,
+			(void) strlcpy(br.ifr_name, sr.svr4_ifr_name,
 			    sizeof(br.ifr_name));
 
 			if ((error = (*ctl)(fp, SIOCGIFFLAGS, 

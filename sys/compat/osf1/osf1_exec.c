@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_exec.c,v 1.4 2002/03/14 01:26:50 millert Exp $ */
+/* $OpenBSD: osf1_exec.c,v 1.5 2004/06/22 23:52:18 jfb Exp $ */
 /* $NetBSD$ */
 
 /*
@@ -238,7 +238,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	error = emul_find(p, NULL, osf1_emul_path,
 	    OSF1_LDR_EXEC_DEFAULT_LOADER, &pathbuf, 0);
 	/* includes /emul/osf1 if appropriate */
-	strncpy(emul_arg->loader_name, pathbuf, MAXPATHLEN + 1);
+	strlcpy(emul_arg->loader_name, pathbuf, sizeof(emul_arg->loader_name));
 	emul_arg->flags |= OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER;
 	if (!error)
 		free((char *)pathbuf, M_TEMP);

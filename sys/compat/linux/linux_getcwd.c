@@ -1,4 +1,4 @@
-/* $OpenBSD: linux_getcwd.c,v 1.3 2002/03/14 01:26:50 millert Exp $ */
+/* $OpenBSD: linux_getcwd.c,v 1.4 2004/06/22 23:52:18 jfb Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*-
@@ -59,6 +59,7 @@ int proc_isunder(struct proc *, struct proc*); /* missing from proc.h */
 #include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
+#include <compat/linux/linux_dirent.h>
 
 #include <machine/linux_machdep.h>
 
@@ -75,7 +76,7 @@ linux_getcwd_common(struct vnode *, struct vnode *,
 static int
 linux_vn_isunder(struct vnode *, struct vnode *, struct proc *);
 
-#define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN+1) + 4)
+#define DIRENT_MINSIZE (sizeof(struct dirent) - (LINUX_MAXNAMLEN+1) + 4)
 
 /*
  * Vnode variable naming conventions in this file:

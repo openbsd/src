@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.25 2004/06/21 23:50:35 tholo Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.26 2004/06/22 23:52:17 jfb Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -392,22 +392,16 @@ hpux_sys_utssys(p, v, retval)
 	case 0:
 		bzero(&ut, sizeof(ut));
 
-		strncpy(ut.sysname, ostype, sizeof(ut.sysname));
-		ut.sysname[sizeof(ut.sysname) - 1] = '\0';
+		strlcpy(ut.sysname, ostype, sizeof(ut.sysname));
 
 		/* copy hostname (sans domain) to nodename */
 		for (i = 0; i < 8 && hostname[i] != '.'; i++)
 			ut.nodename[i] = hostname[i];
 		ut.nodename[i] = '\0';
 
-		strncpy(ut.release, osrelease, sizeof(ut.release));
-		ut.release[sizeof(ut.release) - 1] = '\0';
-
-		strncpy(ut.version, version, sizeof(ut.version));
-		ut.version[sizeof(ut.version) - 1] = '\0';
-
-		strncpy(ut.machine, machine, sizeof(ut.machine));
-		ut.machine[sizeof(ut.machine) - 1] = '\0';
+		strlcpy(ut.release, osrelease, sizeof(ut.release));
+		strlcpy(ut.version, version, sizeof(ut.version));
+		strlcpy(ut.machine, machine, sizeof(ut.machine));
 
 		error = copyout((caddr_t)&ut,
 		    (caddr_t)SCARG(uap, uts), sizeof(ut));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.25 2003/08/15 20:32:16 tedu Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.26 2004/06/22 23:52:18 jfb Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -528,15 +528,9 @@ svr4_sys_uname(p, v, retval)
 	char *dp, *ep;
 
 	bzero(&sut, sizeof(sut));
-
-	strncpy(sut.sysname, ostype, sizeof(sut.sysname)-1);
-	sut.sysname[sizeof(sut.sysname) - 1] = '\0';
-
-	strncpy(sut.nodename, hostname, sizeof(sut.nodename)-1);
-	sut.nodename[sizeof(sut.nodename) - 1] = '\0';
-
-	strncpy(sut.release, osrelease, sizeof(sut.release)-1);
-	sut.release[sizeof(sut.release) - 1] = '\0';
+	strlcpy(sut.sysname, ostype, sizeof(sut.sysname));
+	strlcpy(sut.nodename, hostname, sizeof(sut.nodename));
+	strlcpy(sut.release, osrelease, sizeof(sut.release));
 
 	dp = sut.version;
 	ep = &sut.version[sizeof(sut.version) - 1];
@@ -550,8 +544,7 @@ svr4_sys_uname(p, v, retval)
 		*dp++ = *cp;
 	*dp = '\0';
 
-	strncpy(sut.machine, machine, sizeof(sut.machine)-1);
-	sut.machine[sizeof(sut.machine) - 1] = '\0';
+	strlcpy(sut.machine, machine, sizeof(sut.machine));
 
 	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
 		       sizeof(struct svr4_utsname));

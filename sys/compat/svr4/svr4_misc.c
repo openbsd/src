@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.43 2003/08/15 20:32:16 tedu Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.44 2004/06/22 23:52:18 jfb Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -244,7 +244,7 @@ svr4_readdir_callback(arg, bdp, cookie)
 	idb.d_ino = (svr4_ino_t)bdp->d_fileno;
 	idb.d_off = (svr4_off_t)cookie;
 	idb.d_reclen = (u_short)svr4_reclen;
-	strlcpy(idb.d_name, bdp->d_name, SVR4_MAXNAMLEN+1);
+	strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 	if ((error = copyout((caddr_t)&idb, cb->outp, svr4_reclen)))
 		return (error);
 
@@ -277,7 +277,7 @@ svr4_readdir64_callback(arg, bdp, cookie)
 	idb.d_ino = (svr4_ino64_t)bdp->d_fileno;
 	idb.d_off = (svr4_off64_t)cookie;
 	idb.d_reclen = (u_short)svr4_reclen;
-	strlcpy(idb.d_name, bdp->d_name, SVR4_MAXNAMLEN+1);
+	strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 	if ((error = copyout((caddr_t)&idb, cb->outp, svr4_reclen)))
 		return (error);
 

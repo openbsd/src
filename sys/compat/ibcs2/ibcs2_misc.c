@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.27 2003/08/15 20:32:15 tedu Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.28 2004/06/22 23:52:18 jfb Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ ibcs2_readdir_callback(arg, bdp, cookie)
 	idb.d_pad = 0;
 	idb.d_off = (ibcs2_off_t)cookie;
 	idb.d_reclen = (u_short)ibcs2_reclen;
-	strlcpy(idb.d_name, bdp->d_name, IBCS2_MAXNAMLEN+1);
+	strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 	error = copyout((caddr_t)&idb, cb->outp, ibcs2_reclen);
 	if (error)
 		return (error);

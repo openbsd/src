@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.11 2002/07/20 19:24:57 art Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.12 2004/06/22 23:52:18 jfb Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -179,8 +179,9 @@ make_ultrix_mntent(sp, tem)
 	tem->ufsd_uid = 0;			/* XXX kept where ?*/
 	tem->ufsd_dev = 0;			/* ?? */
 	tem->ufsd_exroot  = 0;			/* ?? */
-	strncpy(tem->ufsd_path, sp->f_mntonname, ULTRIX_MAXPATHLEN);
-	strncpy(tem->ufsd_devname, sp->f_mntfromname, ULTRIX_MAXPATHLEN);
+	strlcpy(tem->ufsd_path, sp->f_mntonname, sizeof(tem->ufsd_path));
+	strlcpy(tem->ufsd_devname, sp->f_mntfromname,
+	    sizeof(tem->ufsd_devname));
 #if 0
 	/* In NetBSD-1.1, filesystem type is unused and always 0 */
 	printf("mntent: %s type %d\n", tem->ufsd_devname, tem->ufsd_fstype);

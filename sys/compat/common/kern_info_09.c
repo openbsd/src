@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_09.c,v 1.11 2003/08/15 20:32:15 tedu Exp $	*/
+/*	$OpenBSD: kern_info_09.c,v 1.12 2004/06/22 23:52:17 jfb Exp $	*/
 /*	$NetBSD: kern_info_09.c,v 1.5 1996/02/21 00:10:59 cgd Exp $	*/
 
 /*
@@ -113,9 +113,9 @@ compat_09_sys_uname(p, v, retval)
 	const char *cp;
 	char *dp, *ep;
 
-	strncpy(outsname.sysname, ostype, sizeof(outsname.sysname));
-	strncpy(outsname.nodename, hostname, sizeof(outsname.nodename));
-	strncpy(outsname.release, osrelease, sizeof(outsname.release));
+	strlcpy(outsname.sysname, ostype, sizeof(outsname.sysname));
+	strlcpy(outsname.nodename, hostname, sizeof(outsname.nodename));
+	strlcpy(outsname.release, osrelease, sizeof(outsname.release));
 	dp = outsname.version;
 	ep = &outsname.version[sizeof(outsname.version) - 1];
 	for (cp = version; *cp && *cp != '('; cp++)
@@ -127,7 +127,7 @@ compat_09_sys_uname(p, v, retval)
 	for (; *cp && *cp != ':' && dp < ep; cp++)
 		*dp++ = *cp;
 	*dp = '\0';
-	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
+	strlcpy(outsname.machine, MACHINE, sizeof(outsname.machine));
 
 	return (copyout((caddr_t)&outsname, (caddr_t)SCARG(uap, name),
 			sizeof(struct outsname)));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.55 2003/12/02 03:46:45 nordin Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.56 2004/06/22 23:52:18 jfb Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -520,18 +520,12 @@ linux_sys_uname(p, v, retval)
 	int len;
 	char *cp;
 
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname) - 1);
-	luts.l_sysname[sizeof(luts.l_sysname) - 1] = '\0';
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename) - 1);
-	luts.l_nodename[sizeof(luts.l_nodename) - 1] = '\0';
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release) - 1);
-	luts.l_release[sizeof(luts.l_release) - 1] = '\0';
-	strncpy(luts.l_version, version, sizeof(luts.l_version) - 1);
-	luts.l_version[sizeof(luts.l_version) - 1] = '\0';
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine) - 1);
-	luts.l_machine[sizeof(luts.l_machine) - 1] = '\0';
-	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname) - 1);
-	luts.l_domainname[sizeof(luts.l_domainname) - 1] = '\0';
+	strlcpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, osrelease, sizeof(luts.l_release));
+	strlcpy(luts.l_version, version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, machine, sizeof(luts.l_machine));
+	strlcpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
@@ -556,11 +550,11 @@ linux_sys_olduname(p, v, retval)
 	int len;
 	char *cp;
 
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
-	strncpy(luts.l_version, version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+	strlcpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, osrelease, sizeof(luts.l_release));
+	strlcpy(luts.l_version, version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, machine, sizeof(luts.l_machine));
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
@@ -585,11 +579,11 @@ linux_sys_oldolduname(p, v, retval)
 	int len;
 	char *cp;
 
-	strncpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
-	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
-	strncpy(luts.l_release, osrelease, sizeof(luts.l_release));
-	strncpy(luts.l_version, version, sizeof(luts.l_version));
-	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
+	strlcpy(luts.l_sysname, ostype, sizeof(luts.l_sysname));
+	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
+	strlcpy(luts.l_release, osrelease, sizeof(luts.l_release));
+	strlcpy(luts.l_version, version, sizeof(luts.l_version));
+	strlcpy(luts.l_machine, machine, sizeof(luts.l_machine));
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
