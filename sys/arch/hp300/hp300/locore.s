@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.26 2001/05/13 17:19:56 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.27 2001/05/13 17:27:24 aaron Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1368,7 +1368,6 @@ Lswnofpsave:
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
 
 	lea	_ASM_LABEL(tmpstk),sp	| now goto a tmp stack for NMI
-Lcxswdone:
 
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
