@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.53 2002/10/09 23:43:11 krw Exp $     */
+/*      $OpenBSD: wdc.c,v 1.54 2002/10/16 21:43:39 art Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1047,7 +1047,7 @@ __wdcwait_reset(chp, drv_mask)
 	u_int8_t st0, st1;
 
 	/* wait for BSY to deassert */
-	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
+	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
 		wdc_set_drive(chp, 0);
 		delay(10);
 		st0 = CHP_READ_REG(chp, wdr_status);
