@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.34 2001/07/21 16:04:03 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.35 2001/07/22 13:37:29 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -135,8 +135,8 @@ _LIBS+=lib${LIB}_p.a
 .if (${MACHINE_ARCH} != "mips")
 _LIBS+=lib${LIB}_pic.a
 .endif
-.if defined(major) && defined(minor)
-_LIBS+=lib${LIB}.so.${major}.${minor}
+.if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
+_LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
 .endif
 
@@ -175,11 +175,11 @@ lib${LIB}_pic.a:: ${SOBJS}
 	@${AR} cq lib${LIB}_pic.a `${LORDER} ${SOBJS} | tsort -q`
 	${RANLIB} lib${LIB}_pic.a
 
-lib${LIB}.so.${major}.${minor}: ${SOBJS} ${DPADD}
-	@echo building shared ${LIB} library \(version ${major}.${minor}\)
-	@rm -f lib${LIB}.so.${major}.${minor}
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOBJS} ${DPADD}
+	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
+	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${CC} -shared ${PICFLAG} \
-	    -o lib${LIB}.so.${major}.${minor} \
+	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	    `${LORDER} ${SOBJS}|tsort -q` ${LDADD}
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
@@ -254,9 +254,9 @@ realinstall:
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
-.if !defined(NOPIC) && defined(major) && defined(minor)
+.if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    lib${LIB}.so.${major}.${minor} ${DESTDIR}${LIBDIR}
+	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
 .endif
 .if !defined(NOLINT)
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
