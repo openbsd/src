@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 1999/02/09 06:36:25 smurph Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.6 1999/09/27 20:46:17 smurph Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -37,18 +37,6 @@
 #ifndef _MVME88K_AUTOCONF_H_
 #define _MVME88K_AUTOCONF_H_
 
-#if 0
-struct confargs {
-	int	ca_bustype;
-	caddr_t	ca_parent;
-	caddr_t	ca_vaddr;
-	caddr_t	ca_paddr;
-#define ca_len ca_size
-	int	ca_size;
-	int	ca_ipl;
-	int	ca_vec;
-};
-#else
 struct confargs {
 	int	ca_bustype;
 	void	*ca_vaddr;
@@ -60,26 +48,15 @@ struct confargs {
 	char	*ca_name;
 	void	*ca_master;	/* points to bus-dependent data */
 };
-#endif
 
-#define BUS_MAIN	0
-#define BUS_MC		1
-#define BUS_PCC		2
-#define BUS_PCCTWO	3
-#define BUS_VMES	4
-#define BUS_VMEL	5
-
-#if 0
-/* From mvme68k autoconf.h */
-#define BUS_MAIN	1
-#define BUS_PCC		2	/* VME147 PCC chip */
-#define BUS_MC		3	/* VME162 MC chip */
-#define BUS_PCCTWO	4	/* VME166/167/177 PCC2 chip */
-#define BUS_VMES	5	/* 16 bit VME access */
-#define BUS_VMEL	6	/* 32 bit VME access */
-#define BUS_IP		7	/* VME162 IP module bus */
-
-#endif
+#define BUS_MAIN      0
+#define BUS_MC        1
+#define BUS_PCC       2
+#define BUS_PCCTWO    3
+#define BUS_VMES      4
+#define BUS_VMEL      5
+#define BUS_SYSCON    6
+#define BUS_BUSSWITCH 7
 
 int always_match __P((struct device *, struct cfdata *, void *));
 

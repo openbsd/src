@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: pcb.h,v 1.5 1999/09/27 20:46:19 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -88,11 +88,14 @@ struct m88100_pcb {
 /* This must always be an even number of words long */
 
 struct m88100_saved_state {
-    unsigned r[32];
+    unsigned r[32];  /* 0 - 31 */
+#define pcb_sp r[31]
+    unsigned epsr;   /* 32 */
     unsigned fpsr;
     unsigned fpcr;
-    unsigned epsr;
+#define exip sxip
     unsigned sxip;
+#define enip snip
     unsigned snip;
     unsigned sfip;
     unsigned ssbr;
@@ -114,13 +117,19 @@ struct m88100_saved_state {
     unsigned fprh;
     unsigned fprl;
     unsigned fpit;
-    unsigned vector;	/* exception vector number */
-    unsigned mask;	/* interrupt mask level */
-    unsigned mode;	/* interrupt mode */
-    unsigned scratch1;	/* used by locore trap handling code */
-    unsigned ipfsr;      /* P BUS status - used in inst fault handling */
-    unsigned dpfsr;      /* P BUS status - used in data fault handling */
-    unsigned pad;	/* alignment */
+    unsigned vector;	      /* exception vector number */
+    unsigned mask;	      /* interrupt mask level */
+    unsigned mode;	      /* interrupt mode */
+    unsigned scratch1;	   /* used by locore trap handling code */
+    unsigned ipfsr;        /* P BUS status - used in inst fault handling */
+    unsigned dpfsr;        /* P BUS status - used in data fault handling */
+    unsigned dsr;          /* MVME197 */
+    unsigned dlar;         /* MVME197 */
+    unsigned dpar;         /* MVME197 */
+    unsigned isr;          /* MVME197 */
+    unsigned ilar;         /* MVME197 */
+    unsigned ipar;         /* MVME197 */
+    unsigned pad;          /* alignment */
 };
 
 #define trapframe m88100_saved_state

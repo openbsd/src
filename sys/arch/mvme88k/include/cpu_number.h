@@ -1,7 +1,6 @@
-/*	$OpenBSD: pmap_table.h,v 1.5 1999/09/27 20:46:19 smurph Exp $ */
 /* 
  * Mach Operating System
- * Copyright (c) 1992 Carnegie Mellon University
+ * Copyright (c) 1993-1992 Carnegie Mellon University
  * All Rights Reserved.
  * 
  * Permission to use, copy, modify and distribute this software and its
@@ -25,25 +24,25 @@
  * the rights to redistribute these changes.
  */
 
-/*
- * HISTORY
- */
+#ifndef	_M88K_CPU_NUMBER_
+#define _M88K_CPU_NUMBER_
+ 
+#ifdef	KERNEL
+#include <machine/param.h>
+extern unsigned number_cpus;
+#define cpu_number() 0
 
-
-/* an entry is considered invalid if pm_size = 0 */
-/* end of list is indicated by pm_size 0xffffffff */
-
-typedef struct {
-  vm_offset_t phys_start;   /* in bytes */
-  vm_offset_t virt_start;   /* in bytes */
-  unsigned int	size;      /* in bytes */
-  unsigned int  prot;	      /* vm_prot_read, vm_prot_write */
-  unsigned int  cacheability; /* none, writeback, normal */
-} pmap_table_entry;
-
-typedef pmap_table_entry *pmap_table_t;
-
-pmap_table_t pmap_table_build __P((unsigned memory_size));
-
-
-
+#if 0 /* This seems to not work correctly. Hmm.... smurph */
+unsigned cpu_number(void);
+static inline unsigned cpu_number(void)
+{
+	unsigned cpu;
+   extern int cputyp;
+	if (cputyp != CPU_188 || number_cpus == 1) return 0;
+   asm("ldcr %0, cr18" : "=r" (cpu));
+	asm("clr  %0, %0, 0<4>" : "=r" (cpu));
+	return (cpu & 3);
+}
+#endif /* 0 */
+#endif /* KERNEL */
+#endif /* _M88K_CPU_NUMBER_ */

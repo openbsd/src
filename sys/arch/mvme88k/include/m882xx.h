@@ -1,4 +1,4 @@
-/*	$OpenBSD: m882xx.h,v 1.4 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: m882xx.h,v 1.5 1999/09/27 20:46:18 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -38,6 +38,7 @@
 #endif
 
 #include <machine/board.h>
+#include <machine/cmmu.h>
 
 /*
  *	88200 CMMU definitions
@@ -68,6 +69,23 @@
 #define CMMU_CTP2	0x848	/* cache tag port 2 */
 #define CMMU_CTP3	0x84C	/* cache tag port 3 */
 #define CMMU_CSSP	0x880	/* cache set status register */
+
+#define CMMU_BWP(_X_) \
+	(((_X_) < 7) ? \
+	 (((_X_) < 6) ? \
+	  (((_X_) < 5) ? \
+	   (((_X_) < 4) ? \
+	    (((_X_) < 3) ? \
+	     (((_X_) < 2) ? \
+	      (((_X_) < 1) ? \
+	       CMMU_BWP0 : \
+	       CMMU_BWP1) : \
+	      CMMU_BWP2) : \
+	     CMMU_BWP3) : \
+	    CMMU_BWP4) : \
+	   CMMU_BWP5) : \
+	  CMMU_BWP6) : \
+	 CMMU_BWP7)
 
 /* 88204 CMMU definitions  */
 #define CMMU_CSSP0	0x880	/* cache set status register */
@@ -112,148 +130,113 @@
 #define CMMU_PFSR_SUPER		6	/* supervisor violation */
 #define CMMU_PFSR_WRITE		7	/* writer violation */
 
-/* Area Description */
-#define AREA_D_WT	0x00000200	/* write through */
-#define AREA_D_G	0x00000080	/* global */
-#define AREA_D_CI	0x00000040	/* cache inhibit */
-#define AREA_D_TE	0x00000001	/* translation enable */
-
-/* Segment Description */
-#define SEG_D_WT	0x00000200	/* write through */
-#define SEG_D_SP	0x00000100	/* supervisor protection */
-#define SEG_D_G		0x00000080	/* global */
-#define SEG_D_CI	0x00000040	/* cache inhibit */
-#define SEG_D_WP	0x00000004	/* write protect */
-#define SEG_D_V		0x00000001	/* valid */
-
-/*
- * Flags for cmmu_flush_tlb
- */
-#define FLUSH_KERNEL    1
-#define FLUSH_USER      0
-#define FLUSH_ALL       ((vm_offset_t)~0)
-
-
 #ifndef	ASSEMBLER
-/*
- * This file defines the data structures for the mmu.
- * One major data structure, the page descriptor, is not defined here
- * but rather in pte.h as struct pte.
- */
-
-struct area_d {		/* area descriptor */
-    unsigned
-	ad_addr:20,	/* segment table base address */
-	       : 2,
-	ad_wt  : 1,	/* write through */
-	       : 1,
-	ad_g   : 1,	/* global */
-	ad_ci  : 1,	/* cache inhibit */
-	       : 5,
-	ad_te  : 1;	/* translation enable */
-};
-
-struct segment_d {	/* segment descriptor */
-    unsigned
-	sd_addr:20,	/* page table base address */
-	       : 2,
-	sd_wt  : 1,	/* write through */ 
-	sd_sp  : 1,	/* supervisor protection */
-	sd_g   : 1,	/* global */
-	sd_ci  : 1,	/* cache inhibit */
-	       : 3,
-	sd_wp  : 1,	/* write protect */
-	       : 1,
-	sd_v   : 1;	/* valid */
-};
-
-typedef	struct segment_d segment_d_t;
-
-struct pfsr {		/* P bus fault status register */
-    unsigned
-	       :13,
-	pfsr_fc: 3,	/* falut code */
-	       :16;
-};
-
-struct batc {		/* block address translation register */
-    unsigned
-	batc_lba:13,	/* logical block address */
-	batc_pba:13,	/* physical block address */
-	batc_s  : 1,	/* supervisor */
-	batc_wt : 4,	/* write through */
-	batc_g  : 1,	/* global */
-	batc_ci : 1,	/* cache inhibit */
-	batc_wp : 1,	/* write protect */
-	batc_v  : 1;	/* valid */
-};
 
 /*
- * Prototypes and stuff for cmmu.c.
+ * Prototypes from "mvme88k/mvme88k/m18x_cmmu.c"
  */
-extern unsigned cpu_sets[MAX_CPUS];
-extern unsigned ncpus;
-extern unsigned cache_policy;
 
 #ifdef CMMU_DEBUG
- void show_apr(unsigned value);
- void show_sctr(unsigned value);
+ void m18x_show_apr(unsigned value);
+ void m18x_show_sctr(unsigned value);
 #endif
 
-/*
- * Prototypes from "motorola/m88k/m88100/cmmu.c"
- */
-unsigned cmmu_cpu_number(void);
+unsigned m18x_cmmu_cpu_number(void);
 #if !DDB
 static
 #endif /* !DDB */
-unsigned cmmu_remote_get(unsigned cpu, unsigned r, unsigned data);
-unsigned cmmu_get_idr(unsigned data);
-void cmmu_init(void);
-void cmmu_shutdown_now(void);
-void cmmu_parity_enable(void);
+unsigned m18x_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data);
+unsigned m18x_cmmu_get_idr(unsigned data);
+void m18x_cmmu_init(void);
+void m18x_cmmu_shutdown_now(void);
+void m18x_cmmu_parity_enable(void);
 #if !DDB
 static
 #endif /* !DDB */
-void cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x);
-void cmmu_set_sapr(unsigned ap);
-void cmmu_remote_set_sapr(unsigned cpu, unsigned ap);
-void cmmu_set_uapr(unsigned ap);
-void cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size);
-void cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size);
-void cmmu_flush_cache(vm_offset_t physaddr, int size);
-void cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size);
-void cmmu_flush_inst_cache(vm_offset_t physaddr, int size);
-void cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size);
-void cmmu_flush_data_cache(vm_offset_t physaddr, int size);
+void m18x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x);
+void m18x_cmmu_set_sapr(unsigned ap);
+void m18x_cmmu_remote_set_sapr(unsigned cpu, unsigned ap);
+void m18x_cmmu_set_uapr(unsigned ap);
+void m18x_cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size);
+void m18x_cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size);
+void m18x_cmmu_flush_cache(vm_offset_t physaddr, int size);
+void m18x_cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size);
+void m18x_cmmu_flush_inst_cache(vm_offset_t physaddr, int size);
+void m18x_cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size);
+void m18x_cmmu_flush_data_cache(vm_offset_t physaddr, int size);
 
-void cmmu_pmap_activate(
+void m18x_cmmu_pmap_activate(
     unsigned cpu,
     unsigned uapr,
     batc_template_t i_batc[BATC_MAX],
     batc_template_t d_batc[BATC_MAX]);
 
-void cmmu_flush_remote_tlb(
+void m18x_cmmu_flush_remote_tlb(
 	unsigned cpu,
 	unsigned kernel,
 	vm_offset_t vaddr,
 	int size);
 
-void cmmu_set_batc_entry(
+void m18x_cmmu_set_batc_entry(
      unsigned cpu,
      unsigned entry_no,
      unsigned data,   /* 1 = data, 0 = instruction */
      unsigned value);  /* the value to stuff into the batc */
 
-void cmmu_set_pair_batc_entry(
+void m18x_cmmu_set_pair_batc_entry(
      unsigned cpu,
      unsigned entry_no,
      unsigned value);  /* the value to stuff into the batc */
 
 #endif	/* ASSEMBLER */
 
+/*
+ * Possible MVME188 board configurations
+ */
+#define CONFIG_0		0x0
+#define CONFIG_1		0x1
+#define CONFIG_2		0x2
+#define CONFIG_5		0x5
+#define CONFIG_6		0x6
+#define CONFIG_A		0xA
+
+/*
+ * Address masks for MMU configs
+ */
+#define CMMU_SRAM		      (1<<31)
+#define CMMU_A12_MASK		(1<<12)
+#define CMMU_A14_MASK		(1<<14)
+#define CMMU_SRAM_MASK		((1<<31)|(1<<30))
+
 #define INST_CMMU 0
 #define DATA_CMMU 1
+#define BOTH_CMMU 2
+
+#define CMMU_MODE_INST		0
+#define CMMU_MODE_DATA		1
+#define CMMU_MODE_BOTH		2
+
+#define CMMU_ACS_USER		0
+#define CMMU_ACS_SUPER		1
+#define CMMU_ACS_BOTH		2
+
+#define CMMU_SPLIT_ADDRESS	0x0
+#define CMMU_SPLIT_SPV		0x1
+#define CMMU_SPLIT_SRAM_SPV	0x2
+#define CMMU_SPLIT_SRAM_ALL	0x3
+
+#define CMMU_SPLIT_MASK		0x3
+
+#define CMMU_NSTRATEGIES	4
+
+/*
+ * Flags passed to cmmu_set()
+ */
+#define NUM_CMMU		0x01
+#define NUM_CPU			0x02 /* notyetused */
+#define MODE_VAL		0x04
+#define ACCESS_VAL		0x08
+#define ADDR_VAL		0x10
 
 #define NBSG    (4*1024*1024) /* segment size */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.5 1999/02/09 12:49:38 deraadt Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.6 1999/09/27 20:46:16 smurph Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -59,13 +59,12 @@ typedef unsigned long m88k_psr_type;
  */
 static inline m88k_psr_type disable_interrupts_return_psr(void)
 {
-    m88k_psr_type temp, oldpsr;
-    asm volatile (
-	"ldcr %0, cr1      \n"
-	"set  %1, %0, 1<1> \n"
-	"stcr %1, cr1      \n"
-	"tcnd ne0, r0, 0     " : "=r" (oldpsr), "=r" (temp));
-    return oldpsr;
+   m88k_psr_type temp, oldpsr;
+   asm volatile ("ldcr %0, cr1" : "=r" (oldpsr));
+   asm volatile ("set  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
+	asm volatile ("stcr %0, cr1" : "=r" (temp));
+	asm volatile ("tcnd ne0, r0, 0");
+   return oldpsr;
 }
 #define disable_interrupt() (void)disable_interrupts_return_psr()
 
@@ -74,7 +73,7 @@ static inline m88k_psr_type disable_interrupts_return_psr(void)
  */
 static inline void set_psr(m88k_psr_type psr)
 {
-    asm volatile ("stcr %0, cr1" :: "r" (psr));
+   asm volatile ("stcr %0, cr1" :: "r" (psr));
 }
 
 /*
@@ -82,12 +81,11 @@ static inline void set_psr(m88k_psr_type psr)
  */
 static inline m88k_psr_type enable_interrupts_return_psr(void)
 {
-    m88k_psr_type temp, oldpsr; /* need a temporary register */
-    asm volatile (
-	"ldcr %0, cr1      \n"
-        "clr  %1, %0, 1<1> \n"
-        "stcr %1, cr1        " : "=r" (oldpsr), "=r" (temp));
-    return oldpsr;
+   m88k_psr_type temp, oldpsr; /* need a temporary register */
+   asm volatile ("ldcr %0, cr1" : "=r" (oldpsr));
+   asm volatile ("clr  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
+	asm volatile ("stcr %0, cr1" : "=r" (temp));
+   return oldpsr;
 }
 #define enable_interrupt() (void)enable_interrupts_return_psr()
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_vectors.h,v 1.5 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: exception_vectors.h,v 1.6 1999/09/27 20:46:17 smurph Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991, 1992 Carnegie Mellon University
@@ -25,9 +25,10 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#define UNDEFINED PREDEFINED_BY_ROM
 #ifndef UNDEFINED
 # define UNDEFINED _unknown_handler
-/* vector 0x00 (#0)     word   _address_handler */
 #endif
 /* vector 0x00 (#0)   */  word   _reset_handler
 /* vector 0x01 (#1)   */  word   _interrupt_handler
@@ -166,3 +167,4 @@
 /* vector 0x85 (#133) */  word   user_raw_putstr /* for USER raw_printf() */
 /* vector 0x85 (#134) */  word   user_raw_xpr 	 /* for USER raw_xpr() */
 #endif
+

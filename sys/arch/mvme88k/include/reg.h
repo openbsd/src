@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: reg.h,v 1.5 1999/09/27 20:46:19 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -32,6 +32,10 @@
  */
 #include <machine/pcb.h>
 
+#define reg m88100_saved_state
+#define r_
+
+#if 0
 struct reg {
     unsigned r_r[32];
     unsigned r_fpsr;
@@ -65,6 +69,7 @@ struct reg {
     unsigned r_scratch1; /* used by locore trap handling code */
     unsigned r_pad;      /* to make an even length */
 } ;
+#endif 
 
 struct fpreg {
     unsigned fp_fpecr;

@@ -63,14 +63,14 @@
 
 #define RTE	NOP ; rte
 
-#define PID	cr0
-#define PSR	cr1
+#define PID    cr0
+#define PSR    cr1
 #define EPSR	cr2
 #define SSBR	cr3
 #define SXIP	cr4
 #define SNIP	cr5
 #define SFIP	cr6
-#define VBR	cr7
+#define VBR    cr7
 #define DMT0	cr8
 #define DMD0	cr9
 #define DMA0	cr10
@@ -80,10 +80,42 @@
 #define DMT2	cr14
 #define DMD2	cr15
 #define DMA2	cr16
-#define SR0	cr17
-#define SR1	cr18
-#define SR2	cr19
-#define SR3	cr20
+#define SRX    cr16 
+#define SR0    cr17
+#define SR1    cr18
+#define SR2    cr19
+#define SR3    cr20
+
+/* MVME197 only */
+#define SRX    cr16 
+#define EXIP	cr4
+#define ENIP	cr5
+#define ICMD   cr25
+#define ICTL   cr26
+#define ISAR   cr27
+#define ISAP   cr28
+#define IUAP   cr29
+#define IIR    cr30
+#define IBP    cr31
+#define IPPU   cr32
+#define IPPL   cr33
+#define ISR    cr34
+#define ILAR   cr35
+#define IPAR   cr36
+#define DCMD   cr40
+#define DCTL   cr41
+#define DSAR   cr42
+#define DSAP   cr43
+#define DUAP   cr44
+#define DIR    cr45
+#define DBP    cr46
+#define DPPU   cr47
+#define DPPL   cr48
+#define DSR    cr49
+#define DLAR   cr50
+#define DPAR   cr51
+/* end MVME197 only */
+
 #define FPECR	fcr0
 #define FPHS1	fcr1
 #define FPLS1	fcr2
@@ -120,6 +152,32 @@
                 or      r3, r0, ARG2	; \
 		addu	r31, r31, 32
 
+/* This define is similar to CALL, but accepts a function pointer XXX smurph */
+#define CALLP(NAME, ARG1, ARG2)              \
+  		subu	r31, r31, 32	   ; \
+                or.u	r5, r0, hi16(NAME) ; \
+                ld	r4, r5, lo16(NAME) ; \
+		or      r2, r0, ARG1       ; \
+                jsr.n   r4                 ; \
+                or      r3, r0, ARG2	   ; \
+		addu	r31, r31, 32
+
+/* This define can replace the xcr instruction XXX smurph */
+#define XCR(DR, SR, CR)         ; \
+      stcr   r13,    SR0   ; \
+      or      r13, r0, SR     ; \
+                ldcr   DR, CR      ; \
+      stcr   r13, CR      ; \
+      ldcr   r13, SR0
+
+/* This define can be used to debug sub routine returns XXX smurph*/
+#define STORE_R1(varname)               ; \
+      stcr   r13,    SR0   /* r13 now free */   ; \
+      /* save r1 to memory location varname */   ; \
+      or.u   r13, r0,  hi16(varname)         ; \
+      st   r1,  r13, lo16(varname)         ; \
+      ldcr   r13, SR0   /* retore r13   */   
+
 /*
  * SR1 - CPU FLAGS REGISTER
  * XXX clean this when the trap handler is reworked. Among the things
@@ -142,12 +200,14 @@
  *	in a rather precarious state and so special cautions must
  * 	be taken.
  */
-#define FLAG_CPU_FIELD_WIDTH		4	/* must be <= 12 */
-
-#define FLAG_IGNORE_DATA_EXCEPTION	5	/* bit number 5 */
-#define FLAG_INTERRUPT_EXCEPTION	6	/* bit number 6 */
-#define FLAG_ENABLING_FPU		7	/* bit number 7 */
-
+#define FLAG_CPU_FIELD_WIDTH		   4	/* must be <= 12 */
+#define FLAG_IGNORE_DATA_EXCEPTION	5	/* bit number 5  */
+#define FLAG_INTERRUPT_EXCEPTION	   6	/* bit number 6  */
+#define FLAG_ENABLING_FPU		      7	/* bit number 7  */
+#define FLAG_FROM_KERNEL            8  /* bit number 8  */
+#define FLAG_187 		               8	/* bit number 9  */
+#define FLAG_188 		               9	/* bit number 10 */
+#define FLAG_197 		              10	/* bit number 11 */
 
 /* REGister OFFset into the E.F. (exception frame) */
 #define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register int))  */
@@ -202,19 +262,19 @@
 /*
  * Bits for eh_debug.
  */
-#define DEBUG_INTERRUPT_BIT		 0
-#define DEBUG_DATA_BIT			 1
-#define DEBUG_INSTRUCTION_BIT		 2
-#define DEBUG_MISALIGN_BIT		 3
-#define DEBUG_UNIMP_BIT			 4
-#define DEBUG_DIVIDE_BIT		 5
-#define DEBUG_OF_BIT			 6
-#define DEBUG_FPp_BIT			 7
-#define DEBUG_FPi_BIT			 8
-#define DEBUG_SYSCALL_BIT	 	 9
-#define DEBUG_MACHSYSCALL_BIT		10
-#define DEBUG_UNIMPLEMENTED_BIT		11
-#define DEBUG_PRIVILEGE_BIT		12
+#define DEBUG_INTERRUPT_BIT	0
+#define DEBUG_DATA_BIT			1
+#define DEBUG_INSTRUCTION_BIT	2
+#define DEBUG_MISALIGN_BIT		3
+#define DEBUG_UNIMP_BIT			4
+#define DEBUG_DIVIDE_BIT		5
+#define DEBUG_OF_BIT			   6
+#define DEBUG_FPp_BIT			7
+#define DEBUG_FPi_BIT			8
+#define DEBUG_SYSCALL_BIT	 	9
+#define DEBUG_MACHSYSCALL_BIT	10
+#define DEBUG_UNIMPLEMENTED_BIT	11
+#define DEBUG_PRIVILEGE_BIT	12
 #define DEBUG_BOUNDS_BIT		13
 #define DEBUG_OVERFLOW_BIT		14
 #define DEBUG_ERROR_BIT			15
@@ -225,6 +285,10 @@
 #define DEBUG_KDB_BIT			20
 #define DEBUG_JKDB_BIT			21
 #define DEBUG_BUGCALL_BIT		22
+#define DEBUG_NON_MASK_BIT	   23		/* MVME197 Non-Maskable Interrupt */
+#define DEBUG_197_READ_BIT    25    /* MVME198 Data Read Miss (Software Table Searches) */
+#define DEBUG_197_WRITE_BIT   26    /* MVME198 Data Write Miss (Software Table Searches) */
+#define DEBUG_197_INST_BIT    27    /* MVME198 Inst ATC Miss (Software Table Searches) */
 
 #define DEBUG_UNKNOWN_BIT		31
 
@@ -245,11 +309,19 @@
  */
 #define ERRATA__XXX_USR 	1
 
-#if !defined(CMMU_I)
-#define CMMU_I	0xFFF77000
-#endif
-#if !defined(CMMU_D)
-#define CMMU_D	0xFFF7F000
-#endif
+#ifndef CMMU_DEFS
+#define CMMU_DEFS
+#define SBC_CMMU_I		0xFFF77000 	/* Single Board Computer code CMMU */
+#define SBC_CMMU_D		0xFFF7F000 	/* Single Board Computer data CMMU */
+
+#define VME_CMMU_I0		0xFFF7E000 	/* MVME188 code CMMU 0 */
+#define VME_CMMU_I1		0xFFF7D000 	/* MVME188 code CMMU 1 */
+#define VME_CMMU_I2		0xFFF7B000 	/* MVME188 code CMMU 2 */
+#define VME_CMMU_I3		0xFFF77000 	/* MVME188 code CMMU 3 */
+#define VME_CMMU_D0		0xFFF6F000 	/* MVME188 data CMMU 0 */
+#define VME_CMMU_D1		0xFFF5F000 	/* MVME188 data CMMU 1 */
+#define VME_CMMU_D2		0xFFF3F000 	/* MVME188 data CMMU 2 */
+#define VME_CMMU_D3		0xFFF7F000 	/* MVME188 data CMMU 3 */
+#endif /* CMMU_DEFS */
 
 #endif /* __M88K_ASM_H__ */

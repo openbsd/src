@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpus.h,v 1.4 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: cpus.h,v 1.5 1999/09/27 20:46:17 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -40,26 +40,26 @@
  */
 #ifndef ASSEMBLER
 union cpupid {
-    unsigned cpupid;
-    struct {
-	unsigned
-	    /*empty*/:16,
-	    arc:8,
-	    version:7,
-	    master:1;
-    } m88100;
-    struct {
-	unsigned
-	    id:8,
-	    type:3,
-	    version:5,
-	    /*empty*/:16;
-    } m88200;
+   unsigned cpupid;
+   struct {
+      unsigned
+      /*empty*/:16,
+      arc:8,
+      version:7,
+      master:1;
+   } m88100;
+   struct {
+      unsigned
+      id:8,
+      type:3,
+      version:5,
+      /*empty*/:16;
+   } m88200;
 };
 #endif ASSEMBLER
 
-#define	M88100		0
-#define M88200		5
-#define M88204		6
+#define M88100 0
+#define M88200 5
+#define M88204 6
 
 #endif  _M88K_CPUS_

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.6 1999/09/27 20:46:19 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -155,7 +155,7 @@
 #define	VM_MAX_ADDRESS	((vm_offset_t) 0xffc00000U)
 
 #define	VM_MIN_USER_ADDRESS	((vm_offset_t) 0)
-#define	VM_MAX_USER_ADDRESS	((vm_offset_t) 0xffc00000U)
+#define	VM_MAX_USER_ADDRESS  ((vm_offset_t) 0xffc00000U)
 
 /* on vme188, max = 0xf0000000 */
 
