@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.8 2002/10/16 15:01:08 itojun Exp $
+#	$OpenBSD: Makefile,v 1.9 2003/06/24 16:06:45 mickey Exp $
 
 PROG=	systrace
-BINDIR?=        /bin
 CFLAGS+=-I.
 CFLAGS+=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith \
 	-Wno-uninitialized -Werror
