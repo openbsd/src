@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.c,v 1.2 2000/11/07 23:32:04 brian Exp $
+ * $OpenBSD: mppe.c,v 1.3 2000/12/29 22:37:25 brian Exp $
  */
 
 #include <sys/types.h>
@@ -233,7 +233,7 @@ MPPEInitOptsOutput(struct lcp_opt *o, const struct ccp_config *cfg)
   log_Printf(LogCCP, "MPPE: InitOptsOutput\n");
 
   if (!MPPE_MasterKeyValid) {
-    log_Printf(LogWARN, "MPPE: MasterKey is invalid,"
+    log_Printf(LogCCP, "MPPE: MasterKey is invalid,"
                " MPPE is capable only with CHAP81 authentication\n");
     *(u_int32_t *)o->data = htonl(0x0);
     return;
