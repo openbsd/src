@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.236 2002/07/10 22:17:58 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.237 2002/07/12 15:52:26 art Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -158,10 +158,7 @@ struct pf_state 	*pf_find_state(struct pf_state_tree *,
 			    struct pf_tree_node *);
 void			 pf_purge_expired_states(void);
 void			 pf_purge_timeout(void *);
-int			 pf_dynaddr_setup(struct pf_addr_wrap *, u_int8_t);
 void			 pf_dynaddr_update(void *);
-void			 pf_dynaddr_remove(struct pf_addr_wrap *);
-void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 void			 pf_print_state(struct pf_state *);
