@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys_process.c,v 1.2 1996/03/03 17:20:04 niklas Exp $	*/
-/*	$NetBSD: sys_process.c,v 1.54 1996/02/09 19:00:14 christos Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.3 1996/05/22 11:52:32 deraadt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -97,6 +97,7 @@ sys_ptrace(p, v, retval)
 	if (SCARG(uap, req) == PT_TRACE_ME)
 		t = p;
 	else {
+
 		/* Find the process we're supposed to be operating on. */
 		if ((t = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
@@ -124,12 +125,21 @@ sys_ptrace(p, v, retval)
 
 		/*
 		 *	(3) it's not owned by you, or is set-id on exec
-		 *	    (unless you're root).
+		 *	    (unless you're root), or...
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
 			ISSET(t->p_flag, P_SUGID)) &&
 		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
+
+		/*
+		 *	(4) ...it's init, which controls the security level
+		 *	    of the entire system, and the system was not
+		 *          compiled with permanently insecure mode turned
+		 *	    on.
+		 */
+		if ((t->p_pid == 1) && (securelevel > -1))
+			return (EPERM);
 		break;
 
 	case  PT_READ_I:
