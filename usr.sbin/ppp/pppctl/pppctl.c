@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.1 1998/08/31 00:22:31 brian Exp $
+ *	$Id: pppctl.c,v 1.2 1999/01/31 12:25:04 brian Exp $
  */
 
 #include <sys/types.h>
@@ -198,7 +198,7 @@ main(int argc, char **argv)
     struct sockaddr *sock;
     struct sockaddr_in ifsin;
     struct sockaddr_un ifsun;
-    int socksz, arg, fd, len, verbose;
+    int socksz, arg, fd, len, verbose, err;
     unsigned TimeoutVal;
     char *DoneWord = "x", *next, *start;
     struct sigaction act, oact;
@@ -314,13 +314,19 @@ main(int argc, char **argv)
     }
 
     if (connect(fd, sock, socksz) < 0) {
+        err = errno;
         if (TimeoutVal) {
             alarm(0);
             sigaction(SIGALRM, &oact, 0);
         }
-        if (TimedOut)
+        if (TimedOut) {
             fputs("Timeout: ", stderr);
-        fprintf(stderr, "Cannot connect to socket %s\n", argv[arg]);
+            err = 0;
+        }
+        fprintf(stderr, "Cannot connect to socket %s", argv[arg]);
+        if (err)
+            fprintf(stderr, ": %s", strerror(err));
+        fputc('\n', stderr);
         close(fd);
         return 3;
     }
