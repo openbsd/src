@@ -1,0 +1,6 @@
+stdin:8: invalid interface name '10.1.2.3'
+stdin:9: invalid interface name '10.1.2.3:0'
+nat on lo0 all -> (lo0) round-robin
+nat on lo0 all -> (lo0:0)
+nat on lo0 all -> (nonexistant0) round-robin
+nat on lo0 all -> (nonexistant0:0)

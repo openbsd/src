@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.474 2005/01/05 18:23:10 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.475 2005/01/27 15:30:35 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2307,6 +2307,11 @@ dynaddr		: '(' STRING ')'		{
 			char	*p, *op;
 
 			op = $2;
+			if (!isalpha(op[0])) {
+				yyerror("invalid interface name '%s'", op);
+				free(op);
+				YYERROR;
+			}
 			while ((p = strrchr($2, ':')) != NULL) {
 				if (!strcmp(p+1, "network"))
 					flags |= PFI_AFLAG_NETWORK;
