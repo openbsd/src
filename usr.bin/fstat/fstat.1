@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.3 1996/07/08 22:09:41 ccappuc Exp $
+.\"	$OpenBSD: fstat.1,v 1.4 1996/08/17 09:12:27 deraadt Exp $
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -200,11 +200,25 @@ connected unix domain stream socket.
 A unidirectional unix domain socket indicates the direction of flow with
 an arrow (``<-'' or ``->''), and a full duplex socket shows a double arrow
 (``<->'').
+.Pp
+For AF_INET sockets,
+.Nm fstat
+also attempts to print the internet address and port for the
+local end of a connection.
+If the socket is connected, it also prints the remote internet address
+and port.
+A ``*'' is used to indicate an INADDR_ANY binding.
 .Sh BUGS
 Since
 .Nm fstat
 takes a snapshot of the system, it is only correct for a very short period
 of time.
+.Pp
+Moreover, because DNS resolution and YP lookups cause many of file
+descriptor changes,
+.Nm fstat
+does not attempt to translate the internet adress and port numbers into
+symbolic names.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr nfsstat 1 ,
