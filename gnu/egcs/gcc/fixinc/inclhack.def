@@ -136,6 +136,18 @@ fix = {
 
     sed = "/^[ ]*typedef[ \t][ \t]*unsigned char[ \t][ \t]*bool[ \t]*;/a\\\n"
                 "#endif\n";
+
+    sed = "/^typedef[ \t][ \t]*int[ \t][ \t]*bool[ \t]*;/i\\\n"
+                "#ifndef __cplusplus\n";
+
+    sed = "/^typedef[ \t][ \t]*int[ \t][ \t]*bool[ \t]*;/a\\\n"
+                "#endif\n";
+
+    sed = "/^[ ]*typedef[ \t][ \t]*unsigned int[ \t][ \t]*bool[ \t]*;/i\\\n"
+                "#ifndef __cplusplus\n";
+
+    sed = "/^[ ]*typedef[ \t][ \t]*unsigned int[ \t][ \t]*bool[ \t]*;/a\\\n"
+                "#endif\n";
 };
 
 
@@ -567,7 +579,8 @@ fix = {
 fix = {
     hackname = io_def_quotes;
     select = "[ \t]*[ \t](_|DES)IO[A-Z]*[ \t]*\\( *[^,']";
-    sed = "s/\\([ \t]*[ \t](_|DES)IO[A-Z]*[ \t]*(\\)\\([^,']\\),/\\1'\\2',/";
+    sed = "s/\\([ \t]*[ \t]_IO[A-Z]*[ \t]*(\\)\\([^,']\\),/\\1'\\2',/";
+    sed = "s/\\([ \t]*[ \t]DESIO[A-Z]*[ \t]*(\\)\\([^,']\\),/\\1'\\2',/";
     sed = "/#[ \t]*define[ \t]*[ \t]_IO/"       "s/'\\([cgxtf]\\)'/\\1/g";
     sed = "/#[ \t]*define[ \t]*[ \t]DESIOC/"    's/\'\([cdgx]\)\'/\1/g';
 };
@@ -724,6 +737,7 @@ fix = {
 fix = {
     hackname = limits_ifndefs;
     files  = "limits.h";
+    files  = "sys/limits.h";
     bypass = "ifndef[ \t]+FLT_MIN";
 
     sed  = "/[ \t]FLT_MIN[ \t]/i\\\n#ifndef FLT_MIN\n";
@@ -1040,8 +1054,8 @@ fix = {
     "\tthen sed -e '/define[ \t]HUGE_VAL[ \t]DBL_MAX/s/DBL_MAX/$dbl_max_def/'"
     "\n\telse cat ; fi |\n"
 
-    "\tsed -e'/define[ \t]HUGE_VAL[ \t]/i\\\n#ifndef HUGE_VAL\n' "
-          "-e'/define[ \t]HUGE_VAL[ \t]/a\\\n#endif\n'";
+    "\tsed -e '/define[ \t]HUGE_VAL[ \t]/i\\\n#ifndef HUGE_VAL\n' "
+          "-e '/define[ \t]HUGE_VAL[ \t]/a\\\n#endif\n'";
 };
 
 

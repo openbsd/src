@@ -2781,18 +2781,14 @@ convert_nontype_argument (type, expr)
 	       applied.  */
 	    e = perform_qualification_conversions (type, expr);
 	    if (TREE_CODE (e) == NOP_EXPR)
-	      {
-		/* The call to perform_qualification_conversions will
-		   insert a NOP_EXPR over EXPR to do express
-		   conversion, if necessary.  But, that will confuse
-		   us if we use this (converted) template parameter to
-		   instantiate another template; then the thing will
-		   not look like a valid template argument.  So, just
-		   make a new constant, of the appropriate type.  */
-		e = make_node (PTRMEM_CST);
-		TREE_TYPE (e) = type;
-		PTRMEM_CST_MEMBER (e) = PTRMEM_CST_MEMBER (expr);
-	      }
+	      /* The call to perform_qualification_conversions will
+		 insert a NOP_EXPR over EXPR to do express conversion,
+		 if necessary.  But, that will confuse us if we use
+		 this (converted) template parameter to instantiate
+		 another template; then the thing will not look like a
+		 valid template argument.  So, just make a new
+		 constant, of the appropriate type.  */
+	      e = make_ptrmem_cst (type, PTRMEM_CST_MEMBER (expr));
 	    return e;
 	  }
 	else if (TREE_CODE (type_pointed_to) == FUNCTION_TYPE)
@@ -6128,7 +6124,12 @@ tsubst (t, args, complain, in_decl)
 	if (max == error_mark_node)
 	  return error_mark_node;
 
-	if (processing_template_decl)
+	if (processing_template_decl 
+	    /* When providing explicit arguments to a template
+	       function, but leaving some arguments for subsequent
+	       deduction, MAX may be template-dependent even if we're
+	       not PROCESSING_TEMPLATE_DECL.  */
+	    || TREE_CODE (max) != INTEGER_CST)
 	  {
 	    tree itype = make_node (INTEGER_TYPE);
 	    TYPE_MIN_VALUE (itype) = size_zero_node;
@@ -6535,6 +6536,8 @@ tsubst (t, args, complain, in_decl)
 	  }
 
 	f = make_typename_type (ctx, f);
+	if (f == error_mark_node)
+	  return f;
 	return cp_build_qualified_type (f, 
 					CP_TYPE_QUALS (f) 
 					| CP_TYPE_QUALS (t));
@@ -6908,9 +6911,20 @@ tsubst_copy (t, args, complain, in_decl)
         /* Substituted template arguments */
 	tree targs = tsubst_copy (TREE_OPERAND (t, 1), args, complain,
 				  in_decl);
-	tree chain;
-	for (chain = targs; chain; chain = TREE_CHAIN (chain))
-	  TREE_VALUE (chain) = maybe_fold_nontype_arg (TREE_VALUE (chain));
+
+	if (targs && TREE_CODE (targs) == TREE_LIST)
+	  {
+	    tree chain;
+	    for (chain = targs; chain; chain = TREE_CHAIN (chain))
+	      TREE_VALUE (chain) = maybe_fold_nontype_arg (TREE_VALUE (chain));
+	  }
+	else if (targs)
+	  {
+	    int i;
+	    for (i = 0; i < TREE_VEC_LENGTH (targs); ++i)
+	      TREE_VEC_ELT (targs, i) 
+		= maybe_fold_nontype_arg (TREE_VEC_ELT (targs, i));
+	  }
 
 	return lookup_template_function
 	  (tsubst_copy (TREE_OPERAND (t, 0), args, complain, in_decl), targs);

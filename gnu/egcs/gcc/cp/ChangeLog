@@ -1,3 +1,102 @@
+1999-06-07  Mark Mitchell  <mark@codesourcery.com>
+
+	* search.c (convert_pointer_to_single_level): Reimplement without
+	using get_binfo.
+
+1999-06-06  Mark Mitchell  <mark@codesourcery.com>
+
+	* method.c (is_back_referenceable_type): Back-reference bools when
+	not squangling.
+
+1999-06-04  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* semantics.c (finish_if_stmt_cond): Copy cond to permanent_obstack.
+	(finish_while_stmt_cond, finish_do_stmt, finish_for_cond): Likewise.
+
+1999-05-30  Mark Mitchell  <mark@codesourcery.com>
+
+	* lex.c (make_lang_type): Create TYPE_BINFO for
+	TEMPLATE_TYPE_PARMs just like for non-template types.
+
+1999-05-28  Nathan Sidwell  <nathan@acm.org>
+
+	* decl.c (complete_array_type): Allocate off same obstack. Fix
+	DO_DEFAULT comment to match reality.
+
+1999-05-22  Mark Mitchell  <mark@codesourcery.com>
+
+	* tree.c (mapcar): Handle NON_LVALUE_EXPR.
+
+1999-05-21  Mark Mitchell  <mark@codesourcery.com>
+
+	* typeck.c (build_ptrmemfunc): Handle PTRMEM_CSTs carefully to
+	reveal optimization opportunities.
+
+1999-05-20  Mark Mitchell  <mark@codesourcery.com>
+
+	* decl.c (grokdeclarator): Don't treat [] as indicating a
+	zero-sized array in a typedef.
+
+	* call.c (build_object_call): Don't look at DECL_NAME for a type.
+	(pt.c): Or CP_TYPE_QUALS for an ERROR_MARK.
+	(typeck.c): Or TYPE_MAIN_VARIANT for a type.
+
+1999-05-20  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tree.c (lvalue_p_1): A NOP_EXPR can be an lvalue.
+	(build_cplus_new): Make sure that what we return is of the right type.
+
+1999-05-20  Mark Mitchell  <mark@codesourcery.com>
+
+	* cp-tree.h (make_ptrmem_cst): New function.
+	* expr.c (cplus_expand_constant): Split out from ...
+	(cplus_expand_expr): Here.  Use cplus_expand_constant.
+	(init_cplus_expand): Set lang_expand_constant.
+	* pt.c (convert_nontype_argument): Use make_ptrmem_cst.
+	* tree.c (make_ptrmem_cst): Define.
+	* typeck.c (unary_complex_lvalue): Use make_ptrmem_cst.
+	* typeck2.c (initializer_constant_valid_p): Use make_ptrmem_cst.
+
+1999-05-19  Mark Mitchell  <mark@codesourcery.com>
+
+	* decl2.c (start_static_storage_duration_function): Fix comment.
+	(finish_file): Create static storage duration functions lazily.
+
+Wed May 19 02:50:53 1999  Arvind Sankar <arvinds@mit.edu>
+
+	* gxxint.texi: Fix typo.
+
+1999-05-18  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* call.c (joust): Compare the types of the conv ops, not the
+	target types of the conversions.
+
+Tue May 18 00:21:34 1999  Zack Weinberg  <zack@rabi.phys.columbia.edu>
+
+	* lang-specs.h: Define __GNUC__ and __GNUC_MINOR__ only if -no-gcc
+	was not given.
+
+1999-05-17  Mark Mitchell  <mark@codesourcery.com>
+
+	* cp-tree.def (TEMPLATE_ID_EXPR): Update documentation.
+	* decl.c (grokfndecl): Don't allow inline declarations of friend
+	template specializations, or friend template specializations with
+	default arguments.
+	* pt.c (tsubst): Handle substitution into array types that does
+	not yield a fixed upper bound, even when not processing a
+	template.
+	(tsubst_copy): Deal with the fact that the second operand to a
+	TEMPLATE_ID_EXPR may be NULL_TREE, a TREE_LIST, or a TREE_VEC.
+	* search.c (marked_pushdecls_p): Don't descend into
+	TEMPLATE_TYPE_PARMs and the like.
+	(unmarked_pushdecls_p): Likewise.
+	
+	* call.c (build_over_call): Don't throw away
+	initializations/copies of empty classes; use MODIFY_EXPR and
+	INIT_EXPR as for non-empty classes.
+	* class.c (finish_struct_1): Put the padding byte for an empty
+	class on the TYPE_NONCOPIED_PARTS list for the class.
+
 1999-05-16  Mark Mitchell  <mark@codesourcery.com>
 
 	* decl2.c (build_expr_from_tree): Handle COMPONENT_REFs that

@@ -23,25 +23,9 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include "auto-host.h"
-
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
+#include "gansidecl.h"
+#include "system.h"
 #include <signal.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#include <ctype.h>
 
 #include "gnu-regex.h"
 #include "server.h"
@@ -57,6 +41,13 @@ static const char program_id[] = "fixincl version 1.0";
 # define MAXPATHLEN     4096
 #endif
 #define NAME_TABLE_SIZE (MINIMUM_MAXIMUM_LINES * MAXPATHLEN)
+
+#ifndef EXIT_SUCCESS
+# define EXIT_SUCCESS 0
+#endif
+#ifndef EXIT_FAILURE
+# define EXIT_FAILURE 1
+#endif
 
 char *file_name_buf;
 
@@ -112,6 +103,7 @@ typedef struct patch_desc tPatchDesc;
     */
 #define FD_MACH_ONLY      0x0000
 #define FD_MACH_IFNOT     0x0001
+#define FD_SHELL_SCRIPT   0x0002
 #define FD_SKIP_TEST      0x8000
 
 typedef struct fix_desc tFixDesc;
@@ -269,15 +261,8 @@ main (argc, argv)
       }
     }
 #else
-#error "NON-BOGUS LIMITS NOT SUPPORTED?!?!"
+ /*#*/ error "NON-BOGUS LIMITS NOT SUPPORTED?!?!"
 #endif
-
-  /*
-     Here we are the child of the grandparent process.  The parent
-     of all the little fixup processes.  We ignore the deaths of
-     our children.  */
-
-  signal (SIGCLD,  SIG_IGN);
 
   /*  For every file specified in stdandard in
       (except as throttled for bogus reasons)...
@@ -382,7 +367,9 @@ initialize()
    `waitpid(2)'.  We also ensure that the children exit with success. */
 
 void
-wait_for_pid( pid_t child, int file_name_ct )
+wait_for_pid(child, file_name_ct)
+     pid_t child;
+     int file_name_ct;
 {
   for (;;) {
     int status;
@@ -923,6 +910,70 @@ extract_quoted_files (pz_data, pz_file_name, p_re_match)
 }
 
 
+
+/* * * * * * * * * * * * *
+
+    This loop should only cycle for 1/2 of one loop.
+    "chain_open" starts a process that uses "read_fd" as
+    its stdin and returns the new fd this process will use
+    for stdout.  */
+
+int
+start_fixer (read_fd, p_fixd, pz_file_name)
+  int read_fd;
+  tFixDesc* p_fixd;
+  char* pz_file_name;
+{
+  tSCC z_err[] = "Error %d (%s) starting filter process for %s\n";
+  tCC* pz_cmd_save;
+  char* pz_cmd;
+
+  if ((p_fixd->fd_flags & FD_SHELL_SCRIPT) == 0)
+    pz_cmd = (char*)NULL;
+  else
+    {
+      tSCC z_cmd_fmt[] = "file='%s'\n%s";
+      pz_cmd = (char*)xmalloc (strlen (p_fixd->patch_args[2])
+                               + sizeof( z_cmd_fmt )
+                               + strlen( pz_file_name ));
+      sprintf (pz_cmd, z_cmd_fmt, pz_file_name, p_fixd->patch_args[2]);
+      pz_cmd_save = p_fixd->patch_args[2];
+      p_fixd->patch_args[2] = pz_cmd;
+    }
+
+  for (;;)
+    {
+      static int failCt = 0;
+      int fd;
+
+      fd = chain_open (read_fd,
+                       (t_pchar *) p_fixd->patch_args,
+                       (process_chain_head == -1)
+                       ? &process_chain_head : (pid_t *) NULL);
+
+      if (fd != -1)
+        {
+          read_fd = fd;
+          break;
+        }
+
+      fprintf (stderr, z_err, errno, strerror (errno),
+               p_fixd->fix_name);
+
+      if ((errno != EAGAIN) || (++failCt > 10))
+        exit (EXIT_FAILURE);
+      sleep (1);
+    }
+
+  if (pz_cmd != (char*)NULL)
+    {
+      free ((void*)pz_cmd);
+      p_fixd->patch_args[2] = pz_cmd_save;
+    }
+
+  return read_fd;
+}
+
 /* * * * * * * * * * * * *
 
    Process the potential fixes for a particular include file.
@@ -934,33 +985,12 @@ process (pz_data, pz_file_name)
      char *pz_data;
      const char *pz_file_name;
 {
-  static char env_current_file[1024] = { "file=" };
+  static char env_current_file[1024];
   tFixDesc *p_fixd = fixDescList;
   int todo_ct = FIX_COUNT;
-  t_fd_pair fdp = { -1, -1 };
+  int read_fd = -1;
+  int num_children = 0;
 
-  /*  IF this is the first time through,
-      THEN put the 'file' environment variable into the environment.
-           This is used by some of the subject shell scripts and tests.   */
-
-  if (env_current_file[5] == NUL)
-    putenv (env_current_file);
-
-  /*
-     Ghastly as it is, this actually updates the value of the variable:
-   
-       putenv(3C)             C Library Functions             putenv(3C)
-   
-       DESCRIPTION
-            putenv() makes the value of the  environment  variable  name
-            equal  to value by altering an existing variable or creating
-            a new one.  In either case, the string pointed to by  string
-            becomes part of the environment, so altering the string will
-            change the environment.  string points to a  string  of  the
-            form  ``name=value.''  The space used by string is no longer
-            used once a new string-defining name is passed to putenv().
-   */
-  strcpy (env_current_file + 5, pz_file_name);
   process_chain_head = NOPROCESS;
   fprintf (stderr, "%-50s   \r", pz_file_name );
   /* For every fix in our fix list, ...  */
@@ -1058,10 +1088,10 @@ process (pz_data, pz_file_name)
           the first fix.  Any subsequent fixes will use the
           stdout descriptor of the previous fix as its stdin.  */
 
-      if (fdp.read_fd == -1)
+      if (read_fd == -1)
         {
-          fdp.read_fd = open (pz_file_name, O_RDONLY);
-          if (fdp.read_fd < 0)
+          read_fd = open (pz_file_name, O_RDONLY);
+          if (read_fd < 0)
             {
               fprintf (stderr, "Error %d (%s) opening %s\n", errno,
                        strerror (errno), pz_file_name);
@@ -1069,33 +1099,8 @@ process (pz_data, pz_file_name)
             }
         }
 
-      /*  This loop should only cycle for 1/2 of one loop.
-          "chain_open" starts a process that uses "fdp.read_fd" as
-          its stdin and returns the new fd this process will use
-          for stdout.  */
-
-      for (;;)
-        {
-          tSCC z_err[] = "Error %d (%s) starting filter process for %s\n";
-          static int failCt = 0;
-          int fd = chain_open (fdp.read_fd,
-                               (t_pchar *) p_fixd->patch_args,
-                               (process_chain_head == -1)
-                               ? &process_chain_head : (pid_t *) NULL);
-
-          if (fd != -1)
-            {
-              fdp.read_fd = fd;
-              break;
-            }
-
-          fprintf (stderr, z_err, errno, strerror (errno),
-                   p_fixd->fix_name);
-
-          if ((errno != EAGAIN) || (++failCt > 10))
-            exit (EXIT_FAILURE);
-          sleep (1);
-        }
+      read_fd = start_fixer (read_fd, p_fixd, pz_file_name);
+      num_children++;
 
     next_fix:
       ;
@@ -1104,7 +1109,7 @@ process (pz_data, pz_file_name)
   /*  IF after all the tests we did not start any patch programs,
       THEN quit now.   */
 
-  if (fdp.read_fd < 0)
+  if (read_fd < 0)
     return;
 
   /*  OK.  We have work to do.  Read back in the output
@@ -1115,7 +1120,7 @@ process (pz_data, pz_file_name)
       output of the filter chain.
       */
   {
-    FILE *in_fp = fdopen (fdp.read_fd, "r");
+    FILE *in_fp = fdopen (read_fd, "r");
     FILE *out_fp = (FILE *) NULL;
     char *pz_cmp = pz_data;
 
@@ -1171,5 +1176,10 @@ process (pz_data, pz_file_name)
       }
     fclose (in_fp);
   }
-  close (fdp.read_fd);  /* probably redundant, but I'm paranoid */
+  close (read_fd);  /* probably redundant, but I'm paranoid */
+
+  /* Wait for child processes created by chain_open()
+     to avoid creating zombies.  */
+  while (--num_children >= 0)
+    wait ((int *) NULL);
 }

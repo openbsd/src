@@ -8558,7 +8558,7 @@ expand_static_init (decl, init)
 
 /* Make TYPE a complete type based on INITIAL_VALUE.
    Return 0 if successful, 1 if INITIAL_VALUE can't be deciphered,
-   2 if there was no information (in which case assume 1 if DO_DEFAULT).  */
+   2 if there was no information (in which case assume 0 if DO_DEFAULT).  */
 
 int
 complete_array_type (type, initial_value, do_default)
@@ -8567,7 +8567,10 @@ complete_array_type (type, initial_value, do_default)
 {
   register tree maxindex = NULL_TREE;
   int value = 0;
-
+  
+  /* Allocate on the same obstack as TYPE.  */
+  push_obstacks (TYPE_OBSTACK (type), TYPE_OBSTACK (type));
+  
   if (initial_value)
     {
       /* Note MAXINDEX  is really the maximum index,
@@ -8615,23 +8618,28 @@ complete_array_type (type, initial_value, do_default)
   if (maxindex)
     {
       tree itype;
+      tree domain;
 
-      TYPE_DOMAIN (type) = build_index_type (maxindex);
+      domain = build_index_type (maxindex);
+      TYPE_DOMAIN (type) = domain;
+
       if (! TREE_TYPE (maxindex))
-	TREE_TYPE (maxindex) = TYPE_DOMAIN (type);
+	TREE_TYPE (maxindex) = domain;
       if (initial_value)
         itype = TREE_TYPE (initial_value);
       else
 	itype = NULL;
       if (itype && !TYPE_DOMAIN (itype))
-	TYPE_DOMAIN (itype) = TYPE_DOMAIN (type);
+	TYPE_DOMAIN (itype) = domain;
       /* The type of the main variant should never be used for arrays
 	 of different sizes.  It should only ever be completed with the
 	 size of the array.  */
       if (! TYPE_DOMAIN (TYPE_MAIN_VARIANT (type)))
-	TYPE_DOMAIN (TYPE_MAIN_VARIANT (type)) = TYPE_DOMAIN (type);
+	TYPE_DOMAIN (TYPE_MAIN_VARIANT (type)) = domain;
     }
 
+  pop_obstacks();
+  
   /* Lay out the type now that we can get the real answer.  */
 
   layout_type (type);
@@ -8710,6 +8718,7 @@ grokfndecl (ctype, type, declarator, orig_declarator, virtualp, flags, quals,
 {
   tree cname, decl;
   int staticp = ctype && TREE_CODE (type) == FUNCTION_TYPE;
+  int has_default_arg = 0;
   tree t;
 
   if (ctype)
@@ -8826,7 +8835,7 @@ grokfndecl (ctype, type, declarator, orig_declarator, virtualp, flags, quals,
     if (TREE_PURPOSE (t)
 	&& TREE_CODE (TREE_PURPOSE (t)) == DEFAULT_ARG)
       {
-	add_defarg_fn (decl);
+	has_default_arg = 1;
 	break;
       }
 
@@ -8847,6 +8856,7 @@ grokfndecl (ctype, type, declarator, orig_declarator, virtualp, flags, quals,
 	      return NULL_TREE;
 	    }
 
+
 	  /* A friend declaration of the form friend void f<>().  Record
 	     the information in the TEMPLATE_ID_EXPR.  */
 	  SET_DECL_IMPLICIT_INSTANTIATION (decl);
@@ -8854,8 +8864,25 @@ grokfndecl (ctype, type, declarator, orig_declarator, virtualp, flags, quals,
 	    = perm_tree_cons (TREE_OPERAND (orig_declarator, 0),
 			      TREE_OPERAND (orig_declarator, 1),
 			      NULL_TREE);
+
+	  if (has_default_arg)
+	    {
+	      cp_error ("default arguments are not allowed in declaration of friend template specialization `%D'",
+			decl);
+	      return NULL_TREE;
+	    }
+
+	  if (inlinep)
+	    {
+	      cp_error ("`inline' is not allowed in declaration of friend template specialization `%D'", 
+			decl);
+	      return NULL_TREE;
+	    }
 	}
     }
+
+  if (has_default_arg)
+    add_defarg_fn (decl);
 
   /* Plain overloading: will not be grok'd by grokclassfn.  */
   if (! ctype && ! processing_template_decl
@@ -10300,7 +10327,8 @@ grokdeclarator (declarator, declspecs, decl_context, initialized, attrlist)
 	      continue;
 
 	    /* VC++ spells a zero-sized array with [].  */
-	    if (size == NULL_TREE && decl_context == FIELD && ! staticp)
+	    if (size == NULL_TREE && decl_context == FIELD && !	staticp
+		&& ! RIDBIT_SETP (RID_TYPEDEF, specbits))
 	      size = integer_zero_node;
 
 	    if (size)

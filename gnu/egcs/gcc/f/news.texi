@@ -9,7 +9,7 @@
 @c in the standalone derivations of this file (e.g. NEWS).
 @set copyrights-news 1995-1999
 
-@set last-update-news 1999-05-13
+@set last-update-news 1999-06-04
 
 @include root.texi
 
@@ -151,7 +151,7 @@ is available at
 
 The following information was last updated on @value{last-update-news}:
 
-@heading In @code{egcs} 1.2 (versus 1.1.2):
+@heading In 0.5.25, @code{GCC} 2.95 (@code{EGCS} 1.2) versus @code{EGCS} 1.1.2:
 @itemize @bullet
 @ifclear USERVISONLY
 @item
@@ -217,15 +217,15 @@ The @samp{-ax} option is now obeyed when compiling Fortran programs.
 @end ifclear
 
 @item
-The new @samp{-fsubscript-check} option
+The new @samp{-fbounds-check} option
 causes @code{g77} to compile run-time bounds checks
 of array subscripts, as well as of substring start and end points.
 
-The current implementation uses the @code{libf2c}
-library routine @code{s_rnge} to print the diagnostic.
-Since a future version of @code{g77} might use a different implementation,
-use the new @samp{-ff2c-subscript-check} option
-if your application requires use of @code{s_rnge} or a compile-time diagnostic.
+@item
+@code{libg2c} now supports building as multilibbed library,
+which provides better support for systems
+that require options such as @samp{-mieee}
+to work properly.
 
 @item
 Source file names with the suffixes @samp{.FOR} and @samp{.FPP}
@@ -245,7 +245,7 @@ of @code{libU77} intrinsics.
 @item
 @code{g77} now warns about a reference to an intrinsic
 that has an interface that is not Year 2000 (Y2K) compliant.
-Also, the @code{libg2c} has been changed to increase the likelihood
+Also, @code{libg2c} has been changed to increase the likelihood
 of catching references to the implementations of these intrinsics
 using the @code{EXTERNAL} mechanism
 (which would avoid the new warnings).
@@ -280,6 +280,14 @@ Even without the @samp{-malign-double} option,
 @code{g77} reliably aligns local double-precision variables
 that are not in @code{EQUIVALENCE} areas
 and not @code{SAVE}'d.
+@end ifclear
+
+@ifclear USERVISONLY
+@item
+@code{g77} now open-codes (``inlines'') division of @code{COMPLEX} operands
+instead of generating a run-time call to
+the @code{libf2c} routines @code{c_div} or @code{z_div},
+unless the @samp{-Os} option is specified.
 @end ifclear
 
 @item
@@ -323,7 +331,34 @@ Upgrade to @code{libf2c} as of 1999-05-10.
 @end ifclear
 @end itemize
 
-@heading In 0.5.24 and @code{egcs} 1.1.2 (versus 0.5.23 and 1.1.1):
+@heading In 0.5.24 versus 0.5.23:
+
+There is no @code{g77} version 0.5.24 at this time,
+or planned.
+0.5.24 is the version number designated for bug fixes and,
+perhaps, some new features added,
+to 0.5.23.
+Version 0.5.23 requires @code{gcc} 2.8.1,
+as 0.5.24 was planned to require.
+
+Due to @code{EGCS} becoming @code{GCC}
+(which is now an acronym for ``GNU Compiler Collection''),
+and @code{EGCS} 1.2 becoming officially designated @code{GCC} 2.95,
+there seems to be no need for an actual 0.5.24 release.
+
+To reduce the confusion already resulting from use of 0.5.24
+to designate @code{g77} versions within @code{EGCS} versions 1.0 and 1.1,
+as well as in versions of @code{g77} documentation and notices
+during that period,
+``mainline'' @code{g77} version numbering resumes
+at 0.5.25 with @code{GCC} 2.95 (@code{EGCS} 1.2),
+skipping over 0.5.24 as a placeholder version number.
+
+To repeat, there is no @code{g77} 0.5.24, but there is now a 0.5.25.
+Please remain calm and return to your keypunch units.
+
+@c 1999-03-15: EGCS 1.1.2 released.
+@heading In @code{EGCS} 1.1.2 versus @code{EGCS} 1.1.1:
 @ifclear USERVISONLY
 @itemize @bullet
 @item
@@ -352,7 +387,8 @@ Improve documentation.
 @end itemize
 @end ifclear
 
-@heading In 0.5.24 and @code{egcs} 1.1.1 (versus 0.5.23 and 1.1):
+@c 1998-12-04: EGCS 1.1.1 released.
+@heading In @code{EGCS} 1.1.1 versus @code{EGCS} 1.1:
 @ifclear USERVISONLY
 @itemize @bullet
 @item
@@ -383,54 +419,8 @@ for the completion code to be set properly).
 @end itemize
 @end ifclear
 
-@heading In @code{egcs} 1.1 (versus 0.5.24):
-@itemize @bullet
-@ifclear USERVISONLY
-@item
-Fix @code{g77} crash compiling code
-containing the construct @samp{CMPLX(0.)} or similar.
-@end ifclear
-
-@ifclear USERVISONLY
-@item
-Fix @code{g77} crash
-(or apparently infinite run-time)
-when compiling certain complicated expressions
-involving @code{COMPLEX} arithmetic
-(especially multiplication).
-@end ifclear
-
-@ifclear USERVISONLY
-@cindex DNRM2
-@cindex stack, 387 coprocessor
-@cindex Intel x86
-@cindex -O2
-@item
-Fix a code-generation bug that afflicted
-Intel x86 targets when @samp{-O2} was specified
-compiling, for example, an old version of
-the @code{DNRM2} routine.
-
-The x87 coprocessor stack was being
-mismanaged in cases involving assigned @code{GOTO}
-and @code{ASSIGN}.
-@end ifclear
-
-@cindex alignment
-@cindex double-precision performance
-@cindex -malign-double
-@item
-Align static double-precision variables and arrays
-on Intel x86 targets
-regardless of whether @samp{-malign-double} is specified.
-
-Generally, this affects only local variables and arrays
-having the @code{SAVE} attribute
-or given initial values via @code{DATA}.
-@end itemize
-
-@c 1998-09-01: egcs-1.1 released.
-@heading In @code{egcs} 1.1 (versus @code{egcs} 1.0.3):
+@c 1998-09-03: EGCS 1.1 released.
+@heading In @code{EGCS} 1.1 versus @code{EGCS} 1.0.3:
 @itemize @bullet
 @ifclear USERVISONLY
 @item
@@ -608,8 +598,25 @@ as well.
 @end ifclear
 @end itemize
 
-@heading In 0.5.24 and @code{egcs} 1.1 (versus 0.5.23):
+@c 1998-09-03: EGCS 1.1 released.
+@heading In @code{EGCS} 1.1 versus @code{g77} 0.5.23:
 @itemize @bullet
+@ifclear USERVISONLY
+@cindex DNRM2
+@cindex stack, 387 coprocessor
+@cindex Intel x86
+@cindex -O2
+@item
+Fix a code-generation bug that afflicted
+Intel x86 targets when @samp{-O2} was specified
+compiling, for example, an old version of
+the @code{DNRM2} routine.
+
+The x87 coprocessor stack was being
+mismanaged in cases involving assigned @code{GOTO}
+and @code{ASSIGN}.
+@end ifclear
+
 @ifclear USERVISONLY
 @item
 @code{g77} no longer produces incorrect code
@@ -617,6 +624,12 @@ and initial values
 for @code{EQUIVALENCE} and @code{COMMON}
 aggregates that, due to ``unnatural'' ordering of members
 vis-a-vis their types, require initial padding.
+@end ifclear
+
+@ifclear USERVISONLY
+@item
+Fix @code{g77} crash compiling code
+containing the construct @samp{CMPLX(0.)} or similar.
 @end ifclear
 
 @ifclear USERVISONLY
@@ -644,6 +657,27 @@ for these cases.
 Previously, @code{g77} treated these expressions
 as denoting special ``pointer'' arguments
 for the purposes of filewide analysis.
+
+@ifclear USERVISONLY
+@item
+Fix @code{g77} crash
+(or apparently infinite run-time)
+when compiling certain complicated expressions
+involving @code{COMPLEX} arithmetic
+(especially multiplication).
+@end ifclear
+
+@cindex alignment
+@cindex double-precision performance
+@cindex -malign-double
+@item
+Align static double-precision variables and arrays
+on Intel x86 targets
+regardless of whether @samp{-malign-double} is specified.
+
+Generally, this affects only local variables and arrays
+having the @code{SAVE} attribute
+or given initial values via @code{DATA}.
 
 @item
 The @code{g77} driver now ensures that @samp{-lg2c}
@@ -702,7 +736,7 @@ for such information.
 
 @ifclear DOC-NEWS
 @c 1998-05-20: 0.5.23 released.
-@heading In 0.5.23 (versus 0.5.22):
+@heading In 0.5.23 versus 0.5.22:
 @itemize @bullet
 @item
 This release contains several regressions against
@@ -906,7 +940,7 @@ as well.
 @end itemize
 
 @c 1998-03-16: 0.5.22 released.
-@heading In 0.5.22 (versus 0.5.21):
+@heading In 0.5.22 versus 0.5.21:
 @itemize @bullet
 @ifclear USERVISONLY
 @item
@@ -1096,8 +1130,8 @@ This fixes a formatted-I/O bug that afflicted
 @end ifclear
 @end itemize
 
-@c 1998-03-15: egcs-1.0.2 released.
-@heading In @code{egcs} 1.0.2 (versus @code{egcs} 1.0.1):
+@c 1998-03-18: EGCS 1.0.2 released.
+@heading In @code{EGCS} 1.0.2 versus @code{EGCS} 1.0.1:
 @itemize @bullet
 @ifclear USERVISONLY
 @item
@@ -1142,8 +1176,8 @@ Fix compiler so it accepts @samp{-fgnu-intrinsics-*} and
 @samp{-fbadu77-intrinsics-*} options.
 @end itemize
 
-@c 1998-01-02: egcs-1.0.1 released.
-@heading In @code{egcs} 1.0.1 (versus @code{egcs} 1.0):
+@c 1998-01-06: EGCS 1.0.1 released.
+@heading In @code{EGCS} 1.0.1 versus @code{EGCS} 1.0:
 @ifclear USERVISONLY
 @itemize @bullet
 @item
@@ -1152,8 +1186,8 @@ machines such as Alphas.
 @end itemize
 @end ifclear
 
-@c 1997-12-03: egcs-1.0 released.
-@heading In @code{egcs} 1.0 (versus 0.5.21):
+@c 1997-12-03: EGCS 1.0 released.
+@heading In @code{EGCS} 1.0 versus @code{g77} 0.5.21:
 @itemize @bullet
 @item
 Version 1.0 of @code{egcs}

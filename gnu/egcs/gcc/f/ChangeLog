@@ -1,3 +1,85 @@
+Mon Jun  7 08:42:40 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* Make-lang.in: Any target using libsubdir must depend
+	on installdirs.
+
+Sat Jun  5 23:50:36 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* g77.texi: Describe a few more missing features people
+	have emailed me about.
+
+Sat Jun  5 17:03:23 1999  Craig Burley  <craig@jcb-sc.com>
+
+	From Dave Love to egcs-patches on 20 May 1999 17:38:38 +0100:
+	* g77.texi: Clean up fossil text vis-a-vis Intel CPUs.
+
+Fri Jun  4 13:56:56 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* Make-lang.in: Use libsubdir, not prefix, to store
+	temporary lang-f77 `flag' file.
+
+Fri Jun  4 10:26:04 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* news.texi (News): Mention GCC 2.95 in favor of EGCS 1.2.
+	Mention that libg2c is multilibbed.
+
+Fri Jun  4 10:09:50 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* g77.texi (Missing Features): Add `Better Warnings'
+	item.
+
+Fri May 28 16:51:41 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* g77.texi: Fix thinko.
+
+Wed May 26 14:43:27 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* news.texi: Document Tue May 18 03:52:04 1999 patch.
+	Fix a grammo.
+
+Wed May 26 14:25:07 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* g77.texi, news.texi, root.texi, version.c: Start renaming
+	EGCS 1.2 to GCC 2.95, and start using 0.5.25 to designate
+	the version of g77 within GCC 2.95.
+
+Wed May 26 11:45:21 1999  Craig Burley  <craig@jcb-sc.com>
+
+	Rename -fsubscript-check to -fbounds-check and
+	-ff2c-subscript-check to -ffortran-bounds-check:
+	* g77.texi: Rename options in docs, clarify usage.
+	* lang-options.h: Rename options, clarify doclets.
+	* news.texi: Rename options, don't bother with fortran-specific
+	option.
+	* top.c (ffe_decode_option): Rename recognized strings.
+
+Tue May 25 18:21:09 1999  Craig Burley  <craig@jcb-sc.com>
+
+	* com.c (FFECOM_FASTER_ARRAY_REFS): Delete this vestige,
+	now that -fflatten-arrays exists.
+
+Tue May 25 17:48:34 1999  Craig Burley  <craig@jcb-sc.com>
+
+	Fix 19990525-0.f:
+	* com.c (ffecom_arg_ptr_to_expr): Strip off parens around
+	CHARACTER expression.
+	(ffecom_prepare_expr_): Ditto.
+
+Tue May 18 03:52:04 1999  Craig Burley  <craig@jcb-sc.com>
+
+	Support use of back end's improved open-coding of complex divide:
+	* com.c (ffecom_tree_divide_): Use RDIV_EXPR for complex divide,
+	instead of run-time call to [cz]_div, if `-Os' option specified.
+	(lang_init_options): Tell back end we want support for wide range
+	of inputs to complex divide.
+
+	* Bump version.
+
+Tue May 18 00:21:34 1999  Zack Weinberg  <zack@rabi.phys.columbia.edu>
+
+	* lang-specs.h: Define __GNUC__ and __GNUC_MINOR__ only if -no-gcc
+	was not given.
+
 Thu May 13 12:23:20 1999  Craig Burley  <craig@jcb-sc.com>
 
 	Fix INTEGER*8 subscripts in array references:

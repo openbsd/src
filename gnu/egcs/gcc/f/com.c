@@ -213,8 +213,6 @@ typedef struct { unsigned :16, :16, :16; } vms_ino_t;
 
 /* Externals defined here.  */
 
-#define FFECOM_FASTER_ARRAY_REFS 0	/* Generates faster code? */
-
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
 
 /* tree.h declares a bunch of stuff that it expects the front end to
@@ -9378,6 +9376,10 @@ ffecom_tree_divide_ (tree tree_type, tree left, tree right,
 		       right);
 
     case COMPLEX_TYPE:
+      if (! optimize_size)
+	return ffecom_2 (RDIV_EXPR, tree_type,
+			 left,
+			 right);
       {
 	ffecomGfrt ix;
 
@@ -10595,6 +10597,9 @@ ffecom_arg_ptr_to_expr (ffebld expr, tree *length)
 
   assert (ffeinfo_kindtype (ffebld_info (expr))
 	  == FFEINFO_kindtypeCHARACTER1);
+
+  while (ffebld_op (expr) == FFEBLD_opPAREN)
+    expr = ffebld_left (expr);
 
   catlist = ffecom_concat_list_new_ (expr, FFETARGET_charactersizeNONE);
   switch (ffecom_concat_list_count_ (catlist))
@@ -13038,6 +13043,12 @@ ffecom_prepare_expr_ (ffebld expr, ffebld dest UNUSED)
   /* Generate whatever temporaries are needed to represent the result
      of the expression.  */
 
+  if (bt == FFEINFO_basictypeCHARACTER)
+    {
+      while (ffebld_op (expr) == FFEBLD_opPAREN)
+	expr = ffebld_left (expr);
+    }
+
   switch (ffebld_op (expr))
     {
     default:
@@ -15019,6 +15030,7 @@ lang_init_options ()
   flag_reduce_all_givs = 1;
   flag_argument_noalias = 2;
   flag_errno_math = 0;
+  flag_complex_divide_method = 1;
 }
 
 void

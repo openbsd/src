@@ -70,6 +70,9 @@ static void emit_sfm PROTO ((int, int));
 static enum arm_cond_code get_arm_condition_code PROTO ((rtx));
 static int const_ok_for_op RTX_CODE_PROTO ((Hint, Rcode));
 
+/* True if we are currently building a constant table. */
+int making_const_table;
+
 /*  Define the information needed to generate branch insns.  This is
    stored from the compare operation. */
 rtx arm_compare_op0, arm_compare_op1;
@@ -1563,8 +1566,11 @@ arm_finalize_pic ()
   /* On the ARM the PC register contains 'dot + 8' at the time of the
      addition.  */
   pic_tmp = plus_constant (gen_rtx_LABEL_REF (Pmode, l1), 8);
-  pic_tmp2 = gen_rtx_CONST (VOIDmode,
+  if (GOT_PCREL)
+    pic_tmp2 = gen_rtx_CONST (VOIDmode,
 			    gen_rtx_PLUS (Pmode, global_offset_table, pc_rtx));
+  else
+    pic_tmp2 = gen_rtx_CONST (VOIDmode, global_offset_table);
 
   pic_rtx = gen_rtx_CONST (Pmode, gen_rtx_MINUS (Pmode, pic_tmp2, pic_tmp));
   

@@ -4912,9 +4912,7 @@ unary_complex_lvalue (code, arg)
 	  type = build_offset_type (DECL_FIELD_CONTEXT (t), TREE_TYPE (t));
 	  type = build_pointer_type (type);
 
-	  t = make_node (PTRMEM_CST);
-	  TREE_TYPE (t) = type;
-	  PTRMEM_CST_MEMBER (t) = TREE_OPERAND (arg, 1);
+	  t = make_ptrmem_cst (type, TREE_OPERAND (arg, 1));
 	  return t;
 	}
     }
@@ -5079,17 +5077,20 @@ build_conditional_expr (ifexp, op1, op2)
       ifexp = op1 = save_expr (ifexp);
     }
 
+  type1 = TREE_TYPE (op1);
+  code1 = TREE_CODE (type1);
+  type2 = TREE_TYPE (op2);
+  code2 = TREE_CODE (type2);
+  if (op1 == error_mark_node || op2 == error_mark_node
+      || type1 == error_mark_node || type2 == error_mark_node)
+    return error_mark_node;
+
   ifexp = cp_convert (boolean_type_node, ifexp);
 
   if (TREE_CODE (ifexp) == ERROR_MARK)
     return error_mark_node;
 
   /* C++: REFERENCE_TYPES must be dereferenced.  */
-  type1 = TREE_TYPE (op1);
-  code1 = TREE_CODE (type1);
-  type2 = TREE_TYPE (op2);
-  code2 = TREE_CODE (type2);
-
   if (code1 == REFERENCE_TYPE)
     {
       op1 = convert_from_reference (op1);
@@ -6515,15 +6516,15 @@ build_ptrmemfunc (type, pfn, force)
      tree type, pfn;
      int force;
 {
-  tree idx = integer_zero_node;
-  tree delta = integer_zero_node;
-  tree delta2 = integer_zero_node;
-  tree npfn = NULL_TREE;
   tree fn;
   
   /* Handle multiple conversions of pointer to member functions.  */
   if (TYPE_PTRMEMFUNC_P (TREE_TYPE (pfn)))
     {
+      tree idx = integer_zero_node;
+      tree delta = integer_zero_node;
+      tree delta2 = integer_zero_node;
+      tree npfn = NULL_TREE;
       tree ndelta, ndelta2;
       tree e1, e2, e3, n;
       tree pfn_type;
@@ -6537,18 +6538,42 @@ build_ptrmemfunc (type, pfn, force)
 	  && comp_target_types (type, pfn_type, 1) != 1)
 	cp_error ("conversion to `%T' from `%T'", type, pfn_type);
 
-      ndelta = cp_convert (ptrdiff_type_node, build_component_ref (pfn, delta_identifier, NULL_TREE, 0));
-      ndelta2 = cp_convert (ptrdiff_type_node, DELTA2_FROM_PTRMEMFUNC (pfn));
-      idx = build_component_ref (pfn, index_identifier, NULL_TREE, 0);
+      if (TREE_CODE (pfn) == PTRMEM_CST)
+	{
+	  /* We could just build the resulting CONSTRUCTOR now, but we
+	     don't, relying on the general machinery below, together
+	     with constant-folding, to do the right thing.  We don't
+	     want to return a PTRMEM_CST here, even though we could,
+	     because a pointer-to-member constant ceases to be a
+	     constant (from the point of view of the language) when it
+	     is cast to another type.  */
+
+	  expand_ptrmemfunc_cst (pfn, &ndelta, &idx, &npfn, &ndelta2);
+	  if (npfn)
+	    /* This constant points to a non-virtual function.
+	       NDELTA2 will be NULL, but it's value doesn't really
+	       matter since we won't use it anyhow.  */
+	    ndelta2 = integer_zero_node;
+	}
+      else
+	{
+	  ndelta = cp_convert (ptrdiff_type_node, 
+			       build_component_ref (pfn, 
+						    delta_identifier, 
+						    NULL_TREE, 0));
+	  ndelta2 = cp_convert (ptrdiff_type_node, 
+				DELTA2_FROM_PTRMEMFUNC (pfn));
+	  idx = build_component_ref (pfn, index_identifier, NULL_TREE, 0);
+	}
 
       n = get_delta_difference (TYPE_METHOD_BASETYPE (TREE_TYPE (pfn_type)),
 				TYPE_METHOD_BASETYPE (TREE_TYPE (type)),
 				force);
-
       delta = build_binary_op (PLUS_EXPR, ndelta, n);
       delta2 = build_binary_op (PLUS_EXPR, ndelta2, n);
       e1 = fold (build (GT_EXPR, boolean_type_node, idx, integer_zero_node));
 	  
+      /* If it's a virtual function, this is what we want.  */
       e2 = build_ptrmemfunc1 (TYPE_GET_PTRMEMFUNC_TYPE (type), delta, idx,
 			      NULL_TREE, delta2);
 
@@ -6556,8 +6581,10 @@ build_ptrmemfunc (type, pfn, force)
       npfn = build1 (NOP_EXPR, type, pfn);
       TREE_CONSTANT (npfn) = TREE_CONSTANT (pfn);
 
-      e3 = build_ptrmemfunc1 (TYPE_GET_PTRMEMFUNC_TYPE (type), delta, idx, npfn,
-			      NULL_TREE);
+      /* But if it's a non-virtual function, or NULL, we use this
+	 instead.  */
+      e3 = build_ptrmemfunc1 (TYPE_GET_PTRMEMFUNC_TYPE (type), delta,
+			      idx, npfn, NULL_TREE);
       return build_conditional_expr (e1, e2, e3);
     }
 
@@ -6575,10 +6602,7 @@ build_ptrmemfunc (type, pfn, force)
 
   fn = TREE_OPERAND (pfn, 0);
   my_friendly_assert (TREE_CODE (fn) == FUNCTION_DECL, 0);
-  npfn = make_node (PTRMEM_CST);
-  TREE_TYPE (npfn) = build_ptrmemfunc_type (type);
-  PTRMEM_CST_MEMBER (npfn) = fn;
-  return npfn;
+  return make_ptrmem_cst (build_ptrmemfunc_type (type), fn);
 }
 
 /* Return the DELTA, IDX, PFN, and DELTA2 values for the PTRMEM_CST
