@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ndp.8,v 1.16 2002/06/08 21:19:13 itojun Exp $
-.\"	$KAME: ndp.8,v 1.27 2002/06/03 19:25:27 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.17 2002/07/17 13:49:03 itojun Exp $
+.\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -165,6 +165,11 @@ All of the flags can begin with the
 special character
 .Ql - ,
 which means the flag should be cleared.
+Note that you need
+.Fl -
+before
+.Fl foo
+in this case.
 .\"
 .Pp
 .Bl -tag -width Ds -compact
