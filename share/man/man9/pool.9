@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.10 2001/05/28 05:34:46 angelos Exp $
+.\"	$OpenBSD: pool.9,v 1.11 2001/05/28 05:37:28 angelos Exp $
 .\"	$NetBSD: pool.9,v 1.13 1999/04/03 14:50:21 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -312,7 +312,7 @@ The number pages in the pool will not decrease below the required value to
 accommodate the minimum number of items specified by this function.
 Unlike
 .Fn pool_prime ,
-this function does not allocate the necessary memory up front.
+this function does not allocate the necessary memory up-front.
 .El
 .Ss POTENTIAL PITFALLS
 Note that undefined behaviour results when mixing the storage providing
@@ -329,9 +329,9 @@ Pool usage logs can be enabled by defining the compile-time option
 The pool manager is implemented in the file
 .Pa sys/kern/subr_pool.c .
 .Sh SEE ALSO
+.Xr free 9 ,
 .Xr malloc 9 ,
-.Xr free 9
-.\" .Xr uvm 9
+.Xr uvm 9
 .Sh HISTORY
 The pool manager first appeared in
 .Nx 1.4
