@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.c,v 1.23 2000/03/19 10:33:33 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.24 2000/06/13 09:57:51 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -367,10 +367,11 @@ ipcp_WriteDNS(struct ipcp *ipcp)
     ipcp->ns.dns[1].s_addr = INADDR_ANY;
   }
 
-  mask = umask(0644);
+  mask = umask(022);
   if ((fp = ID0fopen(_PATH_RESCONF, "w")) != NULL) {
     umask(mask);
-    fputs(ipcp->ns.resolv_nons, fp);
+    if (ipcp->ns.resolv_nons)
+      fputs(ipcp->ns.resolv_nons, fp);
     paddr = inet_ntoa(ipcp->ns.dns[0]);
     log_Printf(LogIPCP, "Primary nameserver set to %s\n", paddr);
     fprintf(fp, "\nnameserver %s\n", paddr);
@@ -502,8 +503,9 @@ ipcp_Show(struct cmdargs const *arg)
         prompt_Printf(arg->prompt, ", ");
       prompt_Printf(arg->prompt, "%u", ipcp->cfg.urgent.udp.port[p]);
     }
+  prompt_Printf(arg->prompt, "\n          TOS:    %s\n\n",
+                ipcp->cfg.urgent.tos ? "yes" : "no");
 
-  prompt_Printf(arg->prompt, "\n\n");
   throughput_disp(&ipcp->throughput, arg->prompt);
 
   return 0;
@@ -570,6 +572,7 @@ ipcp_Init(struct ipcp *ipcp, struct bundle *bundle, struct link *l,
   ipcp->cfg.urgent.tcp.port = (u_short *)malloc(NDEFTCPPORTS * sizeof(u_short));
   memcpy(ipcp->cfg.urgent.tcp.port, default_urgent_tcp_ports,
          NDEFTCPPORTS * sizeof(u_short));
+  ipcp->cfg.urgent.tos = 1;
 
   ipcp->cfg.urgent.udp.nports = ipcp->cfg.urgent.udp.maxports = NDEFUDPPORTS;
   ipcp->cfg.urgent.udp.port = (u_short *)malloc(NDEFUDPPORTS * sizeof(u_short));

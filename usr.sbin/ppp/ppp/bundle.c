@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.36 2000/04/07 23:46:39 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.37 2000/06/13 09:57:50 brian Exp $
  */
 
 #include <sys/param.h>
@@ -440,6 +440,7 @@ bundle_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
   struct bundle *bundle = descriptor2bundle(d);
   struct datalink *dl;
   int result, nlinks;
+  u_short ifqueue;
   size_t queued;
 
   result = 0;
@@ -454,7 +455,8 @@ bundle_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
     if (r && (bundle->phase == PHASE_NETWORK ||
               bundle->phys_type.all & PHYS_AUTO)) {
       /* enough surplus so that we can tell if we're getting swamped */
-      if (queued < 30) {
+      ifqueue = nlinks > bundle->cfg.ifqueue ? nlinks : bundle->cfg.ifqueue;
+      if (queued < ifqueue) {
         /* Not enough - select() for more */
         if (bundle->choked.timer.state == TIMER_RUNNING)
           timer_Stop(&bundle->choked.timer);	/* Not needed any more */
@@ -806,6 +808,7 @@ bundle_Create(const char *prefix, int type, int unit)
                    OPT_THROUGHPUT | OPT_UTMP;
   *bundle.cfg.label = '\0';
   bundle.cfg.mtu = DEF_MTU;
+  bundle.cfg.ifqueue = DEF_IFQUEUE;
   bundle.cfg.choked.timeout = CHOKED_TIMEOUT;
   bundle.phys_type.all = type;
   bundle.phys_type.open = 0;
@@ -1076,13 +1079,12 @@ bundle_Open(struct bundle *bundle, const char *name, int mask, int force)
       if ((mask & dl->physical->type) &&
           (dl->state == DATALINK_CLOSED ||
            (force && dl->state == DATALINK_OPENING &&
-            dl->dial.timer.state == TIMER_RUNNING))) {
-        if (force)	/* Ignore redial timeout ? */
-          timer_Stop(&dl->dial.timer);
+            dl->dial.timer.state == TIMER_RUNNING) ||
+           dl->state == DATALINK_READY)) {
+        timer_Stop(&dl->dial.timer);	/* We're finished with this */
         datalink_Up(dl, 1, 1);
         if (mask & PHYS_AUTO)
-          /* Only one AUTO link at a time */
-          break;
+          break;			/* Only one AUTO link at a time */
       }
       if (name != NULL)
         break;
@@ -1157,8 +1159,10 @@ bundle_ShowStatus(struct cmdargs const *arg)
     prompt_Printf(arg->prompt, ", up time %d:%02d:%02d", secs / 3600,
                   (secs / 60) % 60, secs % 60);
   }
+  prompt_Printf(arg->prompt, "\n Queued:        %u of %u\n",
+                ip_QueueLen(&arg->bundle->ncp.ipcp), arg->bundle->cfg.ifqueue);
 
-  prompt_Printf(arg->prompt, "\n\nDefaults:\n");
+  prompt_Printf(arg->prompt, "\nDefaults:\n");
   prompt_Printf(arg->prompt, " Label:         %s\n", arg->bundle->cfg.label);
   prompt_Printf(arg->prompt, " Auth name:     %s\n",
                 arg->bundle->cfg.auth.name);
@@ -1968,12 +1972,12 @@ bundle_AutoAdjust(struct bundle *bundle, int percent, int what)
       log_Printf(LogPHASE, "%d%% saturation -> Opening link ``%s''\n",
                  percent, choice->name);
       datalink_Up(choice, 1, 1);
-      mp_StopAutoloadTimer(&bundle->ncp.mp);
+      mp_CheckAutoloadTimer(&bundle->ncp.mp);
     } else if (otherlinkup) {	/* Only bring the second-last link down */
       log_Printf(LogPHASE, "%d%% saturation -> Closing link ``%s''\n",
                  percent, choice->name);
       datalink_Close(choice, CLOSE_STAYDOWN);
-      mp_StopAutoloadTimer(&bundle->ncp.mp);
+      mp_CheckAutoloadTimer(&bundle->ncp.mp);
     }
   }
 }

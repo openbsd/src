@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.h,v 1.14 2000/04/07 23:46:39 brian Exp $
+ *	$OpenBSD: bundle.h,v 1.15 2000/06/13 09:57:50 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -101,6 +101,7 @@ struct bundle {
     unsigned opt;             /* Uses OPT_ bits from above */
     char label[50];           /* last thing `load'ed */
     u_short mtu;              /* Interface mtu */
+    u_short ifqueue;          /* Interface queue size */
 
     struct {
       int timeout;            /* How long to leave the output queue choked */

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: defs.h,v 1.14 2000/04/07 23:46:39 brian Exp $
+ * $OpenBSD: defs.h,v 1.15 2000/06/13 09:57:51 brian Exp $
  *
  *	TODO:
  */
@@ -59,6 +59,7 @@
 #define DEF_FSMRETRY 3		/* FSM retry frequency */
 #define DEF_FSMTRIES 5		/* Default max retries */
 #define DEF_FSMAUTHTRIES 3	/* Default max auth retries */
+#define DEF_IFQUEUE 30		/* Default interface queue size */
 
 #define	CONFFILE 	"ppp.conf"
 #define	LINKUPFILE 	"ppp.linkup"

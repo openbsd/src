@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ip.c,v 1.22 2000/03/29 09:32:37 brian Exp $
+ * $OpenBSD: ip.c,v 1.23 2000/06/13 09:57:51 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -475,7 +475,7 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
 
   case IPPROTO_UDP:
     uh = (struct udphdr *) ptop;
-    if (pip->ip_tos == IPTOS_LOWDELAY)
+    if (pip->ip_tos == IPTOS_LOWDELAY && bundle->ncp.ipcp.cfg.urgent.tos)
       pri++;
 
     if ((ntohs(pip->ip_off) & IP_OFFMASK) == 0 &&
@@ -545,7 +545,7 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
 
   case IPPROTO_TCP:
     th = (struct tcphdr *) ptop;
-    if (pip->ip_tos == IPTOS_LOWDELAY)
+    if (pip->ip_tos == IPTOS_LOWDELAY && bundle->ncp.ipcp.cfg.urgent.tos)
       pri++;
 
     if ((ntohs(pip->ip_off) & IP_OFFMASK) == 0 &&

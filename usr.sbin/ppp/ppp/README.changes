@@ -1,3 +1,5 @@
+$OpenBSD: README.changes,v 1.15 2000/06/13 09:57:50 brian Exp $
+
 This file summarises changes made to ppp that effect
 its configuration.
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.83 2000/04/12 21:47:56 aaron Exp $
+.\" $OpenBSD: ppp.8,v 1.84 2000/06/13 09:57:51 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
@@ -2823,6 +2823,8 @@ and the
 address of the local network in which
 .Dv HISADDR
 appears.
+This allows other machines connecteed to the LAN to talk to
+the peer as if the peer itself was connected to the LAN.
 The proxy entry cannot be made unless
 .Dv HISADDR
 is an address from a LAN.
@@ -3101,7 +3103,6 @@ This command gives a summary of available nat commands.
 This option causes various NAT statistics and information to
 be logged to the file
 .Pa /var/log/alias.log .
-This file name is likely to change in the near future.
 .It nat port Ar proto Ar targetIP Ns Xo
 .No : Ns Ar targetPort Ns
 .Oo
@@ -3184,10 +3185,17 @@ This is useful
 if you want to support protocols such as RPC and LPD which require
 connections to come from a well known port.
 .It nat target Op Ar address
-Set the given target address or clear it if no address is given.  The target
-address is used by libalias to specify how to NAT incoming packets by default.
-If a target address is not set, the alias address (that of the tun interface)
-is used.
+Set the given target address or clear it if no address is given.
+The target address is used by libalias to specify how to NAT incoming
+packets by default.
+If a target address is not set or if
+.Dq default
+is given, packets are not altered and are allowed to route to the internal
+network.
+.Pp
+The target address may be set to
+.Dq MYADDR ,
+in which case libalias will redirect all packets to the interface address.
 .It nat use_sockets yes|no
 When enabled, this option tells the network address translation engine to
 create a socket so that it can guarantee a correct incoming ftp data or
@@ -4523,6 +4531,26 @@ In all cases, if the interface is already configured,
 .Nm
 will try to maintain the interface IP numbers so that any existing
 bound sockets will remain valid.
+.It set ifqueue Ar packets
+Set the maximum number of packets that
+.Nm
+will read from the tunnel interface while data cannot be sent to any of
+the available links.
+This queue limit is necessary to flow control outgoing data as the tunnel
+interface is likely to be far faster than the combined links available to
+.Nm ppp .
+.Pp
+If
+.Ar packets
+is set to a value less than the number of links,
+.Nm
+will read up to that value regardless.
+This prevents any possible latency problems.
+.Pp
+The default value for
+.Ar packets
+is
+.Dq 30 .
 .It set ccpretry|ccpretries Oo Ar timeout
 .Op Ar reqtries Op Ar trmtries
 .Oc
@@ -5004,7 +5032,7 @@ is specified,
 will never idle out before the link has been up for at least that number
 of seconds.
 .It set urgent Xo
-.Op tcp|udp
+.Op tcp|udp|none
 .Oo Op +|- Ns
 .Ar port
 .Oc No ...
@@ -5046,6 +5074,12 @@ the current list is adjusted, otherwise the list is reassigned.
 prefixed with a plus or not prefixed at all are added to the list and
 .Ar port Ns No s
 prefixed with a minus are removed from the list.
+.Pp
+If
+.Dq none
+is specified, all priority port lists are disabled and even
+.Dv IPTOS_LOWDELAY
+packets are not prioritised.
 .It set vj slotcomp on|off
 This command tells
 .Nm

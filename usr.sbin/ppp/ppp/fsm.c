@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: fsm.c,v 1.13 2000/02/27 01:38:26 brian Exp $
+ * $OpenBSD: fsm.c,v 1.14 2000/06/13 09:57:51 brian Exp $
  *
  *  TODO:
  */
@@ -976,9 +976,14 @@ fsm_Input(struct fsm *fp, struct mbuf *bp)
   }
   bp = mbuf_Read(bp, &lh, sizeof lh);
 
-  if (ntohs(lh.length) != len)
-    log_Printf(LogWARN, "%s: Oops: Got %d bytes but %d byte payload\n",
-               fp->link->name, len, (int)ntohs(lh.length));
+  if (ntohs(lh.length) != len) {
+    if (ntohs(lh.length) > len) {
+      log_Printf(LogWARN, "%s: Oops: Got %d bytes but %d byte payload "
+                 "- dropped\n", fp->link->name, len, (int)ntohs(lh.length));
+      m_freem(bp);
+      return;
+    }
+  }
 
   if (lh.code < fp->min_code || lh.code > fp->max_code ||
       lh.code > sizeof FsmCodes / sizeof *FsmCodes) {

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.h,v 1.9 2000/03/19 10:33:33 brian Exp $
+ * $OpenBSD: ipcp.h,v 1.10 2000/06/13 09:57:51 brian Exp $
  *
  *	TODO:
  */
@@ -77,6 +77,7 @@ struct ipcp {
 
     struct {
       struct port_range tcp, udp;	/* The range of urgent ports */
+      unsigned tos : 1;			/* Urgent IPTOS_LOWDELAY packets ? */
     } urgent;
 
     struct fsm_retry fsm;	/* How often/frequently to resend requests */
@@ -163,3 +164,5 @@ extern void ipcp_LoadDNS(struct ipcp *);
           ipcp_ClearUrgentPorts(&(ipcp)->cfg.urgent.tcp)
 #define ipcp_ClearUrgentUdpPorts(ipcp) \
           ipcp_ClearUrgentPorts(&(ipcp)->cfg.urgent.udp)
+#define ipcp_ClearUrgentTOS(ipcp) (ipcp)->cfg.urgent.tos = 0;
+#define ipcp_SetUrgentTOS(ipcp) (ipcp)->cfg.urgent.tos = 1;

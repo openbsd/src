@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.21 2000/03/03 21:52:57 brian Exp $
+ *  $OpenBSD: physical.c,v 1.22 2000/06/13 09:57:51 brian Exp $
  *
  */
 
@@ -340,6 +340,8 @@ physical_Close(struct physical *p)
   throughput_log(&p->link.throughput, LogPHASE, p->link.name);
 
   if (p->session_owner != (pid_t)-1) {
+    log_Printf(LogPHASE, "%s: HUPing %d\n", p->link.name,
+               (int)p->session_owner);
     ID0kill(p->session_owner, SIGHUP);
     p->session_owner = (pid_t)-1;
   }
