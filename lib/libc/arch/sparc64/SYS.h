@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2001/09/26 18:39:13 art Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2001/09/26 23:02:10 drahn Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,10 @@
 
 #ifdef __STDC__
 #define _CAT(x,y) x##y
+#define	__ENTRY(p,x)	ENTRY(p##x)
 #else
 #define _CAT(x,y) x/**/y
+#define	__ENTRY(p,x)	ENTRY(p/**/x)
 #endif
 
 /*
@@ -75,26 +77,26 @@
  * Note that it adds a `nop' over what we could do, if we only knew what
  * came at label 1....
  */
-#define	_SYSCALL(x,y) \
-	ENTRY(x); mov _CAT(SYS_,y),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
+#define	_SYSCALL(p,x,y) \
+	__ENTRY(p,x); mov _CAT(SYS_,y),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
 
-#define	SYSCALL(x) \
-	_SYSCALL(x,x)
+#define	__SYSCALL(p,x) \
+	_SYSCALL(p,x,x)
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
  * we use the SYSCALL_G2RFLAG to put the `success' return address in %g2
  * and avoid a branch.
  */
-#define	RSYSCALL(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+#define	__RSYSCALL(p,x) \
+	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
-#define	PSEUDO(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+#define	__PSEUDO(p,x,y) \
+	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
 /*
@@ -103,8 +105,8 @@
  *
  * XXX - This should be optimized.
  */
-#define SYSCALL_NOERROR(x) \
-	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL
+#define __SYSCALL_NOERROR(p,x) \
+	__ENTRY(p,x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL
 
 /*
  * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls 
@@ -112,15 +114,15 @@
  *
  * XXX - This should be optimized.
  */
-#define RSYSCALL_NOERROR(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+#define __RSYSCALL_NOERROR(p,x) \
+	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL
 
 /*
  * PSEUDO_NOERROR(x,y) is like RSYSCALL_NOERROR(y) except that the name is x.
  */
-#define PSEUDO_NOERROR(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+#define __PSEUDO_NOERROR(p,x,y) \
+	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL
 
 	.globl	_C_LABEL(__cerror)
@@ -128,5 +130,28 @@
 /*
  * SYSENTRY is for functions that pretend to be syscalls.
  */
-#define SYSENTRY(x) ENTRY(x)
+#define __SYSENTRY(p,x) __ENTRY(p,x)
 
+#ifdef	_THREAD_SAFE
+/*
+ * For the thread_safe versions, we prepend _thread_sys_ to the function
+ * name so that the 'C' wrapper can go around the real name.
+ */
+#define	SYSCALL(x)		__SYSCALL(_thread_sys_,x)
+#define	RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
+#define	RSYSCALL_NOERROR(x,y)	__RSYSCALL_NOERROR(_thread_sys_,x,y)
+#define	PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
+#define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
+#define	SYSENTRY(x)		__SYSENTRY(_thread_sys_,x)
+#else	/* _THREAD_SAFE */
+/*
+ * The non-threaded library defaults to traditional syscalss where
+ * the function name matches the syscall name.
+ */
+#define	SYSCALL(x)		__SYSCALL(,x)
+#define	RSYSCALL(x)		__RSYSCALL(,x)
+#define	RSYSCALL_NOERROR(x,y)	__RSYSCALL_NOERROR(,x,y)
+#define	PSEUDO(x,y)		__PSEUDO(,x,y)
+#define	PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
+#define	SYSENTRY(x)		__SYSENTRY(,x)
+#endif	/* _THREAD_SAFE */
