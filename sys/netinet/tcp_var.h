@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.16 1999/01/11 15:05:32 niklas Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.17 1999/02/04 00:04:59 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -209,64 +209,64 @@ struct tcpcb {
  * but that's inconvenient at the moment.
  */
 struct	tcpstat {
-	u_long	tcps_connattempt;	/* connections initiated */
-	u_long	tcps_accepts;		/* connections accepted */
-	u_long	tcps_connects;		/* connections established */
-	u_long	tcps_drops;		/* connections dropped */
-	u_long	tcps_conndrops;		/* embryonic connections dropped */
-	u_long	tcps_closed;		/* conn. closed (includes drops) */
-	u_long	tcps_segstimed;		/* segs where we tried to get rtt */
-	u_long	tcps_rttupdated;	/* times we succeeded */
-	u_long	tcps_delack;		/* delayed acks sent */
-	u_long	tcps_timeoutdrop;	/* conn. dropped in rxmt timeout */
-	u_long	tcps_rexmttimeo;	/* retransmit timeouts */
-	u_long	tcps_persisttimeo;	/* persist timeouts */
-	u_long	tcps_persistdrop;	/* connections dropped in persist */
-	u_long	tcps_keeptimeo;		/* keepalive timeouts */
-	u_long	tcps_keepprobe;		/* keepalive probes sent */
-	u_long	tcps_keepdrops;		/* connections dropped in keepalive */
+	u_int32_t tcps_connattempt;	/* connections initiated */
+	u_int32_t tcps_accepts;		/* connections accepted */
+	u_int32_t tcps_connects;	/* connections established */
+	u_int32_t tcps_drops;		/* connections dropped */
+	u_int32_t tcps_conndrops;	/* embryonic connections dropped */
+	u_int32_t tcps_closed;		/* conn. closed (includes drops) */
+	u_int32_t tcps_segstimed;	/* segs where we tried to get rtt */
+	u_int32_t tcps_rttupdated;	/* times we succeeded */
+	u_int32_t tcps_delack;		/* delayed acks sent */
+	u_int32_t tcps_timeoutdrop;	/* conn. dropped in rxmt timeout */
+	u_int32_t tcps_rexmttimeo;	/* retransmit timeouts */
+	u_int32_t tcps_persisttimeo;	/* persist timeouts */
+	u_int32_t tcps_persistdrop;	/* connections dropped in persist */
+	u_int32_t tcps_keeptimeo;	/* keepalive timeouts */
+	u_int32_t tcps_keepprobe;	/* keepalive probes sent */
+	u_int32_t tcps_keepdrops;	/* connections dropped in keepalive */
 
-	u_long	tcps_sndtotal;		/* total packets sent */
-	u_long	tcps_sndpack;		/* data packets sent */
-	u_quad_t tcps_sndbyte;		/* data bytes sent */
-	u_long	tcps_sndrexmitpack;	/* data packets retransmitted */
-	u_quad_t tcps_sndrexmitbyte;	/* data bytes retransmitted */
-	u_quad_t tcps_sndrexmitfast;	/* Fast retransmits */
-	u_long	tcps_sndacks;		/* ack-only packets sent */
-	u_long	tcps_sndprobe;		/* window probes sent */
-	u_long	tcps_sndurg;		/* packets sent with URG only */
-	u_long	tcps_sndwinup;		/* window update-only packets sent */
-	u_long	tcps_sndctrl;		/* control (SYN|FIN|RST) packets sent */
+	u_int32_t tcps_sndtotal;		/* total packets sent */
+	u_int32_t tcps_sndpack;		/* data packets sent */
+	u_int64_t tcps_sndbyte;		/* data bytes sent */
+	u_int32_t tcps_sndrexmitpack;	/* data packets retransmitted */
+	u_int64_t tcps_sndrexmitbyte;	/* data bytes retransmitted */
+	u_int64_t tcps_sndrexmitfast;	/* Fast retransmits */
+	u_int32_t tcps_sndacks;		/* ack-only packets sent */
+	u_int32_t tcps_sndprobe;	/* window probes sent */
+	u_int32_t tcps_sndurg;		/* packets sent with URG only */
+	u_int32_t tcps_sndwinup;	/* window update-only packets sent */
+	u_int32_t tcps_sndctrl;		/* control (SYN|FIN|RST) packets sent */
 
-	u_long	tcps_rcvtotal;		/* total packets received */
-	u_long	tcps_rcvpack;		/* packets received in sequence */
-	u_quad_t tcps_rcvbyte;		/* bytes received in sequence */
-	u_long	tcps_rcvbadsum;		/* packets received with ccksum errs */
-	u_long	tcps_rcvbadoff;		/* packets received with bad offset */
-	u_long	tcps_rcvmemdrop;	/* packets dropped for lack of memory */
-	u_long	tcps_rcvshort;		/* packets received too short */
-	u_long	tcps_rcvduppack;	/* duplicate-only packets received */
-	u_quad_t tcps_rcvdupbyte;	/* duplicate-only bytes received */
-	u_long	tcps_rcvpartduppack;	/* packets with some duplicate data */
-	u_quad_t tcps_rcvpartdupbyte;	/* dup. bytes in part-dup. packets */
-	u_long	tcps_rcvoopack;		/* out-of-order packets received */
-	u_quad_t tcps_rcvoobyte;	/* out-of-order bytes received */
-	u_long	tcps_rcvpackafterwin;	/* packets with data after window */
-	u_quad_t tcps_rcvbyteafterwin;	/* bytes rcvd after window */
-	u_long	tcps_rcvafterclose;	/* packets rcvd after "close" */
-	u_long	tcps_rcvwinprobe;	/* rcvd window probe packets */
-	u_long	tcps_rcvdupack;		/* rcvd duplicate acks */
-	u_long	tcps_rcvacktoomuch;	/* rcvd acks for unsent data */
-	u_long	tcps_rcvackpack;	/* rcvd ack packets */
-	u_quad_t tcps_rcvackbyte;	/* bytes acked by rcvd acks */
-	u_long	tcps_rcvwinupd;		/* rcvd window update packets */
-	u_long	tcps_pawsdrop;		/* segments dropped due to PAWS */
-	u_long	tcps_predack;		/* times hdr predict ok for acks */
-	u_long	tcps_preddat;		/* times hdr predict ok for data pkts */
+	u_int32_t tcps_rcvtotal;	/* total packets received */
+	u_int32_t tcps_rcvpack;		/* packets received in sequence */
+	u_int64_t tcps_rcvbyte;		/* bytes received in sequence */
+	u_int32_t tcps_rcvbadsum;	/* packets received with ccksum errs */
+	u_int32_t tcps_rcvbadoff;	/* packets received with bad offset */
+	u_int32_t tcps_rcvmemdrop;	/* packets dropped for lack of memory */
+	u_int32_t tcps_rcvshort;	/* packets received too short */
+	u_int32_t tcps_rcvduppack;	/* duplicate-only packets received */
+	u_int64_t tcps_rcvdupbyte;	/* duplicate-only bytes received */
+	u_int32_t tcps_rcvpartduppack;	/* packets with some duplicate data */
+	u_int64_t tcps_rcvpartdupbyte;	/* dup. bytes in part-dup. packets */
+	u_int32_t tcps_rcvoopack;	/* out-of-order packets received */
+	u_int64_t tcps_rcvoobyte;	/* out-of-order bytes received */
+	u_int32_t tcps_rcvpackafterwin;	/* packets with data after window */
+	u_int64_t tcps_rcvbyteafterwin;	/* bytes rcvd after window */
+	u_int32_t tcps_rcvafterclose;	/* packets rcvd after "close" */
+	u_int32_t tcps_rcvwinprobe;	/* rcvd window probe packets */
+	u_int32_t tcps_rcvdupack;	/* rcvd duplicate acks */
+	u_int32_t tcps_rcvacktoomuch;	/* rcvd acks for unsent data */
+	u_int32_t tcps_rcvackpack;	/* rcvd ack packets */
+	u_int64_t tcps_rcvackbyte;	/* bytes acked by rcvd acks */
+	u_int32_t tcps_rcvwinupd;	/* rcvd window update packets */
+	u_int32_t tcps_pawsdrop;	/* segments dropped due to PAWS */
+	u_int32_t tcps_predack;		/* times hdr predict ok for acks */
+	u_int32_t tcps_preddat;		/* times hdr predict ok for data pkts */
 
-	u_long	tcps_pcbhashmiss;	/* input packets missing pcb hash */
-	u_long	tcps_noport;		/* no socket on port */
-	u_long	tcps_badsyn;		/* SYN packet with src==dst rcv'ed */
+	u_int32_t tcps_pcbhashmiss;	/* input packets missing pcb hash */
+	u_int32_t tcps_noport;		/* no socket on port */
+	u_int32_t tcps_badsyn;		/* SYN packet with src==dst rcv'ed */
 };
 
 /*
