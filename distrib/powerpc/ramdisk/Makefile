@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2001/04/13 01:29:24 krw Exp $
+#	$OpenBSD: Makefile,v 1.17 2001/06/17 22:40:44 drahn Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -95,7 +95,7 @@ do_files:
 	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	*.o *.lo *.c bsd ${BSD_RD} \
 	rdsetroot
 
