@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.11 2004/01/14 20:52:52 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.12 2004/04/14 13:43:13 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -43,10 +43,9 @@
 
 struct bussw_softc {
 	struct device		sc_dev;
-	void *		sc_paddr;
-	void *		sc_vaddr;
-	int		sc_len;
-	struct intrhand sc_abih;	/* `abort' switch */
+	void *			sc_paddr;
+	void *			sc_vaddr;
+	struct intrhand 	sc_abih;	/* `abort' switch */
 	struct bussw_reg        *sc_bussw;
 };
 
@@ -90,7 +89,7 @@ bussw_attach(parent, self, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	struct bussw_softc      *sc = (struct bussw_softc *)self;
+	struct bussw_softc *sc = (struct bussw_softc *)self;
         struct bussw_reg *bs;
 
 	sc->sc_vaddr = sc->sc_paddr = ca->ca_paddr;
