@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.12 1996/08/14 14:36:15 shawn Exp $	*/
+/*	$OpenBSD: isa.c,v 1.13 1996/08/15 01:51:08 shawn Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -157,10 +157,14 @@ isascan(parent, match)
 		struct isa_attach_args ia2 = ia;
 
 		while ((*cf->cf_attach->ca_match)(parent, dev, &ia2) > 0) {
-			add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
-			add_extent(mem_map, ia.ia_maddr, ia.ia_msize);
-			add_extent(irq_map, ia.ia_irq, 1);
-			add_extent(drq_map, ia.ia_drq, 1);
+			if (ia.ia_iobase > 0 && ia.ia_iosize > 0)
+				add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
+			if (ia.ia_maddr > 0 && ia.ia_msize > 0)
+				add_extent(mem_map, ia.ia_maddr, ia.ia_msize);
+			if (ia.ia_irq > 0)
+				add_extent(irq_map, ia.ia_irq, 1);
+			if (ia.ia_drq > 0)
+				add_extent(drq_map, ia.ia_drq, 1);
 			config_attach(parent, dev, &ia2, isaprint);
 			dev = config_make_softc(parent, cf);
 			ia2 = ia;
@@ -170,10 +174,14 @@ isascan(parent, match)
 	}
 
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
-		add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
-		add_extent(mem_map, ia.ia_maddr, ia.ia_msize);
-		add_extent(irq_map, ia.ia_irq, 1);
-		add_extent(drq_map, ia.ia_drq, 1);
+		if (ia.ia_iobase > 0 && ia.ia_iosize > 0)
+			add_extent(io_map, ia.ia_iobase, ia.ia_iosize);
+		if (ia.ia_maddr > 0 && ia.ia_msize > 0)
+			add_extent(mem_map, ia.ia_maddr, ia.ia_msize);
+		if (ia.ia_irq > 0)
+			add_extent(irq_map, ia.ia_irq, 1);
+		if (ia.ia_drq > 0)
+			add_extent(drq_map, ia.ia_drq, 1);
 		config_attach(parent, dev, &ia, isaprint);
 	}
 	else
