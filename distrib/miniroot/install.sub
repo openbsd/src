@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.141 1999/10/17 06:53:40 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.142 1999/10/17 15:35:51 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -837,7 +837,7 @@ echo
 if [ X"$_reuse" = X"1" ]; then
 	_reuse=
 	if eval test X"\$_installed_via_${_url_type}" = X"1"; then
-		echo -n "Use values from previous ${_url_type} install? "
+		echo -n "Use values from previous ${_url_type} install? [y] "
 		getresp y
 		case "$resp" in
 			y*|Y*)
