@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.10 1999/11/25 07:01:34 d Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.11 1999/11/30 04:53:24 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -133,12 +133,6 @@ pthread_exit(void *status)
 		PANIC("Thread has called pthread_exit() from a destructor. POSIX 1003.1 1996 s16.2.5.2 does not allow this!");
 	}
 
-	/* Free thread-specific poll_data structure, if allocated */
-	if (_thread_run->poll_data.fds != NULL) {
-		free(_thread_run->poll_data.fds);
-		_thread_run->poll_data.fds = NULL;
-	}
-
 	/* Flag this thread as exiting: */
 	_thread_run->flags |= PTHREAD_EXITING;
 
@@ -152,6 +146,7 @@ pthread_exit(void *status)
 	if (_thread_run->attr.cleanup_attr != NULL) {
 		_thread_run->attr.cleanup_attr(_thread_run->attr.arg_attr);
 	}
+
 	/* Check if there is thread specific data: */
 	if (_thread_run->specific_data != NULL) {
 		/* Run the thread-specific data destructors: */
