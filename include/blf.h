@@ -1,4 +1,4 @@
-/* $OpenBSD: blf.h,v 1.3 1997/02/16 20:54:26 provos Exp $ */
+/* $OpenBSD: blf.h,v 1.4 1998/08/10 18:40:53 provos Exp $ */
 /*
  * Blowfish - a fast block cipher designed by Bruce Schneier
  *
@@ -68,6 +68,12 @@ void Blowfish_expandstate
 void blf_key __P((blf_ctx *, const u_int8_t *, u_int16_t));
 void blf_enc __P((blf_ctx *, u_int32_t *, u_int16_t));
 void blf_dec __P((blf_ctx *, u_int32_t *, u_int16_t));
+
+void blf_ecb_encrypt __P((blf_ctx *, u_int8_t *, u_int32_t));
+void blf_ecb_decrypt __P((blf_ctx *, u_int8_t *, u_int32_t));
+
+void blf_cbc_encrypt __P((blf_ctx *, u_int8_t *, u_int8_t *, u_int32_t));
+void blf_cbc_decrypt __P((blf_ctx *, u_int8_t *, u_int8_t *, u_int32_t));
 
 /* Converts u_int8_t to u_int32_t */
 u_int32_t Blowfish_stream2word __P((const u_int8_t *, u_int16_t , u_int16_t *));

@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.1 1997/02/16 20:58:16 provos Exp $
+.\" $OpenBSD: blowfish.3,v 1.2 1998/08/10 18:40:58 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -45,6 +45,14 @@
 .Fn blf_enc "blf_ctx *state" "u_int32_t *data" "u_int16_t datalen"
 .Ft void
 .Fn blf_dec "blf_ctx *state" "u_int32_t *data" "u_int16_t datalen"
+.Ft void
+.Fn blf_ecb_encrypt "blf_ctx *state" "u_int8_t *data" "u_int32_t datalen"
+.Ft void
+.Fn blf_ecb_decrypt "blf_ctx *state" "u_int8_t *data" "u_int32_t datalen"
+.Ft void
+.Fn blf_cbc_encrypt "blf_ctx *state" "u_int8_t *iv" "u_int8_t *data" "u_int32_t datalen"
+.Ft void
+.Fn blf_cbc_decrypt "blf_ctx *state" "u_int8_t *iv" "u_int8_t *data" "u_int32_t datalen"
 .Sh DESCRIPTION
 .Pa Blowfish
 is a fast unpatented block cipher designed by Bruce Schneier.
@@ -59,11 +67,24 @@ The first argument to
 .Fn blf_enc
 is the initalized state derived from
 .Fn blf_key .
-The stream of data is encrypted in Electronic Cookbook Mode (ECB) and
+The stream of 32-bit words is encrypted in Electronic Codebook
+Mode (ECB) and
 .Pa datalen
 must be even.
 .Fn blf_dec
 is used for decrypting Blowfish encrypted blocks.
+.Pp
+The functions 
+.Fn blf_ecb_encrypt
+and
+.Fn blf_ecb_decrypt 
+are used for encrypting and decrypting octet streams in ECB mode.
+The functions 
+.Fn blf_cbc_encrypt
+and
+.Fn blf_cbc_decrypt 
+are used for encrypting and decrypting octet streams in
+Cipherblock Chaining Mode (CBC).
 .Pp
 The functions
 .Fn Blowfish_initstate ,
@@ -74,8 +95,7 @@ and
 .Fn Blowfish_decipher
 are used for customization of the
 .Pa Blowfish
-cipher, i.e. for the blowfish password hashing function or for
-implementation of Cipher Block Chaining Mode (CBC).
+cipher, e.g. for the blowfish password hashing function.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr passwd 1 ,

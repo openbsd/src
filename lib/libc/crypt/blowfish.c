@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.8 1998/03/04 00:34:17 deraadt Exp $ */
+/* $OpenBSD: blowfish.c,v 1.9 1998/08/10 18:40:59 provos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -584,6 +584,144 @@ blf_dec(c, data, blocks)
 		d += 2;
 	}
 }
+
+/* Repeating operations for little endian machines */
+
+#define BLF_BLK_ENC  l = ntohl (*(u_int32_t *)data); \
+        r = ntohl (*(u_int32_t *)(data+4)); \
+        Blowfish_encipher(c, &l, &r); \
+        *(u_int32_t *)data = htonl (l); \
+        *(u_int32_t *)(data + 4) = htonl (r);
+
+#define BLF_BLK_DEC  l = ntohl (*(u_int32_t *)data); \
+        r = ntohl (*(u_int32_t *)(data+4)); \
+        Blowfish_decipher(c, &l, &r); \
+        *(u_int32_t *)data = htonl (l); \
+        *(u_int32_t *)(data + 4) = htonl (r);
+
+
+#if __STDC__
+void
+blf_ecb_encrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
+#else
+void
+blf_ecb_encrypt(c, data, len)
+     blf_ctx *c;
+     u_int8_t *data;
+     u_int32_t len;
+#endif
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int32_t l, r;
+#endif
+	u_int32_t i;
+
+	for (i = 0; i < len; i += 8) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		BLF_BLK_ENC;
+#else
+		Blowfish_encipher(c, data, data + 4);
+#endif
+		data += 8;
+	}
+}
+
+#if __STDC__
+void
+blf_ecb_decrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
+#else
+void
+blf_ecb_decrypt(c, data, len)
+     blf_ctx *c;
+     u_int8_t *data;
+     u_int32_t len;
+#endif
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int32_t l, r;
+#endif
+	u_int32_t i;
+
+	for (i = 0; i < len; i += 8) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		BLF_BLK_DEC;
+#else
+		Blowfish_decipher(c, data, data + 4);
+#endif
+		data += 8;
+	}
+}
+
+#if __STDC__
+void
+blf_cbc_encrypt(blf_ctx *c, u_int8_t *iv, u_int8_t *data, u_int32_t len)
+#else
+void
+blf_cbc_encrypt(c, iv, data, len)
+     blf_ctx *c;
+     u_int8_t *iv;
+     u_int8_t *data;
+     u_int32_t len;
+#endif
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int32_t l, r;
+#endif
+	u_int32_t i;
+
+	for (i = 0; i < len; i += 8) {
+		*(u_int32_t *)data ^= *(u_int32_t *)iv;
+		*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iv + 4);
+#if BYTE_ORDER == LITTLE_ENDIAN
+		BLF_BLK_ENC;
+#else
+		Blowfish_encipher(c, data, data + 4);
+#endif
+		iv = data;
+		data += 8;
+	}
+}
+
+#if __STDC__
+void
+blf_cbc_decrypt(blf_ctx *c, u_int8_t *iva, u_int8_t *data, u_int32_t len)
+#else
+void
+blf_cbc_decrypt(c, iva, data, len)
+     blf_ctx *c;
+     u_int8_t *iva;
+     u_int8_t *data;
+     u_int32_t len;
+#endif
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int32_t l, r;
+#endif
+	u_int8_t *iv;
+	u_int32_t i;
+
+	iv = data + len - 16;
+	data = data + len - 8;
+	for (i = len - 8; i >= 8; i -= 8) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+		BLF_BLK_DEC;
+#else
+		Blowfish_decipher(c, data, data + 4);
+#endif
+		*(u_int32_t *)data ^= *(u_int32_t *)iv;
+		*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iv + 4);
+		iv = data;
+		data -= 8;
+	}
+#if BYTE_ORDER == LITTLE_ENDIAN
+	BLF_BLK_DEC;
+#else
+	Blowfish_decipher(c, data, data + 4);
+#endif
+	*(u_int32_t *)data ^= *(u_int32_t *)iva;
+	*(u_int32_t *)(data + 4) ^= *(u_int32_t *)(iva + 4);
+}
+
 #if 0
 void
 report(u_int32_t data[], u_int16_t len)
