@@ -13,7 +13,7 @@ BINMODE?=4555
 BINDIR=	/usr/bin
 MAN=	ssh.1
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
-MLINKS=	ssh.1 slogin.1 ssh.1 openssh.1
+MLINKS=	ssh.1 slogin.1
 
 SRCS=	ssh.c sshconnect.c log-client.c readconf.c clientloop.c
 
