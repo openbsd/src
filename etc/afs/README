@@ -1,3 +1,9 @@
-Please change the default cell in ThisCell if you have an AFS server that
-is located closer to you. stacken.kth.se has good connectivity, but getting
-root.afs over long distances is unnecessary.
+Please enter an AFS cell near you in the ThisCell file.
+
+The SuidCells file specifies cells, other than your home cell, for which
+the AFS client will actually honor the setuid bit.
+
+If you have an "unknown" cell that is not known in the CellServDB, make
+sure to update your cell.
+
+The ARLA project has a webpage at: http://www.stacken.kth.se/projekt/arla/
