@@ -1,4 +1,4 @@
-.\"	$OpenBSD: col.1,v 1.6 2000/11/09 17:52:06 aaron Exp $
+.\"	$OpenBSD: col.1,v 1.7 2000/11/21 18:14:55 aaron Exp $
 .\"	$NetBSD: col.1,v 1.4 1995/03/26 05:25:52 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
 .Nd filter reverse line feeds from input
 .Sh SYNOPSIS
 .Nm col
-.Op Fl bfx
+.Op Fl bfhx
 .Op Fl l Ar num
 .Sh DESCRIPTION
 .Nm
@@ -71,6 +71,9 @@ Forward half-line feeds are permitted
 mode).
 Normally characters printed on a half-line boundary are printed
 on the following line.
+.It Fl h
+Compress spaces into tabs.
+This is the default behavior.
 .It Fl x
 Output multiple spaces instead of tabs.
 .It Fl l Ar num
@@ -88,10 +91,10 @@ table:
 .Bl -tag -width "carriage return" -compact
 .It ESC\-7
 Reverse line feed (escape then 7).
-.It ESC\-8
-Half reverse line feed (escape then 8).
-.It ESC\-9
-Half forward line feed (escape then 9).
+.It ESC\-10
+Half reverse line feed (escape then 10).
+.It ESC\-11
+Half forward line feed (escape then 11).
 .It backspace
 Moves back one column (8); ignored in the first column.
 .It carriage return
