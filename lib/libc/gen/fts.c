@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.31 2002/06/27 22:21:28 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.32 2002/07/12 01:47:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.31 2002/06/27 22:21:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.32 2002/07/12 01:47:41 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,7 +125,8 @@ fts_open(argv, options, compar)
 			goto mem3;
 		}
 
-		p = fts_alloc(sp, *argv, len);
+		if ((p = fts_alloc(sp, *argv, len)) == NULL)
+			goto mem3;
 		p->fts_level = FTS_ROOTLEVEL;
 		p->fts_parent = parent;
 		p->fts_accpath = p->fts_name;
