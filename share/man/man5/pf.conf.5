@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.121 2002/11/25 04:05:51 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.122 2002/11/26 19:09:07 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -50,10 +50,10 @@ Various options can be changed to tune the default behaviour of the engine.
 .It Traffic Normalization (e.g. Pa scrub No )
 Traffic normalization protects internal machines against inconsistancies
 in Internet protocols.
-.It Translation (Various forms of NAT)
-Translation rules specify which addresses are to be mapped or redirected.
 .It Queueing
 A queuing engine allows for filtering rule based bandwidth control.
+.It Translation (Various forms of NAT)
+Translation rules specify which addresses are to be mapped or redirected.
 .It Packet filtering
 Lastly, a stateful and stateless packet filtering can constrain packet flow.
 .El
@@ -328,9 +328,9 @@ For example,
 .Ed
 .Pp
 .Sh QUEUEING
-Filtering rules can also assign packets to a queue.
+Filtering rules can also assign packets to a queue,
 At least two rules are required to configure queues, and later
-any basic filtering or NAT rule can reference the defined
+any packet filtering or rule can reference the defined
 queues by name.
 The queue name last referenced is where any packets from
 .Pa pass
@@ -416,23 +416,82 @@ of the parent.
 Relative values are calculated against the bandwidth of the parent queue.
 .Pp
 .Sh TRANSLATION
-Where is the section discussion NAT / translation?
+Translation rules modify either the source or destination address of all
+packets associated with a stateful connection which is automatically created
+for packets matching such a rule.
+The translation engine modifies the specified address and/or port in the
+packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
+the packet filter for evaluation.
 .Pp
-This is the only part of NAT that is fucking documented:
+The state entry created permits
+.Xr pf 4
+to keep track of the original address for traffic associated with that state
+and correctly direct return traffic on that connection.
+.Pp
+A variety of translation types rules are available with pf:
+.Pp
 .Bl -tag -width xxxx
-.It Pa no
-Causes matching packets to remain untranslated.
+.It Pa nat
+These rules operate on outgoing connections, translating the source address.
+.It Pa rdr
+These rules operate on incoming connections, translating the destination address.
+.It Pa binat
+These rules (Bidirection NAT) behave somewhat like a combination of both
+.Ba nat
+and
+.Pa rdr
+and create a one-to-one mapping between two netblocks of equal size.
 .El
 .Pp
-.Sh PACKET FILTERING
-The sentence below is COMPLETELY wrong for an intruduction on *FILTERING*
+In addition to modifying the address, some translation rules may also modify
+source or destination ports for TCP or UDP connections.
+In the case of
+.Pa nat
+rules this is possible,
+while it is explicit in the case of
+.Pa rdr
+rules.
+Port numbers are never translated with a
+.Pa binat
+rule.
 .Pp
-While filter rules are typically manipulated using
-.Xr pfctl 8
-other utilities may be written using the
-.Xr ioctl 2
-interface described in
-.Xr pf 4 .
+The
+.Pa no
+option prefixed to a translation rule causes packets to remain untranslated,
+much in the same way as
+.Pa drop <direction> quick
+works when doing regular filtering.
+.Pp
+For each packet processed by the translator, the translation rules are
+evaluated in sequential order, from first to last.
+The first matching rule decides what action is taken.
+.Pp
+If no rule matches the packet, the default action is to pass the packet
+on to the filter rules unmodified.
+It should be noted that all translations of packets occur before
+the filters are applied.
+Hence, filtering rules for redirected packets must match based on
+the address and port after translation.
+Note that all translation rules apply only to packets that pass through
+the specified interface.
+For instance, redirecting port 80 on an external interface to an internal
+web server will only work for connections originating from the outside.
+Connections to the address of the external interface from local hosts will
+not be redirected, since such packets do not actually pass through the
+external interface.
+Redirections can't reflect packets back through the interface they arrive
+on, they can only be redirected to hosts connected to different interfaces
+or to the firewall itself.
+.Pp
+.Sh PACKET FILTERING
+.Xr pf 4
+has the ability to
+.Pa block
+and
+.Pa pass
+packets based on a variety of attributes of their layer 2 (IP) and layer 3
+(Transport) headers. In addition, packets which are passed or blocked can be
+assigned to queues for the purpose of traffic shaping.
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
@@ -450,28 +509,6 @@ that match explicit rules, one uses
 .Ed
 .Pp
 as the first two rules.
-.Pp
-For each packet processed by the translator, the translation rules are
-evaluated in sequential order, from first to last.
-Each rule either matches the packet or doesn't.
-The first matching rule decides what action is taken.
-.Pp
-If no rule matches the packet, the default action is to pass the packet
-up to the filter unmodified.
-It should be noted that all translations of packets occur before
-the filters are applied.
-Hence, rules for redirected packets should specify the address and port
-after translation.
-Note that all translation rules apply only to packets that pass through
-the specified interface.
-For instance, redirecting port 80 on an external interface to an internal
-web server will only work for connections originating from the outside.
-Connections to the address of the external interface from local hosts will
-not be redirected, since such packets do not actually pass through the
-external interface.
-Redirections can't reflect packets back through the interface they arrive
-on, they can only be redirected to hosts connected to different interfaces
-or to the firewall itself.
 .Sh ACTIONS
 .Bl -tag -width Fl
 .It Em block
@@ -621,8 +658,9 @@ Reloading the rule set is not required in this case.
 .Pp
 Ports can be specified using these operators
 .Bd -literal
-    = (equal), != (unequal), < (lesser), <= (lesser or equal), > (greater),
-    >= (greater or equal), >< (range) and <> (except range).
+    = (equal), != (unequal), < (lesser), <= (lesser or equal),
+    > (greater), >= (greater or equal),
+    >< (range) and <> (except range).
 .Ed
 .Pp
 >< and <> are binary operators (they take two arguments), and the range
@@ -645,7 +683,8 @@ show:
     pass in from any to any
     pass in proto tcp from any port <= 1024 to any
     pass in proto tcp from any to any port 25
-    pass in proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != 22
+    pass in proto tcp from 10.0.0.0/8 port > 1024 to \\
+	! 10.1.2.3 port != 22
 .Ed
 .It Pa user <user> group <group>
 The rule only applies to packets of sockets owned by the specified user
@@ -687,7 +726,8 @@ The following example allows only selected users to open outgoing
 connections:
 .Bd -literal
     block out proto { tcp, udp } all
-    pass  out proto { tcp, udp } all user { < 1000, dhartmei } keep state
+    pass  out proto { tcp, udp } all \\
+	user { < 1000, dhartmei } keep state
 .Ed
 .It Pa flags <a>/<b> | /<b>
 The rule only applies to TCP packets that have the flags <a> set
@@ -757,13 +797,16 @@ For example:
 .Pp
 .Bd -literal
     ips = "{ 1.2.3.4, 1.2.3.5 }"
-    pass in proto tcp from any to $ips port >1023 label "$dstaddr:$dstport"
+    pass in proto tcp from any to $ips port >1023 \\
+	label "$dstaddr:$dstport"
 .Ed
 .Pp
 expands to
 .Bd -literal
-    pass in proto tcp from any to 1.2.3.4 port >1023 label "1.2.3.4:>1023"
-    pass in proto tcp from any to 1.2.3.5 port >1023 label "1.2.3.5:>1023"
+    pass in proto tcp from any to 1.2.3.4 port >1023 \\
+	label "1.2.3.4:>1023"
+    pass in proto tcp from any to 1.2.3.5 port >1023 \\
+	label "1.2.3.5:>1023"
 .Ed
 .Pp
 Note that evaluation takes place at parse time.
@@ -848,23 +891,10 @@ option selects an address at random within the defined block of addresses.
 The
 .Pa source-hash
 option uses a hash of the source address to determine the redirection address,
-ensuring that the redirection address is always the same for a given source.
-The option can additionally be modified as follows:
-.Bl -tag -width "random" -compact -offset indent
-.It Em key
-The
-.Pa key
-option for
-.Pa source-hash
-allows one to specify a string used by pfctl to generate a key which is hashed
-in with the source address.
-.It Em random
-The
-.Pa random
-option for
-.Pa source-hash
-randomly generates a key for source-hash every time the ruleset is reloaded.
-.El
+ensuring that the redirection address is always the same for a given source. An
+optional key can be specified after this keyword either in hex or as a string;
+by default pfctl randomly generates a key for source-hash every time the
+ruleset is reloaded.
 .It Em round-robin
 The
 .Pa round-robin
@@ -956,11 +986,14 @@ For example,
     pass out inet proto icmp all icmp-type echoreq keep state
 .Ed
 .Pp
-lets echo requests
-.Pq pings
+allows echo requests,
+e.g as created by
+.Xr ping 8 ,
 out, creates state, and matches incoming echo replies correctly to states.
 .Pp
-Note: nat/rdr rules implicitly create state for connections.
+Note:
+.Pa nat No or Pa rdr
+rules implicitly create state for connections.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.
@@ -1214,6 +1247,7 @@ pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \\
 
 .Ed
 .Sh TRANSLATION EXAMPLES
+.Pa Binat
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,
 therefore lacks permission to bind to port 80).
@@ -1236,7 +1270,9 @@ nat on ! vlan12 from 192.168.168.0/24 to any -> 204.92.77.111
 .Pp
 In the example below, fxp1 is the outside interface; the machine sits between a
 fake internal 144.19.74.* network, and a routable external IP of 204.92.77.100.
-The "no nat" rule excludes protocol AH from being translated.
+The
+.Pa no nat
+rule excludes protocol AH from being translated.
 .Bd -literal
 # NO NAT
 no nat on fxp1 proto ah from 144.19.74.0/24 to any
@@ -1322,8 +1358,8 @@ pf_rule        = action ( "in" | "out" )
 
 nat_rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
 		 "from" ipspec "to" ipspec [ portspec ]
-		 [ "->" ( redirhost | "{" redirhost-list "}" ) [ portspec ] ]
-		 [ pooltype ] [ "static-port" ].
+		 [ "->" ( redirhost | "{" redirhost-list "}" )
+		 [ portspec ] ] [ pooltype ] [ "static-port" ].
 
 binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 		 [ "proto" ( proto-name | proto-number ) ]
@@ -1332,8 +1368,8 @@ binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 
 rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 		 "from" ipspec "to" ipspec [ portspec ]
-		 [ "->" ( redirhost | "{" redirhost-list "}" ) [ portspec ] ]
-		 [ pooltype ] .
+		 [ "->" ( redirhost | "{" redirhost-list "}" )
+		 [ portspec ] ] [ pooltype ] .
 
 antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
 		 "for" ( interface-name | "{" interface-list "}" )
@@ -1365,7 +1401,8 @@ route          = "fastroute" |
 		 [ pooltype ] .
 af	       = "inet" | "inet6" .
 
-protospec      = "proto" ( proto-name | proto-number | "{" proto-list "}" ) .
+protospec      = "proto" ( proto-name | proto-number |
+		 "{" proto-list "}" ) .
 proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ] .
 
 hosts          = "all" |
@@ -1425,11 +1462,14 @@ seconds        = number .
 limit-list     = limit [ [ "," ] limit-list ] .
 limit          = ( "states" | "frags" ) number .
 
-pooltype       = ( "bitmask" | "random" | "source-hash" | "round-robin" ) .
+pooltype       = ( "bitmask" | "random" |
+		 "source-hash" [ ( hex-key | string-key ) ] |
+		 "round-robin" ) .
 
 queue-list     = string [ [ "," ] string ] .
 cbq-def        = "cbq" [ "(" cbq-type [ [ "," ] cbq-type ] ")" ] .
-cbq-type       = ( "default" | "control" | "borrow" | "red" | "ecn" | "rio" ) .
+cbq-type       = ( "default" | "control" | "borrow" |
+		 "red" | "ecn" | "rio" ) .
 
 .Ed
 .Sh FILES
