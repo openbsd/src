@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.29 2003/03/11 07:58:34 david Exp $
+.\"	$OpenBSD: spamd.8,v 1.30 2003/03/13 13:31:10 henning Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@ The rules can be loaded into a
 to simplify handling.
 .Bd -literal
     table <spamd> persist
-    rdr proto tcp from { <spamd> } to any port smtp -> 127.0.0.1 port 8025
+    rdr proto tcp from <spamd> to any port smtp -> 127.0.0.1 port 8025
 .Ed
 .Pp
 Any addresses in table
