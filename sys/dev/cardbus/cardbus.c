@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.2 2000/05/15 06:36:21 niklas Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.3 2001/06/24 21:29:05 mickey Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
 #define STATIC static
 #define DPRINTF(a)
 #endif
-
-extern int cold;
 
 STATIC void cardbusattach __P((struct device *, struct device *, void *));
 /* STATIC int cardbusprint __P((void *, const char *)); */
