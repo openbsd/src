@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.159 2004/09/16 09:14:02 mickey Exp $
+#	$OpenBSD: files.pci,v 1.160 2004/10/20 12:50:48 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -419,6 +419,16 @@ file	dev/pci/if_wi_pci.c		wi_pci
 # device declaration in sys/conf/files
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
+
+# Intel PRO/Wireless 2100
+device  ipw: ifnet, wlan
+attach  ipw at pci
+file    dev/pci/if_ipw.c                ipw
+
+# Intel PRO/Wireless 2200BG/2915ABG
+device	iwi: ifnet, wlan
+attach	iwi at pci
+file	dev/pci/if_iwi.c		iwi
 
 # C-Media CMI8x38 Audio Chip
 device	cmpci: audio, auconv, mulaw
