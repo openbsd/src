@@ -1344,13 +1344,13 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
   }
 
 ret:
-  if (rval < 0) {
+  if (rval) {
     if ((rval == EINVAL) || (rval == ENOMEM) ||
 	(rval == ENOBUFS))
       goto realret;
     for (i = 1; i <= SADB_EXT_MAX; i++)
       headers[i] = NULL;
-    ((struct sadb_msg *)headers[0])->sadb_msg_errno = -rval;
+    ((struct sadb_msg *)headers[0])->sadb_msg_errno = abs(rval);
   } else {
     uint32_t seen = 0;
 
