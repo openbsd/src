@@ -20,9 +20,9 @@ needed. This is to leave room for a kernel source and compile tree
 as you will probably want to compile your own kernel. (GENERIC is
 large and bulky to accommodate all people).
 
-Starting with OpenBSD 2.7, you should be able to leave /usr mounted ro
-on production machines, and use a separate /usr/local partition for
-packages.
+Starting with OpenBSD 2.7, you should be able to leave /usr mounted
+readonly on production machines, and use a separate /usr/local
+partition for packages.
 
 
 If you only have 4M of fast memory, you should make your swap partition
