@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 1998/10/30 19:28:13 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 1999/04/20 19:45:16 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -41,7 +41,7 @@
  * data types (int, long, ...).   The result is u_int and must be cast to
  * any desired pointer type.
  */
-#define	ALIGNBYTES	3
+#define	ALIGNBYTES	7
 #define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
 #define	NBPG		4096		/* bytes/page */
@@ -69,6 +69,7 @@
 #define	SSIZE		(1)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
+#define	UADDR		0xC1000000	/* u-area lives here */
 #define	UPAGES		(2)		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct */
 
