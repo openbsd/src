@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.14 2004/05/09 22:14:15 deraadt Exp $	 */
+/* $OpenBSD: commands.c,v 1.15 2004/06/27 00:48:22 marc Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -156,7 +156,7 @@ scanint(char *str, int *intp)
 #define ERRMAX 20
 
 struct errs {			/* structure for a system-call error */
-	int             errno;	/* value of errno (that is, the actual error) */
+	int             err;	/* value of errno (that is, the actual error) */
 	char           *arg;	/* argument that caused the error */
 };
 
@@ -173,7 +173,7 @@ static char    *err_listem =
 		return(err_toomany); \
 	} else { \
 		errs[errcnt].arg = (p); \
-		errs[errcnt++].errno = (e); \
+		errs[errcnt++].err = (e); \
 	}
 
 #define STRMAX 80
@@ -205,7 +205,7 @@ err_string(void)
 	/* loop thru the sorted list, building an error string */
 	while (cnt < errcnt) {
 		errp = &(errs[cnt++]);
-		if (errp->errno != currerr) {
+		if (errp->err != currerr) {
 			if (currerr != -1) {
 				if (str_adderr(string, sizeof string, currerr) >
 				    sizeof string - 2)
@@ -214,7 +214,7 @@ err_string(void)
 				/* we know there's more */
 				(void) strlcat(string, "; ", sizeof string);
 			}
-			currerr = errp->errno;
+			currerr = errp->err;
 			first = Yes;
 		}
 		if (str_addarg(string, sizeof string, errp->arg, first) >=
@@ -278,7 +278,7 @@ err_compar(const void *e1, const void *e2)
 	const struct errs *p2 = (struct errs *) e2;
 	int result;
 
-	if ((result = p1->errno - p2->errno) == 0)
+	if ((result = p1->err - p2->err) == 0)
 		return (strcmp(p1->arg, p2->arg));
 	return (result);
 }
@@ -304,7 +304,7 @@ show_errors(void)
 	printf("%d error%s:\n\n", errcnt, errcnt == 1 ? "" : "s");
 	while (cnt++ < errcnt) {
 		printf("%5s: %s\n", errp->arg,
-		    errp->errno == 0 ? "Not a number" : strerror(errp->errno));
+		    errp->err == 0 ? "Not a number" : strerror(errp->err));
 		errp++;
 	}
 }
