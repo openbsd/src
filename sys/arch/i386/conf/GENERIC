@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.366 2004/06/03 18:22:21 grange Exp $
+#	$OpenBSD: GENERIC,v 1.367 2004/06/03 18:28:02 grange Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -72,7 +72,8 @@ geodesc* at pci? dev ? function ?	# Geode SC1100/SCx200 IAOC
 lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
-nsclpcsio*	at isa?			# NS PC87366 hardware monitor
+nsclpcsio* at isa?			# NS PC87366 LPC Super I/O
+gpio*	at nsclpcsio?
 gscsio*	at isa?				# NS Geode SC1100 Super I/O
 iic0	at gscsio?			# ACCESS.bus 1
 iic1	at gscsio?			# ACCESS.bus 2

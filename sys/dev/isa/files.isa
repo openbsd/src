@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.87 2004/05/23 17:41:09 grange Exp $
+#	$OpenBSD: files.isa,v 1.88 2004/06/03 18:28:02 grange Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -379,7 +379,7 @@ attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
 
 # NSC PC87366 Super IO / monitor chip
-device	nsclpcsio
+device	nsclpcsio: gpiobus
 attach	nsclpcsio at isa with nsclpcsio_isa
 file	dev/isa/nsclpcsio_isa.c		nsclpcsio_isa
 
