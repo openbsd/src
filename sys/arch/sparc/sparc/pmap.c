@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 1999/12/09 13:22:59 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 1999/12/09 14:26:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5787,7 +5787,7 @@ pmap_kenter_pgs4m(va, pgs, npgs)
 		int pnum;
 		paddr_t pa;
 
-		pa = atop(VM_PAGE_TO_PHYS(pgs[i]);
+		pa = atop(VM_PAGE_TO_PHYS(pgs[i]));
 		pnum = atop(pa);
 
 		pte = pteproto | (pnum << SRMMU_PPNSHIFT) |
