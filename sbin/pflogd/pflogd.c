@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.23 2003/10/22 18:51:55 canacar Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.24 2003/10/22 19:53:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* Privilege separation begins here */	
+	/* Privilege separation begins here */
 	if (priv_init()) {
 		logmsg(LOG_ERR, "unable to privsep");
 		exit(1);
