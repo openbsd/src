@@ -1,4 +1,4 @@
-/*	$OpenBSD: failedlogin.c,v 1.1 1996/11/09 20:17:15 millert Exp $	*/
+/*	$OpenBSD: failedlogin.c,v 1.2 1996/12/04 04:04:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.1 1996/11/09 20:17:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.2 1996/12/04 04:04:41 millert Exp $";
 #endif /* not lint */                                                        
 
 /*
@@ -54,19 +54,20 @@ static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.1 1996/11/09 20:17:15 millert
 #include "pathnames.h"
 
 struct badlogin {
-	size_t	count;			/* number of bad logins */
-	time_t	bl_time;		/* time of the login attempt */
 	char	bl_line[UT_LINESIZE];	/* tty used */
+	char	bl_name[UT_NAMESIZE];	/* remote username */
 	char	bl_host[UT_HOSTSIZE];	/* remote host */
+	time_t	bl_time;		/* time of the login attempt */
+	size_t	count;			/* number of bad logins */
 };
 
 /*
  * Log a bad login to the failedlogin file.
  */
 void
-log_failedlogin(uid, host, tty)
+log_failedlogin(uid, host, name, tty)
 	uid_t uid;
-	char *host, *tty;
+	char *host, *name, *tty;
 {
 	struct badlogin failedlogin;
 	int fd;
@@ -89,6 +90,10 @@ log_failedlogin(uid, host, tty)
 			strncpy(failedlogin.bl_host, host, sizeof(failedlogin.bl_host));
 		else
 			*failedlogin.bl_host = '\0';	/* NULL host field */
+		if (name)
+			strncpy(failedlogin.bl_name, name, sizeof(failedlogin.bl_name));
+		else
+			*failedlogin.bl_name = '\0';	/* NULL name field */
 		(void)write(fd, (char *)&failedlogin, sizeof(failedlogin));
 		(void)close(fd);
 	}
@@ -125,9 +130,16 @@ check_failedlogin(uid)
 			    (int)sizeof(failedlogin.bl_line),
 			    failedlogin.bl_line); 
 			if (*failedlogin.bl_host != '\0')
-				(void)printf(" from %.*s",
-				    (int)sizeof(failedlogin.bl_host),
-				    failedlogin.bl_host);
+				if (*failedlogin.bl_name != '\0')
+					(void)printf(" from %.*s@%.*s",
+					    (int)sizeof(failedlogin.bl_name),
+					    failedlogin.bl_name,
+					    (int)sizeof(failedlogin.bl_host),
+					    failedlogin.bl_host);
+				else
+					(void)printf(" from %.*s",
+					    (int)sizeof(failedlogin.bl_host),
+					    failedlogin.bl_host);
 			(void)putchar('\n');
 
 			/* Reset since this is a good login and write record */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.13 1996/11/09 20:17:17 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.14 1996/12/04 04:04:41 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.13 1996/11/09 20:17:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.14 1996/12/04 04:04:41 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -98,7 +98,7 @@ void	 dofork __P((void));
 
 extern void login __P((struct utmp *));
 extern int check_failedlogin __P((uid_t));
-extern void log_failedlogin __P((uid_t, char *, char *));
+extern void log_failedlogin __P((uid_t, char *, char *, char *));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
@@ -117,7 +117,8 @@ int	authok;
 
 struct	passwd *pwd;
 int	failures;
-char	term[64], *envinit[1], *hostname, *tty, *username = NULL;
+char	term[64], *envinit[1], *hostname, *tty;
+char	*username = NULL, *rusername = NULL;
 
 int
 main(argc, argv)
@@ -129,7 +130,7 @@ main(argc, argv)
 	struct stat st;
 	struct timeval tp;
 	struct utmp utmp;
-	int ask, ch, cnt, fflag, hflag, pflag, quietlog, rootlogin, rval;
+	int ask, ch, cnt, fflag, hflag, pflag, uflag, quietlog, rootlogin, rval;
 	uid_t uid;
 	char *domain, *p, *salt, *ttyn;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
@@ -158,7 +159,7 @@ main(argc, argv)
 
 	fflag = hflag = pflag = 0;
 	uid = getuid();
-	while ((ch = getopt(argc, argv, "fh:p")) != EOF)
+	while ((ch = getopt(argc, argv, "fh:u:p")) != EOF)
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -174,6 +175,12 @@ main(argc, argv)
 			break;
 		case 'p':
 			pflag = 1;
+			break;
+		case 'u':
+			if (uid)
+				errx(1, "-u option: %s", strerror(EPERM));
+			uflag = 1;
+			rusername = optarg;
 			break;
 		case '?':
 		default:
@@ -310,8 +317,9 @@ main(argc, argv)
 			    pwd->pw_name);
 			if (hostname)
 				syslog(LOG_NOTICE,
-				    "LOGIN %s REFUSED FROM %s ON TTY %s",
-				    pwd->pw_name, hostname, tty);
+				    "LOGIN %s REFUSED FROM %s%s%s ON TTY %s",
+				    pwd->pw_name, rusername ? rusername : "",
+				    rusername ? "@" : "", hostname, tty);
 			else
 				syslog(LOG_NOTICE,
 				    "LOGIN %s REFUSED ON TTY %s",
@@ -325,7 +333,7 @@ main(argc, argv)
 		(void)printf("Login incorrect\n");
 		failures++;
 		if (pwd)
-			log_failedlogin(pwd->pw_uid, hostname, tty);
+			log_failedlogin(pwd->pw_uid, hostname, rusername, tty);
 		/* we allow 10 tries, but after 3 we start backing off */
 		if (++cnt > 3) {
 			if (cnt >= 10) {
@@ -431,6 +439,10 @@ main(argc, argv)
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
 	(void)setenv("USER", pwd->pw_name, 1);
 	(void)setenv("PATH", _PATH_DEFPATH, 0);
+	if (hostname)
+		(void)setenv("REMOTEHOST", hostname, 1);
+	if (rusername)
+		(void)setenv("REMOTEUSER", rusername, 1);
 #ifdef KERBEROS
 	if (krbtkfile_env)
 		(void)setenv("KRBTKFILE", krbtkfile_env, 1);
@@ -443,8 +455,9 @@ main(argc, argv)
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0)
 		if (hostname)
-			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s FROM %s",
-			    username, tty, hostname);
+			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s FROM %s%s%s",
+			    username, tty, rusername ? rusername : "",
+			    rusername ? "@" : "", hostname);
 		else
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s", username, tty);
 
@@ -638,14 +651,14 @@ dolastlog(quiet)
 			    ll.ll_time != 0) {
 				(void)printf("Last login: %.*s ",
 				    24-5, (char *)ctime(&ll.ll_time));
+				(void)printf("on %.*s",
+				    (int)sizeof(ll.ll_line),
+				    ll.ll_line);
 				if (*ll.ll_host != '\0')
-					(void)printf("from %.*s\n",
+					(void)printf(" from %.*s",
 					    (int)sizeof(ll.ll_host),
 					    ll.ll_host);
-				else
-					(void)printf("on %.*s\n",
-					    (int)sizeof(ll.ll_line),
-					    ll.ll_line);
+				(void)putchar('\n');
 			}
 			(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), L_SET);
 		}
@@ -666,11 +679,14 @@ badlogin(name)
 	if (failures == 0)
 		return;
 	if (hostname) {
-		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s FROM %s",
-		    failures, failures > 1 ? "S" : "", hostname);
+		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s FROM %s%s%s",
+		    failures, failures > 1 ? "S" : "",
+		    rusername ? rusername : "", rusername ? "@" : "", hostname);
 		syslog(LOG_AUTHPRIV|LOG_NOTICE,
-		    "%d LOGIN FAILURE%s FROM %s, %s",
-		    failures, failures > 1 ? "S" : "", hostname, name);
+		    "%d LOGIN FAILURE%s FROM %s%s%s, %s",
+		    failures, failures > 1 ? "S" : "",
+		    rusername ? rusername : "", rusername ? "@" : "",
+		    hostname, name);
 	} else {
 		syslog(LOG_NOTICE, "%d LOGIN FAILURE%s ON %s",
 		    failures, failures > 1 ? "S" : "", tty);
