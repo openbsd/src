@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2003/05/10 00:35:42 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -3834,7 +3834,8 @@ pmap_testout()
 
 	pg = vm_page_alloc1();
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	/* Now clear reference and modify */
@@ -3910,7 +3911,8 @@ pmap_testout()
 	       ref, mod);
 
 	/* Modify page */
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	*loc = 1;
 
@@ -3935,7 +3937,8 @@ pmap_testout()
 	       ref, mod);
 
 	/* Modify page */
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	*loc = 1;
 
@@ -3960,7 +3963,8 @@ pmap_testout()
 
 
 	/* Modify page */
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	*loc = 1;
 
