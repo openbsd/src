@@ -11,9 +11,10 @@ The following systems have been tested:
 	- MicroVAX 3100/80
 	- MicroVAX 3100/90
 	- MicroVAX 3300
-	- VAX 4000/10{0,5}
-	- VAX 4000/300
-	- VAX 4000/{4,5,6}00{,A}
+	- VAX 4000-10{0,5}
+	- VAX 4000-200
+	- VAX 4000-300
+	- VAX 4000-{4,5,6}00{,A}
 
 Ethernet devices:
 	- on-board MicroVAX or VAXstation LANCE 
