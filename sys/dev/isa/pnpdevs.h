@@ -36,7 +36,6 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "PNP81c8", "ed" },
 	{ "PNP828C", "le" },
 	{ "PNP828D", "le" },
-	{ "WUMbeef", "le" },
 	{ "PNPC000", "com" },
 	{ "PNPC000", "pccom" },
 	{ "PNPC001", "com" },
@@ -45,5 +44,6 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "MOT1170", "pccom" },
 	{ "NECE761", "com" },
 	{ "NECE761", "pccom" },
+	{ "wUMBEEF", "le" },
 	{ NULL, NULL, }
 };
