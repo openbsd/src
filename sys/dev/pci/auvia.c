@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.24 2003/04/27 11:22:53 ho Exp $ */
+/*	$OpenBSD: auvia.c,v 1.25 2003/05/21 19:32:20 drahn Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -851,10 +851,10 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	op = ch->sc_dma_ops;
 
 	while (l) {
-		op->ptr = s;
+		op->ptr = htole32(s);
 		l = l - blksize;
 		/* if last block */
-		op->flags = (l? AUVIA_DMAOP_FLAG : AUVIA_DMAOP_EOL) | blksize;
+		op->flags = htole32((l? AUVIA_DMAOP_FLAG : AUVIA_DMAOP_EOL) | blksize);
 		s += blksize;
 		op++;
 	}
