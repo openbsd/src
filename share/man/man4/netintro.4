@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.25 2004/05/30 21:31:35 jmc Exp $
+.\"	$OpenBSD: netintro.4,v 1.26 2004/08/15 23:27:35 jaredy Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .Dt NETINTRO 4
 .Os
 .Sh NAME
-.Nm networking
+.Nm netintro
 .Nd introduction to networking facilities
 .Sh SYNOPSIS
 .Fd #include <sys/socket.h>
@@ -90,12 +90,16 @@ Network interfaces comprise the lowest layer of the
 networking subsystem, interacting with the actual transport
 hardware.
 An interface may support one or more protocol families and/or address formats.
-The SYNOPSIS section of each network interface entry gives a sample
+The
+.Sx SYNOPSIS
+section of each network interface entry gives a sample
 specification of the related drivers for use in providing a system description
 to the
 .Xr config 8
 program.
-The DIAGNOSTICS section lists messages which may appear on the console
+The
+.Sx DIAGNOSTICS
+section lists messages which may appear on the console
 and/or in the system error log,
 .Pa /var/log/messages
 (see
@@ -103,11 +107,10 @@ and/or in the system error log,
 due to errors in device operation.
 .Sh PROTOCOLS
 The system currently supports the
-Internet
-protocols, the Xerox Network Systems(tm) protocols,
-and some of the
-.Tn ISO OSI
-protocols.
+Internet protocols (IPv4 and IPv6),
+the Xerox Network Systems(tm) protocols,
+CCITT, Appletalk, Novell's IPX protocols,
+and a few others.
 Raw socket interfaces are provided to the
 .Tn IP
 protocol
@@ -121,39 +124,44 @@ information regarding the support for each protocol family.
 .Sh ADDRESSING
 Associated with each protocol family is an address
 format.
-All network addresses adhere to a general structure, called a sockaddr,
+All network addresses adhere to a general structure, called a
+.Vt sockaddr ,
 described below.
 However, each protocol imposes a finer, more specific structure, generally
 renaming the variant, which is discussed in the protocol family manual
 page alluded to above.
 .Bd -literal -offset indent
 struct sockaddr {
-	u_int8_t	sa_len;
-	sa_family_t	sa_family;
-	char		sa_data[14];
+	u_int8_t	sa_len;		/* total length */
+	sa_family_t	sa_family;	/* address family */
+	char		sa_data[14];	/* actually longer */
 };
 .Ed
 .Pp
 The field
-.Ar sa_len
+.Va sa_len
 contains the total length of the structure,
 which may exceed 16 bytes.
 The following address values for
-.Ar sa_family
+.Va sa_family
 are known to the system
 (and additional formats are defined for possible future implementation):
 .Bd -literal
-#define    AF_UNIX      1    /* local to host (pipes, portals) */
-#define    AF_INET      2    /* internetwork: UDP, TCP, etc. */
-#define    AF_NS        6    /* Xerox NS protocols */
-#define    AF_CCITT     10   /* CCITT protocols, X.25 etc */
-#define    AF_HYLINK    15   /* NSC Hyperchannel */
-#define    AF_APPLETALK 16   /* AppleTalk */
-#define    AF_ISO       18   /* ISO protocols */
-#define    AF_IPX       23   /* Novell Internet Protocol */
-#define    AF_INET6     24   /* IPv6 */
-#define    AF_NATM      27   /* native ATM access */
+#define AF_LOCAL	1	/* local to host (pipes, portals) */
+#define AF_INET		2	/* internetwork: UDP, TCP, etc. */
+#define AF_NS		6	/* Xerox NS protocols */
+#define AF_CCITT	10	/* CCITT protocols, X.25 etc */
+#define AF_HYLINK	15	/* NSC Hyperchannel */
+#define AF_APPLETALK	16	/* AppleTalk */
+#define AF_IPX		23	/* Novell Internet Protocol */
+#define AF_INET6	24	/* IPv6 */
+#define AF_NATM		27	/* native ATM access */
 .Ed
+.Pp
+The
+.Va sa_data
+field contains the actual address value.
+Note that it may be longer than 14 bytes.
 .Sh ROUTING
 .Ox
 provides some packet routing facilities.
@@ -164,8 +172,8 @@ transmitting packets.
 A user process (or possibly multiple co-operating processes)
 maintains this database by sending messages over a special kind
 of socket.
-This supplants fixed size
-.Xr ioctl 2
+This supplants fixed-size
+.Xr ioctl 2 's
 used in earlier releases.
 .Pp
 This facility is described in
@@ -186,187 +194,307 @@ The
 is made on a socket (typically of type
 .Dv SOCK_DGRAM )
 in the desired domain.
-Most of the requests supported in earlier releases
+Most of the requests
 take an
-.Ar ifreq
-structure as its parameter.
-This structure has the form
+.Vt ifreq
+structure pointer as their parameter.
+This structure is as follows:
 .Bd -literal
 struct	ifreq {
-#define    IFNAMSIZ    16
-	char    ifr_name[IFNAMSIZ];         /* if name, e.g. "en0" */
+#define IFNAMSIZ 16
+	char	ifr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	union {
-	        struct    sockaddr ifru_addr;
-	        struct    sockaddr ifru_dstaddr;
-	        struct    sockaddr ifru_broadaddr;
-	        short     ifru_flags;
-	        int       ifru_metric;
-	        caddr_t   ifru_data;
+		struct	sockaddr ifru_addr;
+		struct	sockaddr ifru_dstaddr;
+		struct	sockaddr ifru_broadaddr;
+		short	ifru_flags;
+		int	ifru_metric;
+		caddr_t	ifru_data;
 	} ifr_ifru;
-#define ifr_addr      ifr_ifru.ifru_addr    /* address */
-#define ifr_dstaddr   ifr_ifru.ifru_dstaddr /* other end of p-to-p link */
-#define ifr_broadaddr ifr_ifru.ifru_broadaddr /* broadcast address */
-#define ifr_flags     ifr_ifru.ifru_flags   /* flags */
-#define ifr_metric    ifr_ifru.ifru_metric  /* metric */
-#define ifr_media     ifr_ifru.ifru_metric  /* media options (overload) */
-#define ifr_data      ifr_ifru.ifru_data    /* for use by interface */
+#define ifr_addr	ifr_ifru.ifru_addr	/* address */
+#define ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* p-to-p peer */
+#define ifr_broadaddr	ifr_ifru.ifru_broadaddr	/* broadcast address */
+#define ifr_flags	ifr_ifru.ifru_flags	/* flags */
+#define ifr_metric	ifr_ifru.ifru_metric	/* metric */
+#define ifr_mtu		ifr_ifru.ifru_metric	/* mtu (overload) */
+#define ifr_media	ifr_ifru.ifru_metric	/* media options */
+#define ifr_data	ifr_ifru.ifru_data	/* used by interface */
 };
 .Ed
 .Pp
-Calls which are now deprecated are:
-.Bl -tag -width SIOCGIFBRDADDR
-.It Dv SIOCSIFADDR
-Set interface address for protocol family.
-Following the address assignment, the ``initialization'' routine for the
-interface is called.
-.It Dv SIOCSIFDSTADDR
-Set point to point address for protocol family and interface.
-.It Dv SIOCSIFBRDADDR
-Set broadcast address for protocol family and interface.
-.El
-.Pp
+The supported
 .Xr ioctl 2
-requests to obtain addresses and requests both to set and
-retrieve other data are still fully supported
-and use the
-.Ar ifreq
-structure:
-.Bl -tag -width SIOCGIFBRDADDR
-.It Dv SIOCGIFADDR
-Get interface address for protocol family.
-.It Dv SIOCGIFDSTADDR
-Get point to point address for protocol family and interface.
-.It Dv SIOCGIFBRDADDR
-Get broadcast address for protocol family and interface.
-.It Dv SIOCGIFDESCR
-Get interface description, returned in the
-.Ar ifru_data
+requests are:
+.Bl -tag -width Ds
+.It Dv SIOCSIFADDR Fa "struct ifreq *"
+Set the interface address for a protocol family.
+Following the address assignment, the
+.Dq initialization
+routine for the
+interface is called.
+.Pp
+This call has been deprecated and superceded by the
+.Dv SIOCAIFADDR
+call, described below.
+.It Dv SIOCSIFDSTADDR Fa "struct ifreq *"
+Set the point-to-point address for a protocol family and interface.
+.Pp
+This call has been deprecated and superceded by the
+.Dv SIOCAIFADDR
+call, described below.
+.It Dv SIOCSIFBRDADDR Fa "struct ifreq *"
+Set the broadcast address for a protocol family and interface.
+.Pp
+This call has been deprecated and superceded by the
+.Dv SIOCAIFADDR
+call, described below.
+.It Dv SIOCGIFADDR Fa "struct ifreq *"
+Get the interface address for a protocol family.
+.It Dv SIOCGIFDSTADDR Fa "struct ifreq *"
+Get the point-to-point address for a protocol family and interface.
+.It Dv SIOCGIFBRDADDR Fa "struct ifreq *"
+Get the broadcast address for a protocol family and interface.
+.It Dv SIOCGIFDESCR Fa "struct ifreq *"
+Get the interface description, returned in the
+.Va ifru_data
 field.
-.It Dv SIOCSIFDESCR
-Set interface description to the value of the
-.Ar ifru_data
+.It Dv SIOCSIFDESCR Fa "struct ifreq *"
+Set the interface description to the value of the
+.Va ifru_data
 field, limited to the size of
 .Dv IFDESCRSIZE .
-.It Dv SIOCSIFFLAGS
-Set interface flags field.
+.It Dv SIOCSIFFLAGS Fa "struct ifreq *"
+Set the interface flags.
 If the interface is marked down, any processes currently routing packets
 through the interface are notified; some interfaces may be reset so that
 incoming packets are no longer received.
 When marked up again, the interface is reinitialized.
-.It Dv SIOCGIFFLAGS
-Get interface flags.
-.It Dv SIOCSIFMEDIA
-Set interface media.
+.It Dv SIOCGIFFLAGS Fa "struct ifreq *"
+Get the interface flags.
+.It Dv SIOCSIFMEDIA Fa "struct ifreq *"
+Set the interface media settings.
 See
 .Xr ifmedia 4
 for possible values.
-.It Dv SIOCGIFMEDIA
-Get interface media.
+.It Dv SIOCGIFMEDIA Fa "struct ifmediareq *"
+Get the interface media settings.
+The
+.Vt ifmediareq
+structure is as follows:
+.Bd -literal
+struct ifmediareq {
+	char	 ifm_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	int	 ifm_current;	/* current media options */
+	int	 ifm_mask;	/* don't care mask */
+	int	 ifm_status;	/* media status */
+	int	 ifm_active;	/* active options */
+	int	 ifm_count;	/* #entries in ifm_ulist array */
+	int	*ifm_ulist;	/* media words */
+};
+.Ed
+.Pp
 See
 .Xr ifmedia 4
 for interpreting this value.
-.It Dv SIOCSIFMETRIC
-Set interface routing metric.
+.It Dv SIOCSIFMETRIC Fa "struct ifreq *"
+Set the interface routing metric.
 The metric is used only by user-level routers.
-.It Dv SIOCGIFMETRIC
-Get interface metric.
-.El
-.Pp
-There are two requests that make use of a new structure:
-.Bl -tag -width SIOCGIFBRDADDR
-.It Dv SIOCAIFADDR
+.It Dv SIOCGIFMETRIC Fa "struct ifreq *"
+Get the interface metric.
+.It Dv SIOCAIFADDR Fa "struct ifaliasreq *"
 An interface may have more than one address associated with it
 in some protocols.
 This request provides a means to add additional addresses (or modify
 characteristics of the primary address if the default address for the
 address family is specified).
+.Pp
 Rather than making separate calls to set destination or broadcast addresses,
-or network masks (now an integral feature of multiple protocols) a separate
-structure is used to specify all three facets simultaneously (see below).
-One would use a slightly tailored version of this struct specific
-to each family (replacing each sockaddr by one
+or network masks (now an integral feature of multiple protocols), a separate
+structure,
+.Vt ifaliasreq ,
+is used to specify all three facets simultaneously (see below).
+One would use a slightly tailored version of this structure specific
+to each family (replacing each
+.Vt sockaddr
+by one
 of the family-specific type).
-Where the sockaddr itself is larger than the
-default size, one needs to modify the
-.Xr ioctl 2
-identifier itself to include the total size, as described in
+One should always set the length of a
+.Vt sockaddr ,
+as described in
 .Xr ioctl 2 .
-.It Dv SIOCDIFADDR
+.Pp
+The
+.Vt ifaliasreq
+structure is as follows:
+.Bd -literal
+struct ifaliasreq {
+	char	ifra_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	struct	sockaddr ifra_addr;
+	struct	sockaddr ifra_dstaddr;
+#define ifra_broadaddr ifra_dstaddr
+	struct	sockaddr ifra_mask;
+};
+.Ed
+.It Dv SIOCDIFADDR Fa "struct ifreq *"
 This request deletes the specified address from the list
 associated with an interface.
 It also uses the
-.Ar if_aliasreq
+.Vt ifaliasreq
 structure to allow for the possibility of protocols allowing
 multiple masks or destination addresses, and also adopts the
 convention that specification of the default address means
 to delete the first address for the interface belonging to
 the address family in which the original socket was opened.
-.It Dv SIOCGIFCONF
-Get interface configuration list.
+.It Dv SIOCGIFCONF Fa "struct ifconf *"
+Get the interface configuration list.
 This request takes an
-.Ar ifconf
+.Vt ifconf
 structure (see below) as a value-result parameter.
 The
-.Ar ifc_len
+.Va ifc_len
 field should be initially set to the size of the buffer
 pointed to by
-.Ar ifc_buf .
+.Va ifc_buf .
 On return it will contain the length, in bytes, of the
 configuration list.
+.Pp
 Alternately, if the
-.Ar ifc_len
+.Va ifc_len
 passed in is set to 0,
 .Dv SIOCGIFCONF
 will set
-.Ar ifc_len
+.Va ifc_len
 to the size that
-.Ar ifc_buf
-needs to be to fit the entire configuration list and not
+.Va ifc_buf
+needs to be to fit the entire configuration list and will not
 fill in the other parameters.
 This is useful for determining the exact size that
-.Ar ifc_buf
+.Va ifc_buf
 needs to be in advance.
 Note, however, that this is an extension
 that not all operating systems support.
-.El
 .Bd -literal
-/*
-* Structure used in SIOCAIFADDR request.
-*/
-struct ifaliasreq {
-        char    ifra_name[IFNAMSIZ];   /* if name, e.g. "en0" */
-        struct  sockaddr        ifra_addr;
-        struct  sockaddr        ifra_broadaddr;
-        struct  sockaddr        ifra_mask;
-};
-.Ed
-.Bd -literal
-/*
-* Structure used in SIOCGIFCONF request.
-* Used to retrieve interface configuration
-* for machine (useful for programs which
-* must know all networks accessible).
-*/
 struct ifconf {
-	int   ifc_len;		/* size of associated buffer */
+	int	ifc_len;	  /* size of associated buffer */
 	union {
-		caddr_t    ifcu_buf;
-	        struct     ifreq *ifcu_req;
+		caddr_t	ifcu_buf;
+		struct	ifreq *ifcu_req;
 	} ifc_ifcu;
 #define ifc_buf ifc_ifcu.ifcu_buf /* buffer address */
-#define ifc_req ifc_ifcu.ifcu_req /* array of structures returned */
+#define ifc_req ifc_ifcu.ifcu_req /* array of structures ret'd */
 };
 .Ed
+.It Dv SIOCIFCREATE Fa "struct ifreq *"
+Attempt to create the specified interface.
+.It Dv SIOCIFDESTROY Fa "struct ifreq *"
+Attempt to destroy the specified interface.
+.It Dv SIOCIFGCLONERS Fa "struct if_clonereq *"
+Get the list of clonable interfaces.
+This request takes an
+.Vt if_clonereq
+structure pointer (see below) as a value-result parameter.
+The
+.Va ifcr_count
+field should be set to the number of
+.Dv IFNAMSIZ Ns -sized
+strings that can fit in the buffer pointed to by
+.Va ifcr_buffer .
+On return,
+.Va ifcr_total
+will be set to the number of clonable interfaces, and the buffer pointed
+to by
+.Va ifcr_buffer
+will be filled with the names of clonable interfaces aligned on
+.Dv IFNAMSIZ
+boundaries.
+.Pp
+The
+.Vt if_clonereq
+structure is as follows:
+.Bd -literal
+struct if_clonereq {
+	int   ifcr_total;  /* total cloners (out) */
+	int   ifcr_count;  /* room for this many in user buf */
+	char *ifcr_buffer; /* buffer for cloner names */
+};
+.Ed
+.It Dv SIOCAIFGROUP Fa "struct ifgroupreq *"
+Associate the interface named by
+.Va ifgr_name
+with the interface group named by
+.Va ifgr_group .
+The
+.Vt ifgroupreq
+structure is as follows:
+.Bd -literal
+struct ifgroupreq {
+	char	ifgr_name[IFNAMSIZ];
+	u_int	ifgr_len;
+	union {
+		char	ifgru_group[IFNAMSIZ];
+		struct	ifgroup *ifgru_groups;
+	} ifgr_ifgru;
+#define ifgr_group	ifgr_ifgru.ifgru_group
+#define ifgr_groups	ifgr_ifgru.ifgru_groups
+};
+.Ed
+.It Dv SIOCGIFGROUP Fa "struct ifgroupreq *"
+Retrieve the list of groups for which an interface is a member.
+The interface is named by
+.Va ifgr_name .
+On enter, the amount of memory in which the group names will
+be written is stored in
+.Va ifgr_len ,
+and the group names themselves will be written to the memory
+pointed to by
+.Va ifgr_groups .
+On return, the amount of memory actually written is returned in
+.Va ifgr_len .
+.Pp
+Alternately, if the
+.Va ifgr_len
+passed in is set to 0,
+.Dv SIOCGIFGROUP
+will set
+.Va ifgr_len
+to the size that
+.Va ifgr_groups
+needs to be to fit the entire group list and will not
+fill in the other parameters.
+This is useful for determining the exact size that
+.Va ifgr_groups
+needs to be in advance.
+.It Dv SIOCDIFGROUP Fa "struct ifgroupreq *"
+Remove the membership of the interface named by
+.Va ifgr_name
+from the group
+.Va ifgr_group .
+.El
 .Sh SEE ALSO
+.Xr netstat 1 ,
 .Xr ioctl 2 ,
 .Xr socket 2 ,
+.Xr inet 3 ,
+.Xr ipx 3 ,
+.Xr arp 4 ,
 .Xr bridge 4 ,
 .Xr ifmedia 4 ,
+.Xr inet 4 ,
 .Xr intro 4 ,
+.Xr ip 4 ,
+.Xr ip6 4 ,
+.Xr lo 4 ,
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr hosts 5 ,
+.Xr networks 5 ,
 .Xr config 8 ,
+.Xr ifconfig 8 ,
+.Xr netstart 8 ,
+.Xr route 8 ,
 .Xr routed 8
 .Sh HISTORY
 The
-.Nm netintro
+.Nm
 manual appeared in
-.Bx 4.3 tahoe .
+.Bx 4.3 Tahoe .
