@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.20 2002/09/23 04:10:14 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.21 2003/04/05 16:24:59 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.20 2002/09/23 04:10:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.21 2003/04/05 16:24:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -546,6 +546,7 @@ ttyconv(arg)
 	char *arg;
 {
 	char *mval;
+	size_t len = 8;
 
 	/*
 	 * kludge -- we assume that all tty's end with
@@ -553,14 +554,12 @@ ttyconv(arg)
 	 */
 	if (strlen(arg) == 2) {
 		/* either 6 for "ttyxx" or 8 for "console" */
-		if (!(mval = malloc((u_int)8)))
+		if (!(mval = malloc(len)))
 			err(1, "malloc failure");
 		if (!strcmp(arg, "co"))
-			(void)strcpy(mval, "console");
-		else {
-			(void)strcpy(mval, "tty");
-			(void)strcpy(mval + 3, arg);
-		}
+			(void)strlcpy(mval, "console", len);
+		else
+			snprintf(mval, len, "tty%s", arg);
 		return (mval);
 	}
 	if (!strncmp(arg, _PATH_DEV, sizeof(_PATH_DEV) - 1))
