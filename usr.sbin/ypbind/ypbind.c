@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.19 1997/01/30 18:26:55 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.20 1997/02/01 00:26:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.19 1997/01/30 18:26:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.20 1997/02/01 00:26:04 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1106,7 +1106,7 @@ unique_xid(ypdb)
 {
 	int xid;
 
-	xid = (int)ypdb;		/* XXX: & 0xffffffff; */
+	xid = arc4random();
 	while (xid2ypdb(xid) != NULL)
 		xid++;
 
