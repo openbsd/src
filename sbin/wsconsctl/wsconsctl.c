@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.15 2004/07/30 23:28:23 jmc Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.16 2004/08/09 18:39:22 deraadt Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -85,8 +85,8 @@ usage(char *msg)
 	    "usage: %s [-n] -a\n"
 	    "       %s [-n] name ...\n"
 	    "       %s [-n] name=value ...\n"
-	    "       %s [-n] name+=value ...\n", __progname,
-		__progname, __progname, __progname);
+	    "       %s [-n] name+=value ...\n",
+	    __progname, __progname, __progname, __progname);
 
 	exit(1);
 }
@@ -94,16 +94,10 @@ usage(char *msg)
 int
 main(int argc, char *argv[])
 {
-	int i, ch, error;
-	int aflag;
-	char *sep, *p;
-	struct vartypesw *sw;
+	int i, ch, error = 0, aflag = 0, do_merge;
+	struct vartypesw *sw = NULL;
+	char *sep = "=", *p;
 	struct field *f;
-	int do_merge;
-
-	error = aflag = 0;
-	sw = NULL;
-	sep = "=";
 
 	while ((ch = getopt(argc, argv, "anw")) != -1) {
 		switch(ch) {
