@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.3 2000/06/09 00:43:05 aaron Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.4 2000/07/01 14:43:55 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.2 2000/05/15 06:26:58 niklas Exp 
+ *	OpenBSD: cardbusdevs,v 1.3 2000/06/09 00:42:36 aaron Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -63,11 +63,13 @@
 
 /* 3COM Products */
 
-#define	CARDBUS_PRODUCT_3COM_3C575TX	0x5057		/* 3c575 100Base-TX */
-#define	CARDBUS_PRODUCT_3COM_3C575BTX	0x5157		/* 3c575B 100Base-TX */
+#define	CARDBUS_PRODUCT_3COM_3C575	0x5057		/* 3C575 100Base-TX */
+#define	CARDBUS_PRODUCT_3COM_3CCFE575BT	0x5157		/* 3CCFE575BT 100Base-TX */
 #define	CARDBUS_PRODUCT_3COM_3CCFE575CT	0x5257		/* 3CCFE575CT 100Base-TX */
-#define	CARDBUS_PRODUCT_3COM_3CCFE656B	0x6562		/* 3CCFE656B 100Base-TX */
+#define	CARDBUS_PRODUCT_3COM_3CCFEM656	0x6560		/* 3CCFEM656 100Base-TX */
+#define	CARDBUS_PRODUCT_3COM_3CCFEM656B	0x6562		/* 3CCFEM656B 100Base-TX */
 #define	CARDBUS_PRODUCT_3COM_MODEM56	0x6563		/* 56k Modem */
+#define	CARDBUS_PRODUCT_3COM_3CCFEM656C	0x6564		/* 3CCFEM656C 100Base-TX */
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
