@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1997/02/01 21:53:29 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 1997/02/03 17:35:09 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -285,7 +285,7 @@ trap(frame)
 		goto out;
 
 	case T_STKFLT|T_USER:
-		trapsignal(p, SIGSEGV, type &~ T_USER, ILL_BADSTK, (caddr_t)rcr2());
+		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, (caddr_t)rcr2());
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
@@ -297,7 +297,7 @@ trap(frame)
 		goto out;
 
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(p, SIGILL, type &~ T_USER, FPE_FLTINV, (caddr_t)rcr2());
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, (caddr_t)rcr2());
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
