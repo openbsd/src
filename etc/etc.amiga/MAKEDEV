@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.44 2000/03/22 07:34:27 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.45 2000/09/03 14:46:45 espie Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,7 @@
 #	uk*	SCSI Unknown device
 #	*random	inkernal random data source
 #	audio*	one unit of the audio device. Unit 0 is custom chip audio.
+#	joy*	amiga joysticks
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -160,7 +161,7 @@ unit=`unt $i`
 case $i in
 all)
 	sh $this std fd st0 st1 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
-	sh $this mouse0 mouse1 tty00 ttyA0 ttyA1
+	sh $this mouse0 mouse1 joy0 joy1 tty00 ttyA0 ttyA1
 	sh $this ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 ttyB6 ttyB7 ttyB8 ttyB9
 	sh $this grf0 grf1 grf2 grf3 grf4 grf5 grf6
 	sh $this kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
@@ -501,6 +502,18 @@ mouse*)
 	esac
 	;;
 
+joy*)
+	unit=`expr $i : 'joy\(.*\)'`
+	rm -f joy${unit}
+	case $unit in
+	0|1)
+		mknod joy${unit} c 43 ${unit}; chmod 666 mouse${unit}
+		;;
+	*)
+		echo bad unit for joy in: $i
+		;;
+	esac
+	;;
 kbd)
 	rm -f kbd
 	mknod kbd c 14 0
