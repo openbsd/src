@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.83 2004/05/21 23:10:49 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.84 2004/06/14 20:38:19 cedric Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -563,8 +563,6 @@ static int
 remove_stale_rulesets(void)
 {
 	struct pfioc_ruleset	 prs;
-	const int		 action[PF_RULESET_MAX] = { PF_SCRUB,
-				    PF_PASS, PF_NAT, PF_BINAT, PF_RDR };
 	u_int32_t		 nr, mnr;
 
 	memset(&prs, 0, sizeof(prs));
@@ -595,20 +593,25 @@ remove_stale_rulesets(void)
 		    (*s && (t == prs.name || *s != ')')))
 			return (1);
 		if (kill(pid, 0) && errno != EPERM) {
-			int i;
+			int			i;
+			struct pfioc_trans_e	t_e[PF_RULESET_MAX+1];
+			struct pfioc_trans	t;
 
-			for (i = 0; i < PF_RULESET_MAX; ++i) {
-				struct pfioc_rule pr;
-
-				memset(&pr, 0, sizeof(pr));
-				snprintf(pr.anchor, sizeof(pr.anchor),
+			bzero(&t, sizeof(t));
+			bzero(t_e, sizeof(t_e));
+			t.size = PF_RULESET_MAX+1;
+			t.esize = sizeof(t_e[0]);
+			t.array = t_e;
+			for (i = 0; i < PF_RULESET_MAX+1; ++i) {
+				t_e[i].rs_num = i;
+				snprintf(t_e[i].anchor, sizeof(t_e[i].anchor),
 				    "%s/%s", anchorname, prs.name);
-				pr.rule.action = action[i];
-				if ((ioctl(dev, DIOCBEGINRULES, &pr) ||
-				    ioctl(dev, DIOCCOMMITRULES, &pr)) &&
-				    errno != EINVAL)
-					return (1);
 			}
+			t_e[PF_RULESET_MAX].rs_num = PF_RULESET_TABLE;
+			if ((ioctl(dev, DIOCXBEGIN, &t) ||
+			    ioctl(dev, DIOCXCOMMIT, &t)) &&
+			    errno != EINVAL)
+				return (1);
 			mnr--;
 		} else
 			nr++;
