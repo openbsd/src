@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 1997/02/05 01:33:55 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 1997/02/05 06:10:05 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -112,19 +112,21 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 		goto brain_damage;
 	case EXC_DSI|EXC_USER:
 		{
-			int ftype;
+			int ftype, vftype;
 			
-			if (frame->dsisr & DSISR_STORE)
+			if (frame->dsisr & DSISR_STORE) {
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
-			else
-				ftype = VM_PROT_READ;
+				vftype = VM_PROT_WRITE;
+			} else
+				vftype = ftype = VM_PROT_READ;
 			if (vm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->dar), ftype, FALSE)
 			    == KERN_SUCCESS)
 				break;
-		}
 printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
-		trapsignal(p, SIGSEGV, EXC_DSI, SEGV_MAPERR, frame->dar);
+			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR,
+			    frame->dar);
+		}
 		break;
 	case EXC_ISI|EXC_USER:
 		{
@@ -137,7 +139,8 @@ printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				break;
 		}
 printf("isi iar %x\n", frame->srr0);
-		trapsignal(p, SIGSEGV, EXC_ISI, SEGV_MAPERR, frame->srr0);
+		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
+		    frame->srr0);
 		break;
 	case EXC_SC|EXC_USER:
 		{
@@ -261,7 +264,7 @@ brain_damage:
 
 	case EXC_PGM|EXC_USER:
 printf("pgm iar %x\n", frame->srr0);
-		trapsignal(p, SIGILL, EXC_PGM, ILL_ILLOPC, frame->srr0);
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, frame->srr0);
 		break;
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
