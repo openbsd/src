@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.13 1996/12/11 19:08:20 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.14 1997/02/24 20:17:35 jkatz Exp $	*/
 /*	$NetBSD: st.c,v 1.66 1996/05/05 19:53:01 christos Exp $	*/
 
 /*
@@ -1539,7 +1539,7 @@ st_space(st, number, what, flags)
 	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, 900000, NULL, flags);
+	    sizeof(cmd), 0, 0, 0, 2000000, NULL, flags);
 }
 
 /*
