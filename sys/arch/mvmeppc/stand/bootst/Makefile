@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.1 2001/06/26 21:58:00 smurph Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/08/25 20:36:54 miod Exp $
 
 SIZE?=	size
 
@@ -11,7 +11,7 @@ CFLAGS=-O0 ${INCPATH} ${DEFS} ${COPTS}
 LDFLAGS=-s -N -Ttext ${STAGE2_RELOC}
 CLEANFILES+=stboot bootst bootst.bug
 
-#.include "${S}/arch/mvme88k/stand/wrtvid/Makefile.inc"
+#.include "${S}/arch/mvmeppc/stand/wrtvid/Makefile.inc"
 .include "${S}/arch/mvmeppc/stand/bugcrt/Makefile.inc"
 .include "${S}/arch/mvmeppc/stand/libbug/Makefile.inc"
 .include "${S}/arch/mvmeppc/stand/libsa/Makefile.inc"
