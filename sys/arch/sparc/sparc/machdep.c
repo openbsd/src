@@ -653,9 +653,14 @@ boot(howto)
 
 		/*
 		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
 		 */
-		resettodr();
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
 	}
 	(void) splhigh();		/* ??? */
 	if (howto & RB_HALT) {
