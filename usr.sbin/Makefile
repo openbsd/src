@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.11 1996/05/27 08:00:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 1996/06/04 07:56:00 niklas Exp $
 
 # not yet done: catman
 
@@ -8,7 +7,7 @@ SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	diskpart edquota gettable gspa htable inetd iostat \
 	ipftest ipmon ipsend kgmon \
 	kvm_mkdb lpr map-mbone mrinfo mrouted mtrace mtree named \
-	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
+	netgroup_mkdb pkg_install portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdconfig rdate repquota rmt \
 	rpc.bootparamd rpc.pcnfsd rwhod \
 	sa sendmail sliplogin slstats spray sysctl \
