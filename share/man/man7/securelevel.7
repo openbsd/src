@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.14 2002/07/30 00:11:36 nordin Exp $
+.\"     $OpenBSD: securelevel.7,v 1.15 2004/01/08 10:56:07 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -72,6 +72,16 @@ raw disk devices of mounted file systems are read-only
 system immutable and append-only file flags may not be removed
 .It
 kernel modules may not be loaded or unloaded
+.It
+the
+.Va fs.posix.setuid
+.Xr sysctl 8
+variable may not be raised
+.It
+the
+.Va net.inet.ip.sourceroute
+.Xr sysctl 8
+variable may not be raised
 .El
 .It \ 2 Em Highly secure mode
 .Bl -hyphen -compact
