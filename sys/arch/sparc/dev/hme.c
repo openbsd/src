@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.10 1998/09/16 22:02:05 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.11 1998/09/24 22:16:37 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -35,6 +35,10 @@
  * Driver for the Happy Meal (hme) ethernet boards
  * Based on information gleaned from reading the
  *	S/Linux driver by David Miller
+ *
+ * Thanks go to the Univeristy of North Carolina at Greensboro Systems
+ * and Networks Department for some of the resources used to develop
+ * this driver.
  */
 
 #include <sys/param.h>
@@ -621,37 +625,6 @@ hme_poll_stop(sc)
 	DELAY(200);
 }
 
-/*
- * Writing to the serial BitBang, is a matter of putting the bit
- * into the data register, then strobing the clock.
- */
-static void
-hme_tcvr_bb_writeb(sc, b)
-	struct hme_softc *sc;
-	int b;
-{
-	sc->sc_tcvr->bb_data = b & 0x1;
-	sc->sc_tcvr->bb_clock = 0;
-	sc->sc_tcvr->bb_clock = 1;
-}
-
-static int
-hme_tcvr_bb_readb(sc, phy)
-	struct hme_softc *sc;
-	int phy;
-{
-	int ret;
-
-	sc->sc_tcvr->bb_clock = 0;
-	DELAY(10);
-	if (phy == TCVR_PHYADDR_ITX)
-		ret = sc->sc_tcvr->cfg & TCVR_CFG_MDIO0;
-	if (phy == TCVR_PHYADDR_ETX)
-		ret = sc->sc_tcvr->cfg & TCVR_CFG_MDIO1;
-	sc->sc_tcvr->bb_clock = 1;
-	return ((ret) ? 1 : 0);
-}
-
 #define RESET_TRIES	32
 
 static void
@@ -1057,6 +1030,46 @@ hme_mcreset(sc)
 	}
 }
 
+/*
+ * Writing to the serial BitBang, is a matter of putting the bit
+ * into the data register, then strobing the clock.
+ */
+static void
+hme_tcvr_bb_writeb(sc, b)
+	struct hme_softc *sc;
+	int b;
+{
+	sc->sc_tcvr->bb_data = b & 0x1;
+	sc->sc_tcvr->bb_clock = 0;
+	sc->sc_tcvr->bb_clock = 1;
+}
+
+/*
+ * Read a bit from a PHY, if the PHY is not our internal or external
+ * phy addr, just return all zero's.
+ */
+static int
+hme_tcvr_bb_readb(sc, phy)
+	struct hme_softc *sc;
+	int phy;
+{
+	int ret;
+
+	sc->sc_tcvr->bb_clock = 0;
+	DELAY(10);
+
+	if (phy == TCVR_PHYADDR_ITX)
+		ret = sc->sc_tcvr->cfg & TCVR_CFG_MDIO0;
+	else if (phy == TCVR_PHYADDR_ETX)
+		ret = sc->sc_tcvr->cfg & TCVR_CFG_MDIO1;
+	else
+		ret = 0;
+
+	sc->sc_tcvr->bb_clock = 1;
+
+	return ((ret) ? 1 : 0);
+}
+
 static void
 hme_mii_write(self, phy, reg, val)
 	struct device *self;
@@ -1187,6 +1200,4 @@ hme_mii_statchg(self)
 		cr->tx_cfg |= CR_TXCFG_FULLDPLX;
 	else
 		cr->tx_cfg &= ~CR_TXCFG_FULLDPLX;
-
-	/* XXX Update ifp->if_baudrate */
 }
