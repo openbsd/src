@@ -58,7 +58,7 @@
 #define	BIG_ENDIAN	4321	/* MSB first: 68000, ibm, net */
 #define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long */
 
-#define	BYTE_ORDER	LITTLE_ENDIAN
+#define	BYTE_ORDER	LITTLE_ENDIAN	/* ``... Beautiful SPIIIIM!'' */
 
 #include <sys/cdefs.h>
 
