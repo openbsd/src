@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.77 2001/06/23 22:02:53 angelos Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.78 2001/06/23 23:01:08 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1510,7 +1510,7 @@ hifn_process(crp)
 				m_copydata(cmd->src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
-				cuio_copyback(cmd->src_io, enccrd->crd_inject,
+				cuio_copydata(cmd->src_io, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
 		}
 
