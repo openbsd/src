@@ -9,10 +9,6 @@ InWork: Have a test version. The system hangs after a while. Not solved yet.
 
     o	Update MAKEDEV to create all devices correctly.
 
-    o	Add dos disklabel functionality so disks can be shared with NT.
-InWork: mformat needs to be hacked to handle disk labels. Need to figure
-        out what method to use (offseting?).
-
     o   Boot. Standalone boot program instead of booting the kernel directly?
 
     o   Create boot package for distribution.
@@ -22,8 +18,6 @@ InWork: mformat needs to be hacked to handle disk labels. Need to figure
     o   Add more videomodes to pccons driver. 50kHz and 64kHz monitors?
 InWork: This seems to be hard. Need more info on the chip.
 
-    o   SONIC driver. Use the one from Theo as a start?
-
     o   Find out why bitmap load to S3-928 flashes screen.
 Know why (enable linear mode). Need S3 info.
 
@@ -31,13 +25,9 @@ Know why (enable linear mode). Need S3 info.
 
     o   ELF shared libraries......
 
-    o   Recompile ghostscript to have X driver as well as Cannon BJ200.
-
     o   GDB. The current one does not work correctly with current toolchain.
 
     o   ISA driver. ISA dma, interrupt etc.
-
-    o   SONY cd-rom driver + sound driver. Uses ISA dma.
 
     o   Can we have 32 double registers?
 

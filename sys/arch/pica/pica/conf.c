@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1996/05/01 18:15:55 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 1996/05/02 07:59:42 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.4 1996/05/01 18:15:55 pefo Exp $
+ *      $Id: conf.c,v 1.5 1996/05/02 07:59:42 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -143,14 +143,6 @@ cdev_decl(cd);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
-<<<<<<< 1.2
-#define	cdev_gen_ipf(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
-=======
->>>>>>> 1.3
 #ifdef IPFILTER
 #define NIPF 1
 #else

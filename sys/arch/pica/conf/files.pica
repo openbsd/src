@@ -1,55 +1,11 @@
+#	$OpenBSD: files.pica,v 1.3 1996/05/02 07:59:36 pefo Exp $
 #	$NetBSD: files.pica,v 1.16 1995/04/30 10:11:00 cgd Exp $
+#
+# maxpartitions must be first item in files.${ARCH}
+#
 maxpartitions 8
+
 maxusers 2 8 64
-
-device mainbus at root { }		# no locators
-
-#	Our CPU configurator
-device cpu at mainbus			# not optional
-file arch/pica/pica/cpu.c		cpu
-
-#
-#	PICA bus autoconfiguration devices
-#
-device pica at mainbus { }		# { slot = -1, offset = -1 }
-file	arch/pica/pica/pica.c		pica	needs-flag
-
-#	Real time clock, must have one..
-device clock at pica
-file	arch/pica/pica/clock.c		clock
-file	arch/pica/pica/clock_mc.c	clock
-
-#	Ethernet chip
-device sn at pica: ifnet, ether
-file	arch/pica/dev/if_sn.c		sn	needs-count
-
-#	Use machine independent SCSI driver routines
-include	"../../../scsi/files.scsi"
-
-#	Machine dependent SCSI interface driver
-device asc at pica: scsi
-file	arch/pica/dev/asc.c		asc	needs-count
-
-#	NS16450/16550 Serial line driver
-device com at pica
-file	arch/pica/dev/com.c		com	needs-count
-
-#	Paralell printer port driver
-device lpt at pica
-file	arch/pica/dev/lpt.c		lpt	needs-count
-
-#	Console driver on PC-style graphics
-device pc at pica
-device pms at pica
-file	arch/pica/dev/pccons.c		pc pms	needs-count
-
-#	PS2 type mouse driver.
-
-# Floppy disk controller
-device	fdc at pica {drive = -1}
-device	fd at fdc
-file	arch/pica/dev/fd.c			fdc	needs-flag
-major	{fd = 7}
 
 #	Required files
 
@@ -60,7 +16,7 @@ file	arch/pica/pica/conf.c
 file	arch/pica/pica/cpu_exec.c
 file	arch/pica/pica/disksubr.c
 file	arch/pica/dev/dma.c
-file	arch/pica/pica/elf.c
+file	arch/pica/pica/exec_elf.c
 file	arch/pica/pica/machdep.c
 file	arch/pica/pica/mainbus.c
 file	arch/pica/pica/minidebug.c
@@ -70,6 +26,74 @@ file	arch/pica/pica/process_machdep.c
 file	arch/pica/pica/sys_machdep.c
 file	arch/pica/pica/trap.c
 file	arch/pica/pica/vm_machdep.c
+
+#
+# System bus types
+#
+
+device	mainbus {}
+attach	mainbus at root
+
+#	Our CPU configurator
+device	cpu
+attach	cpu at mainbus			# not optional
+file arch/pica/pica/cpu.c		cpu
+
+#
+#	PICA bus autoconfiguration devices
+#
+device	pica {}
+attach	pica at mainbus			# { slot = -1, offset = -1 }
+file	arch/pica/pica/pica.c		pica	needs-flag
+
+#	Real time clock, must have one..
+device	clock
+attach	clock at pica
+file	arch/pica/pica/clock.c		clock
+file	arch/pica/pica/clock_mc.c	clock
+
+#	Ethernet chip
+device	sn
+attach	sn at pica: ifnet, ether
+file	arch/pica/dev/if_sn.c		sn	needs-count
+
+#	Use machine independent SCSI driver routines
+include	"../../../scsi/files.scsi"
+major	{sd = 0}
+major	{cd = 3}
+
+#	Machine dependent SCSI interface driver
+device	asc: scsi
+attach	asc at pica
+file	arch/pica/dev/asc.c		asc	needs-count
+
+#	NS16450/16550 Serial line driver
+device	com
+attach	com at pica
+file	arch/pica/dev/com.c		com	needs-count
+
+#	Paralell printer port driver
+device	lpt
+attach	lpt at pica
+file	arch/pica/dev/lpt.c		lpt	needs-count
+
+#	Console driver on PC-style graphics
+device	pc: tty
+attach	pc at pica
+device	pms
+attach	pms at pica
+file	arch/pica/dev/pccons.c		pms	needs-count
+
+#	PS2 type mouse driver.
+
+# Floppy disk controller
+device	fdc {drive = -1}
+attach	fdc at pica
+device	fd: disk
+attach	fd at fdc
+file	arch/pica/dev/fd.c		fdc	needs-flag
+major	{fd = 7}
+
 #
 # This is a dummy - don't try to use it:
 
@@ -83,5 +107,3 @@ file	compat/ultrix/ultrix_misc.c		compat_ultrix
 file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
 file	compat/ultrix/ultrix_sysent.c		compat_ultrix
 
-
-# Configs

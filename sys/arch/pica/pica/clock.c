@@ -38,7 +38,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.2 1996/05/01 18:15:51 pefo Exp $
+ *      $Id: clock.c,v 1.3 1996/05/02 07:59:42 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -124,7 +124,7 @@ clockattach(parent, self, aux)
 	/*
 	 * establish the clock interrupt; it's a special case
 	 */
-	BUS_INTR_ESTABLISH((struct confargs *)aux, hardclock, self);
+	BUS_INTR_ESTABLISH((struct confargs *)aux, (intr_handler_t)hardclock, self);
 
 	printf("\n");
 }

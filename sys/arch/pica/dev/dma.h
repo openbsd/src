@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dma.h	8.1 (Berkeley) 6/10/93
- *      $Id: dma.h,v 1.3 1996/05/01 16:59:35 pefo Exp $
+ *      $Id: dma.h,v 1.4 1996/05/02 07:59:38 pefo Exp $
  */
 
 /*
@@ -127,7 +127,7 @@ typedef struct dma_softc {
 	int		*sc_dmalen;	/* Pointer to len counter in dev */
 	void (*reset)(struct dma_softc *);	/* Reset routine pointer */
 	void (*enintr)(struct dma_softc *);	/* Int enab routine pointer */
-	void (*map)(struct dma_softc *, caddr_t, size_t, int);
+	void (*map)(struct dma_softc *, char *, size_t, int);
 						/* Map a dma viritual area */
 	void (*start)(struct dma_softc *, caddr_t, size_t, int);
 						/* Start routine pointer */

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.2 1996/05/01 18:16:17 pefo Exp $
+ *      $Id: pmap.c,v 1.3 1996/05/02 07:59:43 pefo Exp $
  */
 
 /*
@@ -931,7 +931,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 					 * Check cache aliasing incompatibility
 					 */
 					if((npv->pv_va & machCacheAliasMask) != (va & machCacheAliasMask)) {
-						printf("pmap_enter: creating uncached mapping.\n");
+						printf("pmap_enter: creating uncached mapping 0x%x, 0x%x.\n",npv->pv_va, va);
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						npte = (npte & ~PG_CACHEMODE) | PG_UNCACHED;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.3 1996/05/01 16:59:32 pefo Exp $
+ *      $Id: dma.c,v 1.4 1996/05/02 07:59:37 pefo Exp $
  */
 
 /*
@@ -343,8 +343,8 @@ asc_dma_init(dma_softc_t *sc)
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
-	sc->isintr = picaDmaNull;
-	sc->intr = picaDmaNull;
+	sc->isintr = (int(*)())picaDmaNull;
+	sc->intr = (int(*)())picaDmaNull;
 	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)PICA_SYS_DMA0_REGS;
@@ -363,8 +363,8 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
-	sc->isintr = picaDmaNull;
-	sc->intr = picaDmaNull;
+	sc->isintr = (int(*)())picaDmaNull;
+	sc->intr = (int(*)())picaDmaNull;
 	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)PICA_SYS_DMA1_REGS;
@@ -383,9 +383,9 @@ sn_dma_init(dma_softc_t *sc, int pages)
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaFlush;
 	sc->map = picaDmaMap;
-	sc->isintr = picaDmaNull;
-	sc->intr = picaDmaNull;
-	sc->end = picaDmaNull;
+	sc->isintr = (int(*)())picaDmaNull;
+	sc->intr = (int(*)())picaDmaNull;
+	sc->end = (int(*)())picaDmaNull;
 
 	sc->dma_reg = (pDmaReg)NULL;
 	sc->pte_size = pages;
