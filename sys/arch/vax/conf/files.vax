@@ -1,4 +1,4 @@
-#       $OpenBSD: files.vax,v 1.7 1997/09/12 09:18:14 maja Exp $
+#       $OpenBSD: files.vax,v 1.8 1997/09/20 13:48:59 maja Exp $
 #       $NetBSD: files.vax,v 1.27 1997/03/15 18:11:09 is Exp $
 #
 # new style config file for vax architecture
@@ -108,9 +108,9 @@ device	hdc { drive = -1 }
 attach	hdc at vsbus
 file	arch/vax/vsa/hdc9224.c		hdc needs-flag
 
-device	rd: disk
-attach	rd at hdc
-major	{rd = 19}
+device	hd: disk
+attach	hd at hdc
+major	{hd = 19}
 
 #
 # Machine-independent SCSI driver.

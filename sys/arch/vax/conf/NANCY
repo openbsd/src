@@ -1,9 +1,11 @@
-#	$OpenBSD: NANCY,v 1.3 1997/09/10 07:34:20 maja Exp $
+#	$OpenBSD: NANCY,v 1.4 1997/09/20 13:48:59 maja Exp $
 #
 # NANCY MV3600 configuration file.
 #
 
 machine		vax		# machine type
+
+makeoptions	DEBUG="-g"
 
 # Here are all different supported CPU types listed.
 #option		"VAX8600"
@@ -12,8 +14,9 @@ machine		vax		# machine type
 #option		"VAX750"
 option		"VAX630"	# MV II
 option		"VAX650"	# MV III, 3600, 3800, 3900
-#option		"VAX410"	# VS 2000
-#option		"VAX43"		# VS 3100/76
+option		"VAX410"	# VS 2000
+option		"VAX420"	# VS 3100
+option		"VAX43"		# VS 3100/76
 
 # Kernel identification
 #option		GENERIC
@@ -29,7 +32,7 @@ options		DEVPAGER	# mapped devices
 # Kernel compiled-in symbolic debugger & system call tracer
 option		DDB
 option		KTRACE
-#option		DIAGNOSTIC
+option		DIAGNOSTIC
 
 # Network support
 #option		GATEWAY
@@ -70,6 +73,8 @@ option		COMPAT_12
 # Kernel(s) to compile
 config		ra0bsd	     root on ra0 swap on ra0
 config		ra2bsd	     root on ra2 swap on ra2
+config		hd0bsd	     root on hd0 swap on hd0
+config		nfsbsd	     root on nfs swap on nfs
 
 # Temporary fix for memory allocation problems in machdep.c
 option		"NBUF=400"
@@ -83,7 +88,7 @@ cpu0		at backplane0	# Only one CPU so far.
 #bi*		at backplane0	# VAXBI bus
 #cmi0		at backplane0	# 11/750 internal bus.
 uba0		at backplane0	# MicroVAXen only have QBUS.
-#vsbus0		at backplane0	# Internal "virtual" VAXstation bus
+vsbus0		at backplane0	# Internal "virtual" VAXstation bus
 
 # Devices connected at VAXBI
 #cpu0		at bi? node?	# KA820/KA825 cpu
@@ -122,22 +127,21 @@ mt*		at mscpbus? drive?	# MSCP tape
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
-#hdc0		at vsbus0		# The strange builtin MFM controller
-#rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
+hdc0		at vsbus0		# The strange builtin MFM controller
+hd*		at hdc0 drive?		# The RD disk subsystem on VS2000
 
 # VAXstation builtin SCSI-controller (NCR5380)
-#ncr0		at vsbus0		# 1st built-in SCSI interface
-#ncr1		at vsbus0		# 2nd built-in SCSI interface
-#scsibus*	at ncr?
+ncr0		at vsbus0		# 1st built-in SCSI interface
+ncr1		at vsbus0		# 2nd built-in SCSI interface
+scsibus*	at ncr?
 
-#sd*		at scsibus? target? lun?
-#st*		at scsibus? target? lun?
-
+sd*		at scsibus? target? lun?
+st*		at scsibus? target? lun?
 
 # Ethernet cards
 #de0		at uba? csr 0174510	# DELUA/DEUNA
 qe0		at uba? csr 0174440	# DEQNA/DELQA
-#le0		at vsbus0		# LANCE
+le0		at vsbus0		# LANCE
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
