@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.66 2000/03/17 17:40:31 itojun Exp $
+#	$OpenBSD: netstart,v 1.67 2000/03/18 19:45:45 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -40,36 +40,36 @@ fi
 ifconfig lo0 inet localhost
 
 # use loopback, not the wire
-route -n add -host $hostname localhost
-route -n add -net 127 127.0.0.1 -reject
+route -n add -host $hostname localhost > /dev/null
+route -n add -net 127 127.0.0.1 -reject > /dev/null
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# IPv6 configurations.
 	ip6kernel=YES
 
 	# disallow link-local unicast dest without outgoing scope identifiers.
-	route add -inet6 fe80:: -prefixlen 10 ::1 -reject
+	route add -inet6 fe80:: -prefixlen 10 ::1 -reject > /dev/null
 
 	# disallow site-local unicast dest without outgoing scope identifiers..
 	# If you configure site-locals without scope id (it is permissible
 	# config for routers that are not on scope boundary), you may want
 	# to comment the line out.
-	route add -inet6 fec0:: -prefixlen 10 ::1 -reject
+	route add -inet6 fec0:: -prefixlen 10 ::1 -reject > /dev/null
 
 	# disallow "internal" addresses to appear on the wire.
-	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
+	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
 
 	# disallow packets to malicious IPv4 compatible prefix.
-	route add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject
-	route add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject
-	route add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
-	route add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject
+	route add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject > /dev/null
+	route add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
+	route add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
+	route add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
 
 	# disallow packets to malicious 6to4 prefix.
-	route add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
-	route add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
-	route add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
-	route add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
+	route add -inet6 2002:e000:: -prefixlen 20 ::1 -reject > /dev/null
+	route add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject > /dev/null
+	route add -inet6 2002:0000:: -prefixlen 24 ::1 -reject > /dev/null
+	route add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject > /dev/null
 
 	# Completely disallow packets to IPv4 compatible prefix.
 	# This may conflict with RFC1933 under following circumstances:
@@ -84,7 +84,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	#     asked to forward it.
 	# Due to rare use of IPv4 compatible address, and security issues
 	# with it, we disable it by default.
-	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
 
 	rtsolif=""
 else
@@ -245,7 +245,8 @@ fi
 #	   Any other combination		-reject		config error
 case "$multicast_host:$multicast_router" in
 NO:NO)
-	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject;;
+	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject> /dev/null
+	;;
 NO:YES)
 	;;
 *:NO)
@@ -258,10 +259,12 @@ EOF
 /^	inet /p
 EOF
 	fi`
-	route -n add -net 224.0.0.0/4 -interface $2;;
+	route -n add -net 224.0.0.0/4 -interface $2 > /dev/null
+	;;
 *:*)
 	echo 'config error, multicasting disabled until rc.conf is fixed'
-	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject;;
+	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
+	;;
 esac
 
 # Configure NAT after configuring network interfaces
