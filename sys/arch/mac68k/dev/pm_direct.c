@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.6 2003/03/14 10:47:36 miod Exp $	*/
 /*  pm_direct.c 1.22 01/09/97 Takashi Hamada */
 
 /*
@@ -520,6 +520,7 @@ pm_intr_pm1(void)
 		printf( "pm: PM is not ready. error code=%08x\n", rval );
 #endif
 		splx(s);
+		return;
 	}
 
 	if ((pmdata.data[2] & 0x10) == 0x10) {
@@ -779,6 +780,7 @@ pm_intr_pm2(void)
 		printf( "pm: PM is not ready. error code: %08x\n", rval );
 #endif
 		splx(s);
+		return;
 	}
 
 	switch( (u_int)(pmdata.data[2] & 0xff) ) {
