@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.6 2004/04/29 04:19:37 deraadt Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.7 2005/03/06 18:44:50 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -171,7 +171,7 @@ priv_pcap_setfilter(pcap_t *hpcap, int oflag, u_int32_t netmask)
 
 /* privileged part of priv_pcap_live */
 int
-pcap_live(const char *device, int snaplen, int promisc)
+pcap_live(const char *device, int snaplen, int promisc, u_int dlt)
 {
 	char		bpf[sizeof "/dev/bpf0000000000"];
 	int		fd = -1, n = 0;
@@ -200,6 +200,9 @@ pcap_live(const char *device, int snaplen, int promisc)
 		/* this is allowed to fail */
 		ioctl(fd, BIOCPROMISC, NULL);
 
+	if (dlt != (u_int) -1 && ioctl(fd, BIOCSDLT, &dlt))
+		goto error;
+
 	/* lock the descriptor */
 	if (ioctl(fd, BIOCLOCK, NULL) < 0)
 		goto error;
@@ -217,7 +220,8 @@ pcap_live(const char *device, int snaplen, int promisc)
  * unprivileged part.
  */
 pcap_t *
-priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
+priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
+    char *ebuf, u_int dlt)
 {
 	int fd, err;
 	struct bpf_version bv;
@@ -242,6 +246,7 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
 	write_command(priv_fd, PRIV_OPEN_BPF);
 	must_write(priv_fd, &slen, sizeof(int));
 	must_write(priv_fd, &prom, sizeof(int));
+	must_write(priv_fd, &dlt, sizeof(u_int));
 	write_string(priv_fd, dev);
 
 	fd = receive_fd(priv_fd);

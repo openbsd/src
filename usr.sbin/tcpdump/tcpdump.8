@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.52 2005/02/04 23:06:30 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.53 2005/03/06 18:44:50 reyk Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
 .Sh SYNOPSIS
 .Nm tcpdump
 .Bk -words
-.Op Fl adeflnNoOpqStvxX
+.Op Fl adeflLnNoOpqStvxX
 .Op Fl c Ar count
 .Op Fl E Oo Ar espalg: Oc Ar espkey
 .Op Fl F Ar file
@@ -37,6 +37,7 @@
 .Op Fl s Ar snaplen
 .Op Fl T Ar type
 .Op Fl w Ar file
+.Op Fl y Ar datalinktype
 .Op Ar expression
 .Ek
 .Sh DESCRIPTION
@@ -120,6 +121,8 @@ E.g.,
 .Dl # tcpdump -l | tee dat
 or
 .Dl # tcpdump -l > dat & tail -f dat
+.It Fl L
+List the supported data link types for the interface and exit.
 .It Fl n
 Do not convert addresses
 .Pq host addresses, port numbers, etc.
@@ -255,6 +258,9 @@ bytes will be printed.
 Like
 .Fl x
 but dumps the packet in emacs-hexl like format.
+.It Fl y Ar datalinktype
+Set the data link type to use while capturing to
+.Ar datalinktype .
 .El
 .Pp
 .Ar expression

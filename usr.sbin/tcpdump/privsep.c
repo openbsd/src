@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.11 2004/07/14 19:07:03 henning Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.12 2005/03/06 18:44:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -178,7 +178,7 @@ priv_init(int argc, char **argv)
 	 * need not send them back */
 	opterr = 0;
 	while ((i = getopt(argc, argv,
-	    "ac:deE:fF:i:lnNOopqr:s:StT:vw:xXY")) != -1) {
+	    "ac:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1) {
 		switch (i) {
 		case 'r':
 			RFileName = optarg;
@@ -278,6 +278,7 @@ static void
 parent_open_bpf(int fd, int *bpfd)
 {
 	int snaplen, promisc, err;
+	u_int dlt;
 	char device[IFNAMSIZ];
 	size_t iflen;
 
@@ -285,10 +286,11 @@ parent_open_bpf(int fd, int *bpfd)
 
 	must_read(fd, &snaplen, sizeof(int));
 	must_read(fd, &promisc, sizeof(int));
+	must_read(fd, &dlt, sizeof(u_int));
 	iflen = read_string(fd, device, sizeof(device), __func__);
 	if (iflen == 0)
 		errx(1, "Invalid interface size specified");
-	*bpfd = pcap_live(device, snaplen, promisc);
+	*bpfd = pcap_live(device, snaplen, promisc, dlt);
 	err = errno;
 	if (*bpfd < 0)
 		logmsg(LOG_DEBUG,

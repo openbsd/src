@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.39 2004/09/16 11:29:51 markus Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.40 2005/03/06 18:44:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.39 2004/09/16 11:29:51 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.40 2005/03/06 18:44:50 reyk Exp $ (LBL)";
 #endif
 
 /*
@@ -39,6 +39,7 @@ static const char rcsid[] =
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 
 #include <netinet/in.h>
 
@@ -49,6 +50,7 @@ static const char rcsid[] =
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <err.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -68,6 +70,7 @@ int aflag;			/* translate network and broadcast addresses */
 int dflag;			/* print filter code */
 int eflag;			/* print ethernet header */
 int fflag;			/* don't translate "foreign" IP address */
+int Lflag;			/* List available link types */
 int nflag;			/* leave addresses as numbers */
 int Nflag;			/* remove domains from printed host names */
 int Oflag = 1;			/* run filter code optimizer */
@@ -108,22 +111,22 @@ struct printer {
 #endif
 
 static struct printer printers[] = {
-	{ ether_if_print,	DLT_EN10MB },
-	{ ether_if_print,	DLT_IEEE802 },
-	{ sl_if_print,		DLT_SLIP },
-	{ sl_bsdos_if_print,	DLT_SLIP_BSDOS },
-	{ ppp_if_print,		DLT_PPP },
-	{ fddi_if_print,	DLT_FDDI },
-	{ null_if_print,	DLT_NULL },
-	{ raw_if_print,		DLT_RAW },
-	{ atm_if_print,		DLT_ATM_RFC1483 },
-	{ loop_if_print, 	DLT_LOOP },
-	{ enc_if_print, 	DLT_ENC },
-	{ pflog_if_print, 	DLT_PFLOG },
-	{ pflog_old_if_print, 	DLT_OLD_PFLOG },
-	{ pfsync_if_print, 	DLT_PFSYNC },
-	{ ppp_ether_if_print,	DLT_PPP_ETHER },
-	{ NULL,			0 },
+	{ ether_if_print,		DLT_EN10MB },
+	{ ether_if_print,		DLT_IEEE802 },
+	{ sl_if_print,			DLT_SLIP },
+	{ sl_bsdos_if_print,		DLT_SLIP_BSDOS },
+	{ ppp_if_print,			DLT_PPP },
+	{ fddi_if_print,		DLT_FDDI },
+	{ null_if_print,		DLT_NULL },
+	{ raw_if_print,			DLT_RAW },
+	{ atm_if_print,			DLT_ATM_RFC1483 },
+	{ loop_if_print,		DLT_LOOP },
+	{ enc_if_print,			DLT_ENC },
+	{ pflog_if_print,		DLT_PFLOG },
+	{ pflog_old_if_print,		DLT_OLD_PFLOG },
+	{ pfsync_if_print,		DLT_PFSYNC },
+	{ ppp_ether_if_print,		DLT_PPP_ETHER },
+	{ NULL,				0 },
 };
 
 static pcap_handler
@@ -131,9 +134,10 @@ lookup_printer(int type)
 {
 	struct printer *p;
 
-	for (p = printers; p->f; ++p)
+	for (p = printers; p->f; ++p) {
 		if (type == p->type)
 			return p->f;
+	}
 
 	error("unknown data link type 0x%x", type);
 	/* NOTREACHED */
@@ -151,6 +155,105 @@ init_pfosfp(void)
 
 static pcap_t *pd;
 
+/* Multiple DLT support */
+void		 pcap_list_linktypes(pcap_t *);
+void		 pcap_print_linktype(u_int);
+int		 pcap_datalink_name_to_val(const char *);
+const char	*pcap_datalink_val_to_name(u_int);
+
+const struct pcap_linktype {
+	u_int dlt_id;
+	const char *dlt_name;
+} pcap_linktypes[] = {
+	{ DLT_NULL,		"NULL" },
+	{ DLT_EN10MB,		"EN10MB" },
+	{ DLT_EN3MB,		"EN3MB" },
+	{ DLT_AX25,		"AX25" },
+	{ DLT_PRONET,		"PRONET" },
+	{ DLT_CHAOS,		"CHAOS" },
+	{ DLT_IEEE802,		"IEEE802" },
+	{ DLT_ARCNET,		"ARCNET" },
+	{ DLT_SLIP,		"SLIP" },
+	{ DLT_PPP,		"PPP" },
+	{ DLT_FDDI,		"FDDI" },
+	{ DLT_ATM_RFC1483,	"ATM_RFC1483" },
+	{ DLT_LOOP,		"LOOP" },
+	{ DLT_ENC,		"ENC" },
+	{ DLT_RAW,		"RAW" },
+	{ DLT_SLIP_BSDOS,	"SLIP_BSDOS" },
+	{ DLT_PPP_BSDOS,	"PPP_BSDOS" },
+	{ DLT_OLD_PFLOG,	"OLD_PFLOG" },
+	{ DLT_PFSYNC,		"PFSYNC" },
+	{ DLT_PPP_ETHER,	"PPP_ETHER" },
+	{ DLT_PFLOG,		"PFLOG" },
+	{ 0,			NULL }
+};
+
+int
+pcap_datalink_name_to_val(const char *name)
+{
+	int i;
+
+	for (i = 0; pcap_linktypes[i].dlt_name != NULL; i++) {
+		if (strcasecmp(pcap_linktypes[i].dlt_name, name) == 0)
+			return (pcap_linktypes[i].dlt_id);
+	}
+
+	return (-1);
+}
+
+const char *
+pcap_datalink_val_to_name(u_int dlt)
+{
+	int i;
+
+	for (i = 0; pcap_linktypes[i].dlt_name != NULL; i++) {
+		if (pcap_linktypes[i].dlt_id == dlt)
+			return (pcap_linktypes[i].dlt_name);
+	}
+
+	return (NULL);
+}
+
+void
+pcap_print_linktype(u_int dlt)
+{
+	const char *name;
+
+	if ((name = pcap_datalink_val_to_name(dlt)) != NULL)
+		fprintf(stderr, "%s\n", name);
+	else
+		fprintf(stderr, "<unknown: %u>\n", dlt);
+}
+
+void
+pcap_list_linktypes(pcap_t *p)
+{
+	int fd = p->fd;
+	u_int n;
+
+#define MAXDLT	100
+
+	u_int dltlist[MAXDLT];
+	struct bpf_dltlist dl = {MAXDLT, dltlist};
+
+	if (fd < 0)
+		error("Invalid bpf descriptor");
+
+	if (ioctl(fd, BIOCGDLTLIST, &dl) < 0)
+		err(1, "BIOCGDLTLIST");
+
+	if (dl.bfl_len > MAXDLT)
+		error("Invalid number of linktypes: %u\n", dl.bfl_len);
+
+	fprintf(stderr, "%d link types supported:\n", dl.bfl_len);
+
+	for (n = 0; n < dl.bfl_len; n++) {
+		fprintf(stderr, "\t");
+		pcap_print_linktype(dltlist[n]);
+	}
+}
+
 extern int optind;
 extern int opterr;
 extern char *optarg;
@@ -166,6 +269,7 @@ main(int argc, char **argv)
 	RETSIGTYPE (*oldhandler)(int);
 	u_char *pcap_userdata;
 	char ebuf[PCAP_ERRBUF_SIZE];
+	u_int dlt = (u_int) -1;
 
 	cnt = -1;
 	device = NULL;
@@ -186,7 +290,8 @@ main(int argc, char **argv)
 		error("%s", ebuf);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "ac:deE:fF:i:lnNOopqr:s:StT:vw:xXY")) != -1)
+	while ((op = getopt(argc, argv,
+	    "ac:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -202,7 +307,6 @@ main(int argc, char **argv)
 		case 'd':
 			++dflag;
 			break;
-
 		case 'e':
 			++eflag;
 			break;
@@ -226,7 +330,9 @@ main(int argc, char **argv)
 			setvbuf(stdout, NULL, _IOLBF, 0);
 #endif
 			break;
-
+		case 'L':
+			++Lflag;
+			break;
 		case 'n':
 			++nflag;
 			break;
@@ -308,6 +414,13 @@ main(int argc, char **argv)
 			}
 			break;
 #endif
+		case 'y':
+			i = pcap_datalink_name_to_val(optarg);
+			if (i < 0)
+				error("invalid data link type: %s", optarg);
+			dlt = (u_int)i;
+			break;
+
 		case 'x':
 			++xflag;
 			break;
@@ -334,7 +447,6 @@ main(int argc, char **argv)
 		pd = priv_pcap_offline(RFileName, ebuf);
 		if (pd == NULL)
 			error("%s", ebuf);
-
 		/* state: STATE_BPF */
 		localnet = 0;
 		netmask = 0;
@@ -346,7 +458,7 @@ main(int argc, char **argv)
 			if (device == NULL)
 				error("%s", ebuf);
 		}
-		pd = priv_pcap_live(device, snaplen, !pflag, 1000, ebuf);
+		pd = priv_pcap_live(device, snaplen, !pflag, 1000, ebuf, dlt);
 		if (pd == NULL)
 			error("%s", ebuf);
 
@@ -362,6 +474,11 @@ main(int argc, char **argv)
 			localnet = 0;
 			netmask = 0;
 		}
+	}
+
+	if (Lflag) {
+		pcap_list_linktypes(pd);
+		exit(0);
 	}
 
 	fcode = priv_pcap_setfilter(pd, Oflag, netmask);
@@ -401,8 +518,9 @@ main(int argc, char **argv)
 		/* state: STATE_RUN */
 	}
 	if (RFileName == NULL) {
-		(void)fprintf(stderr, "%s: listening on %s\n",
+		(void)fprintf(stderr, "%s: listening on %s, link-type ",
 		    program_name, device);
+		pcap_print_linktype(pd->linktype);
 		(void)fflush(stderr);
 	}
 
@@ -563,11 +681,11 @@ usage(void)
 	(void)fprintf(stderr, "%s version %s\n", program_name, version);
 	(void)fprintf(stderr, "libpcap version %s\n", pcap_version);
 	(void)fprintf(stderr,
-"Usage: %s [-adeflnNoOpqStvxX] [-c count] [-E [espalg:]espkey] [-F file]\n",
+"Usage: %s [-adeflLnNoOpqStvxX] [-c count] [-E [espalg:]espkey] [-F file]\n",
 	    program_name);
 	(void)fprintf(stderr,
 "\t\t[-i interface] [-r file] [-s snaplen] [-T type] [-w file]\n");
 	(void)fprintf(stderr,
-"\t\t[expression]\n");
+"\t\t[-y datalinktype] [expression]\n");
 	exit(1);
 }
