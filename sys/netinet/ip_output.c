@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.143 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.144 2002/05/28 15:44:28 jasoni Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -99,11 +99,11 @@ static void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 int
 ip_output(struct mbuf *m0, ...)
 {
-	register struct ip *ip, *mhip;
+	register struct ip *ip;
 	register struct ifnet *ifp;
 	struct mbuf *m = m0;
 	register int hlen = sizeof (struct ip);
-	int len, off, error = 0;
+	int len, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct in_ifaddr *ia;
@@ -705,11 +705,52 @@ sendit:
 		ipstat.ips_cantfrag++;
 		goto bad;
 	}
-	len = (ifp->if_mtu - hlen) &~ 7;
-	if (len < 8) {
-		error = EMSGSIZE;
+
+	error = ip_fragment(m, ifp);
+	if (error == EMSGSIZE)
 		goto bad;
+
+	for (m = m0; m; m = m0) {
+		m0 = m->m_nextpkt;
+		m->m_nextpkt = 0;
+		if (error == 0)
+			error = (*ifp->if_output)(ifp, m, sintosa(dst),
+			    ro->ro_rt);
+		else
+			m_freem(m);
 	}
+
+	if (error == 0)
+		ipstat.ips_fragmented++;
+
+done:
+	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt)
+		RTFREE(ro->ro_rt);
+	return (error);
+bad:
+#ifdef IPSEC
+	if (error == EMSGSIZE && ip_mtudisc && icmp_mtu != 0)
+		ipsec_adjust_mtu(m, icmp_mtu);
+#endif
+	m_freem(m0);
+	goto done;
+}
+
+int
+ip_fragment(struct mbuf *m, struct ifnet *ifp)
+{
+	struct ip *ip, *mhip;
+	struct mbuf *m0;
+	int len, hlen, off;
+	int mhlen, firstlen;
+	struct mbuf **mnext;
+
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+
+	len = (ifp->if_mtu - hlen) &~ 7;
+	if (len < 8)
+		return (EMSGSIZE);
 
 	/*
 	 * If we are doing fragmentation, we can't defer TCP/UDP
@@ -720,9 +761,8 @@ sendit:
 		m->m_pkthdr.csum &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
 	}
 
-    {
-	int mhlen, firstlen = len;
-	struct mbuf **mnext = &m->m_nextpkt;
+	firstlen = len;
+	mnext = &m->m_nextpkt;
 
 	/*
 	 * Loop through length of segment after first fragment,
@@ -733,9 +773,8 @@ sendit:
 	for (off = hlen + len; off < (u_int16_t)ip->ip_len; off += len) {
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
-			error = ENOBUFS;
 			ipstat.ips_odropped++;
-			goto sendorfree;
+			return (ENOBUFS);
 		}
 		*mnext = m;
 		mnext = &m->m_nextpkt;
@@ -759,9 +798,8 @@ sendit:
 		mhip->ip_len = htons((u_int16_t)(len + mhlen));
 		m->m_next = m_copy(m0, off, len);
 		if (m->m_next == 0) {
-			error = ENOBUFS;	/* ??? */
 			ipstat.ips_odropped++;
-			goto sendorfree;
+			return (ENOBUFS);	/* ??? */
 		}
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
@@ -793,31 +831,8 @@ sendit:
 		ip->ip_sum = 0;
 		ip->ip_sum = in_cksum(m, hlen);
 	}
-sendorfree:
-	for (m = m0; m; m = m0) {
-		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
-		if (error == 0)
-			error = (*ifp->if_output)(ifp, m, sintosa(dst),
-			    ro->ro_rt);
-		else
-			m_freem(m);
-	}
 
-	if (error == 0)
-		ipstat.ips_fragmented++;
-    }
-done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt)
-		RTFREE(ro->ro_rt);
-	return (error);
-bad:
-#ifdef IPSEC
-	if (error == EMSGSIZE && ip_mtudisc && icmp_mtu != 0)
-		ipsec_adjust_mtu(m, icmp_mtu);
-#endif
-	m_freem(m0);
-	goto done;
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.22 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.23 2002/05/28 15:44:28 jasoni Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ int	 ip_dooptions(struct mbuf *);
 void	 ip_drain(void);
 void	 ip_flush(void);
 void	 ip_forward(struct mbuf *, int);
+int	 ip_fragment(struct mbuf *, struct ifnet *);
 void	 ip_freef(struct ipq *);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
