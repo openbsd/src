@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.9 1999/09/17 22:14:09 kstailey Exp $
+;	$OpenBSD: syscalls.master,v 1.10 1999/09/21 22:45:07 kstailey Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -334,15 +334,15 @@
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if defined(SYSVSEM) && !defined(alpha)
-169	NOARGS		{ int sys_semsys(int which, int a2, int a3, int a4, \
-			    int a5); } osemsys
+169	NOARGS		{ int compat_10_sys_semsys(int which, int a2, int a3, \
+			    int a4, int a5); } osemsys
 #else
 169	UNIMPL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if defined(SYSVMSG) && !defined(alpha)
-170	NOARGS		{ int sys_msgsys(int which, int a2, int a3, int a4, \
-			    int a5, int a6); } omsgsys
+170	NOARGS		{ int compat_10_sys_msgsys(int which, int a2, int a3, \
+			    int a4, int a5, int a6); } omsgsys
 #else
 170	UNIMPL		1.0 msgsys
 #endif
