@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.8 1999/06/04 02:45:13 aaron Exp $
+.\"	$OpenBSD: kill.1,v 1.9 1999/08/16 18:40:02 aaron Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -46,19 +46,19 @@
 .Sh SYNOPSIS
 .Nm kill
 .Op Fl s Ar signal_name
-.Ar PID
-.Ar \&...
+.Ar pid
+.Op Ar ...
 .Nm kill
 .Fl l
 .Op Ar exit_status
 .Nm kill
 .Fl signal_name
-.Ar PID
-.Ar \&...
+.Ar pid
+.Op Ar ...
 .Nm kill
 .Fl signal_number
-.Ar PID
-.Ar \&...
+.Ar pid
+.Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm

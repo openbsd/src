@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.16 1999/06/04 02:45:13 aaron Exp $
+.\"	$OpenBSD: df.1,v 1.17 1999/08/16 18:40:02 aaron Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -44,7 +44,10 @@
 .Nm df
 .Op Fl hiklnP
 .Op Fl t Ar type
-.Op Ar file | Ar file_system ...
+.Oo
+.Op Ar file | file_system
+.Ar ...
+.Oc
 .Sh DESCRIPTION
 .Nm
 displays statistics about the amount of free disk space on the specified
