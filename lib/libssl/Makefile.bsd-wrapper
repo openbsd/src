@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.30 2001/02/05 22:03:06 todd Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.31 2001/02/09 17:27:47 brad Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -8,33 +8,25 @@ LNDIR=	/usr/bin/lndir
 # Figure out what flag we use to OpenSSL's configure. This
 # needs to be tested on all architectures.
 
-.if ${MACHINE_ARCH} == "i386"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD-x86
-.else
-.if ${MACHINE_ARCH} == "mips"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD-mips
-.else
+OPENSSLDIR=	/etc/ssl
+
 .if ${MACHINE_ARCH} == "alpha"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD-alpha
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-alpha
+.elif ${MACHINE_ARCH} == "i386"
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-x86
+.elif ${MACHINE_ARCH} == "mips"
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-mips
+.elif ${MACHINE_ARCH} == "vax"
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-vax
 .else
-.if ${MACHINE_ARCH} == "vax"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD-vax
-.else
-.if ${MACHINE_ARCH} == "sparc"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD
-.else
-.if ${MACHINE_ARCH} == "m88k"
-SSLCONF=	--openssldir=/etc/ssl OpenBSD
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || 
+${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc"
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD
 .else
 ##UNTESTED!	
-SSLCONF=	--openssldir=/etc/ssl OpenBSD
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD
 .endif
 .endif
-.endif
-.endif
-.endif
-.endif
-
 MUNGEDFILES= \
 	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h \
 	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h \
@@ -53,7 +45,6 @@ MUNGEDFILES= \
 	${.OBJDIR}/RC4.pm \
 	${.OBJDIR}/RIPEMD160.pm \
 	${.OBJDIR}/CRYPTO_set_locking_callback.pm
-
 
 .include <bsd.own.mk>		# for NOMAN
 
