@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.77 2004/06/16 02:09:55 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.78 2004/06/17 00:30:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -405,8 +405,8 @@ trap(type, frame)
 
 		/* dig probe insn */
 		if (ret && trapnum == T_DTLBMISSNA &&
-		    (frame->tf_iir & 0xfc001f80) == 0x04001180) {
-			frame_regmap(frame, frame->tf_iir & 0x1f) = 0;
+		    (opcode & 0xfc001f80) == 0x04001180) {
+			frame_regmap(frame, opcode & 0x1f) = 0;
 			frame->tf_ipsw |= PSL_N;
 			break;
 		}
@@ -446,7 +446,7 @@ trap(type, frame)
 				} else {
 					panic("trap: "
 					    "uvm_fault(%p, %lx, %d, %d): %d",
-					    map, va, 0, vftype, ret);
+					    map, va, fault, vftype, ret);
 				}
 			}
 		}
@@ -469,8 +469,8 @@ trap(type, frame)
 	case T_ILLEGAL:
 	case T_ILLEGAL | T_USER:
 		/* see if it's a SPOP1,,0 */
-		if ((frame->tf_iir & 0xfffffe00) == 0x10000200) {
-			frame_regmap(frame, frame->tf_iir & 0x1f) = 0;
+		if ((opcode & 0xfffffe00) == 0x10000200) {
+			frame_regmap(frame, opcode & 0x1f) = 0;
 			frame->tf_ipsw |= PSL_N;
 			break;
 		}
