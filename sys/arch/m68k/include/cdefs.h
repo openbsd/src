@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.6 2002/02/11 20:08:58 fgsch Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.7 2002/02/11 20:24:43 fgsch Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.2 1995/03/23 20:10:33 jtc Exp $	*/
 
 /*
@@ -10,9 +10,9 @@
 #define	_M68K_CDEFS_H_
 
 #ifdef __STDC__
-#define _C_LABEL(x)	__STRING(_ ## x)
+#define _C_LABEL(x)	_STRING(_ ## x)
 #else
-#define _C_LABEL(x)	__STRING(_/**/x)
+#define _C_LABEL(x)	_STRING(_/**/x)
 #endif
 
 #ifdef __GNUC__
