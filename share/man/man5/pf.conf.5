@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.5 2001/07/16 15:41:59 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.6 2001/07/17 22:33:02 provos Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -47,7 +47,8 @@ rule      = action ( "in" | "out" )
             [ "on" interface-name ]
             [ "proto" ( proto-name | proto-number ) ]
             hosts
-            [ flags ] [ icmp-type ] [ "keep-state" ] .
+            [ flags ] [ icmp-type ] [ "keep-state" ]
+            [ "no-df" ] [ "min-ttl" number ].
 
 action    = "pass" | "block" [ return ] | "scrub" .
 return    = "return-rst" |
@@ -281,6 +282,22 @@ see
 .Xr nat.conf 5
 .Pc
 implicitely create state for connections.
+.Sh NORMALIZATION
+Packet normalization is envoked via the
+.Pa scrub
+directive.  Normalization is used to sanitize packet content in such
+a way that there are no ambiguities in packet interpretation on
+the receiver side.
+.Pp
+The normalizer does full IP fragment reassembly to prevent attacks
+that confuse intrusion detection systems by sending overlapping
+IP fragments.
+.Ss no-df
+Clears the
+.Pa dont-fragment
+bit from a matching ip packet.
+.Ss min-ttl <number>
+Enforces a minium ttl for matching ip packets.
 .Sh EXAMPLES
 .Bd -literal
 # My external interface is kue0 (157.161.48.183, my only routable address)
