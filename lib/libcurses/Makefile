@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 1998/11/17 03:51:20 millert Exp $
+#	$OpenBSD: Makefile,v 1.32 1998/11/30 01:02:16 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -202,11 +202,12 @@ names.c codes.c: ${.CURDIR}/MKnames.awk
 unctrl.c: ${.CURDIR}/MKunctrl.awk
 	echo | ${AWK} -f ${.CURDIR}/MKunctrl.awk > ${.TARGET}
 
-# Link libtermlib to libcurses so we don't break people's Makefiles
+# Link libtermlib, libtermcap to libcurses so we don't break people's Makefiles
 afterinstall:
 	-cd ${DESTDIR}/usr/lib; \
 	for i in ${_LIBS}; do \
 	    ln -f $$i `echo $$i | sed 's/curses/termlib/'`; \
+	    ln -f $$i `echo $$i | sed 's/curses/termap/'`; \
 	done
 
 .include <bsd.lib.mk>
