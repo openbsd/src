@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.7 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.8 2005/01/31 21:25:21 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,8 +54,6 @@ struct cfattach clock_xbowmux_ca = {
         sizeof(struct clock_softc), clockmatch, clockattach
 };
 
-
-void	md_clk_attach(struct device *parent, struct device *self, void *aux);
 
 void	ds1687_get(struct clock_softc *, time_t, struct tod_time *);
 void	ds1687_set(struct clock_softc *, struct tod_time *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: clock.c,v 1.10 2005/01/31 21:25:21 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -46,7 +46,6 @@ void	clockattach(struct device *, struct device *, void *);
 intrmask_t clock_int5_dummy(intrmask_t, struct trap_frame *);
 intrmask_t clock_int5(intrmask_t, struct trap_frame *);
 void clock_int5_init(struct clock_softc *);
-void	md_clk_attach(struct device *, struct device *, void *);
 
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL, NULL, 0
