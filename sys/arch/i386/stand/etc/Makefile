@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1997/07/30 19:40:50 flipk Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/07/30 20:47:43 mickey Exp $
 
 S=	${.CURDIR}/../../../..
 I386=	${.CURDIR}/../..
@@ -10,15 +10,13 @@ machine-links:
 	@ln -fs ${.CURDIR}/../.. i386
 	@ln -fs ${.CURDIR}/../../include machine
 
-assym.h: $S/kern/genassym.sh ${I386}/i386/genassym.cf
-	@echo '#define NISA 1' > isa.h
-	@echo '#define NAPM 1' > apm.h
-	cat ${I386}/i386/genassym.cf ${.CURDIR}/genassym.cf | \
+assym.h: $S/kern/genassym.sh ${.CURDIR}/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} > assym.h.tmp && mv -f assym.h.tmp assym.h
+	    ${PARAM} < ${.CURDIR}/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
-clean cleandir:
-	rm -f isa.h apm.h assym.h
+clean:
+	@rm -f isa.h apm.h assym.h
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
