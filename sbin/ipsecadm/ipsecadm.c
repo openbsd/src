@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.45 2000/10/09 22:21:41 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.46 2000/10/16 23:00:40 niklas Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -1191,7 +1191,7 @@ main(int argc, char **argv)
 		    exit(1);
 		}
 
-		sport = htons(svp->s_port);
+		sport = svp->s_port;
 	    }
 	    else
 	      sport = htons(atoi(argv[i+1]));
@@ -1213,7 +1213,7 @@ main(int argc, char **argv)
 			    argv[0], argv[i + 1], transportproto);
 		    exit(1);
 		}
-		dport = htons(svp->s_port);
+		dport = svp->s_port;
 	    }
 	    else
 	      dport = htons(atoi(argv[i + 1]));
