@@ -1,6 +1,7 @@
-/*	$OpenBSD: opendev.c,v 1.5 1996/09/16 02:40:51 tholo Exp $ */
+/*	$OpenBSD: opendev.c,v 1.6 2000/04/30 17:37:46 millert Exp $ */
 
 /*
+ * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,11 +26,12 @@
  * SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <paths.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "util.h"
 
@@ -46,44 +48,43 @@ opendev(path, oflags, dflags, realpath)
 	char **realpath;
 {
 	int fd;
-	static char namebuf[256];
+	char *slash, *prefix;
+	static char namebuf[PATH_MAX];
 
+	/* Initial state */
 	if (realpath)
 		*realpath = path;
+	fd = -1;
+	errno = ENOENT;
 
-	fd = open(path, oflags);
-	if ((fd < 0) && (errno == ENOENT)) {
-		if (path[0] != '/') {
-			if (dflags & OPENDEV_PART) {
-				/*
-				 * First try raw partition (for removable
-				 * drives)
-				 */
-				(void)snprintf(namebuf, sizeof(namebuf),
-				    "%sr%s%c", _PATH_DEV, path,
-				    'a' + getrawpartition());
-				fd = open(namebuf, oflags);
-			}
+	if (dflags & OPENDEV_BLCK)
+		prefix = "";			/* block device */
+	else
+		prefix = "r";			/* character device */
 
-			if ((dflags & OPENDEV_DRCT) && (fd < 0) &&
-			    (errno == ENOENT)) {
-				/* ..and now no partition (for tapes) */
-				namebuf[strlen(namebuf) - 1] = '\0';
-				fd = open(namebuf, oflags);
-			}
-
+	if ((slash = strchr(path, '/')))
+		fd = open(path, oflags);
+	else if (dflags & OPENDEV_PART) {
+		/*
+		 * First try raw partition (for removable drives)
+		 */
+		if (snprintf(namebuf, sizeof(namebuf), "%s%s%s%c",
+		    _PATH_DEV, prefix, path, 'a' + getrawpartition())
+		    < sizeof(namebuf)) {
+			fd = open(namebuf, oflags);
 			if (realpath)
 				*realpath = namebuf;
-		}
+		} else
+			errno = ENAMETOOLONG;
 	}
-	if ((fd < 0) && (errno == ENOENT) && (path[0] != '/')) {
-		(void)snprintf(namebuf, sizeof(namebuf), "%sr%s",
-		    _PATH_DEV, path);
-		fd = open(namebuf, oflags);
-
-		if (realpath)
-			*realpath = namebuf;
+	if (!slash && fd == -1 && errno == ENOENT) {
+		if (snprintf(namebuf, sizeof(namebuf), "%s%s%s",
+		    _PATH_DEV, prefix, path) < sizeof(namebuf)) {
+			fd = open(namebuf, oflags);
+			if (realpath)
+				*realpath = namebuf;
+		} else
+			errno = ENAMETOOLONG;
 	}
-
 	return (fd);
 }
