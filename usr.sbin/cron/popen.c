@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.4 1999/08/28 20:13:13 millert Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.5 1999/08/30 10:45:37 millert Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 
@@ -123,7 +123,12 @@ cron_popen(program, type, e)
 		}
 		if (e) {
 			setgid(e->gid);
+#if defined(BSD)
+			initgroups(env_get("LOGNAME", e->envp), e->gid);
+#endif
+			setlogin(env_get("LOGNAME", e->envp));
 			setuid(e->uid);
+			chdir(env_get("HOME", e->envp));
 		}
 #if WANT_GLOBBING
 		execvp(gargv[0], gargv);
