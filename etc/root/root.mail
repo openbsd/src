@@ -795,17 +795,19 @@ mode; the second is run afterwards (if in doubt, add your tools to rc.local).
 
 Please refer to our web pages for any other questions you might have.
 	http://www.OpenBSD.org
+Please pay special attention to the Frequently Asked Questions section at
+	http://www.OpenBSD.org/faq/
 
 OpenBSD is free software.  You can do with it as you like, subject to very few
 conditions (described at www.OpenBSD.org/policy.html).  But free software isn't
-written without money.  Network links, hardware costs, release engineering
-and testing work; all these things take money and significant effort on the
-part of those who have made this OpenBSD release what it is.  Please reward the
-developers who have made OpenBSD what it is, and thus make it possible for this
-wonderful process to continue.  For more information on how you can help,
-please see www.OpenBSD.org/goals.html and visit www.OpenBSD.org/donations.html
-to see a list of those who have donated money, equipment, or other resources
-to ensure OpenBSD continues.
+written without money.  Network links, hardware costs, release engineering and
+testing work all take money and significant effort on the part of those who
+have made this OpenBSD release what it is.  Please reward the developers who
+have made OpenBSD what it is, and thus make it possible for this wonderful
+process to continue.  For more information on how you can help, please see
+www.OpenBSD.org/goals.html and visit www.OpenBSD.org/donations.html to see a
+list of those who have donated money, equipment, or other resources to ensure
+OpenBSD continues.
 
 If you wish to ensure that OpenBSD runs better on your machines, please do us
 a favor (after you have your mail system setup!) and type something like:
