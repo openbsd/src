@@ -65,7 +65,7 @@
 /*
  * I/O data buffers defines
  */
-#define	NETSLOP	64
+#define	NETSLOP	4096
 #ifdef _CRAY
 #undef BUFSIZ
 #define BUFSIZ  2048
