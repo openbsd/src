@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pageout.c,v 1.3 1996/08/02 00:06:04 niklas Exp $	*/
+/*	$OpenBSD: vm_pageout.c,v 1.4 1996/09/18 11:57:38 deraadt Exp $	*/
 /*	$NetBSD: vm_pageout.c,v 1.23 1996/02/05 01:54:07 christos Exp $	*/
 
 /* 
@@ -325,14 +325,13 @@ vm_pageout_page(m, object)
 		break;
 	case VM_PAGER_AGAIN:
 	{
-		extern int lbolt;
-
 		/*
 		 * FAIL on a write is interpreted to mean a resource
 		 * shortage, so we put pause for awhile and try again.
 		 * XXX could get stuck here.
 		 */
-		(void) tsleep((caddr_t)&lbolt, PZERO|PCATCH, "pageout", 0);
+		(void) tsleep((caddr_t)&vm_pages_needed, PZERO|PCATCH,
+		    "pageout", 100);
 		break;
 	}
 	case VM_PAGER_FAIL:
@@ -382,6 +381,7 @@ vm_pageout_cluster(m, object)
 	vm_offset_t offset, loff, hoff;
 	vm_page_t plist[MAXPOCLUSTER], *plistp, p;
 	int postatus, ix, count;
+	extern int lbolt;
 
 	/*
 	 * Determine the range of pages that can be part of a cluster
@@ -461,8 +461,6 @@ again:
 	 * XXX rethink this
 	 */
 	if (postatus == VM_PAGER_AGAIN) {
-		extern int lbolt;
-
 		(void) tsleep((caddr_t)&lbolt, PZERO|PCATCH, "pageout", 0);
 		goto again;
 	} else if (postatus == VM_PAGER_BAD)
