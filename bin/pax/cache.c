@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.3 1996/06/23 14:20:30 deraadt Exp $	*/
+/*	$OpenBSD: cache.c,v 1.4 1996/09/15 22:34:06 millert Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.3 1996/06/23 14:20:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cache.c,v 1.4 1996/09/15 22:34:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -247,9 +247,10 @@ name_uid(uid, frc)
 		ptr->uid = uid;
 		ptr->valid = INVALID;
 #		ifdef NET2_STAT
-		(void)sprintf(ptr->name, "%u", uid);
+		(void)snprintf(ptr->name, sizeof(ptr->name), "%u", uid);
 #		else
-		(void)sprintf(ptr->name, "%lu", (unsigned long)uid);
+		(void)snprintf(ptr->name, sizeof(ptr->name), "%lu",
+			       (unsigned long)uid);
 #		endif
 		if (frc == 0)
 			return("");
@@ -324,9 +325,10 @@ name_gid(gid, frc)
 		ptr->gid = gid;
 		ptr->valid = INVALID;
 #		ifdef NET2_STAT
-		(void)sprintf(ptr->name, "%u", gid);
+		(void)snprintf(ptr->name, sizeof(ptr->name), "%u", gid);
 #		else
-		(void)sprintf(ptr->name, "%lu", (unsigned long)gid);
+		(void)snprintf(ptr->name, sizeof(ptr->name), "%lu",
+			       (unsigned long)gid);
 #		endif
 		if (frc == 0)
 			return("");
