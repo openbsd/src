@@ -14,10 +14,10 @@ out as follows:
 
 		bsd		A stock GENERIC kernel.
 
-		bsd-dl		A GENERIC kernel without any support for
+		bsd.dl		A GENERIC kernel without any support for
 				disk devices.
 
-		bsd-rd		A compressed RAMDISK kernel; the embedded
+		bsd.rd		A compressed RAMDISK kernel; the embedded
 				filesystem contains the installation tools.
 
 		SYS_UBOOT	Unified boot file, used for booting from
