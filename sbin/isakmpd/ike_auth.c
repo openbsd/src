@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.96 2004/12/22 12:25:27 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.97 2005/02/22 16:57:48 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -167,7 +167,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 		if (!key) {
 			log_print("ike_auth_get_key: "
 			    "no key found for peer \"%s\" or local ID \"%s\"",
-			    id, local_id);
+			    id, local_id ? local_id : "<none>");
 			return 0;
 		}
 		/* If the key starts with 0x it is in hex format.  */
@@ -1153,6 +1153,9 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	keyfp = monitor_fopen(filename, "r");
 	if (keyfp) {
 		*rsa = PEM_read_RSA_PUBKEY(keyfp, NULL, NULL, NULL);
+		if (!*rsa)
+			log_print("get_raw_key_from_file: failed to get "
+			    "public key %s", filename);
 		fclose(keyfp);
 	} else if (errno != ENOENT) {
 		log_error("get_raw_key_from_file: monitor_fopen "
