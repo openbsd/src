@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.52 2003/05/17 23:35:42 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.53 2003/05/18 02:29:54 todd Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -137,7 +137,9 @@ static const char *talk[] = {
 	"Take a picture of my butt, it's what everyone wants.",
 	"You guys are about four days behind on theo.c",
 	"I'm just talking.",
-	"Vegetarian my ass"
+	"Vegetarian my ass",
+	"Hey, that's a McNallys!",
+	"Your connection is breaking up."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
