@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: modem.c,v 1.10 1999/04/19 16:59:40 brian Exp $
+ * $Id: modem.c,v 1.11 1999/04/21 08:06:46 brian Exp $
  *
  *  TODO:
  */
@@ -287,9 +287,10 @@ modem_Timeout(void *data)
 
     if (modem->fd >= 0) {
       if (ioctl(modem->fd, TIOCMGET, &modem->mbits) < 0) {
-	log_Printf(LogPHASE, "%s: ioctl error (%s)!\n", modem->link.name,
-                  strerror(errno));
-        datalink_Down(modem->dl, CLOSE_NORMAL);
+	log_Printf(LogPHASE, "%s: Carrier not required (pseudo tty ?)\n",
+                   modem->link.name);
+        timer_Stop(&modem->Timer);
+        modem->mbits = TIOCM_CD;
 	return;
       }
     } else
