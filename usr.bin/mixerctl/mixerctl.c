@@ -1,5 +1,5 @@
-/*	$OpenBSD: mixerctl.c,v 1.2 1998/04/26 22:27:30 provos Exp $	*/
-/*	$NetBSD: mixerctl.c,v 1.9 1997/10/19 07:46:04 augustss Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.3 1998/04/30 13:40:01 provos Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -215,11 +215,15 @@ main(argc, argv)
 {
 	int fd, i, j, ch, pos;
 	int aflag = 0, wflag = 0, vflag = 0;
-	char *file = "/dev/mixer";
+	char *file;
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
 	mixer_ctrl_t val;
 	int ndev;
+
+	file = getenv("MIXERDEVICE");
+	if (file == 0)
+		file = "/dev/mixer";
 
 	prog = *argv;
 
