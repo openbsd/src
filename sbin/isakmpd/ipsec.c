@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.19 1999/05/06 22:44:16 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.111 1999/05/06 21:23:06 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.20 1999/06/02 06:33:36 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.112 1999/05/25 07:57:18 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -254,8 +254,6 @@ ipsec_finalize_exchange (struct message *msg)
   struct ipsec_exch *ie = exchange->data;
   struct sa *sa = 0, *old_sa;
   struct proto *proto, *last_proto = 0;
-  struct sockaddr *addr;
-  int len;
 
   switch (exchange->phase)
     {
@@ -309,30 +307,7 @@ ipsec_finalize_exchange (struct message *msg)
 
 	      isa = sa->data;
 
-	      /*
-	       * If client identifiers are not present in the exchange,
-	       * we fake them. RFC 2409 states:
-	       *    The identities of the SAs negotiated in Quick Mode are
-	       *    implicitly assumed to be the IP addresses of the ISAKMP
-	       *    peers, without any constraints on the protocol or port
-	       *    numbers allowed, unless client identifiers are specified
-	       *    in Quick Mode.
-	       *
-	       * -- Michael Paddon (mwp@aba.net.au)
-	       */
-	      if (!ie->id_ci || !ie->id_cr)
-		{
-		  /* Get source address.  */
-		  msg->transport->vtbl->get_src (msg->transport, &addr, &len);
-		  isa->src_net = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
-		  isa->src_mask = htonl (0xffffffff);
-
-		  /* Get destination address.  */
-		  msg->transport->vtbl->get_dst (msg->transport, &addr, &len);
-		  isa->dst_net = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
-		  isa->dst_mask = htonl (0xffffffff);
-		}
-	      else if (exchange->initiator)
+	      if (exchange->initiator)
 		/* Initiator is source, responder is destination.  */
 		ipsec_set_network (ie->id_ci, ie->id_cr, isa);
 	      else
