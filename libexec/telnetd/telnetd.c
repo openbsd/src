@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.4 1996/08/27 10:25:28 deraadt Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.5 1996/12/23 13:31:40 robin Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.4 1996/08/27 10:25:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.5 1996/12/23 13:31:40 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ main(argc, argv)
 		usage();
 		/* NOT REACHED */
 	    } else if (argc == 1) {
-		    if (sp = getservbyname(*argv, "tcp")) {
+		    if ((sp = getservbyname(*argv, "tcp"))) {
 			sin.sin_port = sp->s_port;
 		    } else {
 			sin.sin_port = atoi(*argv);
