@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.24 2000/06/30 16:00:24 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.25 2000/12/21 09:48:05 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -80,17 +80,21 @@ struct quotause {
 } *getprivs __P((u_int, int));
 #define	FOUND	0x01
 
-void	putprivs __P((long, int, struct quotause *));
-void	freeprivs __P((struct quotause *));
-int	writetimes __P((struct quotause *, int, int));
-int	editit __P((char *));
-int	readtimes __P((struct quotause *, int));
-int	writeprivs __P((struct quotause *, int, char *, int));
-int	alldigits __P((char *s));
-int	readprivs __P((struct quotause *, int));
-int	hasquota __P((struct fstab *, int, char **));
-int	cvtatos __P((time_t, char *, time_t *));
+void	usage __P((void));
 int	getentry __P((char *, int, u_int *));
+struct quotause *
+	getprivs __P((u_int, int));
+void	putprivs __P((long, int, struct quotause *));
+int	editit __P((char *));
+int	writeprivs __P((struct quotause *, int, char *, int));
+int	readprivs __P((struct quotause *, int));
+int	writetimes __P((struct quotause *, int, int));
+int	readtimes __P((struct quotause *, int));
+char *	cvtstoa __P((time_t));
+int	cvtatos __P((time_t, char *, time_t *));
+void	freeprivs __P((struct quotause *));
+int	alldigits __P((char *s));
+int	hasquota __P((struct fstab *, int, char **));
 
 void
 usage()
@@ -104,12 +108,12 @@ usage()
 
 int
 main(argc, argv)
-	register char **argv;
 	int argc;
+	char **argv;
 {
-	register struct quotause *qup, *protoprivs, *curprivs;
+	struct quotause *qup, *protoprivs, *curprivs;
 	u_int id, protoid;
-	register int quotatype, tmpfd;
+	int quotatype, tmpfd;
 	char *protoname = NULL;
 	int ch;
 	int tflag = 0, pflag = 0;
@@ -237,7 +241,7 @@ getentry(name, quotatype, idp)
  */
 struct quotause *
 getprivs(id, quotatype)
-	register u_int id;
+	u_int id;
 	int quotatype;
 {
 	register struct fstab *fs;
@@ -429,9 +433,9 @@ writeprivs(quplist, outfd, name, quotatype)
 	for (qup = quplist; qup; qup = qup->next) {
 		(void)fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
 		    qup->fsname, "blocks in use:",
-		    dbtob(qup->dqblk.dqb_curblocks) / 1024,
-		    dbtob(qup->dqblk.dqb_bsoftlimit) / 1024,
-		    dbtob(qup->dqblk.dqb_bhardlimit) / 1024);
+		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks) / 1024),
+		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit) / 1024),
+		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit) / 1024));
 		(void)fprintf(fd, "%s %d, limits (soft = %d, hard = %d)\n",
 		    "\tinodes in use:", qup->dqblk.dqb_curinodes,
 		    qup->dqblk.dqb_isoftlimit, qup->dqblk.dqb_ihardlimit);
@@ -483,9 +487,12 @@ readprivs(quplist, infd)
 			warnx("%s:%s: bad format", fsp, cp);
 			return(0);
 		}
-		dqblk.dqb_curblocks = btodb(dqblk.dqb_curblocks * 1024);
-		dqblk.dqb_bsoftlimit = btodb((off_t)dqblk.dqb_bsoftlimit * 1024);
-		dqblk.dqb_bhardlimit = btodb((off_t)dqblk.dqb_bhardlimit * 1024);
+		dqblk.dqb_curblocks = btodb((u_quad_t)
+		    dqblk.dqb_curblocks * 1024);
+		dqblk.dqb_bsoftlimit = btodb((u_quad_t)
+		    dqblk.dqb_bsoftlimit * 1024);
+		dqblk.dqb_bhardlimit = btodb((u_quad_t)
+		    dqblk.dqb_bhardlimit * 1024);
 		if ((cp = strtok(line2, "\n")) == NULL) {
 			warnx("%s: %s: bad format", fsp, line2);
 			return(0);
@@ -725,9 +732,9 @@ freeprivs(quplist)
  */
 int
 alldigits(s)
-	register char *s;
+	char *s;
 {
-	register int c;
+	int c;
 
 	c = *s++;
 	do {
@@ -742,7 +749,7 @@ alldigits(s)
  */
 int
 hasquota(fs, type, qfnamep)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char **qfnamep;
 {
@@ -752,11 +759,13 @@ hasquota(fs, type, qfnamep)
 	static char buf[BUFSIZ];
 
 	if (!initname) {
-		(void)sprintf(usrname, "%s%s", qfextension[USRQUOTA], qfname);
-		(void)sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
+		(void)snprintf(usrname, sizeof usrname, "%s%s",
+		    qfextension[USRQUOTA], qfname);
+		(void)snprintf(grpname, sizeof grpname, "%s%s",
+		    qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	strlcpy(buf, fs->fs_mntops, sizeof buf);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';
@@ -771,7 +780,8 @@ hasquota(fs, type, qfnamep)
 		*qfnamep = cp;
 		return(1);
 	}
-	(void)sprintf(buf, "%s/%s.%s", fs->fs_file, qfname, qfextension[type]);
+	(void)snprintf(buf, sizeof buf, "%s/%s.%s",
+	    fs->fs_file, qfname, qfextension[type]);
 	*qfnamep = buf;
 	return(1);
 }
