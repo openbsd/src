@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.18 1997/06/03 20:41:19 deraadt Exp $
+#	$OpenBSD: BABY,v 1.19 1997/06/09 21:50:57 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -26,7 +26,7 @@ option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
-#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 
@@ -68,7 +68,8 @@ option		PROCFS		# /proc
 #option		UMAPFS		# NULLFS + uid and gid remapping
 #option		UNION		# union file system
 
-#option		GATEWAY		# packet forwarding
+option		"NMBCLUSTERS=1024"
+option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
 option		NS		# XNS
 #option		ISO,TPIP	# OSI
@@ -76,7 +77,7 @@ option		NS		# XNS
 #option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
 
-config		bsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and sd4
+config		bsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and sd4 dumps on sd2
 
 mainbus0 at root
 
