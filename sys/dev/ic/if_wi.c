@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.9 2001/06/11 00:50:38 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.10 2001/06/11 01:10:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.9 2001/06/11 00:50:38 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.10 2001/06/11 01:10:20 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -169,6 +169,7 @@ wi_attach(sc, print_cis)
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	struct ifnet		*ifp;
+	int			error;
 
 	sc->wi_gone = 0;
 
@@ -177,7 +178,11 @@ wi_attach(sc, print_cis)
 	/* Read the station address. */
 	mac.wi_type = WI_RID_MAC_NODE;
 	mac.wi_len = 4;
-	wi_read_record(sc, (struct wi_ltv_gen *)&mac);
+	error = wi_read_record(sc, (struct wi_ltv_gen *)&mac);
+	if (error) {
+		printf(": unable to read station address\n");
+		return (error);
+	}
 	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
@@ -226,16 +231,18 @@ wi_attach(sc, print_cis)
 	 */
 	gen.wi_type = WI_RID_OWN_CHNL;
 	gen.wi_len = 2;
-	wi_read_record(sc, &gen);
-	sc->wi_channel = letoh16(gen.wi_val);
+	if (wi_read_record(sc, &gen) == 0)
+		sc->wi_channel = letoh16(gen.wi_val);
+	else
+		sc->wi_channel = 3;
 
 	/*
 	 * Find out if we support WEP on this card.
 	 */
 	gen.wi_type = WI_RID_WEP_AVAIL;
 	gen.wi_len = 2;
-	wi_read_record(sc, &gen);
-	sc->wi_has_wep = letoh16(gen.wi_val);
+	if (wi_read_record(sc, &gen) == 0)
+		sc->wi_has_wep = letoh16(gen.wi_val);
 	timeout_set(&sc->sc_timo, wi_inquire, sc);
 
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
