@@ -74,11 +74,12 @@ macobio_match(parent, cf, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 
-		case 0x02:	/* gc */
-		case 0x07:	/* ohare */
-		case 0x10:	/* mac-io "Heathrow" */
-		case 0x17:	/* mac-io "Paddington" */
-		case 0x22:	/* mac-io "Keylargo" */
+		case PCI_PRODUCT_APPLE_GC:
+		case PCI_PRODUCT_APPLE_OHARE:
+		case PCI_PRODUCT_APPLE_HEATHROW:
+		case PCI_PRODUCT_APPLE_PADDINGTON:
+		case PCI_PRODUCT_APPLE_KEYLARGO:
+		case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 			return 1;
 		}
 
@@ -108,18 +109,18 @@ macobio_attach(parent, self, aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
 	/* XXX should not use name */
-	case 0x02:
+	case PCI_PRODUCT_APPLE_GC:
 		node = OF_finddevice("/bandit/gc");
 		need_interrupt_controller = 1;
 		break;
 
-	case 0x07:
+	case PCI_PRODUCT_APPLE_OHARE:
 		node = OF_finddevice("/bandit/ohare");
 		need_interrupt_controller = 1;
 		break;
 
-	case 0x10:	/* heathrow */
-	case 0x17:	/* paddington */
+	case PCI_PRODUCT_APPLE_HEATHROW:
+	case PCI_PRODUCT_APPLE_PADDINGTON:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
@@ -131,7 +132,8 @@ macobio_attach(parent, self, aux)
 				4);
 		}
 		break;
-	case 0x22:	/* keylargo */
+	case PCI_PRODUCT_APPLE_KEYLARGO:
+	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");

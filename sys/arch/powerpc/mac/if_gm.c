@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.14 2001/06/25 23:29:55 drahn Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.15 2001/06/26 19:06:17 maja Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -148,11 +148,12 @@ gmac_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC))
-	{
-		return 1;
-	}
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_APPLE_GMAC:
+		case PCI_PRODUCT_APPLE_GMAC2:
+			return 1;
+		}
 
 	return 0;
 }
