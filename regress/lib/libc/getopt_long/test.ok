@@ -4,13 +4,13 @@ option f, arg infile
 option 9
 remaining ARGV: myfile 
 
-getopt_long: onefile twofile --best --illiterate -i foo.in threefile 
+getopt_long: onefile twofile --best -Williterate -i foo.in threefile 
 option best
 option illiterate
 option i, arg foo.in
 remaining ARGV: onefile twofile threefile 
 
-getopt_long: --fast --drinking guiness -i foo.in somefile 
+getopt_long: --fast --drinking=guiness -i foo.in somefile 
 option fast
 option drinking, arg guiness
 option i, arg foo.in
@@ -19,10 +19,10 @@ remaining ARGV: somefile
 getopt_long (POSIXLY_CORRECT): myfile --force -f infile -9 
 remaining ARGV: myfile --force -f infile -9 
 
-getopt_long (POSIXLY_CORRECT): onefile twofile --best --illiterate -i foo.in threefile 
-remaining ARGV: onefile twofile --best --illiterate -i foo.in threefile 
+getopt_long (POSIXLY_CORRECT): onefile twofile --best -Williterate -i foo.in threefile 
+remaining ARGV: onefile twofile --best -Williterate -i foo.in threefile 
 
-getopt_long (POSIXLY_CORRECT): --fast --drinking guiness -i foo.in somefile 
+getopt_long (POSIXLY_CORRECT): --fast --drinking=guiness -i foo.in somefile 
 option fast
 option drinking, arg guiness
 option i, arg foo.in
@@ -34,13 +34,13 @@ option f, arg infile
 option 9
 remaining ARGV: myfile 
 
-getopt_long_only: onefile twofile --best -illiterate -i foo.in threefile 
+getopt_long_only: onefile twofile -best -Williterate -i foo.in threefile 
 option best
 option illiterate
 option i, arg foo.in
 remaining ARGV: onefile twofile threefile 
 
-getopt_long_only: --fast -drinking guiness -i foo.in somefile 
+getopt_long_only: --fast -drinking=guiness -i foo.in somefile 
 option fast
 option drinking, arg guiness
 option i, arg foo.in
@@ -49,10 +49,10 @@ remaining ARGV: somefile
 getopt_long_only (POSIXLY_CORRECT): myfile -force -f infile -9 
 remaining ARGV: myfile -force -f infile -9 
 
-getopt_long_only (POSIXLY_CORRECT): onefile twofile --best -illiterate -i foo.in threefile 
-remaining ARGV: onefile twofile --best -illiterate -i foo.in threefile 
+getopt_long_only (POSIXLY_CORRECT): onefile twofile -best -Williterate -i foo.in threefile 
+remaining ARGV: onefile twofile -best -Williterate -i foo.in threefile 
 
-getopt_long_only (POSIXLY_CORRECT): --fast -drinking guiness -i foo.in somefile 
+getopt_long_only (POSIXLY_CORRECT): --fast -drinking=guiness -i foo.in somefile 
 option fast
 option drinking, arg guiness
 option i, arg foo.in
