@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.13 2004/03/07 19:29:08 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.14 2004/08/25 22:34:27 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -145,7 +145,7 @@ package may conflict with other packages.
 .It Ar installed
 reinstall an existing package.
 .It Ar libdepends
-library specifications may not be fullfilled.
+library specifications may not be fulfilled.
 .It Ar nonroot
 install even if not running as root.
 .It Ar scripts
@@ -235,7 +235,7 @@ and
 directives, see
 .Xr pkg_create 1 )
 are read from the packing list.
-If any of these dependencies are not currently fullfilled,
+If any of these dependencies are not currently fulfilled,
 an attempt is made to find a package that meets them and install it,
 looking first in the list of packages to install passed to
 .Nm ;
