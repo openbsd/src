@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.7 2004/07/08 01:22:57 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.8 2004/07/25 18:27:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,29 +30,6 @@
 struct ntp_addr	*host_v4(const char *);
 struct ntp_addr	*host_v6(const char *);
 struct ntp_addr	*host_dns(const char *);
-
-int
-check_file_secrecy(int fd, const char *fname)
-{
-	struct stat	st;
-
-	if (fstat(fd, &st)) {
-		log_warn("cannot stat %s", fname);
-		return (-1);
-	}
-
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_warnx("%s: owner not root or current user", fname);
-		return (-1);
-	}
-
-	if (st.st_mode & (S_IRWXG | S_IRWXO)) {
-		log_warnx("%s: group/world readable/writeable", fname);
-		return (-1);
-	}
-
-	return (0);
-}
 
 struct ntp_addr	*
 host(const char *s)
