@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.12 2002/08/21 20:27:35 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.13 2002/09/02 08:00:24 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -89,9 +89,11 @@
  */
 
 /*
- * XXX define this to allow 24-bit operation. Rumored not to work.
+ * Define CG14_LOWCOLOR to stick to 8 bit mode, thus having a faster console.
  */
-#undef CG14_FULLCOLOR
+#ifdef	SMALL_KERNEL
+#define	CG14_LOWCOLOR
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +240,7 @@ cgfourteenattach(parent, self, args)
 	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int node = 0, depth, i;
+	int node, i;
 	u_int32_t *lut;
 	int isconsole = 0;
 	char *nam;
@@ -254,12 +256,20 @@ cgfourteenattach(parent, self, args)
 	isconsole = node == fbnode;
 
 	/*
+	 * Sanity checks
+	 */
+	if (ca->ca_ra.ra_len < 0x10000)
+		panic("\ncgfourteen: expected %x bytes of control registers, got %x",
+		    0x10000, ca->ca_ra.ra_len);
+	if (ca->ca_ra.ra_nreg < CG14_NREG)
+		panic("\ncgfourteen: expected %d registers, got %d",
+		    CG14_NREG, ca->ca_ra.ra_nreg);
+
+	printf(", %dMB", ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len >> 20);
+
+	/*
 	 * Map in the 8 useful pages of registers
 	 */
-	if (ca->ca_ra.ra_len < 0x10000) {
-		panic("\ncgfourteen: expected %x bytes of registers, got %x",
-		    0x10000, ca->ca_ra.ra_len);
-	}
 	sc->sc_ctl = (struct cg14ctl *) mapiodev(
 	    &ca->ca_ra.ra_reg[CG14_REG_CONTROL], 0, ca->ca_ra.ra_len);
 
@@ -281,10 +291,34 @@ cgfourteenattach(parent, self, args)
 	/*
 	 * Stash the physical address of the framebuffer for use by mmap
 	 */
-	if (ca->ca_ra.ra_nreg < CG14_NREG)
-		panic("\ncgfourteen: expected %d registers, got %d",
-		    CG14_NREG, ca->ca_ra.ra_nreg);
 	sc->sc_phys = ca->ca_ra.ra_reg[CG14_REG_VRAM];
+
+#ifdef CG14_LOWCOLOR
+	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
+#else
+	fb_setsize(&sc->sc_sunfb, 32, 1152, 900, node, ca->ca_bustype);
+
+	/*
+	 * The prom will report depth == 8, since this is the mode it will get
+	 * initialized in.
+	 * Try to compensate and enable 32 bit mode, unless it would not fit in
+	 * the video memory. Note that, in this case, the VSIMM will usually
+	 * not appear in the OBP device tree!
+	 */
+	if (sc->sc_sunfb.sf_depth == 8 && sc->sc_sunfb.sf_fbsize * 4 <=
+	    ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len) {
+		sc->sc_sunfb.sf_depth = 32;
+		sc->sc_sunfb.sf_linebytes *= 4;
+		sc->sc_sunfb.sf_fbsize *= 4;
+	}
+#endif
+
+	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[CG14_REG_VRAM],
+	    0,	/* CHUNKY_XBGR */
+	    round_page(sc->sc_sunfb.sf_fbsize));
+
+	printf(", %dx%d, depth %d\n", sc->sc_sunfb.sf_width,
+	    sc->sc_sunfb.sf_height, sc->sc_sunfb.sf_depth);
 
 	/*
 	 * Reset frame buffer controls
@@ -303,14 +337,6 @@ cgfourteenattach(parent, self, args)
 	 */
 	cgfourteen_burner(sc, 1, 0);
 
-#ifdef CG14_FULLCOLOR
-	depth = 32;
-#else
-	depth = 8;
-#endif
-	fb_setsize(&sc->sc_sunfb, depth, 1152, 900, node, ca->ca_bustype);
-	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[CG14_REG_VRAM],
-	    0, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
@@ -318,11 +344,9 @@ cgfourteenattach(parent, self, args)
 	cgfourteen_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgfourteen_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-	printf(", %dx%d, depth %d\n", sc->sc_sunfb.sf_width,
-	    sc->sc_sunfb.sf_height, sc->sc_sunfb.sf_depth);
-
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &cgfourteen_stdscreen, -1,
+		fbwscons_console_init(&sc->sc_sunfb, &cgfourteen_stdscreen,
+		    sc->sc_sunfb.sf_depth == 8 ? -1 : 0,
 		    cgfourteen_setcolor, cgfourteen_burner);
 	}
 
@@ -348,33 +372,37 @@ cgfourteen_ioctl(dev, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = 256;
+		wdf->cmsize = (sc->sc_sunfb.sf_depth == 8) ? 256 : 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		cm = (struct wsdisplay_cmap *)data;
-		error = cgfourteen_getcmap(&sc->sc_cmap, cm);
-		if (error)
-			return (error);
+		if (sc->sc_sunfb.sf_depth == 8) {
+			cm = (struct wsdisplay_cmap *)data;
+			error = cgfourteen_getcmap(&sc->sc_cmap, cm);
+			if (error)
+				return (error);
+		}
 		break;
 
 	case WSDISPLAYIO_PUTCMAP:
-		cm = (struct wsdisplay_cmap *)data;
-		error = cgfourteen_putcmap(&sc->sc_cmap, cm);
-		if (error)
-			return (error);
-		/* XXX should use retrace interrupt */
-		cgfourteen_loadcmap(sc, cm->index, cm->count);
+		if (sc->sc_sunfb.sf_depth == 8) {
+			cm = (struct wsdisplay_cmap *)data;
+			error = cgfourteen_putcmap(&sc->sc_cmap, cm);
+			if (error)
+				return (error);
+			/* XXX should use retrace interrupt */
+			cgfourteen_loadcmap(sc, cm->index, cm->count);
+		}
 		break;
 
 	case WSDISPLAYIO_SVIDEO:
@@ -406,13 +434,12 @@ cgfourteen_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_sunfb.sf_ro;
 	*curyp = 0;
 	*curxp = 0;
-#ifdef CG14_FULLCOLOR
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    0, 0, 0, attrp);
-#else
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-#endif
+	if (sc->sc_sunfb.sf_depth == 8)
+		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
+		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
+	else
+		sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
+		    0, 0, 0, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
@@ -441,18 +468,6 @@ cgfourteen_show_screen(v, cookie, waitok, cb, cbarg)
 /*
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
- *
- * The cg14 frame buffer can be mapped in either 8-bit or 32-bit mode
- * starting at the address stored in the PROM. In 8-bit mode, the X
- * channel is not present, and can be ignored. In 32-bit mode, mapping
- * at 0K delivers a 32-bpp buffer where the upper 8 bits select the X
- * channel information. We hardwire the Xlut to all zeroes to insure
- * that, regardless of this value, direct 24-bit color access will be
- * used.
- *
- * Alternatively, mapping the frame buffer at an offset of 16M seems to
- * tell the chip to ignore the X channel. XXX where does it get the X value
- * to use?
  */
 paddr_t
 cgfourteen_mmap(v, offset, prot)
@@ -479,24 +494,30 @@ cgfourteen_reset(sc)
 	struct cgfourteen_softc *sc;
 {
 
-#ifdef CG14_FULLCOLOR
-	/*
-	 * Enable the video, and put in 24 bit mode.
-	 */
-	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_32 |
-	    CG14_MCTL_POWERCTL;
+	if (sc->sc_sunfb.sf_depth == 8) {
+		/*
+		 * Enable the video and put it in 8 bit mode
+		 */
+		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
+		    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL;
+	} else {
+		/*
+		 * Enable the video, and put in 32 bit mode.
+		 */
+		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID |
+		    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL;
 
-	/*
-	 * Zero the xlut to enable direct-color mode
-	 */
-	bzero(sc->sc_xlut, CG14_CLUT_SIZE);
-#else
-	/*
-	 * Enable the video and put it in 8 bit mode
-	 */
-	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_8 |
-	    CG14_MCTL_POWERCTL;
-#endif
+		/*
+		 * Clear the screen to white
+		 */
+		memset(sc->sc_sunfb.sf_ro.ri_bits, 0xff,
+		    round_page(sc->sc_sunfb.sf_fbsize));
+
+		/*
+		 * Zero the xlut to enable direct-color mode
+		 */
+		bzero(sc->sc_xlut, CG14_CLUT_SIZE);
+	}
 }
 
 void
@@ -584,7 +605,7 @@ cgfourteen_loadcmap(sc, start, ncolors)
 	int start, ncolors;
 {
 	/* XXX switch to auto-increment, and on retrace intr */
-	
+
 	/* Setup pointers to source and dest */
 	u_int32_t *colp = &sc->sc_cmap.cm_chip[start];
 	volatile u_int32_t *lutp = &sc->sc_clut1->clut_lut[start];
