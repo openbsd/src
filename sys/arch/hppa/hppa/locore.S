@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.32 2000/04/27 18:00:11 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.33 2000/05/15 17:22:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1758,7 +1758,141 @@ $trap_copy_loop
 	.export	$trap$all$end, entry
 $trap$all$end
 
-	.align 32
+	.import	dcache_stride, data
+ENTRY(fdcache)
+	ldil	L%dcache_stride,t1
+	ldw	R%dcache_stride(t1), arg3
+
+	mtsp	arg0, sr1		/* move the space register to sr1 */
+	add	arg1, arg2, arg0	/* get the last byte to flush in arg0 */
+
+	zdep	arg3, 27, 28, t1	/* get size of a 16X loop in t1 */
+	comb,<	arg2, t1, fdc_short	/* check for count < 16 * stride */
+	addi	-1, t1, t1		/* compute size of large loop - 1 */
+
+	andcm	arg2, t1, t1		/* L = count - (count mod lenbigloop) */
+	add	arg1, t1, t1		/* ub for big loop is lb + L */
+
+	fdc,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
+fdc_long
+        fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	fdc,m	arg3(sr1, arg1)
+	comb,<<,n arg1, t1, fdc_long
+	fdc,m	arg3(sr1, arg1)
+fdc_short                               /* flush one line at a time */
+	comb,<<,n arg1, arg0, fdc_short
+	fdc,m	arg3(sr1, arg1)
+
+	addi	-1, arg0, arg1
+	fdc	(sr1, arg1)
+
+	bv	r0(r2)
+	sync
+EXIT(fdcache)
+
+	.import	dcache_stride, data
+ENTRY(pdcache)
+	ldil	L%dcache_stride,t1
+	ldw	R%dcache_stride(t1), arg3
+
+	mtsp	arg0, sr1		/* move the space register to sr1 */
+	add	arg1, arg2, arg0	/* get the last byte to flush in arg0 */
+
+	zdep	arg3, 27, 28, t1	/* get size of a 16X loop in t1 */
+	comb,<	arg2, t1, pdc_short	/* check for count < 16 * stride */
+	addi	-1, t1, t1		/* compute size of large loop - 1 */
+
+	andcm	arg2, t1, t1		/* L = count - (count mod lenbigloop) */
+	add	arg1, t1, t1		/* ub for big loop is lb + L */
+
+	pdc,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
+pdc_long
+        pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	pdc,m	arg3(sr1, arg1)
+	comb,<<,n arg1, t1, pdc_long
+	pdc,m	arg3(sr1, arg1)
+pdc_short                               /* flush one line at a time */
+	comb,<<,n arg1, arg0, pdc_short
+	pdc,m	arg3(sr1, arg1)
+
+	addi	-1, arg0, arg1
+	pdc	(sr1, arg1)
+
+	bv	r0(r2)
+	sync
+EXIT(pdcache)
+
+	.import	icache_stride, data
+ENTRY(ficache)
+	ldil	L%icache_stride,t1
+	ldw	R%icache_stride(t1), arg3
+
+	mtsp	arg0, sr1		/* move the space register to sr1 */
+	add	arg1, arg2, arg0	/* get the last byte to flush in arg0 */
+
+	zdep	arg3, 27, 28, t1	/* get size of a 16X loop in t1 */
+	comb,<	arg2, t1, fic_short	/* check for count < 16 * stride */
+	addi	-1, t1, t1		/* compute size of large loop - 1 */
+
+	andcm	arg2, t1, t1		/* L = count - (count mod lenbigloop) */
+	add	arg1, t1, t1		/* ub for big loop is lb + L */
+
+	fic,m	arg3(sr1, arg1)		/* Start flushing first cache line. */
+fic_long
+        fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	fic,m	arg3(sr1, arg1)
+	comb,<<,n arg1, t1, fic_long
+	fic,m	arg3(sr1, arg1)
+fic_short                               /* flush one line at a time */
+	comb,<<,n arg1, arg0, fic_short
+	fic,m	arg3(sr1, arg1)
+
+	addi	-1, arg0, arg1
+	fic	(sr1, arg1)
+
+	bv	r0(r2)
+	sync
+EXIT(ficache)
+
 
 ENTRY(setjmp)
 /*

@@ -1,7 +1,7 @@
-/*	$OpenBSD: cpufunc.h,v 1.16 2000/04/24 17:39:54 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,42 +119,6 @@ static __inline register_t set_psw(register_t psw)
     __asm __volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
 
 static __inline void
-ficache(pa_space_t sp, vaddr_t va, vsize_t size)
-{
-	extern int icache_stride;
-	vaddr_t eva = (va + size + icache_stride - 1) & ~(icache_stride - 1);
-
-	mtsp(sp, 1);
-	while (va < eva)
-		__asm __volatile ("fic,m %1(%%sr1, %0)"
-				  : "+r" (va) : "r" (icache_stride));
-}
-
-static __inline void
-fdcache(pa_space_t sp, vaddr_t va, vsize_t size)
-{
-	extern int dcache_stride;
-	vaddr_t eva = (va + size + dcache_stride-1) & ~(dcache_stride - 1);
-
-	mtsp(sp, 1);
-	while (va < eva)
-		__asm __volatile ("fdc,m %1(%%sr1, %0)"
-				  : "+r" (va) : "r" (dcache_stride));
-}
-
-static __inline void
-pdcache(pa_space_t sp, vaddr_t va, vsize_t size)
-{
-	extern int dcache_stride;
-	vaddr_t eva = (va + size + dcache_stride - 1) & ~(dcache_stride - 1);
-
-	mtsp(sp, 1);
-	while (va < eva)
-		__asm __volatile ("pdc,m %1(%%sr1, %0)"
-				  : "+r" (va) : "r" (dcache_stride));
-}
-
-static __inline void
 iitlba(u_int pg, pa_space_t sp, vaddr_t va)
 {
 	mtsp(sp, 1);
@@ -254,6 +218,9 @@ ledctl(int on, int off, int toggle)
 #endif
 
 #ifdef _KERNEL
+void ficache __P((pa_space_t sp, vaddr_t va, vsize_t size));
+void fdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
+void pdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
 void fcacheall __P((void));
 void ptlball __P((void));
 int btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
