@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1996/07/15 14:57:00 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 1996/08/19 00:02:29 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
 
 /*-
@@ -60,10 +60,15 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #include "fd.h"
 #include "ccd.h"
 #include "ss.h"
+#include "wdc.h"
+#include "acd.h"
+#if 0
+#include "rd.h"
+#endif
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),			/* 0 */
+	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_notdef(),			/* 1 */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
@@ -78,6 +83,10 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
+	bdev_disk_init(NACD,acd),	/* 15: ATAPI CD-ROM */
+#if 0
+	bdev_disk_init(NRD,rd),		/* 16: ram disk driver */
+#endif
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -143,6 +152,8 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
 	cdev_rnd_init(NRND,rnd),	/* 35: random data source */
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
+	cdev_disk_init(NWDC,wd),	/* 37: ST506/ESDI/IDE disk */
+	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -236,7 +247,14 @@ static int chrtoblktab[] = {
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
-+ 	/* 31 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	0,
+	/* 38 */	15,
 };
 
 /*
