@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.9 2003/02/20 21:47:27 millert Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.10 2003/03/13 05:00:45 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -651,7 +651,7 @@ edit_init(void)
 	int fd;
 
 	edit_rewind();
-	strcpy(edit_name, "/var/tmp/scXXXXXXXX");
+	strlcpy(edit_name, "/var/tmp/scXXXXXXXX", sizeof edit_name);
 	if ((fd = mkstemp(edit_name)) == -1) {
 		perror("mkstemp failed");
 		exit(errno);
@@ -745,8 +745,7 @@ edit_edit(void)
 
 	fclose(edit_file);
 
-	system_line = malloc(strlen(editor) + strlen(edit_name) + 6);
-	sprintf(system_line, "%s %s", editor, edit_name);
+	asprintf(&system_line, "%s %s", editor, edit_name);
 	system(system_line);
 	free(system_line);
 

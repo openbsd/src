@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.8 2002/05/29 19:23:34 deraadt Exp $	*/
+/*	$OpenBSD: restore.c,v 1.9 2003/03/13 05:00:44 deraadt Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: restore.c,v 1.8 2002/05/29 19:23:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: restore.c,v 1.9 2003/03/13 05:00:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -512,7 +512,7 @@ keyval(key)
 {
 	static char keybuf[32];
 
-	(void)strcpy(keybuf, "|NIL");
+	(void)strlcpy(keybuf, "|NIL", sizeof keybuf);
 	keybuf[0] = '\0';
 	if (key & ONTAPE)
 		(void)strlcat(keybuf, "|ONTAPE", sizeof keybuf);
@@ -797,7 +797,7 @@ createlinks()
 		for (np = ep->e_links; np != NULL; np = np->e_links) {
 			if ((np->e_flags & NEW) == 0)
 				continue;
-			(void)strcpy(name, myname(ep));
+			(void)strlcpy(name, myname(ep), sizeof name);
 			if (ep->e_type == NODE) {
 				(void)linkit(name, myname(np), SYMLINK);
 			} else {

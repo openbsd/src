@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.10 2002/05/29 19:23:34 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.11 2003/03/13 05:00:44 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.10 2002/05/29 19:23:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.11 2003/03/13 05:00:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ mktempname(ep)
 	if (ep->e_flags & TMPNAME)
 		badentry(ep, "mktempname: called with TMPNAME");
 	ep->e_flags |= TMPNAME;
-	(void)strcpy(oldname, myname(ep));
+	(void)strlcpy(oldname, myname(ep), sizeof oldname);
 	freename(ep->e_name);
 	ep->e_name = savename(gentempname(ep));
 	ep->e_namlen = strlen(ep->e_name);
@@ -345,7 +345,7 @@ flagvalues(ep)
 {
 	static char flagbuf[BUFSIZ];
 
-	(void)strcpy(flagbuf, "|NIL");
+	(void)strlcpy(flagbuf, "|NIL", sizeof flagbuf);
 	flagbuf[0] = '\0';
 	if (ep->e_flags & REMOVED)
 		(void)strlcat(flagbuf, "|REMOVED", sizeof flagbuf);

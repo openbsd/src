@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.21 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.22 2003/03/13 05:00:44 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ setinput(source)
 		}
 		pipein++;
 	}
-	(void)strcpy(magtape, source);
+	(void)strlcpy(magtape, source, sizeof magtape);
 }
 
 void
@@ -309,11 +309,11 @@ again:
 			    " towards the first.\n");
 		} else {
 			fprintf(stderr, "You have read volumes");
-			strcpy(buf, ": ");
+			strlcpy(buf, ": ", sizeof buf);
 			for (i = 1; i < 32; i++)
 				if (tapesread & (1 << i)) {
 					fprintf(stderr, "%s%ld", buf, i);
-					strcpy(buf, ", ");
+					strlcpy(buf, ", ", sizeof buf);
 				}
 			fprintf(stderr, "\n");
 		}
@@ -346,10 +346,9 @@ again:
 		terminateinput();
 		return;
 	}
-	if (buf[0] != '\n') {
-		(void)strcpy(magtape, buf);
-		magtape[strlen(magtape) - 1] = '\0';
-	}
+	if (buf[0] != '\n')
+		(void)strlcpy(magtape, buf, sizeof magtape);
+
 #ifdef RRESTORE
 	if (host)
 		mt = rmtopen(magtape, 0);

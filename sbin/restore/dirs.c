@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.19 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.20 2003/03/13 05:00:44 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.19 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.20 2003/03/13 05:00:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ pathsearch(pathname)
 	struct direct *dp;
 	char *path, *name, buffer[MAXPATHLEN];
 
-	strcpy(buffer, pathname);
+	strlcpy(buffer, pathname, sizeof buffer);
 	path = buffer;
 	ino = ROOTINO;
 	while (*path == '/')
