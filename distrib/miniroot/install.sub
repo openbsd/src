@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.265 2002/10/04 01:22:39 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.266 2002/10/27 14:05:21 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -948,6 +948,16 @@ __EOT
 	done
 }
 
+# Ensure that $1 (if present) is the last element in $GET_FILES.
+make_last_set () {
+	local _set=$1
+
+	if isin $_set $GET_FILES; then
+		GET_FILES=`rmel $_set $GET_FILES`
+		GET_FILES=`addel $_set $GET_FILES`
+	fi
+}
+
 # Install the list of files in the global GET_FILES from the source
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
@@ -958,6 +968,15 @@ install_get_files () {
 	case $resp in 
 	n*|N*)	return ;;
 	esac
+	
+	# Ensure that siteXX.tgz and siteXX.tar.gz are the *last* sets
+	# installed so their contents overwrite the contents of the
+	# other sets, not the other way around. By selecting sets out
+	# of order, the user can cause a set other than siteXX to be
+	# the last set in GET_FILES.
+
+	make_last_set "site${VERSION}.tgz"
+	make_last_set "site${VERSION}.tar.gz"
 
 	echo
 	for _f in $GET_FILES ; do
@@ -1972,7 +1991,7 @@ IFDEVS=`get_ifdevs`
 DEVSMADE=
 
 # extra "site" set can be provided by person doing install or upgrade.
-THESETS="base etc misc comp man game xbase xshare xfont xserv site $MDSETS"
+THESETS="base etc misc comp man game xbase xshare xfont xserv $MDSETS site"
 
 # Global variable using during sets installation
 SETS=
