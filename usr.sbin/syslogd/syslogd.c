@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.54 2002/07/20 18:02:03 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.55 2002/07/24 22:10:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.54 2002/07/20 18:02:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.55 2002/07/24 22:10:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -316,7 +316,7 @@ main(int argc, char *argv[])
 		    bind(funix[i], (struct sockaddr *)&sunx,
 		    SUN_LEN(&sunx)) < 0 ||
 		    chmod(funixn[i], 0666) < 0) {
-			(void) snprintf(line, sizeof line, "cannot create %s",
+			(void)snprintf(line, sizeof line, "cannot create %s",
 			    funixn[i]);
 			logerror(line);
 			dprintf("cannot create %s (%d)\n", funixn[i], errno);
@@ -521,7 +521,7 @@ printsys(char *msg)
 	int c, pri, flags;
 	char *lp, *p, *q, line[MAXLINE + 1];
 
-	snprintf(line, sizeof line, "%s: ", _PATH_UNIX);
+	(void)snprintf(line, sizeof line, "%s: ", _PATH_UNIX);
 	lp = line + strlen(line);
 	for (p = msg; *p != '\0'; ) {
 		flags = SYNC_FILE | ADDDATE;	/* fsync file after write */
@@ -687,12 +687,13 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	v = iov;
 	if (f->f_type == F_WALL) {
-		v->iov_base = greetings;
-		v->iov_len = snprintf(greetings, sizeof(greetings),
+		if ((l = snprintf(greetings, sizeof(greetings),
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
-		    f->f_prevhost, ctime(&now));
-		if (v->iov_len >= sizeof(greetings))
-			v->iov_len = sizeof(greetings) - 1;
+		    f->f_prevhost, ctime(&now))) >= sizeof(greetings) ||
+		    l == -1)
+			l = strlen(greetings);
+		v->iov_base = greetings;
+		v->iov_len = l;
 		v++;
 		v->iov_base = "";
 		v->iov_len = 0;
@@ -716,9 +717,12 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_base = msg;
 		v->iov_len = strlen(msg);
 	} else if (f->f_prevcount > 1) {
+		if ((l = snprintf(repbuf, sizeof(repbuf),
+		    "last message repeated %d times", f->f_prevcount)) >=
+		    sizeof(repbuf) || l == -1)
+			l = strlen(repbuf);
 		v->iov_base = repbuf;
-		v->iov_len = snprintf(repbuf, sizeof repbuf,
-		    "last message repeated %d times", f->f_prevcount);
+		v->iov_len = l;
 	} else {
 		v->iov_base = f->f_prevline;
 		v->iov_len = f->f_prevlen;
@@ -735,10 +739,10 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		l = snprintf(line, sizeof(line) - 1, "<%d>%.15s %s", f->f_prevpri,
-		    (char *)iov[0].iov_base, (char *)iov[4].iov_base);
-		if (l > MAXLINE)
-			l = MAXLINE;
+		if ((l = snprintf(line, sizeof(line), "<%d>%.15s %s",
+		    f->f_prevpri, (char *)iov[0].iov_base,
+		    (char *)iov[4].iov_base)) >= sizeof(line) || l == -1)
+			l = strlen(line);
 		if (sendto(finet, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != l) {
