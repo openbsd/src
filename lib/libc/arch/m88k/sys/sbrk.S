@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.3 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.4 2003/01/02 20:25:31 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,34 +40,35 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: sbrk.S,v 1.3 2000/03/01 17:31:21 todd Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.4 2003/01/02 20:25:31 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_end
-	.globl	curbrk
+	.globl	__curbrk
 
 	.data
 	.align 8
-curbrk:	.long	_end
+__curbrk:
+	.long	_end
 	.text
 
 ENTRY(sbrk)
-	or.u	r5,r0,hi16(curbrk)
-	ld	r5,r5,lo16(curbrk)
+	or.u	r5,r0,hi16(__curbrk)
+	ld	r5,r5,lo16(__curbrk)
 	add	r2,r2,r5
 	or	r4,r2,0
 	or	r13,r0,SYS_break
 	tb0	0,r0,128
-	br 	cerror
-	/* Save old curbrk */
-	or.u	r5,r0,hi16(curbrk)
-	ld	r3,r5,lo16(curbrk)
-	/* Update curbrk */
-	st	r4,r5,lo16(curbrk)
-	/* and return old curbrk */
+	br 	__cerror
+	/* Save old __curbrk */
+	or.u	r5,r0,hi16(__curbrk)
+	ld	r3,r5,lo16(__curbrk)
+	/* Update __curbrk */
+	st	r4,r5,lo16(__curbrk)
+	/* and return old __curbrk */
 	or	r2,r3,0
 	jmp.n	r1
 	or	r3,r0,0

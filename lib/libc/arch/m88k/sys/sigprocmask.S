@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.2 2000/03/01 17:31:22 todd Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$OpenBSD: sigprocmask.S,v 1.2 2000/03/01 17:31:22 todd Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ L1:
 L2:
 	or	r13,r0,SYS_sigprocmask
 	tb0	0,r0,128
-	br	cerror
+	br	__cerror
 	bcnd	eq0,r4,out		/* if old mask not requested, done */
 	st	r2,r4,0			/* otherwise, set it */
 out:

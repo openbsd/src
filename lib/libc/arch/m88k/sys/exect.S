@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: exect.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)exect.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: exect.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,4 +49,4 @@
 ENTRY(exect)
 	or	r13,r0,SYS_execve
 	tb0	0,r0,128 		/* exect(file, argv, env) */
-	br	cerror
+	br	__cerror

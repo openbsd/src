@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.3 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: brk.S,v 1.4 2003/01/02 20:25:31 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)brk.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: brk.S,v 1.3 2000/03/01 17:31:21 todd Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.4 2003/01/02 20:25:31 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@
 
 	.globl	_end
 	.globl	minbrk
-	.globl	curbrk
+	.globl	__curbrk
 
 	.data
 	.align 8
@@ -65,9 +65,9 @@ ENTRY(brk)
 	or	r4,r2,0
 	or	r13,r0,SYS_break
 	tb0	0,r0,128
-	br	cerror
-	or.u	r5,r0,hi16(curbrk)
-	st	r4,r5,lo16(curbrk)
+	br	__cerror
+	or.u	r5,r0,hi16(__curbrk)
+	st	r4,r5,lo16(__curbrk)
 	or	r2,r0,0		/* clear r2/r3 to indicate success */
 	jmp.n	r1
 	or	r3,r0,0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90"*/
-	.asciz "$OpenBSD: sigpending.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
+	.asciz "$OpenBSD: sigpending.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ ENTRY(sigpending)
 	or	r4,r2,0		/* save r2 */
 	or	r13,r0,SYS_sigpending
 	tb0	0,r0,128
-	br	cerror
+	br	__cerror
 	st	r2,r4,0
 	jmp.n	r1
 	or	r2,r0,0

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: SYS.h,v 1.5 2002/02/19 22:12:36 millert Exp $*/
+/* *	$OpenBSD: SYS.h,v 1.6 2003/01/02 20:25:29 miod Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -50,7 +50,7 @@
 			ld r12,r31,40; \
 			or r13,r0, SYS_ ## y; \
 			tb0 0, r0, 128; \
-			br cerror
+			br __cerror
 #define	SYSCALL(x)	_SYSCALL(x,x)
 #define	RSYSCALL(x)	SYSCALL(x) ;\
 			jmp r1
@@ -69,7 +69,7 @@
 			ld r12,r31,40; \
 			or r13,r0, SYS_/**/y; \
 			tb0 0, r0, 128; \
-			br cerror
+			br __cerror
 #define	SYSCALL(x)	_SYSCALL(x,x)
 #define	RSYSCALL(x)	SYSCALL(x); \
 			jmp r1
@@ -82,4 +82,4 @@
 
 #define	ASMSTR		.asciz
 
-	.globl	cerror
+	.globl	__cerror
