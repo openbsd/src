@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.9 1999/02/12 21:35:27 kjell Exp $
+.\" $OpenBSD: vpn.8,v 1.10 1999/02/24 22:56:49 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -92,34 +92,34 @@ Different cipher types may require different sized keys.
 .It Li 3DES Ta "168 bits"
 .It Li BLF Ta "Variable (160 bits recommended)"
 .It Li CAST Ta "Variable (160 bits recommended)"
+.It Li SKIPJACK Ta "80 bits"
 .El
 .Pp
-Use of DES as an encryption algorithm is not recommended
-(except for backwards compatibility) due to its short key length.
+Use of DES or SKIPJACK as an encryption algorithm is not recommended
+(except for backwards compatibility) due to their short key length.
+Furthermore, recent attacks on SKIPJACK have shown severe weaknesses
+in its structure.
+.Pp
 Note that when using DES (or 3DES), the most significant bit of each
 byte is ignored. This means that 8 bytes are required to form a 56-bit
 DES key, and 24 bytes are required to form a 168 bit 3DES key.
-.Pp
-Initialization vectors (IV) are always 8 byte hexadecimal values.
 .Ss Creating Security Associations
 Before the IPSec flows can be defined, two Security Associations (SAs)
-must be defined on each end of the VPN. Eg:
+must be defined on each end of the VPN, e.g.:
 .Bd -literal
 ipsecadm new esp -spi SPI_OUT -src A_EXTERNAL_IP
-         -dst B_EXTERNAL_IP
-         -tunnel A_EXTERNAL_IP B_EXTERNAL_IP
-         -enc 3des -auth sha1 -iv INITIALIZATION_VECTOR
+         -dst B_EXTERNAL_IP -forcetunnel
+         -enc 3des -auth sha1
          -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
    
 ipsecadm new esp -spi SPI_IN -src B_EXTERNAL_IP
-         -dst A_EXTERNAL_IP
-         -tunnel B_EXTERNAL_IP A_EXTERNAL_IP
-         -enc 3des -auth sha1 -iv INITIALIZATION_VECTOR
+         -dst A_EXTERNAL_IP -forcetunnel
+         -enc 3des -auth sha1
          -key ENCRYPTION_KEY -authkey AUTHENTICATION_KEY
 .Ed
 .Pp
 .Ss Creating IPSec Flows
-Both subnets need to configure
+Both IPsec gateways need to configure
 .Xr ipsec 4
 routes with the 
 .Xr ipsecadm 1 
@@ -127,32 +127,32 @@ tool:
 .Pp
 On the security gateway of subnet A:
 .Bd -literal
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_EXTERNAL_IP 255.255.255.255 -local
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK -local
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_EXTERNAL_IP 255.255.255.255
 .Ed
 .Pp
 and on the security gateway of subnet B:
 .Bd -literal
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_EXTERNAL_IP 255.255.255.255 -local
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK -local
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_EXTERNAL_IP 255.255.255.255
 .Ed
@@ -233,14 +233,12 @@ Create the Security Associations (on both endpoints):
 .Pp
 .Bd -literal
 # /sbin/ipsecadm new esp -src 198.168.2.1 -dst 198.168.1.254 \e\ 
-   -tunnel 198.168.2.1 198.168.1.254 \e\  
-   -spi 1000 -enc 3des -auth sha1 -iv cd28c327c7fd0943 \e\ 
+   -forcetunnel -spi 1000 -enc 3des -auth sha1 \e\ 
    -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
    -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
 
 # /sbin/ipsecadm new esp -src 198.168.1.254 -dst 198.168.2.1  \e\ 
-   -tunnel 198.168.1.254 198.168.2.1 \e\ 
-   -spi 1001 -enc 3des -auth sha1 -iv cd28c327c7fd0943 \e\ 
+   -forcetunnel -spi 1001 -enc 3des -auth sha1 \e\ 
    -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
    -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
 .Ed
@@ -249,35 +247,35 @@ Create the Security Associations (on both endpoints):
 Create the ipsec route on machine A:
 .Pp
 .Bd -literal
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
           192.168.2.1 255.255.255.255 -local
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 10.0.99.0 255.255.255.0
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
           10.0.99.0 255.255.255.0 -local
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 192.168.2.1 255.255.255.255
 .Ed
 .It
 Create the ipsec flow on machine B:
 .Bd -literal
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
     -addr 192.168.2.1 255.255.255.255 \e\ 
           192.168.1.254 255.255.255.255 -local
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
     -addr 10.0.99.0 255.255.255.0 10.0.50.0 255.255.255.0
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
      -addr 192.168.2.1 255.255.255.255 \e\ 
            10.0.50.0 255.255.255.0 -local
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
      -addr 10.0.99.0 255.255.255.0 192.168.1.254 255.255.255.255
 .Ed
 .It
