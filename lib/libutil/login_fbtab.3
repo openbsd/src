@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login_fbtab.3,v 1.7 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: login_fbtab.3,v 1.8 2002/06/21 16:37:11 millert Exp $
 .\"
 .\" Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
 .\" files may be covered by other copyrights.
@@ -15,7 +15,7 @@
 .\" warranties, including, without limitation, the implied warranties of
 .\" merchantibility and fitness for any particular purpose.
 .\"
-.Dd November 8, 1999
+.Dd June 14, 2002
 .Dt LOGIN_FBTAB 3
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <util.h>
 .Ft void
-.Fn login_fbtab "char *tty" "uid_t uid" "gid_t gid"
+.Fn login_fbtab "const char *tty" "uid_t uid" "gid_t gid"
 .Sh DESCRIPTION
 The
 .Fn login_fbtab
@@ -35,8 +35,6 @@ function reads the
 file and implements device security as described in the
 .Xr fbtab 5
 manual page.
-.Pp
-If errors occur a null string is returned.
 .Sh DIAGNOSTICS
 Problems are reported via the
 .Xr syslogd 8
@@ -54,7 +52,10 @@ Wietse Venema (wietse@wzv.win.tue.nl)
 Eindhoven University of Technology
 The Netherlands
 .Ed
-.Sh BUGS
-This module uses
+.Sh CAVEATS
+Previous versions of this routine used
 .Xr strtok 3 ,
-which may cause conflicts with other uses of that same routine.
+which can cause conflicts with other uses of that routine.
+This may be an issue when porting programs to
+.Ox 3.1
+and below.
