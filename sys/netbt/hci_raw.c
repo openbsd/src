@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_raw.c,v 1.1 2005/01/14 12:04:02 grange Exp $	*/
+/*	$OpenBSD: hci_raw.c,v 1.2 2005/01/14 20:22:54 grange Exp $	*/
 
 /*
  * ng_btsocket_hci_raw.c
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci_raw.c,v 1.1 2005/01/14 12:04:02 grange Exp $
+ * $Id: hci_raw.c,v 1.2 2005/01/14 20:22:54 grange Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/socket/ng_btsocket_hci_raw.c,v 1.16 2004/10/18 22:19:42 rwatson Exp $
  */
 
@@ -1681,6 +1681,10 @@ hci_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	ng_btsocket_hci_raw_pcb_p pcb = so2hci_raw_pcb(so);
 	struct sockaddr *sa;
 	int error = 0;
+
+	/* XXX: restrict AF_BLUETOOTH sockets to root for now */
+	if ((error = suser(curproc, 0)) != 0)
+		return (error);
 
 	if (req == PRU_CONTROL)
 		return (ng_btsocket_hci_raw_control(so, (u_long)m,
