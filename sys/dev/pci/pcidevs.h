@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.646 2003/06/27 10:03:37 henning Exp 
+ *		OpenBSD: pcidevs,v 1.647 2003/07/08 18:08:31 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -690,7 +690,7 @@
 #define	PCI_PRODUCT_AIRONET_PCI352	0x0350		/* Cisco/Aironet PCI35x WLAN */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless */
-#define	PCI_PRODUCT_AIRONET_PCA504	0x4800		/* PCA504 Wireless */
+#define	PCI_PRODUCT_AIRONET_MPI350	0xa504		/* MPI-350 Wireless */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI */

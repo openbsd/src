@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.646 2003/06/27 10:03:37 henning Exp 
+ *		OpenBSD: pcidevs,v 1.647 2003/07/08 18:08:31 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -303,8 +303,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PC4800 Wireless",
 	},
 	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCA504,
-	    "PCA504 Wireless",
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_MPI350,
+	    "MPI-350 Wireless",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
