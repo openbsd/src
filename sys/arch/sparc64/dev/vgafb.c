@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.12 2002/03/28 04:28:38 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.13 2002/03/30 00:08:14 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -52,6 +52,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rcons/raster.h>
+
+#undef VGAFB_ALLOW_NATIVE
 
 struct vgafb_softc {
 	struct device sc_dev;
@@ -415,12 +417,15 @@ vgafb_mmap(v, off, prot)
 	int prot;
 {
 	struct vgafb_softc *sc = v;
+#ifdef VGAFB_ALLOW_NATIVE
 	bus_addr_t ba;
 	bus_size_t bs;
+#endif
 
 	if (off & PGOFSET)
 		return (-1);
 
+#ifdef VGAFB_ALLOW_NATIVE
 	/* See if this is a native mapping of pixel memory */
 	if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag, sc->sc_mem_cf,
 	    &ba, &bs, NULL) == 0) &&
@@ -436,6 +441,7 @@ vgafb_mmap(v, off, prot)
 		return (bus_space_mmap(sc->sc_mem_t, ba, off - ba, prot,
 		    BUS_SPACE_MAP_LINEAR));
 	}
+#endif
 
 	/* Lastly, this might be a request for a "dumb" framebuffer map */
 	if (off >= 0 && off < sc->sc_mem_size) {
@@ -443,7 +449,7 @@ vgafb_mmap(v, off, prot)
 		    BUS_SPACE_MAP_LINEAR));
 	}
 
-#if 0
+#ifdef VGAFB_ALLOW_NATIVE
 	/* Don't allow mapping of the shadow rom right now... needs work */
 	if (sc->sc_rom_ptr != NULL &&
 	    off >= sc->sc_rom_addr &&
