@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.11 1996/07/16 22:08:17 chuck Exp $	*/
-/*	(sync'd to midway.c 1.60)	*/
+/*	$OpenBSD: midway.c,v 1.12 1996/07/17 03:52:01 chuck Exp $	*/
+/*	(sync'd to midway.c 1.61)	*/
 
 /*
  *
@@ -139,11 +139,11 @@
  */
 
 #ifndef EN_TXHIWAT
-#define EN_TXHIWAT	(32*1024)	/* max 32 KB waiting to be DMAd out */
+#define EN_TXHIWAT	(64*1024)	/* max 64 KB waiting to be DMAd out */
 #endif
 
 #ifndef EN_MINDMA
-#define EN_MINDMA	64	/* don't DMA anything less than this (bytes) */
+#define EN_MINDMA	32	/* don't DMA anything less than this (bytes) */
 #endif
 
 #define RX_NONE		0xffff	/* recv VC not in use */
@@ -396,7 +396,7 @@ int b;
     case MIDDMA_8WORD:  return(8*4);
     case MIDDMA_16WMAYBE:
     case MIDDMA_16WORD: return(16*4);
-    default: panic("en_k2sz");
+    default: panic("en_b2sz");
   }
   return(0);
 }
@@ -417,7 +417,7 @@ int sz;
     case 4*4:  return(MIDDMA_4WORD);
     case 8*4:  return(MIDDMA_8WORD);
     case 16*4: return(MIDDMA_16WORD);
-    default: panic("en_k2sz");
+    default: panic("en_sz2b");
   }
   return(0);
 }
@@ -656,6 +656,7 @@ done_probe:
     ptr += (EN_RXSZ * 1024);
     sz -= (EN_RXSZ * 1024);
     sc->rxslot[lcv].stop = ptr;
+    midvloc = midvloc - MID_RAMOFF;
     midvloc = (midvloc & ~((EN_RXSZ*1024) - 1)) >> 2; /* mask, cvt to words */
     midvloc = midvloc >> MIDV_LOCTOPSHFT;  /* we only want the top 11 bits */
     midvloc = (midvloc & MIDV_LOCMASK) << MIDV_LOCSHIFT;
@@ -788,7 +789,7 @@ int wmtry;
   for (lcv = MID_BUFOFF ; lcv < 1024; lcv += 4) 
     EN_WRITE(sc, lcv, 0);	/* zero memory */
 
-  midvloc = (MID_BUFOFF / sizeof(u_int32_t)) >> MIDV_LOCTOPSHFT;
+  midvloc = ((MID_BUFOFF - MID_RAMOFF) / sizeof(u_int32_t)) >> MIDV_LOCTOPSHFT;
   EN_WRITE(sc, MIDX_PLACE(0), MIDX_MKPLACE(en_k2sz(1), midvloc));
   EN_WRITE(sc, MID_VC(0), (midvloc << MIDV_LOCSHIFT) 
 		| (en_k2sz(1) << MIDV_SZSHIFT) | MIDV_TRASH);
@@ -1218,6 +1219,7 @@ struct en_softc *sc;
     EN_WRITE(sc, MIDX_READPTR(slot), 0);
     EN_WRITE(sc, MIDX_DESCSTART(slot), 0);
     loc = sc->txslot[slot].cur = sc->txslot[slot].start;
+    loc = loc - MID_RAMOFF;
     loc = (loc & ~((EN_TXSZ*1024) - 1)) >> 2; /* mask, cvt to words */
     loc = loc >> MIDV_LOCTOPSHFT;	/* top 11 bits */
     EN_WRITE(sc, MIDX_PLACE(slot), MIDX_MKPLACE(en_k2sz(EN_TXSZ), loc));
@@ -1858,15 +1860,31 @@ struct en_launch *l;
 #endif
     }
 
+    /*
+     * if this is the last buffer, and it looks like we are going to need to
+     * flush the internal buffer, can we extend the length of this mbuf to
+     * avoid the FLUSH?
+     */
+
+    if (tmp->m_next == NULL) {
+      cnt = (need - len) % sizeof(u_int32_t);
+      if (cnt) {
+        cnt = sizeof(u_int32_t) - cnt;	/* # of byte we need to FLUSH */
+        if (M_TRAILINGSPACE(tmp) >= cnt)
+          len += cnt;			/* pad for FLUSH */
+      }
+    }
+      
     /* do we need to do a DMA op to align to word boundary? */
     needalign = (unsigned long) data % sizeof(u_int32_t);
     if (needalign) {
       EN_COUNT(sc->headbyte);
-      cnt = min(len, sizeof(u_int32_t) - needalign);
-      if (cnt == 2) {
+      cnt = sizeof(u_int32_t) - needalign;
+      if (cnt == 2 && len >= cnt) {
         count = 1;
         bcode = MIDDMA_2BYTE;
       } else {
+        cnt = min(cnt, len);		/* prevent overflow */
         count = cnt;
         bcode = MIDDMA_BYTE;
       }
