@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.82 2004/01/23 20:48:33 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.83 2004/02/19 21:16:21 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -160,7 +160,7 @@ struct channel_softc_vtbl wdc_default_vtbl = {
 static char *wdc_log_buf = NULL;
 static unsigned int wdc_tail = 0;
 static unsigned int wdc_head = 0;
-static unsigned int wdc_size = 16 * 1024;
+static unsigned int wdc_log_cap = 16 * 1024;
 static int chp_idx = 1;
 
 void
@@ -168,23 +168,27 @@ wdc_log(struct channel_softc *chp, enum wdcevent_type type,
     unsigned int size, char val[])
 {
 	unsigned int request_size;
-	int idx;
 	char *ptr;
-	int nbytes;
+	int log_size;
+	unsigned int head = wdc_head;
+	unsigned int tail = wdc_tail;
 
-	if (wdc_head < 0 || wdc_head > wdc_size ||
-	    wdc_tail < 0 || wdc_tail > wdc_size) {
-		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head,
-		    wdc_tail);
+#ifdef DIAGNOSTIC
+	if (head < 0 || head > wdc_log_cap ||
+	    tail < 0 || tail > wdc_log_cap) {
+		printf ("wdc_log: head %x wdc_tail %x\n", head,
+		    tail);
 		return;
 	}
 
-	if (size > wdc_size / 2) {
+	if (size > wdc_log_cap / 2) {
 		printf ("wdc_log: type %d size %x\n", type, size);
+		return;
 	}
+#endif
 
 	if (wdc_log_buf == NULL) {
-		wdc_log_buf = malloc(wdc_size, M_DEVBUF, M_NOWAIT);
+		wdc_log_buf = malloc(wdc_log_cap, M_DEVBUF, M_NOWAIT);
 		if (wdc_log_buf == NULL)
 			return;
 	}
@@ -194,29 +198,36 @@ wdc_log(struct channel_softc *chp, enum wdcevent_type type,
 	request_size = size + 2;
 
 	/* Check how many bytes are left */
-	nbytes = wdc_head - wdc_tail;
-	if (nbytes < 0) nbytes += wdc_size;
+	log_size = head - tail;
+	if (log_size < 0) log_size += wdc_log_cap;
 
-	if (nbytes + request_size >= wdc_size) {
-		wdc_tail = (wdc_tail + request_size * 2) % wdc_size;
+	if (log_size + request_size >= wdc_log_cap) {
+		int nb = 0; 
+		int rec_size;
+
+		while (nb <= (request_size * 2)) {
+			if (wdc_log_buf[tail] == 0)
+				rec_size = 1;
+			else
+				rec_size = (wdc_log_buf[tail + 1] & 0x1f) + 2;
+			tail = (tail + rec_size) % wdc_log_cap;
+			nb += rec_size;
+		}
 	}
 
 	/* Avoid wrapping in the middle of a request */
-	if (wdc_head + request_size >= wdc_size) {
-		memset(&wdc_log_buf[wdc_head], 0, wdc_size - wdc_head);
-		wdc_head = 0;
+	if (head + request_size >= wdc_log_cap) {
+		memset(&wdc_log_buf[head], 0, wdc_log_cap - head);
+		head = 0;
 	}
 
-	ptr = &wdc_log_buf[wdc_head];
+	ptr = &wdc_log_buf[head];
 	*ptr++ = type & 0xff;
 	*ptr++ = ((chp->ch_log_idx & 0x7) << 5) | (size & 0x1f);
+	memcpy(ptr, val, size);
 
-	idx = 0;
-	while (size--) {
-		*ptr++ = val[idx];
-		idx++;
-	}
-	wdc_head += request_size;
+	wdc_head = (head + request_size) % wdc_log_cap;
+	wdc_tail = tail;
 }
 
 char *wdc_get_log(unsigned int *, unsigned int *);
@@ -224,60 +235,73 @@ char *wdc_get_log(unsigned int *, unsigned int *);
 char *
 wdc_get_log(unsigned int * size, unsigned int *left)
 {
-	int  bytes = (wdc_head - wdc_tail);
-	char *retbuf;
-	int  ot, c1, c2;
+	int  log_size;
+	char *retbuf = NULL;
+	int  nb, tocopy;
+	int  s;
+	unsigned int head = wdc_head;
+	unsigned int tail = wdc_tail;
 
+	s = splbio();
+
+	log_size = (head - tail);
 	if (left != NULL)
 		*left = 0;
 
-	if (bytes < 0)
-		bytes += wdc_size;
-	if ((u_int)bytes > *size) {
-		if (left != NULL) {
-			*left = bytes - *size;
-		}
-		bytes = *size;
-	}
+	if (log_size < 0)
+		log_size += wdc_log_cap;
+
+	tocopy = log_size;
+	if ((u_int)tocopy > *size)
+		tocopy = *size;
 
 	if (wdc_log_buf == NULL) {
 		*size = 0;
 		*left = 0;
-		return (NULL);
+		goto out;
 	}
 
-	if (wdc_head < 0 || wdc_head > wdc_size ||
-	    wdc_tail < 0 || wdc_tail > wdc_size) {
-		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head,
-		    wdc_tail);
+#ifdef DIAGNOSTIC
+	if (head < 0 || head > wdc_log_cap ||
+	    tail < 0 || tail > wdc_log_cap) {
+		printf ("wdc_log: head %x tail %x\n", head,
+		    tail);
 		*size = 0;
 		*left = 0;
-		return (NULL);
+		goto out;
 	}
+#endif
 
-	retbuf = malloc(bytes, M_TEMP, M_NOWAIT);
+	retbuf = malloc(tocopy, M_TEMP, M_NOWAIT);
 	if (retbuf == NULL) {
 		*size = 0;
-		*left = bytes;
-		return (NULL);
+		*left = log_size;
+		goto out;
 	}
 
-	*size = bytes;
+	nb = 0;
+	for (;;) {
+		int rec_size;
 
-	ot = wdc_tail;
-	wdc_tail += bytes;
-	if (wdc_tail > wdc_size) {
-		wdc_tail -= wdc_size;
-		c2 = wdc_tail;
-		c1 = bytes - wdc_tail;
-	} else {
-		c1 = bytes;
-		c2 = 0;
+		if (wdc_log_buf[tail] == 0)
+			rec_size = 1;
+		else
+			rec_size = (wdc_log_buf[tail + 1] & 0x1f) + 2;
+
+		if ((nb + rec_size) >= tocopy)
+			break;
+
+		memcpy(&retbuf[nb], &wdc_log_buf[tail], rec_size);
+		tail = (tail + rec_size) % wdc_log_cap;
+		nb += rec_size;
 	}
 
-	memcpy(retbuf, &wdc_log_buf[ot], c1);
-	memcpy(&retbuf[c1], &wdc_log_buf[0], c2);
+	wdc_tail = tail;
+	*size = nb;
+	*left = log_size - nb;
 
+ out:
+	splx(s);
 	return (retbuf);
 }
 
