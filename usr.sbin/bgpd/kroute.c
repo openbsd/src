@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.10 2003/12/25 01:48:07 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.11 2003/12/25 01:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -319,14 +319,11 @@ kroute_fetchtable(void)
 
 		kr->flags = F_KERNEL;
 
-		log_kroute(LOG_CRIT, "add from kernel", &kr->r);
-
 		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
 			logit(LOG_CRIT, "RB_INSERT failed!");
 			return (-1);
 		}
 	}
-
 	free(buf);
 	return (0);
 };
