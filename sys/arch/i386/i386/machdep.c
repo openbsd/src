@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.238 2003/07/25 17:41:19 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.239 2003/07/25 21:42:02 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -984,7 +984,7 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_CX8,	"CX8" },
 	{ CPUID_APIC,	"APIC" },
 	{ CPUID_SYS1,	"SYS" },
-	{ CPUID_SYS2,	"SYS" },
+	{ CPUID_SEP,	"SEP" },
 	{ CPUID_MTRR,	"MTRR" },
 	{ CPUID_PGE,	"PGE" },
 	{ CPUID_MCA,	"MCA" },
@@ -1258,12 +1258,12 @@ intel686_cpu_setup(cpu_device, model, step)
 	 * From Intel Application Note #485.
 	 */
 	if ((model == 1) && (step < 3))
-		cpu_feature &= ~CPUID_SYS2;
+		cpu_feature &= ~CPUID_SEP;
 
 	/*
 	 * Make sure SYSENTER is disabled.
 	 */
-	if (cpu_feature & CPUID_SYS2)
+	if (cpu_feature & CPUID_SEP)
 		wrmsr(MSR_SYSENTER_CS, 0);
 
 	/*

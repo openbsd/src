@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.15 2003/07/25 17:41:18 tedu Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.16 2003/07/25 21:42:02 mickey Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@
 #define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
 #define CPUID_APIC	0x00000200	/* has enabled APIC */
 #define CPUID_SYS1	0x00000400	/* has SYSCALL/SYSRET inst. (Cyrix) */
-#define CPUID_SYS2	0x00000800	/* has SYSCALL/SYSRET inst. (AMD/Intel) */
+#define CPUID_SEP	0x00000800	/* has SYSCALL/SYSRET inst. (AMD/Intel) */
 #define CPUID_MTRR	0x00001000	/* has memory type range register */
 #define CPUID_PGE	0x00002000	/* has page global extension */
 #define CPUID_MCA	0x00004000	/* has machine check architecture */
