@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.161 1999/07/07 20:22:21 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.162 1999/07/18 21:07:52 csapuntz Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1611,10 +1611,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82371FB (Triton) PCI-ISA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82438,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_IDE,
 	    0,
 	    "Intel",
-	    "82438 (Triton) IDE",
+	    "82371FB (Triton) IDE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371MX,
@@ -1659,7 +1659,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82371SB (Triton II) PCI-ISA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371IDE,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_IDE,
 	    0,
 	    "Intel",
 	    "82371SB (Triton II) IDE",
@@ -2605,6 +2605,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5596",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
+	    0,
+	    "Silicon Integrated System",
+	    "5597/5598 IDE controller",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5598,
