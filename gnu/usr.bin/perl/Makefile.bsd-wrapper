@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 1998/08/04 20:47:22 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 1998/09/19 18:18:03 deraadt Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -71,7 +71,7 @@ MANALL=		${POD:S/.pod$/.cat1/g:S/.pm$/.cat3p/g} \
 		utils/c2ph.cat1 utils/h2ph.cat1 utils/h2xs.cat1 \
 		utils/perldoc.cat1 utils/perlbug.cat1 utils/pl2pm.cat1 \
 		utils/splain.cat1 x2p/s2p.cat1 pod/pod2man.cat1 \
-		pod/pod2html.cat1 utils/pstruct.cat1 lib/ExtUtils/xsubpp.cat1
+		pod/pod2html.cat1 utils/pstruct.cat1 xsubpp.cat1
 .else
 MANALL=
 .endif
@@ -182,7 +182,7 @@ utils/pstruct.cat1: utils/pstruct
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
 	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
-lib/ExtUtils/xsubpp.cat1: lib/ExtUtils/xsubpp
+xsubpp.cat1: lib/ExtUtils/xsubpp
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
 	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
