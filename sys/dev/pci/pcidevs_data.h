@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.141 1999/05/13 07:00:03 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.142 1999/05/14 00:28:25 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2733,10 +2733,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI-FIRO",
 	},
 	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
 	    0,
 	    "Trident",
-	    "4DWAVE",
+	    "4DWAVE DX",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX,
+	    0,
+	    "Trident",
+	    "4DWAVE NX",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
