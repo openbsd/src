@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.136 1999/11/03 02:45:08 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.137 1999/11/14 11:53:00 ho Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -77,6 +77,9 @@ pcmcia*	at pcic? controller ? socket ?
 
 # USB Generic HID devices
 #uhid*	at uhub? port ? configuration ? interface ?
+
+# USB audio
+#uaudio* at uhub? port ? configuration ?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
@@ -298,6 +301,7 @@ audio*  at ym?
 audio*  at eap?
 audio*	at eso?
 audio*  at sv?
+#audio*	at uaudio?
 
 bktr0   at pci? dev ? function ?
 
