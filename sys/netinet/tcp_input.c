@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.167 2004/05/07 14:42:27 millert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.168 2004/05/21 11:36:23 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3068,15 +3068,17 @@ tcp_mss(tp, offer)
 	 * If we compute a larger value, return it for use in sending
 	 * a max seg size option, but don't store it for use
 	 * unless we received an offer at least that large from peer.
-	 * However, do not accept offers under 216 bytes unless the
-	 * interface MTU is actually that low.
+	 * 
+	 * However, do not accept offers lower than the minimum of
+	 * the interface MTU and 216.
 	 */
 	if (offer > 0)
 		tp->t_peermss = offer;
 	if (tp->t_peermss)
-		mss = min(mss, tp->t_peermss);
+		mss = min(mss, max(tp->t_peermss, 216));
+
 	/* sanity - at least max opt. space */
-	mss = max(mss, min(216, ifp->if_mtu - iphlen - sizeof(struct tcphdr)));
+	mss = max(mss, 64);
 
 	/*
 	 * maxopd stores the maximum length of data AND options
