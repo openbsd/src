@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.25 2001/01/04 22:39:12 miod Exp $
+#	$OpenBSD: Makefile.sun3,v 1.26 2001/07/15 13:10:50 assar Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -21,6 +21,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 CC?=	cc
 LD?=	ld
@@ -164,5 +166,17 @@ db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
 
 locore.o: ${SUN3}/sun3/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

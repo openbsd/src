@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.18 1999/05/30 08:34:27 deraadt Exp $
+#	$OpenBSD: Makefile.sparc,v 1.19 2001/07/15 13:10:50 assar Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -21,6 +21,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 AS?=	as
 CC?=	cc
@@ -191,5 +193,17 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 
 locore.o: ${SPARC}/sparc/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

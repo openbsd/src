@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.20 1998/08/18 15:05:52 ryker Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.21 2001/07/15 13:10:48 assar Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for OpenBSD
@@ -21,6 +21,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 CC?=	cc
 LD?=	ld
@@ -182,5 +184,17 @@ locore.o pmap.o trap.o: Makefile
 
 locore.o: ${MAC68K}/mac68k/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

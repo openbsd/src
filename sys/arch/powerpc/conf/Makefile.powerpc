@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc,v 1.10 2001/07/10 01:56:50 drahn Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.11 2001/07/15 13:10:49 assar Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -22,6 +22,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 AS?=	as
 CC?=	cc
@@ -179,5 +181,17 @@ locore.o machdep.o: Makefile
 
 locore.o: ${PPC}/powerpc/locore.S assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.20 2001/05/11 09:46:02 art Exp $
+#	$OpenBSD: Makefile.alpha,v 1.21 2001/07/15 13:10:46 assar Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -21,6 +21,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 CC?=	cc
 LD?=	ld
@@ -175,5 +177,17 @@ cpuconf.o: cpuconf.c
 
 cpuconf.c: ${ALPHA}/alpha/cpuconf.c
 	cp ${ALPHA}/alpha/cpuconf.c .
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

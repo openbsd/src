@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.15 2001/06/17 21:39:30 hugh Exp $
+#	$OpenBSD: Makefile.vax,v 1.16 2001/07/15 13:10:51 assar Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -21,6 +21,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 %OBJS
 
@@ -207,5 +209,17 @@ intvec.o: ${VAX}/vax/intvec.s assym.h
 
 subr.o: ${VAX}/vax/subr.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

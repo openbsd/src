@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.25 2000/07/16 09:35:39 espie Exp $
+#	$OpenBSD: Makefile.amiga,v 1.26 2001/07/15 13:10:47 assar Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -21,6 +21,8 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+.include <bsd.own.mk>
 
 CC?=	cc
 LD?=	ld
@@ -191,5 +193,17 @@ amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile
 
 locore.o: ${AMIGA}/amiga/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES

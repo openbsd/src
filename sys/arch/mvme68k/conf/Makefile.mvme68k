@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.10 2000/01/06 03:21:42 smurph Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.11 2001/07/15 13:10:49 assar Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -18,6 +18,8 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
+
+.include <bsd.own.mk>
 
 AS?=	as
 CC?=	cc
@@ -177,5 +179,17 @@ locore.o machdep.o: Makefile
 
 locore.o: ${MVME68K}/mvme68k/locore.s assym.h
 	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
 
 %RULES
