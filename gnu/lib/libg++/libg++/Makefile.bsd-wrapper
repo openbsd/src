@@ -1,0 +1,75 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:44 etheisen Exp $
+
+VERSION = 2.7.1
+LIBG++_DIST_VERSION = 2.7.1
+
+.PATH:		$(.CURDIR)/src
+
+SUBDIR+=	gperf genclass
+
+LIB=		g++
+CXXFLAGS+=	-fno-implicit-templates
+CPPFLAGS+=	-I. -I$(.CURDIR)/src -I$(.CURDIR)/../libio \
+		-I$(.CURDIR)/../libstdc++ -I../libio
+LDADD+=		-lcurses
+
+CXXSRCS=	AllocRing.cc Obstack.cc builtin.cc $(REGEX_OBJ) Regex.cc \
+		String.cc Intdouble.cc Integer.cc Rational.cc Random.cc \
+		BitSet.cc BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \
+		Normal.cc NegExp.cc Weibull.cc Erlang.cc DiscUnif.cc \
+		Uniform.cc Poisson.cc HypGeom.cc Geom.cc Binomial.cc RNG.cc \
+		ACG.cc MLCG.cc  RndInt.cc Fix.cc Fix16.cc Fix24.cc \
+		CursesW.cc GetOpt.cc chr.cc error.cc gcd.cc hash.cc lg.cc \
+		fmtq.cc ioob.cc pow.cc sqrt.cc str.cc compare.cc \
+		SLList.cc DLList.cc
+CXXOBJS=	$(CXXSRCS:N*.h:R:S/$/.o/g)
+CSRCS=		bitand.c bitany.c bitblt.c bitclear.c bitcopy.c bitcount.c \
+		bitinvert.c bitlcomp.c bitset1.c bitxor.c timer.c
+COBJS=		$(CSRCS:N*.h:R:S/$/.o/g)
+GXXOBJS=	$(CXXOBJS) $(COBJS)
+
+RX_DIR=		../librx
+RXOBJ=		$(RX_DIR)/rx.o
+LIBIO_DIR=	../libio
+G_CFG_H=	$(LIBIO)/_G_config.h
+
+SRCS=		$(CXXSRCS) $(CSRCS) $(RXOBJ)
+
+CLEANFILES+=	rx.h
+
+all:		rx.h $(G_CFG_H)
+
+beforedepend:	rx.h $(G_CFG_H)
+
+rx.h:
+	ln -s $(.CURDIR)/../librx/rx.h
+
+$(G_CFG_H):
+	@cd $(.CURDIR)/../libio; $(MAKE) -f Makefile.bsd-wrapper _G_config.h
+
+$(RXOBJ) $(RXOBJ:.o=.po) $(RXOBJ:.o=.so):
+	cd $(.CURDIR)/../$(RX_DIR); $(MAKE) -f Makefile.bsd-wrapper
+
+clean: _SUBDIRUSE
+	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
+	rm -f lib${LIB}.a ${GXXOBJS}
+	rm -f lib${LIB}_p.a ${GXXOBJS:.o=.po}
+	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${GXXOBJS:.o=.so}
+	rm -f llib-l${LIB}.ln ${GXXOBJS:.o=.ln}
+
+afterinstall:
+	install -d -m 755 -o $(BINOWN) -g $(BINGRP) \
+		$(DESTDIR)/usr/include/g++/gen
+	@-cd $(.CURDIR); for i in libg++.info*; do \
+		cmp -s $$i $(DESTDIR)/usr/share/info/$$i || \
+		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$$i $(DESTDIR)/usr/share/info/$$i; \
+	done
+	@-cd $(.CURDIR)/src; for i in *.h gen/*.ccP gen/*.hP; do \
+		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
+		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$$i $(DESTDIR)/usr/include/g++/$$i; \
+	done
+
+
+.include <bsd.lib.mk>

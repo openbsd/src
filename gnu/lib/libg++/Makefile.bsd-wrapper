@@ -1,0 +1,6 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:41 etheisen Exp $
+
+SUBDIR+= libiberty libio libstdc++ librx libg++ etc
+
+
+.include <bsd.subdir.mk>

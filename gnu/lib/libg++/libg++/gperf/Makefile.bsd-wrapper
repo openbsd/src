@@ -1,0 +1,35 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:48 etheisen Exp $
+
+.PATH:		$(.CURDIR)/src
+
+PROG=		gperf
+CC=		g++
+CPPFLAGS+=	-nostdinc++ -I$(.CURDIR)/src -I$(.CURDIR)/../../libio  \
+		-I$(.CURDIR)/../../libstdc++ -I$(.CURDIR)/../src \
+		-I../../libio
+SRCS=		new.cc options.cc iterator.cc main.cc gen-perf.cc \
+		key-list.cc list-node.cc hash-table.cc bool-array.cc \
+		read-line.cc std-err.cc version.cc
+LDFLAGS+=	-L../../libstdc++ -L..
+
+STD_DIR=	../../libstdc++
+GXX_DIR=	..
+
+all:		$(STD_DIR)/libstdc++.a $(GXX_DIR)/libg++.a
+
+$(STD_DIR)/libstdc++.a:
+	cd $(STD_DIR); $(MAKE) -f Makefile.bsd-wrapper
+
+$(GXX_DIR)/libg++.a:
+	cd $(GXX_DIR); $(MAKE) -f Makefile.bsd-wrapper
+
+install: maninstall 
+	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		${PROG} ${DESTDIR}/usr/bin
+	@-cd $(.CURDIR); for i in gperf.info*; do \
+		cmp -s $$i $(DESTDIR)/usr/share/info/$$i || \
+		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$$i $(DESTDIR)/usr/share/info/$$i; \
+	done
+
+.include <bsd.prog.mk>

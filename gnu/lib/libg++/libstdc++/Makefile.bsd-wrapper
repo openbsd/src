@@ -1,0 +1,377 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:55 etheisen Exp $
+
+LIB=		stdc++
+CXXFLAGS+=	-fno-implicit-templates -nostdinc++
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio -I../libio
+LDADD+=		-lm
+
+SUBDIR+=	stl
+
+# stdc++ sources/objs
+STD_SRCS=	newi.cc cstringi.cc stddefi.cc stdexcepti.cc typeinfoi.cc \
+		exceptioni.cc cstdlibi.cc cmathi.cc 
+SPEC_OBJS=	cstrmain.o cstrio.o fcomplex.o fcomio.o dcomplex.o dcomio.o \
+		ldcomplex.o ldcomio.o
+STD_OBJS=	$(STD_SRCS:N*.h:R:S/$/.o/g) $(SPEC_OBJS)
+
+IO_DIR=		../libio
+LIBIBERTY_DIR=	../libiberty
+STL_DIR=	./stl
+STD_DIR=	./std
+
+IO_OBJS!=	cat $(IO_DIR)/iostream.list
+QIO_OBJS=	$(IO_OBJS:S/^/$(IO_DIR)\//g)
+
+LIBIBERTY_OBJS!=cat $(LIBIBERTY_DIR)/needed-list
+LIBIBERTY_OBJS+=strerror.o
+QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_DIR)\//g)
+
+STL_OBJS=	$(STL_DIR)/tempbuf.o $(STL_DIR)/tree.o $(STL_DIR)/random.o
+
+SRCS=		$(STD_SRCS) $(SPEC_OBJS) $(QIO_OBJS) $(QLIBIBERTY_OBJS) \
+		$(STL_OBJS)
+
+HEADERS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath \
+		complex csetjmp csignal cstdarg cstddef cstdio cstdlib \
+		cstring ctime cwchar cwctype new stddef string exception \
+		stdexcept typeinfo algorithm deque list map queue set stack \
+		vector utility functional iterator memory numeric
+
+clean:	_SUBDIRUSE
+	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
+	rm -f lib${LIB}.a ${STD_OBJS}
+	rm -f lib${LIB}_p.a ${STD_OBJS:.o=.po}
+	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${STD_OBJS:.o=.so}
+	rm -f llib-l${LIB}.ln ${STD_OBJS:.o=.ln}
+
+afterinstall:
+	install -d -m 755 -o $(BINOWN) -g $(BINGRP) /usr/include/g++/std
+	@-cd $(.CURDIR); for i in $(HEADERS) *.h std/*.*; do \
+		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
+	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		 $$i $(DESTDIR)/usr/include/g++/$$i; \
+	done
+#
+# Misc GNU overidden targets.
+#
+$(STL_OBJS) $(STL_OBJS:.o=.po) $(STL_OBJS:.o=.so):
+	cd $(.CURDIR)/$(STL_DIR); $(MAKE) -f Makefile.bsd-wrapper
+
+$(QIO_OBJS) $(QIO_OBJS:.o=.po) $(QIO_OBJS:.o=.so):
+	cd $(.CURDIR)/$(IO_DIR); $(MAKE) -f Makefile.bsd-wrapper
+
+$(QLIBIBERTY_OBJS) $(QLIBIBERTY_OBJS:.o=.po) $(QLIBIBERTY_OBJS:.o=.so):
+	cd $(.CURDIR)/$(LIBIBERTY_DIR); $(MAKE) -f Makefile.bsd-wrapper
+
+stdexcepti.o:	stdexcepti.cc $(.CURDIR)/std/stdexcept.h
+	@echo "${COMPILE.cc} -frtti ${.IMPSRC}"
+	@${COMPILE.cc} -frtti ${.IMPSRC} -frtti -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+stdexcepti.po: stdexcepti.cc $(.CURDIR)/std/stdexcept.h
+	@echo "${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+stdexcepti.so: stdexcepti.cc $(.CURDIR)/std/stdexcept.h
+	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+typeinfoi.o: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
+	@echo "${COMPILE.cc} -frtti ${.IMPSRC}"
+	@${COMPILE.cc} -frtti ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+typeinfoi.po: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
+	@echo "${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -frtti -p ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+typeinfoi.so: typeinfoi.cc $(.CURDIR)/std/typeinfo.h
+	@echo "${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -frtti ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+STRFUNCS= 	REP MAIN TRAITS ADDSS ADDPS ADDCS ADDSP ADDSC \
+		EQSS EQPS EQSP NESS NEPS NESP LTSS LTPS LTSP GTSS GTPS GTSP \
+		LESS LEPS LESP GESS GEPS GESP
+STRIO=		EXTRACT INSERT GETLINE
+COMFUNCS=	MAIN ADDCC ADDCF ADDFC SUBCC SUBCF SUBFC MULCC MULCF MULFC \
+		DIVCC DIVCF DIVFC PLUS MINUS EQCC EQCF EQFC NECC NECF NEFC \
+		ABS ARG POLAR CONJ NORM COS COSH EXP LOG POWCC POWCF POWCI \
+		POWFC SIN SINH SQRT
+COMIO=		EXTRACT INSERT
+
+cstrmain.o: sinst.cc $(STD_DIR)/bastring.h \
+		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
+	@echo '$(COMPILE.cc) -DC \
+		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
+	    	$(.CURDIR)/sinst.cc -o cstrmain.o'
+	@$(COMPILE.cc) -DC \
+	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
+	    $(.CURDIR)/sinst.cc -o cstrmain.o.o
+	@$(LD) -x -r cstrmain.o.o -o cstrmain.o
+	@rm -f cstrmain.o.o
+
+cstrmain.po: sinst.cc $(STD_DIR)/bastring.h \
+		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
+	@echo '$(COMPILE.cc) -p -DC \
+		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
+	    	$(.CURDIR)/sinst.cc -o cstrmain.po'
+	@$(COMPILE.cc) -p -DC \
+	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
+	    $(.CURDIR)/sinst.cc -o cstrmain.po.o
+	@$(LD) -X -r cstrmain.po.o -o cstrmain.po
+	@rm -f cstrmain.po.o
+
+cstrmain.so: sinst.cc $(STD_DIR)/bastring.h \
+		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DC \
+		`for N in $(STRFUNCS); do echo " -D$${N}"; done` \
+	    	$(.CURDIR)/sinst.cc -o cstrmain.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DC \
+	    `for N in $(STRFUNCS); do echo " -D$${N}"; done` \
+	    $(.CURDIR)/sinst.cc -o cstrmain.so.o
+	@$(LD) -x -r cstrmain.so.o -o cstrmain.so
+	@rm -f cstrmain.so.o
+	
+cstrio.o: sinst.cc $(STD_DIR)/bastring.h \
+		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
+	@echo '$(COMPILE.cc) -DC \
+		`for N in $(STRIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/sinst.cc -o cstrio.o'
+	@$(COMPILE.cc) -DC \
+		`for N in $(STRIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/sinst.cc -o cstrio.o.o
+	@$(LD) -x -r cstrio.o.o -o cstrio.o
+	@rm -f cstrio.o.o
+
+cstrio.po: sinst.cc $(STD_DIR)/bastring.h \
+		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
+	@echo '$(COMPILE.cc) -p -DC \
+		`for N in $(STRIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/sinst.cc -o cstrio.po'
+	@$(COMPILE.cc) -p -DC \
+		`for N in $(STRIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/sinst.cc -o cstrio.po.o
+	@$(LD) -X -r cstrio.po.o -o cstrio.po
+	@rm -f cstrio.po.o
+
+cstrio.so: sinst.cc $(STD_DIR)/bastring.h \
+		$(STD_DIR)/bastring.cc $(STD_DIR)/straits.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC  -DC \
+		`for N in $(STRIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/sinst.cc -o cstrio.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DC \
+		`for N in $(STRIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/sinst.cc -o cstrio.so.o
+	@$(LD) -x -r cstrio.so.o -o cstrio.so
+	@rm -f cstrio.so.o
+
+fcomplex.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -DF \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomplex.o'
+	@$(COMPILE.cc) -DF \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomplex.o.o
+	@$(LD) -x -r fcomplex.o.o -o fcomplex.o
+	@rm -f fcomplex.o.o
+
+fcomplex.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -p -DF \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomplex.po'
+	@$(COMPILE.cc) -p  -DF \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomplex.po.o
+	@$(LD) -X -r fcomplex.po.o -o fcomplex.po
+	@rm -f fcomplex.po.o
+
+fcomplex.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomplex.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomplex.so.o
+	@$(LD) -x -r fcomplex.so.o -o fcomplex.so
+	@rm -f fcomplex.so.o
+
+
+fcomio.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -DF \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomio.o'
+	@$(COMPILE.cc) -DF \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomio.o.o
+	@$(LD) -x -r fcomio.o.o -o fcomio.o
+	@rm -f fcomio.o.o
+
+fcomio.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -p -DF \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomio.po'
+	@$(COMPILE.cc) -p -DF \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomio.po.o
+	@$(LD) -X -r fcomio.po.o -o fcomio.po
+	@rm -f fcomio.po.o
+
+fcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomio.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DF \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o fcomio.so.o
+	@$(LD) -x -r fcomio.so.o -o fcomio.so
+	@rm -f fcomio.so.o
+
+dcomplex.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -DD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomplex.o'
+	@$(COMPILE.cc) -DD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomplex.o.o
+	@$(LD) -x -r dcomplex.o.o -o dcomplex.o
+	@rm -f dcomplex.o.o
+
+dcomplex.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -p -DD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomplex.po'
+	@$(COMPILE.cc) -p  -DD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomplex.po.o
+	@$(LD) -X -r dcomplex.po.o -o dcomplex.po
+	@rm -f dcomplex.po.o
+
+dcomplex.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomplex.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomplex.so.o
+	@$(LD) -x -r dcomplex.so.o -o dcomplex.so
+	@rm -f dcomplex.so.o
+
+dcomio.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -DD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomio.o'
+	@$(COMPILE.cc) -DD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomio.o.o
+	@$(LD) -x -r dcomio.o.o -o dcomio.o
+	@rm -f dcomio.o.o
+
+dcomio.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -p -DD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomio.po'
+	@$(COMPILE.cc) -p -DD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomio.po.o
+	@$(LD) -X -r dcomio.po.o -o dcomio.po
+	@rm -f dcomio.po.o
+
+dcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomio.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o dcomio.so.o
+	@$(LD) -x -r dcomio.so.o -o dcomio.so
+	@rm -f dcomio.so.o
+
+ldcomplex.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -DLD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomplex.o'
+	@$(COMPILE.cc) -DLD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomplex.o.o
+	@$(LD) -x -r ldcomplex.o.o -o ldcomplex.o
+	@rm -f ldcomplex.o.o
+
+ldcomplex.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -p -DLD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomplex.po'
+	@$(COMPILE.cc) -p  -DLD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomplex.po.o
+	@$(LD) -X -r ldcomplex.po.o -o ldcomplex.po
+	@rm -f ldcomplex.po.o
+
+ldcomplex.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomplex.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
+		`for N in $(COMFUNCS); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomplex.so.o
+	@$(LD) -x -r ldcomplex.so.o -o ldcomplex.so
+	@rm -f ldcomplex.so.o
+
+ldcomio.o: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -DLD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomio.o'
+	@$(COMPILE.cc) -DLD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomio.o.o
+	@$(LD) -x -r ldcomio.o.o -o ldcomio.o
+	@rm -f ldcomio.o.o
+
+ldcomio.po: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) -p -DLD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomio.po'
+	@$(COMPILE.cc) -p -DLD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomio.po.o
+	@$(LD) -X -r ldcomio.po.o -o ldcomio.po
+	@rm -f ldcomio.po.o
+
+ldcomio.so: cinst.cc $(STD_DIR)/complext.h $(STD_DIR)/complext.cc \
+		$(STD_DIR)/dcomplex.h $(STD_DIR)/ldcomplex.h
+	@echo '$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomio.so'
+	@$(COMPILE.cc) $(PICFLAG) -DPIC -DLD \
+		`for N in $(COMIO); do echo " -D$${N}"; done` \
+		$(.CURDIR)/cinst.cc -o ldcomio.so.o
+	@$(LD) -x -r ldcomio.so.o -o ldcomio.so
+	@rm -f ldcomio.so.o
+
+.include <bsd.lib.mk>

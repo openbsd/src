@@ -1,0 +1,26 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/03/16 05:18:57 etheisen Exp $
+
+LIB=	stl
+CXXFLAGS+=	-fno-implicit-templates -nostdinc++
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/.. -I$(.CURDIR)/../../libio \
+		-I$(.OBJDIR)/../../libio
+
+CLEANFILES+=	stl.list
+
+SRCS=	tempbuf.cc tree.cc random.cc
+
+
+all:	stl.list
+
+stl.list: ${SRCS:N*.h:R:S/$/.o/g}
+	@echo Generating stl.list
+	@echo "${SRCS:N*.h:R:S/$/.o/g}" >stl.list
+
+install:
+	@-cd $(.CURDIR); for i in *.h; do \
+		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
+	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		 $$i $(DESTDIR)/usr/include/g++/$$i; \
+	done
+
+.include <bsd.lib.mk>
