@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.72 2003/06/27 14:38:02 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.73 2003/06/30 10:50:16 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,7 +79,6 @@ void			 pf_init_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
-void			 pf_tag_purge(void);
 
 extern struct timeout	 pf_expire_to;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.158 2003/06/29 23:37:12 itojun Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.159 2003/06/30 10:50:16 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1116,6 +1116,7 @@ int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);
 void		pf_tag_unref(u_int16_t);
+void		pf_tag_purge(void);
 int		pf_tag_packet(struct mbuf *, struct pf_tag *, int);
 
 extern struct pf_status	pf_status;
