@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.3 2000/02/01 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: send.c,v 1.4 2002/09/06 22:00:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989 Regents of the University of California.
@@ -733,7 +733,7 @@ input int buflen;			/* remaining buffer size */
 {
 	fd_set fds;
 	struct timeval wait;
-	int fromlen;
+	socklen_t fromlen;
 	register int n;
 
 	wait.tv_sec = timeout;
