@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.26 1999/08/06 01:25:12 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.27 1999/11/13 00:11:52 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4061,25 +4061,18 @@ ENTRY(getfp)
  */
 ENTRY(copyinstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
-#ifdef DIAGNOSTIC
-	tst	%o2			! kernel should never give maxlen <= 0
-	ble	1f
-	 EMPTY
-#endif
+	mov	%o1, %o5		! save = toaddr;
+	tst	%o2			! maxlen == 0?
+	beq,a	Lcstoolong		! yes, return ENAMETOOLONG
+	 sethi	%hi(_cpcb), %o4
+
 	set	KERNBASE, %o4
 	cmp	%o0, %o4		! fromaddr < KERNBASE?
-	blu,a	Lcsdocopy		! yes, go do it
-	sethi	%hi(_cpcb), %o4		! (first instr of copy)
+	blu	Lcsdocopy		! yes, go do it
+	 sethi	%hi(_cpcb), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
-
-1:
-	sethi	%hi(2f), %o0
-	call	_panic
-	 or	%lo(2f), %o0, %o0
-2:	.asciz	"copyinstr"
-	_ALIGN
 
 /*
  * copyoutstr(fromaddr, toaddr, maxlength, &lencopied)
@@ -4089,33 +4082,25 @@ ENTRY(copyinstr)
  */
 ENTRY(copyoutstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
-#ifdef DIAGNOSTIC
-	tst	%o2
-	ble	1f
-	 EMPTY
-#endif
+	mov	%o1, %o5		! save = toaddr;
+	tst	%o2			! maxlen == 0?
+	beq,a	Lcstoolong		! yes, return ENAMETOOLONG
+	 sethi	%hi(_cpcb), %o4
+
 	set	KERNBASE, %o4
 	cmp	%o1, %o4		! toaddr < KERNBASE?
-	blu,a	Lcsdocopy		! yes, go do it
+	blu	Lcsdocopy		! yes, go do it
 	 sethi	%hi(_cpcb), %o4		! (first instr of copy)
 
 	b	Lcsdone			! no, return EFAULT
 	 mov	EFAULT, %o0
 
-1:
-	sethi	%hi(2f), %o0
-	call	_panic
-	 or	%lo(2f), %o0, %o0
-2:	.asciz	"copyoutstr"
-	_ALIGN
-
 Lcsdocopy:
 !	sethi	%hi(_cpcb), %o4		! (done earlier)
 	ld	[%o4 + %lo(_cpcb)], %o4	! catch faults
-	set	Lcsfault, %o5
-	st	%o5, [%o4 + PCB_ONFAULT]
+	set	Lcsfault, %g1
+	st	%g1, [%o4 + PCB_ONFAULT]
 
-	mov	%o1, %o5		!	save = toaddr;
 ! XXX should do this in bigger chunks when possible
 0:					! loop:
 	ldsb	[%o0], %g1		!	c = *fromaddr;
@@ -4124,10 +4109,10 @@ Lcsdocopy:
 	be	1f			!	if (c == NULL)
 	 inc	%o1			!		goto ok;
 	deccc	%o2			!	if (--len > 0) {
-	bg	0b			!		fromaddr++;
+	bgu	0b			!		fromaddr++;
 	 inc	%o0			!		goto loop;
 					!	}
-					!
+Lcstoolong:				!
 	b	Lcsdone			!	error = ENAMETOOLONG;
 	 mov	ENAMETOOLONG, %o0	!	goto done;
 1:					! ok:
@@ -4153,12 +4138,11 @@ Lcsfault:
  * it does not seem that way to the C compiler.)
  */
 ENTRY(copystr)
-#ifdef DIAGNOSTIC
-	tst	%o2			! 	if (maxlength <= 0)
-	ble	4f			!		panic(...);
-	 EMPTY
-#endif
 	mov	%o1, %o5		!	to0 = to;
+	tst	%o2			! if (maxlength == 0)
+	beq,a	2f			!
+	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
+
 0:					! loop:
 	ldsb	[%o0], %o4		!	c = *from;
 	tst	%o4
@@ -4166,7 +4150,7 @@ ENTRY(copystr)
 	be	1f			!	if (c == 0)
 	 inc	%o1			!		goto ok;
 	deccc	%o2			!	if (--len > 0) {
-	bg,a	0b			!		from++;
+	bgu,a	0b			!		from++;
 	 inc	%o0			!		goto loop;
 	b	2f			!	}
 	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
@@ -4180,15 +4164,6 @@ ENTRY(copystr)
 3:
 	retl
 	 nop
-#ifdef DIAGNOSTIC
-4:
-	sethi	%hi(5f), %o0
-	call	_panic
-	 or	%lo(5f), %o0, %o0
-5:
-	.asciz	"copystr"
-	_ALIGN
-#endif
 
 /*
  * Copyin(src, dst, len)
