@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.33 2002/03/14 00:42:25 miod Exp $
+	$OpenBSD: syscalls.master,v 1.34 2002/06/05 19:43:25 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -68,12 +68,12 @@
 18	STD		{ int linux_sys_ostat(void); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	STD		{ pid_t linux_sys_getpid(void); }
 21	STD		{ int linux_sys_mount(char *specialfile, char *dir, \
 			    char *filesystemtype, long rwflag, void *data); }
 22	STD		{ int linux_sys_umount(char *specialfile); }
 23	NOARGS		linux_setuid16 { int sys_setuid(uid_t uid); }
-24	NOARGS		linux_getuid16 { uid_t sys_getuid(void); }
+24	STD		linux_getuid16 { uid_t linux_sys_getuid(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
 #ifdef PTRACE
 26	STD		{ int linux_sys_ptrace(void); }
@@ -101,7 +101,7 @@
 44	STD		{ int linux_sys_prof(void); }
 45	STD		{ int linux_sys_brk(char *nsize); }
 46	NOARGS		linux_setgid16 { int sys_setgid(gid_t gid); }
-47	NOARGS		linux_getgid16 { gid_t sys_getgid(void); }
+47	STD		linux_getgid16 { gid_t linux_sys_getgid(void); }
 48	STD		{ int linux_sys_signal(int sig, \
 			    linux_handler_t handler); }
 49	NOARGS		linux_geteuid16 { uid_t sys_geteuid(void); }
@@ -327,8 +327,8 @@
 197     STD        	{ int linux_sys_fstat64(int fd, \
 			    struct linux_stat64 *sp); }
 198	NOARGS		{ int linux_sys_lchown(void); }
-199	NOARGS		{ uid_t sys_getuid(void); }
-200	NOARGS		{ gid_t sys_getgid(void); }
+199	STD		{ uid_t linux_sys_getuid(void); }
+200	STD		{ gid_t linux_sys_getgid(void); }
 201	NOARGS		{ uid_t sys_geteuid(void); }
 202	NOARGS		{ gid_t sys_getegid(void); }
 203	NOARGS		{ int linux_sys_setreuid(void); }
