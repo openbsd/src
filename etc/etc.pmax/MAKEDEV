@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.16 1997/07/07 08:58:14 graichen Exp $
+#	$OpenBSD: MAKEDEV,v 1.17 1997/08/20 03:39:32 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -215,8 +215,8 @@ scc*)
 	unit=`expr $i : 'scc\(.*\)'`
 	case $unit in
 	0)
-		mknod tty00 c 17 2
-		mknod tty01 c 17 3
+		mknod tty00 c 17 0
+		mknod tty01 c 17 2
 		;;
 	*)
 		echo bad unit for scc in: $i
