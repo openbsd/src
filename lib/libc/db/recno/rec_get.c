@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_get.c,v 1.5 1999/02/15 05:11:25 millert Exp $	*/
+/*	$OpenBSD: rec_get.c,v 1.6 2000/11/21 02:11:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_get.c	8.9 (Berkeley) 8/18/94";
 #else
-static char rcsid[] = "$OpenBSD: rec_get.c,v 1.5 1999/02/15 05:11:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: rec_get.c,v 1.6 2000/11/21 02:11:02 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,7 +189,7 @@ __rec_vpipe(t, top)
 {
 	DBT data;
 	recno_t nrec;
-	indx_t len;
+	size_t len;
 	size_t sz;
 	int bval, ch;
 	u_char *p;
