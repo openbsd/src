@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.10 2004/01/01 08:19:33 brad Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.11 2004/01/03 07:35:10 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -57,7 +57,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	struct pthread	*curthread = _get_curthread();
 	struct timespec ts;
 	int             bit, i, j, ret = 0, f_wait = 1;
-	int		events, got_one = 0, fd_count = 0;
+	int		events, got_events = 0, fd_count = 0;
 	struct pthread_poll_data data;
 	fd_mask		mask, rmask, wmask, emask;
 
@@ -183,21 +183,34 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 			 * this file descriptor from the fdset if
 			 * the requested event wasn't ready.
 			 */
-			got_one = 0;
+
+			/*
+			 * First check for invalid descriptor.
+			 * If found, set errno and return -1.
+			 */
+			if (data.fds[i].revents & POLLNVAL) {
+				errno = EBADF;
+				ret = -1;
+				goto done;
+			}
+
+			got_events = 0;
 			if (readfds != NULL) {
 				if (FD_ISSET(data.fds[i].fd, readfds)) {
-					if (data.fds[i].revents & (POLLIN |
-					    POLLRDNORM))
-						got_one = 1;
+					if ((data.fds[i].revents & (POLLIN
+					    | POLLRDNORM | POLLERR
+					    | POLLHUP)) != 0)
+						got_events++;
 					else
 						FD_CLR(data.fds[i].fd, readfds);
 				}
 			}
 			if (writefds != NULL) {
 				if (FD_ISSET(data.fds[i].fd, writefds)) {
-					if (data.fds[i].revents & (POLLOUT |
-					    POLLWRNORM | POLLWRBAND))
-						got_one = 1;
+					if ((data.fds[i].revents & (POLLOUT
+					    | POLLWRNORM | POLLWRBAND | POLLERR
+					    | POLLHUP)) != 0)
+						got_events++;
 					else
 						FD_CLR(data.fds[i].fd,
 						    writefds);
@@ -206,16 +219,15 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 			if (exceptfds != NULL) {
 				if (FD_ISSET(data.fds[i].fd, exceptfds)) {
 					if (data.fds[i].revents & (POLLRDBAND |
-					    POLLPRI | POLLHUP | POLLERR |
-					    POLLNVAL))
-						got_one = 1;
+					    POLLPRI))
+						got_events++;
 					else
 						FD_CLR(data.fds[i].fd,
 						    exceptfds);
 				}
 			}
-			if (got_one)
-				numfds++;
+			if (got_events != 0)
+				numfds+=got_events;
 		}
 		ret = numfds;
 	}
