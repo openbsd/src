@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 1997/09/24 22:28:15 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 1997/09/28 16:49:41 flipk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1406,18 +1406,22 @@ cpu_reset()
 {
 	struct region_descriptor region;
 
+	disable_intr();
+
 	/* Toggle the hardware reset line on the keyboard controller. */
 	outb(KBCMDP, KBC_PULSE0);
-	delay(20000);
+	delay(100000);
 	outb(KBCMDP, KBC_PULSE0);
-	delay(20000);
+	delay(100000);
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by setting the
 	 * IDT to point to nothing.
 	 */
-	setregion(&region, 0, 0);
+	bzero((caddr_t)idt, sizeof(idt));
+	setregion(&region, idt, sizeof(idt) - 1);
 	lidt(&region);
+	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 	/*
 	 * Try to cause a triple fault and watchdog reset by unmapping the
