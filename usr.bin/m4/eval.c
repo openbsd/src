@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.36 2001/09/19 13:14:18 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.37 2001/09/27 11:40:33 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.36 2001/09/19 13:14:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.37 2001/09/27 11:40:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.36 2001/09/19 13:14:18 espie Exp $";
 static void	dodefn __P((const char *));
 static void	dopushdef __P((const char *, const char *));
 static void	dodump __P((const char *[], int));
+static void	dotrace __P((const char *[], int, int));
 static void	doifelse __P((const char *[], int));
 static int	doincl __P((const char *));
 static int	dopaste __P((const char *));
@@ -167,6 +168,14 @@ expand_builtin(argv, argc, td)
 
 	case DUMPTYPE:
 		dodump(argv, argc);
+		break;
+
+	case TRACEONTYPE:
+		dotrace(argv, argc, 1);
+		break;
+
+	case TRACEOFFTYPE:
+		dotrace(argv, argc, 0);
 		break;
 
 	case EXPRTYPE:
@@ -673,6 +682,24 @@ dodump(argv, argc)
 			for (p = hashtab[n]; p != nil; p = p->nxtptr)
 				dump_one_def(p);
 	}
+}
+
+/*
+ * dotrace - mark some macros as traced/untraced depending upon on.
+ */
+static void
+dotrace(argv, argc, on)
+	const char *argv[];
+	int argc;
+	int on;
+{
+	int n;
+
+	if (argc > 2) {
+		for (n = 2; n < argc; n++)
+			mark_traced(argv[n], on);
+	} else
+		mark_traced(NULL, on);
 }
 
 /*

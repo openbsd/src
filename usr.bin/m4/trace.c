@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.1 2001/09/18 14:55:52 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.2 2001/09/27 11:40:33 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -28,6 +28,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <err.h>
+#include <stdlib.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -47,30 +48,64 @@ int traced_macros = 0;
 #define TRACE_INPUT	256	/* not implemented yet */
 #define TRACE_ALL	512
 
-
-static unsigned int letter_to_flag __P((int));
-static void print_header __P((struct input_file *));
-
-static unsigned int flags = TRACE_QUOTE | TRACE_EXPANSION;
-
 static struct t {
 	struct t *next;
 	char 	 *name;
+	int	  on;
 } *l;
 
-void
-mark_traced(name)
+static unsigned int letter_to_flag __P((int));
+static void print_header __P((struct input_file *));
+static struct t *find_trace_entry __P((const char *));
+
+static unsigned int flags = TRACE_QUOTE | TRACE_EXPANSION;
+
+static struct t *
+find_trace_entry(name)
 	const char *name;
 {
 	struct t *n;
 
+	for (n = l; n != NULL; n = n->next)
+		if (STREQ(n->name, name))
+			return n;
+	return NULL;
+}
+
+
+void
+mark_traced(name, on)
+	const char *name;
+	int on;
+{
+	struct t *n, *n2;
+
 	traced_macros = 1;
+
+	if (name == NULL) {
+		if (on)
+			flags |= TRACE_ALL;
+		else {
+			flags &= ~TRACE_ALL;
+			traced_macros = 0;
+		}
+		for (n = l; n != NULL; n = n2) {
+			n2 = n->next;
+			free(n->name);
+			free(n);
+		}
+		l = NULL;
+	} else {
+	    n = find_trace_entry(name);
+	    if (n == NULL) {
 	n = xalloc(sizeof(struct t));
 	n->name = xstrdup(name);
 	n->next = l;
 	l = n;
+	    }
+	    n->on = on;
+	}
 }
-
 
 int 
 is_traced(name)
@@ -78,12 +113,10 @@ is_traced(name)
 {
 	struct t *n;
 
-	if (flags & TRACE_ALL)
-		return 1;
 	for (n = l; n != NULL; n = n->next)
 		if (STREQ(n->name, name))
-			return 1;
-	return 0;
+			return n->on;
+	return (flags & TRACE_ALL) ? 1 : 0;
 }
 
 void

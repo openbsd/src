@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.21 2000/11/10 05:10:33 aaron Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.22 2001/09/27 11:40:33 espie Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -272,6 +272,12 @@ Nothing is returned.
 .It Ic sysval
 Returns the return value from the last
 .Ic syscmd .
+.It Ic traceon
+Enables tracing of macro expansions for the given arguments, or for all
+macros if no argument is given.
+.It Ic traceoff
+Disables tracing of macro expansions for the given arguments, or for all
+macros if no argument is given.
 .It Ic translit
 Transliterate the characters in the first argument from the set
 given by the second argument to the set given by the third.

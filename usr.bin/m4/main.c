@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2001/09/19 13:14:18 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2001/09/27 11:40:33 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.48 2001/09/19 13:14:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.49 2001/09/27 11:40:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,8 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "m4exit",       EXITTYPE | NOARGS },
 	{ "syscmd",       SYSCTYPE },
 	{ "sysval",       SYSVTYPE | NOARGS },
+	{ "traceon",	  TRACEONTYPE | NOARGS },
+	{ "traceoff",	  TRACEOFFTYPE | NOARGS },
 
 #if defined(unix) || defined(__unix__) 
 	{ "unix",         SELFTYPE | NOARGS },
@@ -216,7 +218,7 @@ main(argc,argv)
 			set_trace_flags(optarg);
 			break;
 		case 't':
-			mark_traced(optarg);
+			mark_traced(optarg, 1);
 			break;
 		case 'o':
 			trace_file(optarg);

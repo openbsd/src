@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.20 2001/09/18 13:39:52 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.21 2001/09/27 11:40:33 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -80,6 +80,9 @@
 #define LINETYPE	39
 #define REGEXPTYPE	40
 #define ESYSCMDTYPE	41
+#define TRACEONTYPE	42
+#define TRACEOFFTYPE	43
+
  
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
 #define RECDEF		256	/* Pure recursive def, don't expand it */
