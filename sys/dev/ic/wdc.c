@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.36 2001/06/25 19:31:49 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.37 2001/07/12 01:45:43 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -347,20 +347,8 @@ wdc_floating_bus(chp, drive)
 			return 1;
 	}
 
-	/*
-	 * Test register writability
-	 */
-	CHP_WRITE_REG(chp, wdr_cyl_lo, 0xaa);
-	CHP_WRITE_REG(chp, wdr_cyl_hi, 0x55);
-	CHP_WRITE_REG(chp, wdr_seccnt, 0xff);
 
-	if (CHP_READ_REG(chp, wdr_cyl_lo) == 0xaa &&
-	    CHP_READ_REG(chp, wdr_cyl_hi) == 0x55)
-		return 0;
-
-	CHP_WRITE_REG(chp, wdr_seccnt, 0x58);
-
-	return 1;
+	return 0;
 }
 
 
@@ -403,7 +391,9 @@ wdc_ata_present(chp, drive)
 	int drive;
 {
 	int time_to_done;
+	int retry_cnt = 0;
 
+ retry:
 	/* 
 	   You're actually supposed to wait up to 10 seconds
 	   for DRDY. However, as a practical matter, most
@@ -413,59 +403,37 @@ wdc_ata_present(chp, drive)
 	   to the ATA standard, the master should reply with 00
 	   for any reads to a non-existant slave. 
 	*/
+	time_to_done = wdc_wait_for_status(chp,
+	    (WDCS_DRDY | WDCS_DSC | WDCS_DRQ), 
+	    (WDCS_DRDY | WDCS_DSC), 1000);
+      	if (time_to_done == -1) {
+		if (retry_cnt == 0 && chp->ch_status == 0x00) {
+			/* At least one flash card needs to be kicked */
+			wdccommandshort(chp, drive, WDCC_CHECK_PWR);
+			retry_cnt++;
+			goto retry;
+		}
+		return 0;
+	}
 
-	time_to_done = wdc_wait_for_status(chp, WDCS_DRDY, WDCS_DRDY, 1000);
-      	if (time_to_done == -1) return 0;
+	if ((chp->ch_status & 0xfc) != (WDCS_DRDY | WDCS_DSC))
+		return 0;
 
 	WDCDEBUG_PRINT(("%s:%d:%d: waiting for ready %d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    chp->channel, drive, time_to_done), DEBUG_PROBE);
 
-	/* 
-	   This section has been disabled because my Promise Ultra/66
-	   starts interrupting like crazy when I issue a NOP. This
-	   needs to be researched. - csapuntz@openbsd.org
-	*/
-#if 0
-	/* 
-	   The NOP command always aborts.
+	/*
+	 * Test register writability
+	 */
+	CHP_WRITE_REG(chp, wdr_cyl_lo, 0xaa);
+	CHP_WRITE_REG(chp, wdr_cyl_hi, 0x55);
+	CHP_WRITE_REG(chp, wdr_seccnt, 0xff);
+       	DELAY(10);
 
-	   If a drive doesn't understand NOP, it will abort the
-	   command.
-
-	   If a drive does understand NOP, it will abort the command.
-
-	   If a drive is not present, we may get random crud on
-	   register reads which will hopefully not pass the test.
-
-	   Thanks to gluk@ptci.ru for designing this check.
-	*/
-
-	CHP_WRITE_REG(chp, wdr_features, 0);
-	CHP_WRITE_REG(chp, wdr_command, WDCC_NOP);
-      	delay(10);
-
-	time_to_done = wdc_wait_for_status(chp, 0, 0, 1000);
-
-	if (time_to_done == -1) {
-		WDCDEBUG_PRINT(("%s:%d:%d: timeout waiting for NOP to complete\n", 
-		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, drive), DEBUG_PROBE);
+	if (CHP_READ_REG(chp, wdr_cyl_lo) != 0xaa &&
+	    CHP_READ_REG(chp, wdr_cyl_hi) != 0x55)
 		return 0;
-	}
-
-	WDCDEBUG_PRINT(("%s:%d:%d: NOP completed in %d msec\n",
-	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    chp->channel, drive, time_to_done), DEBUG_PROBE);
-
-	if (!(chp->ch_status & WDCS_ERR) &&
-	    !(chp->ch_error & WDCE_ABRT)) {
-		WDCDEBUG_PRINT(("%s:%d:%d: NOP command did not ABORT command\n",
-		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, drive), DEBUG_PROBE);
-		return 0;
-	}
-#endif
 
 	return 1;
 }
@@ -484,17 +452,18 @@ wdcprobe(chp)
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
-	
-	if (!chp->_vtbl)
+
+	if (chp->_vtbl == 0) {
+		int s = splbio();
 		chp->_vtbl = &wdc_default_vtbl;
+		splx(s);
+	}
 
 #ifdef WDCDEBUG
 	if ((chp->ch_flags & WDCF_VERBOSE_PROBE) ||
 	    (chp->wdc &&
 	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
-		wdcdebug_mask |= DEBUG_PROBE;
-
-	
+		wdcdebug_mask |= DEBUG_PROBE;	
 #endif
 
 	if (chp->wdc == NULL ||
@@ -565,7 +534,12 @@ wdcprobe(chp)
 		 */
 		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
-		} else if (wdc_ata_present(chp, drive)) {
+			continue;
+		} 
+
+		wdc_disable_intr(chp);
+		/* ATA detect */
+		if (wdc_ata_present(chp, drive)) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
 			if (chp->wdc == NULL ||
 			    (chp->wdc->cap & WDC_CAPABILITY_PREATA) != 0)
@@ -573,6 +547,7 @@ wdcprobe(chp)
 		} else {
 			ret_value &= ~(1 << drive);
 		}
+		wdc_enable_intr(chp);
 	}
 
 #ifdef WDCDEBUG
@@ -845,8 +820,16 @@ wdcintr(arg)
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
 	int ret;
-
+	
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
+		/* Acknowledge interrupt by reading status */
+		if (chp->_vtbl == 0) {
+			bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, 
+			    wdr_status & _WDC_REGMASK);
+		} else {
+			CHP_READ_REG(chp, wdr_status);
+		}
+
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
 		return 0;
 	}

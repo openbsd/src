@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.11 2001/07/09 20:10:40 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.12 2001/07/12 01:45:42 csapuntz Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -70,18 +70,16 @@ ata_get_params(drvp, flags, prms)
 
 	int i;
 	u_int16_t *p;
-	int try = 0;
 
 	WDCDEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
 
- again:
 	bzero(tb, sizeof(tb));
 	bzero(prms, sizeof(struct ataparams));
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
-		wdc_c.r_st_bmask = (try == 0) ? WDCS_DRDY : 0;
+		wdc_c.r_st_bmask = WDCS_DRDY;
 		wdc_c.r_st_pmask = WDCS_DRQ;
 		wdc_c.timeout = 1000; /* 1s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
@@ -105,21 +103,8 @@ ata_get_params(drvp, flags, prms)
 	}
 
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		struct channel_softc *chp = drvp->chnl_softc;
-
 		WDCDEBUG_PRINT(("IDENTIFY failed: 0x%x\n", wdc_c.flags)
 		    , DEBUG_PROBE);
-
-		/* Andreas Gunnarsson reports a setup with a flash
-		   disk where the ATA drive remains comatose until
-		   it is sent a command */  
-		if (try == 0 && (drvp->drive_flags & DRIVE_ATA) &&
-		    (wdc_c.flags & AT_TIMEOU) &&
-		    !(chp->ch_status & WDCS_BSY)) {
-			WDCDEBUG_PRINT(("Retrying IDENTIFY\n"), DEBUG_PROBE);
-			try++;
-			goto again;
-		}
 
 		return CMD_ERR;
 	} else {
