@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.9 2001/02/16 16:19:56 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.10 2001/04/04 06:22:57 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -286,34 +286,38 @@ nd6_ra_input(m, off, icmp6len)
 			pi = (struct nd_opt_prefix_info *)pt;
 
 			if (pi->nd_opt_pi_len != 4) {
-				log(LOG_INFO, "nd6_ra_input: invalid option "
-					"len %d for prefix information option, "
-					"ignored\n", pi->nd_opt_pi_len);
+				nd6log((LOG_INFO,
+				    "nd6_ra_input: invalid option "
+				    "len %d for prefix information option, "
+				    "ignored\n", pi->nd_opt_pi_len));
 				continue;
 			}
 
 			if (128 < pi->nd_opt_pi_prefix_len) {
-				log(LOG_INFO, "nd6_ra_input: invalid prefix "
-					"len %d for prefix information option, "
-					"ignored\n", pi->nd_opt_pi_prefix_len);
+				nd6log((LOG_INFO,
+				    "nd6_ra_input: invalid prefix "
+				    "len %d for prefix information option, "
+				    "ignored\n", pi->nd_opt_pi_prefix_len));
 				continue;
 			}
 
 			if (IN6_IS_ADDR_MULTICAST(&pi->nd_opt_pi_prefix)
 			 || IN6_IS_ADDR_LINKLOCAL(&pi->nd_opt_pi_prefix)) {
-				log(LOG_INFO, "nd6_ra_input: invalid prefix "
-					"%s, ignored\n",
-					ip6_sprintf(&pi->nd_opt_pi_prefix));
+				nd6log((LOG_INFO,
+				    "nd6_ra_input: invalid prefix "
+				    "%s, ignored\n",
+				    ip6_sprintf(&pi->nd_opt_pi_prefix)));
 				continue;
 			}
 
 			/* aggregatable unicast address, rfc2374 */
 			if ((pi->nd_opt_pi_prefix.s6_addr8[0] & 0xe0) == 0x20
 			 && pi->nd_opt_pi_prefix_len != 64) {
-				log(LOG_INFO, "nd6_ra_input: invalid prefixlen "
-					"%d for rfc2374 prefix %s, ignored\n",
-					pi->nd_opt_pi_prefix_len,
-					ip6_sprintf(&pi->nd_opt_pi_prefix));
+				nd6log((LOG_INFO,
+				    "nd6_ra_input: invalid prefixlen "
+				    "%d for rfc2374 prefix %s, ignored\n",
+				    pi->nd_opt_pi_prefix_len,
+				    ip6_sprintf(&pi->nd_opt_pi_prefix)));
 				continue;
 			}
 
@@ -347,9 +351,9 @@ nd6_ra_input(m, off, icmp6len)
 
 		/* lower bound */
 		if (mtu < IPV6_MMTU) {
-			log(LOG_INFO, "nd6_ra_input: bogus mtu option "
+			nd6log((LOG_INFO, "nd6_ra_input: bogus mtu option "
 			    "mtu=%d sent from %s, ignoring\n",
-			    mtu, ip6_sprintf(&ip6->ip6_src));
+			    mtu, ip6_sprintf(&ip6->ip6_src)));
 			goto skip;
 		}
 
@@ -362,17 +366,17 @@ nd6_ra_input(m, off, icmp6len)
 				if (change) /* in6_maxmtu may change */
 					in6_setmaxmtu();
 			} else {
-				log(LOG_INFO, "nd6_ra_input: bogus mtu "
+				nd6log((LOG_INFO, "nd6_ra_input: bogus mtu "
 				    "mtu=%d sent from %s; "
 				    "exceeds maxmtu %d, ignoring\n",
 				    mtu, ip6_sprintf(&ip6->ip6_src),
-				    ndi->maxmtu);
+				    ndi->maxmtu));
 			}
 		} else {
-			log(LOG_INFO, "nd6_ra_input: mtu option "
+			nd6log((LOG_INFO, "nd6_ra_input: mtu option "
 			    "mtu=%d sent from %s; maxmtu unknown, "
 			    "ignoring\n",
-			    mtu, ip6_sprintf(&ip6->ip6_src));
+			    mtu, ip6_sprintf(&ip6->ip6_src)));
 		}
 	}
 
@@ -464,10 +468,10 @@ defrouter_addifreq(ifp)
 	 * XXX: An IPv6 address are required to be assigned on the interface.
 	 */
 	if ((ifa = ifaof_ifpforaddr((struct sockaddr *)&def, ifp)) == NULL) {
-		log(LOG_ERR,	/* better error? */
+		nd6log((LOG_ERR,	/* better error? */
 		    "defrouter_addifreq: failed to find an ifaddr "
 		    "to install a route to interface %s\n",
-		    if_name(ifp));
+		    if_name(ifp)));
 		return;
 	}
 
@@ -477,10 +481,10 @@ defrouter_addifreq(ifp)
 	if ((error = rtrequest(RTM_ADD, (struct sockaddr *)&def,
 			       ifa->ifa_addr, (struct sockaddr *)&mask,
 			       flags, NULL)) != 0) {
-		log(LOG_ERR,
+		nd6log((LOG_ERR,
 		    "defrouter_addifreq: failed to install a route to "
 		    "interface %s (errno = %d)\n",
-		    if_name(ifp), error);
+		    if_name(ifp), error));
 	}
 }
 
@@ -899,8 +903,9 @@ prelist_update(new, dr, m)
 				new->ndpr_plen);
 			if (!ia6) {
 				error = EADDRNOTAVAIL;
-				log(LOG_ERR, "prelist_update: failed to add a "
-				    "new address\n");
+				nd6log((LOG_ERR,
+				    "prelist_update: failed to add a "
+				    "new address\n"));
 				goto noautoconf1;
 			}
 
@@ -994,8 +999,8 @@ prelist_update(new, dr, m)
 			  &new->ndpr_addr, new->ndpr_plen);
 		if (!ia6) {
 			error = EADDRNOTAVAIL;
-			log(LOG_ERR, "prelist_update: "
-				"failed to add a new address\n");
+			nd6log((LOG_ERR, "prelist_update: "
+				"failed to add a new address\n"));
 			goto noautoconf2;
 		}
 		/* set onlink bit if an interface route is configured */
@@ -1125,12 +1130,12 @@ nd6_detach_prefix(pr)
 		e = rtrequest(RTM_DELETE, (struct sockaddr *)&sa6, NULL,
 			      (struct sockaddr *)&mask6, 0, NULL);
 		if (e) {
-			log(LOG_ERR,
+			nd6log((LOG_ERR,
 			    "nd6_detach_prefix: failed to delete route: "
 			    "%s/%d (errno = %d)\n",
 			    ip6_sprintf(&sa6.sin6_addr),
 			    pr->ndpr_plen,
-			    e);
+			    e));
 		}
 	}
 
@@ -1160,10 +1165,10 @@ nd6_attach_prefix(pr)
 	ifa = ifaof_ifpforaddr((struct sockaddr *)&pr->ndpr_prefix,
 			       pr->ndpr_ifp);
 	if (ifa == NULL) {
-		log(LOG_ERR,
+		nd6log((LOG_ERR,
 		    "nd6_attach_prefix: failed to find any ifaddr"
 		    " to add route for a prefix(%s/%d)\n",
-		    ip6_sprintf(&pr->ndpr_addr), pr->ndpr_plen);
+		    ip6_sprintf(&pr->ndpr_addr), pr->ndpr_plen));
 	}
 	else {
 		int e;
@@ -1179,10 +1184,10 @@ nd6_attach_prefix(pr)
 		if (e == 0)
 			pr->ndpr_statef_onlink = 1;
 		else {
-			log(LOG_ERR,
+			nd6log((LOG_ERR,
 			    "nd6_attach_prefix: failed to add route for"
 			    " a prefix(%s/%d), errno = %d\n",
-			    ip6_sprintf(&pr->ndpr_addr), pr->ndpr_plen, e);
+			    ip6_sprintf(&pr->ndpr_addr), pr->ndpr_plen, e));
 		}
 	}
 
@@ -1232,10 +1237,10 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 
 	/* prefixlen + ifidlen must be equal to 128 */
 	if (prefixlen != in6_mask2len(&ib->ia_prefixmask.sin6_addr)) {
-		log(LOG_ERR, "in6_ifadd: wrong prefixlen for %s"
+		nd6log((LOG_ERR, "in6_ifadd: wrong prefixlen for %s"
 			"(prefix=%d ifid=%d)\n", if_name(ifp),
 			prefixlen,
-			128 - in6_mask2len(&ib->ia_prefixmask.sin6_addr));
+			128 - in6_mask2len(&ib->ia_prefixmask.sin6_addr)));
 		return NULL;
 	}
 
@@ -1310,10 +1315,11 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 
 	/* add interface route */
 	if ((error = rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_UP|RTF_CLONING))) {
-		log(LOG_NOTICE, "in6_ifadd: failed to add an interface route "
+		nd6log((LOG_NOTICE,
+		    "in6_ifadd: failed to add an interface route "
 		    "for %s/%d on %s, errno = %d\n",
 		    ip6_sprintf(&ia->ia_addr.sin6_addr), prefixlen,
-		    if_name(ifp), error);
+		    if_name(ifp), error));
 	}
 	else
 		ia->ia_flags |= IFA_ROUTE;
@@ -1432,9 +1438,9 @@ in6_init_prefix_ltimes(struct nd_prefix *ndpr)
 
 	/* check if preferred lifetime > valid lifetime */
 	if (ndpr->ndpr_pltime > ndpr->ndpr_vltime) {
-		log(LOG_INFO, "in6_init_prefix_ltimes: preferred lifetime"
+		nd6log((LOG_INFO, "in6_init_prefix_ltimes: preferred lifetime"
 		    "(%d) is greater than valid lifetime(%d)\n",
-		    (u_int)ndpr->ndpr_pltime, (u_int)ndpr->ndpr_vltime);
+		    (u_int)ndpr->ndpr_pltime, (u_int)ndpr->ndpr_vltime));
 		return (EINVAL);
 	}
 	if (ndpr->ndpr_pltime == ND6_INFINITE_LIFETIME)
