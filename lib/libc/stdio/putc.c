@@ -35,10 +35,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: putc.c,v 1.2 1996/08/19 08:32:58 tholo Exp $";
+static char rcsid[] = "$OpenBSD: putc.c,v 1.3 1996/10/28 05:32:55 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include <errno.h>
+#include "local.h"
 
 /*
  * A subroutine version of the macro putc.
@@ -49,5 +51,9 @@ putc(c, fp)
 	int c;
 	register FILE *fp;
 {
+	if (cantwrite(fp)) {
+		errno = EBADF;
+		return (EOF);
+	}
 	return (__sputc(c, fp));
 }
