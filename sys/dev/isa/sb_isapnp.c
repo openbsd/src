@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.6 1999/01/02 00:02:47 niklas Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.7 1999/01/02 17:48:31 niklas Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -87,26 +87,24 @@ sb_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct sbdsp_softc *sc = (struct sbdsp_softc *) self;
-	register struct isa_attach_args *ia = aux;
+	struct sbdsp_softc *sc = (struct sbdsp_softc *) self;
+	struct isa_attach_args *ia = aux;
+	int i;
 
 	sc->sc_iot = ia->ia_iot;
-	sc->sc_ioh = ia->ipa_io[0].h;
-	sc->sc_ic = ia->ia_ic;
-
-	sc->sc_iobase = ia->ipa_io[0].base;
 	sc->sc_irq = ia->ipa_irq[0].num;
+	sc->sc_ic = ia->ia_ic;
 	sc->sc_drq8 = ia->ipa_drq[0].num;
 	
-	if (ia->ipa_ndrq > 1 && ia->ipa_drq[0].num != ia->ipa_drq[1].num) {
-		/* Some cards have the 16 bit drq first */
-		if (sc->sc_drq8 >= 4) {
-			sc->sc_drq16 = sc->sc_drq8;
-			sc->sc_drq8 = ia->ipa_drq[1].num;
-		} else
-			sc->sc_drq16 = ia->ipa_drq[1].num;
-	} else
-		sc->sc_drq16 = DRQUNK;
+        if (ia->ipa_ndrq > 1 && ia->ipa_drq[0].num != ia->ipa_drq[1].num) {
+        	/* Some cards have the 16 bit drq first */
+        	if (sc->sc_drq8 >= 4) {
+                	sc->sc_drq16 = sc->sc_drq8;
+                        sc->sc_drq8 = ia->ipa_drq[1].num;
+                } else
+                	sc->sc_drq16 = ia->ipa_drq[1].num;
+        } else
+        	sc->sc_drq16 = DRQUNK;
 
 #if NMIDI > 0
 	if (ia->ipa_nio > 1) {
@@ -116,6 +114,12 @@ sb_isapnp_attach(parent, self, aux)
 		sc->sc_mpu_sc.iobase = 0;
 #endif
 
+        /*
+         * isapnp is a child if isa, and we need isa for the dma
+         * routines
+         */
+        sc->sc_isa = parent->dv_parent;
+
 	if (!sbmatch(sc)) {
 		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
 		return;
@@ -124,6 +128,5 @@ sb_isapnp_attach(parent, self, aux)
 	printf("%s: %s %s", sc->sc_dev.dv_xname, ia->ipa_devident,
 	       ia->ipa_devclass);
 
-	sc->sc_isa = parent;
 	sbattach(sc);
 }
