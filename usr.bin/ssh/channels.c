@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.85 2001/01/29 19:42:35 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.86 2001/01/31 19:26:19 markus Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
@@ -1317,7 +1317,8 @@ channel_input_open_confirmation(int type, int plen, void *ctxt)
 void
 channel_input_open_failure(int type, int plen, void *ctxt)
 {
-	int id;
+	int id, reason;
+	char *msg = NULL, *lang = NULL;
 	Channel *c;
 
 	if (!compat20)
@@ -1330,13 +1331,18 @@ channel_input_open_failure(int type, int plen, void *ctxt)
 		packet_disconnect("Received open failure for "
 		    "non-opening channel %d.", id);
 	if (compat20) {
-		int reason = packet_get_int();
-		char *msg  = packet_get_string(NULL);
-		char *lang  = packet_get_string(NULL);
-		log("channel_open_failure: %d: reason %d: %s", id, reason, msg);
+		reason = packet_get_int();
+		if (packet_remaining() > 0) {
+			msg  = packet_get_string(NULL);
+			lang = packet_get_string(NULL);
+		}
 		packet_done();
-		xfree(msg);
-		xfree(lang);
+		log("channel_open_failure: %d: reason %d %s", id,
+		    reason, msg ? msg : "<no additional info>");
+		if (msg != NULL)
+			xfree(msg);
+		if (lang != NULL)
+			xfree(lang);
 	}
 	/* Free the channel.  This will also close the socket. */
 	channel_free(id);
