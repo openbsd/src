@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig.c,v 1.2 1997/01/16 05:18:45 millert Exp $	*/
+/*	$OpenBSD: sig.c,v 1.3 1997/03/14 04:15:38 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: sig.c,v 1.2 1997/01/16 05:18:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: sig.c,v 1.3 1997/03/14 04:15:38 tholo Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -118,7 +118,7 @@ sig_init(el)
     sigset_t nset, oset;
 
     (void) sigemptyset(&nset);
-#define _DO(a) (void) sigaddset(&nset, SIGWINCH);
+#define _DO(a) (void) sigaddset(&nset, a);
     ALLSIGS
 #undef _DO
     (void) sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -158,7 +158,7 @@ sig_set(el)
     sigset_t nset, oset;
 
     (void) sigemptyset(&nset);
-#define _DO(a) (void) sigaddset(&nset, SIGWINCH);
+#define _DO(a) (void) sigaddset(&nset, a);
     ALLSIGS
 #undef _DO
     (void) sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -185,7 +185,7 @@ sig_clr(el)
     sigset_t nset, oset;
 
     (void) sigemptyset(&nset);
-#define _DO(a) (void) sigaddset(&nset, SIGWINCH);
+#define _DO(a) (void) sigaddset(&nset, a);
     ALLSIGS
 #undef _DO
     (void) sigprocmask(SIG_BLOCK, &nset, &oset);
