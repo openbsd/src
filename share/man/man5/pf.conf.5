@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.256 2003/06/11 17:03:09 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.257 2003/06/11 23:09:20 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2161,7 +2161,7 @@ in BNF:
 .Bd -literal
 line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule |
                  antispoof-rule | altq-rule | queue-rule | anchor-rule |
-                 trans-anchors | load-anchors )
+                 trans-anchors | load-anchors | table-rule )
 
 option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "optimization" [ "default" | "normal" |
