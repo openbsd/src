@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.8 2003/12/10 07:21:00 itojun Exp $ */
+/* $OpenBSD: ip_id.c,v 1.9 2003/12/12 02:03:27 itojun Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -75,7 +75,7 @@ const static u_int16_t pfacts[PFAC_N] = {
 };
 
 static u_int16_t ru_x;
-static u_int16_t ru_seed, ru_seed2;
+static u_int16_t ru_seed;
 static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
@@ -128,7 +128,6 @@ ip_initid(void)
 
 	/* 15 bits of random seed */
 	ru_seed = (tmp >> 16) & 0x7FFF;
-	ru_seed2 = arc4random() & 0x7FFF;
 
 	/* Determine the LCG we use */
 	ru_b = ((tmp = arc4random()) & 0xfffe) | 1;
@@ -171,10 +170,10 @@ ip_randomid(void)
 	if (ru_counter >= RU_MAX || time.tv_sec > ru_reseed)
 		ip_initid();
 
+#if 0
 	if (!tmp)
 		tmp = arc4random();
 
-#if 0
 	/* Skip a random number of ids */
 	n = tmp & 0x3; tmp = tmp >> 2;
 	if (ru_counter + n >= RU_MAX)
