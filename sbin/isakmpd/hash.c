@@ -1,8 +1,9 @@
-/*	$OpenBSD: hash.c,v 1.4 1999/02/26 03:40:25 niklas Exp $	*/
-/*	$EOM: hash.c,v 1.8 1999/02/25 11:38:59 niklas Exp $	*/
+/*	$OpenBSD: hash.c,v 1.5 1999/04/19 20:00:24 niklas Exp $	*/
+/*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -81,7 +82,7 @@ hash_get (enum hashes hashtype)
     if (hashtype == hashes[i].type)
       return &hashes[i];
 
-  return NULL;
+  return 0;
 }
 
 /*

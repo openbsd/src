@@ -1,8 +1,9 @@
-/*	$OpenBSD: dh.c,v 1.4 1999/02/26 03:36:07 niklas Exp $	*/
-/*	$EOM: dh.c,v 1.3 1999/02/25 11:38:51 niklas Exp $	*/
+/*	$OpenBSD: dh.c,v 1.5 1999/04/19 20:00:24 niklas Exp $	*/
+/*	$EOM: dh.c,v 1.5 1999/04/17 23:20:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,13 +59,15 @@ dh_getlen (struct group *group)
  * means the application has to save the exchange value itself,
  * dh_create_exchange should only be called once.
  */ 
-
-void
+int
 dh_create_exchange (struct group *group, u_int8_t *buf)
 {
-  group->setrandom (group, group->c);
-  group->operation (group, group->a, group->gen, group->c);
+  if (group->setrandom (group, group->c))
+    return -1;
+  if (group->operation (group, group->a, group->gen, group->c))
+    return -1;
   group->getraw (group, group->a, buf);
+  return 0;
 }
 
 /*
@@ -72,11 +75,13 @@ dh_create_exchange (struct group *group, u_int8_t *buf)
  * is the exchange value offered by the other party. No length verification
  * is done for the value, the application has to do that.
  */
-
-void
+int
 dh_create_shared (struct group *group, u_int8_t *secret, u_int8_t *exchange)
 {
-  group->setraw (group, group->b, exchange, group->getlen(group));
-  group->operation (group, group->a, group->b, group->c);
+  if (group->setraw (group, group->b, exchange, group->getlen(group)))
+    return -1;
+  if (group->operation (group, group->a, group->b, group->c))
+    return -1;
   group->getraw (group, group->a, secret);
+  return 0;
 }

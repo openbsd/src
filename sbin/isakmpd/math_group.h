@@ -1,8 +1,9 @@
-/*	$OpenBSD: math_group.h,v 1.4 1999/03/24 14:59:52 niklas Exp $	*/
-/*	$EOM: math_group.h,v 1.5 1999/03/06 12:40:12 niklas Exp $	*/
+/*	$OpenBSD: math_group.h,v 1.5 1999/04/19 20:00:24 niklas Exp $	*/
+/*	$EOM: math_group.h,v 1.7 1999/04/17 23:20:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,9 +57,9 @@ struct group {
   void *gen;			/* Group Generator */
   int (*getlen) (struct group *);
   void (*getraw) (struct group *, void *, u_int8_t *);
-  void (*setraw) (struct group *, void *, u_int8_t *, int);
-  void (*setrandom) (struct group *, void *);
-  void (*operation) (struct group *, void *, void *, void *);
+  int (*setraw) (struct group *, void *, u_int8_t *, int);
+  int (*setrandom) (struct group *, void *);
+  int (*operation) (struct group *, void *, void *, void *);
 };
 
 /* Description of an Elliptic Group over GF(2**n) for Boot-Strapping */

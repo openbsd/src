@@ -1,8 +1,8 @@
-/*	$OpenBSD: cookie.c,v 1.4 1999/02/26 03:35:23 niklas Exp $	*/
-/*	$EOM: cookie.c,v 1.18 1999/02/25 11:38:49 niklas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.5 1999/04/19 20:00:24 niklas Exp $	*/
+/*	$EOM: cookie.c,v 1.20 1999/04/17 23:20:20 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -126,5 +126,5 @@ void
 cookie_init (void)
 {
   /* Start responder cookie resets.  */
-  cookie_reset_event (NULL);
+  cookie_reset_event (0);
 }
