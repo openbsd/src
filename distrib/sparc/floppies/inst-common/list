@@ -1,4 +1,4 @@
-#	$Id: list,v 1.7 1997/02/09 16:50:53 deraadt Exp $
+#	$Id: list,v 1.8 1997/03/31 07:36:09 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -47,7 +47,6 @@ SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/sed
-SYMLINK	/bin/cat		usr/bin/strings
 #SYMLINK /bin/cat		usr/bin/tip
 #SYMLINK /bin/cat		usr/sbin/bad144
 SYMLINK	/bin/cat		usr/sbin/chown
@@ -57,8 +56,7 @@ SPECIAL sync
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh ${DESTDIR}/dev/MAKEDEV std fd0
-#SPECIAL	/bin/rm dev/MAKEDEV
+SPECIAL	cd dev; sh ${DESTDIR}/dev/MAKEDEV floppy
 
 # we need the contents of /usr/mdec
 #COPY	/usr/mdec/boot	usr/mdec/boot
