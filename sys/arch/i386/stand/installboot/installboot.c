@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.22 1997/10/24 00:53:30 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.23 1997/10/25 23:04:05 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -42,6 +42,7 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <sys/reboot.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -106,6 +107,8 @@ main(argc, argv)
 	struct dos_partition *dp;
 	off_t startoff = 0;
 	int mib[4], size;
+	dev_t devno;
+	bios_diskinfo_t di;
 
 	nsectors = nheads = -1;
 	while ((c = getopt(argc, argv, "vnh:s:")) != EOF) {
@@ -144,34 +147,6 @@ main(argc, argv)
 			     OPENDEV_PART, &realdev)) < 0)
 		err(1, "open: %s", realdev);
 
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_BIOS;
-	mib[2] = BIOS_DEV;
-	size = sizeof(biosdev);
-
-	if ((nheads == -1 || nsectors == -1) &&
-	    sysctl(mib, 3, &biosdev, &size, NULL, 0) != -1) {
-
-		if (biosdev & 0x80) {
-			bios_diskinfo_t di;
-
-			mib[2] = BIOS_DISKINFO;
-			mib[3] = biosdev;
-			size = sizeof(di);
-
-			if (sysctl(mib, 4, &di, &size, NULL, 0) == -1)
-				err(1, "sysctl");
-
-			if (nheads == -1)
-				nheads = di.bios_heads;
-			if (nsectors == -1)
-				nsectors = di.bios_sectors;
-		}
-	}
-
-	if (nheads == -1 || nsectors == -1)
-		errx(1, "Unable to get BIOS geometry, must specify -h and -s");
-
 	if (verbose) {
 		fprintf(stderr, "boot: %s\n", boot);
 		fprintf(stderr, "proto: %s\n", proto);
@@ -206,6 +181,27 @@ main(argc, argv)
 
 	if (!S_ISCHR(sb.st_mode))
 		errx(1, "%s: Not a character device", realdev);
+
+	if (nheads == -1 || nsectors == -1) {
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_CHR2BLK;
+		mib[2] = sb.st_rdev;
+		size = sizeof(devno);
+		if(sysctl(mib, 3, &devno, &size, NULL, 0) < 0)
+			err(1, "mapping device number");
+		devno = MAKEBOOTDEV(major(devno), 0, 0, minor(devno), 0);
+
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_BIOS;
+		mib[2] = BIOS_DISKINFO;
+		mib[3] = devno;
+		size = sizeof(di);
+		if(sysctl(mib, 4, &di, &size, NULL, 0) < 0)
+			errx(1, "Unable to get BIOS geometry, "
+				"must specify -h and -s");
+		nheads = di.bios_heads;
+		nsectors = di.bios_sectors;
+	}
 
 	/* Extract and load block numbers */
 	if (loadblocknums(boot, devfd, &dl) != 0)
@@ -371,6 +367,8 @@ loadblocknums(boot, devfd, dl)
 	int		ndb;
 	u_int8_t	*bt;
 	struct exec	eh;
+	int mib[4], size;
+	dev_t dev;
 
 	/*
 	 * Open 2nd-level boot program and record the block numbers
@@ -407,10 +405,14 @@ loadblocknums(boot, devfd, dl)
 
 	if (fstat(devfd, &sb) != 0)
 		err(1, "fstat: %s", realdev);
-
-	printf("%x,%x\n", statbuf.st_dev/MAXPARTITIONS, major(sb.st_rdev));
-	if (statbuf.st_rdev / MAXPARTITIONS != sb.st_rdev / MAXPARTITIONS)
-		/* errx(1, "cross-device install") */;
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_CHR2BLK;
+	mib[2] = sb.st_rdev;
+	size = sizeof(dev);
+	if (sysctl(mib, 3, &dev, &size, NULL, 0) < 0)
+		err(1, "can't map device number");
+	if (statbuf.st_dev / MAXPARTITIONS != dev / MAXPARTITIONS)
+		errx(1, "cross-device install");
 
 	pl = &dl->d_partitions[DISKPART(statbuf.st_dev)];
 	close(fd);
