@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.6 2002/05/24 13:31:11 art Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.7 2003/04/06 18:54:20 ho Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ ofdattach(parent, self, aux)
 	of->sc_ihandle = 0;
 	of->sc_dk.dk_driver = &ofdkdriver;
 	of->sc_dk.dk_name = of->sc_name;
-	strcpy(of->sc_name, of->sc_dev.dv_xname);
+	strlcpy(of->sc_name, of->sc_dev.dv_xname, sizeof of->sc_name);
 	disk_attach(&of->sc_dk);
 	dk_establish(&of->sc_dk, self);				/* XXX */
 	printf("\n");
@@ -145,7 +145,7 @@ ofdopen(dev, flags, fmt, p)
 			path[l] = 0;
 		}
 
-		strcat(path, ":0");
+		strlcat(path, ":0", sizeof path);
 
 		if (!(of->sc_ihandle = OF_open(path)))
 			return ENXIO;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.6 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.7 2003/04/06 18:54:19 ho Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -341,17 +341,17 @@ devopen(of, name, file)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
-	strcpy(fname, name);
+	strlcpy(fname, name, sizeof fname);
 	cp = filename(fname, &partition);
 	if (cp) {
-		strcpy(buf, cp);
+		strlcpy(buf, cp, sizeof buf);
 		*cp = 0;
 	}
 	if (!cp || !*buf)
-		strcpy(buf, DEFAULT_KERNEL);
+		strlcpy(buf, DEFAULT_KERNEL, sizeof buf);
 	if (!*fname)
-		strcpy(fname, bootdev);
-	strcpy(opened_name, fname);
+		strlcpy(fname, bootdev, sizeof fname);
+	strlcpy(opened_name, fname, sizeof opened_name);
 	if (partition) {
 		cp = opened_name + strlen(opened_name);
 		*cp++ = ':';
@@ -359,8 +359,8 @@ devopen(of, name, file)
 		*cp = 0;
 	}
 	if (*buf != '/')
-		strcat(opened_name, "/");
-	strcat(opened_name, buf);
+		strlcat(opened_name, "/", sizeof opened_name);
+	strlcat(opened_name, buf, sizeof opened_name);
 	*file = opened_name + strlen(fname) + 1;
 	if ((handle = OF_finddevice(fname)) == -1)
 		return ENOENT;
@@ -373,7 +373,7 @@ devopen(of, name, file)
 		 * For block devices, indicate raw partition
 		 * (:0 in OpenFirmware)
 		 */
-		strcat(fname, ":0");
+		strlcat(fname, ":0", sizeof fname);
 	if ((handle = OF_open(fname)) == -1)
 		return ENXIO;
 	bzero(&ofdev, sizeof ofdev);

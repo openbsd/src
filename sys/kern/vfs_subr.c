@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.88 2002/08/11 22:32:31 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.89 2003/04/06 18:54:20 ho Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1314,19 +1314,19 @@ vprint(label, vp)
 		vp->v_holdcnt);
 	buf[0] = '\0';
 	if (vp->v_flag & VROOT)
-		strcat(buf, "|VROOT");
+		strlcat(buf, "|VROOT", sizeof buf);
 	if (vp->v_flag & VTEXT)
-		strcat(buf, "|VTEXT");
+		strlcat(buf, "|VTEXT", sizeof buf);
 	if (vp->v_flag & VSYSTEM)
-		strcat(buf, "|VSYSTEM");
+		strlcat(buf, "|VSYSTEM", sizeof buf);
 	if (vp->v_flag & VXLOCK)
-		strcat(buf, "|VXLOCK");
+		strlcat(buf, "|VXLOCK", sizeof buf);
 	if (vp->v_flag & VXWANT)
-		strcat(buf, "|VXWANT");
+		strlcat(buf, "|VXWANT", sizeof buf);
 	if (vp->v_bioflag & VBIOWAIT)
-		strcat(buf, "| VBIOWAIT");
+		strlcat(buf, "| VBIOWAIT", sizeof buf);
 	if (vp->v_flag & VALIASED)
-		strcat(buf, "|VALIASED");
+		strlcat(buf, "|VALIASED", sizeof buf);
 	if (buf[0] != '\0')
 		printf(" flags (%s)", &buf[1]);
 	if (vp->v_data == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2003/01/04 17:41:17 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.75 2003/04/06 18:54:19 ho Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -517,9 +517,9 @@ identifycpu()
 #ifdef MVME147
 	case CPU_147:
 		bcopy(&brdid.suffix, suffix, sizeof brdid.suffix);
-		sprintf(suffix, "MVME%x", brdid.model, suffix);
+		snprintf(suffix, sizeof suffix, "MVME%x", brdid.model, suffix);
 		cpuspeed = pccspeed((struct pccreg *)IIOV(0xfffe1000));
-		sprintf(speed, "%02d", cpuspeed);
+		snprintf(speed, sizeof speed, "%02d", cpuspeed);
 		break;
 #endif
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
@@ -547,8 +547,8 @@ identifycpu()
 		break;
 #endif
 	}
-	sprintf(cpu_model, "Motorola %s: %sMHz MC680%c0 CPU",
-	    suffix, speed, mc);
+	snprintf(cpu_model, sizeof cpu_model,
+	    "Motorola %s: %sMHz MC680%c0 CPU", suffix, speed, mc);
 	switch (mmutype) {
 #if defined(M68060) || defined(M68040)
 	case MMU_68060:
@@ -557,31 +557,30 @@ identifycpu()
 		bcopy(&fpsp_tab, &fpvect_tab,
 				(&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
 #endif
-		strcat(cpu_model, "+MMU");
+		strlcat(cpu_model, "+MMU", sizeof cpu_model);
 		break;
 #endif
 	case MMU_68030:
-		strcat(cpu_model, "+MMU");
+		strlcat(cpu_model, "+MMU", sizeof cpu_model);
 		break;
 	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
+		strlcat(cpu_model, ", MC68851 MMU", sizeof cpu_model);
 		break;
 	default:
 		printf("%s\n", cpu_model);
 		panic("unknown MMU type %d", mmutype);
 	}
-	len = strlen(cpu_model);
 	switch (mmutype) {
 #if defined(M68060)
 	case MMU_68060:
-		len += sprintf(cpu_model + len,
-		    "+FPU, 8k on-chip physical I/D caches");
+		strlcat(cpu_model,"+FPU, 8k on-chip physical I/D caches",
+		    sizeof cpu_model);
 		break;
 #endif
 #if defined(M68040)
 	case MMU_68040:
-		len += sprintf(cpu_model + len,
-		    "+FPU, 4k on-chip physical I/D caches");
+		strlcat(cpu_model, "+FPU, 4k on-chip physical I/D caches",
+		    sizeof cpu_model);
 		break;
 #endif
 #if defined(M68030) || defined(M68020)
@@ -593,11 +592,12 @@ identifycpu()
 			break;
 		case FPU_68881:
 		case FPU_68882:
-			len += sprintf(cpu_model + len, ", MC6888%d FPU",
-			    fputype);
+			len = strlen (cpu_model);
+			snprintf(cpu_model + len, sizeof cpu_model - len,
+			    ", MC6888%d FPU", fputype);
 			break;
 		default:
-			len += sprintf(cpu_model + len, ", unknown FPU", speed);
+			strlcat(cpu_model, ", unknown FPU", sizeof cpu_model);
 			break;
 		}
 		break;
