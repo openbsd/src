@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.108 2001/07/06 18:35:54 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.109 2001/09/22 20:44:48 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -248,6 +248,5 @@ ukphy*	at mii? phy ?				# "unknown" PHYs
 pseudo-device	loop	1		# network loopback
 #pseudo-device	sl	1		# CSLIP
 #pseudo-device	ppp	1		# PPP
-#pseudo-device	pty	16		# pseudo-terminals
 pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk
