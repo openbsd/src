@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.16 1998/07/13 02:11:42 millert Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.17 1998/12/19 06:34:22 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.16 1998/07/13 02:11:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.17 1998/12/19 06:34:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -173,7 +173,7 @@ static struct nlist namelist[] = {
 #define MEMROW		 2	/* uses 4 rows and 31 cols */
 #define MEMCOL		 0
 #define PAGEROW		 2	/* uses 4 rows and 26 cols */
-#define PAGECOL		36
+#define PAGECOL		37
 #define INTSROW		 2	/* uses all rows to bottom and 17 cols */
 #define INTSCOL		63
 #define PROCSROW	 7	/* uses 2 rows and 20 cols */
@@ -316,7 +316,7 @@ labelkre()
 	mvprintw(MEMROW + 2, MEMCOL, "Act");
 	mvprintw(MEMROW + 3, MEMCOL, "All");
 
-	mvprintw(MEMROW + 1, MEMCOL + 31, "Free");
+	mvprintw(MEMROW + 1, MEMCOL + 32, "Free");
 
 	mvprintw(PAGEROW, PAGECOL,     "        PAGING   SWAPPING ");
 	mvprintw(PAGEROW + 1, PAGECOL, "        in  out   in  out ");
@@ -488,7 +488,7 @@ showkre()
 	putint(pgtokb(total.t_rmshr), MEMROW + 3, MEMCOL + 9, 6);
 	putint(pgtokb(total.t_vm), MEMROW + 3, MEMCOL + 15, 7);
 	putint(pgtokb(total.t_vmshr), MEMROW + 3, MEMCOL + 22, 7);
-	putint(pgtokb(total.t_free), MEMROW + 2, MEMCOL + 29, 6);
+	putint(pgtokb(total.t_free), MEMROW + 2, MEMCOL + 30, 6);
 	putint(total.t_rq - 1, PROCSROW + 1, PROCSCOL + 3, 3);
 	putint(total.t_pw, PROCSROW + 1, PROCSCOL + 6, 3);
 	putint(total.t_dw, PROCSROW + 1, PROCSCOL + 9, 3);
