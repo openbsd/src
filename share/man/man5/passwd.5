@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.28 2004/10/04 20:59:57 jmc Exp $
+.\"	$OpenBSD: passwd.5,v 1.29 2004/10/05 14:18:22 millert Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -117,6 +117,17 @@ If the
 .Ar password
 field is empty, no password will be required to gain access to the machine.
 This is almost invariably a mistake.
+By convention, accounts that are not intended to be logged in to
+(e.g. bin, daemon, sshd) have a star
+.Pq Ql *
+in the
+.Ar password
+field.
+Note that there is nothing special about
+.Ql * ,
+it is just one of many strings that is not a valid encrypted password
+(see
+.Xr crypt 3 ) .
 Because
 .Nm master.passwd
 contains the encrypted user passwords, it should not be readable by anyone
@@ -195,6 +206,9 @@ If there is nothing in the
 field, the Bourne shell
 .Pq Pa /bin/sh
 is assumed.
+Accounts that are not intended to be logged in to usually have
+a shell of
+.Pa /sbin/nologin .
 .Sh YP SUPPORT
 If YP is active, the
 .Nm passwd
@@ -260,6 +274,7 @@ containing:
 .Xr chpass 1 ,
 .Xr login 1 ,
 .Xr passwd 1 ,
+.Xr crypt 3 ,
 .Xr getpwent 3 ,
 .Xr login.conf 5 ,
 .Xr netgroup 5 ,
