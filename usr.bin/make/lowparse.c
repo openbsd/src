@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.16 2001/11/11 12:35:02 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.17 2002/12/29 17:29:35 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -451,7 +451,7 @@ void
 LowParse_End()
 {
     Lst_Destroy(&input_stack, NOFREE);	/* Should be empty now */
-#ifdef 0
+#if 0
     Lst_Destroy(&fileNames, (SimpleProc)free);
 #endif
 }
