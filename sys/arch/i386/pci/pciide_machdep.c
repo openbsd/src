@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.2 1999/07/22 04:39:51 deraadt Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.3 2001/04/04 07:02:55 csapuntz Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -51,8 +51,6 @@
 #include <dev/pci/pciidevar.h>
 
 #include <dev/isa/isavar.h>
-
-#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)

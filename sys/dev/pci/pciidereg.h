@@ -1,5 +1,5 @@
-/*	$OpenBSD: pciidereg.h,v 1.2 1999/07/18 21:25:20 csapuntz Exp $	*/
-/*	$NetBSD: pciidereg.h,v 1.4 1999/02/02 16:14:00 bouyer Exp $	*/
+/*	$OpenBSD: pciidereg.h,v 1.3 2001/04/04 07:02:54 csapuntz Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.6 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,7 @@
 /*
  * Bits in the PCI Programming Interface register (some are per-channel).
  * Bits 6-4 are defined as read-only in PCI 2.1 specification.
- * Microsoft proposed to use these bits for independant channels
+ * Microsoft proposed to use these bits for independent channels
  * enable/disable. This feature is enabled based on the value of bit 6.
  */
 #define PCIIDE_CHANSTATUS_EN		0x40
@@ -74,6 +74,8 @@
 #define	PCIIDE_COMPAT_CTL_BASE(chan)	((chan) == 0 ? 0x3f6 : 0x376)
 #define	PCIIDE_COMPAT_CTL_SIZE		1
 #define	PCIIDE_COMPAT_IRQ(chan)		((chan) == 0 ? 14 : 15)
+
+#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
 
 /*
  * definitions for IDE DMA 
@@ -112,4 +114,4 @@ struct idedma_table {
 #define IDEDMA_BYTE_COUNT_ALIGN 0x00010000
 
 /* Number of idedma table needed */
-#define NIDEDMA_TABLES (MAXPHYS/NBPG + 1)
+#define NIDEDMA_TABLES (MAXPHYS/PAGE_SIZE + 1)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pciide_cmd_reg.h,v 1.4 2001/03/25 13:11:55 csapuntz Exp $	*/
-/*	$NetBSD: pciide_cmd_reg.h,v 1.7 2000/06/26 10:07:52 bouyer Exp $	*/
+/*	$OpenBSD: pciide_cmd_reg.h,v 1.5 2001/04/04 07:02:54 csapuntz Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.9 2000/08/02 20:23:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -79,11 +79,16 @@
 
 /* DMA master read mode select */
 #define CMD_DMA_MODE 0x71
+#define CMD_DMA_MASK		0x03
 #define CMD_DMA			0x00
 #define CMD_DMA_MULTIPLE	0x01
-#define CMD_DMA_LINE		0x10
+#define CMD_DMA_LINE		0x03
+/* the followings bits are only for 0646U/646U2/648/649 */
+#define CMD_DMA_IRQ(chan) 	(0x4 << (chan))
+#define CMD_DMA_IRQ_DIS(chan) 	(0x10 << (chan))
+#define CMD_DMA_RST		0x40
 
-/* the followings are only for 0648/9 */
+/* the followings are only for 0646U/646U2/648/649 */
 /* busmaster control/status register */
 #define CMD_BICSR	0x79
 #define CMD_BICSR_80(chan)	(0x01 << (chan))
@@ -93,7 +98,7 @@
 #define CMD_UDMATIM_UDMA33(drive) (0x04 << (drive))
 #define CMD_UDMATIM_TIM_MASK	0x3
 #define CMD_UDMATIM_TIM_OFF(drive) (4 + ((drive) * 2))
-static int8_t cmd0648_9_tim_udma[] = {0x03, 0x02, 0x01, 0x02, 0x01};
+static int8_t cmd0646_9_tim_udma[] = {0x03, 0x02, 0x01, 0x02, 0x01};
 
 /*
  * timings values for the 0643/6/8/9

@@ -1,5 +1,5 @@
-/*      $OpenBSD: pciide.c,v 1.48 2001/03/26 22:17:05 chris Exp $     */
-/*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
+/*      $OpenBSD: pciide.c,v 1.49 2001/04/04 07:02:51 csapuntz Exp $     */
+/*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -14,23 +14,22 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
@@ -97,6 +96,8 @@ int wdcdebug_pciide_mask = 0;
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 
+#include <machine/endian.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -118,15 +119,6 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h> 
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else 
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -449,8 +441,6 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	  sizeof(pciide_promise_products)/sizeof(pciide_promise_products[0]) }
 };
 
-#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
-
 /* options passed via the 'flags' config keyword */
 #define PCIIDE_OPTIONS_DMA	0x01
 
@@ -606,15 +596,15 @@ pciide_chipen(sc, pa)
 	pcireg_t csr;
 	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
 		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		PCI_COMMAND_STATUS_REG);
-	printf(": device disabled (at %s)\n",
-		(csr & PCI_COMMAND_IO_ENABLE) == 0 ?
-		"device" : "bridge");
+		    PCI_COMMAND_STATUS_REG);
+		printf("%s: device disabled (at %s)\n",
+	 	   sc->sc_wdcdev.sc_dev.dv_xname,
+	  	  (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
+		  "device" : "bridge");
 		return 0;
 	}
 	return 1;
 }
-
 
 int
 pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
@@ -994,17 +984,17 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		}
 #endif
 		dma_maps->dma_table[seg].base_addr =
-		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
+		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_addr);
 		dma_maps->dma_table[seg].byte_count =
-		    htopci(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
+		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
 		    IDEDMA_BYTE_COUNT_MASK);
 		WDCDEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
-		   seg, pcitoh(dma_maps->dma_table[seg].byte_count),
-		   pcitoh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
+		   seg, le32toh(dma_maps->dma_table[seg].byte_count),
+		   le32toh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
 
 	}
 	dma_maps->dma_table[dma_maps->dmamap_xfer->dm_nsegs -1].byte_count |=
-	    htopci(IDEDMA_BYTE_COUNT_EOT);
+	    htole32(IDEDMA_BYTE_COUNT_EOT);
 
 #ifndef __OpenBSD__
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 
@@ -1099,13 +1089,13 @@ pciide_dma_finish(v, channel, drive)
 	    status);
 
 	if ((status & IDEDMA_CTL_ERR) != 0) {
-		printf("%s:%d:%d: Bus-Master DMA error: status=0x%x\n",
+		printf("%s:%d:%d: bus-master DMA error: status=0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, channel, drive, status);
 		error |= WDC_DMAST_ERR;
 	}
 
 	if ((status & IDEDMA_CTL_INTR) == 0) {
-		printf("%s:%d:%d: Bus-Master DMA error: missing interrupt, "
+		printf("%s:%d:%d: bus-master DMA error: missing interrupt, "
 		    "status=0x%x\n", sc->sc_wdcdev.sc_dev.dv_xname, channel,
 		    drive, status);
 		error |= WDC_DMAST_NOIRQ;
@@ -1150,13 +1140,11 @@ pciide_chansetup(sc, channel, interface)
 		printf("%s: %s "
 			"cannot allocate memory for command queue",
 		sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		 return 0;
+		return 0;
 	}
 
 	return 1;
-
 }
-
 
 /* some common code used by several chip channel_map */
 void
@@ -1258,8 +1246,7 @@ default_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
-	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-				    sc->sc_tag, PCI_CLASS_REG));
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t csr;
 	int channel, drive;
 	struct ata_drive_datas *drvp;
@@ -1388,7 +1375,6 @@ next:
 			    idedma_ctl);
 		}
 	}
-
 }
 
 void
@@ -1401,14 +1387,15 @@ piix_chip_map(sc, pa)
 	u_int32_t idetim;
 	bus_size_t cmdsize, ctlsize;
 
-	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-					    sc->sc_tag, PCI_CLASS_REG)); 
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
@@ -1423,9 +1410,6 @@ piix_chip_map(sc, pa)
 			break;
 		}
 	}
-
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch (sc->sc_pp->ide_product) {
@@ -1534,7 +1518,7 @@ piix_setup_channel(chp)
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct ata_drive_datas *drvp = cp->wdc_channel.ch_drive;
- 
+
 	oidetim = pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM);
 	idetim = PIIX_IDETIM_CLEAR(oidetim, 0xffff, chp->channel);
 	idedma_ctl = 0;
@@ -1683,7 +1667,7 @@ piix3_4_setup_channel(chp)
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			/* setup Ultra/100 */
-		if (drvp->UDMA_mode > 2 &&
+			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
 				drvp->UDMA_mode = 2;
 			if (drvp->UDMA_mode > 4) {
@@ -1698,8 +1682,8 @@ piix3_4_setup_channel(chp)
 					    drive);
 				}
 			}
-                }
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ) {
+		}
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) {
 			/* setup Ultra/66 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
@@ -1855,8 +1839,7 @@ amd756_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	struct pciide_channel *cp;
-	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-				    sc->sc_tag, PCI_CLASS_REG));
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
 	pcireg_t chanenable;
 	bus_size_t cmdsize, ctlsize;
@@ -1866,14 +1849,13 @@ amd756_chip_map(sc, pa)
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
-
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
                 sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
                 sc->sc_wdcdev.irqack = pciide_irqack;		
 	}
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-			     WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.UDMA_cap = 4;
@@ -2025,6 +2007,8 @@ apollo_chip_map(sc, pa)
 		return;
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 | 
+	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
@@ -2032,14 +2016,12 @@ apollo_chip_map(sc, pa)
 		    && rev >= 6)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = apollo_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 	
@@ -2122,7 +2104,7 @@ apollo_setup_channel(chp)
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM);
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	datatim_reg &= ~APO_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~AP0_UDMA_MASK(chp->channel);
+	udmatim_reg &= ~APO_UDMA_MASK(chp->channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -2273,7 +2255,6 @@ cmd_channel_map(pa, sc, channel)
 		}
 	}
 	pciide_map_compat_intr(pa, cp, channel, interface);
-
 }
 
 int
@@ -2315,7 +2296,6 @@ cmd_chip_map(sc, pa)
 {
 	int channel;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-
 	/*
  	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
 	 * and base adresses registers can be disabled at
@@ -2336,7 +2316,7 @@ cmd_chip_map(sc, pa)
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 
@@ -2444,6 +2424,10 @@ cmd0643_9_chip_map(sc, pa)
 			continue;
 		cmd0643_9_setup_channel(&cp->wdc_channel);
 	}
+	/*
+	 * note - this also makes sure we clear the irq disable and reset
+	 * bits
+	 */
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_DMA_MODE, CMD_DMA_MULTIPLE);
 	WDCDEBUG_PRINT(("cmd0643_9_chip_map: timings reg now 0x%x 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
@@ -2475,7 +2459,8 @@ cmd0643_9_setup_channel(chp)
 		tim = cmd0643_9_data_tim_pio[drvp->PIO_mode];
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
 			if (drvp->drive_flags & DRIVE_UDMA) {
-				/* UltraDMA on a 0648 or 0649 */
+				/* UltraDMA on a 646U2, 0648 or 0649 */
+				drvp->drive_flags &= ~DRIVE_DMA;
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->channel));
 				if (drvp->UDMA_mode > 2 &&
@@ -2485,13 +2470,13 @@ cmd0643_9_setup_channel(chp)
 					drvp->UDMA_mode = 2;
 				if (drvp->UDMA_mode > 2)
 					udma_reg &= ~CMD_UDMATIM_UDMA33(drive);
-				else
+				else if (sc->sc_wdcdev.UDMA_cap > 2) 
 					udma_reg |= CMD_UDMATIM_UDMA33(drive);
 				udma_reg |= CMD_UDMATIM_UDMA(drive);
 				udma_reg &= ~(CMD_UDMATIM_TIM_MASK <<
 				    CMD_UDMATIM_TIM_OFF(drive));
 				udma_reg |=
-				    (cmd0648_9_tim_udma[drvp->UDMA_mode] <<
+				    (cmd0646_9_tim_udma[drvp->UDMA_mode] <<
 				    CMD_UDMATIM_TIM_OFF(drive));
 				pciide_pci_write(sc->sc_pc, sc->sc_tag,
 				    CMD_UDMATIM(chp->channel), udma_reg);
@@ -2500,7 +2485,7 @@ cmd0643_9_setup_channel(chp)
 				 * use Multiword DMA.
 				 * Timings will be used for both PIO and DMA,
 				 * so adjust DMA mode if needed
-				 * if we have a 0648/9, turn off UDMA
+				 * if we have a 0646U2/8/9, turn off UDMA
 				 */
 				if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
 					udma_reg = pciide_pci_read(sc->sc_pc,
@@ -2555,8 +2540,7 @@ cy693_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {       
 	struct pciide_channel *cp;
-	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-				    sc->sc_tag, PCI_CLASS_REG));
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -2589,12 +2573,12 @@ cy693_chip_map(sc, pa)
 		sc->sc_dma_ok = 0;
 	}
 
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.set_modes = cy693_setup_channel;
@@ -2713,10 +2697,8 @@ sis_chip_map(sc, pa)
 	struct pciide_channel *cp;
 	int channel;
 	u_int8_t sis_ctr0 = pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_CTRL0);
-	pcireg_t interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-				    sc->sc_tag, PCI_CLASS_REG));
-	pcireg_t rev = PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    PCI_CLASS_REG));
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	pcireg_t rev = PCI_REVISION(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -2724,21 +2706,21 @@ sis_chip_map(sc, pa)
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
-
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (rev >= 0xd0)
+		if (rev > 0xd0)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
 		sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = sis_setup_channel;
+
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
@@ -2860,7 +2842,8 @@ acer_chip_map(sc, pa)
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
-
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		if (rev >= 0x20)
@@ -2869,8 +2852,6 @@ acer_chip_map(sc, pa)
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA)
@@ -3061,7 +3042,6 @@ hpt_chip_map(sc, pa)
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
-        printf("\n");
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
@@ -3236,218 +3216,8 @@ hpt_pci_intr(arg)
 	return rv;
 }
 
-/*
- * Inline functions for accessing the timing registers of the
- * OPTi controller.
- *
- * These *MUST* disable interrupts as they need atomic access to
- * certain magic registers. Failure to adhere to this *will*
- * break things in subtle ways if the wdc registers are accessed
- * by an interrupt routine while this magic sequence is executing.
- */
-static __inline__ u_int8_t
-opti_read_config(struct channel_softc *chp, int reg)
-{
-	u_int8_t rv;
-	int s = splhigh();
 
-	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
-
-	/* Followed by an 8-bit write of 0x3 to register #2 */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x03u);
-
-	/* Now we can read the required register */
-	rv = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, reg);
-
-	/* Restore the real registers */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x83u);
-
-	splx(s);
-
-	return rv;
-}
-
-static __inline__ void
-opti_write_config(struct channel_softc *chp, int reg, u_int8_t val)
-{
-	int s = splhigh();
-
-	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
-	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
-
-	/* Followed by an 8-bit write of 0x3 to register #2 */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x03u);
-
-	/* Now we can write the required register */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, reg, val);
-
-	/* Restore the real registers */
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x83u);
-
-	splx(s);
-}
-
-void
-opti_chip_map(sc, pa)
-	struct pciide_softc *sc;
-	struct pci_attach_args *pa;
-{
-	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
-	pcireg_t interface;
-	u_int8_t init_ctrl;
-	int channel;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-	printf(": DMA");
-	pciide_mapreg_dma(sc, pa);
-
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.PIO_cap = 4;
-	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
-		sc->sc_wdcdev.DMA_cap = 2;
-		sc->sc_wdcdev.irqack = pciide_irqack;
-	}
-	sc->sc_wdcdev.set_modes = opti_setup_channel;
-
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-
-	init_ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag,
-	    OPTI_REG_INIT_CONTROL);
-
-	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc,
-	    sc->sc_tag, PCI_CLASS_REG));
-
-        pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
-
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
-		cp = &sc->pciide_channels[channel];
-		if (pciide_chansetup(sc, channel, interface) == 0)
-			continue;
-		if (channel == 1 &&
-		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
-			printf("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			continue;
-		}
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
-		if (cp->hw_ok == 0)
-			continue;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			continue;
-		opti_setup_channel(&cp->wdc_channel);
-	}
-}
-
-void
-opti_setup_channel(chp)
-	struct channel_softc *chp;
-{
-	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int drive,spd;
-	int mode[2];
-	u_int8_t rv, mr;
-
-	/*
-	 * The `Delay' and `Address Setup Time' fields of the
-	 * Miscellaneous Register are always zero initially.
-	 */
-	mr = opti_read_config(chp, OPTI_REG_MISC) & ~OPTI_MISC_INDEX_MASK;
-	mr &= ~(OPTI_MISC_DELAY_MASK |
-		OPTI_MISC_ADDR_SETUP_MASK |
-		OPTI_MISC_INDEX_MASK);
-
-	/* Prime the control register before setting timing values */
-	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_DISABLE);
-
-	/* Determine the clockrate of the PCIbus the chip is attached to */
-	spd = 2;
-
-	/* setup DMA if needed */
-	pciide_channel_dma_setup(cp);
-
-	for (drive = 0; drive < 2; drive++) {
-		drvp = &chp->ch_drive[drive];
-		/* If no drive, skip */
-		if ((drvp->drive_flags & DRIVE) == 0) {
-			mode[drive] = -1;
-			continue;
-		}
-
-		if ((drvp->drive_flags & DRIVE_DMA)) {
-			/*
-			 * Timings will be used for both PIO and DMA,
-			 * so adjust DMA mode if needed
-			 */
-			if (drvp->PIO_mode > (drvp->DMA_mode + 2))
-				drvp->PIO_mode = drvp->DMA_mode + 2;
-			if (drvp->DMA_mode + 2 > (drvp->PIO_mode))
-				drvp->DMA_mode = (drvp->PIO_mode > 2) ?
-				    drvp->PIO_mode - 2 : 0;
-			if (drvp->DMA_mode == 0)
-				drvp->PIO_mode = 0;
-
-			mode[drive] = drvp->DMA_mode + 5;
-		} else
-			mode[drive] = drvp->PIO_mode;
-
-		if (drive && mode[0] >= 0 &&
-		    (opti_tim_as[spd][mode[0]] != opti_tim_as[spd][mode[1]])) {
-			/*
-			 * Can't have two drives using different values
-			 * for `Address Setup Time'.
-			 * Slow down the faster drive to compensate.
-			 */
-			int d = (opti_tim_as[spd][mode[0]] >
-				 opti_tim_as[spd][mode[1]]) ?  0 : 1;
-
-			mode[d] = mode[1-d];
-			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
-			chp->ch_drive[d].DMA_mode = 0;
-			chp->ch_drive[d].drive_flags &= DRIVE_DMA;
-		}
-	}
-
-	for (drive = 0; drive < 2; drive++) {
-		int m;
-		if ((m = mode[drive]) < 0)
-			continue;
-
-		/* Set the Address Setup Time and select appropriate index */
-		rv = opti_tim_as[spd][m] << OPTI_MISC_ADDR_SETUP_SHIFT;
-		rv |= OPTI_MISC_INDEX(drive);
-		opti_write_config(chp, OPTI_REG_MISC, mr | rv);
-
-		/* Set the pulse width and recovery timing parameters */
-		rv  = opti_tim_cp[spd][m] << OPTI_PULSE_WIDTH_SHIFT;
-		rv |= opti_tim_rt[spd][m] << OPTI_RECOVERY_TIME_SHIFT;
-		opti_write_config(chp, OPTI_REG_READ_CYCLE_TIMING, rv);
-		opti_write_config(chp, OPTI_REG_WRITE_CYCLE_TIMING, rv);
-
-		/* Set the Enhanced Mode register appropriately */
-	    	rv = pciide_pci_read(sc->sc_pc, sc->sc_tag, OPTI_REG_ENH_MODE);
-		rv &= ~OPTI_ENH_MODE_MASK(chp->channel, drive);
-		rv |= OPTI_ENH_MODE(chp->channel, drive, opti_tim_em[m]);
-		pciide_pci_write(sc->sc_pc, sc->sc_tag, OPTI_REG_ENH_MODE, rv);
-	}
-
-	/* Finally, enable the timings */
-	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_ENABLE);
-
-	pciide_print_modes(cp);
-}
-
-/* A macro to test product */
+/* Macros to test product */
 #define PDC_IS_262(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20262 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20265  ||	\
@@ -3661,6 +3431,8 @@ pdc202xx_setup_channel(chp)
 			continue;
 		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
 			mode = PDC2xx_TIM_SET_MB(mode,
 			   pdc2xx_udma_mb[drvp->UDMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,
@@ -3748,10 +3520,7 @@ pdc20265_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;
-		/*
-		 * If a compat channel, skip.  This may
-		 * never be the case on a PDC2026x ??
-		 */
+		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
 		/*
@@ -3772,4 +3541,216 @@ pdc20265_pci_intr(arg)
 			rv = 1;
 	}
 	return rv;
+}
+
+/*
+ * Inline functions for accessing the timing registers of the
+ * OPTi controller.
+ *
+ * These *MUST* disable interrupts as they need atomic access to
+ * certain magic registers. Failure to adhere to this *will*
+ * break things in subtle ways if the wdc registers are accessed
+ * by an interrupt routine while this magic sequence is executing.
+ */
+static __inline__ u_int8_t
+opti_read_config(struct channel_softc *chp, int reg)
+{
+	u_int8_t rv;
+	int s = splhigh();
+
+	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
+
+	/* Followed by an 8-bit write of 0x3 to register #2 */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x03u);
+
+	/* Now we can read the required register */
+	rv = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, reg);
+
+	/* Restore the real registers */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x83u);
+
+	splx(s);
+
+	return rv;
+}
+
+static __inline__ void
+opti_write_config(struct channel_softc *chp, int reg, u_int8_t val)
+{
+	int s = splhigh();
+
+	/* Two consecutive 16-bit reads from register #1 (0x1f1/0x171) */
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
+	(void) bus_space_read_2(chp->cmd_iot, chp->cmd_ioh, wdr_features);
+
+	/* Followed by an 8-bit write of 0x3 to register #2 */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x03u);
+
+	/* Now we can write the required register */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, reg, val);
+
+	/* Restore the real registers */
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wdr_seccnt, 0x83u);
+
+	splx(s);
+}
+
+void
+opti_chip_map(sc, pa)
+	struct pciide_softc *sc;
+	struct pci_attach_args *pa;
+{
+	struct pciide_channel *cp;
+	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface;
+	u_int8_t init_ctrl;
+	int channel;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.PIO_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+	}
+	sc->sc_wdcdev.set_modes = opti_setup_channel;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	init_ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag,
+	    OPTI_REG_INIT_CONTROL);
+
+	interface = PCI_INTERFACE(pa->pa_class);
+
+        pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		if (channel == 1 &&
+		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
+			printf("%s: %s channel ignored (disabled)\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			continue;
+		}
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		opti_setup_channel(&cp->wdc_channel);
+	}
+}
+
+void
+opti_setup_channel(chp)
+	struct channel_softc *chp;
+{
+	struct ata_drive_datas *drvp;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int drive,spd;
+	int mode[2];
+	u_int8_t rv, mr;
+
+	/*
+	 * The `Delay' and `Address Setup Time' fields of the
+	 * Miscellaneous Register are always zero initially.
+	 */
+	mr = opti_read_config(chp, OPTI_REG_MISC) & ~OPTI_MISC_INDEX_MASK;
+	mr &= ~(OPTI_MISC_DELAY_MASK |
+		OPTI_MISC_ADDR_SETUP_MASK |
+		OPTI_MISC_INDEX_MASK);
+
+	/* Prime the control register before setting timing values */
+	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_DISABLE);
+
+	/* Determine the clockrate of the PCIbus the chip is attached to */
+	spd = (int) opti_read_config(chp, OPTI_REG_STRAP);
+	spd &= OPTI_STRAP_PCI_SPEED_MASK;
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0) {
+			mode[drive] = -1;
+			continue;
+		}
+
+		if ((drvp->drive_flags & DRIVE_DMA)) {
+			/*
+			 * Timings will be used for both PIO and DMA,
+			 * so adjust DMA mode if needed
+			 */
+			if (drvp->PIO_mode > (drvp->DMA_mode + 2))
+				drvp->PIO_mode = drvp->DMA_mode + 2;
+			if (drvp->DMA_mode + 2 > (drvp->PIO_mode))
+				drvp->DMA_mode = (drvp->PIO_mode > 2) ?
+				    drvp->PIO_mode - 2 : 0;
+			if (drvp->DMA_mode == 0)
+				drvp->PIO_mode = 0;
+
+			mode[drive] = drvp->DMA_mode + 5;
+		} else
+			mode[drive] = drvp->PIO_mode;
+
+		if (drive && mode[0] >= 0 &&
+		    (opti_tim_as[spd][mode[0]] != opti_tim_as[spd][mode[1]])) {
+			/*
+			 * Can't have two drives using different values
+			 * for `Address Setup Time'.
+			 * Slow down the faster drive to compensate.
+			 */
+			int d = (opti_tim_as[spd][mode[0]] >
+				 opti_tim_as[spd][mode[1]]) ?  0 : 1;
+
+			mode[d] = mode[1-d];
+			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
+			chp->ch_drive[d].DMA_mode = 0;
+			chp->ch_drive[d].drive_flags &= DRIVE_DMA;
+		}
+	}
+
+	for (drive = 0; drive < 2; drive++) {
+		int m;
+		if ((m = mode[drive]) < 0)
+			continue;
+
+		/* Set the Address Setup Time and select appropriate index */
+		rv = opti_tim_as[spd][m] << OPTI_MISC_ADDR_SETUP_SHIFT;
+		rv |= OPTI_MISC_INDEX(drive);
+		opti_write_config(chp, OPTI_REG_MISC, mr | rv);
+
+		/* Set the pulse width and recovery timing parameters */
+		rv  = opti_tim_cp[spd][m] << OPTI_PULSE_WIDTH_SHIFT;
+		rv |= opti_tim_rt[spd][m] << OPTI_RECOVERY_TIME_SHIFT;
+		opti_write_config(chp, OPTI_REG_READ_CYCLE_TIMING, rv);
+		opti_write_config(chp, OPTI_REG_WRITE_CYCLE_TIMING, rv);
+
+		/* Set the Enhanced Mode register appropriately */
+	    	rv = pciide_pci_read(sc->sc_pc, sc->sc_tag, OPTI_REG_ENH_MODE);
+		rv &= ~OPTI_ENH_MODE_MASK(chp->channel, drive);
+		rv |= OPTI_ENH_MODE(chp->channel, drive, opti_tim_em[m]);
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, OPTI_REG_ENH_MODE, rv);
+	}
+
+	/* Finally, enable the timings */
+	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_ENABLE);
+
+	pciide_print_modes(cp);
 }
