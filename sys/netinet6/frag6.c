@@ -1,5 +1,5 @@
-/*	$OpenBSD: frag6.c,v 1.8 2001/02/16 08:50:23 itojun Exp $	*/
-/*	$KAME: frag6.c,v 1.28 2000/12/12 10:54:06 itojun Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.9 2001/02/22 05:11:52 itojun Exp $	*/
+/*	$KAME: frag6.c,v 1.30 2001/02/22 04:52:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -215,7 +215,6 @@ frag6_input(mp, offp, proto)
 		 * the first fragment to arrive, create a reassembly queue.
 		 */
 		first_frag = 1;
-		frag6_nfragpackets++;
 
 		/*
 		 * Enforce upper bound on number of fragmented packets
@@ -223,11 +222,11 @@ frag6_input(mp, offp, proto)
 		 * If maxfrag is 0, never accept fragments.
 		 * If maxfrag is -1, accept all fragments without limitation.
 		 */
-		if (frag6_nfragpackets >= (u_int)ip6_maxfragpackets) {
-			ip6stat.ip6s_fragoverflow++;
-			in6_ifstat_inc(dstifp, ifs6_reass_fail);
-			frag6_freef(ip6q.ip6q_prev);
-		}
+		if (ip6_maxfragpackets < 0)
+			;
+		else if (frag6_nfragpackets >= (u_int)ip6_maxfragpackets)
+			goto dropfrag;
+		frag6_nfragpackets++;
 		q6 = (struct ip6q *)malloc(sizeof(struct ip6q), M_FTABLE,
 			M_DONTWAIT);
 		if (q6 == NULL)
@@ -642,7 +641,8 @@ frag6_slowtimo()
 	 * (due to the limit being lowered), drain off
 	 * enough to get down to the new limit.
 	 */
-	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets) {
+	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
+	    ip6q.ip6q_prev) {
 		ip6stat.ip6s_fragoverflow++;
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_prev);
