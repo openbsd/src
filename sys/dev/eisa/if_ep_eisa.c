@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.8 1997/07/30 11:12:25 niklas Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.9 1998/02/26 06:47:44 deraadt Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ ep_eisa_attach(parent, self, aux)
 	}
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	printf(": %s", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("couldn't map interrupt (%u)\n", irq);
@@ -187,7 +187,7 @@ ep_eisa_attach(parent, self, aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s, ", intrstr);
+		printf("%s ", intrstr);
 
 	epconfig(sc, chipset);
 }
