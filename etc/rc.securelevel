@@ -1,0 +1,23 @@
+#	$OpenBSD: rc.securelevel,v 1.1 1997/04/15 09:26:48 deraadt Exp $
+#
+# site-specific startup actions, daemons, and other things which
+# can be done BEFORE your system goes into securemode.  For actions
+# which should be done AFTER your system has gone into securemode
+# please see /etc/rc.local
+
+# This is the desired security level
+# XXX
+# XXX it is not really acceptable to put this value in a special
+# XXX file, because locking it down requires immutability on about
+# XXX 5 files instead of 2 (the kernel and init)
+# XXX
+securelevel=1
+
+echo -n 'starting pre-securelevel daemons:'
+
+# Alternatively, xdm smay be started in /etc/ttys.
+#if [ -x /usr/X11R6/bin/xdm ]; then
+#	echo -n ' xdm';		/usr/X11R6/bin/xdm
+#fi
+
+echo '.'

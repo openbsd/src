@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.31 1997/02/28 07:53:33 millert Exp $
+#	$OpenBSD: rc,v 1.32 1997/04/15 09:26:47 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -200,6 +200,11 @@ chmod 666 /dev/tty[pqrs]*
 if [ -f /etc/ptmp ]; then
 	logger -s -p auth.err \
 	'password file may be incorrect -- /etc/ptmp exists'
+fi
+
+. /etc/rc.securelevel
+if [ X${securelevel} != X"" ]; then
+	sysctl -w kern.securelevel=${securelevel}
 fi
 
 virecovery=/var/tmp/vi.recover/recover.*
