@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.16.2.1 1995/11/01 00:06:34 jtc Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.18 1995/12/19 23:27:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -297,9 +297,10 @@ ffs_reload(mountp, cred, p)
 	struct inode *ip;
 	struct csum *space;
 	struct buf *bp;
-	struct fs *fs;
+	struct fs *fs, *newfs;
 	struct partinfo dpart;
 	int i, blks, size, error;
+	int32_t *lp;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -318,16 +319,21 @@ ffs_reload(mountp, cred, p)
 		size = dpart.disklab->d_secsize;
 	if (error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp))
 		return (error);
-	fs = (struct fs *)bp->b_data;
-	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
-	    fs->fs_bsize < sizeof(struct fs)) {
+	newfs = (struct fs *)bp->b_data;
+	if (newfs->fs_magic != FS_MAGIC || newfs->fs_bsize > MAXBSIZE ||
+	    newfs->fs_bsize < sizeof(struct fs)) {
 		brelse(bp);
 		return (EIO);		/* XXX needs translation */
 	}
 	fs = VFSTOUFS(mountp)->um_fs;
-	bcopy(&fs->fs_csp[0], &((struct fs *)bp->b_data)->fs_csp[0],
-	    sizeof(fs->fs_csp));
-	bcopy(bp->b_data, fs, (u_int)fs->fs_sbsize);
+	/* 
+	 * Copy pointer fields back into superblock before copying in	XXX
+	 * new superblock. These should really be in the ufsmount.	XXX
+	 * Note that important parameters (eg fs_ncg) are unchanged.
+	 */
+	bcopy(&fs->fs_csp[0], &newfs->fs_csp[0], sizeof(fs->fs_csp));
+	newfs->fs_maxcluster = fs->fs_maxcluster;
+	bcopy(newfs, fs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -348,6 +354,15 @@ ffs_reload(mountp, cred, p)
 		bcopy(bp->b_data, fs->fs_csp[fragstoblks(fs, i)], (u_int)size);
 		brelse(bp);
 	}
+	/*
+	 * We no longer know anything about clusters per cylinder group.
+	 */
+	if (fs->fs_contigsumsize > 0) {
+		lp = fs->fs_maxcluster;
+		for (i = 0; i < fs->fs_ncg; i++)
+			*lp++ = fs->fs_contigsumsize;
+	}
+
 loop:
 	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
 		nvp = vp->v_mntvnodes.le_next;
