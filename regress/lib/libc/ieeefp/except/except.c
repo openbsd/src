@@ -1,4 +1,4 @@
-/*	$OpenBSD: except.c,v 1.5 2003/09/02 23:52:16 david Exp $	*/
+/*	$OpenBSD: except.c,v 1.6 2004/04/02 03:06:12 mickey Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,22 +7,31 @@
 #include <ieeefp.h>
 #include <float.h>
 
-volatile sig_atomic_t signal_cought;
+volatile sig_atomic_t signal_caught;
 
-static volatile const double one  = 1.0;
-static volatile const double zero = 0.0;
-static volatile const double huge = DBL_MAX;
-static volatile const double tiny = DBL_MIN;
+volatile const double one  = 1.0;
+volatile const double zero = 0.0;
+volatile const double huge = DBL_MAX;
+volatile const double tiny = DBL_MIN;
 
-static void
-sigfpe(int signo)
+void
+sigfpe(int sig, siginfo_t *si, void *v)
 {
-	signal_cought = 1;
+	char buf[132];
+
+	if (si) {
+		snprintf(buf, sizeof(buf), "sigfpe: addr=%p, code=%d\n",
+		    si->si_addr, si->si_code);
+		write(1, buf, strlen(buf));
+	}
+	signal_caught = 1;
 }
+
 
 int
 main(int argc, char *argv[])
 {
+	struct sigaction sa;
 	volatile double x;
 
 	/*
@@ -32,59 +41,59 @@ main(int argc, char *argv[])
 	assert(fpgetmask() == 0);
 	assert(fpgetsticky() == 0);
 
-	/* set up signal handler */
-	signal (SIGFPE, sigfpe);
-	signal_cought = 0;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_sigaction = sigfpe;
+	sa.sa_flags = SA_SIGINFO;
+	sigaction(SIGFPE, &sa, NULL);
+	signal_caught = 0;
 
 	/* trip divide by zero */
 	x = one / zero;
-	assert (fpgetsticky() & FP_X_DZ);
-	assert (signal_cought == 0);
+	assert(fpgetsticky() & FP_X_DZ);
+	assert(signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip invalid operation */
 	x = zero / zero;
-	assert (fpgetsticky() & FP_X_INV);
-	assert (signal_cought == 0);
+	assert(fpgetsticky() & FP_X_INV);
+	assert(signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip overflow */
 	x = huge * huge;
-	assert (fpgetsticky() & FP_X_OFL);
-	assert (signal_cought == 0);
+	assert(fpgetsticky() & FP_X_OFL);
+	assert(signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip underflow */
 	x = tiny * tiny;
-	assert (fpgetsticky() & FP_X_UFL);
-	assert (signal_cought == 0);
+	assert(fpgetsticky() & FP_X_UFL);
+	assert(signal_caught == 0);
 	fpsetsticky(0);
 
-#if 0
 	/* unmask and then trip divide by zero */
 	fpsetmask(FP_X_DZ);
 	x = one / zero;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert(signal_caught == 1);
+	signal_caught = 0;
 
 	/* unmask and then trip invalid operation */
 	fpsetmask(FP_X_INV);
 	x = zero / zero;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert(signal_caught == 1);
+	signal_caught = 0;
 
 	/* unmask and then trip overflow */
 	fpsetmask(FP_X_OFL);
 	x = huge * huge;
-	assert (signal_cought == 1);
-	signal_cought = 0;
+	assert(signal_caught == 1);
+	signal_caught = 0;
 
 	/* unmask and then trip underflow */
 	fpsetmask(FP_X_UFL);
 	x = tiny * tiny;
-	assert (signal_cought == 1);
-	signal_cought = 0;
-#endif
+	assert (signal_caught == 1);
+	signal_caught = 0;
 
 	exit(0);
 }
