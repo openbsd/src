@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6.c,v 1.6 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: route6.c,v 1.7 2002/06/08 00:08:40 itojun Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ ip6_rthdr0(m, ip6, rh0)
 		) {
 		/*
 		 * Type 0 routing header can't contain more than 23 addresses.
-		 * RFC 2462: this limitation was removed since stict/loose
+		 * RFC 2462: this limitation was removed since strict/loose
 		 * bitmap field was deleted.
 		 */
 		ip6stat.ip6s_badoptions++;
