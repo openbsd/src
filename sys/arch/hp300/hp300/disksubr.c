@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.16 2004/03/17 14:16:04 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.17 2005/03/30 07:52:31 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -107,6 +107,10 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 				if (iso_disklabelspoof(dev, strat, lp) != 0)
 #endif
 					msg = "no disk label";
+#if defined(UDF)
+				if (msg && udf_disklabelspoof(dev, strat, lp) == 0)
+					msg = NULL;
+#endif
 			}
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
 			   dkcksum(dlp) != 0)

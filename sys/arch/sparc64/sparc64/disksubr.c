@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2004/03/17 14:16:04 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2005/03/30 07:52:32 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -110,11 +110,18 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	if (spoofonly)
 		return (NULL);
 
-#if defined(CD9660) && (NCD > 0)
-	if ((strat == cdstrategy) &&
-	    (iso_disklabelspoof(dev, strat, lp) == NULL))
-		return (NULL);
+#if NCD > 0
+	if (strat == cdstrategy) {
+#if defined(CD9660)
+		if (iso_disklabelspoof(dev, strat, lp) == 0)
+			return (NULL);
 #endif
+#if defined(UDF)
+		if (udf_disklabelspoof(dev, strat, lp) == 0)
+			return (NULL);
+#endif
+	}
+#endif /* NCD > 0 */
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -153,6 +160,10 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 
 #if defined(CD9660)
 	if (iso_disklabelspoof(dev, strat, lp) == NULL)
+		return (NULL);
+#endif
+#if defined(UDF)
+	if (udf_disklabelspoof(dev, strat, lp) == 0)
 		return (NULL);
 #endif
 	bzero(clp->cd_block, sizeof(clp->cd_block));
