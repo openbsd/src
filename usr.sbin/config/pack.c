@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.14 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: pack.c,v 1.15 2004/01/04 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
@@ -345,14 +345,14 @@ packpvec(void)
 	qsort(packed, npacked, sizeof *packed, pvlencmp);
 	for (p = packed; (i = *p) != NULL; p++) {
 		l = i->i_pvlen;
-if (l > longest_pvec) panic("packpvec");
+		if (l > longest_pvec)
+			panic("packpvec");
 		par = i->i_parents;
 		for (v = 0; v < l; v++)
 			vec[v] = par[v]->i_cfindex;
-		if (l == 0 ||
-		    (o = findvec(vec, PVHASH(vec[l - 1]), l,
-			    samepv, parents.used)) < 0)
-		    	o = addpv(vec, l);
+		if (l == 0 || (o = findvec(vec, PVHASH(vec[l - 1]), l,
+		    samepv, parents.used)) < 0)
+			o = addpv(vec, l);
 		i->i_pvoff = o;
 	}
 	free(vec);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.11 2003/06/28 04:55:07 deraadt Exp $ */
+/*	$OpenBSD: ukc.c,v 1.12 2004/01/04 00:47:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.11 2003/06/28 04:55:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.12 2004/01/04 00:47:01 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -228,7 +228,7 @@ init(void)
 	if ((s = getenv("LINES")) != NULL)
 		sc_height = atoi(s);
 	else
- 		sc_height = tgetnum("li");
+		sc_height = tgetnum("li");
 
 	if (sc_height <= 0)
 		sc_height = 24;
@@ -236,9 +236,9 @@ init(void)
 	if ((s = getenv("COLUMNS")) != NULL)
 		sc_width = atoi(s);
 	else
- 		sc_width = tgetnum("co");
+		sc_width = tgetnum("co");
 
- 	if (sc_width <= 0)
-  		sc_width = 80;
+	if (sc_width <= 0)
+		sc_width = 80;
 #endif
 }

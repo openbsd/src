@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2003/12/29 05:26:11 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2004/01/04 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ static char copyright[] =
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

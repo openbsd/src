@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.19 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.20 2004/01/04 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ struct devi {
 	int	i_lineno;	/* line # in config, for later errors */
 
 	/* created during packing or ioconf.c generation */
-/* 		i_loclen	   via i_atattr->a_loclen */
+/*		i_loclen	   via i_atattr->a_loclen */
 	short	i_collapsed;	/* set => this alias no longer needed */
 	short	i_cfindex;	/* our index in cfdata */
 	short	i_pvlen;	/* number of parents */

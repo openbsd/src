@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.17 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.18 2004/01/04 00:47:01 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ topthing:
 
 machine_spec:
 	XMACHINE WORD '\n'		{ setmachine($2,NULL); } |
-	XMACHINE WORD WORD '\n' 	{ setmachine($2,$3); } |
+	XMACHINE WORD WORD '\n'		{ setmachine($2,$3); } |
 	error { stop("cannot proceed without machine specifier"); };
 
 dev_eof:
@@ -234,7 +234,7 @@ one_def:
 	ATTACH devbase AT atlist devattach_opt attrs_opt
 					{ defdevattach($5, $2, $4, $6); } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
-	MAXPARTITIONS NUMBER 		{ maxpartitions = $2; } |
+	MAXPARTITIONS NUMBER		{ maxpartitions = $2; } |
 	PSEUDO_DEVICE devbase attrs_opt { defdev($2,1,NULL,$3); } |
 	MAJOR '{' majorlist '}';
 
@@ -272,7 +272,7 @@ loclist:
 
 /* "[ WORD locdefault ]" syntax may be unnecessary... */
 locdef:
-	WORD locdefault 		{ $$ = new_nsi($1, $2, 0); } |
+	WORD locdefault			{ $$ = new_nsi($1, $2, 0); } |
 	WORD				{ $$ = new_nsi($1, NULL, 0); } |
 	'[' WORD locdefault ']'		{ $$ = new_nsi($2, $3, 1); };
 
