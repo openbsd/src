@@ -1,8 +1,8 @@
-/*	$OpenBSD: log.c,v 1.5 1999/02/26 03:45:48 niklas Exp $	*/
-/*	$EOM: log.c,v 1.15 1999/02/25 11:39:10 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 1999/04/19 19:53:41 niklas Exp $	*/
+/*	$EOM: log.c,v 1.23 1999/04/18 15:17:24 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,6 +34,7 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
+#include <sys/time.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -48,13 +49,7 @@
 
 #include "log.h"
 
-/*
- * We cannot do the log strings dynamically sizeable as out of memory is one
- * of the situations we need to report about.
- */
-#define LOG_SIZE	200
-
-static void _log_print (int, int, const char *, va_list);
+static void _log_print (int, int, const char *, va_list, int, int);
 
 static FILE *log_output = stderr;
 static int log_level[LOG_ENDCLASS];
@@ -66,7 +61,7 @@ log_to (FILE *f)
     closelog ();
   log_output = f;
   if (!f)
-    openlog ("isakmpd", 0, LOG_DAEMON);
+    openlog ("isakmpd", LOG_CONS, LOG_DAEMON);
 }
 
 FILE *
@@ -75,29 +70,73 @@ log_current (void)
   return log_output;
 }
 
-static void
-_log_print (int error, int level, const char *fmt, va_list ap)
+static char *
+_log_get_class (int error_class)
 {
-  char buffer[LOG_SIZE];
+  /* XXX For test purposes. To be removed later on?  */
+  static char *class_text[] = LOG_CLASSES_TEXT;
+
+  if (error_class < 0)
+    return "Dflt";
+  else if (error_class >= LOG_ENDCLASS)
+    return "Unkn";
+  else
+    return class_text[error_class];
+}
+
+static void
+_log_print (int error, int syslog_level, const char *fmt, va_list ap, 
+	    int class, int level)
+{
+  char buffer[LOG_SIZE], nbuf[LOG_SIZE + 32];
+  static const char fallback_msg[] = 
+    "write to log file failed (errno %d), redirecting output to syslog";
   int len;
+  struct tm *tm;
+  struct timeval now;
+  time_t t;
 
   len = vsnprintf (buffer, LOG_SIZE, fmt, ap);
   if (len < LOG_SIZE - 1 && error)
     snprintf (buffer + len, LOG_SIZE - len, ": %s", strerror (errno));
   if (log_output)
     {
-      fputs (buffer, log_output);
-      fputc ('\n', log_output);
+      gettimeofday (&now, 0);
+      t = now.tv_sec;
+      tm = localtime (&t);
+      if (class >= 0)
+	sprintf (nbuf, "%02d%02d%02d.%06ld %s %02d ", tm->tm_hour, 
+		 tm->tm_min, tm->tm_sec, now.tv_usec, _log_get_class (class), 
+		 level);
+      else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
+	sprintf (nbuf, "%02d%02d%02d.%06ld %s ", tm->tm_hour, 
+		 tm->tm_min, tm->tm_sec, now.tv_usec,
+		 class == LOG_PRINT ? "Default" : "Report>");	
+      strcat (nbuf, buffer);
+      strcat (nbuf, "\n");
+
+      if (fwrite (nbuf, strlen (nbuf), 1, log_output) == 0)
+	{
+	  /* Report fallback.  */
+	  syslog (LOG_ALERT, fallback_msg, errno);
+	  fprintf (log_output, fallback_msg, errno);
+
+	  /* Fallback to syslog.  */
+	  log_to (0);
+
+	  /* (Re)send current message to syslog(). */
+	  syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, buffer);
+	}
     }
   else
-    syslog (level, buffer);
+    syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, buffer);
 }
 
 void
 #ifdef __STDC__
 log_debug (int cls, int level, const char *fmt, ...)
 #else
-log_debug (cls, level, clfmt, va_alist)
+log_debug (cls, level, fmt, va_alist)
      int cls;
      int level;
      const char *fmt;
@@ -109,7 +148,7 @@ log_debug (cls, level, clfmt, va_alist)
   /*
    * If we are not debugging this class, or the level is too low, just return.
    */
-  if (log_level[cls] == 0 || level > log_level[cls])
+  if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
     return;
 #ifdef __STDC__
   va_start (ap, fmt);
@@ -117,7 +156,7 @@ log_debug (cls, level, clfmt, va_alist)
   va_start (ap);
   fmt = va_arg (ap, const char *);
 #endif
-  _log_print (0, LOG_DEBUG, fmt, ap);
+  _log_print (0, LOG_DEBUG, fmt, ap, cls, level);
   va_end (ap);
 }
 
@@ -131,7 +170,7 @@ log_debug_buf (int cls, int level, const char *header, const u_int8_t *buf,
   /*
    * If we are not debugging this class, or the level is too low, just return.
    */
-  if (log_level[cls] == 0 || level > log_level[cls])
+  if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
     return;
 
   log_debug (cls, level, "%s:", header);
@@ -175,7 +214,7 @@ log_print (fmt, va_alist)
   va_start (ap);
   fmt = va_arg (ap, const char *);
 #endif
-  _log_print (0, LOG_NOTICE, fmt, ap);
+  _log_print (0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
 }
 
@@ -196,7 +235,7 @@ log_error (fmt, va_alist)
   va_start (ap);
   fmt = va_arg (ap, const char *);
 #endif
-  _log_print (1, LOG_ERR, fmt, ap);
+  _log_print (1, LOG_ERR, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
 }
 
@@ -217,7 +256,7 @@ log_fatal (fmt, va_alist)
   va_start (ap);
   fmt = va_arg (ap, const char *);
 #endif
-  _log_print (1, LOG_CRIT, fmt, ap);
+  _log_print (1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
   va_end (ap);
   exit (1);
 }
