@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtab.c,v 1.2 2005/03/24 03:11:03 jfb Exp $	*/
+/*	$OpenBSD: strtab.c,v 1.3 2005/03/29 15:04:45 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -116,8 +116,10 @@ cvs_strtab_cleanup(void)
 
 	unfreed = 0;
 	for (i = 0; i < CVS_STRTAB_NBUCKETS; i++) {
-		SLIST_FOREACH(sp, &cvs_strtab[i], cs_link)
+		SLIST_FOREACH(sp, &cvs_strtab[i], cs_link) {
+			cvs_log(LP_DEBUG, "string '%s' not freed", sp->cs_str);
 			unfreed++;
+		}
 	}
 
 	if (unfreed > 0)
