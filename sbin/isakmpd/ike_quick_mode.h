@@ -1,8 +1,8 @@
-/*	$OpenBSD: ike_quick_mode.h,v 1.3 1998/11/17 11:10:13 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.h,v 1.4 2001/06/12 21:38:27 niklas Exp $	*/
 /*	$EOM: ike_quick_mode.h,v 1.1 1998/08/02 20:22:44 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 2001 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +39,7 @@
 
 struct message;
 
-extern int (*ike_quick_mode_initiator[]) (struct message *msg);
-extern int (*ike_quick_mode_responder[]) (struct message *msg);
+extern int (*ike_quick_mode_initiator[]) (struct message *);
+extern int (*ike_quick_mode_responder[]) (struct message *);
 
 #endif /* _IKE_QUICK_MODE_H_ */
