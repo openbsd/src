@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.97 2004/07/23 17:27:40 jaredy Exp $
+.\"	$OpenBSD: afterboot.8,v 1.98 2004/08/14 17:37:27 david Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -631,7 +631,7 @@ You will have to make sure
 .Pa /etc/rc.conf.local
 has:
 .Pp
-.Dl dhcpd_flags=-q
+.Dl dhcpd_flags=\&"\&"
 .Pp
 or run
 .Xr dhcpd 8
