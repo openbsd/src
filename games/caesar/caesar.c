@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.7 1998/08/19 07:53:54 pjanzen Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.8 2001/02/17 20:15:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: caesar.c,v 1.7 1998/08/19 07:53:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.8 2001/02/17 20:15:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ main(argc, argv)
 	}
 
 	if (!(inbuf = malloc(LINELENGTH)))
-		errx(1, "out of memory.");
+		err(1, NULL);
 
 	/* adjust frequency table to weight low probs REAL low */
 	for (i = 0; i < 26; ++i)

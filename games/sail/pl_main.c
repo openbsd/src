@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.6 1999/06/13 16:43:12 pjanzen Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.7 2001/02/17 20:15:00 pjanzen Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_main.c,v 1.6 1999/06/13 16:43:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.7 2001/02/17 20:15:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ reprint:
 	foreachship(sp) {
 		if (sp->file == NULL &&
 		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL)
-			errx(1, "out of memory");
+			err(1, NULL);
 		sp->file->index = sp - SHIP(0);
 		sp->file->stern = nat[sp->nationality]++;
 		sp->file->dir = sp->shipdir;
