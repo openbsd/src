@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.14 2003/11/17 11:21:00 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.15 2003/12/02 09:00:48 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -80,6 +80,13 @@ means letter a-z;
 means expression;
 .Sq S
 means statement.
+As a non-portable extension, it is possible to use long names
+in addition to single letter names.
+A long name is a sequence starting with a lowercase letter
+followed by any number of lowercase letters and digits.
+The underscore character
+.Pq Sq _
+counts as a letter.
 .Pp
 Comments
 .Bd -unfilled -offset indent -compact
