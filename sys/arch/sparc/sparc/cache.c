@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.12 2000/02/21 14:51:20 art Exp $	*/
+/*	$OpenBSD: cache.c,v 1.13 2000/03/17 21:54:07 deraadt Exp $	*/
 /*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ sun4_cache_enable()
 #endif
 }
 
+#if defined(SUN4M)
 void
 ms1_cache_enable()
 {
@@ -342,6 +343,7 @@ turbosparc_cache_enable()
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
+#endif /* defined(SUN4M) */
 
 /*
  * Flush the current context from the cache.
