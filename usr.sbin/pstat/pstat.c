@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.36 2002/06/19 08:45:52 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.37 2002/07/12 05:32:51 art Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.36 2002/06/19 08:45:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.37 2002/07/12 05:32:51 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -646,31 +646,6 @@ mount_print(mp)
 		if (flags & MNT_FORCE) {
 			(void)printf("%sforce", comma);
 			flags &= ~MNT_FORCE;
-			comma = ",";
-		}
-		if (flags & MNT_MLOCK) {
-			(void)printf("%slock", comma);
-			flags &= ~MNT_MLOCK;
-			comma = ",";
-		}
-		if (flags & MNT_MWAIT) {
-			(void)printf("%swait", comma);
-			flags &= ~MNT_MWAIT;
-			comma = ",";
-		}
-		if (flags & MNT_MPBUSY) {
-			(void)printf("%sbusy", comma);
-			flags &= ~MNT_MPBUSY;
-			comma = ",";
-		}
-		if (flags & MNT_MPWANT) {
-			(void)printf("%swant", comma);
-			flags &= ~MNT_MPWANT;
-			comma = ",";
-		}
-		if (flags & MNT_UNMOUNT) {
-			(void)printf("%sunmount", comma);
-			flags &= ~MNT_UNMOUNT;
 			comma = ",";
 		}
 		if (flags & MNT_WANTRDWR) {
