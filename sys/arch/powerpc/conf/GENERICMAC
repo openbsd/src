@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICMAC,v 1.4 2000/01/22 16:36:00 rahnds Exp $
+#	$OpenBSD: GENERICMAC,v 1.5 2000/03/20 07:14:59 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -56,6 +56,8 @@ obio0   at pci? dev ? function ?
 
 #nsphy*  at mii? phy ?                   # NS83840 PHYs   
 
+macintr0 at obio?                        # old interrupt controller
+openpic0 at obio?                        # openpic interrupt controller
 bm*     at obio?                        # bmac ethernet
 #mc*     at obio?                        # MACE ethernet
 #esp*    at obio? flags 0x00ff           # 53c9x SCSI

@@ -21,6 +21,7 @@ file	arch/powerpc/powerpc/in_cksum.c
 file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
 file	arch/powerpc/powerpc/machdep.c
 file	arch/powerpc/powerpc/mem.c
+file	arch/powerpc/powerpc/dma.c
 file	arch/powerpc/powerpc/ofw_machdep.c
 file	arch/powerpc/powerpc/openfirm.c
 file	arch/powerpc/powerpc/pmap.c
@@ -45,8 +46,6 @@ file    arch/powerpc/powerpc/ofwreal.S
 # MAC generic
 #
 file	arch/powerpc/mac/dbdma.c
-define macintr
-file	arch/powerpc/mac/macintr.c			macintr
 
 #
 # Openfirmware support
@@ -136,35 +135,43 @@ include "../../../dev/ata/files.ata"
 
 # MAC periph 
 
-device obio {} : macintr
+device obio {}
 attach obio at pci
-file arch/powerpc/pci/macobio.c                     obio
+file arch/powerpc/pci/macobio.c			obio
 
 device esp: scsi, ncr53c9x
 attach esp at obio
-file arch/powerpc/mac/esp.c                      esp
+file arch/powerpc/mac/esp.c			esp
 
 device mesh: scsi
 attach mesh at obio
-file arch/powerpc/mac/mesh.c                     mesh
+file arch/powerpc/mac/mesh.c			mesh
 
 device mc: ifnet, ether
 attach mc at obio
-file arch/powerpc/mac/if_mc.c                    mc
-file arch/powerpc/mac/am79c950.c                 mc
+file arch/powerpc/mac/if_mc.c			mc
+file arch/powerpc/mac/am79c950.c		mc
 
 device bm: ether, ifnet, ifmedia
 attach bm at obio
-file arch/powerpc/mac/if_bm.c                    bm
+file arch/powerpc/mac/if_bm.c			bm
+
+device macintr {}
+attach macintr at obio
+file	arch/powerpc/mac/macintr.c		macintr
+
+device openpic {}
+attach openpic at obio
+file	arch/powerpc/mac/openpic.c		openpic
 
 device zsc {channel = -1}
 attach zsc at obio
-file arch/powerpc/mac/zs.c                       zsc needs-flag
-file dev/ic/z8530sc.c                           zsc
+file arch/powerpc/mac/zs.c			zsc needs-flag
+file dev/ic/z8530sc.c				zsc
 
 device zstty: tty
 attach zstty at zsc
-file arch/powerpc/mac/z8530tty.c                 zstty needs-flag
+file dev/ic/z8530tty.c                 zstty needs-flag
 
 device adb {}
 attach adb at obio

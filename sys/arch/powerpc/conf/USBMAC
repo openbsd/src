@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKMAC,v 1.5 2000/03/20 07:14:59 rahnds Exp $
+#	$OpenBSD: USBMAC,v 1.1 2000/03/20 07:15:00 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -16,25 +16,9 @@ options		PPC_MPC106_BUG
 option		IPX		# IPX+SPX
 option		IPXIP		# IPX tunneling over IP
 
-# include "../../../conf/GENERIC"
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
-option		COMPAT_43	# and 4.3BSD
-option		FFS		# UFS
-option		MFS		# memory file system
-option		NFSCLIENT	# Network File System client
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		MSDOSFS		# MS-DOS file system
-option		KERNFS		# /kern
-option		INET		# IP + ICMP + TCP + UDP
-pseudo-device	loop	2	# network loopback
-pseudo-device	pty	64	# pseudo-terminals
-#pseudo-device	ccd	4	# concatenated disk devices
-#pseudo-device	ksyms	1	# kernel symbols device
+include "../../../conf/GENERIC"
 
-config		bsd	root on rd0a swap on rd0b
+config		bsd	swap generic
 
 
 #
@@ -51,8 +35,8 @@ mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 #### PCI Bus devices.
 
 pci*		at mpcpcibr?
-pci*		at ppb? bus ?
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
+pci*		at ppb? bus ?
 
 ncr*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
@@ -69,14 +53,6 @@ de*		at pci? dev ? function ?
 #pciide*		at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?    # OpenFirmware console (for debugging)
 obio0   at pci? dev ? function ?
-
-# PCI USB Controllers
-#uhci*	at pci?				# Universal Host Controller (Intel)
-#ohci*	at pci?				# Open Host Controller
-
-# USB bus support
-#usb*	at uhci?
-#usb*	at ohci?
 
 #nsphy*  at mii? phy ?                   # NS83840 PHYs   
 
@@ -105,17 +81,31 @@ scsibus*	at ncr?
 #scsibus*	at mesh?
 #scsibus*	at pcscp?
 
-
-wdc*	at obio? flags 0x0
+wdc*    at obio? flags 0x0
 #wd*     at pciide? channel ? drive ?
 #wd*     at wdc? channel ? drive ? flags 0x0000
 wd*     at wdc? drive ? flags 0x0000
 
 atapiscsi* at wdc? channel ? flags 0x0000
-#atapiscsi* at wdc? 
+#atapibus* at wdc? 
 
 # ATAPI<->SCSI
 scsibus* at atapiscsi?
+
+# PCI USB Controllers
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at ohci?
+uhub*	at usb?
+uhub*  at uhub? port ? configuration ? interface ?
+
+# USB Generic HID devices
+uhid*  at uhub? port ? configuration ? interface ?
+
+# USB Generic driver
+ugen*  at uhub? port ? configuration ? interface ?
+
 
 
 #### ISA Bus devices.
@@ -143,9 +133,9 @@ scsibus* at atapiscsi?
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?            
 cd*		at scsibus? target ? lun ?
-#ch*		at scsibus? target ? lun ?
-#ss*		at scsibus? target ? lun ?
-#uk*		at scsibus? target ? lun ?
+ch*		at scsibus? target ? lun ?
+ss*		at scsibus? target ? lun ?
+uk*		at scsibus? target ? lun ?
 
 #### openfirmware devices
 # mostly unused currently 
@@ -154,10 +144,4 @@ ofrtc*		at openfirm?
 #ofdisk*		at openfirm?	 # used for floppy support
 #ofnet*		at openfirm?
 ofcons*	at openfirm?
-
-pseudo-device	rd		 1	# ram disk
-
-# RAMDISK stuff
-option		MINIROOTSIZE=8192
-option		RAMDISK_HOOKS
 
