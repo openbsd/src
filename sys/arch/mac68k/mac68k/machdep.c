@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 2002/04/16 15:32:59 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.99 2002/04/27 01:52:13 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ void netintr(void);
 #include "ether.h"
 
 /* The following is used externally (sysctl_hw) */
-char	machine[] = "mac68k";	/* cpu "architecture" */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
 
 struct mac68k_machine_S mac68k_machine;
 
@@ -227,16 +227,17 @@ unsigned short  mac68k_statclockipl = PSL_S | PSL_IPL2;
  * The extent maps are not static!  Machine-dependent NuBus and on-board
  * I/O routines need access to them for bus address space allocation.
  */
-static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct	extent *iomem_ex;
 int	iomem_malloc_safe;
 
 /* XXX should be in locore.s for consistency */
 int	astpending = 0;
 
-static void	identifycpu(void);
-static u_long	get_physical(u_int, u_long *);
+void	identifycpu(void);
+u_long	get_physical(u_int, u_long *);
 
+caddr_t	allocsys(caddr_t);
 void	initcpu(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
@@ -323,7 +324,7 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	caddr_t v, firstaddr;
+	caddr_t v;
 	unsigned i;
 	int vers;
 	int base, residual;
@@ -341,10 +342,9 @@ cpu_startup(void)
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufp + i * NBPG,
 		    high[numranges - 1] + i * NBPG,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
@@ -367,84 +367,16 @@ cpu_startup(void)
 		printf("this kernel.\n\n");
 		for (delay = 0; delay < 1000000; delay++);
 	}
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available real memory address is in "firstaddr".
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addressses.
 	 */
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef SYSVSHM
-	shminfo.shmmax = shmmaxpgs;
-	shminfo.shmall = shmmaxpgs;
-	shminfo.shmseg = shmseg;
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	/*
-	 * Determine how many buffers to allocate.
-	 * Use 10% of memory for the first 2 Meg, 5% of the remaining
-	 * memory. Insure a minimum of 16 buffers.
-	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0) {
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / 10;
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20;
-	}
-
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-
-	valloc(buf, struct buf, nbuf);
-
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (caddr_t)uvm_km_alloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	size = (vsize_t)allocsys((caddr_t)0);
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if ((allocsys(v) - v) != size)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -452,16 +384,16 @@ again:
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vm_offset_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE,
 	    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL, 0)))
 		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vm_offset_t)buffers;
+	minaddr = (vaddr_t)buffers;
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
 		/*
@@ -470,7 +402,7 @@ again:
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
 		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
@@ -485,6 +417,7 @@ again:
 		}
 		pmap_update(pmap_kernel());
 	}
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -498,9 +431,10 @@ again:
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * PAGE_SIZE);
+	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024);
+	printf("using %d buffers containing %u bytes (%uK) of memory\n",
+	    nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -523,6 +457,64 @@ again:
 #endif
 	}
 	iomem_malloc_safe = 1;
+}
+
+/*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and then call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+	caddr_t v;
+{
+
+#define	valloc(name, type, num) \
+	    (name) = (type *)v; v = (caddr_t)((name)+(num))
+#define	valloclim(name, type, num, lim) \
+	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+
+#ifdef SYSVSHM
+	shminfo.shmmax = shmmaxpgs;
+	shminfo.shmall = shmmaxpgs;
+	shminfo.shmseg = shmseg;
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+	/*
+	 * Determine how many buffers to allocate.
+	 * Use 10% of memory for the first 2 Meg, then 5% of the remaining
+	 * memory. Insure a minimum of 16 buffers.
+	 */
+	if (bufpages == 0) {
+		if (physmem < btoc(2 * 1024 * 1024))
+			bufpages = physmem / 10;
+		else
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20;
+	}
+
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	valloc(buf, struct buf, nbuf);
+	return (v);
 }
 
 void
@@ -569,7 +561,7 @@ void via_shutdown(void);
  */
 void
 setregs(p, pack, stack, retval)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long  stack;
 	register_t *retval;
@@ -619,17 +611,16 @@ setregs(p, pack, stack, retval)
 }
 
 int	waittime = -1;
-struct pcb dumppcb;
 
 void
 boot(howto)
-	register int howto;
+	int howto;
 {
 	extern u_long maxaddr;
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
-		savectx((struct pcb *)curproc->p_addr);
+	if (curproc && curproc->p_addr)
+		savectx(&curproc->p_addr->u_pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -639,34 +630,25 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-		/* kill the panic on that boot away */
-		if (curproc == NULL)
-			curproc = &proc0;
-
 		waittime = 0;
-
-		/*
-		 * Release inodes, sync and unmount the filesystems.
-		 */
 		vfs_shutdown();
 
-#ifdef notyet
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now unless
 		 * the system was sitting in ddb.
 		 */
 		if ((howto & RB_TIMEBAD) == 0) {
+#ifdef notyet
 			resettodr();
+#else
+#ifdef DIAGNOSTIC
+			printf("OpenBSD/mac68k does not trust itself to update the clock on shutdown.\n");
+#endif
+#endif
 		} else {
 			printf("WARNING: not updating battery clock\n");
 		}
-#else
-# ifdef DIAGNOSTIC
-		printf("OpenBSD/mac68k does not trust itself to update the clock on shutdown.\n");
-# endif
-#endif
 	}
 
 	/* Disable interrupts. */
@@ -674,7 +656,6 @@ boot(howto)
 
 	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP) {
-		savectx(&dumppcb);	/* XXX this goes away soon */
 		dumpsys();
 	}
 
@@ -703,7 +684,7 @@ haltsys:
 	}
 
 	/* Map the last physical page VA = PA for doboot() */
-	pmap_enter(pmap_kernel(), (vm_offset_t)maxaddr, (vm_offset_t)maxaddr,
+	pmap_enter(pmap_kernel(), (vaddr_t)maxaddr, (vaddr_t)maxaddr,
 	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 
@@ -795,42 +776,35 @@ void
 dumpconf()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
 	int maj;
 	int i;
 
 	if (dumpdev == NODEV)
 		return;
-
 	maj = major(dumpdev);
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL) {
-		printf ("dumpconf: returning for d_psize\n");
+	if (bdevsw[maj].d_psize == NULL)
 		return;
-	}
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	chdrsize = cpu_dumpsize();
+	if (nblks <= ctod(1))
+		return;
 
 	dumpsize = 0;
 	for (i = 0; h->ram_segs[i].size && i < NPHYS_RAM_SEGS; i++)
 		dumpsize += btoc(h->ram_segs[i].size);
+	dumpsize += cpu_dumpsize();
 
-	/*
-	 * Check to see if we will fit.  Note we always skip the
-	 * first block in case there is a disk label there.
-	 */
-	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
-		dumpsize = 0;
-		dumplo = -1;
-		return;
-	}
+	/* Always skip the first block, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
 
-	/*
-	 * Put dump at the end of the partition.
-	 */
-	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize < dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
 }
 
 void
@@ -841,7 +815,7 @@ dumpsys()
 				/* dump routine */
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int pg;			/* page being dumped */
-	vm_offset_t maddr;	/* PA being dumped */
+	vaddr_t maddr;	/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
 	int error;		/* error code from (*dump)() */
 	extern int msgbufmapped;
@@ -895,12 +869,12 @@ dumpsys()
 			}
 			maddr = h->ram_segs[seg].start;
 		}
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
- bad:
+bad:
 		switch (error) {
 		case 0:
 			maddr += NBPG;
@@ -968,8 +942,6 @@ microtime(tvp)
 	splx(s);
 }
 
-void straytrap(int, int);
-
 void
 straytrap(pc, evec)
 	int pc;
@@ -977,8 +949,10 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap; vector offset 0x%x from 0x%x.\n",
 	    (int) (evec & 0xfff), pc);
+#ifdef DEBUG
 #ifdef DDB
 	Debugger();
+#endif
 #endif
 }
 
@@ -988,9 +962,9 @@ int badaddr(caddr_t);
 
 int
 badaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t faultbuf;
 
 	nofault = (int *)&faultbuf;
@@ -1005,16 +979,11 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t faultbuf;
 
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *)0;
@@ -1027,16 +996,11 @@ badbaddr(addr)
 
 int
 badwaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t faultbuf;
 
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *)0;
@@ -1049,16 +1013,11 @@ badwaddr(addr)
 
 int
 badladdr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t faultbuf;
 
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *)0;
@@ -1072,56 +1031,15 @@ badladdr(addr)
 void
 netintr()
 {
-#ifdef INET
-#if NETHER
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
-#include "bridge.h"
-#if NBRIDGE > 0
-	if (netisr & (1 << NETISR_BRIDGE)) {
-		netisr &= ~(1 << NETISR_BRIDGE);
-		bridgeintr();
-	}
-#endif
+#define	DONETISR(bit, fn) \
+	do { \
+		if (netisr & (1 << (bit))) { \
+			netisr &= ~(1 << (bit)); \
+			(fn)(); \
+		} \
+	} while (0)
+#include <net/netisr_dispatch.h>
+#undef	DONETISR
 }
 
 /*
@@ -1135,10 +1053,10 @@ nmihand(frame)
 {
 	static int nmihanddeep = 0;
 
-	if (nmihanddeep++)
+	if (nmihanddeep)
 		return;
-/*	regdump(&(frame.F_t), 128);
-	dumptrace(); */
+	nmihanddeep = 1;
+
 #ifdef DIAGNOSTIC
 	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
 #endif
@@ -1146,6 +1064,7 @@ nmihand(frame)
 	if (db_console)
 		Debugger();
 #endif
+
 	nmihanddeep = 0;
 }
 
@@ -1225,8 +1144,8 @@ static char *envbuf = NULL;
 /*
  * getenvvars: Grab a few useful variables
  */
-void		getenvvars(u_long, char *);
-static long	getenv(char *);
+void	getenvvars(u_long, char *);
+long	getenv(char *);
 
 void
 getenvvars(flag, buf)
@@ -1302,11 +1221,13 @@ getenvvars(flag, buf)
 	/*
 	 * Get end of symbols for kernel debugging
 	 */
+#if defined(DDB) || NKSYMS > 0
 	esym = getenv("END_SYM");
 #ifndef SYMTAB_SPACE
 	if (esym == 0)
 #endif
 		esym = (long) &end;
+#endif
 
 	/* Get MacOS time */
 	macos_boottime = getenv("BOOTTIME");
@@ -1332,9 +1253,9 @@ getenvvars(flag, buf)
  	mrg_ADBIntrPtr = (caddr_t)getenv("ADBINTERRUPT");
 }
 
-static char	toupper(char);
+char	toupper(char);
 
-static char
+char
 toupper(c)
 	char c;
 {
@@ -1345,7 +1266,7 @@ toupper(c)
 	}
 }
 
-static long
+long
 getenv(str)
 	char *str;
 {
@@ -1470,7 +1391,7 @@ getenv(str)
  *
  *		Bob Nestor - <rnestor@metronet.com>
  */
-static romvec_t romvecs[] =
+romvec_t romvecs[] =
 {
 	/* Vectors verified for II, IIx, IIcx, SE/30 */
 	{			/* 0 */
@@ -2059,7 +1980,6 @@ static romvec_t romvecs[] =
 	/* Please fill these in! -BG */
 };
 
-
 struct cpu_model_info cpu_models[] = {
 
 /* The first four. */
@@ -2343,9 +2263,9 @@ identifycpu()
 #endif
 }
 
-static void	get_machine_info(void);
+void	get_machine_info(void);
 
-static void
+void
 get_machine_info()
 {
 	int i;
@@ -2629,7 +2549,7 @@ mac68k_set_io_offsets(base)
 }
 
 #if GRAYBARS
-static u_long gray_nextaddr = 0;
+u_long gray_nextaddr = 0;
 
 void
 gray_bar()
@@ -2678,7 +2598,7 @@ extern int get_pte(u_int addr, u_long pte[2], u_short * psr);
  *  to look through MacOS page tables.
  */
 
-static u_long
+u_long
 get_physical(u_int addr, u_long * phys)
 {
 	u_long pte[2], ph, mask;
@@ -2734,9 +2654,9 @@ get_physical(u_int addr, u_long * phys)
 	return 1;
 }
 
-static void	check_video(char *, u_long, u_long);
+void	check_video(char *, u_long, u_long);
 
-static void
+void
 check_video(id, limit, maxm)
 	char *id;
 	u_long limit, maxm;
@@ -2765,9 +2685,11 @@ check_video(id, limit, maxm)
 			mac68k_vidlen += 32768;
 			addr += 32768;
 		}
+#ifdef DIAGNOSTIC
 		printf("  %s internal video at addr 0x%x (phys 0x%x), ",
 		    id, mac68k_vidlog, mac68k_vidphys);
 		printf("len 0x%x.\n", mac68k_vidlen);
+#endif
 	}
 }
 
@@ -2802,7 +2724,7 @@ get_mapping(void)
 			high[numranges - 1] = phys + NBPG;
 		}
 	}
-#if 1
+#ifdef DIAGNOSTIC
 	printf("System RAM: %ld bytes in %ld pages.\n", addr, addr / NBPG);
 	for (i = 0; i < numranges; i++) {
 		printf("     Low = 0x%lx, high = 0x%lx\n", low[i], high[i]);
@@ -2815,8 +2737,10 @@ get_mapping(void)
 		 * setmachdep() (by using intvid_info[]).  Tell the user
 		 * what we know.
 		 */
+#ifdef DIAGNOSTIC
 		printf("On-board video at addr 0x%x (phys 0x%x), len 0x%x.\n",
 		    mac68k_vidlog, mac68k_vidphys, mac68k_vidlen);
+#endif
 	} else {
 		/*
 	 	* We should now look through all of NuBus space to find where
@@ -2911,7 +2835,9 @@ get_mapping(void)
 				    21888, 21888);
 			} else if (0x60000000 <= videoaddr &&
 			    videoaddr < 0x70000000) {
+#ifdef DIAGNOSTIC
 				printf("Checking for Internal Video ");
+#endif
 				/*
 				 * Kludge for IIvx internal video (60b0 0000).
 				 * PB 520 (6000 0000)
@@ -2933,15 +2859,19 @@ get_mapping(void)
 				check_video("AV video (0x50100100)",
 				    1 * 1024 * 1024, 1 * 1024 * 1024);
 			} else {
+#ifdef DIAGNOSTIC
 				printf( "  no internal video at address 0 -- "
 					"videoaddr is 0x%lx.\n", videoaddr);
+#endif
 			}
 		} else {
+#ifdef DIAGNOSTIC
 			printf("  Video address = 0x%lx\n", videoaddr);
 			printf("  Int video starts at 0x%x\n",
 			    mac68k_vidlog);
 			printf("  Length = 0x%x (%d) bytes\n",
 			    mac68k_vidlen, mac68k_vidlen);
+#endif
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.22 2002/04/16 20:54:47 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.23 2002/04/27 01:52:13 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -242,19 +242,6 @@ bootstrap_mac68k(tc)
 	}
 	nextpa = load_addr + round_page((vaddr_t)esym);
 
-#if MFS
-	if (boothowto & RB_MINIROOT) {
-		int	v;
-		boothowto |= RB_DFLTROOT;
-		nextpa = round_page(nextpa);
-		if ((v = mfs_initminiroot((caddr_t) nextpa-load_addr)) == 0) {
-			printf("Error loading miniroot.\n");
-		}
-		printf("Loaded %d byte miniroot.\n", v);
-		nextpa += v;
-	}
-#endif
-
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping the pmap system.\n");
 
@@ -302,9 +289,9 @@ pmap_init_md()
 	 * Mark as unavailable the regions which we have mapped in
 	 * pmap_bootstrap().
 	 */
-	addr = (vaddr_t)IOBase;
+	addr = (vaddr_t)MACHINE_INTIOBASE;
 	if (uvm_map(kernel_map, &addr,
-		    m68k_ptob(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE),
+		    m68k_ptob(MACHINE_IIOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,

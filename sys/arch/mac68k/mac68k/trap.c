@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2002/04/27 01:52:13 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -237,9 +237,6 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-#ifdef DDB
-	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
-#endif
 	struct proc *p;
 	int i, s;
 	u_int ucode;
@@ -251,13 +248,6 @@ trap(type, code, v, frame)
 	p = curproc;
 	ucode = 0;
 
-	if (USERMODE(frame.f_sr)) {
-		type |= T_USER;
-		sticks = p->p_sticks;
-		p->p_md.md_regs = frame.f_regs;
-	} else
-		sticks = 0;
-
 	/* I have verified that this DOES happen! -gwr */
 	if (p == NULL)
 		p = &proc0;
@@ -267,9 +257,16 @@ trap(type, code, v, frame)
 			type, code, v);
 #endif
 
+	if (USERMODE(frame.f_sr)) {
+		type |= T_USER;
+		sticks = p->p_sticks;
+		p->p_md.md_regs = frame.f_regs;
+	} else
+		sticks = 0;
+
 	switch (type) {
 	default:
-	dopanic:
+dopanic:
 		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
 		printf("%s program counter = 0x%x\n",
 		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
@@ -288,7 +285,7 @@ trap(type, code, v, frame)
 		(void)kdb_trap(type, (db_regs_t *)&frame);
 #endif
 #ifdef KGDB
-	kgdb_cont;
+kgdb_cont:
 #endif
 		splx(s);
 		if (panicstr) {
@@ -355,7 +352,9 @@ copyfault:
 
 	case T_CHKINST|T_USER:		/* CHK instruction trap */
 		ucode = frame.f_format;
+		type = FPE_FLTSUB;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
@@ -461,27 +460,11 @@ copyfault:
 	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
 	 * XXX: because locore.s now gives them special treatment.
 	 */
-	case T_TRACE:		/* Kernel trace trap */
-	case T_TRAP15:		/* SUN trace trap */
-#ifdef DDB
-		if (type == T_TRAP15 ||
-		    ((caddr_t) frame.f_pc != trap0 &&
-		     (caddr_t) frame.f_pc != trap1 &&
-		     (caddr_t) frame.f_pc != trap2 &&
-		     (caddr_t) frame.f_pc != trap12 &&
-		     (caddr_t) frame.f_pc != trap15 &&
-		     (caddr_t) frame.f_pc != illinst)) {
-			if (kdb_trap(type, (db_regs_t *) &frame))
-				return;
-		}
-#endif
+	case T_TRAP15:		/* kernel breakpoint */
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
-		typ = TRAP_TRACE;
-		break;
+		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-	case T_TRAP15|T_USER:	/* Sun user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush"
@@ -495,6 +478,9 @@ copyfault:
 			return;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* Kernel trace trap */
+	case T_TRAP15|T_USER:	/* Sun user trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		typ = TRAP_TRACE;
@@ -514,7 +500,7 @@ copyfault:
 		 * IPL while processing the SIR.
 		 */
 		spl1();
-		/* fall into... */
+		/* FALLTHROUGH */
 
 	case T_SSIR:		/* Software interrupt */
 	case T_SSIR|T_USER:
@@ -656,10 +642,8 @@ copyfault:
 		break;
 	    }
 	}
-	if (i) {
-		sv.sival_ptr = (void *)v;
-		trapsignal(p, i, ucode, typ, sv);
-	}
+	sv.sival_ptr = (void *)v;
+	trapsignal(p, i, ucode, typ, sv);
 	if ((type & T_USER) == 0)
 		return;
 out:
@@ -684,7 +668,7 @@ char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
-static int
+int
 writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
@@ -925,7 +909,7 @@ writeback(fp, docachepush)
 }
 
 #ifdef DEBUG
-static void
+void
 dumpssw(ssw)
 	u_short ssw;
 {
@@ -952,7 +936,6 @@ dumpssw(ssw)
 	       f7tm[ssw & SSW4_TMMASK]);
 }
 
-static
 void
 dumpwb(num, s, a, d)
 	int num;
@@ -1100,7 +1083,7 @@ syscall(code, frame)
 		/* nothing to do */
 		break;
 	default:
-	bad:
+bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame.f_regs[D0] = error;

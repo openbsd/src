@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.25 2002/04/16 20:54:16 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.26 2002/04/27 01:52:10 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -304,16 +304,25 @@ u_int	get_mapping(void);
 /* locore.s */
 void	m68881_restore(struct fpframe *);
 void	m68881_save(struct fpframe *);
+void	DCIA(void);
+void	DCIS(void);
+void	DCIU(void);
+void	ICIA(void);
+void	ICPA(void);
+void	PCIA(void);
 void	TBIA(void);
 void	TBIAS(void);
 void	TBIAU(void);
 void	TBIS(vm_offset_t);
-void	DCFP(vm_offset_t);
-void	ICPP(vm_offset_t);
-void	DCIU(void);
-void	DCIS(void);
-void	ICIA(void);
-void	DCFL(vm_offset_t);
+#if defined(M68040)
+void	DCFA(void);
+void	DCFP(paddr_t);
+void	DCFL(paddr_t);
+void	DCPL(paddr_t);
+void	DCPP(paddr_t);
+void	ICPL(paddr_t);
+void	ICPP(paddr_t);
+#endif
 int	suline(caddr_t, caddr_t);
 void	savectx(struct pcb *);
 void	proc_trampoline(void);

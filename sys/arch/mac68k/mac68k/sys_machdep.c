@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.6 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.7 2002/04/27 01:52:13 miod Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.9 1996/05/05 06:18:58 briggs Exp $	*/
 
 /*
@@ -83,6 +83,8 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -94,19 +96,98 @@
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
-int	cachectl(int, caddr_t, int);
-void	DCIU(void);
-void	ICIA(void);
+int	cachectl(int, vaddr_t, int);
 
 /*ARGSUSED1*/
 int
 cachectl(req, addr, len)
 	int req;
-	caddr_t	addr;
+	vaddr_t	addr;
 	int len;
 {
 	int error = 0;
 
+#if defined(M68040)
+	if (mmutype == MMU_68040) {
+		int inc = 0;
+		int doall = 0;
+		paddr_t pa = 0;
+		vaddr_t end = 0;
+
+		if (addr == 0 ||
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
+			doall = 1;
+
+		if (!doall) {
+			end = addr + len;
+			if (len <= 1024) {
+				addr = addr & ~0xF;
+				inc = 16;
+			} else {
+				addr = addr & ~PGOFSET;
+				inc = NBPG;
+			}
+		}
+		do {
+			/*
+			 * Convert to physical address if needed.
+			 * If translation fails, we perform operation on
+			 * entire cache (XXX is this a rational thing to do?)
+			 */
+			if (!doall &&
+			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+				if (pmap_extract(
+				    curproc->p_vmspace->vm_map.pmap,
+				    addr, &pa) == FALSE)
+					doall = 1;
+			}
+			switch (req) {
+			case CC_EXTPURGE|CC_IPURGE:
+			case CC_IPURGE:
+				if (doall) {
+					DCFA();
+					ICPA();
+				} else if (inc == 16) {
+					DCFL(pa);
+					ICPL(pa);
+				} else if (inc == NBPG) {
+					DCFP(pa);
+					ICPP(pa);
+				}
+				break;
+			
+			case CC_EXTPURGE|CC_PURGE:
+			case CC_PURGE:
+				if (doall)
+					DCFA();	/* note: flush not purge */
+				else if (inc == 16)
+					DCPL(pa);
+				else if (inc == NBPG)
+					DCPP(pa);
+				break;
+
+			case CC_EXTPURGE|CC_FLUSH:
+			case CC_FLUSH:
+				if (doall)
+					DCFA();
+				else if (inc == 16)
+					DCFL(pa);
+				else if (inc == NBPG)
+					DCFP(pa);
+				break;
+				
+			default:
+				error = EINVAL;
+				break;
+			}
+			if (doall)
+				break;
+			pa += inc;
+			addr += inc;
+		} while (addr < end);
+		return(error);
+	}
+#endif
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
@@ -127,13 +208,14 @@ cachectl(req, addr, len)
 	return(error);
 }
 
-int sys_sysarch(p, v, retval)
+int
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-#if 0
-	struct sysarch_args /* {
+#if 0 /* unused */
+	struct sys_sysarch_args /* {
 		syscallarg(int) op; 
 		syscallarg(char *) parms;
 	} */ *uap = v;
