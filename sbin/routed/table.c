@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.16 2004/09/08 16:18:12 henning Exp $	*/
+/*	$OpenBSD: table.c,v 1.17 2005/03/22 12:34:13 henning Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1054,8 +1054,8 @@ read_rt(void)
 			continue;
 		}
 
-		/* ignore routes from bgpd */
-		if (m.r.rtm.rtm_flags & RTF_PROTO1)
+		/* ignore routes from bgpd and ospfd */
+		if (m.r.rtm.rtm_flags & (RTF_PROTO1|RTF_PROTO2))
 			continue;
 
 		if (m.r.rtm.rtm_type == RTM_IFINFO

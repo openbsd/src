@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.38 2004/09/08 16:18:12 henning Exp $
+.\"	$OpenBSD: routed.8,v 1.39 2005/03/22 12:34:13 henning Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,10 +84,12 @@ interface on which RIP has not been disabled,
 .Nm
 deletes all pre-existing
 non-static routes in the kernel table,
-except those marked with the RTF_PROTO1 flag (see
+except those marked with either the RTF_PROTO1 or RTF_PROTO2 flag (see
 .Xr route 4 ) ,
 i.e. routes that have been inserted by
-.Xr bgpd 8 .
+.Xr bgpd 8
+or
+.Xr ospfd 8 .
 Static routes in the kernel table are preserved and
 included in RIP responses if they have a valid RIP metric
 (see
