@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.28 1999/03/16 02:47:53 deraadt Exp $
+#	$OpenBSD: daily,v 1.29 2000/04/24 04:23:13 todd Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -94,10 +94,10 @@ fi
 # use it as a backup root filesystem to be updated daily.
 [ "X$ROOTBACKUP" = X1 ] && {
 	rootdev=`awk '$2 == "/" && $1 ~ /^\/dev\// && $3 == "ffs" && \
-	    $4 == "rw" \
+	    $4 ~ /rw/ \
 		 { print substr($1, 6) }' < /etc/fstab`
 	rootbak=`awk '$2 == "/altroot" && $1 ~ /^\/dev\// && $3 == "ffs" && \
-	    $4 == "xx" \
+	    $4 ~ /xx/ \
 		{ print substr($1, 6) }' < /etc/fstab`
 	[ X$rootdev != X -a X$rootbak != X ] && {
 		sync
