@@ -4,7 +4,6 @@ LIB=	crypto
 SSLEAYDIST= src-patent
 
 LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
-SSLEAY_INC= ${.CURDIR}/../${SSLEAYDIST}/include
 
 .if ${MACHINE_ARCH} == "i386"
 CFLAGS+= -DL_ENDIAN -DBN_ASM
@@ -17,7 +16,7 @@ CFLAGS+= -DB_ENDIAN
 .endif
 
 CFLAGS+= -DNO_IDEA -DTERMIOS -DANSI_SOURCE 
-CFLAGS+= -I${SSLEAY_INC}
+CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
 SRCS+=	cryptlib.c mem.c cversion.c ex_data.c cpt_err.c			
 CFLAGS+= -I${LCRYPTO_SRC}/md2
@@ -143,7 +142,7 @@ HDRS= 	asn1/asn1.h asn1/asn1_mac.h bf/blowfish.h bio/bio.h \
 	md2/md2.h md5/md5.h mdc2/mdc2.h objects/objects.h pem/pem.h \
 	pkcs7/pkcs7.h rand/rand.h rc2/rc2.h rc4/rc4.h rc5/rc5.h \
 	ripemd/ripemd.h rsa/rsa.h sha/sha.h stack/stack.h txt_db/txt_db.h \
-	x509/x509.h x509/x509_vfy.h crypto.h cryptall.h ../include/e_os.h
+	x509/x509.h x509/x509_vfy.h crypto.h cryptall.h ../e_os.h
 
 .PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha ${LCRYPTO_SRC}/mdc2	\
 	${LCRYPTO_SRC}/hmac ${LCRYPTO_SRC}/ripemd ${LCRYPTO_SRC}/des  ${LCRYPTO_SRC}/rc2 \
