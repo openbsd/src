@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.55 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.56 2004/08/10 13:02:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -732,7 +732,8 @@ nexthop_update(struct kroute_nexthop *msg)
 }
 
 void
-nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop, int flags)
+nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop, int flags,
+    sa_family_t af)
 {
 	struct nexthop	*nh;
 
@@ -740,8 +741,10 @@ nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop, int flags)
 		asp->flags |= F_NEXTHOP_REJECT;
 	if (flags & SET_NEXTHOP_BLACKHOLE)
 		asp->flags |= F_NEXTHOP_BLACKHOLE;
-	if (!(flags & SET_NEXTHOP))
+	if (!(flags & SET_NEXTHOP) ||
+	    af != nexthop->af)
 		return;
+
 	nh = nexthop_get(nexthop, NULL);
 	nexthop_unlink(asp);
 	asp->nexthop = nh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.139 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.140 2004/08/10 13:02:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,17 +157,15 @@ enum enforce_as {
 };
 
 struct filter_set {
-	u_int16_t	flags;
-	u_int32_t	localpref;
-	u_int32_t	med;
-	/*XXX this nexthop thing should be changed to one bgpd_addr */
-	struct in_addr	nexthop;
-	struct in6_addr	nexthop6;
-	u_int8_t	prepend;
-	char		pftable[PFTABLE_LEN];
+	u_int16_t		flags;
+	u_int32_t		localpref;
+	u_int32_t		med;
+	struct bgpd_addr	nexthop;
+	u_int8_t		prepend;
+	char			pftable[PFTABLE_LEN];
 	struct {
-		int	as;
-		int	type;
+		int		as;
+		int		type;
 	} community;
 };
 

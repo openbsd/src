@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.17 2004/08/10 12:57:18 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.18 2004/08/10 13:02:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 		    f->peer.peerid != peer->conf.id)
 			continue;
 		if (rde_filter_match(f, asp, prefix, prefixlen)) {
-			rde_apply_set(asp, &f->set);
+			rde_apply_set(asp, &f->set, prefix->af);
 			if (f->action != ACTION_NONE)
 				action = f->action;
 			if (f->quick)
@@ -56,9 +56,8 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 }
 
 void
-rde_apply_set(struct rde_aspath *asp, struct filter_set *set)
+rde_apply_set(struct rde_aspath *asp, struct filter_set *set, sa_family_t af)
 {
-	struct bgpd_addr addr;
 	struct aspath	*new;
 	u_int16_t	 as;
 
@@ -72,11 +71,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set *set)
 		asp->med = set->med;
 	}
 
-	/* XXX and uglier */
-	bzero(&addr, sizeof(addr));
-	addr.af = AF_INET;
-	addr.v4.s_addr = set->nexthop.s_addr;
-	nexthop_modify(asp, &addr, set->flags);
+	nexthop_modify(asp, &set->nexthop, set->flags, af);
 
 	if (set->flags & SET_PREPEND) {
 		as = rde_local_as();
