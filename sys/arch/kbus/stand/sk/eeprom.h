@@ -1,6 +1,0 @@
-#define EEPROM_BYTE_OFFSET	8
-
-#define EEPROM_SIZE		0x400
-
-#define EEPROM_OFF_MODEL	0x08
-#define EEPROM_SIZE_MODEL	16

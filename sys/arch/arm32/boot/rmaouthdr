@@ -1,4 +1,0 @@
-#!/bin/sh
-#	$NetBSD: rmaouthdr,v 1.1 1996/01/31 23:18:23 mark Exp $
-
-dd if=$1 of=$2 ibs=32 skip=1 obs=1024b

@@ -1,5 +1,0 @@
-# standard NetBSD/arm32 options
-
-machine	arm32
-
-options		MACHINE_NONCONTIG	# temporary kludge

@@ -1,7 +1,0 @@
-Ok, this is the bootloader source that can be used to boot NetBSD/arm32
-from RISCOS. This code was written for use with Norcroft C and
-objasm under RISCOS. It has been modified to compile under NetBSD/arm32
-but is as yet untested.
-
-It is provided here for the moment as example code for a boot loader
-and will be updated shortly to compile under NetBSD/arm32
