@@ -4,7 +4,7 @@
 SKEY=		yes
 # Defining `KERBEROS' causes support for Kerberos authentication to be
 # compiled in.
-#KERBEROS=	yes
+KERBEROS=	yes
 # Defining 'KERBEROS5' causes support for Kerberos5 authentication to be
 # compiled in.
 #KERBEROS5=	yes
