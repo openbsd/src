@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbreg.h,v 1.4 1998/04/26 21:03:02 provos Exp $	*/
+/*	$OpenBSD: sbreg.h,v 1.5 2002/06/06 20:58:07 aaron Exp $	*/
 /*	$NetBSD: sbreg.h,v 1.24 1997/08/24 23:24:51 augustss Exp $	*/
 
 /*
@@ -211,7 +211,7 @@
 #define	SB_DSP16_RDMA_16	0xBE	/* begin 16-bit linear input */
 #define	SB_DSP16_WDMA_8		0xC6	/* begin 8-bit linear output */
 #define	SB_DSP16_RDMA_8		0xCE	/* begin 8-bit linear input */
-#define SB_DSP_HALT		0xd0	/* temporarilty suspend DMA */
+#define SB_DSP_HALT		0xd0	/* temporarily suspend DMA */
 #define SB_DSP_SPKR_ON		0xd1	/* turn speaker on */
 #define SB_DSP_SPKR_OFF		0xd3	/* turn speaker off */
 #define SB_DSP_CONT		0xd4	/* continue suspended DMA */
