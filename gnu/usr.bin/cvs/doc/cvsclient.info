@@ -1,23 +1,22 @@
-This is Info file cvsclient.info, produced by Makeinfo-1.55 from the
-input file ./cvsclient.texi.
+This is Info file cvsclient.info, produced by Makeinfo-1.64 from the
+input file ../../work/ccvs/doc/cvsclient.texi.
 
 
-File: cvsclient.info,  Node: Top,  Next: Introduction,  Prev: (DIR),  Up: (DIR)
+File: cvsclient.info,  Node: Top,  Next: Introduction,  Up: (dir)
 
 CVS Client/Server
 *****************
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.9 of the protocol
-specification--*Note Introduction:: for more on what this version number
-means.
+regular CVS manual for that.  This is version 1.9.2 of the protocol
+specification--*Note Introduction::, for more on what this version
+number means.
 
 * Menu:
 
 * Introduction::      What is CVS and what is the client/server protocol for?
 * Goals::             Basic design decisions, requirements, scope, etc.
-* Notes::             Notes on the current implementation
 * Protocol Notes::    Possible enhancements, limitations, etc. of the protocol
 * Connection and Authentication::  Various ways to connect to the server
 * Protocol::          Complete description of the protocol
@@ -58,7 +57,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.9 of the protocol specification.  This version
+   This is version 1.9.2 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -70,7 +69,7 @@ speak; they should instead use the `valid-requests' and
 `Valid-responses' mechanism (*note Protocol::.), which is more flexible.
 
 
-File: cvsclient.info,  Node: Goals,  Next: Notes,  Prev: Introduction,  Up: Top
+File: cvsclient.info,  Node: Goals,  Next: Protocol Notes,  Prev: Introduction,  Up: Top
 
 Goals
 *****
@@ -84,48 +83,30 @@ Goals
    * Security and authentication are handled outside this protocol (but
      see below about `cvs kserver' and `cvs pserver').
 
-   * This might be a first step towards adding transactions to CVS
-     (i.e. a set of operations is either executed atomically or none of
-     them is executed), improving the locking, or other features.  The
-     current server implementation is a long way from being able to do
-     any of these things.  The protocol, however, is not known to
-     contain any defects which would preclude them.
+   * The protocol makes it possible for updates to be atomic with
+     respect to checkins; that is if someone commits changes to several
+     files in one cvs command, then an update by someone else would
+     either get all the changes, or none of them.  The current CVS
+     server can't do this, but that isn't the protocol's fault.
 
-   * The server never has to have any CVS locks in place while it is
-     waiting for communication with the client.  This makes things
-     robust in the face of flaky networks.
-
-   * Data is transferred in large chunks, which is necessary for good
-     performance.  In fact, currently the client uploads all the data
-     (without waiting for server responses), and then waits for one
-     server response (which consists of a massive download of all the
-     data).  There may be cases in which it is better to have a richer
-     interraction, but the need for the server to release all locks
-     whenever it waits for the client makes it complicated.
-
-
-File: cvsclient.info,  Node: Notes,  Next: Protocol Notes,  Prev: Goals,  Up: Top
-
-Notes on the Current Implementation
-***********************************
-
-   The client is built in to the normal `cvs' program, triggered by a
-specially-formatted `CVSROOT' variable, for example
-`:server:cygnus.com:/rel/cvsfiles'.
-
-   The client stores what is stored in checked-out directories
-(including `CVS').  The way these are stored is totally compatible with
-standard CVS.  The server requires no storage other than the repository,
-which also is totally compatible with standard CVS.
-
-   The current server implementation can use up huge amounts of memory
-when transmitting a lot of data over a slow link (i.e. the network is
-slower than the server can generate the data).  There is some
-experimental code (see `SERVER_FLOWCONTROL' in options.h) which should
-help significantly.
+   * The protocol is, with a few exceptions, transaction-based.  That
+     is, the client sends all its requests (without waiting for server
+     responses), and then waits for the server to send back all
+     responses (without waiting for further client requests).  This has
+     the advantage of minimizing network turnarounds and the
+     disadvantage of sometimes transferring more data than would be
+     necessary if there were a richer interaction.  Another, more
+     subtle, advantage is that there is no need for the protocol to
+     provide locking for features such as making checkins atomic with
+     respect to updates.  Any such locking can be handled entirely by
+     the server.  A good server implementation (such as the current CVS
+     server) will make sure that it does not have any such locks in
+     place whenever it is waiting for communication with the client;
+     this prevents one client on a slow or flaky network from
+     interfering with the work of others.
 
 
-File: cvsclient.info,  Node: Protocol Notes,  Next: Connection and Authentication,  Prev: Notes,  Up: Top
+File: cvsclient.info,  Node: Protocol Notes,  Next: Connection and Authentication,  Prev: Goals,  Up: Top
 
 Notes on the Protocol
 *********************
@@ -196,16 +177,19 @@ pserver
      connects, sends the string `BEGIN AUTH REQUEST', a linefeed, the
      cvs root, a linefeed, the username, a linefeed, the password
      trivially encoded (see scramble.c in the cvs sources), a linefeed,
-     the string `END AUTH REQUEST', and a linefeed.  The server
-     responds with `I LOVE YOU' and a linefeed if the authentication is
-     successful or `I HATE YOU' and a linefeed if the authentication
-     fails.  After receiving `I LOVE YOU', the client proceeds with the
-     cvs protocol.  If the client wishes to merely authenticate without
-     starting the cvs protocol, the procedure is the same, except
-     `BEGIN AUTH REQUEST' is replaced with `BEGIN VERIFICATION
-     REQUEST', `END AUTH REQUEST' is replaced with `END VERIFICATION
-     REQUEST', and upon receipt of `I LOVE YOU' the connection is
-     closed rather than continuing.
+     the string `END AUTH REQUEST', and a linefeed.  The client must
+     sent the identical string for cvs root here, as it sends later, in
+     the `Root' request of the cvs protocol itself.  Servers are
+     encouraged to enforce this restriction.  The server responds with
+     `I LOVE YOU' and a linefeed if the authentication is successful or
+     `I HATE YOU' and a linefeed if the authentication fails.  After
+     receiving `I LOVE YOU', the client proceeds with the cvs protocol.
+     If the client wishes to merely authenticate without starting the
+     cvs protocol, the procedure is the same, except `BEGIN AUTH
+     REQUEST' is replaced with `BEGIN VERIFICATION REQUEST', `END AUTH
+     REQUEST' is replaced with `END VERIFICATION REQUEST', and upon
+     receipt of `I LOVE YOU' the connection is closed rather than
+     continuing.
 
 
 File: cvsclient.info,  Node: Protocol,  Prev: Connection and Authentication,  Up: Top
@@ -225,6 +209,7 @@ horizontal tab.
 * Responses::
 * Example::
 * Requirements::
+* Obsolete::                        Former protocol features
 
 
 File: cvsclient.info,  Node: Entries Lines,  Next: Modes,  Up: Protocol
@@ -340,24 +325,19 @@ compressed form) ends with a newline.
      Response expected: yes.  Ask the server to send back a
      `Valid-requests' response.
 
-`Repository REPOSITORY \n'
-     Response expected: no.  Tell the server what repository to use.
-     This should be a directory name from a previous server response.
-     Note that this both gives a default for `Entry ' and `Modified '
-     and also for `ci' and the other commands; normal usage is to send a
-     `Repository ' for each directory in which there will be an `Entry
-     ' or `Modified ', and then a final `Repository ' for the original
-     directory, then the command.
-
 `Directory LOCAL-DIRECTORY \n'
-     Additional data: REPOSITORY \n.  Response expected: no.  This is
-     like `Repository', but the local name of the directory may differ
-     from the repository name.  If the client uses this request, it
-     affects the way the server returns pathnames; see *Note
-     Responses::.  LOCAL-DIRECTORY is relative to the top level at
-     which the command is occurring (i.e. the last `Directory' or
-     `Repository' which is sent before the command); to indicate that
-     top level, `.' should be send for LOCAL-DIRECTORY.
+     Additional data: REPOSITORY \n.  Response expected: no.  Tell the
+     server what directory to use.  The REPOSITORY should be a
+     directory name from a previous server response.  Note that this
+     both gives a default for `Entry' and `Modified' and also for `ci'
+     and the other commands; normal usage is to send `Directory' for
+     each directory in which there will be an `Entry' or `Modified',
+     and then a final `Directory' for the original directory, then the
+     command.  If the client uses this request, it affects the way the
+     server returns pathnames; see *Note Responses::.  LOCAL-DIRECTORY
+     is relative to the top level at which the command is occurring
+     (i.e. the last `Directory' which is sent before the command); to
+     indicate that top level, `.' should be send for LOCAL-DIRECTORY.
 
 `Max-dotdot LEVEL \n'
      Response expected: no.  Tell the server that LEVEL levels of
@@ -369,15 +349,14 @@ compressed form) ends with a newline.
 
 `Static-directory \n'
      Response expected: no.  Tell the server that the directory most
-     recently specified with `Repository' or `Directory' should not have
-     additional files checked out unless explicitly requested.  The
-     client sends this if the `Entries.Static' flag is set, which is
-     controlled by the `Set-static-directory' and
-     `Clear-static-directory' responses.
+     recently specified with `Directory' should not have additional
+     files checked out unless explicitly requested.  The client sends
+     this if the `Entries.Static' flag is set, which is controlled by
+     the `Set-static-directory' and `Clear-static-directory' responses.
 
 `Sticky TAGSPEC \n'
      Response expected: no.  Tell the server that the directory most
-     recently specified with `Repository' has a sticky tag or date
+     recently specified with `Directory' has a sticky tag or date
      TAGSPEC.  The first character of TAGSPEC is `T' for a tag, or `D'
      for a date.  The remainder of TAGSPEC contains the actual tag or
      date.
@@ -397,42 +376,29 @@ compressed form) ends with a newline.
 `Entry ENTRY-LINE \n'
      Response expected: no.  Tell the server what version of a file is
      on the local machine.  The name in ENTRY-LINE is a name relative
-     to the directory most recently specified with `Repository'.  If
-     the user is operating on only some files in a directory, `Entry'
+     to the directory most recently specified with `Directory'.  If the
+     user is operating on only some files in a directory, `Entry'
      requests for only those files need be included.  If an `Entry'
-     request is sent without `Modified', `Unchanged', or `Lost' for that
-     file the meaning depends on whether `UseUnchanged' has been sent;
-     if it has been it means the file is lost, if not it means the file
-     is unchanged.
+     request is sent without `Modified' or `Unchanged', it means the
+     file is lost (does not exist in the working directory).
 
 `Modified FILENAME \n'
      Response expected: no.  Additional data: mode, \n, file
      transmission.  Send the server a copy of one locally modified
      file.  FILENAME is relative to the most recent repository sent
-     with `Repository'.  If the user is operating on only some files in
+     with `Directory'.  If the user is operating on only some files in
      a directory, only those files need to be included.  This can also
      be sent without `Entry', if there is no entry for the file.
-
-`Lost FILENAME \n'
-     Response expected: no.  Tell the server that FILENAME no longer
-     exists.  The name is relative to the most recent repository sent
-     with `Repository'.  This is used for any case in which `Entry' is
-     being sent but the file no longer exists.  If the client has
-     issued the `UseUnchanged' request, then this request is not used.
 
 `Unchanged FILENAME \n'
      Response expected: no.  Tell the server that FILENAME has not been
      modified in the checked out directory.  The name is relative to
-     the most recent repository sent with `Repository'.  This request
-     can only be issued if `UseUnchanged' has been sent.
+     the most recent repository sent with `Directory'.
 
 `UseUnchanged \n'
-     Response expected: no.  Tell the server that the client will be
-     indicating unmodified files with `Unchanged', and that files for
-     which no information is sent are nonexistent on the client side,
-     not unchanged.  This is necessary for correct behavior since only
-     the server knows what possible files may exist, and thus what
-     files are nonexistent.
+     Response expected: no.  To specify the version of the protocol
+     described in this document, servers must support this request
+     (although it need not do anything) and clients must issue it.
 
 `Notify FILENAME \n'
      Response expected: no.  Tell the server that a `edit' or `unedit'
@@ -530,11 +496,11 @@ compressed form) ends with a newline.
 `editors \n'
 `annotate \n'
      Response expected: yes.  Actually do a cvs command.  This uses any
-     previous `Argument', `Repository', `Entry', `Modified', or `Lost'
-     requests, if they have been sent.  The last `Repository' sent
-     specifies the working directory at the time of the operation.  No
-     provision is made for any input from the user.  This means that
-     `ci' must use a `-m' argument if it wants to specify a log message.
+     previous `Argument', `Directory', `Entry', or `Modified' requests,
+     if they have been sent.  The last `Directory' sent specifies the
+     working directory at the time of the operation.  No provision is
+     made for any input from the user.  This means that `ci' must use a
+     `-m' argument if it wants to specify a log message.
 
 `init ROOT-NAME \n'
      Response expected: yes.  If it doesn't already exist, create a CVS
@@ -544,23 +510,22 @@ compressed form) ends with a newline.
 
 `update \n'
      Response expected: yes.  Actually do a `cvs update' command.  This
-     uses any previous `Argument', `Repository', `Entry', `Modified',
-     or `Lost' requests, if they have been sent.  The last `Repository'
-     sent specifies the working directory at the time of the operation.
-     The `-I' option is not used-files which the client can decide
-     whether to ignore are not mentioned and the client sends the
+     uses any previous `Argument', `Directory', `Entry', or `Modified'
+     requests, if they have been sent.  The last `Directory' sent
+     specifies the working directory at the time of the operation.  The
+     `-I' option is not used-files which the client can decide whether
+     to ignore are not mentioned and the client sends the
      `Questionable' request for others.
 
 `import \n'
      Response expected: yes.  Actually do a `cvs import' command.  This
-     uses any previous `Argument', `Repository', `Entry', `Modified',
-     or `Lost' requests, if they have been sent.  The last `Repository'
-     sent specifies the working directory at the time of the operation.
-     The files to be imported are sent in `Modified' requests (files
-     which the client knows should be ignored are not sent; the server
-     must still process the CVSROOT/cvsignore file unless -I ! is
-     sent).  A log message must have been specified with a `-m'
-     argument.
+     uses any previous `Argument', `Directory', `Entry', or `Modified'
+     requests, if they have been sent.  The last `Directory' sent
+     specifies the working directory at the time of the operation.  The
+     files to be imported are sent in `Modified' requests (files which
+     the client knows should be ignored are not sent; the server must
+     still process the CVSROOT/cvsignore file unless -I ! is sent).  A
+     log message must have been specified with a `-m' argument.
 
 `watch-on \n'
 `watch-off \n'
@@ -568,10 +533,10 @@ compressed form) ends with a newline.
 `watch-remove \n'
      Response expected: yes.  Actually do the `cvs watch on', `cvs
      watch off', `cvs watch add', and `cvs watch remove' commands,
-     respectively.  This uses any previous `Argument', `Repository',
-     `Entry', `Modified', or `Lost' requests, if they have been sent.
-     The last `Repository' sent specifies the working directory at the
-     time of the operation.
+     respectively.  This uses any previous `Argument', `Directory',
+     `Entry', or `Modified' requests, if they have been sent.  The last
+     `Directory' sent specifies the working directory at the time of
+     the operation.
 
 `release \n'
      Response expected: yes.  Note that a `cvs release' command has
@@ -630,15 +595,12 @@ send data at other times (the current implementation may violate this
 principle in a few minor places, where the server is printing an error
 message and exiting--this should be investigated further).
 
-   Pathnames are of the actual files operated on (i.e. they do not
-contain `,v' endings), and are suitable for use in a subsequent
-`Repository' request.  However, if the client has used the `Directory'
-request, then it is instead a local directory name relative to the
-directory in which the command was given (i.e. the last `Directory'
-before the command).  Then a newline and a repository name (the
-pathname which is sent if `Directory' is not used).  Then the slash and
-the filename.  For example, for a file `i386.mh' which is in the local
-directory `gas.clean/config' and for which the repository is
+   In the following, PATHNAME actually indicates a pair of pathnames.
+First, a local directory name relative to the directory in which the
+command was given (i.e. the last `Directory' before the command).  Then
+a newline and a repository name.  Then a slash and the filename
+(without a `,v' ending).  For example, for a file `i386.mh' which is in
+the local directory `gas.clean/config' and for which the repository is
 `/rel/cvsfiles/devo/gas/config':
 
      gas.clean/config/
@@ -821,92 +783,167 @@ File: cvsclient.info,  Node: Example,  Next: Requirements,  Prev: Responses,  Up
 Example
 =======
 
-   Lines beginning with `c>' are sent by the client; lines beginning
-with `s>' are sent by the server; lines beginning with `#' are not part
-of the actual exchange.
+   Here is an example; lines are prefixed by `C: ' to indicate the
+client sends them or `S: ' to indicate the server sends them.
 
-     c> Root /rel/cvsfiles
-     # In actual practice the lists of valid responses and requests would
-     # be longer
-     c> Valid-responses Updated Checked-in M ok error
-     c> valid-requests
-     s> Valid-requests Root co Modified Entry Repository ci Argument Argumentx
-     s> ok
-     # cvs co devo/foo
-     c> Argument devo/foo
-     c> co
-     s> Updated /rel/cvsfiles/devo/foo/foo.c
-     s> /foo.c/1.4/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-     s> 26
-     s> int mein () { abort (); }
-     s> Updated /rel/cvsfiles/devo/foo/Makefile
-     s> /Makefile/1.2/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-     s> 28
-     s> foo: foo.c
-     s>         $(CC) -o foo $<
-     s> ok
-     # The current implementation would break the connection here and make a
-     # new connection for the next command.  However, the protocol allows it
-     # to keep the connection open and continue, which is what we show here.
-     c> Repository /rel/cvsfiles/devo/foo
-     # foo.c relative to devo/foo just set as Repository.
-     c> Entry /foo.c/1.4/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-     c> Entry /Makefile/1.2/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-     c> Modified foo.c
-     c> 26
-     c> int main () { abort (); }
-     # cvs ci -m <log message> foo.c
-     c> Argument -m
-     c> Argument Well, you see, it took me hours and hours to find this typo and I
-     c> Argumentx searched and searched and eventually had to ask John for help.
-     c> Argument foo.c
-     c> ci
-     s> Checked-in /rel/cvsfiles/devo/foo/foo.c
-     s> /foo.c/1.5/ Mon Apr 19 15:54:22 CDT 1993//
-     s> M Checking in foo.c;
-     s> M /cygint/rel/cvsfiles/devo/foo/foo.c,v  <--  foo.c
-     s> M new revision: 1.5; previous revision: 1.4
-     s> M done
-     s> ok
+   The client starts by connecting, sending the root, and completing the
+protocol negotiation.  In actual practice the lists of valid responses
+and requests would be longer.
+
+     C: Root /home/kingdon/testing/cvsroot
+     C: Valid-responses ok error Checked-in M E
+     C: valid-requests
+     S: Valid-requests Root Directory Entry Modified Argument Argumentx ci co
+     S: ok
+     C: UseUnchanged
+
+   The client wants to check out the `supermunger' module into a fresh
+working directory.  Therefore it first expands the `supermunger'
+module; this step would be omitted if the client was operating on a
+directory rather than a module.
+
+     C: Argument supermunger
+     C: Directory .
+     C: /home/kingdon/testing/cvsroot
+     C: expand-modules
+
+   The server replies that the `supermunger' module expands to the
+directory `supermunger' (the simplest case):
+
+     S: Module-expansion supermunger
+     S: ok
+
+   The client then proceeds to check out the directory.  The fact that
+it sends only a single `Directory' request which specifies `.' for the
+working directory means that there is not already a `supermunger'
+directory on the client.
+
+     C: Argument -N
+     C: Argument supermunger
+     C: Directory .
+     C: /home/kingdon/testing/cvsroot
+     C: co
+
+   The server replies with the requested files.  In this example, there
+is only one, `mungeall.c'.  The `Clear-sticky' and
+`Clear-static-directory' requests are sent by the current
+implementation but they have no effect because the default is for those
+settings to be clear when a directory is newly created.
+
+     S: Clear-sticky supermunger/
+     S: /home/kingdon/testing/cvsroot/supermunger/
+     S: Clear-static-directory supermunger/
+     S: /home/kingdon/testing/cvsroot/supermunger/
+     S: E cvs server: Updating supermunger
+     S: M U supermunger/mungeall.c
+     S: Created supermunger/
+     S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+     S: /mungeall.c/1.1///
+     S: u=rw,g=r,o=r
+     S: 26
+     S: int mein () { abort (); }
+     S: ok
+
+   The current client implementation would break the connection here
+and make a new connection for the next command.  However, the protocol
+allows it to keep the connection open and continue, which is what we
+show here.
+
+   After the user modifies the file and instructs the client to check it
+back in.  The client sends arguments to specify the log message and file
+to check in:
+
+     C: Argument -m
+     C: Argument Well, you see, it took me hours and hours to find this typo and I
+     C: Argumentx searched and searched and eventually had to ask John for help.
+     C: Argument mungeall.c
+
+   It also sends information about the contents of the working
+directory, including the new contents of the modified file.  Note that
+the user has changed into the `supermunger' directory before executing
+this command; the top level directory is a user-visible concept because
+the server should print filenames in `M' and `E' responses relative to
+that directory.
+
+     C: Directory .
+     C: /home/kingdon/testing/cvsroot/supermunger
+     C: Entry /mungeall.c/1.1///
+     C: Modified mungeall.c
+     C: u=rw,g=r,o=r
+     C: 26
+     C: int main () { abort (); }
+
+   And finally, the client issues the checkin command (which makes use
+of the data just sent):
+
+     C: ci
+
+   And the server tells the client that the checkin succeeded:
+
+     S: M Checking in mungeall.c;
+     S: E /home/kingdon/testing/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
+     S: E new revision: 1.2; previous revision: 1.1
+     S: E done
+     S: Mode u=rw,g=r,o=r
+     S: Checked-in ./
+     S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+     S: /mungeall.c/1.2///
+     S: ok
 
 
-File: cvsclient.info,  Node: Requirements,  Prev: Example,  Up: Protocol
+File: cvsclient.info,  Node: Requirements,  Next: Obsolete,  Prev: Example,  Up: Protocol
 
 Required versus optional parts of the protocol
 ==============================================
 
    The following are part of every known implementation of the CVS
-protocol and it is considered reasonable behavior to completely fail to
-work if you are connected with an implementation which attempts to not
-support them.  Requests: Root, Valid-responses, valid-requests,
-Repository, Entry, Modified, Argument, Argumentx, ci, co, update.
-Responses: ok, error, Valid-requests, Checked-in, Updated, Merged,
-Removed, M, E.
+protocol (except obsolete, pre-1.5, versions of CVS) and it is
+considered reasonable behavior to completely fail to work if you are
+connected with an implementation which attempts to not support them.
+Requests: `Root', `Valid-responses', `valid-requests', `Directory',
+`Entry', `Modified', `Unchanged', `Argument', `Argumentx', `ci', `co',
+`update'.  Responses: `ok', `error', `Valid-requests', `Checked-in',
+`Updated', `Merged', `Removed', `M', `E'.
 
-   Failure to support the Directory, UseUnchanged, and Unchanged
-requests is deprecated.  CVS 1.5 and later have supported these
-requests and in the future it will be considered reasonable behavior to
-completely fail to work with an implementation which attempts to not
-support them.  Support for the Repository and Lost requests is
-deprecated; CVS clients 1.5 and later will not use them if
-communicating with a server which supports Directory and UseUnchanged.
+   A server need not implement `Repository', but in order to
+interoperate with CVS 1.5 through 1.9 it must claim to implement it (in
+`Valid-requests').  The client will not actually send the request.
+
+
+File: cvsclient.info,  Node: Obsolete,  Prev: Requirements,  Up: Protocol
+
+Obsolete protocol elements
+==========================
+
+   This section briefly describes protocol elements which are obsolete.
+There is no attempt to document them in full detail.
+
+   There was a `Repository' request which was like `Directory' except
+it only provided REPOSITORY, and the local directory was assumed to be
+similarly named.
+
+   If the `UseUnchanged' request was not sent, there was a `Lost'
+request which was sent to indicate that a file did not exist in the
+working directory, and the meaning of sending `Entries' without `Lost'
+or `Modified' was different.  All current clients (CVS 1.5 and later)
+will send `UseUnchanged' if it is supported.
 
 
 
 Tag Table:
-Node: Top99
-Node: Introduction936
-Node: Goals3468
-Node: Notes4992
-Node: Protocol Notes5865
-Node: Connection and Authentication7543
-Node: Protocol10149
-Node: Entries Lines10548
-Node: Modes11256
-Node: Filenames12779
-Node: Requests13530
-Node: Responses28620
-Node: Example37798
-Node: Requirements39854
+Node: Top117
+Node: Introduction885
+Node: Goals3419
+Node: Protocol Notes5226
+Node: Connection and Authentication6904
+Node: Protocol9708
+Node: Entries Lines10168
+Node: Modes10876
+Node: Filenames12399
+Node: Requests13150
+Node: Responses27275
+Node: Example36266
+Node: Requirements40193
+Node: Obsolete41101
 
 End Tag Table

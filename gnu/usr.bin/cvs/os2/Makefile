@@ -16,13 +16,13 @@ SL = /
 install_dir = s:${SL}gnu${SL}util
 
 # srcdir is usually "."
-srcdir     = .
+srcdir     = ../../work/ccvs/os2
 
 # top_srcdir is usually ".."
-top_srcdir = ..
+top_srcdir = ../../work/ccvs
 
-lib_dir     = ..${SL}lib
-cvs_srcdir = ..${SL}src
+lib_dir     = ../../work/ccvs${SL}lib
+cvs_srcdir = ../../work/ccvs${SL}src
 
 zlib_dir = ${top_srcdir}/zlib
 
@@ -35,7 +35,7 @@ LIB = s:${SL}ibmcpp${SL}lib;s:${SL}toolkt21${SL}os2lib;
 CINC = -Is:${SL}ibmcpp${SL}include -Is:${SL}toolkt21${SL}c${SL}os2h
 # This says we are building an object file, not a full executable.
 OBJ_CFLAGS = -C+
-CFLAGS = -W3 -Wpro+rea+tru+use+ -Ti+ -Ss+ -Gd+ -Gm+ -G4 -Q+ -Sm ${CINC} \
+CFLAGS = -W3 -Wrea+tru+ -Ti+ -Ss+ -Gd- -Gm+ -G4 -Q+ -Sm ${CINC} \
   -I${srcdir} -I${lib_dir} -I${cvs_srcdir} -I${zlib_dir} \
   -DIBM_CPP -DHAVE_CONFIG_H \
   -DTCPIP_IBM -Is:${SL}ibmtcpip${SL}include
@@ -85,7 +85,6 @@ OS2_SOURCES = \
        ${srcdir}${SL}waitpid.c \
        ${srcdir}${SL}popen.c \
        ${srcdir}${SL}porttcp.c \
-       ${srcdir}${SL}strippath.c \
        ${srcdir}${SL}getdate.c \
        ${srcdir}${SL}getpass.c
 
@@ -172,7 +171,6 @@ OS2_OBJECTS = \
        ${srcdir}${SL}waitpid.obj \
        ${srcdir}${SL}popen.obj \
        ${srcdir}${SL}porttcp.obj \
-       ${srcdir}${SL}strippath.obj \
        ${srcdir}${SL}getdate.obj \
        ${srcdir}${SL}getpass.obj
 
@@ -268,7 +266,8 @@ OBJECTS = ${COMMON_OBJECTS} ${LIB_OBJECTS} ${OS2_OBJECTS} ${ZLIB_OBJECTS}
 DISTFILES = ${OS2_HEADERS} ${OS2_SOURCES} \
   ${srcdir}${SL}README ${srcdir}${SL}ChangeLog \
   ${srcdir}${SL}Makefile.in ${srcdir}${SL}.cvsignore \
-  ${srcdir}${SL}test-makefile Makefile
+  ${srcdir}${SL}test-makefile Makefile ${srcdir}/os2inc.h \
+  ${srcdir}/watcom.mak
 
 all:
 

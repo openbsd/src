@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ./cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo-1.64 from the input
+file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -22,12 +22,12 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Top,  Next: Preface,  Prev: (DIR),  Up: (DIR)
+File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 
 
 
    This info manual describes how to use and administer CVS version
-1.9.
+1.9.2.
 
 * Menu:
 
@@ -43,14 +43,18 @@ File: cvs.info,  Node: Top,  Next: Preface,  Prev: (DIR),  Up: (DIR)
 * Recursive behavior::          CVS descends directories
 * Adding files::                Adding files
 * Removing files::              Removing files
+* Removing directories::        Removing directories
 * Tracking sources::            Tracking third-party sources
 * Moving files::                Moving and renaming files
 * Moving directories::          Moving and renaming directories
 * History browsing::            Viewing the history of files in various ways
 * Keyword substitution::        CVS can include the revision inside the file
 * Binary files::                CVS can handle binary files
+* Builds::                      Issues related to CVS and builds
+* Compatibility::               Upgrading CVS versions
 * Revision management::         Policy questions for revision management
-* Invoking CVS::                Reference manual for CVS commands
+* CVS commands::                CVS commands share some things
+* Invoking CVS::                Quick reference to CVS commands
 * Administrative files::        Reference manual for the Administrative files
 * Environment variables::       All environment variables which affect CVS
 * Troubleshooting::             Some tips when nothing works
@@ -144,10 +148,10 @@ File: cvs.info,  Node: Credits,  Next: BUGS,  Prev: Checklist,  Up: Preface
 Credits
 =======
 
-   Roland Pesch, Cygnus Support <pesch@cygnus.com> wrote the manual
-pages which were distributed with CVS 1.3.  Appendix A and B contain
-much text that was extracted from them.  He also read an early draft of
-this manual and contributed many ideas and corrections.
+   Roland Pesch, then of Cygnus Support <roland@wrs.com> wrote the
+manual pages which were distributed with CVS 1.3.  Appendix A and B
+contain much text that was extracted from them.  He also read an early
+draft of this manual and contributed many ideas and corrections.
 
    The mailing-list `info-cvs' is sometimes informative. I have
 included information from postings made by the following persons: David
@@ -215,7 +219,7 @@ exactly which change caused the bug.  This can sometimes be a big help.
 
    You could of course save every version of every file you have ever
 created.  This would however waste an enormous amount of disk space.
-cVS stores all the versions of a file in a single file in a clever way
+CVS stores all the versions of a file in a single file in a clever way
 that only stores the differences between versions.
 
    CVS also helps you if you are part of a group of people working on
@@ -237,17 +241,30 @@ come from them.
 later helped Brian with the design of the CVS module and vendor branch
 support.
 
-   You can get CVS via anonymous ftp from a number of sites, for
-instance prep.ai.mit.edu in `pub/gnu'.
+   You can get CVS via anonymous FTP from a number of sites; for
+example see
+     http://www.gnu.ai.mit.edu/order/ftp.html
+   for a list of the GNU FTP sites.
 
    There is a mailing list, known as `info-cvs', devoted to CVS.  To
 subscribe or unsubscribe send a message to
 `info-cvs-request@prep.ai.mit.edu'.  Please be specific about your
 email address.  As of May 1996, subscription requests are handled by a
 busy human being, so you cannot expect to be added or removed
-immediately.  The usenet group `comp.software.config-mgmt' is also a
-suitable place for CVS discussions (along with other configuration
-management systems).
+immediately.  If you prefer a usenet group, the right group is
+`comp.software.config-mgmt' which is for CVS discussions (along with
+other configuration management systems).  In the future, it might be
+possible to create a `comp.software.config-mgmt.cvs', but probably only
+if there is sufficient CVS traffic on `comp.software.config-mgmt'.
+
+   To report bugs in CVS send mail to `bug-cvs@prep.ai.mit.edu'.  Do
+note that someone may or may not feel like taking care of your bug
+report--if you need a response consider a support contract from Cyclic
+Software (`http://www.cyclic.com' or `info@cyclic.com').  This is also
+the procedure for submitting suggested changes to CVS (see the file
+HACKING in the source distribution for more details).  Note that all
+submitted changes may be distributed under the terms of the GNU Public
+License, so if you don't like this, don't submit them.
 
 CVS is not...
 =============
@@ -283,7 +300,10 @@ CVS is not a build system.
      Figuring out what files need to be rebuilt when something changes
      is, again, something to be handled outside the scope of CVS.  One
      traditional approach is to use `make' for building, and use some
-     automated tool for generating the depencies which `make' uses.
+     automated tool for generating the dependencies which `make' uses.
+
+     See *Note Builds::, for more information on doing builds in
+     conjunction with CVS.
 
 CVS is not a substitute for management.
      Your managers and project leaders are expected to talk to you
@@ -323,7 +343,7 @@ CVS does not have change control
      reported bugs and the status of each one (is it fixed?  in what
      release?  has the bug submitter agreed that it is fixed?).  For
      interfacing CVS to an external bug-tracking system, see the
-     `rcsinfo' and `editinfo' files (*note Administrative files::.).
+     `rcsinfo' and `verifymsg' files (*note Administrative files::.).
 
      Another aspect of change control is keeping track of the fact that
      changes to several files were in fact changed together as one
@@ -352,7 +372,7 @@ CVS does not have a builtin process model
      through various steps, with various approvals as needed.
      Generally, one can accomplish this with CVS but it might be a
      little more work.  In some cases you'll want to use the
-     `commitinfo', `loginfo', `rcsinfo', or `editinfo' files, to
+     `commitinfo', `loginfo', `rcsinfo', or `verifymsg' files, to
      require that certain steps be performed before cvs will allow a
      checkin.  Also consider whether features such as branches and tags
      can be used to perform tasks such as doing work in a development
@@ -498,7 +518,7 @@ not modify or remove any of the files in it.
    You start your favorite editor, hack away at `backend.c', and a
 couple of hours later you have added an optimization pass to the
 compiler.  A note to RCS and SCCS users: There is no need to lock the
-files that you want to edit.  *Note Multiple developers:: for an
+files that you want to edit.  *Note Multiple developers::, for an
 explanation.
 
 
@@ -647,6 +667,7 @@ user-defined modules.
 * Multiple repositories::       Multiple repositories
 * Creating a repository::       Creating a repository
 * Remote repositories::         Accessing repositories on remote machines
+* Read-only access::            Granting read-only access to the repository
 
 
 File: cvs.info,  Node: Specifying a repository,  Next: Repository storage,  Up: Repository
@@ -781,6 +802,11 @@ distributed with RCS.  This file format has become very common--many
 systems other than CVS or RCS can at least import history files in this
 format.
 
+   The RCS files used in CVS differ in a few ways from the standard
+format.  The biggest difference is magic branches; for more information
+see *Note Magic branch numbers::.  Also in CVS the valid tag names are
+a subset of what RCS accepts; for CVS's rules see *Note Tags::.
+
 
 File: cvs.info,  Node: File permissions,  Prev: Repository files,  Up: Repository storage
 
@@ -894,14 +920,29 @@ File: cvs.info,  Node: Creating a repository,  Next: Remote repositories,  Prev:
 Creating a repository
 =====================
 
-   To set up a CVS repository, choose a directory with ample disk space
-available for the revision history of the source files.  It should be
-accessable (directly or via a networked file system) from all machines
-which want to use CVS in server or local mode; the client machines need
-not have any access to it other than via the CVS protocol.  It is not
-possible to use CVS to read from a repository which one only has read
-access to; CVS needs to be able to create lock files (*note
-Concurrency::.).
+   To set up a CVS repository, first choose the machine and disk on
+which you want to store the revision history of the source files.  CPU
+and memory requirements are modest--a server with 32M of memory or even
+less can handle a fairly large source tree with a fair amount of
+activity.  To estimate disk space requirements, if you are importing
+RCS files from another system, the size of those files is the
+approximate initial size of your repository, or if you are starting
+without any version history, a rule of thumb is to allow for the server
+approximately three times the size of the code to be under CVS for the
+repository (you will eventually outgrow this, but not for a while).  On
+the machines on which the developers will be working, you'll want disk
+space for approximately one working directory for each developer
+(either the entire tree or a portion of it, depending on what each
+developer uses).  Don't worry about CPU and memory requirements for the
+clients--any machine with enough capacity to run the operating system in
+question should have little trouble.
+
+   The repository should be accessable (directly or via a networked
+file system) from all machines which want to use CVS in server or local
+mode; the client machines need not have any access to it other than via
+the CVS protocol.  It is not possible to use CVS to read from a
+repository which one only has read access to; CVS needs to be able to
+create lock files (*note Concurrency::.).
 
    To create a repository, run the `cvs init' command.  It will set up
 an empty repository in the CVS root specified in the usual way (*note
@@ -917,14 +958,18 @@ set-up repository.
 remove the history file after running `cvs init'.  *Note history file::.
 
 
-File: cvs.info,  Node: Remote repositories,  Prev: Creating a repository,  Up: Repository
+File: cvs.info,  Node: Remote repositories,  Next: Read-only access,  Prev: Creating a repository,  Up: Repository
 
 Remote repositories
 ===================
 
    Your working copy of the sources can be on a different machine than
-the repository.  Generally, using a remote repository is just like
-using a local one, except that the format of the repository name is:
+the repository.  Using CVS in this manner is known as "client/server"
+operation.  You run CVS on a machine which can mount your working
+directory, known as the "client", and tell it to communicate to a
+machine which can mount the repository, known as the "server".
+Generally, using a remote repository is just like using a local one,
+except that the format of the repository name is:
 
      :METHOD:USER@HOSTNAME:/path/to/repository
 
@@ -1051,7 +1096,7 @@ number, then put this in `/etc/services':
 whatever is necessary to force it to reread its initialization files.
 
    Because the client stores and transmits passwords in cleartext
-(almost--see *Note Password authentication security:: for details), a
+(almost--see *Note Password authentication security::, for details), a
 separate CVS password file may be used, so people don't compromise their
 regular passwords when they access the repository.  This file is
 `$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::.).  Its
@@ -1075,6 +1120,33 @@ argument in the entry, or as the first argument if there is no third
 argument (in this way CVS allows imaginary usernames provided the CVS
 `passwd' file indicates corresponding valid system usernames).  In any
 case, CVS will have no privileges which the (valid) user would not have.
+
+   It is possible to "map" cvs-specific usernames onto system usernames
+(i.e., onto system login names) in the `$CVSROOT/CVSROOT/passwd' file
+by appending a colon and the system username after the password.  For
+example:
+
+     cvs:ULtgRLXo7NRxs:kfogel
+     generic:1sOp854gDF3DY:spwang
+     anyone:1sOp854gDF3DY:spwang
+
+   Thus, someone remotely accessing the repository on
+`chainsaw.brickyard.com' with the following command:
+
+     cvs -d :pserver:cvs@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+
+   would end up running the server under the system identity kfogel,
+assuming successful authentication.  However, the remote user would not
+necessarily need to know kfogel's system password, as the
+`$CVSROOT/CVSROOT/passwd' file might contain a different password, used
+only for CVS.  And as the example above indicates, it is permissible to
+map multiple cvs usernames onto a single system username.
+
+   This feature is designed to allow people repository access without
+full system access (in particular, see *Note Read-only access::);
+however, also *Note Password authentication security::.  Any sort of
+repository access very likely implies a degree of general system access
+as well.
 
    Right now, the only way to put a password in the CVS `passwd' file
 is to paste it there from somewhere else.  Someday, there may be a `cvs
@@ -1126,89 +1198,4 @@ you use this variable, make sure you set it *before* `cvs login' is
 run.  If you were to set it after running `cvs login', then later CVS
 commands would be unable to look up the password for transmission to
 the server.
-
-   The `CVS_PASSWORD' environment variable overrides *all* stored
-passwords.  If it is set, CVS will use it for all password-authenticated
-connections.
-
-
-File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
-
-Security considerations with password authentication
-....................................................
-
-   The passwords are stored on the client side in a trivial encoding of
-the cleartext, and transmitted in the same encoding.  The encoding is
-done only to prevent inadvertent password compromises (i.e., a system
-administrator accidentally looking at the file), and will not prevent
-even a naive attacker from gaining the password.
-
-   The separate CVS password file (*note Password authentication
-server::.) allows people to use a different password for repository
-access than for login access.  On the other hand, once a user has
-access to the repository, she can execute programs on the server system
-through a variety of means.  Thus, repository access implies fairly
-broad system access as well.  It might be possible to modify CVS to
-prevent that, but no one has done so as of this writing.  Furthermore,
-there may be other ways in which having access to CVS allows people to
-gain more general access to the system; noone has done a careful audit.
-
-   In summary, anyone who gets the password gets repository access, and
-some measure of general system access as well.  The password is
-available to anyone who can sniff network packets or read a protected
-(i.e., user read-only) file.  If you want real security, get Kerberos.
-
-
-File: cvs.info,  Node: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
-
-Direct connection with kerberos
--------------------------------
-
-   The main disadvantage of using rsh is that all the data needs to
-pass through additional programs, so it may be slower.  So if you have
-kerberos installed you can connect via a direct TCP connection,
-authenticating with kerberos.
-
-   To do this, CVS needs to be compiled with kerberos support; when
-configuring CVS it tries to detect whether kerberos is present or you
-can use the `--with-krb4' flag to configure.
-
-   The data transmitted is *not* encrypted by default.  Encryption
-support must be compiled into both the client and server; use the
-`--enable-encryption' configure option to turn it on.  You must then
-use the `-x' global option to request encryption.
-
-   You need to edit `inetd.conf' on the server machine to run `cvs
-kserver'.  The client uses port 1999 by default; if you want to use
-another port specify it in the `CVS_CLIENT_PORT' environment variable
-on the client.
-
-   When you want to use CVS, get a ticket in the usual way (generally
-`kinit'); it must be a ticket which allows you to log into the server
-machine.  Then you are ready to go:
-
-     cvs -d :kserver:chainsaw.brickyard.com:/user/local/cvsroot checkout foo
-
-   Previous versions of CVS would fall back to a connection via rsh;
-this version will not do so.
-
-
-File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
-
-Starting a project with CVS
-***************************
-
-   Because renaming files and moving them between directories is
-somewhat inconvenient, the first thing you do when you start a new
-project should be to think through your file organization.  It is not
-impossible to rename or move files, but it does increase the potential
-for confusion and CVS does have some quirks particularly in the area of
-renaming directories.  *Note Moving files::.
-
-   What to do next depends on the situation at hand.
-
-* Menu:
-
-* Setting up the files::        Getting the files into the repository
-* Defining the module::         How to make a module of the files
 

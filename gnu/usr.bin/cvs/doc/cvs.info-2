@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ./cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo-1.64 from the input
+file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -20,6 +20,148 @@ manual into another language, under the above conditions for modified
 versions, except that the section entitled "GNU General Public License"
 and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
+
+Security considerations with password authentication
+....................................................
+
+   The passwords are stored on the client side in a trivial encoding of
+the cleartext, and transmitted in the same encoding.  The encoding is
+done only to prevent inadvertent password compromises (i.e., a system
+administrator accidentally looking at the file), and will not prevent
+even a naive attacker from gaining the password.
+
+   The separate CVS password file (*note Password authentication
+server::.) allows people to use a different password for repository
+access than for login access.  On the other hand, once a user has
+access to the repository, she can execute programs on the server system
+through a variety of means.  Thus, repository access implies fairly
+broad system access as well.  It might be possible to modify CVS to
+prevent that, but no one has done so as of this writing.  Furthermore,
+there may be other ways in which having access to CVS allows people to
+gain more general access to the system; noone has done a careful audit.
+
+   In summary, anyone who gets the password gets repository access, and
+some measure of general system access as well.  The password is
+available to anyone who can sniff network packets or read a protected
+(i.e., user read-only) file.  If you want real security, get Kerberos.
+
+
+File: cvs.info,  Node: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
+
+Direct connection with kerberos
+-------------------------------
+
+   The main disadvantage of using rsh is that all the data needs to
+pass through additional programs, so it may be slower.  So if you have
+kerberos installed you can connect via a direct TCP connection,
+authenticating with kerberos.
+
+   To do this, CVS needs to be compiled with kerberos support; when
+configuring CVS it tries to detect whether kerberos is present or you
+can use the `--with-krb4' flag to configure.
+
+   The data transmitted is *not* encrypted by default.  Encryption
+support must be compiled into both the client and server; use the
+`--enable-encryption' configure option to turn it on.  You must then
+use the `-x' global option to request encryption.
+
+   You need to edit `inetd.conf' on the server machine to run `cvs
+kserver'.  The client uses port 1999 by default; if you want to use
+another port specify it in the `CVS_CLIENT_PORT' environment variable
+on the client.
+
+   When you want to use CVS, get a ticket in the usual way (generally
+`kinit'); it must be a ticket which allows you to log into the server
+machine.  Then you are ready to go:
+
+     cvs -d :kserver:chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+
+   Previous versions of CVS would fall back to a connection via rsh;
+this version will not do so.
+
+
+File: cvs.info,  Node: Read-only access,  Prev: Remote repositories,  Up: Repository
+
+Read-only repository access
+===========================
+
+   It is possible to grant read-only repository access to people using
+the password-authenticated server (*note Password authenticated::.).
+(The other access methods do not have explicit support for read-only
+users because those methods all assume login access to the repository
+machine anyway, and therefore the user can do whatever local file
+permissions allow her to do.)
+
+   A user who has read-only access can do only those CVS operations
+which do not modify the repository, except for certain "administrative"
+files (such as lock files and the history file).  It may be desirable
+to use this feature in conjunction with user-aliasing (*note Password
+authentication server::.).  However, note that read-only access does
+not repeal the existing security considerations in *Note Password
+authentication security::.
+
+   There are two ways to specify read-only access for a user: by
+inclusion, and by exclusion.
+
+   "Inclusion" means listing that user specifically in the
+`$CVSROOT/CVSROOT/readers' file, which is simply a newline-separated
+list of users.  Here is a sample `readers' file:
+
+     melissa
+     splotnik
+     jrandom
+
+   (Don't forget the newline after the last user.)
+
+   "Exclusion" means explicitly listing everyone who has *write*
+access--if the `$CVSROOT/CVSROOT/writers' file exists, then only those
+users listed in it have write access, and everyone else has read-only
+access (of course, even the read-only users still need to be listed in
+the `$CVSROOT/CVSROOT/passwd' file).  The `writers' file has the same
+format as the `readers' file.
+
+   Note: if your `$CVSROOT/CVSROOT/passwd' file maps cvs users onto
+system users (*note Password authentication server::.), make sure you
+deny or grant read-only access using the *cvs* usernames, not the
+system usernames.  That is, the `readers' and `writers' files contain
+cvs usernames, which may or may not be the same as system usernames.
+
+   Here is a complete description of the server's behavior in deciding
+whether to grant read-only or read-write access:
+
+   If `readers' exists, and this user is listed in it, then she gets
+read-only access.  Or if `writers' exists, and this user is NOT listed
+in it, then she also gets read-only access (this is true even if
+`readers' exists but she is not listed there).  Otherwise, she gets
+full read-write access.
+
+   Of course there is a conflict if the user is listed in both files.
+This is resolved in the more conservative way, it being better to
+protect the repository too much than too little: such a user gets
+read-only access.
+
+
+File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
+
+Starting a project with CVS
+***************************
+
+   Because renaming files and moving them between directories is
+somewhat inconvenient, the first thing you do when you start a new
+project should be to think through your file organization.  It is not
+impossible to rename or move files, but it does increase the potential
+for confusion and CVS does have some quirks particularly in the area of
+renaming directories.  *Note Moving files::.
+
+   What to do next depends on the situation at hand.
+
+* Menu:
+
+* Setting up the files::        Getting the files into the repository
+* Defining the module::         How to make a module of the files
 
 
 File: cvs.info,  Node: Setting up the files,  Next: Defining the module,  Up: Starting a new project
@@ -66,7 +208,7 @@ directory.
      $ cd ..
      $ mv DIR DIR.orig
      $ cvs checkout yoyodyne/DIR       # Explanation below
-     $ ls -R yoyodyne
+     $ diff -r DIR.orig yoyodyne/DIR
      $ rm -r DIR.orig
 
 Erasing the original sources is a good idea, to make sure that you do
@@ -483,8 +625,9 @@ the following message:
 operation or print the message again, if it still needs to wait.  If a
 lock seems to stick around for an undue amount of time, find the person
 holding the lock and ask them about the cvs command they are running.
-If they aren't running a cvs command, look for and remove files
-starting with `#cvs.tfl', `#cvs.rfl', or `#cvs.wfl' from the repository.
+If they aren't running a cvs command, look in the repository directory
+mentioned in the message and remove files which they own whose names
+start with `#cvs.tfl', `#cvs.rfl', or `#cvs.wfl'.
 
    Note that these locks are to protect CVS's internal data structures
 and have no relationship to the word "lock" in the sense used by
@@ -650,6 +793,14 @@ user in the format USER:VALUE.  Then instead of passing the name of the
 user to be notified to `notify', CVS will pass the VALUE (normally an
 email address on some other machine).
 
+   CVS does not notify you for your own changes.  Currently this check
+is done based on whether the user name of the person taking the action
+which triggers notification matches the user name of the person getting
+notification.  In fact, in general, the watches features only track one
+edit by each user.  It probably would be more useful if watches tracked
+each working directory separately, so this behavior might be worth
+changing.
+
 
 File: cvs.info,  Node: Editing files,  Next: Watch information,  Prev: Getting Notified,  Up: Watches
 
@@ -758,8 +909,8 @@ Choosing between reserved or unreserved checkouts
 
    Reserved and unreserved checkouts each have pros and cons.  Let it
 be said that a lot of this is a matter of opinion or what works given
-different groups' working styles, but here is an attempt to briefly
-describe the issues.  There are many ways to organize a team of
+different groups' working styles, but here is a brief description of
+some of the issues.  There are many ways to organize a team of
 developers.  CVS does not try to enforce a certain organization.  It is
 a tool that can be used in several ways.
 
@@ -849,12 +1000,23 @@ source files that make up RCS 5.6 have the following revision numbers:
    You can use the `tag' command to give a symbolic name to a certain
 revision of a file.  You can use the `-v' flag to the `status' command
 to see all tags that a file has, and which revision numbers they
-represent.  Tag names can contain uppercase and lowercase letters,
-digits, `-', and `_'.  The two tag names `BASE' and `HEAD' are reserved
-for use by CVS.  It is expected that future names which are special to
-CVS will contain characters such as `%' or `=', rather than being named
+represent.  Tag names must start with an uppercase or lowercase letter
+and can contain uppercase and lowercase letters, digits, `-', and `_'.
+The two tag names `BASE' and `HEAD' are reserved for use by CVS.  It is
+expected that future names which are special to CVS will be specially
+named, for example by starting with `.', rather than being named
 analogously to `BASE' and `HEAD', to avoid conflicts with actual tag
 names.
+
+   You'll want to choose some convention for naming tags, based on
+information such as the name of the program and the version number of
+the release.  For example, one might take the name of the program,
+immediately followed by the version number with `.' changed to `-', so
+that CVS 1.9 would be tagged with the name `cvs1-9'.  If you choose a
+consistent convention, then you won't constantly be guessing whether a
+tag is `cvs-1-9' or `cvs1_9' or what.  You might even want to consider
+enforcing your convention in the taginfo file (*note user-defined
+logging::.).
 
    The following example shows how you can add a tag to a file.  The
 commands must be issued inside your working copy of the module.  That
@@ -1014,7 +1176,7 @@ branch you just created.
 created by adding a digit at the tail of the revision number it is
 based on.  (If `release-1-0' corresponds to revision 1.4, the branch's
 revision number will be 1.4.2.  For obscure reasons CVS always gives
-branches even numbers, starting at 2.  *Note Revision numbers::).
+branches even numbers, starting at 2.  *Note Revision numbers::.).
 
 
 File: cvs.info,  Node: Sticky tags,  Prev: Creating a branch,  Up: Branches
@@ -1090,167 +1252,4 @@ contents it had previously.  Here is how to do it:
      new revision: 1.3; previous revision: 1.2
      done
      $
-
-
-File: cvs.info,  Node: Merging,  Next: Recursive behavior,  Prev: Branches,  Up: Top
-
-Merging
-*******
-
-   You can include the changes made between any two revisions into your
-working copy, by "merging".  You can then commit that revision, and
-thus effectively copy the changes onto another branch.
-
-* Menu:
-
-* Merging a branch::            Merging an entire branch
-* Merging more than once::      Merging from a branch several times
-* Merging two revisions::       Merging differences between two revisions
-* Merging adds and removals::   What if files are added or removed?
-
-
-File: cvs.info,  Node: Merging a branch,  Next: Merging more than once,  Up: Merging
-
-Merging an entire branch
-========================
-
-   You can merge changes made on a branch into your working copy by
-giving the `-j BRANCH' flag to the `update' command.  With one `-j
-BRANCH' option it merges the changes made between the point where the
-branch forked and newest revision on that branch (into your working
-copy).
-
-   The `-j' stands for "join".
-
-   Consider this revision tree:
-
-     +-----+    +-----+    +-----+    +-----+
-     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !      <- The main trunk
-     +-----+    +-----+    +-----+    +-----+
-                     !
-                     !
-                     !   +---------+    +---------+
-     Branch R1fix -> +---! 1.2.2.1 !----! 1.2.2.2 !
-                         +---------+    +---------+
-
-The branch 1.2.2 has been given the tag (symbolic name) `R1fix'.  The
-following example assumes that the module `mod' contains only one file,
-`m.c'.
-
-     $ cvs checkout mod               # Retrieve the latest revision, 1.4
-     
-     $ cvs update -j R1fix m.c        # Merge all changes made on the branch,
-                                      # i.e. the changes between revision 1.2
-                                      # and 1.2.2.2, into your working copy
-                                      # of the file.
-     
-     $ cvs commit -m "Included R1fix" # Create revision 1.5.
-
-   A conflict can result from a merge operation.  If that happens, you
-should resolve it before committing the new revision.  *Note Conflicts
-example::.
-
-   The `checkout' command also supports the `-j BRANCH' flag.  The same
-effect as above could be achieved with this:
-
-     $ cvs checkout -j R1fix mod
-     $ cvs commit -m "Included R1fix"
-
-
-File: cvs.info,  Node: Merging more than once,  Next: Merging two revisions,  Prev: Merging a branch,  Up: Merging
-
-Merging from a branch several times
-===================================
-
-   Continuing our example, the revision tree now looks like this:
-
-     +-----+    +-----+    +-----+    +-----+    +-----+
-     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
-     +-----+    +-----+    +-----+    +-----+    +-----+
-                     !                           *
-                     !                          *
-                     !   +---------+    +---------+
-     Branch R1fix -> +---! 1.2.2.1 !----! 1.2.2.2 !
-                         +---------+    +---------+
-
-   where the starred line represents the merge from the `R1fix' branch
-to the main trunk, as just discussed.
-
-   Now suppose that development continues on the `R1fix' branch:
-
-     +-----+    +-----+    +-----+    +-----+    +-----+
-     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
-     +-----+    +-----+    +-----+    +-----+    +-----+
-                     !                           *
-                     !                          *
-                     !   +---------+    +---------+    +---------+
-     Branch R1fix -> +---! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !
-                         +---------+    +---------+    +---------+
-
-   and then you want to merge those new changes onto the main trunk.
-If you just use the `cvs update -j R1fix m.c' command again, CVS will
-attempt to merge again the changes which you have already merged, which
-can have undesirable side effects.
-
-   So instead you need to specify that you only want to merge the
-changes on the branch which have not yet been merged into the trunk.
-To do that you specify two `-j' options, and CVS merges the changes from
-the first revision to the second revision.  For example, in this case
-the simplest way would be
-
-     cvs update -j 1.2.2.2 -j R1fix m.c    # Merge changes from 1.2.2.2 to the
-                                           # head of the R1fix branch
-
-   The problem with this is that you need to specify the 1.2.2.2
-revision manually.  A slightly better approach might be to use the date
-the last merge was done:
-
-     cvs update -j R1fix:yesterday -j R1fix m.c
-
-   Better yet, tag the R1fix branch after every merge into the trunk,
-and then use that tag for subsequent merges:
-
-     cvs update -j merged_from_R1fix_to_trunk -j R1fix m.c
-
-
-File: cvs.info,  Node: Merging two revisions,  Next: Merging adds and removals,  Prev: Merging more than once,  Up: Merging
-
-Merging differences between any two revisions
-=============================================
-
-   With two `-j REVISION' flags, the `update' (and `checkout') command
-can merge the differences between any two revisions into your working
-file.
-
-     $ cvs update -j 1.5 -j 1.3 backend.c
-
-will *remove* all changes made between revision 1.3 and 1.5.  Note the
-order of the revisions!
-
-   If you try to use this option when operating on multiple files,
-remember that the numeric revisions will probably be very different
-between the various files that make up a module.  You almost always use
-symbolic tags rather than revision numbers when operating on multiple
-files.
-
-
-File: cvs.info,  Node: Merging adds and removals,  Prev: Merging two revisions,  Up: Merging
-
-Merging can add or remove files
-===============================
-
-   If the changes which you are merging involve removing or adding some
-files, `update -j' will reflect such additions or removals.
-
-   For example:
-     cvs update -A
-     touch a b c
-     cvs add a b c ; cvs ci -m "added" a b c
-     cvs tag -b branchtag
-     cvs update -r branchtag
-     touch d ; cvs add d
-     rm a ; cvs rm a
-     cvs ci -m "added d, removed a"
-     cvs update -A
-     cvs update -jbranchtag
 

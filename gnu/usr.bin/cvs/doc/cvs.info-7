@@ -1,0 +1,835 @@
+This is Info file cvs.info, produced by Makeinfo-1.64 from the input
+file ../../work/ccvs/doc/cvs.texinfo.
+
+   Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
+Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the section entitled "GNU General Public License" is included
+exactly as in the original, and provided that the entire resulting
+derived work is distributed under the terms of a permission notice
+identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the section entitled "GNU General Public License"
+and this permission notice may be included in translations approved by
+the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: Copying,  Next: Index,  Prev: Troubleshooting,  Up: Top
+
+GNU GENERAL PUBLIC LICENSE
+**************************
+
+                         Version 2, June 1991
+
+     Copyright (C) 1989, 1991 Free Software Foundation, Inc.
+     59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+     
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+
+Preamble
+========
+
+   The licenses for most software are designed to take away your
+freedom to share and change it.  By contrast, the GNU General Public
+License is intended to guarantee your freedom to share and change free
+software--to make sure the software is free for all its users.  This
+General Public License applies to most of the Free Software
+Foundation's software and to any other program whose authors commit to
+using it.  (Some other Free Software Foundation software is covered by
+the GNU Library General Public License instead.)  You can apply it to
+your programs, too.
+
+   When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+this service if you wish), that you receive source code or can get it
+if you want it, that you can change the software or use pieces of it in
+new free programs; and that you know you can do these things.
+
+   To protect your rights, we need to make restrictions that forbid
+anyone to deny you these rights or to ask you to surrender the rights.
+These restrictions translate to certain responsibilities for you if you
+distribute copies of the software, or if you modify it.
+
+   For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must give the recipients all the rights that
+you have.  You must make sure that they, too, receive or can get the
+source code.  And you must show them these terms so they know their
+rights.
+
+   We protect your rights with two steps: (1) copyright the software,
+and (2) offer you this license which gives you legal permission to copy,
+distribute and/or modify the software.
+
+   Also, for each author's protection and ours, we want to make certain
+that everyone understands that there is no warranty for this free
+software.  If the software is modified by someone else and passed on, we
+want its recipients to know that what they have is not the original, so
+that any problems introduced by others will not reflect on the original
+authors' reputations.
+
+   Finally, any free program is threatened constantly by software
+patents.  We wish to avoid the danger that redistributors of a free
+program will individually obtain patent licenses, in effect making the
+program proprietary.  To prevent this, we have made it clear that any
+patent must be licensed for everyone's free use or not licensed at all.
+
+   The precise terms and conditions for copying, distribution and
+modification follow.
+
+    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+  0. This License applies to any program or other work which contains a
+     notice placed by the copyright holder saying it may be distributed
+     under the terms of this General Public License.  The "Program",
+     below, refers to any such program or work, and a "work based on
+     the Program" means either the Program or any derivative work under
+     copyright law: that is to say, a work containing the Program or a
+     portion of it, either verbatim or with modifications and/or
+     translated into another language.  (Hereinafter, translation is
+     included without limitation in the term "modification".)  Each
+     licensee is addressed as "you".
+
+     Activities other than copying, distribution and modification are
+     not covered by this License; they are outside its scope.  The act
+     of running the Program is not restricted, and the output from the
+     Program is covered only if its contents constitute a work based on
+     the Program (independent of having been made by running the
+     Program).  Whether that is true depends on what the Program does.
+
+  1. You may copy and distribute verbatim copies of the Program's
+     source code as you receive it, in any medium, provided that you
+     conspicuously and appropriately publish on each copy an appropriate
+     copyright notice and disclaimer of warranty; keep intact all the
+     notices that refer to this License and to the absence of any
+     warranty; and give any other recipients of the Program a copy of
+     this License along with the Program.
+
+     You may charge a fee for the physical act of transferring a copy,
+     and you may at your option offer warranty protection in exchange
+     for a fee.
+
+  2. You may modify your copy or copies of the Program or any portion
+     of it, thus forming a work based on the Program, and copy and
+     distribute such modifications or work under the terms of Section 1
+     above, provided that you also meet all of these conditions:
+
+       a. You must cause the modified files to carry prominent notices
+          stating that you changed the files and the date of any change.
+
+       b. You must cause any work that you distribute or publish, that
+          in whole or in part contains or is derived from the Program
+          or any part thereof, to be licensed as a whole at no charge
+          to all third parties under the terms of this License.
+
+       c. If the modified program normally reads commands interactively
+          when run, you must cause it, when started running for such
+          interactive use in the most ordinary way, to print or display
+          an announcement including an appropriate copyright notice and
+          a notice that there is no warranty (or else, saying that you
+          provide a warranty) and that users may redistribute the
+          program under these conditions, and telling the user how to
+          view a copy of this License.  (Exception: if the Program
+          itself is interactive but does not normally print such an
+          announcement, your work based on the Program is not required
+          to print an announcement.)
+
+     These requirements apply to the modified work as a whole.  If
+     identifiable sections of that work are not derived from the
+     Program, and can be reasonably considered independent and separate
+     works in themselves, then this License, and its terms, do not
+     apply to those sections when you distribute them as separate
+     works.  But when you distribute the same sections as part of a
+     whole which is a work based on the Program, the distribution of
+     the whole must be on the terms of this License, whose permissions
+     for other licensees extend to the entire whole, and thus to each
+     and every part regardless of who wrote it.
+
+     Thus, it is not the intent of this section to claim rights or
+     contest your rights to work written entirely by you; rather, the
+     intent is to exercise the right to control the distribution of
+     derivative or collective works based on the Program.
+
+     In addition, mere aggregation of another work not based on the
+     Program with the Program (or with a work based on the Program) on
+     a volume of a storage or distribution medium does not bring the
+     other work under the scope of this License.
+
+  3. You may copy and distribute the Program (or a work based on it,
+     under Section 2) in object code or executable form under the terms
+     of Sections 1 and 2 above provided that you also do one of the
+     following:
+
+       a. Accompany it with the complete corresponding machine-readable
+          source code, which must be distributed under the terms of
+          Sections 1 and 2 above on a medium customarily used for
+          software interchange; or,
+
+       b. Accompany it with a written offer, valid for at least three
+          years, to give any third party, for a charge no more than your
+          cost of physically performing source distribution, a complete
+          machine-readable copy of the corresponding source code, to be
+          distributed under the terms of Sections 1 and 2 above on a
+          medium customarily used for software interchange; or,
+
+       c. Accompany it with the information you received as to the offer
+          to distribute corresponding source code.  (This alternative is
+          allowed only for noncommercial distribution and only if you
+          received the program in object code or executable form with
+          such an offer, in accord with Subsection b above.)
+
+     The source code for a work means the preferred form of the work for
+     making modifications to it.  For an executable work, complete
+     source code means all the source code for all modules it contains,
+     plus any associated interface definition files, plus the scripts
+     used to control compilation and installation of the executable.
+     However, as a special exception, the source code distributed need
+     not include anything that is normally distributed (in either
+     source or binary form) with the major components (compiler,
+     kernel, and so on) of the operating system on which the executable
+     runs, unless that component itself accompanies the executable.
+
+     If distribution of executable or object code is made by offering
+     access to copy from a designated place, then offering equivalent
+     access to copy the source code from the same place counts as
+     distribution of the source code, even though third parties are not
+     compelled to copy the source along with the object code.
+
+  4. You may not copy, modify, sublicense, or distribute the Program
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense or distribute the Program is
+     void, and will automatically terminate your rights under this
+     License.  However, parties who have received copies, or rights,
+     from you under this License will not have their licenses
+     terminated so long as such parties remain in full compliance.
+
+  5. You are not required to accept this License, since you have not
+     signed it.  However, nothing else grants you permission to modify
+     or distribute the Program or its derivative works.  These actions
+     are prohibited by law if you do not accept this License.
+     Therefore, by modifying or distributing the Program (or any work
+     based on the Program), you indicate your acceptance of this
+     License to do so, and all its terms and conditions for copying,
+     distributing or modifying the Program or works based on it.
+
+  6. Each time you redistribute the Program (or any work based on the
+     Program), the recipient automatically receives a license from the
+     original licensor to copy, distribute or modify the Program
+     subject to these terms and conditions.  You may not impose any
+     further restrictions on the recipients' exercise of the rights
+     granted herein.  You are not responsible for enforcing compliance
+     by third parties to this License.
+
+  7. If, as a consequence of a court judgment or allegation of patent
+     infringement or for any other reason (not limited to patent
+     issues), conditions are imposed on you (whether by court order,
+     agreement or otherwise) that contradict the conditions of this
+     License, they do not excuse you from the conditions of this
+     License.  If you cannot distribute so as to satisfy simultaneously
+     your obligations under this License and any other pertinent
+     obligations, then as a consequence you may not distribute the
+     Program at all.  For example, if a patent license would not permit
+     royalty-free redistribution of the Program by all those who
+     receive copies directly or indirectly through you, then the only
+     way you could satisfy both it and this License would be to refrain
+     entirely from distribution of the Program.
+
+     If any portion of this section is held invalid or unenforceable
+     under any particular circumstance, the balance of the section is
+     intended to apply and the section as a whole is intended to apply
+     in other circumstances.
+
+     It is not the purpose of this section to induce you to infringe any
+     patents or other property right claims or to contest validity of
+     any such claims; this section has the sole purpose of protecting
+     the integrity of the free software distribution system, which is
+     implemented by public license practices.  Many people have made
+     generous contributions to the wide range of software distributed
+     through that system in reliance on consistent application of that
+     system; it is up to the author/donor to decide if he or she is
+     willing to distribute software through any other system and a
+     licensee cannot impose that choice.
+
+     This section is intended to make thoroughly clear what is believed
+     to be a consequence of the rest of this License.
+
+  8. If the distribution and/or use of the Program is restricted in
+     certain countries either by patents or by copyrighted interfaces,
+     the original copyright holder who places the Program under this
+     License may add an explicit geographical distribution limitation
+     excluding those countries, so that distribution is permitted only
+     in or among countries not thus excluded.  In such case, this
+     License incorporates the limitation as if written in the body of
+     this License.
+
+  9. The Free Software Foundation may publish revised and/or new
+     versions of the General Public License from time to time.  Such
+     new versions will be similar in spirit to the present version, but
+     may differ in detail to address new problems or concerns.
+
+     Each version is given a distinguishing version number.  If the
+     Program specifies a version number of this License which applies
+     to it and "any later version", you have the option of following
+     the terms and conditions either of that version or of any later
+     version published by the Free Software Foundation.  If the Program
+     does not specify a version number of this License, you may choose
+     any version ever published by the Free Software Foundation.
+
+ 10. If you wish to incorporate parts of the Program into other free
+     programs whose distribution conditions are different, write to the
+     author to ask for permission.  For software which is copyrighted
+     by the Free Software Foundation, write to the Free Software
+     Foundation; we sometimes make exceptions for this.  Our decision
+     will be guided by the two goals of preserving the free status of
+     all derivatives of our free software and of promoting the sharing
+     and reuse of software generally.
+
+                                NO WARRANTY
+
+ 11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO
+     WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE
+     LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+     HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT
+     WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT
+     NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+     FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE
+     QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
+     PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY
+     SERVICING, REPAIR OR CORRECTION.
+
+ 12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+     WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY
+     MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE
+     LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL,
+     INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR
+     INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+     DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU
+     OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY
+     OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN
+     ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+                      END OF TERMS AND CONDITIONS
+
+How to Apply These Terms to Your New Programs
+=============================================
+
+   If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these
+terms.
+
+   To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+convey the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+     ONE LINE TO GIVE THE PROGRAM'S NAME AND A BRIEF IDEA OF WHAT IT DOES.
+     Copyright (C) 19YY  NAME OF AUTHOR
+     
+     This program is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation; either version 2 of the License, or
+     (at your option) any later version.
+     
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+     
+     You should have received a copy of the GNU General Public License
+     along with this program; if not, write to the Free Software
+     Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+   Also add information on how to contact you by electronic and paper
+mail.
+
+   If the program is interactive, make it output a short notice like
+this when it starts in an interactive mode:
+
+     Gnomovision version 69, Copyright (C) 19YY NAME OF AUTHOR
+     Gnomovision comes with ABSOLUTELY NO WARRANTY; for details
+     type `show w'.
+     This is free software, and you are welcome to redistribute it
+     under certain conditions; type `show c' for details.
+
+   The hypothetical commands `show w' and `show c' should show the
+appropriate parts of the General Public License.  Of course, the
+commands you use may be called something other than `show w' and `show
+c'; they could even be mouse-clicks or menu items--whatever suits your
+program.
+
+   You should also get your employer (if you work as a programmer) or
+your school, if any, to sign a "copyright disclaimer" for the program,
+if necessary.  Here is a sample; alter the names:
+
+     Yoyodyne, Inc., hereby disclaims all copyright interest in the program
+     `Gnomovision' (which makes passes at compilers) written by James Hacker.
+     
+     SIGNATURE OF TY COON, 1 April 1989
+     Ty Coon, President of Vice
+
+   This General Public License does not permit incorporating your
+program into proprietary programs.  If your program is a subroutine
+library, you may consider it more useful to permit linking proprietary
+applications with the library.  If this is what you want to do, use the
+GNU Library General Public License instead of this License.
+
+
+File: cvs.info,  Node: Index,  Prev: Copying,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* -j (merging branches):                Merging a branch.
+* -k (RCS kflags):                      Substitution modes.
+* .# files:                             update output.
+* .bashrc, setting CVSROOT in:          Specifying a repository.
+* .cshrc, setting CVSROOT in:           Specifying a repository.
+* .cvsrc file:                          ~/.cvsrc.
+* .profile, setting CVSROOT in:         Specifying a repository.
+* .tcshrc, setting CVSROOT in:          Specifying a repository.
+* /usr/local/cvsroot, as example repository: Repository.
+* :ext::                                Connecting via rsh.
+* :kserver::                            Kerberos authenticated.
+* :local::                              Repository.
+* :pserver::                            Password authentication client.
+* :server::                             Connecting via rsh.
+* <<<<<<<:                              Conflicts example.
+* =======:                              Conflicts example.
+* >>>>>>>:                              Conflicts example.
+* __ files (VMS):                       update output.
+* A sample session:                     A sample session.
+* abandoning work:                      Editing files.
+* About this manual:                    Preface.
+* add (subcommand):                     Adding files.
+* Adding a tag:                         Tags.
+* Adding files:                         Adding files.
+* Admin (subcommand):                   admin.
+* Administrative files (intro):         Intro administrative files.
+* Administrative files (reference):     Administrative files.
+* Administrative files, editing them:   Intro administrative files.
+* ALL in commitinfo:                    commitinfo.
+* annotate (subcommand):                annotate.
+* Atomic transactions, lack of:         Concurrency.
+* authenticated client, using:          Password authentication client.
+* authenticating server, setting up:    Password authentication server.
+* Author keyword:                       Keyword list.
+* Automatically ignored files:          cvsignore.
+* Avoiding editor invocation:           Common options.
+* bill of materials:                    Builds.
+* Binary files:                         Binary files.
+* Branch merge example:                 Merging a branch.
+* Branch number:                        Revision numbers.
+* Branch numbers:                       Creating a branch.
+* Branch, creating a:                   Creating a branch.
+* Branch, vendor-:                      Tracking sources.
+* Branches:                             Branches.
+* Branches motivation:                  Branches motivation.
+* Branches, copying changes between:    Merging.
+* Branches, sticky:                     Sticky tags.
+* Bringing a file up to date:           Updating a file.
+* Bugs, known in this manual:           BUGS.
+* Bugs, reporting (CVS):                What is CVS?.
+* Bugs, reporting (manual):             BUGS.
+* builds:                               Builds.
+* Changes, copying between branches:    Merging.
+* Changing a log message:               admin options.
+* checked out copy, keeping:            Keeping a checked out copy.
+* Checkin program:                      modules.
+* Checking commits:                     commitinfo.
+* Checking out source:                  Getting the source.
+* Checkout (subcommand):                checkout.
+* Checkout program:                     modules.
+* checkout, as term for getting ready to edit: Editing files.
+* Checkout, example:                    Getting the source.
+* choosing, reserved or unreserved checkouts: Choosing a model.
+* Cleaning up:                          Cleaning up.
+* Client/Server Operation:              Remote repositories.
+* Co (subcommand):                      checkout.
+* Command reference:                    Invoking CVS.
+* Command structure:                    Structure.
+* Comment leader:                       admin examples.
+* Commit (subcommand):                  commit.
+* Commit files:                         commit files.
+* Commit, when to:                      When to commit.
+* Commitinfo:                           commitinfo.
+* Committing changes:                   Committing your changes.
+* Common options:                       Common options.
+* Common syntax of info files:          syntax.
+* compatibility, between CVS versions:  Compatibility.
+* COMSPEC:                              Environment variables.
+* Conflict markers:                     Conflicts example.
+* Conflict resolution:                  Conflicts example.
+* Conflicts (merge example):            Conflicts example.
+* Contributors (CVS program):           What is CVS?.
+* Contributors (manual):                Credits.
+* Copying changes:                      Merging.
+* Correcting a log message:             admin options.
+* Creating a branch:                    Creating a branch.
+* Creating a project:                   Starting a new project.
+* Creating a repository:                Creating a repository.
+* Credits (CVS program):                What is CVS?.
+* Credits (manual):                     Credits.
+* CVS 1.6, and watches:                 Watches Compatibility.
+* CVS command structure:                Structure.
+* CVS passwd file:                      Password authentication server.
+* CVS, history of:                      What is CVS?.
+* CVS, introduction to:                 What is CVS?.
+* CVS, versions of:                     Compatibility.
+* CVS_CLIENT_LOG:                       Environment variables.
+* CVS_CLIENT_PORT:                      Kerberos authenticated.
+* CVS_IGNORE_REMOTE_ROOT:               Environment variables.
+* CVS_PASSFILE, environment variable:   Password authentication client.
+* CVS_RCMD_PORT:                        Environment variables.
+* CVS_RSH:                              Environment variables.
+* CVS_SERVER:                           Connecting via rsh.
+* CVS_SERVER_SLEEP:                     Environment variables.
+* CVSEDITOR:                            Environment variables.
+* CVSEDITOR, environment variable:      Committing your changes.
+* CVSIGNORE:                            Environment variables.
+* cvsignore (admin file), global:       cvsignore.
+* CVSREAD:                              Environment variables.
+* CVSREAD, overriding:                  Global options.
+* CVSROOT:                              Environment variables.
+* cvsroot:                              Repository.
+* CVSROOT (file):                       Administrative files.
+* CVSROOT, environment variable:        Specifying a repository.
+* CVSROOT, module name:                 Intro administrative files.
+* CVSROOT, multiple repositories:       Multiple repositories.
+* CVSROOT, overriding:                  Global options.
+* CVSUMASK:                             File permissions.
+* CVSWRAPPERS:                          Environment variables.
+* cvswrappers (admin file):             Wrappers.
+* CVSWRAPPERS, environment variable:    Wrappers.
+* Date keyword:                         Keyword list.
+* Dates:                                Common options.
+* Decimal revision number:              Revision numbers.
+* DEFAULT in commitinfo:                commitinfo.
+* DEFAULT in editinfo:                  editinfo.
+* DEFAULT in verifymsg:                 verifymsg.
+* Defining a module:                    Defining the module.
+* Defining modules (intro):             Intro administrative files.
+* Defining modules (reference manual):  modules.
+* Deleting files:                       Removing files.
+* Deleting revisions:                   admin options.
+* Deleting sticky tags:                 Sticky tags.
+* Descending directories:               Recursive behavior.
+* Diff:                                 Viewing differences.
+* Diff (subcommand):                    diff.
+* Differences, merging:                 Merging two revisions.
+* Directories, moving:                  Moving directories.
+* directories, removing:                Removing directories.
+* Directory, descending:                Recursive behavior.
+* Disjoint repositories:                Multiple repositories.
+* Distributing log messages:            loginfo.
+* driver.c (merge example):             Conflicts example.
+* edit (subcommand):                    Editing files.
+* editinfo (admin file):                editinfo.
+* Editing administrative files:         Intro administrative files.
+* Editing the modules file:             Defining the module.
+* EDITOR:                               Environment variables.
+* Editor, avoiding invocation of:       Common options.
+* EDITOR, environment variable:         Committing your changes.
+* EDITOR, overriding:                   Global options.
+* Editor, specifying per module:        editinfo.
+* editors (subcommand):                 Watch information.
+* emerge:                               Conflicts example.
+* Environment variables:                Environment variables.
+* Errors, reporting (CVS):              What is CVS?.
+* Errors, reporting (manual):           BUGS.
+* Example of a work-session:            A sample session.
+* Example of merge:                     Conflicts example.
+* Example, branch merge:                Merging a branch.
+* Export (subcommand):                  export.
+* Export program:                       modules.
+* Fetching source:                      Getting the source.
+* File locking:                         Multiple developers.
+* File permissions:                     File permissions.
+* File status:                          File status.
+* Files, moving:                        Moving files.
+* Files, reference manual:              Administrative files.
+* Fixing a log message:                 admin options.
+* Forcing a tag match:                  Common options.
+* Form for log message:                 rcsinfo.
+* Format of CVS commands:               Structure.
+* Getting started:                      A sample session.
+* Getting the source:                   Getting the source.
+* Global cvsignore:                     cvsignore.
+* Global options:                       Global options.
+* Group:                                File permissions.
+* Header keyword:                       Keyword list.
+* History (subcommand):                 history.
+* History browsing:                     History browsing.
+* History file:                         history file.
+* History files:                        Repository files.
+* History of CVS:                       What is CVS?.
+* HOME:                                 Environment variables.
+* HOMEPATH:                             Environment variables.
+* Id keyword:                           Keyword list.
+* Ident (shell command):                Using keywords.
+* Identifying files:                    Keyword substitution.
+* Ignored files:                        cvsignore.
+* Ignoring files:                       cvsignore.
+* Import (subcommand):                  import.
+* Importing files:                      From files.
+* Importing files, from other version control systesm: From other version control systems.
+* Importing modules:                    First import.
+* Index:                                Index.
+* Info files (syntax):                  syntax.
+* Informing others:                     Informing others.
+* init (subcommand):                    Creating a repository.
+* Introduction to CVS:                  What is CVS?.
+* Invoking CVS:                         Invoking CVS.
+* Isolation:                            History browsing.
+* Join:                                 Merging a branch.
+* keeping a checked out copy:           Keeping a checked out copy.
+* kerberos:                             Kerberos authenticated.
+* Keyword expansion:                    Keyword substitution.
+* Keyword substitution:                 Keyword substitution.
+* Kflag:                                Substitution modes.
+* kinit:                                Kerberos authenticated.
+* Known bugs in this manual:            BUGS.
+* Layout of repository:                 Repository.
+* Left-hand options:                    Global options.
+* Linear development:                   Revision numbers.
+* List, mailing list:                   What is CVS?.
+* Locally Added:                        File status.
+* Locally Modified:                     File status.
+* Locally Removed:                      File status.
+* Locker keyword:                       Keyword list.
+* Locking files:                        Multiple developers.
+* locks, cvs:                           Concurrency.
+* Log (subcommand):                     log.
+* Log information, saving:              history file.
+* Log keyword:                          Keyword list.
+* Log keyword, selecting comment leader: admin examples.
+* Log message entry:                    Committing your changes.
+* Log message template:                 rcsinfo.
+* Log message, correcting:              admin options.
+* log message, verifying:               verifymsg.
+* Log messages:                         loginfo.
+* Log messages, editing:                editinfo.
+* Login (subcommand):                   Password authentication client.
+* loginfo (admin file):                 loginfo.
+* LOGNAME:                              Environment variables.
+* Mail, automatic mail on commit:       Informing others.
+* Mailing list:                         What is CVS?.
+* Mailing log messages:                 loginfo.
+* Main trunk (intro):                   Revision numbers.
+* Main trunk and branches:              Branches.
+* make:                                 Builds.
+* Many repositories:                    Multiple repositories.
+* Markers, conflict:                    Conflicts example.
+* Merge, an example:                    Conflicts example.
+* Merge, branch example:                Merging a branch.
+* Merging:                              Merging.
+* Merging a branch:                     Merging a branch.
+* Merging a file:                       Updating a file.
+* Merging two revisions:                Merging two revisions.
+* Modifications, copying between branches: Merging.
+* Module status:                        modules.
+* Module, defining:                     Defining the module.
+* Modules (admin file):                 modules.
+* Modules (intro):                      Basic concepts.
+* Modules file:                         Intro administrative files.
+* Modules file, changing:               Defining the module.
+* Motivation for branches:              Branches motivation.
+* Moving directories:                   Moving directories.
+* Moving files:                         Moving files.
+* Multiple developers:                  Multiple developers.
+* Multiple repositories:                Multiple repositories.
+* Name keyword:                         Keyword list.
+* Name, symbolic (tag):                 Tags.
+* Needs Checkout:                       File status.
+* Needs Merge:                          File status.
+* Needs Patch:                          File status.
+* Newsgroups:                           What is CVS?.
+* notify (admin file):                  Getting Notified.
+* Nroff (selecting comment leader):     admin examples.
+* Number, branch:                       Revision numbers.
+* Number, revision-:                    Revision numbers.
+* option defaults:                      ~/.cvsrc.
+* Options, global:                      Global options.
+* Outdating revisions:                  admin options.
+* Overlap:                              Updating a file.
+* Overriding CVSREAD:                   Global options.
+* Overriding CVSROOT:                   Global options.
+* Overriding EDITOR:                    Global options.
+* Overriding RCSBIN:                    Global options.
+* Overriding TMPDIR:                    Global options.
+* Parallel repositories:                Multiple repositories.
+* passwd (admin file):                  Password authentication server.
+* password client, using:               Password authentication client.
+* password server, setting up:          Password authentication server.
+* PATH:                                 Environment variables.
+* Per-module editor:                    editinfo.
+* Policy:                               When to commit.
+* Precommit checking:                   commitinfo.
+* Preface:                              Preface.
+* Pserver (subcommand):                 Password authentication server.
+* RCS history files:                    Repository files.
+* RCS keywords:                         Keyword list.
+* RCS revision numbers:                 Tags.
+* RCS, importing files from:            From other version control systems.
+* RCS-style locking:                    Multiple developers.
+* RCSBIN:                               Environment variables.
+* RCSBIN, overriding:                   Global options.
+* RCSfile keyword:                      Keyword list.
+* rcsinfo (admin file):                 rcsinfo.
+* RCSINIT:                              Environment variables.
+* Rdiff (subcommand):                   rdiff.
+* read-only files, and -r:              Global options.
+* read-only files, and CVSREAD:         Environment variables.
+* read-only files, and watches:         Setting a watch.
+* read-only files, in repository:       File permissions.
+* Read-only mode:                       Global options.
+* read-only repository access:          Read-only access.
+* readers (admin file):                 Read-only access.
+* Recursive (directory descending):     Recursive behavior.
+* Reference manual (files):             Administrative files.
+* Reference manual for variables:       Environment variables.
+* Reference, commands:                  Invoking CVS.
+* regular expression syntax:            syntax.
+* Release (subcommand):                 release.
+* Releases, revisions and versions:     Versions revisions releases.
+* Releasing your working copy:          Cleaning up.
+* Remote repositories:                  Remote repositories.
+* Remove (subcommand):                  Removing files.
+* Removing a change:                    Merging two revisions.
+* removing directories:                 Removing directories.
+* Removing files:                       Removing files.
+* Removing your working copy:           Cleaning up.
+* Renaming directories:                 Moving directories.
+* Renaming files:                       Moving files.
+* Replacing a log message:              admin options.
+* Reporting bugs (CVS):                 What is CVS?.
+* Reporting bugs (manual):              BUGS.
+* Repositories, multiple:               Multiple repositories.
+* Repositories, remote:                 Remote repositories.
+* Repository (intro):                   Repository.
+* Repository, example:                  Repository.
+* Repository, how data is stored:       Repository storage.
+* Repository, setting up:               Creating a repository.
+* reserved checkouts:                   Multiple developers.
+* Resetting sticky tags:                Sticky tags.
+* Resolving a conflict:                 Conflicts example.
+* Restoring old version of removed file: Sticky tags.
+* Resurrecting old version of dead file: Sticky tags.
+* Retrieving an old revision using tags: Tags.
+* reverting to repository version:      Editing files.
+* Revision keyword:                     Keyword list.
+* Revision management:                  Revision management.
+* Revision numbers:                     Revision numbers.
+* Revision tree:                        Revision numbers.
+* Revision tree, making branches:       Branches.
+* Revisions, merging differences between: Merging two revisions.
+* Revisions, versions and releases:     Versions revisions releases.
+* Right-hand options:                   Common options.
+* rsh:                                  Connecting via rsh.
+* Rtag (subcommand):                    rtag.
+* rtag, creating a branch using:        Creating a branch.
+* Saving space:                         admin options.
+* SCCS, importing files from:           From other version control systems.
+* Security:                             File permissions.
+* server, CVS:                          Remote repositories.
+* setgid:                               File permissions.
+* Setting up a repository:              Creating a repository.
+* setuid:                               File permissions.
+* Signum Support:                       Preface.
+* Source keyword:                       Keyword list.
+* Source, getting CVS source:           What is CVS?.
+* Source, getting from CVS:             Getting the source.
+* Specifying dates:                     Common options.
+* Spreading information:                Informing others.
+* Starting a project with CVS:          Starting a new project.
+* State keyword:                        Keyword list.
+* Status (subcommand):                  status.
+* Status of a file:                     File status.
+* Status of a module:                   modules.
+* sticky date:                          Sticky tags.
+* Sticky tags:                          Sticky tags.
+* Sticky tags, resetting:               Sticky tags.
+* Storing log messages:                 loginfo.
+* Structure:                            Structure.
+* Subdirectories:                       Recursive behavior.
+* Support, getting CVS support:         Preface.
+* Symbolic name (tag):                  Tags.
+* Syntax of info files:                 syntax.
+* Tag (subcommand):                     tag.
+* Tag program:                          modules.
+* tag, command, introduction:           Tags.
+* tag, example:                         Tags.
+* Tag, retrieving old revisions:        Tags.
+* Tag, symbolic name:                   Tags.
+* taginfo:                              user-defined logging.
+* Tags:                                 Tags.
+* Tags, sticky:                         Sticky tags.
+* tc, Trivial Compiler (example):       A sample session.
+* Team of developers:                   Multiple developers.
+* TEMP:                                 Environment variables.
+* Template for log message:             rcsinfo.
+* temporary files, location of:         Environment variables.
+* Third-party sources:                  Tracking sources.
+* Time:                                 Common options.
+* timezone, in input:                   Common options.
+* timezone, in output:                  log.
+* TMP:                                  Environment variables.
+* TMPDIR:                               Environment variables.
+* TMPDIR, overriding:                   Global options.
+* Trace:                                Global options.
+* Traceability:                         History browsing.
+* Tracking sources:                     Tracking sources.
+* Transactions, atomic, lack of:        Concurrency.
+* Trivial Compiler (example):           A sample session.
+* Typical repository:                   Repository.
+* umask, for repository files:          File permissions.
+* Undoing a change:                     Merging two revisions.
+* unedit (subcommand):                  Editing files.
+* Unknown:                              File status.
+* unreserved checkouts:                 Multiple developers.
+* Unresolved Conflict:                  File status.
+* Up-to-date:                           File status.
+* Update (subcommand):                  update.
+* Update program:                       modules.
+* update, introduction:                 Updating a file.
+* Updating a file:                      Updating a file.
+* USER:                                 Environment variables.
+* user aliases:                         Password authentication server.
+* users (admin file):                   Getting Notified.
+* Vendor:                               Tracking sources.
+* Vendor branch:                        Tracking sources.
+* verifymsg (admin file):               verifymsg.
+* versions, of CVS:                     Compatibility.
+* Versions, revisions and releases:     Versions revisions releases.
+* Viewing differences:                  Viewing differences.
+* watch add (subcommand):               Getting Notified.
+* watch off (subcommand):               Setting a watch.
+* watch on (subcommand):                Setting a watch.
+* watch remove (subcommand):            Getting Notified.
+* watchers (subcommand):                Watch information.
+* Watches:                              Watches.
+* Wdiff (import example):               First import.
+* What (shell command):                 Using keywords.
+* What branches are good for:           Branches motivation.
+* What is CVS?:                         What is CVS?.
+* When to commit:                       When to commit.
+* Work-session, example of:             A sample session.
+* Working copy:                         Multiple developers.
+* Working copy, removing:               Cleaning up.
+* Wrappers:                             Wrappers.
+* writers (admin file):                 Read-only access.
+* zone, time, in input:                 Common options.
+* zone, time, in output:                log.
+
+

@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ./cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo-1.64 from the input
+file ../../work/ccvs/doc/cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -22,7 +22,154 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Common options,  Next: admin,  Prev: Global options,  Up: Invoking CVS
+File: cvs.info,  Node: ~/.cvsrc,  Next: Global options,  Prev: Structure,  Up: CVS commands
+
+Default options and the ~/.cvsrc file
+=====================================
+
+   There are some `command_options' that are used so often that you
+might have set up an alias or some other means to make sure you always
+specify that option.  One example (the one that drove the
+implementation of the .cvsrc support, actually) is that many people
+find the default output of the `diff' command to be very hard to read,
+and that either context diffs or unidiffs are much easier to understand.
+
+   The `~/.cvsrc' file is a way that you can add default options to
+`cvs_commands' within cvs, instead of relying on aliases or other shell
+scripts.
+
+   The format of the `~/.cvsrc' file is simple.  The file is searched
+for a line that begins with the same name as the `cvs_command' being
+executed.  If a match is found, then the remainder of the line is split
+up (at whitespace characters) into separate options and added to the
+command arguments *before* any options from the command line.
+
+   If a command has two names (e.g., `checkout' and `co'), the official
+name, not necessarily the one used on the command line, will be used to
+match against the file.  So if this is the contents of the user's
+`~/.cvsrc' file:
+
+     log -N
+     diff -u
+     update -P
+     co -P
+
+the command `cvs checkout foo' would have the `-P' option added to the
+arguments, as well as `cvs co foo'.
+
+   With the example file above, the output from `cvs diff foobar' will
+be in unidiff format.  `cvs diff -c foobar' will provide context diffs,
+as usual.  Getting "old" format diffs would be slightly more
+complicated, because `diff' doesn't have an option to specify use of
+the "old" format, so you would need `cvs -f diff foobar'.
+
+   In place of the command name you can use `cvs' to specify global
+options (*note Global options::.).  For example the following line in
+`.cvsrc'
+
+     cvs -z6
+
+   causes CVS to use compression level 6
+
+
+File: cvs.info,  Node: Global options,  Next: Common options,  Prev: ~/.cvsrc,  Up: CVS commands
+
+Global options
+==============
+
+   The available `cvs_options' (that are given to the left of
+`cvs_command') are:
+
+`-b BINDIR'
+     Use BINDIR as the directory where RCS programs are located.
+     Overrides the setting of the `$RCSBIN' environment variable and
+     any precompiled directory.  This parameter should be specified as
+     an absolute pathname.
+
+`-T TEMPDIR'
+     Use TEMPDIR as the directory where temporary files are located.
+     Overrides the setting of the `$TMPDIR' environment variable and
+     any precompiled directory.  This parameter should be specified as
+     an absolute pathname.
+
+`-d CVS_ROOT_DIRECTORY'
+     Use CVS_ROOT_DIRECTORY as the root directory pathname of the
+     repository.  Overrides the setting of the `$CVSROOT' environment
+     variable.  *Note Repository::.
+
+`-e EDITOR'
+     Use EDITOR to enter revision log information.  Overrides the
+     setting of the `$CVSEDITOR' and `$EDITOR' environment variables.
+
+`-f'
+     Do not read the `~/.cvsrc' file.  This option is most often used
+     because of the non-orthogonality of the CVS option set.  For
+     example, the `cvs log' option `-N' (turn off display of tag names)
+     does not have a corresponding option to turn the display on.  So
+     if you have `-N' in the `~/.cvsrc' entry for `log', you may need
+     to use `-f' to show the tag names.
+
+`-H'
+`--help'
+     Display usage information about the specified `cvs_command' (but
+     do not actually execute the command).  If you don't specify a
+     command name, `cvs -H' displays overall help for CVS, including a
+     list of other help options.
+
+`-l'
+     Do not log the cvs_command in the command history (but execute it
+     anyway).  *Note history::, for information on command history.
+
+`-n'
+     Do not change any files.  Attempt to execute the `cvs_command',
+     but only to issue reports; do not remove, update, or merge any
+     existing files, or create any new files.
+
+`-Q'
+     Cause the command to be really quiet; the command will only
+     generate output for serious problems.
+
+`-q'
+     Cause the command to be somewhat quiet; informational messages,
+     such as reports of recursion through subdirectories, are
+     suppressed.
+
+`-r'
+     Make new working files files read-only.  Same effect as if the
+     `$CVSREAD' environment variable is set (*note Environment
+     variables::.).  The default is to make working files writable,
+     unless watches are on (*note Watches::.).
+
+`-s VARIABLE=VALUE'
+     Set a user variable (*note Variables::.).
+
+`-t'
+     Trace program execution; display messages showing the steps of CVS
+     activity.  Particularly useful with `-n' to explore the potential
+     impact of an unfamiliar command.
+
+`-v'
+`--version'
+     Display version and copyright information for CVS.
+
+`-w'
+     Make new working files read-write.  Overrides the setting of the
+     `$CVSREAD' environment variable.  Files are created read-write by
+     default, unless `$CVSREAD' is set or `-r' is given.
+
+`-x'
+     Encrypt all communication between the client and the server.  Only
+     has an effect on the CVS client.  As of this writing, this is only
+     implemented when using a Kerberos connection (*note Kerberos
+     authenticated::.).  Encryption support is not available by
+     default; it must be enabled using a special configure option,
+     `--enable-encryption', when you build CVS.
+
+`-z GZIP-LEVEL'
+     Set the compression level.  Only has an effect on the CVS client.
+
+
+File: cvs.info,  Node: Common options,  Next: admin,  Prev: Global options,  Up: CVS commands
 
 Common command options
 ======================
@@ -50,27 +197,41 @@ options that conflict even with these standard options.
      in the same directory will use the same date (for more information
      on sticky tags/dates, *note Sticky tags::.).
 
-     A wide variety of date formats are supported by CVS.  The
-     DATE_SPEC is interpreted as being in the local timezone, unless a
-     specific timezone is specified.  Examples of valid date
-     specifications include:
-
-                              1 month ago
-                              2 hours ago
-                              400000 seconds ago
-                              last year
-                              last Monday
-                              yesterday
-                              a fortnight ago
-                              3/31/92 10:00:07 PST
-                              January 23, 1987 10:05pm
-                              22:00 GMT
-
      `-D' is available with the `checkout', `diff', `export', `history',
      `rdiff', `rtag', and `update' commands.  (The `history' command
      uses this option in a slightly different way; *note history
-     options::.).  Note that when specifying a date like `3/31/92' it is
-     `MONTH/DAY/YEAR'.  So `1/4/96' is January 4, not March 1.
+     options::.).
+
+     A wide variety of date formats are supported by CVS.  The most
+     standard ones are ISO8601 (from the International Standards
+     Organization) and the Internet e-mail standard (specified in
+     RFC822 as amended by RFC1123).
+
+     ISO8601 dates have many variants but a few examples are:
+
+          1972-09-24
+          1972-09-24 20:05
+
+     See `http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html' for more
+     details about ISO8601 dates.
+
+     In addition to the dates allowed in Internet e-mail itself, CVS
+     also allows some of the fields to be omitted.  For example:
+
+          24 Sep 1972 20:05
+          24 Sep
+
+     The date is interpreted as being in the local timezone, unless a
+     specific timezone is specified.
+
+     These two date formats are preferred.  However, CVS currently
+     accepts a wide variety of other date formats.  They are
+     intentionally not documented here in any detail, and future
+     versions of CVS might not accept all of them.
+
+     One such format is `MONTH/DAY/YEAR'.  This may confuse people who
+     are accustomed to having the month and day in the other order;
+     `1/4/96' is January 4, not April 1.
 
      Remember to quote the argument to the `-D' flag so that your shell
      doesn't interpret spaces as argument separators.  A command using
@@ -85,15 +246,11 @@ options that conflict even with these standard options.
      if you want files retrieved even when there is no match for the
      tag or date.  (The most recent revision of the file will be used).
 
-     `-f' is available with these commands: `checkout', `export',
-     `rdiff', `rtag', and `update'.
+     `-f' is available with these commands: `annotate', `checkout',
+     `export', `rdiff', `rtag', and `update'.
 
      *Warning:*  The `commit' command also has a `-f' option, but it
      has a different behavior for that command.  *Note commit options::.
-
-`-H'
-     Help; describe the options available for this command.  This is
-     the only option supported for all CVS commands.
 
 `-k KFLAG'
      Alter the default RCS processing of keywords.  *Note Keyword
@@ -104,8 +261,8 @@ options that conflict even with these standard options.
      KFLAG with the file, and continues to use it with future update
      commands on the same file until you specify otherwise.
 
-     The `-k' option is available with the `add', `checkout', `diff' and
-     `update' commands.
+     The `-k' option is available with the `add', `checkout', `diff',
+     `import' and `update' commands.
 
 `-l'
      Local; run only in current working directory, rather than
@@ -136,14 +293,7 @@ options that conflict even with these standard options.
      commands.
 
 `-P'
-     Prune (remove) directories that are empty after being updated, on
-     `checkout', or `update'.  Normally, an empty directory (one that
-     is void of revision-controlled files) is left alone.  Specifying
-     `-P' will cause these directories to be silently removed from your
-     checked-out sources.  This does not remove the directory from the
-     repository, only from your checked out copy.  Note that this
-     option is implied by the `-r' or `-D' options of `checkout' and
-     `export'.
+     Prune empty directories.  See *Note Removing directories::.
 
 `-p'
      Pipe the files retrieved from the repository to standard output,
@@ -182,7 +332,7 @@ options that conflict even with these standard options.
      `history', `export', `rdiff', `rtag', and `update' commands.
 
 
-File: cvs.info,  Node: admin,  Next: checkout,  Prev: Common options,  Up: Invoking CVS
+File: cvs.info,  Node: admin,  Next: checkout,  Prev: Common options,  Up: CVS commands
 
 admin--Administration front end for rcs
 =======================================
@@ -219,7 +369,7 @@ admin options
 makes it impossible to use CVS until you undo the effect!
 
    This description of the available options is based on the `rcs(1)'
-man page, but modified to suit readers that are more interrested in CVS
+man page, but modified to suit readers that are more interested in CVS
 than RCS.
 
 `-AOLDFILE'
@@ -234,15 +384,16 @@ than RCS.
 `-b[REV]'
      When used with bare RCS, this option sets the default branch to
      REV; in CVS sticky tags (*note Sticky tags::.) are a better way to
-     decide which branch you want to work on.  With CVS, this option
-     can be used to control behavior with respect to the vendor branch.
+     decide which branch you want to work on.  There is one use with
+     CVS: to revert to the vendor's version when using vendor branches
+     (*note Reverting local changes::.).
 
 `-cSTRING'
      Useful with CVS.  Sets the comment leader to STRING.  The comment
      leader is printed before every log message line generated by the
      keyword `$Log: cvs.info-4,v $
-     keyword `Revision 1.1.1.5  1996/10/18 03:41:41  tholo
-     keyword `Missing files from import
+     keyword `Revision 1.1.1.6  1997/02/21 06:47:26  tholo
+     keyword `Missed files from new release from Cyclic Software
      keyword `' (*note Keyword substitution::.).  This is useful
      for programming languages without multi-line comments.  RCS
      initially guesses the value of the comment leader from the file
@@ -339,8 +490,8 @@ than RCS.
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::.), and in the `$Log: cvs.info-4,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.5  1996/10/18 03:41:41  tholo
-     output from CVS LOG (*note log::.), and in the `Missing files from import
+     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.6  1997/02/21 06:47:26  tholo
+     output from CVS LOG (*note log::.), and in the `Missed files from new release from Cyclic Software
      output from CVS LOG (*note log::.), and in the `' and
      `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS
      uses the `dead' state for its own purposes; to take a file to or
@@ -419,8 +570,8 @@ Comment leaders
 ...............
 
    If you use the `$Log: cvs.info-4,v $
-   If you use the `Revision 1.1.1.5  1996/10/18 03:41:41  tholo
-   If you use the `Missing files from import
+   If you use the `Revision 1.1.1.6  1997/02/21 06:47:26  tholo
+   If you use the `Missed files from new release from Cyclic Software
    If you use the `' keyword and you do not agree with the guess
 for comment leader that CVS has done, you can enforce your will with
 `cvs admin -c'.  This might be suitable for `nroff' source:
@@ -433,7 +584,7 @@ for comment leader that CVS has done, you can enforce your will with
 correct comment leaders in your working files.
 
 
-File: cvs.info,  Node: checkout,  Next: commit,  Prev: admin,  Up: Invoking CVS
+File: cvs.info,  Node: checkout,  Next: commit,  Prev: admin,  Up: CVS commands
 
 checkout--Check out sources for editing
 =======================================
@@ -525,7 +676,7 @@ options::., for a complete description of them):
      in the modules file; *note modules::.).
 
 `-P'
-     Prune empty directories.
+     Prune empty directories.  See *Note Moving directories::.
 
 `-p'
      Pipe files to the standard output.
@@ -597,7 +748,7 @@ checkout examples
      $ cvs checkout -D yesterday tc
 
 
-File: cvs.info,  Node: commit,  Next: diff,  Prev: checkout,  Up: Invoking CVS
+File: cvs.info,  Node: commit,  Next: diff,  Prev: checkout,  Up: CVS commands
 
 commit--Check files into the repository
 =======================================
@@ -710,26 +861,24 @@ commit examples
 New major release number
 ........................
 
-   When you make a major release of your product, you might want the
-revision numbers to track your major release number.  You should
-normally not care about the revision numbers, but this is a thing that
-many people want to do, and it can be done without doing any harm.
+   By default, CVS will assign numeric revisions by leaving the first
+number the same and incrementing the second number.  For example,
+`1.1', `1.2', `1.3', etc.  Normally there is no reason to care about
+the revision numbers--it is easier to treat them as internal numbers
+that CVS maintains, and tags provide a better way to distinguish
+between things like release 1 versus release 2 of your product (*note
+Tags::.).  However, if you want to set the numeric revisions, the `-r'
+option to `cvs commit' can do that.
 
-   To bring all your files up to the RCS revision 3.0 (including those
-that haven't changed), you might do:
+   For example, to bring all your files up to the RCS revision 3.0
+(including those that haven't changed), you might invoke:
 
      $ cvs commit -r 3.0
 
-   Note that it is generally a bad idea to try to make the RCS revision
-number equal to the current release number of your product.  You should
-think of the revision number as an internal number that the CVS package
-maintains, and that you generally never need to care much about.  Using
-the `tag' and `rtag' commands you can give symbolic names to the
-releases instead.  *Note tag:: and *Note rtag::.
-
    Note that the number you specify with `-r' must be larger than any
 existing revision number.  That is, if revision 3.0 exists, you cannot
-`cvs commit -r 1.3'.
+`cvs commit -r 1.3'.  If you want to maintain several releases in
+parallel, you need to use a branch (*note Branches::.).
 
 Committing to a branch
 ......................
@@ -789,7 +938,7 @@ trunk.
      $ cvs checkout -r EXPR1 whatever_module
 
 
-File: cvs.info,  Node: diff,  Next: export,  Prev: commit,  Up: Invoking CVS
+File: cvs.info,  Node: diff,  Next: export,  Prev: commit,  Up: CVS commands
 
 diff--Run diffs between revisions
 =================================
@@ -894,7 +1043,7 @@ printed.
      $ cvs diff -u | less
 
 
-File: cvs.info,  Node: export,  Next: history,  Prev: diff,  Up: Invoking CVS
+File: cvs.info,  Node: export,  Next: history,  Prev: diff,  Up: CVS commands
 
 export--Export sources from CVS, similar to checkout
 ====================================================
@@ -972,7 +1121,7 @@ options::., for a complete description of them):
      explicit target directory.)
 
 
-File: cvs.info,  Node: history,  Next: import,  Prev: export,  Up: Invoking CVS
+File: cvs.info,  Node: history,  Next: import,  Prev: export,  Up: CVS commands
 
 history--Show status of files and users
 =======================================
@@ -1036,6 +1185,9 @@ report is generated:
 
     `O'
           checkout
+
+    `E'
+          export
 
     `T'
           rtag
@@ -1111,7 +1263,7 @@ an argument:
      Show records for user NAME.
 
 
-File: cvs.info,  Node: import,  Next: log,  Prev: history,  Up: Invoking CVS
+File: cvs.info,  Node: import,  Next: log,  Prev: history,  Up: CVS commands
 
 import--Import sources into CVS, using vendor branches
 ======================================================
@@ -1159,6 +1311,12 @@ branch (e.g., for 1.1.1).  You must also specify at least one
 RELEASETAG to identify the files at the leaves created each time you
 execute `import'.
 
+   Note that `import' does *not* change the directory in which you
+invoke it.  In particular, it does not set up that directory as a CVS
+working directory; if you want to work with the sources import them
+first and then check them out into a different directory (*note Getting
+the source::.).
+
 * Menu:
 
 * import options::              import options
@@ -1190,7 +1348,7 @@ options::., for a complete description):
      Indicate the RCS keyword expansion mode desired.  This setting
      will apply to all files created during the import, but not to any
      files that previously existed in the repository.  See *Note
-     Substitution modes:: for a list of valid `-k' settings.
+     Substitution modes::, for a list of valid `-k' settings.
 
 `-I NAME'
      Specify file names that should be ignored during import.  You can
@@ -1206,183 +1364,4 @@ options::., for a complete description):
 
      SPEC can be a file name pattern of the same type that you can
      specify in the `.cvswrappers' file. *Note Wrappers::.
-
-
-File: cvs.info,  Node: import output,  Next: import examples,  Prev: import options,  Up: import
-
-import output
--------------
-
-   `import' keeps you informed of its progress by printing a line for
-each file, preceded by one character indicating the status of the file:
-
-`U FILE'
-     The file already exists in the repository and has not been locally
-     modified; a new revision has been created (if necessary).
-
-`N FILE'
-     The file is a new file which has been added to the repository.
-
-`C FILE'
-     The file already exists in the repository but has been locally
-     modified; you will have to merge the changes.
-
-`I FILE'
-     The file is being ignored (*note cvsignore::.).
-
-`L FILE'
-     The file is a symbolic link; at the moment (and for the forseeable
-     future), symbolic links are ignored.  (Various options in the
-     `modules' file can be used to recreate symbolic links on checkout,
-     update, etc.; *note modules::..)
-
-
-File: cvs.info,  Node: import examples,  Prev: import output,  Up: import
-
-import examples
----------------
-
-   *Note Tracking sources::, and *Note From files::.
-
-
-File: cvs.info,  Node: log,  Next: rdiff,  Prev: import,  Up: Invoking CVS
-
-log--Print out log information for files
-========================================
-
-   * Synopsis: log [options] [files...]
-
-   * Requires: repository, working directory.
-
-   * Changes: nothing.
-
-   Display log information for files.  `log' used to call the RCS
-utility `rlog'.  Although this is no longer true in the current
-sources, this history determines the format of the output and the
-options, which are not quite in the style of the other CVS commands.
-
-   The output includes the location of the RCS file, the "head"
-revision (the latest revision on the trunk), all symbolic names (tags)
-and some other things.  For each revision, the revision number, the
-author, the number of lines added/deleted and the log message are
-printed.  All times are displayed in Coordinated Universal Time (UTC).
-(Other parts of CVS print times in the local timezone).
-
-* Menu:
-
-* log options::                 log options
-* log examples::                log examples
-
-
-File: cvs.info,  Node: log options,  Next: log examples,  Up: log
-
-log options
------------
-
-   By default, `log' prints all information that is available.  All
-other options restrict the output.
-
-`-b'
-     Print information about the revisions on the default branch,
-     normally the highest branch on the trunk.
-
-`-d DATES'
-     Print information about revisions with a checkin date/time in the
-     range given by the semicolon-separated list of dates.  The date
-     formats accepted are those accepted by the `-D' option to many
-     other CVS commands (*note Common options::.).  Dates can be
-     combined into ranges as follows:
-
-    `D1<D2'
-    `D2>D1'
-          Select the revisions that were deposited between D1 and D2.
-
-    `<D'
-    `D>'
-          Select all revisions dated D or earlier.
-
-    `D<'
-    `>D'
-          Select all revisions dated D or later.
-
-    `D'
-          Select the single, latest revision dated D or earlier.
-
-     The `>' or `<' characters may be followed by `=' to indicate an
-     inclusive range rather than an exclusive one.
-
-     Note that the separator is a semicolon (;).
-
-`-h'
-     Print only the RCS pathname, working pathname, head, default
-     branch, access list, locks, symbolic names, and suffix.
-
-`-l'
-     Local; run only in current working directory.  (Default is to run
-     recursively).
-
-`-N'
-     Do not print the list of tags for this file.  This option can be
-     very useful when your site uses a lot of tags, so rather than
-     "more"'ing over 3 pages of tag information, the log information is
-     presented without tags at all.
-
-`-R'
-     Print only the name of the RCS history file.
-
-`-rREVISIONS'
-     Print information about revisions given in the comma-separated
-     list REVISIONS of revisions and ranges.  The following table
-     explains the available range formats:
-
-    `REV1:REV2'
-          Revisions REV1 to REV2 (which must be on the same branch).
-
-    `:REV'
-          Revisions from the beginning of the branch up to and
-          including REV.
-
-    `REV:'
-          Revisions starting with REV to the end of the branch
-          containing REV.
-
-    `BRANCH'
-          An argument that is a branch means all revisions on that
-          branch.
-
-    `BRANCH1:BRANCH2'
-          A range of branches means all revisions on the branches in
-          that range.
-
-    `BRANCH.'
-          The latest revision in BRANCH.
-
-     A bare `-r' with no revisions means the latest revision on the
-     default branch, normally the trunk.  There can be no space between
-     the `-r' option and its argument.
-
-`-s STATES'
-     Print information about revisions whose state attributes match one
-     of the states given in the comma-separated list STATES.
-
-`-t'
-     Print the same as `-h', plus the descriptive text.
-
-`-wLOGINS'
-     Print information about revisions checked in by users with login
-     names appearing in the comma-separated list LOGINS.  If LOGINS is
-     omitted, the user's login is assumed.  There can be no space
-     between the `-w' option and its argument.
-
-   `log' prints the intersection of the revisions selected with the
-options `-d', `-s', and `-w', intersected with the union of the
-revisions selected by `-b' and `-r'.
-
-
-File: cvs.info,  Node: log examples,  Prev: log options,  Up: log
-
-log examples
-------------
-
-   Contributed examples are gratefully accepted.
 
