@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.11 2002/02/16 21:27:43 millert Exp $	*/
+/*	$OpenBSD: apply.c,v 1.12 2003/04/04 00:21:20 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.11 2002/02/16 21:27:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.12 2003/04/04 00:21:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ main(argc, argv)
 {
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
 	char *c, *cmd, *p, *q;
+	size_t len;
 
 	debug = 0;
 	magic = '%';		/* Default magic char is `%'. */
@@ -115,19 +116,31 @@ main(argc, argv)
 	 * the end to consume (nargs) arguments each time round the loop.
 	 * Allocate enough space to hold the maximum command.
 	 */
-	if ((cmd = malloc(sizeof("exec ") - 1 +
-	    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1)) == NULL)
+	len = sizeof("exec ") - 1 +
+	    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1;
+	if ((cmd = malloc(len)) == NULL)
 		err(1, NULL);
 		
 	if (n == 0) {
+		size_t l;
+
 		/* If nargs not set, default to a single argument. */
 		if (nargs == -1)
 			nargs = 1;
 
-		p = cmd;
-		p += sprintf(cmd, "exec %s", argv[0]);
-		for (i = 1; i <= nargs; i++)
-			p += sprintf(p, " %c%d", magic, i);
+		l = snprintf(cmd, len, "exec %s", argv[0]);
+		if (l >= len)
+			err(1, "snprintf");
+		len -= l;
+		p = cmd + l;
+		
+		for (i = 1; i <= nargs; i++) {
+			l = snprintf(p, len, " %c%d", magic, i);
+			if (l >= len)
+				err(1, "snprintf");
+			len -= l;
+			p += l;
+		}
 
 		/*
 		 * If nargs set to the special value 0, eat a single
@@ -136,7 +149,7 @@ main(argc, argv)
 		if (nargs == 0)
 			nargs = 1;
 	} else {
-		(void)sprintf(cmd, "exec %s", argv[0]);
+		(void)snprintf(cmd, len, "exec %s", argv[0]);
 		nargs = n;
 	}
 
@@ -165,9 +178,10 @@ main(argc, argv)
 
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)
-			if (p[0] == magic && isdigit(p[1]) && p[1] != '0')
-				q += sprintf(q, "%s", argv[(++p)[0] - '0']);
-			else
+			if (p[0] == magic && isdigit(p[1]) && p[1] != '0') {
+				sprintf(q, "%s", argv[(++p)[0] - '0']);
+				q += strlen(q);
+			} else
 				*q++ = *p;
 
 		/* Terminate the command string. */
