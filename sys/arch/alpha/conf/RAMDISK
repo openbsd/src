@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.49 2001/12/07 15:48:26 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.50 2002/01/16 20:55:42 miod Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -58,7 +58,6 @@ pci*	at	lca?
 pci*	at	ppb?
 #pci*	at	irongate?
 #pci*	at	tsp?
-#pci*	at	ppb?
 
 # PCI devices
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
