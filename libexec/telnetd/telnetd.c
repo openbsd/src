@@ -805,6 +805,10 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
     int nfd;
     int startslave_called = 0;
     time_t timeout;
+    fd_set *ibits = NULL;
+    fd_set *obits = NULL;
+    fd_set *xbits = NULL;
+    int setsize;
 
     /*
      * Initialize the slc mapping table.
@@ -989,9 +993,16 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 
 
     nfd = ((f > p) ? f : p) + 1;
+    setsize = howmany(nfd, NFDBITS) * sizeof(fd_mask);
+    ibits = malloc(setsize);
+    obits = malloc(setsize);
+    xbits = malloc(setsize);
+    if (ibits == NULL || obits == NULL || xbits == NULL) {
+	syslog(LOG_ERR, "Out of memory");
+	exit(1);
+    }
     timeout = time(NULL) + 5;
     for (;;) {
-	fd_set ibits, obits, xbits;
 	int c;
 
 	/* wait for encryption to be turned on, but don't wait
@@ -1004,32 +1015,28 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	if (ncc < 0 && pcc < 0)
 	    break;
 
-	FD_ZERO(&ibits);
-	FD_ZERO(&obits);
-	FD_ZERO(&xbits);
-
-	if (f >= FD_SETSIZE
-	    || p >= FD_SETSIZE)
-	    fatal(net, "fd too large");
+	memset(obits, 0, setsize);
+	memset(ibits, 0, setsize);
+	memset(xbits, 0, setsize);
 
 	/*
 	 * Never look for input if there's still
 	 * stuff in the corresponding output buffer
 	 */
 	if (nfrontp - nbackp || pcc > 0) {
-	    FD_SET(f, &obits);
+	    FD_SET(f, obits);
 	} else {
-	    FD_SET(p, &ibits);
+	    FD_SET(p, ibits);
 	}
 	if (pfrontp - pbackp || ncc > 0) {
-	    FD_SET(p, &obits);
+	    FD_SET(p, obits);
 	} else {
-	    FD_SET(f, &ibits);
+	    FD_SET(f, ibits);
 	}
 	if (!SYNCHing) {
-	    FD_SET(f, &xbits);
+	    FD_SET(f, xbits);
 	}
-	if ((c = select(nfd, &ibits, &obits, &xbits,
+	if ((c = select(nfd, ibits, obits, xbits,
 			(struct timeval *)0)) < 1) {
 	    if (c == -1) {
 		if (errno == EINTR) {
@@ -1043,14 +1050,14 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	/*
 	 * Any urgent data?
 	 */
-	if (FD_ISSET(net, &xbits)) {
+	if (FD_ISSET(f, xbits)) {
 	    SYNCHing = 1;
 	}
 
 	/*
 	 * Something to read from the network...
 	 */
-	if (FD_ISSET(net, &ibits)) {
+	if (FD_ISSET(f, ibits)) {
 #ifndef SO_OOBINLINE
 	    /*
 	     * In 4.2 (and 4.3 beta) systems, the
@@ -1089,20 +1096,20 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	    if (SYNCHing) {
 		int atmark;
 
-		ioctl(net, SIOCATMARK, (char *)&atmark);
+		ioctl(f, SIOCATMARK, (char *)&atmark);
 		if (atmark) {
-		    ncc = recv(net, netibuf, sizeof (netibuf), MSG_OOB);
+		    ncc = recv(f, netibuf, sizeof (netibuf), MSG_OOB);
 		    if ((ncc == -1) && (errno == EINVAL)) {
-			ncc = read(net, netibuf, sizeof (netibuf));
+			ncc = read(f, netibuf, sizeof (netibuf));
 			if (sequenceIs(didnetreceive, gotDM)) {
-			    SYNCHing = stilloob(net);
+			    SYNCHing = stilloob(f);
 			}
 		    }
 		} else {
-		    ncc = read(net, netibuf, sizeof (netibuf));
+		    ncc = read(f, netibuf, sizeof (netibuf));
 		}
 	    } else {
-		ncc = read(net, netibuf, sizeof (netibuf));
+		ncc = read(f, netibuf, sizeof (netibuf));
 	    }
 	    settimer(didnetreceive);
 #else	/* !defined(SO_OOBINLINE)) */
@@ -1125,7 +1132,7 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	/*
 	 * Something to read from the pty...
 	 */
-	if (FD_ISSET(p, &ibits)) {
+	if (FD_ISSET(p, ibits)) {
 #ifdef STREAMSPTY
 	    if (really_stream)
 		pcc = readstream(p, ptyibuf, BUFSIZ);
@@ -1202,11 +1209,11 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	    }
 	}
 
-	if (FD_ISSET(f, &obits) && (nfrontp - nbackp) > 0)
+	if (FD_ISSET(f, obits) && (nfrontp - nbackp) > 0)
 	    netflush();
 	if (ncc > 0)
 	    telrcv();
-	if (FD_ISSET(p, &obits) && (pfrontp - pbackp) > 0)
+	if (FD_ISSET(p, obits) && (pfrontp - pbackp) > 0)
 	    ptyflush();
     }
     cleanup(0);
