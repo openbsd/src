@@ -1,0 +1,122 @@
+.\"	$OpenBSD: sectok.1,v 1.1 2001/06/27 19:41:46 rees Exp $
+.\"
+.\" copyright 1997, 2000
+.\" the regents of the university of michigan
+.\" all rights reserved
+.\" 
+.\" permission is granted to use, copy, create derivative works 
+.\" and redistribute this software and such derivative works 
+.\" for any purpose, so long as the name of the university of 
+.\" michigan is not used in any advertising or publicity 
+.\" pertaining to the use or distribution of this software 
+.\" without specific, written prior authorization.  if the 
+.\" above copyright notice or any other identification of the 
+.\" university of michigan is included in any copy of any 
+.\" portion of this software, then the disclaimer below must 
+.\" also be included.
+.\" 
+.\" this software is provided as is, without representation 
+.\" from the university of michigan as to its fitness for any 
+.\" purpose, and without warranty by the university of 
+.\" michigan of any kind, either express or implied, including 
+.\" without limitation the implied warranties of 
+.\" merchantability and fitness for a particular purpose. the 
+.\" regents of the university of michigan shall not be liable 
+.\" for any damages, including special, indirect, incidental, or 
+.\" consequential damages, with respect to any claim arising 
+.\" out of or in connection with the use of the software, even 
+.\" if it has been or is hereafter advised of the possibility of 
+.\" such damages.
+
+.Dd January 10, 2001
+.Dt PAY 1
+.Os
+.Sh NAME
+.Nm pay
+.Nd communicate with smartcards using iso7816
+.Sh SYNOPSIS
+.Nm pay
+.Ar [-ht]
+.Sh DESCRIPTION
+.Nm
+is a command-line-like interface for communicating with smartcards.   APDU's () can be sent to the card, and results are displayed.  Some commands are card-specific, and focus on the Schlumberger Cyberflex Access Javacards, as that is one of CITI's most commonly used cards.
+
+The
+.Nm
+options are as follows:
+
+     -h  watch for card removal.
+.Nm
+alerts user of this event
+
+     -t	 change the ATR timeout of a card.  Many cards do not conform to the ISO specs, and use varying lengths of ATR timeouts.
+
+
+The
+.Nm
+commands are as follows:
+
+1/2 - number of port to which smartcard reader is attached also calls reset (and accepts same modifiers) modifers:  t -
+
+r   - issue a reset to the card
+      modifers: v - verbose
+                f - force open
+                i - return immediately if there is no card in the reader
+
+C   - set the instruction class
+
+f   - select or open a file
+      options:  / - select root file (30 00)
+                <byte>.<byte>
+                <byte> <byte> - select file designated by
+                                these two bytes
+
+g   - stat currently selected file
+
+?/h - display the help screen
+      option: command you want help on
+
+i/o/b - send an 'in/out/in-out' command
+      requires ins, p1, p2, p3
+      options: c - allows you to specify class byte
+
+T   - send T=1 I block and get reply
+      options: S - send R/S block
+
+I   - find instructions
+
+j   - Cyberflex: Verify AUT0
+      options:
+        r - reset to default loader
+        s - set selected app as default
+        a - fix broken java atr
+        x - list files in selected DF
+        l - download applet (.bin)
+           options -p program FID, -c instance directory FID,
+                   -s data directory size, -i data container size,
+                   -a applet AID
+        u - unload applet
+           options -p program ID, -c instance directory FID,
+                   -a applet AID
+        p - select applet
+                   -a applet AID
+        q - select default loader as current
+        k - load DES key  (Usage: jk number_of_keys)
+        R - load RSA private key
+
+s   - Sm@rt Cafe:
+       l - download applet (.CAP)
+
+R   - read file
+      R filesize
+
+W   - write file
+      W <filename>
+
+x   - explore (similar to unix `ls`)
+
+c   - dump file contents
+
+e   - eject
+
+q   - quit
