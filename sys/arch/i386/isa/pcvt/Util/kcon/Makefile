@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 1999/01/13 07:26:05 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/05/19 14:49:44 espie Exp $
 
+.if ${MACHINE} == "i386"
 PROG=		kcon
 DEVICE=		/dev/ttyC0
 CFLAGS+= 	-I${.CURDIR}/../keycap -DKEYB_DEVICE=\"${DEVICE}\"
@@ -8,5 +9,11 @@ CFLAGS+= 	-I${.CURDIR}/../keycap -DKEYB_DEVICE=\"${DEVICE}\"
 # making those programs here
 
 LDADD =       -L${.CURDIR}/../keycap -L${.CURDIR}/../keycap/obj -lkeycap
+.else
+NOPROG=yes
+.endif
+
+MAN=	kcon.1
+MANSUBDIR=i386
 
 .include <bsd.prog.mk>
