@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 1999/04/20 19:45:16 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 1999/08/14 03:42:16 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -60,7 +60,7 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	STACK_GROWS_UP	1		/* stack grows to higher addresses */
+#define	MACHINE_STACK_GROWS_UP	1	/* stack grows to higher addresses */
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0
