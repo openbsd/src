@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.25 2000/09/14 13:32:07 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.26 2000/09/14 13:40:03 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -139,8 +139,7 @@ typedef struct hash GSymT;
  *	17) a Lst of strings that are commands to be given to a shell
  *	   to create this target.
  */
-typedef struct GNode {
-    char            *name;     	/* The target's name */
+typedef struct GNode_ {
     char    	    *path;     	/* The full pathname of the file */
     int             type;      	/* Its type (see the OP flags, below) */
     int		    order;	/* Its wait weight */
@@ -193,6 +192,7 @@ typedef struct GNode {
     struct _Suff    *suffix;	/* Suffix for the node (determined by
 				 * Suff_FindDeps and opaque to everyone
 				 * but the Suff module) */
+    char      name[1];     	/* The target's name */
 } GNode;
 
 /*

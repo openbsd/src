@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.54 2000/09/14 13:36:46 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.55 2000/09/14 13:40:03 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.54 2000/09/14 13:36:46 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.55 2000/09/14 13:40:03 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,7 @@ ParseDoOp (gnp, opp)
 	register GNode	*cohort;
 	LstNode	    	ln;
 
-	cohort = Targ_NewGN(gn->name);
+	cohort = Targ_NewGN(gn->name, NULL);
 	/*
 	 * Duplicate links to parents so graph traversal is simple. Perhaps
 	 * some type bits should be duplicated?
@@ -794,7 +794,7 @@ ParseDoDependency (line)
 			Lst_AtEnd(&targets, gn);
 			break;
 		    case Default:
-			gn = Targ_NewGN(".DEFAULT");
+			gn = Targ_NewGN(".DEFAULT", NULL);
 			gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
 			Lst_AtEnd(&targets, gn);
 			DEFAULT = gn;

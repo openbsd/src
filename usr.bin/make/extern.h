@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.31 2000/09/14 13:35:38 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.32 2000/09/14 13:40:03 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -131,8 +131,8 @@ extern void Suff_PrintAll __P((void));
 /* targ.c */
 extern void Targ_Init __P((void));
 extern void Targ_End __P((void));
-extern GNode *Targ_NewGN __P((char *));
-extern GNode *Targ_FindNode __P((char *, int));
+extern GNode *Targ_NewGN __P((const char *, const char *));
+extern GNode *Targ_FindNode __P((const char *, int));
 extern void Targ_FindList __P((Lst, Lst));
 extern Boolean Targ_Ignore __P((GNode *));
 extern Boolean Targ_Silent __P((GNode *));
