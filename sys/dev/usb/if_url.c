@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.9 2002/11/11 02:32:32 nate Exp $ */
+/*	$OpenBSD: if_url.c,v 1.10 2003/01/27 20:10:52 jason Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -934,8 +934,10 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 	c->url_mbuf = m;
 	total_len = m->m_pkthdr.len;
 
-	if (total_len < URL_MIN_FRAME_LEN)
+	if (total_len < URL_MIN_FRAME_LEN) {
+		bzero(c->url_buf + total_len, URL_MIN_FRAME_LEN - total_len);
 		total_len = URL_MIN_FRAME_LEN;
+	}
 	usbd_setup_xfer(c->url_xfer, sc->sc_pipe_tx, c, c->url_buf, total_len,
 			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			URL_TX_TIMEOUT, url_txeof);
