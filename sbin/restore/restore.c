@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.7 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: restore.c,v 1.8 2002/05/29 19:23:34 deraadt Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: restore.c,v 1.7 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: restore.c,v 1.8 2002/05/29 19:23:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -515,13 +515,13 @@ keyval(key)
 	(void)strcpy(keybuf, "|NIL");
 	keybuf[0] = '\0';
 	if (key & ONTAPE)
-		(void)strcat(keybuf, "|ONTAPE");
+		(void)strlcat(keybuf, "|ONTAPE", sizeof keybuf);
 	if (key & INOFND)
-		(void)strcat(keybuf, "|INOFND");
+		(void)strlcat(keybuf, "|INOFND", sizeof keybuf);
 	if (key & NAMEFND)
-		(void)strcat(keybuf, "|NAMEFND");
+		(void)strlcat(keybuf, "|NAMEFND", sizeof keybuf);
 	if (key & MODECHG)
-		(void)strcat(keybuf, "|MODECHG");
+		(void)strlcat(keybuf, "|MODECHG", sizeof keybuf);
 	return (&keybuf[1]);
 }
 

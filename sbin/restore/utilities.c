@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.9 2002/02/23 21:18:11 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.10 2002/05/29 19:23:34 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.9 2002/02/23 21:18:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.10 2002/05/29 19:23:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -348,17 +348,17 @@ flagvalues(ep)
 	(void)strcpy(flagbuf, "|NIL");
 	flagbuf[0] = '\0';
 	if (ep->e_flags & REMOVED)
-		(void)strcat(flagbuf, "|REMOVED");
+		(void)strlcat(flagbuf, "|REMOVED", sizeof flagbuf);
 	if (ep->e_flags & TMPNAME)
-		(void)strcat(flagbuf, "|TMPNAME");
+		(void)strlcat(flagbuf, "|TMPNAME", sizeof flagbuf);
 	if (ep->e_flags & EXTRACT)
-		(void)strcat(flagbuf, "|EXTRACT");
+		(void)strlcat(flagbuf, "|EXTRACT", sizeof flagbuf);
 	if (ep->e_flags & NEW)
-		(void)strcat(flagbuf, "|NEW");
+		(void)strlcat(flagbuf, "|NEW", sizeof flagbuf);
 	if (ep->e_flags & KEEP)
-		(void)strcat(flagbuf, "|KEEP");
+		(void)strlcat(flagbuf, "|KEEP", sizeof flagbuf);
 	if (ep->e_flags & EXISTED)
-		(void)strcat(flagbuf, "|EXISTED");
+		(void)strlcat(flagbuf, "|EXISTED", sizeof flagbuf);
 	return (&flagbuf[1]);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.8 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.9 2002/05/29 19:23:34 deraadt Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.8 2002/02/16 21:27:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.9 2002/05/29 19:23:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -183,26 +183,26 @@ ttyflags(tep, print)
 		/* Convert ttyent.h flags into ioctl flags. */
 		if (st & TTY_LOCAL) {
 			flags |= TIOCFLAG_CLOCAL;
-			(void)strcat(strflags, "local");
+			(void)strlcat(strflags, "local", sizeof strflags);
 			sep++;
 		}
 		if (st & TTY_RTSCTS) {
 			flags |= TIOCFLAG_CRTSCTS;
 			if (sep++)
-				(void)strcat(strflags, "|");
-			(void)strcat(strflags, "rtscts");
+				(void)strlcat(strflags, "|", sizeof strflags);
+			(void)strlcat(strflags, "rtscts", sizeof strflags);
 		}
 		if (st & TTY_SOFTCAR) {
 			flags |= TIOCFLAG_SOFTCAR;
 			if (sep++)
-				(void)strcat(strflags, "|");
-			(void)strcat(strflags, "softcar");
+				(void)strlcat(strflags, "|", sizeof strflags);
+			(void)strlcat(strflags, "softcar", sizeof strflags);
 		}
 		if (st & TTY_MDMBUF) {
 			flags |= TIOCFLAG_MDMBUF;
 			if (sep++)
-				(void)strcat(strflags, "|");
-			(void)strcat(strflags, "mdmbuf");
+				(void)strlcat(strflags, "|", sizeof strflags);
+			(void)strlcat(strflags, "mdmbuf", sizeof strflags);
 		}
 		if (vflag)
 			printf("%s setting flags to: %s\n", path, strflags);
@@ -233,23 +233,23 @@ ttyflags(tep, print)
 				rval = (errno != ENOTTY);
 			}
 		if (flags & TIOCFLAG_CLOCAL) {
-			(void)strcat(strflags, "local");
+			(void)strlcat(strflags, "local", sizeof strflags);
 			sep++;
 		}
 		if (flags & TIOCFLAG_CRTSCTS) {
 			if (sep++)
-				(void)strcat(strflags, "|");
-			(void)strcat(strflags, "rtscts");
+				(void)strlcat(strflags, "|", sizeof strflags);
+			(void)strlcat(strflags, "rtscts", sizeof strflags);
 		}
 		if (flags & TIOCFLAG_SOFTCAR) {
 			if (sep++)
-				(void)strcat(strflags, "|");
-			(void)strcat(strflags, "softcar");
+				(void)strlcat(strflags, "|", sizeof strflags);
+			(void)strlcat(strflags, "softcar", sizeof strflags);
 		}
 		if (flags & TIOCFLAG_MDMBUF) {
 			if (sep++)
-				(void)strcat(strflags, "|");
-			(void)strcat(strflags, "mdmbuf");
+				(void)strlcat(strflags, "|", sizeof strflags);
+			(void)strlcat(strflags, "mdmbuf", sizeof strflags);
 		}
 		printf("%s flags are: %s\n", path, strflags);
 	}

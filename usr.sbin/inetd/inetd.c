@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.91 2002/05/26 09:25:21 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.92 2002/05/29 19:23:34 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.91 2002/05/26 09:25:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.92 2002/05/29 19:23:34 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1725,9 +1725,9 @@ inetd_setproctitle(a, s)
 		char *s = inet_ntoa(sin.sin_addr);
 
 		buf[sizeof(buf) - 1 - strlen(s) - 3] = '\0';
-		strcat(buf, " [");
-		strcat(buf, s);
-		strcat(buf, "]");
+		strlcat(buf, " [", sizeof buf);
+		strlcat(buf, s, sizeof buf);
+		strlcat(buf, "]", sizeof buf);
 	}
 	strncpy(cp, buf, LastArg - cp);
 	cp += strlen(cp);
