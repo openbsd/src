@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.153 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.154 2004/01/17 21:23:16 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -804,6 +804,7 @@ pciide_attach(parent, self, aux)
 		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo,
 		    sizeof devinfo);
 	}
+	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -2334,10 +2335,8 @@ amd756_setup_channel(chp)
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	pcireg_t chanenable;
 #ifndef	PCIIDE_AMD756_ENABLEDMA
-	int product = PCI_PRODUCT(
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_ID_REG));
-	int rev = PCI_REVISION(
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
+	int product = sc->sc_pp->ide_product;
+	int rev = sc->sc_rev;
 #endif
 
 	idedma_ctl = 0;
@@ -2896,8 +2895,7 @@ cmd0643_9_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	int rev = PCI_REVISION(
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
+	int rev = sc->sc_rev;
 	pcireg_t interface;
 
 	/*
@@ -3314,7 +3312,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * apparently hard to tickle, but we'll go ahead and play it
 	 * safe.
 	 */
-	if (PCI_REVISION(pa->pa_class) <= 0x01) {
+	if (sc->sc_rev <= 0x01) {
 		sc->sc_dma_maxsegsz = 8192;
 		sc->sc_dma_boundary = 8192;
 	}
@@ -3664,7 +3662,7 @@ sis_chip_map(sc, pa)
 	int channel;
 	u_int8_t sis_ctr0 = pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_CTRL0);
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	pcireg_t rev = PCI_REVISION(pa->pa_class);
+	int rev = sc->sc_rev;
 	bus_size_t cmdsize, ctlsize;
 	pcitag_t br_tag;
 	struct pci_attach_args br_pa;
@@ -3684,8 +3682,7 @@ sis_chip_map(sc, pa)
 			pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_REG_57,
 			    pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS_REG_57) & 0x7f);
-			if (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    PCI_ID_REG)) == SIS_PRODUCT_5518) {
+			if (sc->sc_pp->ide_product == SIS_PRODUCT_5518) {
 				sc->sis_type = SIS_TYPE_133NEW;
 				sc->sc_wdcdev.UDMA_cap =
 				    sis_hostbr_type_match->udma_mode;
@@ -4183,7 +4180,7 @@ acer_chip_map(sc, pa)
 	int channel;
 	pcireg_t cr, interface;
 	bus_size_t cmdsize, ctlsize;
-	pcireg_t rev = PCI_REVISION(pa->pa_class);
+	int rev = sc->sc_rev;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -4414,7 +4411,7 @@ hpt_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
-	revision = sc->sc_rev = PCI_REVISION(pa->pa_class);
+	revision = sc->sc_rev;
 
 	/*
 	 * when the chip is in native mode it identifies itself as a
@@ -5289,7 +5286,7 @@ opti_chip_map(sc, pa)
 	 * other (NetBSD PR/13151), although the latter may be due to other
 	 * issues too...
 	 */
-	if (PCI_REVISION(pa->pa_class) <= 0x12) {
+	if (sc->sc_rev <= 0x12) {
 		printf(" (disabled)");
 		sc->sc_dma_ok = 0;
 		sc->sc_wdcdev.cap = 0;
@@ -5473,7 +5470,7 @@ serverworks_chip_map(sc, pa)
 		sc->sc_wdcdev.UDMA_cap = 2;
 		break;
 	case PCI_PRODUCT_RCC_CSB5_IDE:
-		if (PCI_REVISION(pa->pa_class) < 0x92)
+		if (sc->sc_rev < 0x92)
 			sc->sc_wdcdev.UDMA_cap = 4;
 		else
 			sc->sc_wdcdev.UDMA_cap = 5;
@@ -5872,7 +5869,7 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	switch (PCI_PRODUCT(pa->pa_id)) {
+	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_NVIDIA_NFORCE_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
@@ -6060,7 +6057,7 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	printf("%s: DMA",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 #ifndef PCIIDE_I31244_ENABLEDMA
-	if (PCI_REVISION(pa->pa_class) == 0) {
+	if (sc->sc_rev == 0) {
 		printf(" disabled due to rev. 0");
 		sc->sc_dma_ok = 0;
 	} else
