@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.3 2003/01/25 07:22:01 jason Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.4 2003/03/29 01:11:00 mickey Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -193,8 +193,7 @@ osiop_gsc_intr(arg)
 	/* Deal with the interrupt */
 	osiop_intr(sc);
 
-	/* Blink the LED. */
-	/* hp700_led_blink(HP700_LED_DISK); */
+	ledctl(PALED_DISK, 0, 0);
 
 	return (1);
 }
