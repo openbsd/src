@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.12 1997/10/05 11:37:01 deraadt Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.13 2001/02/07 20:40:46 todd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: recvjob.c,v 1.12 1997/10/05 11:37:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.13 2001/02/07 20:40:46 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ recvjob()
 
 /*
  * Read printer jobs sent by lpd and copy them to the spooling directory.
- * Return the number of jobs successfully transfered.
+ * Return the number of jobs successfully transferred.
  */
 static int
 readjob()
@@ -325,7 +325,7 @@ read_number(fn)
 }
 
 /*
- * Remove all the files associated with the current job being transfered.
+ * Remove all the files associated with the current job being transferred.
  */
 static void
 rcleanup(signo)
