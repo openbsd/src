@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.16 2000/07/16 08:18:43 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.17 2000/08/27 01:43:26 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.52 2000/07/15 15:28:02 itojun Exp $	*/
 
 /*
@@ -412,12 +412,13 @@ struct route_in6 {
 #define IPV6_FW_ZERO		33 /* clear single/all firewall counter(s) */
 #define IPV6_FW_GET		34 /* get entire firewall rule chain */
 #endif
+/* 35-52: reserved */
+#define IPV6_AUTH_LEVEL		53   /* int; authentication used */
+#define IPV6_ESP_TRANS_LEVEL	54   /* int; transport encryption */
+#define IPV6_ESP_NETWORK_LEVEL	55   /* int; full-packet encryption */
 
-#define IPV6_AUTH_LEVEL		35   /* int; authentication used */
-#define IPV6_ESP_TRANS_LEVEL	36   /* int; transport encryption */
-#define IPV6_ESP_NETWORK_LEVEL	37   /* int; full-packet encryption */
-
-#define IPSEC6_OUTSA		38   /* set the outbound SA for a socket */
+#define IPSEC6_OUTSA		56   /* set the outbound SA for a socket */
+/* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
 #define IPV6_RTHDR_STRICT    1 /* this hop must be a neighbor. XXX old spec */
@@ -540,6 +541,7 @@ struct in6_pktinfo {
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
 /*#define IPV6CTL_MAPPED_ADDR	23	not for openbsd */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
+/* to define items, should talk with KAME guys first, for *BSD compatibility */
 #define IPV6CTL_MAXID		24
 
 #define IPV6CTL_NAMES { \
