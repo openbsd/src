@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.26 2002/04/23 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.27 2002/04/24 23:24:32 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -188,7 +188,6 @@ struct crypt_kop {
 	u_short		crk_oparams;	/* # of output parameters */
 	u_int		crk_pad1;
 	struct crparam	crk_param[CRK_MAXPARAM];
-
 };
 #define CRK_MOD_EXP		0
 #define CRK_MOD_EXP_CRT		1
@@ -202,11 +201,8 @@ struct cryptkop {
 	u_int		krp_status;	/* return status */
 	u_short		krp_iparams;	/* # of input parameters */
 	u_short		krp_oparams;	/* # of output parameters */
-	u_int		krp_pad1;
-	struct crparam	krp_param[CRK_MAXPARAM];
-	struct crparam	krp_kvp[CRK_MAXPARAM];
-
 	u_int32_t	krp_hid;
+	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	int		(*krp_callback)(struct cryptkop *);
 	struct cryptkop *krp_next;
 };

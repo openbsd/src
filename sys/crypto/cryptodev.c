@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.38 2002/04/23 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.39 2002/04/24 23:24:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -464,27 +464,15 @@ int
 cryptodev_key(struct crypt_kop *kop)
 {
 	struct cryptkop *krp = NULL;
-	int in, out;
 	int error = EINVAL;
-	int size, i;
+	int in, out, size, i;
 
 	if (kop->crk_iparams + kop->crk_oparams > CRK_MAXPARAM)
 		return (EFBIG);
 
-	krp = (struct cryptkop *)malloc(sizeof *krp, M_XDATA, M_WAITOK);
-	if (!krp)
-		return (ENOMEM);
-
-	bzero(krp, sizeof *krp);
-	krp->krp_op = kop->crk_op;
-	krp->krp_status = kop->crk_status;
-	krp->krp_iparams = kop->crk_iparams;
-	krp->krp_oparams = kop->crk_oparams;
-	memcpy(krp->krp_param, kop->crk_param, sizeof(kop->crk_param));
-
-	in = krp->krp_iparams;
-	out = krp->krp_oparams;
-	switch (krp->krp_op) {
+	in = kop->crk_iparams;
+	out = kop->crk_oparams;
+	switch (kop->crk_op) {
 	case CRK_MOD_EXP:
 		if (in == 3 && out == 1)
 			break;
@@ -509,28 +497,34 @@ cryptodev_key(struct crypt_kop *kop)
 		goto fail;
 	}
 
-	for (i = 0; i < CRK_MAXPARAM; i++)
-		krp->krp_kvp[i].crp_nbits = krp->krp_param[i].crp_nbits;
+	krp = (struct cryptkop *)malloc(sizeof *krp, M_XDATA, M_WAITOK);
+	if (!krp)
+		return (ENOMEM);
+	bzero(krp, sizeof *krp);
+	krp->krp_op = kop->crk_op;
+	krp->krp_status = kop->crk_status;
+	krp->krp_iparams = kop->crk_iparams;
+	krp->krp_oparams = kop->crk_oparams;
+	krp->krp_status = 0;
+	krp->krp_callback = (int (*) (struct cryptkop *)) cryptodevkey_cb;
 
+	for (i = 0; i < CRK_MAXPARAM; i++)
+		krp->krp_param[i].crp_nbits = kop->crk_param[i].crp_nbits;
 	for (i = 0; i < krp->krp_iparams + krp->krp_oparams; i++) {
-		size = (krp->krp_kvp[i].crp_nbits + 7) / 8;
+		size = (krp->krp_param[i].crp_nbits + 7) / 8;
 		if (size == 0)
 			continue;
-		MALLOC(krp->krp_kvp[i].crp_p, caddr_t, size, M_XDATA, M_WAITOK);
+		MALLOC(krp->krp_param[i].crp_p, caddr_t, size, M_XDATA, M_WAITOK);
 		if (i >= krp->krp_iparams)
 			continue;
-		error = copyin(krp->krp_param[i].crp_p, krp->krp_kvp[i].crp_p, size);
+		error = copyin(kop->crk_param[i].crp_p, krp->krp_param[i].crp_p, size);
 		if (error)
 			goto fail;
 	}
 
-	krp->krp_status = 0;
-	krp->krp_callback = (int (*) (struct cryptkop *)) cryptodevkey_cb;
-
 	error = crypto_kdispatch(krp);
 	if (error)
 		goto fail;
-
 	error = tsleep(krp, PSOCK, "crydev", 0);
 	if (error) {
 		/* XXX can this happen?  if so, how do we recover? */
@@ -538,24 +532,20 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 	for (i = krp->krp_iparams; i < krp->krp_iparams + krp->krp_oparams; i++) {
-		int err;
-
-		size = (krp->krp_kvp[i].crp_nbits + 7) / 8;
+		size = (krp->krp_param[i].crp_nbits + 7) / 8;
 		if (size == 0)
 			continue;
-		err = copyout(krp->krp_kvp[i].crp_p, krp->krp_param[i].crp_p, size);
-		if (err) {
-			error = err;
+		error = copyout(krp->krp_param[i].crp_p, kop->crk_param[i].crp_p, size);
+		if (error)
 			goto fail;
-		}
 	}
 
 fail:
 	kop->crk_status = krp->krp_status;
 	if (krp) {
 		for (i = 0; i < CRK_MAXPARAM; i++) {
-			if (krp->krp_kvp[i].crp_p)
-				FREE(krp->krp_kvp[i].crp_p, M_XDATA);
+			if (krp->krp_param[i].crp_p)
+				FREE(krp->krp_param[i].crp_p, M_XDATA);
 		}
 		free(krp, M_XDATA);
 	}
