@@ -86,6 +86,7 @@ krb_get_krbrealms(int num, char *buf, size_t len)
 int
 krb_get_krbextra(int num, char *buf, size_t len)
 {
-    const char *files[] = { "/etc/krb.extra", NULL };
+    const char *files[] = { "/etc/kerberosIV/krb.extra", "/etc/krb.extra",
+			    NULL };
     return get_file(files, num, "krb.extra", buf, len);
 }
