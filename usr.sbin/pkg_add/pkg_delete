@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.39 2004/08/10 11:53:27 espie Exp $
+# $OpenBSD: pkg_delete,v 1.40 2004/08/10 12:05:52 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -298,7 +298,7 @@ package OpenBSD::PackingElement::Mandir;
 sub cleanup
 {
 	my ($self, $state) = @_;
-	my $fullname = $state->{destdir}.self->fullname();
+	my $fullname = $state->{destdir}.$self->fullname();
 	print "You may wish to remove ", $fullname, " from man.conf\n";
 	unlink("$fullname/whatis.db");
 }
