@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.15 2003/10/05 20:35:22 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.16 2004/01/13 23:24:10 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -184,7 +184,7 @@ unsigned get_dpar(void);
 static __inline__ void mc88110_flush_data_line(paddr_t x)
 {
 	unsigned dctl = get_dctl();
-	if (dctl & CMMU_DCTL_CEN){
+	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(line_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_LINE);
 	}
@@ -193,7 +193,7 @@ static __inline__ void mc88110_flush_data_line(paddr_t x)
 static __inline__ void mc88110_flush_data_page(paddr_t x)
 {
 	unsigned dctl = get_dctl();
-	if (dctl & CMMU_DCTL_CEN){
+	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(page_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_PG);
 	}
@@ -202,8 +202,7 @@ static __inline__ void mc88110_flush_data_page(paddr_t x)
 static __inline__ void mc88110_flush_data(void)
 {
 	unsigned dctl = get_dctl();
-	if (dctl & CMMU_DCTL_CEN){
-		set_dsar(0x00);
+	if (dctl & CMMU_DCTL_CEN) {
 		set_dcmd(CMMU_DCMD_FLUSH_ALL);
 	}
 }
@@ -216,14 +215,13 @@ static __inline__ void mc88110_inval_data_line(paddr_t x)
 
 static __inline__ void mc88110_inval_data(void)
 {
-	set_dsar(0x00);
 	set_dcmd(CMMU_DCMD_INV_ALL);
 }
 
 static __inline__ void mc88110_sync_data_line(paddr_t x)
 {
 	unsigned dctl = get_dctl();
-	if (dctl & CMMU_DCTL_CEN){
+	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(line_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_LINE_INV);
 	}
@@ -232,7 +230,7 @@ static __inline__ void mc88110_sync_data_line(paddr_t x)
 static __inline__ void mc88110_sync_data_page(paddr_t x)
 {
 	unsigned dctl = get_dctl();
-	if (dctl & CMMU_DCTL_CEN){
+	if (dctl & CMMU_DCTL_CEN) {
 		set_dsar(page_addr(x));
 		set_dcmd(CMMU_DCMD_FLUSH_PG_INV);
 	}
@@ -241,8 +239,7 @@ static __inline__ void mc88110_sync_data_page(paddr_t x)
 static __inline__ void mc88110_sync_data(void)
 {
 	unsigned dctl = get_dctl();
-	if (dctl & CMMU_DCTL_CEN){
-		set_dsar(0x00);
+	if (dctl & CMMU_DCTL_CEN) {
 		set_dcmd(CMMU_DCMD_FLUSH_ALL_INV);
 	}
 }
@@ -255,7 +252,6 @@ static __inline__ void mc88110_inval_inst_line(paddr_t x)
 
 static __inline__ void mc88110_inval_inst(void)
 {
-	set_isar(0x00);
 	set_icmd(CMMU_ICMD_INV_ITIC);
 }
 
