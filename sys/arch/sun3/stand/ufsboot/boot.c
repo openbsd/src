@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
+
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -52,7 +52,7 @@ int errno;
 #define LOADADDR	0x4000
 
 extern char		*version;
-char	defname[32] = "netbsd";
+char	defname[32] = "bsd";
 char	line[80];
 
 
@@ -61,7 +61,7 @@ main()
 	char *cp, *file;
 	int	io;
 
-	printf(">> NetBSD ufsboot [%s]\n", version);
+	printf(">> OpenBSD ufsboot [%s]\n", version);
 	prom_get_boot_info();
 	file = defname;
 

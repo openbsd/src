@@ -61,7 +61,7 @@ main()
 	char *cp, *file;
 	int	io;
 
-	printf(">> NetBSD tapeboot [%s]\n", version);
+	printf(">> OpenBSD tapeboot [%s]\n", version);
 	prom_get_boot_info();
 	file = defname;
 

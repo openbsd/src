@@ -14,7 +14,7 @@ int debug = 0;
 
 /*
  * Get useful info from the PROM bootparams struct, i.e.:
- * arg[0] = sd(0,0,0)netbsd
+ * arg[0] = sd(0,0,0)bsd
  * arg[1] = -sa
  */
 
