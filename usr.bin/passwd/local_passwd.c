@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.3 1996/06/26 05:37:46 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.4 1996/09/30 01:54:48 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.3 1996/06/26 05:37:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.4 1996/09/30 01:54:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,8 +77,12 @@ local_passwd(uname)
 
 	pw_init();
 	tfd = pw_lock(0);
-	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
+	if (tfd < 0) {
+		if (errno == EEXIST)
+			errx(1, "the passwd file is busy.");
+		else
+			err(1, "can't open passwd temp file");
+	}
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
