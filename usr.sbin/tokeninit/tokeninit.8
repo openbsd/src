@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokeninit.8,v 1.6 2003/06/12 12:59:53 jmc Exp $
+.\" $OpenBSD: tokeninit.8,v 1.7 2003/11/26 20:25:27 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -140,7 +140,6 @@ This list should be kept secret.
 This list can then take the place of an actual token until
 the system has issued all the challenges printed.
 Challenges are predicted by the following algorithm:
-.Pp
 .Bd -unfilled -offset indent
 * Encrypt the last challenge with the shared secret key
 
@@ -165,7 +164,6 @@ database of information for SNK-004 system
 Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
 .Sh COMMENTS
 A supplier for ActivCard tokens may be obtained by contacting:
-.Pp
 .Bd -unfilled -offset indent
 ActivCard, Inc.
 303 Twin Dolphin Dr., Ste 420
@@ -175,7 +173,6 @@ Fax: (415) 654-1701
 .Ed
 .Pp
 CRYPTOCard tokens may be obtained by contacting:
-.Pp
 .Bd -unfilled -offset indent
 CRYPTOCard Incorporated
 Attn: Wade Clark
@@ -186,17 +183,7 @@ Fax: (708) 459-6599
 <token@cryptocard.com>
 .Ed
 .Pp
-SNK-004 tokens may be obtained by contacting:
-.Pp
-.Bd -unfilled -offset indent
-Digital Pathways, Inc.
-Attn: Paul Kamian
-201 Ravendale Drive
-Mountain View, CA  94043-5216
-Tel: (415) 964-0707
-Fax: (415) 961-7487
-<paul@digpath.com>
-.Ed
+SNK-004 tokens are no longer available for purchase.
 .Sh SEE ALSO
 .Xr x99token 1 ,
 .Xr syslog 3 ,
