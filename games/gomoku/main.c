@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2001/02/17 23:01:04 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2001/03/30 04:40:07 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2001/02/17 23:01:04 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/03/30 04:40:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ main(argc, argv)
 	char **argv;
 {
 	char buf[128];
+	char fname[MAXPATHLEN];
 	int color = BLACK, curmove = 0, i, ch;
 	int input[2];
 	static char *fmt[2] = {
@@ -267,8 +268,8 @@ again:
 					FILE *fp;
 
 					ask("save file name? ");
-					(void)getline(buf, sizeof(buf));
-					if ((fp = fopen(buf, "w")) == NULL) {
+					(void)getline(fname, sizeof(fname));
+					if ((fp = fopen(fname, "w")) == NULL) {
 						log("cannot create save file");
 						goto getinput;
 					}
