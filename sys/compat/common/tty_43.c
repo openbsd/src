@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty_43.c,v 1.3 1996/05/22 12:01:46 deraadt Exp $	*/
-/*	$NetBSD: tty_43.c,v 1.4 1996/05/18 22:17:49 veego Exp $	*/
+/*	$OpenBSD: tty_43.c,v 1.4 1996/05/23 08:32:23 deraadt Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.5 1996/05/20 14:29:17 mark Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -169,7 +169,7 @@ ttcompat(tp, com, data, flag, p)
 		cc[VSTOP] = tc->t_stopc;
 		cc[VEOF] = tc->t_eofc;
 		cc[VEOL] = tc->t_brkc;
-		if (tc->t_brkc == -1)
+		if (tc->t_brkc == (char)-1)
 			cc[VEOL2] = _POSIX_VDISABLE;
 		break;
 	}

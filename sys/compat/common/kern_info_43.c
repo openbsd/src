@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_43.c,v 1.6 1996/05/22 12:01:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.7 1996/05/23 08:32:22 deraadt Exp $	*/
 /*	$NetBSD: kern_info_43.c,v 1.5 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
@@ -227,65 +227,6 @@ compat_43_sys_getkerninfo(p, v, retval)
 		name[0] = KERN_VNODE;
 		error =
 		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
-		break;
-
-
-	case KINFO_BSDI_SYSINFO:
-		{
-			size_t len;
-			struct bsdi_si *usi =
-			    (struct bsdi_si *) SCARG(uap, where);
-			struct bsdi_si ksi;
-			char *us = (char *) &usi[1];
-			extern struct timeval boottime;
-			extern char ostype[], osrelease[], machine[],
-			    hostname[], cpu_model[], version[];
-
-			if (usi == NULL) {
-				size = sizeof(ksi) +
-				    strlen(ostype) + strlen(cpu_model) +
-				    strlen(osrelease) + strlen(machine) +
-				    strlen(version) + strlen(hostname) + 6;
-				error = 0;
-				break;
-			}
-
-#define COPY(fld)							\
-			ksi.fld = us - (u_long) usi;			\
-			if ((error = copyoutstr(fld, us, 1024, &len)) != 0)\
-				return error;				\
-			us += len
-
-			COPY(machine);
-			COPY(cpu_model);
-			ksi.ncpu = 1;			/* XXX */
-			ksi.cpuspeed = 40;		/* XXX */
-			ksi.hwflags = 0;		/* XXX */
-			ksi.physmem = ctob(physmem);
-			ksi.usermem = ctob(physmem);	/* XXX */
-			ksi.pagesize = PAGE_SIZE;
-
-			COPY(ostype);
-			COPY(osrelease);
-			ksi.os_revision = NetBSD;	/* XXX */
-			ksi.posix1_version = _POSIX_VERSION;
-			COPY(version);			/* XXX */
-
-			ksi.hz = hz;
-			ksi.profhz = profhz;
-			ksi.ngroups_max = NGROUPS_MAX;
-			ksi.arg_max = ARG_MAX;
-			ksi.open_max = OPEN_MAX;
-			ksi.child_max = CHILD_MAX;
-
-			ksi.boottime = boottime;
-			COPY(hostname);
-
-			size = (us - (char *) &usi[1]) + sizeof(ksi);
-
-			if ((error = copyout(&ksi, usi, sizeof(ksi))) != 0)
-				return error;
-		}
 		break;
 
 	case KINFO_PROC:
