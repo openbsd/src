@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.14 2002/02/22 19:19:32 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.15 2002/03/12 10:40:33 art Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.14 2002/02/22 19:19:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.15 2002/03/12 10:40:33 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ struct emulation *current;
 static char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
-	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
+	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
 };
 
 static int fread_tail(void *, int, int);
