@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.7 2004/10/27 21:16:45 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.8 2004/10/27 21:17:18 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -227,6 +227,9 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 		    ieee80211_ieee2mhz(i, IEEE80211_CHAN_B);
 		ic->ic_channels[i].ic_flags = IEEE80211_CHAN_B;
 	}
+
+	/* default to authmode OPEN */
+	sc->authmode = IEEE80211_AUTH_OPEN;
 
 	/* IBSS channel undefined for now */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
@@ -963,11 +966,23 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ipw_reset(sc);
 		break;
 
-	default:
-		error = ieee80211_ioctl(ifp, cmd, data);
-		if (error != ENETRESET)
+	case SIOCG80211AUTH:
+		((struct ieee80211_auth *)data)->i_authtype = sc->authmode;
+		break;
+
+	case SIOCS80211AUTH:
+		/* only super-user can do that! */
+		if ((error = suser(curproc, 0)) != 0)
 			break;
 
+		sc->authmode = ((struct ieee80211_auth *)data)->i_authtype;
+		break;
+
+	default:
+		error = ieee80211_ioctl(ifp, cmd, data);
+	}
+
+	if (error == ENETRESET && cmd != SIOCADDMULTI) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING))
 			ipw_init(ifp);
@@ -1788,7 +1803,8 @@ ipw_config(struct ipw_softc *sc)
 			return error;
 	}
 
-	security.authmode = IPW_AUTH_OPEN;
+	security.authmode = (sc->authmode == IEEE80211_AUTH_SHARED) ?
+	    IPW_AUTH_SHARED : IPW_AUTH_OPEN;
 	security.ciphers = htole32(IPW_CIPHER_NONE);
 	security.version = htole16(0);
 	security.replay_counters_number = 0;

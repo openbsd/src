@@ -1,4 +1,4 @@
-/*      $Id: if_ipwvar.h,v 1.1 2004/10/20 12:50:48 deraadt Exp $ */
+/*      $Id: if_ipwvar.h,v 1.2 2004/10/27 21:17:18 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -91,6 +91,8 @@ struct ipw_softc {
 	void 				*sc_ih;
 	pci_chipset_tag_t		sc_pct;
 	bus_size_t			sc_sz;
+
+	int				authmode;
 
 	int				sc_tx_timer;
 
