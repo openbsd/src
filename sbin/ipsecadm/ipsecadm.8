@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.56 2003/02/24 21:54:33 jason Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.57 2003/02/25 22:29:33 markus Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -289,6 +289,21 @@ and
 .Fl ipcomp .
 Default action is to flush all types of security associations
 from the kernel.
+.It show
+Show SAs from kernel.
+Allowed modifiers are:
+.Fl ah ,
+.Fl esp ,
+.Fl oldah ,
+.Fl oldesp ,
+.Fl ip4 ,
+and
+.Fl ipcomp .
+Default action is to show all types of security associations
+from the kernel.
+.It monitor
+Continuously display all PFKEY messages exchanged with
+the kernel.
 .It ipcomp
 Set up an IP Compression Association (IPCA) which will use the IPcomp
 transforms.

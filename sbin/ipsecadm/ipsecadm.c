@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.65 2003/02/15 22:57:58 jason Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.66 2003/02/25 22:29:33 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -81,6 +81,8 @@
 #define FLUSH		0x70
 #define ENC_IP		0x80
 #define XF_COMP		0x90
+#define SHOW		0xa0
+#define MONITOR		0xb0
 
 #define CMD_MASK	0xf0
 
@@ -109,6 +111,9 @@ transform xf[] = {
 };
 
 #define ROUNDUP(x) (((x) + sizeof(u_int64_t) - 1) & ~(sizeof(u_int64_t) - 1))
+
+extern void ipsecadm_monitor(void);
+extern void ipsecadm_show(u_int8_t);
 
 /*
  * returns 0 if "str" represents an address, returns 1 if address/mask,
@@ -265,7 +270,7 @@ usage(void)
 {
 	fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
 	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, ipcomp,\n"
-	    "\t\t  flow, flush\n"
+	    "\t\t  flow, flush, show, monitor\n"
 	    "\tPossible modifiers:\n"
 	    "\t  -enc <alg>\t\t\tencryption algorithm\n"
 	    "\t  -auth <alg>\t\t\tauthentication algorithm\n"
@@ -476,6 +481,13 @@ main(int argc, char *argv[])
 		smsg.sadb_msg_type = SADB_ADD;
 		smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
 		i++;
+	} else if (!strcmp(argv[1], "monitor")) {
+		mode = MONITOR;
+		i++;
+	} else if (!strcmp(argv[1], "show")) {
+		mode = SHOW;
+		smsg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
+		i++;
 	} else {
 		fprintf(stderr, "%s: unknown command: %s\n", argv[0],
 		    argv[1]);
@@ -648,7 +660,8 @@ main(int argc, char *argv[])
 			i++;
 			continue;
 		}
-		if (iscmd(mode, FLUSH) && smsg.sadb_msg_satype == SADB_SATYPE_UNSPEC) {
+		if ((iscmd(mode, FLUSH) || iscmd(mode, SHOW)) &&
+		    smsg.sadb_msg_satype == SADB_SATYPE_UNSPEC) {
 			if (!strcmp(argv[i] + 1, "esp"))
 				smsg.sadb_msg_satype = SADB_SATYPE_ESP;
 			else if (!strcmp(argv[i] + 1, "ah"))
@@ -1215,6 +1228,14 @@ argfail:
 		fprintf(stderr, "%s: Unknown, invalid, or duplicated option: %s\n",
 		    argv[0], argv[i]);
 		exit(1);
+	}
+
+	if (iscmd(mode, SHOW)) {
+		ipsecadm_show(smsg.sadb_msg_satype);
+		exit(0);
+	} else if (iscmd(mode, MONITOR)) {
+		ipsecadm_monitor();
+		exit(0);
 	}
 
 	/* Sanity checks */
