@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.75 2002/07/30 17:28:54 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.76 2002/08/04 14:27:48 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -877,7 +877,7 @@ pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \\
 	flags S/SA keep state
 
 .Ed
-.SH NAT EXAMPLES
+.Sh NAT EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,
 therefore lacks permission to bind to port 80).
