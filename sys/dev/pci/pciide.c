@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.60 2001/08/03 22:03:44 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.61 2001/08/12 20:33:50 mickey Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ int wdcdebug_pciide_mask = 0;
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 
 #include <machine/endian.h>

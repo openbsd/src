@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.47 2001/06/27 06:34:47 kjc Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.48 2001/08/12 20:33:50 mickey Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -91,7 +91,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 
 #if defined(__FreeBSD__)

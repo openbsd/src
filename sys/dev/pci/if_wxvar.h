@@ -280,7 +280,6 @@ struct wxmdvar {
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 #include <machine/bus.h>
 #include <machine/intr.h>

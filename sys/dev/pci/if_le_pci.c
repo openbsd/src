@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.14 2001/02/26 06:46:04 tholo Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.15 2001/08/12 20:33:50 mickey Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -51,7 +51,6 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_param.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

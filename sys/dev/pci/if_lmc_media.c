@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.8 2001/07/09 13:13:43 espie Exp $ */
-/* $Id: if_lmc_media.c,v 1.8 2001/07/09 13:13:43 espie Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.9 2001/08/12 20:33:50 mickey Exp $ */
+/* $Id: if_lmc_media.c,v 1.9 2001/08/12 20:33:50 mickey Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -78,7 +78,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
