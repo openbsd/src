@@ -85,25 +85,12 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
     {
 	if (crd->crd_flags & CRD_F_ENCRYPT)
 	{
-	    /* Inject IV */
-	    if (crd->crd_flags & CRD_F_HALFIV)
-	    {
-		if (crd->crd_flags & CRD_F_IV_PRESENT)
-		  bcopy(buf + crd->crd_inject, sw->sw_iv, blks / 2);
+	    /* IV explicitly provided ? */
+	    if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+	      bcopy(crd->crd_iv, sw->sw_iv, blks);
 
-		/* "Cook" half-IV */
-		for (k = 0; k < blks / 2; k++)
-		  sw->sw_iv[(blks / 2) + k] = ~sw->sw_iv[k];
-
-	        bcopy(sw->sw_iv, buf + crd->crd_inject, blks / 2);
-	    }
-	    else
-	    {
-		if (crd->crd_flags & CRD_F_IV_PRESENT)
-		  bcopy(buf + crd->crd_inject, sw->sw_iv, blks);
-		else
-		  bcopy(sw->sw_iv, buf + crd->crd_inject, blks);
-	    }
+	    if (!(crd->crd_flags & CRD_F_IV_PRESENT))
+	      bcopy(sw->sw_iv, buf + crd->crd_inject, blks);
 
 	    for (i = crd->crd_skip;
 		 i < crd->crd_skip + crd->crd_len;
@@ -125,13 +112,11 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 	}
 	else /* Decrypt */
 	{
-	    /* Copy the IV off the buffer */
-	    bcopy(buf + crd->crd_inject, sw->sw_iv, blks);
-
-	    /* "Cook" half-IV */
-	    if (crd->crd_flags & CRD_F_HALFIV)
-	      for (k = 0; k < blks / 2; k++)
-		sw->sw_iv[(blks / 2) + k] = ~sw->sw_iv[k];
+	    /* IV explicitly provided ? */
+	    if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+	      bcopy(crd->crd_iv, sw->sw_iv, blks);
+	    else /* IV preceeds data */
+	      bcopy(buf + crd->crd_inject, sw->sw_iv, blks);
 
 	    /*
 	     * Start at the end, so we don't need to keep the encrypted
@@ -162,32 +147,23 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 	/* Initialize the IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT)
 	{
-	    if (crd->crd_flags & CRD_F_IV_PRESENT)
-	      m_copydata(m, crd->crd_inject, blks, iv);
+	    /* IV explicitly provided ? */
+	    if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+	      bcopy(crd->crd_iv, iv, blks);
 	    else
-	      bcopy(sw->sw_iv, iv, blks);
+	      bcopy(sw->sw_iv, iv, blks); /* Use IV from context */
 
-	    /* "Cook" half-IV */
-	    if (crd->crd_flags & CRD_F_HALFIV)
-	    {
-		for (k = 0; k < blks / 2; k++)
-		  iv[(blks / 2) + k] = ~iv[k];
-
-		if (!(crd->crd_flags & CRD_F_IV_PRESENT))
-		  m_copyback(m, crd->crd_inject, blks / 2, iv);
-	    }
-	    else
-	      if (!(crd->crd_flags & CRD_F_IV_PRESENT))
-		m_copyback(m, crd->crd_inject, blks, iv);
+	    /* Do we need to write the IV */
+	    if (!(crd->crd_flags & CRD_F_IV_PRESENT))
+	      m_copyback(m, crd->crd_inject, blks, iv);
 	}
-	else
+	else /* Decryption */
 	{
-	    m_copydata(m, crd->crd_inject, blks, iv); /* Get IV off mbuf */
-
-	    /* "Cook" half-IV */
-	    if (crd->crd_flags & CRD_F_HALFIV)
-	      for (k = 0; k < blks / 2; k++)
-	        iv[(blks / 2) + k] = ~iv[k];
+	    /* IV explicitly provided ? */
+	    if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+	      bcopy(crd->crd_iv, iv, blks);
+	    else
+	      m_copydata(m, crd->crd_inject, blks, iv); /* Get IV off mbuf */
 	}
 
 	ivp = iv;
