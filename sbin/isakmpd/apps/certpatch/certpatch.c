@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.19 2002/08/02 17:09:29 aaron Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.20 2002/09/11 10:13:20 ho Exp $	*/
 /*	$EOM: certpatch.c,v 1.11 2000/12/21 14:50:09 ho Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ main (int argc, char **argv)
   X509_EXTENSION *ex = NULL;
   ASN1_OCTET_STRING *data = NULL;
   struct in_addr saddr;
-  char ipaddr[6], *new_id;
+  unsigned char ipaddr[6], *new_id;
   char *type = IDTYPE_IP, *keyfile = NULL, *id = NULL;
   char *certin, *certout;
   int ch, err;
