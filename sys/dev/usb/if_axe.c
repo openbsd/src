@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.15 2004/11/11 12:19:12 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.16 2004/11/11 12:32:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -158,13 +158,13 @@ int	axedebug = 0;
 Static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88172}, 0 },
 	{ { USB_VENDOR_BILLIONTON, USB_PRODUCT_BILLIONTON_SNAPPORT}, 0 },
+	{ { USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DUBE100}, 0 },
 	{ { USB_VENDOR_LINKSYS2, USB_PRODUCT_LINKSYS2_USB200M}, 0 },
-	{ { USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_FA120}, 0 },
 	{ { USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUAU2KTX}, 0 },
+	{ { USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_FA120}, 0 },
 	{ { USB_VENDOR_SYSTEMTALKS, USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 	{ { USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_LN029}, 0 },
-	{ { USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { 0, 0}, 0 }
 };
 
@@ -715,7 +715,6 @@ axe_rx_list_init(struct axe_softc *sc)
 		if (axe_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
 		if (c->axe_xfer == NULL) {
-assert(sc->axe_udev);
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
 				return (ENOBUFS);
