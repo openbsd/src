@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210reg.h,v 1.4 2004/11/03 19:44:12 reyk Exp $	*/
+/*	$OpenBSD: ar5210reg.h,v 1.5 2004/12/31 01:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -341,20 +341,6 @@ typedef enum {
 #define AR5K_AR5210_EEPROM_STAT_WRDONE	0x0008
 
 /*
- * AR5210 EEPROM data registers
- */
-#define	AR5K_AR5210_EEPROM_MAGIC		0x3d
-#define	AR5K_AR5210_EEPROM_MAGIC_VALUE		0x5aa5
-#define AR5K_AR5210_EEPROM_PROTECT		0x3f
-#define	AR5K_AR5210_EEPROM_PROTECT_128_191	0x80
-#define AR5K_AR5210_EEPROM_REG_DOMAIN		0xbf
-#define AR5K_AR5210_EEPROM_INFO_BASE		0xc0
-#define AR5K_AR5210_EEPROM_INFO_VERSION					\
-        (AR5K_AR5210_EEPROM_INFO_BASE + 1)
-#define	AR5K_AR5210_EEPROM_INFO_MAX					\
-        (0x400 - AR5K_AR5210_EEPROM_INFO_BASE)
-
-/*
  * PCU registers
  */
 
@@ -672,11 +658,53 @@ typedef enum {
 #define	AR5K_AR5210_PHY_DISABLE		0x00000002
 
 /*
+ * PHY signal register
+ */
+#define	AR5K_AR5210_PHY_SIG		0x9858
+#define	AR5K_AR5210_PHY_SIG_FIRSTEP	0x0003f000
+#define	AR5K_AR5210_PHY_SIG_FIRSTEP_S	12
+#define	AR5K_AR5210_PHY_SIG_FIRPWR	0x03fc0000
+#define	AR5K_AR5210_PHY_SIG_FIRPWR_S	18
+
+/*
+ * PHY coarse agility control register
+ */
+#define	AR5K_AR5210_PHY_AGCCOARSE	0x985c
+#define	AR5K_AR5210_PHY_AGCCOARSE_LO	0x00007f80
+#define	AR5K_AR5210_PHY_AGCCOARSE_LO_S	7
+#define	AR5K_AR5210_PHY_AGCCOARSE_HI	0x003f8000
+#define	AR5K_AR5210_PHY_AGCCOARSE_HI_S	15
+
+/*
  * PHY agility control register
  */
 #define	AR5K_AR5210_PHY_AGCCTL		0x9860
-#define	AR5K_AR5210_PHY_AGC_CAL		0x00000001
-#define	AR5K_AR5210_PHY_AGC_NF		0x00000002
+#define	AR5K_AR5210_PHY_AGCCTL_CAL	0x00000001
+#define	AR5K_AR5210_PHY_AGCCTL_NF	0x00000002
+
+/*
+ * PHY noise floor status register
+ */
+#define AR5K_AR5210_PHY_NF		0x9864
+#define AR5K_AR5210_PHY_NF_M		0x000001ff
+#define AR5K_AR5210_PHY_NF_ACTIVE	0x00000100
+#define AR5K_AR5210_PHY_NF_RVAL(_n)	(((_n) >> 19) & AR5K_AR5210_PHY_NF_M)
+#define AR5K_AR5210_PHY_NF_AVAL(_n)	(-((_n) ^ AR5K_AR5210_PHY_NF_M) + 1)
+
+/*
+ * PHY ADC saturation register
+ */
+#define	AR5K_AR5210_PHY_ADCSAT		0x9868
+#define	AR5K_AR5210_PHY_ADCSAT_ICNT	0x0001f800
+#define	AR5K_AR5210_PHY_ADCSAT_ICNT_S	11
+#define	AR5K_AR5210_PHY_ADCSAT_THR	0x000007e0
+#define	AR5K_AR5210_PHY_ADCSAT_THR_S	5
+
+/*
+ * PHY RF stage register
+ */
+#define AR5K_AR5210_PHY_RFSTG		0x98d4
+#define AR5K_AR5210_PHY_RFSTG_DISABLE	0x00000021
 
 /*
  * Misc PHY/radio registers

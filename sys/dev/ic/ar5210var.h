@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210var.h,v 1.4 2004/11/08 16:48:25 reyk Exp $	*/
+/*	$OpenBSD: ar5210var.h,v 1.5 2004/12/31 01:00:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -231,10 +231,10 @@ extern ar5k_attach_t ar5k_ar5210_attach;
 	{ AR5K_AR5210_TXDP1, 0 },					\
 	{ AR5K_AR5210_RXDP, 0 },					\
 	{ AR5K_AR5210_CR, 0 },						\
-	{ AR5K_AR5210_ISR, 0, INI_READ },				\
+	{ AR5K_AR5210_ISR, 0, AR5K_INI_READ },				\
 	{ AR5K_AR5210_IMR, 0 },						\
 	{ AR5K_AR5210_IER, AR5K_AR5210_IER_DISABLE },			\
-	{ AR5K_AR5210_BSR, 0, INI_READ },				\
+	{ AR5K_AR5210_BSR, 0, AR5K_INI_READ },				\
 	{ AR5K_AR5210_TXCFG, AR5K_AR5210_DMASIZE_128B },		\
 	{ AR5K_AR5210_RXCFG, AR5K_AR5210_DMASIZE_128B },		\
 	{ AR5K_AR5210_CFG, AR5K_AR5210_INIT_CFG },			\

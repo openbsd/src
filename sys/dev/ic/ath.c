@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.4 2004/11/23 09:39:28 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.5 2004/12/31 01:00:23 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -415,7 +415,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	struct ath_hal *ah;
 	HAL_STATUS status;
 	HAL_TXQ_INFO qinfo;
-	int error = 0;
+	int error = 0, i = 0;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: devid 0x%x\n", __func__, devid));
 
@@ -443,12 +443,25 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	if_printf(ifp, "mac %d.%d phy %d.%d",
 		ah->ah_macVersion, ah->ah_macRev,
 		ah->ah_phyRev >> 4, ah->ah_phyRev & 0xf);
-	if (ah->ah_analog5GhzRev != 0)
-		printf(" 5GHz radio %d.%d",
-			ah->ah_analog5GhzRev >> 4, ah->ah_analog5GhzRev & 0xf);
+	printf(" radio %d.%d", ah->ah_analog5GhzRev >> 4,
+	    ah->ah_analog5GhzRev & 0xf);
 	if (ah->ah_analog2GhzRev != 0)
-		printf(" 2GHz radio %d.%d",
-			ah->ah_analog2GhzRev >> 4, ah->ah_analog2GhzRev & 0xf);
+		printf(" %d.%d", ah->ah_analog2GhzRev >> 4,
+		    ah->ah_analog2GhzRev & 0xf);
+#define ah_mode(_m)	{						\
+		if (i++)						\
+                        printf("/%s", #_m);				\
+                else							\
+                        printf(", 802.11%s", #_m);			\
+}									\
+	if (ah->ah_modes & HAL_MODE_11A)
+		ah_mode(a);
+	if (ah->ah_modes & HAL_MODE_11B)
+		ah_mode(b);
+	if (ah->ah_modes & HAL_MODE_11G)
+		ah_mode(g);
+#undef ah_mode	
+
 	sc->sc_ah = ah;
 	sc->sc_invalid = 0;	/* ready to go, enable interrupt handling */
 
@@ -1228,7 +1241,6 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	s = splnet();
 	switch (cmd) {
-#if 0
         case SIOCSIFMTU:
                 if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
                         error = EINVAL;
@@ -1236,7 +1248,6 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
                         ifp->if_mtu = ifr->ifr_mtu;
                 }
                 break;
-#endif
         case SIOCSIFADDR:
                 ifp->if_flags |= IFF_UP;
 #ifdef INET
@@ -2821,7 +2832,7 @@ ath_tx_proc(void *arg, int npending)
 	struct ath_desc *ds;
 	struct ieee80211_node *ni;
 	struct ath_node *an;
-	int sr, lr, s, s2;
+	int sr, lr, s;
 	HAL_STATUS status;
 
 	DPRINTF(ATH_DEBUG_TX_PROC, ("%s: pending %u tx queue %p, link %p\n",
@@ -2890,9 +2901,9 @@ ath_tx_proc(void *arg, int npending)
 		bf->bf_m = NULL;
 		bf->bf_node = NULL;
 
-		s2 = splnet();
+		s = splnet();
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-		splx(s2);
+		splx(s);
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
@@ -2911,7 +2922,7 @@ ath_draintxq(struct ath_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
 	struct ath_buf *bf;
-	int s, s2;
+	int s;
 
 	/* XXX return value */
 	if (!sc->sc_invalid) {
@@ -2946,7 +2957,7 @@ ath_draintxq(struct ath_softc *sc)
 		bf->bf_m = NULL;
 		ni = bf->bf_node;
 		bf->bf_node = NULL;
-		s2 = splnet();
+		s = splnet();
 		if (ni != NULL && ni != ic->ic_bss) {
 			/*
 			 * Reclaim node reference.
@@ -2954,7 +2965,7 @@ ath_draintxq(struct ath_softc *sc)
 			ieee80211_free_node(ic, ni);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-		splx(s2);
+		splx(s);
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
