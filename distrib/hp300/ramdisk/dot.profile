@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.7 1998/04/14 17:29:45 millert Exp $
+#	$OpenBSD: dot.profile,v 1.8 2000/01/30 01:21:20 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,7 @@ export HOME=/
 umask 022
 
 set -o emacs # emacs-style command line editing
+alias dmesg="cat /kern/msgbuf"
 
 TMPWRITEABLE=/tmp/writeable
 

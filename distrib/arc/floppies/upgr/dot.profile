@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $Id: dot.profile,v 1.2 1997/10/20 22:24:20 millert Exp $
+#       $Id: dot.profile,v 1.3 2000/01/30 01:21:19 deraadt Exp $
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export HISTFILE=/.sh_history
@@ -36,6 +36,7 @@ export TERM=pc3
 umask 022
 
 set -o emacs # emacs-style command line editing
+alias dmesg="cat /kern/msgbuf"
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
