@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2001/12/11 23:19:02 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 2002/05/16 21:11:17 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -121,6 +121,8 @@ cdev_decl(ksyms);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct cdevsw cdevsw[] = {
         cdev_cn_init(1,cn),             /* 0: virtual console */
         cdev_ctty_init(1,ctty),         /* 1: controlling terminal */
@@ -176,7 +178,7 @@ struct cdevsw cdevsw[] = {
         cdev_notdef(),                  /* 47 */
         cdev_notdef(),                  /* 48 */
         cdev_notdef(),                  /* 49 */ 
-        cdev_notdef(),                  /* 50 */ 
+        cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */ 
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2002/04/28 14:47:54 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.45 2002/05/16 21:11:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -96,6 +96,9 @@
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmap.h>
@@ -1071,7 +1074,12 @@ syscall(code, frame)
 		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		error = systrace_redirect(code, p, args, rval);
+	else
+#endif
+		error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
 		frame.f_regs[D0] = rval[0];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.28 2002/04/21 23:35:52 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.29 2002/05/16 21:11:15 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -113,6 +113,8 @@ cdev_decl(xfs_dev);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -165,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_notdef(),			/* 50 */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2001/12/12 19:19:17 jason Exp $ */
+/*	$OpenBSD: conf.c,v 1.10 2002/05/16 21:11:15 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -151,6 +151,8 @@ cdev_decl(pci);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
@@ -202,7 +204,7 @@ struct cdevsw cdevsw[] = {
 	cdev_crypto_init(NCRYPTO,crypto), /* 47: /dev/crypto */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_notdef(),			/* 50 */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else

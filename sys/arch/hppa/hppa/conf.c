@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2002/03/16 00:34:56 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2002/05/16 21:11:14 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -114,6 +114,8 @@ cdev_decl(com);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct cdevsw   cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/*  0: virtual console */
@@ -155,12 +157,13 @@ struct cdevsw   cdevsw[] =
 	cdev_notdef(),			/* 32 */
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 33: ALTQ control interface */
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
+	cdev_systrace_init(NSYSTRACE,systrace)	/* 34: system call tracing */
+	cdev_lkm_dummy(),		/* 35 */
+	cdev_lkm_dummy(),		/* 36 */
+	cdev_lkm_dummy(),		/* 37 */
+	cdev_lkm_dummy(),		/* 38 */
+	cdev_lkm_dummy(),		/* 39 */
+	cdev_lkm_dummy(),		/* 40 */
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.34 2002/05/16 21:11:19 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -404,6 +404,8 @@ cdev_decl(xfs_dev);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -455,7 +457,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 46  was Datakit */
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
-	cdev_notdef(),			/* 49 */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 49: system call tracing */
 	cdev_ksyms_init(NKSYMS,ksyms),  /* 50: Kernel symbols device */
 	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_notdef(),			/* 52: was: KDB50/RA?? */

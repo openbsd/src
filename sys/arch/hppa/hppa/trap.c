@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2002/03/16 01:13:42 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2002/05/16 21:11:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -41,6 +41,9 @@
 #include <sys/user.h>
 
 #include <net/netisr.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm.h>
 
@@ -496,7 +499,13 @@ syscall(frame, args)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	switch (error = (*callp->sy_call)(p, args, rval)) {
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		error = systrace_redirect(code, p, args, rval);
+	else
+#endif
+		error = (*callp->sy_call)(p, args, rval);
+	switch (error) {
 	case 0:
 		p = curproc;			/* changes on exec() */
 		frame = p->p_md.md_regs;

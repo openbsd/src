@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2002/05/16 07:37:44 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.24 2002/05/16 21:11:19 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -39,6 +39,9 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -435,7 +438,12 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, frame->code, callp->sy_argsize, args);
 #endif
-	err = (*callp->sy_call)(curproc, args, rval);
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		err = systrace_redirect(frame->code, curproc, args, rval);
+	else
+#endif
+		err = (*callp->sy_call)(curproc, args, rval);
 	exptr = curproc->p_addr->u_pcb.framep;
 
 #ifdef TRAPDEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2002/03/15 20:46:11 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.30 2002/05/16 21:11:18 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -132,6 +132,8 @@ cdev_decl(xfs_dev);
 #include "ksyms.h"
 #include "inet.h"
 
+#include "systrace.h"
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
@@ -215,7 +217,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 47 */
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
-	cdev_notdef(),			/* 50 */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2002/03/26 01:00:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2002/05/16 21:11:16 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,6 +52,9 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/ktrace.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1317,7 +1320,12 @@ m88100_syscall(register_t code, struct m88100_saved_state *tf)
 #endif
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, &args, rval);
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		error = systrace_redirect(code, p, &args, rval);
+	else
+#endif
+		error = (*callp->sy_call)(p, &args, rval);
 	/*
 	 * system call will look like:
 	 *	 ld r10, r31, 32; r10,r11,r12 might be garbage.

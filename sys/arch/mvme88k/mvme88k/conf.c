@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2002/04/28 15:17:09 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 2002/05/16 21:11:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -106,6 +106,8 @@ cdev_decl(lptwo);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
@@ -197,7 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),                   /* 47 */
 	cdev_notdef(),                   /* 48 */
 	cdev_notdef(),                   /* 49 */
-	cdev_notdef(),                   /* 50 */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
 	cde_xfs_init(NXFS,xfs_dev),      /* 51: xfs communication device */
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2002/01/23 05:21:03 ericj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2002/05/16 21:11:10 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -145,6 +145,8 @@ cdev_decl(pci);
 
 #include <altq/altqconf.h>
 
+#include "systrace.h"
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -197,7 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NULPT,ulpt),	/* 47: USB printer */
 	cdev_ugen_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_tty_init(NUCOM, ucom),	/* 49: USB tty */
-	cdev_notdef(),			/* 50 */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else

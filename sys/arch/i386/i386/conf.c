@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.89 2002/05/16 16:16:52 provos Exp $	*/
+/*	$OpenBSD: conf.c,v 1.90 2002/05/16 21:11:14 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ cdev_decl(mm);
 cdev_decl(wd);
 cdev_decl(crypto);
 #include "systrace.h"
-cdev_decl(systrace);
 #include "pty.h"
 #include "com.h"
 #include "pccom.h"

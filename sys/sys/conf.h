@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.53 2002/05/16 16:16:51 provos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.54 2002/05/16 21:11:19 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -566,5 +566,7 @@ cdev_decl(wsmux);
 # define NSVR4_NET	0
 #endif
 cdev_decl(svr4_net);
+
+cdev_decl(systrace);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2002/03/26 01:00:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2002/05/16 21:11:18 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -66,6 +66,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1360,7 +1363,12 @@ syscall(tf, code, pc)
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
-	error = (*callp->sy_call)(p, &args, rval);
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		error = systrace_redirect(code, p, &args, rval);
+	else
+#endif
+		error = (*callp->sy_call)(p, &args, rval);
 
 	switch (error) {
 		vaddr_t dest;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2002/05/16 21:11:18 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -57,6 +57,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmap.h>
@@ -704,7 +707,12 @@ syscall(code, frame)
 		goto bad;
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-	error = (*callp->sy_call)(p, args, rval);
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		error = systrace_redirect(code, p, args, rval);
+	else
+#endif
+		error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
 		frame.f_regs[D0] = rval[0];

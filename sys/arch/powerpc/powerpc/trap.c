@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.47 2002/05/15 22:49:16 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.48 2002/05/16 21:11:17 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -51,6 +51,9 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -442,11 +445,18 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			rval[1] = frame->fixreg[FIRSTARG + 1];
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, params);
+			scdebug_call(p, code, params);
 #endif
 
 			
-			switch (error = (*callp->sy_call)(p, params, rval)) {
+#if NSYSTRACE > 0
+			if (ISSET(p->p_flag, P_SYSTRACE))
+				error = systrace_redirect(code, p, params,
+				    rval);
+			else
+#endif
+				error = (*callp->sy_call)(p, params, rval);
+			switch (error) {
 			case 0:
 				frame->fixreg[0] = error;
 				frame->fixreg[FIRSTARG] = rval[0];
