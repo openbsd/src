@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.3 2002/04/28 18:28:34 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2002/04/30 07:35:52 deraadt Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -27,6 +27,7 @@ do_files:
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

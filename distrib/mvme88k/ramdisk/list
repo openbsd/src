@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.15 2002/04/30 01:31:20 deraadt Exp $
+#	$OpenBSD: list,v 1.16 2002/04/30 07:35:52 deraadt Exp $
 
 COPY	${OBJDIR}/raminst			raminst
 LINK	raminst					bin/cat
@@ -51,7 +51,6 @@ LINK	raminst					usr/bin/less
 LINK	raminst					usr/bin/sed
 LINK	raminst					usr/bin/tar
 LINK	raminst					usr/bin/pax
-SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
