@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.3 1996/08/29 04:19:32 deraadt Exp $
+.\"	$Id: mail.local.8,v 1.4 1996/08/29 04:24:33 deraadt Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -82,7 +82,9 @@ Efforts have been made so that
 act as securely as possible if the spool directory modes are 1777 or 755.
 The default of 755 is more secure, but prevents mail clients from using all
 styles of locking.  The use of 1777 is more flexible in an NFS shared-spool
-environment, thus many sites use it. However it does carry some risks.
+environment, thus many sites use it.  However it does carry some risks, such
+as attackers filling it up.  Some of these problems may be alleviated by
+making the spool a seperate filesystem, and placing quotas on it.
 The use of any mode besides 1777 and 755 for the spool directory is
 recommended against, but may work properly.
 .Pp
