@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.57 1998/12/19 16:52:22 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.58 1999/01/08 23:45:48 pattonme Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -20,18 +20,15 @@
 # For each port, the MAINTAINER variable is what you should consult for
 # contact information on the person(s) to contact if you have questions/
 # suggestions about that specific port.  By default (if no MAINTAINER
-# is listed), a port is maintained by the subscribers of the ports@freebsd.org
-# mailing list (OpenBSD: ports@openbsd.org), and any correspondence
-# should be directed there.  
+# is listed), a port is maintained by the subscribers of the ports@openbsd.org
+# mailing list, and any correspondence should be directed there.  
 #
-FreeBSD_MAINTAINER=	asami@FreeBSD.ORG
 OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
-NetBSD_MAINTAINER=	agc@netbsd.org
 
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.57 1998/12/19 16:52:22 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.58 1999/01/08 23:45:48 pattonme Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -59,15 +56,12 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # ONLY_FOR_ARCHS - If a port only makes sense to certain architectures, this
 #				  is a list containing the names for them.  It is checked
 #				  against the predefined ${MACHINE_ARCH} value
-# ARCH			- The architecture, as returned by "uname -m".
-# OPSYS			- Portability clause.  This is the operating system the
-#				  makefile is being used on.  Automatically set to
-#				  "FreeBSD," "NetBSD," or "OpenBSD" as appropriate.
-# OPSYS_VER		- The current version if the operating system
-# PORTSDIR		- The root of the ports tree.  Defaults:
-#					FreeBSD/OpenBSD: /usr/ports
-#					NetBSD:          /usr/pkgsrc
-# DISTDIR 		- Where to get gzip'd, tarballed copies of original sources
+# ARCH			- The architecture (default: "uname -m").
+# OPSYS			- The operating system (default: "uname -s").
+# OPSYS_VER		- The current version of the operating system
+#				  (default: "uname -r").
+# PORTSDIR		- The root of the ports tree.  Defaults: /usr/ports
+# DISTDIR 		- Where to get gzip'd, tarballed copies of original sources.
 #				  (default: ${PORTSDIR}/distfiles).
 # PREFIX		- Where to install things in general (default: /usr/local).
 # MASTER_SITES	- Primary location(s) for distribution files if not found
@@ -89,17 +83,13 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  value.
 # MASTER_SITE_OPENBSD - If set, only use ftp.openbsd.org as the
 #				  MASTER_SITE_OVERRIDE.
-# MASTER_SITE_FREEBSD - If set, only use ftp.freebsd.org as the
-#				  MASTER_SITE_OVERRIDE.
 # PACKAGES		- A top level directory where all packages go (rather than
 #				  going locally to each port). (default: ${PORTSDIR}/packages).
 # GMAKE			- Set to path of GNU make if not in $PORTPATH (default: gmake).
 # XMKMF			- Set to path of `xmkmf' if not in $PORTPATH 
 #                 (default: xmkmf -a ).
 # MAINTAINER	- The e-mail address of the contact person for this port
-#				  Defaults: ports@OpenBSD.ORG      (OpenBSD)
-#							ports@FreeBSD.ORG      (FreeBSD)
-#                           packages@NetBSD.ORG    (NetBSD)
+#				  Defaults: ports@OpenBSD.ORG
 # CATEGORIES	- A list of descriptive categories into which this port falls.
 # WRKOBJDIR		- A top level directory where, if defined, the separate working
 #				  directories will get created, and symbolically linked to from
@@ -129,8 +119,8 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  ${DISTDIR}.  Also they will be fetched in this subdirectory 
 #				  from FreeBSD mirror sites.
 # ALLFILES		- All of ${DISTFILES} and ${PATCHFILES}.
-# MIRROR_DISTFILE	- Whether the distfile is redistributable without restrictions.
-#			  Defaults to "yes", set this to "no" if restrictions exist.
+# MIRROR_DISTFILE - Whether the distfile is redistributable without restrictions.
+#				  Defaults to "yes", set this to "no" if restrictions exist.
 # IGNOREFILES	- If some of the ${ALLFILES} are not checksum-able, set
 #				  this variable to their names.
 # PKGNAME		- Name of the package file to create if the DISTNAME 
@@ -271,13 +261,9 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #
 # REQUIRES_MOTIF- Set this in your port if it requires Motif.  It will  be
 #				  built only if HAVE_MOTIF is set.
-# HAVE_MOTIF	- If set, means system has Motif.  Typically set in
-#				  /etc/make.conf (FreeBSD) or
-#				  /etc/mk.conf (OpenBSD, NetBSD).
+# HAVE_MOTIF	- If set, means system has Motif.  Typically set in /etc/mk.conf.
 # MOTIF_STATIC	- If set, link libXm statically; otherwise, link it
-#				  dynamically.  Typically set in
-#				  /etc/make.conf (FreeBSD) or
-#				  /etc/mk.conf (OpenBSD, NetBSD).
+#				  dynamically.  Typically set in /etc/mk.conf.
 # MOTIFLIB		- Set automatically to appropriate value depending on
 #				  ${MOTIF_STATIC}.  Substitute references to -lXm with 
 #				  patches to make your port conform to our standards.
@@ -373,16 +359,9 @@ OPSYS_VER!=	uname -r
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
-.if (${OPSYS} == "OpenBSD")
 NOCLEANDEPENDS=	yes
 NOMANCOMPRESS?=	yes
 DEF_UMASK?=		022
-.elif (${OPSYS} == "NetBSD")
-DEF_UMASK?=		0022
-NOCLEANDEPENDS=	yes
-.else
-DEF_UMASK?=		0022
-.endif
 
 .if exists(${.CURDIR}/Makefile.${ARCH}-${OPSYS})
 .include "${.CURDIR}/Makefile.${ARCH}-${OPSYS}"
@@ -395,13 +374,8 @@ DEF_UMASK?=		0022
 # These need to be absolute since we don't know how deep in the ports
 # tree we are and thus can't go relative.  They can, of course, be overridden
 # by individual Makefiles or local system make configuration.
-.if (${OPSYS} == "NetBSD")
-PORTSDIR?=		/usr/pkgsrc
-LOCALBASE?=		${DESTDIR}/usr/pkg
-.else
 PORTSDIR?=		/usr/ports
 LOCALBASE?=		${DESTDIR}/usr/local
-.endif
 X11BASE?=		${DESTDIR}/usr/X11R6
 DISTDIR?=		${PORTSDIR}/distfiles
 _DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
@@ -484,13 +458,6 @@ CXX=${EGXX}
 .if defined(USE_MOTIF) && !defined(HAVE_MOTIF) && !defined(REQUIRES_MOTIF)
 LIB_DEPENDS+=		Xm.:${PORTSDIR}/x11/lesstif
 .endif
-
-# OpenBSD has perl5 in-tree
-#
-#.if defined(USE_PERL5)
-#BUILD_DEPENDS+=		perl5.00404:${PORTSDIR}/lang/perl5
-#RUN_DEPENDS+=		perl5.00404:${PORTSDIR}/lang/perl5
-#.endif
 
 .if exists(${PORTSDIR}/../Makefile.inc)
 .include "${PORTSDIR}/../Makefile.inc"
@@ -583,26 +550,14 @@ EXTRACT_SUFX?=	.tar.gz
 .if defined(USE_IMAKE) || defined(USE_X11)
 MTREE_FILE=	/etc/mtree/BSD.x11.dist
 .else
-.if (${OPSYS} == "NetBSD")
-MTREE_FILE=	/etc/mtree/BSD.pkg.dist
-.else
 MTREE_FILE=	/etc/mtree/BSD.local.dist
-.endif
 .endif
 .endif
 MTREE_CMD?=	/usr/sbin/mtree
 MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -q -p
 
-.if (${OPSYS} == "OpenBSD")
 .include <bsd.own.mk>
 MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
-.elif (${OPSYS} == "NetBSD")
-NEED_OWN_INSTALL_TARGET=	no
-.include <bsd.own.mk>
-SHAREOWN = ${DOCOWN}
-SHAREGRP = ${DOCGRP}
-SHAREMODE = ${DOCMODE}
-.endif
 
 .if !defined(NO_WRKDIR)
 .if defined(OBJMACHINE)
@@ -620,7 +575,6 @@ WRKSRC?=		${WRKDIR}/${DISTNAME}
 .endif
 
 .if defined(WRKOBJDIR)
-# XXX Is pwd -P available in FreeBSD's /bin/sh?
 __canonical_PORTSDIR!=	cd ${PORTSDIR}; pwd -P
 __canonical_CURDIR!=	cd ${.CURDIR}; pwd -P
 PORTSUBDIR=		${__canonical_CURDIR:S,${__canonical_PORTSDIR}/,,}
@@ -791,26 +745,16 @@ _MASTER_SITE_OPENBSD?=	\
 	ftp://ftp.openbsd.org/pub/OpenBSD/distfiles/${DIST_SUBDIR}/ \
 	ftp://ftp.openbsd.org/pub/OpenBSD/licensed/${DIST_SUBDIR}/
 
-# The second backup master site is ftp.freebsd.org
-#
-_MASTER_SITE_FREEBSD?=	\
-	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
-
 # set the backup master sites.
 #
 MASTER_SITE_BACKUP?=	\
-	${_MASTER_SITE_OPENBSD} ${_MASTER_SITE_FREEBSD}
+	${_MASTER_SITE_OPENBSD} \
+	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/
 
 # If the user has this set, go to the OpenBSD repository for everything.
 #
 .if defined(MASTER_SITE_OPENBSD)
 MASTER_SITE_OVERRIDE=  ${_MASTER_SITE_OPENBSD}
-.endif
-
-# If the user has this set, go to the FreeBSD repository for everything.
-#
-.if defined(MASTER_SITE_FREEBSD)
-MASTER_SITE_OVERRIDE=  ${_MASTER_SITE_FREEBSD}
 .endif
 
 # Where to put distfiles that don't have any other master site
@@ -828,20 +772,6 @@ PATCH_SITES+=	${MASTER_SITE_BACKUP}
 .else
 MASTER_SITES:=	${MASTER_SITE_OVERRIDE} ${MASTER_SITES}
 PATCH_SITES:=	${MASTER_SITE_OVERRIDE} ${PATCH_SITES}
-.endif
-
-# The following is a FreeBSD construct that does not work in OpenBSD.
-# Since OpenBSD does not put packages in /cdrom/ports/packages it
-# is safe to leave (but I may remove it in the future).
-#
-# Search CDROM first if mounted, symlink instead of copy if
-# FETCH_SYMLINK_DISTFILES is set
-.if exists(/cdrom/ports/distfiles)
-MASTER_SITES:=	file:/cdrom/ports/distfiles/${DIST_SUBDIR}/ ${MASTER_SITES}
-PATCH_SITES:=	file:/cdrom/ports/distfiles/${DIST_SUBDIR}/ ${PATCH_SITES}
-.if defined(FETCH_SYMLINK_DISTFILES)
-FETCH_BEFORE_ARGS+=	-l
-.endif
 .endif
 
 # OpenBSD code to handle ports distfiles on a CDROM.  The distfiles
@@ -898,13 +828,7 @@ _IGNOREFILES?=	${IGNOREFILES}
 EXTRACT_ONLY?=	${DISTFILES}
 
 # Documentation
-.if (${OPSYS} == "OpenBSD")
 MAINTAINER?=	ports@OpenBSD.ORG
-.elif (${OPSYS} == "NetBSD")
-MAINTAINER?=	packages@NetBSD.ORG
-.else
-MAINTAINER?=	ports@FreeBSD.ORG
-.endif
 
 .if !defined(CATEGORIES)
 .BEGIN:
@@ -2122,11 +2046,7 @@ readme:
 	@cd ${.CURDIR} && make README.html
 .endif
 
-.if (${OPSYS} == "NetBSD")
-README_NAME=	${TEMPLATES}/README.pkg
-.else
 README_NAME=	${TEMPLATES}/README.port
-.endif
 
 README.html:
 	@${ECHO_MSG} "===>  Creating README.html for ${PKGNAME}"
