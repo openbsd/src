@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.11 2003/09/02 19:04:58 jmc Exp $
+.\"	$OpenBSD: doc,v 1.12 2003/10/04 14:30:27 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2252,11 +2252,11 @@
 .	el \{\
 .		ie \\n(C\\n(aP>2 .y\\n(C\\n(aP
 .		el \{\
-.			as b1 \&\\*(xR\\*(A\\n(aP\fP\s0
+.			as b1 \\*(xR\\*(A\\n(aP\fP\s0
 .			nr aP \\n(aP+1
 .			if \\n(aC>=\\n(aP \{\
 .				if \\n(C\\n(aP==2 \{\
-.					as b1 \&(\\*(A\\n(aP)
+.					as b1 \&\\*(lp\\*(A\\n(aP\\*(rp
 .					nr aP \\n(aP+1
 .				\}
 .			\}
