@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2003/09/04 07:02:37 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.114 2003/09/25 22:20:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -527,8 +527,8 @@ cpuid()
 		printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK "
 		    "(type 0x%x, features 0x%x)\n", cpu_type, cpu_features);
 		p = cpu_types;
-	} else if (p->type == hpcxl && !fpu_enable)
-		/* we know PCXL does not exist w/o FPU */
+	} else if ((p->type == hpcxl || p->type == hpcxl2) && !fpu_enable)
+		/* we know PCXL and PCXL2 do not exist w/o FPU */
 		fpu_enable = 0xc0;
 
 	cpu_type = p->type;
