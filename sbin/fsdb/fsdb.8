@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.11 1999/06/04 02:45:16 aaron Exp $
+.\"	$OpenBSD: fsdb.8,v 1.12 1999/07/04 18:59:39 aaron Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ may be a multi-component name or may begin with slash to indicate that
 the root inode should be used to start the lookup.  If some component
 along the pathname is not found, the last valid directory encountered is
 left as the active inode.
-.br
+.Pp
 This command is valid only if the starting inode is a directory.
 .Pp
 .It Cm active
@@ -234,7 +234,7 @@ to implement most of the file system manipulation code.  The remainder of
 first appeared in
 .Nx 1.1 .
 .Sh WARNING
-Use this tool with extreme caution--you can damage an FFS file system
+Use this tool with extreme caution \(en you can damage an FFS file system
 beyond what
 .Xr fsck 8
 can repair.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.8 1999/06/29 14:10:11 aaron Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.9 1999/07/04 18:59:44 aaron Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -95,7 +95,7 @@ struct nfsd_cargs {
         NFSKERBKEY_T    ncd_key;        /* Session key */
 };
 .Ed
-.sp
+.Pp
 structure.
 The initial call has only the
 .Dv NFSSVC_MNTD
@@ -152,7 +152,7 @@ struct nfsd_srvargs {
         NFSKERBKEY_T    nsd_key;        /* Session key */
 };
 .Ed
-.sp
+.Pp
 to enter the kernel as an
 .Xr nfsd 8
 daemon.
@@ -206,7 +206,7 @@ struct nfsd_args {
         int     namelen;        /* Length of name */
 };
 .Ed
-.sp
+.Pp
 to pass a server side
 .Tn NFS
 socket into the kernel for servicing by the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.9 1999/06/05 04:47:41 aaron Exp $
+.\"	$OpenBSD: btree.3,v 1.10 1999/07/04 18:59:42 aaron Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -135,7 +135,7 @@ cache can reduce the number of I/O operations significantly.
 Obviously, using a cache increases (but only increases) the likelihood of
 corruption or lost data if the system crashes while a tree is being modified.
 If
-.Em cachesize
+.Fa cachesize
 is 0 (no size is specified) a default cache is used.
 .It maxkeypage
 The maximum number of keys which will be stored on any single page.
@@ -146,13 +146,13 @@ This value is used to determine which keys will be stored on overflow
 pages, i.e. if a key or data item is longer than the pagesize divided
 by the minkeypage value, it will be stored on overflow pages instead
 of in the page itself. If
-.Em minkeypage
+.Fa minkeypage
 is 0 (no minimum number of keys is specified) a value of 2 is used.
 .It psize
 Page size is the size (in bytes) of the pages used for nodes in the tree.
 The minimum page size is 512 bytes and the maximum page size is 64K.
 If
-.Em psize
+.Fa psize
 is 0 (no page size is specified) a page size is chosen based on the
 underlying file system I/O block size.
 .It compare
@@ -162,8 +162,10 @@ first key argument is considered to be respectively less than, equal to,
 or greater than the second key argument.
 The same comparison function must be used on a given tree every time it
 is opened.
-.Em compare
-is NULL (no comparison function is specified), the keys are compared
+.Fa compare
+is
+.Dv NULL
+(no comparison function is specified), the keys are compared
 lexically, with shorter keys considered less than longer keys.
 .It prefix
 Prefix is the prefix comparison function.
@@ -173,20 +175,23 @@ key argument.
 If the keys are equal, the key length should be returned.
 Note, the usefulness of this routine is very data dependent, but, in some
 data sets can produce significantly reduced tree sizes and search times. If
-.Em prefix
-is NULL (no prefix function is specified),
-.B and
+.Fa prefix
+is
+.Dv NULL
+(no prefix function is specified),
+.Em and
 no comparison function is specified, a default lexical comparison routine
 is used. If
-.I prefix
-is NULL and a comparison routine is specified, no prefix comparison is
-done.
+.Fa prefix
+is
+.Dv NULL
+and a comparison routine is specified, no prefix comparison is done.
 .It lorder
 The byte order for integers in the stored database metadata.
 The number should represent the order as an integer; for example, 
 big endian order would be the number 4,321.
 If
-.Em lorder
+.Fa lorder
 is 0 (no order is specified) the current host order is used.
 .El
 .Pp

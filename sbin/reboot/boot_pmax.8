@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.12 1999/06/04 02:45:23 aaron Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.13 1999/07/04 18:59:41 aaron Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -99,11 +99,8 @@ must be specified.  Generally, the kernel is named
 An example
 .Nm bootpath
 setting would be:
-.nf
-.sp 1
-.ce 1
-setenv bootpath rz(0,1,0)bsd
-.fi
+.Pp
+.Dl setenv bootpath rz(0,1,0)bsd
 .Pp
 For automatic boots, the ROM automatically passes a
 .Fl a
@@ -139,9 +136,8 @@ with the
 .Fl f
 flag, followed by the path of the kernel to boot, as described above.
 For example:
-.sp 1
-.ce 1
-boot -f rz(0,4,0)bsd.new
+.Pp
+.Dl boot -f rz(0,4,0)bsd.new
 .Pp
 On TurboChannel machines (all DECstation 5000 models), the bootpath
 is specified in the
@@ -153,11 +149,8 @@ when setting the
 .Nm boot
 environment variable, the filename and arguments
 must be enclosed in quotes.  For example:
-.nf
-.sp 1
-.ce 1
-setenv boot "3/rz4/bsd -a"
-.fi
+.Pp
+.Dl setenv boot "3/rz4/bsd -a"
 .Pp
 The device from which to boot is specified as the TurboChannel slot
 number, a TurboChannel-option-specific device name, and a path to the
@@ -193,9 +186,8 @@ If no
 environment variable is set, or if an alternate kernel is to be
 booted, the path of that kernel may be specified after the boot command as
 described above, and any arguments may be passed similarly.  For example:
-.sp 1
-.ce 1
-boot 3/rz4/bsd.new -a
+.Pp
+.Dl boot 3/rz4/bsd.new -a
 .Sh SEE ALSO
 .Xr crash 8 ,
 .Xr fsck 8 ,

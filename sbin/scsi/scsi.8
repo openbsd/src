@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.11 1999/07/03 02:11:08 aaron Exp $
+.\"	$OpenBSD: scsi.8,v 1.12 1999/07/04 18:59:42 aaron Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -79,25 +79,19 @@
 .Fl o Ar count out_fmt
 .Op Ar arg ...
 .Fl i Ar count in_fmt
-.Pp
-.in -\\n(iSu
-.Ar out_fmt
-can be
-.Sq -
-to read output data from stdin;
-.Ar in_fmt
-can be
-.Sq -
-to write input data to stdout.
-.Pp
-If debugging is not compiled in the kernel,
-.Fl d
-will have no effect.
 .Sh DESCRIPTION
 The
 .Nm
 program is used to send commands to a SCSI device. It is also
 a sample usage of the user-level SCSI commands.
+.Ar out_fmt
+can be
+.Ql -
+to read output data from stdin;
+.Ar in_fmt
+can be
+.Ql -
+to write input data to stdout.
 .Pp
 The following options are available:
 .Bl -tag -width Ds
@@ -205,7 +199,7 @@ bytes of data. The data out is built up using the facilities described in
 using the provided arguments to fill in any integer variables.
 .Ar out_fmt
 can be specified as a hyphen
-.Pq Sq -
+.Pq Ql -
 to indicate that the
 .Ar count
 bytes of data should be read from the standard input.
@@ -221,7 +215,7 @@ using the facilities described in
 and displayed on the standard output.
 .Ar in_fmt
 can be specified as a hyphen
-.Pq Sq -
+.Pq Ql -
 to indicate that the
 .Ar count
 bytes of data input should be written to the standard output.

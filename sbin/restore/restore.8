@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.15 1999/06/04 02:45:23 aaron Exp $
+.\"	$OpenBSD: restore.8,v 1.16 1999/07/04 18:59:41 aaron Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -74,7 +74,6 @@
 .Op Fl s Ar fileno
 .Op Ar file Ar ...
 .Pp
-.in -\\n(iSu
 (The
 .Bx 4.3
 option syntax is implemented for backward compatibility but
@@ -241,7 +240,6 @@ Note that the
 flag replaces the function of the old
 .Xr dumpdir 8
 program.
-.ne 1i
 .It Fl x
 The named files are read from the given media.
 If a named file matches a directory whose contents

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.18 1999/07/02 16:57:49 aaron Exp $
+.\"	$OpenBSD: mmap.2,v 1.19 1999/07/04 18:59:44 aaron Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -202,7 +202,7 @@ is not a valid open file descriptor.
 .It Bq Er EINVAL
 .Dv MAP_FIXED
 was specified and the
-.I addr
+.Fa addr
 parameter was not page aligned.
 .Fa fd
 did not reference a regular or character special file.

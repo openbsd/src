@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.19 1999/06/04 02:45:13 aaron Exp $
+.\"	$OpenBSD: ed.1,v 1.20 1999/07/04 18:59:37 aaron Exp $
 .\"
 .Dd May 2, 1993
 .Dt ED 1
@@ -322,13 +322,11 @@ specifies the lower case characters.
 The following literal expressions can also be used in
 .Em char-class
 to specify sets of characters:
-.sp
+.Pp
 .Em \ \ [:alnum:]\ \ [:cntrl:]\ \ [:lower:]\ \ [:space:]
-.PD 0
 .Em \ \ [:alpha:]\ \ [:digit:]\ \ [:print:]\ \ [:upper:]
-.PD 0
 .Em \ \ [:blank:]\ \ [:graph:]\ \ [:punct:]\ \ [:xdigit:]
-.sp
+.Pp
 If
 .Em -
 appears as the first or last character of

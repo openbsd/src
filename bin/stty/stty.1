@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.12 1998/12/15 01:20:27 aaron Exp $
+.\"	$OpenBSD: stty.1,v 1.13 1999/07/04 18:59:38 aaron Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -129,7 +129,6 @@ If
 the output baud rate is set to
 zero, modem control is
 no longer asserted.
-.ne 1i
 .It Cm speed Ar number
 This sets both
 .Cm ispeed
@@ -208,7 +207,6 @@ receives
 or if
 .Cm ixany
 is set, any character restarts output.
-.ne 1i
 .It Cm ixoff Pq Fl ixoff
 Request that the system send (not
 send)
@@ -313,7 +311,6 @@ Echo (do not echo)
 after
 .Dv KILL
 character.
-.ne 1i
 .It Cm echoke Pq Fl echoke
 The
 .Dv KILL
@@ -473,7 +470,6 @@ columns.
 .It Cm cols Ar number
 is an alias for
 .Cm columns .
-.ne 1i
 .It Cm rows Ar number
 The terminal size is recorded as having
 .Ar number
@@ -506,14 +502,12 @@ This means that unsetting
 may not put back all the setting that were previously in effect.
 To set the terminal into a raw state and then accurately restore it, the following
 shell code is recommended:
-.nf
-
+.Bd -literal -offset indent
 save_state=$(stty -g)
 stty raw
 \&...
 stty "$save_state"
-
-.fi
+.Ed
 .It Cm size
 The size of the terminal is printed as two numbers on a single line,
 first rows, then columns.
@@ -558,7 +552,6 @@ Same as
 .It Cm decctlq Pq Fl decctlq
 The converse of
 .Cm ixany .
-.ne 1i
 .It Cm crterase Pq Fl crterase
 Same as
 .Cm echoe .

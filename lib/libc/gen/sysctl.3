@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.25 1999/07/04 12:25:14 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.26 1999/07/04 18:59:42 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -142,20 +142,20 @@ in the system:
 .Bd -literal -offset indent -compact
 int mib[2], maxproc;
 size_t len;
-.sp
+
 mib[0] = CTL_KERN;
 mib[1] = KERN_MAXPROC;
 len = sizeof(maxproc);
 sysctl(mib, 2, &maxproc, &len, NULL, 0);
 .Ed
-.sp
+.Pp
 To retrieve the standard search path for the system utilities:
 .Pp
 .Bd -literal -offset indent -compact
 int mib[2];
 size_t len;
 char *p;
-.sp
+
 mib[0] = CTL_USER;
 mib[1] = USER_CS_PATH;
 sysctl(mib, 2, NULL, &len, NULL, 0);
@@ -261,6 +261,7 @@ information.
 .It Dv KERN_NAME_MAX No "	integer	no"
 .It Dv KERN_NGROUPS No "	integer	no"
 .It Dv KERN_NO_TRUNC No "	integer	no"
+.It Dv KERN_NOSUIDCOREDUMP No "	integer yes"
 .It Dv KERN_OSRELEASE No "	string	no"
 .It Dv KERN_OSREV No "	integer	no"
 .It Dv KERN_OSTYPE No "	string	no"
@@ -350,6 +351,8 @@ The maximum number of supplemental groups.
 Return 1 if file names longer than
 .Dv KERN_NAME_MAX
 are truncated.
+.It Dv KERN_NOSUIDCOREDUMP
+Programs with their set-user-ID bit set will not dump core when this is set.
 .It Dv KERN_OSRELEASE
 The system release string.
 .It Dv KERN_OSREV

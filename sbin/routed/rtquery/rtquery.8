@@ -11,44 +11,46 @@
 .Op Fl r Ar addr
 .Ar host ...
 .Sh DESCRIPTION
-.Nm Rtquery
+.Nm
 is used to query a network routing daemon,
 .Xr routed 8
 or
 .Xr gated 8 ,
 for its routing table by sending a
-.Em request
+.Cm request
 or
-.Em poll
+.Cm poll
 command.  The routing information in any routing
-.Em response
+.Dq response
 packets returned is displayed numerically and symbolically.
 .Pp
-.Em Rtquery
+.Nm
 by default uses the
-.Em request
+.Cm request
 command.
 When the
 .Fl p
 option is specified,
-.Nm rtquery
+.Nm
 uses the
-.Em poll
+.Cm poll
 command, an
 undocumented extension to the RIP protocol supported by
 .Xr gated 8 .
 When querying gated, the
-.Em poll
+.Cm poll
 command is preferred over the
-.Em Request
+.Cm request
 command because the response is not subject to Split Horizon and/or
 Poisoned Reverse, and because some versions of gated do not answer
 the Request command.  Routed does not answer the Poll command, but
-recognizes Requests coming from rtquery and so answers completely.
+recognizes Requests coming from
+.Nm
+and so answers completely.
 .Pp
-.Em Rtquery
+.Nm
 is also used to turn tracing on or off in
-.Em routed .
+.Xr routed 8 .
 .Pp
 Options supported by
 .Nm rtquery :
@@ -61,43 +63,42 @@ The
 option displays only the numeric network and host numbers.
 .It Fl p
 Uses the
-.Em Poll
+.Cm poll
 command to request full routing information from
 .Xr gated 8 .
 This is an undocumented extension RIP protocol supported only by
 .Xr gated 8 .
 .It Fl 1
-query using RIP version 1 instead of RIP version 2.
+Query using RIP version 1 instead of RIP version 2.
 .It Fl w Ar timeout
-changes the delay for an answer from each host.
+Changes the delay for an answer from each host.
 By default, each host is given 15 seconds to respond.
 .It Fl r Ar addr
-ask about the route to destination
-.Em addr .
+Ask about the route to destination
+.Ar addr .
 .It Fl t Ar op
-change tracing, where
-.Em op
+Change tracing, where
+.Ar op
 is one of the following.
 Requests from processes not running with UID 0 or on distant networks
 are generally ignored by the daemon except for a message in the system log.
 .El
 .Bl -tag -width Ds -offset indent-two
 .It Em on=tracefile
-turn tracing on into the specified file.  That file must usually
+Turn tracing on into the specified file.  That file must usually
 have been specified when the daemon was started or be the same
 as a fixed name, often
 .Pa /etc/routed.trace .
 .It Em more
-increases the debugging level.
+Increases the debugging level.
 .It Em off
-turns off tracing.
+Turns off tracing.
 .It Em dump
-dumps the daemon's routing table to the current tracefile.
+Dumps the daemon's routing table to the current tracefile.
 .El
 .Sh SEE ALSO
 .Xr gated 8 ,
 .Xr routed 8
-.br
-RFC\ 1058 - Routing Information Protocol, RIPv1
-.br
-RFC\ 1723 - Routing Information Protocol, RIPv2
+.Pp
+.Dl RFC\ 1058 - Routing Information Protocol, RIPv1
+.Dl RFC\ 1723 - Routing Information Protocol, RIPv2

@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.9 1999/06/30 01:40:18 deraadt Exp $
+.\" $OpenBSD: arc4random.3,v 1.10 1999/07/04 18:59:42 aaron Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -50,10 +50,7 @@ The
 .Fn arc4random 
 function uses the key stream generator employed by the
 arc4 cipher, which uses 8*8 8 bit S-Boxes. The S-Boxes
-can be in about 
-.if t 2\u\s71700\s10\d
-.if n (2**1700)
-states.
+can be in about (2**1700) states.
 .Pp
 The
 .Fn arc4random_stir

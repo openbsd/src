@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.25 1999/07/03 02:11:07 aaron Exp $
+.\"	$OpenBSD: fdisk.8,v 1.26 1999/07/04 18:59:39 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -111,7 +111,7 @@ Number of partition table entry.  A
 denotes the bootable partition.
 .It Em "id"
 System identifier.
-.oS
+.Os
 reserves the
 magic number 166 decimal (A6 in hex).
 If no 166 partition is found, it will use an older FreeBSD partition
@@ -141,7 +141,7 @@ will completely overwrite the primary MBR, and start with a fresh one using
 a default template, or one given by the
 .Fl f
 flag.  It will set up partition number 3 to be an
-.oS
+.Os
 partition, that will start at cylinder 0, head 1, sector 1, and extend
 to the end of the disk.
 This mode is designed to initialize an MBR the very first time,
@@ -241,7 +241,7 @@ that use geometry translation under a potentially different BIOS.
 .Pp
 If you hand craft your disk layout,
 please make sure that the
-.oS
+.Os
 partition starts on a cylinder boundary.
 (This restriction may be changed in the future.)
 .Pp

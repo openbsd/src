@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.9 1999/06/05 04:47:41 aaron Exp $
+.\"	$OpenBSD: regex.3,v 1.10 1999/07/04 18:59:43 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -306,7 +306,7 @@ and
 both of type
 .Fa regoff_t
 (a signed arithmetic type at least as large as an
-.I off_t
+.Li off_t
 and a
 .Li ssize_t ),
 containing respectively the offset of the first character of a substring
@@ -321,7 +321,7 @@ both indicating the character following the empty substring.
 The 0th member of the
 .Fa pmatch
 array is filled in to indicate what substring of
-.I string
+.Fa string
 was matched by the entire RE.
 Remaining members report what substring was matched by parenthesized
 subexpressions within the RE;

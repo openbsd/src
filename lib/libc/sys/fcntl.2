@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.15 1999/06/29 14:23:28 aaron Exp $
+.\"	$OpenBSD: fcntl.2,v 1.16 1999/07/04 18:59:43 aaron Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -178,7 +178,6 @@ upon availability of data to be read.
 .Pp
 Several commands are available for doing advisory file locking;
 they all operate on the following structure:
-.ne 7v
 .Bd -literal
 struct flock {
 	off_t	l_start;	/* starting offset */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hash.3,v 1.6 1999/05/23 14:10:58 aaron Exp $
+.\"	$OpenBSD: hash.3,v 1.7 1999/07/04 18:59:42 aaron Exp $
 .\"	$NetBSD: hash.3,v 1.6 1996/05/03 21:26:50 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -59,7 +59,7 @@ The hash data structure is an extensible, dynamic hashing scheme.
 The access method specific data structure provided to
 .Fn dbopen
 is defined in the
-.Em <db.h>
+.Aq Pa db.h
 include file as follows:
 .Pp
 .Bl -item -compact
@@ -86,18 +86,18 @@ int lorder;
 The elements of this structure are as follows:
 .Bl -tag -width XXXXXX -offset indent
 .It bsize
-.Em bsize
+.Fa bsize
 defines the hash table bucket size, and is, by default, 256 bytes.
 It may be preferable to increase the page size for disk-resident tables
 and tables with large data items.
 .It ffactor
-.Em Ffactor
+.Fa ffactor
 indicates a desired density within the hash table.
 It is an approximation of the number of keys allowed to accumulate in any
 one bucket, determining when the hash table grows or shrinks.
 The default value is 8.
 .It nelem
-.Em Nelem
+.Fa nelem
 is an estimate of the final size of the hash table.
 If not set or set too low, hash tables will expand gracefully as keys
 are entered, although a slight performance degradation may be noticed.
@@ -105,11 +105,11 @@ The default value is 1.
 .It cachesize
 A suggested maximum size, in bytes, of the memory cache.
 This value is
-.B only
+.Em only
 advisory, and the access method will allocate more memory rather
 than fail.
 .It hash
-.Em Hash
+.Fa hash
 is a user defined hash function.
 Since no hash function performs equally well on all possible data, the
 user may find that the built-in hash function does poorly on a particular
@@ -121,7 +121,7 @@ value.
 The byte order for integers in the stored database metadata.
 The number should represent the order as an integer; for example, 
 big endian order would be the number 4,321. If
-.Em lorder
+.Fa lorder
 is 0 (no order is specified) the current host order is used.
 If the  file already exists, the specified value is ignored and the
 value specified when the tree was created is used.
@@ -134,7 +134,7 @@ values specified for the parameters bsize, ffactor, lorder and nelem are
 ignored and the values specified when the tree was created are used.
 .Pp
 If a hash function is specified,
-.Em hash_open
+.Fa hash_open
 will attempt to determine if the hash function specified is the same as
 the one with which the database was created, and will fail if it is not.
 .Pp
