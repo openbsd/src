@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.3 1995/11/06 21:40:46 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.4 1996/01/07 05:28:04 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -221,7 +221,8 @@ getprivs(id, quotatype)
 	quphead = (struct quotause *)0;
 	qcmd = QCMD(Q_GETQUOTA, quotatype);
 	while (fs = getfsent()) {
-		if (strcmp(fs->fs_vfstype, "ffs"))
+		if (strcmp(fs->fs_vfstype, "ffs") &&
+		    strcmp(fs->fs_vfstype, "ufs"))
 			continue;
 		if (!hasquota(fs, quotatype, &qfpathname))
 			continue;
