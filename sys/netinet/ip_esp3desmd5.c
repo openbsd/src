@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp3desmd5.c,v 1.3 1997/02/26 20:53:14 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp3desmd5.c,v 1.4 1997/03/30 22:05:14 mickey Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -145,7 +145,7 @@ esp3desmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 		  buf[len] = txd.edx_initiator ? ESP3DESMD5_IPADI :
 						 ESP3DESMD5_IPADR;
 
-		realMD5Init(&ctx);
+		MD5Init(&ctx);
 		MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 		MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	 	MD5Final(buf, &ctx);
@@ -165,21 +165,21 @@ esp3desmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	  buf[len] = txd.edx_initiator ? ESP3DESMD5_DPADI : ESP3DESMD5_DPADR;
 
 	buf[0] = 0;
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 	MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	MD5Final(buf, &ctx);
 	des_set_key((caddr_t)buf, (caddr_t)(xd->edx_eks[0]));
 
 	buf[0] = 1;
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 	MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	MD5Final(buf, &ctx);
 	des_set_key((caddr_t)buf, (caddr_t)(xd->edx_eks[1]));
 
 	buf[0] = 2;
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 	MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	MD5Final(buf, &ctx);
@@ -187,7 +187,7 @@ esp3desmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 
 	/* HMAC contexts */
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	for (len = 0; len < ESP3DESMD5_KEYSZ; len++)
 	  buf[len] = txd.edx_initiator ? ESP3DESMD5_HPADI : ESP3DESMD5_HPADR;
 
@@ -200,14 +200,14 @@ esp3desmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	for (len = 0; len < ESP3DESMD5_KEYSZ; len++)
 	  buf[len] ^= ESP3DESMD5_IPAD_VAL;
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 	xd->edx_ictx = ctx;
 
 	for (len = 0; len < ESP3DESMD5_KEYSZ; len++)
 	  buf[len] ^= (ESP3DESMD5_IPAD_VAL ^ ESP3DESMD5_OPAD_VAL);
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 	xd->edx_octx = ctx;
 	
@@ -217,7 +217,7 @@ esp3desmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	  buf[len] = txd.edx_initiator ? ESP3DESMD5_RPADI : 
 						 ESP3DESMD5_RPADR;
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESP3DESMD5_KEYSZ);
 	MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	MD5Final(buf, &ctx);

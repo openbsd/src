@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.17 1997/02/04 03:03:18 dm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.18 1997/03/30 22:05:11 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -238,6 +238,7 @@
 #include <sys/user.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/md5k.h>
 
 #include <net/netisr.h>
 
@@ -249,17 +250,6 @@ int	rnd_debug = 0x0000;
 #define	RD_INPUT	0x000f	/* input data */
 #define	RD_OUTPUT	0x00f0	/* output data */
 #define	RD_WAIT		0x0100	/* sleep/wakeup for good data */
-#endif
-
-#ifdef	RND_USE_SHA
-#define	HASH_BUFFER_SIZE	5
-#define	HASH_TRANSFORM	SHATransform
-#else	/* RND_USE_MD5 */
-#ifndef	RND_USE_MD5
-#define	RND_USE_MD5
-#endif
-#define	HASH_BUFFER_SIZE	4
-#define	HASH_TRANSFORM	MD5Transform
 #endif
 
 /*
@@ -612,7 +602,7 @@ extract_entropy(r, buf, nbytes)
 	int	nbytes;
 {
 	int	ret, i;
-	u_int32_t tmp[HASH_BUFFER_SIZE];
+	MD5_CTX tmp;
 	
 	add_timer_randomness(r, &extract_timer_state, nbytes);
 	
@@ -628,25 +618,20 @@ extract_entropy(r, buf, nbytes)
 
 	while (nbytes) {
 		/* Hash the pool to get the output */
-#ifdef	RND_USE_MD5
-		MD5Init(tmp);
-#endif
+		MD5Init(&tmp);
+
 		for (i = 0; i < POOLWORDS; i += 16)
-			HASH_TRANSFORM(tmp, r->pool+i);
+			MD5Update(&tmp, (u_int8_t*)r->pool+i, 16);
+
 		/* Modify pool so next hash will produce different results */
-		add_entropy_word(r, tmp[0]);
-		add_entropy_word(r, tmp[1]);
-		add_entropy_word(r, tmp[2]);
-		add_entropy_word(r, tmp[3]);
-#ifdef	RND_USE_SHA
-		add_entropy_word(r, tmp[5]);
-#endif
+		for (i = 0; i < sizeof(tmp.buffer)/sizeof(tmp.buffer[0]); i++)
+			add_entropy_word(r, tmp.buffer[i]);
 		/*
 		 * Run the MD5 Transform one more time, since we want
 		 * to add at least minimal obscuring of the inputs to
 		 * add_entropy_word().  --- TYT
 		 */
-		HASH_TRANSFORM(tmp, r->pool);
+		MD5Update(&tmp, (u_int8_t*)r->pool, 16);
 
 		/*
 		 * In case the hash function has some recognizable
@@ -654,24 +639,22 @@ extract_entropy(r, buf, nbytes)
 		 */
 		{
 			register u_int8_t	*cp, *dp;
-			cp = (u_int8_t *) tmp;
-			dp = cp + (HASH_BUFFER_SIZE*sizeof(tmp[0])) - 1;
-			for (i=0; i < HASH_BUFFER_SIZE*sizeof(tmp[0])/2; i++) {
-				*cp ^= *dp;
-				cp++;  dp--;
-			}
+			cp = (u_int8_t *) &tmp.buffer;
+			dp = cp + sizeof(tmp.buffer) - 1;
+			while (cp < dp)
+				*cp++ ^= *dp--;
 		}
 
 		/* Copy data to destination buffer */
-		i = MIN(nbytes, HASH_BUFFER_SIZE*sizeof(tmp[0]));
-		bcopy((caddr_t)tmp, buf, i);
+		i = MIN(nbytes, sizeof(tmp.buffer));
+		bcopy((caddr_t)&tmp.buffer, buf, i);
 		nbytes -= i;
 		buf += i;
 		add_timer_randomness(r, &extract_timer_state, nbytes);
 	}
 
 	/* Wipe data from memory */
-	bzero(tmp, sizeof(tmp));
+	bzero(&tmp, sizeof(tmp));
 	
 	return ret;
 }

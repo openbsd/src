@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahmd5.c,v 1.3 1997/02/26 03:01:04 angelos Exp $	*/
+/*	$OpenBSD: ip_ahmd5.c,v 1.4 1997/03/30 22:05:13 mickey Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -166,7 +166,7 @@ ahmd5_input(struct mbuf *m, struct tdb *tdb)
 	ipo.ip_ttl = 0;
 	ipo.ip_sum = 0;
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
 	MD5Final(NULL, &ctx);		/* non-std usage of MD5Final! */
 	MD5Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
@@ -290,7 +290,7 @@ ahmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct 
 	aho.ah_rv = 0;
 	aho.ah_spi = tdb->tdb_spi;
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 
 	MD5Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
 	MD5Final(NULL, &ctx);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdesmd5.c,v 1.4 1997/03/28 09:48:37 provos Exp $	*/
+/*	$OpenBSD: ip_espdesmd5.c,v 1.5 1997/03/30 22:05:14 mickey Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -145,7 +145,7 @@ espdesmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 		  buf[len] = txd.edx_initiator ? ESPDESMD5_IPADI :
 						 ESPDESMD5_IPADR;
 
-		realMD5Init(&ctx);
+		MD5Init(&ctx);
 		MD5Update(&ctx, buf, ESPDESMD5_KEYSZ);
 		MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	 	MD5Final(buf, &ctx);
@@ -161,7 +161,7 @@ espdesmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 
 	/* DES key */
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	for (len = 0; len < ESPDESMD5_KEYSZ; len++)
 	  buf[len] = txd.edx_initiator ? ESPDESMD5_DPADI : ESPDESMD5_DPADR;
 	 
@@ -172,7 +172,7 @@ espdesmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 
 	/* HMAC contexts */
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	for (len = 0; len < ESPDESMD5_KEYSZ; len++)
 	  buf[len] = txd.edx_initiator ? ESPDESMD5_HPADI : ESPDESMD5_HPADR;
 
@@ -185,14 +185,14 @@ espdesmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	for (len = 0; len < ESPDESMD5_KEYSZ; len++)
 	  buf[len] ^= ESPDESMD5_IPAD_VAL;
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESPDESMD5_KEYSZ);
 	xd->edx_ictx = ctx;
 
 	for (len = 0; len < ESPDESMD5_KEYSZ; len++)
 	  buf[len] ^= (ESPDESMD5_IPAD_VAL ^ ESPDESMD5_OPAD_VAL);
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESPDESMD5_KEYSZ);
 	xd->edx_octx = ctx;
 	
@@ -202,7 +202,7 @@ espdesmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	  buf[len] = txd.edx_initiator ? ESPDESMD5_RPADI : 
 						 ESPDESMD5_RPADR;
 
-	realMD5Init(&ctx);
+	MD5Init(&ctx);
 	MD5Update(&ctx, buf, ESPDESMD5_KEYSZ);
 	MD5Update(&ctx, txd.edx_key, txd.edx_keylen);
 	MD5Final(buf, &ctx);

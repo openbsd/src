@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.4 1997/02/26 20:53:13 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.5 1997/03/30 22:05:13 mickey Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -29,7 +29,7 @@
  */
 
 #ifndef _MD5_H_
-#include <netinet/ip_md5.h>
+#include <sys/md5k.h>
 #endif
 
 #define ESPDESMD5_KEYSZ		64
