@@ -78,7 +78,8 @@ int parsing_defsym = 0;
 #define OPTION_SHARED			(OPTION_RPATH_LINK + 1)
 #define OPTION_SONAME			(OPTION_SHARED + 1)
 #define OPTION_SORT_COMMON		(OPTION_SONAME + 1)
-#define OPTION_STATS			(OPTION_SORT_COMMON + 1)
+#define OPTION_STATIC			(OPTION_SORT_COMMON + 1)
+#define OPTION_STATS			(OPTION_STATIC + 1)
 #define OPTION_SYMBOLIC			(OPTION_STATS + 1)
 #define OPTION_TBSS			(OPTION_SYMBOLIC + 1)
 #define OPTION_TDATA			(OPTION_TBSS + 1)
@@ -210,13 +211,13 @@ static const struct ld_option ld_options[] =
       '\0', NULL, NULL, ONE_DASH },
   { {"call_shared", no_argument, NULL, OPTION_CALL_SHARED},
       '\0', NULL, NULL, ONE_DASH },
-  { {"Bstatic", no_argument, NULL, OPTION_NON_SHARED},
+  { {"Bstatic", no_argument, NULL, OPTION_STATIC},
       '\0', NULL, "Do not link against shared libraries", ONE_DASH },
   { {"dn", no_argument, NULL, OPTION_NON_SHARED},
       '\0', NULL, NULL, ONE_DASH },
   { {"non_shared", no_argument, NULL, OPTION_NON_SHARED},
       '\0', NULL, NULL, ONE_DASH },
-  { {"static", no_argument, NULL, OPTION_NON_SHARED},
+  { {"static", no_argument, NULL, OPTION_STATIC},
       '\0', NULL, NULL, ONE_DASH },
   { {"Bsymbolic", no_argument, NULL, OPTION_SYMBOLIC},
       '\0', NULL, "Bind global references locally", ONE_DASH },
@@ -607,6 +608,10 @@ parse_args (argc, argv)
 	  break;
 	case 's':
 	  link_info.strip = strip_all;
+	  break;
+	case OPTION_STATIC:
+	  config.dynamic_link = false;
+	  link_info.static_link = true;         /*XXX added for mips, check ppc usage */
 	  break;
 	case OPTION_SHARED:
 	  link_info.shared = true;
