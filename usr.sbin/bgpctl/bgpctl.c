@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.21 2004/01/07 02:00:05 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.22 2004/01/09 13:48:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/un.h>
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -33,6 +34,7 @@ enum actions {
 	SHOW_SUMMARY,
 	SHOW_NEIGHBOR,
 	SHOW_NEIGHBOR_TIMERS,
+	SHOW_FIB,
 	RELOAD,
 	FIB,
 	FIB_COUPLE,
@@ -61,7 +63,8 @@ static const struct keywords keywords_main[] = {
 
 static const struct keywords keywords_show[] = {
 	{ "neighbor",	SHOW_NEIGHBOR},
-	{ "summary",	SHOW_SUMMARY}
+	{ "summary",	SHOW_SUMMARY},
+	{ "fib",	SHOW_FIB}
 };
 
 static const struct keywords keywords_show_neighbor[] = {
@@ -90,6 +93,8 @@ void		 print_timer(const char *, time_t, u_int);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
 int		 parse_addr(const char *, struct bgpd_addr *);
+void		 show_fib_head(void);
+int		 show_fib_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
 
@@ -136,6 +141,12 @@ again:
 			errx(1, "\"show summary\" does not take arguments");
 		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
 		show_summary_head();
+		break;
+	case SHOW_FIB:
+		if (argc >= 4)
+			errx(1, "\"show fib\" does not take arguments");
+		imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, NULL, 0);
+		show_fib_head();
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
@@ -221,6 +232,9 @@ again:
 			case SHOW:
 			case SHOW_SUMMARY:
 				done = show_summary_msg(&imsg);
+				break;
+			case SHOW_FIB:
+				done = show_fib_msg(&imsg);
 				break;
 			case SHOW_NEIGHBOR:
 				done = show_neighbor_msg(&imsg, NV_DEFAULT);
@@ -450,6 +464,69 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 		addr->af = AF_INET;
 		addr->v4 = ina;
 		return (1);
+	}
+
+	return (0);
+}
+
+void
+show_fib_head(void)
+{
+	printf("flags: * = valid, B = BGP, C = Connected, S = Static\n");
+	printf("       N = BGP Nexthop reachable via this route\n\n");
+	printf("flags destination          gateway\n");
+}
+
+int
+show_fib_msg(struct imsg *imsg)
+{
+	struct kroute		*k;
+	char			*p;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_KROUTE:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute))
+			errx(1, "wrong imsg len");
+		k = imsg->data;
+
+		if (k->flags & F_DOWN)
+			printf(" ");
+		else
+			printf("*");
+
+		if (k->flags & F_BGPD_INSERTED)
+			printf("B");
+		else if (k->flags & F_CONNECTED)
+			printf("C");
+		else if (k->flags & F_KERNEL)
+			printf("S");
+		else
+			printf(" ");
+
+		if (k->flags & F_NEXTHOP)
+			printf("N");
+		else
+			printf(" ");
+
+		printf("   ");
+		if (asprintf(&p, "%s/%u", log_ntoa(k->prefix), k->prefixlen) ==
+		   -1)
+			err(1, NULL);
+		printf("%-20s ", p);
+		free(p);
+
+		if (k->nexthop)
+			printf("%s", log_ntoa(k->nexthop));
+		else if (k->flags & F_CONNECTED)
+			printf("link#%u", k->ifindex);
+		printf("\n");
+
+		break;
+	case IMSG_CTL_END:
+		return (1);
+		break;
+	default:
+		break;
 	}
 
 	return (0);
