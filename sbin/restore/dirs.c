@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.22 2003/07/06 15:42:07 avsm Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.23 2003/07/07 00:51:52 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.22 2003/07/06 15:42:07 avsm Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.23 2003/07/07 00:51:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -229,6 +229,7 @@ treescan(pname, ino, todo)
 {
 	struct inotab *itp;
 	struct direct *dp;
+	int namelen;
 	long bpt;
 	char locname[MAXPATHLEN + 1];
 
@@ -249,7 +250,9 @@ treescan(pname, ino, todo)
 	 * begin search through the directory
 	 * skipping over "." and ".."
 	 */
-	(void)snprintf(locname, sizeof(locname), "%s/", pname);
+	namelen = snprintf(locname, sizeof(locname), "%s/", pname);
+	if (namelen >= sizeof(locname))
+		namelen = sizeof(locname) - 1;
 	rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 	dp = rst_readdir(dirp); /* "." */
 	if (dp != NULL && strcmp(dp->d_name, ".") == 0)
@@ -267,7 +270,8 @@ treescan(pname, ino, todo)
 	 * a zero inode signals end of directory
 	 */
 	while (dp != NULL) {
-		if (strlen(locname) + dp->d_namlen >= sizeof(locname)) {
+		locname[namelen] = '\0';
+		if (namelen + dp->d_namlen >= sizeof(locname)) {
 			fprintf(stderr, "%s%s: name exceeds %d char\n",
 				locname, dp->d_name, sizeof(locname) - 1);
 		} else {
