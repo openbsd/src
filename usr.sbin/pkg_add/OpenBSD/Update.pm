@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.41 2004/12/18 13:20:54 espie Exp $
+# $OpenBSD: Update.pm,v 1.42 2004/12/18 13:39:17 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -451,6 +451,7 @@ sub figure_out_libs
 	my $result = [];
 
 	for my $item (@{$plist->{items}}) {
+		next unless $item->IsFile();
 		$has->{$item->fullname()} = 1;
 	}
 
