@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 2002/03/23 13:28:33 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 2002/12/10 23:34:36 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ cpu_startup()
 
 	/*
 	 * Find out how much space we need, allocate it,
-	 * and the give everything true virtual addresses.
+	 * and then give everything true virtual addresses.
 	 */
 	size = (vsize_t)allocsys((caddr_t)0);
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
@@ -404,7 +404,7 @@ cpu_startup()
  * address; along the way we set each data structure pointer.
  *
  * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and the call
+ * allocate that much and fill it with zeroes, and then call
  * allocsys() again with the correct base virtual address.
  */
 caddr_t
@@ -441,8 +441,7 @@ allocsys(v)
 	 * to be long on memory and short on disk speed, we allocate
 	 * more buffer space than the BSD standard of 10% of memory
 	 * for the first 2 Meg, 5% of the remaining.  We just allocate
-	 * a flag 10%.  Insure a minimum of 16 buffers.  We allocate
-	 * 1/2 as many swap buffer headers as file i/o buffers.
+	 * a flag 10%.  Insure a minimum of 16 buffers.
 	 */
 	if (bufpages == 0)
 		bufpages = physmem / 10;
