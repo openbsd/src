@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.23 1996/10/16 23:18:42 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.24 1996/10/22 01:11:50 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -112,6 +112,8 @@ struct com_softc {
 	u_char sc_dtr;
 
 	u_char	sc_cua;
+
+	u_char	sc_initialize;		/* force initialization */
 
 	u_char *sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
 	u_char sc_ibufs[2][COM_IBUFSIZE];
@@ -790,6 +792,7 @@ comopen(dev, flag, mode, p)
 
 		s = spltty();
 
+		sc->sc_initialize = 1;
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
@@ -1219,11 +1222,9 @@ comparam(tp, t)
 	 * Set the FIFO threshold based on the receive speed, if we are
 	 * changing it.
 	 */
-#if 1
-	if (tp->t_ispeed != t->c_ispeed) {
-#else
-	if (1) {
-#endif
+	if (sc->sc_initialize || (tp->t_ispeed != t->c_ispeed)) {
+		sc->sc_initialize = 0;
+
 		if (ospeed != 0) {
 			/*
 			 * Make sure the transmit FIFO is empty before
