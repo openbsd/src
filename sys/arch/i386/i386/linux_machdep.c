@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.19 2002/02/06 01:55:04 jasoni Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.20 2002/02/13 20:43:42 jasoni Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -587,10 +587,12 @@ linux_machdepioctl(p, v, retval)
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
 		 */
+		FREF(fp);
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
 		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		FRELE(fp);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.21 2002/02/06 01:55:04 jasoni Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.22 2002/02/13 20:43:42 jasoni Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -993,7 +993,7 @@ linux_ioctl_socket(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct linux_sys_ioctl_args /* {
+	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
@@ -1010,6 +1010,7 @@ linux_ioctl_socket(p, v, retval)
 	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
+	FREF(fp);
 
 	if (fp->f_type == DTYPE_VNODE) {
 		vp = (struct vnode *)fp->f_data;
@@ -1113,16 +1114,18 @@ linux_ioctl_socket(p, v, retval)
 				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 				    (sdl->sdl_family == AF_LINK) &&
 				    (sdl->sdl_type == IFT_ETHER)) {
-					return copyout(LLADDR(sdl),
+					error = copyout(LLADDR(sdl),
 					    (caddr_t)&ifr->ifr_hwaddr.sa_data,
 					    LINUX_IFHWADDRLEN);
+					dosys = 0;
+					goto out;
 				}
 			}
 		}
-		return ENOENT;
+		error = ENOENT;
 	    }
 	default:
-		return EINVAL;
+		error = EINVAL;
 	}
 
 out:
@@ -1132,5 +1135,6 @@ out:
 		error = sys_ioctl(p, &ia, retval);
 	}
 
+	FRELE(fp);
 	return (error);
 }

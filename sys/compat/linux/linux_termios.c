@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.10 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.11 2002/02/13 20:43:42 jasoni Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -83,8 +83,8 @@ static void bsd_termios_to_linux_termios __P((struct termios *,
 
 static void
 linux_termio_to_bsd_termios(lt, bts)
-	register struct linux_termio *lt;
-	register struct termios *bts;
+	struct linux_termio *lt;
+	struct termios *bts;
 {
 	int index;
 
@@ -166,8 +166,8 @@ linux_termio_to_bsd_termios(lt, bts)
 
 static void
 bsd_termios_to_linux_termio(bts, lt)
-	register struct termios *bts;
-	register struct linux_termio *lt;
+	struct termios *bts;
+	struct linux_termio *lt;
 {
 	int i, mask;
 
@@ -252,8 +252,8 @@ bsd_termios_to_linux_termio(bts, lt)
 
 static void
 linux_termios_to_bsd_termios(lts, bts)
-	register struct linux_termios *lts;
-	register struct termios *bts;
+	struct linux_termios *lts;
+	struct termios *bts;
 {
 	int index;
 
@@ -340,8 +340,8 @@ linux_termios_to_bsd_termios(lts, bts)
 
 static void
 bsd_termios_to_linux_termios(bts, lts)
-	register struct termios *bts;
-	register struct linux_termios *lts;
+	struct termios *bts;
+	struct linux_termios *lts;
 {
 	int i, mask;
 
@@ -439,17 +439,17 @@ bsd_termios_to_linux_termios(bts, lts)
 
 int
 linux_ioctl_termios(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct linux_sys_ioctl_args /* {
+	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	register struct file *fp;
-	register struct filedesc *fdp;
+	struct file *fp;
+	struct filedesc *fdp;
 	u_long com;
 	struct linux_termio tmplt;
 	struct linux_termios tmplts;
@@ -457,14 +457,17 @@ linux_ioctl_termios(p, v, retval)
 	caddr_t sg;
 	int idat;
 	struct sys_ioctl_args ia;
-	int error;
+	int error = 0;
 
 	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
+	FREF(fp);
 
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-		return (EBADF);
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
 
 	com = SCARG(uap, com);
 	retval[0] = 0;
@@ -473,12 +476,10 @@ linux_ioctl_termios(p, v, retval)
 	case LINUX_TCGETS:
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
 		if (error)
-			return error;
+			goto out;
 		bsd_termios_to_linux_termios(&tmpbts, &tmplts);
 		error = copyout(&tmplts, SCARG(uap, data), sizeof tmplts);
-		if (error)
-			return error;
-		return 0;
+		goto out;
 	case LINUX_TCSETS:
 	case LINUX_TCSETSW:
 	case LINUX_TCSETSF:
@@ -488,10 +489,10 @@ linux_ioctl_termios(p, v, retval)
 		 */
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
 		if (error)
-			return error;
+			goto out;
 		error = copyin(SCARG(uap, data), &tmplts, sizeof tmplts);
 		if (error)
-			return error;
+			goto out;
 		linux_termios_to_bsd_termios(&tmplts, &tmpbts);
 		switch (com) {
 		case LINUX_TCSETS:
@@ -505,18 +506,14 @@ linux_ioctl_termios(p, v, retval)
 			break;
 		}
 		error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&tmpbts, p);
-		if (error)
-			return error;
-		return 0;
+		goto out;
 	case LINUX_TCGETA:
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
 		if (error)
-			return error;
+			goto out;
 		bsd_termios_to_linux_termio(&tmpbts, &tmplt);
 		error = copyout(&tmplt, SCARG(uap, data), sizeof tmplt);
-		if (error)
-			return error;
-		return 0;
+		goto out;
 	case LINUX_TCSETA:
 	case LINUX_TCSETAW:
 	case LINUX_TCSETAF:
@@ -526,10 +523,10 @@ linux_ioctl_termios(p, v, retval)
 		 */
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA, (caddr_t)&tmpbts, p);
 		if (error)
-			return error;
+			goto out;
 		error = copyin(SCARG(uap, data), &tmplt, sizeof tmplt);
 		if (error)
-			return error;
+			goto out;
 		linux_termio_to_bsd_termios(&tmplt, &tmpbts);
 		switch (com) {
 		case LINUX_TCSETA:
@@ -543,13 +540,11 @@ linux_ioctl_termios(p, v, retval)
 			break;
 		}
 		error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&tmpbts, p);
-		if (error)
-			return error;
-		return 0;
+		goto out;
 	case LINUX_TIOCGETD:
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETD, (caddr_t)&idat, p);
 		if (error)
-			return error;
+			goto out;
 		switch (idat) {
 		case TTYDISC:
 			idat = LINUX_N_TTY;
@@ -569,13 +564,11 @@ linux_ioctl_termios(p, v, retval)
 			break;
 		}
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
-		if (error)
-			return error;
-		return 0;
+		goto out;
 	case LINUX_TIOCSETD:
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
-			return error;
+			goto out;
 		switch (idat) {
 		case LINUX_N_TTY:
 			idat = TTYDISC;
@@ -591,12 +584,11 @@ linux_ioctl_termios(p, v, retval)
 		 */
 		case LINUX_N_MOUSE:
 		default:
-			return EINVAL;
+			error = EINVAL;
+			goto out;
 		}
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCSETD, (caddr_t)&idat, p);
-		if (error)
-			return error;
-		return 0;
+		goto out;
 	case LINUX_TIOCGWINSZ:
 		SCARG(&ia, com) = TIOCGWINSZ;
 		break;
@@ -664,34 +656,41 @@ linux_ioctl_termios(p, v, retval)
 			error = (*fp->f_ops->fo_ioctl)(fp, TIOCGETA,
 			    (caddr_t)&tmpbts, p);
 			if (error)
-				return error;
+				goto out;
 			if ((int)SCARG(uap, data) == LINUX_TCIOFF)
 				c = tmpbts.c_cc[VSTOP];
 			else
 				c = tmpbts.c_cc[VSTART];
 			if (c == _POSIX_VDISABLE)
-				return 0;
+				goto out;
 
 			sg = stackgap_init(p->p_emul);
 			cp = (char *) stackgap_alloc(&sg, 1);
 			if ((error = copyout(&c, cp, 1)))
-				return error;
+				goto out;
 
 			SCARG(&wa, fd) = SCARG(uap, fd);
 			SCARG(&wa, buf) = cp;
 			SCARG(&wa, nbyte) = 1;
-			return sys_write(p, &wa, retval);
+			error = sys_write(p, &wa, retval);
+			goto out;
 		    }
 		default:
-			return EINVAL;
+			error = EINVAL;
+			goto out;
 		}
 		SCARG(uap, data) = 0;
 		break;
 	default:
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	SCARG(&ia, fd) = SCARG(uap, fd);
 	SCARG(&ia, data) = SCARG(uap, data);
-	return sys_ioctl(p, &ia, retval);
+	error = sys_ioctl(p, &ia, retval);
+
+out:
+	FRELE(fp);
+	return (error);
 }
