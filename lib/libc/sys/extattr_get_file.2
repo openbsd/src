@@ -1,4 +1,4 @@
-.\" $OpenBSD: extattr_get_file.2,v 1.3 2002/02/23 19:29:15 fgsch Exp $
+.\" $OpenBSD: extattr_get_file.2,v 1.4 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dima@unixfreak.org>
 .\" All rights reserved.
@@ -64,8 +64,7 @@ call retrieves the value of the specified extended attribute into
 a buffer pointed to by
 .Fa data
 of size
-.Fa nbytes
-.
+.Fa nbytes .
 The
 .Fn extattr_set_file
 call sets the value of the specified extended attribute to the data
@@ -130,7 +129,7 @@ is attribute-specific.
 .Pp
 For more information on named extended attributes, please see
 .Xr extattr 9 .
-.Sh CAVEAT
+.Sh CAVEATS
 This interface is under active development, and as such is subject to
 change as applications are adapted to use it.
 Developers are discouraged from relying on its stability.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.15 2001/11/08 11:12:09 mpech Exp $
+.\"	$OpenBSD: syslog.3,v 1.16 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,19 +104,19 @@ see
 A trailing newline is added if none is present.
 .Pp
 The
-.Fn syslog_r 
+.Fn syslog_r
 function is a reentrant version of the
 .Xr syslog 3
 function.
-It takes a pointer to a 
+It takes a pointer to a
 .Fa syslog_data
 structure which is used to store
 information.
 This parameter must be initialized before
 .Fn syslog_r
 is called.
-The SYSLOG_DATA_INIT constant is used for this purpose. 
-The 
+The SYSLOG_DATA_INIT constant is used for this purpose.
+The
 .Fa syslog_data
 structure is composed of the following elements:
 .Bl -tag -width connected
@@ -125,8 +125,8 @@ contains the file descriptor of the file where the message is logged.
 .It Dv connected
 indicates if connect has been done
 .It Dv opened
-indicates if 
-.Xr openlog_r 3 
+indicates if
+.Xr openlog_r 3
 has been called.
 .It Dv log_stat
 status bits, set by
@@ -181,15 +181,15 @@ normally of use only when debugging a program.
 .Pp
 The
 .Fn vsyslog_r
-is used the same way than 
+is used the same way than
 .Fn vsyslog
 except than it takes an additional pointer on a
 .Fa syslog_data
 structure.
-It is a reentrant version of the 
-.Fn vsyslog 
+It is a reentrant version of the
+.Fn vsyslog
 function described above.
-.Pp 
+.Pp
 The
 .Fn openlog
 function provides for more specialized processing of the messages sent by
@@ -286,21 +286,21 @@ through
 .Pp
 The
 .Fn openlog_r
-function is the reentrant version of the 
-.Fn openlog 
+function is the reentrant version of the
+.Fn openlog
 function.
-It takes an additional pointer on a 
+It takes an additional pointer on a
 .Fa syslog_data
 structure.
 This function must be used in conjunction with the other
-reentrant functions. 
+reentrant functions.
 .Pp
 The
 .Fn closelog
-function can be used to close the log file. 
+function can be used to close the log file.
 .Fn closelog_r
 do the same thing but in a reentrant way and takes an additional
-pointer on a 
+pointer on a
 .Fa syslog_data
 structure.
 .Pp
@@ -396,12 +396,12 @@ Always be sure to use the proper secure idiom:
 syslog("%s", string);
 .Ed
 .Pp
-.Fn syslog_r 
-and the other reentrant functions should only be used where 
+.Fn syslog_r
+and the other reentrant functions should only be used where
 reentrancy is required (for instance in a signal handler).
 .Fn syslog
-being not reentrant, only 
-.Fn syslog_r 
+being not reentrant, only
+.Fn syslog_r
 should be used here.
-For more information about reentrancy and signal handlers, see 
+For more information about reentrancy and signal handlers, see
 .Xr signal 3 .

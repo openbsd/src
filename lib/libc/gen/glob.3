@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.17 2001/03/18 17:18:58 deraadt Exp $
+.\"	$OpenBSD: glob.3,v 1.18 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -260,7 +260,7 @@ Limit the amount of memory used by matches to
 .Li ARG_MAX
 This option should be set for programs that can be coerced to a denial of
 service attack via patterns that expand to a very large number of matches,
-such as a long string of 
+such as a long string of
 .Li */../*/..
 .El
 .Pp
@@ -372,7 +372,7 @@ in the include file
 .Bl -tag -width GLOB_NOCHECK
 .It Dv GLOB_NOSPACE
 An attempt to allocate memory failed, or if
-.Va errno 
+.Va errno
 was 0
 .Li GLOB_LIMIT
 was specified in the flags and

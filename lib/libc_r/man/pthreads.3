@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.16 2002/02/21 08:37:55 fgsch Exp $
+.\" $OpenBSD: pthreads.3,v 1.17 2002/04/30 16:31:42 mpech Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -33,10 +33,9 @@ flags (see
 .Sx Thread flags ) ,
 signal mask, and name (as set by
 .Xr pthread_set_name_np 3 ) .
-If the environment variable 
+If the environment variable
 .Ev PTHREAD_DEBUG
 is defined additional information is displayed.
-.Pp
 .Ss Thread states
 Threads can be in one of these states:
 .Bl -tag -offset indent -width Dv -compact

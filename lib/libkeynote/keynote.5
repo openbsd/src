@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.9 2001/09/03 20:14:51 deraadt Exp $
+.\" $OpenBSD: keynote.5,v 1.10 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -133,7 +133,7 @@ and
 (where o represents any octal digit) may be used to represent any non-NUL
 ASCII characters with their corresponding octal values (thus,
 .Qq \e Ns 012
-is the same as 
+is the same as
 .Qq \e Ns n ,
 .Qq \e Ns 101
 is
@@ -159,7 +159,7 @@ becomes
 .Qq a ,
 and
 .Qq \e\e
-becomes 
+becomes
 .Qq \e ) .
 The following four strings are equivalent:
 .Bd -literal
@@ -233,7 +233,7 @@ expressions and may be recursively dereferenced. In the simplest case,
 an attribute is dereferenced simply by using its name outside of
 quotes; e.g., the string value of the attribute named
 .Qq foo
-is by reference to 
+is by reference to
 .Sq foo
 (outside of quotes).
 The
@@ -329,7 +329,7 @@ and key bit encoding (e.g., HEX or BASE64). By convention, the ALGORITHM
 substring starts with an alphabetic character and can contain letters,
 digits, underscores, or dashes (i.e., it should match the regular expression
 .Qo Ns Bo a-zA-Z
-.Bc Ns Bo a-zA-Z0-9_- 
+.Bc Ns Bo a-zA-Z0-9_-
 .Bc Ns *
 .Qc Ns ) .
 The IANA (or some other appropriate authority) will provide a registry of
@@ -367,7 +367,7 @@ KeyNote-Version field, if included, should appear first.
 This field adds or overrides action attributes in the current
 assertion only.
 This mechanism allows the use of short names for (frequently lengthy)
-cryptographic principal identifiers, especially to make the Licensees field 
+cryptographic principal identifiers, especially to make the Licensees field
 more readable.
 The Local-Constants field is of the form:
 .Bd -literal
@@ -540,7 +540,7 @@ within clauses of condition fields, but in no other KeyNote field.
 .Pp
 The keywords
 .Qq true
-and 
+and
 .Qq false
 are not reserved; they can be used as attribute or principal identifier
 names (although this practice makes assertions difficult to understand

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.27 2001/12/03 23:58:48 ericj Exp $
+.\"	$OpenBSD: mmap.2,v 1.28 2002/04/30 16:31:42 mpech Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -224,8 +224,8 @@ Due to a limitation of the current vm system (see
 mapping descriptors
 .Dv PROT_WRITE
 without also specifying
-.Dv PROT_READ 
-is useless 
+.Dv PROT_READ
+is useless
 (results in a segmentation fault when first accessing the mapping).
 This means that such descriptors must be opened with
 .Dv O_RDWR ,

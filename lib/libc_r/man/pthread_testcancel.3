@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.7 2002/02/21 20:12:19 fgsch Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.8 2002/04/30 16:31:42 mpech Exp $
 .\"
 .Dd January 17, 1999
 .Dt PTHREAD_TESTCANCEL 3
@@ -67,7 +67,6 @@ The
 function creates a cancellation point in the calling thread. The
 .Fn pthread_testcancel
 function has no effect if cancelability is disabled.
-.Pp
 .Ss Cancelability States
 The cancelability state of a thread determines the action taken upon
 receipt of a cancellation request. The thread may control cancellation in
@@ -188,4 +187,4 @@ or
 .Sh STANDARDS
 .Fn pthread_testcancel
 conforms to
-.St -p1003.1-96   
+.St -p1003.1-96

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmget.2,v 1.9 2001/08/25 17:54:34 hugh Exp $
+.\"	$OpenBSD: shmget.2,v 1.10 2002/04/30 16:31:42 mpech Exp $
 .\"	$NetBSD: shmget.2,v 1.2 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -58,7 +58,8 @@ does not have a shared memory segment identifier associated with it, and the
 bit is set in
 .Fa shmflg .
 .Pp
-If a new shared memory segment is created, the data structure associated with it (the
+If a new shared memory segment is created, the data structure associated with
+it (the
 .Va shmid_ds
 structure, see
 .Xr shmctl 2 )
@@ -94,7 +95,8 @@ is set to the value of
 .Fa size .
 .El
 .Sh RETURN VALUES
-Upon successful completion a positive shared memory segment identifier is returned.
+Upon successful completion a positive shared memory segment identifier is
+returned.
 Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.

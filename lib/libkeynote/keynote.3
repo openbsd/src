@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.31 2001/09/03 20:14:51 deraadt Exp $
+.\" $OpenBSD: keynote.3,v 1.32 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -270,12 +270,12 @@ if it has been defined as the callback function for more than one attribute.
 In this case,
 .Fa name
 is a regular expression that may match more than one attribute.
-In case of conflict between a regular expression and a 
+In case of conflict between a regular expression and a
 .Dq simple
 attribute, the latter will be given priority.
 In case of conflict between two regular expression attributes, the one added
 later will be given priority.
-A callback function should never change the current 
+A callback function should never change the current
 .Nm
 session, start/invoke/operate on another session, or call one of the
 session-API functions.

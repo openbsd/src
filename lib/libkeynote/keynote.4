@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.20 2001/09/03 20:14:51 deraadt Exp $
+.\" $OpenBSD: keynote.4,v 1.21 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -54,16 +54,16 @@ to the authorization to perform specific tasks.
 A trust-management system has five basic components:
 .Bl -bullet -offset "xxx"
 .It
-A language for describing 
+A language for describing
 .Sq actions ,
 which are operations with security consequences that are
 to be controlled by the system.
 .It
-A mechanism for identifying 
+A mechanism for identifying
 .Sq principals ,
 which are entities that can be authorized to perform actions.
 .It
-A language for specifying application 
+A language for specifying application
 .Sq policies ,
 which govern the actions that principals are authorized to perform.
 .It
@@ -71,7 +71,7 @@ A language for specifying
 .Sq credentials ,
 which allow principals to delegate authorization to other principals.
 .It
-A 
+A
 .Sq compliance checker ,
 which provides a service to applications for determining how an action
 requested by principals should be handled, given a policy and a set
@@ -111,7 +111,7 @@ contain predicates that describe the trusted actions permitted by
 the holders of specific public keys.
 KeyNote assertions are essentially small, highly-structured programs.
 A signed assertion, which can be sent over an untrusted network, is also
-called a 
+called a
 .Sq credential assertion .
 Credential assertions, which also serve the role of certificates, have
 the same syntax as policy assertions but are also signed by the principal
@@ -124,7 +124,7 @@ Actions are specified as a collection of name-value pairs.
 .It
 Principal names can be any convenient string and can directly represent
 cryptographic public keys.
-.It 
+.It
 The same language is used for both policies and credentials.
 .It
 The policy and credential language is concise, highly expressive, human
@@ -133,7 +133,7 @@ transmission media, including electronic mail.
 .It
 The compliance checker returns an application-configured
 .Sq policy compliance value
-that describes how a request should be handled by the application. 
+that describes how a request should be handled by the application.
 Policy compliance values are always positively derived from policy and
 credentials, facilitating analysis of KeyNote-based systems.
 .It
@@ -142,7 +142,7 @@ applications.
 .El
 .Pp
 In KeyNote, the authority to perform trusted actions is associated
-with one or more 
+with one or more
 .Sq principals .
 A principal may be a physical entity, a process in an operating system,
 a public key, or any other convenient abstraction.
@@ -152,7 +152,7 @@ In some cases, a Principal Identifier will contain a cryptographic key
 interpreted by the KeyNote system (e.g., for credential signature
 verification).
 In other cases, Principal Identifiers may have a structure that is opaque
-to KeyNote. 
+to KeyNote.
 .Pp
 Principals perform two functions of concern to KeyNote: They request
 .Sq actions
@@ -174,7 +174,7 @@ Applications invoke the KeyNote compliance checker by issuing a
 .Sq query
 containing a proposed action attribute set and identifying the principal(s)
 requesting it.
-The KeyNote system determines and returns an appropriate 
+The KeyNote system determines and returns an appropriate
 .Sq policy compliance value
 from an ordered set of possible responses.
 .Pp
@@ -189,7 +189,7 @@ compliance values, when appropriate for the application (e.g.,
 .Qq no access ,
 .Qq restricted access ,
 .Qq full access ) .
-Applications can configure the relative ordering (from 
+Applications can configure the relative ordering (from
 .Sq weakest
 to
 .Sq strongest )
@@ -401,7 +401,7 @@ through a
 mechanism (e.g., for attribute values that represent values from among
 a very large namespace).
 .Sh ACTION REQUESTER
-At least one Principal must be identified in each query as the 
+At least one Principal must be identified in each query as the
 .Sq requester
 of the action. Actions may be requested by several principals, each
 considered to have individually requested it.
@@ -444,7 +444,7 @@ normalizing them by conversion to a canonical form.
 .Pp
 Every cryptographic algorithm used in KeyNote defines a method for
 converting keys to their canonical form and that specifies how the
-comparison for equality of two keys is performed. 
+comparison for equality of two keys is performed.
 If the algorithm named in the identifier is unknown to KeyNote,
 the identifier is treated as opaque.
 .Pp
@@ -542,7 +542,7 @@ Here, if the value of the
 .Qq user_id
 attribute is
 .Qq 1073
-and the 
+and the
 .Qq user_name
 attribute is
 .Qq root ,

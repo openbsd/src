@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.13 2001/11/20 18:59:08 deraadt Exp $
+.\"	$OpenBSD: setjmp.3,v 1.14 2002/04/30 16:31:42 mpech Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,7 +146,7 @@ Conversely,
 .Fn _setjmp Ns / Ns Fn _longjmp
 are functionally equivalent to
 .Fn sigsetjmp Ns / Ns Fn siglongjmp
-when 
+when
 .Fn sigsetjmp
 is called with a zero-value
 .Fa savemask .
