@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.4 1996/06/26 21:26:38 maja Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.5 1996/07/04 21:17:15 deraadt Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -70,10 +70,7 @@ If no match was found in the list success is returned.
 .Pp
 If access is denied every call will cause a 
 .Nm no such domain
-error for the caller. To add the security in 
-.Xr ypserv 8
-is not the best place. It would have been better to add it in
-.Xr portmap 8 .
+error for the caller.
 .Pp
 There is no default name for this file. Start 
 .Nm ypserv

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.5 1996/06/30 19:46:06 maja Exp $
+.\"	$OpenBSD: ypserv.8,v 1.6 1996/07/04 21:17:14 deraadt Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -77,9 +77,7 @@ can be found in the file
 .
 .Pp
 If a host isn't secure all queries to the server will result in a YP_NODOM
-result. It would be better to add the security to
-.Xr portmap 8
-and not allow unsecure host to bind to this rpc service.
+result.
 .Pp
 IF the file
 .Nm /var/yp/ypserv.log
