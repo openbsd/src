@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.23 2004/05/08 20:00:44 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.24 2004/05/08 20:18:45 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -244,6 +244,25 @@ group "peering AS65002" {
 	}
 }
 .Ed
+.Pp
+Instead of the neighbor's IP address an address/netmask pair may be given.
+.Bd -literal -offset indent
+neighbor 10.0.0.0/8
+.Ed
+.Pp
+In this case, the neighbor specification becomes a
+.Em template ,
+and if a neighbor connects from an IP address within the given network,
+the template is
+.Em cloned ,
+inheriting everything from the template but the remote address which is
+replaced by the connecting neighbor's address.
+With a template specification it is valid to omit
+.Ar remote-as ,
+.Ar bgpd
+will accept any AS the neighbor presents in the
+.Em OPEN
+message then.
 .Pp
 There are several neighbor properties:
 .Bl -tag -width xxxxxxxx
