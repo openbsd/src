@@ -27,7 +27,7 @@
  * Mountain View, California  94043
  */
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.4 1996/08/19 08:32:06 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.5 1997/05/28 21:28:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -41,7 +41,7 @@ static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.4 1996/08/19 08:32:06 tholo Exp $"
  * and the tcp transport level.  A record is composed on one or more
  * record fragments.  A record fragment is a thirty-two bit header followed
  * by n bytes of data, where n is contained in the header.  The header
- * is represented as a htonl(u_long).  Thegh order bit encodes
+ * is represented as a htonl(u_int32_t).  The high order bit encodes
  * whether or not the fragment is the last fragment of the record
  * (1 => fragment is last, 0 => more fragments to follow. 
  * The other 31 bits encode the byte length of the fragment.
@@ -82,7 +82,7 @@ static struct  xdr_ops xdrrec_ops = {
 
 /*
  * A record is composed of one or more record fragments.
- * A record fragment is a two-byte header followed by zero to
+ * A record fragment is a four-byte header followed by zero to
  * 2**32-1 bytes.  The header is treated as a long unsigned and is
  * encode/decoded to the network via htonl/ntohl.  The low order 31 bits
  * are a byte count of the fragment.  The highest order bit is a boolean:
@@ -105,7 +105,7 @@ typedef struct rec_strm {
 	caddr_t out_base;	/* output buffer (points to frag header) */
 	caddr_t out_finger;	/* next output position */
 	caddr_t out_boundry;	/* data cannot up to this address */
-	u_int32_t *frag_header;	/* beginning of curren fragment */
+	u_int32_t *frag_header;	/* beginning of current fragment */
 	bool_t frag_sent;	/* true if buffer sent in middle of record */
 	/*
 	 * in-coming bits
@@ -538,7 +538,7 @@ get_input_bytes(rstrm, addr, len)
 	return (TRUE);
 }
 
-static bool_t  /* next two bytes of the input stream are treated as a header */
+static bool_t  /* next four bytes of the input stream are treated as a header */
 set_input_fragment(rstrm)
 	register RECSTREAM *rstrm;
 {
