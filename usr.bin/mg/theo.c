@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.45 2003/03/12 10:05:36 art Exp $	*/
+/*	$OpenBSD: theo.c,v 1.46 2003/03/13 11:22:31 henning Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -128,7 +128,8 @@ static const char *talk[] = {
 	"Yes, but the ports people are into S&M.",
 	"Buttons are for idiots.",
 	"We are not hackers. We are turd polishing craftsmen.",
-	"if ya break cvs, we hunt ya and break yer legs"
+	"if ya break cvs, we hunt ya and break yer legs",
+	"who cares.  style(9) can bite my ass"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
