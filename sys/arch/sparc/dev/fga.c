@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.1 1999/07/23 19:11:25 jason Exp $	*/
+/*	$OpenBSD: fga.c,v 1.2 1999/07/25 23:49:37 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -59,8 +59,7 @@
 
 #include <sparc/dev/fgareg.h>
 #include <sparc/dev/fgavar.h>
-#include <sparc/dev/fgaio.h>
-#include <sparc/dev/daadioreg.h>
+#include <machine/fgaio.h>
 
 int	fgamatch	__P((struct device *, void *, void *));
 void	fgaattach	__P((struct device *, struct device *, void *));

@@ -64,7 +64,7 @@
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cd1190reg.h>
 
-#include "bppioctl.h"
+#include <sparc/bppioctl.h>
 #include "magmareg.h"
 
 /*

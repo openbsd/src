@@ -1,4 +1,4 @@
-/*	$OpenBSD: scf.c,v 1.1 1999/07/23 19:11:26 jason Exp $	*/
+/*	$OpenBSD: scf.c,v 1.2 1999/07/25 23:49:37 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -54,7 +54,7 @@
 #include <machine/autoconf.h>
 #include <sparc/cpu.h>
 #include <sparc/sparc/cpuvar.h>
-#include <sparc/dev/scfio.h>
+#include <machine/scfio.h>
 #include <sparc/dev/scfreg.h>
 
 int	scfmatch	__P((struct device *, void *, void *));
