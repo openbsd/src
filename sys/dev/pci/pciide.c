@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.61 2001/08/12 20:33:50 mickey Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.62 2001/08/23 11:04:24 art Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2380,6 +2380,7 @@ cmd_channel_map(pa, sc, channel)
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
+	cp->hw_ok = 1;
 	pciide_map_compat_intr(pa, cp, channel, interface);
 	if (cp->hw_ok == 0)
 		return;
