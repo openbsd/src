@@ -1,3 +1,4 @@
+/*	$OpenBSD: zsvar.h,v 1.8 1996/08/12 00:28:17 downsj Exp $	*/
 /*	$NetBSD: zsvar.h,v 1.8 1996/03/31 22:39:08 pk Exp $ */
 
 /*
@@ -92,7 +93,7 @@ struct zsdevice {
 
 struct zs_chanstate {
 	struct	zs_chanstate *cs_next;	/* linked list for zshard() */
-	volatile struct zschan *cs_zc;	/* points to hardware regs */
+	struct zs_softc *cs_sc;		/* points to my softc */
 	int	cs_unit;		/* unit number */
 	struct	tty *cs_ttyp;		/* ### */
 
