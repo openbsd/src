@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.11 1997/02/24 13:33:59 niklas Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.12 1997/07/24 22:59:31 deraadt Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -444,6 +444,8 @@ fddi_input(ifp, fh, m)
 			break;
 
 		case ETHERTYPE_ARP:
+			if (ifp->if_flags & IFF_NOARP)
+				goto dropanyway;
 			schednetisr(NETISR_ARP);
 			inq = &arpintrq;
 			break;

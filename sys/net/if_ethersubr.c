@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.21 1997/07/23 20:37:19 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.22 1997/07/24 22:59:29 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -484,11 +484,15 @@ decapsulate:
 		break;
 
 	case ETHERTYPE_ARP:
+		if (ifp->if_flags & IFF_NOARP)
+			goto dropanyway;
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
 		break;
 
 	case ETHERTYPE_REVARP:
+		if (ifp->if_flags & IFF_NOARP)
+			goto dropanyway;
 		revarpinput(m);	/* XXX queue? */
 		return;
 

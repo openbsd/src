@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.9 1997/07/21 07:52:05 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.10 1997/07/24 22:59:35 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -354,6 +354,9 @@ arpresolve(ac, rt, m, dst, desten)
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
 		return 1;
 	}
+	if (((struct ifnet *)ac)->if_flags & IFF_NOARP)
+		return 0;
+
 	/*
 	 * There is an arptab entry, but no ethernet address
 	 * response yet.  Replace the held mbuf with this
