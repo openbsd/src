@@ -107,7 +107,6 @@
 ./sbin/mount_mfs
 ./sbin/mount_msdos
 ./sbin/mount_nfs
-./sbin/mount_ntfs
 ./sbin/mount_null
 ./sbin/mount_portal
 ./sbin/mount_procfs

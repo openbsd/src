@@ -1837,7 +1837,6 @@
 ./usr/share/man/cat8/mount_mfs.0
 ./usr/share/man/cat8/mount_msdos.0
 ./usr/share/man/cat8/mount_nfs.0
-./usr/share/man/cat8/mount_ntfs.0
 ./usr/share/man/cat8/mount_null.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
