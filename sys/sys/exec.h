@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.57 1995/10/10 01:27:07 mycroft Exp $	*/
+/*	$NetBSD: exec.h,v 1.58 1995/11/28 08:16:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -69,7 +69,7 @@ struct ps_strings {
  */
 #if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
     defined(COMPAT_IBCS2) || defined(COMPAT_SVR4) || defined(COMPAT_OSF1) || \
-    defined(COMPAT_LINUX) || defined(COMPAT_FREEBSD)
+    defined(COMPAT_LINUX) || defined(COMPAT_FREEBSD) || defined(COMPAT_HPUX)
 #define	STACKGAPLEN	400	/* plenty enough for now */
 #else
 #define	STACKGAPLEN	0
