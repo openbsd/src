@@ -1,7 +1,7 @@
-/*	$OpenBSD: exec.c,v 1.7 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: exec.c,v 1.8 2003/09/05 19:40:42 tedu Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: exec.c,v 1.7 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: exec.c,v 1.8 2003/09/05 19:40:42 tedu Exp $";
 #endif
 
 /*
@@ -41,6 +41,10 @@ vsystem(const char *fmt, ...)
 	int	ret;
 
 	maxargs = (size_t) sysconf(_SC_ARG_MAX);
+	if ((long)maxargs == -1) {
+		pwarnx("vsystem can't retrieve max args");
+		return 1;
+	}
 	maxargs -= 32;			/* some slop for the sh -c */
 	if ((cmd = (char *) malloc(maxargs)) == (char *) NULL) {
 		pwarnx("vsystem can't alloc arg space");
@@ -48,8 +52,9 @@ vsystem(const char *fmt, ...)
 	}
 
 	va_start(args, fmt);
-	if (vsnprintf(cmd, maxargs, fmt, args) > maxargs) {
+	if (vsnprintf(cmd, maxargs, fmt, args) >= maxargs) {
 		pwarnx("vsystem args are too long");
+		free(cmd);
 		return 1;
 	}
 #ifdef DEBUG
