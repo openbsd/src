@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.31 1998/10/03 21:19:01 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.32 1998/10/04 01:37:55 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -119,7 +119,8 @@ void	sdattach __P((struct device *, struct device *, void *));
 int	sdlock __P((struct sd_softc *));
 void	sdunlock __P((struct sd_softc *));
 void	sdminphys __P((struct buf *));
-void	sdgetdisklabel __P((dev_t, struct sd_softc *));
+void	sdgetdisklabel __P((dev_t, struct sd_softc *, struct disklabel *,
+			    struct cpu_disklabel *, int));
 void	sdstart __P((void *));
 void	sddone __P((struct scsi_xfer *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
@@ -355,7 +356,8 @@ sdopen(dev, flag, fmt, p)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
 
 			/* Load the partition info if not already loaded. */
-			sdgetdisklabel(dev, sd);
+			sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
+			    sd->sc_dk.dk_cpulabel, 0);
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
 		}
 	}
@@ -727,6 +729,14 @@ sdioctl(dev, cmd, addr, flag, p)
 		return EIO;
 
 	switch (cmd) {
+	case DIOCGPDINFO: {
+			struct cpu_disklabel osdep;
+
+			sdgetdisklabel(dev, sd, (struct disklabel *)addr,
+			    &osdep, 1);
+			return 0;
+		}
+
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
 		return 0;
@@ -804,15 +814,17 @@ sdioctl(dev, cmd, addr, flag, p)
  * Load the label information on the named device
  */
 void
-sdgetdisklabel(dev, sd)
+sdgetdisklabel(dev, sd, lp, clp, spoofonly)
 	dev_t dev;
 	struct sd_softc *sd;
+	struct disklabel *lp;
+	struct cpu_disklabel *clp;
+	int spoofonly;
 {
-	struct disklabel *lp = sd->sc_dk.dk_label;
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(clp, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sd->params.blksize;
 	lp->d_ntracks = sd->params.heads;
@@ -821,7 +833,7 @@ sdgetdisklabel(dev, sd)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	if (lp->d_secpercyl == 0) {
 		lp->d_secpercyl = 100;
-		/* as long as it's not 0 - readdisklabel divides by it (?) */
+		/* as long as it's not 0 - readdisklabel divides by it */
 	}
 
 	lp->d_type = DTYPE_SCSI;
@@ -862,8 +874,8 @@ sdgetdisklabel(dev, sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(SDLABELDEV(dev), sdstrategy, lp,
-	    sd->sc_dk.dk_cpulabel, 0);
+	errstring = readdisklabel(SDLABELDEV(dev), sdstrategy, lp, clp,
+	    spoofonly);
 	if (errstring) {
 		/*printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);*/
 		return;
@@ -1225,14 +1237,14 @@ sddump(dev, blkno, va, size)
 #endif	/* __BDEVSW_DUMP_OLD_TYPE */
 
 /*
- * Copy up to len chars from src to dst, ignoring non-printables. 
+ * Copy up to len chars from src to dst, ignoring non-printables.
  * Must be room for len+1 chars in dst so we can write the NUL.
  * Does not assume src is NUL-terminated.
  */
 void
 viscpy(dst, src, len)
 	u_char *dst;
-	u_char *src; 
+	u_char *src;
 	int len;
 {
 	while (len > 0 && *src != '\0') {
