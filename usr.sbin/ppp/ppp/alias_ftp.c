@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2001 Charles Mott <cmott@scientech.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $OpenBSD: alias_ftp.c,v 1.9 2001/06/07 09:32:55 brian Exp $
+ */
+
 /*
     Alias_ftp.c performs special processing for FTP sessions under
     TCP.  Specifically, when a PORT/EPRT command from the client
@@ -40,8 +68,6 @@
 	 Add support for passive mode, alias the 227 replies.
 
     See HISTORY file for record of revisions.
-
-    $OpenBSD: alias_ftp.c,v 1.8 2000/11/02 00:53:47 brian Exp $
 */
 
 /* Includes */
@@ -58,6 +84,9 @@
 
 #define FTP_CONTROL_PORT_NUMBER 21
 #define MAX_MESSAGE_SIZE	128
+
+/* FTP protocol flags. */
+#define WAIT_CRLF		0x01
 
 enum ftp_message_type {
     FTP_PORT_COMMAND,
@@ -82,7 +111,7 @@ struct ip *pip,	  /* IP packet to examine/patch */
 struct alias_link *link, /* The link to go through (aliased port) */
 int maxpacketsize  /* The maximum size this packet can grow to (including headers) */)
 {
-    int hlen, tlen, dlen;
+    int hlen, tlen, dlen, pflags;
     char *sptr;
     struct tcphdr *tc;
     int ftp_message_type;
@@ -101,7 +130,8 @@ int maxpacketsize  /* The maximum size this packet can grow to (including header
  * Check that data length is not too long and previous message was
  * properly terminated with CRLF.
  */
-    if (dlen <= MAX_MESSAGE_SIZE && GetLastLineCrlfTermed(link)) {
+    pflags = GetProtocolFlags(link);
+    if (dlen <= MAX_MESSAGE_SIZE && (pflags & WAIT_CRLF)) {
 	ftp_message_type = FTP_UNKNOWN_MESSAGE;
 
 	if (ntohs(tc->th_dport) == FTP_CONTROL_PORT_NUMBER) {
@@ -131,8 +161,11 @@ int maxpacketsize  /* The maximum size this packet can grow to (including header
     if (dlen) {                  /* only if there's data */
       sptr = (char *) pip; 	 /* start over at beginning */
       tlen = ntohs(pip->ip_len); /* recalc tlen, pkt may have grown */
-      SetLastLineCrlfTermed(link,
-			    (sptr[tlen-2] == '\r') && (sptr[tlen-1] == '\n'));
+      if (sptr[tlen-2] == '\r' && sptr[tlen-1] == '\n')
+	pflags &= ~WAIT_CRLF;
+      else
+	pflags |= WAIT_CRLF;
+      SetProtocolFlags(link, pflags);
     }
 }
 

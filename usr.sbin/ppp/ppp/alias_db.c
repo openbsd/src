@@ -1,4 +1,34 @@
-/*  -*- mode: c; tab-width: 8; c-basic-indent: 4; -*-
+/*  -*- mode: c; tab-width: 8; c-basic-indent: 4; -*- */
+
+/*-
+ * Copyright (c) 2001 Charles Mott <cmott@scientech.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $OpenBSD: alias_db.c,v 1.18 2001/06/07 09:32:55 brian Exp $
+ */
+
+/*
     Alias_db.c encapsulates all data structures used for storing
     packet aliasing data.  Other parts of the aliasing software
     access data through functions provided in this file.
@@ -114,8 +144,6 @@
 	as input.
 
     See HISTORY file for additional revisions.
-
-    $OpenBSD: alias_db.c,v 1.17 2001/03/25 12:33:04 brian Exp $
 */
 
 
@@ -279,6 +307,7 @@ struct alias_link                /* Main data structure */
 #define LINK_PPTP                     (IPPROTO_MAX + 4)
 
     int flags;                   /* indicates special characteristics   */
+    int pflags;                  /* protocol-specific flags */
 
 /* flag bits */
 #define LINK_UNKNOWN_DEST_PORT     0x01
@@ -286,7 +315,6 @@ struct alias_link                /* Main data structure */
 #define LINK_PERMANENT             0x04
 #define LINK_PARTIALLY_SPECIFIED   0x03 /* logical-or of first two bits */
 #define LINK_UNFIREWALLED          0x08
-#define LINK_LAST_LINE_CRLF_TERMED 0x10
 
     int timestamp;               /* Time link was last accessed         */
     int expire_time;             /* Expire time for link                */
@@ -991,6 +1019,7 @@ AddLink(struct in_addr  src_addr,
         link->link_type         = link_type;
         link->sockfd            = -1;
         link->flags             = 0;
+        link->pflags            = 0;
         link->timestamp         = timeStamp;
 
     /* Expiration time */
@@ -1829,7 +1858,7 @@ FindAliasAddress(struct in_addr original_addr)
     GetOriginalPort(), GetAliasPort()
     SetAckModified(), GetAckModified()
     GetDeltaAckIn(), GetDeltaSeqOut(), AddSeq()
-    SetLastLineCrlfTermed(), GetLastLineCrlfTermed()
+    SetProtocolFlags(), GetProtocolFlags()
     SetDestCallId()
 */
 
@@ -2197,20 +2226,17 @@ ClearCheckNewLink(void)
 }
 
 void
-SetLastLineCrlfTermed(struct alias_link *link, int yes)
+SetProtocolFlags(struct alias_link *link, int pflags)
 {
 
-    if (yes)
-	link->flags |= LINK_LAST_LINE_CRLF_TERMED;
-    else
-	link->flags &= ~LINK_LAST_LINE_CRLF_TERMED;
+    link->pflags = pflags;;
 }
 
 int
-GetLastLineCrlfTermed(struct alias_link *link)
+GetProtocolFlags(struct alias_link *link)
 {
 
-    return (link->flags & LINK_LAST_LINE_CRLF_TERMED);
+    return (link->pflags);
 }
 
 void

@@ -1,3 +1,31 @@
+/*-
+ * Copyright (c) 2001 Charles Mott <cmott@scientech.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $OpenBSD: alias_local.h,v 1.12 2001/06/07 09:32:55 brian Exp $
+ */
+
 /*
  * Alias_local.h contains the function prototypes for alias.c,
  * alias_db.c, alias_util.c and alias_ftp.c, alias_irc.c (as well
@@ -13,8 +41,6 @@
  * Initial version:  August, 1996  (cjm)    
  *
  * <updated several times by original author and Eivind Eklund>
- *
- * $OpenBSD: alias_local.h,v 1.11 2001/03/25 12:33:04 brian Exp $
  */
 
 #ifndef _ALIAS_LOCAL_H_
@@ -144,8 +170,8 @@ int	 GetDeltaSeqOut(struct ip *_pip, struct alias_link *_link);
 void	 AddSeq(struct ip *_pip, struct alias_link *_link, int _delta);
 void	 SetExpire(struct alias_link *_link, int _expire);
 void	 ClearCheckNewLink(void);
-void	 SetLastLineCrlfTermed(struct alias_link *_link, int _yes);
-int	 GetLastLineCrlfTermed(struct alias_link *_link);
+void	 SetProtocolFlags(struct alias_link *_link, int _pflags);
+int	 GetProtocolFlags(struct alias_link *_link);
 void	 SetDestCallId(struct alias_link *_link, u_int16_t _cid);
 #ifndef NO_FW_PUNCH
 void	 PunchFWHole(struct alias_link *_link);
