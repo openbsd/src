@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.15 2004/02/24 13:21:32 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.16 2004/02/24 13:36:13 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -97,8 +97,6 @@ struct sockaddr_in sockaddr_broadcast;
 #define TIME_MAX 2147483647
 #endif
 
-u_int16_t	local_port;
-u_int16_t	remote_port;
 int		log_priority;
 int		no_daemon;
 int		save_scripts;
@@ -215,7 +213,6 @@ int
 main(int argc, char *argv[])
 {
 	extern char		*__progname;
-	struct servent		*ent;
 	struct interface_info	*ip = NULL;
 	int			 ch, fd, seed, quiet = 0;
 
@@ -263,22 +260,12 @@ main(int argc, char *argv[])
 	if (quiet)
 		log_perror = 0;
 
-	/* Default to the DHCP/BOOTP port. */
-	if (!local_port) {
-		ent = getservbyname("dhcpc", "udp");
-		if (!ent)
-			local_port = htons(68);
-		else
-			local_port = ent->s_port;
-	}
-	remote_port = htons(ntohs(local_port) - 1);	/* XXX */
-
 	/* Get the current time... */
 	time(&cur_time);
 
 	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
 	sockaddr_broadcast.sin_family = AF_INET;
-	sockaddr_broadcast.sin_port = remote_port;
+	sockaddr_broadcast.sin_port = htons(REMOTE_PORT);
 	sockaddr_broadcast.sin_addr.s_addr = INADDR_BROADCAST;
 	sockaddr_broadcast.sin_len = sizeof(sockaddr_broadcast);
 	inaddr_any.s_addr = INADDR_ANY;
@@ -1324,7 +1311,7 @@ cancel:
 		memcpy(&destination.sin_addr.s_addr,
 		    ip->client->destination.iabuf,
 		    sizeof(destination.sin_addr.s_addr));
-	destination.sin_port = remote_port;
+	destination.sin_port = htons(REMOTE_PORT);
 	destination.sin_family = AF_INET;
 	destination.sin_len = sizeof(destination);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.13 2004/02/24 13:21:32 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.14 2004/02/24 13:36:13 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -77,6 +77,9 @@
 #include "tree.h"
 #include "hash.h"
 #include "inet.h"
+
+#define	LOCAL_PORT	68
+#define	REMOTE_PORT	67
 
 struct option_data {
 	int len;
@@ -619,7 +622,6 @@ char *piaddr(struct iaddr);
 extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern time_t cur_time;
-extern u_int16_t local_port;
 extern int log_priority;
 extern int log_perror;
 

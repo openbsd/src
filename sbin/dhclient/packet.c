@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.6 2004/02/24 00:34:40 henning Exp $	*/
+/*	$OpenBSD: packet.c,v 1.7 2004/02/24 13:36:13 henning Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -126,7 +126,7 @@ assemble_udp_ip_header(struct interface_info *interface, unsigned char *buf,
 	*bufix += sizeof(ip);
 
 	/* Fill out the UDP header */
-	udp.uh_sport = local_port;		/* XXX */
+	udp.uh_sport = htons(LOCAL_PORT);	/* XXX */
 	udp.uh_dport = port;			/* XXX */
 	udp.uh_ulen = htons(sizeof(udp) + len);
 	memset(&udp.uh_sum, 0, sizeof(udp.uh_sum));
