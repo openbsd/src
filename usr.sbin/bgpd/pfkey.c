@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.7 2004/01/28 17:27:55 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.8 2004/01/28 17:57:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@
 #define	IOV_CNT	8
 
 static u_int32_t	sadb_msg_seq = 1;
+static int		fd;
 
 int	pfkey_reply(int, u_int32_t *);
 int	pfkey_send(int, uint8_t, struct bgpd_addr *, struct bgpd_addr *,
@@ -275,28 +276,15 @@ int
 pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
     u_int32_t *spi)
 {
-	int		sd;
-	int		ret = -1;
-
-	if ((sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) {
-		if (errno == EPROTONOSUPPORT)
-			log_warnx("no kernel support for PF_KEY");
-		else
-			log_warn("socket");
+	if (pfkey_send(fd, SADB_GETSPI, src, dst, 0, NULL) < 0)
 		return (-1);
-	}
-	if (pfkey_send(sd, SADB_GETSPI, src, dst, 0, NULL) < 0)
-		goto done;
-	if (pfkey_reply(sd, spi) < 0)
-		goto done;
-	if (pfkey_send(sd, SADB_UPDATE, src, dst, *spi, key) < 0)
-		goto done;
-	if (pfkey_reply(sd, NULL) < 0)
-		goto done;
-	ret = 0;
-done:
-	close(sd);
-	return (ret);
+	if (pfkey_reply(fd, spi) < 0)
+		return (-1);
+	if (pfkey_send(fd, SADB_UPDATE, src, dst, *spi, key) < 0)
+		return (-1);
+	if (pfkey_reply(fd, NULL) < 0)
+		return (-1);
+	return (0);
 }
 
 int
@@ -321,5 +309,19 @@ pfkey_auth_establish(struct peer *p)
 int
 pfkey_auth_remove(struct peer *p)
 {
+	return (0);
+}
+
+int
+pfkey_init(void)
+{
+	if ((fd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) {
+		if (errno == EPROTONOSUPPORT)
+			log_warnx("no kernel support for PF_KEY");
+		else
+			log_warn("PF_KEY socket");
+		return (-1);
+	}
+
 	return (0);
 }

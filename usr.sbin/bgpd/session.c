@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.96 2004/01/28 17:29:46 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.97 2004/01/28 17:57:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -170,6 +170,9 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 
 	if ((sock = setup_listener()) == -1)
 		fatalx("listener setup failed");
+
+	if (pfkey_init() == -1)
+		fatalx("pfkey setup failed");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
