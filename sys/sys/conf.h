@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.18 1996/11/11 18:47:27 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.19 1996/12/03 05:09:04 kstailey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ extern struct cdevsw cdevsw[];
 /* cdevsw-specific types */
 #define	dev_type_read(n)	int n __P((dev_t, struct uio *, int))
 #define	dev_type_write(n)	int n __P((dev_t, struct uio *, int))
-#define	dev_type_stop(n)	int n __P((struct tty *, int))
+#define	dev_type_stop(n)	void n __P((struct tty *, int))
 #define	dev_type_tty(n)		struct tty *n __P((dev_t))
 #define	dev_type_select(n)	int n __P((dev_t, int, struct proc *))
 #define	dev_type_mmap(n)	int n __P((dev_t, int, int))
