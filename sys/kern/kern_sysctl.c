@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.114 2004/06/20 03:04:15 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.115 2004/06/24 21:00:03 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1378,6 +1378,14 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if ((vp = pfind(pid)) == NULL)
 		return (ESRCH);
 
+	if (oldp == NULL) {
+		if (op == KERN_PROC_NARGV || op == KERN_PROC_NENV)
+			*oldlenp = sizeof(int);
+		else
+			*oldlenp = ARG_MAX;	/* XXX XXX XXX */
+		return (0);
+	}
+
 	if (P_ZOMBIE(vp) || (vp->p_flag & P_SYSTEM))
 		return (EINVAL);
 
@@ -1425,12 +1433,6 @@ sysctl_proc_args(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* -1 to have space for a terminating NUL */
 	limit = *oldlenp - 1;
 	*oldlenp = 0;
-
-	if (limit > 8 * PAGE_SIZE) {
-		/* Don't allow a denial of service. */
-		error = E2BIG;
-		goto out;
-	}
 
 	rargv = oldp;
 
