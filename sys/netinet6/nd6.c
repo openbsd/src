@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.11 2000/04/17 04:44:51 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.55 2000/04/16 14:08:30 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.12 2000/04/19 07:38:49 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.56 2000/04/19 06:17:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,6 +95,7 @@ int nd6_maxndopt = 10;	/* max # of ND options allowed */
 static int nd6_inuse, nd6_allocated;
 
 struct llinfo_nd6 llinfo_nd6 = {&llinfo_nd6, &llinfo_nd6};
+static size_t nd_ifinfo_indexlim = 8;
 struct nd_ifinfo *nd_ifinfo = NULL;
 struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
@@ -133,21 +134,20 @@ void
 nd6_ifattach(ifp)
 	struct ifnet *ifp;
 {
-	static size_t if_indexlim = 8;
 
 	/*
 	 * We have some arrays that should be indexed by if_index.
 	 * since if_index will grow dynamically, they should grow too.
 	 */
-	if (nd_ifinfo == NULL || if_index >= if_indexlim) {
+	if (nd_ifinfo == NULL || if_index >= nd_ifinfo_indexlim) {
 		size_t n;
 		caddr_t q;
 
-		while (if_index >= if_indexlim)
-			if_indexlim <<= 1;
+		while (if_index >= nd_ifinfo_indexlim)
+			nd_ifinfo_indexlim <<= 1;
 
 		/* grow nd_ifinfo */
-		n = if_indexlim * sizeof(struct nd_ifinfo);
+		n = nd_ifinfo_indexlim * sizeof(struct nd_ifinfo);
 		q = (caddr_t)malloc(n, M_IP6NDP, M_WAITOK);
 		bzero(q, n);
 		if (nd_ifinfo) {
@@ -1390,10 +1390,18 @@ nd6_ioctl(cmd, data, ifp)
 
 		break;
 	case SIOCGIFINFO_IN6:
+		if (!nd_ifinfo || i >= nd_ifinfo_indexlim) {
+			error = EINVAL;
+			break;
+		}
 		ndi->ndi = nd_ifinfo[ifp->if_index];
 		break;
 	case SIOCSIFINFO_FLAGS:
 		/* XXX: almost all other fields of ndi->ndi is unused */
+		if (!nd_ifinfo || i >= nd_ifinfo_indexlim) {
+			error = EINVAL;
+			break;
+		}
 		nd_ifinfo[ifp->if_index].flags = ndi->ndi.flags;
 		break;
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
@@ -1704,6 +1712,8 @@ nd6_slowtimo(ignored_arg)
 
 	timeout(nd6_slowtimo, (caddr_t)0, ND6_SLOWTIMER_INTERVAL * hz);
 	for (i = 1; i < if_index + 1; i++) {
+		if (!nd_ifinfo || i >= nd_ifinfo_indexlim)
+			continue;
 		nd6if = &nd_ifinfo[i];
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
