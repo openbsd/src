@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.26 1998/01/18 18:48:40 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.27 1998/02/22 00:38:40 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -62,7 +62,9 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
+#if NISADMA > 0
 #include <dev/isa/isadmavar.h>
+#endif /* NISADMA > 0 */
 #include <dev/isa/wdreg.h>
 #include <dev/isa/wdlink.h>
 
