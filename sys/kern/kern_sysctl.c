@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.122 2004/11/26 21:23:06 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.123 2004/12/24 17:28:13 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -354,12 +354,14 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    sizeof(struct timeval)));
 	case KERN_VNODE:
 		return (sysctl_vnode(oldp, oldlenp, p));
+#ifndef SMALL_KERNEL
 	case KERN_PROC:
 	case KERN_PROC2:
 		return (sysctl_doproc(name, namelen, oldp, oldlenp));
 	case KERN_PROC_ARGS:
 		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
+#endif
 	case KERN_FILE:
 		return (sysctl_file(oldp, oldlenp));
 	case KERN_MBSTAT:
@@ -510,24 +512,26 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_sysvshm(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
+#ifndef SMALL_KERNEL
 	case KERN_INTRCNT:
 		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
-#ifndef SMALL_KERNEL
 	case KERN_WATCHDOG:
 		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-#endif
 	case KERN_EMUL:
 		return (sysctl_emul(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+#endif
 	case KERN_MAXCLUSTERS:
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &nmbclust);
 		if (!error)
 			nmbclust_update();
 		return (error);
+#ifndef SMALL_KERNEL
 	case KERN_EVCOUNT:
 		return (evcount_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+#endif
 #ifdef __HAVE_TIMECOUNTER
 	case KERN_TIMECOUNTER:
 		return (sysctl_tc(name + 1, namelen - 1, oldp, oldlenp,
@@ -593,9 +597,11 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    disk_count * sizeof(struct diskstats)));
 	case HW_DISKCOUNT:
 		return (sysctl_rdint(oldp, oldlenp, newp, disk_count));
+#ifndef	SMALL_KERNEL
 	case HW_SENSORS:
 		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+#endif
 	case HW_CPUSPEED:
 		if (!cpu_cpuspeed)
 			return (EOPNOTSUPP);
@@ -978,6 +984,8 @@ sysctl_file(where, sizep)
 	return (0);
 }
 
+#ifndef SMALL_KERNEL
+
 /*
  * try over estimating by 5 procs
  */
@@ -1127,6 +1135,8 @@ again:
 	return (0);
 }
 
+#endif	/* SMALL_KERNEL */
+
 /*
  * Fill in an eproc structure for the specified process.
  */
@@ -1184,6 +1194,8 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	ep->e_emul[EMULNAMELEN] = '\0';
 	ep->e_maxrss = p->p_rlimit ? p->p_rlimit[RLIMIT_RSS].rlim_cur : 0;
 }
+
+#ifndef	SMALL_KERNEL
 
 /*
  * Fill in a kproc2 structure for the specified process.
@@ -1558,6 +1570,8 @@ out:
 	return (error);
 }
 
+#endif
+
 /*
  * Initialize disknames/diskstats for export by sysctl. If update is set,
  * then we simply update the disk statistics information.
@@ -1775,6 +1789,8 @@ sysctl_sysvipc(name, namelen, where, sizep)
 }
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
 
+#ifndef	SMALL_KERNEL
+
 int
 sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 {
@@ -1839,3 +1855,5 @@ sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EINVAL);
 	}
 }
+
+#endif	/* SMALL_KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.5 2004/11/26 21:23:06 miod Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.6 2004/12/24 17:28:13 miod Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -84,6 +84,8 @@ evcount_detach(ec)
 	TAILQ_REMOVE(&evcount_list, ec, next);
 }
 
+#ifndef	SMALL_KERNEL
+
 int
 evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -147,3 +149,4 @@ evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	return (error);
 }
+#endif	/* SMALL_KERNEL */
