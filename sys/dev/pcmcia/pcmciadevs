@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.70 2001/10/25 17:24:23 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.71 2001/10/28 19:21:37 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -157,6 +157,7 @@ product DUAL NE2000		0x0100 Dual NE2000
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
+product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 
 /* Farallon Communications */
 product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
