@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.5 2002/01/12 21:08:59 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.16 2002/01/08 06:00:15 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.6 2002/01/12 21:14:57 jason Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.38 2002/01/12 21:09:14 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.39 2002/01/12 21:15:28 jason Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -88,6 +88,8 @@
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
+#	magma*	magma card (makes 16 tty and 2 bpp)
+#	spif*	spif card (makes 8 tty and 1 bpp)
 #	crypto	hardware crypto access driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0

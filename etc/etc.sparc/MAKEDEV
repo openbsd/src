@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.2 2002/01/12 21:02:03 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.16 2002/01/08 06:00:15 todd Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.3 2002/01/12 21:14:57 jason Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.72 2002/01/12 21:02:47 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.73 2002/01/12 21:15:28 jason Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -75,6 +75,7 @@
 #	tun*	network tunnel driver
 #	*random	inkernel random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
+#	spif*	spif card (makes 8 tty and 1 bpp)
 #	xfs*	XFS filesystem devices
 #	raid*	RAIDframe disk devices
 #	fd	makes fd/* for the fdescfs
@@ -243,7 +244,7 @@ spif*)
 	esac
 	offset=$(($U*64))
 	n=0
-	while [ $n -lt 16 ]
+	while [ $n -lt 8 ]
 	do
 		name=${nam}`hex $n`
 		M tty$name c 102 $(($offset+$n))
