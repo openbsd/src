@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: pkg_create,v 1.2 2003/10/19 18:39:19 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -41,10 +41,16 @@ sub archive_cmd { () }
 package OpenBSD::PackingElement::File;
 sub archive_cmd
 {
-	my ($self, $pfh) = @_;
+	my ($self, $pfh, $use_cwd) = @_;
 	my $fh = $$pfh;
 	print $fh $self->{name}, "\n";
-	return ();
+	if (@$use_cwd != 0) {
+	    my @r = @$use_cwd;
+	    @$use_cwd = ();
+	    return @r;
+	} else {
+	    return ();
+	}
 }
 
 package OpenBSD::PackingElement::Cwd;
@@ -52,10 +58,11 @@ use OpenBSD::Temp;
 
 sub archive_cmd
 {
-	my ($self, $pfh, $dir, $base) = @_;
+	my ($self, $pfh, $use_cwd, $dir, $base) = @_;
 	my ($fh, $fname) = OpenBSD::Temp::list($dir);
 	$$pfh = $fh;
-	return ("-C", $base."/".$self->{name}, "-I", $fname);
+	@$use_cwd = ("-C", $base."/".$self->{name}, "-I", $fname );
+	return ();
 }
 
 package OpenBSD::PackingList;
@@ -65,9 +72,10 @@ sub archive_cmd
 {
 	my ($self, $dir, $base) = @_;
 	my $fh;
+	my @use_cwd = ();
 	my @cmd = ();
 	for my $item (@{$self->{items}}) {
-		push(@cmd, $item->archive_cmd(\$fh, $dir, $base));
+		push(@cmd, $item->archive_cmd(\$fh, \@use_cwd, $dir, $base));
 	}
 	return @cmd;
 }
