@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.84 2002/10/07 14:13:48 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.85 2002/10/07 14:34:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -439,7 +439,8 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 	struct pfioc_states ps;
 	struct pf_state *p;
 	char *inbuf = NULL;
-	int i, len = 0;
+	unsigned len = 0;
+	int i;
 
 	for (;;) {
 		ps.ps_len = len;
