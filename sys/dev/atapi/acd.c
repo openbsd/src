@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.2 1996/06/09 08:59:46 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.3 1996/06/09 18:42:46 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -982,7 +982,7 @@ acd_size(cd, flags)
 		blksize = 2048;	/* some drives lie ! */
 	cd->params.blksize = blksize;
 
-	size = ntohl(size);
+	size = ntohl(rdcap.size);
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
