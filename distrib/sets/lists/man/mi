@@ -593,7 +593,6 @@
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/alpha/com.0
 ./usr/share/man/cat4/alpha/cy.0
-./usr/share/man/cat4/alpha/ed.0
 ./usr/share/man/cat4/alpha/esp.0
 ./usr/share/man/cat4/alpha/intro.0
 ./usr/share/man/cat4/alpha/le.0
@@ -1344,7 +1343,6 @@
 ./usr/share/man/cat4/arc
 ./usr/share/man/cat4/arc/autoconf.0
 ./usr/share/man/cat4/arc/com.0
-./usr/share/man/cat4/arc/ed.0
 ./usr/share/man/cat4/arc/intro.0
 ./usr/share/man/cat4/arc/le.0
 ./usr/share/man/cat4/arc/lpt.0
