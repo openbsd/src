@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.14 2003/05/16 17:18:15 jason Exp $	*/
+/*	$OpenBSD: intr.c,v 1.15 2003/05/16 23:55:00 jason Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -283,7 +283,7 @@ intr_establish(level, ih)
 		 * new interrupt handler and interpose it.
 		 */
 #ifdef DEBUG
-		printf("\nintr_establish: intr reused %x", ih->ih_number);
+		printf("intr_establish: intr reused %x\n", ih->ih_number);
 #endif
 
 		if (q->ih_fun != intr_list_handler) {
@@ -306,13 +306,6 @@ intr_establish(level, ih)
 		nih->ih_next = (struct intrhand *)q->ih_arg;
 		q->ih_arg = (void *)nih;
 	}
-#ifdef DEBUG
-	printf("\nintr_establish: vector %x pil %x mapintr %p "
-	    "clrintr %p fun %p arg %p target %d",
-	    ih->ih_number, ih->ih_pil, (void *)ih->ih_map,
-	    (void *)ih->ih_clr, (void *)ih->ih_fun,
-	    (void *)ih->ih_arg, (int)(ih->ih_map ? INTTID(*ih->ih_map) : -1));
-#endif
 
 	if(ih->ih_map) {
 		id = CPU_UPAID;
@@ -320,9 +313,10 @@ intr_establish(level, ih)
 		if(INTTID(m) != id) {
 			printf("\nintr_establish: changing map 0x%llx -> ", m);
 			m = (m & ~INTMAP_TID) | (id << INTTID_SHIFT);
-			*ih->ih_map = m;
 			printf("0x%llx (id=%llx) ", m, id);
 		}
+		m |= INTMAP_V;
+		*ih->ih_map = m;
 	}
 	else {
 #ifdef DEBUG
@@ -333,7 +327,15 @@ intr_establish(level, ih)
 	}
 
 	if (ih->ih_clr != NULL)			/* Set interrupt to idle */
-		ih->ih_clr = INTCLR_IDLE;
+		*ih->ih_clr = INTCLR_IDLE;
+
+#ifdef DEBUG
+	printf("\nintr_establish: vector %x pil %x mapintr %p "
+	    "clrintr %p fun %p arg %p target %d",
+	    ih->ih_number, ih->ih_pil, (void *)ih->ih_map,
+	    (void *)ih->ih_clr, (void *)ih->ih_fun,
+	    (void *)ih->ih_arg, (int)(ih->ih_map ? INTTID(*ih->ih_map) : -1));
+#endif
 
 	splx(s);
 }
