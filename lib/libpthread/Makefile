@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2003/08/01 19:50:23 millert Exp $
+#	$OpenBSD: Makefile,v 1.22 2004/01/18 23:54:20 marc Exp $
 
 #
 # The pthread library is formed from the FreeBSD uthread sources of 
@@ -32,5 +32,4 @@ CFLAGS+=	-D_PTHREADS_INVARIANTS
 .include "${SRCDIR}/uthread/Makefile.inc"
 .include "${SRCDIR}/man/Makefile.inc"
 
-.include <bsd.own.mk>
 .include <bsd.lib.mk>
