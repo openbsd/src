@@ -1,5 +1,5 @@
-/*	$OpenBSD: mulaw.c,v 1.3 1998/04/26 21:03:10 provos Exp $	*/
-/*	$NetBSD: mulaw.c,v 1.8 1997/08/04 09:29:53 augustss Exp $	*/
+/*	$OpenBSD: mulaw.c,v 1.4 1998/10/28 18:01:01 downsj Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.12 1998/08/09 21:41:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -271,6 +271,19 @@ mulaw_to_ulinear8(v, p, cc)
 }
 
 void
+mulaw_to_slinear8(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	/* Use the 16 bit table for 8 bits too. */
+	while (--cc >= 0) {
+		*p = mulawtolin16[*p][0] ^ 0x80;
+		++p;
+	}
+}
+
+void
 mulaw_to_ulinear16(v, p, cc)
 	void *v;
 	u_char *p;
@@ -279,10 +292,30 @@ mulaw_to_ulinear16(v, p, cc)
 	u_char *q = p;
 
 	p += cc;
-	q += cc * 2;
+	q += cc << 1;
 	while (--cc >= 0) {
-		*--q = mulawtolin16[*--p][LO];
-		*--q = mulawtolin16[*p  ][HI];
+		--p;
+		q -= 2;
+		q[HI] = mulawtolin16[*p][0];
+		q[LO] = mulawtolin16[*p][1];
+	}
+}
+
+void
+mulaw_to_slinear16(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc << 1;
+	while (--cc >= 0) {
+		--p;
+		q -= 2;
+		q[HI] = mulawtolin16[*p][0] ^ 0x80;
+		q[LO] = mulawtolin16[*p][1];
 	}
 }
 
@@ -294,6 +327,18 @@ ulinear8_to_mulaw(v, p, cc)
 {
 	while (--cc >= 0) {
 		*p = lintomulaw[*p];
+		++p;
+	}
+}
+
+void
+slinear8_to_mulaw(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	while (--cc >= 0) {
+		*p = lintomulaw[*p ^ 0x80];
 		++p;
 	}
 }
@@ -312,6 +357,19 @@ alaw_to_ulinear8(v, p, cc)
 }
 
 void
+alaw_to_slinear8(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	/* Use the 16 bit table for 8 bits too. */
+	while (--cc >= 0) {
+		*p = alawtolin16[*p][0] ^ 0x80;
+		++p;
+	}
+}
+
+void
 alaw_to_ulinear16(v, p, cc)
 	void *v;
 	u_char *p;
@@ -320,10 +378,30 @@ alaw_to_ulinear16(v, p, cc)
 	u_char *q = p;
 
 	p += cc;
-	q += cc * 2;
+	q += cc << 1;
 	while (--cc >= 0) {
-		*--q = alawtolin16[*--p][LO];
-		*--q = alawtolin16[*p  ][HI];
+		--p;
+		q -= 2;
+		q[HI] = alawtolin16[*p][0];
+		q[LO] = alawtolin16[*p][1];
+	}
+}
+
+void
+alaw_to_slinear16(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc << 1;
+	while (--cc >= 0) {
+		--p;
+		q -= 2;
+		q[HI] = alawtolin16[*p][0] ^ 0x80;
+		q[LO] = alawtolin16[*p][1];
 	}
 }
 
@@ -339,3 +417,14 @@ ulinear8_to_alaw(v, p, cc)
 	}
 }
 
+void
+slinear8_to_alaw(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	while (--cc >= 0) {
+		*p = lintoalaw[*p ^ 0x80];
+		++p;
+	}
+}
