@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.13 2002/07/08 15:02:05 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.14 2002/08/04 05:48:25 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -218,6 +218,7 @@
 08/01	Lughnasa; Feast of the god Lugh, a 30 day Celtic feast centers on
 	this day
 08/03	Columbus sets sail for Cathay, 1492
+08/03	First ICBM (P-7) test, 1957
 08/03	USS Nautilus crosses under north polar ice cap, 1958
 08/04	Axe murder of Andrew and Abbey Borden, 1892
 08/04	Bombing of N. Vietnam begins, 1964
