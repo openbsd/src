@@ -1,9 +1,0 @@
-1) Make sure that the pint driver is in your kernel, see ../INSTALL
-
-2) Make sure that /usr/include/sys/scanio.h is the one for your OS.
-
-3) Fiddle with Makefile if you want to.
-
-4) Type "make install".
-
-5) cd into scripts, type "make install"
