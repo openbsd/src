@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.26 2001/01/14 23:03:39 angelos Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.27 2001/01/15 05:17:17 angelos Exp $";
 #endif /* not lint */
 
 /*
@@ -65,12 +65,6 @@ static char *rcsid = "$Id: edquota.c,v 1.26 2001/01/14 23:03:39 angelos Exp $";
 #include <string.h>
 #include <unistd.h>
 #include "pathnames.h"
-
-#if DEV_BSHIFT < 10
-#define dbtokb(x) ((x) >> (10 - DEV_BSHIFT))
-#else
-#define dbtokb(x) ((x) << (DEV_BSHIFT - 10))
-#endif
 
 char *qfname = QUOTAFILENAME;
 char *qfextension[] = INITQFNAMES;
@@ -437,12 +431,12 @@ writeprivs(quplist, outfd, name, quotatype)
 		err(1, "%s", tmpfil);
 	(void)fprintf(fd, "Quotas for %s %s:\n", qfextension[quotatype], name);
 	for (qup = quplist; qup; qup = qup->next) {
-		(void)fprintf(fd, "%s: %s %lu, limits (soft = %lu, hard = %lu)\n",
+		(void)fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
 		    qup->fsname, "blocks in use:",
-		    (int)(dbtokb((u_quad_t)qup->dqblk.dqb_curblocks)),
-		    (int)(dbtokb((u_quad_t)qup->dqblk.dqb_bsoftlimit)),
-		    (int)(dbtokb((u_quad_t)qup->dqblk.dqb_bhardlimit)));
-		(void)fprintf(fd, "%s %lu, limits (soft = %lu, hard = %lu)\n",
+		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_curblocks) / 1024),
+		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bsoftlimit) / 1024),
+		    (int)(dbtob((u_quad_t)qup->dqblk.dqb_bhardlimit) / 1024));
+		(void)fprintf(fd, "%s %d, limits (soft = %d, hard = %d)\n",
 		    "\tinodes in use:", qup->dqblk.dqb_curinodes,
 		    qup->dqblk.dqb_isoftlimit, qup->dqblk.dqb_ihardlimit);
 	}
