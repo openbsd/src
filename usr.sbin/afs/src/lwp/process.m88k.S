@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.m88k.S,v 1.1 2004/03/02 18:17:51 miod Exp $	*/
+/*	$OpenBSD: process.m88k.S,v 1.2 2004/03/02 23:36:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -35,7 +35,8 @@
  * savecontext(int (*f)(), struct savearea *a1, char *newsp)
  */
 ENTRY(savecontext)
-	/* save all registers but r0, r2, r3 and r4 on stack */
+	/* save all registers but r0, r2, r3 and r31 on stack - we could
+	   skip r4 but saving it allows us to use it as a temporary below. */
 	sub	r31, r31, 4 * 30
 	st.d	r4,  r31, 4 * 0
 	st.d	r6,  r31, 4 * 2
