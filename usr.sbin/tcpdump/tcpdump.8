@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.43 2003/10/12 10:59:47 dhartmei Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.44 2004/04/28 02:17:03 mcbride Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -199,6 +199,8 @@ Force packets selected by
 to be interpreted as the specified
 .Ar type .
 Currently known types are
+.Cm vrrp 
+.Pq Virtual Router Redundancy protocol ,
 .Cm cnfp
 .Pq Cisco NetFlow protocol ,
 .Cm rpc

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.43 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: interface.h,v 1.44 2004/04/28 02:17:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.43 2004/01/28 19:44:55 canacar Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.44 2004/04/28 02:17:03 mcbride Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -57,6 +57,7 @@ extern int packettype;		/* as specified by -T */
 #define PT_RTP		4	/* Real-Time Applications protocol */
 #define PT_RTCP		5	/* Real-Time Applications control protocol */
 #define PT_CNFP		6	/* Cisco NetFlow protocol */
+#define PT_VRRP		7	/* Virtual Router Redundancy protocol */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
@@ -221,6 +222,7 @@ extern char *smb_errstr(int, int);
 extern void print_data(const unsigned char *, int);
 extern void l2tp_print(const u_char *dat, u_int length);
 extern void vrrp_print(const u_char *bp, u_int len, int ttl);
+extern void carp_print(const u_char *bp, u_int len, int ttl);
 extern void hsrp_print(const u_char *, u_int);
 extern void nfsreply_print(const u_char *, u_int, const u_char *);
 extern void nfsreq_print(const u_char *, u_int, const u_char *);
