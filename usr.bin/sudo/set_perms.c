@@ -422,6 +422,7 @@ runas_setup()
 static void
 fatal(str, printerr)
     char *str;
+    int printerr;
 {
 
     if (str) {
