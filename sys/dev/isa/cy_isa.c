@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_isa.c,v 1.2 1996/11/12 20:30:28 niklas Exp $	*/
+/*	$OpenBSD: cy_isa.c,v 1.3 1996/11/29 22:54:53 niklas Exp $	*/
 
 /*
  * cy.c
@@ -38,7 +38,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
@@ -46,8 +46,8 @@
 #include <dev/ic/cyreg.h>
 
 int cy_probe_isa __P((struct device *, void *, void *));
-int cy_probe_common __P((int card, bus_chipset_tag_t,
-			 bus_mem_handle_t, int bustype));
+int cy_probe_common __P((int card, bus_space_tag_t,
+			 bus_space_handle_t, int bustype));
 
 void cyattach __P((struct device *, struct device *, void *));
 
@@ -65,20 +65,20 @@ cy_probe_isa(parent, match, aux)
 {
   int card = ((struct device *)match)->dv_unit;
   struct isa_attach_args *ia = aux;
-  bus_chipset_tag_t bc;
-  bus_mem_handle_t memh;
+  bus_space_tag_t memt;
+  bus_space_handle_t memh;
 
   if(ia->ia_irq == IRQUNK) {
     printf("cy%d error: interrupt not defined\n", card);
     return 0;
   }
 
-  bc = ia->ia_bc;
-  if(bus_mem_map(bc, ia->ia_maddr, 0x2000, 0, &memh) != 0)
+  memt = ia->ia_memt;
+  if(bus_space_map(memt, ia->ia_maddr, 0x2000, 0, &memh) != 0)
     return 0;
 
-  if(cy_probe_common(card, bc, memh, CY_BUSTYPE_ISA) == 0) {
-    bus_mem_unmap(bc, memh, 0x2000);
+  if(cy_probe_common(card, memt, memh, CY_BUSTYPE_ISA) == 0) {
+    bus_space_unmap(memt, memh, 0x2000);
     return 0;
   }
 

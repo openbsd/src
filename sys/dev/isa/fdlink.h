@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdlink.h,v 1.2 1996/10/28 00:06:22 downsj Exp $	*/
+/*	$OpenBSD: fdlink.h,v 1.3 1996/11/29 22:54:56 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -90,8 +90,8 @@ struct fdc_softc {
 	struct isadev sc_id;
 	void *sc_ih;
 
-	bus_chipset_tag_t sc_bc;	/* ISA chipset identifier */
-	bus_io_handle_t   sc_ioh;	/* ISA io handle */
+	bus_space_tag_t sc_iot;		/* ISA chipset identifier */
+	bus_space_handle_t sc_ioh;	/* ISA io handle */
 
 	int sc_drq;
 
@@ -116,11 +116,11 @@ struct fdc_attach_args {
 };
 
 /* Functions from fdc.c. */
-int fdcresult __P((struct fdc_softc *fdc));
-int out_fdc __P((bus_chipset_tag_t bc, bus_io_handle_t ioh, u_char x));
-void fdcstart __P((struct fdc_softc *fdc));
-void fdcstatus __P((struct device *dv, int n, char *s));
-void fdcpseudointr __P((void *arg));
+int fdcresult __P((struct fdc_softc *));
+int out_fdc __P((bus_space_tag_t, bus_space_handle_t, u_char));
+void fdcstart __P((struct fdc_softc *));
+void fdcstatus __P((struct device *, int, char *));
+void fdcpseudointr __P((void *));
 
 /* Functions from fd.c. */
 struct fd_type *fd_nvtotype __P((char *, int, int));

@@ -35,5 +35,5 @@
 #define	ELINK_507_POLY	0xe7
 #define	ELINK_509_POLY	0xcf
 
-void elink_reset __P((bus_chipset_tag_t, bus_io_handle_t, int));
-void elink_idseq __P((bus_chipset_tag_t, bus_io_handle_t, u_char p));
+void elink_reset __P((bus_space_tag_t, bus_space_handle_t, int));
+void elink_idseq __P((bus_space_tag_t, bus_space_handle_t, u_char p));

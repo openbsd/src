@@ -47,7 +47,7 @@ struct le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
 	void	*sc_ih;
-	bus_io_handle_t sc_ioh;
+	bus_space_handle_t sc_ioh;
 	int	sc_card;
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
 };

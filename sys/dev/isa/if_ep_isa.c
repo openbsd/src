@@ -67,7 +67,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
@@ -137,8 +137,8 @@ ep_isa_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int slot, iobase, irq, i;
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
@@ -171,24 +171,24 @@ ep_isa_probe(parent, match, aux)
 	/*
 	 * Map the Etherlink ID port for the probe sequence.
 	 */
-	if (bus_io_map(bc, ELINK_ID_PORT, 1, &ioh)) {
+	if (bus_space_map(iot, ELINK_ID_PORT, 1, 0, &ioh)) {
 		printf("ep_isa_probe: can't map Etherlink ID port\n");
 		return 0;
 	}
 
 	for (slot = 0; slot < MAXEPCARDS; slot++) {
-		elink_reset(bc, ioh, parent->dv_unit);
-		elink_idseq(bc, ioh, ELINK_509_POLY);
+		elink_reset(iot, ioh, parent->dv_unit);
+		elink_idseq(iot, ioh, ELINK_509_POLY);
 
 		/* Untag all the adapters so they will talk to us. */
 		if (slot == 0)
-			bus_io_write_1(bc, ioh, 0, TAG_ADAPTER + 0);
+			bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 0);
 
-		vendor = htons(epreadeeprom(bc, ioh, EEPROM_MFG_ID));
+		vendor = htons(epreadeeprom(iot, ioh, EEPROM_MFG_ID));
 		if (vendor != MFG_ID)
 			continue;
 
-		model = htons(epreadeeprom(bc, ioh, EEPROM_PROD_ID));
+		model = htons(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
 		if ((model & 0xfff0) != PROD_ID) {
 #ifndef trusted
 			printf(
@@ -197,15 +197,15 @@ ep_isa_probe(parent, match, aux)
 			continue;
 			}
 
-		iobase = epreadeeprom(bc, ioh, EEPROM_ADDR_CFG);
+		iobase = epreadeeprom(iot, ioh, EEPROM_ADDR_CFG);
 		iobase = (iobase & 0x1f) * 0x10 + 0x200;
 
-		irq = epreadeeprom(bc, ioh, EEPROM_RESOURCE_CFG);
+		irq = epreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG);
 		irq >>= 12;
 		epaddcard(bus, iobase, irq);
 
 		/* so card will not respond to contention again */
-		bus_io_write_1(bc, ioh, 0, TAG_ADAPTER + 1);
+		bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
 
 		/*
 		 * XXX: this should probably not be done here
@@ -213,11 +213,11 @@ ep_isa_probe(parent, match, aux)
 		 * the board. Perhaps it should be done after
 		 * we have checked for irq/drq collisions?
 		 */
-		bus_io_write_1(bc, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
+		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
 	}
 	/* XXX should we sort by ethernet address? */
 
-	bus_io_unmap(bc, ioh, 1);
+	bus_space_unmap(iot, ioh, 1);
 
  bus_probed:
 
@@ -252,20 +252,20 @@ ep_isa_attach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	u_short conn = 0;
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("ep_isa_attach: can't map i/o space");
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
 	GO_WINDOW(0);
-	conn = bus_io_read_2(bc, ioh, EP_W0_CONFIG_CTRL);
+	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
 
 	printf(": <3Com 3C509 Ethernet> ");
 

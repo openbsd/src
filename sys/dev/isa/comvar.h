@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.4 1996/10/30 15:01:50 niklas Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.5 1996/11/29 22:54:52 niklas Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -34,18 +34,18 @@
 struct commulti_attach_args {
 	int		ca_slave;		/* slave number */
 
-	bus_chipset_tag_t ca_bc;
-	bus_io_handle_t ca_ioh;
+	bus_space_tag_t ca_iot;
+	bus_space_handle_t ca_ioh;
 	int		ca_iobase;
 	int		ca_noien;
 };
 
-int comprobe1 __P((bus_chipset_tag_t, bus_io_handle_t, int));
-void cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
+int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
+void cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 int comintr __P((void *));
 
 extern int comconsaddr;
 extern int comconsattached;
-extern bus_chipset_tag_t comconsbc;
-extern bus_io_handle_t comconsioh;
+extern bus_space_tag_t comconsiot;
+extern bus_space_handle_t comconsioh;
 extern tcflag_t comconscflag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boca.c,v 1.12 1996/11/23 21:46:38 kstailey Exp $ */
+/*	$OpenBSD: boca.c,v 1.13 1996/11/29 22:54:51 niklas Exp $ */
 /*	$NetBSD: boca.c,v 1.15 1996/05/12 23:51:50 mycroft Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
@@ -52,12 +52,12 @@ struct boca_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_iot;
 	int sc_iobase;
 
 	int sc_alive;			/* mask of slave units attached */
 	void *sc_slaves[NSLAVES];	/* com device unit numbers */
-	bus_io_handle_t sc_slaveioh[NSLAVES];
+	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
 int bocaprobe __P((struct device *, void *, void *));
@@ -81,8 +81,8 @@ bocaprobe(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int i, rv = 1;
 
 	/*
@@ -96,12 +96,12 @@ bocaprobe(parent, self, aux)
 	if (iobase == comconsaddr && !comconsattached)
 		goto checkmappings;
 
-	if (bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(bc, ioh, iobase);
-	bus_io_unmap(bc, ioh, COM_NPORTS);
+	rv = comprobe1(iot, ioh, iobase);
+	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (rv == 0)
 		goto out;
 
@@ -112,11 +112,11 @@ checkmappings:
 		if (iobase == comconsaddr && !comconsattached)
 			continue;
 
-		if (bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 			rv = 0;
 			goto out;
 		}
-		bus_io_unmap(bc, ioh, COM_NPORTS);
+		bus_space_unmap(iot, ioh, COM_NPORTS);
 	}
 
 out:
@@ -146,15 +146,15 @@ bocaattach(parent, self, aux)
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
-	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_space_tag_t iot = ia->ia_iot;
 	int i;
 
-	sc->sc_bc = ia->ia_bc;
+	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
 	for (i = 0; i < NSLAVES; i++)
-		if (bus_io_map(bc, sc->sc_iobase + i * COM_NPORTS, COM_NPORTS,
-		    &sc->sc_slaveioh[i]))
+		if (bus_space_map(iot, sc->sc_iobase + i * COM_NPORTS,
+		    COM_NPORTS, 0, &sc->sc_slaveioh[i]))
 			panic("bocaattach: couldn't map slave %d", i);
 
 	printf("\n");
@@ -162,7 +162,7 @@ bocaattach(parent, self, aux)
 	for (i = 0; i < NSLAVES; i++) {
 
 		ca.ca_slave = i;
-		ca.ca_bc = sc->sc_bc;
+		ca.ca_iot = sc->sc_iot;
 		ca.ca_ioh = sc->sc_slaveioh[i];
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
@@ -181,11 +181,11 @@ bocaintr(arg)
 	void *arg;
 {
 	struct boca_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_space_tag_t iot = sc->sc_iot;
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = bus_io_read_1(bc, sc->sc_slaveioh[0], 7) & alive;
+	bits = bus_space_read_1(iot, sc->sc_slaveioh[0], 7) & alive;
 	if (bits == 0)
 		return (0);
 
@@ -202,7 +202,7 @@ bocaintr(arg)
 		TRY(6);
 		TRY(7);
 #undef TRY
-		bits = bus_io_read_1(bc, sc->sc_slaveioh[0], 7) & alive;
+		bits = bus_space_read_1(iot, sc->sc_slaveioh[0], 7) & alive;
 		if (bits == 0)
 			return (1);
  	}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.27 1996/08/14 14:36:14 shawn Exp $
+#	$OpenBSD: files.isa,v 1.28 1996/11/29 22:54:57 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -60,7 +60,7 @@ device	com: tty
 attach	com at isa with com_isa
 attach	com at commulti with com_commulti
 attach	com at pcmcia with com_pcmcia
-file	dev/isa/com.c			com & (com_isa | com_commulti | com_pcmcia) needs-flag
+file	dev/isa/com.c			com & (com_isa | com_commulti | com_pcmcia | com_pica) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 attach	cy at isa with cy_isa
@@ -69,7 +69,8 @@ file	dev/isa/cy_isa.c		cy_isa
 # PC parallel ports (XXX what chip?)
 device	lpt
 attach	lpt at isa with lpt_isa
-file	dev/isa/lpt.c			lpt needs-flag
+file	dev/isa/lpt.c			lpt & (lpt_isa | lpt_pica) needs-flag
+file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
 #
 # SCSI host adapters
@@ -96,9 +97,9 @@ attach	sea at isa
 file	dev/isa/seagate.c		sea
 
 # UltraStor UHA-[13]4f boards
-device	uha: scsi, isa_dma
-attach	uha at isa
-file	dev/isa/ultra14f.c		uha
+# device declaration in sys/conf/files
+attach	uha at isa with uha_isa: isa_dma
+file	dev/isa/uha_isa.c		uha_isa
 
 # Western Digital WD7000 and Future Domain TMC-7000 boards
 device	wds: scsi, isa_dma

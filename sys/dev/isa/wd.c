@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.22 1996/11/28 08:23:38 downsj Exp $	*/
+/*	$OpenBSD: wd.c,v 1.23 1996/11/29 22:55:08 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -53,7 +53,7 @@
 
 #include <vm/vm.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
@@ -858,14 +858,15 @@ wddump(dev, blkno, va, size)
 		}
 
 #ifndef WD_DUMP_NOT_TRUSTED
-		if (wdccommand(d_link, WDCC_WRITE, d_link->sc_drive, cylin, head, sector, 1) != 0 ||
+		if (wdccommand(d_link, WDCC_WRITE, d_link->sc_drive, cylin,
+		    head, sector, 1) != 0 ||
 		    wait_for_drq(wdc) != 0) {
 			wderror(d_link, NULL, "wddump: write failed");
 			return EIO;
 		}
 	
 		/* XXX XXX XXX */
-		bus_io_write_multi_2(wdc->sc_bc, wdc->sc_ioh, wd_data,
+		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
 		    (u_int16_t *)va, lp->d_secsize >> 1);
 	
 		/* Check data request (should be done). */

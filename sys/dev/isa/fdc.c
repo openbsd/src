@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.7 1996/11/23 21:46:40 kstailey Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.8 1996/11/29 22:54:55 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@
 #include <sys/queue.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/conf.h>
 #include <machine/intr.h>
 #include <machine/ioctl_fd.h>
@@ -105,41 +105,43 @@ fdcprobe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int rv;
 
-	bc = ia->ia_bc;
+	iot = ia->ia_iot;
 	rv = 0;
-
-	/* Map the i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, FDC_NPORT, &ioh))
-		return 0;
-
-	/* reset */
-	bus_io_write_1(bc, ioh, fdout, 0);
-	delay(100);
-	bus_io_write_1(bc, ioh, fdout, FDO_FRST);
-
-	/* see if it can handle a command */
-	if (out_fdc(bc, ioh, NE7CMD_SPECIFY) < 0)
-		goto out;
-	out_fdc(bc, ioh, 0xdf);
-	out_fdc(bc, ioh, 2);
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
 		return 0;
+#endif
 
+	/* Map the i/o space. */
+	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
+		return 0;
+
+	/* reset */
+	bus_space_write_1(iot, ioh, fdout, 0);
+	delay(100);
+	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
+
+	/* see if it can handle a command */
+	if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0)
+		goto out;
+	out_fdc(iot, ioh, 0xdf);
+	out_fdc(iot, ioh, 2);
+
+#ifdef NEWCONFIG
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(fdcforceintr, aux);
 		if (ia->ia_irq == IRQNONE)
 			goto out;
 
 		/* reset it again */
-		bus_io_write_1(bc, ioh, fdout, 0);
+		bus_space_write_1(iot, ioh, fdout, 0);
 		delay(100);
-		bus_io_write_1(bc, ioh, fdout, FDO_FRST);
+		bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 	}
 #endif
 
@@ -148,7 +150,7 @@ fdcprobe(parent, match, aux)
 	ia->ia_msize = 0;
 
  out:
-	bus_io_unmap(bc, ioh, FDC_NPORT);
+	bus_space_unmap(iot, ioh, FDC_NPORT);
 	return rv;
 }
 
@@ -166,9 +168,9 @@ fdcforceintr(aux)
 
 	/* the motor is off; this should generate an error with or
 	   without a disk drive present */
-	out_fdc(bc, ioh, NE7CMD_SEEK);
-	out_fdc(bc, ioh, 0);
-	out_fdc(bc, ioh, 0);
+	out_fdc(iot, ioh, NE7CMD_SEEK);
+	out_fdc(iot, ioh, 0);
+	out_fdc(iot, ioh, 0);
 }
 #endif
 
@@ -178,19 +180,19 @@ fdcattach(parent, self, aux)
 	void *aux;
 {
 	struct fdc_softc *fdc = (void *)self;
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
 	struct fdc_attach_args fa;
 	int type;
 
-	bc = ia->ia_bc;
+	iot = ia->ia_iot;
 
 	/* Re-map the I/O space. */
-	if (bus_io_map(bc, ia->ia_iobase, FDC_NPORT, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
 		panic("fdcattach: couldn't map I/O ports");
 
-	fdc->sc_bc = bc;
+	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
 
 	fdc->sc_drq = ia->ia_drq;
@@ -255,13 +257,13 @@ int
 fdcresult(fdc)
 	struct fdc_softc *fdc;
 {
-	bus_chipset_tag_t bc = fdc->sc_bc;
-	bus_io_handle_t ioh = fdc->sc_ioh;
+	bus_space_tag_t iot = fdc->sc_iot;
+	bus_space_handle_t ioh = fdc->sc_ioh;
 	u_char i;
 	int j = 100000, n = 0;
 
 	for (; j; j--) {
-		i = bus_io_read_1(bc, ioh, fdsts) &
+		i = bus_space_read_1(iot, ioh, fdsts) &
 		    (NE7_DIO | NE7_RQM | NE7_CB);
 		if (i == NE7_RQM)
 			return n;
@@ -270,7 +272,7 @@ fdcresult(fdc)
 				log(LOG_ERR, "fdcresult: overrun\n");
 				return -1;
 			}
-			fdc->sc_status[n++] = bus_io_read_1(bc, ioh, fddata);
+			fdc->sc_status[n++] = bus_space_read_1(iot, ioh, fddata);
 		}
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
@@ -278,20 +280,20 @@ fdcresult(fdc)
 }
 
 int
-out_fdc(bc, ioh, x)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+out_fdc(iot, ioh, x)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	u_char x;
 {
 	int i = 100000;
 
-	while ((bus_io_read_1(bc, ioh, fdsts) & NE7_DIO) && i-- > 0);
+	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_DIO) && i-- > 0);
 	if (i <= 0)
 		return -1;
-	while ((bus_io_read_1(bc, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
+	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
 	if (i <= 0)
 		return -1;
-	bus_io_write_1(bc, ioh, fddata, x);
+	bus_space_write_1(iot, ioh, fddata, x);
 	return 0;
 }
 
@@ -320,7 +322,7 @@ fdcstatus(dv, n, s)
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
 
 	if (n == 0) {
-		out_fdc(fdc->sc_bc, fdc->sc_ioh, NE7CMD_SENSEI);
+		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
 		(void) fdcresult(fdc);
 		n = 2;
 	}

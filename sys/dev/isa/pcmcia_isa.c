@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_isa.c,v 1.8 1996/11/23 21:46:44 kstailey Exp $	*/
+/*	$OpenBSD: pcmcia_isa.c,v 1.9 1996/11/29 22:55:05 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -38,6 +38,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <vm/vm.h>
+
+#include <machine/bus.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
@@ -84,25 +86,25 @@ pcmcia_isa_init(parent, cf, aux, pca, flag)
 	int             flag;
 {
 	struct pcmciabus_attach_args *pa = aux;
-	bus_mem_handle_t memh;
+	bus_space_handle_t memh;
 
 #ifdef PCMCIA_ISA_DEBUG
 	if (parent != NULL)
 		printf("PARENT %s\n", parent->dv_xname);
 #endif
 	if (flag == 0) {		/* match */
-		if (bus_mem_map(pa->pba_bc, pa->pba_maddr, pa->pba_msize, 0,
-				&memh))
+		if (bus_space_map(pa->pba_memt, pa->pba_maddr, pa->pba_msize,
+		    0, &memh))
 			return 0;
 		pca->scratch_memsiz = pa->pba_msize;
 		pca->scratch_memh = memh;
-		pca->pa_bc = pa->pba_bc;
+		pca->pa_memt = pa->pba_memt;
 #ifdef PCMCIA_ISA_DEBUG
 		printf("pbaaddr %p maddr %x msize %x\n",
-		       pa, pa->pba_maddr, pa->pba_msize);
-		printf("PCA %p mem %p size %d chip %x memh %x\n",
-		       pca, pca->scratch_mem, pca->scratch_memsiz,
-		       pca->pa_bc, pca->scratch_memh);
+		    pa, pa->pba_maddr, pa->pba_msize);
+		printf("PCA %p mem %p size %d memt %x memh %x\n",
+		    pca, pca->scratch_mem, pca->scratch_memsiz,
+		    pca->pa_memt, pca->scratch_memh);
 #endif
 	}
 	return 1;
@@ -147,7 +149,8 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 	ia.ia_msize = cf->cf_loc[3];
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4] ;
 	ia.ia_drq = cf->cf_loc[5];
-	ia.ia_bc = pc_link->bus->sc_bc;
+	ia.ia_iot = pc_link->bus->sc_iot;
+	ia.ia_memt = pc_link->bus->sc_memt;
 
 #ifdef PCMCIA_ISA_DEBUG
 	printf("pcmcia probe %x %x %p\n", ia.ia_iobase, ia.ia_irq,
@@ -309,10 +312,11 @@ pcmcia_isa_unconfig(pc_link)
 		struct softc {
 			struct device   sc_dev;
 			void *sc_ih;
-			bus_chipset_tag_t sc_bc;
+			bus_space_tag_t sc_iot;
+			bus_space_tag_t sc_memt;
 		} *sc = pc_link->devp;
 		if (sc)
-			isa_intr_disestablish(sc->sc_bc, sc->sc_ih);
+			isa_intr_disestablish(sc->sc_ic, sc->sc_ih);
 	}
 #endif
 	return 0;

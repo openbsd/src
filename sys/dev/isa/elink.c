@@ -39,7 +39,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 #include <dev/isa/elink.h>
 
@@ -64,9 +64,9 @@ static int elink_all_resets_initialized;
  * NOTE: the caller MUST provide an i/o handle for ELINK_ID_PORT!
  */
 void
-elink_reset(bc, ioh, bus)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+elink_reset(iot, ioh, bus)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int bus;
 {
 	struct elink_done_reset *er;
@@ -94,11 +94,11 @@ elink_reset(bc, ioh, bus)
 	LIST_INSERT_HEAD(&elink_all_resets, er, er_link);
 
 	/* Haven't reset the cards on this bus, yet. */
-	bus_io_write_1(bc, ioh, 0, ELINK_RESET);
+	bus_space_write_1(iot, ioh, 0, ELINK_RESET);
 
  out:
-	bus_io_write_1(bc, ioh, 0, 0x00);
-	bus_io_write_1(bc, ioh, 0, 0x00);
+	bus_space_write_1(iot, ioh, 0, 0x00);
+	bus_space_write_1(iot, ioh, 0, 0x00);
 }
 
 /*
@@ -108,9 +108,9 @@ elink_reset(bc, ioh, bus)
  * NOTE: the caller MUST provide an i/o handle for ELINK_ID_PORT!
  */
 void
-elink_idseq(bc, ioh, p)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+elink_idseq(iot, ioh, p)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	register u_char p;
 {
 	register int i;
@@ -118,7 +118,7 @@ elink_idseq(bc, ioh, p)
 
 	c = 0xff;
 	for (i = 255; i; i--) {
-		bus_io_write_1(bc, ioh, 0, c);
+		bus_space_write_1(iot, ioh, 0, c);
 		if (c & 0x80) {
 			c <<= 1;
 			c ^= p;

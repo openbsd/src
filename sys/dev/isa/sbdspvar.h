@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.5 1996/05/07 07:37:46 deraadt Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.6 1996/11/29 22:55:07 niklas Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.13 1996/04/29 20:28:50 christos Exp $	*/
 
 /*

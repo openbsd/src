@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.8 1996/11/23 21:46:42 kstailey Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.9 1996/11/29 22:55:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -62,15 +62,15 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/extent.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 
 #include "isapnpreg.h"
 #include "isapnpvar.h"
 
-#define SEND(d, r)	{ bus_io_write_1(sc->bc, sc->addrh, 0, d); \
-                          bus_io_write_1(sc->bc, sc->wdh,   0, r); }
+#define SEND(d, r)	{ bus_space_write_1(sc->iot, sc->addrh, 0, d); \
+                          bus_space_write_1(sc->iot, sc->wdh,   0, r); }
 
 int isapnpmatch __P((struct device *, void *, void *));
 void isapnpattach __P((struct device *, struct device *, void *));
@@ -81,10 +81,10 @@ struct isapnp_softc {
 	struct device sc_dev;
 	struct device *parent;
 
-	bus_chipset_tag_t bc;
-	bus_io_handle_t addrh;
-	bus_io_handle_t wdh;
-	bus_io_handle_t rdh;
+	bus_space_tag_t iot;
+	bus_space_handle_t addrh;
+	bus_space_handle_t wdh;
+	bus_space_handle_t rdh;
 	int rd_offset;
 
 	int rd_port;
@@ -154,7 +154,7 @@ isapnpattach(parent, self, aux)
 	 */
 	isc->pnpsc = sc;
 
-	sc->bc = ia->ia_bc;
+	sc->iot = ia->ia_iot;
 	sc->parent = parent;
 	TAILQ_INIT(&sc->q_card);
 
@@ -163,9 +163,9 @@ isapnpattach(parent, self, aux)
 	 * from ADDRESS port,
 	 * and valid READ_DATA ports are from 0x203 to 0x3ff.
 	 */
-	if (bus_io_map(sc->bc, ADDRESS, 1, &(sc->addrh)) ||
-	    bus_io_map(sc->bc, ADDRESS+0x0800, 1, &(sc->wdh))   ||
-	    bus_io_map(sc->bc, 0x0200, 0x200, &(sc->rdh)))
+	if (bus_space_map(sc->iot, ADDRESS, 1, 0, &(sc->addrh)) ||
+	    bus_space_map(sc->iot, ADDRESS+0x0800, 1, 0, &(sc->wdh)) ||
+	    bus_space_map(sc->iot, 0x0200, 0x200, 0, &(sc->rdh)))
 		panic("isapnpattach: io mapping failed");
 
 	/* Try various READ_DATA ports from 0x203-0x3ff */
@@ -200,7 +200,7 @@ postisapnpattach(parent, self, aux)
 			struct isa_attach_args ia;
 
 			bzero(&ia, sizeof(ia));
-			ia.ia_bc = iba->iba_bc;
+			ia.ia_iot = iba->iba_iot;
 			ia.ia_ic = iba->iba_ic;
 			ia.id = dev->id;
 			ia.comp_id = dev->comp_id;
@@ -492,20 +492,20 @@ static void
 send_Initiation_LFSR(sc)
 	struct isapnp_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->bc;
-	bus_io_handle_t addrh = sc->addrh;
+	bus_space_tag_t iot = sc->iot;
+	bus_space_handle_t addrh = sc->addrh;
 	int cur, i;
 
 	/* Reset the LSFR */
-	bus_io_write_1(bc, addrh, 0, 0);
-	bus_io_write_1(bc, addrh, 0, 0);
+	bus_space_write_1(iot, addrh, 0, 0);
+	bus_space_write_1(iot, addrh, 0, 0);
 
 	cur = 0x6a;
-	bus_io_write_1(bc, addrh, 0, cur);
+	bus_space_write_1(iot, addrh, 0, cur);
 
 	for (i = 1; i < 32; i++) {
 		cur = (cur >> 1) | (((cur ^ (cur >> 1)) << 7) & 0xff);
-		bus_io_write_1(bc, addrh, 0, cur);
+		bus_space_write_1(iot, addrh, 0, cur);
 	}
 }
 
@@ -517,8 +517,8 @@ get_serial(sc, data)
 	struct isapnp_softc *sc;
 	unsigned char *data;
 {
-	bus_chipset_tag_t bc = sc->bc;
-	bus_io_handle_t rdh = sc->rdh;
+	bus_space_tag_t iot = sc->iot;
+	bus_space_handle_t rdh = sc->rdh;
 
 	int i, bit, valid = 0, sum = 0x6a;
 
@@ -527,11 +527,12 @@ get_serial(sc, data)
 	sc->rd_offset = ((sc->rd_port - 0x80) << 2) | 0x3;
 
 	for (i = 0; i < 72; i++) {
-		bit = bus_io_read_1(bc, rdh, sc->rd_offset) == 0x55;
+		bit = bus_space_read_1(iot, rdh, sc->rd_offset) == 0x55;
 		delay(250);	/* Delay 250 usec */
 
 		/* Can't Short Circuit the next evaluation, so 'and' is last */
-		bit = (bus_io_read_1(bc, rdh, sc->rd_offset) == 0xaa) && bit;
+		bit = (bus_space_read_1(iot, rdh, sc->rd_offset) == 0xaa) &&
+		    bit;
 		delay(250);	/* Delay 250 usec */
 
 		valid = valid || bit;
@@ -557,9 +558,9 @@ get_resource_info(sc, buffer, len)
 	int i, j;
 
 	for (i = 0; i < len; i++) {
-		bus_io_write_1(sc->bc, sc->addrh, 0, STATUS);
+		bus_space_write_1(sc->iot, sc->addrh, 0, STATUS);
 		for (j = 0; j < 100; j++) {
-			if ((bus_io_read_1(sc->bc, sc->rdh, sc->rd_offset))
+			if ((bus_space_read_1(sc->iot, sc->rdh, sc->rd_offset))
 			    & 0x1)
 				break;
 			delay(1);
@@ -569,8 +570,8 @@ get_resource_info(sc, buffer, len)
 			       sc->sc_dev.dv_xname);
 			return 0;
 		}
-		bus_io_write_1(sc->bc, sc->addrh, 0, RESOURCE_DATA);
-		buffer[i] = bus_io_read_1(sc->bc, sc->rdh, sc->rd_offset);
+		bus_space_write_1(sc->iot, sc->addrh, 0, RESOURCE_DATA);
+		buffer[i] = bus_space_read_1(sc->iot, sc->rdh, sc->rd_offset);
 	}
 	return 1;
 }
@@ -843,7 +844,7 @@ isolation_protocol(sc)
 		/* Wake up cards without a CSN */
 		SEND(WAKE, 0);
 		SEND(SET_RD_DATA, sc->rd_port);
-		bus_io_write_1(sc->bc, sc->addrh, 0, SERIAL_ISOLATION);
+		bus_space_write_1(sc->iot, sc->addrh, 0, SERIAL_ISOLATION);
 		delay(1000);	/* Delay 1 msec */
 
 		if (get_serial(sc, data)) {
@@ -1003,7 +1004,7 @@ find_free_io(sc, desc, min_addr, max_addr, size, alignment, range_check)
 	int desc, min_addr, max_addr, size, alignment, range_check;
 {
 	int addr, i, success = 0;
-	bus_io_handle_t data;
+	bus_space_handle_t data;
 	struct emap *io_map;
 
 	if (range_check) {
@@ -1012,17 +1013,18 @@ find_free_io(sc, desc, min_addr, max_addr, size, alignment, range_check)
 			SEND(IO_CONFIG_BASE + desc * 2, addr >> 8);
 			SEND(IO_CONFIG_BASE + desc * 2 + 1, addr & 0xff);
 			SEND(IO_RANGE_CHECK, 0x2);
-			bus_io_map(sc->bc, addr, size, &data);
+			bus_space_map(sc->iot, addr, size, 0, &data);
 			i = 0;
 			for (i = 0; i < size; i++) {
-				if (bus_io_read_1(sc->bc, data, i) != 0xAA) {
-					bus_io_unmap(sc->bc, data, size);
+				if (bus_space_read_1(sc->iot, data, i) !=
+				    0xAA) {
+					bus_space_unmap(sc->iot, data, size);
 					break;
 				}
 			}
 			if (i == size) {
 				success = 1;
-				bus_io_unmap(sc->bc, data, size);
+				bus_space_unmap(sc->iot, data, size);
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadmavar.h,v 1.4 1996/04/22 20:03:05 hannken Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.5 1996/11/29 22:55:02 niklas Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.4 1996/03/01 04:08:46 mycroft Exp $	*/
 
 #define	DMAMODE_WRITE	0

@@ -1,8 +1,12 @@
-/*	$OpenBSD: wds.c,v 1.10 1996/11/23 21:46:49 kstailey Exp $	*/
-/*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
+/*	$OpenBSD: wds.c,v 1.11 1996/11/29 22:55:10 niklas Exp $	*/
+/*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
+#ifdef DDB
 #define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 /*
  * XXX
@@ -65,7 +69,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 
@@ -108,8 +112,8 @@ struct wds_softc {
 	struct isadev sc_id;
 	void *sc_ih;
 
-	bus_chipset_tag_t sc_bc;  /* bus identifier */
-	bus_io_handle_t sc_ioh;   /* io handle */
+	bus_space_tag_t sc_iot;		/* bus identifier */
+	bus_space_handle_t sc_ioh;	/* io handle */
 	int sc_irq, sc_drq;
 
 	int sc_revision;
@@ -143,7 +147,7 @@ int wds_debug = WDSDEBUG;
 #endif
 
 integrate void    wds_wait
-    __P((bus_chipset_tag_t, bus_io_handle_t, int, int, int));
+    __P((bus_space_tag_t, bus_space_handle_t, int, int, int));
 int     wds_cmd __P((struct wds_softc *, u_char *, int));
 integrate void wds_finish_scbs __P((struct wds_softc *));
 int     wdsintr __P((void *));
@@ -167,6 +171,7 @@ void	wds_sense  __P((struct wds_softc *, struct wds_scb *));
 int	wds_poll __P((struct wds_softc *, struct scsi_xfer *, int));
 int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
 void	wds_timeout __P((void *));
+int	wdsprint __P((void *, const char *));
 
 struct scsi_adapter wds_switch = {
 	wds_scsi_cmd,
@@ -185,7 +190,6 @@ struct scsi_device wds_dev = {
 
 int	wdsprobe __P((struct device *, void *, void *));
 void	wdsattach __P((struct device *, struct device *, void *));
-int	wdsprint __P((void *, const char *));
 
 struct cfattach wds_ca = {
 	sizeof(struct wds_softc), wdsprobe, wdsattach
@@ -198,14 +202,14 @@ struct cfdriver wds_cd = {
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 integrate void
-wds_wait(bc, ioh, port, mask, val)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+wds_wait(iot, ioh, port, mask, val)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	int port;
 	int mask;
 	int val;
 {
-	while ((bus_io_read_1(bc, ioh, port) & mask) != val)
+	while ((bus_space_read_1(iot, ioh, port) & mask) != val)
 		;
 }
 
@@ -218,16 +222,16 @@ wds_cmd(sc, ibuf, icnt)
 	u_int8_t *ibuf;
 	int icnt;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t c;
 
-	wds_wait(bc, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
+	wds_wait(iot, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
 
 	while (icnt--) {
-		bus_io_write_1(bc, ioh, WDS_CMD, *ibuf++);
-		wds_wait(bc, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
-		c = bus_io_read_1(bc, ioh, WDS_STAT);
+		bus_space_write_1(iot, ioh, WDS_CMD, *ibuf++);
+		wds_wait(iot, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
+		c = bus_space_read_1(iot, ioh, WDS_STAT);
 		if (c & WDSS_REJ)
 			return 1;
 	}
@@ -295,6 +299,9 @@ wdsattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+#ifdef notyet
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+#endif
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &wds_switch;
@@ -385,19 +392,19 @@ wdsintr(arg)
 	void *arg;
 {
 	struct wds_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char c;
 
 	/* Was it really an interrupt from the board? */
-	if ((bus_io_read_1(bc, ioh, WDS_STAT) & WDSS_IRQ) == 0)
+	if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ) == 0)
 		return 0;
 
 	/* Get the interrupt status byte. */
-	c = bus_io_read_1(bc, ioh, WDS_IRQSTAT) & WDSI_MASK;
+	c = bus_space_read_1(iot, ioh, WDS_IRQSTAT) & WDSI_MASK;
 
 	/* Acknowledge (which resets) the interrupt. */
-	bus_io_write_1(bc, ioh, WDS_IRQACK, 0x00);
+	bus_space_write_1(iot, ioh, WDS_IRQACK, 0x00);
 
 	switch (c) {
 	case WDSI_MSVC:
@@ -838,54 +845,54 @@ wds_find(ia, sc)
 	struct isa_attach_args *ia;
 	struct wds_softc *sc;
 {
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	u_char c;
 	int i;
 
 	/* XXXXX */
 
-	if (bus_io_map(bc, ia->ia_iobase, WDS_IO_PORTS, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, WDS_IO_PORTS, 0, &ioh))
 		return (0);
 
 	/*
 	 * Sending a command causes the CMDRDY bit to clear.
  	 */
-	c = bus_io_read_1(bc, ioh, WDS_STAT);
+	c = bus_space_read_1(iot, ioh, WDS_STAT);
 	for (i = 0; i < 4; i++)
-		if ((bus_io_read_1(bc, ioh, WDS_STAT) & WDSS_RDY) != 0) {
+		if ((bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY) != 0) {
 			goto ready;
 		delay(10);
 	}
 	return 1;
 
 ready:
-	bus_io_write_1(bc, ioh, WDS_CMD, WDSC_NOOP);
-	if (bus_io_read_1(bc, ioh, WDS_STAT) & WDSS_RDY)
+	bus_space_write_1(iot, ioh, WDS_CMD, WDSC_NOOP);
+	if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_RDY)
 		return 1;
 
-	bus_io_write_1(bc, ioh, WDS_HCR, WDSH_SCSIRESET|WDSH_ASCRESET);
+	bus_space_write_1(iot, ioh, WDS_HCR, WDSH_SCSIRESET|WDSH_ASCRESET);
 	delay(10000);
-	bus_io_write_1(bc, ioh, WDS_HCR, 0x00);
+	bus_space_write_1(iot, ioh, WDS_HCR, 0x00);
 	delay(500000);
-	wds_wait(bc, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
-	if (bus_io_read_1(bc, ioh, WDS_IRQSTAT) != 1)
-		if (bus_io_read_1(bc, ioh, WDS_IRQSTAT) != 7)
+	wds_wait(iot, ioh, WDS_STAT, WDSS_RDY, WDSS_RDY);
+	if (bus_space_read_1(iot, ioh, WDS_IRQSTAT) != 1)
+		if (bus_space_read_1(iot, ioh, WDS_IRQSTAT) != 7)
 			printf("%s: failed reset!!! %2x\n",
 			    sc ? sc->sc_dev.dv_xname : "wds?",
-			    bus_io_read_1(bc, ioh, WDS_IRQSTAT));
+			    bus_space_read_1(iot, ioh, WDS_IRQSTAT));
 
-	if ((bus_io_read_1(bc, ioh, WDS_STAT) & (WDSS_RDY)) != WDSS_RDY) {
+	if ((bus_space_read_1(iot, ioh, WDS_STAT) & (WDSS_RDY)) != WDSS_RDY) {
 		printf("%s: waiting for controller to become ready.",
 		    sc ? sc->sc_dev.dv_xname : "wds?");
 		for (i = 0; i < 20; i++) {
-			if ((bus_io_read_1(bc, ioh, WDS_STAT) & (WDSS_RDY)) ==
-			    WDSS_RDY)
+			if ((bus_space_read_1(iot, ioh, WDS_STAT) &
+			    (WDSS_RDY)) == WDSS_RDY)
 				break;
 			printf(".");
 			delay(10000);
 		}
-		if ((bus_io_read_1(bc, ioh, WDS_STAT) & (WDSS_RDY)) !=
+		if ((bus_space_read_1(iot, ioh, WDS_STAT) & (WDSS_RDY)) !=
 		    WDSS_RDY) {
 			printf(" failed\n");
 			return 1;
@@ -898,12 +905,12 @@ ready:
 		/* who are we on the scsi bus? */
 		sc->sc_scsi_dev = 7;
 
-		sc->sc_bc = bc;
+		sc->sc_iot = iot;
 		sc->sc_ioh = ioh;
 		sc->sc_irq = ia->ia_irq;
 		sc->sc_drq = ia->ia_drq;
 	} else
-		bus_io_unmap(bc, ioh, WDS_IO_PORTS);
+		bus_space_unmap(iot, ioh, WDS_IO_PORTS);
 
 	return 0;
 }
@@ -915,8 +922,8 @@ void
 wds_init(sc)
 	struct wds_softc *sc;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct wds_setup init;
 	u_char c;
 	int i;
@@ -960,12 +967,12 @@ wds_init(sc)
 	init.nomb = init.nimb = WDS_MBX_SIZE;
 	wds_cmd(sc, (u_char *)&init, sizeof init);
 
-	wds_wait(bc, ioh, WDS_STAT, WDSS_INIT, WDSS_INIT);
+	wds_wait(iot, ioh, WDS_STAT, WDSS_INIT, WDSS_INIT);
 
 	c = WDSC_DISUNSOL;
 	wds_cmd(sc, &c, sizeof c);
 
-	bus_io_write_1(bc, ioh, WDS_HCR, WDSH_DRQEN);
+	bus_space_write_1(iot, ioh, WDS_HCR, WDSH_DRQEN);
 }
 
 /*
@@ -992,7 +999,7 @@ wds_inquire_setup_information(sc)
 	scb->cmd.opcode = WDSX_GETFIRMREV;
 
 	/* Will poll card, await result. */
-	bus_io_write_1(sc->sc_bc, sc->sc_ioh, WDS_HCR, WDSH_DRQEN);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, WDS_HCR, WDSH_DRQEN);
 	scb->flags |= SCB_POLLED;
 
 	s = splbio();
@@ -1021,7 +1028,6 @@ void
 wdsminphys(bp)
 	struct buf *bp;
 {
-
 	if (bp->b_bcount > ((WDS_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((WDS_NSEG - 1) << PGSHIFT);
 	minphys(bp);
@@ -1036,8 +1042,8 @@ wds_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct wds_softc *sc = sc_link->adapter_softc;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	struct wds_scb *scb;
 	struct wds_scat_gath *sg;
 	int seg;
@@ -1236,11 +1242,11 @@ wds_scsi_cmd(xs)
 	/* XXX Do we really want to do this? */
 	if (flags & SCSI_POLL) {
 		/* Will poll card, await result. */
-		bus_io_write_1(bc, ioh, WDS_HCR, WDSH_DRQEN);
+		bus_space_write_1(iot, ioh, WDS_HCR, WDSH_DRQEN);
 		scb->flags |= SCB_POLLED;
 	} else {
 		/* Will send command, let interrupt routine handle result. */
-		bus_io_write_1(bc, ioh, WDS_HCR, WDSH_IRQEN | WDSH_DRQEN);
+		bus_space_write_1(iot, ioh, WDS_HCR, WDSH_IRQEN | WDSH_DRQEN);
 	}
 
 	s = splbio();
@@ -1341,8 +1347,8 @@ wds_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1350,7 +1356,7 @@ wds_poll(sc, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_io_read_1(bc, ioh, WDS_STAT) & WDSS_IRQ)
+		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ)
 			wdsintr(sc);
 		if (xs->flags & ITSDONE)
 			return 0;
@@ -1369,8 +1375,8 @@ wds_ipoll(sc, scb, count)
 	struct wds_scb *scb;
 	int count;
 {
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1378,7 +1384,7 @@ wds_ipoll(sc, scb, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_io_read_1(bc, ioh, WDS_STAT) & WDSS_IRQ)
+		if (bus_space_read_1(iot, ioh, WDS_STAT) & WDSS_IRQ)
 			wdsintr(sc);
 		if (scb->flags & SCB_DONE)
 			return 0;
