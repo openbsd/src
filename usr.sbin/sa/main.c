@@ -33,7 +33,7 @@ static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.4 1999/05/24 21:24:00 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 2000/11/10 15:33:15 provos Exp $";
 #endif
 
 /*
@@ -130,7 +130,7 @@ main(argc, argv)
 			Kflag = 1;
 			break;
 		case 'l':
-			/* seperate system and user time */
+			/* separate system and user time */
 			lflag = 1;
 			break;
 		case 'm':

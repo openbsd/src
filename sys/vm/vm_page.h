@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.10 1999/12/30 18:21:56 provos Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.11 2000/11/10 15:33:11 provos Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -104,7 +104,7 @@
  * fields were dumped and all the flags were lumped into one short.
  * that is fine for a single threaded uniprocessor OS, but bad if you
  * want to actual make use of locking (simple_lock's).  so, we've
- * seperated things back out again.
+ * separated things back out again.
  *
  * note the page structure has no lock of its own.
  */

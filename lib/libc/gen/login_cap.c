@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.3 2000/09/16 18:06:01 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.4 2000/11/10 15:33:03 provos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -699,7 +699,7 @@ setuserpath(lc, home)
  *	6) A number followed by a g (mult by 1024 * 1024 * 1024).
  *	7) A number followed by a t (mult by 1024 * 1024 * 1024 * 1024).
  *	8) Two or more numbers (with/without k,b,m,g, or t).
- *	   seperated by x (also * for backwards compatibility), specifying
+ *	   separated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  */
 static

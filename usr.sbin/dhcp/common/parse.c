@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1 1998/08/18 03:43:26 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.2 2000/11/10 15:33:13 provos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -280,18 +280,18 @@ void parse_lease_time (cfile, timep)
 }
 
 /* No BNF for numeric aggregates - that's defined by the caller.  What
-   this function does is to parse a sequence of numbers seperated by
-   the token specified in seperator.  If max is zero, any number of
+   this function does is to parse a sequence of numbers separated by
+   the token specified in separator.  If max is zero, any number of
    numbers will be parsed; otherwise, exactly max numbers are
    expected.  Base and size tell us how to internalize the numbers
    once they've been tokenized. */
 
 unsigned char *parse_numeric_aggregate (cfile, buf,
-					max, seperator, base, size)
+					max, separator, base, size)
 	FILE *cfile;
 	unsigned char *buf;
 	int *max;
-	int seperator;
+	int separator;
 	int base;
 	int size;
 {
@@ -311,7 +311,7 @@ unsigned char *parse_numeric_aggregate (cfile, buf,
 	do {
 		if (count) {
 			token = peek_token (&val, cfile);
-			if (token != seperator) {
+			if (token != separator) {
 				if (!*max)
 					break;
 				if (token != RBRACE && token != LBRACE)
@@ -519,10 +519,10 @@ TIME parse_date (cfile)
 	if (tm.tm_year > 1900)
 		tm.tm_year -= 1900;
 
-	/* Slash seperating year from month... */
+	/* Slash separating year from month... */
 	token = next_token (&val, cfile);
 	if (token != SLASH) {
-		parse_warn ("expected slash seperating year from month.");
+		parse_warn ("expected slash separating year from month.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;
@@ -538,10 +538,10 @@ TIME parse_date (cfile)
 	}
 	tm.tm_mon = atoi (val) - 1;
 
-	/* Slash seperating month from day... */
+	/* Slash separating month from day... */
 	token = next_token (&val, cfile);
 	if (token != SLASH) {
-		parse_warn ("expected slash seperating month from day.");
+		parse_warn ("expected slash separating month from day.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;
@@ -567,10 +567,10 @@ TIME parse_date (cfile)
 	}
 	tm.tm_hour = atoi (val);
 
-	/* Colon seperating hour from minute... */
+	/* Colon separating hour from minute... */
 	token = next_token (&val, cfile);
 	if (token != COLON) {
-		parse_warn ("expected colon seperating hour from minute.");
+		parse_warn ("expected colon separating hour from minute.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;
@@ -586,10 +586,10 @@ TIME parse_date (cfile)
 	}
 	tm.tm_min = atoi (val);
 
-	/* Colon seperating minute from second... */
+	/* Colon separating minute from second... */
 	token = next_token (&val, cfile);
 	if (token != COLON) {
-		parse_warn ("expected colon seperating hour from minute.");
+		parse_warn ("expected colon separating hour from minute.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
 		return (TIME)0;

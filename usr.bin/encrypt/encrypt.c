@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.11 1999/09/03 18:13:37 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.12 2000/11/10 15:33:12 provos Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -84,7 +84,7 @@ void print_passwd(char *string, int operation, void *extra)
      switch(operation) {
      case DO_MAKEKEY:
 	  /*
-	   * makekey mode: parse string into seperate DES key and salt.
+	   * makekey mode: parse string into separate DES key and salt.
 	   */
 	  if (strlen(string) != 10) {
 	       /* To be compatible... */

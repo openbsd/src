@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.15 2000/09/07 17:52:23 ericj Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.16 2000/11/10 15:33:09 provos Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -638,7 +638,7 @@ linux_sys_mknod(p, v, retval)
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	/*
-	 * BSD handles FIFOs seperately
+	 * BSD handles FIFOs separately
 	 */
 	if (SCARG(uap, mode) & S_IFIFO) {
 		SCARG(&bma, path) = SCARG(uap, path);

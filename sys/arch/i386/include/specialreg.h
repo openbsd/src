@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.8 1999/11/20 11:18:59 matthieu Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.9 2000/11/10 15:33:06 provos Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -173,7 +173,7 @@
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
- * These registers must be written as three seperate bytes.
+ * These registers must be written as three separate bytes.
  *
  * NCRx+0: A31-A24 of starting address
  * NCRx+1: A23-A16 of starting address

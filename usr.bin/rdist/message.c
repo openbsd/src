@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: message.c,v 1.9 2000/11/10 15:33:12 provos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: message.c,v 1.9 2000/11/10 15:33:12 provos Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -282,7 +282,7 @@ extern char *msgparseopts(msgstr, doset)
 	(void) strcpy(msgbuf, msgstr);
 
 	/*
-	 * Each <facility>=<types> list is seperated by ":".
+	 * Each <facility>=<types> list is separated by ":".
 	 */
 	for (optstr = strtok(msgbuf, ":"); optstr;
 	     optstr = strtok(NULL, ":")) {

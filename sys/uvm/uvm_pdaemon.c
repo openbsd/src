@@ -337,7 +337,7 @@ uvmpd_scan_inactive(pglst)
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
-	 * note: we currently keep swap-backed pages on a seperate inactive
+	 * note: we currently keep swap-backed pages on a separate inactive
 	 * list from object-backed pages.   however, merging the two lists
 	 * back together again hasn't been ruled out.   thus, we keep our
 	 * swap cluster in "swpps" rather than in pps (allows us to mix

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.6 1997/09/15 06:05:51 millert Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.7 2000/11/10 15:33:09 provos Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ struct hpux_sigaction {
 
 /*
  * In BSD EAGAIN and EWOULDBLOCK are the same error code.
- * However, for HP-UX we must split them out to seperate codes.
+ * However, for HP-UX we must split them out to separate codes.
  * The easiest way to do this was to check the return value of
  * BSD routines which are known to return EAGAIN (but never
  * EWOULDBLOCK) and change it to the pseudo-code OEAGAIN when

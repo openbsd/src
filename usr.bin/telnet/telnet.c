@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.10 2000/10/24 21:52:38 millert Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.11 2000/11/10 15:33:13 provos Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ dontoption(option)
 }
 
 /*
- * This routine will turn a pipe seperated list of names in the buffer
+ * This routine will turn a pipe separated list of names in the buffer
  * into an array of pointers to NUL terminated names.  We toss out any
  * bad, duplicate, or verbose names (names with spaces).
  */

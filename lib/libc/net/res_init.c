@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.19 2000/06/22 07:31:18 itojun Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.20 2000/11/10 15:33:04 provos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.19 2000/06/22 07:31:18 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.20 2000/11/10 15:33:04 provos Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,7 +104,7 @@ static char rcsid[] = "$OpenBSD: res_init.c,v 1.19 2000/06/22 07:31:18 itojun Ex
  *   "search" property.
  * - The sortlist comprised of IP address netmask pairs are stored as
  *   values of the "sortlist" property. The IP address and optional netmask
- *   should be seperated by a slash (/) or ampersand (&) character.
+ *   should be separated by a slash (/) or ampersand (&) character.
  * - Internal resolver variables can be set from the value of the "options"
  *   property.
  */

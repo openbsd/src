@@ -843,7 +843,7 @@ ReStart:
 }
 
 /*
- * amap_splitref: split a single reference into two seperate references
+ * amap_splitref: split a single reference into two separate references
  *
  * => called from uvm_map's clip routines
  * => origref's map should be locked

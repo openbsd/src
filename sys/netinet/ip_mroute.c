@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.19 2000/01/21 03:15:05 angelos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.20 2000/11/10 15:33:10 provos Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1238,7 +1238,7 @@ ip_mdq(m, ifp, rt)
 /*
  * Macro to send packet on vif.  Since RSVP packets don't get counted on
  * input, they shouldn't get counted on output, so statistics keeping is
- * seperate.
+ * separate.
  */
 #define MC_SEND(ip,vifp,m) {                             \
                 if ((vifp)->v_flags & VIFF_TUNNEL)	 \

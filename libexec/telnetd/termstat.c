@@ -1,4 +1,4 @@
-/*	$OpenBSD: termstat.c,v 1.4 1998/04/25 04:43:04 millert Exp $	*/
+/*	$OpenBSD: termstat.c,v 1.5 2000/11/10 15:33:04 provos Exp $	*/
 /*	$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: termstat.c,v 1.5 1996/02/28 20:38:27 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: termstat.c,v 1.4 1998/04/25 04:43:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: termstat.c,v 1.5 2000/11/10 15:33:04 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -552,7 +552,7 @@ clientstat(code, parm1, parm2)
 		/*
 		 * Change terminal speed as requested by client.
 		 * We set the receive speed first, so that if we can't
-		 * store seperate receive and transmit speeds, the transmit
+		 * store separate receive and transmit speeds, the transmit
 		 * speed will take precedence.
 		 */
 		tty_rspeed(parm2);

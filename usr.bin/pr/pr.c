@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.7 1999/12/03 23:43:02 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.8 2000/11/10 15:33:12 provos Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.7 1999/12/03 23:43:02 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.8 2000/11/10 15:33:12 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,7 +66,7 @@ static char *rcsid = "$OpenBSD: pr.c,v 1.7 1999/12/03 23:43:02 deraadt Exp $";
 /*
  * pr:	a printing and pagination filter. If multiple input files
  *	are specified, each is read, formatted, and written to standard
- *	output. By default, input is seperated into 66-line pages, each
+ *	output. By default, input is separated into 66-line pages, each
  *	with a header that includes the page number, date, time and the
  *	files pathname.
  *

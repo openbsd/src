@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.9 1999/05/14 20:19:11 aaron Exp $	*/
+/*	$OpenBSD: common.c,v 1.10 2000/11/10 15:33:12 provos Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.9 1999/05/14 20:19:11 aaron Exp $";
+"$OpenBSD: common.c,v 1.10 2000/11/10 15:33:12 provos Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -964,7 +964,7 @@ extern char *xbasename(path)
 }
 
 /*
- * Take a colon (':') seperated path to a file and
+ * Take a colon (':') separated path to a file and
  * search until a component of that path is found and
  * return the found file name.
  */

@@ -48,7 +48,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1 1998/08/18 03:43:25 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.2 2000/11/10 15:33:13 provos Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -123,7 +123,7 @@ static int skipname (label)
 }
 
 /* copy_out_name copies out the name appearing at the specified location
-   into a string, stored as fields seperated by dots rather than lengths
+   into a string, stored as fields separated by dots rather than lengths
    and labels.   The length of the label-formatted name is returned. */
 
 static int copy_out_name (base, name, buf)

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.4 1999/08/26 14:57:19 millert Exp $
+ *	$Id: amq_subr.c,v 1.5 2000/11/10 15:33:13 provos Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ extern qelem mfhead;
 
 #if 0
 /*
- * amd does not allocate a seperate socket to distinguish local
+ * amd does not allocate a separate socket to distinguish local
  * connects so this "security" check is useless.
  */
 static int ok_security(rqstp)

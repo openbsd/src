@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.7 2000/06/30 16:00:04 millert Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.8 2000/11/10 15:33:03 provos Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: initdeck.c,v 1.7 2000/06/30 16:00:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: initdeck.c,v 1.8 2000/11/10 15:33:03 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ static char rcsid[] = "$OpenBSD: initdeck.c,v 1.7 2000/06/30 16:00:04 millert Ex
 /*
  *	This program initializes the card files for monopoly.
  * It reads in a data file with Com. Chest cards, followed by
- * the Chance card.  The two are seperated by a line of "%-".
- * All other cards are seperated by lines of "%%".  In the front
+ * the Chance card.  The two are separated by a line of "%-".
+ * All other cards are separated by lines of "%%".  In the front
  * of the file is the data for the decks in the same order.
  * This includes the seek pointer for the start of each card.
  * All cards start with their execution code, followed by the
