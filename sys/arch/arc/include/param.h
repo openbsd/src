@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.6 1996/12/11 11:12:54 deraadt Exp $ */
+/*      $OpenBSD: param.h,v 1.7 1997/02/28 22:57:34 niklas Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,9 +48,11 @@
  *	Deskstation Tyne
  *	Etc
  */
-#define	MACHINE	     "arc"
-#define MACHINE_ARCH "mips"
-#define MID_MACHINE  MID_PMAX	/* XXX Bogus, but we need it for now... */
+#define	MACHINE		"arc"
+#define	_MACHINE	arc
+#define MACHINE_ARCH	"mips"
+#define _MACHINE_ARCH	mips
+#define MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

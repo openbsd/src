@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 1997/02/18 15:54:26 rahnds Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 1997/02/28 22:57:40 niklas Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -42,7 +42,9 @@
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
 #define	MACHINE		"powerpc"
+#define	_MACHINE	powerpc
 #define	MACHINE_ARCH	"powerpc"
+#define	_MACHINE_ARCH	powerpc
 #define	MID_MACHINE	MID_ZERO
 
 #define	ALIGNBYTES	(sizeof(double) - 1)

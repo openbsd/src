@@ -1,3 +1,4 @@
+/*	$OpenBSD: param.h,v 1.2 1997/02/28 22:57:39 niklas Exp $	*/
 /*	$NetBSD: param.h,v 1.12 1995/06/26 06:56:05 cgd Exp $	*/
 
 /*-
@@ -53,7 +54,9 @@
 #endif
 
 #define MACHINE 	"pc532"
+#define _MACHINE 	pc532
 #define MACHINE_ARCH	"ns32k"
+#define _MACHINE_ARCH	ns32k
 #define MID_MACHINE	MID_NS32532
 
 /*

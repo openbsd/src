@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.2 1997/02/23 21:59:29 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.3 1997/02/28 22:57:41 niklas Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,9 +44,11 @@
 /*
  * Machine dependent constants for Willowglen Mips RISC machines:
  */
-#define	MACHINE	     "wgrisc"
-#define MACHINE_ARCH "mips"
-#define MID_MACHINE  MID_PMAX	/* XXX Bogus, but we need it for now... */
+#define	MACHINE		"wgrisc"
+#define	MACHINE		wgrisc
+#define MACHINE_ARCH	"mips"
+#define _MACHINE_ARCH	mips
+#define MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
