@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.21 2000/03/23 10:13:58 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.22 2000/03/23 14:44:37 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -378,8 +378,10 @@ tsleep(ident, priority, wmesg, timo)
 	else
 		*qp->sq_tailp = p;
 	*(qp->sq_tailp = &p->p_forw) = 0;
-	if (timo)
-		timeout(endtsleep, (void *)p, timo);
+	if (timo) {
+		timeout_set(&p->p_sleep_to, endtsleep, p);
+		timeout_add(&p->p_sleep_to, timo);
+	}
 	/*
 	 * We put ourselves on the sleep queue and start our timeout
 	 * before calling CURSIG, as we could stop there, and a wakeup
@@ -424,7 +426,7 @@ resume:
 			return (EWOULDBLOCK);
 		}
 	} else if (timo)
-		untimeout(endtsleep, (void *)p);
+		timeout_del(&p->p_sleep_to);
 	if (catch && (sig != 0 || (sig = CURSIG(p)) != 0)) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_CSW))
@@ -451,7 +453,7 @@ void
 endtsleep(arg)
 	void *arg;
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	p = (struct proc *)arg;
