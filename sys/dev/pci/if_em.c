@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.12 2003/10/05 21:58:42 henric Exp $ */
+/* $OpenBSD: if_em.c,v 1.13 2003/10/13 21:19:29 jason Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2730,6 +2730,21 @@ em_receive_checksum(struct em_softc *sc,
 	}
 
 	return;
+#else /* __FreeBSD__ */
+	/* 82543 or newer only */
+	if ((sc->hw.mac_type < em_82543) ||
+	    /* Ignore Checksum bit is set */
+	    (rx_desc->status & E1000_RXD_STAT_IXSM))
+		return;
+
+	if ((rx_desc->status & (E1000_RXD_STAT_IPCS|E1000_RXD_ERR_IPE)) ==
+	    E1000_RXD_STAT_IPCS)
+		mp->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+
+	if ((rx_desc->status & (E1000_RXD_STAT_IPCS|E1000_RXD_ERR_IPE|
+	    E1000_RXD_STAT_TCPCS|E1000_RXD_ERR_TCPE)) ==
+	    (E1000_RXD_STAT_TCPCS | E1000_RXD_STAT_IPCS))
+		mp->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 #endif /* __FreeBSD__ */
 }
 
