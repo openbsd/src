@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.67 2000/01/10 04:37:42 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.68 2000/01/10 05:35:09 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -365,7 +365,46 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	}
 
 	/* Initialize TDB for PF_KEY notification */
-	/* XXX */
+	bzero(&tdb2, sizeof(tdb2));
+	tdb2.tdb_satype = get_sa_require(inp);
+
+	/* Always require PFS */
+	tdb2.tdb_flags |= TDBF_PFS; /* XXX Make this configurable */
+
+	/*
+	 * XXX Initialize:
+	 * XXX - Lifetime values
+	 * XXX - encalgxform/authalgxform
+	 * XXX from sysctl-controlled defaults
+	 */
+
+	/* XXX Initialize src_id/dst_id */
+
+#ifdef INET
+	if (!(inp->inp_flags & INP_IPV6))
+	{
+	    tdb2.tdb_src.sin.sin_family = AF_INET;
+	    tdb2.tdb_src.sin.sin_len = sizeof(struct sockaddr_in);
+	    tdb2.tdb_src.sin.sin_addr = inp->inp_laddr;
+
+	    tdb2.tdb_dst.sin.sin_family = AF_INET;
+	    tdb2.tdb_dst.sin.sin_len = sizeof(struct sockaddr_in);
+	    tdb2.tdb_dst.sin.sin_addr = inp->inp_faddr;
+	}
+#endif /* INET */
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
+	{
+	    tdb2.tdb_src.sin6.sin6_family = AF_INET6;
+	    tdb2.tdb_src.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	    tdb2.tdb_src.sin6.sin6_addr = inp->inp_laddr6;
+
+	    tdb2.tdb_dst.sin6.sin6_family = AF_INET6;
+	    tdb2.tdb_dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	    tdb2.tdb_dst.sin6.sin6_addr = inp->inp_faddr6;
+	}
+#endif /* INET6 */
 
 	/* Send PF_KEYv2 Notify */
 	if ((error = pfkeyv2_acquire(&tdb2, 0)) != 0)
