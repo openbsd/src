@@ -1137,6 +1137,7 @@
 ./usr/share/man/cat4/fxp.0
 ./usr/share/man/cat4/gdt.0
 ./usr/share/man/cat4/gem.0
+./usr/share/man/cat4/gentbi.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gpio.0
 ./usr/share/man/cat4/gpr.0
@@ -1222,6 +1223,7 @@
 ./usr/share/man/cat4/i386/mms.0
 ./usr/share/man/cat4/i386/mtrr.0
 ./usr/share/man/cat4/i386/npx.0
+./usr/share/man/cat4/i386/nvram.0
 ./usr/share/man/cat4/i386/pcibios.0
 ./usr/share/man/cat4/i386/pctr.0
 ./usr/share/man/cat4/i386/pss.0
@@ -1468,6 +1470,7 @@
 ./usr/share/man/cat4/sparc/sw.0
 ./usr/share/man/cat4/sparc/tctrl.0
 ./usr/share/man/cat4/sparc/tcx.0
+./usr/share/man/cat4/sparc/timer.0
 ./usr/share/man/cat4/sparc/tslot.0
 ./usr/share/man/cat4/sparc/tvtwo.0
 ./usr/share/man/cat4/sparc/vigra.0
@@ -1518,6 +1521,7 @@
 ./usr/share/man/cat4/sparc64/sabtty.0
 ./usr/share/man/cat4/sparc64/schizo.0
 ./usr/share/man/cat4/sparc64/spif.0
+./usr/share/man/cat4/sparc64/timer.0
 ./usr/share/man/cat4/sparc64/upa.0
 ./usr/share/man/cat4/sparc64/uperf.0
 ./usr/share/man/cat4/sparc64/vgafb.0
@@ -1560,6 +1564,7 @@
 ./usr/share/man/cat4/ubsa.0
 ./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/ucom.0
+./usr/share/man/cat4/udav.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/udsbr.0
 ./usr/share/man/cat4/uftdi.0
@@ -1725,6 +1730,7 @@
 ./usr/share/man/cat5/mvmeppc
 ./usr/share/man/cat5/mygate.0
 ./usr/share/man/cat5/myname.0
+./usr/share/man/cat5/named.conf.0
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
@@ -1898,6 +1904,8 @@
 ./usr/share/man/cat8/disklabel.0
 ./usr/share/man/cat8/diskless.0
 ./usr/share/man/cat8/dmesg.0
+./usr/share/man/cat8/dnssec-keygen.0
+./usr/share/man/cat8/dnssec-signzone.0
 ./usr/share/man/cat8/dump.0
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/editmap.0
@@ -2461,8 +2469,3 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/man/cat4/sparc/timer.0
-./usr/share/man/cat4/sparc64/timer.0
-./usr/share/man/cat5/named.conf.0
-./usr/share/man/cat8/dnssec-keygen.0
-./usr/share/man/cat8/dnssec-signzone.0

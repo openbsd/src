@@ -101,6 +101,7 @@
 ./usr/include/dev/ata
 ./usr/include/dev/ata/atareg.h
 ./usr/include/dev/ata/atavar.h
+./usr/include/dev/ata/satareg.h
 ./usr/include/dev/ata/wdvar.h
 ./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
@@ -108,8 +109,6 @@
 ./usr/include/dev/biovar.h
 ./usr/include/dev/cardbus
 ./usr/include/dev/cardbus/cardbus_exrom.h
-./usr/include/dev/cardbus/cardbusdevs.h
-./usr/include/dev/cardbus/cardbusdevs_data.h
 ./usr/include/dev/cardbus/cardbusvar.h
 ./usr/include/dev/cardbus/cardslotvar.h
 ./usr/include/dev/cardbus/rbus.h
@@ -691,6 +690,7 @@
 ./usr/include/dev/usb/if_cdcereg.h
 ./usr/include/dev/usb/if_cuereg.h
 ./usr/include/dev/usb/if_kuereg.h
+./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_wi_usb.h
 ./usr/include/dev/usb/ohcireg.h

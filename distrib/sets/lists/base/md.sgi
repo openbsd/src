@@ -32,7 +32,7 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/3.3.2/include
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/3.3.2/specs
 ./usr/lib/libasn1.so.14.0
-./usr/lib/libc.so.34.1
+./usr/lib/libc.so.34.2
 ./usr/lib/libcom_err.so.14.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
@@ -61,7 +61,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.9.0
-./usr/lib/libstdc++.so.32.0
+./usr/lib/libstdc++.so.34.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
 ./usr/lib/libusbhid.so.3.0

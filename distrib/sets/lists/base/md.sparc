@@ -30,7 +30,7 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.6/2.95.3/include
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.6/2.95.3/specs
 ./usr/lib/libasn1.so.14.0
-./usr/lib/libc.so.34.1
+./usr/lib/libc.so.34.2
 ./usr/lib/libcom_err.so.14.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
