@@ -1,4 +1,4 @@
-/*	$OpenBSD: serv.c,v 1.4 1996/07/01 20:40:29 deraadt Exp $	*/
+/*	$OpenBSD: serv.c,v 1.5 1996/09/15 19:05:09 millert Exp $	*/
 /*	$NetBSD: serv.c,v 1.7 1995/09/28 05:37:47 tls Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)serv.c	5.4 (Berkeley) 1/21/94";
 #else
-static char rcsid[] = "$OpenBSD: serv.c,v 1.4 1996/07/01 20:40:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: serv.c,v 1.5 1996/09/15 19:05:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: serv.c,v 1.4 1996/07/01 20:40:29 deraadt Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include "mdef.h"
 #include "extr.h" 
 #include "pathnames.h"
@@ -337,11 +338,14 @@ register int argc;
 dodiv(n)
 register int n;
 {
+	int fd;
+
         if (n < 0 || n >= MAXOUT)
                 n = 0;                  /* bitbucket */
         if (outfile[n] == NULL) {
                 m4temp[UNIQUE] = n + '0';
-                if ((outfile[n] = fopen(m4temp, "w")) == NULL)
+		if ((fd = open(m4temp, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0 ||
+		    (outfile[n] = fdopen(fd, "w")) == NULL)
                         error("m4: cannot divert.");
         }
         oindex = n;
