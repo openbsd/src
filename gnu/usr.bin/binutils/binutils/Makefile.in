@@ -204,7 +204,7 @@ BFDLIB = ../bfd/libbfd.la
 
 OPCODES = ../opcodes/libopcodes.la
 
-LIBIBERTY = ../libiberty/libiberty.a
+LIBIBERTY = -liberty
 
 POTFILES = $(CFILES) $(DEBUG_SRCS) $(HFILES)
 
@@ -316,76 +316,74 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 nlmconv_OBJECTS =  nlmconv.o nlmheader.o bucomm.o version.o filemode.o
 nlmconv_LDADD = $(LDADD)
-nlmconv_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+nlmconv_DEPENDENCIES =  ../bfd/libbfd.la
 nlmconv_LDFLAGS = 
 srconv_OBJECTS =  srconv.o coffgrok.o bucomm.o version.o filemode.o
 srconv_LDADD = $(LDADD)
-srconv_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+srconv_DEPENDENCIES =  ../bfd/libbfd.la
 srconv_LDFLAGS = 
 sysdump_OBJECTS =  sysdump.o bucomm.o version.o filemode.o
 sysdump_LDADD = $(LDADD)
-sysdump_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+sysdump_DEPENDENCIES =  ../bfd/libbfd.la
 sysdump_LDFLAGS = 
 coffdump_OBJECTS =  coffdump.o coffgrok.o bucomm.o version.o filemode.o
 coffdump_LDADD = $(LDADD)
-coffdump_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+coffdump_DEPENDENCIES =  ../bfd/libbfd.la
 coffdump_LDFLAGS = 
 dlltool_OBJECTS =  dlltool.o defparse.o deflex.o dyn-string.o bucomm.o \
 version.o filemode.o
-dlltool_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+dlltool_DEPENDENCIES =  ../bfd/libbfd.la
 dlltool_LDFLAGS = 
 windres_OBJECTS =  windres.o resrc.o rescoff.o resbin.o rcparse.o \
 rclex.o winduni.o resres.o bucomm.o version.o filemode.o
-windres_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+windres_DEPENDENCIES =  ../bfd/libbfd.la
 windres_LDFLAGS = 
 dllwrap_OBJECTS =  dllwrap.o dyn-string.o version.o
-dllwrap_DEPENDENCIES =  ../libiberty/libiberty.a
+dllwrap_DEPENDENCIES =  
 dllwrap_LDFLAGS = 
 size_OBJECTS =  size.o bucomm.o version.o filemode.o
 size_LDADD = $(LDADD)
-size_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+size_DEPENDENCIES =  ../bfd/libbfd.la
 size_LDFLAGS = 
 objdump_OBJECTS =  objdump.o prdbg.o rddbg.o debug.o stabs.o ieee.o \
 rdcoff.o bucomm.o version.o filemode.o
-objdump_DEPENDENCIES =  ../opcodes/libopcodes.la ../bfd/libbfd.la \
-../libiberty/libiberty.a
+objdump_DEPENDENCIES =  ../opcodes/libopcodes.la ../bfd/libbfd.la
 objdump_LDFLAGS = 
 ar_OBJECTS =  arparse.o arlex.o ar.o not-ranlib.o arsup.o rename.o \
 bucomm.o version.o filemode.o
-ar_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+ar_DEPENDENCIES =  ../bfd/libbfd.la
 ar_LDFLAGS = 
 strings_OBJECTS =  strings.o bucomm.o version.o filemode.o
 strings_LDADD = $(LDADD)
-strings_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+strings_DEPENDENCIES =  ../bfd/libbfd.la
 strings_LDFLAGS = 
 ranlib_OBJECTS =  ar.o is-ranlib.o arparse.o arlex.o arsup.o rename.o \
 bucomm.o version.o filemode.o
-ranlib_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+ranlib_DEPENDENCIES =  ../bfd/libbfd.la
 ranlib_LDFLAGS = 
 objcopy_OBJECTS =  objcopy.o not-strip.o rename.o rddbg.o debug.o \
 stabs.o ieee.o rdcoff.o wrstabs.o bucomm.o version.o filemode.o
 objcopy_LDADD = $(LDADD)
-objcopy_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+objcopy_DEPENDENCIES =  ../bfd/libbfd.la
 objcopy_LDFLAGS = 
 addr2line_OBJECTS =  addr2line.o bucomm.o version.o filemode.o
 addr2line_LDADD = $(LDADD)
-addr2line_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+addr2line_DEPENDENCIES =  ../bfd/libbfd.la
 addr2line_LDFLAGS = 
 readelf_OBJECTS =  readelf.o version.o
-readelf_DEPENDENCIES =  ../libiberty/libiberty.a
+readelf_DEPENDENCIES =
 readelf_LDFLAGS = 
 nm_new_OBJECTS =  nm.o bucomm.o version.o filemode.o
 nm_new_LDADD = $(LDADD)
-nm_new_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+nm_new_DEPENDENCIES =  ../bfd/libbfd.la
 nm_new_LDFLAGS = 
 strip_new_OBJECTS =  objcopy.o is-strip.o rename.o rddbg.o debug.o \
 stabs.o ieee.o rdcoff.o wrstabs.o bucomm.o version.o filemode.o
 strip_new_LDADD = $(LDADD)
-strip_new_DEPENDENCIES =  ../bfd/libbfd.la ../libiberty/libiberty.a
+strip_new_DEPENDENCIES =  ../bfd/libbfd.la
 strip_new_LDFLAGS = 
 cxxfilt_OBJECTS = 
-cxxfilt_DEPENDENCIES =  cplus-dem.o underscore.o \
-../libiberty/libiberty.a
+cxxfilt_DEPENDENCIES =  cplus-dem.o underscore.o
 cxxfilt_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LEXLIB = @LEXLIB@

@@ -537,7 +537,7 @@ DEP_INCLUDES = -D_GNU_SOURCE -I.. -I$${srcdir} -I../../bfd -I$${srcdir}/config -
 # How to link with both our special library facilities
 # and the system's installed libraries.
 
-GASLIBS = @OPCODES_LIB@ @BFDLIB@ ../libiberty/libiberty.a
+GASLIBS = @OPCODES_LIB@ @BFDLIB@ -liberty
 
 # Files to be copied away after each stage in building.
 STAGESTUFF = *.o $(noinst_PROGRAMS)
@@ -551,8 +551,8 @@ as_new_DEPENDENCIES = $(TARG_CPU_O) $(OBJ_FORMAT_O) $(ATOF_TARG_O) \
 
 
 gasp_new_SOURCES = gasp.c macro.c sb.c hash.c
-gasp_new_LDADD = ../libiberty/libiberty.a $(INTLLIBS)
-gasp_new_DEPENDENCIES = ../libiberty/libiberty.a $(INTLDEPS)
+gasp_new_LDADD = -liberty $(INTLLIBS)
+gasp_new_DEPENDENCIES = $(INTLDEPS)
 
 EXPECT = `if [ -f $${rootme}/../expect/expect ] ; then \
           echo $${rootme}/../expect/expect ; \
@@ -1792,8 +1792,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 itbl_test_OBJECTS =  itbl-parse.o itbl-lex.o
-itbl_test_DEPENDENCIES =  itbl-tops.o itbl-test.o \
-../libiberty/libiberty.a
+itbl_test_DEPENDENCIES =  itbl-tops.o itbl-test.o
 itbl_test_LDFLAGS = 
 as_new_OBJECTS =  app.o as.o atof-generic.o bignum-copy.o cond.o \
 depend.o dwarf2dbg.o ecoff.o ehopt.o expr.o flonum-copy.o \

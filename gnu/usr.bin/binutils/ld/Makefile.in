@@ -196,7 +196,7 @@ man_MANS = ld.1
 INCLUDES = -D_GNU_SOURCE -I. -I$(srcdir) -I../bfd -I$(BFDDIR) -I$(INCDIR) -I$(top_srcdir)/../intl -I../intl $(HDEFINES) $(CFLAGS) -DLOCALEDIR="\"$(prefix)/share/locale\""
 
 BFDLIB = ../bfd/libbfd.la
-LIBIBERTY = ../libiberty/libiberty.a
+LIBIBERTY = -liberty
 
 ALL_EMULATIONS = \
 	ea29k.o \
