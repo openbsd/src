@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.17 2001/07/06 14:37:11 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.18 2001/12/10 03:34:51 ho Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include "transport.h"
 #include "udp.h"
 #include "ui.h"
+#include "util.h"
 
 #ifdef USE_POLICY
 #include "policy.h"
@@ -93,4 +94,55 @@ init (void)
   transport_init ();
   udp_init ();
   ui_init ();
+}
+
+/* Reinitialize, either after a SIGHUP reception or by FIFO UI cmd.  */
+void
+reinit (void)
+{
+  log_print ("reinitializing daemon");
+
+  /*
+   * XXX Remove all(/some?) pending exchange timers? - they may not be
+   *     possible to complete after we've re-read the config file.
+   *     User-initiated SIGHUP's maybe "authorizes" a wait until
+   *     next connection-check.
+   * XXX This means we discard exchange->last_msg, is this really ok?
+   */
+
+  /* Reinitialize PRNG if we are in deterministic mode.  */
+  if (regrand)
+    srandom (seed);
+
+  /* Reread config file.  */
+  conf_reinit ();
+
+  /* Try again to link in libcrypto (good if we started without /usr).  */
+  libcrypto_init ();
+
+  /* Set timezone */
+  tzset ();
+
+#ifdef USE_POLICY
+  /* Reread the policies.  */
+  policy_init ();
+#endif
+
+  /* Reinitialize certificates */
+  cert_init ();
+
+  /* Reinitialize our connection list.  */
+  connection_reinit ();
+
+  /*
+   * Rescan interfaces.
+   */
+  transport_reinit ();
+
+  /*
+   * XXX "These" (non-existant) reinitializations should not be done.
+   *   cookie_reinit ();
+   *   ui_reinit ();
+   *   sa_reinit ();
+   */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.24 2001/12/03 16:17:17 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.25 2001/12/10 03:34:51 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include "connection.h"
 #include "doi.h"
 #include "exchange.h"
+#include "init.h"
 #include "isakmp.h"
 #include "log.h"
 #include "sa.h"
@@ -340,6 +341,10 @@ ui_handle_command (char *line)
 
     case 'Q':
       ui_shutdown_daemon (line);
+      break;
+
+    case 'R':
+      reinit ();
       break;
 
     case 'r':

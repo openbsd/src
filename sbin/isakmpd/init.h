@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.h,v 1.3 1998/11/17 11:10:13 niklas Exp $	*/
+/*	$OpenBSD: init.h,v 1.4 2001/12/10 03:34:51 ho Exp $	*/
 /*	$EOM: init.h,v 1.2 1998/07/07 23:36:00 niklas Exp $	*/
 
 /*
@@ -38,5 +38,6 @@
 #define _INIT_H_
 
 extern void init (void);
+extern void reinit (void);
 
 #endif /* _INIT_H_ */

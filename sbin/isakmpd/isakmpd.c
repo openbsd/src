@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.37 2001/10/26 11:37:16 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.38 2001/12/10 03:34:51 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -214,59 +214,6 @@ parse_args (int argc, char *argv[])
 #endif
 }
 
-/* Reinitialize after a SIGHUP reception.  */
-static void
-reinit (void)
-{
-  log_print ("SIGHUP received, reinitializing daemon.");
-
-  /*
-   * XXX Remove all(/some?) pending exchange timers? - they may not be
-   *     possible to complete after we've re-read the config file.
-   *     User-initiated SIGHUP's maybe "authorizes" a wait until
-   *     next connection-check.
-   * XXX This means we discard exchange->last_msg, is this really ok?
-   */
-
-  /* Reinitialize PRNG if we are in deterministic mode.  */
-  if (regrand)
-    srandom (seed);
-
-  /* Reread config file.  */
-  conf_reinit ();
-
-  /* Try again to link in libcrypto (good if we started without /usr).  */
-  libcrypto_init ();
-
-  /* Set timezone */
-  tzset ();
-
-#ifdef USE_POLICY
-  /* Reread the policies.  */
-  policy_init ();
-#endif
-
-  /* Reinitialize certificates */
-  cert_init ();
-
-  /* Reinitialize our connection list.  */
-  connection_reinit ();
-
-  /*
-   * Rescan interfaces.
-   */
-  transport_reinit ();
-
-  /*
-   * XXX "These" (non-existant) reinitializations should not be done.
-   *   cookie_reinit ();
-   *   ui_reinit ();
-   *   sa_reinit ();
-   */
-
-  sighupped = 0;
-}
-
 static void
 sighup (int sig)
 {
@@ -444,15 +391,25 @@ main (int argc, char *argv[])
     {
       /* If someone has sent SIGHUP to us, reconfigure.  */
       if (sighupped)
-	reinit ();
+	{
+	  log_print ("SIGHUP received");
+	  reinit ();
+	  sighupped = 0;
+	}
 
       /* and if someone sent SIGUSR1, do a state report.  */
       if (sigusr1ed)
-	report ();
+	{
+	  log_print ("SIGUSR1 received");
+	  report ();
+	}
 
       /* and if someone sent SIGUSR2, do a timer rehash.  */
       if (sigusr2ed)
-	rehash_timers ();
+	{
+	  log_print ("SIGUSR2 received");
+	  rehash_timers ();
+	}
 
       /*
        * and if someone set 'sigtermed' (SIGTERM or via the UI), this
