@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2000/02/09 06:01:15 itojun Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2000/02/22 19:27:40 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -134,7 +134,6 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 
 int	totalphysmem;		/* total amount of physical memory in system */
@@ -433,10 +432,13 @@ unknown_cputype:
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	lastusablepage -= btoc(sizeof (struct msgbuf));
-	msgbufp =
-	    (struct msgbuf *)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
-	msgbufmapped = 1;
+	lastusablepage -= btoc(MSGBUFSIZE);
+	printf("%lx %d\n", (caddr_t)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1)),
+	    MSGBUFSIZE);
+	initmsgbuf((caddr_t)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1)),
+	    MSGBUFSIZE);
+	printf("%lx %d\n", (caddr_t)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1)),
+	    MSGBUFSIZE);
 
 	/*
 	 * Allocate space for system data structures.
@@ -944,6 +946,7 @@ dumpsys()
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
+	extern int msgbufmapped;
 
 	/* Save registers. */
 	savectx(&dumppcb);

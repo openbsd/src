@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2000/01/06 03:21:43 smurph Exp $ */
+/*	$OpenBSD: machdep.c,v 1.32 2000/02/22 19:27:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -137,7 +137,6 @@ int   bufpages = BUFPAGES;
 #else
 int   bufpages = 0;
 #endif
-int   msgbufmapped;		/* set when safe to use msgbuf */
 int   maxmem;			/* max memory per process */
 int   physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -258,12 +257,11 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-					  avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-					  TRUE, VM_PROT_READ|VM_PROT_WRITE);
-
-	msgbufmapped = 1;
+		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+		    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -802,6 +800,7 @@ dumpconf()
  */
 dumpsys()
 {
+	extern int msgbufmapped;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.6 1998/03/07 12:41:33 deraadt Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.7 2000/02/22 19:27:46 deraadt Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -85,7 +85,6 @@ void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
  *	msgbufp:	kernel message buffer
  */
 caddr_t		CADDR1, CADDR2, vmmap, ledbase;
-struct msgbuf	*msgbufp;
 
 /*
  * Bootstrap the VM system.
@@ -438,7 +437,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
 	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int)) -
-	    (m68k_round_page(sizeof(struct msgbuf)) + m68k_ptob(1));
+	    (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
 	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
@@ -525,7 +524,7 @@ pmap_bootstrap(nextpa, firstpa)
 		RELOC(ledbase, caddr_t) = (caddr_t)va;
 		va += NBPG;
 		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += NBPG;
+		va += MSGBUFSIZE;
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
 }

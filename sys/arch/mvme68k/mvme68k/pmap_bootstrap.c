@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.4 2000/01/06 03:21:43 smurph Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.5 2000/02/22 19:27:54 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -103,7 +103,6 @@ extern int protection_codes[];
  *	msgbufp:	kernel message buffer
  */
 caddr_t     CADDR1, CADDR2, vmmap, ledbase;
-struct msgbuf  *msgbufp;
 #define ETHERPAGES 16
 void  *etherbuf;
 int   etherlen;
@@ -400,7 +399,7 @@ register vm_offset_t firstpa;
 	RELOC(avail_start, vm_offset_t) = nextpa;
 	RELOC(avail_end, vm_offset_t) = m68k_ptob(RELOC(maxmem, int))
 	   /* XXX allow for msgbuf */
-	   - m68k_round_page(sizeof(struct msgbuf));
+	   - m68k_round_page(MSGBUFSIZE);
 	RELOC(mem_size, vm_size_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 	VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
@@ -475,7 +474,7 @@ register vm_offset_t firstpa;
 		RELOC(ledbase, caddr_t) = (caddr_t)va;
 		va += NBPG;
 		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += NBPG;
+		va += MSGBUFSIZE;
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
 }

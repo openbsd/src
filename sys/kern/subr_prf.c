@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.26 1999/12/02 00:23:35 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.27 2000/02/22 19:28:04 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -317,12 +317,16 @@ putchar(c, flags, tp)
 	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped) {
 		mbp = msgbufp;
 		if (mbp->msg_magic != MSG_MAGIC) {
-			bzero((caddr_t) mbp, sizeof(*mbp));
-			mbp->msg_magic = MSG_MAGIC;
+			/* Nothing we can do */
 		}
 		mbp->msg_bufc[mbp->msg_bufx++] = c;
-		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= MSG_BSIZE)
+		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
 			mbp->msg_bufx = 0;
+                /* If the buffer is full, keep the most recent data. */
+                if (mbp->msg_bufr == mbp->msg_bufx) {
+                         if (++mbp->msg_bufr >= mbp->msg_bufs)
+                                mbp->msg_bufr = 0;
+                }
 	}
 	if ((flags & TOCONS) && constty == NULL && c != '\0')
 		(*v_putc)(c);

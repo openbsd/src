@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.17 1999/11/10 23:17:39 csapuntz Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.18 2000/02/22 19:28:06 deraadt Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -257,12 +257,24 @@ kernfs_xread(kt, off, bufp, len)
 		extern struct msgbuf *msgbufp;
 		long n;
 
-		if (off >= MSG_BSIZE)
+		if (msgbufp == NULL || msgbufp->msg_magic != MSG_MAGIC)
+			return (ENXIO);
+
+		/*
+		 * Note that reads of /kern/msgbuf won't necessarily yield
+		 * consistent results, if the message buffer is modified
+		 * while the read is in progress.  The worst that can happen
+		 * is that incorrect data will be read.  There's no way
+		 * that this can crash the system unless the values in the
+		 * message buffer header are corrupted, but that'll cause
+		 * the system to die anyway.
+		 */
+		if (off >= msgbufp->msg_bufs)
 			return (0);
 		n = msgbufp->msg_bufx + off;
-		if (n >= MSG_BSIZE)
-			n -= MSG_BSIZE;
-		len = min(MSG_BSIZE - n, MSG_BSIZE - off);
+		if (n >= msgbufp->msg_bufs)
+			n -= msgbufp->msg_bufs;
+		len = min(msgbufp->msg_bufs - n, msgbufp->msg_bufs - off);
 		*bufp = msgbufp->msg_bufc + n;
 		return (len);
 	}
@@ -308,8 +320,8 @@ kernfs_xread(kt, off, bufp, len)
 #endif
 		break;
 #ifdef IPSEC
-        case KTT_IPSECSPI:
-                return(ipsp_kern(off, bufp, len));
+	case KTT_IPSECSPI:
+		return(ipsp_kern(off, bufp, len));
 #endif
 	default:
 		return (0);

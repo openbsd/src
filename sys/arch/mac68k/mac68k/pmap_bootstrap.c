@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.12 1999/04/24 06:39:41 downsj Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.13 2000/02/22 19:27:52 deraadt Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.30 1997/01/07 07:44:01 scottr Exp $	*/
 
 /* 
@@ -103,7 +103,6 @@ extern caddr_t	ROMBase;
  *	msgbufp:	kernel message buffer
  */
 caddr_t		CADDR1, CADDR2, vmmap;
-struct msgbuf	*msgbufp;
 
 /*
  * Bootstrap the VM system.
@@ -462,8 +461,8 @@ pmap_bootstrap(nextpa, firstpa)
 		}
 	}
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
-	avail_remaining -= m68k_round_page(sizeof(struct msgbuf));
-	high[numranges - 1] -= m68k_round_page(sizeof(struct msgbuf));
+	avail_remaining -= m68k_round_page(MSGBUFSIZE);
+	high[numranges - 1] -= m68k_round_page(MSGBUFSIZE);
 
 	/* XXX -- this doesn't look correct to me. */
 	while (high[numranges - 1] < low[numranges - 1]) {
@@ -549,7 +548,7 @@ pmap_bootstrap(nextpa, firstpa)
 		tmp_vpages[0] = va;
 		va += NBPG;
 		msgbufp = (struct msgbuf *)va;
-		va += NBPG;
+		va += MSGBUFSIZE;
 		virtual_avail = va;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2000/01/22 03:51:56 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2000/02/22 19:27:58 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -125,12 +125,6 @@ struct firmware *fw = NULL;
 
 void ofw_dbg(char *str);
 
-/*
- * We use the page just above the interrupt vector as message buffer
- */
-struct msgbuf *msgbufp = (struct msgbuf *)0x3000;
-int msgbufmapped = 1;		/* message buffer is always mapped */
-
 caddr_t allocsys __P((caddr_t));
 int power4e_get_eth_addr __P((void));
 
@@ -173,6 +167,12 @@ initppc(startkernel, endkernel, args)
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
 	
+	/*
+	 * XXX We use the page just above the interrupt vector as
+	 * message buffer
+	 */
+	initmsgbuf(0x3000, MSGBUFSIZE);
+
 where = 3;
 	curpcb = &proc0paddr->u_pcb;
 	

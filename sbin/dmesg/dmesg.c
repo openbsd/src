@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.7 1998/07/08 22:14:37 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.8 2000/02/22 19:27:38 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.7 1998/07/08 22:14:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.8 2000/02/22 19:27:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,10 +78,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch, newl, skip;
+	register int ch, newl, skip, i;
 	register char *p, *ep;
 	struct msgbuf *bufp, cur;
-	char *memf, *nlistf;
+	char *memf, *nlistf, *bufdata;
 	kvm_t *kd;
 	char buf[5];
 
@@ -127,21 +127,26 @@ main(argc, argv)
 	if (KREAD((long)bufp, cur))
 		errx(1, "kvm_read: %s (%0lx)", kvm_geterr(kd),
 		    (unsigned long)bufp);
-	kvm_close(kd);
 	if (cur.msg_magic != MSG_MAGIC)
 		errx(1, "magic number incorrect");
-	if (cur.msg_bufx >= MSG_BSIZE)
+	bufdata = malloc(cur.msg_bufs);
+	if (bufdata == NULL)
+		errx(1, "couldn't allocate space for buffer data");
+	if (kvm_read(kd, (long)&bufp->msg_bufc, bufdata,
+	    cur.msg_bufs) != cur.msg_bufs)
+		errx(1, "kvm_read: %s", kvm_geterr(kd));
+	if (cur.msg_bufx >= cur.msg_bufs)
 		cur.msg_bufx = 0;
+	kvm_close(kd);
 
 	/*
 	 * The message buffer is circular; start at the read pointer, and
 	 * go to the write pointer - 1.
 	 */
-	p = ep = cur.msg_bufc + (cur.msg_bufx - 1 + MSG_BSIZE) % MSG_BSIZE;
-	newl = skip = 0;
-	do {
-		if (++p == cur.msg_bufc + MSG_BSIZE)
-			p = cur.msg_bufc;
+	for (newl = skip = i = 0, p = bufdata + cur.msg_bufx;
+	    i < cur.msg_bufs; i++, p++) {
+		if (p == bufdata + cur.msg_bufs)
+			p = bufdata;
 		ch = *p;
 		/* Skip "\n<.*>" syslog sequences. */
 		if (skip) {
@@ -161,7 +166,7 @@ main(argc, argv)
 			(void)putchar(buf[0]);
 		else
 			(void)printf("%s", buf);
-	} while (p != ep);
+	}
 	if (!newl)
 		(void)putchar('\n');
 	exit(0);

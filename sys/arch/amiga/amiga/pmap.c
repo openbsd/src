@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 1999/09/03 18:00:29 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2000/02/22 19:27:42 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -295,7 +295,6 @@ void pmap_pvdump __P((vm_offset_t));
  */
 caddr_t	CADDR1, CADDR2, vmmap;
 u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
-struct msgbuf	*msgbufp;
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -324,7 +323,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	avail_end = maxmem << PGSHIFT;
 
 	/* XXX: allow for msgbuf */
-	avail_end -= m68k_round_page(sizeof(struct msgbuf));
+	avail_end -= m68k_round_page(MSGBUFSIZE);
 #ifdef MACHINE_NONCONTIG
 	/*
 	 * first segment of memory is always the one loadbsd found
@@ -423,7 +422,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
 	SYSMAP(caddr_t		,vmpte		,vmmap	   ,1		)
-	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
+	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,btoc(MSGBUFSIZE))
 
 	virtual_avail = reserve_dumppages(va);
 }

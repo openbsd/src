@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.18 1999/12/08 06:50:16 itojun Exp $	*/
+/* $OpenBSD: machdep.c,v 1.19 2000/02/22 19:27:55 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -157,7 +157,6 @@ volatile vm_offset_t extiova;
 int physmem;      /* available physical memory, in pages */
 int cold;         /* boot process flag */
 vm_offset_t avail_end, avail_start, avail_next;
-int msgbufmapped = 0;
 int foodebug = 0;    /* for size_memory() */
 int longformat = 1;  /* for regdump() */
 int BugWorks = 0;
@@ -461,12 +460,11 @@ cpu_startup()
     * avail_end was pre-decremented in mvme_bootstrap().
     */
 
-   for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
+   for (i = 0; i < btoc(MSGBUFSIZE); i++)
       pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
-			avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
-
-   msgbufmapped = 1;
+	avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
+	VM_PROT_READ|VM_PROT_WRITE, TRUE);
+   initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
    printf("real mem  = %d\n", ctob(physmem));
 
@@ -1160,6 +1158,8 @@ dumpconf()
  */
 dumpsys()
 {
+   extern int msgbufmapped;
+
    msgbufmapped = 0;
    if (dumpdev == NODEV)
       return;

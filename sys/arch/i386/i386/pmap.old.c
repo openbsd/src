@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.34 2000/01/29 21:41:51 mickey Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.35 2000/02/22 19:27:48 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -280,8 +280,7 @@ pmap_bootstrap(virtual_start)
 	SYSMAP(caddr_t		,CMAP1		,CADDR1	   ,1		)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
 	SYSMAP(caddr_t		,XXX_mmap	,vmmap	   ,1		)
-	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,
-	    btoc(sizeof(struct msgbuf))		)
+	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,btoc(MSGBUFSIZE))
 	SYSMAP(bootarg_t *	,bootargmap	,bootargp  ,btoc(bootargc))
 	virtual_avail = va;
 #endif

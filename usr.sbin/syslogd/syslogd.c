@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.33 1999/07/06 10:07:03 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.34 2000/02/22 19:28:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.33 1999/07/06 10:07:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.34 2000/02/22 19:28:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ static char rcsid[] = "$OpenBSD: syslogd.c,v 1.33 1999/07/06 10:07:03 millert Ex
 #include <sys/socket.h>
 #include <sys/msgbuf.h>
 #include <sys/uio.h>
+#include <sys/sysctl.h>
 #include <sys/un.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -219,11 +220,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, i, fklog, len;
+	int ch, i, fklog, len, linesize;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	FILE *fp;
-	char *p, line[MSG_BSIZE + 1];
+	char *p, *line;
 
 	while ((ch = getopt(argc, argv, "duf:m:p:a:")) != -1)
 		switch (ch) {
@@ -274,6 +275,13 @@ main(argc, argv)
 		LocalDomain = p;
 	} else
 		LocalDomain = "";
+
+	linesize = getmsgbufsize();
+	if (linesize < MAXLINE)
+		linesize = MAXLINE;
+	linesize++;
+	line = malloc(linesize);
+
 	(void)signal(SIGTERM, die);
 	(void)signal(SIGINT, Debug ? die : SIG_IGN);
 	(void)signal(SIGQUIT, Debug ? die : SIG_IGN);
@@ -376,7 +384,7 @@ main(argc, argv)
 		}
 		/*dprintf("got a message (%d, %#x)\n", nfds, readfds);*/
 		if (fklog != -1 && FD_ISSET(fklog, &readfds)) {
-			i = read(fklog, line, sizeof(line) - 1);
+			i = read(fklog, line, linesize - 1);
 			if (i > 0) {
 				line[i] = '\0';
 				printsys(line);
@@ -1243,6 +1251,25 @@ cfline(line, f, prog)
 	}
 }
 
+
+/*
+ * Retrieve the size of the kernel message buffer, via sysctl.
+ */
+int
+getmsgbufsize()
+{
+	int msgbufsize, mib[2];
+	size_t size;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MSGBUFSIZE;
+	size = sizeof msgbufsize;
+	if (sysctl(mib, 2, &msgbufsize, &size, NULL, 0) == -1) {
+		dprintf("couldn't get kern.msgbufsize\n");
+		return (0);
+	}
+	return (msgbufsize);
+}
 
 /*
  *  Decode a symbolic name to a numeric value

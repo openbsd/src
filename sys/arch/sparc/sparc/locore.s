@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.34 2000/02/21 17:08:36 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.35 2000/02/22 19:28:00 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -269,8 +269,6 @@ sun4_notsup:
  * kernel space we remap it in configure() to another location and
  * invalidate the mapping at KERNBASE.
  */
-	.globl _msgbuf
-_msgbuf = KERNBASE
 
 /*
  * Each trap has room for four instructions, of which one perforce must
@@ -4674,7 +4672,7 @@ Lsw_havectx:
 #endif
 1:
 #if defined(SUN4M)
-        /*
+	/*
 	 * Flush caches that need to be flushed on context switch.
 	 * We know this is currently only necessary on the sun4m hypersparc.
 	 */

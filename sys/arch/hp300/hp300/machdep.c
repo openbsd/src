@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 1999/09/03 18:00:41 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2000/02/22 19:27:46 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -133,7 +133,6 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -247,11 +246,11 @@ cpu_startup()
 	 * Initialize error message buffer (at end of core).
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ|VM_PROT_WRITE);
-	msgbufmapped = 1;
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -889,6 +888,7 @@ dumpsys()
 	cpu_kcore_hdr_t *chdr_p;
 	char dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 #endif	/* HP300_NEWKVM */
+	extern int msgbufmapped;
 
 	/* XXX initialized here because of gcc lossage */
 	maddr = lowram;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.28 1999/06/29 23:52:00 provos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.29 2000/02/22 19:28:05 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -151,7 +151,8 @@ struct ctlname {
 #define	KERN_SYSVSEM		35      /* int: SysV semaphore support */
 #define	KERN_SYSVSHM		36      /* int: SysV shared memory support */
 #define	KERN_ARND		37	/* int: random integer from arc4rnd */
-#define	KERN_MAXID		38	/* number of valid kern ids */
+#define	KERN_MSGBUFSIZE		38	/* int: size of message buffer */
+#define	KERN_MAXID		39	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -192,6 +193,7 @@ struct ctlname {
 	{ "sysvsem", CTLTYPE_INT }, \
 	{ "sysvshm", CTLTYPE_INT }, \
 	{ "arandom", CTLTYPE_INT }, \
+	{ "msgbufsize", CTLTYPE_INT }, \
 }
 
 /*

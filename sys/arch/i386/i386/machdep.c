@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.124 2000/02/08 00:14:12 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.125 2000/02/22 19:27:48 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -226,9 +226,6 @@ long	dumplo = 0; 		/* blocks */
 
 int	cpu_class;
 
-struct	msgbuf *msgbufp;
-int	msgbufmapped;
-
 bootarg_t *bootargp;
 vm_offset_t avail_end;
 
@@ -319,19 +316,18 @@ cpu_startup()
 	 * (space reserved in /boot)
 	 */
 	pa = avail_end;
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++, pa += NBPG)
+	for (i = 0; i < btoc(MSGBUFSIZE); i++, pa += NBPG)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG), pa,
 		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ|VM_PROT_WRITE);
-
-	msgbufmapped = 1;
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	printf(version);
 	startrtclock();
 	
 	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
+	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -399,12 +395,14 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 
 #if defined(UVM)
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024);
 #else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %lu (%uK)\n", ptoa(cnt.v_free_count),
+	    ptoa(cnt.v_free_count)/1024);
 #endif
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	printf("using %d buffers containing %u bytes (%uK) of memory\n",
+		nbuf, bufpages * CLBYTES, bufpages * CLBYTES / 1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -1636,6 +1634,7 @@ dumpsys()
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
 	register char *str;
+	extern int msgbufmapped;
 
 	/* Save registers. */
 	savectx(&dumppcb);
@@ -2049,7 +2048,7 @@ init386(first_avail)
 		}
 
 	ndumpmem = i;
-	avail_end -= i386_round_page(sizeof(struct msgbuf));
+	avail_end -= i386_round_page(MSGBUFSIZE);
 
 #ifdef DEBUG
 	printf(": %lx\n", avail_end);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 1999/09/27 20:46:18 smurph Exp $ */
+/*	$OpenBSD: param.h,v 1.11 2000/02/22 19:27:55 deraadt Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.10 1999/09/27 20:46:18 smurph Exp $
+ *	$Id: param.h,v 1.11 2000/02/22 19:27:55 deraadt Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -132,6 +132,8 @@
 #ifndef  NKMEMCLUSTERS
 #define  NKMEMCLUSTERS        (4096*1024/CLBYTES)
 #endif
+
+#define MSGBUFSIZE	4096
 
 /* pages ("clicks") to disk blocks */
 #define  ctod(x)              ((x)<<(PGSHIFT-DEV_BSHIFT))

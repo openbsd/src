@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 1999/12/08 23:49:07 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2000/02/22 19:27:59 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -200,19 +200,9 @@ struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 void
 bootstrap()
 {
-	extern int msgbufmapped;
-
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		extern void oldmon_w_cmd __P((u_long, char *));
-		extern struct msgbuf *msgbufp;
-		/*
-		 * XXX
-		 * Some boot programs mess up physical page 0, which
-		 * is where we want to put the msgbuf. There's some
-		 * room, so shift it over half a page.
-		 */
-		msgbufp = (struct msgbuf *)((caddr_t) msgbufp + 4096);
 
 		/*
 		 * XXX:
@@ -251,7 +241,6 @@ bootstrap()
 	pmap_bootstrap(cpuinfo.mmu_ncontext,
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
-	msgbufmapped = 1;	/* enable message buffer */
 #ifdef KGDB
 	zs_kgdb_init();		/* XXX */
 #endif

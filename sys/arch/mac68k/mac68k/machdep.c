@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 1999/12/08 06:50:16 itojun Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2000/02/22 19:27:52 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -201,7 +201,6 @@ int     bufpages = BUFPAGES;
 int     bufpages = 0;
 #endif
 
-int     msgbufmapped;		/* set when safe to use msgbuf */
 int     maxmem;			/* max memory per process */
 int     physmem = MAXMEM;	/* max supported memory, changes to actual */
 
@@ -310,12 +309,12 @@ cpu_startup(void)
 	 * Initialize error message buffer (at end of core).
 	 * high[numranges-1] was decremented in pmap_bootstrap.
 	 */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t) msgbufp,
 		    high[numranges - 1] + i * NBPG,
 		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ|VM_PROT_WRITE);
-	msgbufmapped = 1;
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -792,6 +791,7 @@ dumpsys()
 	vm_offset_t maddr;	/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
 	int error;		/* error code from (*dump)() */
+	extern int msgbufmapped;
 
 	/* XXX initialized here because of gcc lossage */
 	seg = 0;

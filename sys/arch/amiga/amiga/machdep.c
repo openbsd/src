@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 1999/12/08 06:50:14 itojun Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 2000/02/22 19:27:42 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -326,11 +325,11 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp, 
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ|VM_PROT_WRITE);
-	msgbufmapped = 1;
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -873,6 +872,7 @@ dumpsys()
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
+	extern int msgbufmapped;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2000/02/21 21:05:59 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2000/02/22 19:28:01 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -139,10 +139,6 @@ int	bufpages = 0;
 
 int	physmem;
 
-extern struct msgbuf msgbuf;
-struct	msgbuf *msgbufp = &msgbuf;
-int	msgbufmapped = 0;	/* not mapped until pmap_bootstrap */
-
 /* sysctl settable */
 int	sparc_led_blink = 0;
 
@@ -184,6 +180,13 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
+
+	/*
+	 * fix message buffer mapping, note phys addr of msgbuf is 0
+	 */
+	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE,
+	    TRUE, VM_PROT_READ | VM_PROT_WRITE);
+	initmsgbuf((caddr_t)(MSGBUF_VA + (CPU_ISSUN4 ? 4096 : 0)), MSGBUFSIZE);
 
 	proc0.p_addr = proc0paddr;
 
@@ -386,16 +389,6 @@ cpu_startup()
 	 */
 	bzero(proc0paddr, sizeof(struct user));
 
-	/*
-	 * fix message buffer mapping, note phys addr of msgbuf is 0
-	 */
-
-	pmap_enter(pmap_kernel(), MSGBUF_VA, 0x0, VM_PROT_READ|VM_PROT_WRITE,
-		   TRUE, VM_PROT_READ | VM_PROT_WRITE);
-	if (CPU_ISSUN4)
-		msgbufp = (struct msgbuf *)(MSGBUF_VA + 4096);
-	else
-		msgbufp = (struct msgbuf *)MSGBUF_VA;
 	pmap_redzone();
 }
 

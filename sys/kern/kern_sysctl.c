@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.29 1999/06/29 23:51:59 provos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.30 2000/02/22 19:28:03 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <sys/disklabel.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+#include <sys/msgbuf.h>
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
@@ -349,6 +350,14 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+	case KERN_MSGBUFSIZE:
+		/*
+		 * deal with cases where the message buffer has
+		 * become corrupted.
+		 */
+		if (!msgbufp || msgbufp->msg_magic != MSG_MAGIC)
+			return (ENXIO);
+		return (sysctl_rdint(oldp, oldlenp, newp, msgbufp->msg_bufs));
 	default:
 		return (EOPNOTSUPP);
 	}
