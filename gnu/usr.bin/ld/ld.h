@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.3 1998/04/25 06:53:40 niklas Exp $	*/
+/*	$OpenBSD: ld.h,v 1.4 1999/05/10 16:18:33 espie Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -703,6 +703,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 void	swap_longs __P((long *, int));
 void	swap_symbols __P((struct nlist *, int));
 void	swap_zsymbols __P((struct nzlist *, int));
+struct ranlib; /* keep pedantic ISO compilers happy */
 void	swap_ranlib_hdr __P((struct ranlib *, int));
 void	swap__dynamic __P((struct _dynamic *));
 void	swap_section_dispatch_table __P((struct section_dispatch_table *));
