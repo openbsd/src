@@ -41,7 +41,8 @@ struct gmac_dma {
 #define GMAC_INT_TXDONE		0x04
 #define GMAC_INT_RXDONE		0x10
 
-#define GMAC_RXMAC_PR	0x08
+#define GMAC_RXMAC_PR	0x08		/* enable promiscuous mode */
+#define GMAC_RXMAC_HEN	0x10		/* enable the hash filter */
 
 /*
  * register offset
