@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.2 2000/09/29 19:58:41 mickey Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.3 2000/12/07 20:49:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -67,7 +67,8 @@ twe_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TRIWARE &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIWARE_ESCALADE)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIWARE_ESCALADE ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIWARE_ESCALADE_ASIC))
 		return 1;
 
 	return 0;
