@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.6 1999/06/23 21:55:29 cmetz Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.7 1999/07/03 18:14:51 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -149,7 +149,7 @@ struct	protoent {
 #define NI_NAMEREQD	8	/* fail if either host or service name is unknown */
 #define NI_DGRAM	16	/* look up datagram service instead of stream */
 
-#define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name length returned by getnameinfo */
+#define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name returned by getnameinfo */
 #define NI_MAXSERV	32	/* max serv. name length returned by getnameinfo */
 
 #define EAI_BADFLAGS	-1	/* invalid value for ai_flags */
@@ -208,6 +208,7 @@ int		getnameinfo __P((const struct sockaddr *sa, size_t addrlen,
 		    char *host, size_t hostlen, char *serv, size_t servlen,
 		    int flags));
 char		*gai_strerror __P((int ecode));
+int		net_addrcmp __P((struct sockaddr *, struct sockaddr *));
 __END_DECLS
 
 /* This is nec'y to make this include file properly replace the sun version. */
