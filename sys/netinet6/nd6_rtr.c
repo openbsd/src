@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.15 2002/06/07 03:06:15 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.16 2002/06/08 00:06:58 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1210,7 +1210,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 	int s, error;
 	struct in6_addr mask;
 
-	in6_len2mask(&mask, prefixlen);
+	in6_prefixlen2mask(&mask, prefixlen);
 
 	/* find link-local address (will be interface ID) */
 	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0);/* 0 is OK? */
