@@ -1,3 +1,4 @@
+/*	$OpenBSD: irongate_bus_mem.c,v 1.3 2001/04/17 14:53:33 art Exp $	*/
 /* $NetBSD: irongate_bus_mem.c,v 1.6 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-

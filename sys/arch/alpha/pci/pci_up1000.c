@@ -1,3 +1,4 @@
+/*	$OpenBSD: pci_up1000.c,v 1.2 2001/04/17 14:53:34 art Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-

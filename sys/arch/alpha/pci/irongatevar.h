@@ -1,3 +1,4 @@
+/*	$OpenBSD: irongatevar.h,v 1.2 2001/04/17 14:53:34 art Exp $	*/
 /* $NetBSD: irongatevar.h,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-

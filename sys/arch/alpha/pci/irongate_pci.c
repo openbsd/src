@@ -1,3 +1,4 @@
+/*	$OpenBSD: irongate_pci.c,v 1.2 2001/04/17 14:53:33 art Exp $	*/
 /* $NetBSD: irongate_pci.c,v 1.2 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
