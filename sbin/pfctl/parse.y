@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.1 2001/07/16 21:09:37 markus Exp $ */
+/*      $OpenBSD: parse.y,v 1.2 2001/07/16 22:09:55 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -290,10 +290,23 @@ port:		NUMBER			{ $$ = htons($1); }
 		;
 
 flags:					{ $$.b1 = 0; $$.b2 = 0; }
-		| FLAGS STRING		{ $$.b1 = parse_flags($2); $$.b2 = 63; }
+		| FLAGS STRING		{
+			int f;
+
+			if ((f = parse_flags($2)) < 0)
+				errx(1, "line %d: bad flags %s", lineno, $2);
+			$$.b1 = f;
+			$$.b2 = 63;
+		}
 		| FLAGS STRING "/" STRING	{
-			$$.b1 = parse_flags($2);
-			$$.b2 = parse_flags($4);
+			int f;
+
+			if ((f = parse_flags($2)) < 0)
+				errx(1, "line %d: bad flags %s", lineno, $2);
+			$$.b1 = f;
+			if ((f = parse_flags($4)) < 0)
+				errx(1, "line %d: bad flags %s", lineno, $4);
+			$$.b2 = f;
 		}
 		;
 
@@ -605,6 +618,7 @@ yylex(void)
 	x != '>' && \
 	x != '!' && \
 	x != '=' && \
+	x != '/' && \
 	x != '#' )
 
 	if (isalnum(c)) {
