@@ -8,11 +8,11 @@ BEGIN {
     }
 }
 
-use OS2::REXX;
+use OS2::REXX qw(:DEFAULT register);
 
 $| = 1;				# Otherwise data from REXX may come first
 
-print "1..13\n";
+print "1..16\n";
 
 $n = 1;
 sub do_me {
@@ -38,3 +38,11 @@ REXX_eval 'say "ok 10"';
 REXX_eval 'say "ok 11"';
 print "ok 12\n" if REXX_eval("return 2 + 3") eq 5;
 REXX_eval_with 'say myfunc()', myfunc => sub {"ok 13"};
+REXX_eval_with "call myout 'ok'  14", myout => sub {print shift, "\n"};
+REXX_eval_with "say 'ok 'myfunc(3,5)", myfunc => sub {shift() * shift()};
+
+sub MYFUNC1 {shift}
+sub MYFUNC2 {3 * shift}
+REXX_eval_with "call myfunc
+		say 'ok 'myfunc1(1)myfunc2(2)",
+  myfunc => sub { register qw(myfunc1 myfunc2) };

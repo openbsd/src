@@ -3,6 +3,7 @@
 #
 # Written January 24, 2000 by Jarkko Hietaniemi [jhi@iki.fi]
 # Modified February 2, 2000 by Paul Green [Paul_Green@stratus.com]
+# Modified October 23, 2000 by Paul Green [Paul_Green@stratus.com]
 
 #
 # Read in the definitions file
@@ -13,6 +14,7 @@ if (open(CONFIG_DEF, "config.def")) {
         if (/^([^=]+)='(.*)'$/) {
             my ($var, $val) = ($1, $2);
             $define{$var} = $val;
+            $used{$var} = 0;
         } else {
             warn "config.def: $.: illegal line: $_";
         }
@@ -27,8 +29,9 @@ close (CONFIG_DEF);
 # Open the template input file.
 #
 
-unless (open(CONFIG_SH, "config_h.SH_orig")) {
-    die "$0: Cannot open config_h.SH_orig: $!";
+$lineno = 0;
+unless (open(CONFIG_SH, "../config_h.SH")) {
+    die "$0: Cannot open ../config_h.SH: $!";
 }
 
 #
@@ -44,6 +47,7 @@ unless (open(CONFIG_H, ">config.h.new")) {
 #
 
 while (<CONFIG_SH>) {
+    $lineno = $lineno + 1;
     last if /^sed <<!GROK!THIS!/;
 }
 
@@ -53,20 +57,34 @@ while (<CONFIG_SH>) {
 #
 
 while (<CONFIG_SH>) {
+    $lineno = $lineno + 1;
     last if /^!GROK!THIS!/;
+#
+#   The definition of SITEARCH and SITEARCH_EXP has to be commented-out.
+#   The easiest way to do this is to special-case it here.
+#
+    if (/^#define SITEARCH*/) {
+        s@(^.*$)@/*$1@;
+    }
 #
 #   The case of #$d_foo at the BOL has to be handled carefully.
 #   If $d_foo is "undef", then we must first comment out the entire line.
 #
-    if (/^#\$\w+/) {
-        s@^#(\$\w+)@("$define{$1}" eq "undef")?"/*#define":"#$define{$1}"@e;
+    if (/^#(\$\w+)/) {
+        if (exists $define{$1}) {
+            $used{$1}=1;
+            s@^#(\$\w+)@("$define{$1}" eq "undef") ?
+                "/*#define":"#$define{$1}"@e;
+        }
     }
 #
 #   There could be multiple $variables on this line.
 #   Find and replace all of them.
 #
     if (/(\$\w+)/) {
-        s/(\$\w+)/(exists $define{$1}) ? $define{$1} : $1/ge;
+        s/(\$\w+)/(exists $define{$1}) ?
+            (($used{$1}=1),$define{$1}) :
+            ((print "Undefined keyword $1 on line $lineno\n"),$1)/ge;
         print CONFIG_H;
     }
 #
@@ -82,3 +100,10 @@ unless (close (CONFIG_H)) {
     }
 
 close (CONFIG_SH);
+
+while (($key,$value) = each %used) {
+    if ($value == 0) {
+        print "Unused keyword definition: $key\n";
+    }
+}
+

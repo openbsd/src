@@ -10,7 +10,11 @@
 #ifndef ___VDir_H___
 #define ___VDir_H___
 
-const int driveCount = 30;
+/*
+ * Allow one slot for each possible drive letter
+ * and one additional slot for a UNC name
+ */
+const int driveCount = ('Z'-'A')+1+1;
 
 class VDir
 {
@@ -105,6 +109,8 @@ protected:
 
     inline int DriveIndex(char chr)
     {
+	if (chr == '\\' || chr == '/')
+	    return ('Z'-'A')+1;
 	return (chr | 0x20)-'a';
     };
 
@@ -366,8 +372,12 @@ char *VDir::MapPathA(const char *pInName)
      */
     char szBuffer[(MAX_PATH+1)*2];
     char szlBuf[MAX_PATH+1];
+    int length = strlen(pInName);
 
-    if (strlen(pInName) > MAX_PATH) {
+    if (!length)
+	return (char*)pInName;
+
+    if (length > MAX_PATH) {
 	strncpy(szlBuf, pInName, MAX_PATH);
 	if (IsPathSep(pInName[0]) && !IsPathSep(pInName[1])) {   
 	    /* absolute path - reduce length by 2 for drive specifier */
@@ -430,59 +440,60 @@ char *VDir::MapPathA(const char *pInName)
 
 int VDir::SetCurrentDirectoryA(char *lpBuffer)
 {
-    HANDLE hHandle;
-    WIN32_FIND_DATA win32FD;
-    char szBuffer[MAX_PATH+1], *pPtr;
+    char *pPtr;
     int length, nRet = -1;
 
-    GetFullPathNameA(MapPathA(lpBuffer), sizeof(szBuffer), szBuffer, &pPtr);
-    /* if the last char is a '\\' or a '/' then add
-     * an '*' before calling FindFirstFile
-     */
-    length = strlen(szBuffer);
-    if(length > 0 && IsPathSep(szBuffer[length-1])) {
-	szBuffer[length] = '*';
-	szBuffer[length+1] = '\0';
+    pPtr = MapPathA(lpBuffer);
+    length = strlen(pPtr);
+    if(length > 3 && IsPathSep(pPtr[length-1])) {
+	/* don't remove the trailing slash from 'x:\'  */
+	pPtr[length-1] = '\0';
     }
 
-    hHandle = FindFirstFileA(szBuffer, &win32FD);
-    if (hHandle != INVALID_HANDLE_VALUE) {
-        FindClose(hHandle);
-
-	/* if an '*' was added remove it */
-	if(szBuffer[length] == '*')
-	    szBuffer[length] = '\0';
-
+    DWORD r = GetFileAttributesA(pPtr);
+    if ((r != 0xffffffff) && (r & FILE_ATTRIBUTE_DIRECTORY))
+    {
+	char szBuffer[(MAX_PATH+1)*2];
+	DoGetFullPathNameA(pPtr, sizeof(szBuffer), szBuffer);
 	SetDefaultDirA(szBuffer, DriveIndex(szBuffer[0]));
 	nRet = 0;
     }
+
     return nRet;
 }
 
 DWORD VDir::CalculateEnvironmentSpace(void)
-{   /* the current directory environment strings are stored as '=d=d:\path' */
+{   /* the current directory environment strings are stored as '=D:=d:\path' */
     int index;
     DWORD dwSize = 0;
     for (index = 0; index < driveCount; ++index) {
 	if (dirTableA[index] != NULL) {
-	    dwSize += strlen(dirTableA[index]) + 4;  /* add 1 for trailing NULL and 3 for '=d=' */
+	    dwSize += strlen(dirTableA[index]) + 5;  /* add 1 for trailing NULL and 4 for '=D:=' */
 	}
     }
     return dwSize;
 }
 
 LPSTR VDir::BuildEnvironmentSpace(LPSTR lpStr)
-{   /* store the current directory environment strings as '=d=d:\path' */
-    int index;
+{   /* store the current directory environment strings as '=D:=d:\path' */
+    int index, length;
     LPSTR lpDirStr;
     for (index = 0; index < driveCount; ++index) {
 	lpDirStr = dirTableA[index];
 	if (lpDirStr != NULL) {
 	    lpStr[0] = '=';
 	    lpStr[1] = lpDirStr[0];
-	    lpStr[2] = '=';
-	    strcpy(&lpStr[3], lpDirStr);
-	    lpStr += strlen(lpDirStr) + 4; /* add 1 for trailing NULL and 3 for '=d=' */
+	    lpStr[2] = '\0';
+	    CharUpper(&lpStr[1]);
+	    lpStr[2] = ':';
+	    lpStr[3] = '=';
+	    strcpy(&lpStr[4], lpDirStr);
+	    length = strlen(lpDirStr);
+	    lpStr += length + 5; /* add 1 for trailing NULL and 4 for '=D:=' */
+	    if (length > 3 && IsPathSep(lpStr[-2])) {
+		lpStr[-2] = '\0';   /* remove the trailing path separator */
+		--lpStr;
+	    }
 	}
     }
     return lpStr;
@@ -590,8 +601,12 @@ WCHAR* VDir::MapPathW(const WCHAR *pInName)
      */
     WCHAR szBuffer[(MAX_PATH+1)*2];
     WCHAR szlBuf[MAX_PATH+1];
+    int length = wcslen(pInName);
 
-    if (wcslen(pInName) > MAX_PATH) {
+    if (!length)
+	return (WCHAR*)pInName;
+
+    if (length > MAX_PATH) {
 	wcsncpy(szlBuf, pInName, MAX_PATH);
 	if (IsPathSep(pInName[0]) && !IsPathSep(pInName[1])) {   
 	    /* absolute path - reduce length by 2 for drive specifier */
@@ -653,32 +668,25 @@ WCHAR* VDir::MapPathW(const WCHAR *pInName)
 
 int VDir::SetCurrentDirectoryW(WCHAR *lpBuffer)
 {
-    HANDLE hHandle;
-    WIN32_FIND_DATAW win32FD;
-    WCHAR szBuffer[MAX_PATH+1], *pPtr;
+    WCHAR *pPtr;
     int length, nRet = -1;
 
-    GetFullPathNameW(MapPathW(lpBuffer), (sizeof(szBuffer)/sizeof(WCHAR)), szBuffer, &pPtr);
-    /* if the last char is a '\\' or a '/' then add
-     * an '*' before calling FindFirstFile
-     */
-    length = wcslen(szBuffer);
-    if(length > 0 && IsPathSep(szBuffer[length-1])) {
-	szBuffer[length] = '*';
-	szBuffer[length+1] = '\0';
+    pPtr = MapPathW(lpBuffer);
+    length = wcslen(pPtr);
+    if(length > 3 && IsPathSep(pPtr[length-1])) {
+	/* don't remove the trailing slash from 'x:\'  */
+	pPtr[length-1] = '\0';
     }
 
-    hHandle = FindFirstFileW(szBuffer, &win32FD);
-    if (hHandle != INVALID_HANDLE_VALUE) {
-        FindClose(hHandle);
-
-	/* if an '*' was added remove it */
-	if(szBuffer[length] == '*')
-	    szBuffer[length] = '\0';
-
-	SetDefaultDirW(szBuffer, DriveIndex((char)szBuffer[0]));
+    DWORD r = GetFileAttributesW(pPtr);
+    if ((r != 0xffffffff) && (r & FILE_ATTRIBUTE_DIRECTORY))
+    {
+	WCHAR wBuffer[(MAX_PATH+1)*2];
+	DoGetFullPathNameW(pPtr, (sizeof(wBuffer)/sizeof(WCHAR)), wBuffer);
+	SetDefaultDirW(wBuffer, DriveIndex((char)wBuffer[0]));
 	nRet = 0;
     }
+
     return nRet;
 }
 

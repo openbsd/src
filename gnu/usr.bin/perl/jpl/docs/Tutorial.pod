@@ -1,0 +1,1047 @@
+=head1 NAME
+
+Tutorial - Perl and Java
+
+=head1 SYNOPSIS
+
+Java and Perl have different strengths and complement each other well.
+
+You can connect them at runtime with tools such as JPL, PJC, or
+ActiveX. In theory, you can convert Perl to Java bytecode, and
+vice-versa.
+
+=head2 Note:
+
+Not actually a conversion.
+
+At this stage, we are generating Java opcodes by walking Perl's syntax
+tree. This is very different from converting Perl to Java. It's a lot
+easier!
+
+=head1 1.1 Perl and Java, Compared
+
+Perl offers rich text processing features, high-level network APIs,
+excellent database integration, and a centralized repository of
+reusable code:
+
+=over 4
+
+=item *
+
+Regular expression engine is a powerful sub language that can perform
+complex text manipulations and extract data.
+
+=item *
+
+Packages such as libwww-perl (LWP) and libnet are powerful, high-level
+interfaces to network functionality.
+
+=item *
+
+The Perl DBI is an interface to SQL data sources.
+
+=item *
+
+CPAN provides a centralized, organized archive of reusable code.
+
+=back
+
+Java has a powerful graphical API, has numerous embedded
+implementations, excellent database integration, but no single
+recognized repository of reusable code.
+
+=over 4
+
+=item *
+
+The Swing (JFC) toolkit is a powerful toolkit for developing user
+interfaces. Java also boasts 2D and 3D graphics APIs.
+
+=item *
+
+Java comes in embedded flavors, such as:
+
+=over 4
+
+=item *
+
+Kaffe C<http://www.transvirtual.com/> - embedded implementations for
+different platforms
+
+=item *
+
+Waba C<http://www.wabasoft.com/> - a subset of Java for Windows CE and
+PalmOS
+
+=item *
+
+It's embedded into web browsers (Netscape and MS Internet Explorer)
+
+=item *
+
+and more...
+
+=back
+
+=item *
+
+Java's JDBC is similar to Perl's DBI
+
+=item *
+
+Java has many different repositories of code. Efforts such as the
+Giant Java Tree C<http://www.gjt.org/> attempt to create a unified
+repository.
+
+=back
+
+=head1 1.2 Opportunities to Combine Java and Perl
+
+You have a Java program with a lot of data that needs to be parsed,
+filed, briefed, debriefed, and numbered.
+
+You want to build your GUI in Java, but let Perl do the heavy lifting.
+
+You've adopted the "Java is a systems language, Perl is a scripting
+language" paradigm, and it works for you.
+
+You're not sure which regex implementation to use:
+
+C<org.teeth.green.loony.raving.monster.regex.*;>
+
+C<com.zeppelin.regex.*;>
+
+You want the I<B<best of both worlds>>.
+
+=head1 1.3 Important Differences between Java and Perl
+
+=over 4
+
+=item *
+
+C<perl> compiles and executes programs each time you run them (unless you
+use the Perl compiler).
+
+=item *
+
+C<javac> compiles programs in advance, C<java> runs them in the Java
+interpreter.
+
+=item * 
+
+The Java interpreter supports method overloading (methods can have the
+same name, but are differentiated on the basis of their argument
+types). Overloaded methods generally perform the same function, but
+methods with a shorter argument list often use defaults:
+
+=back
+
+    // Draw a circle in the center of the screen
+    int drawCircle(int radius);
+
+    // Draw a circle at specified coordinates
+    int drawCircle(int radius, int h, int k);
+
+=over 4
+
+=item *
+
+The Perl interpreter doesn't support method overloading. In JPL, when
+we call Java from Perl, we need to use some tricks to specify the Java
+method we want to invoke. We'll learn about this when we see JPL's
+C<getmeth> function.
+
+=back
+
+=head2 Note:
+
+At the time this presentation was prepared, JPL did not work with Perl
+for Win32. However, JPL is in the core Perl distribution, and there
+are plans to make it work with Perl for Win32.
+
+With that in mind, I'm presenting the JPL material first, because it
+is of interest to both Win32 and Unix Perl people. The Win32-specific
+stuff (alternatives to JPL) will come last. I won't be offended if the
+Unix people leave when I move to this section of the tutorial, since
+there is no Unix material in that section. I'm perfectly happy to take
+questions between JPL and ActiveX sections. 
+
+A subset of JPL now works on Win32. You can embed Java in Perl, but
+you cannot embed Perl in Java (yet).
+
+=head1 2.1 JPL Overview
+
+Let's look at an overview of JPL.
+
+=head2 2.1.1 Calling Perl from Java
+
+Well-supported by JPL, but it is a complicated process:
+
+=over 4
+
+=item *
+
+The JPL preprocessor parses the I<.jpl> file and generates C code
+wrappers for Perl methods. It also generates Java and Perl source
+files.
+
+=item *
+
+The C compiler compiles the wrapper and links it to the
+I<libPerlInterpreter.so> shared library, producing a shared library for
+the wrapper.
+
+=item *
+
+The Java compiler compiles the Java source file, which uses native
+methods to load the wrapper.
+
+=item *
+
+The wrapper connects the Java code to the Perl code in the Perl source
+file.
+
+=back
+
+Fortunately, a generic F<Makefile.PL> simplifies the process. This is a
+Perl script that generates a I<Makefile> for you.
+
+=head2 2.1.2 Calling Java from Perl
+
+This works best when Perl is embedded within a Java program.
+
+The JNI Perl module creates and loads a JVM. There is no precompiler,
+nothing extra -- it's just a Perl module and extension.
+
+    B<A Problem, Though>. In theory, you can call Java from standalone
+    Perl programs, but this doesn't work because some implementations
+    of Java use a user-level threads package (green threads) that
+    override some functions in the C library. Perl is comfortable
+    using these functions, but Java is not happy using the standard C
+    library functions.
+
+So, with green threads, you can't reliably embed Java in a standalone
+Perl program.
+
+Many Java implementations now use native threads. JPL has been tested
+on Solaris with JDK 1.1.x and native threads, but not on Linux.
+
+=head2 Note:
+
+Oddly enough, this is the only way it works on Win32. 
+
+On Unix, I've still had trouble, even with native threads. I might
+need to recompile perl with -DREENTRANT, but I'm not sure.
+
+
+=head1 2.2 Working with JPL
+
+How to set up a JPL application, compile, and install it.
+
+=head2 2.2.1 Setting up a Project
+
+=over 4
+
+=item 1
+
+The I<install-jpl> script creates the I<setvars> script. Source the
+output of I<setvars> into your shell when you want to develop or run
+JPL applications.
+
+=item 2
+
+Create a directory with the name of your project, such as
+I<Frotz>. (if you want to use the generic F<Makefile.PL>, you need a
+separate directory for each JPL class you create).
+
+=item 3
+
+Copy the generic F<Makefile.PL> into the project directory. The
+I<jpl/Sample> directory in the Perl distribution includes the generic
+F<Makefile.PL>.
+
+=item 4
+
+Write a I<.jpl> program with the same name as the project (such as
+F<Frotz.jpl>)
+
+=back
+
+=head2 2.2.2 Compiling and Installing a Project
+
+Type C<make> to compile the application, and C<make install> to
+install it. This installs the application in the I<jpl> directory you
+created when you installed JPL.
+
+    B<Beware>. The default I<jpl> directory is the same as the
+    directory you install it I<from>. If you go with the default and
+    delete your Perl source, you'll delete your JPL installation!
+
+Type C<java Frotz> (or the name you chose in step 2 of section 2.2.1)
+to run it
+
+=head2 2.2.3 What's in the jpl Directory?
+
+=over 4
+
+=item *
+
+B<libPerlInterpreter.so>: a shared library that loads the Perl
+interpreter.
+
+=item *
+
+Compiled F<.class> files for JPL applications you have written.
+
+=item *
+
+Native code shared library wrappers for JPL applications you have
+written.
+
+=item *
+
+Perl scripts that contain the Perl code to load at runtime.
+
+=back
+
+    Beware. If you issue the C<make> command and then run the examples
+    in your development directory, you might be in for a surprise! If
+    the JPL directories come first in your CLASSPATH and
+    LD_LIBRARY_PATH, you'll keep running the installed, older version,
+    rather than the one you are developing
+
+=head2 Note:
+
+"Source" means to load it into your current shell, with something
+like:
+
+C<eval-backtick-setvars-backtick>
+
+as opposed to just executing it, because then only the subshell gets
+the environment vars.
+
+=head1 2.3 Calling Perl from Java
+
+Now, we'll look at how you can invoke Perl from Java.
+
+=head2 2.3.1 Perl Methods
+
+You can put Perl methods in your F<.jpl> file. Perl methods are
+declared C<perl> and use double curly braces to make life easier on
+the JPL preprocessor:
+
+    perl int perlMultiply(int a, int b) {{
+    my $result = $a * $b;
+    return $result;
+    }}
+
+In your Java code, you can invoke Perl methods like a Java method. The
+native code wrappers take care of running the Perl code:
+
+    public void invokePerlFunction() {
+        int x = 3;
+        int y = 6;
+        int retval = perlMultiply(x, y);
+        System.out.println(x + " * " + y + " = " + retval);
+    }
+
+class MethodDemo
+
+    class MethodDemo {
+    // A Perl method to multiply two numbers and
+    // return the result.
+    //
+    perl int perlMultiply(int a, int b) {{
+        my $result = $a * $b;
+        return $result;
+    }}
+
+    // A Java method to call the Perl function.
+    //
+    public void invokePerlFunction() {
+        int x = 3;
+        int y = 6;
+        int retval = perlMultiply(x, y);
+        System.out.println(x +" * "+ y +" = "+ retval);
+    }
+
+    public static void main(String[] args) {
+        MethodDemo demo = new MethodDemo();
+        demo.invokePerlFunction();
+        }
+    }
+
+=head2 Where did $self go?
+
+Don't worry, C<$self> is still there. JPL takes care of fetching it, as
+well as all the other arguments:
+
+    perl int perlMultiply(int a, int b) {{
+        my $result = $a * $b;
+        return $result;
+    }}
+
+    perl void calculateProduct() {{
+        my $x = 3;
+        my $y = 6;
+        my $retval = $self->perlMultiply($x, $y);
+        print "$x * $y = $retval\n";
+    }}
+
+    B<Note>. JPL takes care of putting all the arguments, including
+    C<$self>, into variables. If you see a variable in the function
+    header, you will get a variable of the same name without having to
+    use C<shift> or C<@_>, guaranteed.
+
+
+
+NOTE:  I've added a line that prints the output of "ref dollar sign self"
+You'll see this when I run the demo.
+
+    class SelfDemo {
+
+    // A Perl method to multiply two values.
+    //
+    perl int perlMultiply(int a, int b) {{
+        my $result = $a * $b;
+        return $result;
+    }}
+
+    // A Perl method to invoke another Perl method.
+    //
+    perl void calculateProduct() {{
+        my $x = 3;
+        my $y = 6;
+        # Ahhh. There's our old friend, $self!
+        #
+        my $retval = $self->perlMultiply($x, $y);
+        # Display the results.
+        #
+        print "$x * $y = $retval\n";
+    }}
+
+    public static void main(String[] args) {
+        SelfDemo demo = new SelfDemo();
+        demo.calculateProduct();
+        }
+    }
+
+=head2 Passing Arrays
+
+If you pass an array from Java into a Perl method, it arrives in the
+form of a scalar reference.
+
+Use the GetIntArrayElements() JNI function to convert that scalar into
+an array of integers.
+
+    perl void min_max( int[] data ) {{
+
+        # Get the array elements
+        #
+        my @new_array = GetIntArrayElements( $data );
+
+        # Sort the array numerically
+        #
+        my @sorted = sort {$a <=> $b} @new_array;
+
+        print "Min: $sorted[0], ",
+        "Max: $sorted[$#sorted]\n";
+    }}
+
+    void minMaxDemo() {
+        int[] data = {101, 99, 42, 666, 23};
+        min_max( data );
+    }
+
+Some JNI Array Functions
+
+=over 4
+
+=item GetBooleanArrayElements( scalar)
+
+Converts scalar to an array of booleans.
+
+=item GetByteArrayElements( scalar )
+
+Converts scalar to an array of bytes.
+
+=item GetCharArrayElements( scalar )
+
+Converts scalar to an array of characters.
+
+=item GetShortArrayElements( scalar )
+
+Converts scalar to an array of short integers.
+
+=item GetIntArrayElements( scalar )
+
+Converts scalar to an array of integers.
+
+=item GetLongArrayElements( scalar )
+
+Converts scalar to an array of long integers.
+
+=item GetFloatArrayElements( scalar )
+
+Converts scalar to an array of floating point numbers.
+
+=item GetDoubleArrayElements( scalar )
+
+Converts scalar to an array of double precision numbers.
+
+=item GetArrayLength( scalar )
+
+Returns the length of the array.
+
+=back
+
+PerlTakesArray.jpl
+    // Show how to pass an array from Java to Perl.
+    //
+
+    public class PerlTakesArray {
+    
+    perl void min_max( int[] data ) {{
+        # Get the array elements
+        #
+        my @new_array = GetIntArrayElements( $data );
+
+        # Sort the array numerically
+        #
+        my @sorted = sort {$a <=> $b} @new_array;
+        print "Min: $sorted[0], ",
+        "Max: $sorted[$#sorted]\n";
+    }}
+
+    void minMaxDemo() {
+        // Create an array and ask Perl to tell us
+        // the min and max values.
+        int[] data = {101, 99, 42, 666, 23};
+        min_max( data );
+    }
+
+    public static void main(String[] argv) {
+        PerlTakesArray demo = new PerlTakesArray();
+        demo.minMaxDemo();
+    }
+    
+    }
+
+=head2 2.3.4 Passing Arrays of Objects
+
+Working with arrays of objects is a little more complicated, because you
+need to work with them one at a time.
+
+Fetch one element at a time with GetObjectArrayElement(), which returns
+an object of type java.lang.Object (the most generic type). 
+
+Explicitly cast the Object to its real type with bless().
+
+    perl void sortArray( String[] names ) {{
+        my @new_array;
+        for (my $i = 0; $i < GetArrayLength($names); $i++) {
+            my $string = GetObjectArrayElement($names, $i);
+            bless $string, "java::lang::String";
+            push @new_array, $string;
+        }
+        print join(', ', sort @new_array), "\n";
+    }}
+
+    void arrayDemo() {
+        String[] names = {"Omega", "Gamma", "Beta", "Alpha"};
+        sortArray( names );
+    }
+
+Note. String is not a primitive type: it is a class (java.lang.String).
+So, you need to use this technique for Strings as well. You can't use
+the technique in 2.3.3.
+
+PerlTakesObjectArray.jpl
+
+    public class PerlTakesObjectArray {
+
+    // Perl method to sort an array of strings.
+    //
+    perl void sortArray( String[] names ) {{
+        my @new_array; # an array to copy names[] to
+
+        # Fetch each element from the array.
+        for (my $i = 0; $i < GetArrayLength($names); $i++) {
+            
+            # Get the object (it's not a String yet!) at
+            # the current index ($i).
+            my $string = GetObjectArrayElement($names, $i);
+
+            # Cast (bless) it into a String.
+            bless $string, "java::lang::String";
+    
+            # Add it to the array.
+            push @new_array, $string;
+        }
+
+        # Print the sorted, comma-delimited array.
+        print join(', ', sort @new_array), "\n";
+
+    }}
+
+    // Create a String array and ask Perl to sort it for us.
+    //
+
+    void arrayDemo() {
+        String[] names = {"Omega", "Gamma", "Beta", "Alpha"};
+        sortArray( names );
+    }
+
+    public static void main(String[] argv) {
+        PerlTakesObjectArray demo = new PerlTakesObjectArray();
+        demo.arrayDemo();
+    }
+    }
+
+=head2 2.3.5 Returning Arrays from Perl to Java
+
+To write a Perl method that returns an array, declare its return value
+as an array type. Make sure you return a reference to the array, not a
+list:
+
+    perl int[] getTime() {{
+        my ($sec, $min, $hour, @unused) = localtime(time);
+        # Return an array with seconds, minutes, hours
+        my @time_array = ($sec, $min, $hour);
+        return \@time_array;
+    }}
+
+    void testArray() {
+        int time[] = getTime();
+        System.out.println(time[2] + ":" + time[1]);
+    }
+
+PerlGivesArray.jpl
+
+    // Simple JPL demo to show how to send an array to Java
+    // from Perl
+
+    class PerlGivesArray {
+    // Call the Perl method to get an array and print
+    // the hour and minute elements.
+
+    void testArray() {
+        int time[] = getTime();
+        System.out.println(time[2] + ":" + time[1]);
+    }
+
+    // Perl method that returns an array reference.
+    //
+    perl int[] getTime() {{
+        # Get the first three arguments from localtime,
+        # discard the rest.
+        my ($sec, $min, $hour, @unused) = localtime(time);
+
+        # Return an array with seconds, minutes, hours
+        my @time_array = ($sec, $min, $hour);
+        return \@time_array;
+    }}
+
+    public static void main(String[] argv) {
+        PerlGivesArray demo = new PerlGivesArray();
+        demo.testArray();
+    }
+    }
+
+=head2 2.3.6 Arrays from Strings
+
+JPL will slice Perl strings up into Java arrays for you. If you declare
+a Perl method as an array type and return a string (instead of an array
+reference), JPL splits up the elements into an array.
+
+Consider this example, where a GIF stored in a string gets turned into
+an array of bytes so Java can make an Image out of it:
+
+    void generateImage() {
+        Toolkit kit = Toolkit.getDefaultToolkit();
+        byte[] image_data = mkImage();
+        img = kit.createImage( image_data );
+    }
+
+    perl byte[] mkImage() {{
+        use GD;
+        my $im = new GD::Image( $self->width, $self->height);
+        my $white = $im->colorAllocate(255, 255, 255);
+        my $blue = $im->colorAllocate(0, 0, 255);
+        $im->fill($white, 0, 0);
+        $im->string(gdLargeFont, 10, 10, "Hello, World", $blue);
+        return $im->gif;
+    }}
+
+GifDemo.jpl
+
+    import java.awt.*;
+    import java.awt.event.*;
+    import java.awt.image.*;
+
+    /*
+    * A JPL program that demonstrates passing byte arrays
+    * between Java and Perl
+    *
+    */
+
+    class GIFDemo extends Canvas {
+        Image img;
+        int width = 200;
+        int height = 30;
+        
+        // Constructor for this class.
+        public GIFDemo() {
+            this.setSize(width, height);
+        }
+
+    // Java method to create an image.
+    //
+    void generateImage() {
+        Toolkit kit = Toolkit.getDefaultToolkit();
+
+        // Invoke the mkImage() Perl method to generate an
+        // image.
+
+        byte[] image_data = mkImage();
+
+        // Create the image with the byte array we got
+        // from the Perl method.
+    
+        img = kit.createImage( image_data );
+    }
+
+    // A Perl method to generate an image.
+
+    perl byte[] mkImage() {{
+
+        # Use the GD image manipulation extension.
+
+        use GD;
+
+        # Create a new image with the height and width specified
+        # in the enclosing Java class.
+
+        my $im = new GD::Image( $self->width, $self->height);
+
+        # Allocate two colors.
+
+        my $white = $im->colorAllocate(255, 255, 255);
+        my $blue = $im->colorAllocate(0, 0, 255);
+
+        # Fill the image with white and draw a greeting.
+
+        $im->fill($white, 0, 0);
+        $im->string(gdLargeFont, 10, 10,
+        "Hello, World", $blue);
+        return $im->gif;
+    }}
+
+    // Java uses this to repaint the image when necessary.
+
+    public void paint(Graphics g) {
+        g.drawImage(img, 0, 0, this);
+    }
+
+    // The entry point.
+
+    public static void main(String[] argv) {
+
+        // Set up a frame and create an image.
+
+        Frame f = new Frame("GD Example");
+        f.setLayout(new BorderLayout());
+        
+        GIFDemo demo = new GIFDemo();
+        demo.generateImage();
+    
+        f.add("Center", demo);
+        f.addWindowListener( new Handler() );
+    
+        f.pack();
+        f.show();
+    
+    }
+    }
+
+    // A handler to process a request to close a window.
+
+    class Handler extends WindowAdapter {
+        public void windowClosing(WindowEvent e) {
+        System.exit(0);
+    }
+    }
+
+=head2 2.3.7 Summary: Calling Perl from Java
+
+=over 4
+
+=item 1 
+
+Put your embedded Perl code in methods that are declared C<perl>. 
+
+=item 2 
+
+Use double, rather than single, curly braces ({{ and }}). 
+
+=item 3 
+
+Invoke the Perl methods from Java just like any other Java method. 
+
+=item 4 
+
+No need to pull arguments off of C<@_> with C<shift>: JPL takes care of
+this for you. This includes C<$self>. 
+
+=item 5 
+
+If you pass a Java array into a Perl method, it comes in as a scalar
+reference. 
+
+=item 6 
+
+Convert references to arrays of primitives with C<Get*ArrayElements> 
+
+=item 7 
+
+Use C<GetObjectArrayElement> to get elements from arrays of strings and
+other objects. 
+
+=item 8 
+
+To return an array from a C<perl> method, declare the method as returning
+an array type, and either: 
+
+=item 9 
+
+Return an array reference. 
+
+=item 10 
+
+Return a string: JPL slices it up for you.
+
+=back
+
+=head1 2.4 Calling Java from Perl
+
+Next, let's look at how to invoke Java from Perl. 
+
+=head2 2.4.1 Java in Perl in Java
+
+Remember the issues from 2.1.2 - this is unstable unless you are calling Java from Perl methods that are themselves embedded in a Java program.
+
+=head2 2.4.2 Java in Perl: Simple Constructors
+
+Use JPL::Class to load the class:
+
+C<use JPL::Class "java::awt::Frame";>
+
+Invoke the constructor to create an instance of the class:
+
+C<my $f = java::awt::Frame->new;>
+
+You've got a reference to a Java object in $f, a Perl scalar. I think
+this is cool.
+
+=head2 2.4.3 Constructors that Take Parameters
+
+If the constructor has parameters, look up the method signature with
+C<getmeth>:
+
+my $new = getmeth("new", ['java.lang.String'], []);
+
+The first argument to C<getmeth> is the name of the method. The second
+argument is a reference to an array that contains a list of the argument
+types. The final argument to C<getmeth> is a reference to an array
+containing a single element with the return type. Constructors always
+have a null (void) return type, even though they return an instance of
+an object.
+
+Invoke the method through the variable you created:
+
+my $f = java::awt::Frame->$new( "Frame Demo" );
+
+Because Java supports method overloading, the only way Java can
+distinguish between different methods that have the same name is through
+the method signature. The C<getmeth> function simply returns a mangled,
+Perl-friendly version of the signature. JPL's AutoLoader takes care of
+finding the right class.
+
+For example, the method signature for $new is C<(Ljava/lang/String;)V>.
+In Perl, this is translated to C<new__Ljava_lang_String_2__V>.  Sure, it
+means something to Java, but thanks to C<getmeth> and JPL's AutoLoader,
+we don't have to worry about it!
+
+=head2 2.4.4 More on getmeth
+
+The C<getmeth> function is not just for constructors. You'll use it to look
+up method signatures for any method that takes arguments.
+
+To use C<getmeth>, just supply the Java names of the types and objects in
+the argument or return value list. Here are a few examples:
+
+=over 4
+
+=item *
+
+Two int arguments, void return type:
+
+    $setSize = getmeth("setSize", ['int', 'int'], []);
+
+=item *
+
+One argument (java.awt.Component), with a return type of the same:
+
+    $add = getmeth("add", ['java.awt.Component'],
+
+    ['java.awt.Component']);
+
+=item *
+
+Two arguments, a String object and a boolean value, and a void return
+type:
+
+    $new = getmeth("new",
+
+    ['java.lang.String', 'boolean'], []);
+
+=item *
+
+A String argument with a java.lang.Class return type:
+
+    $forName = getmeth("forName",
+
+    ['java.lang.String'],
+
+    ['java.lang.Class']);
+
+=item *
+
+No arguments, but a boolean return value:
+
+    $next = getmeth("next", [], ['boolean']);
+
+=back
+
+=head2 2.4.5 Instance Variables
+
+Java instance variables that belong to a class can be reached through
+$self and a method with the same name as the instance variables:
+
+    $frame->$setSize( $self->width, $self->height );
+
+Here is an example:
+
+    class VarDemo {
+
+    int foo = 100;
+
+    perl int perlChange() {{
+        my $current_value = $self->foo;
+
+        # Change foo to ten times itself.
+
+        $self->foo( $current_value * 10 );
+
+    }}
+
+    void executeChange() {
+
+        perlChange();
+        System.out.println(foo);
+
+    }
+
+    public static void main(String[] args) {
+
+        VarDemo demo = new VarDemo();
+        demo.executeChange();
+
+    }
+
+    }
+
+Note. JPL creates these methods with the same name as the variable. You
+can also supply a value to set the variable's value. If you create a
+method with this name, it will collide with the one that JPL defines.
+
+FrameDemo.jpl
+
+    /*
+    * FrameDemo - create and show a Frame in Perl.
+    *
+    */
+
+    public class FrameDemo {
+
+        int height = 50;
+        int width = 200;
+        perl void make_frame () {{
+
+        # Import two Java classes.
+
+        use JPL::Class "java::awt::Frame";
+        use JPL::Class "java::awt::Button";
+
+        # Create a Frame and a Button. The two calls to new()
+        # have the same signature.
+
+        my $new = getmeth("new", ['java.lang.String'], []);
+        my $frame = java::awt::Frame->$new( "Frame Demo" );
+        my $btn = java::awt::Button->$new( "Do Not Press Me" );
+
+        # Add the button to the frame.
+
+        my $add = getmeth("add", ['java.awt.Component'],
+        ['java.awt.Component']);
+        $frame->$add( $btn );
+
+        # Set the size of the frame and show it.
+
+        my $setSize = getmeth("setSize", ['int', 'int'], []);
+        $frame->$setSize($self->width, $self->height);
+        $frame->show;
+
+    }}
+
+    public static void main(String[] argv) {
+
+        FrameDemo demo = new FrameDemo();
+        demo.make_frame();
+
+    }
+
+    }
+
+=head2 2.4.6 Summary: Calling Java from Perl
+
+=over 4
+
+=item 1 
+
+Use JPL::Class to specify a Java class to import. 
+
+=item 2 
+
+You can directly invoke constructors and methods that take no arguments. 
+
+=item 3 
+
+If the constructor or method takes arguments, use getmeth to look up its
+signature. 
+
+=item 4 
+
+Use $self to access Java instance variables and methods.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 1999, Brian Jepson
+
+You may distribute this file under the same terms as Perl itself.
+
+Converted from FrameMaker by  Kevin Falcone.
+
+=cut

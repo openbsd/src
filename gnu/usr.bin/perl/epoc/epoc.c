@@ -17,6 +17,10 @@ Perl_epoc_init(int *argcp, char ***argvp) {
   int truecount=0;
   char **lastcp = (*argvp);
   char *ptr;
+
+#if 0
+  epoc_spawn_posix_server();
+#endif
   for (i=0; i< *argcp; i++) {
     if ((*argvp)[i]) {
       if (*((*argvp)[i]) == '<') {
@@ -58,6 +62,7 @@ Perl_epoc_init(int *argcp, char ***argvp) {
 
 }
 
+
 #ifdef __MARM__
 /* Symbian forgot to include __fixunsdfi into the MARM euser.lib */
 /* This is from libgcc2.c , gcc-2.7.2.3                          */
@@ -86,62 +91,153 @@ __fixunsdfsi (a)
   return (SItype) a;
 }
 
+#endif
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 
 int 
-do_aspawn( pTHX_ SV *really,SV **mark,SV **sp) {
-  return do_spawn( really, mark, sp);
+do_spawn( char *cmd) {
+    dTHXo;
+    char *argv0, *ptr;
+    char *cmdptr = cmd;
+    int ret;
+    
+    argv0 = ptr = malloc( strlen(cmd) + 1);
+
+    while (*cmdptr && !isSPACE( *cmdptr)) {
+      *ptr = *cmdptr;
+      if (*ptr == '/') {
+	*ptr = '\\';
+      }
+      ptr++; cmdptr++;
+    }
+    while (*cmdptr && isSPACE( *cmdptr)) {
+      cmdptr++;
+    }
+    *ptr = '\0';
+    ret = epoc_spawn( argv0, cmdptr);
+    free( argv0);
+    return ret;
 }
 
 int
-do_spawn (pTHX_ SV *really,SV **mark,SV **sp)
-{
-    dTHR;
+do_aspawn ( void *vreally, void **vmark, void **vsp) {
+
+    dTHXo;
+
+    SV *really = (SV*)vreally;
+    SV **mark = (SV**)vmark;
+    SV **sp = (SV**)vsp;
+
+    char **argv;
+    char *str;
+    char *p2, **ptr;
+    char *cmd, *cmdline;
+
+
     int  rc;
-    char **a,*cmd,**ptr, *cmdline, **argv, *p2; 
-    STRLEN n_a;
-    size_t len = 0;
+    int index = 0;
+    int len = 0;
 
     if (sp<=mark)
       return -1;
     
-    a=argv=ptr=(char**) malloc ((sp-mark+3)*sizeof (char*));
+    ptr = argv =(char**) malloc ((sp-mark+3)*sizeof (char*));
     
     while (++mark <= sp) {
-      if (*mark)
-	*a = SvPVx(*mark, n_a);
+      if (*mark && (str = SvPV_nolen(*mark)))
+	argv[index] = str;
       else
-	*a = "";
-      len += strlen( *a) + 1;
-      a++;
-    }
-    *a = Nullch;
-
-    if (!(really && *(cmd = SvPV(really, n_a)))) {
-      cmd = argv[0];
-      argv++;
-    }
+	argv[index] = "";
       
-    cmdline = (char * ) malloc( len + 1);
-    cmdline[ 0] = '\0';
-    while (*argv != NULL) {
-      strcat( cmdline, *argv++);
-      strcat( cmdline, " ");
+      len += strlen(argv[ index++]) + 1;
     }
+    argv[index++] = 0;
+
+    cmd = strdup((const char*)(really ? SvPV_nolen(really) : argv[0]));
 
     for (p2=cmd; *p2 != '\0'; p2++) {
       /* Change / to \ */
       if ( *p2 == '/') 
 	*p2 = '\\';
     }
-    rc = epoc_spawn( cmd, cmdline);
-    free( ptr);
-    free( cmdline);
+      
+    cmdline = (char * ) malloc( len + 1);
+    cmdline[ 0] = '\0';
+    while (*argv != NULL) {
+      strcat( cmdline, *ptr++);
+      strcat( cmdline, " ");
+    }
     
+    free( argv);
+
+    rc = epoc_spawn( cmd, cmdline);
+    free( cmdline);
+    free( cmd);
+
     return rc;
 }
 
- 
-#endif
+static
+XS(epoc_getcwd)   /* more or less stolen from win32.c */
+{
+    dXSARGS;
+    /* Make the host for current directory */
+    char *buffer; 
+    int buflen = 256;
+
+    char *ptr;
+    buffer = (char *) malloc( buflen);
+    if (buffer == NULL) {
+      XSRETURN_UNDEF;
+    }
+    while ((NULL == ( ptr = getcwd( buffer, buflen))) && (errno == ERANGE)) {
+      buflen *= 2;
+      if (NULL == realloc( buffer, buflen)) {
+	 XSRETURN_UNDEF;
+      }
+      
+    }
+
+    /* 
+     * If ptr != Nullch 
+     *   then it worked, set PV valid, 
+     *   else return 'undef' 
+     */
+
+    if (ptr) {
+	SV *sv = sv_newmortal();
+	char *tptr;
+
+	for (tptr = ptr; *tptr != '\0'; tptr++) {
+	  if (*tptr == '\\') {
+	    *tptr = '/';
+	  }
+	}
+	sv_setpv(sv, ptr);
+	free( buffer);
+
+	EXTEND(SP,1);
+	SvPOK_on(sv);
+	ST(0) = sv;
+	XSRETURN(1);
+    }
+    free( buffer);
+    XSRETURN_UNDEF;
+}
+  
+
+void
+Perl_init_os_extras(void)
+{ 
+  dTHXo;
+  char *file = __FILE__;
+  newXS("EPOC::getcwd", epoc_getcwd, file);
+}
+
+void
+Perl_my_setenv(pTHX_ char *nam,char *val) {
+  setenv( nam, val, 1);
+}

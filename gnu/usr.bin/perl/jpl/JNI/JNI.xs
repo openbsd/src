@@ -18,8 +18,7 @@
 #  define PERL_SUBVERSION	SUBVERSION
 #endif
 
-#if PERL_REVISION == 5 && (PERL_VERSION < 4 || \
-			   (PERL_VERSION == 4 && PERL_SUBVERSION <= 75))
+#if PERL_REVISION == 5 && (PERL_VERSION < 4 || (PERL_VERSION == 4 && PERL_SUBVERSION <= 75))
 #  define PL_na		na
 #  define PL_sv_no	sv_no
 #  define PL_sv_undef	sv_undef
@@ -120,18 +119,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jbooleanArray ja = env->NewBooleanArray(len);
-#else
 			jbooleanArray ja = (*env)->NewBooleanArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jboolean)SvIV(*esv);
-#ifdef WIN32
-			env->SetBooleanArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetBooleanArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -141,16 +132,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jboolean);
 
-#ifdef WIN32
-		    jbooleanArray ja = env->NewBooleanArray(len);
-#else
 		    jbooleanArray ja = (*env)->NewBooleanArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetBooleanArrayRegion(ja, 0, len, (jboolean*)SvPV(sv,n_a));
-#else
 		    (*env)->SetBooleanArrayRegion(env, ja, 0, len, (jboolean*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -167,18 +150,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jbyteArray ja = env->NewByteArray(len);
-#else
 			jbyteArray ja = (*env)->NewByteArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jbyte)SvIV(*esv);
-#ifdef WIN32
-			env->SetByteArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetByteArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -188,16 +163,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jbyte);
 
-#ifdef WIN32
-		    jbyteArray ja = env->NewByteArray(len);
-#else
 		    jbyteArray ja = (*env)->NewByteArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetByteArrayRegion(ja, 0, len, (jbyte*)SvPV(sv,n_a));
-#else
 		    (*env)->SetByteArrayRegion(env, ja, 0, len, (jbyte*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -214,18 +181,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jcharArray ja = env->NewCharArray(len);
-#else
 			jcharArray ja = (*env)->NewCharArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jchar)SvIV(*esv);
-#ifdef WIN32
-			env->SetCharArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetCharArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -235,16 +194,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jchar);
 
-#ifdef WIN32
-		    jcharArray ja = env->NewCharArray(len);
-#else
 		    jcharArray ja = (*env)->NewCharArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetCharArrayRegion(ja, 0, len, (jchar*)SvPV(sv,n_a));
-#else
 		    (*env)->SetCharArrayRegion(env, ja, 0, len, (jchar*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -261,18 +212,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jshortArray ja = env->NewShortArray(len);
-#else
 			jshortArray ja = (*env)->NewShortArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jshort)SvIV(*esv);
-#ifdef WIN32
-			env->SetShortArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetShortArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -282,16 +225,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jshort);
 
-#ifdef WIN32
-		    jshortArray ja = env->NewShortArray(len);
-#else
 		    jshortArray ja = (*env)->NewShortArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetShortArrayRegion(ja, 0, len, (jshort*)SvPV(sv,n_a));
-#else
 		    (*env)->SetShortArrayRegion(env, ja, 0, len, (jshort*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -308,18 +243,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jintArray ja = env->NewIntArray(len);
-#else
 			jintArray ja = (*env)->NewIntArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jint)SvIV(*esv);
-#ifdef WIN32
-			env->SetIntArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetIntArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -329,16 +256,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jint);
 
-#ifdef WIN32
-		    jintArray ja = env->NewIntArray(len);
-#else
 		    jintArray ja = (*env)->NewIntArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetIntArrayRegion(ja, 0, len, (jint*)SvPV(sv,n_a));
-#else
 		    (*env)->SetIntArrayRegion(env, ja, 0, len, (jint*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -355,18 +274,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jlongArray ja = env->NewLongArray(len);
-#else
 			jlongArray ja = (*env)->NewLongArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jlong)SvNV(*esv);
-#ifdef WIN32
-			env->SetLongArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetLongArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -376,16 +287,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jlong);
 
-#ifdef WIN32
-		    jlongArray ja = env->NewLongArray(len);
-#else
 		    jlongArray ja = (*env)->NewLongArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetLongArrayRegion(ja, 0, len, (jlong*)SvPV(sv,n_a));
-#else
 		    (*env)->SetLongArrayRegion(env, ja, 0, len, (jlong*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -402,18 +305,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jfloatArray ja = env->NewFloatArray(len);
-#else
 			jfloatArray ja = (*env)->NewFloatArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jfloat)SvNV(*esv);
-#ifdef WIN32
-			env->SetFloatArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetFloatArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -423,16 +318,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jfloat);
 
-#ifdef WIN32
-		    jfloatArray ja = env->NewFloatArray(len);
-#else
 		    jfloatArray ja = (*env)->NewFloatArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetFloatArrayRegion(ja, 0, len, (jfloat*)SvPV(sv,n_a));
-#else
 		    (*env)->SetFloatArrayRegion(env, ja, 0, len, (jfloat*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -449,18 +336,10 @@ makeargs(char *sig, SV** svp, int items)
 			int i;
 			SV** esv;
 
-#ifdef WIN32
-			jdoubleArray ja = env->NewDoubleArray(len);
-#else
 			jdoubleArray ja = (*env)->NewDoubleArray(env, len);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++)
 			    buf[i] = (jdouble)SvNV(*esv);
-#ifdef WIN32
-			env->SetDoubleArrayRegion(ja, 0, len, buf);
-#else
 			(*env)->SetDoubleArrayRegion(env, ja, 0, len, buf);
-#endif
 			free((void*)buf);
 			jv[ix++].l = (jobject)ja;
 		    }
@@ -470,16 +349,8 @@ makeargs(char *sig, SV** svp, int items)
 		else if (SvPOK(sv)) {
 		    jsize len = sv_len(sv) / sizeof(jdouble);
 
-#ifdef WIN32
-		    jdoubleArray ja = env->NewDoubleArray(len);
-#else
 		    jdoubleArray ja = (*env)->NewDoubleArray(env, len);
-#endif
-#ifdef WIN32
-		    env->SetDoubleArrayRegion(ja, 0, len, (jdouble*)SvPV(sv,n_a));
-#else
 		    (*env)->SetDoubleArrayRegion(env, ja, 0, len, (jdouble*)SvPV(sv,n_a));
-#endif
 		    jv[ix++].l = (jobject)ja;
 		}
 		else
@@ -501,27 +372,11 @@ makeargs(char *sig, SV** svp, int items)
 			    jobjectArray ja;
 
 			    if (!jcl)
-#ifdef WIN32
-				jcl = env->FindClass("java/lang/String");
-#else
 				jcl = (*env)->FindClass(env, "java/lang/String");
-#endif
-#ifdef WIN32
-			    ja = env->NewObjectArray(len, jcl, 0);
-#else
 			    ja = (*env)->NewObjectArray(env, len, jcl, 0);
-#endif
 			    for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++) {
-#ifdef WIN32
-				jobject str = (jobject)env->NewStringUTF(SvPV(*esv,n_a));
-#else
 				jobject str = (jobject)(*env)->NewStringUTF(env, SvPV(*esv,n_a));
-#endif
-#ifdef WIN32
-				env->SetObjectArrayElement(ja, i, str);
-#else
 				(*env)->SetObjectArrayElement(env, ja, i, str);
-#endif
 			    }
 			    jv[ix++].l = (jobject)ja;
 			}
@@ -546,35 +401,15 @@ makeargs(char *sig, SV** svp, int items)
 			jobjectArray ja;
 
 			if (!jcl)
-#ifdef WIN32
-			    jcl = env->FindClass("java/lang/Object");
-#else
 			    jcl = (*env)->FindClass(env, "java/lang/Object");
-#endif
-#ifdef WIN32
-			ja = env->NewObjectArray(len, jcl, 0);
-#else
 			ja = (*env)->NewObjectArray(env, len, jcl, 0);
-#endif
 			for (esv = AvARRAY((AV*)rv), i = 0; i < len; esv++, i++) {
 			    if (SvROK(*esv) && (rv = SvRV(*esv)) && SvOBJECT(rv)) {
-#ifdef WIN32
-				env->SetObjectArrayElement(ja, i, (jobject)(void*)SvIV(rv));
-#else
 				(*env)->SetObjectArrayElement(env, ja, i, (jobject)(void*)SvIV(rv));
-#endif
 			    }
 			    else {
-#ifdef WIN32
-				jobject str = (jobject)env->NewStringUTF(SvPV(*esv,n_a));
-#else
 				jobject str = (jobject)(*env)->NewStringUTF(env, SvPV(*esv,n_a));
-#endif
-#ifdef WIN32
-				env->SetObjectArrayElement(ja, i, str);
-#else
 				(*env)->SetObjectArrayElement(env, ja, i, str);
-#endif
 			    }
 			}
 			jv[ix++].l = (jobject)ja;
@@ -590,11 +425,7 @@ makeargs(char *sig, SV** svp, int items)
 	case 'L':
 	    if (!SvROK(sv) || strnEQ(s, "java/lang/String;", 17)) {
 		s += 17;
-#ifdef WIN32
-		jv[ix++].l = (jobject)env->NewStringUTF((char*) SvPV(sv,n_a));
-#else
 		jv[ix++].l = (jobject)(*env)->NewStringUTF(env, (char*) SvPV(sv,n_a));
-#endif
 		break;
 	    }
 	    while (*s != ';') s++;
@@ -760,11 +591,7 @@ GetVersion()
 	JNIEnv *		env = FETCHENV;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetVersion();
-#else
 	    RETVAL = (*env)->GetVersion(env);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -781,17 +608,9 @@ DefineClass(name, loader, buf)
     CODE:
 	{
 #ifdef KAFFE
-#ifdef WIN32
-	    RETVAL = env->DefineClass( loader, buf, (jsize)buf_len_);
-#else
 	    RETVAL = (*env)->DefineClass(env,  loader, buf, (jsize)buf_len_);
-#endif
-#else
-#ifdef WIN32
-	    RETVAL = env->DefineClass( name, loader, buf, (jsize)buf_len_); 
 #else
 	    RETVAL = (*env)->DefineClass(env,  name, loader, buf, (jsize)buf_len_); 
-#endif
 #endif
 	    RESTOREENV;
 	}
@@ -804,11 +623,7 @@ FindClass(name)
 	const char *		name
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->FindClass( name);
-#else
 	    RETVAL = (*env)->FindClass(env,  name);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -820,11 +635,7 @@ GetSuperclass(sub)
 	jclass			sub
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetSuperclass( sub);
-#else
 	    RETVAL = (*env)->GetSuperclass(env,  sub);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -837,11 +648,7 @@ IsAssignableFrom(sub, sup)
 	jclass			sup
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->IsAssignableFrom( sub, sup);
-#else
 	    RETVAL = (*env)->IsAssignableFrom(env,  sub, sup);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -853,11 +660,7 @@ Throw(obj)
 	jthrowable		obj
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->Throw( obj);
-#else
 	    RETVAL = (*env)->Throw(env,  obj);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -870,11 +673,7 @@ ThrowNew(clazz, msg)
 	const char *		msg
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->ThrowNew( clazz, msg);
-#else
 	    RETVAL = (*env)->ThrowNew(env,  clazz, msg);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -885,11 +684,7 @@ ExceptionOccurred()
 	JNIEnv *		env = FETCHENV;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->ExceptionOccurred();
-#else
 	    RETVAL = (*env)->ExceptionOccurred(env);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -900,11 +695,7 @@ ExceptionDescribe()
 	JNIEnv *		env = FETCHENV;
     CODE:
 	{
-#ifdef WIN32
-	    env->ExceptionDescribe();
-#else
 	    (*env)->ExceptionDescribe(env);
-#endif
 	    RESTOREENV;
 	}
 
@@ -913,11 +704,7 @@ ExceptionClear()
 	JNIEnv *		env = FETCHENV;
     CODE:
 	{
-#ifdef WIN32
-	    env->ExceptionClear();
-#else
 	    (*env)->ExceptionClear(env);
-#endif
 	    RESTOREENV;
 	}
 
@@ -927,11 +714,7 @@ FatalError(msg)
 	const char *		msg
     CODE:
 	{
-#ifdef WIN32
-	    env->FatalError( msg);
-#else
 	    (*env)->FatalError(env,  msg);
-#endif
 	    RESTOREENV;
 	}
 
@@ -941,11 +724,7 @@ NewGlobalRef(lobj)
 	jobject			lobj
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewGlobalRef(lobj);
-#else
 	    RETVAL = (*env)->NewGlobalRef(env, lobj);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -957,11 +736,7 @@ DeleteGlobalRef(gref)
 	jobject			gref
     CODE:
 	{
-#ifdef WIN32
-	    env->DeleteGlobalRef(gref);
-#else
 	    (*env)->DeleteGlobalRef(env, gref);
-#endif
 	    RESTOREENV;
 	}
 
@@ -971,11 +746,7 @@ DeleteLocalRef(obj)
 	jobject			obj
     CODE:
 	{
-#ifdef WIN32
-	    env->DeleteLocalRef( obj);
-#else
 	    (*env)->DeleteLocalRef(env,  obj);
-#endif
 	    RESTOREENV;
 	}
 
@@ -986,11 +757,7 @@ IsSameObject(obj1,obj2)
 	jobject			obj2
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->IsSameObject(obj1,obj2);
-#else
 	    RETVAL = (*env)->IsSameObject(env, obj1,obj2);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1002,11 +769,7 @@ AllocObject(clazz)
 	jclass			clazz
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->AllocObject(clazz);
-#else
 	    RETVAL = (*env)->AllocObject(env, clazz);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1022,11 +785,7 @@ NewObject(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->NewObjectA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->NewObjectA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1041,11 +800,7 @@ NewObjectA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewObjectA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->NewObjectA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1057,11 +812,7 @@ GetObjectClass(obj)
 	jobject			obj
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetObjectClass(obj);
-#else
 	    RETVAL = (*env)->GetObjectClass(env, obj);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1074,11 +825,7 @@ IsInstanceOf(obj,clazz)
 	jclass			clazz
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->IsInstanceOf(obj,clazz);
-#else
 	    RETVAL = (*env)->IsInstanceOf(env, obj,clazz);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1092,11 +839,7 @@ GetMethodID(clazz,name,sig)
 	const char *		sig
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetMethodID(clazz,name,sig);
-#else
 	    RETVAL = (*env)->GetMethodID(env, clazz,name,sig);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1112,11 +855,7 @@ CallObjectMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallObjectMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallObjectMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1131,11 +870,7 @@ CallObjectMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallObjectMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallObjectMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1151,11 +886,7 @@ CallBooleanMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallBooleanMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallBooleanMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1170,11 +901,7 @@ CallBooleanMethodA(obj,methodID, args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallBooleanMethodA(obj,methodID, args);
-#else
 	    RETVAL = (*env)->CallBooleanMethodA(env, obj,methodID, args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1190,11 +917,7 @@ CallByteMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallByteMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallByteMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1209,11 +932,7 @@ CallByteMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallByteMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallByteMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1229,11 +948,7 @@ CallCharMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallCharMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallCharMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1248,11 +963,7 @@ CallCharMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallCharMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallCharMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1268,11 +979,7 @@ CallShortMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallShortMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallShortMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1287,11 +994,7 @@ CallShortMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallShortMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallShortMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1307,11 +1010,7 @@ CallIntMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallIntMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallIntMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1326,11 +1025,7 @@ CallIntMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallIntMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallIntMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1346,11 +1041,7 @@ CallLongMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallLongMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallLongMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1365,11 +1056,7 @@ CallLongMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallLongMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallLongMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1385,11 +1072,7 @@ CallFloatMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallFloatMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallFloatMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1404,11 +1087,7 @@ CallFloatMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallFloatMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallFloatMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1424,11 +1103,7 @@ CallDoubleMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallDoubleMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallDoubleMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1443,11 +1118,7 @@ CallDoubleMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallDoubleMethodA(obj,methodID,args);
-#else
 	    RETVAL = (*env)->CallDoubleMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1463,11 +1134,7 @@ CallVoidMethod(obj,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    env->CallVoidMethodA(obj,methodID,args);
-#else
 	    (*env)->CallVoidMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
 
@@ -1480,11 +1147,7 @@ CallVoidMethodA(obj,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    env->CallVoidMethodA(obj,methodID,args);
-#else
 	    (*env)->CallVoidMethodA(env, obj,methodID,args);
-#endif
 	    RESTOREENV;
 	}
 
@@ -1499,11 +1162,7 @@ CallNonvirtualObjectMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualObjectMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualObjectMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1519,11 +1178,7 @@ CallNonvirtualObjectMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualObjectMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualObjectMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1540,11 +1195,7 @@ CallNonvirtualBooleanMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualBooleanMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualBooleanMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1560,11 +1211,7 @@ CallNonvirtualBooleanMethodA(obj,clazz,methodID, args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualBooleanMethodA(obj,clazz,methodID, args);
-#else
 	    RETVAL = (*env)->CallNonvirtualBooleanMethodA(env, obj,clazz,methodID, args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1581,11 +1228,7 @@ CallNonvirtualByteMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualByteMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualByteMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1601,11 +1244,7 @@ CallNonvirtualByteMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualByteMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualByteMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1622,11 +1261,7 @@ CallNonvirtualCharMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualCharMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualCharMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1642,11 +1277,7 @@ CallNonvirtualCharMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualCharMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualCharMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1663,11 +1294,7 @@ CallNonvirtualShortMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualShortMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualShortMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1683,11 +1310,7 @@ CallNonvirtualShortMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualShortMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualShortMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1704,11 +1327,7 @@ CallNonvirtualIntMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualIntMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualIntMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1724,11 +1343,7 @@ CallNonvirtualIntMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualIntMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualIntMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1745,11 +1360,7 @@ CallNonvirtualLongMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualLongMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualLongMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1765,11 +1376,7 @@ CallNonvirtualLongMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualLongMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualLongMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1786,11 +1393,7 @@ CallNonvirtualFloatMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualFloatMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualFloatMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1806,11 +1409,7 @@ CallNonvirtualFloatMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualFloatMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualFloatMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1827,11 +1426,7 @@ CallNonvirtualDoubleMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualDoubleMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualDoubleMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1847,11 +1442,7 @@ CallNonvirtualDoubleMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallNonvirtualDoubleMethodA(obj,clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallNonvirtualDoubleMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1868,11 +1459,7 @@ CallNonvirtualVoidMethod(obj,clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    env->CallNonvirtualVoidMethodA(obj,clazz,methodID,args);
-#else
 	    (*env)->CallNonvirtualVoidMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
 
@@ -1886,11 +1473,7 @@ CallNonvirtualVoidMethodA(obj,clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    env->CallNonvirtualVoidMethodA(obj,clazz,methodID,args);
-#else
 	    (*env)->CallNonvirtualVoidMethodA(env, obj,clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
 
@@ -1902,11 +1485,7 @@ GetFieldID(clazz,name,sig)
 	const char *		sig
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetFieldID(clazz,name,sig);
-#else
 	    RETVAL = (*env)->GetFieldID(env, clazz,name,sig);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1920,11 +1499,7 @@ GetObjectField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetObjectField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetObjectField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1938,11 +1513,7 @@ GetBooleanField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetBooleanField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetBooleanField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1956,11 +1527,7 @@ GetByteField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetByteField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetByteField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1974,11 +1541,7 @@ GetCharField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetCharField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetCharField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -1992,11 +1555,7 @@ GetShortField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetShortField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetShortField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2010,11 +1569,7 @@ GetIntField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetIntField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetIntField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2028,11 +1583,7 @@ GetLongField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetLongField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetLongField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2046,11 +1597,7 @@ GetFloatField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetFloatField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetFloatField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2064,11 +1611,7 @@ GetDoubleField(obj,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetDoubleField(obj,fieldID);
-#else
 	    RETVAL = (*env)->GetDoubleField(env, obj,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2083,11 +1626,7 @@ SetObjectField(obj,fieldID,val)
 	jobject			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetObjectField(obj,fieldID,val);
-#else
 	    (*env)->SetObjectField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2100,11 +1639,7 @@ SetBooleanField(obj,fieldID,val)
 	jboolean		val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetBooleanField(obj,fieldID,val);
-#else
 	    (*env)->SetBooleanField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2117,11 +1652,7 @@ SetByteField(obj,fieldID,val)
 	jbyte			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetByteField(obj,fieldID,val);
-#else
 	    (*env)->SetByteField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2134,11 +1665,7 @@ SetCharField(obj,fieldID,val)
 	jchar			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetCharField(obj,fieldID,val);
-#else
 	    (*env)->SetCharField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2151,11 +1678,7 @@ SetShortField(obj,fieldID,val)
 	jshort			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetShortField(obj,fieldID,val);
-#else
 	    (*env)->SetShortField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2168,11 +1691,7 @@ SetIntField(obj,fieldID,val)
 	jint			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetIntField(obj,fieldID,val);
-#else
 	    (*env)->SetIntField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2185,11 +1704,7 @@ SetLongField(obj,fieldID,val)
 	jlong			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetLongField(obj,fieldID,val);
-#else
 	    (*env)->SetLongField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2202,11 +1717,7 @@ SetFloatField(obj,fieldID,val)
 	jfloat			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetFloatField(obj,fieldID,val);
-#else
 	    (*env)->SetFloatField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2219,11 +1730,7 @@ SetDoubleField(obj,fieldID,val)
 	jdouble			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetDoubleField(obj,fieldID,val);
-#else
 	    (*env)->SetDoubleField(env, obj,fieldID,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2235,11 +1742,7 @@ GetStaticMethodID(clazz,name,sig)
 	const char *		sig
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticMethodID(clazz,name,sig);
-#else
 	    RETVAL = (*env)->GetStaticMethodID(env, clazz,name,sig);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2255,11 +1758,7 @@ CallStaticObjectMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticObjectMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticObjectMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2274,11 +1773,7 @@ CallStaticObjectMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticObjectMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticObjectMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2294,11 +1789,7 @@ CallStaticBooleanMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticBooleanMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticBooleanMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2313,11 +1804,7 @@ CallStaticBooleanMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticBooleanMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticBooleanMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2333,11 +1820,7 @@ CallStaticByteMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticByteMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticByteMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2352,11 +1835,7 @@ CallStaticByteMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticByteMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticByteMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2372,11 +1851,7 @@ CallStaticCharMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticCharMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticCharMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2391,11 +1866,7 @@ CallStaticCharMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticCharMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticCharMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2411,11 +1882,7 @@ CallStaticShortMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticShortMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticShortMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2430,11 +1897,7 @@ CallStaticShortMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticShortMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticShortMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2450,11 +1913,7 @@ CallStaticIntMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticIntMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticIntMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2469,11 +1928,7 @@ CallStaticIntMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticIntMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticIntMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2489,11 +1944,7 @@ CallStaticLongMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticLongMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticLongMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2508,11 +1959,7 @@ CallStaticLongMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticLongMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticLongMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2528,11 +1975,7 @@ CallStaticFloatMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticFloatMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticFloatMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2547,11 +1990,7 @@ CallStaticFloatMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticFloatMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticFloatMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2567,11 +2006,7 @@ CallStaticDoubleMethod(clazz,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    RETVAL = env->CallStaticDoubleMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticDoubleMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2586,11 +2021,7 @@ CallStaticDoubleMethodA(clazz,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->CallStaticDoubleMethodA(clazz,methodID,args);
-#else
 	    RETVAL = (*env)->CallStaticDoubleMethodA(env, clazz,methodID,args);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2606,11 +2037,7 @@ CallStaticVoidMethod(cls,methodID,...)
     CODE:
 	{
 	    jvalue * args = makeargs(sig, &ST(argoff), items - argoff);
-#ifdef WIN32
-	    env->CallStaticVoidMethodA(cls,methodID,args);
-#else
 	    (*env)->CallStaticVoidMethodA(env, cls,methodID,args);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2623,11 +2050,7 @@ CallStaticVoidMethodA(cls,methodID,args)
 	jvalue *		args
     CODE:
 	{
-#ifdef WIN32
-	    env->CallStaticVoidMethodA(cls,methodID,args);
-#else
 	    (*env)->CallStaticVoidMethodA(env, cls,methodID,args);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2639,11 +2062,7 @@ GetStaticFieldID(clazz,name,sig)
 	const char *		sig
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticFieldID(clazz,name,sig);
-#else
 	    RETVAL = (*env)->GetStaticFieldID(env, clazz,name,sig);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2657,11 +2076,7 @@ GetStaticObjectField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticObjectField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticObjectField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2675,11 +2090,7 @@ GetStaticBooleanField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticBooleanField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticBooleanField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2693,11 +2104,7 @@ GetStaticByteField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticByteField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticByteField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2711,11 +2118,7 @@ GetStaticCharField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticCharField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticCharField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2729,11 +2132,7 @@ GetStaticShortField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticShortField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticShortField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2747,11 +2146,7 @@ GetStaticIntField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticIntField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticIntField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2765,11 +2160,7 @@ GetStaticLongField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticLongField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticLongField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2783,11 +2174,7 @@ GetStaticFloatField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticFloatField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticFloatField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2801,11 +2188,7 @@ GetStaticDoubleField(clazz,fieldID)
 	char *			sig = 0;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStaticDoubleField(clazz,fieldID);
-#else
 	    RETVAL = (*env)->GetStaticDoubleField(env, clazz,fieldID);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2820,11 +2203,7 @@ SetStaticObjectField(clazz,fieldID,value)
 	jobject			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticObjectField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticObjectField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2837,11 +2216,7 @@ SetStaticBooleanField(clazz,fieldID,value)
 	jboolean		value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticBooleanField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticBooleanField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2854,11 +2229,7 @@ SetStaticByteField(clazz,fieldID,value)
 	jbyte			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticByteField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticByteField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2871,11 +2242,7 @@ SetStaticCharField(clazz,fieldID,value)
 	jchar			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticCharField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticCharField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2888,11 +2255,7 @@ SetStaticShortField(clazz,fieldID,value)
 	jshort			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticShortField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticShortField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2905,11 +2268,7 @@ SetStaticIntField(clazz,fieldID,value)
 	jint			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticIntField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticIntField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2922,11 +2281,7 @@ SetStaticLongField(clazz,fieldID,value)
 	jlong			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticLongField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticLongField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2939,11 +2294,7 @@ SetStaticFloatField(clazz,fieldID,value)
 	jfloat			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticFloatField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticFloatField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2956,11 +2307,7 @@ SetStaticDoubleField(clazz,fieldID,value)
 	jdouble			value
     CODE:
 	{
-#ifdef WIN32
-	  env->SetStaticDoubleField(clazz,fieldID,value);
-#else
 	  (*env)->SetStaticDoubleField(env, clazz,fieldID,value);
-#endif
 	    RESTOREENV;
 	}
 
@@ -2972,11 +2319,7 @@ NewString(unicode)
 	const jchar *		unicode
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewString(unicode, unicode_len_);
-#else
 	    RETVAL = (*env)->NewString(env, unicode, unicode_len_);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -2988,11 +2331,7 @@ GetStringLength(str)
 	jstring			str
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStringLength(str);
-#else
 	    RETVAL = (*env)->GetStringLength(env, str);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3006,26 +2345,14 @@ GetStringChars(str)
 	jsize 			RETVAL_len_ = NO_INIT;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStringChars(str,&isCopy);
-#else
 	    RETVAL = (*env)->GetStringChars(env, str,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetStringLength(str);
-#else
 	    RETVAL_len_ = (*env)->GetStringLength(env, str);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
 	RETVAL
     CLEANUP:
-#ifdef WIN32
-	    env->ReleaseStringChars(str,RETVAL);
-#else
 	    (*env)->ReleaseStringChars(env, str,RETVAL);
-#endif
 
 jstring
 NewStringUTF(utf)
@@ -3033,11 +2360,7 @@ NewStringUTF(utf)
 	const char *		utf
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewStringUTF(utf);
-#else
 	    RETVAL = (*env)->NewStringUTF(env, utf);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3049,11 +2372,7 @@ GetStringUTFLength(str)
 	jstring			str
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStringUTFLength(str);
-#else
 	    RETVAL = (*env)->GetStringUTFLength(env, str);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3066,21 +2385,13 @@ GetStringUTFChars(str)
 	jboolean		isCopy = NO_INIT;
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetStringUTFChars(str,&isCopy);
-#else
 	    RETVAL = (*env)->GetStringUTFChars(env, str,&isCopy);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
 	RETVAL
     CLEANUP:
-#ifdef WIN32
-	env->ReleaseStringUTFChars(str, RETVAL);
-#else
 	(*env)->ReleaseStringUTFChars(env, str, RETVAL);
-#endif
 
 
 jsize
@@ -3089,11 +2400,7 @@ GetArrayLength(array)
 	jarray			array
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetArrayLength(array);
-#else
 	    RETVAL = (*env)->GetArrayLength(env, array);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3107,11 +2414,7 @@ NewObjectArray(len,clazz,init)
 	jobject			init
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewObjectArray(len,clazz,init);
-#else
 	    RETVAL = (*env)->NewObjectArray(env, len,clazz,init);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3124,11 +2427,7 @@ GetObjectArrayElement(array,index)
 	jsize			index
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetObjectArrayElement(array,index);
-#else
 	    RETVAL = (*env)->GetObjectArrayElement(env, array,index);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3142,11 +2441,7 @@ SetObjectArrayElement(array,index,val)
 	jobject			val
     CODE:
 	{
-#ifdef WIN32
-	    env->SetObjectArrayElement(array,index,val);
-#else
 	    (*env)->SetObjectArrayElement(env, array,index,val);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3156,11 +2451,7 @@ NewBooleanArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewBooleanArray(len);
-#else
 	    RETVAL = (*env)->NewBooleanArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3172,11 +2463,7 @@ NewByteArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewByteArray(len);
-#else
 	    RETVAL = (*env)->NewByteArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3188,11 +2475,7 @@ NewCharArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewCharArray(len);
-#else
 	    RETVAL = (*env)->NewCharArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3204,11 +2487,7 @@ NewShortArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewShortArray(len);
-#else
 	    RETVAL = (*env)->NewShortArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3220,11 +2499,7 @@ NewIntArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewIntArray(len);
-#else
 	    RETVAL = (*env)->NewIntArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3236,11 +2511,7 @@ NewLongArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewLongArray(len);
-#else
 	    RETVAL = (*env)->NewLongArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3252,11 +2523,7 @@ NewFloatArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewFloatArray(len);
-#else
 	    RETVAL = (*env)->NewFloatArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3268,11 +2535,7 @@ NewDoubleArray(len)
 	jsize			len
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->NewDoubleArray(len);
-#else
 	    RETVAL = (*env)->NewDoubleArray(env, len);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -3286,16 +2549,8 @@ GetBooleanArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetBooleanArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetBooleanArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jboolean* r = RETVAL;
@@ -3312,11 +2567,7 @@ GetBooleanArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseBooleanArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseBooleanArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3328,16 +2579,8 @@ GetByteArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetByteArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetByteArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jbyte* r = RETVAL;
@@ -3354,11 +2597,7 @@ GetByteArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseByteArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseByteArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3370,16 +2609,8 @@ GetCharArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetCharArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetCharArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jchar* r = RETVAL;
@@ -3396,11 +2627,7 @@ GetCharArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseCharArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseCharArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3412,16 +2639,8 @@ GetShortArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetShortArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetShortArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jshort* r = RETVAL;
@@ -3438,11 +2657,7 @@ GetShortArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseShortArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseShortArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3454,16 +2669,8 @@ GetIntArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetIntArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetIntArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jint* r = RETVAL;
@@ -3480,11 +2687,7 @@ GetIntArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseIntArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseIntArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3496,16 +2699,8 @@ GetLongArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetLongArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetLongArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jlong* r = RETVAL;
@@ -3522,11 +2717,7 @@ GetLongArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseLongArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseLongArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3538,16 +2729,8 @@ GetFloatArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetFloatArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetFloatArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jfloat* r = RETVAL;
@@ -3564,11 +2747,7 @@ GetFloatArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseFloatArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseFloatArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3580,16 +2759,8 @@ GetDoubleArrayElements(array)
 	jboolean		isCopy = NO_INIT;
     PPCODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->GetDoubleArrayElements(array,&isCopy);
-#else
 	    RETVAL = (*env)->GetDoubleArrayElements(env, array,&isCopy);
-#endif
-#ifdef WIN32
-	    RETVAL_len_ = env->GetArrayLength(array);
-#else
 	    RETVAL_len_ = (*env)->GetArrayLength(env, array);
-#endif
 	    if (GIMME == G_ARRAY) {
 		int i;
 		jdouble* r = RETVAL;
@@ -3606,11 +2777,7 @@ GetDoubleArrayElements(array)
 		else
 		    PUSHs(&PL_sv_no);
 	    }
-#ifdef WIN32
-	    env->ReleaseDoubleArrayElements(array,RETVAL,JNI_ABORT);
-#else
 	    (*env)->ReleaseDoubleArrayElements(env, array,RETVAL,JNI_ABORT);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3625,11 +2792,7 @@ GetBooleanArrayRegion(array,start,len,buf)
 	jboolean *		buf = (jboolean*)sv_grow(ST(3),len * sizeof(jboolean)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetBooleanArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetBooleanArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jboolean));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3646,11 +2809,7 @@ GetByteArrayRegion(array,start,len,buf)
 	jbyte *			buf = (jbyte*)sv_grow(ST(3),len * sizeof(jbyte)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetByteArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetByteArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jbyte));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3667,11 +2826,7 @@ GetCharArrayRegion(array,start,len,buf)
 	jchar *			buf = (jchar*)sv_grow(ST(3),len * sizeof(jchar)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetCharArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetCharArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jchar));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3688,11 +2843,7 @@ GetShortArrayRegion(array,start,len,buf)
 	jshort *		buf = (jshort*)sv_grow(ST(3),len * sizeof(jshort)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetShortArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetShortArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jshort));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3709,11 +2860,7 @@ GetIntArrayRegion(array,start,len,buf)
 	jint *			buf = (jint*)sv_grow(ST(3),len * sizeof(jint)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetIntArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetIntArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jint));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3730,11 +2877,7 @@ GetLongArrayRegion(array,start,len,buf)
 	jlong *			buf = (jlong*)sv_grow(ST(3),len * sizeof(jlong)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetLongArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetLongArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jlong));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3751,11 +2894,7 @@ GetFloatArrayRegion(array,start,len,buf)
 	jfloat *		buf = (jfloat*)sv_grow(ST(3),len * sizeof(jfloat)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetFloatArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetFloatArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jfloat));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3772,11 +2911,7 @@ GetDoubleArrayRegion(array,start,len,buf)
 	jdouble *		buf = (jdouble*)sv_grow(ST(3),len * sizeof(jdouble)+1);
     CODE:
 	{
-#ifdef WIN32
-	    env->GetDoubleArrayRegion(array,start,len,buf);
-#else
 	    (*env)->GetDoubleArrayRegion(env, array,start,len,buf);
-#endif
 	    SvCUR_set(ST(3), len * sizeof(jdouble));
 	    *SvEND(ST(3)) = '\0';
 	    RESTOREENV;
@@ -3797,11 +2932,7 @@ SetBooleanArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetBooleanArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetBooleanArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3820,11 +2951,7 @@ SetByteArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetByteArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetByteArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3843,11 +2970,7 @@ SetCharArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetCharArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetCharArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3866,11 +2989,7 @@ SetShortArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetShortArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetShortArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3889,11 +3008,7 @@ SetIntArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetIntArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetIntArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3912,11 +3027,7 @@ SetLongArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetLongArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetLongArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3935,11 +3046,7 @@ SetFloatArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetFloatArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetFloatArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3958,11 +3065,7 @@ SetDoubleArrayRegion(array,start,len,buf)
 		croak("string is too short");
 	    else if (buf_len_ > len && PL_dowarn)
 		warn("string is too long");
-#ifdef WIN32
-	    env->SetDoubleArrayRegion(array,start,len,buf);
-#else
 	    (*env)->SetDoubleArrayRegion(env, array,start,len,buf);
-#endif
 	    RESTOREENV;
 	}
 
@@ -3974,11 +3077,7 @@ RegisterNatives(clazz,methods,nMethods)
 	jint			nMethods
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->RegisterNatives(clazz,methods,nMethods);
-#else
 	    RETVAL = (*env)->RegisterNatives(env, clazz,methods,nMethods);
-#endif
 	}
 
 SysRet
@@ -3987,11 +3086,7 @@ UnregisterNatives(clazz)
 	jclass			clazz
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->UnregisterNatives(clazz);
-#else
 	    RETVAL = (*env)->UnregisterNatives(env, clazz);
-#endif
 	}
     OUTPUT:
 	RETVAL  
@@ -4002,11 +3097,7 @@ MonitorEnter(obj)
 	jobject			obj
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->MonitorEnter(obj);
-#else
 	    RETVAL = (*env)->MonitorEnter(env, obj);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -4018,11 +3109,7 @@ MonitorExit(obj)
 	jobject			obj
     CODE:
 	{
-#ifdef WIN32
-	    RETVAL = env->MonitorExit(obj);
-#else
 	    RETVAL = (*env)->MonitorExit(env, obj);
-#endif
 	    RESTOREENV;
 	}
     OUTPUT:
@@ -4033,12 +3120,13 @@ GetJavaVM(...)
 	JNIEnv *		env = FETCHENV;
     CODE:
 	{
-	    if (env) {	/* We're embedded. */
-#ifdef WIN32
-		if (env->GetJavaVM(&RETVAL) < 0)
+#ifdef JPL_DEBUG
+	    jpldebug = 1;
 #else
-		if ((*env)->GetJavaVM(env, &RETVAL) < 0)
+	    jpldebug = 0;
 #endif
+	    if (env) {	/* We're embedded. */
+		if ((*env)->GetJavaVM(env, &RETVAL) < 0)
 		    RETVAL = 0;
 	    }
 	    else {	/* We're embedding. */
@@ -4053,7 +3141,7 @@ GetJavaVM(...)
 		}
 
 		if (items--) {
-		    ++mark;
+  		    ++mark;
 		    lib = SvPV(*mark, PL_na);
 		}
 		else
@@ -4062,10 +3150,14 @@ GetJavaVM(...)
 		    fprintf(stderr, "lib is %s.\n", lib);
 		}
 #ifdef WIN32
-		if (!LoadLibrary("javai.dll")) {
-		    if (lib && !LoadLibrary(lib))
-			croak("Can't load javai.dll");
-		}
+        if (LoadLibrary("jvm.dll")) {
+            if (!LoadLibrary("javai.dll")) {
+                warn("Can't load javai.dll");
+            }
+        } else {
+            if (lib && !LoadLibrary(lib))
+                croak("Can't load javai.dll"); 
+        }
 #else
 		if (jpldebug) {
 		    fprintf(stderr, "Opening Java shared library.\n");
@@ -4079,16 +3171,20 @@ GetJavaVM(...)
 			croak("Can't load Java shared library.");
 		}
 #endif
-
+               /* Kaffe seems to get very upset if vm_args.version isn't set */
+#ifdef KAFFE
+		vm_args.version = JNI_VERSION_1_1;
+#endif
 		JNI_GetDefaultJavaVMInitArgs(&vm_args);
 		vm_args.exit = &call_my_exit;
 		if (jpldebug) {
             fprintf(stderr, "items = %d\n", items);
             fprintf(stderr, "mark = %s\n", SvPV(*mark, PL_na));
         }
-		++mark;
 		while (items > 1) {
-		    char *s = SvPV(*mark,PL_na);
+		  char *s;
+		    ++mark;
+		    s = SvPV(*mark,PL_na);
 		    ++mark;
 		    if (jpldebug) {
                 fprintf(stderr, "*s = %s\n", s);
@@ -4115,7 +3211,20 @@ GetJavaVM(...)
 			vm_args.enableVerboseGC = (jint)SvIV(*mark);
 		    else if (strEQ(s, "disableAsyncGC"))
 			vm_args.disableAsyncGC = (jint)SvIV(*mark);
-#ifndef KAFFE
+#ifdef KAFFE
+		    else if (strEQ(s, "libraryhome"))
+			vm_args.libraryhome = savepv(SvPV(*mark,PL_na));
+		    else if (strEQ(s, "classhome"))
+			vm_args.classhome = savepv(SvPV(*mark,PL_na));
+		    else if (strEQ(s, "enableVerboseJIT"))
+			vm_args.enableVerboseJIT = (jint)SvIV(*mark); 
+		    else if (strEQ(s, "enableVerboseClassloading"))
+			vm_args.enableVerboseClassloading = (jint)SvIV(*mark); 
+		    else if (strEQ(s, "enableVerboseCall"))
+			vm_args.enableVerboseCall = (jint)SvIV(*mark); 
+		    else if (strEQ(s, "allocHeapSize"))
+			vm_args.allocHeapSize = (jint)SvIV(*mark); 
+#else
 		    else if (strEQ(s, "verbose"))
 			vm_args.verbose = (jint)SvIV(*mark); 
 		    else if (strEQ(s, "debugging"))
@@ -4132,10 +3241,13 @@ GetJavaVM(...)
 		    fprintf(stderr, "Working CLASSPATH: %s\n", 
 			vm_args.classpath);
 		}
-		JNI_CreateJavaVM(&RETVAL, &jplcurenv, &vm_args);
+		if (JNI_CreateJavaVM(&RETVAL, &jplcurenv, &vm_args) < 0) {
+                  croak("Unable to create instance of JVM");
+                }
 		if (jpldebug) {
 		    fprintf(stderr, "Created Java VM.\n");
 		}
+
 	    }
 	}
 

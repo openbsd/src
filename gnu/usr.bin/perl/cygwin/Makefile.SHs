@@ -125,7 +125,7 @@ $(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
 # The Module used here must not depend on Config or any extensions.
 
 miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)s$(LIB_EXT) opmini$(OBJ_EXT)
-	$(LDLIBPTH) $(CC) $(LARGE) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL)s $(libs)
+	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL)s $(libs)
 	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
 
 !NO!SUBS!
@@ -147,7 +147,7 @@ $(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
 # The Module used here must not depend on Config or any extensions.
 
 miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
-	$(LDLIBPTH) $(CC) $(LARGE) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL) $(libs)
+	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL) $(libs)
 	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
 
 !NO!SUBS!
@@ -157,22 +157,24 @@ esac
 # libperl.a is _the_ library both in dll and static cases
 # $(LIBPERL)$(LIB_EXT) expands to this name dependless of build model
 #
+# NOTE: The "-Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic" is required to give
+# the import library linking priority over the dynamic library, since both
+# the .dll and .a are in the same directory.  When the new standard for
+# naming import/dynamic/static libraries emerges this should be updated.
+#
 $spitshell >>Makefile <<'!NO!SUBS!'
 
-opmini$(OBJ_EXT) : op.c
-	$(CCCMD) $(PLDLFLAGS) -DPERL_EXTERNAL_GLOB -o opmini$(OBJ_EXT) op.c
-
 perl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+	$(SHRPENV) $(LDLIBPTH) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) -Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic `cat ext.libs` $(libs)
 
 pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
 
 purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
 
 quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
 
 !NO!SUBS!
 

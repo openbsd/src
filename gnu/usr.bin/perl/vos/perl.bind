@@ -31,9 +31,6 @@ modules:  miniperlmain,
           universal,
           utf8,
           util,
-          xsutils,
-          vos_dummies,
-          tcp_runtime,
-          tcp_gethost;
+          xsutils;
 
 end;

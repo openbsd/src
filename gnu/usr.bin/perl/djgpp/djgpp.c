@@ -130,7 +130,6 @@ convretcode (pTHX_ int rc,char *prog,int fl)
 int
 do_aspawn (pTHX_ SV *really,SV **mark,SV **sp)
 {
-    dTHR;
     int  rc;
     char **a,*tmps,**argv; 
     STRLEN n_a;
@@ -433,3 +432,22 @@ Perl_DJGPP_init (int *argcp,char ***argvp)
         strcpy (perlprefix,"..");
 }
 
+int
+djgpp_fflush (FILE *fp)
+{
+    int res;
+
+    if ((res = fflush(fp)) == 0 && fp) {
+	Stat_t s;
+	if (Fstat(fileno(fp), &s) == 0 && !S_ISSOCK(s.st_mode))
+	    res = fsync(fileno(fp));
+    }
+/*
+ * If the flush succeeded but set end-of-file, we need to clear
+ * the error because our caller may check ferror().  BTW, this
+ * probably means we just flushed an empty file.
+ */
+    if (res == 0 && fp && ferror(fp) == EOF) clearerr(fp);
+
+    return res;
+}

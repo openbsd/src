@@ -57,25 +57,13 @@ and limited in its effect on practical Perl programs.
 
 =back
 
-=head2 Using external modules
-
-If warnings are enabled with Perl's C<-w> command-line flag, you are
-likely to see warnings when using external modules containing XS
-(compiled) code:
-
-  Subroutine DynaLoader::dl_error redefined at /usr/local/lib/perl5/5.6.0/powerpc-machten/DynaLoader.pm line 93.
-
-This is a harmless consequence of the static linking used for MachTen
-perl.  You can suppress the warnings by using the more modern
-C<-Mwarnings> instead of the traditional C<-w>.  (See L<perllexwarn>.)
-
 =head2 Building external modules
 
 To add an external module to perl, build in the normal way, which
 is documented in L<ExtUtils::MakeMaker>, or which can be driven
 automatically by the CPAN module (see L<CPAN>), which is part of the
-standard distribution.  If wou want to install a
-module contains XS code (C or C++ source which compiles to object code
+standard distribution.  If you want to install a module which
+contains XS code (C or C++ source which compiles to object code
 for linking with perl), you will have to replace your perl binary with
 a new version containing the new statically-linked object module.  The
 build process tells you how to do this.
@@ -98,4 +86,4 @@ Dominic Dunlop <domo@computer.org>
 
 =head1 DATE
 
-Version 1.0 2000-03-22
+Version 1.0.1 2000-03-27

@@ -3,12 +3,15 @@
 & build macro in that subdirectory to create the perl
 & executable program module file.
 & Written 99-02-03 by Paul Green (Paul_Green@stratus.com)
+& Modified 00-10-24 by Paul Green
 &
 &begin_parameters
-     cpu       option(-processor)name,allow(mc68020,i80860,pa7100,pa8000),=mc68020
+     cpu       option(-processor)name,allow(mc68020,i80860,pa7100,pa8000),=pa7100
      recompile switch(-recompile),=1
      rebind    switch(-rebind),=1
      module    option(-module)module_name,='(current_module)'
+     tgt_mod   option(-target_module)module_name,='(current_module)'
+     version   option(-version)name,allow(alpha,ga),=ga
 &end_parameters
 &echo command_lines
 &
@@ -35,6 +38,9 @@
 &if ^ (exists obj&obj&>build.out)
 &then !create_file obj&obj&>build.out ; set_implicit_locking obj&obj&>build.out
 &
+!configure_perl -version &version&
+&
 !change_current_dir obj&obj&
-!start_process (string <build -processor &cpu& &recompile& &rebind&) -module &module&
+!start_process (string <build -processor &cpu& &recompile& &rebind& &+
+     -target_module &tgt_mod& -version &version&) -module &module&
 !change_current_dir <

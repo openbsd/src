@@ -1,5 +1,5 @@
 ln='cp'
-pager='less'
+pager='${DJDIR}/bin/less.exe'
 
 # fix extension names under DOS 
 repair()
@@ -34,7 +34,8 @@ repair()
      -e 's=file/=='\
      -e 's=File/=='\
      -e 's=glob=='\
-     -e 's=Glob=='
+     -e 's=Glob=='\
+     -e 's/storable/Storable/'
 }
 static_ext=$(repair "$static_ext")
 extensions=$(repair "$extensions")

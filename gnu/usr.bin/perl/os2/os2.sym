@@ -9,6 +9,8 @@ dlclose
 my_tmpfile
 my_tmpnam
 my_flock
+my_rmdir
+my_mkdir
 malloc_mutex
 threads_mutex
 nthreads

@@ -1,0 +1,30 @@
+2000-12-18  Bradley M. Kuhn  <bkuhn@ebb.org>
+
+	* JNI/JNI.pm: Updated version to 0.1
+
+2000-12-16  Bradley M. Kuhn  <bkuhn@ebb.org>
+
+	* JNI/JNI.pm (AUTOLOAD): Added check to make sure fiels only
+	appear once in CLASSPATH. 
+
+2000-12-07  Bradley M. Kuhn  <bkuhn@ebb.org>
+
+	* JNI/JNI.xs: Added a requirement that -DJPL_DEBUG be defined for
+	JNI.xs to print out jpldebug options
+
+2000-12-06  Bradley M. Kuhn  <bkuhn@ebb.org>
+
+	* JNI/JNI.pm: removed some stray C-m's floating in the file
+
+	* README.JUST-JNI: Added instructions concerning Kaffe.
+
+	* JNI/JNI.xs (GetJavaVM): Added support for Kaffe's options, and
+	made sure version number gets set.  Also did error checking on
+	creating the JVM.
+	Fixed bug on option processing.
+
+	* JNI/Makefile.PL: Added support to configure Kaffe, including
+	automatic creation of JNI/Config.pm (a new file).
+
+	* JNI/JNI.pm (AUTOLOAD): Added support for Kaffe.
+

@@ -8,8 +8,6 @@
 
 #include <string.h>
 
-char *environ = 0;
-
 int getgid() {return 0;}
 int getegid() {return 0;}
 int geteuid() {return 0;}
@@ -31,7 +29,7 @@ signal() { }
 int execv() { return -1;}
 int execvp() { return -1;}
 
-void Perl_do_exec() {} 
+void Perl_do_exec() {}
 
 /*------------------------------------------------------------------*/
 /* Two dummy functions implement getproto*                          */

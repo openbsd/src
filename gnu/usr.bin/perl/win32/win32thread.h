@@ -175,6 +175,11 @@ END_EXTERN_C
 	}								\
     } STMT_END
 
+#define FREE_THREAD_KEY \
+    STMT_START {							\
+	TlsFree(PL_thr_key);						\
+    } STMT_END
+
 #if defined(USE_RTL_THREAD_API) && !defined(_MSC_VER)
 #define JOIN(t, avp)							\
     STMT_START {							\

@@ -9,17 +9,19 @@ from the network.  Don't expect not to be surprised occasionally.
 
 Requirements
 ------------
-Under Solaris and Linux (and other Unix-like systems), Perl 5.005 (or later)
-must be compiled and installed as a shared library (libperl.so).  I had to use
-the system's malloc.  JPL was originally built and tested with 5.004_04 and
-early Java 1.1 development kits.  This version has not been well tested under
-other versions, so you can expect some rough edges.
+Under Solaris and GNU/Linux (and other Unix-like systems), Perl 5.005 (or
+later) must be compiled and installed as a shared library (libperl.so).  I
+had to use the system's malloc.  JPL was originally built and tested with
+5.004_04 and early Java 1.1 development kits.  This version has not been
+well tested under other versions, so you can expect some rough edges.
 
-You need JDK 1.1.  On Solaris, 1.1.5 has been verified to work.  Linux
+You need JDK 1.1.  On Solaris, 1.1.5 has been verified to work.  GNU/Linux
 users can try the latest version (1.1.3 or later) available from (for
 example):
 
   ftp://ftp.blackdown.org/pub/Linux/JDK/1.1.3/updates/libjava-1.1.3v2-1.tar.gz
+
+(GNU/Linux users can also try Kaffe (see below).)
 
 The get_jdk directory contains a script that will download JDK (but not
 the patch file above) off of the net for you.  (This presumes you've
@@ -40,9 +42,20 @@ with JDK 1.2 (aka Java 2) or any Microsoft implementation of Java.
 
 Kaffe
 -----
-You might notice some mention of Kaffe (www.kaffe.org) in the source files. 
-This is because some preliminary work is being done in this area, but JPL
-doesn't yet work with Kaffe.
+You might notice some mention of Kaffe (www.kaffe.org) in the source files.
+This is because support has been added for Kaffe for JNI:: and JPL::.  In
+other words, you can now call to Java from Perl using Kaffe.
+
+You'll likely need the a checkout circa 2000-12-03 or later from Kaffe's
+CVS.  It has been verified that Kaffe 1.0.5 definitely *will not work*.
+Kaffe 1.0.6 might work, but the CVS tree definitely works (as of
+2000-12-06).
+
+You can get the CVS tree from:
+
+cvs -z3 -d ':pserver:readonly@cvs.kaffe.org:/cvs/kaffe' checkout kaffe
+
+(password is 'readonly')
 
 What the heck is JPL?
 ---------------------
@@ -85,11 +98,12 @@ The second way lets you embed Java in Perl, but doesn't provide support
 for the other direction. This is good, in theory, if you need to work with
 a lot of Java classes from within Perl.  I say "in theory," because this 
 doesn't actually work a lot of the time.  To use this second way, you
-must be using a JDK with native threads.
+must be using a JDK with native threads. Please see README.JUST-JNI for 
+details.
 
 At this point, the second way is the only way to use JPL under Microsoft 
-Windows. Oddly enough, this is the only platform under which the second 
-way works!
+Windows, and probably the only way to use JPL if you're using a version
+of Perl compiled by someone else (such as the Perl that comes with RedHat). 
 
 Installation the First Way (All of JPL)
 ---------------------------------------
@@ -130,85 +144,6 @@ builds Sample.jpl:
   Unfortunately, each time you use 'make' to build a JPL application,
   it will abort when it tries to run 'perl -c' on the generated .pl
   file.  However, you can continue building by typing 'make' again.
-
-Just-JNI (call into Java from Perl only)
-----------------------------------------
-
-This has been tested with:
-
-    Debian 2.1 SPARC, Perl 5.005_60, JDK 1.2 beta (crashes with AWT, though)
-    Windows NT 4.0 SP4, ActivePerl 519, JDK 1.1.8, Visual C++
-    Solaris 7, Perl 5.005_03, JDK 1.1.6, GCC 2.8.1
-
-Solaris 7 Note (this probably applies to all native thread situations):
-
-    Native threads were tricky. I had to build my own Perl, configured with:
-
-    sh Configure -Dprefix=/opt/perl5.005 -Duseshrplib -Doptimize=-g \
-                 -Uusemymalloc -D cc=gcc -Dusethreads -d
-
-    When Configure let me edit config.sh, I changed libs to:
-
-    libs='-lthread -lsocket -lnsl -ldl -lm -lposix4 -lpthread -lc -lcrypt'
-
-    The leading -lthread is the only thing I had to add.
-
-How do I do this crazy thing?
-
-1) Cd into the JPL directory. Type the following:
-
-    perl Makefile.PL
-    make
-    make install
-
-   Under windows, that's:
-
-    perl Makefile.PL
-    nmake
-    nmake install
-
-3) cd into the JNI directory (cd ../JNI or cd ..\JNI)   
-
-4) We now need to compile and make the Closer.class available to your 
-   JPL program.  Closer is a WindowListener that closes the Frame we 
-   make in the test program.
-
-   It seems that we've managed to fix the problem with CLASSPATH not
-   getting propagated to the JVM, so if '.' is in your CLASSPATH, you
-   should be able to compile Closer.java and leave it in the current
-   directory:
-
-       javac Closer.java
-
-5) Make the demo:
-
-    a) If you are on Windows, copy typemap.win32:
-
-        copy typemap.win32 typemap
-
-       (this step will probably go away when we clean up some of the
-        WIN32 #defines)
-
-    b) type the following:
-
-        perl Makefile.PL
-        make
-        make test
-
-       Under Windows:
-
-        perl Makefile.PL
-        nmake
-        nmake test
-
-
-    c) if all went well, type:
-
-        make install
-
-       or, under Windows:
-
-        nmake install
 
 Mailing List
 ------------

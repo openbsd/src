@@ -121,9 +121,6 @@
 /* getsockname returns the size of struct sockaddr_in *without* padding */
 #define  BOGUS_GETNAME_RETURN 8
 
-/* Yes, size_t is size_t */
-#define Sock_size_t size_t
-
 /* 
    read() on a socket blocks until buf is filled completly, 
    recv() returns each massage 
@@ -133,3 +130,16 @@
 /* No /dev/random available*/
 
 #define PERL_NO_DEV_RANDOM
+
+/*
+   work around for buggy atof():
+   atof() in ER5 stdlib depends on locale. 
+*/
+
+double epoc_atof( const char *ptr);
+#define atof(a) epoc_atof(a)
+#define strtoul(a,b,c) epoc_strtoul(a,b,c)
+
+#define init_os_extras Perl_init_os_extras
+
+#define NO_ENVIRON_ARRAY

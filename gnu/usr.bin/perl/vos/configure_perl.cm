@@ -1,0 +1,31 @@
+& This command macro configures perl to build with
+& either the alpha or generally-available version of
+& VOS POSIX.1 support.
+& Written 00-10-24 by Paul Green (Paul_Green@stratus.com)
+& Modified 01-02-12 by Paul Green
+&
+&begin_parameters
+     version   option(-version)name,allow(alpha,ga),=ga
+     debug     switch(-debug),secret
+&end_parameters
+&echo command_lines
+&if &debug& &then &echo macro_lines
+&
+&if (file_info config.&version&.def date_modified) > (file_info config.&version&.h date_modified)
+&then &do
+!copy_file config.&version&.def config.def -delete
+&
+& NOTE: We must invoke Perl 5 not Perl 4. If necessary, edit the
+& macro to ensure that perl5 is invoked.
+&
+&mode no_abort
+!perl5 config.pl
+&if (command_status) = 1032
+&then !perl config.pl
+&mode abort
+!rename config.h.new config.&version&.h -delete
+!delete_file config.def
+&end
+&
+&if (file_info config.&version&.h date_modified) ^= (file_info config.h date_modified)
+&then !copy_file config.&version&.h config.h -delete -keep_dates

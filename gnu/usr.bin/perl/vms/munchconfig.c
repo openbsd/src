@@ -345,8 +345,7 @@ tilde_sub(char LineBuffer[], Translate TildeSub[], int TildeSubCount)
         
       } else {
         /* 'Kay, not a tilde. Is it a word character? */
-        if (isalnum(LineBuffer[TildeLoop]) || (LineBuffer[TildeLoop] =
-                                              '-') ||
+        if (isalnum(LineBuffer[TildeLoop]) ||
             (LineBuffer[TildeLoop] == '-')) {
           TempTilde[TildeBufferLength++] = LineBuffer[TildeLoop];
         } else {

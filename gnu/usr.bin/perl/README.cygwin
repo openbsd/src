@@ -13,7 +13,7 @@ on Cygwin.  This document also describes features of Cygwin that will
 affect how Perl behaves at runtime.
 
 B<NOTE:> There are pre-built Perl packages available for Cygwin and a
-version of Perl is provided on the Cygwin CD.  If you have no need to
+version of Perl is provided on the Cygwin CD.  If you do not need to
 customize the configuration, consider using one of these packages:
 
   http://cygutils.netpedia.net/
@@ -27,31 +27,19 @@ platforms.  They run thanks to the Cygwin library which provides the UNIX
 system calls and environment these programs expect.  More information
 about this project can be found at:
 
-  http://sourceware.cygnus.com/cygwin/
+  http://www.cygwin.com/
 
 A recent net or commercial release of Cygwin is required.
 
-At the time this document was written, the port required recent
-development snapshots that were expected to stabilize early in 2000 and
-be released to the net as B21 and commercially as v1.1.
+At the time this document was last updated, Cygwin 1.1.5 was current.
 
 B<NOTE:> At this point, minimal effort has been made to provide
 compatibility with old (beta) Cygwin releases.  The focus has been to
 provide a high quality release and not worry about working around old
-Cygwin bugs.  If you wish to use Perl with Cygwin B20.1 or earlier,
-consider using either perl5.005_03 or perl5.005_62, which are available
-in source and binary form at C<http://cygutils.netpedia.net/> or on the
-Cygwin CD.  If there is significant demand, a patch kit can be developed
-to port back to earlier Cygwin versions.
-
-=head2 Compiler
-
-A recent net or commercial release of I<gcc> is required.
-
-At the time this document was written, I<gcc-2.95.2> was current and
-could be downloaded from:
-
-  ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/cygwin/gcc-2.95.2/
+bugs.  If you wish to use Perl with Cygwin B20.1 or earlier, consider
+using perl5.005_03, which is available in source and binary form at
+C<http://cygutils.netpedia.net/>.  If there is significant demand,
+a patch kit can be developed to port back to earlier Cygwin versions.
 
 =head2 Cygwin Configuration
 
@@ -60,15 +48,11 @@ that Perl builds cleanly.  These changes are B<not> required for normal
 Perl usage.
 
 B<NOTE:> The binaries that are built will run on all Win32 versions.
-They do not depend on your host system (Win9x, WinNT) or your Cygwin
-configuration (I<ntea>, I<ntsec>, binary/text mounts).  The only
-dependencies come from hardcoded pathnames like C</usr/local>.  However,
-your host system and Cygwin configuration will affect Perl's runtime
-behavior (see L</"TEST">).  Some regression tests may fail in different
-ways depending on your setup.  For now, the test suite does not skip
-tests that do not make sense given a particular setup.  If a test can
-pass in some Cygwin setup, it is left in and explainable test failures
-are documented.
+They do not depend on your host system (Win9x/WinME, WinNT/Win2K)
+or your Cygwin configuration (I<ntea>, I<ntsec>, binary/text mounts).
+The only dependencies come from hard-coded pathnames like C</usr/local>.
+However, your host system and Cygwin configuration will affect Perl's
+runtime behavior (see L</"TEST">).
 
 =over 4
 
@@ -78,29 +62,16 @@ Set the C<PATH> environment variable so that Configure finds the Cygwin
 versions of programs.  Any Windows directories should be removed or
 moved to the end of your C<PATH>.
 
-=item * F</bin/cat.exe>
-
-There should be an instance of I<cat> in F</bin> (or F</usr/bin>).
-Configure tests C<#!/bin/cat> and if it is not found, you will see
-the error:
-
-  Configure: ./try: No such file or directory
-
-=item * F</usr/bin>
-
-If you do not have a F</usr/bin> directory, Configure will B<not> prompt
-you to install I<perl> into F</usr/bin>.
-
 =item * I<nroff>
 
 If you do not have I<nroff> (which is part of the I<groff> package),
-Configure will B<not> prompt you to install man pages.
+Configure will B<not> prompt you to install I<man> pages.
 
 =item * Permissions
 
 On WinNT with either the I<ntea> or I<ntsec> C<CYGWIN> settings, directory
 and file permissions may not be set correctly.  Since the build process
-creates files and directories, to be safe you may want to run a `C<chmod
+creates directories and files, to be safe you may want to run a `C<chmod
 -R +w *>' on the entire Perl source tree.
 
 Also, it is a well known WinNT "feature" that files created by a login
@@ -123,7 +94,7 @@ This will run Configure and keep a record:
 
   ./Configure 2>&1 | tee log.configure
 
-If you are willing to accept all the defaults add a B<-d> option.
+If you are willing to accept all the defaults run Configure with B<-de>.
 However, several useful customizations are available.
 
 =head2 Strip Binaries
@@ -153,22 +124,21 @@ C<http://cygutils.netpedia.net/>.
 
 =item * C<-lcrypt>
 
-The crypt libraries in GNU libc have been ported to Cygwin.
+The crypt package distributed with Cygwin is a Linux compatible 56-bit
+DES crypt port by Corinna Vinschen.
+
+Alternatively, the crypt libraries in GNU libc have been ported to Cygwin.
 
 The DES based Ultra Fast Crypt port was done by Alexey Truhan:
 
-  http://dome.weeg.uiowa.edu/pub/domestic/sos/cw32crypt-dist-0.tgz
+  ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/porters/Okhapkin_Sergey/cw32crypt-dist-0.tgz
 
 NOTE: There are various export restrictions on DES implementations,
 see the glibc README for more details.
 
 The MD5 port was done by Andy Piper:
 
-  http://dome.weeg.uiowa.edu/pub/domestic/sos/libcrypt.tgz
-
-More information can also be found at:
-
-  http://miracle.geol.msu.ru/sos/
+  ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/porters/Okhapkin_Sergey/libcrypt.tgz
 
 =item * C<-lgdbm> (C<use GDBM_File>)
 
@@ -176,18 +146,25 @@ GDBM is available for Cygwin.  GDBM's ndbm/dbm compatibility feature
 also makes C<NDBM_File> and C<ODBM_File> possible (although they add
 little extra value).
 
+NOTE: The ndbm/dbm emulations only completely work on NTFS partitions.
+
 =item * C<-ldb> (C<use DB_File>)
 
 BerkeleyDB is available for Cygwin.  Some details can be found in
 F<ext/DB_File/DB_File.pm>.
+
+NOTE: The BerkeleyDB library only completely works on NTFS partitions.
 
 =item * C<-lcygipc> (C<use IPC::SysV>)
 
 A port of SysV IPC is available for Cygwin.
 
 NOTE: This has B<not> been extensively tested.  In particular,
-C<d_semctl_semun> is undefined because it fails a configure test and on
-Win9x the shm*() functions seem to hang.
+C<d_semctl_semun> is undefined because it fails a Configure test
+and on Win9x the I<shm*()> functions seem to hang.  It also creates
+a compile time dependency because F<perl.h> includes F<<sys/ipc.h>>
+and F<<sys/sem.h>> (which will be required in the future when compiling
+CPAN modules).
 
 =back
 
@@ -228,7 +205,7 @@ These are B<not> yet available with Cygwin.
 
 I<gcc> supports long doubles (12 bytes).  However, several additional
 long double math functions are necessary to use them within Perl
-(I<{atan2,cos,exp,floor,fmod,frexp,log,modf,pow,sin,sqrt}l,strtold>).
+(I<{atan2,cos,exp,floor,fmod,frexp,isnan,log,modf,pow,sin,sqrt}l,strtold>).
 These are B<not> yet available with Cygwin.
 
 =item * C<-Dusethreads>
@@ -248,32 +225,20 @@ You may see some messages during Configure that seem suspicious.
 
 =over 4
 
-=item * Whoa There
-
-Cygwin does not yet implement chroot(), setegid() or seteuid()
-functionality, but has stub functions that return C<ENOSYS>.  You will
-see a message when Configure detects that its guess conflicts with the
-hint file.
-
-  *** WHOA THERE!!! ***
-      The recommended value for $d_chroot on this machine was "undef"!
-      Keep the recommended value? [y]
-
-You should keep the recommended value.
-
-=item * dlsym
+=item * I<dlsym()>
 
 I<ld2> is needed to build dynamic libraries, but it does not exist
 when dlsym() checking occurs (it is not created until `C<make>' runs).
 You will see the following message:
 
   Checking whether your dlsym() needs a leading underscore ...
+  ld2: not found
   I can't compile and run the test program.
   I'm guessing that dlsym doesn't need a leading underscore.
 
 Since the guess is correct, this is not a problem.
 
-=item * Win9x and d_eofnblk
+=item * Win9x and C<d_eofnblk>
 
 Win9x does not correctly report C<EOF> with a non-blocking read on a
 closed pipe.  You will see the following messages:
@@ -288,21 +253,13 @@ closed pipe.  You will see the following messages:
 At least for consistency with WinNT, you should keep the recommended
 value.
 
-=item * Checking how std your stdio is...
-
-Configure reports:
-
-  Your stdio doesn't appear very std.
-
-This is correct.
-
 =item * Compiler/Preprocessor defines
 
 The following error occurs because of the Cygwin C<#define> of
 C<_LONG_DOUBLE>:
 
   Guessing which symbols your C compiler and preprocessor define...
-  try.c:3847: parse error
+  try.c:<line#>: parse error
 
 This failure does not seem to cause any problems.
 
@@ -310,7 +267,7 @@ This failure does not seem to cause any problems.
 
 =head1 MAKE
 
-Simply run make and wait:
+Simply run I<make> and wait:
 
   make 2>&1 | tee log.make
 
@@ -321,8 +278,8 @@ Warnings like these are normal:
   warning: overriding commands for target <file>
   warning: ignoring old commands for target <file>
 
-  Warning: no export definition file provided
-  dllwrap will create one, but may not be what you want
+  dllwrap: no export definition file provided
+  dllwrap: creating one, but that may not be what you want
 
 =head2 ld2
 
@@ -332,9 +289,9 @@ wait until the `C<make install>' process to install the I<ld2> script,
 this is because the remainder of the `C<make>' refers to I<ld2> without
 fully specifying its path and does this from multiple subdirectories.
 The assumption is that $installbin is in your current C<PATH>.  If this
-is not the case or if you do not have an I<install> program, `C<make>'
-will fail at some point.  If this happens, just manually copy I<ld2>
-from the source directory to someplace in your C<PATH>.
+is not the case `C<make>' will fail at some point.  If this happens,
+just manually copy I<ld2> from the source directory to somewhere in
+your C<PATH>.
 
 =head1 TEST
 
@@ -348,21 +305,23 @@ The same tests are run both times, but more information is provided when
 running as `C<./perl harness>'.
 
 Test results vary depending on your host system and your Cygwin
-configuration.  It is possible that Cygwin will pass all the tests,
-but it is more likely that some tests will fail for one of these reasons.
+configuration.  If a test can pass in some Cygwin setup, it is always
+attempted and explainable test failures are documented.  It is possible
+for Perl to pass all the tests, but it is more likely that some tests
+will fail for one of the reasons listed below.
 
 =head2 File Permissions
 
 UNIX file permissions are based on sets of mode bits for
-{read,write,execute} for each {user,group,other}.  By default Cygwin only
-tracks the Win32 readonly attribute represented as the UNIX file user
-write bit (files are always readable, files are executable if they have
-a F<.{com,bat,exe}> extension or begin with C<#!>, directories are always
-readable and executable).  On WinNT with the I<ntea> C<CYGWIN> setting,
-the remaining mode bits are stored as extended attributes.  On WinNT
-with the I<ntsec> C<CYGWIN> setting, permissions use the standard WinNT
-security descriptors and access control lists.  Without one of these
-options, these tests will fail:
+{read,write,execute} for each {user,group,other}.  By default Cygwin
+only tracks the Win32 read-only attribute represented as the UNIX file
+user write bit (files are always readable, files are executable if they
+have a F<.{com,bat,exe}> extension or begin with C<#!>, directories are
+always readable and executable).  On WinNT with the I<ntea> C<CYGWIN>
+setting, the additional mode bits are stored as extended file attributes.
+On WinNT with the I<ntsec> C<CYGWIN> setting, permissions use the standard
+WinNT security descriptors and access control lists.  Without one of
+these options, these tests will fail:
 
   Failed Test           List of failed
   ------------------------------------
@@ -380,7 +339,10 @@ options, these tests will fail:
 =head2 Hard Links
 
 FAT partitions do not support hard links (whereas NTFS does), in which
-case Cygwin implements link() by copying the file.  These tests will fail:
+case Cygwin implements link() by copying the file.  On remote (network)
+drives Cygwin's stat() always sets C<st_nlink> to 1, so the link count
+for remote directories and files is not available.  In either case,
+these tests will fail:
 
   Failed Test           List of failed
   ------------------------------------
@@ -408,7 +370,7 @@ the system with messages like:
     A required .DLL file, CYGWIN1.DLL, was not found
 
   WinNT
-    perl.exe or sh.exe - Unable to Locate DLL
+    perl.exe - Unable to Locate DLL
     The dynamic link library cygwin1.dll could not be found in the
       specified path ...
 
@@ -420,8 +382,13 @@ will fail:
   ------------------------------------
   op/taint.t            1, 3, 31, 37
 
-Alternatively, you can copy F<cygwin1.dll> into one of the Windows system
-directories (although, this is B<not> recommended).
+Alternatively, you can copy F<cygwin1.dll> into the directory where the
+tests run:
+
+  cp /bin/cygwin1.dll t
+
+or one of the Windows system directories (although, this is B<not>
+recommended).
 
 =head2 /etc/group
 
@@ -433,19 +400,12 @@ see entries that use the members field, otherwise this test will fail:
   ------------------------------------
   op/grent.t            1
 
-=head2 Unexplained Failures
-
-Any additional tests that fail are likely due to bugs in Cygwin or the
-optional libraries.  It is expected that by the time of the next net
-release most of these will be solved so they are not described here.
-
 =head2 Script Portability
 
-Cygwin does an outstanding job of providing UNIX-like semantics on
-top of Win32 systems.  However, in addition to the items noted above,
-there are some differences that you should know about.  This is only a
-very brief guide to portability, more information can be found in the
-Cygwin documentation.
+Cygwin does an outstanding job of providing UNIX-like semantics on top of
+Win32 systems.  However, in addition to the items noted above, there are
+some differences that you should know about.  This is a very brief guide
+to portability, more information can be found in the Cygwin documentation.
 
 =over 4
 
@@ -454,20 +414,15 @@ Cygwin documentation.
 Cygwin pathnames can be separated by forward (F</>) or backward (F<\>)
 slashes.  They may also begin with drive letters (F<C:>) or Universal
 Naming Codes (F<//UNC>).  DOS device names (F<aux>, F<con>, F<prn>,
-F<com*>, F<lpt?>) are invalid as base filenames.  However, they can be
-used in extensions (e.g., F<hello.aux>).  Names may not contain these
-characters:
+F<com*>, F<lpt?>, F<nul>) are invalid as base filenames.  However, they
+can be used in extensions (e.g., F<hello.aux>).  Names may contain all
+printable characters except these:
 
   : * ? " < > |
 
-File names are case insensitive, but case preserving.  With the I<mixed>
-C<CYGWIN> setting, file names are mixed-case (although, directory names
-remain case insensitive).
-
-The I<mixed> setting is only available with the "coolview" version of
-F<cygwin1.dll> provided by Sergey Okhapkin at:
-
-  ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/porters/Okhapkin_Sergey/
+File names are case insensitive, but case preserving.  A pathname that
+contains a backslash or drive letter is a Win32 pathname (and not subject
+to the translations applied to POSIX style pathnames).
 
 =item * Text/Binary
 
@@ -486,23 +441,18 @@ The text/binary issue is covered at length in the Cygwin documentation.
 
 =item * F<.exe>
 
-The Cygwin stat() makes the F<.exe> extension transparent by looking for
-a F<foo.exe> when you ask for F<foo> (unless a F<foo> also exists).
-Cygwin does not require a F<.exe> extension, but I<gcc> adds it
-automatically when building a program.  However, when accessing an
-executable as a normal file (e.g., I<install> or I<cp> in a makefile)
-the F<.exe> is not transparent.
-
-NOTE: There is a version of I<install> that understands the F<.exe>
-semantics, it can be found at:
-
-  ftp://ftp.franken.de/pub/win32/develop/gnuwin32/cygwin/porters/Humblet_Pierre_A/
+The Cygwin stat(), lstat() and readlink() functions make the F<.exe>
+extension transparent by looking for F<foo.exe> when you ask for F<foo>
+(unless a F<foo> also exists).  Cygwin does not require a F<.exe>
+extension, but I<gcc> adds it automatically when building a program.
+However, when accessing an executable as a normal file (e.g., I<cp>
+in a makefile) the F<.exe> is not transparent.  The I<install> included
+with Cygwin automatically appends a F<.exe> when necessary.
 
 =item * chown()
 
-On WinNT with the I<ntsec> C<CYGWIN> setting, chown() can change a file's
-user and group IDs.  In all other configurations chown() is a no-op,
-although this is appropriate on Win9x since there is no security model.
+On WinNT chown() can change a file's user and group IDs.  On Win9x chown()
+is a no-op, although this is appropriate since there is no security model.
 
 =item * Miscellaneous
 
@@ -511,11 +461,14 @@ returns C<ENOSYS>.
 
 Win9x can not rename() an open file (although WinNT can).
 
+The Cygwin chroot() implementation has holes (it can not restrict file
+access by native Win32 programs).
+
 =back
 
 =head1 INSTALL
 
-This will install Perl, including man pages.
+This will install Perl, including I<man> pages.
 
   make install | tee log.make-install
 
@@ -539,11 +492,11 @@ be kept as clean as possible.
 
 =item Documentation
 
-  INSTALL README.cygwin
-  Changes Changes5.005 Changes5.004
-  AUTHORS MAINTAIN MANIFEST README.win32
-  pod/perl.pod pod/perlfaq3.pod pod/perlhist.pod pod/perlmodlib.pod
-  pod/perlport.pod pod/perltoc.pod pod/perl5004delta.pod
+  INSTALL README.cygwin README.win32 MANIFEST
+  Changes Changes5.005 Changes5.004 Changes5.6
+  pod/perl.pod pod/perlport.pod pod/perlfaq3.pod
+  pod/perldelta.pod pod/perl5004delta.pod pod/perl56delta.pod
+  pod/perlhist.pod pod/perlmodlib.pod pod/buildtoc.PL pod/perltoc.pod
 
 =item Build, Configure, Make, Install
 
@@ -565,6 +518,7 @@ be kept as clean as possible.
 =item Tests
 
   t/io/tell.t           - binmode
+  t/lib/b.t             - ignore Cwd from os_extras
   t/lib/glob-basic.t    - Win32 directory list access differs from read mode
   t/op/magic.t          - $^X/symlink WORKAROUND, s/.exe//
   t/op/stat.t           - no /dev, skip Win32 ftCreationTime quirk
@@ -575,14 +529,12 @@ be kept as clean as possible.
 
   EXTERN.h              - __declspec(dllimport)
   XSUB.h                - __declspec(dllexport)
-  cygwin/cygwin.c       - os_extras (getcwd)
+  cygwin/cygwin.c       - os_extras (getcwd, spawn)
   perl.c                - os_extras
   perl.h                - binmode
   doio.c                - win9x can not rename a file when it is open
-  pp_sys.c              - do not define h_errno
-  mg.c                  - environ WORKAROUND
-  unixish.h             - environ WORKAROUND
-  util.c                - environ WORKAROUND
+  pp_sys.c              - do not define h_errno, pp_system with spawn
+  util.c                - use setenv
 
 =item Compiled Module Source
 
@@ -599,33 +551,42 @@ be kept as clean as possible.
                         - require MM_Cygwin.pm
   lib/ExtUtils/MM_Cygwin.pm
                         - canonpath, cflags, manifypods, perl_archive
+  lib/File/Find.pm      - on remote drives stat() always sets st_nlink to 1
   lib/File/Spec/Unix.pm - preserve //unc
+  lib/File/Temp.pm      - no directory sticky bit
   lib/perl5db.pl        - use stdin not /dev/tty
-  utils/perlcc.PL       - DynaLoader.a in compile, -DUSEIMPORTLIB
   utils/perldoc.PL      - version comment
 
 =back
 
 =head1 BUGS
 
-Upon each start, I<make> warns that a rule for F<perlmain.o> is overridden
-(but there seems to be no better solution than adding an explicit define).
+When I<make> starts, it warns about overriding commands for F<perlmain.o>.
 
-`C<make clean>' does not remove library F<.def> and F<.exe.stackdump>
+`C<make clean>' does not remove library F<.def> or F<.exe.stackdump>
 files.
 
 The I<ld2> script contains references to the source directory.  You should
-change these to C</usr/local/bin> (or whatever) after install.
+change these to $installbin after `C<make install>'.
+
+Support for swapping real and effective user and group IDs is incomplete.
+On WinNT Cygwin provides setuid(), seteuid(), setgid() and setegid().
+However, additional Cygwin calls for manipulating WinNT access tokens
+and security contexts are required.
+
+When building DLLs, `C<dllwrap --export-all-symbols>' is used to export
+global symbols.  It might be better to generate an explicit F<.def> file
+(see F<makedef.pl>).  Also, DLLs can now be build with `C<gcc -shared>'.
 
 =head1 AUTHORS
 
-Charles Wilson E<lt>cwilson@ece.gatech.eduE<gt>,
-Eric Fifer E<lt>efifer@sanwaint.comE<gt>,
-alexander smishlajev E<lt>als@turnhere.comE<gt>,
-Steven Morlock E<lt>newspost@morlock.netE<gt>,
-Sebastien Barre E<lt>Sebastien.Barre@utc.frE<gt>,
-Teun Burgers E<lt>burgers@ecn.nlE<gt>.
+Charles Wilson <cwilson@ece.gatech.edu>,
+Eric Fifer <egf7@columbia.edu>,
+alexander smishlajev <als@turnhere.com>,
+Steven Morlock <newspost@morlock.net>,
+Sebastien Barre <Sebastien.Barre@utc.fr>,
+Teun Burgers <burgers@ecn.nl>.
 
 =head1 HISTORY
 
-Last updated: 1 March 2000
+Last updated: 9 November 2000

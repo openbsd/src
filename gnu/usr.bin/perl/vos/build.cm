@@ -2,6 +2,8 @@
      cpu       option(-processor)name,allow(mc68020,i80860,pa7100,pa8000),=mc68020
      recompile switch(-recompile),=1
      rebind    switch(-rebind),=1
+     tgt_mod   option(-target_module)module_name,='(current_module)'
+     version   option(-version)name,allow(alpha,ga),=ga
 &end_parameters
 &echo command_lines
 &
@@ -11,14 +13,22 @@
 & necessary, to assign the correct pathname of the directory that
 & contains VOS POSIX.1 support.
 &
-&set_string POSIX >vos_ftp_site>pub>vos>alpha>posix
+&if &version& = alpha
+&then &set_string POSIX >vos_ftp_site>pub>vos>alpha>posix
+&else &set_string POSIX >system>posix_object_library
 &
 & See if the site has VOS POSIX.1 support loaded. If not, quit now.
 &
 &if ^ (exists &POSIX& -directory)
 &then &do
       &display_line build: VOS POSIX.1 support not found. &POSIX&
-      &return
+      &return 1
+      &end
+&
+&if &cpu& = mc68020 & &version& = ga | &cpu& = i80860 & &version& = ga
+&then &do
+      &display_line build: "-version ga" is incompatible with "-processor mc68020 or i80860"
+      &return 1
       &end
 &
 & Set up the appropriate directory suffix for each architecture.
@@ -43,7 +53,11 @@
 &if &recompile& = 0
 &then &goto CHECK_REBIND
 &
-!set_library_paths include << < &POSIX&>incl &+
+&if &version& = alpha
+&then !set_library_paths include << < &POSIX&>incl &+
+     (master_disk)>system>include_library
+&else !set_library_paths include << < &+
+     (master_disk)>system>stcp>include_library &+
      (master_disk)>system>include_library
 &
 &if (exists *.obj -link)
@@ -52,7 +66,12 @@
 & Suppress several harmless compiler warning and advice messages.
 & Use -list -show_include all -show_macros both_ways when debugging.
 &
-&set_string cflags '-u -O4 -D_POSIX_C_SOURCE=199309L -DPERL_CORE'
+&set_string cflags '-u -O4 -D_POSIX_C_SOURCE=199506L -DPERL_CORE'
+&
+& The following is a work-around for stcp-1437,8,9
+&
+&if &version& = ga
+&then &set_string cflags &cflags& -D_BSD_SOURCE
 &
 !cc <<av.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
@@ -76,15 +95,26 @@
 &   &if (command_status) ^= 0 &then &return
 !cc <<mg.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<miniperlmain.c -suppress_diag 2006 &cpu& &cflags&
+!cc <<miniperlmain.c -suppress_diag 2006 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<op.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
+&
+& We are essentially building miniperl for now. Until we
+& get a POSIX shell on VOS we won't add any of the extensions.
+&
+& !link <<op.c opmini.c -delete
+& &if (command_status) ^= 0 &then &return
+& !cc opmini.c -suppress_diag 2006 2064 2065 &cpu& &cflags& -DPERL_EXTERNAL_GLOB
+& &if (command_status) ^= 0 &then &return
+& !unlink opmini.c
+& &if (command_status) ^= 0 &then &return
+&
 !cc <<perl.c -suppress_diag 2006 2053 2065 &cpu& &cflags& &+
-     -DARCHLIB="/system/ported/perl/lib/5.005&obj2&" &+
-     -DARCHLIB_EXP="/system/ported/perl/lib/5.005&obj2&" &+
-     -DSITEARCH="/system/ported/perl/lib/site/5.005&obj2&" &+
-     -DSITEARCH_EXP="/system/ported/perl/lib/site/5.005&obj2&"
+     -DARCHLIB="/system/ported/perl/lib/5.6&obj2&" &+
+     -DARCHLIB_EXP="/system/ported/perl/lib/5.6&obj2&" &+
+     -DSITEARCH="/system/ported/perl/lib/site/5.6&obj2&" &+
+     -DSITEARCH_EXP="/system/ported/perl/lib/site/5.6&obj2&"
 &if (command_status) ^= 0 &then &return
 !cc <<perlapi.c &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
@@ -126,8 +156,11 @@
 &if (command_status) ^= 0 &then &return
 !cc <<xsutils.c &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
+&if &version& = alpha
+&then &do
 !cc <vos_dummies.c &cpu& -O4
 &if (command_status) ^= 0 &then &return
+&end
 &
 & If requested, bind the executable program module.
 &
@@ -139,6 +172,10 @@
 &then &set_string tcp_objlib (master_disk)>system>tcp_os>object_library&obj2&
 &else &set_string tcp_objlib (master_disk)>system>tcp_os>object_library
 &
+&if (exists -directory (master_disk)>system>stcp>object_library&obj2&)
+&then &set_string stcp_objlib (master_disk)>system>stcp>object_library&obj2&
+&else &set_string stcp_objlib (master_disk)>system>stcp>object_library
+&
 &if (exists -directory (master_disk)>system>object_library&obj2&)
 &then &set_string objlib (master_disk)>system>object_library&obj2&
 &else &set_string objlib (master_disk)>system>object_library
@@ -147,11 +184,28 @@
 &then &set_string c_objlib (master_disk)>system>c_object_library&obj2&
 &else &set_string c_objlib (master_disk)>system>c_object_library
 &
-!set_library_paths object . &+
-     &POSIX&>c>runtime>obj&obj& &+
+&if (exists -directory (master_disk)>system>posix_object_library&obj2&)
+&then &set_string posix_objlib (master_disk)>system>posix_object_library&obj2&
+&else &set_string posix_objlib (master_disk)>system>posix_object_library
+&
+&if &version& = alpha
+&then !set_library_paths object . &tcp_objlib& &+
      &POSIX&>c>sysv_runtime>obj&obj& &+
-     &tcp_objlib& &objlib& &c_objlib&
-!bind -control <perl.bind &cpu& -map
+     &POSIX&>c>runtime>obj&obj& &+
+     &c_objlib& &objlib&
+&else !set_library_paths object . &stcp_objlib& &+
+     &stcp_objlib&>common &+
+     &stcp_objlib&>net &+
+     &stcp_objlib&>sbsd &+
+     &stcp_objlib&>socket &+
+     &posix_objlib&>bsd &+
+     &posix_objlib& &+
+     &c_objlib& &objlib&
+&if &version& = alpha
+&then !bind -control <perl.bind vos_dummies &+
+     &tcp_objlib&>tcp_runtime &tcp_objlib&>tcp_gethost &+
+     &cpu& -target_module &tgt_mod& -map
+&else !bind -control <perl.bind &cpu& -target_module &tgt_mod& -map
 &if (command_status) ^= 0 &then &return
 !delete_file *.obj -no_ask -brief
 !unlink *.obj -no_ask -brief
