@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.16 2001/02/18 20:58:02 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.17 2001/03/12 01:01:45 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.14 2001/02/18 20:56:43 jason Exp 
+ *	OpenBSD: miidevs,v 1.15 2001/03/12 01:01:06 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -130,6 +130,10 @@
 #define	MII_STR_xxINTEL_I82553	"i82553 10/100 media interface"
 #define	MII_MODEL_INTEL_I82555	0x0015
 #define	MII_STR_INTEL_I82555	"i82555 10/100 media interface"
+#define	MII_MODEL_INTEL_I82562EM	0x0032
+#define	MII_STR_INTEL_I82562EM	"i82562EM 10/100 media interface"
+#define	MII_MODEL_INTEL_I82562ET	0x0033
+#define	MII_STR_INTEL_I82562ET	"i82562ET 10/100 media interface"
 #define	MII_MODEL_INTEL_I82553	0x0035
 #define	MII_STR_INTEL_I82553	"i82553 10/100 media interface"
 
