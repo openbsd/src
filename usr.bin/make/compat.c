@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.44 2001/11/23 23:42:45 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.45 2001/12/02 00:13:16 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -77,45 +77,20 @@
 
 static char	    meta[256];
 
-static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
 static void CompatInterrupt(int);
 static int CompatRunCommand(void *, void *);
 static void CompatMake(void *, void *);
 static int shellneed(char **);
 
-/*-
- *-----------------------------------------------------------------------
- * CompatInterrupt --
- *	Interrupt the creation of the current target and remove it if
- *	it ain't precious.
- *
- * Side Effects:
- *	The target is removed and the process exits. If .INTERRUPT exists,
- *	its commands are run first WITH INTERRUPTS IGNORED..
- *-----------------------------------------------------------------------
- */
-static void
+static volatile sig_atomic_t interrupted;
+
+static void 
 CompatInterrupt(signo)
-    int     signo;
+    int signo;
 {
-    GNode   *gn;
-
-    if (curTarg != NULL && !Targ_Precious(curTarg)) {
-	char	  *file = Varq_Value(TARGET_INDEX, curTarg);
-
-	if (!noExecute && eunlink(file) != -1)
-	    Error("*** %s removed\n", file);
-
-	/* Run .INTERRUPT only if hit with interrupt signal.  */
-	if (signo == SIGINT) {
-	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
-	    if (gn != NULL)
-		Lst_Find(&gn->commands, CompatRunCommand, gn);
-	}
-
-    }
-    _exit(signo);
+    if (interrupted != SIGINT)
+	interrupted = signo;
 }
 
 /*-
@@ -343,6 +318,9 @@ CompatRunCommand(cmdp, gnp)
 		break;
 	}
 
+	if (interrupted)
+	    break;
+
 	if (stat != -1) {
 	    if (WIFSTOPPED(reason))
 		status = WSTOPSIG(reason);		/* stopped */
@@ -370,13 +348,31 @@ CompatRunCommand(cmdp, gnp)
 		    status = 0;
 		}
 	    }
-	    break;
+	    return !status;
 	} else
 	    Fatal("error in wait: %d", stat);
 	    /*NOTREACHED*/
     }
 
-    return !status;
+    /* This is reached only if interrupted */
+    if (!Targ_Precious(gn)) {
+	char	  *file = Varq_Value(TARGET_INDEX, gn);
+
+	if (!noExecute && eunlink(file) != -1)
+	    Error("*** %s removed\n", file);
+    }
+    if (interrupted == SIGINT) {
+    	GNode *i = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
+	signal(SIGINT, SIG_IGN);
+	signal(SIGTERM, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
+	interrupted = 0;
+	if (i != NULL)
+	    Lst_Find(&i->commands, CompatRunCommand, i);
+	exit(SIGINT);
+    }
+    exit(interrupted);
 }
 
 /*-
@@ -458,11 +454,9 @@ CompatMake(gnp, pgnp)
 	if (Job_CheckCommands(gn, Fatal)) {
 	    /* Our commands are ok, but we still have to worry about the -t
 	     * flag...	*/
-	    if (!touchFlag) {
-		curTarg = gn;
+	    if (!touchFlag)
 		Lst_Find(&gn->commands, CompatRunCommand, gn);
-		curTarg = NULL;
-	    } else
+	    else
 		Job_Touch(gn, gn->type & OP_SILENT);
 	} else
 	    gn->made = ERROR;
@@ -580,14 +574,10 @@ Compat_Run(targs)
     GNode	  *gn = NULL;/* Current root target */
     int 	  errors;   /* Number of targets not remade due to errors */
 
-    if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-	signal(SIGINT, CompatInterrupt);
-    if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
-	signal(SIGTERM, CompatInterrupt);
-    if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
-	signal(SIGHUP, CompatInterrupt);
-    if (signal(SIGQUIT, SIG_IGN) != SIG_IGN)
-	signal(SIGQUIT, CompatInterrupt);
+    signal(SIGINT, CompatInterrupt);
+    signal(SIGTERM, CompatInterrupt);
+    signal(SIGHUP, CompatInterrupt);
+    signal(SIGQUIT, CompatInterrupt);
 
     for (cp = "#=|^(){};&<>*?[]:$`\\\n"; *cp != '\0'; cp++)
 	meta[(unsigned char) *cp] = 1;
