@@ -1,7 +1,7 @@
 TODOs for KAME/OpenBSD
 Jun-ichiro Hagino, KAME project
 KAME Id: TODO,v 1.32 1999/12/08 05:49:27 itojun Exp
-$OpenBSD: TODO,v 1.4 1999/12/21 01:34:16 itojun Exp $
+$OpenBSD: TODO,v 1.5 2000/02/14 05:53:19 itojun Exp $
 
 
 Please refrain from making too much changes to sys/netinet6 tree (even if
@@ -24,11 +24,13 @@ Things we can do with the current code:
 - works just fine on i386 and sparc.
 
 Things we can't do with the current code:
-- setsockopt(), ioctl and advapi needs checking
+- setsockopt(), ioctl and advapi needs more checking
 - check advanced APIs (both userland and kernel)
 - multicast related items need checking
 - ip6_output() does not consult /128 routes, and will not obey icmp6 redir.
 - ssh6 port does not work on sparc (ssh does not work.  sshd works fine - why?)
+- NIS IPv6 name lookup compatibility with Solaris 2.8 (ipnodes.byname).
+  currently NIS will be looked up only for IPv4 names.
 
 Cleanup todo:
 - organize kame/sys/netinet6/in6_src.c and kame/sys/netinet6/in6_pcb.c better
@@ -38,3 +40,4 @@ Cleanup todo:
 - security auditing :-)
 - when both INET and INET6 listening sockets are available, route IPv4
   connection to INET socket (instead of INET6 socket with using mapped addr).
+- tcp/udp/raw socket code has too many #ifdefs
