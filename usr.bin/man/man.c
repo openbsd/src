@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.6 1997/09/10 04:16:30 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.7 1998/03/09 23:20:13 millert Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.6 1997/09/10 04:16:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.7 1998/03/09 23:20:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,12 +90,13 @@ main(argc, argv)
 	glob_t pg;
 	size_t len;
 	int ch, f_cat, f_how, found;
-	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *slashp;
+	char **ap, *cmd, *machine, *p, *p_add, *p_path, *pager, *sflag, *slashp;
 	char *conffile, buf[MAXPATHLEN * 2];
 
+	machine = sflag = NULL;
 	f_cat = f_how = 0;
 	conffile = p_add = p_path = NULL;
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:w")) != -1)
+	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:s:S:w")) != -1)
 		switch (ch) {
 		case 'a':
 			f_all = 1;
@@ -116,6 +117,12 @@ main(argc, argv)
 		case 'M':
 		case 'P':		/* Backward compatibility. */
 			p_path = optarg;
+			break;
+		case 's':		/* SVR4 compatibility. */
+			sflag = optarg;
+			break;
+		case 'S':
+			machine = optarg;
 			break;
 		/*
 		 * The -f and -k options are backward compatible,
@@ -151,8 +158,8 @@ main(argc, argv)
 	/* Read the configuration file. */
 	config(conffile);
 
-	/* Get the machine type. */
-	if ((machine = getenv("MACHINE")) == NULL)
+	/* Get the machine type unless specified by -S. */
+	if (machine == NULL && (machine = getenv("MACHINE")) == NULL)
 		machine = MACHINE;
 
 	/* If there's no _default list, create an empty one. */
@@ -191,10 +198,14 @@ main(argc, argv)
 	 * 2: If the user did not specify MANPATH, -M or a section, rewrite
 	 *    the _default list to include the _subdir list and the machine.
 	 */
-	if (argv[1] == NULL)
+	if (sflag == NULL && argv[1] == NULL)
 		section = NULL;
-	else if ((section = getlist(*argv)) != NULL)
-		++argv;
+	else {
+		if (sflag != NULL && (section = getlist(sflag)) == NULL)
+			errx(1, "unknown manual section `%s'", sflag);
+		else if (sflag == NULL && (section = getlist(*argv)) != NULL)
+			++argv;
+	}
 	if (p_path == NULL && section == NULL) {
 		defnewp = addlist("_default_new");
 		e_defp =
