@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1996/06/25 04:43:43 tholo Exp $
+#	$OpenBSD: Makefile,v 1.16 1996/06/27 07:20:27 downsj Exp $
 #	$NetBSD: Makefile,v 1.29 1996/05/14 17:39:21 ws Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -24,6 +24,7 @@ SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
+SUBDIR+= mount_ext2fs
 
 .if   make(clean) || make(cleandir) || make(obj)
 SUBDIR+= bim config_slot edlabel fdisk pcmcia_cntrl
