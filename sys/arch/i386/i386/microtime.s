@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.15 2002/07/06 19:14:20 nordin Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.16 2002/09/24 00:06:22 nordin Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,13 @@
 #ifndef HZ
 ENTRY(microtime)
 
+#if defined(I586_CPU) || defined(I686_CPU)
+	movl	_pentium_mhz, %ecx
+	testl	%ecx, %ecx
+	jne	pentium_microtime
+#else
 	xorl	%ecx,%ecx
+#endif
 	movb	$(TIMER_SEL0|TIMER_LATCH),%al
 
 	pushfl
@@ -134,12 +140,30 @@ common_microtime:
 	ret
 
 #if defined(I586_CPU) || defined(I686_CPU)
-	# XXX: Move to machdep.c?
-
 	.data
 	.globl	_pentium_base_tsc
 	.comm	_pentium_base_tsc,8
 	.text
+
+	.align	2, 0x90
+pentium_microtime:
+	pushfl
+	cli
+	.byte	0x0f, 0x31	# RDTSC
+	subl	_pentium_base_tsc,%eax
+	sbbl	_pentium_base_tsc+4,%edx
+	/*
+	 * correct the high word first so we won't
+	 * receive a result overflow aka div/0 fault
+	 */
+	pushl	%eax
+	movl	%edx, %eax
+	shll	$16, %edx
+	divw	%cx
+	movzwl	%dx, %edx
+	popl	%eax
+	divl	%ecx
+	jmp	common_microtime
 #endif
 
 #endif

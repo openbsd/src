@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.42 2002/06/07 21:33:43 nordin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.43 2002/09/24 00:06:23 nordin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -101,23 +101,14 @@ void	delay(int);
 void	calibrate_cyclecounter(void);
 #ifndef	HZ
 extern u_quad_t pentium_base_tsc;
-#define CPU_CLOCKUPDATE(otime, ntime)					\
+#define CPU_CLOCKUPDATE()						\
 	do {								\
 		if (pentium_mhz) {					\
 			__asm __volatile("cli\n"			\
-					 "movl (%3), %%eax\n"		\
-					 "movl %%eax, (%2)\n"		\
-					 "movl 4(%3), %%eax\n"		\
-					 "movl %%eax, 4(%2)\n"		\
 					 ".byte 0xf, 0x31\n"		\
 					 "sti\n"			\
-					 "#%0 %1 %2 %3"			\
-					 : "=m" (*otime),		\
-					 "=A" (pentium_base_tsc)	\
-					 : "c" (otime), "b" (ntime));	\
-		}							\
-		else {							\
-			*(otime) = *(ntime);				\
+					 : "=A" (pentium_base_tsc)	\
+					 : );				\
 		}							\
 	} while (0)
 #endif

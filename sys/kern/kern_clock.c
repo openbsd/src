@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.39 2002/07/06 19:14:20 nordin Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.40 2002/09/24 00:06:23 nordin Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -223,6 +223,10 @@ hardclock(frame)
 
 	BUMPTIME(&time, delta);
 	BUMPTIME(&mono_time, delta);
+
+#ifdef CPU_CLOCKUPDATE
+	CPU_CLOCKUPDATE();
+#endif
 
 	/*
 	 * Update real-time timeout queue.
