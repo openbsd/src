@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.9 1998/09/12 14:06:52 provos Exp $	*/
+/*	$OpenBSD: chat.c,v 1.10 1998/10/30 18:04:59 mickey Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.9 1998/09/12 14:06:52 provos Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.10 1998/10/30 18:04:59 mickey Exp $";
 #endif
 #endif
 
@@ -438,8 +438,9 @@ char *chat_file;
 void usage()
 {
     fprintf(stderr, "\
-Usage: %s [-e] [-v] [-V] [-t timeout] [-r report-file] [-T phone-number]\n\
-     [-U phone-number2] {-f chat-file | chat-script}\n", __progname);
+Usage: %s [-e] [-s] [-S] [-v] [-V] [-t timeout] [-r report-file]\n\
+     [-T phone-number] [-U phone-number2] {-f chat-file | chat-script}\n",
+     __progname);
     exit(1);
 }
 
