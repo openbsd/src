@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.4 1996/04/23 03:03:50 deraadt Exp $
+.\"	$OpenBSD: telnetd.8,v 1.5 1998/06/15 17:55:39 mickey Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -452,7 +452,8 @@ is willing to receive an 8 bit data stream.
 Requests that the client handle flow control
 characters remotely.
 .It "DO ECHO"
-This is not really supported, but is sent to identify a 4.2BSD
+This is not really supported, but is sent to identify a
+.Bx 4.2
 .Xr telnet 1
 client, which will improperly respond with
 .Dv WILL ECHO.

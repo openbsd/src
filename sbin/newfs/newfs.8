@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.6 1997/06/16 00:03:10 deraadt Exp $
+.\"	$OpenBSD: newfs.8,v 1.7 1998/06/15 17:55:53 mickey Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -140,7 +140,9 @@ The following options define the general layout policies.
 Causes the file system parameters to be printed out
 without really creating the file system.
 .It Fl O
-Creates a 4.3BSD format filesystem.
+Creates a
+.Bx 4.3
+format filesystem.
 This options is primarily used to build root filesystems
 that can be understood by older boot ROMs.
 .It Fl a Ar maxcontig

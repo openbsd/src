@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.9 1998/03/16 23:28:09 gene Exp $
+.\"	$OpenBSD: options.4,v 1.10 1998/06/15 17:56:02 mickey Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -125,8 +125,9 @@ See
 Enable compatibility with a.out executables that lack a machine id.
 On the i386, this includes NetBSD 0.8's ZMAGIC format, 386BSD and BSDI's
 QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 and other m68k
-architectures this permits
-certain old 4.3BSD binaries to work, though it's use is discouraged now.
+architectures this permits certain old
+.Bx 4.3
+binaries to work, though it's use is discouraged now.
 .It Cd option COMPAT_43
 Use of this option is discouraged. It enables compatibility with
 .Bx 4.3 .
@@ -559,11 +560,16 @@ require you to enable this, you're better off just disconnecting
 .Em them
 from the network.
 .Pp
-TCP bug compatibility with 4.2BSD.  In 4.2BSD, TCP sequence numbers
+TCP bug compatibility with
+.Bx 4.2 .
+In
+.Bx 4.2 ,
+TCP sequence numbers
 were 32-bit signed values.  Modern implementations of TCP use unsigned
 values.  This option clamps the initial sequence number to start in
-the range 2^31 rather than the full unsigned range of 2^32.  Also,
-under 4.2BSD, keepalive packets must contain at least one byte or else
+the range 2^31 rather than the full unsigned range of 2^32.  Also, under
+.Bx 4.2 ,
+keepalive packets must contain at least one byte or else
 the remote end would not respond.
 .It Cd option PFIL_HOOKS
 This option turns on the packet filter interface hooks.  See

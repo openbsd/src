@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.3 1998/02/03 23:35:04 deraadt Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.4 1998/06/15 17:55:21 mickey Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -101,7 +101,8 @@ From the
 .St -p1003.1-88
 Rationale:
 .sp
-4.3BSD provides a
+.Bx 4.3
+provides a
 .Fn getpgrp
 function that returns the process group ID for a specified process.
 Although this function is used to support job control, all known
@@ -109,6 +110,7 @@ job-control shells always specify the calling process with this
 function.
 Thus, the simpler System V
 .Fn getpgrp
-suffices, and the added complexity of the 4.3BSD
+suffices, and the added complexity of the
+.Bx 4.3
 .Fn getpgrp
 has been omitted from POSIX.1.
