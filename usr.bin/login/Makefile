@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.11 1998/03/26 20:28:04 art Exp $
+#	$OpenBSD: Makefile,v 1.12 1998/03/26 20:38:08 art Exp $
 
 PROG=	login
 SRCS=	login.c failedlogin.c
 LDADD=	-lutil
 DPADD=	${LIBUTIL}
+CFLAGS+= -Wall -Wno-unused
 
 .include <bsd.own.mk>	# For SKEY, KERBEROS and KERBEROS5
 
