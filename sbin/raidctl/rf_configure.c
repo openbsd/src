@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_configure.c,v 1.1 1999/01/11 14:49:44 niklas Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.2 1999/02/16 21:51:39 niklas Exp $	*/
 
+/*      $NetBSD: rf_configure.c,v 1.5 1999/02/04 14:50:31 oster Exp $   */
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,106 +48,10 @@
  *
  **************************************************************/
 
-/* $Locker:  $
- * $Log: rf_configure.c,v $
- * Revision 1.1  1999/01/11 14:49:44  niklas
- * Control RAIDframe
- *
- * Revision 1.1.1.2  1998/11/23 21:35:58  niklas
- * NetBSD-current 981123
- *
- * Revision 1.2  1998/11/23 00:18:40  mrg
- * fix compile errors on the alpha.
- *
- * Revision 1.1  1998/11/13 04:34:02  oster
- *
- * RAIDframe, version 1.1, from the Parallel Data Laboratory at
- * Carnegie Mellon University.  Full RAID implementation, including
- * levels 0, 1, 4, 5, 6, parity logging, and a few other goodies.
- * Ported to NetBSD by Greg Oster.
- *
- * raidctl is our userland configuration tool for RAIDframe.
- *
- * Revision 1.42  1996/08/09 18:47:47  jimz
- * major -> dev_major
- *
- * Revision 1.41  1996/07/29  14:05:12  jimz
- * fix numPUs/numRUs confusion (everything is now numRUs)
- * clean up some commenting, return values
- *
- * Revision 1.40  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.39  1996/07/27  18:39:45  jimz
- * cleanup sweep
- *
- * Revision 1.38  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.37  1996/06/19  14:58:02  jimz
- * move layout-specific config parsing hooks into RF_LayoutSW_t
- * table in rf_layout.c
- *
- * Revision 1.36  1996/06/17  14:38:33  jimz
- * properly #if out RF_DEMO code
- * fix bug in MakeConfig that was causing weird behavior
- * in configuration routines (config was not zeroed at start)
- * clean up genplot handling of stacks
- *
- * Revision 1.35  1996/06/05  19:38:32  jimz
- * fixed up disk queueing types config
- * added sstf disk queueing
- * fixed exit bug on diskthreads (ref-ing bad mem)
- *
- * Revision 1.34  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.33  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.32  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.31  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.30  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.29  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.28  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.27  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.26  1995/12/01  15:16:36  root
- * added copyright info
- *
- */
-
-
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "rf_raid.h"
@@ -596,11 +501,12 @@ void *rf_ReadSpareTable(req, fname)
     if (numFound != 4) {
       fprintf(stderr,"Sparemap file prematurely exhausted after %d of %d lines\n",i,linecount); return(NULL);
     }
+
     RF_ASSERT(tableNum >= 0 && tableNum < req->TablesPerSpareRegion);
     RF_ASSERT(tupleNum >= 0 && tupleNum < req->BlocksPerTable);
     RF_ASSERT(spareDisk >= 0 && spareDisk < req->C);
     RF_ASSERT(spareBlkOffset >= 0 && spareBlkOffset < req->SpareSpaceDepthPerRegionInSUs / req->SUsPerPU);
-    
+
     table[tableNum][tupleNum].spareDisk = spareDisk;
     table[tableNum][tupleNum].spareBlockOffsetInSUs = spareBlkOffset * req->SUsPerPU;
   }

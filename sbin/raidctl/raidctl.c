@@ -1,5 +1,5 @@
-/*	$OpenBSD: raidctl.c,v 1.1 1999/01/11 14:49:44 niklas Exp $	*/
-
+/*	$OpenBSD: raidctl.c,v 1.2 1999/02/16 21:51:39 niklas Exp $	*/
+/*      $NetBSD: raidctl.c,v 1.4 1999/02/04 14:50:31 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,10 +54,11 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <string.h>
-#include <sys/disklabel.h>
-#include <machine/disklabel.h>
+#include <unistd.h>
+
 #include "rf_raidframe.h"
 
 extern  char *__progname;
