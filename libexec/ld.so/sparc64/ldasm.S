@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.7 2001/09/25 06:57:03 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.8 2002/03/15 14:52:39 drahn Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -165,11 +165,7 @@ _dl_bind_start_0:	# (x, y)
 #if 0
 	call	_dl_bind_start_0_stub
 	 ldx     [%o1 + (10*4)], %l7
-	mov	%o0, %l5
-	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
-	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
-	sllx	%l5, 3, %o1		/*  So multiply by 24. */
+	mov	%o0, %o1
 	
 	call	_dl_bind
 	 mov	%l7, %o0
@@ -195,10 +191,6 @@ _dl_bind_start_0:	# (x, y)
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
 	add	%l5, %l6, %l5
 	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
-	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
-	sllx	%l5, 3, %l5		/*  So multiply by 24. */
-	
 	call	_dl_bind		/* Call _dl_bind(obj, offset) */
 	 mov	%l5, %o1
 
@@ -212,10 +204,6 @@ _dl_bind_start_0:	# (x, y)
 	.type	_dl_bind_start_1,@function
 _dl_bind_start_1:	# (x, y)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
-	
-	sllx	%o2, 1, %o3		/* Each element is an Elf_Rela which */
-	add	%o3, %o2, %o2		/*  is 3 longwords or 24 bytes. */
-	sllx	%o2, 3, %o2		/*  So multiply by 24. */
 	
 	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
 	
