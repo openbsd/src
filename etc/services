@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.52 2003/06/19 23:20:59 pvalchev Exp $
+#	$OpenBSD: services,v 1.53 2003/12/16 13:43:04 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -140,6 +140,8 @@ isakmp		500/udp				# ISAKMP key management
 klogin		543/tcp				# Kerberos authenticated rlogin
 kshell		544/tcp		krcmd		# Kerberos remote shell
 ekshell		545/tcp				# Kerberos encrypted shell
+afpovertcp	548/tcp				# AFP over TCP
+afpovertcp	548/udp				# AFP over TCP
 rtsp		554/tcp				# Real Time Stream Control Proto
 rtsp		554/udp				# Real Time Stream Control Proto
 submission	587/tcp		msa		# mail message submission
