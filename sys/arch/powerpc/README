@@ -1,30 +1,26 @@
-NOT YET READY!!!
-
 This port is heavily based on the NetBSD powerpc port by
 Wolfgang Solfrank. All of the kernel code is derived from there.
 Some modifications have been made, primarily to support ELF.
 
-Until this README file states that the port is ready, it is unlikey
-that the port will build correctly.
-
-Currently, dont even try, go ahead and look at the code, but
-nothing has been tried since It was checked in.
-
-I hope to have this ready before Jan 1997
 
 Other notes:
 	libexec/ftpd (ftpd.o) does not compile with optimization.
 	`cc: Internal compiler error: program cc1 got fatal signal 11'
 	Real cause unknown. will compile and work correctly
 	if compiled without -O.
+	(worked around with a makefile change)
 
 	a problem exists compiling the file:
 	gnu/usr.bin/binutils/opcodes/ppc-opc.c
 	with the normal data ulimit. it is necessary to raise
 	the ulimit to compile this file in (pd)ksh use "ulimit -d 200000".
+	(problem still exists)
+
+	examine src/sys/arch/powerpc/patches, that file may contain
+	changes necessary to the tree to rebuild the full system.
 
 TODO:
-	ptrace support
+	ptrace support (that works)
 	fp (setround, getround, getmask, setmask, setsticky, getsticky)
 Dale
 rahnds@cvs.openbsd.org
