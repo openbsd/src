@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.47 2002/10/30 20:10:48 millert Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.48 2003/01/30 03:29:49 millert Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -1251,14 +1251,14 @@ linux_sys_setreuid16(p, v, retval)
 		syscallarg(int) ruid;
 		syscallarg(int) euid;
 	} */ *uap = v;
-	struct compat_43_sys_setreuid_args bsa;
+	struct sys_setreuid_args bsa;
 	
 	SCARG(&bsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, ruid);
 	SCARG(&bsa, euid) = ((linux_uid_t)SCARG(uap, euid) == (linux_uid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, euid);
 
-	return compat_43_sys_setreuid(p, &bsa, retval);
+	return sys_setreuid(p, &bsa, retval);
 }
 
 int
@@ -1271,14 +1271,14 @@ linux_sys_setregid16(p, v, retval)
 		syscallarg(int) rgid;
 		syscallarg(int) egid;
 	} */ *uap = v;
-	struct compat_43_sys_setregid_args bsa;
+	struct sys_setregid_args bsa;
 	
 	SCARG(&bsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, rgid);
 	SCARG(&bsa, egid) = ((linux_gid_t)SCARG(uap, egid) == (linux_gid_t)-1) ?
 		(uid_t)-1 : SCARG(uap, egid);
 
-	return compat_43_sys_setregid(p, &bsa, retval);
+	return sys_setregid(p, &bsa, retval);
 }
 
 int

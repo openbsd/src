@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.22 2002/10/30 20:02:58 millert Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.23 2003/01/30 03:29:49 millert Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -528,6 +528,72 @@ sys_setresgid(p, v, retval)
 
 	p->p_flag |= P_SUGID;
 	return (0);
+}
+
+/* ARGSUSED */
+int
+sys_setregid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_setregid_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	struct sys_setresgid_args sresgidargs;
+	gid_t rgid, egid;
+
+	rgid = SCARG(&sresgidargs, rgid) = SCARG(uap, rgid);
+	egid = SCARG(&sresgidargs, egid) = SCARG(uap, egid);
+
+	/*
+	 * The saved gid presents a bit of a dilemma, as it did not
+	 * exist when setregid(2) was conceived.  We only set the saved
+	 * gid when the real gid is specified and either its value would
+	 * change, or where the saved and effective gids are different.
+	 */
+	if (rgid != (gid_t)-1 && (rgid != pc->p_rgid ||
+	    pc->p_svgid != (egid != (gid_t)-1 ? egid : pc->pc_ucred->cr_gid)))
+		SCARG(&sresgidargs, sgid) = rgid;
+	else
+		SCARG(&sresgidargs, sgid) = (gid_t)-1;
+
+	return (sys_setresgid(p, &sresgidargs, retval));
+}
+
+/* ARGSUSED */
+int
+sys_setreuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_setreuid_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+	} */ *uap = v;
+	struct pcred *pc = p->p_cred;
+	struct sys_setresuid_args sresuidargs;
+	uid_t ruid, euid;
+
+	ruid = SCARG(&sresuidargs, ruid) = SCARG(uap, ruid);
+	euid = SCARG(&sresuidargs, euid) = SCARG(uap, euid);
+
+	/*
+	 * The saved uid presents a bit of a dilemma, as it did not
+	 * exist when setreuid(2) was conceived.  We only set the saved
+	 * uid when the real uid is specified and either its value would
+	 * change, or where the saved and effective uids are different.
+	 */
+	if (ruid != (uid_t)-1 && (ruid != pc->p_ruid ||
+	    pc->p_svuid != (euid != (uid_t)-1 ? euid : pc->pc_ucred->cr_uid)))
+		SCARG(&sresuidargs, suid) = ruid;
+	else
+		SCARG(&sresuidargs, suid) = (uid_t)-1;
+
+	return (sys_setresuid(p, &sresuidargs, retval));
 }
 
 /* ARGSUSED */

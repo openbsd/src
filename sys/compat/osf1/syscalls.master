@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 2000/08/04 15:47:55 ericj Exp $
+	$OpenBSD: syscalls.master,v 1.9 2003/01/30 03:29:49 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.29 1999/05/10 03:33:04 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -213,8 +213,8 @@
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
 			    size_t len, int flags, caddr_t from, \
 			    int *fromlenaddr); }
-126	UNIMPL		setreuid
-127	UNIMPL		setregid
+126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
+127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	NOARGS		{ int sys_rename(const char *from, \
 			    const char *to); }
 129	STD		{ int osf1_sys_truncate(char *path, \

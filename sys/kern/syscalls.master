@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.51 2002/10/30 20:02:58 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.52 2003/01/30 03:29:49 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -238,8 +238,8 @@
 125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
 			    int flags, caddr_t from, int *fromlenaddr); } \
 			    orecvfrom
-126	COMPAT_43	{ int sys_setreuid(uid_t ruid, uid_t euid); } osetreuid
-127	COMPAT_43	{ int sys_setregid(gid_t rgid, gid_t egid); } osetregid
+126	STD		{ int sys_setreuid(uid_t ruid, uid_t euid); }
+127	STD		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int sys_rename(const char *from, const char *to); }
 129	COMPAT_43	{ int sys_truncate(const char *path, long length); } \
 			    otruncate

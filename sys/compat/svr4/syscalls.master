@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.32 2002/07/06 19:14:20 nordin Exp $
+	$OpenBSD: syscalls.master,v 1.33 2003/01/30 03:29:49 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -311,8 +311,8 @@
 200	STD		{ int svr4_sys_facl(int fd, int cmd, int num, \
 			    struct svr4_aclent *buf); }
 201	UNIMPL		door
-202	NOARGS		{ int compat_43_sys_setreuid(int ruid, int euid); }
-203	NOARGS		{ int compat_43_sys_setregid(int rgid, int egid); }
+202	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
+203	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 204	UNIMPL		install_utrap
 205	UNIMPL		signotify
 206	UNIMPL		schedctl

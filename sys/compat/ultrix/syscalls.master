@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.7 1999/06/07 07:17:48 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.8 2003/01/30 03:29:49 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1996/01/07 13:38:57 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -196,8 +196,8 @@
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
 			    size_t len, int flags, caddr_t from, \
 			    int *fromlenaddr); }
-126	NOARGS		{ int compat_43_sys_setreuid(int ruid, int euid); }
-127	NOARGS		{ int compat_43_sys_setregid(int rgid, int egid); }
+126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
+127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	NOARGS		{ int sys_rename(char *from, char *to); }
 129	NOARGS		{ int compat_43_sys_truncate(char *path, long length); }
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
