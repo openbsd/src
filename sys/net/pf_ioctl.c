@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.27 2002/12/18 16:28:40 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.28 2002/12/18 18:25:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -142,9 +142,10 @@ pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
     u_int8_t rule_action, u_int8_t rule_number, u_int8_t r_last,
     u_int8_t active, u_int8_t check_ticket)
 {
-	struct pf_ruleset *ruleset;
-	struct pf_rule *rule;
-	int rs_num;
+	struct pf_ruleset	*ruleset;
+	struct pf_rule		*rule;
+	int			 rs_num;
+
 	ruleset = pf_find_ruleset(anchorname, rulesetname);
 	if (ruleset == NULL)
 		return (NULL);
@@ -181,7 +182,7 @@ pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
 int
 pf_add_addr(struct pf_pool *pool, struct pf_pooladdr *addr, u_int8_t af)
 {
-	struct pf_pooladdr *pa;
+	struct pf_pooladdr	*pa;
 
 	pa = pool_get(&pf_pooladdr_pl, PR_NOWAIT);
 	if (pa == NULL) {
@@ -239,7 +240,7 @@ pf_get_ruleset_number(u_int8_t action)
 void
 pf_init_ruleset(struct pf_ruleset *ruleset)
 {
-	int i;
+	int	i;
 
 	memset(ruleset, 0, sizeof(struct pf_ruleset));
 	for(i = 0; i < PF_RULESET_MAX; i++) {
@@ -253,8 +254,8 @@ pf_init_ruleset(struct pf_ruleset *ruleset)
 struct pf_anchor *
 pf_find_anchor(const char *anchorname)
 {
-	struct pf_anchor *anchor;
-	int n = -1;
+	struct pf_anchor	*anchor;
+	int			 n = -1;
 
 	anchor = TAILQ_FIRST(&pf_anchors);
 	while (anchor != NULL && (n = strcmp(anchor->name, anchorname)) < 0)
@@ -268,8 +269,8 @@ pf_find_anchor(const char *anchorname)
 struct pf_ruleset *
 pf_find_ruleset(char *anchorname, char *rulesetname)
 {
-	struct pf_anchor *anchor;
-	struct pf_ruleset *ruleset;
+	struct pf_anchor	*anchor;
+	struct pf_ruleset	*ruleset;
 
 	if (!anchorname[0] && !rulesetname[0])
 		return (&pf_main_ruleset);
@@ -292,8 +293,8 @@ pf_find_ruleset(char *anchorname, char *rulesetname)
 struct pf_ruleset *
 pf_find_or_create_ruleset(char *anchorname, char *rulesetname, int rs_num)
 {
-	struct pf_anchor *anchor, *a;
-	struct pf_ruleset *ruleset, *r;
+	struct pf_anchor	*anchor, *a;
+	struct pf_ruleset	*ruleset, *r;
 
 	if (!anchorname[0] && !rulesetname[0])
 		return (&pf_main_ruleset);
@@ -341,7 +342,7 @@ pf_find_or_create_ruleset(char *anchorname, char *rulesetname, int rs_num)
 void
 pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 {
-	struct pf_anchor *anchor;
+	struct pf_anchor	*anchor;
 
 	if (ruleset == NULL || ruleset->anchor == NULL ||
 	    !TAILQ_EMPTY(ruleset->rules[0].active.ptr) ||
@@ -367,7 +368,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 void
 pf_mv_pool(struct pf_palist *poola, struct pf_palist *poolb)
 {
-	struct pf_pooladdr *mv_pool_pa;
+	struct pf_pooladdr	*mv_pool_pa;
 
 	while ((mv_pool_pa = TAILQ_FIRST(poola)) != NULL) {
 		TAILQ_REMOVE(poola, mv_pool_pa, entries);
@@ -378,7 +379,7 @@ pf_mv_pool(struct pf_palist *poola, struct pf_palist *poolb)
 void
 pf_empty_pool(struct pf_palist *poola)
 {
-	struct pf_pooladdr *empty_pool_pa;
+	struct pf_pooladdr	*empty_pool_pa;
 
 	while ((empty_pool_pa = TAILQ_FIRST(poola)) != NULL) {
 		pf_dynaddr_remove(&empty_pool_pa->addr.addr);
@@ -401,10 +402,10 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 int
 pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
-	int error = 0;
-	struct pf_pooladdr *pa = NULL;
-	struct pf_pool *pool = NULL;
-	int s;
+	struct pf_pooladdr	*pa = NULL;
+	struct pf_pool		*pool = NULL;
+	int			 s;
+	int			 error = 0;
 
 	/* XXX keep in sync with switch() below */
 	if (securelevel > 1)
@@ -486,10 +487,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case DIOCBEGINRULES: {
-		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_ruleset *ruleset;
-		struct pf_rule *rule;
-		int rs_num;
+		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
+		struct pf_ruleset	*ruleset;
+		struct pf_rule		*rule;
+		int			 rs_num;
 
 		ruleset = pf_find_or_create_ruleset(pr->anchor,
 		    pr->ruleset, rs_num);
@@ -506,10 +507,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCADDRULE: {
-		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_ruleset *ruleset;
-		struct pf_rule *rule, *tail;
-		int rs_num;
+		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
+		struct pf_ruleset	*ruleset;
+		struct pf_rule		*rule, *tail;
+		int			 rs_num;
 
 		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
 		if (ruleset == NULL) {
@@ -584,12 +585,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCOMMITRULES: {
-		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_ruleset *ruleset;
-		struct pf_rulequeue *old_rules;
-		struct pf_rule *rule;
-		struct pf_tree_node *n;
-		int rs_num;
+		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
+		struct pf_ruleset	*ruleset;
+		struct pf_rulequeue	*old_rules;
+		struct pf_rule		*rule;
+		struct pf_tree_node	*n;
+		int			 rs_num;
 
 		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
 		if (ruleset == NULL) {
@@ -629,10 +630,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETRULES: {
-		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_ruleset *ruleset;
-		struct pf_rule *tail;
-		int rs_num;
+		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
+		struct pf_ruleset	*ruleset;
+		struct pf_rule		*tail;
+		int			 rs_num;
 
 		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
 		if (ruleset == NULL) {
@@ -653,10 +654,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETRULE: {
-		struct pfioc_rule *pr = (struct pfioc_rule *)addr;
-		struct pf_ruleset *ruleset;
-		struct pf_rule *rule;
-		int rs_num, i;
+		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
+		struct pf_ruleset	*ruleset;
+		struct pf_rule		*rule;
+		int			 rs_num, i;
 
 		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
 		if (ruleset == NULL) {
@@ -691,11 +692,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCHANGERULE: {
-		struct pfioc_rule *pcr = (struct pfioc_rule *)addr;
-		struct pf_ruleset *ruleset;
-		struct pf_rule *oldrule = NULL, *newrule = NULL;
-		u_int32_t nr = 0;
-		int rs_num;
+		struct pfioc_rule	*pcr = (struct pfioc_rule *)addr;
+		struct pf_ruleset	*ruleset;
+		struct pf_rule		*oldrule = NULL, *newrule = NULL;
+		u_int32_t		 nr = 0;
+		int			 rs_num;
 
 		if (!(pcr->action == PF_CHANGE_REMOVE ||
 		    pcr->action == PF_CHANGE_GET_TICKET) &&
@@ -793,7 +794,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (pcr->action == PF_CHANGE_REMOVE) {
-			struct pf_tree_node *n;
+			struct pf_tree_node	*n;
 
 			if (ruleset == &pf_main_ruleset) {
 				RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
@@ -830,7 +831,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_tree_node *n;
+		struct pf_tree_node	*n;
 
 		s = splsoftnet();
 		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
@@ -842,11 +843,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCKILLSTATES: {
-		struct pf_tree_node *n;
-		struct pf_state *st;
-		struct pfioc_state_kill *psk =
-		    (struct pfioc_state_kill *)addr;
-		int killed = 0;
+		struct pf_tree_node	*n;
+		struct pf_state		*st;
+		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
+		int			 killed = 0;
 
 		s = splsoftnet();
 		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
@@ -876,8 +876,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCADDSTATE: {
-		struct pfioc_state *ps = (struct pfioc_state *)addr;
-		struct pf_state *state;
+		struct pfioc_state	*ps = (struct pfioc_state *)addr;
+		struct pf_state		*state;
 
 		state = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (state == NULL) {
@@ -899,10 +899,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETSTATE: {
-		struct pfioc_state *ps = (struct pfioc_state *)addr;
-		struct pf_tree_node *n;
-		u_int32_t nr;
-		int secs;
+		struct pfioc_state	*ps = (struct pfioc_state *)addr;
+		struct pf_tree_node	*n;
+		u_int32_t		 nr;
+		int			 secs;
 
 		nr = 0;
 		s = splsoftnet();
@@ -932,11 +932,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETSTATES: {
-		struct pfioc_states *ps = (struct pfioc_states *)addr;
-		struct pf_tree_node *n;
-		struct pf_state *p, pstore;
-		u_int32_t nr = 0;
-		int space = ps->ps_len;
+		struct pfioc_states	*ps = (struct pfioc_states *)addr;
+		struct pf_tree_node	*n;
+		struct pf_state		*p, pstore;
+		u_int32_t		 nr = 0;
+		int			 space = ps->ps_len;
 
 		if (space == 0) {
 			s = splsoftnet();
@@ -950,7 +950,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		s = splsoftnet();
 		p = ps->ps_states;
 		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
-			int secs = time.tv_sec;
+			int	secs = time.tv_sec;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)ps->ps_len)
 				break;
@@ -979,8 +979,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETSTATUSIF: {
-		struct pfioc_if *pi = (struct pfioc_if *)addr;
-		struct ifnet *ifp;
+		struct pfioc_if	*pi = (struct pfioc_if *)addr;
+		struct ifnet	*ifp;
 
 		if (pi->ifname[0] == 0) {
 			status_ifp = NULL;
@@ -1003,10 +1003,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATUS: {
-		u_int32_t running = pf_status.running;
-		u_int32_t states = pf_status.states;
-		u_int32_t since = pf_status.since;
-		u_int32_t debug = pf_status.debug;
+		u_int32_t	running = pf_status.running;
+		u_int32_t	states = pf_status.states;
+		u_int32_t	since = pf_status.since;
+		u_int32_t	debug = pf_status.debug;
 
 		bzero(&pf_status, sizeof(struct pf_status));
 		pf_status.running = running;
@@ -1020,10 +1020,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCNATLOOK: {
-		struct pfioc_natlook *pnl = (struct pfioc_natlook *)addr;
-		struct pf_state *st;
-		struct pf_tree_node key;
-		int direction = pnl->direction;
+		struct pfioc_natlook	*pnl = (struct pfioc_natlook *)addr;
+		struct pf_state		*st;
+		struct pf_tree_node	 key;
+		int			 direction = pnl->direction;
 
 		key.af = pnl->af;
 		key.proto = pnl->proto;
@@ -1073,8 +1073,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETTIMEOUT: {
-		struct pfioc_tm *pt = (struct pfioc_tm *)addr;
-		int old;
+		struct pfioc_tm	*pt = (struct pfioc_tm *)addr;
+		int		 old;
 
 		if (pt->timeout < 0 || pt->timeout >= PFTM_MAX ||
 		    pt->seconds < 0) {
@@ -1088,7 +1088,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETTIMEOUT: {
-		struct pfioc_tm *pt = (struct pfioc_tm *)addr;
+		struct pfioc_tm	*pt = (struct pfioc_tm *)addr;
 
 		if (pt->timeout < 0 || pt->timeout >= PFTM_MAX) {
 			error = EINVAL;
@@ -1099,7 +1099,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETLIMIT: {
-		struct pfioc_limit *pl = (struct pfioc_limit *)addr;
+		struct pfioc_limit	*pl = (struct pfioc_limit *)addr;
 
 		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
 			error = EINVAL;
@@ -1110,8 +1110,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETLIMIT: {
-		struct pfioc_limit *pl = (struct pfioc_limit *)addr;
-		int old_limit;
+		struct pfioc_limit	*pl = (struct pfioc_limit *)addr;
+		int			 old_limit;
 
 		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
 			error = EINVAL;
@@ -1129,14 +1129,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSETDEBUG: {
-		u_int32_t *level = (u_int32_t *)addr;
+		u_int32_t	*level = (u_int32_t *)addr;
+
 		pf_status.debug = *level;
 		break;
 	}
 
 	case DIOCCLRRULECTRS: {
-		struct pf_ruleset *ruleset = &pf_main_ruleset;
-		struct pf_rule *rule;
+		struct pf_ruleset	*ruleset = &pf_main_ruleset;
+		struct pf_rule		*rule;
 
 		s = splsoftnet();
 		TAILQ_FOREACH(rule,
@@ -1149,9 +1150,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 #ifdef ALTQ
 	case DIOCSTARTALTQ: {
-		struct pf_altq *altq;
-		struct ifnet *ifp;
-		struct tb_profile tb;
+		struct pf_altq		*altq;
+		struct ifnet		*ifp;
+		struct tb_profile	 tb;
 
 		/* enable all altq interfaces on active list */
 		s = splsoftnet();
@@ -1181,10 +1182,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCSTOPALTQ: {
-		struct pf_altq *altq;
-		struct ifnet *ifp;
-		struct tb_profile tb;
-		int err;
+		struct pf_altq		*altq;
+		struct ifnet		*ifp;
+		struct tb_profile	 tb;
+		int			 err;
 
 		/* disable all altq interfaces on active list */
 		s = splsoftnet();
@@ -1214,28 +1215,25 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCBEGINALTQS: {
-		u_int32_t *ticket = (u_int32_t *)addr;
-		struct pf_altq *altq;
+		u_int32_t	*ticket = (u_int32_t *)addr;
+		struct pf_altq	*altq;
 
 		/* Purge the old altq list */
 		while ((altq = TAILQ_FIRST(pf_altqs_inactive)) != NULL) {
 			TAILQ_REMOVE(pf_altqs_inactive, altq, entries);
-
 			if (altq->qname[0] == 0) {
 				/* detach and destroy the discipline */
 				error = altq_remove(altq);
 			}
-
 			pool_put(&pf_altq_pl, altq);
 		}
-
 		*ticket = ++ticket_altqs_inactive;
 		break;
 	}
 
 	case DIOCADDALTQ: {
-		struct pfioc_altq *pa = (struct pfioc_altq *)addr;
-		struct pf_altq *altq, *a;
+		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
+		struct pf_altq		*altq, *a;
 
 		if (pa->ticket != ticket_altqs_inactive) {
 			error = EBUSY;
@@ -1254,8 +1252,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		 */
 		if (altq->qname[0] != 0) {
 			TAILQ_FOREACH(a, pf_altqs_inactive, entries) {
-				if (strncmp(a->ifname, altq->ifname, IFNAMSIZ)
-				    == 0 && a->qname[0] == 0) {
+				if (strncmp(a->ifname, altq->ifname,
+				    IFNAMSIZ) == 0 && a->qname[0] == 0) {
 					altq->altq_disc = a->altq_disc;
 					break;
 				}
@@ -1263,23 +1261,21 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		error = altq_add(altq);
-
 		if (error) {
 			pool_put(&pf_altq_pl, altq);
 			break;
 		}
 
 		TAILQ_INSERT_TAIL(pf_altqs_inactive, altq, entries);
-
 		bcopy(altq, &pa->altq, sizeof(struct pf_altq));
 		break;
 	}
 
 	case DIOCCOMMITALTQS: {
-		u_int32_t *ticket = (u_int32_t *)addr;
-		struct pf_altqqueue *old_altqs;
-		struct pf_altq *altq;
-		int err;
+		u_int32_t		*ticket = (u_int32_t *)addr;
+		struct pf_altqqueue	*old_altqs;
+		struct pf_altq		*altq;
+		int			 err;
 
 		if (*ticket != ticket_altqs_inactive) {
 			error = EBUSY;
@@ -1308,7 +1304,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* Purge the old altq list */
 		while ((altq = TAILQ_FIRST(pf_altqs_inactive)) != NULL) {
 			TAILQ_REMOVE(pf_altqs_inactive, altq, entries);
-
 			if (altq->qname[0] == 0) {
 				/* detach and destroy the discipline */
 				err = altq_pfdetach(altq);
@@ -1318,7 +1313,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if (err != 0 && error == 0)
 					error = err;
 			}
-
 			pool_put(&pf_altq_pl, altq);
 		}
 		splx(s);
@@ -1326,8 +1320,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETALTQS: {
-		struct pfioc_altq *pa = (struct pfioc_altq *)addr;
-		struct pf_altq *altq;
+		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
+		struct pf_altq		*altq;
 
 		pa->nr = 0;
 		s = splsoftnet();
@@ -1339,9 +1333,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETALTQ: {
-		struct pfioc_altq *pa = (struct pfioc_altq *)addr;
-		struct pf_altq *altq;
-		u_int32_t nr;
+		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
+		struct pf_altq		*altq;
+		u_int32_t		 nr;
 
 		if (pa->ticket != ticket_altqs_active) {
 			error = EBUSY;
@@ -1370,10 +1364,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case DIOCGETQSTATS: {
-		struct pfioc_qstats *pq = (struct pfioc_qstats *)addr;
-		struct pf_altq *altq;
-		u_int32_t nr;
-		int nbytes;
+		struct pfioc_qstats	*pq = (struct pfioc_qstats *)addr;
+		struct pf_altq		*altq;
+		u_int32_t		 nr;
+		int			 nbytes;
 
 		if (pq->ticket != ticket_altqs_active) {
 			error = EBUSY;
@@ -1403,7 +1397,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 #endif /* ALTQ */
 
 	case DIOCBEGINADDRS: {
-		struct pfioc_pooladdr *pp = (struct pfioc_pooladdr *)addr;
+		struct pfioc_pooladdr	*pp = (struct pfioc_pooladdr *)addr;
 
 		pf_empty_pool(&pf_pabuf[1]);
 		pp->ticket = ++ticket_pabuf;
@@ -1411,7 +1405,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCADDADDR: {
-		struct pfioc_pooladdr *pp = (struct pfioc_pooladdr *)addr;
+		struct pfioc_pooladdr	*pp = (struct pfioc_pooladdr *)addr;
 
 #ifndef INET
 		if (pp->af == AF_INET) {
@@ -1446,12 +1440,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		TAILQ_INSERT_TAIL(&pf_pabuf[0], pa, entries);
-
 		break;
 	}
 
 	case DIOCGETADDRS: {
-		struct pfioc_pooladdr *pp = (struct pfioc_pooladdr *)addr;
+		struct pfioc_pooladdr	*pp = (struct pfioc_pooladdr *)addr;
 
 		pp->nr = 0;
 		s = splsoftnet();
@@ -1469,8 +1462,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETADDR: {
-		struct pfioc_pooladdr *pp = (struct pfioc_pooladdr *)addr;
-		u_int32_t nr = 0;
+		struct pfioc_pooladdr	*pp = (struct pfioc_pooladdr *)addr;
+		u_int32_t		 nr = 0;
 
 		s = splsoftnet();
 		pool = pf_get_pool(pp->anchor, pp->ruleset, pp->ticket,
@@ -1497,8 +1490,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCHANGEADDR: {
-		struct pfioc_pooladdr *pca = (struct pfioc_pooladdr *)addr;
-		struct pf_pooladdr *oldpa = NULL, *newpa = NULL;
+		struct pfioc_pooladdr	*pca = (struct pfioc_pooladdr *)addr;
+		struct pf_pooladdr	*oldpa = NULL, *newpa = NULL;
 
 		if (pca->action < PF_CHANGE_ADD_HEAD ||
 		    pca->action > PF_CHANGE_REMOVE) {
@@ -1557,7 +1550,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else if (pca->action == PF_CHANGE_ADD_TAIL)
 			oldpa = TAILQ_LAST(&pool->list, pf_palist);
 		else {
-			int i = 0;
+			int	i = 0;
+
 			oldpa = TAILQ_FIRST(&pool->list);
 			while ((oldpa != NULL) && (i < pca->nr)) {
 				oldpa = TAILQ_NEXT(oldpa, entries);
@@ -1587,14 +1581,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pool->cur = TAILQ_FIRST(&pool->list);
 		PF_ACPY(&pool->counter, &pool->cur->addr.addr.addr, pca->af);
-
 		splx(s);
 		break;
 	}
 
 	case DIOCGETANCHORS: {
-		struct pfioc_anchor *pa = (struct pfioc_anchor *)addr;
-		struct pf_anchor *anchor;
+		struct pfioc_anchor	*pa = (struct pfioc_anchor *)addr;
+		struct pf_anchor	*anchor;
 
 		pa->nr = 0;
 		TAILQ_FOREACH(anchor, &pf_anchors, entries)
@@ -1603,9 +1596,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETANCHOR: {
-		struct pfioc_anchor *pa = (struct pfioc_anchor *)addr;
-		struct pf_anchor *anchor;
-		u_int32_t nr = 0;
+		struct pfioc_anchor	*pa = (struct pfioc_anchor *)addr;
+		struct pf_anchor	*anchor;
+		u_int32_t		 nr = 0;
 
 		anchor = TAILQ_FIRST(&pf_anchors);
 		while (anchor != NULL && nr < pa->nr) {
@@ -1620,9 +1613,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETRULESETS: {
-		struct pfioc_ruleset *pr = (struct pfioc_ruleset *)addr;
-		struct pf_anchor *anchor;
-		struct pf_ruleset *ruleset;
+		struct pfioc_ruleset	*pr = (struct pfioc_ruleset *)addr;
+		struct pf_anchor	*anchor;
+		struct pf_ruleset	*ruleset;
 
 		pr->anchor[PF_ANCHOR_NAME_SIZE-1] = 0;
 		if ((anchor = pf_find_anchor(pr->anchor)) == NULL) {
@@ -1636,10 +1629,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETRULESET: {
-		struct pfioc_ruleset *pr = (struct pfioc_ruleset *)addr;
-		struct pf_anchor *anchor;
-		struct pf_ruleset *ruleset;
-		u_int32_t nr = 0;
+		struct pfioc_ruleset	*pr = (struct pfioc_ruleset *)addr;
+		struct pf_anchor	*anchor;
+		struct pf_ruleset	*ruleset;
+		u_int32_t		 nr = 0;
 
 		if ((anchor = pf_find_anchor(pr->anchor)) == NULL) {
 			error = EINVAL;
