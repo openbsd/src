@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.3 2004/04/13 02:00:50 henning Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.4 2004/04/13 17:27:48 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -54,37 +54,45 @@ The
 utility provides a means for relaying DHCP and BOOTP requests from a subnet
 to which no DHCP server is directly connected to one or more DHCP servers on
 other subnets.
-.Sh OPERATION
-.Nm
-listens for DHCP requests on the interface given via the
-.Fl i
-flag.
 .Pp
+.Nm
+listens for DHCP requests on a given interface.
 When a query is received,
 .Nm
 forwards it to the list of DHCP servers specified on the command line.
 When a reply is received, it is broadcast or unicast on the network from
 whence the original request came.
 .Pp
-.Sh COMMAND LINE
+The name of at least one DHCP server to which DHCP and BOOTP requests
+should be relayed,
+as well as the name of the network interface that
+.Nm
+should attempt to configure,
+must be specified on the command line.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+.Nm
+normally runs in the foreground until it has configured
+an interface, and then reverts to running in the background.
+This option forces
+.Nm
+to always run as a foreground process.
+.It Fl i Ar interface
 The name of the network interface that
 .Nm
-should attempt to configure must be specified on the command line using the
-.Fl i
-option.
-.Pp
-If
+should attempt to configure.
+.It Fl p Ar port
+Tells
 .Nm
-should listen and transmit on a port other than the standard (port 67), the
-.Fl p
-flag may used.
+to listen and transmit on a port other than the standard
+.Pq port 67 .
 It should be followed by the UDP port number that
 .Nm
 should use.
 This is mostly useful for debugging purposes.
-If the
-.Fl p
-flag is specified, the relay agent will transmit responses to clients
+The relay agent will transmit responses to clients
 at a port number that is one greater than the one specified \- i.e., if
 you specify
 .Fl p
@@ -93,18 +101,7 @@ Transmissions to servers will be sent to the same port number
 that is specified with the
 .Fl p
 flag.
-.Pp
-.Nm
-will normally run in the foreground until it has configured
-an interface, and then will revert to running in the background.
-To force
-.Nm
-to always run as a foreground process, the
-.Fl d
-flag should be specified.
-.Pp
-The name of at least one DHCP server to which DHCP and BOOTP requests
-should be relayed must be specified on the command line.
+.El
 .Sh SEE ALSO
 .Xr dhclient 8 ,
 .Xr dhcpd 8
@@ -118,7 +115,7 @@ was written by
 The current implementation was reworked by
 .An Henning Brauer Aq henning@openbsd.org .
 .Sh BUGS
-Relayed DHCP traffic could actually safely be protected by IPsec, but
+Relayed DHCP traffic could actually safely be protected by IPsec but,
 like
 .Xr dhcpd 8
 and
