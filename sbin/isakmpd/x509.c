@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.52 2001/06/05 05:59:43 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.53 2001/06/05 06:51:05 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1137,15 +1137,6 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   scert = x509_hash_find (id, id_len);
   if (!scert)
     return 0;
-
-  *certlen = LC (i2d_X509, (scert, NULL));
-  p = *cert = malloc (*certlen);
-  if (!p)
-    {
-      log_error ("x509_cert_obtain: malloc (%d) failed", *certlen);
-      return 0;
-    }
-  *certlen = LC (i2d_X509, (scert, &p));
 
   x509_serialize (scert, cert, certlen);
   if (!*cert)
