@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.80 1998/09/22 08:06:05 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.81 1998/09/22 09:18:15 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -173,7 +173,7 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
-#ne*	at pcmcia? function ?			# PCMCIA based ne cards
+ne*	at pcmcia? function ?			# PCMCIA based ne cards
 ep*	at pcmcia? function ?			# PCMCIA based ep cards
 sm*	at pcmcia? function ?			# PCMCIA based sm cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
