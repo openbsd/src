@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.29 2002/02/21 18:39:46 tdeval Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.30 2002/06/25 22:37:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -335,24 +335,6 @@ _block_table:
 	.byte	0	/* nsect */
 	. = _block_table + BLKCNT*4
 
-#ifdef BEMBR
-	. = 0x1b8
-	.space	4, 0	/* NT registry offset from James C. Cortilier III */
-
-	. = DOSPARTOFF
-	.globl	_partitions
-	/* throw in a partition in case we are block0 as well */
-	/* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
-_partitions:
-	.byte   DOSACTIVE, 0, 1, 0, DOSPTYP_OPENBSD, 255, 255, 255
-	.long   0,50000
-	.byte   0,0,0,0,0,0,0,0
-	.long   0,0
-	.byte   0,0,0,0,0,0,0,0
-	.long   0,0
-	.byte   0,0,0,0,0,0,0,0
-	.long   0,0
-#endif
 	. = 0x200 - 2
 	/* a little signature */
 	.word	DOSMBR_SIGNATURE
