@@ -97,6 +97,8 @@ ep_pci_match(parent, match, aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
 	case PCI_PRODUCT_3COM_3C595:
+	case PCI_PRODUCT_3COM_3C900:
+	case PCI_PRODUCT_3COM_3C905:
 		break;
 	default:
 		return 0;
@@ -154,9 +156,14 @@ ep_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_3COM_3C590:
 		model = "3Com 3C590 Ethernet";
 		break;
-
 	case PCI_PRODUCT_3COM_3C595:
 		model = "3Com 3C595 Ethernet";
+		break;
+	case PCI_PRODUCT_3COM_3C900:
+		model = "3Com 3C900 Ethernet";
+		break;
+	case PCI_PRODUCT_3COM_3C905:
+		model = "3Com 3C905 Ethernet";
 		break;
 	default:
 		model = "unknown model!";
