@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.17 2000/09/19 05:28:11 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.18 2000/09/19 05:54:32 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -450,11 +450,6 @@ ofwconprobe()
 	printf(": memtag %x, iotag %x", memtag, iotag);
 	printf(": cons_width %d cons_linebytes %d cons_height %d\n",
 		cons_width, cons_linebytes, cons_height);
-
-	if (addr[0].size_lo > 0x100000) {
-		addr[0].size_lo = 0x100000;
-	}
-
 
 	{
 		int i,j;
