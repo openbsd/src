@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.5 1996/06/10 04:35:05 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.6 1996/06/11 11:20:22 downsj Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -56,10 +56,13 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $";
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,7 +92,9 @@ struct commands {
 	{ "weof",	MTWEOF,	0 },
 	{ NULL }
 };
+#define COM_EJECT	9	/* element in the above array */
 
+int opendev __P((char *, int, mode_t, char **));
 void printreg __P((char *, u_int, char *));
 void status __P((struct mtget *));
 void usage __P((void));
@@ -97,6 +102,9 @@ void usage __P((void));
 char	*host = NULL;	/* remote host (if any) */
 uid_t	uid;		/* read uid */
 uid_t	euid;		/* effective uid */
+
+char	*progname;
+int	eject = 0;
 
 int
 main(argc, argv)
@@ -107,16 +115,24 @@ main(argc, argv)
 	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
-	char *p, *tape;
+	char *p, *tape, *realtape;
 
 	uid = getuid();
 	euid = geteuid();
 	(void) seteuid(uid);
 
+	if ((progname = strrchr(argv[0], '/')))
+		progname++;
+	else
+		progname = argv[0];
+
+	if (strcmp(progname, "eject") == 0)
+		eject = 1;
+
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = DEFTAPE;
 
-	while ((ch = getopt(argc, argv, "f:t:")) != -1)
+	while ((ch = getopt(argc, argv, "f:t:")) != -1) {
 		switch (ch) {
 		case 'f':
 		case 't':
@@ -126,10 +142,19 @@ main(argc, argv)
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1 || argc > 2)
+	if (eject) {
+		if (argc == 1) {
+			tape = *argv++;
+			argc--;
+		}
+
+		if (argc != 0)
+			usage();
+	} else if (argc < 1 || argc > 2)
 		usage();
 
 	if (strchr(tape, ':')) {
@@ -141,18 +166,23 @@ main(argc, argv)
 	}
 	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 
-	len = strlen(p = *argv++);
-	for (comp = com;; comp++) {
-		if (comp->c_name == NULL)
-			errx(1, "%s: unknown command", p);
-		if (strncmp(p, comp->c_name, len) == 0)
-			break;
+	if (eject)
+		comp = &com[COM_EJECT];
+	else {
+		len = strlen(p = *argv++);
+		for (comp = com;; comp++) {
+			if (comp->c_name == NULL)
+				errx(1, "%s: unknown command", p);
+			if (strncmp(p, comp->c_name, len) == 0)
+				break;
+		}
 	}
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
-	if ((mtfd = host ? rmtopen(tape, flags) : open(tape, flags,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0)
-		err(2, "%s", tape);
+	if ((mtfd = host ? rmtopen(tape, flags) : opendev(tape, flags,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
+	    &realtape)) < 0)
+		err(2, "%s", host ? tape : realtape);
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
 		if (*argv) {
@@ -180,6 +210,47 @@ main(argc, argv)
 
 	exit(X_FINOK);
 	/* NOTREACHED */
+}
+
+int
+opendev(path, flags, mode, realpath)
+	char *path;
+	int flags;
+	mode_t mode;
+	char **realpath;
+{
+	int fd;
+	static char namebuf[256];
+	const char *parts = "abcdefgh";	/* enough for now */
+
+	*realpath = path;
+
+	fd = open(path, flags, mode);
+	if (fd < 0) {
+		if (path[0] != '/') {
+			/* first try raw partition (for removable drives) */
+			(void)snprintf(namebuf, sizeof(namebuf), "%sr%s%c",
+			    _PATH_DEV, path, parts[RAW_PART]);
+			fd = open(namebuf, flags, mode);
+
+			if ((fd < 0) && (errno == ENOENT)) {
+				/* ..and now no partition (for tapes) */
+				namebuf[strlen(namebuf) - 1] = '\0';
+				fd = open(namebuf, flags, mode);
+			}
+
+			*realpath = namebuf;
+		}
+	}
+	if ((fd < 0) && (errno == ENOENT) && (path[0] != '/')) {
+		(void)snprintf(namebuf, sizeof(namebuf), "%sr%s",
+		    _PATH_DEV, path);
+		fd = open(namebuf, flags, mode);
+
+		*realpath = namebuf;
+	}
+
+	return (fd);
 }
 
 #ifdef sun
@@ -275,6 +346,10 @@ printreg(s, v, bits)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: mt [-f device] command [ count ]\n");
+	if (eject)
+		(void)fprintf(stderr, "usage: %s [-f] device\n", progname);
+	else
+		(void)fprintf(stderr,
+		    "usage: %s [-f device] command [ count ]\n", progname);
 	exit(X_USAGE);
 }

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: mt.1,v 1.4 1996/06/11 11:20:22 downsj Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -33,17 +34,21 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd June 11, 1996
 .Dt MT 1
 .Os BSD 4
 .Sh NAME
-.Nm mt
-.Nd magnetic tape manipulating program
+.Nm mt ,
+.Nm eject
+.Nd magnetic tape and removable media manipulating program
 .Sh SYNOPSIS
 .Nm mt
 .Op Fl f Ar tapename
 .Ar command
 .Op Ar count
+.Nm eject
+.Op Fl f
+.Op Ar tapename
 .Sh DESCRIPTION
 .Nm Mt
 is used to give commands to a magnetic tape drive.
@@ -113,6 +118,13 @@ Set the tape density code to
 .Ar count
 as specified in the SCSI2 specification.
 .El
+.Pp
+.Nm Eject
+is simply an alias for
+.Nm mt ,
+with the
+.Cm offline
+command specified.
 .Pp
 If a tape name is not specified, and the environment variable
 .Ev TAPE

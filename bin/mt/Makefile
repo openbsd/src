@@ -6,4 +6,7 @@ SRCS=	mt.c mtrmt.c
 BINOWN=	root
 BINMODE=4555
 
+LINKS=	${BINDIR}/mt ${BINDIR}/eject
+MLINKS=	mt.1 eject.1
+
 .include <bsd.prog.mk>
