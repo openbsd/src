@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.13 2003/06/27 01:36:53 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.14 2003/06/27 01:50:52 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -208,10 +208,7 @@ struct cfdriver be_cd = {
 };
 
 int
-bematch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+bematch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -220,9 +217,7 @@ bematch(parent, vcf, aux)
 }
 
 void
-beattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+beattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;
@@ -471,10 +466,7 @@ beattach(parent, self, aux)
  * network buffer memory.
  */
 static __inline__ int
-be_put(sc, idx, m)
-	struct be_softc *sc;
-	int idx;
-	struct mbuf *m;
+be_put(struct be_softc *sc, int idx, struct mbuf *m)
 {
 	struct mbuf *n;
 	int len, tlen = 0, boff = 0;
@@ -503,9 +495,7 @@ be_put(sc, idx, m)
  * we copy into clusters.
  */
 static __inline__ struct mbuf *
-be_get(sc, idx, totlen)
-	struct be_softc *sc;
-	int idx, totlen;
+be_get(struct be_softc *sc, int idx, int totlen)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
@@ -556,9 +546,7 @@ be_get(sc, idx, totlen)
  * Pass a packet to the higher levels.
  */
 static __inline__ void
-be_read(sc, idx, len)
-	struct be_softc *sc;
-	int idx, len;
+be_read(struct be_softc *sc, int idx, int len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
@@ -605,8 +593,7 @@ be_read(sc, idx, len)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-bestart(ifp)
-	struct ifnet *ifp;
+bestart(struct ifnet *ifp)
 {
 	struct be_softc *sc = (struct be_softc *)ifp->if_softc;
 	struct qec_xd *txd = sc->sc_rb.rb_txd;
@@ -659,8 +646,7 @@ bestart(ifp)
 }
 
 void
-bestop(sc)
-	struct be_softc *sc;
+bestop(struct be_softc *sc)
 {
 	int n;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -693,8 +679,7 @@ bestop(sc)
  * Reset interface.
  */
 void
-bereset(sc)
-	struct be_softc *sc;
+bereset(struct be_softc *sc)
 {
 	int s;
 
@@ -706,8 +691,7 @@ bereset(sc)
 }
 
 void
-bewatchdog(ifp)
-	struct ifnet *ifp;
+bewatchdog(struct ifnet *ifp)
 {
 	struct be_softc *sc = ifp->if_softc;
 
@@ -717,8 +701,7 @@ bewatchdog(ifp)
 }
 
 int
-beintr(v)
-	void *v;
+beintr(void *v)
 {
 	struct be_softc *sc = (struct be_softc *)v;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -749,9 +732,7 @@ beintr(v)
  * QEC Interrupt.
  */
 int
-beqint(sc, why)
-	struct be_softc *sc;
-	u_int32_t why;
+beqint(struct be_softc *sc, u_int32_t why)
 {
 	int r = 0, rst = 0;
 
@@ -828,9 +809,7 @@ beqint(sc, why)
  * Error interrupt.
  */
 int
-beeint(sc, why)
-	struct be_softc *sc;
-	u_int32_t why;
+beeint(struct be_softc *sc, u_int32_t why)
 {
 	int r = 0, rst = 0;
 
@@ -868,8 +847,7 @@ beeint(sc, why)
  * Transmit interrupt.
  */
 int
-betint(sc)
-	struct be_softc *sc;
+betint(struct be_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -927,8 +905,7 @@ betint(sc)
  * Receive interrupt.
  */
 int
-berint(sc)
-	struct be_softc *sc;
+berint(struct be_softc *sc)
 {
 	struct qec_xd *xd = sc->sc_rb.rb_rxd;
 	unsigned int bix, len;
@@ -961,10 +938,7 @@ berint(sc)
 }
 
 int
-beioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+beioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct be_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1071,8 +1045,7 @@ beioctl(ifp, cmd, data)
 
 
 void
-beinit(sc)
-	struct be_softc *sc;
+beinit(struct be_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1166,8 +1139,7 @@ beinit(sc)
 }
 
 void
-be_mcreset(sc)
-	struct be_softc *sc;
+be_mcreset(struct be_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1253,8 +1225,7 @@ chipit:
  * Set the tcvr to an idle state
  */
 void
-be_mii_sync(sc)
-	struct be_softc *sc;
+be_mii_sync(struct be_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
@@ -1272,9 +1243,7 @@ be_mii_sync(sc)
 }
 
 void
-be_pal_gate(sc, phy)
-	struct be_softc *sc;
-	int phy;
+be_pal_gate(struct be_softc *sc, int phy)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
@@ -1291,9 +1260,7 @@ be_pal_gate(sc, phy)
 }
 
 static int
-be_tcvr_read_bit(sc, phy)
-	struct be_softc *sc;
-	int phy;
+be_tcvr_read_bit(struct be_softc *sc, int phy)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
@@ -1321,10 +1288,7 @@ be_tcvr_read_bit(sc, phy)
 }
 
 static void
-be_tcvr_write_bit(sc, phy, bit)
-	struct be_softc *sc;
-	int phy;
-	int bit;
+be_tcvr_write_bit(struct be_softc *sc, int phy, int bit)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
@@ -1344,11 +1308,7 @@ be_tcvr_write_bit(sc, phy, bit)
 }
 
 static void
-be_mii_sendbits(sc, phy, data, nbits)
-	struct be_softc *sc;
-	int phy;
-	u_int32_t data;
-	int nbits;
+be_mii_sendbits(struct be_softc *sc, int phy, u_int32_t data, int nbits)
 {
 	int i;
 
@@ -1357,9 +1317,7 @@ be_mii_sendbits(sc, phy, data, nbits)
 }
 
 static int
-be_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+be_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int val = 0, i;
@@ -1387,9 +1345,7 @@ be_mii_readreg(self, phy, reg)
 }
 
 void
-be_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+be_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int i;
@@ -1411,9 +1367,7 @@ be_mii_writereg(self, phy, reg, val)
 }
 
 int
-be_mii_reset(sc, phy)
-	struct be_softc *sc;
-	int phy;
+be_mii_reset(struct be_softc *sc, int phy)
 {
 	int n;
 
@@ -1436,8 +1390,7 @@ be_mii_reset(sc, phy)
 }
 
 void
-be_tick(arg)
-	void	*arg;
+be_tick(void *arg)
 {
 	struct be_softc *sc = arg;
 	int s = splnet();
@@ -1450,8 +1403,7 @@ be_tick(arg)
 }
 
 void
-be_mii_statchg(self)
-	struct device *self;
+be_mii_statchg(struct device *self)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1481,9 +1433,7 @@ be_mii_statchg(self)
  * Get current media settings.
  */
 void
-be_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+be_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct be_softc *sc = ifp->if_softc;
 
@@ -1499,8 +1449,7 @@ be_ifmedia_sts(ifp, ifmr)
  * Set media options.
  */
 int
-be_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+be_ifmedia_upd(struct ifnet *ifp)
 {
 	struct be_softc *sc = ifp->if_softc;
 	int error;
@@ -1515,10 +1464,7 @@ be_ifmedia_upd(ifp)
  * Service routine for our pseudo-MII internal transceiver.
  */
 int
-be_intphy_service(sc, mii, cmd)
-	struct be_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+be_intphy_service(struct be_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmcr, bmsr;
@@ -1673,8 +1619,7 @@ be_intphy_service(sc, mii, cmd)
  * Determine status of internal transceiver
  */
 void
-be_intphy_status(sc)
-	struct be_softc *sc;
+be_intphy_status(struct be_softc *sc)
 {
 	struct mii_data *mii = &sc->sc_mii;
 	int media_active, media_status;

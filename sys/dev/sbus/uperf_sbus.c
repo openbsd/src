@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_sbus.c,v 1.6 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: uperf_sbus.c,v 1.7 2003/06/27 01:50:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -98,9 +98,7 @@ struct uperf_src uperf_sbus_srcs[] = {
 };
 
 int
-uperf_sbus_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+uperf_sbus_match(struct device *parent, void *vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -108,9 +106,7 @@ uperf_sbus_match(parent, vcf, aux)
 }
 
 void
-uperf_sbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uperf_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct uperf_sbus_softc *sc = (struct uperf_sbus_softc *)self;
@@ -152,9 +148,7 @@ uperf_sbus_attach(parent, self, aux)
  * Read from an indirect register
  */
 u_int32_t
-uperf_sbus_read_reg(sc, r)
-	struct uperf_sbus_softc *sc;
-	bus_size_t r;
+uperf_sbus_read_reg(struct uperf_sbus_softc *sc, bus_size_t r)
 {
 	u_int32_t v;
 	int s;
@@ -193,10 +187,7 @@ uperf_sbus_read_reg(sc, r)
  * Write to an indirect register
  */
 void
-uperf_sbus_write_reg(sc, r, v)
-	struct uperf_sbus_softc *sc;
-	bus_size_t r;
-	u_int32_t v;
+uperf_sbus_write_reg(struct uperf_sbus_softc *sc, bus_size_t r, u_int32_t v)
 {
 	int s;
 
@@ -230,9 +221,7 @@ uperf_sbus_write_reg(sc, r, v)
 }
 
 int
-uperf_sbus_clrcnt(vsc, flags)
-	void *vsc;
-	int flags;
+uperf_sbus_clrcnt(void *vsc, int flags)
 {
 	struct uperf_sbus_softc *sc = vsc;
 	u_int32_t clr = 0, oldsrc;
@@ -249,10 +238,7 @@ uperf_sbus_clrcnt(vsc, flags)
 }
 
 int
-uperf_sbus_setcntsrc(vsc, flags, src0, src1)
-	void *vsc;
-	int flags;
-	u_int src0, src1;
+uperf_sbus_setcntsrc(void *vsc, int flags, u_int src0, u_int src1)
 {
 	struct uperf_sbus_softc *sc = vsc;
 	u_int32_t src;
@@ -271,10 +257,7 @@ uperf_sbus_setcntsrc(vsc, flags, src0, src1)
 }
 
 int
-uperf_sbus_getcntsrc(vsc, flags, srcp0, srcp1)
-	void *vsc;
-	int flags;
-	u_int *srcp0, *srcp1;
+uperf_sbus_getcntsrc(void *vsc, int flags, u_int *srcp0, u_int *srcp1)
 {
 	struct uperf_sbus_softc *sc = vsc;
 	u_int32_t src;
@@ -288,10 +271,7 @@ uperf_sbus_getcntsrc(vsc, flags, srcp0, srcp1)
 }
 
 int
-uperf_sbus_getcnt(vsc, flags, cntp0, cntp1)
-	void *vsc;
-	int flags;
-	u_int32_t *cntp0, *cntp1;
+uperf_sbus_getcnt(void *vsc, int flags, u_int32_t *cntp0, u_int32_t *cntp1)
 {
 	struct uperf_sbus_softc *sc = vsc;
 	u_int32_t c0, c1;
