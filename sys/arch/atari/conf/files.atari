@@ -83,6 +83,8 @@ file	scsi/st.c			st needs-flag
 major	{st = 5}
 device	ch at scsibus: disk
 file	scsi/ch.c			ch needs-flag
+device	ss at scsibus: tape
+file	scsi/ss.c			ss needs-flag
 device	uk at scsibus: disk
 file	scsi/uk.c			uk needs-flag
 device	su at scsibus: disk
