@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.33 2002/04/04 18:39:32 millert Exp $ */
+/* $OpenBSD: user.c,v 1.34 2002/05/17 04:07:50 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -1738,12 +1738,14 @@ groupmod(int argc, char **argv)
 		if (cc >= sizeof(buf))
 			err(EXIT_FAILURE, "group `%s' entry too long",
 			    grp->gr_name);
-		if (cpp[1] == NULL)
-			buf[cc - 1] = '\n';
-		else
+		if (cpp[1] != NULL) {
 			buf[cc - 1] = ',';
-		buf[cc] = '\0';
+			buf[cc] = '\0';
+		}
 	}
+	cc = strlcat(buf, "\n", sizeof(buf));
+	if (cc >= sizeof(buf))
+		err(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
 
 	if (!modify_gid(*argv, buf))
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
