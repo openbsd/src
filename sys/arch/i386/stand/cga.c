@@ -1,3 +1,4 @@
+/*	$OpenBSD: cga.c,v 1.3 1996/09/23 15:15:37 mickey Exp $	*/
 /*	$NetBSD: cga.c,v 1.3 1994/10/27 04:21:51 cgd Exp $	*/
 
 /*-
@@ -39,30 +40,32 @@
  */
 
 #include <sys/param.h>
+#include <dev/ic/mc6845.h>
 
 #define	COL		80
 #define	ROW		25
 #define	CHR		2
-#define MONO_BASE	0x3B4
 #define MONO_BUF	0xB0000
-#define CGA_BASE	0x3D4
 #define CGA_BUF		0xB8000
 
 static u_char	att = 0x7 ;
 u_char *Crtat = (u_char *)CGA_BUF;
 
 static unsigned int addr_6845 = CGA_BASE;
+
+void
 cursor(pos)
-int pos;
+	int pos;
 {
-	outb(addr_6845,14);
+	outb(addr_6845,CRTC_CURSORH);
 	outb(addr_6845+1,pos >> 8);
-	outb(addr_6845,15);
+	outb(addr_6845,CRTC_CURSORL);
 	outb(addr_6845+1,pos&0xff);
 }
 
+void
 sput(c)
-u_char c;
+	u_char c;
 {
 
 	static u_char *crtat = 0;
@@ -81,9 +84,9 @@ u_char c;
 		*(u_short *)Crtat = was;
 
 		/* Extract cursor location */
-		outb(addr_6845,14);
+		outb(addr_6845,CRTC_CURSORH);
 		cursorat = inb(addr_6845+1)<<8 ;
-		outb(addr_6845,15);
+		outb(addr_6845,CRTC_CURSORL);
 		cursorat |= inb(addr_6845+1);
 
 		if(cursorat <= COL*ROW) {
