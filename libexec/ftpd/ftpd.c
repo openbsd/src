@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.8 1996/07/29 03:06:35 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.9 1996/07/29 05:32:59 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1704,22 +1704,15 @@ passive()
 	}
 
 	on = high_data_ports ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
-	(void) seteuid((uid_t)0);
 	if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
-		       (char *)&on, sizeof(on)) < 0) {
-		(void) seteuid((uid_t)pw->pw_uid);
+		       (char *)&on, sizeof(on)) < 0)
 		goto pasv_error;
-	}
 
 	pasv_addr = ctrl_addr;
 	pasv_addr.sin_port = 0;
-	(void) seteuid((uid_t)0);
 	if (bind(pdata, (struct sockaddr *)&pasv_addr,
-		 sizeof(pasv_addr)) < 0) {
-		(void) seteuid((uid_t)pw->pw_uid);
+		 sizeof(pasv_addr)) < 0)
 		goto pasv_error;
-	}
-	(void) seteuid((uid_t)pw->pw_uid);
 
 	len = sizeof(pasv_addr);
 	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
