@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.2 2004/03/07 05:08:16 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.3 2004/03/14 23:14:36 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -214,6 +214,7 @@ typedef struct mpt_softc {
 			fCONFIG_PAGE_SCSI_PORT_2	_port_page2;
 			fCONFIG_PAGE_SCSI_DEVICE_0	_dev_page0[16];
 			fCONFIG_PAGE_SCSI_DEVICE_1	_dev_page1[16];
+			uint16_t			_negotiated_speed[16];
 			uint16_t			_tag_enable;
 			uint16_t			_disc_enable;
 			uint16_t			_update_params0;
@@ -225,6 +226,7 @@ typedef struct mpt_softc {
 #define	mpt_port_page2		cfg.spi._port_page2
 #define	mpt_dev_page0		cfg.spi._dev_page0
 #define	mpt_dev_page1		cfg.spi._dev_page1
+#define	mpt_negotiated_speed	cfg.spi._negotiated_speed
 #define	mpt_tag_enable		cfg.spi._tag_enable
 #define	mpt_disc_enable		cfg.spi._disc_enable
 #define	mpt_update_params0	cfg.spi._update_params0

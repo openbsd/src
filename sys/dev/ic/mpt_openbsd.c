@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.3 2004/03/10 01:09:29 deraadt Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.4 2004/03/14 23:14:36 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -101,15 +101,15 @@
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
+#include <machine/stdarg.h>		/* for mpt_prt() */
+
+static void	mpt_run_ppr(mpt_softc_t *);
+static int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int speed);
 static int	mpt_poll(mpt_softc_t *, struct scsi_xfer *, int);
 static void	mpt_timeout(void *);
 static void	mpt_done(mpt_softc_t *, uint32_t);
 static int	mpt_run_xfer(mpt_softc_t *, struct scsi_xfer *);
 static void	mpt_check_xfer_settings(mpt_softc_t *, struct scsi_xfer *, MSG_SCSI_IO_REQUEST *);
-static void	mpt_set_xfer_mode(mpt_softc_t *, struct scsi_xfer *);
-#if 0
-static void	mpt_get_xfer_mode(mpt_softc_t *, struct scsipi_periph *);
-#endif
 static void	mpt_ctlop(mpt_softc_t *, void *vmsg, uint32_t);
 static void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
 
@@ -128,6 +128,260 @@ static struct scsi_device mpt_dev =
 	NULL, /* have no async handler */
 	NULL, /* Use default 'done' routine */
 };
+
+enum mpt_scsi_speed { U320, U160, U80 };
+
+/*
+ * try speed and
+ * return 0 if failed
+ * return 1 if passed
+ */
+int
+mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
+{
+	fCONFIG_PAGE_SCSI_DEVICE_0 page0;
+	fCONFIG_PAGE_SCSI_DEVICE_1 page1;
+	uint8_t tp;
+
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "Entering PPR");
+	}
+
+	if (mpt->is_fc) {
+		/*
+		 * SCSI transport settings don't make any sense for
+		 * Fibre Channel; silently ignore the request.
+		 */
+		return 1; /* success */
+	}
+
+	/*
+	 * Always allow disconnect; we don't have a way to disable
+	 * it right now, in any case.
+	 */
+	mpt->mpt_disc_enable |= (1 << sc_link->target);
+
+	/*
+	 * Enable tagged queueing.
+	 */
+	if (sc_link->quirks & SDEV_NOTAGS)
+		mpt->mpt_tag_enable &= ~(1 << sc_link->target);
+	else
+		mpt->mpt_tag_enable |= (1 << sc_link->target);
+
+	page1 = mpt->mpt_dev_page1[sc_link->target];
+
+	/*
+	 * Set the wide/narrow parameter for the target.
+	 */
+	if (sc_link->quirks & SDEV_NOWIDE)
+		page1.RequestedParameters &= ~MPI_SCSIDEVPAGE1_RP_WIDE;
+	else {
+		page1.RequestedParameters |= MPI_SCSIDEVPAGE1_RP_WIDE;
+	}
+
+	/*
+	 * Set the synchronous parameters for the target.
+	 */
+	page1.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
+	    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
+	    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
+	    MPI_SCSIDEVPAGE1_RP_IU);
+	if (!(sc_link->quirks & SDEV_NOSYNC)) {
+		int factor, offset, np;
+
+		/*
+		 * Factor:
+		 * 0x08 = U320 = 6.25ns
+		 * 0x09 = U160 = 12.5ns
+		 * 0x0a = U80 = 25ns
+		 */
+		factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
+		offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
+		np = 0;
+		
+		switch (speed) {
+			case U320:
+				/* do nothing */
+				break;
+
+			case U160:
+				factor = 0x09; /* force U160 */
+				break;
+				
+			case U80:
+				factor = 0x0a; /* force U80 */
+		}
+
+		if (factor < 0x9) {
+			/* Ultra320 enable QAS & IU */
+			np |= MPI_SCSIDEVPAGE1_RP_QAS | MPI_SCSIDEVPAGE1_RP_IU;
+		}
+		if (factor < 0xa) {
+			/* >= Ultra160 enable DT transfer */
+			np |= MPI_SCSIDEVPAGE1_RP_DT;
+		}
+		np |= (factor << 8) | (offset << 16);
+		page1.RequestedParameters |= np;
+	}
+
+	/* write parameters out to chip */
+	if (mpt_write_cfg_page(mpt, sc_link->target, &page1.Header)) {
+		mpt_prt(mpt, "unable to write Device Page 1");
+		return 0;
+	}
+
+	/* make sure the parameters were written */
+	if (mpt_read_cfg_page(mpt, sc_link->target, &page1.Header)) {
+		mpt_prt(mpt, "unable to read back Device Page 1");
+		return 0;
+	}
+
+	mpt->mpt_dev_page1[sc_link->target] = page1;
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt,
+		    "SPI Target %d Page 1: RequestedParameters %x Config %x",
+		    sc_link->target,
+		    mpt->mpt_dev_page1[sc_link->target].RequestedParameters,
+		    mpt->mpt_dev_page1[sc_link->target].Configuration);
+	}
+
+	/* use TUR for PPR, use another command if there is a NO_TUR quirk */
+	/* FIXME */
+	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
+		scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
+		SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
+
+	/* read page 0 back to figure out if the PPR worked */
+        page0 = mpt->mpt_dev_page0[sc_link->target];
+        if (mpt_read_cfg_page(mpt, sc_link->target, &page0.Header)) {
+                mpt_prt(mpt, "unable to read Device Page 0");
+                return 0;
+        }
+
+        if (mpt->verbose > 1) {
+                mpt_prt(mpt,
+                    "SPI Tgt %d Page 0: NParms %x Information %x",
+                    sc_link->target,
+                    page0.NegotiatedParameters, page0.Information);
+        }
+
+	if (!(page0.NegotiatedParameters & 0x07) && (speed == U320)) {
+		/* if lowest 3 aren't set the PPR probably failed, retry with other parameters */
+        	if (mpt->verbose > 1) {
+			mpt_prt(mpt, "U320 PPR failed");
+		}
+		return 0;
+	}
+
+	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) && (speed == U160)) {
+		/* if transfer period > 0x09 then U160 PPR failed, retry */
+        	if (mpt->verbose > 1) {
+			mpt_prt(mpt, "U160 PPR failed");
+		}
+		return 0;
+	}
+
+	/*
+	 * Bit 3 - PPR rejected: The IOC sets this bit if the device rejects a PPR message.
+	 * Bit 2 - WDTR Rejected: The IOC sets this bit if the device rejects a WDTR message.
+	 * Bit 1 - SDTR Rejected: The IOC sets this bit if the device rejects a SDTR message.
+	 * Bit 0 - 1 A SCSI SDTR, WDTR, or PPR negotiation has occurred with this device.
+	 */
+	if (page0.Information & 0x0e) {
+		/* target rejected PPR message */
+		mpt_prt(mpt, "Target %d rejected PPR message with %02x",
+			sc_link->target,
+			(uint8_t)page0.Information);
+		return 0;
+	}
+
+	/* print PPR results */
+	switch ((page0.NegotiatedParameters >> 8) & 0xff) {
+		case 0x08:
+			tp = 160;
+			break;
+			
+		case 0x09:
+			tp = 80;
+			break;
+			
+		case 0x0a:
+			tp = 40;
+			break;
+			
+		case 0x0b:
+			tp = 20;
+			break;
+			
+		case 0x0c:
+			tp = 10;
+			break;
+
+		default:
+			tp = 0;
+	}
+
+	mpt_prt(mpt,
+		"target %d %s at %dMHz width %dbit offset %d QAS %d DT %d IU %d",
+		sc_link->target,
+		tp ? "Synchronous" : "Asynchronous",
+		tp,
+		(page0.NegotiatedParameters & 0x20000000) ? 16 : 8,
+		(page0.NegotiatedParameters >> 16) & 0xff,
+		(page0.NegotiatedParameters & 0x04) ? 1 : 0,
+		(page0.NegotiatedParameters & 0x02) ? 1 : 0,
+		(page0.NegotiatedParameters & 0x01) ? 1 : 0);
+
+	return 1; /* success */
+}
+
+/*
+ * Run PPR on all attached devices
+ */
+void
+mpt_run_ppr(mpt_softc_t *mpt)
+{
+	struct scsi_link *sc_link;
+	struct device *dev;
+	u_int8_t target;
+	u_int16_t buswidth;
+
+	/* walk device list */
+	for (dev = TAILQ_FIRST(&alldevs); dev != NULL; dev = TAILQ_NEXT(dev, dv_list)) {
+		if (dev->dv_parent == (struct device *)mpt) {
+			/* found scsibus softc */
+			buswidth = ((struct scsi_link *)&mpt->sc_link)->adapter_buswidth;
+			/* printf("mpt_softc: %x  scsibus: %x  buswidth: %d\n",
+				mpt, dev, buswidth); */
+			/* walk target list */
+			for (target = 0; target < buswidth; target++) {
+				sc_link = ((struct scsibus_softc *)dev)->sc_link[target][0];
+				if ((sc_link != NULL)) {
+				/* got a device! run PPR */
+					/*if (device == cpu) {
+						continue;
+					}*/
+					if (mpt_ppr(mpt, sc_link, U320)) {
+						mpt->mpt_negotiated_speed[target] = U320;
+						continue;
+					}
+
+					if (mpt_ppr(mpt, sc_link, U160)) {
+						mpt->mpt_negotiated_speed[target] = U160;
+						continue;
+					}
+
+					if (mpt_ppr(mpt, sc_link, U80)) {
+						mpt->mpt_negotiated_speed[target] = U80;
+						continue;
+					}
+
+				} /* sc_link */
+			} /* for target */
+		} /* if dev */
+	} /* end for dev */
+}
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -167,6 +421,12 @@ mpt_attach(mpt_softc_t *mpt)
 	mpt->verbose = 2;
 #endif
 	(void) config_found(&mpt->mpt_dev, lptr, scsiprint);
+
+	/* done attaching now walk targets and PPR them */
+	/* FC does not do PPR */
+	if (!mpt->is_fc) {
+		mpt_run_ppr(mpt);
+	}
 }
 
 int
@@ -391,7 +651,7 @@ mpt_timeout(void *arg)
 	struct scsi_link *linkp = xs->sc_link;
 	mpt_softc_t *mpt = (void *) linkp->adapter_softc;
 	uint32_t oseq;
-	int s;
+	int s, index;
 
 	mpt_prt(mpt, "command timeout\n");
 	sc_print_addr(linkp);
@@ -419,14 +679,11 @@ mpt_timeout(void *arg)
 	if (mpt->verbose > 1)
 		mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
 
-	/* XXX WHAT IF THE IOC IS STILL USING IT?? */
-	/* XXX MU we should delay the call to mpt_free_request */
-	req->xfer = NULL;
-	mpt_free_request(mpt, req);
+	for(index = 0; index < MPT_MAX_REQUESTS(mpt); index++)
+		if (req == &mpt->request_pool[index])
+			break;
 
-	xs->error = XS_TIMEOUT;
-	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	mpt_done(mpt, index);
 
 	splx(s);
 }
@@ -644,10 +901,20 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		break;
 
 	case MPI_IOCSTATUS_SCSI_RESIDUAL_MISMATCH:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+
 	case MPI_IOCSTATUS_SCSI_TASK_TERMINATED:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+
 	case MPI_IOCSTATUS_SCSI_TASK_MGMT_FAILED:
+		/* XXX */
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+
 	case MPI_IOCSTATUS_SCSI_IOC_TERMINATED:
-		/* XXX When in doubt, STUFFUP. */
+		/* XXX */
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 
@@ -743,9 +1010,6 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 		mpt_req->Control = MPI_SCSIIO_CONTROL_WRITE;
 	else
 		mpt_req->Control = MPI_SCSIIO_CONTROL_NODATATRANSFER;
-
-	if (cold && !(xs->sc_link->quirks & SDEV_NOWIDE))
-		mpt_set_xfer_mode(mpt, xs);
 
 	mpt_check_xfer_settings(mpt, xs, mpt_req);
 
@@ -949,141 +1213,6 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsi_xfer *xs)
 
 	return (COMPLETE);
 }
-
-void
-mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsi_xfer *xs)
-{
-	fCONFIG_PAGE_SCSI_DEVICE_1 tmp;
-
-	if (mpt->is_fc) {
-		/*
-		 * SCSI transport settings don't make any sense for
-		 * Fibre Channel; silently ignore the request.
-		 */
-		return;
-	}
-
-	/*
-	 * Always allow disconnect; we don't have a way to disable
-	 * it right now, in any case.
-	 */
-	mpt->mpt_disc_enable |= (1 << xs->sc_link->target);
-
-	if (xs->sc_link->quirks & SDEV_NOTAGS)
-		mpt->mpt_tag_enable &= ~(1 << xs->sc_link->target);
-	else
-		mpt->mpt_tag_enable |= (1 << xs->sc_link->target);
-
-	tmp = mpt->mpt_dev_page1[xs->sc_link->target];
-
-	/*
-	 * Set the wide/narrow parameter for the target.
-	 */
-	if (xs->sc_link->quirks & SDEV_NOWIDE)
-		tmp.RequestedParameters &= ~MPI_SCSIDEVPAGE1_RP_WIDE;
-	else {
-		tmp.RequestedParameters |= MPI_SCSIDEVPAGE1_RP_WIDE;
-	}
-	/*
-	 * Set the synchronous parameters for the target.
-	 *
-	 * XXX If we request sync transfers, we just go ahead and
-	 * XXX request the maximum available.  We need finer control
-	 * XXX in order to implement Domain Validation.
-	 */
-	tmp.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
-	    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
-	    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
-	    MPI_SCSIDEVPAGE1_RP_IU);
-	if (!(xs->sc_link->quirks & SDEV_NOSYNC)) {
-		int factor, offset, np;
-
-		factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
-		offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
-		np = 0;
-		if (factor < 0x9) {
-			/* Ultra320 */
-			np |= MPI_SCSIDEVPAGE1_RP_QAS | MPI_SCSIDEVPAGE1_RP_IU;
-		}
-		if (factor < 0xa) {
-			/* at least Ultra160 */
-			np |= MPI_SCSIDEVPAGE1_RP_DT;
-		}
-		np |= (factor << 8) | (offset << 16);
-		tmp.RequestedParameters |= np;
-	}
-
-	if (mpt_write_cfg_page(mpt, xs->sc_link->target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to write Device Page 1");
-		return;
-	}
-
-	if (mpt_read_cfg_page(mpt, xs->sc_link->target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to read back Device Page 1");
-		return;
-	}
-
-	mpt->mpt_dev_page1[xs->sc_link->target] = tmp;
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt,
-		    "SPI Target %d Page 1: RequestedParameters %x Config %x",
-		    xs->sc_link->target,
-		    mpt->mpt_dev_page1[xs->sc_link->target].RequestedParameters,
-		    mpt->mpt_dev_page1[xs->sc_link->target].Configuration);
-	}
-
-	return;
-}
-#if 0
-static void
-mpt_get_xfer_mode(mpt_softc_t *mpt, struct scsipi_periph *periph)
-{
-	fCONFIG_PAGE_SCSI_DEVICE_0 tmp;
-	struct scsipi_xfer_mode xm;
-	int period, offset;
-
-	tmp = mpt->mpt_dev_page0[periph->periph_target];
-	if (mpt_read_cfg_page(mpt, periph->periph_target, &tmp.Header)) {
-		mpt_prt(mpt, "unable to read Device Page 0");
-		return;
-	}
-
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt,
-		    "SPI Tgt %d Page 0: NParms %x Information %x",
-		    periph->periph_target,
-		    tmp.NegotiatedParameters, tmp.Information);
-	}
-
-	xm.xm_target = periph->periph_target;
-	xm.xm_mode = 0;
-
-	if (tmp.NegotiatedParameters & MPI_SCSIDEVPAGE0_NP_WIDE)
-		xm.xm_mode |= PERIPH_CAP_WIDE16;
-
-	period = (tmp.NegotiatedParameters >> 8) & 0xff;
-	offset = (tmp.NegotiatedParameters >> 16) & 0xff;
-	if (offset) {
-		xm.xm_period = period;
-		xm.xm_offset = offset;
-		xm.xm_mode |= PERIPH_CAP_SYNC;
-	}
-
-	/*
-	 * Tagged queueing is all controlled by us; there is no
-	 * other setting to query.
-	 */
-	if (mpt->mpt_tag_enable & (1 << periph->periph_target))
-		xm.xm_mode |= PERIPH_CAP_TQING;
-
-	/*
-	 * We're going to deliver the async event, so clear the marker.
-	 */
-	mpt->mpt_report_xfer_mode &= ~(1 << periph->periph_target);
-
-	scsipi_async_event(&mpt->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
-}
-#endif /* scsipi_xfer_mode */
 
 static void
 mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
@@ -1304,7 +1433,7 @@ mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQU
 		 */
 		return;
 	}
-#if 0
+
 	/*
 	 * XXX never do these commands with tags. Should really be
 	 * in a higher layer.
@@ -1313,7 +1442,7 @@ mpt_check_xfer_settings(mpt_softc_t *mpt, struct scsi_xfer *xs, MSG_SCSI_IO_REQU
              xs->cmd->opcode == TEST_UNIT_READY ||
              xs->cmd->opcode == REQUEST_SENSE)
 		return;
-#endif
+
 	/* Set the queue behavior. */
 	if (mpt->is_fc || (mpt->mpt_tag_enable & (1 << xs->sc_link->target))) {
 			mpt_req->Control |= MPI_SCSIIO_CONTROL_SIMPLEQ;
