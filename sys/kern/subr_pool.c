@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.24 2002/01/29 00:14:23 miod Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.25 2002/02/23 00:03:14 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -159,17 +159,20 @@ struct pool_cache_group {
 	void	*pcg_objects[PCG_NOBJECTS];
 };
 
-static void	pool_cache_reclaim(struct pool_cache *);
+void pool_cache_reclaim(struct pool_cache *);
+void pool_cache_do_invalidate(struct pool_cache *, int,
+    void (*)(struct pool *, void *));
 
-static int	pool_catchup(struct pool *);
-static void	pool_prime_page(struct pool *, caddr_t,
-		    struct pool_item_header *);
+int pool_catchup(struct pool *);
+void pool_prime_page(struct pool *, caddr_t, struct pool_item_header *);
+void pr_rmpage(struct pool *, struct pool_item_header *,
+    struct pool_pagelist *);
+void pool_do_put(struct pool *, void *);
 
 void *pool_allocator_alloc(struct pool *, int);
 void pool_allocator_free(struct pool *, void *);
 
-static void pool_print1(struct pool *, const char *,
-	int (*)(const char *, ...));
+void pool_print1(struct pool *, const char *, int (*)(const char *, ...));
 
 /*
  * Pool log entry. An array of these is allocated in pool_init().
@@ -312,7 +315,7 @@ pr_find_pagehead(struct pool *pp, caddr_t page)
 /*
  * Remove a page from the pool.
  */
-static __inline void
+void
 pr_rmpage(struct pool *pp, struct pool_item_header *ph,
      struct pool_pagelist *pq)
 {
@@ -857,7 +860,7 @@ pool_get(struct pool *pp, int flags)
 /*
  * Internal version of pool_put().  Pool is already locked/entered.
  */
-static void
+void
 pool_do_put(struct pool *pp, void *v)
 {
 	struct pool_item *pi = v;
@@ -1064,7 +1067,7 @@ pool_prime(struct pool *pp, int n)
  *
  * Note, we must be called with the pool descriptor LOCKED.
  */
-static void
+void
 pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
@@ -1144,7 +1147,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
  * Note 3, we must be called with the pool already locked, and we return
  * with it locked.
  */
-static int
+int
 pool_catchup(struct pool *pp)
 {
 	struct pool_item_header *ph;
@@ -1369,7 +1372,7 @@ pool_printit(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 	splx(s);
 }
 
-static void
+void
 pool_print1(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
@@ -1744,7 +1747,7 @@ pool_cache_destruct_object(struct pool_cache *pc, void *object)
  *	This internal function implements pool_cache_invalidate() and
  *	pool_cache_reclaim().
  */
-static void
+void
 pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
     void (*putit)(struct pool *, void *))
 {
@@ -1796,7 +1799,7 @@ pool_cache_invalidate(struct pool_cache *pc)
  *
  *	Reclaim a pool cache for pool_reclaim().
  */
-static void
+void
 pool_cache_reclaim(struct pool_cache *pc)
 {
 
