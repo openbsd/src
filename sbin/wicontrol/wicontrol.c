@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.26 2002/04/01 17:51:23 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.27 2002/04/01 17:53:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.26 2002/04/01 17:51:23 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.27 2002/04/01 17:53:53 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -312,13 +312,13 @@ wi_setkeys(iface, idx, key)
         keys = (struct wi_ltv_keys *)&wreq;
 
         if (key[0] == '0' && (key[1] == 'x' || key[1] == 'X')) {
-	        if (strlen(key) > 30)
+	        if (strlen(key) > 28)
 		        err(1, "encryption key must be no "
-			    "more than 28 hex digits long");
+			    "more than 26 hex digits long");
 	} else {
-	        if (strlen(key) > 14)
+	        if (strlen(key) > 13)
 		        err(1, "encryption key must be no "
-			    "more than 14 characters long");
+			    "more than 13 characters long");
 	}
 
         if (idx > 3)
