@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2004/05/07 15:08:25 aoyama Exp $ */
+/*	$OpenBSD: mem.c,v 1.3 2004/05/07 15:30:02 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;
+extern vaddr_t last_addr;
 
 /*ARGSUSED*/
 int
@@ -123,7 +124,7 @@ mmrw(dev, uio, flags)
 		case 0:
 			/* move one page at a time */
 			v = uio->uio_offset;
-			if (v > MAXPHYSMEM) {
+			if (v > last_addr) {
 				error = EFAULT;
 				goto unlock;
 			}

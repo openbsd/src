@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.113 2004/05/07 08:00:16 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.114 2004/05/07 15:30:04 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -68,6 +68,7 @@
  */
 extern vaddr_t	avail_start;
 extern vaddr_t	virtual_avail, virtual_end;
+extern vaddr_t	last_addr;
 
 /*
  * Macros to operate pm_cpus field
@@ -1921,7 +1922,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (wired)
 		template |= PG_W;
 
-	if ((unsigned long)pa >= MAXPHYSMEM)
+	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH;
 	else
 		template |= CACHE_GLOBAL;
@@ -2689,7 +2690,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	kernel_pmap->pm_stats.wired_count++;
 
 	invalidate_pte(pte);
-	if ((unsigned long)pa >= MAXPHYSMEM)
+	if ((unsigned long)pa >= last_addr)
 		template |= CACHE_INH | PG_V | PG_W;
 	else
 		template |= CACHE_GLOBAL | PG_V | PG_W;
