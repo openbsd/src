@@ -1,4 +1,4 @@
-/*	$Id: e_acss.c,v 1.1 2004/01/23 16:58:43 hshoexer Exp $	*/
+/*	$Id: e_acss.c,v 1.2 2004/02/13 10:05:44 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *
@@ -58,7 +58,7 @@ static int
 acss_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		const unsigned char *iv, int enc)
 {
-	acss_setkey(&data(ctx)->ks,key,enc,ACSS_DATA);
+	acss_setkey(&data(ctx)->ks,key,enc,ACSS_MODE1);
 	return 1;
 }
 

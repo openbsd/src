@@ -1,4 +1,4 @@
-/*	$OpenBSD: acss.h,v 1.2 2004/01/23 19:23:33 hshoexer Exp $	*/
+/*	$OpenBSD: acss.h,v 1.3 2004/02/13 10:05:44 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *
@@ -26,10 +26,10 @@
 #define ACSS_KEYSIZE		5
 
 /* modes of acss */
-#define ACSS_AUTHENTICATE	0
-#define ACSS_SESSIONKEY		1
-#define ACSS_TITLEKEY		2
-#define ACSS_DATA		3
+#define ACSS_MODE0		0
+#define ACSS_MODE1		1
+#define ACSS_MODE2		2
+#define ACSS_MODE3		3
 
 typedef struct acss_key_st {
 	unsigned int	lfsr17;		/* current state of lfsrs */
@@ -37,9 +37,8 @@ typedef struct acss_key_st {
 	unsigned int	lfsrsum;
 	unsigned char	seed[ACSS_KEYSIZE];
 	unsigned char	data[ACSS_KEYSIZE];
-	int		encrypt;	/* XXX make these bit flags? */
+	int		encrypt;
 	int		mode;
-	int		seeded;
 } ACSS_KEY;
 
 void acss_setkey(ACSS_KEY *, const unsigned char *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acss_enc.c,v 1.3 2004/01/23 19:23:33 hshoexer Exp $	*/
+/*	$OpenBSD: acss_enc.c,v 1.4 2004/02/13 10:05:44 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *
@@ -95,7 +95,7 @@ static unsigned char sboxenc[] = {
  * lfsr17:  polynomial of degree 17, primitive modulo 2 (listed in Schneier)
  *          x^15 + x + 1
  * lfsr25:  polynomial of degree 25, not know if primitive modulo 2
- *          x^13 + x^5 + x^4 + x^1 + 1
+ *          x^13 + x^5 + x^4 + x + 1
  *
  * Output bits are discarded, instead the feedback bits are added to produce
  * the cipher stream.  Depending on the mode, feedback bytes may be inverted
@@ -145,24 +145,30 @@ acss(ACSS_KEY *key, unsigned long len, const unsigned char *in,
 
 		/* addition */
 		switch (key->mode) {
-		case ACSS_SESSIONKEY:
-			key->lfsrsum = key->lfsr17 >> 9;
-			key->lfsrsum += key->lfsr25 >> 17;
+		case ACSS_MODE3:
+			key->lfsrsum = 0xff & ~(key->lfsr17 >> 9);
+			key->lfsrsum += 0xff & ~(key->lfsr25 >> 17);
 			break;
-		case ACSS_TITLEKEY:
+		case ACSS_MODE2:
 			key->lfsrsum = key->lfsr17 >> 9;
 			key->lfsrsum += 0xff & ~(key->lfsr25 >> 17);
 			break;
-		case ACSS_AUTHENTICATE:
-		case ACSS_DATA:
-		default:
+		case ACSS_MODE1:
 			key->lfsrsum = 0xff & ~(key->lfsr17 >> 9);
+			key->lfsrsum += key->lfsr25 >> 17;
+			break;
+		case ACSS_MODE0:
+		default:
+			key->lfsrsum = key->lfsr17 >> 9;
 			key->lfsrsum += key->lfsr25 >> 17;
 			break;
 		}
 		key->lfsrsum += (lfsrsumtmp >> 8);
 
-		if (key->encrypt) {
+		if (in == (unsigned char *)0)
+			/* generate only a keystream */
+			out[i] = key->lfsrsum & 0xff;
+		else if (key->encrypt) {
 			out[i] = sboxenc[(in[i] ^ key->lfsrsum) & 0xff];
 		} else {
 			out[i] = (sboxdec[in[i]] ^ key->lfsrsum) & 0xff;
