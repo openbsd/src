@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.5 1996/09/27 14:32:07 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.6 1996/09/27 15:27:03 deraadt Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.5 1996/09/27 14:32:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.6 1996/09/27 15:27:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,7 +120,7 @@ struct part_type {
 	{ 0x83, "Linux filesystem"},
 	{ 0x93, "Amoeba filesystem"},
 	{ 0x94, "Amoeba bad block table"},
-	{ 0xA5, "NetBSD/FreeBSD/386BSD"},
+	{ 0xA5, "386BSD/FreeBSD/NetBSD"},
 	{ 0xA6, "OpenBSD"},
 	{ 0xB7, "BSDI BSD/386 filesystem"},
 	{ 0xB8, "BSDI BSD/386 swap"},
@@ -189,6 +189,8 @@ main(argc, argv)
 			break;
 		case 'm':
 			m_flag = 1;
+			i_flag = 1;
+			u_flag = 1;
 			break;
 		default:
 			usage();
