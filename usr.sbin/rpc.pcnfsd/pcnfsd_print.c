@@ -118,7 +118,7 @@ pr_queue        queue = NULL;
 int suspicious (s)
 char *s;
 {
-	if(strpbrk(s, ";|&<>`'#!?*()[]^") != NULL)
+	if(strpbrk(s, ";|&<>`'#!?*()[]^/${}\n\r\"\\:") != NULL)
 		return 1;
 	return 0;
 }
