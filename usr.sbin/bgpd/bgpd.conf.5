@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.16 2004/02/01 19:49:10 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.17 2004/02/07 20:40:47 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -276,6 +276,13 @@ statement defines the maximum hops the neighbor is away.
 Do not attempt to actively open a TCP connection to the neighbor system.
 .It Ar remote-as
 Set the AS number of the remote system.
+.It Ar tcp md5sig
+Enable TCP MD5 signatures per RFC 2385.
+The shared secret can either be given as a password or hexadecimal key.
+.Bd -literal -offset indent
+tcp md5sig password mekmidasdigoat
+tcp md5sig key deadbeef
+.Ed
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
@@ -285,6 +292,7 @@ configuration file.
 .El
 .Sh SEE ALSO
 .Xr strftime 3 ,
+.Xr tcp 4 ,
 .Xr bgpd 8
 .Sh HISTORY
 The
