@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.34 2002/04/21 10:42:40 art Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.35 2002/05/22 00:20:58 art Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -348,6 +348,8 @@ scsi_done(xs)
 	struct buf *bp;
 	int error;
 
+	splassert(IPL_BIO);
+
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_done\n"));
 #ifdef	SCSIDEBUG
 	if ((sc_link->flags & SDEV_DB1) != 0)
@@ -506,6 +508,7 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 {
 	struct scsi_xfer *xs;
 	int error;
+	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_cmd\n"));
 
@@ -521,11 +524,13 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	if ((error = scsi_execute_xs(xs)) == EJUSTRETURN)
 		return 0;
 
+	s = splbio();
 	/*
 	 * we have finished with the xfer stuct, free it and
 	 * check if anyone else needs to be started up.
 	 */
 	scsi_free_xs(xs, flags);
+	splx(s);
 	return error;
 }
 
