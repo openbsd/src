@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.22 2001/10/04 23:47:21 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.23 2001/10/05 04:40:42 ho Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -479,9 +479,9 @@ Set to
 or the transport protocol number, depending on the transport protocol set
 in the IDci, IDcr, and Main Mode peer ID respectively.
 .It remote_negotiation_address
-Set to the IPv4 address of the remote IKE daemon.
+Set to the IPv4 or IPv6 address of the remote IKE daemon.
 .It local_negotiation_address
-Set to the IPv4 address of the local interface used by the local IKE
+Set to the IPv4 or IPv6 address of the local interface used by the local IKE
 daemon for this exchange.
 .It GMTTimeOfDay
 Set to the UTC date/time, in YYYYMMDDHHmmSS format.
@@ -562,7 +562,7 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
 		d1Pn17LbJC1ZVRNjR5"
     conditions: app_domain == "IPsec policy" && doi == "ipsec" &&
             pfs == "yes" && esp_present == "yes" && ah_present == "no" &&
-            (esp_enc_alg == "3des" || esp_enc_alg == "idea") -> "true";
+            (esp_enc_alg == "3des" || esp_enc_alg == "aes") -> "true";
 
 
 
@@ -601,7 +601,7 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
 		 d1Pn17LbJC1ZVRNjR5"
 conditions: app_domain == "IPsec policy" && doi == "ipsec" &&
 	    pfs == "yes" && esp_present == "yes" && ah_present == "no" &&
-            (esp_enc_alg == "3des" || esp_enc_alg == "idea") -> "true";
+            (esp_enc_alg == "3des" || esp_enc_alg == "aes") -> "true";
 Signature: "sig-x509-sha1-base64:ql+vrUxv14DcBOQHR2jsbXayq6T\\
             mmtMiUB745a8rjwSrQwh+KIVDlUrghPnqhSIkWSDi9oWWMbfg\\
             mkdudZ0wjgeTLMI2NI4GibMMsToakOKMex/0q4cpdpln3DKcQ\\
