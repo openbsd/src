@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.3 2004/08/01 17:18:05 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.4 2004/08/02 10:44:51 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -33,7 +33,6 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-#include <machine/board.h>
 #include <machine/cpu_number.h>
 #include <machine/trap.h>
 
