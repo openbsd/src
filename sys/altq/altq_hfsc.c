@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.17 2003/04/12 18:59:16 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.18 2003/04/12 20:03:22 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -209,6 +209,7 @@ hfsc_add_queue(struct pf_altq *a)
 
 	opts = &a->pq_u.hfsc_opts;
 
+	parent = NULL;
 	if (a->qid != HFSC_ROOTCLASS_HANDLE)
 		if ((parent = clh_to_clp(hif, a->parent_qid)) == NULL)
 			return (EINVAL);
