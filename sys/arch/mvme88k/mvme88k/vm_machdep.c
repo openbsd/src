@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2001/08/05 20:35:46 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2001/08/11 01:54:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -328,8 +328,8 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 	len = round_page(off + len);
 
 	s = splhigh();
-	error = extent_alloc(iomap_extent, len, PAGE_SIZE, 0, 0,
-	    canwait ? EX_WAITSPACE : 0, &iova);
+	error = extent_alloc(iomap_extent, len, PAGE_SIZE, 0, EX_NOBOUNDARY,
+	    canwait ? EX_WAITSPACE : EX_NOWAIT, &iova);
 	splx(s);
 
 	if (error != 0)
@@ -363,7 +363,7 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 /*
  * Free up the mapping in iomap.
  */
-int
+void
 iomap_mapout(vm_offset_t kva, vm_size_t len)
 {
 	vm_offset_t 	off;
@@ -378,10 +378,9 @@ iomap_mapout(vm_offset_t kva, vm_size_t len)
 	s = splhigh();
 	error = extent_free(iomap_extent, kva, len, EX_NOWAIT);
 	splx(s);
+
 	if (error != 0)
 		printf("iomap_mapout: extent_free failed\n");
-
-	return 1;
 }
 
 /*
