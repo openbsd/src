@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2000/11/28 22:59:52 brian Exp $
+#	$OpenBSD: Makefile,v 1.21 2001/08/09 02:26:26 jsyn Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
@@ -12,6 +12,7 @@ SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
 	tty.c tun.c udp.c vjcomp.c
 CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH -DNOI4B -DNONETGRAPH
 CFLAGS+=-DLOCALNAT -DLOCALRAD
+M4FLAGS=-DLOCALNAT -DLOCALRAD
 LDADD+= -lcrypto -ldes -lutil -lz
 DPADD+=	${LIBDES} ${LIBUTIL} ${LIBZ}
 .if defined(NOSUID) || defined(PPP_NOSUID)
@@ -22,6 +23,11 @@ BINOWN=	root
 .endif
 BINGRP=	network
 MAN=	ppp.8
+
+.SUFFIXES: .8 .8.m4
+
+.8.m4.8:
+	m4 ${M4FLAGS} ${.IMPSRC} >${.TARGET}
 
 NOATM=	/usr/include/netnatm required
 .if defined(NOATM)
