@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2004/08/20 15:19:28 millert Exp $
+#	$OpenBSD: GENERIC,v 1.28 2004/09/14 23:17:54 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -384,7 +384,7 @@ ukphy*	at mii? phy ?				# "unknown" PHYs
 #pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0		# sound port driver
 
-#eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
+eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
 #eso*	at pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 #sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 #neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
@@ -432,7 +432,7 @@ auvia*	at pci? dev ? function ?		# VIA VT82C686A
 #audio*	at ess?
 #audio*	at wss?
 #audio*	at ym?
-#audio*	at eap?
+audio*	at eap?
 #audio*	at eso?
 #audio*	at sv?
 #audio*	at neo?
