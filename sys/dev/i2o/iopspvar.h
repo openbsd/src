@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopspvar.h,v 1.1 2001/06/26 02:50:14 niklas Exp $	*/
+/*	$OpenBSD: iopspvar.h,v 1.2 2001/06/27 02:06:37 mickey Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -59,15 +59,15 @@ struct iopsp_target {
 #endif
 
 struct iopsp_softc {
-	struct	device sc_dv;			/* Generic device data */
-	struct	scsi_adapter sc_adapter;	/* scsipi adapter */
-	struct	scsi_channel sc_channel;	/* Prototype link */
-	struct	iop_initiator sc_ii;		/* I2O initiator state */
-	u_short	*sc_tidmap;			/* Target/LUN -> TID map */
-	u_int	sc_chgind;			/* Last LCT change # */
-	u_int	sc_curqd;			/* Current queue depth */
+	struct device		sc_dv;
+	struct scsi_link	sc_link;
+	struct iop_initiator	sc_ii;
+
+	u_short			*sc_tidmap;	/* Target/LUN -> TID map */
+	u_int			sc_chgind;	/* Last LCT change # */
+	u_int			sc_curqd;	/* Current queue depth */
 #ifdef I2OVERBOSE
-	struct	iopsp_target *sc_targetmap;	/* Target information */
+	struct iopsp_target	*sc_targetmap;	/* Target information */
 #endif
 };
 
