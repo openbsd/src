@@ -1,3 +1,4 @@
+/*	$OpenBSD: gemreg.h,v 1.7 2002/02/22 20:15:28 jason Exp $	*/
 /*	$NetBSD: gemreg.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -81,11 +82,11 @@
 #define	GEM_INTR_MAC_CONTROL	0x000010000	/* MAC control interrupt */
 #define	GEM_INTR_MIF		0x000020000
 #define	GEM_INTR_BERR		0x000040000	/* Bus error interrupt */
-#define GEM_INTR_BITS	"\177\020"					\
-			"b\0INTME\0b\1TXEMPTY\0b\2TXDONE\0"		\
-			"b\4RXDONE\0b\5RXNOBUF\0b\6RX_TAG_ERR\0"	\
-			"b\15PCS\0b\16TXMAC\0b\17RXMAC\0"		\
-			"b\20MAC_CONTROL\0b\21MIF\0b\22BERR\0\0"	\
+#define GEM_INTR_BITS	"\020"					\
+			"\1INTME\2TXEMPTY\3TXDONE"		\
+			"\5RXDONE\6RXNOBUF\7RX_TAG_ERR"		\
+			"\16PCS\17TXMAC\20RXMAC"		\
+			"\21MACCONTROL\22MIF\23BERR"
 
 
 
@@ -531,11 +532,11 @@ struct gem_desc {
 #define	GEM_RD_BUFSHIFT		16
 #define	GEM_RD_BUFLEN(x)	(((x)&GEM_RD_BUFSIZE)>>GEM_RD_BUFSHIFT)
 
-#ifndef EVL_ENCAPLEN
+#ifndef EVL_ENCAPLEN		/* defined if NVLAN > 0 */
 #define	EVL_ENCAPLEN	0
 #endif
 
 #define	GEM_MTU		\
     (ETHERMTU + EVL_ENCAPLEN + sizeof(u_int32_t) + sizeof(struct ether_header))
 
-#endif
+#endif /* _IF_GEMREG_H */
