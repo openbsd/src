@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.44 1997/12/23 23:46:16 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.45 1998/02/24 20:21:32 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.44 1997/12/23 23:46:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.45 1998/02/24 20:21:32 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1768,12 +1768,15 @@ machtime_dg(s, sep)
 {
 	u_int result;
 	struct sockaddr sa;
+	struct sockaddr_in *sin;
 	int size;
 
 	size = sizeof(sa);
 	if (recvfrom(s, (char *)&result, sizeof(result), 0, &sa, &size) < 0)
 		return;
-	if (dg_badinput((struct sockaddr_in *)&sa))
+	sin = (struct sockaddr_in *)&sa;
+	if (sin->sin_addr.s_addr == htonl(INADDR_BROADCAST) || 
+	    ntohs(sin->sin_port) < IPPORT_RESERVED/2)
 		return;
 	result = machtime();
 	(void) sendto(s, (char *) &result, sizeof(result), 0, &sa, sizeof(sa));
