@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.37 2002/02/10 23:15:05 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.38 2002/02/22 23:40:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -1480,7 +1480,7 @@ Lclrloop:
 ENTRY(TBIA)
 __TBIA:
 	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbia040
+	jle	Ltbia040
 	pflusha				| flush entire TLB
 	tstl	_mmutype
 	jpl	Lmc68851a		| 68851 implies no d-cache
