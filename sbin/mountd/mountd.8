@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mountd.8,v 1.3 1996/03/21 00:16:12 niklas Exp $
+.\"	$OpenBSD: mountd.8,v 1.4 1996/09/11 05:47:40 mickey Exp $
 .\"	$NetBSD: mountd.8,v 1.11 1996/02/18 11:57:51 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -87,7 +87,7 @@ After changing the exports file,
 a hangup signal should be sent to the mountd daemon
 to get it to reload the export information.
 After sending the SIGHUP
-(kill \-s HUP `cat /var/run/mountd.pid`),
+(kill \-HUP `cat /var/run/mountd.pid`),
 check the syslog output to see if mountd logged any parsing
 errors in the exports file.
 .Sh FILES
