@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lqr.h,v 1.6 2001/06/13 21:33:41 brian Exp $
+ * $OpenBSD: lqr.h,v 1.7 2004/11/16 14:47:02 brad Exp $
  */
 
 /*
@@ -46,6 +46,14 @@ struct lqrdata {
   u_int32_t PeerOutOctets;	/* Peers OutOctets (hdlc.h) */
 };
 
+struct lqrsavedata {	/* Saved on receipt of an LQR */
+  u_int32_t InLQRs;	/* From ifInLQRs */
+  u_int32_t InPackets;	/* From ifInPackets */
+  u_int32_t InDiscards;	/* From ifInDiscards */
+  u_int32_t InErrors;	/* From ifInErrors */
+  u_int32_t InOctets;	/* From InGoodOctets ! */
+};
+
 /*
  *  We support LQR and ECHO as LQM method
  */
@@ -56,10 +64,13 @@ struct mbuf;
 struct physical;
 struct lcp;
 struct fsm;
+struct hdlc;
 struct link;
 struct bundle;
 
 extern void lqr_Dump(const char *, const char *, const struct lqrdata *);
+extern void lqr_Analyse(const struct hdlc *, const struct lqrdata *,
+                        const struct lqrdata *);
 extern void lqr_ChangeOrder(struct lqrdata *, struct lqrdata *);
 extern void lqr_Start(struct lcp *);
 extern void lqr_reStart(struct lcp *);

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $OpenBSD: link.c,v 1.13 2001/08/19 23:22:18 brian Exp $
+ *  $OpenBSD: link.c,v 1.14 2004/11/16 14:47:02 brad Exp $
  *
  */
 
@@ -146,6 +146,34 @@ link_QueueBytes(struct link *l)
   return bytes;
 }
 
+void
+link_PendingLowPriorityData(struct link *l, size_t *pkts, size_t *octets)
+{
+  struct mqueue *queue, *highest;
+  struct mbuf *m;
+  size_t len;
+
+  /*
+   * This is all rfc1989 stuff... because our LQR packet is going to bypass
+   * everything that's not in the highest priority queue, we must be able to
+   * subtract that data from our outgoing packet/octet counts.  However,
+   * we've already async-encoded our data at this point, but the async
+   * encodings MUSTn't be a part of the LQR-reported payload :(  So, we have
+   * the async layer record how much it's padded the packet in the mbuf's
+   * priv field, and when we calculate our outgoing LQR values we subtract
+   * this value for each packet from the octet count sent.
+   */
+
+  highest = LINK_HIGHQ(l);
+  *pkts = *octets = 0;
+  for (queue = l->Queue; queue < highest; queue++) {
+    len = queue->len;
+    *pkts += len;
+    for (m = queue->top; len--; m = m->m_nextpkt)
+      *octets += m_length(m) - m->priv;
+  }
+}
+
 struct mbuf *
 link_Dequeue(struct link *l)
 {
@@ -231,6 +259,7 @@ link_PushPacket(struct link *l, struct mbuf *bp, struct bundle *b, int pri,
   if(pri < 0 || pri >= LINK_QUEUES(l))
     pri = 0;
 
+  bp->priv = 0;		/* Adjusted by the async layer ! */
   for (layer = l->nlayers; layer && bp; layer--)
     if (l->layer[layer - 1]->push != NULL)
       bp = (*l->layer[layer - 1]->push)(b, l, bp, pri, &proto);
@@ -359,7 +388,7 @@ Despatch(struct bundle *bundle, struct link *l, struct mbuf *bp, u_short proto)
     bp = m_pullup(proto_Prepend(bp, proto, 0, 0));
     lcp_SendProtoRej(&l->lcp, MBUF_CTOP(bp), bp->m_len);
     if (p) {
-      p->hdlc.lqm.SaveInDiscards++;
+      p->hdlc.lqm.ifInDiscards++;
       p->hdlc.stats.unknownproto++;
     }
     m_freem(bp);

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: async.c,v 1.11 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: async.c,v 1.12 2004/11/16 14:47:02 brad Exp $
  */
 
 #include <sys/types.h>
@@ -104,12 +104,15 @@ async_LayerPush(struct bundle *bundle, struct link *l, struct mbuf *bp,
   struct physical *p = link2physical(l);
   u_char *cp, *sp, *ep;
   struct mbuf *wp;
+  size_t oldcnt;
   int cnt;
 
   if (!p || m_length(bp) > HDLCSIZE) {
     m_freem(bp);
     return NULL;
   }
+
+  oldcnt = m_length(bp);
 
   cp = p->async.xbuff;
   ep = cp + HDLCSIZE - 10;
@@ -132,6 +135,7 @@ async_LayerPush(struct bundle *bundle, struct link *l, struct mbuf *bp,
   m_freem(bp);
   bp = m_get(cnt, MB_ASYNCOUT);
   memcpy(MBUF_CTOP(bp), p->async.xbuff, cnt);
+  bp->priv = cnt - oldcnt;
   log_DumpBp(LogASYNC, "Write", bp);
 
   return bp;

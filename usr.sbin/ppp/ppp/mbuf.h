@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mbuf.h,v 1.11 2001/08/19 23:22:18 brian Exp $
+ * $OpenBSD: mbuf.h,v 1.12 2004/11/16 14:47:02 brad Exp $
  */
 
 struct mbuf {
@@ -35,6 +35,7 @@ struct mbuf {
   short m_type;			/* MB_* below */
   struct mbuf *m_next;		/* link to next mbuf */
   struct mbuf *m_nextpkt;	/* link to next packet */
+  unsigned long priv;		/* private data - holds HDLC escape count */
   /* buffer space is malloc()d directly after the header */
 };
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *  $OpenBSD: link.h,v 1.7 2000/08/15 10:08:50 brian Exp $
+ *  $OpenBSD: link.h,v 1.8 2004/11/16 14:47:02 brad Exp $
  *
  */
 
@@ -65,6 +65,7 @@ extern void link_SequenceQueue(struct link *);
 extern void link_DeleteQueue(struct link *);
 extern size_t link_QueueLen(struct link *);
 extern size_t link_QueueBytes(struct link *);
+extern void link_PendingLowPriorityData(struct link *, size_t *, size_t *);
 extern struct mbuf *link_Dequeue(struct link *);
 
 extern void link_PushPacket(struct link *, struct mbuf *, struct bundle *,
