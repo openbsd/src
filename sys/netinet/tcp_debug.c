@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.3 1998/11/17 19:23:01 provos Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.4 1999/01/11 02:01:35 deraadt Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -36,6 +36,18 @@
  *	@(#)tcp_debug.c	8.1 (Berkeley) 6/10/93
  */
 
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
+
 #ifdef TCPDEBUG
 /* load symbolic names */
 #define	PRUREQUESTS
@@ -68,6 +80,11 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
+#ifdef INET6
+#include <netinet6/ipv6.h>
+#include <netinet6/in6.h>
+#endif /* INET6 */
+
 #ifdef TCPDEBUG
 int	tcpconsdebug = 0;
 #endif
@@ -75,17 +92,22 @@ int	tcpconsdebug = 0;
  * Tcp debug routines
  */
 void
-tcp_trace(act, ostate, tp, ti, req)
+tcp_trace(act, ostate, tp, ti, req, len)
 	short act, ostate;
 	struct tcpcb *tp;
 	struct tcpiphdr *ti;
 	int req;
+	int len;
 {
 #ifdef TCPDEBUG
 	tcp_seq seq, ack;
-	int len, flags;
+	int flags;
 #endif
 	struct tcp_debug *td = &tcp_debug[tcp_debx++];
+#ifdef INET6
+	struct tcphdr *th;
+	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)ti;
+#endif
 
 	if (tcp_debx == TCP_NDEBUG)
 		tcp_debx = 0;
@@ -97,10 +119,29 @@ tcp_trace(act, ostate, tp, ti, req)
 		td->td_cb = *tp;
 	else
 		bzero((caddr_t)&td->td_cb, sizeof (*tp));
+#ifdef INET6
+	if (tp->pf == PF_INET6) {
+		if (ti) {
+			th = &ti6->ti6_t;
+			td->td_ti6 = *ti6;
+		} else {
+			bzero(&td->td_ti6, sizeof(struct tcpipv6hdr));
+		}
+	} else {
+		if (ti) {
+			th = &ti->ti_t;
+			td->td_ti = *ti;
+		} else {
+			bzero(&td->td_ti, sizeof(struct tcpiphdr));
+		}
+	}
+#else /* INET6 */
 	if (ti)
 		td->td_ti = *ti;
 	else
 		bzero((caddr_t)&td->td_ti, sizeof (*ti));
+#endif /* INET6 */
+
 	td->td_req = req;
 #ifdef TCPDEBUG
 	if (tcpconsdebug == 0)
@@ -117,26 +158,22 @@ tcp_trace(act, ostate, tp, ti, req)
 	case TA_DROP:
 		if (ti == 0)
 			break;
-		seq = ti->ti_seq;
-		ack = ti->ti_ack;
-		len = ti->ti_len;
+		seq = th->th_seq;
+		ack = th->th_ack;
 		if (act == TA_OUTPUT) {
 			seq = ntohl(seq);
 			ack = ntohl(ack);
-			len = ntohs((u_int16_t)len);
 		}
-		if (act == TA_OUTPUT)
-			len -= sizeof (struct tcphdr);
 		if (len)
 			printf("[%x..%x)", seq, seq+len);
 		else
 			printf("%x", seq);
-		printf("@%x, urp=%x", ack, ti->ti_urp);
-		flags = ti->ti_flags;
+		printf("@%x, urp=%x", ack, th->th_urp);
+		flags = th->th_flags;
 		if (flags) {
 #ifndef lint
 			char *cp = "<";
-#define pf(f) { if (ti->ti_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (th->th_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
 			printf(">");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.14 1999/01/08 21:51:23 provos Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.15 1999/01/11 02:01:34 deraadt Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -35,6 +35,18 @@
  *
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -84,7 +96,8 @@ rip_init()
 	in_pcbinit(&rawcbtable, 1);
 }
 
-struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
+struct sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
+
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -137,6 +150,7 @@ rip_input(m, va_alist)
 			sorwakeup(last);
 	} else {
 		m_freem(m);
+		/* Perhaps should send an ICMP protocol unreachable here. */
 		ipstat.ips_noproto++;
 		ipstat.ips_delivered--;
 	}
@@ -214,6 +228,13 @@ rip_output(m, va_alist)
 		flags |= IP_RAWOUTPUT;
 		ipstat.ips_rawout++;
 	}
+#ifdef INET6
+	/*
+	 * A thought:  Even though raw IP shouldn't be able to set IPv6
+	 *             multicast options, if it does, the last parameter to
+	 *             ip_output should be guarded against v6/v4 problems.
+	 */
+#endif
 	return (ip_output(m, inp->inp_options, &inp->inp_route, flags,
 	    inp->inp_moptions, inp));
 }

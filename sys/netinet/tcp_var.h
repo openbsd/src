@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.14 1998/11/18 17:42:22 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.15 1999/01/11 02:01:36 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -77,7 +77,8 @@ struct tcpcb {
 #define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
 
-	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
+	struct	tcpiphdr *t_template;	/* skeletal packet for transmit, will
+					 * be either tcpiphdr or tcpipv6hdr */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 /*
  * The following fields are used as in the protocol specification.
@@ -165,6 +166,8 @@ struct tcpcb {
 
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
+
+	int pf;
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
@@ -324,7 +327,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop __P((struct tcpcb *, int));
 void	 tcp_dooptions __P((struct tcpcb *,
-	    u_char *, int, struct tcpiphdr *, int *, u_int32_t *, u_int32_t *));
+	    u_char *, int, struct tcphdr *, int *, u_int32_t *, u_int32_t *));
 void	 tcp_drain __P((void));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
@@ -334,10 +337,9 @@ struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));
 int	 tcp_output __P((struct tcpcb *));
-void	 tcp_pulloutofband __P((struct socket *,
-	    struct tcpiphdr *, struct mbuf *));
+void	 tcp_pulloutofband __P((struct socket *, u_int, struct mbuf *));
 void	 tcp_quench __P((struct inpcb *, int));
-int	 tcp_reass __P((struct tcpcb *, struct tcpiphdr *, struct mbuf *));
+int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
 void	 tcp_respond __P((struct tcpcb *,
 	    struct tcpiphdr *, struct mbuf *, tcp_seq, tcp_seq, int));
 void	 tcp_setpersist __P((struct tcpcb *));
@@ -346,7 +348,7 @@ struct tcpiphdr *
 	 tcp_template __P((struct tcpcb *));
 struct tcpcb *
 	 tcp_timers __P((struct tcpcb *, int));
-void	 tcp_trace __P((int, int, struct tcpcb *, struct tcpiphdr *, int));
+void	 tcp_trace __P((int, int, struct tcpcb *, struct tcpiphdr *, int, int));
 struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
 int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
@@ -371,4 +373,4 @@ int	 tcp_newreno __P((struct tcpcb *, struct tcpiphdr *));
 u_long	 tcp_seq_subtract  __P((u_long, u_long )); 
 #endif /* TCP_NEWRENO || TCP_SACK */
 
-#endif /* KERNEL */
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.5 1999/01/07 09:14:54 deraadt Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.6 1999/01/11 02:01:35 deraadt Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -36,7 +36,11 @@
  *	@(#)tcp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_TCP_H_
+#define	_NETINET_TCP_H_
+
 typedef u_int32_t tcp_seq;
+
 /*
  * TCP header.
  * Per RFC 793, September, 1981.
@@ -65,6 +69,8 @@ struct tcphdr {
 	u_int16_t th_sum;			/* checksum */
 	u_int16_t th_urp;			/* urgent pointer */
 };
+#define th_reseqlen th_urp			/* TCP data length for 
+						   resequencing/reassembly */
 
 #define	TCPOPT_EOL		0
 #define	TCPOPT_NOP		1
@@ -111,3 +117,5 @@ struct tcphdr {
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
 #define	TCP_SACK_DISABLE 0x300	/* disable SACKs(if enabled by deflt.)*/
+
+#endif /* !_NETINET_TCP_H_ */

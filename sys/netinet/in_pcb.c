@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.28 1999/01/08 07:47:22 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.29 1999/01/11 02:01:34 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -59,9 +59,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#ifdef INET6
 #include <sys/domain.h>
-#endif /* INET6 */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -73,6 +71,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <dev/rndvar.h>
+
+#ifdef INET6
+#include <netinet6/ipv6_var.h>
+#endif /* INET6 */
 
 #ifdef IPSEC
 #include <net/encap.h>

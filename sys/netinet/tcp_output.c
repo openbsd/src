@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.15 1998/11/25 05:44:37 millert Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.16 1999/01/11 02:01:36 deraadt Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -36,6 +36,18 @@
  *	@(#)tcp_output.c	8.3 (Berkeley) 12/30/93
  */
 
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -44,6 +56,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/domain.h>
 
 #include <net/route.h>
 
@@ -65,6 +78,10 @@
 #include <netiso/iso.h>
 #include <netiso/tuba_table.h>
 #endif
+
+#ifdef INET6
+#include <netinet6/tcpipv6.h>
+#endif /* INET6 */
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -165,6 +182,10 @@ tcp_output(tp)
 	int off, flags, error;
 	register struct mbuf *m;
 	register struct tcpiphdr *ti;
+	register struct tcphdr *th;
+#ifdef INET6
+	register struct tcpipv6hdr *ti6 = NULL;
+#endif /* INET6 */
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned int optlen, hdrlen;
 	int idle, sendalot;
@@ -419,7 +440,20 @@ send:
 	 * link header, i.e.
 	 *	max_linkhdr + sizeof (struct tcpiphdr) + optlen <= MHLEN
 	 */
+#ifdef INET6
+        /*
+	 * For IPv6, this has changed to be:
+	 *      max_linkhdr + sizeof(struct tcphdr) + optlen + 
+	 *           sizeof(struct ipv6)  <= MHLEN
+	 * This MIGHT be harder...
+	 */
+#endif /* INET6 */
 	optlen = 0;
+#ifdef INET6
+	if (tp->pf == PF_INET6)  /* if tp->pf is 0, then assume IPv4. */
+	  hdrlen = sizeof(struct tcphdr) + sizeof(struct ipv6);
+	else
+#endif /* INET6 */
 	hdrlen = sizeof (struct tcpiphdr);
 	if (flags & TH_SYN) {
 		tp->snd_nxt = tp->iss;
@@ -596,10 +630,31 @@ send:
 		m->m_len = hdrlen;
 	}
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
-	ti = mtod(m, struct tcpiphdr *);
-	if (tp->t_template == 0)
-		panic("tcp_output");
-	bcopy((caddr_t)tp->t_template, (caddr_t)ti, sizeof (struct tcpiphdr));
+#ifdef INET6
+	if (tp->pf == PF_INET6) {
+		ti6 = mtod(m, struct tcpipv6hdr *);
+		ti = NULL;
+
+		if (!tp->t_template)
+			panic("tcp_output");
+
+		bcopy((caddr_t)tp->t_template, (caddr_t)ti6,
+			sizeof (struct tcpipv6hdr));
+
+		th = &ti6->ti6_t;
+	} else
+#endif /* INET6 */
+	{
+		ti = mtod(m, struct tcpiphdr *);
+
+		if (tp->t_template == 0)
+			panic("tcp_output");
+
+		bcopy((caddr_t)tp->t_template, (caddr_t)ti,
+		      sizeof (struct tcpiphdr));
+
+		th = &ti->ti_t;
+	};
 
 	/*
 	 * Fill in fields, remembering maximum advertised
@@ -623,9 +678,10 @@ send:
 	 * (retransmit and persist are mutually exclusive...)
 	 */
 	if (len || (flags & (TH_SYN|TH_FIN)) || tp->t_timer[TCPT_PERSIST])
-		ti->ti_seq = htonl(tp->snd_nxt);
+		th->th_seq = htonl(tp->snd_nxt);
 	else
-		ti->ti_seq = htonl(tp->snd_max);
+		th->th_seq = htonl(tp->snd_max);
+
 #ifdef TCP_SACK
 	if (sack_rxmit) {
 		/* 
@@ -635,7 +691,7 @@ send:
 		 */
 		if (sendalot)
 			sendalot = 0;
-		ti->ti_seq = htonl(p->rxmit);
+		th->th_seq = htonl(p->rxmit);
 		p->rxmit += len;
 #if defined(TCP_SACK) && defined(TCP_FACK)
 		tp->retran_data += len;
@@ -643,12 +699,13 @@ send:
 	}
 #endif /* TCP_SACK */
 
-	ti->ti_ack = htonl(tp->rcv_nxt);
+	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((caddr_t)opt, (caddr_t)(ti + 1), optlen);
-		ti->ti_off = (sizeof (struct tcphdr) + optlen) >> 2;
+		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
+		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
-	ti->ti_flags = flags;
+	th->th_flags = flags;
+
 	/*
 	 * Calculate receive window.  Don't shrink window,
 	 * but avoid silly window syndrome.
@@ -661,13 +718,13 @@ send:
 		win = (long)(tp->rcv_adv - tp->rcv_nxt);
 	if (flags & TH_RST)
 		win = 0;
-	ti->ti_win = htons((u_int16_t) (win>>tp->rcv_scale));
+	th->th_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		u_int32_t urp = tp->snd_up - tp->snd_nxt;
 		if (urp > IP_MAXPACKET)
 			urp = IP_MAXPACKET;
-		ti->ti_urp = htons((u_int16_t)urp);
-		ti->ti_flags |= TH_URG;
+		th->th_urp = htons((u_int16_t)urp);
+		th->th_flags |= TH_URG;
 	} else
 		/*
 		 * If no urgent pointer to send, then we pull
@@ -681,10 +738,19 @@ send:
 	 * Put TCP length in extended header, and then
 	 * checksum extended header and data.
 	 */
-	if (len + optlen)
-		ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) +
-		    optlen + len));
-	ti->ti_sum = in_cksum(m, (int)(hdrlen + len));
+#ifdef INET6
+	if (tp->pf == PF_INET6) {
+	  th->th_sum = in6_cksum(m, IPPROTO_TCP,
+				 sizeof(struct tcphdr) + optlen + len,
+				 sizeof(struct ipv6));
+	} else
+#endif /* INET6 */
+	{
+		if (len + optlen)
+			ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) +
+				optlen + len));
+		ti->ti_sum = in_cksum(m, (int)(hdrlen + len));
+	}
 
 	/*
 	 * In transmit state, time the transmission and arrange for
@@ -762,7 +828,12 @@ send:
 	 * Trace.
 	 */
 	if (so->so_options & SO_DEBUG)
-		tcp_trace(TA_OUTPUT, tp->t_state, tp, ti, 0);
+#if INET6
+		tcp_trace(TA_OUTPUT, tp->t_state, tp,
+		    (tp->pf == AF_INET6) ? (struct tcpiphdr *)ti6 : ti, 0, len);
+#else
+	tcp_trace(TA_OUTPUT, tp->t_state, tp, ti, 0, len);
+#endif
 
 	/*
 	 * Fill in IP length and desired time to live and
@@ -776,17 +847,25 @@ send:
 		error = tuba_output(m, tp);
 	else
 #endif
+#ifdef INET6
+	if (tp->pf == PF_INET6) {
+	  ((struct ipv6 *)ti6)->ipv6_length = m->m_pkthdr.len - sizeof(struct ipv6);
+
+	  /* Following fields are already grabbed from the tcp_template. */
+	  /* ((struct ipv6 *)ti6)->ipv6_versfl   = ntohl(0x60000000);
+	  ((struct ipv6 *)ti6)->ipv6_nexthdr  = IPPROTO_TCP;
+	  ((struct ipv6 *)ti6)->ipv6_hoplimit = 
+	    tp->t_inpcb->inp_ipv6.ipv6_hoplimit;*/
+
+	  error = ipv6_output(m, &tp->t_inpcb->inp_route6, (so->so_options & SO_DONTROUTE), NULL, NULL, tp->t_inpcb->inp_socket);
+	} else
+#endif /* INET6 */
     {
 	((struct ip *)ti)->ip_len = m->m_pkthdr.len;
 	((struct ip *)ti)->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ti)->ip_tos = tp->t_inpcb->inp_ip.ip_tos;	/* XXX */
-#if BSD >= 43
 	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
 	    so->so_options & SO_DONTROUTE, 0, tp->t_inpcb);
-#else
-	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route, 
-	    so->so_options & SO_DONTROUTE);
-#endif
 #if defined(TCP_SACK) && defined(TCP_FACK)
 	/* Update snd_awnd to reflect the new data that was sent.  */
         tp->snd_awnd = tcp_seq_subtract(tp->snd_max, tp->snd_fack) +

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.31 1999/01/07 06:05:05 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.32 1999/01/11 02:01:36 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -35,6 +35,18 @@
  *
  *	@(#)tcp_usrreq.c	8.2 (Berkeley) 1/3/94
  */
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +85,10 @@
 extern int	check_ipsec_policy __P((struct inpcb *, u_int32_t));
 #endif
 
+#ifdef INET6
+#include <sys/domain.h>
+#endif /* INET6 */
+
 /*
  * TCP protocol interface to socket abstraction.
  */
@@ -103,9 +119,16 @@ tcp_usrreq(so, req, m, nam, control)
 	int error = 0;
 	int ostate;
 
-	if (req == PRU_CONTROL)
-		return (in_control(so, (u_long)m, (caddr_t)nam,
-			(struct ifnet *)control));
+	if (req == PRU_CONTROL) {
+#ifdef INET6
+		if (sotopf(so) == PF_INET6)
+			return in6_control(so, (u_long)m, (caddr_t)nam,
+			    (struct ifnet *)control, 0);
+		else
+#endif /* INET6 */
+			return (in_control(so, (u_long)m, (caddr_t)nam,
+			    (struct ifnet *)control));
+	}
 	if (control && control->m_len) {
 		m_freem(control);
 		if (m)
@@ -176,6 +199,20 @@ tcp_usrreq(so, req, m, nam, control)
 		error = in_pcbbind(inp, nam);
 		if (error)
 			break;
+#ifdef INET6
+		/*
+		 * If we bind to an address, set up the tp->pf accordingly!
+		 */
+		if (inp->inp_flags & INP_IPV6) {
+			/* If a PF_INET6 socket... */
+			if (inp->inp_flags & INP_IPV6_MAPPED)
+				tp->pf = AF_INET;
+			else if ((inp->inp_flags & INP_IPV6_UNDEC) == 0)
+				tp->pf = AF_INET6;
+			/* else tp->pf is still 0. */
+		}
+		/* else socket is PF_INET, and tp->pf is PF_INET. */
+#endif /* INET6 */
 		break;
 
 	/*
@@ -184,6 +221,8 @@ tcp_usrreq(so, req, m, nam, control)
 	case PRU_LISTEN:
 		if (inp->inp_lport == 0)
 			error = in_pcbbind(inp, NULL);
+		/* If the in_pcbbind() above is called, the tp->pf
+		   should still be whatever it was before. */
 		if (error == 0)
 			tp->t_state = TCPS_LISTEN;
 		break;
@@ -198,11 +237,28 @@ tcp_usrreq(so, req, m, nam, control)
 	case PRU_CONNECT:
 		sin = mtod(nam, struct sockaddr_in *);
 
-		/* Disallow connects to a multicast address */
-		if (IN_MULTICAST(sin->sin_addr.s_addr)) {
-			error = EINVAL;
-			break;
-		}
+#ifdef INET6
+		if (sin->sin_family == AF_INET6) {
+			struct in6_addr *in6_addr = &mtod(nam,
+			    struct sockaddr_in6 *)->sin6_addr;
+
+			if (IN6_IS_ADDR_UNSPECIFIED(in6_addr) ||
+			    IN6_IS_ADDR_MULTICAST(in6_addr) ||
+			    (IN6_IS_ADDR_V4MAPPED(in6_addr) &&
+			    ((in6_addr->in6a_words[3] == INADDR_ANY) ||
+			    IN_MULTICAST(in6_addr->in6a_words[3]) ||
+			    in_broadcast(sin->sin_addr, NULL)))) {
+				error = EINVAL;
+				break;
+			}
+		} else if (sin->sin_family == AF_INET)
+#endif /* INET6 */
+			if ((sin->sin_addr.s_addr == INADDR_ANY) ||
+			    IN_MULTICAST(sin->sin_addr.s_addr) ||
+			    in_broadcast(sin->sin_addr, NULL)) {
+				error = EINVAL;
+				break;
+			}
 
 		/* Trying to connect to some broadcast address */
 		if (in_broadcast(sin->sin_addr, NULL)) {
@@ -219,12 +275,34 @@ tcp_usrreq(so, req, m, nam, control)
 		if (error)
 			break;
 
+#ifdef INET6
+		/*
+		 * With a connection, I now know the version of IP
+		 * is in use and hence can set tp->pf with authority. 
+		 */
+		if (inp->inp_flags & INP_IPV6) {
+			if (inp->inp_flags & INP_IPV6_MAPPED)
+				tp->pf = PF_INET;
+			else
+				tp->pf = PF_INET6;
+		}
+		/* else I'm a PF_INET socket, and hence tp->pf is PF_INET. */
+#endif /* INET6 */
+
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
 			in_pcbdisconnect(inp);
 			error = ENOBUFS;
 			break;
 		}
+
+#ifdef INET6
+		if ((inp->inp_flags & INP_IPV6) && (tp->pf == PF_INET)) {
+			inp->inp_ip.ip_ttl = ip_defttl;
+			inp->inp_ip.ip_tos = 0;
+		}
+#endif /* INET6 */
+
 		so->so_state |= SS_CONNECTOUT;
 		/* Compute window scaling to request.  */
 		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
@@ -388,7 +466,7 @@ tcp_usrreq(so, req, m, nam, control)
 		panic("tcp_usrreq");
 	}
 	if (tp && (so->so_options & SO_DEBUG))
-		tcp_trace(TA_USER, ostate, tp, (struct tcpiphdr *)0, req);
+		tcp_trace(TA_USER, ostate, tp, (struct tcpiphdr *)0, req, 0);
 	splx(s);
 	return (error);
 }
@@ -414,12 +492,28 @@ tcp_ctloutput(op, so, level, optname, mp)
 			(void) m_free(*mp);
 		return (ECONNRESET);
 	}
+#ifdef INET6
+	tp = intotcpcb(inp);
+#endif /* INET6 */
 	if (level != IPPROTO_TCP) {
-		error = ip_ctloutput(op, so, level, optname, mp);
+#ifdef INET6
+		/*
+		 * Not sure if this is the best approach.
+		 * It seems to be, but we don't set tp->pf until the connection
+		 * is established, which may lead to confusion in the case of
+		 * AF_INET6 sockets which get SET/GET options for IPv4.
+		 */
+		if (tp->pf == PF_INET6)
+			error = ipv6_ctloutput(op, so, level, optname, mp);
+		else
+#endif /* INET6 */
+			error = ip_ctloutput(op, so, level, optname, mp);
 		splx(s);
 		return (error);
 	}
+#ifndef INET6
 	tp = intotcpcb(inp);
+#endif /* !INET6 */
 
 	switch (op) {
 
