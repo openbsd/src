@@ -3983,7 +3983,7 @@ start_tcp_server (tofdp, fromfdp)
 	if (port <= 0)
 	{
 	    error (0, 0, "CVS_CLIENT_PORT must be a positive number!  If you");
-	    error (0, 0, "are trying to force a connection via rsh, please");
+	    error (0, 0, "are trying to force a connection via ssh, please");
 	    error (0, 0, "put \":server:\" at the beginning of your CVSROOT");
 	    error (1, 0, "variable.");
 	}
@@ -4700,7 +4700,7 @@ start_rsh_server (tofdp, fromfdp)
     /* Do the deed. */
     rsh_pid = popenRW (rsh_argv, pipes);
     if (rsh_pid < 0)
-	error (1, errno, "cannot start server via rsh");
+	error (1, errno, "cannot start server via ssh");
 
     /* Give caller the file descriptors. */
     *tofdp   = pipes[0];
@@ -4771,7 +4771,7 @@ start_rsh_server (tofdp, fromfdp)
 	rsh_pid = piped_child (argv, tofdp, fromfdp);
 
 	if (rsh_pid < 0)
-	    error (1, errno, "cannot start server via rsh");
+	    error (1, errno, "cannot start server via ssh");
     }
     free (command);
 }

@@ -16,7 +16,7 @@
    Watch out if the enum is changed in cvs.h! */
 
 char *method_names[] = {
-    "local", "server (rsh)", "pserver", "kserver", "gserver", "ext", "fork"
+    "local", "server (ssh)", "pserver", "kserver", "gserver", "ext", "fork"
 };
 
 #ifndef DEBUG
