@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.10 1998/05/27 20:28:35 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.11 1998/12/31 11:50:13 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ icmp_error(n, type, code, dest, destifp)
 	 * Don't error if the old packet protocol was ICMP
 	 * error message, only known informational types.
 	 */
-	if (oip->ip_off &~ (IP_MF|IP_DF))
+	if (ntohs(oip->ip_off) &~ (IP_MF|IP_DF))
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
@@ -121,7 +121,7 @@ icmp_error(n, type, code, dest, destifp)
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + min(8,oip->ip_len);
+	icmplen = oiplen + min(8, ntohs(oip->ip_len));
 	m->m_len = icmplen + ICMP_MINLEN;
 	MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
