@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.15 2003/08/14 19:00:12 jason Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.16 2004/06/26 17:34:16 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -383,19 +383,10 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 {
 	struct comp_algo *ipcompx = (struct comp_algo *) tdb->tdb_compalgxform;
 	int             hlen;
-	u_int8_t        prot;
-	u_int16_t       cpi;
 	struct cryptodesc *crdc = NULL;
 	struct cryptop *crp;
 	struct tdb_crypto *tc;
 	struct mbuf    *mi, *mo;
-	struct ipcomp  *ipcomp;
-#ifdef INET
-	struct ip      *ip;
-#endif
-#ifdef INET6
-	struct ip6_hdr *ip6;
-#endif
 
 #if NBPFILTER > 0
 	{
@@ -419,7 +410,6 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 			bpf_mtap(ifn->if_bpf, &m1);
 	}
 #endif
-
 	hlen = IPCOMP_HLENGTH;
 
 	ipcompstat.ipcomps_output++;
@@ -512,55 +502,6 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 		m_freem(mi);
 	}
-	/* Inject IPCOMP header */
-	mo = m_inject(m, skip, hlen, M_DONTWAIT);
-	if (mo == NULL) {
-		DPRINTF(("ipcomp_output(): failed to inject IPCOMP header for IPCA %s/%08x\n",
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-		m_freem(m);
-		ipcompstat.ipcomps_wrap++;
-		return ENOBUFS;
-	}
-	ipcomp = mtod(mo, struct ipcomp *);
-
-	/* Initialize the IPCOMP header */
-
-	bzero(ipcomp, sizeof(struct ipcomp));
-
-	cpi = (u_int16_t) ntohl(tdb->tdb_spi);
-	ipcomp->ipcomp_cpi = htons(cpi);
-
-	/* m_pullup before ? */
-
-	switch (tdb->tdb_dst.sa.sa_family) {
-#ifdef INET
-	case AF_INET:
-		ip = mtod(m, struct ip *);
-		ipcomp->ipcomp_nh = ip->ip_p;
-		break;
-#endif /* INET */
-
-#ifdef INET6
-	case AF_INET6:
-		ip6 = mtod(m, struct ip6_hdr *);
-		ipcomp->ipcomp_nh = ip6->ip6_nxt;
-		break;
-#endif
-
-	default:
-		DPRINTF(("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
-		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
-		    ntohl(tdb->tdb_spi)));
-		m_freem(m);
-		ipcompstat.ipcomps_nopf++;
-		return EPFNOSUPPORT;
-		break;
-	}
-
-	/* Fix Next Protocol in IPv4/IPv6 header */
-	prot = IPPROTO_IPCOMP;
-	m_copyback(m, protoff, sizeof(u_int8_t), &prot);
-
 	/* Ok now, we can pass to the crypto processing */
 
 	/* Get crypto descriptors */
@@ -574,10 +515,10 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 	crdc = crp->crp_desc;
 
 	/* Compression descriptor */
-	crdc->crd_skip = skip + hlen;
-	crdc->crd_len = m->m_pkthdr.len - (skip + hlen);
+	crdc->crd_skip = skip;
+	crdc->crd_len = m->m_pkthdr.len - skip;
 	crdc->crd_flags = CRD_F_COMP;
-	crdc->crd_inject = skip + hlen;
+	crdc->crd_inject = skip;
 
 	/* Compression operation */
 	crdc->crd_alg = ipcompx->type;
@@ -596,7 +537,7 @@ ipcomp_output(m, tdb, mp, skip, protoff)
 
 	tc->tc_spi = tdb->tdb_spi;
 	tc->tc_proto = tdb->tdb_sproto;
-	tc->tc_skip = skip + hlen;
+	tc->tc_skip = skip;
 	bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
 	/* Crypto operation descriptor */
@@ -620,14 +561,16 @@ ipcomp_output_cb(cp)
 	struct cryptop *crp = (struct cryptop *) cp;
 	struct tdb_crypto *tc;
 	struct tdb *tdb;
-	struct mbuf *m;
+	struct mbuf *m, *mo;
 	int error, s, skip, rlen;
+	u_int16_t cpi;
 #ifdef INET
 	struct ip *ip;
 #endif
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif
+	struct ipcomp  *ipcomp;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -682,32 +625,47 @@ ipcomp_output_cb(cp)
 		return error;
 	}
 
-	/* Adjust the length in the IP header. */
+	/* Inject IPCOMP header */
+	mo = m_inject(m, skip, IPCOMP_HLENGTH, M_DONTWAIT);
+	if (mo == NULL) {
+		DPRINTF(("ipcomp_output_cb(): failed to inject IPCOMP header "
+		    "for IPCA %s/%08x\n",
+		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ipcompstat.ipcomps_wrap++;
+		error = ENOBUFS;
+		goto baddone;
+	}
+
+	/* Initialize the IPCOMP header */
+	ipcomp = mtod(mo, struct ipcomp *);
+	bzero(ipcomp, sizeof(struct ipcomp));
+	cpi = (u_int16_t) ntohl(tdb->tdb_spi);
+	ipcomp->ipcomp_cpi = htons(cpi);
+
+	/* m_pullup before ? */
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		ip = mtod(m, struct ip *);
-		ip->ip_len = htons(m->m_pkthdr.len);
+		ipcomp->ipcomp_nh = ip->ip_p;
+		ip->ip_p = IPPROTO_IPCOMP;
 		break;
 #endif /* INET */
-
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_plen = htons(m->m_pkthdr.len) - sizeof(struct ip6_hdr);
+		ipcomp->ipcomp_nh = ip6->ip6_nxt;
+		ip6->ip6_nxt = IPPROTO_IPCOMP;
 		break;
-#endif /* INET6 */
-
+#endif
 	default:
-		m_freem(m);
-		DPRINTF(("ipcomp_output(): unknown/unsupported protocol "
-		    "family %d, IPCA %s/%08x\n",
+		DPRINTF(("ipcomp_output_cb(): unsupported protocol family %d, "
+		    "IPCA %s/%08x\n",
 		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
-		crypto_freereq(crp);
 		ipcompstat.ipcomps_nopf++;
-		splx(s);
-		return EPFNOSUPPORT;
+		error = EPFNOSUPPORT;
+		goto baddone;
 		break;
 	}
 
