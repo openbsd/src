@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.13 1996/11/30 17:50:58 millert Exp $
+#	$OpenBSD: security,v 1.14 1996/12/06 17:17:13 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -246,12 +246,13 @@ done
 # Check for special users with .rhosts/.shosts files.  Only root
 # should have .rhosts/.shosts files.  Also, .rhosts/.shosts
 # files should not have plus signs.
-awk -F: '$1 != "root" && $1 !~ /^[+-].*$/ && \
+awk -F: '$1 != "root" && $1 !~ /^[+-]/ && \
 	($3 < 100 || $1 == "ftp" || $1 == "uucp") \
 		{ print $1 " " $6 }' /etc/passwd |
 while read uid homedir; do
 	for j in .rhosts .shosts; do
-		if [ -f ${homedir}/$j ] ; then
+		# Root owned .rhosts/.shosts files are ok.
+		if [ -f ${homedir}/$j -a ! -O ${homedir}/$j ] ; then
 			rhost=`ls -ldgT ${homedir}/$j`
 			printf "$uid: $rhost\n"
 		fi
@@ -262,7 +263,7 @@ if [ -s $OUTPUT ] ; then
 	cat $OUTPUT
 fi
 
-awk -F: '{ print $1 " " $6 }' /etc/passwd | \
+awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for j in .rhosts .shosts; do
 		if [ -s ${homedir}/$j ] ; then
@@ -283,7 +284,7 @@ fi
 
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
-awk -F: '{ if ($1 !~ /^[+-].*$/) print $1 " " $6 }' /etc/passwd | \
+awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	if [ -d ${homedir}/ ] ; then
 		file=`ls -ldgT ${homedir}`
@@ -303,7 +304,7 @@ fi
 
 # Files that should not be owned by someone else or readable.
 list=".netrc .rhosts .shosts"
-awk -F: '{ print $1 " " $6 }' /etc/passwd | \
+awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
 		file=${homedir}/${f}
@@ -326,7 +327,7 @@ awk '$1 != $5 && $5 != "root" \
 # Files that should not be owned by someone else or writeable.
 list=".bashrc .cshrc .emacs .exrc .forward .klogin .login .logout \
       .profile .tcshrc"
-awk -F: '{ print $1 " " $6 }' /etc/passwd | \
+awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
 		file=${homedir}/${f}
