@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2subr.c,v 1.2 1999/06/23 04:48:49 d Exp $	*/
+/*	$OpenBSD: rl2subr.c,v 1.3 1999/07/14 03:53:23 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -57,9 +57,9 @@ rl2_enable(sc, enable)
 	was_enabled = (sc->sc_intsel & RL2_INTSEL_ENABLE) ? 1 : 0;
 	if (enable != was_enabled) {
 		if (enable)
-			sc->sc_intsel |= 0x10;
+			sc->sc_intsel |= RL2_INTSEL_ENABLE;
 		else
-			sc->sc_intsel &=~0x10;
+			sc->sc_intsel &=~RL2_INTSEL_ENABLE;
 		_rl2_register_write_1(sc, RL2_REG_INTSEL, sc->sc_intsel);
 	}
 	splx(s);
@@ -174,12 +174,13 @@ rl2_wakeup(sc, wnew)
 	int			i;
 
 	/* Save what the last-written values were. */
-	wold = (sc->sc_status & 0x80) | (sc->sc_control & 0x10);
+	wold = (sc->sc_status & RL2_STATUS_WAKEUP) |
+	    (sc->sc_control & RL2_CONTROL_RESET);
 
 	if (wnew == RL2_WAKEUP_SET) {
 		/* SetWakeupBit() */
 		dprintf(" Ws[");
-		rl2_status_set(sc, 0x80);
+		rl2_status_set(sc, RL2_STATUS_WAKEUP);
 		if (0/*LLDInactivityTimeOut &&
 		    (sc->sc_cardtype & RL2_CTYPE_OEM)*/) {
 			dprintf (" 167ms");
@@ -189,21 +190,21 @@ rl2_wakeup(sc, wnew)
 			DELAY(100);
 		}
 		s = rl2_status_read(sc);
-		rl2_control_set(sc, 0x10);
-		if ((s & 0x80) != 0)
+		rl2_control_set(sc, RL2_CONTROL_RESET);
+		if ((s & RL2_STATUS_WAKEUP) != 0)
 			for (i = 0; i < 9; i++) {
 				dprintf(" 2ms");
 				DELAY(2000);
-				rl2_status_set(sc, 0x80);
+				rl2_status_set(sc, RL2_STATUS_WAKEUP);
 			}
 		dprintf("]");
 	} else {
 		/* ClearWakeupBit() */
 		dprintf(" Wc[");
-		if ((wnew & 0x80) == 0)
-			rl2_status_clear(sc, 0x80);
-		if ((wnew & 0x10) == 0)
-			rl2_control_clear(sc, 0x10);
+		if ((wnew & RL2_STATUS_WAKEUP) == 0)
+			rl2_status_clear(sc, RL2_STATUS_WAKEUP);
+		if ((wnew & RL2_CONTROL_RESET) == 0)
+			rl2_control_clear(sc, RL2_CONTROL_RESET);
 		dprintf("]");
 	}
 	return (wold);
@@ -231,51 +232,53 @@ rl2_tx_request(sc, len)
 
 	dprintf(" Tr[");
 	if (sc->sc_width == 16) {
-		rl2_status_tx_write(sc, 0x01);
+		rl2_status_tx_write(sc, RL2_STATUS_TX_HILEN_AVAIL);
 		rl2_data_write_2(sc, len);
 		rl2_status_tx_int(sc);
 
 		s = spl0();
 		for (i = 0; i < 600; i++) {
 			status = rl2_status_tx_read(sc);
-			if (status == 0x02 || status == 0x05)
+			if (status == RL2_STATUS_TX_HILEN_ACCEPT || 
+			    status == RL2_STATUS_TX_ERROR)
 				break;
 			DELAY(1000);
 		}
 		splx(s);
 		dprintf(" %dms", i);
-		if (status == 0x02)
+		if (status == RL2_STATUS_TX_HILEN_ACCEPT)
 			goto success;
-		if (status == 0x05)
+		if (status == RL2_STATUS_TX_ERROR)
 			goto error;
 	} else if (sc->sc_width == 8) {
-		rl2_status_tx_write(sc, 0x06);
-		rl2_data_write_1(sc, len & 0x00ff);
+		rl2_status_tx_write(sc, RL2_STATUS_TX_LOLEN_AVAIL);
+		rl2_data_write_1(sc, len & 0xff);
 		rl2_status_tx_int(sc);
 		s = spl0();
 		for (i = 0; i < 6800; i++) {
 			status = rl2_status_tx_read(sc);
-			if (status == 0x07)
+			if (status == RL2_STATUS_TX_LOLEN_ACCEPT)
 				break;
 			DELAY(1000);
 		}
 		splx(s);
 		dprintf(" %dms", i);
-		if (status == 0x07) {
-			rl2_data_write_1(sc, (len & 0xff00) >> 8);
-			rl2_status_tx_write(sc, 0x01);
+		if (status == RL2_STATUS_TX_LOLEN_ACCEPT) {
+			rl2_data_write_1(sc, (len >> 8) & 0xff);
+			rl2_status_tx_write(sc, RL2_STATUS_TX_HILEN_AVAIL);
 			s = spl0();
 			for (i = 0; i < 600; i++) {
 				status = rl2_status_tx_read(sc);
-				if (status == 0x02 || status == 0x05)
+				if (status == RL2_STATUS_TX_HILEN_ACCEPT || 
+				    status == RL2_STATUS_TX_ERROR)
 					break;
 				DELAY(1000);
 			}
 			splx(s);
 			dprintf(" %dms", i);
-			if (status == 0x02)
+			if (status == RL2_STATUS_TX_HILEN_ACCEPT)
 				goto success;
-			if (status == 0x05)
+			if (status == RL2_STATUS_TX_ERROR)
 				goto error;
 		}
 	}
@@ -290,7 +293,7 @@ rl2_tx_request(sc, len)
 	return (1);
 
 error:
-	/* XXX Will need to clear nak within 100 ms. */
+	/* Will need to clear nak within 100 ms. */
 	dprintf("]=2");
 #ifdef DIAGNOSTIC
 	printf("%s: tx protocol fault (nak)\n", sc->sc_dev.dv_xname);
@@ -322,19 +325,19 @@ rl2_tx_end(sc)
 	s = spl0();
 	for (i = 0; i < 600; i++) {
 		status = rl2_status_tx_read(sc);
-		if (status == 0x03)
+		if (status == RL2_STATUS_TX_XFR_COMPLETE)
 			break;
 		DELAY(1000);
 	}
 	splx(s);
-	if (status == 0x03) {
-		rl2_status_tx_write(sc, 0x00);
+	if (status == RL2_STATUS_TX_XFR_COMPLETE) {
+		rl2_status_tx_write(sc, RL2_STATUS_TX_IDLE);
 		dprintf("]=0");
 		return (0);
 	} else {
 		printf("%s: tx cmd failed (%02x)\n", sc->sc_dev.dv_xname,
 		    status);
-		/* XXX Needs reset? */
+		rl2_need_reset(sc);
 		dprintf("]=-1");
 		return (-1);
 	}
@@ -364,7 +367,9 @@ rl2_rx_request(sc, timeo)
 	/* Short wait for states 1|5|6. */
 	s = spl0();
 	for (i = 0; i < timeo; i++) {
-		if (status == 0x60 || status == 0x10 || status == 0x50)
+		if (status == RL2_STATUS_RX_LOLEN_AVAIL || 
+		    status == RL2_STATUS_RX_HILEN_AVAIL || 
+		    status == RL2_STATUS_RX_ERROR)
 			break;
 		DELAY(1000);
 		status = rl2_status_rx_read(sc);
@@ -373,26 +378,26 @@ rl2_rx_request(sc, timeo)
 	dprintf(" (%dms)",i);
 
 	if (sc->sc_width == 16) {
-		if (status != 0x10)
+		if (status != RL2_STATUS_RX_HILEN_AVAIL)
 			goto badstatus_quiet;
 		/* Read 2 octets. */
 		len = rl2_data_read_2(sc);
 	} else if (sc->sc_width == 8) {
-		if (status != 0x60)
+		if (status != RL2_STATUS_RX_LOLEN_AVAIL)
 			goto badstatus_quiet;
 		/* Read low octet. */
 		lo = rl2_data_read_1(sc);
-		rl2_status_rx_write(sc, 0x70);
+		rl2_status_rx_write(sc, RL2_STATUS_RX_LOLEN_ACCEPT);
 		rl2_status_rx_int(sc);
 		s = spl0();
 		for (i = 0; i < 600; i++) {
 			status = rl2_status_rx_read(sc);
-			if (status == 0x10)
+			if (status == RL2_STATUS_RX_HILEN_AVAIL)
 				break;
 			DELAY(1000);
 		}
 		splx(s);
-		if (status != 0x10)
+		if (status != RL2_STATUS_RX_HILEN_AVAIL)
 			goto badstatus;
 		/* Read high octet. */
 		hi = rl2_data_read_1(sc);
@@ -410,7 +415,7 @@ badstatus:
 	printf("%s: rx_request timed out, status %02x\n", 
 	    sc->sc_dev.dv_xname, status);
 badstatus_quiet:
-	if (status == 0x50)
+	if (status == RL2_STATUS_RX_ERROR)
 		printf("%s: rx protocol error (nak)\n", sc->sc_dev.dv_xname);
 	dprintf("]");
 	return (-1);
@@ -487,17 +492,17 @@ rl2_rx_data(sc, buf, len)
 	u_int8_t		status;
 
 	dprintf(" Rd[");
-	rl2_status_rx_write(sc, 0x20);
+	rl2_status_rx_write(sc, RL2_STATUS_RX_HILEN_ACCEPT);
 	rl2_status_rx_int(sc);
 	s = spl0();
 	for (i = 0; i < 600; i++) {
 		status = rl2_status_rx_read(sc);
-		if (status == 0x40)
+		if (status == RL2_STATUS_RX_XFR)
 			break;
 		DELAY(1000);
 	}
 	splx(s);
-	if (status != 0x40) {
+	if (status != RL2_STATUS_RX_XFR) {
 		dprintf("]=-1");
 		return (-1);
 	}
@@ -520,7 +525,7 @@ rl2_rx_end(sc)
 	/* EndOfRx() */
 
 	dprintf(" Re[");
-	rl2_status_rx_write(sc, 0x30);
+	rl2_status_rx_write(sc, RL2_STATUS_RX_XFR_COMPLETE);
 	rl2_status_rx_int(sc);
 	/* rl2_wakeup(sc, 0); */
 	dprintf("]");
@@ -533,7 +538,7 @@ rl2_clear_nak(sc)
 {
 	/* ClearNAK() */
 
-	rl2_status_tx_write(sc, 0x08);
+	rl2_status_tx_write(sc, RL2_STATUS_CLRNAK);
 	rl2_status_tx_int(sc);
 }
 
@@ -564,14 +569,13 @@ rl2_msg_tx_start(sc, buf, pktlen, state)
 	ret = rl2_tx_request(sc, pktlen);
 	if (ret == 2) {
 		rl2_clear_nak(sc);
-		if (sc->sc_cardtype & RL2_CTYPE_OEM) {
-			/* XXX Needs reset? */
-		}
+		if (sc->sc_cardtype & RL2_CTYPE_OEM)
+			rl2_need_reset(sc);
 		ret = 2;
 	}
 	else if (ret == 1) {
 		/* Timeout. */
-		rl2_status_tx_write(sc, 0x04);
+		rl2_status_tx_write(sc, RL2_STATUS_TX_XFR);
 		ret = -1;
 	}
 	return (ret);
@@ -644,9 +648,8 @@ rl2_msg_tx_end(sc, state)
 		panic("rl2_msg_tx_end remain %d", state->pd.p_nremain);
 #endif
 	ret = rl2_tx_end(sc);
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE) {
-		state->w |= 0x10 | 0x80;
-	}
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE)
+		state->w = RL2_WAKEUP_NOCHANGE;
 	rl2_wakeup(sc, state->w);
 	rl2_enable(sc, state->ien);
 	return (ret);
@@ -662,7 +665,7 @@ rl2_newseq(sc)
 
 	s = splhigh();
 	seq = sc->sc_pktseq++;
-	if (sc->sc_pktseq > 0x7c)
+	if (sc->sc_pktseq > RL2_MAXSEQ)
 		sc->sc_pktseq = 0;
 	splx(s);
 	return (seq);
@@ -759,7 +762,7 @@ rl2_msg_txrx(sc, tx, txlen, rx, rxlen)
 	if (rxc->cmd_error & 0x80) {
 		printf("%s: command error 0x%02x command %c%d\n",
 			sc->sc_dev.dv_xname,
-			rxc->cmd_error & 0x7f,
+			rxc->cmd_error & ~0x80,
 			rxc->cmd_letter, rxc->cmd_fn);
 		return (-1);
 	}
@@ -772,6 +775,8 @@ rl2_msg_txrx(sc, tx, txlen, rx, rxlen)
  * service routine that someone is expecting a reply message.
  * Mailboxes are identified by the message sequence number
  * and also hold a pointer to storage supplied by the waiter.
+ * The interrupt service routine signals the mailbox when it
+ * gets the reply message.
  */
 
 /* Create a mailbox for filling. */
@@ -834,7 +839,7 @@ rl2_mbox_wait(sc, seq, timeo)
 		s = spl0();
 		i = 0;
 		while (mb->mb_state == RL2MBOX_EMPTY && i < timeo) {
-			DELAY(hz); /* 1 tick. */
+			DELAY(1000);
 			i++;
 		}
 		if (i)
@@ -843,10 +848,14 @@ rl2_mbox_wait(sc, seq, timeo)
 			;
 		splx(s);
 	} else {
-		tsleep((void *)mb, PRIBIO, "rl2mbox", timeo);
-		if (mb->mb_state == RL2MBOX_FILLING)
-			/* XXX Could race. */
-			tsleep((void *)mb, PRIBIO, "rl2mbox", 0);
+		tsleep((void *)mb, PRIBIO, "rl2mbox", hz * timeo / 1000);
+		if (mb->mb_state == RL2MBOX_FILLING) {
+			/* Must wait until filled. */
+			s = spl0();
+			while (mb->mb_state == RL2MBOX_FILLING)
+				;
+			splx(s);
+		}
 	}
 
 	s = splhigh();
