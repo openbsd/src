@@ -45,15 +45,22 @@
 .Op Fl p Ns Ar price
 .Op Fl s
 .Op Fl r
-.Op Ar name ...
+.Op Ar user ...
 .Sh DESCRIPTION
 .Nm pac
 reads the printer/plotter accounting files, accumulating the number
 of pages (the usual case) or feet (for raster devices)
-of paper consumed by each user, and printing out
+of paper consumed by each named
+.Ar user ,
+and prints out
 how much each user consumed in pages or feet and dollars.
 .Pp
-Options and operands available:
+When no
+.Ar user
+arguments are given, statistics are printed for every user who has used any
+paper.
+.Pp
+The options are as follows:
 .Bl -tag -width PPprinter
 .It Fl P Ns Ar printer
 Accounting is done for the named printer.
@@ -80,10 +87,6 @@ Reverse the sorting order.
 Accounting information is summarized on the
 summary accounting file; this summarization is necessary since on a
 busy system, the accounting file can grow by several lines per day.
-.It Ar names
-Statistics are only printed for user(s)
-.Ar name ;
-usually, statistics are printed for every user who has used any paper.
 .El
 .Sh FILES
 .Bl -tag -width /var/account/?_sum -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.lockd.8,v 1.6 2000/01/22 02:17:52 aaron Exp $
+.\"	$OpenBSD: rpc.lockd.8,v 1.7 2000/03/04 20:02:24 aaron Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -46,22 +46,27 @@
 is a daemon which provides file- and record-locking services in an NFS
 environment.
 .Pp
-Options and operands available for
-.Nm rpc.lockd :
+The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
-The
-.Fl d
-option causes debugging information to be written to syslog, recording
+.It Fl d Op Ar debug_level
+Write debugging information to syslog, recording
 all RPC transactions to the daemon.  These messages are logged with level
-LOG_DEBUG and facility LOG_DAEMON.  If debug_level is not specified,
+.Dv LOG_DEBUG
+and facility
+.Dv LOG_DAEMON .
+If
+.Ar debug_level
+is not specified,
 level 1 is assumed, giving one log line per protocol operation.  Higher
 debug levels can be specified, causing display of operation arguments
 and internal operations of the daemon.
 .El
 .Pp
 Error conditions are logged to syslog, irrespective of the debug level,
-using log level LOG_ERR and facility LOG_DAEMON.
+using log level
+.Dv LOG_ERR
+and facility
+.Dv LOG_DAEMON .
 .Pp
 The
 .Nm rpc.lockd

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.8 1999/06/05 01:21:38 aaron Exp $
+.\"	$OpenBSD: renice.8,v 1.9 2000/03/04 20:02:23 aaron Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -72,8 +72,7 @@ their scheduling priority altered.
 By default, the processes to be affected are specified by
 their process IDs.
 .Pp
-Options supported by
-.Nm renice :
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl g
 Force
@@ -119,7 +118,7 @@ anything negative (to make things go very fast).
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
 .It Pa /etc/passwd
-to map user names to user IDs
+for mapping user names to user IDs
 .El
 .Sh SEE ALSO
 .Xr nice 1 ,
