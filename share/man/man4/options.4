@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.41 1999/12/21 17:57:09 provos Exp $
+.\"	$OpenBSD: options.4,v 1.42 1999/12/30 19:04:28 provos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -503,6 +503,18 @@ Adds support for the
 boot option (User Kernel Config).
 Allows modification of kernel settings (i.e., device parameters) before
 booting the system.
+.It Cd option UVM_SWAP_ENCRYPT
+Enables kernel support for encrypting pages that are written out to
+swap storage.  Swap encryption avoids that sensitive data stays
+alive on the disk even after the operating system has been shut down.
+This option should be turned on if cryptographic filesystems are used.
+The sysctl variable
+.Em vm.swapencrypt
+controls its behaviour. See
+.Xr sysctl 8
+and
+.Xr sysctl 3
+for details.
 .El
 .Ss Networking Options
 .Bl -ohang
