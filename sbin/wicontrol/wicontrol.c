@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.15 2001/06/07 18:58:39 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.16 2001/06/24 01:58:13 marc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -67,7 +67,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.15 2001/06/07 18:58:39 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.16 2001/06/24 01:58:13 marc Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -671,12 +671,12 @@ struct wi_func {
 };
 
 static struct wi_func wi_opt[] = {
+	{ 'k', wi_setkeys, 0, NULL },  /* MUST be first entry in table */
 	{ 'a', wi_setword, WI_RID_SYSTEM_SCALE, NULL },
 	{ 'c', wi_setword, WI_RID_CREATE_IBSS, NULL },
 	{ 'd', wi_setword, WI_RID_MAX_DATALEN, NULL },
 	{ 'e', wi_setword, WI_RID_ENCRYPTION, NULL },
 	{ 'f', wi_setword, WI_RID_OWN_CHNL, NULL },
-	{ 'k', wi_setkeys, 0, NULL },
 	{ 'm', wi_sethex, WI_RID_MAC_NODE, NULL },
 	{ 'n', wi_setstr, WI_RID_DESIRED_SSID, NULL },
 	{ 'p', wi_setword, WI_RID_PORTTYPE, NULL },
