@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.34 2004/04/29 19:54:36 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.35 2004/07/02 13:58:17 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -43,7 +43,7 @@ CMACHFLAGS=	-mno-check-zero-division -mmemcpy \
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-COPTS?=		-O2
+COPTS?=		-O2 -fno-rerun-cse-after-loop
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0x10000 -e start
