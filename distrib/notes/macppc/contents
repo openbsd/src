@@ -90,7 +90,7 @@ words		(show methods of items at current location in the device tree)
 
 
 NOTES:
-	The powerpc port does not currently support booting from a USB
+	The MACHINE port does not currently support booting from a USB
 	Zip drive, if installed.
 
 	To reset a Power Macintosh to the factory-configure Open Firmware
