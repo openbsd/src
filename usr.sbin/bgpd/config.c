@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.21 2004/01/27 14:09:36 markus Exp $ */
+/*	$OpenBSD: config.c,v 1.22 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,5 +98,5 @@ get_id(struct peer *p)
 	/*
 	 * XXX this collides with multiviews and will need more clue later XXX
 	 */
-	return (ntohl(p->conf.remote_addr.sin_addr.s_addr));
+	return (ntohl(p->conf.remote_addr.v4.s_addr));
 }

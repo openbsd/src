@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.23 2004/01/22 20:34:56 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.24 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -123,8 +123,8 @@ mrt_dump_bgp_msg(struct mrt_config *mrt, void *pkg, u_int16_t pkglen, int type,
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
 	DUMP_SHORT(buf, 4);
-	DUMP_NLONG(buf, peer->local_addr.sin_addr.s_addr);
-	DUMP_NLONG(buf, peer->remote_addr.sin_addr.s_addr);
+	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
+	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 
 	/* bgp header was chopped off so glue a new one together. */
 	if (type > 0) {
@@ -183,8 +183,8 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
 	DUMP_SHORT(buf, 4);
-	DUMP_NLONG(buf, peer->local_addr.sin_addr.s_addr);
-	DUMP_NLONG(buf, peer->remote_addr.sin_addr.s_addr);
+	DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
+	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 
 	DUMP_SHORT(buf, old_state);
 	DUMP_SHORT(buf, new_state);
@@ -310,7 +310,7 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_BYTE(buf, p->prefix->prefixlen);
 	DUMP_BYTE(buf, 1);		/* state */
 	DUMP_LONG(buf, p->lastchange);	/* originated */
-	DUMP_NLONG(buf, peer->remote_addr.sin_addr.s_addr);
+	DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
 	DUMP_SHORT(buf, peer->remote_as);
 	DUMP_SHORT(buf, attr_len);
 

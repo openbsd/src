@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2004/01/26 21:08:18 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.42 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -242,11 +242,8 @@ optnumber	: /* empty */		{ $$ = 0; }
 
 neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer = new_peer();
-			curpeer->conf.remote_addr.sin_len =
-			    sizeof(curpeer->conf.remote_addr);
-			curpeer->conf.remote_addr.sin_family = AF_INET;
-			curpeer->conf.remote_addr.sin_port = htons(BGP_PORT);
-			curpeer->conf.remote_addr.sin_addr.s_addr = $2.s_addr;
+			curpeer->conf.remote_addr.af = AF_INET;
+			curpeer->conf.remote_addr.v4.s_addr = $2.s_addr;
 		}
 		    peeropts_l '}' {
 			curpeer->next = peer_l;
@@ -302,10 +299,8 @@ peeropts	: REMOTEAS number	{
 			free($2);
 		}
 		| LOCALADDR address	{
-			curpeer->conf.local_addr.sin_len =
-			    sizeof(curpeer->conf.local_addr);
-			curpeer->conf.local_addr.sin_family = AF_INET;
-			curpeer->conf.local_addr.sin_addr.s_addr = $2.s_addr;
+			curpeer->conf.local_addr.af = AF_INET;
+			curpeer->conf.local_addr.v4.s_addr = $2.s_addr;
 		}
 		| MULTIHOP number	{
 			if ($2 < 2 || $2 > 255) {
@@ -791,8 +786,6 @@ alloc_peer(void)
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_SELF;
 	p->conf.max_prefix = ULONG_MAX;
-	p->conf.local_addr.sin_len = sizeof(p->conf.local_addr);
-	p->conf.local_addr.sin_family = AF_INET;
 
 	return (p);
 }
@@ -818,8 +811,6 @@ new_peer(void)
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_SELF;
 	p->conf.max_prefix = ULONG_MAX;
-	p->conf.local_addr.sin_len = sizeof(p->conf.local_addr);
-	p->conf.local_addr.sin_family = AF_INET;
 
 	return (p);
 }

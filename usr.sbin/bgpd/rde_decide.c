@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.24 2004/01/22 20:34:56 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.25 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -178,10 +178,13 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (p2->peer->remote_bgpid - p1->peer->remote_bgpid);
 
 	/* 9. lowest peer address wins */
-	if ((p2->peer->conf.remote_addr.sin_addr.s_addr -
-	    p1->peer->conf.remote_addr.sin_addr.s_addr) != 0)
-		return (p2->peer->conf.remote_addr.sin_addr.s_addr -
-		    p1->peer->conf.remote_addr.sin_addr.s_addr);
+	if (memcmp(&p1->peer->conf.remote_addr,
+	    &p2->peer->conf.remote_addr,
+	    sizeof(p1->peer->conf.remote_addr)) != 0)
+		return (memcmp(&p1->peer->conf.remote_addr,
+		    &p2->peer->conf.remote_addr,
+		    sizeof(p1->peer->conf.remote_addr)));
+
 
 	fatalx("Uh, oh a politician in the decision process");
 	/* NOTREACHED */

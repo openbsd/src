@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.94 2004/01/23 18:06:01 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.95 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,9 @@ void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
 
-struct peer	*getpeerbyid(u_int32_t);
+struct peer		*getpeerbyaddr(struct bgpd_addr *);
+struct peer		*getpeerbyid(u_int32_t);
+static struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
 
 struct bgpd_config	*conf, *nconf = NULL;
 struct peer		*npeers;
@@ -722,7 +724,8 @@ session_accept(int listenfd)
 int
 session_connect(struct peer *peer)
 {
-	int		n;
+	int			 n;
+	struct sockaddr		*sa;
 
 	/*
 	 * we do not need the overcomplicated collision detection rfc1771
@@ -732,7 +735,8 @@ session_connect(struct peer *peer)
 	if (peer->sock != -1)
 		return (-1);
 
-	if ((peer->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+	if ((peer->sock = socket(peer->conf.remote_addr.af, SOCK_STREAM,
+	    IPPROTO_TCP)) == -1) {
 		log_peer_warn(&peer->conf, "session_connect socket");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
@@ -741,8 +745,8 @@ session_connect(struct peer *peer)
 	peer->wbuf.sock = peer->sock;
 
 	/* if update source is set we need to bind() */
-	if (peer->conf.local_addr.sin_addr.s_addr)
-		if (bind(peer->sock, (struct sockaddr *)&peer->conf.local_addr,
+	if (peer->conf.local_addr.af)
+		if (bind(peer->sock, addr2sa(&peer->conf.local_addr, 0),
 		    sizeof(peer->conf.local_addr))) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
@@ -756,8 +760,8 @@ session_connect(struct peer *peer)
 
 	session_socket_blockmode(peer->sock, BM_NONBLOCK);
 
-	if ((n = connect(peer->sock, (struct sockaddr *)&peer->conf.remote_addr,
-	    sizeof(peer->conf.remote_addr))) == -1)
+	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT);
+	if ((n = connect(peer->sock, sa, sa->sa_len)) == -1)
 		if (errno != EINPROGRESS) {
 			log_peer_warn(&peer->conf, "connect");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
@@ -1416,7 +1420,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
 			pconf = imsg.data;
-			p = getpeerbyip(pconf->remote_addr.sin_addr.s_addr);
+			p = getpeerbyaddr(&pconf->remote_addr);
 			if (p == NULL) {
 				if ((p = calloc(1, sizeof(struct peer))) ==
 				    NULL)
@@ -1515,13 +1519,27 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 }
 
 struct peer *
+getpeerbyaddr(struct bgpd_addr *addr)
+{
+	struct peer *p;
+
+	/* we might want a more effective way to find peers by IP */
+	for (p = peers; p != NULL &&
+	    memcmp(&p->conf.remote_addr, addr, sizeof(p->conf.remote_addr));
+	    p = p->next)
+		;	/* nothing */
+
+	return (p);
+}
+
+struct peer *
 getpeerbyip(in_addr_t ip)
 {
 	struct peer *p;
 
 	/* we might want a more effective way to find peers by IP */
 	for (p = peers; p != NULL &&
-	    p->conf.remote_addr.sin_addr.s_addr != ip; p = p->next)
+	    p->conf.remote_addr.v4.s_addr != ip; p = p->next)
 		;	/* nothing */
 
 	return (p);
@@ -1579,4 +1597,31 @@ int
 imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	return (imsg_compose_pid(&ibuf_main, type, pid, data, datalen));
+}
+
+static struct sockaddr *
+addr2sa(struct bgpd_addr *addr, u_int16_t port)
+{
+	static struct sockaddr_storage	 ss;
+	struct sockaddr_in		*sa_in = (struct sockaddr_in *)&ss;
+	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)&ss;
+
+	bzero(&ss, sizeof(ss));
+	switch (addr->af) {
+	case AF_INET:
+		sa_in->sin_family = AF_INET;
+		sa_in->sin_len = sizeof(struct sockaddr_in);
+		sa_in->sin_addr.s_addr = addr->v4.s_addr;
+		sa_in->sin_port = htons(port);
+		break;
+	case AF_INET6:
+		sa_in6->sin6_family = AF_INET6;
+		sa_in6->sin6_len = sizeof(struct sockaddr_in6);
+		memcpy(&sa_in6->sin6_addr, &addr->v6,
+		    sizeof(sa_in6->sin6_addr));
+		sa_in6->sin6_port = htons(port);
+		break;
+	}
+
+	return ((struct sockaddr *)&ss);
 }

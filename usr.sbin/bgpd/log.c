@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.22 2004/01/23 21:17:51 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.23 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -110,7 +110,7 @@ log_fmt_peer(const struct peer_config *peer)
 	char		*ip;
 	char		*pfmt;
 
-	ip = inet_ntoa(peer->remote_addr.sin_addr);
+	ip = log_addr(&peer->remote_addr);
 	if (peer->descr[0]) {
 		if (asprintf(&pfmt, "neighbor %s (%s)", ip, peer->descr) ==
 		    -1)
@@ -383,7 +383,7 @@ log_ntoa(in_addr_t ip)
 }
 
 char *
-log_addr(struct bgpd_addr *addr) {
+log_addr(const struct bgpd_addr *addr) {
 	switch (addr->af) {
 	case AF_INET:
 		return (inet_ntoa(addr->v4));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.81 2004/01/27 14:09:36 markus Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.82 2004/01/27 16:49:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -127,8 +127,8 @@ struct peer_config {
 	u_int32_t		 id;
 	char			 group[PEER_DESCR_LEN];
 	char			 descr[PEER_DESCR_LEN];
-	struct sockaddr_in	 remote_addr;
-	struct sockaddr_in	 local_addr;
+	struct bgpd_addr	 remote_addr;
+	struct bgpd_addr	 local_addr;
 	u_long			 max_prefix;
 	u_int16_t		 remote_as;
 	u_int8_t		 ebgp;		/* 1 = ebgp, 0 = ibgp */
@@ -294,7 +294,7 @@ void		 fatal(const char *);
 void		 fatalx(const char *);
 void		 fatal_ensure(const char *, int, const char *);
 char		*log_ntoa(in_addr_t);
-char		*log_addr(struct bgpd_addr *);
+char		*log_addr(const struct bgpd_addr *);
 
 /* parse.y */
 int	 cmdline_symset(char *);
