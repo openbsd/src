@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.144 2004/07/09 21:56:01 miod Exp $
+.\"	$OpenBSD: options.4,v 1.145 2004/07/15 08:21:47 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 21, 2004
+.Dd July 15, 2004
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -86,10 +86,24 @@ and
 .Xr shmget 2
 system calls which were replaced in
 .Ox 3.6
-when
-.Li struct stat
-their arguments were changed to match
-.St -p1003.1-2003 .
+when their arguments were changed to match
+.St -p1003.1-2003 ,
+as well as binaries that use old versions of the
+.Xr fhstat 2 ,
+.Xr fstat 2 ,
+.Xr lstat 2 ,
+.Xr msgctl 2 ,
+.Xr semctl 2 ,
+.Xr shmctl 2
+and
+.Xr stat 2
+system calls which were replaced in
+.Ox 3.6
+when types
+.Li mode_t
+and
+.Li nlink_t
+were extended to 32 bits.
 .It Cd option COMPAT_43
 Use of this option is discouraged.
 It enables compatibility with
