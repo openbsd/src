@@ -165,3 +165,4 @@ pseudo-device	tun	2		# network tunneling over tty
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
+pseudo-device	ccd	4		# concatenated disk devices
