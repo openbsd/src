@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.43 2001/01/04 06:26:49 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.44 2001/01/04 06:50:21 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -847,8 +847,78 @@ domem()
 	char *name;
 	struct kmemstats kmemstats[M_LAST];
 	struct kmembuckets buckets[MINBUCKET + 16];
+	int mib[5];
+	size_t siz;
+	char buf[BUFSIZ], *bufp, *ap;
 
-	kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MALLOCSTATS;
+	mib[2] = KERN_MALLOC_BUCKETS;
+	siz = sizeof(buf);
+	if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
+		printf(
+		    "Could not acquire information on kernel memory bucket sizes.\n");
+		return;
+	}
+
+	bufp = buf;
+	mib[2] = KERN_MALLOC_BUCKET;
+	i = 0;
+	while ((ap = strsep(&bufp, ",")) != NULL) {
+	        mib[3] = atoi(ap);
+		siz = sizeof(u_int64_t);
+
+		mib[4] = KERN_MALLOC_CALLS;
+		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_calls, &siz,
+			   NULL, 0) < 0) {
+		        printf("Failed to read statistics for bucket %d.\n",
+			       mib[3]);
+			return;
+		}
+
+		mib[4] = KERN_MALLOC_ALLOC;
+		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_total, &siz,
+			   NULL, 0) < 0) {
+		        printf("Failed to read statistics for bucket %d.\n",
+			       mib[3]);
+			return;
+		}
+
+		mib[4] = KERN_MALLOC_FREE;
+		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_totalfree, &siz,
+			   NULL, 0) < 0) {
+		        printf("Failed to read statistics for bucket %d.\n",
+			       mib[3]);
+			return;
+		}
+
+		mib[4] = KERN_MALLOC_ELEMENTS;
+		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_elmpercl, &siz,
+			   NULL, 0) < 0) {
+		        printf("Failed to read statistics for bucket %d.\n",
+			       mib[3]);
+			return;
+		}
+
+		mib[4] = KERN_MALLOC_HIWAT;
+		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_highwat, &siz,
+			   NULL, 0) < 0) {
+		        printf("Failed to read statistics for bucket %d.\n",
+			       mib[3]);
+			return;
+		}
+
+		mib[4] = KERN_MALLOC_COULDFREE;
+		if (sysctl(mib, 5, &buckets[MINBUCKET + i].kb_couldfree, &siz,
+			   NULL, 0) < 0) {
+		        printf("Failed to read statistics for bucket %d.\n",
+			       mib[3]);
+			return;
+		}
+
+		i++;
+	}
+
 	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
 	     i++, kp++) {
 		if (kp->kb_calls == 0)
