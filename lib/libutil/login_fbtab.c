@@ -1,3 +1,5 @@
+/*	$OpenBSD: login_fbtab.c,v 1.6 1999/09/21 04:52:45 csapuntz Exp $	*/
+
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.
 *

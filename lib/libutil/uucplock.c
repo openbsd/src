@@ -1,3 +1,4 @@
+/* * $OpenBSD: uucplock.c,v 1.7 1999/09/21 04:52:46 csapuntz Exp $*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uucplock.c,v 1.6 1999/08/17 09:13:13 millert Exp $
  *
  */
 
