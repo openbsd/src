@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.5 2004/08/06 13:23:49 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.6 2005/03/28 12:42:44 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -27,8 +27,6 @@
 
 #ifndef	_M88K_CMMU_H_
 #define	_M88K_CMMU_H_
-
-#include <machine/mmu.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 /*
