@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.7 1997/10/25 05:40:55 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.8 1998/04/13 01:04:26 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -93,6 +93,23 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	. /.commonutils
 	. /.instutils
 
-	# run the installation script.
-	install
+	# Installing or upgrading?
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo -n '(I)nstall or (U)pgrade? '
+		read _forceloop
+		case "$_forceloop" in
+			i*|I*)
+				/install
+				;;
+
+			u*|U*)
+				/upgrade
+				;;
+
+			*)
+				_forceloop=""
+				;;
+		esac
+	done
 fi
