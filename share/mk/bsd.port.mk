@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.31 1998/06/29 22:21:16 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.32 1998/07/06 22:06:51 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -12,7 +12,7 @@
 
 # There are two different types of "maintainers" in the whole ports
 # framework concept.  Maintainers of the bsd.port*.mk files
-# are listed below in the ${OSNAME}_MAINTAINER entries (this file
+# are listed below in the ${OPSYS}_MAINTAINER entries (this file
 # is used by multiple *BSD flavors).  You should consult them directly
 # if you have any questions/suggestions regarding this file since only
 # they are allowed to modify the master copies in the CVS repository!
@@ -37,6 +37,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # OPSYS			- Portability clause.  This is the operating system the
 #				  makefile is being used on.  Automatically set to
 #				  "FreeBSD," "NetBSD," or "OpenBSD" as appropriate.
+# OPSYS_VER		- The current version if the operating system
 # PORTSDIR		- The root of the ports tree.  Defaults:
 #					FreeBSD/OpenBSD: /usr/ports
 #					NetBSD:          /usr/opt
@@ -259,6 +260,8 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # install		- Install the results of a build.
 # reinstall		- Install the results of a build, ignoring "already installed"
 #				  flag.
+# plist			- create a file suitable for use as a packing list.  This
+#				  is for port maintainers.
 # package		- Create a package from an _installed_ port.
 # describe		- Try to generate a one-line description for each port for
 #				  use in INDEX files and the like.
@@ -278,8 +281,9 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEVER override the "regular" targets unless you want to open
 # a major can of worms.
 
-# Get the operating system type
+# Get the operating system type and version
 OPSYS!=	uname -s
+OPSYS_VER!=	uname -r
 
 # Get the architecture
 ARCH!=	uname -m
@@ -406,6 +410,7 @@ BUILD_DEPENDS+=		gmake:${PORTSDIR}/devel/gmake
 # there is no way to refer to them cleanly from within the macro AFAIK.
 EXTRACT_COOKIE?=	${WRKDIR}/.extract_done
 CONFIGURE_COOKIE?=	${WRKDIR}/.configure_done
+INSTALL_PRE_COOKIE?=${WRKDIR}/.install_started
 INSTALL_COOKIE?=	${WRKDIR}/.install_done
 BUILD_COOKIE?=		${WRKDIR}/.build_done
 PATCH_COOKIE?=		${WRKDIR}/.patch_done
@@ -562,6 +567,7 @@ AWK?=		/usr/bin/awk
 BASENAME?=	/usr/bin/basename
 CAT?=		/bin/cat
 CP?=		/bin/cp
+DIRNAME?=	/usr/bin/dirname
 ECHO?=		/bin/echo
 FALSE?=		/usr/bin/false
 GREP?=		/usr/bin/grep
@@ -850,8 +856,7 @@ __ARCH_OK=	1
 IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE}"
 .endif
 .elif defined(COMES_WITH)
-OS_VER!=	uname -r
-.if ( ${OS_VER} >= ${COMES_WITH} )
+.if ( ${OPSYS_VER} >= ${COMES_WITH} )
 IGNORE= "comes with ${OPSYS} as of release ${COMES_WITH}"
 .endif
 .endif
@@ -1334,6 +1339,7 @@ ${CONFIGURE_COOKIE}:
 ${BUILD_COOKIE}:
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-build
 ${INSTALL_COOKIE}:
+	@touch ${INSTALL_PRE_COOKIE}
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-install
 ${PACKAGE_COOKIE}:
 	@cd ${.CURDIR} && ${MAKE} ${.MAKEFLAGS} real-package
@@ -1385,7 +1391,7 @@ checkpatch:
 
 .if !target(reinstall)
 reinstall:
-	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
+	@${RM} -f ${INSTALL_PRE_COOKIE} ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 	@DEPENDS_TARGET=${DEPENDS_TARGET} ${MAKE} install
 .endif
 
@@ -1521,6 +1527,40 @@ checksum: fetch
 			exit 1; \
 		  fi) ; \
 	fi
+.endif
+
+# packing list utilities.  This generates a packing list from a recently
+# installed port.  Not perfect, but pretty close.  The generated file
+# will have to have some tweaks done by hand.
+#
+.if !target(plist)
+plist: install
+	@${MKDIR} ${PKGDIR}
+	@(dirs=""; \
+	  ld=""; \
+	  ${ECHO} "@comment PACKAGE(arch=${ARCH}, opsys=${OPSYS}, vers=${OPSYS_VER})"; \
+	  ${ECHO} "@name ${PKGNAME}"; \
+	  ${ECHO} "@cwd ${PREFIX}"; \
+	  for f in `${MAKE} package-depends|sort -u`; do ${ECHO} "@pkgdep $$f"; done; \
+	  for f in `find ${PREFIX} -newer ${INSTALL_PRE_COOKIE} -print 2> /dev/null`; do \
+	   ff=`${ECHO} $$f | ${SED} -e 's|^${PREFIX}/||'`; \
+	   if [ -d $$f ]; then dirs="$$ff $$dirs"; \
+	   else \
+	    ${ECHO} $$ff; \
+	    if ${ECHO} $$f | ${GREP} -E -q -e '/[^/]+\.so\.[0-9]+\.[0-9]+$$'; then \
+	     ld="$$LDCONFIG `${DIRNAME} $$f`"; \
+	    fi; \
+	   fi; \
+	  done; \
+	  for f in $$dirs; do \
+       if ${GREP} -q -e `${BASENAME} $$f` ${MTREE_FILE}; then \
+        :; \
+       else \
+        ${ECHO} "@dirrm $$f"; \
+       fi; \
+      done; \
+	  for f in $$ld; do ${ECHO} "@exec ${LDCONFIG} -m $$f"; done; \
+	) > ${PLIST}-auto
 .endif
 
 ################################################################
