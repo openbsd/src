@@ -1,6 +1,10 @@
-#	$NetBSD: GENERIC,v 1.23.2.1 1995/10/17 12:54:55 tls Exp $
+#	$NetBSD: INSTOTHER,v 1.1.2.1 1995/10/28 04:05:08 tls Exp $
 #
-#	GENERIC -- everything that's currently supported
+#	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
+#                     adapters.  This kernel is GENERICOTHER with lines
+#                     deleted, not commented out, so it is easy to maintain.
+#
+#       Install kernels no longer support X.
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -11,8 +15,6 @@ options		I586_CPU
 options		MATH_EMULATE	# floating point emulation
 
 #options	DUMMY_NOPS	# speed hack; recommended
-options		XSERVER,UCONSOLE
-options		INSECURE	# insecure; allow /dev/mem writing for X
 options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
@@ -23,57 +25,27 @@ options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
-options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options		DIAGNOSTIC	# internally consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
-options		SYSVMSG		# System V-like message queues
-options		SYSVSEM		# System V-like semaphores
-options		SYSVSHM		# System V-like memory sharing
-#options	SHMMAXPGS=1024	# 1024 pages is the default
-
-options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-options		COMPAT_09	# NetBSD 0.9,
 options		COMPAT_10	# NetBSD 1.0,
-options		COMPAT_43	# and 4.3BSD
-options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
-options		COMPAT_SVR4	# binary compatibility with SVR4
-options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
-options		COMPAT_LINUX	# binary compatibility with Linux
-options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
 
 options		FFS		# UFS
-options		QUOTA		# UFS quotas
-options		LFS		# log-structured file system
-options		MFS		# memory file system
 
 options		NFSCLIENT	# Network File System client
-options		NFSSERVER	# Network File System server
 
 options		CD9660		# ISO 9660 + Rock Ridge file system
 options		MSDOSFS		# MS-DOS file system
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
-options		NULLFS		# loopback file system
-options		PORTAL		# ?
-options		PROCFS		# /proc
-options		UMAPFS		# NULLFS + uid and gid remapping
-options		UNION		# union file system
 
-#options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
-options		NS		# XNS
-options		ISO,TPIP	# OSI
-options		EON		# OSI tunneling over IP
-options		CCITT,LLC,HDLC	# X.25
 
-config		bsd	swap generic
+config		netbsd	swap generic
 options		GENERIC
 
 isa0	at root
@@ -101,21 +73,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
-lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-lms1	at isa? port 0x238 irq 5
-mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-mms1	at isa? port 0x238 irq 5
-#pms0	at isa? port 0x60 irq 12	# PS/2 auxiliary port mouse
-
-aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-scsibus* at aha?
-ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
-scsibus* at ahb?
-ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
-aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
-scsibus* at aic?
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 bt2	at isa? port ? irq ?
@@ -138,8 +95,6 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
-mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
-
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
 wd*	at wdc? drive ?
@@ -157,21 +112,7 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 le*	at pci? bus ? dev ?
 de*	at pci? bus ? dev ?
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
-
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
-#spkr0	at isa? ...
-
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	64		# pseudo-terminals
-pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
