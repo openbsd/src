@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.14 1997/05/06 19:49:56 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 1997/05/07 12:52:22 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,13 @@ all)
 	sh MAKEDEV local
 	;;
 
+raminst)
+	sh MAKEDEV std
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
+	sh MAKEDEV rd0
+	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 pty0
+	;;
+
 std)
 	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
 	mknod console		c 0 0
@@ -117,9 +124,10 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|vnd*|ccd*)
+sd*|vnd*|ccd*|rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
+	rd*)	name=rd;	blk=6; chr=28;;
 	sd*)	name=sd;	blk=8; chr=8;;
 	vnd*)	name=vnd;	blk=9; chr=9;;
 	ccd*)	name=ccd;	blk=7; chr=27;;
