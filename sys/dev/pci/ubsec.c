@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.90 2002/04/28 17:08:18 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.91 2002/04/30 00:26:10 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1751,6 +1751,9 @@ ubsec_kprocess(krp)
 	}
 }
 
+/*
+ * Start computation of cr[3] = (cr[0] ^ cr[1]) mod cr[2]
+ */
 int
 ubsec_kprocess_modexp(sc, krp)
 	struct ubsec_softc *sc;
@@ -1762,7 +1765,7 @@ ubsec_kprocess_modexp(sc, krp)
 	struct ubsec_pktbuf *epb;
 	int err = 0, s;
 	u_int len;
-	u_int16_t ilen = 0;
+	u_int modbits;
 
 #ifdef UBSEC_DEBUG
 	for (s = 0; s < (krp->krp_iparams + krp->krp_oparams); s++) {
@@ -1775,7 +1778,6 @@ ubsec_kprocess_modexp(sc, krp)
 	if (me == NULL)
 		return (ENOMEM);
 	bzero(me, sizeof *me);
-
 	me->me_krp = krp;
 	me->me_q.q_type = UBS_CTXOP_MODEXP;
 
@@ -1784,6 +1786,8 @@ ubsec_kprocess_modexp(sc, krp)
 		err = ENOMEM;
 		goto errout;
 	}
+	mcr = (struct ubsec_mcr *)me->me_q.q_mcr.dma_vaddr;
+	bzero(mcr, sizeof(*mcr));
 
 	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_modexp),
 	    &me->me_q.q_ctx, 0)) {
@@ -1811,28 +1815,26 @@ ubsec_kprocess_modexp(sc, krp)
 		err = ENOMEM;
 		goto errout;
 	}
+	epb = (struct ubsec_pktbuf *)me->me_epb.dma_vaddr;
 
 	if (ubsec_kcopyin(&krp->krp_param[1], me->me_E.dma_vaddr,
 	    1024 / 8, &len)) {
 		err = EOPNOTSUPP;
 		goto errout;
 	}
-	epb = (struct ubsec_pktbuf *)me->me_epb.dma_vaddr;
 	epb->pb_addr = htole32(me->me_E.dma_paddr);
 	epb->pb_next = 0;
 	epb->pb_len = htole32(len);
-	ilen += len;
 #ifdef UBSEC_DEBUG
 	printf("Epb ");
 	ubsec_dump_pb(epb);
 #endif
 
-	mcr = (struct ubsec_mcr *)me->me_q.q_mcr.dma_vaddr;
-	bzero(mcr, sizeof(*mcr));
 	mcr->mcr_pkts = htole16(1);
 	mcr->mcr_flags = 0;
 	mcr->mcr_cmdctxp = htole32(me->me_q.q_ctx.dma_paddr);
 	mcr->mcr_reserved = 0;
+	mcr->mcr_pktlen = 0;
 
 	if (ubsec_kcopyin(&krp->krp_param[0], me->me_M.dma_vaddr,
 	    1024 / 8, &len)) {
@@ -1843,18 +1845,14 @@ ubsec_kprocess_modexp(sc, krp)
 	mcr->mcr_ipktbuf.pb_len = htole32(len);
 	mcr->mcr_ipktbuf.pb_next = htole32(me->me_epb.dma_paddr);
 	mcr->mcr_reserved = 0;
-	ilen += len;
-	mcr->mcr_pktlen = htole16(ilen);
 
 	mcr->mcr_opktbuf.pb_addr = htole32(me->me_C.dma_paddr);
 	mcr->mcr_opktbuf.pb_next = 0;
 	mcr->mcr_opktbuf.pb_len = htole32(me->me_C.dma_size);
-#ifdef UBSEC_DEBUG
-	ubsec_dump_mcr(mcr);
-#endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof(*ctx));
+	modbits = krp->krp_param[2].crp_nbits;
 	if (ubsec_kcopyin(&krp->krp_param[2], ctx->me_N,
 	    1024 / 8, &len)) {
 		err = EOPNOTSUPP;
@@ -1867,9 +1865,14 @@ ubsec_kprocess_modexp(sc, krp)
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
 	ctx->me_E_len = htole16(((krp->krp_param[1].crp_nbits + 31) / 32) * 32);
 	ctx->me_N_len = htole16(len);
+
+	mcr->mcr_opktbuf.pb_len = htole32(modbits / 8);
+
 #ifdef UBSEC_DEBUG
+	ubsec_dump_mcr(mcr);
 	ubsec_dump_ctx2((struct ubsec_ctx_keyop *)ctx);
 #endif
+
 	/*
 	 * ubsec_feed2 will sync mcr and ctx, we just need to sync
 	 * everything else.
@@ -1989,7 +1992,7 @@ ubsec_dump_ctx2(struct ubsec_ctx_keyop *c)
 		struct ubsec_ctx_modexp *cx = (void *)c;
 		int i, len;
 
-		printf(" Elen 0x%x, Nlen 0x%x\n",
+		printf(" Elen %u, Nlen %u\n",
 		    letoh16(cx->me_E_len), letoh16(cx->me_N_len));
 		len = (cx->me_N_len + 7)/8;
 		for (i = 0; i < len; i++)
