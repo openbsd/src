@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.26 1999/06/29 20:24:10 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.27 1999/07/02 17:34:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.40 1999/06/01 19:04:23 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.41 1999/07/02 04:17:16 peter Exp $
  */
 
 /*
@@ -195,7 +195,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.40 1999/06/01 19:04:23 wpaul Exp $";
+	"$FreeBSD: if_xl.c,v 1.41 1999/07/02 04:17:16 peter Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -1517,7 +1517,7 @@ xl_attach(config_id, unit)
 		goto fail;
 	}
 	if (!pci_map_port(config_id, XL_PCI_LOIO,
-				(u_short *)&(sc->xl_bhandle))) {
+				(pci_port_t *)&(sc->xl_bhandle))) {
 		printf ("xl%d: couldn't map port\n", unit);
 		printf ("xl%d: WARNING: check your BIOS and "
 		    "set 'Plug & Play OS' to 'no'\n", unit);
@@ -2129,8 +2129,15 @@ static void xl_txeoc(sc)
 			 * first generation 3c90X chips.
 			 */
 			CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
+			if (txstat & XL_TXSTATUS_UNDERRUN &&
+			    sc->xl_tx_thresh < XL_PACKET_SIZE) {
+				sc->xl_tx_thresh += XL_MIN_FRAMELEN;
+				printf("xl%d: tx underrun, increasing tx start"
+				    " threshold to %d\n", sc->xl_unit,
+				    sc->xl_tx_thresh);
+			}
 			CSR_WRITE_2(sc, XL_COMMAND,
-			    XL_CMD_TX_SET_START|XL_MIN_FRAMELEN);
+			    XL_CMD_TX_SET_START|sc->xl_tx_thresh);
 			if (sc->xl_type == XL_TYPE_905B) {
 				CSR_WRITE_2(sc, XL_COMMAND,
 				XL_CMD_SET_TX_RECLAIM|(XL_PACKET_SIZE >> 4));
@@ -2556,7 +2563,8 @@ static void xl_init(xsc)
 	CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
 
 	/* Set the TX start threshold for best performance. */
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_SET_START|XL_MIN_FRAMELEN);
+	sc->xl_tx_thresh = XL_MIN_FRAMELEN;
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_SET_START|sc->xl_tx_thresh);
 
 	/*
 	 * If this is a 3c905B, also set the tx reclaim threshold.
