@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.58 2001/06/06 22:55:03 jasoni Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.59 2001/06/07 04:12:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -696,7 +696,7 @@ bridge_init(sc)
 		for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 			LIST_INIT(&sc->sc_rts[i]);
 		}
-		get_random_bytes(&sc->sc_hashkey, sizeof(sc->sc_hashkey));
+		sc->sc_hashkey = arc4random();
 	}
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -1330,7 +1330,7 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 			for (h = 0; h < BRIDGE_RTABLE_SIZE; h++) {
 				LIST_INIT(&sc->sc_rts[h]);
 			}
-			get_random_bytes(&sc->sc_hashkey, sizeof(sc->sc_hashkey));
+			sc->sc_hashkey = arc4random();
 		} else
 			goto done;
 	}
