@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.2 2001/08/23 05:12:59 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.3 2001/08/23 05:27:01 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -121,14 +121,6 @@ void		hme_read __P((struct hme_softc *, int, int));
 int		hme_eint __P((struct hme_softc *, u_int));
 int		hme_rint __P((struct hme_softc *));
 int		hme_tint __P((struct hme_softc *));
-
-static int	ether_cmp __P((u_char *, u_char *));
-
-/* Default buffer copy routines */
-void	hme_copytobuf_contig __P((struct hme_softc *, void *, int, int));
-void	hme_copyfrombuf_contig __P((struct hme_softc *, void *, int, int));
-void	hme_zerobuf_contig __P((struct hme_softc *, int, int));
-
 
 void
 hme_config(sc)
@@ -637,22 +629,6 @@ hme_init(sc)
 	ifp->if_timer = 0;
 	hme_start(ifp);
 }
-
-/*
- * Compare two Ether/802 addresses for equality, inlined and unrolled for
- * speed.
- */
-static __inline__ int
-ether_cmp(a, b)
-	u_char *a, *b;
-{       
-        
-	if (a[5] != b[5] || a[4] != b[4] || a[3] != b[3] ||
-	    a[2] != b[2] || a[1] != b[1] || a[0] != b[0])
-		return (0);
-	return (1);
-}
-
 
 /*
  * Routine to copy from mbuf chain to transmit buffer in
@@ -1337,7 +1313,7 @@ hme_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1387,49 +1363,3 @@ chipit:
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, hash[3]);
 	bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
 }
-
-/*
- * Routines for accessing the transmit and receive buffers.
- * The various CPU and adapter configurations supported by this
- * driver require three different access methods for buffers
- * and descriptors:
- *	(1) contig (contiguous data; no padding),
- *	(2) gap2 (two bytes of data followed by two bytes of padding),
- *	(3) gap16 (16 bytes of data followed by 16 bytes of padding).
- */
-
-#if 0
-/*
- * contig: contiguous data with no padding.
- *
- * Buffers may have any alignment.
- */
-
-void
-hme_copytobuf_contig(sc, from, ri, len)
-	struct hme_softc *sc;
-	void *from;
-	int ri, len;
-{
-	volatile caddr_t buf = sc->sc_rb.rb_txbuf + (ri * _HME_BUFSZ);
-
-	/*
-	 * Just call memcpy() to do the work.
-	 */
-	memcpy(buf, from, len);
-}
-
-void
-hme_copyfrombuf_contig(sc, to, boff, len)
-	struct hme_softc *sc;
-	void *to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_rb.rb_rxbuf + (ri * _HME_BUFSZ);
-
-	/*
-	 * Just call memcpy() to do the work.
-	 */
-	memcpy(to, buf, len);
-}
-#endif
