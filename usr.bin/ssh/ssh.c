@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.91 2001/02/06 23:03:24 jakob Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.92 2001/02/06 23:06:21 jakob Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -173,10 +173,10 @@ usage()
 	fprintf(stderr, "  -C          Enable compression.\n");
 	fprintf(stderr, "  -N          Do not execute a shell or command.\n");
 	fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
-	fprintf(stderr, "  -4          Use IPv4 only.\n");
-	fprintf(stderr, "  -6          Use IPv6 only.\n");
 	fprintf(stderr, "  -1          Force protocol version 1.\n");
 	fprintf(stderr, "  -2          Force protocol version 2.\n");
+	fprintf(stderr, "  -4          Use IPv4 only.\n");
+	fprintf(stderr, "  -6          Use IPv6 only.\n");
 	fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
 	fprintf(stderr, "  -s          Invoke command (mandatory) as SSH2 subsystem.\n");
 	exit(1);
