@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.8 1997/04/06 19:17:06 millert Exp $	*/
+/*	$OpenBSD: auth.c,v 1.9 1997/06/08 17:57:24 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: auth.c,v 1.8 1997/04/06 19:17:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.9 1997/06/08 17:57:24 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -936,8 +936,11 @@ get_pap_passwd(passwd)
     check_access(f, filename);
     if (scan_authfile(f, user,
                       remote_name[0]? remote_name: NULL,
-                      (u_int32_t)0, secret, NULL, filename) < 0)
+                      (u_int32_t)0, secret, NULL, filename) < 0) {
+	fclose(f);
 	return 0;
+    }
+    fclose(f);
     if (passwd != NULL) {
         strncpy(passwd, secret, MAXSECRETLEN);
         passwd[MAXSECRETLEN-1] = 0;
