@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.13 1998/03/19 00:30:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.14 1998/03/19 01:00:55 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -738,6 +738,7 @@ cgetnext(bp, db_array)
 						return (-1);
 					}
 					(void)fclose(pfp);
+					pfp = NULL;
 				} else
 					line[len - 1] = '\0';
 			}
