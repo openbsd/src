@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.2 1996/06/28 06:02:59 tholo Exp $
+#	$OpenBSD: sendbug.sh,v 1.3 1996/07/02 15:49:53 tholo Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -44,7 +44,7 @@ GNATS_ADDR=gnats@openbsd.org
 #  DATADIR=${GCC_EXEC_PREFIX}../../../lib
 
 # The default release for this host.
-DEFAULT_RELEASE="xDEFAULT_RELEASEx"
+#DEFAULT_RELEASE="xDEFAULT_RELEASEx"
 
 # The default organization.
 DEFAULT_ORGANIZATION="net"
