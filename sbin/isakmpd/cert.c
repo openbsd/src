@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.16 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.17 2001/05/31 20:21:25 angelos Exp $	*/
 /*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -66,7 +66,8 @@ struct cert_handler cert_handler[] = {
     x509_cert_init, x509_cert_get, x509_cert_validate, 
     x509_cert_insert, x509_cert_free,
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
-    x509_cert_obtain, x509_cert_get_key, x509_cert_get_subjects
+    x509_cert_obtain, x509_cert_get_key, x509_cert_get_subjects,
+    x509_cert_dup, x509_serialize, x509_printable, x509_from_printable
   },
 #endif
 #ifdef USE_KEYNOTE
@@ -75,7 +76,9 @@ struct cert_handler cert_handler[] = {
     keynote_cert_init, keynote_cert_get, keynote_cert_validate,
     keynote_cert_insert, keynote_cert_free,
     keynote_certreq_validate, keynote_certreq_decode, keynote_free_aca,
-    keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subjects
+    keynote_cert_obtain, keynote_cert_get_key, keynote_cert_get_subjects,
+    keynote_cert_dup, keynote_serialize, keynote_printable,
+    keynote_from_printable
   },
 #endif
 };
