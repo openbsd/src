@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.4 1998/12/21 13:03:45 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.5 1999/01/10 23:00:02 d Exp $	*/
 /*
  * Atomic lock for mips
  */
@@ -25,6 +25,8 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 		 * Read the lock and tag the cache line with a 'load linked'
 		 * instruction. (Register 17 (LLAddr) will hold the 
 		 * physical address of lock for diagnostic purposes);
+		 * (Under pathologically heavy swapping, the physaddr may 
+		 * change! XXX)
 		 */
 		__asm__("ll %0, %1" : "=r"(old) : "m"(*lock));
 		if (old != _SPINLOCK_UNLOCKED) 
