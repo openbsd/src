@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.35 1998/03/16 10:41:39 downsj Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.36 1998/03/17 10:50:33 deraadt Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -390,14 +390,21 @@ ed_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	/* We don't check the vendor here since many make NE2000 clones */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8029)
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8029) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_WINBOND_W89C940F) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND2 &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_WINBOND2_W89C940) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETVIN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETVIN_VN5000) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPEX &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPEX_COMPEXE) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_KTI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_KTI_KTIE) ||
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SURECOM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SURECOM_NE34))
 		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_WINBOND_W89C940F)
-		return (1);
-
 	return (0);
 }
 
