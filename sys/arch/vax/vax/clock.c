@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2001/08/25 13:33:37 hugh Exp $	 */
+/*	$OpenBSD: clock.c,v 1.13 2001/11/14 21:35:50 miod Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -117,7 +117,7 @@ void
 inittodr(fs_time) 
 	time_t fs_time;
 {
-	int rv;
+	int rv, deltat;
 
 	rv = (*dep_call->cpu_clkread) (fs_time);
 	switch (rv) {
@@ -131,20 +131,21 @@ inittodr(fs_time)
 		break;
 
 	default: /* System clock OK, no warning if we don't want to. */
-		if (time.tv_sec > fs_time + 3 * SEC_PER_DAY) {
-			printf("Clock has gained %ld days",
-			    (time.tv_sec - fs_time) / SEC_PER_DAY);
-			rv = CLKREAD_WARN;
-		} else if (time.tv_sec + SEC_PER_DAY < fs_time) {
-			printf("Clock has lost %ld day(s)",
-			    (fs_time - time.tv_sec) / SEC_PER_DAY);
+		deltat = time.tv_sec - fs_time;
+
+		if (deltat < 0)
+			deltat = -deltat;
+		if (deltat >= 2 * SEC_PER_DAY) {
+			printf("Clock has %s %ld days",
+			    time.tv_sec < fs_time ? "lost" : "gained",
+			    deltat / SEC_PER_DAY);
 			rv = CLKREAD_WARN;
 		}
 		break;
 	}
 
 	if (rv < CLKREAD_OK)
-		printf(" - CHECK AND RESET THE DATE.\n");
+		printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*   
