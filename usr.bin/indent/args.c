@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.3 1996/10/28 00:36:23 millert Exp $	*/
+/*	$OpenBSD: args.c,v 1.4 1997/07/25 22:00:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)args.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: args.c,v 1.3 1996/10/28 00:36:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.4 1997/07/25 22:00:44 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -51,6 +51,7 @@ static char rcsid[] = "$OpenBSD: args.c,v 1.3 1996/10/28 00:36:23 millert Exp $"
 #include <string.h>
 #include <errno.h>
 #include "indent_globs.h"
+#include <err.h>
 
 /* profile types */
 #define	PRO_SPECIAL	1	/* special case */
@@ -84,77 +85,85 @@ struct pro {
     int        *p_obj;		/* the associated variable */
 }           pro[] = {
 
-    "T", PRO_SPECIAL, 0, KEY, 0,
-    "bacc", PRO_BOOL, false, ON, &blanklines_around_conditional_compilation,
-    "badp", PRO_BOOL, false, ON, &blanklines_after_declarations_at_proctop,
-    "bad", PRO_BOOL, false, ON, &blanklines_after_declarations,
-    "bap", PRO_BOOL, false, ON, &blanklines_after_procs,
-    "bbb", PRO_BOOL, false, ON, &blanklines_before_blockcomments,
-    "bc", PRO_BOOL, true, OFF, &ps.leave_comma,
-    "bl", PRO_BOOL, true, OFF, &btype_2,
-    "br", PRO_BOOL, true, ON, &btype_2,
-    "bs", PRO_BOOL, false, ON, &Bill_Shannon,
-    "cdb", PRO_BOOL, true, ON, &comment_delimiter_on_blankline,
-    "cd", PRO_INT, 0, 0, &ps.decl_com_ind,
-    "ce", PRO_BOOL, true, ON, &cuddle_else,
-    "ci", PRO_INT, 0, 0, &continuation_indent,
-    "cli", PRO_SPECIAL, 0, CLI, 0,
-    "c", PRO_INT, 33, 0, &ps.com_ind,
-    "di", PRO_INT, 16, 0, &ps.decl_indent,
-    "dj", PRO_BOOL, false, ON, &ps.ljust_decl,
-    "d", PRO_INT, 0, 0, &ps.unindent_displace,
-    "eei", PRO_BOOL, false, ON, &extra_expression_indent,
-    "ei", PRO_BOOL, true, ON, &ps.else_if,
-    "fbc", PRO_FONT, 0, 0, (int *) &blkcomf,
-    "fbx", PRO_FONT, 0, 0, (int *) &boxcomf,
-    "fb", PRO_FONT, 0, 0, (int *) &bodyf,
-    "fc1", PRO_BOOL, true, ON, &format_col1_comments,
-    "fc", PRO_FONT, 0, 0, (int *) &scomf,
-    "fk", PRO_FONT, 0, 0, (int *) &keywordf,
-    "fs", PRO_FONT, 0, 0, (int *) &stringf,
-    "ip", PRO_BOOL, true, ON, &ps.indent_parameters,
-    "i", PRO_INT, 8, 0, &ps.ind_size,
-    "lc", PRO_INT, 0, 0, &block_comment_max_col,
-    "lp", PRO_BOOL, true, ON, &lineup_to_parens,
-    "l", PRO_INT, 78, 0, &max_col,
-    "nbacc", PRO_BOOL, false, OFF, &blanklines_around_conditional_compilation,
-    "nbadp", PRO_BOOL, false, OFF, &blanklines_after_declarations_at_proctop,
-    "nbad", PRO_BOOL, false, OFF, &blanklines_after_declarations,
-    "nbap", PRO_BOOL, false, OFF, &blanklines_after_procs,
-    "nbbb", PRO_BOOL, false, OFF, &blanklines_before_blockcomments,
-    "nbc", PRO_BOOL, true, ON, &ps.leave_comma,
-    "nbs", PRO_BOOL, false, OFF, &Bill_Shannon,
-    "ncdb", PRO_BOOL, true, OFF, &comment_delimiter_on_blankline,
-    "nce", PRO_BOOL, true, OFF, &cuddle_else,
-    "ndj", PRO_BOOL, false, OFF, &ps.ljust_decl,
-    "neei", PRO_BOOL, false, OFF, &extra_expression_indent,
-    "nei", PRO_BOOL, true, OFF, &ps.else_if,
-    "nfc1", PRO_BOOL, true, OFF, &format_col1_comments,
-    "nip", PRO_BOOL, true, OFF, &ps.indent_parameters,
-    "nlp", PRO_BOOL, true, OFF, &lineup_to_parens,
-    "npcs", PRO_BOOL, false, OFF, &proc_calls_space,
-    "npro", PRO_SPECIAL, 0, IGN, 0,
-    "npsl", PRO_BOOL, true, OFF, &procnames_start_line,
-    "nps", PRO_BOOL, false, OFF, &pointer_as_binop,
-    "nsc", PRO_BOOL, true, OFF, &star_comment_cont,
-    "nsob", PRO_BOOL, false, OFF, &swallow_optional_blanklines,
-    "nv", PRO_BOOL, false, OFF, &verbose,
-    "pcs", PRO_BOOL, false, ON, &proc_calls_space,
-    "psl", PRO_BOOL, true, ON, &procnames_start_line,
-    "ps", PRO_BOOL, false, ON, &pointer_as_binop,
-    "sc", PRO_BOOL, true, ON, &star_comment_cont,
-    "sob", PRO_BOOL, false, ON, &swallow_optional_blanklines,
-    "st", PRO_SPECIAL, 0, STDIN, 0,
-    "troff", PRO_BOOL, false, ON, &troff,
-    "v", PRO_BOOL, false, ON, &verbose,
-    /* whew! */
-    0, 0, 0, 0, 0
+	{ "T", PRO_SPECIAL, 0, KEY, 0 },
+	{"bacc", PRO_BOOL, false, ON,
+	 &blanklines_around_conditional_compilation },
+	{"badp", PRO_BOOL, false, ON,
+	 &blanklines_after_declarations_at_proctop },
+	{"bad", PRO_BOOL, false, ON, &blanklines_after_declarations },
+	{"bap", PRO_BOOL, false, ON, &blanklines_after_procs },
+	{"bbb", PRO_BOOL, false, ON, &blanklines_before_blockcomments },
+	{"bc", PRO_BOOL, true, OFF, &ps.leave_comma },
+	{"bl", PRO_BOOL, true, OFF, &btype_2 },
+	{"br", PRO_BOOL, true, ON, &btype_2 },
+	{"bs", PRO_BOOL, false, ON, &Bill_Shannon },
+	{"cdb", PRO_BOOL, true, ON, &comment_delimiter_on_blankline },
+	{"cd", PRO_INT, 0, 0, &ps.decl_com_ind },
+	{"ce", PRO_BOOL, true, ON, &cuddle_else },
+	{"ci", PRO_INT, 0, 0, &continuation_indent },
+	{"cli", PRO_SPECIAL, 0, CLI, 0 },
+	{"c", PRO_INT, 33, 0, &ps.com_ind },
+	{"di", PRO_INT, 16, 0, &ps.decl_indent },
+	{"dj", PRO_BOOL, false, ON, &ps.ljust_decl },
+	{"d", PRO_INT, 0, 0, &ps.unindent_displace },
+	{"eei", PRO_BOOL, false, ON, &extra_expression_indent },
+	{"ei", PRO_BOOL, true, ON, &ps.else_if },
+	{"fbc", PRO_FONT, 0, 0, (int *) &blkcomf },
+	{"fbx", PRO_FONT, 0, 0, (int *) &boxcomf },
+	{"fb", PRO_FONT, 0, 0, (int *) &bodyf },
+	{"fc1", PRO_BOOL, true, ON, &format_col1_comments },
+	{"fc", PRO_FONT, 0, 0, (int *) &scomf },
+	{"fk", PRO_FONT, 0, 0, (int *) &keywordf },
+	{"fs", PRO_FONT, 0, 0, (int *) &stringf },
+	{"ip", PRO_BOOL, true, ON, &ps.indent_parameters },
+	{"i", PRO_INT, 8, 0, &ps.ind_size },
+	{"lc", PRO_INT, 0, 0, &block_comment_max_col },
+	{"lp", PRO_BOOL, true, ON, &lineup_to_parens },
+	{"l", PRO_INT, 78, 0, &max_col },
+	{"nbacc", PRO_BOOL, false, OFF,
+	 &blanklines_around_conditional_compilation },
+	{"nbadp", PRO_BOOL, false, OFF,
+	 &blanklines_after_declarations_at_proctop },
+	{"nbad", PRO_BOOL, false, OFF, &blanklines_after_declarations },
+	{"nbap", PRO_BOOL, false, OFF, &blanklines_after_procs },
+	{"nbbb", PRO_BOOL, false, OFF, &blanklines_before_blockcomments },
+	{"nbc", PRO_BOOL, true, ON, &ps.leave_comma },
+	{"nbs", PRO_BOOL, false, OFF, &Bill_Shannon },
+	{"ncdb", PRO_BOOL, true, OFF, &comment_delimiter_on_blankline },
+	{"nce", PRO_BOOL, true, OFF, &cuddle_else },
+	{"ndj", PRO_BOOL, false, OFF, &ps.ljust_decl },
+	{"neei", PRO_BOOL, false, OFF, &extra_expression_indent },
+	{"nei", PRO_BOOL, true, OFF, &ps.else_if },
+	{"nfc1", PRO_BOOL, true, OFF, &format_col1_comments },
+	{"nip", PRO_BOOL, true, OFF, &ps.indent_parameters },
+	{"nlp", PRO_BOOL, true, OFF, &lineup_to_parens },
+	{"npcs", PRO_BOOL, false, OFF, &proc_calls_space },
+	{"npro", PRO_SPECIAL, 0, IGN, 0 },
+	{"npsl", PRO_BOOL, true, OFF, &procnames_start_line },
+	{"nps", PRO_BOOL, false, OFF, &pointer_as_binop },
+	{"nsc", PRO_BOOL, true, OFF, &star_comment_cont },
+	{"nsob", PRO_BOOL, false, OFF, &swallow_optional_blanklines },
+	{"nv", PRO_BOOL, false, OFF, &verbose },
+	{"pcs", PRO_BOOL, false, ON, &proc_calls_space },
+	{"psl", PRO_BOOL, true, ON, &procnames_start_line },
+	{"ps", PRO_BOOL, false, ON, &pointer_as_binop },
+	{"sc", PRO_BOOL, true, ON, &star_comment_cont },
+	{"sob", PRO_BOOL, false, ON, &swallow_optional_blanklines },
+	{"st", PRO_SPECIAL, 0, STDIN, 0 },
+	{"troff", PRO_BOOL, false, ON, &troff },
+	{"v", PRO_BOOL, false, ON, &verbose },
+	/* whew! */
+	{ 0, 0, 0, 0, 0 }
 };
+
+void scan_profile();
+void set_option();
 
 /*
  * set_profile reads $HOME/.indent.pro and ./.indent.pro and handles arguments
  * given in these files.
  */
+void
 set_profile()
 {
     register FILE *f;
@@ -177,6 +186,7 @@ set_profile()
     option_source = "Command line";
 }
 
+void
 scan_profile(f)
     register FILE *f;
 {
@@ -199,6 +209,7 @@ scan_profile(f)
 
 char       *param_start;
 
+int
 eqin(s1, s2)
     register char *s1;
     register char *s2;
@@ -214,6 +225,7 @@ eqin(s1, s2)
 /*
  * Set the defaults.
  */
+void
 set_defaults()
 {
     register struct pro *p;
@@ -228,6 +240,7 @@ set_defaults()
 	    *p->p_obj = p->p_default;
 }
 
+void
 set_option(arg)
     register char *arg;
 {

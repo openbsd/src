@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.2 1996/06/26 05:34:31 deraadt Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.3 1997/07/25 22:00:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.2 1996/06/26 05:34:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.3 1997/07/25 22:00:46 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -63,35 +63,35 @@ struct templ {
 
 struct templ specials[100] =
 {
-    "switch", 1,
-    "case", 2,
-    "break", 0,
-    "struct", 3,
-    "union", 3,
-    "enum", 3,
-    "default", 2,
-    "int", 4,
-    "char", 4,
-    "float", 4,
-    "double", 4,
-    "long", 4,
-    "short", 4,
-    "typdef", 4,
-    "unsigned", 4,
-    "register", 4,
-    "static", 4,
-    "global", 4,
-    "extern", 4,
-    "void", 4,
-    "goto", 0,
-    "return", 0,
-    "if", 5,
-    "while", 5,
-    "for", 5,
-    "else", 6,
-    "do", 6,
-    "sizeof", 7,
-    0, 0
+	{ "switch", 1 },
+	{ "case", 2 },
+	{ "break", 0 },
+	{ "struct", 3 },
+	{ "union", 3 },
+	{ "enum", 3 },
+	{ "default", 2 },
+	{ "int", 4 },
+	{ "char", 4 },
+	{ "float", 4 },
+	{ "double", 4 },
+	{ "long", 4 },
+	{ "short", 4 },
+	{ "typdef", 4 },
+	{ "unsigned", 4 },
+	{ "register", 4 },
+	{ "static", 4 },
+	{ "global", 4 },
+	{ "extern", 4 },
+	{ "void", 4 },
+	{ "goto", 0 },
+	{ "return", 0 },
+	{ "if", 5 },
+	{ "while", 5 },
+	{ "for", 5 },
+	{ "else", 6 },
+	{ "do", 6 },
+	{ "sizeof", 7 },
+	{ 0, 0 }
 };
 
 char        chartype[128] =
@@ -144,7 +144,8 @@ lexi()
     }
 
     /* Scan an alphanumeric token */
-    if (chartype[*buf_ptr] == alphanum || buf_ptr[0] == '.' && isdigit(buf_ptr[1])) {
+    if (chartype[*buf_ptr] == alphanum ||
+	(buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
 	/*
 	 * we have a character or number
 	 */
@@ -153,7 +154,7 @@ lexi()
 				 * reserved words */
 	register struct templ *p;
 
-	if (isdigit(*buf_ptr) || buf_ptr[0] == '.' && isdigit(buf_ptr[1])) {
+	if (isdigit(*buf_ptr) || (buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
 	    int         seendot = 0,
 	                seenexp = 0;
 	    if (*buf_ptr == '0' &&
@@ -542,6 +543,7 @@ stop_lit:
 /*
  * Add the given keyword to the keyword table, using val as the keyword type
  */
+void
 addkey(key, val)
     char       *key;
 {

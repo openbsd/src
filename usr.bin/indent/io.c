@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.2 1996/06/26 05:34:31 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.3 1997/07/25 22:00:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,19 +37,21 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)io.c	5.15 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: io.c,v 1.2 1996/06/26 05:34:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.3 1997/07/25 22:00:46 mickey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "indent_globs.h"
 
 
 int         comment_open;
 static      paren_target;
 
+void
 dump_line()
 {				/* dump_line is the routine that actually
 				 * effects the printing of the new source. It
@@ -281,6 +283,7 @@ inhibit_newline:
     return;
 }
 
+int
 compute_code_target()
 {
     register    target_col = ps.ind_size * ps.ind_level + 1;
@@ -306,6 +309,7 @@ compute_code_target()
     return target_col;
 }
 
+int
 compute_label_target()
 {
     return
@@ -330,7 +334,7 @@ compute_label_target()
  * buffer from temporary buffer
  * 
  */
-int
+void
 fill_buffer()
 {				/* this routine reads stuff from the input */
     register char *p;
@@ -351,7 +355,7 @@ fill_buffer()
 	    register offset = p - in_buffer;
 	    in_buffer = (char *) realloc(in_buffer, size);
 	    if (in_buffer == 0)
-		err("input line too long");
+		errx(1, "input line too long");
 	    p = in_buffer + offset;
 	    in_buffer_limit = in_buffer + size - 2;
 	}
@@ -445,6 +449,7 @@ fill_buffer()
  * HISTORY: initial coding 	November 1976	D A Willcox of CAC
  * 
  */
+int
 pad_output(current, target)	/* writes tabs and blanks (if necessary) to
 				 * get the current output position up to the
 				 * target column */
@@ -530,6 +535,7 @@ count_spaces(current, buffer)
 
 int	found_err;
 /* VARARGS2 */
+void
 diag(level, msg, a, b)
 	char *msg;
 {
@@ -547,6 +553,7 @@ diag(level, msg, a, b)
     }
 }
 
+void
 writefdef(f, nm)
     register struct fstate *f;
 {
@@ -587,7 +594,7 @@ chfont(of, nf, s)
     return s;
 }
 
-
+void
 parsefont(f, s0)
     register struct fstate *f;
     char       *s0;

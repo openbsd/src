@@ -1,4 +1,4 @@
-/* *	$OpenBSD: indent_globs.h,v 1.2 1996/06/26 05:34:30 deraadt Exp $*/
+/* *	$OpenBSD: indent_globs.h,v 1.3 1997/07/25 22:00:45 mickey Exp $*/
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980 The Regents of the University of California.
@@ -218,7 +218,7 @@ struct parser_state {
     float       cstk[STACKSIZE];/* used to store case stmt indentation levels */
     int         box_com;	/* set to true when we are in a "boxed"
 				 * comment. In that case, the first non-blank
-				 * char should be lined up with the / in /* */
+				 * char should be lined up with the / in rem */
     int         comment_delta,
                 n_comment_delta;
     int         cast_mask;	/* indicates which close parens close off

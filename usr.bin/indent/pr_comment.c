@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_comment.c,v 1.2 1996/06/26 05:34:33 deraadt Exp $	*/
+/*	$OpenBSD: pr_comment.c,v 1.3 1997/07/25 22:00:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pr_comment.c	5.12 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: pr_comment.c,v 1.2 1996/06/26 05:34:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pr_comment.c,v 1.3 1997/07/25 22:00:47 mickey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ static char rcsid[] = "$OpenBSD: pr_comment.c,v 1.2 1996/06/26 05:34:33 deraadt 
  * beginning of the input line are removed
  */
 
-
+void
 pr_comment()
 {
     int         now_col;	/* column we are in now */
@@ -86,12 +86,12 @@ pr_comment()
     char       *t_ptr;		/* used for moving string */
     int         unix_comment;	/* tri-state variable used to decide if it is
 				 * a unix-style comment. 0 means only blanks
-				 * since /*, 1 means regular style comment, 2
+				 * since / *, 1 means regular style comment, 2
 				 * means unix style comment */
     int         break_delim = comment_delimiter_on_blankline;
     int         l_just_saw_decl = ps.just_saw_decl;
     /*
-     * int         ps.last_nl = 0;	/* true iff the last significant thing
+     * int         ps.last_nl = 0;	 true iff the last significant thing
      * weve seen is a newline
      */
     int         one_liner = 1;	/* true iff this comment is a one-liner */
@@ -116,7 +116,7 @@ pr_comment()
     else {
 	if (*buf_ptr == '-' || *buf_ptr == '*' || *buf_ptr == '\n') {
 	    ps.box_com = true;	/* a comment with a '-', '*' or newline
-				 * immediately after the /* is assumed to be
+				 * immediately after the / * is assumed to be
 				 * a boxed comment */
 	    break_delim = 0;
 	}
@@ -159,7 +159,7 @@ pr_comment()
 	    buf_ptr++;
     }
     ps.comment_delta = 0;
-    *e_com++ = '/';		/* put '/*' into buffer */
+    *e_com++ = '/';		/* put '/ *' into buffer */
     *e_com++ = '*';
     if (*buf_ptr != ' ' && !ps.box_com)
 	*e_com++ = ' ';
