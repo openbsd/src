@@ -123,7 +123,7 @@ tlphymatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct mii_attach_args *ma = aux;       
+	struct mii_attach_args *ma = aux;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxTI &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxTI_TLAN10T)
@@ -216,7 +216,7 @@ tlphy_service(self, mii, cmd)
 			PHY_WRITE(&sc->sc_mii, MII_BMCR, reg | BMCR_ISO);
 			return (0);
 		}
-		
+
 		/*
 		 * If the interface is not up, don't do anything.
 		 */
@@ -299,7 +299,7 @@ tlphy_status(physc)
 	bmcr = PHY_READ(&sc->sc_mii, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
-		mii->mii_media_status = 0;  
+		mii->mii_media_status = 0;
 		return;
 	}
 
@@ -312,7 +312,7 @@ tlphy_status(physc)
 
 	bmsr = PHY_READ(&sc->sc_mii, MII_BMSR) |
 	    PHY_READ(&sc->sc_mii, MII_BMSR);
-	if (bmsr & BMSR_LINK)   
+	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	if (bmcr & BMCR_LOOP)

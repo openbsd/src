@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.5 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.6 2002/05/04 11:30:06 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -211,7 +211,7 @@ xmphy_service(sc, mii, cmd)
 		 */
 		if (++sc->mii_ticks != sc->mii_anegticks)
 			return (0);
-		
+
 		sc->mii_ticks = 0;
 
 		/*

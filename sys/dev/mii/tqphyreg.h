@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphyreg.h,v 1.1 1999/12/07 22:01:33 jason Exp $	*/
+/*	$OpenBSD: tqphyreg.h,v 1.2 2002/05/04 11:30:06 fgsch Exp $	*/
 /*	$NetBSD: tqphyreg.h,v 1.2 1999/09/16 05:58:18 soren Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  * is 00:c0:39, models 20 and 21.  Warning: The older revision 3 part has
  * several bugs. It always responds to MDIO address 0, and has clear-only
  * semantics for the capability-advertise registers. The current (3/99)
- * revision 11 part, shipping since 8/98, has reportedly fixed these problems. 
+ * revision 11 part, shipping since 8/98, has reportedly fixed these problems.
  */
 
 #define MII_TQPHY_VENDOR	0x10	/* Vendor specific register */

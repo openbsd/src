@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.7 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.8 2002/05/04 11:30:06 fgsch Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.12 2002/03/14 01:26:57 millert Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.13 2002/05/04 11:30:06 fgsch Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -206,7 +206,7 @@ mii_phy_tick(sc)
 	 */
 	if (!sc->mii_anegticks)
 		sc->mii_anegticks = 5;
-	
+
 	if (++sc->mii_ticks != sc->mii_anegticks)
 		return (EJUSTRETURN);
 
@@ -237,7 +237,7 @@ mii_phy_reset(sc)
 
 	/* Wait 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
-		reg = PHY_READ(sc, MII_BMCR); 
+		reg = PHY_READ(sc, MII_BMCR);
 		if ((reg & BMCR_RESET) == 0)
 			break;
 		delay(1000);
@@ -386,7 +386,7 @@ mii_phy_add_media(sc)
 			    sc->mii_inst), MII_MEDIA_1000_T_FDX);
 		}
 	}
-	
+
 	if (sc->mii_capabilities & BMSR_ANEG) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
 		    MII_NMEDIA);	/* intentionally invalid index */

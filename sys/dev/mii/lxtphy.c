@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.8 2002/03/14 01:26:57 millert Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.9 2002/05/04 11:30:06 fgsch Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *
@@ -120,7 +120,7 @@ lxtphymatch(parent, match, aux)
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1a &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1a_LXT971)
 		return (10);
-   
+
 	return (0);
 }
 
@@ -145,7 +145,7 @@ lxtphyattach(parent, self, aux)
 		    MII_REV(ma->mii_id2));
 		sc->mii_status = ukphy_status;
 	}
-   
+
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = lxtphy_service;
