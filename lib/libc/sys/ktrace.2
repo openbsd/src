@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.5 1999/05/23 14:10:54 aaron Exp $
+.\"	$OpenBSD: ktrace.2,v 1.6 1999/05/24 11:57:13 aaron Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -42,6 +42,8 @@
 .Nd process tracing
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
+.Fd #include <sys/param.h>
+.Fd #include <sys/uio.h>
 .Fd #include <sys/ktrace.h>
 .Ft int
 .Fn ktrace "const char *tracefile" "int ops" "int trpoints" "int pid"
