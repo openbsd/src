@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.11 2004/10/09 19:52:04 brad Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.12 2005/03/15 20:18:10 miod Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -88,13 +88,17 @@ nbsd_pci_io_find(pc, tag, reg, type, basep, sizep, flagsp)
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
+#ifdef DEBUG
 		printf("pci_io_find: expected type i/o, found mem\n");
-		return (1);
+#endif
+		return (EINVAL);
 	}
 
 	if (PCI_MAPREG_IO_SIZE(mask) == 0) {
+#ifdef DEBUG
 		printf("pci_io_find: void region\n");
-		return (1);
+#endif
+		return (ENOENT);
 	}
 
 	if (basep != 0)
@@ -153,15 +157,19 @@ nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 	splx(s);
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
+#ifdef DEBUG
 		printf("pci_mem_find: expected type mem, found i/o\n");
-		return (1);
+#endif
+		return (EINVAL);
 	}
 	if (type != -1 && 
 	    PCI_MAPREG_MEM_TYPE(address) != PCI_MAPREG_MEM_TYPE(type)) {
+#ifdef DEBUG
 		printf("pci_mem_find: expected mem type %08x, found %08x\n",
 		    PCI_MAPREG_MEM_TYPE(type),
 		    PCI_MAPREG_MEM_TYPE(address));
-		return (1);
+#endif
+		return (EINVAL);
 	}
 
 	waddress = (u_int64_t)address1 << 32UL | address;
@@ -169,8 +177,10 @@ nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 
 	if ((is64bit && PCI_MAPREG_MEM64_SIZE(wmask) == 0) ||
 	    (!is64bit && PCI_MAPREG_MEM_SIZE(mask) == 0)) {
+#ifdef DEBUG
 		printf("pci_mem_find: void region\n");
-		return (1);
+#endif
+		return (ENOENT);
 	}
 
 	switch (PCI_MAPREG_MEM_TYPE(address)) {
@@ -187,14 +197,18 @@ nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 		 */
 		if (sizeof(u_int64_t) > sizeof(bus_addr_t) &&
 		    (address1 != 0 || mask1 != 0xffffffff)) {
+#ifdef DEBUG
 			printf("pci_mem_find: 64-bit memory map which is "
 			    "inaccessible on a 32-bit platform\n");
-			return (1);
+#endif
+			return (EINVAL);
 		}
 		break;
 	default:
+#ifdef DEBUG
 		printf("pci_mem_find: reserved mapping register type\n");
-		return (1);
+#endif
+		return (EINVAL);
 	}
 
 	if (sizeof(u_int64_t) > sizeof(bus_addr_t)) {
@@ -294,20 +308,21 @@ pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep, maxsize)
 	bus_addr_t base;
 	bus_size_t size;
 	int flags;
+	int rv;
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0)
-			return (1);
-		if (nbsd_pci_io_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
-				     &size, &flags))
-			return (1);
+			return (EINVAL);
+		if ((rv = nbsd_pci_io_find(pa->pa_pc, pa->pa_tag, reg, type,
+		    &base, &size, &flags)) != 0)
+			return (rv);
 		tag = pa->pa_iot;
 	} else {
 		if ((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0)
-			return (1);
-		if (nbsd_pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
-				      &size, &flags))
-			return (1);
+			return (EINVAL);
+		if ((rv = nbsd_pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type,
+		    &base, &size, &flags)) != 0)
+			return (rv);
 		tag = pa->pa_memt;
 	}
 
