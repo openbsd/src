@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.11 2002/11/27 00:37:53 espie Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.12 2003/05/07 21:52:13 vincent Exp $	- library routines*/
 /*
  */
 
@@ -825,8 +825,11 @@ findlib(struct file_entry *p)
 dot_a:
 	p->flags &= ~E_SEARCH_DYNAMIC;
 	if (cp = strrchr(p->filename, '/')) {
+		char *tmp;
 		*cp++ = '\0';
-		fname = concat(concat(p->filename, "/lib", cp), ".a", "");
+		tmp = concat(p->filename, "/lib", cp);
+		fname = concat(tmp, ".a", "");
+		free(tmp);
 		*(--cp) = '/';
 	} else
 		fname = concat("lib", p->filename, ".a");
