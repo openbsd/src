@@ -1,4 +1,4 @@
-.\"	$OpenBSD: close.2,v 1.4 1999/02/27 21:56:11 deraadt Exp $
+.\"	$OpenBSD: close.2,v 1.5 1999/05/11 02:34:03 aaron Exp $
 .\"	$NetBSD: close.2,v 1.5 1995/02/27 12:32:14 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -59,7 +59,15 @@ on the last close of a
 .Xr socket 2
 associated naming information and queued data are discarded;
 on the last close of a file holding an advisory lock
-the lock is released (see further
+the lock is released. However, the semantics of System V and
+.St -p1003.1-88
+dictate that all
+.Xr fcntl 2
+advisory record locks associated with a file for a given process
+are removed when 
+.Em any
+file descriptor for that file is closed by that process (see
+further
 .Xr flock 2 ) .
 .Pp
 When a process exits,
