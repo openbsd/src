@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.4 2001/06/27 00:58:55 lebel Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.5 2001/07/04 19:43:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -43,6 +43,7 @@
 #include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #if !defined(AF_LINK)
 #define	SA_LEN(sa)	sizeof(struct sockaddr)
@@ -97,17 +98,17 @@ getifaddrs(struct ifaddrs **pif)
 	struct ifa_msghdr *ifam;
 	struct sockaddr_dl *dl;
 	struct sockaddr *sa;
-	struct ifaddrs *ifa, *ift;
 	u_short index = 0;
+	size_t len, alen;
 #else	/* NET_RT_IFLIST */
 	char buf[1024];
-	int m, sock;
+	int sock;
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	struct ifreq *lifr;
 #endif	/* NET_RT_IFLIST */
+	struct ifaddrs *ifa, *ift;
 	int i;
-	size_t len, alen;
 	char *data;
 	char *names;
 
