@@ -1,7 +1,8 @@
-/*	$OpenBSD: db_disasm.c,v 1.8 1997/07/09 10:26:39 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.9 1997/07/09 14:29:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
+ * Copyright (c) 1997 Theo de Raadt. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Niklas Hallqvist.
+ *	This product includes software developed by Niklas Hallqvist and
+ *	Theo de Raadt.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
