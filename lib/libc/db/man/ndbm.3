@@ -1,5 +1,5 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.2 1998/05/13 17:15:32 deraadt Exp $
+.\" $OpenBSD: ndbm.3,v 1.3 1998/05/15 14:30:15 d Exp $
 .Dd May 13, 1998
 .Os OpenBSD
 .Dt NDBM 3
@@ -36,7 +36,7 @@ database access methods described in
 .Xr db 3 .
 Each unique record in the database is a key/content pair,
 the components of which may be any arbitrary binary data.
-Both the key and the content are passed about in the following
+The key and the content data are described by the
 .Ft datum
 data structure:
 .Bd -literal -offset indent
@@ -156,7 +156,7 @@ return a value of 0, otherwise a negative value is returned.
 .Pp
 Routines that return a
 .Ft datum
-indicate errors with the
+indicate errors by setting the
 .Va dptr
 field set to
 .Dv NULL .
@@ -168,6 +168,10 @@ function returns
 on error, and sets
 .Va errno
 appropriately.
+On success, it returns a handle to the database that should be
+used as the
+.Fa db
+argument in the other functions.
 .Pp
 The
 .Fn dbm_store
