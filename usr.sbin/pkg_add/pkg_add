@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.66 2004/10/11 12:25:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.67 2004/10/11 12:33:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -361,6 +361,9 @@ if ($< && !$forced{nonroot}) {
 }
 
 $state->{conflict_list} = {};
+$state->{not} = $opt_n;
+$state->{verbose} = $opt_v;
+$state->{beverbose} = $opt_n || $opt_v;
 
 # first, find all possible potential conflicts
 for my $pkg (installed_packages()) {
@@ -392,11 +395,11 @@ sub can_install($$)
 
 
 # This does pre_add a package: finding it and reading its package information
-sub pre_add($$$)
+sub pre_add($$)
 {
-	my ($pkg, $state, $not) = @_;
+	my ($pkg, $state) = @_;
 	my $pkgname1;
-	my $operation = $not ? "Pretending to add" : "Adding";
+	my $operation = $state->{not} ? "Pretending to add" : "Adding";
 	
 	if ($pkg ne '-') {
 		print "$operation $pkg\n";
@@ -769,7 +772,7 @@ sub install_package
 	my $cache = $state->{cache};
 
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = pre_add($pkg, $state, $opt_n);
+		$cache->{$pkg} = pre_add($pkg, $state);
 	}
 
 	my $handle = $cache->{$pkg};
@@ -835,7 +838,7 @@ my $dielater = @_;
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 ensure_ldconfig($opt_v) unless $opt_n;
 
-if ($opt_n or $opt_v) {
+if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
 if ($dielater) {
