@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.12 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.13 2003/06/25 15:13:32 millert Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.12 2003/06/03 02:56:11 millert Exp $
+ *	$OpenBSD: def.h,v 1.13 2003/06/25 15:13:32 millert Exp $
  */
 
 /*
@@ -108,7 +108,6 @@ struct message {
 struct cmd {
 	char	*c_name;		/* Name of command */
 	union {
-		int	(*c_func0)();
 		int	(*c_func1)(void *);
 		int	(*c_func2)(void *, void *);
 	} cfunc;                        /* Implementor of the command */
