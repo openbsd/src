@@ -1,7 +1,8 @@
-/*	$OpenBSD: copy.s,v 1.8 1999/11/13 21:34:06 deraadt Exp $	*/
-/*	$NetBSD: copy.s,v 1.28 1997/05/21 03:51:04 jeremy Exp $	*/
+/*	$OpenBSD: copy.s,v 1.9 2000/05/27 21:38:36 art Exp $	*/
+/*	$NetBSD: copy.s,v 1.29 1998/02/15 21:18:45 thorpej Exp $	*/
 
 /*-
+ * Copyright (c) 1998 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1994, 1995 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -313,6 +314,33 @@ Lcosexit:
 Lcosfault:
 	moveq	#EFAULT,d0
 	bra	Lcosdone
+
+#if defined(UVM)
+/*
+ * kcopy(const void *src, void *dst, size_t len);
+ *
+ * Copy len bytes from src to dst, aborting if we encounter a page fault.
+ */
+ENTRY(kcopy)
+	link    a6,#0
+	movl    _C_LABEL(curpcb),a0	| set fault handler
+	movl    #Lkcfault,a0@(PCB_ONFAULT)
+	movl    a6@(16),sp@-		| push len
+	movl    a6@(12),sp@-		| push dst
+	movl    a6@(8),sp@-		| push src
+	jbsr    _C_LABEL(bcopy)		| copy it
+	addl    #12,sp			| pop args
+	clrl    d0			| success!
+Lkcdone:
+	movl    _C_LABEL(curpcb),a0	| clear fault handler
+	clrl    a0@(PCB_ONFAULT)
+	unlk    a6
+	rts
+Lkcfault:
+	addl    #16,sp			| pop args and return address
+	moveq   #EFAULT,d0		| indicate a fault
+	bra     Lkcdone
+#endif /* UVM */
 
 /*
  * fuword(caddr_t uaddr);
