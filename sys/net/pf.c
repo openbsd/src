@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.310 2003/01/24 15:55:36 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.311 2003/01/25 22:48:45 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1750,10 +1750,15 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			    &r->src.addr.v.a.addr, naddr, NULL))
 				return (NULL);
 
-			if (r->dst.port_op == PF_OP_RRG) {
+			if (r->rpool.proxy_port[1]) {
 				u_int32_t	tmp_nport;
-				tmp_nport = ntohs(r->rpool.proxy_port[0]) +
-				    (ntohs(dport) - ntohs(r->dst.port[0]));
+
+				tmp_nport = ((ntohs(dport) -
+				    ntohs(r->dst.port[0])) %
+				    (ntohs(r->rpool.proxy_port[1]) -
+				    ntohs(r->rpool.proxy_port[0]) + 1)) +
+				    ntohs(r->rpool.proxy_port[0]);
+
 				/* wrap around if necessary */
 				if (tmp_nport > 65535)
 					tmp_nport -= 65535;
