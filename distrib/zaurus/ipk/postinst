@@ -21,6 +21,15 @@ mv tmp rc.rofilesys
 chown root:root rc.rofilesys
 chmod 775 rc.rofilesys
 
+# Convert all mounted ext3 filesystems back into ext2 on reboot.
+for dev in `mount | awk '/on \/hdd[123] type ext3/ {print $1}'`; do
+	cat <<- EOF | debugfs
+	open -f -w ${dev}
+	features -has_journal -needs_recovery
+	quit
+EOF
+done
+
 rm -f rc.zboot
 rm -f zboot
 rm -f zbsdmod.o
