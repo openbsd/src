@@ -1,5 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.8 1999/11/15 19:41:00 millert Exp $	*/
-/*	$NetBSD: whois.c,v 1.5 1994/11/14 05:13:25 jtc Exp $	*/
+/*	$OpenBSD: whois.c,v 1.9 1999/11/19 03:50:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,8 +42,9 @@ static char copyright[] =
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: whois.c,v 1.9 1999/11/19 03:50:49 millert Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: whois.c,v 1.8 1999/11/15 19:41:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,6 +90,10 @@ main(argc, argv)
 	struct servent *sp;
 	struct hostent *hp;
 	struct sockaddr_in sin;
+
+#ifdef SOCKS
+	SOCKSinit(argv[0]);
+#endif
 
 	host = NULL;
 	qnichost = NULL;
@@ -276,6 +280,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: whois [-adgimpqrR] [-h hostname] name ...\n");
+	    "usage: whois [-adgimpqQrR] [-h hostname] name ...\n");
 	exit(EX_USAGE);
 }
