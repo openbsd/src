@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: ksh.1tbl,v 1.7 1998/06/25 19:02:03 millert Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.8 1998/07/24 20:50:02 deraadt Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1220,7 +1220,7 @@ original value of the parameter.
 .IP "\fB++\fP"
 similar to \fB++\fP, except the paramter is decremented by 1.
 .IP "\fB,\fP"
-seperates two arithmetic expressions; the left hand side is evaluated first,
+separates two arithmetic expressions; the left hand side is evaluated first,
 then the right.  The result is value of the expression on the right hand side.
 .IP "\fB=\fP"
 assignment; variable on the left is set to the value on the right.
