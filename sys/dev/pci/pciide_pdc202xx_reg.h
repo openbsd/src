@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.5 2001/08/03 22:03:44 chris Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.6 2002/04/01 16:57:54 gluk Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -113,3 +113,9 @@ static int8_t pdc2xx_dma_mb[] = {0x3, 0x3, 0x3};
 static int8_t pdc2xx_dma_mc[] = {0x5, 0x4, 0x3};
 static int8_t pdc2xx_udma_mb[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
 static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1, 0x1};
+
+/*
+ * Two registers for PDC20268
+ */
+#define PDC268_REG0	0x1
+#define PDC268_REG1	0x3
