@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.3 2004/06/16 18:24:23 grange Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -89,7 +89,11 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 	0,
 	0,
 #endif
+#ifdef DDB
 	i386_ipi_db,
+#else
+	0,
+#endif
 };
 
 void
