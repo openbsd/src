@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.2 1996/08/09 03:11:53 millert Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.3 1996/09/01 15:29:21 millert Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -150,6 +150,8 @@ rmtgetconn()
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
 	(void) setuid(uid); /* Just to be Really Really Safe */
+	if (rmtape == -1)
+		exit(1);		/* rcmd already printed error message */
 
 	size = TP_BSIZE;
 	if (size > 60 * 1024)		/* XXX */
