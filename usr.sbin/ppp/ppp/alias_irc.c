@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_irc.c,v 1.8 2001/08/21 04:09:16 brian Exp $
+ * $OpenBSD: alias_irc.c,v 1.9 2001/09/13 10:32:56 brian Exp $
  */
 
 /* Alias_irc.c intercepts packages contain IRC CTCP commands, and
@@ -235,6 +235,12 @@ lFOUND_CTCP:
 			 true_port = htons(org_port);
 			 true_addr.s_addr = htonl(org_addr);
 			 destaddr.s_addr = 0;
+
+			 /* Sanity/Security checking */
+			 if (!org_addr || !org_port ||
+			     pip->ip_src.s_addr != true_addr.s_addr ||
+			     org_port < IPPORT_RESERVED)
+				 goto lBAD_CTCP;
 
 			 /* Steal the FTP_DATA_PORT - it doesn't really matter, and this
 				 would probably allow it through at least _some_
