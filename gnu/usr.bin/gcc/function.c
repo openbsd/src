@@ -2801,7 +2801,8 @@ purge_addressof_1 (loc, insn, force)
 	{
 	  if (! BYTES_BIG_ENDIAN && ! WORDS_BIG_ENDIAN)
 	    {
-	      rtx sub2 = gen_rtx (SUBREG, GET_MODE (x), sub, 0);
+	      rtx sub2 = gen_rtx (STRICT_LOW_PART, VOIDmode,
+				  gen_rtx (SUBREG, GET_MODE (x), sub, 0));
 	      if (validate_change (insn, loc, sub2, 0))
 		goto restart;
 	    }
