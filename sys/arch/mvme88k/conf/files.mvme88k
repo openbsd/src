@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.21 2003/10/11 22:06:48 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.22 2003/12/26 10:41:41 miod Exp $
 #
 maxpartitions 16
 
@@ -62,7 +62,6 @@ major { vnd = 8 }
 device ssh: scsi
 attach ssh at pcctwo
 file	arch/mvme88k/dev/ssh.c				ssh
-file	arch/mvme88k/dev/sshdma.c			ssh
 
 device vme { }
 attach vme at pcctwo, syscon
@@ -129,5 +128,3 @@ file	arch/mvme88k/dev/vx.c				vx needs-count
 device vs: scsi
 attach vs at vmes
 file	arch/mvme88k/dev/vs.c				vs
-file	arch/mvme88k/dev/vsdma.c			vs
-

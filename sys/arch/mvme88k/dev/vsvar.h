@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.7 2003/10/05 20:27:48 miod Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.8 2003/12/26 10:41:43 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -170,21 +170,5 @@ struct  vs_softc {
 #define WQO_ARE            0x0010   /* autosense recovery enable bit */
 #define WQO_RFWQ           0x0020   /* report frozen work queue bit */
 #define WQO_INIT           0x8000   /* work queue init bit */
-
-void vs_minphys(struct buf *bp);
-int vs_scsicmd(struct scsi_xfer *);
-/*
- * Scatter/gather functions
- */
-
-M328_SG vs_alloc_scatter_gather(void);
-void    vs_dealloc_scatter_gather(M328_SG sg);
-void    vs_link_scatter_gather_element(sg_list_element_t *element,
-					    vaddr_t phys_add,
-					    int len);
-void    vs_link_scatter_gather_list(sg_list_element_t *list,
-					 vaddr_t phys_add,
-					 int elements);
-M328_SG vs_build_memory_structure(struct scsi_xfer *xs, M328_IOPB *iopb);
 
 #endif /* _M328VAR_H */

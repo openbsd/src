@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.23 2003/12/25 21:01:39 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.24 2003/12/26 10:41:43 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -34,7 +34,7 @@
  */
 
 /*
- * MVME328 scsi adaptor driver
+ * MVME328S scsi adaptor driver
  */
 
 #include <sys/param.h>
@@ -53,46 +53,118 @@
 #include <machine/autoconf.h>
 #include <machine/param.h>
 
-#if defined(mvme88k)
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
 #include <mvme88k/dev/vme.h>		/* vme_findvec() */
 #include <machine/cmmu.h>		/* DMA_CACHE_SYNC, etc... */
-#else
-#include <mvme68k/dev/vsreg.h>
-#include <mvme68k/dev/vsvar.h>
-#include <mvme68k/dev/vme.h>		/* vme_findvec() */
-#endif /* mvme88k */
 
-int  vs_checkintr(struct vs_softc *, struct scsi_xfer *, int *);
-void vs_chksense(struct scsi_xfer *);
-void vs_reset(struct vs_softc *);
-void vs_resync(struct vs_softc *);
-int  vs_initialize(struct vs_softc *);
-int  vs_nintr(struct vs_softc *);
-int  vs_eintr(struct vs_softc *);
-int  vs_poll(struct vs_softc *, struct scsi_xfer *);
-void vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
-M328_CQE  * vs_getcqe(struct vs_softc *);
-M328_IOPB * vs_getiopb(struct vs_softc *);
-int do_vspoll(struct vs_softc *, int);
-void thaw_queue(struct vs_softc *, u_int8_t);
-void vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
-void vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
+int	vsmatch(struct device *, void *, void *);
+void	vsattach(struct device *, struct device *, void *);
+int	vs_scsicmd(struct scsi_xfer *);
+
+struct scsi_adapter vs_scsiswitch = {
+	vs_scsicmd,
+	minphys,
+	0,			/* no lun support */
+	0,			/* no lun support */
+};
+
+struct scsi_device vs_scsidev = {
+	NULL,		/* use default error handler */
+	NULL,		/* do not have a start function */
+	NULL,		/* have no async handler */
+	NULL,		/* Use default done routine */
+};
+
+struct cfattach vs_ca = {
+	sizeof(struct vs_softc), vsmatch, vsattach,
+};
+
+struct cfdriver vs_cd = {
+	NULL, "vs", DV_DULL, 0
+};
+
+int	do_vspoll(struct vs_softc *, int);
+void	thaw_queue(struct vs_softc *, u_int8_t);
+M328_SG	vs_alloc_scatter_gather(void);
+M328_SG	vs_build_memory_structure(struct scsi_xfer *, M328_IOPB *);
+int	vs_checkintr(struct vs_softc *, struct scsi_xfer *, int *);
+void	vs_chksense(struct scsi_xfer *);
+void	vs_dealloc_scatter_gather(M328_SG);
+int	vs_eintr(void *);
+M328_CQE *vs_getcqe(struct vs_softc *);
+M328_IOPB *vs_getiopb(struct vs_softc *);
+int	vs_initialize(struct vs_softc *);
+int	vs_intr(struct vs_softc *);
+void	vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
+void	vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
+int	vs_nintr(void *);
+int	vs_poll(struct vs_softc *, struct scsi_xfer *);
+void	vs_reset(struct vs_softc *);
+void	vs_resync(struct vs_softc *);
+void	vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
 
 static __inline__ void vs_clear_return_info(struct vs_softc *);
 
-/*
- * default minphys routine for MVME328 based controllers
- */
-void
-vs_minphys(bp)
-	struct buf *bp;
+int
+vsmatch(pdp, vcf, args)
+	struct device *pdp;
+	void *vcf, *args;
 {
+	struct confargs *ca = args;
+
+	return (!badvaddr((unsigned)ca->ca_vaddr, 1));
+}
+
+void
+vsattach(parent, self, auxp)
+	struct device *parent, *self;
+	void *auxp;
+{
+	struct vs_softc *sc = (struct vs_softc *)self;
+	struct confargs *ca = auxp;
+	struct vsreg * rp;
+	int tmp;
+
+	sc->sc_vsreg = rp = ca->ca_vaddr;
+
+	sc->sc_ipl = ca->ca_ipl;
+	sc->sc_nvec = ca->ca_vec;
+	/* get the next available vector for the error interrupt func. */
+	sc->sc_evec = vme_findvec();
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_target = 7;
+	sc->sc_link.adapter = &vs_scsiswitch;
+	sc->sc_link.device = &vs_scsidev;
+	sc->sc_link.openings = 1;
+
+	sc->sc_ih_n.ih_fn = vs_nintr;
+	sc->sc_ih_n.ih_arg = sc;
+	sc->sc_ih_n.ih_wantframe = 0;
+	sc->sc_ih_n.ih_ipl = ca->ca_ipl;
+
+	sc->sc_ih_e.ih_fn = vs_eintr;
+	sc->sc_ih_e.ih_arg = sc;
+	sc->sc_ih_e.ih_wantframe = 0;
+	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
+
+	if (vs_initialize(sc))
+		return;
+
+	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
+	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
+
 	/*
-	 * No max transfer at this level.
+	 * attach all scsi units on us, watching for boot device
+	 * (see dk_establish).
 	 */
-	minphys(bp);
+	tmp = bootpart;
+	if (ca->ca_paddr != bootaddr)
+		bootpart = -1;		/* invalid flag to dk_establish */
+	config_found(self, &sc->sc_link, scsiprint);
+	bootpart = tmp;		    /* restore old value */
 }
 
 int
@@ -172,7 +244,7 @@ thaw_queue(sc, target)
 }
 
 void
-vs_scsidone (sc, xs, stat)
+vs_scsidone(sc, xs, stat)
 	struct vs_softc *sc;
 	struct scsi_xfer *xs;
 	int stat;
@@ -276,16 +348,12 @@ vs_scsicmd(xs)
 	 * a read, prior to starting the IO.
 	 */
 	if (xs->flags & SCSI_DATA_IN) {	 /* read */
-#if defined(mvme88k)
 		dma_cachectl((vaddr_t)xs->data, xs->datalen,
 			     DMA_CACHE_SYNC_INVAL);
-#endif
 		iopb->iopb_OPTION |= OPT_READ;
 	} else {			 /* write */
-#if defined(mvme88k)
 		dma_cachectl((vaddr_t)xs->data, xs->datalen,
 			     DMA_CACHE_SYNC);
-#endif
 		iopb->iopb_OPTION |= OPT_WRITE;
 	}
 
@@ -496,7 +564,7 @@ vs_initialize(sc)
 	CRB_CLR_DONE(CRSW);
 
 	/* initialize work queues */
-	for (i=1; i<8; i++) {
+	for (i = 1; i < 8; i++) {
 		d16_bzero(wiopb, sizeof(M328_IOPB));
 		wiopb->wqcf_CMD = CNTR_INIT_WORKQ;
 		wiopb->wqcf_OPTION = 0;
@@ -633,7 +701,7 @@ vs_reset(sc)
 
 int
 vs_checkintr(sc, xs, status)
-	struct   vs_softc *sc;
+	struct vs_softc *sc;
 	struct scsi_xfer *xs;
 	int   *status;
 {
@@ -727,9 +795,10 @@ vs_checkintr(sc, xs, status)
 
 /* normal interrupt routine */
 int
-vs_nintr(sc)
-	struct vs_softc *sc;
+vs_nintr(vsc)
+	void *vsc;
 {
+	struct vs_softc *sc = (struct vs_softc *)vsc;
 	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
 	M328_CMD *m328_cmd;
 	struct scsi_xfer *xs;
@@ -776,9 +845,10 @@ vs_nintr(sc)
 }
 
 int
-vs_eintr(sc)
-	struct vs_softc *sc;
+vs_eintr(vsc)
+	void *vsc;
 {
+	struct vs_softc *sc = (struct vs_softc *)vsc;
 	M328_CEVSB *crb = (M328_CEVSB *)&sc->sc_vsreg->sh_CRB;
 	M328_CMD *m328_cmd;
 	struct scsi_xfer *xs;
