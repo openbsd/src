@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.h,v 1.5 1999/03/03 20:43:31 millert Exp $	*/
+/*	$OpenBSD: talk.h,v 1.6 2000/12/31 00:24:51 hugh Exp $	*/
 /*	$NetBSD: talk.h,v 1.3 1994/12/09 02:14:27 jtc Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 extern	int sockt;
 extern	int curses_initialized;
 extern	int invitation_waiting;
+extern	int high_print;
 
 extern	char *current_state;
 extern	int current_line;
