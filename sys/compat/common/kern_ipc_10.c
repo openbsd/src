@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_10.c,v 1.2 1996/08/02 20:34:42 niklas Exp $	*/
+/*	$OpenBSD: kern_ipc_10.c,v 1.3 1998/02/10 04:04:03 deraadt Exp $	*/
 /*	$NetBSD: kern_ipc_10.c,v 1.4 1995/10/07 06:26:25 mycroft Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ compat_10_sys_shmsys(p, v, retval)
 		return (sys_shmctl(p, &shmctl_args, retval));
 
 	case 2:						/* shmdt() */
-		SCARG(&shmat_args, shmaddr) = (void *)SCARG(uap, a2);
+		SCARG(&shmdt_args, shmaddr) = (void *)SCARG(uap, a2);
 		return (sys_shmdt(p, &shmdt_args, retval));
 
 	case 3:						/* shmget() */
