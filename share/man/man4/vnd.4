@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnd.4,v 1.12 2000/03/29 01:28:56 deraadt Exp $
+.\"	$OpenBSD: vnd.4,v 1.13 2000/06/28 19:01:17 art Exp $
 .\"	$NetBSD: vnd.4,v 1.1 1995/12/30 18:10:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1995 Jason R. Thorpe.
@@ -87,12 +87,6 @@ driver does not work if the file does not reside in a local filesystem.
 However the
 .Nm svnd
 variant does.
-.Pp
-Currently, in order to be able to enable swap on a vnd device, the kernel
-must have been configured for it, e.g.,
-.Bd -unfilled -offset indent
-config   bsd   root on sd0a swap on sd0b and vnd0c dumps on sd0b
-.Ed
 .Sh FILES
 /dev/{,r}{,s}vnd* - vnd device special files.
 .Sh HISTORY
