@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.117 2003/01/01 17:20:14 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.118 2003/01/03 21:37:44 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -53,6 +53,8 @@
 #include "pfctl_parser.h"
 #include "pf_print_state.h"
 #include "pfctl_altq.h"
+#include "pfctl_table.h"
+#include "pfctl_radix.h"
 
 void	 usage(void);
 int	 pfctl_enable(int, int);
@@ -85,6 +87,8 @@ char	*rulesopt;
 char	*showopt;
 char	*debugopt;
 char	*anchoropt;
+char	*tableopt;
+char	*tblcmdopt;
 int	 state_killers;
 char	*state_kill[2];
 int	 loadopt = PFCTL_FLAG_ALL;
@@ -166,6 +170,8 @@ usage(void)
 	fprintf(stderr, "[-a anchor:ruleset] [-f file]\n");
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-F modifier] [-k host] [-s modifier] [-x level]\n");
+	fprintf(stderr, "             ");
+	fprintf(stderr, "[-t table [-T command [addresses]*]]\n");
 	exit(1);
 }
 
@@ -1240,11 +1246,13 @@ main(int argc, char *argv[])
 	int ch;
 	int mode = O_RDONLY;
 	int opts = 0;
+	int dummy = 0;
 
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:Adeqf:F:hk:nNOrRs:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "a:Adeqf:F:hk:nNOrRs:t:T:vx:z")) !=
+		-1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1302,6 +1310,12 @@ main(int argc, char *argv[])
 		case 's':
 			showopt = optarg;
 			break;
+		case 't':
+			tableopt = optarg;
+			break;
+		case 'T':
+			tblcmdopt = optarg;
+			break;
 		case 'v':
 			if (opts & PF_OPT_VERBOSE)
 				opts |= PF_OPT_VERBOSE2;
@@ -1323,7 +1337,16 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (argc != optind) {
+	if (tableopt != NULL || tblcmdopt != NULL) {
+		argc -= optind;
+		argv += optind;
+		ch = (tblcmdopt != NULL) ? *tblcmdopt : 0;
+		mode = strchr("acdfkrz", ch) ? O_RDWR : O_RDONLY;
+		if (opts & PF_OPT_NOACTION) {
+			opts &= ~PF_OPT_NOACTION;
+			dummy = PF_OPT_NOACTION;
+		}
+	} else if (argc != optind) {
 		warnx("unknown command line argument: %s ...", argv[optind]);
 		usage();
 		/* NOTREACHED */
@@ -1367,6 +1390,7 @@ main(int argc, char *argv[])
 		if (dev == -1)
 			err(1, "open(\"/dev/pf\")");
 		altqsupport = pfctl_test_altqsupport(dev);
+		pfr_set_fd(dev);
 	} else {
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
@@ -1401,6 +1425,10 @@ main(int argc, char *argv[])
 			pfctl_clear_altq(dev, opts);
 			pfctl_clear_states(dev, opts);
 			pfctl_clear_stats(dev, opts);
+			pfctl_clear_tables(opts);
+			break;
+		case 'T':
+			pfctl_clear_tables(opts);
 			break;
 		default:
 			warnx("Unknown flush modifier '%s'", clearopt);
@@ -1409,6 +1437,12 @@ main(int argc, char *argv[])
 	}
 	if (state_killers)
 		pfctl_kill_states(dev, opts);
+
+	if (tableopt != NULL || tblcmdopt != NULL) {
+		error = pfctl_command_tables(argc, argv, tableopt,
+		    tblcmdopt, rulesopt, opts | dummy);
+		rulesopt = NULL;
+	}
 
 	if (rulesopt != NULL)
 		if (pfctl_rules(dev, rulesopt, opts))
@@ -1452,6 +1486,10 @@ main(int argc, char *argv[])
 			pfctl_show_rules(dev, opts, 1);
 			pfctl_show_timeouts(dev);
 			pfctl_show_limits(dev);
+			pfctl_show_tables(opts);
+			break;
+		case 'T':
+			pfctl_show_tables(opts);
 			break;
 		default:
 			warnx("Unknown show modifier '%s'", showopt);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.60 2002/12/15 16:52:35 margarida Exp $
+.\" $OpenBSD: pfctl.8,v 1.61 2003/01/03 21:37:44 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -39,6 +39,8 @@
 .Op Fl k Ar host
 .Op Fl s Ar modifier
 .Op Fl x Ar level
+.Op Fl t Ar table
+.Op Fl T Ar command
 .Sh DESCRIPTION
 The
 .Nm
@@ -120,7 +122,7 @@ rules, in that order.
 .It Fl F Ar modifier
 Flush one of the following.
 Modifier name may be abbreviated:
-.Bl -tag -width "F rules " -compact
+.Bl -tag -width "F tables " -compact
 .It Fl F Ar nat
 Flush the NAT rules.
 .It Fl F Ar queue
@@ -131,6 +133,8 @@ Flush the filter rules.
 Flush the state table (NAT and filter).
 .It Fl F Ar info
 Flush the filter information (statistics that are not bound to rules).
+.It Fl F Ar Tables
+Flush the radix tables.
 .It Fl F Ar all
 Flush all of the above.
 .El
@@ -168,7 +172,7 @@ Other rules and options are ignored.
 .It Fl s Ar modifier
 Show filter parameters.
 Modifier names may be abbreviated:
-.Bl -tag -width "s rules " -compact
+.Bl -tag -width "s timeouts " -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
 .It Fl s Ar queue
@@ -199,8 +203,34 @@ useful for accounting.
 Show the current global timeouts.
 .It Fl s Ar memory
 Show the current pool memory hard limits.
+.It Fl s Ar Tables
+Show the list of radix tables.
 .It Fl s Ar all
 Show all of the above.
+.El
+.It Fl t Ar table
+Specify the name of the radix table.
+.It Fl T Ar command
+Specify the command to apply to the table. commands include:
+.Bl -tag -width "T Replace " -compact
+.It Fl T Ar create
+Create a new table.
+.It Fl T Ar kill
+Kill a table.
+.It Fl T Ar flush
+Flush all addresses of a table.
+.It Fl T Ar add
+Add one or more addresses in a table.
+.It Fl T Ar delete
+Delete one or more addresses from a table.
+.It Fl T Ar replace
+Replace the addresses of the table.
+.It Fl T Ar show
+Show the content (addresses) of a table.
+.It Fl T Ar test
+Test if the given addresses match a table.
+.It Fl T Ar zero
+Clear all the statistics of a table.
 .El
 .It Fl v
 Produce more verbose output.  A second use of
