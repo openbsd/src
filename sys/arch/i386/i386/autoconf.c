@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 1996/09/28 08:31:21 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 1996/09/29 08:00:41 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -259,7 +259,8 @@ setconf()
 #ifdef INSTALL
 	if (((bootdev >> B_TYPESHIFT) & B_TYPEMASK) == 2) {
 		printf("\n\nInsert file system floppy...\n");
-		cngetc();
+		if (!(boothowto & RB_ASKNAME))
+			cngetc();
 	}
 #endif
 
