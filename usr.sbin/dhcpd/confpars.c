@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.10 2004/09/09 20:51:57 millert Exp $ */
+/*	$OpenBSD: confpars.c,v 1.11 2004/09/15 18:15:50 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -115,7 +115,8 @@ read_leases(void)
 		    path_dhcpd_db,
 		    "check for failed database rewrite attempt!");
 		warn("Please read the dhcpd.leases manual page if you.");
-		error("don't know what to do about this.");	}
+		error("don't know what to do about this.");
+	}
 
 	do {
 		token = next_token(&val, cfile);
