@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 1999/12/17 01:58:46 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 2000/02/22 20:08:16 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -77,6 +77,10 @@
 #define	USHIFT		(3)		/* log2(UPAGES) */
 #define	UPAGES		(1<<USHIFT)	/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
+
+#ifndef	MSGBUFSIZE
+#define	MSGBUFSIZE	2*NBPG		/* default message buffer size */
+#endif
 
 /*
  * Constants related to network buffer management.
