@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.5 1996/10/27 07:59:05 mickey Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.6 1997/01/15 03:06:28 kstailey Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ kernfs_xread(kt, off, bufp, len)
 		break;
 
 	case KTT_USERMEM:
-		sprintf(*bufp, "%lu\n", physmem - cnt.v_wire_count);
+		sprintf(*bufp, "%u\n", physmem - cnt.v_wire_count);
 		break;
 
 	default:
