@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.3 2004/05/31 21:43:23 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.4 2004/06/01 16:27:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,18 +29,14 @@
 #include "ntpd.h"
 #include "ntp.h"
 
-#define	PFD_LISTEN	0
-#define	PFD_LISTEN6	1
-#define	PFD_PIPE_MAIN	2
-#define	PFD_MAX		3
+#define	PFD_PIPE_MAIN	0
 
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		 ibuf_main;
 struct l_fixedpt	 ref_ts;
 
 void	ntp_sighdlr(int);
-int	setup_listener(struct servent *);
-int	setup_listener6(struct servent *);
+int	setup_listeners(struct servent *, struct ntpd_conf *);
 int	ntp_dispatch_imsg(void);
 int	ntp_dispatch(int fd);
 int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);
@@ -60,15 +56,14 @@ ntp_sighdlr(int sig)
 }
 
 pid_t
-ntp_main(int pipe_prnt[2])
+ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 {
-	int			 nfds;
-	int			 sock = -1;
-	int			 sock6 = -1;
+	int			 nfds, i, j;
 	pid_t			 pid;
-	struct pollfd		 pfd[PFD_MAX];
+	struct pollfd		 pfd[OPEN_MAX];
 	struct passwd		*pw;
 	struct servent		*se;
+	struct listen_addr	*la;
 
 	switch (pid = fork()) {
 	case -1:
@@ -92,8 +87,7 @@ ntp_main(int pipe_prnt[2])
 
 	setproctitle("ntp engine");
 
-	sock = setup_listener(se);
-	sock6 = setup_listener6(se);
+	setup_listeners(se, conf);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
@@ -115,16 +109,19 @@ ntp_main(int pipe_prnt[2])
 	while (ntp_quit == 0) {
 		get_ts(&ref_ts);	/* XXX */
 		bzero(&pfd, sizeof(pfd));
-		pfd[PFD_LISTEN].fd = sock;
-		pfd[PFD_LISTEN].events = POLLIN;
-		pfd[PFD_LISTEN6].fd = sock6;
-		pfd[PFD_LISTEN6].events = POLLIN;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
-		if ((nfds = poll(pfd, PFD_MAX, INFTIM)) == -1)
+		i = 1;
+		TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
+			pfd[i].fd = la->fd;
+			pfd[i].events = POLLIN;
+			i++;
+		}
+
+		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				ntp_quit = 1;
@@ -142,17 +139,12 @@ ntp_main(int pipe_prnt[2])
 				ntp_quit = 1;
 		}
 
-		if (nfds > 0 && pfd[PFD_LISTEN].revents & POLLIN) {
-			nfds--;
-			if (ntp_dispatch(sock) == -1)
-				ntp_quit = 1;
-		}
-
-		if (nfds > 0 && pfd[PFD_LISTEN6].revents & POLLIN) {
-			nfds--;
-			if (ntp_dispatch(sock6) == -1)
-				ntp_quit = 1;
-		}
+		for (j = 1; nfds > 0 && j < i; j++)
+			if (pfd[j].revents & POLLIN) {
+				nfds--;
+				if (ntp_dispatch(pfd[j].fd) == -1)
+					ntp_quit = 1;
+			}
 	}
 
 	msgbuf_write(&ibuf_main.w);
@@ -163,44 +155,38 @@ ntp_main(int pipe_prnt[2])
 }
 
 int
-setup_listener(struct servent *se)
+setup_listeners(struct servent *se, struct ntpd_conf *conf)
 {
-	struct sockaddr_in	 sa_in;
-	int			 fd;
+	struct listen_addr	*la;
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		fatal("socket");
+	if (TAILQ_EMPTY(&conf->listen_addrs)) {
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->sa.ss_len = sizeof(struct sockaddr_in);
+		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
+		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
+		    htonl(INADDR_ANY);
+		((struct sockaddr_in *)&la->sa)->sin_port = se->s_port;
+		TAILQ_INSERT_TAIL(&conf->listen_addrs, la, entry);
 
-	bzero(&sa_in, sizeof(sa_in));
-	sa_in.sin_len = sizeof(sa_in);
-	sa_in.sin_family = AF_INET;
-	sa_in.sin_addr.s_addr = htonl(INADDR_ANY);
-	sa_in.sin_port = se->s_port;
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->sa.ss_len = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
+		((struct sockaddr_in6 *)&la->sa)->sin6_port = se->s_port;
+		TAILQ_INSERT_TAIL(&conf->listen_addrs, la, entry);
+	}
 
-	if (bind(fd, (struct sockaddr *)&sa_in, sizeof(sa_in)) == -1)
-		fatal("bind");
+	TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
+		if ((la->fd = socket(la->sa.ss_family, SOCK_DGRAM, 0)) == -1)
+			fatal("socket");
 
-	return (fd);
-}
+		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
+		    -1)
+			fatal("bind");
+	}
 
-int
-setup_listener6(struct servent *se)
-{
-	struct sockaddr_in6	 sa_in6;
-	int			 fd;
-
-	if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
-		fatal("socket");
-
-	bzero(&sa_in6, sizeof(sa_in6));
-	sa_in6.sin6_len = sizeof(sa_in6);
-	sa_in6.sin6_family = AF_INET6;
-	sa_in6.sin6_port = se->s_port;
-
-	if (bind(fd, (struct sockaddr *)&sa_in6, sizeof(sa_in6)) == -1)
-		fatal("bind");
-
-	return (fd);
+	return (0);
 }
 
 int

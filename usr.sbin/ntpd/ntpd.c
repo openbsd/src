@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.2 2004/05/31 13:55:31 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.3 2004/06/01 16:27:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,6 +79,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
+	struct ntpd_conf	 conf;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 chld_pid = 0, pid;
 	char			*conffile;
@@ -87,6 +88,9 @@ main(int argc, char *argv[])
 	int			 pipe_chld[2];
 
 	conffile = CONFFILE;
+
+	bzero(&conf, sizeof(conf));
+	TAILQ_INIT(&conf.listen_addrs);
 
 	log_init(1);		/* log to stderr until daemonized */
 
@@ -122,7 +126,7 @@ main(int argc, char *argv[])
 		fatal("pipe");
 
 	/* fork children */
-	chld_pid = ntp_main(pipe_chld);
+	chld_pid = ntp_main(pipe_chld, &conf);
 
 	setproctitle("[priv]");
 
