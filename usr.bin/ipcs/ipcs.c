@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.17 2002/06/12 06:07:15 mpech Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.18 2002/06/15 18:47:50 matthieu Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -296,7 +296,7 @@ show_msginfo_hdr(void)
 {
 
 	printf("Message Queues:\n");
-	printf("T     ID     KEY        MODE       OWNER    GROUP");
+	printf("T       ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
 		printf("  CREATOR   CGROUP");
 	if (option & OUTSTANDING)
@@ -324,7 +324,7 @@ show_msginfo(time_t stime, time_t rtime, time_t ctime, int ipcid, key_t key,
 		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
 	}
 
-	printf("q %6d %10ld %s %8s %8s", ipcid, key, fmt_perm(mode),
+	printf("q %8d %10ld %s %8s %8s", ipcid, key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
@@ -351,7 +351,7 @@ show_shminfo_hdr(void)
 {
 
 	printf("Shared Memory:\n");
-	printf("T     ID     KEY        MODE       OWNER    GROUP");
+	printf("T       ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
 		printf("  CREATOR   CGROUP");
 	if (option & OUTSTANDING)
@@ -378,7 +378,7 @@ show_shminfo(time_t atime, time_t dtime, time_t ctime, int ipcid, key_t key,
 		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
 	}
 
-	printf("m %6d %10ld %s %8s %8s", ipcid, key, fmt_perm(mode),
+	printf("m %8d %10ld %s %8s %8s", ipcid, key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
@@ -408,7 +408,7 @@ show_seminfo_hdr(void)
 {
 
 	printf("Semaphores:\n");
-	printf("T     ID     KEY        MODE       OWNER    GROUP");
+	printf("T       ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
 		printf("  CREATOR   CGROUP");
 	if (option & BIGGEST)
@@ -429,7 +429,7 @@ show_seminfo(time_t otime, time_t ctime, int ipcid, key_t key, mode_t mode,
 		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
 	}
 
-	printf("s %6d %10ld %s %8s %8s", ipcid, key, fmt_perm(mode),
+	printf("s %8d %10ld %s %8s %8s", ipcid, key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
