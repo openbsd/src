@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2001/01/29 00:01:58 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2001/06/24 17:05:36 miod Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -84,6 +84,7 @@
 #define	splimp()		__spllow(IPL_CLOCK)
 #define	splclock()		__spllow(IPL_CLOCK)
 #define	splstatclock()		__spllow(IPL_CLOCK)
+#define	splvm()			__spllow(IPL_CLOCK)
 #define	splhigh()		__splhigh(IPL_HIGH)
 
 /* software interrupt register */

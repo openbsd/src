@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 2001/06/13 07:38:47 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.19 2001/06/24 17:05:39 miod Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -199,6 +199,7 @@
 #define splnet()	_splraise(0x15)	/* IPL15 */
 #define spltty()	_splraise(0x15)	/* IPL15 */
 #define splimp()	_splraise(0x17)	/* IPL17 */
+#define splvm()		_splraise(0x17)	/* IPL17 */
 #define splclock()	_splraise(0x18)	/* IPL18 */
 #define splhigh()	_splraise(0x1f)	/* IPL1F */
 #define	splstatclock()	splclock()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2000/07/06 15:25:03 ho Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2001/06/24 17:05:37 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 1997/11/07 07:33:18 scottr Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ extern unsigned short	mac68k_schedipl;
 #define	splbio()		_splraise(mac68k_bioipl)
 #define	splnet()		_splraise(mac68k_netipl)
 #define	splimp()		_splraise(mac68k_impipl)
+#define	splvm()			_splraise(mac68k_impipl)
 #define	splclock()		_splraise(mac68k_clockipl)
 #define	splstatclock()		_splraise(mac68k_statclockipl)
 #define	splsched()		_splsched(mac68k_schedipl)

@@ -80,6 +80,7 @@ extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
 #define	splnet()	((*Mach_splnet)())
 #define	splbio()	((*Mach_splbio)())
 #define	splimp()	((*Mach_splimp)())
+#define	splvm()		((*Mach_splimp)())
 #define	spltty()	((*Mach_spltty)())
 #define	splclock()	((*Mach_splclock)())
 #define	splstatclock()	((*Mach_splstatclock)())

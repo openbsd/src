@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2000/08/05 22:07:31 niklas Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 2001/06/24 17:05:36 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ spllower(ncpl)
  * Miscellaneous
  */
 #define	splimp()	splraise(imask[IPL_IMP])
+#define	splvm()		splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
 

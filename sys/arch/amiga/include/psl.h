@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.11 2000/07/06 15:29:52 ho Exp $	*/
+/*	$OpenBSD: psl.h,v 1.12 2001/06/24 17:05:34 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.11 1996/11/30 00:33:49 is Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
@@ -121,6 +121,7 @@ spllower(npsl)
 extern u_int16_t amiga_ttyspl;
 #define spltty()	splexact(amiga_ttyspl)
 #define splimp()	spltty()        /* XXX for the full story, see i386 */
+#define splvm()		spltty()        /* XXX for the full story, see i386 */
 
 #if defined(LEV6_DEFER) || defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 #define splclock()	spl4()
