@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.26 2004/01/04 00:29:50 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.27 2004/03/20 14:56:05 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -59,9 +59,11 @@ timer*	at mainbus0				# Timer chip
 pcons0	at mainbus0				# PROM console
 
 ## Lance Ethernet - AMD7990
-le*	at sbus?
-ledma*	at sbus?
-le*	at ledma?
+le*		at sbus?
+ledma*		at sbus?
+le*		at ledma?
+lebuffer*	at sbus?
+le*		at lebuffer?
 
 # Quad-ethernet glue device, and sub-devices
 qec*	at sbus?
