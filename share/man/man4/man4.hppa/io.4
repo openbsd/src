@@ -1,4 +1,4 @@
-.\" $OpenBSD: io.4,v 1.1 2004/01/15 14:15:00 mickey Exp $
+.\" $OpenBSD: io.4,v 1.2 2004/01/15 15:10:00 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -36,36 +36,36 @@ The following table lists the
 I/O subsystems and connected devices found in the supported
 .Tn HP 9000/700
 machines.
-.Bl -column "715-100" "MBA" "SExxFWD" "CA, FDDI" "Video" -offset left
-.It "Model" Ta "MBA" Ta "SCSI" Ta "Network" Ta "Video"
-.It 705 Ta "A" Ta "SE" Ta "DX" Ta unknown
-.It 710 Ta "A" Ta "SE" Ta "DX" Ta unknown
-.It 712 Ta "LW" Ta "SE" Ta "CA, TR" Ta Artist
-.It 715/33 Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 715/50 Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 715/64 Ta "LW" Ta "SE" Ta "CA" Ta Artist
-.It 715/75 Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 715/80 Ta "LW" Ta "SE" Ta "CA" Ta Artist
-.It 715/100 Ta "LW" Ta "SE" Ta "CA" Ta Artist
-.It 720 Ta "A" Ta "SE" Ta "DX" Ta "[SGC]"
-.It 725/50 Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 725/75 Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 725/64 Ta "LW" Ta "SE" Ta "CA" Ta Artist
-.It 725/100 Ta "LW" Ta "SE" Ta "CA" Ta Artist
-.It 730 Ta "A" Ta "SE" Ta "DX" Ta "[SGC]"
-.It 735 Ta "A" Ta "SE, FWD" Ta "DX, FDDI" Ta "[SGC]"
-.It 745i Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 747i Ta "A" Ta "SE" Ta "DX" Ta Stinger
-.It 750 Ta "A" Ta "SE" Ta "DX" Ta "[SGC]"
-.It 755 Ta "A" Ta "SE, FWD" Ta "DX, FDDI" Ta "[SGC]"
-.It J2x0/XC Ta "LW" Ta "SE, FWD" Ta "CA" Ta "[GSC]"
-.It A180 Ta "DL" Ta "SE" Ta "DC" Ta "[GSC/PCI]
-.It B1xxL Ta "DLW" Ta "SE, FWD" Ta "CA" Ta Visualize-EG
-.It B1xxL+ Ta "DLW" Ta "SE, UW" Ta "DC" Ta Visualize-EG
-.It C1x0 Ta "LW" Ta "SE, FWD" Ta "CA" Ta "[GSC]"
-.It C1xxL Ta "DLW" Ta "SE, UW" Ta "DC" Ta Visualize-EG
-.It "RDI" Ta "DL" Ta "SE" Ta "CA" Ta Visualize-EG
-.It "SAIC" Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.Bl -column "	715x100" "	MBA" "	SExxFWD" "	CAxxFDDI" "	Video" "	xxxxxxx" -offset left
+.It "Model" "	MBA" "	SCSI" "	Network" "	Video" "	Misc"
+.It "705" "	A" "	SE" "	DX" "	unknown"
+.It "710" "	A" "	SE" "	DX" "	unknown"
+.It "712" "	LW" "	SE" "	CA, TR" "	Artist"
+.It "715/33" "	A" "	SE" "	DX" "	Stinger"
+.It "715/50" "	A" "	SE" "	DX" "	Stinger"
+.It "715/64" "	LW" "	SE" "	CA" "	Artist"
+.It "715/75" "	A" "	SE" "	DX" "	Stinger"
+.It "715/80" "	LW" "	SE" "	CA" "	Artist"
+.It "715/100" "	LW" "	SE" "	CA" "	Artist"
+.It "720" "	A" "	SE" "	DX" "	[SGC]"
+.It "725/50" "	A" "	SE" "	DX" "	Stinger"
+.It "725/75" "	A" "	SE" "	DX" "	Stinger"
+.It "725/64" "	LW" "	SE" "	CA" "	Artist"
+.It "725/100" "	LW" "	SE" "	CA" "	Artist"
+.It "730" "	A" "	SE" "	DX" "	[SGC]"
+.It "735" "	A" "	SE, FWD" "	DX, FDDI" "	[SGC]"
+.It "745i" "	A" "	SE" "	DX" "	Stinger"
+.It "747i" "	A" "	SE" "	DX" "	Stinger"
+.It "750" "	A" "	SE" "	DX" "	[SGC]"
+.It "755" "	A" "	SE, FWD" "	DX, FDDI" "	[SGC]"
+.It "J2x0/XC" "	LW" "	SE, FWD" "	CA" "	[GSC]"
+.It "A180" "	DL" "	SE" "	DC" "	[GSC/PCI]"
+.It "B1xxL" "	DLW" "	SE, FWD" "	CA" "	EG"
+.It "B1xxL+" "	DLW" "	SE, UW" "	DC" "	EG"
+.It "C1x0" "	LW" "	SE, FWD" "	CA" "	[GSC]"
+.It "C1xxL" "	DLW" "	SE, UW" "	DC" "	EG"
+.It "RDI" "	DL" "	SE" "	CA" "	EG" "	CardBus"
+.It "SAIC" "	LW" "	SE" "	CA" "	Artist" "	PCMCIA"
 .El
 .Pp
 The MBA column denotes the bus adapters in use Ta 
