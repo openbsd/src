@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.10 1999/07/09 13:35:46 aaron Exp $
+.\"	$OpenBSD: isapnp.4,v 1.12 1999/07/23 19:27:39 deraadt Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -51,12 +51,14 @@ devices on an ISA bus.
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Pp
-.Ss SCSI controllers
+.Ss Disk controllers
 .Bl -tag -width speaker -offset indent -compact
 .It aic
 Adaptec AHA-1520B SCSI controller card.
 .It aha
 Adaptec AHA-154x SCSI controller card.
+.It wdc
+IDE controllers (typically found on sound cards)
 .El
 .Pp
 .Ss Serial and parallel interfaces
@@ -64,6 +66,7 @@ Adaptec AHA-154x SCSI controller card.
 .It com & pccom
 8250/16450/16550/16650/16850-compatible ISA PnP serial cards and internal
 modems (i386 only).
+Win-modems are not supported.
 .El
 .Pp
 .Ss Network interfaces
@@ -74,8 +77,10 @@ modems (i386 only).
 Ethernet driver for Lance based Ethernet interfaces.
 .It ne
 NE2000-compatible Ethernet interfaces.
+.It we
+SMC EtherEZ ethernet cards
 .El
-.Ss Sound cards
+.Ss Sound
 .Bl -tag -width speaker -offset indent -compact
 .It sb
 SoundBlaster series sound cards (SB16 PnP through AWE64).
@@ -85,6 +90,8 @@ Gravis Ultrasound PnP sound cards.
 Yamaha OPL3-SA3 sound cards.
 .It wss
 Windows Sound System cards.
+.It mpu
+MIDI interfaces.
 .El
 .Ss Misc devices
 .Bl -tag -width speaker -offset indent -compact
