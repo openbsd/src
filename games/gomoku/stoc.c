@@ -1,4 +1,4 @@
-/*	$OpenBSD: stoc.c,v 1.2 1996/12/21 21:17:53 tholo Exp $	*/
+/*	$OpenBSD: stoc.c,v 1.3 1998/03/26 21:16:52 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
+#else
+static char rcsid[] = "$OpenBSD: stoc.c,v 1.3 1998/03/26 21:16:52 pjanzen Exp $";
+#endif
 #endif /* not lint */
 
 #include "gomoku.h"

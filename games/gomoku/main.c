@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/01/26 08:00:53 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1998/03/26 21:16:49 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
+#else
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/03/26 21:16:49 pjanzen Exp $";
+#endif
 #endif /* not lint */
 
 #include "gomoku.h"
@@ -76,6 +80,8 @@ int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
 char	*plyr[2];			/* who's who */
 
+static char you[9] = "you\0\0\0\0\0\0";	/* username */
+
 int
 main(argc, argv)
 	int argc;
@@ -88,6 +94,7 @@ main(argc, argv)
 		"%3d %-6s",
 		"%3d        %-6s"
 	};
+	char *tmpname;
 
 	/* revoke privs */
 	setegid(getgid());
@@ -99,7 +106,10 @@ main(argc, argv)
 	else
 		prog = argv[0];
 
-	while ((ch = getopt(argc, argv, "bcdD:u")) != -1) {
+	if ((tmpname = getlogin()) != 0)
+		strncpy(you,tmpname,8);
+
+	while ((ch = getopt(argc, argv, "bcdD:hu")) != -1) {
 		switch (ch) {
 		case 'b':	/* background */
 			interactive = 0;
@@ -117,6 +127,19 @@ main(argc, argv)
 		case 'c':	/* testing: computer verses computer */
 			test = 2;
 			break;
+		case 'h':
+		default:
+			fprintf(stderr,"usage:  %s [-bcdu] [-D debugfile] [inputfile]\n",
+					prog);
+			fprintf(stderr,"\tWhere the options are:\n\t-b : background\n");
+			fprintf(stderr,"\t-c : computer vs itself\n");
+			fprintf(stderr,"\t-d : print debugging information\n");
+			fprintf(stderr,"\t-u : user vs user\n");
+			fprintf(stderr,
+	"\t-D : print debugging information to debugfile\n");
+			fprintf(stderr,
+	"\t  The game will be restored from inputfile if one is specified.\n");
+			exit(1);
 		}
 	}
 	argc -= optind;
@@ -147,21 +170,18 @@ again:
 #endif
 
 		if (inputfp == NULL && test == 0) {
-			for (;;) {
-				ask("black or white? ");
-				getline(buf, sizeof(buf));
-				if (buf[0] == 'b' || buf[0] == 'B') {
-					color = BLACK;
-					break;
-				}
-				if (buf[0] == 'w' || buf[0] == 'W') {
-					color = WHITE;
-					break;
-				}
-				move(22, 0);
+			ask("black or white? ");
+			while (((ch = getchar()) != 'b') && (ch != 'B') &&
+				(ch != 'w') && (ch != 'W')) {
+				move(BSZ3, 0);
 				printw("Black moves first. Please enter `black' or `white'\n");
+				refresh();
 			}
-			move(22, 0);
+			if (ch == 'b' || ch == 'B')
+				color = BLACK;
+			else
+				color = WHITE;
+			move(BSZ3, 0);
 			clrtoeol();
 		}
 	} else {
@@ -201,8 +221,8 @@ again:
 		}
 	}
 	if (interactive) {
-		plyr[BLACK] = input[BLACK] == USER ? "you" : prog;
-		plyr[WHITE] = input[WHITE] == USER ? "you" : prog;
+		plyr[BLACK] = input[BLACK] == USER ? you : prog;
+		plyr[WHITE] = input[WHITE] == USER ? you : prog;
 		bdwho(1);
 	}
 
@@ -214,17 +234,17 @@ again:
 			if (curmove != ILLEGAL)
 				break;
 			switch (test) {
-			case 0: /* user verses program */
+			case 0: /* user versus program */
 				input[color] = USER;
 				input[!color] = PROGRAM;
 				break;
 
-			case 1: /* user verses user */
+			case 1: /* user versus user */
 				input[BLACK] = USER;
 				input[WHITE] = USER;
 				break;
 
-			case 2: /* program verses program */
+			case 2: /* program versus program */
 				input[BLACK] = PROGRAM;
 				input[WHITE] = PROGRAM;
 				break;
@@ -236,16 +256,9 @@ again:
 
 		case USER: /* input comes from standard input */
 		getinput:
-			if (interactive)
-				ask("move? ");
-			if (!getline(buf, sizeof(buf))) {
-				curmove = RESIGN;
-				break;
-			}
-			if (buf[0] == '\0')
-				goto getinput;
-			curmove = ctos(buf);
 			if (interactive) {
+				ask("Enter move (hjklyubn/S/Q)");
+				curmove = getcoord();
 				if (curmove == SAVE) {
 					FILE *fp;
 
@@ -263,13 +276,24 @@ again:
 				}
 				if (curmove != RESIGN &&
 				    board[curmove].s_occ != EMPTY) {
-					log("Illegal move");
+				/*	log("Illegal move"); */
+					beep();
 					goto getinput;
 				}
+			} else {
+				if (!getline(buf, sizeof(buf))) {
+					curmove = RESIGN;
+					break;
+				}
+				if (buf[0] == '\0')
+					goto getinput;
+				curmove = ctos(buf);
 			}
 			break;
 
 		case PROGRAM: /* input comes from the program */
+			if (interactive)
+				ask("Thinking...");
 			curmove = pickmove(color);
 			break;
 		}
@@ -283,13 +307,16 @@ again:
 			bdisp();
 	}
 	if (interactive) {
-		move(22, 0);
+		move(BSZ3, 0);
 		switch (i) {
 		case WIN:
 			if (input[color] == PROGRAM)
 				addstr("Ha ha, I won");
 			else
-				addstr("Rats! you won");
+				if (input[0] == USER && input[1] == USER)
+					addstr("Well, you won (and lost).");
+				else
+					addstr("Rats! You won");
 			break;
 		case TIE:
 			addstr("Wow! its a tie");

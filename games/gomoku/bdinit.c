@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdinit.c,v 1.2 1996/12/21 21:17:49 tholo Exp $	*/
+/*	$OpenBSD: bdinit.c,v 1.3 1998/03/26 21:16:43 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)bdinit.c	8.2 (Berkeley) 5/3/95";
+#else
+static char rcsid[] = "$OpenBSD: bdinit.c,v 1.3 1998/03/26 21:16:43 pjanzen Exp $";
+#endif
 #endif /* not lint */
 
 #include "gomoku.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.3 1997/01/26 08:00:52 downsj Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.4 1998/03/26 21:16:47 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -44,9 +44,15 @@
 #define BSZ	19
 #define BSZ1	(BSZ+1)
 #define BSZ2	(BSZ+2)
+#define BSZ3	(BSZ+3)
+#define BSZ4	(BSZ+4)
 #define BAREA	(BSZ2*BSZ1+1)
 
-/* frame dimentions (based on 5 in a row) */
+/* interactive curses stuff */
+#define FF		'\014'  /* used as redraw command */
+#define BGOTO(y,x)	move(BSZ - (y), 2 * (x) + 3)
+
+/* frame dimensions (based on 5 in a row) */
 #define FSZ1	BSZ
 #define FSZ2	(BSZ-4)
 #define FAREA	(FSZ1*FSZ2 + FSZ2*FSZ2 + FSZ1*FSZ2 + FSZ2*FSZ2)
@@ -261,54 +267,55 @@ extern	int	movelog[BSZ * BSZ];		/* history of moves */
 extern	int	movenum;
 extern	int	debug;
 
-extern	void	addframes __P((int));
-extern	void	appendcombo __P((struct combostr *));
-extern	void	ask __P((char *));
-extern	void	bdinit __P((struct spotstr *));
-extern	void	bdisp __P((void));
-extern	void	bdisp_init __P((void));
+void	addframes __P((int));
+void	appendcombo __P((struct combostr *));
+void	ask __P((char *));
+void	bdinit __P((struct spotstr *));
+void	bdisp __P((void));
+void	bdisp_init __P((void));
 #ifdef DEBUG
-extern	void	bdump __P((FILE *));
+void	bdump __P((FILE *));
 #endif
-extern	void	bdwho __P((int));
-extern	int	better __P((struct spotstr *, struct spotstr *, int));
-extern	int	checkframes __P((struct combostr *, struct combostr *,
+void	bdwho __P((int));
+int	better __P((struct spotstr *, struct spotstr *, int));
+int	checkframes __P((struct combostr *, struct combostr *,
 				 struct spotstr *, int, struct ovlp_info *));
 #ifdef DEBUG
-extern	void	clearcombo __P((struct combostr *, int));
+void	clearcombo __P((struct combostr *, int));
 #endif
-extern	int	ctos __P((char *));
-extern	void	cursfini __P((void));
-extern	void	cursinit __P((void));
-extern	void	dislog __P((char *));
-extern	void	dlog __P((char *));
-extern	int	getline __P((char *, int));
-extern	void	init_overlap __P((void));
+int	ctos __P((char *));
+void	cursfini __P((void));
+void	cursinit __P((void));
+void	dislog __P((char *));
+void	dlog __P((char *));
+int	getcoord __P((void));
+int	getline __P((char *, int));
+void	init_overlap __P((void));
 #ifdef DEBUG
-extern	int	list_eq __P((struct combostr **, struct combostr **, int));
+int	list_eq __P((struct combostr **, struct combostr **, int));
 #endif
-extern	void	log __P((char *));
-extern	int	lton __P((int));
-extern	void	makecombo __P((struct combostr *, struct spotstr *, int, int));
-extern	void	makecombo2 __P((struct combostr *, struct spotstr *, int, int));
-extern	void	makeempty __P((struct combostr *));
-extern	int	makemove __P((int, int));
+void	log __P((char *));
+int	lton __P((int));
+void	makecombo __P((struct combostr *, struct spotstr *, int, int));
+void	makecombo2 __P((struct combostr *, struct spotstr *, int, int));
+void	makeempty __P((struct combostr *));
+int	makemove __P((int, int));
 #ifdef DEBUG
-extern	void	markcombo __P((struct combostr *));
+void	markcombo __P((struct combostr *));
 #endif
-extern	void	panic __P((char *));
-extern	int	pickmove __P((int));
-extern	void	printcombo __P((struct combostr *, char *));
-extern	void	qlog __P((char *));
-extern	void	quit __P((int));
-extern	int	readinput __P((FILE *));
-extern	void	scanframes __P((int));
-extern	int	sortcombo __P((struct combostr **, struct combostr **, struct combostr *));
-extern	char	*stoc __P((int));
-extern	void	updatecombo __P((struct combostr *, int));
-extern	void	update_overlap __P((struct spotstr *));
+void	panic __P((char *));
+int	pickmove __P((int));
+void	printcombo __P((struct combostr *, char *));
+void	qlog __P((char *));
+void	quit __P((int));
+int	readinput __P((FILE *));
+void	scanframes __P((int));
+int	sortcombo __P((struct combostr **, struct combostr **, struct combostr *));
+char	*stoc __P((int));
+void	updatecombo __P((struct combostr *, int));
+void	update_overlap __P((struct spotstr *));
 #ifdef DEBUG
-extern	void	whatsup __P((int));
+void	whatsup __P((int));
 #endif
 
 #define ASSERT(x)

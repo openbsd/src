@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gomoku.6,v 1.1.1.1 1996/12/16 06:56:08 downsj Exp $
+.\"	$OpenBSD: gomoku.6,v 1.2 1998/03/26 21:16:46 pjanzen Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,16 +49,24 @@
 .Op Ar inputfile
 .Sh DESCRIPTION
 .Nm Gomoku
-is a two player game were the object is to get 5 in a row horizontally,
+is a two player game where the object is to get 5 in a row horizontally,
 vertically or diagonally on a 19 by 19 grid. By convention, black always
 moves first.
 With no arguments,
 .Nm gomoku
 will display a playing board and prompt for moves from the user.
-Valid moves are a letter for the column and a number for the row of an empty
-board location. Entering ``quit" or ``resign" will end the game.
-You can save the current state of the game by entering ``save" and
-supplying a file name when prompted.
+The interface is visual and straightforward; you move to a spot 
+using the rogue(6) / hack(6) motion keys
+.Em hjklyubn
+and select it with either 
+.Sq space
+or 
+.Sq return .
+The game will beep if you select a location that is already occupied.
+To save the game, type
+.Sq S
+and to quit, type
+.Sq Q .
 The optional file
 .Ar inputfile
 can be used to restore a saved game.
@@ -74,7 +82,7 @@ has the first move or not respectively. This
 option was intended for game tournaments where a referee program handles
 the board display and pits one program against another.
 .It Fl c
-Computer verses computer.
+Computer versus computer.
 .Nm Gomoku
 will play a game against itself. This is mostly used for testing.
 .It Fl d
@@ -85,10 +93,15 @@ Print the debug information to
 .Ar debugfile
 instead of to the standard output.
 .It Fl u
-User verses user. This is mostly used for testing.
+User versus user. This is mostly used for testing.
+.Sh BUGS
+The program is far too slow and uses far too much memory for the quality of
+game it provides.
 .Sh AUTHOR
 Ralph Campbell
 .Sh ACKNOWLEDGEMENTS
 The board display routines were based on the
 .Nm goref
 program written by Peter Langston.
+The user interface was based on Eric S. Raymond's interface to
+.Nm bs .

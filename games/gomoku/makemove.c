@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemove.c,v 1.3 1997/04/09 02:02:06 deraadt Exp $	*/
+/*	$OpenBSD: makemove.c,v 1.4 1998/03/26 21:16:50 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
+#else
+static char rcsid[] = "$OpenBSD: makemove.c,v 1.4 1998/03/26 21:16:50 pjanzen Exp $";
+#endif
 #endif /* not lint */
 
 #include "gomoku.h"
