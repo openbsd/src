@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.15 1998/03/19 00:30:01 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.16 1998/07/03 01:10:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.15 1998/03/19 00:30:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.16 1998/07/03 01:10:27 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -245,14 +245,16 @@ fts_close(sp)
 		(void)close(sp->fts_rfd);
 	}
 
-	/* Free up the stream pointer. */
-	free(sp);
-
 	/* Set errno and return. */
 	if (!ISSET(FTS_NOCHDIR) && saved_errno) {
+		/* Free up the stream pointer. */
+		free(sp);
 		errno = saved_errno;
 		return (-1);
 	}
+
+	/* Free up the stream pointer. */
+	free(sp);
 	return (0);
 }
 
