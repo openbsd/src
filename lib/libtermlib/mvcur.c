@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvcur.c,v 1.2 1996/07/13 18:20:17 tholo Exp $	*/
+/*	$OpenBSD: mvcur.c,v 1.3 1996/10/12 03:08:25 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,97 +31,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mvcur.c,v 1.2 1996/07/13 18:20:17 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mvcur.c,v 1.3 1996/10/12 03:08:25 tholo Exp $";
 #endif
 
-#include <string.h>
-#include <unistd.h>
-#include <termios.h>
+#include <sys/cdefs.h>
+
+#ifdef __indr_reference
+__indr_reference(_mvcur, mvcur);
+#else
+
+#include <stdlib.h>
 #include "term.h"
 
-static int
-rawmode()
-{
-    struct termios ti;
+#define _mvcur		mvcur
+#define	rcsid		_rcsid
+#include "_mvcur.c"
 
-    if (tcgetattr(STDIN_FILENO, &ti) < 0)
-	return 1;
-    if (ti.c_oflag & OPOST)
-	if (ti.c_oflag & ONLCR)
-	    return 0;
-    return 1;
-}
-
-/*
- * Optimized cursor movement, assume cursor is currently
- * located at (oldx,oldy), output what is needed for the
- * cursor to be relocated to (newx,newy)
- */
-int
-mvcur(oldy, oldx, newy, newx)
-    int oldy;
-    int oldx;
-    int newy;
-    int newx;
-{
-    int l, c, raw;
-    char *p;
-
-    if (newx >= columns) {
-	newy += newx / columns;
-	newx %= columns;
-    }
-    if (oldx >= columns) {
-	l = (oldx + 1) / columns;
-	oldy += l;
-	oldx %= columns;
-	if (!auto_right_margin) {
-	    raw = rawmode();
-	    while (l > 0) {
-		if (raw)
-		    if (carriage_return != NULL)
-			tputs(carriage_return, 0, _ti_outc);
-		    else
-			_ti_outc('\r');
-		if (linefeed_if_not_lf != NULL)
-		    tputs(linefeed_if_not_lf, 0, _ti_outc);
-		else
-		    _ti_outc('\n');
-		l--;
-	    }
-	    oldx = 0;
-	}
-	if (oldy >= lines - 1) {
-	    newy -= oldy - (lines - 1);
-	    oldy = lines - 1;
-	}
-    }
-    if (newy >= lines) {
-	l = newy;
-	newy = lines - 1;
-	if (oldy < lines - 1) {
-	    c = newx;
-	    if (cursor_address == NULL)
-		newx = 0;
-	    mvcur(oldy, oldx, newy, newx);
-	    newx = c;
-	}
-	while (l >= lines) {
-	    if (linefeed_if_not_lf != NULL)
-		tputs(linefeed_if_not_lf, 0, _ti_outc);
-	    else
-		_ti_outc('\n');
-	    l--;
-	    oldx = 0;
-	}
-    }
-    if (newy < oldy && !(cursor_address != NULL || cursor_up != NULL))
-	newy = oldy;
-    if (cursor_address != NULL) {
-	p = tparm(cursor_address, newx, newy);
-	tputs(p, 0, _ti_outc);
-    }
-    else
-	return ERR;
-    return OK;
-}
+#endif

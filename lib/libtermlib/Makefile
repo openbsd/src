@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/09/21 19:22:25 tholo Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/10/12 03:08:24 tholo Exp $
 #
 # Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 # All rights reserved.
@@ -31,7 +31,8 @@
 
 LIB=		termlib
 SRCS=		captoinfo.c def_prog_mode.c def_shell_mode.c del_curterm.c \
-		fillcap.c findcap.c findinfo.c getterm.c globals.c mvcur.c \
+		fillcap.c findcap.c findinfo.c getterm.c globals.c \
+		mvcur.c _mvcur.c \
 		outc.c putp.c reset_prog_mode.c reset_shell_mode.c \
 		restartterm.c setterm.c setupterm.c set_curterm.c tgetent.c \
 		tgetflag.c tgetnum.c tgetstr.c tgoto.c tigetflag.c tigetnum.c \
