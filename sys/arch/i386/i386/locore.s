@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.71 2003/06/06 11:11:53 andreas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.72 2003/07/11 20:45:18 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -902,6 +902,9 @@ ENTRY(copyout)
 	/* Compute PTE offset for start address. */
 	shrl	$PGSHIFT,%edi
 
+	movl	_C_LABEL(curpcb), %edx
+	movl	$2f, PCB_ONFAULT(%edx)
+
 1:	/* Check PTE for each page. */
 	testb	$PG_RW,_C_LABEL(PTmap)(,%edi,4)
 	jz	2f
@@ -910,11 +913,11 @@ ENTRY(copyout)
 	decl	%ecx
 	jns	1b
 
-	movl	16(%esp),%edi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 	jmp	3f
 
 2:	/* Simulate a trap. */
-	pushl	%eax
 	pushl	%ecx
 	movl	%edi,%eax
 	shll	$PGSHIFT,%eax
@@ -923,7 +926,6 @@ ENTRY(copyout)
 	addl	$4,%esp			# pop argument
 	popl	%ecx
 	testl	%eax,%eax		# if not ok, return EFAULT
-	popl	%eax
 	jz	4b
 	jmp	_C_LABEL(copy_fault)
 #endif /* I386_CPU */
@@ -937,8 +939,8 @@ ENTRY(copyout)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
@@ -1010,8 +1012,6 @@ ENTRY(copy_fault)
 ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
-	movl	_C_LABEL(curpcb),%ecx
-	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
 
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
@@ -1029,9 +1029,8 @@ ENTRY(copyoutstr)
 	movl	$NBPG,%ecx
 	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
 
-	/* Compute PTE offset for start address. */
-	movl	%edi,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
+	movl	_C_LABEL(curpcb), %eax
+	movl	$6f, PCB_ONFAULT(%eax)
 
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
@@ -1040,27 +1039,28 @@ ENTRY(copyoutstr)
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
 	jae	_C_LABEL(copystr_fault)
 
+	/* Compute PTE offset for start address. */
+	movl	%edi,%eax
+	shrl	$PGSHIFT,%eax		# calculate pte address
+
 	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
 	jnz	2f
 
-	/* Simulate a trap. */
-	pushl	%eax
+6:	/* Simulate a trap. */
 	pushl	%edx
 	pushl	%edi
 	call	_C_LABEL(trapwrite)	# trapwrite(addr)
 	addl	$4,%esp			# clear argument from stack
 	popl	%edx
 	testl	%eax,%eax
-	popl	%eax
 	jnz	_C_LABEL(copystr_fault)
 
 2:	/* Copy up to end of this page. */
 	subl	%ecx,%edx		# predecrement total count
-	jnc	6f
+	jnc	3f
 	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
 	xorl	%edx,%edx
 
-6:	pushl	%eax			# save PT index
 3:	decl	%ecx
 	js	4f
 	lodsb
@@ -1069,15 +1069,12 @@ ENTRY(copyoutstr)
 	jnz	3b
 
 	/* Success -- 0 byte reached. */
-	addl	$4,%esp			# discard PT index
 	addl	%ecx,%edx		# add back residual for this page
 	xorl	%eax,%eax
 	jmp	copystr_return
 
 4:	/* Go to next page, if any. */
-	popl	%eax			# restore PT index
 	movl	$NBPG,%ecx
-	incl	%eax
 	testl	%edx,%edx
 	jnz	1b
 
@@ -1087,7 +1084,9 @@ ENTRY(copyoutstr)
 #endif /* I386_CPU */
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-5:	/*
+5:	movl	_C_LABEL(curpcb), %eax
+	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
+	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
