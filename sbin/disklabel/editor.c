@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.55 1999/03/21 19:31:10 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.56 1999/03/21 22:11:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.55 1999/03/21 19:31:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.56 1999/03/21 22:11:42 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -127,7 +127,7 @@ int	writelabel __P((int, char *, struct disklabel *));
 extern	char *bootarea, *specname;
 extern	int donothing;
 #ifdef DOSLABEL
-struct dos_partition *dosdp;	/* DOS partition, if found */
+extern	struct dos_partition *dosdp;	/* DOS partition, if found */
 #endif
 
 /*
