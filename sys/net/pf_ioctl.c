@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.15 2002/11/07 22:24:46 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.16 2002/11/12 15:38:36 mpech Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1816,8 +1816,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (altq->qname[0] == 0) {
 				/* attach the discipline */
 				error = altq_pfattach(altq);
-				if (error)
+				if (error) {
+					splx(s);
 					goto fail;
+				}
 			}
 		}
 
