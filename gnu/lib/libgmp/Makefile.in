@@ -36,7 +36,7 @@ AR_FLAGS = rc
 RANLIB_TEST = [ -f /usr/bin/ranlib -o -f /bin/ranlib ]
 RANLIB = ranlib
 SHELL = /bin/sh
-INSTALL = $(srcdir)/install.sh -c
+INSTALL = $(SHELL) $(srcdir)/install.sh -c
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL)
 MAKEINFO = makeinfo
@@ -157,7 +157,7 @@ install-info-files: installdirs $(srcdir)/gmp.info
 #	  else true; fi
 
 installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(includedir) $(libdir) $(infodir)
+	$(SHELL) $(srcdir)/mkinstalldirs $(includedir) $(libdir) $(infodir)
 
 uninstall:
 	rm -f $(libdir)/libgmp.a
