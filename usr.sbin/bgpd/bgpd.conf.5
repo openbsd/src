@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.3 2003/12/24 13:49:21 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.4 2003/12/25 14:28:49 henning Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -182,6 +182,8 @@ have to be directly connected to the local machine.
 If this is not the case the
 .Em multihop
 statement defines the maximum hops the neighbor is away.
+.It Ar passive
+Do not attempt to actively open a TCP connection to the neighbor system.
 .El
 .Sh SEE ALSO
 .Xr bgpd 8

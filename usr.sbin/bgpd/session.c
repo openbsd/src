@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.42 2003/12/25 13:39:00 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.43 2003/12/25 14:28:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -325,8 +325,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			peer->KeepaliveTimer = 0;
 			peer->events = 0;
 			peer->StartTimer = 0;
-			peer->ConnectRetryTimer =
-			    time(NULL) + INTERVAL_CONNECTRETRY;
 
 			/* allocate read buffer */
 			peer->rbuf = calloc(1, sizeof(struct peer_buf_read));
@@ -337,8 +335,15 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
 
-			change_state(peer, STATE_CONNECT, event);
-			session_connect(peer);
+			if (peer->conf.passive) {
+				change_state(peer, STATE_ACTIVE, event);
+				peer->ConnectRetryTimer = 0;
+			} else {
+				change_state(peer, STATE_CONNECT, event);
+				session_connect(peer);
+				peer->ConnectRetryTimer =
+				    time(NULL) + INTERVAL_CONNECTRETRY;
+			}
 			break;
 		default:
 			/* ignore */
@@ -1269,6 +1274,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (p->conf.remote_as != pconf->remote_as)
 				reconf = RECONF_REINIT;
 			if (p->conf.distance != pconf->distance)
+				reconf = RECONF_REINIT;
+
+			if (p->state <= STATE_ACTIVE &&
+			    p->conf.passive && !pconf->passive)
 				reconf = RECONF_REINIT;
 
 			memcpy(&p->conf, pconf, sizeof(struct peer_config));
