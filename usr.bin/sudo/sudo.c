@@ -529,8 +529,14 @@ init_vars(sudo_mode)
 	pw.pw_name = pw_name;
 	sudo_user.pw = &pw;
 
-	log_error(0, "uid %lu does not exist in the passwd file!",
-	    (unsigned long) pw.pw_uid);
+	/*
+	 * If we are in -k/-K mode, just spew to stderr.  It is not unusual for
+	 * users to place "sudo -k" in a .logout file which can cause sudo to
+	 * be run during reboot after the YP/NIS/NIS+/LDAP/etc daemon has died.
+	 */
+	if (sudo_mode & (MODE_INVALIDATE|MODE_KILL))
+	    errx(1, "uid %s does not exist in the passwd file!", pw_name);
+	log_error(0, "uid %s does not exist in the passwd file!", pw_name);
     }
     if (user_shell == NULL || *user_shell == '\0')
 	user_shell = sudo_user.pw->pw_shell;
