@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.24 2003/11/04 14:06:15 jmc Exp $	*/
+/*	$OpenBSD: timed.c,v 1.25 2005/02/17 12:33:30 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -408,9 +408,10 @@ main(int argc, char **argv)
 			justquit = 1;
 		}
 		for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
-			if (ntp->status == MASTER)
+			if (ntp->status == MASTER) {
 				rmnetmachs(ntp);
 				ntp->status = NOMASTER;
+			}
 		}
 		checkignorednets();
 		pickslavenet(0);
