@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.127 2002/02/15 23:11:26 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.128 2002/02/16 00:51:44 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1124,7 +1124,7 @@ do_child(Session *s, const char *command)
 		argv0[0] = '-';
 
 		if (strlcpy(argv0 + 1, shell0, sizeof(argv0) - 1)
-		    <= sizeof(argv0) - 1) {
+		    >= sizeof(argv0) - 1) {
 			errno = EINVAL;
 			perror(shell);
 			exit(1);
