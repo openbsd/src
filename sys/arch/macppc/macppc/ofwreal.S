@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.1 2001/09/01 15:57:06 drahn Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.2 2003/10/15 20:52:44 drahn Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -73,31 +73,31 @@ _C_LABEL(ofmsr):	.long	0	/* area to store msr for openfirmware*/
 
 	.text
 _ENTRY(_C_LABEL(ofw_init))
-	mflr	31			/* save return address */
+	mflr	%r31			/* save return address */
 
-	mr	13,6			/* save args (only pointer used) */
-	lis	8,ofentry@ha
-	stw	5,ofentry@l(8)		/* save virtual mode firmware entry */
+	mr	%r13,%r6		/* save args (only pointer used) */
+	lis	%r8,ofentry@ha
+	stw	%r5,ofentry@l(%r8)	/* save virtual mode firmware entry */
 
-	lis	4,fwcall@ha		/* call ofw directly until vm setup */
-	stw	5,fwcall@l(4)
+	lis	%r4,fwcall@ha		/* call ofw directly until vm setup */
+	stw	%r5,fwcall@l(%r4)
 
-	mfmsr	5
-	lis	4,_C_LABEL(ofmsr)@ha	/* save msr from openfirmware */
-	stw	5,_C_LABEL(ofmsr)@l(4)
+	mfmsr	%r5
+	lis	%r4,_C_LABEL(ofmsr)@ha	/* save msr from openfirmware */
+	stw	%r5,_C_LABEL(ofmsr)@l(%r4)
 #if 0
-	lis	0,(0x80001ffe)@ha
-	addi	0,0,(0x80001ffe)@l
-	mtdbatu 0,0
-	lis	0,(0x80000022)@ha
-	addi	0,0,(0x80000022)@l
-	mtdbatl 0,0
+	lis	%r0,(0x80001ffe)@ha
+	addi	%r0,%r0,(0x80001ffe)@l
+	mtdbatu 0,%r0
+	lis	%r0,(0x80000022)@ha
+	addi	%r0,%r0,(0x80000022)@l
+	mtdbatl 0,%r0
 #endif
 
-	lis	3,fwsave@ha	/* save the mmu values of the firmware */
-	addi	3,3,fwsave@l
-	lis	4,fwbatsave@ha
-	addi	4,4,fwbatsave@l
+	lis	%r3,fwsave@ha	/* save the mmu values of the firmware */
+	addi	%r3,%r3,fwsave@l
+	lis	%r4,fwbatsave@ha
+	addi	%r4,%r4,fwbatsave@l
 	bl	savemmu
 
 	/* save openfirmware address mappings */
@@ -105,18 +105,18 @@ _ENTRY(_C_LABEL(ofw_init))
 
 #if 0
 	/* dont really need the bats from firmware saved, 0 to disable */
-	lis	3,fwbatsave@ha
-	addi	3,3,fwbatsave@l
-	li	4,64
-	li	5,0
-1:	subi	4,4,4
-	stwx	5,4,3
+	lis	%r3,fwbatsave@ha
+	addi	%r3,%r3,fwbatsave@l
+	li	%r4,64
+	li	%r5,0
+1:	subi	%r4,%r4,%r4
+	stwx	%r5,%r4,%r3
 	cmpi	4,0,0
 	bne	1b
 #endif
 
-	mr	6,13			/* restore args pointer */
-	mtlr	31			/* restore return address */
+	mr	%r6,%r13		/* restore args pointer */
+	mtlr	%r31			/* restore return address */
 	blr
 
 /*
@@ -125,65 +125,65 @@ _ENTRY(_C_LABEL(ofw_init))
 	.type	savemmu,@function
 savemmu:
 
-	mr	6,4	/* r4 holds pointer to BAT save area */
+	mr	%r6,%r4	/* r4 holds pointer to BAT save area */
 
-	li	4,0			/* save SRs */
+	li	%r4,0			/* save SRs */
 1:
-	addis	4,4,-0x10000000@ha
-	or.	4,4,4
-	mfsrin	5,4
-	stwu	5,4(3)
+	addis	%r4,%r4,-0x10000000@ha
+	or.	%r4,%r4,%r4
+	mfsrin	%r5,%r4
+	stwu	%r5,4(%r3)
 	bne	1b
 
-	mfibatl	4,0			/* save BATs */
-	stw	4,0(6)
-	mfibatu	4,0
-	stw	4,4(6)
-	mfibatl	4,1
-	stw	4,8(6)
-	mfibatu	4,1
-	stw	4,0xc(6)
-	mfibatl	4,2
-	stw	4,0x10(6)
-	mfibatu	4,2
-	stw	4,0x14(6)
-	mfibatl	4,3
-	stw	4,0x18(6)
-	mfibatu	4,3
-	stw	4,0x1c(6)
-	mfdbatl	4,0
-	stw	4,0x20(6)
-	mfdbatu	4,0
-	stw	4,0x24(6)
-	mfdbatl	4,1
-	stw	4,0x28(6)
-	mfdbatu	4,1
-	stw	4,0x2c(6)
-	mfdbatl	4,2
-	stw	4,0x30(6)
-	mfdbatu	4,2
-	stw	4,0x34(6)
-	mfdbatl	4,3
-	stw	4,0x38(6)
-	mfdbatu	4,3
-	stw	4,0x3c(6)
+	mfibatl	%r4,0			/* save BATs */
+	stw	%r4,0(%r6)
+	mfibatu	%r4,0
+	stw	%r4,4(%r6)
+	mfibatl	%r4,1
+	stw	%r4,8(%r6)
+	mfibatu	%r4,1
+	stw	%r4,0xc(%r6)
+	mfibatl	%r4,2
+	stw	%r4,0x10(%r6)
+	mfibatu	%r4,2
+	stw	%r4,0x14(%r6)
+	mfibatl	%r4,3
+	stw	%r4,0x18(%r6)
+	mfibatu	%r4,3
+	stw	%r4,0x1c(%r6)
+	mfdbatl	%r4,0
+	stw	%r4,0x20(%r6)
+	mfdbatu	%r4,0
+	stw	%r4,0x24(%r6)
+	mfdbatl	%r4,1
+	stw	%r4,0x28(%r6)
+	mfdbatu	%r4,1
+	stw	%r4,0x2c(%r6)
+	mfdbatl	%r4,2
+	stw	%r4,0x30(%r6)
+	mfdbatu	%r4,2
+	stw	%r4,0x34(%r6)
+	mfdbatl	%r4,3
+	stw	%r4,0x38(%r6)
+	mfdbatu	%r4,3
+	stw	%r4,0x3c(%r6)
 
-	mfsprg	4,0			/* save SPRGs */
-	stw	4,4(3)
-	mfsprg	4,1
-	stw	4,8(3)
-	mfsprg	4,2
-	stw	4,12(3)
-	mfsprg	4,3
-	stw	4,16(3)
+	mfsprg	%r4,0			/* save SPRGs */
+	stw	%r4,4(%r3)
+	mfsprg	%r4,1
+	stw	%r4,8(%r3)
+	mfsprg	%r4,2
+	stw	%r4,12(%r3)
+	mfsprg	%r4,3
+	stw	%r4,16(%r3)
 
-	mfsdr1	4			/* save SDR1 */
-	stw	4,20(3)
+	mfsdr1	%r4			/* save SDR1 */
+	stw	%r4,20(%r3)
 
-	addi	4,3,24
+	addi	%r4,%r3,24
 
-	mfmsr	4
-	stw	4,24(3)
+	mfmsr	%r4
+	stw	%r4,24(%r3)
 
 	sync
 	isync
@@ -197,181 +197,181 @@ savemmu:
 	.type	restoremmu,@function
 restoremmu:
 
-	li	0,0
-	mtmsr	0
-	mr	6,4			/* pointer to sr to restore */
-	li	4,0			/* restore SRs */
+	li	%r0,0
+	mtmsr	%r0
+	mr	%r6,%r4			/* pointer to sr to restore */
+	li	%r4,0			/* restore SRs */
 1:
-	lwzu	5,4(3)
-	addis	4,4,-0x10000000@ha
-	or.	4,4,4
-	mtsrin	5,4
+	lwzu	%r5,4(%r3)
+	addis	%r4,%r4,-0x10000000@ha
+	or.	%r4,%r4,%r4
+	mtsrin	%r5,%r4
 	bne	1b
 
-	mfmsr	4
-	lis	5,(PSL_IR|PSL_DR)@h	/* turn off MMU */
-	ori	5,5,(PSL_IR|PSL_DR)@l	/* turn off MMU */
-	andc	4,4,5			/* turn off MMU */
-	mtmsr	4
+	mfmsr	%r4
+	lis	%r5,(PSL_IR|PSL_DR)@h		/* turn off MMU */
+	ori	%r5,%r5,(PSL_IR|PSL_DR)@l	/* turn off MMU */
+	andc	%r4,%r4,%r5				/* turn off MMU */
+	mtmsr	%r4
 	isync
 
-	li	4,0			/* first, invalidate BATs */
-	mtibatu	0,4
-	mtibatu	1,4
-	mtibatu	2,4
-	mtibatu	3,4
-	mtdbatu	0,4
-	mtdbatu	1,4
-	mtdbatu	2,4
-	mtdbatu	3,4
+	li	%r4,0			/* first, invalidate BATs */
+	mtibatu	0,%r4
+	mtibatu	1,%r4
+	mtibatu	2,%r4
+	mtibatu	3,%r4
+	mtdbatu	0,%r4
+	mtdbatu	1,%r4
+	mtdbatu	2,%r4
+	mtdbatu	3,%r4
 
-	lwz	4,0(6)
-	mtibatl	0,4			/* restore BATs */
-	lwz	4,4(6)
-	mtibatu	0,4
-	lwz	4,8(6)
-	mtibatl	1,4
-	lwz	4,12(6)
-	mtibatu	1,4
-	lwz	4,16(6)
-	mtibatl	2,4
-	lwz	4,20(6)
-	mtibatu	2,4
-	lwz	4,24(6)
-	mtibatl	3,4
-	lwz	4,28(6)
-	mtibatu	3,4
-	lwz	4,32(6)
-	mtdbatl	0,4
-	lwz	4,36(6)
-	mtdbatu	0,4
-	lwz	4,40(6)
-	mtdbatl	1,4
-	lwz	4,44(6)
-	mtdbatu	1,4
-	lwz	4,48(6)
-	mtdbatl	2,4
-	lwz	4,52(6)
-	mtdbatu	2,4
-	lwz	4,56(6)
-	mtdbatl	3,4
-	lwz	4,60(6)
-	mtdbatu	3,4
+	lwz	%r4,0(%r6)
+	mtibatl	0,%r4			/* restore BATs */
+	lwz	%r4,4(%r6)
+	mtibatu	0,%r4
+	lwz	%r4,8(%r6)
+	mtibatl	1,%r4
+	lwz	%r4,12(%r6)
+	mtibatu	1,%r4
+	lwz	%r4,16(%r6)
+	mtibatl	2,%r4
+	lwz	%r4,20(%r6)
+	mtibatu	2,%r4
+	lwz	%r4,24(%r6)
+	mtibatl	3,%r4
+	lwz	%r4,28(%r6)
+	mtibatu	3,%r4
+	lwz	%r4,32(%r6)
+	mtdbatl	0,%r4
+	lwz	%r4,36(%r6)
+	mtdbatu	0,%r4
+	lwz	%r4,40(%r6)
+	mtdbatl	1,%r4
+	lwz	%r4,44(%r6)
+	mtdbatu	1,%r4
+	lwz	%r4,48(%r6)
+	mtdbatl	2,%r4
+	lwz	%r4,52(%r6)
+	mtdbatu	2,%r4
+	lwz	%r4,56(%r6)
+	mtdbatl	3,%r4
+	lwz	%r4,60(%r6)
+	mtdbatu	3,%r4
 
-	lwz	4,4(3)
+	lwz	%r4,4(%r3)
 	mtsprg	0,4			/* restore SPRGs */
-	lwz	4,8(3)
+	lwz	%r4,8(%r3)
 	mtsprg	1,4
-	lwz	4,12(3)
+	lwz	%r4,12(%r3)
 	mtsprg	2,4
-	lwz	4,16(3)
+	lwz	%r4,16(%r3)
 	mtsprg	3,4
 
 	sync				/* remove everything from tlb */
-	lis	4,0x40000@ha
-	li	5,0x1000
+	lis	%r4,0x40000@ha
+	li	%r5,0x1000
 1:
-	subf.	4,5,4
-	tlbie	4
+	subf.	%r4,%r5,%r4
+	tlbie	%r4
 	bne	1b
 
 	sync
 	tlbsync
 	sync
 
-	lwz	4,20(3)
+	lwz	%r4,20(%r3)
 	sync
-	mtsdr1	4			/* restore SDR1 */
+	mtsdr1	%r4			/* restore SDR1 */
 
 
 	/* tlbia */
 	sync
-	li	5,0x40
-	mtctr	5
-	li	4,0
+	li	%r5,0x40
+	mtctr	%r5
+	li	%r4,0
     1:
-	tlbie	4
-	addi	4,4,0x1000
+	tlbie	%r4
+	addi	%r4,%r4,0x1000
 	bdnz	1b
 	sync
 	tlbsync
 	sync
 
-	lwz	4,24(3)
-	mtmsr	4
+	lwz	%r4,24(%r3)
+	mtmsr	%r4
 	isync
 
 	blr
 
 
 _ENTRY(_C_LABEL(fwentry))
-	stwu	1,-16(1)
-	mflr	4
-	stw	4,20(1)
-	stw	3,12(1)			/* save arg */
+	stwu	%r1,-16(%r1)
+	mflr	%r4
+	stw	%r4,20(%r1)
+	stw	%r3,12(%r1)			/* save arg */
 
-	lis	3,clsave@ha		/* save mmu values of client */
-	addi	3,3,clsave@l
-	lis	4,clbatsave@ha		/* save mmu values of client */
-	addi	4,4,clbatsave@l
+	lis	%r3,clsave@ha		/* save mmu values of client */
+	addi	%r3,%r3,clsave@l
+	lis	%r4,clbatsave@ha	/* save mmu values of client */
+	addi	%r4,%r4,clbatsave@l
 	bl	savemmu
 
-	lis	3,fwsave@ha		/* restore mmu values of firmware */
-	addi	3,3,fwsave@l
-	lis	4,fwbatsave@ha
-	addi	4,4,fwbatsave@l
+	lis	%r3,fwsave@ha		/* restore mmu values of firmware */
+	addi	%r3,%r3,fwsave@l
+	lis	%r4,fwbatsave@ha
+	addi	%r4,%r4,fwbatsave@l
 	bl	restoremmu
 
-	lis	3,ofentry@ha
-	lwz	3,ofentry@l(3)		/* get actual firmware entry */
-	mtlr	3
+	lis	%r3,ofentry@ha
+	lwz	%r3,ofentry@l(%r3)	/* get actual firmware entry */
+	mtlr	%r3
 
-	mfmsr	4
-	ori	4,4,PSL_IR|PSL_DR	/* turn on MMU */
-	mtmsr	4
+	mfmsr	%r4
+	ori	%r4,%r4,PSL_IR|PSL_DR	/* turn on MMU */
+	mtmsr	%r4
 	isync
 
-	lwz	3,12(1)			/* restore arg */
+	lwz	%r3,12(%r1)		/* restore arg */
 	blrl				/* do actual firmware call */
 
-	stw	3,12(1)			/* save return value */
+	stw	%r3,12(%r1)		/* save return value */
 
-	lis	3,fwsave@ha		/* save mmu values of firmare */
-	addi	3,3,fwsave@l		/* (might not be necessary, but... */
-	lis	4,fwbatsave@ha
-	addi	4,4,fwbatsave@l
+	lis	%r3,fwsave@ha		/* save mmu values of firmare */
+	addi	%r3,%r3,fwsave@l	/* (might not be necessary, but... */
+	lis	%r4,fwbatsave@ha
+	addi	%r4,%r4,fwbatsave@l
 	bl	savemmu
 
-	lis	3,clsave@ha		/* restore mmu values of client */
-	addi	3,3,clsave@l
-	lis	4,clbatsave@ha		/* save mmu values of client */
-	addi	4,4,clbatsave@l
+	lis	%r3,clsave@ha		/* restore mmu values of client */
+	addi	%r3,%r3,clsave@l
+	lis	%r4,clbatsave@ha	/* save mmu values of client */
+	addi	%r4,%r4,clbatsave@l
 	bl	restoremmu
 
-	lwz	4,20(1)
-	lwz	3,12(1)			/* restore return value */
+	lwz	%r4,20(%r1)
+	lwz	%r3,12(%r1)		/* restore return value */
 
-	mtlr	4
-	addi	1,1,16
+	mtlr	%r4
+	addi	%r1,%r1,16
 	blr
 
 /*
  * OpenFirmware entry point
  */
 _ENTRY(_C_LABEL(openfirmware))
-	stwu	1,-16(1)
-	mflr	0			/* save return address */
-	stw	0,20(1)
+	stwu	%r1,-16(%r1)
+	mflr	%r0			/* save return address */
+	stw	%r0,20(%r1)
 
-	lis	4,fwcall@ha
-	lwz	4,fwcall@l(4)
+	lis	%r4,fwcall@ha
+	lwz	%r4,fwcall@l(%r4)
 
-	mtlr	4
+	mtlr	%r4
 	blrl
 
-	lwz	0,20(1)
-	mtlr	0
-	lwz	1,0(1)
+	lwz	%r0,20(%r1)
+	mtlr	%r0
+	lwz	%r1,0(%r1)
 	blr
 
 /*
@@ -409,42 +409,42 @@ _ENTRY(_C_LABEL(openfirmware))
 .comm	_C_LABEL(OF_buf),NBPG,PGOFSET
 
 _ENTRY(_C_LABEL(ofw_stack))
-	mfmsr	8			/* turn off interrupts */
-	andi.	0,8,~(PSL_EE|PSL_RI)@l
-	mtmsr	0
-	stw	8,4(1)			/* abuse return address slot */
+	mfmsr	%r8			/* turn off interrupts */
+	andi.	%r0,%r8,~(PSL_EE|PSL_RI)@l
+	mtmsr	%r0
+	stw	%r8,4(%r1)		/* abuse return address slot */
 
-	lwz	5,0(1)			/* get length of stack frame */
-	subf	5,1,5
+	lwz	%r5,0(%r1)		/* get length of stack frame */
+	subf	%r5,%r1,%r5
 
-	lis	7,firmstk+NBPG-8@ha
-	addi	7,7,firmstk+NBPG-8@l
-	li	6,0xf
-	andc	7,7,6
-	lis	6,ofw_back@ha
-	addi	6,6,ofw_back@l
-	subf	4,5,7			/* make room for stack frame on new stack */
-	stwu	1,-16(7)
-	stw	6,4(7)			/* setup return pointer */
+	lis	%r7,firmstk+NBPG-8@ha
+	addi	%r7,%r7,firmstk+NBPG-8@l
+	li	%r6,0xf
+	andc	%r7,%r7,%r6
+	lis	%r6,ofw_back@ha
+	addi	%r6,%r6,ofw_back@l
+	subf	%r4,%r5,%r7		/* make room for stack frame on new stack */
+	stwu	%r1,-16(%r7)
+	stw	%r6,4(%r7)		/* setup return pointer */
 	
-	stw	7,-16(4)
+	stw	%r7,-16(%r4)
 
-	addi	3,1,8
-	addi	1,4,-16
-	subi	5,5,8
-	subi	4,4,8
+	addi	%r3,%r1,%r8
+	addi	%r1,%r4,-16
+	subi	%r5,%r5,%r8
+	subi	%r4,%r4,%r8
 
-	b	_C_LABEL(ofbcopy)		/* and copy it */
+	b	_C_LABEL(ofbcopy)	/* and copy it */
 
 	.type ofw_back,@function
 ofw_back:
-	lwz	1,0(1)			/* get callers original stack pointer */
+	lwz	%r1,0(%r1)		/* get callers original stack pointer */
 
-	lwz	0,4(1)			/* get saved msr from abused slot */
-	mtmsr	0
+	lwz	%r0,4(%r1)		/* get saved msr from abused slot */
+	mtmsr	%r0
 	
-	lwz	1,0(1)			/* return */
-	lwz	0,4(1)
-	mtlr	0
+	lwz	%r1,0(%r1)		/* return */
+	lwz	%r0,4(%r1)
+	mtlr	%r0
 	blr
 
