@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_output.c,v 1.8 2000/06/03 13:43:45 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.110 2000/06/03 12:43:49 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.9 2000/06/18 02:00:20 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.112 2000/06/18 01:50:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1275,34 +1275,34 @@ ip6_ctloutput(op, so, level, optname, mp)
 					&inp->inp_moptions6, m);
 				break;
 
-		case IPV6_PORTRANGE:
-			optval = *mtod(m, int *);
+			case IPV6_PORTRANGE:
+				optval = *mtod(m, int *);
 
 # define in6p		inp
 # define in6p_flags	inp_flags
-			switch (optval) {
-			case IPV6_PORTRANGE_DEFAULT:
-				in6p->in6p_flags &= ~(IN6P_LOWPORT);
-				in6p->in6p_flags &= ~(IN6P_HIGHPORT);
-				break;
+				switch (optval) {
+				case IPV6_PORTRANGE_DEFAULT:
+					in6p->in6p_flags &= ~(IN6P_LOWPORT);
+					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
+					break;
 
-			case IPV6_PORTRANGE_HIGH:
-				in6p->in6p_flags &= ~(IN6P_LOWPORT);
-				in6p->in6p_flags |= IN6P_HIGHPORT;
-				break;
+				case IPV6_PORTRANGE_HIGH:
+					in6p->in6p_flags &= ~(IN6P_LOWPORT);
+					in6p->in6p_flags |= IN6P_HIGHPORT;
+					break;
 
-			case IPV6_PORTRANGE_LOW:
-				in6p->in6p_flags &= ~(IN6P_HIGHPORT);
-				in6p->in6p_flags |= IN6P_LOWPORT;
-				break;
+				case IPV6_PORTRANGE_LOW:
+					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
+					in6p->in6p_flags |= IN6P_LOWPORT;
+					break;
 
-			default:
-				error = EINVAL;
-				break;
-			}
+				default:
+					error = EINVAL;
+					break;
+				}
 # undef in6p
 # undef in6p_flags
-			break;
+				break;
 
 #ifdef IPSEC
 			case IPV6_IPSEC_POLICY:
