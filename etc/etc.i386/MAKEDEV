@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.i386/MAKEDEV.md,v 1.26 2004/08/09 19:57:23 otto Exp 
-#	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
+#	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -95,7 +95,7 @@
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	tuner*	Tuner devices
-#	uk*	SCSI unknown devices
+#	uk*	Unknown SCSI devices
 #	wdt0	Watchdog timer
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin

@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.36 2004/08/17 20:58:10 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.11 2004/08/17 20:58:05 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -90,7 +90,7 @@
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
-#	uk*	SCSI unknown devices
+#	uk*	Unknown SCSI devices
 #	uperf	Performance counters
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
