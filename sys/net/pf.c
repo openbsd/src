@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.190 2002/02/15 15:42:52 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.191 2002/02/17 21:48:05 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -658,6 +658,16 @@ pflog_packet(struct ifnet *ifp, struct mbuf *m, int af, u_short dir,
 	hdr.reason = htons(reason);
 	hdr.dir = htons(dir);
 	hdr.action = htons(rm->action);
+
+#ifdef INET
+	if (af == AF_INET && dir == PF_OUT) {
+		struct ip *ip;
+
+		ip = mtod(m, struct ip *);
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+	}
+#endif /* INET */
 
 	m1.m_next = m;
 	m1.m_len = PFLOG_HDRLEN;
@@ -2926,9 +2936,11 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		(*rm)->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
-		/* XXX will log packet before rewrite */
-		if ((*rm)->log)
+		if ((*rm)->log) {
+			if (rewrite)
+				m_copyback(m, off, sizeof(*th), (caddr_t)th);
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+		}
 
 		if (((*rm)->action == PF_DROP) &&
 		    (((*rm)->rule_flag & PFRULE_RETURNRST) ||
@@ -3150,9 +3162,11 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		(*rm)->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
-		/* XXX will log packet before rewrite */
-		if ((*rm)->log)
+		if ((*rm)->log) {
+			if (rewrite)
+				m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+		}
 
 		if (((*rm)->action == PF_DROP) && (*rm)->return_icmp) {
 			/* undo NAT/RST changes, if they have taken place */
@@ -3402,9 +3416,14 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		(*rm)->bytes +=  pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
-		/* XXX will log packet before rewrite */
-		if ((*rm)->log)
+		if ((*rm)->log) {
+#ifdef INET6
+			if (rewrite)
+				m_copyback(m, off, ICMP_MINLEN,
+				    (caddr_t)pd->hdr.icmp6);
+#endif /* INET6 */
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+		}
 
 		if ((*rm)->action != PF_PASS)
 			return (PF_DROP);
