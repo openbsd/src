@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.7 2003/07/07 15:37:07 jason Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.8 2005/04/01 18:09:52 brad Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -183,8 +183,14 @@ hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 	burst &= sbusburst;
 
 	/* Translate into plain numerical format */
-	sc->sc_burst =  (burst & SBUS_BURST_32) ? 32 :
-			(burst & SBUS_BURST_16) ? 16 : 0;
+	if ((burst & SBUS_BURST_64))
+		sc->sc_burst = 64;
+	else if ((burst & SBUS_BURST_32))
+		sc->sc_burst = 32;
+	else if ((burst & SBUS_BURST_16))
+		sc->sc_burst = 16;
+	else
+		sc->sc_burst = 0;
 
 	sc->sc_pci = 0; /* XXXXX should all be done in bus_dma. */
 	hme_config(sc);
