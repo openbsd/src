@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.8 2001/05/05 07:12:50 mickey Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.9 2001/05/24 03:02:32 pvalchev Exp $";
 #endif
 
 #include <sys/types.h>
@@ -104,7 +104,9 @@ file(name)
 {
 	FILE *fp;
 
-	if ((fp = fopen(name, "r")) == NULL)
+	if (strcmp(name, "-") == 0)
+		fp = stdin;
+	else if ((fp = fopen(name, "r")) == NULL)
 		err(1, "%s", name);
 	/* in case we want to discriminate */
 	if (strcmp(_PATH_WTMP, name))
@@ -545,11 +547,14 @@ ac(fp)
 void
 usage()
 {
+	extern char *__progname;
 	(void)fprintf(stderr,
 #ifdef CONSOLE_TTY
-	    "ac [-dp] [-c console] [-t tty] [-w wtmp] [users ...]\n");
+	    "%s [-d | -p] [-c console] [-t tty] [-w wtmp] [users ...]\n",
+	    __progname);
 #else
-	    "ac [-dp] [-t tty] [-w wtmp] [users ...]\n");
+	    "%s [-d | -p] [-t tty] [-w wtmp] [users ...]\n",
+	    __progname);
 #endif
 	exit(1);
 }
