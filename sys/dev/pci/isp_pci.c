@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.14 2000/10/16 22:45:01 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.15 2001/02/12 23:42:42 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -54,10 +54,6 @@ isp_pci_dmateardown __P((struct ispsoftc *, struct scsi_xfer *, u_int32_t));
 static void isp_pci_reset1 __P((struct ispsoftc *));
 static void isp_pci_dumpregs __P((struct ispsoftc *, const char *));
 static int isp_pci_intr __P((void *));
-
-#ifndef	ISP_CODE_ORG
-#define	ISP_CODE_ORG		0x1000
-#endif
 
 #ifdef	ISP_COMPILE_FW
 #define	ISP_COMPILE_1040_FW	1
@@ -265,6 +261,11 @@ struct cfattach isp_pci_ca = {
 	sizeof (struct isp_pcisoftc), isp_pci_probe, isp_pci_attach
 };
 
+#ifdef  DEBUG
+const char vstring[] =
+    "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
+#endif
+
 static int
 isp_pci_probe(parent, match, aux)
         struct device *parent;
@@ -310,6 +311,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
+	static const char nomem[] = "%s: no mem for sdparam table\n";
 	u_int32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
@@ -397,8 +399,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -410,8 +411,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_SCSI_1080;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -424,8 +424,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -438,8 +437,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -454,8 +452,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -469,14 +466,12 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate fcparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
-
 		if (rev < 3) {
 			/*
 			 * XXX: Need to get the actual revision
@@ -494,8 +489,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_FC_2200;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate fcparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
@@ -504,6 +498,30 @@ isp_pci_attach(parent, self, aux)
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
 	}
 #endif
+	/*
+	 * Set up logging levels.
+	 */
+#ifdef	ISP_LOGDEFAULT
+	isp->isp_dblev = ISP_LOGDEFAULT;
+#else
+	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
+#ifdef	SCSIDEBUG
+	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
+#endif
+#ifdef	DEBUG
+	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGCONFIG|ISP_LOGINFO;
+#endif
+#endif
+
+#ifdef	DEBUG
+	if (oneshot) {
+		oneshot = 0;
+		isp_prt(isp, ISP_LOGCONFIG, vstring,
+		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
+		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
+	}
+#endif
+
 	isp->isp_revision = rev;
 
 	/*
@@ -533,30 +551,7 @@ isp_pci_attach(parent, self, aux)
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR);
 	data &= ~1;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR, data);
-	/*
-	 * Set up logging levels.
-	 */
-#ifdef	ISP_LOGDEFAULT
-	isp->isp_dblev = ISP_LOGDEFAULT;
-#else
-	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
-#ifdef	SCSIDEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
-#endif
-#ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGCONFIG|ISP_LOGINFO;
-#endif
-#endif
 
-#ifdef DEBUG
-	if (oneshot) {
-		oneshot = 0;
-		printf("Qlogic ISP Driver, OpenBSD (pci) Platform Version "
-		    "%d.%d Core Version %d.%d\n",
-		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
-		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
-	}
-#endif
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf("%s: couldn't map interrupt\n", isp->isp_name);
@@ -574,19 +569,22 @@ isp_pci_attach(parent, self, aux)
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
-	isp_prt(isp, ISP_LOGCONFIG, "interrupting at %s", intrstr);
+
+/*	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);*/
 
 	if (IS_FC(isp)) {
-		DEFAULT_NODEWWN(isp) = 0x400000007F000002;
-		DEFAULT_PORTWWN(isp) = 0x400000007F000002;
+		DEFAULT_NODEWWN(isp) = 0x400000007F000003;
+		DEFAULT_PORTWWN(isp) = 0x400000007F000003;
 	}
 
-	isp->isp_osinfo.no_mbox_ints = 1;
+	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_role = ISP_DEFAULT_ROLES;
 	ISP_LOCK(isp);
+	isp->isp_osinfo.no_mbox_ints = 1;
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
-		free(isp->isp_param, M_DEVBUF);
 		ISP_UNLOCK(isp);
+		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
 	ENABLE_INTS(isp);
