@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsconscfg.8,v 1.1 2000/07/02 01:25:24 mickey Exp $
+.\"	$OpenBSD: wsconscfg.8,v 1.2 2000/07/02 21:00:43 aaron Exp $
 .\"	$NetBSD: wsconscfg.8,v 1.5 1999/05/15 14:45:06 drochner Exp $
 .\"
 .Dd January 12, 1999
@@ -8,7 +8,7 @@
 .Nm wsconscfg
 .Nd configure virtual terminals on a wscons display
 .Sh SYNOPSIS
-.Nm
+.Nm wsconscfg
 .Op Fl f Ar <ctldev>
 .Op Fl d Op Fl F
 .Op Fl k
@@ -19,15 +19,16 @@
 .Sh DESCRIPTION
 The
 .Nm
-tool allows to create and delete virtual terminals on display devices
-controlled by the wscons terminal framework if the underlying display hardware
-driver supports multiple screens. Further it controls the assignment of
-keyboards to displays.
+tool allows the creation and removal of virtual terminals on display devices
+controlled by the wscons terminal framework, as long as the underlying display
+hardware driver supports multiple screens.
+Further, it controls the assignment of keyboards to displays.
+.Pp
 The
 .Ar index
-argument specifies which virtual terminal is to be configured; the allowed
-numbers are from 0 to an implementation-specified value (currently 7, allowing
-for 8 virtual terminals on a display).
+argument specifies which virtual terminal is to be configured.
+The allowed numbers are from 0 to an implementation-specified value
+(currently 7, allowing for 8 virtual terminals on a display).
 In keyboard configuration mode, it specifies the
 .Xr wskbd 8
 device to attach or detach.
@@ -35,18 +36,21 @@ Without further option arguments, a virtual terminal is created with
 implementation specific properties and a default terminal emulation variant
 selected at kernel compile time.
 .Pp
-The options are:
-.Bl -tag -width xxxxxxxxx
+The options are as follows:
+.Bl -tag -width Fl
 .It Fl f Ar ctldev
 Specify the control device of the wscons display to operate on.
 Default is
 .Pa /dev/ttyEcfg .
 .It Fl d
-Delete the specified terminal. A terminal opened by a program will not be
-deleted unless the
+Delete the specified terminal.
+Any specified terminal that is currently open by a program will not be deleted
+unless the
 .Fl F
-option is applied. Terminals used by the operating system console or a
-graphics program (X server) cannot be deleted. With the
+option is also given.
+Terminals used by the operating system console or a graphics program (X server)
+cannot be deleted.
+With the
 .Fl k
 flag, the keyboard specified by
 .Dq index
@@ -60,20 +64,24 @@ will be detached from the wscons display.
 Force deleting of a terminal even if it is in use by a user space program.
 .It Fl k
 Do keyboard related operations instead of virtual screen configuration.
-Without other flags, a keyboard will be attached to the display device. The
+Without other flags, a keyboard will be attached to the display device.
+The
 .Dq index
 argument can be omitted, in this case the first free keyboard will be used.
 .It Fl m
 Do multiplexor related operations instead of virtual screen configuration.
 Without other flags, a multiplexor will be attached to the display device.
 .It Fl t Ar type
-Specify a screen type to use. Screen types refer to display format, colour
-depth and other low-level display properties. Valid
+Specify a screen type to use.
+Screen types refer to display format, color depth, and other low-level
+display properties.
+Valid
 .Ar type
 arguments are defined by the underlying display device driver.
 .It Fl e Ar emul
-Specify the terminal emulation to use for the virtual terminal. The set of
-available terminal emulations is determined at kernel compile time. See
+Specify the terminal emulation to use for the virtual terminal.
+The set of available terminal emulations is determined at kernel compile time.
+See
 .Xr wscons 4
 for details.
 .El
@@ -85,29 +93,43 @@ utility will be invoked in system startup by the
 script, controlled by the
 .Pa /etc/wscons.conf
 configuration file.
-.Sh FILES
-.Pa /etc/wscons.conf
 .Sh EXAMPLES
+The following examples demonstrate the functionality of
+.Nm wsconscfg .
+.Pp
 .Dl wsconscfg -t 80x50 -e vt100 1
 .Pp
-Configure screen 1 (i.e. the second), it will get the type
+Configure screen 1 (i.e., the second) for type
 .Dq 80x50
-and use the VT100 terminal emulation. (Note:
+and VT100 terminal emulation.
+(Note:
 .Dq 80x50
 is a screen type offered by the
 .Xr vga 4
-display driver. In this particular case, an 8x8-font must be loaded
-before to make the screen useful. See
-.Xr wsfontload 8 .)
+display driver.
+In this particular case, an 8x8-font must be loaded beforehand to make the
+screen useful.
+See
+.Xr wsfontload 8 . )
 .Pp
 .Dl wsconscfg -k
 .Pp
 Connect the first unconnected keyboard to the display.
+.Sh FILES
+.Bl -tag -width /etc/wscons.conf -compact
+.It Pa /etc/wscons.conf
+wscons configuration file
+.El
+.Sh SEE ALSO
+.Xr wscons 4 ,
+.Xr wsconsctl 8 ,
+.Xr wsfontload 8 ,
+.Xr wskbd 8
+.Sh HISTORY
+The
+.Nm
+program appeared in
+.Ox 2.8 .
 .Sh BUGS
 There should be an easy way to get a list of the screen types available
 on a display, and of the emulations supported by the kernel.
-.Sh SEE ALSO
-.Xr wscons 4 ,
-.Xr wskbd 8 ,
-.Xr wsconsctl 8 ,
-.Xr wsfontload 8

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.1 2000/07/01 23:52:45 mickey Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.2 2000/07/02 21:00:44 aaron Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,23 +42,23 @@
 .Nm wsconsctl
 .Nd get or set wscons state
 .Sh SYNOPSIS
-.Nm
+.Nm wsconsctl
 .Op Fl kdm
 .Op Fl f Ar file
 .Op Fl n
 .Fl a
-.Nm ""
+.Nm wsconsctl
 .Op Fl kdm
 .Op Fl f Ar file
 .Op Fl n
 .Ar name ...
-.Nm ""
+.Nm wsconsctl
 .Op Fl kdm
 .Op Fl f Ar file
 .Op Fl n
 .Fl w
 .Ar name=value ...
-.Nm ""
+.Nm wsconsctl
 .Op Fl kdm
 .Op Fl f Ar file
 .Op Fl n
@@ -68,65 +68,56 @@
 The 
 .Nm
 command displays or sets various wscons system driver variables.
-If a list of variables is present on the command line, then
+If a list of variables is present on the command line,
 .Nm
 prints the current value of those variables for the specified device.
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-is used to specify all variables for the device.
-.It Fl w
-.Nm
-attempts to set or modify the specified variables to the given values.
-The value can be specified as either an absolute value, by using the
-.Ar =
-symbol
+Print all device variables and their current values.
+.It Fl w Ar name=value
+Attempt to set the specified variable
+.Ar name
+to
+.Ar value .
+The value can be specified as either an absolute, by using the
+.Ql =
+symbol,
 or as a relative value, by using the
-.Ar +=
-symbol. See the
-.Ar EXAMPLES
+.Ql +=
+symbol.
+See the
+.Sx EXAMPLES
 section for more details.
 .It Fl f Ar file
-is used to specify an alternative control device.
+Specify an alternative control device.
 .It Fl n
-suppresses the printing of the variable name in the output -
-only the value will appear.
+Suppress printing of the variable name in the output.
 .It Fl k
-selects the keyboard portion of the device (this is the default).
+Selects the keyboard portion of the device (this is the default).
 .It Fl d
-selects the display portion of the device.
+Selects the display portion of the device.
 .It Fl m
-selects the mouse portion of the device.
+Selects the mouse portion of the device.
 .El
 .Pp
 The
 .Nm
 utility can be used to view and modify aspects of the keyboard,
-display and mouse, using the standard, machine-independent
+display, and mouse using the standard, machine-independent
 workstation console device driver
 .Xr wscons 4 .
 .Pp
-The keyboard type can be modified, the keyboard bell's pitch,
-period and duration
-can be modified, 
+The keyboard type can be modified, the keyboard bell's pitch, period,
+and duration can be modified,
 the
 .Ar typematic
 value can be changed, and the keyboard encoding can be modified
 to switch keys, should the user find a keyboard's default layout
 difficult to use.
-The keyboard types and other relevant definitions,
-can all be found in the
-.Ar /usr/include/dev/wscons/wsconsio.h
-file.
 .Pp
-The mouse types are defined in the
-.Ar /usr/include/dev/wscons/wsconsio.h
-file.
-.Pp
-The keyboard types, and the height, width,
-depth (bits per pixel), color map size, and colormap
-are defined in the
-.Ar /usr/include/dev/wscons/wsconsio.h
-file. There are also definitions relating to video
+There are also definitions relating to video
 control and cursor control, which are not applicable to
 all display types, and to text emulation and graphics
 (mapped) modes.
@@ -135,9 +126,8 @@ There are currently keyboard encodings for the following
 countries: user-defined, US, German, Danish, Italian,
 French, British and Japanese.
 .Sh EXAMPLES
-The following are just a few examples of
-.Nm
-and its functionality.
+The following examples demonstrate the functionality of
+.Nm wsconsctl .
 .Pp
 .Dl wsconsctl -w encoding=uk
 .Pp
@@ -157,11 +147,12 @@ file.
 .Pp
 .Dl wsconsctl -w encoding=us.swapctrlcaps
 .Pp
-sets a US keyboard encoding, with the
+Sets a US keyboard encoding, with the
 .Ar Caps Lock
 and
 .Ar Left Control
-keys swapped. The
+keys swapped.
+The
 .Ar .swapctrlcaps
 encoding does not work for all national keyboard encodings.
 For most purposes, the ability to set the value returned
@@ -171,19 +162,21 @@ key is enough - see the previous example for details.
 .Pp
 .Dl wsconsctl -w bell.pitch=1200
 .Pp
-Sets the bell pitch to be 1200, whilst
+Sets the bell pitch to be 1200.
 .Pp
 .Dl wsconsctl -w bell.pitch+=200
 .Pp
-adds 200 to the current pitch of the bell.
+Adds 200 to the current pitch of the bell.
 .Sh FILES
-.Bl -tag -width /dev/wsmouse0
+.Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
 .It Pa /dev/wskbd0
 keyboard control device
 .It Pa /dev/wsmouse0
 mouse control device
 .It Pa /dev/ttyE0
 display control device
+.It Pa /usr/include/dev/wscons/wsconsio.h
+keyboard/mouse/display definitions
 .El
 .Sh SEE ALSO
 .Xr pckbd 4 ,
@@ -194,4 +187,6 @@ display control device
 The
 .Nm
 command first appeared in
-.Nx 1.4 .
+.Nx 1.4
+and
+.Ox 2.8 .
