@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.25 2001/06/25 08:58:21 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.26 2001/06/25 09:23:30 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -59,12 +59,12 @@
  */
 
 struct pf_tree_node {
-	struct tree_key {
+	struct pf_tree_key {
 		u_int32_t	 addr[2];
 		u_int16_t	 port[2];
 		u_int8_t	 proto;
 	}			 key;
-	struct state		*state;
+	struct pf_state		*state;
 	struct pf_tree_node	*left;
 	struct pf_tree_node	*right;
 	signed char		 balance;
@@ -74,13 +74,13 @@ struct pf_tree_node {
  * Global variables
  */
 
-struct rule		*rulehead;
+struct pf_rule		*pf_rulehead;
 struct nat		*nathead;
 struct rdr		*rdrhead;
-struct state		*statehead;
+struct pf_state		*pfstatehead;
 struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
 struct timeval		 pftv;
-struct status		 status;
+struct pf_status	 pf_status;
 struct ifnet		*status_ifp;
 
 u_int32_t		 last_purge = 0;
@@ -97,18 +97,18 @@ struct pool		pf_state_pl;
  * Prototypes
  */
 
-int		 tree_key_compare(struct tree_key *, struct tree_key *);
+int		 tree_key_compare(struct pf_tree_key *, struct pf_tree_key *);
 void		 tree_rotate_left(struct pf_tree_node **);
 void		 tree_rotate_right(struct pf_tree_node **);
-int		 tree_insert(struct pf_tree_node **, struct tree_key *,
-		    struct state *);
-int		 tree_remove(struct pf_tree_node **, struct tree_key *);
-struct state	*find_state(struct pf_tree_node *, struct tree_key *);
-void		 insert_state(struct state *);
+int		 tree_insert(struct pf_tree_node **, struct pf_tree_key *,
+		    struct pf_state *);
+int		 tree_remove(struct pf_tree_node **, struct pf_tree_key *);
+struct pf_state	*find_state(struct pf_tree_node *, struct pf_tree_key *);
+void		 insert_state(struct pf_state *);
 void		 purge_expired_states(void);
 void		 print_ip(struct ifnet *, struct ip *);
 void		 print_host(u_int32_t, u_int16_t);
-void		 print_state(int, struct state *);
+void		 print_state(int, struct pf_state *);
 void		 print_flags(u_int8_t);
 void		 pfattach(int);
 int		 pfopen(dev_t, int, int, struct proc *);
@@ -133,18 +133,18 @@ int		 pf_test_udp(int, struct ifnet *, int, struct ip *,
 		    struct udphdr *);
 int		 pf_test_icmp(int, struct ifnet *, int, struct ip *,
 		    struct icmp *);
-struct state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf **, int,
+struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf **, int,
 		    struct ip *, struct tcphdr *);
-struct state	*pf_test_state_udp(int, struct ifnet *, struct mbuf **, int,
+struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf **, int,
 		    struct ip *, struct udphdr *);
-struct state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **, int,
+struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **, int,
 		    struct ip *, struct icmp *);
 void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, int,
 		    struct ip *, int *);
 int		 pf_test(int, struct ifnet *, struct mbuf **);
 
 int
-tree_key_compare(struct tree_key *a, struct tree_key *b)
+tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
 {
 	/*
 	 * could use memcmp(), but with the best manual order, we can
@@ -206,7 +206,7 @@ tree_rotate_right(struct pf_tree_node **p)
 }
 
 int
-tree_insert(struct pf_tree_node **p, struct tree_key *key, struct state *state)
+tree_insert(struct pf_tree_node **p, struct pf_tree_key *key, struct pf_state *state)
 {
 	int deltaH = 0;
 
@@ -215,7 +215,7 @@ tree_insert(struct pf_tree_node **p, struct tree_key *key, struct state *state)
 		if (*p == NULL) {
 			return (0);
 		}
-		bcopy(key, &(*p)->key, sizeof(struct tree_key));
+		bcopy(key, &(*p)->key, sizeof(struct pf_tree_key));
 		(*p)->state = state;
 		(*p)->balance = 0;
 		(*p)->left = (*p)->right = NULL;
@@ -247,7 +247,7 @@ tree_insert(struct pf_tree_node **p, struct tree_key *key, struct state *state)
 }
 
 int
-tree_remove(struct pf_tree_node **p, struct tree_key *key)
+tree_remove(struct pf_tree_node **p, struct pf_tree_key *key)
 {
 	int deltaH = 0;
 	int c;
@@ -299,9 +299,9 @@ tree_remove(struct pf_tree_node **p, struct tree_key *key)
 
 			while ((*qq)->right != NULL)
 				qq = &(*qq)->right;
-			bcopy(&(*qq)->key, &(*p)->key, sizeof(struct tree_key));
+			bcopy(&(*qq)->key, &(*p)->key, sizeof(struct pf_tree_key));
 			(*p)->state = (*qq)->state;
-			bcopy(key, &(*qq)->key, sizeof(struct tree_key));
+			bcopy(key, &(*qq)->key, sizeof(struct pf_tree_key));
 			if (tree_remove(&(*p)->left, key)) {
 				(*p)->balance++;
 				if ((*p)->balance == 0)
@@ -319,21 +319,21 @@ tree_remove(struct pf_tree_node **p, struct tree_key *key)
 	return (deltaH);
 }
 
-struct state *
-find_state(struct pf_tree_node *p, struct tree_key *key)
+struct pf_state *
+find_state(struct pf_tree_node *p, struct pf_tree_key *key)
 {
 	int c;
 
 	while (p && (c = tree_key_compare(&p->key, key)))
 		p = (c > 0) ? p->left : p->right;
-	status.state_searches++;
+	pf_status.state_searches++;
 	return (p ? p->state : NULL);
 }
 
 void
-insert_state(struct state *state)
+insert_state(struct pf_state *state)
 {
-	struct tree_key key;
+	struct pf_tree_key key;
 
 	key.proto = state->proto;
 	key.addr[0] = state->lan.addr;
@@ -362,18 +362,18 @@ insert_state(struct state *state)
 			printf("pf: ERROR! insert failed\n");
 	}
 
-	state->next = statehead;
-	statehead = state;
+	state->next = pfstatehead;
+	pfstatehead = state;
 
-	status.state_inserts++;
-	status.states++;
+	pf_status.state_inserts++;
+	pf_status.states++;
 }
 
 void
 purge_expired_states(void)
 {
-	struct tree_key key;
-	struct state *cur = statehead, *prev = NULL;
+	struct pf_tree_key key;
+	struct pf_state *cur = pfstatehead, *prev = NULL;
 
 	while (cur != NULL) {
 		if (cur->expire <= pftv.tv_sec) {
@@ -398,11 +398,11 @@ purge_expired_states(void)
 			tree_remove(&tree_ext_gwy, &key);
 			if (find_state(tree_ext_gwy, &key) != NULL)
 				printf("pf: ERROR! remove failed\n");
-			(prev ? prev->next : statehead) = cur->next;
+			(prev ? prev->next : pfstatehead) = cur->next;
 			pool_put(&pf_state_pl, cur);
-			cur = (prev ? prev->next : statehead);
-			status.state_removals++;
-			status.states--;
+			cur = (prev ? prev->next : pfstatehead);
+			pf_status.state_removals++;
+			pf_status.states--;
 		} else {
 			prev = cur;
 			cur = cur->next;
@@ -439,7 +439,7 @@ print_host(u_int32_t a, u_int16_t p)
 }
 
 void
-print_state(int direction, struct state *s)
+print_state(int direction, struct pf_state *s)
 {
 	print_host(s->lan.addr, s->lan.port);
 	printf(" ");
@@ -476,13 +476,13 @@ pfattach(int num)
 	/* XXX - no M_* tags, but they are not used anyway */
         pool_init(&pf_tree_pl, sizeof(struct pf_tree_node), 0, 0, 0, "pftrpl",
                 0, NULL, NULL, 0);
-        pool_init(&pf_rule_pl, sizeof(struct rule), 0, 0, 0, "pfrulepl",
+        pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
                 0, NULL, NULL, 0);
         pool_init(&pf_nat_pl, sizeof(struct nat), 0, 0, 0, "pfnatpl",
                 0, NULL, NULL, 0);
         pool_init(&pf_rdr_pl, sizeof(struct rdr), 0, 0, 0, "pfrdrpl",
                 0, NULL, NULL, 0);
-        pool_init(&pf_state_pl, sizeof(struct state), 0, 0, 0, "pfstatepl",
+        pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
                 0, NULL, NULL, 0);
 }
 
@@ -537,44 +537,44 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	switch (cmd) {
 
 	case DIOCSTART:
-		if (status.running)
+		if (pf_status.running)
 			error = EINVAL;
 		else {
-			u_int32_t states = status.states;
-			bzero(&status, sizeof(struct status));
-			status.running = 1;
-			status.states = states;
-			status.since = pftv.tv_sec;
+			u_int32_t states = pf_status.states;
+			bzero(&pf_status, sizeof(struct pf_status));
+			pf_status.running = 1;
+			pf_status.states = states;
+			pf_status.since = pftv.tv_sec;
 			printf("pf: started\n");
 		}
 		break;
 
 	case DIOCSTOP:
-		if (!status.running)
+		if (!pf_status.running)
 			error = EINVAL;
 		else {
-			status.running = 0;
+			pf_status.running = 0;
 			printf("pf: stopped\n");
 		}
 		break;
 
 	case DIOCSETRULES: {
-		struct rule *rules = (struct rule *)kb, *ruletail = NULL;
+		struct pf_rule *rules = (struct pf_rule *)kb, *ruletail = NULL;
 		u_int16_t n;
-		while (rulehead != NULL) {
-			struct rule *next = rulehead->next;
-			pool_put(&pf_rule_pl, rulehead);
-			rulehead = next;
+		while (pf_rulehead != NULL) {
+			struct pf_rule *next = pf_rulehead->next;
+			pool_put(&pf_rule_pl, pf_rulehead);
+			pf_rulehead = next;
 		}
 		for (n = 0; n < ub->entries; ++n) {
-			struct rule *rule;
+			struct pf_rule *rule;
 
 			rule = pool_get(&pf_rule_pl, PR_NOWAIT);
 			if (rule == NULL) {
 				error = ENOMEM;
 				goto done;
 			}
-			bcopy(rules + n, rule, sizeof(struct rule));
+			bcopy(rules + n, rule, sizeof(struct pf_rule));
 			rule->ifp = NULL;
 			if (rule->ifname[0]) {
 				rule->ifp = ifunit(rule->ifname);
@@ -589,17 +589,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				ruletail->next = rule;
 				ruletail = rule;
 			} else
-				rulehead = ruletail = rule;
+				pf_rulehead = ruletail = rule;
 		}
 		break;
 	}
 
 	case DIOCGETRULES: {
-		struct rule *rules = (struct rule *)kb;
-		struct rule *rule = rulehead;
+		struct pf_rule *rules = (struct pf_rule *)kb;
+		struct pf_rule *rule = pf_rulehead;
 		u_int16_t n = 0;
 		while ((rule != NULL) && (n < ub->entries)) {
-			bcopy(rule, rules + n, sizeof(struct rule));
+			bcopy(rule, rules + n, sizeof(struct pf_rule));
 			n++;
 			rule = rule->next;
 		}
@@ -694,7 +694,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct state *state = statehead;
+		struct pf_state *state = pfstatehead;
 		while (state != NULL) {
 			state->expire = 0;
 			state = state->next;
@@ -704,12 +704,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETSTATES: {
-		struct state *states = (struct state *)kb;
-		struct state *state;
+		struct pf_state *states = (struct pf_state *)kb;
+		struct pf_state *state;
 		u_int16_t n = 0;
-		state = statehead;
+		state = pfstatehead;
 		while ((state != NULL) && (n < ub->entries)) {
-			bcopy(state, states + n, sizeof(struct state));
+			bcopy(state, states + n, sizeof(struct pf_state));
 			states[n].creation = pftv.tv_sec - states[n].creation;
 			if (states[n].expire <= pftv.tv_sec)
 				states[n].expire = 0;
@@ -733,16 +733,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCGETSTATUS: {
-		struct status *st = (struct status *)kb;
-		u_int8_t running = status.running;
-		u_int32_t states = status.states;
-		bcopy(&status, st, sizeof(struct status));
+		struct pf_status *st = (struct pf_status *)kb;
+		u_int8_t running = pf_status.running;
+		u_int32_t states = pf_status.states;
+		bcopy(&pf_status, st, sizeof(struct pf_status));
 		st->since = st->since ? pftv.tv_sec - st->since : 0;
 		ub->entries = 1;
-		bzero(&status, sizeof(struct status));
-		status.running = running;
-		status.states = states;
-		status.since = pftv.tv_sec;
+		bzero(&pf_status, sizeof(struct pf_status));
+		pf_status.running = running;
+		pf_status.states = states;
+		pf_status.since = pftv.tv_sec;
 		break;
 	}
 
@@ -966,7 +966,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	struct rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
-	struct rule *r = rulehead, *rm = NULL;
+	struct pf_rule *r = pf_rulehead, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1049,7 +1049,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
 		u_int16_t len;
-		struct state *s;
+		struct pf_state *s;
 
 		len = h->ip_len - off - (th->th_off << 2);
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
@@ -1110,7 +1110,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	struct rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport;
-	struct rule *r = rulehead, *rm = NULL;
+	struct pf_rule *r = pf_rulehead, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1171,7 +1171,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	if ((rm != NULL && rm->keep_state) || nat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
-		struct state *s;
+		struct pf_state *s;
 
 		len = h->ip_len - off - 8;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
@@ -1230,7 +1230,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 {
 	struct nat *nat = NULL;
 	u_int32_t baddr;
-	struct rule *r = rulehead, *rm = NULL;
+	struct pf_rule *r = pf_rulehead, *rm = NULL;
 	u_int16_t nr = 1, mnr = 0;
 
 	if (direction == PF_OUT) {
@@ -1280,7 +1280,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		/* create new state */
 		u_int16_t len;
 		u_int16_t id;
-		struct state *s;
+		struct pf_state *s;
 
 		len = h->ip_len - off - 8;
 		id = ih->icmp_hun.ih_idseq.icd_id;
@@ -1321,12 +1321,12 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	return (PF_PASS);
 }
 
-struct state *
+struct pf_state *
 pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
     struct ip *h, struct tcphdr *th)
 {
-	struct state *s;
-	struct tree_key key;
+	struct pf_state *s;
+	struct pf_tree_key key;
 
 	key.proto   = IPPROTO_TCP;
 	key.addr[0] = h->ip_src.s_addr;
@@ -1426,12 +1426,12 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	return (NULL);
 }
 
-struct state *
+struct pf_state *
 pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
     struct ip *h, struct udphdr *uh)
 {
-	struct state *s;
-	struct tree_key key;
+	struct pf_state *s;
+	struct pf_tree_key key;
 
 	key.proto   = IPPROTO_UDP;
 	key.addr[0] = h->ip_src.s_addr;
@@ -1486,7 +1486,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	return (NULL);
 }
 
-struct state *
+struct pf_state *
 pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
     struct ip *h, struct icmp *ih)
 {
@@ -1503,8 +1503,8 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		 * Search for an ICMP state.
 		 */
 
-		struct state *s;
-		struct tree_key key;
+		struct pf_state *s;
+		struct pf_tree_key key;
 
 		key.proto   = IPPROTO_ICMP;
 		key.addr[0] = h->ip_src.s_addr;
@@ -1559,8 +1559,8 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		case IPPROTO_TCP: {
 			struct tcphdr *th;
 			u_int32_t seq;
-			struct state *s;
-			struct tree_key key;
+			struct pf_state *s;
+			struct pf_tree_key key;
 			struct state_peer *src;
 
 			th = pull_hdr(ifp, m, off, off2, sizeof(*th), h2,
@@ -1616,8 +1616,8 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		}
 		case IPPROTO_UDP: {
 			struct udphdr *uh;
-			struct state *s;
-			struct tree_key key;
+			struct pf_state *s;
+			struct pf_tree_key key;
 
 			uh = pull_hdr(ifp, m, off, off2, sizeof(*uh), h2,
 			    &dummy);
@@ -1720,7 +1720,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	struct ip *h = mtod(*m, struct ip *);
 	int off;
 
-	if (!status.running)
+	if (!pf_status.running)
 		return (PF_PASS);
 
 #ifdef DIAGNOSTIC
@@ -1793,8 +1793,8 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 done:
 	if (ifp == status_ifp) {
-		status.bytes[direction] += h->ip_len;
-		status.packets[direction][action]++;
+		pf_status.bytes[direction] += h->ip_len;
+		pf_status.packets[direction][action]++;
 	}
 	return (action);
 }

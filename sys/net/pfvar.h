@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.6 2001/06/25 00:02:54 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.7 2001/06/25 09:23:32 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -46,12 +46,12 @@ struct rule_addr {
 	u_int8_t	port_op;
 };
 
-struct rule {
+struct pf_rule {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
 	struct rule_addr src;
 	struct rule_addr dst;
-	struct rule	*next;
+	struct pf_rule	*next;
 
 	u_int8_t	 action;
 	u_int8_t	 direction;
@@ -78,8 +78,8 @@ struct state_peer {
 	u_int8_t	state;
 };
 
-struct state {
-	struct state	*next;
+struct pf_state {
+	struct pf_state	*next;
 	struct state_host lan;
 	struct state_host gwy;
 	struct state_host ext;
@@ -117,7 +117,7 @@ struct rdr {
 	u_int8_t	 not;
 };
 
-struct status {
+struct pf_status {
 	u_int32_t	running;
 	u_int32_t	bytes[2];
 	u_int32_t	packets[2][2];
