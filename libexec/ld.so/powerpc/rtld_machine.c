@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1.1.1 2000/06/13 03:40:38 rahnds Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2000/08/25 03:36:38 rahnds Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -73,7 +73,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
 
-#if 0
+#ifdef DL_PRINTF_DEBUG
 _dl_printf("object relocation size %x, numrela %x\n",
 	object->Dyn.info[relasz], numrela);
 #endif
@@ -91,7 +91,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 			+ loff);
 		/* Need to construct table to do jumps */
 		pltcall = (Elf32_Addr *)(first_rela) - 12;
-#if 0
+#ifdef DL_PRINTF_DEBUG
 _dl_printf("creating pltcall at %x\n", pltcall);
 _dl_printf("md_reloc( jumprel %x\n", first_rela );
 #endif
@@ -100,7 +100,7 @@ _dl_printf("md_reloc( jumprel %x\n", first_rela );
 			(object->Dyn.info[DT_PLTRELSZ]/sizeof(Elf32_Rela))
 			);
 
-#if 0
+#ifdef DL_PRINTF_DEBUG
 _dl_printf("md_reloc:  plttbl size %x\n", 
 			(object->Dyn.info[DT_PLTRELSZ]/sizeof(Elf32_Rela))
 );
@@ -169,7 +169,7 @@ _dl_printf("md_reloc: plttable %x\n", plttable);
 			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = loff + relas->r_addend;
 
-#if 0
+#ifdef DL_PRINTF_DEBUG
 _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 loff + relas->r_addend, loff, ooff, relas->r_addend);
 #endif
@@ -187,7 +187,7 @@ loff + relas->r_addend, loff, ooff, relas->r_addend);
 				((val &  0xfe000000) == 0xfe000000)))
 			{
 				int index;
-#if 0
+#ifdef DL_PRINTF_DEBUG
 _dl_printf(" ooff %x, sym val %x, addend %x"
 	" r_addr %x symn [%s] -> %x\n",
 	ooff, this->st_value, relas->r_addend,
@@ -210,7 +210,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 					r_addr[2] = val;
 
 				} else {
-#if 0
+#ifdef DL_PRINTF_DEBUG
 	_dl_printf("  index %d, pltcall %x r_addr %x\n",
 		index, pltcall, r_addr);
 #endif
@@ -227,7 +227,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 				_dl_dcbf(&r_addr[2]);
 				val= ooff + this->st_value +
 					relas->r_addend;
-#if 0
+#ifdef DL_PRINTF_DEBUG
 		_dl_printf(" symn [%s] val 0x%x\n", symn, val);
 #endif
 				plttable[index] = val;
@@ -246,7 +246,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 		case RELOC_GLOB_DAT:
 			*r_addr = ooff + this->st_value + relas->r_addend;
 			break;
-#if 0
+#ifdef DL_PRINTF_DEBUG
 		/* should not be supported ??? */
 		case RELOC_REL24:
 			{
@@ -282,7 +282,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 			val &= ~0xffff0003;
 			val |=  (*r_addr & 0xffff0003);
 			*r_addr = val;	
-#if 0
+#ifdef DL_PRINTF_DEBUG
 			_dl_printf("rel 14 %x val %x\n", 
 				r_addr, val);
 #endif
@@ -291,7 +291,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 			}
 			break;
 		case RELOC_COPY:
-#if 0
+#ifdef DL_PRINTF_DEBUG
 			_dl_printf("copy r_addr %x, sym %x [%s] size %d val %x\n",
 				r_addr, sym, symn, sym->st_size,
 				(ooff + this->st_value+
@@ -328,7 +328,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 			size = sym->st_size < cpysrc->st_size ?
 				sym->st_size : cpysrc->st_size;
 		}
-#if 0
+#ifdef DL_PRINTF_DEBUG
 _dl_printf(" found other symbol at %x size %d\n", 
 		src_loff + cpysrc->st_value,  cpysrc->st_size);
 #endif
