@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.12 1999/01/07 06:05:04 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.13 1999/01/07 21:50:52 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -37,6 +37,18 @@
  */
 
 #include <sys/queue.h>
+#include <netinet6/in6.h>
+#include <netinet6/ipv6.h>
+#include <netinet6/ipv6_var.h>
+#include <netinet6/icmpv6.h>
+
+union inpaddru {
+	struct in6_addr iau_addr6;
+	struct {
+		uint8_t pad[12];
+		struct in_addr inaddr;	/* easier transition */
+	} iau_a4u;
+};
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -49,15 +61,29 @@ struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
 	struct	  inpcbtable *inp_table;
-	struct	  in_addr inp_faddr;	/* foreign host table entry */
-	struct	  in_addr inp_laddr;	/* local host table entry */
+	union	  inpaddru inp_faddru;		/* Foreign address. */
+	union	  inpaddru inp_laddru;		/* Local address. */
+#define	inp_faddr	inp_faddru.iau_a4u.inaddr
+#define	inp_faddr6	inp_faddru.iau_addr6
+#define	inp_laddr	inp_laddru.iau_a4u.inaddr
+#define	inp_laddr6	inp_laddru.iau_addr6
 	u_int16_t inp_fport;		/* foreign port */
 	u_int16_t inp_lport;		/* local port */
 	struct	  socket *inp_socket;	/* back pointer to socket */
 	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
-	struct	  route inp_route;	/* placeholder for routing entry */
+	union {				/* Route (notice increased size). */
+		struct route ru_route;
+		struct route6 ru_route6;
+	} inp_ru;
+#define	inp_route	inp_ru.ru_route
+#define	inp_route6	inp_ru.ru_route6
 	int	  inp_flags;		/* generic IP/datagram flags */
-	struct	  ip inp_ip;		/* header prototype; should have more */
+	union {				/* Header prototype. */
+		struct ip hu_ip;
+		struct ipv6 hu_ipv6;
+	} inp_hu;
+#define	inp_ip		inp_hu.hu_ip
+#define	inp_ipv6	inp_hu.hu_ipv6
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
 	u_char	  inp_seclevel[3];	/* Only the first 3 are used for now */
@@ -69,6 +95,9 @@ struct inpcb {
 #define SR_FAILED         1             /* Negotiation failed permanently */
 #define SR_SUCCESS        2             /* SA successfully established */
 #define SR_WAIT           3             /* Waiting for SA */
+	int	inp_fflowinfo;          /* Foreign flowlabel & priority */
+	int	inp_csumoffset;
+	struct	icmpv6_filter inp_filter;
 };
 
 struct inpcbtable {
@@ -79,16 +108,38 @@ struct inpcbtable {
 };
 
 /* flags in inp_flags: */
-#define	INP_RECVOPTS		0x01	/* receive incoming IP options */
-#define	INP_RECVRETOPTS		0x02	/* receive IP options for reply */
-#define	INP_RECVDSTADDR		0x04	/* receive IP dst address */
-#define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR)
-#define	INP_HDRINCL		0x08	/* user supplies entire IP header */
-#define INP_HIGHPORT		0x10	/* user wants "high" port binding */
-#define INP_LOWPORT		0x20	/* user wants "low" port binding */
+#define	INP_RECVOPTS	0x001	/* receive incoming IP options */
+#define	INP_RECVRETOPTS	0x002	/* receive IP options for reply */
+#define	INP_RECVDSTADDR	0x004	/* receive IP dst address */
+
+#define	INP_RXDSTOPTS	INP_RECVOPTS
+#define	INP_RXHOPOPTS	INP_RECVRETOPTS
+#define	INP_RXINFO	INP_RECVDSTADDR
+#define	INP_RXSRCRT	0x010
+#define	INP_HOPLIMIT	0x020
+
+#define	INP_CONTROLOPTS	(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR| \
+	    INP_RXSRCRT|INP_HOPLIMIT)
+
+#define	INP_HDRINCL	0x008	/* user supplies entire IP header */
+#define	INP_HIGHPORT	0x010	/* user wants "high" port binding */
+#define	INP_LOWPORT	0x020	/* user wants "low" port binding */
+
+/*
+ * These flags' values should be determined by either the transport
+ * protocol at PRU_BIND, PRU_LISTEN, PRU_CONNECT, etc, or by in_pcb*().
+ */
+#define	INP_IPV6	0x100	/* sotopf(inp->inp_socket) == PF_INET6 */
+#define	INP_IPV6_UNDEC	0x200	/* PCB is PF_INET6, but listens for V4/V6 */
+#define	INP_IPV6_MAPPED	0x400	/* PF_INET6 PCB which is connected to
+				 * an IPv4 host, or is bound to
+				 * an IPv4 address (specified with
+				 * the mapped form of v6 addresses) */
+#define INP_IPV6_MCAST	0x800	/* Set if inp_moptions points to ipv6 ones */
 
 #define	INPLOOKUP_WILDCARD	1
 #define	INPLOOKUP_SETLOCAL	2
+#define	INPLOOKUP_IPV6		4
 
 #define	sotoinpcb(so)	((struct inpcb *)(so)->so_pcb)
 
@@ -109,6 +160,9 @@ struct baddynamicports {
 };
 
 #ifdef _KERNEL
+
+#define sotopf(so)  (so->so_proto->pr_domain->dom_family)
+
 void	 in_losing __P((struct inpcb *));
 int	 in_pcballoc __P((struct socket *, void *));
 int	 in_pcbbind __P((void *, struct mbuf *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.26 1999/01/07 06:05:04 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.27 1999/01/07 21:50:51 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -35,6 +35,18 @@
  *
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +94,13 @@ int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;	/* 40000 */
 int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
-	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
+	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + \
+	ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
+
+#define	IN6PCBHASH(table, faddr, fport, laddr, lport) \
+	&(table)->inpt_hashtbl[(ntohl((faddr)->in6a_words[0] ^ \
+	(faddr)->in6a_words[3]) + ntohs((fport)) + ntohs((lport))) & \
+	(table->inpt_hash)]
 
 void
 in_pcbinit(table, hashsize)
@@ -143,6 +161,17 @@ in_pcballoc(so, v)
 	    &inp->inp_laddr, inp->inp_lport), inp, inp_hash);
 	splx(s);
 	so->so_pcb = inp;
+
+#ifdef INET6
+	/*
+	 * Small change in this function to set the INP_IPV6 flag so routines
+	 * outside pcb-specific routines don't need to use sotopf(), and all
+	 * of it's pointer chasing, later.
+	 */
+	if (sotopf(so) == PF_INET6)
+		inp->inp_flags = INP_IPV6;
+	inp->inp_csumoffset = -1;
+#endif /* INET6 */
 	return (0);
 }
 
@@ -160,6 +189,11 @@ in_pcbbind(v, nam)
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 	int error;
+
+#ifdef INET6
+	if (sotopf(so) == PF_INET6)
+		return in6_pcbbind(inp, nam);
+#endif /* INET6 */
 
 	if (in_ifaddr.tqh_first == 0)
 		return (EADDRNOTAVAIL);
@@ -320,6 +354,12 @@ in_pcbconnect(v, nam)
 	struct in_ifaddr *ia;
 	struct sockaddr_in *ifaddr = NULL;
 	register struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
+	struct sockaddr_in *sin2;
+
+#ifdef INET6
+	if (sotopf(inp->inp_socket) == PF_INET6)
+		return (in6_pcbconnect(inp, nam));
+#endif /* INET6 */
 
 	if (nam->m_len != sizeof (*sin))
 		return (EINVAL);
@@ -365,6 +405,13 @@ in_pcbconnect(v, nam)
 			ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 			satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
 			rtalloc(ro);
+
+			/*
+			 * It is important to bzero out the rest of the
+			 * struct sockaddr_in when mixing v6 & v4!
+			 */
+			sin2 = (struct sockaddr_in *)&ro->ro_dst;
+			bzero(sin2->sin_zero, sizeof(sin2->sin_zero));
 		}
 		/*
 		 * If we found a route, use the address
@@ -393,7 +440,12 @@ in_pcbconnect(v, nam)
 		 * address of that interface as our source address.
 		 */
 		if (IN_MULTICAST(sin->sin_addr.s_addr) &&
+#ifdef INET6
+		    inp->inp_moptions != NULL &&
+		    !(inp->inp_flags & INP_IPV6_MCAST)) {
+#else
 		    inp->inp_moptions != NULL) {
+#endif
 			struct ip_moptions *imo;
 			struct ifnet *ifp;
 
@@ -436,7 +488,16 @@ in_pcbdisconnect(v)
 {
 	struct inpcb *inp = v;
 
-	inp->inp_faddr.s_addr = INADDR_ANY;
+#ifdef INET6
+	if (sotopf(inp->inp_socket) == PF_INET6) {
+		DPRINTF(IDL_FINISHED,("In INET6 disconnect!"));
+		inp->inp_faddr6 = in6addr_any;
+		/* Disconnected AF_INET6 sockets cannot be "v4-mapped" */
+		inp->inp_flags &= ~INP_IPV6_MAPPED;
+	} else
+#endif
+		inp->inp_faddr.s_addr = INADDR_ANY;
+
 	inp->inp_fport = 0;
 	in_pcbrehash(inp);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
@@ -454,10 +515,15 @@ in_pcbdetach(v)
 	so->so_pcb = 0;
 	sofree(so);
 	if (inp->inp_options)
-		(void)m_free(inp->inp_options);
+		(void)m_freem(inp->inp_options);
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
-	ip_freemoptions(inp->inp_moptions);
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6_MCAST)
+		ipv6_freemoptions(inp->inp_moptions6);
+	else 
+#endif /* INET6 */
+		ip_freemoptions(inp->inp_moptions);
 #ifdef IPSEC
 	/* XXX IPsec cleanup here */
 #endif
@@ -491,6 +557,11 @@ in_setpeeraddr(inp, nam)
 {
 	register struct sockaddr_in *sin;
 	
+#ifdef INET6
+	if (sotopf(inp->inp_socket) == PF_INET6)
+		in6_setpeeraddr(inp, nam);
+#endif /* INET6 */
+
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
 	bzero((caddr_t)sin, sizeof (*sin));
@@ -524,6 +595,14 @@ in_pcbnotify(table, dst, fport_arg, laddr, lport_arg, errno, notify)
 	struct in_addr faddr;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
+#ifdef INET6
+	/*
+	 * See in6_pcbnotify() for IPv6 codepath.  By the time this
+	 * gets called, the addresses passed are either definitely IPv4 or
+	 * IPv6; *_pcbnotify() never gets called with v4-mapped v6 addresses.
+	 */
+#endif /* INET6 */
+
 	if (dst->sa_family != AF_INET)
 		return;
 	faddr = satosin(dst)->sin_addr;
@@ -556,6 +635,14 @@ in_pcbnotifyall(table, dst, errno, notify)
 {
 	register struct inpcb *inp, *oinp;
 	struct in_addr faddr;
+
+#ifdef INET6
+	/*
+	 * See in6_pcbnotify() for IPv6 codepath.  By the time this
+	 * gets called, the addresses passed are either definitely IPv4 or
+	 * IPv6; *_pcbnotify() never gets called with v4-mapped v6 addresses.
+	 */
+#endif /* INET6 */
 
 	if (dst->sa_family != AF_INET)
 		return;
@@ -648,25 +735,66 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 		if (inp->inp_lport != lport)
 			continue;
 		wildcard = 0;
-		if (inp->inp_faddr.s_addr != INADDR_ANY) {
-			if (faddr.s_addr == INADDR_ANY)
-				wildcard++;
-			else if (inp->inp_faddr.s_addr != faddr.s_addr ||
-			    inp->inp_fport != fport)
+#ifdef INET6
+		if (flags & INPLOOKUP_IPV6) {
+			struct in6_addr *laddr6 = (struct in6_addr *)laddr_arg;
+			struct in6_addr *faddr6 = (struct in6_addr *)faddr_arg;
+
+			/* 
+			 * Always skip AF_INET sockets when looking for AF_INET6
+			 * addresses.  The only problem with this comes if the
+			 * PF_INET6 addresses are v4-mapped addresses.  From what
+			 * I've been able to see, none of the callers cause such
+			 * a situation to occur.  If such a situation DID occur,
+			 * then it is possible to miss a matching PCB.
+			 */
+			if (!(inp->inp_flags & INP_IPV6))
 				continue;
+
+			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
+				if (IN6_IS_ADDR_UNSPECIFIED(laddr6))
+					wildcard++;
+				else if (!IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr6))
+					continue;
+			} else {
+				if (!IN6_IS_ADDR_UNSPECIFIED(laddr6))
+					wildcard++;
+			}
+
+			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
+				if (IN6_IS_ADDR_UNSPECIFIED(faddr6))
+					wildcard++;
+				else if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6,
+				    faddr6) || inp->inp_fport != fport)
+					continue;
+			} else {
+				if (!IN6_IS_ADDR_UNSPECIFIED(faddr6))
+					wildcard++;
+			}
 		} else {
-			if (faddr.s_addr != INADDR_ANY)
-				wildcard++;
+#endif /* INET6 */
+			if (inp->inp_faddr.s_addr != INADDR_ANY) {
+				if (faddr.s_addr == INADDR_ANY)
+					wildcard++;
+				else if (inp->inp_faddr.s_addr != faddr.s_addr ||
+				    inp->inp_fport != fport)
+					continue;
+			} else {
+				if (faddr.s_addr != INADDR_ANY)
+					wildcard++;
+			}
+			if (inp->inp_laddr.s_addr != INADDR_ANY) {
+				if (laddr.s_addr == INADDR_ANY)
+					wildcard++;
+				else if (inp->inp_laddr.s_addr != laddr.s_addr)
+					continue;
+			} else {
+				if (laddr.s_addr != INADDR_ANY)
+					wildcard++;
+			}
+#ifdef INET6
 		}
-		if (inp->inp_laddr.s_addr != INADDR_ANY) {
-			if (laddr.s_addr == INADDR_ANY)
-				wildcard++;
-			else if (inp->inp_laddr.s_addr != laddr.s_addr)
-				continue;
-		} else {
-			if (laddr.s_addr != INADDR_ANY)
-				wildcard++;
-		}
+#endif /* INET6 */
 		if ((!wildcard || (flags & INPLOOKUP_WILDCARD)) &&
 		    wildcard < matchwild) {
 			match = inp;
@@ -686,8 +814,19 @@ in_pcbrehash(inp)
 
 	s = splnet();
 	LIST_REMOVE(inp, inp_hash);
-	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
-	    &inp->inp_laddr, inp->inp_lport), inp, inp_hash);
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6) {
+		LIST_INSERT_HEAD(IN6PCBHASH(table, &inp->inp_faddr6,
+		    inp->inp_fport, &inp->inp_laddr6, inp->inp_lport),
+		    inp, inp_hash);
+	} else {
+#endif /* INET6 */
+		LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr,
+		    inp->inp_fport, &inp->inp_laddr, inp->inp_lport),
+		    inp, inp_hash);
+#ifdef INET6
+	}
+#endif /* INET6 */
 	splx(s);
 }
 
@@ -732,3 +871,51 @@ in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 #endif
 	return (inp);
 }
+
+#ifdef INET6
+struct inpcb *
+in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
+	struct inpcbtable *table;
+	struct in6_addr *faddr, *laddr;
+	u_int fport_arg, lport_arg;
+{
+	struct inpcbhead *head;
+	register struct inpcb *inp;
+	u_int16_t fport = fport_arg, lport = lport_arg;
+
+	DPRINTF(IDL_FINISHED,
+	    ("in6_pcbhashlookup(table=%08x, faddr=%08x, fport_arg=%x, "
+	    "laddr=%08x, lport_arg=%x)\n", OSDEP_PCAST(table),
+	    OSDEP_PCAST(faddr), fport_arg, OSDEP_PCAST(laddr), lport_arg));
+
+	head = IN6PCBHASH(table, faddr, fport, laddr, lport);
+	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+		if (!(inp->inp_flags & INP_IPV6))
+			continue;
+		if (IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) &&
+		    inp->inp_fport == fport && inp->inp_lport == lport &&
+		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr)) {
+			/*
+			 * Move this PCB to the head of hash chain so that
+			 * repeated accesses are quicker.  This is analogous to
+			 * the historic single-entry PCB cache.
+			 */
+			if (inp != head->lh_first) {
+				LIST_REMOVE(inp, inp_hash);
+				LIST_INSERT_HEAD(head, inp, inp_hash);
+			}
+			break;
+		}
+	}
+#ifdef DIAGNOSTIC
+	if (inp == NULL && in_pcbnotifymiss) {
+		printf("in6_pcblookup_connect: faddr=");
+		DDO(IDL_MAJOR_EVENT, dump_in6_addr(faddr));
+		printf(" fport=%d laddr=", ntohs(fport));
+		DDO(IDL_MAJOR_EVENT, dump_in6_addr(laddr));
+		printf(" lport=%d\n", ntohs(lport));
+	}
+#endif
+	return (inp);
+}
+#endif /* INET6 */
