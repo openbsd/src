@@ -1,58 +1,42 @@
-/*	$OpenBSD: bioskbd.S,v 1.4 1997/04/09 08:39:23 mickey Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.5 1997/04/21 19:47:32 mickey Exp $	*/
 
 /*
- * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
+ * Copyright (c) 1997 Michael Shalayeff
+ * All rights reserved.
  *
- * Mach Operating System
- * Copyright (c) 1992, 1991 Carnegie Mellon University
- * All Rights Reserved.
- * 
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- * 
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon
- * the rights to redistribute these changes.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
-
-/*
-  Copyright 1988, 1989, 1990, 1991, 1992 
-   by Intel Corporation, Santa Clara, California.
-
-                All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and
-its documentation for any purpose and without fee is hereby
-granted, provided that the above copyright notice appears in all
-copies and that both the copyright notice and this permission notice
-appear in supporting documentation, and that the name of Intel
-not be used in advertising or publicity pertaining to distribution
-of the software without specific, written prior permission.
-
-INTEL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
-IN NO EVENT SHALL INTEL BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
-NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
 
 #include <machine/asm.h>
 #define	_LOCORE
+#include <dev/isa/isareg.h>
+#include <dev/ic/mc146818reg.h>
+#include <i386/isa/nvram.h>
 #include "biosdev.h"
 #undef	_LOCORE
 
@@ -62,85 +46,21 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
 ENTRY(kbd_probe)
-#if 0
-#include <machine/console.h>
-#include <machine/cpufunc.h>
-#include "boot.h"
-
-int
-probe_keyboard(void)
-{
-	int i, retries = 5;
-	unsigned char val;
-
-	/* flush any noise in the buffer */
-	while (inb(KB_STAT) & KB_BUF_FULL) {
-		delay1ms();
-		(void) inb(KB_DATA);
-	}
-
-	/* Try to reset keyboard hardware */
-  again:
-	while (--retries) {
-#ifdef DEBUG
-		printf("%d ", retries);
-#endif
-		while ((inb(KB_STAT) & KB_READY) == KB_READY) delay1ms();
-		outb(KB_DATA, KB_RESET);
-		for (i=0; i<1000; i++) {
-			delay1ms();
-			val = inb(KB_DATA);
-			if (val == KB_ACK || val == KB_ECHO)
-				goto gotack;
-			if (val == KB_RESEND)
-				break;
-		}
-	}
-gotres:
-#ifdef DEBUG
-	printf("gotres\n");
-#endif
-	if (!retries) {
-#ifdef DEBUG
-		printf("gave up\n");
-#endif
-		return(1);
-	}
-gotack:
-	delay1ms();
-	while ((inb(KB_STAT) & KB_BUF_FULL) == 0) delay1ms();
-	delay1ms();
-#ifdef DEBUG
-	printf("ACK ");
-#endif
-	val = inb(KB_DATA);
-	if (val == KB_ACK)
-		goto gotack;
-	if (val == KB_RESEND)
-		goto again;
-	if (val != KB_RESET_DONE) {
-#ifdef DEBUG
-		printf("stray val %d\n", val);
-#endif
-		return(0);
-	}
-#ifdef DEBUG
-	printf("ok\n");
-#endif
-	return(0);
-}
-
-#endif
-	movl	1, %eax		/* present (: */
+	movb	$NVRAM_EQUIPMENT, %al
+	outb	%al, $IO_RTC
+	inb	$(IO_RTC+1), %al
+	xorl	%edx, %edx
+	andb	$(NVRAM_EQUIPMENT_KBD|NVRAM_EQUIPMENT_DISPLAY), %al
+	cmpb	$(NVRAM_EQUIPMENT_KBD|NVRAM_EQUIPMENT_DISPLAY), %al
+	je	1f
+	incl	%edx
+1:	movl	%edx, %eax
 	ret
 
 /*
-# BIOS call "INT 10H Function 0Eh" to write character to console
-#	Call with	%ah = 0x0e
-#			%al = character
-#			%bh = page
-#			%bl = foreground color
-*/
+ * void kbd_putc(int c)
+ *	output byte to console
+ */
 ENTRY(kbd_putc)
 	pushl	%ebx
 
@@ -149,37 +69,25 @@ ENTRY(kbd_putc)
 	xorl	%ebx, %ebx
 	incl	%ebx
 	BIOSINT(0x10)		# display a byte
-
 	popl	%ebx
 	ret
 
-
 /*
-# BIOS call "INT 16H Function 00H" to read character from the keyboard
-#	Call with	%ah = 0x00
-#	Return:		%ah = keyboard scan code
-#			%al = ASCII character
-*/
+ * int kbd_getc(void)
+ *	read character from keyboard
+ */
 ENTRY(kbd_getc)
-	xorl	%eax, %eax
+	movb	$0, %ah
 	BIOSINT(0x16)
 	movzbl	%al, %eax
 	ret
 
-
 /*
-# BIOS call "INT 16H Function 01H" to check whether a character is pending
-#	Call with	%ah = 0x01
-#	Return:	
-#		If key waiting to be input:
-#			%ah = keyboard scan code
-#			%al = ASCII character
-#			ZF  = clear
-#		else
-#			ZF  = set
-*/
+ * int kbd_ischar(void)
+ *	check if there is character available from keyboard
+ */
 ENTRY(kbd_ischar)
-	movb	$0x01, %ah
+	movb	$1, %ah
 	BIOSINT(0x16)
 	setnz	%al
 	movzbl	%al, %eax
