@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.1 2004/05/06 19:47:03 grange Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.2 2004/05/07 04:35:59 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -211,9 +211,6 @@ ichss_setperf(int level)
 		/* Restore bus mastering arbitration state */
 		bus_space_write_1(sc->sc_pm_iot, sc->sc_pm_ioh, ICH_PM_CNTL,
 		    cntl);
-
-		if (update_cpuspeed != NULL)
-			update_cpuspeed();
 	}
 	splx(s);
 
