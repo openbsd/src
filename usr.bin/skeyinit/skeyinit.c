@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.13 1996/10/02 18:11:30 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.14 1996/10/08 16:31:45 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -292,6 +292,7 @@ main(argc, argv)
 		/* Re-open keys file and seek to the end */
 		if (skeylookup(&skey, pp->pw_name) == -1)
 			err(1, "cannot open database");
+		skey_set_algorithm(ht);
 	}
 
 	btoa8(skey.val, key);
