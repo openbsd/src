@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uiomove.9,v 1.6 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: uiomove.9,v 1.7 2003/07/22 01:54:12 tedu Exp $
 .\"	$NetBSD: uiomove.9,v 1.6 2001/12/26 00:16:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/systm.h>
 .Ft int
-.Fn uiomove "caddr_t buf" "int n" "struct uio *uio"
+.Fn uiomove "void *buf" "int n" "struct uio *uio"
 .Sh DESCRIPTION
 The
 .Nm
