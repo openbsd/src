@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.14 2001/01/27 12:03:31 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.15 2001/06/29 19:42:16 niklas Exp $	*/
 /*	$EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <stdio.h>
 
 #define CONFIG_FILE "/etc/isakmpd/isakmpd.conf"
@@ -80,6 +81,7 @@ extern int conf_begin (void);
 extern int conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf);
 extern int conf_end (int, int);
 extern void conf_free_list (struct conf_list *);
+extern struct sockaddr *conf_get_address (char *, char *);
 extern int conf_get_line (FILE *, char *, u_int32_t);
 extern struct conf_list *conf_get_list (char *, char *);
 extern struct conf_list *conf_get_tag_list (char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 2001/03/27 15:46:29 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 2001/06/29 19:42:16 niklas Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -38,7 +38,10 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -613,6 +616,24 @@ conf_get_num (char *section, char *tag, int def)
   if (value)
       return atoi (value);
   return def;
+}
+
+/*
+ * Return the socket endpoint address denoted by TAG in SECTION as a
+ * struct sockaddr.  It is the callers responsibility to deallocate
+ * this structure when it is finished with it.
+ */
+struct sockaddr *
+conf_get_address (char *section, char *tag)
+{
+  char *value = conf_get_str (section, tag);
+  struct sockaddr *sa;
+
+  if (!value)
+    return 0;
+  if (text2sockaddr (value, 0, &sa) == -1)
+    return 0;
+  return sa;
 }
 
 /* Validate X according to the range denoted by TAG in section SECTION.  */
