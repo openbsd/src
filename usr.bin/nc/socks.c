@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.5 2002/02/28 18:05:36 markus Exp $	*/
+/*	$OpenBSD: socks.c,v 1.6 2002/12/30 17:55:25 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -99,7 +99,7 @@ socks_connect (char *host, char *port, struct addrinfo hints,
 	else
 		proxyfd = remote_connect(proxyhost, SOCKS_PORT, proxyhints);
 
-	if (!proxyfd)
+	if (proxyfd < 0)
 		return -1;
 
 	serveraddr = decode_addr (host);
