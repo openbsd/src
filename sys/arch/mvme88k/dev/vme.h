@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.12 2003/12/25 21:01:39 miod Exp $ */
+/*	$OpenBSD: vme.h,v 1.13 2003/12/28 19:44:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -33,109 +33,6 @@ struct vmesoftc {
 	void *		sc_vaddr;
 	struct intrhand sc_abih;       /* `abort' switch */
 };
-
-struct vmessoftc {
-	struct device		sc_dev;
-	struct vmesoftc		*sc_vme;
-};
-
-struct vmelsoftc {
-	struct device		sc_dev;
-	struct vmesoftc		*sc_vme;
-};
-
-/*
- * MVME147 vme configuration registers.
-*/
-struct vme1reg {
-/*01*/	volatile u_short		vme1_scon;
-#define VME1_SCON_SWITCH	0x01		/* SCON jumper is set */
-#define VME1_SCON_SRESET	0x02		/* assert SRESET on bus */
-#define VME1_SCON_SYSFAIL	0x04		/* assert SYSFAIL on bus */
-#define VME1_SCON_ROBIN		0x08		/* round robin bus requests */
-/*03*/	volatile u_short		vme1_reqconf;
-#define VME1_REQ_IPLMASK	0x03		/* interrupt level for requester */
-#define VME1_REQ_RNEVER		0x08
-#define VME1_REQ_RWD		0x10
-#define VME1_REQ_DHB		0x40
-#define VME1_REQ_DWB		0x80
-/*05*/	volatile u_short		vme1_masconf;
-#define VME1_MAS_D16		0x01		/* force d8/16 accesses only */
-#define VME1_MAS_MASA24		0x02		/* send address mod for A24 access */
-#define VME1_MAS_MASA16		0x04		/* send address mod for A16 access */
-#define VME1_MAS_MASUAT		0x08		/* handle unaligned VME cycles */
-#define VME1_MAS_CFILL		0x10		/* DO NOT USE */
-#define VME1_MAS_MASWP		0x20		/* VME fast mode (DO NOT USE) */
-/*07*/	volatile u_short		vme1_slconf;
-#define VME1_SLAVE_SLVD16	0x01		/* DO NOT USE */
-#define VME1_SLAVE_SLVWP	0x20		/* DO NOT USE */
-#define VME1_SLAVE_SLVEN	0x80		/* allow access to onboard DRAM */
-/*09*/	volatile u_short		vme1_timerconf;
-#define VME1_TIMER_LOCAL_MASK	0x03
-#define VME1_TIMER_LOCAL_T0	0x00		/* local timeout 102 microsec */
-#define VME1_TIMER_LOCAL_T1	0x01		/* local timeout 205 microsec */
-#define VME1_TIMER_LOCAL_T2	0x02		/* local timeout 410 microsec */
-#define VME1_TIMER_LOCAL_T3	0x03		/* local timeout disabled */
-#define VME1_TIMER_VMEACC_MASK	0x0c
-#define VME1_TIMER_VMEACC_T0	0x00		/* VME access timeout 102 microsec */
-#define VME1_TIMER_VMEACC_T1	0x04		/* VME access timeout 1.6 millisec */
-#define VME1_TIMER_VMEACC_T2	0x08		/* VME access timeout 51 millisec */
-#define VME1_TIMER_VMEACC_T3	0x0c		/* VME access timeout disabled */
-#define VME1_TIMER_VMEGLO_MASK	0x30
-#define VME1_TIMER_VMEGLO_T0	0x00		/* VME glob timeout 102 microsec */
-#define VME1_TIMER_VMEGLO_T1	0x10		/* VME glob timeout 205 microsec */
-#define VME1_TIMER_VMEGLO_T2	0x20		/* VME glob timeout 410 microsec */
-#define VME1_TIMER_VMEGLO_T3	0x30		/* VME glob timeout disabled */
-#define VME1_TIMER_ARBTO	0x40		/* enable VME arbitration timer */
-/*0b*/	volatile u_short		vme1_sladdrmod;
-#define VME1_SLMOD_DATA		0x01
-#define VME1_SLMOD_PRGRM	0x02
-#define VME1_SLMOD_BLOCK	0x04
-#define VME1_SLMOD_SHORT	0x08
-#define VME1_SLMOD_STND		0x10
-#define VME1_SLMOD_EXTED	0x20
-#define VME1_SLMOD_USER		0x40
-#define VME1_SLMOD_SUPER	0x80
-/*0d*/	volatile u_short		vme1_msaddrmod;
-#define VME1_MSMOD_AM_MASK	0x3f
-#define VME1_MSMOD_AMSEL	0x80
-/*0f*/	volatile u_short		vme1_irqen;
-#define VME1_IRQ_VME(x)		(1 << (x))
-/*11*/	volatile u_short		vme1_uirqen;
-/*13*/	volatile u_short		vme1_uirq;
-/*15*/	volatile u_short		vme1_irq;
-/*17*/	volatile u_short		vme1_vmeid;
-/*19*/	volatile u_short		vme1_buserr;
-/*1b*/	volatile u_short		vme1_gcsr;
-#define VME1_GCSR_OFF		0x0f
-/*1d*/	u_short			:16;
-/*1f*/	u_short			:16;
-/*21*/	volatile u_short		vme1_gcsr_gr0;
-/*23*/	volatile u_short		vme1_gcsr_gr1;
-/*25*/	volatile u_short		vme1_gcsr_boardid;
-/*27*/	volatile u_short		vme1_gcsr_gpr0;
-/*29*/	volatile u_short		vme1_gcsr_gpr1;
-/*2b*/	volatile u_short		vme1_gcsr_gpr2;
-/*2d*/	volatile u_short		vme1_gcsr_gpr3;
-/*2f*/	volatile u_short		vme1_gcsr_gpr4;
-};
-
-/*
- * Basic VME memory layout for the MVME147 follows:
- *    - A32D32 accesses occur at memsize-0xefffffff. This makes it
- *	impossible to do A32D32 accesses before the end of your onboard
- *	memory. If you want to do low address A24D32 accesses, and you
- *	have 16M or more onboard memory you'll find you cannot.
- *    - A32D16 accesses can occur at 0xf0000000-0xff7fffff.
- *    - A16D16 accesses can occur at 0xffff0000-0xffffffff.
- */
-#define VME1_A32D32BASE	0x00000000UL
-#define VME1_A32D32LEN	0xf0000000UL
-#define VME1_A32D16BASE	0xf0000000UL
-#define VME1_A32D16LEN	0x0f800000UL
-#define VME1_A16D16BASE	0xffff0000UL
-#define VME1_A16D16LEN	0x00010000UL
-#define VME1_A16BASE	0xffff0000UL
 
 /*
  * XXX: this chip has some rather inane access rules!
@@ -368,8 +265,8 @@ struct vme2reg {
 #define VME2_A16BASE	0xffff0000UL
 #define VME2_A24BASE	0xff000000UL
 
-void *vmepmap(struct vmesoftc *sc, off_t vmeaddr, int len, int bustype);
-int vmerw(struct vmesoftc *sc, struct uio *uio, int flags, int bus);
+void *vmepmap(struct device *sc, off_t vmeaddr, int len, int bustype);
+int vmerw(struct device *sc, struct uio *uio, int flags, int bus);
 int vmeintr_establish(int vec, struct intrhand *ih);
 int vme_findvec(void);
 int vmescan(struct device *, void *, void *, int);

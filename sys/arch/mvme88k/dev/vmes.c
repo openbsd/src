@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.15 2003/12/27 23:57:06 miod Exp $ */
+/*	$OpenBSD: vmes.c,v 1.16 2003/12/28 19:44:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -48,7 +48,7 @@ void vmesattach(struct device *, struct device *, void *);
 int  vmesmatch(struct device *, void *, void *);
 
 struct cfattach vmes_ca = {
-        sizeof(struct vmessoftc), vmesmatch, vmesattach
+        sizeof(struct device), vmesmatch, vmesattach
 };
 
 struct cfdriver vmes_cd = {
@@ -78,11 +78,7 @@ vmesattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	struct vmessoftc *sc = (struct vmessoftc *)self;
-
 	printf("\n");
-
-	sc->sc_vme = (struct vmesoftc *)parent;
 
 	config_search(vmesscan, self, args);
 }
@@ -137,9 +133,9 @@ vmesread(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct vmessoftc *sc = (struct vmessoftc *) vmes_cd.cd_devs[unit];
+	struct device *sc = (struct device *)vmes_cd.cd_devs[unit];
 
-	return (vmerw(sc->sc_vme, uio, flags, BUS_VMES));
+	return (vmerw(sc->dv_parent, uio, flags, BUS_VMES));
 }
 
 int
@@ -149,9 +145,9 @@ vmeswrite(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct vmessoftc *sc = (struct vmessoftc *) vmes_cd.cd_devs[unit];
+	struct device *sc = (struct device *)vmes_cd.cd_devs[unit];
 
-	return (vmerw(sc->sc_vme, uio, flags, BUS_VMES));
+	return (vmerw(sc->dv_parent, uio, flags, BUS_VMES));
 }
 
 paddr_t
@@ -161,10 +157,10 @@ vmesmmap(dev, off, prot)
 	int prot;
 {
 	int unit = minor(dev);
-	struct vmessoftc *sc = (struct vmessoftc *) vmes_cd.cd_devs[unit];
+	struct device *sc = (struct device *)vmes_cd.cd_devs[unit];
 	void * pa;
 
-	pa = vmepmap(sc->sc_vme, off, NBPG, BUS_VMES);
+	pa = vmepmap(sc->dv_parent, off, NBPG, BUS_VMES);
 #ifdef DEBUG
 	printf("vmes %llx pa %p\n", off, pa);
 #endif

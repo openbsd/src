@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.12 2003/12/19 22:30:18 miod Exp $ */
+/*	$OpenBSD: vmel.c,v 1.13 2003/12/28 19:44:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -48,7 +48,7 @@ void vmelattach(struct device *, struct device *, void *);
 int  vmelmatch(struct device *, void *, void *);
 
 struct cfattach vmel_ca = {
-        sizeof(struct vmelsoftc), vmelmatch, vmelattach
+        sizeof(struct device), vmelmatch, vmelattach
 };
 
 struct cfdriver vmel_cd = {
@@ -78,11 +78,7 @@ vmelattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	struct vmelsoftc *sc = (struct vmelsoftc *)self;
-
 	printf("\n");
-
-	sc->sc_vme = (struct vmesoftc *)parent;
 
 	config_search(vmelscan, self, args);
 }
@@ -137,9 +133,9 @@ vmelread(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
+	struct device *sc = (struct device *)vmel_cd.cd_devs[unit];
 
-	return (vmerw(sc->sc_vme, uio, flags, BUS_VMEL));
+	return (vmerw(sc->dv_parent, uio, flags, BUS_VMEL));
 }
 
 int
@@ -149,9 +145,9 @@ vmelwrite(dev, uio, flags)
 	int flags;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
+	struct device *sc = (struct device *)vmel_cd.cd_devs[unit];
 
-	return (vmerw(sc->sc_vme, uio, flags, BUS_VMEL));
+	return (vmerw(sc->dv_parent, uio, flags, BUS_VMEL));
 }
 
 paddr_t
@@ -161,10 +157,10 @@ vmelmmap(dev, off, prot)
 	int prot;
 {
 	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
+	struct device *sc = (struct device *)vmel_cd.cd_devs[unit];
 	void * pa;
 
-	pa = vmepmap(sc->sc_vme, off, NBPG, BUS_VMEL);
+	pa = vmepmap(sc->dv_parent, off, NBPG, BUS_VMEL);
 #ifdef DEBUG
 	printf("vmel %llx pa %p\n", off, pa);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.26 2003/12/27 23:56:41 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.27 2003/12/28 19:44:26 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -116,7 +116,7 @@ vmematch(parent, cf, args)
  */
 void *
 vmepmap(sc, vmeaddr, len, bustype)
-	struct vmesoftc *sc;
+	struct device *sc;
 	off_t vmeaddr;
 	int len;
 	int bustype;
@@ -137,7 +137,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			base = vme2chip_map(base, len, 16);
 			if (base == NULL) {
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
-				    sc->sc_dev.dv_xname, base, len);
+				    sc->dv_xname, base, len);
 				return (NULL);
 			}
 			break;
@@ -149,7 +149,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			base = vme2chip_map(base, len, 32);
 			if (base == NULL) {
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
-				    sc->sc_dev.dv_xname, base, len);
+				    sc->dv_xname, base, len);
 				return (NULL);
 			}
 			break;
@@ -170,7 +170,7 @@ vmemap(sc, vmeaddr, len, bustype)
 {
 	void *pa, *va;
 
-	pa = vmepmap(sc, vmeaddr, len, bustype);
+	pa = vmepmap((struct device *)sc, vmeaddr, len, bustype);
 	if (pa == NULL)
 		return (NULL);
 	va = mapiodev(pa, len);
@@ -187,7 +187,7 @@ vmeunmap(va, len)
 
 int
 vmerw(sc, uio, flags, bus)
-	struct vmesoftc *sc;
+	struct device *sc;
 	struct uio *uio;
 	int flags;
 	int bus;
@@ -214,7 +214,7 @@ vmerw(sc, uio, flags, bus)
 			c = NBPG - (v & PGOFSET);
 		if (c == 0)
 			return (0);
-		vme = vmemap(sc, v & ~PGOFSET,
+		vme = vmemap((struct vmesoftc *)sc, v & ~PGOFSET,
 		    NBPG, BUS_VMES);
 		if (vme == NULL) {
 			error = EFAULT;	/* XXX? */
