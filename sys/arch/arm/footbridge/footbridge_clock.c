@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_clock.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: footbridge_clock.c,v 1.4 2004/06/03 23:20:07 deraadt Exp $	*/
 /*	$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ cpu_initclocks()
 		profhz = stathz * 8;
 
 	/* Report the clock frequencies */
-	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
+	printf("clock: hz %d stathz %d profhz %d\n", hz, stathz, profhz);
 
 	/* Setup timer 1 and claim interrupt */
 	clock_sc->sc_clock_count = load_timer(TIMER_1_BASE, hz);
