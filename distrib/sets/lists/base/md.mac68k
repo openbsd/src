@@ -304,8 +304,10 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/histedit.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/ieeefp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/iso646.ph
+./usr/lib/perl5/m68k-openbsd/5.003/inttypes.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/kvm.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/langinfo.ph
+./usr/lib/perl5/m68k-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/limits.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/link.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/locale.ph
@@ -553,4 +555,3 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/zlib.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/libexec/ld.so
-./usr/lkm/ipl.o
