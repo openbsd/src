@@ -142,6 +142,10 @@ PUBLIC void cleanup_files NOARGS
     char filename[256];
 
     tempname(filename, REMOVE_FILES);
+
+    if (rmdir(lynx_temp_space))
+	perror("Could not remove the temp-directory");
+
     FREE(lynx_temp_space);
 }
 

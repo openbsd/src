@@ -742,6 +742,8 @@ else {init_ctrl_break[0] = 1;}
 	StrAllocCat(lynx_temp_space, ":");
     }
 #else
+    StrAllocCat(lynx_temp_space, "/lynx-XXXXXX");
+    lynx_temp_space = mkdtemp(lynx_temp_space);
 #ifndef __DJGPP__
     if (((len = strlen(lynx_temp_space)) > 1) &&
 	lynx_temp_space[len-1] != '/') {
