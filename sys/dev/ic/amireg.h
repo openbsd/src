@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.1 2001/03/09 11:14:21 mickey Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.2 2001/03/27 01:10:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -69,7 +69,7 @@
 /* commands */
 #define	AMI_READ	0x01
 #define	AMI_WRITE	0x02
-#define	AMI_SRB_DCDB	0x03
+#define	AMI_PASSTHRU	0x03	/* pass scsi cdb to the device */
 #define	AMI_EINQUIRY	0x04	/* extended inquiry */
 #define	AMI_INQUIRY	0x05	/* inquiry */
 #define	AMI_CHSTATE	0x06	/* pad[0] -- state */
@@ -82,7 +82,7 @@
 #define	AMI_FLUSH	0x0a
 #define	AMI_ILDRIVE	0x0b	/* init logical drive */
 #define	AMI_EINQUIRY3	0x0c
-#define	AMI_DCHDR	0x14	/* ge/set dedicated channel/drives */
+#define	AMI_DCHDR	0x14	/* get/set dedicated channel/drives */
 #define	AMI_GRBLDPROGR	0x18	/* get rebuild progress */
 #define	AMI_GCHECKPROGR	0x19	/* get check consistency progress */
 #define	AMI_GILDRPROGR	0x1b	/* get init logical drive progress */
@@ -127,7 +127,7 @@
 #define	AMI_FRAID_PF	0x55	/* get/set flexraid power fail */
 #define		AMI_GFRAIDPF	1
 #define		AMI_SFRAIDPF	2
-#define	AMI_FRAIDVS	0x56	/* get/set flesraid virtual sizing */
+#define	AMI_FRAIDVS	0x56	/* get/set flexraid virtual sizing */
 #define		AMI_GFRAIDVS	1
 #define		AMI_SFRAIDVS	2
 #define	AMI_BBMANAGE	0x57	/* bad block manage */
@@ -247,7 +247,7 @@ struct ami_iocmd {
 			u_int8_t	aio_pad1[3];
 		} _ami_io;
 
-#define	acc_passthru	_._ami_passthru
+#define	acc_passthru	_._ami_passru
 		struct {
 			u_int16_t	apt_dummy0;
 			u_int32_t	apt_dummy1;
@@ -407,7 +407,7 @@ struct ami_fc_einquiry {
 	u_int32_t	ain_size;	/* size of this structure */
 
 	/* notify */
-	u_int8_t	ain_notify[80];
+	u_int8_t	ain_notify[0x80];
 
 	u_int8_t	ain_rbldrate;	/* rebuild rate %% */
 	u_int8_t	ain_flushintvl;
@@ -424,7 +424,7 @@ struct ami_fc_einquiry {
 	u_int8_t	ain_ldstat[AMI_BIG_MAX_LDRIVES];
 
 	u_int16_t	ain_pdfmtinp[AMI_BIG_MAX_PDRIVES];
-	u_int8_t	ain_pdrates [80];	/* ??? */
+	u_int8_t	ain_pdrates [80];	/* pdrv xfer rates */
 };
 
 struct ami_fc_prodinfo {
