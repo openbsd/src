@@ -1,0 +1,5 @@
+# Host: Motorola m68k running OpenBSD
+XDEPFILES= 
+NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o m68knbsd-nat.o solib.o
+XM_FILE= xm-obsd.h
+NAT_FILE= nm-obsd.h

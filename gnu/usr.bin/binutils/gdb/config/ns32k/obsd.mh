@@ -1,0 +1,4 @@
+# Host: PC532 running OpenBSD
+XM_FILE= xm-obsd.h
+NAT_FILE= nm-obsd.h
+NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o ns32k-nat.o solib.o
