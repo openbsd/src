@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.86 1998/09/26 04:17:49 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.87 1998/09/26 22:35:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -905,97 +905,97 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21050 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21040 (Tulip)",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21030,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21030 (TGA)",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_NVRAM,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "Zephyr NV-RAM",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_KZPSA,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "KZPSA",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21140 (FasterNet)",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "TGA2",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DEFPA,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DEFPA",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21041 (Tulip Pass 3)",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DGLPB (OPPO)",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21142/3",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21052,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21052 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21150,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21150 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21152,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21152 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21153,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21153 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21154,
 	    0,
-	    "Digital Equipment",
+	    "DEC",
 	    "DECchip 21154 PCI-PCI Bridge",
 	},
 	{
@@ -1619,13 +1619,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128,
 	    0,
-	    "Number 9 Computer Company",
+	    "Number 9",
 	    "Imagine-128",
 	},
 	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128_2,
 	    0,
-	    "Number 9 Computer Company",
+	    "Number 9",
 	    "Imagine-128 II",
 	},
 	{
@@ -2723,7 +2723,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DEC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Digital Equipment",
+	    "DEC",
 	    NULL,
 	},
 	{
@@ -2747,7 +2747,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_LSIL, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "LSI Logic Corp of Canada",
+	    "LSI Canada",
 	    NULL,
 	},
 	{
@@ -2777,7 +2777,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NCR, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "AT&T Global Information Systems",
+	    "AT&T GIS",
 	    NULL,
 	},
 	{
@@ -2855,7 +2855,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_LSILOGIC, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "LSI Logic, Headland div.",
+	    "LSI Logic",
 	    NULL,
 	},
 	{
@@ -2879,7 +2879,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_OLIVETTI, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Olivetti Advanced Technology",
+	    "Olivetti",
 	    NULL,
 	},
 	{
@@ -3149,7 +3149,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NUMBER9, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Number 9 Computer Company",
+	    "Number 9",
 	    NULL,
 	},
 	{
@@ -3635,7 +3635,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_MICROCOMPSON, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Micro Computer Sysytems (M) SON",
+	    "Micro Computer Systems (M) SON",
 	    NULL,
 	},
 	{

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.86 1998/09/26 04:17:49 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.87 1998/09/26 22:35:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -64,16 +64,16 @@
 #define	PCI_VENDOR_AST	0x100d		/* AST Research */
 #define	PCI_VENDOR_WEITEK	0x100e		/* Weitek */
 #define	PCI_VENDOR_VIDEOLOGIC	0x1010		/* Video Logic */
-#define	PCI_VENDOR_DEC	0x1011		/* Digital Equipment */
+#define	PCI_VENDOR_DEC	0x1011		/* DEC */
 #define	PCI_VENDOR_MICRONICS	0x1012		/* Micronics Computers */
 #define	PCI_VENDOR_CIRRUS	0x1013		/* Cirrus Logic */
 #define	PCI_VENDOR_IBM	0x1014		/* IBM */
-#define	PCI_VENDOR_LSIL	0x1015		/* LSI Logic Corp of Canada */
+#define	PCI_VENDOR_LSIL	0x1015		/* LSI Canada */
 #define	PCI_VENDOR_ICLPERSONAL	0x1016		/* ICL Personal Systems */
 #define	PCI_VENDOR_SPEA	0x1017		/* SPEA Software */
 #define	PCI_VENDOR_UNISYS	0x1018		/* Unisys Systems */
 #define	PCI_VENDOR_ELITEGROUP	0x1019		/* Elitegroup Computer Systems */
-#define	PCI_VENDOR_NCR	0x101a		/* AT&T Global Information Systems */
+#define	PCI_VENDOR_NCR	0x101a		/* AT&T GIS */
 #define	PCI_VENDOR_VITESSE	0x101b		/* Vitesse Semiconductor */
 #define	PCI_VENDOR_WD	0x101c		/* Western Digital */
 #define	PCI_VENDOR_AMI	0x101e		/* American Megatrends */
@@ -86,11 +86,11 @@
 #define	PCI_VENDOR_ACER	0x1025		/* Acer */
 #define	PCI_VENDOR_DELL	0x1028		/* Dell Computer */
 #define	PCI_VENDOR_SNI	0x1029		/* Siemens Nixdorf AG */
-#define	PCI_VENDOR_LSILOGIC	0x102a		/* LSI Logic, Headland div. */
+#define	PCI_VENDOR_LSILOGIC	0x102a		/* LSI Logic */
 #define	PCI_VENDOR_MATROX	0x102b		/* Matrox */
 #define	PCI_VENDOR_CHIPS	0x102c		/* Chips and Technologies */
 #define	PCI_VENDOR_WYSE	0x102d		/* WYSE Technology */
-#define	PCI_VENDOR_OLIVETTI	0x102e		/* Olivetti Advanced Technology */
+#define	PCI_VENDOR_OLIVETTI	0x102e		/* Olivetti */
 #define	PCI_VENDOR_TOSHIBA	0x102f		/* Toshiba America */
 #define	PCI_VENDOR_TMCRESEARCH	0x1030		/* TMC Research */
 #define	PCI_VENDOR_MIRO	0x1031		/* Miro Computer Products */
@@ -135,7 +135,7 @@
 #define	PCI_VENDOR_PROMISE	0x105a		/* Promise Technology */
 #define	PCI_VENDOR_FOXCONN	0x105b		/* Foxconn International */
 #define	PCI_VENDOR_WIPRO	0x105c		/* Wipro Infotech */
-#define	PCI_VENDOR_NUMBER9	0x105d		/* Number 9 Computer Company */
+#define	PCI_VENDOR_NUMBER9	0x105d		/* Number 9 */
 #define	PCI_VENDOR_VTECH	0x105e		/* Vtech Computers */
 #define	PCI_VENDOR_INFOTRONIC	0x105f		/* Infotronic America */
 #define	PCI_VENDOR_UMC	0x1060		/* United Microelectronics */
@@ -216,7 +216,7 @@
 #define	PCI_VENDOR_HONEYWELL	0x10ac		/* Honeywell IASD */
 #define	PCI_VENDOR_SYMPHONY	0x10ad		/* Symphony Labs */
 #define	PCI_VENDOR_CORNERSTONE	0x10ae		/* Cornerstone Technology */
-#define	PCI_VENDOR_MICROCOMPSON	0x10af		/* Micro Computer Sysytems (M) SON */
+#define	PCI_VENDOR_MICROCOMPSON	0x10af		/* Micro Computer Systems (M) SON */
 #define	PCI_VENDOR_CARDEXPER	0x10b0		/* CardExpert Technology */
 #define	PCI_VENDOR_CABLETRON	0x10B1		/* Cabletron Systems */
 #define	PCI_VENDOR_RAYETHON	0x10b2		/* Raytheon */
