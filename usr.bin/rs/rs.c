@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.4 1997/09/12 04:12:54 millert Exp $	*/
+/*	$OpenBSD: rs.c,v 1.5 2001/10/28 03:56:46 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -300,7 +300,7 @@ prepfile()
 				colwidths[i] = max + gutter;
 			}
 		else
-			for (i = 0; i < ocols; i++) {
+			for (ep = elem, i = 0; i < ocols; i++) {
 				for (j = i; j < nelem; j += ocols)
 					if ((n = strlen(ep[j])) > max)
 						max = n;
