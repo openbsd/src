@@ -91,7 +91,7 @@ NCursesWindow::printw(const char * fmt, ...)
     va_list args;
     va_start(args, fmt);
     char buf[BUFSIZ];
-    vsprintf(buf, fmt, args);
+    vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
     return waddstr(w, buf);
 }
@@ -105,7 +105,7 @@ NCursesWindow::printw(int y, int x, const char * fmt, ...)
     int result = wmove(w, y, x);
     if (result == OK) {
 	char buf[BUFSIZ];
-	vsprintf(buf, fmt, args);
+	vsnprintf(buf, sizeof(buf), fmt, args);
 	result = waddstr(w, buf);
     }
     va_end(args);

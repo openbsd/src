@@ -263,7 +263,7 @@ public:
     Soft_Label_Key_Set* S = new Soft_Label_Key_Set;
     for(int i=1; i <= S->labels(); i++) {
       char buf[5];
-      ::sprintf(buf,"Frm%02d",i);
+      ::snprintf(buf,sizeof(buf),"Frm%02d",i);
       (*S)[i] = buf;                                      // Text
       (*S)[i] = Soft_Label_Key_Set::Soft_Label_Key::Left; // Justification
     }
@@ -421,7 +421,7 @@ public:
 void TestApplication::init_labels(Soft_Label_Key_Set& S) const {
   for(int i=1; i <= S.labels(); i++) {
     char buf[5];
-    ::sprintf(buf,"Key%02d",i);
+    ::snprintf(buf,sizeof(buf),"Key%02d",i);
     S[i] = buf;                                      // Text
     S[i] = Soft_Label_Key_Set::Soft_Label_Key::Left; // Justification
   }
