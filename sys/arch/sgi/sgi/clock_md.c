@@ -1,8 +1,8 @@
-/*	$OpenBSD: clock_md.c,v 1.3 2004/08/09 21:13:29 pefo Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.4 2004/08/10 18:47:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -42,8 +42,8 @@
 extern void clock_int5_init(struct clock_softc *);
 extern int clock_started;
 
-#define FROMBCD(x)      (((x) >> 4) * 10 + ((x) & 0xf))
-#define TOBCD(x)        (((x) / 10 * 16) + ((x) % 10))
+#define FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
+#define TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
 
 void	md_clk_attach(struct device *parent, struct device *self, void *aux);
 
@@ -61,7 +61,7 @@ md_clk_attach(parent, self, aux)
 
 	ca = aux;
 
-        switch (sys_config.system_type) {
+	switch (sys_config.system_type) {
 	case SGI_O2:
 		sc->sc_clock.clk_get = ds1687_get;
 		sc->sc_clock.clk_set = ds1687_set;

@@ -1,8 +1,8 @@
-/*	$OpenBSD: machdep.c,v 1.3 2004/08/10 12:32:14 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.4 2004/08/10 18:47:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -72,7 +72,7 @@
 #include <machine/memconf.h>
 #include <machine/regnum.h>
 
-#include <machine/rm7000.h> 
+#include <machine/rm7000.h>
 
 #include <sys/exec_ecoff.h>
 
@@ -140,7 +140,7 @@ caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
-caddr_t mips_init(int, int32_t *);	
+caddr_t mips_init(int, int32_t *);
 void initcpu(void);
 void dumpsys(void);
 void dumpconf(void);
@@ -262,7 +262,7 @@ mips_init(int argc, int32_t *argv)
 			fp = lastkernpage + 1;
 
 		if (fp <= lp)
-			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT); 
+			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT);
 	}
 
 	/*
@@ -333,8 +333,9 @@ mips_init(int argc, int32_t *argv)
 	tlb_set_wired(0);
 	tlb_flush(sys_config.cpu[0].tlbsize);
 	tlb_set_wired(sys_config.cpu[0].tlbwired);
-	
-/* XXX Save the following as an example on how to optimize I/O mapping */
+
+	/* XXX Save the following as an example on how to optimize I/O mapping */
+
 	/*
 	 *  Set up some fixed mappings. These are so frequently
 	 *  used so faulting them in will waste to many cycles.
@@ -388,8 +389,8 @@ mips_init(int argc, int32_t *argv)
 	 * Allocate system data structures.
 	 */
 	i = (vsize_t)allocsys(NULL);
-        sd = (caddr_t)pmap_steal_memory(i, NULL, NULL);
-        allocsys(sd);
+	sd = (caddr_t)pmap_steal_memory(i, NULL, NULL);
+	allocsys(sd);
 
 	/*
 	 * Bootstrap VM system.
@@ -474,7 +475,7 @@ allocsys(caddr_t v)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 	}
 
-	if (nswbuf == 0) { 
+	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* even */
 		if (nswbuf > 256) {
 			nswbuf = 256;
@@ -711,14 +712,14 @@ setregs(p, pack, stack, retval)
 	extern struct proc *machFPCurProcPtr;
 #if 0
 /* XXX should check validity of header and perhaps be 32/64 indep. */
-        Elf64_Ehdr *eh = pack->ep_hdr;
+	Elf64_Ehdr *eh = pack->ep_hdr;
 
-        if ((((eh->e_flags & EF_MIPS_ABI) != E_MIPS_ABI_NONE) &&
-            ((eh->e_flags & EF_MIPS_ABI) != E_MIPS_ABI_O32)) ||
-            ((eh->e_flags & EF_MIPS_ARCH) >= E_MIPS_ARCH_3) ||
-            (eh->e_ident[EI_CLASS] != ELFCLASS32)) {
+	if ((((eh->e_flags & EF_MIPS_ABI) != E_MIPS_ABI_NONE) &&
+	    ((eh->e_flags & EF_MIPS_ABI) != E_MIPS_ABI_O32)) ||
+	    ((eh->e_flags & EF_MIPS_ARCH) >= E_MIPS_ARCH_3) ||
+	    (eh->e_ident[EI_CLASS] != ELFCLASS32)) {
 		p->p_md.md_flags |= MDP_O32;
-        }
+	}
 #endif
 
 #if !defined(_LP64)
@@ -968,7 +969,7 @@ atoi(const char *s, int b, const char **o)
 		val = -val;
 	if (o != NULL)
 		*o = s - 1;
-	return val;	
+	return val;
 }
 
 /*
@@ -987,7 +988,7 @@ rm7k_perfcntr(cmd, arg1, arg2, arg3)
 
 	switch(cmd) {
 	case PCNT_FNC_SELECT:
-		if((arg1 & 0xff) > PCNT_SRC_MAX || 
+		if((arg1 & 0xff) > PCNT_SRC_MAX ||
 		   (arg1 & ~(PCNT_CE|PCNT_UM|PCNT_KM|0xff)) != 0) {
 			result = EINVAL;
 			break;
@@ -1029,7 +1030,6 @@ rm7k_perfintr(trapframe)
 	if(p != NULL) {
 		p->p_md.md_pc_spill++;
 	}
-	
 }
 
 int

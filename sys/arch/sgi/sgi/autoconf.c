@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2004/08/09 10:11:37 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.3 2004/08/10 18:47:22 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,11 +37,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Utah Hdr: autoconf.c 1.31 91/01/21
- *
- *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.2 2004/08/09 10:11:37 miod Exp $
  */
 
 /*
@@ -131,7 +126,7 @@ swapconf()
 	}
 }
 
-/*                                                                        
+/*
  * the rest of this file was influenced/copied from Theo de Raadt's
  * code in the sparc port to nuke the "options GENERIC" stuff.
  */
@@ -173,7 +168,7 @@ getdisk(str, len, defpart, devp)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				printf(" %s", dv->dv_xname); 
+				printf(" %s", dv->dv_xname);
 #endif
 		}
 		printf("\n");
@@ -359,7 +354,7 @@ gotswap:
 		else {
 			/*
 			 *  Root and Swap are on net.
-			 */	
+			 */
 			nswapdev = dumpdev = NODEV;
 		}
 		swdevt[0].sw_dev = nswapdev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2004/08/10 18:47:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.1 2004/08/06 21:12:19 pefo Exp $
+ *      $Id: conf.c,v 1.2 2004/08/10 18:47:22 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -181,16 +181,16 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
-	cdev_disk_init(NCCD,ccd),       /* 23: concatenated disk driver */
+	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
 cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 26: */
 	cdev_mouse_init(NWSMOUSE, wsmouse),	/* 27: */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 28: */
 #ifdef USER_PCICONF
-        cdev_pci_init(NPCI,pci),        /* 29: PCI user */
+	cdev_pci_init(NPCI,pci),	/* 29: PCI user */
 #else
-        cdev_notdef(),			/* 29 */
+	cdev_notdef(),			/* 29 */
 #endif
 	cdev_notdef(),			/* 30: */
 	cdev_pf_init(NPF,pf),		/* 31: packet filter */
@@ -266,7 +266,7 @@ getnulldev()
 
 
 int chrtoblktbl[] =  {
-      /* VCHR */      /* VBLK */
+	/* VCHR         VBLK */
 	/* 0 */		NODEV,
 	/* 1 */		NODEV,
 	/* 2 */		NODEV,
