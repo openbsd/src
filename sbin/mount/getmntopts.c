@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.7 2004/05/18 11:07:53 otto Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.8 2004/06/22 21:12:00 otto Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.7 2004/05/18 11:07:53 otto Exp $";
+static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.8 2004/06/22 21:12:00 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,47 +49,85 @@ static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.7 2004/05/18 11:07:53 otto Exp
 
 #include "mntopts.h"
 
-void
-getmntopts(const char *options, const struct mntopt *m0, int *flagp)
+int
+getmntopts(const char *optionp, const struct mntopt *m0, int *flagp)
+{
+	char *p, *q;
+	union mntval val;
+	int ret = 0;
+
+	p = q = strdup(optionp);
+	if (p == NULL)
+		err(1, NULL);
+	while (p != NULL) {
+		ret |= getmntopt(&p, &val, m0, flagp);
+	}
+	free(q);
+	return (ret);
+}
+
+int
+getmntopt(char **optionp, union mntval *valuep, const struct mntopt *m0,
+    int *flagp)
 {
 	const struct mntopt *m;
-	int negative;
-	char *opt, *optbuf, *p;
+	char *opt, *value, *endp;
+	long l;
+	int inverse, negative, needval, ret = 0;
 
-	/* Copy option string, since it is about to be torn asunder... */
-	if ((optbuf = strdup(options)) == NULL)
-		err(1, NULL);
+	/* Pull out the next option. */
+	do {
+		if (*optionp == NULL)
+			return (0);
+		opt = strsep(optionp, ",");
+	} while (opt == NULL || *opt == '\0');
 
-	for (opt = optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
-		/* Check for "no" prefix. */
-		if (opt[0] == 'n' && opt[1] == 'o') {
-			negative = 1;
-			opt += 2;
-		} else
-			negative = 0;
+	/* Check for "no" prefix. */
+	if (opt[0] == 'n' && opt[1] == 'o') {
+		negative = 1;
+		opt += 2;
+	} else
+		negative = 0;
 
-		/*
-		 * for options with assignments in them (ie. quotas)
-		 * ignore the assignment as it's handled elsewhere
-		 */
-		p = strchr(opt, '=');
-		if (p != NULL)
-			 *p = '\0';
+	/* Stash the value for options with assignments in them. */
+	if ((value = strchr(opt, '=')) != NULL)
+		*value++ = '\0';
 
-		/* Scan option table. */
-		for (m = m0; m->m_option != NULL; ++m)
-			if (strcasecmp(opt, m->m_option) == 0)
-				break;
+	/* Scan option table. */
+	for (m = m0; m->m_option != NULL; ++m)
+		if (strcasecmp(opt, m->m_option) == 0)
+			break;
 
-		/* Save flag, or fail if option is not recognised. */
-		if (m->m_option) {
-			if (negative == m->m_inverse)
+	/* Save flag, or fail if option is not recognised. */
+	if (m->m_option) {
+		needval = (m->m_oflags & (MFLAG_INTVAL|MFLAG_STRVAL)) != 0;
+		if (needval != (value != NULL))
+			errx(1, "-o %s: option %s a value", opt,
+			    needval ? "needs" : "does not need");
+		inverse = (m->m_oflags & MFLAG_INVERSE) ? 1 : 0;
+		if (m->m_oflags & MFLAG_SET) {
+			if (negative == inverse)
 				*flagp |= m->m_flag;
 			else
 				*flagp &= ~m->m_flag;
-		} else
-			errx(1, "-o %s: option not supported", opt);
-	}
+		}
+		else if (negative == inverse)
+			ret = m->m_flag;
+	} else
+		errx(1, "-o %s: option not supported", opt);
 
-	free(optbuf);
+	/* Store the value for options with assignments in them. */
+	if (value != NULL) {
+		if (m->m_oflags & MFLAG_INTVAL) {
+			l = strtol(value, &endp, 10);
+			if (endp == value || l < 0 || l > INT_MAX ||
+			    (l == LONG_MAX && errno == ERANGE))
+				errx(1, "%s: illegal value '%s'",
+				    opt, value);
+			valuep->ival = (int)l;
+		} else
+			valuep->strval = value;
+	} else
+		memset(valuep, 0, sizeof(*valuep));
+	return (ret);
 }
