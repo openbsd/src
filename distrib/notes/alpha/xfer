@@ -20,7 +20,7 @@ To boot from CD-ROM:
 	ignore them (unless it is DKA0).  For example, if your
 	cdrom is listed as DKA600, you want to use dka6 (device
 	ID's are case insensitive).  Insert the OpenBSD/alpha CD
-	and enter "boot -fi 2.2/alpha/bsd DEVICE" where DEVICE is
+	and enter "boot -fi 2.2/alpha/bsd.rd DEVICE" where DEVICE is
 	the dka device.  Note that the argument order is important
 	here.  If this does not work, you'll have to create a boot
 	floppy or bootable hard disk; follow the directions below.
