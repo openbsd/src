@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_hy.c,v 1.4 1997/02/03 04:47:28 downsj Exp $	*/
+/*	$OpenBSD: grf_hy.c,v 1.5 1997/02/05 16:01:12 downsj Exp $	*/
 /*	$NetBSD: grf_hy.c,v 1.8 1997/01/30 09:18:47 thorpej Exp $	*/
 
 /*
@@ -152,7 +152,11 @@ hyper_dio_attach(parent, self, aux)
 		}
 	}
 
-	grfdev_attach(sc, hy_init, grf, &hyper_grfsw);
+#if NITE > 0
+	grfdev_attach(sc, hy_init, grf, &hyper_grfsw, &hyper_itesw);
+#else
+	grfdev_attach(sc, hy_init, grf, &hyper_grfsw, NULL);
+#endif	/* NITE > 0 */
 }
 
 /*

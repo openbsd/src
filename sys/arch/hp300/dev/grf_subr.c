@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_subr.c,v 1.3 1997/02/04 07:15:26 downsj Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.4 1997/02/05 16:01:15 downsj Exp $	*/
 /*	$NetBSD: grf_subr.c,v 1.3 1997/01/31 21:16:50 carrel Exp $	*/
 
 /*-
@@ -52,14 +52,17 @@
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 
+#include <hp300/dev/itevar.h>
+
 int	grfdevprint __P((void *, const char *));
 
 void
-grfdev_attach(sc, init, regs, sw)
+grfdev_attach(sc, init, regs, sw, isw)
 	struct grfdev_softc *sc;
 	int (*init) __P((struct grf_data *, int, caddr_t));
 	caddr_t regs;
 	struct grfsw *sw;
+	struct itesw *isw;
 {
 	struct grfdev_attach_args ga;
 	struct grf_data *gp;
@@ -106,6 +109,7 @@ grfdev_attach(sc, init, regs, sw)
 	ga.ga_scode = sc->sc_scode;	/* XXX */
 	ga.ga_isconsole = isconsole;
 	ga.ga_data = (void *)sc->sc_data;
+	ga.ga_ite = (void *)isw;
 	(void)config_found(&sc->sc_dev, &ga, grfdevprint);
 }
 

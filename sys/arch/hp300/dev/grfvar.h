@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.4 1997/02/03 04:47:32 downsj Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.5 1997/02/05 16:01:17 downsj Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.9 1997/01/30 09:18:51 thorpej Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ struct	grfdev_attach_args {
 	int	ga_scode;		/* XXX select code, -1 for intio */
 	int	ga_isconsole;		/* from hardware; is console? */
 	void	*ga_data;		/* hardware-dependent data */
+	void	*ga_ite;		/* ITE switch table */
 };
 
 /* flags */
@@ -125,7 +126,8 @@ struct	grfdev_attach_args {
 #ifdef _KERNEL
 extern	struct grf_data grf_cn;		/* grf_data for console device */
 
+struct itesw;
 void	grfdev_attach __P((struct grfdev_softc *,
 	    int (*init)(struct grf_data *, int, caddr_t),
-	    caddr_t, struct grfsw *));
+	    caddr_t, struct grfsw *, struct itesw *itesw));
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rb.c,v 1.4 1997/02/03 04:47:30 downsj Exp $	*/
+/*	$OpenBSD: grf_rb.c,v 1.5 1997/02/05 16:01:14 downsj Exp $	*/
 /*	$NetBSD: grf_rb.c,v 1.10 1997/01/30 09:18:48 thorpej Exp $	*/
 
 /*
@@ -150,7 +150,11 @@ rbox_intio_attach(parent, self, aux)
 	grf = (caddr_t)IIOV(GRFIADDR);
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
-	grfdev_attach(sc, rb_init, grf, &rbox_grfsw);
+#if NITE > 0
+	grfdev_attach(sc, rb_init, grf, &rbox_grfsw, &rbox_itesw);
+#else
+	grfdev_attach(sc, rb_init, grf, &rbox_grfsw, NULL);
+#endif	/* NITE > 0 */
 }
 
 int
@@ -188,7 +192,11 @@ rbox_dio_attach(parent, self, aux)
 		}
 	}
 
-	grfdev_attach(sc, rb_init, grf, &rbox_grfsw);
+#if NITE > 0
+	grfdev_attach(sc, rb_init, grf, &rbox_grfsw, &rbox_itesw);
+#else
+	grfdev_attach(sc, rb_init, grf, &rbox_grfsw, NULL);
+#endif	/* NITE > 0 */
 }
 
 /*
