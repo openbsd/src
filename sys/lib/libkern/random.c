@@ -44,7 +44,7 @@
  * and whatever else we might use it for.  The result is uniform on
  * [0, 2^31 - 1].
  */
-u_long __randseed = 1;
+u_long _randseed = 1;
 
 u_long
 random()
@@ -57,12 +57,12 @@ random()
 	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
 	 * October 1988, p. 1195.
 	 */
-	x = __randseed;
+	x = _randseed;
 	hi = x / 127773;
 	lo = x % 127773;
 	t = 16807 * lo - 2836 * hi;
 	if (t <= 0)
 		t += 0x7fffffff;
-	__randseed = t;
+	_randseed = t;
 	return (t);
 }
