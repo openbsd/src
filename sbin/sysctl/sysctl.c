@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.88 2003/04/25 20:27:19 grange Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.89 2003/04/25 20:32:18 grange Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.88 2003/04/25 20:27:19 grange Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.89 2003/04/25 20:32:18 grange Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.88 2003/04/25 20:27:19 grange Exp $
 #include <sys/uio.h>
 #include <sys/tty.h>
 #include <sys/namei.h>
+#include <sys/sensors.h>
 #include <machine/cpu.h>
 #include <net/route.h>
 
@@ -182,6 +183,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	KMEMBUCKETS	0x00000400
 #define	LONGARRAY	0x00000800
 #define	KMEMSTATS	0x00001000
+#define	SENSORS		0x00002000
 
 /* prototypes */
 void debuginit(void);
@@ -207,6 +209,7 @@ int sysctl_malloc(char *, char **, int *, int, int *);
 int sysctl_seminfo(char *, char **, int *, int, int *);
 int sysctl_shminfo(char *, char **, int *, int, int *);
 int sysctl_watchdog(char *, char **, int *, int, int *);
+int sysctl_sensors(char *, char **, int *, int, int *);
 #ifdef CPU_CHIPSET
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
@@ -441,6 +444,12 @@ parse(char *string, int flags)
 				warnx("use vmstat to view %s information",
 				    string);
 			return;
+		case HW_SENSORS:
+			special |= SENSORS;
+			len = sysctl_sensors(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
 		}
 		break;
 
@@ -859,6 +868,31 @@ parse(char *string, int flags)
 		putchar('\n');
 		return;
 	}
+	if (special & SENSORS) {
+		struct sensor *s = (struct sensor *)buf;
+
+		if (size > 0) {
+			if (!nflag)
+				printf("%s = ", string);
+			printf("(device = %s, type = ", s->device);
+			switch (s->type) {
+			case SENSOR_TEMP:
+				printf("temp");
+				break;
+			case SENSOR_FANRPM:
+				printf("fanrpm");
+				break;
+			case SENSOR_VOLTS_DC:
+				printf("volts_dc");
+				break;
+			default:
+				printf("unknown");
+			}
+			printf(", desc=%s, value=%ld)\n", s->desc, s->value);
+		}
+		return;
+	}
+
 	switch (type) {
 	case CTLTYPE_INT:
 		if (newsize == 0) {
@@ -1877,6 +1911,34 @@ sysctl_watchdog(char *string, char **bufpp, int mib[], int flags,
 	mib[2] = indx;
 	*typep = watchdoglist.list[indx].ctl_type;
 	return(3);
+}
+
+/*
+ * Handle hardware monitoring sensors support
+ */
+int
+sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	char *name;
+	int indx;
+
+	if (*bufpp == NULL) {
+		char name[BUFSIZ];
+
+		/* scan all sensors */
+		for (indx = 0; indx < 256; indx++) {
+			snprintf(name, sizeof(name), "%s.%u", string, indx);
+			parse(name, 0);
+		}
+		return (-1);
+	}
+	if ((name = strsep(bufpp, ".")) == NULL) {
+		warnx("%s: incomplete specification", string);
+		return (-1);
+	}
+	mib[2] = atoi(name);
+	*typep = CTLTYPE_STRUCT;
+	return (3);
 }
 
 /*

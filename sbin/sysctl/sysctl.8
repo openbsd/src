@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.97 2003/03/21 23:06:42 jason Exp $
+.\"	$OpenBSD: sysctl.8,v 1.98 2003/04/25 20:32:18 grange Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -293,6 +293,7 @@ privilege can change the value.
 .It hw.diskstats	struct	no
 .It hw.disknames	string	no
 .It hw.diskcount	integer	no
+.It hw.sensors	struct	no
 .It machdep.console_device	dev_t	no
 .It machdep.unaligned_print	integer	yes (alpha only)
 .It machdep.unaligned_fix	integer	yes (alpha only)
