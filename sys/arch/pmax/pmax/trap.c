@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1998/10/15 21:30:17 imp Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 1999/01/07 23:16:05 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -78,13 +78,6 @@
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 #include <miscfs/procfs/procfs.h>
-
-/* all this to get prototypes for ipintr() and arpintr() */
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip_var.h>
 
 #include "ppp.h"
 
@@ -1059,6 +1052,12 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
+		}
+#endif
+#ifdef INET6
+		if (netisr & (1 << NETISR_IPV6)) {
+			netisr &= ~(1 << NETISR_IPV6);
+			ipv6intr();
 		}
 #endif
 #ifdef NETATALK

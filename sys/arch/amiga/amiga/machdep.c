@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 1998/03/01 14:35:42 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 1999/01/07 23:15:54 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -109,31 +109,7 @@
 #include "ether.h"
 #include "ppp.h"
 
-#include <net/netisr.h>
 #include <net/if.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#ifdef NETHER
-#include <netinet/if_ether.h>
-#endif
-#include <netinet/ip_var.h>
-#endif 
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
-
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -1210,6 +1186,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ipv6intr();
 	}
 #endif
 #ifdef NETATALK

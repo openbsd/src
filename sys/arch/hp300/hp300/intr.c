@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 1997/07/06 08:02:00 downsj Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 1999/01/07 23:15:57 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1997/05/01 16:24:26 thorpej Exp $	*/
 
 /*-
@@ -49,6 +49,9 @@
 #include <sys/vmmeter.h>
 
 #include <net/netisr.h>
+#include "ppp.h"
+
+void	netintr __P((void));
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -277,18 +280,6 @@ intr_dispatch(evec)
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
 }
 
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	nsintr __P((void));
-void	clnintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
-
 void
 netintr()
 {
@@ -300,6 +291,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ipv6intr();
 	}
 #endif
 #ifdef NETATALK
@@ -326,7 +323,6 @@ netintr()
 		ccittintr();
 	}
 #endif
-#include "ppp.h"
 #if NPPP > 0
 	if (netisr & (1 << NETISR_PPP)) {
 		netisr &= ~(1 << NETISR_PPP);

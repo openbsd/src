@@ -1544,6 +1544,12 @@ void netintr()
 		ipintr();
 	}
 #endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ipv6intr();
+	}
+#endif
 #ifdef NETATALK
 	if (netisr & (1 << NETISR_ATALK)) {
 		netisr &= ~(1 << NETISR_ATALK);

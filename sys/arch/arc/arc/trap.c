@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 1998/10/15 21:30:00 imp Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 1999/01/07 23:15:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -240,9 +240,6 @@ extern const struct callback *callv;
 extern u_long intrcnt[];
 extern void MipsSwitchFPState __P((struct proc *, int *));
 extern void MipsFPTrap __P((u_int, u_int, u_int));
-extern void arpintr __P((void));
-extern void ipintr __P((void));
-extern void pppintr __P((void));
 
 u_int trap __P((u_int, u_int, u_int, u_int, struct trap_frame));
 void interrupt __P((u_int, u_int, u_int, u_int, u_int));
@@ -890,6 +887,12 @@ interrupt(statusReg, causeReg, what, pc, args)
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
+		}
+#endif
+#ifdef INET6
+		if (netisr & (1 << NETISR_IPV6)) {
+			netisr &= ~(1 << NETISR_IPV6);
+			ipv6intr();
 		}
 #endif
 #ifdef NETATALK

@@ -66,21 +66,7 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
 #include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 void	strayintr __P((struct clockframe *));
 int	soft01intr __P((void *));
@@ -145,6 +131,10 @@ soft01intr(fp)
 				arpintr();
 			if (n & (1 << NETISR_IP))
 				ipintr();
+#endif
+#ifdef INET6
+			if (n & (1 << NETISR_IPV6))
+				ipv6intr();
 #endif
 #ifdef NETATALK
 			if (n & (1 << NETISR_ATALK))

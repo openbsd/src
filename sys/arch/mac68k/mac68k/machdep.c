@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 1998/05/03 07:19:54 gene Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 1999/01/07 23:16:00 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -123,6 +123,8 @@
 #include <machine/pte.h>
 #include <machine/bus.h>
 #include <net/netisr.h>
+
+void netintr __P((void));
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_param.h>
@@ -973,14 +975,6 @@ badladdr(addr)
 	return (0);
 }
 
-void arpintr __P((void));
-void ipintr __P((void));
-void atintr __P((void));
-void nsintr __P((void));
-void clnlintr __P((void));
-void pppintr __P((void));
-void netintr __P((void));
-
 void
 netintr()
 {
@@ -994,6 +988,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ipv6intr();
 	}
 #endif
 #ifdef NETATALK

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1997/07/31 03:07:55 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1999/01/07 23:15:51 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -95,29 +95,7 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
 #include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 #include "le_ioasic.h"			/* for le_iomem creation */
 
@@ -1490,6 +1468,9 @@ netintr()
 	DONETISR(NETISR_ARP, arpintr());
 	DONETISR(NETISR_IP, ipintr());
 #endif
+#ifdef INET6
+	DONETISR(NETISR_IPV6, ipv6intr());
+#endif
 #ifdef NETATALK
 	DONETISR(NETISR_ATALK, atintr());
 #endif
@@ -1505,7 +1486,7 @@ netintr()
 #ifdef NATM
 	DONETISR(NETISR_NATM, natmintr());
 #endif
-#if NPPP > 1
+#if NPPP > 0
 	DONETISR(NETISR_PPP, pppintr());
 #endif
 
