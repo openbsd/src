@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.4 1995/08/20 13:24:05 leo Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.5 1996/01/24 19:21:40 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,25 +64,19 @@
  * differently for the two channels.  We can, however, ignore this much
  * of the time.
  */
-#ifndef LOCORE
+#if 0	/* Example only! */
+/*
+ * The layout of this structure is hardware-dependent!
+ * Define these in some machine-dependent place.
+ */
 struct zschan {
-#if (BYTE_ORDER == BIG_ENDIAN) && !defined(atari)
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-	u_char		zc_xxx0;
-	volatile u_char	zc_data;	/* data */
-	u_char		zc_xxx1;
-#else
-	u_char		zc_xxx0;
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-    	u_char		zc_xxx1;
-    	volatile u_char	zc_data;	/* data */
-#endif
+	volatile u_char	zc_csr;		/* ctrl, status, or reg. number */
+	volatile u_char	zc_data;	/* data or numbered register */
 };
-
 struct zsdevice {
 	struct	zschan zs_chan[2];
 };
-#endif
+#endif	/* Example only! */
 
 /*
  * Some of the names in this files were chosen to make the hsis driver
