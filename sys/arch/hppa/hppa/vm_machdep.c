@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.35 2002/03/28 07:02:27 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.36 2002/03/28 07:21:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -66,7 +66,7 @@ cpu_coredump(p, vp, cred, core)
 	off_t off;
 	int error;
 
-	CORE_SETMAGIC(*core, COREMAGIC, MID_ZERO, 0);
+	CORE_SETMAGIC(*core, COREMAGIC, MID_HPPA, 0);
 	core->c_hdrsize = ALIGN(sizeof(*core));
 	core->c_seghdrsize = ALIGN(sizeof(cseg));
 	core->c_cpusize = sizeof(md_core);
