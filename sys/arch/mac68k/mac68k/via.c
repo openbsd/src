@@ -1,5 +1,5 @@
-/*	$OpenBSD: via.c,v 1.7 1996/06/08 16:21:17 briggs Exp $	*/
-/*	$NetBSD: via.c,v 1.47 1996/06/07 13:04:46 briggs Exp $	*/
+/*	$OpenBSD: via.c,v 1.8 1996/06/23 15:43:22 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.48 1996/06/21 06:12:45 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -91,13 +91,13 @@ void *via2iarg[7] = {
 void		via2_intr __P((struct frame *));
 void		rbv_intr __P((struct frame *));
 
-void		(*real_via2_intr)(struct frame *);
+void		(*real_via2_intr) __P((struct frame *));
 
 /*
  * Nubus slot interrupt routines and parameters for slots 9-15.  Note
  * that for simplicity of code, "v2IRQ0" for internal video is treated
- * as a slot 15 interrupt; this slot is quite ficticious in real-world
- * Macs.  See also GMGH, pp. 165-167, and "Monster, Loch Ness."
+ * as a slot 15 interrupt; this slot is quite fictitious in real-world
+ * Macs.  See also GMFH, pp. 165-167, and "Monster, Loch Ness."
  */
 void (*slotitab[7]) __P((void *, int)) = {
 	slot_noint,
@@ -109,7 +109,7 @@ void (*slotitab[7]) __P((void *, int)) = {
 	slot_noint	/* int_video_intr */
 };
 
-void	*slotptab[7] = {
+void *slotptab[7] = {
 	(void *) 0, (void *) 1, (void *) 2, (void *) 3,
 	(void *) 4, (void *) 5, (void *) 6
 };
@@ -332,19 +332,18 @@ via2_nubus_intr(bitarg)
 {
 	register int	i, mask, ints;
 
-try_again:
 	via2_reg(vIFR) = 0x80 | V2IF_SLOTINT;
-	if ((ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) != 0) {
-		mask = (1 << 6);
-		i = 7;
-		while (i--) {
+	while ((ints = (~via2_reg(vBufA)) & nubus_intr_mask)) {
+		i = 6;
+		mask = (1 << i);
+		while (mask) {
 			if (ints & mask)
 				(*slotitab[i])(slotptab[i], i+9);
+			i--;
 			mask >>= 1;
 		}
-	} else
-		return;
-	goto try_again;
+		via2_reg(vIFR) = V2IF_SLOTINT;
+	}
 }
 
 /*ARGSUSED*/
@@ -354,19 +353,18 @@ rbv_nubus_intr(bitarg)
 {
 	register int	i, mask, ints;
 
-try_again:
 	via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
-	if ((ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) != 0) {
-		mask = (1 << 6);
-		i = 7;
-		while (i--) {
+	while ((ints = (~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
+		i = 6;
+		mask = (1 << i);
+		while (mask) {
 			if (ints & mask)
 				(*slotitab[i])(slotptab[i], i+9);
+			i--;
 			mask >>= 1;
 		}
-	} else
-		return;
-	goto try_again;
+		via2_reg(rIFR) = 0x80 | V2IF_SLOTINT;
+	}
 }
 
 static void
