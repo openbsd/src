@@ -1928,14 +1928,18 @@ mips*-*-linux*)				# Linux MIPS, either endian.
         esac
 	tmake_file="t-slibgcc-elf-ver t-linux mips/t-linux"
 	;;
-mips*el-*-openbsd*)	# mips little endian
+mips*-*-openbsd*)
 	target_cpu_default="MASK_GAS|MASK_ABICALLS"
-	tm_file="${tm_file} exec-stack.h"
-	;;
-mips*-*-openbsd*)		# mips big endian
-	target_cpu_default="MASK_GAS|MASK_ABICALLS"
-	tm_file="mips/openbsd-be.h ${tm_file}"
-	tm_file="${tm_file} exec-stack.h"
+	tm_file="elfos.h ${tm_file}"
+	case $machine in
+        mips64*-*)
+		tm_defines="MIPS_ISA_DEFAULT=3 MIPS_ABI_DEFAULT=ABI_64"
+		tmake_file="mips/t-openbsd64"
+		;;
+        mips*-*)
+		tm_defines="MIPS_ISA_DEFAULT=3 MIPS_ABI_DEFAULT=ABI_N32"
+		;;
+	esac
 	;;
 mips-*-ecoff* | mipsel-*-ecoff*)
 	if test x$stabs = xyes; then

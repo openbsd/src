@@ -27,20 +27,25 @@ Boston, MA 02111-1307, USA.  */
 #define SUBTARGET_CPP_SPEC OBSD_CPP_SPEC
 
 /* Needed for ELF (inspired by netbsd-elf).  */
+#undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 #define LOCAL_LABEL_PREFIX	"."
 
-/* The profiling lib spec here is not really correct but we leave
-   it as it is until we have some kind of profiling working.  */
-#define LIB_SPEC OBSD_LIB_SPEC
-
-/* By default, OpenBSD mips is little endian.  This is important to set
-   here as mips/mips.h defaults to big endian.  */
-#ifndef TARGET_ENDIAN_DEFAULT
-#define TARGET_ENDIAN_DEFAULT 0
-#endif
-
+#define ASM_FINAL_SPEC ""
 #include <mips/mips.h>
+
+#undef MDEBUG_ASM_SPEC
+#define MDEBUG_ASM_SPEC ""
+
+#include <mips/elf.h>
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "\
+	%{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} \
+	crtbegin%O%s} %{shared:crtbeginS%O%s}"
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+#undef LIB_SPEC
+#define LIB_SPEC OBSD_LIB_SPEC
 
 /* Get generic OpenBSD definitions.  */
 #define OBSD_HAS_DECLARE_FUNCTION_NAME
@@ -53,26 +58,52 @@ Boston, MA 02111-1307, USA.  */
 	support.  */
 #undef SET_ASM_OP
 
+#undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()			\
     do {						\
-	builtin_define ("__unix__");			\
-	builtin_define ("__SYSTYPE_BSD__");		\
+	OPENBSD_OS_CPP_BUILTINS_ELF();			\
 	builtin_define ("__NO_LEADING_UNDERSCORES__");	\
 	builtin_define ("__GP_SUPPORT__");		\
-	builtin_define ("__OpenBSD__");			\
-	builtin_assert ("system=unix");			\
-	builtin_assert ("system=OpenBSD");		\
-	builtin_assert ("machine=mips");			\
+	builtin_assert ("machine=mips");		\
+	if (TARGET_LONG64)				\
+		builtin_define ("__LONG64");		\
+	if (TARGET_64BIT)				\
+		OPENBSD_OS_CPP_BUILTINS_LP64();		\
+	if (TARGET_ABICALLS)				\
+		builtin_define ("__ABICALLS__");	\
+	if (mips_abi == ABI_EABI)			\
+		builtin_define ("__mips_eabi");		\
+	else if (mips_abi == ABI_N32)			\
+		builtin_define ("__mips_n32");		\
+	else if (mips_abi == ABI_64)			\
+		builtin_define ("__mips_n64");		\
+	else if (mips_abi == ABI_O64)			\
+		builtin_define ("__mips_o64");		\
+	/* Needed to make libgcc to build properly */	\
+	if (mips_abi == ABI_N32)			\
+	{						\
+		builtin_define ("_ABIN32=2");		\
+		builtin_define ("_MIPS_SIM=_ABIN32");	\
+		builtin_define ("_MIPS_SZLONG=32");	\
+		builtin_define ("_MIPS_SZPTR=32");	\
+	}						\
+	else if (mips_abi == ABI_64)			\
+	{						\
+		builtin_define ("_ABI64=3");		\
+		builtin_define ("_MIPS_SIM=_ABI64");	\
+		builtin_define ("_MIPS_SZLONG=64");	\
+		builtin_define ("_MIPS_SZPTR=64");	\
+	}						\
+	else						\
+	{						\
+		builtin_define ("_MIPS_SIM=_MIPS_SIM_ABI32");	\
+		builtin_define ("_MIPS_SZLONG=32");	\
+		builtin_define ("_MIPS_SZPTR=32");	\
+	}						\
 } while (0)
 
+
 /* Layout of source language data types.  */
-
-/* This must agree with <machine/ansi.h>.  */
-#undef SIZE_TYPE
-#define SIZE_TYPE "unsigned int"
-
-#undef PTRDIFF_TYPE
-#define PTRDIFF_TYPE "int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
@@ -86,7 +117,8 @@ Boston, MA 02111-1307, USA.  */
    -static, -assert, and -nostdlib. Dynamic loader control.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
+  "%(endian_spec) \
+   %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips64} \
    %{bestGnum} %{shared} %{non_shared} \
    %{call_shared} %{no_archive} %{exact_version} \
    %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
@@ -100,29 +132,3 @@ Boston, MA 02111-1307, USA.  */
 #define MIPS_DEFAULT_GVALUE 0
 
 
-/* Since gas and gld are standard on OpenBSD, we don't need these.  */
-#undef ASM_FINAL_SPEC
-#undef STARTFILE_SPEC
-
-/* Switch into a generic section.  */
-#undef TARGET_ASM_NAMED_SECTION
-#define TARGET_ASM_NAMED_SECTION  default_elf_asm_named_section
-
-/* Not having TARGET_GAS here seems a mistake.  If we actually need to
-   be prepared for file switching, then we need a custom
-   TARGET_ASM_NAMED_SECTION too.  */
-
-#undef TEXT_SECTION
-#define TEXT_SECTION()				\
-do {						\
-  if (TARGET_FILE_SWITCHING)			\
-    abort ();					\
-  fputs (TEXT_SECTION_ASM_OP, asm_out_file);	\
-  fputc ('\n', asm_out_file);			\
-} while (0)
-
-/* collect2 support (Macros for initialization).  */
-
-/* Mips default configuration is COFF-only, and confuses collect2.  */
-#undef OBJECT_FORMAT_COFF
-#undef EXTENDED_COFF

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.48 2004/02/27 17:40:15 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.49 2004/09/06 09:01:05 pefo Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -57,10 +57,6 @@ CLEANFILES=	.gdbinit */.gdbinit *.info* \
 
 .if ${MACHINE} == "amd64"
 M_ARCH=		x86_64
-.elif ${MACHINE} == "arc" || ${MACHINE} == "pmax" || ${MACHINE} == "wgrisc"
-M_ARCH=		mipsel
-.elif ${MACHINE} == "hkmips" || ${MACHINE} == "sgi"
-M_ARCH=		mips
 .else
 M_ARCH=		${MACHINE_ARCH}
 .endif
