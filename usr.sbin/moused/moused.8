@@ -1,13 +1,14 @@
+.\"	$OpenBSD: moused.8,v 1.2 2000/09/01 23:16:27 aaron Exp $
+.\"
 .Dd August 30, 2000
 .Dt MOUSED 8
 .Os
-
 .Sh NAME
 .Nm moused
 .Nd
 mouse daemon
 .Sh SYNOPSIS
-.Nm 
+.Nm moused
 .Op Fl 3DPRcdfs
 .Op Fl I Ar pid_file
 .Op Fl F Ar rate
@@ -21,60 +22,70 @@ mouse daemon
 .Op Fl z Ar target
 .Op Fl b Ar buttons
 .Ar -p Ar device
-
-.Nm 
+.Nm moused
 .Ar -i Ar info
 .Ar -p Ar device
-
 .Sh DESCRIPTION
-.Nm 
-is the mouse daemon, whose purpose is to handle the mouse under the
-console, providing copy and paste functions.
-
-The daemon listens to mouse events, read bytes from the mouse, translates with 
-the appropriate protocol and then transmits to the pcvt console driver the
-actions to execute. 
-
-The following options are available:
+.Nm
+listens for mouse events on the specified
+.Ar device
+and communicates them to the
+.Xr pcvt 4
+driver through the
+.Pa /dev/pcvtctl
+interface.
+Its purpose is to provide copy/paste functionality on the PC console.
+.Pp
+By default, the left mouse button is used to select text (in the familiar
+click-and-drag fashion), the right button is used to extend the selection,
+and the middle button pastes.
+This behavior can be modified through the use of
+.Fl M ,
+i.e.,
+.Fl M
+.Ar 2=3
+maps the right mouse button to paste.
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl 3
 Emulate the third (middle) button for 2-button mice.  It is emulated by pressing
 the left and right physical buttons simultaneously.
-.It Fl C 
-Set double click speed as the maximum interval in msec between button clicks. 
+.It Fl C
+Set double click speed as the maximum interval in msec between button clicks.
 Without this option, the default value of 500 msec will be assumed. This option
 will have effect only on the cut and paste operations in the text mode console.
 .It Fl D
 Lower DTR on the serial port. This option is valid only if
-.Pa mousesystems 
+.Pa mousesystems
 is selected as the protocol type. The DTR line may need to be
-dropped for a 3-button mouse to operate in the 
+dropped for a 3-button mouse to operate in the
 .Pa mousesystems
 mode.
 .It Fl F Ar rate
 Set the report rate (reports/sec) of the device if supported.
 .It Fl I Ar file
-Write the process id of the 
+Write the process id of the
 .Pa moused
 daemon in the specified file. Without this option, the process id will be stored
-in 
+in
 .Pa /var/run/moused.pid.
 .It Fl P
 Do not start the Plug and Play COM device enumeration procedure when identifying
-the serial mouse.  If this option is given together with the 
-.Pa i 
-option, the 
+the serial mouse.  If this option is given together with the
+.Pa i
+option, the
 .Pa moused
 command won't be able to print useful information for the serial mouse.
 .It Fl R
-Lower RTS on the serial port. This option is valid only if 
-.Pa mousesystems 
+Lower RTS on the serial port. This option is valid only if
+.Pa mousesystems
 is selected as the protocol type by the
 .Pa -t
 option below. It is often used with the
 .Pa -D option above. Both RTS and DTR lines may need to be dropped for a
-3-button mouse to operate in the 
-.Pa mousesystems 
+3-button mouse to operate in the
+.Pa mousesystems
 mode.
 is selected as the protocol type by the
 .Pa mousesystems
@@ -93,36 +104,36 @@ testing and debugging.
 .It Fl i Ar info
 Print specified information and quit. Available pieces of information are :
 .Bl -column -indent
-.It port Ta Device name, i.e. 
+.It port Ta Device name, i.e.,
 .Pa /dev/cua0[0-3]
 for a serial mouse,
-.Pa /dev/lms0 
+.Pa /dev/lms0
 for a logitech-style bus mouse,
 .Pa /dev/mms0
 for a microsoft-style bus mouse and
-.Pa /dev/psm0 
+.Pa /dev/psm0
 for a PS/2 mouse.
 .It if Ta Physical interface : serial, bus, inport or PS/2.
 .It type Ta Protocol type : one of the type supported by the
-.Pa -t 
+.Pa -t
 option.
-.It model Ta Mouse model. The 
-.Pa moused 
+.It model Ta Mouse model. The
+.Pa moused
 command may not always be able to identify the model.
 .It all Ta All of the above options. Print device name, physical interface, type
-and model in this order, in one line. 
+and model in this order, in one line.
 .El
 .It Fl m Ar mousetype
-Precise the model of the mouse. For example, 
-.Pa IntelliMouse 
+Precise the model of the mouse. For example,
+.Pa IntelliMouse
 can be specified for a PS/2 mouse with a wheel.
 .It Fl M Ar N=M
 Assign the physical button
 .Pa N
-to the logical button 
+to the logical button
 .Pa M.
-You may specify as many instances of this option as you like. More than one 
-physical button may be assigned to a logical button at the same time. In this 
+You may specify as many instances of this option as you like. More than one
+physical button may be assigned to a logical button at the same time. In this
 case the logical button will be down, if either of the assigned physical buttons
 is held down.  Do not put space around `='.
 .It Fl w Ar N
@@ -131,7 +142,7 @@ Make the physical button
 act as the wheel mode button.
 While this button is pressed, X and Y axis movement is reported to be zero
 and the Y axis movement is mapped to Z axis.
-You may further map the Z axis movement to virtual buttons by the 
+You may further map the Z axis movement to virtual buttons by the
 .Fl z
 option below.
 .It Fl z Ar target
@@ -145,34 +156,34 @@ maybe:
 X or Y axis movement will be reported when the Z axis movement is detected.
 .It Ar N
 Report the virtual buttons
-.Ar N 
-and 
-.Ar N+1 
-down events respectively when negative and positive Z axis movement 
-is detected.
-There doesn't need to be physical buttons 
 .Ar N
-and 
+and
+.Ar N+1
+down events respectively when negative and positive Z axis movement
+is detected.
+There doesn't need to be physical buttons
+.Ar N
+and
 .Ar N+1 .
 Note that mapping to logical buttons is carried out after mapping
 from the Z axis movement to the virtual buttons is done.
 .El
 .It Fl p Ar port
-Use the device 
+Use the device
 .Pa port
-to communicate with the mouse. 
+to communicate with the mouse.
 .Pa port
-must be one of 
+must be one of
 .Pa /dev/cua0[0-3]
 for a serial mouse,
 .Pa /dev/lms0
 for a logitech-bus style mouse,
-.Pa /dev/mms0 
+.Pa /dev/mms0
 for a microsoft-bus style mouse or
 .Pa /dev/psm0
 for a PS/2 mouse.
 .It Fl r Ar resolution
-Set the resolution of the device; in Dots Per Inch, or 
+Set the resolution of the device; in Dots Per Inch, or
 .Pa low
 ,
 .Pa medium-low
@@ -188,33 +199,33 @@ option.
 Specify the protocol type of the mouse attached to the port. You may explicitly
 specify a type listed below or use
 .Pa auto
-to let the 
+to let the
 .Pa moused
 command to automatically select an appropriate protocol for the given mouse. If
-you entirely ommit this option in the command line, 
+you entirely ommit this option in the command line,
 .Pa auto
 is assumed. Under normal circumstances, you need to use this option only if the
 .Pa moused
 command is unable to detect the protocol automatically.
-
+.Pp
 Note that if a protocol type is specified with this option, the
-.Pa -P 
+.Pa -P
 option above is implied and Plug and Play COM device enumeration procedure will be disabled.
-
+.Pp
 Also note that if your mouse is attached to the PS/2 mouse port,
 you should always choose
-.Pa auto 
-or 
-.Pa ps/2 
-, regardless of the brand and model of the mouse. Likewise, if your mouse is 
-attached to the bus mouse port, choose 
-.Pa auto 
-or 
-.Pa busmouse
-. Serial mouse protocols will not work with these mice.
-
+.Pa auto
+or
+.Pa ps/2 ,
+regardless of the brand and model of the mouse. Likewise, if your mouse is
+attached to the bus mouse port, choose
+.Pa auto
+or
+.Pa busmouse .
+Serial mouse protocols will not work with these mice.
+.Pp
 Valid protocol type for this option are the following:
-
+.Pp
 For serial mice:
 .Bl -tag -width thinkingmouse
 .It microsoft Ta Microsoft serial mouse protocol. Most 2-button serial mice use this protocol.
@@ -226,31 +237,32 @@ protocol.
 .It mmseries Ta MM Series mouse protocol.
 .It logitech Ta Logitech mouse protocol. Note that this is for old Logitech
 models.
-.Pa mouseman 
+.Pa mouseman
 or
 .Pa intellimouse
 should be specified for newer models.
-.It mouseman Ta Logitech MouseMan and TrackMan protocol. Some 3-button mice 
-may be compatible with this protocol. Note that MouseMan+ and FirstMouse+ use 
+.It mouseman Ta Logitech MouseMan and TrackMan protocol. Some 3-button mice
+may be compatible with this protocol. Note that MouseMan+ and FirstMouse+ use
 .Pa intellimouse
 protocol rather than this one.
 .It glidepoint Ta  ALPS GlidePoint protocol.
 .It thinkingmouse Ta Kensington ThinkingMouse protocol.
 .It mmhitab Ta Hitachi tablet protocol.
 .El
-
+.Pp
 For the Logitech-style and Microsoft-style bus mouse:
 .Bl -tag -indent
 .It busmouse Ta This is the only protocol type available for the bus style
 mice and should be specified for any bus style mice, regardless of the brand.
 .El
-
+.Pp
 For the PS/2 mouse:
 .Bl -tag -indent
-.It ps/2 Ta This is the only protocol type available for the PS/2 mouse and 
+.It ps/2 Ta This is the only protocol type available for the PS/2 mouse and
 should be specified for any PS/2 mice, regardless of the brand.
-
+.Sh SEE ALSO
+.Xr pcvt 4
 .Sh HISTORY
 This moused daemon is a slightly modified version of the moused daemon from the
 FreeBSD project, written by Michael Smith <msmith@FreeBSD.org>. Both inherits of
-code from the Xfree Project. 
+code from the Xfree Project.
