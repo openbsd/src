@@ -1,4 +1,4 @@
-/*	$OpenBSD: wrtvid.c,v 1.4 2003/06/01 17:00:37 deraadt Exp $ */
+/*	$OpenBSD: wrtvid.c,v 1.5 2003/08/16 17:46:08 deraadt Exp $ */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,9 +9,57 @@
 #include <db.h>
 #include <machine/disklabel.h>
 
-main(argc, argv)
-	int argc;
-	char **argv;
+
+#define BUF_SIZ 512
+static void
+copy_exe(int exe_file, int tape_exe)
+{
+	char *buf;
+	int cnt = 0;
+
+	buf = (char *)malloc(BUF_SIZ);
+
+	lseek (exe_file, 0x20, SEEK_SET);
+	while (BUF_SIZ == (cnt = read(exe_file, buf, BUF_SIZ)))
+		write(tape_exe, buf, cnt);
+	bzero(&buf[cnt], BUF_SIZ-cnt);
+	write(tape_exe, buf, BUF_SIZ);
+}
+
+static void
+swabvid(struct cpu_disklabel *pcpul)
+{
+	M_32_SWAP(pcpul->vid_oss);
+	M_16_SWAP(pcpul->vid_osl);
+	/*
+	M_16_SWAP(pcpul->vid_osa_u);
+	M_16_SWAP(pcpul->vid_osa_l);
+	*/
+	M_32_SWAP(pcpul->vid_cas);
+}
+
+static void
+swabcfg(struct cpu_disklabel *pcpul)
+{
+	M_16_SWAP(pcpul->cfg_atm);
+	M_16_SWAP(pcpul->cfg_prm);
+	M_16_SWAP(pcpul->cfg_atm);
+	M_16_SWAP(pcpul->cfg_rec);
+	M_16_SWAP(pcpul->cfg_trk);
+	M_16_SWAP(pcpul->cfg_psm);
+	M_16_SWAP(pcpul->cfg_shd);
+	M_16_SWAP(pcpul->cfg_pcom);
+	M_16_SWAP(pcpul->cfg_rwcc);
+	M_16_SWAP(pcpul->cfg_ecc);
+	M_16_SWAP(pcpul->cfg_eatm);
+	M_16_SWAP(pcpul->cfg_eprm);
+	M_16_SWAP(pcpul->cfg_eatw);
+	M_16_SWAP(pcpul->cfg_rsvc1);
+	M_16_SWAP(pcpul->cfg_rsvc2);
+}
+
+int
+main(int argc, char *argv[])
 {
 	struct cpu_disklabel *pcpul;
 	struct stat stat;
@@ -50,7 +98,7 @@ main(argc, argv)
 
 	if (filename[5] == 't' ) {
 		pcpul->vid_oss = 1;
-	}else {
+	} else {
 		pcpul->vid_oss = 2;
 	}
 	pcpul->vid_osl = (((stat.st_size -0x20) +511) / 512) *2;
@@ -95,53 +143,4 @@ main(argc, argv)
 	close(tape_vid);
 	close(tape_exe);
 	return (0);
-}
-
-#define BUF_SIZ 512
-copy_exe(exe_file, tape_exe)
-	int exe_file, tape_exe;
-{
-	char *buf;
-	int cnt = 0;
-
-	buf = (char *)malloc(BUF_SIZ);
-
-	lseek (exe_file, 0x20, SEEK_SET);
-	while (BUF_SIZ == (cnt = read(exe_file, buf, BUF_SIZ))) {
-		write(tape_exe, buf, cnt);
-	}
-	bzero(&buf[cnt], BUF_SIZ-cnt);
-	write(tape_exe, buf, BUF_SIZ);
-}
-
-swabvid(pcpul)
-	struct cpu_disklabel *pcpul;
-{
-	M_32_SWAP(pcpul->vid_oss);
-	M_16_SWAP(pcpul->vid_osl);
-	/*
-	M_16_SWAP(pcpul->vid_osa_u);
-	M_16_SWAP(pcpul->vid_osa_l);
-	*/
-	M_32_SWAP(pcpul->vid_cas);
-}
-
-swabcfg(pcpul)
-	struct cpu_disklabel *pcpul;
-{
-	M_16_SWAP(pcpul->cfg_atm);
-	M_16_SWAP(pcpul->cfg_prm);
-	M_16_SWAP(pcpul->cfg_atm);
-	M_16_SWAP(pcpul->cfg_rec);
-	M_16_SWAP(pcpul->cfg_trk);
-	M_16_SWAP(pcpul->cfg_psm);
-	M_16_SWAP(pcpul->cfg_shd);
-	M_16_SWAP(pcpul->cfg_pcom);
-	M_16_SWAP(pcpul->cfg_rwcc);
-	M_16_SWAP(pcpul->cfg_ecc);
-	M_16_SWAP(pcpul->cfg_eatm);
-	M_16_SWAP(pcpul->cfg_eprm);
-	M_16_SWAP(pcpul->cfg_eatw);
-	M_16_SWAP(pcpul->cfg_rsvc1);
-	M_16_SWAP(pcpul->cfg_rsvc2);
 }

@@ -1,13 +1,44 @@
-/*	$OpenBSD: prtvid.c,v 1.4 2001/07/04 08:06:57 niklas Exp $	*/
+/*	$OpenBSD: prtvid.c,v 1.5 2003/08/16 17:46:08 deraadt Exp $	*/
 
 #include <stdio.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
 #include <machine/disklabel.h>
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+static void
+swabvid(struct cpu_disklabel *cdl)
+{
+	M_32_SWAP(cdl->vid_oss);
+	M_16_SWAP(cdl->vid_osl);
+	M_16_SWAP(cdl->vid_osa_u);
+	M_16_SWAP(cdl->vid_osa_l);
+	M_32_SWAP(cdl->vid_cas);
+}
+
+static void
+swabcfg(struct cpu_disklabel *cdl)
+{
+	printf("swapping cfg\n");
+
+	M_16_SWAP(cdl->cfg_atm);
+	M_16_SWAP(cdl->cfg_prm);
+	M_16_SWAP(cdl->cfg_atm);
+	M_16_SWAP(cdl->cfg_rec);
+	M_16_SWAP(cdl->cfg_trk);
+	M_16_SWAP(cdl->cfg_psm);
+	M_16_SWAP(cdl->cfg_shd);
+	M_16_SWAP(cdl->cfg_pcom);
+	M_16_SWAP(cdl->cfg_rwcc);
+	M_16_SWAP(cdl->cfg_ecc);
+	M_16_SWAP(cdl->cfg_eatm);
+	M_16_SWAP(cdl->cfg_eprm);
+	M_16_SWAP(cdl->cfg_eatw);
+	M_16_SWAP(cdl->cfg_rsvc1);
+	M_16_SWAP(cdl->cfg_rsvc2);
+}
+
+int
+main(int argc, char *argv[])
 {
 	struct cpu_disklabel *cdl;
 
@@ -92,36 +123,4 @@ main(argc, argv)
 	    (char *)&(cdl->cfg_rsvc1) - (char *)(cdl));
 	printf("cfg_rsvc2	%x	%x\n", cdl->cfg_rsvc2,
 	    (char *)&(cdl->cfg_rsvc2) - (char *)(cdl));
-}
-
-swabvid(cdl)
-	struct cpu_disklabel *cdl;
-{
-	M_32_SWAP(cdl->vid_oss);
-	M_16_SWAP(cdl->vid_osl);
-	M_16_SWAP(cdl->vid_osa_u);
-	M_16_SWAP(cdl->vid_osa_l);
-	M_32_SWAP(cdl->vid_cas);
-}
-
-swabcfg(cdl)
-	struct cpu_disklabel *cdl;
-{
-	printf("swapping cfg\n");
-
-	M_16_SWAP(cdl->cfg_atm);
-	M_16_SWAP(cdl->cfg_prm);
-	M_16_SWAP(cdl->cfg_atm);
-	M_16_SWAP(cdl->cfg_rec);
-	M_16_SWAP(cdl->cfg_trk);
-	M_16_SWAP(cdl->cfg_psm);
-	M_16_SWAP(cdl->cfg_shd);
-	M_16_SWAP(cdl->cfg_pcom);
-	M_16_SWAP(cdl->cfg_rwcc);
-	M_16_SWAP(cdl->cfg_ecc);
-	M_16_SWAP(cdl->cfg_eatm);
-	M_16_SWAP(cdl->cfg_eprm);
-	M_16_SWAP(cdl->cfg_eatw);
-	M_16_SWAP(cdl->cfg_rsvc1);
-	M_16_SWAP(cdl->cfg_rsvc2);
 }
