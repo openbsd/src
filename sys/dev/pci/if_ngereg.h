@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngereg.h,v 1.2 2001/07/02 05:38:28 nate Exp $	*/
+/*	$OpenBSD: if_ngereg.h,v 1.3 2002/09/21 15:29:46 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: if_ngereg.h,v 1.7 2002/08/08 18:33:28 ambrisko Exp $
  */
 
 #define NGE_CSR			0x00
@@ -229,7 +229,9 @@
 #define NGE_INTRS	\
 	(NGE_IMR_RX_OFLOW|NGE_IMR_TX_UFLOW|NGE_IMR_TX_OK|\
 	 NGE_IMR_TX_IDLE|NGE_IMR_RX_OK|NGE_IMR_RX_ERR|\
-	 NGE_IMR_SYSERR|NGE_IMR_PHY_INTR|NGE_IMR_RX_DESC_OK|NGE_IMR_TX_DESC_OK)
+	 NGE_IMR_SYSERR|NGE_IMR_PHY_INTR|\
+	 NGE_IMR_RX_DESC_OK|NGE_IMR_TX_DESC_OK|\
+	 NGE_IMR_RX_IDLE|NGE_IMR_RX_FIFO_OFLOW)
 
 /* Interrupt enable register */
 #define NGE_IER_INTRENB		0x00000001
@@ -432,6 +434,8 @@
 /* TBI ANAR */
 #define NGE_TBIANAR_HDX		0x00000020
 #define NGE_TBIANAR_FDX		0x00000040
+#define NGE_TBIANAR_PS1		0x00000080
+#define NGE_TBIANAR_PS2		0x00000100
 #define NGE_TBIANAR_PCAP	0x00000180
 #define NGE_TBIANAR_REMFAULT	0x00003000
 #define NGE_TBIANAR_NEXTPAGE	0x00008000
@@ -439,6 +443,8 @@
 /* TBI ANLPAR */
 #define NGE_TBIANLPAR_HDX	0x00000020
 #define NGE_TBIANLPAR_FDX	0x00000040
+#define NGE_TBIANLPAR_PS1	0x00000080
+#define NGE_TBIANLPAR_PS2	0x00000100
 #define NGE_TBIANLPAR_PCAP	0x00000180
 #define NGE_TBIANLPAR_REMFAULT	0x00003000
 #define NGE_TBIANLPAR_NEXTPAGE	0x00008000
@@ -479,8 +485,14 @@ struct nge_desc_64 {
 #define nge_ctl			nge_cmdsts
 	u_int32_t		nge_extsts;
 	/* Driver software section */
-	struct mbuf		*nge_mbuf;
-	struct nge_desc_64	*nge_nextdesc;
+	union {
+		struct mbuf		*nge_mbuf;
+		u_int64_t		nge_dummy;
+	} nge_mb_u;
+	union {
+		struct nge_desc_64	*nge_nextdesc;
+		u_int64_t		nge_dummy;
+	} nge_nd_u;
 };
 
 struct nge_desc_32 {
@@ -493,11 +505,19 @@ struct nge_desc_32 {
 #define nge_ctl			nge_cmdsts
 	u_int32_t		nge_extsts;
 	/* Driver software section */
-	struct mbuf		*nge_mbuf;
-	struct nge_desc_32	*nge_nextdesc;
+	union {
+		struct mbuf		*nge_mbuf;
+		u_int64_t		nge_dummy;
+	} nge_mb_u;
+	union {
+		struct nge_desc_32	*nge_nextdesc;
+		u_int64_t		nge_dummy;
+	} nge_nd_u;
 };
 
 #define nge_desc	nge_desc_32
+#define nge_mbuf	nge_mb_u.nge_mbuf
+#define nge_nextdesc	nge_nd_u.nge_nextdesc
 
 #define NGE_CMDSTS_BUFLEN	0x0000FFFF
 #define NGE_CMDSTS_PKT_OK	0x08000000
@@ -551,7 +571,7 @@ struct nge_desc_32 {
 #define NGE_RXEXTSTS_UDPPKT	0x00200000
 #define NGE_RXEXTSTS_UDPCSUMERR	0x00400000
 
-#define NGE_RX_LIST_CNT		64
+#define NGE_RX_LIST_CNT		128
 #define NGE_TX_LIST_CNT		128
 
 struct nge_list_data {
@@ -644,6 +664,8 @@ struct nge_softc {
 	struct timeout		nge_timeout;
 	LIST_HEAD(__nge_jfreehead, nge_jpool_entry)	nge_jfree_listhead;
 	LIST_HEAD(__nge_jinusehead, nge_jpool_entry)	nge_jinuse_listhead;
+	u_int8_t		nge_tbi;
+	struct ifmedia		nge_ifmedia;
 };
 
 /*
