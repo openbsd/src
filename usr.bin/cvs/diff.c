@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.17 2005/01/13 23:39:42 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.18 2005/01/14 00:35:15 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -832,7 +832,7 @@ isqrt(int n)
 	int y, x = 1;
 
 	if (n == 0)
-		return(0);
+		return (0);
 
 	do { /* newton was a stinker */
 		y = x;
@@ -851,7 +851,8 @@ stone(int *a, int n, int *b, int *c)
 	int oldc, tc, oldl;
 	u_int numtries;
 
-	const u_int bound = dflag ? UINT_MAX : MAX(256, isqrt(n));
+	/* XXX move the isqrt() out of the macro to avoid multiple calls */
+	const u_int bound = dflag ? UINT_MAX : MAX(256, (u_int)isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
