@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.27 1995/04/11 22:08:06 pk Exp $	*/
+/*	$NetBSD: cons.c,v 1.28 1995/11/25 00:03:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -260,7 +260,8 @@ cnpollc(on)
 }
 
 void
-nullcnpollc(on)
+nullcnpollc(dev, on)
+	dev_t dev;
 	int on;
 {
 
