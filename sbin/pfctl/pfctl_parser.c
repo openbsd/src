@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.14 2001/06/26 20:50:26 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.15 2001/06/26 22:26:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -296,26 +296,33 @@ print_rdr(struct pf_rdr *r)
 	printf("\n");
 }
 
+char *pf_reasons[PFRES_MAX+2] = PFRES_NAMES;
+
 void
 print_status(struct pf_status *s)
 {
-	time_t t = time(NULL);
 
-	printf("Time: %u Since: %u Running: %u", t, s->since, s->running);
+	time_t t = time(NULL);
+	int i;
+
+	printf("Time: %u Since: %u Running: %u\n", t, s->since, s->running);
 	if (s->running) {
-		printf(" Bytes In: %u  Bytes Out: %u\n", 
-		       s->bytes[PF_IN], s->bytes[PF_OUT]);
-		printf(" Inbound Packets: Passed: %u Dropped: %u\n", 
-		       s->packets[PF_IN][PF_DROP], 
-		       s->packets[PF_IN][PF_DROP]);
-		printf(" Outbound Packets: Passed: %u Dropped: %u\n", 
-		       s->packets[PF_OUT][PF_PASS], 
-		       s->packets[PF_OUT][PF_DROP]);
-		printf(" States: %u  Inserts: %u Removals: %u Searches: %u", 
-		       s->states, s->state_inserts,
-		       s->state_removals, s->state_searches);
+		printf("Bytes In: %u  Bytes Out: %u\n", 
+		    s->bytes[PF_IN], s->bytes[PF_OUT]);
+		printf("Inbound Packets: Passed: %u Dropped: %u\n", 
+		    s->packets[PF_IN][PF_DROP], 
+		    s->packets[PF_IN][PF_DROP]);
+		printf("Outbound Packets: Passed: %u Dropped: %u\n", 
+		    s->packets[PF_OUT][PF_PASS], 
+		    s->packets[PF_OUT][PF_DROP]);
+		printf("States: %u  Inserts: %u Removals: %u Searches: %u\n",
+		    s->states, s->state_inserts,
+		    s->state_removals, s->state_searches);
+		printf("Counters\n");
+		for (i = 0; i < PFRES_MAX; i++)
+			printf("%30s %8lld\n", pf_reasons[i],
+			    s->counters[i]);
 	}
-	printf("\n");
 }
 
 void

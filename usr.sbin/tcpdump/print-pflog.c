@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.4 2001/06/26 19:06:16 provos Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.5 2001/06/26 22:26:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.4 2001/06/26 19:06:16 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.5 2001/06/26 22:26:14 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -52,6 +52,8 @@ struct rtentry;
 
 #include "interface.h"
 #include "addrtoname.h"
+
+char *pf_reasons[PFRES_MAX+2] = PFRES_NAMES;
 
 void
 pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
@@ -82,27 +84,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	hdr = (struct pfloghdr *)p;
 
 	res = ntohs(hdr->reason);
-	switch(res) {
-	case PFRES_MATCH:
-		why = "match";
-		break;
-
-	case PFRES_BADOFF:
-		why = "bad-offset";
-		break;
-
-	case PFRES_FRAG:
-		why = "fragment";
-		break;
-
-	case PFRES_SHORT:
-		why = "short";
-		break;
-
-	default:
-		why = "unkn";
-		break;
-	}
+	why = (res <= PFRES_MAX) ? pf_reasons[res] : "unkn";
 
 	snprintf(reason, sizeof(reason), "%d(%s)", res, why); 
 

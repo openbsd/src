@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.63 2001/06/26 21:47:40 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.64 2001/06/26 22:26:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2020,7 +2020,20 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	}
 }
 
-#define SAVE_SET(a,x)	do { if ((a) != NULL) *(a) = (x); } while (0)
+
+#define ACTION_SET(a, x) \
+	do { \
+		if ((a) != NULL) \
+			*(a) = (x); \
+	} while (0)
+
+#define REASON_SET(a, x) \
+	do { \
+		if ((a) != NULL) \
+			*(a) = (x); \
+		if (x < PFRES_MAX) \
+			pf_status.counters[x]++; \
+	} while (0)
 
 /*
  * ipoff and off are measured from the start of the mbuf chain.
@@ -2028,28 +2041,28 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
  */
 void *
 pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
-    int len, struct ip *h, u_short *action, u_short *reason)
+    int len, struct ip *h, u_short *actionp, u_short *reasonp)
 {
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 
 	/* sanity check */
 	if (ipoff > off) {
-		SAVE_SET(action, PF_DROP);
-		SAVE_SET(reason, PFRES_BADOFF);
+		ACTION_SET(actionp, PF_DROP);
+		REASON_SET(reasonp, PFRES_BADOFF);
 		return NULL;
 	}
 	if (fragoff) {
 		if (fragoff >= len)
-			SAVE_SET(action, PF_PASS);
+			ACTION_SET(actionp, PF_PASS);
 		else {
-			SAVE_SET(action, PF_DROP);
-			SAVE_SET(reason, PFRES_FRAG);
+			ACTION_SET(actionp, PF_DROP);
+			REASON_SET(reasonp, PFRES_FRAG);
 		}
 		return (NULL);
 	}
 	if (m->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
-		SAVE_SET(action, PF_DROP);
-		SAVE_SET(reason, PFRES_SHORT);
+		ACTION_SET(actionp, PF_DROP);
+		REASON_SET(reasonp, PFRES_SHORT);
 		return (NULL);
 	}
 	m_copydata(m, off, len, p);
@@ -2082,7 +2095,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 
 	if (m->m_pkthdr.len < sizeof(*h)) {
 		action = PF_DROP;
-		reason = PFRES_SHORT;
+		REASON_SET(&reason, PFRES_SHORT);
 		log = 1;
 		goto done;
 	}

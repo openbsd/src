@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.18 2001/06/26 20:50:26 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.19 2001/06/26 22:26:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -122,7 +122,23 @@ struct pf_rdr {
 	u_int8_t	 not;
 };
 
+/* Reasons code for passing/dropping a packet */
+#define PFRES_MATCH	0		/* Explicit match of a rule */
+#define PFRES_BADOFF	1		/* Bad offset for pull_hdr */
+#define PFRES_FRAG	2		/* Dropping following fragment */
+#define PFRES_SHORT	3		/* Dropping short packet */
+#define PFRES_MAX	3		/* total */
+
+#define PFRES_NAMES { \
+	"match", \
+	"bad-offset", \
+	"fragment", \
+	"short", \
+	NULL \
+}
+
 struct pf_status {
+	quad_t		counters[PFRES_MAX];
 	u_int32_t	running;
 	u_int32_t	bytes[2];
 	u_int32_t	packets[2][2];
@@ -189,12 +205,6 @@ struct pfioc_if {
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
-
-/* Reasons code for passing/dropping a packet */
-#define PFRES_MATCH	0		/* Explicit match of a rule */
-#define PFRES_BADOFF	1		/* Bad offset for pull_hdr */
-#define PFRES_FRAG	2		/* Dropping following fragment */
-#define PFRES_SHORT	3		/* Dropping short packet */
 
 #ifdef _KERNEL
 
