@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.9 2001/06/25 17:17:06 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.10 2001/06/25 17:59:19 smart Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -47,7 +47,7 @@
 #include "pfctl_parser.h"
 
 void	 print_error(char *);
-void	 usage();
+void	 usage(void);
 char	*load_file(char *, size_t *);
 int	 pfctl_enable(int);
 int	 pfctl_disable(int);
@@ -61,7 +61,14 @@ int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *);
 int	 pfctl_nat(int, char *);
 int	 pfctl_log(int, char *);
-int	 main(int, char *[]);
+
+int	 dflag;
+int	 eflag;
+char	*clearopt;
+char	*logopt;
+char	*natopt;
+char	*rulesopt;
+char	*showopt;
 
 void
 print_error(char *s)
@@ -77,6 +84,7 @@ usage()
  
 	fprintf(stderr, "usage: %s [-d] [-c set] [-r file]", __progname);
 	fprintf(stderr, " [-n file] [-s set] [-l if] [-e]\n");
+	exit(1);
 }
 
 char *
@@ -403,71 +411,91 @@ main(int argc, char *argv[])
 	int dev;
 	int ch;
 
-	if (argc <= 1) {
-		usage();
-		return (0);
+	while (!error && (ch = getopt(argc, argv, "dc:r:n:s:l:e")) != -1) {
+		switch (ch) {
+		case 'd':
+			dflag++;
+			break;
+		case 'c':
+			clearopt = optarg;
+			break;
+		case 'r':
+			rulesopt = optarg;
+			break;
+		case 'n':
+			natopt = optarg;
+			break;
+		case 's':
+			showopt = optarg;
+			break;
+		case 'l':
+			logopt = optarg;
+			break;
+		case 'e':
+			eflag++;
+			break;
+		default:
+			usage();
+		}
 	}
+
 	dev = open("/dev/pf", O_RDWR);
 	if (dev < 0) {
 		print_error("open(/dev/pf)");
 		return (1);
 	}
-	while (!error && (ch = getopt(argc, argv, "dc:r:n:s:l:e")) != -1) {
-		switch (ch) {
-		case 'd':
-			if (pfctl_disable(dev))
-				error = 1;
-			break;
-		case 'c':
-			if (!strcmp(optarg, "rules")) {
-				if (pfctl_clear_rules(dev))
-					error = 1;
-			} else if (!strcmp(optarg, "nat")) {
-				if (pfctl_clear_nat(dev))
-					error = 1;
-			} else if (!strcmp(optarg, "states")) {
-				if (pfctl_clear_states(dev))
-					error = 1;
-			} else
-				error = 1;
-			break;
-		case 'r':
-			if (pfctl_rules(dev, optarg))
-				error = 1;
-			break;
-		case 'n':
-			if (pfctl_nat(dev, optarg))
-				error = 1;
-			break;
-		case 's':
-			if (!strcmp(optarg, "rules")) {
-				if (pfctl_show_rules(dev))
-					error = 1;
-			} else if (!strcmp(optarg, "nat")) {
-				if (pfctl_show_nat(dev))
-					error = 1;
-			} else if (!strcmp(optarg, "states")) {
-				if (pfctl_show_states(dev, 0))
-					error = 1;
-			} else if (!strcmp(optarg, "status")) {
-				if (pfctl_show_status(dev))
-					error = 1;
-			} else
-				error = 1;
-			break;
-		case 'l':
-			if (pfctl_log(dev, optarg))
-				error = 1;
-			break;
-		case 'e':
-			if (pfctl_enable(dev))
-				error = 1;
-			break;
-		default:
-			usage();
+
+	if (dflag)
+		if (pfctl_disable(dev))
 			error = 1;
-		}
+
+	if (clearopt != NULL) {
+		if (!strcmp(clearopt, "rules")) {
+			if (pfctl_clear_rules(dev))
+				error = 1;
+		} else if (!strcmp(clearopt, "nat")) {
+			if (pfctl_clear_nat(dev))
+				error = 1;
+		} else if (!strcmp(clearopt, "states")) {
+			if (pfctl_clear_states(dev))
+				error = 1;
+		} else
+			error = 1;
 	}
+
+	if (rulesopt != NULL)
+		if (pfctl_rules(dev, rulesopt))
+			error = 1;
+
+	if (natopt != NULL)
+		if (pfctl_nat(dev, natopt))
+			error = 1;
+
+	if (showopt != NULL) {
+		if (!strcmp(showopt, "rules")) {
+			if (pfctl_show_rules(dev))
+				error = 1;
+		} else if (!strcmp(showopt, "nat")) {
+			if (pfctl_show_nat(dev))
+				error = 1;
+		} else if (!strcmp(showopt, "states")) {
+			if (pfctl_show_states(dev, 0))
+				error = 1;
+		} else if (!strcmp(showopt, "status")) {
+			if (pfctl_show_status(dev))
+				error = 1;
+		} else
+			error = 1;
+	}
+
+	if (logopt != NULL)
+		if (pfctl_log(dev, logopt))
+			error = 1;
+
+	if (eflag)
+		if (pfctl_enable(dev))
+			error = 1;
+
 	close(dev);
 	return (error);
 }
