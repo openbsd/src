@@ -1,2 +1,2 @@
-The powerpc port boots off a boot program in an MSDOS filesystem. 
+The MACHINE port boots off a boot program in an MSDOS filesystem. 
 This is now set up by the install program and no special setup is required.

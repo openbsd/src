@@ -1,11 +1,11 @@
-OpenBSD/MACHINE OSREV runs on iMac and possibly some other G3 and G4 Power
-Macintosh systems.  Older ADB-based systems are unlikely to work.  This is
-partially due to firmware issues and partially drive issues.
+OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
+as possibly some other G3 Macintosh systems.  Older ADB-based systems
+will not work, only USB keyboard is supported.
 
-Has been tested on iMac Rev A/233MHz and Rev C/333MHz machines as well as
-several Power Macintosh G4 systems (single and dual processor).  Some
-success has been reported on a PowerBook, however this is not well
-supported.
+Has been tested on iMac Rev A/233MHz and Rev C/333MHz machines, several
+Power Macintosh G4 systems (single and dual processor), as well as the
+G4 Cube.  Some success has been reported on a PowerBook, however this
+is not well supported.
 
 Some code has been written to work better on the B&W G3, but has never
 been retested.  Hardware availability is currently limiting development on
@@ -13,20 +13,20 @@ these systems.
 
 Supported devices {:-include-:}:
 
-	IDE hard disk controllers. iMac supported, other mac onboard possibly.
+	IDE hard disk controllers. iMac/G4 onboard supported.
 	SCSI host adapters:
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 
-	VGA, SVGA Display Adapters. 
+	AGP/SVGA/VGA Display Adapters: Primary Openfirmware display only.
 
 	Serial ports:
 		None.
 
 	Ethernet adapters:
-		[OPENFIRMWARE SUPPORT]
 		Digital DC21x4x-based PCI Ethernet adapters, including:
-		Znyx ZX34X
+			Znyx ZX34X
 		Onboard iMac 10-100Mbs Ethernet, 100Mbs untested.
+		Onboard G4 (gm) ethernet.
 
 	Tape drives:
 		SCSI Tape drives
@@ -36,9 +36,11 @@ Supported devices {:-include-:}:
 		Atapi CD-ROM drives
 
 	Mice:
-		NONE
+		USB Mice.
 
 	Sound Cards:
 		NONE
 
 	Miscellaneous:
+		USB Hubs.
+		USB printers.

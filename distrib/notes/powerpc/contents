@@ -35,7 +35,7 @@ To netboot from a pre-configured bootp/tftp/nfs server containing the
 To boot from a HFS formatted CD containing the "ofwboot", "bsd.rd" and all
 other installation files at the root directory of the CD:
 
-	boot cd:,ofwboot /OSREV/powerpc/bsd.rd
+	boot cd:,ofwboot /OSREV/MACHINE/bsd.rd
 
 Post-install, you will need to boot into OpenBSD from a hard drive, and
 may need to reboot to Mac OS if you have it installed on another drive
@@ -49,7 +49,7 @@ Macintosh G4 (Tower):
 
 To reboot to Mac OS:
 
-	boot boot hd:,\\:tbxi
+	mac-boot
 
 Typically, substituting the device alias (devalias) will allow for easy to
 understand device selection.  Typical examples from a Power Macintosh G4
@@ -68,23 +68,23 @@ one disk.
 
 DistributionDescription
 
-OpenBSDbase(40.4M,101.3M)
+OpenBSDbase(23.8M,71.4M)
 
-OpenBSDcomp(14.3M,48.3M)
+OpenBSDcomp(19.1M,65.5M)
 
-OpenBSDetc(164.4K,740.0K)
+OpenBSDetc(1.0M,3.3M)
 
-OpenBSDgame(6.1M,14.2M)
+OpenBSDgame(2.7M,6.3M)
 
-OpenBSDman(3.4M,13.1M)
+OpenBSDman(5.2M,19.5M)
 
-OpenBSDmisc(1.6M,5.4M)
+OpenBSDmisc(5.6M,5.6M)
 
-OpenBSDxbase(35.2M,85.6M)
+OpenBSDxbase(4.4M,12.1M)
 
-OpenBSDxshare(1.4M,8.3M)
+OpenBSDxshare(1.5M,8.1M)
 
-OpenBSDxfont(1.4M,8.3M)
+OpenBSDxfont(6.2M,7.3M)
 
-OpenBSDxserv(2.7M,7.4M)
+OpenBSDxserv(2.1M,5.4M)
 
