@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_pthread_mutex.c,v 1.6 2000/01/06 06:58:34 d Exp $	*/
+/*	$OpenBSD: test_pthread_mutex.c,v 1.7 2001/03/13 00:04:38 d Exp $	*/
 /* ==== test_pthread_cond.c =========================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
  *
@@ -127,11 +127,35 @@ test_mutex_debug()
 	CHECKr(pthread_mutex_destroy(&mutex_debug));
 }
 
+void
+test_mutex_recursive()
+{
+	pthread_mutexattr_t mutex_recursive_attr; 
+	pthread_mutex_t mutex_recursive; 
+	int i;
+
+	printf("test_mutex_recursive()\n");
+	CHECKr(pthread_mutexattr_init(&mutex_recursive_attr));
+	CHECKr(pthread_mutexattr_settype(&mutex_recursive_attr, 
+	    PTHREAD_MUTEX_RECURSIVE));
+	CHECKr(pthread_mutex_init(&mutex_recursive, &mutex_recursive_attr));
+
+	CHECKr(pthread_mutex_lock(&mutex_recursive));
+	for (i = 0; i < 9; i++)
+		CHECKr(pthread_mutex_lock(&mutex_recursive));
+	for (i = 0; i < 9; i++)
+		CHECKr(pthread_mutex_unlock(&mutex_recursive));
+	CHECKr(pthread_mutex_unlock(&mutex_recursive));
+	/* Posix D10 says undefined behaviour? */
+	ASSERTe(pthread_mutex_unlock(&mutex_recursive), != 0);
+}
+
 int
 main()
 {
 	test_mutex_static();
 	test_mutex_fast();
 	test_mutex_debug();
+	test_mutex_recursive();
 	SUCCEED;
 }
