@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.95 2001/03/18 17:20:13 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.96 2001/05/11 15:34:02 art Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1508,7 +1508,7 @@ send_data(instr, outstr, blksize, filesize, isreg)
 		if (isreg && filesize < (off_t)16 * 1024 * 1024) {
 			buf = mmap(0, filesize, PROT_READ, MAP_SHARED, filefd,
 				   (off_t)0);
-			if (!buf) {
+			if (buf == MAP_FAILED) {
 				syslog(LOG_WARNING, "mmap(%lu): %m",
 				    (unsigned long)filesize);
 				goto oldway;
