@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2003/07/09 23:56:16 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2003/07/10 15:26:54 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -556,7 +556,14 @@ badtrap:
 		     ins.i_op3.i_op3 == IOP3_STQF ||
 		     ins.i_op3.i_op3 == IOP3_LDQFA ||
 		     ins.i_op3.i_op3 == IOP3_STQFA)) {
-			if (emul_qf(ins.i_int, p, sv))
+			if (emul_qf(ins.i_int, p, sv, tf))
+				ADVANCE;
+			break;
+		}
+		if (ins.i_any.i_op == IOP_reg &&
+		    ins.i_op3.i_op3 == IOP3_POPC &&
+		    ins.i_op3.i_rs1 == 0) {
+			if (emul_popc(ins.i_int, p, sv, tf))
 				ADVANCE;
 			break;
 		}

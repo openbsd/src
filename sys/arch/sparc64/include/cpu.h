@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2003/07/09 23:56:16 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 2003/07/10 15:26:54 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -280,7 +280,8 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct proc *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
-int	emul_qf(int32_t, struct proc *, union sigval);
+int	emul_qf(int32_t, struct proc *, union sigval, struct trapframe64 *);
+int	emul_popc(int32_t, struct proc *, union sigval, struct trapframe64 *);
 
 /*
  *

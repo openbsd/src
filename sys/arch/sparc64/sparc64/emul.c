@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.4 2003/07/09 23:56:16 jason Exp $	*/
+/*	$OpenBSD: emul.c,v 1.5 2003/07/10 15:26:54 jason Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -457,18 +457,75 @@ emulinstr(pc, tf)
 	return 0;
 }
 
+#define	SIGN_EXT13(v)	(((int64_t)(v) << 51) >> 51)
+
+/*
+ * emulate STQF, STQFA, LDQF, and LDQFA
+ */
 int
-emul_qf(int32_t insv, struct proc *p, union sigval sv)
+emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 {
 	union instr ins;
+	int freg, isload;
+	u_int8_t asi;
+	int64_t addr;
 
 	ins.i_int = insv;
+	freg = ins.i_op3.i_rd & ~1;
+	freg |= (ins.i_op3.i_rd & 1) << 5;
 
-	if (ins.i_op3.i_rd & 0x20) {
+	if (ins.i_op3.i_op3 == IOP3_LDQF || ins.i_op3.i_op3 == IOP3_LDQFA)
+		isload = 1;
+	else
+		isload = 0;
+
+	if (ins.i_op3.i_op3 == IOP3_STQF || ins.i_op3.i_op3 == IOP3_LDQF)
+		asi = ASI_PRIMARY;
+	else if (ins.i_loadstore.i_i) {
+		/* XXX asi = %asi, how do I get %asi here? kill it for now */
+		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
+		return (0);
+	} else
+		asi = ins.i_asi.i_asi;
+
+	addr = tf->tf_global[ins.i_asi.i_rs1];
+	if (ins.i_loadstore.i_i)
+		addr += SIGN_EXT13(ins.i_simm13.i_simm13);
+	else
+		addr += tf->tf_global[ins.i_asi.i_rs2];
+
+	if ((asi & 0x80) == 0) {
+		/* priviledged asi */
+		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
+		return (0);
+	}
+
+	if ((freg & 3) != 0) {
+		/* only valid for %fN where N % 4 = 0 */
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
 		return (0);
 	}
 
 	trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 	return (0);
+}
+
+int
+emul_popc(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
+{
+	u_int64_t val, ret = 0;
+	union instr ins;
+
+	ins.i_int = insv;
+	if (ins.i_simm13.i_i == 0)
+		val = tf->tf_global[ins.i_asi.i_rs2];
+	else
+		val = SIGN_EXT13(ins.i_simm13.i_simm13);
+
+	for (; val != 0; val >>= 1)
+		if (val & 1)
+			ret++;
+
+	tf->tf_global[ins.i_asi.i_rd] = ret;
+	return (1);
 }
