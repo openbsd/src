@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.11 2001/08/18 00:48:57 espie Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.12 2001/11/14 20:00:48 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.11 2001/08/18 00:48:57 espie Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.12 2001/11/14 20:00:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -202,7 +202,10 @@ static void
 no_ktrace(sig)
 	int sig;
 {
-	(void)fprintf(stderr,
+	char buf[8192];
+
+	snprintf(buf, sizeof(buf),
 "error:\tktrace() system call not supported in the running kernel\n\tre-compile kernel with 'options KTRACE'\n");
-	exit(1);
+	write(STDERR_FILENO, buf, strlen(buf));
+	_exit(1);
 }
