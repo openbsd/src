@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.26 2004/01/16 10:45:49 jmc Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.27 2004/02/13 19:01:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -502,6 +502,8 @@ main(int argc, char **argv)
 	struct pcap_stat pstat;
 	int ch, np, Xflag = 0;
 	pcap_handler phandler = dump_packet;
+
+	closefrom(STDERR_FILENO + 1);
 
 	while ((ch = getopt(argc, argv, "Dxd:s:f:")) != -1) {
 		switch (ch) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.6 2004/01/18 14:21:52 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.7 2004/02/13 19:01:57 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -45,7 +45,7 @@ enum cmd_types {
 };
 
 static int priv_fd = -1;
-static pid_t child_pid = -1;
+static volatile pid_t child_pid = -1;
 
 volatile sig_atomic_t gotsig_chld = 0;
 
@@ -70,6 +70,9 @@ priv_init(void)
 	int snaplen, ret;
 	struct passwd *pw;
 
+	for (i = 1; i < _NSIG; i++)
+		signal(i, SIG_DFL);
+
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
 		err(1, "socketpair() failed");
@@ -77,6 +80,7 @@ priv_init(void)
 	pw = getpwnam("_pflogd");
 	if (pw == NULL)
 		errx(1, "unknown user _pflogd");
+	endpwent();
 
 	child_pid = fork();
 	if (child_pid < 0)
@@ -107,9 +111,6 @@ priv_init(void)
 	}
 
 	/* Father */
-	for (i = 1; i <= _NSIG; i++)
-		signal(i, SIG_DFL);
-
 	/* Pass ALRM/TERM/HUP through to child, and accept CHLD */
 	signal(SIGALRM, sig_pass_to_chld);
 	signal(SIGTERM, sig_pass_to_chld);
@@ -222,8 +223,11 @@ priv_open_log(void)
 static void
 sig_pass_to_chld(int sig)
 {
+	int oerrno = errno;
+
 	if (child_pid != -1)
 		kill(child_pid, sig);
+	errno = oerrno;
 }
 
 /* if parent gets a SIGCHLD, it will exit */
