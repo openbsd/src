@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.74 2004/02/15 02:45:47 tedu Exp $	*/
+/*	$OpenBSD: cd.c,v 1.75 2004/05/09 04:01:59 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ cdattach(parent, self, aux)
 	struct scsibus_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach:\n"));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -396,12 +396,12 @@ cdopen(dev, flag, fmt, p)
 				error = ENXIO;
 				goto bad2;
 			}
-			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
+			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
 
 			/* Fabricate a disk label. */
 			cdgetdisklabel(dev, cd, cd->sc_dk.dk_label,
 			    cd->sc_dk.dk_cpulabel, 0);
-			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
+			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated\n"));
 		}
 	}
 
@@ -515,9 +515,8 @@ cdstrategy(bp)
 		goto bad;
 	}
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
-	SC_DEBUG(cd->sc_link, SDEV_DB1,
-	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy: %ld bytes @ blk %d\n",
+	    bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
 	 * maybe the media changed, or no media loaded
@@ -612,7 +611,7 @@ cdstart(v)
 
 	splassert(IPL_BIO);
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart\n"));
 	/*
 	 * Check if the device has room for another command
 	 */
@@ -822,7 +821,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	if (cd == NULL)
 		return ENXIO;
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));
+	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx\n", cmd));
 
 	/*
 	 * If the device is not valid.. abandon ship

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.48 2003/05/18 16:06:35 mickey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.49 2004/05/09 04:01:59 krw Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ ssattach(parent, self, aux)
 	struct scsibus_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach: "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -565,8 +565,8 @@ ssstrategy(bp)
 	struct buf *dp;
 	int s;
 
-	SC_DEBUG(ss->sc_link, SDEV_DB1,
-	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	SC_DEBUG(ss->sc_link, SDEV_DB2, ("ssstrategy: %ld bytes @ blk %d\n",
+	    bp->b_bcount, bp->b_blkno));
 
 	if (bp->b_bcount > ss->sio.scan_window_size)
 		bp->b_bcount = ss->sio.scan_window_size;
@@ -634,7 +634,7 @@ ssstart(v)
 	struct scsi_r_scanner read_cmd;
 	int flags;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart\n"));
 	/*
 	 * See if there is a buf to do and we are not already
 	 * doing one

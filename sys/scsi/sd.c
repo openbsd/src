@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.67 2004/02/21 00:47:42 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.68 2004/05/09 04:01:59 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -175,7 +175,7 @@ sdattach(parent, self, aux)
 	struct scsibus_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach: "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -418,12 +418,12 @@ sdopen(dev, flag, fmt, p)
 				error = ENXIO;
 				goto bad2;
 			}
-			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
+			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
 
 			/* Load the partition info if not already loaded. */
 			sdgetdisklabel(dev, sd, sd->sc_dk.dk_label,
 			    sd->sc_dk.dk_cpulabel, 0);
-			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
+			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded\n"));
 		}
 	}
 
@@ -540,9 +540,8 @@ sdstrategy(bp)
 		goto bad;
 	}
 
-	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
-	SC_DEBUG(sd->sc_link, SDEV_DB1,
-	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %d\n",
+	    bp->b_bcount, bp->b_blkno));
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */
@@ -638,7 +637,7 @@ sdstart(v)
 	int blkno, nblks, cmdlen, error;
 	struct partition *p;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart\n"));
 
 	splassert(IPL_BIO);
 
@@ -840,7 +839,7 @@ sdioctl(dev, cmd, addr, flag, p)
 	if (sd == NULL)
 		return ENXIO;
 
-	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
+	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx\n", cmd));
 
 	/*
 	 * If the device is not valid.. abandon ship

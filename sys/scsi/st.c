@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.35 2003/05/18 16:06:35 mickey Exp $	*/
+/*	$OpenBSD: st.c,v 1.36 2004/05/09 04:01:59 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ stattach(parent, self, aux)
 	struct scsibus_attach_args *sa = aux;
 	struct scsi_link *sc_link = sa->sa_sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("stattach: "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("stattach:\n"));
 
 	/*
 	 * Store information needed to contact our base driver
@@ -642,7 +642,7 @@ st_mount_tape(dev, flags)
 	if (st->flags & ST_MOUNTED)
 		return 0;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n "));
+	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n"));
 	st->flags |= ST_NEW_MOUNT;
 	st->quirks = st->drive_quirks | st->modes[dsty].quirks;
 	/*
@@ -877,10 +877,10 @@ ststrategy(bp)
 	struct buf *dp;
 	int s;
 
-	SC_DEBUG(st->sc_link, SDEV_DB1,
-	    ("ststrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	SC_DEBUG(st->sc_link, SDEV_DB2, ("ststrategy: %ld bytes @ blk %d\n",
+	    bp->b_bcount, bp->b_blkno));
 	/*
-	 * If it's a null transfer, return immediatly
+	 * If it's a null transfer, return immediately.
 	 */
 	if (bp->b_bcount == 0)
 		goto done;
@@ -963,7 +963,7 @@ ststart(v)
 	struct scsi_rw_tape cmd;
 	int flags;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ststart "));
+	SC_DEBUG(sc_link, SDEV_DB2, ("ststart\n"));
 
 	splassert(IPL_BIO);
 
@@ -1463,7 +1463,7 @@ st_mode_sense(st, flags)
 	    ("density code 0x%x, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
 	    st->flags & ST_READONLY ? "protected" : "enabled"));
-	SC_DEBUG(sc_link, SDEV_DB3,
+	SC_DEBUGN(sc_link, SDEV_DB3,
 	    ("%sbuffered\n",
 	    scsi_sense.header.dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 	if (st->page_0_size)

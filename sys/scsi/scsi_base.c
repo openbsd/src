@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.56 2004/04/18 00:49:29 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.57 2004/05/09 04:01:59 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ scsi_done(xs)
 	if ((xs->flags & SCSI_USER) != 0) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("calling user done()\n"));
 		scsi_user_done(xs); /* to take a copy of the sense etc. */
-		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n "));
+		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n"));
 
 		scsi_free_xs(xs); /* restarts queue too */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
@@ -589,7 +589,7 @@ sc_err1(xs, async)
 {
 	int error;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("sc_err1,err = 0x%x \n", xs->error));
+	SC_DEBUG(xs->sc_link, SDEV_DB3, ("sc_err1,err = 0x%x\n", xs->error));
 
 	/*
 	 * If it has a buf, we might be working with
