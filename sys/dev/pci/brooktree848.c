@@ -232,9 +232,6 @@
 
 */
 
-#define OVERRIDE_CARD CARD_MIRO
-#define OVERRIDE_TUNER PHILIPS_SECAM
-
 #if !defined(__NetBSD__) && !defined(__OpenBSD__)
 #define DDB(x) x
 #define DEB(x)
@@ -519,7 +516,7 @@ struct cfattach bktr_ca = {
 	sizeof(struct bktr_softc), bktr_probe, bktr_attach
 };
 
-#if 0
+#if defined(__NetBSD__)
 extern struct cfdriver bktr_cd;
 #else
 struct cfdriver bktr_cd = {
@@ -1047,7 +1044,7 @@ bktr_attach( ATTACH_ARGS )
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
-				      bktr_intr, bktr, bktr->bktr_dev.dv_xname);
+				      bktr_intr, bktr);
 	if (bktr->ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 	       bktr->bktr_dev.dv_xname);
@@ -1123,7 +1120,6 @@ bktr_attach( ATTACH_ARGS )
 		buf = get_bktr_mem(unit, BROOKTREE_ALLOC);
 	else
 		buf = 0;
-
 #endif
 
 	if ( bootverbose ) {
@@ -1157,6 +1153,7 @@ bktr_attach( ATTACH_ARGS )
 	bktr->tuner.chnlset = DEFAULT_CHNLSET;
 	bktr->audio_mux_select = 0;
 	bktr->audio_mute_state = FALSE;
+
 	probeCard( bktr, TRUE );
 
 #ifdef DEVFS
@@ -3893,19 +3890,6 @@ free_bktr_mem(bktr, dmap, kva)
 	bus_dmamem_free(dmat, dmap->dm_segs, 1);
 	bus_dmamap_destroy(dmat, dmap);
 }
-#elif 0
-static vm_offset_t
-get_bktr_mem( int unit, unsigned size )
-{
-        vm_offset_t    addr = 0;
-	
-	addr = (vm_offset_t)malloc(size, M_DEVBUF, M_WAITOK);
-	if (addr == 0) {
-	    printf("bktr%d: Unable to allocate %d bytes of memory.\n",
-		   unit, size);
-	}
-	return( addr );
-}
 #else /* !__NetBSD__ */
 static vm_offset_t
 get_bktr_mem( int unit, unsigned size )
@@ -5307,7 +5291,7 @@ SYSINIT(bktrdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,bktr_drvinit,NULL)
 #endif  /* __FreeBSD__ */
 
 #if 0
-#if defined(__NetBSD__)||defined(__OpenBSD__)
+#if defined(__NetBSD__)
 #ifdef UVM
 vm_offset_t
 vm_page_alloc_contig(size, low, high, alignment)
