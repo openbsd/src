@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.15 2003/08/07 09:19:14 mickey Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.16 2003/12/09 04:27:51 mickey Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -24,12 +24,12 @@ _DEV(loc)
 _TITLE(tap)
 _DEV(st, 11, 5)
 _TITLE(dis)
-_DEV(flo, 24, 7)
-_DEV(sd, 10, 4)
-_DEV(cd, 12, 6)
 _DEV(ccd, 7, 1)
 _DEV(vnd, 8, 2)
 _DEV(rd, 9, 3)
+_DEV(sd, 10, 4)
+_DEV(cd, 12, 6)
+_DEV(flo, 24, 7)
 _TITLE(term)
 _DEV(com, 23)
 _TITLE(pty)
@@ -46,21 +46,22 @@ _TITLE(point)
 _DEV(wsmouse, 29)
 _TITLE(call)
 _TITLE(spec)
-_DEV(fdesc, 16)
-_DEV(bpf, 17)
-_DEV(tun, 18)
-_DEV(pf, 21)
-_DEV(lkm, 19)
-_DEV(rnd, 20)
-_DEV(xfs, 32)
 _DEV(ch, 13)
 _DEV(ss, 14)
 _DEV(uk, 15)
-_DEV(ses, 37)
+_DEV(fdesc, 16)
+_DEV(bpf, 17)
+_DEV(tun, 18)
+_DEV(lkm, 19)
+_DEV(rnd, 20)
+_DEV(pf, 21)
 _DEV(pdc, 22)
+_DEV(pci, 31)
+_DEV(xfs, 32)
 _DEV(systrace, 34)
 _DEV(au, 35)
 _DEV(cry, 36)
+_DEV(ses, 37)
 #
 dnl
 divert(7)dnl
