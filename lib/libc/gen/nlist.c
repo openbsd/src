@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.11 1996/06/14 05:01:36 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.12 1996/06/17 06:40:53 etheisen Exp $	*/
 /*	$NetBSD: nlist.c,v 1.7 1996/05/16 20:49:20 cgd Exp $	*/
 
 /*
@@ -35,7 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.11 1996/06/14 05:01:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.11 1996/06/14 05:01:36 deraadt Exp 
+$";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -289,50 +290,57 @@ __elf_fdnlist(fd, list)
 {
 	register struct nlist *p;
 	register caddr_t strtab;
-	register off_t symstroff, symoff;
-	register u_long symsize;
-	register int nent, cc, i;
+	register Elf32_Off symoff = 0, symstroff;
+	register Elf32_Word symsize, symstrsize;
+	register Elf32_Sword nent, cc, i;
 	Elf32_Sym sbuf[1024];
 	Elf32_Sym *s;
-	size_t symstrsize;
-	char *shstr;
-	Elf32_Ehdr eh;
-	Elf32_Shdr *sh = NULL;
+	Elf32_Ehdr ehdr;
+	Elf32_Shdr *shdr = NULL;
+        Elf32_Word shdr_size;
 	struct stat st;
 
+        /* Make sure obj is OK */
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &eh, sizeof(eh)) != sizeof(eh) ||
-	    !__elf_is_okay__(&eh) ||
+	    read(fd, &ehdr, sizeof(Elf32_Ehdr)) != sizeof(Elf32_Ehdr) ||
+	    !__elf_is_okay__(&ehdr) ||
 	    fstat(fd, &st) < 0)
 		return (-1);
 
-	sh = (Elf32_Shdr *)malloc(sizeof(Elf32_Shdr) * eh.e_shnum);
+        /* calculate section header table size */
+        shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
 
-	if (lseek (fd, eh.e_shoff, SEEK_SET) < 0)
-		return(-1);
+        /* Make sure it's not too big to mmap */
+	if (shdr_size > SIZE_T_MAX) {
+		errno = EFBIG;
+		return (-1);
+	}
 
-	if (read(fd, sh, sizeof(Elf32_Shdr) * eh.e_shnum) <
-	    sizeof(Elf32_Shdr) * eh.e_shnum)
+        /* mmap section header table */
+	shdr = (Elf32_Shdr *)mmap(NULL, (size_t)shdr_size,
+                                  PROT_READ, 0, fd, ehdr.e_shoff);
+	if (shdr == (Elf32_Shdr *)-1)
 		return (-1);
 
-	shstr = (char *)malloc(sh[eh.e_shstrndx].sh_size);
-	if (lseek (fd, sh[eh.e_shstrndx].sh_offset, SEEK_SET) < 0)
-		return(-1);
-	if (read(fd, shstr, sh[eh.e_shstrndx].sh_size) <
-	    sh[eh.e_shstrndx].sh_size)
-		return(-1);
+        /*
+         * Find the symbol table entry and it's corresponding
+         * string table entry.  Version 1.1 of the ABI states
+         * that there is only one symbol table but that this
+         * could change in the future.
+         */
+        for (i = 0; i < ehdr.e_shnum; i++) {
+                if (shdr[i].sh_type == SHT_SYMTAB) {
+                        symoff = shdr[i].sh_offset;
+                        symsize = shdr[i].sh_size;
+                        symstroff = shdr[shdr[i].sh_link].sh_offset;
+                        symstrsize = shdr[shdr[i].sh_link].sh_size;
+                        break;
+                }
+        }
 
-	for (i = 0; i < eh.e_shnum; i++) {
-		if (strcmp (shstr + sh[i].sh_name, ".strtab") == 0) {
-			symstroff = sh[i].sh_offset;
-			symstrsize = sh[i].sh_size;
-		}
-		else if (strcmp (shstr + sh[i].sh_name, ".symtab") == 0) {
-			symoff = sh[i].sh_offset;
-			symsize = sh[i].sh_size;
-		}
-	}
-	
+        /* Flush the section header table */
+        munmap((caddr_t)shdr, shdr_size);
+
 	/* Check for files too large to mmap. */
 	/* XXX is this really possible? */
 	if (symstrsize > SIZE_T_MAX) {
@@ -366,9 +374,17 @@ __elf_fdnlist(fd, list)
 		p->n_value = 0;
 		++nent;
 	}
-	if (lseek(fd, symoff, SEEK_SET) == -1)
-		return (-1);
 
+        /* Don't process any further if object is stripped. */
+        /* ELFism - dunno if stripped by looking at header */
+        if (symoff == 0)
+                goto done;
+                
+	if (lseek(fd, symoff, SEEK_SET) == -1) {
+                nent = -1;
+                goto done;
+        }
+        
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(sbuf));
 		if (read(fd, sbuf, cc) != cc)
@@ -380,25 +396,35 @@ __elf_fdnlist(fd, list)
 			if (soff == 0)
 				continue;
 			for (p = list; !ISLAST(p); p++) {
+                                /*
+                                 * XXX - ABI crap, they
+                                 * really fucked this up
+                                 * for MIPS and PowerPC
+                                 */
 				if (!strcmp(&strtab[soff],
-				    eh.e_machine == EM_MIPS ?
+				    ehdr.e_machine == EM_MIPS ? 
 				    p->n_un.n_name+1 :
 				    p->n_un.n_name)) {
 					p->n_value = s->st_value;
 
-		/*XXX type conversion is pretty rude... */
+                                        /* XXX - type conversion */
+                                        /*       is pretty rude. */
 					switch(ELF32_ST_TYPE(s->st_info)) {
-					case STT_NOTYPE:
-						p->n_type = N_UNDF;
-						break;
-					case STT_FUNC:
-						p->n_type = N_TEXT;
-						break;
-					case STT_OBJECT:
-						p->n_type = N_DATA;
-						break;
+                                                case STT_NOTYPE:
+                                                        p->n_type = N_UNDF;
+                                                        break;
+                                                case STT_OBJECT:
+                                                        p->n_type = N_DATA;
+                                                        break;
+                                                case STT_FUNC:
+                                                        p->n_type = N_TEXT;
+                                                        break;
+                                                case STT_FILE:
+                                                        p->n_type = N_FN;
+                                                        break;
 					}
-					if(ELF32_ST_BIND(s->st_info) == STB_LOCAL)
+					if (ELF32_ST_BIND(s->st_info) ==
+                                            STB_LOCAL)
 						p->n_type = N_EXT;
 					p->n_desc = 0;
 					p->n_other = 0;
@@ -408,6 +434,7 @@ __elf_fdnlist(fd, list)
 			}
 		}
 	}
+  done:
 	munmap(strtab, symstrsize);
 
 	return (nent);
