@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.5 2002/03/11 15:39:27 art Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.6 2002/03/12 14:37:40 art Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -51,15 +51,19 @@
 #define PT_IO		11	/* do I/O to/from the stopped process. */
 
 struct ptrace_io_desc {
-	int	piod_op;
-#define PIOD_OP_READ_DATA	1
-#define PIOD_OP_WRITE_DATA	2
-#define PIOD_OP_READ_TEXT	3
-#define PIOD_OP_WRITE_TEXT	4
+	int	piod_op;	/* I/O operation */
 	void	*piod_offs;	/* child offset */
 	void	*piod_addr;	/* parent offset */
 	size_t	piod_len;	/* request length */
 };
+
+/*
+ * Operations in piod_op.
+ */
+#define PIOD_READ_D	1	/* Read from D space */
+#define PIOD_WRITE_D	2	/* Write to D space */
+#define PIOD_READ_I	3	/* Read from I space */
+#define PIOD_WRITE_I	4	/* Write to I space */
 
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */

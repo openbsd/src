@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.20 2002/03/12 11:57:12 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.21 2002/03/12 14:37:40 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -89,9 +89,9 @@ sys_ptrace(p, v, retval)
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
+	struct ptrace_io_desc piod;
 	int error, write;
 	int temp;
-	struct ptrace_io_desc piod;
 
 	/* "A foolish consistency..." XXX */
 	if (SCARG(uap, req) == PT_TRACE_ME)
@@ -242,19 +242,20 @@ sys_ptrace(p, v, retval)
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_procp = p;
 		switch (piod.piod_op) {
-		case PIOD_OP_READ_DATA:
-		case PIOD_OP_READ_TEXT:
+		case PIOD_READ_D:
+		case PIOD_READ_I:
 			uio.uio_rw = UIO_READ;
 			break;
-		case PIOD_OP_WRITE_DATA:
-		case PIOD_OP_WRITE_TEXT:
+		case PIOD_WRITE_D:
+		case PIOD_WRITE_I:
 			uio.uio_rw = UIO_WRITE;
 			break;
 		default:
 			return (EINVAL);
 		}
 		error = procfs_domem(p, t, NULL, &uio);
-		*retval = piod.piod_len - uio.uio_resid;
+		piod.piod_len -= uio.uio_resid;
+		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
 #ifdef PT_STEP
 	case  PT_STEP:
