@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.39 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.40 2004/07/10 12:59:57 ho Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1089,9 +1089,12 @@ ohci_intr(void *p)
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
-	if (sc->sc_bus.use_polling) {
+	if (!cold && sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("ohci_intr: ignored interrupt while polling\n");
+		static struct timeval ohci_intr_tv;
+		if ((OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs) &&
+		    usbd_ratecheck(&ohci_intr_tv))
+			printf("ohci_intr: ignored interrupt while polling\n");
 #endif
 		return (0);
 	}
