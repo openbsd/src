@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.2 2004/03/19 20:36:28 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.3 2004/04/03 10:21:57 avsm Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -222,7 +222,8 @@ parent_bind(int fd)
 	must_write(fd, &er, sizeof(er));
 	must_write(fd, &status, sizeof(status));
 
-	close(sock);
+	if (sock >= 0)
+		close(sock);
 }
 
 /* Bind to allowed privileged ports using privsep, or try to bind locally */
