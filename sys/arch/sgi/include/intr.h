@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2004/09/21 05:51:15 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.8 2004/09/24 14:22:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -213,15 +213,17 @@ void set_sint(int pending);
  * to hold interrupt handler info.
  */
 
+#include <sys/evcount.h>
+
 struct intrhand {
 	struct	intrhand *ih_next;
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
-	u_long	ih_count;
 	int	ih_level;
 	int	ih_irq;
 	char	*ih_what;
 	void	*frame;
+	struct evcount  ih_count;
 };
 
 extern struct intrhand *intrhand[INTMASKSIZE];

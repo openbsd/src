@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2004/09/16 09:23:21 pefo Exp $ */
+/*	$OpenBSD: clock.c,v 1.8 2004/09/24 14:22:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,12 +30,15 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <mips64/dev/clockvar.h>
 #include <mips64/archtype.h>
 
+static struct evcount clk_count;
+static int clk_irq = 5;
 
 /* Definition of the driver for autoconfig. */
 int	clockmatch(struct device *, void *, void *);
@@ -176,6 +179,7 @@ clock_int5( intrmask_t mask, struct trap_frame *tf)
 
 	if ((tf->cpl & SPL_CLOCKMASK) == 0) {
 		while (pendingticks) {
+			clk_count.ec_count++;
 			hardclock(tf);
 			pendingticks--;
 		}
@@ -269,6 +273,8 @@ cpu_initclocks()
 	hz = sc->sc_clock.clk_hz;
 	stathz = sc->sc_clock.clk_stathz;
 	profhz = sc->sc_clock.clk_profhz;
+
+	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
 
 	/* Start the clock.  */
 	if (sc->sc_clock.clk_init != NULL)

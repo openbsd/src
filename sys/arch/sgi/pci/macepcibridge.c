@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.4 2004/09/20 10:31:16 pefo Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.5 2004/09/24 14:22:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -426,7 +426,7 @@ pcibr_intr_string(lcv, ih)
 	void *lcv;
 	pci_intr_handle_t ih;
 {
-static char str[16];
+	static char str[16];
 
 	snprintf(str, sizeof(str), "irq %d", ih);
 	return(str);

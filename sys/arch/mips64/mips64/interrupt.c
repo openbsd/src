@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.6 2004/09/21 05:51:15 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.7 2004/09/24 14:22:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -378,11 +378,12 @@ static int initialized = 0;
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
 	ih->ih_what = ih_what;
+	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
+	    &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -490,7 +491,7 @@ static volatile int processing;
 		while (ih) {
 			ih->frame = &cf;
 			if ((*ih->ih_fun)(ih->ih_arg)) {
-				ih->ih_count++;
+				ih->ih_count.ec_count++;
 			}
 			ih = ih->ih_next;
 		}
@@ -560,7 +561,7 @@ generic_iointr(intrmask_t pending, struct trap_frame *cf)
 				ih->frame = cf;
 				if ((*ih->ih_fun)(ih->ih_arg)) {
 					catched |= vm;
-					ih->ih_count++;
+					ih->ih_count.ec_count++;
 				}
 				ih = ih->ih_next;
 			}
