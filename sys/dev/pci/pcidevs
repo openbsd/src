@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.469 2001/11/26 16:37:32 mickey Exp $
+	$OpenBSD: pcidevs,v 1.470 2001/11/29 17:10:57 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1040,6 +1040,9 @@ product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
 product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z
+
+/* Cyclone Microsystems products */
+product CYCLONE PCI_700		0x0700	IQ80310 (PCI-700)
 
 /* Cyrix/National Semiconductor products */
 product CYRIX GXMPCI		0x0001	GXm Host-PCI
