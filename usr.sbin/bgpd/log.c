@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.13 2003/12/30 18:47:00 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.14 2004/01/04 02:13:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -31,16 +31,9 @@
 
 #include "bgpd.h"
 #include "session.h"
+#include "log.h"
 
-static const char *statenames[] = {
-	"None",
-	"Idle",
-	"Connect",
-	"Active",
-	"OpenSent",
-	"OpenConfirm",
-	"Established"
-};
+int	debug;
 
 static const char *eventnames[] = {
 	"None",
@@ -106,8 +99,6 @@ static const char *procnames[] = {
 	"SE",
 	"RDE"
 };
-
-int	debug;
 
 char	*log_fmt_peer(const struct peer *);
 

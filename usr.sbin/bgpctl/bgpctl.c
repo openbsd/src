@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.7 2004/01/03 22:27:06 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.8 2004/01/04 02:13:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -26,22 +26,13 @@
 
 #include "bgpd.h"
 #include "session.h"
+#include "log.h"
 
 int	main(int, char *[]);
 void	summary_head(void);
 int	summary_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
-
-static const char *statenames[] = {
-	"None",
-	"Idle",
-	"Connect",
-	"Active",
-	"OpenSent",
-	"OpenConfirm",
-	"Established"
-};
 
 enum views {
 	VIEW_SUMMARY
