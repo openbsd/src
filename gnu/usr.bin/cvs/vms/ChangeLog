@@ -1,3 +1,18 @@
+1998-05-12  Jim Meyering  <meyering@ascend.com>
+
+	* Makefile.in (distclean): New rule to remove Makefile.
+
+1998-04-18  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getpass.c: Rewrite to use SYS$QIOW instead of curses.  This
+	means we don't need to clear the screen, and also the curses
+	version was sometimes dying with a traceback on VMS 7.1 (I don't
+	know why).
+
+1998-04-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (link_file): Remove; no longer used.
+
 Tue Feb 17 02:29:24 1998  Noel Cragg  <noel@swish.red-bean.com>
 
 	* filesubr.c (last_component): return the top-level directory when

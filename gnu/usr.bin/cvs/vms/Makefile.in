@@ -65,7 +65,7 @@ ls:
 	@echo ${DISTFILES}
 
 .PHONY: clean distclean realclean mostlyclean
-clean distclean realclean mostlyclean:
+clean realclean mostlyclean:
 
 .PHONY: lint
 lint:
@@ -79,6 +79,9 @@ dist-dir:
 
 clean:
 	@echo make clean does nothing in vms subdir
+
+distclean:
+	rm -f Makefile
 
 subdir = vms
 Makefile: ../config.status Makefile.in

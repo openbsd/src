@@ -1,3 +1,7 @@
+1998-04-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (link_file): Remove; no longer used.
+
 Tue Feb 17 02:28:20 1998  Noel Cragg  <noel@swish.red-bean.com>
 
 	* filesubr.c (last_component): return the top-level directory when

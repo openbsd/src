@@ -406,42 +406,6 @@ rename_file (from_file, to_file)
 }
 
 /*
- * link a file, if possible.
- */
-int
-link_file (from_file, to_file)
-    const char *from_file;
-    const char *to_file;
-{
-    char from[PATH_MAX], to[PATH_MAX];
-
-    /* Prefer local relative paths to files at expense of logical name
-       access to files. */
-
-    if (isabsolute(from_file))
-      strcpy(from, from_file);
-    else
-      sprintf(from, "./%s", from_file);
-
-    if (isabsolute(to_file))
-      strcpy(to, to_file);
-    else
-      sprintf(to, "./%s", to_file);
-
-    if (trace)
-#ifdef SERVER_SUPPORT
-	(void) fprintf (stderr, "%c-> link(%s,%s)\n",
-			(server_active) ? 'S' : ' ', from, to);
-#else
-	(void) fprintf (stderr, "-> link(%s,%s)\n", from, to);
-#endif
-    if (noexec)
-	return (0);
-
-    return (link (from, to));
-}
-
-/*
  * unlink a file, if possible.
  */
 int

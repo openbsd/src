@@ -441,12 +441,20 @@ extern SCC_return SccRunScc
    LONG num_files,
    LPSTR *file_names);
 
-/* Lots of things that we could do here.  Options to get/update
-   such as -r -D -k etc. just for starters.  Note that the terminology is
-   a little confusing here.  This function relates to "provider options"
-   (prov_options) which are a way for us to provide extra dialogs beyond
-   the basic ones for a particular command.  It is unrelated to "command
-   options" (SCC_cmdopt_*).  */
+/* If the user invokes version-control-system-defined behavior
+   (typically by clicking an Advanced button in a dialog, e.g. the Get
+   dialog), and the user clicks on that button, then the development
+   environment calls SccGetCommandOptions.  The version control system
+   interacts with the user and then sets *PROV_OPTIONSP to whatever it
+   wants.  The development environment doesn't do anything with it,
+   but does pass it to the various commands as prov_options.  If it
+   calls SccGetCommandOptions again, it will pass the same value (so
+   user choices from the previous "Advanced" click can serve as
+   defaults).
+
+   Note that "provider options" (prov_options) are unrelated to
+   "command options" (SCC_cmdopt_*).  */
+
 extern SCC_return SccGetCommandOptions
   (void *context_arg, HWND window,
    enum SCC_command command,

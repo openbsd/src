@@ -1,10 +1,11 @@
 This is an experimental attempt to interface to the SCC API.
 
 Note that this code doesn't (yet) do anything useful; this file
-is currently for people who want to help hack on our SCC interface,
-not people who want to use it.
+is currently for people who want to hack on the SCC interface,
+not people who want a plug-in integration between any particular pair
+of packages.
 
-To install it, build scc.dll and then add the following
+To install the test DLL, build scc.dll and then add the following
 to the registry using the registry editor:
 
 key/value                what to put there
@@ -29,7 +30,8 @@ CVS is not owned by any one company, so CVS seems like the
 most appropriate string to put there.
 
 If you do this right, then "Source Control" should appear
-under the "Tools" menu.
+under the "Tools" menu (for Visual C++ 4.x; the details of course may
+vary for other development environments).
 
 NOW WHAT?
 
@@ -88,8 +90,8 @@ although they may be at a somewhat different level and systems may
 support/use several interfaces rather than it being an either/or thing.
 
 If you know of other interfaces which should be added here I guess the
-best place to make suggestions is bug-cvs@prep.ai.mit.edu (although
-this list is not intended to be CVS-centric).
+best place to make suggestions is bug-cvs@gnu.org (although
+the following list is not intended to be particularly CVS-centric).
 
 * The CVS remote protocol is documented in doc/cvsclient.texi in the
 CVS distribution and has at least 2 implementations of the client
@@ -103,11 +105,11 @@ implements this via a module which speaks the Metrowerks API out one
 end and the OLE Automation interface out the other (the module runs on
 Windows, not Mac).
 
-* There is an API (for Java, I think) which is supported by Symantec's
-Visual Cafe 2.0, and will be supported by a service pack which will
-implement it for StarTeam 2.1 (source: usenet post by Steve Reynolds
-of StarBase, Oct 1997).
+* Symantec's Visual Cafe interface.
 
 * Metrowerks publishes and implements the CodeWarrior IDE Version
 Control System API.  I think maybe the way to get a copy of the spec
 is as part of CodeWarrior but I'm not completely clear on that.
+
+For (some) more details on these interfaces, and others, see
+    http://www.cyclic.com/cvs/dev-int.html

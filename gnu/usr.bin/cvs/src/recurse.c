@@ -586,7 +586,6 @@ do_dir_proc (p, closure)
     char *newrepos;
     List *sdirlist;
     char *srepository;
-    char *cp;
     Dtype dir_return = R_PROCESS;
     int stripped_dot = 0;
     int err = 0;
@@ -790,16 +789,8 @@ but CVS uses %s for its own purposes; skipping %s directory",
 	repository = srepository;
     }
 
-    /* Put back update_dir.  I think this is the same as just setting
-       update_dir back to saved_update_dir, but there are a few cases I'm
-       not sure about (in particular, if DIR is "." and update_dir is
-       not ""), so for conservatism I'm leaving this here.  */
-    cp = last_component (update_dir);
-    if (cp > update_dir)
-	cp[-1] = '\0';
-    else
-	update_dir[0] = '\0';
-    free (saved_update_dir);
+    free (update_dir);
+    update_dir = saved_update_dir;
 
     return (err);
 }

@@ -1,3 +1,24 @@
+1998-04-28  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TESTS: Add note about Solaris sort program (reported by Mark
+	D. Baushke).
+
+1998-03-16  Larry Jones  <larry.jones@sdrc.com>
+
+	* configure.in: Simplify test for shadow password support since
+	the code now handles the case where shadow passwords are supported
+	but are not in use.
+	* configure: Regenerated.
+
+1998-03-07  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TESTS: Remove note about SGI's XFS.  Someone reports that it
+	works (I would assume due to the 13 Feb 1998, and earlier, changes
+	to sanity.sh).
+
+	* NEWS: Add item about PreservePermissions.  Fix unclear wording
+	in gserver item.
+
 1998-03-04  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* acconfig.h, configure.in: Add PRESERVE_PERMISSIONS_SUPPORT and

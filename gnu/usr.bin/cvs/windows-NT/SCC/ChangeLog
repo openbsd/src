@@ -1,3 +1,11 @@
+1998-03-22  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* pubscc.h: Describe how SccGetCommandOptions works.
+
+1998-03-10  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: Update and clarify various minor points.
+
 Tue Jan 27 12:54:05 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README.txt: Update bug-cvs address to gnu.org.

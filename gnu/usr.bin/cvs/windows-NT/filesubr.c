@@ -99,20 +99,6 @@ copy_file (from, to)
     (void) utime (to, &t);
 }
 
-/*
- * link a file, if possible.  Warning: the Windows NT version of this
- * function just copies the file, so only use this function in ways
- * that can deal with either a link or a copy.
- */
-int
-link_file (from, to)
-    const char *from;
-    const char *to;
-{
-    copy_file (from, to);
-    return 0;
-}
-
 /* FIXME-krp: these functions would benefit from caching the char * &
    stat buf.  */
 

@@ -5442,13 +5442,16 @@ option_with_arg (option, arg)
     send_arg (arg);
 }
 
-/*
- * Send a date to the server.  This will passed a string which is the
- * result of Make_Date, and looks like YY.MM.DD.HH.MM.SS, where all
- * the letters are single digits.  The time will be GMT.  getdate on
- * the server can't parse that, so we turn it back into something
- * which it can parse.
- */
+/* Send a date to the server.  The input DATE is in RCS format.
+   The time will be GMT.
+
+   We then convert that to the format required in the protocol
+   (including the "-D" option) and send it.  According to
+   cvsclient.texi, RFC 822/1123 format is preferred, but for now we
+   use the format that we always have, for
+   conservatism/laziness/paranoia.  As far as I know all servers
+   support the RFC 822/1123 format, so probably there would be no
+   particular danger in switching.  */
 
 void
 client_senddate (date)
@@ -5457,10 +5460,10 @@ client_senddate (date)
     int year, month, day, hour, minute, second;
     char buf[100];
 
-    if (sscanf (date, DATEFORM, &year, &month, &day, &hour, &minute, &second)
+    if (sscanf (date, SDATEFORM, &year, &month, &day, &hour, &minute, &second)
 	!= 6)
     {
-        error (1, 0, "diff_client_senddate: sscanf failed on date");
+        error (1, 0, "client_senddate: sscanf failed on date");
     }
 
     sprintf (buf, "%d/%d/%d %d:%d:%d GMT", month, day, year,
