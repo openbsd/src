@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.7 1996/06/23 19:32:56 maja Exp $	*/
+/*	$OpenBSD: device.h,v 1.8 1996/07/02 07:58:39 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -175,6 +175,8 @@ struct device *config_found_sm __P((struct device *, void *, cfprint_t,
 struct device *config_rootfound __P((char *, void *));
 void config_scan __P((cfscan_t, struct device *));
 struct device *config_attach __P((struct device *, void *, void *, cfprint_t));
+struct device *config_make_softc __P((struct device *parent,
+    struct cfdata *cf));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
 /* compatibility definitions */
