@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.186 2003/08/21 19:12:08 frantzen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.187 2003/08/22 17:24:27 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1579,14 +1579,15 @@ main(int argc, char *argv[])
 	if (state_killers)
 		pfctl_kill_states(dev, opts);
 
-	if (rulesopt && pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
-		error = 1;
-
 	if (tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,
 		    tblcmdopt, rulesopt, anchorname, rulesetname, opts);
 		rulesopt = NULL;
 	}
+
+	if (rulesopt != NULL)
+		if (pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
+			error = 1;
 
 	if (rulesopt != NULL)
 		if (pfctl_rules(dev, rulesopt, opts, anchorname, rulesetname))
