@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.18 1997/08/21 22:19:33 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.19 1997/08/22 00:38:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -117,7 +117,7 @@ devboot(bootdev, p)
 
 void
 putchar(c)
-	register int	c;
+	register int c;
 {
 	static int pos = 0;
 
@@ -150,13 +150,13 @@ putchar(c)
 int
 getchar()
 {
-	int c = cngetc();
-
-	if (c == '\b' || c == '\177')
-		return(c);
+	register int c = cngetc();
 
 	if (c == '\r')
 		c = '\n';
+
+	if ((c < ' ' && c != '\n') || c == '\177')
+		return(c);
 
 	putchar(c);
 
