@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.14 2000/01/15 18:27:51 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.15 2000/01/15 19:37:28 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -79,6 +79,8 @@
 
 #include "bpfilter.h"
 
+int ipsec_common_input(struct mbuf **, int, int, int, int);
+
 extern struct enc_softc encif[];
 
 #ifdef ENCDEBUG
@@ -91,6 +93,7 @@ extern struct enc_softc encif[];
 #define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
+/* sysctl variables */
 int esp_enable = 0;
 int ah_enable = 0;
 
