@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.19 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.20 2002/12/10 20:32:57 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -332,6 +332,7 @@ cgfourteenattach(parent, self, args)
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgfourteen_setcolor);
 
 	cgfourteen_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgfourteen_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
