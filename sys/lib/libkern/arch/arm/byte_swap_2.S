@@ -1,3 +1,4 @@
+/*	$OpenBSD: byte_swap_2.S,v 1.2 2004/02/01 05:47:10 drahn Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.1.20.1 2002/07/02 06:50:59 lukem Exp $	*/
 
 /*-

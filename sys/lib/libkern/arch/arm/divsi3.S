@@ -1,3 +1,4 @@
+/*	$OpenBSD: divsi3.S,v 1.2 2004/02/01 05:47:10 drahn Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.2 2001/11/13 20:06:40 chris Exp $	*/
 
 /*
