@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.148 2001/01/11 22:14:20 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.149 2001/01/13 18:03:07 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -567,7 +567,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDiqQ46")) != EOF) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDiqQ46")) != -1) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
