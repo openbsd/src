@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 1999/01/07 23:16:00 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 1999/02/04 23:00:25 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -509,12 +509,26 @@ setregs(p, pack, sp, retval)
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
-	struct frame *frame;
+	struct frame *frame = (struct frame *) p->p_md.md_regs;
 
-	frame = (struct frame *) p->p_md.md_regs;
+	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = sp;
-	frame->f_regs[A2] = (int) PS_STRINGS;
+	frame->f_regs[D0] = 0;
+	frame->f_regs[D1] = 0;
+	frame->f_regs[D2] = 0;
+	frame->f_regs[D3] = 0;
+	frame->f_regs[D4] = 0;
+	frame->f_regs[D5] = 0;
+	frame->f_regs[D6] = 0;
+	frame->f_regs[D7] = 0;
+	frame->f_regs[A0] = 0;
+	frame->f_regs[A1] = 0;
+	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A3] = 0;
+	frame->f_regs[A4] = 0;
+	frame->f_regs[A5] = 0;
+	frame->f_regs[A6] = 0;
+	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
