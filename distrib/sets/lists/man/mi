@@ -1763,7 +1763,6 @@
 ./usr/share/man/cat8/mk-amd-map.0
 ./usr/share/man/cat8/mkalias.0
 ./usr/share/man/cat8/mkhybrid.0
-./usr/share/man/cat8/mkisofs.0
 ./usr/share/man/cat8/mknetid.0
 ./usr/share/man/cat8/mknod.0
 ./usr/share/man/cat8/modload.0

@@ -1298,7 +1298,6 @@
 ./usr/sbin/mk-amd-map
 ./usr/sbin/mkalias
 ./usr/sbin/mkhybrid
-./usr/sbin/mkisofs
 ./usr/sbin/mknetid
 ./usr/sbin/mopa.out
 ./usr/sbin/mopchk
