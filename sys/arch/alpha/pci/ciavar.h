@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciavar.h,v 1.6 1997/01/24 19:57:40 niklas Exp $	*/
+/*	$OpenBSD: ciavar.h,v 1.7 1998/06/28 02:39:25 angelos Exp $	*/
 /*	$NetBSD: ciavar.h,v 1.6 1996/11/25 03:49:11 cgd Exp $	*/
 
 /*
@@ -45,6 +45,17 @@ struct cia_config {
 
 	u_int32_t cc_hae_mem;
 	u_int32_t cc_hae_io;
+
+        u_int32_t cc_hae_mem;
+        u_int32_t cc_hae_io;
+
+        u_int32_t cc_rev;
+        u_int32_t cc_cnfg;
+        
+        int     cc_flags;
+        
+#define CCF_ISPYXIS     0x01            /* chip is a 21174 Pyxis */
+#define CCF_USEBWX      0x02            /* use BWX when possible */
 
 	struct extent *cc_io_ex, *cc_d_mem_ex, *cc_s_mem_ex;
 	int	cc_mallocsafe;
