@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.8 1997/12/16 22:26:21 deraadt Exp $	*/
+/*	$OpenBSD: job.c,v 1.9 1998/03/15 22:19:24 flipk Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.8 1997/12/16 22:26:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.9 1998/03/15 22:19:24 flipk Exp $";
 #endif
 #endif /* not lint */
 
@@ -1298,7 +1298,7 @@ JobExec(job, argv)
 		int bytes = howmany(job->inPipe+1, NFDBITS) * sizeof(fd_mask);
 		int obytes = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
 
-		if (obytes != bytes) {
+		if (outputsp == NULL || obytes != bytes) {
 			outputsp = realloc(outputsp, bytes);
 			if (outputsp == NULL)
 				return;
