@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.8 1996/08/02 00:05:58 niklas Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.9 1997/01/07 05:37:35 tholo Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -139,8 +139,8 @@ void		vmtotal __P((struct vmtotal *));
 void		vnode_pager_setsize __P((struct vnode *, u_long));
 void		vnode_pager_umount __P((struct mount *));
 boolean_t	vnode_pager_uncache __P((struct vnode *));
-void		vslock __P((caddr_t, u_int));
-void		vsunlock __P((caddr_t, u_int));
+int		vslock __P((caddr_t, u_int));
+int		vsunlock __P((caddr_t, u_int));
 
 /* Machine dependent portion */
 void		vmapbuf __P((struct buf *, vm_size_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.6 1996/04/21 22:33:13 deraadt Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.7 1997/01/07 05:37:37 tholo Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -599,7 +599,7 @@ sys_mlock(p, v, retval)
 		return (error);
 #endif
 
-	error = vm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE);
+	error = vslock((caddr_t)addr, size);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -642,7 +642,7 @@ sys_munlock(p, v, retval)
 		return (error);
 #endif
 
-	error = vm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE);
+	error = vsunlock((caddr_t)addr, size);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 

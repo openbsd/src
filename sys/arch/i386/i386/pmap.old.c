@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.15 1996/10/25 11:14:13 deraadt Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.16 1997/01/07 05:37:32 tholo Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1724,6 +1724,23 @@ pmap_changebit(pa, setbits, maskbits)
 		pmap_update();
 	}
 	splx(s);
+}
+
+void
+pmap_prefault(map, v, l)
+	vm_map_t map;
+	vm_offset_t v;
+	vm_size_t l;
+{
+	vm_offset_t pv, pv2;
+
+	for (pv = v; pv < v + l ; pv += ~PD_MASK + 1) {
+		if (!pmap_pde_v(pmap_pde(map->pmap, pv))) {
+			pv2 = trunc_page(vtopte(pv));
+			vm_fault(map, pv2, VM_PROT_READ, FALSE);
+		}
+		pv &= PD_MASK;
+	}
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.21 1996/11/23 23:19:54 kstailey Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.22 1997/01/07 05:37:36 tholo Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -173,22 +173,25 @@ chgkprot(addr, len, rw)
 }
 #endif
 
-void
+int
 vslock(addr, len)
 	caddr_t	addr;
 	u_int	len;
 {
-	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-			round_page(addr+len), FALSE);
+#ifdef __i386__
+	pmap_prefault(&curproc->p_vmspace->vm_map, (vm_offset_t)addr, len);
+#endif
+	return vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
+			       round_page(addr+len), FALSE);
 }
 
-void
+int
 vsunlock(addr, len)
 	caddr_t	addr;
 	u_int	len;
 {
-	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-			round_page(addr+len), TRUE);
+	return vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
+			       round_page(addr+len), TRUE);
 }
 
 /*
