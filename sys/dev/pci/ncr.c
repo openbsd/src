@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.23 1997/01/15 05:50:44 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.24 1997/01/17 05:32:08 kstailey Exp $	*/
 /*	$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $	*/
 
 /**************************************************************************
@@ -3350,22 +3350,6 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 #define	MIN_ASYNC_PD	40
 #define	MIN_SYNC_PD	20
 
-#if defined(__OpenBSD__)
-
-int ncr_print __P((void *, const char *));
-
-int
-ncr_print(aux, name)
-	void *aux;
-	const char *name;
-{
-
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
-#endif
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
 void
@@ -3655,11 +3639,9 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.device       = &ncr_dev;
 	np->sc_link.flags	 = 0;
 
-#if defined(__OpenBSD__)
-	config_found(self, &np->sc_link, ncr_print);
-#elif defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	config_found(self, &np->sc_link, scsiprint);
-#else /* !__NetBSD__ */
+#else
 #if (__FreeBSD__ >= 2)
 	scbus = scsi_alloc_bus();
 	if(!scbus)
