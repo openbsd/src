@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips.c,v 1.10 2004/08/06 22:42:43 pefo Exp $ */
+/*	$OpenBSD: kvm_mips.c,v 1.11 2004/08/06 22:44:55 deraadt Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -42,12 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.10 2004/08/06 22:42:43 pefo Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.11 2004/08/06 22:44:55 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * MIPS machine dependent routines for kvm.  Hopefully, the forthcoming 
+ * MIPS machine dependent routines for kvm.  Hopefully, the forthcoming
  * vm code will one day obsolete this module.
  */
 
@@ -77,16 +77,14 @@ struct vmstate {
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
 	if (kd->vmst != 0)
 		free(kd->vmst);
 }
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 	struct vmstate *vm;
 	struct nlist nlist[3];
@@ -119,12 +117,9 @@ _kvm_initvtop(kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
-	register struct vmstate *vm;
+	struct vmstate *vm;
 	u_long pte, addr, offset;
 
 	if (ISALIVE(kd)) {
@@ -151,7 +146,7 @@ _kvm_kvatop(kd, va, pa)
 	addr = (u_long)(vm->Sysmap + ((va - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT));
 	/*
 	 * Can't use KREAD to read kernel segment table entries.
-	 * Fortunately it is 1-to-1 mapped so we don't have to. 
+	 * Fortunately it is 1-to-1 mapped so we don't have to.
 	 */
 	if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)addr) < 0)
 		goto invalid;
@@ -166,9 +161,7 @@ invalid:
 }
 
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	_kvm_err(kd, 0, "pa2off going to be implemented!");
 	return 0;
