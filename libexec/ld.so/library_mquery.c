@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.9 2003/06/22 21:39:01 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.10 2003/07/02 08:18:03 niklas Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -84,16 +84,16 @@ _dl_match_file(struct sod *sodp, char *name, int namelen)
 	match = 0;
 	if ((_dl_strcmp((char *)lsod.sod_name, (char *)sodp->sod_name) == 0) &&
 	    (lsod.sod_library == sodp->sod_library) &&
-	    (sodp->sod_major == lsod.sod_major) &&
+	    ((sodp->sod_major == -1) || (sodp->sod_major == lsod.sod_major)) &&
 	    ((sodp->sod_minor == -1) ||
 	    (lsod.sod_minor >= sodp->sod_minor))) {
 		match = 1;
 
 		/* return version matched */
+		sodp->sod_major = lsod.sod_major;
 		sodp->sod_minor = lsod.sod_minor;
 	}
 	_dl_free((char *)lsod.sod_name);
-
 	return match;
 }
 
@@ -107,6 +107,7 @@ _dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
 	const char *pp;
 	int match, len;
 	DIR *dd;
+	struct sod tsod, bsod;		/* transient and best sod */
 
 	/* if we are to search default directories, and hints
 	 * are not to be used, search the standard path from ldconfig
@@ -167,33 +168,46 @@ nohints:
 		if ((dd = _dl_opendir(lp)) != NULL) {
 			match = 0;
 			while ((dp = _dl_readdir(dd)) != NULL) {
-				if (_dl_match_file(sodp, dp->d_name,
+				tsod = *sodp;
+				if (_dl_match_file(&tsod, dp->d_name,
 				    dp->d_namlen)) {
 					/*
-					 * When a match is found, sodp is
-					 * updated with the minor found.
-					 * We continue looking at this
-					 * directory, thus this will find
-					 * the largest matching library
-					 * in this directory.
-					 * we save off the d_name now
-					 * so that it doesn't have to be
-					 * recreated from the hint.
+					 * When a match is found, tsod is
+					 * updated with the major+minor found.
+					 * This version is compared with the
+					 * largest so far (kept in bsod),
+					 * and saved if larger.
 					 */
-					match = 1;
-					len = _dl_strlcpy(_dl_hint_store, lp,
-					    MAXPATHLEN);
-					if (lp[len-1] != '/') {
-						_dl_hint_store[len] = '/';
-						len++;
+					if (!match ||
+					    tsod.sod_major == -1 ||
+					    tsod.sod_major > bsod.sod_major ||
+					    ((tsod.sod_major ==
+					    bsod.sod_major) &&
+					    tsod.sod_minor > bsod.sod_minor)) {
+						bsod = tsod;
+						match = 1;
+						len = _dl_strlcpy(
+						    _dl_hint_store, lp,
+						     MAXPATHLEN);
+						if (lp[len-1] != '/') {
+							_dl_hint_store[len] =
+							    '/';
+							len++;
+						}
+						_dl_strlcpy(
+						    &_dl_hint_store[len],
+						    dp->d_name,
+						    MAXPATHLEN-len);
+						if (tsod.sod_major == -1)
+							break;
 					}
-					_dl_strlcpy(&_dl_hint_store[len],
-					    dp->d_name, MAXPATHLEN-len);
 				}
 			}
 			_dl_closedir(dd);
-			if (match)
+			if (match) {
+				*sodp = bsod;
 				return (_dl_hint_store);
+			}
 		}
 
 		if (*pp)	/* Try curdir if ':' at end */
