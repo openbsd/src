@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.4 1996/09/02 05:37:11 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.5 1996/09/15 20:14:18 millert Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -160,9 +160,8 @@ rmtgetconn()
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
 
 	maxseg = 1024;
-	if (getuid() == 0 && setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
-	    &maxseg, sizeof (maxseg)) < 0)
-		perror("TCP_MAXSEG setsockopt");
+	(void)setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG, &maxseg,
+		sizeof (maxseg));
 
 #ifdef notdef
 	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) < 0)
@@ -194,7 +193,7 @@ rmtopen(tape, mode)
 {
 	char buf[256];
 
-	(void)snprintf(buf, sizeof(buf), "O%s\n%d\n", tape, mode);
+	(void)snprintf(buf, sizeof (buf), "O%s\n%d\n", tape, mode);
 	rmtstate = TS_OPEN;
 	return (rmtcall(tape, buf));
 }
@@ -233,7 +232,7 @@ rmtioctl(cmd, count)
 
 	if (count < 0)
 		return (-1);
-	(void)snprintf(buf, sizeof(buf), "I%d\n%d\n", cmd, count);
+	(void)snprintf(buf, sizeof (buf), "I%d\n%d\n", cmd, count);
 	return (rmtcall("ioctl", buf));
 }
 
