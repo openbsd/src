@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.3 2000/12/27 02:50:07 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.4 2001/03/14 08:09:51 mickey Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -957,6 +957,7 @@ auvia_intr(void *arg)
 {
 	struct auvia_softc *sc = arg;
 	u_int8_t r;
+	int i = 0;
 
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -966,6 +967,8 @@ auvia_intr(void *arg)
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_RECORD_STAT,
 			AUVIA_RPSTAT_INTR);
+
+		i++;
 	}
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -975,7 +978,9 @@ auvia_intr(void *arg)
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AUVIA_PLAY_STAT,
 			AUVIA_RPSTAT_INTR);
+
+		i++;
 	}
 
-	return 1;
+	return (i? 1 : 0);
 }
