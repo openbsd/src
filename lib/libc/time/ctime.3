@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.22 2000/04/16 16:24:03 d Exp $
+.\"	$OpenBSD: ctime.3,v 1.23 2000/08/22 14:21:23 millert Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -14,7 +14,9 @@
 .Nm gmtime_r ,
 .Nm localtime ,
 .Nm localtime_r ,
-.Nm mktime
+.Nm mktime ,
+.Nm timegm ,
+.Nm timelocal
 .Nd convert date and time to ASCII
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -42,6 +44,10 @@
 .Fn gmtime_r "const time_t *clock" "struct tm *result"
 .Ft time_t
 .Fn mktime "struct tm *tm"
+.Ft time_t
+.Fn timegm "struct tm *tm"
+.Ft time_t
+.Fn timelocal "struct tm *tm"
 .Sh DESCRIPTION
 The
 .Fn ctime
@@ -75,7 +81,7 @@ Unlike
 the thread-safe version
 .Fn ctime_r
 is not required to set
-.Fa tzname .
+timelocalFa tzname .
 .Pp
 The
 .Fn localtime
@@ -182,6 +188,20 @@ are determined.
 returns the specified calendar time;
 If the calendar time cannot be represented,
 it returns \-1.
+.Pp
+.Fn timelocal
+is a deprecated interface that is equivalent to calling
+.Fn mktime
+with a negative value for
+.Fa tm_isdst .
+.Pp
+.Fn timegm
+is a deprecated interface that converts the broken-down time, as returned by
+.Fn gmtime ,
+into a calendar time value with the same encoding as that of the values
+returned by the
+.Fn time
+function.
 .Pp
 .Fn difftime
 returns the difference between two calendar times,
