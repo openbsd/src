@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.7 2000/06/30 16:00:22 millert Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.8 2000/10/03 03:12:16 aaron Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int		*dk_select;
 char		**dr_name;
 
 #define	KVM_ERROR(_string) {						\
-	warnx((_string));						\
+	warnx("%s", (_string));						\
 	errx(1, "%s", kvm_geterr(kd));					\
 }
 
