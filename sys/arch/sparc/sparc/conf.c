@@ -167,8 +167,8 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NCGTHREE,cgthree),	/* 55: /dev/cgthree */
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */
-	cdev_disk_init(NCD,cd),		/* 58 SCSI CD-ROM */
-	cdev_notdef(),			/* 59 */
+	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
+	cdev_gen_ipf(NIPF,ipl),		/* 59: ip filtering log */
 	cdev_notdef(),			/* 60 */
 	cdev_notdef(),			/* 61 */
 	cdev_notdef(),			/* 62 */
