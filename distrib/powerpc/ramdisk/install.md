@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2001/04/17 05:37:01 drahn Exp $
+#	$OpenBSD: install.md,v 1.24 2001/04/17 13:06:24 brad Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -154,11 +154,11 @@ md_checkfordisklabel() {
 
 	echo
 	echo "Apple systems have two methods to label/partition a boot disk."
-	echo "Either the disk can be partitioned with apple HFS partition"
-	echo "tools to contain an \"Unused\" partition, or without any any"
-	echo "macos tools, the disk can be labled using an MBR partition table"
+	echo "Either the disk can be partitioned with Apple HFS partition"
+	echo "tools to contain an \"Unused\" partition, or without any"
+	echo "MacOS tools, the disk can be labled using an MBR partition table"
 	echo "If the HFS (DPME) partition table is used, after the disk is"
-	echo "partitioned with the apple software, the \"Unused\" section"
+	echo "partitioned with the Apple software, the \"Unused\" section"
 	echo "must be changed to type \"OpenBSD\" name \"OpenBSD\" using the"
 	echo "pdisk tool contained on this ramdisk. The disklabel can"
 	echo "then be edited normally"
@@ -205,7 +205,7 @@ md_checkforMBRdisklabel() {
 		echo "You may keep your current setup if you want to be able to use any"
 		echo "already loaded OS. However you will be asked to prepare an empty"
 		echo "partition for OpenBSD later. There must also be at least ~0.5Mb free space"
-		echo "in the boot partition to hold the OpenBSD kernel boot."
+		echo "in the boot partition to hold the OpenBSD bootloader."
 		echo
 		echo "Also note that the boot partition must be included as partition"
 		echo "'i' in the OpenBSD disklabel."
@@ -220,7 +220,6 @@ md_checkforMBRdisklabel() {
 		esac
 	;;
 	esac
-
 
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
