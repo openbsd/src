@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.16 2003/09/26 21:26:05 tedu Exp $	*/
+/*	$OpenBSD: apply.c,v 1.17 2003/11/10 22:35:07 mickey Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
+static const char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.16 2003/09/26 21:26:05 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: apply.c,v 1.17 2003/11/10 22:35:07 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
-	char *c, *cmd, *p, *q;
-	const char *c2;
+	char *c, *c2, *cmd, *p, *q;
 	size_t len;
 
 	debug = 0;
