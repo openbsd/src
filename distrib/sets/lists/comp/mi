@@ -3773,3 +3773,5 @@
 ./usr/share/man/cat3/mul.0
 ./usr/share/man/cat3/mul_add.0
 ./usr/share/man/cat3/sqr.0
+./usr/include/dev/ic/anreg.h
+./usr/include/dev/ic/anvar.h

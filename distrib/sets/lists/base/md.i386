@@ -3,6 +3,7 @@
 ./sbin/fdisk
 ./sbin/ldconfig
 ./sbin/wicontrol
+./sbin/ancontrol
 ./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/bin/objdump

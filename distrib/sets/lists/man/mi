@@ -248,6 +248,7 @@
 ./usr/share/man/cat1/fold.0
 ./usr/share/man/cat1/foreach.0
 ./usr/share/man/cat1/from.0
+./usr/share/man/cat1/fs.0
 ./usr/share/man/cat1/fsplit.0
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
@@ -450,6 +451,7 @@
 ./usr/share/man/cat1/ps.0
 ./usr/share/man/cat1/psbb.0
 ./usr/share/man/cat1/pstruct.0
+./usr/share/man/cat1/pts.0
 ./usr/share/man/cat1/pushd.0
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
@@ -790,6 +792,7 @@
 ./usr/share/man/cat4/amiga/ser.0
 ./usr/share/man/cat4/amiga/wesc.0
 ./usr/share/man/cat4/amiga/zssc.0
+./usr/share/man/cat4/an.0
 ./usr/share/man/cat4/arandom.0
 ./usr/share/man/cat4/arc
 ./usr/share/man/cat4/arc/autoconf.0
@@ -822,6 +825,7 @@
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/ms.0
 ./usr/share/man/cat4/audio.0
+./usr/share/man/cat4/aue.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bridge.0
 ./usr/share/man/cat4/ccd.0
@@ -831,6 +835,7 @@
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cnw.0
 ./usr/share/man/cat4/cua.0
+./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/dc.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
@@ -940,6 +945,7 @@
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/keynote.0
 ./usr/share/man/cat4/ksyms.0
+./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
@@ -970,7 +976,9 @@
 ./usr/share/man/cat4/ns.0
 ./usr/share/man/cat4/nsip.0
 ./usr/share/man/cat4/nsphy.0
+./usr/share/man/cat4/nsphyter.0
 ./usr/share/man/cat4/null.0
+./usr/share/man/cat4/ohci.0
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pc532/lpt.0
@@ -1081,8 +1089,10 @@
 ./usr/share/man/cat4/uaudio.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/ugen.0
+./usr/share/man/cat4/uhci.0
 ./usr/share/man/cat4/uhid.0
 ./usr/share/man/cat4/uk.0
+./usr/share/man/cat4/ulpt.0
 ./usr/share/man/cat4/unix.0
 ./usr/share/man/cat4/urandom.0
 ./usr/share/man/cat4/usb.0
@@ -1193,6 +1203,8 @@
 ./usr/share/man/cat5/isakmpd.conf.0
 ./usr/share/man/cat5/isakmpd.policy.0
 ./usr/share/man/cat5/keynote.0
+./usr/share/man/cat5/krb.conf.0
+./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/magic.0
@@ -1442,6 +1454,7 @@
 ./usr/share/man/cat8/nfsiod.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
+./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/photurisd.0
@@ -1547,7 +1560,6 @@
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
-./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/tcpd.0
 ./usr/share/man/cat8/tcpdchk.0
 ./usr/share/man/cat8/tcpdmatch.0
@@ -1579,6 +1591,7 @@
 ./usr/share/man/cat8/visudo.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
+./usr/share/man/cat8/vos.0
 ./usr/share/man/cat8/vpn.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
@@ -1653,14 +1666,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat5/krb.conf.0
-./usr/share/man/cat5/krb.realms.0
-./usr/share/man/cat4/aue.0
-./usr/share/man/cat4/cue.0
-./usr/share/man/cat4/kue.0
-./usr/share/man/cat4/ohci.0
-./usr/share/man/cat4/uhci.0
-./usr/share/man/cat4/ulpt.0
-./usr/share/man/cat1/fs.0
-./usr/share/man/cat8/vos.0
-./usr/share/man/cat1/pts.0
