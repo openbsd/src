@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.6 2002/06/14 17:25:19 aaron Exp $
+.\"     $OpenBSD: mbuf.9,v 1.7 2003/02/02 03:39:07 jason Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -87,7 +87,7 @@
 .Ft int
 .Fn m_apply "struct mbuf *m" "int off" "int len" \
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
-.Fn MEXTALLOC "struct mbuf *m" "int size" "int how"
+.Fn MEXTMALLOC "struct mbuf *m" "int size" "int how"
 .Fn MCLGET "struct mbuf *m" "int how"
 .Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
@@ -539,7 +539,7 @@ casted to
 Allocate and add an mbuf cluster to the mbuf pointed to by
 .Fa m .
 On success, the flag M_EXT is set in the mbuf.
-.It Fn MEXTALLOC "struct mbuf *m" "int size" "int how"
+.It Fn MEXTMALLOC "struct mbuf *m" "int size" "int how"
 Allocate external storage of size
 .Fa size
 and add it to the mbuf pointed to by
