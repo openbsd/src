@@ -1,234 +1,333 @@
-/*	$OpenBSD: i82365reg.h,v 1.4 1996/10/31 01:01:31 niklas Exp $	*/
-
-#ifndef __82365_H__
-#define __82365_H__
-
-/***********************************************************************
- * 82365.h -- information necessary for direct manipulation of PCMCIA
- * cards and controllers
- *
- * Support is included for Intel 82365SL PCIC controllers and clones
- * thereof.
- *
- ***********************************************************************/
+/*	$OpenBSD: i82365reg.h,v 1.5 1998/09/11 07:53:57 fgsch Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.2 1997/10/16 23:18:18 thorpej Exp $	*/
 
 /*
- * data structures used to store information about PCIC sockets and
- * PCMCIA cards, and functions to manipulate them
+ * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Marc Horowitz.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define MAX_CONFIGS 12		/* config table entries */
-#define MAX_IOADDRS 2		/* i/o port ranges */
-#define MAX_MEMS 4		/* memory ranges */
-#define MAX_SOCKS 8		/* pcic sockets */
 
 /*
- * PCIC Registers
- *     Each register is given a name, and most of the bits are named too.
- *     I should really name them all.
- * 
- *     Finally, since the banks can be addressed with a regular syntax,
- *     some macros are provided for that purpose.
+ * All information is from the intel 82365sl PC Card Interface Controller
+ * (PCIC) data sheet, marked "preliminary".  Order number 290423-002, January
+ * 1993.
  */
 
-#define PCIC_BASE 0x03e0	/* base adddress of pcic register set */
-#define PCIC_NPORTS 2		/* pcic takes 2 ports */
+#define	PCIC_IOSIZE		2
 
-/* First, all the registers */
-#define PCIC_ID_REV	0x00	/* Identification and Revision */
-#define PCIC_STATUS	0x01	/* Interface Status */
-#define PCIC_POWER	0x02	/* Power and RESETDRV control */
-#define PCIC_INT_GEN	0x03	/* Interrupt and General Control */
-#define PCIC_STAT_CHG	0x04	/* Card Status Change */
-#define PCIC_STAT_INT	0x05	/* Card Status Change Interrupt Config */
-#define PCIC_ADDRWINE	0x06	/* Address Window Enable */
-#define PCIC_IOCTL	0x07	/* I/O Control */
-#define PCIC_IO0_STL	0x08	/* I/O Address 0 Start Low Byte */
-#define PCIC_IO0_STH	0x09	/* I/O Address 0 Start High Byte */
-#define PCIC_IO0_SPL	0x0a	/* I/O Address 0 Stop Low Byte */
-#define PCIC_IO0_SPH	0x0b	/* I/O Address 0 Stop High Byte */
-#define PCIC_IO1_STL	0x0c	/* I/O Address 1 Start Low Byte */
-#define PCIC_IO1_STH	0x0d	/* I/O Address 1 Start High Byte */
-#define PCIC_IO1_SPL	0x0e	/* I/O Address 1 Stop Low Byte */
-#define PCIC_IO1_SPH	0x0f	/* I/O Address 1 Stop High Byte */
-#define PCIC_SM0_STL	0x10	/* System Memory Address 0 Mapping Start Low Byte */
-#define PCIC_SM0_STH	0x11	/* System Memory Address 0 Mapping Start High Byte */
-#define PCIC_SM0_SPL	0x12	/* System Memory Address 0 Mapping Stop Low Byte */
-#define PCIC_SM0_SPH	0x13	/* System Memory Address 0 Mapping Stop High Byte */
-#define PCIC_CM0_L	0x14	/* Card Memory Offset Address 0 Low Byte */
-#define PCIC_CM0_H	0x15	/* Card Memory Offset Address 0 High Byte */
-#define PCIC_CDGC	0x16	/* Card Detect and General Control */
-#define PCIC_RES17	0x17	/* Reserved */
-#define PCIC_SM1_STL	0x18	/* System Memory Address 1 Mapping Start Low Byte */
-#define PCIC_SM1_STH	0x19	/* System Memory Address 1 Mapping Start High Byte */
-#define PCIC_SM1_SPL	0x1a	/* System Memory Address 1 Mapping Stop Low Byte */
-#define PCIC_SM1_SPH	0x1b	/* System Memory Address 1 Mapping Stop High Byte */
-#define PCIC_CM1_L	0x1c	/* Card Memory Offset Address 1 Low Byte */
-#define PCIC_CM1_H	0x1d	/* Card Memory Offset Address 1 High Byte */
-#define PCIC_RES1E	0x1e	/* Reserved */
-#define PCIC_RES1F	0x1f	/* Reserved */
-#define PCIC_SM2_STL	0x20	/* System Memory Address 2 Mapping Start Low Byte */
-#define PCIC_SM2_STH	0x21	/* System Memory Address 2 Mapping Start High Byte */
-#define PCIC_SM2_SPL	0x22	/* System Memory Address 2 Mapping Stop Low Byte */
-#define PCIC_SM2_SPH	0x23	/* System Memory Address 2 Mapping Stop High Byte */
-#define PCIC_CM2_L	0x24	/* Card Memory Offset Address 2 Low Byte */
-#define PCIC_CM2_H	0x25	/* Card Memory Offset Address 2 High Byte */
-#define PCIC_RES26	0x26	/* Reserved */
-#define PCIC_RES27	0x27	/* Reserved */
-#define PCIC_SM3_STL	0x28	/* System Memory Address 3 Mapping Start Low Byte */
-#define PCIC_SM3_STH	0x29	/* System Memory Address 3 Mapping Start High Byte */
-#define PCIC_SM3_SPL	0x2a	/* System Memory Address 3 Mapping Stop Low Byte */
-#define PCIC_SM3_SPH	0x2b	/* System Memory Address 3 Mapping Stop High Byte */
-#define PCIC_CM3_L	0x2c	/* Card Memory Offset Address 3 Low Byte */
-#define PCIC_CM3_H	0x2d	/* Card Memory Offset Address 3 High Byte */
-#define PCIC_RES2E	0x2e	/* Reserved */
-#define PCIC_RES2F	0x2f	/* Reserved */
-#define PCIC_SM4_STL	0x30	/* System Memory Address 4 Mapping Start Low Byte */
-#define PCIC_SM4_STH	0x31	/* System Memory Address 4 Mapping Start High Byte */
-#define PCIC_SM4_SPL	0x32	/* System Memory Address 4 Mapping Stop Low Byte */
-#define PCIC_SM4_SPH	0x33	/* System Memory Address 4 Mapping Stop High Byte */
-#define PCIC_CM4_L	0x34	/* Card Memory Offset Address 4 Low Byte */
-#define PCIC_CM4_H	0x35	/* Card Memory Offset Address 4 High Byte */
-#define PCIC_RES36	0x36	/* Reserved */
-#define PCIC_RES37	0x37	/* Reserved */
-#define PCIC_RES38	0x38	/* Reserved */
-#define PCIC_RES39	0x39	/* Reserved */
-#define PCIC_RES3A	0x3a	/* Reserved */
-#define PCIC_RES3B	0x3b	/* Reserved */
-#define PCIC_RES3C	0x3c	/* Reserved */
-#define PCIC_RES3D	0x3d	/* Reserved */
-#define PCIC_RES3E	0x3e	/* Reserved */
-#define PCIC_RES3F	0x3f	/* Reserved */
+#define	PCIC_REG_INDEX		0
+#define	PCIC_REG_DATA		1
 
-#define PCIC_STATUSBITS \
-	"\020\010VPP\07POWER\06READY\05WPROT\04DET1\03DET2\02VOL1\01VOL2"
+/*
+ * The PCIC allows two chips to share the same address.  In order not to run
+ * afoul of the netbsd device model, this driver will treat those chips as
+ * the same device.
+ */
 
-/* Now register bits, ordered by reg # */
+#define	PCIC_CHIP0_BASE		0x00
+#define	PCIC_CHIP1_BASE		0x80
 
-/* For Identification and Revision (PCIC_ID_REV) */
-#define PCIC_INTEL0	0x82	/* Intel 82365SL Rev. 0; Both Memory and I/O */
-#define PCIC_INTEL1	0x83	/* Intel 82365SL Rev. 1; Both Memory and I/O */
-#define PCIC_IBM1	0x88	/* IBM PCIC clone; Both Memory and I/O */
-#define PCIC_IBM2	0x89	/* IBM PCIC clone; Both Memory and I/O */
-#define PCIC_146FC6	0x84	/* VL82C146FC6; Both Memory and I/O */
-#define PCIC_146FC7	0x85	/* VL82C146FC7; Both Memory and I/O */
+/* Each PCIC chip can drive two sockets */
 
-/* For Interface Status register (PCIC_STATUS) */
-#define PCIC_VPPV	0x80	/* Vpp_valid */
-#define PCIC_POW	0x40	/* PC Card power active */
-#define PCIC_READY	0x20	/* Ready/~Busy */
-#define PCIC_MWP	0x10	/* Memory Write Protect */
-#define PCIC_CD		0x0C	/* Both card detect bits */
-#define PCIC_BVD	0x03	/* Both Battery Voltage Detect bits */
+#define	PCIC_SOCKETA_INDEX	0x00
+#define	PCIC_SOCKETB_INDEX	0x40
 
-/* For the Power and RESETDRV register (PCIC_POWER) */
-#define PCIC_OUTENA	0x80	/* Output Enable */
-#define PCIC_DISRST	0x40	/* Disable RESETDRV */
-#define PCIC_APSENA	0x20	/* Auto Pwer Switch Enable */
-#define PCIC_VCC5V	0x10	/* PC Card Power 5V Enable */
-#define PCIC_VCC3V	0x08	/* PC Card Power 3V Enable */
-#define PCIC_VPP12V	0x02	/* PC Card Power VPP 12V Enable */
-#define PCIC_VPP5V	0x01	/* PC Card Power VPP 5V Enable */
+/* general setup registers */
 
-/* For the Interrupt and General Control register (PCIC_INT_GEN) */
-#define PCIC_INT_MASK  	0x0f
-#define PCIC_INT_FLAGMASK  	0x0f
-#define PCIC_INTR_ENA	0x10	/* clr bit means CSC interrupt goes via IRQ */
-#define PCIC_CARDTYPE	0x20	/* Card Type 0 = memory, 1 = I/O */
-#define		PCIC_IOCARD	0x20
-#define		PCIC_MEMCARD	0x00
-#define PCIC_CARDRESET	0x40	/* Card reset 0 = Reset, 1 = Normal */
-#define PCIC_RINGIND	0x80	
+#define	PCIC_IDENT				0x00	/* RO */
+#define	PCIC_IDENT_IFTYPE_MASK			0xC0
+#define	PCIC_IDENT_IFTYPE_IO_ONLY		0x00
+#define	PCIC_IDENT_IFTYPE_MEM_ONLY		0x40
+#define	PCIC_IDENT_IFTYPE_MEM_AND_IO		0x80
+#define	PCIC_IDENT_IFTYPE_RESERVED		0xC0
+#define	PCIC_IDENT_ZERO				0x30
+#define	PCIC_IDENT_REV_MASK			0x0F
+#define	PCIC_IDENT_REV_I82365SLR0		0x02
+#define	PCIC_IDENT_REV_I82365SLR1		0x03
 
-/* For the Card Status Change register (PCIC_STAT_CHG) */
-#define PCIC_GPICH	0x10	/* General Purpose Input (GPI) Change */
-#define PCIC_CDTCH	0x08	/* Card Detect Change */
-#define PCIC_RDYCH	0x04	/* Ready Change */
-#define PCIC_BATWRN	0x02	/* Battery Warning */
-#define PCIC_BATDED	0x01	/* Battery Dead */
-#define PCIC_STCH	0x01	/* Status Change */
+#define	PCIC_IF_STATUS				0x01	/* RO */
+#define	PCIC_IF_STATUS_GPI			0x80 /* General Purpose Input */
+#define	PCIC_IF_STATUS_POWERACTIVE		0x40
+#define	PCIC_IF_STATUS_READY			0x20 /* really READY/!BUSY */
+#define	PCIC_IF_STATUS_MEM_WP			0x10
+#define	PCIC_IF_STATUS_CARDDETECT_MASK		0x0C
+#define	PCIC_IF_STATUS_CARDDETECT_PRESENT	0x0C
+#define	PCIC_IF_STATUS_BATTERY_MASK		0x03
+#define	PCIC_IF_STATUS_BATTERY_DEAD1		0x00
+#define	PCIC_IF_STATUS_BATTERY_DEAD2		0x01
+#define	PCIC_IF_STATUS_BATTERY_WARNING		0x02
+#define	PCIC_IF_STATUS_BATTERY_GOOD		0x03
 
-/* For the Card Status Change interrupt config register (PCIC_STAT_INT) */
-#define PCIC_CDT_ENA	0x08	/* Card Detect Enable */
-#define PCIC_RDY_ENA	0x04	/* Ready Enable */
-#define PCIC_BATWRN_ENA	0x02	/* Battery Warning */
-#define PCIC_BATDED_ENA	0x01	/* Battery Dead */
-#define PCIC_ST_ENA	0x01	/* Status Change */
+#define	PCIC_PWRCTL				0x02	/* RW */
+#define	PCIC_PWRCTL_OE				0x80	/* output enable */
+#define	PCIC_PWRCTL_DISABLE_RESETDRV		0x40
+#define	PCIC_PWRCTL_AUTOSWITCH_ENABLE		0x20
+#define	PCIC_PWRCTL_PWR_ENABLE			0x10
+#define	PCIC_PWRCTL_VPP2_MASK			0x0C
+/* XXX these are a little unclear from the data sheet */
+#define	PCIC_PWRCTL_VPP2_RESERVED		0x0C
+#define	PCIC_PWRCTL_VPP2_EN1			0x08
+#define	PCIC_PWRCTL_VPP2_EN0			0x04
+#define	PCIC_PWRCTL_VPP2_ENX			0x00
+#define	PCIC_PWRCTL_VPP1_MASK			0x03
+/* XXX these are a little unclear from the data sheet */
+#define	PCIC_PWRCTL_VPP1_RESERVED		0x03
+#define	PCIC_PWRCTL_VPP1_EN1			0x02
+#define	PCIC_PWRCTL_VPP1_EN0			0x01
+#define	PCIC_PWRCTL_VPP1_ENX			0x00
 
-/* For the Address Window Enable Register (PCIC_ADDRWINE) */
-#define PCIC_SM0_EN	0x01	/* Memory Window 0 Enable */
-#define PCIC_SM1_EN	0x02	/* Memory Window 1 Enable */
-#define PCIC_SM2_EN	0x04	/* Memory Window 2 Enable */
-#define PCIC_SM3_EN	0x08	/* Memory Window 3 Enable */
-#define PCIC_SM4_EN	0x10	/* Memory Window 4 Enable */
-#define PCIC_MEMCS16	0x20	/* ~MEMCS16 Decode A23-A12 */
-#define PCIC_IO0_EN	0x40	/* I/O Window 0 Enable */
-#define PCIC_IO1_EN	0x80	/* I/O Window 1 Enable */
+#define	PCIC_CSC				0x04	/* RW */
+#define	PCIC_CSC_ZERO				0xE0
+#define	PCIC_CSC_GPI				0x10
+#define	PCIC_CSC_CD				0x08 /* Card Detect Change */
+#define	PCIC_CSC_READY				0x04
+#define	PCIC_CSC_BATTWARN			0x02
+#define	PCIC_CSC_BATTDEAD			0x01	/* for memory cards */
+#define	PCIC_CSC_RI				0x01	/* for i/o cards */
 
-/* For the I/O Control Register (PCIC_IOCTL) */
-#define PCIC_IO0_16BIT	0x01	/* I/O to this segment is 16 bit */
-#define PCIC_IO0_CS16	0x02	/* I/O cs16 source is the card */
-#define PCIC_IO0_0WS	0x04	/* zero wait states added on 8 bit cycles */
-#define PCIC_IO0_WS	0x08	/* Wait states added for 16 bit cycles */
-#define PCIC_IO1_16BIT	0x10	/* I/O to this segment is 16 bit */
-#define PCIC_IO1_CS16	0x20	/* I/O cs16 source is the card */
-#define PCIC_IO1_0WS	0x40	/* zero wait states added on 8 bit cycles */
-#define PCIC_IO1_WS	0x80	/* Wait states added for 16 bit cycles */
+#define	PCIC_ADDRWIN_ENABLE			0x06	/* RW */
+#define	PCIC_ADDRWIN_ENABLE_IO1			0x80
+#define	PCIC_ADDRWIN_ENABLE_IO0			0x40
+#define	PCIC_ADDRWIN_ENABLE_MEMCS16		0x20	/* rtfds if you care */
+#define	PCIC_ADDRWIN_ENABLE_MEM4		0x10
+#define	PCIC_ADDRWIN_ENABLE_MEM3		0x08
+#define	PCIC_ADDRWIN_ENABLE_MEM2		0x04
+#define	PCIC_ADDRWIN_ENABLE_MEM1		0x02
+#define	PCIC_ADDRWIN_ENABLE_MEM0		0x01
 
-/* For the various I/O and Memory windows */
-#define PCIC_ADDR_LOW	0
-#define PCIC_ADDR_HIGH	1
-#define PCIC_START	0x00	/* Start of mapping region */
-#define PCIC_END	0x02	/* End of mapping region */
-#define PCIC_MOFF	0x04	/* Card Memory Mapping region offset */
-#define PCIC_IO0	0x08	/* I/O Address 0 */
-#define PCIC_IO1	0x0c	/* I/O Address 1 */
-#define PCIC_SM0	0x10	/* System Memory Address 0 Mapping */
-#define PCIC_SM1	0x18	/* System Memory Address 1 Mapping */
-#define PCIC_SM2	0x20	/* System Memory Address 2 Mapping */
-#define PCIC_SM3	0x28	/* System Memory Address 3 Mapping */
-#define PCIC_SM4	0x30	/* System Memory Address 4 Mapping */
+#define	PCIC_CARD_DETECT			0x16	/* RW */
+#define	PCIC_CARD_DETECT_RESERVED		0xC0
+#define	PCIC_CARD_DETECT_SW_INTR		0x20
+#define	PCIC_CARD_DETECT_RESUME_ENABLE		0x10
+#define	PCIC_CARD_DETECT_GPI_TRANSCTL		0x08
+#define	PCIC_CARD_DETECT_GPI_ENABLE		0x04
+#define	PCIC_CARD_DETECT_CFGRST_ENABLE		0x02
+#define	PCIC_CARD_DETECT_MEMDLY_INHIBIT		0x01
 
-/* For System Memory Window start registers
-   (PCIC_SMx|PCIC_START|PCIC_ADDR_HIGH) */
-#define PCIC_ZEROWS	0x40	/* Zero wait states */
-#define PCIC_DATA16	0x80	/* Data width is 16 bits */
+/* interrupt registers */
 
-/* For System Memory Window stop registers
-   (PCIC_SMx|PCIC_END|PCIC_ADDR_HIGH) */
-#define PCIC_MW0	0x40	/* Wait state bit 0 */
-#define PCIC_MW1	0x80	/* Wait state bit 1 */
+#define	PCIC_INTR				0x03	/* RW */
+#define	PCIC_INTR_RI_ENABLE			0x80
+#define	PCIC_INTR_RESET				0x40	/* active low (zero) */
+#define	PCIC_INTR_CARDTYPE_MASK			0x20
+#define	PCIC_INTR_CARDTYPE_IO			0x20
+#define	PCIC_INTR_CARDTYPE_MEM			0x00
+#define	PCIC_INTR_ENABLE			0x10
+#define	PCIC_INTR_IRQ_MASK			0x0F
+#define	PCIC_INTR_IRQ_SHIFT			0
+#define	PCIC_INTR_IRQ_NONE			0x00
+#define	PCIC_INTR_IRQ_RESERVED1			0x01
+#define	PCIC_INTR_IRQ_RESERVED2			0x02
+#define	PCIC_INTR_IRQ3				0x03
+#define	PCIC_INTR_IRQ4				0x04
+#define	PCIC_INTR_IRQ5				0x05
+#define	PCIC_INTR_IRQ_RESERVED6			0x06
+#define	PCIC_INTR_IRQ7				0x07
+#define	PCIC_INTR_IRQ_RESERVED8			0x08
+#define	PCIC_INTR_IRQ9				0x09
+#define	PCIC_INTR_IRQ10				0x0A
+#define	PCIC_INTR_IRQ11				0x0B
+#define	PCIC_INTR_IRQ12				0x0C
+#define	PCIC_INTR_IRQ_RESERVED13		0x0D
+#define	PCIC_INTR_IRQ14				0x0E
+#define	PCIC_INTR_IRQ15				0x0F
 
-/* For System Memory Window offset registers
-   (PCIC_SMx|PCIC_MOFF|PCIC_ADDR_HIGH) */
-#define PCIC_REG	0x40	/* Attribute/Common select (why called Reg?) */
-#define PCIC_WP		0x80	/* Write-protect this window */
+#define	PCIC_INTR_IRQ_VALIDMASK			0xDEB8 /* 1101 1110 1011 1000 */
 
-/* For Card Detect and General Control register (PCIC_CDGC) */
-#define PCIC_16_DL_INH	0x01	/* 16-bit memory delay inhibit */
-#define PCIC_CNFG_RST_EN 0x02	/* configuration reset enable */
-#define PCIC_GPI_EN	0x04	/* General Purpose Input (GPI) Enable */
-#define PCIC_GPI_TRANS	0x08	/* GPI Transition Control */
-#define PCIC_CDRES_EN	0x10	/* card detect resume enable */
-#define PCIC_SW_CD_INT	0x20	/* s/w card detect interrupt */
+#define	PCIC_CSC_INTR				0x05	/* RW */
+#define	PCIC_CSC_INTR_IRQ_MASK			0xF0
+#define	PCIC_CSC_INTR_IRQ_SHIFT			4
+#define	PCIC_CSC_INTR_IRQ_NONE			0x00
+#define	PCIC_CSC_INTR_IRQ_RESERVED1		0x10
+#define	PCIC_CSC_INTR_IRQ_RESERVED2		0x20
+#define	PCIC_CSC_INTR_IRQ3			0x30
+#define	PCIC_CSC_INTR_IRQ4			0x40
+#define	PCIC_CSC_INTR_IRQ5			0x50
+#define	PCIC_CSC_INTR_IRQ_RESERVED6		0x60
+#define	PCIC_CSC_INTR_IRQ7			0x70
+#define	PCIC_CSC_INTR_IRQ_RESERVED8		0x80
+#define	PCIC_CSC_INTR_IRQ9			0x90
+#define	PCIC_CSC_INTR_IRQ10			0xA0
+#define	PCIC_CSC_INTR_IRQ11			0xB0
+#define	PCIC_CSC_INTR_IRQ12			0xC0
+#define	PCIC_CSC_INTR_IRQ_RESERVED13		0xD0
+#define	PCIC_CSC_INTR_IRQ14			0xE0
+#define	PCIC_CSC_INTR_IRQ15			0xF0
+#define	PCIC_CSC_INTR_CD_ENABLE			0x08
+#define	PCIC_CSC_INTR_READY_ENABLE		0x04
+#define	PCIC_CSC_INTR_BATTWARN_ENABLE		0x02
+#define	PCIC_CSC_INTR_BATTDEAD_ENABLE		0x01	/* for memory cards */
+#define	PCIC_CSC_INTR_RI_ENABLE			0x01	/* for I/O cards */
 
-/* structure for ioctl */
-struct pcic_register {
-    u_char addr;
-    u_char val;
-};
-struct pcic_regs {
-    u_short chip_vers;
-#define PCMICA_CHIP_82365_0	1
-#define PCMICA_CHIP_82365_1	2
-#define PCMICA_CHIP_IBM_1	3
-#define PCMICA_CHIP_IBM_2	4
-#define PCMICA_CHIP_146FC6	5
-#define PCMICA_CHIP_146FC7	6
-    u_short cnt;
-    struct pcic_register reg[128];
-};
-/* DON'T ADD ANYTHING AFTER THIS #endif */
-#endif /* __82365_H__ */
-#ifndef __82365_H__
-#define __82365_H__
-#endif
+#define	PCIC_CSC_INTR_IRQ_VALIDMASK		0xDEB8 /* 1101 1110 1011 1000 */
+
+/* I/O registers */
+
+#define	PCIC_IO_WINS				2
+
+#define	PCIC_IOCTL				0x07	/* RW */
+#define	PCIC_IOCTL_IO1_WAITSTATE		0x80
+#define	PCIC_IOCTL_IO1_ZEROWAIT			0x40
+#define	PCIC_IOCTL_IO1_IOCS16SRC_MASK		0x20
+#define	PCIC_IOCTL_IO1_IOCS16SRC_CARD		0x20
+#define	PCIC_IOCTL_IO1_IOCS16SRC_DATASIZE	0x00
+#define	PCIC_IOCTL_IO1_DATASIZE_MASK		0x10
+#define	PCIC_IOCTL_IO1_DATASIZE_16BIT		0x10
+#define	PCIC_IOCTL_IO1_DATASIZE_8BIT		0x00
+#define	PCIC_IOCTL_IO0_WAITSTATE		0x08
+#define	PCIC_IOCTL_IO0_ZEROWAIT			0x04
+#define	PCIC_IOCTL_IO0_IOCS16SRC_MASK		0x02
+#define	PCIC_IOCTL_IO0_IOCS16SRC_CARD		0x02
+#define	PCIC_IOCTL_IO0_IOCS16SRC_DATASIZE	0x00
+#define	PCIC_IOCTL_IO0_DATASIZE_MASK		0x01
+#define	PCIC_IOCTL_IO0_DATASIZE_16BIT		0x01
+#define	PCIC_IOCTL_IO0_DATASIZE_8BIT		0x00
+
+#define	PCIC_IOADDR0_START_LSB			0x08
+#define	PCIC_IOADDR0_START_MSB			0x09
+#define	PCIC_IOADDR0_STOP_LSB			0x0A
+#define	PCIC_IOADDR0_STOP_MSB			0x0B
+#define	PCIC_IOADDR1_START_LSB			0x0C
+#define	PCIC_IOADDR1_START_MSB			0x0D
+#define	PCIC_IOADDR1_STOP_LSB			0x0E
+#define	PCIC_IOADDR1_STOP_MSB			0x0F
+
+/* memory registers */
+
+/*
+ * memory window addresses refer to bits A23-A12 of the ISA system memory
+ * address.  This is a shift of 12 bits.  The LSB contains A19-A12, and the
+ * MSB contains A23-A20, plus some other bits.
+ */
+
+#define	PCIC_MEM_WINS				5
+
+#define	PCIC_MEM_SHIFT				12
+#define	PCIC_MEM_PAGESIZE			(1<<PCIC_MEM_SHIFT)
+
+#define	PCIC_SYSMEM_ADDRX_SHIFT				PCIC_MEM_SHIFT
+#define	PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_MASK	0x80
+#define	PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT	0x80
+#define	PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_8BIT	0x00
+#define	PCIC_SYSMEM_ADDRX_START_MSB_ZEROWAIT		0x40
+#define	PCIC_SYSMEM_ADDRX_START_MSB_SCRATCH_MASK	0x30
+#define	PCIC_SYSMEM_ADDRX_START_MSB_ADDR_MASK		0x0F
+
+#define	PCIC_SYSMEM_ADDRX_STOP_MSB_WAIT_MASK		0xC0
+#define	PCIC_SYSMEM_ADDRX_STOP_MSB_WAIT0		0x00
+#define	PCIC_SYSMEM_ADDRX_STOP_MSB_WAIT1		0x40
+#define	PCIC_SYSMEM_ADDRX_STOP_MSB_WAIT2		0x80
+#define	PCIC_SYSMEM_ADDRX_STOP_MSB_WAIT3		0xC0
+#define	PCIC_SYSMEM_ADDRX_STOP_MSB_ADDR_MASK		0x0F
+
+/*
+ * The card side of a memory mapping consists of bits A19-A12 of the card
+ * memory address in the LSB, and A25-A20 plus some other bits in the MSB.
+ * Again, the shift is 12 bits.
+ */
+
+#define	PCIC_CARDMEM_ADDRX_SHIFT		PCIC_MEM_SHIFT
+#define	PCIC_CARDMEM_ADDRX_MSB_WP		0x80
+#define	PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_MASK	0x40
+#define	PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_ATTR	0x40
+#define	PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_COMMON	0x00
+#define	PCIC_CARDMEM_ADDRX_MSB_ADDR_MASK	0x3F
+
+#define	PCIC_SYSMEM_ADDR0_START_LSB		0x10
+#define	PCIC_SYSMEM_ADDR0_START_MSB		0x11
+#define	PCIC_SYSMEM_ADDR0_STOP_LSB		0x12
+#define	PCIC_SYSMEM_ADDR0_STOP_MSB		0x13
+
+#define	PCIC_CARDMEM_ADDR0_LSB			0x14
+#define	PCIC_CARDMEM_ADDR0_MSB			0x15
+
+/* #define	PCIC_RESERVED			0x17 */
+
+#define	PCIC_SYSMEM_ADDR1_START_LSB		0x18
+#define	PCIC_SYSMEM_ADDR1_START_MSB		0x19
+#define	PCIC_SYSMEM_ADDR1_STOP_LSB		0x1A
+#define	PCIC_SYSMEM_ADDR1_STOP_MSB		0x1B
+
+#define	PCIC_CARDMEM_ADDR1_LSB			0x1C
+#define	PCIC_CARDMEM_ADDR1_MSB			0x1D
+
+#define	PCIC_SYSMEM_ADDR2_START_LSB		0x20
+#define	PCIC_SYSMEM_ADDR2_START_MSB		0x21
+#define	PCIC_SYSMEM_ADDR2_STOP_LSB		0x22
+#define	PCIC_SYSMEM_ADDR2_STOP_MSB		0x23
+
+#define	PCIC_CARDMEM_ADDR2_LSB			0x24
+#define	PCIC_CARDMEM_ADDR2_MSB			0x25
+
+/* #define	PCIC_RESERVED			0x26 */
+/* #define	PCIC_RESERVED			0x27 */
+
+#define	PCIC_SYSMEM_ADDR3_START_LSB		0x28
+#define	PCIC_SYSMEM_ADDR3_START_MSB		0x29
+#define	PCIC_SYSMEM_ADDR3_STOP_LSB		0x2A
+#define	PCIC_SYSMEM_ADDR3_STOP_MSB		0x2B
+
+#define	PCIC_CARDMEM_ADDR3_LSB			0x2C
+#define	PCIC_CARDMEM_ADDR3_MSB			0x2D
+
+/* #define	PCIC_RESERVED			0x2E */
+/* #define	PCIC_RESERVED			0x2F */
+
+#define	PCIC_SYSMEM_ADDR4_START_LSB		0x30
+#define	PCIC_SYSMEM_ADDR4_START_MSB		0x31
+#define	PCIC_SYSMEM_ADDR4_STOP_LSB		0x32
+#define	PCIC_SYSMEM_ADDR4_STOP_MSB		0x33
+
+#define	PCIC_CARDMEM_ADDR4_LSB			0x34
+#define	PCIC_CARDMEM_ADDR4_MSB			0x35
+
+/* #define	PCIC_RESERVED			0x36 */
+/* #define	PCIC_RESERVED			0x37 */
+/* #define	PCIC_RESERVED			0x38 */
+/* #define	PCIC_RESERVED			0x39 */
+/* #define	PCIC_RESERVED			0x3A */
+/* #define	PCIC_RESERVED			0x3B */
+/* #define	PCIC_RESERVED			0x3C */
+/* #define	PCIC_RESERVED			0x3D */
+/* #define	PCIC_RESERVED			0x3E */
+/* #define	PCIC_RESERVED			0x3F */
+
+/* vendor-specific registers */
+
+#define	PCIC_INTEL_GLOBAL_CTL			0x1E	/* RW */
+#define	PCIC_INTEL_GLOBAL_CTL_RESERVED		0xF0
+#define	PCIC_INTEL_GLOBAL_CTL_IRQ14PULSE_ENABLE	0x08
+#define	PCIC_INTEL_GLOBAL_CTL_EXPLICIT_CSC_ACK	0x04
+#define	PCIC_INTEL_GLOBAL_CTL_IRQLEVEL_ENABLE	0x02
+#define	PCIC_INTEL_GLOBAL_CTL_POWERDOWN		0x01
+
+#define	PCIC_CIRRUS_MISC_CTL_2			0x1E
+#define	PCIC_CIRRUS_MISC_CTL_2_SUSPEND		0x04
+
+#define	PCIC_CIRRUS_CHIP_INFO			0x1F
+#define	PCIC_CIRRUS_CHIP_INFO_CHIP_ID		0xC0
+#define	PCIC_CIRRUS_CHIP_INFO_SLOTS		0x20
+#define	PCIC_CIRRUS_CHIP_INFO_REV		0x1F
