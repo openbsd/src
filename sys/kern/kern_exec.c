@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.72 2002/10/06 22:39:25 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.73 2002/11/09 04:12:32 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -348,7 +348,7 @@ sys_execve(p, v, retval)
 	}
 
 	envc = 0;
-	/* environment need not be there */
+	/* environment does not need to be there */
 	if ((cpp = SCARG(uap, envp)) != NULL ) {
 		while (1) {
 			len = argp + ARG_MAX - dp;
