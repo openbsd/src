@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.11 2000/03/30 23:56:27 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.12 2000/04/16 16:24:04 d Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -176,6 +176,8 @@ time in hours and minutes
 24-hour format time (for times after noon)
 .It 1:28:14
 time in hours, minutes, and seconds
+.It \&-
+equivalent to 0
 .El
 .Pp
 where hour 0 is midnight at the start of the day,
@@ -385,4 +387,4 @@ standard directory used for created files
 .Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zdump 8
-.\" @(#)zic.8	7.18
+.\" @(#)zic.8	7.19

@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.11 1999/01/29 07:04:05 d Exp $	*/
+/*	$OpenBSD: private.h,v 1.12 2000/04/16 16:24:04 d Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -33,7 +33,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.48";
+static char	privatehid[] = "@(#)private.h	7.49";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -62,6 +62,10 @@ static char	privatehid[] = "@(#)private.h	7.48";
 #ifndef HAVE_SYMLINK
 #define HAVE_SYMLINK		1
 #endif /* !defined HAVE_SYMLINK */
+
+#ifndef HAVE_SYS_WAIT_H
+#define HAVE_SYS_WAIT_H		1
+#endif /* !defined HAVE_SYS_WAIT_H */
 
 #ifndef HAVE_UNISTD_H
 #define HAVE_UNISTD_H		1
@@ -92,6 +96,17 @@ static char	privatehid[] = "@(#)private.h	7.48";
 #if HAVE_GETTEXT - 0
 #include "libintl.h"
 #endif /* HAVE_GETTEXT - 0 */
+
+#if HAVE_SYS_WAIT_H - 0
+#include <sys/wait.h>	/* for WIFEXITED and WEXITSTATUS */
+#endif /* HAVE_SYS_WAIT_H - 0 */
+
+#ifndef WIFEXITED
+#define WIFEXITED(status)	(((status) & 0xff) == 0)
+#endif /* !defined WIFEXITED */
+#ifndef WEXITSTATUS
+#define WEXITSTATUS(status)	(((status) >> 8) & 0xff)
+#endif /* !defined WEXITSTATUS */
 
 #if HAVE_UNISTD_H - 0
 #include "unistd.h"	/* for F_OK and R_OK */

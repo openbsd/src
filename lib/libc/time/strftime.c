@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)strftime.c	7.57";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.5 1998/08/14 21:39:44 deraadt Exp $";
+static char elsieid[] = "@(#)strftime.c	7.58";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.6 2000/04/16 16:24:04 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -80,24 +80,21 @@ static const struct lc_time_T	C_time_locale = {
 
 	/*
 	** x_fmt
-	** Since the C language standard calls for
-	** "date, using locale's date format," anything goes.
+	** C99 requires this format.
 	** Using just numbers (as here) makes Quakers happier;
 	** it's also compatible with SVR4.
-	**
-	** XXX--might it be better to use the year-2000 friendly
-	**	%Y-%m-%d
-	** here?
 	*/
 	"%m/%d/%y",
 
 	/*
 	** c_fmt
-	** XXX--Changed by millert from "%D %X"
-	**      to the more common "%a %b %d %H:%M:%S %Y"
-	**      used by everyone else.
+	** C99 requires this format.
+	** Previously this code used "%D %X", but we now conform to C99.
+	** Note that
+	**      "%a %b %d %H:%M:%S %Y"
+	** is used by Solaris 2.3.
 	*/
-	"%a %b %d %H:%M:%S %Y",
+	"%a %b %e %T %Y",
 
 	/* am */
 	"AM",

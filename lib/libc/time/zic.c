@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zic.c	7.99";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.12 2000/03/30 23:30:25 millert Exp $";
+static char elsieid[] = "@(#)zic.c	7.100";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.13 2000/04/16 16:24:04 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -1895,10 +1895,12 @@ const char * const	type;
 	buf = erealloc(buf, (int) (132 + strlen(yitcommand) + strlen(type)));
 	(void) sprintf(buf, "%s %d %s", yitcommand, year, type);
 	result = system(buf);
-	if (result == 0)
-		return TRUE;
-	if (result == (1 << 8))
-		return FALSE;
+	if (WIFEXITED(result)) switch (WEXITSTATUS(result)) {
+		case 0:
+			return TRUE;
+		case 1:
+			return FALSE;
+	}
 	error(_("Wild result from command execution"));
 	(void) fprintf(stderr, _("%s: command was '%s', result was %d\n"),
 		progname, buf, result);

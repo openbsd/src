@@ -1,5 +1,4 @@
-$OpenBSD: Theory,v 1.5 1999/07/01 23:05:39 d Exp $
-@(#)Theory	7.8
+@(#)Theory	7.10
 
 
 ----- Outline -----
@@ -199,7 +198,8 @@ in decreasing order of importance:
 		`-' and `_'.  Do not exceed 14 characters or start with `-'.
 		E.g. prefer `Brunei' to `Bandar_Seri_Begawan'.
 	Include at least one location per time zone rule set per country.
-		One such location is enough.
+		One such location is enough.  Use ISO 3166 (see the file
+		iso3166.tab) to help decide whether something is a country.
 	If all the clocks in a country's region have agreed since 1970,
 		don't bother to include more than one location
 		even if subregions' clocks disagreed before 1970.
@@ -316,6 +316,22 @@ Gregorian calendar while retaining the 6-day week; on 1940-06-27 it
 reverted to the 7-day week.  With the 6-day week the usual days
 off were the 6th, 12th, 18th, 24th and 30th of the month.
 (Source: Evitiar Zerubavel, _The Seven Day Circle_)
+
+
+Mark Brader reported a similar story in "The Book of Calendars", edited
+by Frank Parise (1982, Facts on File, ISBN 0-8719-6467-8), page 377.  But:
+
+From: Petteri Sulonen (via Usenet)
+Date: 14 Jan 1999 00:00:00 GMT
+Message-ID: <Petteri.Sulonen-1401991626030001@lapin-kulta.in.helsinki.fi>
+
+If your source is correct, how come documents between 1929 -- 1940 were
+still dated using the conventional, Gregorian calendar?
+
+I can post a scan of a document dated December 1, 1934, signed by
+Yenukidze, the secretary, on behalf of Kalinin, the President of the
+Executive Committee of the Supreme Soviet, if you like.
+
 
 
 Sweden (and Finland)

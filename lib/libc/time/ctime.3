@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.21 2000/04/15 02:15:26 aaron Exp $
+.\"	$OpenBSD: ctime.3,v 1.22 2000/04/16 16:24:03 d Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -23,9 +23,9 @@
 .Ft void
 .Fn tzset "void"
 .Ft "char *"
-.Fn ctime "time_t *clock"
+.Fn ctime "const time_t *clock"
 .Ft "char *"
-.Fn ctime_r "time_t *clock" "char *buf"
+.Fn ctime_r "const time_t *clock" "char *buf"
 .Ft double
 .Fn difftime "time_t time1" "time_t time0"
 .Ft "char *"
@@ -92,8 +92,7 @@ After filling in the
 structure,
 .Fn localtime
 sets the
-.Fa tm_isdst
-'th
+.Fa tm_isdst Ns No 'th
 element of
 .Fa tzname
 to a pointer to an
@@ -275,4 +274,4 @@ as the superuser.
 Avoid using out-of-range values with
 .Fn mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" based on @(#)newctime.3	7.13
+.\" based on @(#)newctime.3	7.14
