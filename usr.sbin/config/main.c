@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2003/09/26 17:01:14 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2003/12/29 05:26:11 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -323,9 +323,8 @@ stop(void)
 void
 defoption(const char *name)
 {
+	char *p, *low, c;
 	const char *n;
-	char *p, c;
-	char low[500];
 
 	/*
 	 * Convert to lower case.  The header file name will be
@@ -334,11 +333,13 @@ defoption(const char *name)
 	 * original string will be stored in the nvlist for use
 	 * in the header file.
 	 */
+	low = emalloc(strlen(name) + 1);
 	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
 	*p = 0;
 
 	n = intern(low);
+	free(low);
 	(void)do_option(defopttab, &nextdefopt, n, name, "defopt");
 
 	/*
@@ -355,13 +356,11 @@ void
 removeoption(const char *name)
 {
 	struct nvlist *nv, *nvt;
+	char *p, *low, c;
 	const char *n;
-	char *p, c;
-	char low[500];
 
 	if ((nv = ht_lookup(opttab, name)) != NULL) {
-		if (options == nv)
-		{
+		if (options == nv) {
 			options = nv->nv_next;
 			nvfree(nv);
 		} else {
@@ -371,8 +370,7 @@ removeoption(const char *name)
 					nvt->nv_next = nvt->nv_next->nv_next;
 					nvfree(nv);
 					break;
-				}
-				else
+				} else
 					nvt = nvt->nv_next;
 			}
 		}
@@ -380,11 +378,13 @@ removeoption(const char *name)
 
 	(void)ht_remove(opttab, name);
 
+	low = emalloc(strlen(name) + 1);
 	/* make lowercase, then add to select table */
 	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
 	*p = 0;
 	n = intern(low);
+	free(low);
 	(void)ht_remove(selecttab, n);
 }
 
@@ -395,18 +395,19 @@ removeoption(const char *name)
 void
 addoption(const char *name, const char *value)
 {
+	char *p, *low, c;
 	const char *n;
-	char *p, c;
-	char low[500];
 
 	if (do_option(opttab, &nextopt, name, value, "options"))
 		return;
 
+	low = emalloc(strlen(name) + 1);
 	/* make lowercase, then add to select table */
 	for (n = name, p = low; (c = *n) != '\0'; n++)
 		*p++ = isupper(c) ? tolower(c) : c;
 	*p = 0;
 	n = intern(low);
+	free(low);
 	(void)ht_insert(selecttab, n, (void *)n);
 }
 
