@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.52 2002/11/25 00:06:51 cloder Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.53 2002/11/27 21:40:32 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -893,10 +893,12 @@ irealloc(ptr, size)
 	for (osize = malloc_pagesize; *++mp == MALLOC_FOLLOW;)
 	    osize += malloc_pagesize;
 
-        if (!malloc_realloc &&			/* unless we have to, */
+        if (!malloc_realloc &&			/* Unless we have to, */
 	  size <= osize &&			/* .. or are too small, */
 	  size > (osize - malloc_pagesize)) {	/* .. or can free a page, */
-	    return ptr;				/* don't do anything. */
+	    if (malloc_junk)
+		memset((char *)ptr + size, SOME_JUNK, osize-size);
+	    return ptr;				/* ..don't do anything else. */
 	}
 
     } else if (*mp >= MALLOC_MAGIC) {		/* Chunk allocation */
@@ -919,10 +921,12 @@ irealloc(ptr, size)
 	osize = (*mp)->size;
 
 	if (!malloc_realloc &&		/* Unless we have to, */
-	  size < osize &&		/* ..or are too small, */
+	  size <= osize &&		/* ..or are too small, */
 	  (size > osize/2 ||		/* ..or could use a smaller size, */
 	  osize == malloc_minsize)) {	/* ..(if there is one) */
-	    return ptr;			/* ..Don't do anything */
+	    if (malloc_junk)
+		memset((char *)ptr + size, SOME_JUNK, osize-size);
+	    return ptr;			/* ..don't do anything else. */
 	}
 
     } else {
@@ -1070,10 +1074,11 @@ free_pages(ptr, index, info)
 	malloc_brk = pf->end;
 
 	index = ptr2index(pf->end);
-	last_index = index - 1;
 
 	for(i=index;i <= last_index;)
 	    page_dir[i++] = MALLOC_NOT_MINE;
+
+	last_index = index - 1;
 
 	/* XXX: We could realloc/shrink the pagedir here I guess. */
     }
