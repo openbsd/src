@@ -1,7 +1,7 @@
 
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.6 2001/09/04 20:16:46 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 2001/09/04 20:49:08 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -81,6 +81,9 @@
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
+# set this to echo for Echo-Only debugging
+[ "$eo" ] || eo=
+
 hex()
 {
 	case $1 in
@@ -121,12 +124,12 @@ unt()
 }
 dodisk()
 {
-	n=$(( $((${5} * 16 )) + ${6} )) count=0
+	n=$(($((${5}*16))+${6})) count=0
 	RMlist="$RMlist $1$2? r$1$2?"
 	for d in a b c d e f g h i j k l m n o p
 	do
-		M $1$2$d	b $3 $(( $n + $count )) 640
-		M r$1$2$d	c $4 $(( $n + $count )) 640
+		M $1$2$d	b $3 $(($n+$count)) 640
+		M r$1$2$d	c $4 $(($n+$count)) 640
 		let count=count+1
 	done
 	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
@@ -134,15 +137,13 @@ dodisk()
 dodisk2()
 {
 	[ "$7" ] && fac=$7 || fac=16
-	n=$(( $(($5 * $fac )) + $6 ))
+	n=$(($(($5*$fac))+$6))
 	M $1$2a b $3 $n 640 operator
 	M r$1$2a c $4 $n 640 operator
-	n=$(( $n + 2 ))
+	n=$(($n+2))
 	M $1$2c b $3 $n 640 operator
 	M r$1$2c c $4 $n 640 operator
 }
-# set this to echo for Echo-Only debugging
-[ "$eo" ] || eo=
 
 # M name b/c major minor [mode] [group]
 RMlist="rm -f"
@@ -240,7 +241,7 @@ cua[a-z])
 	d) n=5 ;;
 	*) echo unknown cua device $i ;;  
 	esac
-	M cua$unit c 12 $(( $n + 128 )) wheel uucp
+	M cua$unit c 12 $(($n+128)) wheel uucp
 	;;
 speaker)M speaker c 27 0 600;;
 mouse*)name=${i##mouse-}
@@ -274,9 +275,9 @@ pty*)
 	while [ $n -lt 16 ]
 	do
 		nam=$name$(hex $n)
-		M tty$nam c 20 $(( $off + $n )) $mod $grp
-		M pty$nam c 21 $(( $off + $n )) $mod $grp
-		n=$(( $n + 1 ))
+		M tty$nam c 20 $(($off+$n)) $mod $grp
+		M pty$nam c 21 $(($off+$n)) $mod $grp
+		n=$(($n+1))
 	done;;
 bwtwo*) M bwtwo$U c 27 $U 666;;
 cgthree*) M cgthree$U c 55 $U 666;;
@@ -286,15 +287,15 @@ tcx*) M tcx$U c 109 $U 666;;
 fd)
 	RMlist="mkdir -p fd;$RMlist"
 	n=0
-	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(( $n + 1 ));done
+	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
 	MKlist="$MKlist;chmod 555 fd";;
 st*)
-    n=$(( $U * 16 ))
+    n=$(($U*16))
 	for pre in " " n e en
 	do
 		M ${pre}st$U	b 11 $n 660 operator
 		M ${pre}rst$U	c 18 $n 660 operator
-		n=$(( $n + 1 ))
+		n=$(($n+1))
 	done;;
 fd*)
     typnam=$U${i#fd[01]*}
@@ -315,13 +316,13 @@ fd*)
 	*)	echo bad unit $U for $i; exit 1;;
 	esac
 	nam=fd${typnam}
-	n=$(( $(($U * 128 )) + $(($typnum * 16 )) ))
+	n=$(($(($U*128))+$(($typnum*16))))
 	M ${nam}a	b $blk $n 640 operator
-	M ${nam}b	b $blk $(( $n + 1 )) 640 operator
-	M ${nam}c	b $blk $(( $n + 2 )) 640 operator
+	M ${nam}b	b $blk $(($n+1)) 640 operator
+	M ${nam}c	b $blk $(($n+2)) 640 operator
 	M r${nam}a	c $chr $n 640 operator
-	M r${nam}b	c $chr $(( $n + 1 )) 640 operator
-	M r${nam}c	c $chr $(( $n + 2 )) 640 operator;;
+	M r${nam}b	c $chr $(($n+1)) 640 operator
+	M r${nam}c	c $chr $(($n+2)) 640 operator;;
 sd*|ccd*|raid*|wd*)
     case $i in
 	sd*) n=sd b=7 c=17;;
@@ -334,11 +335,11 @@ cd*)
     dodisk2 cd $U 18 58 $U 0;;
 rd*)
     
-	n=$(( $U * 16 ))
-	M rd${unit}a b 5 $(( $n + 0 )) $mod $grp 640 operator
-	M rd${unit}c b 5 $(( $n + 2 )) $mod $grp 640 operator
-	M rrd${unit}a c 61 $(( $n + 0 )) $mod $grp 640 operator
-	M rrd${unit}c c 61 $(( $n + 2 )) $mod $grp 640 operator;;
+	n=$(($U*16))
+	M rd${unit}a b 5 $(($n+0)) $mod $grp 640 operator
+	M rd${unit}c b 5 $(($n+2)) $mod $grp 640 operator
+	M rrd${unit}a c 61 $(($n+0)) $mod $grp 640 operator
+	M rrd${unit}c c 61 $(($n+2)) $mod $grp 640 operator;;
 
 vnd*)
     dodisk vnd $U 8 110 $U 0
@@ -350,12 +351,12 @@ ss*)
 	umask 77
 	ln -s ss$U scan$U;;
 st*)
-    n=$(( $U * 16 ))
+    n=$(($U*16))
 	for pre in " " n e en
 	do
 		M ${pre}st$U	b 11 $n 660 operator
 		M ${pre}rst$U	c 18 $n 660 operator
-		n=$(( $n + 1 ))
+		n=$(($n+1))
 	done;;
 ses*)
 	M ses$U c 4 $U 640 operator;;
@@ -367,21 +368,21 @@ xfs*) M xfs$U c 51 $U 600;;
 	for pre in " " s u p a
 	do
 		M ${pre}random c 119 $n 644
-		n=$(( $n + 1 ))
+		n=$(($n+1))
 	done;;
 audio*)
 	[ "$U" = "0" ] && u= || u=$U
 	M sound$u	c 69 $U
-	M mixer$u	c 69 $(( $U + 16 ))
-	M audio$u	c 69 $(( $U + 128 ))
-	M audioctl$u	c 69 $(( $U + 192 ));;
+	M mixer$u	c 69 $(($U+16))
+	M audio$u	c 69 $(($U+128))
+	M audioctl$u	c 69 $(($U+192));;
 pf*)
 	M pf c 73 0 600;;
 altq)
 	RMlist="mkdir -p altq;$RMlist"
 	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
 		M altq/$d c 74 $U 644
-		U=$(( $U + 1 ))
+		U=$(($U+1))
 	done;;
 bpf*)
 	M bpf$U c 105 $U 600;;
