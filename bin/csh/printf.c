@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.3 1996/08/02 12:40:52 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.4 1996/09/15 22:00:26 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.3 1996/08/02 12:40:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.4 1996/09/15 22:00:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ static char rcsid[] = "$OpenBSD: printf.c,v 1.3 1996/08/02 12:40:52 deraadt Exp 
 #define main printfcmd
 #define warnx(a, b, c) {						\
 	char buf[64];							\
-	(void)sprintf(buf, sizeof(buf), a, b, c);			\
+	(void)snprintf(buf, sizeof(buf), a, b, c);			\
 	error(buf);							\
 }
 #include "../../bin/sh/bltin/bltin.h"
