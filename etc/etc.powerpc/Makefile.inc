@@ -1,10 +1,10 @@
 #
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.1 1997/01/21 23:18:06 rahnds Exp $
+#	$Id: Makefile.inc,v 1.2 1997/05/03 07:48:38 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: binutils
+snap_md: binutils bsd
 
 binutils:
 	cd ${DESTDIR} && tar cf - usr/*openbsd* \
