@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.54 1998/05/20 22:18:24 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.55 1998/05/30 06:55:46 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -127,6 +127,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M4803",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
+	    0,
+	    "Acer Labs",
+	    "M1543 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229,
+	    0,
+	    "Acer Labs",
+	    "M5229 UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
+	    0,
+	    "Acer Labs",
+	    "M5237 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
+	    0,
+	    "Acer Labs",
+	    "M7101 Power Management Controller",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7810,
@@ -1437,6 +1461,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DC5030",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA33,
+	    0,
+	    "Promise Technology",
+	    "Ultra DMA/ATA Bus Master IDE Accelerator",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
 	    0,
 	    "QLogic",
@@ -1885,6 +1915,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9682",
+	},
+	{
+	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
+	    0,
+	    "TriTech Microelectronics",
+	    "Pyramid3D TR25202",
 	},
 	{
 	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_A,
@@ -4956,6 +4992,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Rockwell Semiconductor Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_TRITECH, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "TriTech Microelectronics",
 	    NULL,
 	},
 	{
