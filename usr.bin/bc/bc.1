@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.6 2003/10/18 19:57:10 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.7 2003/10/19 19:21:48 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -125,6 +125,10 @@ quit
 a string of characters, enclosed in double quotes
 .Ed
 .Pp
+The E's in a for statement may all three be empty.
+This is a non-portable extension.
+The continue statement also is a non-portable extension.
+.Pp
 Function definitions
 .Bd -unfilled -offset indent -compact
 define L ( L ,..., L ) {
@@ -232,8 +236,6 @@ or
 .Sq \&!
 operators.
 .Pp
-.Ql For
-statements must have all three E's.
 .Pp
 .Ql Quit
 is interpreted when read, not when executed.

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.12 2003/10/18 20:35:36 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.13 2003/10/19 19:21:48 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.12 2003/10/18 20:35:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.13 2003/10/19 19:21:48 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -138,6 +138,8 @@ extern char *__progname;
 %type <node>	function_header
 %type <node>	input_item
 %type <node>	opt_argument_list
+%type <node>	opt_expression
+%type <node>	opt_relational_expression
 %type <node>	opt_statement
 %type <node>	relational_expression
 %type <node>	return_expression
@@ -278,9 +280,9 @@ statement	: expression
 				}
 				$$ = $3;
 			}
-		| FOR LPAR alloc_macro expression SEMICOLON
-		     relational_expression SEMICOLON
-		     expression RPAR opt_statement pop_nesting
+		| FOR LPAR alloc_macro opt_expression SEMICOLON
+		     opt_relational_expression SEMICOLON
+		     opt_expression RPAR opt_statement pop_nesting
 			{
 				ssize_t n;
 
@@ -443,6 +445,13 @@ argument_list	: expression
 			}
 		;
 
+opt_relational_expression
+		: /* empty */
+			{
+				$$ = cs(" 0 0=");
+			}
+		| relational_expression
+		;
 
 relational_expression
 		: expression
@@ -489,6 +498,13 @@ return_expression
 			}
 		;
 
+
+opt_expression : /* empty */
+			{
+				$$ = cs(" 0");
+			}
+		| expression
+		;
 
 expression	: named_expression
 			{
