@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.12 1999/10/06 04:56:23 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.13 1999/10/06 04:57:32 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -87,7 +87,7 @@
 #define DEBUG_ERRORS 0x80   /* Debug error handling code */
 
 #ifdef WDCDEBUG
-int wdcdebug_atapi_mask = DEBUG_ERRORS;
+int wdcdebug_atapi_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args
