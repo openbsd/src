@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.11 1997/07/25 22:52:43 weingart Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.12 1998/01/11 06:15:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -492,6 +492,28 @@ void doreset(void)
 		wait_retries++;
 	}
 
+#if PCVT_SCANSET == 1
+	/* 
+	 * Pcvt has been compiled for scanset 1, which requires that
+	 * the mainboard controller translates. If it is not able to,
+	 * try to set the keyboard to XT mode so that pcvt will see AT
+	 * scan codes after all. If it fails, we're out of luck.
+	 */
+	kbc_8042cmd(CONTR_READ);
+	response = kbd_response();
+
+	if (!(response & COMMAND_PCSCAN))
+	{
+		if (kbd_cmd(KEYB_C_SCANSET) != 0)
+			printf("pcvt: doreset() - keyboard SCANSET command timeout\n");
+		else if (kbd_cmd(1) != 0)
+			printf("pcvt: doreset() - keyboard SCANSET data timeout\n");
+		else
+			printf("pcvt: doreset() - keyboard set to XT mode\n");
+	 }
+#endif
+
+
 	splx(opri);
 
 #if PCVT_KEYBDID
@@ -530,6 +552,10 @@ r_entry:
 				keyboard_type = KB_MFII;
 			}
 			else if(response == KEYB_R_MF2ID2TP)
+			{
+				keyboard_type = KB_MFII;
+			}
+			else if(response == KEYB_R_MF2ID2TP2)
 			{
 				keyboard_type = KB_MFII;
 			}
