@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.1 2002/01/13 02:06:45 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.2 2002/01/13 04:13:53 jason Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -174,14 +174,12 @@ spifattach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 
 	if (sa->sa_nintr != 2) {
-		printf(": expected 2 interrupts, got %d\n",
-		    sa->sa_nintr);
+		printf(": expected %d interrupts, got %d\n", 2, sa->sa_nintr);
 		return;
 	}
 
 	if (sa->sa_nreg != 1) {
-		printf(": expected %d registers, got %d\n",
-		    1, sa->sa_nreg);
+		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
 		return;
 	}
 
@@ -196,45 +194,45 @@ spifattach(parent, self, aux)
 	if (bus_space_subregion(sc->sc_bustag, sc->sc_regh,
 	    DTR_REG_OFFSET, DTR_REG_LEN, &sc->sc_dtrh) != 0) {
 		printf(": can't map dtr regs\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	if (bus_space_subregion(sc->sc_bustag, sc->sc_regh,
 	    STC_REG_OFFSET, STC_REG_LEN, &sc->sc_stch) != 0) {
 		printf(": can't map dtr regs\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	if (bus_space_subregion(sc->sc_bustag, sc->sc_regh,
 	    ISTC_REG_OFFSET, ISTC_REG_LEN, &sc->sc_istch) != 0) {
 		printf(": can't map dtr regs\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	if (bus_space_subregion(sc->sc_bustag, sc->sc_regh,
 	    PPC_REG_OFFSET, PPC_REG_LEN, &sc->sc_ppch) != 0) {
 		printf(": can't map dtr regs\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	sc->sc_ppcih = bus_intr_establish(sa->sa_bustag,
 	    sa->sa_intr[PARALLEL_INTR].sbi_pri, IPL_TTY, 0, spifppcintr, sc);
 	if (sc->sc_ppcih == NULL) {
 		printf(": failed to establish ppc interrupt\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	sc->sc_stcih = bus_intr_establish(sa->sa_bustag,
 	    sa->sa_intr[SERIAL_INTR].sbi_pri, IPL_TTY, 0, spifstcintr, sc);
 	if (sc->sc_stcih == NULL) {
 		printf(": failed to establish stc interrupt\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	sc->sc_softih = softintr_establish(IPL_TTY, spifsoftintr, sc);
 	if (sc->sc_softih == NULL) {
 		printf(": can't get soft intr\n");
-		return;
+		goto fail_unmapregs;
 	}
 
 	sc->sc_node = sa->sa_node;
@@ -277,6 +275,11 @@ spifattach(parent, self, aux)
 
 	(void)config_found(self, sttymatch, NULL);
 	(void)config_found(self, sbppmatch, NULL);
+
+	return;
+
+fail_unmapregs:
+	bus_space_unmap(sa->sa_bustag, sc->sc_regh, sa->sa_reg[0].sbr_size);
 }
 
 int
@@ -350,7 +353,7 @@ sttyopen(dev, flags, mode, p)
 
 	sc = stty_cd.cd_devs[card];
 	csc = spif_cd.cd_devs[card];
-	if (sc == NULL)
+	if (sc == NULL || csc == NULL)
 		return (ENXIO);
 
 	if (port >= sc->sc_nports)
