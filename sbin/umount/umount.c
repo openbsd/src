@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.7 1999/02/27 07:59:30 deraadt Exp $	*/
+/*	$OpenBSD: umount.c,v 1.8 2000/01/30 02:05:05 millert Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.7 1999/02/27 07:59:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.8 2000/01/30 02:05:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0 && !all || argc != 0 && all)
+	if ((argc == 0 && !all) || (argc != 0 && all))
 		usage();
 
 	/* -h implies "-t nfs" if no -t flag. */
@@ -165,8 +165,8 @@ umountall()
 }
 
 int
-umountfs(name)
-	char *name;
+umountfs(oname)
+	char *oname;
 {
 	enum clnt_stat clnt_stat;
 	struct hostent *hp;
@@ -175,23 +175,32 @@ umountfs(name)
 	struct timeval pertry, try;
 	CLIENT *clp;
 	int so;
-	char *delimp, *hostp, *mntpt, rname[MAXPATHLEN], type[MFSNAMELEN];
+	char *delimp, *hostp, *mntpt;
+	char *name, *newname, rname[MAXPATHLEN], type[MFSNAMELEN];
 
 	if (realpath(name, rname) == NULL) {
 		warn("%s", rname);
 		return (1);
 	}
-
 	mntpt = name = rname;
+	newname = NULL;
 
 	if (stat(name, &sb) < 0) {
-		if ((name = getmntname(mntpt, MNTFROM, type)) == NULL) {
-			name = rname;
-			if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
-				warnx("%s: not currently mounted", name);
+		/*
+		 * 99.9% of the time the path in the kernel is the one
+		 * realpath() returns but check the original just in case...
+		 */
+		if (!(newname = getmntname(name, MNTFROM, type)) &&
+		    !(mntpt = getmntname(name, MNTON, type)) ) {
+			mntpt = oname;
+			if (!(newname = getmntname(oname, MNTFROM, type)) &&
+			    !(mntpt = getmntname(oname, MNTON, type))) {
+				warnx("%s: not currently mounted", oname);
 				return (1);
 			}
 		}
+		if (newname)
+			name = newname;
 	} else if (S_ISBLK(sb.st_mode)) {
 		if ((mntpt = getmntname(name, MNTON, type)) == NULL) {
 			warnx("%s: not currently mounted", name);
@@ -337,14 +346,14 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++)
 		++nextcp;
 
 	/* Build an array of that many types. */
 	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
 		err(1, NULL);
 	av[0] = fslist;
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')); i++) {
 		*nextcp = '\0';
 		av[i] = ++nextcp;
 	}
