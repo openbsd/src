@@ -70,7 +70,7 @@
 #define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(8*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define	MAXDSIZ		(32*1024*1024)		/* max data size */
