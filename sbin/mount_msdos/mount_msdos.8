@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_msdos.8,v 1.16 2003/02/09 07:26:45 jmc Exp $
+.\"	$OpenBSD: mount_msdos.8,v 1.17 2003/04/18 22:16:24 tedu Exp $
 .\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -45,6 +45,7 @@
 .Op Fl l
 .Op Fl 9
 .Op Fl G
+.Op Fl x
 .Ar special
 .Ar node
 .Sh DESCRIPTION
@@ -139,6 +140,8 @@ The differences to the msdos filesystem are minimal and
 limited to the boot block.
 This option enforces
 .Fl s .
+.It Fl x
+If a directory is readable, it inherits the x attribute as well.
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
