@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 1997/09/12 04:33:24 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2001/06/22 23:52:35 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.7 1997/09/12 04:33:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.8 2001/06/22 23:52:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,5 +106,5 @@ terminate(notused)
 	int notused;
 {
 
-	exit(0);
+	_exit(0);
 }
