@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.59 2004/01/11 22:06:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.60 2004/01/11 22:08:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -545,7 +545,7 @@ rde_update_log(const char *message,
     const struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	char		*neighbor;
-	char	 	*nexthop = NULL;
+	char		*nexthop = NULL;
 	struct in_addr	 nh;
 
 	if (! (conf->log & BGPD_LOG_UPDATES))
