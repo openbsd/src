@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.4 2004/06/28 01:41:53 aaron Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.5 2004/08/12 06:11:57 niklas Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -354,6 +354,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 
 struct intrhand *apic_intrhand[256];
 int	apic_intrcount[256];
+int	apic_maxlevel[256];
 
 
 /* XXX should check vs. softc max int number */
@@ -459,14 +460,10 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 		pp->ip_maxlevel = 0; /* XXX magic */
 		pp->ip_vector = 0;
 	} else if (maxlevel != pp->ip_maxlevel) {
-		if (minlevel != maxlevel) {
-			printf("%s: WARNING: sharing interrupt "
-			    "between different IPLs (currently broken)\n",
-			    sc->sc_dev.dv_xname);
-			printf("%s: pin %d, ipls %x..%x\n",
-			    sc->sc_dev.dv_xname,
-			    pin, minlevel, maxlevel);
-		}
+		if (minlevel != maxlevel)
+			printf("%s: pin %d shares different IPL interrupts "
+			    "(%x..%x), degraded performance\n",
+			    sc->sc_dev.dv_xname, pin, minlevel, maxlevel);
 
 		/*
 		 * Allocate interrupt vector at the *lowest* priority level
@@ -475,7 +472,7 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 		 * The interrupt handler will raise ipl higher than this
 		 * as appropriate.
 		 */
-		nvector = idt_vec_alloc(maxlevel, maxlevel+15);
+		nvector = idt_vec_alloc(minlevel, minlevel+15);
 
 		if (nvector == 0) {
 			/*
@@ -486,6 +483,7 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 			panic("%s: can't alloc vector for pin %d at level %x",
 			    sc->sc_dev.dv_xname, pin, maxlevel);
 		}
+		apic_maxlevel[nvector] = maxlevel;
 		/* 
 		 * XXX want special handler for the maxlevel != minlevel
 		 * case here!
