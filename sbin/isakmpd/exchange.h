@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.9 1999/04/19 21:03:35 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.22 1999/04/15 18:51:08 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.10 1999/04/27 21:14:04 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.23 1999/04/25 22:04:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -106,9 +106,6 @@ struct exchange {
   /* 1 if we are the initiator, 0 if we are the responder.  */
   u_int8_t initiator;
 
-  /* A reference counter for this structure.  */
-  u_int32_t refcnt;
-
   /* Various flags, look below for descriptions.  */
   u_int32_t flags;
 
@@ -180,8 +177,6 @@ extern void exchange_init (void);
 extern struct exchange *exchange_lookup (u_int8_t *, int);
 extern struct exchange *exchange_lookup_by_name (char *, int);
 extern struct exchange *exchange_lookup_from_icookie (u_int8_t *);
-extern void exchange_reference (struct exchange *);
-extern void exchange_release (struct exchange *);
 extern void exchange_report (void);
 extern void exchange_run (struct message *);
 extern int exchange_save_nonce (struct message *);
