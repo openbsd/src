@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.13 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: aac.c,v 1.14 2002/03/27 15:02:59 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -81,7 +81,7 @@ char   *aac_describe_code(struct aac_code_lookup *, u_int32_t);
 void	aac_describe_controller(struct aac_softc *);
 void	aac_enqueue(struct aac_softc *, struct scsi_xfer *, int);
 void	aac_enqueue_ccb(struct aac_softc *, struct aac_ccb *);
-int	aac_enqueue_fib(struct aac_softc *, int, u_int32_t, u_int32_t);
+int	aac_enqueue_fib(struct aac_softc *, int, struct aac_ccb *);
 void	aac_eval_mapping(u_int32_t, int *, int *, int *);
 int	aac_exec_ccb(struct aac_ccb *);
 void	aac_free_ccb(struct aac_softc *, struct aac_ccb *);
@@ -1598,8 +1598,7 @@ aac_start(struct aac_ccb *ccb)
 	ccb->ac_fib->Header.SenderData = (u_int32_t)ccb; /* XXX ack, sizing */
 
 	/* put the FIB on the outbound queue */
-	if (aac_enqueue_fib(sc, AAC_ADAP_NORM_CMD_QUEUE,
-	    ccb->ac_fib->Header.Size, ccb->ac_fib->Header.ReceiverFibAddress))
+	if (aac_enqueue_fib(sc, AAC_ADAP_NORM_CMD_QUEUE, ccb))
 		return (EBUSY);
 
 	return (0);
@@ -1779,12 +1778,16 @@ static struct {
  * but implementing this usefully is difficult.
  */
 int
-aac_enqueue_fib(struct aac_softc *sc, int queue, u_int32_t fib_size,
-    u_int32_t fib_addr)
+aac_enqueue_fib(struct aac_softc *sc, int queue, struct aac_ccb *ccb)
 {
 	u_int32_t pi, ci;
 	int error;
 	aac_lock_t lock;
+	u_int32_t fib_size;
+	u_int32_t fib_addr;
+
+	fib_size = ccb->ac_fib->Header.Size;
+	fib_addr = ccb->ac_fib->Header.ReceiverFibAddress;
 
 	lock = AAC_LOCK(sc);
 
@@ -1829,6 +1832,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
     struct aac_fib **fib_addr)
 {
 	u_int32_t pi, ci;
+	int notify;
 	int error;
 	aac_lock_t lock;
 
@@ -1843,7 +1847,11 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 		error = ENOENT;
 		goto out;
 	}
-    
+
+	notify = 0;
+	if (ci == pi + 1)
+		notify++;
+
 	/* wrap the queue? */
 	if (ci >= aac_qinfo[queue].size)
 		ci = 0;
@@ -1857,7 +1865,7 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 	sc->sc_queues->qt_qindex[queue][AAC_CONSUMER_INDEX] = ci + 1;
 
 	/* if we have made the queue un-full, notify the adapter */
-	if (((pi + 1) == ci) && (aac_qinfo[queue].notify != 0))
+	if (notify && (aac_qinfo[queue].notify != 0))
 		AAC_QNOTIFY(sc, aac_qinfo[queue].notify);
 	error = 0;
 
