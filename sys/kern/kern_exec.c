@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.27 1999/04/22 19:37:43 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.28 1999/06/03 16:01:26 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -381,7 +381,7 @@ sys_execve(p, v, retval)
 	uvmspace_exec(p);
 #else
 	/* Unmap old program */
-#ifdef sparc
+#ifdef __sparc__
 	kill_user_windows(p);		/* before stack addresses go away */
 #endif
 	/* Kill shared memory and unmap old program */

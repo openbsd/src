@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos.h,v 1.6 1997/02/01 21:49:53 deraadt Exp $	*/
+/*	$OpenBSD: sunos.h,v 1.7 1999/06/03 16:01:15 deraadt Exp $	*/
 /*	$NetBSD: sunos.h,v 1.8 1996/05/05 16:07:43 veego Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
@@ -145,7 +145,7 @@ struct sunos_audio_info {
 
 __BEGIN_DECLS
 /* Defined in arch/m68k/m68k/sunos_machdep.c -- sparc uses regular sendsig() */
-#ifndef sparc
+#ifndef __sparc__
 void	sunos_sendsig __P((sig_t, int, int, u_long, int, union sigval));
 #endif
 __END_DECLS

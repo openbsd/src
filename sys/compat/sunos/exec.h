@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.2 1996/08/02 20:35:30 niklas Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 1999/06/03 16:01:11 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.4 1994/10/25 23:03:22 deraadt Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ struct sunos_exec {
 #define SUNOS_M_68020	2	/* runs only on 68020 */
 #define	SUNOS_M_SPARC	3	/* runs only on SPARC */
 
-#ifdef sparc
+#ifdef __sparc__
 #define SUNOS_M_NATIVE	SUNOS_M_SPARC
 #else
 #define SUNOS_M_NATIVE	SUNOS_M_68020
