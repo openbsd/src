@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.80 2004/05/26 19:14:14 mickey Exp $ */
+/*	$OpenBSD: loader.c,v 1.81 2004/05/27 21:59:07 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -87,11 +87,7 @@ _dl_run_dtors(elf_object_t *object)
 	if (object->dyn.fini) {
 		DL_DEB(("doing dtors @%p: [%s]\n",
 		    object->dyn.fini, object->load_name));
-#ifdef MD_CALL
-		MD_CALL(object, object->dyn.fini, NULL);
-#else
 		(*object->dyn.fini)();
-#endif
 	}
 	if (object->next)
 		_dl_run_dtors(object->next);
@@ -682,11 +678,7 @@ _dl_call_init(elf_object_t *object)
 	if (object->dyn.init) {
 		DL_DEB(("doing ctors @%p: [%s]\n",
 		    object->dyn.init, object->load_name));
-#ifdef MD_CALL
-		MD_CALL(object, object->dyn.init, NULL);
-#else
 		(*object->dyn.init)();
-#endif
 	}
 
 	/* What about loops? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2004/05/25 21:56:49 deraadt Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.3 2004/05/27 21:59:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -48,7 +48,7 @@
 typedef
 struct hppa_plabel {
 	Elf_Addr	pc;
-	Elf_Addr	sl;
+	Elf_Addr	*sl;
 	SPLAY_ENTRY(hppa_plabel) node;
 } hppa_plabel_t;
 SPLAY_HEAD(_dl_md_plabels, hppa_plabel) _dl_md_plabel_root;
@@ -72,15 +72,12 @@ SPLAY_PROTOTYPE(_dl_md_plabels, hppa_plabel, node, _dl_md_plcmp);
 SPLAY_GENERATE(_dl_md_plabels, hppa_plabel, node, _dl_md_plcmp);
 
 Elf_Addr
-_dl_md_plabel(const elf_object_t *obj, const Elf_Sym *sym, const Elf_RelA *rela)
+_dl_md_plabel(Elf_Addr pc, Elf_Addr *sl)
 {
 	hppa_plabel_t key, *p;
 
-	if (ELF_ST_TYPE(sym->st_info) != STT_FUNC)
-		return (0);
-
-	key.pc = obj->load_offs + sym->st_value + rela->r_addend;
-	key.sl = (Elf_Addr)obj->dyn.pltgot;
+	key.pc = pc;
+	key.sl = sl;
 	p = SPLAY_FIND(_dl_md_plabels, &_dl_md_plabel_root, &key);
 	if (p == NULL) {
 		p = _dl_malloc(sizeof(*p));
@@ -111,6 +108,22 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (rela == NULL)
 		return (0);
+
+	if (object->dyn.init && !((Elf_Addr)object->dyn.init & 2)) {
+		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.init,
+		    object->dyn.pltgot);
+		DL_DEB(("PLABEL32: %x(_init) -> 0x%x in %s\n",
+		    object->dyn.init, addr, object->load_name));
+		object->dyn.init = (void *)addr;
+	}
+
+	if (object->dyn.fini && !((Elf_Addr)object->dyn.fini & 2)) {
+		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.fini,
+		    object->dyn.pltgot);
+		DL_DEB(("PLABEL32: %x(_fini) -> 0x%x in %s\n",
+		    object->dyn.fini, addr, object->load_name));
+		object->dyn.fini = (void *)addr;
+	}
 
 	for (i = 0; i < numrela; i++, rela++) {
 		const elf_object_t *sobj;
@@ -172,7 +185,13 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		case RELOC_PLABEL32:
 			if (ELF_R_SYM(rela->r_info)) {
-				*pt = _dl_md_plabel(sobj, this, rela);
+				if (ELF_ST_TYPE(this->st_info) != STT_FUNC) {
+					DL_DEB(("[%x]PLABEL32: bad\n", i));
+					break;
+				}
+				*pt = _dl_md_plabel(sobj->load_offs +
+				    this->st_value + rela->r_addend,
+				    sobj->dyn.pltgot);
 				DL_DEB(("[%x]PLABEL32: %s:%s -> 0x%x in %s\n",
 				    i, symn, object->load_name,
 				    *pt, sobj->load_name));
