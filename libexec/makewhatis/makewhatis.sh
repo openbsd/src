@@ -7,12 +7,14 @@
 TDIR=/tmp/whatis$$
 FILE=$TDIR/whatis
 
-umask 077
+um=`umask`
+umask 022
 if ! mkdir $TDIR ; then
 	printf "tmp directory %s already exists, looks like:\n" $TDIR
 	ls -alF $TDIR
 	exit 1
 fi
+umask $um
 
 trap "rm -rf $TDIR; exit 1" 1 2 15
 
