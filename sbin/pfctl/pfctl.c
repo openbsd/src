@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.26 2001/07/03 12:10:45 ho Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.27 2001/07/05 11:40:25 ho Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -160,7 +160,7 @@ pfctl_enable(int dev, int opts)
 		else
 			err(1, "DIOCSTART");
 	}
-	if ((opts && PF_OPT_QUIET) == 0)
+	if ((opts & PF_OPT_QUIET) == 0)
 		printf("pf enabled\n");
 	return (0);
 }
@@ -174,7 +174,7 @@ pfctl_disable(int dev, int opts)
 		else
 			err(1, "DIOCSTOP");
 	}
-	if ((opts && PF_OPT_QUIET) == 0)
+	if ((opts & PF_OPT_QUIET) == 0)
 		printf("pf disabled\n");
 	return (0);
 }
@@ -184,7 +184,7 @@ pfctl_clear_stats(int dev, int opts)
 {
 	if (ioctl(dev, DIOCCLRSTATUS))
 		err(1, "DIOCCLRSTATUS");
-	if ((opts && PF_OPT_QUIET) == 0)
+	if ((opts & PF_OPT_QUIET) == 0)
 		printf("pf: statistics cleared\n");
 	return (0);
 }
@@ -198,7 +198,7 @@ pfctl_clear_rules(int dev, int opts)
 		err(1, "DIOCBEGINRULES");
 	else if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
 		err(1, "DIOCCOMMITRULES");
-	if ((opts && PF_OPT_QUIET) == 0)
+	if ((opts & PF_OPT_QUIET) == 0)
 		printf("rules cleared\n");
 	return (0);
 }
@@ -217,7 +217,7 @@ pfctl_clear_nat(int dev, int opts)
 		err(1, "DIOCBEGINRDRS");
 	else if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 		err(1, "DIOCCOMMITRDRS");
-	if ((opts && PF_OPT_QUIET) == 0)
+	if ((opts & PF_OPT_QUIET) == 0)
 		printf("nat cleared\n");
 	return (0);
 }
@@ -227,7 +227,7 @@ pfctl_clear_states(int dev, int opts)
 {
 	if (ioctl(dev, DIOCCLRSTATES))
 		err(1, "DIOCCLRSTATES");
-	if ((opts && PF_OPT_QUIET) == 0)
+	if ((opts & PF_OPT_QUIET) == 0)
 		printf("states cleared\n");
 	return (0);
 }
@@ -339,7 +339,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
 			err(1, "DIOCCOMMITRULES");
-		if ((opts && PF_OPT_QUIET) == 0)
+		if ((opts & PF_OPT_QUIET) == 0)
 			printf("%u rules loaded\n", n);
 	}
 	return (0);
