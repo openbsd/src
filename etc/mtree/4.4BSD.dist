@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.146 2003/03/11 09:29:27 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.147 2003/03/12 05:06:06 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1292,6 +1292,12 @@ vax
 
 # ./usr/share/man/ps2
 ps2
+
+# ./usr/share/man/ps2/alpha
+alpha
+
+# ./usr/share/man/ps2/alpha
+..
 
 # ./usr/share/man/ps2/i386
 i386
