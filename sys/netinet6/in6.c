@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.38 2002/06/07 04:18:56 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.39 2002/06/07 15:00:54 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -1377,6 +1377,39 @@ in6_delmulti(in6m)
 		free(in6m, M_IPMADDR);
 	}
 	splx(s);
+}
+
+struct in6_multi_mship *
+in6_joingroup(ifp, addr, errorp)
+	struct ifnet *ifp;
+	struct in6_addr *addr;
+	int *errorp;
+{
+	struct in6_multi_mship *imm;
+
+	imm = malloc(sizeof(*imm), M_IPMADDR, M_NOWAIT);
+	if (!imm) {
+		*errorp = ENOBUFS;
+		return NULL;
+	}
+	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp);
+	if (!imm->i6mm_maddr) {
+		/* *errorp is alrady set */
+		free(imm, M_IPMADDR);
+		return NULL;
+	}
+	return imm;
+}
+
+int
+in6_leavegroup(imm)
+	struct in6_multi_mship *imm;
+{
+
+	if (imm->i6mm_maddr)
+		in6_delmulti(imm->i6mm_maddr);
+	free(imm,  M_IPMADDR);
+	return 0;
 }
 
 /*

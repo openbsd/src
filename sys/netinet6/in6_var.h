@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.17 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.18 2002/06/07 15:00:55 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -555,17 +555,18 @@ do {						\
 	IN6_NEXT_MULTI((step), (in6m));		\
 } while (0)
 
-int	in6_ifinit(struct ifnet *,
-			struct in6_ifaddr *, struct sockaddr_in6 *, int);
-struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *,
-				     int *);
+int	in6_ifinit(struct ifnet *, struct in6_ifaddr *, struct sockaddr_in6 *,
+	int);
+struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *, int *);
 void	in6_delmulti(struct in6_multi *);
+struct in6_multi_mship *in6_joingroup(struct ifnet *, struct in6_addr *, int *);
+int	in6_leavegroup(struct in6_multi_mship *);
 void	in6_ifscrub(struct ifnet *, struct in6_ifaddr *);
-extern int in6_ifindex2scopeid(int);
-extern int in6_mask2len(struct in6_addr *);
-extern void in6_len2mask(struct in6_addr *, int);
-int	in6_control(struct socket *,
-			 u_long, caddr_t, struct ifnet *, struct proc *);
+int	in6_ifindex2scopeid(int);
+int	in6_mask2len(struct in6_addr *);
+void	in6_len2mask(struct in6_addr *, int);
+int	in6_control(struct socket *, u_long, caddr_t, struct ifnet *,
+	struct proc *);
 void	in6_purgeaddr(struct ifaddr *, struct ifnet *);
 int	in6if_do_dad(struct ifnet *);
 void	in6_savemkludge(struct in6_ifaddr *);
@@ -576,18 +577,15 @@ void	in6_restoremkludge(struct in6_ifaddr *, struct ifnet *);
 void	in6_createmkludge(struct ifnet *);
 void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(struct ifnet *, int);
-struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *,
-					     struct in6_addr *);
+struct in6_ifaddr *in6ifa_ifpwithaddr(struct ifnet *, struct in6_addr *);
 char	*ip6_sprintf(struct in6_addr *);
 int	in6_addr2scopeid(struct ifnet *, struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
-int	in6_are_prefix_equal(struct in6_addr *p1, struct in6_addr *p2,
-				  int len);
-void	in6_prefixlen2mask(struct in6_addr *maskp, int len);
-int	in6_prefix_ioctl(struct socket *so, u_long cmd, caddr_t data,
-			      struct ifnet *ifp);
-int	in6_prefix_add_ifid(int iilen, struct in6_ifaddr *ia);
-void	in6_prefix_remove_ifid(int iilen, struct in6_ifaddr *ia);
+int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
+void	in6_prefixlen2mask(struct in6_addr *, int);
+int	in6_prefix_ioctl(struct socket *, u_long, caddr_t, struct ifnet *);
+int	in6_prefix_add_ifid(int, struct in6_ifaddr *);
+void	in6_prefix_remove_ifid(int, struct in6_ifaddr *);
 void	in6_purgeprefix(struct ifnet *);
 
 struct inpcb;
