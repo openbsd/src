@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.54 2002/04/16 00:18:21 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.55 2002/04/21 02:16:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.54 2002/04/16 00:18:21 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.55 2002/04/21 02:16:52 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2147,9 +2147,9 @@ wi_get_id(sc)
 		bzero(&sver, sizeof(sver));
 		sver.wi_type = WI_RID_SYMBOL_IDENTITY;
 		sver.wi_len = 7;
-		/* value should be "V2.00-11" */
+		/* value should be something like "V2.00-11" */
 		if (wi_read_record(sc, (struct wi_ltv_gen *)&sver) == 0 &&
-		    *(p = (char *)sver.wi_str) == 'V' &&
+		    *(p = (char *)sver.wi_str) >= 'A' &&
 		    p[2] == '.' && p[5] == '-' && p[8] == '\0') {
 			sc->sc_firmware_type = WI_SYMBOL;
 			sc->sc_sta_firmware_ver = (p[1] - '0') * 10000 +
