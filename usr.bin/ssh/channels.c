@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.7 1999/09/30 05:11:29 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.8 1999/09/30 08:03:39 deraadt Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -910,7 +910,7 @@ void channel_input_port_forward_request(int is_root)
 
   /* Check that an unprivileged user is not trying to forward a privileged
      port. */
-  if (port < 1024 && !is_root)
+  if (port < IPPORT_RESERVED && !is_root)
     packet_disconnect("Requested forwarding of port %d but user is not root.",
 		      port);
 
