@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.1 2002/01/15 22:00:12 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.2 2002/01/16 15:35:26 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ const struct wscons_keydesc zskbd_keydesctab[] = {
 };
 
 struct wskbd_mapdata zskbd_keymapdata = {
-	zskbd_keydesctab
+	zskbd_keydesctab, KB_US
 };
 
 #define	ZSKBDUNIT(x)	(minor(x) & 0x7ffff)
@@ -466,8 +466,6 @@ zskbd_attach(parent, self, aux)
 		console = 1;
 	}
 
-	printf("\n");
-
 	tp = ttymalloc();
 	tp->t_dev = dev;
 	tp->t_oproc = zsstart;
@@ -494,17 +492,9 @@ zskbd_attach(parent, self, aux)
 	 */
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
-		struct termios t;
 
 		/* Wait a while for previous console output to complete */
 		DELAY(10000);
-
-		/* Setup the "new" parameters in t. */
-		t.c_ispeed = 0;
-		t.c_ospeed = 1200;
-		t.c_cflag = CS8 | CLOCAL;
-
-		s = splzs();
 
 		/*
 		 * Turn on receiver and status interrupts.
@@ -513,12 +503,7 @@ zskbd_attach(parent, self, aux)
 		 * the time zsparam() reads the initial rr0 state.
 		 */
 		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
-
-		splx(s);
-
-		/* Make sure zsparam will see changes. */
-		tp->t_ospeed = 0;
-		(void) zsparam(tp, &t);
+		zskbd_init(zst);
 
 		s = splzs();
 
@@ -541,8 +526,6 @@ zskbd_attach(parent, self, aux)
 
 		splx(s);
 	}
-
-	zskbd_init(zst);
 
 	a.console = console;
 	a.keymap = &zskbd_keymapdata;
@@ -658,71 +641,65 @@ zskbd_init(zst)
 	/* Ok, start the reset sequence... */
 
 	s = splhigh();
-	zst->zst_leds = 0;
-	zst->zst_layout = -1;
 
 	for (tries = 5; tries != 0; tries--) {
 		int ltries;
 
+		zst->zst_leds = 0;
+		zst->zst_layout = -1;
+
+		/* Send reset request */
 		zskbd_putc(zst, SKBD_CMD_RESET);
 
 		ltries = 1000;
 		while (--ltries > 0) {
 			rr0 = *cs->cs_reg_csr;
-			if (rr0 & ZSRR0_RX_READY)
-				break;
+			if (rr0 & ZSRR0_RX_READY) {
+				zskbd_raw(zst, *cs->cs_reg_data);
+				if (zst->zst_kbdstate == SKBD_STATE_RESET)
+					break;
+			}
 			DELAY(1000);
 		}
 		if (ltries == 0)
 			continue;
-		zskbd_raw(zst, *cs->cs_reg_data);
-		if (zst->zst_kbdstate != SKBD_STATE_RESET)
-			continue;
 
+		/* Wait for reset to finish. */
 		ltries = 1000;
 		while (--ltries > 0) {
 			rr0 = *cs->cs_reg_csr;
-			if (rr0 & ZSRR0_RX_READY)
-				break;
+			if (rr0 & ZSRR0_RX_READY) {
+				zskbd_raw(zst, *cs->cs_reg_data);
+				if (zst->zst_kbdstate == SKBD_STATE_GETKEY)
+					break;
+			}
 			DELAY(1000);
 		}
 		if (ltries == 0)
 			continue;
-		zskbd_raw(zst, *cs->cs_reg_data);
-		if (zst->zst_kbdstate != SKBD_STATE_GETKEY)
-			continue;
 
+
+		/* Send layout request */
 		zskbd_putc(zst, SKBD_CMD_LAYOUT);
 
 		ltries = 1000;
 		while (--ltries > 0) {
 			rr0 = *cs->cs_reg_csr;
-			if (rr0 & ZSRR0_RX_READY)
-				break;
+			if (rr0 & ZSRR0_RX_READY) {
+				zskbd_raw(zst, *cs->cs_reg_data);
+				if (zst->zst_layout != -1)
+					break;
+			}
 			DELAY(1000);
 		}
 		if (ltries == 0)
 			continue;
-		zskbd_raw(zst, *cs->cs_reg_data);
-		if (zst->zst_kbdstate != SKBD_STATE_LAYOUT)
-			continue;
-		ltries = 1000;
-		while (--ltries > 0) {
-			rr0 = *cs->cs_reg_csr;
-			if (rr0 & ZSRR0_RX_READY)
-				break;
-			DELAY(1000);
-		}
-		if (ltries == 0)
-			continue;
-		zskbd_raw(zst, *cs->cs_reg_data);
-		if (zst->zst_kbdstate == SKBD_STATE_GETKEY)
-			break;
+		break;
 	}
 	if (tries == 0)
-		printf(":reset timeout\n");
+		printf(": reset timeout\n");
 	else
-		printf("reset ok, layout %d\n", zst->zst_layout);
+		printf(": layout %d\n", zst->zst_layout);
 	splx(s);
 }
 
@@ -733,7 +710,12 @@ zskbd_raw(zst, c)
 {
 	int claimed = 0;
 
-	printf("raw(state %d, code %x)\n", zst->zst_kbdstate, c);
+	if (zst->zst_kbdstate == SKBD_STATE_LAYOUT) {
+		zst->zst_kbdstate = SKBD_STATE_GETKEY;
+		zst->zst_layout = c;
+		return;
+	}
+
 	switch (c) {
 	case SKBD_RSP_RESET:
 		zst->zst_kbdstate = SKBD_STATE_RESET;
@@ -748,10 +730,8 @@ zskbd_raw(zst, c)
 		claimed = 1;
 	}
 
-	if (claimed) {
-		printf("out state: %d\n", zst->zst_kbdstate);
+	if (claimed)
 		return;
-	}
 
 	switch (zst->zst_kbdstate) {
 	case SKBD_STATE_RESET:
@@ -760,16 +740,9 @@ zskbd_raw(zst, c)
 			printf("%s: reset1 invalid code 0x%02x\n",
 			    zst->zst_dev.dv_xname, c);
 		break;
-	case SKBD_STATE_LAYOUT:
-		zst->zst_kbdstate = SKBD_STATE_GETKEY;
-		printf("layout: %02x\n", c);
-		zst->zst_layout = c;
-		break;
 	case SKBD_STATE_GETKEY:
-		printf("KEY(%02x)\n", c);
 		break;
 	}
-	printf("out state: %d\n", zst->zst_kbdstate);
 }
 
 void
@@ -1536,9 +1509,6 @@ zskbd_enable(v, on)
 	void *v;
 	int on;
 {
-	struct zskbd_softc *zst = v;
-
-	printf("zskbd_enable: %s\n", zst->zst_dev.dv_xname);
 	return (0);
 }
 
@@ -1549,7 +1519,6 @@ zskbd_set_leds(v, on)
 {
 	struct zskbd_softc *zst = v;
 
-	printf("zskbd_set_leds: %s\n", zst->zst_dev.dv_xname);
 	zst->zst_leds = on;
 }
 
@@ -1559,7 +1528,6 @@ zskbd_get_leds(v)
 {
 	struct zskbd_softc *zst = v;
 
-	printf("zskbd_get_leds: %s\n", zst->zst_dev.dv_xname);
 	return (zst->zst_leds);
 }
 
@@ -1571,15 +1539,9 @@ zskbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct zskbd_softc *zst = v;
-
-	printf("zskbd_ioctl: %s\n", zst->zst_dev.dv_xname);
-
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-#if 0		/* XXX need to allocate a type... */
-		*(int *)data = WSKBD_TYPE_XXX;
-#endif
+		*(int *)data = WSKBD_TYPE_SUN;
 		return (0);
 	case WSKBDIO_SETLEDS:
 		zskbd_set_leds(v, *(int *)data);
@@ -1596,10 +1558,7 @@ zskbd_cnpollc(v, on)
 	void *v;
 	int on;
 {
-	struct zskbd_softc *zst = v;
 	extern int swallow_zsintrs;
-
-	printf("%s: cnpollc...", zst->zst_dev.dv_xname);
 
 	if (on)
 		swallow_zsintrs++;
@@ -1617,8 +1576,6 @@ zskbd_cngetc(v, type, data)
 	int s;
 	u_int8_t c, rr0;
 
-	printf("%s: cngetc...", zst->zst_dev.dv_xname);
-
 	s = splhigh();
 	do {
 		rr0 = *zst->zst_cs->cs_reg_csr;
@@ -1627,8 +1584,15 @@ zskbd_cngetc(v, type, data)
 	c = *zst->zst_cs->cs_reg_data;
 	splx(s);
 
-	printf("%02x\n", c);
-
-	*type = (c & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-	*data = c & 0x7f;
+	switch (c) {
+	case SKBD_RSP_IDLE:
+		*type = WSCONS_EVENT_ALL_KEYS_UP;
+		*data = 0;
+		break;
+	default:
+		*type = (c & 0x80) ?
+		    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+		*data = c & 0x7f;
+		break;
+	}
 }
