@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.16 1997/04/01 07:58:40 millert Exp $	*/
+/*	$OpenBSD: w.c,v 1.17 1997/05/30 18:39:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -400,28 +400,31 @@ pr_header(nowp, nusers)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
 	size = sizeof(boottime);
-	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1 &&
-	    boottime.tv_sec != 0) {
+	if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1) {
 		uptime = now - boottime.tv_sec;
-		uptime += 30;
-		days = uptime / SECSPERDAY;
-		uptime %= SECSPERDAY;
-		hrs = uptime / SECSPERHOUR;
-		uptime %= SECSPERHOUR;
-		mins = uptime / SECSPERMIN;
-		(void)printf(" up");
-		if (days > 0)
-			(void)printf(" %d day%s,", days, days > 1 ? "s" : "");
-		if (hrs > 0 && mins > 0)
-			(void)printf(" %2d:%02d,", hrs, mins);
-		else {
-			if (hrs > 0)
-				(void)printf(" %d hr%s,",
-				    hrs, hrs > 1 ? "s" : "");
-			if (mins > 0 || (days == 0 && hrs == 0))
-				(void)printf(" %d min%s,",
-				    mins, mins != 1 ? "s" : "");
-		}
+		if (boottime.tv_sec > 59) {
+			uptime += 30;
+			days = uptime / SECSPERDAY;
+			uptime %= SECSPERDAY;
+			hrs = uptime / SECSPERHOUR;
+			uptime %= SECSPERHOUR;
+			mins = uptime / SECSPERMIN;
+			(void)printf(" up");
+			if (days > 0)
+				(void)printf(" %d day%s,", days,
+				    days > 1 ? "s" : "");
+			if (hrs > 0 && mins > 0)
+				(void)printf(" %2d:%02d,", hrs, mins);
+			else {
+				if (hrs > 0)
+					(void)printf(" %d hr%s,",
+					    hrs, hrs > 1 ? "s" : "");
+				if (mins > 0 || (days == 0 && hrs == 0))
+					(void)printf(" %d min%s,",
+					    mins, mins != 1 ? "s" : "");
+			}
+		} else
+			printf(" %d seconds,", uptime);
 	}
 
 	/* Print number of users logged in to system */
