@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.30 2002/04/22 05:27:39 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.31 2002/06/21 05:37:20 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -238,6 +238,7 @@ adjustname(const char *fn)
 	int		i, j;
 	char		linkbuf[NFILEN];
 #endif
+	int n;
 
 	switch (*fn) {
 	case '/':
@@ -247,8 +248,12 @@ adjustname(const char *fn)
 	case '~':
 		fn++;
 		cp = getenv("HOME");
-		if (cp != NULL && *cp != '\0' && (*fn == '/' || *fn == '\0')) {
-			cp = fnb + strlcpy(fnb, cp, sizeof(fnb));
+		if (cp != NULL && *cp != '\0' &&
+		    (*fn == '/' || *fn == '\0')) {
+			n = strlcpy(fnb, cp, sizeof fnb);
+			if (n >= sizeof fnb)
+				n = sizeof fnb - 1;
+			cp = fnb + n;
 			if (*fn)
 				fn++;
 			break;
@@ -258,7 +263,10 @@ adjustname(const char *fn)
 				*cp++ = *fn++;
 			*cp = '\0';
 			if ((pwent = getpwnam(fnb)) != NULL) {
-				cp = fnb + strlcpy(fnb, pwent->pw_dir, sizeof(fnb));
+				n = strlcpy(fnb, pwent->pw_dir, sizeof fnb);
+				if (n >= sizeof fnb)
+					n = sizeof fnb - 1;
+				cp = fnb + n;
 				break;
 			} else {
 				fn -= strlen(fnb) + 1;
@@ -267,7 +275,10 @@ adjustname(const char *fn)
 		}
 	default:
 #ifndef	NODIR
-		cp = fnb + strlcpy(fnb, wdir, sizeof(fnb));
+		n = strlcpy(fnb, wdir, sizeof fnb);
+		if (n >= sizeof fnb)
+			n = sizeof fnb - 1;
+		cp = fnb + n;
 		break;
 #else
 		return fn;	/* punt */
@@ -504,7 +515,7 @@ d_makename(LINE *lp, char *fn, int len)
 {
 	int i;
 	char *p, *np;
-	
+
 	strlcpy(fn, curbp->b_fname, len);
 	p = lp->l_text;
 	for (i = 0; i < NAME_FIELD; i++) {

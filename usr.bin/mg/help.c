@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.17 2002/03/16 19:30:29 vincent Exp $	*/
+/*	$OpenBSD: help.c,v 1.18 2002/06/21 05:37:20 vincent Exp $	*/
 
 /*
  * Help functions for Mg 2
@@ -28,7 +28,7 @@ desckey(f, n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
-	int	 c, m, i;
+	int	 c, m, i, num;
 	char	*pep;
 	char	 prompt[80];
 
@@ -36,7 +36,10 @@ desckey(f, n)
 	if (inmacro)
 		return TRUE;	/* ignore inside keyboard macro */
 #endif /* !NO_MACRO */
-	pep = prompt + strlcpy(prompt, "Describe key briefly: ", sizeof(prompt));
+	num = strlcpy(prompt, "Describe key briefly: ", sizeof(prompt));
+	if (num >= sizeof prompt)
+		num = sizeof prompt - 1;
+	pep = prompt + num;
 	key.k_count = 0;
 	m = curbp->b_nmodes;
 	curmap = curbp->b_modes[m]->p_map;

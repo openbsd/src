@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.25 2002/05/29 12:28:45 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.26 2002/06/21 05:37:20 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -319,7 +319,7 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	PF	 funct;
 	char	 prompt[80];
 	char	*pep;
-	int	 c, s;
+	int	 c, s, n;
 
 #ifndef NO_MACRO
 	if (macrodef) {
@@ -345,7 +345,10 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	} else {
 #endif /* !NO_STARTUP */
 #endif /* !NO_MACRO */
-		pep = prompt + strlcpy(prompt, p, sizeof(prompt));
+		n = strlcpy(prompt, p, sizeof prompt);
+		if (n >= sizeof prompt)
+			n = sizeof prompt - 1;
+		pep = prompt + n;
 		for (;;) {
 			ewprintf("%s", prompt);
 			pep[-1] = ' ';
