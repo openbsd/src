@@ -404,7 +404,7 @@ LYHelp.h : LYHelp.hin
 
 cfg_defs.h : $(srcdir)/cfg_defs.sh config.cache lynx_cfg.h
 	@rm -f $@
-	PATH=$(srcdir):$$PATH; export PATH; $(SHELL) -c '$(srcdir)/cfg_defs.sh'
+	PATH=$(srcdir):$$PATH; export PATH; $(SHELL) -c '$(SHELL) $(srcdir)/cfg_defs.sh'
 
 install-cfg : $(LIBDIR)
 	-mv -f $(LIBDIR)/lynx.cfg $(LIBDIR)/lynx.oldcfg
