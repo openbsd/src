@@ -427,6 +427,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/crypto.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cryptosoft.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/des_locl.ph

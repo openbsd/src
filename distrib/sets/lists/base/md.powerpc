@@ -417,6 +417,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cast.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/crypto.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/cryptosoft.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/des_locl.ph
