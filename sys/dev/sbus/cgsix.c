@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.34 2003/02/12 19:41:20 henric Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.35 2003/03/20 15:42:06 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -155,6 +155,11 @@ cgsixattach(parent, self, aux)
 		goto fail;
 	}
 
+	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
+	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
+	sc->sc_height = getpropint(sa->sa_node, "height", 900);
+	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
+
 	/*
 	 * Map just BT, FHC, FBC, THC, and video RAM.
 	 */
@@ -181,7 +186,8 @@ cgsixattach(parent, self, aux)
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + CGSIX_VID_OFFSET,
-	    CGSIX_VID_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_vid_regs) != 0) {
+	    sc->sc_linebytes * sc->sc_height, BUS_SPACE_MAP_LINEAR,
+	    0, &sc->sc_vid_regs) != 0) {
 		printf(": cannot map vid registers\n");
 		goto fail_vid;
 	}
@@ -225,11 +231,6 @@ cgsixattach(parent, self, aux)
 	}
 
 	cgsix_burner(sc, 1, 0);
-
-	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
-	sc->sc_height = getpropint(sa->sa_node, "height", 900);
-	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
 
 	sbus_establish(&sc->sc_sd, self);
 
