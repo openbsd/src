@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 2001/08/19 20:13:52 art Exp $	*/
+/*	$OpenBSD: exec.h,v 1.4 2001/08/19 20:19:03 art Exp $	*/
 /*	$NetBSD: elf_machdep.h,v 1.7 2001/02/11 00:18:49 eeh Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
@@ -14,6 +14,8 @@
 			break;
 
 #define NATIVE_EXEC_ELF
+#define _KERN_DO_ELF
+#define _NLIST_DO_ELF
 
 #ifdef __arch64__
 #define ARCH_ELFSIZE		64	/* MD native binary size */
