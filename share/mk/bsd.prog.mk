@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.3 1996/04/22 01:28:36 deraadt Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.4 1996/06/02 05:58:20 tholo Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -27,12 +27,14 @@ LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 LIBL?=		${DESTDIR}/usr/lib/libl.a
 LIBM?=		${DESTDIR}/usr/lib/libm.a
 LIBMP?=		${DESTDIR}/usr/lib/libmp.a
+LIBOLDCURSES?=	${DESTDIR}/usr/lib/libocurses.a
 LIBPC?=		${DESTDIR}/usr/lib/libpc.a
 LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
+LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
 

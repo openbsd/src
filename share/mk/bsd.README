@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.8 1996/04/22 01:28:33 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.9 1996/06/02 05:58:20 tholo Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -292,12 +292,14 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBKDB		/usr/lib/libkdb.a
 			LIBKRB		/usr/lib/libkrb.a
 			LIBKVM		/usr/lib/libkvm.a
+			LIBOLDCURSES	/usr/lib/libocurses.a
 			LIBM		/usr/lib/libm.a
 			LIBMP		/usr/lib/libmp.a
 			LIBPC		/usr/lib/libpc.a
 			LIBPLOT		/usr/lib/libplot.a
 			LIBRPC		/usr/lib/sunrpc.a
-			LIBTERM		/usr/lib/libterm.a
+			LIBTERMCAP	/usr/lib/libtermcap.a
+			LIBTERMLIB	/usr/lib/libtermlib.a
 			LIBUTIL		/usr/lib/libutil.a
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
