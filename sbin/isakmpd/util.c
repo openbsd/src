@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2001/06/27 00:10:35 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2001/06/27 05:16:49 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
@@ -271,12 +272,26 @@ text2sockaddr (char *address, char *port, struct sockaddr **sa)
 int
 sockaddr2text (struct sockaddr *sa, char **address)
 {
-#ifdef HAVE_GETNAMEINFO
   char buf[NI_MAXHOST];
 
+#ifdef HAVE_GETNAMEINFO
   if (getnameinfo (sa, sa->sa_len, buf, sizeof buf, 0, 0,
 		   allow_name_lookups ? 0 : NI_NUMERICHOST))
     return -1;
+#else
+  if (sa->sa_family == AF_INET)
+    {
+      strncpy (buf, inet_ntoa (((struct sockaddr_in *)sa)->sin_addr), 
+	       NI_MAXHOST - 1);
+      buf[NI_MAXHOST - 1] = '\0';
+    }
+  else
+    {
+      log_print ("sockaddr2text: unsupported protocol family %d\n",
+		  sa->sa_family);
+      strcpy (buf, "<error>");
+    }
+#endif
 
   *address = malloc (strlen (buf) + 1);
   if (!address)
@@ -284,9 +299,6 @@ sockaddr2text (struct sockaddr *sa, char **address)
   
   strcpy (*address, buf);
   return 0;
-#else
-  return -1;
-#endif
 }
 
 /*
