@@ -127,7 +127,12 @@ this system call must be executed directly by the shell if it
 is to affect all future processes created by the shell;
 .Ic limit
 is thus a built-in command to
-.Xr csh 1 .
+.Xr csh 1
+and
+.Ic ulimit
+is the
+.Xr sh 1
+equivalent.
 .Pp
 The system refuses to extend the data or stack space when the limits
 would be exceeded in the normal way: a
@@ -173,19 +178,11 @@ raised the maximum limit value, and the caller is not the super-user.
 .El
 .Sh SEE ALSO
 .Xr csh 1 ,
+.Xr sh 1 ,
 .Xr quota 2 ,
 .Xr sigaction 2 ,
 .Xr sigaltstack 2 ,
 .Xr sysctl 3
-.Sh BUGS
-There should be 
-.Ic limit
-and
-.Ic unlimit
-commands in
-.Xr sh 1
-as well as in
-.Xr csh .
 .Sh HISTORY
 The
 .Fn getrlimit
