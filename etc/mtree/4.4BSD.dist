@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.151 2003/04/09 15:25:16 todd Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.152 2003/05/16 17:06:09 miod Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -199,11 +199,6 @@ std             gname=bin uname=root mode=0755
 ..
 
 # ./usr/include/g++
-..
-
-# ./usr/include/kerberosIV
-kerberosIV		gname=bin uname=root mode=0755
-# ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
