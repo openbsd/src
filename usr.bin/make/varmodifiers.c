@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.3 2000/07/17 23:54:26 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.4 2000/07/24 21:57:28 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1124,7 +1124,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 #ifdef SUNSHCMD
 	    case 's':
 		if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
-		    char *err;
+		    char *err = 0;
 		    newStr = str ? Cmd_Exec(str, &err) : NULL;
 		    if (err)
 			Error(err, str);
