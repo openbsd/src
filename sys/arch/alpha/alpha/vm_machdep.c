@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 1999/09/03 18:00:13 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 1999/09/14 11:41:18 kstailey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
@@ -198,7 +198,11 @@ printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp
 	 * is started, to resume here, returning nonzero from setjmp.
 	 */
 #ifdef DIAGNOSTIC
-	if (p1 != curproc)
+	/*
+	 * If p1 != curproc && p1 == &proc0, we are creating a kernel
+	 * thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
 		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
