@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.20 1997/01/15 05:50:27 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.21 1997/01/16 14:23:32 maja Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -101,6 +101,25 @@ int scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
 
 int scsibusprint __P((void *, const char *));
+
+int
+scsiprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct scsi_link *l = aux;
+
+	/* only "scsibus"es can attach to "scsi"s; easy. */
+	if (pnp)
+		printf("scsibus at %s", pnp);
+
+	/* don't print channel if the controller says there can be only one. */
+#ifdef 0
+	if (l->channel != SCSI_CHANNEL_ONLY_ONE)
+		printf(" channel %d", l->channel);
+#endif
+	return (UNCONF);
+}
 
 int
 scsibusmatch(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.9 1997/01/15 05:50:29 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.10 1997/01/16 14:23:33 maja Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.29 1996/03/19 03:07:50 mycroft Exp $	*/
 
 /*
@@ -161,6 +161,8 @@ struct scsi_link {
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 };
+
+int	scsiprint __P((void *, const char *));
 
 /*
  * This describes matching information for scsi_inqmatch().  The more things
