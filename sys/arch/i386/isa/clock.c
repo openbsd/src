@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 1999/01/31 14:56:01 espie Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 1999/10/06 07:36:55 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -100,6 +100,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
+#include <dev/clock_subr.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
@@ -137,7 +138,6 @@ int	gettick __P((void));
 void	sysbeep __P((int, int));
 int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
-static int yeartoday __P((int));
 int 	hexdectodec __P((int));
 int	dectohexdec __P((int));
 int	rtcintr __P((void *));
@@ -151,8 +151,6 @@ int pentium_mhz;
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
-#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
 
 __inline u_int
 mc146818_read(sc, reg)
@@ -410,17 +408,6 @@ rtcput(regs)
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
-static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-static int
-yeartoday(year)
-	int year;
-{
-
-	return (((year % 4) == 0 &&
-		 ((year % 100) != 0 || (year % 400) == 0))? 366 : 365);
-}
-
 int
 hexdectodec(n)
 	int n;
@@ -440,6 +427,86 @@ dectohexdec(n)
 static int timeset;
 
 /*
+ * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
+ * to be called at splclock()
+ */
+static int cmoscheck __P((void));
+static int
+cmoscheck()
+{
+	int i;
+	unsigned short cksum = 0;
+
+	for (i = 0x10; i <= 0x2d; i++)
+		cksum += mc146818_read(NULL, i); /* XXX softc */
+
+	return (cksum == (mc146818_read(NULL, 0x2e) << 8)
+			  + mc146818_read(NULL, 0x2f));
+}
+
+/*
+ * patchable to control century byte handling:
+ * 1: always update
+ * -1: never touch
+ * 0: try to figure out itself
+ */
+int rtc_update_century = 0;
+
+/*
+ * Expand a two-digit year as read from the clock chip
+ * into full width.
+ * Being here, deal with the CMOS century byte.
+ */
+static int clock_expandyear __P((int));
+static int
+clock_expandyear(clockyear)
+	int clockyear;
+{
+	int s, clockcentury, cmoscentury;
+
+	clockcentury = (clockyear < 70) ? 20 : 19;
+	clockyear += 100 * clockcentury;
+
+	if (rtc_update_century < 0)
+		return (clockyear);
+
+	s = splclock();
+	if (cmoscheck())
+		cmoscentury = mc146818_read(NULL, NVRAM_CENTURY);
+	else
+		cmoscentury = 0;
+	splx(s);
+	if (!cmoscentury) {
+#ifdef DIAGNOSTIC
+		printf("clock: unknown CMOS layout\n");
+#endif
+		return (clockyear);
+	}
+	cmoscentury = hexdectodec(cmoscentury);
+
+	if (cmoscentury != clockcentury) {
+		/* XXX note: saying "century is 20" might confuse the naive. */
+		printf("WARNING: NVRAM century is %d but RTC year is %d\n",
+		       cmoscentury, clockyear);
+
+		/* Kludge to roll over century. */
+		if ((rtc_update_century > 0) ||
+		    ((cmoscentury == 19) && (clockcentury == 20) &&
+		     (clockyear == 2000))) {
+			printf("WARNING: Setting NVRAM century to %d\n",
+			       clockcentury);
+			s = splclock();
+			mc146818_write(NULL, NVRAM_CENTURY,
+				       dectohexdec(clockcentury));
+			splx(s);
+		}
+	} else if (cmoscentury == 19 && rtc_update_century == 0)
+		rtc_update_century = 1; /* will update later in resettodr() */
+
+	return (clockyear);
+}
+
+/*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
@@ -448,9 +515,7 @@ inittodr(base)
 	time_t base;
 {
 	mc_todregs rtclk;
-	time_t n;
-	int sec, min, hr, dom, mon, yr;
-	int i, days = 0;
+	struct clock_ymdhms dt;
 	int s;
 
 	/*
@@ -467,6 +532,8 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
+	time.tv_usec = 0;
+
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
@@ -475,47 +542,51 @@ inittodr(base)
 	}
 	splx(s);
 
-	sec = hexdectodec(rtclk[MC_SEC]);
-	min = hexdectodec(rtclk[MC_MIN]);
-	hr = hexdectodec(rtclk[MC_HOUR]);
-	dom = hexdectodec(rtclk[MC_DOM]);
-	mon = hexdectodec(rtclk[MC_MONTH]);
-	yr = hexdectodec(rtclk[MC_YEAR]);
-	yr = (yr < 70) ? yr+100 : yr;
+	dt.dt_sec = hexdectodec(rtclk[MC_SEC]);
+	dt.dt_min = hexdectodec(rtclk[MC_MIN]);
+	dt.dt_hour = hexdectodec(rtclk[MC_HOUR]);
+	dt.dt_day = hexdectodec(rtclk[MC_DOM]);
+	dt.dt_mon = hexdectodec(rtclk[MC_MONTH]);
+	dt.dt_year = clock_expandyear(hexdectodec(rtclk[MC_YEAR]));
 
-	n = sec + 60 * min + 3600 * hr;
-	n += (dom - 1) * 3600 * 24;
 
-	if (yeartoday(yr) == 366)
-		month[1] = 29;
-	for (i = mon - 2; i >= 0; i--)
-		days += month[i];
-	month[1] = 28;
-	for (i = 70; i < yr; i++)
-		days += yeartoday(i);
-	n += days * 3600 * 24;
+	/*
+	 * If time_t is 32 bits, then the "End of Time" is 
+	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
+	 * This code copes with RTC's past the end of time if time_t
+	 * is an int32 or less. Needed because sometimes RTCs screw
+	 * up or are badly set, and that would cause the time to go
+	 * negative in the calculation below, which causes Very Bad
+	 * Mojo. This at least lets the user boot and fix the problem.
+	 * Note the code is self eliminating once time_t goes to 64 bits.
+	 */
+	if (sizeof(time_t) <= sizeof(int32_t)) {
+		if (dt.dt_year >= 2038) {
+			printf("WARNING: RTC time at or beyond 2038.\n");
+			dt.dt_year = 2037;
+			printf("WARNING: year set back to 2037.\n");
+			printf("WARNING: CHECK AND RESET THE DATE!\n");
+		}
+	}
 
-	n += tz.tz_minuteswest * 60;
+	time.tv_sec = clock_ymdhms_to_secs(&dt) + tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
-		n -= 3600;
+		time.tv_sec -= 3600;
 
-	if (base < n - 5*SECYR)
+	if (base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
-	else if (base > n + 5*SECYR) {
+	else if (base > time.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 		goto fstime;
 	}
 
 	timeset = 1;
-	time.tv_sec = n;
-	time.tv_usec = 0;
 	return;
 
 fstime:
 	timeset = 1;
 	time.tv_sec = base;
-	time.tv_usec = 0;
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
@@ -526,8 +597,9 @@ void
 resettodr()
 {
 	mc_todregs rtclk;
-	time_t n;
-	int diff, i, j;
+	struct clock_ymdhms dt;
+	int diff;
+	int century;
 	int s;
 
 	/*
@@ -545,31 +617,21 @@ resettodr()
 	diff = tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
 		diff -= 3600;
-	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
-	rtclk[MC_SEC] = dectohexdec(n % 60);
-	n /= 60;
-	rtclk[MC_MIN] = dectohexdec(n % 60);
-	rtclk[MC_HOUR] = dectohexdec(n / 60);
+	clock_secs_to_ymdhms(time.tv_sec - diff, &dt);
 
-	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
-	rtclk[MC_DOW] = (n + 4) % 7;  /* 1/1/70 is Thursday */
-
-	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
-		n -= i;
-
-	rtclk[MC_YEAR] = dectohexdec(j - 1900);
-
-	if (i == 366)
-		month[1] = 29;
-	for (i = 0; n >= month[i]; i++)
-		n -= month[i];
-	month[1] = 28;
-	rtclk[MC_MONTH] = dectohexdec(++i);
-
-	rtclk[MC_DOM] = dectohexdec(++n);
-
+	rtclk[MC_SEC] = dectohexdec(dt.dt_sec);
+	rtclk[MC_MIN] = dectohexdec(dt.dt_min);
+	rtclk[MC_HOUR] = dectohexdec(dt.dt_hour);
+	rtclk[MC_DOW] = dt.dt_wday;
+	rtclk[MC_YEAR] = dectohexdec(dt.dt_year % 100);
+	rtclk[MC_MONTH] = dectohexdec(dt.dt_mon);
+	rtclk[MC_DOM] = dectohexdec(dt.dt_day);
 	s = splclock();
 	rtcput(&rtclk);
+	if (rtc_update_century > 0) {
+		century = dectohexdec(dt.dt_year / 100);
+		mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
+	}
 	splx(s);
 }
 
