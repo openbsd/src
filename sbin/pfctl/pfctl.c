@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.123 2003/01/05 22:14:23 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.124 2003/01/05 22:34:20 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,7 +76,7 @@ int	 pfctl_rules(int, char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
-int	 pfctl_test_altqsupport(int);
+int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int);
 
 char	*clearopt;
@@ -1173,14 +1173,15 @@ pfctl_clear_rule_counters(int dev, int opts)
 }
 
 int
-pfctl_test_altqsupport(int dev)
+pfctl_test_altqsupport(int dev, int opts)
 {
 	struct pfioc_altq pa;
 
 	if (ioctl(dev, DIOCGETALTQS, &pa)) {
 		if (errno == ENODEV) {
-			fprintf(stderr, "No ALTQ support in the kernel\n");
-			fprintf(stderr, "ALTQ related functions disabled\n");
+			if (!(opts & PF_OPT_QUIET))
+				fprintf(stderr, "No ALTQ support in kernel\n"
+				    "ALTQ related functions disabled\n");
 			return (0);
 		} else
 			err(1, "DIOCGETALTQS");
@@ -1388,7 +1389,7 @@ main(int argc, char *argv[])
 		dev = open("/dev/pf", mode);
 		if (dev == -1)
 			err(1, "open(\"/dev/pf\")");
-		altqsupport = pfctl_test_altqsupport(dev);
+		altqsupport = pfctl_test_altqsupport(dev, opts);
 	} else {
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
