@@ -44,11 +44,14 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <vm/vm.h>
+
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/icu.h>
 
