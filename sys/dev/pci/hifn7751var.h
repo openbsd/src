@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.13 2000/04/13 20:55:34 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.14 2000/04/13 22:34:09 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -178,10 +178,10 @@
 struct hifn_softc;
 
 typedef struct hifn_command {
-	u_int	flags;
 	volatile u_int result_flags;
 
 	u_short	session_num;
+	u_int16_t base_masks, cry_masks, mac_masks;
 
 	u_char	iv[HIFN_IV_LENGTH], *ck, mac[HIFN_MAC_KEY_LENGTH];
 
