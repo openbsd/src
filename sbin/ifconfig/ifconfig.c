@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.129 2005/01/18 21:51:14 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.130 2005/01/20 17:47:38 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.129 2005/01/18 21:51:14 claudio Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.130 2005/01/20 17:47:38 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,9 +209,9 @@ void	setcarp_vhid(const char *, int);
 void	setcarp_state(const char *, int);
 void	setcarpdev(const char *, int);
 void	unsetcarpdev(const char *, int);
-void	setpfsync_syncif(const char *, int);
+void	setpfsync_syncdev(const char *, int);
 void	setpfsync_maxupd(const char *, int);
-void	unsetpfsync_syncif(const char *, int);
+void	unsetpfsync_syncdev(const char *, int);
 void	setpfsync_syncpeer(const char *, int);
 void	unsetpfsync_syncpeer(const char *, int);
 void	pfsync_status(void);
@@ -313,8 +313,10 @@ const struct	cmd {
 	{ "state",	NEXTARG,	0,		setcarp_state },
 	{ "carpdev",	NEXTARG,	0,		setcarpdev },
 	{ "-carpdev",	1,		0,		unsetcarpdev },
-	{ "syncif",	NEXTARG,	0,		setpfsync_syncif },
-	{ "-syncif",	1,		0,		unsetpfsync_syncif },
+	{ "syncdev",	NEXTARG,	0,		setpfsync_syncdev },
+	{ "-syncdev",	1,		0,		unsetpfsync_syncdev },
+	{ "syncif",	NEXTARG,	0,		setpfsync_syncdev },
+	{ "-syncif",	1,		0,		unsetpfsync_syncdev },
 	{ "syncpeer",	NEXTARG,	0,		setpfsync_syncpeer },
 	{ "-syncpeer",	1,		0,		unsetpfsync_syncpeer },
 	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
@@ -2853,7 +2855,7 @@ unsetcarpdev(const char *val, int d)
 }
 
 void
-setpfsync_syncif(const char *val, int d)
+setpfsync_syncdev(const char *val, int d)
 {
 	struct pfsyncreq preq;
 
@@ -2863,7 +2865,7 @@ setpfsync_syncif(const char *val, int d)
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGETPFSYNC");
 
-	strlcpy(preq.pfsyncr_syncif, val, sizeof(preq.pfsyncr_syncif));
+	strlcpy(preq.pfsyncr_syncdev, val, sizeof(preq.pfsyncr_syncdev));
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
@@ -2871,7 +2873,7 @@ setpfsync_syncif(const char *val, int d)
 
 /* ARGSUSED */
 void
-unsetpfsync_syncif(const char *val, int d)
+unsetpfsync_syncdev(const char *val, int d)
 {
 	struct pfsyncreq preq;
 
@@ -2881,7 +2883,7 @@ unsetpfsync_syncif(const char *val, int d)
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGETPFSYNC");
 
-	bzero((char *)&preq.pfsyncr_syncif, sizeof(preq.pfsyncr_syncif));
+	bzero((char *)&preq.pfsyncr_syncdev, sizeof(preq.pfsyncr_syncdev));
 
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
@@ -2972,8 +2974,8 @@ pfsync_status(void)
 	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
 		return;
 
-	if (preq.pfsyncr_syncif[0] != '\0') {
-		printf("\tpfsync: syncif: %s ", preq.pfsyncr_syncif);
+	if (preq.pfsyncr_syncdev[0] != '\0') {
+		printf("\tpfsync: syncdev: %s ", preq.pfsyncr_syncdev);
 		if (preq.pfsyncr_syncpeer.s_addr != INADDR_PFSYNC_GROUP)
 			printf("syncpeer: %s ",
 			    inet_ntoa(preq.pfsyncr_syncpeer));
@@ -3309,7 +3311,7 @@ usage(int value)
 	    "\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
 	    "\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
 	    "\t[state init | backup | master]\n"
-	    "\t[syncif iface] [-syncif] [syncpeer peer_address] [-syncpeer]\n"
+	    "\t[syncdev iface] [-syncdev] [syncpeer peer_address] [-syncpeer]\n"
 	    "\t[phase n] [range netrange] [timeslot timeslot_range]\n"
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
 	    "\t[pppoeac access-concentrator] [-pppoeac]\n"

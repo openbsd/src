@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.18 2004/12/14 13:41:01 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.19 2005/01/20 17:47:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -221,7 +221,7 @@ struct pfsyncstats {
  * Configuration structure for SIOCSETPFSYNC SIOCGETPFSYNC
  */
 struct pfsyncreq {
-	char		 pfsyncr_syncif[IFNAMSIZ];
+	char		 pfsyncr_syncdev[IFNAMSIZ];
 	struct in_addr	 pfsyncr_syncpeer;
 	int		 pfsyncr_maxupdates;
 	int		 pfsyncr_authlevel;

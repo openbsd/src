@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.42 2004/12/16 00:45:34 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.43 2005/01/20 17:47:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -768,7 +768,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGETPFSYNC:
 		bzero(&pfsyncr, sizeof(pfsyncr));
 		if (sc->sc_sync_ifp)
-			strlcpy(pfsyncr.pfsyncr_syncif,
+			strlcpy(pfsyncr.pfsyncr_syncdev,
 			    sc->sc_sync_ifp->if_xname, IFNAMSIZ);
 		pfsyncr.pfsyncr_syncpeer = sc->sc_sync_peer;
 		pfsyncr.pfsyncr_maxupdates = sc->sc_maxupdates;
@@ -791,7 +791,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EINVAL);
 		sc->sc_maxupdates = pfsyncr.pfsyncr_maxupdates;
 
-		if (pfsyncr.pfsyncr_syncif[0] == 0) {
+		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
 			sc->sc_sync_ifp = NULL;
 			if (sc->sc_mbuf_net != NULL) {
 				/* Don't keep stale pfsync packets around. */
@@ -808,7 +808,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		if ((sifp = ifunit(pfsyncr.pfsyncr_syncif)) == NULL)
+		if ((sifp = ifunit(pfsyncr.pfsyncr_syncdev)) == NULL)
 			return (EINVAL);
 
 		s = splnet();
