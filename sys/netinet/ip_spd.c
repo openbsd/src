@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.36 2001/06/27 05:35:51 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.37 2001/08/06 18:46:16 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -391,7 +391,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		 */
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			/* "Touch" the entry. */
-			ipo->ipo_last_searched = time.tv_sec;
+			if (dignore == 0)
+				ipo->ipo_last_searched = time.tv_sec;
 
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
@@ -424,12 +425,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 		case IPSP_IPSEC_ACQUIRE:
 			/* Acquire SA through key management. */
-			if (ipsp_acquire_sa(ipo,
-			    dignore ? &sdst : &ipo->ipo_dst,
-			    signore ? NULL : &ipo->ipo_src, ddst, NULL) != 0) {
-				*error = EACCES;
-				return NULL;
-			}
+			ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
+			    signore ? NULL : &ipo->ipo_src, ddst, NULL);
 
 			/* Fall through */
 		case IPSP_IPSEC_USE:
@@ -491,20 +488,22 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			 * policy.
 			 */
 			if (ipo->ipo_sproto == ipo->ipo_tdb->tdb_sproto &&
-			    !bcmp(&ipo->ipo_tdb->tdb_src
-				, dignore ? &ssrc : &ipo->ipo_dst,
+			    !bcmp(&ipo->ipo_tdb->tdb_src,
+				dignore ? &ssrc : &ipo->ipo_dst,
 				ipo->ipo_tdb->tdb_src.sa.sa_len))
 				goto skipinputsearch;
 
 			/* Not applicable, unlink. */
 			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 			    ipo_tdb_next);
+			ipo->ipo_last_searched = 0;
 			ipo->ipo_tdb = NULL;
 		}
 
 		/* Find whether there exists an appropriate SA. */
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
-			ipo->ipo_last_searched = time.tv_sec; /* "touch" */
+			if (dignore == 0)
+				ipo->ipo_last_searched = time.tv_sec;
 
 			ipo->ipo_tdb =
 			    gettdbbysrc(dignore ? &ssrc : &ipo->ipo_dst,
@@ -544,10 +543,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			}
 
 			/* Acquire SA through key management. */
-			if ((*error = ipsp_acquire_sa(ipo,
-			    dignore ? &ssrc : &ipo->ipo_dst,
-			    signore ? NULL : &ipo->ipo_src, ddst, NULL)) != 0)
-				return NULL;
+			ipsp_acquire_sa(ipo, dignore ? &ssrc : &ipo->ipo_dst,
+			    signore ? NULL : &ipo->ipo_src, ddst, NULL);
 
 			/* Fall through */
 		case IPSP_IPSEC_USE:
