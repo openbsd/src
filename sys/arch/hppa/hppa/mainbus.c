@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.20 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.21 2002/02/07 05:43:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -851,6 +851,7 @@ mbattach(parent, self, aux)
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_hpa = 0;
+	nca.ca_irq = -1;
 	nca.ca_hpamask = HPPA_IOSPACE;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
@@ -904,8 +905,7 @@ mbsubmatch(parent, match, aux)
 	    ((ca->ca_hpa & ~ca->ca_hpamask) != cf->hppacf_off))
 		return (0);
 
-	if ((ret = (*cf->cf_attach->ca_match)(parent, match, aux)) &&
-	    cf->hppacf_irq != -1)
+	if ((ret = (*cf->cf_attach->ca_match)(parent, match, aux)))
 		ca->ca_irq = cf->hppacf_irq;
 
 	return ret;
