@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.101 2002/12/09 18:26:09 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.102 2002/12/10 11:03:52 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1072,7 +1072,7 @@ pfctl_show_anchors(int dev, int opts)
 
 		memset(&pa, 0, sizeof(pa));
 		if (ioctl(dev, DIOCGETANCHORS, &pa)) {
-			warnx("DIOCGETANCHORS");
+			warn("DIOCGETANCHORS");
 			return (-1);
 		}
 		mnr = pa.nr;
@@ -1080,7 +1080,7 @@ pfctl_show_anchors(int dev, int opts)
 		for (nr = 0; nr < mnr; ++nr) {
 			pa.nr = nr;
 			if (ioctl(dev, DIOCGETANCHOR, &pa)) {
-				warnx("DIOCGETANCHOR");
+				warn("DIOCGETANCHOR");
 				return (-1);
 			}
 			printf("  %s\n", pa.name);
@@ -1095,7 +1095,7 @@ pfctl_show_anchors(int dev, int opts)
 				fprintf(stderr, "No rulesets in anchor '%s'.\n",
 				    anchorname);
 			else
-				warnx("DIOCGETRULESETS");
+				warn("DIOCGETRULESETS");
 			return (-1);
 		}
 		mnr = pr.nr;
@@ -1103,7 +1103,7 @@ pfctl_show_anchors(int dev, int opts)
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr)) {
-				warnx("DIOCGETRULESET");
+				warn("DIOCGETRULESET");
 				return (-1);
 			}
 			printf("  %s:%s\n", pr.anchor, pr.name);
