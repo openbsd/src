@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.80 2004/06/25 02:35:36 henning Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.81 2004/09/25 18:29:46 jaredy Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -280,7 +280,7 @@ gotit:
 void
 usage(void)
 {
-	fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
+	fprintf(stderr, "usage: ipsecadm command [modifier ...]\n"
 	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, ipcomp,\n"
 	    "\t\t  tcpmd5, flow, flush, show, monitor\n"
 	    "\tPossible modifiers:\n"
@@ -300,10 +300,11 @@ usage(void)
 	    "\t  -keyfile <file>\t\tfile to read key material from\n"
 	    "\t  -authkey <val>\t\tkey material for auth in new esp\n"
 	    "\t  -authkeyfile <file>\t\tfile to read authkey material from\n"
-	    "\t  -sport\t\t\tsource port for flow\n"
-	    "\t  -dport\t\t\tdestination port for flow\n"
+	    "\t  -sport <port>\t\t\tsource port for flow\n"
+	    "\t  -dport <port>\t\t\tdestination port for flow\n"
 	    "\t  -transport <val>\t\tprotocol number for flow\n"
-	    "\t  -addr [<ip> <net> <ip> <net>|<ip/len> <ip/len>] subnets for flow\n"
+	    "\t  -addr <srcnet> <mask> <dstnet> <mask>\t\tsubnets for flow\n"
+	    "\t  -addr <srcnet/prefix> <dstnet/prefix>\t\tsame as above but in CIDR\n"
 	    "\t  -delete\t\t\tdelete specified flow\n"
 	    "\t  -bypass\t\t\tpermit a flow through without IPsec\n"
 	    "\t  -permit\t\t\tsame as bypass\n"
@@ -314,11 +315,11 @@ usage(void)
 	    "\t  -dontacq\t\t\trequire, without using key mgmt.\n"
 	    "\t  -in\t\t\t\tspecify incoming-packet policy\n"
 	    "\t  -out\t\t\t\tspecify outgoing-packet policy\n"
-	    "\t  -[ah|esp|ip4|ipcomp|tcpmd5]\t\tflush a particular protocol\n"
-	    "\t  -srcid\t\t\tsource identity for flows\n"
-	    "\t  -dstid\t\t\tdestination identity for flows\n"
-	    "\t  -srcid_type\t\t\tsource identity type\n"
-	    "\t  -dstid_type\t\t\tdestination identity type\n"
+	    "\t  -[ah|esp|ip4|ipcomp|tcpmd5]\tflush a particular protocol\n"
+	    "\t  -srcid <id>\t\t\tsource identity for flows\n"
+	    "\t  -dstid <id>\t\t\tdestination identity for flows\n"
+	    "\t  -srcid_type <type>\t\tsource identity type\n"
+	    "\t  -dstid_type <type>\t\tdestination identity type\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
 }
