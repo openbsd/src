@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.38 2001/02/20 01:50:11 assar Exp $	*/
+/*	$OpenBSD: mount.h,v 1.39 2001/03/23 00:24:10 mickey Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ struct vfsconf {
 	int	vfc_typenum;		/* historic filesystem type number */
 	int	vfc_refcount;		/* number mounted of this type */
 	int	vfc_flags;		/* permanent flags */
-	int	(*vfc_mountroot)(void);	/* if != NULL, routine to mount root */
+	int	(*vfc_mountroot)__P((void));	/* if != NULL, routine to mount root */
 	struct	vfsconf *vfc_next;	/* next in list */
 };
 
