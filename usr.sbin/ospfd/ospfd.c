@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.11 2005/03/25 13:39:10 henning Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.12 2005/03/26 11:04:28 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -77,6 +77,8 @@ main_sig_handler(int sig, short event, void *arg)
 	 * signal handler rules don't apply, libevent decouples for us
 	 */
 
+	int	die = 0;
+
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
@@ -85,12 +87,14 @@ main_sig_handler(int sig, short event, void *arg)
 	case SIGCHLD:
 		if (check_child(ospfe_pid, "ospf engine")) {
 			ospfe_pid = 0;
-			ospfd_shutdown();
+			die = 1;
 		}
 		if (check_child(rde_pid, "route decision engine")) {
 			rde_pid = 0;
-			ospfd_shutdown();
+			die = 1;
 		}
+		if (die)
+			ospfd_shutdown();
 		break;
 	case SIGHUP:
 		/* reconfigure */
