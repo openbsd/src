@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.352 2003/04/05 23:56:32 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.353 2003/04/07 13:40:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3996,6 +3996,10 @@ parseicmpspec(char *w, sa_family_t af)
 			return (0);
 		}
 		ulval = p->code;
+	}
+	if (ulval > 255) {
+		yyerror("invalid icmp code %ld", ulval);
+		return (0);
 	}
 	return (icmptype << 8 | ulval);
 }
