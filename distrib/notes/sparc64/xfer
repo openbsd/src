@@ -34,14 +34,14 @@ dnl
 dnl XXX uncomment when floppy available
 dnl Creating a bootable floppy disk using DOS/Windows:
 dnl
-dnl	First you need to get access to the OpenBSD Bootable floppy
-dnl	images.  If you can access the CD-ROM distribution under DOS
-dnl	the bootable disks are in the OSREV/MACHINE directory, otherwise
-dnl	you you will have to download them from one of the OpenBSD
-dnl	ftp or http mirror sites, using ftp or a web-viewer.  In either
-dnl	case, take care to do "binary" transfers, since these are
-dnl	images files and any DOS cr/lf translations or control/z EOF
-dnl	interpretations will result in corrupted transfers.
+dnl	First you need to get access to the OpenBSD bootable floppy
+dnl	images. If you can access the distribution from the CD-ROM under 
+dnl	DOS, you will find the bootable disks in the OSREV/MACHINE 
+dnl	directory. Otherwise, you will have to download them from one of 
+dnl	the OpenBSD ftp or http mirror sites, using an ftp client or a web 
+dnl	browser. In either case, take care to do "binary" transfers, since 
+dnl	these are images files and any DOS cr/lf translations or control/z 
+dnl	EOF interpretations will result in corrupted transfers.
 dnl	
 dnl	You will also need to go to the "tools" directory and grab a
 dnl	copy of the rawrite.exe utility and its documentation.  This
@@ -68,9 +68,9 @@ dnl
 dnl Creating a bootable floppy disk using SunOS or other Un*x-like system:
 dnl
 dnl	First, you will need obtain a local copy of the bootable filesystem
-dnl	image as described above.  If possible use cksum or md5 to verify
-dnl	the checksums of the images vs. the values in the CKSUM or MD5
-dnl	files on the mirror site.
+dnl	image as described above.  If possible use the cksum(1) or md5(1) 
+dnl	commands to verify the checksums of the images vs. the values in 
+dnl	the CKSUM or MD5 files on the mirror site.
 dnl
 dnl	Next, use the dd(1) utility to copy the file to the floppy drive.
 dnl	Under SunOS, the command would be:
@@ -81,7 +81,7 @@ dnl	If you are using something other than SunOS, you may have to adapt
 dnl	this to conform to local naming conventions for the floppy and
 dnl	options suitable for copying to a "raw" floppy image.  The key
 dnl	issue is that the device name used for the floppy *must* be one
-dnl	that refers to the whole 2880 block image, not a partition or
+dnl	that refers to the correct block device, not a partition or
 dnl	compatibility mode, and the copy command needs to be compatible
 dnl	with the requirement that writes to a raw device must be in
 dnl	multiples of 512-byte blocks.  The variations are endless and
@@ -203,7 +203,7 @@ dnl mirror sites over the internet, however you must consider the speed and
 dnl reliability of your internet connection for this option.  It may save
 dnl much time and frustration to use ftp get/reget to transfer the
 dnl distribution sets to a local server or disk and perform the installation
-dnl from there, rather than directly on the internet.
+dnl from there, rather than directly from the internet.
 dnl 
 
 To install or upgrade OpenBSD using a tape, you need to do the following:

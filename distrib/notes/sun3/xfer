@@ -30,11 +30,11 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	single user mode), and then booting from that partition.
 
 	Using the "b" partition allows you to boot without overwriting
-	any useful parts of the disk, you can also use another partition,
-	but don't used the "a" or "c" partition without understanding
+	any useful parts of the disk. You can also use another partition,
+	but don't use the "a" or "c" partition without understanding
 	the disklabel issues described below under "incompatible systems".
 
-	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
+	This requires that you are running SunOS, Solaris, OpenBSD or NetBSD
 	which have a compatible view of SunOS disk labels and partitions.
 
 	Use the dd(1) utility to copy the file to the hard drive.
@@ -73,7 +73,7 @@ sites over the internet, however you must consider the speed and
 reliability of your internet connection for this option.  It may save
 much time and frustration to use ftp get/reget to transfer the
 distribution sets to a local server or disk and perform the installation
-from there, rather than directly on the internet.
+from there, rather than directly from the internet.
 
 
 To install or upgrade OpenBSD using a tape, you need to do the following:

@@ -15,19 +15,19 @@ mirror sites over the internet, however you must consider the speed and
 reliability of your internet connection for this option.  It may save
 much time and frustration to use ftp get/reget to transfer the
 distribution sets to a local server or disk and perform the installation
-from there, rather than directly on the internet.
+from there, rather than directly from the internet.
 
 
 Creating a bootable floppy disk using DOS/Windows:
 
-	First you need to get access to the OpenBSD Bootable floppy
-	images.  If you can access the CD-ROM distribution under DOS
-	the bootable disks are in the OSREV/MACHINE directory, otherwise
-	you you will have to download them from one of the OpenBSD
-	ftp or http mirror sites, using ftp or a web-viewer.  In either
-	case, take care to do "binary" transfers, since these are
-	images files and any DOS cr/lf translations or control/z EOF
-	interpretations will result in corrupted transfers.
+	First you need to get access to the OpenBSD bootable floppy
+	images. If you can access the distribution from the CD-ROM under 
+	DOS, you will find the bootable disks in the OSREV/MACHINE 
+	directory. Otherwise, you will have to download them from one of 
+	the OpenBSD ftp or http mirror sites, using an ftp client or a web 
+	browser. In either case, take care to do "binary" transfers, since 
+	these are images files and any DOS cr/lf translations or control/z 
+	EOF interpretations will result in corrupted transfers.
 	
 	You will also need to go to the "tools" directory and grab a
 	copy of the rawrite.exe utility and its documentation.  This
@@ -54,9 +54,9 @@ Creating a bootable floppy disk using DOS/Windows:
 Creating a bootable floppy disk using SunOS or other Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use cksum or md5 to verify
-	the checksums of the images vs. the values in the CKSUM or MD5
-	files on the mirror site.
+	image as described above.  If possible use the cksum(1) or md5(1) 
+	commands to verify the checksums of the images vs. the values in 
+	the CKSUM or MD5 files on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
 	Under SunOS, the command would be:
@@ -67,7 +67,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 	this to conform to local naming conventions for the floppy and
 	options suitable for copying to a "raw" floppy image.  The key
 	issue is that the device name used for the floppy *must* be one
-	that refers to the whole 2880 block image, not a partition or
+	that refers to the correct block device, not a partition or
 	compatibility mode, and the copy command needs to be compatible
 	with the requirement that writes to a raw device must be in
 	multiples of 512-byte blocks.  The variations are endless and
