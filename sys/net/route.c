@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.6 1997/12/31 04:19:03 mickey Exp $	*/
+/*	$OpenBSD: route.c,v 1.7 1997/12/31 04:25:13 mickey Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -112,8 +112,8 @@ rtalloc1(dst, report)
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
 		newrt = rt = (struct rtentry *)rn;
 		if (report && (rt->rt_flags & RTF_CLONING)) {
-			err = rtrequest(RTM_RESOLVE, dst, SA(0),
-			    SA(0), 0, &newrt);
+			err = rtrequest(RTM_RESOLVE, dst, SA(NULL),
+			    SA(NULL), 0, &newrt);
 			if (err) {
 				newrt = rt;
 				rt->rt_refcnt++;
@@ -366,7 +366,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		netmask = 0;
 	switch (req) {
 	case RTM_DELETE:
-		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == 0)
+		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == NULL)
 			senderr(ESRCH);
 		if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 			panic ("rtrequest delete");
@@ -374,10 +374,10 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		rt->rt_flags &= ~RTF_UP;
 		if (rt->rt_gwroute) {
 			rt = rt->rt_gwroute; RTFREE(rt);
-			(rt = (struct rtentry *)rn)->rt_gwroute = 0;
+			(rt = (struct rtentry *)rn)->rt_gwroute = NULL;
 		}
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
+			ifa->ifa_rtrequest(RTM_DELETE, rt, SA(NULL));
 		rttrash++;
 		if (ret_nrt)
 			*ret_nrt = rt;
@@ -549,13 +549,13 @@ rtinit(ifa, cmd, flags)
 			printf("rtinit: wrong ifa (%p) was (%p)\n",
 			       ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
-			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
+			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(NULL));
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
 			ifa->ifa_refcnt++;
 			if (ifa->ifa_rtrequest)
-			    ifa->ifa_rtrequest(RTM_ADD, rt, SA(0));
+			    ifa->ifa_rtrequest(RTM_ADD, rt, SA(NULL));
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
