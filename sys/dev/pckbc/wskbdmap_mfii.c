@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.14 2001/10/25 15:42:43 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.15 2002/04/04 21:24:33 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -382,6 +382,20 @@ static const keysym_t pckbd_keydesc_es[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_lt[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_1,		KS_exclam,	KS_agrave,	KS_Agrave,
+    KC(3),   KS_2,		KS_at,		KS_egrave,	KS_Egrave,
+    KC(3),   KS_2,		KS_numbersign,	KS_ae,		KS_AE,
+    KC(3),   KS_2,		KS_dollar,	KS_ediaeresis,	KS_Ediaeresis,
+    KC(3),   KS_2,		KS_percent,	KS_aacute,	KS_Aacute,
+    KC(3),   KS_2,		KS_asciicircum,	KS_eth,		KS_ETH,
+    KC(3),   KS_2,		KS_ampersand,	KS_oslash,	KS_Ooblique,
+    KC(3),   KS_2,		KS_asterisk,	KS_ucircumflex,	KS_Ucircumflex,
+    KC(13),  KS_equal,		KS_plus,	KS_thorn,	KS_THORN,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 static const keysym_t pckbd_keydesc_be[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(2),   KS_ampersand,	KS_1,		KS_bar,
@@ -701,6 +715,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_SF,			KB_SG,	pckbd_keydesc_sf),
 	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	pckbd_keydesc_sg_nodead),
 	KBD_MAP(KB_PT,			KB_US,	pckbd_keydesc_pt),
+	KBD_MAP(KB_LT,			KB_US,	pckbd_keydesc_lt),
 	{0, 0, 0, 0}
 };
 
