@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.3 1997/06/22 23:04:41 downsj Exp $
+.\" $OpenBSD: lndir.1,v 1.4 1997/06/22 23:10:56 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -166,23 +166,25 @@ If the link already exists but doesn't point to the correct file, the
 program prints the link name and the location where it does point.
 .Sh BUGS
 The
-.Nm patch
-program gets upset if it cannot change the files.  You should never run
-.Nm patch
-from a shadow directory anyway.
-.\".Pp
-.\" You need to use something like
-.\" .nf
-.\"	find todir \|\-type l \|\-print \||\| xargs rm
-.\" .fi
-.\" to clear out all files before you can relink (if fromdir moved, for instance).
-.\" Something like
-.\" .nf
-.\"	 find . \|\\! \|\-type d \|\-print
-.\" .fi
-.\" will find all files that are not directories.
-.Sh SEE ALSO
 .Xr patch 1
+program gets upset if it cannot change the files.  You should never run
+.Xr patch 1
+from a shadow directory anyway.
+.Pp
+You need to use something like
+.Bd -unfilled -offset indent
+find todir \|\-type l \|\-print \||\| xargs rm
+.Ed
+to clear out all files before you can relink (if fromdir moved, for instance).
+Something like
+.Bd -unfilled -offset indent
+find . \|\\! \|\-type d \|\-print
+.Ed
+will find all files that are not directories.
+.Sh SEE ALSO
+.Xr find 1 ,
+.Xr ln 1 ,
+.Xr patch 1 .
 .Sh HISTORY
 .Nm lndir
 was first distributed as part of X11.
