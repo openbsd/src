@@ -1,4 +1,4 @@
-.\"	$OpenBSD: column.1,v 1.3 1998/09/23 04:32:37 aaron Exp $
+.\"	$OpenBSD: column.1,v 1.4 1999/06/01 21:47:44 aaron Exp $
 .\"	$NetBSD: column.1,v 1.3 1995/03/26 09:08:28 glass Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -48,7 +48,7 @@
 .Op Ar
 .Sh DESCRIPTION
 The
-.Nm column
+.Nm
 utility formats its input into multiple columns.
 Rows are filled before columns.
 Input is taken from
@@ -78,7 +78,7 @@ Fill columns before filling rows.
 .El
 .Pp
 The 
-.Nm column
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh ENVIRONMENT
 .Bl -tag -width COLUMNS
@@ -89,7 +89,7 @@ is used to determine the size of
 the screen if no other information is available.
 .El
 .Sh EXAMPLES
-.Dl (printf \&"PERM LINKS OWNER SIZE MONTH DAY HH:MM/YEAR NAME\en\&"\ \&;\ \&\e
+.Dl (printf \&"PERM LINKS OWNER GROUP SIZE MONTH DAY HH:MM/YEAR NAME\en\&"\ \&;\ \&\e
 .Dl ls -l \&| sed 1d) \&| column -t
 .Sh SEE ALSO
 .Xr colrm 1 ,
