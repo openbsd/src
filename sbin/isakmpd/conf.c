@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.65 2004/04/15 20:20:55 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.66 2004/04/23 14:15:55 ho Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -71,6 +71,8 @@ struct conf_trans {
 	int             override;
 	int             is_default;
 };
+
+#define CONF_SECT_MAX 256
 
 TAILQ_HEAD(conf_trans_head, conf_trans) conf_trans_queue;
 
@@ -361,54 +363,126 @@ conf_find_trans_xf(int phase, char *xf)
 #endif
 
 static void
-conf_load_defaults(int tr)
+conf_load_defaults_mm(int tr, char *mme, char *mmh, char *mma, char *dhg,
+    char *mme_p, char *mma_p, char *dhg_p)
 {
-#define CONF_MAX 256
-	int             enc, auth, hash, group, group_max, proto, mode,
-	                pfs;
-	char            sect[CONF_MAX], *dflt;
+	char sect[CONF_SECT_MAX];
 
-	char           *mm_auth[] = {"PRE_SHARED", "DSS", "RSA_SIG", 0};
-	char           *mm_hash[] = {"MD5", "SHA", 0};
-	char           *mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
-	"CAST_CBC", "AES_CBC", 0};
-	char           *dh_group[] = {"MODP_768", "MODP_1024", "MODP_1536", "MODP_2048", 0};
-	char           *qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES", 0};
-	char           *qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
-		"HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512",
-	"NONE", 0};
+	snprintf(sect, sizeof sect, "%s-%s%s%s", mme_p, mmh, dhg_p, mma_p);
 
-	/* Abbreviations to make section names a bit shorter.  */
-	char           *mm_auth_p[] = {"", "-DSS", "-RSA_SIG", 0};
-	char           *mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", 0};
-	char           *dh_group_p[] = {"-GRP1", "-GRP2", "-GRP5", "-GRP14", "", 0};
-	char           *qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES", 0};
-	char           *qm_hash_p[] = {"-MD5", "-SHA", "-RIPEMD",
-		"-SHA2-256", "-SHA2-384", "-SHA2-512",
-	"", 0};
+	LOG_DBG((LOG_MISC, 90, "conf_load_defaults : main mode %s", sect));
+
+	conf_set(tr, sect, "ENCRYPTION_ALGORITHM", mme, 0, 1);
+	if (strcmp(mme, "BLOWFISH_CBC") == 0)
+		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
+		    1);
+	else if (strcmp(mme, "AES_CBC") == 0)
+		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_AES_KEYLEN, 0,
+		    1);
+
+	conf_set(tr, sect, "HASH_ALGORITHM", mmh, 0, 1);
+	conf_set(tr, sect, "AUTHENTICATION_METHOD", mma, 0, 1);
+	conf_set(tr, sect, "GROUP_DESCRIPTION", dhg, 0, 1);
+	conf_set(tr, sect, "Life", CONF_DFLT_TAG_LIFE_MAIN_MODE, 0, 1);
+}
+
+static void
+conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
+    char *qmh_p, char *dhg_p, int proto, int mode, int pfs)
+{
+	char sect[CONF_SECT_MAX], tmp[CONF_SECT_MAX];
 
 	/* Helper #defines, incl abbreviations.  */
 #define PROTO(x)  ((x) ? "AH" : "ESP")
 #define PFS(x)    ((x) ? "-PFS" : "")
 #define MODE(x)   ((x) ? "TRANSPORT" : "TUNNEL")
 #define MODE_p(x) ((x) ? "-TRP" : "")
-	group_max = sizeof dh_group / sizeof *dh_group - 1;
+
+	if (proto == 1 && strcmp(qmh, "NONE") == 0) /* AH */
+		return;
+
+	snprintf(tmp, sizeof tmp, "QM-%s%s%s%s%s%s", PROTO(proto),
+	    MODE_p(mode), qme_p, qmh_p, PFS(pfs), dhg_p);
+
+	strlcpy(sect, tmp, CONF_SECT_MAX);
+	strlcat(sect, "-SUITE",	CONF_SECT_MAX);
+
+	LOG_DBG((LOG_MISC, 90, "conf_load_defaults : quick mode %s", sect));
+
+	conf_set(tr, sect, "Protocols", tmp, 0, 1);
+	snprintf(sect, sizeof sect, "IPSEC_%s", PROTO(proto));
+	conf_set(tr, tmp, "PROTOCOL_ID", sect, 0, 1);
+	strlcpy(sect, tmp, CONF_SECT_MAX);
+	strlcat(sect, "-XF", CONF_SECT_MAX);
+	conf_set(tr, tmp, "Transforms", sect, 0, 1);
+
+	/*
+	 * XXX For now, defaults
+	 * contain one xf per protocol.
+	 */
+	conf_set(tr, sect, "TRANSFORM_ID", qme, 0, 1);
+	if (strcmp(qme ,"BLOWFISH") == 0)
+		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
+			 1);
+	else if (strcmp(qme ,"AES") == 0)
+		conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_AES_KEYLEN, 0,
+			 1);
+	conf_set(tr, sect, "ENCAPSULATION_MODE", MODE(mode), 0, 1);
+	if (strcmp(qmh, "NONE")) {
+		conf_set(tr, sect, "AUTHENTICATION_ALGORITHM", qmh, 0, 1);
+
+		/* XXX Another shortcut to keep length down */
+		if (pfs)
+			conf_set(tr, sect, "GROUP_DESCRIPTION", dhg, 0, 1);
+	}
+
+	/* XXX Lifetimes depending on enc/auth strength? */
+	conf_set(tr, sect, "Life", CONF_DFLT_TAG_LIFE_QUICK_MODE, 0, 1);
+}
+
+static void
+conf_load_defaults(int tr)
+{
+	int             enc, auth, hash, group, proto, mode, pfs;
+	char            *dflt;
+	
+	char           *mm_auth[] = {"PRE_SHARED", "DSS", "RSA_SIG", 0};
+	char           *mm_auth_p[] = {"", "-DSS", "-RSA_SIG", 0};
+	char           *mm_hash[] = {"MD5", "SHA", 0};
+	char           *mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
+				    "CAST_CBC", "AES_CBC", 0};
+	char           *mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", 0};
+	char           *dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
+				     "MODP_1536", "MODP_2048", 0};
+	char           *dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
+				       0};
+	char           *qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
+				    0};
+	char           *qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF",
+				      "-AES", 0};
+	char           *qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
+				     "HMAC_SHA2_256", "HMAC_SHA2_384",
+				     "HMAC_SHA2_512", "NONE", 0};
+	char           *qm_hash_p[] = {"-MD5", "-SHA", "-RIPEMD", "-SHA2-256",
+				       "-SHA2-384", "-SHA2-512", "", 0};
 
 	/* General and X509 defaults */
 	conf_set(tr, "General", "Retransmits", CONF_DFLT_RETRANSMITS, 0, 1);
-	conf_set(tr, "General", "Exchange-max-time", CONF_DFLT_EXCH_MAX_TIME, 0, 1);
+	conf_set(tr, "General", "Exchange-max-time", CONF_DFLT_EXCH_MAX_TIME,
+	    0, 1);
 	conf_set(tr, "General", "Policy-file", CONF_DFLT_POLICY_FILE, 0, 1);
-	conf_set(tr, "General", "Pubkey-directory", CONF_DFLT_PUBKEY_DIR, 0, 1);
+	conf_set(tr, "General", "Pubkey-directory", CONF_DFLT_PUBKEY_DIR, 0,
+	    1);
 
 #ifdef USE_X509
-	conf_set(tr, "X509-certificates", "CA-directory", CONF_DFLT_X509_CA_DIR, 0,
-		 1);
-	conf_set(tr, "X509-certificates", "Cert-directory", CONF_DFLT_X509_CERT_DIR,
-		 0, 1);
-	conf_set(tr, "X509-certificates", "Private-key", CONF_DFLT_X509_PRIVATE_KEY,
-		 0, 1);
-	conf_set(tr, "X509-certificates", "CRL-directory", CONF_DFLT_X509_CRL_DIR,
-		 0, 1);
+	conf_set(tr, "X509-certificates", "CA-directory",
+	    CONF_DFLT_X509_CA_DIR, 0, 1);
+	conf_set(tr, "X509-certificates", "Cert-directory",
+	    CONF_DFLT_X509_CERT_DIR, 0, 1);
+	conf_set(tr, "X509-certificates", "Private-key",
+	    CONF_DFLT_X509_PRIVATE_KEY, 0, 1);
+	conf_set(tr, "X509-certificates", "CRL-directory",
+	    CONF_DFLT_X509_CRL_DIR, 0, 1);
 #endif
 
 #ifdef USE_KEYNOTE
@@ -436,156 +510,40 @@ conf_load_defaults(int tr)
 		 CONF_DFLT_PHASE1_TRANSFORMS, 0, 1);
 
 	/* Main modes */
-	for (enc = 0; mm_enc[enc]; enc++) {
-		for (hash = 0; mm_hash[hash]; hash++) {
-			for (auth = 0; mm_auth[auth]; auth++) {
-				for (group = 0; dh_group_p[group]; group++) {
-					/* special */
-					snprintf(sect, sizeof sect, "%s-%s%s%s",
-					    mm_enc_p[enc], mm_hash[hash],
-					    dh_group_p[group], mm_auth_p[auth]);
-
-#if 0
-					if (!conf_find_trans_xf(1, sect))
-						continue;
-#endif
-
-					LOG_DBG((LOG_MISC, 90,
-					    "conf_load_defaults : main mode %s",
-					    sect));
-
-					conf_set(tr, sect, "ENCRYPTION_ALGORITHM",
-					    mm_enc[enc], 0, 1);
-					if (strcmp(mm_enc[enc], "BLOWFISH_CBC") == 0)
-						conf_set(tr, sect, "KEY_LENGTH",
-						    CONF_DFLT_VAL_BLF_KEYLEN, 0, 1);
-
-					conf_set(tr, sect, "HASH_ALGORITHM",
-					    mm_hash[hash], 0, 1);
-					conf_set(tr, sect, "AUTHENTICATION_METHOD",
-					    mm_auth[auth], 0, 1);
-
-					/* XXX Always DH group 2 (MODP_1024) */
-					conf_set(tr, sect, "GROUP_DESCRIPTION",
-					    dh_group[group < group_max ? group : 1],
-					    0, 1);
-
-					conf_set(tr, sect, "Life",
-					    CONF_DFLT_TAG_LIFE_MAIN_MODE, 0, 1);
-				}
-			}
-		}
-	}
+	for (enc = 0; mm_enc[enc]; enc++)
+		for (hash = 0; mm_hash[hash]; hash++)
+			for (auth = 0; mm_auth[auth]; auth++)
+				for (group = 0; dhgroup_p[group]; group++)
+					conf_load_defaults_mm (tr, mm_enc[enc],
+					    mm_hash[hash], mm_auth[auth],
+					    dhgroup[group], mm_enc_p[enc],
+					    mm_auth_p[auth], dhgroup_p[group]);
 
 	/* Setup a default Phase 1 entry */
 	conf_set(tr, "Phase 1", "Default", "Default-phase-1", 0, 1);
-
 	conf_set(tr, "Default-phase-1", "Phase", "1", 0, 1);
 	conf_set(tr, "Default-phase-1", "Configuration",
-		 "Default-phase-1-configuration", 0, 1);
+	    "Default-phase-1-configuration", 0, 1);
 	dflt = conf_get_trans_str(tr, "General", "Default-phase-1-ID");
 	if (dflt)
 		conf_set(tr, "Default-phase-1", "ID", dflt, 0, 1);
 
 	/* Quick modes */
-	for (enc = 0; qm_enc[enc]; enc++) {
-		for (proto = 0; proto < 2; proto++) {
-			for (mode = 0; mode < 2; mode++) {
-				for (pfs = 0; pfs < 2; pfs++) {
-					for (hash = 0; qm_hash[hash]; hash++) {
-						for (group = 0; dh_group_p[group];
-						    group++) {
-							char tmp[CONF_MAX];
-
-							if ((proto == 1 &&
-							    strcmp(qm_hash[hash],
-							    "NONE") == 0)) /* AH */
-								continue;
-
-							snprintf(tmp, sizeof tmp,
-							    "QM-%s%s%s%s%s%s",
-							    PROTO(proto),
-							    MODE_p(mode),
+	for (enc = 0; qm_enc[enc]; enc++)
+		for (proto = 0; proto < 2; proto++)
+			for (mode = 0; mode < 2; mode++)
+				for (pfs = 0; pfs < 2; pfs++)
+					for (hash = 0; qm_hash[hash]; hash++)
+						for (group = 0;
+						     dhgroup_p[group]; group++)
+							conf_load_defaults_qm(
+							    tr, qm_enc[enc],
+							    qm_hash[hash],
+							    dhgroup[group],
 							    qm_enc_p[enc],
 							    qm_hash_p[hash],
-							    PFS(pfs),
-							    dh_group_p[group]);
-
-							strlcpy(sect, tmp, CONF_MAX);
-							strlcat(sect, "-SUITE",
-							    CONF_MAX);
-
-#if 0
-							if (!conf_find_trans_xf(2, sect))
-								continue;
-#endif
-
-							LOG_DBG((LOG_MISC, 90,
-							    "conf_load_defaults : quick mode %s",
-							    sect));
-
-							conf_set(tr, sect, "Protocols",
-							    tmp, 0, 1);
-
-							snprintf(sect, sizeof sect,
-							    "IPSEC_%s", PROTO(proto));
-							conf_set(tr, tmp, "PROTOCOL_ID",
-							    sect, 0, 1);
-
-							strlcpy(sect, tmp, CONF_MAX);
-							strlcat(sect, "-XF", CONF_MAX);
-							conf_set(tr, tmp, "Transforms",
-							    sect, 0, 1);
-
-							/*
-							 * XXX For now, defaults
-							 * contain one xf per protocol.
-							 */
-
-							conf_set(tr, sect,
-							    "TRANSFORM_ID",
-							    qm_enc[enc], 0, 1);
-
-							if (strcmp(qm_enc[enc],
-							    "BLOWFISH") == 0)
-								conf_set(tr, sect,
-								    "KEY_LENGTH",
-								    CONF_DFLT_VAL_BLF_KEYLEN,
-								    0, 1);
-
-							conf_set(tr, sect,
-							    "ENCAPSULATION_MODE",
-							    MODE(mode), 0, 1);
-
-							if (strcmp(qm_hash[hash], "NONE")) {
-								conf_set(tr, sect, "AUTHENTICATION_ALGORITHM",
-								    qm_hash[hash], 0, 1);
-
-								/*
-								 * XXX
-								 *
-								 * Another shortcut:
-								 * to keep length down
-								 */
-								if (pfs)
-									conf_set(tr, sect, "GROUP_DESCRIPTION",
-									    dh_group[group < group_max ? group : 1],
-									    0, 1);
-							}
-							/*
-							 * XXX
-							 * Lifetimes depending
-							 * on enc/auth strength?
-							 */
-							conf_set(tr, sect, "Life", CONF_DFLT_TAG_LIFE_QUICK_MODE, 0,
-							    1);
-
-						}
-					}
-				}
-			}
-		}
-	}
+							    dhgroup_p[group],
+							    proto, mode, pfs);
 }
 
 void
