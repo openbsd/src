@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.17 2004/04/28 04:34:46 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.18 2004/05/08 17:40:53 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,6 +128,7 @@ print_peer(struct peer_config *p)
 	const char	*tab	= "\t";
 	const char	*nada	= "";
 	const char	*c;
+	char		*method;
 
 	if (p->group[0]) {
 		printf("group \"%s\" {\n", p->group);
@@ -170,14 +171,19 @@ print_peer(struct peer_config *p)
 
 	if (p->auth.method == AUTH_MD5SIG)
 		printf("%s\ttcp md5sig\n", c);
-	else if (p->auth.method == AUTH_IPSEC_MANUAL_ESP) {
-		printf("%s\tipsec esp in spi %u %s XXXXXX", c, p->auth.spi_in,
+	else if (p->auth.method == AUTH_IPSEC_MANUAL_ESP || p->auth.method == AUTH_IPSEC_MANUAL_AH) {
+		if (p->auth.method == AUTH_IPSEC_MANUAL_ESP)
+			method = "esp";
+		else
+			method = "ah";
+
+		printf("%s\tipsec %s in spi %u %s XXXXXX", c, method, p->auth.spi_in,
 		    print_auth_alg(p->auth.auth_alg_in));
 		if (p->auth.enc_alg_in)
 			printf(" %s XXXXXX", print_enc_alg(p->auth.enc_alg_in));
 		printf("\n");
 
-		printf("%s\tipsec esp out spi %u %s XXXXXX", c, p->auth.spi_out,
+		printf("%s\tipsec %s out spi %u %s XXXXXX", c, method, p->auth.spi_out,
 		    print_auth_alg(p->auth.auth_alg_out));
 		if (p->auth.enc_alg_out)
 			printf(" %s XXXXXX",

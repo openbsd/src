@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.103 2004/05/08 17:23:20 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.104 2004/05/08 17:40:53 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,7 @@ typedef struct {
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
 %token	<v.string>		STRING
-%type	<v.number>		number asnumber optnumber yesno inout
+%type	<v.number>		number asnumber optnumber yesno inout espah
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -539,21 +539,17 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.auth.md5key_len = strlen($4) / 2;
 			free($4);
 		}
-		| IPSEC ESP IKE {
+		| IPSEC espah IKE {
 			if (curpeer->conf.auth.method) {
 				yyerror("auth method cannot be redefined");
 				YYERROR;
 			}
-			curpeer->conf.auth.method = AUTH_IPSEC_IKE_ESP;
+			if ($2)
+				curpeer->conf.auth.method = AUTH_IPSEC_IKE_ESP;
+			else
+				curpeer->conf.auth.method = AUTH_IPSEC_IKE_AH;
 		}
-		| IPSEC AH IKE {
-			if (curpeer->conf.auth.method) {
-				yyerror("auth method cannot be redefined");
-				YYERROR;
-			}
-			curpeer->conf.auth.method = AUTH_IPSEC_IKE_AH;
-		}
-		| IPSEC ESP inout SPI number STRING STRING encspec {
+		| IPSEC espah inout SPI number STRING STRING encspec {
 			u_int32_t	auth_alg;
 			u_int8_t	keylen;
 
@@ -561,7 +557,6 @@ peeropts	: REMOTEAS asnumber	{
 				yyerror("auth method cannot be redefined");
 				YYERROR;
 			}
-			curpeer->conf.auth.method = AUTH_IPSEC_MANUAL_ESP;
 
 			if (!strcmp($6, "sha1")) {
 				auth_alg = SADB_AALG_SHA1HMAC;
@@ -582,6 +577,17 @@ peeropts	: REMOTEAS asnumber	{
 				    "is %u bytes", keylen, strlen($7) / 2);
 				free($7);
 				YYERROR;
+			}
+
+			if ($2)
+				curpeer->conf.auth.method = AUTH_IPSEC_MANUAL_ESP;
+			else {
+				if ($8.enc_alg) {
+					yyerror("\"ipsec ah\" doesn't take encryption keys");
+					free($7);
+					YYERROR;
+				}
+				curpeer->conf.auth.method = AUTH_IPSEC_MANUAL_AH;
 			}
 
 			if ($3 == 1) {
@@ -631,6 +637,10 @@ peeropts	: REMOTEAS asnumber	{
 			    sizeof(curpeer->conf.attrset));
 		}
 		| mrtdump
+		;
+
+espah		: ESP		{ $$ = 1; }
+		| AH		{ $$ = 0; }
 		;
 
 encspec		: /* nada */	{
