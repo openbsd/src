@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.26 2004/09/14 23:39:32 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.27 2004/10/26 21:27:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -137,11 +137,10 @@ cpuattach(parent, self, aux)
 		    pdc_cache.ic_size / 1024, pdc_cache.ic_conf.cc_line * 16);
 		p = "D";
 	}
-	/* TODO decode associativity */
-	printf("%uK(%db/l) wr-%s %scoherent %scache, ",
+
+	printf("%uK(%db/l) wr-%s %scache, ",
 	    pdc_cache.dc_size / 1024, pdc_cache.dc_conf.cc_line * 16,
-	    pdc_cache.dc_conf.cc_wt? "thru" : "back",
-	    pdc_cache.dc_conf.cc_cst? "" : "in", p);
+	    pdc_cache.dc_conf.cc_wt? "thru" : "back", p);
 
 	p = "";
 	if (!pdc_cache.dt_conf.tc_sh) {
