@@ -24,7 +24,6 @@ To get a telnet client and server with kerberos5 support, do the following:
 Things todo, in no particular order:
 
  - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
- - kadmind
  - hprop, iprop
  - kf, kfd
  - kpasswdd and hack krb5 support in our passwd
