@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.10 2003/02/14 03:58:42 marc Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.11 2003/12/23 20:03:54 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -51,17 +51,13 @@ close(int fd)
 	/* This is a cancelation point: */
 	_thread_enter_cancellation_point();
 
-	if ((fd == _thread_kern_pipe[0]) || (fd == _thread_kern_pipe[1])) {
-		/*
-		 * Don't allow silly programs to close the kernel pipe.
-		 */
+	if ((fd < 0) || (fd >= _thread_dtablesize) ||
+	    (fd == _thread_kern_pipe[0]) || (fd == _thread_kern_pipe[1])) {
 		errno = EBADF;
 		ret = -1;
-	}
-	/*
-	 * Lock the file descriptor while the file is closed and get
-	 * the file descriptor status:
-	 */
+	} else if (_thread_fd_table[fd] == NULL)
+		/* unknown to thread kernel, let system handle the close */
+		ret = _thread_sys_close(fd);
 	else if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		/*
 		 * Check if the file should be left as blocking.
