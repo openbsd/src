@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.5 2000/01/15 19:43:41 angelos Exp $
+.\"	$OpenBSD: enc.4,v 1.6 2000/04/08 18:49:28 angelos Exp $
 .Dd October 7, 1999
 .Dt ENC 4
 .Os
@@ -43,6 +43,16 @@ interface with an IPsec SA.
 Note that the
 .Dq enc0
 interface may not be used in a bridge configuration.
+.Pp
+If the
+.Dv IFF_LINK0
+flag is set on an
+.Nm
+interface, IP-in-IP encapsulation (instead of Ethernet-in-IP) is
+done.
+Its use is currently experimental.
+This flag should not be set when the interface is used in conjunction
+with the bridge.
 .Pp
 The last use of the
 .Nm
