@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_put.c,v 1.9 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_put.c,v 1.10 2005/01/03 22:19:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c   8.8 (Berkeley) 7/26/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_put.c,v 1.9 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_put.c,v 1.10 2005/01/03 22:19:38 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,7 +78,7 @@ __bt_put(dbp, key, data, flags)
 	PAGE *h;
 	indx_t index, nxtindex;
 	pgno_t pg;
-	u_int32_t nbytes;
+	u_int32_t nbytes, size32;
 	int dflags, exact, status;
 	char *dest, db[NOVFLSIZE], kb[NOVFLSIZE];
 
@@ -131,8 +131,9 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tkey.data = kb;
 			tkey.size = NOVFLSIZE;
 			memmove(kb, &pg, sizeof(pgno_t));
+			size32 = key->size;
 			memmove(kb + sizeof(pgno_t),
-			    &key->size, sizeof(u_int32_t));
+			    &size32, sizeof(u_int32_t));
 			dflags |= P_BIGKEY;
 			key = &tkey;
 		}
@@ -142,8 +143,9 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tdata.data = db;
 			tdata.size = NOVFLSIZE;
 			memmove(db, &pg, sizeof(pgno_t));
+			size32 = data->size;
 			memmove(db + sizeof(pgno_t),
-			    &data->size, sizeof(u_int32_t));
+			    &size32, sizeof(u_int32_t));
 			dflags |= P_BIGDATA;
 			data = &tdata;
 		}
