@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.31 2003/07/22 19:39:50 otto Exp $
+#	$OpenBSD: Makefile.alpha,v 1.32 2003/11/21 17:53:19 espie Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -34,7 +34,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
 CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
-CMACHFLAGS=	-mno-fp-regs
+CMACHFLAGS=	-mno-fp-regs -fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
