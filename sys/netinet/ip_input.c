@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.42 1999/09/25 06:35:48 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.43 1999/11/29 16:22:29 ho Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -569,8 +569,11 @@ in_iawithaddr(ina, m)
 			     * either for subnet or net.
 			     */
 			    ina.s_addr == ia->ia_subnet ||
-			    ina.s_addr == ia->ia_net)
+			    ina.s_addr == ia->ia_net) {
+				/* Make sure M_BCAST is set */
+				m->m_flags |= M_BCAST;
 				return ia;
+			    }
 		}
 	}
 
