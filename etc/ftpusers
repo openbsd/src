@@ -1,12 +1,16 @@
-#	$OpenBSD: ftpusers,v 1.6 1998/08/12 13:25:25 kstailey Exp $
+#	$OpenBSD: ftpusers,v 1.7 2002/05/20 21:19:44 deraadt Exp $
 #
 # list of users disallowed any ftp access.
 # read by ftpd(8).
 root
-bin
 daemon
-nobody
 operator
+bin
+smmsp
+popa3d
+sshd
 uucp
 www
 named
+proxy
+nobody
