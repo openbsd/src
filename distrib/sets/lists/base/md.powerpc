@@ -1,9 +1,9 @@
 ./sbin/fdisk
 ./usr/include/powerpc
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.2
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.2/2.7.2.1
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.2/2.7.2.1/include
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.2/2.7.2.1/include/objc
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.3
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.3/2.7.2.1
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.3/2.7.2.1/include
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.3/2.7.2.1/include/objc
 ./usr/lib/perl5/auto/Text
 ./usr/lib/perl5/auto/Text/ParseWords
 ./usr/lib/perl5/auto/Text/ParseWords/autosplit.ix
@@ -340,7 +340,7 @@
 ./usr/mdec/boot.mac
 ./usr/mdec/boot.ppc
 ./usr/mdec/ofwboot
-./usr/powerpc-unknown-openbsd2.2
-./usr/powerpc-unknown-openbsd2.2/bin
-./usr/powerpc-unknown-openbsd2.2/lib
-./usr/powerpc-unknown-openbsd2.2/lib/ldscripts
+./usr/powerpc-unknown-openbsd2.3
+./usr/powerpc-unknown-openbsd2.3/bin
+./usr/powerpc-unknown-openbsd2.3/lib
+./usr/powerpc-unknown-openbsd2.3/lib/ldscripts

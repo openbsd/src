@@ -11,11 +11,11 @@ out as follows:
 		simpleroot*	pmax boot and installation
 				simpleroot files; see below.
 
-There is a pmax simpleroot image named simpleroot22.fs (it is usually
-compressed using gzip - simpleroot22.fs.gz - so you need gunzip first
+There is a pmax simpleroot image named simpleroot23.fs (it is usually
+compressed using gzip - simpleroot23.fs.gz - so you need gunzip first
 to uncompress it) subdirectory of the OpenBSD 2.3 distribution.  This
 file you can dump onto a disk and boot from it to start the installation
-of OpenBSD/pmax. Also there is a simpleroot22.tar.gz file there.  It
+of OpenBSD/pmax. Also there is a simpleroot23.tar.gz file there.  It
 can be used as root area on the NFS server if you plan to install via
 network.
 
@@ -25,7 +25,7 @@ distribution sets.  The binary distribution sets can be found in
 subdirectories of the "pmax/bins" subdirectory of the OpenBSD 2.3
 distribution tree, and are as follows:
 
-	base22	The OpenBSD/pmax 2.3 base binary distribution.  You
+	base23	The OpenBSD/pmax 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -33,7 +33,7 @@ distribution tree, and are as follows:
 		everything described below.
 		[ 13.9M gzipped, 47.2M uncompressed ]
 
-	comp22	The OpenBSD/pmax Compiler tools.  All of the tools
+	comp23	The OpenBSD/pmax Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -44,7 +44,7 @@ distribution tree, and are as follows:
 		call and library manual pages.
 		[ 13.1M gzipped, 51.8M uncompressed ]
 
-	etc22	This distribution set contains the system
+	etc23	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -53,22 +53,22 @@ distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 94K gzipped, 500K uncompressed ]
 
-	game22	This set includes the games and their manual pages.
+	game23	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 7.2M uncompressed ]
 
-	man22	This set includes all of the manual pages for the
+	man23	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 2.4M gzipped, 9.1M uncompressed ]
 
-	misc22	This set includes the system dictionaries (which are
+	misc23	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.7M gzipped, 5.9M uncompressed ]
 
-	text22	This set includes OpenBSD's text processing tools,
+	text23	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 957K gzipped, 4.0M uncompressed ]

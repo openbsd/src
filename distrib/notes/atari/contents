@@ -29,7 +29,7 @@ Bootable Kernel floppy:
 	and the GENERIC kernel.  It is setup so that you can insert it
 	into your floppy drive, and start the programs from GEM.
 
-	This floppy is named boot-22.fs
+	This floppy is named boot-23.fs
 
 Installation floppy:
 
@@ -42,7 +42,7 @@ Installation floppy:
 	file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing TOS partitions.
 
-	This floppy's are named "inst-22.fs.1" and "inst-22.fs.2".
+	This floppy's are named "inst-23.fs.1" and "inst-23.fs.2".
 
 The OpenBSD/atari binary distribution sets contain the binaries which
 comprise the OpenBSD 2.3 release for the atari.  There are seven binary
@@ -50,7 +50,7 @@ distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "atari/bins"
 subdirectory of the OpenBSD 2.3 distribution tree, and are as follows:
 
-	base22	The OpenBSD/atari 2.3 base binary distribution.  You
+	base23	The OpenBSD/atari 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -58,7 +58,7 @@ subdirectory of the OpenBSD 2.3 distribution tree, and are as follows:
 		everything described below.
 		[ 7M gzipped, 19M uncompressed ]
 
-	comp22	The OpenBSD/atari Compiler tools.  All of the tools
+	comp23	The OpenBSD/atari Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -69,7 +69,7 @@ subdirectory of the OpenBSD 2.3 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 4M gzipped, 12M uncompressed ]
 
-	etc22	This distribution set contains the system
+	etc23	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -78,22 +78,22 @@ subdirectory of the OpenBSD 2.3 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 50K gzipped, 280K uncompressed ]
 
-	games22	This set includes the games and their manual pages.
+	games23	This set includes the games and their manual pages.
 		[ 1M gzipped, 3M uncompressed ]
 
-	man22	This set includes all of the manual pages for the
+	man23	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 730K gzipped, 3M uncompressed ]
 
-	misc22	This set includes the system dictionaries (which are
+	misc23	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 2M gzipped, 6M uncompressed ]
 
-	text22	This set includes OpenBSD's text processing tools,
+	text23	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 784K gzipped, 3M uncompressed ]

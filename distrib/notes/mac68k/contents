@@ -32,10 +32,10 @@ and are as follows:
 		it enables a different SCSI driver which may allow
 		some otherwise incompatible SCSI disks to function
 		with OpenBSD/mac68k.  You must install either this
-		or bsd22.tar.gz.
+		or bsd23.tar.gz.
 		[ 1.4M uncompressed ]
 
-	base22.tar.gz	The OpenBSD/mac68k 2.3 base binary distribution.  You
+	base23.tar.gz	The OpenBSD/mac68k 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -43,7 +43,7 @@ and are as follows:
 		everything described below.
 		[ 11.9M gzipped, 33.7M uncompressed ]
 
-	comp22.tar.gz	The OpenBSD/mac68k Compiler tools.  All of the tools
+	comp23.tar.gz	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system header files
 		(/usr/include), the linker, the compiler tool chain,
@@ -54,9 +54,9 @@ and are as follows:
 		call and library manual pages.  It is very almost a must
 		to install this set if one wants an even minimally
 		functional system.
-		[ 7.0M gzipped, 22.5M uncompressed ]
+		[ 7.0M gzipped, 23.5M uncompressed ]
 
-	etc22.tar.gz	This distribution set contains the system
+	etc23.tar.gz	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -65,18 +65,18 @@ and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 93K gzipped, 490K uncompressed ]
 
-	game22.tar.gz	This set includes the BSD games and their manual pages.
+	game23.tar.gz	This set includes the BSD games and their manual pages.
 		It's installation is optional.
 		[ 2.7M gzipped, 6.7M uncompressed ]
 
-	man22.tar.gz	This set includes all of the manual pages for the
+	man23.tar.gz	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.  Installation of
 		this set is completely optional but is highly recommended.
 		[ 2.4M gzipped, 9.1M uncompressed ]
 
-	misc22.tar.gz	This set includes the system dictionaries (which are
+	misc23.tar.gz	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default as well as
@@ -85,7 +85,7 @@ and are as follows:
 		of many system programs.
 		[ 1.7M gzipped, 5.9M uncompressed ]
 
-	text22.tar.gz	This set includes OpenBSD's text processing tools,
+	text23.tar.gz	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.  This set is highly recommended as
 		these programs are depended upon for such basic 

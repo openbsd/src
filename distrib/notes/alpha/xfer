@@ -94,13 +94,13 @@ following:
 	administrator.) In the above example, "<dist_directories>"
 	are the distribution sets' directories, for the distribution
 	sets you wish to place on the tape.  For instance, to put
-	the "base22" and "etc22" distributions on tape (in order
+	the "base23" and "etc23" distributions on tape (in order
 	to do the absolute minimum installation to a new disk),
 	you would do the following:
 
 		cd .../2.3		# the top of the tree
 		cd alpha/
-		tar cf <tape_device> base22 etc22
+		tar cf <tape_device> base23 etc23
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -153,7 +153,7 @@ must do the following:
 	Place the distribution sets you wish to upgrade somewhere
 	in your current file system tree.  At a bare minimum, you
 	must upgrade the "base" binary distribution, and so must
-	put the "base22" set somewhere in your file system.  If
+	put the "base23" set somewhere in your file system.  If
 	you wish, you can do the other sets, as well, but you should
 	NOT upgrade the "etc" distribution; the "etc" distribution
 	contains system configuration files that you should review

@@ -74,7 +74,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 	Next, use the dd(1) utility to copy the file to the floppy drive.
 	Under SunOS, the command would be:
 
-		dd if=floppy22.fs of=/dev/rfd0c bs=36b
+		dd if=floppy23.fs of=/dev/rfd0c bs=36b
 
 	If you are using something other than SunOS, you may have to adapt
 	this to conform to local naming conventions for the floppy and
@@ -113,9 +113,9 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	Use the dd(1) utility to copy the file to the floppy drive.
 	Under SunOS, the command would be:
 
-		dd if=floppy22.fs of=/dev/rsd0b bs=36b
+		dd if=floppy23.fs of=/dev/rsd0b bs=36b
 				- or -
-		dd if=miniroot22.fs of=/dev/rsd0b bs=36b
+		dd if=miniroot23.fs of=/dev/rsd0b bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
@@ -140,7 +140,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	To copy the floppy image to the whole disk, overwriting labels:
 
-		dd if=floppy22.fs of=/dev/rsdXc bs=36b
+		dd if=floppy23.fs of=/dev/rsdXc bs=36b
 
 	Two notes - X should be replaced by the unit number of the target
 	disk, which is most likely *not* the disk/partition that's your
@@ -159,13 +159,13 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris NetBSD or OpenBSD labels:
 
-		dd if=floppy22.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+		dd if=floppy23.fs of=/dev/rsdXc bs=1b skip=1 seek=1
 
 	You need to be sure that your version of dd(1) supports the
 	skip and seek operands, otherwise you can try a technique like:
 
 		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
-		dd if=floppy22.fs of=/dev/rsdXc bs=36b
+		dd if=floppy23.fs of=/dev/rsdXc bs=36b
 		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
 
 	In either case, you've created a situation where the disklabel
@@ -217,7 +217,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	#! /bin/sh
 	tape=/dev/nrst0
 	mt -f ${tape} rewind
-	for file in base22 etc22 comp22 game22 man22 misc22 text22
+	for file in base23 etc23 comp23 game23 man23 misc23 text23
 	do
 		dd if=${file}.tar.gz of=${tape}
 	done
@@ -275,7 +275,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base22" set somewhere in your file system.  If you wish,
+	"base23" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.

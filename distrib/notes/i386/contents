@@ -11,7 +11,7 @@ out as follows:
 
 		X11/		The X window system for OpenBSD/i386 2.3
 
-		floppy22.fs	The i386 boot and installation
+		floppy23.fs	The i386 boot and installation
 				floppy; see below.
 
 		*.tar.gz	i386 binary distribution sets;
@@ -29,7 +29,7 @@ As well you may be interested in
 		installation section, below.
 
 
-In summary, there is one i386 floppy image called "floppy22.fs" (which
+In summary, there is one i386 floppy image called "floppy23.fs" (which
 you can copy to a floppy using rawrite.exe or `dd'; as described later
 in this document).  This is a bootable install floppy which can be
 used both to install and to upgrade OpenBSD to the current version.
@@ -52,7 +52,7 @@ distribution sets.  The binary distribution sets can be found in
 the "i386" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	base22	The OpenBSD/i386 2.3 base binary distribution.  You
+	base23	The OpenBSD/i386 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -60,7 +60,7 @@ and are as follows:
 		everything described below.
 		[ 11.9M gzipped, 33.3M uncompressed ]
 
-	comp22	The OpenBSD/i386 Compiler tools.  All of the tools
+	comp23	The OpenBSD/i386 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -71,7 +71,7 @@ and are as follows:
 		call and library manual pages.
 		[ 7.3M gzipped, 23.0M uncompressed ]
 
-	etc22	This distribution set contains the system
+	etc23	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -80,22 +80,22 @@ and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 93K gzipped, 490K uncompressed ]
 
-	game22	This set includes the games and their manual pages.
+	game23	This set includes the games and their manual pages.
 		[ 2.7M gzipped, 6.4M uncompressed ]
 
-	man22	This set includes all of the manual pages for the
+	man23	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 2.5M gzipped, 9.4M uncompressed ]
 
-	misc22	This set includes the system dictionaries (which are
+	misc23	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.7M gzipped, 5.8M uncompressed ]
 
-	text22	This set includes OpenBSD's text processing tools,
+	text23	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 944K gzipped, 3.3M uncompressed ]

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-RELEASE=22
+RELEASE=23
 SPLITSIZE=240640
 
 GZIP=--best

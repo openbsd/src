@@ -12,7 +12,7 @@ the files as follows:
 
 	X11/			The X window system for OpenBSD/pc532 2.3
 
-	floppy22.fs		The pc532 boot and installation floppy;
+	floppy23.fs		The pc532 boot and installation floppy;
 				see below.
 
 	*.tar.gz		pc532 binary distribution sets;
@@ -29,7 +29,7 @@ distribution sets.  The binary distribution sets can be found in
 the "pc532" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	base22
+	base23
 		The OpenBSD/pc532 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
@@ -37,7 +37,7 @@ and are as follows:
 		excludes everything described below.
 		[ 6.8M gzipped ]
 
-	comp22
+	comp23
 		The OpenBSD/pc532 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
@@ -47,7 +47,7 @@ and are as follows:
 		as the system call and library manual pages.
 		[ 4.7M gzipped ]
 
-	etc22
+	etc23
 		This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
@@ -57,25 +57,25 @@ and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 63K gzipped ]
 
-	games22
+	games23
 		This set includes the games and their manual pages.
 		[ 2.8M gzipped ]
 
-	man22
+	man23
 		This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.8M gzipped ]
 
-	misc22
+	misc23
 		This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.9M gzipped ]
 
-	text22
+	text23
 		This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
@@ -88,12 +88,12 @@ is supported by the following files:
 	Initial file system used via SCSI floppy or downloaded into 
 	memory:
 
-	inst-22.fs	-- file system containing boot loader 
+	inst-23.fs	-- file system containing boot loader 
 			   and install kernel with 2MB
 			   ram root file system.
 
 	download.c	-- source for the program to download
-			   inst-22.fs into memory via the
+			   inst-23.fs into memory via the
 			   pc532 ROM monitor.
 
 

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/10/01 22:12:53 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1998/03/08 00:26:13 deraadt Exp $
 
-REV=	22
+REV=	23
 
 LDSTATIC=	-static
 
