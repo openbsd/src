@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.18 1998/09/20 02:22:21 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.19 1999/08/04 17:13:24 espie Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.18 1998/09/20 02:22:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.19 1999/08/04 17:13:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: ar_io.c,v 1.18 1998/09/20 02:22:21 millert Exp 
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/param.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <string.h>
 #include <fcntl.h>
@@ -87,6 +88,7 @@ static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
 char *arcname;				/* printable name of archive */
 char *gzip_program;			/* name of gzip program */
+static pid_t zpid = -1;			/* pid of child process */
 
 static int get_phys __P((void));
 extern sigset_t s_mask;
@@ -345,6 +347,16 @@ ar_close()
 	    (arsb.st_size == 0)) {
 		(void)unlink(arcname);
 		can_unlnk = 0;
+	}
+
+	/*
+	 * for a quick extract/list, pax frequently exits before the child
+	 * process is done
+	 */
+	if ((act == LIST || act == EXTRACT) && nflag && zpid > 0) {
+		int status;
+		kill(zpid, SIGINT);
+		waitpid(zpid, &status, 0);
 	}
 
 	(void)close(arfd);
@@ -1316,18 +1328,17 @@ ar_start_gzip(fd)
 	int fd;
 #endif
 {
-	pid_t pid;
 	int fds[2];
 	char *gzip_flags;
 
 	if (pipe(fds) < 0)
 		err(1, "could not pipe");
-	pid = fork();
-	if (pid < 0)
+	zpid = fork();
+	if (zpid < 0)
 		err(1, "could not fork");
 
 	/* parent */
-	if (pid) {
+	if (zpid) {
 		switch (act) {
 		case ARCHIVE:
 			dup2(fds[1], fd);
