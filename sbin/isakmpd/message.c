@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.33 2000/10/07 07:00:20 niklas Exp $	*/
-/*	$EOM: message.c,v 1.155 2000/10/06 23:55:42 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.34 2000/10/10 13:35:11 niklas Exp $	*/
+/*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -270,7 +270,8 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
       /* Reserved fields in ISAKMP messages should be zero.  */
       if (GET_ISAKMP_GEN_RESERVED (buf) != 0)
 	{
-	  log_print ("message_parse_payloads: reserved field non-zero");
+	  log_print ("message_parse_payloads: reserved field non-zero: %x",
+		     GET_ISAKMP_GEN_RESERVED (buf));
 	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
 	  return -1;
 	}
@@ -1131,14 +1132,26 @@ message_recv (struct message *msg)
   return 0;
 }
 
+void
+message_send_expire (struct message *msg)
+{
+  msg->retrans = 0;
+
+  message_send (msg);
+}
+
 /* Queue up message MSG for transmittal.  */
 void
 message_send (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
 
-  /* Reset the retransmission event.  */
-  msg->retrans = 0;
+  /* Remove retransmissions on this message  */
+  if (msg->retrans)
+    {
+      timer_remove_event (msg->retrans);
+      msg->retrans = 0;
+    }
 
   /*
    * If the ISAKMP SA has set up encryption, encrypt the message.
