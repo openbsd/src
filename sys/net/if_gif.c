@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.11 2000/12/31 22:32:28 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.12 2001/02/06 03:26:10 mickey Exp $	*/
 /*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 
 #include <net/if_gif.h>
 
-#include "gif.h"
 #include "bpfilter.h"
 #include "bridge.h"
 
@@ -81,23 +80,22 @@
 
 extern int ifqmaxlen;
 
-#if NGIF > 0
-
+int ngif;
 void gifattach __P((int));
 
 /*
  * gif global variable definitions
  */
-int ngif = NGIF;		/* number of interfaces */
 struct gif_softc *gif = 0;
 
 void
-gifattach(dummy)
-	int dummy;
+gifattach(n)
+	int n;
 {
 	register struct gif_softc *sc;
 	register int i;
 
+	ngif = n;
 	gif = sc = malloc (ngif * sizeof(struct gif_softc), M_DEVBUF, M_WAIT);
 	bzero(sc, ngif * sizeof(struct gif_softc));
 	for (i = 0; i < ngif; sc++, i++) {
@@ -451,4 +449,3 @@ gif_ioctl(ifp, cmd, data)
  bad:
 	return error;
 }
-#endif /*NGIF > 0*/
