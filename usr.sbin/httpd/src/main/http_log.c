@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_log.c,v 1.14 2003/08/21 13:11:35 henning Exp $ */
+/*	$OpenBSD: http_log.c,v 1.15 2004/06/07 04:21:30 brad Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -316,6 +316,9 @@ static void log_error_core(const char *file, int line, int level,
 			   const char *fmt, va_list args)
 {
     char errstr[MAX_STRING_LEN];
+#ifndef AP_UNSAFE_ERROR_LOG_UNESCAPED
+    char scratch[MAX_STRING_LEN];
+#endif
     size_t len;
     int save_errno = errno;
     FILE *logf;
@@ -447,7 +450,14 @@ static void log_error_core(const char *file, int line, int level,
     }
 #endif
 
+#ifndef AP_UNSAFE_ERROR_LOG_UNESCAPED
+    if (ap_vsnprintf(scratch, sizeof(scratch) - len, fmt, args)) {
+        len += ap_escape_errorlog_item(errstr + len, scratch,
+                                       sizeof(errstr) - len);
+    }
+#else
     len += ap_vsnprintf(errstr + len, sizeof(errstr) - len, fmt, args);
+#endif
 
     /* NULL if we are logging to syslog */
     if (logf) {
