@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.49 1999/08/08 15:08:24 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.50 1999/08/08 16:28:17 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -628,9 +628,6 @@ com_detach(self, flags)
 	mn |= 0x80;
 	vdevgone(maj, mn, mn, VCHR);
 
-	/* Free the receive buffer. */
-	free(sc->sc_rbuf, M_DEVBUF);
-
 	/* Detach and free the tty. */
 	if (sc->sc_tty) {
 		tty_detach(sc->sc_tty);
@@ -652,14 +649,14 @@ com_activate(self, act)
 	struct com_softc *sc = (struct com_softc *)self;
 	int s, rv = 0;
 
-	s = splserial();
+	s = spltty();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
+		if (sc->sc_hwflags & COM_HW_CONSOLE) {
 			rv = EBUSY;
 			break;
 		}
