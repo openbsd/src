@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.115 2004/11/02 02:12:16 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.116 2004/11/02 02:33:26 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.115 2004/11/02 02:12:16 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.116 2004/11/02 02:33:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAOPTCLR	0x0004		/* -mediaopt command */
 #define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
-#define A_MEDIAMODE     0x0010          /* mode command */
+#define A_MEDIAMODE	0x0010		/* mode command */
 
 #define	NEXTARG		0xffffff
 #define NEXTARG2	0xfffffe
@@ -264,8 +264,8 @@ const struct	cmd {
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
-	{ "chan",       NEXTARG,        0,              setifchan },
-	{ "-chan",      -1,             0,              setifchan },
+	{ "chan",	NEXTARG,	0,		setifchan },
+	{ "-chan",	-1,		0,		setifchan },
 	{ "powersave",	1,		0,		setifpowersave },
 	{ "-powersave",	0,		0,		setifpowersave },
 	{ "powersavesleep", NEXTARG,	0,		setifpowersavesleep },
@@ -319,7 +319,7 @@ const struct	cmd {
 	{ "media",	NEXTARG,	A_MEDIA,	setmedia },
 	{ "mediaopt",	NEXTARG,	A_MEDIAOPTSET,	setmediaopt },
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
-	{ "mode",       NEXTARG,        A_MEDIAMODE,    setmediamode },
+	{ "mode",	NEXTARG,	A_MEDIAMODE,	setmediamode },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
@@ -343,7 +343,7 @@ void	list_cloners(void);
 
 const char *get_media_type_string(int);
 const char *get_media_subtype_string(int);
-int     get_media_mode(int, const char *);
+int	get_media_mode(int, const char *);
 int	get_media_subtype(int, const char *);
 int	get_media_options(int, const char *);
 int	lookup_media_word(const struct ifmedia_description *, int,
@@ -859,7 +859,6 @@ deletetunnel(const char *ignored, int alsoignored)
 	if (ioctl(s, SIOCDIFPHYADDR, &ifr) < 0)
 		warn("SIOCDIFPHYADDR");
 }
-
 
 /* ARGSUSED */
 void
@@ -1500,23 +1499,21 @@ void
 setmediamode(const char *val, int d)
 {
 	int type, subtype, options, inst, mode;
-	 
+
 	init_current_media();
-	 
+
 	/* Can only issue `mode' once. */
 	if (actions & A_MEDIAMODE)
 		errx(1, "only one `mode' command may be issued");
-	 
+
 	type = IFM_TYPE(media_current);
 	subtype = IFM_SUBTYPE(media_current);
 	options = IFM_OPTIONS(media_current);
 	inst = IFM_INST(media_current);
-	 
+
 	if ((mode = get_media_mode(type, val)) == -1)
 		errx(1, "invalid media mode: %s", val);
-	 
 	media_current = IFM_MAKEWORD(type, subtype, options, inst) | mode;
-	 
 	/* Media will be set after other processing is complete. */
 }
 
@@ -1632,8 +1629,6 @@ settimeslot(const char *val, int d)
 
 	if (ioctl(s, SIOCSIFTIMESLOT, (caddr_t)&ifr) < 0)
 		err(1, "SIOCSIFTIMESLOT");
-
-
 }
 
 unsigned long get_ts_map(int ts_flag, int ts_start, int ts_stop)
@@ -1711,12 +1706,11 @@ int
 get_media_mode(int type, const char *val)
 {
 	int rval;
-	 
+
 	rval = lookup_media_word(ifm_mode_descriptions, type, val);
 	if (rval == -1)
 		errx(1, "unknown %s media mode: %s",
 		    get_media_type_string(type), val);
-	 
 	return (rval);
 }
 
@@ -1774,7 +1768,7 @@ print_media_word(int ifmw, int print_type, int as_syntax)
 	/* Find mode. */
 	if (IFM_MODE(ifmw) != 0) {
 		for (desc = ifm_mode_descriptions; desc->ifmt_string != NULL;
-		     desc++) {
+		    desc++) {
 			if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
 			    IFM_MODE(ifmw) == IFM_MODE(desc->ifmt_word)) {
 				printf(" mode %s", desc->ifmt_string);
@@ -1984,7 +1978,6 @@ status(int link, struct sockaddr_dl *sdl)
 
 	phys_status(0);
 }
-
 
 /* ARGSUSED */
 void
@@ -2752,7 +2745,6 @@ unsetvlandev(const char *val, int d)
 		err(1, "SIOCSETVLAN");
 }
 
-
 static const char *carp_states[] = { CARP_STATES };
 
 void
@@ -2970,7 +2962,6 @@ unsetpfsync_syncif(const char *val, int d)
 	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETPFSYNC");
 }
-
 
 /* ARGSUSED */
 void
