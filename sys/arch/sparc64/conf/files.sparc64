@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.18 2001/10/05 17:37:30 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.19 2001/10/28 02:23:28 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -72,6 +72,12 @@ file	arch/sparc64/dev/auxio.c		auxio
 device beeper
 attach beeper at ebus
 file	arch/sparc64/dev/beeper.c		beeper
+
+device sab {}
+attach sab at ebus
+device sabtty
+attach sabtty at sab
+file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
 
 device audioce: audio, auconv
 attach audioce at ebus
