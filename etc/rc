@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.227 2003/05/14 18:41:06 ian Exp $
+#	$OpenBSD: rc,v 1.228 2003/07/29 17:52:17 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -120,6 +120,7 @@ ttyflags -a
 
 if [ "X${pf}" != X"NO" ]; then
 	RULES="block all"
+	RULES="$RULES\npass on lo0"
 	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
 	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
 	RULES="$RULES\npass out inet proto icmp all icmp-type echoreq keep state"
