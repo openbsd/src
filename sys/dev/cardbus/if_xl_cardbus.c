@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.2 2000/06/09 00:45:25 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.3 2000/06/09 15:35:29 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -37,13 +37,6 @@
  *
  */
 
-/* #define XL_DEBUG 4 */	/* define to report infomation for debugging */
-
-#define XL_POWER_STATIC		/* do not use enable/disable functions */
-				/* I'm waiting elinkxl.c uses
-                                   sc->enable and sc->disable
-                                   functions. */
-
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -76,13 +69,13 @@
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
 
+#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/ic/xlreg.h>
 
-#if defined DEBUG && !defined XL_DEBUG
-#define XL_DEBUG
-#endif
+#undef XL_DEBUG
+#define XL_POWER_STATIC		/* do not use enable/disable functions */
 
 #if defined XL_DEBUG
 #define DPRINTF(a) printf a
@@ -137,27 +130,27 @@ const struct xl_cardbus_product {
 	const char	*ecp_name;	/* device name */
 } xl_cardbus_products[] = {
 	{ CARDBUS_PRODUCT_3COM_3C575TX,
-	  /* XL_CONF_MII, */ 0,
+	  0,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
 	  XL_3C575,
 	  "3c575-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3C575BTX,
-	  /* XL_CONF_90XB|XL_CONF_MII, */ 0,
+	  0,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  XL_3C575B,
 	  "3c575B-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFE575CT,
-	  /* XL_CONF_90XB|XL_CONF_MII, */ 0,
+	  0,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  XL_3C575B,
 	  "3c575C-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFE656B,
-	  /* XL_CONF_90XB|XL_CONF_MII, */ 0,
+	  0,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  XL_3C575B,
@@ -261,7 +254,7 @@ xl_cardbus_attach(parent, self, aux)
 	psc->sc_cardtype = ecp->ecp_cardtype;
 
 	if (psc->sc_cardtype == XL_3C575B) {
-		/* Map CardBus function status window. */
+		/* map CardBus function status window */
 		if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 		    CARDBUS_MAPREG_TYPE_MEM, 0, &psc->sc_funct,
 		    &psc->sc_funch, 0, &psc->sc_funcsize)) {
@@ -271,7 +264,7 @@ xl_cardbus_attach(parent, self, aux)
 		}
 
 		/*
-		 * Make sure CardBus brigde can access memory space.  Usually
+		 * Make sure CardBus bridge can access memory space.  Usually
 		 * memory access is enabled by BIOS, but some BIOSes do not
 		 * enable it.
 		 */
@@ -316,16 +309,17 @@ xl_cardbus_attach(parent, self, aux)
 	printf(": irq %d", ca->ca_intrline);
 #endif
 
-	bus_space_write_2(sc->xl_btag, sc->xl_bhandle, XL_COMMAND, XL_CMD_RESET);
+	bus_space_write_2(sc->xl_btag, sc->xl_bhandle, XL_COMMAND,
+	    XL_CMD_RESET);
 	delay(400);
 	{
 		int i = 0;
-		while (bus_space_read_2(sc->xl_btag, sc->xl_bhandle, XL_STATUS) &
-		    XL_STAT_CMDBUSY) {
+		while (bus_space_read_2(sc->xl_btag, sc->xl_bhandle, XL_STATUS)
+		    & XL_STAT_CMDBUSY) {
 			if (++i > 10000) {
 				printf("ex: timeout %x\n",
-				    bus_space_read_2(sc->xl_btag, sc->xl_bhandle,
-				        XL_STATUS));
+				    bus_space_read_2(sc->xl_btag,
+				        sc->xl_bhandle, XL_STATUS));
 				printf("ex: addr %x\n",
 				    cardbus_conf_read(cc, cf, ca->ca_tag,
 				    CARDBUS_BASE0_REG));
@@ -379,7 +373,8 @@ xl_cardbus_detach(self, arg)
 		/*
 		 * Unhook the interrupt handler.
 		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->xl_intrhand);
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf,
+		    sc->xl_intrhand);
 
 		if (psc->sc_cardtype == XL_3C575B) {
 			Cardbus_mapreg_unmap(ct,
