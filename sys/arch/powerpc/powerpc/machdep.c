@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 1998/08/22 18:31:57 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1998/08/25 07:58:48 pefo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -159,13 +159,10 @@ initppc(startkernel, endkernel, args)
 	battable[0].batu = BATU(0x00000000);
 
 	if(system_type == POWER4e) {
-		/* DBAT1 maps I/O */
-		battable[1].batl = BATL(0x80000000, BAT_I);
-		battable[1].batu = BATU(0x80000000);
-
-		/* DBAT2 maps PCI mem */
-		battable[2].batl = BATL(MPC106_P_PCI_MEM_SPACE, BAT_I);
-		battable[2].batu = BATU(MPC106_V_PCI_MEM_SPACE);
+		/* Map ISA I/O */
+		addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I);
+		battable[1].batl = BATL(0xbfffe000, BAT_I);
+		battable[1].batu = BATU(0xbfffe000);
 	}
 
 	/*
@@ -181,10 +178,10 @@ initppc(startkernel, endkernel, args)
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
+#if 1
 	__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(battable[1].batl), "r"(battable[1].batu));
-	__asm__ volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
+#endif
 	
 	/*
 	 * Set up trap vectors
@@ -413,6 +410,11 @@ cpu_startup()
 	bufinit();
 
 	/*
+	 * Configure devices.
+	 */
+	configure();
+	
+	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
@@ -422,13 +424,8 @@ cpu_startup()
 		__asm__ volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
-	
-	/*
-	 * Configure devices.
-	 */
-	configure();
-	
 }
+	
 
 /*
  * Allocate space for system data structures.
