@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.7 1996/05/09 06:55:51 niklas Exp $
-#	$NetBSD: MAKEDEV,v 1.20 1996/04/13 01:02:18 veego Exp $
+#	$OpenBSD: MAKEDEV,v 1.8 1996/05/27 07:51:23 deraadt Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -108,8 +108,8 @@ all)
 
 floppy)
 	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 tun0 tun1
-	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5
-	sh MAKEDEV ttye0 ttye1 ttye2 ttye3 ttye4 ttye5
+	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5 grf6
+	sh MAKEDEV ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
 	sh MAKEDEV cd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 st0
 	sh MAKEDEV fd0 fd1 fd2 fd3 
 	;;
@@ -327,7 +327,7 @@ ttye*)
 	rm -f ttye${unit}
 	rm -f ite*
 	case $unit in
-	0|1|2|3|4|5)
+	0|1|2|3|4|5|6)
 		mknod ttye${unit} c 13 ${unit}
 		;;
 	*)
@@ -340,7 +340,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	rm -f grf${unit}
 	case $unit in
-	0|1|2|3|4|5)
+	0|1|2|3|4|5|6)
 		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
 		;;
 	*)
