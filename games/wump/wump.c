@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.8 1998/08/19 07:42:27 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.9 1999/06/10 22:58:24 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.8 1998/08/19 07:42:27 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.9 1999/06/10 22:58:24 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,9 @@ static char rcsid[] = "$OpenBSD: wump.c,v 1.8 1998/08/19 07:42:27 pjanzen Exp $"
 
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/wait.h>
+#include <err.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -255,8 +258,10 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 		} while (!take_action());
 		(void)fpurge(stdin); 
 
-		if (!getans("\nCare to play another game? (y-n) "))
+		if (!getans("\nCare to play another game? (y-n) ")) {
+			(void)printf("\n");
 			exit(0);
+		}
 		clear_things_in_cave();
 		if (!getans("In the same cave? (y-n) "))
 			cave_init();
@@ -783,7 +788,10 @@ int_compare(a, b)
 void
 instructions()
 {
-	char buf[120], *p, *getenv();
+	const char *pager;
+	pid_t pid;
+	int status;
+	int fd;
 
 	/*
 	 * read the instructions file, if needed, and show the user how to
@@ -792,19 +800,34 @@ instructions()
 	if (!getans("Instructions? (y-n) "))
 		return;
 
-	if (access(_PATH_WUMPINFO, R_OK)) {
+	if ((fd = open(_PATH_WUMPINFO, O_RDONLY)) == -1) {
 		(void)printf(
 "Sorry, but the instruction file seems to have disappeared in a\n\
 puff of greasy black smoke! (poof)\n");
 		return;
 	}
 
-	if (!(p = getenv("PAGER")) ||
-	    strlen(p) > sizeof(buf) + strlen(_PATH_WUMPINFO) + 5)
-		p = _PATH_PAGER;
-
-	(void)sprintf(buf, "%s %s", p, _PATH_WUMPINFO);
-	(void)system(buf);
+	if (!isatty(1))
+		pager = "/bin/cat";
+	else {
+		if (!(pager = getenv("PAGER")) || (*pager == 0))
+			pager = _PATH_PAGER;
+	}
+	switch (pid = fork()) {
+	case 0: /* child */
+		if (dup2(fd, 0) == -1)
+			err(1, "dup2");
+		(void)execl(_PATH_BSHELL, "sh", "-c", pager, NULL);
+		err(1, "exec sh -c %s", pager);
+		/* NOT REACHED */
+	case -1:
+		err(1, "fork");
+		/* NOT REACHED */
+	default:
+		(void)waitpid(pid, &status, 0);
+		close(fd);
+		break;
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.4 1999/03/26 03:16:10 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.5 1999/06/10 22:58:24 pjanzen Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,12 +47,15 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.4 1999/03/26 03:16:10 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.5 1999/06/10 22:58:24 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <err.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -83,6 +86,7 @@ int	compmove __P((void));
 int	countbooks __P((int *));
 int	countcards __P((int *));
 int	drawcard __P((int, int *));
+int	getans __P((const char *));
 int	gofish __P((int, int, int *));
 void	goodmove __P((int, int, int *, int *));
 void	init __P((void));
@@ -445,20 +449,70 @@ nrandom(n)
 	return((int)random() % n);
 }
 
+int
+getans(prompt)
+	const char *prompt;
+{
+	char buf[20];
+
+	/*
+	 * simple routine to ask the yes/no question specified until the user
+	 * answers yes or no, then return 1 if they said 'yes' and 0 if they
+	 * answered 'no'.
+	 */
+	for (;;) {
+		(void)printf("%s", prompt);
+		(void)fflush(stdout);
+		if (!fgets(buf, sizeof(buf), stdin))
+			return(0);
+		if (*buf == 'N' || *buf == 'n')
+			return(0);
+		if (*buf == 'Y' || *buf == 'y')
+			return(1);
+		(void)printf(
+"I don't understand your answer; please enter 'y' or 'n'!\n");
+	}
+	/* NOTREACHED */
+}
+
 void
 instructions()
 {
+	const char *pager;
+	pid_t pid;
+	int status;
 	int input;
-	char buf[1024];
+	int fd;
 
-	(void)printf("Would you like instructions (y or n)? ");
-	input = getchar();
-	while (getchar() != '\n');
-	if (input != 'y')
+	if (getans("Would you like instructions (y or n)? ") == 0)
 		return;
 
-	(void)sprintf(buf, "%s %s", _PATH_MORE, _PATH_INSTR);
-	(void)system(buf);
+	if ((fd = open(_PATH_INSTR, O_RDONLY)) == -1)
+		(void)printf("No instruction file found!\n");
+	else {
+		switch (pid = fork()) {
+		case 0: /* child */
+			if (!isatty(1))
+				pager = "/bin/cat";
+			else {
+				if (!(pager = getenv("PAGER")) || (*pager == 0))
+					pager = _PATH_MORE;
+			}
+			if (dup2(fd, 0) == -1)
+				err(1, "dup2");
+			(void)execl(_PATH_BSHELL, "sh", "-c", pager, NULL);
+			err(1, "exec sh -c %s", pager);
+			/* NOT REACHED */
+		case -1:
+			err(1, "fork");
+			/* NOT REACHED */
+		default:
+			(void)waitpid(pid, &status, 0);
+			close(fd);
+			break;
+		}
+	}
+
 	(void)printf("Hit return to continue...\n");
 	while ((input = getchar()) != EOF && input != '\n');
 }

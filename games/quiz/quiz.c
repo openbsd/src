@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.7 1999/03/27 04:45:25 pjanzen Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.8 1999/06/10 22:58:24 pjanzen Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.7 1999/03/27 04:45:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: quiz.c,v 1.8 1999/06/10 22:58:24 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,9 +168,14 @@ show_index()
 	QE *qp;
 	const char *p, *s;
 	FILE *pf;
+	const char *pager;
 
-	if ((pf = popen(_PATH_PAGER, "w")) == NULL)
-		err(1, "%s", _PATH_PAGER);
+	if (!isatty(1))
+		pager = "/bin/cat";
+	else if (!(pager = getenv("PAGER")) || (*pager == 0))
+			pager = _PATH_PAGER;
+	if ((pf = popen(pager, "w")) == NULL)
+		err(1, "%s", pager);
 	(void)fprintf(pf, "Subjects:\n\n");
 	for (qp = qlist.q_next; qp; qp = qp->q_next) {
 		for (s = next_cat(qp->q_text); s; s = next_cat(s)) {
