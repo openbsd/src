@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bah.c,v 1.8 1997/09/18 13:39:55 niklas Exp $ */
+/*	$OpenBSD: if_bah.c,v 1.9 2001/08/20 19:35:18 miod Exp $ */
 /*	$NetBSD: if_bah.c,v 1.30 1997/04/04 06:27:32 is Exp $ */
 
 /*
@@ -60,6 +60,7 @@
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -159,6 +160,7 @@ struct bah_softc {
 	struct	arccom	sc_arccom;	/* Common arcnet structures */
 	struct	isr	sc_isr;
 	struct	a2060	*sc_base;
+	struct	timeout	sc_tmo;
 	u_long	sc_recontime;		/* seconds only, I'm lazy */
 	u_long	sc_reconcount;		/* for the above */
 	u_long	sc_reconcount_excessive; /* for the above */
@@ -296,6 +298,7 @@ bah_zbus_attach(parent, self, aux)
 	alloc_sicallback();
 	alloc_sicallback();
 
+	timeout_set(&sc->sc_tmo, bah_reconwatch, sc);
 	sc->sc_isr.isr_intr = bahintr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
@@ -1065,7 +1068,7 @@ bahintr(arg)
 		 * time if necessary.
 		 */
 
-		untimeout(bah_reconwatch, (void *)sc);
+		timeout_del(&sc->sc_tmo);
 		newsec = time.tv_sec;
 		if ((newsec - sc->sc_recontime <= 2) && 
 		    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
@@ -1074,7 +1077,7 @@ bahintr(arg)
 			    sc->sc_dev.dv_xname);
 		}
 		sc->sc_recontime = newsec;
-		timeout(bah_reconwatch, (void *)sc, 15*hz);
+		timeout_add(&sc->sc_tmo, 15 * hz);
 	}
 
 	if (maskedisr & ARC_RI) {

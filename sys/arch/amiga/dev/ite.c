@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.13 2000/07/22 00:35:50 espie Exp $  */
+/*	$OpenBSD: ite.c,v 1.14 2001/08/20 19:35:18 miod Exp $  */
 /*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
@@ -916,6 +916,8 @@ ite_filter(c, caller)
 
 	ite_restart_blanker(kbd_ite);
 	kbd_tty = kbd_ite->tp;
+	if (!timeout_initialized(&kbd_ite->repeat_timeout))
+		timeout_set(&kbd_ite->repeat_timeout, repeat_handler, NULL);
 
 	/* have to make sure we're at spltty in here */
 	s = spltty();
@@ -945,7 +947,7 @@ ite_filter(c, caller)
 	/* stop repeating on up event */
 	if (up) {
 		if (tout_pending) {
-			untimeout(repeat_handler, 0);
+			timeout_del(&kbd_ite->repeat_timeout);
 			tout_pending = 0;
 			last_char = 0;
 		}
@@ -953,7 +955,7 @@ ite_filter(c, caller)
 		return;
 	} else if (tout_pending && last_char != c) {
 		/* different character, stop also */
-		untimeout(repeat_handler, 0);
+		timeout_del(&kbd_ite->repeat_timeout);
 		tout_pending = 0;
 		last_char = 0;
 	}
@@ -996,12 +998,14 @@ ite_filter(c, caller)
 	if (!tout_pending && caller == ITEFILT_TTY && kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char = c;
-		timeout(repeat_handler, 0, start_repeat_timeo * hz / 100);
+		timeout_add(&kbd_ite->repeat_timeout,
+		    start_repeat_timeo * hz / 100);
 	} else if (!tout_pending && caller == ITEFILT_REPEATER &&
 	    kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char = c;
-		timeout(repeat_handler, 0, next_repeat_timeo * hz / 100);
+		timeout_add(&kbd_ite->repeat_timeout,
+		    next_repeat_timeo * hz / 100);
 	}
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {

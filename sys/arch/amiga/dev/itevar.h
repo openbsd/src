@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.3 1996/05/02 06:44:14 niklas Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.4 2001/08/20 19:35:18 miod Exp $	*/
 /*	$NetBSD: itevar.h,v 1.14 1996/04/21 21:12:03 veego Exp $	*/
 
 /*
@@ -33,6 +33,8 @@
 #if ! defined (_ITEVAR_H)
 #define _ITEVAR_H
 
+#include <sys/timeout.h>
+
 enum ite_arraymaxs {
 	MAX_ARGSIZE = 256,
 	MAX_TABS = 256,
@@ -52,6 +54,8 @@ enum ite_attr {
 struct ite_softc {
 	struct	device device;
 	struct	tty *tp;
+	struct	timeout blank_timeout;
+	struct	timeout repeat_timeout;
 	char	argbuf[MAX_ARGSIZE];
 	struct  grf_softc *grf;		/* XXX */
 	void	*priv;

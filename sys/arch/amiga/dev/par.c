@@ -1,4 +1,4 @@
-/*	$OpenBSD: par.c,v 1.7 2001/02/07 07:46:50 art Exp $	*/
+/*	$OpenBSD: par.c,v 1.8 2001/08/20 19:35:18 miod Exp $	*/
 /*	$NetBSD: par.c,v 1.16 1996/12/23 09:10:28 veego Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/file.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/timeout.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
@@ -65,6 +66,8 @@ struct	par_softc {
 #define sc_burst sc_param.burst
 #define sc_timo  sc_param.timo
 #define sc_delay sc_param.delay
+	struct	timeout sc_partimo;
+	struct	timeout sc_parstart;
 } *par_softcp;
 
 #define getparsp(x)	(x > 0 ? NULL : par_softcp)
@@ -110,6 +113,8 @@ struct cfdriver par_cd = {
 	NULL, "par", DV_DULL, NULL, 0
 };
 
+struct	timeout tmo_parintr;
+
 /*ARGSUSED*/
 int
 parmatch(pdp, match, auxp)
@@ -134,6 +139,7 @@ parattach(pdp, dp, auxp)
 	if ((pardebug & PDB_NOCHECK) == 0)
 #endif
 		par_softcp->sc_flags = PARF_ALIVE;
+	timeout_set(&tmo_parintr, parintr, par_softcp);
 	printf("\n");
 }
 
@@ -296,7 +302,9 @@ parrw(dev, uio)
   if (sc->sc_timo > 0) 
     {
       sc->sc_flags |= PARF_TIMO;
-      timeout(partimo, (void *)unit, sc->sc_timo);
+      if (!timeout_initialized(&sc->sc_partimo))
+	      timeout_set(&sc->sc_partimo, partimo, (caddr_t)unit);
+      timeout_add(&sc->sc_partimo, sc->sc_timo);
     }
   while (uio->uio_resid > 0) 
     {
@@ -329,7 +337,7 @@ again:
 #endif
 	  if (sc->sc_flags & PARF_TIMO) 
 	    {
-	      untimeout(partimo, (void *)unit);
+	      timeout_del(&sc->sc_partimo);
 	      sc->sc_flags &= ~PARF_TIMO;
 	    }
 	  splx(s);
@@ -395,7 +403,9 @@ again:
       if (sc->sc_delay > 0) 
 	{
 	  sc->sc_flags |= PARF_DELAY;
-	  timeout(parstart, (void *)unit, sc->sc_delay);
+	  if (!timeout_initialized(&sc->sc_parstart))
+		  timeout_set(&sc->sc_parstart, parstart, (caddr_t)unit);
+	  timeout_add(&sc->sc_parstart, sc->sc_delay);
 	  error = tsleep(sc, PCATCH | (PZERO - 1), "par-cdelay", 0);
 	  if (error) 
 	    {
@@ -419,12 +429,12 @@ again:
   s = splsoftclock();
   if (sc->sc_flags & PARF_TIMO) 
     {
-      untimeout(partimo, (void *)unit);
+      timeout_del(&sc->sc_partimo);
       sc->sc_flags &= ~PARF_TIMO;
     }
   if (sc->sc_flags & PARF_DELAY) 
     {
-      untimeout(parstart, (void *)unit);
+      timeout_del(&sc->sc_parstart);
       sc->sc_flags &= ~PARF_DELAY;
     }
   splx(s);
@@ -540,7 +550,7 @@ parintr(arg)
 	 */
 	if (mask) {
 		if (partimeout_pending)
-			untimeout(parintr, 0);
+			timeout_del(&tmo_parintr);
 		if (parsend_pending)
 			parsend_pending = 0;
 	}
@@ -576,7 +586,7 @@ parsendch (ch)
 		 & (CIAB_PRA_SEL|CIAB_PRA_BUSY|CIAB_PRA_POUT)));
 #endif
       /* wait a second, and try again */
-      timeout(parintr, 0, hz);
+      timeout_add(&tmo_parintr, hz);
       partimeout_pending = 1;
       /* this is essentially a flipflop to have us wait for the
 	 first character being transmitted when trying to transmit
@@ -592,7 +602,7 @@ parsendch (ch)
 	    printf ("parsendch interrupted, error = %d\n", error);
 #endif
 	  if (partimeout_pending)
-	    untimeout(parintr, 0);
+	    timeout_del(&tmo_parintr);
 
 	  partimeout_pending = 0;
 	}

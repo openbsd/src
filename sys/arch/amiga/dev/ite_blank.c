@@ -1,4 +1,4 @@
-/* $OpenBSD: ite_blank.c,v 1.1 1999/11/05 17:15:34 espie Exp $ */
+/* $OpenBSD: ite_blank.c,v 1.2 2001/08/20 19:35:18 miod Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -79,10 +79,12 @@ ite_restart_blanker(kbd)
 
 	/* steal timing trick from pcvt */
 	if (last_schedule != time.tv_sec) {
+		if (!timeout_initialized(&kbd->blank_timeout))
+			timeout_set(&kbd->blank_timeout, ite_blank, kbd);
 		if (blank_enabled && !blanked_screen)
-			untimeout(ite_blank, kbd);
+			timeout_del(&kbd->blank_timeout);
 		if (blank_enabled && blank_time) 
-			timeout(ite_blank, kbd, blank_time * hz);
+			timeout_add(&kbd->blank_timeout, blank_time * hz);
 		last_schedule = time.tv_sec;
 	}
 	ite_unblank(kbd);
@@ -104,7 +106,7 @@ ite_disable_blanker(kbd)
 {
 	int x = spltty();
 
-	untimeout(ite_blank, kbd);
+	timeout_del(&kbd->blank_timeout);
 	blank_enabled = 0;
 	ite_unblank(kbd);
 
