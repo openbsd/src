@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.8 2001/06/10 05:35:59 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.9 2001/06/11 00:50:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.8 2001/06/10 05:35:59 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.9 2001/06/11 00:50:38 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -149,10 +149,10 @@ STATIC int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
 STATIC void wi_inquire		__P((void *));
 STATIC void wi_setdef		__P((struct wi_softc *, struct wi_req *));
 STATIC int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
-STATIC void wi_get_id		__P((struct wi_softc *));
+STATIC void wi_get_id		__P((struct wi_softc *, int));
 
 int	wi_intr			__P((void *));
-int	wi_attach		__P((struct wi_softc *));
+int	wi_attach		__P((struct wi_softc *, int));
 void	wi_init			__P((void *));
 void	wi_stop			__P((struct wi_softc *));
 
@@ -162,8 +162,9 @@ struct cfdriver wi_cd = {
 };
 
 int
-wi_attach(sc)
+wi_attach(sc, print_cis)
 	struct wi_softc *sc;
+	int print_cis;
 {
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
@@ -180,8 +181,7 @@ wi_attach(sc)
 	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
-	wi_get_id(sc);
-
+	wi_get_id(sc, print_cis);
 	printf("address %s", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	ifp = &sc->arpcom.ac_if;
@@ -1505,11 +1505,33 @@ wi_shutdown(arg)
 }
 
 STATIC void
-wi_get_id(sc)
+wi_get_id(sc, print_cis)
 	struct wi_softc *sc;
+	int print_cis;
 {
 	struct wi_ltv_ver       ver;
+	struct wi_ltv_cis	cis;
 	const char		*p;
+
+	if (print_cis) {
+		/*
+		 * For PCI attachments the CIS strings won't have been printed
+		 * so print them here.
+		 */
+		cis.wi_type = WI_RID_CIS;
+		cis.wi_len = sizeof(cis.wi_cis);
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&cis) == 0) {
+			char *cis_strings[3];
+
+			cis_strings[0] = (char *)&cis.wi_cis[11];
+			cis_strings[1] = cis_strings[0] +
+			    strlen(cis_strings[0]) + 1;
+			cis_strings[2] = cis_strings[1] +
+			    strlen(cis_strings[1]) + 1;
+			printf("\n%s: \"%s, %s, %s\"", WI_PRT_ARG(sc),
+			    cis_strings[0], cis_strings[1], cis_strings[2]);
+		}
+	}
 
 	/* get chip identity */
 	bzero(&ver, sizeof(ver));
@@ -1565,13 +1587,13 @@ wi_get_id(sc)
 	ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
 	if (sc->sc_prism2) {
 		printf("\n%s: %s, Firmware %i.%i variant %i, ",
-		    sc->sc_dev.dv_xname, p, ver.wi_ver[2],
+		    WI_PRT_ARG(sc), p, ver.wi_ver[2],
 		    ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
 	} else {
-		printf("\n%s: Firmware %i.%i, ", sc->sc_dev.dv_xname,
-		    ver.wi_ver[2], ver.wi_ver[3]);
+		printf("\n%s: Firmware %i.%i variant %i, ", WI_PRT_ARG(sc),
+		    ver.wi_ver[2], ver.wi_ver[3], ver.wi_ver[1]);
 	}
 
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.2 2001/06/07 04:55:06 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.3 2001/06/11 00:50:38 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -113,7 +113,7 @@
 int	wi_pci_match	__P((struct device *, void *, void *));
 void	wi_pci_attach	__P((struct device *, struct device *, void *));
 int	wi_intr		__P((void *));
-int	wi_attach	__P((struct wi_softc *));
+int	wi_attach	__P((struct wi_softc *, int));
 
 struct cfattach wi_pci_ca = {
 	sizeof (struct wi_softc), wi_pci_match, wi_pci_attach
@@ -210,5 +210,5 @@ wi_pci_attach(parent, self, aux)
 	 */
 	bus_space_write_1(memt, memh, WI_COR_OFFSET, WI_COR_VALUE);
 
-	wi_attach(sc);
+	wi_attach(sc, 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.5 2001/06/07 22:41:00 millert Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.6 2001/06/11 00:50:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,7 +74,7 @@ int	wi_pcmcia_activate	__P((struct device *, enum devact));
 void	wi_pcmcia_attach	__P((struct device *, struct device *, void *));
 
 int	wi_intr			__P((void *));
-int	wi_attach		__P((struct wi_softc *));
+int	wi_attach		__P((struct wi_softc *, int));
 void	wi_init			__P((void *));
 void	wi_stop			__P((struct wi_softc *));
 
@@ -285,7 +285,7 @@ wi_pcmcia_attach(parent, self, aux)
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
 
-	wi_attach(sc);
+	wi_attach(sc, 0);
 	return;
 
 bad:
