@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcibios.c,v 1.5 2000/07/06 18:42:18 mickey Exp $	*/
-/*	$NetBSD: pcibios.c,v 1.2 1999/11/17 07:33:41 thorpej Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.6 2000/08/08 19:12:48 mickey Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.4 2000/07/18 11:15:25 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibios.h>
 #ifdef PCIBIOS_INTR_FIXUP
@@ -85,11 +86,18 @@
 #ifdef PCIBIOS_BUS_FIXUP
 #include <i386/pci/pci_bus_fixup.h>
 #endif
+#ifdef PCIBIOS_ADDR_FIXUP
+#include <i386/pci/pci_addr_fixup.h>
+#endif
 
 #ifdef __NetBSD__
 #include <machine/bios32.h>
 #elif __OpenBSD__
 #include <machine/biosvar.h>
+#endif
+
+#ifdef PCIBIOSVERBOSE
+int	pcibiosverbose = 1;
 #endif
 
 int pcibios_present;
@@ -207,6 +215,10 @@ pcibios_init()
 	printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
 #endif
 #endif
+
+#ifdef PCIBIOS_ADDR_FIXUP
+	pci_addr_fixup(NULL, pcibios_max_bus);
+#endif
 }
 
 void
@@ -268,8 +280,8 @@ pcibios_pir_init()
 
 		printf("PCI Interrupt Router at %03d:%02d:%01d",
 		    pcibios_pir_header.router_bus,
-		    (pcibios_pir_header.router_devfunc >> 3) & 0x1f,
-		    pcibios_pir_header.router_devfunc & 7);
+		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		if (pcibios_pir_header.compat_router != 0) {
 			pci_devinfo(pcibios_pir_header.compat_router, 0, 0,
 			    devinfo);
@@ -464,7 +476,7 @@ pcibios_print_pir_table()
 		printf("PIR Entry %d:\n", i);
 		printf("\tBus: %d  Device: %d\n",
 		    pcibios_pir_table[i].bus,
-		    pcibios_pir_table[i].device >> 3);
+		    PIR_DEVFUNC_DEVICE(pcibios_pir_table[i].device));
 		for (j = 0; j < 4; j++) {
 			printf("\t\tINT%c: link 0x%02x bitmap 0x%04x\n",
 			    'A' + j,
@@ -474,3 +486,57 @@ pcibios_print_pir_table()
 	}
 }
 #endif
+
+void
+pci_device_foreach(pc, maxbus, func)
+	pci_chipset_tag_t pc;
+	int maxbus;
+	void (*func) __P((pci_chipset_tag_t, pcitag_t));
+{
+	const struct pci_quirkdata *qd;
+	int bus, device, function, maxdevs, nfuncs;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
+
+	for (bus = 0; bus <= maxbus; bus++) {
+		maxdevs = pci_bus_maxdevs(pc, bus);
+		for (device = 0; device < maxdevs; device++) {
+			tag = pci_make_tag(pc, bus, device, 0);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+			/* Invalid vendor ID value? */
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+				continue;
+			/* XXX Not invalid, but we've done this ~forever. */
+			if (PCI_VENDOR(id) == 0)
+				continue;
+
+			qd = pci_lookup_quirkdata(PCI_VENDOR(id),
+			    PCI_PRODUCT(id));
+
+			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+			    (qd != NULL &&
+			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+				nfuncs = 8;
+			else
+				nfuncs = 1;
+
+			for (function = 0; function < nfuncs; function++) {
+				tag = pci_make_tag(pc, bus, device, function);
+				id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+				/* Invalid vendor ID value? */
+				if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+					continue;
+				/*
+				 * XXX Not invalid, but we've done this
+				 * ~forever.
+				 */
+				if (PCI_VENDOR(id) == 0)
+					continue;
+				(*func)(pc, tag);
+			}
+		}
+	}
+}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: piix.c,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
-/*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $  */
+/*	$OpenBSD: piix.c,v 1.4 2000/08/08 19:12:48 mickey Exp $	*/
+/*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -83,9 +83,18 @@
 #include <i386/pci/piixreg.h>
 #include <i386/pci/piixvar.h>
 
+#ifdef PIIX_DEBUG
+#define	DPRINTF(arg) printf arg
+#else
+#define	DPRINTF(arg)
+#endif
+
 int	piix_getclink __P((pciintr_icu_handle_t, int, int *));
 int	piix_get_intr __P((pciintr_icu_handle_t, int, int *));
 int	piix_set_intr __P((pciintr_icu_handle_t, int, int));
+#ifdef PIIX_DEBUG
+void	piix_pir_dump __P((struct piix_handle *));
+#endif
 
 const struct pciintr_icu piix_pci_icu = {
 	piix_getclink,
@@ -119,6 +128,9 @@ piix_init(pc, iot, tag, ptagp, phandp)
 		return (1);
 	}
 
+#ifdef PIIX_DEBUG
+	piix_pir_dump(ph);
+#endif
 	*ptagp = &piix_pci_icu;
 	*phandp = ph;
 	return (0);
@@ -129,19 +141,23 @@ piix_getclink(v, link, clinkp)
 	pciintr_icu_handle_t v;
 	int link, *clinkp;
 {
+	DPRINTF(("PIIX link value 0x%x: ", link));
 
 	/* Pattern 1: simple. */
 	if (PIIX_LEGAL_LINK(link - 1)) {
 		*clinkp = link - 1;
+		DPRINTF(("PIRQ %d (simple)\n", *clinkp));
 		return (0);
 	}
 
 	/* Pattern 2: configuration register offset */
 	if (link >= 0x60 && link <= 0x63) {
 		*clinkp = link - 0x60;
+		DPRINTF(("PIRQ %d (register offset)\n", *clinkp));
 		return (0);
 	}
 
+	DPRINTF(("bogus IRQ selection source\n"));
 	return (1);
 }
 
@@ -160,7 +176,7 @@ piix_get_intr(v, clink, irqp)
 	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
 	shift = clink << 3;
 	if ((reg >> shift) & PIIX_CFG_PIRQ_NONE)
-		*irqp = 0xff;
+		*irqp = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
 	else
 		*irqp = PIIX_PIRQ(reg, clink);
 
@@ -236,3 +252,34 @@ piix_set_trigger(v, irq, trigger)
 
 	return (0);
 }
+
+#ifdef PIIX_DEBUG
+void
+piix_pir_dump(ph)
+	struct piix_handle *ph;
+{
+	int i, irq;
+	pcireg_t irqs = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
+	u_int8_t elcr[2];
+
+	elcr[0] = bus_space_read_1(ph->ph_iot, ph->ph_elcr_ioh, 0);
+	elcr[1] = bus_space_read_1(ph->ph_iot, ph->ph_elcr_ioh, 1);
+
+	for (i = 0; i < 4; i++) {
+		irq = PIIX_PIRQ(irqs, i);
+		if (irq & PIIX_CFG_PIRQ_NONE)
+			printf("PIIX PIRQ %d: irq none (0x%x)\n", i, irq);
+		else
+			printf("PIIX PIRQ %d: irq %d\n", i, irq);
+	}
+	printf("PIIX irq:");
+	for (i = 0; i < 16; i++)
+		printf(" %2d", i);
+	printf("\n");
+	printf(" trigger:");
+	for (i = 0; i < 16; i++)
+		printf("  %c", (elcr[(i & 8) ? 1 : 0] & (1 << (i & 7))) ?
+		       'L' : 'E');
+	printf("\n");
+}
+#endif /* PIIX_DEBUG */

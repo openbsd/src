@@ -1,5 +1,5 @@
-/*	$OpenBSD: opti82c700reg.h,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
-/*	$NetBSD: opti82c700reg.h,v 1.1 1999/11/17 01:21:20 thorpej Exp $  */
+/*	$OpenBSD: opti82c700reg.h,v 1.4 2000/08/08 19:12:47 mickey Exp $	*/
+/*	$NetBSD: opti82c700reg.h,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -35,11 +35,6 @@
 #define	FIRESTAR_CFG_INTR_PIRQ	0xb8	/* PCI configuration space */
 
 #define	FIRESTAR_PIRQ_NONE	0
-#define	FIRESTAR_PIRQ_MIN	FIRESTAR_CFG_INTR_IRQ
-#define	FIRESTAR_PIRQ_MAX	(FIRESTAR_CFG_INTR_PIRQ + 1)
-#define	FIRESTAR_LEGAL_LINK(link) ((link) >= FIRESTAR_PIRQ_MIN &&	\
-				   (link) <= FIRESTAR_PIRQ_MAX)
-
 #define	FIRESTAR_PIRQ_MASK	0xdffa
 #define	FIRESTAR_LEGAL_IRQ(irq)	((irq) >= 0 && (irq) <= 15 &&		\
 				 ((1 << (irq)) & FIRESTAR_PIRQ_MASK) != 0)

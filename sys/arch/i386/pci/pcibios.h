@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcibios.h,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
-/*	$NetBSD: pcibios.h,v 1.1 1999/11/17 01:16:37 thorpej Exp $	*/
+/*	$OpenBSD: pcibios.h,v 1.4 2000/08/08 19:12:48 mickey Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -80,9 +80,36 @@ struct pcibios_pir_header {
 	u_int8_t	checksum;
 } __attribute__((__packed__));
 
+#define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
+#define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
+
 void	pcibios_init __P((void));
 
 extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
 extern int pcibios_max_bus;
+
+void pci_device_foreach __P((pci_chipset_tag_t, int,
+			     void (*) (pci_chipset_tag_t, pcitag_t)));
+
+#ifdef PCIBIOSVERBOSE
+extern int pcibiosverbose;
+
+#define	PCIBIOS_PRINTV(arg) \
+	do { \
+		if (pcibiosverbose) \
+			printf arg; \
+	} while (0)
+#define	PCIBIOS_PRINTVN(n, arg) \
+	do { \
+		 if (pcibiosverbose > (n)) \
+			printf arg; \
+	} while (0)
+#else
+#define	PCIBIOS_PRINTV(arg)
+#define	PCIBIOS_PRINTVN(n, arg)
+#endif
+
+void pci_device_foreach __P((pci_chipset_tag_t, int,
+    void (*) __P((pci_chipset_tag_t, pcitag_t))));

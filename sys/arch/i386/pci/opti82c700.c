@@ -1,5 +1,5 @@
-/*	$OpenBSD: opti82c700.c,v 1.3 2000/03/28 03:37:59 mickey Exp $	*/
-/*	$NetBSD: opti82c700.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
+/*	$OpenBSD: opti82c700.c,v 1.4 2000/08/08 19:12:47 mickey Exp $	*/
+/*	$NetBSD: opti82c700.c,v 1.2 2000/07/18 11:07:20 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 /*
- * Support for the Opti 82c700 PCI-ISA bridge interrupt controller.
+ * Support for the Opti 82c700 FireStar PCI-ISA bridge interrupt controller.
  */
 
 #include <sys/param.h>
@@ -81,6 +81,12 @@
 
 #include <i386/pci/pci_intr_fixup.h>
 #include <i386/pci/opti82c700reg.h>
+
+#ifdef FIRESTARDEBUG
+#define	DPRINTF(arg)	printf arg
+#else
+#define	DPRINTF(arg)
+#endif
 
 int	opti82c700_getclink __P((pciintr_icu_handle_t, int, int *));
 int	opti82c700_get_intr __P((pciintr_icu_handle_t, int, int *));
@@ -102,6 +108,9 @@ struct opti82c700_handle {
 };
 
 int	opti82c700_addr __P((int, int *, int *));
+#ifdef FIRESTARDEBUG
+void	opti82c700_pir_dump __P((struct opti82c700_handle *));
+#endif
 
 int
 opti82c700_init(pc, iot, tag, ptagp, phandp)
@@ -119,7 +128,9 @@ opti82c700_init(pc, iot, tag, ptagp, phandp)
 
 	ph->ph_pc = pc;
 	ph->ph_tag = tag;
-
+#ifdef FIRESTARDEBUG
+	opti82c700_pir_dump(ph);
+#endif
 	*ptagp = &opti82c700_pci_icu;
 	*phandp = ph;
 	return (0);
@@ -146,6 +157,7 @@ opti82c700_addr(link, addrofs, ofs)
 		break;
 
 	case FIRESTAR_PIR_SELECT_PIRQ:
+		/* FALLTHROUGH */
 	case FIRESTAR_PIR_SELECT_BRIDGE:
 		if (regofs < 0 || regofs > 3)
 			return (1);
@@ -165,13 +177,30 @@ opti82c700_getclink(v, link, clinkp)
 	pciintr_icu_handle_t v;
 	int link, *clinkp;
 {
+	DPRINTF(("FireStar link value 0x%x: ", link));
 
-	if (FIRESTAR_LEGAL_LINK(link)) {
-		*clinkp = link;
-		return (0);
+	switch (FIRESTAR_PIR_SELECTSRC(link)) {
+	default:
+		DPRINTF(("bogus IRQ selection source\n"));
+		return (1);
+	case FIRESTAR_PIR_SELECT_NONE:
+		DPRINTF(("No interrupt connection\n"));
+		return (1);
+	case FIRESTAR_PIR_SELECT_IRQ:
+		DPRINTF(("FireStar IRQ pin"));
+		break;
+	case FIRESTAR_PIR_SELECT_PIRQ:
+		DPRINTF(("FireStar PIO pin or Serial IRQ PIRQ#"));
+		break;
+	case FIRESTAR_PIR_SELECT_BRIDGE:
+		DPRINTF(("FireBridge 1 INTx# pin"));
+		break;
 	}
 
-	return (1);
+	DPRINTF((" REGOFST:%#x\n", FIRESTAR_PIR_REGOFS(link)));
+	*clinkp = link;
+
+	return (0);
 }
 
 int
@@ -183,15 +212,14 @@ opti82c700_get_intr(v, clink, irqp)
 	pcireg_t reg;
 	int val, addrofs, ofs;
 
-	if (FIRESTAR_LEGAL_LINK(clink) == 0)
-		return (1);
-
 	if (opti82c700_addr(clink, &addrofs, &ofs))
 		return (1);
 
 	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, addrofs);
 	val = (reg >> ofs) & FIRESTAR_CFG_PIRQ_MASK;
-	*irqp = (val == FIRESTAR_PIRQ_NONE) ? 0xff : val;
+
+	*irqp = (val == FIRESTAR_PIRQ_NONE) ?
+	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
 	return (0);
 }
@@ -205,7 +233,7 @@ opti82c700_set_intr(v, clink, irq)
 	int addrofs, ofs;
 	pcireg_t reg;
 
-	if (FIRESTAR_LEGAL_LINK(clink) == 0 || FIRESTAR_LEGAL_IRQ(irq) == 0)
+	if (FIRESTAR_LEGAL_IRQ(irq) == 0)
 		return (1);
 
 	if (opti82c700_addr(clink, &addrofs, &ofs))
@@ -250,6 +278,20 @@ opti82c700_get_trigger(v, irq, triggerp)
 		return (0);
 	}
 
+	/*
+	 * Search PIO PCIIRQ.
+	 */
+	for (i = 0; i < 4; i++) {
+		opti82c700_addr(FIRESTAR_PIR_MAKELINK(FIRESTAR_PIR_SELECT_PIRQ,
+		    i), &addrofs, &ofs);
+		reg = pci_conf_read(ph->ph_pc, ph->ph_tag, addrofs);
+		val = (reg >> ofs) & FIRESTAR_CFG_PIRQ_MASK;
+		if (val != irq)
+			continue;
+		*triggerp = IST_LEVEL;
+		return (0);
+	}
+
 	return (1);
 }
 
@@ -285,6 +327,19 @@ opti82c700_set_trigger(v, irq, trigger)
 			    (FIRESTAR_TRIGGER_SHIFT + ofs));
 		pci_conf_write(ph->ph_pc, ph->ph_tag, addrofs, reg);
 		return (0);
+	}
+
+	/*
+	 * Search PIO PCIIRQ.
+	 */
+	for (i = 0; i < 4; i++) {
+		opti82c700_addr(FIRESTAR_PIR_MAKELINK(FIRESTAR_PIR_SELECT_PIRQ,
+		    i), &addrofs, &ofs);
+		reg = pci_conf_read(ph->ph_pc, ph->ph_tag, addrofs);
+		val = (reg >> ofs) & FIRESTAR_CFG_PIRQ_MASK;
+		if (val != irq)
+			continue;
+		return (trigger == IST_LEVEL ? 0 : 1);
 	}
 
 	return (1);

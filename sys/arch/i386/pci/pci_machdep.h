@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.5 1998/01/20 18:40:23 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.6 2000/08/08 19:12:48 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -97,3 +97,10 @@ void		pci_decompose_tag __P((pci_chipset_tag_t, pcitag_t,
 void		*pci_map_int __P((pcitag_t, int, int (*)(void *), void *));
 int		pci_map_io __P((pcitag_t, int, int *));
 int		pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
+
+/*
+ * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,
+ * says that 255 means `unknown' or `no connection' to the interrupt
+ * controller on a PC.
+ */
+#define	I386_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff

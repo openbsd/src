@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_bus_fixup.c,v 1.4 2000/04/07 22:22:57 aaron Exp $	*/
+/*	$OpenBSD: pci_bus_fixup.c,v 1.5 2000/08/08 19:12:47 mickey Exp $	*/
 /*	$NetBSD: pci_bus_fixup.c,v 1.1 1999/11/17 07:32:58 thorpej Exp $  */
 
 /*
@@ -50,9 +50,11 @@ pci_bus_fixup(pc, bus)
 	pci_chipset_tag_t pc;
 	int bus;
 {
-	static int bus_total;
+#ifdef PCIBIOSVERBOSE
 	static int bridge_cnt;
-	int device, maxdevs, function, nfuncs, bridge, bus_max, bus_sub;
+	int bridge;
+#endif
+	int device, maxdevs, function, nfuncs, bus_max, bus_sub;
 	const struct pci_quirkdata *qd;
 	pcireg_t reg;
 	pcitag_t tag;
@@ -60,14 +62,15 @@ pci_bus_fixup(pc, bus)
 	bus_max = bus;
 	bus_sub = 0;
 
-	if (++bus_total > 256)
-		panic("pci_bus_fixup: more than 256 PCI busses?");
-
 	maxdevs = pci_bus_maxdevs(pc, bus);
 
 	for (device = 0; device < maxdevs; device++) {
 		tag = pci_make_tag(pc, bus, device, 0);
 		reg = pci_conf_read(pc, tag, PCI_ID_REG);
+
+		/* can't be that many */
+		if (bus_max == 255)
+			break;
 
 		/* Invalid vendor ID value? */
 		if (PCI_VENDOR(reg) == PCI_VENDOR_INVALID)
@@ -101,9 +104,6 @@ pci_bus_fixup(pc, bus)
 			if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
 			    (PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI ||
 			     PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
-				/* Assign the bridge #. */
-				bridge = bridge_cnt++;
-
 				/* Assign the bridge's secondary bus #. */
 				bus_max++;
 
@@ -121,6 +121,9 @@ pci_bus_fixup(pc, bus)
 				pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
 
 #ifdef PCIBIOSVERBOSE
+				/* Assign the bridge #. */
+				bridge = bridge_cnt++;
+
 				printf("PCI bridge %d: primary %d, "
 				    "secondary %d, subordinate %d\n",
 				    bridge, bus, bus_max, bus_sub);

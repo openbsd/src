@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.31 2000/03/26 22:38:32 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.32 2000/08/08 19:12:44 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -61,6 +61,7 @@
 #include <machine/cpu.h>
 #include <machine/biosvar.h>
 
+#include <dev/pci/pcivar.h>
 #include <i386/pci/pcibios.h>
 
 #include <dev/cons.h>
