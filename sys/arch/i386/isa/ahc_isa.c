@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.4 1999/01/11 05:11:24 millert Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.5 2000/03/22 02:57:17 smurph Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -84,6 +84,13 @@
 
 #include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>
+#include <dev/ic/smc93cx6var.h>
+
+#ifdef DEBUG
+#define bootverbose	1
+#else
+#define bootverbose	0
+#endif
 
 /* IO port address setting range as EISA slot number */
 #define AHC_ISA_MIN_SLOT	0x1	/* from iobase = 0x1c00 */
@@ -112,9 +119,10 @@ int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
 
 int	ahc_isa_probe __P((struct device *, void *, void *));
 void	ahc_isa_attach __P((struct device *, struct device *, void *));
+void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
 
 struct cfattach ahc_isa_ca = {
-	sizeof(struct ahc_data), ahc_isa_probe, ahc_isa_attach
+	sizeof(struct ahc_softc), ahc_isa_probe, ahc_isa_attach
 };
 
 /*
@@ -144,8 +152,12 @@ ahc_isa_irq(iot, ioh)
 {
 	int irq;
 	u_char intdef;
+	u_char hcntrl;
+	
+	/* Pause the card preseving the IRQ type */
+	hcntrl = bus_space_read_1(iot, ioh, HCNTRL) & IRQMS;
+	bus_space_write_1(iot, ioh, HCNTRL, hcntrl | PAUSE);
 
-	ahc_reset("ahc_isa", iot, ioh);
 	intdef = bus_space_read_1(iot, ioh, INTDEF);
 	switch (irq = (intdef & 0xf)) {
 	case 9:
@@ -261,7 +273,7 @@ ahc_isa_match(ia, iobase)
 	if (ia->ia_irq != IRQUNK &&
 	    ia->ia_irq != irq) {
 		printf("ahc_isa_match: irq mismatch (kernel %d, card %d)\n",
-		    ia->ia_irq, irq);
+		       ia->ia_irq, irq);
 		return (0);
 	}
 
@@ -334,15 +346,18 @@ ahc_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	ahc_type type;
-	struct ahc_data *ahc = (void *)self;
+	ahc_chip chip;
+	struct ahc_softc *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int irq;
 	char idstring[EISA_IDSTRINGLEN];
 	const char *model;
+	u_char channel = 'A';
 
+	ahc->sc_dmat = ia->ia_dmat;
+	chip = AHC_VL; /* We are a VL Bus Controller */  
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("ahc_isa_attach: could not map slot I/O addresses");
 	if (!ahc_isa_idstring(iot, ioh, idstring))
@@ -352,16 +367,16 @@ ahc_isa_attach(parent, self, aux)
 
 	if (strcmp(idstring, "ADP7756") == 0) {
 		model = EISA_PRODUCT_ADP7756;
-		type = AHC_284;
+		chip |= AHC_AIC7770;
 	} else if (strcmp(idstring, "ADP7757") == 0) {
 		model = EISA_PRODUCT_ADP7757;
-		type = AHC_284;
+		chip |= AHC_AIC7770;
 	} else {
 		panic("ahc_isa_attach: Unknown device type %s", idstring);
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, iot, ioh, type, AHC_FNONE);
+	ahc_construct(ahc, iot, ioh, chip, AHC_FNONE, AHC_AIC7770_FE, channel);
 
 #ifdef DEBUG
 	/*
@@ -372,23 +387,15 @@ ahc_isa_attach(parent, self, aux)
 	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
 #endif
 
+	ahc->channel = 'A';
+	ahc->channel_b = 'B';
+	if (ahc_reset(ahc) != 0)
+		return;
 	/*
 	 * Now that we know we own the resources we need, do the 
 	 * card initialization.
-	 *
-	 * First, the aic7770 card specific setup.
 	 */
-
-	/* XXX
-	 * On AHA-284x,
-	 * all values are automagically intialized at
-	 * POST for these cards, so we can always rely
-	 * on the Scratch Ram values.  However, we should
-	 * read the SEEPROM here (Dan has the code to do
-	 * it) so we can say what kind of translation the
-	 * BIOS is using.  Printing out the geometry could
-	 * save a lot of users the grief of failed installs.
-	 */
+	aha2840_load_seeprom(ahc);
 
 	/*      
 	 * See if we have a Rev E or higher aic7770. Anything below a
@@ -461,4 +468,99 @@ ahc_isa_attach(parent, self, aux)
 
 	/* Attach sub-devices - always succeeds */
 	ahc_attach(ahc);
+}
+
+/*
+ * Read the 284x SEEPROM.
+ */
+void
+aha2840_load_seeprom(struct ahc_softc *ahc)
+{
+	struct	  seeprom_descriptor sd;
+	struct	  seeprom_config sc;
+	u_int16_t checksum = 0;
+	u_int8_t  scsi_conf;
+	int	  have_seeprom;
+
+	sd.sd_tag = ahc->sc_iot;
+	sd.sd_bsh = ahc->sc_ioh;
+	sd.sd_control_offset = SEECTL_2840;
+	sd.sd_status_offset = STATUS_2840;
+	sd.sd_dataout_offset = STATUS_2840;		
+	sd.sd_chip = C46;
+	sd.sd_MS = 0;
+	sd.sd_RDY = EEPROM_TF;
+	sd.sd_CS = CS_2840;
+	sd.sd_CK = CK_2840;
+	sd.sd_DO = DO_2840;
+	sd.sd_DI = DI_2840;
+
+	if (bootverbose)
+		printf("%s: Reading SEEPROM...", ahc_name(ahc));
+	have_seeprom = read_seeprom(&sd,
+				    (u_int16_t *)&sc,
+				    /*start_addr*/0,
+				    sizeof(sc)/2);
+
+	if (have_seeprom) {
+		/* Check checksum */
+		int i;
+		int maxaddr = (sizeof(sc)/2) - 1;
+		u_int16_t *scarray = (u_int16_t *)&sc;
+
+		for (i = 0; i < maxaddr; i++)
+			checksum = checksum + scarray[i];
+		if (checksum != sc.checksum) {
+			if(bootverbose)
+				printf ("checksum error\n");
+			have_seeprom = 0;
+		} else if (bootverbose) {
+			printf("done.\n");
+		}
+	}
+
+	if (!have_seeprom) {
+		if (bootverbose)
+			printf("%s: No SEEPROM available\n", ahc_name(ahc));
+		ahc->flags |= AHC_USEDEFAULTS;
+	} else {
+		/*
+		 * Put the data we've collected down into SRAM
+		 * where ahc_init will find it.
+		 */
+		int i;
+		int max_targ = (ahc->features & AHC_WIDE) != 0 ? 16 : 8;
+		u_int16_t discenable;
+
+		discenable = 0;
+		for (i = 0; i < max_targ; i++){
+	                u_int8_t target_settings;
+			target_settings = (sc.device_flags[i] & CFXFER) << 4;
+			if (sc.device_flags[i] & CFSYNCH)
+				target_settings |= SOFS;
+			if (sc.device_flags[i] & CFWIDEB)
+				target_settings |= WIDEXFER;
+			if (sc.device_flags[i] & CFDISC)
+				discenable |= (0x01 << i);
+			ahc_outb(ahc, TARG_SCSIRATE + i, target_settings);
+		}
+		ahc_outb(ahc, DISC_DSB, ~(discenable & 0xff));
+		ahc_outb(ahc, DISC_DSB + 1, ~((discenable >> 8) & 0xff));
+
+		ahc->our_id = sc.brtime_id & CFSCSIID;
+
+		scsi_conf = (ahc->our_id & 0x7);
+		if (sc.adapter_control & CFSPARITY)
+			scsi_conf |= ENSPCHK;
+		if (sc.adapter_control & CFRESETB)
+			scsi_conf |= RESET_SCSI;
+
+		if (sc.bios_control & CF284XEXTEND)		
+			ahc->flags |= AHC_EXTENDED_TRANS_A;
+		/* Set SCSICONF info */
+		ahc_outb(ahc, SCSICONF, scsi_conf);
+
+		if (sc.adapter_control & CF284XSTERM)
+			ahc->flags |= AHC_TERM_ENB_A;
+	}
 }
