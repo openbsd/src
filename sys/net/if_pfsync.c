@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.28 2004/04/25 17:52:37 pb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.29 2004/04/25 18:09:30 pb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -326,11 +326,12 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			RB_FOREACH(st, pf_state_tree_lan_ext,
 			    &kif->pfik_lan_ext) {
-				if (st->creatorid == creatorid)
+				if (st->creatorid == creatorid) {
 					st->timeout = PFTM_PURGE;
+					pf_purge_expired_state(st);
+				}
 			}
 		}
-		pf_purge_expired_states();
 		splx(s);
 
 		break;
@@ -475,15 +476,10 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-			/*
-			 * XXX
-			 * pf_purge_expired_states() is expensive,
-			 * we really want to purge the state directly.
-			 */
 			st->timeout = PFTM_PURGE;
 			st->sync_flags |= PFSTATE_FROMSYNC;
+			pf_purge_expired_state(st);
 		}
-		pf_purge_expired_states();
 		splx(s);
 		break;
 	case PFSYNC_ACT_UPD_C: {
@@ -601,15 +597,10 @@ pfsync_input(struct mbuf *m, ...)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-			/*
-			 * XXX
-			 * pf_purge_expired_states() is expensive,
-			 * we really want to purge the state directly.
-			 */
 			st->timeout = PFTM_PURGE;
 			st->sync_flags |= PFSTATE_FROMSYNC;
+			pf_purge_expired_state(st);
 		}
-		pf_purge_expired_states();
 		splx(s);
 		break;
 	case PFSYNC_ACT_INS_F:

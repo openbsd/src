@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.438 2004/04/25 02:32:35 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.439 2004/04/25 18:09:29 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -783,6 +783,42 @@ pf_src_tree_remove_state(struct pf_state *s)
 }
 
 void
+pf_purge_expired_state(struct pf_state *cur)
+{
+	if (cur->src.state == PF_TCPS_PROXY_DST)
+		pf_send_tcp(cur->rule.ptr, cur->af,
+		    &cur->ext.addr, &cur->lan.addr,
+		    cur->ext.port, cur->lan.port,
+		    cur->src.seqhi, cur->src.seqlo + 1,
+		    TH_RST|TH_ACK, 0, 0, 0, 1);
+	RB_REMOVE(pf_state_tree_ext_gwy,
+	    &cur->u.s.kif->pfik_ext_gwy, cur);
+	RB_REMOVE(pf_state_tree_lan_ext,
+	    &cur->u.s.kif->pfik_lan_ext, cur);
+	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
+#if NPFSYNC
+	pfsync_delete_state(cur);
+#endif
+	pf_src_tree_remove_state(cur);
+	if (--cur->rule.ptr->states <= 0 &&
+	    cur->rule.ptr->src_nodes <= 0)
+		pf_rm_rule(NULL, cur->rule.ptr);
+	if (cur->nat_rule.ptr != NULL)
+		if (--cur->nat_rule.ptr->states <= 0 &&
+			cur->nat_rule.ptr->src_nodes <= 0)
+			pf_rm_rule(NULL, cur->nat_rule.ptr);
+	if (cur->anchor.ptr != NULL)
+		if (--cur->anchor.ptr->states <= 0)
+			pf_rm_rule(NULL, cur->anchor.ptr);
+	pf_normalize_tcp_cleanup(cur);
+	pfi_detach_state(cur->u.s.kif);
+	TAILQ_REMOVE(&state_updates, cur, u.s.entry_updates);
+	pool_put(&pf_state_pl, cur);
+	pf_status.fcounters[FCNT_STATE_REMOVALS]++;
+	pf_status.states--;
+}
+
+void
 pf_purge_expired_states(void)
 {
 	struct pf_state		*cur, *next;
@@ -791,39 +827,8 @@ pf_purge_expired_states(void)
 	    cur; cur = next) {
 		next = RB_NEXT(pf_state_tree_id, &tree_id, cur);
 
-		if (pf_state_expires(cur) <= time.tv_sec) {
-			if (cur->src.state == PF_TCPS_PROXY_DST)
-				pf_send_tcp(cur->rule.ptr, cur->af,
-				    &cur->ext.addr, &cur->lan.addr,
-				    cur->ext.port, cur->lan.port,
-				    cur->src.seqhi, cur->src.seqlo + 1,
-				    TH_RST|TH_ACK, 0, 0, 0, 1);
-			RB_REMOVE(pf_state_tree_ext_gwy,
-			    &cur->u.s.kif->pfik_ext_gwy, cur);
-			RB_REMOVE(pf_state_tree_lan_ext,
-			    &cur->u.s.kif->pfik_lan_ext, cur);
-			RB_REMOVE(pf_state_tree_id, &tree_id, cur);
-#if NPFSYNC
-			pfsync_delete_state(cur);
-#endif
-			pf_src_tree_remove_state(cur);
-			if (--cur->rule.ptr->states <= 0 &&
-			    cur->rule.ptr->src_nodes <= 0)
-				pf_rm_rule(NULL, cur->rule.ptr);
-			if (cur->nat_rule.ptr != NULL)
-				if (--cur->nat_rule.ptr->states <= 0 &&
-					cur->nat_rule.ptr->src_nodes <= 0)
-					pf_rm_rule(NULL, cur->nat_rule.ptr);
-			if (cur->anchor.ptr != NULL)
-				if (--cur->anchor.ptr->states <= 0)
-					pf_rm_rule(NULL, cur->anchor.ptr);
-			pf_normalize_tcp_cleanup(cur);
-			pfi_detach_state(cur->u.s.kif);
-			TAILQ_REMOVE(&state_updates, cur, u.s.entry_updates);
-			pool_put(&pf_state_pl, cur);
-			pf_status.fcounters[FCNT_STATE_REMOVALS]++;
-			pf_status.states--;
-		}
+		if (pf_state_expires(cur) <= time.tv_sec)
+			pf_purge_expired_state(cur);
 	}
 }
 
