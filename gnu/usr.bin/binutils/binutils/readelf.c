@@ -8144,7 +8144,8 @@ process_mips_specific (file)
 	    iconf[cnt] = BYTE_GET (econf64[cnt]);
 	}
 
-      printf (_("\nSection '.conflict' contains %d entries:\n"), conflictsno);
+      printf (_("\nSection '.conflict' contains %lu entries:\n"),
+	      (unsigned long) conflictsno);
       puts (_("  Num:    Index       Value  Name"));
 
       for (cnt = 0; cnt < conflictsno; ++cnt)
