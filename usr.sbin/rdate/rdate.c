@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.14 2002/05/16 10:46:34 jakob Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.15 2002/05/16 11:00:53 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
 
 /*
  * rdate.c: Set the date from the specified host
- * 
- * 	Uses the rfc868 time protocol at socket 37.
+ *
+ *	Uses the rfc868 time protocol at socket 37.
  *	Time is returned as the number of seconds since
  *	midnight January 1st 1900.
  */
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.14 2002/05/16 10:46:34 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.15 2002/05/16 11:00:53 deraadt Exp $";
 #endif
 #endif				/* lint */
 
@@ -59,7 +59,6 @@ static const char rcsid[] = "$OpenBSD: rdate.c,v 1.14 2002/05/16 10:46:34 jakob 
 
 void rfc868time_client (const char *, struct timeval *, struct timeval *);
 void ntp_client (const char *, struct timeval *, struct timeval *);
-
 
 extern char    *__progname;
 
@@ -140,16 +139,15 @@ main(int argc, char **argv)
 		(void) strftime(buf, sizeof buf, "%a %b %e %H:%M:%S %Z %Y\n", ltm);
 		(void) fputs(buf, stdout);
 
-
 		adjsec  = adjust.tv_sec + adjust.tv_usec / 1.0e6;
 
 		if (slidetime) {
 			if (ntp)
-				(void) fprintf(stdout, 
+				(void) fprintf(stdout,
 				   "%s: adjust local clock by %.6f seconds\n",
 				   __progname, adjsec);
 			else
-				(void) fprintf(stdout, 
+				(void) fprintf(stdout,
 				   "%s: adjust local clock by %ld seconds\n",
 				   __progname, adjust.tv_sec);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.1 2002/05/16 10:46:34 jakob Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.2 2002/05/16 11:00:53 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
 
 /*
  * rdate.c: Set the date from the specified host
- * 
- * 	Uses the rfc868 time protocol at socket 37.
+ *
+ *	Uses the rfc868 time protocol at socket 37.
  *	Time is returned as the number of seconds since
  *	midnight January 1st 1900.
  */
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.1 2002/05/16 10:46:34 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.2 2002/05/16 11:00:53 deraadt Exp $";
 #endif
 #endif				/* lint */
 
@@ -68,14 +68,13 @@ void
 rfc868time_client (const char *hostname,
 	     struct timeval *new, struct timeval *adjust)
 {
-	struct hostent *hp;
-	struct servent *sp, ssp;
 	struct protoent *pp, ppp;
+	struct servent *sp, ssp;
 	struct sockaddr_in sin;
-
-	int s;
+	struct hostent *hp;
 	struct timeval old;
 	time_t tim;
+	int s;
 
 	if ((hp = gethostbyname(hostname)) == NULL)
 		errx(1, "%s: %s", hostname, hstrerror(h_errno));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.2 2002/05/16 10:52:38 deraadt Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.3 2002/05/16 11:00:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -49,11 +49,13 @@
 #include <time.h>
 #include <unistd.h>
 
-/* NTP definitions.  Note that these assume 8-bit bytes - sigh.  There
+/*
+ * NTP definitions.  Note that these assume 8-bit bytes - sigh.  There
  * is little point in parameterising everything, as it is neither
  * feasible nor useful.  It would be very useful if more fields could
  * be defined as unspecified.  The NTP packet-handling routines
- * contain a lot of extra assumptions. */
+ * contain a lot of extra assumptions.
+ */
 
 #define JAN_1970   2208988800.0		/* 1970 - 1900 in seconds */
 #define NTP_SCALE  4294967296.0		/* 2^32, of course! */
@@ -110,14 +112,12 @@ void	create_timeval(double, struct timeval *, struct timeval *);
 void
 ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 {
-	struct hostent *hp;
-	struct servent *sp, ssp;
-	struct protoent *pp, ppp;
 	struct sockaddr_in server, peer;
-
-	int s;
-	int packets = 0;
+	struct protoent *pp, ppp;
+	struct servent *sp, ssp;
+	struct hostent *hp;
 	double offset, error;
+	int packets = 0, s;
 
 	if ((hp = gethostbyname(hostname)) == NULL)
 		errx(1, "%s: %s", hostname, hstrerror(h_errno));
@@ -168,12 +168,10 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 {
 	int attempts = 0, accepts = 0, rejects = 0;
 	int delay = MAX_DELAY;
-
 	double deadline;
 	double a, b, x, y;
 	double minerr = 0.1;		/* Maximum ignorable variation */
 	double dispersion = 0.0;	/* The source dispersion in seconds */
-
 	struct ntp_data data;
 
 	deadline = current_time(JAN_1970) + delay;
@@ -251,10 +249,12 @@ write_packet(int fd, const struct sockaddr *peer, struct ntp_data *data)
 	return 0;
 }
 
-/* Check the packet and work out the offset and optionally the error.
+/*
+ * Check the packet and work out the offset and optionally the error.
  * Note that this contains more checking than xntp does. Return 0 for
  * success, 1 for failure. Note that it must not change its arguments
- * if it fails. */
+ * if it fails.
+ */
 int
 read_packet(int fd, struct ntp_data *data, double *off, double *error,
     double *dispersion)
@@ -276,10 +276,10 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error,
 		return 1; /* failure or timeout */
 		/* XXX does not deal with all possible return values */
 
-	/* assumes fd was ready */
+	/* XXX assumes fd was ready */
 
 	length = recvfrom(fd, receive, NTP_PACKET_MAX + 1, 0, NULL, 0);
-	if (length <= 0) {
+	if (length < 0) {
 		warnx("Unable to receive NTP packet from server");
 		return 1;
 	}
@@ -338,9 +338,11 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error,
 	return 0;
 }
 
-/* Pack the essential data into an NTP packet, bypassing struct layout
+/*
+ * Pack the essential data into an NTP packet, bypassing struct layout
  * and endian problems.  Note that it ignores fields irrelevant to
- * SNTP. */
+ * SNTP.
+ */
 void
 pack_ntp(u_char	*packet, int length, struct ntp_data *data)
 {
@@ -376,9 +378,11 @@ pack_ntp(u_char	*packet, int length, struct ntp_data *data)
 	}
 }
 
-/* Unpack the essential data from an NTP packet, bypassing struct
+/*
+ * Unpack the essential data from an NTP packet, bypassing struct
  * layout and endian problems.  Note that it ignores fields irrelevant
- * to SNTP. */
+ * to SNTP.
+ */
 void
 unpack_ntp(struct ntp_data *data, u_char *packet, int length)
 {
@@ -415,9 +419,10 @@ unpack_ntp(struct ntp_data *data, u_char *packet, int length)
 	data->transmit = d/NTP_SCALE;
 }
 
-/* Get the current UTC time in seconds since the Epoch plus an offset
+/*
+ * Get the current UTC time in seconds since the Epoch plus an offset
  * (usually the time from the beginning of the century to the Epoch)
- * */
+ */
 double
 current_time(double offset)
 {
@@ -429,8 +434,10 @@ current_time(double offset)
 	return offset + current.tv_sec + 1.0e-6 * current.tv_usec;
 }
 
-/* Change offset into current UTC time. This is portable, even if
- * struct timeval uses an unsigned long for tv_sec. */
+/*
+ * Change offset into current UTC time. This is portable, even if
+ * struct timeval uses an unsigned long for tv_sec.
+ */
 void
 create_timeval(double difference, struct timeval *new, struct timeval *adjust)
 {
