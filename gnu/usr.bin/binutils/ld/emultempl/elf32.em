@@ -95,10 +95,121 @@ case ${target} in
 
 /* Search a directory for a .so file.  */
 
+static char * gld${EMULATION_NAME}_search_dir_needed (const char *dirlist, const char *filename);
+
+static char * gld${EMULATION_NAME}_search_dir (const char *dirname,
+  const char *filename, int req_maj, int req_min);
+
+static char * gld${EMULATION_NAME}_split_lib_name (char *name, int *pmaj,
+  int *pmin);
+
+/* THIS FUNCTION MODIFIES THE name ARGUMENT string */
 static char *
-gld${EMULATION_NAME}_search_dir (dirname, filename)
+gld${EMULATION_NAME}_split_lib_name (name, pmaj, pmin)
+  char *name;
+  int *pmaj, *pmin;
+{
+  char*eptr, *lib = name;
+  char *s;
+  int found_so = 0;
+
+  *pmaj = -1;
+  *pmin = -1;
+  
+  if (strncmp(lib, "lib", 3) == 0)   
+    lib += 3;
+
+  s = lib;
+  while (found_so == 0)
+    {
+      s = strstr(s, ".so");
+
+      /* if .so not found, return not found, invalid lib name */
+      if (s == NULL)
+	{
+	  return NULL;
+	}
+
+      /* if .so is at end of string, fine return with pmaj/pmin -1 */
+      if (s[3] == '\0')
+	{
+	  *s = '\0';
+	  return lib;
+	}
+
+      if (s[3] == '.')
+	{
+	  *s = '\0';
+	  found_so = 1;
+	}
+      /* skip over the ".so" */
+      s += 3;
+    }
+
+  
+  /* lib[name].so.[M].[N] */
+  /*  s          ^        */
+  s += 1;
+
+  /* lib[name].so.[M].[N] */
+  /*  s           ^       */
+  *pmaj = strtoul (s, &eptr, 10);
+
+  /* lib[name].so.[M]X... */
+  /*  eptr           ^    */
+  if (*eptr != '.' || s == eptr)
+    return NULL; /* invalid, must have minor */
+
+  s = eptr+1;
+
+  /* lib[name].so.[M].[N]  */
+  /*  s               ^    */
+  *pmin = strtoul (s, &eptr, 10);
+
+  /* lib[name].so.[M].[N]  */
+  /*  eptr               ^ */
+  if (*eptr != '\0' || s == eptr)
+    return NULL;  /* minor must be last field of library */
+
+  return lib;
+}
+
+static char *
+gld${EMULATION_NAME}_search_dir_needed (dirlist, filename)
+    const char *dirlist;
+    const char *filename;
+{
+  char *dlist, *dlist_alloc, *dir;
+  char *fnam, *fnam_alloc, *lib;
+  char *found = NULL;
+  int maj = -1, min = -1;
+  
+  dlist_alloc = dlist = xstrdup(dirlist);
+  fnam_alloc = fnam = xstrdup(filename);
+  
+  lib = gld${EMULATION_NAME}_split_lib_name(fnam, &maj, &min);
+  
+  while (lib != NULL && found == NULL)
+    {
+      dir = strsep(&dlist, ":");
+      if (dir == NULL)
+	break;
+      if (*dir == '\0')
+	continue; /* skip dirlist of ...::... */
+      found = gld${EMULATION_NAME}_search_dir(dir, lib, maj, min);
+    }
+  
+  free(dlist_alloc);
+  free(fnam_alloc);
+  return found;
+}
+
+
+static char *
+gld${EMULATION_NAME}_search_dir (dirname, filename, req_maj, req_min)
      const char *dirname;
      const char *filename;
+     int req_maj, req_min;
 {
   const char *dot;
   unsigned int len;
@@ -182,10 +293,11 @@ gld${EMULATION_NAME}_search_dir (dirname, filename)
 
       /* We've found a match for the name we are searching for.  See
 	 if this is the version we should use.  */
-      if (found == NULL
-	  || (found_maj > max_maj)
-	  || (found_maj == max_maj
-	      && (found_min > max_min)))
+      if (((req_maj == -1) && (found == NULL
+	    || (found_maj > max_maj)
+	    || (found_maj == max_maj && (found_min > max_min))))
+	  || ((found_maj == req_maj) && (found_min >= req_min)
+	    && (found_min > max_min)))
 	{
 	  if (found != NULL)
 	    free (found);
@@ -526,6 +638,25 @@ gld${EMULATION_NAME}_search_needed (path, name, force)
 
   if (path == NULL || *path == '\0')
     return FALSE;
+
+EOF
+case ${target} in
+  *-*-openbsd*)
+    cat >>e${EMULATION_NAME}.c <<EOF
+  {
+    char *found;
+    if ((found = gld${EMULATION_NAME}_search_dir_needed(path, name)) != NULL) {
+      if (gld${EMULATION_NAME}_try_needed (found, force)) {
+	free(found);
+	return TRUE;
+      }
+      free(found);
+    }
+  }
+
+EOF
+esac
+cat >>e${EMULATION_NAME}.c <<EOF
   len = strlen (name);
   while (1)
     {
@@ -1123,7 +1254,7 @@ EOF
 case ${target} in
   *-*-openbsd*)
     cat >>e${EMULATION_NAME}.c <<EOF
-  string = gld${EMULATION_NAME}_search_dir(search->name, filename);
+  string = gld${EMULATION_NAME}_search_dir(search->name, filename, -1, -1);
   if (string == NULL)
     return FALSE;
 EOF
