@@ -59,9 +59,6 @@
 int vsprintf __P((char *, const char *, va_list));
 
 void dk_cleanup __P((void));
-#if defined(FFS) && defined(CD9660)
-static int dk_match_ffs __P((void));
-#endif
 
 static u_int mmuh = -1, memh = -1;
 
