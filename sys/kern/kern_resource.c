@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.10 1999/11/05 01:18:01 mickey Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.11 2000/03/03 11:31:43 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ sys_getpriority(curp, v, retval)
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
-		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
+		for (p = LIST_FIRST(&allproc); p; p = LIST_NEXT(p, p_list))
 			if (p->p_ucred->cr_uid == SCARG(uap, who) &&
 			    p->p_nice < low)
 				low = p->p_nice;
@@ -166,7 +166,7 @@ sys_setpriority(curp, v, retval)
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
-		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
+		for (p = LIST_FIRST(&allproc); p; p = LIST_NEXT(p, p_list))
 			if (p->p_ucred->cr_uid == SCARG(uap, who)) {
 				error = donice(curp, p, SCARG(uap, prio));
 				found++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.30 2000/02/22 19:28:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.31 2000/03/03 11:31:43 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -717,10 +717,10 @@ sysctl_doproc(name, namelen, where, sizep)
 
 	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
 		return (EINVAL);
-	p = allproc.lh_first;
+	p = LIST_FIRST(&allproc);
 	doingzomb = 0;
 again:
-	for (; p != 0; p = p->p_list.le_next) {
+	for (; p != 0; p = LIST_NEXT(p, p_list)) {
 		/*
 		 * Skip embryonic processes.
 		 */

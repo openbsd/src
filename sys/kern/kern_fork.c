@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.28 2000/02/21 20:00:09 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.29 2000/03/03 11:31:42 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -211,9 +211,9 @@ retry:
 		 * is in use.  Remember the lowest pid that's greater
 		 * than lastpid, so we can avoid checking for a while.
 		 */
-		p2 = allproc.lh_first;
+		p2 = LIST_FIRST(&allproc);
 again:
-		for (; p2 != 0; p2 = p2->p_list.le_next) {
+		for (; p2 != 0; p2 = LIST_NEXT(p2, p_list)) {
 			while (p2->p_pid == lastpid ||
 			    p2->p_pgrp->pg_id == lastpid) {
 				lastpid++;

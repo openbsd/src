@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.17 1999/09/05 22:20:45 tholo Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.18 2000/03/03 11:31:43 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ schedcpu(arg)
 	 */
 	phz = stathz ? stathz : profhz;
 
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
@@ -764,7 +764,7 @@ db_show_all_procs(addr, haddr, count, modif)
 		return;
 	}
 	
-	p = allproc.lh_first;
+	p = LIST_FIRST(&allproc);
 
 	switch (*mode) {
 
@@ -813,7 +813,7 @@ db_show_all_procs(addr, haddr, count, modif)
 
 			}
 		}
-		p = p->p_list.le_next;
+		p = LIST_NEXT(p, p_list);
 		if (p == 0 && doingzomb == 0) {
 			doingzomb = 1;
 			p = zombproc.lh_first;

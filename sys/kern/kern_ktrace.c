@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.11 1999/02/11 20:34:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.12 2000/03/03 11:31:42 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ sys_ktrace(curp, v, retval)
 	 * Clear all uses of the tracefile
 	 */
 	if (ops == KTROP_CLEARFILE) {
-		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+		for (p = LIST_FIRST(&allproc); p; p = LIST_NEXT(p, p_list)) {
 			if (p->p_tracep == vp) {
 				if (ktrcanset(curp, p)) {
 					p->p_tracep = NULL;
@@ -479,7 +479,7 @@ ktrwrite(vp, kth)
 	 */
 	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
 	    error);
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
 		if (p->p_tracep == vp) {
 			p->p_tracep = NULL;
 			p->p_traceflag = 0;

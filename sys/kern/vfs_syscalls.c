@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.62 2000/02/07 04:55:19 assar Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.63 2000/03/03 11:31:43 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -336,7 +336,11 @@ checkdirs(olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
+		/*
+		 * XXX - we have a race with fork here. We should probably
+		 *       check if the process is SIDL before we fiddle with it.
+		 */
 		fdp = p->p_fd;
 		if (fdp->fd_cdir == olddp) {
 			vrele(fdp->fd_cdir);
