@@ -1,13 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2003/03/02 23:55:11 cloder Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/03/08 18:17:04 beck Exp $
 
 PROG=	spamd
 SRCS=	spamd.c sdl.c
-MAN=	spamd.8 spamd-setup.8
+MAN=	spamd.8
 
 CFLAGS+= -Wall -Werror -Wstrict-prototypes -ansi
-
-afterinstall:
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/spamd-setup.pl ${DESTDIR}${BINDIR}/spamd-setup
 
 .include <bsd.prog.mk>

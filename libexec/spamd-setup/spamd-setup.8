@@ -1,0 +1,213 @@
+.\"	$OpenBSD: spamd-setup.8,v 1.1 2003/03/08 18:17:04 beck Exp $
+.\"
+.\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason L. Wright
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 14, 2003
+.Dt SPAMD-SETUP 8
+.Os
+.Sh NAME
+.Nm spamd-setup
+.Nd parse and load file of spammer addresses
+.Sh SYNOPSIS
+.Nm spamd-setup
+.Op Ar file ...
+.Sh DESCRIPTION
+The
+.Nm
+utility adds blacklists by adding addresses to the
+.Xr pf 4
+table
+.Aq spamd ,
+as well as configuring mail rejection messages for
+the added list of addresses in
+.Xr spamd 8 .
+The
+.Aq spamd
+table is used in conjuction with a
+.Xr pf 4
+redirection rule to selectively redirect mail connections
+to the
+.Xr spamd 8
+daemon.
+.Pp
+blacklists and whitelists are specified in the configuration file
+.Pa /etc/spamd.conf
+and are processed in the order specified in the 
+.Ar all
+tag. 
+output is concatenated to build up a table for
+.Xr pf 4 .
+Then the blacklist addresses are sent to a running
+.Xr spamd 8
+along with the message spamd will give on mail rejection when a
+matching client connects.
+.Sh CONFIGURATION FILES
+The default configuration file is
+.Pa /etc/spamd.conf
+which follows the syntax of configuration databases
+as documented in 
+.Xr getcap 3 . 
+Additional files given as parameters to
+.Nm
+will be read to add to the default configuration file,
+.Pa /etc/spamd.conf
+.Pp
+Example:
+.Bd -literal -offset indent
+.Ic all:\e
+.Ic 	:spews1:white:myblack:\e
+.Ic 	
+.Ic spews1:\e
+.Ic 	:black\e
+.Ic 	:msg=\e"SPAM. Your address \%A is in the spews level\e
+.Ic 	1 database\en see http://www.spews.org/ask.cgi?x=%A\en\e":\e
+.Ic 	:method=http:\e	
+.Ic 	:file=www.spews.org/spews_list_level1.txt:
+.Ic \ \	
+.Ic white:\e
+.Ic 	:white:\e
+.Ic 	:method=file:\e
+.Ic 	:file=/var/white/mywhite:\e
+.Ic \ \ 
+.Ic myblack:\e
+.Ic 	:black:\e
+.Ic 	:msg=/var/black/myblack.msg:\e
+.Ic 	:method=file:\e
+.Ic 	:file=/var/blck/myblack.txt
+.Ed
+.Pp
+The default configuration file must include the entry
+.Ar all
+which specifies the order in which named blacklists and whitelists
+are to be applied. The addresses in a whitelist are removed from the
+preceeding blacklist. In the above example, if address that was present
+in all three lists, blacklists
+.Ar spews1
+and
+.Ar myblack
+as well as whitelist
+.Ar white ,
+the address would be removed from blacklist
+.Ar spews1
+by the subsequent
+.Ar white
+whitelist. However, the address would not be removed from the
+.Ar myblack
+blacklist. To remove all the addresses in
+.Ar white
+from
+.Ar myblack
+the configution
+.Bd -literal -offset indent
+.Ic all:\e
+.Ic 	:spews1:white:myblack:white:\e
+.Ic 	
+.Ed
+would be used instead.
+.Pp blacklists and whitelists are then constructed by name,
+blacklists are identified by the capability
+.Ar black
+and whitelists by the capability
+.Ar white .
+.Pp
+The source of the addresses for blacklists and whitelists is 
+specified using the
+.Ar method
+and 
+.Ar file
+capability entries.
+.Ar method
+specifies the method by which to retrieve the addresses, which may
+be 
+.Ar http
+.Ar ftp
+.Ar file
+or
+.Ar exec .
+The methods
+.Ar http
+.Ar ftp
+and
+.Ar file
+capabilities will make
+.Nm
+retrieve the source file as specified in the location in
+the 
+.Ar file
+capability for the list.
+The
+.Ar exec
+capability will make 
+.Nm
+spawn the program with arguments indicated in the
+.Ar file
+capability for the list, and read the source file
+from the output of the program. the source file for each blacklist or
+whitelist is expected to consist of one network block or address per
+line (optionally followed by a space and text that is ignored).
+Comment lines beginning with
+.Ar #
+are ignored.
+Network blocks may be specified in any of the formats as in
+the following example:
+.Bd -literal -offset indent
+.Ic # CIDR format
+.Ic 192.168.20.0/24
+.Ic # A start - end range
+.Ic 192.168.21.0 - 192.168.21.255
+.Ic # As a single IP address
+.Ic 192.168.23.1
+.Ed
+.Pp
+Each blacklist must include a message, specified with the
+.Ar msg
+capability as a string. The argument to 
+.Ar msg
+specifies the message, the message may be includes in 
+quotes, in which case characters may be escaped as specified in
+.Xr getcap 3
+with the execption that a colon (:) is allowed in the quoted string.
+Alternatively, if the argument to
+.Ar msg
+is not specified in quotes, it is assumed to be a local filename
+from which the message text may be read.
+The message is configured in 
+.Xr spamd 8
+to be displayed in the smtp dialogue to any connections that match addresses
+in the blacklist.
+\e\" will produce a double quote in the output,
+and %% will produce a single % in the output.
+%A will be expanded by
+.Xr spamd 8
+to display the connecting IP address in the output.
+.Pp
+.Sh SEE ALSO
+.Xr ftp 1 ,
+.Xr pf 4 ,
+.Xr spamd 8
