@@ -2222,7 +2222,7 @@ txt_fc_col(sp, argc, argv)
 				break;
 		}
 		if (nf)
-			FREE_SPACE(sp, p, 0);
+			FREE_SPACE(sp, (char *) p, 0);
 		CHK_INTR;
 	} else {
 		/* Figure out the number of columns. */
@@ -2240,7 +2240,7 @@ txt_fc_col(sp, argc, argv)
 				p = msg_print(sp, argv[base]->bp + prefix, &nf);
 				cnt = ex_printf(sp, "%s", p);
 				if (nf)
-					FREE_SPACE(sp, p, 0);
+					FREE_SPACE(sp, (char *) p, 0);
 				CHK_INTR;
 				if ((base += numrows) >= argc)
 					break;
