@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.5 1996/08/31 09:24:01 pefo Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.6 1996/12/23 02:56:48 deraadt Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.3 1996/01/06 12:44:13 thorpej Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ exec_hpux_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (exec_aout_setup_stack(p, epp));
+	return (exec_setup_stack(p, epp));
 }
 
 static int
@@ -227,7 +227,7 @@ exec_hpux_prep_zmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (exec_aout_setup_stack(p, epp));
+	return (exec_setup_stack(p, epp));
 }
 
 /*
@@ -270,7 +270,7 @@ exec_hpux_prep_omagic(p, epp)
 	 */
 	dsize = epp->ep_dsize + execp->ha_text - roundup(execp->ha_text, NBPG);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (exec_aout_setup_stack(p, epp));
+	return (exec_setup_stack(p, epp));
 }
 
 /*

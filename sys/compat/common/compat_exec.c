@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_exec.c,v 1.2 1996/08/02 20:34:40 niklas Exp $	*/
+/*	$OpenBSD: compat_exec.c,v 1.3 1996/12/23 02:56:47 deraadt Exp $	*/
 /*	$NetBSD: compat_exec.c,v 1.1 1996/05/18 15:52:21 christos Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ exec_aout_prep_oldzmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 
@@ -137,7 +137,7 @@ exec_aout_prep_oldnmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
 
 
@@ -186,5 +186,5 @@ exec_aout_prep_oldomagic(p, epp)
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_aout_setup_stack(p, epp);
+	return exec_setup_stack(p, epp);
 }
