@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.22 2003/10/27 10:45:58 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.23 2003/11/08 16:43:02 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -122,6 +122,10 @@ ENTRY(cpu_switch)
 	st	r29,r10, PCB_R29
 	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
 	st	r31,r10, PCB_SP
+	fldcr	r2, fcr62
+	fldcr	r3, fcr63
+	st	r2, r10, PCB_FCR62
+	st	r3, r10, PCB_FCR63
 
 	bsr.n	_C_LABEL(getipl)
 	 or	r14,r10, 0		/* save r10 in r14 */
@@ -265,7 +269,11 @@ ASLOCAL(Lswnochg)
 	st	r10, r14, P_ADDR	/* p->p_addr = curpcb; restore p_addr */
 
 	/* restore from the current context */
-	ld	r1,r10,  PCB_PC
+	ld	r2, r10, PCB_FCR62
+	ld	r3, r10, PCB_FCR63
+	fstcr	r2, fcr62
+	fstcr	r3, fcr63
+	ld	r1, r10, PCB_PC
 	ld	r14,r10, PCB_R14
 	ld	r15,r10, PCB_R15
 	ld	r16,r10, PCB_R16
@@ -331,6 +339,8 @@ ENTRY(savectx)
 	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
 	st	r31,r10, PCB_SP
 	st	r2, r10, PCB_IPL	/* save interrupt mask */
+	fldcr	r2, fcr62
+	fldcr	r3, fcr63
+	st	r2, r10, PCB_FCR62
 	jmp.n	r1
-	 or	r2,r0,r0
-
+	 st	r3, r10, PCB_FCR63

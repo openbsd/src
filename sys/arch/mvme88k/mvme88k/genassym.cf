@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2003/10/11 22:08:57 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2003/11/08 16:43:02 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.8 2003/10/11 22:08:57 miod Exp $
+#	$Id: genassym.cf,v 1.9 2003/11/08 16:43:02 miod Exp $
 #
 
 include <sys/param.h>
@@ -86,8 +86,6 @@ define	EF_DMT2		offsetof(struct m88100_saved_state, dmt2) / sizeof(int)
 define	EF_DMD2		offsetof(struct m88100_saved_state, dmd2) / sizeof(int)
 define	EF_DMA2		offsetof(struct m88100_saved_state, dma2) / sizeof(int)
 define	EF_FPECR	offsetof(struct m88100_saved_state, fpecr) / sizeof(int)
-define	EF_FPCR		offsetof(struct m88100_saved_state, fpcr) / sizeof(int)
-define	EF_FPSR		offsetof(struct m88100_saved_state, fpsr) / sizeof(int)
 define	EF_FPHS1	offsetof(struct m88100_saved_state, fphs1) / sizeof(int)
 define	EF_FPLS1	offsetof(struct m88100_saved_state, fpls1) / sizeof(int)
 define	EF_FPHS2	offsetof(struct m88100_saved_state, fphs2) / sizeof(int)
@@ -142,3 +140,5 @@ member	pcb_r28
 member	pcb_r29
 member	pcb_r30
 member	pcb_sp
+member	pcb_fcr62
+member	pcb_fcr63

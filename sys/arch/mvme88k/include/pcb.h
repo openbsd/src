@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.10 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.11 2003/11/08 16:43:00 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -55,26 +55,29 @@
  */
 
 struct m88100_pcb {
-    unsigned pcb_pc;	/* address to return */
-    unsigned pcb_ipl;
-    unsigned pcb_r14;
-    unsigned pcb_r15;
-    unsigned pcb_r16;
-    unsigned pcb_r17;
-    unsigned pcb_r18;
-    unsigned pcb_r19;
-    unsigned pcb_r20;
-    unsigned pcb_r21;
-    unsigned pcb_r22;
-    unsigned pcb_r23;
-    unsigned pcb_r24;
-    unsigned pcb_r25;
-    unsigned pcb_r26;
-    unsigned pcb_r27;
-    unsigned pcb_r28;
-    unsigned pcb_r29;
-    unsigned pcb_r30;
-    unsigned pcb_sp; 	/* kernel stack pointer */
+	unsigned pcb_pc;	/* address to return */
+	unsigned pcb_ipl;
+	unsigned pcb_r14;
+	unsigned pcb_r15;
+	unsigned pcb_r16;
+	unsigned pcb_r17;
+	unsigned pcb_r18;
+	unsigned pcb_r19;
+	unsigned pcb_r20;
+	unsigned pcb_r21;
+	unsigned pcb_r22;
+	unsigned pcb_r23;
+	unsigned pcb_r24;
+	unsigned pcb_r25;
+	unsigned pcb_r26;
+	unsigned pcb_r27;
+	unsigned pcb_r28;
+	unsigned pcb_r29;
+	unsigned pcb_r30;
+	unsigned pcb_sp; 	/* kernel stack pointer */
+	/* floating-point state */
+	unsigned pcb_fcr62;
+	unsigned pcb_fcr63;
 };
 
 #define m88100_saved_state reg
@@ -82,13 +85,10 @@ struct m88100_pcb {
 
 struct pcb
 {
-  struct m88100_pcb            kernel_state;
-  struct m88100_saved_state    user_state;
-  int	 		       pcb_onfault;	/* for copyin/copyout faults */
-  int	 		       pcb_pad;		/* pad it XXX */
+	struct m88100_pcb		kernel_state;
+	struct m88100_saved_state	user_state;
+	int				pcb_onfault;
 };
-
-typedef	struct pcb	*pcb_t;		/* exported */
 
 /*
  *	Location of saved user registers for the proc.
