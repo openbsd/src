@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrun.c,v 1.7 2000/06/20 01:29:14 provos Exp $	*/
+/*	$OpenBSD: tcfsrun.c,v 1.8 2000/06/20 10:46:52 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -95,5 +95,3 @@ run_main(int argc, char *argv[], char *envp[])
 	}
 	exit(0);
 }
-
-
