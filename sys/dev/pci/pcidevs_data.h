@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.549 2002/09/24 19:45:32 nate Exp 
+ *		OpenBSD: pcidevs,v 1.550 2002/09/30 18:12:53 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7707,8 +7707,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Essential Communications",
 	},
 	{
-	    PCI_VENDOR_2MICRO,
-	    "2 Micro Inc",
+	    PCI_VENDOR_O2MICRO,
+	    "O2 Micro Inc",
 	},
 	{
 	    PCI_VENDOR_3DFX,
