@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.363 2001/01/24 11:06:24 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.364 2001/01/24 18:34:24 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1177,6 +1177,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI",
 	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PM,
+	    0,
+	    "ATI",
+	    "Rage P/M",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
