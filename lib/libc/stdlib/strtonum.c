@@ -1,4 +1,4 @@
-/* $OpenBSD: strtonum.c,v 1.1 2004/05/03 17:09:24 tedu Exp $ */
+/* $OpenBSD: strtonum.c,v 1.2 2004/05/03 20:53:34 millert Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst and Todd Miller
  * All rights reserved.
@@ -48,7 +48,7 @@ strtonum(const char *numstr, long long minval, unsigned long long maxval,
 	if (minval > maxval || maxval < minval ||
 	    (minval < 0 && maxval > LLONG_MAX))
 		error = INVALID;
-	else if (minval >= 0) {
+	else if (maxval > LLONG_MAX ) {
 		ull = strtoull(numstr, &ep, 10);
 		if (numstr == ep || *ep != '\0')
 			error = INVALID;
