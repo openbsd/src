@@ -1,6 +1,6 @@
-/* * $OpenBSD: md.h,v 1.3 2001/11/25 04:20:40 miod Exp $*/
+/* * $OpenBSD: md.h,v 1.4 2001/12/24 03:13:55 miod Exp $*/
 /*
- *	- m68k dependent definitions
+ *	- m88k dependent definitions
  */
 
 #if defined(CROSS_LINKER) 
@@ -10,9 +10,13 @@
 #define NEED_SWAP
 #endif
 
+#undef __LDPGSZ
+#undef ELF_TARG_DATA
+#undef ELF_TARG_MACH
+#undef relocation_info
 #undef MID_MACHINE
-/* XXX */
-#define MID_MACHINE 153
+#define MID_MACHINE MID_M88K
+#include <mvme88k/exec.h>
 #endif
 
 #define	MAX_ALIGNMENT		(sizeof (double))
