@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.6 2001/06/27 04:49:43 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.7 2001/07/17 15:49:22 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -74,6 +74,8 @@
  */
 int malloc_deb_type = -1;
 int malloc_deb_size = -1;
+int malloc_deb_size_lo = -1;
+int malloc_deb_size_hi = -1;
 
 /*
  * MALLOC_DEBUG_CHUNKS is the number of memory chunks we require on the
@@ -122,6 +124,7 @@ debug_malloc(size, type, flags, addr)
 
 	if ((type != malloc_deb_type && malloc_deb_type != 0) ||
 	    (size != malloc_deb_size && malloc_deb_size != 0) ||
+	    (size < malloc_deb_size_lo || size > malloc_deb_size_hi) ||
 	    type == M_DEBUG)
 		return 0;
 
