@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.h,v 1.7 1999/04/19 21:01:45 niklas Exp $	*/
-/*	$EOM: message.h,v 1.43 1999/04/13 20:00:40 ho Exp $	*/
+/*	$OpenBSD: message.h,v 1.8 1999/04/27 20:58:30 niklas Exp $	*/
+/*	$EOM: message.h,v 1.45 1999/04/25 13:38:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -147,17 +147,18 @@ struct message {
 
 /* Message flags.  */
 
-/* Don't retransmit this message, ever.  */
-#define MSG_NO_RETRANS	1
-
-/* Don't free message after sending */
-#define MSG_KEEP	2
+/*
+ * This is the last message of an exchange, meaning it should not be
+ * retransmitted other than if we see duplicates from our peer's last
+ * message.
+ */
+#define MSG_LAST	1
 
 /* The message has already been encrypted.  */
-#define MSG_ENCRYPTED	4
+#define MSG_ENCRYPTED	2
 
 /* The message is on the send queue.  */
-#define MSG_IN_TRANSIT	8
+#define MSG_IN_TRANSIT	4
 
 extern int message_add_payload (struct message *, u_int8_t, u_int8_t *,
 				size_t, int);
