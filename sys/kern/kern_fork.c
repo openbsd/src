@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.52 2002/02/16 00:54:49 nordin Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.53 2002/02/22 01:08:42 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -301,10 +301,20 @@ fork1(p1, exitsig, flags, stack, stacksize, func, arg, retval)
 	PHOLD(p1);
 
 	if (flags & FORK_VMNOSTACK) {
-		/* share as much address space as possible */
-		(void) uvm_map_inherit(&p1->p_vmspace->vm_map,
-		    VM_MIN_ADDRESS, round_page(VM_MAXUSER_ADDRESS - MAXSSIZ),
+		/* share everything, but ... */
+		uvm_map_inherit(&p1->p_vmspace->vm_map,
+		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS,
 		    MAP_INHERIT_SHARE);
+		/* ... don't share stack */
+#ifdef MACHINE_STACK_GROWS_UP
+		uvm_map_inherit(&p1->p_vmspace->vm_map,
+		    USRSTACK, USRSTACK + MAXSSIZ,
+		    MAP_INHERIT_COPY);
+#else
+		uvm_map_inherit(&p1->p_vmspace->vm_map,
+		    USRSTACK - MAXSSIZ, USRSTACK,
+		    MAP_INHERIT_COPY);
+#endif
 	}
 
 	p2->p_addr = (struct user *)uaddr;
