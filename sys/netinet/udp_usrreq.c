@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.8 1997/01/26 01:23:46 tholo Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.9 1997/02/16 04:42:50 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ udp_input(m, va_alist)
 	 */
 	len = ntohs((u_int16_t)uh->uh_ulen);
 	if (ip->ip_len != len) {
-		if (len > ip->ip_len) {
+		if (len > ip->ip_len || len < sizeof(struct udphdr)) {
 			udpstat.udps_badlen++;
 			goto bad;
 		}
