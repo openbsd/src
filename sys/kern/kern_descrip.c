@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.37 2001/10/07 22:42:07 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.38 2001/10/07 23:12:06 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -460,17 +460,15 @@ fdrelease(p, fd)
 	struct proc *p;
 	int fd;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file **fpp, *fp;
-	register char *pf;
+	struct filedesc *fdp = p->p_fd;
+	struct file **fpp, *fp;
 
 	fpp = &fdp->fd_ofiles[fd];
 	fp = *fpp;
 	if (fp == NULL)
 		return (EBADF);
-	pf = &fdp->fd_ofileflags[fd];
 	*fpp = NULL;
-	*pf = 0;
+	fdp->fd_ofileflags[fd] = 0;
 	fd_unused(fdp, fd);
 	if (fd < fdp->fd_knlistsize)
 		knote_fdclose(p, fd);
