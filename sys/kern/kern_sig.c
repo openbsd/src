@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.6 1996/09/03 11:01:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.7 1996/10/18 06:08:40 tholo Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1046,8 +1046,7 @@ coredump(p)
 	register struct proc *p;
 {
 	register struct vnode *vp;
-	register struct pcred *pcred = p->p_cred;
-	register struct ucred *cred = pcred->pc_ucred;
+	register struct ucred *cred = p->p_cred->pc_ucred;
 	register struct vmspace *vm = p->p_vmspace;
 	struct nameidata nd;
 	struct vattr vattr;
@@ -1055,26 +1054,41 @@ coredump(p)
 	char name[MAXCOMLEN+6];		/* progname.core */
 	struct core core;
 
-	if (!(pcred->p_svuid == pcred->p_ruid && pcred->p_ruid == 0) &&
-	    (pcred->p_svuid != pcred->p_ruid ||
-	    cred->cr_uid != pcred->p_ruid ||
-	    pcred->p_svgid != pcred->p_rgid ||
-	    cred->cr_gid != pcred->p_rgid))
-		return (EFAULT);
+	/*
+	 * Don't dump if not root and the process has used set user or
+	 * group privileges.
+	 */
+	if ((p->p_flag & P_SUGID) &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	/* Don't dump if will exceed file size limit. */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFAULT);
-	sprintf(name, "%s.core", p->p_comm);
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
-	error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR);
-	if (error)
-		return (error);
-	vp = nd.ni_vp;
 
+	sprintf(name, "%s.core", p->p_comm);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	if ((error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR)) != 0)
+		return (error);
+
+	/*
+	 * Change euid to uid for coredump output
+	 */
+	cred = crdup(cred);
+	cred->cr_uid = p->p_cred->p_ruid;
+
+	/*
+	 * Don't dump to non-regular files, files with links, or files
+	 * owned by someone else.
+	 */
+	vp = nd.ni_vp;
+	if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0)
+		goto out;
 	/* Don't dump to non-regular files or files with links. */
-	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
-		error = EFAULT;
+	if (vp->v_type != VREG || vattr.va_nlink != 1 ||
+	    vattr.va_mode & ((VREAD | VWRITE) >> 3 | (VREAD | VWRITE) >> 6)) {
+		error = EACCES;
 		goto out;
 	}
 	VATTR_NULL(&vattr);
@@ -1109,14 +1123,14 @@ coredump(p)
 		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
 		    (int)core.c_dsize,
 		    (off_t)core.c_cpusize, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp,
 		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
 		    core.c_ssize,
 		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	} else {
 		/*
 		 * vm_coredump() spits out all appropriate segments.
@@ -1127,11 +1141,12 @@ coredump(p)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
 		    (int)core.c_hdrsize, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
+		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	}
 out:
 	VOP_UNLOCK(vp);
 	error1 = vn_close(vp, FWRITE, cred, p);
+	crfree(cred);
 	if (error == 0)
 		error = error1;
 	return (error);
