@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_emit.c,v 1.5 2001/05/22 19:02:36 angelos Exp $	*/
+/*	$OpenBSD: tp_emit.c,v 1.6 2001/05/24 03:59:00 angelos Exp $	*/
 /*	$NetBSD: tp_emit.c,v 1.8 1996/03/16 23:13:48 christos Exp $	*/
 
 /*-
@@ -206,13 +206,13 @@ tp_emit(dutype, tpcb, seq, eot, data)
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
 	}
-	m->m_data += max_hdr;
 	if (m == NULL) {
 		if (data != (struct mbuf *) 0)
 			m_freem(data);
 		error = ENOBUFS;
 		goto done;
 	}
+	m->m_data += max_hdr;
 	m->m_len = sizeof(struct tpdu);
 	m->m_act = MNULL;
 
