@@ -1,4 +1,4 @@
-/*	$OpenBSD: snova.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: snova.c,v 1.4 2002/07/26 20:14:39 pjanzen Exp $	*/
 /*	$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)snova.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: snova.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: snova.c,v 1.4 2002/07/26 20:14:39 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ snova(x, y)
 	if (f)
 	{
 		/* supernova is in same quadrant as Enterprise */
-		printf("\nRED ALERT: supernova occuring at %d,%d\n", ix, iy);
+		printf("\a\nRED ALERT: supernova occuring at %d,%d\n", ix, iy);
 		dx = ix - Ship.sectx;
 		dy = iy - Ship.secty;
 		if (dx * dx + dy * dy <= 2)

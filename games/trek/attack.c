@@ -1,4 +1,4 @@
-/*	$OpenBSD: attack.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: attack.c,v 1.4 2002/07/26 20:14:39 pjanzen Exp $	*/
 /*	$NetBSD: attack.c,v 1.3 1995/04/22 10:58:26 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)attack.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: attack.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: attack.c,v 1.4 2002/07/26 20:14:39 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ attack(resting)
 			Ship.shield -= shldabsb;
 		}
 		/* actually do the hit */
-		printf("HIT: %d units", hit);
+		printf("\aHIT: %d units", hit);
 		if (!damaged(SRSCAN))
 			printf(" from %d,%d", Etc.klingon[i].x, Etc.klingon[i].y);
 		cas = (shldabsb * 100) / hit;
@@ -156,7 +156,7 @@ attack(resting)
 		/* see if damages occurred */
 		if (hit >= (15 - Game.skill) * (25 - ranf(12)))
 		{
-			printf("CRITICAL HIT!!!\n");
+			printf("\aCRITICAL HIT!!!\a\n");
 			/* select a device from probability vector */
 			cas = ranf(1000);
 			for (l = 0; cas >= 0; l++)
