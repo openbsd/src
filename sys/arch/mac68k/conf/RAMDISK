@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2003/05/13 22:45:10 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2004/04/01 22:15:55 xsa Exp $
 #
 # RAMDISK - bsd.rd configuration file (non-SBC version)
 
@@ -27,7 +27,7 @@ pseudo-device	bpfilter 1	# packet filter
 option		DDB
 
 # Mac-specific options
-option		HZ=60		# Macs like 60hz
+option		HZ=60		# Macs like 60Hz
 option		M68040
 option		M68030
 option		M68020		# Must have 68851 PMMU
