@@ -1,3 +1,4 @@
+.\"	$OpenBSD: socketpair.2,v 1.2 1998/04/26 22:40:41 millert Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -84,8 +85,22 @@ process address space.
 .Xr pipe 2
 .Sh BUGS
 This call is currently implemented only for the
-.Tn UNIX
+.Tn LOCAL
 domain.
+Many operating systems only accept a
+.Ar protocol
+of
+.Ev
+PF_UNSPEC ,
+so that should be used instead of
+.Ev
+PF_LOCAL
+for maximal portability.
+.Sh STANDARDS
+The
+.Fn socketpair
+function conforms to
+.St -xpg4.2 .
 .Sh HISTORY
 The
 .Fn socketpair
