@@ -1,5 +1,5 @@
-# $OpenBSD: northamerica,v 1.17 2004/06/28 13:43:32 millert Exp $
-# @(#)northamerica	7.69
+# $OpenBSD: northamerica,v 1.18 2005/03/02 12:35:45 millert Exp $
+# @(#)northamerica	7.72
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
@@ -209,6 +209,13 @@ Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
 # Pennsylvania, Rhode Island, South Carolina, eastern Tennessee,
 # Vermont, Virginia, West Virginia
 
+# From Dave Cantor (2004-11-02):
+# Early this summer I had the occasion to visit the Mount Washington
+# Observatory weather station atop (of course!) Mount Washington [, NH]....
+# One of the staff members said that the station was on Eastern Standard Time
+# and didn't change their clocks for Daylight Saving ... so that their
+# reports will always have times which are 5 hours behind UTC.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule	NYC	1920	only	-	Mar	lastSun	2:00	1:00	D
 Rule	NYC	1920	only	-	Oct	lastSun	2:00	0	S
@@ -356,10 +363,26 @@ Zone America/Adak	 12:13:21 -	LMT	1867 Oct 18
 			-11:00	US	B%sT	1983 Oct 30 2:00
 			-10:00	US	AH%sT	1983 Nov 30
 			-10:00	US	HA%sT
+# The following switches don't quite make our 1970 cutoff.
+#
 # Shanks writes that part of southwest Alaska (e.g. Aniak)
 # switched from -11:00 to -10:00 on 1968-09-22 at 02:00,
 # and another part (e.g. Akiak) made the same switch five weeks later.
-# These switches don't quite make our 1970 cutoff.
+#
+# From David Flater (2004-11-09):
+# In e-mail, 2004-11-02, Ray Hudson, historian/liaison to the Unalaska
+# Historic Preservation Commission, provided this information, which
+# suggests that Unalaska deviated from statutory time from early 1967
+# possibly until 1983:
+#
+#  Minutes of the Unalaska City Council Meeting, January 10, 1967:
+#  "Except for St. Paul and Akutan, Unalaska is the only important
+#  location not on Alaska Standard Time.  The following resolution was
+#  made by William Robinson and seconded by Henry Swanson:  Be it
+#  resolved that the City of Unalaska hereby goes to Alaska Standard
+#  Time as of midnight Friday, January 13, 1967 (1 A.M. Saturday,
+#  January 14, Alaska Standard Time.)  This resolution was passed with
+#  three votes for and one against."
 
 # Hawaii
 #
@@ -423,7 +446,7 @@ Link America/Denver America/Shiprock
 # Lemhi, Lincoln, Madison, Minidoka, Oneida, Owyhee, Payette, Power,
 # Teton, Twin Falls, Valley, Washington counties) and eastern Oregon
 # switched four weeks late in 1974.
-# 
+#
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Boise	-7:44:49 -	LMT	1883 Nov 18 12:00
 			-8:00	US	P%sT	1923 May 13 2:00
@@ -1732,6 +1755,15 @@ Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
 # to DST--and one more hour on 1999-04-04--when the announcers will have
 # returned to Baltimore, which switches on that date.)
 
+# From Evert van der Veer via Steffen Thorsen (2004-10-28):
+# Cuba is not going back to standard time this year.
+# From Paul Eggert (2004-10-28):
+# http://www.granma.cu/ingles/2004/septiembre/juev30/41medid-i.html
+# says that it's due to a problem at the Antonio Guiteras
+# thermoelectric plant, and says "This October there will be no return
+# to normal hours (after daylight saving time)".
+# For now, let's assume that it's a one-year temporary measure.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
 Rule	Cuba	1928	only	-	Oct	10	0:00	0	S
@@ -1760,8 +1792,9 @@ Rule	Cuba	1991	1995	-	Oct	Sun>=8	0:00s	0	S
 Rule	Cuba	1996	only	-	Oct	 6	0:00s	0	S
 Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
 Rule	Cuba	1998	1999	-	Mar	lastSun	0:00s	1:00	D
-Rule	Cuba	1998	max	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	1998	2003	-	Oct	lastSun	0:00s	0	S
 Rule	Cuba	2000	max	-	Apr	Sun>=1	0:00s	1:00	D
+Rule	Cuba	2005	max	-	Oct	lastSun	0:00s	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
