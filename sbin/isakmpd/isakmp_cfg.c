@@ -95,9 +95,8 @@ int (*isakmp_cfg_responder[]) (struct message *) = {
 };
 
 /*
- * As "the server", this starts SET/ACK mode
- * As "the client", this starts REQ/REPLY mode
- * XXX A lot can be shared with responder_send_ATTR.
+ * When we are "the server", this starts SET/ACK mode
+ * When we are "the client", this starts REQ/REPLY mode
  */
 static int
 cfg_initiator_send_ATTR (struct message *msg)
@@ -186,18 +185,76 @@ cfg_initiator_send_ATTR (struct message *msg)
     }
   else
     {
-      /* XXX REQ/REPLY  */
+      struct conf_list *alist;
+      struct conf_list_node *anode;
+
       ie->cfg_type = ISAKMP_CFG_REQUEST;
 
       LOG_DBG ((LOG_NEGOTIATION, 10,
 		"cfg_initiator_send_ATTR: REQ/REPLY mode"));
+
+      alist = conf_get_list (id_string, "Attributes");
+      if (!alist)
+	continue;
+
+      for (anode = TAILQ_FIRST (&alist->fields); anode;
+	   anove = TAILQ_NEXT (anode, link))
+	{
+	  if (strcasecmp (anode->field, "Address") == 0)
+	    {
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS);
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS);
+	      attrlen += ISAKMP_ATTR_SZ * 2;
+	    }
+	  else if (strcasecmp (anode->field, "Netmask") == 0)
+	    {
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK);
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK);
+	      attrlen += ISAKMP_ATTR_SZ * 2;
+	    }
+	  else if (strcasecmp (anode->field, "Nameserver") == 0)
+	    {
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS);
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS);
+	      attrlen += ISAKMP_ATTR_SZ * 2;
+	    }
+	  else if (strcasecmp (anode->field, "WINS-server") == 0)
+	    {
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS);
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS);
+	      attrlen += ISAKMP_ATTR_SZ * 2;
+	    }
+	  else if (strcasecmp (anode->field, "DHCP-server") == 0)
+	    {
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP);
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP);	
+	      attrlen += ISAKMP_ATTR_SZ * 2;
+	    }
+	  else if (strcasecmp (anode->field, "Lifetime") == 0)
+	    {
+	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY);
+	      attrlen += ISAKMP_ATTR_SZ;
+	    }
+	  else
+	    {
+	      log_print ("cfg_initiator_send_ATTR: unknown attribute %.20s "
+			 "in section [%s]", anode->field, id_string);
+	    }
+	}
+
+      conf_free_list (alist);
     }
   
   if (attrlen == 0)
     {
       /* No data found.  */
-      log_print ("cfg_initiator_send_ATTR: no IKECFG attributes found for %s",
-		 id_string);
+      log_print ("cfg_initiator_send_ATTR: no IKECFG attributes "
+		 "found for [%s]", id_string);
+
+      /*
+       * We can continue, but this indicates a configuration error that
+       * the user probably will want to correct.
+       */
       free (id_string);
       return 0;
     }
