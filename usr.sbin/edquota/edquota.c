@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.36 2003/03/13 09:09:46 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.37 2003/04/02 20:30:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -251,6 +251,7 @@ getprivs(id, quotatype)
 	u_int mid;
 	char *qfpathname;
 	static int warned = 0;
+	size_t qfpathnamelen;
 
 	setfsent();
 	quphead = (struct quotause *)0;
@@ -262,7 +263,8 @@ getprivs(id, quotatype)
 			continue;
 		if (!hasquota(fs, quotatype, &qfpathname))
 			continue;
-		qupsize = sizeof(*qup) + strlen(qfpathname);
+		qfpathnamelen = strlen(qfpathname);
+		qupsize = sizeof(*qup) + qfpathnamelen;
 		if ((qup = (struct quotause *)malloc(qupsize)) == NULL)
 			errx(2, "out of memory");
 		if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
@@ -313,8 +315,8 @@ getprivs(id, quotatype)
 			}
 			close(fd);
 		}
-		strcpy(qup->qfname, qfpathname);
-		strcpy(qup->fsname, fs->fs_file);
+		strlcpy(qup->qfname, qfpathname, qfpathnamelen + 1);
+		strlcpy(qup->fsname, fs->fs_file, sizeof qup->fsname);
 		if (quphead == NULL)
 			quphead = qup;
 		else
