@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.15 2000/09/06 02:45:12 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.16 2000/09/07 03:02:04 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -362,6 +362,7 @@ bus_space_tag_t cons_membus = &ppc_membus;
 bus_space_handle_t cons_display_mem_h;
 bus_space_handle_t cons_display_ctl_h;
 int cons_height, cons_width, cons_linebytes, cons_depth;
+u_int32_t cons_addr;
 
 #include "vgafb_pci.h"
 
@@ -407,6 +408,10 @@ ofwconprobe()
 	if ( err != 4) {
 		cons_depth = 0;
 	}
+	err = OF_getprop(stdout_node, "address", &cons_addr, 4);
+	if ( err != 4) {
+		OF_interpret("frame-buffer-adr", 1, &cons_addr);
+	}
 
 	stdin_node = OF_instance_to_package(OF_stdin);
 	len = OF_getprop(stdin_node, "name", iname, 20);
@@ -438,6 +443,7 @@ ofwconprobe()
 		pcifunc(addr[1].phys_hi));
 
 	printf(": memaddr %x size %x, ", addr[0].phys_lo, addr[0].size_lo);
+	printf(": consaddr %x, ", cons_addr);
 	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
 	printf(": memtag %x, iotag %x", memtag, iotag);
 	printf(": cons_width %d cons_linebytes %d cons_height %d\n",
@@ -454,7 +460,7 @@ ofwconprobe()
 		cons_membus->bus_base = 0x80000000;
 		cons_membus->bus_reverse = 1;
 #if 0
-		err = bus_space_map( cons_membus, addr[0].phys_lo, addr[0].size_lo,
+		err = bus_space_map( cons_membus, cons_addr, addr[0].size_lo,
 			0, &cons_display_mem_h);
 		printf("mem map err %x",err);
 		bus_space_map( cons_membus, addr[1].phys_lo, addr[1].size_lo,
@@ -464,18 +470,16 @@ ofwconprobe()
 		vgafb_pci_console(cons_membus,
 			addr[1].phys_lo, addr[1].size_lo,
 			cons_membus, 
-			addr[0].phys_lo, addr[0].size_lo,
+			cons_addr, addr[0].size_lo,
 			&pa, pcibus(addr[1].phys_hi), pcidev(addr[1].phys_hi),
 			pcifunc(addr[1].phys_hi));
 
 
-#if 0
-		for (j = 2; j < 4; j++) {
-			for (i = 0; i < cons_width * cons_height; i++) {
-				bus_space_write_1(cons_membus,
-					cons_display_mem_h, i, j);
+#if 1
+		for (i = 0; i < cons_linebytes * cons_height; i++) {
+			bus_space_write_1(cons_membus,
+				cons_display_mem_h, i, 0);
 
-			}
 		}
 #endif
 	}
