@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.4 2002/01/25 02:37:43 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.5 2002/03/14 04:18:05 jason Exp $	*/
 /*
  * magma.c
  *
@@ -328,10 +328,10 @@ magma_attach(parent, dev, aux)
 	struct sbus_attach_args *sa = aux;
 	struct magma_softc *sc = (struct magma_softc *)dev;
 	struct magma_board_info *card;
-	char *magma_prom, *clockstr;
+	char magma_prom[40], *clockstr;
 	int chip, cd_clock;
 
-	magma_prom = getpropstring(sa->sa_node, "magma_prom");
+	getpropstringA(sa->sa_node, "magma_prom", magma_prom);
 	for (card = supported_cards; card->mb_name != NULL; card++) {
 		if (strcmp(sa->sa_name, card->mb_sbusname) != 0)
 			continue;
