@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.26 2002/05/29 09:45:39 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.27 2002/06/11 05:58:27 nordin Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ setmaxusers(n)
 	}
 	maxusers = n;
 	if (n < minmaxusers) {
-		warnx("warning: minimum of %d maxusers assumed\n", minmaxusers);
+		warnx("warning: minimum of %d maxusers assumed", minmaxusers);
 		maxusers = minmaxusers;
 	} else if (n > maxmaxusers) {
 		warnx("warning: maxusers (%d) > %d", n, maxmaxusers);

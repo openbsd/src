@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.2 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.3 2002/06/11 05:58:27 nordin Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -974,7 +974,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			warnx("Illegal argument: %c\n", ch);
+			warnx("Illegal argument: %c", ch);
 			usage(myname);
 		}
 	argc -= optind;
