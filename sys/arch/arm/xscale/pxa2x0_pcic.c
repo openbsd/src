@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.9 2005/03/08 23:07:17 uwe Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.10 2005/03/09 22:00:23 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -55,6 +55,7 @@ void	*pxapcic_intr_establish(pcmcia_chipset_handle_t,
     struct pcmcia_function *, int, int (*)(void *), void *, char *);
 void	pxapcic_intr_disestablish(pcmcia_chipset_handle_t, void *);
 const char *pxapcic_intr_string(pcmcia_chipset_handle_t, void *);
+void	pxapcic_wait_ready(struct pxapcic_socket *);
 void	pxapcic_socket_enable(pcmcia_chipset_handle_t);
 void	pxapcic_socket_disable(pcmcia_chipset_handle_t);
 
@@ -274,12 +275,40 @@ pxapcic_intr_string(pch, ih)
 }
 
 void
+pxapcic_wait_ready(so)
+	struct pxapcic_socket *so;
+{
+	bus_space_tag_t iot = so->sc->sc_iot;
+	int i;
+
+	for (i = 0; i < 10000; i++) {
+		if (bus_space_read_2(iot, so->scooph, SCOOP_REG_CSR) &
+		    SCP_CSR_READY)
+			return;
+		delay(500);
+#ifdef PCICDEBUG
+		if ((i>5000) && (i%100 == 99))
+			printf(".");
+#endif
+	}
+
+#ifdef DIAGNOSTIC
+	printf("pxapcic_wait_ready: ready never happened, status = %02x\n",
+	    bus_space_read_2(iot, so->scooph, SCOOP_REG_CSR));
+#endif
+}
+
+void
 pxapcic_socket_enable(pch)
         pcmcia_chipset_handle_t pch;
 {
 	struct pxapcic_socket *so = pch;
 	bus_space_tag_t iot = so->sc->sc_iot;
 	u_int16_t reg;
+
+#ifdef PCICDEBUG
+	printf("pxapcic_socket_enable: socket %d\n", so->socket);
+#endif
 
 	/* XXX fix scoop1 base address before trying that. */
 	if (so->socket == 1)
@@ -294,7 +323,6 @@ pxapcic_socket_enable(pch)
 		reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_GPWR);
 		bus_space_write_2(iot, so->scooph, SCOOP_REG_GPWR,
 		    reg | (1<<6)); /* SCOOP0_CF_POWER_C3000 */
-		delay(1000);
 	}
 
  	/* XXX */
@@ -330,6 +358,8 @@ pxapcic_socket_enable(pch)
 		   
 	delay(20000);
 
+	pxapcic_wait_ready(so);
+
 #if 0
 	printf("cardtype %d\n", h->pcmcia);
 #endif
@@ -342,6 +372,10 @@ pxapcic_socket_disable(pch)
 	struct pxapcic_socket *so = pch;
 	bus_space_tag_t iot = so->sc->sc_iot;
 	u_int16_t reg;
+
+#ifdef PCICDEBUG
+	printf("pxapcic_socket_disable: socket %d\n", so->socket);
+#endif
 
 	/* XXX fix scoop1 base address before trying that. */
 	if (so->socket == 1)
@@ -357,7 +391,6 @@ pxapcic_socket_disable(pch)
 		reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_GPWR);
 		bus_space_write_2(iot, so->scooph, SCOOP_REG_GPWR,
 		    reg & ~(1<<6)); /* SCOOP0_CF_POWER_C3000 */
-		delay(1000);	/* XXX needed? */
 	}
 }
 
