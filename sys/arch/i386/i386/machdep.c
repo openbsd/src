@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 1998/01/22 02:30:46 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.78 1998/02/17 23:49:29 matthieu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -229,6 +229,14 @@ int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 
 extern u_int cnvmem;	/* BIOS's conventional memory size */
 extern u_int extmem;	/* BIOS's extended memory size */
+
+#ifdef APERTURE
+#ifdef INSECURE
+int allowaperture = 1;
+#else
+int allowaperture = 0;
+#endif
+#endif
 
 void	cyrix6x86_cpu_setup __P((const char *));
 void	intel586_cpu_setup __P((const char *));
@@ -1871,6 +1879,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOTDIR);		/* overloaded */
 		dev = chrtoblk((dev_t)name[1]);
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
+#ifdef APERTURE
+	case  CPU_ALLOWAPERTURE:
+		if (securelevel > 0) 
+			return (sysctl_rdint(oldp, oldlenp, newp, 
+					     allowaperture));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+					   &allowaperture));
+#endif
 	default:
 		return EOPNOTSUPP;
 	}

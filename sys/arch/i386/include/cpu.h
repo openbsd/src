@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 1997/12/17 08:54:51 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 1998/02/17 23:49:31 matthieu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -234,7 +234,8 @@ void	setconf __P((void));
 #define	CPU_BIOS		2	/* BIOS variables */
 #define	CPU_BLK2CHR		3	/* convert blk maj into chr one */
 #define	CPU_CHR2BLK		4	/* convert chr maj into blk one */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define CPU_ALLOWAPERTURE	5	/* allow mmap of /dev/xf86 */
+#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -242,6 +243,7 @@ void	setconf __P((void));
 	{ "bios", CTLTYPE_INT }, \
 	{ "blk2chr", CTLTYPE_STRUCT }, \
 	{ "chr2blk", CTLTYPE_STRUCT }, \
+	{ "allowaperture", CTLTYPE_INT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

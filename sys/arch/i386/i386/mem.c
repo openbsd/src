@@ -60,6 +60,13 @@
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
 
+/* open counter for aperture */
+static int ap_open_count = 0;
+extern int allowaperture;
+
+#define VGA_START 0xA0000
+#define VGA_END   0xBFFFF
+
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode, p)
@@ -79,7 +86,21 @@ mmopen(dev, flag, mode, p)
 		}
 		break;
 #endif
-
+#ifdef APERTURE
+	case 4:
+	        if (suser(p->p_ucred, &p->p_acflag) != 0) {
+			return(EPERM);
+		}
+		if (!allowaperture) {
+			return(EPERM);
+		}
+		/* authorize only one simultaneous open() */
+		if (ap_open_count > 0) {
+			return(EPERM);
+		}
+		ap_open_count++;
+		break;
+#endif
 	default:
 		break;
 	}
@@ -93,7 +114,11 @@ mmclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-
+#ifdef APERTURE
+	if (minor(dev) == 4) {
+		ap_open_count--;
+	}
+#endif
 	return (0);
 }
 
@@ -215,7 +240,16 @@ mmmmap(dev, off, prot)
 		if (!kernacc((caddr_t)off, NBPG, B_READ))
 			return -1;
 		return i386_btop(vtophys(off));
-
+#ifdef APERTURE
+/* minor device 4 is aperture driver */
+	case 4:
+		if (allowaperture 
+		    && (((off >= VGA_START && off <= VGA_END )
+			 || (unsigned)off > (unsigned)ctob(physmem)))) 
+			return i386_btop(off);
+		else 
+			return -1;
+#endif
 	default:
 		return -1;
 	}
