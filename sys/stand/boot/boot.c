@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 1997/05/31 15:48:24 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.10 1997/07/18 00:52:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,10 +36,9 @@
 #include <sys/reboot.h>
 #include <sys/stat.h>
 #include <libsa.h>
-#include <debug.h>
 #include "cmd.h"
 
-char *kernels[] = {
+const char *const kernels[] = {
 	"bsd",	"bsd.gz",
 	"obsd",	"obsd.gz",
 	NULL
@@ -48,31 +47,24 @@ char *kernels[] = {
 extern	const char version[];
 int	boothowto;
 u_int	cnvmem, extmem;
-struct cmd_state cmd = {
-	"", "bsd", "/etc/boot.conf", "/", (void *)0x100000, 5, ""
-};
+struct cmd_state cmd;
 
 void
 boot(bootdev)
 	dev_t	bootdev;
 {
-	register char *bootfile = kernels[0];
+	register const char *bootfile = kernels[0];
 	register int i = 0, f;
 
-#ifdef DEBUG
-	*(u_int16_t*)0xb8148 = 0x4730;
-#endif
-	gateA20(1);
-	cons_probe();	/* call console init before any io */
-#ifndef _TEST
-	memprobe();
-#endif
-#ifdef DEBUG
-	*(u_int16_t*)0xb8148 = 0x4f31;
-#endif
-	debug_init();
+	machdep();
 
 	printf(">> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
+
+	strncpy(cmd.image, bootfile, sizeof(cmd.image));
+	cmd.conf = "/etc/boot.conf";
+	cmd.cwd[0] = '/'; cmd.cwd[1] = '\0';
+	cmd.addr = (void *)0x100000;
+	cmd.timeout = 5;
 
 	devboot(bootdev, cmd.bootdev);
 	f = read_conf(&cmd);
