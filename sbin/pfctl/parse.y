@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.199 2002/11/23 05:22:24 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.200 2002/11/23 09:15:25 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -556,9 +556,9 @@ qassign_list	: qassign_item			{ $$ = $1; }
 		;
 
 qassign_item	: STRING			{
-			$$ = malloc(sizeof(struct node_queue));
+			$$ = calloc(1, sizeof(struct node_queue));
 			if ($$ == NULL)
-				err(1, "queue_item: malloc");
+				err(1, "queue_item: calloc");
 			strlcpy($$->queue, $1, PF_QNAME_SIZE);
 			$$->next = NULL;
 			$$->tail = $$;
@@ -900,9 +900,9 @@ if_item		: STRING			{
 				yyerror("unknown interface %s", $1);
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_if));
+			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
-				err(1, "if_item: malloc");
+				err(1, "if_item: calloc");
 			strlcpy($$->ifname, $1, IFNAMSIZ);
 			$$->ifa_flags = n->ifa_flags;
 			$$->not = 0;
@@ -952,9 +952,9 @@ proto_item	: STRING			{
 				yyerror("proto 0 cannot be used");
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_proto));
+			$$ = calloc(1, sizeof(struct node_proto));
 			if ($$ == NULL)
-				err(1, "proto_item: malloc");
+				err(1, "proto_item: calloc");
 			$$->proto = pr;
 			$$->next = NULL;
 			$$->tail = $$;
@@ -1055,9 +1055,9 @@ port_list	: port_item			{ $$ = $1; }
 		;
 
 port_item	: port				{
-			$$ = malloc(sizeof(struct node_port));
+			$$ = calloc(1, sizeof(struct node_port));
 			if ($$ == NULL)
-				err(1, "port_item: malloc");
+				err(1, "port_item: calloc");
 			$$->port[0] = $1;
 			$$->port[1] = $1;
 			$$->op = PF_OP_EQ;
@@ -1065,9 +1065,9 @@ port_item	: port				{
 			$$->tail = $$;
 		}
 		| PORTUNARY port		{
-			$$ = malloc(sizeof(struct node_port));
+			$$ = calloc(1, sizeof(struct node_port));
 			if ($$ == NULL)
-				err(1, "port_item: malloc");
+				err(1, "port_item: calloc");
 			$$->port[0] = $2;
 			$$->port[1] = $2;
 			$$->op = $1;
@@ -1075,9 +1075,9 @@ port_item	: port				{
 			$$->tail = $$;
 		}
 		| port PORTBINARY port		{
-			$$ = malloc(sizeof(struct node_port));
+			$$ = calloc(1, sizeof(struct node_port));
 			if ($$ == NULL)
-				err(1, "port_item: malloc");
+				err(1, "port_item: calloc");
 			$$->port[0] = $1;
 			$$->port[1] = $3;
 			$$->op = $2;
@@ -1123,9 +1123,9 @@ uid_list	: uid_item			{ $$ = $1; }
 		;
 
 uid_item	: uid				{
-			$$ = malloc(sizeof(struct node_uid));
+			$$ = calloc(1, sizeof(struct node_uid));
 			if ($$ == NULL)
-				err(1, "uid_item: malloc");
+				err(1, "uid_item: calloc");
 			$$->uid[0] = $1;
 			$$->uid[1] = $1;
 			$$->op = PF_OP_EQ;
@@ -1137,9 +1137,9 @@ uid_item	: uid				{
 				yyerror("user unknown requires operator = or !=");
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_uid));
+			$$ = calloc(1, sizeof(struct node_uid));
 			if ($$ == NULL)
-				err(1, "uid_item: malloc");
+				err(1, "uid_item: calloc");
 			$$->uid[0] = $2;
 			$$->uid[1] = $2;
 			$$->op = $1;
@@ -1151,9 +1151,9 @@ uid_item	: uid				{
 				yyerror("user unknown requires operator = or !=");
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_uid));
+			$$ = calloc(1, sizeof(struct node_uid));
 			if ($$ == NULL)
-				err(1, "uid_item: malloc");
+				err(1, "uid_item: calloc");
 			$$->uid[0] = $1;
 			$$->uid[1] = $3;
 			$$->op = $2;
@@ -1201,9 +1201,9 @@ gid_list	: gid_item			{ $$ = $1; }
 		;
 
 gid_item	: gid				{
-			$$ = malloc(sizeof(struct node_gid));
+			$$ = calloc(1, sizeof(struct node_gid));
 			if ($$ == NULL)
-				err(1, "gid_item: malloc");
+				err(1, "gid_item: calloc");
 			$$->gid[0] = $1;
 			$$->gid[1] = $1;
 			$$->op = PF_OP_EQ;
@@ -1215,9 +1215,9 @@ gid_item	: gid				{
 				yyerror("group unknown requires operator = or !=");
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_gid));
+			$$ = calloc(1, sizeof(struct node_gid));
 			if ($$ == NULL)
-				err(1, "gid_item: malloc");
+				err(1, "gid_item: calloc");
 			$$->gid[0] = $2;
 			$$->gid[1] = $2;
 			$$->op = $1;
@@ -1229,9 +1229,9 @@ gid_item	: gid				{
 				yyerror("group unknown requires operator = or !=");
 				YYERROR;
 			}
-			$$ = malloc(sizeof(struct node_gid));
+			$$ = calloc(1, sizeof(struct node_gid));
 			if ($$ == NULL)
-				err(1, "gid_item: malloc");
+				err(1, "gid_item: calloc");
 			$$->gid[0] = $1;
 			$$->gid[1] = $3;
 			$$->op = $2;
@@ -1305,9 +1305,9 @@ icmp6_list	: icmp6_item			{ $$ = $1; }
 		;
 
 icmp_item	: icmptype		{
-			$$ = malloc(sizeof(struct node_icmp));
+			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
-				err(1, "icmp_item: malloc");
+				err(1, "icmp_item: calloc");
 			$$->type = $1;
 			$$->code = 0;
 			$$->proto = IPPROTO_ICMP;
@@ -1331,9 +1331,9 @@ icmp_item	: icmptype		{
 				}
 				ulval = p->code;
 			}
-			$$ = malloc(sizeof(struct node_icmp));
+			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
-				err(1, "icmp_item: malloc");
+				err(1, "icmp_item: calloc");
 			$$->type = $1;
 			$$->code = ulval + 1;
 			$$->proto = IPPROTO_ICMP;
@@ -1343,9 +1343,9 @@ icmp_item	: icmptype		{
 		;
 
 icmp6_item	: icmp6type		{
-			$$ = malloc(sizeof(struct node_icmp));
+			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
-				err(1, "icmp_item: malloc");
+				err(1, "icmp_item: calloc");
 			$$->type = $1;
 			$$->code = 0;
 			$$->proto = IPPROTO_ICMPV6;
@@ -1369,9 +1369,9 @@ icmp6_item	: icmp6type		{
 				}
 				ulval = p->code;
 			}
-			$$ = malloc(sizeof(struct node_icmp));
+			$$ = calloc(1, sizeof(struct node_icmp));
 			if ($$ == NULL)
-				err(1, "icmp_item: malloc");
+				err(1, "icmp_item: calloc");
 			$$->type = $1;
 			$$->code = ulval + 1;
 			$$->proto = IPPROTO_ICMPV6;
@@ -1586,16 +1586,16 @@ redir_host_list	: host				{ $$ = $1; }
 
 redirpool	: /* empty */			{ $$ = NULL; }
 		| ARROW redirspec		{
-			$$ = malloc(sizeof(struct redirection));
+			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
-				err(1, "redirection: malloc");
+				err(1, "redirection: calloc");
 			$$->host = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
 		| ARROW redirspec PORT rport	{
-			$$ = malloc(sizeof(struct redirection));
+			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
-				err(1, "redirection: malloc");
+				err(1, "redirection: calloc");
 			$$->host = $2;
 			$$->rport = $4;
 		}
@@ -1607,9 +1607,9 @@ pooltype	: /* empty */			{ $$.type = PF_POOL_NONE; }
 		| SOURCEHASH			{ $$.type = PF_POOL_SRCHASH; }
 		| SOURCEHASH RANDOM
 		{
-			$$.key = malloc(sizeof(struct pf_poolhashkey));
+			$$.key = calloc(1, sizeof(struct pf_poolhashkey));
 			if ($$.key == NULL)
-				err(1, "pooltype: malloc");
+				err(1, "pooltype: calloc");
 			$$.type = PF_POOL_SRCKEYHASH;
 			$$.key->key32[0] = arc4random();
 			$$.key->key32[1] = arc4random();
@@ -1620,9 +1620,9 @@ pooltype	: /* empty */			{ $$.type = PF_POOL_NONE; }
 		{
 			MD5_CTX context;
 			
-			$$.key = malloc(sizeof(struct pf_poolhashkey));
+			$$.key = calloc(1, sizeof(struct pf_poolhashkey));
 			if ($$.key == NULL)
-				err(1, "pooltype: malloc");
+				err(1, "pooltype: calloc");
 			$$.type = PF_POOL_SRCKEYHASH;
 			MD5Init(&context);
 			MD5Update(&context, $3, strlen($3));
@@ -1637,16 +1637,16 @@ staticport	: /* empty */			{ $$ = 0; }
 
 redirection	: /* empty */			{ $$ = NULL; }
 		| ARROW host			{
-			$$ = malloc(sizeof(struct redirection));
+			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
-				err(1, "redirection: malloc");
+				err(1, "redirection: calloc");
 			$$->host = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
 		| ARROW host PORT rport	{
-			$$ = malloc(sizeof(struct redirection));
+			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
-				err(1, "redirection: malloc");
+				err(1, "redirection: calloc");
 			$$->host = $2;
 			$$->rport = $4;
 		}
@@ -1988,8 +1988,11 @@ dport		: /* empty */			{
 		}
 		;
 
-route_host	: '(' STRING ')'		{ 
-			if (($$->ifname = strdup($2)) == NULL) {
+route_host	: STRING			{ 
+			$$ = calloc(1, sizeof(struct node_host));
+			if ($$ == NULL)
+				err(1, "route_host: calloc");
+			if (($$->ifname = strdup($1)) == NULL) {
 				yyerror("routeto: strdup");
 				YYERROR;
 			}
@@ -1998,6 +2001,8 @@ route_host	: '(' STRING ')'		{
 				    $$->ifname);
 				YYERROR;
 			}
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| '(' STRING host ')'		{ 
 			$$ = $3;
@@ -2532,7 +2537,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
-					err(1, "expand_altq: malloc");
+					err(1, "expand_altq: calloc");
 				strlcpy(n->parent, qname, PF_QNAME_SIZE);
 				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
 				strlcpy(n->ifname, interface->ifname, IFNAMSIZ);
@@ -2562,9 +2567,9 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
 			/* found ourselve in queues */
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
-				n = malloc(sizeof(struct node_queue));
+				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
-					err(1, "expand_queue: malloc");
+					err(1, "expand_queue: calloc");
 				strlcpy(n->parent, a->qname, PF_QNAME_SIZE);
 				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
 				strlcpy(n->ifname, tqueue->ifname, IFNAMSIZ);
@@ -2706,9 +2711,9 @@ expand_rule(struct pf_rule *r,
 
 		TAILQ_INIT(&r->rt_pool.list);
 		for (h = rt_pool_hosts; h; h = h->next) {
-			pa = malloc(sizeof(struct pf_pooladdr));
+			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
-				yyerror("malloc");
+				yyerror("calloc");
 				error++;
 			}
 			pa->addr = h->addr;
@@ -2806,9 +2811,9 @@ expand_nat(struct pf_nat *n,
 
 		TAILQ_INIT(&n->rpool.list);
 		for (h = rpool_hosts; h; h = h->next) {
-			pa = malloc(sizeof(struct pf_pooladdr));
+			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
-				yyerror("malloc");
+				yyerror("calloc");
 				error++;
 			}
 			pa->addr = h->addr;
@@ -2818,9 +2823,9 @@ expand_nat(struct pf_nat *n,
 
 		TAILQ_INIT(&n->rpool.list);
 		for (h = rpool_hosts; h; h = h->next) {
-			pa = malloc(sizeof(struct pf_pooladdr));
+			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
-				yyerror("malloc");
+				yyerror("calloc");
 				error++;
 			}
 			pa->addr = h->addr;
@@ -2897,9 +2902,9 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 
 		TAILQ_INIT(&r->rpool.list);
 		for (h = rpool_hosts; h; h = h->next) {
-			pa = malloc(sizeof(struct pf_pooladdr));
+			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
-				yyerror("malloc");
+				yyerror("calloc");
 				error++;
 			}
 			pa->addr = h->addr;
