@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.10 2004/05/07 19:10:06 otto Exp $
+# $OpenBSD: Makefile,v 1.11 2004/10/03 19:24:58 otto Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
-	t18 t19 t20
+	t18 t19 t20 t21 t22
 
 t1:
 	grep t.s ${.CURDIR}/in | diff - ${.CURDIR}/t1.out
@@ -79,6 +79,16 @@ t20:
 	echo 'a+b' | grep  -qw 'a+b'
 	echo 'a+b' | fgrep -qw 'a+b'
 
+t21:
+	grep -l D.e ${.CURDIR}/in | diff - ${.CURDIR}/t21.out
+	egrep -l D.e ${.CURDIR}/in | diff - ${.CURDIR}/t21.out
+	grep -l '.*D.e' ${.CURDIR}/in | diff - ${.CURDIR}/t21.out
+	egrep -l '.*D.e' ${.CURDIR}/in | diff - ${.CURDIR}/t21.out
+
+t22:
+	grep -l 'a.*b' ${.CURDIR}/t22.in
+
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
+.PHONY: t21 t22
 
 .include <bsd.regress.mk>
