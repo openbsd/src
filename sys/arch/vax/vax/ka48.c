@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.2 2001/02/25 15:55:27 hugh Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.3 2001/04/01 19:17:38 hugh Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -86,7 +86,18 @@ struct	cpu_dep ka48_calls = {
 void
 ka48_conf()
 {
-	printf("cpu: KA48\n");
+	char *cpuname;
+	switch((vax_siedata >> 8) & 0xFF) {
+	case VAX_STYP_45:
+		cpuname = "KA45";
+		break;
+	case VAX_STYP_48:
+		cpuname = "KA48";
+		break;
+	default:
+		cpuname = "unknown SOC";
+	}
+	printf("cpu: %s\n", cpuname);
 	ka48_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 	printf("cpu: turning on floating point chip\n");
 	mtpr(2, PR_ACCS); /* Enable floating points */
