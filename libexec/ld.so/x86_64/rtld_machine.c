@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2004/02/10 14:47:07 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2004/02/10 16:14:11 drahn Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -228,11 +228,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		where = (Elf_Addr *)(rels->r_offset + loff);
 
 		if (RELOC_USE_ADDEND(type))
-#if 1
 			value = rels->r_addend;
-#else
-			value = *where & RELOC_VALUE_BITMASK(type);
-#endif
 		else
 			value = 0;
 
@@ -339,16 +335,6 @@ resolve_failed:
 	return (fails);
 }
 
-#if 0
-struct jmpslot {
-	u_short opcode;
-	u_short addr[2];
-	u_short reloc_index;
-#define JMPSLOT_RELOC_MASK              0xffff
-};
-#define JUMP    0xe990          /* NOP + JMP opcode */
-#endif
-
 void
 _dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
 {
@@ -361,16 +347,16 @@ _dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
 Elf_Addr
 _dl_bind(elf_object_t *object, int index)
 {
-	Elf_Rel *rel;
+	Elf_RelA *rel;
 	Elf_Word *addr;
 	const Elf_Sym *sym, *this;
 	const char *symn;
-	Elf_Addr ooff;
+	Elf_Addr ooff, newval;
 	sigset_t omask, nmask;
 
-	rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
+	rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 
-	rel += index/sizeof(Elf_Rel);
+	rel += index;
 
 	sym = object->dyn.symtab;
 	sym += ELF_R_SYM(rel->r_info);
@@ -385,6 +371,8 @@ _dl_bind(elf_object_t *object, int index)
 		*((int *)0) = 0;        /* XXX */
 	}
 
+	newval = ooff + this->st_value + rel->r_addend;
+
 	/* if GOT is protected, allow the write */
 	if (object->got_size != 0) {
 		sigfillset(&nmask);
@@ -393,7 +381,7 @@ _dl_bind(elf_object_t *object, int index)
 		    PROT_READ|PROT_WRITE);
 	}
 
-	_dl_reloc_plt((Elf_Addr *)addr, ooff + this->st_value);
+	_dl_reloc_plt((Elf_Addr *)addr, newval);
 
 	/* put the GOT back to RO */
 	if (object->got_size != 0) {
@@ -402,21 +390,16 @@ _dl_bind(elf_object_t *object, int index)
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
-	return((Elf_Addr)ooff + this->st_value);
+	return(newval);
 }
 
-/*/
-#define LAZY_BINDING_WORKS
- */
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	extern void _dl_bind_start(void);       /* XXX */
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
-#ifdef LAZY_BINDING_WORKS
 	int i, num;
 	Elf_RelA *rel;
-#endif
 	Elf_Addr ooff;
 	const Elf_Sym *this;
 
@@ -451,22 +434,19 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
 
-#ifdef LAZY_BINDING_WORKS
 	if (!lazy) {
-#endif
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-#ifdef LAZY_BINDING_WORKS
 	} else {
 		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 		num = (object->Dyn.info[DT_PLTRELSZ]);
 		for (i = 0; i < num/sizeof(Elf_RelA); i++, rel++) {
 			Elf_Addr *where;
 			where = (Elf_Addr *)(rel->r_offset + object->load_offs);
-			*where = object->load_offs + rel->r_addend;
+			*where += object->load_offs;
 		}
 
 	}
-#endif
+
 	/* PLT is already RO on i386, no point in mprotecting it, just GOT */
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,
