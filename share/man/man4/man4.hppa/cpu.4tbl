@@ -1,0 +1,138 @@
+.\" $OpenBSD: cpu.4tbl,v 1.1 2002/04/05 21:36:16 mickey Exp $
+.\"
+.\" Copyright (c) 2002 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Michael Shalayeff.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 4, 2002
+.Dt CPU 4 hppa
+.Os
+.Sh NAME
+.Nm cpu
+.Nd HP PA-RISC CPU
+.Sh SYNOPSIS
+.Cd "cpu*       at mainbus0 irq 31
+.Sh DESCRIPTION
+.Pp
+The following table lists the
+.Tn PA-RISC
+CPU types and thier characteristics, such as TLB and maximum
+cache sizes,
+.Tn HP9000/700
+machines they were used in (see also
+.Xr intro 4
+for the reverse list).
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;   
+l l l l l l l l
+l l l l l l l l
+_ _ _ _ _ _ _ _
+l l l l l l l l .
+CPU:PA:CLK:FPU:Caches:TLB:BTLB:Models
+   :  :Mhz:y/n:      :   :    :
+7000:1.1a:50?:No : :64?:4 I:705,710,720
+    :    :   :   : :   :4 D:730,750
+7100:1.1b:100:Yes: 1MB L2I:120:16:715/33/50/75
+    :    :   :   : 2MB L2D:   :  :725/50/75
+    :    :   :   :        :   :  :735/100,755/100
+7150:1.1b:125?:Yes: 1MB L2I:120?:16:735/125,755/125
+    :    :    :   : 2MB L2D:    :  :
+7100LC:1.1c:100:Yes: 1KB L1I:64:8:712/60/80/100
+      :    :   :   : 1MB L2I:  : :715/64/80/100
+      :    :   :   : 1MB L2D:  : :715/100XC
+      :    :   :   :        :  : :725/64/100
+7200:1.1d:140:Yes: 2KB L1 :120:16:C100,C110
+    :    :   :   : 1MB L2I:   :  :J200,J210
+    :    :   :   : 1MB L2D:   :  :
+7300LC:1.1e:180:Yes:64KB L1I:96:8:A180,A180C
+      :    :   :   :64KB L1D:  : :B132,B160,B180
+      :    :   :   : 1MB L2 :  : :C132L,C160L
+.TE
+.in -\n(dIu
+.Pp
+.Sh FLOATING-POINT COPROCESSOR
+The following table summirizes available floating-point coprocessor
+models for the 32 bit
+.Tn PA-RISC
+processors.
+.Pp
+.in +\n(dIu
+.TS
+tab (:) ;   
+l l
+_ _
+l l .
+FPU:Model
+Indigo:
+Sterling I MIU (TYCO):
+Sterling I MIU (ROC w/Weitek):
+FPC (w/Weitek):
+FPC (w/Bit):
+Timex-II:
+Rolex:
+HARP-I:
+Tornado:
+PA-50 (Hitachi):
+PCXL:712/80/80/100
+.TE
+.in -\n(dIu
+.Pp
+.Sh PERFORMANCE MONITOR COPROCESSOR
+The performance monitor coprocessor is an optional,
+implementation-dependent coprocessor which provides a minimal common
+software interface to implementation-dependent performance monitor hardware.
+.Pp
+.Sh DEBUG SPECIAL UNIT
+The debug special function unit is an optional,
+architected SFU which provides hardware assistance for software debugging
+using breakpoints.
+The debug SFU is currently defined only for Level 0 processors.
+.Pp
+.Sh SEE ALSO
+.Xr asp 4 ,
+.Xr intro 4 ,
+.Xr lasi 4
+.Xr wax 4
+.Pp
+.Bl -tag -width PA7100LCxERSxx -compact
+.It PA-RISC 1.1 Architecture and Instruction Set Reference Manual
+Hewlett-Packard, May 15, 1996
+.It PA7100LC ERS
+Hewlett-Packard, March 30 1999, Public version 1.0
+.It PA7300LC ERS
+Hewlett-Packard, March 18 1996, Version 1.0
+.Sh HISTORY
+The
+.Nm
+driver was written by
+.An Michael Shalayeff Aq mickey@openbsd.org
+for HPPA
+port for
+.Ox 2.5 .
