@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 1996/04/28 10:59:03 deraadt Exp $ */
+/*	$OpenBSD: mem.c,v 1.5 1997/02/10 11:39:26 downsj Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -85,7 +85,7 @@
 #include <vm/vm.h>
 
 extern u_int lowram;
-caddr_t zeropage;
+static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
@@ -193,18 +193,18 @@ mmrw(dev, uio, flags)
 			 * XXX on the hp300 we already know where there
 			 * is a global zeroed page, the null segment table.
 			 */
-			if (zeropage == NULL) {
+			if (devzeropage == NULL) {
 #if CLBYTES == NBPG
 				extern caddr_t Segtabzero;
-				zeropage = Segtabzero;
+				devzeropage = Segtabzero;
 #else
-				zeropage = (caddr_t)
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 #endif
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 		default:

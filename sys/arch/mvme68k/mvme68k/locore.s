@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.13 1997/02/08 10:50:36 deraadt Exp $ */
+/*	$OpenBSD: locore.s,v 1.14 1997/02/10 11:39:25 downsj Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1119,38 +1119,6 @@ Ldorte:
 #define	ENTRY(name)		EXPORT(name)
 #define ALTENTRY(name, rname) 	ENTRY(name)
 #endif
-
-/*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movl	#NBPG/32,d0		| number of 32 byte chunks
-#if defined(M68040)
-	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lmlloop			| no, use movl
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
-	rts
-#endif
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
-	rts
 
 /*
  * non-local gotos
