@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.14 2004/05/10 12:10:50 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.15 2004/09/15 22:21:40 deraadt Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.14 2004/05/10 12:10:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.15 2004/09/15 22:21:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -256,7 +256,7 @@ snarf(char *linebuf, int *flag)
  * Delete messages.
  */
 int
-delete(void *v)
+deletecmd(void *v)
 {
 	int *msgvec = v;
 

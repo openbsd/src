@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2004/05/10 12:10:50 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2004/09/15 22:21:40 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.22 2004/05/10 12:10:50 millert Exp $
+ *	$OpenBSD: extern.h,v 1.23 2004/09/15 22:21:40 deraadt Exp $
  */
 
 struct name;
@@ -101,7 +101,7 @@ void	 commands(void);
 int	 copycmd(void *);
 int	 core(void *);
 int	 count(struct name *);
-int	 delete(void *);
+int	 deletecmd(void *);
 int	 delm(int *);
 int	 deltype(void *);
 void	 demail(void);
@@ -200,7 +200,7 @@ int	 putline(FILE *, char *, int);
 int	 pversion(void *);
 int	 quit(void);
 int	 quitcmd(void *);
-int	 raise(int);
+int	 chraise(int);
 int	 readline(FILE *, char *, int, int *);
 void	 register_file(FILE *, int, pid_t);
 void	 regret(int);
