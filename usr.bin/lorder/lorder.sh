@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: lorder.sh,v 1.2 1996/06/26 05:36:09 deraadt Exp $
+#	$OpenBSD: lorder.sh,v 1.3 1996/09/16 01:16:27 deraadt Exp $
 #	$NetBSD: lorder.sh,v 1.3 1995/04/24 07:38:52 cgd Exp $
 #
 # Copyright (c) 1990, 1993
@@ -50,8 +50,17 @@ case $# in
 esac
 
 # temporary files
-R=/tmp/_reference_$$
-S=/tmp/_symbol_$$
+TDIR=/tmp/_lorder$$
+R=$TDIR/reference
+S=$TDIR/symbol
+
+um=`umask`
+umask 022
+if ! mkdir $TDIR ; then
+	echo temporary directory exists $TDIR
+	exit 1
+fi
+umask $um
 
 # remove temporary files on HUP, INT, QUIT, PIPE, TERM
 trap "rm -f $R $S; exit 1" 1 2 3 13 15
@@ -88,4 +97,4 @@ nm -go $* | sed "
 sort +1 $R -o $R
 sort +1 $S -o $S
 join -j 2 -o 1.1 2.1 $R $S
-rm -f $R $S
+rm -rf $TDIR
