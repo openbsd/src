@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.15 2001/01/09 03:27:04 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.16 2001/01/16 20:01:27 mickey Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -97,7 +97,7 @@ isp_attach(isp)
 	lptr->adapter_softc = isp;
 	lptr->device = &isp_dev;
 	lptr->adapter = &isp->isp_osinfo._adapter;
-	lptr->openings = isp->isp_maxcmds;
+	lptr->openings = isp->isp_maxcmds > 128? 128 : isp->isp_maxcmds;
 	if (IS_FC(isp)) {
 		isp->isp_osinfo._adapter.scsi_cmd = ispcmd;
 		lptr->adapter_buswidth = MAX_FC_TARG;
@@ -115,7 +115,8 @@ isp_attach(isp)
 			lptrb->adapter_softc = isp;
 			lptrb->device = &isp_dev;
 			lptrb->adapter = &isp->isp_osinfo._adapter;
-			lptrb->openings = isp->isp_maxcmds;
+			lptrb->openings = isp->isp_maxcmds > 128?
+			    128 : isp->isp_maxcmds;
 			lptrb->adapter_buswidth = MAX_TARGETS;
 			lptrb->adapter_target = sdp->isp_initiator_id;
 			lptrb->flags = SDEV_2NDBUS;
