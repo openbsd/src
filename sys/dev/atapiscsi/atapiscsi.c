@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.4 1999/07/22 03:10:47 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.5 1999/07/22 07:45:48 deraadt Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -183,6 +183,8 @@ atapiscsi_attach(parent, self, aux)
 	struct ataparams ids;
 	struct ataparams *id = &ids;
 	int drive;
+
+	printf("\n");
 
 	/* Ouch */
 	as->valid[0] = as->valid[1] = 0;
