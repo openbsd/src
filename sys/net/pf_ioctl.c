@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.6 2002/06/16 17:00:39 aaron Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.7 2002/07/05 14:05:44 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -198,6 +198,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_status.running = 1;
 			pf_status.states = states;
 			pf_status.since = time.tv_sec;
+			if (status_ifp != NULL)
+				strlcpy(pf_status.ifname, 
+				    status_ifp->if_xname, IFNAMSIZ);
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
 		}
 		break;
@@ -1320,12 +1323,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_if *pi = (struct pfioc_if *)addr;
 		struct ifnet *ifp;
 
-		if ((ifp = ifunit(pi->ifname)) == NULL)
-			error = EINVAL;
-		else {
-			status_ifp = ifp;
-			strlcpy(pf_status.ifname, ifp->if_xname, IFNAMSIZ);
-		}
+		if (pi->ifname[0] == 0) {
+			status_ifp = NULL;
+			bzero(pf_status.ifname, IFNAMSIZ);
+		} else
+			if ((ifp = ifunit(pi->ifname)) == NULL)
+				error = EINVAL;
+			else {
+				status_ifp = ifp;
+				strlcpy(pf_status.ifname, ifp->if_xname, IFNAMSIZ);
+			}
 		break;
 	}
 
@@ -1346,6 +1353,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_status.states = states;
 		pf_status.since = since;
 		pf_status.debug = debug;
+		if (status_ifp != NULL)
+			strlcpy(pf_status.ifname,
+			    status_ifp->if_xname, IFNAMSIZ);
 		break;
 	}
 
