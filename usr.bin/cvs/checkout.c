@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.12 2004/12/14 01:11:51 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.13 2005/02/22 22:12:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,6 +39,9 @@
 #include "proto.h"
 
 
+#define CVS_LISTMOD    1
+#define CVS_STATMOD    2
+
 
 /*
  * cvs_checkout()
@@ -49,12 +52,50 @@
 int
 cvs_checkout(int argc, char **argv)
 {
-	int i, ch;
+	int i, ch, statmod, kflag;
+	char *date, *rev, *koptstr, *tgtdir, *rcsid;
 	struct cvsroot *root;
 
-	while ((ch = getopt(argc, argv, "c")) != -1) {
+	statmod = 0;
+	rcsid = NULL;
+	tgtdir = NULL;
+	kflag = RCS_KWEXP_DEFAULT;
+
+	while ((ch = getopt(argc, argv, "AcD:d:fj:k:lNnPRr:st:")) != -1) {
 		switch (ch) {
+		case 'A':
+			break;
 		case 'c':
+			statmod = CVS_LISTMOD;
+			break;
+		case 'D':
+			date = optarg;
+			break;
+		case 'd':
+			tgtdir = optarg;
+			break;
+		case 'f':
+			break;
+		case 'j':
+			break;
+		case 'k':
+			koptstr = optarg;
+			kflag = rcs_kflag_get(koptstr);
+			if (RCS_KWEXP_INVAL(kflag)) {
+				cvs_log(LP_ERR,
+				    "invalid RCS keyword expansion mode");
+				rcs_kflag_usage();
+				return (EX_USAGE);
+			}
+			break;
+		case 'r':
+			rev = optarg;
+			break;
+		case 's':
+			statmod = CVS_STATMOD;
+			break;
+		case 't':
+			rcsid = optarg;
 			break;
 		default:
 			return (EX_USAGE);
@@ -64,9 +105,14 @@ cvs_checkout(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
+	if (!statmod && (argc == 0)) {
 		cvs_log(LP_ERR,
 		    "must specify at least one module or directory");
+		return (EX_USAGE);
+	}
+
+	if (statmod && (argc > 0)) {
+		cvs_log(LP_ERR,  "-c and -s must not get any arguments");
 		return (EX_USAGE);
 	}
 
@@ -90,12 +136,21 @@ cvs_checkout(int argc, char **argv)
 			if (cvs_sendarg(root, argv[i], 0) < 0)
 				break;
 
-		if ((cvs_senddir(root, cvs_files) < 0) ||
-		    (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0))
+		if (cvs_senddir(root, cvs_files) < 0)
+			return (EX_PROTOCOL);
+		if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
 			cvs_log(LP_ERR, "failed to expand module");
 
 		/* XXX not too sure why we have to send this arg */
 		if (cvs_sendarg(root, "-N", 0) < 0)
+			return (EX_PROTOCOL);
+
+		if ((statmod == CVS_LISTMOD) &&
+		    (cvs_sendarg(root, "-c", 0) < 0))
+			return (EX_PROTOCOL);
+
+		if ((statmod == CVS_STATMOD) &&
+		    (cvs_sendarg(root, "-s", 0) < 0))
 			return (EX_PROTOCOL);
 
 		for (i = 0; i < argc; i++)
