@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.6 1999/08/16 07:55:40 fgsch Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.7 1999/08/16 07:57:33 fgsch Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -183,8 +183,11 @@ sm_pcmcia_attach(parent, self, aux)
 	sc->sc_bst = psc->sc_pcioh.iot;
 	sc->sc_bsh = psc->sc_pcioh.ioh;
 
+#ifdef notyet
 	sc->sc_enable = sm_pcmcia_enable;
 	sc->sc_disable = sm_pcmcia_disable;
+#endif
+	sc->sc_enabled = 1;
 
 	if (pcmcia_io_map(pa->pf, (cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8, 0, cfe->iospace[0].length,
@@ -222,10 +225,17 @@ sm_pcmcia_attach(parent, self, aux)
 	if (enaddr == NULL)
 		printf(", unable to get Ethernet address\n");
 
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
+	    sc);
+	if (psc->sc_ih == NULL)
+		printf(": couldn't establish interrupt\n");
+
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
 
+#ifdef notyet
 	pcmcia_function_disable(pa->pf);
+#endif
 }
 
 int
