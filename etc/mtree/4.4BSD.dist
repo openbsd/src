@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.71 1999/05/02 21:16:50 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.72 1999/05/04 16:29:11 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -206,6 +206,17 @@ lint
 # ./usr/libdata/lint
 ..
 
+# ./usr/libdata/perl5
+perl5
+
+# ./usr/libdata/perl5/site_perl
+site_perl
+# ./usr/libdata/perl5/site_perl
+..
+
+# ./usr/libdata/perl5
+..
+
 # ./usr/libdata
 ..
 
@@ -245,6 +256,18 @@ lib
 
 # ./usr/local/libdata
 libdata
+
+# ./usr/local/libdata/perl5
+perl5
+
+# ./usr/local/libdata/perl5/site_perl
+site_perl
+# ./usr/local/libdata/perl5/site_perl
+..
+
+# ./usr/local/libdata/perl5
+..
+
 # ./usr/local/libdata
 ..
 
