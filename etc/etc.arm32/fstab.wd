@@ -1,0 +1,3 @@
+/dev/wd0a	/		ffs	rw 1 1
+#/dev/wd0e	/var		ffs	rw 1 2
+#/dev/wd0f	/usr		ffs	rw 1 3

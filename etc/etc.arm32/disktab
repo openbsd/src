@@ -1,0 +1,83 @@
+# Disk geometry and partition layout tables. 
+# Key:
+#	dt	controller type
+#	ty	type of disk (fixed, removeable, simulated)
+#	d[0-4]	drive-type-dependent parameters
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	sc	#sectors/cylinder, ns*nt default
+#	su	#sectors/unit, sc*nc default
+#	se	sector size, DEV_BSIZE default
+#	rm	rpm, 3600 default
+#	sf	supports bad144-style bad sector forwarding
+#	sk	sector skew per track, default 0
+#	cs	sector skew per cylinder, default 0
+#	hs	headswitch time, default 0
+#	ts	one-cylinder seek time, default 0
+#	il	sector interleave (n:1), 1 default
+#	bs	boot block size, default BBSIZE
+#	sb	superblock size, default SBSIZE
+#	o[a-h]	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#	t[a-h]	partition types (filesystem, swap, etc)
+#
+# All partition sizes reserve space for bad sector tables.
+# (5 cylinders needed for maintenance + replacement sectors)
+#
+
+# a == root
+# b == swap
+# c == whole disk
+# d == scratch
+# e == /var
+# f == scratch
+# h == /usr
+
+cfs420a|Conner Peripherals 420MB IDE:\
+	:dt=ESDI:ty=winchester:se#512:nt#16:ns#63:nc#826: \
+	:pa#20160:oa#416304:ta=4.2BSD:ba#4096:fa#512: \
+	:pb#17136:ob#436464:tb=swap: \
+	:pc#832608:oc#0: \
+	:pd#416304:od#0:td=adfs:bd#512: \
+	:pe#379008:oe#453600:te=4.2BSD:be#4096:fe#512:
+
+disk4|Seagate ST3491A:\
+	:dt=ESDI:ty=winchester:se#512:nt#15:ns#62:nc#899: \
+	:pa#46500:oa#46500:ta=4.2BSD:ba#4096:fa#512: \
+	:pb#46500:ob#93000:tb=swap:bb#4096:fb#512: \
+	:pc#836070:oc#0: \
+	:pd#46500:od#0:td=adfs:bd#512: \
+	:pe#46500:oe#139500:te=4.2BSD:be#512: \
+	:pf#650070:of#186000:tf=4.2BSD:bf#4096:ff#512:
+
+cfs425a|Conner Peripherals 425MB IDE:\
+	:dt=ESDI:ty=winchester:se#512:nt#16:ns#62:nc#839: \
+	:pa#49600:oa#49600:ta=4.2BSD:ba#4096:fa#512: \
+	:pb#49600:ob#99200:tb=swap: \
+	:pc#832288:oc#0: \
+	:pd#49600:od#0:td=adfs:bd#512: \
+	:pe#49600:oe#148800:te=4.2BSD:be#4096:fe#512: \
+	:pf#633888:of#198400:tf=4.2BSD:bf#4096:ff#512:
+
+cfa850|Conner Peripherals 850MB IDE:\
+	:dt=ESDI:ty=winchester:\
+	:nc#1651:ns#63:nt#16:se#512:\
+	:pa#60480:oa#50400:ta=4.2BSD:\
+	:pb#129024:ob#110880:tb=swap:\
+	:pc#1664208:oc#0:\
+	:pd#50400:od#0:\
+	:pe#1424304:oe#239904:te=4.2BSD:
+
+floppy|3.5in High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:pa#2880:oa#0:ba#4096:fa#512:\
+	:pb#2880:ob#0:\
+	:pc#2880:oc#0:
+
+LMR650E|pd650|PD650|650MB PD Cartridge:\
+	:dt=SCSI::ty=removable:se#512:nt#64:ns#32:nc#634: \
+	:pa#1298432:oa#0:ta=4.2BSD:ba#4096:fa#512:\
+	:pc#1298432:oc#0:
