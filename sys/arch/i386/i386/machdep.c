@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.244 2003/09/11 21:48:56 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.245 2003/10/14 19:38:21 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1097,6 +1097,7 @@ viac3_rnd(void *v)
 }
 
 #ifdef CRYPTO
+
 struct viac3_session {
 	u_int8_t ses_iv[16];
 	int ses_klen, ses_used;
@@ -1428,6 +1429,7 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 
 	splx(s);
 }
+
 #endif /* CRYPTO */
 
 #endif /* defined(I686_CPU) */
@@ -1504,7 +1506,8 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			viac3_crypto_present = 1;
 			printf(" AES");
 		}
-#endif
+#endif /* CRYPTO */
+
 		printf("\n");
 		break;
 	}
