@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.14 2000/06/18 04:33:03 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.15 2000/06/18 06:24:45 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.94 2000/06/13 10:06:19 jinmei Exp $	*/
 
 /*
@@ -210,6 +210,22 @@ ip6intr()
 		splx(s);
 		if (m == 0)
 			return;
+#ifndef PULLDOWN_TEST
+		/*
+		 * KAME requirement: make sure mbuf is packed well
+		 */
+
+		if (m->m_next) {
+			int l;
+			if (m->m_pkthdr.len > MCLBYTES)
+				l = MCLBYTES;
+			else
+				l = m->m_pkthdr.len;
+			m = m_pullup2(m, l);
+			if (!m)
+				continue;
+		}
+#endif
 		ip6_input(m);
 	}
 }
