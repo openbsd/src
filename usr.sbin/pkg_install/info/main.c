@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.6 1997/12/14 09:42:19 gene Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/12/14 10:04:01 gene Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.6 1997/12/14 09:42:19 gene Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.7 1997/12/14 10:04:01 gene Exp $";
 #endif
 
 /*
@@ -177,6 +177,6 @@ usage(const char *name, const char *fmt, ...)
     fprintf(stderr, "-v         show all information\n");
     fprintf(stderr, "-t temp    use temp as template for mktemp()\n");
     fprintf(stderr, "-e pkg     returns 0 if pkg is installed, 1 otherwise\n");
-    fprintf(stderr, "\n[no args = -c -d -R]\n");
+    fprintf(stderr, "\n[no args = -a -I]\n");
     exit(1);
 }
