@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2003/10/16 05:03:22 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2003/12/18 20:06:15 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -258,12 +258,6 @@ decr_intr(struct clockframe *frame)
 	 */
 	ppc_mtdec(nextevent - tb);
 
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = nexttimerevent - ticks_per_intr;
-
 	if (cpl & SPL_CLOCK) {
 		tickspending += nticks;
 		statspending += nstats;
@@ -286,13 +280,19 @@ decr_intr(struct clockframe *frame)
 			 * Do softclock stuff only on the last iteration.
 			 */
 			frame->pri = s | SINT_CLOCK;
-			if (nticks > 1)
-				while (--nticks > 1)
-					hardclock(frame);
+			while (nticks > 1) {
+				/* sync lasttb with hardclock */
+				lasttb += ticks_per_intr;
+				hardclock(frame);
+				nticks--;
+			}
 
 			frame->pri = s;
-			if (nticks)
+			if (nticks) {
+				/* sync lasttb with hardclock */
+				lasttb += ticks_per_intr;
 				hardclock(frame);
+			}
 
 			while (nstats-- > 0)
 				statclock(frame);
@@ -398,10 +398,9 @@ microtime(struct timeval *tvp)
 
 	s = ppc_intr_disable();
 	tb = ppc_mftb();
-	ticks = (tb - lasttb) * ns_per_tick;
+	ticks = ((tb - lasttb) * ns_per_tick) / 1000;
 	*tvp = time;
 	ppc_intr_enable(s);
-	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;

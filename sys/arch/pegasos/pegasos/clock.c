@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 2003/10/31 03:54:33 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 2003/12/18 20:06:15 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -262,12 +262,6 @@ decr_intr(struct clockframe *frame)
 	 */
 	ppc_mtdec(nextevent - tb);
 
-	/*
-	 * lasttb is used during microtime. Set it to the virtual
-	 * start of this tick interval.
-	 */
-	lasttb = nexttimerevent - ticks_per_intr;
-
 	if (cpl & SPL_CLOCK) {
 		tickspending += nticks;
 		statspending += nstats;
@@ -291,12 +285,18 @@ decr_intr(struct clockframe *frame)
 			 */
 			frame->pri = s | SINT_CLOCK;
 			if (nticks > 1)
-				while (--nticks > 1)
+				while (--nticks > 1) {
+					/* sync lasttb with hardclock */
+					lasttb += ticks_per_intr;
 					hardclock(frame);
+				}
 
 			frame->pri = s;
-			if (nticks)
+			if (nticks) {
+				/* sync lasttb with hardclock */
+				lasttb += ticks_per_intr;
 				hardclock(frame);
+			}
 
 			while (nstats-- > 0)
 				statclock(frame);
