@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 1996/06/23 14:30:50 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 1996/07/12 01:03:44 weingart Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.3 1996/06/23 14:30:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.4 1996/07/12 01:03:44 weingart Exp $";
 #endif
 #endif /* not lint */
 
@@ -555,7 +555,8 @@ single_user()
 	pid_t pid, wpid;
 	int status;
 	sigset_t mask;
-	char *shell = _PATH_BSHELL;
+	char shell[MAXPATHLEN];		/* Allocate space here */
+	char name[MAXPATHLEN];		/* Name (argv[0]) of shell */
 	char *argv[2];
 #ifdef SECURE
 	struct ttyent *typ;
@@ -564,6 +565,10 @@ single_user()
 		"Enter root password, or ^D to go multi-user\n";
 	char *clear, *password;
 #endif
+
+	/* Init shell and name */
+	strcpy(shell, _PATH_BSHELL);
+	strcpy(name, "-sh");
 
 	/*
 	 * If the kernel is in secure mode, downgrade it to insecure mode.
@@ -615,8 +620,22 @@ single_user()
 			    num != 0 && *cp != '\n' && cp < &altshell[127])
 					cp++;
 			*cp = '\0';
-			if (altshell[0] != '\0')
-				shell = altshell;
+
+			/* Copy in alternate shell */
+			if (altshell[0] != '\0'){
+				char *p;
+
+				/* Binary to exec */
+				strcpy(shell, altshell);
+
+				/* argv[0] */
+				p = strrchr(altshell, '/');
+				if(p == NULL) p = altshell;
+				else p++;
+
+				name[0] = '-';
+				strcpy(&name[1], p);
+			}
 		}
 #endif /* DEBUGSHELL */
 
@@ -632,11 +651,14 @@ single_user()
 		 * Fire off a shell.
 		 * If the default one doesn't work, try the Bourne shell.
 		 */
-		argv[0] = "-sh";
-		argv[1] = 0;
+		argv[0] = name;
+		argv[1] = NULL;
 		setenv("PATH", _PATH_STDPATH, 1);
 		execv(shell, argv);
 		emergency("can't exec %s for single user: %m", shell);
+
+		argv[0] = "-sh";
+		argv[1] = NULL;
 		execv(_PATH_BSHELL, argv);
 		emergency("can't exec %s for single user: %m", _PATH_BSHELL);
 		sleep(STALL_TIMEOUT);
