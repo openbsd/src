@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$Id: le.4,v 1.1.1.1 1995/10/18 08:44:31 deraadt Exp $
+.\"	$Id: le.4,v 1.2 1996/05/02 01:24:31 deraadt Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sparc
@@ -64,6 +64,30 @@ interface employs the address resolution protocol described in
 .Xr arp 4
 to dynamically map between Internet and Ethernet addresses on the local
 network.
+.Pp
+The sun4m interface has two types of connectors:
+.Pp
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.It AUI/DIX
+Standard 15 pin connector
+.It 10BaseT
+UTP, also known as twisted pair
+.El
+.Pp
+The default port to use is selected at boot time; if there is link on the UTP
+port, then the UTP interface is selected, otherwise the active connector
+defaults to AUI. To choose an alternate port,
+use the following flag
+.Xr ifconfig 8
+or in your /etc/hostname.le? file.
+.Pp
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.It link0
+Use the UTP port.
+.It -link0
+Use the AUI port.
+.El
+.Pp
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr inet 4 ,
