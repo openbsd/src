@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.10 2004/12/14 10:17:28 mcbride Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.11 2005/03/04 16:57:34 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -100,7 +100,6 @@ static struct transport_vtbl udp_encap_transport_vtbl = {
 };
 
 char	 *udp_encap_default_port = 0;
-char	 *udp_encap_bind_port = 0;
 
 void
 udp_encap_init(void)

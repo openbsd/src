@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.h,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
+/*	$OpenBSD: udp_encap.h,v 1.2 2005/03/04 16:57:34 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -32,6 +32,5 @@ struct transport *udp_encap_bind (const struct sockaddr *);
 void		  udp_encap_init (void);
 
 extern char	 *udp_encap_default_port;
-extern char	 *udp_encap_bind_port;
 
 #endif /* _UDP_H_ */
