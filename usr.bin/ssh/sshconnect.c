@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.63 2000/04/12 07:03:06 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.64 2000/04/12 07:45:44 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -986,7 +986,7 @@ void
 ssh_exchange_identification()
 {
 	char buf[256], remote_version[256];	/* must be same size! */
-	int remote_major, remote_minor, i;
+	int remote_major, remote_minor, i, mismatch;
 	int connection_in = packet_get_connection_in();
 	int connection_out = packet_get_connection_out();
 
@@ -1020,39 +1020,51 @@ ssh_exchange_identification()
 	debug("Remote protocol version %d.%d, remote software version %.100s",
 	      remote_major, remote_minor, remote_version);
 
-/*** XXX option for disabling 2.0 or 1.5 */
 	compat_datafellows(remote_version);
+	mismatch = 0;
 
-	/* Check if the remote protocol version is too old. */
-	if (remote_major == 1 && remote_minor < 3)
-		fatal("Remote machine has too old SSH software version.");
-
-	/* We speak 1.3, too. */
-	if (remote_major == 1 && remote_minor == 3) {
-		enable_compat13();
-		if (options.forward_agent) {
-			log("Agent forwarding disabled for protocol 1.3");
-			options.forward_agent = 0;
+	switch(remote_major) {
+	case 1:
+		if (remote_minor == 99 &&
+		    (options.protocol & SSH_PROTO_2) &&
+		    !(options.protocol & SSH_PROTO_1_PREFERRED)) {
+			enable_compat20();
+			break;
 		}
+		if (!(options.protocol & SSH_PROTO_1)) {
+			mismatch = 1;
+			break;
+		}
+		if (remote_minor < 3) {
+			fatal("Remote machine has too old SSH software version.");
+		} else if (remote_minor == 3) {
+			/* We speak 1.3, too. */
+			enable_compat13();
+			if (options.forward_agent) {
+				log("Agent forwarding disabled for protocol 1.3");
+				options.forward_agent = 0;
+			}
+		}
+		break;
+	case 2:
+		if (options.protocol & SSH_PROTO_2) {
+			enable_compat20();
+			break;
+		}
+		/* FALLTHROUGH */
+	default: 
+		mismatch = 1;
+		break;
 	}
-	if ((remote_major == 2 && remote_minor == 0) ||
-	    (remote_major == 1 && remote_minor == 99)) {
-		enable_compat20();
-	}
-#if 0
-	/*
-	 * Removed for now, to permit compatibility with latter versions. The
-	 * server will reject our version and disconnect if it doesn't
-	 * support it.
-	 */
-	if (remote_major != PROTOCOL_MAJOR)
+	if (mismatch)
 		fatal("Protocol major versions differ: %d vs. %d",
-		      PROTOCOL_MAJOR, remote_major);
-#endif
+		    (options.protocol & SSH_PROTO_2) ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
+		    remote_major);
+
 	/* Send our own protocol version identification. */
 	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
-	    compat20 ? 2 : PROTOCOL_MAJOR,
-	    compat20 ? 0 : PROTOCOL_MINOR,
+	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
+	    compat20 ? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_1,
 	    SSH_VERSION);
 	if (atomicio(write, connection_out, buf, strlen(buf)) != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
@@ -1339,11 +1351,15 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 /* KEXINIT */
 
 	debug("Sending KEX init.");
-        if (options.cipher == SSH_CIPHER_ARCFOUR ||
+	if (options.ciphers != NULL) {
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] = 
+		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
+	} else if (
+	    options.cipher == SSH_CIPHER_ARCFOUR ||
             options.cipher == SSH_CIPHER_3DES_CBC ||
             options.cipher == SSH_CIPHER_CAST128_CBC ||
             options.cipher == SSH_CIPHER_BLOWFISH_CBC) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] = cipher_name(options.cipher);
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = cipher_name(options.cipher);
 	}
 	if (options.compression) {

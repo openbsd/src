@@ -12,14 +12,17 @@
  */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.23 2000/04/12 00:18:20 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.24 2000/04/12 07:45:43 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
+#include "xmalloc.h"
 
 #include <ssl/md5.h>
 
 /*
+ * This is used by SSH1:
+ *
  * What kind of triple DES are these 2 routines?
  *
  * Why is there a redundant initialization vector?
@@ -75,7 +78,7 @@ SSH_3CBC_DECRYPT(des_key_schedule ks1,
 }
 
 /*
- * SSH uses a variation on Blowfish, all bytes must be swapped before
+ * SSH1 uses a variation on Blowfish, all bytes must be swapped before
  * and after encryption/decryption. Thus the swap_bytes stuff (yuk).
  */
 static void
@@ -161,8 +164,32 @@ cipher_name(int cipher)
 {
 	if (cipher < 0 || cipher >= sizeof(cipher_names) / sizeof(cipher_names[0]) ||
 	    cipher_names[cipher] == NULL)
-		fatal("cipher_name: bad cipher number: %d", cipher);
+		fatal("cipher_name: bad cipher name: %d", cipher);
 	return cipher_names[cipher];
+}
+
+/* Returns 1 if the name of the ciphers are valid. */
+
+#define	CIPHER_SEP	","
+int
+ciphers_valid(const char *names)
+{
+	char *ciphers;
+	char *p;
+	int i;
+
+	if (strcmp(names, "") == 0)
+		return 0;
+	ciphers = xstrdup(names);
+	for ((p = strtok(ciphers, CIPHER_SEP)); p; (p = strtok(NULL, CIPHER_SEP))) {
+		i = cipher_number(p);
+		if (i == -1 || !(cipher_mask2() & (1 << i))) {
+			xfree(ciphers);
+			return 0;
+		}
+	}
+	xfree(ciphers);
+	return 1;
 }
 
 /*
@@ -264,7 +291,6 @@ cipher_set_key(CipherContext *context, int cipher, const unsigned char *key,
 	}
 	memset(padded, 0, sizeof(padded));
 }
-
 
 void 
 cipher_set_key_iv(CipherContext * context, int cipher,

@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.101 2000/04/12 07:03:06 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.102 2000/04/12 07:45:44 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -63,9 +63,6 @@ char *config_file_name = SERVER_CONFIG_FILE;
  * Default value is AF_UNSPEC means both IPv4 and IPv6.
  */
 int IPv4or6 = AF_UNSPEC;
-
-/* Flag indicating whether SSH2 is enabled */
-int allow_ssh2 = 0;
 
 /*
  * Debug mode flag.  This can be set on the command line.  If debug
@@ -271,16 +268,24 @@ chop(char *s)
 void
 sshd_exchange_identification(int sock_in, int sock_out)
 {
-	int i;
+	int i, mismatch;
 	int remote_major, remote_minor;
+	int major, minor;
 	char *s;
 	char buf[256];			/* Must not be larger than remote_version. */
 	char remote_version[256];	/* Must be at least as big as buf. */
 
-	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
-		 allow_ssh2 ? 1	 : PROTOCOL_MAJOR,
-		 allow_ssh2 ? 99 : PROTOCOL_MINOR,
-		 SSH_VERSION);
+	if (options.protocol & (SSH_PROTO_1|SSH_PROTO_2)) {
+		major = PROTOCOL_MAJOR_1;
+		minor = 99;
+	} else if (options.protocol & SSH_PROTO_2) {
+		major = PROTOCOL_MAJOR_2;
+		minor = PROTOCOL_MINOR_2;
+	} else {
+		major = PROTOCOL_MAJOR_1;
+		minor = PROTOCOL_MINOR_1;
+	}
+	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", major, minor, SSH_VERSION);
 	server_version_string = xstrdup(buf);
 
 	if (client_version_string == NULL) {
@@ -301,7 +306,6 @@ sshd_exchange_identification(int sock_in, int sock_out)
 				buf[i] = '\n';
 				buf[i + 1] = 0;
 				continue;
-				//break;
 			}
 			if (buf[i] == '\n') {
 				/* buf[i] == '\n' */
@@ -332,8 +336,13 @@ sshd_exchange_identification(int sock_in, int sock_out)
 
 	compat_datafellows(remote_version);
 
+	mismatch = 0;
 	switch(remote_major) {
 	case 1:
+		if (!(options.protocol & SSH_PROTO_1)) {
+			mismatch = 1;
+			break;
+		}
 		if (remote_minor < 3) {
 			packet_disconnect("Your ssh version is too old and"
 			    "is no longer supported.  Please install a newer version.");
@@ -341,27 +350,37 @@ sshd_exchange_identification(int sock_in, int sock_out)
 			/* note that this disables agent-forwarding */
 			enable_compat13();
 		}
-		if (remote_minor != 99)
-		       break;
-		/* FALLTHROUGH */
+		if (remote_minor == 99) {
+			if (options.protocol & SSH_PROTO_2)
+				enable_compat20();
+			else
+				mismatch = 1;
+		}
+		break;
 	case 2:
-		if (allow_ssh2) {
+		if (options.protocol & SSH_PROTO_2) {
 			enable_compat20();
 			break;
 		}
 		/* FALLTHROUGH */
 	default: 
-		s = "Protocol major versions differ.\n";
-		(void) atomicio(write, sock_out, s, strlen(s));
-		close(sock_in);
-		close(sock_out);
-		log("Protocol major versions differ for %s: %d vs. %d",
-		    get_remote_ipaddr(), PROTOCOL_MAJOR, remote_major);
-		fatal_cleanup();
+		mismatch = 1;
 		break;
 	}
 	chop(server_version_string);
 	chop(client_version_string);
+	debug("Local version string %.200s", server_version_string);
+
+	if (mismatch) {
+		s = "Protocol major versions differ.\n";
+		(void) atomicio(write, sock_out, s, strlen(s));
+		close(sock_in);
+		close(sock_out);
+		log("Protocol major versions differ for %s: %.200s vs. %.200s",
+		    get_remote_ipaddr(),
+		    server_version_string, client_version_string);
+		fatal_cleanup();
+	}
 }
 
 /*
@@ -397,11 +416,8 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:diqQ246")) != EOF) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:diqQ46")) != EOF) {
 		switch (opt) {
-		case '2':
-			allow_ssh2 = 1;
-			break;
 		case '4':
 			IPv4or6 = AF_INET;
 			break;
@@ -580,6 +596,7 @@ main(int ac, char **av)
 		public_key = RSA_new();
 		sensitive_data.private_key = RSA_new();
 
+		/* XXX check options.protocol */
 		log("Generating %d bit RSA key.", options.server_key_bits);
 		rsa_generate_key(sensitive_data.private_key, public_key,
 				 options.server_key_bits);
@@ -1106,6 +1123,11 @@ do_ssh2_kex()
 	char *sprop[PROPOSAL_MAX];
 
 /* KEXINIT */
+
+	if (options.ciphers != NULL) {
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] = 
+		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
+	}
 
 	debug("Sending KEX init.");
 
