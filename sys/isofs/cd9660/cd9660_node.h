@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.11 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.12 2001/12/10 18:49:51 art Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ struct iso_node {
 	long iso_start;		/* actual start of data of file (may be different */
 				/* from iso_extent, if file has extended attributes) */
 	ISO_RRIP_INODE  inode;
-	struct cluster_info i_ci; 
 };
 
 #define	i_forw		i_chain[0]

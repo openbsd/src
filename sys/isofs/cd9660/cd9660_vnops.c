@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.18 2001/12/10 04:45:31 art Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.19 2001/12/10 18:49:51 art Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -290,16 +290,6 @@ cd9660_getattr(v)
 	return (0);
 }
 
-#ifdef DEBUG
-extern int doclusterread;
-#else
-#define doclusterread 1
-#endif
-
-/* XXX until cluster routines can handle block sizes less than one page */
-#define cd9660_doclusterread \
-	(doclusterread && (ISO_DEFAULT_BLOCK_SIZE >= NBPG))
-
 /*
  * Vnode op for reading.
  */
@@ -316,83 +306,38 @@ cd9660_read(v)
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
 	struct iso_node *ip = VTOI(vp);
-	struct iso_mnt *imp;
-	struct buf *bp;
-	daddr_t lbn, rablock;
-	off_t diff;
-	int rasize, error = 0;
-	long size, n, on;
+	int error;
 
 	if (uio->uio_resid == 0)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
-	ip->i_flag |= IN_ACCESS;
-	imp = ip->i_mnt;
 
-	if (vp->v_type == VREG) {
-		error = 0;
-		while (uio->uio_resid > 0) {
-			void *win;
-			vsize_t bytelen = MIN(ip->i_size - uio->uio_offset,
-					uio->uio_resid);
-
-			if (bytelen == 0)
-				break;
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
-			if (error)
-				break;
-		}
-		goto out;
+	if (vp->v_type != VREG) {
+		/*
+		 * XXXART - maybe we should just panic? this is not possible
+		 *  unless vn_rdwr is called with VDIR and that's an error.
+		 */
+		return (EISDIR);
 	}
 
-	do {
-		lbn = lblkno(imp, uio->uio_offset);
-		on = blkoff(imp, uio->uio_offset);
-		n = min((u_int)(imp->logical_block_size - on),
-			uio->uio_resid);
-		diff = (off_t)ip->i_size - uio->uio_offset;
-		if (diff <= 0)
-			return (0);
-		if (diff < n)
-			n = diff;
-		size = blksize(imp, ip, lbn);
-		rablock = lbn + 1;
-		if (cd9660_doclusterread) {
-			if (lblktosize(imp, rablock) <= ip->i_size)
-				error = cluster_read(vp, &ip->i_ci,
-				    (off_t)ip->i_size, lbn, size, NOCRED, &bp);
-			else
-				error = bread(vp, lbn, size, NOCRED, &bp);
-		} else {
-			if (ip->i_ci.ci_lastr + 1 == lbn &&
-			    lblktosize(imp, rablock) < ip->i_size) {
-				rasize = blksize(imp, ip, rablock);
-				error = breadn(vp, lbn, size, &rablock,
-					       &rasize, 1, NOCRED, &bp);
-			} else
-				error = bread(vp, lbn, size, NOCRED, &bp);
-		}
-		ip->i_ci.ci_lastr = lbn;
-		n = min(n, size - bp->b_resid);
-		if (error) {
-			brelse(bp);
+	ip->i_flag |= IN_ACCESS;
+
+	while (uio->uio_resid > 0) {
+		void *win;
+		vsize_t bytelen = MIN(ip->i_size - uio->uio_offset,
+		    uio->uio_resid);
+		if (bytelen == 0)
+			break;
+		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
+		    UBC_READ);
+		error = uiomove(win, bytelen, uio);
+		ubc_release(win, 0);
+		if (error)
 			return (error);
-		}
+	}
 
-		error = uiomove(bp->b_data + on, (int)n, uio);
-
-                if (n + on == imp->logical_block_size ||
-		    uio->uio_offset == (off_t)ip->i_size)
-			bp->b_flags |= B_AGE;
-		brelse(bp);
-	} while (error == 0 && uio->uio_resid > 0 && n != 0);
-
-out:
-	return (error);
+	return (0);
 }
 
 /* ARGSUSED */
