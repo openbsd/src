@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.11 2002/05/28 09:07:07 mpech Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.12 2002/06/12 07:10:36 aaron Exp $ 
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ for each dma xfer {
         bus_dmamap_unload(); /* prepare dmamap for reuse             */
 
         /*
-         * copy any data desired from the DMA'able memory using the
+         * Copy any data desired from the DMA'able memory using the
          * pointer created by bus_dmamem_map().
          */
 
@@ -157,7 +157,7 @@ bus_dmamap_destroy();        /* release any resources used by dmamap */
 .Sh NOTES
 All data structures, function prototypes, and macros are defined in
 the architecture-specific header
-.Pa Aq machine/bus.h .
+.Aq Pa machine/bus.h .
 Note that this document assumes the existence of types already defined
 by the current "bus.h" interface.
 .Pp
@@ -306,8 +306,8 @@ Otherwise, the buffer is assumed to be in process
 .Fa p Ns 's
 address space.
 .It Fa flags
-are defined as follows:
-.Bl -tag -width "BUS_DMA_STREAMING" -compact
+Flags are defined as follows:
+.Bl -tag -width BUS_DMA_STREAMING -compact
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -461,7 +461,7 @@ operations is not allowed, and behavior is undefined if this is attempted.
 .El
 .Pp
 Synchronization operations are expressed from the perspective of the
-host RAM, e.g. a
+host RAM, e.g., a
 .Em "device -> memory"
 operation is a
 .Em READ
@@ -489,7 +489,9 @@ This function exists so that multiple read and write transfers can be
 performed with the same buffer, and so that drivers can explicitly
 inform the
 .Nm
-code when their data is 'ready' in its DMA buffer.
+code when their data is
+.Dq ready
+in its DMA buffer.
 .Pp
 An example of multiple read-write use of a single mapping
 might look like:
@@ -547,8 +549,8 @@ can thus not be used to program DMA controller address registers.
 Only the values in the
 .Fa dm_segs
 array of a successfully loaded DMA map (using
-.Fn bus_dmamap_load
-) can be used for this purpose.
+.Fn bus_dmamap_load )
+can be used for this purpose.
 .Pp
 Allocations will always be rounded to the hardware page size.
 Callers may wish to take advantage of this, and cluster allocation of
@@ -556,7 +558,7 @@ small data structures.
 Arguments are as follows:
 .Bl -tag -width alignment -compact
 .It Fa tag
-The is the bus_dma_tag_t passed down from the parent driver via
+This is the bus_dma_tag_t passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa size
 The amount of memory to allocate.
@@ -588,7 +590,7 @@ It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
 It is not safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_STREAMING
-Adjusts, if necessary, the size, alignment, and boundary constrains
+Adjusts, if necessary, the size, alignment, and boundary constraints
 to conform to the platform-dependent requirements for the use of the
 .Dv BUS_DMA_STREAMING
 flag with the
