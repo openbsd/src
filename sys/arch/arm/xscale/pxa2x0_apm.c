@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.8 2005/03/03 22:55:00 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.9 2005/03/29 23:17:45 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -76,7 +76,7 @@ struct cfdriver apm_cd = {
 
 int	apm_userstandbys;
 int	apm_suspends;
-int	apm_battlow;		/* XXX unused */
+int	apm_battlow;
 
 /* battery percentage at where we get verbose in our warnings.  This
    value can be changed using sysctl(8), value machdep.apmwarn.
@@ -310,10 +310,6 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 	if (cold)
 		vfs_syncwait(0);
 
-	/* Clear pending standby and suspend requests. */
-	apm_userstandbys = 0;
-	apm_suspends = 0;
-
 	pxa2x0_apm_sleep((struct pxa2x0_apm_softc *)sc);
 }
 
@@ -383,7 +379,6 @@ apm_periodic_check(struct pxa2x0_apm_softc *sc)
 {
 	u_long	event_type;
 
-	/* Loop until all events are handled. */
 	while (1) {
 		if (apm_get_event(sc, &event_type) != 0)
 			break;
@@ -391,15 +386,11 @@ apm_periodic_check(struct pxa2x0_apm_softc *sc)
 			break;
 	}
 
-	/*
-	 * Counters for pending requests are cleared just before changing
-	 * the processor run mode to avoid falling back to sleep after a
-	 * wake-up event.
-	 */
-	if (apm_suspends || apm_userstandbys) {
+	if (apm_battlow || apm_suspends || apm_userstandbys) {
 		apm_suspend(sc);
 		apm_resume(sc);
 	}
+	apm_battlow = apm_suspends = apm_userstandbys = 0;
 }
 
 void
