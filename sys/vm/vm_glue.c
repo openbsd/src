@@ -1,5 +1,5 @@
-/*    $OpenBSD: vm_glue.c,v 1.11 1996/03/24 17:05:35 tholo Exp $    */
-/*    $NetBSD: vm_glue.c,v 1.52 1996/02/12 21:51:59 christos Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.12 1996/04/19 06:45:31 niklas Exp $    */
+/*	$NetBSD: vm_glue.c,v 1.53 1996/02/18 22:53:43 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -228,7 +228,7 @@ vm_fork(p1, p2)
 		shmfork(p1, p2);
 #endif
 
-#if !defined(i386) && !defined(pc532)
+#if !defined(pc532)
 	/*
 	 * Allocate a wired-down (for now) pcb and kernel stack for the process
 	 */
