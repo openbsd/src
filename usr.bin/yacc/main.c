@@ -50,6 +50,9 @@ static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/file.h>
+#include <stdlib.h>
 #include <signal.h>
 #include "defs.h"
 
@@ -110,10 +113,6 @@ short *rprec;
 char  *rassoc;
 short **derives;
 char *nullable;
-
-extern char *mktemp();
-extern char *getenv();
-
 
 done(k)
 int k;
@@ -386,8 +385,29 @@ create_file_names()
 }
 
 
+FILE *
+fsopen(name, mode)
+    char *name;
+    char *mode;
+{
+    FILE *fp = NULL;
+    int fd, mod = O_RDONLY;
+
+    if (strchr(mode, 'w'))
+	mod = O_RDWR;
+    if ((fd = open(name, mod | O_EXCL|O_CREAT, 0666)) == -1 ||
+	(fp = fdopen(fd, mode)) == NULL) {
+	if (fd != -1)
+	    close(fd);
+    }
+    return (fp);
+}
+
+
 open_files()
 {
+    int fd;
+
     create_file_names();
 
     if (input_file == 0)
@@ -397,11 +417,11 @@ open_files()
 	    open_error(input_file_name);
     }
 
-    action_file = fopen(action_file_name, "w");
+    action_file = fsopen(action_file_name, "w");
     if (action_file == 0)
 	open_error(action_file_name);
 
-    text_file = fopen(text_file_name, "w");
+    text_file = fsopen(text_file_name, "w");
     if (text_file == 0)
 	open_error(text_file_name);
 
@@ -417,7 +437,7 @@ open_files()
 	defines_file = fopen(defines_file_name, "w");
 	if (defines_file == 0)
 	    open_error(defines_file_name);
-	union_file = fopen(union_file_name, "w");
+	union_file = fsopen(union_file_name, "w");
 	if (union_file ==  0)
 	    open_error(union_file_name);
     }
