@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.9 2001/02/09 04:08:11 aaron Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.10 2001/02/17 07:35:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_vr.c,v 1.7 1999/01/10 18:51:49 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_vr.c,v 1.17 1999/09/17 18:25:30 wpaul Exp $
  */
 
 /*
@@ -121,7 +121,8 @@ struct cfdriver vr_cd = {
 };
 
 int vr_newbuf			__P((struct vr_softc *,
-				     struct vr_chain_onefrag *));
+				     struct vr_chain_onefrag *,
+				     struct mbuf *));
 int vr_encap			__P((struct vr_softc *, struct vr_chain *,
 				     struct mbuf * ));
 
@@ -1005,7 +1006,7 @@ vr_attach(parent, self, aux)
 	 * registers.
 	 */
 	VR_SETBIT(sc, VR_EECSR, VR_EECSR_LOAD);
-	DELAY(200);
+	DELAY(1000);
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		eaddr[i] = CSR_READ_1(sc, VR_PAR0 + i);
 
@@ -1081,8 +1082,8 @@ vr_attach(parent, self, aux)
 
 	vr_getmode_mii(sc);
 	vr_autoneg_mii(sc, VR_FLAG_FORCEDELAY, 1);
-	media = sc->ifmedia.ifm_media;
 	vr_stop(sc);
+	media = sc->ifmedia.ifm_media;
 
 	ifmedia_set(&sc->ifmedia, media);
 
@@ -1152,7 +1153,7 @@ vr_list_rx_init(sc)
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
 		cd->vr_rx_chain[i].vr_ptr =
 			(struct vr_desc *)&ld->vr_rx_list[i];
-		if (vr_newbuf(sc, &cd->vr_rx_chain[i]) == ENOBUFS)
+		if (vr_newbuf(sc, &cd->vr_rx_chain[i], NULL) == ENOBUFS)
 			return(ENOBUFS);
 		if (i == (VR_RX_LIST_CNT - 1)) {
 			cd->vr_rx_chain[i].vr_nextdesc =
@@ -1180,21 +1181,31 @@ vr_list_rx_init(sc)
  * overflow the field and make a mess.
  */
 int
-vr_newbuf(sc, c)
+vr_newbuf(sc, c, m)
 	struct vr_softc		*sc;
 	struct vr_chain_onefrag	*c;
+	struct mbuf		*m;
 {
 	struct mbuf		*m_new = NULL;
 
-	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL)
-		return(ENOBUFS);
+	if (m == NULL) {
+		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		if (m_new == NULL)
+			return(ENOBUFS);
 
-	MCLGET(m_new, M_DONTWAIT);
-	if (!(m_new->m_flags & M_EXT)) {
-		m_freem(m_new);
-		return(ENOBUFS);
+		MCLGET(m_new, M_DONTWAIT);
+		if (!(m_new->m_flags & M_EXT)) {
+			m_freem(m_new);
+			return(ENOBUFS);
+		}
+		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+	} else {
+		m_new = m;
+		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		m_new->m_data = m_new->m_ext.ext_buf;
 	}
+
+	m_adj(m_new, sizeof(u_int64_t));
 
 	c->vr_mbuf = m_new;
 	c->vr_ptr->vr_status = VR_RXSTAT;
@@ -1223,8 +1234,11 @@ vr_rxeof(sc)
 
 	while(!((rxstat = sc->vr_cdata.vr_rx_head->vr_ptr->vr_status) &
 							VR_RXSTAT_OWN)) {
+		struct mbuf		*m0 = NULL;
+
 		cur_rx = sc->vr_cdata.vr_rx_head;
 		sc->vr_cdata.vr_rx_head = cur_rx->vr_nextdesc;
+		m = cur_rx->vr_mbuf;
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -1261,13 +1275,11 @@ vr_rxeof(sc)
 				printf("unknown rx error\n");
 				break;
 			}
-			cur_rx->vr_ptr->vr_status = VR_RXSTAT;
-			cur_rx->vr_ptr->vr_ctl = VR_RXCTL|VR_RXLEN;
+			vr_newbuf(sc, cur_rx, m);
 			continue;
 		}
 
 		/* No errors; receive the packet. */	
-		m = cur_rx->vr_mbuf;
 		total_len = VR_RXBYTES(cur_rx->vr_ptr->vr_status);
 
 		/*
@@ -1279,24 +1291,19 @@ vr_rxeof(sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
-		/*
-		 * Try to conjure up a new mbuf cluster. If that
-		 * fails, it means we have an out of memory condition and
-		 * should leave the buffer in place and continue. This will
-		 * result in a lost packet, but there's little else we
-		 * can do in this situation.
-		 */
-		if (vr_newbuf(sc, cur_rx) == ENOBUFS) {
+		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
+		    total_len + ETHER_ALIGN, 0, ifp, NULL);
+		vr_newbuf(sc, cur_rx, m);
+		if (m0 == NULL) {
 			ifp->if_ierrors++;
-			cur_rx->vr_ptr->vr_status = VR_RXSTAT;
-			cur_rx->vr_ptr->vr_ctl = VR_RXCTL|VR_RXLEN;
 			continue;
 		}
+		m_adj(m0, ETHER_ALIGN);
+		m = m0;
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
-		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = total_len;
+
 #if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
@@ -1879,6 +1886,8 @@ vr_watchdog(ifp)
 
 	if (sc->vr_autoneg) {
 		vr_autoneg_mii(sc, VR_FLAG_DELAYTIMEO, 1);
+		if (!(ifp->if_flags & IFF_UP))
+			vr_stop(sc);
 		return;
 	}
 

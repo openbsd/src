@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.2 1999/01/30 23:15:37 niklas Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.3 2001/02/17 07:35:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_vrreg.h,v 1.2 1999/01/10 18:51:49 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_vrreg.h,v 1.6 1999/08/28 00:50:59 peter Exp $
  */
 
 /*
@@ -334,10 +334,9 @@ struct vr_desc {
 #define VR_TXCTL_LASTFRAG	0x00400000
 #define VR_TXCTL_FINT		0x00800000
 
-
 #define VR_MAXFRAGS		16
 #define VR_RX_LIST_CNT		64
-#define VR_TX_LIST_CNT		64
+#define VR_TX_LIST_CNT		128
 #define VR_MIN_FRAMELEN		60
 #define VR_FRAMELEN		1536
 #define VR_RXLEN		1520
@@ -435,19 +434,40 @@ struct vr_softc {
 	bus_space_read_1(sc->vr_btag, sc->vr_bhandle, reg)
 
 #define VR_TIMEOUT		1000
+#define ETHER_ALIGN		2
 
 /*
  * General constants that are fun to know.
  *
  * VIA vendor ID
  */
-#define	VIA_VENDORID		0x1106
+#define	VIA_VENDORID			0x1106
 
 /*
  * VIA Rhine device IDs.
  */
-#define	VIA_DEVICEID_RHINE	0x3043
-#define VIA_DEVICEID_RHINE_II	0x6100
+#define	VIA_DEVICEID_RHINE		0x3043
+#define VIA_DEVICEID_RHINE_II		0x6100
+
+/*
+ * Delta Electronics device ID.
+ */
+#define DELTA_VENDORID			0x1500
+
+/*
+ * Delta device IDs.
+ */
+#define DELTA_DEVICEID_RHINE_II		0x1320
+
+/*
+ * Addtron vendor ID.
+ */
+#define ADDTRON_VENDORID		0x4033
+
+/*
+ * Addtron device IDs.
+ */
+#define ADDTRON_DEVICEID_RHINE_II	0x1320
 
 
 /*
