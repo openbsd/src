@@ -133,7 +133,7 @@ char **argv;
 		default:
 			fprintf(stderr, "Can't match key %s in map %s. Reason: %s\n",
 				inkey, inmap, yperr_string(r));
-			break;
+			exit(1);
 		}
 	}
 	exit(0);
