@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.64 2004/10/26 17:37:04 espie Exp $
+# $OpenBSD: pkg_delete,v 1.65 2004/10/31 09:06:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -610,11 +610,6 @@ if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 
-if (defined $state->{display}) {
-	close $state->{display};
-	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-	System("$pager ".$state->{displayname});
-}
 my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {
 	print "Problems logged as $logname\n";

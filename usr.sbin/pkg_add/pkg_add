@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.84 2004/10/20 11:38:57 espie Exp $
+# $OpenBSD: pkg_add,v 1.85 2004/10/31 09:06:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -973,11 +973,6 @@ ensure_ldconfig($state);
 
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
-}
-if (defined $state->{display}) {
-	close $state->{display};
-	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-	System("$pager ".$state->{displayname});
 }
 $state->delayed_output();
 if ($dielater) {
