@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif.c,v 1.2 1996/09/23 14:18:59 mickey Exp $	*/
+/*	$OpenBSD: netif.c,v 1.3 1996/10/29 08:44:09 mickey Exp $	*/
 /*	$NetBSD: netif.c,v 1.5 1995/09/18 21:19:34 pk Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/cdefs.h>
 #include <sys/mount.h>
 #include <time.h>
-#include <string.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -227,7 +226,9 @@ netif_get(desc, pkt, len, timo)
 	size_t len;
 	time_t timo;
 {
+#ifdef NETIF_DEBUG
 	struct netif *nif = desc->io_netif;
+#endif
 	struct netif_driver *drv = desc->io_netif->nif_driver;
 	ssize_t rv;
 
@@ -255,7 +256,9 @@ netif_put(desc, pkt, len)
 	void *pkt;
 	size_t len;
 {
+#ifdef NETIF_DEBUG
 	struct netif *nif = desc->io_netif;
+#endif
 	struct netif_driver *drv = desc->io_netif->nif_driver;
 	ssize_t rv;
 

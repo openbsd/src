@@ -1,11 +1,9 @@
-/*	$OpenBSD: netif.h,v 1.2 1996/09/23 14:18:59 mickey Exp $	*/
+/*	$OpenBSD: netif.h,v 1.3 1996/10/29 08:44:10 mickey Exp $	*/
 /*	$NetBSD: netif.h,v 1.4 1995/09/14 23:45:30 pk Exp $	*/
 
 #ifndef __SYS_LIBNETBOOT_NETIF_H
 #define __SYS_LIBNETBOOT_NETIF_H
 #include "iodesc.h"
-
-#define NENTS(x)	sizeof(x)/sizeof(x[0])
 
 struct netif_driver {
 	char	*netif_bname;
