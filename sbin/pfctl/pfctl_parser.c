@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.71 2002/05/18 13:47:57 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.72 2002/05/19 22:26:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -123,7 +123,7 @@ struct icmptypeent icmp6_type[] = {
 	{ "mtraceresp",	MLD6_MTRACE_RESP },
 	{ "mtrace",	MLD6_MTRACE }
 };
-	
+
 struct icmpcodeent icmp_code[] = {
 	{ "net-unr",		ICMP_UNREACH,	ICMP_UNREACH_NET },
 	{ "host-unr",		ICMP_UNREACH,	ICMP_UNREACH_HOST },
@@ -171,7 +171,6 @@ struct icmpcodeent icmp6_code[] = {
 	{ "redironlink", ND_REDIRECT, ND_REDIRECT_ONLINK },
 	{ "redirrouter", ND_REDIRECT, ND_REDIRECT_ROUTER }
 };
-	
 
 struct icmptypeent *
 geticmptypebynumber(u_int8_t type, u_int8_t af)
@@ -268,7 +267,7 @@ unmask(struct pf_addr *m, u_int8_t af)
 	else
 		msize = 4;
 	while (j < msize && m->addr32[j] == 0xffffffff) {
-			b += 32;	
+			b += 32;
 			j++;
 	}
 	if (j < msize) {
@@ -297,7 +296,7 @@ print_addr(struct pf_addr_wrap *addr, struct pf_addr *mask, u_int8_t af)
 
 		if (bits != (af == AF_INET ? 32 : 128))
 			printf("/%u", bits);
-	} 
+	}
 }
 
 void
@@ -309,11 +308,10 @@ print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
 	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
 		printf("?");
 	else {
-		hp = getpfhostname(buf); 
+		hp = getpfhostname(buf);
 		printf("%s", hp->h_name);
 	}
 	if (mask != NULL) {
-		
 		if (!PF_AZERO(mask, af))
 			printf("/%u", unmask(mask, af));
 	}
@@ -341,7 +339,6 @@ print_host(struct pf_state_host *h, u_int8_t af, int opts)
 			printf("[%u]", p);
 	}
 }
-		
 
 void
 print_seq(struct pf_state_peer *p)
@@ -442,7 +439,7 @@ print_nat(struct pf_nat *n)
 		printf("%s ", n->ifname);
 	}
 	if (n->af) {
-		if (n->af == AF_INET) 
+		if (n->af == AF_INET)
 			printf("inet ");
 		else
 			printf("inet6 ");
@@ -488,7 +485,7 @@ print_binat(struct pf_binat *b)
 		printf("%s ", b->ifname);
 	}
 	if (b->af) {
-		if (b->af == AF_INET) 
+		if (b->af == AF_INET)
 			printf("inet ");
 		else
 			printf("inet6 ");
@@ -512,7 +509,7 @@ print_binat(struct pf_binat *b)
 	} else
 		printf("any ");
 	if (!b->no) {
-	 	printf("-> ");
+		printf("-> ");
 		print_addr(&b->raddr, NULL, b->af);
 	}
 	printf("\n");
@@ -531,7 +528,7 @@ print_rdr(struct pf_rdr *r)
 		printf("%s ", r->ifname);
 	}
 	if (r->af) {
-		if (r->af == AF_INET) 
+		if (r->af == AF_INET)
 			printf("inet ");
 		else
 			printf("inet6 ");
@@ -765,7 +762,7 @@ print_rule(struct pf_rule *r)
 		printf(" ");
 	}
 	if (r->af) {
-		if (r->af == AF_INET) 
+		if (r->af == AF_INET)
 			printf("inet ");
 		else
 			printf("inet6 ");

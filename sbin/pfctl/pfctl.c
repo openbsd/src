@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.64 2002/05/19 22:15:19 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.65 2002/05/19 22:26:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -87,7 +87,7 @@ char	*timeoutopt;
 char	*limitopt;
 char	*debugopt;
 int	 state_killers;
-char 	*state_kill[2];
+char	*state_kill[2];
 
 char	*infile;
 
@@ -315,7 +315,7 @@ pfctl_kill_states(int dev, int opts)
 			psk.psk_src.addr.addr.v6 =
 			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
 			    sin6_addr;
-		else 
+		else
 			errx(1, "Unknown address family!?!?!");
 
 		if (state_killers > 1) {
@@ -350,7 +350,7 @@ pfctl_kill_states(int dev, int opts)
 					psk.psk_dst.addr.addr.v6 =
 					    ((struct sockaddr_in6 *)resp[1]->
 					    ai_addr)->sin6_addr;
-				else 
+				else
 					errx(1, "Unknown address family!?!?!");
 
 				if (ioctl(dev, DIOCKILLSTATES, &psk))

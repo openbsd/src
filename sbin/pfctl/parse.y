@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2002/05/12 15:02:52 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2002/05/19 22:26:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -110,7 +110,7 @@ struct peer {
 int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
 struct pf_rule_addr	*new_addr(void);
-void		 	 ipmask(struct pf_addr *, u_int8_t);
+void			 ipmask(struct pf_addr *, u_int8_t);
 void			 expand_rule(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
@@ -212,7 +212,7 @@ ruleset		: /* empty */
 
 varset		: STRING PORTUNARY STRING
 		{
-			if (pf->opts & PF_OPT_VERBOSE)			
+			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = %s\n", $1, $3);
 			if (symset($1, $3) == -1) {
 				yyerror("cannot store variable %s", $1);
@@ -221,7 +221,9 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto uids gids flags icmpspec keep fragment nodf minttl maxmss allowopts label
+pfrule		: action dir log quick interface route af proto fromto
+		  uids gids flags icmpspec keep fragment nodf minttl
+		  maxmss allowopts label
 		{
 			struct pf_rule r;
 
@@ -271,7 +273,7 @@ pfrule		: action dir log quick interface route af proto fromto uids gids flags i
 						yyerror("address family"
 						    " mismatch");
 						YYERROR;
-					}	
+					}
 					memcpy(&r.rt_addr, $6.addr,
 					    sizeof(r.rt_addr));
 					free($6.addr);
@@ -469,7 +471,7 @@ host		: address			{
 			struct node_host *n;
 			for (n = $1; n; n = n->next)
 				if (n->af == AF_INET)
-					ipmask(&n->mask, 32); 
+					ipmask(&n->mask, 32);
 				else
 					ipmask(&n->mask, 128);
 			$$ = $1;
@@ -805,7 +807,7 @@ flags		: /* empty */			{ $$.b1 = 0; $$.b2 = 0; }
 		| FLAGS "/" flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;
 
-icmpspec	: /* empty */                   { $$ = NULL; }
+icmpspec	: /* empty */			{ $$ = NULL; }
 		| ICMPTYPE icmp_item		{ $$ = $2; }
 		| ICMPTYPE '{' icmp_list '}'	{ $$ = $3; }
 		| ICMP6TYPE icmp6_item		{ $$ = $2; }
@@ -820,10 +822,10 @@ icmp6_list	: icmp6_item			{ $$ = $1; }
 		| icmp6_list ',' icmp6_item	{ $3->next = $1; $$ = $3; }
 		;
 
-icmp_item	: icmptype		{ 
+icmp_item	: icmptype		{
 			$$ = malloc(sizeof(struct node_icmp));
 			if ($$ == NULL)
-				err(1, "icmp_item: malloc");	
+				err(1, "icmp_item: malloc");
 			$$->type = $1;
 			$$->code = 0;
 			$$->proto = IPPROTO_ICMP;
@@ -1373,8 +1375,8 @@ dport		: /* empty */			{
 		}
 		;
 
-route		: /* empty */			{ 
-			$$.string = NULL; 
+route		: /* empty */			{
+			$$.string = NULL;
 			$$.rt = 0;
 			$$.addr = NULL;
 			$$.af = 0;
@@ -1399,8 +1401,8 @@ route		: /* empty */			{
 			$$.addr = &$4->addr.addr;
 			$$.af = $4->af;
 		}
-		| ROUTETO STRING 		{
-			$$.string = strdup($2); 
+		| ROUTETO STRING {
+			$$.string = strdup($2);
 			$$.rt = PF_ROUTETO;
 			$$.addr = NULL;
 		}
@@ -1419,8 +1421,8 @@ route		: /* empty */			{
 			$$.addr = &$4->addr.addr;
 			$$.af = $4->af;
 		}
-		| DUPTO STRING 		{ 
-			$$.string = strdup($2); 
+		| DUPTO STRING {
+			$$.string = strdup($2);
 			$$.rt = PF_DUPTO;
 			$$.addr = NULL;
 		}
@@ -1627,9 +1629,9 @@ expand_rule(struct pf_rule *r,
 		r->gid.gid[1] = gid->gid[1];
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
-		
+
 		if ((src_host->af && dst_host->af && r->af) &&
-		    (src_host->af != dst_host->af || src_host->af != r->af || 
+		    (src_host->af != dst_host->af || src_host->af != r->af ||
 			    dst_host->af != r->af)) {
 			yyerror("address family mismatch");
 			nomatch++;
@@ -1641,7 +1643,7 @@ expand_rule(struct pf_rule *r,
 		    (src_host->af != r->af)) {
 			yyerror("address family mismatch");
 			nomatch++;
-		} else if ((dst_host->af && r->af) && 
+		} else if ((dst_host->af && r->af) &&
 		    (dst_host->af != r->af)) {
 			yyerror("address family mismatch");
 			nomatch++;
@@ -1650,7 +1652,7 @@ expand_rule(struct pf_rule *r,
 		} else if (dst_host->af && !r->af) {
 			r->af= dst_host->af;
 		}
-		
+
 		if (icmp_type->proto && r->proto != icmp_type->proto) {
 			yyerror("icmp-type mismatch");
 			nomatch++;
@@ -1933,24 +1935,23 @@ top:
 		break;
 	}
 
-        /* Need to parse v6 addresses before tokenizing numbers. ick */
-        if (isxdigit(c) || c == ':') {
-                struct node_host *node = NULL;
+	/* Need to parse v6 addresses before tokenizing numbers. ick */
+	if (isxdigit(c) || c == ':') {
+		struct node_host *node = NULL;
 		u_int32_t addr[4];
 		char lookahead[46];
-                int i = 0, notv6addr = 0;
+		int i = 0, notv6addr = 0;
 
 		lookahead[i] = c;
 
-		while (i < sizeof(lookahead) && 
+		while (i < sizeof(lookahead) &&
 		    (isxdigit(c) || c == ':' || c == '.')) {
-			 	lookahead[++i] = c = lgetc(fin);
+			lookahead[++i] = c = lgetc(fin);
 		}
 
 		/* quick check avoids calling inet_pton too often */
-		if (isalnum(c)) {
+		if (isalnum(c))
 			notv6addr++;
-		}
 		lungetc(lookahead[i], fin);
 		lookahead[i] = '\0';
 
@@ -1959,16 +1960,15 @@ top:
 			node->af = AF_INET6;
 			node->addr.addr_dyn = NULL;
 			memcpy (&node->addr.addr, &addr, sizeof(addr));
-                	yylval.v.host = node;
-                	return IPV6ADDR;
+			yylval.v.host = node;
+			return IPV6ADDR;
 		} else {
-                	free(node);
-                	while (i > 1) {
-                        	lungetc(lookahead[--i], fin);
-			}
+			free(node);
+			while (i > 1)
+				lungetc(lookahead[--i], fin);
 			c = lookahead[--i];
 		}
-        }
+	}
 
 	if (isdigit(c)) {
 		int index = 0, base = 10;
