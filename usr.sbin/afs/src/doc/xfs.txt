@@ -2,7 +2,7 @@
 XFS DOCUMENTATION
 =================
 
-$Id: xfs.txt,v 1.1 2000/09/11 14:40:53 art Exp $
+$Id: xfs.txt,v 1.2 2001/04/10 08:17:54 deraadt Exp $
 
 This is not the truth, but close too.
 
@@ -50,7 +50,7 @@ Are passed through the xfs device somehow.
 Each message is prepended by a header including the 32-bit fields
 `size'', ``opcode'', ``sequence_num'', ``pad1'' (in that
 order). ``Size'' is the size of the WHOLE message.  ``Opcode'' is the
-opcode (described bellow). ``sequence_num'' is a messages specific field
+opcode (described below). ``sequence_num'' is a messages specific field
 that is used for replying the the sender of the message (if so is
 needed).
 
