@@ -99,6 +99,14 @@ dnl so we can go back to a simple check.
 AC_CHECK_LIB(sec, getspnam)
 AC_CHECK_FUNCS(getspnam)
 
+dnl
+dnl Check for a system libz.
+dnl
+AC_CHECK_LIB(z, zlibVersion, ZLIB=-lz , ZLIBSUBDIRS=zlib ZLIB=$srcdir/zlib/libz.a ZLIB_INCLUDES=-I$srcdir/zlib)
+AC_SUBST(ZLIB)
+AC_SUBST(ZLIBSUBDIRS)
+AC_SUBST(ZLIB_INCLUDES)
+
 dnl We always use CVS's regular expression matcher.
 dnl This is because:
 dnl (1) If memory serves, the syntax of the regular expressions

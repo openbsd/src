@@ -71,8 +71,11 @@ CC	 = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS =
 LDFLAGS = @LDFLAGS@
+ZLIB = @ZLIB@
 
 INCLUDES = -I. -I.. -I$(srcdir) -I$(top_srcdir)/lib
+ZLIB_INCLUDES = @ZLIB_INCLUDES@
+
 .c.o:
 	$(CC) $(CPPFLAGS) $(INCLUDES) $(DEFS) $(CFLAGS) -c $<
 
@@ -144,10 +147,10 @@ dist-dir:
 
 # Linking rules.
 
-$(PROGS): ../lib/libcvs.a ../zlib/libz.a ../diff/libdiff.a
+$(PROGS): ../lib/libcvs.a ../diff/libdiff.a
 
 cvs: $(OBJECTS)
-	$(CC) $(OBJECTS) ../lib/libcvs.a ../zlib/libz.a ../diff/libdiff.a $(LIBS) $(LDFLAGS) -o $@ 
+	$(CC) $(OBJECTS) ../lib/libcvs.a ../diff/libdiff.a $(ZLIB) $(LIBS) $(LDFLAGS) -o $@ 
 
 xlint: $(SOURCES)
 	files= ; \
@@ -178,7 +181,7 @@ cvsbug: cvsbug.sh $(srcdir)/version.c
 $(OBJECTS): $(HEADERS) options.h
 
 zlib.o: zlib.c
-	$(CC) $(CPPFLAGS) $(INCLUDES) -I$(top_srcdir)/zlib $(DEFS) $(CFLAGS) -c $(srcdir)/zlib.c
+	$(CC) $(CPPFLAGS) $(INCLUDES) ${ZLIB_INCLUDES} $(DEFS) $(CFLAGS) -c $(srcdir)/zlib.c
 
 subdir = src
 Makefile: ../config.status Makefile.in

@@ -94,7 +94,7 @@ DISTFILES = \
 
 ### Subdirectories to run make in for the primary targets.
 # Unix source subdirs, where we'll want to run lint and etags:
-USOURCE_SUBDIRS = lib zlib diff src
+USOURCE_SUBDIRS = lib @ZLIBSUBDIRS@ diff src
 # Documentation directories; special handling
 INSTALL_MAN=man
 # All other subdirs:
@@ -186,24 +186,28 @@ realclean-local: distclean-local
 saber:
 	@for dir in $(SUBDIRS); do cd $$dir && $(MAKE) $(FLAGS_TO_PASS) $@ || exit 1; cd ..; done
 
-.PHONY: check
-check:
-	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
+.PHONY: -dependency
+-dependency:
+
+.PHONY: zlib-dependency
+zlib-dependency:
 	cd zlib ; $(MAKE) $(FLAGS_TO_PASS)
+
+.PHONY: check
+check: @ZLIBSUBDIRS@-dependency
+	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
 	cd diff ; $(MAKE) $(FLAGS_TO_PASS)
 	cd src ; $(MAKE) $(FLAGS_TO_PASS) check
 
 .PHONY: remotecheck
-remotecheck:
+remotecheck: @ZLIBSUBDIRS@-dependency
 	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
-	cd zlib ; $(MAKE) $(FLAGS_TO_PASS)
 	cd diff ; $(MAKE) $(FLAGS_TO_PASS)
 	cd src ; $(MAKE) $(FLAGS_TO_PASS) remotecheck
 
 .PHONY: installcheck
-installcheck:
+installcheck: @ZLIBSUBDIRS@-dependency
 	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
-	cd zlib ; $(MAKE) $(FLAGS_TO_PASS)
 	cd diff ; $(MAKE) $(FLAGS_TO_PASS)
 	cd src ; $(MAKE) $(FLAGS_TO_PASS) installcheck
 
