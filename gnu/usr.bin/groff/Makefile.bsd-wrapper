@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.14 1999/06/07 00:45:37 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2000/01/11 16:29:52 millert Exp $
 
 #
 # groff config
@@ -40,7 +40,7 @@ MAN_BUILD=	${MANALL}
 .endif
 
 
-MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7
+MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7 eqn.1 neqn.1
 
 .SUFFIXES: .n .cat1 .cat5 .cat7
 
