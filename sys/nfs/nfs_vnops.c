@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.23 1999/01/10 20:06:51 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.24 1999/02/06 23:07:46 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -954,7 +954,7 @@ nfs_readrpc(vp, uiop, cred)
 		nfsm_fhtom(vp, v3);
 		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED * 3);
 		if (v3) {
-			txdr_hyper(&uiop->uio_offset, tl);
+			txdr_hyper(uiop->uio_offset, tl);
 			*(tl + 2) = txdr_unsigned(len);
 		} else {
 			*tl++ = txdr_unsigned(uiop->uio_offset);
@@ -1021,7 +1021,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 		nfsm_fhtom(vp, v3);
 		if (v3) {
 			nfsm_build(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-			txdr_hyper(&uiop->uio_offset, tl);
+			txdr_hyper(uiop->uio_offset, tl);
 			tl += 2;
 			*tl++ = txdr_unsigned(len);
 			*tl++ = txdr_unsigned(*iomode);
@@ -2503,7 +2503,7 @@ nfs_commit(vp, offset, cnt, cred, procp)
 	nfsm_reqhead(vp, NFSPROC_COMMIT, NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-	txdr_hyper(&offset, tl);
+	txdr_hyper(offset, tl);
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
 	nfsm_request(vp, NFSPROC_COMMIT, procp, cred);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.9 1999/01/10 20:06:53 millert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.10 1999/02/06 23:07:47 millert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -257,7 +257,7 @@
 		if ((full) && (a)->va_size != VNOVAL) {				\
 			nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);		\
 			*tl++ = nfs_true;					\
-			txdr_hyper(&(a)->va_size, tl);				\
+			txdr_hyper((a)->va_size, tl);				\
 		} else {							\
 			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);		\
 			*tl = nfs_false;					\

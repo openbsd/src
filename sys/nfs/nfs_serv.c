@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.17 1999/02/01 17:44:17 millert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.18 1999/02/06 23:07:42 millert Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -2490,7 +2490,7 @@ again:
 			if (v3) {
 				nfsm_srvpostop_attr(getret, &at);
 				nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
-				txdr_hyper(&at.va_filerev, tl);
+				txdr_hyper(at.va_filerev, tl);
 				tl += 2;
 			} else
 				nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2529,7 +2529,7 @@ again:
 	if (v3) {
 		nfsm_srvpostop_attr(getret, &at);
 		nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-		txdr_hyper(&at.va_filerev, tl);
+		txdr_hyper(at.va_filerev, tl);
 	}
 	mp = mp2 = mb;
 	bp = bpos;
@@ -2747,7 +2747,7 @@ again:
 				2 * NFSX_UNSIGNED);
 			nfsm_srvpostop_attr(getret, &at);
 			nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
-			txdr_hyper(&at.va_filerev, tl);
+			txdr_hyper(at.va_filerev, tl);
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
@@ -2783,7 +2783,7 @@ again:
 	nfsm_reply(cnt);
 	nfsm_srvpostop_attr(getret, &at);
 	nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-	txdr_hyper(&at.va_filerev, tl);
+	txdr_hyper(at.va_filerev, tl);
 	mp = mp2 = mb;
 	bp = bpos;
 	be = bp + M_TRAILINGSPACE(mp);
@@ -3032,13 +3032,13 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	if (v3) {
 		tval = (u_quad_t)sf->f_blocks;
 		tval *= (u_quad_t)sf->f_bsize;
-		txdr_hyper(&tval, &sfp->sf_tbytes);
+		txdr_hyper(tval, &sfp->sf_tbytes);
 		tval = (u_quad_t)sf->f_bfree;
 		tval *= (u_quad_t)sf->f_bsize;
-		txdr_hyper(&tval, &sfp->sf_fbytes);
+		txdr_hyper(tval, &sfp->sf_fbytes);
 		tval = (u_quad_t)sf->f_bavail;
 		tval *= (u_quad_t)sf->f_bsize;
-		txdr_hyper(&tval, &sfp->sf_abytes);
+		txdr_hyper(tval, &sfp->sf_abytes);
 		sfp->sf_tfiles.nfsuquad[0] = 0;
 		sfp->sf_tfiles.nfsuquad[1] = txdr_unsigned(sf->f_files);
 		sfp->sf_ffiles.nfsuquad[0] = 0;

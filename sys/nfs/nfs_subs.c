@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.24 1999/01/16 13:28:25 niklas Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.25 1999/02/06 23:07:45 millert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1600,7 +1600,7 @@ nfsm_srvwcc(nfsd, before_ret, before_vap, after_ret, after_vap, mbp, bposp)
 	} else {
 		nfsm_build(tl, u_int32_t *, 7 * NFSX_UNSIGNED);
 		*tl++ = nfs_true;
-		txdr_hyper(&(before_vap->va_size), tl);
+		txdr_hyper(before_vap->va_size, tl);
 		tl += 2;
 		txdr_nfsv3time(&(before_vap->va_mtime), tl);
 		tl += 2;
@@ -1650,8 +1650,8 @@ nfsm_srvfattr(nfsd, vap, fp)
 	if (nfsd->nd_flag & ND_NFSV3) {
 		fp->fa_type = vtonfsv3_type(vap->va_type);
 		fp->fa_mode = vtonfsv3_mode(vap->va_mode);
-		txdr_hyper(&vap->va_size, &fp->fa3_size);
-		txdr_hyper(&vap->va_bytes, &fp->fa3_used);
+		txdr_hyper(vap->va_size, &fp->fa3_size);
+		txdr_hyper(vap->va_bytes, &fp->fa3_used);
 		fp->fa3_rdev.specdata1 = txdr_unsigned(major(vap->va_rdev));
 		fp->fa3_rdev.specdata2 = txdr_unsigned(minor(vap->va_rdev));
 		fp->fa3_fsid.nfsuquad[0] = 0;

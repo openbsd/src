@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.13 1998/08/19 22:26:53 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.14 1999/02/06 23:07:44 millert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1224,7 +1224,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 			*tl++ = txdr_unsigned(nd->nd_flag & ND_LEASE);
 			*tl++ = txdr_unsigned(cache);
 			*tl++ = txdr_unsigned(nd->nd_duration);
-			txdr_hyper(frev, tl);
+			txdr_hyper(*frev, tl);
 		} else {
 			nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 			*tl = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.13 1998/08/19 22:26:51 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.14 1999/02/06 23:07:40 millert Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -730,7 +730,7 @@ nqnfsrv_getlease(nfsd, slp, procp, mrq)
 	nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(cache);
 	*tl++ = txdr_unsigned(nfsd->nd_duration);
-	txdr_hyper(&frev, tl);
+	txdr_hyper(frev, tl);
 	nfsm_build(fp, struct nfs_fattr *, NFSX_V3FATTR);
 	nfsm_srvfillattr(&va, fp);
 	nfsm_srvdone;
