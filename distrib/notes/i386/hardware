@@ -44,7 +44,7 @@ Supported hardware {:-include-:}:
 			Intel 450NX based machines
 			ServerWorks chipset-based machines
 			(We just had to mention those last three, since
-			 they are the hardest to support))
+			 they are the hardest to support)
 		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
 		support
 		Universal Serial Bus (USB)
@@ -71,8 +71,8 @@ Supported hardware {:-include-:}:
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2)
 		OPTi 82C568, 82D568, and 82C621
-		Promise PDC20246, PDC20262, PDC20265/7 (But not the Promise
-			RAID controllers)
+		Promise PDC20246, PDC20262, PDC20265/7/8 (but the Promise
+			RAID mode is not supported)
 		Silicon Integrated Systems 5513 (5597/5598)
 		VIA Technologies VT82C586[A], VT82C596, VT82C686
 		(Other PCI IDE-compliant controllers should work, but
@@ -101,7 +101,7 @@ Supported hardware {:-include-:}:
 		AMD Am53c974 PCscsi-PCI SCSI controllers, including:
 			Tekram DC-390
 		Buslogic BT-54x (Adaptec AHA-154x clones)
-		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
+		BusLogic 445, 74x, 9xx  (but not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
 		Initio INIC-940 and INIC-950 based PCI SCSI host
 			adapters, including the Initio INI-9090U,
@@ -310,7 +310,7 @@ Supported hardware {:-include-:}:
 		RealTek 8129, RealTek 8139 Ethernet adapters, including:
 			Accton MPX 5030/5038
 			Allied Telesyn AT2550
-			D-Link DFE530TX, DFE530TX+, DFE538TX
+			D-Link DFE530TX+, DFE538TX
 			Encore ENL832-TX 10/100 M PCI
 			Genius GF100TXR
 			KTX-9130TX 10/100 Fast Ethernet
