@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.4 2002/12/11 18:27:19 deraadt Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.5 2003/03/07 00:04:21 markus Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -183,10 +183,6 @@ keyboard_put_values(const char *pre, int fd)
 	if (field_by_value(keyboard_field_tab, &kbmap)->flags & FLG_SET) {
 		if (ioctl(fd, WSKBDIO_SETMAP, &kbmap) < 0)
 			warn("WSKBDIO_SETMAP");
-		else {
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &kbmap), " -> ");
-		}
 	}
 
 	repeat.which = 0;
