@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.42 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: socket.h,v 1.43 2002/03/15 02:11:01 itojun Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ struct cmsghdr {
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
 	(((caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
 			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
-	    (mhdr)->msg_control + (mhdr)->msg_controllen) ? \
+	    ((caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen) ? \
 	    (struct cmsghdr *)NULL : \
 	    (struct cmsghdr *)((caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len)))
 
