@@ -1,5 +1,5 @@
-/*    $OpenBSD: ls.c,v 1.5 1996/12/14 12:18:03 mickey Exp $      */
-/*    $NetBSD: ls.c,v 1.16 1996/02/14 05:58:53 jtc Exp $      */
+/*	$OpenBSD: ls.c,v 1.6 1997/01/03 22:36:08 millert Exp $	*/
+/*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.5 1996/12/14 12:18:03 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.6 1997/01/03 22:36:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,10 +119,10 @@ main(argc, argv)
 
 	/* Terminal defaults to -Cq, non-terminal defaults to -1. */
 	if (isatty(STDOUT_FILENO)) {
-              if ((p = getenv("COLUMNS")) != NULL)
-                      termwidth = atoi(p);
-              else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
-                  win.ws_col > 0)
+		if ((p = getenv("COLUMNS")) != NULL)
+			termwidth = atoi(p);
+		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
+		    win.ws_col > 0)
 			termwidth = win.ws_col;
 		f_column = f_nonprint = 1;
 	} else
@@ -391,11 +391,8 @@ display(p, list)
 	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
-	char *user, *group, *flags, buf[20];	/* 32 bits == 10 digits */
-
-#ifdef lint
-	flags = NULL;
-#endif
+	char *user, *group, buf[20];	/* 32 bits == 10 digits */
+	char *flags = NULL;
 
 	/*
 	 * If list is NULL there are two possibilities: that the parent
@@ -542,7 +539,12 @@ mastercmp(a, b)
 		return (0);
 
 	if (a_info == FTS_NS || b_info == FTS_NS)
-		return (namecmp(*a, *b));
+		if (b_info != FTS_NS)
+			return (1);
+		else if (a_info != FTS_NS)
+			return (-1);
+		else
+			return (namecmp(*a, *b));
 
 	if (a_info == b_info)
 		return (sortfcn(*a, *b));
