@@ -2,9 +2,10 @@ OpenBSD/sparc OSREV runs on the following classes of machines:
 	- sun4  -- 4/100, 4/200, and 4/300.   (note that support
 		   for the 4/400 processor is incomplete)
 	- sun4c -- SS1, SS1+, SS2, IPC, ELC, IPX, and SLC
-	- sun4m -- Sparc Classic, LX, 4, 5, 10, 20, and 600MP.
+	- sun4m -- Sun Sparc Classic, LX, 4, 5, 10, 20, and 600MP.
+		   Tadpole SPARCbook 3GS and 3GX
 		*** See Notes Below
-	- faithful clones of the above Sun systems (e.g. Integrix)
+	- faithful clones of the above Sun systems (e.g. Integrix, Force)
 
 OpenBSD/sparc OSREV does NOT run on these machines (yet):
 	- Sun 4/400 --  Lacking support for the I/O cache, and related
@@ -28,7 +29,7 @@ Supported devices {:-include-:}:
 		cgsix, cgthree, and bwtwo frame buffers
 
         sun4m on-board machine specific video:
-                TCX, cgfourteen (aka SX)
+                TCX, cgfourteen (aka SX), p9100 (Tadpole 3GS, 3GX)
 
 	sun4 video (not thoroughly tested...): 
 		P4  -- on-board bwtwo, cgfour, cgsix, cgeight
@@ -68,7 +69,7 @@ Supported devices {:-include-:}:
 		sun4c/Classic AMD audio.
 		sun4m (ss4/ss5) CS4231 audio.
 		Sun SBus Expansion Subsystem (SUNW,xbox)
-
+		Tadpole microcontroller (tctrl)
 
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines (Will not boot correctly on multiple CPU sun4m)
@@ -86,7 +87,7 @@ Hardware the we do NOT currently support, but get many questions about:
         SBus GS framebuffer (aka cgtwelve)
         SBus GT framebuffer ("Graphics Tower")
         SBus ZX framebuffer (aka Leo)
-
+	Tadpole onboard PCMCIA and modem
 
 *** Note: sun4m and general sparc caveats
 
