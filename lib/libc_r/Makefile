@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1999/05/26 03:35:42 d Exp $
+#	$OpenBSD: Makefile,v 1.8 1999/05/26 03:37:32 d Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -36,7 +36,7 @@ HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	msync.o nanosleep.o open.o pipe.o poll.o read.o readv.o recvfrom.o \
 	recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
 	setsockopt.o shutdown.o sigaction.o sigaltstack.o \
-	sigpending.o sigprocmask.o sigsuspend.o \
+	sigprocmask.o sigsuspend.o \
 	socket.o socketpair.o wait4.o write.o writev.o \
 	_exit.o 
 
