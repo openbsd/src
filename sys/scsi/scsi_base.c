@@ -680,6 +680,9 @@ scsi_interpret_sense(xs)
 		case 0x8:	/* BLANK CHECK */
 			error = 0;
 			break;
+		case 0xa:	/* COMMAND ABORTED */
+			error = ERESTART;
+			break;
 		case 0xd:	/* VOLUME OVERFLOW */
 			error = ENOSPC;
 			break;
@@ -702,6 +705,9 @@ scsi_interpret_sense(xs)
 					printf(", requested size: %d (decimal)",
 					    info);
 					break;
+				case 0xa:	/* COMMAND ABORTED */
+					printf(", cmd %x, attempting retry",
+						xs->cmd->opcode);
 				default:
 					printf(", info = %d (decimal)", info);
 				}
