@@ -22,11 +22,11 @@
 /usr/share/games/quiz.db/poetry:poem{-}line:next:poem:author
 /usr/share/games/quiz.db/posneg:pos{itive}:neg{ative}
 /usr/share/games/quiz.db/pres:pres{ident}:term:vice:succ{essor}
-/usr/share/games/quiz.db/province:province:cap{ital}
+/usr/share/games/quiz.db/province:province:cap{ital}:flower:bird
 /usr/share/games/quiz.db/seq-easy:easy{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/seq-hard:hard{-}{seq{uence}}:next:name
 /usr/share/games/quiz.db/sexes:male:female
 /usr/share/games/quiz.db/sov:sov{ereign}:cen{t{ury}}:succ{essor}
-/usr/share/games/quiz.db/state:state:cap{ital}:abbr{ev{iation}}:flower
+/usr/share/games/quiz.db/state:state:cap{ital}:abbr{ev{iation}}:flower:bird:tree
 /usr/share/games/quiz.db/trek:star:trek
 /usr/share/games/quiz.db/ucc:section:U{niform{-}}C{riminal{-}}C{ode}
