@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICMAC,v 1.2 1999/11/28 23:23:04 rahnds Exp $
+#	$OpenBSD: GENERICMAC,v 1.3 2000/01/14 05:35:31 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -35,6 +35,9 @@ mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 #### PCI Bus devices.
 
 pci*		at mpcpcibr?
+pci*		at ppb? bus ?
+ppb*		at pci? dev ? function ?	# PCI-PCI bridges
+
 ncr*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
