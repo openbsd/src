@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 1997/03/25 23:12:23 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 1997/06/25 18:18:58 kstailey Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.9 1997/03/25 23:12:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.10 1997/06/25 18:18:58 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,12 +246,12 @@ main(argc, argv)
 	sigfillset(&mask);
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGSYS,
 		SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGTSTP, SIGALRM, 0);
-	sigprocmask(SIG_SETMASK, &mask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_IGN;
-	(void) sigaction(SIGTTIN, &sa, (struct sigaction *)0);
-	(void) sigaction(SIGTTOU, &sa, (struct sigaction *)0);
+	(void) sigaction(SIGTTIN, &sa, NULL);
+	(void) sigaction(SIGTTOU, &sa, NULL);
 
 	/*
 	 * Paranoia.
@@ -302,7 +302,7 @@ handle(va_alist)
 		sa.sa_mask = mask_everything;
 		/* XXX SA_RESTART? */
 		sa.sa_flags = sig == SIGCHLD ? SA_NOCLDSTOP : 0;
-		sigaction(sig, &sa, (struct sigaction *) 0);
+		sigaction(sig, &sa, NULL);
 	}
 	va_end(ap);
 }
@@ -650,7 +650,7 @@ single_user()
 		 * and those are reset to SIG_DFL on exec.
 		 */
 		sigemptyset(&mask);
-		sigprocmask(SIG_SETMASK, &mask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &mask, NULL);
 
 		/*
 		 * Fire off a shell.
@@ -675,7 +675,7 @@ single_user()
 		 * We are seriously hosed.  Do our best.
 		 */
 		emergency("can't fork single-user shell, trying again");
-		while (waitpid(-1, (int *) 0, WNOHANG) > 0)
+		while (waitpid(-1, NULL, WNOHANG) > 0)
 			continue;
 		return (state_func_t) single_user;
 	}
@@ -738,8 +738,8 @@ runcom()
 		sigemptyset(&sa.sa_mask);
 		sa.sa_flags = 0;
 		sa.sa_handler = SIG_IGN;
-		(void) sigaction(SIGTSTP, &sa, (struct sigaction *)0);
-		(void) sigaction(SIGHUP, &sa, (struct sigaction *)0);
+		(void) sigaction(SIGTSTP, &sa, NULL);
+		(void) sigaction(SIGHUP, &sa, NULL);
 
 		setctty(_PATH_CONSOLE);
 
@@ -748,7 +748,7 @@ runcom()
 		argv[2] = runcom_mode == AUTOBOOT ? "autoboot" : 0;
 		argv[3] = 0;
 
-		sigprocmask(SIG_SETMASK, &sa.sa_mask, (sigset_t *) 0);
+		sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
 
 		execv(_PATH_BSHELL, argv);
 		stall("can't exec %s for %s: %m", _PATH_BSHELL, _PATH_RUNCOM);
@@ -758,7 +758,7 @@ runcom()
 	if (pid == -1) {
 		emergency("can't fork for %s on %s: %m",
 			_PATH_BSHELL, _PATH_RUNCOM);
-		while (waitpid(-1, (int *) 0, WNOHANG) > 0)
+		while (waitpid(-1, NULL, WNOHANG) > 0)
 			continue;
 		sleep(STALL_TIMEOUT);
 		return (state_func_t) single_user;
@@ -900,7 +900,7 @@ construct_argv(command)
 
 	if ((argv[argc++] = strtok(command, separators)) == 0)
 		return 0;
-	while (argv[argc++] = strtok((char *) 0, separators))
+	while (argv[argc++] = strtok(NULL, separators))
 		continue;
 	return argv;
 }
@@ -1062,7 +1062,7 @@ start_window_system(sp)
 		return;
 
 	sigemptyset(&mask);
-	sigprocmask(SIG_SETMASK, &mask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	if (setsid() < 0)
 		emergency("setsid failed (window) %m");
@@ -1085,7 +1085,7 @@ start_getty(sp)
 {
 	pid_t pid;
 	sigset_t mask;
-	time_t current_time = time((time_t *) 0);
+	time_t current_time = time(NULL);
 	int p[2], new = 1;
 
 	if (sp->se_flags & SE_DEVEXISTS)
@@ -1151,7 +1151,7 @@ start_getty(sp)
 	}
 
 	sigemptyset(&mask);
-	sigprocmask(SIG_SETMASK, &mask, (sigset_t *) 0);
+	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	execv(sp->se_getty_argv[0], sp->se_getty_argv);
 	stall("can't exec getty '%s' for port %s: %m",
@@ -1204,7 +1204,7 @@ collect_child(pid)
 	}
 
 	sp->se_process = pid;
-	sp->se_started = time((time_t *) 0);
+	sp->se_started = time(NULL);
 	add_session(sp);
 #endif /* LETS_GET_SMALL */
 }
@@ -1265,12 +1265,12 @@ multi_user()
 			break;
 		}
 		sp->se_process = pid;
-		sp->se_started = time((time_t *) 0);
+		sp->se_started = time(NULL);
 		add_session(sp);
 	}
 
 	while (!requested_transition)
-		if ((pid = waitpid(-1, (int *) 0, 0)) != -1)
+		if ((pid = waitpid(-1, NULL, 0)) != -1)
 			collect_child(pid);
 
 	return (state_func_t) requested_transition;
@@ -1386,7 +1386,7 @@ death()
 		clang = 0;
 		alarm(DEATH_WATCH);
 		do
-			if ((pid = waitpid(-1, (int *)0, 0)) != -1)
+			if ((pid = waitpid(-1, NULL, 0)) != -1)
 				collect_child(pid);
 		while (clang == 0 && errno != ECHILD);
 

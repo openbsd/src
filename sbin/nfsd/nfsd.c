@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.4 1997/01/15 23:41:34 millert Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.5 1997/06/25 18:28:10 kstailey Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ main(argc, argv, envp)
 			 * in ONC RPC".
 			 */
 			kt.length = ntohl(kt.length);
-			if (gettimeofday(&ktv, (struct timezone *)0) == 0 &&
+			if (gettimeofday(&ktv, NULL) == 0 &&
 			    kt.length > 0 && kt.length <=
 			    (RPCAUTH_MAXSIZ - 3 * NFSX_UNSIGNED)) {
 			    kin.w1 = NFS_KERBW1(kt);

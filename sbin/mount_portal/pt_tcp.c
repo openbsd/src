@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_tcp.c,v 1.3 1997/03/23 03:52:17 millert Exp $	*/
+/*	$OpenBSD: pt_tcp.c,v 1.4 1997/06/25 18:25:50 kstailey Exp $	*/
 /*	$NetBSD: pt_tcp.c,v 1.9 1995/05/21 15:33:22 mycroft Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ portal_tcp(pcr, key, v, kso, fdp)
 		int so;
 
 		if (priv)
-			so = rresvport((int *) 0);
+			so = rresvport(NULL);
 		else
 			so = socket(AF_INET, SOCK_STREAM, 0);
 		if (so < 0) {

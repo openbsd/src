@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.10 1997/06/18 15:49:25 kstailey Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.11 1997/06/25 18:25:47 kstailey Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.10 1997/06/18 15:49:25 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.11 1997/06/25 18:25:47 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ sigchld(sig)
 {
 	pid_t pid;
 
-	while ((pid = waitpid((pid_t) -1, (int *) 0, WNOHANG)) > 0)
+	while ((pid = waitpid((pid_t) -1, NULL, WNOHANG)) > 0)
 		;
 	if (pid < 0 && errno != ECHILD)
 		syslog(LOG_WARNING, "waitpid: %m");
@@ -241,8 +241,7 @@ main(argc, argv)
 		 */
 		memset(fdsp, 0, fdssize);
 		FD_SET(so, fdsp);
-		rc = select(so+1, fdsp, (fd_set *)0, (fd_set *)0,
-		    (struct timeval *)0);
+		rc = select(so+1, fdsp, NULL, NULL, NULL);
 		if (rc < 0) {
 			if (errno == EINTR)
 				continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.9 1997/04/20 15:37:26 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.10 1997/06/25 18:23:59 kstailey Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ main(argc, argv)
 			 */
 			if (kret == KSUCCESS &&
 			    ktick.kt.length <= (RPCAUTH_MAXSIZ-3*NFSX_UNSIGNED)
-			    && gettimeofday(&ktv, (struct timezone *)0) == 0) {
+			    && gettimeofday(&ktv, NULL) == 0) {
 			    ncd.ncd_authtype = RPCAUTH_KERB4;
 			    ncd.ncd_authstr = (u_char *)&ktick;
 			    ncd.ncd_authlen = nfsm_rndup(ktick.kt.length) +
@@ -609,7 +609,7 @@ getnfsargs(spec, nfsargsp)
 	if (inet_aton(hostp, &saddr.sin_addr) != 0) {
 		if ((nfsargsp->flags & NFSMNT_KERB)) {
 			if ((hp = gethostbyaddr((char *)&saddr.sin_addr.s_addr,
-			    sizeof (u_long), AF_INET)) == (struct hostent *)0) {
+			    sizeof (u_long), AF_INET)) == NULL) {
 				warnx("can't resolve hostname for address %s",
 				    hostp);
 				return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.12 1997/03/27 19:57:55 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.13 1997/06/25 18:21:35 kstailey Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ linkcmd(kernel, entry, outfile, address, object)
 
 	if(pid == 0) {
 		execl(_PATH_LD, "ld", "-A", kernel, "-e", entrybuf, "-o",
-		outfile, "-T", addrbuf, object, (char *)0);
+		outfile, "-T", addrbuf, object, NULL);
 		exit(128 + errno);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.9 1997/01/22 00:37:15 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.10 1997/06/25 18:29:07 kstailey Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.9 1997/01/22 00:37:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.10 1997/06/25 18:29:07 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ chkquota(vfstype, fsname, mntpt, auxarg, pidp)
 					continue;
 				if (qnp->flags & HASGRP) {
 					fup = addid((u_long)dp->di_gid,
-						    GRPQUOTA, (char *)0);
+						    GRPQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
 					    mode == IFLNK)
@@ -303,7 +303,7 @@ chkquota(vfstype, fsname, mntpt, auxarg, pidp)
 				}
 				if (qnp->flags & HASUSR) {
 					fup = addid((u_long)dp->di_uid,
-						    USRQUOTA, (char *)0);
+						    USRQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
 					    mode == IFLNK)
