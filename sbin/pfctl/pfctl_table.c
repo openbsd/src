@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.31 2003/02/03 14:51:36 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.32 2003/02/04 12:10:02 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -618,6 +618,7 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction)
 			exit(1);
 		}
 	}
+	bzero(buffer.addrs, size * sizeof(buffer.addrs[0]));
 	size = 0;
 }
 
