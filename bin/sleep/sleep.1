@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.10 2000/01/05 01:58:03 pjanzen Exp $
+.\"	$OpenBSD: sleep.1,v 1.11 2000/02/19 23:03:50 aaron Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -50,37 +50,19 @@
 The
 .Nm
 utility
-suspends execution for a minimum of
+suspends execution for a minimum of the specified number of
 .Ar seconds .
-.Ar seconds
-must be positive and may contain a decimal fraction.
+This number must be positive and may contain a decimal fraction.
 .Nm
-is used to schedule the execution of other commands (see
-.Sx EXAMPLES
-below).
-.Pp
-The
-.Nm
-utility exits with one of the following values:
-.Bl -tag -width flag
-.It Li \&0
-On successful completion, or if the signal
-.Dv SIGALRM
-was received.
-.It Li \&>\&0
-An error occurred.
-.El
-.Pp
-.Nm 
-handles fractional arguments as an extension to
-.St -p1003.2 .
+is commonly used to schedule the execution of other commands (see below).
 .Sh EXAMPLES
-.Dl (sleep 1800; sh command_file >& errors)&
-.Pp
-This incantation would wait a half hour before
-running the script command_file (see also the
+Wait a half hour before running the script
+.Pa command_file
+(see also the
 .Xr at 1
-utility).
+utility):
+.Pp
+.Dl (sleep 1800; sh command_file >& errors)&
 .Pp
 To repetitively run a command (with
 .Xr csh 1 ) :
@@ -99,14 +81,16 @@ The scenario for such a script might be: a program currently
 running is taking longer than expected to process a series of
 files, and it would be nice to have another program start 
 processing the files created by the first program as soon as it is finished 
-(when zzz.rawdata is created).
-The script checks every five minutes for the file zzz.rawdata.
-Then, when the file is found, processing is done in several steps
+(when
+.Pa zzz.rawdata
+is created).
+The script checks every five minutes for this file.
+When it is found, processing is done in several steps
 by sleeping 70 seconds between each
 .Xr awk 1
 job.
 .Pp
-To monitor the growth of a file without consuming too many resources :
+To monitor the growth of a file without consuming too many resources:
 .Pp
 .Bd -literal -offset indent -compact
 while true; do
@@ -114,14 +98,31 @@ while true; do
 	sleep 5
 done
 .Ed
+.Sh DIAGNOSTICS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width flag -compact
+.It Li \&0
+On successful completion, or if the signal
+.Dv SIGALRM
+was received.
+.It Li \&>\&0
+An error occurred.
+.El
 .Sh SEE ALSO
 .Xr at 1 ,
+.Xr nanosleep 2 ,
 .Xr setitimer 2 ,
 .Xr alarm 3 ,
-.Xr sleep 3
+.Xr sleep 3 ,
+.Xr usleep 3
 .Sh STANDARDS
 The
 .Nm
 command offers a superset of
 .St -p1003.2
 functionality.
+The handling of fractional arguments is provided as an extension to the
+specification.
