@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.16 2001/06/22 14:26:36 lebel Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.17 2001/08/14 00:01:56 espie Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -22,13 +22,14 @@
  */
 
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <err.h>
-#include <errno.h>
+#include <vis.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/cdio.h>
@@ -810,6 +811,7 @@ int pstatus (arg)
 	struct ioc_read_subchannel ss;
 	struct cd_sub_channel_info data;
 	int rc, trk, m, s, f;
+	char vis_catalog[1 + 4 * 15];
 
 	rc = status (&trk, &m, &s, &f);
 	if (rc >= 0) {
@@ -831,9 +833,12 @@ int pstatus (arg)
 		printf("Media catalog is %sactive",
 		ss.data->what.media_catalog.mc_valid ? "": "in");
 		if (ss.data->what.media_catalog.mc_valid &&
-		    ss.data->what.media_catalog.mc_number[0])
-			printf(", number \"%.15s\"",
-			       ss.data->what.media_catalog.mc_number);
+		    ss.data->what.media_catalog.mc_number[0]) {
+		    	strvisx(vis_catalog,
+			   ss.data->what.media_catalog.mc_number,
+			   15, VIS_SAFE);
+			printf(", number \"%.15s\"", vis_catalog);
+		}
 		putchar('\n');
 	} else
 		printf("No media catalog info available\n");
