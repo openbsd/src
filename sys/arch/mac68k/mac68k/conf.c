@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/05/04 18:50:46 mickey Exp $	*/
+/*	$NetBSD: conf.c,v 1.33 1996/05/18 18:54:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,20 +149,23 @@ cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(st);
 cdev_decl(sd);
+cdev_decl(cd);
 cdev_decl(fd);
 #include "grf.h"
 cdev_decl(grf);
 #define NADB 1 /* #include "adb.h" */
 cdev_decl(adb);
-#include "ser.h"
-cdev_decl(ser);
-cdev_decl(cd);
+#include "zsc.h"
+cdev_decl(zsc);
+#include "zstty.h"
+cdev_decl(zs);
 cdev_decl(vnd);
 cdev_decl(ccd);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
+dev_decl(filedesc,open);
 
 #ifdef LKM
 #define NLKM	1
@@ -194,7 +197,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 9 */
 	cdev_grf_init(1,grf),		/* 10: frame buffer */
 	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
-	cdev_tty_init(NSER,ser),	/* 12: 2 mac serial ports -- BG*/
+	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -204,7 +207,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
-	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_mouse_init(NADB,adb),	/* 23: ADB event interface */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
@@ -246,6 +249,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t	dev;
 {
@@ -290,6 +294,7 @@ static int chrtoblktab[] = {
 	/* 31 */	NODEV,
 };
 
+dev_t
 chrtoblk(dev)
 	dev_t	dev;
 {
@@ -305,15 +310,15 @@ chrtoblk(dev)
 
 #define itecnpollc	nullcnpollc
 cons_decl(ite);
-#define sercnpollc	nullcnpollc
-cons_decl(ser);
+#define zscnpollc	nullcnpollc
+cons_decl(zs);
 
 struct	consdev constab[] = {
 #if NITE > 0
 	cons_init(ite),
 #endif
-#if NSER > 0
-	cons_init(ser),
+#if NZSTTY > 0
+	cons_init(zs),
 #endif
 	{ 0 },
 };

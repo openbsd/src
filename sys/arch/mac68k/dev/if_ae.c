@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.40 1996/02/02 15:30:56 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.46 1996/05/15 03:20:22 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -51,7 +51,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 #include "nubus.h"
 #include <dev/ic/dp8390reg.h>
 #include "if_aereg.h"
@@ -98,12 +98,15 @@ struct ae_softc {
 	u_char  next_packet;	/* pointer to next unread RX packet */
 };
 
+static int	ae_id_card __P((nubus_slot *slot, struct ae_softc *sc));
+static int	ae_size_card_memory __P((struct ae_softc *sc));
+
 int aeprobe __P((struct device *, void *, void *));
 void aeattach __P((struct device *, struct device *, void *));
-void aeintr __P((void *));
+void aeintr __P((void *, int));
 int aeioctl __P((struct ifnet *, u_long, caddr_t));
 void aestart __P((struct ifnet *));
-void aewatchdog __P(( /* short */ ));
+void aewatchdog __P((struct ifnet *));
 void aereset __P((struct ae_softc *));
 void aeinit __P((struct ae_softc *));
 void aestop __P((struct ae_softc *));
@@ -119,10 +122,14 @@ void ae_getmcaf __P((struct arpcom *, u_char *));
 static inline void ae_rint __P((struct ae_softc *));
 static inline void ae_xmit __P((struct ae_softc *));
 static inline caddr_t ae_ring_copy __P((
-		/* struct ae_softc *, caddr_t, caddr_t, u_short */ ));
+		struct ae_softc *, caddr_t, caddr_t, int));
 
-struct cfdriver aecd = {
-	NULL, "ae", aeprobe, aeattach, DV_IFNET, sizeof(struct ae_softc)
+struct cfattach ae_ca = {
+	sizeof(struct ae_softc), aeprobe, aeattach
+};
+
+struct cfdriver ae_cd = {
+	NULL, "ae", DV_IFNET
 };
 
 #define	ETHER_MIN_LEN	64
@@ -130,13 +137,16 @@ struct cfdriver aecd = {
 #define	ETHER_ADDR_LEN	6
 
 static char zero = 0;
-static u_char ones = 0xff;
 
 /*
  * XXX These two should be moved to locore, and maybe changed to use shorts
  * instead of bytes.  The reason for these is that bcopy and bzero use longs,
  * which the ethernet cards can't handle.
  */
+
+void			bszero __P((u_short *addr, int len));
+static inline void	word_copy __P((caddr_t a, caddr_t b, int len));
+static inline void	byte_copy __P((caddr_t a, caddr_t b, int len));
 
 void
 bszero(u_short * addr, int len)
@@ -228,6 +238,7 @@ ae_id_card(slot, sc)
 		}
 		break;
 	default:
+		printf("Unknown ethernet drsw: %x\n", slottype.drsw);
 		sc->vendor = AE_VENDOR_UNKNOWN;
 		return 0;
 	}
@@ -239,13 +250,12 @@ ae_id_card(slot, sc)
 	return 1;
 }
 
-int
+static int
 ae_size_card_memory(sc)
 	struct ae_softc *sc;
 {
 	u_short *p;
 	u_short i1, i2, i3, i4;
-	int     size;
 
 	p = (u_short *) sc->mem_start;
 
@@ -294,15 +304,17 @@ aeprobe(parent, match, aux)
 
 	sc->regs_rev = 0;
 
-	addr = (caddr_t) NUBUS_SLOT_TO_BASE(nu->slot);
+	addr = (caddr_t) nu->virtual_base;
 
 	switch (sc->vendor) {
 	case AE_VENDOR_INTERLAN:
 		sc->nic_addr = addr + GC_NIC_OFFSET;
 		sc->rom_addr = addr + GC_ROM_OFFSET;
 		sc->mem_start = addr + GC_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc)) == 0)
+		if ((memsize = ae_size_card_memory(sc)) == 0) {
+			printf("Failed to determine size of RAM.\n");
 			return 0;
+		}
 
 		/* reset the NIC chip */
 		*((caddr_t) addr + GC_RESET_OFFSET) = (char) zero;
@@ -319,8 +331,10 @@ aeprobe(parent, match, aux)
 		sc->nic_addr = addr + AE_NIC_OFFSET;
 		sc->rom_addr = addr + AE_ROM_OFFSET;
 		sc->mem_start = addr + AE_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc)) == 0)
+		if ((memsize = ae_size_card_memory(sc)) == 0) {
+			printf("Failed to determine size of RAM.\n");
 			return (0);
+		}
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
@@ -346,8 +360,10 @@ aeprobe(parent, match, aux)
 		sc->rom_addr = addr + FE_ROM_OFFSET;
 		sc->nic_addr = addr + AE_NIC_OFFSET;
 		sc->mem_start = addr + AE_DATA_OFFSET;
-		if ((memsize = ae_size_card_memory(sc)) == 0)
+		if ((memsize = ae_size_card_memory(sc)) == 0) {
+			printf("Failed to determine size of RAM.\n");
 			return (0);
+		}
 
 		/* Get station address from on-board ROM */
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
@@ -381,7 +397,7 @@ aeprobe(parent, match, aux)
 
 	for (i = 0; i < memsize; ++i)
 		if (sc->mem_start[i]) {
-			printf("%s: failed to clear shared memory at %x - check configuration\n",
+printf("%s: failed to clear shared memory at %p - check configuration\n",
 			    sc->sc_dev.dv_xname,
 			    sc->mem_start + i);
 			return (0);
@@ -401,16 +417,14 @@ aeattach(parent, self, aux)
 	void   *aux;
 {
 	struct ae_softc *sc = (void *) self;
-	struct nubus_hw *nu = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/* Set interface to stopped condition (reset). */
 	aestop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = aecd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = aestart;
 	ifp->if_ioctl = aeioctl;
 	ifp->if_watchdog = aewatchdog;
@@ -424,7 +438,7 @@ aeattach(parent, self, aux)
 	/* Print additional info when attached. */
 	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	printf("type %s, %dk mem.\n", sc->type_str, sc->mem_size / 1024);
+	printf("type %s, %ldk mem.\n", sc->type_str, sc->mem_size / 1024);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -482,11 +496,12 @@ aestop(sc)
  * an interrupt after a transmit has been started on it.
  */
 static int aeintr_ctr = 0;
+
 void
-aewatchdog(unit)
-	int     unit;
+aewatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ae_softc *sc = aecd.cd_devs[unit];
+	struct ae_softc *sc = ifp->if_softc;
 
 #if 1
 /*
@@ -498,10 +513,11 @@ aewatchdog(unit)
 
 	i = aeintr_ctr;
 
-	(*via2itab[1]) (1);
+	(*via2itab[1]) ((void *) 1);
 
 	if (i != aeintr_ctr) {
-		log(LOG_ERR, "ae%d: device timeout, recovered\n", unit);
+		log(LOG_ERR, "%s: device timeout, recovered\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 #endif
@@ -521,7 +537,6 @@ aeinit(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int     i;
-	u_char  command;
 	u_char  mcaf[8];
 
 	/*
@@ -674,7 +689,7 @@ void
 aestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	caddr_t buffer;
 	int     len;
@@ -848,8 +863,9 @@ loop:
 
 /* Ethernet interface interrupt processor. */
 void
-aeintr(arg)
-	void *arg;
+aeintr(arg, slot)
+	void	*arg;
+	int	slot;
 {
 	struct ae_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1021,7 +1037,7 @@ aeioctl(ifp, cmd, data)
 	u_long  cmd;
 	caddr_t data;
 {
-	struct ae_softc *sc = aecd.cd_devs[ifp->if_unit];
+	struct ae_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
@@ -1170,7 +1186,7 @@ static inline caddr_t
 ae_ring_copy(sc, src, dst, amount)
 	struct ae_softc *sc;
 	caddr_t src, dst;
-	u_short amount;
+	int amount;
 {
 	u_short tmp_amount;
 
@@ -1232,7 +1248,7 @@ aeget(sc, src, total_len)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(total_len, len);
-		src = ae_ring_copy(sc, src, mtod(m, caddr_t), len);
+		src = ae_ring_copy(sc, src, mtod(m, caddr_t), (int) len);
 		total_len -= len;
 		*mp = m;
 		mp = &m->m_next;

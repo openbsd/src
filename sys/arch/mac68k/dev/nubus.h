@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.12 1996/01/12 04:52:58 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.14 1996/05/07 03:13:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -59,13 +59,14 @@
 #define  NUBUS_TYPE_ETHERNET	0x0001
 #define   NUBUS_DRSW_3COM	0x0000
 #define   NUBUS_DRSW_GATOR	0x0103
-#define    NUBUS_DRHW_INTERLAN	0x0100
-#define    NUBUS_DRHW_KINETICS	0x0106
 #define   NUBUS_DRSW_ASANTE	0x0104
 #define   NUBUS_DRSW_TECHWORKS	0x0109
-#define    NUBUS_DRHW_SONIC	0x0110
 #define   NUBUS_DRSW_FARALLON	0x010C
 #define   NUBUS_DRSW_FOCUS	0x011A
+#define    NUBUS_DRHW_INTERLAN	0x0100
+#define    NUBUS_DRHW_KINETICS	0x0106
+#define    NUBUS_DRHW_SONIC	0x0110
+#define    NUBUS_DRHW_CABLETRON	0x0109
 
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
 #define  NUBUS_TYPE_RS232	0x0002
@@ -98,6 +99,7 @@ typedef struct _nubus_slot {
 	u_int32_t	crc;
 	u_int32_t	length;
 	u_int32_t	directory_offset;
+	vm_offset_t	virtual_base;
 } nubus_slot;
 
 /*
@@ -219,15 +221,10 @@ typedef struct _NUBUS_EXEC_BLOCK {
 
 #define NUBUS_MIN_SLOT		0x9
 #define NUBUS_MAX_SLOT		0xE
-#define	NUBUS_INT_VIDEO_PSUEDO_SLOT 0xF
 #define NUBUS_ROM_TEST_PATTERN	0x5A932BC7
 
-#define NUBUS_BASE_TO_SLOT(x)	(((((x)-NuBusBase) >> 24) & 0x0F) + \
-				 NUBUS_MIN_SLOT)
-#define NUBUS_SLOT_TO_BASE(x)	(NuBusBase + \
+#define NUBUS_SLOT_TO_PADDR(x)	( 0xF9000000 + \
 				 ((((x)-NUBUS_MIN_SLOT) & 0xF) << 24))
-#define NUBUS_VIRT_TO_PHYS(x)	((x - NuBusBase) + \
-				 ((0xF0 | NUBUS_MIN_SLOT) << 24))
 
 struct nubus_softc {
 	struct	device	sc_dev;

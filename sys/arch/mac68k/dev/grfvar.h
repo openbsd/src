@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.8 1995/07/06 17:13:51 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.10 1996/05/19 22:27:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,19 +43,46 @@
  */
 
 #define CARD_NAME_LEN	64
-/* per display info */
-struct grf_softc {
+
+/*
+ * State info, per hardware instance.
+ */
+struct grfbus_softc {
 	struct	device	sc_dev;
 	nubus_slot	sc_slot;
 
-	char		card_name[CARD_NAME_LEN];
 	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
-	u_int32_t	g_flags;	/* software flags		*/
-	u_int32_t	g_type;		/* index into grfdev		*/
 	u_int16_t	card_id;	/* DrHW value for nubus cards	*/
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
-	caddr_t		g_data;		/* device dependent data	*/
 };
+
+/*
+ * State info, per grf instance.
+ */
+struct grf_softc {
+	struct	device sc_dev;		/* device glue */
+
+	int	sc_flags;		/* software flags */
+	struct	grfmode *sc_grfmode;	/* forwarded ... */
+	nubus_slot	*sc_slot;
+					/* mode-change on/off/mode function */
+	int	(*sc_mode) __P((struct grf_softc *, int, void *));
+					/* map virtual addr to physical addr */
+	caddr_t	(*sc_phys) __P((struct grf_softc *, vm_offset_t));
+};
+
+/*
+ * Attach grf and ite semantics to Mac video hardware.
+ */
+struct grfbus_attach_args {
+	char	*ga_name;		/* name of semantics to attach */
+	struct	grfmode *ga_grfmode;	/* forwarded ... */
+	nubus_slot	*ga_slot;
+	int	(*ga_mode) __P((struct grf_softc *, int, void *));
+	caddr_t	(*ga_phys) __P((struct grf_softc *, vm_offset_t));
+};
+
+typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vm_offset_t addr));
 
 /* flags */
 #define	GF_ALIVE	0x01
@@ -64,19 +91,6 @@ struct grf_softc {
 #define GF_WANTED	0x08
 #define GF_BSDOPEN	0x10
 #define GF_HPUXOPEN	0x20
-
-/* display types - indices into grfdev */
-#define	GT_MACVIDEO		0
-#define	GT_INTERNALVIDEO	1
-
-struct grfdev {
-	int	gd_softid;	/* DrSW */
-	int	(*gd_probe)();	/* probe routine */
-	int	(*gd_init) ();	/* boot time initialization */
-	int	(*gd_mode) ();	/* mode-change on/off/mode function */
-	char	*gd_desc;	/* text description */
-	caddr_t	(*gd_phys) ();	/* map virtual addr to physical addr */
-};
 
 /* requests to mode routine */
 #define GM_GRFON	1
@@ -117,3 +131,19 @@ struct image_data {
 #define VID_TABLE_OFFSET	2
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
+
+int	grfopen __P((dev_t dev, int flag, int mode, struct proc *p));
+int	grfclose __P((dev_t dev, int flag, int mode, struct proc *p));
+int	grfioctl __P((dev_t, int, caddr_t, int, struct proc *p));
+int	grfselect __P((dev_t dev, int rw, struct proc *p));
+int	grfmmap __P((dev_t dev, int off, int prot));
+int	grfon __P((dev_t dev));
+int	grfoff __P((dev_t dev));
+int	grfaddr __P((struct grf_softc *gp, register int off));
+int	grfmap __P((dev_t dev, caddr_t *addrp, struct proc *p));
+int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
+
+void	grf_establish __P((struct grfbus_softc *,
+	    int (*)(struct grf_softc *, int, void *),
+	    caddr_t (*)(struct grf_softc *, vm_offset_t)));
+int	grfbusprint __P((void *, char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96reg.h,v 1.4 1994/10/26 08:46:45 cgd Exp $	*/
+/*	$NetBSD: scsi96reg.h,v 1.5 1996/05/05 06:18:02 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -27,8 +27,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_SCSI96REG_H_
-#define _MACHINE_SCSI96REG_H_
+#ifndef _SCSI96REG_MACHINE_
+#define _SCSI96REG_MACHINE_
 
 typedef volatile unsigned char	v_uchar;
 
@@ -170,4 +170,4 @@ struct ncr53c96regs {
 
 #define NCR96_DALREG	0xF	/* Data alignment register.	W   */
 
-#endif /* _MACHINE_SCSI96REG_H_ */
+#endif /* _SCSI96REG_MACHINE_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.7 1995/08/24 04:27:16 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.11 1996/05/19 22:27:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -40,18 +40,33 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <machine/grfioctl.h>
 #include <machine/cpu.h>
+#include <machine/grfioctl.h>
+#include <machine/viareg.h>
 
 #include "nubus.h"
 #include "grfvar.h"
 
-extern int	grfmv_probe __P((struct grf_softc *gp, nubus_slot *slot));
-extern int	grfmv_init __P((struct grf_softc *gp));
-extern int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+static void	load_image_data __P((caddr_t data, struct image_data *image));
+static void	grfmv_intr __P((void *vsc, int slot));
+static int	get_vrsrcid __P((nubus_slot *slot));
 
 static char zero = 0;
+
+static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+static int	grfmv_match __P((struct device *, void *, void *));
+static void	grfmv_attach __P((struct device *, struct device *, void *));
+
+struct cfdriver macvid_cd = {
+	NULL, "macvid", DV_DULL
+};
+
+struct cfattach macvid_ca = {
+	sizeof(struct grfbus_softc), grfmv_match, grfmv_attach
+};
 
 static void
 load_image_data(data, image)
@@ -77,15 +92,17 @@ load_image_data(data, image)
 	bcopy(data + 42, &image->planeBytes, 4);
 }
 
+/*ARGSUSED*/
 static void
-grfmv_intr(sc, slot)
-	struct	grf_softc *sc;
+grfmv_intr(vsc, slot)
+	void	*vsc;
 	int	slot;
 {
-	struct grf_softc *gp;
-	caddr_t		 slotbase;
+	caddr_t			 slotbase;
+	struct grfbus_softc	*sc;
 
-	slotbase = (caddr_t) NUBUS_SLOT_TO_BASE(slot);
+	sc = (struct grfbus_softc *) vsc;
+	slotbase = (caddr_t) sc->sc_slot.virtual_base;
 	slotbase[0xa0000] = zero;
 }
 
@@ -94,7 +111,6 @@ get_vrsrcid(slot)
 	nubus_slot	*slot;
 {
 extern	u_short	mac68k_vrsrc_vec[];
-extern	int	mac68k_vrsrc_cnt;
 	int	i;
 
 	for (i = 0 ; i < 6 ; i++)
@@ -103,16 +119,19 @@ extern	int	mac68k_vrsrc_cnt;
 	return 0x80;
 }
 
-extern int
-grfmv_probe(sc, slot)
-	struct	grf_softc *sc;
-	nubus_slot	*slot;
+static int
+grfmv_match(parent, self, aux)
+	struct device *parent;
+	void *self, *aux;
 {
-	nubus_dir	dir, *dirp, dir2, *dirp2;
+	struct grfbus_softc	*sc;
+	nubus_slot	*slot = (nubus_slot *) aux;
+	nubus_dir	dir, *dirp, *dirp2;
 	nubus_dirent	dirent, *direntp;
 	nubus_type	slottype;
 	int		vrsrc;
 
+	sc = (struct grfbus_softc *) self;	/* XXX: indirect brokenness */
 	dirp = &dir;
 	direntp = &dirent;
 	nubus_get_main_dir(slot, dirp);
@@ -154,61 +173,79 @@ grfmv_probe(sc, slot)
 
 	sc->card_id = slottype.drhw;
 
+	sc->sc_slot = *slot;
+
 	/* Need to load display info (and driver?), etc... */
 
 	return 1;
 }
 
-extern int
-grfmv_init(sc)
-	struct grf_softc *sc;
+static void
+grfmv_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct grfbus_softc	*sc;
 	struct image_data image_store, image;
+	struct		grfmode *gm;
+	char		cardname[CARD_NAME_LEN];
 	nubus_dirent	dirent;
 	nubus_dir	mode_dir;
 	int		mode;
-	u_long		base;
+
+	sc = (struct grfbus_softc *) self;
+	gm = &sc->curr_mode;
 
 	mode = NUBUS_RSRC_FIRSTMODE;
-	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0)
-		return 0;
+	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
+		printf("\n%s: probe failed to get board rsrc.\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &mode_dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent) <= 0)
-		return 0;
+	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent)
+	    <= 0) {
+		printf("\n%s: probe failed to get mode dir.\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t) &image_store,
-				sizeof(struct image_data)) <= 0)
-		return 0;
+				sizeof(struct image_data)) <= 0) {
+		printf("\n%s: probe failed to get indirect mode data.\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	load_image_data((caddr_t) &image_store, &image);
 
-	base = NUBUS_SLOT_TO_BASE(sc->sc_slot.slot);
+	gm->mode_id = mode;
+	gm->fbbase = (caddr_t) (sc->sc_slot.virtual_base + image.offset);
+	gm->fboff = image.offset;
+	gm->rowbytes = image.rowbytes;
+	gm->width = image.right - image.left;
+	gm->height = image.bottom - image.top;
+	gm->fbsize = sc->curr_mode.height * sc->curr_mode.rowbytes;
+	gm->hres = image.hRes;
+	gm->vres = image.vRes;
+	gm->ptype = image.pixelType;
+	gm->psize = image.pixelSize;
 
-	sc->curr_mode.mode_id = mode;
-	sc->curr_mode.fbbase = (caddr_t) (base + image.offset);
-	sc->curr_mode.fboff = image.offset;
-	sc->curr_mode.rowbytes = image.rowbytes;
-	sc->curr_mode.width = image.right - image.left;
-	sc->curr_mode.height = image.bottom - image.top;
-	sc->curr_mode.fbsize = sc->curr_mode.height * sc->curr_mode.rowbytes;
-	sc->curr_mode.hres = image.hRes;
-	sc->curr_mode.vres = image.vRes;
-	sc->curr_mode.ptype = image.pixelType;
-	sc->curr_mode.psize = image.pixelSize;
-
-	strncpy(sc->card_name, nubus_get_card_name(&sc->sc_slot),
+	strncpy(cardname, nubus_get_card_name(&sc->sc_slot),
 		CARD_NAME_LEN);
+	cardname[CARD_NAME_LEN-1] = '\0';
 
-	sc->card_name[CARD_NAME_LEN-1] = '\0';
+	printf(": %s\n", cardname);
 
 	add_nubus_intr(sc->sc_slot.slot, grfmv_intr, sc);
 
-	return 1;
+	/* Perform common video attachment. */
+	grf_establish(sc, grfmv_mode, grfmv_phys);
 }
 
-extern int
+static int
 grfmv_mode(gp, cmd, arg)
 	struct grf_softc *gp;
 	int cmd;
@@ -228,10 +265,11 @@ grfmv_mode(gp, cmd, arg)
 	return EINVAL;
 }
 
-extern caddr_t
+static caddr_t
 grfmv_phys(gp, addr)
 	struct grf_softc *gp;
 	vm_offset_t addr;
 {
-	return (caddr_t) NUBUS_VIRT_TO_PHYS(addr);
+	return (caddr_t) (NUBUS_SLOT_TO_PADDR(gp->sc_slot->slot) +
+				(addr - gp->sc_slot->virtual_base));
 }

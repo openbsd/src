@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1996/02/19 21:40:48 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 1996/05/05 06:18:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,30 +77,27 @@
  *	@(#)clock.c   7.6 (Berkeley) 5/7/91
  */
 
-#if !defined(STANDALONE)
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
 
+#include <machine/autoconf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
+#include <machine/limits.h>
 
 #if defined(GPROF) && defined(PROFTIMER)
 #include <sys/gprof.h>
 #endif
 
-#else				/* STANDALONE */
-#include "stand.h"
-#endif				/* STANDALONE */
-
+#include "pram.h"
 #include "clockreg.h"
-#include "via.h"
+#include <machine/viareg.h>
 
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-#define DIFF19041970 2082844800
-#define DIFF19701990 630720000
-#define DIFF19702010 1261440000
+#define	DIFF19041970	2082844800
+#define	DIFF19701990	630720000
+#define	DIFF19702010	1261440000
 
 /*
  * Mac II machine-dependent clock routines.
@@ -111,12 +108,13 @@ static int month_days[12] = {
  *
  * We use VIA1 timer 1.
  */
-void 
-startrtclock(void)
+void
+startrtclock()
 {
-/* BARF MF startrt clock is called twice in init_main, configure,
-   the reason why is doced in configure */
-
+/*
+ * BARF MF startrt clock is called twice in init_main, configure,
+ * the reason why is doced in configure
+ */
 	/* be certain clock interrupts are off */
 	via_reg(VIA1, vIER) = V1IF_T1;
 
@@ -133,7 +131,7 @@ startrtclock(void)
 }
 
 void
-enablertclock(void)
+enablertclock()
 {
 	/* clear then enable clock interrupt. */
 	via_reg(VIA1, vIFR) |= V1IF_T1;
@@ -141,18 +139,19 @@ enablertclock(void)
 }
 
 void
-cpu_initclocks(void)
+cpu_initclocks()
 {
 	enablertclock();
 }
 
 void
-setstatclockrate(int rateinhz)
+setstatclockrate(rateinhz)
+	int rateinhz;
 {
 }
 
 void
-disablertclock(void)
+disablertclock()
 {
 	/* disable clock interrupt */
 	via_reg(VIA1, vIER) = V1IF_T1;
@@ -164,7 +163,7 @@ disablertclock(void)
  * Check high byte twice to prevent missing a roll-over.
  * (race condition?)
  */
-u_long 
+u_long
 clkread()
 {
 	register int high, high2, low;
@@ -198,12 +197,12 @@ int     profscale = 0;		/* Scale factor from sys clock to prof clock */
 char    profon = 0;		/* Is profiling clock on? */
 
 /* profon values - do not change, locore.s assumes these values */
-#define PRF_NONE   0x00
-#define   PRF_USER   0x01
-#define   PRF_KERNEL   0x80
+#define	PRF_NONE	0x00
+#define	PRF_USER	0x01
+#define	PRF_KERNEL	0x80
 
-void 
-initprofclock(void)
+void
+initprofclock()
 {
 	/* profile interval must be even divisor of system clock interval */
 	if (profint > CLK_INTERVAL)
@@ -219,8 +218,8 @@ initprofclock(void)
 	profintlow = profint & 0xff;
 }
 
-void 
-startprofclock(void)
+void
+startprofclock()
 {
 	via_reg(VIA2, vT1L) = (profint - 1) & 0xff;
 	via_reg(VIA2, vT1LH) = (profint - 1) >> 8;
@@ -229,8 +228,8 @@ startprofclock(void)
 	via_reg(VIA2, vT1CH) = (profint - 1) >> 8;
 }
 
-void 
-stopprofclock(void)
+void
+stopprofclock()
 {
 	via_reg(VIA2, vT1L) = 0;
 	via_reg(VIA2, vT1LH) = 0;
@@ -245,21 +244,22 @@ stopprofclock(void)
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-void 
-profclock(clockframe * pclk)
+void
+profclock(pclk)
+	clockframe *pclk;
 {
 	/*
-         * Came from user mode.
-         * If this process is being profiled record the tick.
-         */
+	 * Came from user mode.
+	 * If this process is being profiled record the tick.
+	 */
 	if (USERMODE(pclk->ps)) {
 		if (p->p_stats.p_prof.pr_scale)
 			addupc_task(&curproc, pclk->pc, 1);
 	}
 	/*
-         * Came from kernel (supervisor) mode.
-         * If we are profiling the kernel, record the tick.
-         */
+	 * Came from kernel (supervisor) mode.
+	 * If we are profiling the kernel, record the tick.
+	 */
 	else
 		if (profiling < 2) {
 			register int s = pclk->pc - s_lowpc;
@@ -268,10 +268,10 @@ profclock(clockframe * pclk)
 				kcount[s / (HISTFRACTION * sizeof(*kcount))]++;
 		}
 	/*
-         * Kernel profiling was on but has been disabled.
-         * Mark as no longer profiling kernel and if all profiling done,
-         * disable the clock.
-         */
+	 * Kernel profiling was on but has been disabled.
+	 * Mark as no longer profiling kernel and if all profiling done,
+	 * disable the clock.
+	 */
 	if (profiling && (profon & PRF_KERNEL)) {
 		profon &= ~PRF_KERNEL;
 		if (profon == PRF_NONE)
@@ -281,38 +281,43 @@ profclock(clockframe * pclk)
 #endif
 #endif
 
+static u_long	ugmt_2_pramt __P((u_long));
+static u_long	pramt_2_ugmt __P((u_long));
+
 /*
  * Convert GMT to Mac PRAM time, using global timezone
  * GMT bias adjustment is done elsewhere.
  */
-static u_long 
-ugmt_2_pramt(u_long t)
+static u_long
+ugmt_2_pramt(t)
+	u_long t;
 {
 	/* don't know how to open a file properly. */
 	/* assume compiled timezone is correct. */
 
-	return (t = t + DIFF19041970 - 60*tz.tz_minuteswest);
+	return (t = t + DIFF19041970 - 60 * tz.tz_minuteswest);
 }
 
 /*
  * Convert a Mac PRAM time value to GMT, using compiled-in timezone
  * GMT bias adjustment is done elsewhere.
  */
-static u_long 
-pramt_2_ugmt(u_long t)
+static u_long
+pramt_2_ugmt(t)
+	u_long t;
 {
-	return (t = t - DIFF19041970 + 60*tz.tz_minuteswest);
+	return (t = t - DIFF19041970 + 60 * tz.tz_minuteswest);
 }
 
 /*
  * Time from the booter.
  */
-u_long  macos_boottime;
+u_long	macos_boottime;
 
 /*
  * Bias in minutes east from GMT (also from booter).
  */
-long    macos_gmtbias;
+long	macos_gmtbias;
 
 /*
  * Flag for whether or not we can trust the PRAM.  If we don't
@@ -320,33 +325,33 @@ long    macos_gmtbias;
  * that is passed from the booter (which will only be a second
  * or two off by now).
  */
-int     mac68k_trust_pram = 1;
+int	mac68k_trust_pram = 1;
 
 /*
  * Set global GMT time register, using a file system time base for comparison
  * and sanity checking.
  */
-void 
-inittodr(time_t base)
+void
+inittodr(base)
+	time_t base;
 {
-	u_long  timbuf;
-	u_long  pramtime;
+	u_long timbuf;
 
 	timbuf = pramt_2_ugmt(pram_readtime());
 	if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) > 10 * 60) {
 #if DIAGNOSTIC
 		printf(
-		   "PRAM time does not appear to have been read correctly.\n");
-		printf("PRAM: 0x%x, macos_boottime: 0x%x.\n",
-			timbuf, macos_boottime + 60 * tz.tz_minuteswest);
+		    "PRAM time does not appear to have been read correctly.\n");
+		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
+		    timbuf, macos_boottime + 60 * tz.tz_minuteswest);
 #endif
 		timbuf = macos_boottime;
 		mac68k_trust_pram = 0;
 	}
 #ifdef DIAGNOSTIC
 	else
-		printf("PRAM: 0x%x, macos_boottime: 0x%x.\n",
-			timbuf, macos_boottime);
+		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
+		    timbuf, macos_boottime);
 #endif
 
 	/*
@@ -384,8 +389,8 @@ inittodr(time_t base)
  * Set battery backed clock to a new time, presumably after someone has
  * changed system time.
  */
-void 
-resettodr(void)
+void
+resettodr()
 {
 	if (mac68k_trust_pram)
 		/*
@@ -400,7 +405,6 @@ resettodr(void)
 		    "to the pram on this system.\n");
 #endif
 }
-
 /*
  * The Macintosh timers decrement once every 1.2766 microseconds.
  * MGFH2, p. 180
@@ -410,8 +414,8 @@ resettodr(void)
 #define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
 #define	LARGE_DELAY	0x40000		/* About 335 msec */
 
-int delay_factor = DELAY_CALIBRATE;
-volatile int delay_flag = 1;
+unsigned	delay_factor = DELAY_CALIBRATE;
+volatile int	delay_flag = 1;
 
 /*
  * delay(usec)
@@ -423,7 +427,8 @@ volatile int delay_flag = 1;
  * due to adjustments for calculations involving 32 bit values.
  */
 void
-delay(unsigned usec)
+delay(usec)
+	unsigned usec;
 {
 	register unsigned int cycles;
 
@@ -432,15 +437,15 @@ delay(unsigned usec)
 	else
 		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while ((cycles-- > 0) && delay_flag)
-		;
+	while ((cycles-- > 0) && delay_flag);
 }
 
+static unsigned	dummy_delay __P((unsigned));
 /*
  * Dummy delay calibration.  Functionally identical to delay(), but
  * returns the number of times through the loop.
  */
-static int
+static unsigned
 dummy_delay(usec)
 	unsigned usec;
 {
@@ -451,14 +456,16 @@ dummy_delay(usec)
 	else
 		cycles = ((usec > 0 ? usec : 1) * delay_factor) >> 7;
 
-	while ((cycles-- > 0) && delay_flag)
-		;
+	while ((cycles-- > 0) && delay_flag);
 
 	return ((delay_factor >> 7) - cycles);
 }
 
+static void	delay_timer1_irq __P((void *));
+
 static void
-delay_timer1_irq()
+delay_timer1_irq(dummy)
+	void *dummy;
 {
 	delay_flag = 0;
 }
@@ -470,7 +477,7 @@ void
 mac68k_calibrate_delay()
 {
 	int n;
-	int sum;
+	unsigned sum;
 
 	/* Disable VIA1 timer 1 interrupts and set up service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
@@ -478,7 +485,7 @@ mac68k_calibrate_delay()
 
 	/* Set the timer for one-shot mode, then clear and enable interrupts */
 	via_reg(VIA1, vACR) &= ~ACR_T1LATCH;
-	via_reg(VIA1, vIFR) = V1IF_T1;		/* (this is needed for IIsi) */
+	via_reg(VIA1, vIFR) = V1IF_T1;	/* (this is needed for IIsi) */
 	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
 
 	for (sum = 0, n = 8; n > 0; n--) {
@@ -499,13 +506,13 @@ mac68k_calibrate_delay()
 	 *	delay_factor = ((sum / 8) / (1024 * 1.2766)) * 128;
 	 * That is, average the sum, divide by the number of usec,
 	 * and multiply by a scale factor of 128.
-	 * 
+	 *
 	 * We can accomplish the same thing by simplifying and using
 	 * shifts, being careful to avoid as much loss of precision
-	 * as possible.  (If the sum exceeds (2^31-1)/10000, we need
+	 * as possible.  (If the sum exceeds UINT_MAX/10000, we need
 	 * to rearrange the calculation slightly to do this.)
 	 */
-	if (sum > 214748)	/* This is a _fast_ machine! */
+	if (sum > (UINT_MAX / 10000))	/* This is a _fast_ machine! */
 		delay_factor = (((sum >> 3) * 10000) / CLK_RATE) >> 3;
 	else
 		delay_factor = (((sum * 10000) >> 3) / CLK_RATE) >> 3;

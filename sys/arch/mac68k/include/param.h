@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 1996/02/17 14:50:40 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.26 1996/05/05 06:17:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,8 +76,8 @@
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
 
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_	1
+#ifndef _PARAM_MACHINE_
+#define _PARAM_MACHINE_
 
 #ifndef PSL_IPL
 #include <machine/psl.h>
@@ -86,7 +86,9 @@
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
  */
+#define	_MACHINE	mac68k
 #define	MACHINE		"mac68k"
+#define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
 
@@ -186,4 +188,4 @@ void	delay		__P((unsigned));
 #define DELAY(ms)	delay(ms)
 #endif	/* _KERNEL && !_LOCORE */
 
-#endif /* _MACHINE_PARAM_H_ */
+#endif /* _PARAM_MACHINE_ */

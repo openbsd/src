@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1995/08/09 03:22:50 briggs Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.9 1996/05/05 06:18:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -43,6 +43,10 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 
+#include <dev/cons.h>
+
+#include <ufs/ffs/ffs_extern.h>
+
 #include <machine/pte.h>
 
 #include "sd.h"
@@ -57,10 +61,10 @@ struct	swdevt	swdevt[] = {
 };
 
 #if NSD > 0
-extern struct cfdriver sdcd;
+extern struct cfdriver sd_cd;
 #endif
 #if NCD > 0
-extern struct cfdriver cdcd;
+extern struct cfdriver cd_cd;
 #endif
 
 struct	genericconf {
@@ -69,17 +73,20 @@ struct	genericconf {
 	dev_t		gc_root;
 } genericconf[] = {
 #if NSD > 0
-	{ &sdcd,  "sd",  makedev(4,0) },
+	{ &sd_cd,  "sd",  makedev(4,0) },
 #endif
 #if NCD > 0
-	{ &cdcd,  "cd",  makedev(6,0) },
+	{ &cd_cd,  "cd",  makedev(6,0) },
 #endif
 	{ 0 }
 };
 
-extern int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+void	setconf __P((void));
+void	doboot __P((void));
+void	gets __P((char *));
+int (*mountroot) __P((void)) = ffs_mountroot;
 
+void
 setconf()
 {
 	register struct genericconf *gc = NULL;
@@ -136,7 +143,7 @@ verybad:
 		printf("\n");
 		goto doswap;
 	}
-	printf(" -- hit any key to reboot\n", root_swap);
+	printf(" -- hit any key to reboot\n");
 	cngetc();
 	doboot();
 	printf("      Automatic reboot failed.\n");
@@ -160,6 +167,7 @@ doswap:
 	 	rootdev = dumpdev;
 }
 
+void
 gets(cp)
 	char *cp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 1995/12/11 02:38:08 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 1996/05/17 02:11:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,11 +77,17 @@
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning 
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	.text
+	.globl	_kernel_text
+_kernel_text:
+
 #include "assym.h"
 #include "vectors.s"
 #include "macglobals.s"
-
-	.text
 
 /*
  * This is where we wind up if the kernel jumps to location 0.
@@ -112,6 +118,14 @@ Ljmp0panic:
 _buserr:
 	tstl	_nofault		| device probe?
 	jeq	Lberr			| no, handle as usual
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
+	jne	Lberrfault30		| no, handle as 030
+	movl	sp@(0x14),_mac68k_buserr_addr
+	movl	_nofault,sp@-		| yes,
+	jbsr	_longjmp
+#endif
+Lberrfault30:
 	movl	sp@(0x10),_mac68k_buserr_addr
 	movl	_nofault,sp@-		| yes,
 	jbsr	_longjmp		|  longjmp(nofault)
@@ -553,6 +567,7 @@ Lsigr1:
  */
 /* BARF We must re-configure this. */
 	.globl	_hardclock, _nmihand
+	.globl	_mrg_VBLQueue
 
 _spurintr:
 _lev3intr:
@@ -602,21 +617,30 @@ _lev4intr:
 	addql	#4,sp
 	rte			| return from exception
 
+/* 
+ * We could tweak rtclock_intr and gain 12 cycles on the 020 and 030 by
+ * saving the status register directly to the stack, but this would lose
+ * badly on the 040.  Aligning the stack takes 10 more cycles than this
+ * code does, so it's a good compromise.
+ */
 	.globl _rtclock_intr
 
-/* MAJORBARF: Fix this routine to be like Mac clocks */
 _rtclock_intr:
+	movl	d2,sp@-			| save d2
+	movw	sr,d2			| save SPL
+	movw	#SPL2,sr		| raise SPL to splclock()
 	movl	a6@(8),a1		| get pointer to frame in via1_intr
-	movl	a1@(64), sp@-		| push ps
-	movl	a1@(68), sp@-		| push pc
-	movl	sp, sp@-		| push pointer to ps, pc
+	movl	a1@(64),sp@-		| push ps
+	movl	a1@(68),sp@-		| push pc
+	movl	sp,sp@-			| push pointer to ps, pc
 	jbsr	_hardclock		| call generic clock int routine
-	lea	sp@(12), sp		| pop params
+	lea	sp@(12),sp		| pop params
+	jbsr	_mrg_VBLQueue		| give programs in the VBLqueue a chance
 	addql	#1,_intrcnt+20		| add another system clock interrupt
-
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
-
-	movl	#1, d0			| clock taken care of
+	movw	d2,sr			| restore SPL
+	movl	sp@+,d2			| restore d2
+	movl	#1,d0			| clock taken care of
 	rts				| go back from whence we came
 
 _lev7intr:
@@ -797,12 +821,6 @@ _esym:		.long	0
 	.globl	_edata
 	.globl	_etext
 	.globl	start
-	.globl _videoaddr, _videorowbytes
-	.globl _videobitdepth
-	.globl _machineid
-	.globl _videosize
-	.globl _IOBase
-	.globl _NuBusBase
 
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
@@ -1040,7 +1058,7 @@ _esigcode:
  * Primitives
  */ 
 
-#include "m68k/asm.h"
+#include <m68k/asm.h>
 
 /*
  * copypage(fromaddr, toaddr)
@@ -1446,8 +1464,10 @@ __TBIA:
 Lmotommu3:
 #endif
 	pflusha
+#if defined(M68020)
 	tstl	_mmutype
 	jgt	Ltbia851
+#endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 Ltbia851:
@@ -1476,14 +1496,16 @@ ENTRY(TBIS)
 	rts
 Lmotommu4:
 #endif
+#if defined(M68020)
 	tstl	_mmutype
-	jgt	Ltbis851
+	jle	Ltbis851
+	pflushs	#0,#0,a0@		| flush address from both sides
+	rts
+Ltbis851:
+#endif
 	pflush	#0,#0,a0@		| flush address from both sides
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip data cache
-	rts
-Ltbis851:
-	pflushs	#0,#0,a0@		| flush address from both sides
 	rts
 
 /*
@@ -1501,14 +1523,16 @@ ENTRY(TBIAS)
 	rts
 Lmotommu5:
 #endif
+#if defined(M68020)
 	tstl	_mmutype
-	jgt	Ltbias851
+	jle	Ltbias851
+	pflushs	#4,#4			| flush supervisor TLB entries
+	rts
+Ltbias851:
+#endif
 	pflush	#4,#4			| flush supervisor TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Ltbias851:
-	pflushs	#4,#4			| flush supervisor TLB entries
 	rts
 
 /*
@@ -1525,14 +1549,16 @@ ENTRY(TBIAU)
 	.word	0xf518			| yes, pflusha (for now) XXX
 Lmotommu6:
 #endif
+#if defined(M68020)
 	tstl	_mmutype
-	jgt	Ltbiau851
+	jle	Ltbiau851
+	pflush	#0,#4			| flush user TLB entries
+	rts
+Ltbiau851:
+#endif
 	pflush	#0,#4			| flush user TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Ltbiau851:
-	pflush	#0,#4			| flush user TLB entries
 	rts
 
 /*
@@ -1767,11 +1793,8 @@ Lm68881rdone:
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
- * Basically we just turn off the MMU and jump to the appropriate ROM routine.
- * Note that we must be running in an address range that is mapped one-to-one
- * logical to physical so that the PC is still valid immediately after the MMU
- * is turned off.  We have conveniently mapped the last page of physical
- * memory this way.
+ * Basically we just jump to the appropriate ROM routine after mapping
+ * the ROM into its proper home (back in machdep).
  */
 	.globl	_doboot, _ROMBase
 _doboot:
@@ -2105,7 +2128,6 @@ _mac68k_vrsrc_cnt:
 _mac68k_vrsrc_vec:
 	.word	0, 0, 0, 0, 0, 0
 _mac68k_buserr_addr:
-	.long	0
 	.globl	_SONICSPACE, _SONICSPACE_size
 _SONICSPACE:
 	.space	108123

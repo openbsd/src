@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.2 1995/04/21 02:47:44 briggs Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.3 1996/05/05 06:16:24 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,4 +41,25 @@ typedef struct adb_trace_xlate_s {
 }       adb_trace_xlate_t;
 
 extern adb_trace_xlate_t adb_trace_xlations[];
-void    adb_asmcomplete();
+
+/* adb.c */
+void    adb_asmcomplete __P((void));
+void	adb_enqevent __P((adb_event_t *event));
+void	adb_handoff __P((adb_event_t *event));
+void	adb_autorepeat __P((void *keyp));
+void	adb_dokeyupdown __P((adb_event_t *event));
+void	adb_keymaybemouse __P((adb_event_t *event));
+void	adb_processevent __P((adb_event_t *event));
+int	adbopen __P((dev_t dev, int flag, int mode, struct proc *p));
+int	adbclose __P((dev_t dev, int flag, int mode, struct proc *p));
+int	adbread __P((dev_t dev, struct uio *uio, int flag));
+int	adbwrite __P((dev_t dev, struct uio *uio, int flag));
+int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
+int	adbselect __P((dev_t dev, int rw, struct proc *p));
+
+/* adbsysadm.s */
+void	extdms_complete __P((void));
+
+/* adbsys.c */
+void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void	extdms_init __P((void));

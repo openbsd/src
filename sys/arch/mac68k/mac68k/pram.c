@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.6 1995/09/17 18:50:17 briggs Exp $	*/
+/*	$NetBSD: pram.c,v 1.8 1996/03/31 14:21:03 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -35,7 +35,8 @@
 
 
 /* #include "stand.h"  */
-#include "via.h"
+#include <sys/types.h>
+#include <machine/viareg.h>
 #include "pram.h"
 #include "macrom.h"
 

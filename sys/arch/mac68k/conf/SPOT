@@ -1,12 +1,12 @@
-#	$NetBSD: GENERIC,v 1.37 1996/05/19 22:29:04 scottr Exp $
+#	$NetBSD: SPOT,v 1.8 1996/05/20 03:23:36 scottr Exp $
 #
-# GENERIC
+# SPOT
 
 include	"std.mac68k"
 
 maxusers	16
 
-# obsolete timezone spec
+makeoptions CC="cc -m68030"
 options         MAXFDESCS=2048
 
 # Standard system options
@@ -24,8 +24,8 @@ options		FFS
 options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
 #options	NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		NULLFS		# Null (formerly loop-back) filesystem
+#options	NFSCLIENT	# Sun NFS-compatible filesystem
+#options	NULLFS		# Null (formerly loop-back) filesystem
 options		CD9660		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
@@ -36,6 +36,8 @@ options		PROCFS		# Process filesystem
 
 options		SCSI
 #options	SCSIDEBUG
+#options	NCR5380_DEBUG
+#options	SBC_DEBUG
 
 # Networking options
 options		INET
@@ -44,19 +46,16 @@ options		GATEWAY		# IP packet forwarding
 #options	ISO		# OSI networking
 #options	TPIP
 #options	EON
+options		PPP_BSDCOMP
+#options	PPP_DEFLATE
 options		COMPAT_42
 options		COMPAT_43
-options		NS
+#options	NS
 options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
-options		PPP_BSDCOMP,PPP_DEFLATE
 
 # Mac-specific options
-options		M68040
 options		M68030
-options		M68020		# Must have 68851 PMMU
-options		FPSP
-options		FPU_EMULATE
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
@@ -66,31 +65,30 @@ options		MACHINE_NONCONTIG
 config		bsd	swap generic
 options		GENERIC
 
-sn0		at obio?	# SONIC ethernet (68040)
-
 intvid0		at obio?	# Internal video hardware
-grf*		at intvid?
 
 nubus0		at mainbus?
 
 ae*		at nubus?
 macvid*		at nubus?
+
+# Attach grf semantics to all video hardware as it is found
+grf*		at intvid?
 grf*		at macvid?
 
-ncrscsi0	at obio?		# SCSI NCR 5380
-ncr96scsi0	at obio?		# SCSI NCR 53C96
+#ncrscsi0	at obio?		# SCSI NCR 5380
+#ncr96scsi0	at obio?		# SCSI NCR 53C96
+sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
-ss*	at scsibus? target ? lun ?
-uk*	at scsibus? target ? lun ?
 
-pseudo-device	pty		16
-pseudo-device	bpfilter	12
+pseudo-device	pty		32
+pseudo-device	bpfilter	16
 pseudo-device	vnd		2
 pseudo-device	ppp		2
 pseudo-device	loop
-pseudo-device	sl
+#pseudo-device	sl

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 1995/12/21 05:02:01 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 1996/05/25 14:48:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,8 +69,10 @@
    but there isn't time to do anything about that right now...
  */
 
-#ifndef _MACHINE_CPU_H_
-#define _MACHINE_CPU_H_	1
+#ifndef _CPU_MACHINE_
+#define _CPU_MACHINE_
+
+#include <machine/pcb.h>
 
 /*
  * definitions of cpu-dependent requirements
@@ -79,6 +81,7 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
+void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 
 /*
  * Arguments to hardclock, softclock and gatherstats
@@ -205,8 +208,10 @@ extern unsigned char ssir;
 #define MACH_CLASSIIvx	0x0006	/* Similar to IIsi -- different via2 emul? */
 #define MACH_CLASSLC	0x0007	/* Low-Cost/Performa/Wal-Mart Macs. */
 #define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
+#define MACH_CLASSDUO	0x0009	/* Powerbooks Duos.  More integration/Docks. */
 #define MACH_CLASSIIfx	0x0080	/* The IIfx is in a class by itself. */
-#define MACH_CLASSQ	0x0100	/* Centris/Quadras. */
+#define MACH_CLASSQ	0x0100	/* non-A/V Centris/Quadras. */
+#define MACH_CLASSAV	0x0101	/* A/V Centris/Quadras. */
 
 #define MACH_68020	0
 #define MACH_68030	1
@@ -267,13 +272,9 @@ extern	unsigned long		load_addr;
 
 /* physical memory sections */
 #define	ROMBASE		(0x40800000)
-#define	ROMLEN		(0x00100000)		/* 1MB should be enough! */
-#define	ROMMAPSIZE	btoc(ROMLEN)		/* 1k of page tables.  */
+#define	ROMLEN		(0x00200000)		/* 2MB should be enough! */
+#define	ROMMAPSIZE	btoc(ROMLEN)		/* 32k of page tables.  */
 
-/* This should not be used.  Use IOBase, instead. */
-#define INTIOBASE	(0x50F00000)
-
-#define INTIOTOP	(IOBase+0x00100000)
 #define IIOMAPSIZE	btoc(0x00100000)
 
 /* XXX -- Need to do something about superspace.
@@ -350,4 +351,31 @@ extern	unsigned long		load_addr;
 #define CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
 #define CACHE4_OFF	0x00000000
 
-#endif	/* !_MACHINE_CPU_H_ */
+__BEGIN_DECLS
+/* machdep.c */
+u_int get_mapping __P((void));
+
+/* locore.s */
+void	m68881_restore __P((struct fpframe *));
+void	m68881_save __P((struct fpframe *));
+u_int	getsfc __P((void));
+u_int	getdfc __P((void));
+void	TBIA __P((void));
+void	TBIAS __P((void));
+void	TBIS __P((vm_offset_t));
+void	DCFP __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	DCFL __P((vm_offset_t));
+int	suline __P((caddr_t, caddr_t));
+int	susword __P((caddr_t, u_int));
+void	savectx __P((struct pcb *));
+void	proc_trampoline __P((void));
+
+/* trap.c */
+void	child_return __P((struct proc *, struct frame));
+
+__END_DECLS
+
+#endif	/* _CPU_MACHINE_ */

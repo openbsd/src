@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.5 1995/12/04 02:10:46 briggs Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.9 1996/05/05 06:16:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -236,24 +236,24 @@ static int  scsi_select __P((SC_REQ *, int));
 static int  handle_message __P((SC_REQ *, u_int));
 static void ack_message __P((void));
 static void nack_message __P((SC_REQ *, u_char));
-static int  information_transfer __P((void));
+static void finish_req __P((SC_REQ *reqp));
+static int command_size __P((u_char opcode));
+static int  information_transfer __P((struct ncr_softc *));
 static void reselect __P((struct ncr_softc *));
-static int  dma_ready __P((void));
-static void transfer_dma __P((SC_REQ *, u_int, int));
 static int  check_autosense __P((SC_REQ *, int));
 static int  reach_msg_out __P((struct ncr_softc *, u_long));
 static int  check_intr __P((struct ncr_softc *));
-static void scsi_reset __P((struct ncr_softc *));
-static int  scsi_dmaok __P((SC_REQ *));
+static void scsi_reset __P((void));
+static void scsi_reset_verbose __P((struct ncr_softc *, const char *));
 static void run_main __P((struct ncr_softc *));
 static void scsi_main __P((struct ncr_softc *));
 static void ncr_ctrl_intr __P((struct ncr_softc *));
-static void ncr_dma_intr __P((struct ncr_softc *));
 static void ncr_tprint __P((SC_REQ *, char *, ...));
 static void ncr_aprint __P((struct ncr_softc *, char *, ...));
 
+static void show_data_sense __P((struct scsi_xfer *xs));
 static void show_request __P((SC_REQ *, char *));
-static void show_phase __P((SC_REQ *, int));
+/* static void show_phase __P((SC_REQ *, int)); */
 static void show_signals __P((u_char, u_char));
 
 #endif /* _NCR5380REG_H */

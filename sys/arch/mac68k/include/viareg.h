@@ -1,4 +1,4 @@
-/*	$NetBSD: via.h,v 1.15 1996/02/03 22:50:22 briggs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.3 1996/05/05 06:18:07 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -68,6 +68,7 @@
 	/* VIA2 data register A */
 #define DA2O_v2Ram1	0x80
 #define DA2O_v2Ram0	0x40
+#define DA2I_v2IRQ0	0x40
 #define DA2I_v2IRQE	0x20
 #define DA2I_v2IRQD	0x10
 #define DA2I_v2IRQC	0x08
@@ -156,7 +157,7 @@ extern int VIA2;
 #define RBVMonitorMask	0x38	/* Type numbers */
 #define RBVOff		0x40	/* monitor turn off */
 #define RBVMonIDNone	0x38	/* What RBV actually has for no video */
-#define RBVMonIDOff	0x0		/* What rbv_vidstatus() returns for no video */
+#define RBVMonIDOff	0x0	/* What rbv_vidstatus() returns for no video */
 #define RBVMonID15BWP	0x08	/* BW portrait */
 #define RBVMonIDRGB	0x10	/* color monitor */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
@@ -164,20 +165,17 @@ extern int VIA2;
 
 #define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
 #define via2_reg(r) (*(Via2Base+(r)))
-#define via_SR_input(v)	(via_reg((v), vACR) &= 0xef)
-#define via_SR_output(v)	(via_reg((v), vACR) = ((via_reg((v), vACR) & \
-								0xe3) | 0x1c))
 
 #define vDirA_ADBState	0x30
 
-void		VIA_initialize   (void);
-unsigned char	VIA_get_SR       (long vianum);
-long		VIA_set_SR       (long vianum, unsigned char data);
-int		rbv_vidstatus    (void);
-int		add_nubus_intr   (int addr, void (*func)(), void *client_data);
-void		mac68k_register_scsi_irq(void (*irq_func)(void *), void *clnt);
-void		mac68k_register_scsi_drq(void (*drq_func)(void *), void *clnt);
-void		mac68k_register_via1_t1_irq(void (*irq_func)(void *));
+void	VIA_initialize   __P((void));
+int	rbv_vidstatus    __P((void));
+void	via_shutdown __P((void));
+int	add_nubus_intr   __P((int, void (*) __P((void *, int)), void *));
+void	enable_nubus_intr __P((void));
+void	mac68k_register_scsi_irq __P((void (*)(void *), void *clnt));
+void	mac68k_register_scsi_drq __P((void (*)(void *), void *clnt));
+void	mac68k_register_via1_t1_irq __P((void (*)(void *)));
 
-extern void	(*via1itab[7])();
-extern void	(*via2itab[7])();
+extern void	(*via1itab[7]) __P((void *));
+extern void	(*via2itab[7]) __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1996/02/17 14:50:42 briggs Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 1996/05/19 04:30:32 briggs Exp $	*/
 
 #ifndef PSL_C
 #include <m68k/psl.h>
@@ -26,28 +26,31 @@
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
-/* These should be used for:
-   1) ensuring mutual exclusion (why use processor level?)
-   2) allowing faster devices to take priority
-
-   Note that on the mac, most things are masked at spl1, almost
-   everything at spl2, and everything but the panic switch and
-   power at spl4.
+/*
+ * These should be used for:
+ * 1) ensuring mutual exclusion (why use processor level?)
+ * 2) allowing faster devices to take priority
+ *
+ * Note that on the Mac, most things are masked at spl1, almost
+ * everything at spl2, and everything but the panic switch and
+ * power at spl4.
  */
-#define splsoftclock()  spl1()	/* disallow softclock */
-#define splsoftnet()    spl1()	/* disallow network */
-#define splclock()      spl1()	/* disallow clock interrupt */
-#define spltty()        spl1()	/* disallow tty (softserial&adb) interrupts */
-#define splbio()        spl2()	/* disallow block I/O */
-#define splnet()        spl2()	/* disallow network */
-#define splimp()        spl2()	/* disallow imput */
-#define splhigh()       spl7()	/* disallow everything */
-#define splsched()      spl7()	/* disallow scheduling */
-
-#define splstatclock()  spl2()	/* This should be splclock... */
+#define	splsoftclock()	spl1()	/* disallow softclock */
+#define	splsoftnet()	spl1()	/* disallow network */
+#define	spltty()	spl1()	/* disallow tty (softserial & ADB) */
+#define	splbio()	spl2()	/* disallow block I/O */
+#define	splnet()	spl2()	/* disallow network */
+#define	splimp()	spl2()	/* disallow goblins and other nonsense */
+#define	splclock()	spl2()	/* disallow clock (and other) interrupts */
+#define	splstatclock()	spl2()	/* ditto */
+#define	splzs()		spl4()	/* disallow serial hw interrupts */
+#define	splhigh()	spl7()	/* disallow everything */
+#define	splsched()	spl7()	/* disallow scheduling */
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+
+int	spl0 __P((void));
 
 #endif /* _KERNEL && !_LOCORE */
 

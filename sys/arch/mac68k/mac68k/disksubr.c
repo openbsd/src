@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 1996/02/14 14:20:54 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 1996/05/05 06:18:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -81,6 +81,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
@@ -89,7 +90,6 @@
 #define	b_cylin	b_resid
 
 #define NUM_PARTS_PROBED 32
-static int print = 0;
 
 #define ROOT_PART 1
 #define UFS_PART 2
@@ -97,11 +97,24 @@ static int print = 0;
 #define HFS_PART 4
 #define SCRATCH_PART 5
 
+static int getFreeLabelEntry __P((struct disklabel *));
+static int whichType __P((struct partmapentry *));
+static void fixPartTable __P((struct partmapentry *, long, char *, int *));
+static void setRoot __P((struct partmapentry *, struct disklabel *, int));
+static void setSwap __P((struct partmapentry *, struct disklabel *, int));
+static void setUfs __P((struct partmapentry *, struct disklabel *, int));
+static void setHfs __P((struct partmapentry *, struct disklabel *, int));
+static void setScratch __P((struct partmapentry *, struct disklabel *, int));
+static int getNamedType
+__P((struct partmapentry *, int, struct disklabel *, int, int, int *));
+static char *read_mac_label __P((dev_t, void (*)(struct buf *),
+		register struct disklabel *, struct cpu_disklabel *));
+
 /*
  * Find an entry in the disk label that is unused and return it
  * or -1 if no entry
  */
-int 
+static int 
 getFreeLabelEntry(lp)
 	struct disklabel *lp;
 {
@@ -119,7 +132,7 @@ getFreeLabelEntry(lp)
 /*
  * figure out what the type of the given part is and return it
  */
-int 
+static int 
 whichType(part)
 	struct partmapentry *part;
 {
@@ -296,7 +309,7 @@ setScratch(part, lp, slot)
 	part->pmPartType[0] = '\0';
 }
 
-int 
+static int 
 getNamedType(part, num_parts, lp, type, alt, maxslot)
 	struct partmapentry *part;
 	int num_parts;
@@ -330,7 +343,7 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
 				if (*maxslot < 1) *maxslot = 1;
 				break;
 			default:
-				printf("disksubr.c: can't do type \n", type);
+				printf("disksubr.c: can't do type %d\n", type);
 				break;
 			}
 
@@ -365,10 +378,10 @@ skip:
  *	NetBSD to live on cluster 0--regardless of the actual order on the
  *	disk.  This whole algorithm should probably be changed in the future.
  */
-char *
+static char *
 read_mac_label(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -456,7 +469,7 @@ done:
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -551,9 +564,10 @@ setdisklabel(olp, nlp, openmask, osdep)
  *  MF - 8-14-93 This function is never called.  It is here just in case
  *  we want to write dos disklabels some day. Really!
  */
+int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -611,7 +625,9 @@ bounds_check_with_label(bp, lp, wlabel)
 	int wlabel;
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+#if 0
 	int labelsect = lp->d_partitions[0].p_offset;
+#endif
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
@@ -663,7 +679,7 @@ bad:
 
 void
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
 	/* Empty for now. -- XXX */

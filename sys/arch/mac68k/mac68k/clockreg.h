@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.4 1996/02/01 03:40:26 briggs Exp $	*/
+/*	$NetBSD: clockreg.h,v 1.5 1996/04/01 05:16:52 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -40,19 +40,24 @@
 
 
 #define CLK_SPEED	0.0000012766	/* time to complete a clock (3 MHz) */
-#define CLK_INTERVAL	13055		/* clks to hit HZ ticks/sec */
 
 /*
- * The VIA1 clock speed is 1.2766us, so the timer value above is:
+ * Calculate clocks needed to hit HZ ticks/sec.
+ *
+ * The VIA clock speed is 1.2766us, so the timer value needed is:
  *
  *                    1       1,000,000us     1
  *  CLK_INTERVAL = -------- * ----------- * ------
  *                 1.2766us       1s          HZ
  *
- * where HZ == 60.  This gives us 13055.5 and change...  We round down.
+ * While it may be tempting to simplify the following further, we can run
+ * into integer overflow problems.  Also note:  do *not* define HZ to be
+ * less than 12; overflow will occur, yielding invalid results.
  */
-#define CLK_INTH	(CLK_INTERVAL >> 8)
-#define CLK_INTL	(CLK_INTERVAL & 0xff)
+#define CLK_INTERVAL	((int)((((100000000L / HZ) * 100) / 12766)))
+
+#define CLK_INTH	((CLK_INTERVAL >> 8) & 0xff)	/* high byte */
+#define CLK_INTL	(CLK_INTERVAL & 0xff)		/* low byte */
 
 #if !defined(PRF_INTERVAL)
 #define PRF_INTERVAL CLK_INTERVAL

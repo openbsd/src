@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.1 1995/11/21 04:53:20 briggs Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.3 1996/05/05 06:17:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -47,9 +47,6 @@ extern int boothowto;
 int rd_root_size = ROOTBYTES;
 char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
-/*
- * This is called during autoconfig.
- */
 void
 rd_attach_hook(unit, rd)
 	int unit;

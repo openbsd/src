@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1995/06/24 16:18:50 briggs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1996/05/18 18:52:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -77,6 +77,7 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
+#include <machine/pcb.h>
 #include <machine/pte.h>
 
 #if defined(M68040)
@@ -185,6 +186,33 @@ extern struct pv_entry *pv_table;	/* array of entries, one per page */
 
 extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
+
+__BEGIN_DECLS
+/* pmap.c */
+void	mac68k_set_pte __P((vm_offset_t va, vm_offset_t pge));
+void	pmap_remove_mapping  __P((pmap_t, vm_offset_t, pt_entry_t *, int));
+boolean_t	pmap_testbit __P((vm_offset_t, int));
+void	pmap_changebit       __P((vm_offset_t, int, boolean_t));
+void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
+void	pmap_pvdump          __P((vm_offset_t));
+void	pmap_check_wiring    __P((char *, vm_offset_t));
+void	pmap_collect_pv __P((void));
+void	pmap_activate __P((register pmap_t, struct pcb *));
+void	pmap_deactivate __P((register pmap_t, struct pcb *));
+
+/* pmap_bootstrap.c */
+void	pmap_bootstrap __P((vm_offset_t, register vm_offset_t));
+void	bootstrap_mac68k __P((int));
+
+/* locore.s */
+void	loadustp __P((vm_offset_t));
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	DCFP __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+void	copypage __P((caddr_t, caddr_t));
+__END_DECLS
+
 #endif	/* _KERNEL */
 
-#endif	_PMAP_MACHINE_
+#endif	/* _PMAP_MACHINE_ */

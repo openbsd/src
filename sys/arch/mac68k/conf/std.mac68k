@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.8 1995/11/21 05:05:51 briggs Exp $
+#	$NetBSD: std.mac68k,v 1.12 1996/05/18 18:53:56 briggs Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -7,17 +7,15 @@ machine	mac68k m68k
 
 mainbus0 at root
 
-nubus0	at mainbus0
-ite0	at mainbus0
-adb0	at mainbus0
+# on-board I/O
+obio0 at mainbus?
 
-fpu0	at mainbus0
-
-asc0	at mainbus0
-
-ser0	at mainbus0
-grf0	at nubus0	slot -1 id ? claimed 0
-grf1	at nubus0	slot -1 id ? claimed 0
+adb0	at obio?
+asc0	at obio?
+fpu0	at obio?
+ite0	at obio?
+zsc0	at obio?
+zstty*	at zsc? channel ?
 
 options	TIMEZONE=0		# minutes west of GMT--read from booter
 options	DST=0			# daylight savings rules--obsolete

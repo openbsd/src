@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.h,v 1.2 1995/02/16 00:02:12 briggs Exp $	*/
+/*	$NetBSD: pram.h,v 1.3 1996/05/05 06:18:53 briggs Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -68,4 +68,7 @@ void writeExtPram(char *addr, int loc, int len);
 
 unsigned long	getPramTime(void);
 void 		setPramTime(unsigned long time);
+
+unsigned long	pram_readtime __P((void));
+void		pram_settime __P((unsigned long));
 

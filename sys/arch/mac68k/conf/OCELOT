@@ -1,4 +1,4 @@
-#	$NetBSD: OCELOT,v 1.6 1995/11/21 05:00:34 briggs Exp $
+#	$NetBSD: OCELOT,v 1.10 1996/05/19 22:29:06 scottr Exp $
 #
 # OCELOT
 
@@ -40,7 +40,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68040
-options		M68030		# Includes the 020+851
+options		M68030
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
@@ -49,8 +49,16 @@ options		MACHINE_NONCONTIG
 
 config		bsd	swap generic
 
-ae0	at nubus0	slot -1   id ?   claimed 0
-ae1	at nubus0	slot -1   id ?   claimed 0
+intvid0		at obio?	# Internal video hardware
+
+nubus0		at mainbus?
+
+ae*		at nubus?
+macvid*		at nubus?
+
+# Attach grf semantics to all video hardware as it is found
+grf*		at intvid?
+grf*		at macvid?
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96

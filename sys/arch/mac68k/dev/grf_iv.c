@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.10 1995/08/11 17:48:19 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.12 1996/05/19 22:27:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <machine/grfioctl.h>
 #include <machine/cpu.h>
@@ -48,20 +49,29 @@
 #include "nubus.h"
 #include "grfvar.h"
 
-extern int	grfiv_probe __P((struct grf_softc *sc, nubus_slot *ignore));
-extern int	grfiv_init __P((struct grf_softc *sc));
-extern int	grfiv_mode __P((struct grf_softc *sc, int cmd, void *arg));
-
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern long		videorowbytes;
 extern long		videobitdepth;
 extern unsigned long	videosize;
 
-extern int
-grfiv_probe(sc, slotinfo)
-	struct grf_softc *sc;
-	nubus_slot *slotinfo;
+static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+static int	grfiv_match __P((struct device *, void *, void *));
+static void	grfiv_attach __P((struct device *, struct device *, void *));
+
+struct cfdriver intvid_cd = {
+	NULL, "intvid", DV_DULL
+};
+
+struct cfattach intvid_ca = {
+	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
+};
+
+static int
+grfiv_match(pdp, match, auxp)
+	struct device	*pdp;
+	void	*match, *auxp;
 {
 	static int	internal_video_found = 0;
 
@@ -69,30 +79,22 @@ grfiv_probe(sc, slotinfo)
 		return 0;
 	}
 
-	if (   (NUBUS_SLOT_TO_BASE(slotinfo->slot) <= mac68k_vidlog)
-	    && (mac68k_vidlog < NUBUS_SLOT_TO_BASE(slotinfo->slot + 1))) {
-		internal_video_found++;
-		return 1;
-	}
-
-	if (slotinfo->slot == NUBUS_INT_VIDEO_PSUEDO_SLOT) {
-		internal_video_found++;
-		return 1;
-	}
-
-	return 0;
+	return 1;
 }
 
-extern int
-grfiv_init(sc)
-	struct	grf_softc *sc;
+static void
+grfiv_attach(parent, self, aux)
+	struct device *parent, *self;
+	void   *aux;
 {
-	struct grfmode *gm;
-	int i, j;
+	struct grfbus_softc	*sc;
+	struct grfmode		*gm;
+
+	sc = (struct grfbus_softc *) self;
 
 	sc->card_id = 0;
 
-	strcpy(sc->card_name, "Internal video");
+	printf(": Internal Video\n");
 
 	gm = &(sc->curr_mode);
 	gm->mode_id = 0;
@@ -107,10 +109,11 @@ grfiv_init(sc)
 	gm->fbbase = (caddr_t) mac68k_vidlog;
 	gm->fboff = 0;
 
-	return 1;
+	/* Perform common video attachment. */
+	grf_establish(sc, grfiv_mode, grfiv_phys);
 }
 
-extern int
+static int
 grfiv_mode(sc, cmd, arg)
 	struct grf_softc *sc;
 	int cmd;
@@ -130,7 +133,7 @@ grfiv_mode(sc, cmd, arg)
 	return EINVAL;
 }
 
-extern caddr_t
+static caddr_t
 grfiv_phys(gp, addr)
 	struct grf_softc *gp;
 	vm_offset_t addr;

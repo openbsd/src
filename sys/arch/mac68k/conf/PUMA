@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.7 1995/11/21 05:00:36 briggs Exp $
+#	$NetBSD: PUMA,v 1.12 1996/05/19 22:29:07 scottr Exp $
 #
 # PUMA
 
@@ -40,7 +40,7 @@ options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
-options		M68030		# Includes the 020+851
+options		M68030
 options		MACHINE_NONCONTIG
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
@@ -49,9 +49,14 @@ options		COMPAT_10
 
 config		bsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
-ae*	at nubus0	slot -1   id ?   claimed 0
+nubus0		at mainbus?
 
-ncrscsi0	at mainbus?		# SCSI NCR 5380
+ae*		at nubus?
+macvid*		at nubus?
+
+grf*		at macvid?
+
+ncrscsi0	at obio?		# SCSI NCR 5380
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?
@@ -64,3 +69,8 @@ pseudo-device	vnd		4
 pseudo-device	loop
 pseudo-device	ppp
 pseudo-device	sl
+
+# Puma-specific options
+
+# Try linked commands on all targets
+options		TRY_SCSI_LINKED_COMMANDS=0x7f

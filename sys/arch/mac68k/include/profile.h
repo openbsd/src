@@ -1,8 +1,8 @@
-/*	$NetBSD: profile.h,v 1.2 1994/10/26 08:46:41 cgd Exp $	*/
+/*	$NetBSD: profile.h,v 1.3 1996/05/05 06:17:55 briggs Exp $	*/
 
-#ifndef _MACHINE_PROFILE_H_
-#define _MACHINE_PROFILE_H_
+#ifndef _PROFILE_MACHINE_
+#define _PROFILE_MACHINE_
 
 #include <m68k/profile.h>
 
-#endif
+#endif _PROFILE_MACHINE_

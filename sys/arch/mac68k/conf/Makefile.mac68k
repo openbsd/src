@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.34 1996/02/09 02:21:26 mycroft Exp $
+#	$NetBSD: Makefile.mac68k,v 1.38 1996/05/11 16:12:20 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,13 +21,12 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS=	as
-AWK=	awk
-CC=	cc
-CPP=	cpp
-LD=	ld
-STRIP=	strip -d
-TOUCH=	touch -f -c
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -35,8 +34,9 @@ MAC68K=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmac68k
-CFLAGS=		${DEBUG} -O -Werror -msoft-float
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -DLOCORE
+GCCWFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
+CFLAGS=		${DEBUG} -O ${GCCWFLAGS} -msoft-float
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
 ### Find out what to use for libkern.
@@ -150,7 +150,7 @@ links:
 
 SRCS=	${MAC68K}/mac68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${MAC68K}/mac68k/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
@@ -162,9 +162,7 @@ depend: .depend
 autoconf.o conf.o: Makefile
  
 # depend on network or filesystem configuration 
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
-if_tun.o if_loop.o if_ethersubr.o: Makefile
-in_proto.o: Makefile
+uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
 genassym.o machdep.o: Makefile

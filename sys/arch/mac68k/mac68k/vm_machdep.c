@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1996/02/05 02:10:00 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1996/05/05 16:50:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,8 @@
 
 extern int fpu_type;
 
+void savectx __P((struct pcb *));
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -81,7 +83,6 @@ cpu_fork(p1, p2)
 	register struct trapframe *tf;
 	register struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline(), child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
@@ -118,19 +119,20 @@ cpu_fork(p1, p2)
  */
 void
 cpu_set_kpc(p, pc)
-	struct proc	*p;
-	u_int32_t	pc;
+	struct proc *p;
+	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
-	extern void proc_trampoline();
 
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *) pcbp->pcb_regs[11];
 	sf->sf_pc = (u_int) proc_trampoline;
-	pcbp->pcb_regs[6] = pc;		/* A2 */
+	pcbp->pcb_regs[6] = (int)pc;	/* A2 */
 	pcbp->pcb_regs[7] = (int)p;	/* A3 */
 }
+
+void	switch_exit __P((struct proc *));
 
 /*
  * cpu_exit is called as the last action during exit.
@@ -232,9 +234,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t	pa;
 
@@ -260,11 +263,15 @@ pagemove(from, to, size)
 	}
 }
 
+void	physaccess __P((caddr_t, caddr_t, register int, register int));
+void	TBIAS __P((void));
+
 /*
  * Map `size' bytes of physical memory starting at `paddr' into
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
  */ 
+void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;
@@ -281,6 +288,9 @@ physaccess(vaddr, paddr, size, prot)
 	TBIAS();
 }
 
+void	physunaccess __P((caddr_t, register int));
+
+void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
@@ -292,6 +302,8 @@ physunaccess(vaddr, size)
 		*pte++ = PG_NV;
 	TBIAS();
 }
+
+void	setredzone __P((void *, caddr_t));
 
 /*
  * Set a red zone in the kernel stack after the u. area.
@@ -305,15 +317,19 @@ physunaccess(vaddr, size)
  * Look at _lev6intr in locore.s for more details.
  */
 /*ARGSUSED*/
+void
 setredzone(pte, vaddr)
-	struct pte *pte;
+	void *pte;
 	caddr_t vaddr;
 {
 }
 
+int	kvtop __P((register caddr_t addr));
+
 /*
  * Convert kernel VA to physical address
  */
+int
 kvtop(addr)
 	register caddr_t addr;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.13 1995/08/14 03:55:28 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.17 1996/05/05 06:17:19 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -47,13 +47,11 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/scsi96reg.h>
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 
 /* Support for the NCR 53C96 SCSI processor--primarily for '040 Macs. */
 
-#ifdef DDB
-int     Debugger();
-#else
+#ifndef DDB
 #define Debugger() panic("Should call Debugger here (mac/dev/scsi96.c).")
 #endif
 
@@ -78,7 +76,6 @@ struct ncr53c96_softc {
 	} \
 }
 
-static unsigned int ncr53c96_adapter_info(struct ncr53c96_softc * ncr53c96);
 static void ncr53c96_minphys(struct buf * bp);
 static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 
@@ -102,20 +99,25 @@ struct scsi_device ncr53c96_dev = {
 	NULL,			/* Use default "done" routine.	    */
 };
 
-extern int matchbyname();
-static int ncr96probe();
-static void ncr96attach();
+static int	ncr96probe __P((struct device *, void *, void *));
+static void	ncr96attach __P((struct device *, struct device *, void *));
 
-struct cfdriver ncr96scsicd =
-{NULL, "ncr96scsi", ncr96probe, ncr96attach,
-DV_DULL, sizeof(struct ncr53c96_softc), NULL, 0};
+struct cfattach ncr96scsi_ca = {
+	sizeof(struct ncr53c96_softc), ncr96probe, ncr96attach
+};
 
+struct cfdriver ncr96scsi_cd = {
+	NULL, "ncr96scsi", DV_DULL, NULL, 0
+};
+
+static int ncr96_print __P((void *, char *));
 static int
 ncr96_print(aux, name)
 	void   *aux;
 	char   *name;
 {
 	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); return UNCONF; */
+	return UNCONF;
 }
 
 static int
@@ -125,17 +127,12 @@ ncr96probe(parent, match, aux)
 	void *aux;
 {
 	static int probed = 0;
-	struct ncr53c96_softc *ncr53c96;
 
 		return 0;
 	if (!mac68k_machine.scsi96) {
 		return 0;
 	}
-	ncr53c96 = (struct ncr53c96_softc *) match;
 
-	if (strcmp(*((char **) aux), ncr53c96->sc_dev.dv_xname)) {
-		return 0;
-	}
 	if (!probed) {
 		probed = 1;
 		ncr53c96base += SCSIBase;
@@ -150,7 +147,6 @@ ncr96attach(parent, dev, aux)
 {
 	int     unit = dev->dv_unit;
 	struct ncr53c96_softc *ncr53c96;
-	int     r;
 
 	ncr53c96 = (struct ncr53c96_softc *) dev;
 
@@ -280,15 +276,21 @@ ncr53c96_show_scsi_cmd(struct scsi_xfer * xs)
 		    xs->sc_link->scsibus, xs->sc_link->target,
 		    xs->sc_link->lun);
 	}
+	return 0;
 }
+
 /*
  * Actual chip control.
  */
+
+extern void	ncr53c96_intr __P((int));
 
 extern void
 ncr53c96_intr(int adapter)
 {
 }
+
+extern int	ncr53c96_irq_intr __P((void));
 
 extern int
 ncr53c96_irq_intr(void)
@@ -297,6 +299,7 @@ ncr53c96_irq_intr(void)
 	return 1;
 }
 
+extern int	ncr53c96_drq_intr __P((void));
 extern int
 ncr53c96_drq_intr(void)
 {
@@ -307,11 +310,13 @@ ncr53c96_drq_intr(void)
 static int
 ncr53c96_reset_target(int adapter, int target)
 {
+return 0;
 }
 
 static int
 ncr53c96_poll(int adapter, int timeout)
 {
+return 0;
 }
 
 static int
@@ -320,7 +325,7 @@ do_send_cmd(struct scsi_xfer * xs)
 	struct ncr53c96regs *ncr = (struct ncr53c96regs *) ncr53c96base;
 	u_char *cmd;
 	int     i, stat, is, intr;
-	int     status, msg, phase;
+	int     msg, phase;
 
 	xs->resid = 0;
 	i = (int) ncr->statreg;	/* clear interrupts */
@@ -352,7 +357,7 @@ do_send_cmd(struct scsi_xfer * xs)
 	    "datalen = %d\n", stat, is, intr, xs->datalen);
 	phase = ncr->statreg & NCR96_STAT_PHASE;
 	if (((phase == 0x01) || (phase == 0x00)) && xs->datalen) {
-		printf("data = 0x%x, datalen = 0x%x.\n", xs->data, xs->datalen);
+		printf("data = %p, datalen = 0x%x.\n", xs->data, xs->datalen);
 		stat = ncr->statreg;
 		is = ncr->isreg;
 		intr = ncr->instreg;
@@ -381,8 +386,8 @@ do_send_cmd(struct scsi_xfer * xs)
 			}
 
 			intr = ncr->instreg;
-			printf("\nin loop.  stat = 0x%x, intr = 0x%x, cnt = %d.  ",
-			    stat, intr, cnt);
+			printf("\nin loop.  stat = 0x%x, intr = 0x%x",
+			    stat, intr);
 			printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
 		}
 /*	} else {

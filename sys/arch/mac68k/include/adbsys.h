@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.3 1994/12/03 23:34:28 briggs Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.5 1996/05/05 14:34:07 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -33,6 +33,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ADBSYS_MACHINE_
+#define _ADBSYS_MACHINE_
 
 #include <sys/time.h>	/* timeval stuff */
 #include <sys/ioctl.h>	/* ioctls */
@@ -92,8 +94,11 @@ typedef struct adb_dev_s{
 	/* Interesting handler IDs */
 #define ADB_STDKBD	1
 #define ADB_EXTKBD	2
+#define ADB_PBKBD	12
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
+#define ADBMS_EXTENDED	4
+#define ADBMS_USPEED	47	/* MicroSpeed mouse */
 
 
 	/* Get device info from ADB system */
@@ -124,3 +129,7 @@ typedef struct adb_listencmd_s{
 	u_char bytes[8];	/* bytes */
 } adb_listencmd_t;
 #define ADBIOC_LISTENCMD	_IOW('A', 133, adb_listencmd_t)
+
+void	adb_init __P((void));
+
+#endif /* _ADBSYS_MACHINE_ */
