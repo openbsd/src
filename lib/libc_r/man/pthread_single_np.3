@@ -1,0 +1,41 @@
+.\" $OpenBSD: pthread_single_np.3,v 1.1 1999/03/22 04:12:57 d Exp $
+.\" David Leonard <d@openbsd.org>, 1999. Public domain.
+.Dd March 21, 1999
+.Os
+.Dt PTHREAD_SINGLE_NP 3
+.Sh NAME
+.Nm pthread_single_np ,
+.Nm pthread_multi_np
+.Nd switch thread scheduling mode
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <pthread_np.h>
+.Ft int
+.Fn pthread_single_np void
+.Ft int
+.Fn pthread_multi_np void
+.Sh DESCRIPTION
+The
+.Fn pthread_single_np
+function causes the process to 
+enter single-threaded (non-POSIX) scheduling mode.
+.Pp
+The
+.Fn pthread_multi_np
+function causes the process to 
+return to multi-threaded scheduling mode.
+.Sh RETURN VALUES
+The
+.Fn pthread_single_np
+and
+.Fn pthread_multi_np
+functions return zero on success, or an error number on failure.
+.Sh SEE ALSO
+.Xr pthreads 3
+.Sh STANDARDS
+The
+.Fn pthread_single_np
+and
+.Fn pthread_multi_np
+functions are non-portable and may not be supported with the above
+semantics on other POSIX systems.

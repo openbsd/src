@@ -1,0 +1,47 @@
+.\" $OpenBSD: putc_unlocked.3,v 1.1 1999/03/22 04:12:57 d Exp $
+.\" David Leonard <d@openbsd.org>, 1998. Public domain.
+.Dd March 20, 1999
+.Os
+.Dt PUTC_UNLOCKED 3
+.Sh NAME
+.Nm putc_unlocked ,
+.Nm putchar_unlocked
+.Nd put next character from stream, efficiently
+.Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Ft int
+.Fn putc_unlocked "int c" "FILE *stream"
+.Ft int
+.Fn putchar_unlocked "int c"
+.Sh DESCRIPTION
+The
+.Fn putc_unlocked
+and
+.Fn putchar_unlocked
+functions are equivalent to their locked counterparts,
+.Xr putc 3
+and
+.Xr putchar 3 .
+However,
+.Fn putc_unlocked
+and
+.Fn putchar_unlocked
+assume that the relevant stream has either been previous locked
+with
+.Xr flockfile 3 ,
+or that it will not be accessed by any other thread.
+.Sh RETURN VALUES
+The return values are as described for
+.Xr putc 3
+and
+.Xr putchar 3 .
+.Sh SEE ALSO
+.Xr putc 3 ,
+.Xr putchar 3
+.Sh STANDARDS
+.Fn putc_unlocked
+and
+.Fn putchar_unlocked
+conform to ISO/IEC 9945-1 ANSI/IEEE
+.Pq Dq Tn POSIX
+Std 1003.1 Second Edition 1996-07-12.

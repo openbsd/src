@@ -1,0 +1,31 @@
+.\" $OpenBSD: pthread_sigmask.3,v 1.1 1999/03/22 04:12:57 d Exp $
+.Dd March 21, 1999
+.Os
+.Dt PTHREAD_SIGMASK 3
+.Sh NAME
+.Nm pthread_sigmask
+.Nd manipulate the current thread's signal mask
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Fd #include <signal.h>
+.Ft int
+.Fn pthread_sigmask "int how" "const sigset_t *set" "sigset_t *oset"
+.Sh DESCRIPTION
+The
+.Fn pthread_sigmask
+function is identical to
+.Xr sigprocmask 2 ,
+except that it only affects the signal mask of the calling thread.
+.Sh RETURN VALUES
+The return values of
+.Fn pthread_sigmask
+are the same as
+.Xr sigprocmask 2 .
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr sigprocmask 2 .
+.Sh STANDARDS
+.Fn pthread_sigmask
+conforms to ISO/IEC 9945-1 ANSI/IEEE
+.Pq Dq Tn POSIX
+Std 1003.1 Second Edition 1996-07-12.

@@ -1,0 +1,47 @@
+.\" $OpenBSD: getc_unlocked.3,v 1.1 1999/03/22 04:12:57 d Exp $
+.\" David Leonard <d@openbsd.org>, 1999. Public domain.
+.Dd March 20, 1999
+.Os
+.Dt GETC_UNLOCKED 3
+.Sh NAME
+.Nm getc_unlocked ,
+.Nm getchar_unlocked
+.Nd get next character from stream, efficiently
+.Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Ft int
+.Fn getc_unlocked "FILE *stream"
+.Ft int
+.Fn getchar_unlocked
+.Sh DESCRIPTION
+The
+.Fn getc_unlocked
+and
+.Fn getchar_unlocked
+functions are equivalent to their locked counterparts,
+.Xr getc 3
+and
+.Xr getchar 3 .
+However,
+.Fn getc_unlocked
+and
+.Fn getchar_unlocked
+assume that the relevant stream has either been previous locked
+with
+.Xr flockfile 3 ,
+or that it will not be accessed by any other thread.
+.Sh RETURN VALUES
+The return values are as described for
+.Xr getc 3
+and
+.Xr getchar 3 .
+.Sh SEE ALSO
+.Xr getc 3 ,
+.Xr getchar 3
+.Sh STANDARDS
+.Fn getc_unlocked
+and
+.Fn getchar_unlocked
+conform to ISO/IEC 9945-1 ANSI/IEEE
+.Pq Dq Tn POSIX
+Std 1003.1 Second Edition 1996-07-12.
