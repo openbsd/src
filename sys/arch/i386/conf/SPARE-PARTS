@@ -1,7 +1,7 @@
 #
 #	SPARE-PARTS: spare-parts.teeny.org, the teeny gateway to the world.
 #
-#	$OpenBSD: SPARE-PARTS,v 1.8 1996/10/21 10:20:31 mickey Exp $
+#	$OpenBSD: SPARE-PARTS,v 1.9 1996/10/22 01:56:13 downsj Exp $
 #
 
 machine		i386
@@ -41,14 +41,14 @@ option		COMPAT_11
 #option		LKM
 
 option		FFS
-option		QUOTA
-option		MFS
+#option		QUOTA
+#option		MFS
 
 option		PPP_BSDCOMP,PPP_DEFLATE
 option		IPFILTER
 
 option		NFSCLIENT
-option		NFSSERVER
+#option		NFSSERVER
 
 #option		CD9660
 option		MSDOSFS
@@ -57,8 +57,8 @@ option		FIFO
 option		KERNFS
 option		NULLFS
 option		PROCFS
-option		UMAPFS
-option		UNION
+#option		UMAPFS
+#option		UNION
 
 option		GATEWAY
 option		INET
@@ -82,8 +82,7 @@ pccom0	at isa? port 0x3f8 irq 4
 pccom1	at isa? port 0x2f8 irq 3
 pccom2	at isa? port 0x3e8 irq 2
 
-lpt0	at isa? port 0x3BC irq 7
-lpt1	at isa? port 0x278 irq 5
+lpt0	at isa? port 0x3bc
 
 ed0	at isa? port 0x320 irq 11 iomem 0xd0000
 ed1	at isa? port 0x300 irq 10
@@ -92,8 +91,6 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2
 fd*	at fdc? drive ?
 
 wdc0	at isa? port 0x1f0 irq 14
-option	WDC_ST11
-wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
 
 pseudo-device	loop	1
