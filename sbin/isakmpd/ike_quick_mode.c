@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.13 1999/04/19 21:22:49 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.82 1999/04/17 23:20:27 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.14 1999/04/27 21:04:07 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.83 1999/04/25 22:08:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -834,7 +834,6 @@ initiator_send_HASH (struct message *msg)
   if (ie->group)
     message_register_post_send (msg, gen_g_xy);
   sa_reference (msg->isakmp_sa);
-  exchange_reference (exchange);
   message_register_post_send (msg, post_quick_mode);
 
   return 0;
@@ -942,7 +941,6 @@ post_quick_mode (struct message *msg)
 	}
     }
   sa_release (isakmp_sa);
-  exchange_release (exchange);
 }
 
 /*
@@ -1351,7 +1349,6 @@ responder_recv_HASH (struct message *msg)
   free (my_hash);
 
   sa_reference (msg->isakmp_sa);
-  exchange_reference (exchange);
   post_quick_mode (msg);
 
   return 0;
