@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.25 2000/11/10 09:59:02 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.26 2000/11/19 21:22:04 millert Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -36,6 +36,8 @@ SSLCONF=	--openssldir=/etc/ssl OpenBSD
 .endif
 
 MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h ${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/Makefile ${.OBJDIR}/${SSL_SRC}/apps/der_chop ${.OBJDIR}/${SSL_SRC}/tools/c_rehash
+
+.include <bsd.own.mk>		# for NOMAN
 
 .ifndef NOMAN
 MANALL=	ssl.cat3 SSL_get_error.cat3 \
@@ -450,13 +452,11 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	RIPEMD160.3 RIPEMD160_Init.3 RIPEMD160.3 RIPEMD160_Update.3 \
 	RIPEMD160.3 RIPEMD160_Final.3 \
 
-
-.else
-MANALL=
-.endif
-
-.include <bsd.own.mk>
 .include <bsd.man.mk>
+.else
+maninstall:
+
+.endif
 
 # XXX .PATH order is critical because of non-unique filenames
 .PATH: ${.CURDIR}/src/doc/crypto ${.CURDIR}/src/doc/ssl ${.CURDIR}/src/doc/apps
