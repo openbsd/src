@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.5 1996/11/27 19:54:52 niklas Exp $	*/
+/*	$OpenBSD: disk.c,v 1.6 1997/04/07 06:23:10 millert Exp $	*/
 /*	$NetBSD: disk.c,v 1.3 1995/11/23 02:39:40 cgd Exp $	*/
 
 /*
@@ -106,12 +106,12 @@ diskopen(f, ctlr, unit, part)
 	char *msg, buf[DEV_BSIZE], devname[32];
 	static struct disk_softc *sc;
 
-if (sc != NULL) {
-	f->f_devdata = (void *)sc;
-	return 0;
-}
+	if (sc != NULL) {
+		f->f_devdata = (void *)sc;
+		return 0;
+	}
 
-	if (unit >= 8 || part >= 8)
+	if (unit >= 8 || part >= MAXPARTITIONS)
 		return (ENXIO);
 	/* 
 	 * XXX
