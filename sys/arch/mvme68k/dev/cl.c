@@ -1,4 +1,4 @@
-/*	$Id: cl.c,v 1.8 1995/12/01 20:39:26 deraadt Exp $ */
+/*	$Id: cl.c,v 1.9 1995/12/16 19:42:39 rahnds Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -372,10 +372,9 @@ cl_initchannel(sc, channel)
 	sc->sc_cl[channel].tty = NULL;
 	s = splhigh();
 	cl_reg->cl_car	= (u_char) channel;
-	/* async, do we want to try DMA at some point? */
 	cl_reg->cl_livr	= PCC2_VECBASE + 0xc;/* set vector base at 5C */
-	cl_reg->cl_ier	= 0x88;  /* should change XXX */
-	/* if the port is not the console */
+	/* if the port is not the console, should be init for all ports??*/
+	cl_reg->cl_ier	= 0x00;
 	if (sc->sc_cl[channel].cl_consio != 1) {
 		cl_reg->cl_cmr	= 0x02; 
 		cl_reg->cl_cor1	= 0x17;
@@ -401,15 +400,6 @@ cl_initchannel(sc, channel)
 		cl_reg->cl_msvr_dtr	= 0x00;
 		cl_reg->cl_rtprl	= CL_RX_TIMEOUT;
 		cl_reg->cl_rtprh	= 0x00;
-	}
-	if (channel == 2) { /* test one channel now */
-		/* shift for tx DMA */
-		/* no shift for rx DMA */
-	/* async only */
-	/* rx only (tx commented out) */
-		cl_reg->cl_cmr	= /* CL_TXDMAINT | */ CL_RXDMAINT; 
-		cl_reg->cl_ier	= 0xa8; 
-		cl_reg->cl_licr	= 0x00;
 	}
 	sc->cl_reg->cl_ccr = 0x20;
 	while (sc->cl_reg->cl_ccr != 0) {
@@ -550,9 +540,15 @@ int clopen (dev, flag, mode, p)
 			 */
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
 			tp->t_lflag = TTYDEF_LFLAG;
 			tp->t_ispeed = tp->t_ospeed = cldefaultrate;
+
+			if(sc->sc_cl[channel].cl_consio == 1) {
+				/* console is 8N1 */
+				tp->t_cflag = (CREAD | CS8 | HUPCL);
+			} else {
+				tp->t_cflag = TTYDEF_CFLAG;
+			}
 		}
 		/*
 		 * do these all the time
@@ -576,10 +572,17 @@ int clopen (dev, flag, mode, p)
 		}
 #endif
 		tp->t_state |= TS_CARR_ON;
-#ifdef CL_DMA_WORKS
 		{
 			u_char save = sc->cl_reg->cl_car;
 			sc->cl_reg->cl_car = channel;
+			sc->cl_reg->cl_ier	= 0x88;
+#ifdef CL_DMA_WORKS
+			{
+			sc->cl_reg->cl_cmr	=
+				/* CL_TXDMAINT | */ CL_RXDMAINT; 
+			sc->cl_reg->cl_ier	= 0xa8;
+			sc->cl_reg->cl_licr	= 0x00;
+			}
 			sc->cl_reg->cl_arbadrl	=
 				((u_long)sc->sc_cl[channel].rxp[0]) & 0xffff;
 			sc->cl_reg->cl_arbadru	=
@@ -615,9 +618,9 @@ if (channel == 2) { /* test one channel now */
 			sc->cl_reg->cl_ccr = 0x20;
 			while (sc->cl_reg->cl_ccr != 0) {
 			}
+#endif /* CL_DMA_WORKS */
 			sc->cl_reg->cl_car = save;
 		}
-#endif /* CL_DMA_WORKS */
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 		splx(s);
 		return(EBUSY);
