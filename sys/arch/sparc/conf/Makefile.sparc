@@ -110,7 +110,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} -c vers.c
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] tags1 *.[io] \
+	rm -f eddep bsd bsd.gdb tags vnode_if.[ch] tags1 *.[io] \
 		[a-z]*.s Errs errs linterrs makelinks genassym
 
 locore.o: ${SPARC}/sparc/locore.s assym.s

@@ -44,7 +44,7 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 #options	COMPAT_09, COMPAT_10
 
-config	netbsd		swap generic
+config		bsd		swap generic
 
 pseudo-device	sl 2
 pseudo-device	ppp 2

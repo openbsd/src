@@ -2,7 +2,7 @@
 
 machine		sparc
 options		SUN4, SUN4C, SUN4M
-options		MMU_3L
+#options		MMU_3L
 #options	DDB,DEBUG,DIAGNOSTIC
 
 # obsolete timezone spec
@@ -50,7 +50,7 @@ options		LKM
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
 options		COMPAT_SVR4		# compatibility with SVR4 binaries
 
-config		netbsd	swap generic
+config		bsd	swap generic
 
 mainbus0 at root
 cpu0	at mainbus0

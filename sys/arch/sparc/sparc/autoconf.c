@@ -375,7 +375,7 @@ bootpath_build()
 
 /*
  * Fake a ROM generated bootpath.
- * The argument `cp' points to a string such as "xd(0,0,0)netbsd"
+ * The argument `cp' points to a string such as "xd(0,0,0)bsd"
  */
 static void
 bootpath_fake(bp, cp)
@@ -502,7 +502,7 @@ bootpath_fake(bp, cp)
 		BP_APPEND(bp,"sbus",-1,0);
 		BP_APPEND(bp,"esp",-1,v0val[0]);
 		if (cp[1] == 'r') 
-			sprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
+			sprintf(tmpname, "cd"); /* use 'cd', not 'sr'*/
 		else
 			sprintf(tmpname,"%c%c", cp[0], cp[1]);
 		BP_APPEND(bp,tmpname,v0val[1], v0val[2]);
