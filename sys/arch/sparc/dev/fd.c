@@ -622,9 +622,6 @@ fdstart(fd)
 	fd->sc_q.b_active = 1;
 	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 
-	/* Instrumentation. */
-	disk_busy(&fd->sc_dk);
-
 	/* If controller not already active, start it. */
 	if (!active)
 		fdcstart(fdc);
@@ -654,8 +651,6 @@ fdfinish(fd, bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
-
-	disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 	biodone(bp);
 	/* turn off motor 5s from now */
@@ -1120,6 +1115,10 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 		fdc->sc_nstat = 0;
+
+		fd->sc_dk.dk_seek++;
+		disk_busy(&fd->sc_dk);
+
 		timeout(fdctimeout, fdc, 4 * hz);
 		return 1;
 
@@ -1172,6 +1171,9 @@ loop:
 		OUT_FDC(fdc, type->sectrac, IOTIMEDOUT);/* sectors/track */
 		OUT_FDC(fdc, type->gap1, IOTIMEDOUT);	/* gap1 size */
 		OUT_FDC(fdc, type->datalen, IOTIMEDOUT);/* data length */
+
+		disk_busy(&fd->sc_dk);
+
 		/* allow 2 seconds for operation */
 		timeout(fdctimeout, fdc, 2 * hz);
 		return 1;				/* will return later */
@@ -1186,6 +1188,8 @@ loop:
 		}
 
 	case SEEKCOMPLETE:
+		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+
 		/* Make sure seek really happened. */
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
 		    cyl != bp->b_cylin * fd->sc_type->step) {
@@ -1212,6 +1216,9 @@ loop:
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		untimeout(fdctimeout, fdc);
+
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+
 		if (fdc->sc_nstat != 7 || (st0 & 0xf8) != 0 || st1 != 0) {
 #ifdef FD_DEBUG
 			if (fdc_debug) {
