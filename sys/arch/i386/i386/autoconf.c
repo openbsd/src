@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 1996/12/05 14:27:50 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 1996/12/06 15:59:20 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -177,7 +177,8 @@ setroot()
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if ((majdev > 20) || (*devname[majdev] == '\0'))
+	if (majdev > sizeof(devname)/sizeof(devname[0]) ||
+	    *devname[majdev] == '\0')
 		return;
 	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
@@ -196,8 +197,7 @@ setroot()
 #ifdef DOSWAP
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    (mindev / MAXPARTITIONS) ==
-		    (minor(swp->sw_dev) / MAXPARTITIONS)) {
+		    mindev/MAXPARTITIONS == minor(swp->sw_dev)/MAXPARTITIONS) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
