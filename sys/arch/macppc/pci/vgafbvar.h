@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.1 2001/09/01 15:55:18 drahn Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.2 2001/10/31 12:26:18 art Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ struct vgafb_config {
 
 	int	(*vc_ioctl) __P((void *, u_long,
 		    caddr_t, int, struct proc *));
-	int	(*vc_mmap) __P((void *, off_t, int));
+	paddr_t	(*vc_mmap) __P((void *, off_t, int));
 	#if 0
 	struct raster   dc_raster;      /* raster description */
 	#endif
@@ -75,7 +75,7 @@ void	vgafb_cnattach __P((bus_space_tag_t iot, bus_space_tag_t memt,
 void	vgafb_wsdisplay_attach __P((struct device *parent,
 	    struct vgafb_config *vc, int console));
 int	vgafbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	vgafbmmap __P((void *, off_t, int));
+paddr_t	vgafbmmap __P((void *, off_t, int));
 int	vgafb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 paddr_t	vgafb_mmap __P((void *, off_t, int));
 int	vgafb_alloc_screen __P((void *v, const struct wsscreen_descr *type,
