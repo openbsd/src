@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.9 2004/05/08 06:12:50 henning Exp $ */
+/*	$OpenBSD: tree.c,v 1.10 2004/09/16 18:35:43 deraadt Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -267,7 +267,7 @@ tree_evaluate_recurse(int *bufix, unsigned char **bufp,
 		return t1;
 
 	default:
-		warn("Bad node id in tree: %d.", tree->op);
+		warning("Bad node id in tree: %d.", tree->op);
 		t1 = MAX_TIME;
 		return t1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.8 2004/04/22 15:22:48 henning Exp $ */
+/*	$OpenBSD: icmp.c,v 1.9 2004/09/16 18:35:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
@@ -104,7 +104,7 @@ icmp_echorequest(struct iaddr *addr)
 	status = sendto(icmp_protocol_fd, &icmp, sizeof(icmp), 0,
 	    (struct sockaddr *)&to, sizeof(to));
 	if (status < 0)
-		warn("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
+		warning("icmp_echorequest %s: %m", inet_ntoa(to.sin_addr));
 
 	if (status != sizeof icmp)
 		return 0;
@@ -126,7 +126,7 @@ icmp_echoreply(struct protocol *protocol)
 	status = recvfrom(protocol->fd, icbuf, sizeof(icbuf), 0,
 	    (struct sockaddr *)&from, &salen);
 	if (status < 0) {
-		warn("icmp_echoreply: %m");
+		warning("icmp_echoreply: %m");
 		return;
 	}
 

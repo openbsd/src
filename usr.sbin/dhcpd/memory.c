@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.8 2004/05/11 04:08:35 deraadt Exp $ */
+/*	$OpenBSD: memory.c,v 1.9 2004/09/16 18:35:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -252,7 +252,7 @@ new_address_range(struct iaddr low, struct iaddr high, struct subnet *subnet,
 		if (subnet->group->get_lease_hostnames) {
 			h = gethostbyaddr((char *)&ia, sizeof ia, AF_INET);
 			if (!h)
-				warn("No hostname for %s", inet_ntoa(ia));
+				warning("No hostname for %s", inet_ntoa(ia));
 			else {
 				int len = strlen(h->h_name) + 1;
 
@@ -347,7 +347,7 @@ subnet_inner_than(struct subnet *subnet, struct subnet *scan, int warnp)
 				break;
 		strlcpy(n1buf, piaddr(subnet->net), sizeof(n1buf));
 		if (warnp)
-			warn("%ssubnet %s/%d conflicts with subnet %s/%d",
+			warning("%ssubnet %s/%d conflicts with subnet %s/%d",
 			    "Warning: ", n1buf, 32 - i,
 			    piaddr(scan->net), 32 - j);
 		if (i < j)
@@ -463,7 +463,7 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 	    lease->hardware_addr.hlen) ||
 	    memcmp(comp->hardware_addr.haddr, lease->hardware_addr.haddr,
 	    comp->hardware_addr.hlen))))) {
-		warn("Lease conflict at %s", piaddr(comp->ip_addr));
+		warning("Lease conflict at %s", piaddr(comp->ip_addr));
 		return 0;
 	} else {
 		/* If there's a Unique ID, dissociate it from the hash
@@ -632,7 +632,7 @@ abandon_lease(struct lease *lease, char *message)
 	lease->flags |= ABANDONED_LEASE;
 	lt = *lease;
 	lt.ends = cur_time + abtime;
-	warn("Abandoning IP address %s for %d seconds: %s",
+	warning("Abandoning IP address %s for %d seconds: %s",
 	    piaddr(lease->ip_addr), abtime, message);
 	lt.hardware_addr.htype = 0;
 	lt.hardware_addr.hlen = 0;

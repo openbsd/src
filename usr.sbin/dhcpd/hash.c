@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.2 2004/04/14 00:56:02 henning Exp $	*/
+/*	$OpenBSD: hash.c,v 1.3 2004/09/16 18:35:43 deraadt Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -87,7 +87,7 @@ void add_hash(struct hash_table *table, unsigned char *name, int len,
 	bp = new_hash_bucket("add_hash");
 
 	if (!bp) {
-		warn("Can't add %s to hash table.", name);
+		warning("Can't add %s to hash table.", name);
 		return;
 	}
 	bp->name = name;

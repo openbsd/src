@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.11 2004/09/15 18:15:50 henning Exp $ */
+/*	$OpenBSD: confpars.c,v 1.12 2004/09/16 18:35:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -40,8 +40,6 @@
 
 #include "dhcpd.h"
 #include "dhctoken.h"
-
-static time_t parsed_time;
 
 /* conf-file :== parameters declarations EOF
    parameters :== <nil> | parameter | parameters parameter
@@ -111,10 +109,10 @@ read_leases(void)
 	   thinking that no leases have been assigned to anybody, which
 	   could create severe network chaos. */
 	if ((cfile = fopen(path_dhcpd_db, "r")) == NULL) {
-		warn("Can't open lease database %s: %m -- %s",
+		warning("Can't open lease database %s: %m -- %s",
 		    path_dhcpd_db,
 		    "check for failed database rewrite attempt!");
-		warn("Please read the dhcpd.leases manual page if you.");
+		warning("Please read the dhcpd.leases manual page if you.");
 		error("don't know what to do about this.");
 	}
 
@@ -123,7 +121,7 @@ read_leases(void)
 		if (token == EOF)
 			break;
 		if (token != LEASE) {
-			warn("Corrupt lease file - possible data loss!");
+			warning("Corrupt lease file - possible data loss!");
 			skip_to_semi(cfile);
 		} else {
 			struct lease *lease;
@@ -203,7 +201,6 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		return 1;
 
 	case TIMESTAMP:
-		parsed_time = parse_timestamp(cfile);
 		break;
 
 	case SHARED_NETWORK:
@@ -354,7 +351,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 			error("next-server is not known");
 		group->next_server.len = 4;
 		memcpy(group->next_server.iabuf,
-			cache->value, group->next_server.len);
+		    cache->value, group->next_server.len);
 		parse_semi(cfile);
 		break;
 
@@ -471,19 +468,16 @@ void parse_allow_deny(cfile, group, flag)
 
 /* boolean :== ON SEMI | OFF SEMI | TRUE SEMI | FALSE SEMI */
 
-int parse_boolean(cfile)
-	FILE *cfile;
+int
+parse_boolean(FILE *cfile)
 {
-	int token;
 	char *val;
 	int rv;
 
-	token = next_token(&val, cfile);
-	if (!strcasecmp (val, "true")
-	    || !strcasecmp (val, "on"))
+	next_token(&val, cfile);
+	if (!strcasecmp (val, "true") || !strcasecmp (val, "on"))
 		rv = 1;
-	else if (!strcasecmp (val, "false")
-		 || !strcasecmp (val, "off"))
+	else if (!strcasecmp (val, "false") || !strcasecmp (val, "off"))
 		rv = 0;
 	else {
 		parse_warn("boolean value (true/false/on/off) expected");
@@ -1096,7 +1090,7 @@ void parse_option_param(cfile, group)
 				tree = tree_concat(tree, tree_const(buf, 1));
 				break;
 			default:
-				warn("Bad format %c in parse_option_param.",
+				warning("Bad format %c in parse_option_param.",
 				    *fmt);
 				skip_to_semi(cfile);
 				return;
@@ -1127,8 +1121,8 @@ void parse_option_param(cfile, group)
    but rather in the database file and the journal file.  (Okay, actually
    they're not even used there yet). */
 
-time_t parse_timestamp(cfile)
-	FILE *cfile;
+time_t
+parse_timestamp(FILE *cfile)
 {
 	time_t rv;
 
@@ -1152,8 +1146,8 @@ time_t parse_timestamp(cfile)
 		     | CLASS identifier SEMI
 		     | DYNAMIC_BOOTP SEMI */
 
-struct lease *parse_lease_declaration(cfile)
-	FILE *cfile;
+struct lease *
+parse_lease_declaration(FILE *cfile)
 {
 	char *val;
 	int token;
@@ -1223,7 +1217,7 @@ struct lease *parse_lease_declaration(cfile)
 					lease.uid = (unsigned char *)
 						malloc(lease.uid_len);
 					if (!lease.uid) {
-						warn("no space for uid");
+						warning("no space for uid");
 						return NULL;
 					}
 					memcpy(lease.uid, val, lease.uid_len);
@@ -1234,7 +1228,7 @@ struct lease *parse_lease_declaration(cfile)
 					    parse_numeric_aggregate(cfile,
 					    NULL, &lease.uid_len, ':', 16, 8);
 					if (!lease.uid) {
-						warn("no space for uid");
+						warning("no space for uid");
 						return NULL;
 					}
 					if (lease.uid_len == 0) {

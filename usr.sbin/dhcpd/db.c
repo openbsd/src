@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.9 2004/07/29 11:58:41 henning Exp $	*/
+/*	$OpenBSD: db.c,v 1.10 2004/09/16 18:35:42 deraadt Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -100,15 +100,16 @@ write_lease(struct lease *lease)
 	}
 
 	if (lease->uid_len) {
-		int i;
+		int j;
+
 		errno = 0;
 		fprintf(db_file, "\n\tuid %2.2x", lease->uid[0]);
 		if (errno)
 			++errors;
 
-		for (i = 1; i < lease->uid_len; i++) {
+		for (j = 1; j < lease->uid_len; j++) {
 			errno = 0;
-			fprintf(db_file, ":%2.2x", lease->uid[i]);
+			fprintf(db_file, ":%2.2x", lease->uid[j]);
 			if (errno)
 				++errors;
 		}
@@ -239,7 +240,7 @@ new_lease_file(void)
 	write_leases();
 
 	fflush(db_file);
-	ftruncate(fileno(db_file), ftell(db_file));
+	ftruncate(fileno(db_file), ftello(db_file));
 	fsync(fileno(db_file));
 
 	counting = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.4 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.5 2004/09/16 18:35:42 deraadt Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -247,7 +247,7 @@ send_packet(struct interface_info *interface, struct dhcp_packet *raw,
 
 	result = writev(interface->wfdesc, iov, 2);
 	if (result < 0)
-		warn("send_packet: %m");
+		warning("send_packet: %m");
 	return (result);
 }
 

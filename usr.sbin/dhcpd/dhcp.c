@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.13 2004/09/16 09:35:24 claudio Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.14 2004/09/16 18:35:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -132,7 +132,7 @@ dhcpdiscover(struct packet *packet)
 			 * reclaim the abandoned lease.
 			 */
 			if ((lease->flags & ABANDONED_LEASE)) {
-				warn("Reclaiming abandoned IP address %s.",
+				warning("Reclaiming abandoned IP address %s.",
 				    piaddr(lease->ip_addr));
 				lease->flags &= ~ABANDONED_LEASE;
 			}
@@ -563,7 +563,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		result = send_packet(packet->interface, &raw,
 		    outgoing.packet_length, from, &to, packet->haddr);
 		if (result == -1)
-			warn("send_fallback: %m");
+			warning("send_fallback: %m");
 		return;
 	} else {
 		to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
@@ -882,7 +882,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 	if (packet->options[i].data) {
 		state->prl = dmalloc(packet->options[i].len, "ack_lease: prl");
 		if (!state->prl)
-			warn("no memory for parameter request list");
+			warning("no memory for parameter request list");
 		else {
 			memcpy(state->prl, packet->options[i].data,
 			    packet->options[i].len);
@@ -1093,7 +1093,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 void
 dhcp_reply(struct lease *lease)
 {
-	int bufs = 0, packet_length, result, i;
+	int bufs = 0, packet_length, i;
 	struct dhcp_packet raw;
 	struct sockaddr_in to;
 	struct in_addr from;
@@ -1215,7 +1215,7 @@ dhcp_reply(struct lease *lease)
 		to.sin_addr = raw.giaddr;
 		to.sin_port = server_port;
 
-		result = send_packet(state->ip, &raw,
+		(void) send_packet(state->ip, &raw,
 		    packet_length, raw.siaddr, &to, &state->haddr);
 
 		free_lease_state(state, "dhcp_reply gateway");
@@ -1258,7 +1258,7 @@ dhcp_reply(struct lease *lease)
 
 	memcpy(&from, state->from.iabuf, sizeof from);
 
-	result = send_packet(state->ip, &raw, packet_length,
+	(void) send_packet(state->ip, &raw, packet_length,
 	    from, &to, &hto);
 
 	free_lease_state(state, "dhcp_reply");
@@ -1405,7 +1405,7 @@ find_lease(struct packet *packet, struct shared_network *share,
 		    ip_lease->hardware_addr.hlen))) {
 			if (uid_lease) {
 				if (uid_lease->ends > cur_time) {
-					warn("client %s has duplicate leases on %s",
+					warning("client %s has duplicate leases on %s",
 					    print_hw_addr(packet->raw->htype,
 					    packet->raw->hlen, packet->raw->chaddr),
 					    ip_lease->shared_network->name);
@@ -1427,13 +1427,13 @@ find_lease(struct packet *packet, struct shared_network *share,
 		if (packet->packet_type == DHCPREQUEST && fixed_lease) {
 			fixed_lease = NULL;
 db_conflict:
-			warn("Both dynamic and static leases present for %s.",
+			warning("Both dynamic and static leases present for %s.",
 			    piaddr(cip));
-			warn("Either remove host declaration %s or remove %s",
+			warning("Either remove host declaration %s or remove %s",
 			    (fixed_lease && fixed_lease->host ?
 			    (fixed_lease->host->name ? fixed_lease->host->name :
 			    piaddr(cip)) : piaddr(cip)), piaddr(cip));
-			warn("from the dynamic address pool for %s",
+			warning("from the dynamic address pool for %s",
 			    share->name);
 			if (fixed_lease)
 				ip_lease = NULL;
@@ -1554,7 +1554,7 @@ db_conflict:
 	   the administrator will eventually investigate. */
 	if (lease && (lease->flags & ABANDONED_LEASE)) {
 		if (packet->packet_type == DHCPREQUEST) {
-			warn("Reclaiming REQUESTed abandoned IP address %s.",
+			warning("Reclaiming REQUESTed abandoned IP address %s.",
 			    piaddr(lease->ip_addr));
 			lease->flags &= ~ABANDONED_LEASE;
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.12 2004/09/16 09:35:24 claudio Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.13 2004/09/16 18:35:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -176,7 +176,7 @@ discover_interfaces(int state)
 					subnet->interface = tmp;
 					subnet->interface_address = addr;
 				} else if (subnet->interface != tmp) {
-					warn("Multiple %s %s: %s %s",
+					warning("Multiple %s %s: %s %s",
 					    "interfaces match the",
 					    "same subnet",
 					    subnet->interface->name,
@@ -185,7 +185,7 @@ discover_interfaces(int state)
 				share = subnet->shared_network;
 				if (tmp->shared_network &&
 				    tmp->shared_network != share) {
-					warn("Interface %s matches %s",
+					warning("Interface %s matches %s",
 					    tmp->name,
 					    "multiple shared networks");
 				} else {
@@ -195,7 +195,7 @@ discover_interfaces(int state)
 				if (!share->interface) {
 					share->interface = tmp;
 				} else if (share->interface != tmp) {
-					warn("Multiple %s %s: %s %s",
+					warning("Multiple %s %s: %s %s",
 					    "interfaces match the",
 					    "same shared network",
 					    share->interface->name,
@@ -237,9 +237,9 @@ discover_interfaces(int state)
 
 		/* We must have a subnet declaration for each interface. */
 		if (!tmp->shared_network && (state == DISCOVER_SERVER)) {
-			warn("No subnet declaration for %s (%s).",
+			warning("No subnet declaration for %s (%s).",
 			    tmp->name, inet_ntoa(foo.sin_addr));
-			warn("Please write a subnet declaration in your %s",
+			warning("Please write a subnet declaration in your %s",
 			    "dhcpd.conf file for the");
 			error("network segment to which interface %s %s",
 			    tmp->name, "is attached.");
@@ -390,13 +390,13 @@ got_one(struct protocol *l)
 
 	if ((result = receive_packet (ip, u.packbuf, sizeof u,
 	    &from, &hfrom)) == -1) {
-		warn("receive_packet failed on %s: %s", ip->name,
+		warning("receive_packet failed on %s: %s", ip->name,
 		    strerror(errno));
 		ip->errors++;
 		if ((!interface_status(ip)) ||
 		    (ip->noifmedia && ip->errors > 20)) {
 			/* our interface has gone away. */
-			warn("Interface %s no longer appears valid.",
+			warning("Interface %s no longer appears valid.",
 			    ip->name);
 			ip->dead = 1;
 			interfaces_invalidated = 1;
