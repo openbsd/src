@@ -1,4 +1,4 @@
-\.\"	$OpenBSD: release.8,v 1.1 2000/07/07 18:00:58 marc Exp $
+\.\"	$OpenBSD: release.8,v 1.2 2000/07/07 18:13:26 marc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -50,7 +50,7 @@ tag the
 developers add to the repository prior to making a release.   There
 are two tags, one which identifies the release as it exists on the
 .Tn CD\-ROM
-and another which identifes the
+and another which identifies the
 .Em stable
 branch.   The
 .Em stable
@@ -126,11 +126,11 @@ is the architecture of your machine, e.g.
 .br
 where
 .Va ${NAME}
-is your kernel config file.   You should
+is your kernel configuration file.   You should
 .Em not
 edit
 .Li GENERIC ,
-create your own kernel configuration if you need to make modifiations.
+create your own kernel configuration if you need to make modifications.
 If using
 .Li GENERIC
 you can skip this step.  And yes, you may use
@@ -205,7 +205,7 @@ are going to make into a release.
 .Pp
 The system release consist of a generic kernel, one
 .Tn CD\-ROM
-and two floppy bootable filesystems, the release
+and two floppy boot-able file-systems, the release
 .Sq tarballs ,
 installation instructions, and checksum files.
 .Pp
@@ -281,7 +281,7 @@ based and doesn't contain the
 directory mechanism that comes with Berkeley
 .Pa make .
 While the tree can be built in place, it's better to refrain from
-poluting the cvs sources.  An alternate build location needs to
+polluting the cvs sources.  An alternate build location needs to
 be selected, large enough to hold the
 .Tn X11R6
 object files, libraries, and binaries.  Call this location
