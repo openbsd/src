@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.8 2002/06/09 02:44:13 todd Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.9 2002/06/09 04:33:42 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -81,7 +81,8 @@ usage()
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-c core] [-p pid] <program> args\n", __progname);
+	fprintf(stderr, "Usage: %s [-c core] [-p pid] <program> args\n",
+	    __progname);
 	exit(1);
 }
 
@@ -103,14 +104,14 @@ main(int argc, char **argv)
 	core = NULL;
 	pid = 0;
 
-	while((c = getopt(argc, argv, "c:p:")) != -1) {
+	while ((c = getopt(argc, argv, "c:p:")) != -1) {
 		switch(c) {
 			case 'c':
 				core = optarg;
 				break;
 			case 'p':
 				pid = (pid_t) strtol(optarg, &perr, 10);
-				if(*perr != '\0')
+				if (*perr != '\0')
 					errx(1, "invalid PID");
 				break;
 			case '?':
@@ -323,11 +324,11 @@ cmd_quit(int argc, char **argv, void *arg)
 		ps->ps_flags |= PSF_KILL;
 
 		if (process_kill(ps))
-			return 1;
+			return (1);
 	}
 
 	ps->ps_state = TERMINATED;
-	return 1;
+	return (1);
 }
 
 /*
@@ -348,7 +349,7 @@ cmd_complt(char *buf, size_t buflen)
 
 	if (!command) {
 		/* XXX - can't handle symbols yet. */
-		return -1;
+		return (-1);
 	}
 
 	start = buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.4 2002/06/09 02:44:13 todd Exp $	*/
+/*	$OpenBSD: process.c,v 1.5 2002/06/09 04:33:42 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -91,7 +91,7 @@ process_load(struct pstate *ps)
 	if (wait(&status) == 0)
 		err(1, "wait");
 
-	return 0;
+	return (0);
 }
 
 int
@@ -103,9 +103,9 @@ process_kill(struct pstate *ps)
 	case STOPPED:
 		if (ptrace(PT_KILL, ps->ps_pid, NULL, 0) != 0)
 			err(1, "ptrace(PT_KILL)");
-		return 1;
+		return (1);
 	default:
-		return 0;
+		return (0);
 	}
 }
 
@@ -116,7 +116,7 @@ cmd_process_kill(int argc, char **argv, void *arg)
 
 	process_kill(ps);
 
-	return 1;
+	return (1);
 }
 
 int
@@ -124,7 +124,7 @@ process_bkpt_main(struct pstate *ps, void *arg)
 {
 	sym_update(ps);
 
-	return BKPT_DEL_CONT;
+	return (BKPT_DEL_CONT);
 }
 
 int
@@ -144,7 +144,7 @@ cmd_process_run(int argc, char **argv, void *arg)
 
 	if (ps->ps_state != LOADED) {
 		fprintf(stderr, "Process already running.\n");
-		return 0;
+		return (0);
 	}
 
 	/*
