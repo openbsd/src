@@ -82,7 +82,7 @@ all)
 
 raminst)
 	sh MAKEDEV std
-	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 st0 st1 cd0 cd1
 	sh MAKEDEV rd0
 	sh MAKEDEV tty00 tty01 pty0
 	;;
