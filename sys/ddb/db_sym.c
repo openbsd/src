@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.18 1997/02/07 07:03:40 mickey Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.19 1997/05/29 03:28:44 mickey Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -82,7 +82,7 @@ db_add_symbol_table(start, end, name, ref, rend)
 	new->id = db_nsymtabs;
 	TAILQ_INSERT_TAIL(&db_symtabs, new, list);
 
-	return ++db_nsymtabs;
+	return db_nsymtabs++;
 }
 
 /*
@@ -170,6 +170,7 @@ db_eqname(src, dst, c)
 	return (FALSE);
 }
 
+#ifdef DDB
 boolean_t
 db_value_of_name(name, valuep)
 	char		*name;
@@ -183,7 +184,6 @@ db_value_of_name(name, valuep)
 	db_symbol_values(sym, &name, valuep);
 	return (TRUE);
 }
-
 
 /*
  * Lookup a symbol.
@@ -234,6 +234,7 @@ db_lookup(symstr)
 
 	return sp;
 }
+#endif
 
 /*
  * Does this symbol name appear in more than one symbol table?
@@ -398,4 +399,21 @@ db_stub_xh(sym, xh)
 	struct exec	*xh;
 {
 	X_db_stub_xh(sym, xh);
+}
+
+int
+db_symtablen(sym)
+	db_symtab_t	sym;
+{
+	return X_db_symtablen(sym);
+}
+
+int
+db_symatoff(sym, off, buf, len)
+	db_symtab_t	sym;
+	int off;
+	void *buf;
+	int *len;
+{
+	return X_db_symatoff(sym, off, buf, len);
 }

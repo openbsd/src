@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.h,v 1.10 1997/02/07 07:03:41 mickey Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.11 1997/05/29 03:28:45 mickey Exp $	*/
 /*	$NetBSD: db_sym.h,v 1.7 1996/02/05 01:57:16 christos Exp $	*/
 
 /* 
@@ -124,6 +124,8 @@ boolean_t db_line_at_pc __P((db_sym_t, char **, int *, db_expr_t));
 int db_sym_numargs __P((db_sym_t, int *, char **));
 struct exec;
 void db_stub_xh __P((db_symtab_t, struct exec *));
+int db_symtablen __P((db_symtab_t));
+int db_symatoff __P((db_symtab_t, int, void*, int*));
 
 /* db_hangman.c */
 void db_hangman __P((db_expr_t, int, db_expr_t, char *));

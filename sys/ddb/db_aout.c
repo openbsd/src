@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.15 1997/02/07 08:32:15 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.16 1997/05/29 03:28:43 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -31,7 +31,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/exec_aout.h>
+#include <sys/exec.h>
+#include <sys/conf.h>
+#include <sys/lkm.h>
 
 #include <machine/db_machdep.h>		/* data types */
 
@@ -359,10 +361,60 @@ X_db_stub_xh(sym, xh)
 {
 	extern char kernel_text[];
 
-	bzero(xh, sizeof(*xh));
-	xh->a_midmag = htonl((((0 << 10) | MID_ZERO) << 16) | ZMAGIC);
-	xh->a_syms   = *sym->private;
-	xh->a_entry  = (u_long)kernel_text;
+	bcopy(kernel_text, xh, sizeof(*xh));
+	xh->a_syms = *(int *)sym->private;
+	xh->a_data = 0;
+	if (sym->id != 0) {	/* lkm */
+		struct lkm_table *p;
+		for (p = lkm_list(NULL);
+		     p != NULL && p->sym_id != sym->id; p = lkm_list(p))
+			;
+		if (p != NULL) {
+			xh->a_entry = (u_long)p->entry;
+			xh->a_syms = p->sym_symsize;
+		}
+#ifdef DIAGNOSTIC
+		else
+			printf("X_db_stub_xh: no lkm for symtab (ghost?)\n");
+#endif
+	}
+}
+
+int
+X_db_symtablen(sym)
+	db_symtab_t sym;
+{
+	return sym->rend - sym->start;
+}
+
+int
+X_db_symatoff(sym, off, buf, len)
+	db_symtab_t sym;
+	int off;
+	void *buf;
+	int *len;
+{
+	/* symtab */
+	if (off < (sym->end - sym->start)) {
+		struct nlist n;
+
+		bcopy (&((struct nlist *)sym->start)[off / sizeof(n)],
+		       &n, sizeof(n));
+		n.n_un.n_strx = n.n_un.n_name - sym->end;
+		*len = min(*len, sizeof(n) - off % sizeof(n));
+		bcopy ((u_int8_t*)&n + off % sizeof(n), buf, *len);
+	} else {
+		/* strtab */
+		off -= sym->end - sym->start;
+		if (off < (sym->rend - sym->end)) {
+			/* no preprocessing for string table */
+			*len = min(*len, (sym->rend - sym->end - off));
+			bcopy(sym->end + off, buf, *len);
+		} else
+			return -1;
+	}
+
+	return 0;
 }
 
 /*
