@@ -115,11 +115,12 @@
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
 ./usr/libdata/ldscripts
-./usr/libdata/ldscripts/alphabsd.x
-./usr/libdata/ldscripts/alphabsd.xbn
-./usr/libdata/ldscripts/alphabsd.xn
-./usr/libdata/ldscripts/alphabsd.xr
-./usr/libdata/ldscripts/alphabsd.xu
+./usr/libdata/ldscripts/elf64alpha.x
+./usr/libdata/ldscripts/elf64alpha.xbn
+./usr/libdata/ldscripts/elf64alpha.xn
+./usr/libdata/ldscripts/elf64alpha.xr
+./usr/libdata/ldscripts/elf64alpha.xs
+./usr/libdata/ldscripts/elf64alpha.xu
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
