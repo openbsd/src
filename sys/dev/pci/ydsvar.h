@@ -1,4 +1,4 @@
-/*	$OpenBSD: ydsvar.h,v 1.2 2001/07/08 06:43:27 fgsch Exp $	*/
+/*	$OpenBSD: ydsvar.h,v 1.3 2001/12/20 04:50:06 jcs Exp $	*/
 /*	$NetBSD$	*/
 
 /*
@@ -109,8 +109,16 @@ struct yds_softc {
 	bus_space_handle_t	sc_opl_ioh;
 	struct device		*sc_mpu;
 	bus_space_handle_t	sc_mpu_ioh;
+
+	/*
+	 * Suspend/resume support
+	 */
+	void			*powerhook;
+	int			suspend;
 };
 #define sc_opl_iot	sc_legacy_iot
 #define sc_mpu_iot	sc_legacy_iot
+
+int ac97_id2;
 
 #endif /* _DEV_PCI_YDSVAR_H_ */
