@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.6 1996/08/23 19:11:02 niklas Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.7 1996/10/13 21:17:39 niklas Exp $	*/
 /*	$NetBSD: advnops.c,v 1.28 1996/04/23 05:18:32 veego Exp $	*/
 
 /*
@@ -586,8 +586,7 @@ adosfs_bmap(v)
 	} */ *sp = v;
 	struct anode *ap;
 	struct buf *flbp;
-	long nb, fcnt;
-	u_long flblk, flblkoff;
+	long nb, fcnt, flblk, flblkoff;
 	daddr_t *bnp;
 	daddr_t bn;
 	int error; 
@@ -632,7 +631,7 @@ adosfs_bmap(v)
 	/*
 	 * check last indirect block cache
 	 */
-	if (flblk < ap->lastlindblk) 
+	if (flblk < (long)ap->lastlindblk) 
 		fcnt = 0;
 	else {
 		flblk -= ap->lastlindblk;
@@ -676,7 +675,7 @@ adosfs_bmap(v)
 	 * valid table entries stored at offset ADBI_NBLKTABENT.
 	 */
 	flblkoff = bn % ANODENDATBLKENT(ap);
-	if (flblkoff < adoswordn(flbp, 2 /* ADBI_NBLKTABENT */)) {
+	if (flblkoff < (long)adoswordn(flbp, 2 /* ADBI_NBLKTABENT */)) {
 		flblkoff = (ap->nwords - 51) - flblkoff;
 		*bnp = adoswordn(flbp, flblkoff) * ap->amp->secsperblk;
 	} else {
