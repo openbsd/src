@@ -603,9 +603,10 @@ const char *ssl_cmd_SSLCertificateChainFile(
     char *cpPath;
 
     cpPath = ssl_util_server_root_relative(cmd->pool, "certkey", arg);
-    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+    if (!ap_server_is_chrooted() && !ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
         return ap_pstrcat(cmd->pool, "SSLCertificateChainFile: file '",
                           cpPath, "' not exists or empty", NULL);
+    ap_server_strip_chroot(cpPath, 0);
     sc->szCertificateChain = cpPath;
     return NULL;
 }
