@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.17 2005/01/29 16:29:09 millert Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.18 2005/01/31 21:23:08 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -483,7 +483,6 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	struct dhcp_packet raw;
 	unsigned char nak = DHCPNAK;
 	struct packet outgoing;
-	struct hardware hto;
 	struct tree_cache *options[256], dhcpnak_tree, dhcpmsg_tree;
 
 	memset(options, 0, sizeof options);
@@ -536,10 +535,6 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	    print_hw_addr(packet->raw->htype, packet->raw->hlen,
 	    packet->raw->chaddr), packet->raw->giaddr.s_addr ?
 	    inet_ntoa(packet->raw->giaddr) : packet->interface->name);
-
-	hto.htype = packet->raw->htype;
-	hto.hlen = packet->raw->hlen;
-	memcpy(hto.haddr, packet->raw->chaddr, hto.hlen);
 
 	/* Set up the common stuff... */
 	memset(&to, 0, sizeof to);
@@ -1099,7 +1094,6 @@ dhcp_reply(struct lease *lease)
 	struct dhcp_packet raw;
 	struct sockaddr_in to;
 	struct in_addr from;
-	struct hardware hto;
 	struct lease_state *state = lease->state;
 	int nulltp, bootpp;
 	u_int8_t *prl;
@@ -1196,11 +1190,6 @@ dhcp_reply(struct lease *lease)
 	    lease->hardware_addr.haddr),
 	    state->giaddr.s_addr ? inet_ntoa(state->giaddr) : state->ip->name);
 
-	/* Set up the hardware address... */
-	hto.htype = lease->hardware_addr.htype;
-	hto.hlen = lease->hardware_addr.hlen;
-	memcpy(hto.haddr, lease->hardware_addr.haddr, hto.hlen);
-
 	memset(&to, 0, sizeof to);
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
@@ -1263,7 +1252,7 @@ dhcp_reply(struct lease *lease)
 	memcpy(&from, state->from.iabuf, sizeof from);
 
 	(void) send_packet(state->ip, &raw, packet_length,
-	    from, &to, &hto);
+	    from, &to, &state->haddr);
 
 	free_lease_state(state, "dhcp_reply");
 	lease->state = NULL;

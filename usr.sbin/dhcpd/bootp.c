@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.11 2004/09/16 18:35:42 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.12 2005/01/31 21:23:08 claudio Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -52,7 +52,6 @@ bootp(struct packet *packet)
 	struct dhcp_packet raw;
 	struct sockaddr_in to;
 	struct in_addr from;
-	struct hardware hto;
 	struct tree_cache *options[256];
 	struct subnet *subnet = NULL;
 	struct lease *lease;
@@ -307,11 +306,6 @@ lose:
 	else
 		memcpy(raw.file, packet->raw->file, sizeof(raw.file));
 
-	/* Set up the hardware destination address... */
-	hto.htype = packet->raw->htype;
-	hto.hlen = packet->raw->hlen;
-	memcpy(hto.haddr, packet->raw->chaddr, hto.hlen);
-
 	from = packet->interface->primary_address;
 
 	/* Report what we're doing... */
@@ -353,5 +347,5 @@ lose:
 
 	errno = 0;
 	(void) send_packet(packet->interface, &raw,
-	    outgoing.packet_length, from, &to, &hto);
+	    outgoing.packet_length, from, &to, packet->haddr);
 }
