@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2003/04/17 02:22:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -343,14 +343,15 @@ editor(gp, argc, argv)
 	 */
 	if (*argv != NULL) {
 		if (sp->frp != NULL) {
+			size_t l;
 			/* Cheat -- we know we have an extra argv slot. */
-			MALLOC_NOMSG(sp,
-			    *--argv, char *, strlen(sp->frp->name) + 1);
+			l = strlen(sp->frp->name) + 1;
+			MALLOC_NOMSG(sp, *--argv, char *, l);
 			if (*argv == NULL) {
 				v_estr(gp->progname, errno, NULL);
 				goto err;
 			}
-			(void)strcpy(*argv, sp->frp->name);
+			(void)strlcpy(*argv, sp->frp->name, l);
 		}
 		sp->argv = sp->cargv = argv;
 		F_SET(sp, SC_ARGNOFREE);
@@ -548,10 +549,9 @@ v_obsolete(name, argv)
 	while (*++argv && strcmp(argv[0], "--"))
 		if (argv[0][0] == '+') {
 			if (argv[0][1] == '\0') {
-				MALLOC_NOMSG(NULL, argv[0], char *, 4);
+				argv[0] = strdup("-c$");
 				if (argv[0] == NULL)
 					goto nomem;
-				(void)strcpy(argv[0], "-c$");
 			} else  {
 				p = argv[0];
 				len = strlen(argv[0]);
@@ -560,16 +560,15 @@ v_obsolete(name, argv)
 					goto nomem;
 				argv[0][0] = '-';
 				argv[0][1] = 'c';
-				(void)strcpy(argv[0] + 2, p + 1);
+				(void)strlcpy(argv[0] + 2, p + 1, len);
 			}
 		} else if (argv[0][0] == '-')
 			if (argv[0][1] == '\0') {
-				MALLOC_NOMSG(NULL, argv[0], char *, 3);
+				argv[0] = strdup("-s");
 				if (argv[0] == NULL) {
 nomem:					v_estr(name, errno, NULL);
 					return (1);
 				}
-				(void)strcpy(argv[0], "-s");
 			} else
 				if ((argv[0][1] == 'c' || argv[0][1] == 'T' ||
 				    argv[0][1] == 't' || argv[0][1] == 'w') &&

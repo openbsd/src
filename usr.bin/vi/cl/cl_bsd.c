@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_bsd.c,v 1.7 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: cl_bsd.c,v 1.8 2003/04/17 02:22:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996
@@ -317,7 +317,7 @@ tigetstr(name)
 
 	p = sbuf;
 #ifdef _AIX
-	return ((p = tgetstr(name, &p)) == NULL ? (char *)-1 : strcpy(sbuf, p));
+	return ((p = tgetstr(name, &p)) == NULL ? (char *)-1 : (strlcpy(sbuf, p, sizeof(sbuf)), sbuf));
 #else
 	return (tgetstr(name, &p) == NULL ? (char *)-1 : sbuf);
 #endif

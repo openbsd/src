@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.9 2002/06/12 06:07:17 mpech Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.10 2003/04/17 02:22:56 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -52,7 +52,7 @@ static int	sscr_getprompt(SCR *);
 static int	sscr_init(SCR *);
 static int	sscr_insert(SCR *);
 static int	sscr_matchprompt(SCR *, char *, size_t, size_t *);
-static int	sscr_pty(int *, int *, char *, struct termios *, void *);
+static int	sscr_pty(int *, int *, char *, size_t, struct termios *, void *);
 static int	sscr_setprompt(SCR *, char *, size_t);
 
 /*
@@ -128,13 +128,15 @@ sscr_init(sp)
 	}
 
 	if (sscr_pty(&sc->sh_master,
-	    &sc->sh_slave, sc->sh_name, &sc->sh_term, &sc->sh_win) == -1) {
+	    &sc->sh_slave, sc->sh_name, sizeof(sc->sh_name),
+	    &sc->sh_term, &sc->sh_win) == -1) {
 		msgq(sp, M_SYSERR, "pty");
 		goto err;
 	}
 #else
 	if (sscr_pty(&sc->sh_master,
-	    &sc->sh_slave, sc->sh_name, &sc->sh_term, NULL) == -1) {
+	    &sc->sh_slave, sc->sh_name, sizeof(sc->sh_name),
+	    &sc->sh_term, NULL) == -1) {
 		msgq(sp, M_SYSERR, "pty");
 		goto err;
 	}
@@ -630,19 +632,20 @@ sscr_check(sp)
 
 #ifdef HAVE_SYS5_PTY
 static int ptys_open(int, char *);
-static int ptym_open(char *);
+static int ptym_open(char *, size_t);
 
 static int
-sscr_pty(amaster, aslave, name, termp, winp)
+sscr_pty(amaster, aslave, name, namelen, termp, winp)
 	int *amaster, *aslave;
 	char *name;
+	size_t namelen;
 	struct termios *termp;
 	void *winp;
 {
 	int master, slave, ttygid;
 
 	/* open master terminal */
-	if ((master = ptym_open(name)) < 0)  {
+	if ((master = ptym_open(name, namelen)) < 0)  {
 		errno = ENOENT;	/* out of ptys */
 		return (-1);
 	}
@@ -671,13 +674,14 @@ sscr_pty(amaster, aslave, name, termp, winp)
  *	to it.  pts_name is also returned which is the name of the slave.
  */
 static int
-ptym_open(pts_name)
+ptym_open(pts_name, pts_namelen)
 	char *pts_name;
+	size_t pts_namelen;
 {
 	int fdm;
 	char *ptr, *ptsname();
 
-	strcpy(pts_name, _PATH_SYSV_PTY);
+	strlcpy(pts_name, _PATH_SYSV_PTY, pts_namelen);
 	if ((fdm = open(pts_name, O_RDWR)) < 0 )
 		return (-1);
 
@@ -701,7 +705,7 @@ ptym_open(pts_name)
 		close(fdm);
 		return (-3);
 	}
-	strcpy(pts_name, ptr);
+	strlcpy(pts_name, ptr, pts_namelen);
 	return (fdm);
 }
 
@@ -745,9 +749,10 @@ ptys_open(fdm, pts_name)
 #else /* !HAVE_SYS5_PTY */
 
 static int
-sscr_pty(amaster, aslave, name, termp, winp)
+sscr_pty(amaster, aslave, name, namelen, termp, winp)
 	int *amaster, *aslave;
 	char *name;
+	size_t namelen;
 	struct termios *termp;
 	void *winp;
 {
@@ -780,7 +785,7 @@ sscr_pty(amaster, aslave, name, termp, winp)
 					*amaster = master;
 					*aslave = slave;
 					if (name)
-						strcpy(name, line);
+						strlcpy(name, line, namelen);
 					if (termp)
 						(void) tcsetattr(slave, 
 							TCSAFLUSH, termp);
