@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.6 1997/07/10 23:37:49 millert Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.7 1997/07/12 20:06:01 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -19,5 +19,8 @@ void SHA1Transform __P((u_int32_t state[5], u_char buffer[64]));
 void SHA1Init __P((SHA1_CTX *context));
 void SHA1Update __P((SHA1_CTX *context, u_char *data, u_int len));
 void SHA1Final __P((u_char digest[20], SHA1_CTX *context));
+char *SHA1End __P((SHA1_CTX *, char *));
+char *SHA1File __P((char *, char *));
+char *SHA1Data __P((const u_char *, size_t, char *));
 
 #endif /* _SHA1_H */
