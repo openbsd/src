@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.5 1996/09/24 04:27:24 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 1996/09/24 11:34:29 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -58,8 +58,9 @@ struct dos_partition {
 } dos_partitions[NDOSPART];
 
 /* Known DOS partition types. */
-#define	DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
+#define DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
 #define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
+#define DOSPTYP_OPENBSD	0xa6		/* OpenBSD partition type */
 #define DOSPTYP_FAT12	0x1		/* 12-bit FAT */
 #define DOSPTYP_FAT16S	0x4		/* 16-bit FAT, less than 32M */
 #define DOSPTYP_FAT16B	0x6		/* 16-bit FAT, more than 32M */
