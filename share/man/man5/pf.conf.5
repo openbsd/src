@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.100 2002/10/31 09:18:24 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.101 2002/10/31 10:51:03 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -248,6 +248,15 @@ Example:
 .Bd -literal
     set block-policy return
 .Ed
+.Ss require-order
+By default
+.Xr pfctl 8
+enforces an ordering of the ruleset to: options, scrub, nat, filter.
+Setting this option to
+.Em no
+disables this enforcement.
+One has to be very careful about the implications of an out of order
+ruleset.
 .Sh ACTIONS
 .Bl -tag -width Fl
 .It Em block
@@ -1068,8 +1077,9 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 				"high-latency" | "satellite" | 
 				"aggressive" | "conservative" ] ]
                        [ "limit" ( limit | "{" limit-list "}" ) ] |
-                       [ "loginterface" ( interface-name | "none" ) ] | .
-                       [ "block-policy" ( "drop" | "return" ) ] ).
+                       [ "loginterface" ( interface-name | "none" ) ] |
+                       [ "block-policy" ( "drop" | "return" ) ] |
+                       [ "require-order" ( "yes" | "no" ) ] ).
 
 pf_rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
