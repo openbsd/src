@@ -2614,3 +2614,5 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./sbin/swapctl
+./usr/bin/keynote

@@ -11,7 +11,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.5/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.5/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.1
+./usr/lib/libc.so.21.2
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
@@ -416,3 +416,4 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/pool.ph
 ./usr/lib/libcurses++.so.1.0
 ./usr/libdata/perl5/site_perl/mips-openbsd/termcap.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/swap.ph

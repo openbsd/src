@@ -380,3 +380,4 @@
 ./usr/powerpc-unknown-openbsd2.5/lib
 ./usr/powerpc-unknown-openbsd2.5/lib/ldscripts
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/termcap.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/swap.ph

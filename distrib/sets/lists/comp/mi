@@ -1106,6 +1106,7 @@
 ./usr/include/sys/resource.h
 ./usr/include/sys/resourcevar.h
 ./usr/include/sys/scanio.h
+./usr/include/sys/swap.h
 ./usr/include/sys/scsiio.h
 ./usr/include/sys/select.h
 ./usr/include/sys/sem.h
@@ -2844,3 +2845,6 @@
 ./usr/include/g++/etip.h
 ./usr/lib/libcurses++.a
 ./usr/lib/libcurses++_p.a
+./usr/lib/libkeynote.a
+./usr/lib/libkeynote_p.a
+./usr/lib/libkeynote_pic.a

@@ -10,7 +10,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.8.1/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.21.1
+./usr/lib/libc.so.21.2
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
@@ -599,4 +599,5 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/sys/pool.ph
 ./usr/lib/libcurses++.so.1.0
-./usr/libdata/perl5/site_perl/amiga-openbsd/termcap.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/termcap.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/swap.ph
