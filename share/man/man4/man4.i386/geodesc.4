@@ -1,4 +1,4 @@
-.\"	$OpenBSD: geodesc.4,v 1.4 2004/09/30 19:59:27 mickey Exp $
+.\"	$OpenBSD: geodesc.4,v 1.5 2004/11/12 10:31:22 jmc Exp $
 .\"
 .\"Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
 .\"
@@ -47,3 +47,10 @@ The
 .Nm
 driver was written by
 .An Markus Friedl .
+.Sh BUGS
+It's unwise to combine
+.Nm
+with
+.Xr ddb 4 ,
+since the latter may prevent the former from resetting the
+watchdog timeout before it expires.
