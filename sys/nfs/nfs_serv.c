@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.33 2002/06/11 05:14:54 art Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.34 2002/07/03 20:57:00 nate Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -112,7 +112,7 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache = 0, getret;
+	int error = 0, rdonly, getret;
 	char *cp2;
 	struct mbuf *mb, *mreq, *mb2;
 	struct vattr va;
@@ -179,7 +179,7 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache;
+	int error = 0, rdonly;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
 	u_quad_t frev;
@@ -225,7 +225,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, preat_ret = 1, postat_ret = 1;
+	int error = 0, rdonly, preat_ret = 1, postat_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), gcheck = 0;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -355,7 +355,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, dirattr_ret = 1;
+	int error = 0, len, dirattr_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -426,7 +426,7 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, i, tlen, len, getret;
+	int error = 0, rdonly, i, tlen, len, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mb2, *mp2 = NULL, *mp3 = NULL, *mreq;
@@ -528,7 +528,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	int32_t t1;
 	int i;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, cnt, len, left, siz, tlen, getret;
+	int error = 0, rdonly, cnt, len, left, siz, tlen, getret;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), reqlen;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -695,7 +695,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, len, forat_ret = 1;
+	int error = 0, rdonly, len, forat_ret = 1;
 	int ioflags, aftat_ret = 1, retlen, zeroing, adjust;
 	int stable = NFSV3WRITE_FILESYNC;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
@@ -881,7 +881,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos, dpos;
-	int error = 0, rdonly, cache, len = 0, forat_ret = 1;
+	int error = 0, rdonly, len = 0, forat_ret = 1;
 	int ioflags, aftat_ret = 1, s, adjust, v3, zeroing;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq, *mrep, *md;
@@ -1242,7 +1242,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	caddr_t cp;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, tsize, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, len, tsize, dirfor_ret = 1, diraft_ret = 1;
 	dev_t rdev = 0;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), how, exclusive_flag = 0;
 	char *cp2;
@@ -1478,7 +1478,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	struct nameidata nd;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	u_int32_t major, minor;
 	enum vtype vtyp;
 	char *cp2;
@@ -1625,7 +1625,7 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
@@ -1708,7 +1708,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, len2, fdirfor_ret = 1, fdiraft_ret = 1;
+	int error = 0, len, len2, fdirfor_ret = 1, fdiraft_ret = 1;
 	int tdirfor_ret = 1, tdiraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
@@ -1889,7 +1889,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, len, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, rdonly, len, dirfor_ret = 1, diraft_ret = 1;
 	int getret = 1, v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
@@ -1989,7 +1989,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	char *bpos, *pathcp = NULL, *cp2;
 	struct uio io;
 	struct iovec iv;
-	int error = 0, cache, len, len2, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, len, len2, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	struct mbuf *mb, *mreq, *mb2;
 	struct vnode *dirp = (struct vnode *)0;
@@ -2129,7 +2129,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -2239,7 +2239,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, len, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
@@ -2381,7 +2381,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 	struct uio io;
 	struct iovec iv;
 	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
-	int siz, cnt, fullsiz, eofflag, rdonly, cache, ncookies;
+	int siz, cnt, fullsiz, eofflag, rdonly, ncookies;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	u_quad_t frev, off, toff, verf;
 	u_long *cookies = NULL, *cookiep;
@@ -2646,7 +2646,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	struct vattr va, at, *vap = &va;
 	struct nfs_fattr *fp;
 	int len, nlen, rem, xfer, tsiz, i, error = 0, getret = 1;
-	int siz, cnt, fullsiz, eofflag, rdonly, cache, dirlen, ncookies;
+	int siz, cnt, fullsiz, eofflag, rdonly, dirlen, ncookies;
 	u_quad_t frev, off, toff, verf;
 	u_long *cookies = NULL, *cookiep;
 
@@ -2957,14 +2957,11 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt, cache;
+	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
 	u_quad_t frev, off;
 
-#ifndef nolint
-	cache = 0;
-#endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
@@ -3017,7 +3014,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, getret = 1;
+	int error = 0, rdonly, getret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -3028,9 +3025,6 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	struct statfs statfs;
 	u_quad_t frev, tval;
 
-#ifndef nolint
-	cache = 0;
-#endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
@@ -3095,7 +3089,7 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	struct nfsv3_fsinfo *sip;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, getret = 1, pref;
+	int error = 0, rdonly, getret = 1, pref;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
 	struct vnode *vp;
@@ -3104,9 +3098,6 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	fhandle_t *fhp;
 	u_quad_t frev;
 
-#ifndef nolint
-	cache = 0;
-#endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
@@ -3166,7 +3157,7 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	struct nfsv3_pathconf *pc;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, rdonly, cache, getret = 1;
+	int error = 0, rdonly, getret = 1;
 	register_t linkmax, namemax, chownres, notrunc;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -3176,9 +3167,6 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	fhandle_t *fhp;
 	u_quad_t frev;
 
-#ifndef nolint
-	cache = 0;
-#endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
@@ -3231,7 +3219,7 @@ nfsrv_null(nfsd, slp, procp, mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep;
 	caddr_t bpos;
-	int error = NFSERR_RETVOID, cache = 0;
+	int error = NFSERR_RETVOID;
 	struct mbuf *mb, *mreq;
 	u_quad_t frev;
 
@@ -3252,7 +3240,7 @@ nfsrv_noop(nfsd, slp, procp, mrq)
 {
 	struct mbuf *mrep = nfsd->nd_mrep;
 	caddr_t bpos;
-	int error, cache = 0;
+	int error;
 	struct mbuf *mb, *mreq;
 	u_quad_t frev;
 

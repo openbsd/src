@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.11 2000/01/05 20:50:52 millert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.12 2002/07/03 20:57:00 nate Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -374,10 +374,10 @@
 		{ \
 		nfsd->nd_repstat = error; \
 		if (error && !(nfsd->nd_flag & ND_NFSV3)) \
-		   (void) nfs_rephead(0, nfsd, slp, error, cache, &frev, \
+		   (void) nfs_rephead(0, nfsd, slp, error, &frev, \
 			mrq, &mb, &bpos); \
 		else \
-		   (void) nfs_rephead((s), nfsd, slp, error, cache, &frev, \
+		   (void) nfs_rephead((s), nfsd, slp, error, &frev, \
 			mrq, &mb, &bpos); \
 		if (mrep != NULL) { \
 			m_freem(mrep); \
@@ -393,10 +393,10 @@
 		{ \
 		nfsd->nd_repstat = error; \
 		if (error && !(v3)) \
-		   (void) nfs_rephead(0, nfsd, slp, error, cache, &frev, \
+		   (void) nfs_rephead(0, nfsd, slp, error, &frev, \
 			&mreq, &mb, &bpos); \
 		else \
-		   (void) nfs_rephead((s), nfsd, slp, error, cache, &frev, \
+		   (void) nfs_rephead((s), nfsd, slp, error, &frev, \
 			&mreq, &mb, &bpos); \
 		}
 
