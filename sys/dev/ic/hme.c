@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.16 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: hme.c,v 1.17 2002/08/06 20:02:26 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -378,9 +378,11 @@ hme_stop(sc)
 	for (n = 0; n < 20; n++) {
 		u_int32_t v = bus_space_read_4(t, seb, HME_SEBI_RESET);
 		if ((v & (HME_SEB_RESET_ETX | HME_SEB_RESET_ERX)) == 0)
-			return;
+			break;
 		DELAY(20);
 	}
+	if (n >= 20)
+		printf("%s: hme_stop: reset failed\n", sc->sc_dev.dv_xname);
 
 	for (n = 0; n < HME_TX_RING_SIZE; n++) {
 		if (sc->sc_txd[n].sd_loaded) {
@@ -395,8 +397,6 @@ hme_stop(sc)
 			sc->sc_txd[n].sd_mbuf = NULL;
 		}
 	}
-
-	printf("%s: hme_stop: reset failed\n", sc->sc_dev.dv_xname);
 }
 
 void
