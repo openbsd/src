@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.55 2002/11/21 19:34:25 jason Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.56 2003/05/30 03:33:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -301,7 +301,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	int i, error;
 
-	if (cop->len > 256*1024-4)
+	if (cop->len > 64*1024-4)
 		return (E2BIG);
 
 	if (cse->txform && (cop->len % cse->txform->blocksize) != 0) {
