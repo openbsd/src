@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.4 1999/05/03 22:46:38 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.5 1999/05/06 02:26:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -67,6 +67,7 @@ lif_open (path, f)
 #endif
 
 	fp = alloc(sizeof(*fp));
+	/* XXX we're assuming here that sizeof(fp->f_buf) >= LIF_FILESTART */
 	if ((err = (f->f_dev->dv_strategy)(f->f_devdata, F_READ, 0,
 	    sizeof(fp->f_buf), &fp->f_buf, &buf_size)) ||
 	    buf_size != sizeof(fp->f_buf)) {
