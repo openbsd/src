@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.64 1999/10/14 17:17:46 millert Exp $
+#	$OpenBSD: install.sh,v 1.65 1999/10/14 17:19:42 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -543,11 +543,23 @@ if [ X"$libssl" != X1 ]; then
 	resp=
 	while [ X"${resp}" = X ]; do
 		echo
-		echo "The SSL libraries included with the CD do not contain RSA code"
-		echo "for licensing reasons.  Instead, enhanced SSL shared libraries"
-		echo "with RSA code are available on ftp and http sites.  If you do"
-		echo "not install the SSL+RSA libraries right now, they are easily"
-		echo "installed later."
+		echo "Two OpenBSD libraries (libssl and libcrypto, based on OpenSSL) implement many"
+		echo "cryptographic functions which are used by OpenBSD programs like ssh, httpd, and"
+		echo "isakmpd.  Due to patent licensing reasons, those libraries may not be included"
+		echo "on the CD -- instead the base distribution contains libraries which have had"
+		echo "the troublesome code removed -- the programs listed above will not be fully"
+		echo "functional as a result.  Libraries which _include_ the troublesome routines"
+		echo "are available and can be FTP installed, as long as you meet the follow (legal)"
+		echo "criteria:"
+		echo "  (1) Outside the USA, no restrictions apply. Use libssl${VERSION}.tar.gz."
+		echo "  (2) Inside the USA, non-commercial entities may install libsslUSA${VERSION}.tar.gz."
+		echo "  (3) Commercial entities in the USA are left in the cold, due to how the"
+		echo "      licences work.  (This is how the USA crypto export policy feels to the"
+		echo "      rest of the world.)"
+		echo ""
+		echo "If you do not install the libssl package now, it is easily installed at
+		echo "a later time (see the afterboot(8) and ssl(8) manual pages)."
+
 		echo -n "Install SSL+RSA libraries now via (f)tp, (h)ttp, or (n)ot? [$resp] "
 		getresp "$resp"
 		case "$resp" in
