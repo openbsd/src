@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsdkintf.c,v 1.10 2000/08/08 16:07:43 peter Exp $	*/
+/*	$OpenBSD: rf_openbsdkintf.c,v 1.11 2001/12/08 22:10:01 tdeval Exp $	*/
 /*	$NetBSD: rf_netbsdkintf.c,v 1.93 2000/07/14 15:26:29 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -200,9 +200,18 @@ struct raidbuf {
 #define	RAIDPUTBUF(buf) free(buf, M_RAIDFRAME)
 
 /*
+ * Some port (like i386) use a swapgeneric that wants to snoop around
+ * in this raid_cd structure.  It is preserved (for now) to remain
+ * compatible with such practice.
+ */
+struct cfdriver raid_cd = {
+	NULL, "raid", DV_DISK, NULL, 0
+};
+
+/*
  * XXX Not sure if the following should be replacing the raidPtrs above,
-   or if it should be used in conjunction with that... 
-*/
+ * or if it should be used in conjunction with that... 
+ */
 struct raid_softc {
 	int	 sc_flags;		/* flags */
 	int	 sc_cflags;		/* configuration flags */
