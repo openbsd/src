@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1997/02/03 11:53:25 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1997/02/04 10:06:20 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -89,12 +89,12 @@ int	cartridge = 0;	/* Assume non-cartridge tape */
 long	dev_bsize = 1;	/* recalculated below */
 long	blocksperfile;	/* output blocks per file */
 char	*host = NULL;	/* remote host (if any) */
+int	maxbsize = 64*1024;	/* XXX MAXBSIZE from sys/param.h */
 
 static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
 
-extern int maxbsize;
 
 int
 main(argc, argv)
