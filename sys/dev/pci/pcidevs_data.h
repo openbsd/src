@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.399 2001/05/28 06:52:00 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.400 2001/05/28 14:18:36 art Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -45,10 +45,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
 	    "3c985",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
-	    "3c556 Mini-PCI V.90 Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339,
