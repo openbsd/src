@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.56 2004/09/28 12:09:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.57 2004/09/28 15:48:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -69,7 +69,7 @@ struct rde_peer {
 
 #define AS_SET			1
 #define AS_SEQUENCE		2
-#define ASPATH_HEADER_SIZE	sizeof(struct aspath)
+#define ASPATH_HEADER_SIZE	(sizeof(struct aspath) - sizeof(u_char))
 
 LIST_HEAD(aspath_list, aspath);
 
@@ -78,7 +78,7 @@ struct aspath {
 	int			refcnt;	/* reference count */
 	u_int16_t		len;	/* total length of aspath in octets */
 	u_int16_t		ascnt;	/* number of AS hops in data */
-	u_char			data[0]; /* placeholder for actual data */
+	u_char			data[1]; /* placeholder for actual data */
 };
 
 enum attrtypes {
