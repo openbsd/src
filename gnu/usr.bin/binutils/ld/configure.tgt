@@ -71,7 +71,7 @@ sparc64-*-netbsd*)	targ_emul=elf64_sparc ;;
 sparc64-*-openbsd*)	targ_emul=elf64_sparc ;;
 sparc*-*-netbsd*elf*)	targ_emul=elf32_sparc ;;
 sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
-sparc*-*-openbsd*)	targ_emul=sparcnbsd ;;
+sparc*-*-openbsd*)	targ_emul=elf32_sparc ;;
 sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
 			targ_emul=elf32_sparc ;;
 sparc-*-solaris2*)	targ_emul=elf32_sparc

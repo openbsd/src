@@ -789,17 +789,13 @@ case "${targ}" in
     targ_defvec=sparclynx_coff_vec
     targ_selvecs=sparclynx_aout_vec
     ;;
-  sparc-*-netbsdelf*)
+  sparc-*-netbsdelf* | sparc-*-openbsd*)
     targ_defvec=bfd_elf32_sparc_vec
     targ_selvecs=sparcnetbsd_vec
     ;;
   sparc-*-netbsdaout* | sparc-*-netbsd*)
     targ_defvec=sparcnetbsd_vec
     targ_selvecs=bfd_elf32_sparc_vec
-    targ_underscore=yes
-    ;;
-  sparc-*-openbsd*)
-    targ_defvec=sparcnetbsd_vec
     targ_underscore=yes
     ;;
   sparc-*-elf* | sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)

@@ -2537,7 +2537,7 @@ EOF
                             ;;
       sparc-*-openbsd*)     em=nbsd
 			    case ${cpu} in
-				sparc) fmt=aout ;;
+				sparc) fmt=elf ;;
 				sparc64) fmt=elf ;;
                             esac
 			    ;;
