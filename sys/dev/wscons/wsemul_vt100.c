@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.9 2004/04/02 04:39:51 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.10 2004/12/23 21:45:51 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -68,8 +68,9 @@ void wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *, u_char,
 				     int);
 void wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *, u_char,
 				   int);
+void wsemul_vt100_nextline(struct wsemul_vt100_emuldata *);
 typedef u_int vt100_handler(struct wsemul_vt100_emuldata *, u_char);
-static vt100_handler
+vt100_handler
 wsemul_vt100_output_esc,
 wsemul_vt100_output_csi,
 wsemul_vt100_output_scs94,
@@ -298,6 +299,25 @@ wsemul_vt100_reset(edp)
 }
 
 /*
+ * Move the cursor to the next line if possible. If the cursor is at
+ * the bottom of the scroll area, then scroll it up. If the cursor is
+ * at the bottom of the screen then don't move it down.
+ */
+void
+wsemul_vt100_nextline(struct wsemul_vt100_emuldata *edp)
+{
+	if (ROWS_BELOW == 0) {
+		/* Bottom of the scroll region. */
+	  	wsemul_vt100_scrollup(edp, 1);
+	} else {
+		if ((edp->crow+1) < edp->nrows)
+			/* Cursor not at the bottom of the screen. */
+			edp->crow++;
+		CHECK_DW;
+	}
+}	
+
+/*
  * now all the state machine bits
  */
 
@@ -311,11 +331,7 @@ wsemul_vt100_output_normal(edp, c, kernel)
 
 	if ((edp->flags & (VTFL_LASTCHAR | VTFL_DECAWM)) ==
 	    (VTFL_LASTCHAR | VTFL_DECAWM)) {
-		if (ROWS_BELOW > 0) {
-			edp->crow++;
-			CHECK_DW;
-		} else
-			wsemul_vt100_scrollup(edp, 1);
+		wsemul_vt100_nextline(edp);
 		edp->ccol = 0;
 		edp->flags &= ~VTFL_LASTCHAR;
 	}
@@ -426,11 +442,7 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 	    case ASCII_LF:
 	    case ASCII_VT:
 	    case ASCII_FF:
-		if (ROWS_BELOW > 0) {
-			edp->crow++;
-			CHECK_DW;
-		} else
-			wsemul_vt100_scrollup(edp, 1);
+		wsemul_vt100_nextline(edp);
 		break;
 	}
 }
@@ -486,12 +498,7 @@ wsemul_vt100_output_esc(edp, c)
 		edp->ccol = 0;
 		/* FALLTHRU */
 	    case 'D': /* IND */
-		if (ROWS_BELOW > 0) {
-			edp->crow++;
-			CHECK_DW;
-			break;
-		}
-		wsemul_vt100_scrollup(edp, 1);
+		wsemul_vt100_nextline(edp);
 		break;
 	    case 'H': /* HTS */
 		KASSERT(edp->tabs != 0);
