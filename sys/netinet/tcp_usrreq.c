@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.74 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.75 2004/01/06 17:38:13 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -925,6 +925,12 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		   &tcp_do_ecn));
 #endif
+	case TCPCTL_SYN_CACHE_LIMIT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		   &tcp_syn_cache_limit));
+	case TCPCTL_SYN_BUCKET_LIMIT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		   &tcp_syn_bucket_limit));
 	default:
 		return (ENOPROTOOPT);
 	}

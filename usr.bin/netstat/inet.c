@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.77 2003/12/27 23:17:34 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.78 2004/01/06 17:38:12 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.77 2003/12/27 23:17:34 mcbride Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.78 2004/01/06 17:38:12 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,6 @@ tcp_stats(u_long off, char *name)
 	p(tcps_predack, "\t%u correct ACK header prediction%s\n");
 	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
 	p3(tcps_pcbhashmiss, "\t%u PCB cache miss%s\n");
-	p(tcps_badsyn, "\t%u SYN packet%s received with same src/dst address/port\n");
 
 	p(tcps_ecn_accepts, "\t%u ECN connection%s accepted\n");
 	p(tcps_ecn_rcvece, "\t\t%u ECE packet%s received\n");
@@ -333,6 +332,21 @@ tcp_stats(u_long off, char *name)
 	p1(tcps_cwr_frecovery, "\t\t\tcwr by fastrecovery: %u\n");
 	p1(tcps_cwr_timeout, "\t\t\tcwr by timeout: %u\n");
 	p1(tcps_cwr_ecn, "\t\t\tcwr by ecn: %u\n");
+
+	p(tcps_badsyn, "\t%u bad connection attempt%s\n");
+	p1(tcps_sc_added, "\t%qd SYN cache entries added\n");
+	p(tcps_sc_collisions, "\t\t%qd hash collision%s\n");
+	p1(tcps_sc_completed, "\t\t%qd completed\n");
+	p1(tcps_sc_aborted, "\t\t%qd aborted (no space to build PCB)\n");
+	p1(tcps_sc_timed_out, "\t\t%qd timed out\n");
+	p1(tcps_sc_overflowed, "\t\t%qd dropped due to overflow\n");
+	p1(tcps_sc_bucketoverflow, "\t\t%qd dropped due to bucket overflow\n");
+	p1(tcps_sc_reset, "\t\t%qd dropped due to RST\n");
+	p1(tcps_sc_unreach, "\t\t%qd dropped due to ICMP unreachable\n");
+	p(tcps_sc_retransmitted, "\t%qd SYN,ACK%s retransmitted\n");
+	p(tcps_sc_dupesyn, "\t%qd duplicate SYN%s received for entries "
+		"already in the cache\n");
+	p(tcps_sc_dropped, "\t%qd SYN%s dropped (no route or no space)\n");
 
 #undef p
 #undef p1

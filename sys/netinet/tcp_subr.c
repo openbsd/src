@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.71 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.72 2004/01/06 17:38:13 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -139,6 +139,14 @@ u_int32_t	tcp_now;
 #endif
 int	tcbhashsize = TCBHASHSIZE;
 
+/* syn hash parameters */
+#define	TCP_SYN_HASH_SIZE	293
+#define	TCP_SYN_BUCKET_SIZE	35
+int	tcp_syn_cache_size = TCP_SYN_HASH_SIZE;
+int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
+int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
+struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
+
 #ifdef INET6
 extern int ip6_defhlim;
 #endif /* INET6 */
@@ -184,6 +192,9 @@ tcp_init()
 
 	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
 #endif /* INET6 */
+
+	/* Initialize the compressed state engine. */
+	syn_cache_init();
 
 	/* Initialize timer state. */
 	tcp_timer_init();
@@ -673,6 +684,7 @@ tcp_close(struct tcpcb *tp)
 
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
+	syn_cache_cleanup(tp);
 
 #ifdef TCP_SACK
 	/* Free SACK holes. */
@@ -852,8 +864,14 @@ tcp6_ctlinput(cmd, sa, d)
 			return;
 		}
 
-		(void) in6_pcbnotify(&tcbtable, sa, th.th_dport,
-		    (struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
+		if (in6_pcbnotify(&tcbtable, sa, th.th_dport,
+		    (struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify) == 0 &&
+		    syn_cache_count &&
+		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
+		     inet6ctlerrmap[cmd] == ENETUNREACH ||
+		     inet6ctlerrmap[cmd] == EHOSTDOWN))
+			syn_cache_unreach((struct sockaddr *)sa6_src,
+			    sa, &th);
 	} else {
 		(void) in6_pcbnotify(&tcbtable, sa, 0,
 		    (struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
@@ -912,8 +930,22 @@ tcp_ctlinput(cmd, sa, v)
 
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
-			     th->th_sport, errno, notify);
+		if (in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
+		    th->th_sport, errno, notify) == 0 &&
+		    syn_cache_count &&
+		    (inetctlerrmap[cmd] == EHOSTUNREACH ||
+		     inetctlerrmap[cmd] == ENETUNREACH ||
+		     inetctlerrmap[cmd] == EHOSTDOWN)) {
+			struct sockaddr_in sin;
+
+			bzero(&sin, sizeof(sin));
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_port = th->th_sport;
+			sin.sin_addr = ip->ip_src;
+			syn_cache_unreach((struct sockaddr *)&sin,
+			    sa, th);
+		}
 	} else
 		in_pcbnotifyall(&tcbtable, sa, errno, notify);
 

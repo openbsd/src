@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.51 2003/06/09 07:40:25 itojun Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.52 2004/01/06 17:38:13 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ struct tcpcb {
 #define TF_SEND_CWR	0x00020000	/* send CWR in next seg */
 #define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
 #endif
+#define TF_DEAD		0x00080000	/* dead and to-be-released */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -171,6 +172,9 @@ struct tcpcb {
 	u_int32_t ts_recent_age;		/* when last updated */
 	tcp_seq	last_ack_sent;
 
+/* pointer for syn cache entries*/
+	LIST_HEAD(, syn_cache) t_sc;	/* list of entries by this tcb */
+
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 
@@ -205,6 +209,80 @@ do {									\
 		timeout_del(&(tp)->t_delack_to);			\
 	}								\
 } while (/*CONSTCOND*/0)
+#endif /* _KERNEL */
+
+/*
+ * Handy way of passing around TCP option info.
+ */
+struct tcp_opt_info {
+	int		ts_present;
+	u_int32_t	ts_val;
+	u_int32_t	ts_ecr;
+	u_int16_t	maxseg;
+};
+
+#ifdef _KERNEL
+
+/*
+ * Data for the TCP compressed state engine.
+ */
+union syn_cache_sa {
+	struct sockaddr sa;
+	struct sockaddr_in sin;
+#if 1 /*def INET6*/
+	struct sockaddr_in6 sin6;
+#endif
+};
+
+struct syn_cache {
+	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
+	struct timeout sc_timer;		/* rexmt timer */
+	union {					/* cached route */
+		struct route route4;
+#ifdef INET6
+		struct route_in6 route6;
+#endif
+	} sc_route_u;
+#define sc_route4	sc_route_u.route4
+#ifdef INET6
+#define sc_route6	sc_route_u.route6
+#endif
+	long sc_win;				/* advertised window */
+	int sc_bucketidx;			/* our bucket index */
+	u_int32_t sc_hash;
+	u_int32_t sc_timestamp;			/* timestamp from SYN */
+#if 0
+	u_int32_t sc_timebase;			/* our local timebase */
+#endif
+	union syn_cache_sa sc_src;
+	union syn_cache_sa sc_dst;
+	tcp_seq sc_irs;
+	tcp_seq sc_iss;
+	u_int sc_rxtcur;			/* current rxt timeout */
+	u_int sc_rxttot;			/* total time spend on queues */
+	u_short sc_rxtshift;			/* for computing backoff */
+	u_short sc_flags;
+
+#define	SCF_UNREACH		0x0001		/* we've had an unreach error */
+#define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
+#define	SCF_DEAD		0x0004		/* this entry to be released */
+#define	SCF_SACK_PERMIT		0x0008		/* permit sack */
+#define	SCF_ECN_PERMIT		0x0010		/* permit ecn */
+
+	struct mbuf *sc_ipopts;			/* IP options */
+	u_int16_t sc_peermaxseg;
+	u_int16_t sc_ourmaxseg;
+	u_int8_t sc_request_r_scale	: 4,
+		 sc_requested_s_scale	: 4;
+
+	struct tcpcb *sc_tp;			/* tcb for listening socket */
+	LIST_ENTRY(syn_cache) sc_tpq;		/* list of entries by same tp */
+};
+
+struct syn_cache_head {
+	TAILQ_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
+	u_short sch_length;			/* # entries in bucket */
+};
 #endif /* _KERNEL */
 
 /*
@@ -319,6 +397,20 @@ struct	tcpstat {
 	u_int32_t tcps_cwr_ecn;		/* # of cwnd reduced by ecn */
 	u_int32_t tcps_cwr_frecovery;	/* # of cwnd reduced by fastrecovery */
 	u_int32_t tcps_cwr_timeout;	/* # of cwnd reduced by timeout */
+
+	/* These statistics deal with the SYN cache. */
+	u_int64_t tcps_sc_added;	/* # of entries added */
+	u_int64_t tcps_sc_completed;	/* # of connections completed */
+	u_int64_t tcps_sc_timed_out;	/* # of entries timed out */
+	u_int64_t tcps_sc_overflowed;	/* # dropped due to overflow */
+	u_int64_t tcps_sc_reset;	/* # dropped due to RST */
+	u_int64_t tcps_sc_unreach;	/* # dropped due to ICMP unreach */
+	u_int64_t tcps_sc_bucketoverflow;/* # dropped due to bucket overflow */
+	u_int64_t tcps_sc_aborted;	/* # of entries aborted (no mem) */
+	u_int64_t tcps_sc_dupesyn;	/* # of duplicate SYNs received */
+	u_int64_t tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
+	u_int64_t tcps_sc_collisions;	/* # of hash collisions */
+	u_int64_t tcps_sc_retransmitted;/* # of retransmissions */
 };
 
 /*
@@ -339,7 +431,9 @@ struct	tcpstat {
 #define	TCPCTL_RSTPPSLIMIT     12 /* RST pps limit */
 #define	TCPCTL_ACK_ON_PUSH     13 /* ACK immediately on PUSH */
 #define	TCPCTL_ECN	       14 /* RFC3168 ECN */
-#define	TCPCTL_MAXID	       15
+#define	TCPCTL_SYN_CACHE_LIMIT 15 /* max size of comp. state engine */
+#define	TCPCTL_SYN_BUCKET_LIMIT	16 /* max size of hash bucket */
+#define	TCPCTL_MAXID	       17
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -357,6 +451,8 @@ struct	tcpstat {
 	{ "rstppslimit",	CTLTYPE_INT }, \
 	{ "ackonpush",	CTLTYPE_INT }, \
 	{ "ecn", 	CTLTYPE_INT }, \
+	{ "syn_cache_limit", 	CTLTYPE_INT }, \
+	{ "syn_bucket_limit", 	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {
@@ -377,6 +473,13 @@ extern	struct pool sackhl_pool;
 #endif
 extern	int tcp_do_ecn;		/* RFC3168 ECN enabled/disabled? */
 
+extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
+extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
+
+extern	int tcp_syn_cache_size;
+extern	struct syn_cache_head tcp_syn_cache[];
+extern	u_long syn_cache_count;
+
 int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *
@@ -391,7 +494,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 void	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-		int *, u_int32_t *, u_int32_t *);
+		struct tcp_opt_info *);
 void	 tcp_drain(void);
 void	 tcp_init(void);
 #if defined(INET6) && !defined(TCP6)
@@ -456,5 +559,24 @@ void	tcp_rndiss_init(void);
 tcp_seq	tcp_rndiss_next(void);
 u_int16_t
 	tcp_rndiss_encrypt(u_int16_t);
+
+int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
+		struct tcphdr *, unsigned int, struct socket *,
+		struct mbuf *, u_char *, int, struct tcp_opt_info *);
+void	 syn_cache_unreach(struct sockaddr *, struct sockaddr *,
+	   struct tcphdr *);
+struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
+		struct tcphdr *, unsigned int, unsigned int,
+		struct socket *so, struct mbuf *);
+void	 syn_cache_init(void);
+void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
+struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
+		struct syn_cache_head **);
+void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
+		struct tcphdr *);
+int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
+void	 syn_cache_timer(void *);
+void	 syn_cache_cleanup(struct tcpcb *);
+
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_VAR_H_ */
