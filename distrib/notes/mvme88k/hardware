@@ -1,49 +1,43 @@
-dnl	$OpenBSD: hardware,v 1.5 2003/12/30 10:45:45 miod Exp $
-OpenBSD/MACHINE OSREV runs on the following MVME boards:
+dnl	$OpenBSD: hardware,v 1.6 2003/12/30 16:29:21 miod Exp $
+OpenBSD/MACHINE OSREV runs on the systems built around the following
+MVME boards:
 
 	- MVME187 (Single board computer with 88100 processor)
 	- MVME188 (HYPERmodule-based systems with up to 4 88100 processors)
 
-OpenBSD/MACHINE OSREV also runs on the Motorola M8120 system, which is a
-non-expandable MVME187.
+Besides various Motorola complete systems (M8120, MVME187-based series
+900, etc), OpenBSD/MACHINE also runs on the MVME187-based Triton Dolphin
+System 100.
 
 The minimal configuration requires 16MB of RAM and ~250M of disk space.
 To install the entire system requires much more disk space, and to
 compile the system, more RAM is recommended.
 
 Supported HYPERmodules: (for MVME188 systems)
+
 	2P64 (2 88100 processors, 4 88200 CMMUs)
 	2P256 (2 88100 processors, 4 88204 CMMUs)
 	4P128 (4 88100 processors, 8 88200 CMMUs)
 	4P512 (4 88100 processors, 8 88204 CMMUs)
 
-The 1P64, 1P128, 2P128 and 2P512 HYPERmodules are not currently supported.
+	The 1P64, 1P128, 2P128 and 2P512 HYPERmodules are not
+	currently supported.
 
-Supported devices {:-include-:}:
+Supported devices:
 
-MVME187:
-	serial ports:
-		on-board Cirrus Logic CD2401 tty00-tty03 (cl)
-	ethernet:
-		on-board Intel 82596CA ethernet (ie)
-	SCSI:
-		on-board SCSI controller NCR53c710 (ssh)
-	SRAM:
-		supported
-	VMEbus:
-		supported
+MVME187 on-board devices:
+	Cirrus Logic CD2401 serial ports, tty00-tty03 (cl)
+	Intel 82596CA Ethernet (ie)
+	NCR53c710 SCSI Controller (ssh)
+	128KB SRAM (/dev/sram0)
+	8KB NVRAM (/dev/nvram0)
 
-MVME188:
-	serial ports:
-		on-board (SYSCON) serial ports ttya-ttyb (dart)
-	VMEbus:
-		supported
+MVME188 on-board devices:
+	serial ports on SYSCON board, ttya-ttyb (dart)
+	2KB NVRAM (/dev/nvram0)
 
-Additional VMEbus devices supported by the OpenBSD/MACHINE port {:-include-:}:
+Additional VMEbus devices:
 
 	MVME328 High Performance SCSI Controller (vs)
-
 	MVME332XT High Performance Serial I/O Controller (vx)
-
 	MVME376 Ethernet Communications Controller (le)
-

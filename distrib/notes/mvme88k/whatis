@@ -1,3 +1,3 @@
-dnl	$OpenBSD: whatis,v 1.4 2003/12/30 10:45:45 miod Exp $
+dnl	$OpenBSD: whatis,v 1.5 2003/12/30 16:29:21 miod Exp $
 OpenBSD/MACHINE is a port of OpenBSD to the Motorola 881x0
-processor-based VME boards.
+processor-based VME boards and systems built upon them.
