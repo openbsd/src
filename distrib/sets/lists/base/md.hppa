@@ -877,6 +877,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/pdqreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/pdqvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/pt2254a.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ralreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ralvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ic/rf3000reg.ph
