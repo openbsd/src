@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.3 2001/06/24 23:16:35 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.4 2001/06/24 23:20:57 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -105,7 +105,7 @@ load_file(char *name, size_t *len)
 	if (file == NULL) {
 		fprintf(stderr, "ERROR: couldn't open file %s (%s)\n",
 		    name, strerror(errno));
-		return 0;
+		return (0);
 	}
 	fseek(file, 0, SEEK_END);
 	*len = ftell(file);
@@ -114,16 +114,16 @@ load_file(char *name, size_t *len)
     	if (buf == NULL) {
 		fclose(file);
 		fprintf(stderr, "ERROR: malloc() failed\n");
-		return 0;
+		return (0);
 	}
 	if (fread(buf, 1, *len, file) != *len) {
 		free(buf);
 		fclose(file);
 		fprintf(stderr, "ERROR: fread() failed\n");
-		return 0;
+		return (0);
 	}
 	fclose(file);
-	return buf;
+	return (buf);
 }
 
 int
@@ -135,24 +135,24 @@ main(int argc, char *argv[])
 	ub = malloc(sizeof(struct ioctlbuffer));
 	if (ub == NULL) {
 		printf("ERROR: malloc() failed\n");
-		return 1;
+		return (1);
 	}
 	ub->size = 131072;
 	ub->buffer = malloc(ub->size);
 	if (ub->buffer == NULL) {
 		printf("ERROR: malloc() failed\n");
-		return 1;
+		return (1);
 	}
 	memset(ub->buffer, 0, ub->size);
 	ub->entries = 0;
 	if (argc < 2) {
 		usage(argv[0]);
-		return 1;
+		return (1);
 	}
 	dev = open("/dev/pf", O_RDWR);
 	if (dev < 0) {
 		printerror("open(/dev/pf)");
-		return 1;
+		return (1);
 	}
 	if (!strcmp(argv[1], "start")) {
 		if (ioctl(dev, DIOCSTART))
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 		if (argc < 3) {
 			close(dev);
 			usage(argv[0]);
-			return 1;
+			return (1);
 		}
 		if (!strcmp(argv[2], "rules")) {
 			struct rule *rule = ub->buffer;
@@ -209,7 +209,7 @@ main(int argc, char *argv[])
 				else {
 					close(dev);
 					usage(argv[0]);
-					return 1;
+					return (1);
 				}
 			}
 			ub->entries = ub->size / sizeof(struct state);
@@ -229,14 +229,14 @@ main(int argc, char *argv[])
 		else {
 			close(dev);
 			usage(argv[0]);
-			return 1;
+			return (1);
 		}
 	}
 	else if (!strcmp(argv[1], "clear")) {
 		if (argc < 3) {
 			close(dev);
 			usage(argv[0]);
-			return 1;
+			return (1);
 		}
 		ub->entries = 0;
 		if (!strcmp(argv[2], "rules")) {
@@ -260,14 +260,14 @@ main(int argc, char *argv[])
 		else {
 			close(dev);
 			usage(argv[0]);
-			return 1;
+			return (1);
 		}
 	}
 	else if (!strcmp(argv[1], "log")) {
 		if (argc < 3) {
 			close(dev);
 			usage(argv[0]);
-			return 1;
+			return (1);
 		}
 		strncpy(ub->buffer, argv[2], 16);
 		if (ioctl(dev, DIOCSETSTATUSIF, ub))
@@ -284,11 +284,11 @@ main(int argc, char *argv[])
 		    strcmp(argv[2], "rules"))) {
 			close(dev);
 			usage(argv[0]);
-			return 1;
+			return (1);
 		}
 		buf = load_file(argv[3], &len);
 		if (buf == NULL)
-			return 1;
+			return (1);
 
 		if (!strcmp(argv[2], "rules")) {
 			struct rule *rule = ub->buffer;
@@ -338,7 +338,7 @@ main(int argc, char *argv[])
 			free(buf);
 			buf = load_file(argv[3], &len);
 			if (buf == NULL)
-				return 1;
+				return (1);
 			n = 0;
 			nr = 0;
 			s = buf;
@@ -366,11 +366,11 @@ main(int argc, char *argv[])
 	else {
 		close(dev);
 		usage(argv[0]);
-		return 1;
+		return (1);
 	}
 	close(dev);
 	free(ub->buffer);
 	free(ub);
-	return 0;
+	return (0);
 }
 

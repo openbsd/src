@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.3 2001/06/24 23:16:36 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.4 2001/06/24 23:24:15 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -342,7 +342,7 @@ next_line(char **s)
 		**s = 0;
 		(*s)++;
 	}
-	return l;
+	return (l);
 }
 
 static char *
@@ -358,7 +358,7 @@ next_word(char **s)
 		**s = 0;
 		(*s)++;
 	}
-	return w;
+	return (w);
 }
 
 static u_int16_t
@@ -372,7 +372,7 @@ next_number(char **s)
 		n += **s - '0';
 		(*s)++;
 	}
-	return n;
+	return (n);
 }
 
 static u_int32_t
@@ -383,7 +383,7 @@ next_addr(char **w)
 	b = next_number(w);
 	c = next_number(w);
 	d = next_number(w);
-	return htonl((a << 24) | (b << 16) | (c << 8) | d);
+	return (htonl((a << 24) | (b << 16) | (c << 8) | d));
 }
 
 static u_int8_t
@@ -397,7 +397,7 @@ next_flags(char **s)
 		f |= 1 << (p-tcpflags);
 		(*s)++;
 	}
-	return f ? f : 63;
+	return (f ? f : 63);
 }
 
 static u_int16_t
@@ -405,11 +405,11 @@ rule_port(char *w, u_int8_t p)
 {
 	struct servent *s;
 	if (isdigit(*w))
-		return htons(atoi(w));
+		return (htons(atoi(w)));
 	s = getservbyname(w, p == 6 ? "tcp" : "udp");
 	if (s == NULL)
-		return 0;
-	return s->s_port;
+		return (0);
+	return (s->s_port);
 }
 
 static u_int32_t
@@ -419,7 +419,7 @@ rule_mask(u_int8_t b)
 	int i;
 	for (i = 31; i > 31-b; --i)
 		m |= (1 << i);
-	return htonl(m);
+	return (htonl(m));
 }
 
 int
@@ -437,7 +437,7 @@ parse_rule(int n, char *l, struct rule *r)
 	else {
 		fprintf(stderr, "error on line %i: expected pass/block, got %s\n",
 		    n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
@@ -455,7 +455,7 @@ parse_rule(int n, char *l, struct rule *r)
 	else {
 		fprintf(stderr, "error on line %i: expected in/out, got %s\n",
 		    n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
@@ -486,7 +486,7 @@ parse_rule(int n, char *l, struct rule *r)
 		if (p == NULL) {
 			fprintf(stderr, "error on line %i: unknown protocol %s\n",
 			    n, w);
-			return 0;
+			return (0);
 		}
 		r->proto = p->p_proto;
 		w = next_word(&l);
@@ -513,7 +513,7 @@ parse_rule(int n, char *l, struct rule *r)
 				r->src.mask = rule_mask(next_number(&w));
 			else {
 				fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
-				return 0;
+				return (0);
 			}
 			w = next_word(&l);
 		}
@@ -542,7 +542,7 @@ parse_rule(int n, char *l, struct rule *r)
 			if (r->src.port_op == 1) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
 					fprintf(stderr, "error on line %i: expected <>/><, got %s\n", n, w);
-					return 0;
+					return (0);
 				}
 				w = next_word(&l);
 				r->src.port[1] = rule_port(w, r->proto);
@@ -554,7 +554,7 @@ parse_rule(int n, char *l, struct rule *r)
 		if (strcmp(w, "to")) {
 			fprintf(stderr, "error on line %i: expected to, got %s\n",
 			    n, w);
-			return 0;
+			return (0);
 		}
 		w = next_word(&l);
 		if (!strcmp(w, "any"))
@@ -571,7 +571,7 @@ parse_rule(int n, char *l, struct rule *r)
 				r->dst.mask = rule_mask(next_number(&w));
 			else {
 				fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
-				return 0;
+				return (0);
 			}
 			w = next_word(&l);
 		}
@@ -600,7 +600,7 @@ parse_rule(int n, char *l, struct rule *r)
 			if (r->dst.port_op == 1) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
 					fprintf(stderr, "error on line %i: expected <>/><, got %s\n", n, w);
-					return 0;
+					return (0);
 				}
 				w = next_word(&l);
 				r->dst.port[1] = rule_port(w, r->proto);
@@ -612,14 +612,14 @@ parse_rule(int n, char *l, struct rule *r)
 	else {
 		fprintf(stderr, "error on line %i: expected all/from, got %s\n",
 		    n, w);
-		return 0;
+		return (0);
 	}
 
 	/* flags */
 	if (!strcmp(w, "flags")) {
 		if (r->proto != 6) {
 			fprintf(stderr, "error on line %i: flags only valid for proto tcp\n", n);
-			return 0;
+			return (0);
 		}
 		else {
 			w = next_word(&l);
@@ -633,7 +633,7 @@ parse_rule(int n, char *l, struct rule *r)
 	if (!strcmp(w, "icmp-type")) {
 		if (r->proto != 1) {
 			fprintf(stderr, "error on line %i: icmp-type only valid for proto icmp\n", n);
-			return 0;
+			return (0);
 		}
 		else {
 			w = next_word(&l);
@@ -656,7 +656,7 @@ parse_rule(int n, char *l, struct rule *r)
 		}
 		else {
 			fprintf(stderr, "error on line %i: expected state, got %s\n", n, w);
-			return 0;
+			return (0);
 		}
 	}
 
@@ -666,7 +666,7 @@ parse_rule(int n, char *l, struct rule *r)
 		w = next_word(&l);
 	}
 
-	return 1;
+	return (1);
 }
 
 int
@@ -679,7 +679,7 @@ parse_nat(int n, char *l, struct nat *nat)
 	/* nat */
 	if (strcmp(w, "nat" )) {
 		fprintf(stderr, "error on line %i: expected nat, got %s\n", n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
@@ -699,14 +699,14 @@ parse_nat(int n, char *l, struct nat *nat)
 		nat->smask = rule_mask(next_number(&w));
 	else {
 		fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
 	/* -> */
 	if (strcmp(w, "->")) {
 		fprintf(stderr, "error on line %i: expected ->, got %s\n", n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
@@ -727,7 +727,7 @@ parse_nat(int n, char *l, struct nat *nat)
 			fprintf(stderr,
 			 "error on line %i: expected tcp/udp/icmp, got %s\n",
 			    n, w);
-			return 0;
+			return (0);
 		}
 		w = next_word(&l);
 	}
@@ -738,7 +738,7 @@ parse_nat(int n, char *l, struct nat *nat)
 		w = next_word(&l);
 	}
 
-	return 1;
+	return (1);
 }
 
 int
@@ -751,7 +751,7 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 	/* rdr */
 	if (strcmp(w, "rdr" )) {
 		fprintf(stderr, "error on line %i: expected rdr, got %s\n", n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
@@ -771,14 +771,14 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 		rdr->dmask = rule_mask(next_number(&w));
 	else {
 		fprintf(stderr, "error on line %i: expected /, got '%c'\n", n, *w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
 	/* external port */
 	if (strcmp(w, "port")) {
 		fprintf(stderr, "error on line %i: expected port, got %s\n", n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 	rdr->dport = htons(next_number(&w));
@@ -787,7 +787,7 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 	/* -> */
 	if (strcmp(w, "->")) {
 		fprintf(stderr, "error on line %i: expected ->, got %s\n", n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 
@@ -798,7 +798,7 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 	/* internal port */
 	if (strcmp(w, "port")) {
 		fprintf(stderr, "error on line %i: expected port, got %s\n", n, w);
-		return 0;
+		return (0);
 	}
 	w = next_word(&l);
 	rdr->rport = htons(next_number(&w));
@@ -815,7 +815,7 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 			fprintf(stderr,
 			 "error on line %i: expected tcp/udp, got %s\n",
 			    n, w);
-			return 0;
+			return (0);
 		}
 		w = next_word(&l);
 	}
@@ -826,6 +826,6 @@ parse_rdr(int n, char *l, struct rdr *rdr)
 		w = next_word(&l);
 	}
 
-	return 1;
+	return (1);
 }
 
