@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.21 2002/06/07 21:58:38 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.22 2002/06/09 02:16:39 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.21 2002/06/07 21:58:38 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.22 2002/06/09 02:16:39 deraadt Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -1061,7 +1061,7 @@ do {\
 	if (vflag && width < strlen(inet6name(in6)))
 		width = strlen(inet6name(in6));
 	snprintf(line, sizeof line, "%.*s.", width, inet6name(in6));
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	if (!nflag && port)
 		GETSERVBYPORT6(port, proto, sp);
 	if (sp || port == 0)
@@ -1100,7 +1100,7 @@ inet6name(in6p)
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, sizeof(domain)) == 0 &&
-		    (cp = index(domain, '.')))
+		    (cp = strchr(domain, '.')))
 			(void) strlcpy(domain, cp + 1, sizeof domain);
 		else
 			domain[0] = '\0';
@@ -1109,7 +1109,7 @@ inet6name(in6p)
 	if (!nflag && !IN6_IS_ADDR_UNSPECIFIED(in6p)) {
 		hp = gethostbyaddr((char *)in6p, sizeof(*in6p), AF_INET6);
 		if (hp) {
-			if ((cp = index(hp->h_name, '.')) &&
+			if ((cp = strchr(hp->h_name, '.')) &&
 			    !strcmp(cp + 1, domain))
 				*cp = 0;
 			cp = hp->h_name;

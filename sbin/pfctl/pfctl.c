@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.71 2002/06/08 16:44:15 drahn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.72 2002/06/09 02:14:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -691,7 +691,7 @@ pfctl_limit(int dev, char *opt, int opts)
 	char *arg, *serr = NULL;
 	unsigned int limit;
 
-	arg = index(opt, '=');
+	arg = strchr(opt, '=');
 	if (arg == NULL)
 		return pfctl_getlimit(dev, opt);
 	else {
@@ -785,7 +785,7 @@ pfctl_timeout(int dev, char *opt, int opts)
 	char *seconds, *serr = NULL;
 	int setval;
 
-	seconds = index(opt, '=');
+	seconds = strchr(opt, '=');
 	if (seconds == NULL)
 		return pfctl_gettimeout(dev, opt);
 	else {

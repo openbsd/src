@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.12 2002/05/27 06:29:14 deraadt Exp $ */
+/* $OpenBSD: signature.c,v 1.13 2002/06/09 02:12:55 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -447,7 +447,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	return 0;
     }
 
-    key = index(key, ':'); /* Move forward, to the Encoding. We're guaranteed
+    key = strchr(key, ':'); /* Move forward, to the Encoding. We're guaranteed
 			    * to have a ':' character, since this is a key */
     key++;
 
@@ -775,7 +775,7 @@ keynote_sigverify_assertion(struct assertion *as)
 	  (as->as_signeralgorithm == KEYNOTE_ALGORITHM_RSA)))
       return SIGRESULT_FALSE;
 
-    sig = index(as->as_signature, ':');   /* Move forward to the Encoding. We
+    sig = strchr(as->as_signature, ':');   /* Move forward to the Encoding. We
 					   * are guaranteed to have a ':'
 					   * character, since this is a valid
 					   * signature */
@@ -960,7 +960,7 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 	return (char *) NULL;
     }
 
-    sig = index(sigalg, ':');
+    sig = strchr(sigalg, ':');
     if (sig == (unsigned char *) NULL)
     {
 	keynote_errno = ERROR_SYNTAX;
