@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.5 2004/10/28 23:06:10 brad Exp $  */
+/*	$Id: if_iwi.c,v 1.6 2004/11/22 19:52:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -136,12 +136,10 @@ static __inline u_int32_t MEM_READ_4(struct iwi_softc *sc, u_int32_t addr)
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
 }
 
-#define IWI_DEBUG
-
 #ifdef IWI_DEBUG
 #define DPRINTF(x)	if (iwi_debug > 0) printf x
 #define DPRINTFN(n, x)	if (iwi_debug >= (n)) printf x
-int iwi_debug = 2;
+int iwi_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
