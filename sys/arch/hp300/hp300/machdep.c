@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 1998/02/05 16:48:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 1998/02/09 06:26:19 dima Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -80,6 +80,9 @@
 #endif
 
 #include <machine/db_machdep.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
