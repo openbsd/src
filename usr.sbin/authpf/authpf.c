@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.59 2003/06/24 20:44:54 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.60 2003/06/24 20:45:54 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -501,7 +501,7 @@ check_luser(char *luserdir, char *luser)
 		/* reuse tmp */
 		strlcpy(tmp, "\n\n-**- Sorry, you have been banned! -**-\n\n",
 		    sizeof(tmp));
-		while ((fputs(tmp, stdout) != EOF) && !feof(f)) {
+		while (fputs(tmp, stdout) != EOF && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
 				fflush(stdout);
 				return (0);
