@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.143 1999/05/27 09:16:28 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.146 1999/05/27 21:50:35 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -657,6 +657,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 LP",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
+	    0,
+	    "ATI Technologies",
+	    "Rage Magnum",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
 	    0,
 	    "ATI Technologies",
@@ -894,13 +900,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6832,
 	    0,
 	    "Cirrus Logic",
-	    "CL-PD6832",
+	    "CL-PD6832 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833,
 	    0,
 	    "Cirrus Logic",
-	    "CL-PD6833",
+	    "CL-PD6833 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542,
@@ -919,6 +925,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CL-GD7541",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4610,
+	    0,
+	    "Cirrus Logic",
+	    "CS4610 SoundFusion Audio",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
+	    0,
+	    "Cirrus Logic",
+	    "CS4280 CrystalClear Audio",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
@@ -1371,10 +1389,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ATM PCA-200e",
 	},
 	{
-	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_LTMODEM,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
 	    0,
-	    "Fujitsu (4th ID)",
+	    "AT&T/Lucent",
 	    "K56flex DSVD LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
+	    0,
+	    "AT&T/Lucent",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -1803,12 +1827,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Collage 155 ATM adapter",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
-	    0,
-	    "Matrox",
-	    "MGA Impression",
-	},
-	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
 	    0,
 	    "Matrox",
@@ -1849,6 +1867,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Matrox",
 	    "MGA Millennium G200 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
+	    0,
+	    "Matrox",
+	    "MGA Impression",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA_PCI,
@@ -2557,6 +2581,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "6205",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,
+	    0,
+	    "Silicon Integrated System",
+	    "5597/5598 USB",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
@@ -5829,9 +5859,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_FUJITSU4, 0,
+	    PCI_VENDOR_LUCENT, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu (4th ID)",
+	    "AT&T/Lucent",
 	    NULL,
 	},
 	{
