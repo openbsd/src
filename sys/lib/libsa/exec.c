@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.11 1995/10/20 00:47:47 cgd Exp $	*/
+/*	$NetBSD: exec.c,v 1.12 1996/05/14 10:28:18 leo Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,7 +83,7 @@ exec(path, loadaddr, howto)
 	}
 
         /* Text */
-	printf("%d", x.a_text);
+	printf("%ld", x.a_text);
 	addr = loadaddr;
 #ifdef NO_LSEEK
 	if (N_GETMAGIC(x) == ZMAGIC && read(io, (char *)addr, 0x400) == -1)
@@ -99,13 +99,13 @@ exec(path, loadaddr, howto)
 			*addr++ = 0;
 
         /* Data */
-	printf("+%d", x.a_data);
+	printf("+%ld", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
 
         /* Bss */
-	printf("+%d", x.a_bss);
+	printf("+%ld", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
 
@@ -113,7 +113,7 @@ exec(path, loadaddr, howto)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
-	printf("+[%d", x.a_syms);
+	printf("+[%ld", x.a_syms);
 	if (read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
 	addr += x.a_syms;
