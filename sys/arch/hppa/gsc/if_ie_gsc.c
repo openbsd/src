@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.14 2002/10/13 14:15:35 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.15 2002/12/11 06:02:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -153,9 +153,9 @@ ie_gsc_attend(sc)
 	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 
 	fdcache(0, (vaddr_t)ie_mem, IE_SIZE);
-	DELAY(10);
+	DELAY(1);
 	r->ie_attn = 0;
-	DELAY(10);
+	DELAY(1);
 }
 
 void
