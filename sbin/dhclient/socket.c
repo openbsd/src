@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.2 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: socket.c,v 1.3 2004/02/06 11:33:22 henning Exp $	*/
 
 /* BSD socket interface code... */
 
@@ -42,112 +42,110 @@
 
 #include "dhcpd.h"
 
-/* Generic interface registration routine... */
-int if_register_socket (info)
-	struct interface_info *info;
+/*
+ * Generic interface registration routine...
+ */
+int
+if_register_socket(struct interface_info *info)
 {
 	struct sockaddr_in name;
 	int sock;
 	int flag;
 
 	/* Set up the address we're going to bind to. */
-	memset(&name, 0, sizeof name);
+	memset(&name, 0, sizeof(name));
 	name.sin_family = AF_INET;
 	name.sin_port = local_port;
 	name.sin_addr.s_addr = INADDR_ANY;
 
 	/* Make a socket... */
-	if ((sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
-		error ("Can't create dhcp socket: %m");
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		error("Can't create dhcp socket: %m");
 
 	/* Set the REUSEADDR option so that we don't fail to start if
 	   we're being restarted. */
 	flag = 1;
-	if (setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
-			(char *)&flag, sizeof flag) < 0)
-		error ("Can't set SO_REUSEADDR option on dhcp socket: %m");
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+	    (char *)&flag, sizeof(flag)) < 0)
+		error("Can't set SO_REUSEADDR option on dhcp socket: %m");
 
 	flag = 1;
-	if (setsockopt (sock, SOL_SOCKET, SO_REUSEPORT,
-			(char *)&flag, sizeof flag) < 0)
-		error ("Can't set SO_REUSEPORT option on dhcp socket: %m");
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
+	    (char *)&flag, sizeof(flag)) < 0)
+		error("Can't set SO_REUSEPORT option on dhcp socket: %m");
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses. */
-	if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
-			(char *)&flag, sizeof flag) < 0)
-		error ("Can't set SO_BROADCAST option on dhcp socket: %m");
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
+	    (char *)&flag, sizeof(flag)) < 0)
+		error("Can't set SO_BROADCAST option on dhcp socket: %m");
 
 	/* Bind the socket to this interface's IP address. */
-	if (bind (sock, (struct sockaddr *)&name, sizeof name) < 0)
-		error ("Can't bind to dhcp address: %m");
+	if (bind(sock, (struct sockaddr *)&name, sizeof(name)) < 0)
+		error("Can't bind to dhcp address: %m");
 
 	flag = IPSEC_LEVEL_BYPASS;
-	if (setsockopt (sock, IPPROTO_IP, IP_AUTH_LEVEL,
-			(char *)&flag, sizeof flag) == -1)
+	if (setsockopt(sock, IPPROTO_IP, IP_AUTH_LEVEL,
+	    (char *)&flag, sizeof(flag)) == -1)
 		if (errno != EOPNOTSUPP)
-			error ("Can't bypass auth IPsec on dhcp socket: %m");
-	if (setsockopt (sock, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
-			(char *)&flag, sizeof flag) == -1)
+			error("Can't bypass auth IPsec on dhcp socket: %m");
+	if (setsockopt(sock, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
+	    (char *)&flag, sizeof(flag)) == -1)
 		if (errno != EOPNOTSUPP)
-			error ("Can't bypass ESP transport on dhcp socket: %m");
-	if (setsockopt (sock, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
-			(char *)&flag, sizeof flag) == -1)
+			error("Can't bypass ESP transport on dhcp socket: %m");
+	if (setsockopt(sock, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
+	    (char *)&flag, sizeof(flag)) == -1)
 		if (errno != EOPNOTSUPP)
-			error ("Can't bypass ESP network on dhcp socket: %m");
+			error("Can't bypass ESP network on dhcp socket: %m");
 
-	return sock;
+	return (sock);
 }
 
-void if_register_fallback (info)
-	struct interface_info *info;
+void
+if_register_fallback(struct interface_info *info)
 {
-
-	info -> wfdesc = if_register_socket (info);
+	info->wfdesc = if_register_socket(info);
 
 	if (!quiet_interface_discovery)
-		note ("Sending on   Socket/%s%s%s",
-		      info -> name,
-		      (info -> shared_network ? "/" : ""),
-		      (info -> shared_network ?
-		       info -> shared_network -> name : ""));
+		note("Sending on   Socket/%s%s%s",
+		    info->name,
+		    (info->shared_network ? "/" : ""),
+		    (info->shared_network ?
+		        info->shared_network -> name : ""));
 }
 
-ssize_t send_fallback (interface, packet, raw, len, from, to, hto)
-	struct interface_info *interface;
-	struct packet *packet;
-	struct dhcp_packet *raw;
-	size_t len;
-	struct in_addr from;
-	struct sockaddr_in *to;
-	struct hardware *hto;
+ssize_t
+send_fallback(struct interface_info *interface, struct packet *packet,
+    struct dhcp_packet *raw, size_t len, struct in_addr from,
+    struct sockaddr_in *to, struct hardware *hto)
 {
 	int result;
 
-	result = sendto (interface -> wfdesc, (char *)raw, len, 0,
-	  (struct sockaddr *)to, sizeof *to);
+	result = sendto(interface->wfdesc, (char *)raw, len, 0,
+	  (struct sockaddr *)to, sizeof(*to));
 
 	if (result == -1) {
-		warn ("send_fallback: %m");
+		warn("send_fallback: %m");
 		if (errno == ENETUNREACH)
-			warn ("send_fallback: please consult README file %s",
-			  "regarding broadcast address.");
+			warn("send_fallback: please consult README file %s",
+			    "regarding broadcast address.");
 	}
-	return result;
+	return (result);
 }
 
-/* This just reads in a packet and silently discards it. */
-
-void fallback_discard (protocol)
-	struct protocol *protocol;
+/*
+ * This just reads in a packet and silently discards it.
+ */
+void
+fallback_discard(struct protocol *protocol)
 {
-	char buf [1540];
+	char buf[1540];
 	struct sockaddr_in from;
-	socklen_t flen = sizeof from;
+	socklen_t flen = sizeof(from);
 	int status;
-	struct interface_info *interface = protocol -> local;
+	struct interface_info *interface = protocol->local;
 
-	status = recvfrom (interface -> wfdesc, buf, sizeof buf, 0,
-			   (struct sockaddr *)&from, &flen);
+	status = recvfrom(interface->wfdesc, buf, sizeof(buf), 0,
+	    (struct sockaddr *)&from, &flen);
 	if (status == 0)
-		warn ("fallback_discard: %m");
+		warn("fallback_discard: %m");
 }
