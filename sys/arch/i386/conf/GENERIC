@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.330 2003/03/06 22:21:51 markus Exp $
+#	$OpenBSD: GENERIC,v 1.331 2003/03/09 01:54:20 tedu Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -416,7 +416,7 @@ sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
 cmpci*	at pci? dev ? function ?		# C-Media CMI8338/8738
 auich*	at pci? dev ? function ?		# i82801 ICH AC'97 audio
-autri*	at pci? dev ? function ?		# Trident 4D WAVE
+autri*	at pci? dev ? function ? flags 0x0000	# Trident 4D WAVE
 auvia*	at pci? dev ? function ?		# VIA VT82C686A
 clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
 clct*	at pci? dev ? function ?		# CS4281 CrystalClear audio
