@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.28 2001/03/22 00:24:58 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.29 2001/03/28 11:33:31 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -43,7 +43,9 @@ Other BSD variants, as well as older versions of
 include other targets and variables.
 Conversion methods are outlined here.
 .Pp
-This is an incomplete draft; some variables and targets are not yet documented.
+This is still incomplete; some variables and targets are not yet documented.
+Mostly because undocumented stuff has fuzzy semantics, and it hasn't been
+decided yet how to define it.
 .Sh TARGETS
 .Bl -tag -width do-configure
 .It Ar addsum
@@ -56,7 +58,9 @@ Default target.
 Build the port.
 Essentially invoke
 .Bd -literal
-env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \\\&\
+env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \\
+.Ed
+.Bd -literal
 	-f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
 .It Ar checkpatch
@@ -187,6 +191,8 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
+.It Ar rebuild
+Force rebuild of the port.
 .It Ar show
 Invoked with VARNAME=name, show the contents of VARNAME.
 Mostly used from recursive makes, or to know the contents of another
@@ -281,6 +287,12 @@ Comment used for a flavored package, if the non-flavored comment is
 unappropriate.
 .It Ev COMMENT-foo-vanilla
 Comment used for a sub-, flavored package.
+.It Ev CONFIGURE_ARGS
+Arguments to pass to configure script. Defaults are empty, except for
+gnu-style configure, where prefix and sysconfdir are set.
+.It Ev CONFIGURE_ENV
+Basic environment passed to configure script (path and libtool setup).
+gnu-style configure adds a lot more variables.
 .It Ev CONFIGURE_SCRIPT
 Set to name of script invoked by
 .Ar configure
@@ -289,8 +301,8 @@ Should be relative to ${WRKSRC}.
 .It Ev CONFIGURE_SHARED
 Set to --enable-shared or --disable-shared, depending whether the
 architecture supports shared libraries.
-Append to CONFIGURE_ARGS, for ports that build dynamic libraries and
-whose configure script supports those options.
+Should be appended to CONFIGURE_ARGS, for ports that build dynamic libraries 
+and whose configure script supports these options.
 .It Ev CONFIGURE_STYLE
 Set to style of configuration that needs to happen.
 If
@@ -577,6 +589,13 @@ needed by this ports tree.
 Usually set to the current version of
 .Nm
 when port was built, and updated by port maintainers when needed.
+.It Ev NO_BUILD
+Port does not need any build stage.
+.It Ev NO_DEPENDS
+Don't verify build of dependencies. Do not use in any ports Makefile. This
+is only meant as a user convenience when, e.g., you just want to browse
+through a given port's source and do not wish to trigger the build of
+dependencies.
 .It Ev NO_SHARED_LIBS
 Set to
 .Sq Yes
@@ -820,6 +839,11 @@ Defaults to xmkf -a -DPorts.
 The -DPorts is specific to
 .Ox
 and is always appended.
+.It Ev YACC
+Name of yacc program to pass to gnu-configure, defaults to yacc.
+(gnu-configure would always try to use bison otherwise, which leads to
+unreproductible builds.)
+Set to bison if needed.
 .El
 .Sh FILES
 .Bl -tag -width files/md5
