@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.4 2001/09/04 15:06:15 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.5 2001/09/26 19:34:54 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.34 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -469,6 +469,12 @@ psycho_attach(parent, self, aux)
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
 	}
+
+	/*
+	 * XXX Linux magic, helps U30
+	 * "PROM sets the IRQ retry value too low, increase it."
+	 */
+	sc->sc_regs->intr_retry_timer = 0xff;
 
 	/*
 	 * attach the pci.. note we pass PCI A tags, etc., for the sabre here.
