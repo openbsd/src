@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_defs.h,v 1.8 1999/02/11 19:38:54 mickey Exp $	*/
+/*	$OpenBSD: ppp_defs.h,v 1.9 1999/02/11 19:52:11 mickey Exp $	*/
 /*	$NetBSD: ppp_defs.h,v 1.1 1995/07/04 06:28:26 paulus Exp $	*/
 
 /*
@@ -45,26 +45,26 @@
 /*
  * Significant octet values.
  */
-#define	PPP_ALLSTATIONS	0xff	/* All-Stations broadcast address */
-#define	PPP_UI		0x03	/* Unnumbered Information */
-#define	PPP_FLAG	0x7e	/* Flag Sequence */
-#define	PPP_ESCAPE	0x7d	/* Asynchronous Control Escape */
-#define	PPP_TRANS	0x20	/* Asynchronous transparency modifier */
+#define PPP_ALLSTATIONS	0xff	/* All-Stations broadcast address */
+#define PPP_UI		0x03	/* Unnumbered Information */
+#define PPP_FLAG	0x7e	/* Flag Sequence */
+#define PPP_ESCAPE	0x7d	/* Asynchronous Control Escape */
+#define PPP_TRANS	0x20	/* Asynchronous transparency modifier */
 
 /*
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */
-#define	PPP_XNS		0x25	/* Xerox NS */
+#define PPP_XNS		0x25	/* Xerox NS */
 #define PPP_AT		0x29	/* AppleTalk Protocol */
-#define	PPP_IPX		0x2b	/* Internetwork Packet Exchange */
-#define	PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
-#define	PPP_VJC_UNCOMP	0x2f	/* VJ uncompressed TCP */
+#define PPP_IPX		0x2b	/* Internetwork Packet Exchange */
+#define PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
+#define PPP_VJC_UNCOMP	0x2f	/* VJ uncompressed TCP */
 #define PPP_IPV6	0x57	/* Internet Protocol Version 6 */
 #define PPP_COMP	0xfd	/* compressed packet */
 #define PPP_IPCP	0x8021	/* IP Control Protocol */
 #define PPP_ATCP	0x8029	/* AppleTalk Control Protocol */
-#define	PPP_IPXCP	0x802b	/* IPX Control Protocol */
+#define PPP_IPXCP	0x802b	/* IPX Control Protocol */
 #define PPP_CCP		0x80fd	/* Compression Control Protocol */
 #define PPP_LCP		0xc021	/* Link Control Protocol */
 #define PPP_PAP		0xc023	/* Password Authentication Protocol */
