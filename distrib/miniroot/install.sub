@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.120 1999/04/05 00:26:49 millert Exp $
+#	$OpenBSD: install.sub,v 1.121 1999/04/07 08:47:34 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -351,7 +351,7 @@ you have already entered information for).  Available disks are:
 __EOT
 	_DKDEVS=`md_get_diskdevs`
 	echo	"$_DKDEVS"
-	echo	""
+	echo
 	echo -n	"Which one? [done] "
 	getresp ""
 	if [ "X${resp}" = "X" ]; then
@@ -361,7 +361,7 @@ __EOT
 	elif isin $resp $_DKDEVS ; then
 		DISK="$resp"
 	else
-		echo ""
+		echo
 		echo "The disk $resp does not exist."
 		DISK=""
 	fi
@@ -384,13 +384,13 @@ __EOT
 		_defdsk=""
 	fi
 	echo	"$_DKDEVS"
-	echo	""
+	echo
 	echo -n "Which disk is the root disk [${_defdsk}]? "
 	getresp "${_defdsk}"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
 	else
-		echo ""
+		echo
 		echo "The disk $resp does not exist."
 		ROOTDISK=""
 	fi
@@ -455,7 +455,7 @@ __EOT
 				fi
 				echo $_ifs
 			done
-			echo	""
+			echo
 		fi
 		echo -n	"Configure which interface? (or, enter 'done') [$_ouranswer] "
 		getresp "$_ouranswer"
@@ -693,15 +693,15 @@ enable_network() {
 	echo	"Network interface configuration:"
 	ifconfig -am
 
-	echo	""
+	echo
 
 	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
 		route show
-		echo	""
+		echo
 		echo	"Resolver enabled."
 	else
 		route -n show
-		echo	""
+		echo
 		echo	"Resolver not enabled."
 	fi
 
@@ -927,14 +927,14 @@ if [ "${_url_type}" = "ftp" ]; then
 			stty -echo
 			getresp "${_ftp_server_password}"
 			stty echo
-			echo ""
+			echo
 			_ftp_server_password=$resp
 
 			echo -n "Password (again): "
 			stty -echo
 			getresp "${_ftp_server_password}"
 			stty echo
-			echo ""
+			echo
 			if [ "${_ftp_server_password}" != "${resp}" ]; then
 				echo "Passwords do not match, try again."
 				resp=""
@@ -1000,9 +1000,9 @@ else
 			n*|N*)	return ;;
 			*)	;;
 		esac
-		echo ""
+		echo
 		echo "${_file_list}"
-		echo ""
+		echo
 		return
 	else
 		echo "Adding *.tar.gz and *.tgz files to selector."
@@ -1035,17 +1035,17 @@ done
 
 # Allow the user to select/de-select additional sets
 while : ; do
-	echo ""
+	echo
 	echo "The following sets are available for extraction."
 	echo "Enter filename, \`list', \`all', or \`done'."
 	echo "You may de-select a set by prepending a '-' to its name."
-	echo ""
+	echo
 	get_selection "$_sets $_kernel"
 
 	if [ "X${resp}" = X"done" ]; then
 		break
 	elif [ "X${resp}" = X"list" ]; then
-		echo ""
+		echo
 		eval echo "\$_${_url_type}_server_dir:"
 		echo "${_file_list}"
 		continue
@@ -1075,7 +1075,7 @@ esac
 # Download the files one at a time and keep track of which ones failed
 while test -n "${_get_files}" ; do
 	_failed_files=""
-	echo ""
+	echo
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
 		if [ "X${_f}" = "X${_kernel}" ]; then
@@ -1093,20 +1093,20 @@ while test -n "${_get_files}" ; do
 	# Give them the option of refetching failed files.
 	_get_files=""
 	while test -n "${_failed_files}" ; do
-		echo ""
+		echo
 		echo "The following files failed to transfer and extract correctly:"
 		echo "Choose which one(s) to refetch or 'done' to exit selector."
 		echo "You may de-select a file by prepending a '-' to its name."
-		echo ""
+		echo
 		get_selection "$_failed_files"
 
 		if [ "X${resp}" = X"done" ]; then
 			break
 		elif [ "X${resp}" = X"list" ]; then
-			echo ""
+			echo
 			eval echo "\$_${_url_type}_server_dir:"
 			echo "${_file_list}"
-			echo ""
+			echo
 			continue
 		fi
 
@@ -1156,9 +1156,9 @@ else
 			n*|N*)	return ;;
 			*)	;;
 		esac
-		echo ""
+		echo
 		( cd $1 && ls )
-		echo ""
+		echo
 		return
 	else
 		echo "Adding *.tar.gz and *.tgz files to selector."
@@ -1189,17 +1189,17 @@ done
 
 # Allow the user to select/de-select additional sets
 while : ; do
-	echo ""
+	echo
 	echo "The following sets are available for extraction."
 	echo "Enter filename, \`list', \`all', or \`done'."
 	echo "You may de-select a set by prepending a '-' to its name."
-	echo ""
+	echo
 	get_selection "$_sets $_kernel"
 
 	if [ "X${resp}" = X"done" ]; then
 		break
 	elif [ "X${resp}" = X"list" ]; then
-		echo ""
+		echo
 		echo "${1}:"
 		( cd $1 && ls )
 		continue
@@ -1228,7 +1228,7 @@ esac
 # Extract the files one at a time and keep track of which ones failed
 while test -n "${_get_files}" ; do
 	_failed_files=""
-	echo ""
+	echo
 	for _f in $_get_files ; do
 		echo "$1/${_f}:"
 		if [ "X${_f}" = "X${_kernel}" ]; then
@@ -1246,20 +1246,20 @@ while test -n "${_get_files}" ; do
 	# Give them the option of retrying failed files.
 	_get_files=""
 	while test -n "${_failed_files}" ; do
-		echo ""
+		echo
 		echo "The following files failed to extract correctly:"
 		echo "Choose which one(s) to retry or 'done' to exit selector."
 		echo "You may de-select a file by prepending a '-' to its name."
-		echo ""
+		echo
 		get_selection "$_failed_files"
 
 		if [ "X${resp}" = X"done" ]; then
 			break
 		elif [ "X${resp}" = X"list" ]; then
-			echo ""
+			echo
 			echo "${1}:"
 			( cd $1 && ls )
-			echo ""
+			echo
 			continue
 		fi
 
@@ -1280,7 +1280,7 @@ the CD-ROM device containing the partition with the installation sets:
 __EOT
 _CDDEVS=`md_get_cddevs`
 echo    "$_CDDEVS"
-echo	""
+echo
 echo -n	"Which is the CD-ROM with the installation media? [abort] "
 getresp "abort"
 case "$resp" in
@@ -1293,7 +1293,7 @@ case "$resp" in
 		if isin $resp $_CDDEVS ; then
 			_drive=$resp
 		else
-			echo ""
+			echo
 			echo "The CD-ROM $resp does not exist."
 			echo "Aborting."
 			return
@@ -1385,7 +1385,7 @@ case "$resp" in
 		if isin $resp $_DKDEVS ; then
 			_drive=$resp
 		else
-			echo ""
+			echo
 			echo "The disk $resp does not exist."
 			echo "Aborting."
 			return 0
@@ -1491,7 +1491,7 @@ the disk device containing the partition with the installation sets:
 __EOT
 _DKDEVS=`md_get_diskdevs`
 echo    "$_DKDEVS"
-echo	""
+echo
 echo -n	"Which is the disk with the installation sets? [abort] "
 
 if mount_a_disk ; then
@@ -1820,7 +1820,7 @@ __EOT
 
 	# Give the user the opportunity to extract more sets. They
 	# don't necessarily have to come from the same media.
-	echo	""
+	echo
 	echo -n	"Extract more sets? [n] "
 	getresp "n"
 	case "$resp" in
@@ -1970,7 +1970,7 @@ local _fstab=$1
 
 check_kernel() {
 	if [ ! -s /mnt/bsd ]; then
-		echo	""
+		echo
 		echo	"Warning, no kernel installed!"
 		echo	"You did not unpack a file set containing a kernel."
 		echo	"This is needed to boot.  Please note that the install"

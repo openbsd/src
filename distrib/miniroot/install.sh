@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.48 1999/04/07 06:09:22 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.49 1999/04/07 08:47:34 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -109,7 +109,7 @@ if [ "`df /`" = "`df /mnt`" ]; then
 	echo -n "Proceed with installation? [n] "
 else
 	echo "You seem to be trying to restart an interrupted installation!"
-	echo ""
+	echo
 	echo "You can try to skip the disk preparation steps and continue,"
 	echo "otherwise you should reboot the miniroot and start over..."
 	echo -n "Skip disk initialization? [n] "
@@ -117,7 +117,7 @@ fi
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		echo	""
+		echo
 		echo	"Cool!  Let's get to it..."
 		;;
 	*)
@@ -213,7 +213,7 @@ __get_filesystems_1
 		done
 
 		# Now prompt the user for the mount points.  Loop until "done"
-		echo	""
+		echo
 		_i=0
 		resp="X"
 		while [ $_npartitions -gt 0 -a X${resp} != X"done" ]; do
@@ -252,11 +252,29 @@ __get_filesystems_1
 		done
 	done
 
-	echo	""
+	if [ -f /sbin/swapon ]; then
+		echo
+		echo "Do you wish to enable swap for this install (WARNING: Useful for low memory"
+		echo "machines, but only do this if the b partition on the root disk was configured"
+		echo -n "correctly before this kernel boot, or disaster will result)? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				swapon /dev/${ROOTDISK}b
+				;;
+			reboot)
+				reboot
+				;;
+			*)
+				;;
+		esac
+	fi
+
+	echo
 	echo	"You have configured the following devices and mount points:"
-	echo	""
+	echo
 	cat ${FILESYSTEMS}
-	echo	""
+	echo
 	echo	"Filesystems will now be created on these devices."
 	echo 	"If you made any mistakes, you may edit this now."
 	echo -n	"Edit using ${EDITOR}? [n] "
@@ -276,9 +294,9 @@ __get_filesystems_1
 		while read _device_name _junk; do
 			echo -n "${_device_name} "
 		done
-		echo ""
+		echo
 	) < ${FILESYSTEMS}
-	echo	""
+	echo
 
 	echo -n	"Are you really sure that you're ready to proceed? [n] "
 	getresp "n"
@@ -304,20 +322,6 @@ else
 	while [ "X${ROOTDISK}" = "X" ]; do
 		getrootdisk
 	done
-fi
-
-if [ -f /sbin/swapon ]; then
-	echo "Do you wish to enable swap for this install (WARNING: Useful for low memory"
-	echo "machines, but only do this if the b partition on the root disk was configured"
-	echo -n "correctly before this kernel boot, or disaster will result)? [n]"
-	getresp "n"
-	case "$resp" in
-		y*|Y*)
-			swapon /dev/${ROOTDISK}b
-			;;
-		*)
-			;;
-	esac
 fi
 
 # Get network configuration information, and store it for placement in the
@@ -357,11 +361,11 @@ case "$resp" in
 		done
 		FQDN=$resp
 
-		echo ""
+		echo
 		echo "If you have any devices being configured by a DHCP server"
 		echo "it is recommended that you do not enter a default route or"
 		echo "any name servers."
-		echo ""
+		echo
 
 		configurenetwork
 
@@ -431,9 +435,9 @@ case "$resp" in
 		fi
 
 		if [ ! -f /tmp/resolv.conf.shadow ]; then 
-			echo ""
+			echo
 			echo "The host table is as follows:"
-			echo ""
+			echo
 			cat /tmp/hosts
 		cat << __hosts_table_1
 
@@ -493,7 +497,7 @@ if [ "`df /`" = "`df /mnt`" ]; then
 # XXX after the install is complete.
 #
 #	echo	"The fstab is configured as follows:"
-#	echo	""
+#	echo
 #	cat /tmp/fstab
 #	cat << \__fstab_config_1
 #
@@ -512,7 +516,7 @@ if [ "`df /`" = "`df /mnt`" ]; then
 #			;;
 #	esac
 #
-#	echo ""
+#	echo
 
 	munge_fstab /tmp/fstab /tmp/fstab.shadow
 	mount_fs /tmp/fstab.shadow
@@ -542,14 +546,14 @@ while [ "X${resp}" = X"" ]; do
 	stty -echo
 	getresp "${_password}"
 	stty echo
-	echo ""
+	echo
 	_password=$resp
 
 	echo -n "Password (again): "
 	stty -echo
 	getresp ""
 	stty echo
-	echo ""
+	echo
 	if [ "${_password}" != "${resp}" ]; then
 		echo "Passwords do not match, try again."
 		resp=""
@@ -565,9 +569,9 @@ md_copy_kernel
 if [ ! -d /mnt/etc -o ! -d /mnt/usr/share/zoneinfo -o ! -d /mnt/dev ]; then
 	echo "Something needed to complete the installation seems"
 	echo "to be missing, did you forget to extract a required set?"
-	echo ""
+	echo
 	echo "Please review the installation notes and try again..."
-	echo ""
+	echo
 	echo "You *may* be able to correct the problem and type 'install'"
 	echo "without having to extract all of the distribution sets again."
 	exit
