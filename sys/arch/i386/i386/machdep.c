@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 1998/01/20 18:40:14 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 1998/01/22 02:30:46 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -218,6 +218,7 @@ struct	extent *iomem_ex;
 static	ioport_malloc_safe;
 
 caddr_t	allocsys __P((caddr_t));
+void	setup_buffers __P((vm_offset_t *));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
@@ -257,9 +258,7 @@ cpu_startup()
 	unsigned i;
 	caddr_t v;
 	int sz;
-	int base, residual;
 	vm_offset_t minaddr, maxaddr, pa;
-	vm_size_t size;
 	struct pcb *pcb;
 	int x;
 
@@ -306,58 +305,27 @@ cpu_startup()
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
-	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE / CLBYTES) {
-		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE / CLBYTES;
-		residual = 0;
-	}
-
-	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-	}
+	setup_buffers(&maxaddr);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, 16*NCARGS,
+	    TRUE);
 
 	/*
 	 * Allocate a submap for physio
 	 */
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
+	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
+	    TRUE);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES, M_MBUF,
+	    M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
@@ -489,6 +457,92 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
 	return v;
+}
+
+void
+setup_buffers(maxaddr)
+	vm_offset_t *maxaddr;
+{
+	vm_size_t size;
+	vm_offset_t addr;
+	int base, residual, left, i;
+	struct pglist pgs, freepgs;
+	vm_page_t pg, *last, *last2;
+
+	size = MAXBSIZE * nbuf;
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+	    maxaddr, size, TRUE);
+	addr = (vm_offset_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	    &addr, size, FALSE) != KERN_SUCCESS)
+		panic("startup: cannot allocate buffers");
+
+	base = bufpages / nbuf;
+	residual = bufpages % nbuf;
+	if (base >= MAXBSIZE / CLBYTES) {
+		/* don't want to alloc more physical mem than needed */
+		base = MAXBSIZE / CLBYTES;
+		residual = 0;
+	}
+
+	/*
+	 * In case we might need DMA bouncing we have to make sure there
+	 * is some memory below 16MB available.  On machines with many
+	 * pages reserved for the buffer cache we risk filling all of that
+	 * area with buffer pages.  We still want much of the buffers
+	 * reside there as that lowers the probability of them needing to
+	 * bounce, but we have to set aside some space for DMA buffers too.
+	 *
+	 * The current strategy is to grab hold of 2MB chunks at a time as long
+	 * as they fit below 16MB, and as soon as that fail, give back the
+	 * last one and allocate the rest above 16MB.  That should guarantee
+	 * at least 2MB below 16MB left for DMA buffers.
+	 */
+	TAILQ_INIT(&pgs);
+	last = last2 = 0;
+	addr = 0;
+	for (left = bufpages; left > 2 * 1024 * 1024 / CLBYTES;
+	    left -= 2 * 1024 * 1024 / CLBYTES) {
+		if (vm_page_alloc_memory(2 * 1024 * 1024, 0, 16 * 1024 * 1024,
+		    CLBYTES, 0, &pgs, 1, 0)) {
+			if (last2) {
+				TAILQ_INIT(&freepgs);
+				freepgs.tqh_first = *last2;
+				freepgs.tqh_last = pgs.tqh_last;
+				(*last2)->pageq.tqe_prev = &freepgs.tqh_first;
+				pgs.tqh_last = last2;
+				*last2 = NULL;
+				vm_page_free_memory(&freepgs);
+				left += 2 * 1024 * 1024 / CLBYTES;
+				addr = 16 * 1024 * 1024;
+			}
+			break;
+		}
+		last2 = last ? last : &pgs.tqh_first;
+		last = pgs.tqh_last;
+	}
+	if (left > 0)
+		if (vm_page_alloc_memory(left * CLBYTES, addr, avail_end,
+		    CLBYTES, 0, &pgs, 1, 0))
+			panic("cannot get physical memory for buffer cache");
+
+	pg = pgs.tqh_first;
+	for (i = 0; i < nbuf; i++) {
+		/*
+		 * First <residual> buffers get (base+1) physical pages
+		 * allocated for them.  The rest get (base) physical pages.
+		 *
+		 * The rest of each buffer occupies virtual space,
+		 * but has no physical memory allocated for it.
+		 */
+		addr = (vm_offset_t)buffers + i * MAXBSIZE;
+		for (size = CLBYTES * (i < residual ? base + 1 : base);
+		     size > 0; size -= NBPG, addr += NBPG) {
+			pmap_enter(pmap_kernel(), addr, pg->phys_addr,
+			    VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			pg = pg->pageq.tqe_next;
+		}
+	}
 }
 
 /*  
