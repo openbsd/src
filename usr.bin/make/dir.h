@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.7 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.8 2000/09/14 13:43:31 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -47,12 +47,12 @@
 #ifndef	_DIR
 #define	_DIR
 
-typedef struct Path {
-    char         *name;	    	/* Name of directory */
-    int	    	  refCount; 	/* Number of paths with this directory */
-    int		  hits;	    	/* the number of times a file in this
+typedef struct Path_ {
+    int		refCount; 	/* Number of paths with this directory */
+    int		hits;	    	/* the number of times a file in this
 				 * directory has been found */
-    Hash_Table    files;    	/* Hash table of files in directory */
+    Hash_Table	files;    	/* Hash table of files in directory */
+    char	name[1];	/* Name of directory */
 } Path;
 
 extern void Dir_Init __P((void));
@@ -61,7 +61,7 @@ extern Boolean Dir_HasWildcards __P((char *));
 extern void Dir_Expand __P((char *, Lst, Lst));
 extern char *Dir_FindFile __P((char *, Lst));
 extern Boolean Dir_MTime __P((GNode *));
-extern void Dir_AddDir __P((Lst, char *));
+extern void Dir_AddDir __P((Lst, const char *, const char *));
 extern char *Dir_MakeFlags __P((char *, Lst));
 extern void Dir_ClearPath __P((Lst));
 extern void Dir_Concat __P((Lst, Lst));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2000/09/14 13:32:07 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2000/09/14 13:43:31 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: main.c,v 1.41 2000/09/14 13:32:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.42 2000/09/14 13:43:31 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,6 +142,7 @@ static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static void		MainParseArgs __P((int, char **));
 char *			chdir_verify_path __P((char *, char *));
 static int		ReadMakefile __P((void *, void *));
+static void		add_dirpath __P((Lst, const char *));
 static void		usage __P((void));
 static void 		posixParseOptLetter __P((char));
 int 			main __P((int, char **));
@@ -347,7 +348,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		}
 		case 'm':
-			Dir_AddDir(&sysIncPath, optarg);
+			Dir_AddDir(&sysIncPath, optarg, NULL);
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -473,6 +474,26 @@ chdir_verify_path(path, obpath)
 	return 0;
 }
 
+/* Add a :-separated path to a Lst of directories.  */
+static void
+add_dirpath(l, n)
+    Lst 	l;
+    const char 	*n;
+{
+    const char *start;
+    const char *cp;
+
+    for (start = n;;) {
+	for (cp = start; *cp != '\0' && *cp != ':';)
+	    cp++;
+	Dir_AddDir(l, start, cp);
+	if (*cp == '\0')
+	    break;
+	else
+	    start= cp+1;
+    }
+}
+
 
 /*-
  * main --
@@ -505,7 +526,6 @@ main(argc, argv)
 	char cdpath[MAXPATHLEN + 1];
     	char *machine = getenv("MACHINE");
 	char *machine_arch = getenv("MACHINE_ARCH");
-	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
 	static char syspath[] = _PATH_DEFSYSPATH;
 
@@ -652,7 +672,7 @@ main(argc, argv)
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
 	if (objdir != curdir)
-		Dir_AddDir(&dirSearchPath, curdir);
+		Dir_AddDir(&dirSearchPath, curdir, NULL);
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 
@@ -719,18 +739,8 @@ main(argc, argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (Lst_IsEmpty(&sysIncPath)) {
-		for (start = syspath; *start != '\0'; start = cp) {
-			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
-				continue;
-			if (*cp == '\0') {
-				Dir_AddDir(&sysIncPath, start);
-			} else {
-				*cp++ = '\0';
-				Dir_AddDir(&sysIncPath, start);
-			}
-		}
-	}
+	if (Lst_IsEmpty(&sysIncPath))
+	    add_dirpath(&sysIncPath, syspath);
 
 	/*
 	 * Read in the built-in rules first, followed by the specified
@@ -782,7 +792,7 @@ main(argc, argv)
 	 * <directory>:<directory>:<directory>...
 	 */
 	if (Var_Exists("VPATH", VAR_CMD)) {
-		char *vpath, *path, *cp, savec;
+		char *vpath;
 		/*
 		 * GCC stores string constants in read-only memory, but
 		 * Var_Subst will want to write this thing, so store it
@@ -791,20 +801,8 @@ main(argc, argv)
 		static char VPATH[] = "${VPATH}";
 
 		vpath = Var_Subst(VPATH, (SymTable *)VAR_CMD, FALSE);
-		path = vpath;
-		do {
-			/* skip to end of directory */
-			for (cp = path; *cp != ':' && *cp != '\0'; cp++)
-				continue;
-			/* Save terminator character so know when to stop */
-			savec = *cp;
-			*cp = '\0';
-			/* Add directory to search path */
-			Dir_AddDir(&dirSearchPath, path);
-			*cp = savec;
-			path = cp + 1;
-		} while (savec == ':');
-		free(vpath);
+		add_dirpath(&dirSearchPath, vpath);
+		(void)free(vpath);
 	}
 
 	/*

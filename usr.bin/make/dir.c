@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.24 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.25 2000/09/14 13:43:30 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -82,12 +82,14 @@
  *	Dir_PrintDirectories	Print stats about the directory cache.
  */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include "make.h"
 #include "hash.h"
+#include "ohash.h"
 #include "dir.h"
 
 #ifndef lint
@@ -95,7 +97,7 @@
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: dir.c,v 1.24 2000/09/14 13:32:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.25 2000/09/14 13:43:30 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,8 +111,7 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.24 2000/09/14 13:32:06 espie Exp $";
  *	hampers the style of some makefiles, they must be changed.
  *
  *	A list of all previously-read directories is kept in the
- *	openDirectories Lst. This list is checked first before a directory
- *	is opened.
+ *	openDirectories cache.
  *
  *	The need for the caching of whole directories is brought about by
  *	the multi-level transformation code in suff.c, which tends to search
@@ -171,7 +172,7 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.24 2000/09/14 13:32:06 espie Exp $";
 
 LIST          dirSearchPath;	/* main search path */
 
-static LIST   openDirectories;	/* the list of all open directories */
+static struct hash   openDirectories;	/* cache all open directories */
 
 /*
  * Variables for gathering statistics on the efficiency of the hashing
@@ -193,8 +194,10 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * be two rules to update a single file, so this
 			     * should be ok, but... */
 
+static struct hash_info dir_info = { offsetof(Path, name), 
+    NULL, hash_alloc, hash_free, element_alloc };
 
-static int DirFindName __P((void *, void *));
+static Path *DirReaddir __P((const char *, const char *));
 static int DirMatchFiles __P((char *, Path *, Lst));
 static void DirExpandCurly __P((char *, char *, Lst, Lst));
 static void DirExpandInt __P((char *, Lst, Lst));
@@ -217,23 +220,14 @@ void
 Dir_Init()
 {
     Lst_Init(&dirSearchPath);
-    Lst_Init(&openDirectories);
+    hash_init(&openDirectories, 4, &dir_info);
     Hash_InitTable(&mtimes, 0);
 
-    /*
-     * Since the Path structure is placed on both openDirectories and
-     * the path we give Dir_AddDir (which in this case is openDirectories),
-     * we need to remove "." from openDirectories and what better time to
-     * do it than when we have to fetch the thing anyway?
-     */
-    Dir_AddDir(&openDirectories, ".");
-    dot = (Path *)Lst_DeQueue(&openDirectories);
+    dot = DirReaddir(".", NULL);
 
-    /*
-     * We always need to have dot around, so we increment its reference count
-     * to make sure it's not destroyed.
-     */
-    dot->refCount += 1;
+    /* We always need to have dot around, so we increment its reference count
+     * to make sure it's not destroyed.  */
+    dot->refCount++;
 }
 
 /*-
@@ -252,36 +246,18 @@ void
 Dir_End()
 {
 #ifdef CLEANUP
-    dot->refCount -= 1;
+    struct Path *p;
+    unsigned int i;
+
+    dot->refCount--;
     Dir_Destroy(dot);
-    Dir_ClearPath(&dirSearchPath);
-    Lst_Destroy(&dirSearchPath, NOFREE);
-    Dir_ClearPath(&openDirectories);
-    Lst_Destroy(&openDirectories, NOFREE);
+    Lst_Destroy(&dirSearchPath, Dir_Destroy);
+    for (p = hash_first(&openDirectories, &i); p != NULL;
+    	p = hash_next(&openDirectories, &i))
+	    Dir_Destroy(p);
+    hash_delete(&openDirectories);
     Hash_DeleteTable(&mtimes);
 #endif
-}
-
-/*-
- *-----------------------------------------------------------------------
- * DirFindName --
- *	See if the Path structure describes the same directory as the
- *	given one by comparing their names. Called from Dir_AddDir via
- *	Lst_Find when searching the list of open directories.
- *
- * Results:
- *	0 if it is the same. Non-zero otherwise
- *
- * Side Effects:
- *	None
- *-----------------------------------------------------------------------
- */
-static int
-DirFindName (p, dname)
-    void *p;	      /* Current name */
-    void *dname;      /* Desired name */
-{
-    return strcmp(((Path *)p)->name, (char *)dname);
 }
 
 /*-
@@ -620,7 +596,7 @@ Dir_Expand (word, path, expansions)
 			if (*dp == '/')
 			    *dp = '\0';
 			Lst_Init(&temp);
-			Dir_AddDir(&temp, dirpath);
+			Dir_AddDir(&temp, dirpath, NULL);
 			DirExpandInt(cp+1, &temp, expansions);
 			Lst_Destroy(&temp, NOFREE);
 		    }
@@ -836,10 +812,8 @@ Dir_FindFile (name, path)
 		 * again in such a manner, we will find it without having to do
 		 * numerous numbers of access calls. Hurrah!
 		 */
-		cp = strrchr (file, '/');
-		*cp = '\0';
-		Dir_AddDir (path, file);
-		*cp = '/';
+		cp = strrchr(file, '/');
+		Dir_AddDir(path, file, cp);
 
 		/*
 		 * Save the modification time so if it's needed, we don't have
@@ -895,9 +869,7 @@ Dir_FindFile (name, path)
      * b/c we added it here. This is not good...
      */
 #ifdef notdef
-    cp[-1] = '\0';
-    Dir_AddDir (path, name);
-    cp[-1] = '/';
+    Dir_AddDir(path, name, cp-1);
 
     bigmisses += 1;
     ln = Lst_Last(path);
@@ -1015,6 +987,57 @@ Dir_MTime(gn)
     return exists;
 }
 
+/* Read a directory, either from the disk, or from the cache.  */
+static Path *
+DirReaddir(name, end)
+    const char 		*name;
+    const char 		*end;
+{
+    Path          	*p;	/* pointer to new Path structure */
+    DIR     	  	*d;	/* for reading directory */
+    struct dirent 	*dp;	/* entry in directory */
+    unsigned int      	slot;
+
+    slot = hash_qlookupi(&openDirectories, name, &end);
+    p = hash_find(&openDirectories, slot);
+
+    if (p != NULL)
+	return p;
+
+    p = hash_create_entry(&dir_info, name, &end);
+    p->hits = 0;
+    p->refCount = 0;
+    Hash_InitTable(&p->files, -1);
+
+    if (DEBUG(DIR)) {
+	printf("Caching %s...", p->name);
+	fflush(stdout);
+    }
+
+    if ((d = opendir(p->name)) == NULL) 
+    	return NULL;
+    /* Skip the first two entries -- these will *always* be . and ..  */
+    (void)readdir(d);
+    (void)readdir(d);
+
+    while ((dp = readdir(d)) != NULL) {
+#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
+	/* The sun directory library doesn't check for a 0 inode
+	 * (0-inode slots just take up space), so we have to do
+	 * it ourselves.  */
+	if (dp->d_fileno == 0)
+	    continue;
+#endif /* sun && d_ino */
+	(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
+    }
+    (void)closedir(d);
+    if (DEBUG(DIR))
+	printf("done\n");
+
+    hash_insert(&openDirectories, slot, p);
+    return p;
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Dir_AddDir --
@@ -1022,72 +1045,30 @@ Dir_MTime(gn)
  *	the arguments is backwards so ParseDoDependency can do a
  *	Lst_ForEach of its list of paths...
  *
- * Results:
- *	none
- *
  * Side Effects:
  *	A structure is added to the list and the directory is
  *	read and hashed.
  *-----------------------------------------------------------------------
  */
 void
-Dir_AddDir (path, name)
-    Lst           path;	      /* the path to which the directory should be
-			       * added */
-    char          *name;      /* the name of the directory to add */
+Dir_AddDir(path, name, end)
+    Lst		path;	/* the path to which the directory should be
+			 * added */
+    const char	*name;	/* the name of the directory to add */
+    const char	*end;
 {
-    LstNode       ln;	      /* node in case Path structure is found */
-    register Path *p;	      /* pointer to new Path structure */
-    DIR     	  *d;	      /* for reading directory */
-    register struct dirent *dp; /* entry in directory */
+    Path	*p;	/* pointer to new Path structure */
 
-    ln = Lst_Find(&openDirectories, DirFindName, name);
-    if (ln != NULL) {
-	p = (Path *)Lst_Datum(ln);
-	if (Lst_Member(path, p) == NULL) {
-	    p->refCount += 1;
-	    Lst_AtEnd(path, p);
-	}
-    } else {
-	if (DEBUG(DIR)) {
-	    printf("Caching %s...", name);
-	    fflush(stdout);
-	}
-
-	if ((d = opendir (name)) != (DIR *) NULL) {
-	    p = (Path *) emalloc (sizeof (Path));
-	    p->name = estrdup (name);
-	    p->hits = 0;
-	    p->refCount = 1;
-	    Hash_InitTable (&p->files, -1);
-
-	    /*
-	     * Skip the first two entries -- these will *always* be . and ..
-	     */
-	    (void)readdir(d);
-	    (void)readdir(d);
-
-	    while ((dp = readdir (d)) != (struct dirent *) NULL) {
-#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
-		/*
-		 * The sun directory library doesn't check for a 0 inode
-		 * (0-inode slots just take up space), so we have to do
-		 * it ourselves.
-		 */
-		if (dp->d_fileno == 0) {
-		    continue;
-		}
-#endif /* sun && d_ino */
-		(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
-	    }
-	    (void) closedir (d);
-	    Lst_AtEnd(&openDirectories, p);
-	    Lst_AtEnd(path, p);
-	}
-	if (DEBUG(DIR)) {
-	    printf("done\n");
-	}
-    }
+    p = DirReaddir(name, end);
+    if (p == NULL)
+    	return;
+    if (p->refCount == 0)
+    	Lst_AtEnd(path, p);
+    else if (Lst_Member(path, p) != NULL)
+    	return;
+    else
+    	Lst_AtEnd(path, p);
+    p->refCount++;
 }
 
 /*-
@@ -1169,16 +1150,10 @@ Dir_Destroy (pp)
     void *pp;	    /* The directory descriptor to nuke */
 {
     Path    	  *p = (Path *) pp;
-    p->refCount -= 1;
 
-    if (p->refCount == 0) {
-	LstNode	ln;
-
-	ln = Lst_Member(&openDirectories, p);
-	Lst_Remove(&openDirectories, ln);
-
+    if (--p->refCount == 0) {
+    	hash_remove(&openDirectories, hash_qlookup(&openDirectories, p->name));
 	Hash_DeleteTable (&p->files);
-	free(p->name);
 	free(p);
     }
 }
@@ -1242,8 +1217,8 @@ Dir_Concat(path1, path2)
 void
 Dir_PrintDirectories()
 {
-    LstNode	ln;
     Path	*p;
+    unsigned int i;
 
     printf ("#*** Directory Cache:\n");
     printf ("# Stats: %d hits %d misses %d near misses %d losers (%d%%)\n",
@@ -1251,12 +1226,9 @@ Dir_PrintDirectories()
 	      (hits+bigmisses+nearmisses ?
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
     printf ("# %-20s referenced\thits\n", "directory");
-    Lst_Open(&openDirectories);
-    while ((ln = Lst_Next(&openDirectories)) != NULL) {
-	p = (Path *)Lst_Datum(ln);
-	printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
-    }
-    Lst_Close(&openDirectories);
+    for (p = hash_first(&openDirectories, &i); p != NULL;
+    	p = hash_next(&openDirectories, &i))
+	    printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
 }
 
 static void 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.55 2000/09/14 13:40:03 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.56 2000/09/14 13:43:31 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.55 2000/09/14 13:40:03 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.56 2000/09/14 13:43:31 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -571,7 +571,7 @@ ParseAddDir(path, name)
     void *path;
     void *name;
 {
-    Dir_AddDir((Lst)path, (char *)name);
+    Dir_AddDir((Lst)path, (char *)name, NULL);
 }
 
 /*-
@@ -1467,7 +1467,7 @@ void
 Parse_AddIncludeDir(dir)
     char    	  *dir;	    /* The name of the directory to add */
 {
-    Dir_AddDir(&parseIncPath, dir);
+    Dir_AddDir(&parseIncPath, dir, NULL);
 }
 
 /*-
