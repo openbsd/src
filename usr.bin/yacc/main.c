@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/04/04 18:41:38 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1997/11/05 09:36:22 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/04/04 18:41:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/11/05 09:36:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -358,12 +358,33 @@ create_file_names()
     {
         if (explicit_file_name)
 	{
-	    defines_file_name = MALLOC(strlen(output_file_name));
+	    char *suffix;
+
+	    defines_file_name = MALLOC(strlen(output_file_name)+1);
 	    if (defines_file_name == 0)
 	        no_space();
 	    strcpy(defines_file_name, output_file_name);
-	    if (!strcmp(output_file_name + (strlen(output_file_name)-2), ".c"))
-	        defines_file_name [strlen(output_file_name)-1] = 'h';
+
+            /* does the output_file_name have a known suffix */
+            if ((suffix = strrchr(output_file_name, '.')) != 0 &&
+                (!strcmp(suffix, ".c") ||	/* good, old-fashioned C */
+                 !strcmp(suffix, ".C") ||	/* C++, or C on Windows */
+                 !strcmp(suffix, ".cc") ||	/* C++ */
+                 !strcmp(suffix, ".cxx") ||	/* C++ */
+                 !strcmp(suffix, ".cpp")))	/* C++ (Windows) */
+            {
+                strncpy(defines_file_name, output_file_name,
+                    suffix - output_file_name + 1);
+                defines_file_name[suffix - output_file_name + 1] = 'h';
+                defines_file_name[suffix - output_file_name + 2] = '\0';
+            } else {
+                fprintf(stderr,"%s: suffix of output file name %s"
+                    " not recognized, no -d file generated.\n",
+                    myname, output_file_name);
+                dflag = 0;
+                free(defines_file_name);
+                defines_file_name = 0;
+            }
 	}
 	else
 	{
