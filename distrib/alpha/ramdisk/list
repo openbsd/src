@@ -1,9 +1,9 @@
-#	$OpenBSD: list,v 1.6 1998/04/28 16:28:01 millert Exp $
+#	$OpenBSD: list,v 1.7 1998/09/21 23:22:57 deraadt Exp $
 
 # we strip comments from files since we need the space...
 
 # the disktab explanation file
-SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/disktab.preinstall > etc/disktab.preinstall
+#SPECIAL sed -e '/^#[ 	].*$/d' < ${CURDIR}/disktab.preinstall > etc/disktab.preinstall
 
 # and the installation tools
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${CURDIR}/dot.profile > .profile

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 1997/12/02 02:30:34 deraadt Exp $
+#	$OpenBSD: list,v 1.7 1998/09/21 23:23:00 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -31,6 +31,7 @@ LINK	instbin			bin/test bin/[
 LINK	instbin			sbin/fsck_ffs sbin/fsck
 LINK	instbin			sbin/reboot sbin/halt
 LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/dhclient
 LINK	instbin			sbin/init
 LINK	instbin			sbin/mknod
 LINK	instbin			sbin/mount
@@ -41,13 +42,12 @@ LINK	instbin			sbin/mount_kernfs
 LINK	instbin			sbin/newfs sbin/mount_mfs
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/route
-LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
 SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
 SYMLINK	../../instbin		usr/bin/ftp
 SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK	../../instbin		usr/bin/sed
-SYMLINK	../../instbin		usr/bin/build usr/bin/vi
+#SYMLINK	../../instbin		usr/bin/build usr/bin/vi
 
 ARGVLINK ksh		-sh
 
@@ -63,3 +63,7 @@ COPY	${CURDIR}/../miniroot/install.sh		install
 COPY	${CURDIR}/../miniroot/upgrade.sh		upgrade
 SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade
+
+# dhcp things
+COPY	${CURDIR}/../miniroot/dhclient.conf etc/dhclient.conf
+COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
