@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.71 2002/07/18 04:35:03 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.72 2002/07/18 14:00:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1884,6 +1884,9 @@ ENTRY(TLABEL(hpmc),0)
 	ldw	R%emrg_stack(arg1), arg1
 
 	/* never returns, but still */
+	ldil	L%GBCAST_ADDR, t1
+	ldi	CMD_RESET, t2
+	stw	t2, R%GBCAST_ADDR(t1)
 hpmc_never_dies
 	b	hpmc_never_dies
 	nop
