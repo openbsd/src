@@ -1,20 +1,26 @@
-# $OpenBSD: README,v 1.2 1998/09/23 07:30:57 todd Exp $ -*- text -*-
+# $OpenBSD: README,v 1.3 2000/05/01 02:24:11 miod Exp $ -*- text -*-
 
-NetBSD/Sun3 Binary Snapshot
+OpenBSD/Sun3 Binary Snapshot
 
-This FTP directory contains a binary snapshot of NetBSD/Sun3.
+This FTP directory contains a binary snapshot of OpenBSD/Sun3. This
+can't be considered a working, stable release yet.
 
-The NetBSD/sun3 port runs on most Sun3 machines, including:
+The OpenBSD/sun3 port should run on the following Sun3 machines (* means
+having being tested):
 
-	Sun3/{50,60,110,160,260}
+	Sun3/50
+	Sun3/60
+	Sun3/110
+	Sun3/160*
+	Sun3/260*
 
-Devices currently supported include:
+Devices currently supported include(* means having being tested):
 
-	Intel Ether (ie), on-board or VME
+	Intel Ether (ie), on-board* or VME
 	Lance Ether (le), on-board
-	SCSI (sd,st,...), on-board or VME
-	keyboard/display console
-	serial port (ttya/ttyb) console
+	SCSI (sd,st,...), on-board or VME*. Sun-2 SCSI not supported yet.
+	keyboard/display console*
+	serial port (ttya/ttyb) console*
 
 Other Features:
 
@@ -22,30 +28,23 @@ Other Features:
 	Kernel debugger included (ddb)
 	Runs SunOS binaries (see sparc sun shared lib notes)
 
-There's still a lot left to do  (see doc/sun3/TODO).
+There's still a lot left to do. Most of the code is borrowed from
+NetBSD, and new code is being tested right now, but didn't make into
+this snapshot.
 
-Before using the files in this directory, you should start by
-unpacking doc.shar and reading all the files it contains.
-Suggested reading order is:
-	doc/sun3/README
-	doc/sun3/STATUS
-	doc/sun3/INSTALL
-	doc/sun3/SUP
-	doc/sun3/BUILDING
-	doc/sun3/TODO
+To use this, all you need to do it unpack everything onto the disk that
+will be used for root and usr, which can be either a real disk or some
+part of your NFS server.
 
-To use this, all you need to do it unpack everything onto the
-disk that will be used for root and usr, which can be either a
-real disk or some part of your NFS server.
-
-REMEMBER: run dev/MAKEDEV after you unpack things!
+Don't forget to setup correct devices nodes after installing the
+tarballs. Run something like:
 (cd dev ; MAKEDEV std)
 
-If you have any questions or comments about this port please
-send mail to the list:  <port-sun3@netbsd.org>
+If you have any questions or comments about this port,or want to help,
+please contact the Sun3 portmaster: <miod@openbsd.org>
 
-If you'd like to help, send me mail at <gwr@netbsd.org>
-so I can coordinate efforts.
-
-Enjoy!
-Gordon Ross
+I'm sorry this port isn't in good shape to be really usable now, but it
+will mature over the next few months.
+Enjoy anyway!
+-- 
+  Miod Vallat
