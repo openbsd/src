@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.22 1998/10/30 03:39:16 provos Exp $
+.\"	$OpenBSD: options.4,v 1.23 1998/11/17 19:56:19 provos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -584,6 +584,32 @@ the range 2^31 rather than the full unsigned range of 2^32.  Also, under
 .Bx 4.2 ,
 keepalive packets must contain at least one byte or else
 the remote end will not respond.
+.It Cd option TCP_NEWRENO
+Turns on NewReno fast recovery phase, which allows one lost segment
+to be recovered per round trip time. When more than
+one segment has been dropped per window, the transmission can continue
+without waiting for a retranmission timeout.  
+.Em TCP_NEWRENO
+can not be used together with
+.Em TCP_SACK .
+.It Cd option TCP_SACK
+Turns on selective acknowledgements. Additional information about
+segments already received can be transmitted back to the sender,
+thus indicating segments that have been lost and allowing for
+a swifter recovery. Both communication endpoints need to support
+.Em SACK .
+The fallback behaviour is NewReno.
+.Em TCP_SACK
+can not be used together with
+.Em TCP_NEWRENO .
+.It Cd option TCP_FACK
+Turns on forward acknowledgements allowing a more precise estimate of
+outstanding data during the fast recovery phase by using 
+.Em SACK 
+information. 
+.Em TCP_FACK 
+can be used additionally to
+.Em TCP_SACK .
 .It Cd option PFIL_HOOKS
 This option turns on the packet filter interface hooks.  See
 .Xr pfil 9
