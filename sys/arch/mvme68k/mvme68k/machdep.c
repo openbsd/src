@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2001/06/27 04:19:17 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.42 2001/06/27 06:19:48 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -186,7 +186,6 @@ void initvectors(void);
 void
 mvme68k_init()
 {
-#if defined(MACHINE_NEW_NONCONTIG)
 	extern vm_offset_t avail_start, avail_end;
 
 	/*
@@ -198,7 +197,6 @@ mvme68k_init()
 	uvm_setpagesize();
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 			  atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
-#endif /* MACHINE_NEW_NONCONTIG */
 
 	/* 
 	 * Put machine specific exception vectors in place.

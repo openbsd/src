@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2001/06/14 21:30:40 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.13 2001/06/27 06:19:49 art Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -140,10 +140,6 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS * PAGE_SIZE)
 #define VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
-/* Use new VM page bootstrap interface. */
-#define	MACHINE_NEW_NONCONTIG
-
-#if defined(MACHINE_NEW_NONCONTIG)
 /*
  * Constants which control the way the VM system deals with memory segments.
  * The mvme88k only has one physical memory segment.
@@ -165,7 +161,5 @@ struct pmap_physseg {
 	struct simplelock *plock;	/* page lock for this seg */
 };
 #endif /* _LOCORE */
-
-#endif /* MACHINE_NEW_NONCONTIG */
 
 #endif	_MACHINE_VM_PARAM_

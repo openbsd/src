@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.17 2001/05/06 00:45:55 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.18 2001/06/27 06:19:55 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -134,8 +134,6 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
-
-#define MACHINE_NEW_NONCONTIG
 
 #define VM_PHYSSEG_MAX		32	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH

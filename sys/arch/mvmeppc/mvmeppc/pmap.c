@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 2001/06/27 04:32:46 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2001/06/27 06:19:52 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -616,13 +616,11 @@ avail_end = npgs * NBPG;
 		}
 	}
 	
-#ifdef MACHINE_NEW_NONCONTIG	
 	for (mp = avail; mp->size; mp++) {
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size),
 			VM_FREELIST_DEFAULT);
 	}
-#endif
 
 	/*
 	 * Initialize kernel pmap and hardware.
@@ -682,10 +680,8 @@ pmap_init()
 	vsize_t sz;
 	vaddr_t addr;
 	int i, s;
-#ifdef MACHINE_NEW_NONCONTIG
 	int bank;
 	char *attr;
-#endif
 	
 	sz = (vm_size_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
@@ -700,7 +696,6 @@ pmap_init()
             0, NULL, NULL, M_VMPMAP);
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
-#ifdef MACHINE_NEW_NONCONTIG
 	pv = pv_table;
 	attr = pmap_attrib;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
@@ -710,7 +705,6 @@ pmap_init()
 		pv += sz;
 		attr += sz;
 	}
-#endif
 	pmap_initialized = 1;
 	splx(s);
 }
@@ -734,7 +728,7 @@ pmap_page_index(pa)
 	}
 	return -1;
 }
-#ifdef MACHINE_NEW_NONCONTIG
+
 static __inline struct pv_entry *
 pmap_find_pv(paddr_t pa)
 {
@@ -757,7 +751,6 @@ pmap_find_attr(paddr_t pa)
 	} 
 	return NULL;
 }
-#endif
 
 vm_offset_t ppc_kvm_size = VM_KERN_ADDR_SIZE_DEF;
 

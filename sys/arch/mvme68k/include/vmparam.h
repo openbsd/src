@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2001/06/26 21:35:40 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.7 2001/06/27 06:19:47 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -167,10 +167,6 @@
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
 
-/* Use new VM page bootstrap interface. */
-#define	MACHINE_NEW_NONCONTIG
-
-#if defined(MACHINE_NEW_NONCONTIG)
 /*
  * Constants which control the way the VM system deals with memory segments.
  * The mvme68k only has one physical memory segment.
@@ -189,6 +185,5 @@ struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv table for this seg */
 	char *attrs;			/* page attributes for this seg */
 };
-#endif /* MACHINE_NEW_NONCONTIG */
 
 #endif /* _MVME68K_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.6 2000/11/08 21:27:25 ericj Exp $ */
+/* $OpenBSD: vmparam.h,v 1.7 2001/06/27 06:19:42 art Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -128,8 +128,6 @@
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */
-
-#define MACHINE_NEW_NONCONTIG
 
 #define	VM_PHYSSEG_MAX		16		/* XXX */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/06/27 04:19:17 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.24 2001/06/27 06:19:49 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -279,16 +279,6 @@ void pmap_check_wiring	__P((char *, vm_offset_t));
 #define	PRM_CFLUSH	2
 #define	PRM_KEEPPTPAGE	4
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-vm_offset_t	vm_first_phys;	/* PA of first managed page */
-vm_offset_t	vm_last_phys;	/* PA just past last managed page */
-
-#define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
-				 (pa) >= vm_first_phys && (pa) < vm_last_phys)
-
-#define	pa_to_pvh(pa)		(&pv_table[pmap_page_index((pa))])
-#define	pa_to_attribute(pa)	(&pmap_attributes[pmap_page_index((pa))])
-#else
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
 				 vm_physseg_find(atop((pa)), NULL) != -1)
 
@@ -307,42 +297,7 @@ vm_offset_t	vm_last_phys;	/* PA just past last managed page */
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.attrs[pg_];				\
 })
-#endif /* MACHINE_NEW_NONCONTIG */
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-/*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either kmem_alloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then mapping the pages and zeroing them.
- *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
- */
-void *
-pmap_bootstrap_alloc(size)
-	int size;
-{
-	extern boolean_t vm_page_startup_initialized;
-	vm_offset_t val;
-	
-	if (vm_page_startup_initialized)
-		panic("pmap_bootstrap_alloc: called after startup initialized");
-	size = round_page(size);
-	val = virtual_avail;
-
-	virtual_avail = pmap_map(virtual_avail, avail_start,
-		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
-	avail_start += size;
-
-	bzero((void *)val, size);
-	return ((void *) val);
-}
-#endif /* ! MACHINE_NEW_NONCONTIG */
-
-#if defined(MACHINE_NEW_NONCONTIG)
 /*
  *    Routine:        pmap_virtual_space
  *
@@ -359,7 +314,6 @@ pmap_virtual_space(vstartp, vendp)
 	*vstartp = virtual_avail;
 	*vendp = virtual_end;
 }
-#endif /* MACHINE_NEW_NONCONTIG */
 
 /*
  *    Routine:        pmap_init
@@ -369,33 +323,21 @@ pmap_virtual_space(vstartp, vendp)
  *            Called by vm_init, to initialize any structures that the pmap
  *            system needs to map virtual memory.
  */
-#if defined(MACHINE_NEW_NONCONTIG)
 void
 pmap_init()
-#else
-void
-pmap_init(phys_start, phys_end)
-	vm_offset_t	phys_start, phys_end;
-#endif
 {
 	vm_offset_t	addr, addr2;
 	vm_size_t	s;
 	int		rv;
 	int		npages;
-#if defined(MACHINE_NEW_NONCONTIG)
 	struct pv_entry *pv;
 	char		*attr;
 	int		bank;
-#endif
 
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-#if defined(MACHINE_NEW_NONCONTIG)
 		printf("pmap_init()\n");
-#else
-		printf("pmap_init(%x, %x)\n", phys_start, phys_end);
-#endif
 #endif
 	/*
 	 * Now that kernel map has been allocated, we can mark as
@@ -437,12 +379,8 @@ pmap_init(phys_start, phys_end)
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++)
 		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
-#else
-	page_cnt = atop(phys_end - phys_start);
-#endif
 	s = M68K_STSIZE;                                /* Segtabzero */
 	s += page_cnt * sizeof(struct pv_entry);        /* pv table */
 	s += page_cnt * sizeof(char);                   /* attribute table */
@@ -479,7 +417,6 @@ pmap_init(phys_start, phys_end)
 			pv_table, pmap_attributes);
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	/*
  	 * Now that the pv and attribute tables have been allocated,
  	 * assign them to the memory segments.
@@ -493,7 +430,6 @@ pmap_init(phys_start, phys_end)
 		pv += npages;
 		attr += npages;
 	}
-#endif 
 
 	/*
 	 * Allocate physical memory for kernel PT pages and their management.
@@ -584,10 +520,6 @@ pmap_init(phys_start, phys_end)
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
-#if !defined(MACHINE_NEW_NONCONTIG)
-	vm_first_phys = phys_start;
-	vm_last_phys = phys_end;
-#endif
 	pmap_initialized = TRUE;
 }
 
@@ -1457,11 +1389,7 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-#if defined(MACHINE_NEW_NONCONTIG)
 	int bank, s;
-#else
-	int s;
-#endif /* MACHINE_NEW_NONCONTIG */
 
 	if (pmap != pmap_kernel())
 		return;
@@ -1471,13 +1399,9 @@ pmap_collect(pmap)
 		printf("pmap_collect(%p)\n", pmap);
 #endif
 	s = splimp();
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (bank = 0; bank < vm_nphysseg; bank++)
 		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
 		    ptoa(vm_physmem[bank].end));
-#else
-	pmap_collect1(pmap, vm_first_phys, vm_last_phys);
-#endif /* MACHINE_NEW_NONCONTIG */
 	splx(s);
 
 #ifdef notyet

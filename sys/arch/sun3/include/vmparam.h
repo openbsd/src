@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2001/05/06 00:45:56 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2001/06/27 06:19:56 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.14 1995/09/26 04:02:10 gwr Exp $	*/
 
 /*
@@ -156,8 +156,6 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
- 
-#define MACHINE_NEW_NONCONTIG
  
 #define VM_PHYSSEG_MAX		4
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH

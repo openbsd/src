@@ -103,8 +103,6 @@ extern vm_offset_t ppc_kvm_size;
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)((KERNEL_SR << ADDR_SR_SHFT) \
 						+ VM_KERN_ADDRESS_SIZE))
 
-#define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
-
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * PAGE_SIZE)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * PAGE_SIZE)
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)

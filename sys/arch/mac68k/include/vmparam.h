@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2001/05/08 17:30:40 aaron Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2001/06/27 06:19:46 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.8 1996/11/15 14:21:00 briggs Exp $	*/
 
 /*
@@ -189,9 +189,6 @@
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
-
-/* Use new VM page bootstrap interface. */
-#define MACHINE_NEW_NONCONTIG
 
 /*
  * Constants which control the way the VM system deals with memory segments.

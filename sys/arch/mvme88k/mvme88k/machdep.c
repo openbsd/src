@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.42 2001/06/27 04:29:19 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.43 2001/06/27 06:19:50 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -2186,14 +2186,12 @@ mvme_bootstrap(void)
 		       &avail_start, &avail_end, &virtual_avail,
 		       &virtual_end);
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	/*
 	 * Tell the VM system about available physical memory.  
 	 * mvme88k only has one segment.
 	 */
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 			  atop(avail_start), atop(avail_end),VM_FREELIST_DEFAULT);
-#endif /* MACHINE_NEW_NONCONTIG */
 	
 	/*
 	 * Must initialize p_addr before autoconfig or

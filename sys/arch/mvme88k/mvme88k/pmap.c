@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2001/06/27 04:29:20 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2001/06/27 06:19:51 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -191,30 +191,6 @@ static struct simplelock *pv_lock_table; /* array */
 
 static pv_entry_t pv_head_table; /* array of entries, one per page */
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-/*
- * First and last physical address that we maintain any information
- * for. Initialized to zero so that pmap operations done before
- * pmap_init won't touch any non-existent structures.
- */
-static vm_offset_t   pmap_phys_start   = (vm_offset_t) 0;
-static vm_offset_t   pmap_phys_end  = (vm_offset_t) 0;
-
-/*
- * Index into pv_head table, its lock bits, and the modify bits
- * starting at pmap_phys_start.
- */
-#define PFIDX(pa)		(atop(pa - pmap_phys_start))
-#define PFIDX_TO_PVH(pfidx)	(&pv_head_table[pfidx])
-#define	PA_TO_PVH(pa)		(&pv_head_table[PFIDX(pa)])
-#define PMAP_MANAGED(pa)	(pmap_initialized && \
-	((pa) >= pmap_phys_start && (pa) < pmap_phys_end))
-#define LOCK_PVH(pa)		simple_lock(&(pv_lock_table[PFIDX(pa)]))
-#define UNLOCK_PVH(pa)		simple_unlock(&(pv_lock_table[PFIDX(pa)]))
-#define	PA_TO_ATTRIB(pa)	(pmap_modify_list[PFIDX(pa)])
-#define	SET_ATTRIB(pa, attr)	(pmap_modify_list[PFIDX(pa)] = (attr))
-
-#else
 #define	PMAP_MANAGED(pa) (pmap_initialized &&			\
 			 vm_physseg_find(atop((pa)), NULL) != -1)
 
@@ -253,7 +229,6 @@ static vm_offset_t   pmap_phys_end  = (vm_offset_t) 0;
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	vm_physmem[bank_].pmseg.attrs[pg_] = (attr);			\
 })
-#endif /* !defined(MACHINE_NEW_NONCONTIG) */
 
 /*
  *	Locking and TLB invalidation primitives
@@ -1299,40 +1274,6 @@ pmap_bootstrap(vm_offset_t load_start,
 	avail_next = *phys_start;
 } /* pmap_bootstrap() */
 
-/*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either uvm_km_zalloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then mapping the pages and zeroing them.
- *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
- */
-
-#if !defined(MACHINE_NEW_NONCONTIG)
-void *
-pmap_bootstrap_alloc(int size)
-{
-	register void *mem;
-
-	size = round_page(size);
-	mem = (void *)virtual_avail;
-	virtual_avail = pmap_map(virtual_avail, avail_start,
-				 avail_start + size,
-				 VM_PROT_READ|VM_PROT_WRITE|(CACHE_GLOBAL << 16));
-	avail_start += size;
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("pmap_bootstrap_alloc: size %x virtual_avail %x avail_start %x\n",
-		       size, virtual_avail, avail_start);
-	}
-#endif
-	bzero((void *)mem, size);
-	return (mem);
-}
-#endif /* !defined(MACHINE_NEW_NONCONTIG) */
 
 /*
  * Routine:	PMAP_INIT
@@ -1373,7 +1314,6 @@ pmap_bootstrap_alloc(int size)
  * 	uvm_km_zalloc() memory for modify_bits
  *
  */
-#ifdef MACHINE_NEW_NONCONTIG
 void
 pmap_init(void)
 {
@@ -1447,72 +1387,6 @@ pmap_init(void)
 	}
 	pmap_initialized = TRUE;
 } /* pmap_init() */
-
-#else
-void
-pmap_init(vm_offset_t phys_start, vm_offset_t phys_end)
-{
-	register long		npages;
-	register vm_offset_t	addr;
-	register vm_size_t	s;
-	register int		i;
-	vm_size_t		pvl_table_size;
-
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_INIT | CD_NORM)) == (CD_INIT | CD_NORM))
-		printf("(pmap_init) phys_start %x  phys_end %x\n", phys_start, phys_end);
-#endif
-
-	/*
-	 * Allocate memory for the pv_head_table and its lock bits,
-	 * the modify bit array, and the pte_page table.
-	 */
-	npages = atop(phys_end - phys_start);
-	s = PV_TABLE_SIZE(npages);		/* pv_list */
-	s += PV_LOCK_TABLE_SIZE(npages);	/* pv_lock_table */
-	s += npages * sizeof(char);		/* pmap_modify_list */
-
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_INIT | CD_FULL)) == (CD_INIT | CD_FULL)) {
-		printf("(pmap_init) nbr of managed pages = %x\n", npages);
-		printf("(pmap_init) size of pv_list = %x\n",
-		       npages * sizeof(struct pv_entry));
-	}
-#endif
-	s = round_page(s);
-	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
-
-	pv_head_table =  (pv_entry_t)addr;
-	addr += PV_TABLE_SIZE(npages);
-
-	/*
-	 * Assume that 'simple_lock' is used to lock pv_lock_table
-	 */
-	pv_lock_table = (struct simplelock *)addr; /* XXX */
-	addr += PV_LOCK_TABLE_SIZE(npages);
-
-	pmap_modify_list = (char *)addr;
-
-	/*
-	* Initialize pv_lock_table
-	*/
-	for (i = 0; i < npages; i++)
-		simple_lock_init(&(pv_lock_table[i]));
-
-	/*
-	  * Only now, when all of the data structures are allocated,
-	  * can we set pmap_phys_start and pmap_phys_end. If we set them
-	  * too soon, the kmem_alloc above will blow up when it causes
-	  * a call to pmap_enter, and pmap_enter tries to manipulate the
-	  * (not yet existing) pv_list.
-	  */
-	pmap_phys_start = phys_start;
-	pmap_phys_end = phys_end;
-
-	pmap_initialized = TRUE;
-
-} /* pmap_init() */
-#endif 
 
 /*
  * Routine:	PMAP_ZERO_PAGE
@@ -4137,10 +4011,8 @@ check_map(pmap_t map, vm_offset_t s, vm_offset_t e, char *who)
 	pt_entry_t  *ptep;
 	boolean_t   found;
 	int      loopcnt;
-#if defined(MACHINE_NEW_NONCONTIG)
 	int bank;
 	unsigned      npages;
-#endif 
 
 	/*
 	 * for each page in the address space, check to see if there's
@@ -4187,17 +4059,11 @@ check_map(pmap_t map, vm_offset_t s, vm_offset_t e, char *who)
 		   reserved by vm_page_startup */
 		/* pmap_init also allocate some memory for itself. */
 
-#if defined(MACHINE_NEW_NONCONTIG)
 		for (npages = 0, bank = 0; bank < vm_nphysseg; bank++)
 			npages += vm_physmem[bank].end - vm_physmem[bank].start;
 		if (map == kernel_pmap &&
 		    va < round_page((vm_offset_t)(pmap_modify_list + npages)))
 			continue;
-#else
-		if (map == kernel_pmap &&
-		    va < round_page((vm_offset_t)(pmap_modify_list + (pmap_phys_end - pmap_phys_start))))
-			continue;
-#endif 
 		pv_h = PA_TO_PVH(phys);
 		found = FALSE;
 
@@ -4277,10 +4143,9 @@ check_pmap_consistency(char *who)
 	vm_offset_t phys;
 	pv_entry_t  pv_h;
 	int      spl;
-#ifdef MACHINE_NEW_NONCONTIG
 	int bank;
 	unsigned      npages;
-#endif 
+
 	if ((pmap_con_dbg & (CD_CHKPM | CD_NORM)) == (CD_CHKPM | CD_NORM))
 		printf("check_pmap_consistency (%s :%x) start.\n", who, curproc);
 
@@ -4306,19 +4171,12 @@ check_pmap_consistency(char *who)
 	}
 
 	/* run through all managed paes, check pv_list for each one */
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (npages = 0, bank = 0; bank < vm_nphysseg; bank++) {
 		for (phys = ptoa(vm_physmem[bank].start); phys < ptoa(vm_physmem[bank].end); phys += PAGE_SIZE) {
 			pv_h = PA_TO_PVH(phys);
 			check_pv_list(phys, pv_h, who);
 		}
 	}
-#else
-	for (phys = pmap_phys_start; phys < pmap_phys_end; phys += PAGE_SIZE) {
-		pv_h = PA_TO_PVH(phys);
-		check_pv_list(phys, pv_h, who);
-	}
-#endif /* defined(MACHINE_NEW_NONCONTIG) */
 
 	SPLX(spl);
 
@@ -4358,27 +4216,6 @@ pmap_virtual_space(vm_offset_t *startp, vm_offset_t *endp)
 	*startp = virtual_avail;
 	*endp = virtual_end;
 }
-
-#if !defined(MACHINE_NEW_NONCONTIG)
-
-unsigned int
-pmap_free_pages(void)
-{
-	return atop(avail_end - avail_next);
-}
-
-boolean_t
-pmap_next_page(vm_offset_t *addrp)
-{
-	if (avail_next == avail_end)
-		return FALSE;
-
-	*addrp = avail_next;
-	avail_next += PAGE_SIZE;
-	return TRUE;
-}
-
-#endif
 
 #ifdef USING_BATC
    #ifdef OMRON_PMAP
