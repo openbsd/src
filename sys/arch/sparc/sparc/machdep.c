@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2002/01/23 17:35:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.78 2002/01/23 17:51:52 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -272,8 +272,6 @@ cpu_startup()
 	if (dvmamap_extent == 0)
 		panic("unable to allocate extent for dvma");
 
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif

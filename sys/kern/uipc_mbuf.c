@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.47 2002/01/23 17:35:57 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.48 2002/01/23 17:51:52 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -115,6 +115,11 @@ struct pool_allocator mclpool_allocator = {
 void
 mbinit()
 {
+	vaddr_t minaddr, maxaddr;
+
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
+
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", &mclpool_allocator);
 

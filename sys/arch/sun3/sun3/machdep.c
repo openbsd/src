@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2002/01/23 17:35:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2002/01/23 17:51:52 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -330,9 +330,6 @@ cpu_startup()
 	 * the kernel map (any kernel mapping is OK) and then the
 	 * device drivers clone the kernel mappings into DVMA space.
 	 */
-
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 	printf("using %d buffers containing %d bytes of memory\n",

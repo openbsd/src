@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.193 2002/01/23 17:35:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.194 2002/01/23 17:51:52 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -394,9 +394,6 @@ cpu_startup()
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024);

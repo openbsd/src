@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2002/01/23 17:35:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2002/01/23 17:51:52 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -313,12 +313,6 @@ cpu_startup()
 	 */
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
                                  16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-        mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.64 2002/01/23 17:35:55 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.65 2002/01/23 17:51:52 art Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -954,9 +954,6 @@ cpu_startup()
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-			VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;

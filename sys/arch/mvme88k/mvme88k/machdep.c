@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.87 2002/01/23 17:35:56 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.88 2002/01/23 17:51:52 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -654,9 +654,6 @@ cpu_startup()
 	if (iomap_extent == NULL)
 		panic("unable to allocate extent for iomap");
 
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
-	
 	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free), uvmexp.free);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
