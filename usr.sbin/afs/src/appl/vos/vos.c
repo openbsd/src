@@ -40,7 +40,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos.c,v 1.1 2000/09/11 14:40:37 art Exp $");
+RCSID("$Id: vos.c,v 1.2 2002/01/28 19:33:21 fgsch Exp $");
 
 int vos_interactive = 0;
 
@@ -132,8 +132,8 @@ help_cmd(int argc, char **argv)
 static int
 apropos_cmd(int argc, char **argv)
 {
-    if (argc == 0) {
-	fprintf (stderr, "apropos: missing topic");
+    if (argc < 2) {
+	fprintf (stderr, "apropos: missing topic\n");
 	return 0;
     }
 
