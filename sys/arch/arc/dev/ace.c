@@ -1,4 +1,4 @@
-/*	$OpenBSD: ace.c,v 1.3 1996/07/18 17:02:00 pefo Exp $	*/
+/*	$OpenBSD: ace.c,v 1.4 1996/08/26 10:58:24 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1656,16 +1656,12 @@ acecnprobe(cp)
 	bus_io_handle_t ioh;
 	int found;
 
-#if 0
 	if (bus_io_map(bc, CONADDR, COM_NPORTS, &ioh)) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-#else
 	ioh = CONADDR;
-#endif
 	found = comprobe1(bc, ioh, CONADDR);
-	bus_io_unmap(bc, ioh, COM_NPORTS);
 	if (!found) {
 		cp->cn_pri = CN_DEAD;
 		return;
