@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.8 2000/01/31 19:57:21 deraadt Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.9 2001/02/26 16:32:32 art Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -84,9 +84,11 @@ netbsd_sys_fdatasync(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	if ((error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p)) == 0 &&
-	    bioops.io_fsync != NULL)
-		error = (*bioops.io_fsync)(vp);
+	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
+#ifdef FFS_SOFTUPDATES
+	if (error == 0 && vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
+		error = softdep_fsync(vp);
+#endif  
 
 	VOP_UNLOCK(vp, 0, p);
 	return (error);
