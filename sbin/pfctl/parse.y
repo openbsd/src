@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.407 2003/08/20 13:02:52 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.408 2003/08/20 16:27:36 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3584,6 +3584,12 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 						errs++;
 
 				for (nq = nqueues; nq != NULL; nq = nq->next) {
+					if (!strcmp(a->qname, nq->queue)) {
+						yyerror("queue cannot have "
+						    "itself as child");
+						errs++;
+						continue;
+					}
 					n = calloc(1,
 					    sizeof(struct node_queue));
 					if (n == NULL)
