@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.54 1999/12/08 02:26:18 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.55 1999/12/09 20:22:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -348,7 +348,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	m_copydata(m, m->m_pkthdr.len - alen, alen, iv);
 
 	/* 
-	 * Skip forward to the begining of the ESP header. If we run out
+	 * Skip forward to the beginning of the ESP header. If we run out
 	 * of mbufs in the process, the check inside the following while()
 	 * loop will catch it.
 	 */
@@ -438,7 +438,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
      */
     if (roff == 0) 
     {
-	/* The ESP header was conveniently at the begining of the mbuf */
+	/* The ESP header was conveniently at the beginning of the mbuf */
 	m_adj(m1, 2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
 	if (!(m1->m_flags & M_PKTHDR))
 	  m->m_pkthdr.len -= (2 * sizeof(u_int32_t) + tdb->tdb_ivlen);
@@ -449,7 +449,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	  /*
 	   * Part or all of the ESP header is at the end of this mbuf, so first
 	   * let's remove the remainder of the ESP header from the
-	   * begining of the remainder of the mbuf chain, if any.
+	   * beginning of the remainder of the mbuf chain, if any.
 	   */
 	  if (roff + 2 * sizeof(u_int32_t) + tdb->tdb_ivlen > m1->m_len)
 	  {

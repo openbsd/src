@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.33 1999/12/08 07:07:27 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.34 1999/12/09 20:22:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -521,7 +521,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	    return NULL;
     }
 
-    /* Record the begining of the AH header */
+    /* Record the beginning of the AH header */
     for (len = 0, m1 = m; m1 && (len + m1->m_len <= skip); m1 = m1->m_next)
       len += m1->m_len;
 
@@ -605,7 +605,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
      */
     if (roff == 0) 
     {
-	/* The AH header was conveniently at the begining of the mbuf */
+	/* The AH header was conveniently at the beginning of the mbuf */
 	m_adj(m1, AH_NEW_FLENGTH);
 	if (!(m1->m_flags & M_PKTHDR))
 	  m->m_pkthdr.len -= AH_NEW_FLENGTH;
@@ -616,7 +616,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	  /*
 	   * Part or all of the AH header is at the end of this mbuf, so first
 	   * let's remove the remainder of the AH header from the
-	   * begining of the remainder of the mbuf chain, if any.
+	   * beginning of the remainder of the mbuf chain, if any.
 	   */
 	  if (roff + AH_NEW_FLENGTH > m1->m_len)
 	  {
@@ -1068,7 +1068,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     /*
      * The AH header is guaranteed by m_inject() to be in contiguous memory,
-     * at the begining of the returned mbuf.
+     * at the beginning of the returned mbuf.
      */
     ah = mtod((*mp), struct ah_new *);
     
