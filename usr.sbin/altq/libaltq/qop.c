@@ -1,4 +1,4 @@
-/*	$OpenBSD: qop.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$OpenBSD: qop.c,v 1.3 2001/10/26 07:39:52 kjc Exp $	*/
 /*	$KAME: qop.c,v 1.10 2001/08/16 10:39:13 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -792,10 +792,10 @@ struct classinfo *get_nextclass(struct classinfo *clinfo)
 u_long
 atobps(const char *s)
 {
-	u_long bandwidth;
+	double bandwidth;
 	char *cp;
 			
-	bandwidth = strtoul(s, &cp, 0);
+	bandwidth = strtod(s, &cp);
 	if (cp != NULL) {
 		if (*cp == 'K' || *cp == 'k')
 			bandwidth *= 1000;
@@ -804,16 +804,18 @@ atobps(const char *s)
 		else if (*cp == 'G' || *cp == 'g')
 			bandwidth *= 1000000000;
 	}
-	return (bandwidth);
+	if (bandwidth < 0)
+		bandwidth = 0;
+	return ((u_long)bandwidth);
 }
 
 u_long
 atobytes(const char *s)
 {
-	u_long bytes;
+	double bytes;
 	char *cp;
 			
-	bytes = strtoul(s, &cp, 0);
+	bytes = strtod(s, &cp);
 	if (cp != NULL) {
 		if (*cp == 'K' || *cp == 'k')
 			bytes *= 1024;
@@ -822,7 +824,9 @@ atobytes(const char *s)
 		else if (*cp == 'G' || *cp == 'g')
 			bytes *= 1024 * 1024 * 1024;
 	}
-	return (bytes);
+	if (bytes < 0)
+		bytes = 0;
+	return ((u_long)bytes);
 }
 
 static int 
