@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.2 2001/06/25 05:15:11 angelos Exp $	*/
+/*	$OpenBSD: key.h,v 1.3 2001/07/02 02:28:35 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -32,7 +32,7 @@
 #define ISAKMP_KEYTYPE_PRIVATE  1
 
 void key_free (int, int, void *);
-void key_serialize (int, int, void *, u_int8_t **, int *);
+void key_serialize (int, int, void *, u_int8_t **, size_t *);
 char *key_printable (int, int, u_int8_t *, int);
 void key_from_printable (int, int, char *, u_int8_t **, int *);
 void *key_internalize (int, int, u_int8_t *, int);

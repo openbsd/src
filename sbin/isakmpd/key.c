@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.3 2001/07/01 19:48:43 niklas Exp $	*/
+/*	$OpenBSD: key.c,v 1.4 2001/07/02 02:28:35 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -50,7 +50,7 @@ key_free (int type, int private, void *key)
 
 /* Convert from internal form to serialized */
 void
-key_serialize (int type, int private, void *key, u_int8_t **data, int *datalen)
+key_serialize (int type, int private, void *key, u_int8_t **data, size_t *datalen)
 {
   u_int8_t *p;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.19 2001/07/01 19:48:43 niklas Exp $	*/
+/*	$OpenBSD: connection.c,v 1.20 2001/07/02 02:28:35 deraadt Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ void
 connection_init ()
 {
   struct conf_list *conns, *attrs;
-  struct conf_list_node *conn, *attr;
+  struct conf_list_node *conn, *attr = NULL;
 
   /*
    * Passive connections normally include: all "active" connections that

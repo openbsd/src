@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.76 2001/07/01 19:48:44 niklas Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.77 2001/07/02 02:28:35 deraadt Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ struct pf_key_v2_sa_seq {
 TAILQ_HEAD (, pf_key_v2_sa_seq) pf_key_v2_sa_seq_map;
 #endif
 
-static u_int8_t *pf_key_v2_convert_id (u_int8_t *, int, int *, int *);
+static u_int8_t *pf_key_v2_convert_id (u_int8_t *, int, size_t *, int *);
 static struct pf_key_v2_msg *pf_key_v2_call (struct pf_key_v2_msg *);
 static struct pf_key_v2_node *pf_key_v2_find_ext (struct pf_key_v2_msg *,
 						  u_int16_t);
@@ -1965,7 +1965,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 }
 
 static u_int8_t *
-pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
+pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 {
   u_int8_t *res = 0;
   char addrbuf[ADDRESS_MAX + 5];
@@ -2072,7 +2072,8 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   struct sockaddr *dst, *src;
   int error;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
-  int sidtype = 0, didtype = 0, sidlen = 0, didlen = 0;
+  int sidtype = 0, didtype = 0;
+  size_t sidlen = 0, didlen = 0;
   u_int8_t *sid = 0, *did = 0;
 #ifndef SADB_X_EXT_FLOW_TYPE
   struct sockaddr_storage hostmask_storage;
