@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.26 2001/06/24 21:29:05 mickey Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.27 2001/06/25 04:05:51 fgsch Exp $ */
 /*	$NetBSD: usb_port.h,v 1.42 2001/03/28 19:00:39 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -252,13 +252,7 @@ typedef int usb_malloc_type;
 
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
-#define IF_INPUT(ifp, m) do {						\
-	struct ether_header *eh;					\
-									\
-	eh = mtod(m, struct ether_header *);				\
-	m_adj(m, sizeof(struct ether_header));				\
-	ether_input((ifp), (eh), (m));					\
-} while (0)
+#define IF_INPUT(ifp, m) ether_input_mbuf((ifp), (m))
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect

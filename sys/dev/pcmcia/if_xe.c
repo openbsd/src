@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.19 2001/06/23 21:54:57 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.20 2001/06/25 04:05:51 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -769,7 +769,6 @@ xe_get(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int16_t pktlen, len, recvcount = 0;
 	u_int8_t *data;
-	struct ether_header *eh;
 	
 	PAGE(sc, 0);
 	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RSR);
@@ -842,15 +841,12 @@ xe_get(sc)
 	
 	ifp->if_ipackets++;
 	
-	eh = mtod(top, struct ether_header *);
-	
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
 #endif
 	
-	m_adj(top, sizeof(struct ether_header));
-	ether_input(ifp, eh, top);
+	ether_input_mbuf(ifp, top);
 	return (recvcount);
 }
 

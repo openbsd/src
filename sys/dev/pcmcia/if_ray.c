@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.14 2001/06/23 21:54:56 fgsch Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.15 2001/06/25 04:05:51 fgsch Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -1675,8 +1675,8 @@ done:
 #endif
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+
+	ether_input_mbuf(ifp, m);
 }
 
 /* receive an auth packet
