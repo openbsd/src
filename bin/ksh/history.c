@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.11 1999/06/15 01:18:34 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.12 2000/10/12 10:51:13 art Exp $	*/
 
 /*
  * command history
@@ -862,7 +862,7 @@ hist_init(s)
 		/*
 		 * check on its validity
 		 */
-		if ((int)base == -1 || *base != HMAGIC1 || base[1] != HMAGIC2) {
+		if (base == MAP_FAILED || *base != HMAGIC1 || base[1] != HMAGIC2) {
 			if ((int)base !=  -1)
 				munmap((caddr_t)base, hsize);
 			hist_finish();
@@ -1109,7 +1109,7 @@ writehistfile(lno, cmd)
 			/* someone has added some lines */
 			bytes = sizenow - hsize;
 			base = (unsigned char *)mmap(0, sizenow, PROT_READ, MAP_FLAGS, histfd, 0);
-			if ((int)base == -1)
+			if (base == MAP_FAILED)
 				goto bad;
 			new = base + hsize;
 			if (*new != COMMAND) {
