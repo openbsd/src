@@ -1,5 +1,5 @@
-/*	$OpenBSD: audioio.h,v 1.9 1998/08/16 17:01:02 deraadt Exp $	*/
-/*	$NetBSD: audioio.h,v 1.21 1998/05/27 17:21:29 augustss Exp $	*/
+/*	$OpenBSD: audioio.h,v 1.10 1998/10/28 17:58:43 downsj Exp $	*/
+/*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -282,6 +282,7 @@ typedef struct mixer_ctrl {
 #define AudioNpseudo	"pseudo"
 #define AudioNmute	"mute"
 #define AudioNenhanced	"enhanced"
+#define AudioNpreamp	"preamp"
 #define AudioNon	"on"
 #define AudioNoff	"off"
 #define AudioNmode	"mode"
@@ -293,6 +294,7 @@ typedef struct mixer_ctrl {
 #define AudioNswap	"swap"	/* swap left and right channels */
 #define AudioNagc	"agc"
 #define AudioNdelay	"delay"
+#define AudioNselect	"select" /* select destination */
 
 #define AudioEmulaw		"mulaw"
 #define AudioEalaw		"alaw"
