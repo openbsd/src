@@ -6,7 +6,47 @@ The miniroot's install program will:
 
 	* Allow you to place disklabels on additional disks.
 	  Note that partition sizes and offsets are expressed
-	  in sectors.
+	  in sectors.  When you fill out the disklabel, you will
+	  need to specify partition types and filesystem parameters.
+	  If you're unsure what the these values should be, use the
+	  following:
+
+		fstype: 4.2BSD
+		fsize: 1024
+		bsize: 4096
+		cpg: 16
+
+	  If the partition will be a swap partition, use the following:
+
+		fstype: swap
+		fsize: 0 (or blank)
+		bsize: 0 (or blank)
+		cpg: 0 (or blank)
+
+	  You will also need to specify the number of partitions.
+	  The number of partitions is determined by the `index' of
+	  the last partition letter, where a == 1, b == 2, etc.
+	  Therefore, if the last filled partition is partition `g',
+	  there are 7 partitions.  Any partitions with size of 0
+	  may be removed from the list.
+
+	  If the disk is the boot disk, you _must_ offset the root
+	  partition (`a') one cylinder, as the hp300 boot code
+	  if large enough to spill past the label area.  In this case,
+	  the `c' partition must be fstype `boot'.
+
+	  Anything after a `#' is a comment.
+
+	  The following is an example disklabel partition map:
+
+7 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:    30912      448    4.2BSD     1024  8192    16   # (Cyl.    1 - 69)
+  b:   130816    31360      swap                        # (Cyl.   70 - 361)
+  c:  1296512        0      boot                        # (Cyl.    0 - 2893)
+  e:    81984   162176    4.2BSD     1024  8192    16   # (Cyl.  362 - 544)
+  f:   102592   244160    4.2BSD     1024  4096    16   # (Cyl.  545 - 773)
+  g:   949760   346752    4.2BSD     1024  8192    16   # (Cyl.  774 - 2893)
 
 	* Create filesystems on target partitions.
 

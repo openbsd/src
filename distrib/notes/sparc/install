@@ -18,6 +18,39 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
+Your Sparcstation expects to be able to download a second stage bootstrap
+program via TFTP after havinf acquired its IP address through RevARP when
+instructed to boot "over the net". It will look for a filename composed of
+the machine's IP address followed by the machine's architecture, separated
+by a period. For example, a sun4c machine which has been assigned IP
+address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
+Normally, this file is symbolic link to an appropriate second-stage
+boot program, which should be located in a place where the TFTP daemon
+can find it (remember, many TFTP daemons run in a chroot'ed environment).
+You can find the boot program in `/usr/mdec/boot' in the NetBSD/sparc
+distribution. Unfortunately, it is necessary to install this file
+differently for sun4 and sun4c clients: the sun4 version needs to have its
+`a.out' header stripped off (otherwise the machine will crash), while the
+sun4c version must retain it (otherwise the PROM will complain).
+
+Here's an example to illustrate this whole mess:
+
+    server# cd /<client-root-dir>/usr/mdec
+    if client is a sun4:
+	server# set SKIP=1
+	server# set KARCH=SUN4
+    else
+	server# set SKIP=0
+	server# set KARCH=SUN4C
+    server# dd if=boot of=/tftpboot/boot.sparc.netbsd.$KARCH skip=$SKIP bs=32
+    server# cd /tftpboot
+    server# ln -s boot.sparc.netbsd.$KARCH 8273900B.$KARCH
+
+Note: some versions of Openboot ROMs (sun4c) seem to require that the
+boot program size is nicely rounded. Therefore it may be necessary to
+strip(8) off the symbol table.
+
+
 As noted above in the section `Preparing your System for NetBSD Installation',
 you have several options when choosing a location to store the installation
 filesets. However, the easiest way is to put the *.tar.gz files you want
@@ -200,13 +233,13 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-device /sbus/esp/sd@0,0
 
 
-Congratulations, you have successfully installed NetBSD 1.0.  When you
+Congratulations, you have successfully installed NetBSD 1.1.  When you
 reboot into NetBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the NetBSD 1.0 distribution might need to be
+Some of the files in the NetBSD 1.1 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
@@ -224,7 +257,8 @@ least the following pieces:
     gzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
     the "install.sh" script
-    a "/boot" file from a SunOS sun4c machine
+    a "/boot" file from a SunOS machine that matches your machine type
+	(e.g. sun or sun4c)
     a kernel, most likely "/netbsd"
 
 All these pieces, except "/boot", are supplied in the NetBSD/sparc
@@ -274,13 +308,13 @@ The installboot man page says to do something like this:
     sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd2a
 
 You can now extract the provided "*.tar.gz files onto your disk.  The
-provided script, "install.sh" will help you:
+provided script, "install_from_sunos.sh" will help you:
 
     sunos# ls -FC
     base.tar.gz      etc.tar.gz       man.tar.gz       secr.tar.gz
     comp.tar.gz      games.tar.gz     misc.tar.gz      text.tar.gz
     install.sh       netbsd.id3_scsi
-    sunos# ./install.sh
+    sunos# ./install_from_sunos.sh
     [...]
 
 This script NEEDS gzip and gtar (GNU gzip and GNU tar) on your

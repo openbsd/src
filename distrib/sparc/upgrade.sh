@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.3 1995/11/01 21:10:41 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.3.2.1 1995/11/16 22:30:57 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -75,7 +75,7 @@ twiddle()
 		sleep 1; echo -n "-";
 		sleep 1; echo -n "\\";
 		sleep 1; echo -n "|";
-	 done > /dev/tty & echo $!
+	done > /dev/tty & echo $!
 }
 
 set_terminal() {
@@ -90,17 +90,17 @@ set_terminal() {
 #
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | grep "^sd.*at scsibus" | cut -d" " -f1
+	dmesg | egrep "(^sd[0-9]|^x[dy][0-9])" | cut -d" " -f1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	dmesg | grep "^sd" | grep "rev" | cut -d" " -f1
+	dmesg | grep "^cd[0-9]" | cut -d" " -f1 | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	dmesg | egrep "(^le[0-9]|^ie[0-9])" | cut -d" " -f1
+	dmesg | egrep "(^le[0-9]|^ie[0-9])" | cut -d" " -f1 | sort -u
 }
 
 md_installboot() {
@@ -370,25 +370,61 @@ __install_ftp_2
 
 install_common_nfs_cdrom() {
 	# $1 - directory containing file
+	local _filename
+	local _setsdone
+	local _prev
+	local _f
 
-	# Get the name of the file.
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "File name? "
-		getresp ""
-	done
-	_common_filename="/mnt2/$1/$resp"
-
-	# Ensure file exists
-	if [ ! -f $_common_filename ]; then
-		echo "File $_common_filename does not exist.  Check to make"
-		echo "sure you entered the information properly."
+	_sets=`(cd /mnt2/$1; ls *.tar.gz)`
+	if [ -z "$_sets" ]; then
+		echo "There are no NetBSD install sets available in \"$1\""
 		return
 	fi
 
-	# Extract file
-	cat $_common_filename | (cd /mnt; tar -zxvpf -)
-	echo "Extraction complete."
+	_setsdone=""
+	while : ; do
+		echo "The following sets are available for extraction:"
+		echo "(marked sets have already been extracted)"
+		echo ""
+
+		_prev=""
+		for _f in $_sets ; do
+			if isin $_f $_setsdone; then
+				echo -n "[X] "
+			else
+				echo -n "    "
+				if [ -z "$_prev" ]; then _prev=$_f; fi
+			fi
+			echo $_f
+		done
+		echo ""
+
+		# Get the name of the file.
+		if [ "X$_prev" = "X" ]; then resp=n; else resp=y; fi
+		echo -n "Continue extraction [$resp]?"
+		getresp "$resp"
+		if [ "$resp" = "n" ]; then
+			break
+		fi
+
+		echo -n "File name [$_prev]? "
+		getresp "$_prev"
+		_f=$resp
+		_filename="/mnt2/$1/$_f"
+
+		# Ensure file exists
+		if [ ! -f $_filename ]; then
+			echo "File $_filename does not exist.  Check to make"
+			echo "sure you entered the information properly."
+			continue
+		fi
+
+		# Extract file
+		cat $_filename | (cd /mnt; tar -zxvpf -)
+		echo "Extraction complete."
+		_setsdone="$_f $_setsdone"
+
+	done
 }
 
 install_cdrom() {
@@ -462,8 +498,8 @@ __install_cdrom_2
 				;;
 		esac
 	done
-
 	# Mount the CD-ROM
+	mkdir /mnt2 > /dev/null 2>&1
 	if ! mount -t ${_cdrom_filesystem} -o ro \
 	    /dev/${_cdrom_drive}${_cdrom_partition} /mnt2 ; then
 		echo "Cannot mount CD-ROM drive.  Aborting."
@@ -614,7 +650,7 @@ __install_tape_2
 			2)
 				(
 					cd /mnt
-					tar -zxvpf $TAPE
+					dd if=$TAPE | tar -xvpf -
 				)
 				;;
 
@@ -637,16 +673,16 @@ timezones can be selected by entering a token like "MET" or "GMT-6".
 Other zones are grouped by continent, with detailed zone information
 separated by a slash ("/"), e.g. "US/Pacific".
 
-To get a listing of what's available in /usr/share/timezone, enter "?"
-at the first prompt below.
+To get a listing of what's available in /usr/share/zoneinfo, enter "?"
+at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
 		TZ=`ls -l /etc/timezone 2>/dev/null | awk '{print $NF}' |
-			sed -e 's?/usr/share/timezone/??'`
+			sed -e 's?/usr/share/zoneinfo/??'`
 	fi
 	while :; do
-		echo -n	"What timezone are you in [$TZ]? "
+		echo -n	"What timezone are you in [\`?' for list] [$TZ]? "
 		getresp "$TZ"
 		case "$resp" in
 		"")
@@ -659,16 +695,23 @@ __get_timezone_1
 			;;
 		*)
 			_a=$resp
-			if [ -d /usr/share/zoneinfo/$_a ]; then
+			while [ -d /usr/share/zoneinfo/$_a ]; do
 				echo -n "There are several timezones available"
-				echo " within '$_a'"
-				echo -n "Select a sub-timezone: "
+				echo " within zone '$_a'"
+				echo -n "Select a sub-timezone [\`?' for list]: "
 				getresp ""
-				_a=${_a}/${resp}
-			fi
+				case "$resp" in
+				"?") ls /usr/share/zoneinfo/$_a ;;
+				*)	_a=${_a}/${resp}
+					if [ -f /usr/share/zoneinfo/$_a ]; then
+						break;
+					fi
+					;;
+				esac
+			done
 			if [ -f /usr/share/zoneinfo/$_a ]; then
 				TZ="$_a"
-				echo "You have selected timezone "$_a".
+				echo "You have selected timezone \"$_a\"".
 				break 2
 			fi
 			echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
@@ -873,7 +916,6 @@ __install_sets_1
 ALLSETS="base comp etc games man misc text"
 UPGRSETS="base comp games man misc text"
 RELDIR=
-RELDIR=/a/release
 
 if [ -f $RELDIR/base.tar.gz ]; then
 	echo -n	"Install from sets in the current root filesystem? [y] "
@@ -881,7 +923,10 @@ if [ -f $RELDIR/base.tar.gz ]; then
 	case "$resp" in
 		y*|Y*)
 			for _f in $UPGRSETS; do
-				echo -n "Install $_f ? [y]"
+				if [ ! -f $RELDIR/${_f}.tar.gz ]; then
+					continue;
+				fi
+				echo -n "Install set \"$_f\" ? [y]"
 				getresp "y"
 				case "$resp" in
 				y*|Y*)
@@ -890,6 +935,7 @@ if [ -f $RELDIR/base.tar.gz ]; then
 					_yup=X
 					;;
 				*)
+					continue;
 					;;
 				esac
 				echo "Extraction complete."
@@ -972,11 +1018,11 @@ esac
 
 	if [ -f /mnt/netbsd ]; then
 		echo "Saving existing kernel in netbsd.1.0."
-		cp /mnt/netbsd /mnt/netbsd.1.0
+		mv /mnt/netbsd /mnt/netbsd.1.0
 	fi
 
 	echo "Copying netbsd 1.1 kernel ..."
-	cp /netbsd /mnt/netbsd
+	cp -p /netbsd /mnt/netbsd
 
 	if [ "$_INSTBOOT" = "Y" ]; then
 		echo "Installing NetBSD bootblock..."

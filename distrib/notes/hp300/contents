@@ -68,12 +68,12 @@ the NetBSD 1.1 distribution tree, and are as follows:
 
 The hp300 security distribution set is named "secr11" and can be found
 in the "hp300/security" subdirectory of the NetBSD 1.1 distribution
-tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete NetBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, this
-distribution set may not be exported to locations outside of the
-United States and Canada.)  [ XXXK gzipped, XXXK uncompressed ]
+tree.  It contains executables which are built in the "src/domestic" portion
+if the NetBSD source tree.  It can only be found on those sites which carry
+the complete NetBSD distribution and that can legally obtain it.  (Remember,
+because of United States law, this distribution set may not be exported to
+locations outside of the United States and Canada.)
+[ 128K gzipped, 275K uncompressed ]
 
 The hp300 binary distribution sets are distributed as gzipped tar files.
 Each hp300 binary distribution set also has its own "CKSUMS" file, just
@@ -83,6 +83,10 @@ The following are included in the `.../install' directory:
 
 	SYS_INST.gz	A gzipped copy of the SYS_INST miniroot
 			installation program.
+
+	SYS_NBOOT.gz	A gzipped copy of the network boot block.
+			This is useful if you are installing
+			a diskless NetBSD/hp300 system.
 
 	inst-11.fs.gz	A gzipped copy of the miniroot filesystem.
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.2.2.1 1995/11/01 21:26:21 pk Exp $
+#	$NetBSD: install.sh,v 1.2.2.2 1995/11/16 22:30:55 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -75,7 +75,7 @@ twiddle()
 		sleep 1; echo -n "-";
 		sleep 1; echo -n "\\";
 		sleep 1; echo -n "|";
-	 done > /dev/tty & echo $!
+	done > /dev/tty & echo $!
 }
 
 set_terminal() {
@@ -90,17 +90,17 @@ set_terminal() {
 #
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | egrep "(^sd[0-9]:|^x[dy][0-9]:)" | cut -d" " -f1 | sort | uniq
+	dmesg | egrep "(^sd[0-9]|^x[dy][0-9])" | cut -d" " -f1 | sort -u
 }
 
 md_get_cddevs() {
 	# return available CDROM devices
-	dmesg | grep "^sd" | grep "rev" | cut -d" " -f1
+	dmesg | grep "^cd[0-9]" | cut -d" " -f1 | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network devices
-	dmesg | egrep "(^le[0-9]|^ie[0-9])" | cut -d" " -f1
+	dmesg | egrep "(^le[0-9]|^ie[0-9])" | cut -d" " -f1 | sort -u
 }
 
 md_installboot() {
@@ -221,71 +221,91 @@ addifconfig() {
 
 
 configurenetwork() {
+	local _ifsdone
+	local _ifs
+
+	_IFS=`md_get_ifdevs`
+	_ifsdone=""
+	resp=""		# force at least one iteration
+	while [ "X${resp}" != X"done" ]; do
 	cat << \__configurenetwork_1
 
-You may configure the following network interfaces:
+You may configure the following network interfaces (the interfaces
+marked with [X] have been succesfully configured):
 
 __configurenetwork_1
 
-	_IFS=`md_get_ifdevs`
-	echo	$_IFS
-	echo	""
-	echo -n	"Configure which interface? [done] "
-	getresp "done"
-	case "$resp" in
+		for _ifs in $_IFS; do
+			if isin $_ifs $_ifsdone ; then
+				echo -n "[X] "
+			else
+				echo -n "    "
+			fi
+			echo $_ifs
+		done
+		echo	""
+		echo -n	"Configure which interface? [done] "
+		getresp "done"
+		case "$resp" in
 		"done")
 			;;
-
 		*)
-			if isin $resp $_IFS ; then
-				_interface_name=$resp
-
-				# remove from list
-				_IFS=`rmel $resp "$_IFS"`
-
-				# Get IP address
-				resp=""		# force one iteration
-				while [ "X${resp}" = X"" ]; do
-					echo -n "IP address? "
-					getresp ""
-					_interface_ip=$resp
-				done
-
-				# Get symbolic name
-				resp=""		# force one iteration
-				while [ "X${resp}" = X"" ]; do
-					echo -n "Symbolic name? "
-					getresp ""
-					_interface_symname=$resp
-				done
-
-				# Get netmask
-				resp=""		# force one iteration
-				while [ "X${resp}" = X"" ]; do
-					echo -n "Netmask? "
-					getresp ""
-					_interface_mask=$resp
-				done
-
-				# Configure the interface.  If it
-				# succeeds, add it to the permanent
-				# network configuration info.
-				ifconfig ${_interface_name} down
-				if ifconfig ${_interface_name} inet \
-				    ${_interface_ip} \
-				    netmask ${_interface_mask} up ; then
-					addifconfig \
-					    ${_interface_name} \
-					    ${_interface_symname} \
-					    ${_interface_ip} \
-					    ${_interface_mask}
+			_ifs=$resp
+			if isin $_ifs $_IFS ; then
+				if configure_ifs $_ifs ; then
+					_ifsdone="$_ifs $_ifsdone"
 				fi
 			else
-				echo ""
-				echo "The interface $resp does not exist."
+				echo "Invalid response: \"$resp\" is not in list"
 			fi
 			;;
-	esac
+		esac
+	done
+}
+
+configure_ifs() {
+
+	_interface_name=$1
+
+	# Get IP address
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "IP address? "
+		getresp ""
+		_interface_ip=$resp
+	done
+
+	# Get symbolic name
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Symbolic (host) name? "
+		getresp ""
+		_interface_symname=$resp
+	done
+
+	# Get netmask
+	resp=""		# force one iteration
+	while [ "X${resp}" = X"" ]; do
+		echo -n "Netmask? "
+		getresp ""
+		_interface_mask=$resp
+	done
+
+	# Configure the interface.  If it
+	# succeeds, add it to the permanent
+	# network configuration info.
+	ifconfig ${_interface_name} down
+	if ifconfig ${_interface_name} inet \
+	    ${_interface_ip} \
+	    netmask ${_interface_mask} up ; then
+		addifconfig \
+		    ${_interface_name} \
+		    ${_interface_symname} \
+		    ${_interface_ip} \
+		    ${_interface_mask}
+		return 0
+	fi
+	return 1
 }
 
 install_ftp() {
@@ -370,25 +390,61 @@ __install_ftp_2
 
 install_common_nfs_cdrom() {
 	# $1 - directory containing file
+	local _filename
+	local _setsdone
+	local _prev
+	local _f
 
-	# Get the name of the file.
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "File name? "
-		getresp ""
-	done
-	_common_filename="/mnt2/$1/$resp"
-
-	# Ensure file exists
-	if [ ! -f $_common_filename ]; then
-		echo "File $_common_filename does not exist.  Check to make"
-		echo "sure you entered the information properly."
+	_sets=`(cd /mnt2/$1; ls *.tar.gz)`
+	if [ -z "$_sets" ]; then
+		echo "There are no NetBSD install sets available in \"$1\""
 		return
 	fi
 
-	# Extract file
-	cat $_common_filename | (cd /mnt; tar -zxvpf -)
-	echo "Extraction complete."
+	_setsdone=""
+	while : ; do
+		echo "The following sets are available for extraction:"
+		echo "(marked sets have already been extracted)"
+		echo ""
+
+		_prev=""
+		for _f in $_sets ; do
+			if isin $_f $_setsdone; then
+				echo -n "[X] "
+			else
+				echo -n "    "
+				if [ -z "$_prev" ]; then _prev=$_f; fi
+			fi
+			echo $_f
+		done
+		echo ""
+
+		# Get the name of the file.
+		if [ "X$_prev" = "X" ]; then resp=n; else resp=y; fi
+		echo -n "Continue extraction [$resp]?"
+		getresp "$resp"
+		if [ "$resp" = "n" ]; then
+			break
+		fi
+
+		echo -n "File name [$_prev]? "
+		getresp "$_prev"
+		_f=$resp
+		_filename="/mnt2/$1/$_f"
+
+		# Ensure file exists
+		if [ ! -f $_filename ]; then
+			echo "File $_filename does not exist.  Check to make"
+			echo "sure you entered the information properly."
+			continue
+		fi
+
+		# Extract file
+		cat $_filename | (cd /mnt; tar -zxvpf -)
+		echo "Extraction complete."
+		_setsdone="$_f $_setsdone"
+
+	done
 }
 
 install_cdrom() {
@@ -464,6 +520,7 @@ __install_cdrom_2
 	done
 
 	# Mount the CD-ROM
+	mkdir /mnt2 > /dev/null 2>&1
 	if ! mount -t ${_cdrom_filesystem} -o ro \
 	    /dev/${_cdrom_drive}${_cdrom_partition} /mnt2 ; then
 		echo "Cannot mount CD-ROM drive.  Aborting."
@@ -615,7 +672,7 @@ __install_tape_2
 			2)
 				(
 					cd /mnt
-					tar -zxvpf $TAPE
+					dd if=$TAPE | tar -xvpf -
 				)
 				;;
 
@@ -638,16 +695,16 @@ timezones can be selected by entering a token like "MET" or "GMT-6".
 Other zones are grouped by continent, with detailed zone information
 separated by a slash ("/"), e.g. "US/Pacific".
 
-To get a listing of what's available in /usr/share/timezone, enter "?"
-at the first prompt below.
+To get a listing of what's available in /usr/share/zoneinfo, enter "?"
+at the prompts below.
 
 __get_timezone_1
 	if [ X$TZ = X ]; then
 		TZ=`ls -l /etc/timezone 2>/dev/null | awk '{print $NF}' |
-			sed -e 's?/usr/share/timezone/??'`
+			sed -e 's?/usr/share/zoneinfo/??'`
 	fi
 	while :; do
-		echo -n	"What timezone are you in [$TZ]? "
+		echo -n	"What timezone are you in [\`?' for list] [$TZ]? "
 		getresp "$TZ"
 		case "$resp" in
 		"")
@@ -660,16 +717,23 @@ __get_timezone_1
 			;;
 		*)
 			_a=$resp
-			if [ -d /usr/share/zoneinfo/$_a ]; then
+			while [ -d /usr/share/zoneinfo/$_a ]; do
 				echo -n "There are several timezones available"
-				echo " within '$_a'"
-				echo -n "Select a sub-timezone: "
+				echo " within zone '$_a'"
+				echo -n "Select a sub-timezone [\`?' for list]: "
 				getresp ""
-				_a=${_a}/${resp}
-			fi
+				case "$resp" in
+				"?") ls /usr/share/zoneinfo/$_a ;;
+				*)	_a=${_a}/${resp}
+					if [ -f /usr/share/zoneinfo/$_a ]; then
+						break;
+					fi
+					;;
+				esac
+			done
 			if [ -f /usr/share/zoneinfo/$_a ]; then
 				TZ="$_a"
-				echo "You have selected timezone "$_a".
+				echo "You have selected timezone \"$_a\"".
 				break 2
 			fi
 			echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
@@ -773,6 +837,30 @@ echo -n	"Do you wish to edit the root disklabel? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
+cat << \__disklabel_notice_2
+Here is an example of what the partition information will look like once
+you have entered the disklabel editor. Disk partition sizes and offsets
+are in sector (most likely 512 bytes) units. Make sure these size/offset
+pairs are on cylinder boundaries (the number of sector per cylinder is
+given in the `sectors/cylinder' entry, which is not shown here).
+
+Do not change any parameters except the partition layout and the label name.
+It's probably also wisest not to touch the `8 partitions:' line, even
+in case you have defined less than eight partitions.
+
+[Example]
+8 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
+  b:    64512    50176      swap                        # (Cyl.  112 - 255)
+  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
+  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
+[End of example]
+
+__disklabel_notice_2
+		echo -n "Hit <enter> to enter the disklabel editor: "
+		getresp ""
+
 		disklabel -W ${ROOTDISK}
 		disklabel -e ${ROOTDISK}
 		;;
@@ -781,11 +869,11 @@ case "$resp" in
 		;;
 esac
 
-cat << \__disklabel_notice_2
+cat << \__disklabel_notice_3
 
 You will now be given the opportunity to place disklabels on any additional
 disks on your system.
-__disklabel_notice_2
+__disklabel_notice_3
 
 resp="X"	# force at least one iteration
 while [ "X$resp" != X"done" ]; do
@@ -797,9 +885,10 @@ done
 # XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
 cat << \__get_filesystems_1
 
-You will now have the opportunity to enter filesystem information.
-You will be prompted for device name and mount point (full path,
-including the prepending '/' character).
+You will now have the opportunity to specify mount points for some or
+all of the partitions you have on your disk(s).
+You will be prompted for device name (for example `/dev/sd0d') and
+mount point (full path, e.g. `/usr').
 
 Note that these do not have to be in any particular order.  You will
 be given the opportunity to edit the resulting 'fstab' file before
@@ -903,10 +992,7 @@ case "$resp" in
 		done
 		FQDN=$resp
 
-		resp=""		# force at least one iteration
-		while [ "X${resp}" != X"done" ]; do
-			configurenetwork
-		done
+		configurenetwork
 
 		echo -n "Enter IP address of default route: [none] "
 		getresp "none"
@@ -1064,7 +1150,10 @@ if [ -f $RELDIR/base.tar.gz ]; then
 	case "$resp" in
 		y*|Y*)
 			for _f in $ALLSETS; do
-				echo -n "Install $_f ? [y]"
+				if [ ! -f $RELDIR/${_f}.tar.gz ]; then
+					continue;
+				fi
+				echo -n "Install set \"$_f\" ? [y]"
 				getresp "y"
 				case "$resp" in
 				y*|Y*)
@@ -1073,6 +1162,7 @@ if [ -f $RELDIR/base.tar.gz ]; then
 					_yup=X
 					;;
 				*)
+					continue;
 					;;
 				esac
 				echo "Extraction complete."
@@ -1117,7 +1207,7 @@ while [ "X${resp}" = X"" ]; do
 	# Give the user the opportunity to extract more sets.  They don't
 	# necessarily have to come from the same media.
 	echo	""
-	echo -n	"Extract more sets? [n] "
+	echo -n	"Extract more sets (from other media)? [n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
@@ -1152,7 +1242,7 @@ done
 	echo "done."
 
 	echo "Copying kernel..."
-	cp /netbsd /mnt/netbsd
+	cp -p /netbsd /mnt/netbsd
 
 	md_installboot ${ROOTDISK}
 )
