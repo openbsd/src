@@ -332,8 +332,7 @@ fxp_attach(parent, self, aux)
 		return;
 	}
 #else
-	if (pci_io_find(pc, pa->pa_tag, PCI_MAPREG_TYPE_MEM,
-	    &iobase, &iosize)) {
+	if (pci_io_find(pc, pa->pa_tag, FXP_PCI_IOBA, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
 		return;
 	}
