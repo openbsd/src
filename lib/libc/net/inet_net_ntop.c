@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_ntop.c,v 1.2 2002/02/17 19:42:23 millert Exp $	*/
+/*	$OpenBSD: inet_net_ntop.c,v 1.3 2002/08/19 03:01:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -21,7 +21,7 @@
 #if 0
 static const char rcsid[] = "$From: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: inet_net_ntop.c,v 1.2 2002/02/17 19:42:23 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inet_net_ntop.c,v 1.3 2002/08/19 03:01:54 itojun Exp $";
 #endif
 #endif
 
@@ -88,13 +88,19 @@ inet_net_ntop_ipv4(src, bits, dst, size)
 	char *t;
 	u_int m;
 	int b;
+	char *ep;
+	int advance;
+
+	ep = dst + size;
+	if (ep <= dst)
+		goto emsgsize;
 
 	if (bits < 0 || bits > 32) {
 		errno = EINVAL;
 		return (NULL);
 	}
 	if (bits == 0) {
-		if (size < sizeof "0")
+		if (ep - dst < sizeof "0")
 			goto emsgsize;
 		*dst++ = '0';
 		*dst = '\0';
@@ -102,34 +108,43 @@ inet_net_ntop_ipv4(src, bits, dst, size)
 
 	/* Format whole octets. */
 	for (b = bits / 8; b > 0; b--) {
-		if (size < sizeof "255.")
+		if (ep - dst < sizeof "255.")
 			goto emsgsize;
-		t = dst;
-		dst += sprintf(dst, "%u", *src++);
+		advance = snprintf(dst, ep - dst, "%u", *src++);
+		if (advance <= 0 || advance >= ep - dst)
+			goto emsgsize;
+		dst += advance;
 		if (b > 1) {
+			if (dst + 1 >= ep)
+				goto emsgsize;
 			*dst++ = '.';
 			*dst = '\0';
 		}
-		size -= (size_t)(dst - t);
 	}
 
 	/* Format partial octet. */
 	b = bits % 8;
 	if (b > 0) {
-		if (size < sizeof ".255")
+		if (ep - dst < sizeof ".255")
 			goto emsgsize;
-		t = dst;
 		if (dst != odst)
+			if (dst + 1 >= ep)
+				goto emsgsize;
 			*dst++ = '.';
 		m = ((1 << b) - 1) << (8 - b);
-		dst += sprintf(dst, "%u", *src & m);
-		size -= (size_t)(dst - t);
+		advance = snprintf(dst, ep - dst, "%u", *src & m);
+		if (advance <= 0 || advance >= ep - dst)
+			goto emsgsize;
+		dst += advance;
 	}
 
 	/* Format CIDR /width. */
-	if (size < sizeof "/32")
+	if (ep - dst < sizeof "/32")
 		goto emsgsize;
-	dst += sprintf(dst, "/%u", bits);
+	advance = snprintf(dst, ep - dst, "/%u", bits);
+	if (advance <= 0 || advance >= ep - dst)
+		goto emsgsize;
+	dst += advance;
 	return (odst);
 
  emsgsize:

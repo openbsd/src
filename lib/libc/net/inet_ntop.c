@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_ntop.c,v 1.3 2002/05/24 21:22:37 deraadt Exp $	*/
+/*	$OpenBSD: inet_ntop.c,v 1.4 2002/08/19 03:01:54 itojun Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "$From: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.3 2002/05/24 21:22:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inet_ntop.c,v 1.4 2002/08/19 03:01:54 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -116,10 +116,12 @@ inet_ntop6(src, dst, size)
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
+	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+	char *tp, *ep;
 	struct { int base, len; } best, cur;
 	u_int words[IN6ADDRSZ / INT16SZ];
 	int i;
+	int advance;
 
 	/*
 	 * Preprocess:
@@ -156,30 +158,45 @@ inet_ntop6(src, dst, size)
 	 * Format the result.
 	 */
 	tp = tmp;
-	for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
+	ep = tmp + sizeof(tmp);
+	for (i = 0; i < (IN6ADDRSZ / INT16SZ) && tp < ep; i++) {
 		/* Are we inside the best run of 0x00's? */
 		if (best.base != -1 && i >= best.base &&
 		    i < (best.base + best.len)) {
-			if (i == best.base)
+			if (i == best.base) {
+				if (tp + 1 >= ep)
+					return (NULL);
 				*tp++ = ':';
+			}
 			continue;
 		}
 		/* Are we following an initial run of 0x00s or any real hex? */
-		if (i != 0)
+		if (i != 0) {
+			if (tp + 1 >= ep)
+				return (NULL);
 			*tp++ = ':';
+		}
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
-			if (!inet_ntop4(src+12, tp, sizeof tmp - (tp - tmp)))
+			if (!inet_ntop4(src+12, tp, (size_t)(ep - tp)))
 				return (NULL);
 			tp += strlen(tp);
 			break;
 		}
-		tp += sprintf(tp, "%x", words[i]);
+		advance = snprintf(tp, ep - tp, "%x", words[i]);
+		if (advance <= 0 || advance >= ep - tp)
+			return (NULL);
+		tp += advance;
 	}
 	/* Was it a trailing run of 0x00's? */
-	if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ))
+	if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ)) {
+		if (tp + 1 >= ep)
+			return (NULL);
 		*tp++ = ':';
+	}
+	if (tp + 1 >= ep)
+		return (NULL);
 	*tp++ = '\0';
 
 	/*
