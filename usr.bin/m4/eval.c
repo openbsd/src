@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.38 2001/09/27 22:38:28 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.39 2001/09/29 15:43:48 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.38 2001/09/27 22:38:28 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.39 2001/09/29 15:43:48 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,9 @@ static void	dotrace __P((const char *[], int, int));
 static void	doifelse __P((const char *[], int));
 static int	doincl __P((const char *));
 static int	dopaste __P((const char *));
+static void	gnu_dochq __P((const char *[], int));
 static void	dochq __P((const char *[], int));
+static void	gnu_dochc __P((const char *[], int));
 static void	dochc __P((const char *[], int));
 static void	dodiv __P((int));
 static void	doundiv __P((const char *[], int));
@@ -89,6 +91,22 @@ unsigned long	expansion_id;
 
 /*
  * eval - eval all macros and builtins calls
+ *	  argc - number of elements in argv.
+ *	  argv - element vector :
+ *			argv[0] = definition of a user
+ *				  macro or nil if built-in.
+ *			argv[1] = name of the macro or
+ *				  built-in.
+ *			argv[2] = parameters to user-defined
+ *			   .	  macro or built-in.
+ *			   .
+ *
+ * A call in the form of macro-or-builtin() will result in:
+ *			argv[0] = nullstr
+ *			argv[1] = macro-or-builtin
+ *			argv[2] = nullstr
+ *
+ * argc is 3 for macro-or-builtin() and 2 for macro-or-builtin
  */
 void
 eval(argv, argc, td)
@@ -114,23 +132,7 @@ eval(argv, argc, td)
 
 /*
  * expand_builtin - evaluate built-in macros.
- *	  argc - number of elements in argv.
- *	  argv - element vector :
- *			argv[0] = definition of a user
- *				  macro or nil if built-in.
- *			argv[1] = name of the macro or
- *				  built-in.
- *			argv[2] = parameters to user-defined
- *			   .	  macro or built-in.
- *			   .
- *
- * Note that the minimum value for argc is 3. A call in the form
- * of macro-or-builtin() will result in:
- *			argv[0] = nullstr
- *			argv[1] = macro-or-builtin
- *			argv[2] = nullstr
  */
-
 void
 expand_builtin(argv, argc, td)
 	const char *argv[];
@@ -138,6 +140,7 @@ expand_builtin(argv, argc, td)
 	int td;
 {
 	int c, n;
+	int ac;
 	static int sysval = 0;
 
 #ifdef DEBUG
@@ -151,6 +154,8 @@ expand_builtin(argv, argc, td)
   * have macro-or-builtin() type call. We adjust
   * argc to avoid further checking..
   */
+  	ac = argc;
+
 	if (argc == 3 && !*(argv[2]))
 		argc--;
 
@@ -278,11 +283,17 @@ expand_builtin(argv, argc, td)
 		break;
 #endif
 	case CHNQTYPE:
-		dochq(argv, argc);
+		if (mimic_gnu)
+			gnu_dochq(argv, ac);
+		else
+			dochq(argv, argc);
 		break;
 
 	case CHNCTYPE:
-		dochc(argv, argc);
+		if (mimic_gnu)
+			gnu_dochc(argv, ac);
+		else
+			dochc(argv, argc);
 		break;
 
 	case SUBSTYPE:
@@ -766,6 +777,25 @@ dopaste(pfile)
 }
 #endif
 
+static void
+gnu_dochq(argv, ac)
+	const char *argv[];
+	int ac;
+{
+	/* In gnu-m4 mode, the only way to restore quotes is to have no
+	 * arguments at all. */
+	if (ac == 2) {
+		lquote[0] = LQUOTE, lquote[1] = EOS;
+		rquote[0] = RQUOTE, rquote[1] = EOS;
+	} else {
+		strlcpy(lquote, argv[2], sizeof(lquote));
+		if(ac > 3)
+			strlcpy(rquote, argv[3], sizeof(rquote));
+		else
+			rquote[0] = EOS;
+	}
+}
+
 /*
  * dochq - change quote characters
  */
@@ -774,15 +804,6 @@ dochq(argv, argc)
 	const char *argv[];
 	int argc;
 {
-	/* In gnu-m4 mode, having two empty arguments means no quotes at
-	 * all.  */
-	if (mimic_gnu) {
-		if (argc > 3 && !*argv[2] && !*argv[3]) {
-			lquote[0] = EOS;
-			rquote[0] = EOS;
-			return;
-		}
-	}
 	if (argc > 2) {
 		if (*argv[2])
 			strlcpy(lquote, argv[2], sizeof(lquote));
@@ -801,6 +822,27 @@ dochq(argv, argc)
 	}
 }
 
+static void
+gnu_dochc(argv, ac)
+	const char *argv[];
+	int ac;
+{
+	/* In gnu-m4 mode, no arguments mean no comment
+	 * arguments at all. */
+	if (ac == 2) {
+		scommt[0] = EOS;
+		ecommt[0] = EOS;
+	} else {
+		if (*argv[2])
+			strlcpy(scommt, argv[2], sizeof(scommt));
+		else
+			scommt[0] = SCOMMT, scommt[1] = EOS;
+		if(ac > 3 && *argv[3])
+			strlcpy(ecommt, argv[3], sizeof(ecommt));
+		else
+			ecommt[0] = ECOMMT, ecommt[1] = EOS;
+	}
+}
 /*
  * dochc - change comment characters
  */
