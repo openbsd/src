@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.21 2004/01/31 15:13:03 otto Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.22 2004/02/02 09:43:27 otto Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.21 2004/01/31 15:13:03 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.22 2004/02/02 09:43:27 otto Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -166,9 +166,6 @@ getname(const u_char *ap)
 	u_int32_t addr;
 	struct hnamemem *p;
 
-#ifndef LBL_ALIGN
-	addr = *(const u_int32_t *)ap;
-#else
 	/*
 	 * Extract 32 bits in network order, dealing with alignment.
 	 */
@@ -202,7 +199,7 @@ getname(const u_char *ap)
 #endif
 		break;
 	}
-#endif
+
 	p = &hnametable[addr & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (p->addr == addr)

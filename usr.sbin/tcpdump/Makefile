@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2004/01/31 15:13:03 otto Exp $
+#	$OpenBSD: Makefile,v 1.45 2004/02/02 09:43:27 otto Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -26,10 +26,6 @@ MAN=	tcpdump.8
 CFLAGS+=-Wall -I${.CURDIR}/../../sbin/pfctl
 
 CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DRETSIGTYPE=void -DHAVE_NET_SLIP_H -DHAVE_ETHER_NTOHOST -DINET6
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc") || \
-    (${MACHINE_ARCH} == "sparc64")
-CFLAGS+=-DLBL_ALIGN
-.endif
 
 LDADD+=	-lpcap -ll -lcrypto
 DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}

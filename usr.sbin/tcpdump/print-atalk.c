@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.21 2004/01/28 19:44:55 canacar Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.22 2004/02/02 09:43:27 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.21 2004/01/28 19:44:55 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.22 2004/02/02 09:43:27 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -223,7 +223,6 @@ ddp_print(register const u_char *bp, register u_int length, register int t,
 	  register u_short snet, register u_char snode, u_char skt)
 {
 
-#ifdef LBL_ALIGN
 	if ((long)bp & 3) {
 		static u_char *abuf = NULL;
 
@@ -237,7 +236,6 @@ ddp_print(register const u_char *bp, register u_int length, register int t,
 		packetp = abuf;
 		bp = abuf;
 	}
-#endif
 
 	switch (t) {
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.h,v 1.7 2002/09/03 12:21:12 ho Exp $	*/
+/*	$OpenBSD: extract.h,v 1.8 2004/02/02 09:43:27 otto Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -25,21 +25,15 @@
 
 /* Network to host order macros */
 
-#ifdef LBL_ALIGN
 #define EXTRACT_16BITS(p) \
 	((u_int16_t)*((const u_int8_t *)(p) + 0) << 8 | \
 	(u_int16_t)*((const u_int8_t *)(p) + 1))
+
 #define EXTRACT_32BITS(p) \
 	((u_int32_t)*((const u_int8_t *)(p) + 0) << 24 | \
 	(u_int32_t)*((const u_int8_t *)(p) + 1) << 16 | \
 	(u_int32_t)*((const u_int8_t *)(p) + 2) << 8 | \
 	(u_int32_t)*((const u_int8_t *)(p) + 3))
-#else
-#define EXTRACT_16BITS(p) \
-	((u_int16_t)ntohs(*(const u_int16_t *)(p)))
-#define EXTRACT_32BITS(p) \
-	((u_int32_t)ntohl(*(const u_int32_t *)(p)))
-#endif
 
 #define EXTRACT_24BITS(p) \
 	((u_int32_t)*((const u_int8_t *)(p) + 0) << 16 | \
