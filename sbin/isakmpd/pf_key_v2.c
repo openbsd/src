@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.1 1999/03/24 14:37:13 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.1 1999/03/24 11:09:18 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.2 1999/03/31 01:53:00 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.2 1999/03/31 01:32:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -46,6 +47,7 @@
 #include <unistd.h>
 
 #include "conf.h"
+#include "exchange.h"
 #include "ipsec.h"
 #include "ipsec_num.h"
 #include "log.h"
@@ -78,7 +80,6 @@ TAILQ_HEAD (pf_key_v2_msg, pf_key_v2_node);
 
 static struct pf_key_v2_msg *pf_key_v2_call (struct pf_key_v2_msg *);
 static struct pf_key_v2_node *pf_key_v2_find_ext (struct pf_key_v2_msg *,
-						  struct pf_key_v2_node *,
 						  u_int16_t);
 static void pf_key_v2_notify (struct pf_key_v2_msg *);
 static struct pf_key_v2_msg *pf_key_v2_read (u_int32_t);
@@ -358,15 +359,13 @@ pf_key_v2_call (struct pf_key_v2_msg *msg)
   return pf_key_v2_read (seq);
 }
 
-/*
- * Find the next TYPE extension in MSG starting from EXT, unless EXT is zero
- * which means find the first.  Return zero if none found.
- */
+/* Find the TYPE extension in MSG.  Return zero if none found.  */
 static struct pf_key_v2_node *
-pf_key_v2_find_ext (struct pf_key_v2_msg *msg, struct pf_key_v2_node *ext,
-		    u_int16_t type)
+pf_key_v2_find_ext (struct pf_key_v2_msg *msg, u_int16_t type)
 {
-  for (ext = TAILQ_NEXT (ext ? ext : TAILQ_FIRST (msg), link); ext;
+  struct pf_key_v2_node *ext;
+
+  for (ext = TAILQ_NEXT (TAILQ_FIRST (msg), link); ext;
        ext = TAILQ_NEXT (ext, link))
     if (ext->type == type)
       return ext;
@@ -549,7 +548,7 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
       goto cleanup;
     }
 
-  sa = (struct sadb_sa *)pf_key_v2_find_ext (ret, 0, SADB_EXT_SA)->seg;
+  sa = (struct sadb_sa *)pf_key_v2_find_ext (ret, SADB_EXT_SA)->seg;
   if (!sa)
     {
       log_print ("pf_key_v2_get_spi: no SA extension found");
@@ -910,8 +909,244 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 }
  
 /*
+ * Enable/disable a flow.
+ * XXX Assumes OpenBSD {ADD,DEL}FLOW extensions.
+ * Should probably be moved to sysdep.c
+ */
+static int
+pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
+		in_addr_t rmask, u_int8_t *spi, u_int8_t proto,
+		in_addr_t dst, int delete)
+{
+#if defined (SADB_X_ADDFLOW) && defined (SADB_X_DELFLOW)
+  struct sadb_msg msg;
+  struct sadb_sa ssa;
+  struct sadb_address *addr = 0;
+  struct pf_key_v2_msg *flow = 0, *ret = 0;
+  size_t len;
+  int err;
+
+  msg.sadb_msg_type = delete ? SADB_X_DELFLOW : SADB_X_ADDFLOW;
+  switch (proto)
+    {
+    case IPSEC_PROTO_IPSEC_ESP:
+      msg.sadb_msg_satype = SADB_SATYPE_ESP;
+      break;
+    case IPSEC_PROTO_IPSEC_AH:
+      msg.sadb_msg_satype = SADB_SATYPE_AH;
+      break;
+    default:
+      log_print ("pf_key_v2_flow: invalid proto %d", proto);
+      goto cleanup;
+    }
+  msg.sadb_msg_seq = 0;
+  flow = pf_key_v2_msg_new (&msg, 0);
+  if (!flow)
+    goto cleanup;
+
+  /* Setup the SA extension.  */
+  ssa.sadb_sa_exttype = SADB_EXT_SA;
+  ssa.sadb_sa_len = sizeof ssa / PF_KEY_V2_CHUNK;
+  memcpy (&ssa.sadb_sa_spi, spi, sizeof ssa.sadb_sa_spi);
+  ssa.sadb_sa_replay = 0;
+  ssa.sadb_sa_state = 0;
+  ssa.sadb_sa_auth = 0;
+  ssa.sadb_sa_encrypt = 0;
+  /*
+   * XXX The LOCALFLOW flag should only be set if this machine is part of the
+   * source subnet.
+   */
+  ssa.sadb_sa_flags = SADB_SAFLAGS_X_LOCALFLOW;
+  if (!delete)
+    ssa.sadb_sa_flags |= SADB_SAFLAGS_X_REPLACEFLOW;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa, 0) == -1)
+    goto cleanup;
+
+  /*
+   * Setup the ADDRESS extensions.
+   *
+   * XXX Addresses has to be thought through.  Assumes IPv4.
+   */
+  len = sizeof *addr + PF_KEY_V2_ROUND (sizeof (struct sockaddr_in));
+  if (!delete)
+    {
+      addr = malloc (len);
+      if (!addr)
+	goto cleanup;
+      addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+      addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#if 0
+      addr->sadb_address_proto = 0;
+      addr->sadb_address_prefixlen = 0;
+#endif
+      addr->sadb_address_reserved = 0;
+      memset (addr + 1, '\0', sizeof (struct sockaddr_in));
+      ((struct sockaddr_in *)(addr + 1))->sin_len
+	= sizeof (struct sockaddr_in);
+      ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
+      ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = dst;
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
+			     PF_KEY_V2_NODE_MALLOCED) == -1)
+	goto cleanup;
+      addr = 0;
+    }
+
+  addr = malloc (len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#if 0
+  addr->sadb_address_proto = 0;
+  addr->sadb_address_prefixlen = 0;
+#endif
+  addr->sadb_address_reserved = 0;
+  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
+  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
+  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
+  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = laddr;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  addr = malloc (len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype = SADB_EXT_X_SRC_MASK;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#if 0
+  addr->sadb_address_proto = 0;
+  addr->sadb_address_prefixlen = 0;
+#endif
+  addr->sadb_address_reserved = 0;
+  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
+  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
+  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
+  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = lmask;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  addr = malloc (len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype = SADB_EXT_X_DST_FLOW;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#if 0
+  addr->sadb_address_proto = 0;
+  addr->sadb_address_prefixlen = 0;
+#endif
+  addr->sadb_address_reserved = 0;
+  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
+  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
+  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
+  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = raddr;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  addr = malloc (len);
+  if (!addr)
+    goto cleanup;
+  addr->sadb_address_exttype = SADB_EXT_X_DST_MASK;
+  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
+#if 0
+  addr->sadb_address_proto = 0;
+  addr->sadb_address_prefixlen = 0;
+#endif
+  addr->sadb_address_reserved = 0;
+  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
+  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
+  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
+  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = rmask;
+  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
+			 PF_KEY_V2_NODE_MALLOCED) == -1)
+    goto cleanup;
+  addr = 0;
+
+  log_debug (LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
+	     htonl(laddr), htonl(lmask), htonl(raddr), htonl(rmask));
+
+  ret = pf_key_v2_call (flow);
+  pf_key_v2_msg_free (flow);
+  flow = 0;
+  if (!ret)
+    goto cleanup;
+  err = ((struct sadb_msg *)TAILQ_FIRST (ret)->seg)->sadb_msg_errno;
+  if (err)
+    {
+      log_print ("pf_key_v2_flow: %sFLOW: %s", delete ? "DEL" : "ADD",
+		 strerror (err));
+      goto cleanup;
+    }
+  pf_key_v2_msg_free (ret);
+
+  log_debug (LOG_MISC, 50, "pf_key_v2_flow: done");
+
+  return 0;
+
+ cleanup:
+  if (addr)
+    free (addr);
+  if (flow)
+    pf_key_v2_msg_free (flow);
+  if (ret)
+    pf_key_v2_msg_free (ret);
+  return -1;
+
+#else
+  log_error ("pf_key_v2_flow: not supported in pure PF_KEYv2");
+  return -1;
+#endif
+}
+
+/* Enable a flow given a SA.  */
+int
+pf_key_v2_enable_sa (struct sa *sa)
+{
+  struct ipsec_sa *isa = sa->data;
+  struct sockaddr *dst;
+  int dstlen;
+  struct proto *proto = TAILQ_FIRST (&sa->protos);
+
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+
+  /* XXX Check why byte ordering is backwards.  */
+  return pf_key_v2_flow (htonl (isa->src_net), htonl (isa->src_mask),
+			 htonl (isa->dst_net), htonl (isa->dst_mask),
+			 proto->spi[0], proto->proto,
+			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0);
+}
+
+/* Disable a flow given a SA.  */
+static int
+pf_key_v2_disable_sa (struct sa *sa)
+{
+  struct ipsec_sa *isa = sa->data;
+  struct sockaddr *dst;
+  int dstlen;
+  struct proto *proto = TAILQ_FIRST (&sa->protos);
+
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+
+  /* XXX Check why byte ordering is backwards.  */
+  return pf_key_v2_flow (htonl (isa->src_net), htonl (isa->src_mask),
+			 htonl (isa->dst_net), htonl (isa->dst_mask),
+			 proto->spi[0], proto->proto,
+			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 1);
+}
+
+/*
  * Delete the IPSec SA represented by the INCOMING direction in protocol PROTO
- * of the IKE security association SA.
+ * of the IKE security association SA.  Also delete potential flows tied to it.
  */
 int
 pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
@@ -922,6 +1157,14 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   struct sockaddr *saddr;
   int saddrlen, len, err;
   struct pf_key_v2_msg *delete = 0, *ret = 0;
+
+  /*
+   * If the SA was incoming and it has not yet been replaced, remove the
+   * flow associated with it.
+   * We ignore any errors from the disabling of the flow, it does not matter.
+   */
+  if (!incoming && !(sa->flags & SA_FLAG_REPLACED))
+    pf_key_v2_disable_sa (sa);
 
   msg.sadb_msg_type = SADB_DELETE;
   switch (proto->proto)
@@ -1029,218 +1272,8 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   return -1;
 }
 
-/* Enable a flow given a SA.  */
-int
-pf_key_v2_enable_sa (struct sa *sa)
-{
-  struct ipsec_sa *isa = sa->data;
-  struct sockaddr *dst;
-  int dstlen;
-  struct proto *proto = TAILQ_FIRST (&sa->protos);
-
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-
-  /* XXX Check why byte ordering is backwards.  */
-  return pf_key_v2_enable_spi (htonl (isa->src_net), htonl (isa->src_mask),
-			       htonl (isa->dst_net), htonl (isa->dst_mask),
-			       proto->spi[0], proto->proto,
-			       ((struct sockaddr_in *)dst)->sin_addr.s_addr);
-}
-
 /*
- * Enable a flow.
- * XXX Assumes OpenBSD ADDFLOW extension.  Should probably be moved to sysdep.c
- */
-int
-pf_key_v2_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		      in_addr_t rmask, u_int8_t *spi, u_int8_t proto,
-		      in_addr_t dst)
-{
-#ifdef SADB_X_ADDFLOW
-  struct sadb_msg msg;
-  struct sadb_sa ssa;
-  struct sadb_address *addr = 0;
-  struct pf_key_v2_msg *addflow = 0, *ret = 0;
-  size_t len;
-  int err;
-
-  msg.sadb_msg_type = SADB_X_ADDFLOW;
-  switch (proto)
-    {
-    case IPSEC_PROTO_IPSEC_ESP:
-      msg.sadb_msg_satype = SADB_SATYPE_ESP;
-      break;
-    case IPSEC_PROTO_IPSEC_AH:
-      msg.sadb_msg_satype = SADB_SATYPE_AH;
-      break;
-    default:
-      log_print ("pf_key_v2_delete_spi: invalid proto %d", proto);
-      goto cleanup;
-    }
-  msg.sadb_msg_seq = 0;
-  addflow = pf_key_v2_msg_new (&msg, 0);
-  if (!addflow)
-    goto cleanup;
-
-  /* Setup the SA extension.  */
-  ssa.sadb_sa_exttype = SADB_EXT_SA;
-  ssa.sadb_sa_len = sizeof ssa / PF_KEY_V2_CHUNK;
-  memcpy (&ssa.sadb_sa_spi, spi, sizeof ssa.sadb_sa_spi);
-  ssa.sadb_sa_replay = 0;
-  ssa.sadb_sa_state = 0;
-  ssa.sadb_sa_auth = 0;
-  ssa.sadb_sa_encrypt = 0;
-  /*
-   * XXX The LOCALFLOW flag should only be set if this machine is part of the
-   * source subnet.
-   */
-  ssa.sadb_sa_flags = SADB_SAFLAGS_X_LOCALFLOW;
-  if (pf_key_v2_msg_add (addflow, (struct sadb_ext *)&ssa, 0) == -1)
-    goto cleanup;
-
-  /*
-   * Setup the ADDRESS extensions.
-   *
-   * XXX Addresses has to be thought through.  Assumes IPv4.
-   */
-  len = sizeof *addr + PF_KEY_V2_ROUND (sizeof (struct sockaddr_in));
-  addr = malloc (len);
-  if (!addr)
-    goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
-  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#if 0
-  addr->sadb_address_proto = 0;
-  addr->sadb_address_prefixlen = 0;
-#endif
-  addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = dst;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
-  if (pf_key_v2_msg_add (addflow, (struct sadb_ext *)addr,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  addr = 0;
-
-  addr = malloc (len);
-  if (!addr)
-    goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
-  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#if 0
-  addr->sadb_address_proto = 0;
-  addr->sadb_address_prefixlen = 0;
-#endif
-  addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = laddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
-  if (pf_key_v2_msg_add (addflow, (struct sadb_ext *)addr,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  addr = 0;
-
-  addr = malloc (len);
-  if (!addr)
-    goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_SRC_MASK;
-  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#if 0
-  addr->sadb_address_proto = 0;
-  addr->sadb_address_prefixlen = 0;
-#endif
-  addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = lmask;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
-  if (pf_key_v2_msg_add (addflow, (struct sadb_ext *)addr,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  addr = 0;
-
-  addr = malloc (len);
-  if (!addr)
-    goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_DST_FLOW;
-  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#if 0
-  addr->sadb_address_proto = 0;
-  addr->sadb_address_prefixlen = 0;
-#endif
-  addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = raddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
-  if (pf_key_v2_msg_add (addflow, (struct sadb_ext *)addr,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  addr = 0;
-
-  addr = malloc (len);
-  if (!addr)
-    goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_DST_MASK;
-  addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#if 0
-  addr->sadb_address_proto = 0;
-  addr->sadb_address_prefixlen = 0;
-#endif
-  addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = rmask;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
-  if (pf_key_v2_msg_add (addflow, (struct sadb_ext *)addr,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  addr = 0;
-
-  log_debug (LOG_SYSDEP, 50, "pf_key_v2_enable_spi: src %x %x dst %x %x",
-	     laddr, lmask, raddr, rmask);
-
-  ret = pf_key_v2_call (addflow);
-  pf_key_v2_msg_free (addflow);
-  addflow = 0;
-  if (!ret)
-    goto cleanup;
-  err = ((struct sadb_msg *)TAILQ_FIRST (ret)->seg)->sadb_msg_errno;
-  if (err)
-    {
-      log_print ("pf_key_v2_enable_spi: ADDFLOW: %s", strerror (err));
-      goto cleanup;
-    }
-  pf_key_v2_msg_free (ret);
-
-  log_debug (LOG_MISC, 50, "pf_key_v2_enable_spi: done");
-
-  return 0;
-
- cleanup:
-  if (addr)
-    free (addr);
-  if (addflow)
-    pf_key_v2_msg_free (addflow);
-  if (ret)
-    pf_key_v2_msg_free (ret);
-  return -1;
-
-#else
-  log_error ("pf_key_v2_enable_spi: not supported in pure PF_KEYv2");
-  return -1;
-#endif
-}
-
-/*
- * Establish an encap route.
+ * Establish an on-demand keying route.
  * XXX This is not really belonging in the PF_KEYv2 glue, it should be moved
  * to sysdep.c
  */
@@ -1253,12 +1286,98 @@ pf_key_v2_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 }
 
 static void
+pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
+{
+  struct sadb_msg *msg;
+  struct sadb_sa *ssa;
+  struct sadb_address *dst;
+  struct sockaddr *dstaddr;
+  struct sadb_lifetime *life;
+  struct sa *sa;
+  struct pf_key_v2_node *lifenode;
+
+  msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
+  ssa = pf_key_v2_find_ext (pmsg, SADB_EXT_SA)->seg;
+  dst = pf_key_v2_find_ext (pmsg, SADB_EXT_ADDRESS_DST)->seg;
+  dstaddr = (struct sockaddr *)(dst + 1);
+  lifenode = pf_key_v2_find_ext (pmsg, SADB_EXT_LIFETIME_HARD);
+  if (!lifenode)
+    lifenode = pf_key_v2_find_ext (pmsg, SADB_EXT_LIFETIME_SOFT);
+  life = lifenode->seg;
+
+  /* XXX IPv4 specific */
+  log_debug (LOG_SYSDEP, 20,
+	     "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
+	     life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
+	     : "HARD",
+	     inet_ntoa (((struct sockaddr_in *)dstaddr)->sin_addr),
+	     ntohl (ssa->sadb_sa_spi), msg->sadb_msg_satype);
+
+  /*
+   * Find the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
+   * one outgoing and one incoming, we regard expirations for any of
+   * them as an expiration of the full IKE SA.  Likewise, in
+   * protection suites consisting of more than one protocol, any
+   * expired individual IPsec stack SA will be seen as an expiration
+   * of the full suite.
+   *
+   * XXX When anything else than AH and ESP is supported this needs to change.
+   * XXX IPv4 specific.
+   */
+  sa = ipsec_sa_lookup (((struct sockaddr_in *)dstaddr)->sin_addr.s_addr,
+			ssa->sadb_sa_spi,
+			msg->sadb_msg_satype == SADB_SATYPE_ESP
+			? IPSEC_PROTO_IPSEC_ESP : IPSEC_PROTO_IPSEC_AH);
+
+  /* If the SA is already gone, don't do anything.  */
+  if (!sa)
+    return;
+
+  /*
+   * If we want this connection to stay "forever", we should renegotiate
+   * already at the soft expire, and certainly at the hard expire if we
+   * haven't started a negotiation by then.  However, do not renegotiate
+   * if this SA is already obsoleted by another.
+   */
+  if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
+      == SA_FLAG_STAYALIVE)
+    {
+      /* If we are already renegotiating, don't start over.  */
+      if (!exchange_lookup_by_name (sa->name, 2))
+	exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced, sa);
+    }
+
+  if (life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_HARD)
+    {
+      /*
+       * XXX We need to reestablish the on-demand route here.  This we need
+       * even if we have started a new negotiation, considering it might
+       * fail.
+       */
+
+      /* Remove the old SA, it isn't useful anymore.  */
+      sa_free (sa);
+    }
+}
+
+static void
 pf_key_v2_notify (struct pf_key_v2_msg *msg)
 {
-  log_debug (LOG_SYSDEP, 80, "pf_key_v2_notify: entered");
+  switch (((struct sadb_msg *)TAILQ_FIRST (msg)->seg)->sadb_msg_type)
+    {
+    case SADB_EXPIRE:
+      pf_key_v2_expire (msg);
+      break;
 
-  /* XXX To be implemented.  */
+    case SADB_ACQUIRE:
+      log_print ("pf_key_v2_notify: ACQUIRE not yet implemented");
+      /* XXX To be implemented.  */
+      break;
 
+    default:
+      log_print ("pf_key_v2_notify: unexpected message type (%d)",
+		 ((struct sadb_msg *)TAILQ_FIRST (msg)->seg)->sadb_msg_type);
+    }
   pf_key_v2_msg_free (msg);
 }
 
@@ -1266,6 +1385,21 @@ void
 pf_key_v2_handler (int fd)
 {
   struct pf_key_v2_msg *msg;
+  int n;
+
+  /*
+   * As synchronous read/writes to the socket can have taken place between
+   * the select(2) call of the main loop and this handler, we need to recheck
+   * the readability.
+   */
+  if (ioctl (pf_key_v2_socket, FIONREAD, &n) == -1)
+    {
+      log_error ("pf_key_v2_handler: ioctl (%d, FIONREAD, &n) failed",
+		 pf_key_v2_socket);
+      return;
+    }
+  if (!n)
+    return;
 
   msg = pf_key_v2_read (0);
   if (msg)
