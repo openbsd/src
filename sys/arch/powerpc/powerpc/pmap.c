@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2001/12/13 19:14:41 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 2002/01/06 04:04:48 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -55,6 +55,17 @@ struct pte_ovfl {
 };
 
 LIST_HEAD(pte_ovtab, pte_ovfl) *potable; /* Overflow entries for ptable */
+
+/* free lists for potable entries, it is not valid to pool_put
+ * in the pte spill handler.
+ * pofreebusy variable is a flag to indicate that the 
+ * higher level is maniuplating list0 and that spill cannot touch
+ * it, the higher level can only be touching one at a time.
+ * if list0 is busy list1 cannot be busy.
+ */
+LIST_HEAD(,pte_ovfl) pofreetable0 = LIST_HEAD_INITIALIZER(pofreetable0);
+LIST_HEAD(,pte_ovfl) pofreetable1 = LIST_HEAD_INITIALIZER(pofreetable1);
+volatile int pofreebusy;
 
 struct pmap kernel_pmap_;
 
@@ -1038,6 +1049,22 @@ poalloc()
 	if (!pmap_initialized)
 		panic("poalloc");
 #endif
+	pofreebusy = 1;
+	if (!LIST_EMPTY(&pofreetable0)) {
+		po = LIST_FIRST(&pofreetable0);
+		LIST_REMOVE(po,po_list);
+		pofreebusy = 0;
+		return po;
+	}
+	pofreebusy = 0;
+
+	if (!LIST_EMPTY(&pofreetable1)) {
+		po = LIST_FIRST(&pofreetable1);
+		LIST_REMOVE(po,po_list);
+		pofreebusy = 0;
+		return po;
+	}
+
 	s = splimp();
 	po = pool_get(&pmap_po_pool, PR_NOWAIT);
 	splx(s);
@@ -1052,9 +1079,34 @@ pofree(po, freepage)
 	int freepage;
 {
 	int s;
-	s = splimp();
-	pool_put(&pmap_po_pool, po);
-	splx(s);
+	if (freepage) {
+		s = splimp();
+		pool_put(&pmap_po_pool, po);
+		splx(s);
+		while (!LIST_EMPTY(&pofreetable1)) {
+			po = LIST_FIRST(&pofreetable1);
+			LIST_REMOVE(po, po_list);
+			s = splimp();
+			pool_put(&pmap_po_pool, po);
+			splx(s);
+		}
+
+		pofreebusy = 1;
+		while (!LIST_EMPTY(&pofreetable0)) {
+			po = LIST_FIRST(&pofreetable0);
+			LIST_REMOVE(po, po_list);
+			s = splimp();
+			pool_put(&pmap_po_pool, po);
+			splx(s);
+		}
+		pofreebusy = 0;
+
+	} else {
+		if (pofreebusy == 0)
+			LIST_INSERT_HEAD(&pofreetable0, po, po_list);
+		else
+			LIST_INSERT_HEAD(&pofreetable1, po, po_list);
+	}
 }
 
 /*
