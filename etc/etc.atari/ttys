@@ -1,7 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.2 1995/11/28 05:40:26 jtc Exp $
-#
-#	from: @(#)ttys	5.1 (Berkeley) 4/17/89
+#	$OpenBSD: ttys,v 1.5 1997/10/11 21:22:08 deraadt Exp $
 #
 # name	getty				type	status		comments
 #

@@ -1,6 +1,5 @@
 #
-#	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.3 1996/07/28 09:01:03 deraadt Exp $
+#	$OpenBSD: ttys,v 1.4 1997/10/11 21:22:16 deraadt Exp $
 #
 # name	getty				type	status		comments
 #
