@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.22 2001/06/24 17:03:16 csapuntz Exp $	*/
+/*	$OpenBSD: mount.c,v 1.23 2001/12/16 22:45:37 miod Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.22 2001/06/24 17:03:16 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.23 2001/12/16 22:45:37 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -404,7 +404,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		} while (*++edir != NULL);
 
 		if (errno == ENOENT)
-			warn("exec %s for %s", execname, name);
+			warn("no mount helper program found for %s", vfstype);
 		exit(1);
 		/* NOTREACHED */
 	default:				/* Parent. */
