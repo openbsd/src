@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.h,v 1.6 2000/03/08 08:42:48 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.12 2000/03/07 23:37:54 ho Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.7 2000/04/07 22:06:20 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.14 2000/03/31 15:29:03 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #ifndef _LIBCRYPTO_H_
 #define _LIBCRYPTO_H_
+
+#ifdef USE_X509
 
 #include <stdio.h>
 
@@ -95,7 +97,11 @@ extern int (*lc_RSA_private_encrypt) (int, unsigned char *, unsigned char *,
 extern int (*lc_RSA_public_decrypt) (int, unsigned char *, unsigned char *,
 				     RSA *, int);
 extern int (*lc_RSA_size) (RSA *);
+#if OPENSSL_VERSION_NUMBER >= 0x00905100L
+extern void (*lc_OpenSSL_add_all_algorithms) (void);
+#else
 extern void (*lc_SSLeay_add_all_algorithms) (void);
+#endif
 extern int (*lc_X509_NAME_cmp) (X509_NAME *, X509_NAME *);
 extern void (*lc_X509_OBJECT_free_contents) (X509_OBJECT *);
 extern void (*lc_X509_STORE_CTX_cleanup) (X509_STORE_CTX *);
@@ -173,6 +179,8 @@ extern STACK *(*lc_sk_new) (int (*) ());
 
 #if SSLEAY_VERSION_NUMBER < 0x00904100L
 #define lc_sk_new_null() lc_sk_new (NULL)
+#endif
+
 #endif
 
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.c,v 1.5 2000/02/07 01:32:54 niklas Exp $	*/
-/*	$EOM: libcrypto.c,v 1.11 2000/02/07 01:30:36 angelos Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.6 2000/04/07 22:06:20 niklas Exp $	*/
+/*	$EOM: libcrypto.c,v 1.13 2000/03/31 15:29:03 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -42,6 +42,8 @@
 
 void *libcrypto = 0;
 
+#ifdef USE_X509
+
 #ifdef HAVE_DLOPEN
 
 /*
@@ -68,7 +70,11 @@ int (*lc_RSA_private_encrypt) (int, unsigned char *, unsigned char *, RSA *,
 int (*lc_RSA_public_decrypt) (int, unsigned char *, unsigned char *, RSA *,
 			      int);
 int (*lc_RSA_size) (RSA *);
+#if OPENSSL_VERSION_NUMBER >= 0x00905100L
+void (*lc_OpenSSL_add_all_algorithms) (void);
+#else
 void (*lc_SSLeay_add_all_algorithms) (void);
+#endif
 int (*lc_X509_NAME_cmp) (X509_NAME *, X509_NAME *);
 void (*lc_X509_STORE_CTX_cleanup) (X509_STORE_CTX *);
 void (*lc_X509_OBJECT_free_contents) (X509_OBJECT *);
@@ -138,7 +144,11 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (RSA_private_encrypt),
   SYMENTRY (RSA_public_decrypt),
   SYMENTRY (RSA_size),
+#if OPENSSL_VERSION_NUMBER >= 0x00905100L
+  SYMENTRY (OpenSSL_add_all_algorithms),
+#else
   SYMENTRY (SSLeay_add_all_algorithms),
+#endif
   SYMENTRY (X509_NAME_cmp),
   SYMENTRY (X509_STORE_CTX_cleanup),
   SYMENTRY (X509_STORE_CTX_init),
@@ -176,9 +186,12 @@ static struct dynload_script libcrypto_script[] = {
 };
 #endif
 
+#endif /* USE_X509 */
+
 void
 libcrypto_init (void)
 {
+#ifdef USE_X509
 #ifdef HAVE_DLOPEN
   dyn_load (libcrypto_script);
 #elif !defined (USE_LIBCRYPTO)
@@ -193,6 +206,12 @@ libcrypto_init (void)
 
 #if defined (USE_LIBCRYPTO)
   /* Add all algorithms known by SSL */
+#if OPENSSL_VERSION_NUMBER >= 0x00905100L
+  LC (OpenSSL_add_all_algorithms, ());
+#else
   LC (SSLeay_add_all_algorithms, ());
 #endif
+#endif
+#endif /* USE_X509 */
 }
+
