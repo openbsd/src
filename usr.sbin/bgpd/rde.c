@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.66 2004/01/22 21:01:26 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.67 2004/01/22 21:09:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -578,8 +578,7 @@ rde_update_log(const char *message,
 		asprintf(&nexthop, " via %s", inet_ntoa(nh));
 	}
 
-	logit(LOG_DEBUG, "neighbor %s (AS%u) %s %s/%u"
-	    "%s",
+	log_debug("neighbor %s (AS%u) %s %s/%u %s",
 	    neighbor, peer->conf.remote_as, message,
 	    inet_ntoa(prefix->v4), prefixlen,
 	    nexthop ? nexthop : "");

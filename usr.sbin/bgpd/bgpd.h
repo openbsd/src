@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.77 2004/01/22 20:59:16 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.78 2004/01/22 21:08:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,7 +27,6 @@
 
 #include <poll.h>
 #include <stdarg.h>
-#include <syslog.h>
 
 #define	BGP_VERSION			4
 #define	BGP_PORT			179
@@ -282,13 +281,13 @@ int		 msgbuf_unbounded(struct msgbuf *msgbuf);
 
 /* log.c */
 void		 log_init(int);
-void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
 void		 log_peer_warn(const struct peer_config *, const char *, ...);
 void		 log_peer_warnx(const struct peer_config *, const char *, ...);
 void		 log_warn(const char *, ...);
 void		 log_warnx(const char *, ...);
 void		 log_info(const char *, ...);
+void		 log_debug(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
 void		 fatal_ensure(const char *, int, const char *);

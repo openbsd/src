@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.20 2004/01/22 20:59:17 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.21 2004/01/22 21:09:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "bgpd.h"
@@ -101,6 +102,7 @@ static const char *procnames[] = {
 };
 
 char	*log_fmt_peer(const struct peer_config *);
+void	 logit(int, const char *, ...);
 
 char *
 log_fmt_peer(const struct peer_config *peer)
@@ -237,6 +239,16 @@ log_info(const char *emsg, ...)
 
 	va_start(ap, emsg);
 	vlog(LOG_INFO, emsg, ap);
+	va_end(ap);
+}
+
+void
+log_debug(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vlog(LOG_DEBUG, emsg, ap);
 	va_end(ap);
 }
 

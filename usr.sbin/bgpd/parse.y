@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2004/01/17 19:35:36 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2004/01/22 21:09:00 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 
 #include "bgpd.h"
 #include "mrt.h"
