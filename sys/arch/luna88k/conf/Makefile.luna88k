@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.1.1.1 2004/04/21 15:23:47 aoyama Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.2 2004/04/29 14:33:24 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -32,6 +32,7 @@ STRIP?= strip
 S!=	cd ../../../..; pwd
 .endif
 LUNA88K=	$S/arch/luna88k
+M88K=		$S/arch/m88k
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dluna88k -Dm88k
@@ -51,10 +52,6 @@ STRIPFLAGS=	-d
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS?=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS?=	${CFLAGS}
-
-### CPU configuration
-
-CPPFLAGS+=	-DM88100
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -119,9 +116,9 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${LUNA88K}/luna88k/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${M88K}/m88k/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${LUNA88K}/luna88k/genassym.cf > assym.h.tmp && \
+	    ${PARAM} < ${M88K}/m88k/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c

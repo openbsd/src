@@ -1,1 +1,12 @@
-#	$OpenBSD: files.m88k,v 1.1 2004/04/26 12:34:05 miod Exp $
+#	$OpenBSD: files.m88k,v 1.2 2004/04/29 14:33:27 miod Exp $
+
+file	arch/m88k/m88k/cmmu.c
+file	arch/m88k/m88k/m88100_fp.S			m88100
+file	arch/m88k/m88k/m88110_fp.S			m88110
+file	arch/m88k/m88k/m88110_mmu.S			m88110
+file	arch/m88k/m88k/process.S
+file	arch/m88k/m88k/process_machdep.c
+file	arch/m88k/m88k/subr.S
+file	arch/m88k/m88k/trap.c
+file	arch/m88k/m88k/vectors_88100.S			m88100
+file	arch/m88k/m88k/vectors_88110.S			m88110

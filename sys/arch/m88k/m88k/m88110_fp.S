@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.11 2003/08/12 19:33:27 miod Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.1 2004/04/29 14:33:27 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.

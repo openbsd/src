@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1.1.1 2004/04/21 15:24:00 aoyama Exp $
+#	$OpenBSD: genassym.cf,v 1.1 2004/04/29 14:33:27 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.1.1.1 2004/04/21 15:24:00 aoyama Exp $
+#	$Id: genassym.cf,v 1.1 2004/04/29 14:33:27 miod Exp $
 #
 
 include <sys/param.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.32 2004/04/05 19:17:25 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.33 2004/04/29 14:33:27 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -32,6 +32,7 @@ STRIP?= strip
 S!=	cd ../../../..; pwd
 .endif
 MVME88K=	$S/arch/mvme88k
+M88K=		$S/arch/m88k
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme88k -Dm88k
@@ -54,14 +55,7 @@ HOSTED_CFLAGS?=	${CFLAGS}
 
 ### CPU configuration
 
-.if (${IDENT:M-DMVME187} != "" || ${IDENT:M-DMVME188} != "")
-CPPFLAGS+=	-DM88100
-.endif
-.if (${IDENT:M-DMVME197} != "")
-CPPFLAGS+=	-DM88110
-.endif
-
-# syntaxic sugar for 187, which do not exist with multiple processors
+# syntaxic sugar for 187, which does not exist with multiple processors
 .if (${IDENT:M-DMVME187} != "" && ${IDENT:M-DNCPUS} == "")
 CPPFLAGS+=	-DNCPUS=1
 .endif
@@ -129,9 +123,9 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${MVME88K}/mvme88k/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${M88K}/m88k/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${MVME88K}/mvme88k/genassym.cf > assym.h.tmp && \
+	    ${PARAM} < ${M88K}/m88k/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.26 2004/04/24 19:51:44 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.27 2004/04/29 14:33:27 miod Exp $
 #
 maxpartitions 16
 
@@ -77,26 +77,16 @@ file	netns/ns_cksum.c				ns
 
 file	arch/mvme88k/mvme88k/autoconf.c
 file	arch/mvme88k/mvme88k/conf.c
-file	arch/mvme88k/mvme88k/cmmu.c
-file	arch/mvme88k/mvme88k/m8820x.c			mvme187 | mvme188
-file	arch/mvme88k/mvme88k/m88110.c			mvme197
+file	arch/mvme88k/mvme88k/m8820x.c			m88100
+file	arch/mvme88k/mvme88k/m88110.c			m88110
 file	arch/mvme88k/mvme88k/disksubr.c
 file	arch/mvme88k/mvme88k/dkbad.c
 file	arch/mvme88k/mvme88k/eh.S
-file	arch/mvme88k/mvme88k/locore_asm_routines.S
 file	arch/mvme88k/mvme88k/locore_c_routines.c
-file	arch/mvme88k/mvme88k/m88100_fp.S		mvme187 | mvme188
-file	arch/mvme88k/mvme88k/m88110_fp.S		mvme197
-file	arch/mvme88k/mvme88k/m88110_mmu.S		mvme197
 file	arch/mvme88k/mvme88k/machdep.c
 file	arch/mvme88k/mvme88k/mem.c
 file	arch/mvme88k/mvme88k/pmap.c
 file	arch/mvme88k/mvme88k/pmap_table.c
-file	arch/mvme88k/mvme88k/process.S
-file	arch/mvme88k/mvme88k/process_machdep.c
-file	arch/mvme88k/mvme88k/trap.c
-file	arch/mvme88k/mvme88k/vectors_88100.S		mvme187 | mvme188
-file	arch/mvme88k/mvme88k/vectors_88110.S		mvme197
 file	arch/mvme88k/mvme88k/vm_machdep.c
 file	arch/mvme88k/ddb/db_disasm.c			ddb
 file	arch/mvme88k/ddb/db_interface.c			ddb
