@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.9 2000/03/23 09:59:56 art Exp $	*/
+/*	$OpenBSD: param.c,v 1.10 2000/03/27 13:56:10 mickey Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -92,7 +92,9 @@ struct	timezone tz = { TIMEZONE, DST };
 #define	NPROC (20 + 16 * MAXUSERS)
 int	maxproc = NPROC;
 #define	NTEXT (80 + NPROC / 8)	/* actually the object cache */
+#ifndef UVM
 int	vm_cache_max = NTEXT;	/* XXX these probably needs some measurements */
+#endif
 #define	NVNODE (NPROC * 2 + NTEXT + 100)
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
