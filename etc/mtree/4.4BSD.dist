@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.31 1997/03/05 04:34:26 flipk Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.32 1997/03/05 09:13:12 niklas Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -506,11 +506,6 @@ smm
 # ./usr/share/doc/smm/01.setup
 01.setup
 
-# ./usr/share/doc/smm/01.setup/tahoe
-tahoe
-# ./usr/share/doc/smm/01.setup/tahoe
-..
-
 # ./usr/share/doc/smm/01.setup/vax
 vax
 # ./usr/share/doc/smm/01.setup/vax
@@ -982,11 +977,6 @@ sun3
 # ./usr/share/man/cat4/sun3
 ..
 
-# ./usr/share/man/cat4/tahoe
-tahoe
-# ./usr/share/man/cat4/tahoe
-..
-
 # ./usr/share/man/cat4/vax
 vax
 # ./usr/share/man/cat4/vax
@@ -1093,11 +1083,6 @@ sun3
 # ./usr/share/man/cat8/sun3
 ..
 
-# ./usr/share/man/cat8/tahoe
-tahoe
-# ./usr/share/man/cat8/tahoe
-..
-
 # ./usr/share/man/cat8/vax
 vax
 # ./usr/share/man/cat8/vax
@@ -1192,11 +1177,6 @@ sparc
 # ./usr/share/man/man4/sun3
 sun3
 # ./usr/share/man/man4/sun3
-..
-
-# ./usr/share/man/man4/tahoe
-tahoe
-# ./usr/share/man/man4/tahoe
 ..
 
 # ./usr/share/man/man4/vax
