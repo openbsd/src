@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.10 2003/04/30 21:06:10 vincent Exp $	*/
+/*	$OpenBSD: str.c,v 1.11 2003/05/12 20:54:49 jsyn Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.10 2003/04/30 21:06:10 vincent Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.11 2003/05/12 20:54:49 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,57 +220,6 @@ s_strlcat(dst, src, siz)
 
         return(dlen + (s - src));       /* count does not include NUL */
 }
-
-Char   *
-s_strncpy(dst, src, n)
-    register Char *dst, *src;
-    register size_t n;
-{
-    register Char *sdst;
-
-    if (n == 0)
-	return(dst);
-
-    sdst = dst;
-    do
-	if ((*dst++ = *src++) == '\0') {
-	    while (--n != 0)
-		*dst++ = '\0';
-	    return(sdst);
-	}
-    while (--n != 0)
-	;
-    return (sdst);
-}
-
-#ifdef NOTUSED
-Char   *
-s_strncat(dst, src, n)
-    register Char *dst, *src;
-    register size_t n;
-{
-    register Char *sdst;
-
-    if (n == 0)
-	return (dst);
-
-    sdst = dst;
-
-    while (*dst++)
-	continue;
-    --dst;
-
-    do
-	if ((*dst++ = *src++) == '\0')
-	    return(sdst);
-    while (--n != 0)
-	continue;
-
-    *dst = '\0';
-    return (sdst);
-}
-
-#endif
 
 Char   *
 s_strchr(str, ch)
