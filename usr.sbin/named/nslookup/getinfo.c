@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.3 1997/04/06 19:00:22 millert Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.4 1998/09/03 02:01:39 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)getinfo.c	5.26 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: getinfo.c,v 8.6 1996/12/02 09:17:24 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.3 1997/04/06 19:00:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.4 1998/09/03 02:01:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,6 +182,11 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 	    if (_res.options & RES_DEBUG2)
 		    printf("SendRequest failed\n");
 	    return (status);
+    }
+    if (n > sizeof(answer)) {
+	    if (_res.options & RES_DEBUG2)
+		    printf("SendRequest overflowed\n");
+	    return (-1);
     }
     eom = (u_char *) &answer + n;
 
