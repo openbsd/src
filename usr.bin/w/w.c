@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.30 2000/07/07 21:09:02 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.31 2000/12/23 02:07:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.30 2000/07/07 21:09:02 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.31 2000/12/23 02:07:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,8 @@ main(argc, argv)
 				p = hp->h_name;
 				p += strlen(hp->h_name);
 				p -= strlen(domain);
-				if (p > hp->h_name && strcmp(p, domain) == 0)
+				if (p > hp->h_name &&
+				    strcasecmp(p, domain) == 0)
 					*p = '\0';
 			}
 			p = hp->h_name;
