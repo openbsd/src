@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.14 2001/01/15 22:40:30 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.15 2001/01/31 05:43:07 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -284,6 +284,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     struct ip6_hdr *ip6;
 #endif /* INET6 */
 
+    struct mbuf *m0;
     ushort hlen;
     u_int8_t v;
 
@@ -337,14 +338,17 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     /* Don't forget the EtherIP header */
     hlen += sizeof(u_int8_t);
 
-    /* Get enough space for a header */
-    M_PREPEND(m, hlen, M_DONTWAIT);
-    if (m == 0)
-    {
-	DPRINTF(("etherip_output(): M_PREPEND of size %d failed\n", hlen));
+    MGETHDR(m0, M_DONTWAIT, MT_DATA);
+    if (m0 == NULL) {
+	DPRINTF(("etherip_output(): M_GETHDR failed\n"));
 	etheripstat.etherip_adrops++;
       	return ENOBUFS;
     }
+    M_COPY_PKTHDR(m0, m);
+    m0->m_next = m;
+    m0->m_len = hlen;
+    m0->m_pkthdr.len += hlen;
+    m = m0;
 
     /* Statistics */
     etheripstat.etherip_opackets++;
@@ -355,7 +359,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #ifdef INET
 	case AF_INET:
 	    ipo = mtod(m, struct ip *);
-	
+
 	    ipo->ip_v = IPVERSION;
 	    ipo->ip_hl = 5;
 	    ipo->ip_len = htons(m->m_pkthdr.len);
