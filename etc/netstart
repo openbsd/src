@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.59 2000/01/02 06:39:08 todd Exp $
+#	$OpenBSD: netstart,v 1.60 2000/01/02 06:42:13 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -126,26 +126,26 @@ for hn in /etc/hostname.*; do
 	    [a-z]*)
 		cmd2="$dt $dtaddr"
 		;;
-	     esac
-	     if [ ! -n "$name" ]; then
+	    esac
+	    if [ ! -n "$name" ]; then
 		    echo "/etc/hostname.$if: invalid network configuration file"
 		return
-	     fi
-	     case $af in
-	     inet)
+	    fi
+	    case $af in
+	    inet)
 		[ "$mask" ] && cmd="$cmd netmask $mask"
 		if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
 		    cmd="$cmd broadcast $bcaddr"
 		fi
 		[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
-	     ;;
-	     inet6) [ "$mask" ] && cmd="$cmd prefixlen $mask"
+	    ;;
+	    inet6) [ "$mask" ] && cmd="$cmd prefixlen $mask"
 		cmd="$cmd $bcaddr"
 		;;
-	     *) cmd="$cmd $mask $bcaddr"
-	     esac
-	     cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
-	     ;;
+	    *) cmd="$cmd $mask $bcaddr"
+	    esac
+	    cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+	    ;;
 	esac
 	eval "$cmd"
     done < /etc/hostname.$if
