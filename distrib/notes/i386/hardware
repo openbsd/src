@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.96 2002/11/28 14:40:15 grange Exp $
+dnl	$OpenBSD: hardware,v 1.97 2002/11/28 23:31:24 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -615,6 +615,7 @@ Supported hardware {:-include-:}:
 		VIA VT82C686A SouthBridge integrated AC'97 audio
 		Yamaha OPL3-SA3
 		Yamaha DS-XG
+		Yamaha and Roland ISA/ISA PnP MIDI UART
 		[The following drivers are not extensively tested:]
 		Personal Sound System
 		ProAudio Spectrum
