@@ -86,7 +86,7 @@ static struct {
 	{ CRYPTO_3DES_CBC,		NID_des_ede3_cbc,	8,	24, },
 	{ CRYPTO_AES_CBC,		NID_aes_128_cbc,	16,	16, },
 	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
-	{ CRYPTO_CAST_CBC, 		NID_cast5_cbc,		8, 	16, },
+	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
 	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
 	{ CRYPTO_ARC4,			NID_rc4,		8,	16, },
 	{ 0,				NID_undef,		0,	 0, },
@@ -265,7 +265,7 @@ int
 cryptodev_usable_ciphers(const int **nids)
 {
 	struct syslog_data sd = SYSLOG_DATA_INIT;
-	
+
 	if (!check_dev_crypto()) {
 		*nids = NULL;
 		return (0);
@@ -283,7 +283,6 @@ cryptodev_usable_ciphers(const int **nids)
 	if (ioctl(cryptodev_fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
 		syslog_r(LOG_ERR, &sd, "CIOCASYMFEAT failed (%m)");
 	}
-	
 }
 
 int
@@ -682,7 +681,7 @@ cryptodev_sym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 		if (s)
 			crparam2bn(&kop->crk_param[kop->crk_iparams+1], s);
 		ret = 0;
-	} 
+	}
 	return (ret);
 }
 
@@ -701,7 +700,6 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		return (ret);
 	}
 
-	
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_MOD_EXP;
 
@@ -802,12 +800,12 @@ cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
 {
 	BIGNUM t2;
 	int ret = 0;
-	
+
 	BN_init(&t2);
- 
+
 	/* v = ( g^u1 * y^u2 mod p ) mod q */
 	/* let t1 = g ^ u1 mod p */
-	ret = 0; 
+	ret = 0;
 
 	if (!dsa->meth->bn_mod_exp(dsa,t1,dsa->g,u1,dsa->p,ctx,mont))
 		goto err;
@@ -1015,7 +1013,7 @@ ENGINE_load_cryptodev(void)
 	if (!check_dev_crypto()) {
 		return;
 	}
-	
+
 	/*
 	 * find out what asymmetric crypto algorithms we support
 	 */
@@ -1046,7 +1044,7 @@ ENGINE_load_cryptodev(void)
 		if (cryptodev_asymfeat & CRF_MOD_EXP) {
 			cryptodev_rsa.bn_mod_exp = cryptodev_bn_mod_exp;
 			if (cryptodev_asymfeat & CRF_MOD_EXP_CRT)
-				cryptodev_rsa.rsa_mod_exp = 
+				cryptodev_rsa.rsa_mod_exp =
 				    cryptodev_rsa_mod_exp;
 			else
 				cryptodev_rsa.rsa_mod_exp =
@@ -1056,18 +1054,17 @@ ENGINE_load_cryptodev(void)
 
 	if (ENGINE_set_DSA(engine, &cryptodev_dsa)) {
 		const DSA_METHOD *meth = DSA_OpenSSL();
-		
-		memcpy(&cryptodev_dsa, meth, sizeof(DSA_METHOD)); 
-		if (cryptodev_asymfeat & CRF_DSA_SIGN) 
-			cryptodev_dsa.dsa_do_sign = cryptodev_dsa_do_sign;   
-  	        if (cryptodev_asymfeat & CRF_MOD_EXP) {
+
+		memcpy(&cryptodev_dsa, meth, sizeof(DSA_METHOD));
+		if (cryptodev_asymfeat & CRF_DSA_SIGN)
+			cryptodev_dsa.dsa_do_sign = cryptodev_dsa_do_sign;
+	        if (cryptodev_asymfeat & CRF_MOD_EXP) {
 			cryptodev_dsa.bn_mod_exp = cryptodev_dsa_bn_mod_exp;
 			cryptodev_dsa.dsa_mod_exp = cryptodev_dsa_dsa_mod_exp;
 		}
-  	        if (cryptodev_asymfeat & CRF_DSA_VERIFY)
-			cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;   
+	        if (cryptodev_asymfeat & CRF_DSA_VERIFY)
+			cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;
 	}
-		
 
 	if (ENGINE_set_DH(engine, &cryptodev_dh)){
 		const DH_METHOD *dh_meth = DH_OpenSSL();
@@ -1082,7 +1079,7 @@ ENGINE_load_cryptodev(void)
 				    cryptodev_dh_compute_key;
 		}
 	}
-	
+
 	ENGINE_add(engine);
 	ENGINE_free(engine);
 	ERR_clear_error();
