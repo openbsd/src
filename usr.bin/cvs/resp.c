@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.15 2004/12/08 20:00:23 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.16 2004/12/10 18:47:38 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <libgen.h>
 #include <sysexits.h>
 
 #include "buf.h"
@@ -499,13 +500,22 @@ cvs_resp_cksum(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_copyfile(struct cvsroot *root, int type, char *line)
 {
-	char newname[MAXNAMLEN];
+	char path[MAXPATHLEN], newpath[MAXPATHLEN], newname[MAXNAMLEN], *file;
 
-	/* read the new file name given by the server */
-	if (cvs_getln(root, newname, sizeof(newname)) < 0)
+	/* read the remote path of the file to copy and its new name */
+	if ((cvs_getln(root, path, sizeof(path)) < 0) ||
+	    (cvs_getln(root, newname, sizeof(newname)) < 0))
 		return (-1);
 
-	if (rename(line, newname) == -1) {
+	if ((file = basename(path)) == NULL) {
+		cvs_log(LP_ERR, "no base file name in Copy-file path");
+		return (-1);
+	}
+
+	snprintf(path, sizeof(path), "%s%s", line, file);
+	snprintf(newpath, sizeof(newpath), "%s%s", line, newname);
+
+	if (rename(path, newpath) == -1) {
 		cvs_log(LP_ERRNO, "failed to rename %s to %s", line, newname);
 		return (-1);
 	}
