@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.77 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.78 2004/06/26 06:01:14 naddy Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1002,9 +1002,8 @@ ether_ifdetach(ifp)
 
 #if 0
 /*
- * This is for reference.  We have a table-driven version
- * of the little-endian crc32 generator, which is faster
- * than the double-loop.
+ * This is for reference.  We have table-driven versions of the
+ * crc32 generators, which are faster than the double-loop.
  */
 u_int32_t
 ether_crc32_le(const u_int8_t *buf, size_t len)
@@ -1027,30 +1026,6 @@ ether_crc32_le(const u_int8_t *buf, size_t len)
 
 	return (crc);
 }
-#else
-u_int32_t
-ether_crc32_le(const u_int8_t *buf, size_t len)
-{
-	static const u_int32_t crctab[] = {
-		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-	};
-	u_int32_t crc;
-	int i;
-
-	crc = 0xffffffffU;	/* initial value */
-
-	for (i = 0; i < len; i++) {
-		crc ^= buf[i];
-		crc = (crc >> 4) ^ crctab[crc & 0xf];
-		crc = (crc >> 4) ^ crctab[crc & 0xf];
-	}
-
-	return (crc);
-}
-#endif
 
 u_int32_t
 ether_crc32_be(const u_int8_t *buf, size_t len)
@@ -1073,6 +1048,57 @@ ether_crc32_be(const u_int8_t *buf, size_t len)
 
 	return (crc);
 }
+#else
+u_int32_t
+ether_crc32_le(const u_int8_t *buf, size_t len)
+{
+	static const u_int32_t crctab[] = {
+		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+	};
+	size_t i;
+	u_int32_t crc;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		crc ^= buf[i];
+		crc = (crc >> 4) ^ crctab[crc & 0xf];
+		crc = (crc >> 4) ^ crctab[crc & 0xf];
+	}
+
+	return (crc);
+}
+
+u_int32_t
+ether_crc32_be(const u_int8_t *buf, size_t len)
+{
+	static const u_int8_t rev[] = {
+		0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
+		0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf
+	};
+	static const u_int32_t crctab[] = {
+		0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9,
+		0x130476dc, 0x17c56b6b, 0x1a864db2, 0x1e475005,
+		0x2608edb8, 0x22c9f00f, 0x2f8ad6d6, 0x2b4bcb61,
+		0x350c9b64, 0x31cd86d3, 0x3c8ea00a, 0x384fbdbd
+	};
+	size_t i;
+	u_int32_t crc;
+	u_int8_t data;
+
+	crc = 0xffffffffU;	/* initial value */
+	for (i = 0; i < len; i++) {
+		data = buf[i];
+		crc = (crc << 4) ^ crctab[(crc >> 28) ^ rev[data & 0xf]];
+		crc = (crc << 4) ^ crctab[(crc >> 28) ^ rev[data >> 4]];
+	}
+
+	return (crc);
+}
+#endif
 
 #ifdef INET
 u_char	ether_ipmulticast_min[ETHER_ADDR_LEN] =
