@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.54 2005/02/25 10:22:31 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.55 2005/02/26 09:11:18 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -169,14 +169,13 @@ system libraries to run.
 .It /stand/
 Programs used in a stand-alone environment.
 .It /tmp/
-Temporary files, usually an
-.Xr mfs 8
-memory-based filesystem (the contents
+Temporary files;
+the contents
 of
 .Pa /tmp
-are usually
+are
 .Em not
-preserved across a system reboot).
+preserved across a system reboot.
 .It /usr/
 Contains the majority of user utilities and applications.
 .Pp
