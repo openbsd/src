@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.23 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.24 2002/07/28 21:22:27 fgsch Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -1087,7 +1087,7 @@ ext2fs_checksb(fs, ronly)
 		}
 		if (fs2h32(fs->e2fs_features_incompat) &
 		    ~EXT2F_INCOMPAT_SUPP) {
-			printf("Ext2 fs: unsupported optionnal feature\n");
+			printf("Ext2 fs: unsupported optional feature\n");
 			return (EINVAL);      /* XXX needs translation */
 		}
 		if (!ronly && fs2h32(fs->e2fs_features_rocompat) &
