@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.39 2001/12/06 20:12:00 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.40 2001/12/06 21:22:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -978,11 +978,22 @@ void dc_setfilt_21143(sc)
 	}
 
 	/* Set our MAC address */
-	sp[39] = ((u_int16_t *)sc->arpcom.ac_enaddr)[0];
-	sp[40] = ((u_int16_t *)sc->arpcom.ac_enaddr)[1];
-	sp[41] = ((u_int16_t *)sc->arpcom.ac_enaddr)[2];
+	sp[39] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 0);
+	sp[40] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 1);
+	sp[41] = DC_SP_FIELD(sc->arpcom.ac_enaddr, 2);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct dc_list_data, dc_sbuf[0]),
+	    sizeof(struct dc_list_data) - 
+	    offsetof(struct dc_list_data, dc_sbuf[0]),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sframe->dc_status = htole32(DC_TXSTAT_OWN);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct dc_list_data, dc_tx_list[i]),
+	    sizeof(struct dc_desc), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	CSR_WRITE_4(sc, DC_TXSTART, 0xFFFFFFFF);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.19 2001/12/06 20:12:00 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.20 2001/12/06 21:22:07 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1004,3 +1004,10 @@ extern void dc_attach	__P((struct dc_softc *));
 extern int dc_detach	__P((struct dc_softc *));
 extern int dc_intr	__P((void *));
 extern void dc_reset	__P((struct dc_softc *));
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define	DC_SP_FIELD_C(x)	((x) << 16)
+#else
+#define	DC_SP_FIELD_C(x)	(x)
+#endif
+#define	DC_SP_FIELD(x,f)	DC_SP_FIELD_C(((u_int16_t *)(x))[(f)])
