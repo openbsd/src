@@ -1,4 +1,4 @@
-/*	$OpenBSD: panic.c,v 1.2 1996/06/26 05:31:28 deraadt Exp $	*/
+/*	$OpenBSD: panic.c,v 1.3 1996/08/03 20:16:57 millert Exp $	*/
 /*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
 
 /*
@@ -38,11 +38,12 @@
 
 #include "panic.h"
 #include "at.h"
+#include "privs.h"
 
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: panic.c,v 1.2 1996/06/26 05:31:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: panic.c,v 1.3 1996/08/03 20:16:57 millert Exp $";
 #endif
 
 /* External variables */
@@ -56,8 +57,11 @@ panic(a)
 /* Something fatal has happened, print error message and exit.
  */
 	fprintf(stderr, "%s: %s\n", namep, a);
-	if (fcreated)
+	if (fcreated) {
+		PRIV_START
 		unlink(atfile);
+		PRIV_END
+	}
 
 	exit(EXIT_FAILURE);
 }
@@ -69,8 +73,11 @@ perr(a)
 /* Some operating system error; print error message and exit.
  */
 	perror(a);
-	if (fcreated)
+	if (fcreated) {
+		PRIV_START
 		unlink(atfile);
+		PRIV_END
+	}
 
 	exit(EXIT_FAILURE);
 }

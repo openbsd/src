@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.2 1996/06/26 05:31:27 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.3 1996/08/03 20:16:52 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.2 1996/06/26 05:31:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.3 1996/08/03 20:16:52 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -248,13 +248,6 @@ writefile(runtimer, queue)
 	PRIV_END
 
 	/*
-	 * We no longer need suid root; now we just need to be able to
-	 * write to the directory, if necessary.
-	 */
-
-	    REDUCE_PRIV(effective_uid);
-
-	/*
 	 * We've successfully created the file; let's set the flag so it
 	 * gets removed in case of an interrupt or error.
 	 */
@@ -345,8 +338,12 @@ writefile(runtimer, queue)
 	 */
 	fprintf(fp, "cd %s\n", cwdname());
 
-	while ((ch = getchar()) != EOF)
+	if ((ch = getchar()) == EOF)
+		panic("Input error");
+
+	do {
 		fputc(ch, fp);
+	} while ((ch = getchar()) != EOF);
 
 	fprintf(fp, "\n");
 	if (ferror(fp))
