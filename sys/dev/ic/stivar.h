@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.1 2000/05/30 19:39:38 mickey Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.2 2001/01/11 21:30:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -31,9 +31,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STIVAR_H_
-#define _STIVAR_H_
+#ifndef _IC_STIVAR_H_
+#define _IC_STIVAR_H_
 
+/* #define	STIDEBUG */
 
 struct sti_softc {
 	struct device sc_dev;
@@ -76,4 +77,4 @@ struct sti_softc {
 void sti_attach_common __P((struct sti_softc *sc));
 int sti_intr __P((void *v));
 
-#endif /* _STIVAR_H_ */
+#endif /* _IC_STIVAR_H_ */

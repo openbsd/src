@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.2 2001/01/11 21:23:53 mickey Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.3 2001/01/11 21:30:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -31,10 +31,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STI_H_
-#define _STI_H_
+#ifndef _IC_STIREG_H_
+#define _IC_STIREG_H_
 
-#define	STIDEBUG
+/* #define	STIDEBUG */
 
 #define	STI_REGION_MAX	8
 #define	STI_MONITOR_MAX	256
@@ -584,4 +584,4 @@ STI_DEP(util);
 
 #pragma pack()
 
-#endif /* _STI_H_ */
+#endif /* _IC_STIREG_H_ */
