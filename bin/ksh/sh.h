@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.16 2004/02/08 19:18:15 deraadt Exp $	*/
+/*	$OpenBSD: sh.h,v 1.17 2004/05/10 16:28:47 pvalchev Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -357,7 +357,7 @@ typedef INT32 Tflag;
 #define ISMAGIC(c)	((unsigned char)(c) == MAGIC)
 #define	NOT		'!'	/* might use ^ (ie, [!...] vs [^..]) */
 
-#define	LINE	1024		/* input line size */
+#define	LINE	2048		/* input line size */
 #define	PATH	1024		/* pathname size (todo: PATH_MAX/pathconf()) */
 #define ARRAYMAX 1023		/* max array index */
 
