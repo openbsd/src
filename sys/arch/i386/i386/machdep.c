@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 1998/03/01 11:25:28 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.84 1998/03/04 07:22:02 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -696,7 +696,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			cyrix6x86_cpu_setup
 		},
-		/* Family 6, not yet available from Cyrix */
+		/* Family 6 */
 		{
 			CPUCLASS_686,
 			{
@@ -707,8 +707,6 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		} }
 	}
 };
-
-#define CPUDEBUG
 
 void
 cyrix6x86_cpu_setup(cpu_device)
@@ -750,7 +748,7 @@ identifycpu()
 #if defined(I586_CPU) || defined(I686_CPU)
 	extern int cpu_feature;
 #endif
-	const char *name, *modifier, *vendorname;
+	const char *name, *modifier, *vendorname, *token;
 	const char *cpu_device = "cpu0";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
@@ -769,6 +767,7 @@ identifycpu()
 		class = i386_nocpuid_cpus[cpu].cpu_class;
 		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
 		modifier = "";
+		token = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (cpu_id >> 12) & 3;
@@ -801,8 +800,10 @@ identifycpu()
 			class = family - 3;
 			modifier = "";
 			name = "";
+			token = "";
 			cpu_setup = NULL;
 		} else {
+			token = cpup->cpu_id;
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
 			modifier = modifiers[modif];
@@ -820,8 +821,12 @@ identifycpu()
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
-		classnames[class]);
+	if (*token)
+		sprintf(cpu_model, "%s %s%s (\"%s\" %s-class)", vendorname,
+			modifier, name, token, classnames[class]);
+	else
+		sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier,
+			name, classnames[class]);
 	printf("%s: %s", cpu_device, cpu_model);
 
 #if defined(I586_CPU) || defined(I686_CPU)
