@@ -282,6 +282,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/bmtphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/eephyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/iophyreg.ph
@@ -530,6 +531,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/wskbdvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/wsksymdef.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/wsksymvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/wsmoused.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/wsmousevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wsfont
@@ -1732,4 +1734,3 @@
 ./usr/mdec/rdboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/eephyreg.ph

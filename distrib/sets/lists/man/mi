@@ -1601,11 +1601,11 @@
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/memconfig.0
-./usr/share/man/cat8/i386/moused.0
 ./usr/share/man/cat8/i386/wicontrol.0
 ./usr/share/man/cat8/i386/wsconscfg.0
 ./usr/share/man/cat8/i386/wsconsctl.0
 ./usr/share/man/cat8/i386/wsfontload.0
+./usr/share/man/cat8/i386/wsmoused.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0

@@ -678,6 +678,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/bmtphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/eephyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/iophyreg.ph
@@ -937,6 +938,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wskbdvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsksymdef.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsksymvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsmoused.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsmousevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wsfont
@@ -1832,4 +1834,3 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/eephyreg.ph
