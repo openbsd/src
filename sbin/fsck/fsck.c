@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.3 1996/12/04 09:40:41 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.4 1996/12/04 10:25:57 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 
 	switch (pid = fork()) {
 	case -1:				/* Error. */
-		warn("vfork");
+		warn("fork");
 		if (optbuf)
 			free(optbuf);
 		return (1);
