@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: obio.4,v 1.4 1999/06/05 13:18:36 aaron Exp $
+.\"	$OpenBSD: obio.4,v 1.5 2002/10/01 20:58:12 miod Exp $
 .\"	$NetBSD: obio.4,v 1.1 1997/07/18 02:13:40 ender Exp $
 .\"
 .Dd July 2, 1997
@@ -48,16 +48,17 @@ system to help find and attach devices
 connected to the
 .Tn Macintosh
 onboard I/O bus.
-.Sh DIAGNOSTICS
-.Bl -diag -compact
-.It obio0 at mainbus0.
-This is the normal autoconfiguration message indicating that the
-onboard I/O bus has been found and attached to the main processor
-bus.
-.El
 .Sh SEE ALSO
-.Xr autoconf 4 ,
+.Xr adb 4 ,
+.\" .Xr asc 4 ,
+.\" .Xr esp 4 ,
+.Xr intro 4 ,
 .Xr mainbus 4
+.Xr mc 4 ,
+.\" .Xr ncrscsi 4
+.\" .Xr sbc 4
+.Xr sn 4
+.\" .Xr zsc 4
 .Sh HISTORY
 The
 .Nm

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ae.4,v 1.5 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: ae.4,v 1.6 2002/10/01 20:58:12 miod Exp $
 .\"
 .Dd June 7, 1997
 .Dt AE 4 mac68k
@@ -73,23 +73,18 @@ Apple EtherTalk NB
 3Com EtherLink NB
 .El
 .Ed
-.Sh DIAGNOSTICS
-.Bl -diag -compact
-.It ae%d at nubus%d: address %s, type %s  %dKB memory.
-This is a normal autoconfiguration message noting the 6 byte physical
-ethernet address of the adapter, its manufacturer, and how much buffer
-memory it has.
-.El
-.\" .Sh ERRORS
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ifmedia 4 ,
 .Xr inet 4 ,
+.Xr intro 4 ,
+.Xr mc 4 ,
 .Xr netintro 4 ,
 .Xr sn 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
 interface first appeared in
 .Nx 1.0 .
-.\" .Sh BUGS

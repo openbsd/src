@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: mainbus.4,v 1.3 1999/06/05 13:18:36 aaron Exp $
+.\"	$OpenBSD: mainbus.4,v 1.4 2002/10/01 20:58:12 miod Exp $
 .\"	$NetBSD: mainbus.4,v 1.1 1997/07/18 02:13:40 ender Exp $
 .\"
 .Dd July 2, 1997
@@ -39,6 +39,8 @@
 .Nd Mac68k main processor bus device.
 .Sh SYNOPSIS
 .Cd "mainbus0 at root"
+.Cd "obio0 at mainbus?"
+.Cd "nubus0 at mainbus?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,18 +48,12 @@ interface serves as an abstraction used by the autoconfiguration
 system to help find and attach busses
 .Pq e.g. the Tn NuBus expansion bus
 or devices
-.Pq e.g. the math coprocessor
 connected to the
 .Tn Macintosh
 main processor bus.
-.Sh DIAGNOSTICS
-.Bl -diag -compact
-.It mainbus0 (root).
-This is the normal autoconfiguration message indicating that the
-main processor bus has been found.
-.El
 .Sh SEE ALSO
-.Xr autoconf 4 ,
+.Xr intro 4 ,
+.\" .Xr nubus 4 ,
 .Xr obio 4
 .Sh HISTORY
 The

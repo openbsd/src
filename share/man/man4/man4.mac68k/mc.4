@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mc.4,v 1.6 2002/08/29 07:34:31 wcobb Exp $
+.\"	$OpenBSD: mc.4,v 1.7 2002/10/01 20:58:12 miod Exp $
 .\"	$NetBSD: mc.4,v 1.1 1997/12/18 06:22:45 ender Exp $
 .\"
 .\" Copyright (c) 1997 David Huang <khym@bga.com>
@@ -60,18 +60,15 @@ Quadra 660AV
 Quadra 840AV
 .El
 .Ed
-.Sh DIAGNOSTICS
-.Bl -diag -compact
-.It mc0 at obio0: address %s.
-This is a normal autoconfiguration message noting the 6 byte physical
-Ethernet address of the adapter.
-.El
 .Sh SEE ALSO
 .Xr ae 4 ,
 .Xr arp 4 ,
+.Xr ifmedia 4 ,
 .Xr inet 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr sn 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

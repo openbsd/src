@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: adb.4,v 1.6 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: adb.4,v 1.7 2002/10/01 20:58:12 miod Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd July 17, 1997
@@ -39,8 +39,8 @@
 .Nd Apple Desktop Bus event interface
 .Sh SYNOPSIS
 .Cd "adb0 at obio?"
-.Cd "option MRG_ADB"
-.Cd "#include <machine/adbsys.h>"
+.Cd "#option MRG_ADB" Pq "use ROM-based ADB driver"
+.Fd #include <machine/adbsys.h>
 .Sh DESCRIPTION
 The Apple Desktop Bus
 .Pq Tn ADB
@@ -243,12 +243,15 @@ The
 .Tn ADB
 event device.
 .El
+.Sh SEE ALSO
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
 interface first appeared in
 .Nx 0.9 .
-It has been under development ever since.
+It is
+.Ud .
 .Sh AUTHORS
 Bradley A. Grantham wrote the original
 .Nm
