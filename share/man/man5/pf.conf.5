@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.250 2003/06/03 12:18:02 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.251 2003/06/07 20:00:52 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1822,6 +1822,12 @@ rules of all named rulesets in the specified
 .It Ar anchor <name>
 Evaluates the filter rules of all named rulesets in the specified
 .Ar anchor .
+.It Ar load anchor <name>:<ruleset> from <file>
+Loads the rules from the specified file into the named
+ruleset
+.Ar <ruleset>
+attached to the anchor
+.Ar <name> .
 .El
 .Pp
 When evaluation of the main ruleset reaches an
@@ -1877,6 +1883,24 @@ incoming connections to port 25.
 loads a single ruleset containing a single rule into the
 .Ar anchor ,
 which blocks all packets from a specific address.
+.Pp
+The named ruleset can also be populated by adding a
+.Ar load anchor
+rule after the
+.Ar anchor
+rule:
+.Bd -literal -offset indent
+anchor spam
+load anchor spam:manual from /etc/pf-spam.conf
+.Ed
+.Pp
+When
+.Xr pfctl 8
+loads
+.Nm pf.conf ,
+it will also load all the rules from the file
+.Pa /etc/pf-spam.conf
+into the named ruleset.
 .Pp
 Optionally,
 .Ar anchor
