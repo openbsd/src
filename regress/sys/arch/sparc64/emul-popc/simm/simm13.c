@@ -1,4 +1,4 @@
-/*	$OpenBSD: simm13.c,v 1.1 2003/08/19 05:25:14 jason Exp $	*/
+/*	$OpenBSD: simm13.c,v 1.2 2003/08/19 05:37:57 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -43,7 +43,10 @@ gen_simm(u_int32_t *p, int imm)
 	 *	 popc imm, %o0
 	 */
 	p[0] = I_JMPLri(I_G0, I_O7, 8);
+	__asm __volatile("iflush %0+0" : : "r" (&p[0]));
 	p[1] = _I_OP3_R_RI(I_O0, IOP3_POPC, I_G0, imm);
+	__asm __volatile("iflush %0+0" : : "r" (&p[1]));
+	__asm __volatile("nop;nop;nop;nop;nop");
 }
 
 int
