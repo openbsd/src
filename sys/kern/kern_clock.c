@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.21 1999/08/15 00:07:43 pjanzen Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.22 2000/03/23 09:59:57 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/dkstat.h>
-#include <sys/callout.h>
+#include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -351,7 +351,6 @@ void
 hardclock(frame)
 	register struct clockframe *frame;
 {
-	register struct callout *p1;
 	register struct proc *p;
 	register int delta, needsoft;
 	extern int tickdelta;
@@ -364,22 +363,8 @@ hardclock(frame)
 
 	/*
 	 * Update real-time timeout queue.
-	 * At front of queue are some number of events which are ``due''.
-	 * The time to these is <= 0 and if negative represents the
-	 * number of ticks which have passed since it was supposed to happen.
-	 * The rest of the q elements (times > 0) are events yet to happen,
-	 * where the time for each is given as a delta from the previous.
-	 * Decrementing just the first of these serves to decrement the time
-	 * to all events.
 	 */
-	needsoft = 0;
-	for (p1 = calltodo.c_next; p1 != NULL; p1 = p1->c_next) {
-		if (--p1->c_time > 0)
-			break;
-		needsoft = 1;
-		if (p1->c_time == 0)
-			break;
-	}
+	needsoft = timeout_hardclock_update();
 
 	p = curproc;
 	if (p) {
@@ -701,114 +686,6 @@ hardclock(frame)
 		} else
 			setsoftclock();
 	}
-}
-
-/*
- * Software (low priority) clock interrupt.
- * Run periodic events from timeout queue.
- */
-/*ARGSUSED*/
-void
-softclock()
-{
-	register struct callout *c;
-	register void *arg;
-	register void (*func) __P((void *));
-	register int s;
-
-	s = splhigh();
-	while ((c = calltodo.c_next) != NULL && c->c_time <= 0) {
-		func = c->c_func;
-		arg = c->c_arg;
-		calltodo.c_next = c->c_next;
-		c->c_next = callfree;
-		callfree = c;
-		splx(s);
-		(*func)(arg);
-		(void) splhigh();
-	}
-	splx(s);
-}
-
-/*
- * timeout --
- *	Execute a function after a specified length of time.
- *
- * untimeout --
- *	Cancel previous timeout function call.
- *
- *	See AT&T BCI Driver Reference Manual for specification.  This
- *	implementation differs from that one in that no identification
- *	value is returned from timeout, rather, the original arguments
- *	to timeout are used to identify entries for untimeout.
- */
-void
-timeout(ftn, arg, ticks)
-	void (*ftn) __P((void *));
-	void *arg;
-	register int ticks;
-{
-	register struct callout *new, *p, *t;
-	register int s;
-
-	if (ticks <= 0)
-		ticks = 1;
-
-	/* Lock out the clock. */
-	s = splhigh();
-
-	/* Fill in the next free callout structure. */
-	if (callfree == NULL)
-		panic("timeout table full");
-	new = callfree;
-	callfree = new->c_next;
-	new->c_arg = arg;
-	new->c_func = ftn;
-
-	/*
-	 * The time for each event is stored as a difference from the time
-	 * of the previous event on the queue.  Walk the queue, correcting
-	 * the ticks argument for queue entries passed.  Correct the ticks
-	 * value for the queue entry immediately after the insertion point
-	 * as well.  Watch out for negative c_time values; these represent
-	 * overdue events.
-	 */
-	for (p = &calltodo;
-	    (t = p->c_next) != NULL && ticks > t->c_time; p = t)
-		if (t->c_time > 0)
-			ticks -= t->c_time;
-	new->c_time = ticks;
-	if (t != NULL)
-		t->c_time -= ticks;
-
-	/* Insert the new entry into the queue. */
-	p->c_next = new;
-	new->c_next = t;
-	splx(s);
-}
-
-void
-untimeout(ftn, arg)
-	void (*ftn) __P((void *));
-	void *arg;
-{
-	register struct callout *p, *t;
-	register int s;
-
-	s = splhigh();
-	for (p = &calltodo; (t = p->c_next) != NULL; p = t)
-		if (t->c_func == ftn && t->c_arg == arg) {
-			/* Increment next entry's tick count. */
-			if (t->c_next && t->c_time > 0)
-				t->c_next->c_time += t->c_time;
-
-			/* Move entry from callout queue to callfree queue. */
-			p->c_next = t->c_next;
-			t->c_next = callfree;
-			callfree = t;
-			break;
-		}
-	splx(s);
 }
 
 /*
@@ -1329,42 +1206,3 @@ sysctl_clockrate(where, sizep)
 	clkinfo.stathz = stathz ? stathz : hz;
 	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
 }
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-
-#include <ddb/db_interface.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_output.h>
-
-void db_show_callout(addr, haddr, count, modif)
-	db_expr_t addr; 
-	int haddr; 
-	db_expr_t count;
-	char *modif;
-{
-	register struct callout *p1;
-	register int	cum;
-	register int	s;
-	db_expr_t	offset;
-	char		*name;
-
-        db_printf("      cum     ticks      arg  func\n");
-	s = splhigh();
-	for (cum = 0, p1 = calltodo.c_next; p1; p1 = p1->c_next) {
-		register int t = p1->c_time;
-
-		if (t > 0)
-			cum += t;
-
-		db_find_sym_and_offset((db_addr_t)p1->c_func, &name, &offset);
-		if (name == NULL)
-			name = "?";
-
-                db_printf("%9d %9d %8x  %s (%x)\n",
-			  cum, t, p1->c_arg, name, p1->c_func);
-	}
-	splx(s);
-}
-#endif

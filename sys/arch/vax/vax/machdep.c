@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.20 1999/12/08 06:50:17 itojun Exp $ */
+/* $OpenBSD: machdep.c,v 1.21 2000/03/23 09:59:56 art Exp $ */
 /* $NetBSD: machdep.c,v 1.45 1997/07/26 10:12:49 ragge Exp $	 */
 
 /*
@@ -60,7 +60,7 @@
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/callout.h>
+#include <sys/timeout.h>
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
@@ -254,13 +254,7 @@ cpu_startup()
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, TRUE);
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i - 1].c_next = &callout[i];
-	callout[i - 1].c_next = NULL;
+	timeout_init();
 
 	printf("avail mem = %d\n", (int)ptoa(cnt.v_free_count));
 	printf("Using %d buffers containing %d bytes of memory.\n", nbuf,
@@ -342,7 +336,7 @@ allocsys(v)
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
-	valloc(callout, struct callout, ncallout);
+	valloc(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2000/03/16 22:11:03 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2000/03/23 09:59:54 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -44,7 +44,7 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/callout.h>
+#include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -310,7 +310,7 @@ hppa_init(start)
 	valloc(cfree, struct cblock, nclist);
 #endif
 
-	valloc(callout, struct callout, ncallout);
+	valloc(timeouts, struct timeout, ntimeout);
 	valloc(buf, struct buf, nbuf);
 
 #ifdef SYSVSHM
@@ -525,12 +525,9 @@ cpu_startup()
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	/*
-	 * Initialize callouts
+	 * Initialize timeouts
 	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
+	timeout_init();
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

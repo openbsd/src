@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 1999/05/22 21:22:20 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2000/03/23 09:59:53 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.6 1996/03/13 21:32:39 mark Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <sys/callout.h>
+#include <sys/timeout.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
@@ -1368,13 +1368,9 @@ cpu_startup()
 */
 
 /*
- * Initialise callouts
+ * Initialise timeouts
  */
-
-	callfree = callout;
-
-	for (loop = 1; loop < ncallout; ++loop)
-		callout[loop - 1].c_next = &callout[loop];
+	timeout_init();
 
 	printf("avail mem = %d (%d pages)\n", (int)ptoa(cnt.v_free_count),
 	    (int)ptoa(cnt.v_free_count) / NBPG);
@@ -1471,7 +1467,7 @@ allocsys(v)
     (caddr_t)(name) = (type *)v; \
     v = (caddr_t)((name) + (num));
 
-    valloc(callout, struct callout, ncallout);
+    valloc(timeouts, struct timeout, ntimeout);
 
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);

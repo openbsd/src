@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.8 2000/03/21 14:55:52 deraadt Exp $	*/
+/*	$OpenBSD: param.c,v 1.9 2000/03/23 09:59:56 art Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
-#include <sys/callout.h>
+#include <sys/timeout.h>
 #ifdef REAL_CLISTS
 #include <sys/clist.h>
 #endif
@@ -96,7 +96,7 @@ int	vm_cache_max = NTEXT;	/* XXX these probably needs some measurements */
 #define	NVNODE (NPROC * 2 + NTEXT + 100)
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
-int	ncallout = (16 + NPROC) * 2;
+int	ntimeout = (16 + NPROC) * 2;
 #ifdef REAL_CLISTS
 int	nclist = 60 + 12 * MAXUSERS;
 #endif
@@ -166,7 +166,7 @@ int	nbuf, nswbuf;
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
-struct 	callout *callout;
+struct 	timeout *timeouts;
 struct	cblock *cfree;
 struct	buf *buf, *swbuf;
 char	*buffers;
