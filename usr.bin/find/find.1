@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.41 2004/01/23 19:38:13 millert Exp $
+.\"	$OpenBSD: find.1,v 1.42 2004/02/24 07:20:38 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -39,7 +39,7 @@
 .Nd walk a file hierarchy
 .Sh SYNOPSIS
 .Nm find
-.Op Fl dHhLXxW
+.Op Fl dHhLWXx
 .Op Fl f Ar file
 .Ar file Op Ar ...
 .Op Ar expression
@@ -100,6 +100,10 @@ returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
+.It Fl W
+Let
+.Nm
+take whiteouts into account when scanning directories.
 .It Fl X
 Permit
 .Nm
@@ -130,10 +134,6 @@ Prevents
 .Nm
 from descending into directories that have a device number different
 than that of the file from which the descent began.
-.It Fl W
-Let
-.Nm
-take whiteouts into account when scanning directories.
 .El
 .Sh PRIMARIES
 .Bl -tag -width Ds
@@ -495,27 +495,27 @@ to be a separate argument to
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
-.It Li "$ find  /  \e!  -name  \*q*.c\*q  -print"
+.It Li "$ find / \e! -name '*.c' -print"
 Print out a list of all the files whose names do not end in
 .Dq \&.c .
-.It Li "$ find  /  -newer  ttt  -user  wnj  -print"
+.It Li "$ find / -newer ttt -user wnj -print"
 Print out a list of all the files owned by user
 .Dq wnj
 that are newer
 than the file
 .Dq ttt .
-.It Li "$ find  /  \e!  \e(  -newer  ttt  -user  wnj  \e)  -print"
+.It Li "$ find / \e! \e( -newer ttt -user wnj \e) -print"
 Print out a list of all the files which are not both newer than
 .Dq ttt
 and owned by
 .Dq wnj .
-.It Li "$ find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -print"
+.It Li "$ find / \e( -newer ttt -or -user wnj \e) -print"
 Print out a list of all the files that are either owned by
 .Dq wnj
 or
 that are newer than
 .Dq ttt .
-.It Li "$ find  /  \e!  -fstype  local  -prune  -or  -name '*.core' -print"
+.It Li "$ find / \e! -fstype local -prune -or -name '*.core' -print"
 Print out a list of all core files on local file systems.
 .El
 .Sh SEE ALSO
