@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.43 2002/06/07 04:47:06 ho Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.44 2003/02/15 19:21:05 jason Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -295,7 +295,7 @@ struct sadb_x_cred {
 #define SADB_X_CALG_NONE	0
 #define SADB_X_CALG_OUI		1
 #define SADB_X_CALG_DEFLATE	2
-#define SADB_X_CALG_LSZ		3
+#define SADB_X_CALG_LZS		3
 #define SADB_X_CALG_MAX		4
 
 #define SADB_SAFLAGS_PFS         	0x001    /* perfect forward secrecy */
