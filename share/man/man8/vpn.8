@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.71 2004/02/06 05:35:27 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.72 2004/02/25 08:42:38 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -89,8 +89,8 @@ Before doing either manual or automated keying, or performing
 encryption (ESP) or authentication (AH) operations, ensure the appropriate
 kernel operation has been enabled:
 .Bd -literal -offset indent
-# sysctl -w net.inet.esp.enable=1
-# sysctl -w net.inet.ah.enable=1
+# sysctl net.inet.esp.enable=1
+# sysctl net.inet.ah.enable=1
 .Ed
 .Pp
 The ESP and AH protocols default to 'on'.
@@ -98,8 +98,8 @@ The ESP and AH protocols default to 'on'.
 For security gateways, proper operation often also requires packet
 forwarding to be enabled:
 .Bd -literal -offset indent
-# sysctl -w net.inet.ip.forwarding=1
-# sysctl -w net.inet6.ip6.forwarding=1
+# sysctl net.inet.ip.forwarding=1
+# sysctl net.inet6.ip6.forwarding=1
 .Ed
 .Pp
 Packet forwarding defaults to 'off'.

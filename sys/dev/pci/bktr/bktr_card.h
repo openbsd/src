@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.h,v 1.2 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: bktr_card.h,v 1.3 2004/02/25 08:42:38 jmc Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp $ */
 
 /*
@@ -54,8 +54,8 @@
  *  options BKTR_OVERRIDE_CARD  <card type>
  *  eg options BKTR_OVERRIDE CARD=1
  *
- * or using the sysclt  hw.bt848.card
- *  eg sysctl -w hw.bt848.card=1
+ * or using the sysctl  hw.bt848.card
+ *  eg sysctl hw.bt848.card=1
  *
  * where <card type> is one of the following card defines.
  */

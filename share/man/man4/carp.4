@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.5 2003/12/08 10:03:43 markus Exp $
+.\"	$OpenBSD: carp.4,v 1.6 2004/02/25 08:42:38 jmc Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -105,7 +105,7 @@ The configuration is identical, except we skew virtual host 1 instead.
 .Pp
 Finally, the ARP balancing feature must be enabled on both hosts:
 .Pp
-.Dl # sysctl -w net.inet.carp.arpbalance=1
+.Dl # sysctl net.inet.carp.arpbalance=1
 .Pp
 When the hosts receive an ARP request for 192.168.1.10, they both select
 one of the virtual hosts based on the source IP address in the request.

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.233 2004/02/11 23:17:32 beck Exp $
+#	$OpenBSD: rc,v 1.234 2004/02/25 08:42:38 jmc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -140,7 +140,7 @@ if [ -f /etc/sysctl.conf ]; then
 	# delete comments and blank lines
 	set -- `stripcom /etc/sysctl.conf`
 	while [ $# -ge 1 ] ; do
-		sysctl -w $1
+		sysctl $1
 		shift
 	done
 )
@@ -368,7 +368,7 @@ fi
 [ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
 	echo -n 'setting kernel security level: '
-	sysctl -w kern.securelevel=${securelevel}
+	sysctl kern.securelevel=${securelevel}
 fi
 
 # patch /etc/motd
