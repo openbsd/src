@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.17 2000/10/14 18:31:36 aaron Exp $
+.\"	$OpenBSD: pci.4,v 1.18 2000/10/14 20:44:42 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -68,10 +68,12 @@ Consult your system's
 .Xr intro 4
 for additional information.
 .Pp
+.Ss Details specific to the i386
 Note that interrupt mappings on the i386 may require that you configure
 your BIOS to reserve sufficient interrupts as "PCI/ISAPnP" so that there
 are sufficient interrupts remaining to configure the discovered PCI
-devices.
+devices.  For more information, see
+.Xr pcibios 4 .
 .Sh SUPPORTED DEVICES
 The system includes machine-independent
 .Tn PCI
