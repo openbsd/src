@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.171 2002/10/17 11:22:42 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.172 2002/10/22 07:07:35 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -157,7 +157,7 @@ int	rule_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_nat *);
 int	rdr_consistent(struct pf_rdr *);
 int	yyparse(void);
-void	ipmask(struct pf_addr *, u_int8_t);
+void	set_ipmask(struct node_host *, u_int8_t);
 void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_host *);
 void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *,
@@ -805,22 +805,13 @@ host		: address
 		| address '/' number		{
 			struct node_host *n;
 			for (n = $1; n; n = n->next) {
-				if ($1->af == AF_INET) {
-					if ($3 > 32) {
-						yyerror(
-						    "illegal netmask value /%d",
-						    $3);
-						YYERROR;
-					}
-				} else {
-					if ($3 > 128) {
-						yyerror(
-						    "illegal netmask value /%d",
-						    $3);
-						YYERROR;
-					}
+				if (($1->af == AF_INET && $3 > 32) ||
+				    ($1->af == AF_INET6 && $3 > 128)) {
+					yyerror("illegal netmask value /%d",
+					    $3);
+					YYERROR;
 				}
-				ipmask(&n->mask, $3);
+				set_ipmask(n, $3);
 			}
 			$$ = $1;
 		}
@@ -842,7 +833,7 @@ address		: '(' STRING ')'		{
 			if ($$ == NULL)
 				err(1, "address: calloc");
 			$$->af = 0;
-			ipmask(&$$->mask, 128);
+			set_ipmask($$, 128);
 			$$->addr.addr_dyn = (struct pf_addr_dyn *)1;
 			strncpy($$->addr.addr.pfa.ifname, $2,
 			    sizeof($$->addr.addr.pfa.ifname));
@@ -2663,9 +2654,12 @@ parse_rules(FILE *input, struct pfctl *xpf)
 }
 
 void
-ipmask(struct pf_addr *m, u_int8_t b)
+set_ipmask(struct node_host *h, u_int8_t b)
 {
+	struct pf_addr *m, *n;
 	int i, j = 0;
+
+	m = &h->mask;
 
 	for (i = 0; i < 4; i++)
 		m->addr32[i] = 0;
@@ -2678,6 +2672,11 @@ ipmask(struct pf_addr *m, u_int8_t b)
 		m->addr32[j] |= (1 << i);
 	if (b)
 		m->addr32[j] = htonl(m->addr32[j]);
+
+	/* Mask off bits of the address that will never be used. */
+	n = &h->addr.addr;
+	for (i = 0; i < 4; i++)
+		n->addr32[i] = n->addr32[i] & m->addr32[i];
 }
 
 /*
@@ -2852,9 +2851,9 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 			memcpy(&n->mask, &p->mask, sizeof(struct pf_addr));
 		else {
 			if (n->af == AF_INET)
-				ipmask(&n->mask, 32);
+				set_ipmask(n, 32);
 			else
-				ipmask(&n->mask, 128);
+				set_ipmask(n, 128);
 		}
 		n->ifindex = p->ifindex;
 
@@ -2930,7 +2929,7 @@ host(char *s)
 		h->af = AF_INET;
 		h->addr.addr_dyn = NULL;
 		h->addr.addr.addr32[0] = ina.s_addr;
-		ipmask(&h->mask, 32);
+		set_ipmask(h, 32);
 		h->next = NULL;
 		h->tail = h;
 		return (h);
@@ -2950,7 +2949,7 @@ host(char *s)
 		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
 		    sizeof(n->addr.addr));
 		n->ifindex = ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-		ipmask(&n->mask, 128);
+		set_ipmask(n, 128);
 		freeaddrinfo(res);
 		n->next = NULL;
 		n->tail = n;
@@ -2979,14 +2978,14 @@ host(char *s)
 			memcpy(&n->addr.addr,
 			    &((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr,
 			    sizeof(struct in_addr));
-			ipmask(&n->mask, 32);
+			set_ipmask(n, 32);
 		} else {
 			memcpy(&n->addr.addr,
 			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
 			    sizeof(struct in6_addr));
 			n->ifindex =
 			    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-			ipmask(&n->mask, 128);
+			set_ipmask(n, 128);
 		}
 		n->next = NULL;
 		n->tail = n;
