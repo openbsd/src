@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.22 1999/10/03 21:50:04 provos Exp $");
+RCSID("$Id: ssh.c,v 1.23 1999/10/12 21:04:22 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -97,6 +97,7 @@ usage()
   fprintf(stderr, "  -t          Tty; allocate a tty even if command is given.\n");
   fprintf(stderr, "  -v          Verbose; display verbose debugging messages.\n");
   fprintf(stderr, "  -V          Display version number only.\n");
+  fprintf(stderr, "  -P          Don't allocate a privileged port.\n");
   fprintf(stderr, "  -q          Quiet; don't display any warning messages.\n");
   fprintf(stderr, "  -f          Fork into background after authentication.\n");
   fprintf(stderr, "  -e char     Set escape character; ``none'' = disable (default: ~).\n");
@@ -272,6 +273,10 @@ main(int ac, char **av)
 
 	case 'g':
 	  options.gateway_ports = 1;
+	  break;
+
+	case 'P':
+	  options.use_privileged_port = 0;
 	  break;
 
 	case 'a':
@@ -522,7 +527,14 @@ main(int ac, char **av)
   restore_uid();
 
   /* Open a connection to the remote host.  This needs root privileges if
-     rhosts_authentication is true. */
+     rhosts_{rsa_}authentication is true. */
+
+  if (!options.use_privileged_port)
+    {
+       options.rhosts_authentication = 0;
+       options.rhosts_rsa_authentication = 0;
+    }
+
   ok = ssh_connect(host, &hostaddr, options.port, options.connection_attempts,
 		   !options.rhosts_authentication &&
 		   !options.rhosts_rsa_authentication,

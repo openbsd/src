@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.15 1999/10/11 20:40:08 markus Exp $
+.\" $Id: ssh.1,v 1.16 1999/10/12 21:04:22 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -24,7 +24,7 @@
 .Op Ar command
 .Pp
 .Nm ssh
-.Op Fl agknqtvxXC
+.Op Fl agknqtvxCPX
 .Op Fl c Ar blowfish | 3des
 .Op Fl e Ar escape_char
 .Op Fl i Ar identity_file
@@ -345,6 +345,14 @@ configuration file.
 .It Fl p Ar port
 Port to connect to on the remote host.  This can be specified on a
 per-host basis in the configuration file.
+.It Fl P
+Use a non-privileged port for outgoing connections.
+This can be used if your firewall does
+not permit connections from privileged ports.
+Note that this option turns of
+.Cm RhostsAuthentication
+and
+.Cm RhostsRSAAuthentication .
 .It Fl q
 Quiet mode.  Causes all warning and diagnostic messages to be
 suppressed.  Only fatal errors are displayed.
@@ -678,6 +686,20 @@ having to remember to give the user name on the command line.
 .It Cm UserKnownHostsFile
 Specifies a file to use instead of
 .Pa $HOME/.ssh/known_hosts .
+.It Cm UsePrivilegedPort
+Specifies whether to use a privileged port for outgoing connections.
+The argument must be
+.Dq yes
+or
+.Dq no .
+The default is
+.Dq yes .
+Note that setting this option to
+.Dq no
+turns of
+.Cm RhostsAuthentication
+and
+.Cm RhostsRSAAuthentication .
 .It Cm UseRsh
 Specifies that rlogin/rsh should be used for this host.  It is
 possible that the host does not at all support the

@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.10 1999/10/06 20:07:42 dugsong Exp $");
+RCSID("$Id: readconf.c,v 1.11 1999/10/12 21:04:21 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -100,7 +100,8 @@ typedef enum
   oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
   oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
   oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
-  oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication
+  oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication,
+  oUsePrivilegedPort
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -114,6 +115,7 @@ static struct
   { "forwardagent", oForwardAgent },
   { "forwardx11", oForwardX11 },
   { "gatewayports", oGatewayPorts },
+  { "useprivilegedports", oUsePrivilegedPort },
   { "rhostsauthentication", oRhostsAuthentication },
   { "passwordauthentication", oPasswordAuthentication },
   { "rsaauthentication", oRSAAuthentication },
@@ -260,6 +262,10 @@ void process_config_line(Options *options, const char *host,
 
     case oGatewayPorts:
       intptr = &options->gateway_ports;
+      goto parse_flag;
+      
+    case oUsePrivilegedPort:
+      intptr = &options->use_privileged_port;
       goto parse_flag;
       
     case oRhostsAuthentication:
@@ -568,6 +574,7 @@ void initialize_options(Options *options)
   options->forward_agent = -1;
   options->forward_x11 = -1;
   options->gateway_ports = -1;
+  options->use_privileged_port = -1;
   options->rhosts_authentication = -1;
   options->rsa_authentication = -1;
 #ifdef KRB4
@@ -613,6 +620,8 @@ void fill_default_options(Options *options)
     options->forward_x11 = 1;
   if (options->gateway_ports == -1)
     options->gateway_ports = 0;
+  if (options->use_privileged_port == -1)
+    options->use_privileged_port = 1;
   if (options->rhosts_authentication == -1)
     options->rhosts_authentication = 1;
   if (options->rsa_authentication == -1)
