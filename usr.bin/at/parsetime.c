@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.8 1999/03/21 04:04:42 alex Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.9 2000/01/05 08:06:25 millert Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -151,7 +151,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: parsetime.c,v 1.8 1999/03/21 04:04:42 alex Exp $";
+static char rcsid[] = "$OpenBSD: parsetime.c,v 1.9 2000/01/05 08:06:25 millert Exp $";
 #endif
 
 /* Local functions */
@@ -443,21 +443,23 @@ assign_date(tm, mday, mon, year)
 	struct tm *tm;
 	int mday, mon, year;
 {
-	if (year > 99) {
-	    if (year >= TM_YEAR_BASE)
-		    year -= TM_YEAR_BASE;
-	    else
-		    panic("garbled time");
-	} else if (year != -1) {
-		/*
-		 * check if the specified year is in the next century.
-		 * allow for one year of user error as many people will
-		 * enter n - 1 at the start of year n.
-		 */
-		if (year < tm->tm_year % 100 - 1)
-			year += 100;
-		/* adjust for the year 2000 and beyond */
-		year += tm->tm_year - (tm->tm_year % 100);
+
+	/*
+	 * Convert year into tm_year format (year - 1900).
+	 * We may be given the year in 2 digit, 4 digit, or tm_year format.
+	 */
+	if (year != -1) {
+		if (year >= TM_YEAR_BASE)
+			year -= TM_YEAR_BASE;	/* convert from 4 digit year */
+		else if (year < 100) {
+			/* Convert to tm_year assuming current century */
+			year += (tm->tm_year / 100) * 100;
+
+			if (year == tm->tm_year - 1)
+				year++;		/* Common off by one error */
+			else if (year < tm->tm_year)
+				year += 100;	/* must be in next century */
+		}
 	}
 
 	if (year < 0 &&
