@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.155 2003/06/09 11:14:46 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.156 2003/06/20 18:24:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -441,6 +441,7 @@ struct pf_state_peer {
 	u_int16_t	max_win;	/* largest window (pre scaling)	*/
 	u_int8_t	state;		/* active state level		*/
 	u_int8_t	wscale;		/* window scaling factor	*/
+	u_int16_t	mss;		/* Maximum segment size option	*/
 	struct pf_state_scrub	*scrub;	/* state is scrubbed		*/
 };
 
