@@ -1,7 +1,7 @@
-#	$OpenBSD: files.i2o,v 1.5 2001/07/03 22:50:41 niklas Exp $
+#	$OpenBSD: files.i2o,v 1.6 2001/07/04 04:36:43 mickey Exp $
 
 device	iop {tid = -1}: scsi
-file	dev/i2o/iop.c			iop	needs-flag
+file	dev/i2o/iop.c			iop & iop_pci	needs-flag
 
 # SCSI peripheral
 device	iopsp: scsi
