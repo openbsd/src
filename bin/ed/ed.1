@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.48 2004/04/19 10:01:53 jmc Exp $
+.\"	$OpenBSD: ed.1,v 1.49 2004/10/04 21:24:54 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -118,6 +118,14 @@ The address(es) indicate the line or range of lines to be affected by the
 command.
 If fewer addresses are given than the command accepts, then
 default addresses are supplied.
+.Pp
+Many
+.Nm
+commands and line addresses support basic regular expressions
+.Pq BREs .
+See
+.Xr re_format 7
+for more information on regular expressions.
 .Pp
 The options are as follows:
 .Bl -tag -width "-p string"
@@ -281,189 +289,6 @@ command, where
 .Ar lc
 is a lower case letter.
 .El
-.Ss REGULAR EXPRESSIONS
-Regular expressions are patterns used in selecting text.
-For example, the
-.Nm
-command
-.Pp
-.Dl g/string/
-.Pp
-prints all lines containing
-.Qq string .
-Regular expressions are also used by the
-.Ic s
-command for selecting old text to be replaced with new.
-.Pp
-In addition to specifying string literals, regular expressions can
-represent classes of strings.
-Strings thus represented are said to be matched by the
-corresponding regular expression.
-If it is possible for a regular expression to match several strings in
-a line, then the leftmost longest match is the one selected.
-.Pp
-The following symbols are used in constructing regular expressions:
-.Bl -tag -width Dsasdfsd
-.It Ar c
-Any character
-.Ar c
-not listed below, including
-.Sq { ,
-.Sq } ,
-.Sq \&( ,
-.Sq \&) ,
-.Sq \*(Lt ,
-and
-.Sq \*(Gt
-matches itself.
-.It \e Ns Ar c
-Any backslash-escaped character
-.Ar c ,
-except for
-.Sq { ,
-.Sq } ,
-.Sq \&( ,
-.Sq \&) ,
-.Sq \*(Lt ,
-and
-.Sq \*(Gt
-matches itself.
-.It \&.
-Matches any single character.
-.It Bq Ar char-class
-Matches any single character in
-.Ar char-class .
-To include a
-.Ql \&]
-in
-.Ar char-class ,
-it must be the first character.
-A range of characters may be specified by separating the end characters
-of the range with a
-.Ql - ;
-e.g.,
-.Ar a-z
-specifies the lower case characters.
-The following literal expressions can also be used in
-.Ar char-class
-to specify sets of characters:
-.Bd -unfilled -offset indent
-[:alnum:] [:cntrl:] [:lower:] [:space:]
-[:alpha:] [:digit:] [:print:] [:upper:]
-[:blank:] [:graph:] [:punct:] [:xdigit:]
-.Ed
-.Pp
-If
-.Ql -
-appears as the first or last character of
-.Ar char-class ,
-then it matches itself.
-All other characters in
-.Ar char-class
-match themselves.
-.Pp
-Patterns in
-.Ar char-class
-of the form
-.Eo [.
-.Ar col-elm
-.Ec .]\&
-or
-.Eo [=
-.Ar col-elm
-.Ec =]\&
-where
-.Ar col-elm
-is a collating element are interpreted according to
-.Xr setlocale 3
-.Pq not currently supported .
-See
-.Xr regex 3
-for an explanation of these constructs.
-.It Bq ^ Ns Ar char-class
-Matches any single character, other than newline, not in
-.Ar char-class .
-.Ar char-class
-is defined as above.
-.It ^
-If
-.Sq ^
-is the first character of a regular expression, then it
-anchors the regular expression to the beginning of a line.
-Otherwise, it matches itself.
-.It $
-If
-.Sq $
-is the last character of a regular expression,
-it anchors the regular expression to the end of a line.
-Otherwise, it matches itself.
-.It \e\*(Lt
-Anchors the single character regular expression or subexpression
-immediately following it to the beginning of a word.
-.Pq This may not be available.
-.It \e\*(Gt
-Anchors the single character regular expression or subexpression
-immediately following it to the end of a word.
-.Pq This may not be available.
-.It \e( Ns Ar re Ns \e)
-Defines a subexpression
-.Ar re .
-Subexpressions may be nested.
-A subsequent backreference of the form
-.Pf \e Ns Ar n ,
-where
-.Ar n
-is a number in the range [1,9], expands to the text matched by the
-.Ar n Ns th
-subexpression.
-For example, the regular expression
-.Ar \e(.*\e)\e1
-matches any string consisting of identical adjacent substrings.
-Subexpressions are ordered relative to their left delimiter.
-.It *
-Matches the single character regular expression or subexpression
-immediately preceding it zero or more times.
-If
-.Sq *
-is the first character of a regular expression or subexpression,
-then it matches itself.
-The
-.Sq *
-operator sometimes yields unexpected results.
-For example, the regular expression
-.Ar b*
-matches the beginning of the string
-.Qq abbb
-(as opposed to the substring
-.Qq bbb ) ,
-since a null match is the only leftmost match.
-.Sm off
-.It Xo
-.Pf \e{ Ar n , m No \e}\ \&
-.Pf \e{ Ar n , No \e}\ \&
-.Pf \e{ Ar n No \e}
-.Xc
-.Sm on
-Matches the single character regular expression or subexpression
-immediately preceding it at least
-.Ar n
-and at most
-.Ar m
-times.
-If
-.Ar m
-is omitted, then it matches at least
-.Ar n
-times.
-If the comma is also omitted, then it matches exactly
-.Ar n
-times.
-.El
-.Pp
-Additional regular expression operators may be defined depending on the
-particular
-.Xr regex 3
-implementation.
 .Ss COMMANDS
 All
 .Nm
@@ -892,24 +717,6 @@ When the shell returns from execution, a
 is printed to the standard output.
 The current line is unchanged.
 .El
-.Sh LIMITATIONS
-.Nm
-processes
-.Ar file
-arguments for backslash escapes, i.e., in a filename,
-any characters preceded by a backslash
-.Pq Ql \e
-are interpreted literally.
-.Pp
-If a text
-.Pq non-binary
-file is not terminated by a newline character,
-then
-.Nm
-appends one on reading/writing it.
-In the case of a binary file,
-.Nm
-does not append a newline on reading/writing.
 .Sh FILES
 .Bl -tag -width /tmp/ed.* -compact
 .It Pa /tmp/ed.*
@@ -959,7 +766,7 @@ but any changes to the buffer are lost.
 .Xr sed 1 ,
 .Xr sh 1 ,
 .Xr vi 1 ,
-.Xr regex 3
+.Xr re_format 7
 .Pp
 "A Tutorial Introduction to the UNIX Text Editor",
 .Pa /usr/share/doc/usd/09.edtut/ .
@@ -978,3 +785,21 @@ An
 .Nm
 command appeared in
 .At v1 .
+.Sh CAVEATS
+.Nm
+processes
+.Ar file
+arguments for backslash escapes, i.e., in a filename,
+any characters preceded by a backslash
+.Pq Ql \e
+are interpreted literally.
+.Pp
+If a text
+.Pq non-binary
+file is not terminated by a newline character,
+then
+.Nm
+appends one on reading/writing it.
+In the case of a binary file,
+.Nm
+does not append a newline on reading/writing.
