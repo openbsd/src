@@ -1,4 +1,67 @@
-#	$OpenBSD: list,v 1.6 2002/04/30 01:31:19 deraadt Exp $
+#
+#	$OpenBSD: list,v 1.7 2002/04/30 03:47:03 deraadt Exp $
+#
+
+SRCDIRS distrib/special
+SRCDIRS bin sbin gnu/usr.bin usr.bin usr.sbin
+SRCDIRS sys/arch/alpha/stand
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin			instbin
+LINK	instbin					bin/cat
+LINK	instbin					bin/chmod bin/chgrp sbin/chown
+LINK	instbin					bin/cp
+LINK	instbin					bin/dd
+LINK	instbin					bin/df
+LINK	instbin					bin/ed
+LINK	instbin					bin/ln
+LINK	instbin					bin/ls
+LINK	instbin					bin/mkdir
+LINK	instbin					bin/mv
+LINK	instbin					bin/ksh bin/sh
+ARGVLINK ksh					-sh
+LINK	instbin					bin/rm
+LINK	instbin					bin/stty
+LINK	instbin					bin/sleep
+LINK	instbin					sbin/disklabel
+LINK	instbin					sbin/dmesg
+LINK	instbin					sbin/hostname
+LINK	instbin					sbin/fsck
+LINK	instbin					sbin/ifconfig
+LINK	instbin					sbin/init
+LINK	instbin					sbin/mknod
+LINK	instbin					sbin/mount
+#LINK	instbin					sbin/mount_cd9660
+LINK	instbin					sbin/mount_ffs
+LINK	instbin					sbin/newfs sbin/mount_mfs
+LINK	instbin					sbin/reboot sbin/halt
+LINK	instbin					sbin/route
+LINK	instbin					sbin/umount
+LINK	instbin					usr/bin/ftp
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin					usr/bin/gzip
+LINK	instbin					usr/bin/less usr/bin/more
+LINK	instbin					usr/bin/sed
+LINK	instbin					usr/bin/pax bin/cpio bin/tar
+#LINK	instbin					usr/mdec/installboot
+
+# copy the MAKEDEV script and make some devices
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV ramdisk
+
+# we need the contents of /usr/mdec XXX - no it's not necessary and won't fit.
+#COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
+#COPY	${DESTDIR}/usr/mdec/bootxx		usr/mdec/bootxx
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group			etc/group
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+TERMCAP	vt100,vt200,dumb			usr/share/misc/termcap
+
+# so DNS can work
+SYMLINK /tmp/resolv.conf.shadow			etc/resolv.conf
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile

@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2002/04/25 22:10:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/04/30 03:47:03 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk${REV}.fs
-CRUNCHCONF?=    ${TOP}/common/${CBIN}.conf
 
 MOUNT_POINT=	/mnt
 
@@ -27,6 +26,8 @@ BOOTXX?=	/usr/mdec/bootxx
 RDSETROOT=	elfrdsetroot
 
 .include "${TOP}/inst-common/Makefile.inc"
+
+LISTS+=		${.CURDIR}/list
 
 all: ${CBIN} bsd.rd
 
