@@ -1,6 +1,2 @@
-dnl	$OpenBSD: upgrade,v 1.9 2002/03/23 23:58:50 miod Exp $
-Due to the youth of the MACHINE port, upgrades to OpenBSD OSREV are not
-supported.
-You are strongly advised to reinstall your existing machines from scratch.
-dnl
-dnl OpenBSDUpgrade({:-CDROM, the miniroot, or the installation floppy-:})
+dnl	$OpenBSD: upgrade,v 1.10 2002/10/03 00:19:49 miod Exp $
+OpenBSDUpgrade({:-CDROM, the miniroot, or the installation floppy-:})
