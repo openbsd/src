@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.354 2003/05/16 17:15:17 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.355 2003/05/17 01:08:50 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2369,7 +2369,6 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			return (PF_DROP);
 		} else
 			*sm = s;
-		/* SYN proxy handling */
 		if ((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN &&
 		    r->keep_state == PF_STATE_SYNPROXY) {
 			s->src.state = PF_TCPS_PROXY_SRC;
@@ -2384,7 +2383,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->src.seqhi = arc4random();
 			pf_send_ack(off, th, pd, af, r->return_ttl, r,
 			    TH_SYN, s->src.seqhi);
-			return (PF_DROP);
+			return (PF_SYNPROXY_DROP);
 		}
 	}
 
@@ -3256,13 +3255,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	if ((*state)->src.state == PF_TCPS_PROXY_SRC) {
 		if (direction != (*state)->direction)
-			return (PF_DROP);
+			return (PF_SYNPROXY_DROP);
 		if (th->th_flags & TH_SYN) {
 			if (ntohl(th->th_seq) != (*state)->src.seqlo)
 				return (PF_DROP);
 			pf_send_ack(off, th, pd, pd->af, 0, (*state)->rule.ptr,
 			    TH_SYN, (*state)->src.seqhi);
-			return (PF_DROP);
+			return (PF_SYNPROXY_DROP);
 		} else if (!(th->th_flags & TH_ACK) ||
 		    (ntohl(th->th_ack) != (*state)->src.seqhi + 1) ||
 		    (ntohl(th->th_seq) != (*state)->src.seqlo + 1))
@@ -3286,12 +3285,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 				pf_send_syn(pd->af, &(*state)->ext.addr,
 				    &(*state)->lan.addr, (*state)->ext.port,
 				    (*state)->lan.port, (*state)->dst.seqhi);
-			return (PF_DROP);
+			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
 		    (TH_SYN|TH_ACK)) ||
 		    (ntohl(th->th_ack) != (*state)->dst.seqhi + 1))
 			return (PF_DROP);
 		else {
+			(*state)->dst.max_win = MAX(ntohs(th->th_win), 1);
 			(*state)->dst.seqlo = ntohl(th->th_seq);
 			pf_send_ack(off, th, pd, pd->af, 0,
 			    (*state)->rule.ptr, 0, 0);
@@ -3299,13 +3299,14 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    (*state)->src.seqlo;
 			(*state)->dst.seqdiff = (*state)->src.seqhi -
 			    (*state)->dst.seqlo;
-			/* XXX */
-			(*state)->src.seqhi = (*state)->src.seqlo + 65536;
-			(*state)->dst.seqhi = (*state)->dst.seqlo + 65536;
+			(*state)->src.seqhi = (*state)->src.seqlo +
+			    (*state)->src.max_win;
+			(*state)->dst.seqhi = (*state)->dst.seqlo +
+			    (*state)->dst.max_win;
 			(*state)->src.wscale = (*state)->dst.wscale = 0;
 			(*state)->src.state = (*state)->dst.state =
 			    TCPS_ESTABLISHED;
-			return (PF_DROP);
+			return (PF_SYNPROXY_DROP);
 		}
 	}
 
@@ -4773,7 +4774,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	/* We do IP header normalization and packet reassembly here */
 	if (pf_normalize_ip(m0, dir, ifp, &reason) != PF_PASS) {
-		ACTION_SET(&action, PF_DROP);
+		action = PF_DROP;
 		goto done;
 	}
 	m = *m0;
@@ -4905,7 +4906,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	if (ifp == status_ifp) {
 		pf_status.bcounters[0][dir == PF_OUT] += pd.tot_len;
-		pf_status.pcounters[0][dir == PF_OUT][action]++;
+		pf_status.pcounters[0][dir == PF_OUT][action != PF_PASS]++;
 	}
 
 done:
@@ -4920,7 +4921,7 @@ done:
 		    pd.tot_len, dir == PF_OUT, r->action == PF_PASS,
 		    r->dst.not);
 
-	if (action != PF_DROP && h->ip_hl > 5 &&
+	if (action == PF_PASS && h->ip_hl > 5 &&
 	    !((s && s->allow_opts) || r->allow_opts)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
@@ -4930,7 +4931,7 @@ done:
 	}
 
 #ifdef ALTQ
-	if (action != PF_DROP && r->qid) {
+	if (action == PF_PASS && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag	*atag;
 
@@ -4952,8 +4953,12 @@ done:
 	if (log)
 		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r, a, ruleset);
 
-	/* pf_route can free the mbuf causing *m0 to become NULL */
-	if (r->rt)
+	if (action == PF_SYNPROXY_DROP) {
+		m_freem(*m0);
+		*m0 = NULL;
+		action = PF_PASS;
+	} else if (r->rt)
+		/* pf_route can free the mbuf causing *m0 to become NULL */
 		pf_route(m0, r, dir, ifp, s);
 
 	return (action);
@@ -5129,7 +5134,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 
 	if (ifp == status_ifp) {
 		pf_status.bcounters[1][dir == PF_OUT] += pd.tot_len;
-		pf_status.pcounters[1][dir == PF_OUT][action]++;
+		pf_status.pcounters[1][dir == PF_OUT][action != PF_PASS]++;
 	}
 
 done:
@@ -5147,7 +5152,7 @@ done:
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
 
 #ifdef ALTQ
-	if (action != PF_DROP && r->qid) {
+	if (action == PF_PASS && r->qid) {
 		struct m_tag	*mtag;
 		struct altq_tag	*atag;
 
@@ -5169,8 +5174,12 @@ done:
 	if (log)
 		PFLOG_PACKET(ifp, h, m, AF_INET6, dir, reason, r, a, ruleset);
 
-	/* pf_route6 can free the mbuf causing *m0 to become NULL */
-	if (r->rt)
+	if (action == PF_SYNPROXY_DROP) {
+		m_freem(*m0);
+		*m0 = NULL;
+		action = PF_PASS;
+	} else if (r->rt)
+		/* pf_route6 can free the mbuf causing *m0 to become NULL */
 		pf_route6(m0, r, dir, ifp, s);
 
 	return (action);
