@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.8 2004/09/27 18:25:47 brad Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.9 2004/10/04 13:02:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,6 +87,9 @@ amphymatch(struct device *parent, void *match, void *aux)
 		return(10);
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_DAVICOM_DM9102)
+		return(10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_DAVICOM_DM9601)
 		return(10);
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&	/*XXX*/
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_AMD_79C875phy)
