@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.131 1999/03/23 08:17:16 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.133 1999/05/03 17:23:59 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2831,121 +2831,121 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C505 (Pluto)",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C561,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C561",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C586A IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C576 3V",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C585,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C585 (Apollo) PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C586 (Apollo VP) PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C595 (Apollo VP2) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597PCI,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C597 (Apollo VP3) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598PCI,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C598 (Apollo MVP3) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT86C926 Amazon",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C570M (Apollo) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570MV,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C570M (Apollo) PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C586 (Apollo VP) IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C1595,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C1595 (Apollo VP2) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT83C572 USB",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C586 (Apollo VP) Power Management",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C597 (Apollo VP3) PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "VT82C598 (Apollo MVP3) PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "Rhine/RhineII",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
 	    0,
-	    "VIA Technologies",
+	    "VIA",
 	    "RhineII",
 	},
 	{
@@ -4673,7 +4673,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_VIATECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "VIA Technologies",
+	    "VIA",
 	    NULL,
 	},
 	{

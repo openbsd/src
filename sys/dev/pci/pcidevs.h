@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.131 1999/03/23 08:17:16 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.133 1999/05/03 17:23:59 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -303,7 +303,7 @@
 #define	PCI_VENDOR_TRIONES	0x1103		/* Triones Technologies */
 #define	PCI_VENDOR_RASTEROPS	0x1104		/* RasterOps */
 #define	PCI_VENDOR_SIGMA	0x1105		/* Sigma Designs */
-#define	PCI_VENDOR_VIATECH	0x1106		/* VIA Technologies */
+#define	PCI_VENDOR_VIATECH	0x1106		/* VIA */
 #define	PCI_VENDOR_STRATIS	0x1107		/* Stratus Computer */
 #define	PCI_VENDOR_PROTEON	0x1108		/* Proteon */
 #define	PCI_VENDOR_COGENT	0x1109		/* Cogent Data Technologies */
@@ -886,7 +886,7 @@
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */
 
-/* Industrial Computer Source products */
+/* Industrial Computer Source */
 #define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* WDT 50x Watchdog Timer */
 
 /* Integrated Micro Solutions products */
