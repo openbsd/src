@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.22 2001/06/27 21:54:47 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.23 2001/06/28 20:30:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -80,8 +80,8 @@ usage()
 {
 	extern char *__progname;
  
-	fprintf(stderr, "usage: %s [-de] [-c set] [-l interface]", __progname);
-	fprintf(stderr, " [-N] [-n file] [-r file] [-s set] [-v] [-z]\n");
+	fprintf(stderr, "usage: %s [-de] [-F set] [-l interface]", __progname);
+	fprintf(stderr, " [-n] [-N file] [-R file] [-s set] [-v]\n");
 	exit(1);
 }
 
