@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.15 2003/01/15 21:25:44 millert Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.16 2003/01/15 22:20:15 millert Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.15 2003/01/15 21:25:44 millert Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.16 2003/01/15 22:20:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ main(argc, argv)
 		if (sysctl(mib, 3, &nfs_id, &len, NULL, 0))
 			err(1, "sysctl: VFS_MAXTYPENUM");
 
-		do {
+		for (; nfs_id; nfs_id--) {
 			struct vfsconf vfsc;
 
 			mib[0] = CTL_VFS;
@@ -175,9 +175,8 @@ main(argc, argv)
 
 			if (!strcmp(vfsc.vfc_name, MOUNT_NFS))
 				break;
-		} while (--nfs_id);
-
-		if (nfs_id < 0)
+		}
+		if (nfs_id == 0)
 			errx(1, "cannot find nfs filesystem id");
 	}
 
