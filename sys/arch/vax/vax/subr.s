@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.8 2000/06/05 11:03:05 art Exp $     */
+/*	$OpenBSD: subr.s,v 1.9 2000/10/10 18:25:27 bjc Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -156,7 +156,7 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 
 # Have bcopy and bzero here to be sure that system files that not gets
 # macros.h included will not complain.
-ENTRY(bcopy,0)
+ENTRY(bcopy,R2)
 	movl	4(ap), r0
 	movl	8(ap), r1
 	movl	0xc(ap), r2
@@ -170,7 +170,7 @@ ENTRY(bzero,0)
 	ret
 
 # cmpc3 is sometimes emulated; we cannot use it
-ENTRY(bcmp, 0);
+ENTRY(bcmp, R2);
     movl    4(ap), r2
     movl    8(ap), r1
     movl    12(ap), r0
