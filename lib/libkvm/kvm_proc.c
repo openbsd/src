@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.18 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.19 2003/11/17 20:25:18 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.18 2003/08/06 21:08:05 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.19 2003/11/17 20:25:18 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -421,10 +421,11 @@ kvm_getprocs(kd, op, arg, cnt)
 	} else {
 		struct nlist nl[4], *p;
 
+		memset(nl, 0, sizeof(nl));
 		nl[0].n_name = "_nprocs";
 		nl[1].n_name = "_allproc";
 		nl[2].n_name = "_zombproc";
-		nl[3].n_name = 0;
+		nl[3].n_name = NULL;
 
 		if (kvm_nlist(kd, nl) != 0) {
 			for (p = nl; p->n_type != 0; ++p)
