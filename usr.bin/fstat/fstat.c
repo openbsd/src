@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.39 2002/06/12 06:07:15 mpech Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.40 2002/07/13 06:02:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.39 2002/06/12 06:07:15 mpech Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.40 2002/07/13 06:02:57 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -168,9 +168,7 @@ void cryptotrans(void *, int i);
 void systracetrans(struct fsystrace *, int i);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -311,8 +309,7 @@ pid_t	Pid;
  * print open files attributed to this process
  */
 void
-dofiles(kp)
-	struct kinfo_proc *kp;
+dofiles(struct kinfo_proc *kp)
 {
 	int i;
 	struct file file;
@@ -401,11 +398,7 @@ dofiles(kp)
 }
 
 void
-vtrans(vp, i, flag, offset)
-	struct vnode *vp;
-	int i;
-	int flag;
-	off_t offset;
+vtrans(struct vnode *vp, int i, int flag, off_t offset)
 {
 	struct vnode vn;
 	struct filestat fst;
@@ -522,9 +515,7 @@ vtrans(vp, i, flag, offset)
 }
 
 int
-ufs_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+ufs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct inode inode;
 
@@ -543,9 +534,7 @@ ufs_filestat(vp, fsp)
 }
 
 int
-ext2fs_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+ext2fs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct inode inode;
 
@@ -564,9 +553,7 @@ ext2fs_filestat(vp, fsp)
 }
 
 int
-msdos_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+msdos_filestat(struct vnode *vp, struct filestat *fsp)
 {
 #if 0
 	struct inode inode;
@@ -587,9 +574,7 @@ msdos_filestat(vp, fsp)
 }
 
 int
-nfs_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+nfs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct nfsnode nfsnode;
 	mode_t mode;
@@ -656,9 +641,7 @@ xfs_filestat(vp, fsp)
 }
 
 int
-null_filestat(vp, fsp)
-	struct vnode *vp;
-	struct filestat *fsp;
+null_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct null_node node;
 	struct filestat fst;
@@ -733,8 +716,7 @@ null_filestat(vp, fsp)
 }
 
 char *
-getmnton(m)
-	struct mount *m;
+getmnton(struct mount *m)
 {
 	static struct mount mount;
 	static struct mtab {
@@ -761,9 +743,7 @@ getmnton(m)
 }
 
 void
-pipetrans(pipe, i)
-	struct pipe *pipe;
-	int i;
+pipetrans(struct pipe *pipe, int i)
 {
 	struct pipe pi;
 	void *maxaddr;
@@ -796,9 +776,7 @@ bad:
 }
 
 void
-kqueuetrans(kq, i)
-	struct kqueue *kq;
-	int i;
+kqueuetrans(struct kqueue *kq, int i)
 {
 	struct kqueue kqi;
 
@@ -821,24 +799,17 @@ bad:
 }
 
 void
-cryptotrans(f, i)
-	void *f;
-	int i;
+cryptotrans(void *f, int i)
 {
 	PREFIX(i);
 
 	printf(" ");
 
 	printf("crypto %p\n", f);
-	return;
-bad:
-	printf("* error\n");
 }
 
 void
-systracetrans(f, i)
-	struct fsystrace *f;
-	int i;
+systracetrans(struct fsystrace *f, int i)
 {
 	struct fsystrace fi;
 
@@ -860,8 +831,7 @@ bad:
 
 #ifdef INET6
 const char *
-inet6_addrstr(p)
-	struct in6_addr *p;
+inet6_addrstr(struct in6_addr *p)
 {
 	struct sockaddr_in6 sin6;
 	static char hbuf[NI_MAXHOST];
@@ -891,9 +861,7 @@ inet6_addrstr(p)
 #endif
 
 void
-socktrans(sock, i)
-	struct socket *sock;
-	int i;
+socktrans(struct socket *sock, int i)
 {
 	static char *stypename[] = {
 		"unused",	/* 0 */
@@ -1114,8 +1082,7 @@ getinetproto(number)
 }
 
 int
-getfname(filename)
-	char *filename;
+getfname(char *filename)
 {
 	struct stat statbuf;
 	DEVS *cur;
@@ -1136,7 +1103,7 @@ getfname(filename)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: fstat [-fnv] [-p pid] [-u user] "
 	    "[-N system] [-M core] [file ...]\n");

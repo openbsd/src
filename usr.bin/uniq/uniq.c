@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.9 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.10 2002/07/13 06:04:24 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.9 2002/02/16 21:27:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.10 2002/07/13 06:04:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -70,12 +70,10 @@ void	 obsolete(char *[]);
 void	 usage(void);
 
 int
-main (argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *t1, *t2;
-	FILE *ifp, *ofp;
+	FILE *ifp = NULL, *ofp = NULL;
 	int ch;
 	char *prevline, *thisline, *p;
 
@@ -174,9 +172,7 @@ done:	argc -= optind;
  *	of the line.
  */
 void
-show(ofp, str)
-	FILE *ofp;
-	char *str;
+show(FILE *ofp, char *str)
 {
 
 	if (cflag && *str)
@@ -186,8 +182,7 @@ show(ofp, str)
 }
 
 char *
-skip(str)
-	char *str;
+skip(char *str)
 {
 	int infield, nchars, nfields;
 
@@ -204,8 +199,7 @@ skip(str)
 }
 
 FILE *
-file(name, mode)
-	char *name, *mode;
+file(char *name, char *mode)
 {
 	FILE *fp;
 
@@ -215,8 +209,7 @@ file(name, mode)
 }
 
 void
-obsolete(argv)
-	char *argv[];
+obsolete(char *argv[])
 {
 	int len;
 	char *ap, *p, *start;
@@ -245,7 +238,7 @@ obsolete(argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: uniq [-c | -du] [-f fields] [-s chars] [input [output]]\n");
