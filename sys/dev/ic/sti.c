@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.24 2003/04/03 23:09:36 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.25 2003/05/24 17:42:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -374,12 +374,15 @@ int
 sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 {
 	struct sti_font *fp = &sc->sc_curfont;
-	int uc, size;
+	int size;
+#ifdef notyet
+	int uc;
 	struct {
 		struct sti_unpmvflags flags;
 		struct sti_unpmvin in;
 		struct sti_unpmvout out;
 	} a;
+#endif
 
 	/*
 	 * Get the first PROM font in memory
@@ -423,6 +426,7 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 		addr = NULL; /* fp->next */
 	} while (addr);
 
+#ifdef notyet
 	/*
 	 * If there is enough room in the off-screen framebuffer memory,
 	 * display all the characters there in order to display them
@@ -456,6 +460,7 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 		free(sc->sc_romfont, M_DEVBUF);
 		sc->sc_romfont = NULL;
 	}
+#endif
 
 	return (0);
 }
