@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2000/10/11 11:52:09 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.18 2000/10/24 01:50:19 hugh Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -40,6 +40,8 @@ option 		COMPAT_12
 #option 	COMPAT_13
 #option 	COMPAT_14
 #option 	COMPAT_ULTRIX
+
+option		INSN_EMULATE	# CPU lacks some hardware instructions.
 
 # Kernel(s) to compile
 config		bsd		swap generic

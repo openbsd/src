@@ -305,7 +305,8 @@ file	arch/vax/vax/ka43.c		vax43
 file	arch/vax/vax/ka46.c		vax46
 file	arch/vax/vax/ka48.c		vax48
 file	arch/vax/vax/ka49.c		vax49
-file	arch/vax/vax/emulate.s		vax630|vax650|vax410
+file	arch/vax/vax/emulate.s		insn_emulate
+file	arch/vax/vax/unimpl_emul.s	insn_emulate
 file	arch/vax/vax/ka650.c		vax650
 file	arch/vax/vax/ka670.c		vax670
 file	arch/vax/vax/scb.c
