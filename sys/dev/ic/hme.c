@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.19 2002/08/07 03:42:14 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.20 2002/09/28 02:04:44 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -662,7 +662,7 @@ hme_start(ifp)
 
 	if (cnt != 0) {
 		sc->sc_tx_prod = bix;
-		ifp->if_timer = 5;
+		ifp->if_timer = 0;
 	}
 }
 
@@ -971,10 +971,13 @@ hme_mii_statchg(dev)
 
 	/* Set the MAC Full Duplex bit appropriately */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
-	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0) {
 		v |= HME_MAC_TXCFG_FULLDPLX;
-	else
+		sc->sc_arpcom.ac_if.if_flags |= IFF_SIMPLEX;
+	} else {
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
+		sc->sc_arpcom.ac_if.if_flags &= ~IFF_SIMPLEX;
+	}
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
 	/* If an external transceiver is selected, enable its MII drivers */
