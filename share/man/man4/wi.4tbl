@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.64 2004/12/05 04:03:53 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.65 2005/01/15 03:59:39 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -146,6 +146,7 @@ Adaptec AWN-8030:Prism-2.5:PCMCIA
 Addtron AWA-100:Prism-2:PCI
 Addtron AWP-100:Prism-2:PCMCIA
 Agere ORiNOCO:Hermes:PCMCIA
+Ambit WLAN:Prism-3:USB
 Apacer Wireless Steno MB112:Prism-3:USB
 Apple Airport:Hermes:macobio
 ARtem Onair:Hermes:PCMCIA
@@ -203,6 +204,7 @@ Nokia C020 Wireless LAN:Prism-I:PCMCIA
 Nokia C110/C111 Wireless LAN:Prism-2:PCMCIA
 Nortel E-mobility 211818-A:Spectrum24:PCI
 NTT-ME 11Mbps Wireless LAN:Prism-2:PCMCIA
+Pheenet WL-503IA:Prism-3:USB
 Planex GW-NS11H:Prism-3:PCMCIA
 Proxim Harmony:Prism-2:PCMCIA
 Proxim RangeLAN-DS:Prism-2:PCMCIA
@@ -210,6 +212,7 @@ Samsung MagicLAN SWL-2000N:Prism-2:PCMCIA
 Samsung MagicLAN SWL-2210P:Prism-2:PCI
 Siemens SpeedStream SS1021:Prism-2:PCMCIA
 Siemens SpeedStream SS1022:Prism-3:USB
+Sitecom WL-022:Prism-3:USB
 SMC 2632 EZ Connect:Prism-2:PCMCIA
 Symbol Spectrum24:Spectrum24:PCMCIA
 Symbol LA4123:Spectrum24:PCI
