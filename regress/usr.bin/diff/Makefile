@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2003/07/17 21:04:03 otto Exp $
+# $OpenBSD: Makefile,v 1.2 2003/07/21 20:16:21 otto Exp $
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12
 
 DIFF=diff
 
@@ -16,6 +16,8 @@ DIFF=diff
 # t8: revisison 1.1 and 1.54 of kern_malloc.c
 # t9: revisison 1.1 and 1.104 of vfs_syscalls.c
 # t10: two files with no end of line at the end, line in second file is longer
+# t11: rev 1.3 and 1.36 of usr.bin/ed/ed.1.
+# t12: rev 1.1 and 1.2 of sbin/isakmpd/regress/hmac/Makefile. Fails.
 
 .SUFFIXES: .1 .2
 
