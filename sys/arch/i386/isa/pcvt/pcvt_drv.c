@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.29 1999/12/01 09:59:59 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.30 2000/07/19 13:39:34 art Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -97,6 +97,12 @@ void pccnpollc(Dev_t, int);
 int pcprobe(struct device *, void *, void *);
 void pcattach(struct device *, struct device *, void *);
 
+
+#if PCVT_KBD_FIFO
+struct timeout pcvt_to;
+void pcvt_timeout(void *);
+#endif
+
 int
 pcprobe(struct device *parent, void *match, void *aux)
 {
@@ -178,6 +184,10 @@ pcattach(struct device *parent, struct device *self, void *aux)
 	pcconsp = vs[0].vs_tty;
 
 	async_update();
+
+#if PCVT_KBD_FIFO
+	timeout_set(&pcvt_to, pcvt_timeout, NULL);
+#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pcintr, (void *)0, sc->sc_dev.dv_xname);
@@ -385,15 +395,11 @@ u_char pcvt_kbd_fifo[PCVT_KBD_FIFO_SZ];
 int pcvt_kbd_wptr = 0;
 int pcvt_kbd_rptr = 0;
 short pcvt_kbd_count= 0;
-static u_char pcvt_timeout_scheduled;
 
-static void
+void
 pcvt_timeout(void *arg)
 {
-	int s;
 	u_char *cp;
-
-	pcvt_timeout_scheduled = 0;
 
 #if PCVT_SCREENSAVER
 	pcvt_scrnsv_reset();
@@ -414,13 +420,6 @@ pcvt_timeout(void *arg)
 				(*linesw[pcconsp->t_line].l_rint)(*cp++ & 0xff,
 				    pcconsp);
 		}
-
-		s = spltty();
-
-		if (!pcvt_kbd_count)
-			pcvt_timeout_scheduled = 0;
-
-		splx(s);
 	}
 
 	return;
@@ -474,11 +473,8 @@ pcintr(void *arg)
 	}
 
 	if (ret == 1) {	/* got data from keyboard ? */
-		if (!pcvt_timeout_scheduled) {	/* if not already active .. */
-			s = spltty();
-			pcvt_timeout_scheduled = 1;	/* flag active */
-			timeout((TIMEOUT_FUNC_T)pcvt_timeout, (caddr_t) 0, 1);
-			splx(s);
+		if (!timeout_pending(&pcvt_to)) {/* if not already active .. */
+			timeout_add(&pcvt_to, 1);
 		}
 	}
 	return (ret);
@@ -546,7 +542,7 @@ pcstart(register struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 
 	tp->t_state |= TS_TIMEOUT;
-	timeout(ttrstrt, tp, 1);
+	timeout_add(&tp->t_rstrt_to, 1);
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 low:
