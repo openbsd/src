@@ -2700,3 +2700,15 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/dev/ic/i8253reg.h
+./usr/include/dev/ic/oplreg.h
+./usr/include/dev/ic/oplvar.h
+./usr/include/dev/isa/mpu401var.h
+./usr/include/dev/isa/pcppireg.h
+./usr/include/dev/isa/pcppivar.h
+./usr/include/dev/isa/spkrio.h
+./usr/include/dev/midi_if.h
+./usr/include/dev/midisynvar.h
+./usr/include/dev/midivar.h
+./usr/include/dev/sequencervar.h
+./usr/include/sys/midiio.h
