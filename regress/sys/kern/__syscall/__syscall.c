@@ -1,4 +1,4 @@
-/*	$OpenBSD: __syscall.c,v 1.1 2002/02/08 21:39:22 art Exp $	*/
+/*	$OpenBSD: __syscall.c,v 1.2 2002/02/13 16:24:25 art Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -18,7 +18,7 @@ main()
 	case -1:
 		err(1, "fork");
 	case 0:
-		__syscall(SYS_exit, (u_int64_t)17);
+		__syscall((u_int64_t)SYS_exit, (u_int64_t)17);
 		abort();
 	}
 
