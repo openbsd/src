@@ -1,3 +1,6 @@
+/*
+ * Public domain.  2001, Theo de Raadt
+ */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <stdio.h>
