@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.4 1996/08/22 20:33:16 millert Exp $*/
+/* *	$OpenBSD: defs.h,v 1.5 1996/08/22 20:40:43 millert Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -179,6 +179,4 @@ void	 prnames __P((struct namelist *));
 void	 server __P((void));
 void	 yyerror __P((char *));
 int	 yyparse __P((void));
-/* XXX - move to /usr/include/unistd.h... */
-int	 rcmdsh __P((char **, u_short, char *, char *, char *, char *));
 char	*xbasename __P((char *));
