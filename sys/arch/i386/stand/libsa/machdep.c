@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 1997/09/02 19:17:41 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1997/09/29 03:48:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -83,7 +83,7 @@ apm_check()
 			 "shll $16, %%ecx\n\t"
 			 "orl %%ecx, %0"
 			 : "=a" (detail), "=b" (f)
-			 : "0" (APM_INSTCHECK), "1" (PMDV_APMBIOS)
+			 : "0" (APM_INSTCHECK), "1" (APM_DEV_APM_BIOS)
 			 : "%ecx", "cc");
 	if (f || BIOS_regs.biosr_bx != 0x504d /* "PM" */ ) {
 #ifdef DEBUG
@@ -101,7 +101,7 @@ apm_disconnect() {
 	__asm __volatile(DOINT(0x15) "\n\t"
 			 "setc %b0"
 			 : "=a" (rv)
-			 : "0" (APM_DISCONNECTANY), "b" (PMDV_APMBIOS)
+			 : "0" (APM_DISCONNECT), "b" (APM_DEV_APM_BIOS)
 			 : "%ecx", "%edx", "cc");
 	return (rv & 0xff)? rv >> 8 : 0;
 }
@@ -116,19 +116,19 @@ apm_connect()
 			  "movzwl %%ax, %%eax\n\tshll $4, %0\n\t"
 			  "movzwl %%cx, %%ecx\n\tshll $4, %2\n\t"
 			  "movzwl %%dx, %%edx\n\tshll $4, %3\n\t"
-			  : "=a" (BIOS_vars.apm_code32_base),
+			  : "=a" (BIOS_vars.bios_apm_code32_base),
 			    "=b" (f),
-			    "=c" (BIOS_vars.apm_code16_base),
-			    "=d" (BIOS_vars.apm_data_base)
-			  : "0" (APM_PROT32CONNECT), "1" (PMDV_APMBIOS)
+			    "=c" (BIOS_vars.bios_apm_code16_base),
+			    "=d" (BIOS_vars.bios_apm_data_base)
+			  : "0" (APM_PROT32_CONNECT), "1" (APM_DEV_APM_BIOS)
 			  : "cc");
-	BIOS_vars.apm_entry    = BIOS_regs.biosr_bx;
+	BIOS_vars.bios_apm_entry    = BIOS_regs.biosr_bx;
 #if 0
-	BIOS_vars.apm_code_len = BIOS_regs.biosr_si & 0xffff;
-	BIOS_vars.apm_data_len = BIOS_regs.biosr_di & 0xffff;
+	BIOS_vars.bios_apm_code_len = BIOS_regs.biosr_si & 0xffff;
+	BIOS_vars.bios_apm_data_len = BIOS_regs.biosr_di & 0xffff;
 #else
-	BIOS_vars.apm_code_len = 0x10000;
-	BIOS_vars.apm_data_len = 0x10000;
+	BIOS_vars.bios_apm_code_len = 0x10000;
+	BIOS_vars.bios_apm_data_len = 0x10000;
 #endif
 	return (f & 0xff)? f >> 8 : 0;
 }
@@ -147,7 +147,7 @@ machdep()
 #endif
 
 #ifdef BOOT_APM
-	if ((BIOS_vars.apm_detail = apm_check())) {
+	if ((BIOS_vars.bios_apm_detail = apm_check())) {
 
 		printf("apm: ");
 		apm_disconnect();
@@ -155,10 +155,13 @@ machdep()
 			printf("connect error\n");
 #ifdef DEBUG
 		printf("%x text=%x/%x[%x] data=%x[%x] @ %x",
-		       BIOS_vars.apm_detail, BIOS_vars.apm_code32_base,
-		       BIOS_vars.apm_code16_base, BIOS_vars.apm_code_len,
-		       BIOS_vars.apm_data_base, BIOS_vars.apm_data_len,
-		       BIOS_vars.apm_entry);
+		       BIOS_vars.bios_apm_detail,
+		       BIOS_vars.bios_apm_code32_base,
+		       BIOS_vars.bios_apm_code16_base,
+		       BIOS_vars.bios_apm_code_len,
+		       BIOS_vars.bios_apm_data_base,
+		       BIOS_vars.bios_apm_data_len,
+		       BIOS_vars.bios_apm_entry);
 #else
 		printf("present");
 #endif
