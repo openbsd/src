@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.39 1999/08/09 17:38:45 deraadt Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.40 2001/01/29 05:51:00 mickey Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -234,8 +234,8 @@ struct isapnp_pin {
 };
 
 struct isapnp_knowndev {
-	const char *pnpid;
-	const char *driver;
+	const char pnpid[8];
+	const char driver[5];
 };
 
 /*
@@ -354,7 +354,7 @@ struct isa_softc {
 	 * DMA maps used for the 8 DMA channels.
 	 */
 	bus_dmamap_t	sc_dmamaps[8];
-	vm_size_t	sc_dmalength[8];
+	bus_size_t 	sc_dmalength[8];
 
 	int	sc_dmareads;		/* state for isa_dmadone() */
 	int	sc_dmafinished;		/* DMA completion state */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.28 1999/08/22 06:13:10 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.29 2001/01/29 05:51:00 mickey Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
 int isapnp_alloc_drq __P((struct device *, struct isapnp_pin *));
 int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
     struct isa_attach_args *, int));
-struct isa_attach_args *isapnp_bestconfig __P((struct device *, 
+struct isa_attach_args *isapnp_bestconfig __P((struct device *,
     struct isapnp_softc *, struct isa_attach_args **));
 void isapnp_print_region __P((const char *, struct isapnp_region *,
     size_t));
@@ -455,7 +455,7 @@ isapnp_bestconfig(isa, sc, ipa)
 				else {
 					if (n)
 						n->ipa_sibling = c;
-				
+
 					else
 						l = c;
 					n = c;
@@ -481,7 +481,7 @@ isapnp_id_to_vendor(v, id)
 {
 	static const char hex[] = "0123456789ABCDEF";
 	char *p = v;
-	
+
 	*p++ = 'A' + (id[0] >> 2) - 1;
 	*p++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*p++ = 'A' + (id[1] & 0x1f) - 1;
@@ -610,7 +610,7 @@ isapnp_submatch(parent, match, aux)
 	const char *dname;
 	int i;
 
-	for (i = 0; isapnp_knowndevs[i].pnpid; i++) {
+	for (i = 0; isapnp_knowndevs[i].pnpid[0]; i++) {
 		dname = NULL;
 
 		if (strcmp(isapnp_knowndevs[i].pnpid, ipa->ipa_devlogic) == 0)
@@ -721,7 +721,7 @@ isapnp_configure(sc, ipa)
 	for (i = 0; i < sizeof(isapnp_mem_range); i++) {
 		if (i < ipa->ipa_nmem)
 			r = &ipa->ipa_mem[i];
-		else 
+		else
 			r = &rz;
 
 		isapnp_write_reg(sc,
@@ -784,7 +784,7 @@ isapnp_configure(sc, ipa)
 	for (i = 0; i < sizeof(isapnp_mem32_range); i++) {
 		if (i < ipa->ipa_nmem32)
 			r = &ipa->ipa_mem32[i];
-		else 
+		else
 			r = &rz;
 
 		isapnp_write_reg(sc,
@@ -827,7 +827,7 @@ isapnp_isa_attach_hook(isa_sc)
 
 {
 	struct isapnp_softc sc;
-	
+
 	bzero(&sc, sizeof sc);
 	sc.sc_iot = isa_sc->sc_iot;
 	sc.sc_ncards = 0;
@@ -890,7 +890,9 @@ isapnp_attach(parent, self, aux)
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
+#if NISADMA > 0
 	sc->sc_dmat = ia->ia_dmat;
+#endif
 	sc->sc_ncards = 0;
 
 	if (isapnp_map(sc))
@@ -940,7 +942,9 @@ isapnp_attach(parent, self, aux)
 			lpa->ia_ic = ia->ia_ic;
 			lpa->ia_iot = ia->ia_iot;
 			lpa->ia_memt = ia->ia_memt;
+#if NISADMA > 0
 			lpa->ia_dmat = ia->ia_dmat;
+#endif
 			lpa->ia_delaybah = ia->ia_delaybah;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
