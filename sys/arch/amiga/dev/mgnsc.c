@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgnsc.c,v 1.6 1996/05/02 06:44:19 niklas Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.7 1996/05/06 09:35:05 niklas Exp $	*/
 /*	$NetBSD: mgnsc.c,v 1.18 1996/04/21 21:12:11 veego Exp $	*/
 
 /*
@@ -201,7 +201,8 @@ mgnsc_dmaintr(arg)
 	siopintr(sc);
 #else
 	add_sicallback((sifunc_t)siopintr, sc, NULL);
-#endif	return (1);
+#endif
+	return (1);
 }
 
 #ifdef DEBUG
