@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.18 2000/01/16 12:39:55 maja Exp $	*/
+/*	$OpenBSD: scon.c,v 1.19 2000/12/07 18:19:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -349,13 +349,7 @@ char *argv[];
 	else
 	{
 		if((fd = open(device, O_RDWR)) == -1)
-		{
-			char buffer[80];
-			strcpy(buffer,"ERROR opening ");
-			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
-			perror(buffer);
-			exit(1);
-		}
+			err(1, "ERROR opening %s", device);
 		if(vflag)
 			printf("using device %s\n",device);		
 	}
@@ -374,20 +368,14 @@ char *argv[];
 		}
 
 		if(ioctl(fd, SETSCROLLSIZE, &scrollback_pages) < 0)
-		{
-			perror("ioctl(SETSCROLLSIZE)");
-			exit(2);
-		}
+			err(2, "ioctl(SETSCROLLSIZE)");
 		exit(0);
 	}
 
 	if (oflag == 1)
 	{
 		if (ioctl(fd, TOGGLEPCDISP, &oflag) < 0)
-		{
-			perror("ioctl(TOGGLEPCDISP)");
-			exit(2);
-		}
+			err(2, "ioctl(TOGGLEPCDISP)");
 		exit(0);
 	}
 
@@ -419,11 +407,7 @@ char *argv[];
 		}
 
 		if(ioctl(fd, VGASCREENSAVER, &timeout) < 0)
-		{
-			perror("ioctl(VGASCREENSAVER)");
-			fprintf(stderr, "Check the driver, the screensaver is probably not compiled in!\n");
-			exit(2);
-		}
+			err(2, "ioctl(VGASCREENSAVER)");
 		goto success;
 	}
 
@@ -432,10 +416,7 @@ char *argv[];
 		if(vflag)
 			printf("Setting number of columns to %d\n", colms);
 		if(ioctl(fd, VGASETCOLMS, &colms) < 0)
-		{
-			perror("ioctl(VGASETCOLMS)");
-			exit(2);
-		}
+			err(2, "ioctl(VGASETCOLMS)");
 		goto success;
 	}
 	
@@ -468,10 +449,7 @@ char *argv[];
 				p.g = palette[idx].g;
 				p.b = palette[idx].b;
 				if(ioctl(fd, VGAWRITEPEL, (caddr_t)&p) < 0)
-				{
-					perror("ioctl(fd, VGAWRITEPEL)");
-					return 2;
-				}
+					err(2, "ioctl(fd, VGAWRITEPEL)");
 			}
 		goto success;
 	}
@@ -488,10 +466,7 @@ char *argv[];
 			printf("processing option -c, setting current screen to %d\n",current);
 		
 		if(ioctl(fd, VGASETSCREEN, &screeninfo) == -1)
-		{
-			perror("ioctl VGASETSCREEN failed");
-			exit(1);
-		}
+			err(1, "ioctl VGASETSCREEN failed");
 		exit(0);
 	}
 
@@ -532,10 +507,7 @@ char *argv[];
 	screeninfo.force_24lines = fflag;
 
 	if(ioctl(fd, VGASETSCREEN, &screeninfo) == -1)
-	{
-		perror("ioctl VGASETSCREEN failed");
-		exit(1);
-	}
+		err(1, "ioctl VGASETSCREEN failed");
 success:
 	if(vflag)
 		printf("successful execution of ioctl VGASETSCREEN!\n");
@@ -569,10 +541,7 @@ void printadaptor(fd)
 int fd;
 {
 	if(ioctl(fd, VGAGETSCREEN, &screeninfo) == -1)
-	{
-		perror("ioctl VGAGETSCREEN failed");
-		exit(1);
-	}
+		err(1, "ioctl VGAGETSCREEN failed");
 	switch(screeninfo.adaptor_type)
 	{
 		default:
@@ -602,10 +571,7 @@ void printmonitor(fd)
 int fd;
 {
 	if(ioctl(fd, VGAGETSCREEN, &screeninfo) == -1)
-	{
-		perror("ioctl VGAGETSCREEN failed");
-		exit(1);
-	}
+		err(1, "ioctl VGAGETSCREEN failed");
 	switch(screeninfo.monitor_type)
 	{
 		default:
@@ -697,10 +663,7 @@ void printinfo(fd)
 int fd;
 {
 	if(ioctl(fd, VGAGETSCREEN, &screeninfo) == -1)
-	{
-		perror("ioctl VGAGETSCREEN failed");
-		exit(1);
-	}
+		err(1, "ioctl VGAGETSCREEN failed");
 
 	printf( "Video Adaptor Type           = ");
 	
@@ -822,10 +785,7 @@ static void printpalette(int fd)
 		struct vgapel p;
 		p.idx = idx;
 		if(ioctl(fd, VGAREADPEL, &p) < 0)
-		{
-			perror("ioctl(VGAREADPEL)");
-			exit(2);
-		}
+			err(2, "ioctl(VGAREADPEL)");
 		palette[idx].r = p.r;
 		palette[idx].g = p.g;
 		palette[idx].b = p.b;

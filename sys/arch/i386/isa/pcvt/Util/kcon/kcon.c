@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcon.c,v 1.6 1999/01/13 07:26:05 niklas Exp $	*/
+/*	$OpenBSD: kcon.c,v 1.7 2000/12/07 18:19:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -181,10 +181,7 @@ char *argv[];
 	}
 
 	if((kbfd = open(KEYB_DEVICE, 0)) < 0)
-	{
-		perror("kcon: keyboard open failure");
-		exit(1);
-	}
+		err(1, "kcon: keyboard open failure");
 
 	if(sf)
 	{
@@ -331,10 +328,7 @@ int kbfd;
 		kbmapp->keynum = i;
 
 		if(ioctl(kbfd, KBDGCKEY, kbmapp) < 0)
-		{
-			perror("kcon: ioctl KBDGCKEY failed");
-			exit(1);
-		}
+			err(1, "kcon: ioctl KBDGCKEY failed");
 
 		if((kbmapp->type & KBD_MASK) == KBD_ALTGR)
 			altgr_defined = i;
@@ -459,10 +453,7 @@ int kbfd;
 	int delay, rate;
 	
 	if((ioctl(kbfd, KBDGTPMAT, &cur_typemat_val)) < 0)
-	{
-		perror("kcon: ioctl KBDGTPMAT failed");
-		exit(1);
-	}
+		err(1, "kcon: ioctl KBDGTPMAT failed");
 
 	delay = ((cur_typemat_val & 0x60) >> 5);
 	rate = cur_typemat_val & 0x1f;
@@ -488,10 +479,7 @@ int tf;
 		srepsw_val = KBD_REPEATOFF;
 
 	if(ioctl(kbfd, KBDSREPSW, &srepsw_val) < 0)
-	{
-		perror("kcon: ioctl KBDREPSW failed");
-		exit(1);
-	}
+		err(1, "kcon: ioctl KBDREPSW failed");
 }
 	
 /*---------------------------------------------------------------------------*
@@ -507,10 +495,7 @@ int rate;
 	int new_typemat_val;
 
 	if((ioctl(kbfd, KBDGTPMAT, &cur_typemat_val)) < 0)
-	{
-		perror("kcon: ioctl KBDGTPMAT failed");
-		exit(1);
-	}
+		err(1, "kcon: ioctl KBDGTPMAT failed");
 
 	if(delay == -1)
 		delay = (cur_typemat_val & 0x60);
@@ -525,10 +510,7 @@ int rate;
 	new_typemat_val = delay | rate;
 
 	if((ioctl(kbfd, KBDSTPMAT, &new_typemat_val)) < 0)
-	{
-		perror("kcon: ioctl KBDSTPMAT failed");
-		exit(1);
-	}
+		err(1, "kcon: ioctl KBDSTPMAT failed");
 }
 
 /*---------------------------------------------------------------------------*
@@ -562,10 +544,7 @@ char *map;
 	/* set default mapping */
 
 	if((ioctl(kbfd, KBDDEFAULT)) < 0)
-	{
-		perror("kcon: ioctl KBDDEFAULT failed");
-		exit(1);
-	}
+		err(1, "kcon: ioctl KBDDEFAULT failed");
 	
 	/* DE flag present? */
 
@@ -627,10 +606,7 @@ int kbfd;
 			entry.type = lock[i].typ;
 
 			if((ioctl(kbfd, KBDSCKEY, &entry)) < 0)
-			{
-				perror("kcon: ioctl KBDSCKEY failed");
-				exit(1);
-			}
+				err(1, "kcon: ioctl KBDSCKEY failed");
 		}
 	}
 }
@@ -680,10 +656,7 @@ int kbfd;
 				entry.keynum = n;
 				entry.type = shift[i].typ;
 				if((ioctl(kbfd, KBDSCKEY, &entry)) < 0) 
-				{
-					perror("kcon: ioctl KBDSCKEY failed");
-					exit(1);
-				}
+					err(1, "kcon: ioctl KBDSCKEY failed");
 			}
 		}
 	}
@@ -722,10 +695,7 @@ int kbfd;
 		entry.keynum = i;
 
 		if((ioctl(kbfd, KBDGOKEY, &entry)) < 0)
-		{
-			perror("kcon: ioctl KBDGOKEY failed");
-			exit(1);
-		}
+			err(1, "kcon: ioctl KBDGOKEY failed");
 
 		entry.type = KBD_ASCII;
 
@@ -767,10 +737,7 @@ setit:		if (setflag)
 			keyflag[i] = 1;
 
 			if((ioctl(kbfd, KBDSCKEY, &entry)) < 0)
-			{
-				perror("kcon: ioctl KBDSCKEY failed");
-				exit(1);
-			}
+				err(1, "kcon: ioctl KBDSCKEY failed");
 		}
 	}
 }

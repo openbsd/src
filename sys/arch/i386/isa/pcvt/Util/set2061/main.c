@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1999/01/13 07:26:07 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2000/12/07 18:19:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Hellmuth Michaelis
@@ -91,10 +91,7 @@ char *argv[];
 		fd = DEFAULTFD;
 
 	if(ioctl(fd, KDENABIO, 0) < 0)
-	{
-		perror("ioctl(KDENABIO)");
-		return 1;
-	}
+		err(1, "ioctl(KDENABIO)");
 
 	AltICD2061SetClock(freq, no);
 

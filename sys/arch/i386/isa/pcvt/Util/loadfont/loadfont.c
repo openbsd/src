@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfont.c,v 1.5 1999/05/24 15:37:44 aaron Exp $	*/
+/*	$OpenBSD: loadfont.c,v 1.6 2000/12/07 18:19:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -138,13 +138,7 @@ main(int argc, char **argv)
 	if(dflag)
 	{
 		if((fd = open(device, O_RDWR)) == -1)
-		{
-			char buffer[80];
-			strcpy(buffer,"ERROR opening ");
-			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
-			perror(buffer);
-			exit(1);
-		}
+			err(1, "ERROR opening %s", device);
 	}
 	else
 	{
@@ -152,10 +146,7 @@ main(int argc, char **argv)
 	}
 
 	if(ioctl(fd, VGAGETSCREEN, &screeninfo) == -1)
-	{
-		perror("ioctl VGAGETSCREEN failed");
-		exit(1);
-	}
+		err(1, "ioctl VGAGETSCREEN failed");
 
 	if(info == 1)
 	{
@@ -224,20 +215,10 @@ main(int argc, char **argv)
 	sbp = &sbuf;
 	
 	if((in = fopen(filename, "r")) == NULL)
-	{
-		char buffer[80];
-		snprintf(buffer, sizeof(buffer), "cannot open file %s for reading", filename);
-		perror(buffer);
-		exit(1);
-	}
+		err(1, "cannot open file %s for reading", filename);
 
 	if((fstat(fileno(in), sbp)) != 0)
-	{
-		char buffer[80];
-		snprintf(buffer, sizeof(buffer), "cannot fstat file %s", filename);
-		perror(buffer);
-		exit(1);
-	}
+		err(1, "cannot fstat file %s", filename);
 		
 	chr_height = sbp->st_size / 256; /* 256 chars per font */
 			
@@ -306,10 +287,7 @@ setfont(int charset, int fontloaded, int charscan, int scrscan, int scrrow)
 	vfattr.screen_size = scrrow;
 
 	if(ioctl(fd, VGASETFONTATTR, &vfattr) == -1)
-	{
-		perror("loadfont - ioctl VGASETFONTATTR failed, error");
-		exit(1);
-	}
+		err(1, "loadfont - ioctl VGASETFONTATTR failed, error");
 }
 
 static void
@@ -330,10 +308,7 @@ loadfont(int fontset, int charscanlines, unsigned char *font_table)
 		}
 		font_table += charscanlines;
 		if(ioctl(fd, VGALOADCHAR, &vlc) == -1)
-		{
-			perror("loadfont - ioctl VGALOADCHAR failed, error");
-			exit(1);
-		}
+			err(1, "loadfont - ioctl VGALOADCHAR failed, error");
 	}
 }
 
@@ -345,10 +320,8 @@ printvgafontattr(int charset)
 	vfattr.character_set = charset;
 
 	if(ioctl(fd, VGAGETFONTATTR, &vfattr) == -1)
-	{
-		perror("loadfont - ioctl VGAGETFONTATTR failed, error");
-		exit(1);
-	}
+		err(1, "loadfont - ioctl VGAGETFONTATTR failed, error");
+
 	printf(" %d  ",charset);
 	if(vfattr.font_loaded)
 	{

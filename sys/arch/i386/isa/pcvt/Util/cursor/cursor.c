@@ -1,4 +1,4 @@
-/*	$OpenBSD: cursor.c,v 1.6 1999/05/24 15:15:32 aaron Exp $	*/
+/*	$OpenBSD: cursor.c,v 1.7 2000/12/07 18:19:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -114,13 +114,7 @@ char *argv[];
 	else
 	{
 		if((fd = open(device, O_RDWR)) == -1)
-		{
-			char buffer[80];
-			strcpy(buffer,"ERROR opening ");
-			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
-			perror(buffer);
-			exit(1);
-		}
+			err(1, "ERROR opening %s", device);
 	}
 
 	if(screen == -1)
@@ -128,13 +122,7 @@ char *argv[];
 		struct stat stat;
 		
 		if((fstat(fd, &stat)) == -1)
-		{
-			char buffer[80];
-			strcpy(buffer,"ERROR opening ");
-			strncat(buffer,device,sizeof(buffer) - strlen(buffer));
-			perror(buffer);
-			exit(1);
-		}
+			err(1, "ERROR opening %s", device);
 
 		screen = minor(stat.st_rdev);
 	}
@@ -144,10 +132,7 @@ char *argv[];
 	cursorshape.screen_no = screen;
 
 	if(ioctl(fd, VGACURSOR, &cursorshape) == -1)
-	{
-		perror("cursor - ioctl VGACURSOR failed, error");
-		exit(1);
-	}
+		err(1, "cursor - ioctl VGACURSOR failed, error");
 	else
 		exit(0);
 }
