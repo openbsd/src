@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popa3d.8,v 1.3 2001/09/21 20:37:39 camield Exp $
+.\"	$OpenBSD: popa3d.8,v 1.4 2001/09/24 19:08:01 camield Exp $
 .Dd August 15, 2001
 .Dt POPA3D 8
 .Os
@@ -68,28 +68,11 @@ for TCP-wrappers access control:
 .Pp
 .Pa pop3 stream tcp nowait root /usr/libexec/tcpd /usr/sbin/popa3d
 .Pp
-Send SIGHUP to the
-.Xr inetd 8
-daemon to make the changes effective.
-.Pp
-After starting the daemon, either stand-alone or through
-.Xr inetd 8 ,
-all valid users can access their mailbox through the POP3 service.
-This requires the username to be in the password database and the
-password to not be empty. Authentication for super-users like root
-will always fail, even if the password is correct.
-.Sh PREREQUISITES
-Before using
-.Nm
-for the first time, the following steps have to be carried out as root:
-.Bl -enum
-.It
-groupadd popa3d
-.It
-useradd -c 'POP3 server' -d /nonexistent -g popa3d -s /sbin/nologin popa3d
-.It
-mkdir -m 755 /usr/share/empty
-.El
+For access to a mailbox through the POP3 service, the username must
+be in the password database and the password field must not be
+empty.
+Authentication for super-users like root will always fail, even if the
+password is correct.
 .Sh COMMANDS
 A normal POP3 session progresses through three states: authorization,
 transaction and update.
@@ -135,9 +118,9 @@ User mail spools
 .It Pa /etc/hosts.allow, /etc/hosts.deny
 TCP-wrappers access controls may be defined here as described in
 .Xr hosts_access 5 .
-Only valid if either
+Valid if
 .Nm
-is started in daemon-mode and is compiled with LIBWRAP, or if
+is started in daemon-mode, or if
 .Nm
 is running through
 .Xr inetd 8
@@ -146,7 +129,7 @@ and is used in combination with
 .El
 .Sh SEE ALSO
 .Xr inetd 8 ,
-.Xr sendmail 8 .
+.Xr sendmail 8
 .Pp
 Official Internet Protocol Standard
 .%T STD 53 ,
