@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2003/10/07 01:52:13 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.26 2003/10/11 11:49:49 dtucker Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -37,7 +37,7 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ssh_config ssh_proxy sshd_config sshd_proxy \
 		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
-		ls.copy banner.in banner.out
+		ls.copy banner.in banner.out empty.in
 
 #LTESTS+=	ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
