@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.6 1998/07/09 01:32:12 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.7 1998/09/21 08:31:46 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.6 1998/07/09 01:32:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.7 1998/09/21 08:31:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ show(argc, argv)
 	char **argv;
 {
 	register struct rt_msghdr *rtm;
-	char *buf, *next, *lim;
+	char *buf = NULL, *next, *lim;
 	size_t needed;
 	int mib[6];
 
@@ -126,21 +126,26 @@ show(argc, argv)
 		perror("route-sysctl-estimate");
 		exit(1);
 	}
-	if ((buf = malloc(needed)) == 0) {
-		printf("out of space\n");
-		exit(1);
+	if (needed > 0) {
+		if ((buf = malloc(needed)) == 0) {
+			printf("out of space\n");
+			exit(1);
+		}
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+			perror("sysctl of routing table");
+			exit(1);
+		}
+		lim  = buf + needed;
 	}
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
-		perror("sysctl of routing table");
-		exit(1);
-	}
-	lim  = buf + needed;
 
 	printf("Routing tables\n");
 
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		p_rtentry(rtm);
+	if (buf) {
+		for (next = buf; next < lim; next += rtm->rtm_msglen) {
+			rtm = (struct rt_msghdr *)next;
+			p_rtentry(rtm);
+		}
+		free(buf);
 	}
 }
 

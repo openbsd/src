@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.26 1997/12/12 09:06:08 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.27 1998/09/21 08:31:46 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.26 1997/12/12 09:06:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.27 1998/09/21 08:31:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ flushroutes(argc, argv)
 {
 	size_t needed;
 	int mib[6], rlen, seqno;
-	char *buf, *next, *lim;
+	char *buf = NULL, *next, *lim;
 	register struct rt_msghdr *rtm;
 
 	if (uid) {
@@ -277,16 +277,21 @@ bad:			usage(*argv);
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		quit("route-sysctl-estimate");
-	if ((buf = malloc(needed)) == NULL)
-		quit("malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		quit("actual retrieval of routing table");
-	lim = buf + needed;
+	if (needed) {
+		if ((buf = malloc(needed)) == NULL)
+			quit("malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			quit("actual retrieval of routing table");
+		lim = buf + needed;
+	}
 	if (verbose) {
 		(void) printf("Examining routing table from sysctl\n");
 		 if (af)
 			printf("(address family %s)\n", (*argv + 1));
 	}
+	if (buf == NULL)
+		return;
+
 	seqno = 0;		/* ??? */
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -326,6 +331,7 @@ bad:			usage(*argv);
 			(void) printf("done\n");
 		}
 	}
+	free(buf);
 }
 
 static char hexlist[] = "0123456789abcdef";
@@ -1074,7 +1080,7 @@ interfaces()
 {
 	size_t needed;
 	int mib[6];
-	char *buf, *lim, *next;
+	char *buf = NULL, *lim, *next;
 	register struct rt_msghdr *rtm;
 
 	mib[0] = CTL_NET;
@@ -1085,14 +1091,17 @@ interfaces()
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		quit("route-sysctl-estimate");
-	if ((buf = malloc(needed)) == NULL)
-		quit("malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		quit("actual retrieval of interface table");
-	lim = buf + needed;
-	for (next = buf; next < lim; next += rtm->rtm_msglen) {
-		rtm = (struct rt_msghdr *)next;
-		print_rtmsg(rtm, rtm->rtm_msglen);
+	if (needed) {
+		if ((buf = malloc(needed)) == NULL)
+			quit("malloc");
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			quit("actual retrieval of interface table");
+		lim = buf + needed;
+		for (next = buf; next < lim; next += rtm->rtm_msglen) {
+			rtm = (struct rt_msghdr *)next;
+			print_rtmsg(rtm, rtm->rtm_msglen);
+		}
+		free(buf);
 	}
 }
 
