@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.25 2003/07/29 00:24:15 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.26 2003/10/15 15:58:22 mpech Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.25 2003/07/29 00:24:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.26 2003/10/15 15:58:22 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ setthetime(char *p)
 			tv.tv_sec = tval;
 			tv.tv_usec = 0;
 			if (settimeofday(&tv, NULL))
-				errx(1, "settimeofday");
+				err(1, "settimeofday");
 			logwtmp("{", "date", "");
 		}
 	}
