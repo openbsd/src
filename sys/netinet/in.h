@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.14 1999/01/01 11:15:03 deraadt Exp $	*/
+/*	$OpenBSD: in.h,v 1.15 1999/01/03 18:20:35 millert Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ struct sockaddr_in {
 struct ip_opts {
 	struct in_addr	ip_dst;		/* first hop, 0 w/o src rt */
 #if defined(__cplusplus)
-	char	Ip_opts[40];		/* cannot have same name as class */
+	int8_t		Ip_opts[40];	/* cannot have same name as class */
 #else
 	int8_t		ip_opts[40];	/* actually variable in size */
 #endif
