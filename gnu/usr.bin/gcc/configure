@@ -2182,6 +2182,15 @@ for machine in $canon_build $canon_host $canon_target; do
 		tmake_file=rs6000/t-rs6000
 		use_collect2=yes
 		;;
+	powerpc-*-*bsd*)
+		cpu_type=rs6000
+		xm_file=rs6000/xm-openbsd.h
+		tm_file=rs6000/openbsd.h
+	        tmake_file=rs6000/t-openbsd
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		xmake_file=rs6000/x-openbsd
+		;;
 	powerpc-*-sysv4* | powerpc-*-elf*)
 		cpu_type=rs6000
 		xm_file=rs6000/xm-sysv4.h
