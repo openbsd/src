@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.17 1999/08/14 05:47:41 fgsch Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.18 1999/08/16 06:49:29 fgsch Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -145,33 +145,23 @@ struct ep_pcmcia_product {
 	u_short		epp_chipset;	/* 3Com chipset used */
 	int		epp_flags;	/* initial softc flags */
 	int		epp_expfunc;	/* expected function */
-	const char	*epp_name;	/* device name */
-} ep_pcmcia_products[] = {
+} ep_pcmcia_prod[] = {
 	{ PCMCIA_PRODUCT_3COM_3C562,	EP_CHIPSET_3C509,
-	  0,				0,
-	  PCMCIA_STR_3COM_3C562 },
+	  0,				0 },
 
 	{ PCMCIA_PRODUCT_3COM_3C589,	EP_CHIPSET_3C509,
-	  0,				0,
-	  PCMCIA_STR_3COM_3C589 },
+	  0,				0 },
 
 	{ PCMCIA_PRODUCT_3COM_3CXEM556,	EP_CHIPSET_3C509,
-	  0,				0,
-	  PCMCIA_STR_3COM_3CXEM556 },
+	  0,				0 },
 
 	{ PCMCIA_PRODUCT_3COM_3CXEM556B,EP_CHIPSET_3C509,
-	  0,				0,
-	  PCMCIA_STR_3COM_3CXEM556B },
+	  0,				0 },
 
 #ifdef notyet
 	{ PCMCIA_PRODUCT_3COM_3C574,	EP_CHIPSET_BOOMERANG,
-	  EP_FLAGS_MII,			0,
-	  PCMCIA_STR_3COM_3C574 },
+	  EP_FLAGS_MII,			0}
 #endif
-
-	{ 0,				0,
-	  0,				0,
-	  NULL },
 };
 
 struct ep_pcmcia_product *ep_pcmcia_lookup __P((struct pcmcia_attach_args *));
@@ -180,12 +170,12 @@ struct ep_pcmcia_product *
 ep_pcmcia_lookup(pa)
 	struct pcmcia_attach_args *pa;
 {
-	struct ep_pcmcia_product *epp;
+	int i;
 
-	for (epp = ep_pcmcia_products; epp->epp_name != NULL; epp++)
-		if (pa->product == epp->epp_product &&
-		    pa->pf->number == epp->epp_expfunc)
-			return (epp);
+	for (i = 0; i < sizeof(ep_pcmcia_prod)/sizeof(ep_pcmcia_prod[0]); i++)
+		if (pa->product == ep_pcmcia_prod[i].epp_product &&
+		    pa->pf->number == ep_pcmcia_prod[i].epp_expfunc)
+			return &ep_pcmcia_prod[i];
 
 	return (NULL);
 }
@@ -375,7 +365,6 @@ ep_pcmcia_attach(parent, self, aux)
 	if (sc->sc_ih == NULL)
 		printf(", couldn't establish interrupt");
 
-	printf(": <%s>", epp->epp_name);
 	epconfig(sc, epp->epp_chipset, enaddr);
 
 #ifdef notyet

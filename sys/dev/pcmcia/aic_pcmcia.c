@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.5 1999/07/26 05:43:15 deraadt Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.6 1999/08/16 06:49:29 fgsch Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -71,34 +71,16 @@ struct aic_pcmcia_product {
 	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
 	u_int32_t	app_product;		/* PCMCIA product ID */
 	int		app_expfunc;		/* expected function number */
-	const char	*app_name;		/* device name */
-} aic_pcmcia_products[] = {
+} aic_pcmcia_prod[] = {
 	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_1,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460_1 },
+	  0 },
+
 	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_2,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460_2 },
+	  0 },
+
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
-	  0,				PCMCIA_STR_NEWMEDIA_BUSTOASTER },
-	{ 0,				0,
-	  0,				NULL },
+	  0 }
 };
-
-struct aic_pcmcia_product *aic_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct aic_pcmcia_product *
-aic_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct aic_pcmcia_product *app;
-
-	for (app = aic_pcmcia_products; app->app_name != NULL; app++) {
-		if (pa->manufacturer == app->app_vendor &&
-		    pa->product == app->app_product &&
-		    pa->pf->number == app->app_expfunc)
-			return (app);
-	}
-	return (NULL);
-}
 
 int
 aic_pcmcia_match(parent, match, aux)
@@ -106,9 +88,13 @@ aic_pcmcia_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
+	int i;
 
-	if (aic_pcmcia_lookup(pa) != NULL)
-		return (1);
+	for (i = 0; i < sizeof(aic_pcmcia_prod)/sizeof(aic_pcmcia_prod[0]); i++)
+		if (pa->manufacturer == aic_pcmcia_prod[i].app_vendor &&
+		    pa->product == aic_pcmcia_prod[i].app_product &&
+		    pa->pf->number == aic_pcmcia_prod[i].app_expfunc)
+			return (1);
 	return (0);
 }
 
@@ -122,7 +108,6 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	struct aic_pcmcia_product *app;
 
 	psc->sc_pf = pf;
 
@@ -174,9 +159,6 @@ aic_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	app = aic_pcmcia_lookup(pa);
-	if (app)
-		printf(": %s", app->app_name);
 	printf("\n");
 
 	aicattach(sc);
