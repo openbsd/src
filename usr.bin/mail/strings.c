@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.6 1997/11/14 00:23:58 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.7 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: strings.c,v 1.5 1996/06/08 19:48:40 christos Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: strings.c,v 1.6 1997/11/14 00:23:58 millert Exp $";
+static const char rcsid[] = "$OpenBSD: strings.c,v 1.7 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,8 @@ static char rcsid[] = "$OpenBSD: strings.c,v 1.6 1997/11/14 00:23:58 millert Exp
  * The string spaces are of exponentially increasing size, to satisfy
  * the occasional user with enormous string size requests.
  */
-
 char *
-salloc(size)
-	int size;
+salloc(int size)
 {
 	char *t;
 	int s;
@@ -103,7 +101,7 @@ salloc(size)
  * since last reset.
  */
 void
-sreset()
+sreset(void)
 {
 	struct strings *sp;
 	int index;
@@ -125,7 +123,7 @@ sreset()
  * Meant to be called in main, after initialization.
  */
 void
-spreserve()
+spreserve(void)
 {
 	struct strings *sp;
 

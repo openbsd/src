@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.5 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.6 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.4 1996/06/08 19:48:25 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
  * A bunch of global variable declarations lie herein.
  * def.h must be included first.
  */
-
 int	msgCount;			/* Count of messages read in */
 int	rcvmode;			/* True if receiving mail */
 int	sawcom;				/* Set after first command */
@@ -86,14 +85,12 @@ int	realscreenheight;		/* the real screen height */
 int	uflag;				/* Are we in -u mode? */
 sigset_t intset;			/* Signal set that is just SIGINT */
 
-
 /*
  * The pointers for the string allocation routines,
  * there are NSPACE independent areas.
  * The first holds STRINGSIZE bytes, the next
  * twice as much, and so on.
  */
-
 #define	NSPACE	25			/* Total number of string spaces */
 struct strings {
 	char	*s_topFree;		/* Beginning of this area */

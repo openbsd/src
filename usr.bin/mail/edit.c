@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.10 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.11 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.10 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: edit.c,v 1.11 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ static char rcsid[] = "$OpenBSD: edit.c,v 1.10 2001/11/20 20:50:00 millert Exp $
  * Edit a message list.
  */
 int
-editor(v)
-	void *v;
+editor(void *v)
 {
 	int *msgvec = v;
 
@@ -68,8 +67,7 @@ editor(v)
  * Invoke the visual editor on a message list.
  */
 int
-visual(v)
-	void *v;
+visual(void *v)
 {
 	int *msgvec = v;
 
@@ -82,9 +80,7 @@ visual(v)
  * We get the editor from the stuff above.
  */
 int
-edit1(msgvec, type)
-	int *msgvec;
-	int type;
+edit1(int *msgvec, int type)
 {
 	int c, i;
 	FILE *fp;
@@ -147,10 +143,7 @@ edit1(msgvec, type)
  * "Type" is 'e' for _PATH_EX, 'v' for _PATH_VI.
  */
 FILE *
-run_editor(fp, size, type, readonly)
-	FILE *fp;
-	off_t size;
-	int type, readonly;
+run_editor(FILE *fp, off_t size, int type, int readonly)
 {
 	FILE *nf = NULL;
 	int t;

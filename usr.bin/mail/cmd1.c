@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.20 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.21 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
+static const char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.20 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.21 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ static int screen;
 static volatile sig_atomic_t gothdrint;
 
 int
-headers(v)
-	void *v;
+headers(void *v)
 {
 	int *msgvec = v;
 	int n, mesg, flag, size;
@@ -119,8 +118,7 @@ headers(v)
  * Scroll to the next/previous screen
  */
 int
-scroll(v)
-	void *v;
+scroll(void *v)
 {
 	char *arg = v;
 	int size, maxscreen;
@@ -158,7 +156,7 @@ scroll(v)
  * Compute screen size.
  */
 int
-screensize()
+screensize(void)
 {
 	int s;
 	char *cp;
@@ -173,8 +171,7 @@ screensize()
  * in the passed message list.
  */
 int
-from(v)
-	void *v;
+from(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -191,8 +188,7 @@ from(v)
  * This is a slight improvement to the standard one.
  */
 void
-printhead(mesg)
-	int mesg;
+printhead(int mesg)
 {
 	struct message *mp;
 	char headline[LINESIZE], wcount[LINESIZE], *subjline, dispc, curind;
@@ -258,8 +254,7 @@ printhead(mesg)
  * Print out the value of dot.
  */
 int
-pdot(v)
-	void *v;
+pdot(void *v)
 {
 	printf("%d\n", (int)(dot - &message[0] + 1));
 	return(0);
@@ -269,8 +264,7 @@ pdot(v)
  * Print out all the possible commands.
  */
 int
-pcmdlist(v)
-	void *v;
+pcmdlist(void *v)
 {
 	extern const struct cmd cmdtab[];
 	const struct cmd *cp;
@@ -295,8 +289,7 @@ pcmdlist(v)
  * Pipe message to command
  */
 int
-pipeit(ml, sl)
-	void *ml, *sl;
+pipeit(void *ml, void *sl)
 {
 	int  *msgvec = ml;
 	char *cmd    = sl;
@@ -308,8 +301,7 @@ pipeit(ml, sl)
  * Paginate messages, honor ignored fields.
  */
 int
-more(v)
-	void *v;
+more(void *v)
 {
 	int *msgvec = v;
 	return(type1(msgvec, NULL, 1, 1));
@@ -319,8 +311,7 @@ more(v)
  * Paginate messages, even printing ignored fields.
  */
 int
-More(v)
-	void *v;
+More(void *v)
 {
 	int *msgvec = v;
 
@@ -331,8 +322,7 @@ More(v)
  * Type out messages, honor ignored fields.
  */
 int
-type(v)
-	void *v;
+type(void *v)
 {
 	int *msgvec = v;
 
@@ -343,8 +333,7 @@ type(v)
  * Type out messages, even printing ignored fields.
  */
 int
-Type(v)
-	void *v;
+Type(void *v)
 {
 	int *msgvec = v;
 
@@ -355,10 +344,7 @@ Type(v)
  * Type out the messages requested.
  */
 int
-type1(msgvec, cmd, doign, page)
-	int *msgvec;
-	char *cmd;
-	int doign, page;
+type1(int *msgvec, char *cmd, int doign, int page)
 {
 	int nlines, *ip, restoreterm;
 	struct message *mp;
@@ -397,7 +383,7 @@ type1(msgvec, cmd, doign, page)
 	}
 
 	/*
-	 * send messages to the output.
+	 * Send messages to the output.
 	 */
 	for (ip = msgvec; *ip && ip - msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
@@ -423,8 +409,7 @@ type1(msgvec, cmd, doign, page)
  * and defaults to 5.
  */
 int
-top(v)
-	void *v;
+top(void * v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -466,8 +451,7 @@ top(v)
  * get mboxed.
  */
 int
-stouch(v)
-	void *v;
+stouch(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -484,8 +468,7 @@ stouch(v)
  * Make sure all passed messages get mboxed.
  */
 int
-mboxit(v)
-	void *v;
+mboxit(void *v)
 {
 	int *msgvec = v;
 	int *ip;
@@ -502,8 +485,7 @@ mboxit(v)
  * List the folders the user currently has.
  */
 int
-folders(v)
-	void *v;
+folders(void *v)
 {
 	char *files = (char *)v;
 	char dirname[PATHSIZE];
@@ -525,8 +507,7 @@ folders(v)
  * come in since we started reading mail.
  */
 int
-inc(v)
-	void *v;
+inc(void *v)
 {
 	int nmsg, mdot;
 
@@ -548,8 +529,7 @@ inc(v)
  * User hit ^C while printing the headers.
  */
 void
-hdrint(s)
-	int s;
+hdrint(int s)
 {
 
 	gothdrint = 1;

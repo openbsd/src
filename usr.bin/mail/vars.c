@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.6 2001/01/16 05:36:09 millert Exp $	*/
+/*	$OpenBSD: vars.c,v 1.7 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: vars.c,v 1.4 1996/06/08 19:48:45 christos Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: vars.c,v 1.6 2001/01/16 05:36:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: vars.c,v 1.7 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,15 +55,14 @@ static char rcsid[] = "$OpenBSD: vars.c,v 1.6 2001/01/16 05:36:09 millert Exp $"
  * Assign a value to a variable.
  */
 void
-assign(name, value)
-	char name[], value[];
+assign(char *name, char *value)
 {
 	struct var *vp;
 	int h;
 
 	h = hash(name);
 	vp = lookup(name);
-	if (vp == NOVAR) {
+	if (vp == NULL) {
 		vp = (struct var *)calloc(sizeof(*vp), 1);
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];
@@ -80,9 +79,9 @@ assign(name, value)
  * Thus, we cannot free same!
  */
 void
-vfree(cp)
-	char *cp;
+vfree(char *cp)
 {
+
 	if (*cp)
 		(void)free(cp);
 }
@@ -91,20 +90,15 @@ vfree(cp)
  * Copy a variable value into permanent (ie, not collected after each
  * command) space.  Do not bother to alloc space for ""
  */
-
 char *
-vcopy(str)
-	char str[];
+vcopy(char *str)
 {
 	char *new;
-	unsigned len;
 
 	if (*str == '\0')
 		return("");
-	len = strlen(str) + 1;
-	if ((new = (char *)malloc(len)) == NULL)
+	if ((new = strdup(str)) == NULL)
 		errx(1, "Out of memory");
-	(void)memcpy(new, str, len);
 	return(new);
 }
 
@@ -114,13 +108,12 @@ vcopy(str)
  */
 
 char *
-value(name)
-	char name[];
+value(char *name)
 {
 	struct var *vp;
 	char *env;
 
-	if ((vp = lookup(name)) != NOVAR)
+	if ((vp = lookup(name)) != NULL)
 		return(vp->v_value);
 	else if ((env = getenv(name)))
 		return(env);
@@ -139,51 +132,46 @@ value(name)
  * Locate a variable and return its variable
  * node.
  */
-
 struct var *
-lookup(name)
-	char name[];
+lookup(char *name)
 {
 	struct var *vp;
 
-	for (vp = variables[hash(name)]; vp != NOVAR; vp = vp->v_link)
+	for (vp = variables[hash(name)]; vp != NULL; vp = vp->v_link)
 		if (*vp->v_name == *name && equal(vp->v_name, name))
 			return(vp);
-	return(NOVAR);
+	return(NULL);
 }
 
 /*
  * Locate a group name and return it.
  */
-
 struct grouphead *
-findgroup(name)
-	char name[];
+findgroup(char *name)
 {
 	struct grouphead *gh;
 
-	for (gh = groups[hash(name)]; gh != NOGRP; gh = gh->g_link)
+	for (gh = groups[hash(name)]; gh != NULL; gh = gh->g_link)
 		if (*gh->g_name == *name && equal(gh->g_name, name))
 			return(gh);
-	return(NOGRP);
+	return(NULL);
 }
 
 /*
  * Print a group out on stdout
  */
 void
-printgroup(name)
-	char name[];
+printgroup(char *name)
 {
 	struct grouphead *gh;
 	struct group *gp;
 
-	if ((gh = findgroup(name)) == NOGRP) {
+	if ((gh = findgroup(name)) == NULL) {
 		printf("\"%s\": not a group\n", name);
 		return;
 	}
 	printf("%s\t", gh->g_name);
-	for (gp = gh->g_list; gp != NOGE; gp = gp->ge_link)
+	for (gp = gh->g_list; gp != NULL; gp = gp->ge_link)
 		printf(" %s", gp->ge_name);
 	putchar('\n');
 }
@@ -193,8 +181,7 @@ printgroup(name)
  * the variable or group hash table.
  */
 int
-hash(name)
-	char *name;
+hash(char *name)
 {
 	int h = 0;
 

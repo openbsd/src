@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.19 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.20 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.19 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: aux.c,v 1.20 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,14 +50,13 @@ static char rcsid[] = "$OpenBSD: aux.c,v 1.19 2001/11/20 20:50:00 millert Exp $"
  *
  * Auxiliary functions.
  */
-static char *save2str __P((char *, char *));
+static char *save2str(char *, char *);
 
 /*
  * Return a pointer to a dynamic copy of the argument.
  */
 char *
-savestr(str)
-	char *str;
+savestr(char *str)
 {
 	char *new;
 	int size = strlen(str) + 1;
@@ -71,8 +70,7 @@ savestr(str)
  * Make a copy of new argument incorporating old one.
  */
 static char *
-save2str(str, old)
-	char *str, *old;
+save2str(char *str, char *old)
 {
 	char *new;
 	int newsize = strlen(str) + 1;
@@ -94,8 +92,7 @@ save2str(str, old)
  * back to the system mailbox on exit.
  */
 void
-touch(mp)
-	struct message *mp;
+touch(struct message *mp)
 {
 
 	mp->m_flag |= MTOUCH;
@@ -108,8 +105,7 @@ touch(mp)
  * Return true if it is.
  */
 int
-isdir(name)
-	char name[];
+isdir(char *name)
 {
 	struct stat sbuf;
 
@@ -122,8 +118,7 @@ isdir(name)
  * Count the number of arguments in the given string raw list.
  */
 int
-argcount(argv)
-	char **argv;
+argcount(char **argv)
 {
 	char **ap;
 
@@ -137,9 +132,7 @@ argcount(argv)
  * pointer (or NULL if the desired header field is not available).
  */
 char *
-hfield(field, mp)
-	char field[];
-	struct message *mp;
+hfield(char *field, struct message *mp)
 {
 	FILE *ibuf;
 	char linebuf[LINESIZE];
@@ -168,11 +161,7 @@ hfield(field, mp)
  * Must deal with \ continuations & other such fraud.
  */
 int
-gethfield(f, linebuf, rem, colon)
-	FILE *f;
-	char linebuf[];
-	int rem;
-	char **colon;
+gethfield(FILE *f, char *linebuf, int rem, char **colon)
 {
 	char line2[LINESIZE];
 	char *cp, *cp2;
@@ -227,9 +216,7 @@ gethfield(f, linebuf, rem, colon)
  */
 
 char*
-ishfield(linebuf, colon, field)
-	char linebuf[], field[];
-	char *colon;
+ishfield(char *linebuf, char *colon, char *field)
 {
 	char *cp = colon;
 
@@ -246,23 +233,34 @@ ishfield(linebuf, colon, field)
 
 /*
  * Copy a string, lowercasing it as we go.  ``dsize'' should be
- * the real size (not len) of the dest string (guarantee NULL term).
+ * the real size (not len) of the dest string (guarantee NUL term).
  */
-void
-istrncpy(dest, src, dsize)
-	char *dest, *src;
-	size_t dsize;
+size_t
+istrlcpy(char *dst, const char *src, size_t dsize)
 {
+	char *d = dst;
+	const char *s = src;
+	size_t n = dsize;
 
-	if (dsize != 0) {
-		while (--dsize != 0 && *src != '\0') {
-			if (isupper(*src))
-				*dest++ = tolower(*src++);
-			else
-				*dest++ = *src++;
-		}
-		*dest = '\0';
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if (isupper(*s))
+				*d++ = tolower(*s++);
+			else if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
 	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (dsize != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
 
 /*
@@ -270,7 +268,6 @@ istrncpy(dest, src, dsize)
  * commands.  All but the current file pointer are saved on
  * the stack.
  */
-
 static	int	ssp;			/* Top of file stack */
 struct sstack {
 	FILE	*s_file;		/* File we were in. */
@@ -284,8 +281,7 @@ struct sstack {
  * that they are no longer reading from a tty (in all probability).
  */
 int
-source(v)
-	void *v;
+source(void *v)
 {
 	char **arglist = v;
 	FILE *fi;
@@ -318,8 +314,9 @@ source(v)
  * Update the "sourcing" flag as appropriate.
  */
 int
-unstack()
+unstack(void)
 {
+
 	if (ssp <= 0) {
 		puts("\"Source\" stack over-pop.");
 		sourcing = 0;
@@ -342,8 +339,7 @@ unstack()
  * This is nifty for the shell.
  */
 void
-alter(name)
-	char *name;
+alter(char *name)
 {
 	struct stat sb;
 	struct timeval tv[2];
@@ -365,8 +361,7 @@ alter(name)
  * return true if it is all blanks and tabs.
  */
 int
-blankline(linebuf)
-	char linebuf[];
+blankline(char *linebuf)
 {
 	char *cp;
 
@@ -382,9 +377,7 @@ blankline(linebuf)
  * before returning it.
  */
 char *
-nameof(mp, reptype)
-	struct message *mp;
-	int reptype;
+nameof(struct message *mp, int reptype)
 {
 	char *cp, *cp2;
 
@@ -405,8 +398,7 @@ nameof(mp, reptype)
  * Ignore it.
  */
 char *
-skip_comment(cp)
-	char *cp;
+skip_comment(char *cp)
 {
 	int nesting = 1;
 
@@ -432,8 +424,7 @@ skip_comment(cp)
  * of "host-phrase."
  */
 char *
-skin(name)
-	char *name;
+skin(char *name)
 {
 	char *nbuf, *bufend, *cp, *cp2;
 	int c, gotlt, lastsp;
@@ -543,9 +534,7 @@ skin(name)
  *	2 -- get sender's name for Reply
  */
 char *
-name1(mp, reptype)
-	struct message *mp;
-	int reptype;
+name1(struct message *mp, int reptype)
 {
 	char namebuf[LINESIZE];
 	char linebuf[LINESIZE];
@@ -590,9 +579,8 @@ newname:
 				first = 0;
 			} else
 				cp2 = strrchr(namebuf, '!') + 1;
-			strncpy(cp2, cp, sizeof(namebuf) - (cp2 - namebuf) - 2);
-			namebuf[sizeof(namebuf) - 2] = '\0';
-			strcat(namebuf, "!");
+			strlcpy(cp2, cp, sizeof(namebuf) - (cp2 - namebuf) - 1);
+			strlcat(namebuf, "!", sizeof(namebuf));
 			goto newname;
 		}
 		cp++;
@@ -604,9 +592,7 @@ newname:
  * Count the occurances of c in str
  */
 int
-charcount(str, c)
-	char *str;
-	int c;
+charcount(char *str, int c)
 {
 	char *cp;
 	int i;
@@ -618,25 +604,10 @@ charcount(str, c)
 }
 
 /*
- * Are any of the characters in the two strings the same?
- */
-int
-anyof(s1, s2)
-	char *s1, *s2;
-{
-
-	while (*s1)
-		if (strchr(s2, *s1++))
-			return(1);
-	return(0);
-}
-
-/*
  * Convert c to upper case
  */
 int
-raise(c)
-	int c;
+raise(int c)
 {
 
 	if (islower(c))
@@ -648,8 +619,7 @@ raise(c)
  * Copy s1 to s2, return pointer to null in s2.
  */
 char *
-copy(s1, s2)
-	char *s1, *s2;
+copy(char *s1, char *s2)
 {
 
 	while ((*s2++ = *s1++) != '\0')
@@ -661,9 +631,7 @@ copy(s1, s2)
  * See if the given header field is supposed to be ignored.
  */
 int
-isign(field, ignore)
-	char *field;
-	struct ignoretab ignore[2];
+isign(char *field, struct ignoretab ignore[2])
 {
 	char realfld[LINESIZE];
 
@@ -673,7 +641,7 @@ isign(field, ignore)
 	 * Lower-case the string, so that "Status" and "status"
 	 * will hash to the same place.
 	 */
-	istrncpy(realfld, field, sizeof(realfld));
+	istrlcpy(realfld, field, sizeof(realfld));
 	if (ignore[1].i_count > 0)
 		return(!member(realfld, ignore + 1));
 	else
@@ -681,9 +649,7 @@ isign(field, ignore)
 }
 
 int
-member(realfield, table)
-	char *realfield;
-	struct ignoretab *table;
+member(char *realfield, struct ignoretab *table)
 {
 	struct ignore *igp;
 
@@ -695,7 +661,7 @@ member(realfield, table)
 }
 
 void
-clearnew()
+clearnew(void)
 {
 	struct message *mp;
 

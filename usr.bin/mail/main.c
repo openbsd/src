@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
+static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.15 2001/11/20 20:50:00 millert Exp $
 #include <sys/ioctl.h>
 #include "extern.h"
 
-int	main __P((int, char **));
-__dead void usage __P((void));
+__dead	void	usage(void);
+	int	main(int, char **);
 
 /*
  * Mail -- a mail program
@@ -63,9 +63,7 @@ __dead void usage __P((void));
  */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int i;
 	struct name *to, *cc, *bcc, *smopts;
@@ -93,10 +91,10 @@ main(argc, argv)
 	 * first of these users.
 	 */
 	ef = NULL;
-	to = NIL;
-	cc = NIL;
-	bcc = NIL;
-	smopts = NIL;
+	to = NULL;
+	cc = NULL;
+	bcc = NULL;
+	smopts = NULL;
 	subject = NULL;
 	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
@@ -200,9 +198,9 @@ main(argc, argv)
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NIL && (subject != NULL || cc != NIL || bcc != NIL))
+	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL))
 		errx(1, "You must specify direct recipients with -s, -c, or -b");
-	if (ef != NULL && to != NIL)
+	if (ef != NULL && to != NULL)
 		errx(1, "Cannot give -f and people to send to");
 	/*
 	 * Block SIGINT except where we install an explicit handler for it.
@@ -266,7 +264,7 @@ main(argc, argv)
  * Width is either 80 or ws_col;
  */
 void
-setscreensize()
+setscreensize(void)
 {
 	struct termios tbuf;
 	struct winsize ws;
@@ -293,7 +291,7 @@ setscreensize()
 }
 
 __dead void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-iInv] [-s subject] [-c cc-addr] "

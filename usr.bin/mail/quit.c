@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.15 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.16 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
+static const char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.15 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: quit.c,v 1.16 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,7 @@ static char rcsid[] = "$OpenBSD: quit.c,v 1.15 2001/11/20 20:50:00 millert Exp $
  * The "quit" command.
  */
 int
-quitcmd(v)
-	void *v;
+quitcmd(void *v)
 {
 	/*
 	 * If we are sourcing, then return 1 so execute() can handle it.
@@ -74,7 +73,7 @@ quitcmd(v)
  * Remove the system mailbox, if none saved there.
  */
 int
-quit()
+quit(void)
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
@@ -89,6 +88,7 @@ quit()
 	 */
 	if (readonly)
 		return(0);
+
 	/*
 	 * If editing (not reading system mail box), then do the work
 	 * in edstop()
@@ -105,7 +105,6 @@ quit()
 	 * If all the messages are to be preserved, just exit with
 	 * a message.
 	 */
-
 	fbuf = Fopen(mailname, "r+");
 	if (fbuf == NULL)
 		goto newmail;
@@ -116,7 +115,7 @@ quit()
 	}
 	if (!spool_lock()) {
 		(void)Fclose(fbuf);
-		return(-1);			/* lockspool printed error for us */
+		return(-1);		/* lockspool printed the error for us */
 	}
 	rbuf = NULL;
 	if (fstat(fileno(fbuf), &minfo) >= 0 && minfo.st_size > mailsize) {
@@ -148,7 +147,6 @@ quit()
 	/*
 	 * Adjust the message flags in each message.
 	 */
-
 	anystat = 0;
 	autohold = value("hold") != NULL;
 	holdbit = autohold ? MPRESERVE : MBOX;
@@ -211,7 +209,6 @@ quit()
 	 * If he has specified "append" don't copy his mailbox,
 	 * just copy saveable entries at the end.
 	 */
-
 	mbox = expand("&");
 	mcount = c;
 	if (value("append") == NULL) {
@@ -280,7 +277,6 @@ quit()
 	 * to the end of the stuff we just saved.
 	 * If we are appending, this is unnecessary.
 	 */
-
 	if (value("append") == NULL) {
 		rewind(ibuf);
 		c = getc(ibuf);
@@ -311,7 +307,6 @@ quit()
 	 * Now we are ready to copy back preserved files to
 	 * the system mailbox, if any were requested.
 	 */
-
 	if (p != 0) {
 		writeback(rbuf);
 		(void)Fclose(fbuf);
@@ -323,7 +318,6 @@ quit()
 	 * Finally, remove his /var/mail file.
 	 * If new mail has arrived, copy it back.
 	 */
-
 cream:
 	if (rbuf != NULL) {
 		abuf = Fopen(mailname, "r+");
@@ -360,8 +354,7 @@ newmail:
  * Incorporate the any new mail that we found.
  */
 int
-writeback(res)
-	FILE *res;
+writeback(FILE *res)
 {
 	struct message *mp;
 	int p, c;
@@ -414,7 +407,7 @@ writeback(res)
  * file from the temporary.  Save any new stuff appended to the file.
  */
 int
-edstop()
+edstop(void)
 {
 	int gotcha, c;
 	struct message *mp;
@@ -456,6 +449,8 @@ edstop()
 		if ((fd = mkstemp(tempname)) == -1 ||
 		    (obuf = Fdopen(fd, "w")) == NULL) {
 			warn("%s", tempname);
+			if (fd != -1)
+				close(fd);
 			relsesigs();
 			return(-1);
 		}

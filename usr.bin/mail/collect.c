@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.22 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.23 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
+static const char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.22 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: collect.c,v 1.23 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,14 +62,11 @@ static char rcsid[] = "$OpenBSD: collect.c,v 1.22 2001/11/20 20:50:00 millert Ex
  * receipt of an interrupt signal, the partial message can be salted
  * away on dead.letter.
  */
-
 static	FILE	*collf;			/* File for saving away */
 static	int	hadintr;		/* Have seen one SIGINT so far */
 
 FILE *
-collect(hp, printheaders)
-	struct header *hp;
-	int printheaders;
+collect(struct header *hp, int printheaders)
 {
 	FILE *fbuf;
 	int lc, cc, fd, c, t, lastlong, rc, sig;
@@ -252,8 +249,8 @@ cont:
 			hp->h_bcc = cat(hp->h_bcc, extract(&linebuf[2], GBCC));
 			break;
 		case 'd':
-			strncpy(linebuf + 2, getdeadletter(), sizeof(linebuf) - 3);
-			linebuf[sizeof(linebuf) - 1] = '\0';
+			linebuf[2] = '\0';
+			strlcat(linebuf, getdeadletter(), sizeof(linebuf));
 			/* fall into . . . */
 		case 'r':
 		case '<':
@@ -399,10 +396,7 @@ out:
  * Write a file, ex-like if f set.
  */
 int
-exwrite(name, fp, f)
-	char name[];
-	FILE *fp;
-	int f;
+exwrite(char *name, FILE *fp, int f)
 {
 	FILE *of;
 	int c;
@@ -447,9 +441,7 @@ exwrite(name, fp, f)
  * On return, make the edit file the new temp file.
  */
 void
-mesedit(fp, c)
-	FILE *fp;
-	int c;
+mesedit(FILE *fp, int c)
 {
 	FILE *nf;
 	struct sigaction oact;
@@ -473,9 +465,7 @@ mesedit(fp, c)
  * Sh -c must return 0 to accept the new message.
  */
 void
-mespipe(fp, cmd)
-	FILE *fp;
-	char cmd[];
+mespipe(FILE *fp, char *cmd)
 {
 	FILE *nf;
 	int fd;
@@ -527,11 +517,7 @@ out:
  * should shift over and 'f' if not.
  */
 int
-forward(ms, fp, fn, f)
-	char ms[];
-	FILE *fp;
-	char *fn;
-	int f;
+forward(char *ms, FILE *fp, char *fn, int f)
 {
 	int *msgvec;
 	struct ignoretab *ig;
@@ -575,7 +561,7 @@ forward(ms, fp, fn, f)
  * Save the partial message in ~/dead.letter.
  */
 int
-collabort()
+collabort(void)
 {
 	/*
 	 * the control flow is subtle, because we can be called from ~q.
@@ -601,8 +587,7 @@ collabort()
 }
 
 void
-savedeadletter(fp)
-	FILE *fp;
+savedeadletter(FILE *fp)
 {
 	FILE *dbuf;
 	int c;
@@ -623,9 +608,7 @@ savedeadletter(fp)
 }
 
 int
-gethfromtty(hp, gflags)
-	struct header *hp;
-	int gflags;
+gethfromtty(struct header *hp, int gflags)
 {
 
 	hadintr = 0;

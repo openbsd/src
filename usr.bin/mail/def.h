@@ -1,5 +1,6 @@
-/*	$OpenBSD: def.h,v 1.8 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.9 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.8 2001/11/20 20:50:00 millert Exp $
+ *	$OpenBSD: def.h,v 1.9 2001/11/21 15:26:39 millert Exp $
  */
 
 /*
@@ -83,7 +84,6 @@ struct message {
 /*
  * flag bits.
  */
-
 #define	MUSED		(1<<0)		/* entry is used, but this bit isn't */
 #define	MDELETED	(1<<1)		/* entry has been deleted */
 #define	MSAVED		(1<<2)		/* entry has been saved */
@@ -123,14 +123,12 @@ struct cmd {
 };
 
 /* Yechh, can't initialize unions */
-
 #define	c_minargs c_msgflag		/* Minimum argcount for RAWLIST */
 #define	c_maxargs c_msgmask		/* Max argcount for RAWLIST */
 
 /*
  * Argument types.
  */
-
 #define	MSGLIST	0x0001		/* Message list type */
 #define	STRLIST	0x0002		/* A pure string */
 #define	RAWLIST	0x0004		/* Shell string list */
@@ -148,7 +146,6 @@ struct cmd {
 /*
  * Oft-used mask values
  */
-
 #define	MMNORM		(MDELETED|MSAVED)/* Look at both save and delete bits */
 #define	MMNDEL		MDELETED	/* Look only at deleted bit */
 
@@ -156,7 +153,6 @@ struct cmd {
  * Structure used to return a break down of a head
  * line (hats off to Bill Joy!)
  */
-
 struct headline {
 	char	*l_from;	/* The name of the sender */
 	char	*l_tty;		/* His tty string (if any) */
@@ -178,7 +174,6 @@ struct headline {
  * Structure used to pass about the current
  * state of the user-typed message header.
  */
-
 struct header {
 	struct name *h_to;		/* Dynamic "To:" string */
 	char *h_subject;		/* Subject string */
@@ -192,7 +187,6 @@ struct header {
  * the recipients of mail and aliases and all that
  * kind of stuff.
  */
-
 struct name {
 	struct	name *n_flink;		/* Forward link in list. */
 	struct	name *n_blink;		/* Backward list link */
@@ -223,12 +217,6 @@ struct grouphead {
 	struct	group *g_list;		/* Users in group. */
 };
 
-#define	NIL	((struct name *) 0)	/* The nil pointer for namelists */
-#define	NONE	((struct cmd *) 0)	/* The nil pointer to command tab */
-#define	NOVAR	((struct var *) 0)	/* The nil pointer to variables */
-#define	NOGRP	((struct grouphead *) 0)/* The nil grouphead pointer */
-#define	NOGE	((struct group *) 0)	/* The nil group pointer */
-
 /*
  * Structure of the hash table of ignored header fields
  */
@@ -244,7 +232,6 @@ struct ignoretab {
  * Token values returned by the scanner used for argument lists.
  * Also, sizes of scanner-related things.
  */
-
 #define	TEOL	0			/* End of the command line */
 #define	TNUMBER	1			/* A message number */
 #define	TDASH	2			/* A simple dash */
@@ -262,10 +249,9 @@ struct ignoretab {
 #define	STRINGLEN	1024		/* Maximum length of string token */
 
 /*
- * Constants for conditional commands.  These describe whether
- * we should be executing stuff or not.
+ * Constants for conditional commands.
+ * These describe whether we should be executing stuff or not.
  */
-
 #define	CANY		0		/* Execute in send or receive mode */
 #define	CRCV		1		/* Execute in receive mode only */
 #define	CSEND		2		/* Execute in send mode only */
@@ -275,9 +261,9 @@ struct ignoretab {
  * useful just before closing an old file that was opened
  * for read/write.
  */
-#define trunc(stream) {							\
+#define trunc(stream) do {						\
 	(void)fflush(stream); 						\
 	(void)ftruncate(fileno(stream), (off_t)ftell(stream));		\
-}
+} while(0)
 
 #endif /* MAIL_DEF_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.13 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.14 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.13 2001/01/16 05:36:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: names.c,v 1.14 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,15 +58,13 @@ static char rcsid[] = "$OpenBSD: names.c,v 1.13 2001/01/16 05:36:08 millert Exp 
  * name and return it.
  */
 struct name *
-nalloc(str, ntype)
-	char str[];
-	int ntype;
+nalloc(char *str, int ntype)
 {
 	struct name *np;
 
 	np = (struct name *)salloc(sizeof(*np));
-	np->n_flink = NIL;
-	np->n_blink = NIL;
+	np->n_flink = NULL;
+	np->n_blink = NULL;
 	np->n_type = ntype;
 	np->n_name = savestr(str);
 	return(np);
@@ -76,15 +74,14 @@ nalloc(str, ntype)
  * Find the tail of a list and return it.
  */
 struct name *
-tailof(name)
-	struct name *name;
+tailof(struct name *name)
 {
 	struct name *np;
 
 	np = name;
-	if (np == NIL)
-		return(NIL);
-	while (np->n_flink != NIL)
+	if (np == NULL)
+		return(NULL);
+	while (np->n_flink != NULL)
 		np = np->n_flink;
 	return(np);
 }
@@ -92,27 +89,25 @@ tailof(name)
 /*
  * Extract a list of names from a line,
  * and make a list of names from it.
- * Return the list or NIL if none found.
+ * Return the list or NULL if none found.
  */
 struct name *
-extract(line, ntype)
-	char line[];
-	int ntype;
+extract(char *line, int ntype)
 {
 	char *cp;
 	struct name *top, *np, *t;
 	char *nbuf;
 
 	if (line == NULL || *line == '\0')
-		return(NIL);
+		return(NULL);
 	if ((nbuf = (char *)malloc(strlen(line) + 1)) == NULL)
 		errx(1, "Out of memory");
-	top = NIL;
-	np = NIL;
+	top = NULL;
+	np = NULL;
 	cp = line;
 	while ((cp = yankword(cp, nbuf)) != NULL) {
 		t = nalloc(nbuf, ntype);
-		if (top == NIL)
+		if (top == NULL)
 			top = t;
 		else
 			np->n_flink = t;
@@ -127,22 +122,20 @@ extract(line, ntype)
  * Turn a list of names into a string of the same names.
  */
 char *
-detract(np, ntype)
-	struct name *np;
-	int ntype;
+detract(struct name *np, int ntype)
 {
 	int s, comma;
 	char *cp, *top;
 	struct name *p;
 
 	comma = ntype & GCOMMA;
-	if (np == NIL)
+	if (np == NULL)
 		return(NULL);
 	ntype &= ~GCOMMA;
 	s = 0;
 	if (debug && comma)
 		fputs("detract asked to insert commas\n", stderr);
-	for (p = np; p != NIL; p = p->n_flink) {
+	for (p = np; p != NULL; p = p->n_flink) {
 		if (ntype && (p->n_type & GMASK) != ntype)
 			continue;
 		s += strlen(p->n_name) + 1;
@@ -154,11 +147,11 @@ detract(np, ntype)
 	s += 2;
 	top = salloc(s);
 	cp = top;
-	for (p = np; p != NIL; p = p->n_flink) {
+	for (p = np; p != NULL; p = p->n_flink) {
 		if (ntype && (p->n_type & GMASK) != ntype)
 			continue;
 		cp = copy(p->n_name, cp);
-		if (comma && p->n_flink != NIL)
+		if (comma && p->n_flink != NULL)
 			*cp++ = ',';
 		*cp++ = ' ';
 	}
@@ -173,8 +166,7 @@ detract(np, ntype)
  * Throw away things between ()'s, and take anything between <>.
  */
 char *
-yankword(ap, wbuf)
-	char *ap, wbuf[];
+yankword(char *ap, char *wbuf)
 {
 	char *cp, *cp2;
 
@@ -221,10 +213,7 @@ yankword(ap, wbuf)
  * program and removed.
  */
 struct name *
-outof(names, fo, hp)
-	struct name *names;
-	FILE *fo;
-	struct header *hp;
+outof(struct name *names, FILE *fo, struct header *hp)
 {
 	int c, ispipe;
 	struct name *np, *top;
@@ -236,7 +225,7 @@ outof(names, fo, hp)
 	np = names;
 	(void)time(&now);
 	date = ctime(&now);
-	while (np != NIL) {
+	while (np != NULL) {
 		if (!isfileaddr(np->n_name) && np->n_name[0] != '|') {
 			np = np->n_flink;
 			continue;
@@ -251,7 +240,6 @@ outof(names, fo, hp)
 		 * See if we have copied the complete message out yet.
 		 * If not, do so.
 		 */
-
 		if (image < 0) {
 			int fd;
 			char tempname[PATHSIZE];
@@ -290,9 +278,8 @@ outof(names, fo, hp)
 		 * or give it as the standard input to the desired
 		 * program as appropriate.
 		 */
-
 		if (ispipe) {
-			int pid;
+			pid_t pid;
 			char *shell;
 			sigset_t nset;
 
@@ -365,8 +352,7 @@ cant:
  * be a filename.  We cheat with .'s to allow path names like ./...
  */
 int
-isfileaddr(name)
-	char *name;
+isfileaddr(char *name)
 {
 	char *cp;
 
@@ -387,19 +373,17 @@ isfileaddr(name)
  * Changed after all these months of service to recursively
  * expand names (2/14/80).
  */
-
 struct name *
-usermap(names)
-	struct name *names;
+usermap(struct name *names)
 {
 	struct name *new, *np, *cp;
 	struct grouphead *gh;
 	int metoo;
 
-	new = NIL;
+	new = NULL;
 	np = names;
 	metoo = (value("metoo") != NULL);
-	while (np != NIL) {
+	while (np != NULL) {
 		if (np->n_name[0] == '\\') {
 			cp = np->n_flink;
 			new = put(new, np);
@@ -408,7 +392,7 @@ usermap(names)
 		}
 		gh = findgroup(np->n_name);
 		cp = np->n_flink;
-		if (gh != NOGRP)
+		if (gh != NULL)
 			new = gexpand(new, gh, metoo, np->n_type);
 		else
 			new = put(new, np);
@@ -422,12 +406,8 @@ usermap(names)
  * fixed level to keep things from going haywire.
  * Direct recursion is not expanded for convenience.
  */
-
 struct name *
-gexpand(nlist, gh, metoo, ntype)
-	struct name *nlist;
-	struct grouphead *gh;
-	int metoo, ntype;
+gexpand(struct name *nlist, struct grouphead *gh, int metoo, int ntype)
 {
 	struct group *gp;
 	struct grouphead *ngh;
@@ -440,13 +420,13 @@ gexpand(nlist, gh, metoo, ntype)
 		return(nlist);
 	}
 	depth++;
-	for (gp = gh->g_list; gp != NOGE; gp = gp->ge_link) {
+	for (gp = gh->g_list; gp != NULL; gp = gp->ge_link) {
 		cp = gp->ge_name;
 		if (*cp == '\\')
 			goto quote;
 		if (strcmp(cp, gh->g_name) == 0)
 			goto quote;
-		if ((ngh = findgroup(cp)) != NOGRP) {
+		if ((ngh = findgroup(cp)) != NULL) {
 			nlist = gexpand(nlist, ngh, metoo, ntype);
 			continue;
 		}
@@ -456,7 +436,7 @@ quote:
 		 * At this point should allow to expand
 		 * to self if only person in group
 		 */
-		if (gp == gh->g_list && gp->ge_link == NOGE)
+		if (gp == gh->g_list && gp->ge_link == NULL)
 			goto skip;
 		if (!metoo && strcmp(cp, myname) == 0)
 			np->n_type |= GDEL;
@@ -471,14 +451,13 @@ skip:
  * Concatenate the two passed name lists, return the result.
  */
 struct name *
-cat(n1, n2)
-	struct name *n1, *n2;
+cat(struct name *n1, struct name *n2)
 {
 	struct name *tail;
 
-	if (n1 == NIL)
+	if (n1 == NULL)
 		return(n2);
-	if (n2 == NIL)
+	if (n2 == NULL)
 		return(n1);
 	tail = tailof(n1);
 	tail->n_flink = n2;
@@ -491,8 +470,7 @@ cat(n1, n2)
  * Return an error if the name list won't fit.
  */
 char **
-unpack(sm, np)
-	struct name *np, *sm;
+unpack(struct name *np, struct name *sm)
 {
 	char **ap, **top;
 	int t, extra, metoo, verbose;
@@ -522,11 +500,11 @@ unpack(sm, np)
 		*ap++ = "-m";
 	if (verbose)
 		*ap++ = "-v";
-	for (; sm != NIL; sm = sm->n_flink)
+	for (; sm != NULL; sm = sm->n_flink)
 		if ((sm->n_type & GDEL) == 0)
 			*ap++ = sm->n_name;
 	*ap++ = "--";
-	for (; np != NIL; np = np->n_flink)
+	for (; np != NULL; np = np->n_flink)
 		if ((np->n_type & GDEL) == 0)
 			*ap++ = np->n_name;
 	*ap = NULL;
@@ -539,24 +517,23 @@ unpack(sm, np)
  * Return the head of the new list.
  */
 struct name *
-elide(names)
-	struct name *names;
+elide(struct name *names)
 {
 	struct name *np, *t, *new;
 	struct name *x;
 
-	if (names == NIL)
-		return(NIL);
+	if (names == NULL)
+		return(NULL);
 	new = names;
 	np = names;
 	np = np->n_flink;
-	if (np != NIL)
-		np->n_blink = NIL;
-	new->n_flink = NIL;
-	while (np != NIL) {
+	if (np != NULL)
+		np->n_blink = NULL;
+	new->n_flink = NULL;
+	while (np != NULL) {
 		t = new;
 		while (strcasecmp(t->n_name, np->n_name) < 0) {
-			if (t->n_flink == NIL)
+			if (t->n_flink == NULL)
 				break;
 			t = t->n_flink;
 		}
@@ -565,13 +542,12 @@ elide(names)
 		 * If we ran out of t's, put the new entry after
 		 * the current value of t.
 		 */
-
 		if (strcasecmp(t->n_name, np->n_name) < 0) {
 			t->n_flink = np;
 			np->n_blink = t;
 			t = np;
 			np = np->n_flink;
-			t->n_flink = NIL;
+			t->n_flink = NULL;
 			continue;
 		}
 
@@ -580,13 +556,12 @@ elide(names)
 		 * current t.  If at the front of the list,
 		 * the new guy becomes the new head of the list.
 		 */
-
 		if (t == new) {
 			t = np;
 			np = np->n_flink;
 			t->n_flink = new;
 			new->n_blink = t;
-			t->n_blink = NIL;
+			t->n_blink = NULL;
 			new = t;
 			continue;
 		}
@@ -595,7 +570,6 @@ elide(names)
 		 * The normal case -- we are inserting into the
 		 * middle of the list.
 		 */
-
 		x = np;
 		np = np->n_flink;
 		x->n_flink = t;
@@ -608,14 +582,13 @@ elide(names)
 	 * Now the list headed up by new is sorted.
 	 * Go through it and remove duplicates.
 	 */
-
 	np = new;
-	while (np != NIL) {
+	while (np != NULL) {
 		t = np;
-		while (t->n_flink != NIL &&
+		while (t->n_flink != NULL &&
 		       strcasecmp(np->n_name, t->n_flink->n_name) == 0)
 			t = t->n_flink;
-		if (t == np || t == NIL) {
+		if (t == np || t == NULL) {
 			np = np->n_flink;
 			continue;
 		}
@@ -624,9 +597,8 @@ elide(names)
 		 * Now t points to the last entry with the same name
 		 * as np.  Make np point beyond t.
 		 */
-
 		np->n_flink = t->n_flink;
-		if (t->n_flink != NIL)
+		if (t->n_flink != NULL)
 			t->n_flink->n_blink = np;
 		np = np->n_flink;
 	}
@@ -638,12 +610,11 @@ elide(names)
  * the list.
  */
 struct name *
-put(list, node)
-	struct name *list, *node;
+put(struct name *list, struct name *node)
 {
 	node->n_flink = list;
-	node->n_blink = NIL;
-	if (list != NIL)
+	node->n_blink = NULL;
+	if (list != NULL)
 		list->n_blink = node;
 	return(node);
 }
@@ -653,12 +624,11 @@ put(list, node)
  * a name list and return it.
  */
 int
-count(np)
-	struct name *np;
+count(struct name *np)
 {
 	int c;
 
-	for (c = 0; np != NIL; np = np->n_flink)
+	for (c = 0; np != NULL; np = np->n_flink)
 		if ((np->n_type & GDEL) == 0)
 			c++;
 	return(c);
@@ -668,26 +638,24 @@ count(np)
  * Delete the given name from a namelist.
  */
 struct name *
-delname(np, name)
-	struct name *np;
-	char name[];
+delname(struct name *np, char *name)
 {
 	struct name *p;
 
-	for (p = np; p != NIL; p = p->n_flink)
+	for (p = np; p != NULL; p = p->n_flink)
 		if ((strcasecmp(p->n_name, name) == 0) ||
 		    (value("allnet") &&
 		    strncasecmp(p->n_name, name, strlen(name)) == 0 &&
 		    *(p->n_name+strlen(name)) == '@')) {
-			if (p->n_blink == NIL) {
-				if (p->n_flink != NIL)
-					p->n_flink->n_blink = NIL;
+			if (p->n_blink == NULL) {
+				if (p->n_flink != NULL)
+					p->n_flink->n_blink = NULL;
 				np = p->n_flink;
 				continue;
 			}
-			if (p->n_flink == NIL) {
-				if (p->n_blink != NIL)
-					p->n_blink->n_flink = NIL;
+			if (p->n_flink == NULL) {
+				if (p->n_blink != NULL)
+					p->n_blink->n_flink = NULL;
 				continue;
 			}
 			p->n_blink->n_flink = p->n_flink;
@@ -700,8 +668,7 @@ delname(np, name)
  * Pretty print a name list
  * Uncomment it if you need it.
  */
-
-/*
+#if 0
 void
 prettyprint(name)
 	struct name *name;
@@ -709,10 +676,10 @@ prettyprint(name)
 	struct name *np;
 
 	np = name;
-	while (np != NIL) {
+	while (np != NULL) {
 		fprintf(stderr, "%s(%d) ", np->n_name, np->n_type);
 		np = np->n_flink;
 	}
 	putc('\n', stderr);
 }
-*/
+#endif

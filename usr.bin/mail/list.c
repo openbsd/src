@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.10 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: list.c,v 1.11 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
+static const char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.10 2001/01/16 05:36:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: list.c,v 1.11 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: list.c,v 1.10 2001/01/16 05:36:08 millert Exp $
 #include <ctype.h>
 #include "extern.h"
 
-int	matchto __P((char *, int));
+int matchto(char *, int);
 
 /*
  * Mail -- a mail program
@@ -61,9 +61,7 @@ int	matchto __P((char *, int));
  * Returns the count of messages picked up or -1 on error.
  */
 int
-getmsglist(buf, vector, flags)
-	char *buf;
-	int *vector, flags;
+getmsglist(char *buf, int *vector, int flags)
 {
 	int *ip;
 	struct message *mp;
@@ -91,7 +89,6 @@ getmsglist(buf, vector, flags)
 /*
  * Bit values for colon modifiers.
  */
-
 #define	CMNEW		01		/* New messages */
 #define	CMOLD		02		/* Old messages */
 #define	CMUNREAD	04		/* Unread messages */
@@ -102,7 +99,6 @@ getmsglist(buf, vector, flags)
  * The following table describes the letters which can follow
  * the colon and gives the corresponding modifier bit.
  */
-
 struct coltab {
 	char	co_char;		/* What to find past : */
 	int	co_bit;			/* Associated modifier bit */
@@ -117,12 +113,10 @@ struct coltab {
 	{ 0,		0,		0,		0 }
 };
 
-static	int	lastcolmod;
+static int lastcolmod;
 
 int
-markall(buf, f)
-	char buf[];
-	int f;
+markall(char *buf, int f)
 {
 	char **np;
 	int i;
@@ -265,7 +259,6 @@ number:
 	 * so that we can unmark any whose sender was not selected
 	 * if any user names were given.
 	 */
-
 	if ((np > namelist || colmod != 0) && mc == 0)
 		for (i = 1; i <= msgCount; i++)
 			if ((message[i-1].m_flag & MDELETED) == f)
@@ -275,7 +268,6 @@ number:
 	 * If any names were given, go through and eliminate any
 	 * messages whose senders were not requested.
 	 */
-
 	if (np > namelist) {
 		for (i = 1; i <= msgCount; i++) {
 			for (mc = 0, np = &namelist[0]; *np != NULL; np++)
@@ -298,7 +290,6 @@ number:
 		/*
 		 * Make sure we got some decent messages.
 		 */
-
 		mc = 0;
 		for (i = 1; i <= msgCount; i++)
 			if (message[i-1].m_flag & MMARK) {
@@ -319,7 +310,6 @@ number:
 	 * If any colon modifiers were given, go through and
 	 * unmark any messages which do not satisfy the modifiers.
 	 */
-
 	if (colmod != 0) {
 		for (i = 1; i <= msgCount; i++) {
 			struct coltab *colp;
@@ -330,7 +320,6 @@ number:
 					if ((mp->m_flag & colp->co_mask)
 					    != colp->co_equal)
 						unmark(i);
-			
 		}
 		for (mp = &message[0]; mp < &message[msgCount]; mp++)
 			if (mp->m_flag & MMARK)
@@ -354,8 +343,7 @@ number:
  * value.
  */
 int
-evalcol(col)
-	int col;
+evalcol(int col)
 {
 	struct coltab *colp;
 
@@ -373,8 +361,7 @@ evalcol(col)
  * has to be undeleted.
  */
 int
-check(mesg, f)
-	int mesg, f;
+check(int mesg, int f)
 {
 	struct message *mp;
 
@@ -395,10 +382,7 @@ check(mesg, f)
  * for a RAWLIST.
  */
 int
-getrawlist(line, argv, argc)
-	char line[];
-	char **argv;
-	int  argc;
+getrawlist(char *line, char **argv, int argc)
 {
 	char c, *cp, *cp2, quotec;
 	int argn;
@@ -500,12 +484,11 @@ getrawlist(line, argv, argc)
 }
 
 /*
- * scan out a single lexical item and return its token number,
+ * Scan out a single lexical item and return its token number,
  * updating the string pointer passed **p.  Also, store the value
  * of the number or string scanned in lexnumber or lexstring as
  * appropriate.  In any event, store the scanned `thing' in lexstring.
  */
-
 struct lex {
 	char	l_char;
 	char	l_token;
@@ -522,8 +505,7 @@ struct lex {
 };
 
 int
-scan(sp)
-	char **sp;
+scan(char **sp)
 {
 	char *cp, *cp2;
 	int c;
@@ -542,7 +524,6 @@ scan(sp)
 	/*
 	 * strip away leading white space.
 	 */
-
 	while (c == ' ' || c == '\t')
 		c = *cp++;
 
@@ -550,7 +531,6 @@ scan(sp)
 	 * If no characters remain, we are at end of line,
 	 * so report that.
 	 */
-
 	if (c == '\0') {
 		*sp = --cp;
 		return(TEOL);
@@ -561,7 +541,6 @@ scan(sp)
 	 * the number and convert it on the fly.
 	 * Return TNUMBER when done.
 	 */
-
 	if (isdigit(c)) {
 		lexnumber = 0;
 		while (isdigit(c)) {
@@ -578,7 +557,6 @@ scan(sp)
 	 * Check for single character tokens; return such
 	 * if found.
 	 */
-
 	for (lp = &singles[0]; lp->l_char != 0; lp++)
 		if (c == lp->l_char) {
 			lexstring[0] = c;
@@ -594,7 +572,6 @@ scan(sp)
 	 * If the lead character is a " or ', save it
 	 * and scan until you get another.
 	 */
-
 	quotec = 0;
 	if (c == '\'' || c == '"') {
 		quotec = c;
@@ -624,9 +601,9 @@ scan(sp)
  * Unscan the named token by pushing it onto the regret stack.
  */
 void
-regret(token)
-	int token;
+regret(int token)
 {
+
 	if (++regretp >= REGDEP)
 		errx(1, "Too many regrets");
 	regretstack[regretp] = token;
@@ -639,8 +616,9 @@ regret(token)
  * Reset all the scanner global variables.
  */
 void
-scaninit()
+scaninit(void)
 {
+
 	regretp = -1;
 }
 
@@ -649,8 +627,7 @@ scaninit()
  * its message number.
  */
 int
-first(f, m)
-	int f, m;
+first(int f, int m)
 {
 	struct message *mp;
 
@@ -672,9 +649,7 @@ first(f, m)
  * if so.
  */
 int
-matchsender(str, mesg)
-	char *str;
-	int mesg;
+matchsender(char *str, int mesg)
 {
 	char *cp, *cp2, *backup;
 
@@ -697,12 +672,10 @@ matchsender(str, mesg)
  * See if the passed name received the passed message number.  Return true
  * if so.
  */
-
 static char *to_fields[] = { "to", "cc", "bcc", NULL };
 
 int
-matchto(str, mesg)
-	char *str;
+matchto(char *str, int mesg)
 {
 	struct message *mp;
 	char *cp, *cp2, *backup, **to;
@@ -741,12 +714,10 @@ matchto(str, mesg)
  * have the form "/search-string."  If it is of the form "/," we use the
  * previous search string.
  */
-
 char lastscan[STRINGLEN];
+
 int
-matchsubj(str, mesg)
-	char *str;
-	int mesg;
+matchsubj(char *str, int mesg)
 {
 	struct message *mp;
 	char *cp, *cp2, *backup;
@@ -754,16 +725,13 @@ matchsubj(str, mesg)
 	str++;
 	if (*str == '\0')
 		str = lastscan;
-	else {
-		strncpy(lastscan, str, sizeof(lastscan) - 1);
-		lastscan[sizeof(lastscan) - 1] = '\0';
-	}
+	else
+		strlcpy(lastscan, str, sizeof(lastscan));
 	mp = &message[mesg-1];
 	
 	/*
 	 * Now look, ignoring case, for the word in the string.
 	 */
-
 	if (value("searchheaders") && (cp = strchr(str, ':'))) {
 		/* Check for special case "/To:" */
 		if (raise(str[0]) == 'T' && raise(str[1]) == 'O' &&
@@ -795,8 +763,7 @@ matchsubj(str, mesg)
  * Mark the named message by setting its mark bit.
  */
 void
-mark(mesg)
-	int mesg;
+mark(int mesg)
 {
 	int i;
 
@@ -810,8 +777,7 @@ mark(mesg)
  * Unmark the named message.
  */
 void
-unmark(mesg)
-	int mesg;
+unmark(int mesg)
 {
 	int i;
 
@@ -825,8 +791,7 @@ unmark(mesg)
  * Return the message number corresponding to the passed meta character.
  */
 int
-metamess(meta, f)
-	int meta, f;
+metamess(int meta, int f)
 {
 	int c, m;
 	struct message *mp;

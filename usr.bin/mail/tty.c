@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.13 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.14 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
+static const char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.13 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tty.c,v 1.14 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,11 +63,8 @@ static	volatile sig_atomic_t	ttysignal;	/* Interrupted by a signal? */
 /*
  * Read all relevant header fields.
  */
-
 int
-grabh(hp, gflags)
-	struct header *hp;
-	int gflags;
+grabh(struct header *hp, int gflags)
 {
 	struct termios ttybuf;
 #ifndef TIOCSTI
@@ -120,7 +117,7 @@ grabh(hp, gflags)
 #endif
 	if (gflags & GTO) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_to != NIL)
+		if (!ttyset && hp->h_to != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("To: ", detract(hp->h_to, 0));
@@ -140,7 +137,7 @@ grabh(hp, gflags)
 	}
 	if (gflags & GCC) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_cc != NIL)
+		if (!ttyset && hp->h_cc != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("Cc: ", detract(hp->h_cc, 0));
@@ -150,7 +147,7 @@ grabh(hp, gflags)
 	}
 	if (gflags & GBCC) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_bcc != NIL)
+		if (!ttyset && hp->h_bcc != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		s = readtty("Bcc: ", detract(hp->h_bcc, 0));
@@ -187,15 +184,13 @@ out:
  * be read.
  *
  */
-
 char *
-readtty(pr, src)
-	char pr[], src[];
+readtty(char *pr, char *src)
 {
 	struct sigaction act, oact;
-	sigset_t oset;
 	char ch, canonb[BUFSIZ];
 	char *cp, *cp2;
+	sigset_t oset;
 	int c;
 
 	fputs(pr, stdout);
@@ -316,8 +311,7 @@ redo:
  * Receipt continuation.
  */
 void
-ttystop(s)
-	int s;
+ttystop(int s)
 {
 	struct sigaction act, oact;
 	sigset_t nset;
@@ -344,8 +338,7 @@ ttystop(s)
 
 /*ARGSUSED*/
 void
-ttyint(s)
-	int s;
+ttyint(int s)
 {
 
 	ttysignal = s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.12 1998/06/12 17:51:50 millert Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.13 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: v7.local.c,v 1.12 1998/06/12 17:51:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: v7.local.c,v 1.13 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,7 @@ static char rcsid[] = "$OpenBSD: v7.local.c,v 1.12 1998/06/12 17:51:50 millert E
  * mail is queued).
  */
 void
-findmail(user, buf, buflen)
-	char *user, *buf;
-	int buflen;
+findmail(char *user, char *buf, int buflen)
 {
 	char *mbox;
 	struct stat sb;
@@ -72,10 +70,9 @@ findmail(user, buf, buflen)
 	    sb.st_uid != getuid() && sb.st_uid != geteuid())
 		mbox = NULL;
 
-	if (mbox) {
-		(void)strncpy(buf, mbox, buflen - 1);
-		buf[buflen - 1] = '\0';
-	} else
+	if (mbox)
+		(void)strlcpy(buf, mbox, buflen);
+	else
 		(void)snprintf(buf, buflen, "%s/%s", _PATH_MAILDIR, user);
 }
 
@@ -83,7 +80,7 @@ findmail(user, buf, buflen)
  * Get rid of the queued mail.
  */
 void
-demail()
+demail(void)
 {
 
 	if (value("keep") != NULL || rm(mailname) < 0)
@@ -94,7 +91,7 @@ demail()
  * Discover user login name.
  */
 char *
-username()
+username(void)
 {
 	char *np;
 	uid_t uid;
@@ -104,6 +101,8 @@ username()
 	if ((np = getenv("LOGNAME")) != NULL)
 		return(np);
 	if ((np = getname(uid = getuid())) != NULL)
+		return(np);
+	if ((np = getlogin()) != NULL)
 		return(np);
 	printf("Cannot associate a name with uid %u\n", (unsigned)uid);
 	return(NULL);

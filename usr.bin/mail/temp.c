@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.11 2000/08/02 04:10:48 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.12 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.11 2000/08/02 04:10:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: temp.c,v 1.12 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,10 +51,10 @@ static char rcsid[] = "$OpenBSD: temp.c,v 1.11 2000/08/02 04:10:48 millert Exp $
  * Give names to all the temporary files that we will need.
  */
 
-char	*tmpdir;
+char *tmpdir;
 
 void
-tinit()
+tinit(void)
 {
 	char *cp;
 
@@ -75,7 +75,7 @@ tinit()
 	 * do a spreserve() after us.
 	 */
 	if (myname != NULL) {
-		if (getuserid(myname) < 0)
+		if (getuserid(myname) == UID_MAX)
 			errx(1, "\"%s\" is not a user of this system", myname);
 	} else {
 		if ((cp = username()) == NULL) {

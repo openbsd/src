@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.19 2001/11/20 20:50:00 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.20 2001/11/21 15:26:39 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
+static const char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.19 2001/11/20 20:50:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: fio.c,v 1.20 2001/11/21 15:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,10 +63,7 @@ static volatile sig_atomic_t fiosignal;
  * Wrapper for read() to catch EINTR.
  */
 ssize_t
-myread(fd, buf, len)
-	int fd;
-	char *buf;
-	int len;
+myread(int fd, char *buf, int len)
 {
 	ssize_t nread;
 
@@ -79,9 +76,7 @@ myread(fd, buf, len)
  * Set up the input pointers while copying the mail file into /tmp.
  */
 void
-setptr(ibuf, offset)
-	FILE *ibuf;
-	off_t offset;
+setptr(FILE *ibuf, off_t offset)
 {
 	int c, count;
 	char *cp, *cp2;
@@ -184,10 +179,7 @@ setptr(ibuf, offset)
  * characters written, including the newline if requested.
  */
 int
-putline(obuf, linebuf, outlf)
-	FILE *obuf;
-	char *linebuf;
-	int   outlf;
+putline(FILE *obuf, char *linebuf, int outlf)
 {
 	int c;
 
@@ -208,11 +200,7 @@ putline(obuf, linebuf, outlf)
  * include the newline (or carriage return) at the end.
  */
 int
-readline(ibuf, linebuf, linesize, signo)
-	FILE *ibuf;
-	char *linebuf;
-	int linesize;
-	int *signo;
+readline(FILE *ibuf, char *linebuf, int linesize, int *signo)
 {
 	struct sigaction act;
 	struct sigaction savetstp;
@@ -277,8 +265,7 @@ readline(ibuf, linebuf, linesize, signo)
  * passed message pointer.
  */
 FILE *
-setinput(mp)
-	struct message *mp;
+setinput(struct message *mp)
 {
 
 	fflush(otf);
@@ -292,9 +279,7 @@ setinput(mp)
  * a dynamically allocated message structure.
  */
 void
-makemessage(f, omsgCount)
-	FILE *f;
-	int omsgCount;
+makemessage(FILE *f, int omsgCount)
 {
 	size_t size = (msgCount + 1) * sizeof(struct message);
 
@@ -326,10 +311,9 @@ makemessage(f, omsgCount)
  * If the write fails, return 1, else 0
  */
 int
-append(mp, f)
-	struct message *mp;
-	FILE *f;
+append(struct message *mp, FILE *f)
 {
+
 	return(fwrite((char *) mp, sizeof(*mp), 1, f) != 1);
 }
 
@@ -337,8 +321,7 @@ append(mp, f)
  * Delete or truncate a file, but only if the file is a plain file.
  */
 int
-rm(name)
-	char *name;
+rm(char *name)
 {
 	struct stat sb;
 
@@ -363,7 +346,7 @@ static sigset_t nset, oset;
  * Hold signals SIGHUP, SIGINT, and SIGQUIT.
  */
 void
-holdsigs()
+holdsigs(void)
 {
 
 	if (sigdepth++ == 0) {
@@ -379,7 +362,7 @@ holdsigs()
  * Release signals SIGHUP, SIGINT, and SIGQUIT.
  */
 void
-relsesigs()
+relsesigs(void)
 {
 
 	if (--sigdepth == 0)
@@ -390,10 +373,7 @@ relsesigs()
  * Unblock and ignore a signal
  */
 int
-ignoresig(sig, oact, oset)
-	int sig;
-	struct sigaction *oact;
-	sigset_t *oset;
+ignoresig(int sig, struct sigaction *oact, sigset_t *oset)
 {
 	struct sigaction act;
 	sigset_t nset;
@@ -419,8 +399,7 @@ ignoresig(sig, oact, oset)
  * the passed buffer.
  */
 off_t
-fsize(iob)
-	FILE *iob;
+fsize(FILE *iob)
 {
 	struct stat sbuf;
 
@@ -441,12 +420,12 @@ fsize(iob)
  * Return the file name as a dynamic string.
  */
 char *
-expand(name)
-	char *name;
+expand(char *name)
 {
 	char xname[PATHSIZE];
 	char cmdbuf[PATHSIZE];		/* also used for file names */
-	int pid, l;
+	pid_t pid;
+	int l;
 	char *cp, *shell;
 	int pivec[2];
 	struct stat sbuf;
@@ -484,8 +463,9 @@ expand(name)
 		(void)snprintf(xname, sizeof(xname), "%s%s", homedir, name + 1);
 		name = savestr(xname);
 	}
-	if (!anyof(name, "~{[*?$`'\"\\"))
+	if (strpbrk(name, "~{[*?$`'\"\\") == NULL)
 		return(name);
+	/* XXX - just use glob(3) and env expansion instead? */
 	if (pipe(pivec) < 0) {
 		warn("pipe");
 		return(name);
@@ -533,18 +513,15 @@ expand(name)
  * Determine the current folder directory name.
  */
 int
-getfold(name, namelen)
-	char *name;
-	int namelen;
+getfold(char *name, int namelen)
 {
 	char *folder;
 
 	if ((folder = value("folder")) == NULL)
 		return(-1);
-	if (*folder == '/') {
-		strncpy(name, folder, namelen-1);
-		name[namelen-1] = '\0';
-	} else
+	if (*folder == '/')
+		strlcpy(name, folder, namelen);
+	else
 		(void)snprintf(name, namelen, "%s/%s", homedir ? homedir : ".",
 		    folder);
 	return(0);
@@ -554,7 +531,7 @@ getfold(name, namelen)
  * Return the name of the dead.letter file.
  */
 char *
-getdeadletter()
+getdeadletter(void)
 {
 	char *cp;
 
@@ -574,8 +551,7 @@ getdeadletter()
  * SIGTTOU, SIGTTIN.
  */
 void
-fioint(s)
-	int s;
+fioint(int s)
 {
 
 	fiosignal = s;
