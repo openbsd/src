@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2001/01/22 14:51:04 art Exp $	*/
+/*	$OpenBSD: exec.h,v 1.9 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: exec.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
 
 /*
@@ -33,19 +33,7 @@
 
 #define __LDPGSZ	4096
 
-/* Relocation format. */
-struct relocation_info_i386 {
-	int r_address;			/* offset in text or data segment */
-	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
-			 r_pcrel :  1,	/* 1 if value should be pc-relative */
-			r_length :  2,	/* log base 2 of value's width */
-			r_extern :  1,	/* 1 if need to add symbol to value */
-		       r_baserel :  1,	/* linkage table relative */
-		      r_jmptable :  1,	/* relocate to jump table */
-		      r_relative :  1,	/* load address relative */
-			  r_copy :  1;	/* run time copy */
-};
-#define relocation_info	relocation_info_i386
+#define NATIVE_EXEC_ELF
 
 #define ARCH_ELFSIZE		32
 
@@ -58,9 +46,6 @@ struct relocation_info_i386 {
 #define _NLIST_DO_ELF
 
 #define _KERN_DO_AOUT
-#if defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || \
-    !defined(_KERNEL)
 #define _KERN_DO_ELF
-#endif
 
 #endif  /* _I386_EXEC_H_ */

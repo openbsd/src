@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.18 2001/12/04 00:00:36 niklas Exp $	*/
+/*	$OpenBSD: icu.s,v 1.19 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ IDTVEC(softtty)
 	call	_C_LABEL(comsoft)
 	movl	%ebx,_C_LABEL(cpl)
 #endif
-	jmp	%esi
+	jmp	*%esi
 
 #define DONETISR(s, c) \
 	.globl  _C_LABEL(c)	;\
@@ -155,7 +155,7 @@ IDTVEC(softnet)
 	xchgl	_C_LABEL(netisr),%edi
 #include <net/netisr_dispatch.h>
 	movl	%ebx,_C_LABEL(cpl)
-	jmp	%esi
+	jmp	*%esi
 #undef DONETISR
 
 IDTVEC(softclock)
@@ -163,5 +163,5 @@ IDTVEC(softclock)
 	movl	%eax,_C_LABEL(cpl)
 	call	_C_LABEL(softclock)
 	movl	%ebx,_C_LABEL(cpl)
-	jmp	%esi
+	jmp	*%esi
 

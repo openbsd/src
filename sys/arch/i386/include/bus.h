@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.34 2003/01/16 04:16:00 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.35 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -639,9 +639,9 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	int _port1 = (h1)+(o1); int _port2 = (h2)+(o2); int _cnt=(cnt);	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
-		1:	movl %w1,%%dx				;	\
+		1:	movl %k1,%%edx				;	\
 			inb  %%dx,%%al				;	\
-			movl %w0,%%dx				;	\
+			movl %k0,%%edx				;	\
 			outb %%al,%%dx				;	\
 			incl %0					;	\
 			incl %1					;	\
@@ -656,14 +656,14 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	int _port1 = (h1)+(o1); int _port2 = (h2)+(o2); int _cnt=(cnt);	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
-		1:	movl %w1,%%dx				;	\
+		1:	movl %k1,%%edx				;	\
 			inw  %%dx,%%ax				;	\
-			movl %w0,%%dx				;	\
+			movl %k0,%%edx				;	\
 			outw %%ax,%%dx				;	\
 			addl $2, %0				;	\
 			addl $2, %1				;	\
 			loop 1b"				:	\
-		    "+D" (_port2), "+S" (_port1), "+c" ((_cnt))	::	\
+		    "+D" (_port2), "+ES" (_port1), "+c" ((_cnt))	::	\
 		    "%edx", "%eax", "cc");				\
 	} else								\
 		i386_space_copy(_port1, _port2, 2, _cnt);		\
@@ -673,14 +673,14 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	int _port1 = (h1)+(o1); int _port2 = (h2)+(o2); int _cnt=(cnt);	\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
-		1:	movl %w1,%%dx				;	\
+		1:	movl %k1,%%edx				;	\
 			inl  %%dx,%%eax				;	\
-			movl %w0,%%dx				;	\
+			movl %k0,%%edx				;	\
 			outl %%eax,%%dx				;	\
 			addl $4, %0				;	\
 			addl $4, %1				;	\
 			loop 1b"				:	\
-		    "+D" (_port2), "+S" (_port1), "+c" ((_cnt))	::	\
+		    "+D" (_port2), "+ES" (_port1), "+c" ((_cnt))	::	\
 		    "%edx", "%eax", "cc");				\
 	} else								\
 		i386_space_copy(_port1, _port2, 4, _cnt);		\

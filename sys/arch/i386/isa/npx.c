@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.25 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: npx.c,v 1.26 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -152,9 +152,9 @@ extern int i386_fpu_fdivbug;
  */
 void probeintr(void);
 asm (".text\n\t"
-"_probeintr:\n\t"
+"probeintr:\n\t"
 	"ss\n\t"
-	"incl	_npx_intrs_while_probing\n\t"
+	"incl	npx_intrs_while_probing\n\t"
 	"pushl	%eax\n\t"
 	"movb	$0x20,%al	# EOI (asm in strings loses cpp features)\n\t"
 	"outb	%al,$0xa0	# IO_ICU2\n\t"
@@ -166,9 +166,9 @@ asm (".text\n\t"
 
 void probetrap(void);
 asm (".text\n\t"
-"_probetrap:\n\t"
+"probetrap:\n\t"
 	"ss\n\t"
-	"incl	_npx_traps_while_probing\n\t"
+	"incl	npx_traps_while_probing\n\t"
 	"fnclex\n\t"
 	"iret\n\t");
 
@@ -307,7 +307,7 @@ npxprobe(parent, match, aux)
 
 int npx586bug1(int, int);
 asm (".text\n\t"
-"_npx586bug1:\n\t"
+"npx586bug1:\n\t"
 	"fildl	4(%esp)		# x\n\t"
 	"fildl	8(%esp)		# y\n\t"
 	"fld	%st(1)\n\t"

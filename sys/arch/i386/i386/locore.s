@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.68 2003/01/09 22:27:09 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.69 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -70,9 +70,10 @@
 /*
  * override user-land alignment before including asm.h
  */
-#define	ALIGN_DATA	.align	2
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
+
+#define	ALIGN_DATA	.align  4
+#define	ALIGN_TEXT	.align  4,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align  16,0x90	/* 16-byte boundaries better for 486 */
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
 
@@ -100,8 +101,8 @@
 	pushl	%ds		; \
 	pushl	%es		; \
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	movl	%ax,%ds		; \
-	movl	%ax,%es
+	movw	%ax,%ds		; \
+	movw	%ax,%es
 #define	INTRFASTEXIT \
 	popl	%es		; \
 	popl	%ds		; \
@@ -591,14 +592,14 @@ begin:
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
+	movw	%cx,%fs
+	movw	%cx,%gs
 
 	call	_C_LABEL(main)
 
 NENTRY(proc_trampoline)
 	pushl	%ebx
-	call	%esi
+	call	*%esi
 	addl	$4,%esp
 	INTRFASTEXIT
 	/* NOTREACHED */
@@ -609,7 +610,7 @@ NENTRY(proc_trampoline)
  * Signal trampoline; copied to top of user stack.
  */
 NENTRY(sigcode)
-	call	SIGF_HANDLER(%esp)
+	call	*SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 #ifdef VM86
@@ -618,8 +619,8 @@ NENTRY(sigcode)
 #endif
 	movl	SC_FS(%eax),%ecx
 	movl	SC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
+	movw	%cx,%fs
+	movw	%dx,%gs
 1:	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$SYS_sigreturn,%eax
@@ -633,7 +634,7 @@ _C_LABEL(esigcode):
 
 #ifdef COMPAT_SVR4
 NENTRY(svr4_sigcode)
-	call	SVR4_SIGF_HANDLER(%esp)
+	call	*SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
 #ifdef VM86
@@ -642,8 +643,8 @@ NENTRY(svr4_sigcode)
 #endif
 	movl	SVR4_UC_FS(%eax),%ecx
 	movl	SVR4_UC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
+	movw	%cx,%fs
+	movw	%dx,%gs
 1:	pushl	%eax
 	pushl	$1			# setcontext(p) == syscontext(1, p)
 	pushl	%eax			# junk to fake return address
@@ -662,7 +663,7 @@ _C_LABEL(svr4_esigcode):
  * Signal trampoline; copied to top of user stack.
  */
 NENTRY(linux_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
+	call	*LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
 #ifdef VM86
@@ -671,8 +672,8 @@ NENTRY(linux_sigcode)
 #endif
 	movl	LINUX_SC_FS(%ebx),%ecx
 	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
+	movw	%cx,%fs
+	movw	%dx,%gs
 1:	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_sigreturn,%eax
 	int	$0x80			# enter kernel with args on stack
@@ -689,7 +690,7 @@ _C_LABEL(linux_esigcode):
  * Signal trampoline; copied to top of user stack.
  */
 NENTRY(freebsd_sigcode)
-	call	FREEBSD_SIGF_HANDLER(%esp)
+	call	*FREEBSD_SIGF_HANDLER(%esp)
 	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
 					# the copy at SIGF_SCP(%esp))
 	pushl	%eax
@@ -1277,9 +1278,9 @@ NENTRY(lgdt)
 	nop
 1:	/* Reload "stale" selectors. */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%ds
-	movl	%ax,%es
-	movl	%ax,%ss
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
@@ -1527,8 +1528,8 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	xorl	%eax, %eax
 	xorl	%ecx, %ecx
 #endif
-	movl	%fs,%ax
-	movl	%gs,%cx
+	movw	%fs,%ax
+	movw	%gs,%cx
 	movl	%eax,PCB_FS(%esi)
 	movl	%ecx,PCB_GS(%esi)
 
@@ -1587,8 +1588,8 @@ switch_exited:
 	/* Restore segment registers. */
 	movl	PCB_FS(%esi),%eax
 	movl	PCB_GS(%esi),%ecx
-	movl	%ax,%fs
-	movl	%cx,%gs
+	movw	%ax,%fs
+	movw	%cx,%gs
 
 switch_restored:
 	/* Restore cr0 (including FPU state). */
@@ -1651,8 +1652,8 @@ ENTRY(switch_exit)
 
 	/* Clear segment registers; always null in proc0. */
 	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
+	movw	%cx,%fs
+	movw	%cx,%gs
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -1688,8 +1689,8 @@ ENTRY(savectx)
 	xorl	%eax, %eax
 	xorl	%ecx, %ecx
 #endif
-	movl	%fs,%ax
-	movl	%gs,%cx
+	movw	%fs,%ax
+	movw	%gs,%cx
 	movl	%eax,PCB_FS(%edx)
 	movl	%ecx,PCB_GS(%edx)
 
@@ -1714,7 +1715,7 @@ ENTRY(savectx)
  * XXX - debugger traps are now interrupt gates so at least bdb doesn't lose
  * control.  The sti's give the standard losing behaviour for ddb and kgdb.
  */
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
+#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
@@ -1820,7 +1821,7 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 NENTRY(resume_pop_ds)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
-	movl	%ax,%es
+	movw	%ax,%es
 NENTRY(resume_pop_es)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
 	jmp	calltrap

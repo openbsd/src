@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.16 2002/09/24 00:06:22 nordin Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.17 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 ENTRY(microtime)
 
 #if defined(I586_CPU) || defined(I686_CPU)
-	movl	_pentium_mhz, %ecx
+	movl	_C_LABEL(pentium_mhz), %ecx
 	testl	%ecx, %ecx
 	jne	pentium_microtime
 #else
@@ -97,7 +97,7 @@ ENTRY(microtime)
 
 	movl	$11932,%edx	# counter limit
 
-	testb	$IRQ_BIT(0),_ipending + IRQ_BYTE(0)
+	testb	$IRQ_BIT(0),_C_LABEL(ipending) + IRQ_BYTE(0)
 	jnz	1f
 
 	cmpl	$12,%ecx	# check for potential overflow
@@ -123,8 +123,8 @@ ENTRY(microtime)
 	shrl	$12,%eax		# a = a/4096 = 3433d/4096
 
 common_microtime:
-	movl	_time,%edx	# get time.tv_sec
-	addl	_time+4,%eax	# add time.tv_usec
+	movl	_C_LABEL(time),%edx	# get time.tv_sec
+	addl	_C_LABEL(time)+4,%eax	# add time.tv_usec
 
 	popfl			# enable interrupts
 	
@@ -141,8 +141,8 @@ common_microtime:
 
 #if defined(I586_CPU) || defined(I686_CPU)
 	.data
-	.globl	_pentium_base_tsc
-	.comm	_pentium_base_tsc,8
+	.globl	_C_LABEL(pentium_base_tsc)
+	.comm	_C_LABEL(pentium_base_tsc),8
 	.text
 
 	.align	2, 0x90
@@ -150,8 +150,8 @@ pentium_microtime:
 	pushfl
 	cli
 	.byte	0x0f, 0x31	# RDTSC
-	subl	_pentium_base_tsc,%eax
-	sbbl	_pentium_base_tsc+4,%edx
+	subl	_C_LABEL(pentium_base_tsc),%eax
+	sbbl	_C_LABEL(pentium_base_tsc)+4,%edx
 	/*
 	 * correct the high word first so we won't
 	 * receive a result overflow aka div/0 fault

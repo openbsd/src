@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.27 2002/07/12 21:17:06 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.28 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -358,9 +358,9 @@ pcibios_get_status(sc, rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 
 	__asm __volatile("pushl	%%es\n\t"
 			 "pushl	%%ds\n\t"
-			 "movw	4(%%edi), %%ecx\n\t"
+			 "movw	4(%%edi), %%cx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
-			 "lcall	%%cs:(%%edi)\n\t"
+			 "lcall	%%cs:*(%%edi)\n\t"
 			 "pop	%%ds\n\t"
 			 "pop	%%es\n\t"
 			 "jc	1f\n\t"
@@ -414,9 +414,9 @@ pcibios_get_intr_routing(sc, table, nentries, exclirq)
 
 	__asm __volatile("pushl	%%es\n\t"
 			 "pushl	%%ds\n\t"
-			 "movw	4(%%esi), %%ecx\n\t"
+			 "movw	4(%%esi), %%cx\n\t"
 			 "movl	%%ecx, %%ds\n\t"
-			 "lcall	%%cs:(%%esi)\n\t"
+			 "lcall	%%cs:*(%%esi)\n\t"
 			 "popl	%%ds\n\t"
 			 "popl	%%es\n\t"
 			 "jc	1f\n\t"

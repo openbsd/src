@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 2001/09/05 08:22:36 espie Exp $	*/
+/*	$OpenBSD: asm.h,v 1.6 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -45,10 +45,10 @@
 #ifdef PIC
 #define PIC_PROLOGUE	\
 	pushl	%ebx;	\
-	call	1f;	\
-1:			\
+	call	666f;	\
+666:			\
 	popl	%ebx;	\
-	addl	$__GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+	addl	$_C_LABEL(_GLOBAL_OFFSET_TABLE_)+[.-666b], %ebx
 #define PIC_EPILOGUE	\
 	popl	%ebx
 #define PIC_PLT(x)	x@PLT
@@ -62,12 +62,21 @@
 #define PIC_GOTOFF(x)	x
 #endif
 
-#ifdef __STDC__
-# define _C_LABEL(x)	_ ## x
-#else
-# define _C_LABEL(x)	_/**/x
-#endif
+#define _C_LABEL(name)	name
 #define	_ASM_LABEL(x)	x
+
+/*
+ * WEAK ALIAS: create a weak alias
+ */
+#define WEAK_ALIAS(alias,sym) \
+	.weak alias; \
+	alias = sym
+
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced
+ */
+#define WARN_REFERENCES(_sym,_msg)	\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT

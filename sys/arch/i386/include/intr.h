@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2002/12/11 07:16:11 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.19 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -226,7 +226,8 @@ static __inline void
 softintr(mask)
 	int mask;
 {
-	__asm __volatile("orl %0,_ipending" : : "ir" (mask));
+	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (mask));
+
 }
 
 #define	setsoftast()	(astpending = 1)

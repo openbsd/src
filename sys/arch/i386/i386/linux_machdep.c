@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.25 2003/03/28 00:49:13 miod Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.26 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -149,8 +149,8 @@ linux_sendsig(catcher, sig, mask, code, type, val)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		__asm("movl %%gs,%k0" : "=r" (frame.sf_sc.sc_gs));
+		__asm("movl %%fs,%k0" : "=r" (frame.sf_sc.sc_fs));
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.17 2003/03/28 00:49:13 miod Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.18 2003/04/17 03:42:14 drahn Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -85,8 +85,8 @@ svr4_getcontext(p, uc, mask, oonstack)
 	} else
 #endif
 	{
-	        __asm("movl %%gs,%w0" : "=r" (r[SVR4_X86_GS]));
-		__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
+	        __asm("movl %%gs,%k0" : "=r" (r[SVR4_X86_GS]));
+		__asm("movl %%fs,%k0" : "=r" (r[SVR4_X86_FS]));
 		r[SVR4_X86_ES] = tf->tf_es;
 		r[SVR4_X86_DS] = tf->tf_ds;
 		r[SVR4_X86_EFL] = tf->tf_eflags;
