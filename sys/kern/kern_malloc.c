@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.28 2001/05/11 06:38:47 angelos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.29 2001/05/14 06:56:30 angelos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -499,9 +499,8 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 			buckstring_init = 1;
 			bzero(buckstring, sizeof(buckstring));
 		        for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++)
-			        siz += snprintf(buckstring + siz,
-						sizeof(buckstring) - siz - 1,
-					        "%d,", (u_int)(1<<i));
+			        siz += sprintf(buckstring + siz,
+				    "%d,", (u_int)(1<<i));
 			buckstring[siz - 1] = '\0'; /* Remove trailing comma */
 		}
 	        return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
@@ -509,42 +508,34 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen)
 	case KERN_MALLOC_BUCKET:
 	        bcopy(&bucket[BUCKETINDX(name[1])], &kb, sizeof(kb));
 		kb.kb_next = kb.kb_last = 0;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb,
-					sizeof(kb)));
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &kb, sizeof(kb)));
 	case KERN_MALLOC_KMEMSTATS:
 #ifdef KMEMSTATS
 		if ((name[1] < 0) || (name[1] >= M_LAST))
 			return (EINVAL);
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
-					&kmemstats[name[1]],
-					sizeof(struct kmemstats)));
+		    &kmemstats[name[1]], sizeof(struct kmemstats)));
 #else
 		return (EOPNOTSUPP);
 #endif
 	case KERN_MALLOC_KMEMNAMES:
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
-		/*
-		 * XXX We should use a spinlock here, since
-		 * multiple processes could conceivably be "stuck"
-		 * waiting for memory to become available.
-		 */
 	        if (memall == NULL) {
 			int totlen;
 
 			/* Figure out how large a buffer we need */
-			for (totlen = 1, i = 0; i < M_LAST; i++)
+			for (totlen = 0, i = 0; i < M_LAST; i++) {
 				if (memname[i])
-					totlen += strlen(memname[i]) + 1;
-				else
-					totlen++;
-
-			memall = malloc(totlen + M_LAST, M_TEMP, M_WAITOK);
+					totlen += strlen(memname[i]);
+				totlen++;
+			}
+			memall = malloc(totlen + M_LAST, M_SYSCTL, M_NOWAIT);
+			if (memall == NULL)
+				return (ENOMEM);
 			bzero(memall, totlen + M_LAST);
-
 		        for (siz = 0, i = 0; i < M_LAST; i++)
 			        siz += sprintf(memall + siz, "%s,",
-					       memname[i] ? memname[i] : "");
-
+				    memname[i] ? memname[i] : "");
 			memall[siz - 1] = '\0'; /* Remove trailing comma */
 
 			/* Now, convert all spaces to underscores */
