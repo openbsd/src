@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2002/07/30 05:33:39 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2002/07/30 05:37:21 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -44,16 +44,9 @@
 #include "intercept.h"
 #include "systrace.h"
 #include "systrace-errno.h"
+#include "filter.h"
 
 void yyrestart(FILE *);
-
-int filter_fnmatch(struct intercept_translate *, struct logic *);
-int filter_stringmatch(struct intercept_translate *, struct logic *);
-int filter_negstringmatch(struct intercept_translate *, struct logic *);
-int filter_substrmatch(struct intercept_translate *, struct logic *);
-int filter_negsubstrmatch(struct intercept_translate *, struct logic *);
-int filter_inpath(struct intercept_translate *, struct logic *);
-int filter_true(struct intercept_translate *, struct logic *);
 
 struct logic *parse_newsymbol(char *, int, char *);
 
