@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.56 1999/01/11 21:39:53 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.57 1999/02/28 06:51:16 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -48,7 +48,7 @@ option		BOOT_CONFIG	# boot-time kernel config
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=3560
 
-config		bsd	root on rd0a swap on rd0b
+config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0 at root
 
