@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.27 1997/11/06 05:59:32 csapuntz Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.28 1998/02/23 20:15:54 niklas Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -107,9 +107,9 @@ kernacc(addr, len, rw)
 	 * about the buffer cache for now.
 	 */
 	if (!readbuffers && rv && (eaddr > (vm_offset_t)buffers &&
-		   saddr < (vm_offset_t)buffers + MAXBSIZE * nbuf))
+	    saddr < (vm_offset_t)buffers + MAXBSIZE * nbuf))
 		rv = FALSE;
-	return(rv == TRUE);
+	return (rv == TRUE);
 }
 
 int
@@ -133,7 +133,7 @@ useracc(addr, len, rw)
 
 	rv = vm_map_check_protection(&curproc->p_vmspace->vm_map,
 	    trunc_page(addr), round_page(addr+len), prot);
-	return(rv == TRUE);
+	return (rv == TRUE);
 }
 
 #ifdef KGDB
@@ -182,8 +182,8 @@ vslock(addr, len)
 #ifdef __i386__
 	pmap_prefault(&curproc->p_vmspace->vm_map, (vm_offset_t)addr, len);
 #endif
-	return vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-			       round_page(addr+len), FALSE);
+	return (vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
+	    round_page(addr+len), FALSE));
 }
 
 int
@@ -191,8 +191,8 @@ vsunlock(addr, len)
 	caddr_t	addr;
 	u_int	len;
 {
-	return vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-			       round_page(addr+len), TRUE);
+	return (vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
+	    round_page(addr+len), TRUE));
 }
 
 /*
@@ -274,13 +274,15 @@ vm_fork(p1, p2)
 	     (caddr_t)&up->u_stats.pstat_startcopy));
 
 #if defined(i386) || defined(pc532)
-	{ vm_offset_t addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
+	{
+		 vm_offset_t addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
 
-	/* ream out old pagetables and kernel stack */
-	vp = &p2->p_vmspace->vm_map;
-	(void)vm_deallocate(vp, addr, VM_MAX_ADDRESS - addr);
-	(void)vm_allocate(vp, &addr, VM_MAX_ADDRESS - addr, FALSE);
-	(void)vm_map_inherit(vp, addr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
+		 /* ream out old pagetables and kernel stack */
+		 vp = &p2->p_vmspace->vm_map;
+		 (void)vm_deallocate(vp, addr, VM_MAX_ADDRESS - addr);
+		 (void)vm_allocate(vp, &addr, VM_MAX_ADDRESS - addr, FALSE);
+		 (void)vm_map_inherit(vp, addr, VM_MAX_ADDRESS,
+		     VM_INHERIT_NONE);
 	}
 #endif
 
@@ -390,7 +392,6 @@ loop:
 	ppri = INT_MIN;
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
-
 			pri = p->p_swtime + p->p_slptime - p->p_nice * 8;
 			if (pri > ppri) {
 				pp = p;
@@ -420,8 +421,8 @@ loop:
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
 			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
-			       p->p_pid, p->p_comm, p->p_addr,
-			       ppri, cnt.v_free_count);
+			    p->p_pid, p->p_comm, p->p_addr, ppri,
+			    cnt.v_free_count);
 #endif
 #if defined(arc) || defined(pica)
 			vm_map_pageable(kernel_map, (vm_offset_t)p->p_addr,
@@ -437,11 +438,11 @@ loop:
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: no room for pid %d(%s), free %d\n",
-		       p->p_pid, p->p_comm, cnt.v_free_count);
+		    p->p_pid, p->p_comm, cnt.v_free_count);
 #endif
-	(void) splhigh();
+	(void)splhigh();
 	VM_WAIT;
-	(void) spl0();
+	(void)spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: room again, free %d\n", cnt.v_free_count);
@@ -451,7 +452,7 @@ loop:
 
 #define	swappable(p)							\
 	(((p)->p_flag & (P_SYSTEM | P_INMEM | P_WEXIT)) == P_INMEM &&	\
-	 (p)->p_holdcnt == 0)
+	    (p)->p_holdcnt == 0)
 
 /*
  * Swapout is driven by the pageout daemon.  Very simple, we find eligible
@@ -528,8 +529,8 @@ swapout(p)
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
 		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
-		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
-		       p->p_slptime, cnt.v_free_count);
+		    p->p_pid, p->p_comm, p->p_addr, p->p_stat, p->p_slptime,
+		    cnt.v_free_count);
 #endif
 
 	/*
