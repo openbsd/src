@@ -658,3 +658,4 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/stdbool.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/machine/netbsd_machdep.ph
