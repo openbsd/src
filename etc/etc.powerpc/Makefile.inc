@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1998/09/12 20:07:36 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 1998/09/16 03:39:02 rahnds Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 
 # HACK ALERT 
-REL=23
+REL=24
 # unhack
 
 .ifdef DESTDIR
