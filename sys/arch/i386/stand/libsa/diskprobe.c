@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.8 1997/10/26 10:00:32 niklas Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.9 1997/10/26 23:19:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -54,50 +54,46 @@ u_int32_t bios_cksumlen;
 void
 diskprobe()
 {
-	u_int drive, i = 0, rv;
 	struct disklabel label;
-	u_int unit, type;
+	register u_int i;
+	register bios_diskinfo_t *pdi;
+	u_int type;
 
 	printf("Probing disks:");
+	pdi = bios_diskinfo;
 
 	/* Floppies */
-	for(drive = 0; drive < 4; drive++) {
-		rv = bios_getinfo(drive, &bios_diskinfo[i]);
-
-		if(rv) {
+	for(i = 0; i < 4; i++, pdi++) {
+		if(bios_getinfo(i, pdi)) {
 #ifdef BIOS_DEBUG
-			printf(" <!fd%u>", drive);
+			printf(" <!fd%u>", i);
 #endif
 			break;
-		}
-
-		printf(" fd%u", drive);
+		} else
+			printf(" fd%u", i);
 
 		/* Fill out best we can - (fd?) */
-		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(2, 0, 0, drive, 0);
-		i++;
+		pdi->bsd_dev = MAKEBOOTDEV(2, 0, 0, i, RAW_PART);
 	}
 
 #ifdef BIOS_DEBUG
-	printf("/");
+	printf(";");
 #endif
 
 	/* Hard disks */
-	for(drive = 0x80; drive < 0x88; drive++) {
-		rv = bios_getinfo(drive, &bios_diskinfo[i]);
+	for(i = 0; i < 8; i++, pdi++) {
 
-		if(rv) {
+		if(bios_getinfo(i | 0x80, pdi)) {
 #ifdef BIOS_DEBUG
-			printf(" <!hd%u>", drive);
+			printf(" <!hd%u>", i);
 #endif
 			break;
 		}
 
-		unit = drive - 0x80;
-		printf(" hd%u%s", unit, (bios_diskinfo[i].bios_edd > 0?"+":""));
+		printf(" hd%u%s", i, (pdi->bios_edd > 0?"+":""));
 
 		/* Try to find the label, to figure out device type */
-		if((bios_getdisklabel(drive, &label)) ) {
+		if((bios_getdisklabel(i | 0x80, &label)) ) {
 			printf("*");
 			type = 0;	/* XXX let it be IDE */
 		} else {
@@ -105,36 +101,36 @@ diskprobe()
 			switch (label.d_type) {
 			case DTYPE_SCSI:
 				type = 4;
-				bios_diskinfo[i].flags |= BDI_GOODLABEL;
+				pdi->flags |= BDI_GOODLABEL;
 				break;
 
 			case DTYPE_ESDI:
 			case DTYPE_ST506:
 				type = 0;
-				bios_diskinfo[i].flags |= BDI_GOODLABEL;
+				pdi->flags |= BDI_GOODLABEL;
 				break;
 
 			default:
-				bios_diskinfo[i].flags |= BDI_BADLABEL;
+				pdi->flags |= BDI_BADLABEL;
 				type = 0;	/* XXX Suggest IDE */
 			}
 		}
 
+		pdi->checksum = 0; /* just in case */
 		/* Fill out best we can */
-		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(type, 0, 0, unit, 0);
-		i++;
+		pdi->bsd_dev = MAKEBOOTDEV(type, 0, 0, i, RAW_PART);
 	}
 
 	/* End of list */
-	bios_diskinfo[i].bios_number = -1;
-	addbootarg(BOOTARG_DISKINFO,
-		   (i + 1) * sizeof(bios_diskinfo[0]), bios_diskinfo);
-
+	pdi->bios_number = -1;
 	/* Checksumming of hard disks */
 	for (i = 0; disksum(i) && i < MAX_CKSUMLEN; i++)
 		;
 	bios_cksumlen = i + 1;
 	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
+	addbootarg(BOOTARG_DISKINFO, (pdi - bios_diskinfo + 1) *
+				     sizeof(bios_diskinfo[0]), bios_diskinfo);
+
 
 	printf("\n");
 }
