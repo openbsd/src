@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_debug.h,v 1.3 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: spx_debug.h,v 1.4 2003/04/02 18:51:37 mickey Exp $	*/
 
 /*-
  *
@@ -71,7 +71,6 @@ int	spx_debx;
 #ifdef _KERNEL
 extern char *prurequests[];
 extern char *sanames[];
-extern char *tcpstates[];
 
 void	spx_trace(int act, int ostate, struct spxpcb *sp, struct spx *si,
 		       int req);
