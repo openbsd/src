@@ -65,6 +65,11 @@ Supported devices {:-include-:}:
 	Sound devices:
 		onboard SBus CS4321 (audiocs)
 		onboard EBus/PCI CS4231 (audioce)
+		Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 (autri)
+
+	Cryptography accelerators:
+		Hifn 7751/7811/7951 (hifn)
+		Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 (ubsec)
 
 	Miscellaneous devices:
 		EBus beeper (beeper)
@@ -72,8 +77,8 @@ Supported devices {:-include-:}:
 
 Hardware the we do NOT currently support, but get many questions about:
 
-	Framebuffers (these will work as PROM console output, but no raster
-	  console or X Window support yet).
+	Framebuffers (these will work as PROM console output and raster
+	  console, but X Window support yet).
 	Keyboards (these will work as PROM console input, but no X Window
 	  support yet).
 	Mice (no X Window support yet).
