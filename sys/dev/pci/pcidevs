@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.365 2001/02/06 07:50:38 chris Exp $
+	$OpenBSD: pcidevs,v 1.366 2001/02/18 18:20:41 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -781,6 +781,7 @@ product ATI MACH64_GI		0x4749  Mach64 GI
 product ATI MACH64_GM		0x474d	Mach64 GM
 product ATI MACH64_GP		0x4750  Mach64 GP
 product ATI MACH64_GQ		0x4751  Mach64 GQ
+product ATI RAGEXL		0x4752	Rage XL
 product ATI MACH64_GT		0x4754  Mach64 GT
 product ATI MACH64_GU		0x4755  Mach64 GU
 product ATI MACH64_GV		0x4756  Mach64 GV
@@ -798,6 +799,7 @@ product ATI RAGE_PM		0x4c52	Rage P/M
 product ATI RAGE_FURY		0x5046	Rage Fury AGP4x
 product ATI RAGE128_PK		0x5052	Rage 128 PK
 product ATI RADEON_AIW		0x5144	AIW Radeon
+product ATI RAGE128GL		0x5245	Rage 128 GL
 product ATI RAGE_MAGNUM		0x5246	Rage Magnum
 product ATI RAGE_128_VR_AGP	0x524c	Rage 128 VR AGP
 product ATI MACH64_VT		0x5654	Mach64 VT
@@ -1026,6 +1028,7 @@ product ESSTECH	MAESTROII	0x1968	Maestro II
 product ESSTECH SOLO1		0x1969	SOLO-1 AudioDrive
 product ESSTECH MAESTRO2E	0x1978	Maestro 2E
 product ESSTECH MAESTRO3	0x1998	Maestro 3
+product ESSTECH ES1983		0x1999	ES1983 Modem
 product ESSTECH 2898		0x2898	ES2898 Modem
 
 /* Essential Communications products */
@@ -1350,6 +1353,7 @@ product NETSEC 7751		0x7751	7751
 product CMI CMI8338A		0x0100	CMI8338A Audio
 product CMI CMI8338B		0x0101	CMI8338B Audio
 product CMI CMI8738		0x0111	CMI8738/C3DX Audio
+product CMI HSP56		0x0211	HSP56 AMR
 
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
@@ -1437,6 +1441,7 @@ product NVIDIA VANTA1		0x002c	Vanta
 product NVIDIA VANTA2		0x002d	Vanta
 product NVIDIA GEFORCE256	0x0100	GeForce256
 product NVIDIA GEFORCE256_DDR	0x0101	GeForce256 DDR
+product NVIDIA GEFORCE2MX	0x0110	GeForce2 MX
 product NVIDIA GEFORCE2GTS	0x0150	GeForce2 GTS
 
 /* Oak Technologies products */
