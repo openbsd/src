@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.17 2000/07/09 19:20:40 marc Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.18 2000/11/24 04:18:20 millert Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -322,7 +322,6 @@ void add_srcdirs(int argc, char **argv)
         if (argv[i][0] == '/' || topdir[0] == '\0') {
 	     if (strlcpy(tmppath, argv[i], sizeof(tmppath)) >= sizeof(tmppath))
 	       overflow = 1;  
-	     continue;
 	} else {
 	     if (strlcpy(tmppath, topdir, sizeof(tmppath)) >= sizeof(tmppath)||
 		 strlcat(tmppath, "/", sizeof(tmppath)) >= sizeof(tmppath) ||
