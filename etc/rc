@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.110 1999/09/04 21:30:49 millert Exp $
+#	$OpenBSD: rc,v 1.111 1999/09/04 22:20:20 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -339,35 +339,34 @@ elif [ ! -d $vidir ]; then
 	chmod 1777 $vidir
 else
 	vibackup=$vidir/vi.*
-	if [ "$vibackup" != "$vidir/vi.*" ]; then
-		for i in $vibackup; do
-			# Unmodified vi editor backup files either have the
-			# execute bit set or are zero length.  Delete them.
-			# Anything that is not a normal file gets deleted too.
-			if [ -x $i -o ! -s $i -o ! -f $i ]; then
-				rm $i
-			fi
-		done
-	fi
+	for i in $vibackup; do
+		[ "$i" = "$vibackup" ] && break
+		# Unmodified vi editor backup files either have the
+		# execute bit set or are zero length.  Delete them.
+		# Anything that is not a normal file gets deleted too.
+		if [ -x $i -o ! -s $i -o ! -f $i ]; then
+			rm $i
+		fi
+	done
+
 	virecovery=$vidir/recover.*
-	if [ "$virecovery" != "$vidir/recover.*" ]; then
-		echo preserving editor files
-		for i in $virecovery; do
-			# Delete any recovery files that are zero length,
-			# corrupted, # or that have no corresponding backup
-			# file.  Else send mail to the user.
-			if [ -f $i ]; then
-				r=`awk '/^X-vi-recover-path:/{print $2}' < $i`
-				if [ -n "$r" -a -s "$r" ]; then
-					sendmail -t < $i
-				else
-					rm $i
-				fi
+	echo preserving editor files
+	for i in $virecovery; do
+		[ "$i" = "$virecovery" ] && break
+		# Delete any recovery files that are zero length,
+		# corrupted, # or that have no corresponding backup
+		# file.  Else send mail to the user.
+		if [ -f $i ]; then
+			recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
+			if [ -n "$recfile" -a -s "$recfile" ]; then
+				sendmail -t < $i
 			else
 				rm $i
 			fi
-		done
-	fi
+		else
+			rm $i
+		fi
+	done
 fi
 
 if [ -f /var/account/acct ]; then
