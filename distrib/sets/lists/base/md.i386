@@ -675,6 +675,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/uhavar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/vgareg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/vgavar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/wdcevent.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/wdcreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/wdcvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/xlreg.ph

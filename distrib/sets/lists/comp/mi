@@ -280,6 +280,7 @@
 ./usr/include/dev/ic/uhavar.h
 ./usr/include/dev/ic/vgareg.h
 ./usr/include/dev/ic/vgavar.h
+./usr/include/dev/ic/wdcevent.h
 ./usr/include/dev/ic/wdcreg.h
 ./usr/include/dev/ic/wdcvar.h
 ./usr/include/dev/ic/xlreg.h
