@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.7 2003/09/19 22:34:52 miod Exp $ */
+/*	$OpenBSD: exec_mvme.c,v 1.8 2004/11/11 21:44:40 miod Exp $ */
 /*	$NetBSD: exec_sun.c,v 1.5 1996/01/29 23:41:06 gwr Exp $ */
 
 /*-
@@ -81,7 +81,7 @@ exec_mvme(file, flag)
 	 *  loadaddr as a parameter and let the kernel relocate itself!)
 	 *
 	 * note that ZMAGIC files included the a.out header in the text area
-	 * so we must mask that off (has no effect on the other formats
+	 * so we must mask that off (has no effect on the other formats)
 	 */
 	loadaddr = (void *)(x.a_entry & ~sizeof(x));
 
