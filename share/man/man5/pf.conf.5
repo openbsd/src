@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.147 2002/12/09 22:19:39 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.148 2002/12/09 22:23:35 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -768,9 +768,12 @@ The host and port specifications are optional, as in the following examples:
 .Ed
 .It Pa all
 This is a short form for "from any to any".
-.It Pa user <user> group <group>
-The rule only applies to packets of sockets owned by the specified user
-and group.
+.It Pa group <group>
+Similar to
+.Pa user Ns ,
+this rule only applies to packets of sockets owned by the specified group.
+.It Pa user <user>
+The rule only applies to packets of sockets owned by the specified user.
 For outgoing connections initiated from the firewall, this is the user
 that opened the connection.
 For incoming connections to the firewall itself, this is the user that
