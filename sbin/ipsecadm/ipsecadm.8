@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.11 1999/07/09 13:35:49 aaron Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.12 1999/08/05 22:02:05 ho Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -139,7 +139,7 @@ Allowed modifiers are:
 and
 .Fl chain .
 .It group
-Group two SA's together. Allowed modifiers are:
+Group two SAs together. Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
 .Fl proto ,
@@ -163,7 +163,7 @@ The
 .Xr netstat 1
 command shows the existing flows.
 .It bind
-Associate an incoming Security Assoication with and outgoing Security
+Associate an incoming Security Association with an outgoing Security
 Association. When a socket receives packets secured by the incoming
 SA all responses will be processed by the outgoing SA. Allowed modifiers
 are:
@@ -180,6 +180,17 @@ and
 .Fl dst .
 This can be useful while travelling where the IP address of potential
 clients is not known.
+.It flush
+Flush SAs from from kernel. This includes flushing any flows and 
+routing entries associated with the SAs. Allowed modifiers are:
+.Fl ah ,
+.Fl esp ,
+.Fl oldah ,
+.Fl oldesp ,
+and
+.Fl ip4 .
+Default action is to flush all types of security associations 
+from the kernel.
 .El
 .Pp
 If no command is given
@@ -365,9 +376,29 @@ The
 .Nm flow
 command also creates a flow which matches local packets. This is aquivalent
 to using a source address of 0.0.0.0 and a source network mask of
-255.255.255.0.
+255.255.255.255.
 .It delete
 Instead of creating a flow, an existing flow is deleted.
+.It ah
+For
+.Nm flush ,
+only flush SAs of type ah.
+.It esp
+For
+.Nm flush ,
+only flush SAs of type esp.
+.It oldah
+For
+.Nm flush ,
+only flush SAs of type old ah.
+.It oldesp
+For
+.Nm flush ,
+only flush SAs of type old esp.
+.It ip4
+For
+.Nm flush ,
+only flush SAs of type ip4.
 .El
 .Sh EXAMPLE
 Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
@@ -383,6 +414,11 @@ Setup a SA for authentication with old ah only:
 .Bd -literal
 ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
 	-key 12341234deadbeef
+.Ed
+.Pp
+Delete all esp SAs and their flows and routing information:
+.Bd -literal
+ipsecadm flush -esp
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,

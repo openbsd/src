@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.21 1999/07/15 14:56:26 niklas Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.22 1999/08/05 22:02:04 ho Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -73,6 +73,7 @@
 #define GRP_SPI		0x40
 #define FLOW		0x50
 #define BINDSA		0x60
+#define FLUSH		0x70
 #define ENC_IP		0x80
 
 #define CMD_MASK	0xf0
@@ -178,7 +179,7 @@ usage()
 {
     fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
 	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4\n"
-	    "\t\t  flow, bind\n"
+	    "\t\t  flow, bind, flush\n"
 	    "\tPossible modifiers:\n"
 	    "\t  -enc <alg>\t\t\t encryption algorithm\n"
 	    "\t  -auth <alg>\t\t\t authentication algorithm\n"
@@ -196,6 +197,7 @@ usage()
 	    "\t  -addr <ip> <net> <ip> <net>\t subnets for flow\n"
 	    "\t  -delete\t\t\t delete specified flow\n"
 	    "\t  -local\t\t\t also create a local flow\n"
+	    "\t  -[ah|esp|oldah|oldesp|ip4]\t to flush a particular protocol\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
 }
@@ -366,18 +368,27 @@ main(int argc, char **argv)
 		  i++;
 	      }
 	      else
-		if (!strcmp(argv[1], "ip4"))
+		if (!strcmp(argv[1], "flush"))
 		{
-		    mode = ENC_IP;
-		    smsg.sadb_msg_type = SADB_ADD;
-		    smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
+		    mode = FLUSH;
+		    smsg.sadb_msg_type = SADB_FLUSH;
+		    smsg.sadb_msg_satype = SADB_SATYPE_UNSPEC;
 		    i++;
 		}
-		else
-		{
-		    fprintf(stderr, "%s: unknown command: %s", argv[0], argv[1]);
-		    exit(1);
-		}
+		else 
+		  if (!strcmp(argv[1], "ip4"))
+		  {
+		      mode = ENC_IP;
+		      smsg.sadb_msg_type = SADB_ADD;
+		      smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
+		      i++;
+		  }
+		  else
+		  {
+		      fprintf(stderr, "%s: unknown command: %s", argv[0], 
+			      argv[1]);
+		      exit(1);
+		  }
     
     for (i++; i < argc; i++)
     {
@@ -465,6 +476,32 @@ main(int argc, char **argv)
 	      if (strlen(argv[i + 2]) == 4)
 		sa.sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
 
+	    i++;
+	    continue;
+	}
+
+	if (iscmd(mode, FLUSH) && smsg.sadb_msg_satype == SADB_SATYPE_UNSPEC)
+	{
+	    if(!strcmp(argv[i] + 1, "esp"))
+	        smsg.sadb_msg_satype = SADB_SATYPE_ESP;
+	    else 
+	      if(!strcmp(argv[i] + 1, "ah"))
+	          smsg.sadb_msg_satype = SADB_SATYPE_AH;
+	      else 
+		if(!strcmp(argv[i] + 1, "oldesp"))
+		    smsg.sadb_msg_satype = SADB_X_SATYPE_ESP_OLD;
+		else 
+		  if(!strcmp(argv[i] + 1, "oldah"))
+		      smsg.sadb_msg_satype = SADB_X_SATYPE_AH_OLD;
+		  else 
+		    if(!strcmp(argv[i] + 1, "ip4"))
+		        smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
+		    else
+		    {
+		      fprintf(stderr, "%s: invalid SA type %s\n", argv[0],
+			      argv[i + 1]);
+		      exit(1);
+		    }
 	    i++;
 	    continue;
 	}
@@ -889,7 +926,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (spi == SPI_RESERVED_MIN)
+    if (spi == SPI_RESERVED_MIN && !iscmd(mode, FLUSH))
     {
 	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 	exit(1);
@@ -926,7 +963,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (!dstset)
+    if (!dstset && !iscmd(mode, FLUSH))
     {
 	fprintf(stderr, "%s: no destination address for the SA specified\n", 
 		argv[0]);
@@ -1178,10 +1215,14 @@ main(int argc, char **argv)
 		 iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 		 smsg.sadb_msg_len += sad7.sadb_address_len;
 		 break;
+
+	    case FLUSH:
+		 /* No more work needed. */
+		 break;
+	  
 	}
     }
 
     xf_set(iov, cnt, smsg.sadb_msg_len * 8);
     exit (0);
 }
-
