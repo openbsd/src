@@ -939,6 +939,8 @@ int main(argc, argv)
 	int 		count, recvlen, dummy = 0;
 
 	FD_ZERO(&fds);
+	if (igmp_socket >= FD_SETSIZE)
+	    log(LOG_ERR, 0, "descriptor too big");
 	FD_SET(igmp_socket, &fds);
 
 	tv.tv_sec = timeout;

@@ -30,7 +30,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.9 2002/02/19 19:39:40 millert Exp $";
+	"@(#) $Id: main.c,v 1.10 2002/08/09 02:27:16 itojun Exp $";
 #endif
 
 extern char *configfilename;
@@ -278,9 +278,13 @@ usage:	fprintf(stderr,
 	(void)signal(SIGQUIT, dump);
 
     FD_ZERO(&readers);
+    if (igmp_socket >= FD_SETSIZE)
+	log(LOG_ERR, 0, "descriptor too big");
     FD_SET(igmp_socket, &readers);
     nfds = igmp_socket + 1;
     for (i = 0; i < nhandlers; i++) {
+	if (ihandlers[i].fd >= FD_SETSIZE)
+	    log(LOG_ERR, 0, "descriptor too big");
 	FD_SET(ihandlers[i].fd, &readers);
 	if (ihandlers[i].fd >= nfds)
 	    nfds = ihandlers[i].fd + 1;
