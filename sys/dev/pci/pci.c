@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.20 2001/06/26 22:22:41 jason Exp $	*/
+/*	$OpenBSD: pci.c,v 1.21 2001/07/20 05:56:25 csapuntz Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -187,6 +187,7 @@ pciattach(parent, self, aux)
 			pa.pa_pc = pc;
 			pa.pa_device = device;
 			pa.pa_function = function;
+			pa.pa_bus = bus;
 			pa.pa_tag = tag;
 			pa.pa_id = id;
 			pa.pa_class = class;
