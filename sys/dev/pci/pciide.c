@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.32 2000/10/16 18:09:56 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.33 2000/10/21 05:43:18 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -296,7 +296,9 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	},
 };
 
+#ifdef notyet
 const struct pciide_product_desc pciide_opti_products[] = {
+
 	{ PCI_PRODUCT_OPTI_82C621,
 	  0,
 	  opti_chip_map
@@ -310,6 +312,7 @@ const struct pciide_product_desc pciide_opti_products[] = {
 	  opti_chip_map
 	},
 };
+#endif
 
 const struct pciide_product_desc pciide_cmd_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_640,	/* CMD Technology PCI0640 */
@@ -398,8 +401,10 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	  sizeof(pciide_intel_products)/sizeof(pciide_intel_products[0]) },
 	{ PCI_VENDOR_AMD, pciide_amd_products,
 	  sizeof(pciide_amd_products)/sizeof(pciide_amd_products[0]) },
+#ifdef notyet
 	{ PCI_VENDOR_OPTI, pciide_opti_products,
 	  sizeof(pciide_opti_products)/sizeof(pciide_opti_products[0]) },
+#endif
 	{ PCI_VENDOR_CMDTECH, pciide_cmd_products,
 	  sizeof(pciide_cmd_products)/sizeof(pciide_cmd_products[0]) },
 	{ PCI_VENDOR_VIATECH, pciide_via_products,
@@ -2901,7 +2906,7 @@ opti_chip_map(sc, pa)
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
@@ -2965,8 +2970,7 @@ opti_setup_channel(chp)
 	opti_write_config(chp, OPTI_REG_CONTROL, OPTI_CONTROL_DISABLE);
 
 	/* Determine the clockrate of the PCIbus the chip is attached to */
-	spd = (int) opti_read_config(chp, OPTI_REG_STRAP);
-	spd &= OPTI_STRAP_PCI_SPEED_MASK;
+	spd = 2;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
