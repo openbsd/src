@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesvar.h,v 1.2 2001/06/04 13:07:20 ho Exp $	*/
+/*	$OpenBSD: isesvar.h,v 1.3 2001/06/24 21:08:06 ho Exp $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -33,9 +33,9 @@ struct ises_softc {
 	bus_space_handle_t	sc_memh;	/* memory handle */
 	bus_space_tag_t		sc_memt;	/* memory tag */
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
-	bus_dmamap_t		sc_dmamap_xfer; /* dma xfer map */
-	struct ises_databuf     sc_dmamap;      /* data area */
-	bus_addr_t		sc_dmamap_phys; /* bus address of data area */
+	bus_dmamap_t		sc_dmamap;	/* dma xfer map */
+	struct ises_databuf     sc_dma_data;	/* data area */
+
 	int32_t			sc_cid;		/* crypto tag */
 	u_int32_t		sc_intrmask;	/* interrupt mask */
 	SIMPLEQ_HEAD(,ises_q)	sc_queue;	/* packet queue */
@@ -60,7 +60,7 @@ struct ises_q {
 	struct ises_softc	*q_sc;
 
 	struct mbuf 		*q_src_m, *q_dst_m;
-	struct ises_pktbuf	q_srcpkt, q_dstpkt;
+	bus_dma_segment_t	q_srcpkt, q_dstpkt;
 
 	struct ises_bchu_session q_bsession;
 	u_int32_t		q_hminner[5];	/* hmac inner state */

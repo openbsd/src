@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.9 2001/06/23 21:06:48 angelos Exp $	*/
+/*	$OpenBSD: ises.c,v 1.10 2001/06/24 21:08:07 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -155,7 +155,6 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_addr_t membase;
 	bus_size_t memsize;
 	u_int32_t cmd;
 
@@ -186,7 +185,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	/* Map control/status registers. */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_memt,
-	    &sc->sc_memh, &membase, &memsize, 0)) {
+	    &sc->sc_memh, NULL, &memsize, 0)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -214,7 +213,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize DMA map */
 	sc->sc_dmat = pa->pa_dmat;
 	error = bus_dmamap_create(sc->sc_dmat, 1 << PGSHIFT, 1, 1 << PGSHIFT,
-	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_dmamap_xfer);
+	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_dmamap);
 	if (error) {
 		printf(": cannot create dma map (%d)\n", error);
 		goto fail;
@@ -222,16 +221,15 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	state++;
 
 	/* Allocate in DMAable memory. */
-	if (bus_dmamem_alloc(sc->sc_dmat, sizeof sc->sc_dmamap, 1, 0, &seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_alloc(sc->sc_dmat, sizeof sc->sc_dma_data, 1, 0, &seg,
+	    1, &nsegs, BUS_DMA_NOWAIT)) {
 		printf(": can't alloc dma buffer space\n");
 		goto fail;
 	}
 	state++;
 
-	sc->sc_dmamap_phys = seg.ds_addr;
-	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, sizeof sc->sc_dmamap,
-	    (caddr_t *)&sc->sc_dmamap, 0)) {
+	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, sizeof sc->sc_dma_data,
+	    (caddr_t *)&sc->sc_dma_data, 0)) {
 		printf(": can't map dma buffer space\n");
 		goto fail;
 	}
@@ -263,12 +261,12 @@ ises_attach(struct device *parent, struct device *self, void *aux)
  fail:
 	switch (state) { /* Always fallthrough here. */
 	case 4:
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_dmamap,
-		    sizeof sc->sc_dmamap);
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_dma_data,
+		    sizeof sc->sc_dma_data);
 	case 3:
 		bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
 	case 2:
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_xfer);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 	case 1:
 		pci_intr_disestablish(pc, sc->sc_ih);
 	default: /* 0 */
@@ -404,9 +402,8 @@ ises_initstate(void *v)
 			break;
 		}
 
-		/* We failed. We cannot do anything else. */
-		printf ("%s: firmware download failed\n", dv);
-		return;
+		/* We failed. */
+		goto fail;
 
 	case 7:
 		if (ises_assert_cmd_mode(sc) < 0)
@@ -424,7 +421,7 @@ ises_initstate(void *v)
 		printf("%s: firmware v%d.%d loaded (%d bytes)", dv,
 		    stat & 0xffff, (stat >> 16) & 0xffff, ISES_BF_IDPLEN << 2);
 
-		/* We can use firmware version 1.x & 2.x */
+		/* We can use firmware versions 1.x & 2.x */
 		switch (stat & 0xffff) {
 		case 0:
 			printf(" diagnostic, %s disabled\n", dv);
@@ -535,6 +532,7 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data,
 		for (p = 0; p < len; p++)
 			WRITE_REG(sc, ISES_A_IQD, *(data + p));
 
+	/* Signal 'command ready'. */
 	WRITE_REG(sc, ISES_A_IQS, 0);
 
 	splx(s);
@@ -1170,7 +1168,7 @@ ises_process(struct cryptop *crp)
 
 #if 0 /* XXX */
 	for (i = j = 0; i < q->q_src_npa; i++) {
-		struct ises_pktbuf *pb;
+		bus_dma_segment_t *ds;
 
 		/* XXX DEBUG? */
 
@@ -1184,24 +1182,24 @@ ises_process(struct cryptop *crp)
 			sskip = 0;
 		}
 
-		pb = NULL; /* XXX initial packet */
+		ds = NULL; /* XXX initial packet */
 
-		pb->pb_addr = q->q_src_packp;
+		ds->ds_addr = q->q_src_packp;
 		if (stheend) {
 			if (q->q_src_packl > stheend) {
-				pb->pb_len = stheend;
+				ds->ds_len = stheend;
 				stheend = 0;
 			} else {
-				pb->pb_len = q->q_src_packl;
-				stheend -= pb->pb_len;
+				ds->ds_len = q->q_src_packl;
+				stheend -= ds->ds_len;
 			}
 		} else
-			pb->pb_len = q->q_src_packl;
+			ds->ds_len = q->q_src_packl;
 
 		if ((i + 1) == q->q_src_npa)
-			pb->pb_next = 0;
+			ds->ds_next = 0;
 		else
-			pb->pb_next = vtophys(&q->q_srcpkt);
+			ds->ds_next = vtophys(&q->q_srcpkt);
 
 		j++;
 	}
@@ -1269,7 +1267,7 @@ ises_process(struct cryptop *crp)
 
 #if 0
 		for (i = j = 0; i < q->q_dst_npa; i++) {
-			struct ises_pktbuf *pb;
+			struct bus_dma_segment_t *ds;
 
 			if (dskip) {
 				if (dskip >= q->q_dst_packl[i]) {
@@ -1282,30 +1280,30 @@ ises_process(struct cryptop *crp)
 			}
 
 			if (j == 0)
-				pb = NULL; /* &q->q_mcr->mcr_opktbuf; */
+				ds = NULL; /* &q->q_mcr->mcr_opktbuf; */
 			else
-				pb = &q->q_dstpkt[j - 1];
+				ds = &q->q_dstpkt[j - 1];
 
-			pb->pb_addr = q->q_dst_packp[i];
+			ds->ds_addr = q->q_dst_packp[i];
 
 			if (dtheend) {
 				if (q->q_dst_packl[i] > dtheend) {
-					pb->pb_len = dtheend;
+					ds->ds_len = dtheend;
 					dtheend = 0;
 				} else {
-					pb->pb_len = q->q_dst_packl[i];
-					dtheend -= pb->pb_len;
+					ds->ds_len = q->q_dst_packl[i];
+					dtheend -= ds->ds_len;
 				}
 			} else
-				pb->pb_len = q->q_dst_packl[i];
+				ds->ds_len = q->q_dst_packl[i];
 
 			if ((i + 1) == q->q_dst_npa) {
 				if (maccrd)
-					pb->pb_next = vtophys(q->q_macbuf);
+					ds->ds_next = vtophys(q->q_macbuf);
 				else
-					pb->pb_next = 0;
+					ds->ds_next = 0;
 			} else
-				pb->pb_next = vtophys(&q->q_dstpkt[j]);
+				ds->ds_next = vtophys(&q->q_dstpkt[j]);
 			j++;
 		}
 #endif
@@ -1812,14 +1810,35 @@ ises_showreg (void)
 	
 	printf ("DMA read starts at 0x%x, length %d bytes\n", 
 	    READ_REG(sc, ISES_DMA_READ_START), 
-	    READ_REG(sc, ISES_DMA_READ_COUNT));
+	    READ_REG(sc, ISES_DMA_READ_COUNT) >> 16);
 	
 	printf ("DMA write starts at 0x%x, length %d bytes\n",
 	    READ_REG(sc, ISES_DMA_WRITE_START),
-	    READ_REG(sc, ISES_DMA_WRITE_COUNT));
+	    READ_REG(sc, ISES_DMA_WRITE_COUNT) & 0x00ff);
 
-	printf ("DMA status register contains [%08x]\n", 
-	    READ_REG(sc, ISES_DMA_STATUS));
+	stat = READ_REG(sc, ISES_DMA_STATUS);
+	printf ("DMA status register contains [%08x]\n", stat);
+
+	if (stat & ISES_DMA_CTRL_ILT)
+		printf (" -- Ignore latency timer\n");
+	if (stat & 0x0C000000)
+		printf (" -- PCI Read - multiple\n");
+	else if (stat & 0x08000000)
+		printf (" -- PCI Read - line\n");
+
+	if (stat & ISES_DMA_STATUS_R_RUN)
+		printf (" -- PCI Read running/incomplete\n");
+	else
+		printf (" -- PCI Read complete\n");
+	if (stat & ISES_DMA_STATUS_R_ERR)
+		printf (" -- PCI Read DMA Error\n");
+
+	if (stat & ISES_DMA_STATUS_W_RUN)
+		printf (" -- PCI Write running/incomplete\n");
+	else
+		printf (" -- PCI Write complete\n");
+	if (stat & ISES_DMA_STATUS_W_ERR)
+		printf (" -- PCI Write DMA Error\n");
 
 	/* OMR / HOMR / SOMR */
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.4 2001/06/24 17:06:18 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.5 2001/06/24 21:08:06 ho Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -360,11 +360,6 @@ struct ises_bchu_session {
 	u_int32_t	dbcr[2];	/* Data block count register */
 	u_int32_t	hmlr[2];	/* Hash message length reg. */
 } __attribute__((packed));
-
-struct ises_pktbuf {
-	volatile u_int32_t	pb_addr;	/* address of buffer start */
-	volatile u_int32_t	pb_len;		/* packet length */
-};
 
 #define ISES_B_DATASIZE			4096
 struct ises_databuf {
