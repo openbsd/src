@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.20 2002/04/01 05:49:57 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.21 2002/04/03 22:49:56 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -156,6 +156,7 @@ wi_pci_attach(parent, self, aux)
 	bus_space_tag_t localt;
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_space_tag_t memt = pa->pa_memt;
+	bus_addr_t localbase;
 	bus_size_t localsize, memsize;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t command;
@@ -171,15 +172,31 @@ wi_pci_attach(parent, self, aux)
 			printf(": can't map mem space\n");
 			return;
 		}
-		if (pci_mapreg_map(pa, WI_PCI_PLX_IORES, PCI_MAPREG_TYPE_IO, 0,
-		    &iot, &ioh, NULL, NULL, 0) != 0) {
+		if (pci_mapreg_map(pa, WI_PCI_PLX_IORES,
+		    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL, 0) != 0) {
 			printf(": can't map I/O space\n");
 			return;
 		}
-		if (pci_mapreg_map(pa, WI_PCI_PLX_LOCALRES, PCI_MAPREG_TYPE_IO, 0,
-		    &localt, &localh, NULL, &localsize, 0) != 0) {
-			printf(": can't map PLX I/O space\n");
-			return;
+		/*
+		 * Some cards, such as the PLX version of the NDC NCP130
+		 * don't have the PLX local registers mapped.  In general
+		 * this is OK since those card enable PLX interrupts for us.
+		 * As such, we don't consider an error here to be fatal.
+		 */
+		localsize = 0;
+		if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, WI_PCI_PLX_LOCALRES)
+		    == PCI_MAPREG_TYPE_IO) {
+			if (pci_io_find(pa->pa_pc, pa->pa_tag,
+			    WI_PCI_PLX_LOCALRES, &localbase, &localsize) != 0)
+				printf(": can't find PLX I/O space\n");
+			if (localsize != 0) {
+				if (bus_space_map(pa->pa_iot, localbase,
+				    localsize, 0, &localh) != 0) {
+					printf(": can't map PLX I/O space\n");
+					localsize = 0;
+				} else
+					localt = pa->pa_iot;
+			}
 		}
 		break;
 	case WI_PCI_PRISM:
@@ -239,10 +256,15 @@ wi_pci_attach(parent, self, aux)
 		 * Tell the PLX chip to enable interrupts.  In most cases
 		 * the serial EEPROM has done this for us but some cards
 		 * appear not to.
+		 * Note that some PLX-based cards lack this I/O space.
 		 */
-		command = bus_space_read_4(localt, localh, WI_PLX_INTCSR);
-		command |= WI_PLX_INTEN;
-		bus_space_write_4(localt, localh, WI_PLX_INTCSR, command);
+		if (localsize != 0) {
+			command = bus_space_read_4(localt, localh,
+			    WI_PLX_INTCSR);
+			command |= WI_PLX_INTEN;
+			bus_space_write_4(localt, localh, WI_PLX_INTCSR,
+			    command);
+		}
 
 		/*
 		 * Setup the PLX chip for level interrupts and config index 1
@@ -251,7 +273,8 @@ wi_pci_attach(parent, self, aux)
 		    WI_PLX_COR_OFFSET, WI_PLX_COR_VALUE);
 
 		/* Unmap registers we no longer need access to. */
-		bus_space_unmap(localt, localh, localsize);
+		if (localsize != 0)
+			bus_space_unmap(localt, localh, localsize);
 		bus_space_unmap(memt, memh, memsize);
 
 		wi_attach(sc, 1);
