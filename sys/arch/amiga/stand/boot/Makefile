@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/01/16 09:26:21 niklas Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/03/22 00:19:56 niklas Exp $
 
 NOPROG=	installboot
 MAN=installboot.8
@@ -34,7 +34,9 @@ COPTS += -Wall -Wstrict-prototypes
 
 BOOTBLOCKS=xxboot # XXX  fdboot is too large at the moment.
 
-.s.o: ; $(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $*.o -c $*.s
+.s.o:
+	$(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $*.o -c \
+	    ${.CURDIR}/$*.s
 
 #libs:
 
@@ -49,10 +51,10 @@ all: $(BOOTBLOCKS) installboot
 $(OBJS): txlt
 
 xxstart.s: bbstart.s
-	cpp bbstart.s > $@
+	cpp ${.CURDIR}/bbstart.s > $@
 	
 fdstart.s: bbstart.s
-	cpp -DAUTOLOAD=8192 bbstart.s > $@
+	cpp -DAUTOLOAD=8192 ${.CURDIR}/bbstart.s > $@
 
 x.out: xxstart.o $(OBJS) $(LIBS)
 	$(LD) $(LDFLAGS) -r -dc -e _start -o x.out xxstart.o $(OBJS) $(LIBS)
