@@ -1,4 +1,4 @@
-/*	$Id: kern_info_43.c,v 1.2 1996/02/02 22:45:44 etheisen Exp $ */
+/*	$Id: kern_info_43.c,v 1.3 1996/02/02 23:25:15 etheisen Exp $ */
 
 /*	$NetBSD: kern_info_43.c,v 1.3 1995/10/07 06:26:24 mycroft Exp $	*/
 
@@ -242,15 +242,18 @@ compat_43_sys_getkerninfo(p, v, retval)
 
 		s = bsdi_strings;
 
-		bsdi_si.bsdi_ostype = ((char *)(s - bsdi_strings)) + sizeof(bsdi_si);
+		bsdi_si.bsdi_ostype = ((char *)(s - bsdi_strings)) +
+				       sizeof(bsdi_si);
 		strcpy(s, ostype);
 		s += strlen(s) + 1;
 
-		bsdi_si.bsdi_osrelease = ((char *)(s - bsdi_strings)) + sizeof(bsdi_si);
+		bsdi_si.bsdi_osrelease = ((char *)(s - bsdi_strings)) +
+					  sizeof(bsdi_si);
 		strcpy(s, osrelease);
 		s += strlen(s) + 1;
 
-		bsdi_si.bsdi_machine = ((char *)(s - bsdi_strings)) + sizeof(bsdi_si);
+		bsdi_si.bsdi_machine = ((char *)(s - bsdi_strings)) +
+					sizeof(bsdi_si);
 		strcpy(s, machine);
 		s += strlen(s) + 1;
 
@@ -270,7 +273,8 @@ compat_43_sys_getkerninfo(p, v, retval)
 		/* how much of the buffer is remaining */
 		left = size;
 
-		if ((error = copyout((char *)&bsdi_si, SCARG(uap, where), left)) != 0)
+		if ((error = copyout((char *)&bsdi_si, SCARG(uap, where), 
+		    left)) != 0)
 			break;
 
 		/* is there any point in continuing? */
@@ -279,8 +283,8 @@ compat_43_sys_getkerninfo(p, v, retval)
 		else
 			break;
 
-		error = copyout(&bsdi_strings, SCARG(uap, where) + sizeof(bsdi_si),
-				left);
+		error = copyout(&bsdi_strings, SCARG(uap, where) +
+				sizeof(bsdi_si), left);
 
 		break;
 	}
