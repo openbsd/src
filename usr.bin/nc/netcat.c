@@ -1338,8 +1338,9 @@ main(argc, argv)
 		argv[1] = cp;	/* head of new arg block */
 		fprintf(stderr, "Cmd line: ");
 		fflush(stderr);	/* I dont care if it's unbuffered or not! */
-		insaved = read(0, cp, BIGSIZ);	/* we're gonna fake fgets()
+		insaved = read(0, cp, BIGSIZ-1); /* we're gonna fake fgets()
 						 * here */
+		cp[BIGSIZ-1] = '\0';
 		if (insaved <= 0)
 			bail("wrong");
 		x = findline(cp, insaved);
