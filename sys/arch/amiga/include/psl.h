@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.9 1997/09/18 13:40:04 niklas Exp $	*/
+/*	$OpenBSD: psl.h,v 1.10 1999/05/10 16:24:55 espie Exp $	*/
 /*	$NetBSD: psl.h,v 1.11 1996/11/30 00:33:49 is Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
@@ -18,7 +18,7 @@ splraise(npsl)
 {
         register int opsl;
 
-        __asm __volatile ("clrl %0; movew sr,%0" : "&=d" (opsl) : : "cc");
+        __asm __volatile ("clrl %0; movew sr,%0" : "=&d" (opsl) : : "cc");
 	if (npsl > (opsl & (PSL_S|PSL_IPL)))
         	__asm __volatile ("movew %0,sr" : : "di" (npsl) : "cc");
         return opsl;
@@ -30,7 +30,7 @@ splexact(npsl)
 {
         register int opsl;
 
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : "&=d" (opsl) :
+        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : "=&d" (opsl) :
 	    "di" (npsl) : "cc");
         return opsl;
 }
@@ -82,7 +82,7 @@ spllower(npsl)
 {
         register int opsl;
 
-        __asm __volatile ("clrl %0; movew sr,%0" : "&=d" (opsl) : : "cc");
+        __asm __volatile ("clrl %0; movew sr,%0" : "=&d" (opsl) : : "cc");
         splx(npsl);
         return opsl;
 }
