@@ -23,19 +23,19 @@ As well you may be interested in
 		installation section, below.
 
 
-In summary, there is one i386 floppy image called "floppy.fs". This is
-a bootable install floppy which can be used both to install and to
-upgrade an OpenBSD to the current version, as well as for maintenance
-work.  In addition, the "tools/" directory contains some utilities
-that might be useful for the installation.
+In summary, there is one i386 floppy image called "floppy.fs".  This
+is a bootable install floppy which can be used both to install and to
+upgrade OpenBSD to the current version.  It is also useful for maintenance
+and disaster recovery.  In addition, the "tools/" directory contains some
+utilities that might be useful for the installation.
 
 Bootable installation/upgrade floppy:
 
-	This disks contains a file system, is bootable, and have
+	This disk contains a file system, is bootable, and has
 	enough utilities on board to prepare your hard disk drive
-	for OpenBSD and install the OpenBSD distribution.
+	for OpenBSD and to install the OpenBSD distribution.
 
-	It also holds the untilities needed in order to upgrade a
+	It also holds the utilities needed in order to upgrade a
 	system to the current version of OpenBSD.
 
 The OpenBSD/i386 binary distribution sets contain the binaries which
