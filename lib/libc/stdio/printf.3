@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.14 1999/02/27 21:55:46 deraadt Exp $
+.\"	$OpenBSD: printf.3,v 1.15 1999/03/01 20:41:56 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -190,8 +190,6 @@ If this field is not provided, the argument following the last
 argument accessed will be used.
 Arguments are numbered starting at
 .Cm 1 .
-If unaccessed arguments in the format string are interspersed with
-ones that are accessed the results will be indeterminate.
 .It
 Zero or more of the following flags:
 .Bl -hyphen
@@ -681,3 +679,9 @@ interface is not available on older
 systems and the
 .Fn asprintf
 interface is not portable.
+.Pp
+There is no way for printf to know the size of each argument passed. If
+you use positional arguments you must ensure that all parameters, up to the
+last positionally-specified parameter, are used in the format string.  This
+allows for the format string to be parsed for this information. Failure
+to do this will mean your code is non-portable and liable to fail.
