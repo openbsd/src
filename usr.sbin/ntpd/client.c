@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.36 2004/09/30 10:19:43 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.37 2004/10/05 11:23:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -83,15 +83,7 @@ client_addr_init(struct ntp_peer *p)
 		}
 	}
 
-	if (p->addr != NULL) {
-		if ((p->query->fd = socket(p->addr->ss.ss_family,
-		    SOCK_DGRAM, 0)) == -1)
-			fatal("client_query socket");
-		if (connect(p->query->fd, (struct sockaddr *)&p->addr->ss,
-		    p->addr->ss.ss_len) == -1)
-			fatal("client_query connect");
-	}
-
+	p->query->fd = -1;
 	set_next(p, 0);
 
 	return (0);
@@ -111,12 +103,6 @@ client_nextaddr(struct ntp_peer *p)
 	if ((p->addr = p->addr->next) == NULL)
 		p->addr = p->addr_head.a;
 
-	if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
-		fatal("client_query socket");
-	if (connect(p->query->fd, (struct sockaddr *)&p->addr->ss,
-	    p->addr->ss.ss_len) == -1)
-		fatal("client_query connect");
-
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
 
@@ -129,6 +115,22 @@ client_query(struct ntp_peer *p)
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
 		set_next(p, INTERVAL_QUERY_PATHETIC);
 		return (-1);
+	}
+
+	if (p->query->fd == -1) {
+		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
+		    0)) == -1)
+			fatal("client_query socket");
+		if (connect(p->query->fd, (struct sockaddr *)&p->addr->ss,
+		    p->addr->ss.ss_len) == -1) {
+			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
+			    errno == EHOSTUNREACH) {
+				client_nextaddr(p);
+				set_next(p, INTERVAL_QUERY_PATHETIC);
+				return (-1);
+			} else
+				fatal("client_query connect");
+		}
 	}
 
 	/*
