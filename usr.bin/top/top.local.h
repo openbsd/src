@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.local.h,v 1.1 1997/08/14 14:00:26 downsj Exp $	*/
+/*	$OpenBSD: top.local.h,v 1.2 1997/08/14 15:05:04 downsj Exp $	*/
 
 /*
  *  Top - a top users display for Berkeley Unix
@@ -45,7 +45,7 @@
 #endif
 
 #ifndef Default_TOPN
-#define Default_TOPN	15
+#define Default_TOPN	-1
 #endif
 
 #ifndef Default_DELAY
