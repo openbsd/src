@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.17 2002/04/22 01:42:35 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.18 2002/10/15 16:05:33 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -22,6 +22,7 @@ option		DDB		# in-kernel debugger
 option		DIAGNOSTIC	# internal consistency checks
 option		DEBUG		# internal debug checks
 option		KTRACE
+option		PTRACE
 option		KMEMSTATS
 
 option		PMAPDEBUG
@@ -32,15 +33,15 @@ option		COMPAT_43	# Compatibility with 4.3BSD
 
 #option		DISKLESS
 option		FFS		# unfortunately this is required...
-#option		MFS		# memory file system
+option		MFS		# memory file system
 option		FIFO		# FIFOs; RECOMMENDED
 option		INET		# IP + ICMP + TCP + UDP
 option		NFSCLIENT	# Network File System client
 
 pseudo-device	loop	2	# network loopback
-#pseudo-device	bpfilter 8	# packet filter
+pseudo-device	bpfilter 8	# packet filter
 
-#pseudo-device	pty	64	# pseudo-terminals
+pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	ksyms
 
 option		BOOT_CONFIG	# add support for boot -c
