@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.15 2002/11/30 19:36:05 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.16 2002/11/30 23:02:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -109,7 +109,7 @@ logmsg(int pri, const char *message, ...)
 
 	if (log_debug) {
 		vfprintf(stderr, message, ap);
-		fprintf("\n");
+		fprintf(stderr, "\n");
 	} else
 		vsyslog(pri, message, ap);
 	va_end(ap);
