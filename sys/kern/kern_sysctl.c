@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.93 2003/12/18 23:46:20 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.94 2004/01/07 02:13:51 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -80,6 +80,8 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+
+#define	PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
@@ -262,6 +264,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	if (namelen != 1) {
 		switch (name[0]) {
 		case KERN_PROC:
+		case KERN_PROC2:
 		case KERN_PROF:
 		case KERN_MALLOCSTATS:
 		case KERN_TTY:
@@ -341,7 +344,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_VNODE:
 		return (sysctl_vnode(oldp, oldlenp, p));
 	case KERN_PROC:
-		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
+	case KERN_PROC2:
+		return (sysctl_doproc(name, namelen, oldp, oldlenp));
 	case KERN_PROC_ARGS:
 		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
@@ -912,17 +916,33 @@ sysctl_doproc(name, namelen, where, sizep)
 	char *where;
 	size_t *sizep;
 {
-	register struct proc *p;
-	register struct kinfo_proc *dp = (struct kinfo_proc *)where;
-	register int needed = 0;
-	int buflen = where != NULL ? *sizep : 0;
-	int doingzomb;
+	struct kinfo_proc2 kproc2;
 	struct eproc eproc;
-	int error = 0;
+	struct proc *p;
+	char *dp;
+	int arg, buflen, doingzomb, elem_size, elem_count;
+	int error, needed, type, op;
 
-	if (namelen != 2 && !(namelen == 1 &&
-	    (name[0] == KERN_PROC_ALL || name[0] == KERN_PROC_KTHREAD)))
-		return (EINVAL);
+	dp = where;
+	buflen = where != NULL ? *sizep : 0;
+	needed = error = 0;
+	type = name[0];
+
+	if (type == KERN_PROC) {
+		if (namelen != 3 && !(namelen == 2 &&
+		    (name[1] == KERN_PROC_ALL || name[1] == KERN_PROC_KTHREAD)))
+			return (EINVAL);
+		op = name[1];
+		arg = op == KERN_PROC_ALL ? 0 : name[2];
+		elem_size = elem_count = 0;
+	} else /* if (type == KERN_PROC2) */ {
+		if (namelen != 5 || name[3] < 0 || name[4] < 0)
+			return (EINVAL);
+		op = name[1];
+		arg = name[2];
+		elem_size = name[3];
+		elem_count = name[4];
+	}
 	p = LIST_FIRST(&allproc);
 	doingzomb = 0;
 again:
@@ -934,36 +954,41 @@ again:
 			continue;
 		/*
 		 * TODO - make more efficient (see notes below).
-		 * do by session.
 		 */
-		switch (name[0]) {
+		switch (op) {
 
 		case KERN_PROC_PID:
 			/* could do this with just a lookup */
-			if (p->p_pid != (pid_t)name[1])
+			if (p->p_pid != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_PGRP:
 			/* could do this by traversing pgrp */
-			if (p->p_pgrp->pg_id != (pid_t)name[1])
+			if (p->p_pgrp->pg_id != (pid_t)arg)
+				continue;
+			break;
+
+		case KERN_PROC_SESSION:
+			if (p->p_session->s_leader == NULL ||
+			    p->p_session->s_leader->p_pid != (pid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_TTY:
 			if ((p->p_flag & P_CONTROLT) == 0 ||
 			    p->p_session->s_ttyp == NULL ||
-			    p->p_session->s_ttyp->t_dev != (dev_t)name[1])
+			    p->p_session->s_ttyp->t_dev != (dev_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_UID:
-			if (p->p_ucred->cr_uid != (uid_t)name[1])
+			if (p->p_ucred->cr_uid != (uid_t)arg)
 				continue;
 			break;
 
 		case KERN_PROC_RUID:
-			if (p->p_cred->p_ruid != (uid_t)name[1])
+			if (p->p_cred->p_ruid != (uid_t)arg)
 				continue;
 			break;
 
@@ -971,21 +996,43 @@ again:
 			if (p->p_flag & P_SYSTEM)
 				continue;
 			break;
+		default:
+			return (EINVAL);
 		}
-		if (buflen >= sizeof(struct kinfo_proc)) {
-			fill_eproc(p, &eproc);
-			error = copyout((caddr_t)p, &dp->kp_proc,
-					sizeof(struct proc));
-			if (error)
-				return (error);
-			error = copyout((caddr_t)&eproc, &dp->kp_eproc,
-					sizeof(eproc));
-			if (error)
-				return (error);
-			dp++;
-			buflen -= sizeof(struct kinfo_proc);
+		if (type == KERN_PROC) {
+			if (buflen >= sizeof(struct kinfo_proc)) {
+				fill_eproc(p, &eproc);
+				error = copyout((caddr_t)p,
+				    &((struct kinfo_proc *)dp)->kp_proc,
+				    sizeof(struct proc));
+				if (error)
+					return (error);
+				error = copyout((caddr_t)&eproc,
+				    &((struct kinfo_proc *)dp)->kp_eproc,
+				    sizeof(eproc));
+				if (error)
+					return (error);
+				dp += sizeof(struct kinfo_proc);
+				buflen -= sizeof(struct kinfo_proc);
+			}
+			needed += sizeof(struct kinfo_proc);
+		} else /* if (type == KERN_PROC2) */ {
+			if (buflen >= elem_size && elem_count > 0) {
+				fill_kproc2(p, &kproc2);
+				/*
+				 * Copy out elem_size, but not larger than
+				 * the size of a struct kinfo_proc2.
+				 */
+				error = copyout(&kproc2, dp,
+				    min(sizeof(kproc2), elem_size));
+				if (error)
+					return (error);
+				dp += elem_size;
+				buflen -= elem_size;
+				elem_count--;
+			}
+			needed += elem_size;
 		}
-		needed += sizeof(struct kinfo_proc);
 	}
 	if (doingzomb == 0) {
 		p = LIST_FIRST(&zombproc);
@@ -993,7 +1040,7 @@ again:
 		goto again;
 	}
 	if (where != NULL) {
-		*sizep = (caddr_t)dp - where;
+		*sizep = dp - where;
 		if (needed > *sizep)
 			return (ENOMEM);
 	} else {
@@ -1059,6 +1106,165 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	strncpy(ep->e_emul, p->p_emul->e_name, EMULNAMELEN);
 	ep->e_emul[EMULNAMELEN] = '\0';
 	ep->e_maxrss = p->p_rlimit ? p->p_rlimit[RLIMIT_RSS].rlim_cur : 0;
+}
+
+/*
+ * Fill in a kproc2 structure for the specified process.
+ */
+void
+fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
+{
+	struct tty *tp;
+	struct timeval ut, st;
+
+	bzero(ki, sizeof(*ki));
+
+	ki->p_paddr = PTRTOINT64(p);
+	ki->p_fd = PTRTOINT64(p->p_fd);
+	ki->p_stats = PTRTOINT64(p->p_stats);
+	ki->p_limit = PTRTOINT64(p->p_limit);
+	ki->p_vmspace = PTRTOINT64(p->p_vmspace);
+	ki->p_sigacts = PTRTOINT64(p->p_sigacts);
+	ki->p_sess = PTRTOINT64(p->p_session);
+	ki->p_tsess = 0;	/* may be changed if controlling tty below */
+	ki->p_ru = PTRTOINT64(p->p_ru);
+
+	ki->p_eflag = 0;
+	ki->p_exitsig = p->p_exitsig;
+	ki->p_flag = p->p_flag;
+
+	ki->p_pid = p->p_pid;
+	if (p->p_pptr)
+		ki->p_ppid = p->p_pptr->p_pid;
+	else
+		ki->p_ppid = 0;
+	if (p->p_session->s_leader)
+		ki->p_sid = p->p_session->s_leader->p_pid;
+	else
+		ki->p_sid = 0;
+	ki->p__pgid = p->p_pgrp->pg_id;
+
+	ki->p_tpgid = -1;	/* may be changed if controlling tty below */
+
+	ki->p_uid = p->p_ucred->cr_uid;
+	ki->p_ruid = p->p_cred->p_ruid;
+	ki->p_gid = p->p_ucred->cr_gid;
+	ki->p_rgid = p->p_cred->p_rgid;
+	ki->p_svuid = p->p_cred->p_svuid;
+	ki->p_svgid = p->p_cred->p_svgid;
+
+	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
+	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
+	ki->p_ngroups = p->p_cred->pc_ucred->cr_ngroups;
+
+	ki->p_jobc = p->p_pgrp->pg_jobc;
+	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
+		ki->p_tdev = tp->t_dev;
+		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : -1;
+		ki->p_tsess = PTRTOINT64(tp->t_session);
+	} else {
+		ki->p_tdev = NODEV;
+	}
+
+	ki->p_estcpu = p->p_estcpu;
+	ki->p_rtime_sec = p->p_rtime.tv_sec;
+	ki->p_rtime_usec = p->p_rtime.tv_usec;
+	ki->p_cpticks = p->p_cpticks;
+	ki->p_pctcpu = p->p_pctcpu;
+
+	ki->p_uticks = p->p_uticks;
+	ki->p_sticks = p->p_sticks;
+	ki->p_iticks = p->p_iticks;
+
+	ki->p_tracep = PTRTOINT64(p->p_tracep);
+	ki->p_traceflag = p->p_traceflag;
+
+	ki->p_siglist = p->p_siglist;
+	ki->p_sigmask = p->p_sigmask;
+	ki->p_sigignore = p->p_sigignore;
+	ki->p_sigcatch = p->p_sigcatch;
+
+	ki->p_stat = p->p_stat;
+	ki->p_nice = p->p_nice;
+
+	ki->p_xstat = p->p_xstat;
+	ki->p_acflag = p->p_acflag;
+
+	strlcpy(ki->p_comm, p->p_comm, sizeof(ki->p_comm));
+	strncpy(ki->p_login, p->p_session->s_login,
+	    min(sizeof(ki->p_login) - 1, sizeof(p->p_session->s_login)));
+
+	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
+		ki->p_vm_rssize = 0;
+		ki->p_vm_tsize = 0;
+		ki->p_vm_dsize = 0;
+		ki->p_vm_ssize = 0;
+	} else {
+		struct vmspace *vm = p->p_vmspace;
+
+		ki->p_vm_rssize = vm_resident_count(vm);
+		ki->p_vm_tsize = vm->vm_tsize;
+		ki->p_vm_dsize = vm->vm_dsize;
+		ki->p_vm_ssize = vm->vm_ssize;
+
+		ki->p_forw = PTRTOINT64(p->p_forw);
+		ki->p_back = PTRTOINT64(p->p_back);
+		ki->p_addr = PTRTOINT64(p->p_addr);
+		ki->p_stat = p->p_stat;
+		ki->p_swtime = p->p_swtime;
+		ki->p_slptime = p->p_slptime;
+		ki->p_schedflags = p->p_schedflags;
+		ki->p_holdcnt = p->p_holdcnt;
+		ki->p_priority = p->p_priority;
+		ki->p_usrpri = p->p_usrpri;
+		if (p->p_wmesg)
+			strlcpy(ki->p_wmesg, p->p_wmesg, sizeof(ki->p_wmesg));
+		ki->p_wchan = PTRTOINT64(p->p_wchan);
+
+	}
+
+	if (p->p_session->s_ttyvp)
+		ki->p_eflag |= EPROC_CTTY;
+	if (SESS_LEADER(p))
+		ki->p_eflag |= EPROC_SLEADER;
+
+	/* XXX Is this double check necessary? */
+	if (P_ZOMBIE(p)) {
+		ki->p_uvalid = 0;
+	} else {
+		ki->p_uvalid = 1;
+
+		PHOLD(p);	/* need for pstats */
+		ki->p_ustart_sec = p->p_stats->p_start.tv_sec;
+		ki->p_ustart_usec = p->p_stats->p_start.tv_usec;
+
+		calcru(p, &ut, &st, 0);
+		ki->p_uutime_sec = ut.tv_sec;
+		ki->p_uutime_usec = ut.tv_usec;
+		ki->p_ustime_sec = st.tv_sec;
+		ki->p_ustime_usec = st.tv_usec;
+
+		ki->p_uru_maxrss = p->p_stats->p_ru.ru_maxrss;
+		ki->p_uru_ixrss = p->p_stats->p_ru.ru_ixrss;
+		ki->p_uru_idrss = p->p_stats->p_ru.ru_idrss;
+		ki->p_uru_isrss = p->p_stats->p_ru.ru_isrss;
+		ki->p_uru_minflt = p->p_stats->p_ru.ru_minflt;
+		ki->p_uru_majflt = p->p_stats->p_ru.ru_majflt;
+		ki->p_uru_nswap = p->p_stats->p_ru.ru_nswap;
+		ki->p_uru_inblock = p->p_stats->p_ru.ru_inblock;
+		ki->p_uru_oublock = p->p_stats->p_ru.ru_oublock;
+		ki->p_uru_msgsnd = p->p_stats->p_ru.ru_msgsnd;
+		ki->p_uru_msgrcv = p->p_stats->p_ru.ru_msgrcv;
+		ki->p_uru_nsignals = p->p_stats->p_ru.ru_nsignals;
+		ki->p_uru_nvcsw = p->p_stats->p_ru.ru_nvcsw;
+		ki->p_uru_nivcsw = p->p_stats->p_ru.ru_nivcsw;
+
+		timeradd(&p->p_stats->p_cru.ru_utime,
+			 &p->p_stats->p_cru.ru_stime, &ut);
+		ki->p_uctime_sec = ut.tv_sec;
+		ki->p_uctime_usec = ut.tv_usec;
+		PRELE(p);
+	}
 }
 
 int

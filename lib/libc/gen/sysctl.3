@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.118 2004/01/02 21:44:03 mcbride Exp $
+.\"	$OpenBSD: sysctl.3,v 1.119 2004/01/07 02:13:51 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -366,7 +366,8 @@ information.
 .It Dv KERN_OSTYPE No "	string	no"
 .It Dv KERN_OSVERSION No "	string	no"
 .It Dv KERN_POSIX1 No "	integer	no"
-.It Dv KERN_PROC No "	struct proc	no"
+.It Dv KERN_PROC No "	struct kinfo_proc	no"
+.It Dv KERN_PROC2 No "	struct kinfo_proc2	no"
 .It Dv KERN_PROC_ARGS No "	node	not applicable"
 .It Dv KERN_PROF No "	node	not applicable"
 .It Dv KERN_RAWPARTITION No "	integer	no"
@@ -590,6 +591,15 @@ The third and fourth level names are as follows:
 .It Dv KERN_PROC_TTY No "	A tty device"
 .It Dv KERN_PROC_UID No "	A user ID"
 .El
+.It Dv KERN_PROC2
+Like
+.Dv KERN_PROC
+but an array of
+.Li struct kinfo_proc2
+structures is returned.
+The fifth level name is the size of the
+.Li struct kinfo_proc2
+and the sixth level name is the number of structures to return.
 .It Dv KERN_PROC_ARGS
 Returns the arguments or environment of a process.
 The third level name is the PID of the process.
