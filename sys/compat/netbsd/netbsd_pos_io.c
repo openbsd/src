@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_pos_io.c,v 1.1 1999/09/17 12:13:47 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_pos_io.c,v 1.2 1999/09/17 12:37:54 kstailey Exp $	*/
 
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
@@ -59,7 +59,7 @@
 
 static int netbsd_set_pos __P((struct proc *, int fd, off_t offset));
 /*
- * sys_lseek's trimmed down
+ * sys_lseek trimmed down
  */
 static int
 netbsd_set_pos(p, fd, offset)
