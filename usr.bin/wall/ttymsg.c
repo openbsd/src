@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.14 2003/07/31 18:21:42 avsm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.15 2004/09/14 23:01:31 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.14 2003/07/31 18:21:42 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.15 2004/09/14 23:01:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -132,7 +132,9 @@ ttymsg(iov, iovcnt, line, tmout)
 				--iovcnt;
 			}
 			if (wret) {
-				iov->iov_base += wret;
+				char *base = iov->iov_base;
+
+				iov->iov_base = base + wret;
 				iov->iov_len -= wret;
 			}
 			continue;
