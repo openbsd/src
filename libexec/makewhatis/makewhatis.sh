@@ -6,7 +6,7 @@
 #
 # Public domain.
 #
-# $OpenBSD: makewhatis.sh,v 1.6 1997/11/18 06:13:57 millert Exp $
+# $OpenBSD: makewhatis.sh,v 1.7 1999/09/19 23:15:02 alex Exp $
 #
 
 PATH=/usr/bin:/bin; export PATH
@@ -19,31 +19,36 @@ WHATIS=`mktemp ${TMPDIR=/tmp}/whatis.XXXXXXXXXX` || {
 }
 trap "rm -f $LIST $WHATIS; exit 1" 1 2 15
 
-MANDIR=${1-/usr/share/man}
-if test ! -d "$MANDIR"; then 
-	echo "makewhatis: $MANDIR: not a directory"
-	rm -f $LIST $WHATIS
-	exit 1
-fi
+MANDIRS=${*-`perl -ne 'print "$1 " if ( /^_whatdb\s+(.*)\/whatis.db\s*$/ );' \
+	/etc/man.conf`}
 
-find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
-    sort -n | awk '{if (u[$1]) next; u[$1]++ ; print $11}' > $LIST
- 
-egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
-	sed -e 's/ [a-zA-Z0-9]* \\-/ -/' > $WHATIS
+for MANDIR in $MANDIRS; do
+	if test ! -d "$MANDIR"; then 
+		echo "makewhatis: $MANDIR: not a directory"
+		rm -f $LIST $WHATIS
+		exit 1
+	fi
 
-egrep '\.0$' $LIST | while read file
-do
-	sed -n -f /usr/share/man/makewhatis.sed $file;
-done >> $WHATIS
+	find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
+		sort -n | awk '{if (u[$1]) next; u[$1]++ ; print $11}' > $LIST
+	 
+	egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
+		sed -e 's/ [a-zA-Z0-9]* \\-/ -/' > $WHATIS
 
-egrep '\.[0].(gz|Z)$' $LIST | while read file
-do
-	gzip -fdc $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> $WHATIS
+	egrep '\.0$' $LIST | while read file
+	do
+		sed -n -f /usr/share/man/makewhatis.sed $file;
+	done >> $WHATIS
 
-sort -u -o $WHATIS $WHATIS
+	egrep '\.[0].(gz|Z)$' $LIST | while read file
+	do
+		gzip -fdc $file | sed -n -f /usr/share/man/makewhatis.sed;
+	done >> $WHATIS
 
-install -o root -g bin -m 444 $WHATIS "$MANDIR/whatis.db"
+	sort -u -o $WHATIS $WHATIS
+
+	install -o root -g bin -m 444 $WHATIS "$MANDIR/whatis.db"
+done
+
 rm -f $LIST $WHATIS
 exit 0
