@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.208 2000/09/17 05:11:47 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.209 2000/10/07 16:52:32 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -78,48 +78,48 @@ cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 
 # PCI USB Controllers
-#uhci*	at pci?				# Universal Host Controller (Intel)
-#ohci*	at pci?				# Open Host Controller
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
 
 # USB bus support
-#usb*	at uhci?
-#usb*	at ohci?
+usb*	at uhci? disable
+usb*	at ohci? disable
 
 # USB Hubs
-#uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Generic HID devices
-#uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printers
-#ulpt*	at uhub? port ? configuration ? interface ?
+ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Mass Storage devices
-#umass*	at uhub? port ? configuration ? interface ?
-#scsibus* at umass?
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
 
 # USB Modems
-#umodem*	at uhub? port ? configuration ?
-#ucom*	at umodem?
+umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
 
 # USB Audio
-#uaudio* at uhub? port ? configuration ?
+uaudio* at uhub? port ? configuration ?
 
 # USB Ethernet adapters
-#aue*	at uhub? port ?			# ADMtek AN986 Pegasus based adapters
-#cue*	at uhub? port ?			# CATC USB-EL1201A based adapters
-#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?			# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
 
 # Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
+urio*	at uhub? port ?
 
 # Handspring Visor
-#uvisor*	at uhub? port ? configuration ?
-#ucom*	at uvisor?
+uvisor*	at uhub? port ? configuration ?
+ucom*	at uvisor?
 
 # USB Generic driver
-#ugen*	at uhub? port ? configuration ? interface ?
+ugen*	at uhub? port ? configuration ? interface ?
 
 puc*	at pci?				# PCI "universal" communication device
 
