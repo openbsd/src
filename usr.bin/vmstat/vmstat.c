@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.34 1999/09/02 01:23:30 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.35 1999/12/12 00:52:21 hugh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -416,7 +416,7 @@ dovmstat(interval, reps)
 #else
 #define pgtok(a) ((a) * ((int)sum.v_page_size >> 10))
 #endif
-		(void)printf("%6u%6u ",
+		(void)printf("%7u%7u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 #ifdef UVM
 		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
@@ -469,7 +469,7 @@ printhdr()
 {
 	register int i;
 
-	(void)printf(" procs   memory     page%*s", 20, "");
+	(void)printf(" procs   memory       page%*s", 20, "");
 	if (ndrives > 0)
 		(void)printf("%s %*sfaults   cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
@@ -478,7 +478,7 @@ printhdr()
 		(void)printf("%*s  faults   cpu\n",
 		   ndrives * 3, "");
 
-	(void)printf(" r b w   avm   fre  flt  re  pi  po  fr  sr ");
+	(void)printf(" r b w    avm    fre  flt  re  pi  po  fr  sr ");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
 			(void)printf("%c%c ", dr_name[i][0],
@@ -550,94 +550,94 @@ dosum()
 #ifdef UVM
 	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
 	/* vm_page constants */
-	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
+	(void)printf("%11u bytes per page\n", uvmexp.pagesize);
 
 	/* vm_page counters */
-	(void)printf("%9u pages managed\n", uvmexp.npages);
-	(void)printf("%9u pages free\n", uvmexp.free);
-	(void)printf("%9u pages active\n", uvmexp.active);
-	(void)printf("%9u pages inactive\n", uvmexp.inactive);
-	(void)printf("%9u pages being paged out\n", uvmexp.paging);
-	(void)printf("%9u pages wired\n", uvmexp.wired);
-	(void)printf("%9u pages reserved for pagedaemon\n",
+	(void)printf("%11u pages managed\n", uvmexp.npages);
+	(void)printf("%11u pages free\n", uvmexp.free);
+	(void)printf("%11u pages active\n", uvmexp.active);
+	(void)printf("%11u pages inactive\n", uvmexp.inactive);
+	(void)printf("%11u pages being paged out\n", uvmexp.paging);
+	(void)printf("%11u pages wired\n", uvmexp.wired);
+	(void)printf("%11u pages reserved for pagedaemon\n",
 		     uvmexp.reserve_pagedaemon);
-	(void)printf("%9u pages reserved for kernel\n",
+	(void)printf("%11u pages reserved for kernel\n",
 		     uvmexp.reserve_kernel);
 
 	/* swap */
-	(void)printf("%9u swap pages\n", uvmexp.swpages);
-	(void)printf("%9u swap pages in use\n", uvmexp.swpginuse);
-	(void)printf("%9u total anon's in system\n", uvmexp.nanon);
-	(void)printf("%9u free anon's\n", uvmexp.nfreeanon);
+	(void)printf("%11u swap pages\n", uvmexp.swpages);
+	(void)printf("%11u swap pages in use\n", uvmexp.swpginuse);
+	(void)printf("%11u total anon's in system\n", uvmexp.nanon);
+	(void)printf("%11u free anon's\n", uvmexp.nfreeanon);
 
 	/* stat counters */
-	(void)printf("%9u page faults\n", uvmexp.faults);
-	(void)printf("%9u traps\n", uvmexp.traps);
-	(void)printf("%9u interrupts\n", uvmexp.intrs);
-	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
-	(void)printf("%9u software interrupts\n", uvmexp.softs);
-	(void)printf("%9u syscalls\n", uvmexp.syscalls);
-	(void)printf("%9u pagein operations\n", uvmexp.pageins);
-	(void)printf("%9u swap ins\n", uvmexp.swapins);
-	(void)printf("%9u swap outs\n", uvmexp.swapouts);
-	(void)printf("%9u forks\n", uvmexp.forks);
-	(void)printf("%9u forks where vmspace is shared\n",
+	(void)printf("%11u page faults\n", uvmexp.faults);
+	(void)printf("%11u traps\n", uvmexp.traps);
+	(void)printf("%11u interrupts\n", uvmexp.intrs);
+	(void)printf("%11u cpu context switches\n", uvmexp.swtch);
+	(void)printf("%11u software interrupts\n", uvmexp.softs);
+	(void)printf("%11u syscalls\n", uvmexp.syscalls);
+	(void)printf("%11u pagein operations\n", uvmexp.pageins);
+	(void)printf("%11u swap ins\n", uvmexp.swapins);
+	(void)printf("%11u swap outs\n", uvmexp.swapouts);
+	(void)printf("%11u forks\n", uvmexp.forks);
+	(void)printf("%11u forks where vmspace is shared\n",
 		     uvmexp.forks_sharevm);
 
 	/* daemon counters */
-	(void)printf("%9u number of times the pagedamoen woke up\n",
+	(void)printf("%11u number of times the pagedamoen woke up\n",
 		     uvmexp.pdwoke);
-	(void)printf("%9u revolutions of the clock hand\n", uvmexp.pdrevs);
-	(void)printf("%9u pages freed by pagedaemon\n", uvmexp.pdfreed);
-	(void)printf("%9u pages scanned by pagedaemon\n", uvmexp.pdscans);
-	(void)printf("%9u pages reactivated by pagedaemon\n", uvmexp.pdreact);
-	(void)printf("%9u busy pages found by pagedaemon\n", uvmexp.pdbusy);
+	(void)printf("%11u revolutions of the clock hand\n", uvmexp.pdrevs);
+	(void)printf("%11u pages freed by pagedaemon\n", uvmexp.pdfreed);
+	(void)printf("%11u pages scanned by pagedaemon\n", uvmexp.pdscans);
+	(void)printf("%11u pages reactivated by pagedaemon\n", uvmexp.pdreact);
+	(void)printf("%11u busy pages found by pagedaemon\n", uvmexp.pdbusy);
 #else
 	kread(X_SUM, &sum, sizeof(sum));
-	(void)printf("%9u cpu context switches\n", sum.v_swtch);
-	(void)printf("%9u device interrupts\n", sum.v_intr);
-	(void)printf("%9u software interrupts\n", sum.v_soft);
-	(void)printf("%9u traps\n", sum.v_trap);
-	(void)printf("%9u system calls\n", sum.v_syscall);
-	(void)printf("%9u total faults taken\n", sum.v_faults);
-	(void)printf("%9u swap ins\n", sum.v_swpin);
-	(void)printf("%9u swap outs\n", sum.v_swpout);
-	(void)printf("%9u pages swapped in\n", sum.v_pswpin / CLSIZE);
-	(void)printf("%9u pages swapped out\n", sum.v_pswpout / CLSIZE);
-	(void)printf("%9u page ins\n", sum.v_pageins);
-	(void)printf("%9u page outs\n", sum.v_pageouts);
-	(void)printf("%9u pages paged in\n", sum.v_pgpgin);
-	(void)printf("%9u pages paged out\n", sum.v_pgpgout);
-	(void)printf("%9u pages reactivated\n", sum.v_reactivated);
-	(void)printf("%9u intransit blocking page faults\n", sum.v_intrans);
-	(void)printf("%9u zero fill pages created\n", sum.v_nzfod / CLSIZE);
-	(void)printf("%9u zero fill page faults\n", sum.v_zfod / CLSIZE);
-	(void)printf("%9u pages examined by the clock daemon\n", sum.v_scan);
-	(void)printf("%9u revolutions of the clock hand\n", sum.v_rev);
-	(void)printf("%9u VM object cache lookups\n", sum.v_lookups);
-	(void)printf("%9u VM object hits\n", sum.v_hits);
-	(void)printf("%9u total VM faults taken\n", sum.v_vm_faults);
-	(void)printf("%9u copy-on-write faults\n", sum.v_cow_faults);
-	(void)printf("%9u pages freed by daemon\n", sum.v_dfree);
-	(void)printf("%9u pages freed by exiting processes\n", sum.v_pfree);
-	(void)printf("%9u pages free\n", sum.v_free_count);
-	(void)printf("%9u pages wired down\n", sum.v_wire_count);
-	(void)printf("%9u pages active\n", sum.v_active_count);
-	(void)printf("%9u pages inactive\n", sum.v_inactive_count);
-	(void)printf("%9u bytes per page\n", sum.v_page_size);
+	(void)printf("%11u cpu context switches\n", sum.v_swtch);
+	(void)printf("%11u device interrupts\n", sum.v_intr);
+	(void)printf("%11u software interrupts\n", sum.v_soft);
+	(void)printf("%11u traps\n", sum.v_trap);
+	(void)printf("%11u system calls\n", sum.v_syscall);
+	(void)printf("%11u total faults taken\n", sum.v_faults);
+	(void)printf("%11u swap ins\n", sum.v_swpin);
+	(void)printf("%11u swap outs\n", sum.v_swpout);
+	(void)printf("%11u pages swapped in\n", sum.v_pswpin / CLSIZE);
+	(void)printf("%11u pages swapped out\n", sum.v_pswpout / CLSIZE);
+	(void)printf("%11u page ins\n", sum.v_pageins);
+	(void)printf("%11u page outs\n", sum.v_pageouts);
+	(void)printf("%11u pages paged in\n", sum.v_pgpgin);
+	(void)printf("%11u pages paged out\n", sum.v_pgpgout);
+	(void)printf("%11u pages reactivated\n", sum.v_reactivated);
+	(void)printf("%11u intransit blocking page faults\n", sum.v_intrans);
+	(void)printf("%11u zero fill pages created\n", sum.v_nzfod / CLSIZE);
+	(void)printf("%11u zero fill page faults\n", sum.v_zfod / CLSIZE);
+	(void)printf("%11u pages examined by the clock daemon\n", sum.v_scan);
+	(void)printf("%11u revolutions of the clock hand\n", sum.v_rev);
+	(void)printf("%11u VM object cache lookups\n", sum.v_lookups);
+	(void)printf("%11u VM object hits\n", sum.v_hits);
+	(void)printf("%11u total VM faults taken\n", sum.v_vm_faults);
+	(void)printf("%11u copy-on-write faults\n", sum.v_cow_faults);
+	(void)printf("%11u pages freed by daemon\n", sum.v_dfree);
+	(void)printf("%11u pages freed by exiting processes\n", sum.v_pfree);
+	(void)printf("%11u pages free\n", sum.v_free_count);
+	(void)printf("%11u pages wired down\n", sum.v_wire_count);
+	(void)printf("%11u pages active\n", sum.v_active_count);
+	(void)printf("%11u pages inactive\n", sum.v_inactive_count);
+	(void)printf("%11u bytes per page\n", sum.v_page_size);
 #endif
 
 	kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
 	    nchstats.ncs_badhits + nchstats.ncs_falsehits +
 	    nchstats.ncs_miss + nchstats.ncs_long;
-	(void)printf("%9ld total name lookups\n", nchtotal);
+	(void)printf("%11ld total name lookups\n", nchtotal);
 	(void)printf(
-	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-directory\n",
+	    "%11s cache hits (%d%% pos + %d%% neg) system %d%% per-directory\n",
 	    "", PCT(nchstats.ncs_goodhits, nchtotal),
 	    PCT(nchstats.ncs_neghits, nchtotal),
 	    PCT(nchstats.ncs_pass2, nchtotal));
-	(void)printf("%9s deletions %d%%, falsehits %d%%, toolong %d%%\n", "",
+	(void)printf("%11s deletions %d%%, falsehits %d%%, toolong %d%%\n", "",
 	    PCT(nchstats.ncs_badhits, nchtotal),
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
