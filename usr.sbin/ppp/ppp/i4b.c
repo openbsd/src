@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: i4b.c,v 1.2 2000/02/27 01:38:26 brian Exp $
+ *	$OpenBSD: i4b.c,v 1.3 2000/08/16 09:07:01 brian Exp $
  */
 
 #include <sys/param.h>
@@ -246,11 +246,13 @@ static int
 i4b_Speed(struct physical *p)
 {
   struct termios ios;
+  int ret;
 
-  if (tcgetattr(p->fd, &ios) == -1)
-    return 0;
+  if (tcgetattr(p->fd, &ios) == -1 ||
+      (ret = SpeedToInt(cfgetispeed(&ios))) == 0)
+    ret = 65536;
 
-  return SpeedToInt(cfgetispeed(&ios));
+  return ret;
 }
 
 static const char *
