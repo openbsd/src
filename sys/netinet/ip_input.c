@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.117 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.118 2004/03/15 09:45:31 tedu Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -254,9 +254,9 @@ ip_init()
 	for (i = 0; defbaddynamicports_udp[i] != 0; i++)
 		DP_SET(baddynamicports.udp, defbaddynamicports_tcp[i]);
 
-	strncpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
-	strncpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
-	strncpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
+	strlcpy(ipsec_def_enc, IPSEC_DEFAULT_DEF_ENC, sizeof(ipsec_def_enc));
+	strlcpy(ipsec_def_auth, IPSEC_DEFAULT_DEF_AUTH, sizeof(ipsec_def_auth));
+	strlcpy(ipsec_def_comp, IPSEC_DEFAULT_DEF_COMP, sizeof(ipsec_def_comp));
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
