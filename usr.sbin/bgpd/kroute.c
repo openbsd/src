@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.64 2004/01/11 19:42:27 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.65 2004/01/11 19:53:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -265,11 +265,15 @@ kr_nexthop_add(in_addr_t key)
 		struct kroute_nexthop	 nh;
 
 		bzero(&nh, sizeof(nh));
+		nh.nexthop.af = AF_INET;
 		nh.nexthop.v4.s_addr = key;
 		if (h->kroute != NULL) {
 			nh.valid = 1;
 			nh.connected = h->kroute->r.flags & F_CONNECTED;
-			nh.gateway.v4.s_addr = h->kroute->r.nexthop;
+			if (h->kroute->r.nexthop != 0) {
+				nh.gateway.af = AF_INET;
+				nh.gateway.v4.s_addr = h->kroute->r.nexthop;
+			}
 			memcpy(&nh.kr, &h->kroute->r, sizeof(nh.kr));
 		}
 		send_nexthop_update(&nh);
@@ -337,6 +341,8 @@ kr_show_route(struct imsg *imsg)
 		RB_FOREACH(h, knexthop_tree, &knt) {
 			bzero(&snh, sizeof(snh));
 			snh.addr.v4.s_addr = h->nexthop;
+			if (snh.addr.v4.s_addr != 0)
+				snh.addr.af = AF_INET;
 			if (h->kroute != NULL)
 				if (!(h->kroute->r.flags & F_DOWN))
 					snh.valid = 1;
@@ -590,7 +596,8 @@ knexthop_validate(struct knexthop_node *kn)
 		was_valid = 1;
 
 	bzero(&n, sizeof(n));
-	n.nexthop.v4.s_addr = kn->nexthop;
+	if ((n.nexthop.v4.s_addr = kn->nexthop) != 0)
+		n.nexthop.af = AF_INET;
 	kroute_detach_nexthop(kn);
 
 	if ((kr = kroute_match(kn->nexthop)) == NULL) {	/* no match */
@@ -604,7 +611,8 @@ knexthop_validate(struct knexthop_node *kn)
 			if (!was_valid) {
 				n.valid = 1;
 				n.connected = kr->r.flags & F_CONNECTED;
-				n.gateway.v4.s_addr = kr->r.nexthop;
+				if ((n.gateway.v4.s_addr = kr->r.nexthop) != 0)
+					n.gateway.af = AF_INET;
 				memcpy(&n.kr, &kr->r, sizeof(n.kr));
 				send_nexthop_update(&n);
 			}
@@ -758,12 +766,14 @@ if_change(u_short ifindex, int flags)
 		RB_FOREACH(n, knexthop_tree, &knt)
 			if (n->kroute == kkr->kr) {
 				bzero(&nh, sizeof(nh));
-				nh.nexthop.v4.s_addr = n->nexthop;
+				if ((nh.nexthop.v4.s_addr = n->nexthop) != 0)
+					nh.nexthop.af = AF_INET;
 				if (!(kkr->kr->r.flags & F_DOWN)) {
 					nh.valid = 1;
 					nh.connected = 1;
-					nh.gateway.v4.s_addr =
-					    kkr->kr->r.nexthop;
+					if ((nh.gateway.v4.s_addr =
+					    kkr->kr->r.nexthop) != 0)
+						nh.gateway.af = AF_INET;
 				}
 				memcpy(&nh.kr, &kkr->kr->r, sizeof(nh.kr));
 				send_nexthop_update(&nh);
