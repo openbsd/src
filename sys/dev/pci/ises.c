@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.13 2001/07/02 09:18:15 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.14 2001/08/09 19:42:05 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -251,8 +251,8 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	sc->sc_initstate = 0;
-	timeout_set(&sc->sc_timeout, ises_initstate, sc);
-	ises_initstate(sc);
+	startuphook_establish(ises_initstate, sc);
+
 #ifdef ISESDEBUG
 	ises_debug_init(sc);
 #endif
@@ -296,6 +296,12 @@ ises_initstate(void *v)
 
 	switch (sc->sc_initstate) {
 	case 0:
+		/* Called by dostartuphooks(9). */
+		timeout_set(&sc->sc_timeout, ises_initstate, sc);
+
+		/* FALLTHROUGH */
+		sc->sc_initstate++;
+	case 1:
 		/* Power up the chip (clear powerdown bit) */
 		stat = READ_REG(sc, ISES_BO_STAT);
 		if (stat & ISES_BO_STAT_POWERDOWN) {
@@ -304,10 +310,20 @@ ises_initstate(void *v)
 			/* Selftests will take 1 second. */
 			break;
 		}
+#if 0
+		else {
+			/* Power down the chip for sane init, then rerun. */
+			stat |= ISES_BO_STAT_POWERDOWN;
+			WRITE_REG(sc, ISES_BO_STAT, stat);
+			sc->sc_initstate--; /* Rerun state 1. */
+			break;
+		}
+#else
 		/* FALLTHROUGH (chip is already powered up) */
 		sc->sc_initstate++;
+#endif
 
-	case 1:
+	case 2:
 		/* Perform a hardware reset */
 		stat = 0;
 
@@ -324,7 +340,7 @@ ises_initstate(void *v)
 		/* Again, selftests will take 1 second. */
 		break;
 
-	case 2:
+	case 3:
 		/* Set AConf to zero, i.e 32-bits access to A-int. */
 		stat = READ_REG(sc, ISES_BO_STAT);
 		stat &= ~ISES_BO_STAT_ACONF;
@@ -350,7 +366,7 @@ ises_initstate(void *v)
 		ticks = 1;
 		break;
 
-	case 3:
+	case 4:
 		/* After tamper bit has been set, powerdown chip. */
 		stat = READ_REG(sc, ISES_BO_STAT);
 		stat |= ISES_BO_STAT_POWERDOWN;
@@ -358,7 +374,7 @@ ises_initstate(void *v)
 		/* Wait one second for power to dissipate. */
 		break;
 
-	case 4:
+	case 5:
 		/* Clear tamper and powerdown bits. */
 		stat = READ_REG(sc, ISES_BO_STAT);
 		stat &= ~(ISES_BO_STAT_TAMPER | ISES_BO_STAT_POWERDOWN);
@@ -366,7 +382,7 @@ ises_initstate(void *v)
 		/* Again, wait one second for selftests. */
 		break;
 
-	case 5:
+	case 6:
 		/*
 		 * We'll need some space in the input queue (IQF)
 		 * and we need to be in the 'waiting for program
@@ -395,7 +411,7 @@ ises_initstate(void *v)
 		/* Wait 1s while chip resets and runs selftests */
 		break;
 
-	case 6:
+	case 7:
 		/* Did the download succed? */
 		if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_HW_DA) {
 			ticks = 1;
@@ -405,7 +421,7 @@ ises_initstate(void *v)
 		/* We failed. */
 		goto fail;
 
-	case 7:
+	case 8:
 		if (ises_assert_cmd_mode(sc) < 0)
 			goto fail;
 
@@ -460,16 +476,18 @@ ises_initstate(void *v)
 
 		/* Register ourselves with crypto framework. */
 #ifdef notyet
-		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
+		p = crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
 		    ises_newsession, ises_freesession, ises_process);
-		crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
+		p |= crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
 		    NULL, NULL, NULL);
-		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
+		p |= crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
 		    NULL, NULL, NULL);
-		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
+		p |= crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
 		    NULL, NULL, NULL);
-		crypto_register(sc->sc_cid, CRYPTO_RIPEMD160_HMAC, 0, 0,
+		p |= crypto_register(sc->sc_cid, CRYPTO_RIPEMD160_HMAC, 0, 0,
 		    NULL, NULL, NULL);
+		if (p)
+			printf("%s: could not register all algorithms\n", dv);
 #endif
 
 		return;
