@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.38 2001/11/27 22:53:19 provos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.39 2001/11/28 17:18:00 ericj Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -388,10 +388,10 @@ sosend(so, addr, uio, top, control, flags)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct mbuf **mp;
-	register struct mbuf *m;
-	register long space, len;
-	register quad_t resid;
-	int clen = 0, error, s, dontroute, mlen;
+	struct mbuf *m;
+	long space, len, mlen, clen = 0;
+	quad_t resid;
+	int error, s, dontroute;
 	int atomic = sosendallatonce(so) || top;
 
 	if (uio)
@@ -483,19 +483,15 @@ restart:
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;
-#ifdef	MAPPED_MBUFS
-					len = min(MCLBYTES, resid);
-#else
 					if (atomic && top == 0) {
-						len = min(MCLBYTES - max_hdr, resid);
+						len = lmin(MCLBYTES - max_hdr, resid);
 						m->m_data += max_hdr;
 					} else
-						len = min(MCLBYTES, resid);
-#endif
+						len = lmin(MCLBYTES, resid);
 					space -= len;
 				} else {
 nopages:
-					len = min(min(mlen, resid), space);
+					len = lmin(lmin(mlen, resid), space);
 					space -= len;
 					/*
 					 * For datagram protocols, leave room
