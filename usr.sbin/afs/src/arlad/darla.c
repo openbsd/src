@@ -36,7 +36,7 @@ int DARLA_Open(DARLA_file *Dfp, char *fname, int oflag)
 
   int fd;
 
-  fd = open(fname, oflag);
+  fd = open(fname, oflag, 0600);
   arla_log(ADEBMISC, "DARLA_Open: errno=%d", errno); 
   if (fd > 0)
   {

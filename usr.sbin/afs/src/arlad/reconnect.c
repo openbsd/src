@@ -1063,7 +1063,7 @@ copy_cached_file(int from, int to)
     snprintf (name_to,   sizeof(name_to),   "%04X", to);
 
     fd_from = open(name_from,O_RDONLY | O_BINARY);  
-    fd_to   = open(name_to,  O_WRONLY | O_CREAT | O_BINARY);
+    fd_to   = open(name_to,  O_WRONLY | O_CREAT | O_BINARY | O_TRUNC, 0600);
 
     while((n = read(fd_from, buf, BUFSIZE)) > 0)
 	write(fd_to, buf, n);
