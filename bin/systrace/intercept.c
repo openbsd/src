@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.25 2002/08/05 14:49:26 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.26 2002/08/05 19:10:22 jason Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -703,10 +703,16 @@ intercept_syscall_result(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			    icpid->name, intercept_newimagecbarg);
 
 	} else if (!strcmp("setuid", name)) {
-		intercept.getarg(0, args, argsize, (void **)&icpid->uid);
+		register_t reg;
+
+		intercept.getarg(0, args, argsize, (void **)&reg);
+		icpid->uid = reg;
 		icpid->flags |= ICFLAGS_UIDKNOWN;
 	} else if (!strcmp("setgid", name)) {
-		intercept.getarg(0, args, argsize, (void **)&icpid->gid);
+		register_t reg;
+
+		intercept.getarg(0, args, argsize, (void **)&reg);
+		icpid->gid = reg;
 		icpid->flags |= ICFLAGS_GIDKNOWN;
 	}
  out:
