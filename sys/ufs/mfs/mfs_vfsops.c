@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.16 2002/01/23 01:40:59 art Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.17 2002/02/18 09:23:26 ericj Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -259,6 +259,7 @@ mfs_start(mp, flags, p)
 	register struct mfsnode *mfsp = VTOMFS(vp);
 	register struct buf *bp;
 	register caddr_t base;
+	int sleepreturn = 0;
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_buflist != (struct buf *)-1) {
@@ -275,11 +276,14 @@ mfs_start(mp, flags, p)
 		 * otherwise we will loop here, as tsleep will always return
 		 * EINTR/ERESTART.
 		 */
-		if (tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0)) {
+		if (sleepreturn != 0) {
 			if (vfs_busy(mp, LK_NOWAIT, NULL, p) ||
 			    dounmount(mp, 0, p))
 				CLRSIG(p, CURSIG(p));
+			sleepreturn = 0;
+			continue;
 		}
+		sleepreturn = tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0);
 	}
 	return (0);
 }
