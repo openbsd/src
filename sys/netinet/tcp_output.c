@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.54 2003/01/25 15:27:29 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.55 2003/05/29 00:35:18 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1071,9 +1071,20 @@ send:
 	/*
 	 * Trace.
 	 */
-	if (so->so_options & SO_DEBUG)
-		tcp_trace(TA_OUTPUT, tp->t_state, tp, mtod(m, caddr_t), 0,
-			len);
+	if (so->so_options & SO_DEBUG) {
+		/* TCP template does not fill ip version, so fill it in here */
+		struct ip *sip;
+		sip = mtod(m, struct ip *);
+		switch (tp->pf) {
+		case AF_INET:
+			sip->ip_v = 4;
+			break;
+		case AF_INET6:
+			sip->ip_v = 6;
+			break;
+		}
+		tcp_trace(TA_OUTPUT, tp->t_state, tp, m, 0, len);
+	}
 
 	/*
 	 * Fill in IP length and desired time to live and
