@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.21 1999/12/11 20:53:03 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.22 1999/12/14 08:23:35 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -144,7 +144,7 @@ int	atapi_dsc_ready __P((void *));
 void    atapi_dsc_check __P((void *));
 int	atapi_dsc_semiready __P((void *));
 int	atapi_poll_wait __P((int (*) __P((void *)), void *, int, int, char *));
-void    atapi_to_scsi_sense __P((struct scsi_xfer *, u_int8_t));
+int     atapi_to_scsi_sense __P((struct scsi_xfer *, u_int8_t));
 
 struct atapiscsi_softc {
 	struct device  sc_dev;
@@ -479,21 +479,31 @@ wdc_atapi_send_cmd(sc_xfer)
 	return (ret);
 }
 
-void    
+
+/*
+ * Returns 1 if we experienced an ATA-level abort command
+ *           (ABRT bit set but no additional sense)
+ *         0 if normal command processing
+ */
+int
 atapi_to_scsi_sense(xfer, flags)
 	struct scsi_xfer *xfer;
 	u_int8_t flags;
 {
 	struct scsi_sense_data *sense = &xfer->sense;
-	
+	int ret = 0;
+
+	xfer->error = XS_SHORTSENSE;
+
 	sense->error_code = SSD_ERRCODE_VALID | 0x70;
 	sense->flags = (flags >> 4);
 
 	WDCDEBUG_PRINT(("Atapi error: %d ", (flags >> 4)), DEBUG_ERRORS);
 
-	if ((flags & 0x4) && (sense->flags == 0)) {
+	if ((flags & 4) && (sense->flags == 0)) {
 		sense->flags = SKEY_ABORTED_COMMAND;
 		WDCDEBUG_PRINT(("ABRT "), DEBUG_ERRORS);
+		ret = 1;
 	}
 
 	if (flags & 0x1) {
@@ -510,9 +520,12 @@ atapi_to_scsi_sense(xfer, flags)
 	/* Let's ignore these in version 1 */
 	if (flags & 0x8) {
 		WDCDEBUG_PRINT(("MCR "), DEBUG_ERRORS);
+		if (sense->flags == 0)
+			xfer->error = XS_NOERROR;
 	}
 
 	WDCDEBUG_PRINT(("\n"), DEBUG_ERRORS);
+	return (ret);
 }
 
 
@@ -598,10 +611,7 @@ wdc_atapi_the_poll_machine(chp, xfer)
 			idx = 0;
 		}
 
-		if (xfer->delay != 0) {
-			while (xfer->delay--)
-				delay(1000);
-		}
+		if (xfer->delay != 0) delay (1000 * xfer->delay);
 
 		switch (ret) {
 		case GOTO_NEXT:
@@ -628,7 +638,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 {
 	int idx = 0, ret;
 	int claim_irq = 0;
-	u_int64_t now = (u_int64_t)time.tv_sec * 1000 + time.tv_usec / 1000;
+	extern int ticks;
 	int timeout_delay = hz / 10;
 
 	if (xfer->c_flags & C_POLL) {
@@ -646,15 +656,11 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 	xfer->claim_irq = 0;
 	xfer->delay = 0;
 
-	ret = (xfer->next)(chp, xfer, xfer->endtime && (now >= xfer->endtime));
+	ret = (xfer->next)(chp, xfer, 
+			   xfer->endticks && (ticks - xfer->endticks >= 0));
 
-	if (xfer->timeout != -1) {
-		now = (u_int64_t)time.tv_sec * 1000 + 
-		    time.tv_usec / 1000;
-
-		xfer->endtime = (u_int64_t)xfer->timeout + now;
-
-	}
+	if (xfer->timeout != -1) 
+		xfer->endticks = max((xfer->timeout * 1000) / hz, 1) + ticks;
 
 	if (xfer->claim_irq) claim_irq = xfer->claim_irq;
 
@@ -665,8 +671,7 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 		if (xfer->expect_irq) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 			xfer->expect_irq = 0;
-			timeout(wdctimeout, chp, 
-			    (xfer->endtime - now) * hz / 1000);
+			timeout(wdctimeout, chp, xfer->endticks - ticks);
 
 			return (claim_irq);
 		}
@@ -1005,12 +1010,13 @@ wdc_atapi_intr_data(chp, xfer, timeout)
 		return (GOTO_NEXT);
 	}
 
-
+	
 	if (xfer->c_bcount >= len) {
-	  WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d st 0x%x err 0x%x "
-			  "ire 0x%x\n", xfer->c_bcount,
-			  len, chp->ch_status, chp->ch_error, ire), DEBUG_INTR);
-
+		WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d "
+		    "st 0x%x err 0x%x "
+		    "ire 0x%x\n", xfer->c_bcount,
+		    len, chp->ch_status, chp->ch_error, ire), DEBUG_INTR);
+		
 		/* Common case */
 		if (sc_xfer->flags & SCSI_DATA_OUT)
 			wdc_output_bytes(drvp, (u_int8_t *)xfer->databuf +
@@ -1112,10 +1118,8 @@ wdc_atapi_intr_complete(chp, xfer, timeout)
 	} else {
 		sc_xfer->resid = xfer->c_bcount;
 		if (chp->ch_status & WDCS_ERR) {
-		        /* save the short sense */
-			sc_xfer->error = XS_SHORTSENSE;
-			atapi_to_scsi_sense(sc_xfer, chp->ch_error);
-			if ((sc_xfer->sc_link->quirks &
+			if (!atapi_to_scsi_sense(sc_xfer, chp->ch_error) &&
+			    (sc_xfer->sc_link->quirks &
 			     ADEV_NOSENSE) == 0) {
 				/*
 				 * let the driver issue a
@@ -1178,6 +1182,11 @@ wdc_atapi_intr_for_us(chp, xfer, timeout)
 
 	WDCDEBUG_PRINT(("ATAPI_INTR\n"), DEBUG_INTR);
 
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+	DELAY (1);
+
+	wdc_atapi_update_status(chp);
+
 	if (timeout) {
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -1191,11 +1200,6 @@ wdc_atapi_intr_for_us(chp, xfer, timeout)
 		return (GOTO_NEXT);
 	}
 
-
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
-	DELAY (1);
-
-	wdc_atapi_update_status(chp);
 
 	if (chp->ch_status & WDCS_BSY)
 		return (CONTINUE_POLL);
@@ -1229,13 +1233,35 @@ wdc_atapi_ctrl(chp, xfer, timeout)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	char *errstring = NULL;
 
+	switch (drvp->state) {
+	case IDENTIFY:
+	case IDENTIFY_WAIT:
+		errstring = "IDENTIFY";
+		break;
+		
+	case PIOMODE:
+		errstring = "Post IDENTIFY";
+		break;
+
+	case PIOMODE_WAIT:
+		errstring = "PIOMODE";
+		break;
+	case DMAMODE_WAIT:
+		errstring = "dmamode";
+		break;
+	default:
+		errstring = "unknown state";
+		break;
+	}
+
 	if (timeout) {
 		if (drvp->state != IDENTIFY)
 			goto timeout;
 		else {
-			printf ("wdc_atapi_ctrl: timeout during IDENTIFY."
+#ifdef DIAGNOSTIC
+			printf ("wdc_atapi_ctrl: timeout before IDENTIFY."
 			    "Should not happen\n");
-
+#endif
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			xfer->next = wdc_atapi_done;
 			return (GOTO_NEXT);
@@ -1269,15 +1295,11 @@ wdc_atapi_ctrl(chp, xfer, timeout)
 		break;
 	
 	case IDENTIFY_WAIT:
-		errstring = "IDENTIFY";
-		
 		/* We don't really care if this operation failed.
 		   It's just there to wake the drive from its stupor. */
 		if (!(chp->ch_status & WDCS_ERR)) {
 			wdcbit_bucket(chp, 512);
 	
-			errstring = "Post IDENTIFY";
-
 			xfer->timeout = 100;
 			drvp->state = PIOMODE;
 			break;
@@ -1300,7 +1322,6 @@ piomode:
 		xfer->expect_irq = 1;
 		break;
 	case PIOMODE_WAIT:
-		errstring = "piomode";
 		if (chp->ch_status & WDCS_ERR) {
 			if (drvp->PIO_mode < 3) {
 				drvp->PIO_mode = 3;
@@ -1328,9 +1349,8 @@ piomode:
 		break;
 
 	case DMAMODE_WAIT:
-		errstring = "dmamode";
 		if (chp->ch_status & WDCS_ERR)
-			goto error;
+			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 	/* fall through */
 
 	case READY:
@@ -1353,8 +1373,9 @@ error:
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 	    errstring);
 	printf("error (0x%x)\n", chp->ch_error);
-	sc_xfer->error = XS_SHORTSENSE;
-	atapi_to_scsi_sense(sc_xfer, chp->ch_error);
+
+	sc_xfer->error = XS_DRIVER_STUFFUP;
+
 	xfer->next = wdc_atapi_reset;
 	return (GOTO_NEXT);
 }
