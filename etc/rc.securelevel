@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.14 2000/07/13 16:26:13 millert Exp $
+#	$OpenBSD: rc.securelevel,v 1.15 2004/07/06 04:03:41 henning Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -14,17 +14,4 @@
 securelevel=1
 
 echo -n 'starting pre-securelevel daemons:'
-
-# Securelevel > 1 does not allow the clock to be set backwards
-if [ $securelevel -gt 1 -a X"${ntpdate_flags}" != X"NO" \
-    -a -x /usr/local/sbin/ntpdate ]; then
-	echo -n ' ntpdate'
-	/usr/local/sbin/ntpdate -b ${ntpdate_flags} >/dev/null
-fi
-
-if [ X"${ntpd}" == X"YES" -a -x /usr/local/sbin/tickadj \
-    -a -e /etc/ntp.conf ]; then
-       echo -n ' tickadj';	/usr/local/sbin/tickadj -Aq
-fi
-
 echo '.'

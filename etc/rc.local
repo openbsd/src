@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.35 2004/04/07 19:23:39 david Exp $
+#	$OpenBSD: rc.local,v 1.36 2004/07/06 04:03:41 henning Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -9,22 +9,6 @@
 # Add your local changes additions to this file
 
 echo -n 'starting local daemons:'
-
-# run ntpdate prior to ntpd
-if [ $securelevel -le 1 -a X"${ntpdate_flags}" != X"NO" \
-    -a -x /usr/local/sbin/ntpdate ]; then
-	echo -n ' ntpdate'
-	/usr/local/sbin/ntpdate -b ${ntpdate_flags} >/dev/null
-fi
-
-if [ X"${ntpd}" == X"YES" -a -x /usr/local/sbin/ntpd \
-    -a -e /etc/ntp.conf ]; then
-	ntpd_flags="-p /var/run/ntpd.pid"
-	if [ $securelevel -ge 1 ]; then
-		ntpd_flags="${ntpd_flags} -x"
-	fi
-	echo -n ' ntpd';       /usr/local/sbin/ntpd ${ntpd_flags}
-fi
 
 if [ -x /usr/local/sbin/cfsd ]; then
 	if ps auxc | grep -q '^ *root .* mountd$'; then
