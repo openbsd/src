@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsdkintf.c,v 1.4 1999/08/02 12:33:43 peter Exp $	*/
+/*	$OpenBSD: rf_openbsdkintf.c,v 1.5 1999/08/02 20:32:49 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ decl_simple_lock_data(, recon_queue_mutex)
 
 /* prototypes */
 void	rf_KernelWakeupFunc __P((struct buf *));
-static void	rf_InitBP __P((struct buf *, struct vnode *, unsigned, dev_t,
+void	rf_InitBP __P((struct buf *, struct vnode *, unsigned, dev_t,
 	    RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*)(struct buf *),
 	    void *, int, struct proc *));
 
@@ -213,7 +213,7 @@ int	raidsize __P((dev_t));
 
 void	rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
 void	rf_CopybackReconstructedData(RF_Raid_t *raidPtr);
-static int	raidinit __P((dev_t,RF_Raid_t *,int));
+int	raidinit __P((dev_t,RF_Raid_t *,int));
 
 int	raidopen __P((dev_t, int, int, struct proc *));
 int	raidclose __P((dev_t, int, int, struct proc *));
@@ -279,16 +279,16 @@ static int numraid = 0;
 /* declared here, and made public, for the benefit of KVM stuff.. */
 struct raid_softc *raid_softc;
 
-static void	raidgetdefaultlabel
+void	raidgetdefaultlabel
 	     __P((RF_Raid_t *, struct raid_softc *, struct disklabel *));
-static void	raidgetdisklabel __P((dev_t));
-static void	raidmakedisklabel __P((struct raid_softc *));
+void	raidgetdisklabel __P((dev_t));
+void	raidmakedisklabel __P((struct raid_softc *));
 
-static int	raidlock __P((struct raid_softc *));
+int	raidlock __P((struct raid_softc *));
 void	raidunlock __P((struct raid_softc *));
 int	raidlookup __P((char *, struct proc *p, struct vnode **));
 
-static void rf_markalldirty __P((RF_Raid_t *));
+void	rf_markalldirty __P((RF_Raid_t *));
 
 void
 raidattach(num)
@@ -1306,7 +1306,7 @@ raidioctl(dev, cmd, data, flag, p)
  * raidinit -- complete the rest of the initialization for the
  * RAIDframe device.
  */
-static int
+int
 raidinit(dev, raidPtr, unit)
 	dev_t dev;
 	RF_Raid_t *raidPtr;
@@ -1776,7 +1776,7 @@ rf_KernelWakeupFunc(vbp)
 /*
  * Initialize a buf structure for doing an I/O in the kernel.
  */
-static void
+void
 rf_InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
     logBytesPerSector, b_proc)
 	struct buf *bp;
@@ -1835,7 +1835,7 @@ rf_GetSpareTableFromDaemon(req)
 }
 #endif
 
-static void
+void
 raidgetdefaultlabel(raidPtr, rs, lp)
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs;
@@ -1874,7 +1874,7 @@ raidgetdefaultlabel(raidPtr, rs, lp)
  * Read the disklabel from the raid device.  If one is not present, fake one
  * up.
  */
-static void
+void
 raidgetdisklabel(dev)
 	dev_t dev;
 {
@@ -1931,7 +1931,7 @@ raidgetdisklabel(dev)
  * Take care of things one might want to take care of in the event
  * that a disklabel isn't present.
  */
-static void
+void
 raidmakedisklabel(rs)
 	struct raid_softc *rs;
 {
@@ -2001,7 +2001,7 @@ raidlookup(path, p, vpp)
  * Several drivers do this; it should be abstracted and made MP-safe.
  * (Hmm... where have we seen this warning before :->  GO )
  */
-static int
+int
 raidlock(rs)
 	struct raid_softc *rs;
 {
