@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.57 2003/03/16 13:15:53 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.58 2003/04/10 16:11:12 millert Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -723,7 +723,7 @@ dodisk()
 		M r{-$-}1{-$-}2$d	c {-$-}4 Add($n, $count) 640
 		let count=count+1
 	done
-	MKlist="$MKlist;chown root.operator {-$-}1{-$-}2? r{-$-}1{-$-}2?"
+	MKlist="$MKlist;chown root:operator {-$-}1{-$-}2? r{-$-}1{-$-}2?"
 }
 dnl
 dnl dodisk2(name, unit, blkmaj, chrmaj, unit, off[, stepping])
@@ -777,7 +777,7 @@ M() {
 	mklist="$mklist {-$-}1"
 	G={-$-}{6:-wheel}
 	[ "{-$-}7" ] && {
-		MKlist="$MKlist;chown {-$-}7.{-$-}G {-$-}1"
+		MKlist="$MKlist;chown {-$-}7:{-$-}G {-$-}1"
 	} || {
 		case $G in
 		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
