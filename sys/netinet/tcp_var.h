@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.32 2000/09/25 09:41:03 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.33 2000/10/14 01:04:11 itojun Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -289,7 +289,8 @@ struct	tcpstat {
 #define	TCPCTL_IDENT		9 /* get connection owner */
 #define	TCPCTL_SACK	       10 /* selective acknowledgement, rfc 2018 */
 #define TCPCTL_MSSDFLT	       11 /* Default maximum segment size */
-#define	TCPCTL_MAXID	       12
+#define	TCPCTL_RSTPPSLIMIT     12 /* RST pps limit */
+#define	TCPCTL_MAXID	       13
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -304,6 +305,7 @@ struct	tcpstat {
 	{ "ident", 	CTLTYPE_STRUCT }, \
 	{ "sack",	CTLTYPE_INT }, \
 	{ "mssdflt",	CTLTYPE_INT }, \
+	{ "rstppslimit",	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {

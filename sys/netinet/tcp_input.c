@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.78 2000/10/11 09:14:11 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.79 2000/10/14 01:04:10 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -106,6 +106,10 @@ struct	tcpiphdr tcp_saveti;
 int	tcptv_keep_init = TCPTV_KEEP_INIT;
 
 extern u_long sb_max;
+
+int tcp_rst_ppslim = 100;		/* 100pps */
+int tcp_rst_ppslim_count = 0;
+struct timeval tcp_rst_ppslim_last;
 
 #endif /* TUBA_INCLUDE */
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
@@ -680,13 +684,13 @@ findpcb:
 		 */
 		if (inp == 0) {
 			++tcpstat.tcps_noport;
-			goto dropwithreset;
+			goto dropwithreset_ratelim;
 		}
 	}
 
 	tp = intotcpcb(inp);
 	if (tp == 0)
-		goto dropwithreset;
+		goto dropwithreset_ratelim;
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
 	
@@ -2065,6 +2069,20 @@ dropafterack:
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
 	return;
+
+dropwithreset_ratelim:
+	/*
+	 * We may want to rate-limit RSTs in certain situations,
+	 * particularly if we are sending an RST in response to
+	 * an attempt to connect to or otherwise communicate with
+	 * a port for which we have no socket.
+	 */
+	if (ppsratecheck(&tcp_rst_ppslim_last, &tcp_rst_ppslim_count,
+	    tcp_rst_ppslim) == 0) {
+		/* XXX stat */
+		goto drop;
+	}
+	/* ...fall into dropwithreset... */
 
 dropwithreset:
 	/*
