@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.60 2001/02/23 16:46:36 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.61 2001/05/11 06:43:41 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.60 2001/02/23 16:46:36 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.61 2001/05/11 06:43:41 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.60 2001/02/23 16:46:36 mickey Exp $
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/dkstat.h>
+#include <sys/uio.h>
+#include <sys/namei.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
 #include <net/route.h>
@@ -124,6 +126,8 @@ struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
 struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
+struct ctlname forkstatname[] = CTL_KERN_FORKSTAT_NAMES;
+struct ctlname nchstatsname[] = CTL_KERN_NCHSTATS_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -172,6 +176,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	UNSIGNED	0x00000200
 #define	KMEMBUCKETS	0x00000400
 #define	LONGARRAY	0x00000800
+#define KMEMSTATS	0x00001000
 
 /* prototypes */
 void debuginit __P((void));
@@ -334,12 +339,20 @@ parse(string, flags)
 				(void)printf("%s = %s\n", string,
 				    state == GMON_PROF_OFF ? "off" : "running");
 			return;
+		case KERN_FORKSTAT:
+			sysctl_forkstat(string, &bufp, mib, flags, &type);
+			return;
+		case KERN_NCHSTATS:
+			sysctl_nchstats(string, &bufp, mib, flags, &type);
+			return;
 		case KERN_MALLOCSTATS:
 			len = sysctl_malloc(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			if (mib[2] == KERN_MALLOC_BUCKET)
 				special |= KMEMBUCKETS;
+			if (mib[2] == KERN_MALLOC_KMEMSTATS)
+				special |= KMEMSTATS;
 			newsize = 0;
 			break;
 		case KERN_VNODE:
@@ -599,7 +612,28 @@ parse(string, flags)
 		struct kmembuckets *kb = (struct kmembuckets *)buf;
 		if (!nflag)
 			(void)printf("%s = ", string);
-		(void)printf("calls = %qu, total_allocated = %qu, total_free = %qu, elements = %qu, high_watermark = %qu, could_free = %qu\n", kb->kb_calls, kb->kb_total, kb->kb_totalfree, kb->kb_elmpercl, kb->kb_highwat, kb->kb_couldfree);
+		(void)printf("(calls = %qu, total_allocated = %qu, total_free = %qu, elements = %qu, high_watermark = %qu, could_free = %qu)\n", kb->kb_calls, kb->kb_total, kb->kb_totalfree, kb->kb_elmpercl, kb->kb_highwat, kb->kb_couldfree);
+		return;
+	}
+	if (special & KMEMSTATS) {
+		struct kmemstats *km = (struct kmemstats *)buf;
+		int j, first = 1;
+
+		if (!nflag)
+			(void)printf("%s = ", string);
+		(void)printf("(inuse = %ld, calls = %ld, memuse = %ldK, limblocks = %d, mapblocks = %d, maxused = %ldK, limit = %ldK, spare = %ld, sizes = (", km->ks_inuse, km->ks_calls, (km->ks_memuse + 1023) / 1024, km->ks_limblocks, km->ks_mapblocks, (km->ks_maxused + 1023) / 1024, (km->ks_limit + 1023) / 1024, km->ks_spare);
+		for (j = 1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
+		 	if ((km->ks_size & j ) == 0)
+				continue;
+			if (first)
+				(void)printf("%d", j);
+			else
+				(void)printf(",%d", j);
+			first = 0;
+		}
+		if (first)
+			(void)printf("none");
+		(void)printf("))\n");
 		return;
 	}
 	if (special & CLOCK) {
@@ -651,8 +685,8 @@ parse(string, flags)
 			(void)printf("%s = ", string);
 		(void)printf("bootdev = 0x%x, "
 			     "cylinders = %u, heads = %u, sectors = %u\n",
-			     pdi->bsd_dev, pdi->bios_cylinders, pdi->bios_heads,
-			     pdi->bios_sectors);
+			     pdi->bsd_dev, pdi->bios_cylinders,
+			     pdi->bios_heads, pdi->bios_sectors);
 		return;
 	}
 	if (special & BIOSDEV) {
@@ -1243,6 +1277,137 @@ struct list inetvars[] = {
 };
 
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
+struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
+struct list nchstatslist = { nchstatsname, KERN_NCHSTATS_MAXID };
+
+/*
+ * handle vfs namei cache statistics
+ */
+int
+sysctl_nchstats(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	static struct nchstats nch;
+	int indx;
+	size_t size;
+	static int keepvalue = 0;
+
+	if (*bufpp == NULL) {
+		bzero(&nch, sizeof(struct nchstats));
+		listall(string, &nchstatslist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &nchstatslist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	if (*bufpp != NULL) {
+		warnx("fourth level name in %s is invalid", string);
+		return(-1);
+	}
+	if (keepvalue == 0) {
+		size = sizeof(struct nchstats);
+		if (sysctl(mib, 2, &nch, &size, NULL, 0) < 0)
+			return(-1);
+		keepvalue = 1;
+	}
+	if (!nflag)
+		(void)printf("%s = ", string);
+	switch (indx) {
+	case KERN_NCHSTATS_GOODHITS:
+		(void)printf("%ld\n", nch.ncs_goodhits);
+		break;
+	case KERN_NCHSTATS_NEGHITS:
+		(void)printf("%ld\n", nch.ncs_neghits);
+		break;
+	case KERN_NCHSTATS_BADHITS:
+		(void)printf("%ld\n", nch.ncs_badhits);
+		break;
+	case KERN_NCHSTATS_FALSEHITS:
+		(void)printf("%ld\n", nch.ncs_falsehits);
+		break;
+	case KERN_NCHSTATS_MISS:
+		(void)printf("%ld\n", nch.ncs_miss);
+		break;
+	case KERN_NCHSTATS_LONG:
+		(void)printf("%ld\n", nch.ncs_long);
+		break;
+	case KERN_NCHSTATS_PASS2:
+		(void)printf("%ld\n", nch.ncs_pass2);
+		break;
+	case KERN_NCHSTATS_2PASSES:
+		(void)printf("%ld\n", nch.ncs_2passes);
+		break;
+	}
+	return(-1);
+}
+
+/*
+ * handle fork statistics
+ */
+int
+sysctl_forkstat(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	static struct forkstat fks;
+	static int keepvalue = 0;
+	int indx;
+	size_t size;
+
+	if (*bufpp == NULL) {
+		bzero(&fks, sizeof(struct forkstat));
+		listall(string, &forkstatlist);
+		return(-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &forkstatlist)) == -1)
+		return(-1);
+	if (*bufpp != NULL) {
+		warnx("fourth level name in %s is invalid", string);
+		return(-1);
+	}
+	if (keepvalue == 0) {
+		size = sizeof(struct forkstat);
+		if (sysctl(mib, 2, &fks, &size, NULL, 0) < 0)
+			return(-1);
+		keepvalue = 1;
+	}
+	if (!nflag)
+		(void)printf("%s = ", string);
+	switch (indx)	{
+	case KERN_FORKSTAT_FORK:
+		(void)printf("%d\n", fks.cntfork);
+		break;
+	case KERN_FORKSTAT_VFORK:
+		(void)printf("%d\n", fks.cntvfork);
+		break;
+	case KERN_FORKSTAT_RFORK:
+		(void)printf("%d\n", fks.cntrfork);
+		break;
+	case KERN_FORKSTAT_KTHREAD:
+		(void)printf("%d\n", fks.cntkthread);
+		break;
+	case KERN_FORKSTAT_SIZFORK:
+		(void)printf("%d\n", fks.sizfork);
+		break;
+	case KERN_FORKSTAT_SIZVFORK:
+		(void)printf("%d\n", fks.sizvfork);
+		break;
+	case KERN_FORKSTAT_SIZRFORK:
+		(void)printf("%d\n", fks.sizrfork);
+		break;
+	case KERN_FORKSTAT_SIZKTHREAD:
+		(void)printf("%d\n", fks.sizkthread);
+		break;
+	}
+	return(-1);
+}
 
 /*
  * handle malloc statistics
@@ -1255,16 +1420,17 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 	int flags;
 	int *typep;
 {
-	int indx, size, stor, i;
-	char *name, bufp[BUFSIZ], *buf;
+	int indx, stor, i;
+	char *name, bufp[BUFSIZ], *buf, *ptr;
 	struct list lp;
+	size_t size;
 
 	if (*bufpp == NULL) {
 		listall(string, &kernmalloclist);
 		return(-1);
 	}
 	if ((indx = findname(string, "third", bufpp, &kernmalloclist)) == -1)
-		return (-1);
+		return(-1);
 	mib[2] = indx;
 	if (mib[2] == KERN_MALLOC_BUCKET) {
 		if ((name = strsep(bufpp, ".")) == NULL) {
@@ -1283,8 +1449,8 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 				return(-1);
 			lp.size = stor + 2;
 			for (i = 1;
-			     (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
-			     i++) {
+			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
+			    i++) {
 				lp.list[i].ctl_type = CTLTYPE_STRUCT;
 			}
 			lp.list[i].ctl_name = buf;
@@ -1295,10 +1461,53 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 		}
 		mib[3] = atoi(name);
 		return(4);
-	} else {
+	} else if (mib[2] == KERN_MALLOC_BUCKETS) {
+		*typep = CTLTYPE_STRING;
+		return(3);
+	} else if (mib[2] == KERN_MALLOC_KMEMSTATS) {
+		size = BUFSIZ;
+		stor = mib[2];
+		mib[2] = KERN_MALLOC_KMEMNAMES;
+		buf = bufp;
+		if (sysctl(mib, 3, buf, &size, NULL, 0) < 0)
+			return(-1);
+		mib[2] = stor;
+		if ((name = strsep(bufpp, ".")) == NULL) {
+			for (stor = 0, i = 0; i < size; i++)
+				if (buf[i] == ',')
+					stor++;
+			lp.list = calloc(stor + 2, sizeof(struct ctlname));
+			if (lp.list == NULL)
+				return(-1);
+			lp.size = stor + 2;
+			for (i = 1;
+			    (lp.list[i].ctl_name = strsep(&buf, ",")) != NULL;
+			    i++) {
+				lp.list[i].ctl_type = CTLTYPE_STRUCT;
+			}
+			lp.list[i].ctl_name = buf;
+			lp.list[i].ctl_type = CTLTYPE_STRUCT;
+			listall(string, &lp);
+			free(lp.list);
+			return(-1);
+		}
+		ptr = strstr(buf, name);
+		if (ptr == NULL)	/* Should never happen */
+			return(-1);
+		/* Catch weird prefix match -- XXX recovery ? */
+		if ((*(ptr + strlen(name)) != ',') &&
+		    (*(ptr + strlen(name)) != '\0'))
+			return(-1);
+		for (i = 0, stor = 0; buf + i < ptr; i++)
+			if (buf[i] == ',')
+				stor++;
+		mib[3] = stor;
+		return(4);
+	} else if (mib[2] == KERN_MALLOC_KMEMNAMES) {
 		*typep = CTLTYPE_STRING;
 		return(3);
 	}
+	return(-1);
 }
 
 /*
