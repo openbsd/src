@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.5 2005/01/20 21:35:07 grange Exp $
+# $OpenBSD: Makefile.cross,v 1.6 2005/01/28 19:51:47 mickey Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -67,6 +67,8 @@ ${CROSSDIRS}:
 			echo powerpc ;;\
 		sgi) \
 			echo mips64 ;;\
+		cats|zaurus) \
+			echo arm ;;\
 		*) \
 			(echo Unknown arch ${TARGET} >&2) ; exit 1;; \
 	esac > ${CROSSDIR}/TARGET_ARCH
@@ -185,13 +187,12 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	@touch ${CROSSBINUTILS}
 
 # bsd.own.mk can't do it for us
-.if ${TARGET} == "amd64" || ${TARGET} == "cats" || \
-    ${TARGET} == "hppa" || ${TARGET} == "hppa64" || \
-    ${TARGET} == "i386" || \
-    ${TARGET} == "sparc64" || ${TARGET} == "sgi"
-TARGET_USE_GCC3=Yes
-.else
+.if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
+    ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "vax"
 TARGET_USE_GCC3=No
+.else
+TARGET_USE_GCC3=Yes
 .endif
 
 ${CROSSGCC}:		${CROSSBINUTILS}
