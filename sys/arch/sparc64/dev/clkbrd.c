@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrd.c,v 1.2 2004/09/28 14:34:58 miod Exp $	*/
+/*	$OpenBSD: clkbrd.c,v 1.3 2004/09/28 16:37:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -75,7 +75,7 @@ clkbrd_attach(parent, self, aux)
 {
 	struct clkbrd_softc *sc = (struct clkbrd_softc *)self;
 	struct fhc_attach_args *fa = aux;
-	int i, slots;
+	int slots;
 	u_int8_t r;
 
 	sc->sc_bt = fa->fa_bustag;
@@ -128,12 +128,6 @@ clkbrd_attach(parent, self, aux)
 	}
 
 	printf(": %d slots\n", slots);
-
-	for (i = 0; i < fa->fa_nreg; i++) {
-		printf(" r[%d] slot %x offset %x size %x\n",
-		    i, fa->fa_reg[i].fbr_slot, fa->fa_reg[i].fbr_offset,
-		    fa->fa_reg[i].fbr_size);
-	}
 
 	if (sparc_led_blink)
 		clkbrd_led_blink(sc);
