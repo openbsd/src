@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.75 2000/09/21 17:30:48 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.76 2000/09/23 01:07:38 chris Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -82,6 +82,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/ip_ipsp.h>
 #endif /* IPSEC */
 
+#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
+
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
@@ -89,8 +91,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/tcpipv6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
-
-#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
 
 struct	tcpiphdr tcp_saveti;
 struct  tcpipv6hdr tcp_saveti6;
