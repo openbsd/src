@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/06/02 14:41:57 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/07/16 07:49:08 pefo Exp $
 
 CFLAGS+=-I${.CURDIR}/../include
 BINDIR?=/usr/sbin
@@ -21,8 +21,14 @@ COMPILE_ET=${.CURDIR}/../compile_et/${__objdir}/compile_et
 COMPILE_ET=${.CURDIR}/../compile_et/compile_et
 .endif
 
-.if exists(${.CURDIR}/../com_err/${__objdir})
-COM_ERR=-L${.CURDIR}/../com_err/${__objdir} -lcom_err_pic
+.if (${MACHINE_ARCH} != "mips")
+COM_ERR_PIC=	-lcom_err_pic
 .else
-COM_ERR=-L${.CURDIR}/../com_err -lcom_err_pic
+COM_ERR_PIC=	-lcom_err
+.endif
+
+.if exists(${.CURDIR}/../com_err/${__objdir})
+COM_ERR=-L${.CURDIR}/../com_err/${__objdir} ${COM_ERR_PIC}
+.else
+COM_ERR=-L${.CURDIR}/../com_err ${COM_ERR_PIC}
 .endif
