@@ -30,10 +30,10 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 2, 1995
-.Dt COMPAT_LINUX 8
+.Dt compat_linux 8
 .Os BSD 4
 .Sh NAME
-.Nm COMPAT_LINUX
+.Nm compat_linux
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
 OpenBSD supports running Linux binaries. This only applies to i386 systems
@@ -43,12 +43,12 @@ will not work include the Linux /proc filesystem (which is different from
 the optional OpenBSD /proc filesystem), and i386-specific calls, such as
 enabling virtual 8086 mode. Currently, sound is not supported for Linux
 binaries (they will probably run, but not produce any sound).
-
+.Pp
 The Linux compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_LINUX
 option enabled.
-
+.Pp
 A lot of programs are dynamically linked. This means, that you will
 also need the Linux shared libraries that the program depends on, and
 the runtime linker. Also, you will need to create a "shadow root"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.1 1996/08/24 22:08:57 deraadt Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.2 1997/02/14 23:14:21 deraadt Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -33,22 +33,22 @@
 .\"	Stolen from compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl 
 .\"
 .Dd July 6, 1996
-.Dt COMPAT_SVR4 8
+.Dt compat_svr4 8
 .Os BSD 4
 .Sh NAME
-.Nm COMPAT_SVR4
+.Nm compat_svr4
 .Nd setup procedure for running SVR4/iBCS2 binaries
 .Sh DESCRIPTION
 OpenBSD supports running SVR4/iBCS2 binaries. This code has been tested on
 i386 and sparc systems. Most programs should work, but not ones that use
 the /proc filesystem, sound, or threads (unfortunately ttsession uses threads).
 .\" XXX: What else?
-
+.Pp
 The SVR4 compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_SVR4
 option enabled.
-
+.Pp
 Most SVR4 programs are dynamically linked. This means that you will
 also need the shared libraries that the program depends on and the
 runtime linker. Also, you will need to create a "shadow root"

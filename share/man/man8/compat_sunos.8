@@ -31,14 +31,19 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd June 15, 1994
-.Dt COMPAT_SUNOS 8
+.Dt compat_sunos 8
 .Os BSD 4
 .Sh NAME
-.Nm COMPAT_SUNOS
+.Nm compat_sunos
 .Nd setup procedure for m68k and sparc architectures
 .Sh DESCRIPTION
 OpenBSD/sparc and some of the OpenBSD/m68k architectures can run
 SunOS executables.  Most executables will work.
+.Pp
+The SunOS compatibility feature is active
+for kernels compiled with the
+.Nm COMPAT_SUNOS
+option enabled.
 .Pp
 The exceptions include programs that use the SunOS kvm library,
 and various system calls, ioctl()'s, or kernel semantics
