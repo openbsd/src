@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.64 2002/09/11 05:38:47 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.65 2003/05/12 00:48:52 jason Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ int	if_mark_ignore(struct radix_node *, void *);
 int	if_mark_unignore(struct radix_node *, void *);
 
 int	ifqmaxlen = IFQ_MAXLEN;
+int	netisr;
 
 void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);

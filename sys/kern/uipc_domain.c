@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.13 2002/03/14 01:27:05 millert Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.14 2003/05/12 00:48:52 jason Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -48,6 +48,8 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/timeout.h>
+
+struct	domain *domains;
 
 void	pffasttimo(void *);
 void	pfslowtimo(void *);

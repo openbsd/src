@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.34 2003/04/14 04:53:50 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.35 2003/05/12 00:48:52 jason Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 
 #include <uvm/uvm_extern.h>
 
-struct shminfo shminfo;
+extern struct shminfo shminfo;
 struct shmid_ds **shmsegs;	/* linear mapping of shmid -> shmseg */
 struct pool shm_pool;
 unsigned short *shmseqs;	/* array of shm sequence numbers */

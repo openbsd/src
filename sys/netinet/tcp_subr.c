@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.65 2002/08/28 15:43:03 pefo Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.66 2003/05/12 00:48:52 jason Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -136,6 +136,8 @@ int	tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
 int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
 
+u_int32_t	tcp_now;
+
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
 #endif
@@ -153,6 +155,7 @@ struct pool sackhl_pool;
 int	tcp_freeq(struct tcpcb *);
 
 struct tcpstat tcpstat;		/* tcp statistics */
+tcp_seq  tcp_iss;
 
 /*
  * Tcp initialization

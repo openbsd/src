@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_seq.h,v 1.3 2001/06/09 07:03:43 angelos Exp $	*/
+/*	$OpenBSD: tcp_seq.h,v 1.4 2003/05/12 00:48:52 jason Exp $	*/
 /*	$NetBSD: tcp_seq.h,v 1.6 1995/03/26 20:32:35 jtc Exp $	*/
 
 /*
@@ -64,6 +64,6 @@
 #define	TCP_ISSINCR	(125*1024)	/* increment for tcp_iss each second */
 
 #ifdef _KERNEL
-tcp_seq	tcp_iss;		/* tcp initial send seq # */
+extern tcp_seq	tcp_iss;		/* tcp initial send seq # */
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_SEQ_H_ */
