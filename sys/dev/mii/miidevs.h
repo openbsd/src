@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.7 1999/05/07 21:38:57 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.8 1999/10/12 16:56:04 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.5 1999/05/07 21:37:45 jason Exp 
+ *	OpenBSD: miidevs,v 1.6 1999/10/12 16:55:34 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -53,6 +53,7 @@
 #define	MII_OUI_DAVICOM	0x006040	/* Davicom Semiconductor */
 #define	MII_OUI_ICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
+#define	MII_OUI_INTEL_ALT	0x00f800	/* Intel (alt) */
 #define	MII_OUI_LEVEL1	0x1e0400	/* Level 1 */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
@@ -80,6 +81,10 @@
 /* Intel PHYs */
 #define	MII_MODEL_INTEL_I82555	0x0015
 #define	MII_STR_INTEL_I82555	"i82555 10/100 media interface"
+#define	MII_MODEL_INTEL_I82553	0x0035
+#define	MII_STR_INTEL_I82553	"i82553 10/100 media interface"
+#define	MII_MODEL_INTEL_ALT_I82553	0x0000
+#define	MII_STR_INTEL_ALT_I82553	"i82553 10/100 media interface"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_LEVEL1_LXT970	0x0000
