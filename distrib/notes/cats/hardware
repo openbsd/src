@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2005/03/16 22:50:08 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.19 2005/03/18 23:51:39 miod Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -26,9 +26,9 @@ Supported devices {:-include-:}:
 		(Other PCI IDE-compliant controllers should work, but
 		 those not listed above may not be capable of DMA modes)
 	SCSI Host Adapters
-		adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
+		Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
 		    AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
-		    and AIC-7899 based host adapters [C] including the
+		    and AIC-7899 based host adapters including the
 		    Adaptec cards
 			AHA-274X[W,T]
 			AHA-284X
