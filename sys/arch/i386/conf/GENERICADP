@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICADP,v 1.8 1996/05/04 09:21:15 deraadt Exp $
+#	$OpenBSD: GENERICADP,v 1.9 1996/05/06 11:49:15 deraadt Exp $
 #	$NetBSD: GENERICADP,v 1.20 1996/04/25 20:14:16 scottr Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
@@ -165,13 +165,14 @@ le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 
-pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
+pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
+sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
+wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
+pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
+gus0	at isa? port 0x220 irq 7 drq 1 flags 6	# Gravis Ultra Sound (record drq for full-duplex)
+aria0	at isa? port 0x280 irq 10 flags 1	# Prometheus/Aria 16
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
