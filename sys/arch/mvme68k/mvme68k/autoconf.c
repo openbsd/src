@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1996/06/16 10:34:37 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.9 1996/11/06 01:45:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -373,14 +373,9 @@ setroot()
 	register int len, majdev, mindev;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
-	extern int (*mountroot) __P((void *));
 	dev_t temp;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
-#endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void *));
 #endif
 
 	printf("boot device: %s\n",
@@ -508,7 +503,7 @@ gotswap:
 #endif
 #if defined(FFS)
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		majdev = major(rootdev);
 		mindev = minor(rootdev);
 		printf("root on %s%c\n", bootdv->dv_xname,
