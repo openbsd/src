@@ -1,3 +1,5 @@
+/*	$Id: dmavar.h,v 1.2 1995/11/07 08:48:54 deraadt Exp $ */
+
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *   @(#)dmavar.h   7.2 (Berkeley) 11/4/90
- *   $Id: dmavar.h,v 1.1.1.1 1995/10/18 10:43:06 deraadt Exp $
+ *   $Id: dmavar.h,v 1.2 1995/11/07 08:48:54 deraadt Exp $
  */
 
 /* dmago flags */   

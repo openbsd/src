@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.1 1995/06/09 22:19:26 gwr Exp $	*/
+/*	$Id: netif_sun.c,v 1.2 1995/11/07 08:50:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

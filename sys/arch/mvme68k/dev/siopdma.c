@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.6 1995/02/12 19:19:00 chopps Exp $	*/
+/*	$Id: siopdma.c,v 1.2 1995/11/07 08:49:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.20 1995/04/12 08:47:21 pk Exp $ */
+/*	$Id: if_le.c,v 1.2 1995/11/07 08:49:02 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993

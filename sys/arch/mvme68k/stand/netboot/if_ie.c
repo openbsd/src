@@ -1,9 +1,8 @@
-/*	$NetBSD: le_poll.c,v 1.3 1994/10/26 09:11:48 cgd Exp $	*/
+/*	$Id: if_ie.c,v 1.3 1995/11/07 08:51:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
- * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,8 +13,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Theo de Raadt
- * 4. The name of the Author may not be used to endorse or promote products
+ *	This product includes software developed under OpenBSD by
+ *	Theo de Raadt for Willowglen Singapore.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.15 1995/04/11 09:18:09 pk Exp $	*/
+/*	$Id: if_ie.c,v 1.2 1995/11/07 08:49:00 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -28,6 +28,9 @@
  *	University of Vermont and State Agricultural College and Garrett A.
  *	Wollman, by William F. Jolitz, and by the University of California,
  *	Berkeley, Lawrence Berkeley Laboratory, and its contributors.
+ *    and
+ *      This product includes software developed under OpenBSD by
+ *	Theo de Raadt for Willowglen Singapore.
  * 4. Neither the names of the Universities nor the names of the authors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

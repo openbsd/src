@@ -1,4 +1,4 @@
-;	$NetBSD: siop_script.ss,v 1.3 1995/08/18 15:28:11 chopps Exp $
+;	$Id: siop_script.ss,v 1.2 1995/11/07 08:49:32 deraadt Exp $
 
 ;
 ; Copyright (c) 1995 Michael L. Hitch

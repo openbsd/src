@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.4 1994/11/20 20:52:22 deraadt Exp $ */
+/*	$Id: if_lereg.h,v 1.2 1995/11/07 08:51:03 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993

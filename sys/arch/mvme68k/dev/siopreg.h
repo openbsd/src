@@ -1,6 +1,7 @@
-/*	$NetBSD: siopreg.h,v 1.7 1995/08/18 15:28:13 chopps Exp $	*/
+/*	$Id: siopreg.h,v 1.2 1995/11/07 08:49:33 deraadt Exp $ */
 
 /*
+ * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $	*/
+/*	$Id: conf.c,v 1.3 1995/11/07 08:50:58 deraadt Exp $ */
 
 #include <sys/types.h>
 #include <netinet/in.h>

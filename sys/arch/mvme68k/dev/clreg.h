@@ -1,3 +1,5 @@
+/*	$Id: clreg.h,v 1.2 1995/11/07 08:48:54 deraadt Exp $ */
+
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
  *   
@@ -11,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *   This product includes software developed by Dale Rahn.
+ *	This product includes software developed by Dale Rahn.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

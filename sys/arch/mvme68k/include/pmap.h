@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1995/05/11 16:53:03 jtc Exp $	*/
+/*	$Id: pmap.h,v 1.2 1995/11/07 08:49:57 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University

@@ -1,3 +1,3 @@
-/*	$NetBSD: setjmp.h,v 1.1 1994/12/20 10:36:33 cgd Exp $	*/
+/*	$Id: setjmp.h,v 1.2 1995/11/07 08:50:03 deraadt Exp $ */
 
 #include <m68k/setjmp.h>

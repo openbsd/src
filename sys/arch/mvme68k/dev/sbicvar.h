@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.8 1995/08/18 15:28:05 chopps Exp $	*/
+/*	$Id: sbicvar.h,v 1.2 1995/11/07 08:49:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.h,v 1.4 1994/12/16 22:01:11 deraadt Exp $ */
+/*	$Id: if_iereg.h,v 1.2 1995/11/07 08:51:01 deraadt Exp $ */
 
 /*
  * if_sunie.h

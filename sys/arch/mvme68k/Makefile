@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1994/11/20 20:51:32 deraadt Exp $
+#	$Id: Makefile,v 1.2 1995/11/07 08:48:35 deraadt Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #

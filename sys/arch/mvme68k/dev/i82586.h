@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.3 1995/01/27 09:49:55 pk Exp $ */
+/*	$Id: i82586.h,v 1.2 1995/11/07 08:48:58 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -18,6 +18,9 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	Vermont and State Agricultural College and Garrett A. Wollman.
+ *    and
+ *      This product includes software developed under OpenBSD by
+ *	Theo de Raadt for Willowglen Singapore.
  * 4. Neither the name of the University nor the name of the author
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

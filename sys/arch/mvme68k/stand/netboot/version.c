@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.1 1995/06/09 22:02:40 gwr Exp $ */
+/*	$Id: version.c,v 1.2 1995/11/07 08:51:04 deraadt Exp $ */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
@@ -6,4 +6,4 @@
  *	1.1
  */
 
-char *version = "$Revision: 1.1.1.2 $";
+char *version = "$Revision: 1.2 $";

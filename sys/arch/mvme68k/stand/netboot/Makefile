@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/07/03 02:53:55 gwr Exp $
+#	$Id: Makefile,v 1.2 1995/11/07 08:50:55 deraadt Exp $
 
 RELOC=0x3F0000
 

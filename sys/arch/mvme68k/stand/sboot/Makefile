@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1995/07/03 02:53:55 gwr Exp $
+#	$Id: Makefile,v 1.2 1995/11/07 08:51:06 deraadt Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}

@@ -1,3 +1,3 @@
-/*	$NetBSD: trap.h,v 1.2 1994/10/26 02:33:57 cgd Exp $	*/
+/*	$Id: trap.h,v 1.2 1995/11/07 08:50:06 deraadt Exp $ */
 
 #include <m68k/trap.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 1994/10/26 07:26:40 cgd Exp $	*/
+/*	$Id: pte.h,v 1.2 1995/11/07 08:50:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.

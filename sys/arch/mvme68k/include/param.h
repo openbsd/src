@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 1995/03/28 18:15:38 jtc Exp $	*/
+/*	$Id: param.h,v 1.3 1995/11/07 08:49:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
