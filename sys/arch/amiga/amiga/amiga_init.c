@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.18 2001/04/20 11:01:55 art Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.19 2001/05/14 15:43:11 jj Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -311,12 +311,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		RELOC(ZBUSAVAIL, u_int) += m68k_round_page(cd->size);
 	}
 
-	/*
-	 * update these as soon as possible!
-	 */
-	RELOC(PAGE_SIZE, u_int)  = NBPG;
-	RELOC(PAGE_MASK, u_int)  = NBPG-1;
-	RELOC(PAGE_SHIFT, u_int) = PG_SHIFT;
 
 	/*
 	 * assume KVA_MIN == 0.  We subtract the kernel code (and
