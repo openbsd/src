@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.23 2001/07/31 15:20:19 brian Exp $
+ *	$OpenBSD: mp.c,v 1.24 2001/08/18 22:15:28 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1117,6 +1117,10 @@ mpserver_Open(struct mpserver *s, struct peerid *peer)
 
   l = snprintf(s->socket.sun_path, sizeof s->socket.sun_path, "%sppp-%s-%02x-",
                _PATH_VARRUN, peer->authname, peer->enddisc.class);
+  if (l < 0) {
+    log_Printf(LogERROR, "mpserver: snprintf(): %s\n", strerror(errno));
+    return MPSERVER_FAILED;
+  }
 
   for (f = 0; f < peer->enddisc.len && l < sizeof s->socket.sun_path - 2; f++) {
     snprintf(s->socket.sun_path + l, sizeof s->socket.sun_path - l,
