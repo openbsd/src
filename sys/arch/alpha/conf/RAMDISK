@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 1998/09/22 20:43:33 jason Exp $
+#	$OpenBSD: RAMDISK,v 1.19 1998/09/23 19:29:17 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -109,7 +109,7 @@ pci*	at	ppb?
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 fxp*	at	pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-ed*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
+ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
@@ -141,9 +141,11 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
-ed0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and
-ed1	at	isa? port 0x250 iomem 0xd8000 irq 9	# NE[12]000 ethercards
-ed2	at	isa? port 0x300 iomem 0xcc000 irq 10
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 wdc0	at	isa? port 0x1f0 irq 14		# ST506, ESDI, and IDE
 wdc1	at	isa? port 0x170 irq 15		# controllers
