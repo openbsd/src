@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.21 2004/05/15 01:49:35 tedu Exp $       */
+/*    $OpenBSD: func.c,v 1.22 2004/08/06 19:23:58 mickey Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.21 2004/05/15 01:49:35 tedu Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.22 2004/08/06 19:23:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1088,6 +1088,9 @@ static struct limits {
     { RLIMIT_MEMLOCK,	"memorylocked",	1024,	"kbytes" },
     { RLIMIT_NPROC,	"maxproc",	1,	"" },
     { RLIMIT_NOFILE,	"openfiles",	1,	"" },
+#ifdef RLIMIT_VMEM
+    { RLIMIT_VMEM,	"vmemsize",	1024,	"kbytes" },
+#endif
     { -1,		NULL,		0,	NULL }
 };
 
