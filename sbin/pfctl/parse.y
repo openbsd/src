@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.298 2003/01/25 16:33:19 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.299 2003/01/25 18:16:05 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -758,7 +758,8 @@ tabledef	: TABLE PORTUNARY STRING PORTUNARY table_opts {
 				    PF_TABLE_NAME_SIZE - 1);
 				YYERROR;
 			}
-			pfctl_define_table($3, $5.flags, $5.init_addr);
+			pfctl_define_table($3, $5.flags, $5.init_addr,
+			    pf->opts & PF_OPT_NOACTION);
 		}
 		;
 
