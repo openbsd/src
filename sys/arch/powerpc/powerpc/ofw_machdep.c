@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.5 1998/05/29 04:15:40 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.6 1998/06/28 04:35:17 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ extern void_f *pending_int_f;
 void ofw_do_pending_int();
 extern int system_type;
 
+void ofw_intr_init();
 void
 ofrootfound()
 {
@@ -113,7 +114,38 @@ ofrootfound()
 		panic("ofroot not configured");
 	if (system_type == OFWMACH) {
 		pending_int_f = ofw_do_pending_int;
+		ofw_intr_init();
 	}
+}
+void
+ofw_intr_init()
+{
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so imp > (tty | net | bio).
+	 */
+	/* with openfirmware drivers all levels block clock
+	 * (have to block polling)
+	 */
+	imask[IPL_IMP] = SPL_CLOCK;
+	imask[IPL_TTY] = SPL_CLOCK | SINT_TTY;
+	imask[IPL_NET] = SPL_CLOCK | SINT_NET;
+	imask[IPL_BIO] = SPL_CLOCK;
+	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+
+	/*
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
+	 */
+	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_NET] |= imask[IPL_BIO];
+
+	/*
+	 * These are pseudo-levels.
+	 */
+	imask[IPL_NONE] = 0x00000000;
+	imask[IPL_HIGH] = 0xffffffff;
+
 }
 void
 ofw_do_pending_int()
@@ -133,12 +165,13 @@ static int processing;
 	dmsr = emsr & ~PSL_EE;
 	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
 
+
 	pcpl = splhigh();		/* Turn off all */
-	if(ipending & SINT_CLOCK) {
+	if((ipending & SINT_CLOCK) && (pcpl & imask[IPL_CLOCK] == 0)) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 	}
-	if(ipending & SINT_NET) {
+	if((ipending & SINT_NET) && ((pcpl & imask[IPL_NET]) == 0) ) {
 		extern int netisr;
 		int pisr = netisr;
 		netisr = 0;
