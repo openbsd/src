@@ -1,8 +1,8 @@
-/*	$OpenBSD: timer.c,v 1.4 1999/02/26 03:50:50 niklas Exp $	*/
-/*	$EOM: timer.c,v 1.8 1999/02/25 11:39:23 niklas Exp $	*/
+/*	$OpenBSD: timer.c,v 1.5 1999/04/19 20:57:25 niklas Exp $	*/
+/*	$EOM: timer.c,v 1.11 1999/04/13 20:00:41 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -126,4 +126,19 @@ timer_remove_event (struct event *ev)
 	     ev->name, ev->arg);
   TAILQ_REMOVE (&events, ev, link);
   free (ev);
+}
+
+void
+timer_report (void)
+{
+  struct event *ev;
+  struct timeval now;
+
+  gettimeofday (&now, 0);
+
+  for (ev = TAILQ_FIRST (&events); ev; ev = TAILQ_NEXT (ev, link))
+    log_debug (LOG_REPORT, 0, 
+	       "timer_report: event %s(%p) scheduled in %d seconds",
+	       (ev->name ? ev->name : "<unknown>"), ev, 
+	       (int)(ev->expiration.tv_sec - now.tv_sec));
 }
