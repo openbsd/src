@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.18 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.19 2002/06/08 23:23:24 millert Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.18 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.19 2002/06/08 23:23:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ displayq(int format)
 	ret = stat(LO, &statb);
 	PRIV_END;
 	if (ret >= 0) {
-		if (statb.st_mode & 0100) {
+		if (statb.st_mode & S_IXUSR) {
 			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s is down: ", printer);
@@ -165,7 +165,7 @@ displayq(int format)
 			} else
 				putchar('\n');
 		}
-		if (statb.st_mode & 010) {
+		if (statb.st_mode & S_IXGRP) {
 			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s queue is turned off\n", printer);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.33 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.34 2002/06/08 23:23:24 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ again:
 	 *    write the name of the current control file into the lock file
 	 *    so the spool queue program can tell what we're working on
 	 */
-	for (qp = queue; nitems--; free((char *) q)) {
+	for (qp = queue; nitems--; free(q)) {
 		q = *qp++;
 		if (stat(q->q_name, &stb) < 0)
 			continue;
@@ -253,7 +253,7 @@ again:
 				goto done;
 			/* rebuild queue (after lpc topq) */
 			if (stb.st_mode & S_IXOTH) {
-				for (free((char *) q); nitems--; free((char *) q))
+				for (free(q); nitems--; free(q))
 					q = *qp++;
 				stb.st_mode &= ~S_IXOTH;
 				if (fchmod(lfd, stb.st_mode & 0777) < 0)
@@ -296,7 +296,7 @@ again:
 			}
 		}
 	}
-	free((char *) queue);
+	free(queue);
 	/*
 	 * search the spool directory for more work.
 	 */
