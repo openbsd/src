@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.278 2003/11/08 00:45:34 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.279 2003/11/14 13:51:42 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -450,6 +450,22 @@ ruleset finishes loading.
 For example:
 .Pp
 .Dl set fingerprints \&"/etc/pf.os.devel\&"
+.Pp
+.It Ar set debug
+Set the debug
+.Ar level
+to one of the following:
+.Pp
+.Bl -tag -width xxxxxxxxxxxx -compact
+.It Ar none
+Don't generate debug messages.
+.It Ar urgent
+Generate debug messages only for serious errors.
+.It Ar misc
+Generate debug messages for various errors.
+.It Ar loud
+Generate debug messages for common conditions.
+.El
 .El
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
