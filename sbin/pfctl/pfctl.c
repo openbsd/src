@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.93 2002/11/24 16:47:02 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.94 2002/12/01 19:56:42 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -677,6 +677,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 			return (1);
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			memcpy(&pf->prule->rule, r, sizeof(pf->prule->rule));
+			pf->prule->pool_ticket = pf->paddr.ticket;
 			if (ioctl(pf->dev, DIOCADDRULE, pf->prule))
 				err(1, "DIOCADDRULE");
 		}
@@ -695,6 +696,7 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 			return (1);
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			memcpy(&pf->pnat->nat, n, sizeof(pf->pnat->nat));
+			pf->pnat->pool_ticket = pf->paddr.ticket;
 			if (ioctl(pf->dev, DIOCADDNAT, pf->pnat))
 				err(1, "DIOCADDNAT");
 		}
@@ -710,7 +712,8 @@ pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
 {
 	if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
-			memcpy(&pf->pbinat->binat, b, sizeof(pf->pbinat->binat));
+			memcpy(&pf->pbinat->binat, b,
+			    sizeof(pf->pbinat->binat));
 			if (ioctl(pf->dev, DIOCADDBINAT, pf->pbinat))
 				err(1, "DIOCADDBINAT");
 		}
@@ -728,6 +731,7 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 			return (1);
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
+			pf->prdr->pool_ticket = pf->paddr.ticket;
 			if (ioctl(pf->dev, DIOCADDRDR, pf->prdr))
 				err(1, "DIOCADDRDR");
 		}
