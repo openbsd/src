@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.5 1996/12/16 20:04:39 tholo Exp $	*/
+/*	$OpenBSD: key.c,v 1.6 1996/12/17 19:09:30 tholo Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.5 1996/12/16 20:04:39 tholo Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.6 1996/12/17 19:09:30 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,13 +227,13 @@ f_lcase(ip)
 	struct info *ip;
 {
 	if (ip->off) {
-		ip.t_iflag &= ~IUCLC;
-		ip.t_oflag &= ~OLCUC;
-		ip.t_lflag &= ~XCASE;
+		ip->t.c_iflag &= ~IUCLC;
+		ip->t.c_oflag &= ~OLCUC;
+		ip->t.c_lflag &= ~XCASE;
 	} else {
-		ip.t_iflag |= IUCLC;
-		ip.t_oflag |= OLCUC;
-		ip.t_lflag |= XCASE;
+		ip->t.c_iflag |= IUCLC;
+		ip->t.c_oflag |= OLCUC;
+		ip->t.c_lflag |= XCASE;
 	}
 	ip->set = 1;
 }
