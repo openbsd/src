@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.19 2005/01/27 17:03:23 millert Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.20 2005/03/25 16:41:18 mickey Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -90,8 +90,9 @@ pcic_isa_probe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_tag_t memt = ia->ia_memt, iot = ia->ia_iot;
 	bus_space_handle_t ioh, memh;
+	bus_size_t msize;
 	int val, found;
 
 	/* Disallow wildcarded i/o address. */
@@ -104,8 +105,14 @@ pcic_isa_probe(parent, match, aux)
 	if (ia->ia_msize == -1)
 		ia->ia_msize = PCIC_MEMSIZE;
 
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
-		return (0);
+	msize = ia->ia_msize;
+	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
+		if (ia->ia_msize > PCIC_MEMSIZE &&
+		    !bus_space_map(memt, ia->ia_maddr, PCIC_MEMSIZE, 0, &memh))
+			msize = PCIC_MEMSIZE;
+		else
+			return (0);
+	}
 	found = 0;
 
 	/*
@@ -134,11 +141,12 @@ pcic_isa_probe(parent, match, aux)
 		found++;
 
 	bus_space_unmap(iot, ioh, PCIC_IOSIZE);
-	bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
+	bus_space_unmap(memt, memh, msize);
 
 	if (!found)
 		return (0);
 	ia->ia_iosize = PCIC_IOSIZE;
+	ia->ia_msize = msize;
 	return (1);
 }
 
