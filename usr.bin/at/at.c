@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.9 1997/03/03 00:30:02 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.10 1997/03/03 03:31:10 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.9 1997/03/03 00:30:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.10 1997/03/03 03:31:10 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -483,9 +483,6 @@ process_jobs(argc, argv, what)
 	char queue;
 	int jobno;
 
-	if (optind == argc && (what == ATRM || what == CAT))
-		usage();
-
 	PRIV_START
 
 	if (chdir(_PATH_ATJOBS) != 0)
@@ -675,14 +672,20 @@ main(argc, argv)
 	/* select our program */
 	switch (program) {
 	case ATQ:
+		if (optind != argc)
+			usage();
 		list_jobs();
 		break;
 
 	case ATRM:
+		if (optind == argc)
+			usage();
 		process_jobs(argc, argv, ATRM);
 		break;
 
 	case CAT:
+		if (optind == argc)
+			usage();
 		process_jobs(argc, argv, CAT);
 		break;
 
