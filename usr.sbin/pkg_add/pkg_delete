@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.3 2003/10/23 17:48:07 espie Exp $
+# $OpenBSD: pkg_delete,v 1.4 2003/10/23 23:11:22 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -266,7 +266,7 @@ sub delete_package
 		next if defined $removed->{$name};
 		print "remove dependency in $name\n" if $opt_v or $opt_n;
 		OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $opt_n;
-		$removed->{name} = 1;
+		$removed->{$name} = 1;
 	}
 	remove_packing_info($dir) unless $opt_n;
 }
