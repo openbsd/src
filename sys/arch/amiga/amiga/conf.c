@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 1996/05/04 09:16:04 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 1996/05/07 10:02:51 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.35 1996/04/27 20:48:50 veego Exp $	*/
 
 /*-
@@ -138,8 +138,8 @@ struct cdevsw	cdevsw[] =
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
 	cdev_tty_init(NCOM,com),	/* 32: ISA serial port */
 	cdev_lpt_init(NLPT,lpt),	/* 33: ISA parallel printer */
-	cdev_gen_ipf(NIPF,ipl),         /* 34: IP filter log */
-	cdev_ss_init(NSS,ss),           /* 35: SCSI scanner */
+	cdev_gen_ipf(NIPF,ipl),		/* 34: IP filter log */
+	cdev_scanner_init(NSS,ss),	/* 35: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
