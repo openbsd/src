@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.8 2005/03/29 11:36:40 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.9 2005/03/29 12:55:55 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -92,6 +92,8 @@ struct tctrl_softc {
 	u_int	sc_cmdlen;
 	u_int	sc_rspoff;
 	u_int	sc_rsplen;
+	u_int	sc_bellfreq;
+	u_int	sc_bellvol;
 
 	struct timeout sc_tmo;
 };
@@ -99,6 +101,7 @@ struct tctrl_softc {
 int	tctrl_match(struct device *, void *, void *);
 void	tctrl_attach(struct device *, struct device *, void *);
 
+void	tctrl_bell(struct tctrl_softc *, int, int);
 void	tctrl_brightness(struct tctrl_softc *, int, int);
 void	tctrl_init_lcd(struct tctrl_softc *);
 int	tctrl_intr(void *);
@@ -213,6 +216,7 @@ tctrl_attach(parent, self, aux)
 	}
 
 	/* Get a few status values */
+	tctrl_bell(sc, 0xff, 0);
 	tctrl_brightness(sc, 0xff, 0);
 
 	sc->sc_regs->intr = TS102_UCTRL_INT_RXNE_REQ|TS102_UCTRL_INT_RXNE_MSK;
@@ -476,6 +480,29 @@ tctrl_read_ext_status(struct tctrl_softc *sc)
 }
 
 void
+tctrl_bell(struct tctrl_softc *sc, int mask, int value)
+{
+	struct tctrl_req req;
+
+	req.cmdbuf[0] = TS102_OP_CTL_SPEAKER_VOLUME;
+	req.cmdbuf[1] = mask;
+	req.cmdbuf[2] = value;
+	req.cmdlen = 3;
+	req.rsplen = 2;
+
+	tctrl_request(sc, &req);
+
+	/*
+	 * Note that rspbuf[0] returns the previous value, before any
+	 * adjustment happened.
+	 */
+	if (mask == 0)
+		sc->sc_bellvol = value;
+	else
+		sc->sc_bellvol = req.rspbuf[0];
+}
+
+void
 tctrl_brightness(struct tctrl_softc *sc, int mask, int value)
 {
 	struct tctrl_req req;
@@ -488,7 +515,14 @@ tctrl_brightness(struct tctrl_softc *sc, int mask, int value)
 
 	tctrl_request(sc, &req);
 
-	sc->sc_brightness = req.rspbuf[0];
+	/*
+	 * Note that rspbuf[0] returns the previous value, before any
+	 * adjustment happened.
+	 */
+	if (mask == 0)
+		sc->sc_brightness = value;
+	else
+		sc->sc_brightness = req.rspbuf[0];
 }
 
 void
@@ -707,4 +741,50 @@ tadpole_set_pcmcia(int slot, int enabled)
 		tctrl_lcd(sc, ~TS102_LCD_PCMCIA_ACTIVE,
 		    sc->sc_pcmcia_on ? TS102_LCD_PCMCIA_ACTIVE : 0);
 	}
+}
+
+int
+tadpole_bell(u_int duration, u_int freq, u_int volume)
+{
+	struct tctrl_softc *sc;
+	struct tctrl_req req;
+
+	if (tctrl_cd.cd_devs == NULL
+	    || tctrl_cd.cd_ndevs == 0
+	    || tctrl_cd.cd_devs[0] == NULL) {
+		return (0);
+	}
+
+	sc = (struct tctrl_softc *)tctrl_cd.cd_devs[0];
+
+	/* Adjust frequency if necessary (first time or frequence change) */
+	if (freq > 0 && freq <= 0xffff && freq != sc->sc_bellfreq) {
+		req.cmdbuf[0] = TS102_OP_CMD_SET_BELL_FREQ;
+		req.cmdbuf[1] = (freq >> 8) & 0xff;
+		req.cmdbuf[2] = freq & 0xff;
+		req.cmdlen = 3;
+		req.rsplen = 1;
+
+		tctrl_request(sc, &req);
+
+		sc->sc_bellfreq = freq;
+	}
+
+	/* Adjust volume if necessary */
+	if (volume >= 0 && volume <= 100) {
+		volume = (volume * 255) / 100;
+		if (volume != sc->sc_bellvol)
+			tctrl_bell(sc, 0, volume);
+
+	}
+
+	req.cmdbuf[0] = TS102_OP_CMD_RING_BELL;
+	req.cmdbuf[1] = (duration >> 8) & 0xff;
+	req.cmdbuf[2] = duration & 0xff;
+	req.cmdlen = 3;
+	req.rsplen = 1;
+
+	tctrl_request(sc, &req);
+
+	return (1);
 }

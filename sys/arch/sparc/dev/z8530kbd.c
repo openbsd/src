@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.5 2005/03/06 23:23:08 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.6 2005/03/29 12:55:55 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -123,6 +123,11 @@
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
+
+#include "tctrl.h"
+#if NTCTRL > 0
+#include <sparc/dev/tctrlvar.h>
+#endif
 
 /*
  * How many input characters we can buffer.
@@ -1228,6 +1233,11 @@ zskbd_bell(zst, period, pitch, volume)
 	ticks = (period * hz)/1000;
 	if (ticks <= 0)
 		ticks = 1;
+
+#if NTCTRL > 0
+	if (tadpole_bell(period / 10, pitch, volume) != 0)
+		return;
+#endif
 
 	s = splzs();
 	if (zst->zst_bellactive) {
