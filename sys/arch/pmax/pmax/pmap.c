@@ -832,11 +832,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (!pmap)
 		panic("pmap_enter: pmap");
 	if (!pmap->pm_segtab) {
+#ifdef DEBUG
 		enter_stats.kernel++;
+#endif
 		if (va < VM_MIN_KERNEL_ADDRESS || va >= virtual_end)
 			panic("pmap_enter: kva");
 	} else {
+#ifdef DEBUG
 		enter_stats.user++;
+#endif
 		if (va >= VM_MAXUSER_ADDRESS)
 			panic("pmap_enter: uva");
 	}
