@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.43 1997/12/04 21:35:29 art Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.44 1997/12/23 23:46:16 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.43 1997/12/04 21:35:29 art Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.44 1997/12/23 23:46:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -967,7 +967,8 @@ register_rpc(sep)
 			    ntohs(sin.sin_port));
 		(void)pmap_unset(sep->se_rpcprog, n);
 		if (!pmap_set(sep->se_rpcprog, n, pp->p_proto, ntohs(sin.sin_port)))
-			syslog(LOG_ERR, "pmap_set: %u %u %u %u: %m",
+			syslog(LOG_ERR, "%s %s: pmap_set: %u %u %u %u: %m",
+			    sep->se_service, sep->se_proto,
 			    sep->se_rpcprog, n, pp->p_proto,
 			    ntohs(sin.sin_port));
 	}
