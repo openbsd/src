@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.13 2000/10/13 15:02:02 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.14 2000/10/14 18:10:37 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,6 +66,7 @@
  * 3Com 3CCFEM656	10/100Mbps LAN+56k Modem CardBus PC Card
  * 3Com 3CCFEM656B	10/100Mbps LAN+56k Modem CardBus PC Card
  * 3Com 3CCFEM656C	10/100Mbps LAN+56k Global Modem CardBus PC Card
+ * 3Com 3C3FEM656C	10/100Mbps LAN+56k Global Modem CardBus Type III PC Card
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell on-board 3c920	10/100Mbps/RJ-45
