@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.4 2003/05/12 08:41:22 pjanzen Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.5 2003/05/12 08:46:09 pjanzen Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
 .Dd April 1, 2001
@@ -522,7 +522,7 @@ is increased 50% per size over one, and
 .Em quickness
 remains the same, regardless of size.
 .Pp
-Nastier monsters are found as one progress farther out from the origin.
+Nastier monsters are found as one progresses farther out from the origin.
 Monsters also may flock.
 The percent chance of that happening is designated as
 .Em flock%
