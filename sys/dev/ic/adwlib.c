@@ -99,7 +99,7 @@ static void AdvDelayMicroSecond __P((u_int32_t));
  *
  * All drivers should use this structure to set the default EEPROM
  * configuration. The BIOS now uses this structure when it is built.
- * Additional structure information can be found in advlib.h where
+ * Additional structure information can be found in adwlib.h where
  * the structure is defined.
  */
 static ADW_EEP_3550_CONFIG
@@ -2303,7 +2303,7 @@ ADW_SOFTC	*sc;
  * Command completion is polled for once per microsecond.
  *
  * The function can be called from anywhere including an interrupt handler.
- * But the function is not re-entrant, so it uses the DvcEnter/LeaveCritical()
+ * But the function is not re-entrant, so it uses the splbio/splx()
  * functions to prevent reentrancy.
  *
  * Return Values:
@@ -2320,8 +2320,9 @@ u_int32_t       idle_cmd_parameter;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int		result;
-	u_int32_t	i, j;
-
+	u_int32_t	s, i, j;
+ 
+	s = splbio();
 
 	/*
 	 * Clear the idle command status which is set by the microcode
@@ -2360,12 +2361,14 @@ u_int32_t       idle_cmd_parameter;
 		for (j = 0; j < SCSI_US_PER_MSEC; j++) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD_STATUS, result);
 			if (result != 0) {
+				splx(s);
 				return result;
 			}
 			AdvDelayMicroSecond(1);
 		}
 	}
 
+	splx(s);
 	return ADW_ERROR;
 }
 
