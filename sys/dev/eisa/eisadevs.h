@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.10 1998/11/22 16:23:16 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.11 1998/11/27 01:17:34 mickey Exp 
  */
 
 /*
@@ -89,6 +89,9 @@
 #define	EISA_PRODUCT_HWPC000	"Hewlett-Packard Series 700 EISA System Board"
 #define	EISA_PRODUCT_HWPC010	"Hewlett-Packard Series 700 EISA System Board"
 #define	EISA_PRODUCT_HWPC051	"Hewlett-Packard Series 700 EISA System Board"
+#define	EISA_PRODUCT_HWPC091	"Hewlett-Packard EISA System Board"
+#define	EISA_PRODUCT_HWPC0D1	"Hewlett-Packard EISA System Board"
+#define	EISA_PRODUCT_HWPC0E1	"Hewlett-Packard EISA System Board"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.10 1998/11/22 16:23:16 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.11 1998/11/27 01:17:34 mickey Exp 
  */
 
 /*
@@ -186,6 +186,21 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "HWPC051",
 	    EISA_PRODUCT_HWPC051,
+	},
+	{
+	    0,
+	    "HWPC091",
+	    EISA_PRODUCT_HWPC091,
+	},
+	{
+	    0,
+	    "HWPC0D1",
+	    EISA_PRODUCT_HWPC0D1,
+	},
+	{
+	    0,
+	    "HWPC0E1",
+	    EISA_PRODUCT_HWPC0E1,
 	},
 	{
 	    0,
