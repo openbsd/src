@@ -1,9 +1,51 @@
-dnl	$OpenBSD: install,v 1.7 2005/03/09 03:41:37 jcs Exp $
+dnl	$OpenBSD: install,v 1.8 2005/03/19 00:56:05 uwe Exp $
 OpenBSDInstallPrelude
 
+	openbsd{:--:}OSrev{:--:}_arm.ipk
+
 OpenBSD is installed on the Zaurus by effectively converting
-Linux into a bootloader.  You will need the following files
-from the distribution:
+Linux into a bootloader.  This can be done easily by installing
+a package from Qtopia, or manually from a terminal.  Both ways
+are described below, the easy one first.
+
+The package takes care of modifying the Linux startup files for
+you as necessary.  To protect you from a common pitfall, ext3
+filesystems mounted on /hdd[12] are converted back to ext2.
+
+(That way a fatal error in Linux startup scripts is avoided when
+the journal has been destroyed by mounting one of the ext3
+filesystems as ext2 on OpenBSD.)
+
+1. Press "Home" until the second icon tab is selected (Settings).
+2. Open the "Add/Remove Software" dialog.  That's the green icon
+   with an arrow pointing from left to right into a rectangle.
+3. Press "Install packages via networks", the middle one of the
+   three big buttons.  The "Package Manager" dialog pops up.
+4. Press the yellow switch icon in the lower right corner to
+   bring up the "Package Servers" dialog.
+5. Press the left button, which is labeled "New" if your zaurus
+   is in English, enter the HTTP URL of the nearest OpenBSD, and
+   change the field above the URL into a name for that server.
+   Press the "OK" button in the upper right corner to return to
+   the "Package Manager" dialog.
+6. Press the "Upgrade" button in the lower left corner to update
+   the package index if that was not done automatically.  A
+   package named "openbsd" should appear in the package list.
+   Select this package and press the question mark icon in the
+   lower right corner.
+7. Now you see the package details and three buttons, labeled
+   "Install", "Remove", and "Ignore" in this order.  Press the
+   leftmost button and twice "OK" to finish the installation.
+8. Close the "Add/Remove Software" dialog, switch to the first
+   tab (Applications), scroll down, and press the icon which is
+   labeled "Install OpenBSD".  A few seconds later, OpenBSD will
+   boot on your Zaurus.
+9. The next time you reboot the zaurus, you will have the choice
+   of booting either OpenBSD or Linux.  At the zboot> prompt,
+   hit enter to boot OpenBSD, or type 'r' to boot Linux.
+
+To install the OpenBSD boot program manually, you will need the
+following files from the distribution:
 
 	zbsdmod.o
 	zboot
@@ -12,7 +54,7 @@ from the distribution:
 After starting up some sort of terminal emulator on the Zaurus
 and becoming root, perform the following operation:
 
-	# insmod -f zbsdmod.o
+	# insmod zbsdmod.o
 	# cp bsd.rd /proc/zboot
 
 A few seconds later, OpenBSD will boot on your Zaurus.
@@ -20,8 +62,8 @@ A few seconds later, OpenBSD will boot on your Zaurus.
 If you already have a bsd.rd or bsd kernel contained in a FFS
 partition on the C3000 hard drive, you can instead use 
 
-	# insmod -f zbsdmod.o
-	# zboot
+	# insmod zbsdmod.o
+	# ./zboot
 
 OpenBSDInstallPart2
 
@@ -53,7 +95,7 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	One of the three partitions on the Zaurus C3000 hard drive is
 	a 3GB MSDOS filesystem.  This partition can be a lot smaller,
 	it is therefore recommended that you cut most of the space off
-	this tiny MSDOS partition, and create a new 0xA6 partition
+	this large MSDOS partition, and create a new A6 partition
 	afterwards, like this:
 
 	 0: 83    0   3 13 - 1511   7 17 [          63:      205569 ] Linux files*
