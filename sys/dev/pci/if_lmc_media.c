@@ -1,5 +1,5 @@
-/* $OpenBSD $ */
-/* $Id: if_lmc_media.c,v 1.2 1999/10/26 23:47:14 chris Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.3 2000/02/01 18:01:41 chris Exp $ */
+/* $Id: if_lmc_media.c,v 1.3 2000/02/01 18:01:41 chris Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -170,6 +170,7 @@ static void	lmc_ds3_set_100ft(lmc_softc_t * const, int);
 static int	lmc_ds3_get_link_status(lmc_softc_t * const);
 static void	lmc_ds3_set_crc_length(lmc_softc_t * const, int);
 static void	lmc_ds3_set_scram(lmc_softc_t * const, int);
+static void	lmc_ds3_watchdog(lmc_softc_t * const);
 
 static void	lmc_hssi_init(lmc_softc_t * const);
 static void	lmc_hssi_default(lmc_softc_t * const);
@@ -178,6 +179,7 @@ static void	lmc_hssi_set_clock(lmc_softc_t * const, int);
 static int	lmc_hssi_get_link_status(lmc_softc_t * const);
 static void	lmc_hssi_set_link_status(lmc_softc_t * const, int);
 static void	lmc_hssi_set_crc_length(lmc_softc_t * const, int);
+static void	lmc_hssi_watchdog(lmc_softc_t * const);
 
 static void     lmc_ssi_init(lmc_softc_t * const);
 static void     lmc_ssi_default(lmc_softc_t * const);
@@ -187,6 +189,7 @@ static void     lmc_ssi_set_speed(lmc_softc_t * const, lmc_ctl_t *);
 static int      lmc_ssi_get_link_status(lmc_softc_t * const);
 static void     lmc_ssi_set_link_status(lmc_softc_t * const, int);
 static void     lmc_ssi_set_crc_length(lmc_softc_t * const, int);
+static void	lmc_ssi_watchdog(lmc_softc_t * const);
 
 static void	lmc_t1_init(lmc_softc_t * const);
 static void	lmc_t1_default(lmc_softc_t * const);
@@ -194,6 +197,8 @@ static void	lmc_t1_set_status(lmc_softc_t * const, lmc_ctl_t *);
 static int	lmc_t1_get_link_status(lmc_softc_t * const);
 static void     lmc_t1_set_circuit_type(lmc_softc_t * const, int);
 static void	lmc_t1_set_crc_length(lmc_softc_t * const, int);
+static void	lmc_t1_set_clock(lmc_softc_t * const, int);
+static void	lmc_t1_watchdog(lmc_softc_t * const);
 
 static void	lmc_dummy_set_1(lmc_softc_t * const, int);
 static void	lmc_dummy_set2_1(lmc_softc_t * const, lmc_ctl_t *);
@@ -213,7 +218,8 @@ lmc_media_t lmc_ds3_media = {
 	lmc_ds3_get_link_status,	/* get link status */
 	lmc_dummy_set_1,		/* set link status */
 	lmc_ds3_set_crc_length,		/* set CRC length */
-	lmc_dummy_set_1                 /* set T1 or E1 circuit type */
+	lmc_dummy_set_1,		/* set T1 or E1 circuit type */
+	lmc_ds3_watchdog
 };
 
 lmc_media_t lmc_hssi_media = {
@@ -227,7 +233,8 @@ lmc_media_t lmc_hssi_media = {
 	lmc_hssi_get_link_status,	/* get link status */
 	lmc_hssi_set_link_status,	/* set link status */
 	lmc_hssi_set_crc_length,	/* set CRC length */
-	lmc_dummy_set_1                 /* set T1 or E1 circuit type */
+	lmc_dummy_set_1,		/* set T1 or E1 circuit type */
+	lmc_hssi_watchdog
 };
 
 lmc_media_t lmc_ssi_media = {
@@ -241,21 +248,23 @@ lmc_media_t lmc_ssi_media = {
         lmc_ssi_get_link_status,	/* get link status */
         lmc_ssi_set_link_status,	/* set link status */
         lmc_ssi_set_crc_length,		/* set CRC length */
-        lmc_dummy_set_1			/* set T1 or E1 circuit type */
+        lmc_dummy_set_1,		/* set T1 or E1 circuit type */
+	lmc_ssi_watchdog
 };
 
 lmc_media_t lmc_t1_media = {
 	lmc_t1_init,			/* special media init stuff */
 	lmc_t1_default,			/* reset to default state */
 	lmc_t1_set_status,		/* reset status to state provided */
-        lmc_dummy_set_1,                /* set clock source */
-        lmc_dummy_set2_1,                       /* set line speed */
+        lmc_t1_set_clock,		/* set clock source */
+        lmc_dummy_set2_1,		/* set line speed */
 	lmc_dummy_set_1,		/* set cable length */
 	lmc_dummy_set_1,		/* set scrambler */
 	lmc_t1_get_link_status,		/* get link status */
-        lmc_dummy_set_1,                /* set link status */
+        lmc_dummy_set_1,		/* set link status */
 	lmc_t1_set_crc_length,		/* set CRC length */
-        lmc_t1_set_circuit_type /* set T1 or E1 circuit type */
+        lmc_t1_set_circuit_type,	/* set T1 or E1 circuit type */
+	lmc_t1_watchdog
 };
 
 static void
@@ -285,7 +294,7 @@ lmc_hssi_default(lmc_softc_t * const sc)
 {
 	sc->lmc_miireg16 = LMC_MII16_LED_ALL;
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_clock_source(sc, LMC_CTL_CLOCK_SOURCE_EXT);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
 }
@@ -359,7 +368,7 @@ lmc_hssi_get_link_status(lmc_softc_t * const sc)
 static void
 lmc_hssi_set_link_status(lmc_softc_t * const sc, int state)
 {
-	if (state)
+	if (state == LMC_LINK_UP)
 		sc->lmc_miireg16 |= LMC_MII16_HSSI_TA;
 	else
 		sc->lmc_miireg16 &= ~LMC_MII16_HSSI_TA;
@@ -386,6 +395,22 @@ lmc_hssi_set_crc_length(lmc_softc_t * const sc, int state)
 	lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
 }
 
+static void
+lmc_hssi_watchdog (lmc_softc_t * const sc)
+{
+	/* HSSI is blank */
+}
+
+static void
+lmc_ds3_watchdog (lmc_softc_t * const sc)
+{
+	sc->lmc_miireg16 = lmc_mii_readreg (sc, 0, 16);
+	if (sc->lmc_miireg16 & 0x0018)
+	{
+		printf("%s: AIS Recieved\n", sc->lmc_xname);
+		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
+	}
+}
 
 /*
  *  DS3 methods
@@ -412,7 +437,7 @@ lmc_ds3_default(lmc_softc_t * const sc)
 {
 	sc->lmc_miireg16 = LMC_MII16_LED_ALL;
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_cable_length(sc, LMC_CTL_CABLE_LENGTH_LT_100FT);
 	sc->lmc_media->set_scrambler(sc, LMC_CTL_OFF);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
@@ -566,7 +591,7 @@ lmc_ssi_default(lmc_softc_t * const sc)
 	 */
         lmc_gpio_mkoutput(sc, LMC_GEP_SSI_TXCLOCK);
 
-	sc->lmc_media->set_link_status(sc, 0);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
 	sc->lmc_media->set_clock_source(sc, LMC_CTL_CLOCK_SOURCE_EXT);
 	sc->lmc_media->set_speed(sc, NULL);
 	sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
@@ -705,7 +730,7 @@ lmc_ssi_get_link_status(lmc_softc_t * const sc)
 static void
 lmc_ssi_set_link_status(lmc_softc_t * const sc, int state)
 {
-	if (state) {
+	if (state == LMC_LINK_UP) {
                 sc->lmc_miireg16 |= (LMC_MII16_SSI_DTR | LMC_MII16_SSI_RTS);
 		printf(LMC_PRINTF_FMT ": asserting DTR and RTS\n",
 		       LMC_PRINTF_ARGS);
@@ -820,6 +845,27 @@ write_av9110(lmc_softc_t *sc, u_int32_t n, u_int32_t m, u_int32_t v,
                           | LMC_GEP_SSI_GENERATOR));
 }
 
+static void
+lmc_ssi_watchdog (lmc_softc_t * const sc)
+{
+	u_int16_t mii17;
+	struct ssicsr2 {
+		unsigned short dtr:1, dsr:1, rts:1, cable:3, crc:1, led0:1,
+		led1:1, led2:1, led3:1, fifo:1, ll:1, rl:1, tm:1, loop:1;
+	};
+	struct ssicsr2 *ssicsr;
+	mii17 = lmc_mii_readreg (sc, 0, 17);
+	ssicsr = (struct ssicsr2 *) &mii17;
+	if (ssicsr->cable == 7) {
+		lmc_led_off (sc, LMC_MII16_LED2);
+	}
+	else {
+		lmc_led_on (sc, LMC_MII16_LED2);
+	}
+
+}
+
+
 /*
  *  T1 methods
  */
@@ -833,14 +879,11 @@ static void lmc_t1_write(lmc_softc_t * const sc, int a, int d)
 	lmc_mii_writereg(sc, 0, 18, d);
 }
 
-/* XXX future to be integtrated with if_lmc.c for alarms
 static int lmc_t1_read(lmc_softc_t * const sc, int a)
 {
 	lmc_mii_writereg(sc, 0, 17, a);
 	return lmc_mii_readreg(sc, 0, 18);
 }
-*/
-
 
 static void
    lmc_t1_init(lmc_softc_t * const sc)
@@ -908,7 +951,7 @@ static void
 static void   lmc_t1_default(lmc_softc_t * const sc)
 {
         sc->lmc_miireg16 = LMC_MII16_LED_ALL;
-        sc->lmc_media->set_link_status(sc, 0);
+        sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
         sc->lmc_media->set_circuit_type(sc, LMC_CTL_CIRCUIT_TYPE_T1);
         sc->lmc_media->set_crc_length(sc, LMC_CTL_CRC_LENGTH_16);
 }
@@ -966,12 +1009,12 @@ lmc_t1_get_link_status(lmc_softc_t * const sc){
         {
                 if( link_status & T1F_RAIS )
                 {                        /* turn on blue LED */
-                        printf(" link status: RAIS turn ON Blue %x\n", link_status ); /* DEBUG */
+                        printf("%s: link status: RAIS turn ON Blue %x\n", sc->lmc_xname, link_status); /* DEBUG */
                         lmc_led_on(sc, LMC_DS3_LED1);
                 }
                 else
                 {                        /* turn off blue LED */
-                        printf(" link status: RAIS turn OFF Blue %x\n", link_status ); /* DEBUG */
+                        printf("%s: link status: RAIS turn OFF Blue %x\n", sc->lmc_xname, link_status ); /* DEBUG */
 			lmc_led_off(sc, LMC_DS3_LED1);
                 }       
 	}
@@ -986,14 +1029,14 @@ lmc_t1_get_link_status(lmc_softc_t * const sc){
 		if( (link_status & (T1F_RYEL | T1F_RMYEL)) == 0 )
                         {
 				/* turn off yellow LED */
-       		                printf(" link status: RYEL turn OFF Yellow %x\n", link_status ); /* DEBUG */
+       		                printf("%s: link status: RYEL turn OFF Yellow %x\n", sc->lmc_xname, link_status); /* DEBUG */
                     	        lmc_led_off(sc, LMC_DS3_LED0);
 
                         }
                         else
                         {
                                 /* turn on yellow LED */                         
-                                printf(" link status: RYEL turn ON Yellow %x\n", link_status ); /* DEBUG */
+                                printf("%s: link status: RYEL turn ON Yellow %x\n", sc->lmc_xname, link_status); /* DEBUG */
                                 lmc_led_on(sc, LMC_DS3_LED0);
                         }
                 }
@@ -1049,6 +1092,82 @@ static void
 
         lmc_mii_writereg(sc, 0, 16, sc->lmc_miireg16);
 }
+
+/*
+ * 1 == internal, 0 == external
+ */
+static void
+lmc_t1_set_clock (lmc_softc_t * const sc, int ie)
+{
+	if (ie == LMC_CTL_CLOCK_SOURCE_EXT) {
+		sc->lmc_gpio &= ~(LMC_GEP_SSI_TXCLOCK);
+		LMC_CSR_WRITE (sc, csr_gp, sc->lmc_gpio);
+		sc->ictl.clock_source = LMC_CTL_CLOCK_SOURCE_EXT;
+		printf (LMC_PRINTF_FMT ": clock external\n", LMC_PRINTF_ARGS);
+	}
+	else {
+		sc->lmc_gpio |= LMC_GEP_SSI_TXCLOCK;
+		LMC_CSR_WRITE (sc, csr_gp, sc->lmc_gpio);
+		sc->ictl.clock_source = LMC_CTL_CLOCK_SOURCE_INT;
+		printf (LMC_PRINTF_FMT ": clock internal\n", LMC_PRINTF_ARGS);
+	}
+}
+
+static void
+lmc_t1_watchdog(lmc_softc_t * const sc)
+{
+	int t1stat;
+
+	/* read alarm 1 status (recieve) */
+	t1stat = lmc_t1_read (sc, 0x47);
+	/* blue alarm -- RAIS */
+	if (t1stat & 0x08) {
+		if (sc->lmc_blue != 1)
+			printf ("%s: AIS Recieved\n", sc->lmc_xname);
+		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
+		sc->lmc_blue = 1;
+	} else {
+		if (sc->lmc_blue == 1)
+			printf ("%s: AIS ok\n", sc->lmc_xname);
+		lmc_led_off (sc, LMC_DS3_LED1);
+		lmc_led_on (sc, LMC_DS3_LED2);
+		sc->lmc_blue = 0;
+	}
+
+	/* Red alarm -- LOS | LOF */
+	if (t1stat & 0x04) {
+		/* Only print the error once */
+		if (sc->lmc_red != 1)
+			printf ("%s: Red Alarm\n", sc->lmc_xname);
+		lmc_led_on (sc, LMC_DS3_LED2 | LMC_DS3_LED3);
+		sc->lmc_red = 1;
+	} else { 
+		if (sc->lmc_red == 1)
+			printf ("%s: Red Alarm ok", sc->lmc_xname);
+	lmc_led_off (sc, LMC_DS3_LED3);
+	lmc_led_on (sc, LMC_DS3_LED2);
+	sc->lmc_red = 0;
+	}
+
+	/* check for Recieve Multiframe Yellow Alarm
+	 * Ignore Recieve Yellow Alarm
+	 */
+	if (t1stat & 0x80) {
+		if (sc->lmc_yel != 1) {
+			printf ("%s: Recieve Yellow Alarm\n", sc->lmc_xname);
+		}
+			lmc_led_on (sc, LMC_DS3_LED0 | LMC_DS3_LED2);
+			sc->lmc_yel = 1;
+	}
+	else {
+		if (sc->lmc_yel == 1)
+		printf ("%s: Yellow Alarm ok\n", sc->lmc_xname);
+		lmc_led_off (sc, LMC_DS3_LED0);
+		lmc_led_on (sc, LMC_DS3_LED2);
+		sc->lmc_yel = 0;
+	}
+}
+
 
 static void
 lmc_set_protocol(lmc_softc_t * const sc, lmc_ctl_t *ctl)

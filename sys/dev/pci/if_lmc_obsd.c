@@ -1,4 +1,4 @@
-/*	$OpenBSD $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.5 2000/02/01 18:01:41 chris Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -234,7 +234,7 @@ lmc_pci_attach(struct device * const parent,
 	u_int32_t revinfo, cfdainfo, id, ssid;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
-#if !defined(LMC_IOMAPPED)
+#if 0
 	vm_offset_t pa_csrs;
 #endif
 	unsigned csroffset = LMC_PCI_CSROFFSET;
@@ -341,7 +341,7 @@ lmc_pci_attach(struct device * const parent,
 
 	sc->lmc_media->defaults(sc);
 
-	sc->lmc_media->set_link_status(sc, 0); /* down */
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN); /* down */
 
 	/*
 	 * Make sure there won't be any interrupts or such...

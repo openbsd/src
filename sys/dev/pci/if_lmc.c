@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_lmc.c,v 1.3 2000/02/01 18:01:40 chris Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -1281,7 +1282,8 @@ lmc_ifstart_one(struct ifnet * const ifp)
 
 	ifq = &sc->lmc_p2pcom.p2p_isnd;
 
-	m = ifq->ifq_head;
+        m = ifq->ifq_head;
+    {
 	if (m == NULL) {
 		ifq = &sc->lmc_if.if_snd;
 		m = ifq->ifq_head;
@@ -1291,6 +1293,7 @@ lmc_ifstart_one(struct ifnet * const ifp)
 	IF_DEQUEUE(ifq, m);
 
 	m = lmc_txput(sc, m);
+    }
 	if (m != NULL)
 		IF_PREPEND(ifq, m);
 

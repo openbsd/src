@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_lmc_types.h,v 1.2 2000/02/01 18:01:42 chris Exp $ */
 /*	$NetBSD: if_lmc_types.h,v 1.2 1999/03/25 04:09:33 explorer Exp $	*/
 
 /*-
@@ -58,11 +59,7 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 typedef bus_addr_t lmc_csrptr_t;
 #else
-#ifdef LMC_IOMAPPED
-typedef u_int16_t lmc_csrptr_t;
-#else
 typedef volatile u_int32_t *lmc_csrptr_t;
-#endif
 #endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
