@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.6 2001/10/01 17:08:30 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.7 2001/10/11 00:05:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.6 2001/10/01 17:08:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.7 2001/10/11 00:05:55 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <paths.h>
@@ -38,23 +38,15 @@ static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.6 2001/10/01 17:08:30 miller
 #include <unistd.h>
 #include <err.h>
 
-void
-usage()
-{
-	extern char *__progname;
-
-	(void) fprintf(stderr,
-	    "Usage: %s [-dqtu] [-p prefix] template\n", __progname);
-	exit(1);
-}
+__dead void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int ch, uflag = 0, qflag = 0, tflag = 0, makedir = 0;
-	char *cp, *template, *prefix = _PATH_TMP;
+	int ch, fd, uflag = 0, quiet = 0, tflag = 0, makedir = 0;
+	char *cp, *template, *tempfile, *prefix = _PATH_TMP;
 	size_t plen;
 
 	while ((ch = getopt(argc, argv, "dp:qtu")) != -1)
@@ -67,7 +59,7 @@ main(argc, argv)
 			tflag = 1;
 			break;
 		case 'q':
-			qflag = 1;
+			quiet = 1;
 			break;
 		case 't':
 			tflag = 1;
@@ -79,15 +71,24 @@ main(argc, argv)
 			usage();
 	}
 
-	if (argc - optind != 1)
+	/* If no template specified use a default one (implies -t mode) */
+	switch (argc - optind) {
+	case 1:
+		template = argv[optind];
+		break;
+	case 0:
+		template = "tmp.XXXXXXXXXX";
+		tflag = 1;
+		break;
+	default:
 		usage();
+	}
 
 	if (tflag) {
-		if (strchr(argv[optind], '/')) {
-			if (qflag)
-				exit(1);
-			else
-				errx(1, "template must not contain directory separators in -t mode");
+		if (strchr(template, '/')) {
+			if (!quiet)
+				warnx("template must not contain directory separators in -t mode");
+			exit(1);
 		}
 
 		cp = getenv("TMPDIR");
@@ -97,49 +98,56 @@ main(argc, argv)
 		while (plen != 0 && prefix[plen - 1] == '/')
 			plen--;
 
-		template = (char *)malloc(plen + 1 + strlen(argv[optind]) + 1);
-		if (template == NULL) {
-			if (qflag)
-				exit(1);
-			else
-				errx(1, "Cannot allocate memory");
+		tempfile = (char *)malloc(plen + 1 + strlen(template) + 1);
+		if (tempfile == NULL) {
+			if (!quiet)
+				warnx("cannot allocate memory");
+			exit(1);
 		}
-		memcpy(template, prefix, plen);
-		template[plen] = '/';
-		strcpy(template + plen + 1, argv[optind]);	/* SAFE */
+		(void)memcpy(tempfile, prefix, plen);
+		tempfile[plen] = '/';
+		(void)strcpy(tempfile + plen + 1, template);	/* SAFE */
 	} else {
-		if ((template = strdup(argv[optind])) == NULL) {
-			if (qflag)
-				exit(1);
-			else
-				errx(1, "Cannot allocate memory");
+		if ((tempfile = strdup(template)) == NULL) {
+			if (!quiet)
+				warnx("cannot allocate memory");
+			exit(1);
 		}
 	}
 
 	if (makedir) {
-		if (mkdtemp(template) == NULL) {
-			if (qflag)
-				exit(1);
-			else
-				err(1, "Cannot make temp dir %s", template);
+		if (mkdtemp(tempfile) == NULL) {
+			if (!quiet)
+				warn("cannot make temp dir %s", tempfile);
+			exit(1);
 		}
 
 		if (uflag)
-			(void) rmdir(template);
+			(void)rmdir(tempfile);
 	} else {
-		if (mkstemp(template) < 0) {
-			if (qflag)
-				exit(1);
-			else
-				err(1, "Cannot create temp file %s", template);
+		if ((fd = mkstemp(tempfile)) < 0) {
+			if (!quiet)
+				warn("cannot make temp file %s", tempfile);
+			exit(1);
 		}
+		(void)close(fd);
 
 		if (uflag)
-			(void) unlink(template);
+			(void)unlink(tempfile);
 	}
 
-	(void) puts(template);
-	free(template);
+	(void)puts(tempfile);
+	free(tempfile);
 
 	exit(0);
+}
+
+__dead void
+usage()
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr,
+	    "Usage: %s [-dqtu] [-p prefix] [template]\n", __progname);
+	exit(1);
 }
