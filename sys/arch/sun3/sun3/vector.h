@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.h,v 1.5 1997/01/16 04:04:36 kstailey Exp $	*/
+/*	$OpenBSD: vector.h,v 1.6 2000/08/28 22:06:36 miod Exp $	*/
 /*	$NetBSD: vector.h,v 1.10 1996/11/20 18:57:40 gwr Exp $	*/
 
 /*-
@@ -43,4 +43,25 @@
 
 extern void (*vector_table[]) __P((void));
 
+void addrerr __P((void));
 void badtrap __P((void));
+void buserr __P((void));
+void chkinst __P((void));
+void coperr __P((void));
+void fmterr __P((void));
+void fpfline __P((void));
+void fpunsupp __P((void));
+void illinst __P((void));
+void privinst __P((void));
+void trace __P((void));
+void trap0 __P((void));
+void trap1 __P((void));
+void trap12 __P((void));
+void trap15 __P((void));
+void trap2 __P((void));
+void trapvinst __P((void));
+void zerodiv __P((void));
+void fpfault __P((void));
+
+void _isr_autovec __P((void));
+
