@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.3 1997/01/15 23:44:33 millert Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.4 1997/09/11 19:47:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,13 +32,14 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mknetid.c,v 1.3 1997/01/15 23:44:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: mknetid.c,v 1.4 1997/09/11 19:47:30 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <string.h>
 #include <pwd.h>
 #include <grp.h>
 #include <netdb.h>

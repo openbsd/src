@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdethers.c,v 1.2 1996/05/30 09:53:12 deraadt Exp $ */
+/*	$OpenBSD: stdethers.c,v 1.3 1997/09/11 19:47:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdethers.c,v 1.2 1996/05/30 09:53:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdethers.c,v 1.3 1997/09/11 19:47:33 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -41,6 +41,7 @@ static char rcsid[] = "$OpenBSD: stdethers.c,v 1.2 1996/05/30 09:53:12 deraadt E
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 char *ProgramName = "stdethers";

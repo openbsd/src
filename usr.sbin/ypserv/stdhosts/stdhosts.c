@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.3 1996/06/26 21:26:36 maja Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.4 1997/09/11 19:47:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.3 1996/06/26 21:26:36 maja Exp $";
+static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.4 1997/09/11 19:47:35 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ static char rcsid[] = "$OpenBSD: stdhosts.c,v 1.3 1996/06/26 21:26:36 maja Exp $
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 static int read_line(fp, buf, size)
