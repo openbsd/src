@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.4 1998/12/05 16:50:41 csapuntz Exp $'
+SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.5 1999/03/03 14:23:19 deraadt Exp $'
 # SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp $'
 
 # Script to produce VFS front-end sugar.
@@ -163,6 +163,20 @@ extern struct vnodeop_desc vop_default_desc;
 '
 
 echo '#include "systm.h"'
+
+echo '#ifdef VOP_NOT_INLINE'
+echo '#define STATIC_INLINE'
+echo '#else'
+echo '#define STATIC_INLINE static __inline'
+echo '#endif'
+
+echo '#ifdef INTERNAL_VOP_NOT_INLINE'
+echo '#define FUNC_STATIC_INLINE'
+echo '#else'
+echo '#undef FUNC_STATIC_INLINE'
+echo '#define FUNC_STATIC_INLINE static __inline'
+echo '#endif'
+
 # Body stuff
 # This awk program needs toupper() so define it if necessary.
 sed -e "$sed_prep" $src | $awk "$toupper"'
@@ -176,7 +190,7 @@ function doit() {
 	printf("};\n");
 	printf("extern struct vnodeop_desc %s_desc;\n", name);
 	# Prototype it.
-	protoarg = sprintf("static __inline int %s __P((", toupper(name));
+	protoarg = sprintf("STATIC_INLINE int %s __P((", toupper(name));
 	protolen = length(protoarg);
 	printf("%s", protoarg);
 	for (i=0; i<argc; i++) {
@@ -192,8 +206,9 @@ function doit() {
 		protolen += arglen;
 	}
 	printf("));\n");
+	printf("#if !defined(VOP_NOT_INLINE) || defined(INTERNAL_VOP_NOT_INLINE)\n");
 	# Define inline function.
-	printf("static __inline int %s(", toupper(name));
+	printf("FUNC_STATIC_INLINE int %s(", toupper(name));
 	for (i=0; i<argc; i++) {
 		printf("%s", argname[i]);
 		if (i < (argc-1)) printf(", ");
@@ -214,6 +229,7 @@ function doit() {
 	}
 	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
 		argname[0], arg0special, name);
+    printf("#endif /* !VOP_NOT_INLINE */");
 }
 BEGIN	{
 	arg0special="";
@@ -248,6 +264,7 @@ echo -n "$warning" | sed -e 's/\$//g'
 echo ""
 echo -n "$copyright"
 echo '
+#define INTERNAL_VOP_NOT_INLINE
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
