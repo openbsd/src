@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.70 2002/11/23 15:08:50 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.71 2002/11/24 17:39:04 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.70 2002/11/23 15:08:50 henning Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.71 2002/11/24 17:39:04 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -2371,21 +2371,21 @@ in6_getprefix(plen, which)
 	char *plen;
 	int which;
 {
-	struct sockaddr_in6 *sin = sin6tab[which];
+	struct sockaddr_in6 *sin6 = sin6tab[which];
 	u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 128))
 		errx(1, "%s: bad value", plen);
-	sin->sin6_len = sizeof(*sin);
+	sin6->sin6_len = sizeof(*sin6);
 	if (which != MASK)
-		sin->sin6_family = AF_INET6;
+		sin6->sin6_family = AF_INET6;
 	if ((len == 0) || (len == 128)) {
-		memset(&sin->sin6_addr, 0xff, sizeof(struct in6_addr));
+		memset(&sin6->sin6_addr, 0xff, sizeof(struct in6_addr));
 		return;
 	}
-	memset((void *)&sin->sin6_addr, 0x00, sizeof(sin->sin6_addr));
-	for (cp = (u_char *)&sin->sin6_addr; len > 7; len -= 8)
+	memset((void *)&sin6->sin6_addr, 0x00, sizeof(sin6->sin6_addr));
+	for (cp = (u_char *)&sin6->sin6_addr; len > 7; len -= 8)
 		*cp++ = 0xff;
 	if (len)
 		*cp = 0xff << (8 - len);
