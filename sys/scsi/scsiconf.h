@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsiconf.h,v 1.11 1997/01/18 16:18:32 briggs Exp $	*/
-/*	$NetBSD: scsiconf.h,v 1.29 1996/03/19 03:07:50 mycroft Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.12 1997/04/14 04:09:15 downsj Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -125,7 +125,7 @@ struct scsi_device {
 	 * we're simply notifying the upper-level driver that the command
 	 * is complete and expect no status back.
 	 */
-	int	(*done)  __P((struct scsi_xfer *, int));
+	void	(*done)  __P((struct scsi_xfer *));
 };
 
 /*
@@ -135,6 +135,7 @@ struct scsi_device {
  * as well.
  */
 struct scsi_link {
+	u_int8_t scsi_version;		/* SCSI-I, SCSI-II, etc. */
 	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t target;		/* targ of this dev */
 	u_int8_t lun;			/* lun of this dev */
@@ -155,6 +156,7 @@ struct scsi_link {
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
 #define SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
+#define SDEV_NOSTARTUNIT	0x20	/* do not issue start unit requests in sd.c */
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */

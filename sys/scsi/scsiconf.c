@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.27 1997/04/02 08:01:56 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.28 1997/04/14 04:09:14 downsj Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -333,6 +333,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:841", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "PIONEER ", "CD-ROM DR-124X  ", "1.01"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-541  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-55S  ", ""},     SDEV_NOLUNS},
@@ -361,7 +363,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS},
+	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS|SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBMRAID ", "0662S",            ""},     SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM     ", "0663H",            ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -393,6 +399,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "RODIME  ", "RO3000S         ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
+	 "SEAGATE ", "ST125N          ", ""},     SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST157N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296           ", ""},     SDEV_NOLUNS},
@@ -406,6 +414,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
+	/* Letting the motor run kills floppy drives and disks quit fast. */
+	{{T_DIRECT, T_REMOV,
+	 "TEAC", "FC-1",                 ""},     SDEV_NOSTARTUNIT},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
@@ -631,6 +642,7 @@ scsi_probedev(scsi, target, lun)
 	if ((inqbuf.version & SID_ANSII) == 0 &&
 	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
+	sc_link->scsi_version = inqbuf.version;
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		scsi->moreluns |= (1 << target);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi_tape.h,v 1.5 1996/10/31 01:09:24 niklas Exp $	*/
-/*	$NetBSD: scsi_tape.h,v 1.8 1996/03/19 03:07:36 mycroft Exp $	*/
+/*	$OpenBSD: scsi_tape.h,v 1.6 1997/04/14 04:09:13 downsj Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.9 1996/05/24 02:04:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -210,6 +210,7 @@ struct block_desc_cipher {
                 0x15    1     45434       RLL   CS    ECMA TC17    4
                 0x16   48     10000       MFM   C     X3.193-1990  1
                 0x17   48     42500       MFM   C     X3B5/91-174  1
+		0x45   73     67733       RLL   C     QIC3095
 
                 where Code means:
                 NRZI Non Return to Zero, change on ones
@@ -245,5 +246,6 @@ struct block_desc_cipher {
 #define QIC_1320	0x12
 #define DDS		0x13
 #define DAT_1		0x13
+#define QIC_3095	0x45
 
 #endif /* _SCSI_TAPE_H_ */

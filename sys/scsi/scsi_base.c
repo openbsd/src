@@ -1,8 +1,8 @@
-/*	$OpenBSD: scsi_base.c,v 1.10 1996/06/16 03:07:19 downsj Exp $	*/
-/*	$NetBSD: scsi_base.c,v 1.36 1996/05/03 19:48:20 christos Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.11 1997/04/14 04:09:07 downsj Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -48,8 +48,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-
-void scsi_error __P((struct scsi_xfer *, int));
 
 LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
 
@@ -180,6 +178,14 @@ scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	xs->retries = retries;
 	xs->timeout = timeout;
 	xs->bp = bp;
+
+	/*
+	 * Set the LUN in the CDB if we have an older device.  We also
+	 * set it for more modern SCSI-II devices "just in case".
+	 */
+	if ((sc_link->scsi_version & SID_ANSII) <= 2)
+		xs->cmd->bytes[0] |=
+		    ((sc_link->lun << SCSI_CMD_LUN_SHIFT) & SCSI_CMD_LUN_MASK);
 
 	return xs;
 }
@@ -318,6 +324,7 @@ scsi_done(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
+	struct buf *bp;
 	int error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_done\n"));
@@ -341,23 +348,7 @@ scsi_done(xs)
 		return;
 	}
 
-	/*
-	 * If the device has it's own done routine, call it first.
-	 * If it returns a legit error value, return that, otherwise
-	 * it wants us to continue with normal processing.
-	 *
-	 * Make sure the upper-level driver knows that this might not
-	 * actually be the last time they hear from us.  We need to get
-	 * status back.
-	 */
-	if (sc_link->device->done) {
-		SC_DEBUG(sc_link, SDEV_DB2, ("calling private done()\n"));
-		error = (*sc_link->device->done)(xs, 0);
-		if (error == EJUSTRETURN)
-			goto done;
-		SC_DEBUG(sc_link, SDEV_DB3, ("continuing with generic done()\n"));
-	}
-	if (xs->bp == NULL) {
+	if (!((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)) {
 		/*
 		 * if it's a normal upper level request, then ask
 		 * the upper level code to handle error checking
@@ -366,12 +357,14 @@ scsi_done(xs)
 		wakeup(xs);
 		return;
 	}
+
 	/*
 	 * Go and handle errors now.
 	 * If it returns ERESTART then we should RETRY
 	 */
 retry:
-	if (sc_err1(xs, 1) == ERESTART) {
+	error = sc_err1(xs, 1);
+	if (error == ERESTART) {
 		switch ((*(sc_link->adapter->scsi_cmd)) (xs)) {
 		case SUCCESSFULLY_QUEUED:
 			return;
@@ -382,7 +375,18 @@ retry:
 			goto retry;
 		}
 	}
-done:
+
+	bp = xs->bp;
+	if (bp) {
+		if (error) {
+			bp->b_error = error;
+			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
+		} else {
+			bp->b_error = 0;
+			bp->b_resid = xs->resid;
+		}
+	}
 	if (sc_link->device->done) {
 		/*
 		 * Tell the device the operation is actually complete.
@@ -390,9 +394,11 @@ done:
 		 * notification of the upper-level driver only; they
 		 * won't be returning any meaningful information to us.
 		 */
-		(void)(*sc_link->device->done)(xs, 1);
+		(*sc_link->device->done)(xs);
 	}
 	scsi_free_xs(xs, SCSI_NOSLEEP);
+	if (bp)
+		biodone(bp);
 }
 
 int
@@ -417,14 +423,19 @@ retry:
 	 * TRY_AGAIN_LATER, (as for polling)
 	 * After the wakeup, we must still check if it succeeded
 	 * 
-	 * If we have a bp however, all the error processing
-	 * and the buffer code both expect us to return straight
-	 * to them, so as soon as the command is queued, return
+	 * If we have a SCSI_NOSLEEP (typically because we have a buf)
+	 * we just return.  All the error proccessing and the buffer
+	 * code both expect us to return straight to them, so as soon
+	 * as the command is queued, return.
 	 */
 	switch ((*(xs->sc_link->adapter->scsi_cmd)) (xs)) {
 	case SUCCESSFULLY_QUEUED:
-		if (xs->bp)
+		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 			return EJUSTRETURN;
+#ifdef DIAGNOSTIC
+		if (xs->flags & SCSI_NOSLEEP)
+			panic("scsi_execute_xs: NOSLEEP and POLL");
+#endif
 		s = splbio();
 		while ((xs->flags & ITSDONE) == 0)
 			tsleep(xs, PRIBIO + 1, "scsi_scsi_cmd", 0);
@@ -561,28 +572,7 @@ sc_err1(xs, async)
 		break;
 	}
 
-	scsi_error(xs, error);
 	return error;
-}
-
-void
-scsi_error(xs, error)
-	struct scsi_xfer *xs;
-	int error;
-{
-	struct buf *bp = xs->bp;
-
-	if (bp) {
-		if (error) {
-			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-		} else {
-			bp->b_error = 0;
-			bp->b_resid = xs->resid;
-		}
-		biodone(bp);
-	}
 }
 
 /*

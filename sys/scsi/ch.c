@@ -1,8 +1,8 @@
-/*	$OpenBSD: ch.c,v 1.6 1996/08/12 10:21:41 deraadt Exp $	*/
-/*	$NetBSD: ch.c,v 1.21 1996/04/19 00:02:29 christos Exp $	*/
+/*	$OpenBSD: ch.c,v 1.7 1997/04/14 04:09:05 downsj Exp $	*/
+/*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
+ * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
  * All rights reserved.
  *
  * Partially based on an autochanger driver written by Stefan Grefen
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/fcntl.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_changer.h>
@@ -81,6 +82,12 @@ struct ch_softc {
 	u_int8_t	sc_exchangemask[4];
 
 	int		flags;		/* misc. info */
+
+	/*
+	 * Quirks; see below.
+	 */
+	int		sc_settledelay;	/* delay for settle */
+
 };
 
 /* sc_flags */
@@ -114,6 +121,21 @@ int	ch_position __P((struct ch_softc *, struct changer_position *));
 int	ch_usergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, caddr_t, size_t));
 int	ch_get_params __P((struct ch_softc *, int));
+void	ch_get_quirks __P((struct ch_softc *, struct scsi_inquiry_data *));
+
+/*
+ * SCSI changer quirks.
+ */
+struct chquirk {
+	struct	scsi_inquiry_pattern cq_match; /* device id pattern */
+	int	cq_settledelay;	/* settle delay, in seconds */
+};
+
+struct chquirk chquirks[] = {
+	{{T_CHANGER, T_REMOV,
+	  "SPECTRA",	"9000",		"0200"},
+	 75},
+};
 
 int
 chmatch(parent, match, aux)
@@ -148,24 +170,35 @@ chattach(parent, self, aux)
 	printf("\n");
 
 	/*
+	 * Find out our device's quirks.
+	 */
+	ch_get_quirks(sc, sa->sa_inqbuf);
+
+	/*
+	 * Some changers require a long time to settle out, to do
+	 * tape inventory, for instance.
+	 */
+	if (sc->sc_settledelay) {
+		printf("%s: waiting %d seconds for changer to settle...\n",
+		    sc->sc_dev.dv_xname, sc->sc_settledelay);
+		delay(1000000 * sc->sc_settledelay);
+	}
+
+	/*
 	 * Get information about the device.  Note we can't use
 	 * interrupts yet.
 	 */
 	if (ch_get_params(sc, SCSI_AUTOCONF))
 		printf("%s: offline\n", sc->sc_dev.dv_xname);
 	else {
-		printf("%s: %d slot%s, %d drive%s, %d picker%s",
+#define PLURAL(c)	(c) == 1 ? "" : "s"
+		printf("%s: %d slot%s, %d drive%s, %d picker%s, %d portal%s\n",
 		    sc->sc_dev.dv_xname,
-		    sc->sc_counts[CHET_ST], (sc->sc_counts[CHET_ST] > 1) ?
-		    "s" : "",
-		    sc->sc_counts[CHET_DT], (sc->sc_counts[CHET_DT] > 1) ?
-		    "s" : "",
-		    sc->sc_counts[CHET_MT], (sc->sc_counts[CHET_MT] > 1) ?
-		    "s" : "");
-		if (sc->sc_counts[CHET_IE])
-			printf(", %d portal%s", sc->sc_counts[CHET_IE],
-			    (sc->sc_counts[CHET_IE] > 1) ? "s" : "");
-		printf("\n");
+		    sc->sc_counts[CHET_ST], PLURAL(sc->sc_counts[CHET_ST]),
+		    sc->sc_counts[CHET_DT], PLURAL(sc->sc_counts[CHET_DT]),
+		    sc->sc_counts[CHET_MT], PLURAL(sc->sc_counts[CHET_MT]),
+		    sc->sc_counts[CHET_IE], PLURAL(sc->sc_counts[CHET_IE]));
+#undef PLURAL
 #ifdef CHANGER_DEBUG
 		printf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
 		    sc->sc_dev.dv_xname,
@@ -249,6 +282,21 @@ chioctl(dev, cmd, data, flags, p)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
+
+	/*
+	 * If this command can change the device's state, we must
+	 * have the device open for writing.
+	 */
+	switch (cmd) {
+	case CHIOGPICKER:
+	case CHIOGPARAMS:
+	case CHIOGSTATUS:
+		break;
+
+	default:
+		if ((flags & FWRITE) == 0)
+			return (EBADF);
+	}
 
 	switch (cmd) {
 	case CHIOMOVE:
@@ -636,4 +684,23 @@ ch_get_params(sc, scsiflags)
 
 	sc->sc_link->flags |= SDEV_MEDIA_LOADED;
 	return (0);
+}
+
+void
+ch_get_quirks(sc, inqbuf)
+	struct ch_softc *sc;
+	struct scsi_inquiry_data *inqbuf;
+{
+	struct chquirk *match;
+	int priority;
+
+	sc->sc_settledelay = 0;
+
+	match = (struct chquirk *)scsi_inqmatch(inqbuf,
+	    (caddr_t)chquirks,
+	    sizeof(chquirks) / sizeof(chquirks[0]),
+	    sizeof(chquirks[0]), &priority);
+	if (priority != 0) {
+		sc->sc_settledelay = match->cq_settledelay;
+	}
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi_debug.h,v 1.4 1996/11/28 13:20:36 niklas Exp $	*/
-/*	$NetBSD: scsi_debug.h,v 1.5 1994/12/28 19:43:00 mycroft Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.5 1997/04/14 04:09:08 downsj Exp $	*/
+/*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)

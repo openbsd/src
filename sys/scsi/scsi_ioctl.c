@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.6 1996/08/13 00:06:24 niklas Exp $	*/
-/*	$NetBSD: scsi_ioctl.c,v 1.20 1996/02/14 21:47:22 christos Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.7 1997/04/14 04:09:11 downsj Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -46,6 +46,7 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -288,6 +289,16 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	int error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
+
+	/* Check for the safe-ness of this request. */
+	switch (cmd) {
+	case SCIOCIDENTIFY:
+		break;
+
+	default:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+	}
 
 	switch(cmd) {
 	case SCIOCCOMMAND: {

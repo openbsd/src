@@ -1,5 +1,5 @@
-/*	$OpenBSD: st.c,v 1.14 1997/02/24 20:17:35 jkatz Exp $	*/
-/*	$NetBSD: st.c,v 1.66 1996/05/05 19:53:01 christos Exp $	*/
+/*	$OpenBSD: st.c,v 1.15 1997/04/14 04:09:17 downsj Exp $	*/
+/*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -81,8 +81,11 @@
 #define STUNIT(z)	((minor(z) >> 4)       )
 #define CTLMODE	3
 
-#define SCSI_2_MAX_DENSITY_CODE	0x17	/* maximum density code specified
-					 * in SCSI II spec. */
+/*
+ * Maximum density code known.
+ */
+#define SCSI_2_MAX_DENSITY_CODE		0x45
+
 /*
  * Define various devices that we know mis-behave in some way,
  * and note how they are bad, so we can correct for them
@@ -99,6 +102,7 @@ struct quirkdata {
 #define	ST_Q_SENSE_HELP		0x0002	/* must do READ for good MODE SENSE */
 #define	ST_Q_IGNORE_LOADS	0x0004
 #define	ST_Q_BLKSIZE		0x0008	/* variable-block media_blksize > 0 */
+#define	ST_Q_UNIMODAL		0x0010	/* unimode drive rejects mode select */
 	u_int page_0_size;
 #define	MAX_PAGE_0_SIZE	64
 	struct modes modes[4];
@@ -201,6 +205,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0},				/* minor 4-7 */
 		{0, 0, 0},				/* minor 8-11 */
 		{0, 0, 0}				/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "HP      ", "T4000s          ", ""},     {ST_Q_UNIMODAL, 0, {
+		{0, 0, QIC_3095},			/* minor 0-3 */
+		{0, 0, QIC_3095},			/* minor 4-7 */
+		{0, 0, QIC_3095},			/* minor 8-11 */
+		{0, 0, QIC_3095},			/* minor 12-15 */
 	}}},
 #if 0
 	{{T_SEQUENTIAL, T_REMOV,
@@ -1401,6 +1412,18 @@ st_mode_select(st, flags)
 	struct scsi_link *sc_link = st->sc_link;
 
 	scsi_select_len = 12 + st->page_0_size;
+
+	/*
+	 * This quirk deals with drives that have only one valid mode
+	 * and think this gives them license to reject all mode selects,
+	 * even if the selected mode is the one that is supported.
+	 */
+	if (st->quirks & ST_Q_UNIMODAL) {
+		SC_DEBUG(sc_link, SDEV_DB3,
+		    ("not setting density 0x%x blksize 0x%x\n",
+		    st->density, st->blksize));
+		return 0;
+	}
 
 	/*
 	 * Set up for a mode select

@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi_all.h,v 1.4 1996/07/02 20:18:49 deraadt Exp $	*/
-/*	$NetBSD: scsi_all.h,v 1.7 1996/03/19 03:06:10 mycroft Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.5 1997/04/14 04:09:06 downsj Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
  * SCSI general  interface description
@@ -35,8 +35,14 @@
 #define SCSI_CTL_LINK		0x01
 #define SCSI_CTL_FLAG		0x02
 #define SCSI_CTL_VENDOR		0xC0
-#define	SCSI_CMD_LUN		0xA0	/* these two should not be needed */
-#define	SCSI_CMD_LUN_SHIFT	5	/* LUN in the cmd is no longer SCSI */
+
+
+/*
+ * Some old SCSI devices need the LUN to be set in the top 3 bits of the
+ * second byte of the CDB.
+ */
+#define	SCSI_CMD_LUN_MASK	0xe0
+#define	SCSI_CMD_LUN_SHIFT	5
 
 
 struct scsi_generic {
@@ -176,8 +182,6 @@ struct scsi_changedef {
 #define	CHANGE_DEFINITION	0x40
 #define	MODE_SENSE_BIG		0x54
 #define	MODE_SELECT_BIG		0x55
-#define MOVE_MEDIUM     	0xa5
-#define READ_ELEMENT_STATUS	0xb8
 
 /*
  * Sort of an extra one, for SCSI_RESET.
