@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: iplang_l.l,v 1.2 2001/01/17 06:01:26 fgsch Exp $	*/
+/*	$OpenBSD: iplang_l.l,v 1.3 2001/01/30 14:58:23 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -20,7 +20,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include "y.tab.h"
-#include "ip_compat.h"
+#include "ip_fil_compat.h"
 #include "ipf.h"
 
 #ifndef	__P

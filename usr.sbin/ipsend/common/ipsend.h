@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsend.h,v 1.3 2001/01/17 06:01:25 fgsch Exp $	*/
+/*	$OpenBSD: ipsend.h,v 1.4 2001/01/30 14:58:23 kjell Exp $	*/
 
 /*
  * ipsend.h (C) 1997-1998 Darren Reed
@@ -23,7 +23,7 @@
 # endif
 #endif
 
-#include "ip_compat.h"
+#include "ip_fil_compat.h"
 #ifdef	linux
 #include <linux/sockios.h>
 #endif
