@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.138 2003/01/20 18:37:52 camield Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.139 2003/01/21 19:12:08 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -496,7 +496,7 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 			printf("%s=", t[i]);
 			if (rule->skip[i].nr == -1)
 				printf("end ");
-			else if (rule->skip[i].nr != rule->nr + 1)
+			else
 				printf("%u ", rule->skip[i].nr);
 		}
 		printf("]\n");
