@@ -691,7 +691,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/glob.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ieeefp.ph

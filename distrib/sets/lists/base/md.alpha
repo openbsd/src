@@ -1013,7 +1013,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/glob.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ieeefp.ph

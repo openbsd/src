@@ -1027,6 +1027,7 @@
 ./usr/libexec
 ./usr/libexec/afsd
 ./usr/libexec/atrun
+./usr/libexec/auth
 ./usr/libexec/comsat
 ./usr/libexec/cpp
 ./usr/libexec/cvs

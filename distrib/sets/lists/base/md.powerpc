@@ -1013,7 +1013,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/glob.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ieeefp.ph

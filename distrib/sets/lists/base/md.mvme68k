@@ -1024,7 +1024,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/glob.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ieeefp.ph

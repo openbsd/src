@@ -146,7 +146,6 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/fstab.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/fts.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/glob.ph
-./usr/lib/perl5/site_perl/mips-openbsd/gmp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/grp.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/histedit.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ieeefp.ph

@@ -1028,7 +1028,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/g++/vector.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/glob.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/gmp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386
@@ -1760,6 +1759,7 @@
 ./usr/sbin/zzz
 ./usr/share/misc/keycap.pcvt
 ./usr/share/misc/pcvtfonts
+./usr/share/misc/pcvtfonts/iso8859-1-euro.816
 ./usr/share/misc/pcvtfonts/koi8-8x10
 ./usr/share/misc/pcvtfonts/koi8-8x14
 ./usr/share/misc/pcvtfonts/koi8-8x16
