@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.23 1999/10/26 22:32:28 angelos Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.100 1999/10/01 13:44:21 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.24 2000/01/26 15:22:02 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.106 2000/01/24 22:55:46 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -129,11 +129,15 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   switch (isakmp_sa->recv_certtype)
     {
     case ISAKMP_CERTENC_NONE:
-      /* For shared keys, just duplicate the passphrase.  */
-      principal = calloc (isakmp_sa->recv_certlen + 1, sizeof (char));
+      /* For shared keys, just duplicate the passphrase with the
+         appropriate prefix tag. */
+      principal = calloc (isakmp_sa->recv_certlen + 1 + strlen ("passphrase:"),
+                          sizeof (char));
       if (principal == NULL)
 	return 0;
-      memcpy (principal, isakmp_sa->recv_cert, isakmp_sa->recv_certlen);
+      strcpy (principal, "passphrase:");
+      memcpy (principal + strlen ("passphrase:"), isakmp_sa->recv_cert,
+	      isakmp_sa->recv_certlen);
       break;
 
     case ISAKMP_CERTENC_X509_SIG:
@@ -182,7 +186,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    * what mode of authentication we used in Phase 1.
    */
   if (LK (kn_add_authorizer, (keynote_sessid, principal)) == -1)
-    return 0;
+    {
+      log_print ("check_policy: kn_add_authorizer failed");
+      return 0;
+    }
 
   /* Ask policy.  */
   result = LK (kn_do_query, (keynote_sessid, return_values, RETVALUES_NUM));
@@ -198,6 +205,13 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 		 result);
       return 0;
     }
+
+  /*
+   * XXX Currently, check_policy() is only called from message_negotiate_sa(),
+   *     and so this log message reflects this. Change to somethine better?
+   */
+  if (result == 0)  
+    log_print ("check_policy: negotiated SA failed policy check");
 
   /*
    * Given that we have only 2 return values from policy (true/false)
@@ -465,7 +479,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		group_desc = new_group_desc;
 	      else if (group_desc != new_group_desc)
 		{
-		  log_print ("inititor_send_HASH_SA_NONCE: "
+		  log_print ("initiator_send_HASH_SA_NONCE: "
 			     "differing group descriptions in a proposal");
 		  goto bail_out;
 		}
@@ -1100,6 +1114,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   my_hash = 0;
 
   kep = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
+  if (kep)
+    ie->pfs = 1;
 
   /* Handle optional client ID payloads.  */
   idp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
