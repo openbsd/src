@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.12 2003/10/21 22:48:07 vincent Exp $	*/
+/*	$OpenBSD: window.c,v 1.13 2003/10/27 11:21:12 vincent Exp $	*/
 
 /*
  *		Window handling.
@@ -11,7 +11,7 @@ new_window(BUFFER *bp)
 {
 	MGWIN *wp;
 
-	wp = malloc(sizeof(MGWIN));
+	wp = calloc(1, sizeof(MGWIN));
 	if (wp == NULL)
 		return (NULL);
 
@@ -22,7 +22,8 @@ new_window(BUFFER *bp)
 	wp->w_marko = 0;
 	wp->w_flag = 0;
 	wp->w_force = 0;
-	bp->b_nwnd++;
+	if (bp)
+		bp->b_nwnd++;
 	LIST_INIT(&wp->w_undo);
 	wp->w_undoptr = NULL;
 	memset(&wp->w_undopos, 0, sizeof wp->w_undopos);

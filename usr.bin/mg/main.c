@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2003/06/26 23:04:10 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2003/10/27 11:21:12 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -157,7 +157,7 @@ edinit(PF init_fcn)
 
 	bheadp = NULL;
 	bp = bfind("*scratch*", TRUE);		/* Text buffer.		 */
-	wp = (MGWIN *)malloc(sizeof(MGWIN));	/* Initial window.	 */
+	wp = new_window(bp);
 	if (wp == NULL)
 		panic("Out of memory");
 	if (bp == NULL || wp == NULL)
@@ -166,15 +166,8 @@ edinit(PF init_fcn)
 	wheadp = wp;
 	curwp = wp;
 	wp->w_wndp = NULL;			/* Initialize window.	 */
-	wp->w_bufp = bp;
-	bp->b_nwnd = 1;				/* Displayed.		 */
 	wp->w_linep = wp->w_dotp = bp->b_linep;
-	wp->w_doto = 0;
-	wp->w_markp = NULL;
-	wp->w_marko = 0;
-	wp->w_toprow = 0;
 	wp->w_ntrows = nrow - 2;		/* 2 = mode, echo.	 */
-	wp->w_force = 0;
 	wp->w_flag = WFMODE | WFHARD;		/* Full.		 */
 
 	if (init_fcn)

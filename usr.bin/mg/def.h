@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.49 2003/10/21 22:48:07 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.50 2003/10/27 11:21:12 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -360,6 +360,8 @@ int	 kinsert(int, int);
 int	 kremove(int);
 
 /* window.c X */
+MGWIN	*new_window(BUFFER *);
+void	 free_window(MGWIN *);
 int	 reposition(int, int);
 int	 refresh(int, int);
 int	 nextwind(int, int);
