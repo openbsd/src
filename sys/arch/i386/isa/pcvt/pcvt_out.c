@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.26 2000/09/01 05:46:02 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.27 2000/09/28 17:45:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1274,11 +1274,12 @@ vt_coldmalloc(void)
 	 * need to write '\r' characters in the buffer (carriage return
 	 */
 	
-	if ((Copybuffer = (char *)malloc((vs[0].maxcol + 1) *
-	     vs[0].screen_rows, M_DEVBUF,
-	     M_WAITOK)) == NULL)
+	Copybuffer_size = (vs[0].maxcol + 1) * vs[0].screen_rows;
+	if ((Copybuffer = (char *)malloc(Copybuffer_size, M_DEVBUF, M_WAITOK))
+	     == NULL)
 	{
 		printf("pcvt: copy memory malloc failed\n");
+		Copybuffer_size = 0;
 	}
 
 	for(nscr = 0; nscr < PCVT_NSCREENS; nscr++)
@@ -1408,6 +1409,7 @@ vt_col(struct video_state *svsp, int cols)
 
 	}
 	reallocate_scrollbuffer(svsp, scrollback_pages);
+	reallocate_copybuffer(svsp);
 	return(1);
 }
 

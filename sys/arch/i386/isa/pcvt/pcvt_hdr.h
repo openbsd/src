@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.39 2000/09/22 17:39:05 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.40 2000/09/28 17:45:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1012,6 +1012,7 @@ void	set_2ndcharset ( void );
 void	set_charset ( struct video_state *svsp, int curvgacs );
 void	set_screen_size ( struct video_state *svsp, int size );
 void	reallocate_scrollbuffer ( struct video_state *svsp, int pages );
+void	reallocate_copybuffer ( struct video_state *svsp );
 u_char *sgetc ( int noblock );
 void	sixel_vga ( struct sixels *charsixel, u_char *charvga );
 void	sput ( u_char *s, U_char attrib, int len, int page );
@@ -1134,6 +1135,7 @@ static __inline void vt_selattr(struct video_state *svsp)
 /* mouse console support prototype */
 
 char *Copybuffer; /* buffer that contains mouse selections */
+unsigned int Copybuffer_size;
 uid_t Copyowner; /* uid of the owner of the selection, useful for verifying
 		    permissions on it
 		  */

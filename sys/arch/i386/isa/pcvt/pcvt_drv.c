@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.33 2000/09/28 15:44:50 aaron Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.34 2000/09/28 17:45:42 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -296,7 +296,7 @@ pcclose(Dev_t dev, int flag, int mode, struct proc *p)
 
 	/* remove the selection at logout */
 	if (Copybuffer)
-		bzero(Copybuffer, (vs[0].maxcol + 1) * vs[0].screen_rows);
+		bzero(Copybuffer, Copybuffer_size);
 	Paste_avail = 0;	
 	
 	return(0);

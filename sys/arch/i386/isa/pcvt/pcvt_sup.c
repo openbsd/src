@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.16 2000/02/27 20:34:36 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.17 2000/09/28 17:45:42 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -713,6 +713,7 @@ set_screen_size(struct video_state *svsp, int size)
 #endif /* PCVT_SIGWINCH */
 
 			reallocate_scrollbuffer(svsp, scrollback_pages);
+			reallocate_copybuffer(svsp);
 			break;
 		}
  	}
@@ -750,6 +751,33 @@ reallocate_scrollbuffer(struct video_state *svsp, int pages)
 
 		svsp->scr_offset = svsp->row - 1;
 	}
+	splx(s);
+}
+
+/*---------------------------------------------------------------------------*
+ *	resize the copy buffer to accomodate largest current cols * rows
+ *---------------------------------------------------------------------------*/
+void
+reallocate_copybuffer(struct video_state *svsp)
+{
+	int newsize, s;
+
+	s = splhigh();
+
+	newsize = (svsp->maxcol + 1) * svsp->screen_rows;
+	if (newsize <= Copybuffer_size)
+		goto out;
+
+	if (Copybuffer)
+		free(Copybuffer, M_DEVBUF);
+
+	if ((Copybuffer = (char *)malloc(newsize, M_DEVBUF, M_NOWAIT)) == NULL){
+		printf("pcvt: copybuffer memory malloc failed\n");
+		Copybuffer_size = 0;
+	}
+
+	Copybuffer_size = newsize;
+out:
 	splx(s);
 }
 
