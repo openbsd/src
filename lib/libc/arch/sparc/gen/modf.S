@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: modf.S,v 1.2 1996/08/19 08:17:41 tholo Exp $"
+	.asciz "$OpenBSD: modf.S,v 1.3 2003/04/22 19:57:57 jason Exp $"
 #endif /* LIBC_SCCS */
 
 #include "DEFS.h"
@@ -172,7 +172,7 @@ ENTRY(modf)
 	ldd	[%fp - 16], %f0		! %f0:f1 = val;
 	fsubd	%f0, %f4, %f0		! %f0:f1 -= %f4:f5;
 	ret
-	restore
+	 restore
 
 Lbig:
 	/*
@@ -191,4 +191,4 @@ Lbig:
 	ldd	[%l0 + %lo(L0)], %f0	! return 0.0;
 #endif
 	ret
-	restore
+	 restore

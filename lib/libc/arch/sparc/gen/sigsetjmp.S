@@ -31,7 +31,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.3 2002/08/05 15:29:28 art Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.4 2003/04/22 19:57:57 jason Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -47,7 +47,7 @@ ENTRY(sigsetjmp)
 	ld [%g1+_C_LABEL(_setjmp)], %g1	! else goto _setjmp;
 1:
 	jmp %g1
-	nop
+	 nop
 
 ENTRY(siglongjmp)
 	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
@@ -58,7 +58,7 @@ ENTRY(siglongjmp)
 	ld [%g1+_C_LABEL(_longjmp)], %g1 ! else goto _longjmp;
 1:
 	jmp %g1
-	nop
+	 nop
 	unimp 0
 
 #else /* PIC */
@@ -66,7 +66,7 @@ ENTRY(siglongjmp)
 ENTRY(sigsetjmp)
 	cmp %o1,0
 	be _C_LABEL(_setjmp)
-	st %o1,[%o0+40]		! jmpbuf[JBLEN]
+	 st %o1,[%o0+40]		! jmpbuf[JBLEN]
 	nop
 	ba,a _C_LABEL(setjmp)
 	unimp 0
@@ -75,7 +75,7 @@ ENTRY(siglongjmp)
 	ld [%o0+40],%g1
 	cmp %g1,0
 	be _C_LABEL(_longjmp)
-	nop
+	 nop
 	ba,a _C_LABEL(_longjmp)
 	unimp 0
 

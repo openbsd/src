@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: umul.S,v 1.3 2002/11/23 19:04:39 drahn Exp $"
+	.asciz "$OpenBSD: umul.S,v 1.4 2003/04/22 19:57:57 jason Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -146,7 +146,7 @@ FUNC(.umul)
 	add	%o4, %o0, %o4	! %o4 += %o0 (add y to upper half)
 1:	rd	%y, %o0		! get lower half of product
 	retl
-	addcc	%o4, %g0, %o1	! put upper half in place and set Z for %o1==0
+	 addcc	%o4, %g0, %o1	! put upper half in place and set Z for %o1==0
 
 Lmul_shortway:
 	/*
@@ -188,4 +188,4 @@ Lmul_shortway:
 	srl	%o5, 20, %o5	! shift low bits right 20
 	or	%o5, %o0, %o0
 	retl
-	addcc	%g0, %g0, %o1	! %o1 = zero, and set Z
+	 addcc	%g0, %g0, %o1	! %o1 = zero, and set Z

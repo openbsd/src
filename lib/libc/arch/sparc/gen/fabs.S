@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: fabs.S,v 1.2 1996/08/19 08:17:26 tholo Exp $"
+	.asciz "$OpenBSD: fabs.S,v 1.3 2003/04/22 19:57:57 jason Exp $"
 #endif /* LIBC_SCCS */
 
 /* fabs - floating absolute value */
@@ -48,4 +48,4 @@ ENTRY(fabs)
 	std	%o0, [%sp + 32]		! return value => %f0:f1
 	ldd	[%sp + 32], %f0		! (via kernel %o0/%o1 slot)
 	retl
-	fabss	%f0, %f0		! return absolute value
+	 fabss	%f0, %f0		! return absolute value

@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: saveregs.S,v 1.2 1996/08/19 08:17:43 tholo Exp $"
+	.asciz "$OpenBSD: saveregs.S,v 1.3 2003/04/22 19:57:57 jason Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -59,4 +59,4 @@ ENTRY(__builtin_saveregs)
 	st	%i3, [%fp + 0x50]	! fr->fr_argd[3]
 	st	%i4, [%fp + 0x54]	! fr->fr_argd[4]
 	retl
-	st	%i5, [%fp + 0x58]	! fr->fr_argd[5]
+	 st	%i5, [%fp + 0x58]	! fr->fr_argd[5]
