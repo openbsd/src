@@ -39,7 +39,7 @@ PC532=	../..
 INCLUDES= -I. -I$S -I$S/sys -I${PC532}
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
 ASFLAGS=
-CFLAGS=	-O -Werror -fno-builtin -msb ${COPTS}
+CFLAGS=	-O -Werror -msb ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

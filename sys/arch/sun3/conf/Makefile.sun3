@@ -35,7 +35,7 @@ SUN3=	../..
 INCLUDES= -I. -I../.. -I$S/arch -I$S/sys -I$S
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
 # We do NOT want accidental FP instructions in the kernel.
-CFLAGS= -Werror -fno-builtin -msoft-float ${DEBUG} ${COPTS}
+CFLAGS= -Werror -msoft-float ${DEBUG} ${COPTS}
 
 # What to use for libkern:
 .include "$S/lib/libkern/Makefile.inc"

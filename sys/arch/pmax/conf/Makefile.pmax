@@ -33,9 +33,9 @@ INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpmax -D__NetBSD__ ${GP}
 CPPOPTS=${INCLUDES} ${IDENT} -D_KERNEL -Dpmax -D__NetBSD__
 .ifdef DEBUG 
-CFLAGS=	${DEBUG} -Werror -fno-builtin ${COPTS}
+CFLAGS=	${DEBUG} -Werror ${COPTS}
 .else
-CFLAGS= -O2 -Werror -fno-builtin ${COPTS}
+CFLAGS= -O2 -Werror ${COPTS}
 .endif
 
 ### find out what to use for libkern

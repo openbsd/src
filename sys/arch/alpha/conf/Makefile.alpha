@@ -34,7 +34,7 @@ ALPHA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	-Werror -fno-builtin -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
+CFLAGS=	-Werror -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
 AFLAGS=	${COPTS}
 
 ### find out what to use for libkern

@@ -36,7 +36,7 @@ SPARC=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	${COPTS} -O2 -Werror -fno-builtin
+CFLAGS=	${COPTS} -O2 -Werror
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

@@ -35,7 +35,7 @@ AMIGA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
-CFLAGS=	-O -Werror -fno-builtin -mc68020 -m68881 ${COPTS}
+CFLAGS=	-O -Werror -mc68020 -m68881 ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
