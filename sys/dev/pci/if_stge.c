@@ -442,7 +442,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) & 0x3;
 		if (pmode == 3) {
 			/*
 			 * The card has lost all configuration data in
@@ -453,7 +453,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (pmode != 0) {
 			printf(": waking up from power state D%d\n", pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR, 0);
 		}
 	}
 

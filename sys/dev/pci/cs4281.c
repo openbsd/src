@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.15 2003/08/21 04:57:40 mickey Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.16 2003/10/07 14:11:04 fgsch Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ cs4281_attach(parent, self, aux)
 	    &pci_pwrmgmt_cap_reg, 0)) {
 		pcireg_t reg;
 
-		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + PCI_PMCSR;
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, pci_pwrmgmt_csr_reg);
 		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
 			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,

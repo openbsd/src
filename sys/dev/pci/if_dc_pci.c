@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.40 2003/09/29 18:53:58 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.41 2003/10/07 14:11:04 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -172,7 +172,7 @@ void dc_pci_acpi(self, aux)
 	r = pci_conf_read(pc, pa->pa_tag, cptr) & 0xFF;
 	if (r == 0x01) {
 
-		r = pci_conf_read(pc, pa->pa_tag, cptr + 4);
+		r = pci_conf_read(pc, pa->pa_tag, cptr + PCI_PMCSR);
 		if (r & DC_PSTATE_D3) {
 			u_int32_t		iobase, membase, irq;
 
@@ -186,7 +186,7 @@ void dc_pci_acpi(self, aux)
 			    "-- setting to D0\n", sc->sc_dev.dv_xname,
 			    r & DC_PSTATE_D3);
 			r &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, cptr + 4, r);
+			pci_conf_write(pc, pa->pa_tag, cptr + PCI_PMCSR, r);
 
 			/* Restore PCI config data. */
 			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFBIO, iobase);
