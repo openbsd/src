@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.3 1996/06/23 14:20:30 deraadt Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.4 1997/04/06 06:11:10 millert Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.3 1996/06/23 14:20:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.4 1997/04/06 06:11:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,11 @@ wr_start()
 	if (wrblksz % BLKMULT) {
 		paxwarn(1, "Write block size of %d is not a %d byte multiple",
 		    wrblksz, BLKMULT);
+		return(-1);
+	}
+	if (wrblksz > MAXBLK_POSIX) {
+		paxwarn(0, "Write block size of %d larger than POSIX max %d, archive may not be portable",
+			wrblksz, MAXBLK_POSIX);
 		return(-1);
 	}
 

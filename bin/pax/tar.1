@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.8 1997/04/05 22:36:18 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.9 1997/04/06 06:11:16 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -86,7 +86,10 @@ flags may be used:
 .It Fl b Ar "blocking factor"
 Set blocking factor to use for the archive,
 .Nm
-uses 512 byte blocks.  The default is 20, the maximum is 63.
+uses 512 byte blocks.  The default is 20, the maximum is 126.
+Archives with a blocking factor larger 63 violate the
+.Tn POSIX
+standard and will not be portable to all systems.
 .It Fl e
 Stop after first error.
 .It Fl f Ar archive
