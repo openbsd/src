@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.11 2001/11/07 19:07:41 mickey Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.12 2002/05/24 23:02:14 itojun Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -252,9 +252,16 @@
 #define	IFT_SIPTG		   0xcb /* SIP Trunk Group */
 #define	IFT_SIPSIG		   0xcc /* SIP Signaling */
 #define	IFT_DOCSCABLEUPSTREAMCHANNEL 0xcd /* CATV Upstream Channel */
+#define	IFT_ECONET		   0xce /* Acorn Econet */
+#define	IFT_PON155		   0xcf /* FSAN 155Mb Symetrical PON interface */
+#define	IFT_PON622		   0xd0 /* FSAN 622Mb Symetrical PON interface */*/
+#define	IFT_BRIDGE		   0xd1 /* Transparent bridge interface */
+#define	IFT_LINEGROUP		   0xd2 /* Interface common to multiple lines */
+#define	IFT_VOICEEMFGD		   0xd3 /* voice E&M Feature Group D */
+#define	IFT_VOICEFGDEANA	   0xd4 /* voice FGD Exchange Access North American */
+#define	IFT_VOICEDID		   0xd5 /* voice Direct Inward Dialing */
 
 /* private usage... how should we define these? */
-#define	IFT_BRIDGE	0xe8		/* bridge interfaces */
 #define	IFT_GIF		0xf0
 #define	IFT_DUMMY	0xf1
 #define	IFT_PVC		0xf2
