@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 2003/01/30 03:29:49 millert Exp $
+	$OpenBSD: syscalls.master,v 1.9 2003/05/11 19:45:18 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1996/01/07 13:38:57 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -136,7 +136,7 @@
 			    struct itimerval *itv, struct itimerval *oitv); }
 84	STD		{ int ultrix_sys_wait3(int *status, int options, \
 			    struct rusage *rusage);}
-85	NOARGS		{ int sys_swapon(char *name); }
+85	NOARGS		{ int compat_25_sys_swapon(char *name); }
 86	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
