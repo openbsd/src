@@ -80,7 +80,7 @@ xfs_init(struct vfsconf *vfs)
     return 0;
 }
 
-struct vfsops xfs_vfsops = {
+const struct vfsops xfs_vfsops = {
 #ifdef HAVE_STRUCT_VFSOPS_VFS_MOUNT
     xfs_mount_common,
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.21 2003/08/05 20:47:36 tedu Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.22 2003/08/14 07:46:40 mickey Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ procfs_statfs(mp, sbp, p)
 #define procfs_checkexp ((int (*)(struct mount *, struct mbuf *,	\
 	int *, struct ucred **))eopnotsupp)
 
-struct vfsops procfs_vfsops = {
+const struct vfsops procfs_vfsops = {
 	procfs_mount,
 	procfs_start,
 	procfs_unmount,

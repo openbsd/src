@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.57 2003/08/05 21:27:15 tedu Exp $	*/
+/*	$OpenBSD: mount.h,v 1.58 2003/08/14 07:46:40 mickey Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ LIST_HEAD(vnodelst, vnode);
 
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
-	struct vfsops	*mnt_op;		/* operations on fs */
+	const struct vfsops *mnt_op;		/* operations on fs */
 	struct vfsconf  *mnt_vfc;               /* configuration info */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnode    *mnt_syncer;            /* syncer vnode */
@@ -452,7 +452,7 @@ struct mount {
  * mount time to identify the requested filesystem.
  */
 struct vfsconf {
-	struct	vfsops *vfc_vfsops;	/* filesystem operations vector */
+	const struct vfsops *vfc_vfsops; /* filesystem operations vector */
 	char	vfc_name[MFSNAMELEN];	/* filesystem type name */
 	int	vfc_typenum;		/* historic filesystem type number */
 	int	vfc_refcount;		/* number mounted of this type */

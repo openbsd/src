@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.4 2003/05/24 21:48:05 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.5 2003/08/14 07:46:40 mickey Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -1165,7 +1165,7 @@ const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
 	NULL,
 };
 
-struct vfsops ntfs_vfsops = {
+const struct vfsops ntfs_vfsops = {
 	ntfs_mount,
 	ntfs_start,
 	ntfs_unmount,

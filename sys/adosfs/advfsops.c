@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.24 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.25 2003/08/14 07:46:39 mickey Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -743,7 +743,7 @@ adosfs_init(struct vfsconf *vfsp)
 /*
  * vfs generic function call table
  */
-struct vfsops adosfs_vfsops = {
+const struct vfsops adosfs_vfsops = {
 	adosfs_mount,
 	adosfs_start,
 	adosfs_unmount,

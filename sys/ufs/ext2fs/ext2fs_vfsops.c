@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.28 2003/07/06 09:02:11 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.29 2003/08/14 07:46:40 mickey Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct vnodeopv_desc *ext2fs_vnodeopv_descs[] = {
 	NULL,
 };
 
-struct vfsops ext2fs_vfsops = {
+const struct vfsops ext2fs_vfsops = {
 	ext2fs_mount,
 	ufs_start,
 	ext2fs_unmount,

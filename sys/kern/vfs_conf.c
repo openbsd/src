@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.21 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.22 2003/08/14 07:46:39 mickey Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -80,71 +80,71 @@ struct vnode *rootvnode;
 
 
 #ifdef FFS
-extern	struct vfsops ffs_vfsops;
+extern	const struct vfsops ffs_vfsops;
 #endif
 
 #ifdef LFS
-extern	struct vfsops lfs_vfsops;
+extern	const struct vfsops lfs_vfsops;
 #endif
 
 #ifdef MFS
-extern	struct vfsops mfs_vfsops;
+extern	const struct vfsops mfs_vfsops;
 #endif
 
 #ifdef MSDOSFS
-extern	struct vfsops msdosfs_vfsops;
+extern	const struct vfsops msdosfs_vfsops;
 #endif
 
 #ifdef NFSCLIENT
-extern	struct vfsops nfs_vfsops;
+extern	const struct vfsops nfs_vfsops;
 #endif
 
 #ifdef FDESC
-extern	struct vfsops fdesc_vfsops;
+extern	const struct vfsops fdesc_vfsops;
 #endif
 
 #ifdef PORTAL
-extern	struct vfsops portal_vfsops;
+extern	const struct vfsops portal_vfsops;
 #endif
 
 #ifdef NULLFS
-extern	struct vfsops nullfs_vfsops;
+extern	const struct vfsops nullfs_vfsops;
 #endif
 
 #ifdef UMAPFS
-extern	struct vfsops umapfs_vfsops;
+extern	const struct vfsops umapfs_vfsops;
 #endif
 
 #ifdef KERNFS
-extern	struct vfsops kernfs_vfsops;
+extern	const struct vfsops kernfs_vfsops;
 #endif
 
 #ifdef PROCFS
-extern	struct vfsops procfs_vfsops;
+extern	const struct vfsops procfs_vfsops;
 #endif
 
 #ifdef CD9660
-extern	struct vfsops cd9660_vfsops;
+extern	const struct vfsops cd9660_vfsops;
 #endif
 
 #ifdef UNION
-extern	struct vfsops union_vfsops;
+extern	const struct vfsops union_vfsops;
 #endif
 
 #ifdef ADOSFS
-extern 	struct vfsops adosfs_vfsops;
+extern 	const struct vfsops adosfs_vfsops;
 #endif
 
 #ifdef EXT2FS
-extern	struct vfsops ext2fs_vfsops;
+extern	const struct vfsops ext2fs_vfsops;
 #endif
 
 #ifdef XFS
-extern  struct vfsops xfs_vfsops;
+extern  const struct vfsops xfs_vfsops;
 #endif
 
 #ifdef NTFS
-extern  struct vfsops ntfs_vfsops;
+extern  const struct vfsops ntfs_vfsops;
 #endif
 
 /*

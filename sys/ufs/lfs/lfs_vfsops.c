@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.17 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.18 2003/08/14 07:46:40 mickey Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 
 int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 
-struct vfsops lfs_vfsops = {
+const struct vfsops lfs_vfsops = {
 	lfs_mount,
 	ufs_start,
 	lfs_unmount,

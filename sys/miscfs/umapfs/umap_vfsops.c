@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.22 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.23 2003/08/14 07:46:40 mickey Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ const struct vnodeopv_desc * const umapfs_vnodeopv_descs[] = {
 	NULL,
 };
 
-struct vfsops umapfs_vfsops = {
+const struct vfsops umapfs_vfsops = {
 	umapfs_mount,
 	layerfs_start,
 	umapfs_unmount,

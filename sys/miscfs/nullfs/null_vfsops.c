@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.16 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.17 2003/08/14 07:46:39 mickey Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ const struct vnodeopv_desc * const nullfs_vnodeopv_descs[] = {
 	NULL,
 };
 
-struct vfsops nullfs_vfsops = {
+const struct vfsops nullfs_vfsops = {
 	nullfs_mount,
 	layerfs_start,
 	nullfs_unmount,

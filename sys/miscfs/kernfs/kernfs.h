@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs.h,v 1.12 2003/08/11 10:19:24 mickey Exp $	*/
+/*	$OpenBSD: kernfs.h,v 1.13 2003/08/14 07:46:39 mickey Exp $	*/
 /*	$NetBSD: kernfs.h,v 1.10 1996/02/09 22:40:21 christos Exp $	*/
 
 /*
@@ -97,6 +97,6 @@ int	kernfs_init(struct vfsconf *);
 int	kernfs_allocvp(const struct kern_target *, struct mount *, struct vnode **);
 const struct kern_target *kernfs_findtarget(char *, int);
 extern int (**kernfs_vnodeop_p)(void *);
-extern struct vfsops kernfs_vfsops;
+extern const struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 #endif /* _KERNEL */
