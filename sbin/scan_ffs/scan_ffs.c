@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.2 1998/02/04 20:54:48 millert Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.3 1998/02/05 17:18:30 weingart Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -116,7 +116,7 @@ ufsscan(fd, beg, end, flags)
 void
 usage()
 {
-	fprintf(stderr, "usage: scan_ffs [-lsv] [-b begin] [-e end] special\n");
+	fprintf(stderr, "usage: scan_ffs [-lsv] [-b begin] [-e end] <device>\n");
 	exit(1);
 }
 
