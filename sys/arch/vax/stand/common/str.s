@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.s,v 1.1 2000/04/27 02:26:26 bjc Exp $ */
+/*	$OpenBSD: str.s,v 1.2 2000/05/01 00:12:02 bjc Exp $ */
 /*	$NetBSD: str.s,v 1.1 1999/03/06 16:36:06 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -145,3 +145,20 @@ ENTRY(strcat, 0)
 1:	movb	(r1)+,(r0)+
 	bneq	1b
 	ret
+
+ENTRY(setjmp, 0)
+       movl    4(ap), r0
+       movl    8(fp), (r0)
+       movl    12(fp), 4(r0)
+       movl    16(fp), 8(r0)
+       addl3   fp,$28,12(r0)
+       clrl    r0
+       ret
+
+ENTRY(longjmp, 0)
+       movl    4(ap), r1
+       movl    8(ap), r0
+       movl    (r1), ap
+       movl    4(r1), fp
+       movl    12(r1), sp
+       jmp     *8(r1)

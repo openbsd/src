@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2000/04/27 02:26:24 bjc Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.2 2000/05/01 00:12:00 bjc Exp $ */
 /*	$NetBSD: autoconf.c,v 1.5 1999/08/23 19:09:27 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -212,12 +212,26 @@ scbinit()
 	mtpr(20, PR_IPL);
 }
 
+extern int jbuf[10];
+extern int sluttid, senast, skip;
+
 void
 rtimer()
 {
 	mtpr(31, PR_IPL);
 	tickcnt++;
 	mtpr(0xc1, PR_ICCS);
+	if (skip)
+		return;
+	if ((vax_boardtype == VAX_BTYP_46) ||
+		(vax_boardtype == VAX_BTYP_48) ||
+		(vax_boardtype == VAX_BTYP_49)) {
+		int nu = sluttid - getsecs();
+		if (senast != nu) {
+			mtpr(20, PR_IPL);
+			longjmp(jbuf);
+		}
+	}
 }
 
 asm("

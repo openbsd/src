@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2000/04/27 02:26:24 bjc Exp $ */
+/*	$OpenBSD: boot.c,v 1.2 2000/05/01 00:12:01 bjc Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -75,18 +75,25 @@ char *filer[] = {
 	0,
 };
 
+int jbuf[10];
+int sluttid, senast, skip;
+
 Xmain()
 {
-	int io, type, sluttid, askname, filindex = 0;
-	int j, senast = 0, nu;
+	int io, type, askname, filindex = 0;
+	int j, nu;
 
 	io=0;
+	skip = 1;
 	autoconf();
 
 	askname = howto & RB_ASKNAME;
 	printf("\n\r>> OpenBSD/vax boot [%s %s] <<\n", __DATE__, __TIME__);
 	printf(">> Press any key to abort autoboot  ");
 	sluttid = getsecs() + 5;
+	senast = 0;
+	skip = 0;
+	setjmp(jbuf);
 	for (;;) {
 		nu = sluttid - getsecs();
 		if (senast != nu)
@@ -95,6 +102,7 @@ Xmain()
 			break;
 		senast = nu;
 		if ((j = (testkey() & 0177))) {
+			skip = 1;
 			if (j != 10 && j != 13) {
 				printf("\nPress '?' for help");
 				askname = 1;
@@ -102,6 +110,7 @@ Xmain()
 			break;
 		}
 	}
+	skip = 1;
 	printf("\n");
 
 	/* First try to autoboot */
