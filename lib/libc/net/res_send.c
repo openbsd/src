@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.7 1997/06/04 03:18:41 dm Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.8 1998/03/19 00:30:08 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.7 1997/06/04 03:18:41 dm Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.8 1998/03/19 00:30:08 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -751,12 +751,12 @@ read_len:
 	   } /*foreach ns*/
 	} /*foreach retry*/
 	res_close();
-	if (!v_circuit)
+	if (!v_circuit) {
 		if (!gotsomewhere)
 			errno = ECONNREFUSED;	/* no nameservers found */
 		else
 			errno = ETIMEDOUT;	/* no answer obtained */
-	else
+	} else
 		errno = terrno;
 	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.14 1997/10/11 04:04:40 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.15 1998/03/19 00:30:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.14 1997/10/11 04:04:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.15 1998/03/19 00:30:01 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -299,12 +299,13 @@ fts_read(sp)
 	if (instr == FTS_FOLLOW &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE)) {
 		p->fts_info = fts_stat(sp, p, 1);
-		if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR))
+		if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
 			if ((p->fts_symfd = open(".", O_RDONLY, 0)) < 0) {
 				p->fts_errno = errno;
 				p->fts_info = FTS_ERR;
 			} else
 				p->fts_flags |= FTS_SYMFOLLOW;
+		}
 		return (p);
 	}
 
@@ -394,13 +395,14 @@ next:	tmp = p;
 			goto next;
 		if (p->fts_instr == FTS_FOLLOW) {
 			p->fts_info = fts_stat(sp, p, 1);
-			if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR))
+			if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
 				if ((p->fts_symfd =
 				    open(".", O_RDONLY, 0)) < 0) {
 					p->fts_errno = errno;
 					p->fts_info = FTS_ERR;
 				} else
 					p->fts_flags |= FTS_SYMFOLLOW;
+			}
 			p->fts_instr = FTS_NOINSTR;
 		}
 
@@ -641,7 +643,7 @@ fts_build(sp, type)
 	 * checking FTS_NS on the returned nodes.
 	 */
 	cderrno = 0;
-	if (nlinks || type == BREAD)
+	if (nlinks || type == BREAD) {
 		if (fts_safe_changedir(sp, cur, dirfd(dirp))) {
 			if (nlinks && type == BREAD)
 				cur->fts_errno = errno;
@@ -652,7 +654,7 @@ fts_build(sp, type)
 			dirp = NULL;
 		} else
 			descend = 1;
-	else
+	} else
 		descend = 0;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.5 1997/09/22 05:03:30 millert Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.6 1998/03/19 00:29:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.5 1997/09/22 05:03:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.6 1998/03/19 00:29:59 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,14 +100,14 @@ fnmatch(pattern, string, flags)
 				return (FNM_NOMATCH);
 
 			/* Optimize for pattern with * at end or before /. */
-			if (c == EOS)
+			if (c == EOS) {
 				if (flags & FNM_PATHNAME)
 					return ((flags & FNM_LEADING_DIR) ||
 					    strchr(string, '/') == NULL ?
 					    0 : FNM_NOMATCH);
 				else
 					return (0);
-			else if (c == '/' && (flags & FNM_PATHNAME)) {
+			} else if (c == '/' && (flags & FNM_PATHNAME)) {
 				if ((string = strchr(string, '/')) == NULL)
 					return (FNM_NOMATCH);
 				break;

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.7 1998/03/06 02:01:38 brian Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.8 1998/03/19 00:30:03 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -262,13 +262,14 @@ openlog(ident, logstat, logfac)
 			(void)fcntl(LogFile, F_SETFD, 1);
 		}
 	}
-	if (LogFile != -1 && !connected)
+	if (LogFile != -1 && !connected) {
 		if (connect(LogFile, (struct sockaddr *)&SyslogAddr,
 			sizeof(SyslogAddr)) == -1) {
 			(void)close(LogFile);
 			LogFile = -1;
 		} else
 			connected = 1;
+	}
 }
 
 void

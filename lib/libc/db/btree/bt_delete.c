@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_delete.c,v 1.3 1996/08/19 08:20:05 tholo Exp $";
+static char rcsid[] = "$OpenBSD: bt_delete.c,v 1.4 1998/03/19 00:29:51 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -418,7 +418,7 @@ __bt_pdelete(t, h)
 		 * root page. If it's the rootpage, turn it back into an empty
 		 * leaf page.
 		 */
-		if (NEXTINDEX(pg) == 1)
+		if (NEXTINDEX(pg) == 1) {
 			if (pg->pgno == P_ROOT) {
 				pg->lower = BTDATAOFF;
 				pg->upper = t->bt_psize;
@@ -428,7 +428,7 @@ __bt_pdelete(t, h)
 					return (RET_ERROR);
 				continue;
 			}
-		else {
+		} else {
 			/* Pack remaining key items at the end of the page. */
 			nksize = NBINTERNAL(bi->ksize);
 			from = (char *)pg + pg->upper;

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash.c,v 1.5 1997/07/23 21:00:27 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.6 1998/03/19 00:29:55 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -869,7 +869,7 @@ hash_realloc(p_ptr, oldsize, newsize)
 {
 	register void *p;
 
-	if (p = malloc(newsize)) {
+	if ((p = malloc(newsize))) {
 		memmove(p, *p_ptr, oldsize);
 		memset((char *)p + oldsize, 0, newsize - oldsize);
 		free(*p_ptr);
