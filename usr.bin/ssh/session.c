@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.60 2001/03/15 22:07:08 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.61 2001/03/16 19:06:30 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -192,18 +192,11 @@ do_authenticated(struct passwd * pw)
 		startup_pipe = -1;
 	}
 
-	/*
-	 * Inform the channel mechanism that we are the server side and that
-	 * the client may request to connect to any port at all. (The user
-	 * could do it anyway, and we wouldn\'t know what is permitted except
-	 * by the client telling us, so we can equally well trust the client
-	 * not to request anything bogus.)
-	 */
-	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
-		channel_permit_all_opens();
-
 	s = session_new();
 	s->pw = pw;
+
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
+		channel_permit_all_opens();
 
 #ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
@@ -1700,6 +1693,8 @@ do_authenticated2(Authctxt *authctxt)
 		close(startup_pipe);
 		startup_pipe = -1;
 	}
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
+		channel_permit_all_opens();
 #ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
 		error("unable to get login class");
