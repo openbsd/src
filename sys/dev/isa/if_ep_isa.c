@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.13 1998/03/23 03:06:06 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.14 1998/06/02 20:29:02 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -195,11 +195,11 @@ ep_isa_probe(parent, match, aux)
 		model = htons(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
 		if ((model & 0xfff0) != PROD_ID_3C509) {
 #ifndef trusted
-			printf(
-			 "ep_isa_probe: ignoring model %04x\n", model);
+			printf("ep_isa_probe: ignoring model %04x\n",
+			    model);
 #endif
 			continue;
-			}
+		}
 
 		iobase = epreadeeprom(iot, ioh, EEPROM_ADDR_CFG);
 		iobase = (iobase & 0x1f) * 0x10 + 0x200;
@@ -222,14 +222,11 @@ ep_isa_probe(parent, match, aux)
 		 */
 		if ((model & 0xfff0) == PROD_ID_3C509) {
 			if (bus_space_map(iot, iobase, 1, 0, &ioh2)) {
-				printf(
-				"ep_isa_probe: can't map Etherlink iobase\n");
+				printf("ep_isa_probe: can't map Etherlink iobase\n");
 				return 0;
 			}
-			if (bus_space_read_2(iot, ioh2, EP_W0_EEPROM_COMMAND)
-			    & EEPROM_TST_MODE) {
-				printf(
-				 "3COM 3C509 Ethernet card in PnP mode\n");
+			if (bus_space_read_2(iot, ioh2,
+			    EP_W0_EEPROM_COMMAND) & EEPROM_TST_MODE) {
 				continue;
 			}
 			bus_space_unmap(iot, ioh2, 1);
