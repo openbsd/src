@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2001/06/27 05:15:40 art Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2001/07/31 08:24:56 hugh Exp $
 
 machine 	vax			# machine type
 
@@ -84,7 +84,7 @@ ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
-#smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
+smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
 #hd*		at hdc0 drive?		# RD5x disks
@@ -156,12 +156,17 @@ ss*		at scsibus? target? lun?
 uk*		at scsibus? target? lun?
 
 # Workstation console
-#wscons*	at smg?
+wsdisplay0	at smg?
+
 
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
-#lkc0		at dz0
+
+lkkbd0		at dz0 line 0
+wskbd*		at lkkbd? console ?
+lkms0		at dz0 line 1
+wsmouse*	at lkms?
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	1	# packet filter
