@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.20 2005/02/25 03:12:43 cloder Exp $
+.\"	$OpenBSD: fts.3,v 1.21 2005/03/01 15:38:39 mpf Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,7 +108,7 @@ structure contains at least the following fields, which are
 described in greater detail below:
 .Bd -literal
 typedef struct _ftsent {
-	u_short fts_info;		/* flags for FTSENT structure */
+	unsigned short fts_info;	/* flags for FTSENT structure */
 	char *fts_accpath;		/* access path */
 	char *fts_path;			/* root path */
 	size_t fts_pathlen;		/* strlen(fts_path) */
@@ -118,9 +118,9 @@ typedef struct _ftsent {
 	int fts_errno;			/* file errno */
 	long fts_number;		/* local numeric value */
 	void *fts_pointer;		/* local address value */
-	struct ftsent *fts_parent;	/* parent directory */
-	struct ftsent *fts_link;	/* next file structure */
-	struct ftsent *fts_cycle;	/* cycle structure */
+	struct _ftsent *fts_parent;	/* parent directory */
+	struct _ftsent *fts_link;	/* next file structure */
+	struct _ftsent *fts_cycle;	/* cycle structure */
 	struct stat *fts_statp;		/* stat(2) information */
 } FTSENT;
 .Ed
