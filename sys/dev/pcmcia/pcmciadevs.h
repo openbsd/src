@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.49 2000/10/27 07:53:49 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.50 2001/01/16 20:12:32 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.43 2000/09/17 14:40:39 aaron Exp 
+ *		OpenBSD: pcmciadevs,v 1.45 2001/01/16 20:12:12 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
+#define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -161,6 +162,12 @@
 /* Dual */
 #define	PCMCIA_CIS_DUAL_NE2000	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DUAL_NE2000	0x0100
+
+/* ELSA Products */
+#define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_MC2_IEEE	0x0001
+#define	PCMCIA_CIS_ELSA_XI300_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI300_IEEE	0x0002
 
 /* Farallon Communications */
 #define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
