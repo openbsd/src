@@ -2271,8 +2271,6 @@
 ./usr/share/man/cat3/svc_fdset.0
 ./usr/share/man/cat3/svc_getargs.0
 ./usr/share/man/cat3/svc_getcaller.0
-./usr/share/man/cat3/svc_getreg.0
-./usr/share/man/cat3/svc_getregset.0
 ./usr/share/man/cat3/svc_register.0
 ./usr/share/man/cat3/svc_run.0
 ./usr/share/man/cat3/svc_sendreply.0
@@ -2586,3 +2584,15 @@
 ./var/db/libc.tags
 ./usr/include/cast.h
 ./usr/include/dev/pci/brktree_reg.h
+./usr/share/man/cat3/_tolower.0
+./usr/share/man/cat3/_toupper.0
+./usr/share/man/cat3/des_key_sched.0
+./usr/share/man/cat3/ether_addr.0
+./usr/share/man/cat3/hstrerror.0
+./usr/share/man/cat3/monstartup.0
+./usr/share/man/cat3/resizeterm.0
+./usr/share/man/cat3/slk_color.0
+./usr/share/man/cat3/svc_freeargs.0
+./usr/share/man/cat3/svc_getreq.0
+./usr/share/man/cat3/svc_getreqset.0
+./usr/share/man/cat3/xdr_u_int.0
