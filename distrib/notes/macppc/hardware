@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.16 2002/12/04 17:39:12 nate Exp $
+dnl	$OpenBSD: hardware,v 1.17 2002/12/05 12:49:37 margarida Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -66,7 +66,7 @@ Supported devices {:-include-:}:
 		    Farallon PN9000SX
 		    Netgear GA620 and GA620T
 		    SGI Tigon
-		Intel i82450, i82542, i82543, i82544, i82545, and i82456
+		Intel i82540, i82542, i82543, i82544, i82545, and i82546
 		based adapters (em), including:
 			Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 			(PWLA8490)
