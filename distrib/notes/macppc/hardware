@@ -1,11 +1,12 @@
+dnl	$OpenBSD: hardware,v 1.7 2002/04/07 22:51:25 miod Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
 Machines with older firmware: 6xxx, 7xxx 8xxx, and 9xxx machines are
 not supported.  PowerMac G3 Beige status is unknown. 
 
-Has been tested on iMac Revs A-C as well as on iMac DV(+) machines, 
-Power Macintosh G4 systems (single and dual processor), as well as
+OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
+machines, Power Macintosh G4 systems (single and dual processor), as well as
 the G4 Cube. B&W G3 support has been added in 3.1.
 
 For portables, PowerBook G3, PowerBook G4 and iBook have been
@@ -17,60 +18,75 @@ is supported via an APM emulation layer.
 
 Supported devices {:-include-:}:
 
-	IDE hard disk controllers. onboard controllers supported.
-	SCSI host adapters:
+	IDE hard disk controllers
+		Onboard controllers
+
+	SCSI host adapters
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
+		    (53c810 and 53c825)
 
-	AGP/SVGA/VGA Display Adapters: Primary Openfirmware display only.
+	RAID controllers
+		Adaptec SCSI RAID (I2O) controllers (ASR-2100S, ASR-3200S,
+		    etc)
 
-	Serial ports:
-		Built-in Zilog 8530-based serial ports.
-		Internal modems not supported on all models.
+	AGP/SVGA/VGA Display Adapters
+		Primary Openfirmware display only:
+		- ATI Mach64 GP
+		- ATI Mach64 GV
+		- ATI Mach64 128 PK
+		- ATI Mach64 128 VR AGP
+		- ATI Mobility M3
+		- ATI Rage Fury AGP4x
 
-	Ethernet adapters:
+	Serial ports
+		Built-in Zilog 8530-based serial ports
+		Internal modems not supported on all models
+
+	Ethernet adapters
 		Digital DC21x4x-based PCI Ethernet adapters (de), including:
 			Znyx ZX34X
 		Digital DC21x43 clone-based PCI Ethernet adapters (dc)
 		HME PCI Fast Ethernet (hme)
 		HME PCI Quad Fast Ethernet (hme)
-		Onboard Older iMac 10-100Mbs (bm) Ethernet. 
-		Onboard G4/PowerBook/Newer iMac (gm) ethernet.
+		Onboard Older iMac 10-100Mbs (bm) Ethernet
+		Onboard G4/PowerBook/Newer iMac (gm) ethernet
 
 	Wireless Ethernet Adapters
-		Aironet 802.11DS PCI
-		WaveLAN IEEE 802.11DS
+		Aironet 802.11DS PCMCIA and PCI
+		WaveLAN IEEE 802.11DS PCMCIA
 
-	Tape drives:
-		SCSI Tape drives.
+	Tape drives
+		SCSI Tape drives
 
-	CD-ROM drives:
-		SCSI CD-ROM drives.
-		SCSI CD-RW drives.
-		Atapi CD-ROM drives.
-		Atapi DVD-ROM drives.
+	CD-ROM drives
+		SCSI CD-ROM drives
+		SCSI CD-RW drives
+		Atapi CD-ROM drives
+		Atapi DVD-ROM drives
 		Atapi DVD-RAM drives (read-only)
 		Atapi DVD-RW drives (read-only?)
-		Atapi CD-RW drives.
+		Atapi CD-RW drives
 
-	Keyboard:
-		ADB and USB keyboards.
+	Keyboards
+		ADB and USB keyboards
 
-	Mice:
-		USB Mice. 
-		ADB trackpads.
+	Mice
+		USB Mice.
+		ADB trackpads
 
-	Sound Cards:
-		AWACS.
+	Sound Cards
+		AWACS
 		USB audio (uaudio)
 
-	Miscellaneous:
-		USB Hubs.
-		USB printers.
+	Miscellaneous
+		USB Hubs
+		USB printers
+		USB Zip drives
 
-	Cryptography Accelerators:
+	Cryptography Accelerators
 		Hifn 7751/7811/7951 (hifn)
 		Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 (ubsec)
 
 The built-in firewire (IEEE1394) ports available in some machines are
 not supported.
-The built-in Cardbus slot in some machines is not not supported.
+The built-in Cardbus slot in some machines is not supported.

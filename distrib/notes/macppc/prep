@@ -69,8 +69,10 @@ setenv boot-device ide:,ofwboot
 dev /		(change to root level of the device tree)
 pwd		(show current location in the device tree)
 ls		(show items at current location in the device tree)
-words		(show methods of items at current location in the device tree)
-.properties	(show properties of items at current location in the device tree)
+words		(show methods of items at current location in the device
+		tree)
+.properties	(show properties of items at current location in the
+		device tree)
 
 
 To reset a Power Macintosh to the factory-configure Open Firmware settings,
