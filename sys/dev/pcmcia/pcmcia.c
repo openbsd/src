@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.9 1997/04/17 08:21:12 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.10 1997/08/19 21:59:49 angelos Exp $	*/
 
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
@@ -853,6 +853,10 @@ pcmcia_read_cis(link, scratch, offs, len)
 	u_char *p = SCRATCH_MEM(pca);
 	int size = SCRATCH_SIZE(pca);
 	volatile int *inuse = &SCRATCH_INUSE(pca);
+	int pgoff = offs / size;
+	int toff;
+
+	toff = offs - (pgoff * size);
 
 	PPRINTF(("- pcmcia_read_cis: mem %p size %d\n", p, size));
 	if (pca == NULL)
@@ -865,9 +869,7 @@ pcmcia_read_cis(link, scratch, offs, len)
 	splx(s);
 
 	while (len > 0) {
-		int pgoff = offs / size;
-		int toff = offs - (pgoff * size);
-		int tlen = min(len + toff, size / 2) - toff;
+		int tlen = min(len, (size - toff) / 2);
 		int i;
 
 		if ((err = PCMCIA_MAP_MEM(pca, link, pca->pa_memt, p, pgoff,
@@ -884,6 +886,8 @@ pcmcia_read_cis(link, scratch, offs, len)
 		PCMCIA_MAP_MEM(pca, link, pca->pa_memt, p, 0, size,
 			       PCMCIA_LAST_WIN | PCMCIA_UNMAP);
 		len -= tlen;
+		pgoff++;
+		toff = 0;
 	}
 error:
 	s = splbio();
