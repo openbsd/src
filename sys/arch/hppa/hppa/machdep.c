@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2002/02/11 19:42:11 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2002/02/12 05:23:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -323,13 +323,27 @@ hppa_init(start)
 
 	/* setup hpmc handler */
 	{
-		extern u_int hpmc_v;	/* from locore.s */
-		register u_int *p = &hpmc_v;
+		extern u_int hpmc_v[];	/* from locore.s */
+		register u_int *p = hpmc_v;
 
 		if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
-			*p = 0;	/* XXX nop is more appropriate? */
+			*p = 0x08000240;
 
+		p[6] = (u_int)&hpmc_dump;
+		p[7] = 32;
 		p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
+	}
+
+	{
+		extern u_int hppa_toc[], hppa_toc_end[];
+		register u_int cksum, *p;
+
+		for (cksum = 0, p = hppa_toc; p < hppa_toc_end; p++)
+			cksum += *p;
+
+		*p = cksum;
+		PAGE0->ivec_toc = (int (*)(void))hppa_toc;
+		PAGE0->ivec_toclen = hppa_toc_end - hppa_toc + 1;
 	}
 
 	/* BTLB params */
@@ -912,8 +926,8 @@ boot(howto)
 	if (howto & RB_DUMP)
 		dumpsys();
 
-haltsys:
 	doshutdownhooks();
+haltsys:
 
 	if (howto & RB_HALT) {
 		printf("System halted!\n");
@@ -955,7 +969,10 @@ cpu_dumpsize()
 void
 hpmc_dump()
 {
+	printf("HPMC\n");
 
+	cold = 0;
+	boot(RB_NOSYNC);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.52 2002/02/11 21:29:37 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.53 2002/02/12 05:23:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -1026,6 +1026,21 @@ hpmc_never_dies
 	b	hpmc_never_dies
 	nop
 EXIT(TLABEL(hpmc))
+
+ENTRY(hppa_toc,0)
+
+	.import	boot, code
+	ldil	L%boot, t1
+	ldo	R%boot(t1), t1
+	ldi	0, arg0
+	.call
+	blr	r0, rp
+	bv,n	0(t1)
+	nop
+
+ALTENTRY(hppa_toc_end)
+	.word	0
+EXIT(hppa_toc)
 
 	.export TLABEL(emu), entry
 LEAF_ENTRY(TLABEL(emu))
