@@ -239,6 +239,7 @@
 ./usr/bin/fsplit
 ./usr/bin/fstat
 ./usr/bin/ftp
+./usr/bin/gdbtui
 ./usr/bin/gencat
 ./usr/bin/getconf
 ./usr/bin/getopt
