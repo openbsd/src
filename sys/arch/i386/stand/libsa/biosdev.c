@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.41 1997/10/24 01:38:50 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.42 1997/10/24 17:16:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -70,11 +70,15 @@ bios_getinfo(dev, pdi)
 	int dev;
 	bios_diskinfo_t *pdi;
 {
-	u_int rv, bm, sgn;
+	u_int rv, bm;
+#ifdef BIOS_DEBUG
+	printf("getinfo: try #8, %x,%p\n", dev, pdi);
+#endif
+	BIOS_regs.biosr_ds = BIOS_regs.biosr_es = 0;
 	__asm __volatile (DOINT(0x13) "\n\t"
 			  "setc %b0; movzbl %h1, %1\n\t"
 			  "movzbl %%cl, %3; andb $0x3f, %b3\n\t"
-			  "xchgb %%cl, %%ch; rorb $2, %%ch"
+			  "xchgb %%cl, %%ch; rolb $2, %%ch"
 			  : "=a" (rv), "=d" (pdi->bios_heads),
 			    "=c" (pdi->bios_cylinders),
 			    "=b" (pdi->bios_sectors)
@@ -85,18 +89,22 @@ bios_getinfo(dev, pdi)
 	pdi->bios_heads++;
 	pdi->bios_cylinders &= 0x3ff;
 	pdi->bios_cylinders++;
-
-	if (rv & 0xff)
+#ifdef BIOS_DEBUG
+	printf("getinfo: got #8\n");
+#endif
+	if (rv & 0xff || !pdi->bios_cylinders)
 		return(1);
 
-	/* EDD support check */
-	__asm __volatile(DOINT(0x13) "; setc %b0"
-		 : "=a" (rv), "=c" (bm), "=b" (sgn)
-		 : "0" (0x4400), "2" (0x55aa) : "%edx", "cc");
-	if (!(rv & 0xff) && (sgn & 0xffff) == 0xaa55)
-		pdi->bios_edd = bm & 0xffff;
-	else
-		pdi->bios_edd = -1;
+	if (dev & 0x80) {
+		/* EDD support check */
+		__asm __volatile(DOINT(0x13) "; setc %b0"
+			 : "=a" (rv), "=c" (bm)
+			 : "0" (0x4100), "2" (0x55aa), "d" (dev) : "cc");
+		if (!(rv & 0xff) && (BIOS_regs.biosr_bx & 0xffff) == 0xaa55)
+			pdi->bios_edd = bm & 0xffff;
+		else
+			pdi->bios_edd = -1;
+	}
 
 	/*
 	 * NOTE: This seems to hang on certain machines.  Use function #8
@@ -104,10 +112,9 @@ bios_getinfo(dev, pdi)
 	 */
 	__asm __volatile (DOINT(0x13) "; setc %b0"
 		: "=a" (rv) : "0" (0x1500), "d" (dev) : "%ecx", "cc");
-
 	if(!(rv & 0xff00))
 		return(1);
-	if(rv & 0x00ff)
+	if(rv & 0xff)
 		return(1);
 
 	return(0);
