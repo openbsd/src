@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.759 2004/09/18 20:31:45 beck Exp $
+$OpenBSD: pcidevs,v 1.760 2004/09/20 17:27:52 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1801,6 +1801,7 @@ product NVIDIA NFORCE3_USB	0x00d7	nForce3 USB
 product NVIDIA NFORCE3_USB2	0x00d8	nForce3 USB2
 product NVIDIA NFORCE3_ACA	0x00da	nForce3 AC-97 Audio
 product NVIDIA NFORCE3_PPB	0x00dd	nForce3 PCI-PCI
+product NVIDIA NFORCE3_250_ACA	0x00ea	nForce3 250 AC-97 Audio
 product NVIDIA GEFORCE256	0x0100	GeForce256
 product NVIDIA GEFORCE256_DDR	0x0101	GeForce256 DDR
 product NVIDIA QUADOR		0x0103	Quadro
