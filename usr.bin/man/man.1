@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.10 1999/06/10 22:38:02 pjanzen Exp $
+.\"	$OpenBSD: man.1,v 1.11 1999/09/16 09:37:44 deraadt Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,16 +75,35 @@ for you).
 This can be used to find which man page applies to a particular subsystem
 you are interested in, for instance
 .Pp
-.Nm man Fl k Em compat
+.Nm man Fl k Em mount
 .Pp
 will list all man-pages which contain your
 .Ar keyword
 in the
 .Em NAME
-line of the man page
-(ie.
-.Em Nm man - display the on-line manual pages
-above).
+line of the man page;
+in this case a list much like this:
+.Bd -literal -offset xx
+amd (8) - automatically mount file systems
+amq (8) - automounter query tool
+mount (8) - mount file systems
+mount, unmount (2) - mount or dismount a filesystem
+mount_ados (8) - mount an AmigaDOS file system
+mount_cd9660 (8) - mount an ISO-9660 filesystem
+mount_ext2fs (8) - mount a ext2fs file system
+mount_fdesc (8) - mount the file-descriptor file system
+mount_ffs, mount_ufs (8) - mount a Berkeley Fast File System
+mount_kernfs (8) - mount the /kern file system
+mount_procfs (8) - mount the process file system
+mount_umap (8) - sample file system layer
+mount_union (8) - mount union filesystems
+mount_xfs (8) - mount the xfs filesystem
+mount_xfs (8) - mount the xfs filesystem.
+mountd (8) - service remote NFS mount requests
+newfs, mount_mfs (8) - construct a new file system
+umount (8) - unmount file systems
+\&...
+.Ed
 .It Fl a
 Display all of the manual pages for a specified
 .Ar section
