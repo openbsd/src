@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.41 2001/02/06 17:29:30 fgsch Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.42 2001/03/07 05:43:17 aaron Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -252,12 +252,18 @@ int iplattach()
 # ifdef	IPFILTER_LOG
 	ipflog_init();
 # endif
-	if (nat_init() == -1)
+	if (nat_init() == -1) {
+		SPL_X(s);
 		return -1;
-	if (fr_stateinit() == -1)
+	}
+	if (fr_stateinit() == -1) {
+		SPL_X(s);
 		return -1;
-	if (appr_init() == -1)
+	}
+	if (appr_init() == -1) {
+		SPL_X(s);
 		return -1;
+	}
 
 # ifdef NETBSD_PF
 #  if __NetBSD_Version__ >= 104200000
