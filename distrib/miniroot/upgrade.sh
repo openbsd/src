@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.49 2003/06/23 00:38:57 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.50 2003/06/23 00:43:18 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -91,7 +91,7 @@ case $resp in
 y*|Y*) enable_network ;;
 esac
 
-# Offer the user to opportunity to tweak, repair, or create the network
+# Offer the user the opportunity to tweak, repair, or create the network
 # configuration by hand.
 manual_net_cfg
 
