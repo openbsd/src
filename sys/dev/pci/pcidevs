@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.299 2000/08/06 16:50:03 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.300 2000/08/06 22:30:45 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -47,7 +47,7 @@
 vendor MARTINMARIETTA	0x003d	Martin-Marietta 
 vendor COMPAQ		0x0e11	Compaq
 vendor SYMBIOS		0x1000	Symbios Logic
-vendor ATI		0x1002	ATI Technologies
+vendor ATI		0x1002	ATI
 vendor ULSI		0x1003	ULSI Systems
 vendor VLSI		0x1004	VLSI Technology
 vendor AVANCE		0x1005	Avance Logic
@@ -753,6 +753,7 @@ product ATI RAGE_MAGNUM		0x5246	Rage Magnum
 product ATI MACH64_VT		0x5654	Mach64 VT
 product ATI MACH64_VU		0x5655	Mach64 VU
 product ATI MACH64_VV		0x5656	Mach64 VV
+product ATI RAGE_FURY		0x5046	Rage Fury AGP4x
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
