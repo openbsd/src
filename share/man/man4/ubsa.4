@@ -1,4 +1,4 @@
-.\" $OpenBSD: ubsa.4,v 1.4 2005/03/18 00:33:01 deraadt Exp $
+.\" $OpenBSD: ubsa.4,v 1.5 2005/03/18 06:24:36 jmc Exp $
 .\" $NetBSD: ubsa.4,v 1.1 2002/10/08 13:18:42 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ serial adapters from Belkin and other vendors.
 .Pp
 Some 3G (UMTS/GPRS/GSM)
 .Xr cardbus 4
-devices are using a Belkin serial adapter and an
+devices use a Belkin serial adapter and an
 .Xr ohci 4
 controller to provide a common AT interface.
 .Pp
@@ -76,6 +76,7 @@ The device is accessed through the
 driver which makes it behave like a
 .Xr tty 4 .
 .Sh SEE ALSO
+.Xr cardbus 4 ,
 .Xr tty 4 ,
 .Xr ucom 4 ,
 .Xr usb 4
