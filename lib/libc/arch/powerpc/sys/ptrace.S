@@ -7,6 +7,7 @@ PREFIX(ptrace)
 	sc
 	cmpwi 0, 0
  	beq ok
- 	b cerror
+	b	PIC_PLT(_ASM_LABEL(cerror))
+
 ok:
 	blr

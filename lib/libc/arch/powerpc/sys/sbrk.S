@@ -4,16 +4,26 @@
 	.globl _end
 	.globl curbrk
 	.globl minbrk
-curbrk:	.long _end
-minbrk:	.long _end
+_ASM_LABEL(curbrk):
+	.long _C_LABEL(end)
+_ASM_LABEL(minbrk):
+	.long _C_LABEL(end)
 
 
 	.text
-PSEUDO_PREFIX(sbrk,break)
+PREFIX2(sbrk,break)
 	
 	/* call break(curbrk + size) */
-	addis	6,0,curbrk@h
-	ori	6,6,curbrk@l	/* # 6 = &curbrk */
+#ifndef PIC
+	addis	6, 0, curbrk@H
+	ori	6, 6, curbrk@L	/* # 6 = &curbrk */
+#else
+	mflr	10
+	bl	_GLOBAL_OFFSET_TABLE_@local-4
+	mflr	4
+	mtlr	10
+	lwz	6,_ASM_LABEL(curbrk)@got(9)
+#endif
 	lwz	5, 0(6)		/* # 5 = *6 (old_curbrk) */
 	add	3, 5, 3		/* # 3 = new_curbrk */
 	mr	7, 3
@@ -21,12 +31,12 @@ PSEUDO_PREFIX(sbrk,break)
 	sc
 
 	/* check for error */
-	cmpwi 0, 0
-	beq+ sbrk_ok		/* OK so this is stupid but I haven't read b */
-	b cerror
+	cmpwi	0, 0
+	beq+	.L_sbrk_ok
+	b	PIC_PLT(_ASM_LABEL(cerror))
 
 	/* update, curbrk and return */
-sbrk_ok:
+.L_sbrk_ok:
 	stw	7, 0(6)		/* # remember, 6=&curbrk, 7=new_curbrk */
 	mr	3, 5		/* # remember, 5=old_curbrk */
 	blr
