@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.573 2003/01/05 12:47:20 grange Exp 
+ *		OpenBSD: pcidevs,v 1.574 2003/01/08 22:04:17 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4979,6 +4979,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "4S2P",
 	},
 	{
+	    PCI_VENDOR_SYMBOL, PCI_PRODUCT_SYMBOL_LA41X3,
+	    "Spectrum24 LA41X3 Series WLAN",
+	},
+	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
 	    "82C101",
 	},
@@ -8103,16 +8107,20 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "TerraTec Electronic Gmbh",
 	},
 	{
+	    PCI_VENDOR_SYMBOL,
+	    "Symbol",
+	},
+	{
+	    PCI_VENDOR_SYBA,
+	    "Syba",
+	},
+	{
 	    PCI_VENDOR_BLUESTEEL,
 	    "Bluesteel Networks",
 	},
 	{
 	    PCI_VENDOR_VMWARE,
 	    "VMware",
-	},
-	{
-	    PCI_VENDOR_SYBA,
-	    "Syba",
 	},
 	{
 	    PCI_VENDOR_NDC,

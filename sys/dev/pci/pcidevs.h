@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.573 2003/01/05 12:47:20 grange Exp 
+ *		OpenBSD: pcidevs,v 1.574 2003/01/08 22:04:17 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -554,9 +554,10 @@
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic Gmbh */
+#define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
+#define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
-#define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
@@ -2158,6 +2159,9 @@
 
 /* Syba */
 #define	PCI_PRODUCT_SYBA_4S2P	0x0781		/* 4S2P */
+
+/* Symbol */
+#define	PCI_PRODUCT_SYMBOL_LA41X3	0x0001		/* Spectrum24 LA41X3 Series WLAN */
 
 /* Symphony Labs products */
 #define	PCI_PRODUCT_SYMPHONY_82C101	0x0001		/* 82C101 */
