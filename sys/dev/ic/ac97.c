@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.41 2004/02/27 17:37:56 deraadt Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.42 2004/04/23 09:26:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -294,7 +294,8 @@ int ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
 				  char *);
 void ac97_restore_shadow(struct ac97_codec_if *self);
 
-static void ac97_ad198x_init(struct ac97_softc *);
+void ac97_ad198x_init(struct ac97_softc *);
+void ac97_cx20468_init(struct ac97_softc *);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -349,7 +350,8 @@ const struct ac97_codecid {
 	{ 0x50,	0xf8, 7, 0,	"CS4205" },
 	{ 0x60,	0xf8, 7, 0,	"CS4291" },
 }, ac97_cx[] = {
-	{ 0x29, 0xff, 0, 0,	"CX20468" },
+	{ 0x21, 0xff, 0, 0,	"HSD11246" },
+	{ 0x28, 0xf8, 7, 0,	"CX20468",	ac97_cx20468_init },
 }, ac97_em[] = {
 	{ 0x23, 0xff, 0, 0,	"EM28023" },
 	{ 0x28, 0xff, 0, 0,	"EM28028" },
@@ -1058,7 +1060,7 @@ ac97_set_rate(codec_if, p, mode)
  * Codec-dependent initialization
  */
   	 
-static void
+void
 ac97_ad198x_init(struct ac97_softc *as)
 {
         unsigned short misc;
@@ -1066,4 +1068,14 @@ ac97_ad198x_init(struct ac97_softc *as)
         ac97_read(as, AC97_AD_REG_MISC, &misc);
         ac97_write(as, AC97_AD_REG_MISC,
 	    misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
+}
+
+void
+ac97_cx20468_init(struct ac97_softc *as)
+{
+        unsigned short misc;
+
+        ac97_read(as, AC97_CX_REG_MISC, &misc);
+        ac97_write(as, AC97_CX_REG_MISC,
+	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
 }

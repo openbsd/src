@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.15 2003/07/15 13:20:31 couderc Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.16 2004/04/23 09:26:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -154,13 +154,21 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define	AC97_VENDOR_ID_MASK		0xffffff00
 
 /* Analog Devices codec specific data */
-#define AC97_AD_REG_MISC        0x76
-#define AC97_AD_MISC_MBG        0x0001  /* 0 */
-#define AC97_AD_MISC_VREFD      0x0002  /* 1 */
-#define AC97_AD_MISC_VREFH      0x0004  /* 2 */
-#define AC97_AD_MISC_MADST      0x0008  /* 3 */
-#define AC97_AD_MISC_MADPD      0x0020  /* 5 */
-#define AC97_AD_MISC_FMXE       0x0100  /* 8 */
-#define AC97_AD_MISC_DAM        0x0400  /*10 */
-#define AC97_AD_MISC_MSPLT      0x1000  /*12 */
-#define AC97_AD_MISC_DACZ       0x4000  /*14 */
+#define AC97_AD_REG_MISC	0x76
+#define AC97_AD_MISC_MBG	0x0001	/* 0 */
+#define AC97_AD_MISC_VREFD	0x0002	/* 1 */
+#define AC97_AD_MISC_VREFH	0x0004	/* 2 */
+#define AC97_AD_MISC_MADST	0x0008	/* 3 */
+#define AC97_AD_MISC_MADPD	0x0020	/* 5 */
+#define AC97_AD_MISC_FMXE	0x0100	/* 8 */
+#define AC97_AD_MISC_DAM	0x0400	/*10 */
+#define AC97_AD_MISC_MSPLT	0x1000	/*12 */
+#define AC97_AD_MISC_DACZ	0x4000	/*14 */
+
+/* Conexant codec specific data */
+#define AC97_CX_REG_MISC	0x5c
+#define AC97_CX_PCM		0x00
+#define AC97_CX_AC3		0x02
+#define AC97_CX_MASK		0x03
+#define AC97_CX_COPYRIGHT	0x04
+#define AC97_CX_SPDIFEN		0x08
