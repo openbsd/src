@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.19 2001/06/26 14:19:33 lebel Exp $	*/
+/*	$OpenBSD: tar.c,v 1.20 2001/06/26 14:55:13 lebel Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.19 2001/06/26 14:19:33 lebel Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.20 2001/06/26 14:55:13 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -1020,7 +1020,7 @@ ustar_wr(arcn)
 		 * occur, we remove the / and copy the first part to the prefix
 		 */
 		*pt = '\0';
-		strncpy(hd->prefix, arcn->name, sizeof(hd->prefix));
+		strlcpy(hd->prefix, arcn->name, sizeof(hd->prefix));
 		*pt++ = '/';
 	} else
 		memset(hd->prefix, 0, sizeof(hd->prefix));
@@ -1029,7 +1029,7 @@ ustar_wr(arcn)
 	 * copy the name part. this may be the whole path or the part after
 	 * the prefix
 	 */
-	strncpy(hd->name, pt, sizeof(hd->name));
+	strlcpy(hd->name, pt, sizeof(hd->name));
 
 	/*
 	 * set the fields in the header that are type dependent
@@ -1072,7 +1072,7 @@ ustar_wr(arcn)
 			hd->typeflag = SYMTYPE;
 		else
 			hd->typeflag = LNKTYPE;
-		strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		strlcpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
 		memset(hd->devmajor, 0, sizeof(hd->devmajor));
 		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))
