@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.5 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: banner.c,v 1.6 2003/03/13 23:11:16 tedu Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -53,16 +53,13 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.5 2001/11/19 19:02:13 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: banner.c,v 1.6 2003/03/13 23:11:16 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,15 +136,20 @@ scan_out(scfd, scsp, dlm)
 	for (scnhgt = 0; scnhgt++ < HEIGHT+DROP; ) {
 		strp = &outbuf[0];
 		sp = scsp;
-		for (nchrs = 0; ; ) {
-			c = TRC(cc = *sp++);
+		for (nchrs = 0; *sp != dlm && *sp != '\0'; ) {
+			cc = *sp++;
+			if ((unsigned char)cc < ' ' ||
+			    (unsigned char)cc > 0x7f)
+				cc = INVALID;
+
+			c = TRC(cc);
 			d = dropit(c);
 			if ((!d && scnhgt > HEIGHT) || (scnhgt <= DROP && d))
 				for (j = WIDTH; --j;)
 					*strp++ = BACKGND;
 			else
 				strp = scnline(scnkey[(int)c][scnhgt-1-d], strp, cc);
-			if (*sp == dlm || *sp == '\0' || nchrs++ >= PW/(WIDTH+1)-1)
+			if (nchrs++ >= PW/(WIDTH+1)-1)
 				break;
 			*strp++ = BACKGND;
 #ifdef LPD_CHSET				/* <sjg> */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chset.c,v 1.2 1996/06/26 05:31:35 deraadt Exp $	*/
+/*	$OpenBSD: chset.c,v 1.3 2003/03/13 23:11:16 tedu Exp $	*/
 /*	$NetBSD: chset.c,v 1.2 1995/04/09 06:00:26 cgd Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #if 0
 static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: chset.c,v 1.2 1996/06/26 05:31:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: chset.c,v 1.3 2003/03/13 23:11:16 tedu Exp $";
 #endif
 #endif /* not lint */
 
