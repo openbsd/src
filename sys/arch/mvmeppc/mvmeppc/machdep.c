@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2004/01/25 23:04:11 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2004/01/26 22:58:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ struct extent *devio_ex;
 static int devio_malloc_safe = 0;
 
 /* HACK - XXX */
-int segment8_mapped = 0;
+int segment8_mapped = 1;
 int segmentC_mapped = 0;
 
 void
@@ -217,6 +217,8 @@ initppc(startkernel, endkernel, args)
 	 */
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
+	battable[8].batl = BATL(0x80000000, BAT_I);
+	battable[8].batu = BATU(0x80000000);
 	
 	/*
 	 * Now setup fixed bat registers
@@ -231,6 +233,10 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	ppc_mtdbat0l(battable[0].batl);
 	ppc_mtdbat0u(battable[0].batu);
+
+	/* DBAT2 used for ISA space */
+	ppc_mtdbat2l(battable[8].batl);
+	ppc_mtdbat2u(battable[8].batu);
 
 	/*
 	 * Set up trap vectors
@@ -298,7 +304,7 @@ initppc(startkernel, endkernel, args)
 	pmap_bootstrap(startkernel, endkernel);
 
 #if 1
-	/* MVME2[67]00 max out at 256MB */
+	/* MVME2[67]00 max out at 256MB, and we need BAT2 for now. */
 #else
 	/* use BATs to map 1GB memory, no pageable BATs now */
 	if (physmem > btoc(0x10000000)) {
