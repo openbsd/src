@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.4 1996/05/26 00:27:50 deraadt Exp $	*/
+/*	$OpenBSD: ms.c,v 1.5 1996/12/03 07:36:29 kstailey Exp $	*/
 /*	$NetBSD: ms.c,v 1.6 1996/05/17 19:32:09 gwr Exp $	*/
 
 /*
@@ -544,10 +544,13 @@ ms_stint(cs)
 
 	ms = cs->cs_private;
 
-	cs->cs_rr0_new = zs_read_csr(cs);
+	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
+	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
+	cs->cs_rr0 = rr0;
 	ms->ms_intr_flags |= INTR_ST_CHECK;
+
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
 }
@@ -615,7 +618,7 @@ ms_softint(cs)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
 		    ms->ms_dev.dv_xname);
-		cs->cs_rr0 = cs->cs_rr0_new;
+		cs->cs_rr0_delta = 0;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.4 1996/05/26 00:27:49 deraadt Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.5 1996/12/03 07:36:32 kstailey Exp $	*/
 /*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
 
 /*
@@ -1034,7 +1034,7 @@ kbd_stint(cs)
 
 	k = cs->cs_private;
 
-	cs->cs_rr0_new = zs_read_csr(cs);
+	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 #if 0
@@ -1045,7 +1045,10 @@ kbd_stint(cs)
 	}
 #endif
 
+	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
+	cs->cs_rr0 = rr0;
 	k->k_intr_flags |= INTR_ST_CHECK;
+
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
 }
@@ -1126,7 +1129,7 @@ kbd_softint(cs)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
 		    k->k_dev.dv_xname);
-		cs->cs_rr0 = cs->cs_rr0_new;
+		cs->cs_rr0_delta = 0;
 	}
 
 	splx(s);
