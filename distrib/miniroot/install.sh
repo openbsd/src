@@ -1,6 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.2 1996/03/28 21:48:18 niklas Exp $
-#	$NetBSD: install.sh,v 1.2 1996/02/28 00:47:42 thorpej Exp $
+#	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	OpenBSD installation script.
+#	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
@@ -50,20 +49,29 @@ MODE="install"
 
 # include machine-dependent functions
 # The following functions must be provided:
+#	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_ifdevs()		- return available network interfaces
+#	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
-#	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
+#	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
+#	md_native_fstype()	- native filesystem type for disk installs
+#	md_native_fsopts()	- native filesystem options for disk installs
+#	md_makerootwritable()	- make root writable (at least /tmp)
+
+# include machine dependent subroutines
 . install.md
 
 # include common subroutines
 . install.sub
 
+# which sets?
+THESETS="$ALLSETS"
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -88,8 +96,10 @@ md_set_term
 # Get timezone info
 get_timezone
 
-# We don't like it, but it sure makes a few things a lot easier.
-do_mfs_mount "/tmp" "2048"
+# Make sure we can write files (at least in /tmp)
+# This might make an MFS mount on /tmp, or it may
+# just re-mount the root with read-write enabled.
+md_makerootwritable
 
 # Install the shadowed disktab file; lets us write to it for temporary
 # purposes without mounting the miniroot read-write.
@@ -99,68 +109,10 @@ while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
 done
 
-# Make sure there's a disklabel there.  If there isn't, puke after
-# disklabel prints the error message.
-md_checkfordisklabel ${ROOTDISK}
-case "$resp" in
-	1)
-		cat << \__disklabel_not_present_1
-
-FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
-
-__disklabel_not_present_1
-		exit
-		;;
-
-	2)
-		cat << \__disklabel_corrupted_1
-
-FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
-
-__disklabel_corrupted_1
-		exit
-		;;
-
-	*)
-		;;
-esac
-
-# Give the user the opportinuty to edit the root disklabel.
-cat << \__disklabel_notice_1
-
-You have already placed a disklabel onto the target root disk.
-However, due to the limitations of the standalone program used
-you may want to edit that label to change partition type information.
-You will be given the opporunity to do that now.  Note that you may
-not change the size or location of any presently open partition.
-
-__disklabel_notice_1
-echo -n	"Do you wish to edit the root disklabel? [y] "
-getresp "y"
-case "$resp" in
-	y*|Y*)
-		md_prep_disklabel
-		disklabel -W ${ROOTDISK}
-		disklabel -e ${ROOTDISK}
-		;;
-
-	*)
-		;;
-esac
-
-cat << \__disklabel_notice_2
-
-You will now be given the opportunity to place disklabels on any additional
-disks on your system.
-__disklabel_notice_2
-
-_DKDEVS=`rmel ${ROOTDISK} ${_DKDEVS}`
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
-	labelmoredisks
-done
+# Deal with disklabels, including editing the root disklabel
+# and labeling additional disks.  This is machine-dependent since
+# some platforms may not be able to provide this functionality.
+md_prep_disklabel ${ROOTDISK}
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Loop and
 # get the rest.
@@ -205,12 +157,10 @@ while [ "X$resp" != X"done" ]; do
 				# Invalid response; no multiple roots
 				_first_char="X"
 			else
-				_first_char=`echo ${_mount_point} | \
-				    cut -c 1`
+				_first_char=`firstchar ${_mount_point}`
 			fi
 		done
-		echo "${_device_name}	${_mount_point}" >> \
-		    ${FILESYSTEMS}
+		echo "${_device_name}	${_mount_point}" >> ${FILESYSTEMS}
 		resp="X"	# force loop to repeat
 		;;
 	esac
@@ -226,7 +176,7 @@ echo -n	"mistakes, you may edit this now.  Edit? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		vi ${FILESYSTEMS}
+		${EDITOR} ${FILESYSTEMS}
 		;;
 	*)
 		;;
@@ -235,8 +185,7 @@ esac
 # Loop though the file, place filesystems on each device.
 echo	"Creating filesystems..."
 (
-	while read line; do
-		_device_name=`echo $line | awk '{print $1}'`
+	while read _device_name _junk; do
 		newfs /dev/r${_device_name}
 		echo ""
 	done
@@ -258,10 +207,13 @@ echo -n	"Configure the network? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		echo -n "Enter system hostname: "
 		resp=""		# force at least one iteration
+		if [ -f /etc/myname ]; then
+			resp=`cat /etc/myname`
+		fi
+		echo -n "Enter system hostname: [$resp] "
 		while [ "X${resp}" = X"" ]; do
-			getresp ""
+			getresp "$resp"
 		done
 		hostname $resp
 		echo $resp > /tmp/myname
@@ -315,7 +267,7 @@ case "$resp" in
 		getresp "n"
 		case "$resp" in
 			y*|Y*)
-				vi /tmp/hosts
+				${EDITOR} /tmp/hosts
 				;;
 
 			*)
@@ -355,12 +307,15 @@ esac
 
 # Now that the network has been configured, it is safe to configure the
 # fstab.
-awk '{
-	if ($2 == "/")
-		printf("/dev/%s %s ffs rw 1 1\n", $1, $2)
-	else
-		printf("/dev/%s %s ffs rw 1 2\n", $1, $2)
-}' < ${FILESYSTEMS} > /tmp/fstab
+(
+	while read _dev _mp; do
+		if [ "$mp" = "/" ]; then
+			echo /dev/$_dev $_mp ffs rw 1 1
+		else
+			echo /dev/$_dev $_mp ffs rw 1 2
+		fi
+	done
+) < ${FILESYSTEMS} > /tmp/fstab
 
 echo	"The fstab is configured as follows:"
 echo	""
@@ -378,7 +333,7 @@ echo -n	"Edit the fstab? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		vi /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
@@ -389,7 +344,23 @@ echo ""
 munge_fstab /tmp/fstab /tmp/fstab.shadow
 mount_fs /tmp/fstab.shadow
 
-install_sets $ALLSETS
+mount | while read line; do
+	set -- $line
+	if [ "$2" = "/" -a "$3" = "nfs" ]; then
+		echo "You appear to be running diskless."
+		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
+		getresp "n"
+		case "$resp" in
+			y*|Y*)
+				get_localdir
+				;;
+			*)
+				;;
+		esac
+	fi
+done
+
+install_sets $ALLSETS $MDSETS
 
 # Copy in configuration information and make devices in target root.
 (
@@ -402,21 +373,29 @@ install_sets $ALLSETS
 		fi
 	done
 
-	echo -n "Installing timezone link..."
-	rm -f /mnt/etc/localtime
-	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-	echo "done."
-
-	echo -n "Making devices..."
-	pid=`twiddle`
-	cd /mnt/dev
-	sh MAKEDEV all
-	kill $pid
-	echo "done."
-
-	echo -n "Copying kernel..."
-	cp -p /bsd /mnt/bsd
-	echo "done."
+	# If no zoneinfo on the installfs, give them a second chance
+	if [ ! -e /usr/share/zoneinfo ]; then
+		get_timezone
+	fi
+	if [ ! -e /mnt/usr/share/zoneinfo ]; then
+		echo "Cannot install timezone link..."
+	else
+		echo -n "Installing timezone link..."
+		rm -f /mnt/etc/localtime
+		ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+		echo "done."
+	fi
+	if [ ! -x /mnt/dev/MAKEDEV ]; then
+		echo "No /dev/MAKEDEV installed, something is wrong here..."
+	else
+		echo -n "Making devices..."
+		pid=`twiddle`
+		cd /mnt/dev
+		sh MAKEDEV all
+		kill $pid
+		echo "done."
+	fi
+	md_copy_kernel
 
 	md_installboot ${ROOTDISK}
 )

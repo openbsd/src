@@ -1,37 +1,30 @@
 #
-# $NetBSD: mini_xx.mk,v 1.1 1995/11/21 21:19:04 gwr Exp $
+# $NetBSD: mini_xx.mk,v 1.1.6.1 1996/08/29 03:17:15 gwr Exp $
 # Hacks for re-linking some programs -static
 #
 
-MINI_XX = awk grep more tip vi
+MINI_XX = grep less tip vi
 mini_xx : ${MINI_XX}
 
 clean_xx:
-	-rm -f mini_xx ${MINI_XX}
+	-rm -f ${MINI_XX}
 
-awk : FORCE
-	cd ${BSDSRCDIR}/gnu/usr.bin/gawk ;\
-	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
-	    OUTDIR=${.CURDIR} ${.CURDIR}/awk
-
-grep : FORCE
+grep :
 	cd ${BSDSRCDIR}/gnu/usr.bin/grep ;\
 	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
 	    OUTDIR=${.CURDIR} ${.CURDIR}/grep
 
-more : FORCE
-	cd ${BSDSRCDIR}/usr.bin/more ;\
+less :
+	cd ${BSDSRCDIR}/usr.bin/less/less ;\
 	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
-	    OUTDIR=${.CURDIR} ${.CURDIR}/more
+	    OUTDIR=${.CURDIR} ${.CURDIR}/less
 
-tip : FORCE
+tip :
 	cd ${BSDSRCDIR}/usr.bin/tip ;\
 	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
 	    OUTDIR=${.CURDIR} ${.CURDIR}/tip
 
-vi : FORCE
-	cd ${BSDSRCDIR}/usr.bin/vi/common ;\
+vi :
+	cd ${BSDSRCDIR}/usr.bin/vi/build ;\
 	$(MAKE) -f Makefile -f ${TOP}/common/Make.static \
 	    OUTDIR=${.CURDIR} ${.CURDIR}/vi
-
-FORCE:

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 1996/06/29 05:54:21 tholo Exp $
+#	$Id: list,v 1.6 1996/09/05 21:26:56 deraadt Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
@@ -19,7 +19,7 @@ SPECIAL	/usr/sbin/chroot . ./pwd_mkdb -p /etc/master.passwd
 SPECIAL	/bin/rm pwd_mkdb
 
 # copy the crunched binary, link to it
-COPY	${OBJDIR}/bsd.gz	bsd.gz
+COPY	${OBJDIR}/netbsd.gz	netbsd.gz
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
 LINK	instbin			bin/chmod
@@ -44,7 +44,6 @@ LINK	instbin			bin/rmdir
 LINK	instbin			bin/sh
 LINK	instbin			bin/stty
 LINK	instbin			bin/sync
-LINK	instbin			bin/tar
 LINK	instbin			bin/test
 LINK	instbin			bin/[
 LINK	instbin			sbin/bim
@@ -71,7 +70,6 @@ LINK	instbin			sbin/rrestore
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/swapon
 LINK	instbin			sbin/umount
-SYMLINK	/instbin		usr/bin/awk
 SYMLINK	/instbin		usr/bin/basename
 SYMLINK	/instbin		usr/bin/chgrp
 SYMLINK	/instbin		usr/bin/dirname
@@ -83,9 +81,11 @@ SYMLINK	/instbin		usr/bin/gunzip
 SYMLINK	/instbin		usr/bin/gzcat
 SYMLINK	/instbin		usr/bin/gzip
 SYMLINK	/instbin		usr/bin/more
+SYMLINK	/instbin		usr/bin/less
 SYMLINK	/instbin		usr/bin/netstat
 SYMLINK	/instbin		usr/bin/sed
 SYMLINK	/instbin		usr/bin/strings
+SYMLINK	/instbin		usr/bin/tar
 SYMLINK	/instbin		usr/bin/tip
 SYMLINK /instbin		usr/bin/vi
 SYMLINK /instbin		usr/bin/view

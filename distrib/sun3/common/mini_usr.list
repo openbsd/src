@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_usr.list,v 1.2 1995/11/21 21:19:00 gwr Exp $
+#	$NetBSD: mini_usr.list,v 1.2.6.1 1996/08/29 03:12:45 gwr Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -30,6 +30,7 @@ LINK		mini_usr		usr/bin/cut
 LINK		mini_usr		usr/bin/ftp
 LINK		mini_usr		usr/bin/rsh
 LINK		mini_usr		usr/bin/sed
+LINK		mini_usr		usr/bin/sort
 LINK		mini_usr		usr/bin/strings
 LINK		mini_usr		usr/bin/tftp
 

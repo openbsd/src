@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/04/25 21:30:33 niklas Exp $ 
-#	$NetBSD: Makefile.inc,v 1.5 1995/11/28 23:58:56 jtc Exp $ 
+#	$NetBSD: Makefile.inc,v 1.5.4.2 1996/08/07 07:29:42 phil Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -24,7 +23,7 @@ PWDOBJ=		${PWDSRC}/obj
 PWDOBJ=		${PWDSRC}
 .endif
 
-all: bsd
+all: netbsd
 	dd if=/dev/zero of=${IMAGE} bs=18k count=80
 	disklabel -r -w ${.OBJDIR}/${IMAGE} boot3 2>/dev/null
 	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" \
@@ -32,19 +31,25 @@ all: bsd
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} boot3
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp bsd ${MOUNT_POINT}/bsd
+	cp netbsd ${MOUNT_POINT}/netbsd
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 
-inject.fs: ${CBIN} ${LISTS} bsd.gz 
+inject.fs: ${CBIN} ${LISTS} netbsd.gz 
 	(cd ${PWDSRC}; ${MAKE})
-	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o
+	${CC} -static -o pwd_mkdb ${PWDOBJ}/*.o -lutil
+.ifndef SD
 	dd if=/dev/zero of=${.TARGET} bs=128k count=16
 	vnconfig -v -c ${VND_DEV} ${.TARGET}
 	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
 	mount ${VND_DEV} ${MOUNT_POINT}
+.else
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 -s 4096 \
+		-t 1 -u 256 /dev/r${SD}
+	mount /dev/${SD} ${MOUNT_POINT}
+.endif
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
@@ -52,7 +57,11 @@ inject.fs: ${CBIN} ${LISTS} bsd.gz
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
+.ifndef SD
 	vnconfig -u ${VND_DEV}
+.else
+	dd if=/dev/${SD} of=${.TARGET} bs=128k count=16
+.endif
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -60,7 +69,6 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	(cd ${COMMONDIR}; ${MAKE} download.o)
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
@@ -70,29 +78,29 @@ cloak: ${COMMONDIR}/cloak.c
 
 inject: ${COMMONDIR}/inject.c
 
-bsd.gz:
-	gzip -9 <${ADIR}/compile/DEFAULT/bsd >bsd.gz
-#	cp ${ADIR}/compile/DEFAULT/bsd /var/tmp/$$$$; \
+netbsd.gz:
+	gzip -9 <${ADIR}/compile/DEFAULT/netbsd >netbsd.gz
+#	cp ${ADIR}/compile/DEFAULT/netbsd /var/tmp/$$$$; \
 #		strip /var/tmp/$$$$; \
-#		gzip -9 </var/tmp/$$$$ >bsd.gz; \
+#		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
 #		rm /var/tmp/$$$$
 
 
-bsd.o: inject cloak inject.fs
-	cp ${ADIR}/compile/INSTALL/bsd /var/tmp/$$$$; \
+netbsd.o: inject cloak inject.fs
+	cp ${ADIR}/compile/INSTALL/netbsd /var/tmp/$$$$; \
 		strip /var/tmp/$$$$; \
 		./inject /var/tmp/$$$$ inject.fs; \
-		gzip -9 </var/tmp/$$$$ | ./cloak >bsd.o; \
+		gzip -9 </var/tmp/$$$$ | ./cloak >netbsd.o; \
 		rm /var/tmp/$$$$
 
 go.o: ${COMMONDIR}/go.c
 
-bsd: bsd.o go.o
-	ld -s -z -T 240000 -e _go go.o netbsd.o ${MDEC}/zboot.o -o bsd
+netbsd: netbsd.o go.o
+	ld -s -z -T 240000 -e _go go.o netbsd.o ${MDEC}/zboot.o -o netbsd
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
-	/bin/rm -f bsd* inject* cloak pwd_mkdb
+	/bin/rm -f netbsd* inject* cloak pwd_mkdb
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

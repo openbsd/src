@@ -1,15 +1,50 @@
-#	$OpenBSD: list,v 1.3 1996/04/25 21:31:40 niklas Exp $
-#	$NetBSD: list,v 1.2 1996/01/06 22:42:17 pk Exp $
+#	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
-# We can only get this program this way.
-COPY	${DESTDIR}/sbin/mount_mfs	sbin/mount_mfs
-SPECIAL	chmod 555 sbin/mount_mfs
+# Sparc extra's
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/dmesg
+
+SYMLINK	../../instbin		usr/bin/basename
+SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
+SYMLINK ../../instbin		usr/bin/cut
+SYMLINK ../../instbin		usr/bin/gawk usr/bin/awk
+SYMLINK ../../instbin		usr/bin/getopt
+SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
+SYMLINK ../../instbin		usr/bin/netstat
+SYMLINK ../../instbin		usr/bin/rsh
+SYMLINK ../../instbin		usr/bin/strings
+SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
+SYMLINK ../../instbin		usr/bin/vi
+SYMLINK	../../instbin		usr/bin/less usr/bin/more
+SYMLINK	../../instbin		usr/sbin/installboot
+SYMLINK	../../instbin		usr/sbin/sysctl
+
+# crunchgen source directory specials
+CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
+CRUNCHSPECIAL	less srcdir usr.bin/less/less
+CRUNCHSPECIAL	installboot srcdir sys/arch/sparc/stand/installboot
+
+
+# Minimize use of MFS
+SYMLINK	/tmp	var/tmp
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
+SPECIAL	cd dev; sh MAKEDEV all
+SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 
+# the zoneinfo
+COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
+
+# and the termcap file
+COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC/bsd	bsd
+COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow

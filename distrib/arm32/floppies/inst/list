@@ -1,0 +1,11 @@
+# $NetBSD: list,v 1.1 1996/05/16 19:59:01 mark Exp $
+
+# the disktab explanation file
+COPY	disktab.preinstall		etc/disktab.preinstall
+
+# and the installation tools
+COPY	dot.profile			.profile
+COPY	dot.instutils			.instutils
+COPY	install.sh			install
+COPY	dot.hdprofile			tmp/.hdprofile
+SPECIAL	chmod 755 install

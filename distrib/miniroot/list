@@ -1,4 +1,6 @@
-#	$NetBSD: list,v 1.3 1996/01/06 22:45:14 pk Exp $
+#	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
+
+SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -22,13 +24,9 @@ LINK	instbin			bin/sh
 LINK	instbin			bin/stty
 LINK	instbin			bin/sleep
 LINK	instbin			bin/sync
-LINK	instbin			bin/tar
-LINK	instbin			bin/test
-LINK	instbin			bin/[
-LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/dmesg
-LINK	instbin			sbin/fsck
-LINK	instbin			sbin/halt
+LINK	instbin			bin/test bin/[
+LINK	instbin			sbin/fsck_ffs sbin/fsck
+LINK	instbin			sbin/reboot sbin/halt
 LINK	instbin			sbin/ifconfig
 LINK	instbin			sbin/init
 LINK	instbin			sbin/mknod
@@ -36,46 +34,28 @@ LINK	instbin			sbin/mount
 LINK	instbin			sbin/mount_cd9660
 LINK	instbin			sbin/mount_ffs
 LINK	instbin			sbin/mount_nfs
-LINK	instbin			sbin/newfs
+LINK	instbin			sbin/newfs sbin/mount_mfs
 LINK	instbin			sbin/ping
-LINK	instbin			sbin/reboot
 LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
-SYMLINK	../../instbin		usr/bin/awk
-SYMLINK	../../instbin		usr/bin/basename
 SYMLINK	../../instbin		usr/bin/chflags
-SYMLINK	../../instbin		usr/bin/chgrp
-SYMLINK	../../instbin		usr/bin/cut
-SYMLINK	../../instbin		usr/bin/egrep
-SYMLINK	../../instbin		usr/bin/fgrep
-SYMLINK	../../instbin		usr/bin/ftp
-SYMLINK	../../instbin		usr/bin/grep
-SYMLINK	../../instbin		usr/bin/gunzip
-SYMLINK	../../instbin		usr/bin/gzcat
-SYMLINK	../../instbin		usr/bin/gzip
-SYMLINK	../../instbin		usr/bin/more
-SYMLINK	../../instbin		usr/bin/netstat
-SYMLINK	../../instbin		usr/bin/rsh
-SYMLINK	../../instbin		usr/bin/sed
-SYMLINK	../../instbin		usr/bin/strings
-SYMLINK	../../instbin		usr/bin/sort
-SYMLINK	../../instbin		usr/bin/tip
-SYMLINK	../../instbin		usr/bin/tset
-SYMLINK	../../instbin		usr/bin/vi
-SYMLINK	../../instbin		usr/sbin/chown
+SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
 SYMLINK	../../instbin		usr/sbin/chroot
+SYMLINK	../../instbin		usr/bin/ftp
+SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+SYMLINK	../../instbin		usr/bin/sed
+SYMLINK	../../instbin		usr/bin/sort
+SYMLINK	../../instbin		usr/bin/tar
+SYMLINK	../../instbin		usr/bin/tip
 SYMLINK	../../instbin		usr/sbin/update
 
-# Minimize use of MFS
-SYMLINK	/tmp	var/tmp
-
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
-SPECIAL	cd dev; sh MAKEDEV all
-SPECIAL	/bin/rm dev/MAKEDEV
+# `internal' crunchgen links
+ARGVLINK mount_ffs	ffs
+ARGVLINK mount_nfs	nfs
+ARGVLINK mount_cd9660	cd9660
+ARGVLINK sh		-sh
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
@@ -86,14 +66,9 @@ COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 
-# the zoneinfo
-COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
-
-# and the termcap file
-COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
-
 # and the installation scripts
 COPY	${CURDIR}/install.sub		install.sub
 COPY	${CURDIR}/install.sh		install
 COPY	${CURDIR}/upgrade.sh		upgrade
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/install.sub > install.sub
 SPECIAL	chmod 755 install upgrade

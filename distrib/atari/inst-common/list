@@ -21,7 +21,6 @@ LINK	instbin			bin/sh
 LINK	instbin			bin/-sh
 LINK	instbin			bin/stty
 LINK	instbin			bin/sync
-LINK	instbin			bin/tar
 LINK	instbin			bin/test
 LINK	instbin			bin/[
 LINK	instbin			sbin/disklabel
@@ -50,6 +49,7 @@ LINK	instbin			usr/bin/more
 LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/strings
+LINK	instbin			usr/bin/tar
 LINK	instbin			usr/bin/tip
 LINK	instbin			usr/sbin/chown
 LINK	instbin			usr/sbin/chroot

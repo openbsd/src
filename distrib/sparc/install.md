@@ -1,5 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 1996/03/28 21:48:22 niklas Exp $
-#	$NetBSD: install.md,v 1.2 1996/02/28 00:50:28 thorpej Exp $
+#	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +40,9 @@
 # machine dependent section of installation/upgrade script.
 #
 
+# Machine-dependent install sets
+MDSETS="xbin xman xinc xcon"
+
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
@@ -49,6 +51,25 @@ md_set_term() {
 	getresp "sun"
 	TERM="$resp"
 	export TERM
+}
+
+md_makerootwritable() {
+	# Was: do_mfs_mount "/tmp" "2048"
+	# /tmp is the mount point
+	# 2048 is the size in DEV_BIZE blocks
+
+	umount /tmp > /dev/null 2>&1
+	if ! mount_mfs -s 2048 swap /tmp ; then
+		cat << \__mfs_failed_1
+
+FATAL ERROR: Can't mount the memory filesystem.
+
+__mfs_failed_1
+		exit
+	fi
+
+	# Bleh.  Give mount_mfs a chance to DTRT.
+	sleep 2
 }
 
 md_get_diskdevs() {
@@ -66,30 +87,68 @@ md_get_ifdevs() {
 	dmesg | egrep "(^le[0-9] |^ie[0-9] )" | cut -d" " -f1 | sort -u
 }
 
+md_get_partition_range() {
+    # return range of valid partition letters
+    echo "[a-h]"
+}
+
 md_installboot() {
 	echo "Installing boot block..."
-	/usr/mdec/binstall -v ffs /mnt
+	/usr/mdec/binstall ffs /mnt
+}
+
+md_native_fstype() {
+}
+
+md_native_fsopts() {
 }
 
 md_checkfordisklabel() {
 	# $1 is the disk to check
+	local rval
 
 	disklabel $1 > /dev/null 2> /tmp/checkfordisklabel
 	if grep "no disk label" /tmp/checkfordisklabel; then
-		rval="1"
+		rval=1
 	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
-		rval="2"
+		rval=2
 	else
-		rval="0"
+		rval=0
 	fi
 
 	rm -f /tmp/checkfordisklabel
+	return $rval
 }
 
 md_prep_disklabel()
 {
+	local _disk
+
+	_disk=$1
+	md_checkfordisklabel $_disk
+	case $? in
+	0)
+		echo -n "Do you wish to edit the disklabel on $_disk? [y]"
+		;;
+	1)
+		echo "WARNING: Disk $_disk has no label"
+		echo -n "Do you want to create one with the disklabel editor? [y]"
+		;;
+	2)
+		echo "WARNING: Label on disk $_disk is corrupted"
+		echo -n "Do you want to try and repair the damage using the disklabel editor? [y]"
+		;;
+	esac
+
+	getresp "y"
+	case "$resp" in
+	y*|Y*) ;;
+	*)	return ;;
+	esac
+
 	# display example
 	cat << \__md_prep_disklabel_1
+
 Here is an example of what the partition information will look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units. Make sure these size/offset
@@ -110,16 +169,26 @@ in case you have defined less than eight partitions.
 [End of example]
 
 __md_prep_disklabel_1
+	echo -n "Press [Enter] to continue "
+	getresp ""
+	disklabel -W ${_disk}
+	disklabel -e ${_disk}
+}
+
+md_copy_kernel() {
+	echo -n "Copying kernel..."
+	cp -p /netbsd /mnt/netbsd
+	echo "done."
 }
 
 md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/sparc ${VERSION} installation program."
+		echo "Welcome to the NetBSD/sparc ${VERSION} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put OpenBSD on your disk,
+This program is designed to help you put NetBSD on your disk,
 in a simple and rational way.  You'll be asked several questions,
 and it would probably be useful to have your disk's hardware
 manual, the installation notes, and a calculator handy.
@@ -127,10 +196,10 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the OpenBSD/sparc ${VERSION} upgrade program."
+		echo "Welcome to the NetBSD/sparc ${VERSION} upgrade program."
 		cat << \__welcome_banner_2
 
-This program is designed to help you upgrade your OpenBSD system in a
+This program is designed to help you upgrade your NetBSD system in a
 simple and rational way.
 
 As a reminder, installing the `etc' binary set is NOT recommended.
@@ -147,7 +216,7 @@ program can cause SIGNIFICANT data loss, and you are advised
 to make sure your data is backed up before beginning the
 installation process.
 
-Default answers are displyed in brackets after the questions.
+Default answers are displayed in brackets after the questions.
 You can hit Control-C at any time to quit, but if you do so at a
 prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
@@ -174,7 +243,7 @@ md_congrats() {
 	fi
 	cat << __congratulations_1
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!
+CONGRATULATIONS!  You have successfully $what NetBSD!
 To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 

@@ -1,16 +1,18 @@
-$OpenBSD: README.files,v 1.3 1996/04/25 21:27:17 niklas Exp $
-$NetBSD: README.files,v 1.3 1995/12/21 02:40:49 cgd Exp $
+$NetBSD: README.files,v 1.4.4.2 1996/06/13 20:52:44 cgd Exp $
 
 README.files			This list.
 
-Snapshots are organized by release, numbered by year, month, and date, in
-directories with names of the form "YYMMDD".
+ported-software			A list of software ported to NetBSD/Alpha,
+				and patches to make software go.
+
+Snapshots are organized by release.  Releases are numbered by year, month,
+and day, in directories with names of the form "YYMMDD".
 
 In each directory:
 
 README_FIRST			Important last-minute notes about the snapshot.
-README				Installation notes; probably incomplete.
-STATUS				Status of OpenBSD/Alpha.
+README				Installation notes; incomplete.
+STATUS				Status of NetBSD/Alpha, supported hardware list.
 TODO.users			Things that I think users could do to help out.
 
 bin/				Directory with binaries for this snapshot.
@@ -18,10 +20,8 @@ bin/				Directory with binaries for this snapshot.
 	bin.tar.gz		Everything on the disk image except /etc,
 				/usr/X11R6, /boot, and the kernel.
 	etc.tar.gz		/etc from the disk image.
-	bsd.gz			Gzipped GENERIC kernel (also on disk image).
-	bsd.gdb.gz		Gzipped GENERIC kernel w/debugging symbols.
-	bsd_nfs.gz		Gzipped GENERIC_NFS kernel.
-	bsd_nfs.gdb.gz		Gzipped GENERIC_NFS kernel w/debugging symbols.
+	netbsd.gz		Gzipped GENERIC kernel (also on disk image).
+	netbsd.gdb.gz		Gzipped GENERIC kernel w/debugging symbols.
 	rz25-image.gz		Disk image, of an RZ25, for installation.
 	x11.tar.gz		/usr/X11R6 from the disk image.
 
@@ -30,8 +30,8 @@ src/				Directory with sources for this snapshot.
 	X11R6-XF86-3.1.2-diffs.gz
 				Diffs from XFree86 3.1.2 used to make the
 				X11 binaries in the distribution.
+				X11 sources should be placed in
+				/usr/alphasrc/xc.
 	cygnus.tar.gz		Toolchain (gcc, gas, ld, etc.) sources
 				used to build the compiler toolchain.
-	sys.tar.gz		Kernel sources.
-	userland-diffs.gz	Diffs from the OpenBSD-current user-land
-				sources used to build the distribution.
+				Should be untarred into /usr/alphasrc/cygnus.

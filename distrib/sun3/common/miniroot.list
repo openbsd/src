@@ -1,4 +1,4 @@
-#	$NetBSD: miniroot.list,v 1.2 1995/11/21 21:19:05 gwr Exp $
+#	$NetBSD: miniroot.list,v 1.2.6.1 1996/08/29 03:19:32 gwr Exp $
 
 # These are scripts:
 COPY	${DESTDIR}/usr/bin/false	bin
@@ -13,9 +13,7 @@ COPY	${DESTDIR}/usr/mdec/ufsboot	usr/mdec
 LINK		usr/mdec/ufsboot	ufsboot
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/disktab  	etc
 COPY	${DESTDIR}/etc/group		etc
-COPY	${DESTDIR}/etc/hosts		etc
 COPY	${DESTDIR}/etc/master.passwd	etc
 COPY	${DESTDIR}/etc/passwd		etc
 COPY	${DESTDIR}/etc/protocols	etc
@@ -23,18 +21,27 @@ COPY	${DESTDIR}/etc/pwd.db		etc
 COPY	${DESTDIR}/etc/services		etc
 COPY	${DESTDIR}/etc/spwd.db		etc
 
-# copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV std rd0 sd0 sd2 st0
-SPECIAL	/bin/rm dev/MAKEDEV
-SPECIAL	mkfifo dev/pipe
+# some /etc files get special handling (for MFS /tmp yuck)
+COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+SYMLINK	/tmp/disktab.shadow		etc/disktab
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
 
-# and the miniroot installation tools
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV		dev
+COPY	${DESTDIR}/dev/MAKEDEV.local	dev
+SPECIAL	cd dev; sh MAKEDEV all
+
+# copy the miniroot installation tools
 COPY	${TOPDIR}/common/mr.profile	.profile
-COPY	${TOPDIR}/common/mr.remount	.remount
 COPY	${TOPDIR}/common/mr.termcap	usr/share/misc/termcap
 
-# and the "install" command
-COPY	${TOPDIR}/common/install.sh	install
-SPECIAL 		chmod 755 install
+COPY	${TOPDIR}/common/install.md	install.md
+COPY	${OBJDIR}/install.sub		install.sub
+SPECIAL chmod 644 install.md install.sub
+
+COPY	${TOPDIR}/../miniroot/install.sh install
+COPY	${TOPDIR}/../miniroot/upgrade.sh upgrade
+SPECIAL chmod 755 install upgrade
 

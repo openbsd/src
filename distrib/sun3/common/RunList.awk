@@ -1,4 +1,4 @@
-#	$NetBSD: RunList.awk,v 1.1.1.1 1995/10/08 23:07:46 gwr Exp $
+#	$NetBSD: RunList.awk,v 1.1.1.1.6.1 1996/08/29 03:10:58 gwr Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -16,6 +16,11 @@ $1 == "COPY" {
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
 	printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $3);
+	next;
+}
+$1 == "SYMLINK" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}; rm -f %s; ln -s %s %s)\n", $3, $2, $3);
 	next;
 }
 $1 == "SPECIAL" {

@@ -1,5 +1,4 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.3 1996/06/29 05:54:21 tholo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -28,8 +27,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#	$Id: upgrade.sh,v 1.4 1996/09/05 21:27:06 deraadt Exp $
 
-#	OpenBSD upgrade script.
+#	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
@@ -47,9 +48,9 @@ getresp() {
 	fi
 }
 
-echo	"Welcome to the OpenBSD ${VERSION} upgrade program."
+echo	"Welcome to the NetBSD ${VERSION} upgrade program."
 echo	""
-echo	"This program is designed to help you put the new version of OpenBSD"
+echo	"This program is designed to help you put the new version of NetBSD"
 echo	"on your hard disk, in a simple and rational way.  To upgrade, you"
 echo	"must have plenty of free space on all partitions which will be"
 echo	"upgraded.  If you have at least 1MB free on your root partition,"
@@ -229,7 +230,7 @@ echo	"Done."
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
 $DONTDOIT cp /mnt/.profile /mnt/.profile.bak
-$DONTDOIT pax -rw -X -k . /mnt
+$DONTDOIT tar --exclude etc --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
 $DONTDOIT mv /mnt/etc/rc /mnt/etc/rc.bak
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
@@ -241,11 +242,11 @@ echo	"Done."
 echo    ""
 echo    ""
 echo	"OK!  The preliminary work of setting up your disk is now complete,"
-echo	"and you can now upgrade the actual OpenBSD software."
+echo	"and you can now upgrade the actual NetBSD software."
 echo	""
 echo	"Right now, your hard disk is mounted on /mnt.  You should consult"
 echo	"the installation notes to determine how to load and install the new"
-echo	"OpenBSD distribution sets, and how to clean up after the upgrade"
+echo	"NetBSD distribution sets, and how to clean up after the upgrade"
 echo	"software, when you are done."
 echo	""
 echo	"GOOD LUCK!"

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inject.c,v 1.1.1.1 1995/10/18 08:37:42 deraadt Exp $
+ *	$Id: inject.c,v 1.2 1996/09/05 21:26:54 deraadt Exp $
  */
 
 #include <stdio.h>

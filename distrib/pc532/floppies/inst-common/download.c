@@ -1,14 +1,13 @@
-/*	$OpenBSD: download.c,v 1.2 1996/04/25 21:30:37 niklas Exp $	*/
 /*	$NetBSD: download.c,v 1.1 1995/10/06 21:00:16 phil Exp $	*/
 
 /*
-   Hacked by Phil Nelson for use with OpenBSD, 10/5/95.
+   Hacked by Phil Nelson for use with NetBSD, 10/5/95.
    This source is in the public domain except for the makeraw function.
 
    The upload part of this program is taken from Bruce's ROM debugger
    code.
 
-   For OpenBSD, the usages are:
+   For NetBSD, the usages are:
 
        download file 
               - open "file" and ship it out standard output with the

@@ -1,5 +1,5 @@
-#	$OpenBSD: mr.profile,v 1.3 1996/04/25 21:31:46 niklas Exp $
-#	$NetBSD: mr.profile,v 1.2 1995/11/21 21:19:08 gwr Exp $
+#
+#	$NetBSD: mr.profile,v 1.2.6.1 1996/08/29 03:21:13 gwr Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -48,11 +48,8 @@ update
 # get the terminal type?
 # (nah, ansi is good enough)
 
-# remount root
-sh /.remount
-
 # run the installation script.
-echo 'To install OpenBSD, enter the command:  install'
+echo 'To install NetBSD, enter the command:  install'
 echo 'Otherwise, enter the command:  halt'
 # /install  XXX - Not yet...
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: miniroot.tree,v 1.2 1995/11/21 21:19:07 gwr Exp $
+#	$NetBSD: miniroot.tree,v 1.2.6.1 1996/08/29 03:20:18 gwr Exp $
 #
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -21,6 +21,11 @@ etc
 # ./etc
 ..
 
+# ./kern
+kern
+# ./kern
+..
+
 # ./mnt
 mnt
 # ./mnt
@@ -29,6 +34,11 @@ mnt
 # ./mnt2
 mnt2
 # ./mnt2
+..
+
+# ./proc
+proc
+# ./proc
 ..
 
 # ./sbin

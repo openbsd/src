@@ -1,0 +1,90 @@
+# $NetBSD: list,v 1.1 1996/05/16 19:59:08 mark Exp $
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mv
+LINK	instbin			bin/pwd
+LINK	instbin			bin/rm
+LINK	instbin			bin/sh
+LINK	instbin			bin/stty
+LINK	instbin			bin/sync
+LINK	instbin			bin/test
+LINK	instbin			bin/[
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/fsck_ffs
+LINK	instbin			sbin/halt
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_msdos
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/newfs
+LINK	instbin			sbin/ping
+LINK	instbin			sbin/reboot
+LINK	instbin			sbin/route
+LINK	instbin			sbin/shutdown
+LINK	instbin			sbin/slattach
+LINK	instbin			sbin/umount
+SYMLINK	/bin/cat		usr/bin/awk
+SYMLINK	/bin/cat		usr/bin/chgrp
+SYMLINK	/bin/cat		usr/bin/cksum
+SYMLINK	/bin/cat		usr/bin/cmp
+SYMLINK	/bin/cat		usr/bin/cut
+SYMLINK	/bin/cat		usr/bin/ftp
+SYMLINK	/bin/cat		usr/bin/gunzip
+SYMLINK	/bin/cat		usr/bin/gzcat
+SYMLINK	/bin/cat		usr/bin/gzip
+SYMLINK	/bin/cat		usr/bin/grep
+SYMLINK	/bin/cat		usr/bin/more
+SYMLINK	/bin/cat		usr/bin/printf
+SYMLINK	/bin/cat		usr/bin/sed
+SYMLINK	/bin/cat		usr/bin/strings
+SYMLINK	/bin/cat		usr/bin/tar
+SYMLINK	/bin/cat		usr/bin/tee
+SYMLINK	/bin/cat		usr/bin/tip
+SYMLINK	/bin/cat		usr/bin/tr
+SYMLINK	/bin/cat		usr/bin/wc
+SYMLINK	/bin/cat		usr/bin/xargs
+SYMLINK	/bin/cat		usr/sbin/chown
+SYMLINK	/bin/cat		usr/sbin/chroot
+SYMLINK	/bin/cat		usr/sbin/update
+SPECIAL	/bin/rm instbin
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec
+#COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
+COPY	${DESTDIR}/etc/passwd		etc/passwd
+COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
+COPY	${DESTDIR}/etc/services		etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+
+# and the common installation tools
+COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/inst-common/termcap.vt100	usr/share/misc/termcap
+
+COPY	${TOPDIR}/inst-common/inst.sh	usr/local/sbin/inst
+SPECIAL	/bin/chmod 755 usr/local/sbin/inst

@@ -1,0 +1,8 @@
+# $NetBSD: list,v 1.1 1996/05/16 19:59:20 mark Exp $
+
+# and the upgrade tools
+COPY	dot.profile			.profile
+COPY	dot.upgrutils			.upgrutils
+COPY	upgrade.sh			upgrade
+COPY	dot.hdprofile			tmp/.hdprofile
+SPECIAL	chmod 755 upgrade

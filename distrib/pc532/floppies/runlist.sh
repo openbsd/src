@@ -1,4 +1,4 @@
-#	$Id: runlist.sh,v 1.1.1.1 1995/10/18 08:37:41 deraadt Exp $
+#	$Id: runlist.sh,v 1.2 1996/09/05 21:26:45 deraadt Exp $
 
 if [ "X$1" = "X-d" ]; then
 	SHELLCMD=cat

@@ -1,4 +1,3 @@
-#	$OpenBSD: Makefile,v 1.3 1996/04/25 21:32:01 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1995/11/21 21:19:14 gwr Exp $
 
 TOP=		${.CURDIR}/..
@@ -14,7 +13,7 @@ TREE=	${TOP}/common/${IMAGE}.tree
 LISTS=	${TOP}/common/${CBIN}.list \
 	${TOP}/common/${IMAGE}.list
 
-KERNEL=${SRCSYSDIR}/arch/sun3/compile/RAMDISK/bsd
+KERNEL=${SRCSYSDIR}/arch/sun3/compile/RAMDISK/netbsd
 
 MOUNT_POINT=	/mnt
 BDEV=		/dev/rd0
@@ -26,12 +25,12 @@ NBLKS=		512
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
-CLEANFILES= bsd-rd rdsetroot ${IMAGE}.fs
+CLEANFILES= netbsd-rd rdsetroot ${IMAGE}.fs
 
-bsd-rd : rdsetroot ${IMAGE}.fs
-	cp ${KERNEL} bsd-tmp
-	./rdsetroot  bsd-tmp < ${IMAGE}.fs
-	-mv -f bsd-tmp $@
+netbsd-rd : rdsetroot ${IMAGE}.fs
+	cp ${KERNEL} netbsd-tmp
+	./rdsetroot  netbsd-tmp < ${IMAGE}.fs
+	-mv -f netbsd-tmp $@
 
 rdsetroot: ${TOP}/common/rdsetroot.c
 	$(CC) -o $@ -DDEBUG ${TOP}/common/rdsetroot.c

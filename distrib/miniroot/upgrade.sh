@@ -1,6 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.2 1996/03/28 21:48:20 niklas Exp $
-#	$NetBSD: upgrade.sh,v 1.2 1996/02/28 00:47:45 thorpej Exp $
+#	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,33 +36,37 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	OpenBSD installation script.
+#	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.1
-export VERSION				# XXX needed in subshell
 ROOTDISK=""				# filled in below
 
-trap "umount /tmp > /dev/null 2>&1" 0
+trap "unmount_fs -fast /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
 
 MODE="upgrade"
 
 # include machine-dependent functions
 # The following functions must be provided:
+#	md_copy_kernel()	- copy a kernel to the installed disk
 #	md_get_diskdevs()	- return available disk devices
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_ifdevs()		- return available network interfaces
+#	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
-#	md_checkfordisklabel()	- check for valid disklabel
 #	md_labeldisk()		- put label on a disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
 #	md_congrats()		- display friendly message
+
+# include machine dependent subroutines
 . install.md
 
 # include common subroutines
 . install.sub
+
+# which sets?
+THESETS="$UPGRSETS"
 
 # Good {morning,afternoon,evening,night}.
 md_welcome_banner
@@ -85,40 +88,14 @@ md_set_term
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
 
-# We don't like it, but it sure makes a few things a lot easier.
-do_mfs_mount "/tmp" "2048"
+# Make sure we can write files (at least in /tmp)
+# This might make an MFS mount on /tmp, or it may
+# just re-mount the root with read-write enabled.
+md_makerootwritable
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
 done
-
-# Make sure there's a disklabel there.  If there isn't, puke after
-# disklabel prints the error message.
-md_checkfordisklabel ${ROOTDISK}
-case $rval in
-	1)
-		cat << \__disklabel_not_present_1
-
-FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
-
-__disklabel_not_present_1
-		exit
-		;;
-
-	2)
-		cat << \__disklabel_corrupted_1
-
-FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
-
-__disklabel_corrupted_1
-		exit
-		;;
-
-	*)
-		;;
-esac
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
 # this with the user.  Check and mount the root filesystem.
@@ -150,7 +127,6 @@ if [ ! -f /mnt/etc/fstab ]; then
 	echo	"ERROR: no /etc/fstab!"
 	exit 1
 fi
-cp /mnt/etc/fstab /tmp/fstab
 
 # Grab the hosts table so we can use it.
 if [ ! -f /mnt/etc/hosts ]; then
@@ -202,27 +178,20 @@ __network_config_2
 esac
 
 # Now that the network has been configured, it is safe to configure the
-# fstab.  We remove all but ufs/ffs/nfs.
+# fstab.  We remove all but ufs/ffs.
 (
-	rm -f /tmp/fstab.new
-	while read line; do
-		_fstype=`echo $line | awk '{print $3}'`
+	> /tmp/fstab
+	while read _dev _mp _fstype _rest ; do
 		if [ "X${_fstype}" = X"ufs" -o \
-		    "X${_fstype}" = X"ffs" -o \
-		    "X${_fstype}" = X"nfs" ]; then
-			echo $line >> /tmp/fstab.new
+		     "X${_fstype}" = X"ffs" ]; then
+			if [ "X${_fstype}" = X"ufs" ]; then
+				# Convert ufs to ffs.
+				_fstype=ffs
+			fi
+			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
 		fi
 	done
-) < /tmp/fstab
-
-if [ ! -f /tmp/fstab.new ]; then
-	echo	"ERROR: strange fstab!"
-	exit 1
-fi
-
-# Convert ufs to ffs.
-sed -e 's/ufs/ffs/' < /tmp/fstab.new > /tmp/fstab
-rm -f /tmp/fstab.new
+) < /mnt/etc/fstab
 
 echo	"The fstab is configured as follows:"
 echo	""
@@ -239,7 +208,7 @@ echo -n	"Edit the fstab? [n] "
 getresp "n"
 case "$resp" in
 	y*|Y*)
-		vi /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
@@ -260,21 +229,40 @@ check_fs /tmp/fstab.shadow
 # Mount filesystems.
 mount_fs /tmp/fstab.shadow
 
+echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
+getresp "y"
+case "$resp" in
+	y*|Y*)
+		get_localdir /mnt
+		;;
+	*)
+		;;
+esac
+
 # Install sets.
-install_sets $UPGRSETS
+install_sets
 
 # Get timezone info
 get_timezone
 
 # Fix up the fstab.
 echo -n	"Converting ufs to ffs in /etc/fstab..."
-sed -e 's/ufs/ffs/' < /mnt/etc/fstab > /tmp/fstab
+(
+	> /tmp/fstab
+	while read _dev _mp _fstype _rest ; do
+		if [ "X${_fstype}" = X"ufs" ]; then
+			# Convert ufs to ffs.
+			_fstype=ffs
+		fi
+		echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
+	done
+) < /mnt/etc/fstab
 echo	"done."
 echo -n	"Would you like to edit the resulting fstab? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		vi /tmp/fstab
+		${EDITOR} /tmp/fstab
 		;;
 
 	*)
@@ -298,15 +286,13 @@ esac
 	echo "done."
 
 	echo -n "Making devices..."
-	pid=`twiddle`
+	_pid=`twiddle`
 	cd /mnt/dev
 	sh MAKEDEV all
-	kill $pid
+	kill $_pid
 	echo "done."
 
-	echo -n "Copying kernel..."
-	cp -p /bsd /mnt/bsd
-	echo "done."
+	md_copy_kernel
 
 	md_installboot ${ROOTDISK}
 )

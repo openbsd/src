@@ -1,4 +1,3 @@
-#	$OpenBSD: dot.hdprofile,v 1.2 1996/04/25 21:30:26 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -27,6 +26,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#       $Id: dot.hdprofile,v 1.3 1996/09/05 21:26:46 deraadt Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/usr/games:/
 export PATH
@@ -56,6 +57,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	. /.commonutils
 	. /.instutils
 
-	echo "Follow the installation directions to install the OpenBSD"
+	echo "Follow the installation directions to install the NetBSD"
 	echo "distribution sets."
 fi

@@ -1,4 +1,4 @@
-#	$NetBSD: list2sh.awk,v 1.1 1995/12/18 22:47:30 pk Exp $
+#	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
 	printf("cd ${OBJDIR}\n");
@@ -16,14 +16,30 @@ $1 == "COPY" {
 }
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
-	printf("rm -f ${TARGDIR}/%s\n", $3);
-	printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $3);
+	for (i = 3; i <= NF; i++) {
+		printf("rm -f ${TARGDIR}/%s\n", $i);
+		printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $i);
+	}
 	next;
 }
 $1 == "SYMLINK" {
 	printf("echo '%s'\n", $0);
-	printf("rm -f ${TARGDIR}/%s\n", $3);
-	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
+	for (i = 3; i <= NF; i++) {
+		printf("rm -f ${TARGDIR}/%s\n", $i);
+		printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $i);
+	}
+	next;
+}
+$1 == "ARGVLINK" {
+	# crunchgen directive; ignored here
+	next;
+}
+$1 == "SRCDIRS" {
+	# crunchgen directive; ignored here
+	next;
+}
+$1 == "CRUNCHSPECIAL" {
+	# crunchgen directive; ignored here
 	next;
 }
 $1 == "COPYDIR" {
