@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getnetent.c,v 1.6 1997/04/03 02:12:57 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: getnetent.c,v 1.7 1997/04/24 08:37:09 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -102,7 +102,7 @@ again:
 	p = strpbrk(cp, " \t");
 	if (p != NULL)
 		*p++ = '\0';
-	net.n_net = htonl(inet_network(cp));
+	net.n_net = inet_network(cp);
 	net.n_addrtype = AF_INET;
 	q = net.n_aliases = net_aliases;
 	if (p != NULL) 
