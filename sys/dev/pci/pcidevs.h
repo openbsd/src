@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.59 1998/06/25 01:55:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.60 1998/06/26 01:50:42 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -517,7 +517,7 @@
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
-#define	PCI_VENDOR_BAD	0xffff		/* ILLEGITIMATE VENDOR ID */
+#define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
 /*
  * List of known products.  Grouped by vendor.

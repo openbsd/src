@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.59 1998/06/25 01:55:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.60 1998/06/26 01:50:42 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -5139,9 +5139,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_BAD, 0,
+	    PCI_VENDOR_INVALID, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ILLEGITIMATE VENDOR ID",
+	    "INVALID VENDOR ID",
 	    NULL,
 	},
 	{ 0, 0, 0, NULL, NULL, }
