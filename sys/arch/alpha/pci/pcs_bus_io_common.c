@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcs_bus_io_common.c,v 1.7 1997/07/06 18:28:00 niklas Exp $	*/
+/*	$OpenBSD: pcs_bus_io_common.c,v 1.8 1997/07/07 07:15:41 niklas Exp $	*/
 /*	$NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
@@ -794,7 +794,7 @@ __C(__C(CHIP,_io_write_raw_multi_),BYTES)(v, h, o, a, c)		\
 		}							\
 		__C(__C(CHIP,_io_write_),BYTES)(v, h, o, temp);		\
 		__C(CHIP,_io_barrier)(v, h, o, BYTES, BUS_BARRIER_WRITE); \
-		i = MIN(c, BYTES) - 1; 					\
+		i = MIN(c, BYTES); 					\
 		c -= i;							\
 		a += i;							\
 	}								\
