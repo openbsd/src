@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.293 2003/03/06 04:19:45 david Exp $
+#	$OpenBSD: install.sub,v 1.294 2003/04/16 23:47:01 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -827,11 +827,10 @@ enable_network() {
 	ifconfig -am
 
 	# enable the resolver if resolv.conf is available
+	route -n show
 	if [ -f /etc/resolv.conf ]; then
-		route show
 		echo "\nResolver enabled."
 	else
-		route -n show
 		echo "\nResolver not enabled."
 	fi
 
