@@ -38,7 +38,8 @@ HP-UX	10.20	hp700	bundled cc	1.6.2	Todd Miller	 none
 HP-UX	10.20	PA-RISC2.0 bundled cc	1.5.4	Leon von Stauber none
 HP-UX	11.00	hp700	ansi-c		1.5.5b1	Alek Komarnitsky --with-C2
 HP-UX	11.00	hp700	bundled cc	1.5.5p5	Lynn Osburn	 none
-HP-UX	10.20	hp700	gcc 2.8.1	1.5.6b2	Jeff Earickson 	 --with-DCE
+HP-UX	11.00	hp700	HP C compiler	1.6.2	Jeff Earickson 	 --with-pam
+HP-UX	10.20	hp700	gcc 2.95.2	1.6.2	Jeff Earickson 	 --with-DCE
 Ultrix	4.3	mips	bundled cc	1.6.2	Todd Miller	 none
 Ultrix	4.3	mips	gcc2.7.2.1	1.5.9	Todd Miller	 --with-skey
 IRIX	4.05H	mips	gcc2.6.3	1.5.3	Todd Miller	 none

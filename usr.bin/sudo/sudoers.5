@@ -1,12 +1,12 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.3 $$Date: 2000/01/24 04:22:53 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.4 $$Date: 2000/01/28 01:10:20 $
 '''
 ''' $Log: sudoers.5,v $
-''' Revision 1.3  2000/01/24 04:22:53  millert
-''' sudo 1.6.2
+''' Revision 1.4  2000/01/28 01:10:20  millert
+''' 1.6.2p1
 '''
-''' Revision 1.22  2000/01/24 03:57:49  millert
-''' Add netgroup caveat
+''' Revision 1.23  2000/01/26 21:21:28  millert
+''' Expanded docs on sudoers 'defaults' options based on INSTALL file info.
 '''
 '''
 .de Sh
@@ -99,7 +99,7 @@
 .nr % 0
 .rr F
 .\}
-.TH sudoers 5 "1.6.2" "23/Jan/2000" "FILE FORMATS"
+.TH sudoers 5 "1.6.2" "26/Jan/2000" "FILE FORMATS"
 .UC
 .if n .hy 0
 .if n .na
@@ -379,96 +379,172 @@ be escaped with a backslash (\f(CW\e\fR).
 .PP
 \fBFlags\fR:
 .Ip "long_otp_prompt" 12
-Put \s-1OTP\s0 prompt on its own line
+When validating with a One Time Password scheme (\fBS/Key\fR or \fB\s-1OPIE\s0\fR),
+a two-line prompt is used to make it easier to cut and paste the
+challenge to a local window.  It's not as pretty as the default but
+some people find it more convenient.  This flag is off by default.
 .Ip "ignore_dot" 12
-Ignore \*(L'.\*(R' in \f(CW$PATH\fR
+If set, \fBsudo\fR will ignore \*(L'.\*(R' or \*(L'\*(R' (current dir) in \f(CW$PATH\fR;
+the \f(CW$PATH\fR itself is not modified.  This flag is off by default.
 .Ip "mail_always" 12
-Always send mail when sudo is run
+Send mail to the \fImailto\fR user every time a users runs sudo.
+This flag is off by default.
 .Ip "mail_no_user" 12
-Send mail if the user is not in sudoers
+If set, mail will be sent to the \fImailto\fR user if the invoking
+user is not in the \fIsudoers\fR file.  This flag is on by default.
 .Ip "mail_no_host" 12
-Send mail if the user is not in sudoers for this host
+If set, mail will be sent to the \fImailto\fR user if the invoking
+user exists in the \fIsudoers\fR file, but is not allowed to run
+commands on the current host.  This flag is off by default.
 .Ip "mail_no_perms" 12
-Send mail if the user is not allowed to run a command
+If set, mail will be sent to the \fImailto\fR user if the invoking
+user allowed to use sudo but the command they are trying is not
+listed in their \fIsudoers\fR file entry.  This flag is off by default.
 .Ip "tty_tickets" 12
-Use a separate timestamp for each user/tty combo
+If set, users must authenticate on a per-tty basis.  Normally,
+\fBsudo\fR uses a directory in the ticket dir with the same name as
+the user running it.  With this flag enabled, \fBsudo\fR will use a
+file named for the tty the user is logged in on in that directory.
+This flag is off by default.
 .Ip "lecture" 12
-Lecture user the first time they run sudo
+If set, a user will receive a short lecture the first time he/she
+runs \fBsudo\fR.  This flag is on by default.
 .Ip "authenticate" 12
-Require users to authenticate by default
+If set, users must authenticate themselves via a password (or other
+means of authentication) before they may run commands.  This default
+may be overridden via the \f(CWPASSWD\fR and \f(CWNOPASSWD\fR tags.
+This flag is on by default.
 .Ip "root_sudo" 12
-Root may run sudo
+If set, root is allowed to run sudo too.  Disabling this prevents users
+from \*(L"chaining\*(R" sudo commands to get a root shell by doing something
+like \f(CW"sudo sudo /bin/sh"\fR.
+This flag is on by default.
 .Ip "log_host" 12
-Log the hostname in the (non-syslog) log file
+If set, the hostname will be logged in the (non-syslog) \fBsudo\fR log file.
+This flag is off by default.
 .Ip "log_year" 12
-Log the year in the (non-syslog) log file
+If set, the four-digit year will be logged in the (non-syslog) \fBsudo\fR log file.
+This flag is off by default.
 .Ip "shell_noargs" 12
-If sudo is invoked with no arguments, start a shell
+If set and \fBsudo\fR is invoked with no arguments it acts as if the
+\f(CW-s\fR flag had been given.  That is, it runs a shell as root (the
+shell is determined by the \f(CWSHELL\fR environment variable if it is
+set, falling back on the shell listed in the invoking user's
+/etc/passwd entry if not).  This flag is off by default.
 .Ip "set_home" 12
-Set \f(CW$HOME\fR to the target user when starting a shell with \f(CW-s\fR
+If set and \fBsudo\fR is invoked with the \f(CW-s\fR flag the \f(CWHOME\fR
+environment variable will be set to the home directory of the target
+user (which is root unless the \f(CW-u\fR option is used).  This effectively
+makes the \f(CW-s\fR flag imply \f(CW-H\fR.  This flag is off by default.
 .Ip "path_info" 12
-Allow some information gathering to give useful error messages
+Normally, \fBsudo\fR will tell the user when a command could not be
+found in their \f(CW$PATH\fR.  Some sites may wish to disable this as
+it could be used to gather information on the location of executables
+that the normal user does not have access to.  The disadvantage is
+that if the executable is simply not in the user's \f(CW$PATH\fR, \fBsudo\fR
+will tell the user that they are not allowed to run it, which can
+be confusing.  This flag is off by default.
 .Ip "fqdn" 12
-Require fully-qualified hostnames in the sudoers file
+Set this flag if you want to put fully qualified hostnames in the
+\fIsudoers\fR file.  Ie: instead of myhost you would use myhost.mydomain.edu.
+You may still use the short form if you wish (and even mix the two).
+Beware that turning on \fIfqdn\fR requires sudo to make \s-1DNS\s0 lookups
+which may make \fBsudo\fR unusable if \s-1DNS\s0 stops working (for example
+if the machine is not plugged into the network).  Also note that
+you must use the host's official name as \s-1DNS\s0 knows it.  That is,
+you may not use a host alias (\f(CWCNAME\fR entry) due to performance
+issues and the fact that there is no way to get all aliases from
+\s-1DNS\s0.  If your machine's hostname (as returned by the \f(CWhostname\fR
+command) is already fully qualified you shouldn't need to set
+\fIfqfn\fR.  This flag is off by default.
 .Ip "insults" 12
-Insult the user when they enter an incorrect password
+If set, sudo will insult users when they enter an incorrect
+password.  This flag is off by default.
 .Ip "requiretty" 12
-Only allow the user to run sudo if they have a tty
+If set, sudo will only run when the user is logged in to a real
+tty.  This will disallow things like \f(CW"rsh somehost sudo ls"\fR since
+\fIrsh\fR\|(1) does not allocate a tty.  Because it is not possible to turn
+of echo when there is no tty present, some sites may with to set
+this flag to prevent a user from entering a visible password.  This
+flag is off by default.
 .PP
 \fBIntegers\fR:
 .Ip "passwd_tries" 12
-Number of tries to enter a password
+The number of tries a user gets to enter his/her password before
+sudo logs the failure and exits.  The default is 3.
 .PP
 \fBIntegers that can be used in a boolean context\fR:
 .Ip "loglinelen" 12
-Length at which to wrap log file lines (use 0 or negate for no wrap)
+Number of characters per line for the file log.  This value is used
+to decide when to wrap lines for nicer log files.  This has no
+effect on the syslog log file, only the file log.  The default is
+80 (use 0 or negate to disable word wrap).
 .Ip "timestamp_timeout" 12
-Authentication timestamp timeout
+Number of minutes that can elapse before \fBsudo\fR will ask for a passwd
+again.  The default is 5, set this to 0 to always prompt for a password.
 .Ip "passwd_timeout" 12
-Password prompt timeout
+Number of minutes before the sudo password prompt times out.
+The default is 5, set this to 0 for no password timeout.
 .Ip "umask" 12
-Umask to use or 0777 to use user's
+Umask to use when running the root command.  Set this to 0777 to
+not override the user's umask.  The default is 0022.
 .PP
 \fBStrings\fR:
 .Ip "mailsub" 12
-Subject line for mail messages
+Subject of the mail sent to the \fImailto\fR user. The escape \f(CW%h\fR
+will expand to the hostname of the machine.
+Default is \*(L"*** \s-1SECURITY\s0 information for \f(CW%h\fR ***\*(R".
 .Ip "badpass_message" 12
-Incorrect password message
+Message that is displayed if a user enters an incorrect password.
+The default is \*(L"Sorry, try again.\*(R" unless insults are enabled.
 .Ip "timestampdir" 12
-Path to authentication timestamp dir
+The directory in which \fBsudo\fR stores its timestamp files.
+The default is either \f(CW/var/run/sudo\fR or \f(CW/tmp/sudo\fR.
 .Ip "passprompt" 12
-Default password prompt
+The default prompt to use when asking for a password; can be overridden
+via the \f(CW-p\fR option or the \f(CWSUDO_PROMPT\fR environment variable. Supports
+two escapes: \*(L"%u\*(R" expands to the user's login name and \*(L"%h\*(R" expands
+to the local hostname.  The default value is \*(L"Password:\*(R".
 .Ip "runas_default" 12
-Default user to run commands as
+The default user to run commands as if the \f(CW-u\fR flag is not specified
+on the command line.  This defaults to \*(L"root\*(R".
 .Ip "syslog_goodpri" 12
-Syslog priority to use when user authenticates successfully
+Syslog priority to use when user authenticates successfully.
+Defaults to \*(L"notice\*(R".
 .Ip "syslog_badpri" 12
-Syslog priority to use when user authenticates unsuccessfully
+Syslog priority to use when user authenticates unsuccessfully.
+Defaults to \*(L"alert\*(R".
 .PP
 \fBStrings that can be used in a boolean context\fR:
 .Ip "syslog" 12
-Syslog facility if syslog is being used for logging (negate to disable syslog)
+Syslog facility if syslog is being used for logging (negate to
+disable syslog logging).  Defaults to \*(L"local2\*(R".
 .Ip "mailerpath" 12
-Path to mail program
+Path to mail program used to send warning mail.
+Defaults to the path to sendmail found at configure time.
 .Ip "mailerflags" 12
-Flags for mail program
+Flags to use when invoking mailer. Defaults to \f(CW-t\fR.
 .Ip "mailto" 12
-Address to send mail to
+Address to send warning and erorr mail to.  Defaults to \*(L"root\*(R".
 .Ip "exempt_group" 12
-Users in this group are exempt from password and \s-1PATH\s0 requirements
+Users in this group are exempt from password and \s-1PATH\s0 requirements.
+This is not set by default.
 .Ip "secure_path" 12
-Value to override user's \f(CW$PATH\fR with
+Path used for every command run from \fBsudo\fR.  If you don't trust the
+people running sudo to have a sane \f(CWPATH\fR environment variable you may
+want to use this.  Another use is if you want to have the \*(L"root path\*(R"
+be separate from the \*(L"user path.\*(R"  This is not set by default.
 .Ip "verifypw" 12
 This option controls when a password will be required when a
 user runs sudo with the \fB\-v\fR.  It has the following possible values:
 .Sp
 .Vb 3
-\&    all         All the user's sudoers entries for the
+\&    all         All the user's I<sudoers> entries for the
 \&                current host must have the C<NOPASSWD>
 \&                flag set to avoid entering a password.
 .Ve
 .Vb 4
-\&    any         At least one of the user's sudoers entries
+\&    any         At least one of the user's I<sudoers> entries
 \&                for the current host must have the
 \&                C<NOPASSWD> flag set to avoid entering a
 \&                password.
@@ -487,12 +563,12 @@ This option controls when a password will be required when a
 user runs sudo with the \fB\-l\fR.  It has the following possible values:
 .Sp
 .Vb 3
-\&    all         All the user's sudoers entries for the
+\&    all         All the user's I<sudoers> entries for the
 \&                current host must have the C<NOPASSWD>
 \&                flag set to avoid entering a password.
 .Ve
 .Vb 4
-\&    any         At least one of the user's sudoers entries
+\&    any         At least one of the user's I<sudoers> entries
 \&                for the current host must have the
 \&                C<NOPASSWD> flag set to avoid entering a
 \&                password.

@@ -159,11 +159,17 @@ Special features/options:
 	on the machine.
 
   --with-pam
-	Enable PAM support.  Tested on Redhat Linux 5.x, 6.0 and
-	Solaris 2.6, 7.
-	NOTE: on RedHat Linux (and perhaps others) you *must* install
-	an /etc/pam.d/sudo file.  You may either use the sample.pam
-	file included with sudo or use /etc/pam.d/su as a reference.
+	Enable PAM support.  Tested on:
+	    Redhat Linux 5.x, 6.0, and 6.1
+	    Solaris 2.6 and 7
+	    HP-UX 11.0
+        NOTE: on RedHat Linux you *must* install an /etc/pam.d/sudo file.
+	You may either use the sample.pam file included with sudo or use
+	/etc/pam.d/su as a reference.  On Solaris and HP-UX 11 systems
+	you should check (and understand) the contents of /etc/pam.conf.
+	Do a "man pam.conf" for more information and consider using the
+	"debug" option, if available, with your PAM libraries in
+	/etc/pam.conf to obtain syslog output for debugging purposes.
 
   --with-AFS
 	Enable AFS support with kerberos authentication.  Should work under
@@ -171,8 +177,14 @@ Special features/options:
 	link without it.
 
   --with-DCE
-	Enable DCE support.  Known to work on HP-UX 9.X and 10.0.  Other
-	platforms may require source code and/or `configure' changes.
+	Enable DCE support.  Known to work on HP-UX 9.X, 10.X, and 11.0.
+	The use of PAM is recommended for HP-UX 11.X systems, since PAM is
+	fully implemented (this is not true for 10.20 and earlier versions).
+	Check to see that your 11.X (or other) system uses DCE via PAM by
+	looking at /etc/pam.conf to see if "libpam_dce" libraries are 
+	referenced there.  Other platforms may require source code and/or 
+	`configure' changes; you should check to see if your platform can 
+	access DCE via PAM before using this option.
 
   --disable-sia
 	Disable SIA support.  This is the "Security Integration Architecture"
@@ -228,10 +240,10 @@ Special features/options:
 	security hole as most editors allow a user to get a shell (which would
 	be a root shell and hence, no logging).
 
-The following options are also configurable at runtime:
-
   --with-otp-only
 	This option is now just an alias for --without-passwd.
+
+The following options are also configurable at runtime:
 
   --with-long-otp-prompt
 	When validating with a One Time Password scheme (S/Key or OPIE), a
@@ -286,7 +298,7 @@ The following options are also configurable at runtime:
 	Default is "*** SECURITY information for %h ***".
 
   --without-mail-if-no-user
-	Normally, sudo will mail to the "alermail" user if the user invoking
+	Normally, sudo will mail to the "alertmail" user if the user invoking
 	sudo is not in the sudoers file.  This option disables that behavior.
 
   --with-mail-if-no-host
@@ -357,8 +369,8 @@ The following options are also configurable at runtime:
 	The default is 5, set this to 0 for no password timeout.
 
   --with-tty-tickets
-	This makes sudo use a different ticket file for each tty (per user).
-	Ie: instead of the ticket file being "username" it is "username:tty".
+	This makes sudo use a different ticket file for each user/tty combo.
+	Ie: instead of the ticket path being "username" it is "username/tty".
 	This is useful for "shared" accounts like "operator".  Note that this
 	means that there will be more files in the timestamp dir.  This is not
 	a problem if your system has a cron job to remove of files from /tmp

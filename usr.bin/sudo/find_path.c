@@ -64,7 +64,7 @@ extern int lstat	__P((const char *, struct stat *));
 #endif /* !STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: find_path.c,v 1.94 1999/10/07 21:20:57 millert Exp $";
+static const char rcsid[] = "$Sudo: find_path.c,v 1.95 2000/01/27 04:31:58 millert Exp $";
 #endif /* lint */
 
 /*
@@ -108,7 +108,7 @@ find_path(infile, outfile)
      * Grab PATH out of the environment (or from the string table
      * if SECURE_PATH is in effect) and make a local copy.
      */
-    if (def_str(I_SECURE_PATH))
+    if (def_str(I_SECURE_PATH) && !user_is_exempt())
 	path = def_str(I_SECURE_PATH);
     else if ((path = getenv("PATH")) == NULL)
 	return(NOT_FOUND);

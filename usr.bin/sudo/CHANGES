@@ -1242,3 +1242,10 @@ Sudo 1.6.1 released.
 
 392) PAM fixups: custom prompts now work correctly and errors are
      dealt with more sanely.  Patches from Cloyce D. Spradling.
+
+Sudo 1.6.2 released.
+
+393) Users in the 'exempt' group shouldn't get their $PATH overridden
+     by 'secure-path'.  Patch from jmknoble@pobox.com.
+
+394) Pam now works on HP-UX 11.0, thanks to Jeff A. Earickson.

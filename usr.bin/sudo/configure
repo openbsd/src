@@ -7630,6 +7630,44 @@ EOF
     AUTH_OBJS="${AUTH_OBJS} kerb5.o"
 fi
 
+if test "$with_pam" = "yes"; then
+    echo $ac_n "checking for -ldl""... $ac_c" 1>&6
+echo "configure:7636: checking for -ldl" >&5
+if eval "test \"`echo '$''{'ac_cv_lib_dl'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-ldl  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 7643 "configure"
+#include "confdefs.h"
+
+int main() {
+main()
+; return 0; }
+EOF
+if { (eval echo configure:7650: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+  rm -rf conftest*
+  ac_cv_lib_dl=yes
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  ac_cv_lib_dl=no
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+echo "$ac_t""$ac_cv_lib_dl" 1>&6
+if test "$ac_cv_lib_dl" = yes; then
+  SUDO_LIBS="${SUDO_LIBS} -ldl -lpam"
+else
+  SUDO_LIBS="${SUDO_LIBS} -lpam"
+fi
+
+fi
+
 if test "$with_kerb4" = "yes"; then
     cat >> confdefs.h <<\EOF
 #define HAVE_KERB4 1
@@ -7658,21 +7696,21 @@ EOF
     fi
 
     echo $ac_n "checking for -ldes""... $ac_c" 1>&6
-echo "configure:7662: checking for -ldes" >&5
+echo "configure:7700: checking for -ldes" >&5
 if eval "test \"`echo '$''{'ac_cv_lib_des'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
 LIBS="-ldes  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 7669 "configure"
+#line 7707 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:7676: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
+if { (eval echo configure:7714: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest; then
   rm -rf conftest*
   ac_cv_lib_des=yes
 else
@@ -7693,10 +7731,6 @@ else
 fi
 
     AUTH_OBJS="${AUTH_OBJS} kerb4.o"
-fi
-
-if test "$with_pam" = "yes"; then
-    SUDO_LIBS="${SUDO_LIBS} -ldl -lpam"
 fi
 
 if test "$with_AFS" = "yes"; then
@@ -7795,7 +7829,7 @@ if test "$with_authenticate" = "yes"; then
 fi
 
 echo $ac_n "checking for log file location""... $ac_c" 1>&6
-echo "configure:7799: checking for log file location" >&5
+echo "configure:7833: checking for log file location" >&5
 if test -n "$with_logpath"; then
     echo "$ac_t""$with_logpath" 1>&6
     cat >> confdefs.h <<EOF
@@ -7825,7 +7859,7 @@ else
 fi
 
 echo $ac_n "checking for timestamp file location""... $ac_c" 1>&6
-echo "configure:7829: checking for timestamp file location" >&5
+echo "configure:7863: checking for timestamp file location" >&5
 if test -n "$with_timedir"; then
     echo "$ac_t""$with_timedir" 1>&6
     cat >> confdefs.h <<EOF

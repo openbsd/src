@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.299 2000/01/19 19:07:24 millert Exp $
+dnl $Sudo: configure.in,v 1.300 2000/01/27 20:01:37 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -1433,6 +1433,13 @@ if test "$with_kerb5" = "yes"; then
 fi
 
 dnl
+dnl PAM libs
+dnl
+if test "$with_pam" = "yes"; then
+    AC_HAVE_LIBRARY(dl, SUDO_LIBS="${SUDO_LIBS} -ldl -lpam", SUDO_LIBS="${SUDO_LIBS} -lpam")
+fi
+
+dnl
 dnl Find kerberos 4 includes and libs or complain
 dnl
 if test "$with_kerb4" = "yes"; then
@@ -1461,13 +1468,6 @@ if test "$with_kerb4" = "yes"; then
 
     AC_HAVE_LIBRARY(des, SUDO_LIBS="${SUDO_LIBS} -lkrb -ldes", SUDO_LIBS="${SUDO_LIBS} -lkrb")
     AUTH_OBJS="${AUTH_OBJS} kerb4.o"
-fi
-
-dnl
-dnl PAM libs
-dnl
-if test "$with_pam" = "yes"; then
-    SUDO_LIBS="${SUDO_LIBS} -ldl -lpam"
 fi
 
 dnl
