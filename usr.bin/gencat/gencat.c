@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.9 2004/07/01 19:23:34 mickey Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -39,8 +39,8 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "$OpenBSD: gencat.c,v 1.8 2003/06/10 22:20:46 deraadt Exp $";
+static const char rcsid[] =
+    "$OpenBSD: gencat.c,v 1.9 2004/07/01 19:23:34 mickey Exp $";
 #endif /* not lint */
 
 /***********************************************************
@@ -90,6 +90,9 @@ up-to-date.  Many thanks.
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <nl_types.h>
+#include <err.h>
 
 struct _msgT {
 	long    msgId;
@@ -179,8 +182,7 @@ main(int argc, char *argv[])
 static void
 warning(char *cptr, char *msg)
 {
-	fprintf(stderr, "%s: %s on line %ld\n", __progname, msg, lineno);
-	fprintf(stderr, "%s\n", curline);
+	warnx("%s on line %ld\n%s", msg, lineno, curline);
 	if (cptr) {
 		char   *tptr;
 		for (tptr = curline; tptr < cptr; ++tptr)
