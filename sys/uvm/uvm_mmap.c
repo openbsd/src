@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.38 2003/01/09 22:27:12 miod Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.39 2003/04/07 14:47:08 mpech Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ sys_msync(p, v, retval)
 	size = (vsize_t) round_page(size);
 
 	/* disallow wrap-around. */
-	if (addr + size < addr)
+	if (addr + (ssize_t)size < addr)
 		return (EINVAL);
 
 	/*
@@ -651,7 +651,7 @@ sys_munmap(p, v, retval)
 	size += pageoff;
 	size = (vsize_t) round_page(size);
 
-	if ((int)size < 0)
+	if ((ssize_t)size < 0)
 		return (EINVAL);
 	if (size == 0)
 		return (0);
@@ -729,7 +729,7 @@ sys_mprotect(p, v, retval)
 	addr -= pageoff;
 	size += pageoff;
 	size = (vsize_t) round_page(size);
-	if ((int)size < 0)
+	if ((ssize_t)size < 0)
 		return (EINVAL);
 
 	/*
@@ -777,7 +777,7 @@ sys_minherit(p, v, retval)
 	size += pageoff;
 	size = (vsize_t) round_page(size);
 
-	if ((int)size < 0)
+	if ((ssize_t)size < 0)
 		return (EINVAL);
 	
 	switch (uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr+size,
@@ -918,7 +918,7 @@ sys_mlock(p, v, retval)
 	size = (vsize_t) round_page(size);
 	
 	/* disallow wrap-around. */
-	if (addr + (int)size < addr)
+	if (addr + (ssize_t)size < addr)
 		return (EINVAL);
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
@@ -972,7 +972,7 @@ sys_munlock(p, v, retval)
 	size = (vsize_t) round_page(size);
 
 	/* disallow wrap-around. */
-	if (addr + (int)size < addr)
+	if (addr + (ssize_t)size < addr)
 		return (EINVAL);
 
 #ifndef pmap_wired_count
