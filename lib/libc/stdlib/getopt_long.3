@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.1 2002/12/03 20:24:30 millert Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.2 2002/12/04 21:42:22 millert Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -163,6 +163,33 @@ If an option starting with
 .Sq -
 does not match a long option but does match a single-character option,
 the single-character option is returned.
+.Sh RETURN VALUES
+If the
+.Fa flag
+field in
+.Li struct option
+is
+.Dv NULL ,
+.Fn getopt_long
+and
+.Fn getopt_long_only
+return the value specified in the
+.Fa val
+field, which is usually just the corresponding short option.
+If
+.Fa flag
+is not
+.Dv NULL ,
+these functions return 0 and store
+.Fa val
+in the location pointed to by
+.Fa flag .
+These functions return
+.Sq \:
+if there was a missing option argument,
+.Sq ?
+if the user specified an unknown or ambiguous option, and
+\-1 when the argument list has been exhausted.
 .Sh EXAMPLES
 .Bd -literal -compact
 int bflag, ch, fd;

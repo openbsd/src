@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.18 2002/12/04 20:31:30 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.19 2002/12/04 21:42:22 millert Exp $
 .\"
 .Dd April 19, 1994
 .Dt GETOPT 3
@@ -126,6 +126,29 @@ When all options have been processed (i.e., up to the first non-option
 argument),
 .Fn getopt
 returns \-1.
+.Sh RETURN VALUES
+The
+.Fn getopt
+function returns the next known option character in
+.Fa optstring .
+If
+.Fn getopt
+encounters a character not found in
+.Fa optstring
+or if it detects a missing option argument,
+it returns
+.Sq ? .
+If
+.Fa optstring
+has a leading
+.Sq \:
+then a missing option argument causes
+.Sq \:
+to be returned instead of
+.Sq ? .
+The
+.Fn getopt
+function returns \-1 when the argument list is exhausted.
 .Sh EXAMPLES
 .Bd -literal -compact
 int bflag, ch, fd;
