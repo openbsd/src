@@ -258,7 +258,6 @@
 ./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mixerctl
-./usr/bin/mk_cmds
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
 ./usr/bin/mktemp
