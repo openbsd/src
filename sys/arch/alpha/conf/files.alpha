@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.9 1997/02/26 16:30:59 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.10 1997/03/25 08:00:43 niklas Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -162,6 +162,14 @@ file	arch/alpha/isa/pms.c		pms
 
 attach	vga at isa with vga_isa
 file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
+
+# National Semiconductor DS8390/WD83C690-based boards
+# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
+# XXX conflicts with other ports; can't be in files.isa
+device	ed: ether, ifnet
+attach	ed at isa with ed_isa
+attach	ed at pcmcia with ed_pcmcia
+file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 
 #
 # EISA Bus support
