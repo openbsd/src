@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.21 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: date.c,v 1.22 2002/04/17 03:54:30 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.21 2002/02/16 21:27:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.22 2002/04/17 03:54:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ main(argc, argv)
 
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "d:nr:ut:")) != -1)
+	while ((ch = getopt(argc, argv, "ad:nr:ut:")) != -1)
 		switch((char)ch) {
 		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
