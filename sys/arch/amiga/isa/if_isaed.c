@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.9 1996/08/03 07:16:36 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.10 1996/09/26 21:07:18 niklas Exp $	*/
 
 /*
  *	Derived from sys/dev/isa/if_ed.c:
@@ -2644,29 +2644,31 @@ ed_ring_copy(sc, src, dst, amount)
  * as needed.  Return pointer to last mbuf in chain.
  * sc = ed info (softc)
  * src = pointer in ed ring buffer
- * dst = pointer to last mbuf in mbuf chain to copy to
- * amount = amount of data to copy
+ * totlen = maximum packet size
  */
 struct mbuf *
-edget(sc, src, total_len)
+edget(sc, src, totlen)
 	struct ed_softc *sc;
 	int src;
-	u_short total_len;
+	int totlen;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
-	int len;
+	int len, pad;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
+
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = total_len;
-	len = MHLEN;
+	m->m_pkthdr.len = totlen;
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	m->m_data += pad;
+	len = MHLEN - pad;
 	top = 0;
 	mp = &top;
 
-	while (total_len > 0) {
+	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
@@ -2675,14 +2677,14 @@ edget(sc, src, total_len)
 			}
 			len = MLEN;
 		}
-		if (total_len >= MINCLSIZE) {
+		if (top && totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		m->m_len = len = min(total_len, len);
+		m->m_len = len = min(totlen, len);
 		src = ed_ring_copy(sc, src, mtod(m, caddr_t), len);
-		total_len -= len;
+		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
 	}
