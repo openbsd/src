@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.17 1997/01/30 06:03:08 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.18 1997/01/30 07:47:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.17 1997/01/30 06:03:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.18 1997/01/30 07:47:29 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -63,9 +63,11 @@ static char rcsid[] = "$OpenBSD: ypbind.c,v 1.17 1997/01/30 06:03:08 deraadt Exp
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_rmt.h>
 #include <unistd.h>
+#include <err.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
+#define SERVERSDIR	"/etc/yp"
 #define BINDINGDIR	"/var/yp/binding"
 #define YPBINDLOCK	"/var/run/ypbind.lock"
 
@@ -82,6 +84,8 @@ struct _dom_binding {
 	int dom_lockfd;
 	int dom_alive;
 	int dom_xid;
+	char dom_servlist[MAXPATHLEN];
+	FILE *dom_servlistfp;
 };
 
 extern bool_t xdr_domainname(), xdr_ypbind_resp();
@@ -92,8 +96,10 @@ void rpc_received __P((char *dom, struct sockaddr_in *raddrp, int force));
 void checkwork __P((void));
 enum clnt_stat handle_replies __P((void));
 enum clnt_stat handle_ping __P((void));
-int broadcast __P((struct _dom_binding *ypdb));
+int broadcast __P((struct _dom_binding *ypdb, char *, int));
+int direct __P((struct _dom_binding *ypdb, char *, int));
 int ping __P((struct _dom_binding *ypdb));
+int pings __P((struct _dom_binding *ypdb));
 
 char *domain;
 
@@ -150,6 +156,9 @@ ypbindproc_domain_2x(transp, argp, clnt)
 	char path[MAXPATHLEN];
 	time_t now;
 
+	if (strchr((char *)argp, '/') || strchr((char *)argp, '.'))
+		return NULL;
+
 	memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
 
@@ -164,9 +173,12 @@ ypbindproc_domain_2x(transp, argp, clnt)
 		ypdb->dom_vers = YPVERS;
 		ypdb->dom_alive = 0;
 		ypdb->dom_lockfd = -1;
-		sprintf(path, "%s/%s.%d", BINDINGDIR, ypdb->dom_domain,
-		    (int)ypdb->dom_vers);
+		sprintf(path, "%s/%s.%d", BINDINGDIR,
+		    ypdb->dom_domain, (int)ypdb->dom_vers);
 		unlink(path);
+		sprintf(ypdb->dom_servlist, "%s/%s",
+		    SERVERSDIR, ypdb->dom_domain);
+		ypdb->dom_servlistfp = fopen(ypdb->dom_servlist, "r");
 		ypdb->dom_xid = unique_xid(ypdb);
 		ypdb->dom_pnext = ypbindlist;
 		ypbindlist = ypdb;
@@ -483,6 +495,9 @@ main(argc, argv)
 	rmtcr.xdr_results = xdr_bool;
 	rmtcr.results_ptr = (caddr_t)&rmtcr_outval;
 
+	if (strchr(domain, '/') || strchr(domain, '.'))
+		errx(1, "bad domainname %s", domain);
+
 	/* build initial domain binding, make it "unsuccessful" */
 	ypbindlist = (struct _dom_binding *)malloc(sizeof *ypbindlist);
 	memset(ypbindlist, 0, sizeof *ypbindlist);
@@ -490,8 +505,8 @@ main(argc, argv)
 	ypbindlist->dom_vers = YPVERS;
 	ypbindlist->dom_alive = 0;
 	ypbindlist->dom_lockfd = -1;
-	sprintf(path, "%s/%s.%d", BINDINGDIR, ypbindlist->dom_domain,
-	    (int)ypbindlist->dom_vers);
+	sprintf(path, "%s/%s.%d", BINDINGDIR,
+	    ypbindlist->dom_domain, (int)ypbindlist->dom_vers);
 	(void)unlink(path);
 
 	checkwork();
@@ -559,7 +574,7 @@ checkwork()
 			if (ypdb->dom_alive == 1)
 				ping(ypdb);
 			else
-				broadcast(ypdb);
+				pings(ypdb);
 			time(&t);
 			ypdb->dom_check_t = t + 5;
 		}
@@ -626,19 +641,16 @@ ping(ypdb)
 }
 
 int
-broadcast(ypdb)
+pings(ypdb)
 	struct _dom_binding *ypdb;
 {
 	domainname dom = ypdb->dom_domain;
 	struct rpc_msg msg;
-	char buf[1400], *inbuf = NULL;
+	struct sockaddr_in bindsin;
+	char buf[1400];
 	char path[MAXPATHLEN];
 	enum clnt_stat st;
-	int outlen, i, sock, len, inlen = 8192;
-	struct sockaddr_in bindsin;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
-	struct in_addr in;
+	int outlen;
 	AUTH *rpcua;
 	XDR xdr;
 
@@ -685,15 +697,10 @@ broadcast(ypdb)
 	if (ypdb->dom_lockfd != -1) {
 		close(ypdb->dom_lockfd);
 		ypdb->dom_lockfd = -1;
-		sprintf(path, "%s/%s.%d", BINDINGDIR, ypdb->dom_domain,
-		    (int)ypdb->dom_vers);
+		sprintf(path, "%s/%s.%d", BINDINGDIR,
+		    ypdb->dom_domain, (int)ypdb->dom_vers);
 		unlink(path);
 	}
-
-	memset(&bindsin, 0, sizeof bindsin);
-	bindsin.sin_family = AF_INET;
-	bindsin.sin_len = sizeof(bindsin);
-	bindsin.sin_port = htons(PMAPPORT);
 
 	if (ypdb->dom_alive == 2) {
 		/*
@@ -701,11 +708,38 @@ broadcast(ypdb)
 		 * ypserver on other subnet was once bound,
 		 * but rebooted and is now using a different port
 		 */
+		memset(&bindsin, 0, sizeof bindsin);
+		bindsin.sin_family = AF_INET;
+		bindsin.sin_len = sizeof(bindsin);
+		bindsin.sin_port = htons(PMAPPORT);
 		bindsin.sin_addr = ypdb->dom_server_addr.sin_addr;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 		    sizeof bindsin) < 0)
 			perror("sendto");
 	}
+	if (ypdb->dom_servlistfp)
+		return direct(ypdb, buf, outlen);
+	return broadcast(ypdb, buf, outlen);
+}
+
+int
+broadcast(ypdb, buf, outlen)
+	struct _dom_binding *ypdb;
+	char *buf;
+	int outlen;
+{
+	char *inbuf = NULL;
+	int i, sock, len, inlen = 8192;
+	struct sockaddr_in bindsin;
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	struct in_addr in;
+
+	memset(&bindsin, 0, sizeof bindsin);
+	bindsin.sin_family = AF_INET;
+	bindsin.sin_len = sizeof(bindsin);
+	bindsin.sin_port = htons(PMAPPORT);
+
 	/* find all networks and send the RPC packet out them all */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
@@ -771,6 +805,67 @@ broadcast(ypdb)
 	}
 	close(sock);
 	free(inbuf);
+	return 0;
+}
+
+int
+direct(ypdb, buf, outlen)
+	struct _dom_binding *ypdb;
+	char *buf;
+	int outlen;
+{
+	char line[1024], *p;
+	struct hostent *hp;
+	struct sockaddr_in bindsin;
+	int i, c;
+	struct stat fst, st;
+
+	if (fstat(fileno(ypdb->dom_servlistfp), &fst) != -1 &&
+	    stat(ypdb->dom_servlist, &st) != -1 &&
+	    (st.st_dev != fst.st_dev || st.st_ino != fst.st_ino)) {
+		FILE *fp;
+
+		fp = fopen(ypdb->dom_servlist, "r");
+		if (fp) {
+			fclose(ypdb->dom_servlistfp);
+			ypdb->dom_servlistfp = fp;
+		}
+	}
+	(void) rewind(ypdb->dom_servlistfp);
+
+	memset(&bindsin, 0, sizeof bindsin);
+	bindsin.sin_family = AF_INET;
+	bindsin.sin_len = sizeof(bindsin);
+	bindsin.sin_port = htons(PMAPPORT);
+
+	while (fgets(line, sizeof(line), ypdb->dom_servlistfp) != NULL) {
+		/* skip lines that are too big */
+		p = strchr(line, '\n');
+		if (p == NULL) {
+			while ((c = getc(ypdb->dom_servlistfp)) != '\n' && c != EOF)
+				;
+			continue;
+		}
+		*p = '\0';
+		p = line;
+		while (isspace(*p))
+			p++;
+		if (*p == '#')
+			continue;
+		hp = gethostbyname(p);
+		if (!hp)
+			continue;
+		/* step through all addresses in case first is unavailable */
+		for (i = 0; hp->h_addr_list[i]; i++) {
+			memmove(&bindsin.sin_addr, hp->h_addr_list[0],
+			    hp->h_length);
+			if (sendto(rpcsock, buf, outlen, 0,
+			    (struct sockaddr *)&bindsin, sizeof bindsin) < 0) {
+				perror("sendto");
+				continue;
+			}
+		}
+	}
 	return 0;
 }
 

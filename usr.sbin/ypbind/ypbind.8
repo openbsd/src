@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypbind.8,v 1.5 1996/04/29 08:05:39 deraadt Exp $
+.\"	$OpenBSD: ypbind.8,v 1.6 1997/01/30 07:47:28 deraadt Exp $
 .\"	$NetBSD: ypbind.8,v 1.2 1996/02/28 01:21:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,12 +42,12 @@
 .Nm ypbind
 .Nd create and maintain a binding to a YP server
 .Sh SYNOPSIS
-.Nm ypbind
+.Nm
 .Op Fl ypset
-.Nm ypbind
+.Nm
 .Op Fl ypsetme
 .Sh DESCRIPTION
-.Nm Ypbind
+.Nm
 finds the server for a particular YP domain and stores information about it
 in a
 .Pa binding file.
@@ -56,20 +56,32 @@ that particular domain and which port the server is using.  This information
 is stored in the directory
 .Pa /var/yp/binding
 in a file named with the convention
-.Pa domainname.version.
+.Pa DOMAINNAME.version.
 (The YP system only supplies information on version 2.)
 .Pp
 When
-.Nm ypbind
-starts, it broadcasts looking for a process willing to serve maps for the
+.Nm
+starts the primary domain (or gets the first request for a new domain),
+it checks if a file for the domain in question exists in the directory
+.Pa /etc/yp/
+(ie. /etc/yp/DOMAINNAME).
+If such a file exists, it will list the hosts which
+.Nm
+should restrict it's server search to.
+Otherwise,
+.Nm
+assumes it will need to use broadcasts to find a valid server.
+Using either of these techniques,
+.Nm
+will search for a server willing to serve maps for the
 client's domain.  Once a binding is established,
-.Nm ypbind
+.Nm
 maintains this binding by periodically communicating with the server to which
 it is bound.  If the binding is somehow lost, e.g by server reboot,
-.Nm ypbind
+.Nm
 marks the domain as unbound and attempts to re-establish the binding.
 When the binding is once again successful,
-.Nm ypbind
+.Nm
 marks the domain as bound and resumes its periodic check.
 .Pp
 The options are as follows:
@@ -88,14 +100,19 @@ The
 and
 .Fl ypsetme
 options are dangerous and should be avoided.
+For greatest security, the use of a server list in
+.Pa /var/yp/DOMAINNAME
+is recommended.
 .Pp
 If the directory
 .Pa /var/yp/binding
 exists, YP is started automatically at boot time by
 .Pa /etc/rc .
 .Sh FILES
-.Pa /var/yp/binding/domainname.version
+.Pa /var/yp/binding/DOMAINNAME.version
 - binding file for domainname
+.Pa /etc/yp/DOMAINNNAME
+- server list for this particular domain
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
@@ -103,7 +120,7 @@ exists, YP is started automatically at boot time by
 .Xr yppoll 8 ,
 .Xr ypset 8 ,
 .Xr ypwhich 1 ,
-.Xr ypserv 8
+.Xr ypserv 8 ,
 .Xr yp 8
 .Sh AUTHOR
 Theo de Raadt
