@@ -1,5 +1,5 @@
-/*	$OpenBSD: rd_root.c,v 1.4 1998/07/19 16:08:13 deraadt Exp $	*/
-/*	$NetBSD: rd_root.c,v 1.3 1996/05/05 06:17:09 briggs Exp $	*/
+/*	$OpenBSD: rd_root.c,v 1.5 1999/06/13 06:29:08 downsj Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.1 1996/05/20 01:17:31 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -30,6 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <dev/ramdisk.h>
 
@@ -48,6 +49,9 @@ extern int boothowto;
 int rd_root_size = ROOTBYTES;
 char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 
+/*
+ * This is called during autoconfig.
+ */
 void
 rd_attach_hook(unit, rd)
 	int unit;
@@ -58,7 +62,7 @@ rd_attach_hook(unit, rd)
 		rd->rd_addr = (caddr_t) rd_root_image;
 		rd->rd_size = (size_t)  rd_root_size;
 		rd->rd_type = RD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		printf("rd%d: fixed, %d blocks\n", unit, MINIROOTSIZE);
 	}
 }
 
