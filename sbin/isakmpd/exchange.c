@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.90 2004/02/05 11:01:54 hshoexer Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.91 2004/02/16 20:40:34 markus Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1518,7 +1518,7 @@ exchange_finalize (struct message *msg)
       else
 	id_doi = "<no doi>";
 
-      if (msg->isakmp_sa)
+      if (msg->isakmp_sa && msg->isakmp_sa->transport)
 	id_trp = msg->isakmp_sa->transport->vtbl->decode_ids
 	  (msg->isakmp_sa->transport);
       else
