@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.9 2003/04/04 21:50:00 deraadt Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.10 2003/05/05 20:07:37 avsm Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: biz22.c,v 1.9 2003/04/04 21:50:00 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: biz22.c,v 1.10 2003/05/05 20:07:37 avsm Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -127,7 +127,7 @@ biz22f_dialer(num, acu)
 void
 biz22_disconnect()
 {
-	write(FD, DISCONNECT_CMD, 4);
+	write(FD, DISCONNECT_CMD, sizeof(DISCONNECT_CMD)-1);
 	sleep(2);
 	tcflush(FD, TCIOFLUSH);
 }
