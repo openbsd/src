@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 1999/07/05 20:22:16 rahnds Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2001/01/24 21:09:25 drahn Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,9 +68,9 @@ struct opcode {
 };
 
 typedef u_int32_t instr_t;
-typedef void (op_class_func) (instr_t);
+typedef void (op_class_func) (u_int32_t addr, instr_t);
 
-void dis_ppc(const struct opcode *opcodeset, instr_t instr);
+void dis_ppc(u_int32_t, const struct opcode *opcodeset, instr_t instr);
 
 op_class_func op_ill, op_base;
 op_class_func op_cl_x13, op_cl_x1e, op_cl_x1f;
@@ -386,7 +386,7 @@ const struct opcode opcodes_3f[] = {
 typedef void (op_class_func) (instr_t);
 */
 void
-op_ill(instr_t instr)
+op_ill(u_int32_t addr, instr_t instr)
 {
 	db_printf("illegal instruction %x\n", instr);
 }
@@ -401,7 +401,8 @@ extract_field(u_int32_t value, u_int32_t base, u_int32_t width)
 const struct opcode * search_op(const struct opcode *);
 
 void
-disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
+disasm_fields(u_int32_t addr, const struct opcode *popcode, instr_t instr,
+	char *disasm_str)
 {
 	char * pstr;
 	enum function_mask func;
@@ -533,7 +534,11 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 	if (func & Op_LI) {
 		u_int LI;
 		LI = extract_field(instr, 31 - 29, 24);
-		pstr += sprintf (pstr, "0x%x, ", LI);
+		LI = LI << 4;
+		if (LI & 0x04000000) {
+			LI &= ~0x07ffffff;
+		}
+		pstr += sprintf (pstr, "0x%x", addr + LI);
 		func &= ~Op_LI;
 	}
 	switch (func & Op_SIMM) {
@@ -776,55 +781,55 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 }
 
 void
-op_base(instr_t instr)
+op_base(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes,instr);
+	dis_ppc (addr, opcodes,instr);
 }
 
 void
-op_cl_x13(instr_t instr)
+op_cl_x13(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_13,instr);
+	dis_ppc (addr, opcodes_13,instr);
 }
 
 void
-op_cl_x1e(instr_t instr)
+op_cl_x1e(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_1e,instr);
+	dis_ppc (addr, opcodes_1e,instr);
 }
 
 void
-op_cl_x1f(instr_t instr)
+op_cl_x1f(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_1f,instr);
+	dis_ppc (addr, opcodes_1f,instr);
 }
 
 void
-op_cl_x3a(instr_t instr)
+op_cl_x3a(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_3a,instr);
+	dis_ppc (addr, opcodes_3a,instr);
 }
 
 void
-op_cl_x3b(instr_t instr)
+op_cl_x3b(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_3b,instr);
+	dis_ppc (addr, opcodes_3b,instr);
 }
 
 void
-op_cl_x3e(instr_t instr)
+op_cl_x3e(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_3e,instr);
+	dis_ppc (addr, opcodes_3e,instr);
 }
 
 void
-op_cl_x3f(instr_t instr)
+op_cl_x3f(u_int32_t addr, instr_t instr)
 {
-	dis_ppc (opcodes_3f,instr);
+	dis_ppc (addr, opcodes_3f,instr);
 }
 
 void
-dis_ppc(const struct opcode *opcodeset, instr_t instr)
+dis_ppc(u_int32_t addr, const struct opcode *opcodeset, instr_t instr)
 {
 	const struct opcode *op;
 	int found = 0;
@@ -837,12 +842,12 @@ dis_ppc(const struct opcode *opcodeset, instr_t instr)
 	{
 		if ((instr & op->mask) == op->code) {
 			found = 1;
-			disasm_fields(op, instr, disasm_str);
+			disasm_fields(addr, op, instr, disasm_str);
 			db_printf("%s%s",op->name, disasm_str);
 			return;
 		}
 	}
-	op_ill(instr);
+	op_ill(addr, instr);
 }
 
 db_addr_t
@@ -852,7 +857,7 @@ db_disasm(db_addr_t loc, boolean_t extended)
 	instr_t opcode;
 	opcode = *(instr_t *)(loc);
 	class = opcode >> 26;
-	(opcodes_base[class])(opcode);
+	(opcodes_base[class])(loc, opcode);
 
 	return loc + 4;
 }
