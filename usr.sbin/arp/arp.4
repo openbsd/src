@@ -87,11 +87,13 @@ flag set).
 ARP entries may be added, deleted or changed with the
 .Xr arp 8
 utility.
-Manually added entries may be temporary or permanent,
+Manually added entries may be temporary, static or permanent,
 and may be
 .Dq published ,
 in which case the system will respond to ARP requests for that host
-as if it were the target of the request.
+as if it were the target of the request. A static entry will not 
+time out, but may be overwritten by network traffic, while a permanent
+entry will not time out and can not be overwritten.
 .Pp
 In the past,
 ARP was used to negotiate the use of a trailer encapsulation.
@@ -105,6 +107,15 @@ ARP has discovered another host on the local network which responds to
 mapping requests for its own Internet address with a different Ethernet
 address, generally indicating that two hosts are attempting to use the
 same Internet address.
+.Pp
+.Em "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x."
+An existing route has been overwritten with a new Ethernet address, for
+example when the other host has changed Ethernet cards.  If the route
+previously was static/non-expiring, the new route will expire normally.
+.Pp
+.Em "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x."
+As above, but the existing route had been manually setup as permanent.
+The routing information is not modified.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr route 4 ,
