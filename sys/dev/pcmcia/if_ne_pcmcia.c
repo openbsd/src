@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.50 2001/06/04 05:56:49 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.51 2001/06/12 05:54:25 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -373,6 +373,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_MACNICA, PCMCIA_PRODUCT_MACNICA_ME1_JEIDA,
       PCMCIA_CIS_MACNICA_ME1_JEIDA,
       0, 0x00b8, { 0x08, 0x00, 0x42 } },
+
+    { PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
+      PCMCIA_CIS_NETGEAR_FA410TXC,
+      0, -1, { 0x00, 0x40, 0xf4 } },
 
     { PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
       PCMCIA_CIS_NETGEAR_FA410TXC,
