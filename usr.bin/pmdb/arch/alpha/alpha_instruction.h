@@ -1,4 +1,4 @@
-/*	$PMDB: alpha_instruction.h,v 1.3 2002/01/30 23:14:34 art Exp $	*/
+/*	$OpenBSD: alpha_instruction.h,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 

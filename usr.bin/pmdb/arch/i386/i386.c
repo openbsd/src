@@ -1,4 +1,4 @@
-/*	$PMDB: i386.c,v 1.5 2002/02/21 01:54:44 art Exp $	*/
+/*	$OpenBSD: i386.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 

@@ -1,4 +1,4 @@
-/*	$PMDB: signal.c,v 1.10 2002/03/07 13:56:56 art Exp $	*/
+/*	$OpenBSD: signal.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 

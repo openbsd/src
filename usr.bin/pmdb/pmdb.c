@@ -1,4 +1,4 @@
-/*	$PMDB: pmdb.c,v 1.41 2002/03/12 14:24:30 art Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 

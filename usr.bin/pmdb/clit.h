@@ -1,4 +1,4 @@
-/*	$PMDB: clit.h,v 1.8 2002/03/07 13:57:28 art Exp $	*/
+/*	$OpenBSD: clit.h,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 

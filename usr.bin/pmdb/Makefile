@@ -1,4 +1,4 @@
-#	$PMDB: Makefile,v 1.10 2002/03/07 14:27:08 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/03/15 16:41:05 jason Exp $
 
 .include <bsd.own.mk>
 

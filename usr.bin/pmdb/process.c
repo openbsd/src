@@ -1,4 +1,4 @@
-/*	$PMDB: process.c,v 1.19 2002/03/11 23:39:49 art Exp $	*/
+/*	$OpenBSD: process.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
