@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsb_addr_comp.c,v 1.2 1997/12/09 07:57:27 art Exp $	*/
+/*	$OpenBSD: lsb_addr_comp.c,v 1.3 1997/12/12 05:30:26 art Exp $	*/
 /* $KTH: lsb_addr_comp.c,v 1.9 1997/04/01 08:18:37 joda Exp $ */
 
 /*
@@ -41,7 +41,7 @@
 
 #include "krb_locl.h"
 
-#include "lsb_addr_comp.h"
+#include "krb-archaeology.h"
 
 int
 krb_lsb_antinet_ulong_cmp(u_int32_t x, u_int32_t y)

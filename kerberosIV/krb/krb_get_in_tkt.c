@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_get_in_tkt.c,v 1.3 1997/12/09 07:57:25 art Exp $	*/
+/*	$OpenBSD: krb_get_in_tkt.c,v 1.4 1997/12/12 05:30:24 art Exp $	*/
 /* $KTH: krb_get_in_tkt.c,v 1.22 1997/08/23 15:49:11 joda Exp $ */
 
 /*
@@ -151,7 +151,6 @@ krb_decode_as_rep(char *user, char *instance, char *realm,
 		  KTEXT as_rep, CREDENTIALS *cred)
 {
     int kerror;
-    unsigned char *p;
     time_t now;
     
     if (decrypt_proc == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd_priv.c,v 1.4 1997/12/09 07:57:33 art Exp $	*/
+/*	$OpenBSD: rd_priv.c,v 1.5 1997/12/12 05:30:28 art Exp $	*/
 /* $KTH: rd_priv.c,v 1.24 1997/05/14 17:53:29 joda Exp $ */
 
 /*
@@ -42,7 +42,7 @@
 #include "krb_locl.h"
 
 /* application include files */
-#include "lsb_addr_comp.h"
+#include "krb-archaeology.h"
 
 /*
  * krb_rd_priv() decrypts and checks the integrity of an

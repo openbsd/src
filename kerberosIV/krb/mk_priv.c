@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk_priv.c,v 1.4 1997/12/09 07:57:29 art Exp $	*/
+/*	$OpenBSD: mk_priv.c,v 1.5 1997/12/12 05:30:27 art Exp $	*/
 /* $KTH: mk_priv.c,v 1.18 1997/04/01 08:18:37 joda Exp $ */
 
 /*
@@ -42,7 +42,7 @@
 #include "krb_locl.h"
 
 /* application include files */
-#include "lsb_addr_comp.h"
+#include "krb-archaeology.h"
 
 /*
  * krb_mk_priv() constructs an AUTH_MSG_PRIVATE message.  It takes

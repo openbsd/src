@@ -1,3 +1,4 @@
+/*	$OpenBSD: acl_files.c,v 1.5 1997/12/12 05:30:07 art Exp $	*/
 /* $KTH: acl_files.c,v 1.10 1997/05/02 14:28:56 assar Exp $ */
 
 /* 
@@ -115,7 +116,8 @@ acl_canonicalize_principal(char *principal, char *canon)
 	canon += len;
 	*canon++ = '\0';
     } else if(krb_get_lrealm(canon, 1) != KSUCCESS) {
-	strcpy(canon, KRB_REALM);
+	strncpy(canon, KRB_REALM, MAX_PRINCIPAL_SIZE);
+	canon[MAX_PRINCIPAL_SIZE - 1] = '\0';
     }
 }
 	    
@@ -279,10 +281,15 @@ destroy_hash(struct hashtbl *h)
     int i;
 
     for(i = 0; i < h->size; i++) {
-	if(h->tbl[i] != NULL) free(h->tbl[i]);
+	if(h->tbl[i] != NULL) {
+	    free(h->tbl[i]);
+	    h->tbl[i] = NULL;
+	}
     }
     free(h->tbl);
+    h->tbl = NULL;
     free(h);
+    h = NULL;
 }
 
 /* Compute hash value for a string */
@@ -319,13 +326,16 @@ add_hash(struct hashtbl *h, char *el)
 	}
 	h->size = h->size << 1;
 	free(old);
+	old = NULL;
     }
 
     hv = hashval(el) % h->size;
     while(h->tbl[hv] != NULL && strcmp(h->tbl[hv], el)) hv = (hv+1) % h->size;
     s = strdup(el);
-    h->tbl[hv] = s;
-    h->entries++;
+    if (s != NULL) {
+	h->tbl[hv] = s;
+	h->entries++;
+    }
 }
 
 /* Returns nonzero if el is in h */
@@ -388,7 +398,7 @@ acl_load(char *name)
     }
 
     /* Set up the acl */
-    strcpy(acl_cache[i].filename, name);
+    strncpy(acl_cache[i].filename, name, LINESIZE);
     if((acl_cache[i].fd = open(name, O_RDONLY, 0)) < 0) return(-1);
     /* Force reload */
     acl_cache[i].acl = (struct hashtbl *) 0;

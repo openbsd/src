@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify_user.c,v 1.2 1997/12/09 07:57:42 art Exp $	*/
+/*	$OpenBSD: verify_user.c,v 1.3 1997/12/12 05:30:34 art Exp $	*/
 /* $KTH: verify_user.c,v 1.8 1997/04/01 08:18:46 joda Exp $ */
 
 /*
@@ -73,7 +73,7 @@ krb_verify_user(char *name, char *instance, char *realm, char *password,
 	char hostname[MAXHOSTNAMELEN];
 	char *phost;
 
-	if (k_gethostname(hostname, sizeof(hostname)) == -1) {
+	if (gethostname(hostname, sizeof(hostname)) == -1) {
 	    dest_tkt();
 	    return -1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send_to_kdc.c,v 1.5 1997/12/09 07:57:38 art Exp $	*/
+/*	$OpenBSD: send_to_kdc.c,v 1.6 1997/12/12 05:30:32 art Exp $	*/
 /* $KTH: send_to_kdc.c,v 1.47 1997/11/07 17:31:38 bg Exp $ */
 
 /* 
@@ -268,13 +268,19 @@ static int http_send(int s, struct sockaddr_in* adr, KTEXT pkt)
     char *str;
     char *msg;
 
-    base64_encode(pkt->dat, pkt->length, &str);
+
+    if(base64_encode(pkt->dat, pkt->length, &str) < 0)
+	return -1;
+
     if(getenv(PROXY_VAR)){
 	if (asprintf(&msg, "GET http://%s:%d/%s HTTP/1.0\r\n\r\n",
 		     inet_ntoa(adr->sin_addr),
 		     ntohs(adr->sin_port),
-		     str) == -1)
+		     str) == -1){
+	    free(str);
+	    str = NULL;
 	    return -1;
+	}
     }else
 	if (asprintf(&msg, "GET %s HTTP/1.0\r\n\r\n", str) == -1){
 	    free(str);
@@ -298,6 +304,8 @@ static int http_recv(void *buf, size_t len, KTEXT rpkt)
 {
     char *p;
     char *tmp = malloc(len + 1);
+    if (tmp == NULL)
+	return -1;
     memcpy(tmp, buf, len);
     tmp[len] = 0;
     p = strstr(tmp, "\r\n\r\n");

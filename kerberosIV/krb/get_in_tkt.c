@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_in_tkt.c,v 1.6 1997/12/09 07:57:16 art Exp $	*/
+/*	$OpenBSD: get_in_tkt.c,v 1.7 1997/12/12 05:30:21 art Exp $	*/
 /* $KTH: get_in_tkt.c,v 1.19 1997/10/03 21:51:42 joda Exp $ */ 
 
 /* 
@@ -90,8 +90,8 @@ passwd_to_afskey(char *user, char *instance, char *realm, void *passwd,
  */
 
 int
-krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
-		  char *sinstance, int life, char *password)
+krb_get_pw_in_tkt2(char *user, char *instance, char *realm, char *service,
+		   char *sinstance, int life, char *password, des_cblock *key)
 {
     char pword[100];		/* storage for the password */
     int code;
@@ -122,8 +122,11 @@ krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
 	    memcpy(&tmp, &as_rep, sizeof(as_rep));
 	    code = krb_decode_as_rep(user, instance, realm, service, sinstance, 
 				     *kp, NULL, password, &tmp, &cred);
-	    if(code == 0)
+	    if(code == 0){
+		if(key)
+		    (**kp)(user, instance, realm, password, key);
 		break;
+	    }
 	    if(code != INTK_BADPW)
 		ret = code; /* this is probably a better code than
 			       what code gets after this loop */
@@ -137,3 +140,12 @@ krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
         memset(pword, 0, sizeof(pword));
     return(code);
 }
+
+int
+krb_get_pw_in_tkt(char *user, char *instance, char *realm, char *service,
+                 char *sinstance, int life, char *password)
+{
+    return krb_get_pw_in_tkt2(user, instance, realm, 
+			      service, sinstance, life, password, NULL);
+}
+

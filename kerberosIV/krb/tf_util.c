@@ -1,4 +1,4 @@
-/*	$OpenBSD: tf_util.c,v 1.3 1997/12/09 07:57:40 art Exp $	*/
+/*	$OpenBSD: tf_util.c,v 1.4 1997/12/12 05:30:33 art Exp $	*/
 /* $KTH: tf_util.c,v 1.25 1997/11/04 09:44:28 bg Exp $ */
 
 /* 
@@ -180,7 +180,7 @@ tf_init(char *tf_name, int rw)
       return TKT_FIL_ACC;
     }
     for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
-      if (k_flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
+      if (flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
 	if (krb_debug)
 	  krb_warning("tf_init: retry %d of write lock of `%s'.\n",
 		      i_retry, tf_name);
@@ -204,7 +204,7 @@ tf_init(char *tf_name, int rw)
   }
 
   for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
-    if (k_flock(fd, K_LOCK_SH | K_LOCK_NB) < 0) {
+    if (flock(fd, K_LOCK_SH | K_LOCK_NB) < 0) {
       if (krb_debug)
 	krb_warning("tf_init: retry %d of read lock of `%s'.\n",
 		    i_retry, tf_name);
@@ -255,9 +255,9 @@ tf_create(char *tf_name)
   fd = open(tf_name, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
   if (fd < 0)
     return TKT_FIL_ACC;
-  if (k_flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
+  if (flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
     sleep(TF_LCK_RETRY);
-    if (k_flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
+    if (flock(fd, K_LOCK_EX | K_LOCK_NB) < 0) {
       close(fd);
       fd = -1;
       return TKT_FIL_LCK;
@@ -449,7 +449,7 @@ void
 tf_close(void)
 {
   if (!(fd < 0)) {
-    k_flock(fd, K_LOCK_UN);
+    flock(fd, K_LOCK_UN);
     close(fd);
     fd = -1;		/* see declaration of fd above */
   }

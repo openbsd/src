@@ -84,36 +84,42 @@ extern int krb_debug;
 extern int krb_ap_req_debug;
 extern int krb_dns_debug;
 
-/* Temporary fixes for krb_{rd,mk}_safe */
-#define DES_QUAD_GUESS 0
-#define DES_QUAD_NEW 1
-#define DES_QUAD_OLD 2
-
-/* Set this to one of the constants above to specify default checksum
-   type to emit */
-#define DES_QUAD_DEFAULT DES_QUAD_GUESS
-
 /* Utils */
-int krb_name_to_name(const char *, char *, size_t);
+int
+krb_name_to_name __P((
+	const char *host,
+	char *phost,
+	size_t phost_size));
 
-void encrypt_ktext(KTEXT cip, des_cblock *key, int encrypt);
-int kdc_reply_cred(KTEXT cip, CREDENTIALS *cred);
-int kdc_reply_cipher(KTEXT reply, KTEXT cip);
+void
+encrypt_ktext __P((
+	KTEXT cip,
+	des_cblock *key,
+	int encrypt));
 
-void k_ricercar(char*);
+int
+kdc_reply_cipher __P((
+	KTEXT reply,
+	KTEXT cip));
 
-/* safe multiple strcat */
-int k_concat(char*, size_t, ...);
-int k_vconcat(char*, size_t, va_list);
+int
+kdc_reply_cred __P((
+	KTEXT cip,
+	CREDENTIALS *cred));
 
-/* mallocing versions of the above */
-size_t k_vmconcat (char**, size_t, va_list); 
-size_t k_mconcat (char**, size_t, ...);
+void
+k_ricercar __P((char *name));
+
 
 /* used in rd_safe.c and mk_safe.c */
-
-void fixup_quad_cksum(void *start, size_t len, des_cblock *key, 
-		      void *new_checksum, void *old_checksum, int little);
+void
+fixup_quad_cksum __P((
+	void *start,
+	size_t len,
+	des_cblock *key,
+	void *new_checksum,
+	void *old_checksum,
+	int little));
 
 /* stuff from libroken*/
 
@@ -124,5 +130,16 @@ void fixup_quad_cksum(void *start, size_t len, des_cblock *key,
 #ifndef FALSE
 #define FALSE 0
 #endif
+
+char *strtok_r(char *s1, const char *s2, char **lasts);
+
+/* Temporary fixes for krb_{rd,mk}_safe */
+#define DES_QUAD_GUESS 0
+#define DES_QUAD_NEW 1
+#define DES_QUAD_OLD 2
+
+/* Set this to one of the constants above to specify default checksum
+   type to emit */
+#define DES_QUAD_DEFAULT DES_QUAD_GUESS
 
 #endif /*  __krb_locl_h */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_krbrlm.c,v 1.10 1997/12/09 09:07:07 art Exp $	*/
+/*	$OpenBSD: get_krbrlm.c,v 1.11 1997/12/12 05:30:22 art Exp $	*/
 /* $KTH: get_krbrlm.c,v 1.16 1997/05/02 01:26:22 assar Exp $ */
 
 /* 
@@ -64,62 +64,50 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
 int
 krb_get_lrealm(char *r, int n)
 {
-  static const char *const files[] = KRB_CNF_FILES;
-  int i;
-  
-  const char *dir = getenv("KRBCONFDIR");
-
-  if (n > 1)
-    return(KFAILURE);		/* Temporary restriction */
-
-  /* First try user specified file */
-  if (dir != 0 && !issetugid()) {
-    char fname[MAXPATHLEN];
-    if(k_concat(fname, sizeof(fname), dir, "/krb.conf", NULL) == 0)
-	if (krb_get_lrealm_f(r, n, fname) == KSUCCESS)
+    int i;
+    char file[MAXPATHLEN];
+    
+    if (n > 1)
+	return(KFAILURE);		/* Temporary restriction */
+    
+    for (i = 0; krb_get_krbconf(i, file, sizeof(file)) == 0; i++)
+	if (krb_get_lrealm_f(r, n, file) == KSUCCESS)
 	    return KSUCCESS;
-  }
-
-  for (i = 0; files[i] != 0; i++)
-    if (krb_get_lrealm_f(r, n, files[i]) == KSUCCESS)
-      return KSUCCESS;
-
-  if (r[0] == '#')
+    
+    if (r[0] == '#')
 	return(KFAILURE);
+    
+    /* If nothing else works try LOCALDOMAIN, if it exists */
+    if (n == 1) {
+	char *t, hostname[MAXHOSTNAMELEN];
+	gethostname(hostname, sizeof(hostname));
+	t = krb_realmofhost(hostname);
+	if (t != NULL) {
+	    strcpy (r, t);
+	    return KSUCCESS;
+	}
+	t = strchr(hostname, '.');
+	if (t == 0)
+	    return KFAILURE;	/* No domain part, you loose */
 
-  /* If nothing else works try LOCALDOMAIN, if it exists */
-  if (n == 1)
-    {
-      char *t, hostname[MAXHOSTNAMELEN];
-      k_gethostname(hostname, sizeof(hostname));
-      t = krb_realmofhost(hostname);
-      if (t) {
-	strncpy (r, t, REALM_SZ);
-	r[REALM_SZ-1] = '\0';
-	return KSUCCESS;
-      }
-      t = strchr(hostname, '.');
-      if (t == 0)
-	return KFAILURE;	/* No domain part, you loose */
-
-      t++;			/* Skip leading dot and upcase the rest */
-      for (; *t; t++, r++)
-	*r = toupper(*t);
-      *r = 0;
-      return(KSUCCESS);
+	t++;			/* Skip leading dot and upcase the rest */
+	for (; *t != '\0'; t++, r++)
+	    *r = toupper(*t);
+	*r = 0;
+	return(KSUCCESS);
     }
-  else
-    return(KFAILURE);
+    else
+	return(KFAILURE);
 }
 
 /* For SunOS5 compat. */
 char *
 krb_get_default_realm(void)
 {
-  static char local_realm[REALM_SZ]; /* local kerberos realm */
-  if (krb_get_lrealm(local_realm, 1) != KSUCCESS){
-    strncpy(local_realm, "NO.DEFAULT.REALM", REALM_SZ);
-    local_realm[REALM_SZ-1] = '\0';
-  }
-  return local_realm;
+    static char local_realm[REALM_SZ]; /* local kerberos realm */
+    if (krb_get_lrealm(local_realm, 1) != KSUCCESS){
+	strncpy(local_realm, "NO.DEFAULT.REALM", REALM_SZ);
+	local_realm[REALM_SZ-1] = '\0';
+    }
+    return local_realm;
 }

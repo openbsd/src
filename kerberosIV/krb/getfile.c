@@ -1,5 +1,5 @@
-/*	$OpenBSD: et_list.c,v 1.2 1997/12/09 07:57:14 art Exp $	*/
-/* $KTH: et_list.c,v 1.12 1997/05/13 09:45:01 bg Exp $ */
+/*	$OpenBSD: getfile.c,v 1.1 1997/12/12 05:30:22 art Exp $	*/
+/* $KTH: getfile.c,v 1.1 1997/12/05 09:04:10 joda Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
@@ -39,17 +39,48 @@
  * SUCH DAMAGE.
  */
 
-struct et_list {
-    struct et_list *next;
-    const struct error_table *table;
-};
+#include "krb_locl.h"
 
-#if defined(__GNUC__)
+int
+krb_get_krbconf(int num, char *buf, size_t len)
+{
+    const char *files[] = KRB_CNF_FILES;
+    const char *p, **q;
+    int i = 0;
+    if(!issetugid() && (p = getenv("KRBCONFDIR"))){
+	if(num == i){
+	    snprintf(buf, len, "%s/krb.conf", p);
+	    return 0;
+	}
+	i++;
+    }
+    for(q = files; *q != NULL; q++, i++){
+	if(num == i){
+	    snprintf(buf, len, "%s", *q);
+	    return 0;
+	}
+    }
+    return -1;
+}
 
-struct et_list * _et_list __attribute__ ((weak)) = 0;
-
-#else /* !__GNUC__ */
-
-struct et_list * _et_list = 0;
-
-#endif /* !__GNUC__ */
+int
+krb_get_krbrealms(int num, char *buf, size_t len)
+{
+    const char *files[] = KRB_RLM_FILES;
+    const char *p, **q;
+    int i = 0;
+    if(!issetugid() && (p = getenv("KRBCONFDIR"))){
+	if(num == i){
+	    snprintf(buf, len, "%s/krb.realms", p);
+	    return 0;
+	}
+	i++;
+    }
+    for(q = files; *q; q++, i++){
+	if(num == i){
+	    snprintf(buf, len, "%s", *q);
+	    return 0;
+	}
+    }
+    return -1;
+}

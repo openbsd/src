@@ -218,7 +218,7 @@ kerb_dbl_lock(int mode)
     if (non_blocking)
 	flock_mode |= K_LOCK_NB;
     
-    if (k_flock(dblfd, flock_mode) < 0) 
+    if (flock(dblfd, flock_mode) < 0) 
 	return errno;
     mylock++;
     return 0;
@@ -234,10 +234,10 @@ kerb_dbl_unlock()
 	fflush(stderr);
 	exit(1);
     }
-    if (k_flock(dblfd, K_LOCK_UN) < 0) {
+    if (flock(dblfd, K_LOCK_UN) < 0) {
 	fprintf(stderr, "Kerberos database lock error. (unlocking)\n");
 	fflush(stderr);
-	perror("k_flock");
+	perror("flock");
 	exit(1);
     }
     mylock = 0;

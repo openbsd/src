@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrealm.c,v 1.7 1997/12/09 07:57:19 art Exp $	*/
+/*	$OpenBSD: getrealm.c,v 1.8 1997/12/12 05:30:23 art Exp $	*/
 /* $KTH: getrealm.c,v 1.26 1997/10/08 22:51:13 joda Exp $ */
 
 /* 
@@ -94,26 +94,14 @@ dns_find_realm(char *hostname, char *realm)
 static FILE *
 open_krb_realms(void)
 {
-  static const char *const files[] = KRB_RLM_FILES;
-  FILE *res;
-  int i;
-  
-  const char *dir = getenv("KRBCONFDIR");
-
-  /* First try user specified file */
-  if (dir != 0 && getuid() != geteuid()) {
-    char fname[MAXPATHLEN];
-
-    if(k_concat(fname, sizeof(fname), dir, "/krb.realms", NULL) == 0)
-	if ((res = fopen(fname, "r")) != NULL)
+    int i;
+    char file[128];
+    FILE *res;
+    for(i = 0; krb_get_krbrealms(i, file, sizeof(file)) == 0; i++)
+	if ((res = fopen(file, "r")) != NULL)
 	    return res;
-  }
 
-  for (i = 0; files[i] != 0; i++)
-    if ((res = fopen(files[i], "r")) != NULL)
-      return res;
-
-  return NULL;
+    return NULL;
 }
 
 static int

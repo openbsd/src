@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendauth.c,v 1.4 1997/12/09 07:57:38 art Exp $	*/
+/*	$OpenBSD: sendauth.c,v 1.5 1997/12/12 05:30:32 art Exp $	*/
 /* $KTH: sendauth.c,v 1.15 1997/04/18 14:11:36 joda Exp $ */
 
 /* 
@@ -131,6 +131,7 @@ krb_sendauth(int32_t options,	/* bit-pattern of options */
 	char tmp[4];
 	u_int32_t len;
 	char inst[INST_SZ];
+	char *i;
 
 	ret = krb_net_read (fd, tmp, 4);
 	if (ret < 0)
@@ -145,11 +146,11 @@ krb_sendauth(int32_t options,	/* bit-pattern of options */
 	    return -1;
 
 	if (options & KOPT_DONT_CANON)
-	    strncpy (inst, instance, sizeof(inst));
+	    i = instance;
 	else
-	    strncpy (inst, krb_get_phost(instance), sizeof(inst));
-
-	inst[sizeof(inst)-1] = '\0';
+	    i = krb_get_phost(instance);
+	strncpy (inst, i, sizeof(inst));
+	inst[sizeof(inst) - 1] = '\0';
 
 	ret = krb_get_cred (service, inst, realm, cred);
 	if (ret != KSUCCESS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk_safe.c,v 1.4 1997/12/09 07:57:30 art Exp $	*/
+/*	$OpenBSD: mk_safe.c,v 1.5 1997/12/12 05:30:28 art Exp $	*/
 /* $KTH: mk_safe.c,v 1.21 1997/04/19 23:18:03 joda Exp $ */
 
 /*
@@ -42,7 +42,7 @@
 #include "krb_locl.h"
 
 /* application include files */
-#include "lsb_addr_comp.h"
+#include "krb-archaeology.h"
 
 
 /* from rd_safe.c */

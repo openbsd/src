@@ -1,4 +1,5 @@
-/*	$Id: kinit.c,v 1.2 1997/11/28 12:48:47 art Exp $	*/
+/*	$OpenBSD: kinit.c,v 1.3 1997/12/12 05:30:16 art Exp $	*/
+/*	$Id: kinit.c,v 1.3 1997/12/12 05:30:16 art Exp $	*/
 /*      $KTH: kinit.c,v 1.15 1997/03/30 18:58:46 assar Exp $    */
 
 
@@ -111,8 +112,8 @@ main(int argc, char **argv)
 	iflag = rflag = 1;
 	username = NULL;
     }
-    if (k_gethostname(buf, MAXHOSTNAMELEN)) 
-	errx(1, "k_gethostname failed");
+    if (gethostname(buf, MAXHOSTNAMELEN)) 
+	errx(1, "gethostname failed");
     printf("%s (%s)\n", ORGANIZATION, buf);
     if (username) {
 	printf("Kerberos Initialization for \"%s", aname);

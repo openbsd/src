@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_service_key.c,v 1.3 1997/12/09 07:57:35 art Exp $	*/
+/*	$OpenBSD: read_service_key.c,v 1.4 1997/12/12 05:30:30 art Exp $	*/
 /* $KTH: read_service_key.c,v 1.8 1997/03/23 03:53:16 joda Exp $ */
 
 /* 
@@ -81,29 +81,31 @@ read_service_key(char *service,	/* Service Name */
 
     wcard = (instance[0] == '*') && (instance[1] == '\0');
 
-    while (getst(stab,serv,SNAME_SZ) > 0) { /* Read sname */
-        getst(stab,inst,INST_SZ); /* Instance */
-        getst(stab,rlm,REALM_SZ); /* Realm */
+    while (getst(stab, serv, SNAME_SZ) > 0) { /* Read sname */
+        getst(stab, inst, INST_SZ); /* Instance */
+        getst(stab, rlm, REALM_SZ); /* Realm */
         /* Vers number */
         if (read(stab, &vno, 1) != 1) {
 	    close(stab);
             return KFAILURE;
 	}
         /* Key */
-        if (read(stab,key,8) != 8) {
+        if (read(stab, key, 8) != 8) {
 	    close(stab);
             return KFAILURE;
 	}
         /* Is this the right service */
-        if (service != NULL && strcmp(serv,service))
+        if (service != NULL && strcmp(serv, service))
             continue;
         /* How about instance */
-        if (!wcard && strcmp(inst,instance))
+        if (wcard == '\0' && strcmp(inst,instance))
             continue;
-        if (wcard)
-            strncpy(instance,inst,INST_SZ);
+        if (wcard != 0) {
+            strncpy(instance, inst, INST_SZ);
+	    instance[INST_SZ - 1] = '\0';
+	}
         /* Is this the right realm */
-        if (realm != NULL && strcmp(rlm,realm)) 
+        if (realm != NULL && strcmp(rlm, realm)) 
 	    continue;
 
         /* How about the key version number */

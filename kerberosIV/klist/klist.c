@@ -1,3 +1,4 @@
+/*	$OpenBSD: klist.c,v 1.3 1997/12/12 05:30:17 art Exp $	*/
 /* $KTH: klist.c,v 1.28 1997/05/26 17:33:50 bg Exp $ */
 
 /*
@@ -21,7 +22,7 @@ static int option_verbose = 0;
 static char progname[]="klist";
 
 static char *
-short_date(int32_t dp)
+short_date(time_t dp)
 {
     char *cp;
     time_t t = (time_t)dp;
@@ -159,7 +160,11 @@ ok_getst(int fd, char *s, int n)
 {
     int count = n;
     int err;
-    while ((err = read(fd, s, 1)) > 0 && --count)
+
+    if (s == NULL)
+	return -1;
+
+    while ((err = read(fd, s, 1)) > 0 && (--count) != 0)
         if (*s++ == '\0')
             return (n - count);
     if (err < 0)
@@ -169,13 +174,11 @@ ok_getst(int fd, char *s, int n)
 }
 
 static void
-display_tokens()
+display_tokens(void)
 {
     u_int32_t i;
     unsigned char t[128];
     struct ViceIoctl parms;
-    struct ClearToken ct;
-    int size_secret_tok, size_public_tok;
 
     parms.in = (void *)&i;
     parms.in_size = sizeof(i);
@@ -183,11 +186,21 @@ display_tokens()
     parms.out_size = sizeof(t);
 
     for (i = 0; k_pioctl(NULL, VIOCGETTOK, &parms, 0) == 0; i++) {
+        int32_t size_secret_tok, size_public_tok;
         char *cell;
-	memcpy(&size_secret_tok, t, 4);
-	memcpy(&size_public_tok, t + 4 + size_secret_tok, 4);
-	memcpy(&ct, t + 4 + size_secret_tok + 4, size_public_tok);
-	cell = t + 4 + size_secret_tok + 4 + size_public_tok + 4;
+	struct ClearToken ct;
+	unsigned char *r = t;
+
+	memcpy(&size_secret_tok, r, sizeof(size_secret_tok));
+	/* dont bother about the secret token */
+	r += size_secret_tok + sizeof(size_secret_tok);
+	memcpy(&size_public_tok, r, sizeof(size_public_tok));
+	r += sizeof(size_public_tok);
+	memcpy(&ct, r, size_public_tok);
+	r += size_public_tok;
+	/* there is a int32_t with length of cellname, but we dont read it */
+	r += sizeof(int32_t);
+	cell = r;
 
 	printf("%-15s  ", short_date(ct.BeginTimestamp));
 	printf("%-15s  ", short_date(ct.EndTimestamp));
@@ -259,7 +272,7 @@ main(int argc, char **argv)
     int     do_tokens = 0;
     char   *tkt_file = NULL;
 
-    while (*(++argv)) {
+    while (*(++argv) != NULL) {
 	if (!strcmp(*argv, "-v")) {
 	    option_verbose = 1;
 	    continue;
@@ -302,7 +315,9 @@ main(int argc, char **argv)
 	display_srvtab(tkt_file);
     else
 	display_tktfile(tkt_file, tgt_test, long_form);
-    if (long_form && do_tokens)
+    if (long_form && do_tokens){
+	printf("\nAFS tokens:\n");
 	display_tokens();
+    }
     exit(0);
 }

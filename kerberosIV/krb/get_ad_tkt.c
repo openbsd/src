@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_ad_tkt.c,v 1.3 1997/12/09 07:57:15 art Exp $	*/
+/*	$OpenBSD: get_ad_tkt.c,v 1.4 1997/12/12 05:30:20 art Exp $	*/
 /* $KTH: get_ad_tkt.c,v 1.16 1997/05/30 17:43:34 bg Exp $ */
 
 /*
@@ -94,9 +94,10 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
      */
 
     kerror = krb_get_cred(KRB_TICKET_GRANTING_TICKET, realm, realm, &cr);
-    if (kerror == KSUCCESS)
+    if (kerror == KSUCCESS) {
       strncpy(lrealm, realm, REALM_SZ);
-    else
+      lrealm[REALM_SZ - 1] = '\0';
+    } else
       kerror = krb_get_tf_realm(TKT_FILE, lrealm);
     
     if (kerror != KSUCCESS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.2 1997/12/09 07:57:36 art Exp $	*/
+/*	$OpenBSD: resolve.c,v 1.3 1997/12/12 05:30:31 art Exp $	*/
 /* $KTH: resolve.c,v 1.12 1997/10/28 15:37:39 bg Exp $ */
 
 /*
@@ -133,6 +133,11 @@ parse_reply(unsigned char *data, int len)
 	return NULL;
     }
     r->q.domain = strdup(host);
+    if(r->q.domain == NULL) {
+	dns_free_data(r);
+	return NULL;
+    }
+
     p += status;
     r->q.type = (p[0] << 8 | p[1]);
     p += 2;
@@ -157,7 +162,15 @@ parse_reply(unsigned char *data, int len)
 	p += 2;
 	*rr = (struct resource_record*)calloc(1, 
 					      sizeof(struct resource_record));
+	if(*rr == NULL) {
+	    dns_free_data(r);
+	    return NULL;
+	}
 	(*rr)->domain = strdup(host);
+	if((*rr)->domain == NULL) {
+	    dns_free_data(r);
+	    return NULL;
+	}
 	(*rr)->type = type;
 	(*rr)->class = class;
 	(*rr)->ttl = ttl;
@@ -172,6 +185,10 @@ parse_reply(unsigned char *data, int len)
 		return NULL;
 	    }
 	    (*rr)->u.txt = strdup(host);
+	    if((*rr)->u.txt == NULL) {
+		dns_free_data(r);
+		return NULL;
+	    }
 	    break;
 	case T_MX:
 	case T_AFSDB:{
@@ -182,6 +199,10 @@ parse_reply(unsigned char *data, int len)
 	    }
 	    (*rr)->u.mx = (struct mx_record*)malloc(sizeof(struct mx_record) + 
 						    strlen(host));
+	    if((*rr)->u.mx == NULL) {
+		dns_free_data(r);
+		return NULL;
+	    }
 	    (*rr)->u.mx->preference = (p[0] << 8) | p[1];
 	    strncpy((*rr)->u.mx->domain, host, MAXHOSTNAMELEN);
 	    (*rr)->u.mx->domain[MAXHOSTNAMELEN-1] = '\0';
@@ -196,6 +217,10 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.srv = 
 		(struct srv_record*)malloc(sizeof(struct srv_record) + 
 					   strlen(host));
+	    if((*rr)->u.srv == NULL) {
+		dns_free_data(r);
+		return NULL;
+	    }
 	    (*rr)->u.srv->priority = (p[0] << 8) | p[1];
 	    (*rr)->u.srv->weight = (p[2] << 8) | p[3];
 	    (*rr)->u.srv->port = (p[4] << 8) | p[5];
@@ -205,6 +230,10 @@ parse_reply(unsigned char *data, int len)
 	}
 	case T_TXT:{
 	    (*rr)->u.txt = (char*)malloc(size + 1);
+	    if((*rr)->u.txt == NULL) {
+		dns_free_data(r);
+		return NULL;
+	    }
 	    strncpy((*rr)->u.txt, (char*)p + 1, *p);
 	    (*rr)->u.txt[*p] = 0;
 	    break;
@@ -212,6 +241,10 @@ parse_reply(unsigned char *data, int len)
 	    
 	default:
 	    (*rr)->u.data = (unsigned char*)malloc(size);
+	    if((*rr)->u.data == NULL) {
+		dns_free_data(r);
+		return NULL;
+	    }
 	    memcpy((*rr)->u.data, p, size);
 	}
 	p += size;
@@ -228,7 +261,7 @@ dns_lookup(const char *domain, const char *type_name)
     int len;
     int type;
     struct dns_reply *r = NULL;
-    u_long old_options;
+    u_long old_options = 0;
     
     type = string_to_type(type_name);
     if (krb_dns_debug) {

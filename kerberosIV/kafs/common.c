@@ -162,21 +162,29 @@ find_cells(char *file, char ***cells, int *index)
     FILE *f;
     char cell[64];
     int i;
+    int ind = *index;
+
     f = fopen(file, "r");
     if (f == NULL)
 	return;
     while (fgets(cell, sizeof(cell), f)) {
 	char *nl = strchr(cell, '\n');
 	if (nl) *nl = 0;
-	for(i = 0; i < *index; i++)
+	for(i = 0; i < ind; i++)
 	    if(strcmp((*cells)[i], cell) == 0)
 		break;
-	if(i == *index){
-	    *cells = realloc(*cells, (*index + 1) * sizeof(**cells));
-	    (*cells)[(*index)++] = strdup(cell);
+	if(i == ind){
+	    *cells = realloc(*cells, (ind + 1) * sizeof(**cells));
+	    if (*cells == NULL)
+		break;
+	    (*cells)[ind] = strdup(cell);
+	    if ((*cells)[ind] == NULL)
+		break;
+	    ++ind;
 	}
     }
     fclose(f);
+    *index = ind;
 }
 
 /*

@@ -1,23 +1,12 @@
-/*	$Id: kdb_util.c,v 1.1.1.1 1995/12/14 06:52:42 tholo Exp $	*/
-
-/*-
- * Copyright 1987, 1988 by the Student Information Processing Board
- *	of the Massachusetts Institute of Technology
- *
- * Permission to use, copy, modify, and distribute this software
- * and its documentation for any purpose and without fee is
- * hereby granted, provided that the above copyright notice
- * appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation,
- * and that the names of M.I.T. and the M.I.T. S.I.P.B. not be
- * used in advertising or publicity pertaining to distribution
- * of the software without specific, written prior permission.
- * M.I.T. and the M.I.T. S.I.P.B. make no representations about
- * the suitability of this software for any purpose.  It is
- * provided "as is" without express or implied warranty.
- */
+/*	$OpenBSD: kdb_util.c,v 1.2 1997/12/12 05:30:13 art Exp $	*/
+/* $KTH: kdb_util.c,v 1.36 1997/12/05 04:21:50 assar Exp $ */
 
 /*
+ * Copyright 1987, 1988 by the Massachusetts Institute of Technology.
+ * 
+ * For copying and distribution information, please see the file
+ * <mit-copyright.h>.
+ *
  * Kerberos database manipulation utility. This program allows you to
  * dump a kerberos database to an ascii readable file and load this
  * file into the database. Read locking of the database is done during a
@@ -27,16 +16,12 @@
  * Written July 9, 1987 by Jeffrey I. Schiller
  */
 
-#include <adm_locl.h>
-
-static char *prog; 
-
-Principal aprinc;
+#include "adm_locl.h"
 
 static des_cblock master_key, new_master_key;
 static des_key_schedule master_key_schedule, new_master_key_schedule;
 
-#define zaptime(foo) bzero((char *)(foo), sizeof(*(foo)))
+#define zaptime(foo) memset((foo), 0, sizeof(*(foo)))
 
 /* cv_key is a procedure which takes a principle and changes its key, 
    either for a new method of encrypting the keys, or a new master key.
@@ -44,9 +29,23 @@ static des_key_schedule master_key_schedule, new_master_key_schedule;
    order). */
 
 struct callback_args {
-    void (*cv_key)();
+    void (*cv_key)(Principal *);
     FILE *output_file;
 };
+
+time_t
+tm2time (struct tm tm, int local)
+{
+     time_t t;
+
+     tm.tm_isdst = -1;
+
+     t = mktime (&tm);
+
+     if (!local)
+       t += t - mktime (gmtime (&t));
+     return t;
+}
 
 static void
 print_time(FILE *file, time_t timeval)
@@ -54,27 +53,29 @@ print_time(FILE *file, time_t timeval)
     struct tm *tm;
     tm = gmtime(&timeval);
     fprintf(file, " %04d%02d%02d%02d%02d",
-            tm->tm_year < 1900 ? tm->tm_year + 1900: tm->tm_year,
+	    tm->tm_year + 1900,
             tm->tm_mon + 1,
             tm->tm_mday,
             tm->tm_hour,
             tm->tm_min);
 }
 
-static long
+static time_t
 time_explode(char *cp)
 {
     char wbuf[5];
     struct tm tp;
-    long maketime(struct tm *tp, int local);
     int local;
+
+    if (cp == NULL)
+	return -1;
 
     zaptime(&tp);			/* clear out the struct */
     
     if (strlen(cp) > 10) {		/* new format */
-	(void) strncpy(wbuf, cp, 4);
+	strncpy(wbuf, cp, 4);
 	wbuf[4] = 0;
-	tp.tm_year = atoi(wbuf);
+	tp.tm_year = atoi(wbuf) - 1900;
 	cp += 4;			/* step over the year */
 	local = 0;			/* GMT */
     } else {				/* old format: local time, 
@@ -82,7 +83,7 @@ time_explode(char *cp)
 	wbuf[0] = *cp++;
 	wbuf[1] = *cp++;
 	wbuf[2] = 0;
-	tp.tm_year = 1900 + atoi(wbuf);
+	tp.tm_year = atoi(wbuf);
 	local = 1;			/* local */
     }
 
@@ -104,13 +105,16 @@ time_explode(char *cp)
     tp.tm_min = atoi(wbuf);
 
 
-    return(maketime(&tp, local));
+    return(tm2time(tp, local));
 }
 
 static int
-dump_db_1(char *arg, Principal *principal)
+dump_db_1(void *arg, Principal *principal)
 {	    /* replace null strings with "*" */
     struct callback_args *a = (struct callback_args *)arg;
+
+    if (principal == NULL)
+	return -1;
     
     if (principal->instance[0] == '\0') {
 	principal->instance[0] = '*';
@@ -152,75 +156,107 @@ dump_db (char *db_file, FILE *output_file, void (*cv_key) (Principal *))
     a.cv_key = cv_key;
     a.output_file = output_file;
     
-    kerb_db_iterate (dump_db_1, (char *)&a);
+    kerb_db_iterate ((k_iter_proc_t)dump_db_1, &a);
     return fflush(output_file);
+}
+
+static int
+add_file(void *db, FILE *file)
+{
+    int ret;
+    int lineno = 0;
+    char line[1024];
+    unsigned long key[2]; /* yes, long */
+    Principal pr;
+    
+    char exp_date[64], mod_date[64];
+    
+    int life, kkvno, kvno;
+    
+    while(1){
+	memset(&pr, 0, sizeof(pr));
+	errno = 0;
+	if(fgets(line, sizeof(line), file) == NULL){
+	    if(errno != 0)
+	      err (1, "fgets");
+	    break;
+	}
+	lineno++;
+	ret = sscanf(line, "%s %s %d %d %d %hd %lx %lx %s %s %s %s",
+		     pr.name, pr.instance,
+		     &life, &kkvno, &kvno,
+		     &pr.attributes,
+		     &key[0], &key[1],
+		     exp_date, mod_date,
+		     pr.mod_name, pr.mod_instance);
+	if(ret != 12){
+	    warnx("Line %d malformed (ignored)", lineno);
+	    continue;
+	}
+	pr.key_low = ntohl (key[0]);
+	pr.key_high = ntohl (key[1]);
+	pr.max_life = life;
+	pr.kdc_key_ver = kkvno;
+	pr.key_version = kvno;
+	pr.exp_date = time_explode(exp_date);
+	pr.mod_date = time_explode(mod_date);
+	if (pr.instance[0] == '*')
+	    pr.instance[0] = 0;
+	if (pr.mod_name[0] == '*')
+	    pr.mod_name[0] = 0;
+	if (pr.mod_instance[0] == '*')
+	    pr.mod_instance[0] = 0;
+	if (kerb_db_update(db, &pr, 1) != 1) {
+	    warn ("store %s.%s aborted",
+		  pr.name, pr.instance);
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 static void
 load_db (char *db_file, FILE *input_file)
 {
-    char    exp_date_str[50];
-    char    mod_date_str[50];
-    int     temp1, temp2, temp3;
+    long *db;
     int code;
     char *temp_db_file;
-    temp1 = strlen(db_file)+2;
-    temp_db_file = malloc (temp1);
-    strcpy(temp_db_file, db_file);
-    strcat(temp_db_file, "~");
+
+    asprintf (&temp_db_file, "%s~", db_file);
+    if(temp_db_file == NULL)
+	errx (1, "out of memory");
 
     /* Create the database */
-    if ((code = kerb_db_create(temp_db_file)) != 0) {
-	fprintf(stderr, "Couldn't create temp database %s: %s\n",
-		temp_db_file, strerror(code));
-	exit(1);
-    }
+    if ((code = kerb_db_create(temp_db_file)) != 0)
+	err (1, "creating temp database %s", temp_db_file);
     kerb_db_set_name(temp_db_file);
-    for (;;) {			/* explicit break on eof from fscanf */
-        u_long key_lo, key_hi;	/* Must match format string */
-	bzero((char *)&aprinc, sizeof(aprinc));
-	if (fscanf(input_file,
-		   "%s %s %d %d %d %hd %lx %lx %s %s %s %s\n",
-		   aprinc.name,
-		   aprinc.instance,
-		   &temp1,
-		   &temp2,
-		   &temp3,
-		   &aprinc.attributes,
-		   &key_lo,
-		   &key_hi,
-		   exp_date_str,
-		   mod_date_str,
-		   aprinc.mod_name,
-		   aprinc.mod_instance) == EOF)
-	    break;
-	aprinc.key_low = ntohl (key_lo);
-	aprinc.key_high = ntohl (key_hi);
-	aprinc.max_life = (unsigned char) temp1;
-	aprinc.kdc_key_ver = (unsigned char) temp2;
-	aprinc.key_version = (unsigned char) temp3;
-	aprinc.exp_date = time_explode(exp_date_str);
-	aprinc.mod_date = time_explode(mod_date_str);
-	if (aprinc.instance[0] == '*')
-	    aprinc.instance[0] = '\0';
-	if (aprinc.mod_name[0] == '*')
-	    aprinc.mod_name[0] = '\0';
-	if (aprinc.mod_instance[0] == '*')
-	    aprinc.mod_instance[0] = '\0';
-	if (kerb_db_put_principal(&aprinc, 1) != 1) {
-	    fprintf(stderr, "Couldn't store %s.%s: %s; load aborted\n",
-		    aprinc.name, aprinc.instance,
-		    strerror(errno));
-	    exit(1);
-	};
-    }
+    db = kerb_db_begin_update();
+    if (db == NULL)
+	err (1, "opening temp database %s", temp_db_file);
+    
+    if(add_file(db, input_file))
+	errx (1, "Load aborted");
+
+    kerb_db_end_update(db);
     if ((code = kerb_db_rename(temp_db_file, db_file)) != 0)
-	perror("database rename failed");
-    (void) fclose(input_file);
+        warn("database rename failed");
+    fclose(input_file);
     free(temp_db_file);
 }
 
-/*ARGSUSED*/
+static void
+merge_db(char *db_file, FILE *input_file)
+{
+    void *db;
+    
+    db = kerb_db_begin_update();
+    if(db == NULL)
+        err (1, "Couldn't open database");
+    if(add_file(db, input_file))
+        errx (1, "Merge aborted");
+    kerb_db_end_update(db);
+}
+
 static void
 update_ok_file (char *file_name)
 {
@@ -229,21 +265,11 @@ update_ok_file (char *file_name)
     int fd;
     static char ok[]=".dump_ok";
 
-    if ((file_ok = (char *)malloc(strlen(file_name) + strlen(ok) + 1))
-	== NULL) {
-	fprintf(stderr, "kdb_util: out of memory.\n");
-	(void) fflush (stderr);
-	perror ("malloc");
-	exit (1);
-    }
-    strcpy(file_ok, file_name);
-    strcat(file_ok, ok);
-    if ((fd = open(file_ok, O_WRONLY|O_CREAT|O_TRUNC, 0400)) < 0) {
-	fprintf(stderr, "Error creating 'ok' file, '%s'", file_ok);
-	perror("");
-	(void) fflush (stderr);
-	exit (1);
-    }
+    asprintf (&file_ok, "%s%s", file_name, ok);
+    if (file_ok == NULL)
+      errx (1, "out of memory");
+    if ((fd = open(file_ok, O_WRONLY|O_CREAT|O_TRUNC, 0400)) < 0)
+        err (1, "Error creating %s", file_ok);
     free(file_ok);
     close(fd);
 }
@@ -260,19 +286,17 @@ convert_key_new_master (Principal *p)
      since that's changing */
   if ((strncmp (p->name, KERB_M_NAME, ANAME_SZ) == 0) &&
       (strncmp (p->instance, KERB_M_INST, INST_SZ) == 0)) {
-    bcopy((char *)new_master_key, (char *) key, sizeof (des_cblock));
+    memcpy (key, new_master_key, sizeof(des_cblock));
     (p->key_version)++;
   } else {
-    bcopy((char *)&(p->key_low), (char *)key, 4);
-    bcopy((char *)&(p->key_high), (char *) (((long *) key) + 1), 4);
+    copy_to_key(&p->key_low, &p->key_high, key);
     kdb_encrypt_key (&key, &key, &master_key, master_key_schedule, DES_DECRYPT);
   }
 
   kdb_encrypt_key (&key, &key, &new_master_key, new_master_key_schedule, DES_ENCRYPT);
 
-  bcopy((char *)key, (char *)&(p->key_low), 4);
-  bcopy((char *)(((long *) key) + 1), (char *)&(p->key_high), 4);
-  bzero((char *)key, sizeof (key));  /* a little paranoia ... */
+  copy_from_key(key, &(p->key_low), &(p->key_high));
+  memset(key, 0, sizeof (key));  /* a little paranoia ... */
 
   (p->kdc_key_ver)++;
 }
@@ -280,36 +304,42 @@ convert_key_new_master (Principal *p)
 static void
 clear_secrets (void)
 {
-  bzero((char *)master_key, sizeof (des_cblock));
-  bzero((char *)master_key_schedule, sizeof (des_key_schedule));
-  bzero((char *)new_master_key, sizeof (des_cblock));
-  bzero((char *)new_master_key_schedule, sizeof (des_key_schedule));
+  memset(master_key, 0, sizeof (des_cblock));
+  memset(master_key_schedule, 0, sizeof (des_key_schedule));
+  memset(new_master_key, 0, sizeof (des_cblock));
+  memset(new_master_key_schedule, 0, sizeof (des_key_schedule));
 }
 
 static void
 convert_new_master_key (char *db_file, FILE *out)
 {
-
+#ifdef RANDOM_MKEY
+  errx (1, "Sorry, this function is not available with "
+	"the new master key scheme.");
+#else
   printf ("\n\nEnter the CURRENT master key.");
-  if (kdb_get_master_key (TRUE, &master_key, master_key_schedule) != 0) {
-    fprintf (stderr, "%s: Couldn't get master key.\n", prog);
-    clear_secrets ();
-    exit (-1);
+  if (kdb_get_master_key (KDB_GET_PROMPT, &master_key,
+			  master_key_schedule) != 0) {
+    errx (1, "Couldn't get master key.");
   }
 
   if (kdb_verify_master_key (&master_key, master_key_schedule, stderr) < 0) {
-    clear_secrets ();
-    exit (-1);
+    exit (1);
   }
 
   printf ("\n\nNow enter the NEW master key.  Do not forget it!!");
-  if (kdb_get_master_key (TRUE, &new_master_key, new_master_key_schedule) != 0) {
-    fprintf (stderr, "%s: Couldn't get new master key.\n", prog);
-    clear_secrets ();
-    exit (-1);
+  if (kdb_get_master_key (KDB_GET_TWICE, &new_master_key,
+			  new_master_key_schedule) != 0) {
+    errx (1, "Couldn't get new master key.");
   }
 
   dump_db (db_file, out, convert_key_new_master);
+  {
+    char fname[128];
+    snprintf(fname, sizeof(fname), "%s.new", MKEYFILE);
+    kdb_kstash(&new_master_key, fname);
+  }
+#endif /* RANDOM_MKEY */
 }
 
 static void
@@ -320,8 +350,7 @@ convert_key_old_db (Principal *p)
  /* leave null keys alone */
   if ((p->key_low == 0) && (p->key_high == 0)) return;
 
-  bcopy((char *)&(p->key_low), (char *)key, 4);
-  bcopy((char *)&(p->key_high), (char *)(((long *) key) + 1), 4);
+  copy_to_key(&p->key_low, &p->key_high, key);
 
 #ifndef NOENCRYPTION
   des_pcbc_encrypt((des_cblock *)key,(des_cblock *)key,
@@ -332,9 +361,8 @@ convert_key_old_db (Principal *p)
   /* make new key, new style */
   kdb_encrypt_key (&key, &key, &master_key, master_key_schedule, DES_ENCRYPT);
 
-  bcopy((char *)key, (char *)&(p->key_low), 4);
-  bcopy((char *)(((long *) key) + 1), (char *)&(p->key_high), 4);
-  bzero((char *)key, sizeof (key));  /* a little paranoia ... */
+  copy_from_key(key, &(p->key_low), &(p->key_high));
+  memset(key, 0, sizeof (key));  /* a little paranoia ... */
 }
 
 static void
@@ -344,20 +372,17 @@ convert_old_format_db (char *db_file, FILE *out)
   Principal principal_data[1];
   int n, more;
 
-  if (kdb_get_master_key (TRUE, &master_key, master_key_schedule) != 0L) {
-    fprintf (stderr, "%s: Couldn't get master key.\n", prog);
-    clear_secrets();
-    exit (-1);
+  if (kdb_get_master_key (KDB_GET_PROMPT, &master_key,
+			  master_key_schedule) != 0L) {
+    errx (1, "Couldn't get master key.");
   }
 
   /* can't call kdb_verify_master_key because this is an old style db */
   /* lookup the master key version */
   n = kerb_get_principal(KERB_M_NAME, KERB_M_INST, principal_data,
 			 1 /* only one please */, &more);
-  if ((n != 1) || more) {
-    fprintf(stderr, "verify_master_key: Kerberos error on master key lookup, %d found.\n", n);
-    exit (-1);
-  }
+  if ((n != 1) || more)
+    errx (1, "verify_master_key: Kerberos error on master key lookup, %d found.\n", n);
 
   /* set up the master key */
   fprintf(stderr, "Current Kerberos master key version is %d.\n",
@@ -367,26 +392,25 @@ convert_old_format_db (char *db_file, FILE *out)
    * now use the master key to decrypt (old style) the key in the db, had better
    * be the same! 
    */
-  bcopy((char *)&principal_data[0].key_low, (char *)key_from_db, 4);
-  bcopy((char *)&principal_data[0].key_high,
-	(char *)(((long *) key_from_db) + 1), 4);
+  copy_to_key(&principal_data[0].key_low,
+	      &principal_data[0].key_high,
+	      key_from_db);
 #ifndef NOENCRYPTION
   des_pcbc_encrypt(&key_from_db,&key_from_db,(long)sizeof(key_from_db),
 	master_key_schedule,(des_cblock *)master_key_schedule, DES_DECRYPT);
 #endif
   /* the decrypted database key had better equal the master key */
-  n = bcmp((char *) master_key, (char *) key_from_db,
-	   sizeof(master_key));
-  bzero((char *)key_from_db, sizeof(key_from_db));
+
+  n = memcmp(master_key, key_from_db, sizeof(master_key));
+  memset(key_from_db, 0, sizeof(key_from_db));
 
   if (n) {
     fprintf(stderr, "\n\07\07verify_master_key: Invalid master key, ");
     fprintf(stderr, "does not match database.\n");
-    exit (-1);
+    exit (1);
   }
     
   fprintf(stderr, "Master key verified.\n");
-  (void) fflush(stderr);
 
   dump_db (db_file, out, convert_key_old_db);
 }
@@ -394,9 +418,11 @@ convert_old_format_db (char *db_file, FILE *out)
 int
 main(int argc, char **argv)
 {
+    int ret;
     FILE   *file;
     enum {
 	OP_LOAD,
+	OP_MERGE,
 	OP_DUMP,
 	OP_SLAVE_DUMP,
 	OP_NEW_MASTER,
@@ -404,25 +430,35 @@ main(int argc, char **argv)
     }       op;
     char *file_name;
     char *db_name;
-    prog = argv[0];
+
+    atexit(clear_secrets);
     
     if (argc != 3 && argc != 4) {
-	fprintf(stderr, "Usage: %s operation file-name [database name].\n",
+	fprintf(stderr, "Usage: %s operation file [database name].\n",
 		argv[0]);
+	fprintf(stderr, "Operation is one of: "
+		"load, merge, dump, slave_dump, new_master_key, "
+		"convert_old_db\n");
 	exit(1);
     }
     if (argc == 3)
 	db_name = DBM_FILE;
     else
 	db_name = argv[3];
-
-    if (kerb_db_set_name (db_name) != 0) {
-	perror("Can't open database");
-	exit(1);
-    }
     
+    ret = kerb_db_set_name (db_name);
+    
+    /* this makes starting slave servers ~14.3 times easier */
+    if(ret && strcmp(argv[1], "load") == 0)
+       ret = kerb_db_create (db_name);
+
+    if(ret)
+      err (1, "Can't open database");
+
     if (!strcmp(argv[1], "load"))
 	op = OP_LOAD;
+    else if (!strcmp(argv[1], "merge"))
+	op = OP_MERGE;
     else if (!strcmp(argv[1], "dump"))
 	op = OP_DUMP;
     else if (!strcmp(argv[1], "slave_dump"))
@@ -432,44 +468,35 @@ main(int argc, char **argv)
     else if (!strcmp(argv[1], "convert_old_db"))
         op = OP_CONVERT_OLD_DB;
     else {
-	fprintf(stderr,
-	    "%s: %s is an invalid operation.\n", prog, argv[1]);
-	fprintf(stderr,
-	    "%s: Valid operations are \"dump\", \"slave_dump\",", argv[0]);
-	fprintf(stderr,
-		"\"load\", \"new_master_key\", and \"convert_old_db\".\n");
-	exit(1);
+        warnx ("%s is an invalid operation.", argv[1]);
+	warnx ("Valid operations are \"load\", \"merge\", "
+	       "\"dump\", \"slave_dump\", \"new_master_key\", "
+	       "and \"convert_old_db\"");
+	return 1;
     }
 
     file_name = argv[2];
-    file = fopen(file_name, op == OP_LOAD ? "r" : "w");
-    if (file == NULL) {
-	fprintf(stderr, "%s: Unable to open %s\n", prog, argv[2]);
-	(void) fflush(stderr);
-	perror("open");
-	exit(1);
-    }
+    file = fopen(file_name, (op == OP_LOAD || op == OP_MERGE) ? "r" : "w");
+    if (file == NULL)
+        err (1, "open %s", argv[2]);
 
     switch (op) {
     case OP_DUMP:
-      if ((dump_db (db_name, file, (void (*)()) 0) == EOF) ||
-	  (fclose(file) == EOF)) {
-	  fprintf(stderr, "error on file %s:", file_name);
-	  perror("");
-	  exit(1);
-      }
+      if ((dump_db (db_name, file, (void (*)(Principal *)) 0) == EOF) ||
+	  (fclose(file) == EOF))
+	  err (1, "%s", file_name);
       break;
     case OP_SLAVE_DUMP:
-      if ((dump_db (db_name, file, (void (*)()) 0) == EOF) ||
-	  (fclose(file) == EOF)) {
-	  fprintf(stderr, "error on file %s:", file_name);
-	  perror("");
-	  exit(1);
-      }
+      if ((dump_db (db_name, file, (void (*)(Principal *)) 0) == EOF) ||
+	  (fclose(file) == EOF))
+	err (1, "%s", file_name);
       update_ok_file (file_name);
       break;
     case OP_LOAD:
       load_db (db_name, file);
+      break;
+    case OP_MERGE:
+      merge_db (db_name, file);
       break;
     case OP_NEW_MASTER:
       convert_new_master_key (db_name, file);
@@ -480,5 +507,5 @@ main(int argc, char **argv)
       printf("Don't forget to do a `kdb_util load %s' to reload the database!\n", file_name);      
       break;
     }
-    exit(0);
-  }
+    return 0;
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_host.c,v 1.4 1997/12/09 14:42:50 art Exp $	*/
+/*	$OpenBSD: get_host.c,v 1.5 1997/12/12 05:30:21 art Exp $	*/
 /* $KTH: get_host.c,v 1.31 1997/09/26 17:42:37 joda Exp $ */
 
 /*
@@ -71,7 +71,8 @@ free_hosts(struct host_list *h)
 }
 
 static int
-parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
+parse_address(char *address, enum krb_host_proto *proto,
+	      char **host, int *port)
 {
     char *p, *q;
     int default_port = krb_port;
@@ -114,7 +115,7 @@ parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
     if(q != NULL){
 	*host = (char*)malloc(q - p + 1);
 	if (*host == NULL)
-	  return -1;
+	    return -1;
 	strncpy(*host, p, q - p);
 	(*host)[q - p] = '\0';
 	q++;
@@ -131,6 +132,8 @@ parse_address(char *address, enum krb_host_proto *proto, char **host, int *port)
 	}
     }else{
 	*host = strdup(p);
+	if(*host == NULL)
+	    return -1;
 	*port = default_port;
     }
     return 0;
@@ -141,10 +144,11 @@ add_host(char *realm, char *address, int admin, int validate)
 {
     struct krb_host *host;
     struct host_list *p, **last = &hosts;
+
     host = (struct krb_host*)malloc(sizeof(struct krb_host));
     if (host == NULL)
 	return 1;
-    if (parse_address(address, &host->proto, &host->host, &host->port))
+    if(parse_address(address, &host->proto, &host->host, &host->port) < 0)
 	return 1;
     if(validate && gethostbyname(host->host) == NULL){
 	free(host->host);
@@ -168,7 +172,7 @@ add_host(char *realm, char *address, int admin, int validate)
 	last = &p->next;
     }
     host->realm = strdup(realm);
-    if (host->realm == NULL){
+    if (host->realm == NULL) {
 	free(host->host);
 	host->host = NULL;
 	free(host);
@@ -176,7 +180,7 @@ add_host(char *realm, char *address, int admin, int validate)
 	return 1;
     }
     p = (struct host_list*)malloc(sizeof(struct host_list));
-    if (p == NULL){
+    if (p == NULL) {
 	free(host->realm);
 	host->realm==NULL;
 	free(host->host);
@@ -209,8 +213,8 @@ read_file(const char *filename, const char *r)
     f = fopen(filename, "r");
     if(f == NULL)
 	return -1;
-    while(fgets(line, sizeof(line), f)){
-	n = sscanf(line, "%1024s %1024s admin %1024s", realm, address, scratch);
+    while(fgets(line, sizeof(line), f) != NULL) {
+	n = sscanf(line, "%s %s admin %s", realm, address, scratch);
 	if(n == 2 || n == 3){
 	    if(strcmp(realm, r))
 		continue;
@@ -225,18 +229,12 @@ read_file(const char *filename, const char *r)
 static int
 init_hosts(char *realm)
 {
-    static const char *files[] = KRB_CNF_FILES;
     int i;
-    char *dir = getenv("KRBCONFDIR");
-
+    char file[128];
+    
     krb_port = ntohs(k_getportbyname (KRB_SERVICE, NULL, htons(KRB_PORT)));
-    if(dir && getuid() != geteuid()){
-	char file[MAXPATHLEN];
-	if(k_concat(file, sizeof(file), dir, "/krb.conf", NULL) == 0)
-	    read_file(file, realm);
-    }
-    for(i = 0; files[i]; i++)
-	read_file(files[i], realm);
+    for(i = 0; krb_get_krbconf(i, file, sizeof(file)) == 0; i++)
+	read_file(file, realm);
     return 0;
 }
 
