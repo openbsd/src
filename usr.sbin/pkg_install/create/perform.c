@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.8 1999/02/26 16:13:31 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.9 1999/07/28 12:35:00 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.8 1999/02/26 16:13:31 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.9 1999/07/28 12:35:00 espie Exp $";
 #endif
 
 /*
@@ -219,9 +219,13 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     plist_t *p;
     int ret;
 #define DIST_MAX_ARGS 4096
-    char *args[DIST_MAX_ARGS];	/* Much more than enough. */
+    char *args[DIST_MAX_ARGS];	
+    char *tempfile[DIST_MAX_ARGS/2];
+    int current = 0;
+    FILE *flist = 0;
     int nargs = 0;
     int pipefds[2];
+    int i;
     FILE *totar;
     pid_t pid;
 
@@ -270,15 +274,31 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
     for (p = plist->head; p; p = p->next) {
 	if (nargs > (DIST_MAX_ARGS - 2))
 	    errx(2, "too many args for tar command");
-	if (p->type == PLIST_FILE)
-	    args[nargs++] = p->name;
+	if (p->type == PLIST_FILE) {
+	    if (!flist) {
+	    	int fd;
+	    	tempfile[current] = strdup("/tmp/tpkg.XXXXXXXXXX");
+		if ((fd = mkstemp(tempfile[current])) == -1)
+		    errx(2, "can't make temp file");
+		if (! (flist = fdopen(fd, "w")))
+		    errx(2, "can't write to temp file");
+		args[nargs++] = "-T";
+		args[nargs++] = tempfile[current++];
+	    }
+	    fprintf(flist, "%s\n", p->name);
+	}
 	else if (p->type == PLIST_CWD || p->type == PLIST_SRC) {
+	    if (flist) 
+		fclose(flist);
+	    flist = 0;
 	    args[nargs++] = "-C";
 	    args[nargs++] = p->name;
 	}
 	else if (p->type == PLIST_IGNORE)
 	     p = p->next;
     }
+    if (flist) 
+    	fclose(flist);
     args[nargs] = NULL;
 
     /* fork/exec tar to create the package */
@@ -288,9 +308,13 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	err(2, "failed to fork");
     else if ( pid == 0 ) {
 	execv("/bin/tar", args);
+	for (i = 0; i < current; i++)
+	    unlink(tempfile[i]);
 	err(2, "failed to execute tar command");
     }
     wait(&ret);
+    for (i = 0; i < current; i++)
+	unlink(tempfile[i]);
     /* assume either signal or bad exit is enough for us */
     if (ret) {
 	cleanup(0);
