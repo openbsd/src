@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.31 1997/06/23 09:37:37 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.32 1997/06/26 06:26:15 denny Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.31 1997/06/23 09:37:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.32 1997/06/26 06:26:15 denny Exp $";
 #endif /* not lint */
 
 /*
@@ -619,6 +619,7 @@ void print_service __P((char *, struct servtab *));
 void setup __P((struct servtab *));
 struct servtab *getconfigent __P((void));
 struct servtab *enter __P((struct servtab *));
+int matchconf __P((struct servtab *, struct servtab *));
 
 void
 config(sig)
@@ -634,11 +635,10 @@ config(sig)
 	}
 	for (sep = servtab; sep; sep = sep->se_next)
 		sep->se_checked = 0;
-	while ((cp = getconfigent())) {
+	cp = getconfigent();
+	while (cp != NULL) {
 		for (sep = servtab; sep; sep = sep->se_next)
-			if (strcmp(sep->se_service, cp->se_service) == 0 &&
-			    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
-			    strcmp(sep->se_proto, cp->se_proto) == 0)
+			if (matchconf(sep, cp))
 				break;
 		if (sep != 0) {
 			int i;
@@ -685,7 +685,8 @@ config(sig)
 			n = strlen(sep->se_service);
 			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1) 
 				n = sizeof sep->se_ctrladdr_un.sun_path - 1;
-			strncpy(sep->se_ctrladdr_un.sun_path, sep->se_service, n);
+			strncpy(sep->se_ctrladdr_un.sun_path,
+				sep->se_service, n);
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
 			sep->se_ctrladdr_size = n +
 			    sizeof sep->se_ctrladdr_un.sun_family;
@@ -693,50 +694,9 @@ config(sig)
 			break;
 		case AF_INET:
 			sep->se_ctrladdr_in.sin_family = AF_INET;
-			if (!strcmp(sep->se_hostaddr,"*"))
-				sep->se_ctrladdr_in.sin_addr.s_addr =
-				    INADDR_ANY;
-			else if (!inet_aton(sep->se_hostaddr,
-			    &sep->se_ctrladdr_in.sin_addr)) {
-				/*
-				 * Do we really want to support hostname
-				 * lookups here?
-				 */
-				struct hostent *hp;
-				hp = gethostbyname(sep->se_hostaddr);
-				if (hp == 0) {
-					syslog(LOG_ERR, "%s: unknown host",
-					    sep->se_hostaddr);
-					sep->se_checked = 0;
-					continue;
-				} else if (hp->h_addrtype != AF_INET) {
-					syslog(LOG_ERR,
-					    "%s: address isn't an Internet "
-					    "address",
-					    sep->se_hostaddr);
-					sep->se_checked = 0;
-					continue;
-				} else {
-					/*
-					 * What to do about multi-homed hosts?
-					 *
-					 * The resolver may be doing
-					 * random load balancing. Somehow
-					 * this doesn't seem like what the
-					 * user intended.
-					 */
-					if (hp->h_addr_list[1] != NULL) {
-						syslog(LOG_WARNING,
-				"%s has multiple addresses, using the first",
-							sep->se_hostaddr);
-					}
-
-					bcopy(hp->h_addr_list[0],
-						&sep->se_ctrladdr_in.sin_addr,
-						sizeof(struct in_addr));
-				}
-			}
+			/* se_ctrladdr_in was set in getconfigent */
 			sep->se_ctrladdr_size = sizeof sep->se_ctrladdr_in;
+
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
 
@@ -781,6 +741,15 @@ config(sig)
 				if (sep->se_fd == -1)
 					setup(sep);
 			}
+		}
+		if (cp->se_next != NULL) {
+			struct servtab *tmp = cp;
+
+			cp = cp->se_next;
+			free(tmp);
+		} else {
+			free (cp);
+			cp = getconfigent();
 		}
 	}
 	endconfig();
@@ -1005,13 +974,45 @@ enter(cp)
 	return (sep);
 }
 
-FILE	*fconfig = NULL;
-struct	servtab serv;
-char	line[1024];
-char	*defhost;
-char	*skip __P((char **));
-char	*nextline __P((FILE *));
-char	*newstr __P((char *));
+int
+matchconf (old, new)
+	struct servtab	*old;
+	struct servtab	*new;
+{
+	if (strcmp(old->se_service, new->se_service) != 0)
+		return (0);
+
+	if (strcmp(old->se_hostaddr, new->se_hostaddr) != 0)
+		return (0);
+
+	if (strcmp(old->se_proto, new->se_proto) != 0)
+		return (0);
+
+	/*
+	 * If the new servtab is bound to a specific address, check that the
+	 * old servtab is bound to the same entry. If the new service is not
+	 * bound to a specific address then the check of se_hostaddr above
+	 * is sufficient.
+	 */
+
+	if ((old->se_family == AF_INET) &&
+		(new->se_family == AF_INET) &&
+		(bcmp(&old->se_ctrladdr_in.sin_addr,
+		    &new->se_ctrladdr_in.sin_addr,
+		    sizeof(new->se_ctrladdr_in.sin_addr)) != 0)) {
+				return (0);
+	}
+
+	return (1);
+}
+
+FILE		*fconfig = NULL;
+char		line[1024];
+char		*defhost;
+char		*skip __P((char **));
+char		*nextline __P((FILE *));
+char		*newstr __P((char *));
+struct servtab	*dupconfig __P((struct servtab *));
 
 int
 setconfig()
@@ -1042,10 +1043,18 @@ endconfig()
 struct servtab *
 getconfigent()
 {
-	register struct servtab *sep = &serv;
+	register struct servtab *sep;
 	int argc;
 	char *cp, *arg;
 	char *hostdelim;
+	struct servtab *nsep;
+	struct servtab *psep;
+
+	sep = (struct servtab *) malloc(sizeof(struct servtab));
+	if (sep == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		exit(-1);
+	}
 
 more:
 #ifdef MULOG
@@ -1169,8 +1178,10 @@ more:
 	}
 	sep->se_wait = strcmp(arg, "wait") == 0;
 	sep->se_user = newstr(skip(&cp));
-	if ((sep->se_group = strchr(sep->se_user, '.'))) {
-		*sep->se_group++ = '\0';
+	arg = strchr(sep->se_user, '.');
+	if (arg) {
+		*arg++ = '\0';
+		sep->se_group = newstr(arg);
 	}
 	sep->se_server = newstr(skip(&cp));
 	if (strcmp(sep->se_server, "internal") == 0) {
@@ -1226,6 +1237,109 @@ more:
 	}
 	while (argc <= MAXARGV)
 		sep->se_argv[argc++] = NULL;
+
+	/*
+	 * Now that we've processed the entire line, check if the hostname
+	 * specifier was a comma separated list of hostnames. If so
+	 * we'll make new entries for each address.
+	 */
+	while ((hostdelim = strrchr(sep->se_hostaddr, ',')) != NULL) {
+		nsep = dupconfig(sep);
+
+		/*
+		 * NULL terminate the hostname field of the existing entry,
+		 * and make a dup for the new entry.
+		 */
+		*hostdelim++ = '\0';
+		nsep->se_hostaddr = newstr(hostdelim);
+
+		nsep->se_next = sep->se_next;
+		sep->se_next = nsep;
+	}
+
+	nsep = sep;
+	while (nsep != NULL) {
+		nsep->se_checked = 1;
+		if (nsep->se_family == AF_INET) {
+			if (!strcmp(nsep->se_hostaddr,"*"))
+				nsep->se_ctrladdr_in.sin_addr.s_addr =
+				    INADDR_ANY;
+			else if (!inet_aton(nsep->se_hostaddr,
+			    &nsep->se_ctrladdr_in.sin_addr)) {
+				struct hostent *hp;
+				hp = gethostbyname(nsep->se_hostaddr);
+				if (hp == 0) {
+					syslog(LOG_ERR, "%s: unknown host",
+					    nsep->se_hostaddr);
+					nsep->se_checked = 0;
+					goto skip;
+				} else if (hp->h_addrtype != AF_INET) {
+					syslog(LOG_ERR,
+					    "%s: address isn't an Internet "
+					    "address",
+					    nsep->se_hostaddr);
+					nsep->se_checked = 0;
+					goto skip;
+				} else {
+					int i = 1;
+
+					bcopy(hp->h_addr_list[0],
+						&nsep->se_ctrladdr_in.sin_addr,
+						sizeof(struct in_addr));
+					while (hp->h_addr_list[i] != NULL) {
+						psep = dupconfig(nsep);
+						psep->se_hostaddr = newstr(
+						    nsep->se_hostaddr);
+						psep->se_checked = 1;
+						bcopy(
+						    hp->h_addr_list[i],
+				    &psep->se_ctrladdr_in.sin_addr,
+						    sizeof(struct in_addr));
+						psep->se_ctrladdr_size =
+						  sizeof(psep->se_ctrladdr_in);
+						i++;
+
+						/*
+						 * Prepend to list, don't
+						 * want to look up its
+						 * hostname again.
+						 */
+						psep->se_next = sep;
+						sep = psep;
+					}
+				}
+			}
+		}
+skip:
+		nsep = nsep->se_next;
+	}
+
+	/*
+	 * Finally, free any entries which failed the gethostbyname
+	 * check.
+	 */
+	psep = NULL;
+	nsep = sep;
+	while (nsep != NULL) {
+		struct servtab *tsep;
+
+		if (nsep->se_checked == 0) {
+			tsep = nsep;
+			if (psep == NULL) {
+				sep = nsep->se_next;
+				nsep = sep;
+			} else {
+				nsep = nsep->se_next;
+				psep->se_next = nsep;
+			}
+			freeconfig(tsep);
+		} else {
+			nsep->se_checked = 0;
+			psep = nsep;
+			nsep = nsep->se_next;
+		}
+	}
+
 	return (sep);
 }
 
@@ -1243,7 +1357,8 @@ freeconfig(cp)
 		free(cp->se_proto);
 	if (cp->se_user)
 		free(cp->se_user);
-	/* Note: se_group is part of the newstr'ed se_user */
+	if (cp->se_group)
+		free(cp->se_group);
 	if (cp->se_server)
 		free(cp->se_server);
 	for (i = 0; i < MAXARGV; i++)
@@ -1259,7 +1374,7 @@ skip(cpp)
 	char *start;
 
 	if (*cpp == NULL)
-		return ((char *)0);
+			return ((char *)0);
 
 again:
 	while (*cp == ' ' || *cp == '\t')
@@ -1306,6 +1421,47 @@ newstr(cp)
 		return(cp);
 	syslog(LOG_ERR, "strdup: %m");
 	exit(-1);
+}
+
+struct servtab *
+dupconfig(sep)
+	struct servtab *sep;
+{
+	struct servtab *newtab;
+	int argc;
+
+	newtab = (struct servtab *) malloc(sizeof(struct servtab));
+
+	if (newtab == NULL) {
+		syslog(LOG_ERR, "malloc: %m");
+		exit (-1);
+	}
+
+	bzero ((char *)newtab, sizeof(struct servtab));
+
+	newtab->se_service = sep->se_service ? newstr(sep->se_service) : NULL;
+	newtab->se_socktype = sep->se_socktype;
+	newtab->se_family = sep->se_family;
+	newtab->se_proto = sep->se_proto ? newstr(sep->se_proto) : NULL;
+	newtab->se_rpcprog = sep->se_rpcprog;
+	newtab->se_rpcversl = sep->se_rpcversl;
+	newtab->se_rpcversh = sep->se_rpcversh;
+	newtab->se_wait = sep->se_wait;
+	newtab->se_user = sep->se_user ? newstr(sep->se_user) : NULL;
+	newtab->se_group = sep->se_group ? newstr(sep->se_group) : NULL;
+	newtab->se_bi = sep->se_bi;
+	newtab->se_server = sep->se_server ? newstr(sep->se_server) : 0;
+
+	for (argc = 0; argc <= MAXARGV; argc++)
+		newtab->se_argv[argc] = sep->se_argv[argc] ?
+			newstr(sep->se_argv[argc]) : NULL;
+	newtab->se_max = sep->se_max;
+
+#ifdef MULOG
+	newtab->se_log = sep->se_log;
+#endif
+
+	return (newtab);
 }
 
 void
@@ -1629,17 +1785,23 @@ print_service(action, sep)
 	char *action;
 	struct servtab *sep;
 {
-	if (isrpcservice(sep))
-		fprintf(stderr, "%s: %s rpcprog=%d, rpcvers=%d/%d, proto=%s,",
-		    action, sep->se_service, sep->se_rpcprog,
-		    sep->se_rpcversh, sep->se_rpcversl, sep->se_proto);
+	if (strcmp(sep->se_hostaddr, "*") == 0)
+		fprintf(stderr, "%s: %s ", action, sep->se_service);
 	else
-		fprintf(stderr, "%s: %s proto=%s,",
-		    action, sep->se_service, sep->se_proto);
-		fprintf(stderr,
-	    " wait.max=%d.%d user.group=%s.%s builtin=%lx server=%s\n",
-		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		    (long)sep->se_bi, sep->se_server);
+		fprintf(stderr, "%s: %s:%s ", action, sep->se_hostaddr,
+			sep->se_service);
+
+	if (isrpcservice(sep))
+		fprintf(stderr, "rpcprog=%d, rpcvers=%d/%d, proto=%s,",
+		    sep->se_rpcprog, sep->se_rpcversh,
+		    sep->se_rpcversl, sep->se_proto);
+	else
+		fprintf(stderr, "proto=%s,", sep->se_proto);
+
+	fprintf(stderr,
+		" wait.max=%hd.%d user.group=%s.%s builtin=%lx server=%s\n",
+		sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
+		(long)sep->se_bi, sep->se_server);
 }
 
 #ifdef MULOG
