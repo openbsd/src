@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.4 1996/07/13 11:01:34 mickey Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.5 1996/11/12 08:52:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@ int dflag;			/* print filter code */
 
 char *program_name;
 
-int32_t thiszone;		/* seconds offset from gmt to local time */
+int32_t thiszone=0;		/* seconds offset from gmt to local time */
 
 /* Externs */
 extern void bpf_dump(struct bpf_program *, int);
