@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.10 2004/04/08 12:26:06 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.11 2004/04/08 14:32:47 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -67,7 +67,7 @@ int
 priv_init(void)
 {
 	int i, fd, socks[2], cmd;
-	int snaplen, ret;
+	int snaplen, ret, olderrno;
 	struct passwd *pw;
 
 	for (i = 1; i < _NSIG; i++)
@@ -147,13 +147,14 @@ priv_init(void)
 			fd = open(filename,
 			    O_RDWR|O_CREAT|O_APPEND|O_NONBLOCK|O_NOFOLLOW,
 			    0600);
+			olderrno = errno;
+			send_fd(socks[0], fd);
 			if (fd < 0)
 				logmsg(LOG_NOTICE,
 				    "[priv]: failed to open %s: %s",
-				    filename, strerror(errno));
+				    filename, strerror(olderrno));
 			else
 				close(fd);
-			send_fd(socks[0], fd);
 			break;
 
 		default:
