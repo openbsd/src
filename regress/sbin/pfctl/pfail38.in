@@ -1,0 +1,4 @@
+nat on lo0 tag thistagisfaaaaaartooooolooooooooong -> 127.0.0.1
+rdr on lo0 tag thistagisfaaaaaartooooolooooooooong -> 127.0.0.1
+no nat on lo0 tag thistagisfaaaaaartooooolooooooooong -> 127.0.0.1
+no rdr on lo0 tag thistagisfaaaaaartooooolooooooooong -> 127.0.0.1
