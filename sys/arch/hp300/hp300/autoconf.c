@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1997/01/13 18:03:55 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 1997/01/18 06:43:05 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.29 1996/12/17 08:41:19 thorpej Exp $	*/
 
 /*
@@ -617,9 +617,7 @@ setroot()
 	extern char *nfsbootdevname;
 	extern int nfs_mountroot __P((void));
 #endif
-#ifdef FFS
-	extern int ffs_mountroot __P((void));
-#endif
+	extern int dk_mountroot __P((void));
 
 	bootdv = booted_device;
 
@@ -808,9 +806,8 @@ setroot()
 		nfsbootdevname = rootdv->dv_xname;
 		return;
 #endif
-#ifdef FFS
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
 		if (nswapdev != NODEV)
@@ -818,7 +815,6 @@ setroot()
 			DISKPART(nswapdev) + 'a');
 		printf("\n");
 		break;
-#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
