@@ -37,7 +37,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: exect.S,v 1.2 1996/08/19 08:15:34 tholo Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.3 2002/11/05 00:02:20 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -46,4 +46,4 @@
 ENTRY(exect)
 	movl	#SYS_execve,d0
 	trap	#0
-	jra	cerror		/* exect(file, argv, env) */
+	jra	__cerror	/* exect(file, argv, env) */

@@ -37,14 +37,14 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: cerror.S,v 1.2 1996/08/19 08:15:33 tholo Exp $"
+	.asciz "$OpenBSD: cerror.S,v 1.3 2002/11/05 00:02:20 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
 	.even
 	.globl	_errno
-cerror:
+__cerror:
 #ifdef	PIC
 	movl	#__GLOBAL_OFFSET_TABLE_,a0
 	lea	pc@(0,a0:l),a0

@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.11 2002/11/03 23:58:38 marc Exp $
+ *	$OpenBSD: SYS.h,v 1.12 2002/11/05 00:02:17 miod Exp $
  */
 
 #include <sys/syscall.h>
@@ -66,7 +66,7 @@
 
 #define		__SYSCALL(p,x,y)				\
 				.even;				\
-			err:	jra	cerror;			\
+			err:	jra	__cerror;		\
 			__SYSCALL_NOERROR(p,x,y);		\
 				jcs err
 
@@ -107,4 +107,4 @@
 
 #define	ASMSTR		.asciz
 
-	.globl	cerror
+	.globl	__cerror

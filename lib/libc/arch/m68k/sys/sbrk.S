@@ -37,26 +37,26 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.2 1996/08/19 08:15:40 tholo Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.3 2002/11/05 00:02:20 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
 	.globl	_end
-	.globl	curbrk
+	.globl	__curbrk
 
 	.data
-curbrk:	.long	_end
+__curbrk:.long	_end
 	.text
 
 ENTRY(sbrk)
 #ifdef	PIC
 	movl	#__GLOBAL_OFFSET_TABLE_,a1
 	lea	pc@(0,a1:l),a1
-	movl	a1@(curbrk:w),a1
+	movl	a1@(__curbrk:w),a1
 	movl	a1@,d0
 #else
-	movl	curbrk,d0
+	movl	__curbrk,d0
 #endif
 	addl	d0,sp@(4)
 	movl	#SYS_break,d0
@@ -66,9 +66,9 @@ ENTRY(sbrk)
 	movl	a1@,d0
 	movl	sp@(4),a1@
 #else
-	movl	curbrk,d0
-	movl	sp@(4),curbrk
+	movl	__curbrk,d0
+	movl	sp@(4),__curbrk
 #endif
 	rts
 err:
-	jra	cerror
+	jra	__cerror

@@ -37,7 +37,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.3 1999/01/06 23:14:17 d Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.4 2002/11/05 00:02:20 miod Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -63,4 +63,4 @@ out:
 	clrl	d0
 	rts
 err:
-	jra	cerror
+	jra	__cerror
