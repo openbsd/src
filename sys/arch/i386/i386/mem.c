@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.12 1999/09/03 18:00:51 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.13 1999/09/06 06:19:08 matthieu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -70,7 +70,7 @@ static int ap_open_count = 0;
 extern int allowaperture;
 
 #define VGA_START 0xA0000
-#define VGA_END   0xBFFFF
+#define BIOS_END  0xFFFFF
 #endif
 
 /*ARGSUSED*/
@@ -260,7 +260,7 @@ mmmmap(dev, off, prot)
 /* minor device 4 is aperture driver */
 	case 4:
 		if (allowaperture &&
-		    (((off >= VGA_START && off <= VGA_END) ||
+		    (((off >= VGA_START && off <= BIOS_END) ||
 		    (unsigned)off > (unsigned)ctob(physmem))))
 			return i386_btop(off);
 		else 
