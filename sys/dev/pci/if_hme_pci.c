@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.4 2001/12/14 01:25:29 drahn Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.5 2002/03/13 21:02:54 jason Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 #ifdef __sparc64__
 #include <machine/autoconf.h>
+#include <dev/ofw/openfirm.h>
 #endif
 #include <machine/cpu.h>
 
@@ -159,7 +160,9 @@ hmeattach_pci(parent, self, aux)
 	sc->sc_mif = hsc->hsc_memh + 0x7000;
 
 #ifdef __sparc__
-        myetheraddr(sc->sc_enaddr);
+	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
+		myetheraddr(sc->sc_enaddr);
 #endif
 #ifdef __powerpc__
 	pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
