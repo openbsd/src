@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1996/06/11 10:37:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 1996/06/12 11:21:23 deraadt Exp $
 #	$NetBSD: Makefile,v 1.29 1996/05/14 17:39:21 ws Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -6,7 +6,7 @@
 
 SUBDIR=	badsect disklabel ccdconfig dmesg fastboot ifconfig init ipf ipfstat \
 	ipnat kbd mknod modload modunload mount mountd nfsd nfsiod \
-	nologin ping quotacheck reboot route routed savecore shutdown \
+	nologin ping quotacheck reboot route routed savecore scsi shutdown \
 	slattach swapon ttyflags umount
 
 # support for various file systems
