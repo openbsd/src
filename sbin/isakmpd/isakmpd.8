@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.24 2001/04/09 21:21:57 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.25 2001/04/30 12:51:13 provos Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -243,6 +243,7 @@ value, if you enter '.', the field will be left blank.
 .Bd -literal
 # openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \\
 	-signkey /etc/ssl/private/ca.key \\
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_CA \\
 	-out /etc/ssl/ca.crt
 .Ed
 .Pp
@@ -263,19 +264,34 @@ unique.
 .Pp
 Now take these certificate signing requests to your CA and process
 them like below.  You have to add some extensions to the certificate
-in order to make it usable for isakmpd, which is why you will need
-to run
-.Xr certpatch 8 .
+in order to make it usable for isakmpd.  There are two
+possible ways to add the extensions to the certificate.
+Either you have to to run
+.Xr certpatch 8
+or you have to make use of an OpenSSL configuration file, for example
+.Pa /etc/ssl/x509v3.cnf .
 Replace 10.0.0.1 with the IP-address which
 .Nm
 will be using for identity.
 .Pp
+For using
+.Xr certpach 8 ,
+do the following
 .Bd -literal
 # openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
 	-CAkey /etc/ssl/private/ca.key -CAcreateserial \\
 	-out 10.0.0.1.crt
 # certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \\
 	10.0.0.1.crt 10.0.0.1.crt
+.Ed
+.Pp
+Otherwise do
+.Bd -literal
+# setenv CERTIP 10.0.0.1
+# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
+	-CAkey /etc/ssl/private/ca.key -CAcreateserial \\
+        -extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \\
+	-out 10.0.0.1.crt
 .Ed
 .Pp
 Put the certificate (the file ending in .crt) in
