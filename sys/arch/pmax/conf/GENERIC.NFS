@@ -2,7 +2,7 @@
 # GENERIC netboot / nfs root + swap kernel for the distribition simpleroot
 #
 
-machine		pmax			# machine type
+machine		pmax mips		# machine type and subtype
 
 # generic mips support
 option		CPU_R3000		# R2000/R3000 support

@@ -2,7 +2,7 @@
 # DECstation 5000/20 or 5000/25 kernel config
 #
 
-machine		pmax			# machine type
+machine		pmax mips		# machine type and subtype
 
 # generic mips support
 option		CPU_R3000		# R2000/R3000 support

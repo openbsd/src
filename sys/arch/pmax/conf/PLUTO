@@ -2,7 +2,7 @@
 #	PLUTO - specific config(8) file for pluto
 #
 
-machine		pmax
+machine		pmax mips
 
 option		CPU_R3000
 option		MIPS1

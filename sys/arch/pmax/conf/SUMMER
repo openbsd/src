@@ -2,7 +2,7 @@
 #		SUMMER - specific config(8) file for summer
 #
 
-machine		pmax
+machine		pmax mips
 
 option		MIPS1
 option		CPU_R3000
