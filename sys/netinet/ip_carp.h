@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.11 2004/12/10 22:35:17 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.12 2004/12/14 01:59:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -130,8 +130,6 @@ struct carpreq {
 	int		carpr_advbase;
 	unsigned char	carpr_key[CARP_KEY_LEN];
 };
-#define	SIOCSVH	_IOWR('i', 245, struct ifreq)
-#define	SIOCGVH	_IOWR('i', 246, struct ifreq)
 
 /*
  * Names for CARP sysctl objects
