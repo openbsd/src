@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.52 2002/11/14 15:15:54 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.53 2003/01/30 03:46:46 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -243,8 +243,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * the shared libraries which follow.
 	 * Do not run init code if run from ldd.
 	 */
-	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL))
-		_dl_call_init(_dl_objects->next);
+	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL)) {
+		_dl_objects->status |= STAT_INIT_DONE;
+		_dl_call_init(_dl_objects);
+	}
 
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
@@ -514,8 +516,13 @@ _dl_rtld(elf_object_t *object)
 void
 _dl_call_init(elf_object_t *object)
 {
-	if (object->next)
-		_dl_call_init(object->next);
+	struct dep_node *n;
+
+	for (n = object->first_child; n; n = n->next_sibling) {
+		if (n->data->status & STAT_INIT_DONE)
+			continue;
+		_dl_call_init(n->data);
+	}
 
 	if (object->status & STAT_INIT_DONE)
 		return;
@@ -523,6 +530,7 @@ _dl_call_init(elf_object_t *object)
 	if (object->dyn.init)
 		(*object->dyn.init)();
 
+	/* What about loops? */
 	object->status |= STAT_INIT_DONE;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.15 2002/11/23 04:09:34 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.16 2003/01/30 03:46:46 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -132,6 +132,8 @@ _dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 	object->load_offs = loff;
 	object->load_name = _dl_strdup(objname);
 	object->refcount = 1;
+	object->first_child = NULL;
+	object->last_child = NULL;
 	return(object);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.19 2002/12/18 19:20:01 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.20 2003/01/30 03:46:46 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -121,7 +121,14 @@ typedef struct elf_object {
 	u_int32_t	nchains;
 	Elf_Dyn	*dynamic;
 
+	struct dep_node *first_child;
+	struct dep_node *last_child;
 } elf_object_t;
+
+struct dep_node {
+	struct dep_node *next_sibling;
+	elf_object_t *data;
+};
 
 extern void _dl_rt_resolve(void);
 
