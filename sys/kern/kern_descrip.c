@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.33 2001/07/25 16:03:14 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.34 2001/07/28 17:12:12 gluk Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -349,7 +349,7 @@ sys_fcntl(p, v, retval)
 
 	case F_SETLKW:
 		flg |= F_WAIT;
-		/* Fall into F_SETLK */
+		/* FALLTHROUGH */
 
 	case F_SETLK:
 		if (fp->f_type != DTYPE_VNODE)
@@ -360,8 +360,14 @@ sys_fcntl(p, v, retval)
 		    sizeof (fl));
 		if (error)
 			return (error);
-		if (fl.l_whence == SEEK_CUR)
-			fl.l_start += fp->f_offset;
+		if (fl.l_whence == SEEK_CUR) {
+			if (fl.l_start == 0 && fl.l_len < 0) {
+				/* lockf(3) compliance hack */
+				fl.l_len = -fl.l_len;
+				fl.l_start = fp->f_offset - fl.l_len;
+			} else
+				fl.l_start += fp->f_offset;
+		}
 		switch (fl.l_type) {
 
 		case F_RDLCK:
@@ -393,14 +399,14 @@ sys_fcntl(p, v, retval)
 		    sizeof (fl));
 		if (error)
 			return (error);
-		if (fl.l_whence == SEEK_CUR)
-			fl.l_start += fp->f_offset;
-		else if (fl.l_whence != SEEK_END &&
-			 fl.l_whence != SEEK_SET &&
-			 fl.l_whence != 0)
-			return (EINVAL);
-		if (fl.l_start < 0)
-			return (EINVAL);
+		if (fl.l_whence == SEEK_CUR) {
+			if (fl.l_start == 0 && fl.l_len < 0) {
+				/* lockf(3) compliance hack */
+				fl.l_len = -fl.l_len;
+				fl.l_start = fp->f_offset - fl.l_len;
+			} else
+				fl.l_start += fp->f_offset;
+		}
 		if (fl.l_type != F_RDLCK &&
 		    fl.l_type != F_WRLCK &&
 		    fl.l_type != F_UNLCK &&
