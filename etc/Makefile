@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.132 2001/09/21 22:13:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.133 2001/12/19 02:26:41 form Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -254,7 +254,7 @@ release:
 .else
 release: distribution snap_pre snap_md
 	cd ${.CURDIR}/../distrib/notes; ${MAKE}; ${MAKE} install
-	cd ${.CURDIR}/../distrib/sets; csh maketars ${OSrev}
+	cd ${.CURDIR}/../distrib/sets; csh -f maketars ${OSrev}
 	-cp ${DESTDIR}/snapshot/bsd* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*boot* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*BOOT* ${RELEASEDIR}
