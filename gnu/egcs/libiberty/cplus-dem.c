@@ -246,6 +246,49 @@ typedef enum type_kind_t
   tk_real
 } type_kind_t;
 
+struct demangler_engine libiberty_demanglers[] =
+{
+  {
+    AUTO_DEMANGLING_STYLE_STRING,
+      auto_demangling,
+      "Automatic selection based on executable"
+  }
+  ,
+  {
+    GNU_DEMANGLING_STYLE_STRING,
+      gnu_demangling,
+      "GNU (g++) style demangling"
+  }
+  ,
+  {
+    LUCID_DEMANGLING_STYLE_STRING,
+      lucid_demangling,
+      "Lucid (lcc) style demangling"
+  }
+  ,
+  {
+    ARM_DEMANGLING_STYLE_STRING,
+      arm_demangling,
+      "ARM style demangling"
+  }
+  ,
+  {
+    HP_DEMANGLING_STYLE_STRING,
+      hp_demangling,
+      "HP (aCC) style demangling"
+  }
+  ,
+  {
+    EDG_DEMANGLING_STYLE_STRING,
+      edg_demangling,
+      "EDG style demangling"
+  }
+  ,
+  {
+    NULL, unknown_demangling, NULL
+  }
+};
+
 #define STRING_EMPTY(str)	((str) -> b == (str) -> p)
 #define PREPEND_BLANK(str)	{if (!STRING_EMPTY(str)) \
     string_prepend(str, " ");}
@@ -728,6 +771,40 @@ cplus_mangle_opname (opname, options)
 	return optable[i].in;
     }
   return (0);
+}
+
+/* Add a routine to set the demangling style to be sure it is valid and
+   allow for any demangler initialization that maybe necessary. */
+
+enum demangling_styles
+cplus_demangle_set_style (style)
+     enum demangling_styles style;
+{
+  struct demangler_engine *demangler = libiberty_demanglers; 
+
+  for (; demangler->demangling_style != unknown_demangling; ++demangler)
+    if (style == demangler->demangling_style)
+      {
+	current_demangling_style = style;
+	return current_demangling_style;
+      }
+
+  return unknown_demangling;
+}
+
+/* Do string name to style translation */
+
+enum demangling_styles
+cplus_demangle_name_to_style (name)
+     const char *name;
+{
+  struct demangler_engine *demangler = libiberty_demanglers; 
+
+  for (; demangler->demangling_style != unknown_demangling; ++demangler)
+    if (strcmp (name, demangler->demangling_style_name) == 0)
+      return demangler->demangling_style;
+
+  return unknown_demangling;
 }
 
 /* char *cplus_demangle (const char *mangled, int options)

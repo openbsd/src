@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2001/06/09 22:02:01 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2002/05/11 13:05:08 fgsch Exp $
 
 LIB=		iberty
-CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
+CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
 
 # XXX -- GNUism
 # As we need to fill variables with contents of dynamically created files
@@ -17,10 +17,10 @@ HOST_FILES!=	cat $(.OBJDIR)/needed-list
 .endif
 
 SRCS=		argv.c choose-temp.c concat.c cplus-dem.c dyn-string.c \
-		fdmatch.c getopt.c getopt1.c getruntime.c hashtab.c hex.c \
-		floatformat.c objalloc.c obstack.c pexecute.c spaces.c \
-		splay-tree.c strerror.c strsignal.c xatexit.c xexit.c \
-		xmalloc.c xstrerror.c xstrdup.c \
+		fdmatch.c getopt.c getopt1.c getpwd.c getruntime.c \
+		hashtab.c hex.c floatformat.c objalloc.c obstack.c \
+		pexecute.c spaces.c splay-tree.c strerror.c strsignal.c \
+		xatexit.c xexit.c xmalloc.c xstrerror.c xstrdup.c \
 		$(HOST_FILES)
 
 #		choose-temp.c fnmatch.c objalloc.c pexecute.c xstrdup.c \
