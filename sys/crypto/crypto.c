@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.10 2000/06/18 08:37:10 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.11 2000/06/20 05:39:32 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -315,7 +315,7 @@ crypto_invoke(struct cryptop *crp)
     if ((crp->crp_desc == NULL) || (crypto_drivers == NULL))
     {
 	crp->crp_etype = EINVAL;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return 0;
     }
 
@@ -331,7 +331,7 @@ crypto_invoke(struct cryptop *crp)
 	  crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return 0;
     }
 
@@ -348,7 +348,7 @@ crypto_invoke(struct cryptop *crp)
 	  crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return 0;
     }
 
@@ -487,4 +487,13 @@ crypto_thread(void)
 
 	s = splhigh();
     }
+}
+
+/*
+ * Invoke the callback on behalf of the driver.
+ */
+void
+crypto_done(struct cryptop *crp)
+{
+    crp->crp_callback(crp);
 }
