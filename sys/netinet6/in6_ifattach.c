@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.28 2002/06/11 07:04:07 itojun Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.29 2002/06/11 07:36:00 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -387,10 +387,10 @@ in6_ifattach_linklocal(ifp, altifp)
 		 * suppress it.  (jinmei@kame.net 20010130)
 		 */
 		if (error != EAFNOSUPPORT)
-			log(LOG_NOTICE, "in6_ifattach_linklocal: failed to "
+			nd6log((LOG_NOTICE, "in6_ifattach_linklocal: failed to "
 			    "configure a link-local address on %s "
 			    "(errno=%d)\n",
-			    ifp->if_xname, error);
+			    ifp->if_xname, error));
 		return(-1);
 	}
 
@@ -495,9 +495,9 @@ in6_ifattach_loopback(ifp)
 	 * NULL to the 3rd arg.
 	 */
 	if ((error = in6_update_ifa(ifp, &ifra, NULL)) != 0) {
-		log(LOG_ERR, "in6_ifattach_loopback: failed to configure "
+		nd6log((LOG_ERR, "in6_ifattach_loopback: failed to configure "
 		    "the loopback address on %s (errno=%d)\n",
-		    ifp->if_xname, error);
+		    ifp->if_xname, error));
 		return(-1);
 	}
 
@@ -591,8 +591,12 @@ in6_ifattach(ifp, altifp)
 	 * remember there could be some link-layer that has special
 	 * fragmentation logic.
 	 */
-	if (ifp->if_mtu < IPV6_MMTU)
+	if (ifp->if_mtu < IPV6_MMTU) {
+		nd6log((LOG_INFO, "in6_ifattach: "
+		    "%s has too small MTU, IPv6 not enabled\n",
+		    ifp->if_xname));
 		return;
+	}
 
 	/* create a multicast kludge storage (if we have not had one) */
 	in6_createmkludge(ifp);
@@ -619,15 +623,15 @@ in6_ifattach(ifp, altifp)
 	 * usually, we require multicast capability to the interface
 	 */
 	if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-		log(LOG_INFO, "in6_ifattach: "
+		nd6log((LOG_INFO, "in6_ifattach: "
 		    "%s is not multicast capable, IPv6 not enabled\n",
-		    ifp->if_xname);
+		    ifp->if_xname));
 		return;
 	}
 
 	/*
-	 * assign loopback address for loopback interface
-	 * XXX multiple loopback interface case
+	 * assign loopback address for loopback interface.
+	 * XXX multiple loopback interface case.
 	 */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		in6 = in6addr_loopback;
@@ -752,7 +756,7 @@ in6_ifdetach(ifp)
 	rt = rtalloc1((struct sockaddr *)&sin6, 0);
 	if (rt && rt->rt_ifp == ifp) {
 		rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
-			rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 		rtfree(rt);
 	}
 }
