@@ -423,6 +423,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/auviavar.ph

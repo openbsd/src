@@ -803,6 +803,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/autrivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/auviavar.ph

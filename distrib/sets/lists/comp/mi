@@ -375,6 +375,7 @@
 ./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
+./usr/include/dev/pci/amdpmreg.h
 ./usr/include/dev/pci/autrireg.h
 ./usr/include/dev/pci/autrivar.h
 ./usr/include/dev/pci/auviavar.h

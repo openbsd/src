@@ -365,6 +365,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/autrivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/auviavar.ph

@@ -443,6 +443,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/urlphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ofw/ofw_pci.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/autrivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcireg.ph
