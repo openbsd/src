@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.10 2000/09/14 13:52:41 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.11 2000/11/24 14:27:19 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ typedef struct Path_ {
 
 extern void Dir_Init __P((void));
 extern void Dir_End __P((void));
-extern Boolean Dir_HasWildcards __P((char *));
+extern Boolean Dir_HasWildcards __P((const char *));
 extern void Dir_Expand __P((char *, Lst, Lst));
 extern char *Dir_FindFile __P((char *, Lst));
 extern TIMESTAMP Dir_MTime __P((GNode *));

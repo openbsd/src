@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.57 2000/09/14 13:46:45 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.58 2000/11/24 14:27:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -103,7 +103,7 @@
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.57 2000/09/14 13:46:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.58 2000/11/24 14:27:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1867,7 +1867,7 @@ Parse_End()
 {
 #ifdef CLEANUP
     Lst_Destroy(&targCmds, (SimpleProc)free);
-    Lst_Destroy(&fileNames, (void (*) __P((ClientData))) free);
+    Lst_Destroy(&fileNames, (SimpleProc)free);
     Lst_Delete(&targets, NOFREE);
     Lst_Destroy(&sysIncPath, Dir_Destroy);
     Lst_Destroy(&parseIncPath, Dir_Destroy);

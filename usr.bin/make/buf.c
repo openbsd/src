@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.13 2000/09/14 13:32:05 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.14 2000/11/24 14:27:19 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: buf.c,v 1.13 2000/09/14 13:32:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.14 2000/11/24 14:27:19 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,18 +133,10 @@ Buf_Init(bp, size)
     Buffer 	bp;	/* New Buffer */
     size_t    	size;	/* Initial size for the buffer */
 {
-    if (size == 0) {
+    if (size == 0)
 	size = BUF_DEF_SIZE;
-    }
     bp->inPtr = bp->endPtr = bp->buffer = emalloc(size);
     bp->endPtr += size;
-}
-
-void
-Buf_Destroy(buf)
-    Buffer  buf;  	/* Buffer to destroy */
-{
-    free(buf->buffer);
 }
 
 void

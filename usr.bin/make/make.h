@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.27 2000/09/14 13:52:42 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.28 2000/11/24 14:27:19 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ typedef struct GNode_ {
     const char *    fname;	/* File name of commands.  */
     LIST            commands;  	/* Creation commands */
 
-    struct _Suff    *suffix;	/* Suffix for the node (determined by
+    struct Suff_    *suffix;	/* Suffix for the node (determined by
 				 * Suff_FindDeps and opaque to everyone
 				 * but the Suff module) */
     char      name[1];     	/* The target's name */

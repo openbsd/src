@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.27 2000/09/14 13:52:41 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.28 2000/11/24 14:27:19 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: dir.c,v 1.27 2000/09/14 13:52:41 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.28 2000/11/24 14:27:19 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ Dir_End()
     	p = hash_next(&openDirectories, &i))
 	    Dir_Destroy(p);
     hash_delete(&openDirectories);
-    Hash_DeleteTable(&mtimes);
+    free_hash(&mtimes);
 #endif
 }
 
@@ -356,49 +356,45 @@ Dir_End()
  *	see if the given name has any wildcard characters in it
  *	be careful not to expand unmatching brackets or braces.
  *	XXX: This code is not 100% correct. ([^]] fails etc.)
- *	I really don't think that make(1) should be expanding
- *	patterns, because then you have to set a mechanism for
- *	escaping the expansion!
- *
- * Results:
- *	returns TRUE if the word should be expanded, FALSE otherwise
- *
- * Side Effects:
- *	none
  *-----------------------------------------------------------------------
  */
 Boolean
 Dir_HasWildcards (name)
-    char          *name;	/* name to check */
+    const char          *name;	/* name to check */
 {
-    register char *cp;
-    int wild = 0, brace = 0, bracket = 0;
+    const char 		*cp;
+    Boolean 		wild = FALSE;
+    unsigned long	brace = 0, bracket = 0;
 
-    for (cp = name; *cp; cp++) {
-	switch(*cp) {
+    for (cp = name; *cp != '\0' ; cp++) {
+	switch (*cp) {
 	case '{':
 	    brace++;
-	    wild = 1;
+	    wild = TRUE;
 	    break;
 	case '}':
+	    if (brace == 0)
+	    	return FALSE;
 	    brace--;
 	    break;
 	case '[':
 	    bracket++;
-	    wild = 1;
+	    wild = TRUE;
 	    break;
 	case ']':
+	    if (bracket == 0)
+	    	return FALSE;
 	    bracket--;
 	    break;
 	case '?':
 	case '*':
-	    wild = 1;
+	    wild = TRUE;
 	    break;
 	default:
 	    break;
 	}
     }
-    return (wild && bracket == 0 && brace == 0);
+    return wild && bracket == 0 && brace == 0;
 }
 
 /*-

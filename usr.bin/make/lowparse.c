@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.4 2000/09/14 13:32:07 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.5 2000/11/24 14:27:19 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -165,6 +165,7 @@ new_istring(str, name, lineno)
     IFile *ifile;
 
     ifile = emalloc(sizeof(*ifile));
+    /* No malloc, name is always taken from an existing ifile */
     ifile->fname = name;
     ifile->F = NULL;
     /* Strings are used from for loops... */
@@ -240,7 +241,8 @@ Parse_NextFile()
 }
 
 
-int
+/* guts for ParseReadc. Grab a new line off fgetln when we hit "\n" */
+static int
 newline()
 {
     size_t len;
