@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.5 1999/03/01 04:56:05 jason Exp $	*/
+/*	$OpenBSD: led.c,v 1.6 2001/01/30 03:55:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -43,6 +43,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
@@ -113,6 +114,8 @@ ledattach(parent, self, aux)
 
 	sc->sc_node = ca->ca_ra.ra_node;
 
+	timeout_set(&sc->sc_to, led_cycle, sc);
+
 	if (CPU_ISSUN4M)
 		sc->sc_reg = mapiodev(&(ca->ca_ra.ra_reg[0]), 0,
 		    ca->ca_ra.ra_reg[0].rr_len);
@@ -157,6 +160,6 @@ led_cycle(v)
 
 	if (sparc_led_blink != 0) {
 		s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3));
-		timeout(led_cycle, sc, s);
+		timeout_add(&sc->sc_to, s);
 	}
 }

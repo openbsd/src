@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.h,v 1.3 1999/03/01 04:56:05 jason Exp $	*/
+/*	$OpenBSD: led.h,v 1.4 2001/01/30 03:55:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -40,6 +40,7 @@ struct led_softc {
 	int		sc_node;		/* which node */
 	u_int16_t *	sc_reg;			/* register (4/600) */
 	int		sc_index;		/* index into patterns */
+	struct timeout	sc_to;			/* timeout data */
 };
 extern struct led_softc *led_sc;
 
