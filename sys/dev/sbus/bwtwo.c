@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.6 2003/02/12 19:41:20 henric Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.7 2003/03/27 17:40:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -210,6 +210,11 @@ bwtwoattach(parent, self, aux)
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
+	sc->sc_depth = getpropint(sa->sa_node, "depth", 1);
+	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
+	sc->sc_height = getpropint(sa->sa_node, "height", 900);
+	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
+
 	if (sa->sa_nreg != 1) {
 		printf(": expected %d registers, got %d\n", 1, sa->sa_nreg);
 		goto fail;
@@ -228,18 +233,13 @@ bwtwoattach(parent, self, aux)
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset + BWTWO_VID_OFFSET,
-	    BWTWO_VID_SIZE, BUS_SPACE_MAP_LINEAR,
+	    sc->sc_linebytes * sc->sc_height, BUS_SPACE_MAP_LINEAR,
 	    0, &sc->sc_vid_regs) != 0) {
 		printf(": cannot map vid registers\n");
 		goto fail_vid;
 	}
 
 	console = bwtwo_is_console(sa->sa_node);
-
-	sc->sc_depth = getpropint(sa->sa_node, "depth", 1);
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
-	sc->sc_height = getpropint(sa->sa_node, "height", 900);
-	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
