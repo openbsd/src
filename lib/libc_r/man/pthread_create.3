@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_create.3,v 1.5 1999/11/24 05:35:32 d Exp $
+.\" $OpenBSD: pthread_create.3,v 1.6 2000/01/06 06:19:18 d Exp $
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -103,6 +103,10 @@ is invalid.
 .El
 .Sh SEE ALSO
 .Xr fork 2 ,
+.Xr pthread_attr_init 3 ,
+.Xr pthread_attr_setdetachstate 3 ,
+.Xr pthread_attr_setstackaddr 3 ,
+.Xr pthread_attr_setstacksize 3 ,
 .Xr pthread_cleanup_pop 3 ,
 .Xr pthread_cleanup_push 3 ,
 .Xr pthread_exit 3 ,
