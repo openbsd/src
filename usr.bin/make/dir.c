@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.41 2004/04/07 13:11:35 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.42 2004/06/22 19:58:20 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -881,18 +881,12 @@ DirReaddiri(const char *name, const char *ename)
 
     if ((d = opendir(p->name)) == NULL)
 	return NULL;
-    /* Skip the first two entries -- these will *always* be . and ..  */
-    (void)readdir(d);
-    (void)readdir(d);
 
     while ((dp = readdir(d)) != NULL) {
-#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
-	/* The sun directory library doesn't check for a 0 inode
-	 * (0-inode slots just take up space), so we have to do
-	 * it ourselves.  */
-	if (dp->d_fileno == 0)
-	    continue;
-#endif /* sun && d_ino */
+	if (dp->d_name[0] == '.' && 
+	    (dp->d_name[1] == '\0' || 
+	    	(dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
+		continue;
 	add_file(p, dp->d_name);
     }
     (void)closedir(d);
