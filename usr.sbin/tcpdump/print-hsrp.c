@@ -1,9 +1,9 @@
-/*	$OpenBSD: print-hsrp.c,v 1.1 2002/01/22 18:33:07 mickey Exp $	*/
+/*	$OpenBSD: print-hsrp.c,v 1.2 2002/01/22 18:52:38 mickey Exp $	*/
 
 /*
  * Copyright (C) 2001 Julian Cowley
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,7 +33,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-hsrp.c,v 1.1 2002/01/22 18:33:07 mickey Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-hsrp.c,v 1.2 2002/01/22 18:52:38 mickey Exp $";
 #endif
 
 #ifdef HAVE_CONFIG_H
