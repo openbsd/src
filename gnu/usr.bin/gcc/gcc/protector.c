@@ -113,7 +113,7 @@ static void change_arg_use_of_insns
 static void change_arg_use_of_insns_2
 	PARAMS ((rtx insn, rtx orig, rtx *new, HOST_WIDE_INT size));
 static void change_arg_use_in_operand
-	PARAMS ((rtx x, rtx orig, rtx *new, HOST_WIDE_INT size));
+	PARAMS ((rtx insn, rtx x, rtx orig, rtx *new, HOST_WIDE_INT size));
 static void validate_insns_of_varrefs PARAMS ((rtx insn));
 static void validate_operand_of_varrefs PARAMS ((rtx insn, rtx *loc));
 
@@ -1591,7 +1591,7 @@ change_arg_use_of_insns_2 (insn, orig, new, size)
 	rtx seq;
 	
 	start_sequence ();
-	change_arg_use_in_operand (PATTERN (insn), orig, new, size);
+	change_arg_use_in_operand (insn, PATTERN (insn), orig, new, size);
 
 	seq = get_insns ();
 	end_sequence ();
@@ -1610,8 +1610,8 @@ change_arg_use_of_insns_2 (insn, orig, new, size)
 
 
 static void
-change_arg_use_in_operand (x, orig, new, size)
-     rtx x, orig, *new;
+change_arg_use_in_operand (insn, x, orig, new, size)
+     rtx insn, x, orig, *new;
      HOST_WIDE_INT size;
 {
   register enum rtx_code code;
@@ -1731,25 +1731,30 @@ change_arg_use_in_operand (x, orig, new, size)
 	    }
 	}
       break;
-#ifdef TARGET_ARM
-    case PARALLEL:
-      for (i = 0, j = 0; j < XVECLEN (x, 0); j++)
-	{
-	  change_arg_use_in_operand (XVECEXP (x, 0, j), orig, new, size);
 
-	  /* if load_multiple insn has a insn used virtual_incoming_args_rtx,
-	     the insn is removed from this PARARELL insn.  */
-	  if (check_used_flag (XVECEXP (x, 0, j)))
-	    {
-	      emit_insn (XVECEXP (x, 0, j));
-	      XVECEXP (x, 0, j) = NULL;
-	    }
-	  else
-	    XVECEXP (x, 0, i++) = XVECEXP (x, 0, j);
+    case PARALLEL:
+      for (j = 0; j < XVECLEN (x, 0); j++)
+  	{
+	  change_arg_use_in_operand (insn, XVECEXP (x, 0, j), orig, new, size);
 	}
-      PUT_NUM_ELEM (XVEC (x, 0), i);
+      if (recog_memoized (insn) < 0)
+	{
+	  for (i = 0, j = 0; j < XVECLEN (x, 0); j++)
+	    {
+	      /* if parallel insn has a insn used virtual_incoming_args_rtx,
+		 the insn is removed from this PARALLEL insn.  */
+	      if (check_used_flag (XVECEXP (x, 0, j)))
+		{
+		  emit_insn (XVECEXP (x, 0, j));
+		  XVECEXP (x, 0, j) = NULL;
+		}
+	      else
+		XVECEXP (x, 0, i++) = XVECEXP (x, 0, j);
+	    }
+	  PUT_NUM_ELEM (XVEC (x, 0), i);
+	}
       return;
-#endif
+
     default:
       break;
     }
@@ -1765,7 +1770,7 @@ change_arg_use_in_operand (x, orig, new, size)
 	    XEXP (x, i) = *new;
 	    continue;
 	  }
-	change_arg_use_in_operand (XEXP (x, i), orig, new, size);
+	change_arg_use_in_operand (insn, XEXP (x, i), orig, new, size);
       }
     else if (*fmt == 'E')
       for (j = 0; j < XVECLEN (x, i); j++)
@@ -1777,7 +1782,7 @@ change_arg_use_in_operand (x, orig, new, size)
 	      XVECEXP (x, i, j) = *new;
 	      continue;
 	    }
-	  change_arg_use_in_operand (XVECEXP (x, i, j), orig, new, size);
+	  change_arg_use_in_operand (insn, XVECEXP (x, i, j), orig, new, size);
 	}
 }   
 
