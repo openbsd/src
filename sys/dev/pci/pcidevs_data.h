@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.721 2004/04/09 17:56:44 grange Exp 
+ *	OpenBSD: pcidevs,v 1.722 2004/04/14 04:46:59 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2787,6 +2787,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000 (82541EI)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER2,
+	    "PRO/1000 (82541ER)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM,
 	    "PRO/1000MT (LOM)",
 	},
@@ -2805,6 +2809,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI,
 	    "PRO/1000 (82547EI)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI_LOM,
+	    "PRO/1000 (82547EI LOM)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD,
@@ -6757,6 +6765,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596,
 	    "VT82C596 Power Mgmt",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
+	    "VT6105M RhineIII",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
