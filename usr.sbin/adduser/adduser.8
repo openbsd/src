@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.24 2001/09/07 20:34:11 millert Exp $
+.\"	$OpenBSD: adduser.8,v 1.25 2001/12/04 22:05:23 millert Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -168,11 +168,15 @@ Add the appropriate entries to the password and group files and re-generate
 the password database using
 .Xr pwd_mkdb 8 .
 .It
-Create a home directory and copy all
-.Pa dot.*
-files from the skeletal login directory (normally
+Create a home directory and copy all files from the skeletal
+login directory (normally
 .Pa /etc/skel )
 to this new directory.
+Files named in the fashion of
+.Dq Pa dot.foo
+will be renamed to
+.Dq Pa .foo
+int the new directory.
 .It
 Mails the new user a welcome message at the discretion of the account creator.
 .El
