@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.7 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.8 2002/07/17 22:10:56 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
