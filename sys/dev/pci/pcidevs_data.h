@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.467 2001/11/22 02:23:05 naddy Exp 
+ *		OpenBSD: pcidevs,v 1.468 2001/11/23 04:17:58 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3307,20 +3307,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RM861HA",
 	},
 	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI010L,
+	    "VScom PCI 010L",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI100L,
+	    "VScom PCI 100L",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI110L,
+	    "VScom PCI 110L",
+	},
+	{
 	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200L,
-	    "VScom PCI 200-L",
+	    "VScom PCI 200L",
 	},
 	{
-	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0,
-	    "VScom PCI 800-H",
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI210L,
+	    "VScom PCI 210L",
 	},
 	{
-	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1,
-	    "VScom PCI 800-H",
+	    PCI_VENDOR_MOLEX, PCI_PRODUCT_MOLEX_VSCOM_PCI400L,
+	    "VScom PCI 400L",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800L,
+	    "VScom PCI 800L",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCIx10H,
+	    "VScom PCI x10H",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI100H,
+	    "VScom PCI 100H",
 	},
 	{
 	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200H,
-	    "VScom PCI 200-H",
+	    "VScom PCI 200H",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2,
+	    "VScom PCI 200HV2",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0,
+	    "VScom PCI 400H/800H",
+	},
+	{
+	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1,
+	    "VScom PCI 800H",
+	},
+	{
+	    PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_VSCOM_PCI011H,
+	    "VScom PCI 011H",
 	},
 	{
 	    PCI_VENDOR_PE, PCI_PRODUCT_PE_GNIC2,
@@ -6917,6 +6957,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_LAVA,
 	    "Lava",
+	},
+	{
+	    PCI_VENDOR_OXFORD2,
+	    "Oxford",
 	},
 	{
 	    PCI_VENDOR_TAMARACK,

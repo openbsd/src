@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.16 2001/11/18 20:43:35 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.17 2001/11/23 04:18:22 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ const struct puc_device_description puc_devices[] = {
 	 * network/misc (0x02/0x80) device.
 	 */
 	{   /* "Dolphin Peripherals 4035", */
-	    {	PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,	0xd84d,	0x6808	},
-	    {	0xffff,	0xffff,				0xffff,	0xffff	},
+	    {	PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,		0xd84d,	0x6808	},
+	    {	0xffff,	0xffff,					0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -109,8 +109,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial PCI 16C550 (10x family): 1S */
 	{   /* "SIIG Cyber Serial PCI 16C550 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1000,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1000,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
@@ -118,8 +118,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial PCI 16C650 (10x family): 1S */
 	{   /* "SIIG Cyber Serial PCI 16C650 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1001,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1001,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
@@ -127,8 +127,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial PCI 16C850 (10x family): 1S */
 	{   /* "SIIG Cyber Serial PCI 16C850 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1002,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1002,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
@@ -136,8 +136,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber I/O PCI 16C550 (10x family): 1S, 1P */
 	{   /* "SIIG Cyber I/O PCI 16C550 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1010,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1010,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
@@ -146,8 +146,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber I/O PCI 16C650 (10x family): 1S, 1P */
 	{   /* "SIIG Cyber I/O PCI 16C650 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1011,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1011,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
@@ -156,8 +156,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber I/O PCI 16C850 (10x family): 1S, 1P */
 	{   /* "SIIG Cyber I/O PCI 16C850 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1012,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1012,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
@@ -166,8 +166,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Parallel PCI (10x family): 1P */
 	{   /* "SIIG Cyber Parallel PCI (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1020,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1020,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
 	    },
@@ -175,8 +175,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Parallel Dual PCI (10x family): 2P */
 	{   /* "SIIG Cyber Parallel Dual PCI (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1021,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1021,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
 		{ PUC_PORT_TYPE_LPT, 0x20, 0x00 },
@@ -185,8 +185,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial Dual PCI 16C550 (10x family): 2S */
 	{   /* "SIIG Cyber Serial Dual PCI 16C550 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1030,	0,	0	},
-	    {	0xffff,	0xffff,	0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1030,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -195,8 +195,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial Dual PCI 16C650 (10x family): 2S */
 	{   /* "SIIG Cyber Serial Dual PCI 16C650 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1031,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1031,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -205,8 +205,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial Dual PCI 16C850 (10x family): 2S */
 	{   /* "SIIG Cyber Serial Dual PCI 16C850 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1032,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1032,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -215,8 +215,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2S1P PCI 16C550 (10x family): 2S, 1P */
 	{   /* "SIIG Cyber 2S1P PCI 16C550 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1034,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1034,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -226,8 +226,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2S1P PCI 16C650 (10x family): 2S, 1P */
 	{   /* "SIIG Cyber 2S1P PCI 16C650 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1035,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1035,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -237,8 +237,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2S1P PCI 16C850 (10x family): 2S, 1P */
 	{   /* "SIIG Cyber 2S1P PCI 16C850 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1036,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1036,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -248,8 +248,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 4S PCI 16C550 (10x family): 4S */
 	{   /* "SIIG Cyber 4S PCI 16C550 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1050,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1050,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -260,8 +260,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 4S PCI 16C650 (10x family): 4S */
 	{   /* "SIIG Cyber 4S PCI 16C650 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1051,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1051,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -272,8 +272,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 4S PCI 16C850 (10x family): 4S */
 	{   /* "SIIG Cyber 4S PCI 16C850 (10x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1052,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1052,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
@@ -288,8 +288,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Parallel PCI (20x family): 1P */
 	{   /* "SIIG Cyber Parallel PCI (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2020,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2020,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
 	    },
@@ -297,8 +297,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Parallel Dual PCI (20x family): 2P */
 	{   /* "SIIG Cyber Parallel Dual PCI (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2021,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2021,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00 },
@@ -307,8 +307,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2P1S PCI 16C550 (20x family): 1S, 2P */
 	{   /* "SIIG Cyber 2P1S PCI 16C550 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2040,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2040,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
@@ -318,8 +318,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2P1S PCI 16C650 (20x family): 1S, 2P */
 	{   /* "SIIG Cyber 2P1S PCI 16C650 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2041,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2041,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
@@ -329,8 +329,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2P1S PCI 16C850 (20x family): 1S, 2P */
 	{   /* "SIIG Cyber 2P1S PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2042,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2042,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
@@ -340,8 +340,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial PCI 16C550 (20x family): 1S */
 	{   /* "SIIG Cyber Serial PCI 16C550 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2000,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2000,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -349,8 +349,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial PCI 16C650 (20x family): 1S */
 	{   /* "SIIG Cyber Serial PCI 16C650 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2001,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2001,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -358,8 +358,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial PCI 16C850 (20x family): 1S */
 	{   /* "SIIG Cyber Serial PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2002,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2002,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -367,8 +367,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber I/O PCI 16C550 (20x family): 1S, 1P */
 	{   /* "SIIG Cyber I/O PCI 16C550 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2010,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2010,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
@@ -377,8 +377,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber I/O PCI 16C650 (20x family): 1S, 1P */
 	{   /* "SIIG Cyber I/O PCI 16C650 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2011,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2011,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
@@ -387,8 +387,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber I/O PCI 16C850 (20x family): 1S, 1P */
 	{   /* "SIIG Cyber I/O PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2012,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2012,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_LPT, 0x14, 0x00 },
@@ -397,8 +397,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial Dual PCI 16C550 (20x family): 2S */
 	{   /* "SIIG Cyber Serial Dual PCI 16C550 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2030,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2030,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -407,8 +407,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial Dual PCI 16C650 (20x family): 2S */
 	{   /* "SIIG Cyber Serial Dual PCI 16C650 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2031,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2031,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -417,8 +417,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber Serial Dual PCI 16C850 (20x family): 2S */
 	{   /* "SIIG Cyber Serial Dual PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2032,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2032,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -427,8 +427,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2S1P PCI 16C550 (20x family): 2S, 1P */
 	{   /* "SIIG Cyber 2S1P PCI 16C550 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2060,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2060,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -438,8 +438,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2S1P PCI 16C650 (20x family): 2S, 1P */
 	{   /* "SIIG Cyber 2S1P PCI 16C650 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2061,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2061,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -449,8 +449,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 2S1P PCI 16C850 (20x family): 2S, 1P */
 	{   /* "SIIG Cyber 2S1P PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2062,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2062,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -460,8 +460,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 4S PCI 16C550 (20x family): 4S */
 	{   /* "SIIG Cyber 4S PCI 16C550 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2050,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2050,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -472,8 +472,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 4S PCI 16C650 (20x family): 4S */
 	{   /* "SIIG Cyber 4S PCI 16C650 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2051,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2051,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -484,8 +484,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 4S PCI 16C850 (20x family): 4S */
 	{   /* "SIIG Cyber 4S PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2052,	0,	0	},
-	    {	0xffff,	0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2052,			0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -496,8 +496,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* SIIG Cyber 8S PCI 16C850 (20x family): 8S */
 	{   /* "SIIG Cyber 8S PCI 16C850 (20x family)", */
-	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2081,	0,	0	},
-	    {	0xffff, 0xffff,				0,	0	},
+	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2081,			0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -518,8 +518,8 @@ const struct puc_device_description puc_devices[] = {
 	 * the card.
 	 */
 	{   /* "VScom PCI-800", */
-	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_1076,	0x10b5,	0x1076	},
-	    {	0xffff,	0xffff,				0xffff,	0xffff	},
+	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_1076,		0x10b5,	0x1076	},
+	    {	0xffff,	0xffff,					0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
@@ -533,12 +533,68 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
-	 * Titan PCI-800H. Uses 8 16950 UART, behind a PCI chips that offers
-	 * 4 com port on PCI device 0 and 4 on PCI device 1. PCI device 0 has
+	* VScom PCI 011H, 1 lpt.
+	*/
+	{   /* "VScom PCI-011H", */
+	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_VSCOM_PCI011H,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI x10H, 1 lpt.
+	 * is the lpt part of VScom 110H, 210H, 410H
+	 */
+	{   /* "VScom PCI-x10H", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCIx10H,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 100H, little sister of 800H, 1 com.
+	 * also com part of VScom 110H
+	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * jumper J1 set to 2-3.
+	 */
+	{   /* "VScom PCI-100H", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI100H,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 200H, little sister of 800H, 2 com.
+	 * also com part of VScom 210H
+	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * jumper J1 set to 2-3.
+	 */
+
+	{   /* "VScom PCI-200H", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200H,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 400H and 800H. Uses 4/8 16950 UART, behind a PCI chips
+	 * that offers 4 com port on PCI device 0 (both 400H and 800H)
+	 * and 4 on PCI device 1 (800H only). PCI device 0 has
 	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 Mhz crystal
 	 * instead of the standart 1.8432Mhz.
+	 * There's a version with a jumper for selecting the crystal frequency,
+	 * defaults to 8x as used here. The jumperless version uses 8x, too.
 	 */
-	{   /* "VScom PCI-800H", */
+	{   /* "VScom PCI-400H/800H", */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0,	0, 0	},
 	    {	0xffff, 0xffff,						0, 0	},
 	    {
@@ -548,7 +604,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
 	    },
 	},
-	{   /* "VScom PCI-800H", */
+	{   /* "VScom PCI-400H/800H", */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1,	0, 0	},
 	    {	0xffff, 0xffff,						0, 0	},
 	    {
@@ -560,38 +616,135 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
+	 * VScom PCI 200HV2, is 200H Version 2.
+	 * Sells as 200H
+	 * strange things with the second port, either my card is simply
+	 * broken or something really strange is going on.
+	 * second port does not work at all. I'll request another one for
+	 * further testing.
+	 */
+	{   /* "VScom PCI-200HV2", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 010L
+	 * one lpt
+	 * untested
+	 */
+	{   /* "VScom PCI-010L", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI010L,    0, 0	},
+	    {	0xffff, 0xffff,                                         0, 0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 100L
+	 * one com
+	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * jumper J1 set to 2-3.
+	 */
+	{   /* "VScom PCI-100L", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI100L,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 110L
+	 * one com, one lpt
+	 * untested
+	 */
+	{   /* "VScom PCI-110L", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI110L,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
+	    },
+	},
+
+	/*
 	 * VScom PCI-200L has 2 x 16550 UARTS.
 	 * The board has a jumper which allows you to select a clock speed
-	 * of either 14.7456MHz or 1.8432MHz. By default it runs at the
-	 * latter.  If pins 2 & 3 are shorted, use COM_FREQ * 8 instead.
+	 * of either 14.7456MHz or 1.8432MHz. By default it runs at 
+	 * the fast speed.
 	 */
 	{   /* "VScom PCI-200L with 2 x 16550 UARTS" */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200L,	0, 0	},
 	    {	0xffff, 0xffff,					    	0, 0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8},
 	    },
 	},
 
 	/*
-	 * VScom PCI-200H uses a 14.7456 Mhz crystal instead of the standard
-	 * 1.8432Mhz.
+	 * VScom PCI-210L
+	 * Has a jumper for frequency selection, defaults to 8x as used here
+	 * two com, one lpt
 	 */
-	{   /* "VScom PCI-200H with 2 x 16950 UARTS" */
-	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200H,	0, 0	},
+	{   /* "VScom PCI-210L" */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI210L,	0, 0	},
 	    {	0xffff, 0xffff,					    	0, 0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00 },
 	    },
 	},
 
-	/* NEC PK-UG-X001 K56flex PCI Modem card.
-	   NEC MARTH bridge chip and Rockwell RCVDL56ACF/SP using. */
+	/*
+	 * VScom PCI 400L
+	 * Has a jumper for frequency selection, defaults to 8x as used here
+	 * This is equal to J1 in pos 2-3
+	 * VendorID mismatch with docs, should be 14d2 (oxford), is 10d2 (molex)
+	 */
+	{   /* "VScom PCI-400L", */
+	    {	PCI_VENDOR_MOLEX, PCI_PRODUCT_MOLEX_VSCOM_PCI400L,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 800L
+	 * Has a jumper for frequency selection, defaults to 8x as used here
+	 */
+	{   /* "VScom PCI-800L", */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800L,	0, 0	},
+	    {	0xffff, 0xffff,						0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x28, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * NEC PK-UG-X001 K56flex PCI Modem card.
+	 * NEC MARTH bridge chip and Rockwell RCVDL56ACF/SP using.
+	 */
 	{   /* "NEC PK-UG-X001 K56flex PCI Modem", */
-	    {	PCI_VENDOR_NEC,	PCI_PRODUCT_NEC_MARTH,	0x1033,	0x8014	},
-	    {	0xffff,	0xffff,				0xffff,	0xffff	},
+	    {	PCI_VENDOR_NEC,	PCI_PRODUCT_NEC_MARTH,		0x1033,	0x8014	},
+	    {	0xffff,	0xffff,					0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -599,8 +752,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/*NEC PK-UG-X008 */
 	{   /* "NEC PK-UG-X008", */
-	    {	PCI_VENDOR_NEC,	PCI_PRODUCT_NEC_PKUG,	0x1033,	0x8012	},
-	    {	0xffff,	0xffff,				0xffff,	0xffff	},
+	    {	PCI_VENDOR_NEC,	PCI_PRODUCT_NEC_PKUG,		0x1033,	0x8012	},
+	    {	0xffff,	0xffff,					0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -608,8 +761,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Lava Computers 2SP-PCI (0x8000-0x8003) */
 	{   /* "Lava Computers 2SP-PCI parallel port", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P,	0,	0	},
-	    {	0xffff,	0xfffc,					0,	0	},
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P,		0, 0	},
+	    {	0xffff,	0xfffc,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
 	    },
@@ -617,8 +770,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Lava Computers 2SP-PCI and Quattro-PCI serial ports */
 	{   /* "Lava Computers dual serial port", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,	0,	0	},
-	    {	0xffff,	0xfffc,				0,	0	},
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,		0, 0	},
+	    {	0xffff,	0xfffc,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -627,9 +780,9 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Lava Computers LavaPort-Dual and LavaPort-Quad 4*clock PCI serial ports */
 	{   /* "Lava Computers high-speed port", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_0,	0,	0	},
-	    {	0xffff,	0xfffc,				0,	0	},
-	    {
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_0,		0, 0	},
+	    {	0xffff,	0xfffc,						0, 0	},
+	    {	
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ*4 },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ*4 },
 	    },
@@ -637,8 +790,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Lava Computers LavaPort-650 */
 	{   /* "Lava Computers high-speed port", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_650,	0,	0	},
-	    {	0xffff,	0xfffc,				0,	0	},
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_650,			0, 0	},
+	    {	0xffff,	0xfffc,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ*4 },
 	    },
@@ -646,8 +799,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Koutech IOFLEX-2S PCI Dual Port Serial, port 1 */
 	{   /* "Koutech IOFLEX-2S PCI Dual Port Serial, port 1", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_0,	0,	0	},
-	    {	0xffff,	0xfffc,				0,	0	},
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_0,		0, 0	},
+	    {	0xffff,	0xfffc,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -655,8 +808,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Koutech IOFLEX-2S PCI Dual Port Serial, port 2 */
 	{   /* "Koutech IOFLEX-2S PCI Dual Port Serial, port 2", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,	0,	0	},
-	    {	0xffff,	0xfffc,				0,	0	},
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,		0, 0	},
+	    {	0xffff,	0xfffc,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -664,8 +817,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Lava Computers Octopus-550 serial ports */
 	{   /* "Lava Computers Octopus-550 8-port serial", */
-	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_0, 0,      0       },
-	    {   0xffff, 0xfffc,				 0,      0       },
+	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_0,		0, 0	},
+	    {   0xffff, 0xfffc,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -676,8 +829,8 @@ const struct puc_device_description puc_devices[] = {
 
 	/* US Robotics (3Com) PCI Modems */
 	{   /* "US Robotics (3Com) 3CP5609 PCI 16550 Modem", */
-	    {	PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,	0,	0	},
-	    {	0xffff,	0xffff,					0,	0	},
+	    {	PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,		0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -686,8 +839,8 @@ const struct puc_device_description puc_devices[] = {
 	/* IBM 33L4618: AT&T/Lucent Venus Modem */
 	{   /* "IBM 33L4618: AT&T/Lucent Venus Modem", */
 	    /* "Actiontec 56K PCI Master" */
-	    {	PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_VENUSMODEM, 0,	0	},
-	    {	0xffff,	0xffff,					0,	0	},
+	    {	PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_VENUSMODEM, 	0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ },
 	    },
@@ -696,8 +849,8 @@ const struct puc_device_description puc_devices[] = {
 	/* Topic/SmartLink 5634PCV SurfRider */
 	{   /* "Topic/SmartLink 5634PCV SurfRider", */
 	    /* "Topic/SmartLink 5634PCV SurfRider" */
-	    {	PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,	0,	0	},
-	    {	0xffff,	0xffff,					0,	0	},
+	    {	PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,		0, 0	},
+	    {	0xffff,	0xffff,						0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
@@ -705,8 +858,8 @@ const struct puc_device_description puc_devices[] = {
 
 	{   /* NULL, */
 
-	    {	0,	0,	0,	0	},
-	    {	0,	0,	0,	0	},
+	    {	0,	0,		0, 0	},
+	    {	0,	0,		0, 0	},
 	    {
 		{ 0, 0, 0 },
 	    },
