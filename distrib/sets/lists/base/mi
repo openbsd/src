@@ -2432,9 +2432,11 @@
 ./usr/share/vi/catalog/english
 ./usr/share/vi/catalog/french
 ./usr/share/vi/catalog/german
+./usr/share/vi/catalog/polish
 ./usr/share/vi/catalog/ru_RU.KOI8-R
 ./usr/share/vi/catalog/spanish
 ./usr/share/vi/catalog/swedish
+./usr/share/vi/catalog/uk_UA.KOI8-U
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa
 ./usr/share/zoneinfo/Africa/Abidjan
