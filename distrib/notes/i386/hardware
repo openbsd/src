@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.192 2005/03/18 04:00:58 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.193 2005/03/19 00:56:18 joris Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -163,7 +163,7 @@ Supported hardware {:-include-:}:
 		WD-7000 SCSI host adapters [A] [B] [C]
 	RAID and Cache Controllers
 		3ware Escalade 3W-5x00, 3W-6x00 [A] [C]
-		Adaptec FSA-based RAID controllers, including: [A] [C]
+		Adaptec FSA-based RAID controllers, including: [A] [B] [C]
 		    Adaptec AAC-2622, AAC-364, AAC-3642
 		    Dell PERC 2/Si, PERC 2/QC, PERC 3/Si, PERC 3/Di,
 		      PERC 3/QC
