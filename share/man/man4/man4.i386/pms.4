@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: pms.4,v 1.4 1996/10/15 07:52:12 downsj Exp $
+.\"	$OpenBSD: pms.4,v 1.5 1998/10/11 03:06:52 downsj Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -71,6 +71,21 @@ puts the device into raw mode, if it is not already, and the
 puts it into translated (or cooked) mode.  If the mode of the
 .Nm
 device driver changes, all pending but not yet read input is flushed.
+.Pp
+The
+.Nm
+driver also supports
+.Dq Intellimouse
+devices, with the wheel acting as a third button.  The kernel must currently
+be compiled with
+.Pp
+.Cd option INTELLIMOUSE
+.Pp
+specified in the config file, and the X server should be configured to use
+the translated mode of the driver.  (The output of the translated mode is
+.Em Busmouse
+compatible.)  Otherwise, the mouse works as a normal, two button, PS/2
+device.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/psm0
