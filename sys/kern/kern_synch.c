@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.26 2000/06/27 18:13:23 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.27 2000/07/06 07:00:04 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ scheduler_start()
 	/*
 	 * We avoid polluting the global namespace by keeping the scheduler
 	 * timeouts static in this function.
-	 * We setup the timeouts here and kick rundrobin and schedcpu once to
+	 * We setup the timeouts here and kick roundrobin and schedcpu once to
 	 * make them do their job.
 	 */
 
@@ -101,19 +101,20 @@ roundrobin(arg)
 	void *arg;
 {
 	struct timeout *to = (struct timeout *)arg;
+	struct proc *p = curproc;
 	int s;
 
-	if (curproc != NULL) {
+	if (p != NULL) {
 		s = splstatclock();
-		if (curproc->p_schedflags & PSCHED_SEENRR) {
+		if (p->p_schedflags & PSCHED_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
 			 * without switching and may be hogging the CPU.
 			 * Indicate that the process should yield.
 			 */
-			curproc->p_schedflags |= PSCHED_SHOULDYIELD;
+			p->p_schedflags |= PSCHED_SHOULDYIELD;
 		} else {
-			curproc->p_schedflags |= PSCHED_SEENRR;
+			p->p_schedflags |= PSCHED_SEENRR;
 		}
 		splx(s);
 	}
