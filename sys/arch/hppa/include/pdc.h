@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.3 1998/07/08 21:33:42 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.4 1998/07/14 17:44:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -460,6 +460,17 @@ struct pz_device {
 }
 
 extern pdcio_t pdc;
+
+#ifdef _KERNEL
+struct consdev;
+
+void init_pdc __P((void));
+void pdc_probe __P((struct consdev *));
+void pdc_init __P((struct consdev *));
+int pdc_getc __P((dev_t));
+void pdc_putc __P((dev_t, int));
+void pdc_pollc __P((dev_t, int));
+#endif
 
 #endif	/* !(_LOCORE) */
 
