@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.45 2002/02/02 17:52:27 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.46 2002/02/04 11:48:22 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -491,6 +491,10 @@ finishdup(p, old, new, retval)
 	struct file *fp, *oldfp;
 	struct filedesc *fdp = p->p_fd;
 
+	/*
+	 * Don't fd_getfile here. We want to closef LARVAL files and
+	 * closef can deal with that.
+	 */
 	oldfp = fdp->fd_ofiles[new];
 
 	fp = fdp->fd_ofiles[old];
@@ -529,6 +533,10 @@ fdrelease(p, fd)
 	struct filedesc *fdp = p->p_fd;
 	struct file **fpp, *fp;
 
+	/*
+	 * Don't fd_getfile here. We want to closef LARVAL files and closef
+	 * can deal with that.
+	 */
 	fpp = &fdp->fd_ofiles[fd];
 	fp = *fpp;
 	if (fp == NULL)
@@ -1138,26 +1146,21 @@ filedescopen(dev, mode, type, p)
  */
 int
 dupfdopen(fdp, indx, dfd, mode, error)
-	register struct filedesc *fdp;
-	register int indx, dfd;
+	struct filedesc *fdp;
+	int indx, dfd;
 	int mode;
 	int error;
 {
-	register struct file *wfp;
-	struct file *fp;
+	struct file *wfp;
 
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
 	 * of file descriptors, or the fd to be dup'd has already been
-	 * closed, reject.  Note, check for new == old is necessary as
-	 * falloc could allocate an already closed to-be-dup'd descriptor
-	 * as the new descriptor.
+	 * closed, reject. Note, there is no need to check for new == old
+	 * because fd_getfile will return NULL if the file at indx is
+	 * newly created by falloc (FIF_LARVAL).
 	 */
-	fp = fdp->fd_ofiles[indx];
 	if ((wfp = fd_getfile(fdp, dfd)) == NULL)
-		return (EBADF);
-
-	if (fp == wfp)
 		return (EBADF);
 
 	/*
