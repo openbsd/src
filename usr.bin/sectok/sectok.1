@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.1,v 1.8 2001/08/15 19:48:39 rees Exp $
+.\"	$OpenBSD: sectok.1,v 1.9 2002/03/14 22:25:29 rees Exp $
 .\"
 .\" Copyright (C) 2001, Jakob Schlyter. All rights reserved.
 .\"
@@ -154,6 +154,17 @@ and write to selected fid.
 .Op Ar length
 .Xc
 Get a random challenge from the card.
+.It Xo
+.Cm pin
+.Op Fl k Ar keyno
+.Op Ar PIN
+.Xc
+Verify CHV (PIN).
+.It Xo
+.Cm chpin
+.Op Fl k Ar keyno
+.Xc
+Change CHV (PIN).
 .El
 .Ss Cyberflex commands
 .Pp
