@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2004/09/24 12:54:13 markus Exp $
+# $OpenBSD: Makefile,v 1.2 2004/12/29 04:39:17 david Exp $
 
 NET=	192.0.3.0
 MASK=	255.255.255.0
@@ -13,6 +13,7 @@ netmask:
 .endfor
 
 REGRESS_TARGETS=netmask
+REGRESS_ROOT_TARGETS=${REGRESS_TARGETS}
 .PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
