@@ -1,4 +1,4 @@
-/*	$OpenBSD: shared_intr.c,v 1.4 1998/12/27 00:27:18 deraadt Exp $	*/
+/*	$OpenBSD: shared_intr.c,v 1.5 1998/12/31 09:17:58 deraadt Exp $	*/
 /*	$NetBSD: shared_intr.c,v 1.1 1996/11/17 02:03:08 cgd Exp $	*/
 
 /*
@@ -115,6 +115,12 @@ alpha_shared_intr_dispatch(intr, num)
 	return (handled);
 }
 
+/*
+ * Just check to see if an IRQ is available/can be shared.
+ * 0 = interrupt not available
+ * 1 = interrupt shareable
+ * 2 = interrupt all to ourself
+ */
 int
 alpha_shared_intr_check(intr, num, type)
 	struct alpha_shared_intr *intr;
@@ -131,7 +137,7 @@ alpha_shared_intr_check(intr, num, type)
 	case IST_LEVEL:
 		if (type != intr[num].intr_sharetype)
 			return (0);
-		return (2);
+		return (1);
 	case IST_EDGE:
 	case IST_PULSE:
 		if ((type != IST_NONE) && (intr[num].intr_q.tqh_first != NULL))

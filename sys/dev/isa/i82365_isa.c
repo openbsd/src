@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.2 1998/12/27 00:27:18 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.3 1998/12/31 09:17:43 deraadt Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ pcic_isa_attach(parent, self, aux)
 			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 2)
 				goto found;
 		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist))
+			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 1)
 				goto found;
 		printf("\n%s: can't allocate interrupt\n", sc->dev.dv_xname);
 		return;
