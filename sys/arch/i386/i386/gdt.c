@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.19 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.20 2003/11/08 05:38:33 nordin Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -61,20 +61,13 @@ int gdt_flags;
 
 static __inline void gdt_lock(void);
 static __inline void gdt_unlock(void);
-void gdt_compact(void);
 void gdt_grow(void);
-void gdt_shrink(void);
 int gdt_get_slot(void);
 void gdt_put_slot(int);
 
 /*
  * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
  * waiting for memory.
- *
- * Note that the locking done here is not sufficient for multiprocessor
- * systems.  A freshly allocated slot will still be of type SDT_SYSNULL for
- * some time after the GDT is unlocked, so gdt_compact() could attempt to
- * reclaim it.
  */
 static __inline void
 gdt_lock()
@@ -99,59 +92,7 @@ gdt_unlock()
 }
 
 /*
- * Compact the GDT as follows:
- * 0) We partition the GDT into two areas, one of the slots before gdt_count,
- *    and one of the slots after.  After compaction, the former part should be
- *    completely filled, and the latter part should be completely empty.
- * 1) Step through the process list, looking for TSS and LDT descriptors in
- *    the second section, and swap them with empty slots in the first section.
- * 2) Arrange for new allocations to sweep through the empty section.  Since
- *    we're sweeping through all of the empty entries, and we'll create a free
- *    list as things are deallocated, we do not need to create a new free list
- *    here.
- */
-void
-gdt_compact()
-{
-	struct proc *p;
-	struct pcb *pcb;
-	int slot = NGDT, oslot;
-
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-		pcb = &p->p_addr->u_pcb;
-		oslot = IDXSEL(pcb->pcb_tss_sel);
-		if (oslot >= gdt_count) {
-			while (dynamic_gdt[slot].sd.sd_type != SDT_SYSNULL) {
-				if (++slot >= gdt_count)
-					panic("gdt_compact botch 1");
-			}
-			dynamic_gdt[slot] = dynamic_gdt[oslot];
-			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			pcb->pcb_tss_sel = GSEL(slot, SEL_KPL);
-		}
-		oslot = IDXSEL(pcb->pcb_ldt_sel);
-		if (oslot >= gdt_count) {
-			while (dynamic_gdt[slot].sd.sd_type != SDT_SYSNULL) {
-				if (++slot >= gdt_count)
-					panic("gdt_compact botch 2");
-			}
-			dynamic_gdt[slot] = dynamic_gdt[oslot];
-			dynamic_gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			pcb->pcb_ldt_sel = GSEL(slot, SEL_KPL);
-		}
-	}
-	for (; slot < gdt_count; slot++)
-		if (dynamic_gdt[slot].gd.gd_type == SDT_SYSNULL)
-			panic("gdt_compact botch 3");
-	for (slot = gdt_count; slot < gdt_size; slot++)
-		if (dynamic_gdt[slot].gd.gd_type != SDT_SYSNULL)
-			panic("gdt_compact botch 4");
-	gdt_next = gdt_count;
-	gdt_free = GNULL_SEL;
-}
-
-/*
- * Grow or shrink the GDT.
+ * Initialize the GDT subsystem.  Called from autoconf().
  */
 void
 gdt_init()
@@ -172,6 +113,9 @@ gdt_init()
 	lgdt(&region);
 }
 
+/*
+ * Grow the GDT.
+ */
 void
 gdt_grow()
 {
@@ -183,18 +127,6 @@ gdt_grow()
 
 	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt + old_len,
 	    (vaddr_t)dynamic_gdt + new_len, FALSE, FALSE);
-}
-
-void
-gdt_shrink()
-{
-	size_t old_len, new_len;
-
-	old_len = gdt_size * sizeof(union descriptor);
-	gdt_size >>= 1;
-	new_len = old_len >> 1;
-	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt + new_len,
-	    (vaddr_t)dynamic_gdt + old_len, TRUE, FALSE);
 }
 
 /*
@@ -217,10 +149,10 @@ gdt_get_slot()
 		gdt_free = dynamic_gdt[slot].gd.gd_selector;
 	} else {
 		if (gdt_next != gdt_count)
-			panic("gdt_get_slot botch 1");
+			panic("gdt_get_slot: gdt_next != gdt_count");
 		if (gdt_next >= gdt_size) {
 			if (gdt_size >= MAXGDTSIZ)
-				panic("gdt_get_slot botch 2");
+				panic("gdt_get_slot: out of GDT descriptors");
 			if (dynamic_gdt == gdt)
 				panic("gdt_get_slot called before gdt_init");
 			gdt_grow();
@@ -245,19 +177,8 @@ gdt_put_slot(slot)
 	gdt_count--;
 
 	dynamic_gdt[slot].gd.gd_type = SDT_SYSNULL;
-	/* 
-	 * shrink the GDT if we're using less than 1/4 of it.
-	 * Shrinking at that point means we'll still have room for
-	 * almost 2x as many processes as are now running without
-	 * having to grow the GDT.
-	 */
-	if (gdt_size > MINGDTSIZ && gdt_count <= gdt_size / 4) {
-		gdt_compact();
-		gdt_shrink();
-	} else {
-		dynamic_gdt[slot].gd.gd_selector = gdt_free;
-		gdt_free = slot;
-	}
+	dynamic_gdt[slot].gd.gd_selector = gdt_free;
+	gdt_free = slot;
 
 	gdt_unlock();
 }
