@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2004/01/02 09:02:50 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.4 2004/01/03 13:28:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -48,7 +48,7 @@ control_init(void)
 		return (-1);
 	}
 
-	old_umask = umask(S_IWGRP|S_IWOTH|S_IROTH|S_IXOTH);
+	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, SOCKET_NAME, sizeof(sun.sun_path));
