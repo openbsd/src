@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.18 2002/05/29 12:41:42 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.19 2002/06/19 22:02:08 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -121,11 +121,10 @@ findbuffer(char *fname)
  * Read the file "fname" into the current buffer.  Make all of the text
  * in the buffer go away, after checking for unsaved changes.  This is
  * called by the "read" command, the "visit" command, and the mainline
- * (for "uemacs file").
+ * (for "mg file").
  */
 int
-readin(fname)
-	char *fname;
+readin(char *fname)
 {
 	MGWIN	*wp;
 	int	 status, i;
@@ -162,7 +161,6 @@ readin(fname)
 	else
 		curbp->b_flag &=~ BFREADONLY;
 
-
 	return status;
 }
 
@@ -194,11 +192,10 @@ insertfile(fname, newname, needinfo)
 	LINE	*lp1, *lp2;
 	LINE	*olp;			/* line we started at */
 	MGWIN	*wp;
-	int	 nbytes, s, nline;
-	int	 opos;			/* and offset into it */
+	int	 nbytes, s, nline, siz;
+	int	 opos;			/* offset we started at */
 
 	lp1 = NULL;
-
 	if (line == NULL) {
 		line = malloc(NLINE);
 		linesize = NLINE;
@@ -223,7 +220,7 @@ insertfile(fname, newname, needinfo)
 	opos = curwp->w_doto;
 
 	/* open a new line, at point, and start inserting after it */
-	(void)lnewline();
+	lnewline();
 	olp = lback(curwp->w_dotp);
 	if (olp == curbp->b_linep) {
 		/* if at end of buffer, create a line to insert before */
@@ -233,8 +230,10 @@ insertfile(fname, newname, needinfo)
 
 	/* don't count fake lines at the end */
 	nline = 0;
+	siz = 0;
 	while ((s = ffgetline(line, linesize, &nbytes)) != FIOERR) {
 doneread:
+		siz += nbytes + 1;
 		switch (s) {
 		case FIOSUC:
 			++nline;
@@ -255,7 +254,7 @@ doneread:
 			if (s == FIOEOF)
 				goto endoffile;
 			break;
-		case FIOLONG:{
+		case FIOLONG: {
 				/* a line too long to fit in our buffer */
 				char	*cp;
 				int	newsize;
@@ -286,6 +285,8 @@ doneread:
 		}
 	}
 endoffile:
+	undo_add_insert(olp, opos, siz);
+
 	/* ignore errors */
 	ffclose(NULL);
 	/* don't zap an error */
