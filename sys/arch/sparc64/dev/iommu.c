@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.28 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.29 2003/05/22 21:16:29 henric Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1032,7 +1032,7 @@ iommu_dvmamap_append_range(bus_dma_tag_t t, bus_dmamap_t map, paddr_t pa,
 	sgend = sgstart + length - 1;
 
 #ifdef DIAGNOSTIC
-	if (sgstart == NULL || sgstart >= sgend) {
+	if (sgstart == NULL || sgstart > sgend) {
 		printf("append range invalid mapping for %lx "
 		    "(0x%llx - 0x%llx)\n", pa, sgstart, sgend);
 		map->dm_nsegs = 0;
@@ -1481,7 +1481,7 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 #ifdef DIAGNOSTIC
 	struct iommu_state *is = sb->sb_iommu;
 
-	if (va < is->is_dvmabase || va >= is->is_dvmaend)
+	if (va < is->is_dvmabase || va > is->is_dvmaend)
 		panic("invalid va: %llx", (long long)va);
 
 	if ((is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)] & IOTTE_STREAM) == 0) {
@@ -1495,7 +1495,7 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 	va &= ~PAGE_MASK;
 
 #ifdef DIAGNOSTIC
-	if (va < is->is_dvmabase || vaend >= is->is_dvmaend)
+	if (va < is->is_dvmabase || vaend > is->is_dvmaend)
 		panic("invalid va range: %llx to %llx (%x to %x)",
 		    (long long)va, (long long)vaend,
 		    is->is_dvmabase,
