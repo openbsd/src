@@ -4,7 +4,6 @@ pass kill
 pass list
 pass rule pass in from <regress> to any
 pass list
-pass create
 pass list
 pass rule
 pass list
