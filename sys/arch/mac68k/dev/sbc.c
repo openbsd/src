@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.12 1999/01/11 05:11:35 millert Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.13 2001/09/09 21:48:31 miod Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ void
 sbc_drq_intr(p)
 	void *p;
 {
-	extern int *nofault, mac68k_buserr_addr;
+	extern int *nofault, m68k_fault_addr;
 	struct sbc_softc *sc = (struct sbc_softc *)p;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)p;
 	struct sci_req *sr = ncr_sc->sc_current;
@@ -415,7 +415,7 @@ sbc_drq_intr(p)
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
-			count = ((  (u_long)mac68k_buserr_addr
+			count = ((  (u_long)m68k_fault_addr
 				  - (u_long)sc->sc_drq_addr));
 
 			if ((count < 0) || (count > dh->dh_len)) {
@@ -434,7 +434,7 @@ sbc_drq_intr(p)
 			printf("%s: drq /berr, complete=0x%x (pending 0x%x)\n",
 			   ncr_sc->sc_dev.dv_xname, count, dh->dh_len);
 #endif
-		mac68k_buserr_addr = 0;
+		m68k_fault_addr = 0;
 
 		return;
 	}
