@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.33 2002/02/16 01:19:52 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.34 2002/02/17 05:14:30 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -92,12 +92,12 @@ dnl
 dnl TODO:
 dnl
 dnl make a 'disktgt' macro that automatically does:
-dnl disktgt(rd, {-Ramdisk-})
+dnl disktgt(rd, {-rd-})
 dnl
 dnl	target(all,rd,0)
 dnl	target(ramd,rd,0)
 dnl	disk_q(rd)
-dnl	__devitem(rd, {-rd*-}, {-Ramdisk-})dnl
+dnl	__devitem(rd, {-rd*-}, {-rd-})dnl
 dnl
 dnl
 _mkdev(loc, local, {-test -s $T.local && sh $T.local-})dnl
@@ -188,7 +188,7 @@ _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
 -})dnl
 dnl
-__devitem(ramdisk, ramdisk, devices to be put on install floppies)dnl
+__devitem(ramdisk, ramdisk, devices to be put on ramdisk-based media)dnl
 __devitem(std, {-std-}, standard devices)dnl
 dnl
 dnl
@@ -724,7 +724,7 @@ target(ramd, bpf, 0)dnl
 target(ramd, std)dnl
 target(ramd, random)dnl
 target(ramd, bpf, 0)dnl
-__devitem(rd, {-rd*-}, "ramdisk" pseudo-disks)dnl
+__devitem(rd, {-rd*-}, "rd" pseudo-disks)dnl
 _mkdev(rd, rd*, {-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl
 __devitem(xd, xd*, Xylogic 753/7053 disks)dnl
 __devitem(xy, xy*, {-	Xylogic 450/451 disks-})dnl
