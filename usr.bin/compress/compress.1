@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.27 2003/09/05 04:46:35 tedu Exp $
+.\"	$OpenBSD: compress.1,v 1.28 2003/09/05 07:24:59 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -71,6 +71,9 @@
 .Op Ar
 .Pp
 .Nm zcat
+.Op Fl fghqr
+.Op Ar
+.Nm gzcat
 .Op Fl fhqr
 .Op Ar
 .Sh DESCRIPTION
@@ -84,7 +87,7 @@ They are functionally identical, but use different algorithms for compression.
 If invoked as
 .Nm gzip
 or
-.Nm compress Fl g
+.Nm compress Fl g ,
 the deflate mode of compression is chosen by default;
 otherwise the older method of compression
 .Pq compress mode
@@ -140,6 +143,11 @@ The
 command is equivalent in functionality to
 .Nm uncompress
 .Fl c .
+The
+.Nm gzcat
+command is equivalent in functionality to
+.Nm gunzip
+.Fl c .
 .Pp
 If renaming the files would cause files to be overwritten and the standard
 input device is a terminal, the user is prompted (on the standard error
@@ -168,6 +176,8 @@ code limit
 Compressed or uncompressed output is written to the standard output.
 No files are modified (force
 .Nm zcat
+or
+.Nm gzcat
 mode).
 .It Fl d
 Decompress the source files instead of compressing them (force
@@ -185,8 +195,10 @@ and if the option
 is also given, copy the input data without change
 to the standard ouput: let
 .Nm zcat
+or
+.Nm gzcat
 behave as
-.Nm cat .
+.Xr cat 1 .
 .It Fl g
 Use deflate scheme which reportedly provides better compression rates (force
 .Nm gzip
