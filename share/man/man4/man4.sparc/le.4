@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$Id: le.4,v 1.6 1998/10/19 05:45:10 jason Exp $
+.\"	$Id: le.4,v 1.7 1998/11/11 02:58:35 jason Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sparc
@@ -83,23 +83,21 @@ Standard 15 pin connector
 UTP, also known as twisted pair
 .El
 .Pp
-The system will not automatically select the correct port unless the kernel
-was loaded via the network. Thus one of the following flags should be used
-with
+By default, the system will select the media type automatically, but the
 .Xr ifconfig 8
-or in your /etc/hostname.le? file:
-.Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.It link0
-Use the UTP port.
-.It link1
-Use the AUI port.
-.It -link0 -link1
-Use the existing port selection (useful only for network booting).
+command can be used to force the media selection.
+The media types are shown below:
+.Bl -tag -width xxxxxxxxxxxxxx -offset indent
+.It media autoselect
+Attempt to autoselect the media type (default)
+.It media 10base5
+Use the AUI connector
+.It media 10baseT
+Use the twisted pair connector
 .El
-.Pp
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr inet 4 ,
 .Xr be 4 ,
