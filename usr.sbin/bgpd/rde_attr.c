@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.18 2004/03/05 22:21:32 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.19 2004/03/11 16:38:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -797,7 +797,7 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 #define UPDATE()				\
 	do {					\
 		if (r == -1)			\
-			return (1);		\
+			return (-1);		\
 		total_size += r;		\
 		if ((unsigned int)r < size) {	\
 			size -= r;		\
@@ -842,6 +842,10 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 			UPDATE();
 		}
 	}
+	/* ensure that we have a valid C-string */
+	if (size > 0)
+		*buf = '\0';
+
 	return total_size;
 #undef UPDATE
 }
