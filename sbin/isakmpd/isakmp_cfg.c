@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.22 2002/08/23 18:01:33 ho Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.23 2003/01/09 12:46:45 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -583,7 +583,7 @@ cfg_responder_send_ATTR (struct message *msg)
     }
 
   /* We are responder, check isakmp_sa for other side.  */
-  if (isakmp_sa->initiator)
+  if (isakmp_sa->initiator ^ (ie->cfg_type == ISAKMP_CFG_REQUEST))
     id_string = ipsec_id_string (isakmp_sa->id_i, isakmp_sa->id_i_len);
   else
     id_string = ipsec_id_string (isakmp_sa->id_r, isakmp_sa->id_r_len);
@@ -1014,7 +1014,9 @@ cfg_encode_attributes (struct isakmp_cfg_attr_head *attrs, u_int32_t type,
 	  break;
 	}
 
+      SET_ISAKMP_ATTR_TYPE (*attrp + off, attr->type);
       SET_ISAKMP_ATTR_LENGTH_VALUE (*attrp + off, attr->length);
+      off += ISAKMP_ATTR_VALUE_OFF + attr->length;
     }
 
   return 0;
