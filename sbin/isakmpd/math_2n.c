@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_2n.c,v 1.7 1999/04/20 11:32:57 niklas Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.8 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ b2n_print (b2n_ptr n)
 	    flag = 1;
 	  }
     }
-  printf("\n");
+  printf ("\n");
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.15 2001/02/16 21:17:31 provos Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.16 2001/04/09 22:09:53 ho Exp $	*/
 /*	$EOM: certpatch.c,v 1.11 2000/12/21 14:50:09 ho Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ main (int argc, char **argv)
 
   /* read command line arguments */
   while ((ch = getopt (argc, argv, "t:k:i:")) != -1)
-    switch(ch) {
+    switch (ch) {
     case 't':
       type = optarg;
       break;
@@ -161,7 +161,7 @@ main (int argc, char **argv)
   if (BIO_read_filename (file, certin) == -1) 
     {
       perror ("read");
-      exit(1);
+      exit (1);
     }
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
   cert = PEM_read_bio_X509 (file, NULL, NULL, NULL);

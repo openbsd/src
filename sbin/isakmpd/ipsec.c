@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.41 2001/03/29 06:51:25 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.42 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1760,8 +1760,8 @@ ipsec_decode_ids (char *fmt, u_int8_t *id1, size_t id1_len,
   static char result[1024];
   char s_id1[256], s_id2[256];
 
-  ipsec_decode_id(s_id1, sizeof s_id1, id1, id1_len, isakmpform);
-  ipsec_decode_id(s_id2, sizeof s_id2, id2, id2_len, isakmpform);
+  ipsec_decode_id (s_id1, sizeof s_id1, id1, id1_len, isakmpform);
+  ipsec_decode_id (s_id2, sizeof s_id2, id2, id2_len, isakmpform);
 
   snprintf (result, sizeof result, fmt, s_id1, s_id2);
   return result;

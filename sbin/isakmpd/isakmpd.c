@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.29 2001/04/09 21:21:57 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.30 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ reinit (void)
 #endif
 
   /* Reinitialize certificates */
-  cert_init();
+  cert_init ();
 
   /* Reinitialize our connection list.  */
   connection_reinit ();
@@ -250,7 +250,7 @@ reinit (void)
 
   /*
    * XXX "These" (non-existant) reinitializations should not be done.
-   *   cookie_reinit();
+   *   cookie_reinit ();
    *   ui_reinit ();
    *   sa_reinit ();
    */
@@ -330,7 +330,7 @@ write_pid_file (void)
   if (fp != NULL)
     {
       /* XXX Error checking!  */
-      fprintf (fp, "%d\n", getpid());
+      fprintf (fp, "%d\n", getpid ());
       fclose (fp);
     }
   else

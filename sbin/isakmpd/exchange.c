@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.43 2001/04/08 21:23:02 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.44 2001/04/09 22:09:51 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -631,7 +631,7 @@ exchange_create (int phase, int initiator, int doi, int type)
 	}
     }
 
-  gettimeofday(&expiration, 0);
+  gettimeofday (&expiration, 0);
   delta = conf_get_num ("General", "Exchange-max-time", EXCHANGE_MAX_TIME);
   expiration.tv_sec += delta;
   exchange->death = timer_add_event ("exchange_free_aux", exchange_free_aux,

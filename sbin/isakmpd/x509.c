@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.47 2001/04/03 13:59:12 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.48 2001/04/09 22:09:53 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ x509_generate_kn (X509 *cert)
 	      return 0;
 	    }
 
-	  sprintf(before, "%s", tm->data);
+	  sprintf (before, "%s", tm->data);
 	}
 
       /* Fix missing seconds.  */
@@ -447,7 +447,7 @@ x509_generate_kn (X509 *cert)
 	      return 0;
 	    }
 
-	  sprintf(after, "%s", tm->data);
+	  sprintf (after, "%s", tm->data);
         }
 
       /* Fix missing seconds.  */
@@ -1199,7 +1199,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
    */
   *cnt = 2;
 
-  *id = calloc(*cnt, sizeof **id);
+  *id = calloc (*cnt, sizeof **id);
   if (!*id)
     {
       log_print ("x509_cert_get_subject: malloc (%d) failed",
@@ -1207,7 +1207,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
       goto fail;
     }
 
-  *id_len = malloc(*cnt * sizeof **id_len);
+  *id_len = malloc (*cnt * sizeof **id_len);
   if (!*id_len)
     {
       log_print ("x509_cert_get_subject: malloc (%d) failed",

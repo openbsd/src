@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.39 2001/03/06 22:18:48 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.40 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ isakmp_sa_check (struct sa *sa, void *v_arg)
     return 0;
 
   /* match icookie+rcookie against spi */
-  if(memcmp (sa->cookies, arg->spi, ISAKMP_HDR_COOKIES_LEN) == 0)
+  if (memcmp (sa->cookies, arg->spi, ISAKMP_HDR_COOKIES_LEN) == 0)
     return 1;
 
   return 0;
@@ -797,7 +797,7 @@ sa_setup_expirations (struct sa *sa)
 
   if (!sa->death)
     {
-      gettimeofday(&expiration, 0);
+      gettimeofday (&expiration, 0);
       LOG_DBG ((LOG_TIMER, 95,
 		"sa_setup_expirations: SA %p hard timeout in %qd seconds",
 		sa, sa->seconds));

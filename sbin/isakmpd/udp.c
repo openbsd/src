@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.28 2001/03/06 22:17:21 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.29 2001/04/09 22:09:53 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ udp_init ()
     port = htons (udp_default_port);
   else
     {
-      s = getservbyname("isakmp", "udp");
+      s = getservbyname ("isakmp", "udp");
       port = s ? s->s_port : htons (UDP_DEFAULT_PORT);
     }
 

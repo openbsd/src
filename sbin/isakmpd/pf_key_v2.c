@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.47 2001/03/27 21:09:49 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.48 2001/04/09 22:09:52 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -625,7 +625,7 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
     goto cleanup;
 
 #ifdef KAME
-  memset(&ssa2, 0, sizeof ssa2);
+  memset (&ssa2, 0, sizeof ssa2);
   ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
   ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
   ssa2.sadb_x_sa2_mode = 0;
@@ -904,7 +904,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
     goto cleanup;
 
 #ifdef KAME
-  memset(&ssa2, 0, sizeof ssa2);
+  memset (&ssa2, 0, sizeof ssa2);
   ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
   ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
   ssa2.sadb_x_sa2_mode = 0;
@@ -1452,7 +1452,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (!flow)
     goto cleanup;
 
-  memset(&ssa2, 0, sizeof ssa2);
+  memset (&ssa2, 0, sizeof ssa2);
   ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
   ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
   ssa2.sadb_x_sa2_mode = 0;
@@ -1828,7 +1828,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
     goto cleanup;
 
 #ifdef KAME
-  memset(&ssa2, 0, sizeof ssa2);
+  memset (&ssa2, 0, sizeof ssa2);
   ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
   ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
   ssa2.sadb_x_sa2_mode = 0;
@@ -2884,7 +2884,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   if (pf_key_v2_msg_add (grpspis, (struct sadb_ext *)&sa2, 0) == -1)
     goto cleanup;
 #else
-  memset(&kamesa2, 0, sizeof kamesa2);
+  memset (&kamesa2, 0, sizeof kamesa2);
   kamesa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
   kamesa2.sadb_x_sa2_len = sizeof kamesa2 / PF_KEY_V2_CHUNK;
   kamesa2.sadb_x_sa2_mode = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.38 2001/04/09 21:21:57 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.39 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -669,7 +669,7 @@ message_validate_sa (struct message *msg, struct payload *p)
     {
       msg->isakmp_sa = TAILQ_FIRST (&exchange->sa_list);
       if (msg->isakmp_sa)
-        sa_reference(msg->isakmp_sa);
+        sa_reference (msg->isakmp_sa);
     }
 
   /*
@@ -899,7 +899,7 @@ message_recv (struct message *msg)
     {
       msg->isakmp_sa = sa_lookup_by_header (buf, 0);
       if (msg->isakmp_sa)
-        sa_reference(msg->isakmp_sa);
+        sa_reference (msg->isakmp_sa);
 
       /*
        * If we cannot find an ISAKMP SA out of the cookies, this is either
@@ -1468,7 +1468,7 @@ message_dump_raw (char *header, struct message *msg, int class)
   for (i = 0; i < msg->iovlen; i++)
     for (j = 0; j < msg->iov[i].iov_len; j++)
       {
-	sprintf(p, "%02x", ((u_int8_t *)msg->iov[i].iov_base)[j]);
+	sprintf (p, "%02x", ((u_int8_t *)msg->iov[i].iov_base)[j]);
 	p += 2;
 	if (++k % 32 == 0)
 	  {

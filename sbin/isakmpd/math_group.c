@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.c,v 1.12 2000/04/07 22:04:44 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.13 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ modp_setrandom (struct group *grp, math_mp_t d)
   for (i = 0; i < l; i++)
     {
       if (i % 4)
-	tmp = sysdep_random();
+	tmp = sysdep_random ();
 
 #if MP_FLAVOUR == MP_FLAVOUR_GMP
       mpz_mul_2exp (d, d, 8);

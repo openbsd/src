@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_encap.c,v 1.20 2001/01/27 12:03:34 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.21 2001/04/09 22:09:52 ho Exp $	*/
 /*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
@@ -742,7 +742,7 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   emsg->em_ena_dst.s_addr = dst;
 
   LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
-	    htonl(laddr), htonl(lmask), htonl(raddr), htonl(rmask)));
+	    htonl (laddr), htonl (lmask), htonl (raddr), htonl (rmask)));
   emsg->em_ena_isrc.s_addr = laddr;
   emsg->em_ena_ismask.s_addr = lmask;
   emsg->em_ena_idst.s_addr = raddr;
@@ -854,7 +854,7 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 
   LOG_DBG ((LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
 	    rtmsg->rtm_msglen));
-  if (write(s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
+  if (write (s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
     {
       if (errno == EEXIST)
 	{
@@ -862,17 +862,17 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 
 	  LOG_DBG ((LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
 		    rtmsg->rtm_msglen));
-	  if (write(s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
+	  if (write (s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
 	    {
-	      log_error("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
-			rtmsg->rtm_msglen);
+	      log_error ("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
+			 rtmsg->rtm_msglen);
 	      goto fail;
 	    }
 	}
       else
 	{
-	  log_error("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
-		    rtmsg->rtm_msglen);
+	  log_error ("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
+		     rtmsg->rtm_msglen);
 	  goto fail;
 	}
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.c,v 1.12 2000/10/10 13:35:12 niklas Exp $	*/
+/*	$OpenBSD: transport.c,v 1.13 2001/04/09 22:09:53 ho Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ transport_report (void)
       
       /* This is the reason message_dump_raw lives outside message.c.  */
       for (msg = TAILQ_FIRST (&t->sendq); msg; msg = TAILQ_NEXT (msg, link))
-        message_dump_raw("udp_report", msg, LOG_REPORT);
+        message_dump_raw ("udp_report", msg, LOG_REPORT);
     }
 }
 
