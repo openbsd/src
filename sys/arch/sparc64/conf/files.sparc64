@@ -14,8 +14,8 @@ attach pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
 
 include "dev/sun/files.sun"
+include "dev/sbus/files.sbus"
 
-device sbus { slot = -1, offset = -1 }
 attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
 
@@ -87,7 +87,6 @@ file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
-file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,
@@ -112,7 +111,5 @@ file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
-#file 	ddb/db_aout.c			ddb_aout
-#file	ddb/db_elf.c			ddb
 
 file	arch/sparc64/dev/md_root.c	memory_disk_hooks
