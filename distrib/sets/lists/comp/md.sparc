@@ -142,6 +142,7 @@
 ./usr/libdata/ldscripts/elf32_sparc.xr
 ./usr/libdata/ldscripts/elf32_sparc.xs
 ./usr/libdata/ldscripts/elf32_sparc.xu
+./usr/libdata/ldscripts/elf32_sparc.xz
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidireg.ph
