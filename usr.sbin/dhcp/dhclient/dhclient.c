@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.5 1999/06/06 19:09:05 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.6 1999/11/30 21:45:10 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1926,15 +1926,13 @@ void script_write_params (ip, prefix, lease)
 						goto supersede;
 					}
 					dp = dbuf;
-					memcpy (dp,
+					memcpy (dp, lease -> options [i].data,
+						lease -> options [i].len);
+					memcpy (dp + lease -> options [i].len,
 						ip -> client -> 
 						config -> defaults [i].data,
 						ip -> client -> 
 						config -> defaults [i].len);
-					memcpy (dp + ip -> client -> 
-						config -> defaults [i].len,
-						lease -> options [i].data,
-						lease -> options [i].len);
 				}
 			} else {
 				dp = ip -> client ->
