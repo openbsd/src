@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.5 1999/08/18 00:28:08 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.6 1999/11/26 17:07:10 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -54,11 +54,11 @@ option		DST=0		# daylight savings time used by RTC
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
 
-option  RAMDISK_HOOKS
-option  MINIROOTSIZE=8192
+#option  RAMDISK_HOOKS
+#option  MINIROOTSIZE=8192
 
-config	bsd root on rd0 swap on rd0	# temp until ie0 is stable
-#config	bsd root on nfs swap on nfs
+#config	bsd root on rd0 swap on rd0	# temp until ie0 is stable
+config	bsd root on nfs swap on nfs
 
 pseudo-device	rd	2	# RAM disk device
 
@@ -74,7 +74,7 @@ mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 #vmeb*	at mainbus0 irq ?	# VME bus adapter
 #dino*	at mainbus0 irq ?	# PCI bus bridge
 
-#sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
+sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
 
 # internal i/o space
 gsc*	at lasi?		# 712,715/100,725/75,725/100
