@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.98 1998/11/08 15:09:01 mickey Exp $
+#	$OpenBSD: files,v 1.99 1998/11/17 06:14:47 downsj Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -56,6 +56,10 @@ file	dev/ic/aic6360.c	aic
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
 file	dev/ic/adv.c		adv
+
+# AdvanSys ULTRA WIDE SCSI controllers
+device	adw: scsi
+file	dev/ic/adw.c		adw
 
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 device	bha: scsi
