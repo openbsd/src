@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.25 2000/07/06 15:33:31 ho Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.26 2000/07/07 15:37:00 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -697,8 +697,8 @@ int
 hzto(tv)
 	struct timeval *tv;
 {
-	register unsigned long ticks;
-	register long sec, usec;
+	unsigned long ticks;
+	long sec, usec;
 	int s;
 
 	/*
@@ -729,8 +729,8 @@ hzto(tv)
 		sec--;
 		usec += 1000000;
 	}
-	if (sec < 0) {
-		ticks = 1;
+	if (sec < 0 || (sec == 0 && usec <= 0)) {
+		ticks = 0;
 	} else if (sec <= LONG_MAX / 1000000)
 		ticks = (sec * 1000000 + (unsigned long)usec + (tick - 1))
 		    / tick + 1;
