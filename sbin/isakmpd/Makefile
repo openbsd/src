@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.19 1999/07/17 21:54:39 niklas Exp $
-#	$EOM: Makefile,v 1.55 1999/07/17 20:44:07 niklas Exp $
+#	$OpenBSD: Makefile,v 1.20 1999/08/26 22:29:19 niklas Exp $
+#	$EOM: Makefile,v 1.58 1999/08/26 11:21:48 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -50,15 +50,16 @@ OS=		openbsd
 
 PROG=		isakmpd
 BINDIR?=	/sbin
+LDSTATIC?=	-static
 SRCS=		app.c attribute.c cert.c connection.c \
 		constants.c conf.c cookie.c crypto.c dh.c doi.c exchange.c \
 		exchange_num.c field.c gmp_util.c hash.c if.c ike_auth.c \
 		ike_aggressive.c ike_main_mode.c ike_phase_1.c \
 		ike_quick_mode.c init.c ipsec.c ipsec_fld.c ipsec_num.c \
-		isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c log.c \
-		message.c math_2n.c math_ec2n.c math_group.c \
+		isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c libcrypto.c \
+		log.c message.c math_2n.c math_ec2n.c math_group.c \
 		prf.c sa.c sysdep.c timer.c transport.c udp.c ui.c \
-		util.c x509.c
+		util.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
@@ -117,6 +118,34 @@ SUBDIR+=	regress
 .endif
 
 .include "sysdep/${OS}/Makefile.sysdep"
+
+.ifdef HAVE_DLOPEN
+X509=		x509.c
+POLICY=		policy.c
+CFLAGS+=	-DHAVE_DLOPEN
+SRCS+=		dyn.c
+.endif
+
+.ifdef USE_KEYNOTE
+USE_LIBCRYPTO=	yes
+POLICY=		policy.c
+LDADD+=		-lkeynote -lm
+DPADD+=		${LIBKEYNOTE} ${LIBM}
+CFLAGS+=	-DUSE_KEYNOTE
+.endif
+
+.ifdef USE_LIBCRYPTO
+X509=		x509.c
+CFLAGS+=	-DUSE_LIBCRYPTO
+LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO}
+.endif
+
+SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY}
+CFLAGS+=	${IPSEC_CFLAGS}
+
+LDADD+=		${DESLIB}
+DPADD+=		${DESLIBDEP}
 
 exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num
