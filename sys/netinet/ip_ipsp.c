@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.147 2002/05/31 02:41:08 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.148 2002/06/09 04:22:40 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1237,6 +1237,19 @@ ipsp_skipcrypto_unmark(struct tdb_ident *tdbi)
 	splx(s);
 }
 
+/* Return true if the two structures match. */
+int
+ipsp_ref_match(struct ipsec_ref *ref1, struct ipsec_ref *ref2)
+{
+	if (ref1->ref_type != ref2->ref_type ||
+	    ref1->ref_len != ref2->ref_len ||
+	    bcmp(ref1 + 1, ref2 + 1, ref1->ref_len))
+		return 0;
+
+	return 1;
+}
+
+#ifdef notyet
 /*
  * Go down a chain of IPv4/IPv6/ESP/AH/IPiP chains creating an tag for each
  * IPsec header encountered. The offset where the first header, as well
@@ -1472,15 +1485,4 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		}
 	}
 }
-
-/* Return true if the two structures match. */
-int
-ipsp_ref_match(struct ipsec_ref *ref1, struct ipsec_ref *ref2)
-{
-	if (ref1->ref_type != ref2->ref_type ||
-	    ref1->ref_len != ref2->ref_len ||
-	    bcmp(ref1 + 1, ref2 + 1, ref1->ref_len))
-		return 0;
-
-	return 1;
-}
+#endif /* notyet */
