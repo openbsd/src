@@ -174,4 +174,7 @@ distribution:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.include <bsd.own.mk>	# for NOMAN if it's there
+.ifndef NOMAN
 .include <bsd.man.mk>
+.endif

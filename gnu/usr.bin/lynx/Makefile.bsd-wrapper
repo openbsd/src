@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1998/10/18 20:02:35 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/12/05 19:43:46 kstailey Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.1
@@ -15,12 +15,18 @@ HELPFILES=	keystrokes/bookmark_help.html keystrokes/cookie_help.html \
 		about_lynx.html lynx-dev.html lynx_help_main.html \
 		lynx_url_support.html
 
-all:	config.status lynx.cat1
+.include <bsd.own.mk>
+
+.ifdef NOMAN
+LYNX_CAT1=
+.else
+LYNX_CAT1=lynx.cat1
+.endif
+
+all:	config.status ${LYNX_CAT1}
 	${MAKE} ${GNUCFLAGS}
 
 .FORCE:	.IGNORE
-
-.include <bsd.own.mk>
 
 .ifdef GLOBAL_AUTOCONF_CACHE
 CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
