@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.50 2004/04/17 00:09:01 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.51 2004/04/26 05:24:00 mcbride Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -292,14 +292,27 @@ struct ifnet {				/* and the entries */
 	} \
 }
 
-#define	IF_INPUT_ENQUEUE(ifq, m) {			\
-	if (IF_QFULL(ifq)) {				\
-		IF_DROP(ifq);				\
-		m_freem(m);				\
-		if (!ifq->ifq_congestion)		\
-			if_congestion(ifq);		\
-	} else						\
-		IF_ENQUEUE(ifq, m);			\
+#define	IF_INPUT_ENQUEUE(ifq, m) {					\
+	if (IF_QFULL(ifq)) {						\
+		IF_DROP(ifq);						\
+		m_freem(m);						\
+		if (!ifq->ifq_congestion)				\
+			if_congestion(ifq);				\
+	} else {							\
+		if (m->m_next == NULL && (m->m_flags & M_PKTHDR)) {	\
+			if ((m->m_flags & M_CLUSTER) &&			\
+			    m->m_len <= (MHLEN &~ (sizeof(long) - 1))) {\
+				caddr_t data = m->m_data;		\
+				caddr_t ext_buf = m->m_ext.ext_buf;	\
+				m->m_data = m->m_pktdat;		\
+				MH_ALIGN(m, m->m_len);			\
+				bcopy(data, m->m_data, m->m_len);	\
+				pool_put(&mclpool, ext_buf);		\
+				m->m_flags &= ~(M_EXT|M_CLUSTER);	\
+			}						\
+		}							\
+		IF_ENQUEUE(ifq, m);					\
+	}								\
 }
 
 #define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
