@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.32 2000/04/20 07:47:11 angelos Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.33 2000/04/20 17:26:37 angelos Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ char *hostname;
 
 int nprobes = 3;
 int max_ttl = IPDEFTTL;
-int min_ttl = 1;
+int first_ttl = 1;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
@@ -330,11 +330,11 @@ main(argc, argv)
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDIg:b:m:np:q:rs:t:w:vlP:c")) != -1)
+	while ((ch = getopt(argc, argv, "dDIg:f:m:np:q:rs:t:w:vlP:c")) != -1)
 		switch (ch) {
-		case 'b':
-			min_ttl = atoi(optarg);
-			if (min_ttl < 1 || min_ttl > max_ttl)
+		case 'f':
+			first_ttl = atoi(optarg);
+			if (first_ttl < 1 || first_ttl > max_ttl)
 				errx(1, "min ttl must be 1 to %d.", max_ttl);
 			break;
 		case 'c':
@@ -367,8 +367,8 @@ main(argc, argv)
 			break;
 		case 'm':
 			max_ttl = atoi(optarg);
-			if (max_ttl < min_ttl || max_ttl > MAXTTL)
-				errx(1, "max ttl must be %d to %d.", min_ttl,
+			if (max_ttl < first_ttl || max_ttl > MAXTTL)
+				errx(1, "max ttl must be %d to %d.", first_ttl,
 				     MAXTTL);
 			break;
 		case 'n':
@@ -537,10 +537,10 @@ main(argc, argv)
 	Fprintf(stderr, ", %d hops max, %d byte packets\n", max_ttl, datalen);
 	(void) fflush(stderr);
 
-	if (min_ttl > 1)
-		Printf("Skipping %d intermediate hops\n", min_ttl - 1);
+	if (first_ttl > 1)
+		Printf("Skipping %d intermediate hops\n", first_ttl - 1);
 
-	for (ttl = min_ttl; ttl <= max_ttl; ++ttl) {
+	for (ttl = first_ttl; ttl <= max_ttl; ++ttl) {
 		in_addr_t lastaddr = 0;
 		int got_there = 0;
 		int unreachable = 0;
@@ -1004,6 +1004,6 @@ usage()
 	(void)fprintf(stderr,
 "usage: traceroute [-dDInrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
 [-P proto] [-q nqueries] [-s src_addr] [-t tos]\n\t\
-[-w wait] [-b min_ttl] host [data size]\n");
+[-w wait] [-f first_ttl] host [data size]\n");
 	exit(1);
 }
