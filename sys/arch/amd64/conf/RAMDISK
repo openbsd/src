@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2004/03/12 01:40:48 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2004/06/05 22:29:31 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -203,6 +203,7 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #xl*	at pci? dev ? function ?		# 3C9xx ethernet
 #xl*	at cardbus? dev ? function ?		# 3C575 ethernet
 #rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
+re*	at pci? dev ? function ?		# Realtek 8139C+/8169/8169S/8110S
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 #vr*	at pci? dev ? function ?		# VIA Rhine ethernet
@@ -247,6 +248,7 @@ brgphy* at mii? phy ?				# Broadcom Gigabit PHYs
 #eephy* at mii? phy ?				# Marvell 88E1000 series PHY
 #xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 #bmtphy* at mii? phy ?				# Broadcom 10/100 PHYs
+rgephy*	at mii? phy ?				# Realtek 8169S/8110S PHY
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback

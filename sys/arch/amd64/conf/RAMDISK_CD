@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.8 2004/05/23 04:03:57 drahn Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.9 2004/06/05 22:29:31 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -218,6 +218,7 @@ em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 #txp*	at pci? dev ? function ?		# 3com 3CR990
 #nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+re*	at pci? dev ? function ?		# Realtek 8139C+/8169/8169S/8110S
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 #mtd*	at pci? dev ? function ?		# Myson MTD803
 
@@ -249,6 +250,7 @@ brgphy*	at mii? phy ?				# Broadcom Gigabit PHYs
 eephy* at mii? phy ?				# Marvell 88E1000 series PHY
 xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
 bmtphy* at mii? phy ?				# Broadcom 10/100 PHYs
+rgephy*	at mii? phy ?				# Realtek 8169S/8110S PHY
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
