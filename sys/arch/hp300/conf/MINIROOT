@@ -1,4 +1,4 @@
-#	$OpenBSD: MINIROOT,v 1.1 1997/02/16 10:42:17 downsj Exp $
+#	$OpenBSD: MINIROOT,v 1.2 1997/02/16 14:37:08 downsj Exp $
 #
 # Ram disk kernel for the miniroot.
 #
@@ -45,7 +45,7 @@ option	 	SE_KEYBOARD	# include Swedish HIL keymap
 # (Warning: this compiles in a large string table)
 option	 	DIOVERBOSE	# recognize "unknown" DIO devices
 
-config		bsd swap generic
+config		bsd root rd0 swap sd0 and sd1 and hd0 and hd1
 
 mainbus0	at root		# root "bus"
 

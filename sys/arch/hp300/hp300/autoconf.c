@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 1997/02/03 08:11:59 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 1997/02/16 14:37:10 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.31 1997/01/31 01:49:41 thorpej Exp $	*/
 
 /*
@@ -423,6 +423,7 @@ struct nam2blk {
 	{ "ct",		0 },
 	{ "hd",		2 },
 	{ "sd",		4 },
+	{ "rd",		8 },
 };
 
 static int
