@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 1997/09/17 06:47:14 downsj Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 1997/11/07 08:11:41 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -139,9 +139,7 @@ TAILQ_HEAD(mmuhd,mmuentry);
 struct pmap {
 	union	ctxinfo *pm_ctx;	/* current context, if any */
 	int	pm_ctxnum;		/* current context's number */
-#if 0
-	simple_lock_data_t pm_lock;	/* spinlock */
-#endif
+	struct simplelock pm_lock;	/* spinlock */
 	int	pm_refcount;		/* just what it says */
 
 	struct mmuhd	pm_reglist;	/* MMU regions on this pmap (4/4c) */

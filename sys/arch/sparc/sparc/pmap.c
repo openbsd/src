@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 1997/09/17 06:47:21 downsj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 1997/11/07 08:11:44 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.96 1997/09/14 19:20:48 pk Exp $ */
 
 /*
@@ -66,12 +66,12 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/lock.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_page.h>
-#include <vm/lock.h>
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>
@@ -2647,7 +2647,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
-	simple_lock_init(kernel_pmap_store.pm_lock);
+	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
 #if defined(SUN4_MMU3L)
 	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
