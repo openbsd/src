@@ -1,5 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.4 1997/01/16 09:25:50 niklas Exp $	*/
-/*	$NetBSD: exec.h,v 1.8 1994/10/26 02:06:11 cgd Exp $	*/
+/*	$OpenBSD: exec.h,v 1.5 1999/06/08 15:05:22 espie Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -27,35 +26,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _MACHINE_EXEC_H_
-#define _MACHINE_EXEC_H_
+#ifndef _AMIGA_EXEC_H_
+#define _AMIGA_EXEC_H_
 
-#define __LDPGSZ	8192
+#include <m68k/exec.h>
 
-/* Relocation format. */
-struct relocation_info_m68k {
-	int r_address;			/* offset in text or data segment */
-	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
-			 r_pcrel :  1,	/* 1 if value should be pc-relative */
-			r_length :  2,	/* log base 2 of value's width */
-			r_extern :  1,	/* 1 if need to add symbol to value */
-		       r_baserel :  1,	/* linkage table relative */
-		      r_jmptable :  1,	/* relocate to jump table */
-		      r_relative :  1,	/* load address relative */
-			  r_copy :  1;	/* run time copy */
-};
-#define relocation_info	relocation_info_m68k
-
-#define ELF_TARG_CLASS		ELFCLASS32
-#define ELF_TARG_DATA		ELFDATA2MSB
-#define ELF_TARG_MACH		EM_68K
-
-#define _NLIST_DO_AOUT
 #define _NLIST_DO_ELF
 
-#define _KERN_DO_AOUT
 #if defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 #define _KERN_DO_KERN
 #endif
 
-#endif  /* _MACHINE_EXEC_H_ */
+#endif  /* _AMIGA_EXEC_H_ */
