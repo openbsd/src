@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.5 2002/02/15 02:18:39 deraadt Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.6 2002/02/15 02:33:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -544,7 +544,7 @@ pnpparse(pnpid_t * id, char *buf, int len)
 #if 0
 		debug("Mouse: PnP checksum: 0x%02X\n", sum);
 #endif
-		sprintf(s, "%02X", sum & 0x0ff);
+		snprintf(s, sizeof s, "%02X", sum & 0x0ff);
 		if (strncmp(s, &buf[len - 3], 2) != 0) {
 #if 0
 			/*
