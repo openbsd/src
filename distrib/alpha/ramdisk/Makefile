@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/05/07 12:46:54 niklas Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/05/07 16:23:05 niklas Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ NEWFSARGS= -t ffs -m 0 -o space -c 16 -i 16384
 setroot: ${IMAGE} bsd ecoffrdsetroot
 	${.OBJDIR}/ecoffrdsetroot bsd < ${IMAGE}
 
-${IMAGE}:	do_prep do_mount do_files do_umount unconfig
+${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
 
 ecoffrdsetroot:	${TOP}/ecoffrdsetroot.c
@@ -39,24 +39,24 @@ ecoffrdsetroot:	${TOP}/ecoffrdsetroot.c
 bsd:	${KERNEL}
 	cp ${KERNEL} bsd
 
-do_prep: ${CBIN} unconfig
+do_prep: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}
 	
 do_mount:
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${VND_RDEV} ${DISKTYPE}
+	newfs ${NEWFSARGS} -s ${NBLKS} ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
  
 do_umount:
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
-	-umount ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND} && cat /*bin/* > /dev/null
 
 unconfig:
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND} && cat /*bin/* > /dev/null
-	-rm -f ${REALIMAGE}
 
 .PRECIOUS:	${IMAGE}
