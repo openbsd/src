@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.113 2001/09/11 19:03:55 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.114 2001/09/21 22:14:03 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -16,11 +16,6 @@ bin
 
 # ./dev
 dev
-
-# ./dev/fd
-fd		mode=0555
-# ./dev/fd
-..
 
 # ./dev
 ..

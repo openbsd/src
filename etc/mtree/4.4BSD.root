@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.root,v 1.6 1998/05/14 16:09:47 niklas Exp $
+#	$OpenBSD: 4.4BSD.root,v 1.7 2001/09/21 22:14:03 deraadt Exp $
 #	$NetBSD: 4.4BSD.root,v 1.2 1996/05/12 23:30:32 thorpej Exp $
 #
 #	   user: bostic
@@ -53,12 +53,6 @@ c               type=dir mode=0755
 # ./dev
 /set type=file gname=operator uname=root mode=0640
 dev             type=dir gname=wheel mode=0755
-
-# ./dev/fd
-/set type=file gname=bin uname=root mode=0666
-fd              type=dir uname=root gname=wheel mode=0755
-# ./dev/fd
-..
 
 # ./dev
 ..
