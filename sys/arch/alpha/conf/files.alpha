@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.8 1997/01/24 19:57:03 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.9 1997/02/26 16:30:59 niklas Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -275,7 +275,7 @@ file	netns/ns_cksum.c			ns
 file	arch/alpha/alpha/promcons.c
 
 # XXX
-file	arch/alpha/alpha/cpuconf.c
+# file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
 file	arch/alpha/alpha/dec_21000.c		dec_21000	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag

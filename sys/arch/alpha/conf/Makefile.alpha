@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.10 1997/01/24 19:56:58 niklas Exp $
+#	$OpenBSD: Makefile.alpha,v 1.11 1997/02/26 16:30:58 niklas Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -85,7 +85,7 @@ HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o \
+SYSTEM_OBJ=	locore.o cpuconf.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
@@ -150,12 +150,12 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${ALPHA}/alpha/locore.s \
+SRCS=	${ALPHA}/alpha/locore.s ${ALPHA}/alpha/cpuconf.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} cpuconf.c param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
 	    ${ALPHA}/alpha/genassym.c
@@ -177,4 +177,9 @@ clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
 locore.o: ${ALPHA}/alpha/locore.s assym.h
 	${NORMAL_S}
 
+cpuconf.o: cpuconf.c
+	${NORMAL_C}
+
+cpuconf.c: ${ALPHA}/alpha/cpuconf.c
+	cp ../../alpha/cpuconf.c .
 %RULES
