@@ -224,6 +224,7 @@
 ./usr/bin/ex
 ./usr/bin/expand
 ./usr/bin/false
+./usr/bin/fgen
 ./usr/bin/fgrep
 ./usr/bin/file
 ./usr/bin/file2c

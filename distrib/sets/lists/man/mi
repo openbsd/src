@@ -256,6 +256,7 @@
 ./usr/share/man/cat1/expr.0
 ./usr/share/man/cat1/false.0
 ./usr/share/man/cat1/fg.0
+./usr/share/man/cat1/fgen.0
 ./usr/share/man/cat1/fgrep.0
 ./usr/share/man/cat1/file.0
 ./usr/share/man/cat1/file2c.0
@@ -1359,6 +1360,7 @@
 ./usr/share/man/cat5/ethers.0
 ./usr/share/man/cat5/exports.0
 ./usr/share/man/cat5/fbtab.0
+./usr/share/man/cat5/forward.0
 ./usr/share/man/cat5/fs.0
 ./usr/share/man/cat5/fstab.0
 ./usr/share/man/cat5/gettytab.0
