@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.221 2003/03/07 19:23:37 wilfried Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.222 2003/03/14 22:05:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -129,6 +129,7 @@
 #include <machine/specialreg.h>
 #include <machine/biosvar.h>
 
+#include <dev/rndvar.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042reg.h>
@@ -314,6 +315,7 @@ void	intel586_cpu_setup(const char *, int, int);
 void	intel686_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
+void	viac3_rnd(void *);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
 static __inline u_char
@@ -993,6 +995,69 @@ winchip_cpu_setup(cpu_device, model, step)
 #endif
 }
 
+#if defined(I686_CPU)
+/*
+ * Note, the VIA C3 Nehemia provides 4 internal 8-byte buffers, which
+ * store random data, and can be accessed a lot quicker than waiting
+ * for new data to be generated.  As we are using every 8th bit only
+ * due to whitening, we only pull off 4 bytes worth of data here, to
+ * help prevent stalling, and allow the RNG to generate new data in
+ * parallel with anything else going on.
+ *
+ * Note, due to some weirdness in the RNG, we need at last 7 bytes
+ * extra on the end of our buffer.  Also, there is an outside chance
+ * that the VIA RNG can "wedge", as the generated bit-rate is variable.
+ * Since the RNG generates in excess of 21KB/s at it's worst, this is
+ * still significantly faster than the rate at which we are collecting
+ * from it.  We could do all sorts of startup testing and things, but
+ * frankly, I don't really see the point.
+ *
+ * Adding to the whole confusion, in order to access the RNG, we need
+ * to have FXSR support enabled, and the correct FPU enable bits must
+ * be there to enable the FPU.  It would be nice if all this mumbo-
+ * jumbo was not needed in order to use the RNG.  Oh well, life does
+ * go on...
+ */
+#define VIAC3_RNG_BUFSIZ	16		/* 32bit words */
+struct timeout viac3_rnd_tmo;
+int viac3_rnd_present = 0;
+
+void
+viac3_rnd(void *v)
+{
+	struct timeout *tmo = v;
+	unsigned int *p, i, rv, creg0, creg4, len = VIAC3_RNG_BUFSIZ;
+	static int buffer[VIAC3_RNG_BUFSIZ + 2];
+	int s;
+
+	s = splhigh();
+	/* XXX - should not be needed, but we need FXSR & FPU set to access RNG */
+	creg0 = rcr0();
+	lcr0(creg0 & ~(CR0_EM|CR0_TS));
+	creg4 = rcr4();
+	lcr4(creg4 | CR4_OSFXSR);
+
+	/*
+	 * Here we collect the random data from the VIA C3 RNG.  We make
+	 * sure that we turn on maximum whitening (%edx[0,1] == "11"), so
+	 * that we get the best random data possible.
+	 */
+	__asm __volatile ("rep;.byte 0x0F,0xA7,0xC0"
+	    : "=a" (rv) : "d" (3), "D" (buffer), "c" (len*sizeof(int))
+	    : "memory", "cc");
+
+	/* XXX - should not be needed */
+	lcr0(creg0);
+	lcr4(creg4);
+
+	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
+		add_true_randomness(*p);
+
+	timeout_add(tmo, (hz>100)?(hz/100):1);
+	splx(s);
+}
+#endif
+
 void
 cyrix3_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
@@ -1013,6 +1078,45 @@ cyrix3_cpu_setup(cpu_device, model, step)
 		} else {
 			cpu_feature &= ~CPUID_3DNOW;
 		}
+		break;
+
+	case 9:
+		if (step < 3)
+			break;
+
+		/* 
+		 * C3 Nehemia:
+		 * First we check for extended feature flags, and then
+		 * (if present) retrieve the ones at 0xC0000001.  In this
+		 * bit 2 tells us if the RNG is present.  Bit 3 tells us
+		 * if the RNG has been enabled.  In order to use the RNG
+		 * we need 3 things:  We need an RNG, we need the FXSR bit
+		 * enabled in cr4 (SSE/SSE2 stuff), and we need to have
+		 * Bit 6 of MSR 0x110B set to 1 (the default), which will
+		 * show up as bit 3 set here.
+		 */
+		__asm __volatile("cpuid" /* Check for RNG */
+		    : "=a" (val) : "a" (0xC0000000) : "cc");
+		if (val >= 0xC0000001) {
+			__asm __volatile("cpuid"
+			    : "=d" (val) : "a" (0xC0000001) : "cc");
+		}
+
+		/* Stop here if no RNG */
+		if (!(val & 0x4))
+			break;
+
+		/* Enable RNG if disabled */
+		if (!(val & 0x8)) {
+			u_int64_t msreg;
+
+			msreg = rdmsr(0x110B);
+			msreg |= 0x40;
+			wrmsr(0x110B, msreg);
+			printf("Screwed with MSR 0x110B!\n");
+		}
+		viac3_rnd_present = 1;
+		printf("%s: RNG activated\n", cpu_device);
 		break;
 	}
 #endif
@@ -1171,6 +1275,9 @@ cyrix3_cpu_name(model, step)
 	case 8:
 		if (step < 8)
 			name = "C3 Ezra-T";
+		break;
+	case 9:
+		name = "C3 Nehemia";
 		break;
 	}
 	return name;

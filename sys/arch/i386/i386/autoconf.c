@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.45 2002/06/08 08:08:28 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.46 2003/03/14 22:05:43 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -80,6 +80,13 @@ void diskconf(void);
  */
 dev_t	bootdev = 0;		/* bootdevice, initialized in locore.s */
 
+/* Support for VIA C3 RNG */
+#ifdef I686_CPU
+extern struct timeout viac3_rnd_tmo;
+extern int	viac3_rnd_present;
+void		viac3_rnd(void *);
+#endif
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -112,6 +119,17 @@ cpu_configure()
 
 	/* Set up proc0's TSS and LDT (after the FPU is configured). */
 	i386_proc0_tss_ldt_init();
+
+#ifdef I686_CPU
+	/*
+	 * At this point the RNG is running, and if FSXR is set we can
+	 * use it.  Here we setup a periodic timeout to collect the data.
+	 */
+	if (viac3_rnd_present) {
+		timeout_set(&viac3_rnd_tmo, viac3_rnd, &viac3_rnd_tmo);
+		viac3_rnd(&viac3_rnd_tmo);
+	}
+#endif
 }
 
 /*

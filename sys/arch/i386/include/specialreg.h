@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.11 2001/12/04 17:47:24 mickey Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.12 2003/03/14 22:05:45 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -85,6 +85,8 @@
 #define CR4_MCE	0x00000040	/* machine check enable */
 #define CR4_PGE	0x00000080	/* page global enable */
 #define CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
+#define CR4_OSFXSR	0x00000200	/* enable SSE instructions (P6 & later) */
+#define CR4_OSXMMEXCPT	0x00000400	/* enable SSE instructions (P6 & later) */
 
 /*
  * CPUID "features" (and "extended features") bits:
