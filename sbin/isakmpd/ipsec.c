@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.17 1999/05/02 19:20:33 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.107 1999/05/02 12:48:57 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.18 1999/05/02 22:05:35 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.108 1999/05/02 21:02:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -81,7 +81,7 @@ struct contact {
   struct sockaddr *addr;
   socklen_t len;
 } *contacts = 0;
-size_t contact_cnt = 0, contact_limit = 0;
+int contact_cnt = 0, contact_limit = 0;
 
 static int addr_cmp (const void *, const void *);
 static int ipsec_add_contact (struct message *msg);
@@ -1615,18 +1615,19 @@ ipsec_add_contact (struct message *msg)
   struct contact *new_contacts;
   struct sockaddr *dst, *addr;
   socklen_t dstlen;
+  int cnt;
 
   if (contact_cnt == contact_limit)
     {
-      new_contacts = realloc (contacts,
-			      contact_limit ? 2 * contact_limit : 64);
+      cnt = contact_limit ? 2 * contact_limit : 64;
+      new_contacts = realloc (contacts, cnt * sizeof contacts[0]);
       if (!new_contacts)
 	{
 	  log_error ("ipsec_add_contact: realloc (%p, %d) failed", contacts,
-		     2 * contact_limit);
+		     cnt * sizeof contacts[0]);
 	  return -1;
 	}
-      contact_limit *= 2;
+      contact_limit = cnt;
       contacts = new_contacts;
     }
   msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
