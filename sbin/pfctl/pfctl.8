@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.54 2002/11/20 14:08:03 pb Exp $
+.\" $OpenBSD: pfctl.8,v 1.55 2002/11/24 17:44:44 pb Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -100,12 +100,12 @@ Modifier name may be abbreviated:
 .Bl -tag -width "F rules " -compact
 .It Fl F Ar nat
 Flush the NAT rules.
+.It Fl F Ar queue
+Flush the queue rules.
 .It Fl F Ar rules
 Flush the filter rules.
 .It Fl F Ar state
 Flush the state table (NAT and filter).
-.It Fl F Ar queue
-Flush the queue rules.
 .It Fl F Ar info
 Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar all
@@ -148,6 +148,8 @@ Modifier names may be abbreviated:
 .Bl -tag -width "s rules " -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
+.It Fl s Ar queue
+Show the currently loaded queue rules.
 .It Fl s Ar rules
 Show the currently loaded filter rules.
 When used together with -v, the per-rule statistics (number of evaluations,
@@ -157,8 +159,6 @@ will skip evaluation of rules where possible.
 Packets passed statefully are counted in the rule that created the state
 (even though the rule isn't evaluated more than once for the entire
 connection).
-.It Fl s Ar queue
-Show the currently loaded queue rules.
 .It Fl s Ar state
 Show the contents of the state table.
 .It Fl s Ar info
