@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.10 1996/09/30 06:30:43 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.11 1996/09/30 18:49:55 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -116,7 +116,7 @@ main(argc, argv)
 	salt = pp->pw_passwd;
 
 	if (getuid() != 0) {
-		pw = getpass("Password:");
+		pw = getpass("Password (or `s/key'):");
 		if (strcasecmp(pw, "s/key") == 0) {
 			if (skey_haskey(me))
 				exit(1);

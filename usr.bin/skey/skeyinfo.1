@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyinfo.1,v 1.2 1996/06/26 05:39:22 deraadt Exp $
+.\" $OpenBSD: skeyinfo.1,v 1.3 1996/09/30 18:49:53 millert Exp $
 .\"
 .\"
 .Dd 9 June 1994
@@ -14,6 +14,11 @@
 .Nm skeyinfo
 prints out the next S/Key challenge for the specified user or for the
 current user if no user is specified.
+.Sh EXAMPLE
+% skey -n <number of passwords to print> `skeyinfo` | lpr
+.sp
+This would print out a list of S/Key passwords for use over
+an untrusted network (perhaps for use at a conference).
 .Sh SEE ALSO
 .Xr skeyinit 1 ,
 .Xr skey 1

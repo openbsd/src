@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.6 1996/09/29 23:04:58 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.7 1996/09/30 18:49:54 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -6,7 +6,7 @@
 .Dt SKEYINIT 1
 .Os NetBSD 4
 .Sh NAME
-.Nm S/key
+.Nm skeyinit
 .Nd change password or add user to S/Key authentication system.
 .Sh SYNOPSIS
 .Nm skeyinit
@@ -15,25 +15,56 @@
 .Op Ar user
 .Sh DESCRIPTION
 .Nm skeyinit
-will initialize the system information to allow a user to use
-their S/Key to login.
-You should use a secure login connection to generate
-your first one time password.
+initializes the system so you can use S/Key one-time passwords
+to login.  The program will ask you to enter a secret pass phrase;
+enter a phrase of several words in response. After the S/Key database
+has been updated you can login using either your regular password
+or using S/Key one-time passwords.
+.Pp
+.Nm skeyinit
+requires you to type a secret password, so it should be used
+only on a secure terminal.  For example, on the console of a
+workstation or over an encrypted network session.  If you are
+using
+.Nm skeyinit
+while logged in over an untrusted network, follow the instructions
+given below with the
+.Fl s
+option.
+.Pp
+Before initializing an S/Key entry, the user must authenticate
+using either a standard password or an S/Key challenge.  When used
+over an untrusted network, a password of
+.Sq s/key
+should be used.  The user will then be presented with the standard
+S/Key challenge and allowed to proceed if it is correct.
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl x
-displays pass phrase in hexidecimal instead of ASCII.
+Displays pass phrase in hexidecimal instead of ASCII.
 .It Fl s
-allows the user to set the seed and count for complete control
-of the parameters.
-To do this run skeyinit in one window and put in your count and seed;
-then run
+Set secure mode where the user is expected to have used a secure
+machine to generate the first one time password.  Without the
+.Fl s
+the system will assume you are direct connected over secure
+communications and prompt you for your secret password.  The
+.Fl s
+option also allows one to set the seed and count for complete
+control of the parameters.  You can use
+.Dq skeyinit -s
+in combination with the
 .Nm skey
-in another window to generate the correct 6 english words
-for that count and seed.
-You can then "cut-and-paste" or type the words into the skeyinit window.
+command to set the seed and count if you do not like the defaults.
+To do this run
+.Nm skeyinit
+in one window and put in your count and seed, then run
+.Nm skey
+in another window to generate the correct 6 english words for that
+count and seed.  You can then "cut-and-paste" or type the words into the
+.Nm skeyinit
+window.
 .It Fl z
-allows the user to zero their S/Key entry.
+Allows the user to zero their S/Key entry.
 .It Fl md4
 Selects MD4 as the hash algorithm.
 .It Fl md5
@@ -41,7 +72,7 @@ Selects MD5 as the hash algorithm.
 .It Fl sha1
 Selects SHA (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
 .It Ar user
-the username to be changed/added. By default the current user is
+The username to be changed/added. By default the current user is
 operated on.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys
