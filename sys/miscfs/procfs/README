@@ -1,4 +1,4 @@
-/*	$OpenBSD: README,v 1.3 2000/08/12 04:33:02 jasoni Exp $	*/
+/*	$OpenBSD: README,v 1.4 2000/08/12 04:56:23 jasoni Exp $	*/
 /*	$NetBSD: README,v 1.4 1994/06/29 06:34:43 cgd Exp $	*/
 
 saute procfs lyonnais
@@ -79,14 +79,16 @@ total 0
  681 dr-xr-xr-x  2 root  wheel  0 Sep 21 15:06 84
 3273 dr-xr-xr-x  2 jsp   staff  0 Sep 21 15:06 curproc
 % ls -li /proc/curproc
-total 408
-3341 --w-------  1 jsp  staff       0 Sep 21 15:06 ctl
-1554 -r-xr-xr-x  1 bin  bin     90112 Mar 29 04:52 file
-3339 -rw-------  1 jsp  staff  118784 Sep 21 15:06 mem
-3343 --w-------  1 jsp  staff       0 Sep 21 15:06 note
-3344 --w-------  1 jsp  staff       0 Sep 21 15:06 notepg
-3340 -rw-------  1 jsp  staff       0 Sep 21 15:06 regs
-3342 -r--r--r--  1 jsp  staff       0 Sep 21 15:06 status
+total 792
+135147 -r--r--r--  1 jason  staff       0 Aug 11 22:52 cmdline
+135143 --w-------  1 jason  staff       0 Aug 11 22:52 ctl
+  3860 -r-xr-xr-x  1 root   bin    167936 Jul 30 14:23 file
+135142 -rw-------  1 jason  staff     108 Aug 11 22:52 fpregs
+135140 -rw-------  1 jason  staff  225280 Aug 11 22:52 mem
+135145 --w-------  1 jason  staff       0 Aug 11 22:52 note
+135146 --w-------  1 jason  staff       0 Aug 11 22:52 notepg
+135141 -rw-------  1 jason  staff      64 Aug 11 22:52 regs
+135144 -r--r--r--  1 jason  staff       0 Aug 11 22:52 status
 % df /proc/curproc /proc/curproc/file
 Filesystem  512-blocks    Used   Avail Capacity  Mounted on
 proc                 2       2       0   100%    /proc
