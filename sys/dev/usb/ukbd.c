@@ -1,5 +1,5 @@
-/*	$OpenBSD: ukbd.c,v 1.16 2002/07/25 02:18:10 nate Exp $	*/
-/*      $NetBSD: ukbd.c,v 1.79 2001/12/30 19:37:43 augustss Exp $        */
+/*	$OpenBSD: ukbd.c,v 1.17 2002/07/29 20:03:05 nate Exp $	*/
+/*      $NetBSD: ukbd.c,v 1.82 2002/07/11 21:14:30 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -360,10 +360,8 @@ ukbd_enable(void *v, int on)
 
 	/* Should only be called to change state */
 	if (sc->sc_enabled == on) {
-#ifdef UKBD_DEBUG
-		printf("ukbd_enable: %s: bad call on=%d\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev), on);
-#endif
+		DPRINTF(("ukbd_enable: %s: bad call on=%d\n",
+			 USBDEVNAME(sc->sc_hdev.sc_dev), on));
 		return (EBUSY);
 	}
 
