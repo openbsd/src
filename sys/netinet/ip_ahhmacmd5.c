@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahhmacmd5.c,v 1.12 1997/06/25 07:53:22 provos Exp $	*/
+/*	$OpenBSD: ip_ahhmacmd5.c,v 1.13 1997/07/01 22:12:42 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -374,7 +374,8 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
 #define AHXPORT 
 
 int
-ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
+ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, 
+		 struct mbuf **mp)
 {
     struct ahhmacmd5_xdata *xd;
     struct ip *ip, ipo;

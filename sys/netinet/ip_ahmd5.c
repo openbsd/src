@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahmd5.c,v 1.9 1997/06/25 07:53:23 provos Exp $	*/
+/*	$OpenBSD: ip_ahmd5.c,v 1.10 1997/07/01 22:12:44 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -99,6 +99,7 @@ ahmd5_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     }
     m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN,
 	       (caddr_t)xd);
+
     bzero(ipseczeroes, IPSEC_ZEROES_SIZE);	/* paranoid */
     return 0;
 }
@@ -294,7 +295,8 @@ ahmd5_input(struct mbuf *m, struct tdb *tdb)
 #define AHXPORT 
 
 int
-ahmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
+ahmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
+  	     struct mbuf **mp)
 {
     struct ahmd5_xdata *xd;
     struct ip *ip, ipo;

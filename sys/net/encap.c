@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.5 1997/06/25 07:53:19 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.6 1997/07/01 22:12:40 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -44,6 +44,7 @@
 
 #include <net/encap.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_ip4.h>
 
 extern struct ifnet loif;
 
@@ -51,7 +52,8 @@ extern int ipspkernfs_dirty;
 
 void encap_init(void);
 int encap_output __P((struct mbuf *, ...));
-int encap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *);
+int encap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, 
+		 struct mbuf *);
 
 extern int tdb_init(struct tdb *, struct mbuf *);
 
@@ -89,10 +91,11 @@ encap_init()
 
 /*ARGSUSED*/
 int
-encap_usrreq(register struct socket *so, int req, struct mbuf *m, struct mbuf *nam, struct mbuf *control)
+encap_usrreq(register struct socket *so, int req, struct mbuf *m, 
+	     struct mbuf *nam, struct mbuf *control)
 {
-    register int error = 0;
     register struct rawcb *rp = sotorawcb(so);
+    register int error = 0;
     int s;
     
     if (req == PRU_ATTACH)
@@ -133,16 +136,13 @@ va_dcl
 #endif
 {
 #define SENDERR(e) do { error = e; goto flush;} while (0)
-    struct socket *so;
-    int len, emlen, error = 0, nspis, i;
+    int len, emlen, error = 0;
     struct encap_msghdr *emp;
-    struct ifnet *ifp;
-    struct ifaddr *ifa;
-    struct sockaddr_encap *sen, *sen2;
-    struct sockaddr_in *sin;
-    struct tdb *tdbp, *tprev;
-    va_list ap;
+    struct tdb *tdbp, *tdbp2;
+    caddr_t buffer = 0;
+    struct socket *so;
     u_int32_t spi;
+    va_list ap;
     
     va_start(ap, m);
     so = va_arg(ap, struct socket *);
@@ -156,75 +156,44 @@ va_dcl
       panic("encap_output");
 
     len = m->m_pkthdr.len; 
+
     emp = mtod(m, struct encap_msghdr *);
+
     emlen = emp->em_msglen;
     if ((len < emlen))
       SENDERR(EINVAL);
 
     if (m->m_len < emlen)
     {
-	m = m_pullup(m, emlen);
-	if (m == NULL)
+	MALLOC(buffer, caddr_t, emlen, M_TEMP, M_WAITOK);	
+	if (buffer == 0)
 	  SENDERR(ENOBUFS);
-		
-	emp = mtod(m, struct encap_msghdr *);
+
+	m_copydata(m, 0, emlen, buffer);
+
+	emp = (struct encap_msghdr *) buffer;
     }
 	
+    if (emp->em_version != PFENCAP_VERSION_1)
+      SENDERR(EINVAL);
+
     switch (emp->em_type)
     {
-	case EMT_IFADDR:
-	    if (emp->em_ifn >= nencap)
-	      SENDERR(ENODEV);
-	    
-            /*
-	     * Set the default source address for an encap interface
-	     */
-	    
-	    ifp = &(enc_softc[emp->em_ifn].enc_if);
-		
-	    if ((ifp->if_addrlist.tqh_first == NULL) ||
-		(ifp->if_addrlist.tqh_first->ifa_addr == NULL) ||
-		(ifp->if_addrlist.tqh_first->ifa_addr->sa_family != AF_ENCAP))
-	    {
-		MALLOC(ifa, struct ifaddr *, sizeof (struct ifaddr) + 
-		       2 * SENT_DEFIF_LEN, M_IFADDR, M_WAITOK);
-		if (ifa == NULL)
-		  SENDERR(ENOBUFS);
-
-		bzero((caddr_t)ifa, sizeof (struct ifaddr) + 
-		      2 * SENT_DEFIF_LEN);
-		sen = (struct sockaddr_encap *)(ifa + 1);
-		sen2 = (struct sockaddr_encap *)((caddr_t)sen + 
-						 SENT_DEFIF_LEN);
-		ifa->ifa_addr = (struct sockaddr *)sen;
-		ifa->ifa_dstaddr = (struct sockaddr *)sen2;
-		ifa->ifa_ifp = ifp;
-		TAILQ_INSERT_HEAD(&(ifp->if_addrlist), ifa, ifa_list);
-	    }
-	    else
-	    {
-		sen = (struct sockaddr_encap *)((&(ifp->if_addrlist))->tqh_first->ifa_addr);
-		sen2 = (struct sockaddr_encap *)((&(ifp->if_addrlist))->tqh_first->ifa_dstaddr);
-	    }
-
-	    sen->sen_family = AF_ENCAP;
-	    sen->sen_len = SENT_DEFIF_LEN;
-	    sen->sen_type = SENT_DEFIF;
-	    sin = (struct sockaddr_in *) &(sen->sen_dfl);
-	    sin->sin_len = sizeof(*sin);
-	    sin->sin_family = AF_INET;
-	    sin->sin_addr = emp->em_ifa;
-
-	    *sen2 = *sen;
-
-	    break;
-		
 	case EMT_SETSPI:
-	    if (emp->em_if >= nencap)
-	      SENDERR(ENODEV);
+	    if (emlen <= EMT_SETSPI_FLEN)
+	      SENDERR(EINVAL);
+	    
 	    tdbp = gettdb(emp->em_spi, emp->em_dst);
 	    if (tdbp == NULL)
 	    {
+		/* 
+		 * If only one of the two outter addresses is set, return
+		 * error.
+		 */
+		if ((emp->em_osrc.s_addr != 0) ^
+		    (emp->em_odst.s_addr != 0))
+		  SENDERR(EINVAL);
+		
 		MALLOC(tdbp, struct tdb *, sizeof (*tdbp), M_TDB, M_WAITOK);
 		if (tdbp == NULL)
 		  SENDERR(ENOBUFS);
@@ -233,8 +202,38 @@ va_dcl
 		
 		tdbp->tdb_spi = emp->em_spi;
 		tdbp->tdb_dst = emp->em_dst;
-		tdbp->tdb_rcvif = &(enc_softc[emp->em_if].enc_if);
 
+		tdbp->tdb_proto = emp->em_proto;
+		tdbp->tdb_sport = emp->em_sport;
+		tdbp->tdb_dport = emp->em_dport;
+
+	        tdbp->tdb_src = emp->em_src;
+
+		/* Check if this is an encapsulating SPI */
+		if (emp->em_osrc.s_addr != 0)
+		{
+		    tdbp->tdb_flags |= TDBF_TUNNELING;
+		    tdbp->tdb_osrc = emp->em_osrc;
+		    tdbp->tdb_odst = emp->em_odst;
+
+		    /* TTL */
+		    switch (emp->em_ttl)
+		    {
+			case IP4_DEFAULT_TTL:
+			    tdbp->tdb_ttl = 0;
+			    break;
+			    
+			case IP4_SAME_TTL:
+			    tdbp->tdb_flags |= TDBF_SAME_TTL;
+			    break;
+
+			default:
+			    /* Get just the least significant bits */
+			    tdbp->tdb_ttl = emp->em_ttl % 256;
+			    break;
+		    }
+		}
+		
 		puttdb(tdbp);
 	    }
 	    else
@@ -302,82 +301,77 @@ va_dcl
 	    }
 
 	    error = tdb_init(tdbp, m);
+	    if (error)
+	      SENDERR(EINVAL);
+	    
 	    ipspkernfs_dirty = 1;
+
 	    break;
 		
 	case EMT_DELSPI:
-	    if (emp->em_if >= nencap)
-	      SENDERR(ENODEV);
-	    tdbp = gettdb(emp->em_spi, emp->em_dst);
+	    if (emlen != EMT_DELSPI_FLEN)
+	      SENDERR(EINVAL);
+	    
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
 	    if (tdbp == NULL)
-	    {
-		error = EINVAL;
-		break;
-	    }
-
-	    if (emp->em_alg != tdbp->tdb_xform->xf_type)
-	    {
-		error = EINVAL;
-		break;
-	    }
-
+	      SENDERR(ENOENT);
+	    
 	    error = tdb_delete(tdbp, 0);
+	    if (error)
+	      SENDERR(EINVAL);
+	    
 	    break;
 
 	case EMT_DELSPICHAIN:
-	    if (emp->em_if >= nencap)
-	      SENDERR(ENODEV);
-	    tdbp = gettdb(emp->em_spi, emp->em_dst);
+	    if (emlen != EMT_DELSPICHAIN_FLEN)
+	      SENDERR(EINVAL);
+
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
 	    if (tdbp == NULL)
-	    {
-		error = EINVAL;
-		break;
-	    }
-
-	    if (emp->em_alg != tdbp->tdb_xform->xf_type)
-	    {
-		error = EINVAL;
-		break;
-	    }
-
+	      SENDERR(ENOENT);
+	    
 	    error = tdb_delete(tdbp, 1);
+	    if (error)
+	      SENDERR(EINVAL);
+
 	    break;
 
 	case EMT_GRPSPIS:
-	    nspis = (emlen - 4) / 12;
-	    if (nspis * 12 + 4 != emlen)
+	    if (emlen != EMT_GRPSPIS_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    for (i = 0; i < nspis; i++)
-	      if ((tdbp = gettdb(emp->em_rel[i].emr_spi, emp->em_rel[i].emr_dst)) == NULL)
-		SENDERR(ENOENT);
-	      else
-		emp->em_rel[i].emr_tdb = tdbp;
+	    tdbp = gettdb(emp->em_rel_spi, emp->em_rel_dst);
+	    if (tdbp == NULL)
+	      SENDERR(ENOENT);
 
-	    tprev = emp->em_rel[0].emr_tdb;
-	    tprev->tdb_inext = NULL;
-	    for (i = 1; i < nspis; i++)
-	    {
-		tdbp = emp->em_rel[i].emr_tdb;
-		tprev->tdb_onext = tdbp;
-		tdbp->tdb_inext = tprev;
-		tprev = tdbp;
-	    }
-	    tprev->tdb_onext = NULL;
+	    tdbp2 = gettdb(emp->em_rel_spi2, emp->em_rel_dst2);
+	    if (tdbp2 == NULL)
+	      SENDERR(ENOENT);
+	    
+	    tdbp->tdb_onext = tdbp2;
+	    tdbp2->tdb_inext = tdbp;
+	    
 	    ipspkernfs_dirty = 1;
 	    error = 0;
 	    break;
 
 	case EMT_RESERVESPI:
-	    spi = reserve_spi(emp->em_spi, emp->em_dst);
+	    if (emlen != EMT_RESERVESPI_FLEN)
+	      SENDERR(EINVAL);
+	    
+	    spi = reserve_spi(emp->em_gen_spi, emp->em_gen_dst);
 	    if (spi == 0)
-	      if (emp->em_spi == 0)
+	      if (emp->em_gen_spi == 0)
 		SENDERR(ENOBUFS);
 	      else
 		SENDERR(EINVAL);
 
-	    emp->em_spi = spi;
+	    emp->em_gen_spi = spi;
 	    
+	    /* If we're using a buffer, copy the data back to the mbuf */
+	    if (buffer)
+	      m_copyback(m, 0, emlen, buffer);
+
 	    /* Send it back to us */
 	    if (sbappendaddr(&so->so_rcv, &encap_src, m, 
 			     (struct mbuf *)0) == 0)
@@ -390,114 +384,66 @@ va_dcl
 	    break;
 	    
 	case EMT_ENABLESPI:
-	    tdbp = gettdb(emp->em_spi, emp->em_dst);
+	    if (emlen != EMT_ENABLESPI_FLEN)
+	      SENDERR(EINVAL);
+	    
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 
 	    /* Clear the INVALID flag */
 	    tdbp->tdb_flags &= (~TDBF_INVALID);
+
 	    error = 0;
 
 	    break;
 	    
 	case EMT_DISABLESPI:
-	    tdbp = gettdb(emp->em_spi, emp->em_dst);
+	    if (emlen != EMT_DISABLESPI_FLEN)
+	      SENDERR(EINVAL);
+	    
+	    tdbp = gettdb(emp->em_gen_spi, emp->em_gen_dst);
 	    if (tdbp == NULL)
 	      SENDERR(ENOENT);
 	    
 	    /* Set the INVALID flag */
 	    tdbp->tdb_flags |= TDBF_INVALID;
+
 	    error = 0;
 	    
+	    break;
+
+	case EMT_NOTIFY:
+	    if (emlen <= EMT_NOTIFY_FLEN)
+	      SENDERR(EINVAL);
+	    
+	    /* XXX Not yet finished */
+
+	    SENDERR(EINVAL);
+
 	    break;
 	    
 	default:
 	    SENDERR(EINVAL);
     }
     
+    if (buffer)
+      free(buffer, M_TEMP);
+
     return error;
     
 flush:
     if (m)
       m_freem(m);
+
+    if (buffer)
+      free(buffer, M_TEMP);
+
     return error;
 }
 
 struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
-    struct sockaddr_encap *egw = (struct sockaddr_encap *)gw;
-    u_char *op = (u_char *)gw;
-    int i, j;
-    struct ifaddr *retval = loif.if_addrlist.tqh_first;
-    union
-    {
-	struct in_addr ia;
-	u_char io[4];
-    } iao;
-	
-    switch (egw->sen_type)
-    {
-	case SENT_IPSP:
-	    return enc_softc[egw->sen_ipsp_ifn].enc_if.if_addrlist.tqh_first;
-	    break;
-	    
-	case SENT_IP4:
-	    /*
-	     * Pretty-much standard options walking code.
-	     * Repeated elsewhere as necessary
-	     */
-	    
-	    for (i = SENT_IP4_LEN; i < egw->sen_len;)
-	      switch (op[i])
-	      {
-		  case SENO_EOL:
-		      goto opt_done;
-		      
-		  case SENO_NOP:
-		      i++;
-		      continue;
-		      
-		  case SENO_IFN:
-		      if (op[i+1] != 3)
-		      {
-			  return NULL;
-		      }
-		      retval = enc_softc[op[i+2]].enc_if.if_addrlist.tqh_first;
-		      goto opt_done;
-		      
-		  case SENO_IFIP4A:
-		      if (op[i+1] != 6) /* XXX -- IPv4 address */
-		      {
-			  return NULL;
-		      }
-		      iao.io[0] = op[i+2];
-		      iao.io[1] = op[i+3];
-		      iao.io[2] = op[i+4];
-		      iao.io[3] = op[i+5];
-		      
-		      for (j = 0; j < nencap; j++)
-		      {
-			  struct ifaddr *ia = (struct ifaddr *)enc_softc[j].enc_if.if_addrlist.tqh_first;
-			  
-			  struct sockaddr_in *si = (struct sockaddr_in *)ia->ifa_addr;
-			  
-			  if ((si->sin_family == AF_INET) && (si->sin_addr.s_addr == iao.ia.s_addr))
-			  {
-			      retval = ia;
-			      goto opt_done;
-			  }
-		      }
-		      i += 6;
-		      break;
-		      
-		  default:
-		      if (op[i+1] == 0)
-			return NULL;
-		      i += op[i+i];
-	      }
-    opt_done:
-	    break;
-    }
-    return retval;
+    return enc_softc.if_addrlist.tqh_first;
 }

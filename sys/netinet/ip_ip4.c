@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.9 1997/06/25 07:53:27 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.10 1997/07/01 22:12:49 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -155,10 +155,10 @@ ip4_input(register struct mbuf *m, int iphlen)
 }
 
 int
-ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
+ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, 
+	    struct mbuf **mp)
 {
     struct ip *ipo, *ipi;
-    struct ip4_xdata *xd;
     ushort ilen;
 
     ip4stat.ip4s_opackets++;
@@ -178,23 +178,19 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
     /* ipo->ip_id = htons(ip_id++); */
     get_random_bytes((void *)&(ipo->ip_id), sizeof(ipo->ip_id));
     ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* keep C and DF */
-    xd = (struct ip4_xdata *)tdb->tdb_xdata;
-    switch (xd->ip4_ttl)
-    {
-	case IP4_SAME_TTL:
-	    ipo->ip_ttl = ipi->ip_ttl;
-	    break;
-	case IP4_DEFAULT_TTL:
-	    ipo->ip_ttl = ip_defttl;
-	    break;
-	default:
-	    ipo->ip_ttl = xd->ip4_ttl;
-    }
+
+    if (tdb->tdb_flags & TDBF_SAME_TTL)
+      ipo->ip_ttl = ipi->ip_ttl;
+    else
+      if (tdb->tdb_ttl == 0)
+        ipo->ip_ttl = ip_defttl;
+      else
+        ipi->ip_ttl = tdb->tdb_ttl;
 	
     ipo->ip_p = IPPROTO_IPIP;
     ipo->ip_sum = 0;
-    ipo->ip_src = gw->sen_ipsp_src;
-    ipo->ip_dst = gw->sen_ipsp_dst;
+    ipo->ip_src = tdb->tdb_osrc;
+    ipo->ip_dst = tdb->tdb_odst;
 	
 /* 
  *  printf("ip4_output: [%x->%x](l=%d, p=%d)", 
@@ -208,8 +204,11 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
     *mp = m;
 
     /* Update the counters */
-    tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
+    if (tdb->tdb_xform->xf_type == XF_IP4)
+    {
+	tdb->tdb_cur_packets++;
+	tdb->tdb_cur_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
+    }
 
     return 0;
 
@@ -225,39 +224,17 @@ ipe4_attach()
 int
 ipe4_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 {
-    struct ip4_xdata *xd;
-    struct ip4_xencap txd;
-    struct encap_msghdr *em;
-	
 #ifdef ENCDEBUG
     if (encdebug)
       printf("ipe4_init: setting up\n");
 #endif
     tdbp->tdb_xform = xsp;
-    MALLOC(tdbp->tdb_xdata, caddr_t, sizeof (struct ip4_xdata), M_XDATA,
-	   M_WAITOK);
-    if (tdbp->tdb_xdata == NULL)
-      return ENOBUFS;
-    bzero(tdbp->tdb_xdata, sizeof (struct ip4_xdata));
-    xd = (struct ip4_xdata *)tdbp->tdb_xdata;
-	
-    em = mtod(m, struct encap_msghdr *);
-    if (em->em_msglen - EMT_SETSPI_FLEN > sizeof (struct ip4_xencap))
-    {
-	free((caddr_t)tdbp->tdb_xdata, M_XDATA);
-	tdbp->tdb_xdata = NULL;
-	return EINVAL;
-    }
-    m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN,
-	       (caddr_t)&txd);
-    xd->ip4_ttl = txd.ip4_ttl;
     return 0;
 }
 
 int
 ipe4_zeroize(struct tdb *tdbp)
 {
-    FREE(tdbp->tdb_xdata, M_XDATA);
     return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.8 1997/06/25 07:53:28 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.9 1997/07/01 22:12:52 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -32,6 +32,7 @@ struct tdb				/* tunnel descriptor block */
     struct tdb	   *tdb_hnext;  	/* next in hash chain */
     struct tdb	   *tdb_onext;	        /* next in output */
     struct tdb	   *tdb_inext;  	/* next in input (prev!) */
+    struct xformsw *tdb_xform;	        /* transformation to use */
     u_int32_t	    tdb_spi;    	/* SPI to use */
     u_int32_t	    tdb_flags;  	/* Flags related to this TDB */
 #define TDBF_UNIQUE	   0x00001	/* This should not be used by others */
@@ -46,6 +47,8 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_SOFT_PACKETS  0x00200	/* Soft expiration */
 #define TDBF_SOFT_FIRSTUSE 0x00400	/* Soft expiration */
 #define TDBF_SOFT_RELATIVE 0x00800	/* Soft expiration */
+#define TDBF_TUNNELING     0x01000	/* Do IP-in-IP encapsulation */
+#define TDBF_SAME_TTL      0x02000	/* Keep the packet TTL, in tunneling */
     u_int64_t       tdb_exp_packets;	/* Expire after so many packets s|r */
     u_int64_t       tdb_soft_packets;	/* Expiration warning */ 
     u_int64_t       tdb_cur_packets;    /* Current number of packets s|r'ed */
@@ -63,9 +66,19 @@ struct tdb				/* tunnel descriptor block */
     u_int64_t       tdb_exp_first_use;	/* Expire if tdb_first_use +
 					   tdb_exp_first_use <= curtime */
     struct in_addr  tdb_dst;	        /* dest address for this SPI */
-    struct ifnet   *tdb_rcvif;	        /* related rcv encap interface */
-    struct xformsw *tdb_xform;	        /* transformation to use */
+    struct in_addr  tdb_src;	        /* source address for this SPI,
+					 * used when tunneling */
+    struct in_addr  tdb_osrc;
+    struct in_addr  tdb_odst;		/* Source and destination addresses
+					 * of outter IP header if we're doing
+					 * tunneling */
     caddr_t	    tdb_xdata;	        /* transformation data (opaque) */
+    u_int16_t	    tdb_sport;		/* Source port, if applicable */
+    u_int16_t       tdb_dport;		/* Destination port, if applicable */
+
+    u_int8_t	    tdb_ttl;		/* TTL used in tunneling */
+    u_int8_t	    tdb_proto;		/* Protocol carried */
+    u_int16_t	    tdb_foo;		/* alignment */
 };
 
 #define TDB_HASHMOD	257

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.14 1997/06/25 07:53:29 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.15 1997/07/01 22:12:53 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -198,57 +198,6 @@ ip_output(m0, va_alist)
 			return EHOSTUNREACH;
 		}
 
-		ifp = re->re_rt->rt_ifp;
-
-		if (ip->ip_src.s_addr == INADDR_ANY) {
-			struct sockaddr_encap *sen;
-			struct sockaddr_in *sinp;
-
-			if (ifp->if_addrlist.tqh_first)
-				sen = (struct sockaddr_encap *)
-				    ifp->if_addrlist.tqh_first->ifa_addr;
-			else {
-#ifdef ENCDEBUG
-				if (encdebug)
-					printf("ip_output: interface %s has no default address\n",
-					    ifp->if_xname);
-#endif /* ENCDEBUG */
-				m_freem(m);
-				RTFREE(re->re_rt);
-				return ENXIO;
-			}
-
-			if (sen->sen_family != AF_ENCAP) {
-#ifdef ENCDEBUG
-				if (encdebug)
-					printf("ip_output: %s does not have AF_ENCAP address\n",
-					    ifp->if_xname);
-#endif /* ENCDEBUG */
-				m_freem(m);
-				RTFREE(re->re_rt);
-				return EHOSTDOWN;
-			}
-
-			if (sen->sen_type != SENT_DEFIF) {
-#ifdef ENCDEBUG
-				if (encdebug)
-					printf("ip_output: %s does not have SENT_DEFIF address\n",
-					    ifp->if_xname);
-#endif /* ENCDEBUG */
-				m_freem(m);
-				RTFREE(re->re_rt);
-				return EHOSTDOWN;
-			}
-			sinp = (struct sockaddr_in *)&(sen->sen_dfl);
-			ip->ip_src = sinp->sin_addr;
-		}
-
-#ifdef ENCDEBUG
-		if (encdebug)
-			printf("ip_output: encapsulating %x->%x through %x->%x\n",
-			    ip->ip_src.s_addr, ip->ip_dst.s_addr,
-			    gw->sen_ipsp_src, gw->sen_ipsp_dst);
-#endif
 		ip->ip_len = htons((u_short)ip->ip_len);
 		ip->ip_off = htons((u_short)ip->ip_off);
 		ip->ip_sum = 0;
@@ -263,6 +212,10 @@ ip_output(m0, va_alist)
 
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst);
 
+		/* Fix the ip_src field if necessary */
+		if ((ip->ip_src.s_addr == INADDR_ANY) && tdb)
+		 	ip->ip_src = tdb->tdb_src;
+
 		/* 
 		 * If we're doing IP-in-IP first, let the options be.
 		 * Otherwise, get rid of them.
@@ -271,11 +224,12 @@ ip_output(m0, va_alist)
 		 * XXX subsequently authenticated).
 		 */
 		if (tdb && tdb->tdb_xform)
-		  if (tdb->tdb_xform->xf_type != XF_IP4)
- 		    if (hlen > sizeof (struct ip)) {	/* XXX IPOPT */
- 			ip_stripoptions(m, (struct mbuf *)0);
- 			hlen = sizeof (struct ip);
- 		    }
+		    if ((tdb->tdb_xform->xf_type != XF_IP4) ||
+			(tdb->tdb_flags & TDBF_TUNNELING))
+		          if (hlen > sizeof (struct ip)) {	/* XXX IPOPT */
+			          ip_stripoptions(m, (struct mbuf *)0);
+				  hlen = sizeof (struct ip);
+			  }
 
 		/* Now fix the checksum */
 		ip->ip_sum = in_cksum(m, hlen);
@@ -300,6 +254,27 @@ ip_output(m0, va_alist)
 				return ENXIO;
 			}
 
+			/* Check for tunneling */
+			if (tdb->tdb_flags & TDBF_TUNNELING) {
+#ifdef ENCDEBUG
+			        if (encdebug)
+			                printf("ip_output: doing tunneling\n");
+#endif /* ENCDEBUG */
+
+				/* Register first use */
+				if (tdb->tdb_first_use == 0)
+				      tdb->tdb_first_use = time.tv_sec;
+			    
+				error = ipe4_output(m, gw, tdb, &mp);
+				if (mp == NULL)
+				        error = EFAULT;
+				if (error) {
+				        RTFREE(re->re_rt);
+					return error;
+				}
+				m = mp;
+			}
+
 #ifdef ENCDEBUG
 			if (encdebug)
 				printf("ip_output: calling %s\n",
@@ -308,7 +283,7 @@ ip_output(m0, va_alist)
 
 			/* Register first use */
 			if (tdb->tdb_first_use == 0)
-			  tdb->tdb_first_use = time.tv_sec;
+			        tdb->tdb_first_use = time.tv_sec;
 
 			error = (*(tdb->tdb_xform->xf_output))(m, gw, tdb, &mp);
 			if (mp == NULL)
@@ -322,7 +297,7 @@ ip_output(m0, va_alist)
 		}
 
 		/*
-		 * At this point, mp is pointing to an mbuf chain with the
+		 * At this point, m is pointing to an mbuf chain with the
 		 * processed packet. Call ourselves recursively, but
 		 * bypass the encap code.
 		 */

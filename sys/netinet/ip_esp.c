@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.6 1997/06/25 07:53:24 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.7 1997/07/01 22:12:45 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -142,7 +142,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	return;
     }
 
-    m->m_pkthdr.rcvif = tdbp->tdb_rcvif;
+    m->m_pkthdr.rcvif = &enc_softc;
 
     /* Register first use */
     if (tdbp->tdb_first_use == 0)

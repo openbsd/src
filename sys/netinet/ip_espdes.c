@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdes.c,v 1.8 1997/06/25 07:53:26 provos Exp $	*/
+/*	$OpenBSD: ip_espdes.c,v 1.9 1997/07/01 22:12:48 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -294,7 +294,8 @@ espdes_input(struct mbuf *m, struct tdb *tdb)
 }
 
 int
-espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
+espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
+	      struct mbuf **mp)
 {
     struct espdes_xdata *xd;
     struct ip *ip, ipo;

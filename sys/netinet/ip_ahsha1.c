@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahsha1.c,v 1.5 1997/06/25 07:53:23 provos Exp $	*/
+/*	$OpenBSD: ip_ahsha1.c,v 1.6 1997/07/01 22:12:45 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -293,7 +293,8 @@ ahsha1_input(struct mbuf *m, struct tdb *tdb)
 #define AHXPORT 
 
 int
-ahsha1_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
+ahsha1_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
+	      struct mbuf **mp)
 {
     struct ahsha1_xdata *xd;
     struct ip *ip, ipo;

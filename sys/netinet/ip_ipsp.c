@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.10 1997/06/25 07:53:28 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.11 1997/07/01 22:12:51 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -71,34 +71,36 @@ int encdebug = 1;
  */
 
 struct xformsw xformsw[] = {
-    { XF_IP4,		0,		"IPv4 Simple Encapsulation",
-      ipe4_attach,		ipe4_init,	ipe4_zeroize,
+    { XF_IP4,	         0,               "IPv4 Simple Encapsulation",
+      ipe4_attach,       ipe4_init,       ipe4_zeroize,
       (struct mbuf * (*)(struct mbuf *, struct tdb *))ipe4_input, 
       ipe4_output, },
-    { XF_AHMD5,		XFT_AUTH,	"Keyed MD5 Authentication",
-      ahmd5_attach,		ahmd5_init,	ahmd5_zeroize,
-      ahmd5_input,		ahmd5_output, },
-    { XF_AHSHA1,		XFT_AUTH,	"Keyed SHA1 Authentication",
-      ahsha1_attach,		ahsha1_init,	ahsha1_zeroize,
-      ahsha1_input,		ahsha1_output, },
-    { XF_ESPDES,		XFT_CONF,	"DES-CBC Encryption",
-      espdes_attach,	espdes_init,	espdes_zeroize,
-      espdes_input,	espdes_output, },
-    { XF_ESP3DES,		XFT_CONF,	"3DES-CBC Encryption",
-      esp3des_attach,	esp3des_init,	esp3des_zeroize,
-      esp3des_input,	esp3des_output, },
-    { XF_AHHMACMD5,		XFT_AUTH,	"HMAC MD5 Authentication",
-      ahhmacmd5_attach,	ahhmacmd5_init,	ahhmacmd5_zeroize,
-      ahhmacmd5_input,	ahhmacmd5_output, },
-    { XF_AHHMACSHA1,	XFT_AUTH,	"HMAC SHA1 Authentication",
-      ahhmacsha1_attach,	ahhmacsha1_init, ahhmacsha1_zeroize,
-      ahhmacsha1_input,	ahhmacsha1_output, },
-    { XF_ESPDESMD5,		XFT_CONF|XFT_AUTH,     "DES-CBC Encryption + MD5 Authentication",
-      espdesmd5_attach,	espdesmd5_init,	espdesmd5_zeroize,
-      espdesmd5_input,	espdesmd5_output, },
-    { XF_ESP3DESMD5,	XFT_CONF|XFT_AUTH,     "3DES-CBC Encryption + MD5 Authentication",
-      esp3desmd5_attach,	esp3desmd5_init,	esp3desmd5_zeroize,
-      esp3desmd5_input,	esp3desmd5_output, },
+    { XF_AHMD5,	         XFT_AUTH,	  "Keyed MD5 Authentication",
+      ahmd5_attach,      ahmd5_init,      ahmd5_zeroize,
+      ahmd5_input,       ahmd5_output, },
+    { XF_AHSHA1,         XFT_AUTH,	  "Keyed SHA1 Authentication",
+      ahsha1_attach,     ahsha1_init,     ahsha1_zeroize,
+      ahsha1_input,      ahsha1_output, },
+    { XF_ESPDES,         XFT_CONF,        "DES-CBC Encryption",
+      espdes_attach,     espdes_init,     espdes_zeroize,
+      espdes_input,      espdes_output, },
+    { XF_ESP3DES,        XFT_CONF,        "3DES-CBC Encryption",
+      esp3des_attach,    esp3des_init,    esp3des_zeroize,
+      esp3des_input,     esp3des_output, },
+    { XF_AHHMACMD5,	 XFT_AUTH,	  "HMAC MD5 Authentication",
+      ahhmacmd5_attach,	 ahhmacmd5_init,  ahhmacmd5_zeroize,
+      ahhmacmd5_input,	 ahhmacmd5_output, },
+    { XF_AHHMACSHA1,	 XFT_AUTH,	  "HMAC SHA1 Authentication",
+      ahhmacsha1_attach, ahhmacsha1_init, ahhmacsha1_zeroize,
+      ahhmacsha1_input,	 ahhmacsha1_output, },
+    { XF_ESPDESMD5,	 XFT_CONF|XFT_AUTH,     
+      "DES-CBC Encryption + MD5 Authentication",
+      espdesmd5_attach,	 espdesmd5_init,  espdesmd5_zeroize,
+      espdesmd5_input,	 espdesmd5_output, },
+    { XF_ESP3DESMD5,	 XFT_CONF|XFT_AUTH,     
+      "3DES-CBC Encryption + MD5 Authentication",
+      esp3desmd5_attach, esp3desmd5_init, esp3desmd5_zeroize,
+      esp3desmd5_input,	 esp3desmd5_output, },
 };
 
 struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];
@@ -111,7 +113,7 @@ int ipspkernfs_dirty = 1;
 /*
  * Reserve an SPI; the SA is not valid yet though. Zero is reserved as
  * an error return value. If tspi is not zero, we try to allocate that
- * SPI.
+ * SPI. SPIs less than 255 are reserved, so we check for those too.
  */
 
 u_int32_t
@@ -122,7 +124,7 @@ reserve_spi(u_int32_t tspi, struct in_addr src)
     
     while (1)
     {
-	while (spi == 0)		/* Get a new SPI */
+	while (spi <= 255)		/* Get a new SPI */
 	  get_random_bytes((void *)&spi, sizeof(spi));
 	
 	/* Check whether we're using this SPI already */
@@ -247,6 +249,9 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
     return EINVAL;
 }
 
+/*
+ * XXX This should change to something cleaner.
+ */
 int
 ipsp_kern(int off, char **bufp, int len)
 {
@@ -277,10 +282,6 @@ ipsp_kern(int off, char **bufp, int len)
 	  /* Being paranoid to avoid buffer overflows */
 
           k += 126 + strlen(tdbp->tdb_xform->xf_name);
-          if (tdbp->tdb_rcvif)
-            k += strlen(tdbp->tdb_rcvif->if_xname);
-          else
-            k += 4;
       }
 
     if (k == 0)
@@ -295,10 +296,9 @@ ipsp_kern(int off, char **bufp, int len)
       {
 	  b = (char *)&(tdbp->tdb_dst.s_addr);
 	  k += sprintf(ipspkernfs + k, 
-		       "SPI=%x, destination=%d.%d.%d.%d, interface=%s\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
+		       "SPI=%x, destination=%d.%d.%d.%d\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
 		       ntohl(tdbp->tdb_spi), ((int)b[0] & 0xff), ((int)b[1] & 0xff), 
 		       ((int)b[2] & 0xff), ((int)b[3] & 0xff), 
-		       (tdbp->tdb_rcvif ? tdbp->tdb_rcvif->if_xname : "none"),
 		       tdbp->tdb_xform->xf_type, tdbp->tdb_xform->xf_name,
 		       (tdbp->tdb_onext ? ntohl(tdbp->tdb_onext->tdb_spi) : 0),
 		       (tdbp->tdb_inext ? ntohl(tdbp->tdb_inext->tdb_spi) : 0));
