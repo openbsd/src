@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.8 1997/01/26 01:23:44 tholo Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.9 1997/01/30 22:41:59 deraadt Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -190,6 +190,8 @@ rip_output(m, va_alist)
 			return (EMSGSIZE);
 		}
 		ip = mtod(m, struct ip *);
+		NTOHS(ip->ip_len);
+		NTOHS(ip->ip_off);
 		/*
 		 * don't allow both user specified and setsockopt options,
 		 * and don't allow packet length sizes that will crash
