@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.23 1999/12/19 22:57:52 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.24 2000/01/12 17:14:02 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -267,6 +267,7 @@ atapiscsi_attach(parent, self, aux)
 			drvp->drive_flags &= ~DRIVE_ATAPI;
 	}
 
+	
 	as->sc_adapterlink.scsibus = (u_int8_t)-1;
 
 	config_found((struct device *)as, 
@@ -319,12 +320,6 @@ wdc_atapi_minphys (struct buf *bp)
 	minphys(bp);
 }
 
-
-/*
- *  The scsi_cmd interface works as follows:
- *
- */
-
 int
 wdc_atapi_get_params(chp, drive, id)
 	struct channel_softc *chp;
@@ -333,6 +328,7 @@ wdc_atapi_get_params(chp, drive, id)
 {
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	struct wdc_command wdc_c;
+	int retries = 3;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
 	/*
@@ -369,13 +365,22 @@ wdc_atapi_get_params(chp, drive, id)
 	
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
+
+ retry:
 	if (ata_get_params(drvp, AT_POLL, id) != 0) {
 		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
-		    "failed for drive %s:%d:%d: error 0x%x\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive, 
-		    wdc_c.r_error), DEBUG_PROBE);
+		    "failed for drive %s:%d:%d\n",
+		    chp->wdc->sc_dev.dv_xname, chp->channel, drive), 
+		    DEBUG_PROBE);
+
+		if (retries--) {
+			delay(100000);
+			goto retry;
+		}
+
 		return (-1);
 	}
+
 	return (COMPLETE);
 }
 
@@ -528,6 +533,17 @@ atapi_to_scsi_sense(xfer, flags)
 	return (ret);
 }
 
+int wdc_atapi_drive_selected __P((struct channel_softc *, int));
+
+int
+wdc_atapi_drive_selected(chp, drive)
+	struct channel_softc *chp;
+	int drive;
+{
+	u_int8_t reg = CHP_READ_REG(chp, wdr_sdh);
+
+	return ((reg & 0x10) == (drive << 4));
+}
 
 enum atapi_context {
 	ctxt_process = 0,
@@ -1193,9 +1209,6 @@ wdc_atapi_intr_for_us(chp, xfer, timeout)
 
 	WDCDEBUG_PRINT(("ATAPI_INTR\n"), DEBUG_INTR);
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
-	DELAY (1);
-
 	wdc_atapi_update_status(chp);
 
 	if (timeout) {
@@ -1214,6 +1227,14 @@ wdc_atapi_intr_for_us(chp, xfer, timeout)
 
 	if (chp->ch_status & WDCS_BSY)
 		return (CONTINUE_POLL);
+
+	if (!wdc_atapi_drive_selected(chp, xfer->drive))
+	{
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+		delay (1);
+
+		return (CONTINUE_POLL);
+	}
 
 	if (as->protocol_phase != as_cmdout &&
 	    (xfer->c_flags & C_MEDIA_ACCESS) &&
@@ -1279,13 +1300,19 @@ wdc_atapi_ctrl(chp, xfer, timeout)
 		}
 	}
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
-	delay (1);
-
 	wdc_atapi_update_status(chp);
-	
+
 	if (chp->ch_status & WDCS_BSY)
 		return (CONTINUE_POLL);
+
+	if (!wdc_atapi_drive_selected(chp, xfer->drive))
+	{
+		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (xfer->drive << 4));
+		delay (1);
+
+		return (CONTINUE_POLL);
+	}
+
 
 	xfer->claim_irq = 1;
 
