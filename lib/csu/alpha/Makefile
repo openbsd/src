@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2001/01/25 05:37:20 art Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/01/31 06:55:17 art Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
 .include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
 
 CFLAGS+=	-DLIBC_SCCS -DPIC -DELFSIZE=64
-CFLAGS+=	-I${.CURDIR}/../../../libexec/elf_rtld/include
+CFLAGS+=	-I${.CURDIR}/../
 
 .if !defined(ELF_TOOLCHAIN)
 CFLAGS+=	-DECOFF_COMPAT
