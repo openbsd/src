@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.9 1998/09/10 22:15:21 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.10 1998/09/16 22:02:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -506,6 +506,7 @@ hmeinit(sc)
 	struct hme_softc *sc;
 {
 	u_int32_t c;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct hme_tcvr *tcvr = sc->sc_tcvr;
 	struct hme_cr *cr = sc->sc_cr;
 	struct hme_gr *gr = sc->sc_gr;
@@ -596,6 +597,10 @@ hmeinit(sc)
 	cr->rx_cfg |= CR_RXCFG_ENABLE;	/* enable rx */
 
 	mii_mediachg(&sc->sc_mii);
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	ifp->if_timer = 0;
 }
 
 static void
