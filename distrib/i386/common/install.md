@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2002/05/18 17:56:03 krw Exp $
+#	$OpenBSD: install.md,v 1.7 2002/05/18 19:28:50 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,12 +147,12 @@ md_prep_fdisk()
 	if [ -n "$_whole" ]; then
 		echo
 		echo Updating MBR based on BIOS geometry.
-		fdisk -e ${_disk} << __EOC
+		fdisk -e ${_disk} << __EOT
 reinit
 update
 write
 quit
-__EOC
+__EOT
 
 	else
 
