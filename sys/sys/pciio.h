@@ -1,3 +1,5 @@
+/*	$OpenBSD: pciio.h,v 1.2 2001/06/26 20:44:14 jason Exp $	*/
+
 /*-
  * Copyright (c) 1997, Stefan Esser <se@FreeBSD.ORG>
  * Copyright (c) 1997, 1998, 1999, Kenneth D. Merry <ken@FreeBSD.ORG>
