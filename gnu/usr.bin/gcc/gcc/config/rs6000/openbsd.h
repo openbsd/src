@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
     {						\
       OPENBSD_OS_CPP_BUILTINS_ELF();		\
       builtin_define ("__powerpc__");		\
+      builtin_define ("__unix__");		\
       builtin_assert ("cpu=powerpc");		\
       builtin_assert ("machine=powerpc");	\
     }						\
