@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.4 2000/03/22 00:02:12 deraadt Exp $ */
+/* $OpenBSD: mtrr.c,v 1.5 2001/07/04 23:52:41 espie Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/memrange.h>
+#include <sys/systm.h>
 
 #include <machine/specialreg.h>
 
