@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.2 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.3 2005/02/05 22:20:42 brad Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -85,25 +85,25 @@ const struct mii_phy_funcs ciphy_funcs = {
 	ciphy_service, ciphy_status, ciphy_reset,
 };
 
+static const struct mii_phydesc ciphys[] = {
+	{ MII_OUI_CICADA,	MII_MODEL_CICADA_CS8201,
+	  MII_STR_CICADA_CS8201 },
+	{ MII_OUI_CICADA,	MII_MODEL_CICADA_CS8201A,
+	  MII_STR_CICADA_CS8201A },
+	{ MII_OUI_CICADA,	MII_MODEL_CICADA_CS8201B,
+	  MII_STR_CICADA_CS8201B },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 ciphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_CICADA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_CICADA_CS8201) {
+	if (mii_phy_match(ma, ciphys) != NULL)
 		return (10);
-	}
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_CICADA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_CICADA_CS8201A) {
-		return (10);
-	}
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_CICADA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_CICADA_CS8201B) {
-		return (10);
-	}
 
 	return (0);
 }
@@ -114,24 +114,10 @@ ciphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	char *mstr;
+	const struct mii_phydesc *mpd;
 
-	switch (MII_MODEL(ma->mii_id2)) {
-	case MII_MODEL_CICADA_CS8201:
-		mstr = MII_STR_CICADA_CS8201;
-		break;
-	case MII_MODEL_CICADA_CS8201A:
-		mstr = MII_STR_CICADA_CS8201A;
-		break;
-	case MII_MODEL_CICADA_CS8201B:
-		mstr = MII_STR_CICADA_CS8201B;
-		break;
-	default:
-		mstr = "unknown ciphy";
-		break;
-	}
-
-	printf(": %s, rev. %d\n", mstr, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, ciphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

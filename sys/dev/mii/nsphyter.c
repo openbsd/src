@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.9 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.10 2005/02/05 22:20:42 brad Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -107,18 +107,23 @@ const struct mii_phy_funcs nsphyter_funcs = {
 	nsphyter_service, nsphyter_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc nsphyterphys[] = {
+	{ MII_OUI_NATSEMI,	MII_MODEL_NATSEMI_DP83843,
+	  MII_STR_NATSEMI_DP83843 },
+	{ MII_OUI_NATSEMI,	MII_MODEL_NATSEMI_DP83815,
+	  MII_STR_NATSEMI_DP83815 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 nsphytermatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI) {
-		switch (MII_MODEL(ma->mii_id2)) {
-		case MII_MODEL_NATSEMI_DP83843:
-		case MII_MODEL_NATSEMI_DP83815:
-			return (10);
-		}
-	}
+	if (mii_phy_match(ma, nsphyterphys) != NULL)
+		return (10);
 
 	return (0);
 }
@@ -129,12 +134,10 @@ nsphyterattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83815)
-		printf(": %s", MII_STR_NATSEMI_DP83815);
-	else
-		printf(": %s", MII_STR_NATSEMI_DP83843);
-	printf(", rev. %d\n", MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, nsphyterphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

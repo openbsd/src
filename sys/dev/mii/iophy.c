@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.10 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.11 2005/02/05 22:20:42 brad Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -105,6 +105,17 @@ const struct mii_phy_funcs iophy_funcs = {
 	iophy_service, iophy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc iophys[] = {
+	{ MII_OUI_xxINTEL,	MII_MODEL_xxINTEL_I82553,
+	  MII_STR_xxINTEL_I82553 },
+	{ MII_OUI_INTEL,	MII_MODEL_INTEL_I82553,
+	  MII_STR_INTEL_I82553 },
+
+	{ 0,			0,
+	  NULL },
+
+};
+
 int
 iophymatch(parent, match, aux)
 	struct device *parent;
@@ -113,12 +124,7 @@ iophymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxINTEL &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxINTEL_I82553)
-		return (10);
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_INTEL &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_INTEL_I82553)
+	if (mii_phy_match(ma, iophys) != NULL)
 		return (10);
 
 	return (0);
@@ -132,9 +138,10 @@ iophyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_INTEL_I82553,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, iophys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

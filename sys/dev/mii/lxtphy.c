@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.12 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.13 2005/02/05 22:20:42 brad Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -112,6 +112,16 @@ const struct mii_phy_funcs lxtphy971_funcs = {
 	lxtphy_service, ukphy_status, lxtphy_reset,
 };
 
+static const struct mii_phydesc lxtphys[] = {
+	{ MII_OUI_xxLEVEL1,	MII_MODEL_xxLEVEL1_LXT970,
+	  MII_STR_xxLEVEL1_LXT970 },
+	{ MII_OUI_xxLEVEL1a,	MII_MODEL_xxLEVEL1a_LXT971,
+	  MII_STR_xxLEVEL1a_LXT971 },
+
+	{ 0,			0,
+	  NULL },
+};
+
 int
 lxtphymatch(parent, match, aux)
 	struct device *parent;
@@ -120,12 +130,7 @@ lxtphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1 &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1_LXT970)
-		return (10);
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1a &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1a_LXT971)
+	if (mii_phy_match(ma, lxtphys) != NULL)
 		return (10);
 
 	return (0);
@@ -139,19 +144,19 @@ lxtphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1 &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1_LXT970) {
-		printf(": %s, rev. %d\n", MII_STR_xxLEVEL1_LXT970,
-		    MII_REV(ma->mii_id2));
 		sc->mii_funcs = &lxtphy_funcs;
 	}
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1a &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1a_LXT971) {
-		printf(": %s, rev. %d\n", MII_STR_xxLEVEL1a_LXT971,
-		    MII_REV(ma->mii_id2));
 		sc->mii_funcs = &lxtphy971_funcs;
 	}
+
+	mpd = mii_phy_match(ma, lxtphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

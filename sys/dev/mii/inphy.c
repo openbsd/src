@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.11 2005/01/28 18:27:55 brad Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.12 2005/02/05 22:20:42 brad Exp $	*/
 /*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -107,6 +107,17 @@ const struct mii_phy_funcs inphy_funcs = {
 	inphy_service, inphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc inphys[] = {
+	{ MII_OUI_INTEL,	MII_MODEL_INTEL_I82555,
+	  MII_STR_INTEL_I82555 },
+	{ MII_OUI_INTEL,	MII_MODEL_INTEL_I82562EM,
+	  MII_STR_INTEL_I82562EM },
+	{ MII_OUI_INTEL,	MII_MODEL_INTEL_I82562ET,
+	  MII_STR_INTEL_I82562ET },
+	{ 0,			0,
+	  NULL },
+};
+
 int
 inphymatch(parent, match, aux)
 	struct device *parent;
@@ -115,14 +126,8 @@ inphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_INTEL) {
-		switch (MII_MODEL(ma->mii_id2)) {
-		case MII_MODEL_INTEL_I82555:
-		case MII_MODEL_INTEL_I82562EM:
-		case MII_MODEL_INTEL_I82562ET:
-			return (10);
-		}
-	}
+	if (mii_phy_match(ma, inphys) != NULL)
+		return (10);
 
 	return (0);
 }
@@ -135,23 +140,10 @@ inphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	char *mstr;
+	const struct mii_phydesc *mpd;
 
-	switch (MII_MODEL(ma->mii_id2)) {
-	case MII_MODEL_INTEL_I82555:
-		mstr = MII_STR_INTEL_I82555;
-		break;
-	case MII_MODEL_INTEL_I82562EM:
-		mstr = MII_STR_INTEL_I82562EM;
-		break;
-	case MII_MODEL_INTEL_I82562ET:
-		mstr = MII_STR_INTEL_I82562ET;
-		break;
-	default:
-		mstr = "unknown inphy";
-		break;
-	}
-	printf(": %s, rev. %d\n", mstr, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, inphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
