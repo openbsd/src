@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2005/03/10 16:47:33 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2005/03/12 06:16:07 deraadt Exp $	*/
 
 /*
  *	Mainline.
@@ -17,7 +17,7 @@
 int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
-int		 startrow;			/* row to start         */
+int		 startrow;			/* row to start		*/
 BUFFER		*curbp;				/* current buffer	*/
 BUFFER		*bheadp;			/* BUFFER list head */
 MGWIN		*curwp;				/* current window	*/

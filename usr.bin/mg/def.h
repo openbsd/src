@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.58 2005/03/10 18:27:47 henning Exp $	*/
+/*	$OpenBSD: def.h,v 1.59 2005/03/12 06:16:07 deraadt Exp $	*/
 
 #include <sys/queue.h>
 
@@ -201,7 +201,7 @@ typedef struct MGWIN {
 	char		w_force;	/* If NZ, forcing row.		*/
 	char		w_flag;		/* Flags.			*/
 	LIST_HEAD(, undo_rec) w_undo;	/* Undo actions list */
-	int             w_undopos;      /* Where we were during the last
+	int		w_undopos;	/* Where we were during the last
 					   undo action */
 	struct undo_rec *w_undoptr;
 	struct LINE	*w_wrapline;
