@@ -1183,7 +1183,7 @@
 ./usr/share/man/cat5/hosts.equiv.0
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
-./usr/share/man/cat5/inetd.0
+./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/info.0
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/intro.0
