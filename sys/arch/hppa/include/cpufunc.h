@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.9 1999/05/22 00:16:42 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.10 1999/08/12 18:45:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -89,7 +89,7 @@ static __inline u_int ldsid(vaddr_t p) {
 static __inline u_int mtsm(u_int mask) {
 	register u_int ret;
 	__asm __volatile("ssm 0,%0\n\t"
-			 "mtsm %1": "=r" (ret) : "r" (mask));
+			 "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
 }
 
