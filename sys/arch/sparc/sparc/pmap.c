@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.68 2000/01/27 17:00:02 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.69 2000/01/27 17:37:15 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -254,7 +254,7 @@ pgt_page_alloc(sz, flags, mtype)
 
         if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
                 pcache_flush(p, (caddr_t)VA2PA(p), sz);
-                kvm_uncache(p, sz/NBPG);
+                kvm_uncache(p, atop(sz));
         }
         return (p);
 }       
@@ -2822,7 +2822,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * for pmap_zero_page and pmap_copy_page, and some pages
 	 * for dumpsys(), all with no associated physical memory.
 	 */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	p = (caddr_t)round_page((vaddr_t)p);
 	avail_start = (paddr_t)p - KERNBASE;
 
 	i = (int)p;
@@ -3101,7 +3101,7 @@ pmap_bootstrap4m(void)
 	 * the next whole page) and continuing through the number
 	 * of available pages are free.
 	 */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	p = (caddr_t)round_page((vaddr_t)p);
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
@@ -3147,7 +3147,7 @@ pmap_bootstrap4m(void)
 	      p - (caddr_t) kernel_pagtable_store);
 
 	/* Round to next page and mark end of stolen pages */
-	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
+	p = (caddr_t)round_page((vaddr_t)p);
 	pagetables_end = (vaddr_t)p;
 
 	avail_start = (paddr_t)p - KERNBASE;
@@ -3397,11 +3397,6 @@ pmap_init()
 	int n, npages;
 	vsize_t size;
 	vaddr_t addr;
-
-#ifdef DEBUG
-	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: CLSIZE!=1");
-#endif
 
 	npages = 0;
 	for (n = 0; n < vm_nphysseg; n++)
@@ -4571,7 +4566,7 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 
 	write_user_windows();	/* paranoia */
 
-	va &= ~(NBPG-1);
+	va = trunc_page(va);
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PG_S|PG_W : PG_S;
 	else
@@ -4890,7 +4885,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 	write_user_windows();	/* paranoia */
 
-	va &= ~(NBPG-1);
+	va = trunc_page(va);
 	if (pm == pmap_kernel())
 		newprot = prot & VM_PROT_WRITE ? PPROT_N_RWX : PPROT_N_RX;
 	else
