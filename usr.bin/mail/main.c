@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2001/11/21 15:28:25 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.17 2001/11/21 15:28:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 	char *ef;
 	char nosrc = 0;
 	char *rc;
-	extern char *version;
+	extern const char version[];
 
 	/*
 	 * Set up a reasonable environment.
