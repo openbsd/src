@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtquery.8,v 1.17 2003/08/08 09:34:10 jmc Exp $
+.\"	$OpenBSD: rtquery.8,v 1.18 2005/03/23 18:03:52 jmc Exp $
 .\"
 .\" Copyright (c) 1982, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,56 +35,31 @@
 .Nd query routing daemons for their routing tables
 .Sh SYNOPSIS
 .Nm rtquery
-.Op Fl np1
-.Op Fl w Ar timeout
+.Op Fl 1np
 .Op Fl r Ar addr
+.Op Fl t Ar op
+.Op Fl w Ar timeout
 .Ar host ...
 .Sh DESCRIPTION
 .Nm
-is used to query a network routing daemon,
-.Xr routed 8
-or
-.Xr gated ,
+is used to query a RIPv1/2 network routing daemon
 for its routing table by sending a
-.Cm request
-or
-.Cm poll
+.Em request
 command.
 The routing information in any routing
-.Dq response
+.Em response
 packets returned is displayed numerically and symbolically.
+.Nm
+is also used to turn tracing on or off.
 .Pp
-.Nm
-by default uses the
-.Cm request
-command.
-When the
-.Fl p
-option is specified,
-.Nm
-uses the
-.Cm poll
-command, an
-undocumented extension to the RIP protocol supported by
-.Xr gated .
-When querying gated, the
-.Cm poll
-command is preferred over the
-.Cm request
-command because the response is not subject to Split Horizon and/or
-Poisoned Reverse, and because some versions of gated do not answer
-the Request command.
-Routed does not answer the Poll command, but
-recognizes Requests coming from
-.Nm
-and so answers completely.
-.Pp
-.Nm
-is also used to turn tracing on or off in
-.Xr routed 8 .
+See
+.Xr routed 8
+for more information about a RIPv1/2 capable routing daemon.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 1
+Query using RIP version 1 instead of RIP version 2.
 .It Fl n
 Normally network and host numbers are displayed both symbolically
 and numerically.
@@ -93,16 +68,11 @@ The
 option displays only the numeric network and host numbers.
 .It Fl p
 Uses the
-.Cm poll
-command to request full routing information from
-.Xr gated .
-This is an undocumented extension RIP protocol supported only by
-.Xr gated .
-.It Fl 1
-Query using RIP version 1 instead of RIP version 2.
-.It Fl w Ar timeout
-Changes the delay for an answer from each host.
-By default, each host is given 15 seconds to respond.
+.Em poll
+command to request full routing information,
+instead of the default
+.Em request
+command.
 .It Fl r Ar addr
 Ask about the route to destination
 .Ar addr .
@@ -112,23 +82,33 @@ Change tracing, where
 is one of the following.
 Requests from processes not running with UID 0 or on distant networks
 are generally ignored by the daemon except for a message in the system log.
-.El
-.Bl -tag -width Ds -offset indent-two
-.It Em on=tracefile
+.Bl -tag -width Ds -offset indent
+.It Ic dump
+Dumps the daemon's routing table to the current tracefile.
+.It Ic more
+Increases the debugging level.
+.It Ic off
+Turns off tracing.
+.It Ic on Ns = Ns Ar tracefile
 Turn tracing on into the specified file.
 That file must usually
 have been specified when the daemon was started or be the same
 as a fixed name, often
 .Pa /etc/routed.trace .
-.It Em more
-Increases the debugging level.
-.It Em off
-Turns off tracing.
-.It Em dump
-Dumps the daemon's routing table to the current tracefile.
+.El
+.It Fl w Ar timeout
+Changes the delay for an answer from each host.
+By default, each host is given 15 seconds to respond.
 .El
 .Sh SEE ALSO
 .Xr routed 8
-.Pp
-.Dl RFC 1058 - Routing Information Protocol, RIPv1
-.Dl RFC 1723 - Routing Information Protocol, RIPv2
+.Rs
+.%R RFC 1058
+.%T Routing Information Protocol, RIPv1
+.%D June 1988
+.Re
+.Rs
+.%R RFC 1723
+.%T Routing Information Protocol, RIPv2
+.%D November 1994
+.Re
