@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.77 2004/01/09 19:08:50 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.78 2004/01/10 17:04:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@ void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
-void	session_update(struct peer *);
+void	session_update(u_int32_t, void *, size_t);
 void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
@@ -77,6 +77,8 @@ int	parse_keepalive(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
+
+struct peer	*getpeerbyid(u_int32_t);
 
 struct bgpd_config	*conf, *nconf = NULL;
 struct peer		*npeers;
@@ -912,10 +914,51 @@ session_keepalive(struct peer *peer)
 }
 
 void
-session_update(struct peer *peer)
+session_update(u_int32_t peerid, void *data, size_t datalen)
 {
-	start_timer_keepalive(peer);
-	peer->stats.msg_sent_update++;
+	struct peer		*p;
+	struct msg_header	 msg;
+	struct buf		*buf;
+	ssize_t			 len;
+	int			 errs = 0, n;
+
+	if ((p = getpeerbyid(peerid)) == NULL) {
+		logit(LOG_CRIT, "no such peer: id=%u", peerid);
+		return;
+	}
+
+	len = MSGSIZE_HEADER + datalen;
+
+	memset(&msg.marker, 0xff, sizeof(msg.marker));
+	msg.len = htons(len);
+	msg.type = UPDATE;
+
+	if ((buf = buf_open(len)) == NULL) {
+		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
+	}
+	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
+	errs += buf_add(buf, &msg.len, sizeof(msg.len));
+	errs += buf_add(buf, &msg.type, sizeof(msg.type));
+	errs += buf_add(buf, data, datalen);
+
+	if (errs > 0) {
+		buf_free(buf);
+		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
+	}
+
+	if ((n = buf_close(&p->wbuf, buf)) < 0) {
+		if (n == -2)
+			log_peer_errx(p, "Connection closed");
+		else
+			log_peer_err(p, "Write error");
+		buf_free(buf);
+		bgp_fsm(p, EVNT_CON_FATAL);
+	}
+
+	start_timer_keepalive(p);
+	p->stats.msg_sent_update++;
 }
 
 void
@@ -1414,8 +1457,19 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_END:
 			if (idx != PFD_PIPE_MAIN)
-				fatalx("reconf request not from parent");
+				fatalx("ctl kroute request not from parent");
 			control_imsg_relay(&imsg);
+		case IMSG_UPDATE:
+			if (idx != PFD_PIPE_ROUTE)
+				fatalx("update request not from RDE");
+			if (imsg.hdr.len > IMSG_HEADER_SIZE +
+			    MAX_PKTSIZE - MSGSIZE_HEADER ||
+			    imsg.hdr.len < IMSG_HEADER_SIZE +
+			    MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER)
+				logit(LOG_CRIT, "RDE sent invalid update");
+			else
+				session_update(imsg.hdr.peerid, imsg.data,
+				    imsg.hdr.len - IMSG_HEADER_SIZE);
 		default:
 			break;
 		}
@@ -1431,6 +1485,19 @@ getpeerbyip(in_addr_t ip)
 	/* we might want a more effective way to find peers by IP */
 	for (p = peers; p != NULL &&
 	    p->conf.remote_addr.sin_addr.s_addr != ip; p = p->next)
+		;	/* nothing */
+
+	return (p);
+}
+
+struct peer *
+getpeerbyid(u_int32_t peerid)
+{
+	struct peer *p;
+
+	/* we might want a more effective way to find peers by IP */
+	for (p = peers; p != NULL &&
+	    p->conf.id != peerid; p = p->next)
 		;	/* nothing */
 
 	return (p);
