@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.8 2002/11/22 11:46:02 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.9 2002/11/25 16:30:22 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -172,11 +172,11 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa)
 	/* if tbrsize is not specified, use heuristics */
 	if (pa->tbrsize == 0) {
 		rate = pa->ifbandwidth;
-		if (rate <= 1 * 1024 * 1024)
+		if (rate <= 1 * 1000 * 1000)
 			size = 1;
-		else if (rate <= 10 * 1024 * 1024)
+		else if (rate <= 10 * 1000 * 1000)
 			size = 4;
-		else if (rate <= 200 * 1024 * 1024)
+		else if (rate <= 200 * 1000 * 1000)
 			size = 8;
 		else
 			size = 24;
@@ -574,13 +574,13 @@ rate2str(double rate)
 
 	if (rate == 0.0)
 		snprintf(buf, RATESTR_MAX, "0");
-	else if (rate >= 1024 * 1024 * 1024)
+	else if (rate >= 1000 * 1000 * 1000)
 		snprintf(buf, RATESTR_MAX, "%.2fGb",
-		    rate / (1024.0 * 1024.0 * 1024.0));
+		    rate / (1000.0 * 1000.0 * 1000.0));
 	else if (rate >= 1024 * 1024)
-		snprintf(buf, RATESTR_MAX, "%.2fMb", rate / (1024.0 * 1024.0));
+		snprintf(buf, RATESTR_MAX, "%.2fMb", rate / (1000.0 * 1000.0));
 	else if (rate >= 1024)
-		snprintf(buf, RATESTR_MAX, "%.2fKb", rate / 1024.0);
+		snprintf(buf, RATESTR_MAX, "%.2fKb", rate / 1000.0);
 	else
 		snprintf(buf, RATESTR_MAX, "%db", (int)rate);
 	return (buf);
