@@ -1,4 +1,4 @@
-/*	$OpenBSD: del_curterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: del_curterm.c,v 1.2 1996/08/31 02:40:30 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,11 +31,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: del_curterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: del_curterm.c,v 1.2 1996/08/31 02:40:30 tholo Exp $";
 #endif
 
 #include <stdlib.h>
 #include "term.h"
+
+extern TERMINAL _ti_empty;
 
 /*
  * Free storage associated with the terminal description
@@ -51,6 +53,8 @@ del_curterm(term)
 {
     int i;
 
+    if (term == &_ti_empty)
+	return OK;
     for (i = 0; i < _tStrCnt; i++)
 	if (term->strs[i] != NULL)
 	    free(term->strs[i]);
@@ -61,6 +65,6 @@ del_curterm(term)
      * one, set cur_term to NULL
      */
     if (term == cur_term)
-	cur_term = NULL;
+	cur_term = &_ti_empty;
     return OK;
 }
