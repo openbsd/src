@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.95 2003/12/19 18:08:23 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.96 2003/12/19 21:25:03 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -709,7 +709,6 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	sdt_entry_t *kmap;
 	vaddr_t vaddr, virt, kernel_pmap_size, pdt_size;
 	paddr_t s_text, e_text, kpdt_phys;
-	u_int32_t apr_data;
 	pt_entry_t *pte;
 	int i;
 	pmap_table_t ptable;
@@ -749,14 +748,14 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 */
 	kernel_pmap->pm_count = 1;
 	kernel_pmap->pm_cpus = 0;
-	kernel_pmap->pm_stpa = kmap = (sdt_entry_t *)(*phys_start);
+	kmap = (sdt_entry_t *)(*phys_start);
 	kernel_pmap->pm_stab = (sdt_entry_t *)(*virt_start);
 	kmapva = *virt_start;
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kernel_pmap->pm_stpa = 0x%x\n", kernel_pmap->pm_stpa);
-		printf("kernel_pmap->pm_stab = 0x%x\n", kernel_pmap->pm_stab);
+		printf("kernel_pmap->pm_stab = 0x%x (pa 0x%x)\n",
+		    kernel_pmap->pm_stab, kmap);
 	}
 #endif
 
@@ -776,9 +775,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("     kernel segment start = 0x%x\n", kernel_pmap->pm_stpa);
 		printf("kernel segment table size = 0x%x\n", kernel_pmap_size);
-		printf("       kernel segment end = 0x%x\n", ((paddr_t)kernel_pmap->pm_stpa) + kernel_pmap_size);
 	}
 #endif
 	/* init all segment descriptors to zero */
@@ -1012,18 +1009,13 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * Switch to using new page tables
 	 */
 
-	apr_data = (atop(kernel_pmap->pm_stpa) << PG_SHIFT) | CACHE_WT | APR_V;
+	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) | CACHE_WT | APR_V;
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		show_apr(apr_data);
+		show_apr(kernel_pmap->pm_apr);
 	}
 #endif
 	/* Invalidate entire kernel TLB. */
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("invalidating tlb %x\n", apr_data);
-	}
-#endif
 
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
@@ -1042,7 +1034,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 			    phys_map_vaddr2 + (i << PAGE_SHIFT));
 			invalidate_pte(pte);
 			/* Load supervisor pointer to segment table. */
-			cmmu_remote_set_sapr(i, apr_data);
+			cmmu_remote_set_sapr(i, kernel_pmap->pm_apr);
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 				printf("Processor %d running virtual.\n", i);
@@ -1149,6 +1141,7 @@ pmap_create(void)
 {
 	pmap_t pmap;
 	sdt_entry_t *segdt;
+	paddr_t stpa;
 	u_int s;
 #ifdef	PMAP_USE_BATC
 	int i;
@@ -1177,17 +1170,18 @@ pmap_create(void)
 	 */
 	pmap->pm_stab = segdt;
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
-	    (paddr_t *)&pmap->pm_stpa) == FALSE)
+	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
+	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
 
 #ifdef DEBUG
-	if (!PAGE_ALIGNED(pmap->pm_stpa))
+	if (!PAGE_ALIGNED(stpa))
 		panic("pmap_create: sdt_table 0x%x not aligned on page boundary",
-		    (int)pmap->pm_stpa);
+		    (int)stpa);
 
 	if (pmap_con_dbg & CD_CREAT) {
-		printf("(pmap_create: %x) pmap=0x%p, pm_stab=0x%x, pm_stpa=0x%x\n",
-		    curproc, pmap, pmap->pm_stab, pmap->pm_stpa);
+		printf("(pmap_create: %x) pmap=0x%p, pm_stab=0x%x (pa 0x%x)\n",
+		    curproc, pmap, pmap->pm_stab, stpa);
 	}
 #endif
 
@@ -2345,32 +2339,24 @@ pmap_collect(pmap_t pmap)
  * Routine:	PMAP_ACTIVATE
  *
  * Function:
- * 	Binds the given physical map to the given
- *	processor, and returns a hardware map description.
- *	In a mono-processor implementation the cpu
- *	argument is ignored, and the PMAP_ACTIVATE macro
- *	simply sets the MMU root pointer element of the PCB
- *	to the physical address of the segment descriptor table.
+ * 	Binds the pmap associated to the process to the current processor.
  *
  * Parameters:
  * 	p	pointer to proc structure
  *
  * Notes:
- *	If the specified pmap is not kernel_pmap, this routine makes arp
- *	template and stores it into UAPR (user area pointer register) in the
+ *	If the specified pmap is not kernel_pmap, this routine stores its
+ *	apr template into UAPR (user area pointer register) in the
  *	CMMUs connected to the specified CPU.
  *
  *	If kernel_pmap is specified, only flushes the TLBs mapping kernel
  *	virtual space, in the CMMUs connected to the specified CPU.
- *
  */
 void
 pmap_activate(struct proc *p)
 {
-	u_int32_t apr_data;
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	int cpu = cpu_number();
-
 #ifdef	PMAP_USE_BATC
 	int n;
 #endif
@@ -2384,10 +2370,7 @@ pmap_activate(struct proc *p)
 		/*
 		 * Lock the pmap to put this cpu in its active set.
 		 */
-
 		simple_lock(&pmap->pm_lock);
-		apr_data = (atop(pmap->pm_stpa) << PG_SHIFT) |
-		    CACHE_GLOBAL | APR_V;
 
 #ifdef	PMAP_USE_BATC
 		/*
@@ -2396,12 +2379,12 @@ pmap_activate(struct proc *p)
 		 * ABOUT THE BATC ENTRIES, THE SUPERVISOR TLBs SHOULB BE
 		 * FLUSHED AS WELL.
 		 */
-		cmmu_pmap_activate(cpu, apr_data,
+		cmmu_pmap_activate(cpu, pmap->pm_apr,
 		    pmap->pm_ibatc, pmap->pm_dbatc);
 		for (n = 0; n < BATC_MAX; n++)
 			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
 #else
-		cmmu_set_uapr(apr_data);
+		cmmu_set_uapr(pmap->pm_apr);
 		cmmu_flush_tlb(FALSE, 0, -1);
 #endif	/* PMAP_USE_BATC */
 
@@ -2409,7 +2392,6 @@ pmap_activate(struct proc *p)
 		 * Mark that this cpu is using the pmap.
 		 */
 		SETBIT_CPUSET(cpu, &(pmap->pm_cpus));
-
 		simple_unlock(&pmap->pm_lock);
 	}
 }
@@ -2418,14 +2400,10 @@ pmap_activate(struct proc *p)
  * Routine:	PMAP_DEACTIVATE
  *
  * Function:
- *	Unbinds the given physical map from the given processor,
- *	i.e. the pmap i no longer is use on the processor.
+ *	Unbinds the pmap associated to the process from the current processor.
  *
  * Parameters:
  *	p		pointer to proc structure
- *
- * pmap_deactive simply clears the pm_cpus field in given pmap structure.
- *
  */
 void
 pmap_deactivate(struct proc *p)
@@ -2461,7 +2439,7 @@ pmap_deactivate(struct proc *p)
  *	m88k_protection
  *
  * Special Assumptions:
- *	no locking reauired
+ *	no locking required
  *
  * This routine maps the physical pages at the 'phys_map' virtual
  * addresses set up in pmap_bootstrap. It flushes the TLB to make the
