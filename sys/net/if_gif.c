@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.18 2001/06/15 03:38:34 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.19 2001/06/25 06:33:48 angelos Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -148,24 +148,33 @@ gif_output(ifp, m, dst, rt)
 {
 	register struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
-	static int called = 0;	/* XXX: MUTEX */
-	int calllimit = 3;	/* XXX: adhoc */
+	struct m_tag *mtag;
 
 	/*
 	 * gif may cause infinite recursion calls when misconfigured.
-	 * We'll prevent this by introducing upper limit.
-	 * XXX: this mechanism may introduce another problem about
-	 *      mutual exclusion of the variable CALLED, especially if we
-	 *      use kernel thread.
+	 * We'll prevent this by detecting loops.
 	 */
-	if (++called >= calllimit) {
-		log(LOG_NOTICE,
-		    "gif_output: recursively called too many times(%d)\n",
-		    called);
+	for (mtag = m_tag_find(m, PACKET_TAG_GIF, NULL); mtag;
+	     mtag = m_tag_find(m, PACKET_TAG_GIF, mtag)) {
+		if (!bcmp((caddr_t)(mtag + 1), &ifp, sizeof(struct ifnet *))) {
+			IF_DROP(&ifp->if_snd);
+			log(LOG_NOTICE,
+			    "gif_output: recursively called too many times\n");
+			m_freem(m);
+			error = EIO;	/* is there better errno? */
+			goto end;
+		}
+	}
+
+	mtag = m_tag_get(PACKET_TAG_GIF, sizeof(struct ifnet *), M_NOWAIT);
+	if (mtag == NULL) {
+		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		error = EIO;	/* is there better errno? */
+		error = ENOMEM;
 		goto end;
 	}
+	bcopy(&ifp, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
+	m_tag_prepend(m, mtag);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
@@ -217,7 +226,6 @@ gif_output(ifp, m, dst, rt)
 	}
 
   end:
-	called = 0;		/* reset recursion counter */
 	if (error) ifp->if_oerrors++;
 	return error;
 }
