@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 1997/10/25 20:30:45 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 1997/10/25 21:47:26 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1469,7 +1469,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	dev_t consdev;
+	dev_t dev;
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
@@ -1477,11 +1477,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOTDIR);		/* overloaded */
 
 		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
+			dev = cn_tab->cn_dev;
 		else
-			consdev = NODEV;
-		return sysctl_rdstruct(oldp, oldlenp, newp,
-				       &consdev, sizeof consdev);
+			dev = NODEV;
+		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 #if NBIOS > 0
 	case CPU_BIOS:
 		return bios_sysctl(name + 1, namelen - 1, oldp, oldlenp,
@@ -1490,11 +1489,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_BLK2CHR:
 		if (namelen != 2)
 			return (ENOTDIR);		/* overloaded */
-		return blktochr(name[1]);
+		dev = blktochr((dev_t)name[1]);
+		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	case CPU_CHR2BLK:
 		if (namelen != 2)
 			return (ENOTDIR);		/* overloaded */
-		return chrtoblk(name[1]);
+		dev = blktochr((dev_t)name[1]);
+		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	default:
 		return EOPNOTSUPP;
 	}

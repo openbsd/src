@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 1997/10/25 08:36:42 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 1997/10/25 21:47:27 mickey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -216,8 +216,8 @@ void	setconf __P((void));
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "bios", CTLTYPE_INT }, \
-	{ "blk2chr", CTLTYPE_INT }, \
-	{ "chr2blk", CTLTYPE_INT }, \
+	{ "blk2chr", CTLTYPE_STRUCT }, \
+	{ "chr2blk", CTLTYPE_STRUCT }, \
 }
 
 #endif /* !_I386_CPU_H_ */
