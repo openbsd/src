@@ -1500,7 +1500,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/vm
 ./usr/libdata/perl5/site_perl/sparc-openbsd/vm/pmap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/vm/vm.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/vm/vm_kern.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/vm/vm_page.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/vm/vm_param.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/xfs

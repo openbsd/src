@@ -1437,7 +1437,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_conf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_extern.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_inherit.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_kern.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_map.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_page.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vm/vm_pager.ph

@@ -1867,7 +1867,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vm
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vm/pmap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vm/vm.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/vm/vm_kern.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vm/vm_page.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vm/vm_param.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/xfs

@@ -1450,7 +1450,6 @@
 ./usr/include/vm
 ./usr/include/vm/pmap.h
 ./usr/include/vm/vm.h
-./usr/include/vm/vm_kern.h
 ./usr/include/vm/vm_page.h
 ./usr/include/vm/vm_param.h
 ./usr/include/xfs

@@ -1853,7 +1853,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vm
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vm/pmap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vm/vm.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/vm/vm_kern.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vm/vm_page.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/vm/vm_param.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/xfs
