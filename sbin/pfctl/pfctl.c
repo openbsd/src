@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.119 2003/01/03 22:47:51 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.120 2003/01/03 22:48:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -964,8 +964,8 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_BINAT]))
 				err(1, "DIOCBEGINRULES");
 		}
-		if (((altqsupport && loadopt
-		    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
+		if (((altqsupport && (loadopt &
+		    (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)) &&
 		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket)) {
 			err(1, "DIOCBEGINALTQS");
 		}
@@ -989,7 +989,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	pf.rule_nr = 0;
 	if (parse_rules(fin, &pf, opts) < 0)
 		errx(1, "Syntax error in file: pf rules not loaded");
-	if ((altqsupport && loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)
+	if ((altqsupport && (loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0))
 		if (check_commit_altq(dev, opts) != 0)
 			errx(1, "errors in altq config");
 	if ((opts & PF_OPT_NOACTION) == 0) {
@@ -1004,8 +1004,8 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_BINAT]))
 				err(1, "DIOCCOMMITRULES");
 		}
-		if (((altqsupport && loadopt
-		    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
+		if (((altqsupport && (loadopt &
+		    (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)) &&
 		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
 			err(1, "DIOCCOMMITALTQS");
 		if ((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) {
