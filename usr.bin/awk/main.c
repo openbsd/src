@@ -30,6 +30,7 @@ char	*version = "version May 27, 1996";
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <locale.h>
 #include "awk.h"
 #include "awkgram.h"
 
@@ -52,6 +53,8 @@ int main(int argc, char *argv[])
 {
 	char *fs = NULL, *marg;
 	int temp;
+
+	setlocale(LC_ALL, "");
 
 	if ((cmdname = strrchr(argv[0], '/')) != NULL)
 		cmdname++;
