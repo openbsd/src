@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.19 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.20 2002/08/16 02:06:43 millert Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -369,6 +369,15 @@ fbwscons_console_init(sf, wsc, row, setcolor, burner)
 			sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
 	} else
 		sf->sf_ro.ri_crow = row;
+
+	/*
+	 * Scale back rows and columns if the font would not otherwise
+	 * fit on this display. Without this we would panic later.
+	 */
+	if (sf->sf_ro.ri_crow >= wsc->nrows)
+		sf->sf_ro.ri_crow = wsc->nrows - 1;
+	if (sf->sf_ro.ri_ccol >= wsc->ncols)
+		sf->sf_ro.ri_ccol = wsc->ncols - 1;
 
 	/*
 	 * Select appropriate color settings to mimic a
