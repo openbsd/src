@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.7 1997/08/05 16:26:05 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.8 1997/08/07 01:11:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,8 +33,8 @@
  */
 
 #include <sys/param.h>
+#include <machine/biosvar.h>
 #include "libsa.h"
-#include "biosdev.h"
 
 static int addrprobe __P((int));
 
@@ -43,7 +43,9 @@ memprobe()
 {
 	int ram;
 
-	cnvmem = biosmem();
+	__asm volatile(DOINT(0x12) "\n\t" : "=a" (cnvmem));
+
+	cnvmem &= 0xffff;
 
 	/* probe extended memory
 	 *
@@ -52,7 +54,7 @@ memprobe()
 	 */
 	for(ram = 1024; ram < 512*1024; ram += 4){
 
-		if(!(ram % 1024))
+		if(!(ram % 64))
 			printf("Probing memory: %d KB\r", ram-1024);
 		if(addrprobe(ram))
 			break;
