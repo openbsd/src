@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.18 2003/11/13 19:42:21 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.19 2003/11/17 11:20:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.18 2003/11/13 19:42:21 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.19 2003/11/17 11:20:13 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -123,6 +123,9 @@ extern char *__progname;
 %token SCALE IBASE OBASE AUTO
 %token CONTINUE ELSE PRINT
 
+%left BOOL_OR
+%left BOOL_AND
+%nonassoc BOOL_NOT
 %nonassoc EQUALS LESS_EQ GREATER_EQ UNEQUALS LESS GREATER
 %right <str> ASSIGN_OP
 %left PLUS MINUS
@@ -464,11 +467,7 @@ opt_relational_expression
 		;
 
 relational_expression
-		: expression
-			{
-				$$ = node($1, cs(" 0!="), END_NODE);
-			}
-		| expression EQUALS expression
+		: expression EQUALS expression
 			{
 				$$ = node($1, $3, cs("="), END_NODE);
 			}
@@ -491,6 +490,10 @@ relational_expression
 		| expression GREATER_EQ expression
 			{
 				$$ = node($1, $3, cs("!>"), END_NODE);
+			}
+		| expression
+			{
+				$$ = node($1, cs(" 0!="), END_NODE);
 			}
 		;
 
@@ -611,6 +614,46 @@ expression	: named_expression
 		| SCALE LPAR expression RPAR
 			{
 				$$ = node($3, cs("X"), END_NODE);
+			}
+		| BOOL_NOT expression
+			{
+				$$ = node($2, cs("N"), END_NODE);
+			}
+		| expression BOOL_AND alloc_macro pop_nesting expression
+			{
+				ssize_t n = node(cs("R"), $5, END_NODE);
+				emit_macro($3, n);
+				$$ = node($1, cs("d0!="), $3, END_NODE);
+			}
+		| expression BOOL_OR alloc_macro pop_nesting expression
+			{
+				ssize_t n = node(cs("R"), $5, END_NODE);
+				emit_macro($3, n);
+				$$ = node($1, cs("d0="), $3, END_NODE);
+			}
+		| expression EQUALS expression
+			{
+				$$ = node($1, $3, cs("G"), END_NODE);
+			}
+		| expression UNEQUALS expression
+			{
+				$$ = node($1, $3, cs("GN"), END_NODE);
+			}
+		| expression LESS expression
+			{
+				$$ = node($3, $1, cs("("), END_NODE);
+			}
+		| expression LESS_EQ expression
+			{
+				$$ = node($3, $1, cs("{"), END_NODE);
+			}
+		| expression GREATER expression
+			{
+				$$ = node($1, $3, cs("("), END_NODE);
+			}
+		| expression GREATER_EQ expression
+			{
+				$$ = node($1, $3, cs("{"), END_NODE);
 			}
 		;
 
