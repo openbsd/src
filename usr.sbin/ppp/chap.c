@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.c,v 1.1.1.1 1997/11/23 20:27:33 brian Exp $
+ * $Id: chap.c,v 1.2 1997/12/07 23:55:06 brian Exp $
  *
  *	TODO:
  */
@@ -129,7 +129,7 @@ RecvChapTalk(struct fsmheader *chp, struct mbuf *bp)
   name = cp + valsize;
   namelen = arglen - valsize - 1;
   name[namelen] = 0;
-  LogPrintf(LogPHASE, " Valsize = %d, Name = %s\n", valsize, name);
+  LogPrintf(LogLCP, " Valsize = %d, Name = \"%s\"\n", valsize, name);
 
   switch (chp->code) {
   case CHAP_CHALLENGE:

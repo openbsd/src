@@ -1,5 +1,5 @@
 /*
- * $Id: phase.c,v 1.1.1.1 1997/11/23 20:27:35 brian Exp $
+ * $Id: phase.c,v 1.2 1997/12/07 23:55:08 brian Exp $
  */
 
 #include <sys/param.h>
@@ -30,6 +30,20 @@ static const char *PhaseNames[] = {
   "Dead", "Establish", "Authenticate", "Network", "Terminate"
 };
 
+static const char *
+Auth2Nam(u_short auth)
+{
+  switch (auth) {
+  case PROTO_PAP:
+    return "PAP";
+  case PROTO_CHAP:
+    return "CHAP";
+  case 0:
+    return "none";
+  }
+  return "unknown";
+}
+
 void
 NewPhase(int new)
 {
@@ -42,7 +56,8 @@ NewPhase(int new)
     lcp->auth_ineed = lcp->want_auth;
     lcp->auth_iwait = lcp->his_auth;
     if (lcp->his_auth || lcp->want_auth) {
-      LogPrintf(LogPHASE, " his = %x, mine = %x\n", lcp->his_auth, lcp->want_auth);
+      LogPrintf(LogPHASE, " his = %s, mine = %s\n",
+                Auth2Nam(lcp->his_auth), Auth2Nam(lcp->want_auth));
       if (lcp->his_auth == PROTO_PAP)
 	StartAuthChallenge(&AuthPapInfo);
       if (lcp->want_auth == PROTO_CHAP)
