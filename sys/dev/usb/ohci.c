@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.35 2003/07/08 13:19:09 nate Exp $ */
+/*	$OpenBSD: ohci.c,v 1.36 2003/08/06 20:40:30 millert Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -884,9 +884,9 @@ ohci_init(ohci_softc_t *sc)
  bad4:
 	ohci_free_sed(sc, sc->sc_isoc_head);
  bad3:
-	ohci_free_sed(sc, sc->sc_ctrl_head);
- bad2:
 	ohci_free_sed(sc, sc->sc_bulk_head);
+ bad2:
+	ohci_free_sed(sc, sc->sc_ctrl_head);
  bad1:
 	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
 	return (err);
