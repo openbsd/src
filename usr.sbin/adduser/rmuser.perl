@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- perl -*-
 #
-# $OpenBSD: rmuser.perl,v 1.2 1999/07/11 21:58:14 espie Exp $
+# $OpenBSD: rmuser.perl,v 1.3 2000/11/25 23:22:33 millert Exp $
 #
 # Copyright 1995, 1996 Guy Helmer, Madison, South Dakota 57042.
 # All rights reserved.
@@ -35,17 +35,13 @@
 #
 #	$From: rmuser.perl,v 1.2 1996/12/07 21:25:12 ache Exp $
 
-sub LOCK_SH {0x01;}
-sub LOCK_EX {0x02;}
-sub LOCK_NB {0x04;}
-sub LOCK_UN {0x08;}
-sub F_SETFD {2;}
+use Fcntl qw(:DEFAULT :flock);
 
 $ENV{"PATH"} = "/bin:/sbin:/usr/bin:/usr/sbin";
 umask(022);
 $whoami = $0;
 $passwd_file = "/etc/master.passwd";
-$new_passwd_file = "${passwd_file}.new.$$";
+$passwd_tmp = "/etc/ptmp";
 $group_file = "/etc/group";
 $new_group_file = "${group_file}.new.$$";
 $mail_dir = "/var/mail";
@@ -54,34 +50,35 @@ $atjob_dir = "/var/at/jobs";
 
 #$debug = 1;
 
+END {
+    if (-e $passwd_tmp) {
+	unlink($passwd_tmp) ||
+	    warn "\n${whoami}: warning: couldn't unlink $passwd_tmp ($!)\n\tPlease investigate, as this file should not be left in the filesystem\n";
+    }
+}
+
 sub cleanup {
     local($sig) = @_;
 
     print STDERR "Caught signal SIG$sig -- cleaning up.\n";
-    &unlockpw;
-    if (-e $new_passwd_file) {
-	unlink $new_passwd_file;
-    }
     exit(0);
 }
 
-sub lockpw {
-    # Open the password file for reading
-    if (!open(MASTER_PW, "$passwd_file")) {
+sub open_files {
+    open(GROUP, $group_file) ||
+	die "\n${whoami}: Error: couldn't open ${group_file}: $!\n";
+    if (!flock(GROUP, LOCK_EX|LOCK_NB)) {
+	print STDERR "\n${whoami}: Error: couldn't lock ${group_file}: $!\n";
+	exit 1;
+    }
+
+    sysopen(NEW_PW, $passwd_tmp, O_RDWR|O_CREAT|O_EXCL, 0600) ||
+	die "\n${whoami}: Error: Password file busy\n";
+
+    if (!open(MASTER_PW, $passwd_file)) {
 	print STDERR "${whoami}: Error: Couldn't open ${passwd_file}: $!\n";
 	exit(1);
     }
-    # Set the close-on-exec flag just in case
-    fcntl(MASTER_PW, &F_SETFD, 1);
-    # Apply an advisory lock the password file
-    if (!flock(MASTER_PW, &LOCK_EX|&LOCK_NB)) {
-	print STDERR "Couldn't lock ${passwd_file}: $!\n";
-	exit(1);
-    }
-}
-
-sub unlockpw {
-    flock(MASTER_PW, &LOCK_UN);
 }
 
 $SIG{'INT'} = 'cleanup';
@@ -99,7 +96,7 @@ if ($< != 0) {
     exit(1);
 }
 
-&lockpw;
+&open_files;
 
 if ($#ARGV == 0) {
     # Username was given as a parameter
@@ -111,7 +108,6 @@ if ($#ARGV == 0) {
 
 if (($pw_ent = &check_login_name($login_name)) eq '0') {
     print STDERR "${whoami}: Error: User ${login_name} not in password database\n";
-    &unlockpw;
     exit 1;
 }
 
@@ -120,7 +116,6 @@ if (($pw_ent = &check_login_name($login_name)) eq '0') {
 
 if ($uid == 0) {
     print "${whoami}: Sorry, I'd rather not remove a user with a uid of 0.\n";
-    &unlockpw;
     exit 1;
 }
 
@@ -130,7 +125,6 @@ $ans = &get_yn("Is this the entry you wish to remove? ");
 
 if ($ans eq 'N') {
     print "User ${login_name} not removed.\n";
-    &unlockpw;
     exit 0;
 }
 
@@ -231,7 +225,7 @@ sub get_login_name {
     for ($done = 0; ! $done; ) {
 	print "Enter login name for user to remove: ";
 	$login_name = <>;
-	chop $login_name;
+	chomp $login_name;
 	if (!($login_name =~ /^\w+$/)) {
 	    print STDERR "Sorry, login name must contain alphanumeric characters only.\n";
 	} elsif (length($login_name) > 16 || length($login_name) == 0) {
@@ -255,7 +249,7 @@ sub check_login_name {
 
     seek(MASTER_PW, 0, 0);
     while ($i = <MASTER_PW>) {
-	chop $i;
+	chomp $i;
 	($Mname, $Mpassword, $Muid, $Mgid, $Mclass, $Mchange, $Mexpire,
 	 $Mgecos, $Mhome_dir, $Mshell) = split(/:/, $i);
 	if ($Mname eq $login_name) {
@@ -277,7 +271,7 @@ sub get_yn {
     for ($done = 0; ! $done; ) {
 	print $prompt;
 	$ans = <>;
-	chop $ans;
+	chomp $ans;
 	$ans =~ tr/a-z/A-Z/;
 	if (!($ans =~ /^[YN]/)) {
 	    print STDERR "Please answer (y)es or (n)o.\n";
@@ -294,15 +288,9 @@ sub update_passwd_file {
 
     print STDERR "Updating password file,";
     seek(MASTER_PW, 0, 0);
-    open(NEW_PW, ">$new_passwd_file") ||
-	die "\n${whoami}: Error: Couldn't open file ${new_passwd_file}:\n $!\n";
-    chmod(0600, $new_passwd_file) ||
-	print STDERR "\n${whoami}: warning: couldn't set mode of $new_passwd_file to 0600 ($!)\n\tcontinuing, but please check mode of /etc/master.passwd!\n";
     $skipped = 0;
     while ($i = <MASTER_PW>) {
-	if ($i =~ /\n$/) {
-	    chop $i;
-	}
+	chomp($i);
 	if ($i ne $pw_ent) {
 	    print NEW_PW "$i\n";
 	} else {
@@ -315,9 +303,6 @@ sub update_passwd_file {
 
     if ($skipped == 0) {
 	print STDERR "\n${whoami}: Whoops! Didn't find ${login_name}'s entry second time around!\n";
-	unlink($new_passwd_file) ||
-	    print STDERR "\n${whoami}: warning: couldn't unlink $new_passwd_file ($!)\n\tPlease investigate, as this file should not be left in the filesystem\n";
-	&unlockpw;
 	exit 1;
     }
 
@@ -325,7 +310,7 @@ sub update_passwd_file {
     # Run pwd_mkdb to install the updated password files and databases
 
     print STDERR " updating databases,";
-    system('/usr/sbin/pwd_mkdb', '-p', ${new_passwd_file});
+    system('/usr/sbin/pwd_mkdb', '-p', ${passwd_tmp});
     print STDERR " done.\n";
 
     close(MASTER_PW);		# Not useful anymore
@@ -338,12 +323,6 @@ sub update_group_file {
     local($grname, $grpass, $grgid, $grmember_list, @grmembers);
 
     print STDERR "Updating group file:";
-    open(GROUP, $group_file) ||
-	die "\n${whoami}: Error: couldn't open ${group_file}: $!\n";
-    if (!flock(GROUP, &LOCK_EX|&LOCK_NB)) {
-	print STDERR "\n${whoami}: Error: couldn't lock ${group_file}: $!\n";
-	exit 1;
-    }
     local($group_perms, $group_uid, $group_gid) =
 	(stat(GROUP))[2, 4, 5]; # File Mode, uid, gid
     open(NEW_GROUP, ">$new_group_file") ||
@@ -360,16 +339,14 @@ sub update_group_file {
 	} else {
 	    #
 	    # Remove the user from the group
-	    if ($i =~ /\n$/) {
-		chop $i;
-	    }
+	    chomp $i;
 	    ($grname, $grpass, $grgid, $grmember_list) = split(/:/, $i);
 	    @grmembers = split(/,/, $grmember_list);
 	    undef @new_grmembers;
 	    local(@new_grmembers);
 	    foreach $j (@grmembers) {
 		if ($j ne $login_name) {
-		    push(new_grmembers, $j);
+		    push(@new_grmembers, $j);
 		} elsif ($debug) {
 		    print STDERR "Removing $login_name from group $grname\n";
 		}
