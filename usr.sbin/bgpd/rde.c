@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.147 2004/11/11 13:06:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.148 2004/11/11 13:14:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2173,7 +2173,7 @@ sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
 		break;
 	default:
 		fatal("king bula sez: unknown address family");
-		/* not reached */
+		/* NOTREACHED */
 	}
 
 	return (0);
