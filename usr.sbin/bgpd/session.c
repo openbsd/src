@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.192 2004/09/16 17:44:36 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.193 2004/09/22 08:46:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -15,7 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -297,54 +296,47 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			last = p;
 		}
 
-		if (peer_cnt > peer_l_elms ||
-		    peer_cnt + 2 * PEER_L_RESERVE < peer_l_elms) {
+		if (peer_cnt > peer_l_elms) {
 			if ((newp = realloc(peer_l, sizeof(struct peer *) *
-			    (peer_cnt + PEER_L_RESERVE))) == NULL) {
+			    peer_cnt)) == NULL) {
 				/* panic for now  */
 				log_warn("could not resize peer_l from %u -> %u"
-				    " entries", peer_l_elms,
-				    peer_cnt + PEER_L_RESERVE);
+				    " entries", peer_l_elms, peer_cnt);
 				fatalx("exiting");
 			}
 			peer_l = newp;
-			peer_l_elms = peer_cnt + PEER_L_RESERVE;
+			peer_l_elms = peer_cnt;
 		}
 
 		mrt_cnt = 0;
-		LIST_FOREACH(m, &mrthead, entry) {
+		LIST_FOREACH(m, &mrthead, entry)
 			if (m->queued)
 				mrt_cnt++;
-		}
 
-		if (mrt_cnt > mrt_l_elms ||
-		    mrt_cnt + 2 * PEER_L_RESERVE < mrt_l_elms) {
+		if (mrt_cnt > mrt_l_elms) {
 			if ((newp = realloc(mrt_l, sizeof(struct mrt *) *
-			    (mrt_cnt + PEER_L_RESERVE))) == NULL) {
+			    mrt_cnt)) == NULL) {
 				/* panic for now  */
 				log_warn("could not resize mrt_l from %u -> %u"
-				    " entries", mrt_l_elms,
-				    mrt_cnt + PEER_L_RESERVE);
+				    " entries", mrt_l_elms, mrt_cnt);
 				fatalx("exiting");
 			}
 			mrt_l = newp;
-			mrt_l_elms = mrt_cnt + PEER_L_RESERVE;
+			mrt_l_elms = mrt_cnt;
 		}
 
 		new_cnt = PFD_LISTENERS_START + listener_cnt + peer_cnt +
 		    ctl_cnt + mrt_cnt;
-		if (new_cnt > pfd_elms ||
-		    (new_cnt + 2) * PFD_RESERVE < pfd_elms) {
+		if (new_cnt > pfd_elms) {
 			if ((newp = realloc(pfd, sizeof(struct pollfd) *
-			    (new_cnt + PFD_RESERVE))) == NULL) {
+			    new_cnt)) == NULL) {
 				/* panic for now  */
 				log_warn("could not resize pfd from %u -> %u"
-				    " entries", pfd_elms,
-				    new_cnt + PFD_RESERVE);
+				    " entries", pfd_elms, new_cnt);
 				fatalx("exiting");
 			}
 			pfd = newp;
-			pfd_elms = new_cnt + PFD_RESERVE;
+			pfd_elms = new_cnt;
 		}
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
