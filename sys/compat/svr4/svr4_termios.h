@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_termios.h,v 1.3 1996/08/02 20:35:45 niklas Exp $	 */
+/*	$OpenBSD: svr4_termios.h,v 1.4 1998/02/10 15:01:43 niklas Exp $	 */
 /*	$NetBSD: svr4_termios.h,v 1.2 1994/11/18 02:54:21 christos Exp $	 */
 
 /*
@@ -132,9 +132,9 @@ struct svr4_termio {
 #define	SVR4_CBAUD	00000017
 #define	SVR4_CSIZE	00000060
 #define	SVR4_CS5	00000000
-#define	SVR4_CS6	00000200
+#define	SVR4_CS6	00000020
 #define	SVR4_CS7	00000040
-#define	SVR4_CS8	00000006
+#define	SVR4_CS8	00000060
 #define	SVR4_CSTOPB	00000100
 #define	SVR4_CREAD	00000200
 #define	SVR4_PARENB	00000400
@@ -214,6 +214,8 @@ struct svr4_winsize {
 #define	SVR4_B9600	13
 #define	SVR4_B19200	14
 #define	SVR4_B38400	15
+#if 0
+/* XXX How do these fit in CBAUD? */
 #define	SVR4_B57600	16
 #define	SVR4_B76800	17
 #define	SVR4_B115200	18
@@ -221,5 +223,6 @@ struct svr4_winsize {
 #define	SVR4_B230400	20
 #define	SVR4_B307200	21
 #define	SVR4_B460800	22
+#endif
 
 #endif /* !_SVR4_TERMIOS_H_ */
