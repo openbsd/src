@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.6 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.7 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -55,8 +55,11 @@ void    wdsc_enintr(struct sbic_softc *);
 int     wdsc_dmago(struct sbic_softc *, char *, int, int);
 int     wdsc_dmanext(struct sbic_softc *);
 void    wdsc_dmastop(struct sbic_softc *);
-int     wdsc_dmaintr(struct sbic_softc *);
-int     wdsc_scsiintr(struct sbic_softc *);
+int     wdsc_dmaintr(void *);
+int     wdsc_scsiintr(void *);
+
+extern void sbicinit(struct sbic_softc *);
+extern int sbicintr(struct sbic_softc *);
 
 struct scsi_adapter wdsc_scsiswitch = {
     sbic_scsicmd,
@@ -114,7 +117,6 @@ wdscattach(pdp, dp, auxp)
     struct sbic_softc   *sc = (struct sbic_softc *)dp;
     struct confargs *ca = auxp;
     struct pccreg *pcc = (struct pccreg *)ca->ca_master;
-    int                 ipl;
     int tmp;
 
     sc->sc_enintr  = wdsc_enintr;
@@ -287,9 +289,10 @@ wdsc_dmastop(dev)
  * Come here following a DMA interrupt
  */
 int
-wdsc_dmaintr(dev)
-    struct sbic_softc *dev;
+wdsc_dmaintr(arg)
+	void *arg;
 {
+    struct sbic_softc *dev = (struct sbic_softc *)arg;
     volatile struct pccreg *pc = dev->sc_cregs;
     int                 found = 0;
 
@@ -316,9 +319,10 @@ wdsc_dmaintr(dev)
  * Come here for SCSI interrupts
  */
 int
-wdsc_scsiintr(dev)
-    struct sbic_softc *dev;
+wdsc_scsiintr(arg)
+	void *arg;
 {
+    struct sbic_softc *dev = (struct sbic_softc *)arg;
     volatile struct pccreg *pc = dev->sc_cregs;
     int                 found;
 

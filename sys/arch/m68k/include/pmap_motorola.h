@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.5 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.6 2002/04/27 23:21:02 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -154,6 +154,10 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 #endif
 
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
+
+#ifdef COMPAT_HPUX
+int	pmap_mapmulti(pmap_t, vaddr_t);
+#endif
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.33 2001/12/08 02:24:06 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.34 2002/04/27 23:21:06 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline(), child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
@@ -188,11 +187,13 @@ pagemove(from, to, size)
  */ 
 void
 physaccess(vaddr, paddr, size, prot)
-	caddr_t vaddr, paddr;
-	register int size, prot;
+	vaddr_t vaddr;
+	paddr_t paddr;
+	size_t size;
+	int prot;
 {
-	register pt_entry_t *pte;
-	register u_int page;
+	pt_entry_t *pte;
+	u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
@@ -205,10 +206,10 @@ physaccess(vaddr, paddr, size, prot)
 
 void
 physunaccess(vaddr, size)
-	caddr_t vaddr;
-	register int size;
+	vaddr_t vaddr;
+	size_t size;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
@@ -219,15 +220,16 @@ physunaccess(vaddr, size)
 /*
  * Convert kernel VA to physical address
  */
-int
+paddr_t
 kvtop(addr)
-	caddr_t addr;
+	vaddr_t addr;
 {
 	paddr_t pa;
 
 	if (pmap_extract(pmap_kernel(), (vm_offset_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)pa);
+
+	return (pa);
 }
 
 /*

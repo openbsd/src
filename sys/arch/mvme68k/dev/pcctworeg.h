@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctworeg.h,v 1.3 1996/04/28 11:03:28 deraadt Exp $ */
+/*	$OpenBSD: pcctworeg.h,v 1.4 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -149,3 +149,5 @@ extern struct pcctworeg *sys_pcc2;
 #define PCC2_SC_SNOOP		(1 << 6)
 #define PCC2_SC_INVAL		(2 << 6)
 #define PCC2_SC_RESV		(3 << 6)
+
+int  pcctwointr_establish(int, struct intrhand *);

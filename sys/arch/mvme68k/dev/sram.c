@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.8 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: sram.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,17 +32,19 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
-
 #include <sys/device.h>
-#include <machine/cpu.h>
+
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/cpu.h>
 #include <machine/mioctl.h>
+
+#include <mvme68k/dev/memdevs.h>
 
 #include "mc.h"
 
@@ -75,14 +77,13 @@ srammatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 
 	if (cputyp == CPU_147)
 		return (0);
 	if (ca->ca_vaddr == (void *)-1)
-		return (!badpaddr(ca->ca_paddr, 1));
-	return (!badvaddr(ca->ca_vaddr, 1));
+		return (!badpaddr((paddr_t)ca->ca_paddr, 1));
+	return (!badvaddr((vaddr_t)ca->ca_vaddr, 1));
 }
 
 void
@@ -93,7 +94,6 @@ sramattach(parent, self, args)
 	struct confargs *ca = args;
 	struct sramsoftc *sc = (struct sramsoftc *)self;
 	struct mcreg *mc;
-	int i;
 
 	switch (cputyp) {
 #ifdef MVME162
@@ -148,9 +148,10 @@ sramattach(parent, self, args)
 
 /*ARGSUSED*/
 int
-sramopen(dev, flag, mode)
+sramopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	if (minor(dev) >= sram_cd.cd_ndevs ||
 	    sram_cd.cd_devs[minor(dev)] == NULL)
@@ -160,9 +161,10 @@ sramopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-sramclose(dev, flag, mode)
+sramclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -171,9 +173,10 @@ sramclose(dev, flag, mode)
 /*ARGSUSED*/
 int
 sramioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
+	dev_t dev;
+	u_long cmd;
 	caddr_t data;
-	int     cmd, flag;
+	int flag;
 	struct proc *p;
 {
 	int unit = minor(dev);

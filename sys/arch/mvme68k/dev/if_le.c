@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.17 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: if_le.c,v 1.18 2002/04/27 23:21:05 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -80,25 +80,29 @@ struct cfattach le_ca = {
 
 static int lebustype;
 
-hide void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-hide u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
-hide void vlewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-hide u_int16_t vlerdcsr(struct am7990_softc *, u_int16_t);
+void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+void vlewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t vlerdcsr(struct am7990_softc *, u_int16_t);
+void nvram_cmd(struct am7990_softc *, u_char, u_short);
+u_int16_t nvram_read(struct am7990_softc *, u_char);
+void vleetheraddr(struct am7990_softc *);
+void vleinit(struct am7990_softc *);
+void vlereset(struct am7990_softc *);
+int vle_intr(void *);
+void vle_copytobuf_contig(struct am7990_softc *, void *, int, int);
+void vle_zerobuf_contig(struct am7990_softc *, int, int);
 
 /* send command to the nvram controller */
-nvram_cmd(sc, cmd, addr )
-struct am7990_softc *sc;
-u_char cmd;
-u_short addr;
+void
+nvram_cmd(sc, cmd, addr)
+	struct am7990_softc *sc;
+	u_char cmd;
+	u_short addr;
 {
 	int i;
-	u_char rcmd = 0;
-	u_char rcmd2= 0;
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
-	rcmd = addr;
-	rcmd = rcmd << 3;
-	rcmd |= cmd;
 	for (i=0;i<8;i++) {
 		reg1->ler1_ear=((cmd|(addr<<1))>>i); 
 		CDELAY; 
@@ -108,13 +112,12 @@ u_short addr;
 /* read nvram one bit at a time */
 u_int16_t
 nvram_read(sc, nvram_addr)
-struct am7990_softc *sc;
-u_char nvram_addr;
+	struct am7990_softc *sc;
+	u_char nvram_addr;
 {
 	u_short val = 0, mask = 0x04000;
 	u_int16_t wbit;
 	/* these used by macros DO NOT CHANGE!*/
-	int i;
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	((struct le_softc *)sc)->csr = 0x4f;
 	ENABLE_NVRAM;
@@ -136,7 +139,7 @@ u_char nvram_addr;
 
 void
 vleetheraddr(sc)
-struct am7990_softc *sc;
+	struct am7990_softc *sc;
 {
 	u_char * cp = sc->sc_arpcom.ac_enaddr;
 	u_int16_t ival[3];
@@ -148,10 +151,10 @@ struct am7990_softc *sc;
 	memcpy(cp, &ival[0], 6);
 }
 
-hide void
+void
 lewrcsr(sc, port, val)
-struct am7990_softc *sc;
-u_int16_t port, val;
+	struct am7990_softc *sc;
+	u_int16_t port, val;
 {
 	register struct lereg1 *ler1 = (struct lereg1 *)((struct le_softc *)sc)->sc_r1;
 
@@ -159,10 +162,10 @@ u_int16_t port, val;
 	ler1->ler1_rdp = val;
 }
 
-hide void
+void
 vlewrcsr(sc, port, val)
-struct am7990_softc *sc;
-u_int16_t port, val;
+	struct am7990_softc *sc;
+	u_int16_t port, val;
 {
 	register struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
@@ -170,10 +173,10 @@ u_int16_t port, val;
 	ler1->ler1_rdp = val;
 }
 
-hide u_int16_t
+u_int16_t
 lerdcsr(sc, port)
-struct am7990_softc *sc;
-u_int16_t port;
+	struct am7990_softc *sc;
+	u_int16_t port;
 {
 	register struct lereg1 *ler1 = (struct lereg1 *)((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
@@ -183,10 +186,10 @@ u_int16_t port;
 	return (val);
 }
 
-hide u_int16_t
+u_int16_t
 vlerdcsr(sc, port)
-struct am7990_softc *sc;
-u_int16_t port;
+	struct am7990_softc *sc;
+	u_int16_t port;
 {
 	register struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
@@ -199,7 +202,7 @@ u_int16_t port;
 /* init MVME376, set ipl and vec */
 void
 vleinit(sc)
-struct am7990_softc *sc;
+	struct am7990_softc *sc;
 {
 	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	u_char vec = ((struct le_softc *)sc)->sc_vec;
@@ -213,7 +216,7 @@ struct am7990_softc *sc;
 /* MVME376 hardware reset */
 void
 vlereset(sc)
-struct am7990_softc *sc;
+	struct am7990_softc *sc;
 {
 	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	RESET_HW;
@@ -226,7 +229,7 @@ struct am7990_softc *sc;
 
 int
 vle_intr(sc)
-register void *sc;
+	void *sc;
 {
 	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	int rc;
@@ -237,9 +240,9 @@ register void *sc;
 
 void
 vle_copytobuf_contig(sc, from, boff, len)
-struct am7990_softc *sc;
-void *from;
-int boff, len;
+	struct am7990_softc *sc;
+	void *from;
+	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
 
@@ -255,8 +258,8 @@ int boff, len;
 
 void
 vle_zerobuf_contig(sc, boff, len)
-struct am7990_softc *sc;
-int boff, len;
+	struct am7990_softc *sc;
+	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
 	/* 
@@ -271,16 +274,15 @@ int boff, len;
 
 int
 lematch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	/* check physical addr for bogus MVME162 addr @0xffffd200. wierd XXX - smurph */
 	if (cputyp == CPU_162 && ca->ca_paddr == (void *)0xffffd200)
 		return (0);
 
-	return (!badvaddr(ca->ca_vaddr, 2));
+	return (!badvaddr((vaddr_t)ca->ca_vaddr, 2));
 }
 
 /*
@@ -290,14 +292,13 @@ void *vcf, *args;
  */
 void
 leattach(parent, self, aux)
-struct device *parent;
-struct device *self;
-void *aux;
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
 	register struct le_softc *lesc = (struct le_softc *)self;
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
-	register int a;
 	int pri = ca->ca_ipl;
 	extern void *etherbuf;
 	caddr_t addr;
@@ -344,7 +345,7 @@ void *aux;
 		lesc->sc_vec = ca->ca_vec;
 		sc->sc_memsize = VLEMEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP;
-		sc->sc_addr = kvtop(sc->sc_mem);
+		sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
 		sc->sc_hwreset = vlereset;
 		sc->sc_rdcsr = vlerdcsr;
 		sc->sc_wrcsr = vlewrcsr;
@@ -361,7 +362,7 @@ void *aux;
 		sc->sc_mem = etherbuf;
 		lesc->sc_r1 = (void *)ca->ca_vaddr;
 		sc->sc_conf3 = LE_C3_BSWP /*| LE_C3_ACON | LE_C3_BCON*/;
-		sc->sc_addr = kvtop(sc->sc_mem);
+		sc->sc_addr = kvtop((vaddr_t)sc->sc_mem);
 		sc->sc_memsize = LEMEMSIZE;
 		sc->sc_rdcsr = lerdcsr;
 		sc->sc_wrcsr = lewrcsr;
@@ -407,6 +408,3 @@ void *aux;
 #endif
 	}
 }
-
-
-

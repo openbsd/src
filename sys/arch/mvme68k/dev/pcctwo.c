@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.8 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -62,6 +62,8 @@ struct pcctwosoftc {
 
 void pcctwoattach(struct device *, struct device *, void *);
 int  pcctwomatch(struct device *, void *, void *);
+int  pcctwo_print(void *, const char *);
+int  pcctwo_scan(struct device *, void *, void *);
 
 struct cfattach pcctwo_ca = {
 	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach
@@ -78,7 +80,6 @@ pcctwomatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	struct pcctworeg *pcc2;
 
@@ -86,7 +87,7 @@ pcctwomatch(parent, vcf, args)
 	if (cputyp == CPU_162 || cputyp == CPU_147 || cputyp == CPU_172)
 		return (0);
 	pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
-	if (badvaddr(pcc2, 1) || pcc2->pcc2_chipid != PCC2_CHIPID)
+	if (badvaddr((vaddr_t)pcc2, 1) || pcc2->pcc2_chipid != PCC2_CHIPID)
 		return (0);
 	return (1);
 }
@@ -112,7 +113,6 @@ pcctwo_scan(parent, child, args)
 {
 	struct cfdata *cf = child;
 	struct pcctwosoftc *sc = (struct pcctwosoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -146,7 +146,6 @@ pcctwoattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct pcctwosoftc *sc = (struct pcctwosoftc *)self;
-	int i;
 
 	if (sys_pcc2)
 		panic("pcc2 already attached!");

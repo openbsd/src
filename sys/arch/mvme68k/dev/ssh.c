@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.2 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: ssh.c,v 1.3 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,13 +50,15 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
+
 #include <mvme68k/dev/sshreg.h>
 #include <mvme68k/dev/sshvar.h>
-
-extern u_int   kvtop();
 
 /*
  * SCSI delays
@@ -75,7 +77,11 @@ void sshsetdelay(int);
 void ssh_scsidone(struct ssh_acb *, int);
 void ssh_sched(struct ssh_softc *);
 int  ssh_poll(struct ssh_softc *, struct ssh_acb *);
-int  sshintr(struct ssh_softc *);
+void sshintr(struct ssh_softc *);
+void sshinitialize(struct ssh_softc *);
+void ssh_start(struct ssh_softc *, int, int, u_char *, int, u_char *, int);
+int  ssh_checkintr(struct ssh_softc *, u_char, u_char, u_char, int *);
+void scsi_period_to_ssh(struct ssh_softc *, int);
 
 /* 53C710 script */
 const
@@ -149,7 +155,7 @@ struct scsi_xfer *xs;
 	struct ssh_acb *acb;
 	struct ssh_softc *sc;
 	struct scsi_link *slp;
-	int flags, s, i;
+	int flags, s;
 
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
@@ -267,7 +273,7 @@ struct ssh_softc *sc;
 {
 	struct scsi_link *slp;
 	struct ssh_acb *acb;
-	int stat, i;
+	int i;
 
 #ifdef DEBUG
 	if (sc->sc_nexus) {
@@ -320,7 +326,7 @@ int stat;
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *slp = xs->sc_link;
 	struct ssh_softc *sc = slp->adapter_softc;
-	int s, dosched = 0;
+	int dosched = 0;
 
 #ifdef DIAGNOSTIC
 	if (acb == NULL || xs == NULL)
@@ -429,7 +435,9 @@ register struct ssh_softc *sc;
 ssh_regmap_p rp;
 char *where;
 {
+#ifdef fix_this
 	int i;
+#endif
 
 	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
 			  sc->sc_dev.dv_xname,
@@ -476,14 +484,14 @@ char *where;
 
 void
 sshinitialize(sc)
-struct ssh_softc *sc;
+	struct ssh_softc *sc;
 {
 	/*
 	 * Need to check that scripts is on a long word boundary
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
-	sc->sc_scriptspa = kvtop(scripts);
+	sc->sc_scriptspa = kvtop((vaddr_t)scripts);
 
 	/*
 	 * malloc sc_acb to ensure that DS is on a long word boundary.
@@ -591,7 +599,7 @@ struct ssh_softc *sc;
 			sc->sc_nexus->xs->error = XS_DRIVER_STUFFUP;
 			ssh_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
 		}
-		while (acb = sc->nexus_list.tqh_first) {
+		while ((acb = sc->nexus_list.tqh_first)) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			ssh_scsidone(acb, acb->stat[0]);
 		}
@@ -614,16 +622,18 @@ struct ssh_softc *sc;
 
 void
 ssh_start (sc, target, lun, cbuf, clen, buf, len)
-struct ssh_softc *sc;
-int target;
-int lun;
-u_char *cbuf;
-int clen;
-u_char *buf;
-int len;
+	struct ssh_softc *sc;
+	int target;
+	int lun;
+	u_char *cbuf;
+	int clen;
+	u_char *buf;
+	int len;
 {
 	ssh_regmap_p rp = sc->sc_sshp;
+#ifdef DEBUG
 	int i;
+#endif
 	int nchain;
 	int count, tcount;
 	char *addr, *dmaend;
@@ -650,20 +660,20 @@ int len;
 	acb->msg[0] = -1;
 	acb->ds.scsi_addr = (0x10000 << target) | (sc->sc_sync[target].sxfer << 8);
 	acb->ds.idlen = 1;
-	acb->ds.idbuf = (char *) kvtop(&acb->msgout[0]);
+	acb->ds.idbuf = (char *) kvtop((vaddr_t)&acb->msgout[0]);
 	acb->ds.cmdlen = clen;
-	acb->ds.cmdbuf = (char *) kvtop(cbuf);
+	acb->ds.cmdbuf = (char *) kvtop((vaddr_t)cbuf);
 	acb->ds.stslen = 1;
-	acb->ds.stsbuf = (char *) kvtop(&acb->stat[0]);
+	acb->ds.stsbuf = (char *) kvtop((vaddr_t)&acb->stat[0]);
 	acb->ds.msglen = 1;
-	acb->ds.msgbuf = (char *) kvtop(&acb->msg[0]);
+	acb->ds.msgbuf = (char *) kvtop((vaddr_t)&acb->msg[0]);
 	acb->msg[1] = -1;
 	acb->ds.msginlen = 1;
 	acb->ds.extmsglen = 1;
 	acb->ds.synmsglen = 3;
-	acb->ds.msginbuf = (char *) kvtop(&acb->msg[1]);
-	acb->ds.extmsgbuf = (char *) kvtop(&acb->msg[2]);
-	acb->ds.synmsgbuf = (char *) kvtop(&acb->msg[3]);
+	acb->ds.msginbuf = (char *) kvtop((vaddr_t)&acb->msg[1]);
+	acb->ds.extmsgbuf = (char *) kvtop((vaddr_t)&acb->msg[2]);
+	acb->ds.synmsgbuf = (char *) kvtop((vaddr_t)&acb->msg[3]);
 	bzero(&acb->ds.chain, sizeof (acb->ds.chain));
 
 	if (sc->sc_sync[target].state == SYNC_START) {
@@ -706,7 +716,7 @@ int len;
 	addr = buf;
 	dmaend = NULL;
 	while (count > 0) {
-		acb->ds.chain[nchain].databuf = (char *) kvtop (addr);
+		acb->ds.chain[nchain].databuf = (char *) kvtop ((vaddr_t)addr);
 		if (count < (tcount = NBPG - ((int) addr & PGOFSET)))
 			tcount = count;
 		acb->ds.chain[nchain].datalen = tcount;
@@ -741,7 +751,7 @@ int len;
 #endif
 
 	/* push data cache for all data the 53c710 needs to access */
-	dma_cachectl (acb, sizeof (struct ssh_acb));
+	dma_cachectl ((caddr_t)acb, sizeof (struct ssh_acb));
 	dma_cachectl (cbuf, clen);
 	if (buf != NULL && len != 0)
 		dma_cachectl (buf, len);
@@ -762,7 +772,7 @@ int len;
 					 sc->sc_dev.dv_xname);
 		rp->ssh_temp = 0;
 		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
-		rp->ssh_dsa = kvtop(&acb->ds);
+		rp->ssh_dsa = kvtop((vaddr_t)&acb->ds);
 		rp->ssh_dsp = sc->sc_scriptspa;
 		SSH_TRACE('s',1,0,0)
 	} else {
@@ -784,11 +794,11 @@ int len;
 
 int
 ssh_checkintr(sc, istat, dstat, sstat0, status)
-struct   ssh_softc *sc;
-u_char   istat;
-u_char   dstat;
-u_char   sstat0;
-int   *status;
+	struct   ssh_softc *sc;
+	u_char   istat;
+	u_char   dstat;
+	u_char   sstat0;
+	int   *status;
 {
 	ssh_regmap_p rp = sc->sc_sshp;
 	struct ssh_acb *acb = sc->sc_nexus;
@@ -931,7 +941,7 @@ int   *status;
 				}
 			}
 #endif
-			dma_cachectl (acb, sizeof(*acb));
+			dma_cachectl ((caddr_t)acb, sizeof(*acb));
 		}
 #ifdef DEBUG
 		SSH_TRACE('m',rp->ssh_sbcl,(rp->ssh_dsp>>8),rp->ssh_dsp);
@@ -1114,7 +1124,7 @@ int   *status;
 			}
 			if (j < DMAMAXIO)
 				acb->ds.chain[j].datalen = 0;
-			DCIAS(kvtop(&acb->ds.chain));
+			DCIAS(kvtop((vaddr_t)&acb->ds.chain));
 		}
 		++sc->sc_tinfo[target].dconns;
 		/*
@@ -1171,8 +1181,8 @@ int   *status;
 			sc->sc_nexus = acb;
 			sc->sc_flags |= acb->status;
 			acb->status = 0;
-			DCIAS(kvtop(&acb->stat[0]));
-			rp->ssh_dsa = kvtop(&acb->ds);
+			DCIAS(kvtop((vaddr_t)&acb->stat[0]));
+			rp->ssh_dsa = kvtop((vaddr_t)&acb->ds);
 			rp->ssh_sxfer = sc->sc_sync[acb->xs->sc_link->target].sxfer;
 			rp->ssh_sbcl = sc->sc_sync[acb->xs->sc_link->target].sbcl;
 			break;
@@ -1183,16 +1193,16 @@ int   *status;
 					 sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
 		}
-		dma_cachectl (acb, sizeof(*acb));
+		dma_cachectl ((caddr_t)acb, sizeof(*acb));
 		rp->ssh_temp = 0;
 		rp->ssh_dcntl |= SSH_DCNTL_STD;
 		return (0);
 	}
 	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff04) {
+#ifdef DEBUG
 		u_short ctest2 = rp->ssh_ctest2;
 
 		/* reselect was interrupted (by Sig_P or select) */
-#ifdef DEBUG
 		if (ssh_debug & 0x100 ||
 			 (ctest2 & SSH_CTEST2_SIGP) == 0)
 			printf ("%s: reselect interrupted (Sig_P?) scntl1 %x ctest2 %x 
@@ -1214,7 +1224,7 @@ int   *status;
 		}
 		target = sc->sc_nexus->xs->sc_link->target;
 		rp->ssh_temp = 0;
-		rp->ssh_dsa = kvtop(&sc->sc_nexus->ds);
+		rp->ssh_dsa = kvtop((vaddr_t)&sc->sc_nexus->ds);
 		rp->ssh_sxfer = sc->sc_sync[target].sxfer;
 		rp->ssh_sbcl = sc->sc_sync[target].sbcl;
 		rp->ssh_dsp = sc->sc_scriptspa;
@@ -1229,7 +1239,7 @@ int   *status;
 		printf ("%s: Unrecognized message in data sfbr %x msg %x sbcl %x\n",
 				  sc->sc_dev.dv_xname, rp->ssh_sfbr, acb->msg[1], rp->ssh_sbcl);
 		/* what should be done here? */
-		DCIAS(kvtop(&acb->msg[1]));
+		DCIAS(kvtop((vaddr_t)&acb->msg[1]));
 		rp->ssh_dsp = sc->sc_scriptspa + Ent_switch;
 		return (0);
 	}
@@ -1268,8 +1278,8 @@ int   *status;
 	 */
 	printf ("sshchkintr: target %x ds %x\n", target, &acb->ds);
 	printf ("scripts %x ds %x rp %x dsp %x dcmd %x\n", sc->sc_scriptspa,
-			  kvtop(&acb->ds), kvtop(rp), rp->ssh_dsp,
-			  *((long *)&rp->ssh_dcmd));
+	  kvtop((vaddr_t)&acb->ds), kvtop((vaddr_t)rp), rp->ssh_dsp,
+	  *((long *)&rp->ssh_dcmd));
 	printf ("sshchkintr: istat %x dstat %x sstat0 %x dsps %x "
 			  "dsa %x sbcl %x sts %x msg %x %x sfbr %x\n",
 			  istat, dstat, sstat0, rp->ssh_dsps, rp->ssh_dsa,
@@ -1324,7 +1334,7 @@ struct ssh_softc *sc;
 #endif
 
 	ssh_start(sc, acb->xs->sc_link->target, acb->xs->sc_link->lun,
-				  &acb->cmd, acb->clen, acb->daddr, acb->dleft);
+	  (u_char *)&acb->cmd, acb->clen, acb->daddr, acb->dleft);
 
 	return;
 }
@@ -1332,10 +1342,9 @@ struct ssh_softc *sc;
 /*
  * 53C710 interrupt handler
  */
-
-int
-sshintr (sc)
-register struct ssh_softc *sc;
+void
+sshintr(sc)
+	register struct ssh_softc *sc;
 {
 	ssh_regmap_p rp;
 	register u_char istat, dstat, sstat0;
@@ -1413,10 +1422,12 @@ register struct ssh_softc *sc;
  * not be correct for other 53c710 boards.
  *
  */
+void
 scsi_period_to_ssh (sc, target)
-struct ssh_softc *sc;
+	struct ssh_softc *sc;
+	int target;
 {
-	int period, offset, i, sxfer, sbcl;
+	int period, offset, sxfer, sbcl;
 
 	period = sc->sc_nexus->msg[4];
 	offset = sc->sc_nexus->msg[5];

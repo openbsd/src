@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.6 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.7 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -36,12 +36,13 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
+#include <machine/bugio.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/prom.h>
 
@@ -62,14 +63,12 @@ struct cfdriver bugtty_cd = {
 int bugttycnprobe(struct consdev *cp);
 int bugttycninit(struct consdev *cp);
 int bugttycngetc(dev_t dev);
-int bugttycnputc(dev_t dev, char c);
+void bugttycnputc(dev_t dev, char c);
 
-int bugttyopen(dev_t dev, int flag, int mode, struct proc *p);
-int bugttyclose(dev_t dev, int flag, int mode, struct proc *p);
-int bugttyread(dev_t dev, struct uio *uio, int flag);
-int bugttywrite(dev_t dev, struct uio *uio, int flag);
-int bugttyioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-int bugttystop(struct tty *tp, int flag);
+struct tty *bugttytty(dev_t);
+int bugttymctl(dev_t, int, int);
+int bugttyparam(struct tty*, struct termios *);
+void bugtty_chkinput(void);
 
 #define DIALOUT(x) ((x) & 0x80)
 #define SWFLAGS(dev) (bugttyswflags | (DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0))
@@ -126,8 +125,8 @@ bugttymctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
 {
-	static int settings = TIOCM_DTR | TIOCM_RTS |
-	    TIOCM_CTS | TIOCM_CD | TIOCM_DSR;
+	/*static int settings = TIOCM_DTR | TIOCM_RTS |
+	    TIOCM_CTS | TIOCM_CD | TIOCM_DSR;*/
 	int s;
 
 	/*printf("mctl: dev %x, bits %x, how %x,",dev, bits, how);*/
@@ -242,7 +241,9 @@ bugttyopen(dev, flag, mode, p)
 }
 
 int
-bugttyparam()
+bugttyparam(tp, tm)
+	struct tty*tp;
+	struct termios *tm;
 {
 	return (0);
 }
@@ -251,7 +252,7 @@ void
 bugttyoutput(tp)
 	struct tty *tp;
 {
-	int cc, s, unit, cnt ;
+	int cc, s, cnt;
 
 	/* only supports one unit */
 
@@ -302,6 +303,7 @@ bugttyread(dev, uio, flag)
 
 #if 1
 /* only to be called at splclk() */
+void
 bugtty_chkinput()
 {
 	struct tty *tp;
@@ -354,7 +356,7 @@ bugttywrite(dev, uio, flag)
 int
 bugttyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -480,6 +482,7 @@ int
 bugttycninit(cp)
 	struct consdev *cp;
 {
+	return (0);
 }
 
 int
@@ -489,7 +492,7 @@ bugttycngetc(dev)
 	return (bug_inchr());
 }
 
-int
+void
 bugttycnputc(dev, c)
 	dev_t dev;
 	char c;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.10 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: flash.c,v 1.11 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,7 +32,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -44,7 +43,9 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
+
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 
@@ -58,7 +59,7 @@
 
 struct flashsoftc {
 	struct device		sc_dev;
-	u_char *			sc_paddr;
+	u_char *		sc_paddr;
 	volatile u_char *	sc_vaddr;
 	u_char			sc_manu;
 	u_char			sc_ii;
@@ -79,6 +80,8 @@ struct cfdriver flash_cd = {
 
 int flashwritebyte(struct flashsoftc *sc, int addr, u_char val);
 int flasherasezone(struct flashsoftc *sc, int addr);
+u_char *flashsavezone(struct flashsoftc *, int);
+int flashwritezone(struct flashsoftc *, u_char *, int);
 
 struct flashii intel_flashii[] = {
 	{ "28F008SA",	FLII_INTEL_28F008SA,	1024*1024,	64*1024 },
@@ -126,7 +129,7 @@ flashmatch(parent, cf, args)
 		return (0);
 #endif
 
-	if (badpaddr(ca->ca_paddr, 1))
+	if (badpaddr((paddr_t)ca->ca_paddr, 1))
 		return (0);
 
 	if (!mc_hasflash())
@@ -229,7 +232,7 @@ flashwritezone(sc, zone, start)
 		do {
 			sc->sc_vaddr[0] = FLCMD_READSTAT;
 			sr = sc->sc_vaddr[0];
-		} while (sr & FLSR_WSMS == 0);
+		} while ((sr & FLSR_WSMS) == 0);
 		if (sr & FLSR_BWS)
 			return (i);	/* write failed on this byte! */
 		sc->sc_vaddr[0] = FLCMD_RESET;
@@ -296,21 +299,25 @@ flashwritebyte(sc, addr, val)
 
 /*ARGSUSED*/
 int
-flashopen(dev, flag, mode)
+flashopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
+
 	if (minor(dev) >= flash_cd.cd_ndevs ||
 	    flash_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
+
 	return (0);
 }
 
 /*ARGSUSED*/
 int
-flashclose(dev, flag, mode)
+flashclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -319,9 +326,10 @@ flashclose(dev, flag, mode)
 /*ARGSUSED*/
 int
 flashioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
-	u_char *data;
-	int     cmd, flag;
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	int unit = minor(dev);
@@ -488,4 +496,3 @@ flashmmap(dev, off, prot)
 		return (-1);
 	return (m68k_btop(sc->sc_paddr + off));
 }
-

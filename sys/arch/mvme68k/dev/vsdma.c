@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.4 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.5 2002/04/27 23:21:05 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,8 +62,8 @@ void	vsattach(struct device *, struct device *, void *);
 int	vsprint(void *auxp, char *);
 void  vs_initialize(struct vs_softc *);
 int	vs_intr(struct vs_softc *);
-int	vs_nintr(struct vs_softc *);
-int	vs_eintr(struct vs_softc *);
+int	vs_nintr(void *);
+int	vs_eintr(void *);
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,
@@ -92,9 +92,8 @@ vsmatch(pdp, vcf, args)
 	struct device *pdp;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	return(!badvaddr(ca->ca_vaddr, 1));
+	return(!badvaddr((vaddr_t)ca->ca_vaddr, 1));
 }
 
 void
@@ -106,7 +105,6 @@ vsattach(parent, self, auxp)
 	struct confargs *ca = auxp;
 	struct vsreg * rp;
 	int tmp;
-	extern int cpuspeed;
 
 	sc->sc_vsreg = rp = ca->ca_vaddr;
 
@@ -160,9 +158,11 @@ vsprint(auxp, pnp)
 
 /* normal interrupt function */
 int
-vs_nintr(sc)
-	struct vs_softc *sc;
+vs_nintr(arg)
+	void *arg;
 {
+	struct vs_softc *sc = (struct vs_softc *)arg;
+
 #ifdef SDEBUG
 	printf("Normal Interrupt!!!\n");
 #endif 
@@ -173,9 +173,11 @@ vs_nintr(sc)
 
 /* error interrupt function */
 int
-vs_eintr(sc)
-	struct vs_softc *sc;
+vs_eintr(arg)
+	void *arg;
 {
+	struct vs_softc *sc = (struct vs_softc *)arg;
+
 #ifdef SDEBUG
 	printf("Error Interrupt!!!\n");
 #endif

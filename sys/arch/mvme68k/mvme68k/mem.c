@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.18 2001/12/08 02:24:06 art Exp $ */
+/*	$OpenBSD: mem.c,v 1.19 2002/04/27 23:21:06 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -74,13 +74,13 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
+#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -89,9 +89,10 @@ static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	switch (minor(dev)) {
@@ -107,9 +108,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -202,7 +204,7 @@ mmrw(dev, uio, flags)
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 *
-			 * XXX on the hp300 we already know where there
+			 * XXX on the mvme68k we already know where there
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (devzeropage == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.12 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: vme.c,v 1.13 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,10 +65,13 @@
 int  vmematch(struct device *, void *, void *);
 void vmeattach(struct device *, struct device *, void *);
 
-int vme1chip_init(struct vmesoftc *sc);
-int vme2chip_init(struct vmesoftc *sc);
+void vme1chip_init(struct vmesoftc *sc);
+void vme2chip_init(struct vmesoftc *sc);
 u_long vme2chip_map(u_long base, int len, int dwidth);
-int vme2abort(struct frame *frame);
+int vme2abort(void *);
+
+void vmeunmap(void *, int);
+int vmeprint(void *, const char *);
 
 static int vmebustype;
 
@@ -240,7 +243,7 @@ vmerw(sc, uio, flags, bus)
 	int flags;
 	int bus;
 {
-	register vm_offset_t o, v;
+	register vm_offset_t v;
 	register int c;
 	register struct iovec *iov;
 	void *vme;
@@ -297,7 +300,6 @@ vmescan(parent, child, args, bustype)
 {
 	struct cfdata *cf = child;
 	struct vmesoftc *sc = (struct vmesoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -422,7 +424,7 @@ vmeintr_establish(vec, ih)
 }
 
 #if defined(MVME147)
-int
+void
 vme1chip_init(sc)
 	struct vmesoftc *sc;
 {
@@ -438,12 +440,12 @@ vme1chip_init(sc)
 /*
  * XXX what AM bits should be used for the D32/D16 mappings?
  */
-int
+void
 vme2chip_init(sc)
 	struct vmesoftc *sc;
 {
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
-	u_long ctl, addr, vasize;
+	u_long ctl;
 
 	/* turn off SYSFAIL LED */
 	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
@@ -472,8 +474,8 @@ vme2chip_init(sc)
 	printf("%s: 4phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
 	    sc->sc_dev.dv_xname,
 	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
-	    vme2->vme2_master4 << 16 + vme2->vme2_master4mod << 16,
-       vme2->vme2_master4 & 0xffff0000 + vme2->vme2_master4 & 0xffff0000);
+	    (vme2->vme2_master4 << 16) + (vme2->vme2_master4mod << 16),
+       (vme2->vme2_master4 & 0xffff0000) + (vme2->vme2_master4 & 0xffff0000));
 	/*
 	 * Map the VME irq levels to the cpu levels 1:1.
 	 * This is rather inflexible, but much easier.
@@ -493,7 +495,6 @@ vme2chip_init(sc)
 		 * pseudo driver, abort interrupt handler
 		 */
 		sc->sc_abih.ih_fn = vme2abort;
-		sc->sc_abih.ih_arg = 0;
 		sc->sc_abih.ih_ipl = 7;
 		sc->sc_abih.ih_wantframe = 1;
 
@@ -525,18 +526,20 @@ vme2chip_map(base, len, dwidth)
 		if (base < VME2_D32STARTVME)
 			return (NULL);
 		return (base - VME2_D32STARTVME + VME2_D32STARTPHYS);
+	default:
+		return (NULL);
 	}
 }
 
 #if NPCCTWO > 0
 int
 vme2abort(frame)
-	struct frame *frame;
+	void *frame;
 {
 	struct vmesoftc *sc = (struct vmesoftc *)vme_cd.cd_devs[0];
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 
-	if (vme2->vme2_irqstat & VME2_IRQ_AB == 0) {
+	if ((vme2->vme2_irqstat & VME2_IRQ_AB) == 0) {
 		printf("%s: abort irq not set\n", sc->sc_dev.dv_xname);
 		return (0);
 	}

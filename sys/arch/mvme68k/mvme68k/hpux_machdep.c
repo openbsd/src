@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.5 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.6 2002/04/27 23:21:06 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 /*
- * Machinde-dependent bits for HP-UX binary compatibility.
+ * Machine-dependent bits for HP-UX binary compatibility.
  */
 
 #include <sys/param.h>
@@ -74,12 +74,12 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h> 
 #include <machine/reg.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_sig.h>
 #include <compat/hpux/hpux_util.h>
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
@@ -143,6 +143,7 @@ hpux_cpu_makecmds(p, epp)
 	/* set up command for exec header */
 	NEW_VMCMD(&epp->ep_vmcmds, hpux_cpu_vmcmd,
 	    sizeof(struct hpux_exec), (long)epp->ep_hdr, NULLVP, 0, 0);
+	return (0);
 }
 
 /*
@@ -171,7 +172,7 @@ hpux_cpu_vmcmd(p, ev)
 			p->p_md.md_flags &= ~MDP_CCBDATA;
 
 		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.md_flags & ~MDP_CCBSTACK;
+			p->p_md.md_flags &= ~MDP_CCBSTACK;
 	}
 
 	return (0);

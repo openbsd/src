@@ -1,4 +1,4 @@
-/*	$OpenBSD: bug.c,v 1.4 1999/09/27 20:30:31 smurph Exp $ */
+/*	$OpenBSD: bug.c,v 1.5 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -35,10 +35,17 @@
  * are preserved.
  */
 #include <sys/param.h>
+
+#include <machine/bugio.h>
 #include <machine/prom.h>
 
 /* flag to traphandler to signify prom call. presumes splhigh() */
 extern volatile int promcall;
+
+void bug_outln(char *, char *);
+void bug_delay(int);
+void bug_stat(void);
+void asm_bug_stat(void);
 
 /* tty routines */
 char
@@ -208,17 +215,6 @@ bug_brdid()
 	return (pbrd_id);
 }
 
-void
-bug_rtc_rd(ptime)
-	struct bug_time *ptime;
-{
-	promcall = 1;
-	asm volatile ("movl %0,sp@-" :: "a" (ptime));
-	MVMEPROM_CALL(MVMEPROM_RTC_RD);
-	asm volatile ("nop");
-	promcall = 0;
-}
-
 int asm_callbuf[4];
 
 void
@@ -247,8 +243,3 @@ asm_bug_stat()
 	asm volatile ("movl _asm_callbuf+8,d0");
 	asm volatile ("movl _asm_callbuf+12,d1");
 }
-
-
-
-
-

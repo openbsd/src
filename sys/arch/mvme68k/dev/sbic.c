@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.10 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: sbic.c,v 1.11 2002/04/27 23:21:05 miod Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -89,8 +89,6 @@
  */
 #define SBIC_WAIT(regs, until, timeo) sbicwait(regs, until, timeo, __LINE__)
 
-extern u_int kvtop();
-
 int     sbicicmd(struct sbic_softc *, void *, int, void *, int);
 int     sbicgo(struct sbic_softc *, struct scsi_xfer *);
 int     sbicdmaok(struct sbic_softc *, struct scsi_xfer *);
@@ -113,6 +111,7 @@ void    sbic_scsidone(struct sbic_acb *, int);
 void    sbic_sched(struct sbic_softc *);
 void    sbic_save_ptrs(struct sbic_softc *);
 void    sbic_load_ptrs(struct sbic_softc *);
+void    sbicinit(struct sbic_softc *);
 
 /*
  * Synch xfer parameters, and timing conversions
@@ -313,11 +312,11 @@ sbic_load_ptrs(dev)
          * do kvm to pa mappings
          */
         vaddr = acb->sc_kv.dc_addr;
-        paddr = acb->sc_pa.dc_addr = (char *) kvtop(vaddr);
+        paddr = acb->sc_pa.dc_addr = (char *)kvtop((vaddr_t)vaddr);
 
         for (count = (NBPG - ((int)vaddr & PGOFSET));
              count < acb->sc_kv.dc_count &&
-                     (char *)kvtop(vaddr + count + 4) == paddr + count + 4;
+                (char *)kvtop((vaddr_t)vaddr + count + 4) == paddr + count + 4;
              count += NBPG)
             ;   /* Do nothing */
 
@@ -406,7 +405,7 @@ sbic_scsicmd(xs)
     acb->clen           = xs->cmdlen;
     acb->sc_kv.dc_addr  = xs->data;
     acb->sc_kv.dc_count = xs->datalen;
-    acb->pa_addr        = xs->data ? (char *)kvtop(xs->data) : 0;
+    acb->pa_addr        = xs->data ? (char *)kvtop((vaddr_t)xs->data) : 0;
     bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
 
     if ( flags & SCSI_POLL ) {
@@ -599,7 +598,7 @@ sbic_scsidone(acb, stat)
             acb->clen           = sizeof(*ss);
             acb->sc_kv.dc_addr  = (char *)&xs->sense;
             acb->sc_kv.dc_count = sizeof(struct scsi_sense_data);
-            acb->pa_addr        = (char *)kvtop(&xs->sense); /* XXX check */
+            acb->pa_addr        = (char *)kvtop((vaddr_t)&xs->sense); /* XXX check */
             acb->flags          = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
 
             TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
@@ -1609,9 +1608,9 @@ sbicgo(dev, xs)
     addr  = acb->sc_kv.dc_addr;
     count = acb->sc_kv.dc_count;
 
-    if ( count && ((char *)kvtop(addr) != acb->sc_pa.dc_addr) ) {
+    if ( count && ((char *)kvtop((vaddr_t)addr) != acb->sc_pa.dc_addr) ) {
         printf("sbic: DMA buffer mapping changed %x->%x\n",
-                acb->sc_pa.dc_addr, kvtop(addr));
+                acb->sc_pa.dc_addr, kvtop((vaddr_t)addr));
 #ifdef DDB
         Debugger();
 #endif
@@ -2432,9 +2431,9 @@ sbicnextstate(dev, csr, asr)
                      */
                     GET_SBIC_csr(regs,csr);
 
-                    if ( csr == SBIC_CSR_MIS   | MESG_IN_PHASE ||
-                         csr == SBIC_CSR_MIS_1 | MESG_IN_PHASE ||
-                         csr == SBIC_CSR_MIS_2 | MESG_IN_PHASE ) {
+                    if (csr == (SBIC_CSR_MIS   | MESG_IN_PHASE) ||
+                        csr == (SBIC_CSR_MIS_1 | MESG_IN_PHASE) ||
+                        csr == (SBIC_CSR_MIS_2 | MESG_IN_PHASE)) {
                         /*
                          * Yup, gone to message in. Fetch the target LUN
                          */
@@ -2596,7 +2595,7 @@ sbiccheckdmap(bp, len, mask)
 
     while ( len ) {
 
-        phy_buf = kvtop(buffer);
+        phy_buf = kvtop((vaddr_t)buffer);
         phy_len = NBPG - ((int) buffer & PGOFSET);
 
         if ( len < phy_len )

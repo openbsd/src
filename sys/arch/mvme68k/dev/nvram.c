@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.9 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: nvram.c,v 1.10 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -37,13 +37,18 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <machine/psl.h>
+
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
+#include <machine/psl.h>
+
+#include <mvme68k/dev/memdevs.h>
 #include <mvme68k/dev/nvramreg.h>
 
 #if defined(GPROF)
@@ -71,21 +76,20 @@ struct cfdriver nvram_cd = {
 
 int
 nvrammatch(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;   
 
 /*X*/	if (ca->ca_vaddr == (void *)-1)
 /*X*/		return (1);
-	return (!badvaddr(ca->ca_vaddr, 1));
+	return (!badvaddr((vaddr_t)ca->ca_vaddr, 1));
 }
 
 void
 nvramattach(parent, self, args)
-struct device *parent, *self;
-void *args;
+	struct device *parent, *self;
+	void *args;
 {
 	struct confargs *ca = args;
 	struct nvramsoftc *sc = (struct nvramsoftc *)self;
@@ -100,7 +104,7 @@ void *args;
 
 /*X*/	if (sc->sc_vaddr == (void *)-1)
 /*X*/		sc->sc_vaddr = mapiodev((void *)sc->sc_paddr,
-/*X*/		max(sc->sc_len, NBPG));
+/*X*/		    MAX(sc->sc_len, NBPG));
 /*X*/	if (sc->sc_vaddr == NULL)
 /*X*/		panic("failed to map!");
 
@@ -122,13 +126,12 @@ void *args;
  */
 void
 microtime(tvp)
-register struct timeval *tvp;
+	register struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
@@ -160,9 +163,22 @@ register struct timeval *tvp;
 const short dayyr[12] =
 { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-static u_long
+struct chiptime {
+	int     sec;
+	int     min;
+	int     hour;
+	int     wday;
+	int     day;
+	int     mon;
+	int     year;
+};
+
+u_long chiptotime(int, int, int, int, int, int);
+void timetochip(struct chiptime *);
+
+u_long
 chiptotime(sec, min, hour, day, mon, year)
-register int sec, min, hour, day, mon, year;
+	register int sec, min, hour, day, mon, year;
 {
 	register int days, yr;
 
@@ -197,20 +213,11 @@ register int sec, min, hour, day, mon, year;
 	return (days * SECDAY + hour * 3600 + min * 60 + sec);
 }
 
-struct chiptime {
-	int     sec;
-	int     min;
-	int     hour;
-	int     wday;
-	int     day;
-	int     mon;
-	int     year;
-};
-
+void
 timetochip(c)
-register struct chiptime *c;
+	struct chiptime *c;
 {
-	register int t, t2, t3, now = time.tv_sec;
+	int t, t2, t3, now = time.tv_sec;
 
 	/* January 1 1970 was a Thursday (4 in unix wdays) */
 	/* compute the days since the epoch */
@@ -258,8 +265,9 @@ register struct chiptime *c;
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
+void
 inittodr(base)
-time_t base;
+	time_t base;
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	register struct clockreg *cl = sc->sc_regs;
@@ -313,6 +321,7 @@ time_t base;
  * and when rebooting.  Do nothing if the time is not yet known, e.g.,
  * when crashing during autoconfig.
  */
+void
 resettodr()
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
@@ -335,9 +344,10 @@ resettodr()
 
 /*ARGSUSED*/
 int
-nvramopen(dev, flag, mode)
-dev_t dev;
-int flag, mode;
+nvramopen(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	if (minor(dev) >= nvram_cd.cd_ndevs ||
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
@@ -347,9 +357,10 @@ int flag, mode;
 
 /*ARGSUSED*/
 int
-nvramclose(dev, flag, mode)
-dev_t dev;
-int flag, mode;
+nvramclose(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -358,10 +369,11 @@ int flag, mode;
 /*ARGSUSED*/
 int
 nvramioctl(dev, cmd, data, flag, p)
-dev_t   dev;
-caddr_t data;
-int     cmd, flag;
-struct proc *p;
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
@@ -381,9 +393,9 @@ struct proc *p;
 /*ARGSUSED*/
 int
 nvramread(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
@@ -394,9 +406,9 @@ int flags;
 /*ARGSUSED*/
 int
 nvramwrite(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.25 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: cl.c,v 1.26 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -33,7 +33,6 @@
 /* DMA mode still does not work!!! */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
@@ -41,12 +40,17 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/device.h>
-/* #include <sys/queue.h> */
-#include <machine/cpu.h>
-#include <machine/autoconf.h>
-#include <dev/cons.h>
-#include <mvme68k/dev/clreg.h>
 #include <sys/syslog.h>
+/* #include <sys/queue.h> */
+
+#include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/cpu.h>
+
+#include <dev/cons.h>
+
+#include <mvme68k/dev/clreg.h>
+
 #include "cl.h"
 
 #ifdef DDB
@@ -59,7 +63,7 @@
 #include <mvme68k/dev/pcctworeg.h>
 #endif
 
-#define splcl() spl3()
+#define splcl() spltty()
 #define USE_BUFFER
 
 /* min timeout 0xa, what is a good value */
@@ -170,9 +174,9 @@ void cl_unblock(struct tty *tp);
 int clccparam(struct clsoftc *sc, struct termios *par, int channel);
 
 int clparam(struct tty *tp, struct termios *t);
-int cl_mintr(struct clsoftc *sc);
-int cl_txintr(struct clsoftc *sc);
-int cl_rxintr(struct clsoftc *sc);
+int cl_mintr(void *);
+int cl_txintr(void *);
+int cl_rxintr(void *);
 void cl_overflow(struct clsoftc *sc, int channel, time_t *ptime, u_char *msg);
 void cl_parity(struct clsoftc *sc, int channel);
 void cl_frame(struct clsoftc *sc, int channel);
@@ -183,19 +187,19 @@ void cl_dumpport(int channel);
 int	clprobe(struct device *parent, void *self, void *aux);
 void	clattach(struct device *parent, struct device *self, void *aux);
 
-int clopen(dev_t dev, int flag, int mode, struct proc *p);
-int clclose(dev_t dev, int flag, int mode, struct proc *p);
-int clread(dev_t dev, struct uio *uio, int flag);
-int clwrite(dev_t dev, struct uio *uio, int flag);
-int clioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-int clstop(struct tty *tp, int flag);
-
-static void cl_initchannel(struct clsoftc *sc, int channel);
-static void clputc(struct clsoftc *sc, int unit, u_char c);
-static u_char clgetc(struct clsoftc *sc, int *channel);
-static void cloutput(struct tty *tp);
-void cl_softint(struct clsoftc *sc);
+void cl_initchannel(struct clsoftc *sc, int channel);
+void clputc(struct clsoftc *sc, int unit, u_char c);
+u_char clgetc(struct clsoftc *sc, int *channel);
+void cloutput(struct tty *tp);
+void cl_softint(void *);
 void cl_appendbufn(struct clsoftc *sc, u_char channel, u_char *buf, u_short cnt);
+
+struct tty *cltty(dev_t);
+int cl_instat(struct clsoftc *);
+void clcnpollc(dev_t, int);
+void cl_chkinput(void);
+void cl_break(struct clsoftc *, int);
+void cl_appendbuf(struct clsoftc *, u_char, u_char);
 
 struct cfattach cl_ca = {
 	sizeof(struct clsoftc), clprobe, clattach
@@ -213,9 +217,8 @@ int dopoll = 1;
 #define CL_CHANNEL(x) (minor(x) & 3)
 #define CL_TTY(x) (minor(x))
 
-extern int cputyp;
-
-struct tty * cltty(dev)
+struct tty *
+cltty(dev)
 	dev_t dev;
 {
 	int unit, channel;
@@ -229,7 +232,8 @@ struct tty * cltty(dev)
 	return sc->sc_cl[channel].tty;
 }
 
-int	clprobe(parent, self, aux)
+int
+clprobe(parent, self, aux)
 	struct device *parent;
 	void *self;
 	void *aux;
@@ -320,8 +324,9 @@ clattach(parent, self, aux)
 	sc->ssir = allocate_sir(cl_softint, (void *)sc);
 #endif
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
-		int j;
 #if 0
+		int j;
+
 		for (j = 0; j < 2 ; j++) {
 			sc->sc_cl[i].rxp[j] = (void *)kvtop(sc->sc_cl[i].rx[j]);
 			printf("cl[%d].rxbuf[%d] %x p %x\n",
@@ -387,7 +392,8 @@ clattach(parent, self, aux)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_mxintrcnt);
 	printf("\n");
 }
-static void
+
+void
 cl_initchannel(sc, channel)
 	struct clsoftc *sc;
 	int channel;
@@ -529,7 +535,8 @@ int clmctl (dev, bits, how)
 	return(bits);
 }
 
-int clopen (dev, flag, mode, p)
+int
+clopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
@@ -697,6 +704,7 @@ int clparam(tp, t)
 	return 0;
 }
 
+#if 0
 void cloutput(tp)
 	struct tty *tp;
 {
@@ -734,8 +742,10 @@ void cloutput(tp)
 	}
 	splx(s);
 }
+#endif
 
-int clclose (dev, flag, mode, p)
+int
+clclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
@@ -777,10 +787,12 @@ int clclose (dev, flag, mode, p)
 
 	return 0;
 }
-int clread (dev, uio, flag)
+
+int
+clread (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
-int flag;
+	int flag;
 {
 	int unit, channel;
 	struct tty *tp;
@@ -798,7 +810,9 @@ int flag;
 		return ENXIO;
 	return((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
-int clwrite (dev, uio, flag)
+
+int
+clwrite (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
@@ -819,9 +833,11 @@ int clwrite (dev, uio, flag)
 		return ENXIO;
 	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
-int clioctl (dev, cmd, data, flag, p)
+
+int
+clioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -1001,7 +1017,10 @@ int
 clcngetc(dev)
 	dev_t dev;
 {
-	u_char val, reoir, licr, isrl, data, status, fifo_cnt;
+	u_char val, reoir, licr, isrl, data, fifo_cnt;
+#if 0
+	u_char status;
+#endif
 	int got_char = 0;
 	u_char ier_old = 0xff;
 	struct clreg *cl_reg = cl_cons.cl_vaddr;
@@ -1068,6 +1087,8 @@ clcnputc(dev, c)
 	clputc(0, 0, c);
 	return 0;
 }
+
+void
 clcnpollc(dev, on)
 	dev_t dev;
 	int on;
@@ -1079,7 +1100,8 @@ clcnpollc(dev, on)
 	}
 	return;
 }
-static void
+
+void
 clputc(sc, unit, c)
 	struct clsoftc *sc;
 	int unit;
@@ -1181,7 +1203,8 @@ cl_chkinput()
 	}
 }
 #endif
-static u_char 
+
+u_char 
 clgetc(sc, channel)
 	struct clsoftc *sc;
 	int *channel;
@@ -1406,9 +1429,12 @@ clstart(tp)
 	struct tty *tp;
 {
 	dev_t dev;
+#if 0
 	u_char cbuf;
+	int cnt;
+#endif
 	struct clsoftc *sc;
-	int channel, unit, s, cnt;
+	int channel, unit, s;
 
 	dev = tp->t_dev;
 	channel = CL_CHANNEL(dev);
@@ -1455,9 +1481,10 @@ clstart(tp)
 	return;
 }
 int
-cl_mintr(sc)
-	struct clsoftc *sc;
+cl_mintr(arg)
+	void *arg;
 {
+	struct clsoftc *sc = (struct clsoftc *)arg;
 	u_char mir, misr, msvr;
 	int channel;
 	if(((mir = sc->cl_reg->cl_mir) & 0x40) == 0x0) {
@@ -1510,10 +1537,11 @@ cl_mintr(sc)
 }
 
 int
-cl_txintr(sc)
-	struct clsoftc *sc;
+cl_txintr(arg)
+	void *arg;
 {
-	static empty = 0;
+	struct clsoftc *sc = (struct clsoftc *)arg;
+	static int empty = 0;
 	u_char tir, cmr, teoir;
 	u_char max;
 	int channel;
@@ -1632,11 +1660,11 @@ cl_txintr(sc)
 }
 
 int
-cl_rxintr(sc)
-	struct clsoftc *sc;
+cl_rxintr(arg)
+	void *arg;
 {
+	struct clsoftc *sc = (struct clsoftc *)arg;
 	u_char rir, channel, cmr, risrl;
-	u_char c;
 	u_char fifocnt;
 	struct tty *tp;
 	int i;
@@ -1859,31 +1887,6 @@ cl_break (sc, channel)
 }
 
 void
-cl_dumpport0()
-{
-	cl_dumpport(0);
-	return;
-}
-void
-cl_dumpport1()
-{
-	cl_dumpport(1);
-	return;
-}
-void
-cl_dumpport2()
-{
-	cl_dumpport(2);
-	return;
-}
-void
-cl_dumpport3()
-{
-	cl_dumpport(3);
-	return;
-}
-
-void
 cl_dumpport(channel)
 	int channel;
 {
@@ -2010,7 +2013,7 @@ cl_appendbuf(sc, channel, c)
 	u_char channel;
 	u_char c;
 {
-	int s;
+	/* int s; */
 	/* s = splcl(); */
 	if (1 + sc->sc_cl[channel].nchar >= CL_BUFSIZE ) {
 		cl_overflow (sc, channel, &sc->sc_fotime, "rbuf");
@@ -2034,7 +2037,7 @@ cl_appendbufn(sc, channel, buf, cnt)
 	u_char *buf;
 	u_short cnt;
 {
-	int s;
+	/* int s; */
 	int i;
 	/* s = splcl(); */ /* should be called at splcl(). */
 	if (cnt + sc->sc_cl[channel].nchar >= CL_BUFSIZE ) {
@@ -2059,9 +2062,10 @@ cl_appendbufn(sc, channel, buf, cnt)
 }
 
 void
-cl_softint(sc)
-	struct clsoftc *sc;
+cl_softint(arg)
+	void *arg;
 {
+	struct clsoftc *sc = (struct clsoftc *)arg;
 	int i;
 	int s;
 	u_char c;

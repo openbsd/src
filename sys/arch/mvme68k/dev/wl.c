@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.8 2002/03/14 03:15:56 millert Exp $ */
+/*	$OpenBSD: wl.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -31,7 +31,6 @@
  */  
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
@@ -39,16 +38,20 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/device.h>
-#include <machine/cpu.h>
+#include <sys/syslog.h>
+
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+#include <machine/cpu.h>
+
 #include <mvme68k/dev/wlreg.h>
 #include <mvme68k/dev/vme.h>
-#include <sys/syslog.h>
+
 #include "cl.h"
 
 #include "vmes.h"
 
-#define splcl() spl3()
+#define splcl() spltty()
 
 /* min timeout 0xa, what is a good value */
 #define CL_TIMEOUT	0x10
@@ -186,13 +189,6 @@ void cl_dumpport(int channel);
 
 int	wlprobe(struct device *parent, void *self, void *aux);
 void	wlattach(struct device *parent, struct device *self, void *aux);
-
-int wlopen(dev_t dev, int flag, int mode, struct proc *p);
-int wlclose(dev_t dev, int flag, int mode, struct proc *p);
-int wlread(dev_t dev, struct uio *uio, int flag);
-int wlwrite(dev_t dev, struct uio *uio, int flag);
-int wlioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p);
-int wlstop(struct tty *tp, int flag);
 
 static void cl_initchannel(struct wlsoftc *sc, int channel);
 static void clputc(struct wlsoftc *sc, int unit, u_char c);
@@ -504,7 +500,8 @@ int clmctl (dev, bits, how)
 	return(bits);
 }
 
-int wlopen (dev, flag, mode, p)
+int
+wlopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
@@ -645,7 +642,8 @@ void cloutput(tp)
 	splx(s);
 }
 
-int wlclose (dev, flag, mode, p)
+int
+wlclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
@@ -685,7 +683,8 @@ int wlclose (dev, flag, mode, p)
 	return (0);
 }
 
-int wlread (dev, uio, flag)
+int
+wlread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
@@ -706,7 +705,8 @@ int wlread (dev, uio, flag)
 		return ENXIO;
 	return((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
-int wlwrite (dev, uio, flag)
+int
+wlwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
@@ -727,9 +727,10 @@ int wlwrite (dev, uio, flag)
 		return ENXIO;
 	return((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
-int wlioctl (dev, cmd, data, flag, p)
+int
+wlioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2002/04/25 22:18:20 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.12 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -137,7 +137,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int want_resched;
+extern int want_resched;
 #define	need_resched()	{ want_resched = 1; aston(); }
 
 /*
@@ -153,7 +153,7 @@ int want_resched;
  */
 #define	signotify(p)	aston()
 
-int astpending;
+extern int astpending;
 #define aston() (astpending = 1)
 
 extern	char *intiobase, *intiolimit;
@@ -193,17 +193,62 @@ extern int	cputyp;
 
 struct intrhand {
 	struct	intrhand *ih_next;
-	int	(*ih_fn)();
+	int	(*ih_fn)(void *);
 	void	*ih_arg;
 	int	ih_ipl;
 	int	ih_wantframe;
 };
+
+int intr_establish(int, struct intrhand *);
 
 struct haltvec {
 	struct haltvec *hv_next;
 	void	(*hv_fn)(void);
 	int	hv_pri;
 };
+
+struct frame;
+struct fpframe;
+struct pcb;
+
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
+void	DCIA(void);
+void	DCIS(void);
+void	DCIAS(vaddr_t);
+void	DCIU(void);
+void	ICIA(void);
+void	ICPA(void);
+void	PCIA(void);
+void	TBIA(void);
+void	TBIS(vaddr_t);
+void	TBIAS(void);
+void	TBIAU(void);
+#if defined(M68040)
+void	DCFA(void);
+void	DCFP(paddr_t);
+void	DCFL(paddr_t);
+void	DCPL(paddr_t);
+void	DCPP(paddr_t);
+void	ICPL(paddr_t);
+void	ICPP(paddr_t);
+#endif
+int	suline(caddr_t, caddr_t);
+void	savectx(struct pcb *);
+void	switch_exit(struct proc *);
+__dead void	doboot(void);
+void	loadustp(int);
+void	proc_trampoline(void);
+
+int badpaddr(paddr_t, int);
+int badvaddr(vaddr_t, int);
+void nmihand(void *);
+int intr_findvec(int, int);
+
+void dma_cachectl(caddr_t, int);
+paddr_t kvtop(vaddr_t);
+void physaccess(vaddr_t, paddr_t, size_t, int);
+void physunaccess(vaddr_t, size_t);
 
 #endif	/* _KERNEL */
 #endif	/* _MVME68K_CPU_H_ */

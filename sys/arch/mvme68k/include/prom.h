@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.9 2001/06/12 22:53:16 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.10 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -30,6 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _MACHINE_PROM_H_
+#define _MACHINE_PROM_H_
 
 #define MVMEPROM_INCHR		0x00
 #define MVMEPROM_INSTAT		0x01
@@ -190,3 +192,4 @@ struct mvmeprom_args {
 #define RB_NOSYM 0x4000
 #endif
 
+#endif /* _MACHINE_PROM_H_ */

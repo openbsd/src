@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.8 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: vmel.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,14 +32,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
+
 #include <mvme68k/dev/vme.h>
 
 /*
@@ -50,6 +52,8 @@
 
 void vmelattach(struct device *, struct device *, void *);
 int  vmelmatch(struct device *, void *, void *);
+
+int vmelscan(struct device *, void *, void *);
 
 struct cfattach vmel_ca = {
 	sizeof(struct vmelsoftc), vmelmatch, vmelattach
@@ -91,9 +95,10 @@ vmelattach(parent, self, args)
 
 /*ARGSUSED*/
 int
-vmelopen(dev, flag, mode)
+vmelopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 	if (minor(dev) >= vmel_cd.cd_ndevs ||
 	    vmel_cd.cd_devs[minor(dev)] == NULL)
@@ -103,9 +108,10 @@ vmelopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-vmelclose(dev, flag, mode)
+vmelclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -114,13 +120,12 @@ vmelclose(dev, flag, mode)
 /*ARGSUSED*/
 int
 vmelioctl(dev, cmd, data, flag, p)
-	dev_t   dev;
+	dev_t dev;
+	u_long cmd;
 	caddr_t data;
-	int     cmd, flag;
+	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
 	int error = 0;
 
 	switch (cmd) {

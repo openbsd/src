@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccreg.h,v 1.4 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: pccreg.h,v 1.5 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -154,5 +154,6 @@ extern struct pccreg *sys_pcc;
 
 /* XXX */
 int	pccintr_establish(int vec, struct intrhand *ih);
+int	pccspeed(struct pccreg *);
 
 #define PCC_GENCTL_IEN	0x10

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2002/02/22 22:45:34 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.18 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,6 +83,7 @@
 
 
 #ifdef _KERNEL
+extern void delay(int);
 #define DELAY(n)	delay(n)
 #endif
 

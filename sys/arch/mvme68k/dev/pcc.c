@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.8 2002/04/21 23:44:29 miod Exp $ */
+/*	$OpenBSD: pcc.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -62,7 +62,9 @@ struct pccsoftc {
 
 void pccattach(struct device *, struct device *, void *);
 int  pccmatch(struct device *, void *, void *);
-int  pccabort(struct frame *);
+int  pccabort(void *);
+int  pcc_print(void *, const char *);
+int  pcc_scan(struct device *, void *, void *);
 
 struct cfattach pcc_ca = {
 	sizeof(struct pccsoftc), pccmatch, pccattach
@@ -79,7 +81,6 @@ pccmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 
 	/* the pcc only exist on vme147's */
@@ -109,7 +110,6 @@ pcc_scan(parent, child, args)
 {
 	struct cfdata *cf = child;
 	struct pccsoftc *sc = (struct pccsoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -143,7 +143,6 @@ pccattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct pccsoftc *sc = (struct pccsoftc *)self;
-	int i;
 
 	if (sys_pcc)
 		panic("pcc already attached!");
@@ -160,7 +159,6 @@ pccattach(parent, self, args)
 	printf(": rev %d\n", sc->sc_pcc->pcc_chiprev);
 
 	sc->sc_nmiih.ih_fn = pccabort;
-	sc->sc_nmiih.ih_arg = 0;
 	sc->sc_nmiih.ih_ipl = 7;
 	sc->sc_nmiih.ih_wantframe = 1;
 	pccintr_establish(PCCV_ABORT, &sc->sc_nmiih);
@@ -191,7 +189,7 @@ pccintr_establish(vec, ih)
 
 int
 pccabort(frame)
-	struct frame *frame;
+	void *frame;
 {
 #if 0
 	/* XXX wait for it to debounce -- there is something wrong here */
@@ -213,15 +211,13 @@ pccspeed(pcc)
 	volatile int cnt;
 	int speed;
 
-	/*printf("counting...lim = %d\n", lim);*/
-
 	pcc->pcc_t1irq = 0;		/* just in case */
 	pcc->pcc_t1pload = 0;
 	pcc->pcc_t1ctl = PCC_TIMERCLEAR;
 	pcc->pcc_t1ctl = PCC_TIMERSTART;
 	
 	cnt = 0;
-	while (1) {
+	for (;;) {
 		tmp = pcc->pcc_t1count;
 		if (tmp > lim)
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.9 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: mc.c,v 1.10 2002/04/27 23:21:05 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -62,7 +62,9 @@ struct mcsoftc {
 
 void mcattach(struct device *, struct device *, void *);
 int  mcmatch(struct device *, void *, void *);
-int  mcabort(struct frame *);
+int  mcabort(void *);
+int  mc_print(void *, const char *);
+int  mc_scan(struct device *, void *, void *);
 
 struct cfattach mc_ca = {
 	sizeof(struct mcsoftc), mcmatch, mcattach
@@ -79,12 +81,11 @@ mcmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	struct mcreg *mc = (struct mcreg *)(IIOV(ca->ca_paddr) + MC_MCCHIP_OFF);
 
-	if ((cputyp != CPU_172 && cputyp != CPU_162) || badvaddr(mc, 1) ||
-	    mc->mc_chipid != MC_CHIPID)
+	if ((cputyp != CPU_172 && cputyp != CPU_162) ||
+	    badvaddr((vaddr_t)mc, 1) || mc->mc_chipid != MC_CHIPID)
 		return (0);
 	return (1);
 }
@@ -110,7 +111,6 @@ mc_scan(parent, child, args)
 {
 	struct cfdata *cf = child;
 	struct mcsoftc *sc = (struct mcsoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -144,7 +144,6 @@ mcattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct mcsoftc *sc = (struct mcsoftc *)self;
-	int i;
 
 	if (sys_mc)
 		panic("mc already attached!");
@@ -161,7 +160,6 @@ mcattach(parent, self, args)
 	printf(": rev %d\n", sc->sc_mc->mc_chiprev);
 
 	sc->sc_nmiih.ih_fn = mcabort;
-	sc->sc_nmiih.ih_arg = 0;
 	sc->sc_nmiih.ih_ipl = 7;
 	sc->sc_nmiih.ih_wantframe = 1;
 	mcintr_establish(MCV_ABORT, &sc->sc_nmiih);
@@ -191,7 +189,7 @@ mcintr_establish(vec, ih)
 
 int
 mcabort(frame)
-	struct frame *frame;
+	void *frame;
 {
 	/* wait for it to debounce */
 	while (sys_mc->mc_abortirq & MC_ABORT_ABS)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.12 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.13 2002/04/27 23:21:06 miod Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,9 @@
 #include <sys/kernel.h>
 #include <sys/mtio.h>
 #include <sys/buf.h>
+#include <sys/mount.h>
+
+#include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -58,6 +61,8 @@
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
+int	cachectl(int, vaddr_t, int);
+
 /*
  * Note that what we do here for a 68040 is different than HP-UX.
  *
@@ -69,19 +74,20 @@
  * do pages, above that we do the entire cache.
  */
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
-int req;
-caddr_t  addr;
-int len;
+	int req;
+	vaddr_t addr;
+	int len;
 {
 	int error = 0;
 
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
-		register int inc = 0;
-		paddr_t pa = 0;
+		int inc = 0;
 		int doall = 0;
-		caddr_t end;
+		paddr_t pa = 0;
+		vaddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
@@ -95,16 +101,16 @@ int len;
 		}
 #endif
 		if (addr == 0 ||
-			 (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = (caddr_t)((int)addr & ~0xF);
+				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = (caddr_t)((int)addr & ~PGOFSET);
+				addr = addr & ~PGOFSET;
 				inc = NBPG;
 			}
 		}
@@ -115,49 +121,50 @@ int len;
 			 * entire cache (XXX is this a rational thing to do?)
 			 */
 			if (!doall &&
-				 (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				if (pmap_extract(curproc->p_vmspace->vm_map.pmap,
-				    (vm_offset_t)addr, &pa) == FALSE)
+			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+				if (pmap_extract(
+				    curproc->p_vmspace->vm_map.pmap,
+				    addr, &pa) == FALSE)
 					doall = 1;
 			}
 			switch (req) {
-				case CC_EXTPURGE|CC_IPURGE:
-				case CC_IPURGE:
-					if (doall) {
-						DCFA();
-						ICPA();
-					} else if (inc == 16) {
-						DCFL(pa);
-						ICPL(pa);
-					} else if (inc == NBPG) {
-						DCFP(pa);
-						ICPP(pa);
-					}
-					break;
+			case CC_EXTPURGE|CC_IPURGE:
+			case CC_IPURGE:
+				if (doall) {
+					DCFA();
+					ICPA();
+				} else if (inc == 16) {
+					DCFL(pa);
+					ICPL(pa);
+				} else if (inc == NBPG) {
+					DCFP(pa);
+					ICPP(pa);
+				}
+				break;
 
-				case CC_EXTPURGE|CC_PURGE:
-				case CC_PURGE:
-					if (doall)
-						DCFA(); /* note: flush not purge */
-					else if (inc == 16)
-						DCPL(pa);
-					else if (inc == NBPG)
-						DCPP(pa);
-					break;
+			case CC_EXTPURGE|CC_PURGE:
+			case CC_PURGE:
+				if (doall)
+					DCFA(); /* note: flush not purge */
+				else if (inc == 16)
+					DCPL(pa);
+				else if (inc == NBPG)
+					DCPP(pa);
+				break;
 
-				case CC_EXTPURGE|CC_FLUSH:
-				case CC_FLUSH:
-					if (doall)
-						DCFA();
-					else if (inc == 16)
-						DCFL(pa);
-					else if (inc == NBPG)
-						DCFP(pa);
-					break;
+			case CC_EXTPURGE|CC_FLUSH:
+			case CC_FLUSH:
+				if (doall)
+					DCFA();
+				else if (inc == 16)
+					DCFL(pa);
+				else if (inc == NBPG)
+					DCFP(pa);
+				break;
 
-				default:
-					error = EINVAL;
-					break;
+			default:
+				error = EINVAL;
+				break;
 			}
 			if (doall)
 				break;
@@ -168,21 +175,21 @@ int len;
 	}
 #endif
 	switch (req) {
-		case CC_EXTPURGE|CC_PURGE:
-		case CC_EXTPURGE|CC_FLUSH:
-		case CC_PURGE:
-		case CC_FLUSH:
-			DCIU();
-			break;
-		case CC_EXTPURGE|CC_IPURGE:
-			DCIU();
-			/* fall into... */
-		case CC_IPURGE:
-			ICIA();
-			break;
-		default:
-			error = EINVAL;
-			break;
+	case CC_EXTPURGE|CC_PURGE:
+	case CC_EXTPURGE|CC_FLUSH:
+	case CC_PURGE:
+	case CC_FLUSH:
+		DCIU();
+		break;
+	case CC_EXTPURGE|CC_IPURGE:
+		DCIU();
+		/* fall into... */
+	case CC_IPURGE:
+		ICIA();
+		break;
+	default:
+		error = EINVAL;
+		break;
 	}
 	return (error);
 }
@@ -191,9 +198,10 @@ int len;
  * DMA cache control
  */
 /*ARGSUSED1*/
+void
 dma_cachectl(addr, len)
-caddr_t  addr;
-int len;
+	caddr_t  addr;
+	int len;
 {
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
@@ -228,19 +236,20 @@ int len;
 		} while (addr < end);
 	}
 #endif	/* M68040 */
-	return (0);
 }
 
 int
 sys_sysarch(p, v, retval)
-struct proc *p;
-void *v;
-register_t *retval;
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct sysarch_args /* {
+#if 0
+	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;
 }

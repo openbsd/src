@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.18 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.19 2002/04/27 23:21:05 miod Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -182,9 +182,9 @@ struct ie_softc {
 
 	struct arpcom sc_arpcom;/* system arpcom structure */
 
-	void (*reset_596)();    /* card dependent reset function */
-	void (*chan_attn)();    /* card dependent attn function */
-	void (*run_596)();      /* card depenent "go on-line" function */
+	void (*reset_596)(void *);	/* card dependent reset function */
+	void (*chan_attn)(void *);	/* card dependent attn function */
+	void (*run_596)(void *);	/* card dependent "go on-line" func */
 	void (*memcopy)(const void *, void *, u_int);
 	                        /* card dependent memory copy function */
         void (*memzero)(void *, u_int);
@@ -241,9 +241,9 @@ struct ie_softc {
 #endif
 };
 
-static void ie_obreset(struct ie_softc *);
-static void ie_obattend(struct ie_softc *);
-static void ie_obrun(struct ie_softc *);
+void ie_obreset(void *);
+void ie_obattend(void *);
+void ie_obrun(void *);
 
 void iewatchdog(struct ifnet *);
 int ieintr(void *);
@@ -252,17 +252,29 @@ int ieinit(struct ie_softc *);
 int ieioctl(struct ifnet *, u_long, caddr_t);
 void iestart(struct ifnet *);
 void iereset(struct ie_softc *);
-static void ie_readframe(struct ie_softc *, int);
-static void ie_drop_packet_buffer(struct ie_softc *);
-static int command_and_wait(struct ie_softc *, int,
+void ie_readframe(struct ie_softc *, int);
+void ie_drop_packet_buffer(struct ie_softc *);
+int command_and_wait(struct ie_softc *, int,
     void volatile *, int);
-/*static*/ void ierint(struct ie_softc *);
-/*static*/ void ietint(struct ie_softc *);
-static int ieget(struct ie_softc *, struct mbuf **,
+void ierint(struct ie_softc *);
+void ietint(struct ie_softc *);
+int ieget(struct ie_softc *, struct mbuf **,
 		      struct ether_header *, int *);
-static void setup_bufs(struct ie_softc *);
-static int mc_setup(struct ie_softc *, void *);
-static void mc_reset(struct ie_softc *);
+void setup_bufs(struct ie_softc *);
+int mc_setup(struct ie_softc *, void *);
+void mc_reset(struct ie_softc *);
+
+void ie_setup_config(volatile struct ie_config_cmd *, int, int);
+void ie_ack(struct ie_softc *, u_int);
+int ether_equal(u_char *, u_char *);
+int check_eh(struct ie_softc *, struct ether_header *, int *);
+int ie_buflen(struct ie_softc *, int);
+int ie_packet_len(struct ie_softc *);
+void iexmit(struct ie_softc *);
+int ieget(struct ie_softc *, struct mbuf **, struct ether_header *, int *);
+int ie_setupram(struct ie_softc *);
+void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
+void iestop(struct ie_softc *);
 
 #ifdef IEDEBUG
 void print_rbd(volatile struct ie_recv_buf_desc *);
@@ -271,8 +283,8 @@ int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-int iematch();
-void ieattach();
+int iematch(struct device *, void *, void *);
+void ieattach(struct device *, struct device *, void *);
 
 struct cfattach ie_ca = {
 	sizeof(struct ie_softc), iematch, ieattach
@@ -303,7 +315,7 @@ struct cfdriver ie_cd = {
  * Here are a few useful functions.  We could have done these as macros, but
  * since we have the inline facility, it makes sense to use that instead.
  */
-static inline void
+void
 ie_setup_config(cmd, promiscuous, manchester)
 	volatile struct ie_config_cmd *cmd;
 	int promiscuous, manchester;
@@ -325,7 +337,7 @@ ie_setup_config(cmd, promiscuous, manchester)
 	cmd->ie_miabf = 0x3f;
 }
 
-static inline void
+void
 ie_ack(sc, mask)
 	struct ie_softc *sc;
 	u_int mask;
@@ -340,18 +352,19 @@ iematch(parent, vcf, args)
 	struct device *parent;
 	void	*vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-   return (!badvaddr(ca->ca_vaddr, 4));
+
+	return (!badvaddr((vaddr_t)ca->ca_vaddr, 4));
 }
 
 /*
  * Deep Magic: reset it, then set SCP address again. Pray.
  */
 void
-ie_obreset(sc)
-	struct ie_softc *sc;
+ie_obreset(arg)
+	void *arg;
 {
+	struct ie_softc *sc = (struct ie_softc *)arg;
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 	volatile int t;
 	u_long	a;
@@ -371,17 +384,19 @@ ie_obreset(sc)
 }
 
 void
-ie_obattend(sc)
-	struct ie_softc *sc;
+ie_obattend(arg)
+	void *arg;
 {
+	struct ie_softc *sc = (struct ie_softc *)arg;
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 
 	ieo->attn = 1;
 }
 
+/* ARGSUSED */
 void
-ie_obrun(sc)
-	struct ie_softc *sc;
+ie_obrun(arg)
+	void *arg;
 {
 }
 
@@ -397,7 +412,6 @@ ieattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
-	register struct bootpath *bp;
 	int     pri = ca->ca_ipl;
 	volatile struct ieob *ieo;
 	paddr_t pa;
@@ -737,7 +751,7 @@ ietint(sc)
  * Compare two Ether/802 addresses for equality, inlined and unrolled for
  * speed.  I'd love to have an inline assembler version of this...
  */
-static inline int
+int
 ether_equal(one, two)
 	u_char *one, *two;
 {
@@ -760,7 +774,7 @@ ether_equal(one, two)
  * only client which will fiddle with IFF_PROMISC is BPF.  This is
  * probably a good assumption, but we do not make it here.  (Yet.)
  */
-static inline int
+int
 check_eh(sc, eh, to_bpf)
 	struct ie_softc *sc;
 	struct ether_header *eh;
@@ -869,7 +883,7 @@ check_eh(sc, eh, to_bpf)
  * IE_RBUF_SIZE is an even power of two.  If somehow the act_len exceeds
  * the size of the buffer, then we are screwed anyway.
  */
-static inline int
+int
 ie_buflen(sc, head)
 	struct ie_softc *sc;
 	int head;
@@ -878,7 +892,7 @@ ie_buflen(sc, head)
 	return (sc->rbuffs[head]->ie_rbd_actual & (IE_RBUF_SIZE | (IE_RBUF_SIZE - 1)));
 }
 
-static inline int
+int
 ie_packet_len(sc)
 	struct ie_softc *sc;
 {
@@ -911,7 +925,7 @@ ie_packet_len(sc)
  * command to the chip to be executed.  On the way, if we have a BPF listener
  * also give him a copy.
  */
-inline static void
+void
 iexmit(sc)
 	struct ie_softc *sc;
 {
@@ -966,7 +980,7 @@ sc->xmit_cbuffs[sc->xctail]);
  * chain of partially-full mbufs.  This should help to speed up the
  * operation considerably.  (Provided that it works, of course.)  
  */
-static inline int
+int
 ieget(sc, mp, ehp, to_bpf)
 	struct ie_softc *sc;
 	struct mbuf **mp;
@@ -1142,7 +1156,7 @@ ieget(sc, mp, ehp, to_bpf)
  * on confusing code to deal with them.  Hopefully, this machine will never ARP
  * for trailers anyway.
  */
-static void
+void
 ie_readframe(sc, num)
 	struct ie_softc *sc;
 	int num;			/* frame number to read */
@@ -1232,7 +1246,7 @@ ie_readframe(sc, num)
 	ether_input(&sc->sc_arpcom.ac_if, &eh, m);
 }
 
-static void
+void
 ie_drop_packet_buffer(sc)
 	struct ie_softc *sc;
 {
@@ -1393,16 +1407,18 @@ iereset(sc)
 	splx(s);
 }
 
+#if 0
 /*
  * This is called if we time out.
  */
-static void
+void
 chan_attn_timeout(rock)
 	caddr_t rock;
 {
 
 	*(int *)rock = 1;
 }
+#endif
 
 /*
  * Send a command to the controller and wait for it to either complete
@@ -1413,7 +1429,7 @@ chan_attn_timeout(rock)
  * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK 
  * to become true.  
  */
-static int
+int
 command_and_wait(sc, cmd, pcmd, mask)
 	struct ie_softc *sc;
 	int cmd;
@@ -1480,7 +1496,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 /*
  * Run the time-domain reflectometer.
  */
-static void
+void
 run_tdr(sc, cmd)
 	struct ie_softc *sc;
 	struct ie_tdr_cmd *cmd;
@@ -1526,15 +1542,7 @@ run_tdr(sc, cmd)
 #define	ALLOC(p, n)	_ALLOC(p, ALIGN(n)) /* XXX convert to this? */
 #endif
 
-static inline caddr_t
-Align(ptr)
-        caddr_t ptr;
-{
-        u_long  l = (u_long)ptr;
-
-        l = (l + 3) & ~3L;
-        return (caddr_t)l;
-}
+#define	Align(ptr)	((caddr_t)(((u_long)(ptr) + 3) & ~3L))
 
 /*
  * setup_bufs: set up the buffers
@@ -1549,13 +1557,11 @@ Align(ptr)
  * note: this function was written to be easy to understand, rather than
  *       highly efficient (it isn't in the critical path).
  */
-static void 
+void 
 setup_bufs(sc)
 	struct ie_softc *sc;
 {
 	caddr_t ptr = sc->buf_area;	/* memory pool */
-	volatile struct ie_recv_frame_desc *rfd = (void *) ptr;
-	volatile struct ie_recv_buf_desc *rbd;
 	int     n, r;
 
 	/*
@@ -1680,7 +1686,7 @@ setup_bufs(sc)
  * Run the multicast setup command.
  * Called at splnet().
  */
-static int
+int
 mc_setup(sc, ptr)
 	struct ie_softc *sc;
 	void *ptr;
@@ -1720,7 +1726,6 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
-	int n;
 
 	ptr = sc->buf_area;
 
@@ -1808,7 +1813,7 @@ ieinit(sc)
 	return 0;
 }
 
-static void
+void
 iestop(sc)
 	struct ie_softc *sc;
 {
@@ -1908,7 +1913,7 @@ ieioctl(ifp, cmd, data)
 	return error;
 }
 
-static void
+void
 mc_reset(sc)
 	struct ie_softc *sc;
 {
@@ -1948,4 +1953,3 @@ print_rbd(rbd)
 	    rbd->mbz);
 }
 #endif
-

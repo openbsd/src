@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2001/12/11 23:19:02 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.26 2002/04/27 23:21:05 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -69,8 +69,9 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
+
+#include <machine/conf.h>
 
 #include "st.h"
 #include "sd.h"
@@ -108,37 +109,19 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-
 #include "sram.h"
-cdev_decl(sram);
-
 #include "vmel.h"
-cdev_decl(vmel);
-
 #include "vmes.h"
-cdev_decl(vmes);
-
 #include "nvram.h"
-cdev_decl(nvram);
-
 #include "flash.h"
-cdev_decl(flash);
 
 #include "pty.h"
 cdev_decl(fd);
 
 #include "zs.h"
-cdev_decl(zs);
 #include "cl.h"
-cdev_decl(cl);
 #include "wl.h"
-cdev_decl(wl);
 #include "bugtty.h"
-cdev_decl(bugtty);
-
 
 /* open, close, write, ioctl */
 #define	cdev_lp_init(c,n) { \
@@ -154,7 +137,6 @@ cdev_decl(bugtty);
 	dev_init(c,n,mmap) }
 
 #include "lp.h"
-cdev_decl(lp);
 #include "lptwo.h"
 cdev_decl(lptwo);
 #ifdef XFS
@@ -251,6 +233,7 @@ dev_t	swapdev = makedev(3, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -261,6 +244,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -309,6 +293,7 @@ static int chrtoblktbl[] = {
 /*
  * Convert a character device number to a block device number.
  */
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
