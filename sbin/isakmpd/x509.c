@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.72 2002/06/10 20:45:35 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.73 2002/08/02 13:10:41 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -830,6 +830,44 @@ x509_cert_get (u_int8_t *asn, u_int32_t len)
 }
 
 int
+x509_crl_get (X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+{
+  char *crlfile;
+  BIO *in;
+
+  if ((crlfile = conf_get_str ("X509-certificates", "CRL-file")) == NULL)
+    {
+      LOG_DBG ((LOG_MISC, 10, "x509_crl_get: no CRL-file specified"));
+      return 0;
+    }
+
+  if((in = BIO_new (BIO_s_file ())) == NULL)
+    {
+      log_print ("x509_crl_get: BIO_new (BIO_s_file ()) failed");
+      return 0;
+    }
+
+  if (BIO_read_filename (in, crlfile) <= 0)
+    {
+      log_print ("x509_crl_get: BIO_read_filename (in, \"%s\") failed",
+		 crlfile);
+      BIO_free (in);
+      return 0;
+    }
+
+  *crl = PEM_read_bio_X509_CRL (in, NULL, NULL, NULL);
+  BIO_free (in);
+  if (*crl == NULL)
+    {
+      log_print ("x509_crl_get: PEM_read_bio_X509_CRL (in, NULL, NULL, NULL)"
+		 " failed");
+      return 0;
+    }
+
+  return 1;
+}
+
+int
 x509_cert_validate (void *scert)
 {
   X509_STORE_CTX csc;
@@ -843,6 +881,9 @@ x509_cert_validate (void *scert)
    * trust.
    */
   X509_STORE_CTX_init (&csc, x509_cas, cert, NULL);
+  X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK);
+  X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK_ALL);
+  csc.get_crl = x509_crl_get;
   res = X509_verify_cert (&csc);
   err = csc.error;
   X509_STORE_CTX_cleanup (&csc);
