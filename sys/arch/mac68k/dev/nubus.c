@@ -1,5 +1,5 @@
-/*	$OpenBSD: nubus.c,v 1.11 1997/04/23 13:38:35 briggs Exp $	*/
-/*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.12 1997/04/24 02:10:15 gene Exp $	*/
+/*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -232,12 +232,16 @@ nubus_print(aux, name)
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 
 	if (name) {
-		printf("%s: slot %x: %s ", name, na->fmt->slot,
+		printf("%s: slot %x: %s", name, na->fmt->slot,
 		    nubus_get_card_name(na->fmt));
-		printf("(Vendor: %s, ",
+		printf(" (Vendor: %s,",
 		    nubus_get_vendor(na->fmt, NUBUS_RSRC_VEND_ID));
-		printf("Part: %s)",
+		printf(" Part: %s",
 		    nubus_get_vendor(na->fmt, NUBUS_RSRC_VEND_PART));
+#ifdef DIAGNOSTIC
+		printf(" Type: %04x %04x %04x %04x",
+		    na->category, na->type, na->drsw, na->drhw);
+#endif
 	}
 	return (UNCONF);
 }
