@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2000/06/08 22:25:22 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2001/04/03 20:27:26 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -69,11 +69,7 @@ cpu_fork(p1, p2, stack, stacksize)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
 	
-#ifdef UVM
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
-#else
-	pcb->pcb_pm = &p2->p_vmspace->vm_pmap;
-#endif
 
 	pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(), (vm_offset_t)pcb->pcb_pm);
 	
