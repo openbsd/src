@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.50 2004/09/18 22:01:18 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.51 2004/10/25 23:36:50 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1588,16 +1588,16 @@ ffs_checkblk(ip, bno, size)
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, dtog(fs, bno))),
 		(int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
-		/* XXX - probably should panic here */
 		brelse(bp);
-		return (-1);
+		return (0);
 	}
+
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp)) {
-		/* XXX - probably should panic here */
 		brelse(bp);
-		return (-1);
+		return (0);
 	}
+
 	bno = dtogd(fs, bno);
 	if (size == fs->fs_bsize) {
 		free = ffs_isblock(fs, cg_blksfree(cgp), fragstoblks(fs, bno));
