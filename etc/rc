@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.151 2000/08/28 02:30:35 brad Exp $
+#	$OpenBSD: rc,v 1.152 2000/09/01 06:56:48 aaron Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -538,6 +538,10 @@ date
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
 if [ "X${xdm_flags}" != X"NO" ]; then
 	echo 'starting xdm...';		/usr/X11R6/bin/xdm ${xdm_flags}
+else
+	if [ "X${moused_flags}" != X"NO" -a -x /usr/sbin/moused ]; then
+		echo 'starting moused...';	/usr/sbin/moused ${moused_flags}
+	fi
 fi
 
 exit 0
