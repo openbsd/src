@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.10 1997/09/14 10:37:44 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.11 1997/09/20 07:51:39 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.10 1997/09/14 10:37:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.11 1997/09/20 07:51:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -394,6 +394,7 @@ printif(ifrm, ifaliases)
 			if (getinfo(&ifreq) < 0)
 				continue;
 			status(1);
+			count++;
 			noinet = 1;
 			continue;
 		}
