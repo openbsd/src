@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.762 2004/09/20 20:45:54 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.763 2004/09/21 11:31:24 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1147,6 +1147,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Intrepid USB",
 	},
 	{
+	    PCI_VENDOR_ARALION, PCI_PRODUCT_ARALION_ARS106S,
+	    "ARS106S",
+	},
+	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_USB,
 	    "USB",
 	},
@@ -1853,6 +1857,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
 	    "CS4281 CrystalClear Audio",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_1210SA,
+	    "SiI1210SA",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
@@ -8445,6 +8453,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ENE,
 	    "ENE",
+	},
+	{
+	    PCI_VENDOR_ARALION,
+	    "Aralion Inc.",
 	},
 	{
 	    PCI_VENDOR_TERRATEC,

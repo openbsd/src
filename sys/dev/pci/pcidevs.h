@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.762 2004/09/20 20:45:54 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.763 2004/09/21 11:31:24 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -230,6 +230,7 @@
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson Century */
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
 #define	PCI_VENDOR_ENE	0x1524		/* ENE */
+#define	PCI_VENDOR_ARALION	0x1538		/* Aralion Inc. */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic Gmbh */
 #define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
@@ -605,6 +606,9 @@
 #define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* Intrepid */
 #define	PCI_PRODUCT_APPLE_INTREPID_OHCI	0x003f		/* Intrepid USB */
 
+/* Aralion Inc. products */
+#define	PCI_PRODUCT_ARALION_ARS106S	0x0301		/* ARS106S */
+
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_USB	0x0003		/* USB */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -823,6 +827,7 @@
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear Audio */
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
+#define	PCI_PRODUCT_CMDTECH_1210SA	0x0240		/* SiI1210SA */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
