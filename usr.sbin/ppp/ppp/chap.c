@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.c,v 1.2 1999/02/06 03:22:32 brian Exp $
+ * $Id: chap.c,v 1.3 1999/02/07 13:48:33 brian Exp $
  *
  *	TODO:
  */
@@ -158,7 +158,6 @@ chap_BuildAnswer(char *name, char *key, u_char id, char *challenge, int MSChap)
     *digest++ = 16;				/* value size */
 
     MD5Init(&MD5context);
-log_Printf(LogPHASE, "Build with 0x%x, %s & %.*s\n", id, key, *challenge, challenge+1);
     MD5Update(&MD5context, &id, 1);
     MD5Update(&MD5context, key, klen);
     MD5Update(&MD5context, challenge + 1, *challenge);
@@ -356,7 +355,6 @@ chap_Input(struct physical *p, struct mbuf *bp)
 #ifndef NORADIUS
         if (*p->dl->bundle->radius.cfg.file) {
           chap->challenge[*chap->challenge+1] = '\0';
-log_Printf(LogPHASE, "Challenge %s, answer is %d bytes starting with %d\n", chap->challenge+1, alen+1, *ans);
           radius_Authenticate(&p->dl->bundle->radius, &chap->auth,
                               chap->auth.in.name, ans, chap->challenge + 1);
         } else
