@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.5 1999/09/20 11:09:37 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.6 1999/09/25 11:43:29 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -46,7 +46,6 @@
 #include <sys/exec_elf.h>
 #include <sys/exec_olf.h>
 #include <sys/file.h>
-#include <sys/filedesc.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -363,12 +362,12 @@ elf64_load_file(p, path, epp, ap, last)
 {
 	int error, i;
 	struct nameidata nd;
-	struct vnode *vp;
 	Elf64_Ehdr eh;
 	Elf64_Phdr *ph = NULL;
 	u_long phsize;
 	char *bp = NULL;
 	u_long addr = *last;
+	struct vnode *vp;
 	u_int8_t os;			/* Just a dummy in this routine */
 
 	bp = path;
@@ -381,17 +380,10 @@ elf64_load_file(p, path, epp, ap, last)
 		error = EACCES;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
-		goto bad;
 	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
 		goto bad;
-	if (vp->v_mount->mnt_flag & MNT_NOEXEC) {
-		error = EACCES;
-		goto bad;
-	}
-	if ((vp->v_mount->mnt_flag & MNT_NOSUID) ||
-	    (p->p_flag & P_TRACED) || p->p_fd->fd_refcnt > 1)
-		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
+	if ((error = VOP_ACCESS(vp, VREAD, p->p_ucred, p)) != 0)
+		goto bad1;
 	if ((error = elf64_read_from(p, nd.ni_vp, 0,
 				    (caddr_t)&eh, sizeof(eh))) != 0)
 		goto bad1;
@@ -520,6 +512,7 @@ exec_elf64_makecmds(p, epp)
 			     pp->p_offset, (caddr_t)interp,
 			     pp->p_filesz)) != 0)
 				goto bad;
+			break;
 		}
 	}
 
@@ -598,8 +591,8 @@ exec_elf64_makecmds(p, epp)
 
 		case PT_INTERP:
 			/* Already did this one */
-		case PT_NOTE:
 		case PT_DYNAMIC:
+		case PT_NOTE:
 			break;
 
 		case PT_PHDR:
