@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.13 1998/02/08 22:41:32 tholo Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.14 1998/08/21 23:31:35 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -683,6 +683,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	dev_t dev;
 	int error;
 
+retry:
 	imp = VFSTOISOFS(mp);
 	dev = imp->im_dev;
 	if ((*vpp = cd9660_ihashget(dev, ino)) != NULLVP)
@@ -708,7 +709,16 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
-	cd9660_ihashins(ip);
+	error = cd9660_ihashins(ip);
+
+	if (error) {
+		vrele(vp);
+
+		if (error == EEXIST)
+			goto retry;
+
+		return (error);
+	}
 
 	if (isodir == 0) {
 		int lbn, off;
@@ -855,7 +865,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			 */
 			vp = nvp;
 			ip->i_vnode = vp;
-			cd9660_ihashins(ip);
 		}
 		break;
 	case VLNK:

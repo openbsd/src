@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.6 1997/11/08 17:21:07 niklas Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.7 1998/08/21 23:31:34 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ void	cd9660_defattr __P((struct iso_directory_record *, struct iso_node *,
 void	cd9660_deftstamp __P((struct iso_directory_record *, struct iso_node *,
     struct buf *));
 struct	vnode *cd9660_ihashget __P((dev_t, ino_t));
-void	cd9660_ihashins __P((struct iso_node *));
+int	cd9660_ihashins __P((struct iso_node *));
 void	cd9660_ihashrem __P((struct iso_node *));
 int	cd9660_tstamp_conv7 __P((u_char *, struct timespec *));
 int	cd9660_tstamp_conv17 __P((u_char *, struct timespec *));

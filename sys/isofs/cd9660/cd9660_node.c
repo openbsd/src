@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.8 1998/07/22 16:40:08 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.9 1998/08/21 23:31:32 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -181,7 +181,7 @@ loop:
 /*
  * Insert the inode into the hash table, and return it locked.
  */
-void
+int
 cd9660_ihashins(ip)
 	struct iso_node *ip;
 {
@@ -190,6 +190,13 @@ cd9660_ihashins(ip)
 
 	simple_lock(&cd9660_ihash_slock);
 	ipp = &isohashtbl[INOHASH(ip->i_dev, ip->i_number)];
+
+	for (iq = *ipp; iq; iq = iq->i_next) {
+		if (iq->i_dev == ip->i_dev &&
+		    iq->i_number == ip->i_number)
+			return (EEXIST);
+	}
+			      
 	if ((iq = *ipp) != NULL)
 		iq->i_prev = &ip->i_next;
 	ip->i_next = iq;
@@ -198,6 +205,7 @@ cd9660_ihashins(ip)
 	simple_unlock(&cd9660_ihash_slock);
 
 	lockmgr(&ip->i_lock, LK_EXCLUSIVE, 0, p);
+	return (0);
 }
 
 /*
@@ -209,6 +217,9 @@ cd9660_ihashrem(ip)
 {
 	register struct iso_node *iq;
 
+	if (ip->i_prev == NULL)
+		return;
+	
 	simple_lock(&cd9660_ihash_slock);
 	if ((iq = ip->i_next) != NULL)
 		iq->i_prev = ip->i_prev;
