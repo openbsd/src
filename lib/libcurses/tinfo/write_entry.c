@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.2 1999/03/02 06:23:29 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.3 1999/03/11 21:03:57 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -56,7 +56,7 @@
 #define TRACE_OUT(p) /*nothing*/
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.45 1999/02/28 22:26:33 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.46 1999/03/06 22:48:21 tom Exp $")
 
 static int total_written;
 
@@ -379,7 +379,7 @@ static int compute_offsets(char **Strings, int strmax, short *offsets)
     return nextfree;
 }
 
-static void convert_shorts(char *buf, short *Numbers, int count)
+static void convert_shorts(unsigned char *buf, short *Numbers, int count)
 {
     int i;
     for (i = 0; i < count; i++) {

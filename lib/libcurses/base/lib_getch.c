@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.1 1999/01/18 19:09:46 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.2 1999/03/11 21:03:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.41 1998/09/26 23:34:53 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.43 1999/03/08 02:35:10 tom Exp $")
 
 #include <fifo_defs.h>
 
@@ -231,8 +231,9 @@ int	ch;
 	if (wgetch_should_refresh(win))
 		wrefresh(win);
 
-	if (!win->_notimeout && (win->_delay >= 0 || SP->_cbreak > 1)) {
-	int delay;
+	if (!win->_notimeout && (win->_delay >= 0 || SP->_cbreak > 1))
+	{
+	        int delay;
 
 		T(("timed delay in wgetch()"));
 		if (SP->_cbreak > 1)
@@ -248,7 +249,8 @@ int	ch;
 		/* else go on to read data available */
 	}
 
-	if (win->_use_keypad) {
+	if (win->_use_keypad) 
+        {
 		/*
 		 * This is tricky.  We only want to get special-key
 		 * events one at a time.  But we want to accumulate

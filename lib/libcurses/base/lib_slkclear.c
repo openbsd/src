@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_slkclear.c,v 1.1 1999/01/18 19:10:01 millert Exp $	*/
+/*	$OpenBSD: lib_slkclear.c,v 1.2 1999/03/11 21:03:56 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -40,7 +40,7 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkclear.c,v 1.3 1998/02/11 12:13:56 tom Exp $")
+MODULE_ID("$From: lib_slkclear.c,v 1.4 1999/03/03 23:44:22 juergen Exp $")
 
 int
 slk_clear(void)
@@ -54,7 +54,11 @@ slk_clear(void)
 	   inherit those attributes from the standard screen */
 	SP->_slk->win->_bkgd  = stdscr->_bkgd;
 	SP->_slk->win->_attrs = stdscr->_attrs;
-	werase(SP->_slk->win);
-
-	returnCode(wrefresh(SP->_slk->win));
+        if (SP->_slk->win == stdscr) {
+          returnCode(OK);
+        }
+	else {
+	  werase(SP->_slk->win);
+	  returnCode(wrefresh(SP->_slk->win));
+	}
 }
