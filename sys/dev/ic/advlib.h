@@ -1,5 +1,5 @@
-/*	$OpenBSD: advlib.h,v 1.2 1998/09/28 01:56:57 downsj Exp $	*/
-/*      $NetBSD: advlib.h,v 1.3 1998/09/26 16:02:57 dante Exp $        */
+/*	$OpenBSD: advlib.h,v 1.3 1998/11/17 04:25:21 downsj Exp $	*/
+/*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -72,37 +72,44 @@
 #define ASC_ERROR	-1
 
 
-#define HI_BYTE(x)	(*((__u8 *)(&x)+1))
-#define LO_BYTE(x)	(*((__u8 *)&x))
-#define HI_WORD(x)	(*((__u16 *)(&x)+1))
-#define LO_WORD(x)	(*((__u16 *)&x))
-#ifndef MAKEWORD
-#define MAKEWORD(lo, hi)	((__u16) (((__u16) lo) | ((__u16) hi << 8)))
+#if BYTE_ORDER == BIG_ENDIAN
+#define LO_BYTE(x)	(*((u_int8_t *)(&(x))+1))
+#define HI_BYTE(x)	(*((u_int8_t *)&(x)))
+#define LO_WORD(x)	(*((u_int16_t *)(&(x))+1))
+#define HI_WORD(x)	(*((u_int16_t *)&(x)))
+#else
+#define HI_BYTE(x)	(*((u_int8_t *)(&(x))+1))
+#define LO_BYTE(x)	(*((u_int8_t *)&(x)))
+#define HI_WORD(x)	(*((u_int16_t *)(&(x))+1))
+#define LO_WORD(x)	(*((u_int16_t *)&(x)))
 #endif
-#ifndef MAKELONG
-#define MAKELONG(lo, hi)	((__u32) (((__u32) lo) | ((__u32) hi << 16)))
-#endif
-#define SwapWords(dWord)	((__u32) ((dWord >> 16) | (dWord << 16)))
-#define SwapBytes(word)		((__u16) ((word >> 8) | (word << 8)))
-#define BigToLittle(dWord)	((__u32) (SwapWords(MAKELONG(SwapBytes(LO_WORD(dWord)), SwapBytes(HI_WORD(dWord))))))
-#define LittleToBig(dWord)	BigToLittle(dWord)
+
+#define MAKEWORD(lo, hi)	((u_int16_t) (((u_int16_t) (lo)) | \
+				((u_int16_t) (hi) << 8)))
+
+#define MAKELONG(lo, hi)	((u_int32_t) (((u_int32_t) (lo)) | \
+				((u_int32_t) (hi) << 16)))
+
+#define SWAPWORDS(dWord)	((u_int32_t) ((dWord) >> 16) | ((dWord) << 16))
+#define SWAPBYTES(word)		((u_int16_t) ((word) >> 8) | ((word) << 8))
+#define	BIGTOLITTLE(dWord)	(u_int32_t)(SWAPBYTES(SWAPWORDS(dWord) >> 16 ) << 16) | \
+				SWAPBYTES(SWAPWORDS(dWord) & 0xFFFF)
+#define LITTLETOBIG(dWord)	BIGTOLITTLE(dWord)
 
 
 #define ASC_PCI_ID2BUS(id)	((id) & 0xFF)
 #define ASC_PCI_ID2DEV(id)	(((id) >> 11) & 0x1F)
 #define ASC_PCI_ID2FUNC(id)	(((id) >> 8) & 0x7)
-#define ASC_PCI_MKID(bus, dev, func)	((((dev) & 0x1F) << 11) | (((func) & 0x7) << 8) | ((bus) & 0xFF))
+#define ASC_PCI_MKID(bus, dev, func)	((((dev) & 0x1F) << 11) | \
+				(((func) & 0x7) << 8) | ((bus) & 0xFF))
 #define ASC_PCI_REVISION_3150	0x02
 #define ASC_PCI_REVISION_3050	0x03
 
 
-#define ASC_IS_NARROW_BOARD(sc) (((sc)->sc_flags & ASC_WIDE_BOARD) == 0)
-#define ASC_IS_WIDE_BOARD(sc)   ((sc)->sc_flags & ASC_WIDE_BOARD)
-
-
 #define ASC_MAX_SG_QUEUE	7
 #define ASC_SG_LIST_PER_Q 	ASC_MAX_SG_QUEUE
-#define ASC_MAX_SG_LIST		(1 + ((ASC_SG_LIST_PER_Q) * (ASC_MAX_SG_QUEUE))) /* SG_ALL */
+#define ASC_MAX_SG_LIST		(1 + ((ASC_SG_LIST_PER_Q) * \
+				(ASC_MAX_SG_QUEUE)))		/* SG_ALL */
 
 
 #define ASC_IS_ISA		0x0001
@@ -969,6 +976,19 @@ typedef struct asceep_config
 {
 	u_int16_t	cfg_lsw;
 	u_int16_t	cfg_msw;
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t	disc_enable;
+	u_int8_t	init_sdtr;
+	u_int8_t	start_motor;
+	u_int8_t	use_cmd_qng;
+	u_int8_t	max_tag_qng;
+	u_int8_t	max_total_qng;
+	u_int8_t	power_up_wait;
+	u_int8_t	bios_scan;
+	u_int8_t	isa_dma_speed:4;
+	u_int8_t	chip_scsi_id:4;
+	u_int8_t	no_scam;
+#else
 	u_int8_t	init_sdtr;
 	u_int8_t	disc_enable;
 	u_int8_t	use_cmd_qng;
@@ -980,6 +1000,7 @@ typedef struct asceep_config
 	u_int8_t	no_scam;
 	u_int8_t	chip_scsi_id:4;
 	u_int8_t	isa_dma_speed:4;
+#endif
 	u_int8_t	dos_int13_table[ASC_MAX_TID + 1];
 	u_int8_t	adapter_info[6];
 	u_int16_t	cntl;
@@ -1249,8 +1270,8 @@ typedef struct asceep_config
 #define ASC_GET_CHIP_LRAM_DATA(iot, ioh)			bus_space_read_2((iot), (ioh), ASC_IOP_RAM_DATA)
 #define ASC_SET_CHIP_LRAM_DATA(iot, ioh, data)			bus_space_write_2((iot), (ioh), ASC_IOP_RAM_DATA, data)
 #if BYTE_ORDER == BIG_ENDIAN
-#define ASC_GET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh)		swap_bytes(bus_space_read_2((iot), (ioh), ASC_IOP_RAM_DATA))
-#define ASC_SET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh, data)		bus_space_write_2((iot), (ioh), ASC_IOP_RAM_DATA, swap_bytes(data))
+#define ASC_GET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh)		SWAPBYTES(bus_space_read_2((iot), (ioh), ASC_IOP_RAM_DATA))
+#define ASC_SET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh, data)		bus_space_write_2((iot), (ioh), ASC_IOP_RAM_DATA, SWAPBYTES(data))
 #else
 #define ASC_GET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh)		bus_space_read_2((iot), (ioh), ASC_IOP_RAM_DATA)
 #define ASC_SET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh, data)		bus_space_write_2((iot), (ioh), ASC_IOP_RAM_DATA, data)

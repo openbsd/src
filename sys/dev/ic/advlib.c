@@ -1,5 +1,5 @@
-/*	$OpenBSD: advlib.c,v 1.2 1998/09/28 01:56:57 downsj Exp $	*/
-/*      $NetBSD: advlib.c,v 1.4 1998/09/26 16:02:56 dante Exp $        */
+/*	$OpenBSD: advlib.c,v 1.3 1998/11/17 04:25:21 downsj Exp $	*/
+/*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -76,6 +76,8 @@
 #include <dev/ic/advmcode.h>
 
 
+/* #define ASC_DEBUG */
+
 /******************************************************************************/
 /*                                Static functions                            */
 /******************************************************************************/
@@ -135,6 +137,8 @@ static int AscTestExternalLram __P((bus_space_tag_t, bus_space_handle_t));
 /* MicroCode routines */
 static u_int16_t AscInitMicroCodeVar __P((ASC_SOFTC *));
 static u_int32_t AscGetOnePhyAddr __P((ASC_SOFTC *, u_int8_t *, u_int32_t));
+static u_int32_t AscGetSGList __P((ASC_SOFTC *, u_int8_t *, u_int32_t,
+					ASC_SG_HEAD *));
 
 /* EEProm routines */
 static int AscWriteEEPCmdReg __P((bus_space_tag_t, bus_space_handle_t,
@@ -153,6 +157,9 @@ static int AscSetEEPConfig __P((bus_space_tag_t, bus_space_handle_t,
 					ASCEEP_CONFIG *, u_int16_t));
 static int AscSetEEPConfigOnce __P((bus_space_tag_t, bus_space_handle_t,
 					ASCEEP_CONFIG *, u_int16_t));
+#ifdef ASC_DEBUG
+static void AscPrintEEPConfig __P((ASCEEP_CONFIG *, u_int16_t));
+#endif
 
 /* Interrupt routines */
 static void AscIsrChipHalted __P((ASC_SOFTC *));
@@ -162,6 +169,8 @@ static int AscWaitISRDone __P((ASC_SOFTC *));
 static u_int8_t _AscCopyLramScsiDoneQ __P((bus_space_tag_t, bus_space_handle_t,
 					u_int16_t, ASC_QDONE_INFO *,
 					u_int32_t));
+static void AscGetQDoneInfo __P((bus_space_tag_t, bus_space_handle_t, u_int16_t,
+					ASC_QDONE_INFO *));
 static void AscToggleIRQAct __P((bus_space_tag_t, bus_space_handle_t));
 static void AscDisableInterrupt __P((bus_space_tag_t, bus_space_handle_t));
 static void AscEnableInterrupt __P((bus_space_tag_t, bus_space_handle_t));
@@ -194,6 +203,8 @@ static int AscSendScsiQueue __P((ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t));
 static int AscSgListToQueue __P((int));
 static u_int AscGetNumOfFreeQueue __P((ASC_SOFTC *, u_int8_t, u_int8_t));
 static int AscPutReadyQueue __P((ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t));
+static void AscPutSCSIQ __P((bus_space_tag_t, bus_space_handle_t,
+					 u_int16_t, ASC_SCSI_Q *));
 static int AscPutReadySgListQueue __P((ASC_SOFTC *, ASC_SCSI_Q *, u_int8_t));
 static u_int8_t AscAllocFreeQueue __P((bus_space_tag_t, bus_space_handle_t,
 					u_int8_t));
@@ -227,12 +238,6 @@ static void DvcLeaveCritical __P((int));
 static void DvcSleepMilliSecond __P((u_int32_t));
 //static void DvcDelayMicroSecond __P((u_int32_t));
 static void DvcDelayNanoSecond __P((u_int32_t));
-static u_int32_t DvcGetSGList __P((ASC_SOFTC *, u_int8_t *, u_int32_t,
-					ASC_SG_HEAD *));
-static void DvcPutScsiQ __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, int));
-static void DvcGetQinfo __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t, u_int16_t *, int words));
 
 
 /******************************************************************************/
@@ -375,7 +380,7 @@ AscInitFromEEP(sc)
 	if (ASC_GET_PC_ADDR(iot, ioh) != ASC_MCODE_START_ADDR)
 		return (-2);
 
-	eep_config = (ASCEEP_CONFIG *) & eep_config_buf;
+	eep_config = &eep_config_buf;
 	cfg_msw = ASC_GET_CHIP_CFG_MSW(iot, ioh);
 	cfg_lsw = ASC_GET_CHIP_CFG_LSW(iot, ioh);
 	if ((cfg_msw & ASC_CFG_MSW_CLR_MASK) != 0) {
@@ -384,6 +389,9 @@ AscInitFromEEP(sc)
 		ASC_SET_CHIP_CFG_MSW(iot, ioh, cfg_msw);
 	}
 	chksum = AscGetEEPConfig(iot, ioh, eep_config, sc->bus_type);
+#ifdef ASC_DEBUG
+	AscPrintEEPConfig(eep_config, chksum);
+#endif
 	if (chksum == 0)
 		chksum = 0xAA55;
 
@@ -419,9 +427,15 @@ AscInitFromEEP(sc)
 			eep_config->adapter_info[1] = 0;
 			eep_config->adapter_info[2] = 0;
 			eep_config->adapter_info[3] = 0;
+#if BYTE_ORDER == BIG_ENDIAN
+			eep_config->adapter_info[5] = 0;
+			/* Indicate EEPROM-less board. */
+			eep_config->adapter_info[4] = 0xBB;
+#else
 			eep_config->adapter_info[4] = 0;
 			/* Indicate EEPROM-less board. */
 			eep_config->adapter_info[5] = 0xBB;
+#endif
 		} else {
 			write_eep = 1;
 			warn_code |= ASC_WARN_EEPROM_CHKSUM;
@@ -433,12 +447,21 @@ AscInitFromEEP(sc)
 	sc->isa_dma_speed = eep_config->isa_dma_speed;
 	sc->start_motor = eep_config->start_motor;
 	sc->dvc_cntl = eep_config->cntl;
+#if BYTE_ORDER == BIG_ENDIAN
+	sc->adapter_info[0] = eep_config->adapter_info[1];
+	sc->adapter_info[1] = eep_config->adapter_info[0];
+	sc->adapter_info[2] = eep_config->adapter_info[3];
+	sc->adapter_info[3] = eep_config->adapter_info[2];
+	sc->adapter_info[4] = eep_config->adapter_info[5];
+	sc->adapter_info[5] = eep_config->adapter_info[4];
+#else
 	sc->adapter_info[0] = eep_config->adapter_info[0];
 	sc->adapter_info[1] = eep_config->adapter_info[1];
 	sc->adapter_info[2] = eep_config->adapter_info[2];
 	sc->adapter_info[3] = eep_config->adapter_info[3];
 	sc->adapter_info[4] = eep_config->adapter_info[4];
 	sc->adapter_info[5] = eep_config->adapter_info[5];
+#endif
 
 	if (!AscTestExternalLram(iot, ioh)) {
 		if (((sc->bus_type & ASC_IS_PCI_ULTRA) == ASC_IS_PCI_ULTRA)) {
@@ -486,8 +509,12 @@ AscInitFromEEP(sc)
 	}
 
 	eep_config->cfg_msw = ASC_GET_CHIP_CFG_MSW(iot, ioh);
-	if (write_eep)
+	if (write_eep) {
 		AscSetEEPConfig(iot, ioh, eep_config, sc->bus_type);
+#ifdef ASC_DEBUG
+		AscPrintEEPConfig(eep_config, 0);
+#endif
+	}
 
 	return (warn_code);
 }
@@ -598,33 +625,6 @@ AscFindSignature(iot, ioh)
 			return (1);
 	}
 	return (0);
-}
-
-
-static u_int32_t
-AscLoadMicroCode(iot, ioh, s_addr, mcode_buf, mcode_size)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t       s_addr;
-	u_int16_t      *mcode_buf;
-	u_int16_t       mcode_size;
-{
-	u_int32_t       chksum;
-	u_int16_t       mcode_word_size;
-	u_int16_t       mcode_chksum;
-
-	mcode_word_size = mcode_size >> 1;
-	/* clear board memory */
-	AscMemWordSetLram(iot, ioh, s_addr, 0, mcode_word_size);
-	/* copy uCode to board memory */
-	AscMemWordCopyToLram(iot, ioh, s_addr, mcode_buf, mcode_word_size);
-	chksum = AscMemSumLramWord(iot, ioh, s_addr, mcode_word_size);
-	mcode_chksum = AscMemSumLramWord(iot, ioh, ASC_CODE_SEC_BEG,
-			   ((mcode_size - s_addr - ASC_CODE_SEC_BEG) >> 1));
-	AscWriteLramWord(iot, ioh, ASCV_MCODE_CHKSUM_W, mcode_chksum);
-	AscWriteLramWord(iot, ioh, ASCV_MCODE_SIZE_W, mcode_size);
-
-	return (chksum);
 }
 
 
@@ -1012,19 +1012,15 @@ AscReadLramByte(iot, ioh, addr)
 
 	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, addr & 0xFFFE);
 	word_data = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
-#if BYTE_ORDER == BIG_ENDIAN
-	if (addr & 1)
-		//odd address
-			byte_data = (u_int8_t) (word_data & 0xFF);
-	else
+
+	if (addr & 1) {
+		/* odd address */
 		byte_data = (u_int8_t) ((word_data >> 8) & 0xFF);
-#else
-	if (addr & 1)
-		//odd address
-			byte_data = (u_int8_t) ((word_data >> 8) & 0xFF);
-	else
+	} else {
+		/* even address */
 		byte_data = (u_int8_t) (word_data & 0xFF);
-#endif
+	}
+
 	return (byte_data);
 }
 
@@ -1040,27 +1036,17 @@ AscWriteLramByte(iot, ioh, addr, data)
 
 
 	word_data = AscReadLramWord(iot, ioh, addr & 0xFFFE);
-#if BYTE_ORDER == BIG_ENDIAN
-	if (addr & 1)
-		//odd address
-	{
-		word_data &= 0xFF00;
-		word_data |= ((u_int16_t) data) & 0x00FF;
-	} else {
-		word_data &= 0xFF00;
-		word_data |= (((u_int16_t) data) << 8) & 0xFF00;
-	}
-#else
-	if (addr & 1)
-		//odd address
-	{
+
+	if (addr & 1) {
+		/* odd address */
 		word_data &= 0x00FF;
 		word_data |= (((u_int16_t) data) << 8) & 0xFF00;
 	} else {
+		/* even address */
 		word_data &= 0xFF00;
 		word_data |= ((u_int16_t) data) & 0x00FF;
 	}
-#endif
+
 	AscWriteLramWord(iot, ioh, addr, word_data);
 }
 
@@ -1149,7 +1135,7 @@ AscMemWordCopyToLram(iot, ioh, s_addr, s_buffer, words)
 
 	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, s_addr);
 	for (i = 0; i < words; i++, s_buffer++)
-		ASC_SET_CHIP_LRAM_DATA(iot, ioh, *s_buffer);
+		ASC_SET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh, *s_buffer);
 }
 
 
@@ -1165,7 +1151,7 @@ AscMemWordCopyFromLram(iot, ioh, s_addr, s_buffer, words)
 
 	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, s_addr);
 	for (i = 0; i < words; i++, s_buffer++)
-		*s_buffer = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+		*s_buffer = ASC_GET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh);
 }
 
 
@@ -1178,15 +1164,16 @@ AscMemDWordCopyToLram(iot, ioh, s_addr, s_buffer, dwords)
 	int             dwords;
 {
 	int             i;
-	int             words;
-	u_int16_t      *pw;
+	u_int32_t      *pw;
 
 	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, s_addr);
 
-	pw = (u_int16_t *) s_buffer;
-	words = dwords << 1;
-	for (i = 0; i < words; i++, pw++)
-		ASC_SET_CHIP_LRAM_DATA(iot, ioh, *pw);
+	pw = s_buffer;
+	for (i = 0; i < dwords; i++, pw++) {
+		ASC_SET_CHIP_LRAM_DATA(iot, ioh, LO_WORD(*pw));
+		DELAY(1);
+		ASC_SET_CHIP_LRAM_DATA(iot, ioh, HI_WORD(*pw));
+	}
 }
 
 
@@ -1283,6 +1270,33 @@ AscInitMicroCodeVar(sc)
 
 
 static u_int32_t
+AscLoadMicroCode(iot, ioh, s_addr, mcode_buf, mcode_size)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_int16_t       s_addr;
+	u_int16_t      *mcode_buf;
+	u_int16_t       mcode_size;
+{
+	u_int32_t       chksum;
+	u_int16_t       mcode_word_size;
+	u_int16_t       mcode_chksum;
+
+	mcode_word_size = mcode_size >> 1;
+	/* clear board memory */
+	AscMemWordSetLram(iot, ioh, s_addr, 0, mcode_word_size);
+	/* copy uCode to board memory */
+	AscMemWordCopyToLram(iot, ioh, s_addr, mcode_buf, mcode_word_size);
+	chksum = AscMemSumLramWord(iot, ioh, s_addr, mcode_word_size);
+	mcode_chksum = AscMemSumLramWord(iot, ioh, ASC_CODE_SEC_BEG,
+			   ((mcode_size - s_addr - ASC_CODE_SEC_BEG) >> 1));
+	AscWriteLramWord(iot, ioh, ASCV_MCODE_CHKSUM_W, mcode_chksum);
+	AscWriteLramWord(iot, ioh, ASCV_MCODE_SIZE_W, mcode_size);
+
+	return (chksum);
+}
+
+
+static u_int32_t
 AscGetOnePhyAddr(sc, buf_addr, buf_size)
 	ASC_SOFTC      *sc;
 	u_int8_t       *buf_addr;
@@ -1291,7 +1305,7 @@ AscGetOnePhyAddr(sc, buf_addr, buf_size)
 	ASC_MIN_SG_HEAD sg_head;
 
 	sg_head.entry_cnt = ASC_MIN_SG_LIST;
-	if (DvcGetSGList(sc, buf_addr, buf_size, (ASC_SG_HEAD *) & sg_head) !=
+	if (AscGetSGList(sc, buf_addr, buf_size, (ASC_SG_HEAD *) & sg_head) !=
 	    buf_size) {
 		return (0L);
 	}
@@ -1300,6 +1314,26 @@ AscGetOnePhyAddr(sc, buf_addr, buf_size)
 	}
 	return (sg_head.sg_list[0].addr);
 }
+
+
+static u_int32_t
+AscGetSGList(sc, buf_addr, buf_len, asc_sg_head_ptr)
+	ASC_SOFTC      *sc;
+	u_int8_t       *buf_addr;
+	u_int32_t       buf_len;
+	ASC_SG_HEAD    *asc_sg_head_ptr;
+{
+	u_int32_t       buf_size;
+
+	buf_size = buf_len;
+	asc_sg_head_ptr->entry_cnt = 1;
+	asc_sg_head_ptr->sg_list[0].addr = (u_int32_t) buf_addr;
+	asc_sg_head_ptr->sg_list[0].bytes = buf_size;
+
+	return (buf_size);
+}
+
+
 /******************************************************************************/
 /*                                 EEProm routines                            */
 /******************************************************************************/
@@ -1526,16 +1560,61 @@ AscSetEEPConfigOnce(iot, ioh, cfg_buf, bus_type)
 		n_error++;
 
 	wbuf = (u_int16_t *) cfg_buf;
-	for (s_addr = 0; s_addr < 2; s_addr++, wbuf++)
+	for (s_addr = 0; s_addr < 2; s_addr++, wbuf++) {
 		if (*wbuf != AscReadEEPWord(iot, ioh, s_addr))
 			n_error++;
+	}
 
-	for (s_addr = cfg_beg; s_addr <= cfg_end; s_addr++, wbuf++)
+	for (s_addr = cfg_beg; s_addr <= cfg_end; s_addr++, wbuf++) {
 		if (*wbuf != AscReadEEPWord(iot, ioh, s_addr))
 			n_error++;
+	}
 
 	return (n_error);
 }
+
+
+#ifdef ASC_DEBUG
+static void
+AscPrintEEPConfig(eep_config, chksum)
+	ASCEEP_CONFIG	*eep_config;
+	u_int16_t	chksum;
+{
+	printf("---- ASC EEprom settings ----\n");
+	printf("cfg_lsw = 0x%x\n", eep_config->cfg_lsw);
+	printf("cfg_msw = 0x%x\n", eep_config->cfg_msw);
+	printf("init_sdtr = 0x%x\n", eep_config->init_sdtr);
+	printf("disc_enable = 0x%x\n", eep_config->disc_enable);
+	printf("use_cmd_qng = %d\n", eep_config->use_cmd_qng);
+	printf("start_motor = 0x%x\n", eep_config->start_motor);
+	printf("max_total_qng = 0x%x\n", eep_config->max_total_qng);
+	printf("max_tag_qng = 0x%x\n", eep_config->max_tag_qng);
+	printf("bios_scan = 0x%x\n", eep_config->bios_scan);
+	printf("power_up_wait = 0x%x\n", eep_config->power_up_wait);
+	printf("no_scam = %d\n", eep_config->no_scam);
+	printf("chip_scsi_id = %d\n", eep_config->chip_scsi_id);
+	printf("isa_dma_speed = %d\n", eep_config->isa_dma_speed);
+	printf("cntl = 0x%x\n", eep_config->cntl);
+#if BYTE_ORDER == BIG_ENDIAN
+	printf("adapter_info[0] = 0x%x\n", eep_config->adapter_info[1]);
+	printf("adapter_info[1] = 0x%x\n", eep_config->adapter_info[0]);
+	printf("adapter_info[2] = 0x%x\n", eep_config->adapter_info[3]);
+	printf("adapter_info[3] = 0x%x\n", eep_config->adapter_info[2]);
+	printf("adapter_info[4] = 0x%x\n", eep_config->adapter_info[5]);
+	printf("adapter_info[5] = 0x%x\n", eep_config->adapter_info[4]);
+#else
+	printf("adapter_info[0] = 0x%x\n", eep_config->adapter_info[0]);
+	printf("adapter_info[1] = 0x%x\n", eep_config->adapter_info[1]);
+	printf("adapter_info[2] = 0x%x\n", eep_config->adapter_info[2]);
+	printf("adapter_info[3] = 0x%x\n", eep_config->adapter_info[3]);
+	printf("adapter_info[4] = 0x%x\n", eep_config->adapter_info[4]);
+	printf("adapter_info[5] = 0x%x\n", eep_config->adapter_info[5]);
+#endif
+	printf("checksum = 0x%x\n", eep_config->chksum);
+	printf("calculated checksum = 0x%x\n", chksum);
+	printf("-----------------------------\n");
+}
+#endif
 
 
 /******************************************************************************/
@@ -1564,7 +1643,7 @@ AscISR(sc)
 	saved_ctrl_reg = ctrl_reg & (~(ASC_CC_SCSI_RESET | ASC_CC_CHIP_RESET |
 			   ASC_CC_SINGLE_STEP | ASC_CC_DIAG | ASC_CC_TEST));
 	chipstat = ASC_GET_CHIP_STATUS(iot, ioh);
-	if (chipstat & ASC_CSW_SCSI_RESET_LATCH)
+	if (chipstat & ASC_CSW_SCSI_RESET_LATCH) {
 		if (!(sc->bus_type & (ASC_IS_VL | ASC_IS_EISA))) {
 			int_pending = TRUE;
 			sc->sdtr_done = 0;
@@ -1578,6 +1657,7 @@ AscISR(sc)
 			ASC_SET_CHIP_STATUS(iot, ioh, 0);
 			chipstat = ASC_GET_CHIP_STATUS(iot, ioh);
 		}
+	}
 	saved_ram_addr = ASC_GET_CHIP_LRAM_ADDR(iot, ioh);
 	host_flag = AscReadLramByte(iot, ioh, ASCV_HOST_FLAG_B) &
 		(u_int8_t) (~ASC_HOST_FLAG_IN_ISR);
@@ -1686,8 +1766,9 @@ AscIsrQDone(sc)
 		}
 		if (sc->cur_total_qng >= n_q_used) {
 			sc->cur_total_qng -= n_q_used;
-			if (sc->cur_dvc_qng[tid_no] != 0)
+			if (sc->cur_dvc_qng[tid_no] != 0) {
 				sc->cur_dvc_qng[tid_no]--;
+			}
 		} else {
 			AscSetLibErrorCode(sc, ASCQ_ERR_CUR_QNG);
 			scsiq->d3.done_stat = ASC_QD_WITH_ERROR;
@@ -1765,10 +1846,11 @@ AscIsrChipHalted(sc)
 	tid_no = ASC_TIX_TO_TID(target_ix);
 	target_id = ASC_TID_TO_TARGET_ID(tid_no);
 
-	if (sc->pci_fix_asyn_xfer & target_id)
+	if (sc->pci_fix_asyn_xfer & target_id) {
 		asyn_sdtr = ASYN_SDTR_DATA_FIX_PCI_REV_AB;
-	else
+	} else {
 		asyn_sdtr = 0;
+	}
 
 	if (int_halt_code == ASC_HALT_DISABLE_ASYN_USE_SYN_FIX) {
 		if (sc->pci_fix_asyn_xfer & target_id) {
@@ -1827,7 +1909,6 @@ AscIsrChipHalted(sc)
 		if ((out_msg.msg_type == MS_EXTEND) &&
 		    (out_msg.msg_len == MS_SDTR_LEN) &&
 		    (out_msg.msg_req == MS_SDTR_CODE)) {
-
 			sc->init_sdtr &= ~target_id;
 			sc->sdtr_done &= ~target_id;
 			AscSetChipSDTR(iot, ioh, asyn_sdtr, tid_no);
@@ -1915,22 +1996,52 @@ _AscCopyLramScsiDoneQ(iot, ioh, q_addr, scsiq, max_dma_count)
 	u_int16_t       _val;
 	u_int8_t        sg_queue_cnt;
 
-	DvcGetQinfo(iot, ioh, q_addr + ASC_SCSIQ_DONE_INFO_BEG, (u_int16_t *) scsiq,
-		    ((sizeof(ASC_SCSIQ_2) + sizeof(ASC_SCSIQ_3)) / 2));
+	AscGetQDoneInfo(iot, ioh, q_addr + ASC_SCSIQ_DONE_INFO_BEG, scsiq);
+
 	_val = AscReadLramWord(iot, ioh, q_addr + ASC_SCSIQ_B_STATUS);
-	scsiq->q_status = _val;
-	scsiq->q_no = (_val >> 8);
+	scsiq->q_status = LO_BYTE(_val);
+	scsiq->q_no = HI_BYTE(_val);
 	_val = AscReadLramWord(iot, ioh, q_addr + ASC_SCSIQ_B_CNTL);
-	scsiq->cntl = _val;
-	sg_queue_cnt = (_val >> 8);
+	scsiq->cntl = LO_BYTE(_val);
+	sg_queue_cnt = HI_BYTE(_val);
 	_val = AscReadLramWord(iot, ioh, q_addr + ASC_SCSIQ_B_SENSE_LEN);
-	scsiq->sense_len = _val;
-	scsiq->extra_bytes = (_val >> 8);
+	scsiq->sense_len = LO_BYTE(_val);
+	scsiq->extra_bytes = HI_BYTE(_val);
 	scsiq->remain_bytes = AscReadLramWord(iot, ioh,
 				     q_addr + ASC_SCSIQ_DW_REMAIN_XFER_CNT);
 	scsiq->remain_bytes &= max_dma_count;
 
 	return (sg_queue_cnt);
+}
+
+
+static void
+AscGetQDoneInfo(iot, ioh, addr, scsiq)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	u_int16_t	addr;
+	ASC_QDONE_INFO	*scsiq;
+{
+	u_int16_t	val;
+
+	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, addr);
+
+	val = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+	scsiq->d2.ccb_ptr = MAKELONG(val, ASC_GET_CHIP_LRAM_DATA(iot, ioh));
+	val = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+	scsiq->d2.target_ix = LO_BYTE(val);
+	scsiq->d2.flag = HI_BYTE(val);
+	val = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+	scsiq->d2.cdb_len = LO_BYTE(val);
+	scsiq->d2.tag_code = HI_BYTE(val);
+	scsiq->d2.vm_id = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+
+	val = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+	scsiq->d3.done_stat = LO_BYTE(val);
+	scsiq->d3.host_stat = HI_BYTE(val);
+	val = ASC_GET_CHIP_LRAM_DATA(iot, ioh);
+	scsiq->d3.scsi_stat = LO_BYTE(val);
+	scsiq->d3.scsi_msg = HI_BYTE(val);
 }
 
 
@@ -2615,12 +2726,14 @@ AscPutReadySgListQueue(sc, scsiq, q_no)
 				 * Tell the board how many entries are in the S/G list
 				 */
 				AscMemWordCopyToLram(iot, ioh, q_addr + ASC_SCSIQ_SGHD_CPY_BEG,
-						     (u_int16_t *) & scsi_sg_q, sizeof(ASC_SG_LIST_Q) >> 1);
+							(u_int16_t *) & scsi_sg_q,
+							sizeof(ASC_SG_LIST_Q) >> 1);
 				/*
 				 * Tell the board the addresses of the S/G list segments
 				 */
 				AscMemDWordCopyToLram(iot, ioh, q_addr + ASC_SGQ_LIST_BEG,
-						      (u_int32_t *) & sg_head->sg_list[sg_index], sg_list_dwords);
+							(u_int32_t *) & sg_head->sg_list[sg_index],
+							sg_list_dwords);
 				sg_index += ASC_SG_LIST_PER_Q;
 			}
 		}
@@ -2665,9 +2778,7 @@ AscPutReadyQueue(sc, scsiq, q_no)
 	AscMemWordCopyToLram(iot, ioh, q_addr + ASC_SCSIQ_CDB_BEG,
 		       (u_int16_t *) scsiq->cdbptr, scsiq->q2.cdb_len >> 1);
 
-	DvcPutScsiQ(iot, ioh, q_addr + ASC_SCSIQ_CPY_BEG,
-		    (u_int16_t *) & scsiq->q1.cntl,
-		    ((sizeof(ASC_SCSIQ_1) + sizeof(ASC_SCSIQ_2)) / 2) - 1);
+	AscPutSCSIQ(iot, ioh, q_addr + ASC_SCSIQ_CPY_BEG, scsiq);
 
 	/*
 	 * Let's start the command
@@ -2676,6 +2787,51 @@ AscPutReadyQueue(sc, scsiq, q_no)
 			 (scsiq->q1.q_no << 8) | ASC_QS_READY);
 
 	return (ASC_NOERROR);
+}
+
+
+static void
+AscPutSCSIQ(iot, ioh, addr, scsiq)
+	bus_space_tag_t		iot;
+	bus_space_handle_t	ioh;
+	u_int16_t		addr;
+	ASC_SCSI_Q 		*scsiq;
+{
+	u_int16_t	val;
+
+
+	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, addr);
+
+	/* ASC_SCSIQ_1 */
+	val = MAKEWORD(scsiq->q1.cntl, scsiq->q1.sg_queue_cnt);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = MAKEWORD(scsiq->q1.target_id, scsiq->q1.target_lun);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = LO_WORD(scsiq->q1.data_addr);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = HI_WORD(scsiq->q1.data_addr);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = LO_WORD(scsiq->q1.data_cnt);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = HI_WORD(scsiq->q1.data_cnt);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = LO_WORD(scsiq->q1.sense_addr);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = HI_WORD(scsiq->q1.sense_addr);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = MAKEWORD(scsiq->q1.sense_len, scsiq->q1.extra_bytes);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+
+	/* ASC_SCSIQ_2 */
+	val = LO_WORD(scsiq->q2.ccb_ptr);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = HI_WORD(scsiq->q2.ccb_ptr);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = MAKEWORD(scsiq->q2.target_ix, scsiq->q2.flag);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	val = MAKEWORD(scsiq->q2.cdb_len, scsiq->q2.tag_code);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, val);
+	ASC_SET_CHIP_LRAM_DATA(iot, ioh, scsiq->q2.vm_id);
 }
 
 
@@ -3044,7 +3200,7 @@ AscResetDevice(sc, target_ix)
 					AscStartQueueExe(iot, ioh);
 					if (sc->pci_fix_asyn_xfer & target_id)
 						AscSetRunChipSynRegAtID(iot, ioh, tid_no,
-									ASYN_SDTR_DATA_FIX_PCI_REV_AB);
+								ASYN_SDTR_DATA_FIX_PCI_REV_AB);
 					AscWaitTixISRDone(sc, target_ix);
 				}
 			} else
@@ -3111,7 +3267,7 @@ AscSetLibErrorCode(sc, err_code)
 {
 	/*
 	 * if(sc->err_code == 0) { sc->err_code = err_code;
-	 	 */ AscWriteLramWord(sc->sc_iot, sc->sc_ioh, ASCV_ASCDVC_ERR_CODE_W,
+	 */ AscWriteLramWord(sc->sc_iot, sc->sc_ioh, ASCV_ASCDVC_ERR_CODE_W,
 			       err_code);
 	/*
 	 * }
@@ -3309,62 +3465,4 @@ DvcDelayNanoSecond(n)
 {
 
 	DELAY((n + 999) / 1000);
-}
-
-
-static u_int32_t
-DvcGetSGList(sc, buf_addr, buf_len, asc_sg_head_ptr)
-	ASC_SOFTC      *sc;
-	u_int8_t       *buf_addr;
-	u_int32_t       buf_len;
-	ASC_SG_HEAD    *asc_sg_head_ptr;
-{
-	u_int32_t       buf_size;
-
-	buf_size = buf_len;
-	asc_sg_head_ptr->entry_cnt = 1;
-	asc_sg_head_ptr->sg_list[0].addr = (u_int32_t) buf_addr;
-	asc_sg_head_ptr->sg_list[0].bytes = buf_size;
-
-	return (buf_size);
-}
-
-
-static void
-DvcPutScsiQ(iot, ioh, s_addr, outbuf, words)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t       s_addr;
-	u_int16_t      *outbuf;
-	int             words;
-{
-	int             i;
-
-	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, s_addr);
-	for (i = 0; i < words; i++, outbuf++) {
-		if (i == 2 || i == 10)
-			continue;
-
-		ASC_SET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh, *outbuf);
-	}
-}
-
-
-static void
-DvcGetQinfo(iot, ioh, s_addr, inbuf, words)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t       s_addr;
-	u_int16_t      *inbuf;
-	int             words;
-{
-	int             i;
-
-	ASC_SET_CHIP_LRAM_ADDR(iot, ioh, s_addr);
-	for (i = 0; i < words; i++, inbuf++) {
-		if (i == 5)
-			continue;
-
-		*inbuf = ASC_GET_CHIP_LRAM_DATA_NO_SWAP(iot, ioh);
-	}
 }
