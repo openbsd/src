@@ -1,4 +1,4 @@
-/*	$OpenBSD: qereg.h,v 1.2 1998/10/19 19:55:55 jason Exp $	*/
+/*	$OpenBSD: qereg.h,v 1.3 1998/10/20 00:57:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -79,6 +79,19 @@ struct qe_cregs {
 #define	QE_CR_STAT_RXLERR	0x00000004	/* rx late error */
 #define	QE_CR_STAT_RXPERR	0x00000002	/* rx parity error */
 #define	QE_CR_STAT_RXSERR	0x00000001	/* rx sbus error ack */
+
+/*
+ * Errors: all status bits except for TX/RX IRQ
+ */
+#define	QE_CR_STAT_ALLERRORS	\
+	( QE_CR_STAT_EDEFER   | QE_CR_STAT_CLOSS    | QE_CR_STAT_ERETRIES \
+	| QE_CR_STAT_LCOLL    | QE_CR_STAT_FUFLOW   | QE_CR_STAT_JERROR \
+	| QE_CR_STAT_BERROR   | QE_CR_STAT_TCCOFLOW | QE_CR_STAT_TXDERROR \
+	| QE_CR_STAT_TXLERR   | QE_CR_STAT_TXPERR   | QE_CR_STAT_TXSERR \
+	| QE_CR_STAT_RCCOFLOW | QE_CR_STAT_RUOFLOW  | QE_CR_STAT_MCOFLOW \
+	| QE_CR_STAT_RXFOFLOW | QE_CR_STAT_RLCOLL   | QE_CR_STAT_FCOFLOW \
+	| QE_CR_STAT_CECOFLOW | QE_CR_STAT_RXDROP   | QE_CR_STAT_RXSMALL \
+	| QE_CR_STAT_RXLERR   | QE_CR_STAT_RXPERR   | QE_CR_STAT_RXSERR)
 
 /* qe_cregs.qmask: qec error interrupt mask. */
 #define	QE_CR_QMASK_COFLOW	0x00100000	/* collision cntr overflow */

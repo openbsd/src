@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.2 1998/10/19 19:55:54 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.3 1998/10/20 00:57:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -297,20 +297,21 @@ qeintr(v)
 	int r = 0;
 
 	qecstat = sc->sc_qr->stat >> (4 * sc->sc_channel);
-	qestat = sc->sc_cr->stat;
 	if ((qecstat & 0xf) == 0)
 		return r;
 
-	if (qecstat & QEC_STAT_ER || qecstat & QEC_STAT_BM) {
+	qestat = sc->sc_cr->stat;
+
+	if (qestat & QE_CR_STAT_ALLERRORS) {
 		r |= qe_eint(sc, qestat);
 		if (r == -1)
 			return 1;
 	}
 
-	if (qecstat & QEC_STAT_TX && qestat & QE_CR_STAT_TXIRQ)
+	if (qestat & QE_CR_STAT_TXIRQ)
 		r |= qe_tint(sc);
 
-	if (qecstat & QEC_STAT_RX && qestat & QE_CR_STAT_RXIRQ)
+	if (qestat & QE_CR_STAT_RXIRQ)
 		r |= qe_rint(sc);
 
 	return r;
