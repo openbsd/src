@@ -1,4 +1,4 @@
-#	$OpenBSD: INSTADP,v 1.7 1996/05/04 09:21:17 deraadt Exp $
+#	$OpenBSD: INSTADP,v 1.8 1996/05/09 20:50:03 hvozda Exp $
 #	$NetBSD: INSTADP,v 1.14 1996/04/25 20:14:23 scottr Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
@@ -62,6 +62,15 @@ pci0	at mainbus0
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 
+pcicmaster0     at isa? port 0x3E0 size 2
+pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
+pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
+pcicmaster1 at isa? port 0x3E2 size 2
+pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
+pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+
+pcmcia* at pcic?
+
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
@@ -77,6 +86,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
+com3    at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
 
 #cy0	at isa? ...
 
@@ -124,6 +134,8 @@ ep*	at eisa? slot ?				# 3C579 ethernet cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
+ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
+ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
