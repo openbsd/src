@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.21 2004/09/15 22:52:00 jmc Exp $
+.\"	$OpenBSD: ndp.8,v 1.22 2004/10/28 08:44:22 itojun Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,11 +145,9 @@ list; install the top entry of the list into the kernel routing table.
 Shows the default interface used as the default route when
 there is no default router.
 .It Fl I Ar interface
-Specifies the default interface used as the default route when
-there is no default router.
-The
+Specifies the default
 .Ar interface
-will be used as the default.
+to be used when there is no interface specified even though required.
 .It Fl I Ic delete
 The current default interface will be deleted from the kernel.
 .It Fl i Ar interface Op Ar flags ...
