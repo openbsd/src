@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.4 1995/05/14 15:46:17 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.4.2.1 1995/11/06 21:51:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -273,5 +273,6 @@ int	mode, nblk;
 	DMA->dma_mode = mode ^ DMA_WRBIT;
 	DMA->dma_mode = mode;
 	DMA->dma_data = nblk;
+	delay(2);	/* Needed for Falcon */
 	DMA->dma_mode = DMA_SCREG | (mode & DMA_WRBIT);
 }
