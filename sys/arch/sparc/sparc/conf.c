@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 1999/07/18 17:07:49 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 1999/07/23 19:11:27 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -85,6 +85,9 @@
 #include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
 #include "spif.h"		/* has NSTTY and NSBPP */
+#include "scf.h"
+#include "flash.h"
+#include "fga.h"
 
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -227,17 +230,17 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 95 */
 	cdev_notdef(),			/* 96 */
 	cdev_notdef(),			/* 97 */
-	cdev_notdef(),			/* 98 */
+	cdev_fga_init(NFGA,fga),	/* 98 */
 	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
-	cdev_tty_init(NMTTY,mtty),	/* 100 */
-	cdev_gen_init(NMBPP,mbpp),	/* 101 */
-	cdev_tty_init(NSTTY,stty),	/* 102 */
-	cdev_gen_init(NSBPP,sbpp),	/* 103 */
+	cdev_tty_init(NMTTY,mtty),	/* 100: magma */
+	cdev_gen_init(NMBPP,mbpp),	/* 101: magma */
+	cdev_tty_init(NSTTY,stty),	/* 102: spif */
+	cdev_gen_init(NSBPP,sbpp),	/* 103: spif */
 	cdev_bpp_init(NBPP,bpp),	/* 104: bpp */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_disk_init(NRD,rd),		/* 106: ram disk driver */
-	cdev_notdef(),			/* 107 */
-	cdev_notdef(),			/* 108 */
+	cdev_scf_init(NSCF,scf),	/* 107: sysconfig regs */
+	cdev_flash_init(NFLASH,flash),	/* 108: flash memory */
 	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 111: network tunnel */

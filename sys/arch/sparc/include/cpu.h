@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 1999/01/10 13:34:20 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1999/07/23 19:11:27 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -176,6 +176,8 @@ void	intr_fasttrap __P((int level, void (*vec)(void)));
 
 /* auxreg.c */
 void led_blink __P((void *));
+/* scf.c */
+void scfblink __P((void *));
 /* disksubr.c */
 struct dkbad;
 int isbad __P((struct dkbad *bt, int, int, int));

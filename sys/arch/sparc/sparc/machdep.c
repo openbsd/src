@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 1999/07/09 21:30:02 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 1999/07/23 19:11:28 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -98,6 +98,7 @@
 #ifdef SUN4M
 #include <sparc/dev/power.h>
 #include "power.h"
+#include "scf.h"
 #endif
 
 #include "auxreg.h"
@@ -563,7 +564,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_LED_BLINK:
-#if (NLED > 0) || (NAUXREG > 0)
+#if (NLED > 0) || (NAUXREG > 0) || (NSCF > 0)
 		oldval = sparc_led_blink;
 		ret = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &sparc_led_blink);
@@ -578,6 +579,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 #if NLED > 0
 			led_cycle((caddr_t *)led_sc);
+#endif
+#if NSCF > 0
+			scfblink((caddr_t *)0);
 #endif
 		}
 

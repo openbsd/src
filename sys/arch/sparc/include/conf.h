@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.9 1999/02/01 00:30:43 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.10 1999/07/23 19:11:27 jason Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -108,5 +108,27 @@ cdev_decl(mbpp);
 
 cdev_decl(stty);
 cdev_decl(sbpp);
+
+/* open, close, ioctl */
+#define	cdev_scf_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+cdev_decl(scf);
+
+/* open, close, ioctl, read, write */
+#define	cdev_flash_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read),	\
+	dev_init(c,n,write), dev_init(c,n,ioctl),			\
+	(dev_type_stop((*))) nullop, 0, seltrue, (dev_type_mmap((*))) enodev }
+cdev_decl(flash);
+
+#define	cdev_fga_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+cdev_decl(fga);
 
 cdev_decl(ksyms);

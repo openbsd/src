@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.30 1999/06/06 04:48:24 jason Exp $
+#	$OpenBSD: files.sparc,v 1.31 1999/07/23 19:11:23 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -303,7 +303,28 @@ file	arch/sparc/dev/spif.c		spif | stty | sbpp needs-flag
 
 device bpp {}
 attach bpp at sbus
-file    arch/sparc/dev/bpp.c          bpp needs-flag
+file    arch/sparc/dev/bpp.c		bpp needs-flag
 
 attach xbox at sbus
 file	arch/sparc/dev/xbox.c		xbox
+
+# sysconfig registers on Force CPU-5V
+device scf {}
+attach scf at mainbus
+file	arch/sparc/dev/scf.c		scf needs-flag
+
+# flash memory on Force CPU-5V
+device flash {}
+attach flash at obio
+file	arch/sparc/dev/flash.c		flash needs-flag
+
+# VME/SBus bridge on Force CPU-5V
+device fga {}
+attach fga at iommu
+device fvme { [addr = -1], [level = -1], [vect = -1] }
+attach fvme at fga
+file	arch/sparc/dev/fga.c		fga needs-flag
+
+device daadio {}
+attach daadio at fvme
+file	arch/sparc/dev/daadio.c		daadio
