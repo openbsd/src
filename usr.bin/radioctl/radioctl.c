@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.7 2002/01/02 19:18:55 mickey Exp $ */
+/* $OpenBSD: radioctl.c,v 1.8 2002/01/22 22:09:28 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -77,26 +77,26 @@ const char *onchar = "on";
 const char *offchar = "off";
 #define OFFCHAR_LEN	3
 
-static struct radio_info ri;
+struct radio_info ri;
 
-static int	parse_opt(char *, struct opt_t *);
+int	parse_opt(char *, struct opt_t *);
 
-static void	print_vars(int);
-static void	do_ioctls(int, struct opt_t *, int);
+void	print_vars(int);
+void	do_ioctls(int, struct opt_t *, int);
 
-static void	print_value(int);
-static void	change_value(const struct opt_t);
-static void	update_value(int, u_long *, u_long);
+void	print_value(int);
+void	change_value(const struct opt_t);
+void	update_value(int, u_long *, u_long);
 
-static void     warn_unsupported(int);
-static void	usage(void);
+void     warn_unsupported(int);
+void	usage(void);
 
-static void	show_verbose(const char *, int);
-static void	show_int_val(u_long, const char *, char *, int);
-static void	show_float_val(float, const char *, char *, int);
-static void	show_char_val(const char *, const char *, int);
-static int	str_to_opt(const char *);
-static u_long	str_to_long(char *, int);
+void	show_verbose(const char *, int);
+void	show_int_val(u_long, const char *, char *, int);
+void	show_float_val(float, const char *, char *, int);
+void	show_char_val(const char *, const char *, int);
+int	str_to_opt(const char *);
+u_long	str_to_long(char *, int);
 
 /*
  * Control behavior of a FM tuner - set frequency, volume etc
@@ -108,15 +108,11 @@ main(int argc, char **argv)
 
 	char *radiodev = NULL;
 	int rd = -1;
-
 	int optchar;
-	char *param = NULL;
-
 	int show_vars = 0;
 	int set_param = 0;
 	int silent = 0;
-
-	int optv = 0;
+	int mode = O_RDONLY;
 
 	if (argc < 2)
 		usage();
@@ -125,55 +121,55 @@ main(int argc, char **argv)
 	if (radiodev == NULL)
 		radiodev = RADIODEVICE;
 
-	while ((optchar = getopt(argc, argv, "af:nw:")) != -1) {
+	while ((optchar = getopt(argc, argv, "af:nw")) != -1) {
 		switch (optchar) {
 		case 'a':
 			show_vars = 1;
-			optv = 1;
 			break;
 		case 'f':
 			radiodev = optarg;
-			optv = 2;
 			break;
 		case 'n':
 			silent = 1;
-			optv = 1;
 			break;
 		case 'w':
 			set_param = 1;
-			param = optarg;
-			optv = 2;
+			mode = O_RDWR;
 			break;
 		default:
 			usage();
 			/* NOTREACHED */
 		}
-
-		argc -= optv;
-		argv += optv;
 	}
 
-	rd = open(radiodev, O_RDONLY);
+	argc -= optind;
+	argv += optind;
+
+	rd = open(radiodev, mode);
 	if (rd < 0)
 		err(1, "%s open error", radiodev);
 
 	if (ioctl(rd, RIOCGINFO, &ri) < 0)
 		err(1, "RIOCGINFO");
 
-	if (argc > 1)
-		if (parse_opt(*(argv + 1), &opt)) {
-			show_verbose(varname[opt.option], silent);
-			print_value(opt.option);
-			free(opt.string);
-			putchar('\n');
-		}
-
-	if (set_param)
-		if (parse_opt(param, &opt))
-			do_ioctls(rd, &opt, silent);
-
-	if (show_vars)
+	if (!argc && show_vars && !set_param)
 		print_vars(silent);
+	else if (argc > 0 && !show_vars) {
+		if (set_param) {
+			for(; argc--; argv++)
+				if (parse_opt(*argv, &opt))
+					do_ioctls(rd, &opt, silent);
+		} else {
+			for(; argc--; argv++)
+				if (parse_opt(*argv, &opt)) {
+					show_verbose(varname[opt.option],
+					    silent);
+					print_value(opt.option);
+					free(opt.string);
+					putchar('\n');
+				}
+		}
+	}
 
 	if (close(rd) < 0)
 		warn("%s close error", radiodev);
@@ -181,7 +177,7 @@ main(int argc, char **argv)
 	return 0;
 }
 
-static void
+void
 usage(void)
 {
 	fprintf(stderr, "usage:  %s [-f file] [-n] variable ...\n"
@@ -191,20 +187,20 @@ usage(void)
 	exit(1);
 }
 
-static void
+void
 show_verbose(const char *nick, int silent)
 {
 	if (!silent)
 		printf("%s=", nick);
 }
 
-static void
+void
 warn_unsupported(int optval)
 {
 	warnx("driver does not support `%s'", varname[optval]);
 }
 
-static void
+void
 do_ioctls(int fd, struct opt_t *o, int silent)
 {
 	int oval;
@@ -250,7 +246,7 @@ do_ioctls(int fd, struct opt_t *o, int silent)
 	putchar('\n');
 }
 
-static void
+void
 change_value(const struct opt_t o)
 {
 	int unsupported = 0;
@@ -297,7 +293,7 @@ change_value(const struct opt_t o)
 /*
  * Convert string to integer representation of a parameter
  */
-static int
+int
 str_to_opt(const char *topt)
 {
 	int res, toptlen, varlen, len, varsize;
@@ -319,7 +315,7 @@ str_to_opt(const char *topt)
 	return OPTION_NONE;
 }
 
-static void
+void
 update_value(int sign, u_long *value, u_long update)
 {
 	switch (sign) {
@@ -338,7 +334,7 @@ update_value(int sign, u_long *value, u_long update)
 /*
  * Convert string to unsigned integer
  */
-static u_long
+u_long
 str_to_long(char *str, int optval)
 {
 	u_long val;
@@ -358,7 +354,7 @@ str_to_long(char *str, int optval)
  * parse string s into struct opt_t
  * return true on success, false on failure
  */
-static int
+int
 parse_opt(char *s, struct opt_t *o) {
 	const char *badvalue = "bad value `%s'";
 	char *topt = NULL;
@@ -440,7 +436,7 @@ parse_opt(char *s, struct opt_t *o) {
 /*
  * Print current value of the parameter.
  */
-static void
+void
 print_value(int optval)
 {
 	if (optval == OPTION_NONE)
@@ -474,21 +470,21 @@ print_value(int optval)
 	}
 }
 
-static void
+void
 show_int_val(u_long val, const char *nick, char *append, int silent)
 {
 	show_verbose(nick, silent);
 	printf("%lu%s\n", val, append);
 }
 
-static void
+void
 show_float_val(float val, const char *nick, char *append, int silent)
 {
 	show_verbose(nick, silent);
 	printf("%.2f%s\n", val, append);
 }
 
-static void
+void
 show_char_val(const char *val, const char *nick, int silent)
 {
 	show_verbose(nick, silent);
@@ -498,7 +494,7 @@ show_char_val(const char *val, const char *nick, int silent)
 /*
  * Print all available parameters
  */
-static void
+void
 print_vars(int silent)
 {
 	show_int_val(ri.volume, varname[OPTION_VOLUME], "", silent);
