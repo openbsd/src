@@ -1,99 +1,13 @@
-The ramdisk kernel may be loaded from the network, from CD-ROM, or other
-SCSI devices (such as Zip(tm) disk).  This section primarily describes the
-setup required for a network boot, but does offer information pertaining to
-installation from other media.  Note that loading from HPIB or SCSI cartridge
-tape is possible, but not currently supported.
+Most MACHINE machines don't generally need any specific preparation.
 
-You will need information about your disk's geometry, based on 512-byte
-sectors.  You must have this information before proceeding.  The
-file `HP-IB.geometry' has geometry information for several HP-IB disks,
-but may be incomplete.  Geometry may be calculated from an HP-UX 
-`/etc/disktab' entry, but note that HP-UX geometry is based on
-1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
+On series 400, you will wish to configure the prom as ``HP-UX compatible''
+before installing OpenBSD. To do so, at the prom prompt, enter ``CF'',
+then ``2'' (Boot Mode Selection), then ``2'' (HP-UX Compatible).  Choose
+to make this setting Permanent with ``P'', then validate your changes with
+``E''.  Your machine will restart in HP-UX mode.
 
-QUICK NOTE ABOUT PARTITIONS:  Since the target disk will become the boot
-disk for your new OpenBSD/hp300 installation, you will need to treat the
-`a' and `c' partitions in a special manner.  Due to the size of the
-OpenBSD/hp300 boot program (it spills into the area after the disklabel),
-it is necessary to offset the `a' partition one cylinder from the beginning
-of the disk.  Later, the `c' partition will be marked with the type
-`FS_BOOT' and may not be used for a filesystem.  (For those unfamiliar
-with historic BSD partition conventions, the `c' partition is defined
-as `the entire disk', or the `raw partition'.)
-
-		   Ramdisk installation via network or CD-ROM
-	           ------------------------------------------
-NOTE:  BOOTING SYS_UBOOT VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
-IS `REV. C' OR LATER.  (This only applies to the 320/350 era machines.)
-
-In order to complete this process, you will need the following from the
-`OSREV/hp300' directory of the distribution:
-
-	SYS_UBOOT	The unified boot block file.
-
-	bsd.rd		The uncompressed RAMDISK kernel image.
-
-To boot SYS_UBOOT via the network, you will need a system capable of
-handling boot requests for an hp300.  If you will use this method, see
-the special note below.
-
-To boot from SCSI CD-ROM, simply insert the CD that is hp300 bootable into
-the drive before power up, then during the computer's self-test cycle,
-press the space bar.  Shortly, you should see a menu of possible boot
-options appear.  Select the option corresponding to SYS_CDBOOT.
-SYS_CDBOOT will then load and begin loading bsd.rd from the CD; depending
-on your ROM revision and hardware configuration, you may or may not see
-any messages on the console while this happens.
-
-Please note that booting from CD-ROM may not be supported by all models of
-hp300.  You will also need a CD-ROM drive which uses 512 byte blocks;
-anything which shipped with an hp300 or is known to boot a SPARC or black
-NeXTStation should work.
-
--- The following section is specific for loading SYS_UBOOT via the network. --
-
-If you wish to load the SYS_UBOOT program via the network, you need to
-either have another OpenBSD system on the network, or something else
-capable of running the rbootd(8) program.  Source code may be found
-under usr.sbin/rbootd in the OpenBSD source tree, but requires the
-Berkeley Packet Filter (bpf) in order to function.  It may be possible to
-use HP-UX, but is not recommended (or documented here).  For more
-information on diskless booting under OpenBSD, see the diskless(8)
-manual page.
-
-First of all, configure your rbootd to handle boot requests from the
-client.  NOTE: OpenBSD's `rbootd' is slightly different from HP-UX's.
-To configure OpenBSD's `rbootd', create a file called `/etc/rbootd.conf'
-and place in it an entry like the following:
-
-	08:00:09:04:AA:33	SYS_UBOOT	# thunder-egg
-
-The first column is the ethernet address of the client's network interface.
-The second column is the program to send to the client, and anything after
-the `#' is a comment.  Once you have rbootd running, copy the SYS_UBOOT
-program to the /usr/mdec/rbootd directory on your server.  If this
-directory doesn't exist already, you will need to create it.
-
-Next, add the client to /etc/ethers on your server.  For example:
-
-	08:00:09:04:AA:33	thunder-egg
-
-Then start `rarpd' on your server; `rarpd -a' should do the trick.
-
-Finally, you need to add an entry in /etc/bootparams.  For example:
-
-	thunder-egg	root=myserver:/export/hp300
-
-Where myserver is the name of your server machine and `/export/hp300'
-is the directory that holds the ramdisk kernel image (`bsd.rd').
-Now run `rpc.bootparamd' and make sure that this directory is NFS
-exported to the client.  See the manual pages on your server system
-if you need more information about exporting filesystems.  If you
-run into problems you may wish to run `rpc.bootparamd' with the `-d'
-flag on your server to get extra debugging information.
-
-You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
-press the space bar.  Shortly, you should see a menu of possible boot
-options appear.  Select the option corresponding to SYS_UBOOT.
-SYS_UBOOT will then load and prompt you for a kernel name.  NFS file
-names should not have a leading '/' prepended to them, simply use `bsd.rd'.
+If you plan to use a serial console, you might have to flip a switch
+on series 300, or configure the RS-232 interface as ``remote'' from the
+Configuration menu, on series 400.  Please refer to the OpenBSD/MACHINE
+FAQ at http://www.openbsd.org/hp300/hp300faq.html for more information
+about this process.

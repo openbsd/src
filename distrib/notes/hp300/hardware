@@ -58,6 +58,9 @@ The following HP hardware is supported:
 (*) 400-series machines configured for Domain/OS are not fully supported,
     notably, the keyboard doesn't work and the ROMs must be in `HP-UX mode'.
 
+    The 425e is only supported with a serial console on the first serial
+    port.
+
 (**) SCSI-II drives are known to work, though this may require changing a
      jumper on some drives.  See your disk's documentation for details.
 
