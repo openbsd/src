@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.1,v 1.10 2003/06/03 02:56:20 millert Exp $
+.\"	$OpenBSD: uname.1,v 1.11 2004/02/23 15:01:33 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd print operating system name
 .Sh SYNOPSIS
 .Nm uname
-.Op Fl amnpsrv
+.Op Fl amnprsv
 .Sh DESCRIPTION
 The
 .Nm uname
@@ -58,10 +58,10 @@ that the system is known by to a communications
 network).
 .It Fl p
 Print the processor type in more detail.
-.It Fl s
-Print the operating system name.
 .It Fl r
 Print the operating system release.
+.It Fl s
+Print the operating system name.
 .It Fl v
 Print the operating system version.
 .El
