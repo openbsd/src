@@ -22,6 +22,7 @@
 
 public int utf_mode = 0;
 
+#if !SMALL
 /*
  * Predefined character sets,
  * selected by the LESSCHARSET environment variable.
@@ -334,3 +335,56 @@ prchar(c)
 		snprintf(buf, sizeof(buf), binfmt, c);
 	return (buf);
 }
+
+#else /* SMALL */
+
+public int binattr = AT_STANDOUT;
+
+	public void
+init_charset()
+{
+	return;
+}
+
+/*
+ * Is a given character a "binary" character?
+ */
+	public int
+binary_char(c)
+	unsigned char c;
+{
+	return (!isprint(c));
+}
+
+/*
+ * Is a given character a "control" character?
+ */
+	public int
+control_char(c)
+	int c;
+{
+	return (iscntrl(c));
+}
+
+/*
+ * Return the printable form of a character.
+ * For example, in the "ascii" charset '\3' is printed as "^C".
+ */
+	public char *
+prchar(c)
+	int c;
+{
+	static char buf[8];
+
+	c &= 0377;
+	if (!iscntrl(c))
+		snprintf(buf, sizeof(buf), "%c", c);
+	else if (c == ESC)
+		snprintf(buf, sizeof(buf), "ESC");
+  	else if (c < 128 && !iscntrl(c ^ 0100))
+  		snprintf(buf, sizeof(buf), "^%c", c ^ 0100);
+	else
+		snprintf(buf, sizeof(buf), "*s<%X>", c);
+	return (buf);
+}
+#endif /* SMALL */
