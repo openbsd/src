@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spppcontrol.8,v 1.4 2001/06/23 05:57:10 deraadt Exp $
+.\"	$OpenBSD: spppcontrol.8,v 1.5 2004/11/30 18:28:20 jmc Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -82,7 +82,7 @@ or expected will be displayed, plus any possible options to the
 authentication protocol if applicable.
 Note that the authentication secrets (sometimes called
 .Em keys )
-are not being returned by the underlying system call, and are thus not
+are not returned by the underlying system call, and are thus not
 displayed.
 .Pp
 If any additional parameter is supplied, superuser privileges are
@@ -175,13 +175,6 @@ This is the default, and will not be explicitly displayed in
 mode.
 .El
 .Sh EXAMPLES
-.Bd -literal
-# spppcontrol bppp0
-bppp0:	phase=dead
-	myauthproto=chap myauthname="uriah"
-	hisauthproto=chap hisauthname="ifb-gw" norechallenge
-.Ed
-.Pp
 Display the settings for bppp0.
 The interface is currently in
 .Em dead
@@ -194,22 +187,28 @@ and remote is expected to authenticate by the name
 Once the initial CHAP handshake was successful, no further CHAP
 challenges will be transmitted.
 There are supposedly some known CHAP secrets for both ends of the link
-which are not being shown.
+which are not displayed.
+.Bd -literal -offset indent
+$ spppcontrol bppp0
+bppp0:	phase=dead
+	myauthproto=chap myauthname="uriah"
+	hisauthproto=chap hisauthname="ifb-gw" norechallenge
+.Ed
 .Pp
-.Bd -literal
+A possible call to
+.Nm
+that could have been used to bring the interface into the state shown
+by the previous example:
+.Bd -literal -offset indent
 # spppcontrol bppp0 \e
 	authproto=chap \e
 	myauthname=uriah myauthsecret='some secret' \e
 	hisauthname=ifb-gw hisauthsecret='another' \e
 	norechallenge
 .Ed
-.Pp
-A possible call to
-.Nm
-that could have been used to bring the interface into the state shown
-by the previous example.
 .Sh SEE ALSO
 .Xr netstat 1 ,
+.Xr pppoe 4 ,
 .Xr sppp 4 ,
 .Xr ifconfig 8
 .Rs
