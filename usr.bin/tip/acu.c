@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.4 1997/09/01 23:24:23 deraadt Exp $	*/
+/*	$OpenBSD: acu.c,v 1.5 2000/04/20 06:19:33 deraadt Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: acu.c,v 1.4 1997/09/01 23:24:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: acu.c,v 1.5 2000/04/20 06:19:33 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -74,7 +74,7 @@ connect()
 
 	if (!DU) {		/* regular connect message */
 		if (CM != NOSTR)
-			pwrite(FD, CM, size(CM));
+			parwrite(FD, CM, size(CM));
 		logent(value(HOST), "", DV, "call completed");
 		return (NOSTR);
 	}
@@ -109,7 +109,7 @@ connect()
 			
 			if ((conflag = (*acu->acu_dialer)(phnum, CU))) {
 				if (CM != NOSTR)
-					pwrite(FD, CM, size(CM));
+					parwrite(FD, CM, size(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
 				return (NOSTR);
@@ -147,7 +147,7 @@ connect()
 			if ((conflag = (*acu->acu_dialer)(phnum, CU))) {
 				fclose(fd);
 				if (CM != NOSTR)
-					pwrite(FD, CM, size(CM));
+					parwrite(FD, CM, size(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
 				return (NOSTR);

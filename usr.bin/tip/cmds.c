@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.7 1997/09/01 23:24:23 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.8 2000/04/20 06:19:33 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.7 1997/09/01 23:24:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.8 2000/04/20 06:19:33 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -139,7 +139,7 @@ transfer(buf, fd, eofchars)
 	sig_t f;
 	char r;
 
-	pwrite(FD, buf, size(buf));
+	parwrite(FD, buf, size(buf));
 	quit = 0;
 	kill(pid, SIGIOT);
 	read(repdes[0], (char *)&ccc, 1);  /* Wait until read process stops */
@@ -148,7 +148,7 @@ transfer(buf, fd, eofchars)
 	 * finish command
 	 */
 	r = '\r';
-	pwrite(FD, &r, 1);
+	parwrite(FD, &r, 1);
 	do
 		read(FD, &c, 1); 
 	while ((c&STRIP_PAR) != '\n');
@@ -430,7 +430,7 @@ send(c)
 	int retry = 0;
 
 	cc = c;
-	pwrite(FD, &cc, 1);
+	parwrite(FD, &cc, 1);
 #ifdef notdef
 	if (number(value(CDELAY)) > 0 && c != '\r')
 		nap(number(value(CDELAY)));
@@ -451,7 +451,7 @@ tryagain:
 		printf("\r\ntimeout error (%s)\r\n", ctrl(c));
 		if (retry++ > 3)
 			return;
-		pwrite(FD, &null, 1); /* poke it */
+		parwrite(FD, &null, 1); /* poke it */
 		goto tryagain;
 	}
 }

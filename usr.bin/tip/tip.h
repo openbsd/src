@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.9 1998/07/12 05:27:03 todd Exp $	*/
+/*	$OpenBSD: tip.h,v 1.10 2000/04/20 06:19:33 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ void	execute __P((char *s));
 void	logent __P((char *group, char *num, char *acu, char *message));
 void	loginit __P((void));
 void	prtime __P((char *s, time_t a));
-void	pwrite __P((int fd, char *buf, int n));
+void	parwrite __P((int fd, char *buf, int n));
 void	raw __P((void));
 void	send __P((int c));
 void	setparity __P((char *defparity));
