@@ -1,3 +1,0 @@
-BUILD_LIBS = $(ARLIB) $(SHLIB) $(SHLINK)
-SHFLAGS    = -h $(SHLIB)
-SHDEPS     = -lm

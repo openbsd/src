@@ -1,7 +1,0 @@
-# Significant variables:
-
-TO_TOPDIR=${TOLIBGXX}../
-DOING_LIBGXX=true
-THIS_FILE="${srcdir}/${TOLIBGXX}config.shared"
-
-. ${srcdir}/${TO_TOPDIR}libio/config.shared

@@ -1,7 +1,0 @@
-#!/bin/sh
-# $Id: elisp-comp,v 1.3 1998/03/03 21:47:32 millert Exp $
-# Trivial script to compile the Elisp files.
-setpath=${TMPDIR-/tmp}/elc.$$
-echo "(setq load-path (cons nil load-path))" > $setpath
-emacs -batch -l $setpath -f batch-byte-compile "$@"
-rm -f $setpath

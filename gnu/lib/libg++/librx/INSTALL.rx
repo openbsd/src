@@ -1,8 +1,0 @@
-For general installation instructions, see `INSTALL'.
-
-* Choice of compiler
-
-For reasonable performance, it is highly advisable to compile this
-code with gcc using at least the `-O' level of optimization.  
-
-
