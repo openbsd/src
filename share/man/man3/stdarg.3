@@ -1,5 +1,5 @@
-.\"	$OpenBSD: stdarg.3,v 1.9 2002/07/20 04:06:13 deraadt Exp $
-.\"	$NetBSD: stdarg.3,v 1.3 1994/11/30 15:24:37 jtc Exp $
+.\"	$OpenBSD: stdarg.3,v 1.10 2002/10/24 19:32:24 millert Exp $
+.\"	$NetBSD: stdarg.3,v 1.15 2002/08/18 08:57:07 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,12 +38,13 @@
 .\"
 .\"	@(#)stdarg.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 5, 1993
+.Dd October 24, 2002
 .Dt STDARG 3
 .Os
 .Sh NAME
 .Nm va_start ,
 .Nm va_arg ,
+.Nm va_copy ,
 .Nm va_end
 .Nd variable argument lists
 .Sh SYNOPSIS
@@ -52,6 +53,8 @@
 .Fn va_start "va_list ap" last
 .Ft type
 .Fn va_arg "va_list ap" type
+.Ft void
+.Fn va_copy "va_list dst" "va_list src"
 .Ft void
 .Fn va_end "va_list ap"
 .Sh DESCRIPTION
@@ -70,15 +73,17 @@ The called function must declare an object of type
 which is used by the macros
 .Fn va_start ,
 .Fn va_arg ,
-and
-.Fn va_end .
+.Fn va_end ,
+and, optionally,
+.Fn va_copy .
 .Pp
 The
 .Fn va_start
 macro initializes
 .Fa ap
 for subsequent use by
-.Fn va_arg
+.Fn va_arg ,
+.Fn va_copy
 and
 .Fn va_end ,
 and must be called first.
@@ -156,10 +161,29 @@ Successive invocations return the values of the remaining
 arguments.
 .Pp
 The
+.Fn va_copy
+macro makes
+.Fa dst
+a copy of
+.Fa src
+as if the
+.Fn va_start
+macro had been applied to it followed by the same sequence of uses of the
+.Fn va_arg
+macro as had previously been used to reach the present state of
+.Fa src .
+.Pp
+The
+.Fn va_copy
+macro returns no value.
+.Pp
+The
 .Fn va_end
 macro handles a normal return from the function whose variable argument
 list was initialized by
-.Fn va_start .
+.Fn va_start
+or
+.Fn va_copy .
 .Pp
 The
 .Fn va_end
@@ -207,7 +231,19 @@ The
 and
 .Fn va_end
 macros conform to
-.St -ansiC .
+.St -ansiC-99 .
+.Sh HISTORY
+The
+.Fn va_start ,
+.Fn va_arg
+and
+.Fn va_end
+macros were introduced in
+.St -ansiC-89 .
+The
+.Fn va_copy
+macro was introduced in
+.St -ansiC-99 .
 .Sh COMPATIBILITY
 These macros are
 .Em not
