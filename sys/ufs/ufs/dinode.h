@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.5 1999/12/02 18:38:17 art Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.6 2003/05/26 18:33:17 tedu Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
  */
 
 typedef int32_t ufs_daddr_t;
+typedef int32_t ufs1_daddr_t;
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
@@ -85,8 +86,8 @@ struct dinode {
 	int32_t		di_mtimensec;	/*  28: Last modified time. */
 	int32_t		di_ctime;	/*  32: Last inode change time. */
 	int32_t		di_ctimensec;	/*  36: Last inode change time. */
-	ufs_daddr_t	di_db[NDADDR];	/*  40: Direct disk blocks. */
-	ufs_daddr_t	di_ib[NIADDR];	/*  88: Indirect disk blocks. */
+	ufs1_daddr_t	di_db[NDADDR];	/*  40: Direct disk blocks. */
+	ufs1_daddr_t	di_ib[NIADDR];	/*  88: Indirect disk blocks. */
 	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
 	int32_t		di_blocks;	/* 104: Blocks actually held. */
 	int32_t		di_gen;		/* 108: Generation number. */
@@ -107,7 +108,7 @@ struct dinode {
 #define	di_ouid		di_u.oldids[0]
 #define	di_rdev		di_db[0]
 #define	di_shortlink	di_db
-#define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(ufs_daddr_t))
+#define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(ufs1_daddr_t))
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */

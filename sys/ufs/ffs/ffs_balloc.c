@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.22 2001/12/19 08:58:07 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.23 2003/05/26 18:33:16 tedu Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -382,7 +382,7 @@ fail:
 		    (int)fs->fs_bsize, NOCRED, &bp);
 		if (r)
 			panic("Could not unwind indirect block, error %d", r);
-		bap = (ufs_daddr_t *)bp->b_data;
+		bap = (daddr_t *)bp->b_data;
 		bap[indirs[unwindidx].in_off] = 0;
 		if (flags & B_SYNC) {
 			bwrite(bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.8 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.9 2003/05/26 18:33:16 tedu Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray(struct vnode *, ufs_daddr_t, ufs_daddr_t *,
+static int ext2fs_bmaparray(struct vnode *, ufs1_daddr_t, ufs1_daddr_t *,
 								struct indir *, int *, int *);
 
 /*
@@ -110,8 +110,8 @@ ext2fs_bmap(v)
 int
 ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	ufs_daddr_t bn;
-	ufs_daddr_t *bnp;
+	ufs1_daddr_t bn;
+	ufs1_daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
@@ -122,7 +122,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct mount *mp;
 	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
-	ufs_daddr_t daddr;
+	ufs1_daddr_t daddr;
 	long metalbn;
 	int error, maxrun = 0, num;
 
@@ -213,12 +213,12 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			}
 		}
 
-		daddr = fs2h32(((ufs_daddr_t *)bp->b_data)[xap->in_off]);
+		daddr = fs2h32(((ufs1_daddr_t *)bp->b_data)[xap->in_off]);
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 				bn < MNINDIR(ump) && *runp < maxrun &&
-				is_sequential(ump, ((ufs_daddr_t *)bp->b_data)[bn - 1],
-				((ufs_daddr_t *)bp->b_data)[bn]);
+				is_sequential(ump, ((ufs1_daddr_t *)bp->b_data)[bn - 1],
+				((ufs1_daddr_t *)bp->b_data)[bn]);
 				++bn, ++*runp);
 	}
 	if (bp)

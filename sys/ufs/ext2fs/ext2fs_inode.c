@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.21 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.22 2003/05/26 18:33:16 tedu Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -60,8 +60,8 @@
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_indirtrunc(struct inode *, ufs_daddr_t, ufs_daddr_t,
-				ufs_daddr_t, int, long *);
+static int ext2fs_indirtrunc(struct inode *, ufs1_daddr_t, ufs1_daddr_t,
+				ufs1_daddr_t, int, long *);
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
@@ -171,9 +171,9 @@ int
 ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
 	struct vnode *ovp = ITOV(oip);
-	ufs_daddr_t lastblock;
-	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	ufs1_daddr_t lastblock;
+	ufs1_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs1_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	int offset, size, level;
@@ -382,17 +382,17 @@ done:
 static int
 ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	struct inode *ip;
-	ufs_daddr_t lbn, lastbn;
-	ufs_daddr_t dbn;
+	ufs1_daddr_t lbn, lastbn;
+	ufs1_daddr_t dbn;
 	int level;
 	long *countp;
 {
 	int i;
 	struct buf *bp;
 	struct m_ext2fs *fs = ip->i_e2fs;
-	ufs_daddr_t *bap;
+	ufs1_daddr_t *bap;
 	struct vnode *vp;
-	ufs_daddr_t *copy = NULL, nb, nlbn, last;
+	ufs1_daddr_t *copy = NULL, nb, nlbn, last;
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
 	int error = 0, allerror = 0;
@@ -434,9 +434,9 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		return (error);
 	}
 
-	bap = (ufs_daddr_t *)bp->b_data;
+	bap = (ufs1_daddr_t *)bp->b_data;
 	if (lastbn >= 0) {
-		MALLOC(copy, ufs_daddr_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
+		MALLOC(copy, ufs1_daddr_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));
@@ -457,7 +457,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 			continue;
 		if (level > SINGLE) {
 			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
-						   (ufs_daddr_t)-1, level - 1,
+						   (ufs1_daddr_t)-1, level - 1,
 						   &blkcount);
 			if (error)
 				allerror = error;

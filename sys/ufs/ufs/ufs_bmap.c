@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.14 2002/10/13 18:26:13 krw Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.15 2003/05/26 18:33:17 tedu Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -103,8 +103,8 @@ ufs_bmap(v)
 int
 ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	ufs_daddr_t bn;
-	ufs_daddr_t *bnp;
+	daddr_t bn;
+	daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
@@ -115,7 +115,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct mount *mp;
 	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
-	ufs_daddr_t daddr;
+	daddr_t daddr;
 	long metalbn;
 	int error, maxrun = 0, num;
 
@@ -198,13 +198,13 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			}
 		}
 
-		daddr = ((ufs_daddr_t *)bp->b_data)[xap->in_off];
+		daddr = ((daddr_t *)bp->b_data)[xap->in_off];
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 			    bn < MNINDIR(ump) && *runp < maxrun &&
 			    is_sequential(ump,
-				((ufs_daddr_t *)bp->b_data)[bn - 1],
-				((ufs_daddr_t *)bp->b_data)[bn]);
+				((daddr_t *)bp->b_data)[bn - 1],
+				((daddr_t *)bp->b_data)[bn]);
 			    ++bn, ++*runp);
 	}
 	if (bp)
@@ -227,7 +227,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 int
 ufs_getlbns(vp, bn, ap, nump)
 	struct vnode *vp;
-	ufs_daddr_t bn;
+	daddr_t bn;
 	struct indir *ap;
 	int *nump;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.7 2002/07/29 04:01:09 fgsch Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.8 2003/05/26 18:33:16 tedu Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -59,8 +59,8 @@
 #define SBSIZE		1024
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
-#define	BBLOCK		((ufs_daddr_t)(0))
-#define	SBLOCK		((ufs_daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	BBLOCK		((ufs1_daddr_t)(0))
+#define	SBLOCK		((ufs1_daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 
 /*
  * Addresses stored in inodes are capable of addressing blocks

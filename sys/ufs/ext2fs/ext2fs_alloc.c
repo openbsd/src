@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.9 2002/03/14 03:16:13 millert Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.10 2003/05/26 18:33:16 tedu Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -56,13 +56,13 @@
 
 u_long ext2gennumber;
 
-static ufs_daddr_t	ext2fs_alloccg(struct inode *, int, ufs_daddr_t, int);
+static ufs1_daddr_t	ext2fs_alloccg(struct inode *, int, ufs1_daddr_t, int);
 static u_long	ext2fs_dirpref(struct m_ext2fs *);
 static void	ext2fs_fserr(struct m_ext2fs *, u_int, char *);
 static u_long	ext2fs_hashalloc(struct inode *, int, long, int,
-		    ufs_daddr_t (*)(struct inode *, int, ufs_daddr_t, int));
-static ufs_daddr_t	ext2fs_nodealloccg(struct inode *, int, ufs_daddr_t, int);
-static ufs_daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, ufs_daddr_t);
+		    ufs1_daddr_t (*)(struct inode *, int, ufs1_daddr_t, int));
+static ufs1_daddr_t	ext2fs_nodealloccg(struct inode *, int, ufs1_daddr_t, int);
+static ufs1_daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, ufs1_daddr_t);
 
 /*
  * Allocate a block in the file system.
@@ -84,12 +84,12 @@ static ufs_daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, ufs_daddr_t);
 int
 ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 	struct inode *ip;
-	ufs_daddr_t lbn, bpref;
+	ufs1_daddr_t lbn, bpref;
 	struct ucred *cred;
-	ufs_daddr_t *bnp;
+	ufs1_daddr_t *bnp;
 {
 	struct m_ext2fs *fs;
-	ufs_daddr_t bno;
+	ufs1_daddr_t bno;
 	int cg;
 	
 	*bnp = 0;
@@ -108,7 +108,7 @@ ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 		cg = ino_to_cg(fs, ip->i_number);
 	else
 		cg = dtog(fs, bpref);
-	bno = (ufs_daddr_t)ext2fs_hashalloc(ip, cg, bpref, fs->e2fs_bsize,
+	bno = (ufs1_daddr_t)ext2fs_hashalloc(ip, cg, bpref, fs->e2fs_bsize,
 						 ext2fs_alloccg);
 	if (bno > 0) {
 		ip->i_e2fs_nblock += btodb(fs->e2fs_bsize);
@@ -225,12 +225,12 @@ ext2fs_dirpref(fs)
  * contigously. The two fields of the ext2 inode extension (see
  * ufs/ufs/inode.h) help this.
  */
-ufs_daddr_t
+ufs1_daddr_t
 ext2fs_blkpref(ip, lbn, indx, bap)
 	struct inode *ip;
-	ufs_daddr_t lbn;
+	ufs1_daddr_t lbn;
 	int indx;
-	ufs_daddr_t *bap;
+	ufs1_daddr_t *bap;
 {
 	struct m_ext2fs *fs;
 	int cg, i;
@@ -278,7 +278,7 @@ ext2fs_hashalloc(ip, cg, pref, size, allocator)
 	int cg;
 	long pref;
 	int size;	/* size for data blocks, mode for inodes */
-	ufs_daddr_t (*allocator)(struct inode *, int, ufs_daddr_t, int);
+	ufs1_daddr_t (*allocator)(struct inode *, int, ufs1_daddr_t, int);
 {
 	struct m_ext2fs *fs;
 	long result;
@@ -326,11 +326,11 @@ ext2fs_hashalloc(ip, cg, pref, size, allocator)
  * and if it is, allocate it.
  */
 
-static ufs_daddr_t
+static ufs1_daddr_t
 ext2fs_alloccg(ip, cg, bpref, size)
 	struct inode *ip;
 	int cg;
-	ufs_daddr_t bpref;
+	ufs1_daddr_t bpref;
 	int size;
 {
 	struct m_ext2fs *fs;
@@ -414,11 +414,11 @@ gotit:
  *   2) allocate the next available inode after the requested
  *	  inode in the specified cylinder group.
  */
-static ufs_daddr_t
+static ufs1_daddr_t
 ext2fs_nodealloccg(ip, cg, ipref, mode)
 	struct inode *ip;
 	int cg;
-	ufs_daddr_t ipref;
+	ufs1_daddr_t ipref;
 	int mode;
 {
 	struct m_ext2fs *fs;
@@ -489,7 +489,7 @@ gotit:
 void
 ext2fs_blkfree(ip, bno)
 	struct inode *ip;
-	ufs_daddr_t bno;
+	ufs1_daddr_t bno;
 {
 	struct m_ext2fs *fs;
 	char *bbp;
@@ -576,13 +576,13 @@ ext2fs_inode_free(struct inode *pip, ino_t ino, int mode)
  * available.
  */
 
-static ufs_daddr_t
+static ufs1_daddr_t
 ext2fs_mapsearch(fs, bbp, bpref)
 	struct m_ext2fs *fs;
 	char *bbp;
-	ufs_daddr_t bpref;
+	ufs1_daddr_t bpref;
 {
-	ufs_daddr_t bno;
+	ufs1_daddr_t bno;
 	int start, len, loc, i, map;
 
 	/*
