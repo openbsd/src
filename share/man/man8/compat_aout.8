@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_aout.8,v 1.1 2003/06/29 10:54:05 espie Exp $
+.\"	$OpenBSD: compat_aout.8,v 1.2 2003/08/23 19:29:33 tedu Exp $
 .\"
 .\" Copyright (c) 2003 Marc Espie
 .\"
@@ -39,7 +39,9 @@ Most programs should work.
 The a.out compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_AOUT
-option enabled.
+option and kern.emul.aout
+.Xr sysctl 8
+enabled.
 .Pp
 A lot of programs are dynamically linked.
 This means that the shared libraries that the programs depend on
