@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.55 1999/07/30 19:13:48 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.56 1999/08/08 01:51:43 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -283,6 +283,13 @@ struct cdevsw	cdevsw[] =
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
 	cdev_wdt_init(NWDT,wdt),	/* 55: WDT50x watchdog timer */
+	/* The following slots are reserved for isdn4bsd. */
+	cdev_notdef(),			/* 56: i4b main device */
+	cdev_notdef(),			/* 57: i4b control device */
+	cdev_notdef(),			/* 58: i4b raw b-channel access */
+	cdev_notdef(),			/* 59: i4b trace device */
+	cdev_notdef(),			/* 60: i4b phone device */
+	/* End of reserved slots for isdn4bsd. */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
