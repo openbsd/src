@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 1999/11/16 12:21:41 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 1999/11/24 16:07:15 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2661,14 +2661,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 			break;
 		}
 	}
-
-#if defined(UVM)
-	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
-#else
-	cnt.v_page_size = NBPG;
-	vm_set_page_size();
-#endif
 
 #if defined(SUN4)
 	/*
