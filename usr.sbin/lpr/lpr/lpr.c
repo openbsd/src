@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.30 2003/03/11 04:36:55 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.31 2003/03/25 02:15:21 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.30 2003/03/11 04:36:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.31 2003/03/25 02:15:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 	struct stat stb;
 
 	/*
-	 * Simulate setuid daemon but with real and effective swapped.
+	 * Simulate setuid daemon w/ PRIV_END called.
 	 * We don't want lpr to actually be setuid daemon since that
 	 * requires that the lpr binary be owned by user daemon, which
 	 * is potentially unsafe.
@@ -144,8 +144,8 @@ main(int argc, char **argv)
 	real_uid = getuid();
 	effective_gid = pw->pw_gid;
 	real_gid = getgid();
-	setresgid(effective_gid, real_gid, effective_gid);
-	setresuid(effective_uid, real_uid, effective_uid);
+	setresgid(real_gid, real_gid, effective_gid);
+	setresuid(real_uid, real_uid, effective_uid);
 
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, cleanup);
