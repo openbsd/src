@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.12 2002/06/01 01:40:38 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.13 2002/06/09 01:28:06 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -574,7 +574,7 @@ print_err_message(space)
 	char *space;
 {
 	if (logflag)
-		fprintf(fout, "%ssyslog(LOG_ERR, \"%s\");\n", space, _errbuf);
+		fprintf(fout, "%ssyslog(LOG_ERR, \"%%s\", \"%s\");\n", space, _errbuf);
 	else if (inetdflag || pmflag)
 		fprintf(fout, "%s_msgout(\"%s\");\n", space, _errbuf);
 	else
@@ -614,12 +614,12 @@ write_msg_out()
 	fprintf(fout, "#ifdef RPC_SVC_FG\n");
 	if (inetdflag || pmflag)
 		fprintf(fout, "\tif (_rpcpmstart)\n");
-	fprintf(fout, "\t\tsyslog(LOG_ERR, msg);\n");
+	fprintf(fout, "\t\tsyslog(LOG_ERR, \"%%s\", msg);\n");
 	fprintf(fout, "\telse {\n");
 	fprintf(fout, "\t\t(void) write(STDERR_FILENO, msg, strlen(msg));\n");
 	fprintf(fout, "\t\t(void) write(STDERR_FILENO, \"\\n\", 1);\n");
 	fprintf(fout, "\t}\n#else\n");
-	fprintf(fout, "\tsyslog(LOG_ERR, msg);\n");
+	fprintf(fout, "\tsyslog(LOG_ERR, \"%%s\", msg);\n");
 	fprintf(fout, "#endif\n");
 	fprintf(fout, "}\n");
 }
