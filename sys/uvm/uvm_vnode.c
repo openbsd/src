@@ -1685,7 +1685,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = rw;
 	uio.uio_resid = wanted;
-	uio.uio_procp = NULL;
+	uio.uio_procp = curproc;
 
 	/*
 	 * do the I/O!  (XXX: curproc?)
