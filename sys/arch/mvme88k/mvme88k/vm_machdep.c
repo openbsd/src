@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.44 2001/12/22 10:23:50 smurph Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.45 2001/12/24 04:07:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -64,7 +64,6 @@
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
-#include <machine/pte.h>
 #include <machine/trap.h>
 
 extern struct extent *iomap_extent;
