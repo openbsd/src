@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.5 1996/07/03 17:14:31 chuck Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.6 1997/09/28 23:09:55 deraadt Exp $       */
 
 /*
  *
@@ -122,7 +122,7 @@ atm_rtrequest(req, rt, sa)
 		}
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sizeof(null_sdl)) {
-			log(LOG_DEBUG, "atm_rtrequest: bad gateway value");
+			log(LOG_DEBUG, "atm_rtrequest: bad gateway value\n");
 			break;
 		}
 
@@ -232,7 +232,8 @@ register struct atm_pseudohdr *desten;	/* OUT */
 	struct sockaddr_dl *sdl;
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		log(LOG_INFO, "atmresolve: BCAST/MCAST packet detected/dumped");
+		log(LOG_INFO,
+		    "atmresolve: BCAST/MCAST packet detected/dumped\n");
 		goto bad;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.6 1997/02/21 09:17:33 angelos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.7 1997/09/28 23:09:58 deraadt Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ ip_mrouter_init(so, m)
 
 	if (mrtdebug)
 		log(LOG_DEBUG,
-		    "ip_mrouter_init: so_type = %d, pr_protocol = %d",
+		    "ip_mrouter_init: so_type = %d, pr_protocol = %d\n",
 		    so->so_type, so->so_proto->pr_protocol);
 
 	if (so->so_type != SOCK_RAW ||
@@ -420,7 +420,7 @@ ip_mrouter_init(so, m)
 	timeout(expire_upcalls, (caddr_t)0, EXPIRE_TIMEOUT);
 
 	if (mrtdebug)
-		log(LOG_DEBUG, "ip_mrouter_init");
+		log(LOG_DEBUG, "ip_mrouter_init\n");
 
 	return (0);
 }
@@ -473,7 +473,7 @@ ip_mrouter_done()
 	splx(s);
 	
 	if (mrtdebug)
-		log(LOG_DEBUG, "ip_mrouter_done");
+		log(LOG_DEBUG, "ip_mrouter_done\n");
 	
 	return (0);
 }
@@ -555,7 +555,7 @@ add_vif(m)
 	
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
 		if (vifcp->vifc_flags & VIFF_SRCRT) {
-			log(LOG_ERR, "Source routed tunnels not supported.");
+			log(LOG_ERR, "Source routed tunnels not supported.\n");
 			return (EOPNOTSUPP);
 		}
 
@@ -614,7 +614,7 @@ add_vif(m)
 		numvifs = vifcp->vifc_vifi + 1;
 	
 	if (mrtdebug)
-		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, thresh %x, rate %d",
+		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, thresh %x, rate %d\n",
 		    vifcp->vifc_vifi, 
 		    ntohl(vifcp->vifc_lcl_addr.s_addr),
 		    (vifcp->vifc_flags & VIFF_TUNNEL) ? "rmtaddr" : "mask",
@@ -686,7 +686,7 @@ del_vif(m)
 	splx(s);
 	
 	if (mrtdebug)
-		log(LOG_DEBUG, "del_vif %d, numvifs %d", *vifip, numvifs);
+		log(LOG_DEBUG, "del_vif %d, numvifs %d\n", *vifip, numvifs);
 	
 	return (0);
 }
@@ -746,7 +746,7 @@ add_mfc(m)
 	/* If an entry already exists, just update the fields */
 	if (rt) {
 		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc update o %x g %x p %x",
+			log(LOG_DEBUG,"add_mfc update o %x g %x p %x\n",
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
@@ -770,14 +770,14 @@ add_mfc(m)
 		    rt->mfc_mcastgrp.s_addr == mfccp->mfcc_mcastgrp.s_addr &&
 		    rt->mfc_stall != NULL) {
 			if (nstl++)
-				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %p",
+				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %p\n",
 				    "multiple kernel entries",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
 
 			if (mrtdebug & DEBUG_MFC)
-				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %p",
+				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %p\n",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
@@ -809,7 +809,7 @@ add_mfc(m)
 		 * No mfc; make a new one
 		 */
 		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc no upcall o %x g %x p %x",
+			log(LOG_DEBUG,"add_mfc no upcall o %x g %x p %x\n",
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
@@ -879,7 +879,7 @@ del_mfc(m)
 	mfccp = mtod(m, struct mfcctl *);
 
 	if (mrtdebug & DEBUG_MFC)
-		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x",
+		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x\n",
 		    ntohl(mfccp->mfcc_origin.s_addr), ntohl(mfccp->mfcc_mcastgrp.s_addr));
 
 	s = splsoftnet();
@@ -951,7 +951,7 @@ ip_mforward(m, ifp)
 #endif /* RSVP_ISI */
 
     if (mrtdebug & DEBUG_FORWARD)
-	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p",
+	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
 	    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
     if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
@@ -966,7 +966,7 @@ ip_mforward(m, ifp)
 	 * Source-route tunnels are no longer supported.
 	 */
 	if ((srctun++ % 1000) == 0)
-	    log(LOG_ERR, "ip_mforward: received source-routed packet from %x",
+	    log(LOG_ERR, "ip_mforward: received source-routed packet from %x\n",
 		ntohl(ip->ip_src.s_addr));
 
 	return (1);
@@ -1031,7 +1031,7 @@ ip_mforward(m, ifp)
 
 	mrtstat.mrts_no_route++;
 	if (mrtdebug & (DEBUG_FORWARD | DEBUG_MFC))
-	    log(LOG_DEBUG, "ip_mforward: no rte s %x g %x",
+	    log(LOG_DEBUG, "ip_mforward: no rte s %x g %x\n",
 		ntohl(ip->ip_src.s_addr),
 		ntohl(ip->ip_dst.s_addr));
 
@@ -1097,7 +1097,7 @@ ip_mforward(m, ifp)
 	    mrtstat.mrts_upcalls++;
 
 	    if (socket_send(ip_mrouter, mm, &sin) < 0) {
-		log(LOG_WARNING, "ip_mforward: ip_mrouter socket queue full");
+		log(LOG_WARNING, "ip_mforward: ip_mrouter socket queue full\n");
 		++mrtstat.mrts_upq_sockfull;
 		free(rte, M_MRTABLE);
 		m_free(mb0);
@@ -1182,7 +1182,7 @@ expire_upcalls(v)
 			++mrtstat.mrts_cache_cleanups;
 			if (mrtdebug & DEBUG_EXPIRE)
 				log(LOG_DEBUG,
-				    "expire_upcalls: expiring (%x %x)",
+				    "expire_upcalls: expiring (%x %x)\n",
 				    ntohl(rt->mfc_origin.s_addr),
 				    ntohl(rt->mfc_mcastgrp.s_addr));
 
@@ -1246,7 +1246,7 @@ ip_mdq(m, ifp, rt)
     if ((vifi >= numvifs) || (viftable[vifi].v_ifp != ifp)) {
 	/* came in the wrong interface */
 	if (mrtdebug & DEBUG_FORWARD)
-	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p",
+	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p\n",
 		ifp, vifi, viftable[vifi].v_ifp); 
 	++mrtstat.mrts_wrong_if;
 	++rt->mfc_wrong_if;
@@ -1493,7 +1493,8 @@ ipip_input(m, va_alist)
 			mrtstat.mrts_cant_tunnel++; /*XXX*/
 			m_freem(m);
 			if (mrtdebug)
-				log(LOG_DEBUG, "ip_mforward: no tunnel with %x",
+				log(LOG_DEBUG,
+				    "ip_mforward: no tunnel with %x\n",
 				    ntohl(ip->ip_src.s_addr));
 			return;
 		}
@@ -1655,7 +1656,7 @@ tbf_dequeue(vifp, j)
     vifp->v_tbf.q_len--;
 
     if (tbfdebug > 1)
-	log(LOG_DEBUG, "tbf_dequeue: vif# %d qlen %d",vifp-viftable, i-1);
+	log(LOG_DEBUG, "tbf_dequeue: vif# %d qlen %d\n",vifp-viftable, i-1);
 }
 
 static void
@@ -1728,7 +1729,7 @@ tbf_send_packet(vifp,m)
 	error = ip_output(m, (struct mbuf *)0, (struct route *)0,
 			  IP_FORWARDING|IP_MULTICASTOPTS, &imo);
 	if (mrtdebug & DEBUG_XMIT)
-	    log(LOG_DEBUG, "phyint_send on vif %d err %d", vifp-viftable, error);
+	    log(LOG_DEBUG, "phyint_send on vif %d err %d\n", vifp-viftable, error);
     }
     splx(s);
 }
@@ -1794,7 +1795,7 @@ priority(vifp, ip)
 		break;
 	}
 
-	if (tbfdebug > 1) log(LOG_DEBUG, "port %x prio %d", ntohs(udp->uh_dport), prio);
+	if (tbfdebug > 1) log(LOG_DEBUG, "port %x prio %d\n", ntohs(udp->uh_dport), prio);
     } else
 	prio = 50;
 

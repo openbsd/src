@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.11 1997/08/01 03:53:01 flipk Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.12 1997/09/28 23:09:56 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ arp_rtrequest(req, rt, sa)
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sizeof(null_sdl)) {
-			log(LOG_DEBUG, "arp_rtrequest: bad gateway value");
+			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
 		SDL(gate)->sdl_type = rt->rt_ifp->if_type;
@@ -342,7 +342,7 @@ arpresolve(ac, rt, m, dst, desten)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
-		log(LOG_DEBUG, "arpresolve: can't allocate llinfo");
+		log(LOG_DEBUG, "arpresolve: can't allocate llinfo\n");
 		m_freem(m);
 		return (0);
 	}
