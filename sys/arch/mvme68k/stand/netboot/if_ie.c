@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.4 1996/04/28 10:49:22 deraadt Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.5 1996/05/16 02:55:36 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -44,7 +44,10 @@
 #define NRXBUF	16
 #define IE_RBUF_SIZE	ETHER_MAX_LEN
 
+#include <machine/prom.h>
+
 #include "stand.h"
+#include "libsa.h"
 #include "netif.h"
 #include "config.h"
 
@@ -107,9 +110,8 @@ ie_match(nif, machdep_hint)
 {
 	char   *name;
 	int     i, val = 0;
-	extern int cputyp;
 
-	if (cputyp == CPU_147)
+	if (bugargs.cputyp == CPU_147)
 		return (0);
 	name = machdep_hint;
 	if (name && !bcmp(ie_driver.netif_bname, name, 2))
@@ -132,13 +134,12 @@ ie_probe(nif, machdep_hint)
 	struct netif *nif;
 	void   *machdep_hint;
 {
-	extern int cputyp;
 
 	/* the set unit is the current unit */
 	if (ie_debug)
 		printf("ie%d: ie_probe called\n", nif->nif_unit);
 
-	if (cputyp != CPU_147)
+	if (bugargs.cputyp != CPU_147)
 		return (0);
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.5 1996/04/28 10:49:19 deraadt Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.6 1996/05/16 02:55:36 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -55,7 +55,10 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
+#include <machine/prom.h>
+
 #include "stand.h"
+#include "libsa.h"
 #include "net.h"
 #include "netif.h"
 #include "config.h"
@@ -183,9 +186,8 @@ machdep_common_ether(ether)
 	u_char *ether;
 {
 	u_char *ea;
-	extern int cputyp;
 
-	if (cputyp == CPU_147) {
+	if (bugargs.cputyp == CPU_147) {
 		ea = (u_char *) ETHER_ADDR_147;
 
 		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
