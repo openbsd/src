@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.256 2002/07/06 19:14:20 nordin Exp $
+#	$OpenBSD: files,v 1.257 2002/09/03 16:30:54 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -110,7 +110,7 @@ file	dev/ic/smc93cx6.c		ahc
 
 # Adaptec AIC-6[23]60 SCSI controllers
 device	aic: scsi
-file	dev/ic/aic6360.c	aic
+file	dev/ic/aic6360.c	aic & (aic_isa | aic_pcmcia | aic_isapnp)
 
 # DPT EATA SCSI controllers
 device	dpt: scsi

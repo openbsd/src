@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.107 2002/08/28 21:20:48 mickey Exp $
+#	$OpenBSD: pnpdevs,v 1.108 2002/09/03 16:30:55 mickey Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -14,6 +14,7 @@
 #--Adaptec SCSI--
 #aha		ADP1542	# Adaptec AHA-154x series (PNP00A0)
 aha		PNP00A0	# Adaptec AHA-154x series
+aic		ADP1502	# Adaptec AHA-152x series
 aic		ADP1520	# Adaptec AHA-152x series
 aic		ADP2015	# Adaptec AHA-1530P
 

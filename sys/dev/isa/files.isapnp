@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isapnp,v 1.24 2002/08/28 21:20:48 mickey Exp $
+#	$OpenBSD: files.isapnp,v 1.25 2002/09/03 16:30:55 mickey Exp $
 #	$NetBSD: files.isapnp,v 1.7 1997/10/16 17:16:36 matt Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
@@ -28,6 +28,9 @@ attach	wdc at isapnp with wdc_isapnp: isa_dma
 file	dev/isa/wdc_isapnp.c		wdc_isapnp
 
 attach	aha at isapnp with aha_isapnp
+
+attach	aic at isapnp with aic_isapnp
+file	dev/isa/aic_isapnp.c		aic_isapnp
 
 attach	sb at isapnp with sb_isapnp
 file	dev/isa/sb_isapnp.c		sb_isapnp needs-flag
