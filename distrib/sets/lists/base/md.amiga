@@ -436,7 +436,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/asm.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/audioio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/bus.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/cdefs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/conf.ph
@@ -639,6 +638,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wi_hostap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wi_ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/if_wivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/intersil7170.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/isp_inline.ph
