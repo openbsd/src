@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.11 2001/08/19 17:37:02 art Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.12 2001/11/14 14:32:54 hugh Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -72,11 +72,12 @@ struct exec {
 #define	MID_NS32532	137	/* ns32532 */
 #define	MID_SPARC	138	/* sparc */
 #define	MID_PMAX	139	/* pmax */
-#define	MID_VAX		140	/* vax */
+#define	MID_VAX1K	140	/* vax 1k page size */
 #define	MID_ALPHA	141	/* Alpha BSD binary */
 #define	MID_MIPS	142	/* big-endian MIPS */
 #define	MID_ARM6	143	/* ARM6 */
 #define MID_POWERPC	149	/* big-endian PowerPC */
+#define	MID_VAX		150	/* vax */
 #define MID_SPARC64	151	/* LP64 sparc */
 #define MID_M88K	153	/* m88k BSD binary */ 
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
