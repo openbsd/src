@@ -306,10 +306,12 @@ main(argc, argv)
 	}
 
 	/* tuck my process id away */
-	fp = fopen(PidFile, "w");
-	if (fp != NULL) {
-		fprintf(fp, "%d\n", getpid());
-		(void) fclose(fp);
+	if (!Debug) {
+		fp = fopen(PidFile, "w");
+		if (fp != NULL) {
+			fprintf(fp, "%d\n", getpid());
+			(void) fclose(fp);
+		}
 	}
 
 	dprintf("off & running....\n");
