@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.26 2004/12/10 15:00:27 mickey Exp $
+.\"	$OpenBSD: calendar.1,v 1.27 2004/12/10 20:20:11 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -90,6 +90,7 @@ To handle national Easter names in the calendars,
 .Dq Paskha=<national_name>
 (for Orthodox Easter) can be used.
 .Pp
+The
 .Dq CALENDAR
 variable can be used to specify the style.
 Only
@@ -154,8 +155,8 @@ Empty lines and lines protected by the C commenting syntax
 .Pq Li /* ... */
 are ignored.
 .Pp
-Some possible calendar entries (<tab> characters are highlighted by a
-\fB\et\fR sequence):
+Some possible calendar entries
+(a \fB\et\fR sequence denotes a <tab> character):
 .Bd -unfilled -offset indent
 LANG=C
 Easter=Ostern
@@ -167,15 +168,15 @@ Easter=Ostern
 Jun. 15\fB\et\fRJune 15.
 15 June\fB\et\fRJune 15.
 Thursday\fB\et\fREvery Thursday.
-June\fB\et\fREvery June	1st.
+June\fB\et\fREvery June 1st.
 15 *\fB\et\fR15th of every month.
 
-May Sun+2\fB\et\fRsecond Sunday	in May (Muttertag)
-04/SunLast\fB\et\fRlast	Sunday in April,
-\fB\et\fRsummer	time in	Europe
+May Sun+2\fB\et\fRsecond Sunday in May (Muttertag)
+04/SunLast\fB\et\fRlast Sunday in April,
+\fB\et\fRsummer time in Europe
 Easter\fB\et\fREaster
-Ostern-2\fB\et\fRGood Friday (2	days before Easter)
-Paskha\fB\et\fROrthodox	Easter
+Ostern-2\fB\et\fRGood Friday (2 days before Easter)
+Paskha\fB\et\fROrthodox Easter
 .Ed
 .Sh FILES
 .Bl -tag -width ~/.calendar/calendar -compact
