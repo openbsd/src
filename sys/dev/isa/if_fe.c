@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.22 2005/02/17 19:05:36 miod Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.23 2005/04/03 10:20:47 brad Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1995,7 +1995,7 @@ fe_ioctl(ifp, command, data)
 
 /*
  * Retreive packet from receive buffer and send to the next level up via
- * ether_input(). If there is a BPF listener, give a copy to BPF, too.
+ * ether_input_mbuf(). If there is a BPF listener, give a copy to BPF, too.
  * Returns 0 if success, -1 if error (i.e., mbuf allocation failure).
  */
 int
