@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.9 2004/01/20 16:50:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.10 2004/09/15 19:01:58 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -81,7 +81,7 @@ _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 		relyear = -1;
 	}
 
-	bp = buf;
+	bp = (unsigned char *)buf;
 	while ((c = *fmt) != '\0') {
 		/* Clear `alternate' modifier prior to new conversion. */
 		alt_format = 0;
