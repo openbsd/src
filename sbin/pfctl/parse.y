@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.113 2002/07/08 11:46:32 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.114 2002/07/09 10:39:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -151,12 +151,13 @@ struct sym {
 };
 struct sym *symhead = NULL;
 
-int	symset(const char *name, const char *val);
-char *	symget(const char *name);
+int	symset(const char *, const char *);
+char *	symget(const char *);
 
-struct ifaddrs    *ifa0_lookup(char *ifa_name);
-struct ifaddrs    *ifa4_lookup(char *ifa_name);
-struct ifaddrs    *ifa6_lookup(char *ifa_name);
+void	ifa_load();
+int	ifa_exists(char *);
+struct node_host    *ifa_lookup(char *);
+struct node_host    *ifa_pick_ip(struct node_host *, u_int8_t);
 
 typedef struct {
 	union {
@@ -513,7 +514,7 @@ if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
 		| if_item			{ $$ = $1; }
 
 if_item		: STRING			{
-			if (ifa0_lookup($1) == 0) {
+			if (!ifa_exists($1)) {
 				yyerror("unknown interface %s", $1);
 				YYERROR;
 			}
@@ -659,41 +660,14 @@ address		: '(' STRING ')'		{
 			    sizeof($$->addr.addr.pfa.ifname));
 		}
 		| STRING			{
-			if (ifa0_lookup($1)) {
-				struct ifaddrs *ifa;
+			if (ifa_exists($1)) {
+				struct node_host *h = NULL;
 
-				/* an interface with this name exists */
-				if ((ifa = ifa4_lookup($1))) {
-					struct sockaddr_in *sin =
-					    (struct sockaddr_in *)
-					    ifa->ifa_addr;
-
-					$$ = calloc(1,
-					    sizeof(struct node_host));
-					if ($$ == NULL)
-						err(1, "address: calloc");
-					$$->af = AF_INET;
-					$$->addr.addr_dyn = NULL;
-					memcpy(&$$->addr.addr, &sin->sin_addr,
-					    sizeof(u_int32_t));
-				} else if ((ifa = ifa6_lookup($1))) {
-					struct sockaddr_in6 *sin6 =
-					    (struct sockaddr_in6 *)
-					    ifa->ifa_addr;
-
-					$$ = calloc(1,
-					    sizeof(struct node_host));
-					if ($$ == NULL)
-						err(1, "address: calloc");
-					$$->af = AF_INET6;
-					$$->addr.addr_dyn = NULL;
-					memcpy(&$$->addr.addr, &sin6->sin6_addr,
-					    sizeof(struct pf_addr));
-				} else {
-					yyerror("interface %s has no IP "
-					    "addresses", $1);
+				/* interface with this name exists */
+				if ((h = ifa_lookup($1)) == NULL)
 					YYERROR;
-				}
+				else
+					$$ = h;
 			} else {
 				struct node_host *h = NULL, *n;
 				struct addrinfo hints, *res0, *res;
@@ -1235,10 +1209,6 @@ redirection	: /* empty */			{ $$ = NULL; }
 			$$ = malloc(sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: malloc");
-			if ($2->next) {
-				yyerror("multiple ip addresses");
-				YYERROR;
-			}
 			$$->address = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
@@ -1246,10 +1216,6 @@ redirection	: /* empty */			{ $$ = NULL; }
 			$$ = malloc(sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: malloc");
-			if ($2->next) {
-				yyerror("multiple ip addresses");
-				YYERROR;
-			}
 			$$->address = $2;
 			$$->rport = $4;
 		}
@@ -1278,15 +1244,24 @@ natrule		: no NAT interface af proto fromto redirection
 			}
 			if (nat.no) {
 				if ($7 != NULL) {
-					yyerror("'no nat' rule does not need '->'");
+					yyerror("'no nat' rule does not need "
+					    "'->'");
 					YYERROR;
 				}
 			} else {
+				struct node_host *n;
+
 				if ($7 == NULL || $7->address == NULL) {
-					yyerror("'nat' rule requires '-> address'");
+					yyerror("'nat' rule requires '-> "
+					    "address'");
 					YYERROR;
 				}
-				memcpy(&nat.raddr, &$7->address->addr,
+				n = ifa_pick_ip($7->address, nat.af);
+				if (n == NULL)
+					YYERROR;
+				if (!nat.af)
+					nat.af = n->af;
+				memcpy(&nat.raddr, &n->addr,
 				    sizeof(nat.raddr));
 				nat.proxy_port[0] = ntohs($7->rport.a);
 				nat.proxy_port[1] = ntohs($7->rport.b);
@@ -1385,25 +1360,30 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 					YYERROR;
 				}
 			} else {
+				struct node_host *n;
+
 				if ($10 == NULL || $10->address == NULL) {
 					yyerror("'binat' rule requires"
 					    " '-> address'");
 					YYERROR;
 				}
-				if ($10->address->addr.addr_dyn != NULL) {
+				n = ifa_pick_ip($10->address, binat.af);
+				if (n == NULL)
+					YYERROR;
+				if (n->addr.addr_dyn != NULL) {
 					if (!binat.af) {
 						yyerror("address family (inet/"
 						    "inet6) undefined");
 						YYERROR;
 					}
-					$10->address->af = binat.af;
+					n->af = binat.af;
 				}
-				if (binat.af && $10->address->af != binat.af) {
+				if (binat.af && n->af != binat.af) {
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
-				binat.af = $10->address->af;
-				memcpy(&binat.raddr, &$10->address->addr,
+				binat.af = n->af;
+				memcpy(&binat.raddr, &n->addr,
 				    sizeof(binat.raddr));
 				free($10->address);
 				free($10);
@@ -1457,11 +1437,19 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 					YYERROR;
 				}
 			} else {
+				struct node_host *n;
+
 				if ($11 == NULL || $11->address == NULL) {
-					yyerror("'rdr' rule requires '-> address'");
+					yyerror("'rdr' rule requires '-> "
+					    "address'");
 					YYERROR;
 				}
-				memcpy(&rdr.raddr, &$11->address->addr,
+				n = ifa_pick_ip($11->address, rdr.af);
+				if (n == NULL)
+					YYERROR;
+				if (!rdr.af)
+					rdr.af = n->af;
+				memcpy(&rdr.raddr, &n->addr,
 				    sizeof(rdr.raddr));
 				free($11->address);
 				rdr.rport  = $11->rport.a;
@@ -2530,9 +2518,8 @@ symget(const char *nam)
 	return (NULL);
 }
 
-struct ifaddrs **ifa0tab, **ifa4tab, **ifa6tab;
-int ifa0len, ifa4len, ifa6len;
-
+struct ifaddrs **ifatab, **ifalist;
+int ifatablen, ifalistlen;
 int
 ifa_comp(const void *p1, const void *p2)
 {
@@ -2547,95 +2534,120 @@ ifa_load(void)
 {
 	struct ifaddrs *ifap, *ifa;
 	void *p;
-	int ifalen = 0;
+	int load_ifalen = 0;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "getifaddrs");
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
-		ifalen++;
+		load_ifalen++;
 	/* (over-)allocate tables */
-	ifa0tab = malloc(ifalen * sizeof(void *));
-	ifa4tab = malloc(ifalen * sizeof(void *));
-	ifa6tab = malloc(ifalen * sizeof(void *));
-	if (!ifa0tab || !ifa4tab || !ifa6tab)
+	ifatab = malloc(load_ifalen * sizeof(void *));
+	ifalist = malloc(load_ifalen * sizeof(void *));
+	if (!ifatab || !ifalist)
 		err(1, "malloc");
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			if (bsearch(&ifa, ifa0tab, ifa0len, sizeof(void *),
+			if (bsearch(&ifa, ifalist, ifalistlen, sizeof(void *),
 			    ifa_comp))
 				continue; /* take only the first LINK address */
-			ifa0tab[ifa0len++] = ifa;
-			qsort(ifa0tab, ifa0len, sizeof(void *), ifa_comp);
+			ifalist[ifalistlen++] = ifa;
+			qsort(ifalist, ifalistlen, sizeof(void *), ifa_comp);
 		}
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			if (bsearch(&ifa, ifa4tab, ifa4len, sizeof(void *),
-			    ifa_comp))
-				continue; /* take only the first IPv4 address */
-			ifa4tab[ifa4len++] = ifa;
-			qsort(ifa4tab, ifa4len, sizeof(void *), ifa_comp);
-		}
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			/* XXX - better address selection required! */
-			if (bsearch(&ifa, ifa6tab, ifa6len, sizeof(void *),
-			    ifa_comp))
-				continue; /* take only the first IPv6 address */
-			ifa6tab[ifa6len++] = ifa;
-			qsort(ifa6tab, ifa6len, sizeof(void *), ifa_comp);
+		if (ifa->ifa_addr->sa_family == AF_INET ||
+		    ifa->ifa_addr->sa_family == AF_INET6) {
+			ifatab[ifatablen++] = ifa;
 		}
 	}
 	/* shrink tables */
-	if ((p = realloc(ifa0tab, ifa0len * sizeof(void *))) == NULL) {
-		free(ifa0tab);
-		ifa0tab = NULL;
+	if ((p = realloc(ifatab, ifatablen * sizeof(void *))) == NULL) {
+		free(ifatab);
+		ifatab = NULL;
 	} else
-		ifa0tab = p;
-	if ((p = realloc(ifa4tab, ifa4len * sizeof(void *))) == NULL) {
-		free(ifa4tab);
-		ifa4tab = NULL;
+		ifatab = p;
+	if ((p = realloc(ifalist, ifalistlen * sizeof(void *))) == NULL) {
+		free(ifalist);
+		ifalist = NULL;
 	} else
-		ifa4tab = p;
-	if ((p = realloc(ifa6tab, ifa6len * sizeof(void *))) == NULL) {
-		free(ifa6tab);
-		ifa6tab = NULL;
-	} else
-		ifa6tab = p;
-	if (!ifa0tab || !ifa4tab || !ifa6tab)
+		ifalist = p;
+	if (!ifatab || !ifalist)
 		err(1, "realloc");
+
 }
 
-struct ifaddrs *
-ifa0_lookup(char *ifa_name)
+int
+ifa_exists(char *ifa_name)
 {
 	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
 
-	if (!ifa0tab)
+	if (!ifalist)
 		ifa_load();
 	ifa.ifa_name = ifa_name;
-	ifpp = bsearch(&ifp, ifa0tab, ifa0len, sizeof(void *), ifa_comp);
-	return ifpp ? *ifpp : NULL;
+	ifpp = bsearch(&ifp, ifalist, ifalistlen, sizeof(void *), ifa_comp);
+	if (ifpp == NULL)
+		return(0);
+	else
+		return(1);
 }
 
-struct ifaddrs *
-ifa4_lookup(char *ifa_name)
+struct node_host *
+ifa_lookup(char *ifa_name)
 {
-	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
+	struct node_host *h = NULL, *n = NULL;
+	struct ifaddrs *ifa;
 
-	if (!ifa4tab)
+	if (!ifatab)
 		ifa_load();
-	ifa.ifa_name = ifa_name;
-	ifpp = bsearch(&ifp, ifa4tab, ifa4len, sizeof(void *), ifa_comp);
-	return ifpp ? *ifpp : NULL;
+	for (ifa = *ifatab; ifa; ifa = ifa->ifa_next) {
+		if (strncmp(ifa->ifa_name, ifa_name, IFNAMSIZ) == 0) {
+			if (!(ifa->ifa_addr->sa_family == AF_INET ||
+			    ifa->ifa_addr->sa_family == AF_INET6))
+				continue;
+			n = calloc(1, sizeof(struct node_host));
+			if (n == NULL)
+				err(1, "address: calloc");
+			n->af = ifa->ifa_addr->sa_family;
+			n->addr.addr_dyn = NULL;
+			if (ifa->ifa_addr->sa_family == AF_INET)
+				memcpy(&n->addr.addr, &((struct sockaddr_in *)
+				    ifa->ifa_addr)->sin_addr.s_addr,
+				    sizeof(struct in_addr));
+			else {
+				memcpy(&n->addr.addr, &((struct sockaddr_in6 *)
+				    ifa->ifa_addr)->sin6_addr.s6_addr,
+				    sizeof(struct in6_addr));
+				n->ifindex = ((struct sockaddr_in6 *)
+				    ifa->ifa_addr)->sin6_scope_id;
+			}
+			n->next = h;
+			h = n;
+		}
+	}
+	if (h == NULL) {
+		yyerror("no IP address found for %s", ifa_name);
+	}
+	return (h);
 }
 
-struct ifaddrs *
-ifa6_lookup(char *ifa_name)
+struct node_host *
+ifa_pick_ip(struct node_host *nh, u_int8_t af)
 {
-	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
+	struct node_host *h, *n = NULL;
 
-	if (!ifa6tab)
-		ifa_load();
-	ifa.ifa_name = ifa_name;
-	ifpp = bsearch(&ifp, ifa6tab, ifa6len, sizeof(void *), ifa_comp);
-	return ifpp ? *ifpp : NULL;
+	if (af == 0 && nh->next) {
+		yyerror("address family not given and interface has multiple "
+		    "ips");
+		return(NULL);
+	}
+	for(h = nh; h; h = h->next) {
+		if (h->af == af || h->af == 0 || af == 0) {
+			if (n != NULL) {
+				yyerror("interface has multiple IPs of "
+				    "this address family");
+				return(NULL);
+			}
+			n = h;
+		}
+	}
+	return n;
 }
 
