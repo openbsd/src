@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 1999/11/26 00:32:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.52 1999/12/22 21:25:24 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -113,6 +113,7 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		LORDER=${CROSSDIR}/usr/bin/lorder \
 		RANLIB=${CROSSDIR}/usr/bin/ranlib \
 		SIZE=${CROSSDIR}/usr/bin/size STRIP=${CROSSDIR}/usr/bin/strip \
+		LORDER=${CROSSDIR}/usr/bin/lorder \
 		HOSTCC=cc
 
 cross-helpers:
@@ -174,7 +175,7 @@ cross-binutils-new:	cross-dirs
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
 	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} DESTDIR=${CROSSDIR} install)
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
-	    ${.CURDIR}/usr.bin/lorder/lorder.sh.gnm \
+	    ${.CURDIR}/usr.bin/lorder/lorder.sh \
 	    ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-lorder
 	ln -sf ${CROSSDIR}/usr/bin/`cat ${CROSSDIR}/TARGET_CANON`-as \
 	    ${CROSSDIR}/usr/bin/as
@@ -289,12 +290,12 @@ cross-nm:	cross-dirs
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin/nm
 
 cross-gcc:	cross-dirs
-	cd ${.CURDIR}/gnu/usr.bin/gcc; \
+	cd ${.CURDIR}/gnu/egcs/gcc; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj BSDSRCDIR=${.CURDIR} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} -f Makefile.bsd-wrapper obj
-	(cd ${CROSSDIR}/usr/obj/gnu/usr.bin/gcc; \
-	    /bin/sh ${.CURDIR}/gnu/usr.bin/gcc/configure \
+	(cd ${CROSSDIR}/usr/obj/gnu/egcs/gcc; \
+	    /bin/sh ${.CURDIR}/gnu/egcs/gcc/configure \
 	    --prefix ${CROSSDIR}/usr \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
 	    ${MAKE} BISON=yacc LANGUAGES=c LDFLAGS=${LDSTATIC} \
