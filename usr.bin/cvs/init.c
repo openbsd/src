@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.10 2005/02/27 00:22:08 jfb Exp $	*/
+/*	$OpenBSD: init.c,v 1.11 2005/03/01 21:14:21 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -128,13 +128,8 @@ cvs_init(int argc, char **argv)
 			(void)close(fd);
 
 			strlcat(path, RCS_FILE_EXT, sizeof(path));
-			rfp = rcs_open(path, RCS_WRITE, 0644);
+			rfp = rcs_open(path, RCS_WRITE|RCS_CREATE, 0640);
 			if (rfp == NULL) {
-				return (EX_CANTCREAT);
-			}
-
-			if (rcs_write(rfp) < 0) {
-				rcs_close(rfp);
 				return (EX_CANTCREAT);
 			}
 
