@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.42 2004/04/15 12:35:20 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.43 2004/04/16 23:32:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -158,7 +158,7 @@ int clparam(struct tty *tp, struct termios *t);
 int cl_mintr(void *);
 int cl_txintr(void *);
 int cl_rxintr(void *);
-void cl_overflow(struct clsoftc *sc, int channel, long *ptime, u_char *msg);
+void cl_overflow(struct clsoftc *sc, int channel, long *ptime, char *msg);
 void cl_parity(struct clsoftc *sc, int channel);
 void cl_frame(struct clsoftc *sc, int channel);
 void cl_break( struct clsoftc *sc, int channel);
@@ -173,9 +173,6 @@ void	clattach(struct device *parent, struct device *self, void *aux);
 void cl_initchannel(struct clsoftc *sc, int channel);
 void clputc(struct clsoftc *sc, int unit, u_char c);
 u_char clgetc(struct clsoftc *sc, int *channel);
-#if 0
-void cloutput(struct tty *tp);
-#endif
 
 struct cfattach cl_ca = {
 	sizeof(struct clsoftc), clprobe, clattach
@@ -185,7 +182,10 @@ struct cfdriver cl_cd = {
 	NULL, "cl", DV_TTY
 };
 
+#if 0
 #define CLCDBUF 80
+void cloutput(struct tty *tp);
+#endif
 
 #define CL_UNIT(x) (minor(x) >> 2)
 #define CL_CHANNEL(x) (minor(x) & 3)
@@ -909,21 +909,22 @@ void
 clcnprobe(cp)
 	struct consdev *cp;
 {
-	/* always there ? */
-	/* serial major */
 	int maj;
 
+	cp->cn_pri = CN_DEAD;
+
 	/* bomb if it'a a MVME188 */
-	if (brdtyp == BRD_188 || badaddr(CD2400_BASE_ADDR, 1) != 0) {
-		cp->cn_pri = CN_DEAD;
+	if (brdtyp == BRD_188 || badaddr(CD2400_BASE_ADDR, 1) != 0)
 		return;
-	}
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == clopen)
 			break;
-	cp->cn_dev = makedev (maj, 0);
+	if (maj == nchrdev)
+		return;
+
+	cp->cn_dev = makedev(maj, 0);
 	cp->cn_pri = CN_NORMAL;
 }
 
@@ -1739,58 +1740,48 @@ log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x risrl %x risrh %x\n",
 			 * for this call
 			 */
 			(*linesw[tp->t_line].l_rint)(c,tp);
-			reoir = 0x00;
 #endif
 		}
 		break;
 	default:
 		log(LOG_WARNING, "cl_rxintr unknown mode %x\n", cmr);
 		/* we probably will go to hell quickly now */
-		reoir = 0x08;
-		sc->cl_reg->cl_reoir = reoir;
+		sc->cl_reg->cl_reoir = 0x08;
 	}
 	return 1;
 }
 
 void
-cl_overflow (sc, channel, ptime, msg)
+cl_overflow(sc, channel, ptime, msg)
 	struct clsoftc *sc;
 	int channel;
 	long *ptime;
-	u_char *msg;
+	char *msg;
 {
-/*
-	if (*ptime != time.tv_sec) {
-*/
-	{
-/*
-		*ptime = time.tv_sec;
-*/
-		log(LOG_WARNING, "%s%d[%d]: %s overrun\n", cl_cd.cd_name,
-			0 /* fix */, channel, msg);
-	}
-	return;
+	log(LOG_WARNING, "%s[%d]: %s overrun\n", sc->sc_dev.dv_xname,
+	    channel, msg);
 }
 
 void
-cl_parity (sc, channel)
+cl_parity(sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-	log(LOG_WARNING, "%s%d[%d]: parity error\n", cl_cd.cd_name, 0, channel);
-	return;
+	log(LOG_WARNING, "%s[%d]: parity error\n", sc->sc_dev.dv_xname,
+	    channel);
 }
 
 void
-cl_frame (sc, channel)
+cl_frame(sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-	log(LOG_WARNING, "%s%d[%d]: frame error\n", cl_cd.cd_name, 0, channel);
-	return;
+	log(LOG_WARNING, "%s[%d]: frame error\n", sc->sc_dev.dv_xname,
+	    channel);
 }
+
 void
-cl_break (sc, channel)
+cl_break(sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
@@ -1798,9 +1789,9 @@ cl_break (sc, channel)
 	if (sc->sc_cl[channel].cl_consio && db_console != 0)
 		Debugger();
 #else
-	log(LOG_WARNING, "%s%d[%d]: break detected\n", cl_cd.cd_name, 0, channel);
+	log(LOG_WARNING, "%s[%d]: break detected\n", sc->sc_dev.dv_xname,
+	    channel);
 #endif
-	return;
 }
 
 #ifdef DEBUG
@@ -1924,6 +1915,5 @@ cl_dumpport(channel)
 	printf("btbadru %x, btbadrl %x, btbcnt %x, btbsts %x\n",
 		btbadru,    btbadrl,    btbcnt,    btbsts);
 	printf("}\n");
-	return;
 }
 #endif
