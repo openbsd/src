@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.h,v 1.6 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: nvram.h,v 1.7 2004/06/09 10:17:10 art Exp $	*/
 /*	$NetBSD: nvram.h,v 1.5 1995/05/05 22:08:43 mycroft Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 
 #define	NVRAM_RESET_RST		0x00		/* normal reset */
 #define	NVRAM_RESET_LOAD 	0x04		/* load system */
-#define	NVRAM_RESET_SOFT	0x0A		/* soft reset */
+#define	NVRAM_RESET_JUMP	0x0a		/* jump through 40:67 */
 
 /* NVRAM byte 2: diskette drive type in upper/lower nibble */
 #define NVRAM_DISKETTE	(MC_NVRAM_START + 2)	/* RTC offset 0x10 */
