@@ -1,4 +1,4 @@
-/*	$OpenBSD: extent.h,v 1.2 1996/12/09 09:27:02 niklas Exp $	*/
+/*	$OpenBSD: extent.h,v 1.3 1997/07/12 22:50:05 weingart Exp $	*/
 /*	$NetBSD: extent.h,v 1.5 1996/11/21 18:42:17 cgd Exp $	*/
 
 /*-
@@ -60,6 +60,8 @@ struct extent {
 	u_long	ex_end;			/* end of extent */
 	int	ex_mtype;		/* memory type */
 	int	ex_flags;		/* misc. information */
+
+	LIST_ENTRY(extent) ex_link;
 };
 
 struct extent_fixed {
@@ -100,6 +102,9 @@ struct extent_fixed {
 	(ALIGN(sizeof(struct extent_fixed)) +		\
 	((ALIGN(sizeof(struct extent_region))) *	\
 	 (_nregions)))
+
+struct extent *extent_find __P((char *));
+void extent_print_all __P((void));
 
 struct	extent *extent_create __P((char *, u_long, u_long, int,
 	    caddr_t, size_t, int));

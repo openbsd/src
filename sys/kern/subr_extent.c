@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.2 1996/12/09 09:27:04 niklas Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.3 1997/07/12 22:50:06 weingart Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -48,12 +48,14 @@
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 #else
 /*
  * user-land definitions, so it can fit into a testing harness.
  */
 #include <sys/param.h>
 #include <sys/extent.h>
+#include <sys/queue.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -70,12 +72,69 @@ static	struct extent_region *extent_alloc_region_descriptor
 	    __P((struct extent *, int));
 static	void extent_free_region_descriptor __P((struct extent *,
 	    struct extent_region *));
+static	void extent_register __P((struct extent *));
 
 /*
  * Macro to align to an arbitrary power-of-two boundary.
  */
 #define EXTENT_ALIGN(_start, _align)			\
 	(((_start) + ((_align) - 1)) & (-(_align)))
+
+/*
+ * Register the extent on a doubly linked list.
+ * Should work, no?
+ */
+static LIST_HEAD(listhead, extent) ext_list;
+static struct listhead *ext_listp;
+
+static void
+extent_register(ex)
+	struct extent *ex;
+{
+	/* Is this redundant? */
+	if(ext_listp == NULL){
+		LIST_INIT(&ext_list);
+		ext_listp = &ext_list;
+	}
+
+	/* Insert into list */
+	LIST_INSERT_HEAD(ext_listp, ex, ex_link);
+}
+
+/*
+ * Find a given extent, and return a pointer to
+ * it so that other extent functions can be used
+ * on it.
+ *
+ * Returns NULL on failure.
+ */
+struct extent *
+extent_find(name)
+	char *name;
+{
+	struct extent *ep;
+
+	for(ep = ext_listp->lh_first; ep != NULL; ep = ep->ex_link.le_next){
+		if(!strcmp(ep->ex_name, name)) return(ep);
+	}
+
+	return(NULL);
+}
+
+
+/*
+ * Print out all extents registered.  This is used in
+ * DDB show extents
+ */
+void
+extent_print_all(void)
+{
+	struct extent *ep;
+
+	for(ep = ext_listp->lh_first; ep != NULL; ep = ep->ex_link.le_next){
+		extent_print(ep);
+	}
+}
 
 /*
  * Allocate and initialize an extent map.
@@ -156,6 +215,8 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 		ex->ex_flags |= EXF_FIXED;
 	if (flags & EX_NOCOALESCE)
 		ex->ex_flags |= EXF_NOCOALESCE;
+
+	extent_register(ex);
 	return (ex);
 }
 
