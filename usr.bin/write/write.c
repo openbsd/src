@@ -97,7 +97,7 @@ main(argc, argv)
 	if (term_chk(mytty, &msgsok, &atime, 1))
 		exit(1);
 	if (!msgsok)
-		errx(1, "you have write permission turned off");
+		warnx("you have write permission turned off");
 
 	myuid = getuid();
 
