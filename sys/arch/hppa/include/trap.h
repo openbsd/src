@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.3 1999/02/17 20:40:32 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.4 1999/05/02 03:41:45 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -85,6 +85,8 @@
 #define	HPPA_BREAK_IVA			7
 #define	HPPA_BREAK_PDC_IODC_CALL	8
 #define	HPPA_BREAK_GDB			8	/* Standard GDB breakpoint.  */
+#define	HPPA_BREAK_GET_PSW		9
+#define	HPPA_BREAK_SET_PSW		10
 
 /*
  * Tear apart a break instruction to find its type.

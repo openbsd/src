@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.7 1999/04/20 19:29:12 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.8 1999/05/02 03:41:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -93,22 +93,25 @@ static __inline u_int mtsm(u_int mask) {
 	return ret;
 }
 
-#if 0
-static __inline void set_psw(u_int psw) {
-	__asm __volatile("mtctl %0, %%cr22\n\t"
-			 "mtctl %%r0, %%cr17\n\t"
-			 "mtctl %%r0, %%cr17\n\t"
-			 "ldil L%%., %0\n\t"
-			 "ldo R%%.+24(%0), %0\n\t"
-			 "mtctl %0, %%cr18\n\t"
-			 "ldo 4(%0), %0\n\t"
-			 "mtctl %0, %%cr18\n\t"
-			 "rfi\n\tnop\n\tnop"
-			 :: "r" (psw));
+static __inline register_t get_psw(void)
+{
+	register u_int ret;
+	__asm __volatile("break %1, %2\n\tcopy %%ret0, %0" : "=r" (ret)
+		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_GET_PSW)
+		: "r28");
+	return ret;
 }
-#else
-void set_psw __P((u_int psw));
-#endif
+
+static __inline register_t set_psw(register_t psw)
+{
+	register u_int ret;
+	__asm __volatile("copy	%0, %%arg0\n\tbreak %1, %2\n\tcopy %%ret0, %0"
+		: "=r" (ret)
+		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SET_PSW), "0" (psw)
+		: "r26", "r28");
+	return ret;
+}
+
 
 #define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
 #define	fice(sp,off) __asm __volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))

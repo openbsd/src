@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 1999/04/20 20:36:06 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 1999/05/02 03:42:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -140,7 +140,7 @@ s_textsize
  */
 ENTRY(__start)
 /*
- *	start(pdc, boothowto, bootdev, esym bootapiver, argv, argc)
+ *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
  *	pdc - PDC entry point (not used, HP-UX compatibility)
  *	boothowto - boot flags (see "reboot.h")
@@ -320,22 +320,6 @@ $noddb
 
 	/* should never return... */
 EXIT(__start)
-
-ENTRY(set_psw)
-	mtctl	r0,pcsq
-	mtctl	r0,pcsq
-	ldil	L%$set_psw,t1
-	ldo	R%$set_psw(t1),t1
-	mtctl	t1,pcoq	
-	ldo	4(t1),t1
-	mtctl	t1,pcoq	
-	mtctl	arg0,ipsw
-	rfi
-	nop
-$set_psw
-	bv	0(rp)
-	nop
-EXIT(set_psw)
 
 /*
  * Kernel Gateway Page (must be at known address)
@@ -609,7 +593,7 @@ $ivaaddr
 	CTRAP(itlb,T_ITLBMISS)	/*  6. instruction TLB miss fault */
 	ATRAP(iprot,T_IPROT)	/*  7. instruction protection trap */
 	ATRAP(illegal,T_ILLEGAL)/*  8. Illegal instruction trap */
-	ATRAP(ibreak,T_IBREAK)	/*  9. break instruction trap */
+	CTRAP(ibreak,T_IBREAK)	/*  9. break instruction trap */
 	ATRAP(privop,T_PRIV_OP)	/* 10. privileged operation trap */
 	ATRAP(privr,T_PRIV_REG)	/* 11. privileged register trap */
 	ATRAP(ovrfl,T_OVERFLOW)	/* 12. overflow trap */
@@ -807,6 +791,52 @@ $tlbret
 	mtsp	r25, sr1
 	rfir
 	nop
+
+	.export	TLABEL(ibreak), code
+TLABEL(ibreak)
+	mfctl	iir, r16
+	extru	r16, 31, 5, r9
+	comib,<>,n HPPA_BREAK_KERNEL, r9, TLABEL(all)
+
+	/* If this was called by a user process then always pass it to trap() */
+	mfctl	pcoq, r8
+	extru,=	r8, 31, 2, r0
+	b,n	TLABEL(all)
+
+	/* don't accept breaks from data segments */
+	.import etext
+	ldil	L%etext, r9
+	ldo	R%etext(r9), r9
+	comb,<<,n r8, r9, TLABEL(all)
+
+	/* now process all those `break' calls we make */
+	extru	r16, 18, 13, r9
+	comib,<>,n HPPA_BREAK_GET_PSW, r9, $ibreak_ngetpsw
+
+	b	$ibreak_exit
+	mfctl	ipsw, ret0
+
+$ibreak_ngetpsw
+	comib,<>,n HPPA_BREAK_SET_PSW, r9, $ibreak_nsetpsw
+
+	mfctl	ipsw, ret0
+	b	$ibreak_exit
+	mtctl	arg0, ipsw
+
+$ibreak_nsetpsw
+	b	TLABEL(all)
+	nop
+
+$ibreak_exit
+	/* skip the break */
+	mfctl	pcoq, r8
+	mfctl	pcoq, r8
+	mtctl	r8, pcoq
+	add	r8, 4, r8
+	mtctl	r8, pcoq
+	rfir
+	nop
+
 
 	.export	TLABEL(all), code
 TLABEL(all)
@@ -1628,22 +1658,16 @@ ENTRY(switch_exit)
 EXIT(switch_exit)
 
 ENTRY(switch_trampoline)
-	/* TODO */
-	bv	0(rp)
-	nop
+	/* XXX load curproc here? */
+	bv	0(arg0)
+	copy	arg1, arg0
 EXIT(switch_trampoline)
-
-ENTRY(child_return)
-	/* TODO */
-	bv	0(rp)
-	nop
-EXIT(child_return)
 
 /*
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
 ENTRY(sigcode)
-	/* TODO */
+	/* TODO signal trampoline */
 ALTENTRY(esigcode)
 	bv	0(rp)
 	nop
@@ -1653,18 +1677,10 @@ EXIT(sigcode)
 ENTRY(linux_sigcode)
 
 ALTENTRY(linux_esigcode)
-	/* TODO */
+	/* TODO linux signal trampoline */
 	bv	0(rp)
 	nop
 EXIT(linix_esigcode)
 #endif /* COMPAT_LINUX */
 
-	/* Leave this down here.  It avoids a nasty, hard-to-fix bug in gas. */
-	.space $PRIVATE$
-
-	.export $global$,data
-$global$
-	.word 0
-
 	.end
-
