@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.155 2001/12/28 12:14:27 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.156 2001/12/28 14:50:54 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -860,7 +860,6 @@ static int
 ssh_session(void)
 {
 	int type;
-	int plen;
 	int interactive = 0;
 	int have_tty = 0;
 	struct winsize ws;
@@ -878,7 +877,7 @@ ssh_session(void)
 		packet_put_int(options.compression_level);
 		packet_send();
 		packet_write_wait();
-		type = packet_read(&plen);
+		type = packet_read();
 		if (type == SSH_SMSG_SUCCESS)
 			packet_start_compression(options.compression_level);
 		else if (type == SSH_SMSG_FAILURE)
@@ -916,7 +915,7 @@ ssh_session(void)
 		packet_write_wait();
 
 		/* Read response from the server. */
-		type = packet_read(&plen);
+		type = packet_read();
 		if (type == SSH_SMSG_SUCCESS) {
 			interactive = 1;
 			have_tty = 1;
@@ -935,7 +934,7 @@ ssh_session(void)
 		x11_request_forwarding_with_spoofing(0, proto, data);
 
 		/* Read response from the server. */
-		type = packet_read(&plen);
+		type = packet_read();
 		if (type == SSH_SMSG_SUCCESS) {
 			interactive = 1;
 		} else if (type == SSH_SMSG_FAILURE) {
@@ -955,7 +954,7 @@ ssh_session(void)
 		auth_request_forwarding();
 
 		/* Read response from the server. */
-		type = packet_read(&plen);
+		type = packet_read();
 		packet_check_eom();
 		if (type != SSH_SMSG_SUCCESS)
 			log("Warning: Remote host denied authentication agent forwarding.");
