@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.21 2004/04/19 18:29:17 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.22 2004/10/04 21:40:53 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -314,8 +314,12 @@ Patterns are arbitrary Boolean combinations
 .Ic "\&! || &&" )
 of regular expressions and
 relational expressions.
-Regular expressions are as in
-.Xr egrep 1 .
+.Nm
+supports extended regular expressions
+.Pq EREs .
+See
+.Xr re_format 7
+for more information on regular expressions.
 Isolated regular expressions
 in a pattern apply to the entire line.
 Regular expressions may also occur in
@@ -718,11 +722,11 @@ Print an error message to standard error:
 { print "error!" > "/dev/stderr" }
 .Ed
 .Sh SEE ALSO
-.Xr egrep 1 ,
 .Xr lex 1 ,
 .Xr printf 1 ,
 .Xr sed 1 ,
-.Xr printf 3
+.Xr printf 3 ,
+.Xr re_format 7
 .Pp
 "Awk \(em A Pattern Scanning and Processing Language",
 .Pa /usr/share/doc/usd/16.awk/ .
