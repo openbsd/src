@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.21 2002/02/14 04:25:32 fgsch Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.22 2002/03/07 17:07:10 fgsch Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1119,10 +1119,10 @@ long
 binder(jsp)
 	jmpslot_t	*jsp;
 {
-	struct so_map	*smp, *src_map;
+	struct so_map	*smp, *src_map = NULL;
 	long		addr;
 	char		*sym;
-	struct nzlist	*np = NULL;
+	struct nzlist	*np;
 	int		index;
 
 	/*
@@ -1143,18 +1143,7 @@ binder(jsp)
 	sym = LM_STRINGS(smp) +
 		LM_SYMBOL(smp,RELOC_SYMBOL(&LM_REL(smp)[index]))->nz_strx;
 
-	/*
-	 * If this is a call from a dlopen(3) object, try to resolve locally
-	 * first
-	 */
-	if (LM_PRIVATE(smp)->spd_flags & RTLD_DL) {
-		src_map = smp;
-		np = lookup(sym, &src_map, 1);
-	}
-	if (np == NULL) {
-		src_map = NULL;
-		np = lookup(sym, &src_map, 1);
-	}
+	np = lookup(sym, &src_map, 1);
 	if (np == NULL)
 		errx(1, "Undefined symbol \"%s\" called from %s:%s at %#x",
 				sym, main_progname, smp->som_path, jsp);
