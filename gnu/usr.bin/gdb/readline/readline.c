@@ -21,13 +21,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: readline.c,v 1.1.1.1 1995/10/18 08:40:15 deraadt Exp $
+	$Id: readline.c,v 1.2 1996/07/17 05:42:28 michaels Exp $
 */
+
+#include "ansidecl.h"
+/* needed here for PTR */
 
 /* Remove these declarations when we have a complete libgnu.a. */
 /* #define STATIC_MALLOC */
 #if !defined (STATIC_MALLOC)
-extern char *xmalloc (), *xrealloc ();
+extern char *xmalloc (long), *xrealloc (PTR, long);
 #else
 static char *xmalloc (), *xrealloc ();
 #endif /* STATIC_MALLOC */
@@ -39,6 +42,7 @@ static char *xmalloc (), *xrealloc ();
 #include <sys/file.h>
 #endif
 #include <signal.h>
+
 
 #if defined (HAVE_UNISTD_H)
 #  include <unistd.h>
