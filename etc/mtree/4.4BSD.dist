@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.17 1996/06/18 10:31:26 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.18 1996/06/27 21:11:32 tholo Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -805,11 +805,6 @@ quiz.db
 ..
 
 # ./usr/share/games
-..
-
-# ./usr/share/gnats
-gnats
-# ./usr/share/gnats
 ..
 
 # ./usr/share/groff_font

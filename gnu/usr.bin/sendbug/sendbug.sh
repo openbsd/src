@@ -5,6 +5,7 @@
 # version written by Heinz G. Seidl (hgs@cygnus.com).
 #
 # This file is part of GNU GNATS.
+# Modified by tholo for OpenBSD
 #
 # GNU GNATS is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,47 +20,73 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#	$OpenBSD: sendbug.sh,v 1.1 1996/06/27 21:09:07 tholo Exp $
 
 # The version of this send-pr.
-VERSION=xVERSIONx
+VERSION=3.97
 
 # The submitter-id for your site.
-SUBMITTER=xSUBMITTERx
+SUBMITTER=net
 
-# Where the GNATS directory lives, if at all.
-[ -z "$GNATS_ROOT" ] && 
-GNATS_ROOT=xGNATS_ROOTx
+## Where the GNATS directory lives, if at all.
+#[ -z "$GNATS_ROOT" ] && 
+#GNATS_ROOT=xGNATS_ROOTx
 
 # The default mail address for PR submissions. 
-GNATS_ADDR=xGNATS_ADDRx
+GNATS_ADDR=gnats@openbsd.org
 
-# Where the gnats category tree lives.
-DATADIR=xDATADIRx
+## Where the gnats category tree lives.
+#DATADIR=xDATADIRx
 
-# If we've been moved around, try using GCC_EXEC_PREFIX.
-[ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && 
-  DATADIR=${GCC_EXEC_PREFIX}../../../lib
+## If we've been moved around, try using GCC_EXEC_PREFIX.
+#[ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && 
+#  DATADIR=${GCC_EXEC_PREFIX}../../../lib
 
 # The default release for this host.
 DEFAULT_RELEASE="xDEFAULT_RELEASEx"
 
 # The default organization.
-DEFAULT_ORGANIZATION="xDEFAULT_ORGANIZATIONx"
+DEFAULT_ORGANIZATION="net"
 
-# The default site to look for.
-GNATS_SITE=xGNATS_SITEx
+## The default site to look for.
+#GNATS_SITE=xGNATS_SITEx
 
-# Newer config information?
-[ -f ${GNATS_ROOT}/gnats-adm/config ] && . ${GNATS_ROOT}/gnats-adm/config
+## Newer config information?
+#[ -f ${GNATS_ROOT}/gnats-adm/config ] && . ${GNATS_ROOT}/gnats-adm/config
 
 # What mailer to use.  This must come after the config file, since it is
 # host-dependent.
-MAIL_AGENT="xMAIL_AGENTx"
+if [ -f /usr/sbin/sendmail ]; then
+  MAIL_AGENT="/usr/sbin/sendmail -oi -t"
+else
+  MAIL_AGENT="/usr/lib/sendmail -oi -t"
+fi
+MAILER=`echo $MAIL_AGENT | sed -e 's, .*,,'`
+if [ ! -f "$MAILER" ]; then
+  echo "$COMMAND: Cannot find mail program \"$MAILER\"."
+  echo "$COMMAND: Please fix the MAIL_AGENT entry in the $COMMAND file."
+  exit 1
+fi
 
 # How to read the passwd database.
-PASSWD="xPASSWDx"
+if [ -f /bin/domainname ]; then
+  if [ "`/bin/domainname`" != ""  -a -f /usr/bin/ypcat ]; then
+    PASSWD="/usr/bin/ypcat passwd 2>/dev/null | cat - /etc/passwd | grep '^$LOGNAME:' |
+      cut -f5 -d':' | sed -e 's/,.*//'"
+  fi
+fi
+if [ "$PASSWD" = "" ]; then
+  PASSWD="cat /etc/passwd | grep '^$LOGNAME:' | cut -f5 -d':' | sed -e 's/,.*//'"
+fi
 
-ECHON=xECHONx
+if [ "`echo -n foo`" = foo ]; then
+  ECHON=bsd
+elif [ "`echo 'foo\c'`" = foo ]; then
+  ECHON=sysv
+else
+  ECHON=none
+fi
 
 if [ $ECHON = bsd ] ; then
   ECHON1="echo -n"
@@ -106,14 +133,7 @@ if [ -n "$NAME" ]; then
 elif [ -f $HOME/.fullname ]; then
   ORIGINATOR="`sed -e '1q' $HOME/.fullname`"
 else
-  ORIGINATOR=`$PASSWD | sed -e /"$LOGNAME"/'{s/^[^:]*:[^:]*:[^:]*:[^:]*:\([^,:;]*\).*$/\1/' -e q -e } -e d`
-  case "$ORIGINATOR" in
-  *'&'*)
-    TEMP=`echo $LOGNAME | tr '[a-z]' '[A-Z]'`
-    TEMP=`echo $TEMP $LOGNAME | sed 's/^\(.\)[^ ]* ./\1/'`
-    ORIGINATOR=`echo "$ORIGINATOR" | sed "s/&/$TEMP/"`
-    ;;
-  esac
+  ORIGINATOR="`eval \"$PASSWD\"`"
 fi
 
 if [ -n "$ORGANIZATION" ]; then
@@ -142,50 +162,69 @@ else
 fi
 
 # Find out some information.
-SYSTEM=`( [ -f /bin/uname ] && /bin/uname -a ) || \
-        ( [ -f /usr/bin/uname ] && /usr/bin/uname -a ) || echo ""`
-ARCH=`[ -f /bin/arch ] && /bin/arch`
-MACHINE=`[ -f /bin/machine ] && /bin/machine`
+ARCH=`( [ -f /bin/arch ] && /bin/arch ) || \
+        ( [ -f /usr/bin/arch ] && /usr/bin/arch ) || echo ""`
+SYSTEM=`( [ -f /bin/uname ] && /bin/uname -s ) || \
+        ( [ -f /usr/bin/uname ] && /usr/bin/uname -s ) || echo ""`
+RELEASE=`( [ -f /bin/uname ] && /bin/uname -r ) || \
+        ( [ -f /usr/bin/uname ] && /usr/bin/uname -r ) || echo ""`
+MACHINE=`( [ -f /bin/machine ] && /bin/machine ) || \
+        ( [ -f /usr/bin/machine ] && /usr/bin/machine ) || \
+        ( [ -f /bin/uname ] && /bin/uname -m ) || \
+        ( [ -f /usr/bin/uname ] && /usr/bin/uname -m ) || echo ""`
+if [ -n "$SYSTEM" -a -n "$RELEASE" ]; then
+  SYSTEM="$SYSTEM $RELEASE"
+fi
 
 COMMAND=`echo $0 | sed -e 's,.*/,,'`
-USAGE="Usage: $COMMAND [-PVL] [-t address] [-f filename] [--request-id] 
-[--version]"
+#USAGE="Usage: $COMMAND [-PVL] [-t address] [-f filename] [-s severity]
+#       [-c address] [--request-id] [--version]"
+USAGE="Usage: $COMMAND [-PVL] [--version]"
 REMOVE=
 BATCH=
+CC=
+SEVERITY_C=
 
 while [ $# -gt 0 ]; do
   case "$1" in
     -r) ;; 		# Ignore for backward compat.
-    -t | --to) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
-	shift ; GNATS_ADDR="$1"
-	EXPLICIT_GNATS_ADDR=true
-        ;;
-    -f | --file) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
-	shift ; IN_FILE="$1"
-	if [ "$IN_FILE" != "-" -a ! -r "$IN_FILE" ]; then
-	  echo "$COMMAND: cannot read $IN_FILE"
-	  exit 1
-	fi
-	;;
+#    -t | --to) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
+#	shift ; GNATS_ADDR="$1"
+#	EXPLICIT_GNATS_ADDR=true
+#        ;;
+#    -f | --file) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
+#	shift ; IN_FILE="$1"
+#	if [ "$IN_FILE" != "-" -a ! -r "$IN_FILE" ]; then
+#	  echo "$COMMAND: cannot read $IN_FILE"
+#	  exit 1
+#	fi
+#	;;
     -b | --batch) BATCH=true ;;
+    -c | --cc) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
+	shift ; CC="$1"
+	;;
+    -s | --severity) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
+	shift ; SEVERITY_C="$1"
+	;;
     -p | -P | --print) PRINT=true ;;
     -L | --list) FORMAT=norm ;;
     -l | -CL | --lisp) FORMAT=lisp ;;
-    --request-id) REQUEST_ID=true ;;
+#    --request-id) REQUEST_ID=true ;;
     -h | --help) echo "$USAGE"; exit 0 ;;
     -V | --version) echo "$VERSION"; exit 0 ;;
     -*) echo "$USAGE" ; exit 1 ;;
-    *) if [ -z "$USER_GNATS_SITE" ]; then
-	 if [ ! -r "$DATADIR/gnats/$1" ]; then
-	   echo "$COMMAND: the GNATS site $1 does not have a categories list."
-	   exit 1
-	 else
-	   # The site name is the alias they'll have to have created.
-	   USER_GNATS_SITE=$1
-	 fi
-       else
-	 echo "$USAGE" ; exit 1
-       fi
+    *) echo "$USAGE" ; exit 1
+#       if [ -z "$USER_GNATS_SITE" ]; then
+#	 if [ ! -r "$DATADIR/gnats/$1" ]; then
+#	   echo "$COMMAND: the GNATS site $1 does not have a categories list."
+#	   exit 1
+#	 else
+#	   # The site name is the alias they'll have to have created.
+#	   USER_GNATS_SITE=$1
+#	 fi
+#       else
+#	 echo "$USAGE" ; exit 1
+#       fi
        ;;
  esac
  shift
@@ -212,12 +251,13 @@ __EOF__
   exit 1
 fi
 
-if [ -r "$DATADIR/gnats/$GNATS_SITE" ]; then
-  CATEGORIES=`grep -v '^#' $DATADIR/gnats/$GNATS_SITE | sort`
-else
-  echo "$COMMAND: could not read $DATADIR/gnats/$GNATS_SITE for categories list."
-  exit 1
-fi
+#if [ -r "$DATADIR/gnats/$GNATS_SITE" ]; then
+#  CATEGORIES=`grep -v '^#' $DATADIR/gnats/$GNATS_SITE | sort`
+#else
+#  echo "$COMMAND: could not read $DATADIR/gnats/$GNATS_SITE for categories list."
+#  exit 1
+#fi
+CATEGORIES="system user library documentation kernel sparc i386 m68k mips ppc arm alpha ns32k vax"
 
 if [ -z "$CATEGORIES" ]; then
   echo "$COMMAND: the categories list for $GNATS_SITE was empty!"
@@ -246,7 +286,9 @@ ORIGINATOR_C='<name of the PR author (one line)>'
 ORGANIZATION_C='<organization of PR author (multiple lines)>'
 CONFIDENTIAL_C='<[ yes | no ] (one line)>'
 SYNOPSIS_C='<synopsis of the problem (one line)>'
-SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
+if [ -z "$SEVERITY_C" ]; then
+  SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
+fi
 PRIORITY_C='<[ low | medium | high ] (one line)>'
 CATEGORY_C='<name of the product (one line)>'
 CLASS_C='<[ sw-bug | doc-bug | change-request | support ] (one line)>'
@@ -299,9 +341,6 @@ SEND-PR: -*- send-pr -*-
 SEND-PR: Lines starting with `SEND-PR' will be removed automatically, as
 SEND-PR: will all comments (text enclosed in `<' and `>').
 SEND-PR: 
-SEND-PR: Please consult the send-pr man page `send-pr(1)' or the Texinfo
-SEND-PR: manual if you are not sure how to fill out a problem report.
-SEND-PR:
 SEND-PR: Choose from the following categories:
 SEND-PR:
 __EOF__
@@ -322,6 +361,7 @@ __EOF__
 To: $GNATS_ADDR
 Subject: 
 From: $FROM
+Cc: $CC
 Reply-To: $REPLYTO
 X-send-pr-version: $VERSION
 
@@ -339,9 +379,9 @@ ${ORGANIZATION-	$ORGANIZATION_C}
 >Release:	${DEFAULT_RELEASE-$RELEASE_C}
 >Environment:
 	$ENVIRONMENT_C
-`[ -n "$SYSTEM" ] && echo System: $SYSTEM`
-`[ -n "$ARCH" ] && echo Architecture: $ARCH`
-`[ -n "$MACHINE" ] && echo Machine: $MACHINE`
+`[ -n "$SYSTEM" ] && echo "	System      : $SYSTEM"`
+`[ -n "$ARCH" ] && echo "	Architecture: $ARCH"`
+`[ -n "$MACHINE" ] && echo "	Machine     : $MACHINE"`
 >Description:
 	$DESCRIPTION_C
 >How-To-Repeat:
@@ -449,18 +489,8 @@ while [ -z "$REQUEST_ID" ]; do
     ""|sw-bug|doc-bug|change-request|support) CNT=`expr $CNT + 1` ;;
     *)  echo "$COMMAND: \`$CLASS' is not a valid value for \`Class'."
   esac
-  #
-  # 6) Release
-  #
-  PATTERN=">Release:"
-  RELEASE=`eval sed -n -e "\"$SED_CMD\"" $TEMP`
-  if [ -z "$RELEASE" ]; then
-    echo "$COMMAND: you must include a Release: field in your report."
-  else
-    CNT=`expr $CNT + 1`
-  fi
 
-  [ $CNT -lt 6 -a -z "$BATCH" ] && 
+  [ $CNT -lt 5 -a -z "$BATCH" ] && 
     echo "Errors were found with the problem report."
 
   while true; do
@@ -468,7 +498,7 @@ while [ -z "$REQUEST_ID" ]; do
       $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
       read input
     else
-      if [ $CNT -eq 6 ]; then
+      if [ $CNT -eq 5 ]; then
         input=s
       else
         input=a
