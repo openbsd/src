@@ -1,15 +1,16 @@
-# $OpenBSD: Makefile,v 1.10 2003/12/09 12:46:32 otto Exp $
+# $OpenBSD: Makefile,v 1.11 2003/12/17 15:11:36 otto Exp $
 
 DC=dc -x
 
-REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 \
-	t19 t20
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
+	t18 t19 t20
 
 # .in: input file
 # .out: desired result
 
 # t1: basic operations, prints "dc: Runtime warning: non-zero scale in exponent"
 # t2: factoring program
+# t3: string handling
 # t4: more string ops
 # t5: bc output, computing exp
 # t6: nesting level and tail recursion

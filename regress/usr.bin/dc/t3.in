@@ -1,0 +1,28 @@
+# $OpenBSD: t3.in,v 1.1 2003/12/17 15:11:36 otto Exp $
+#
+# Copyright (c) 2003 Kevin Quick <quick@null.net>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+[ Sing the classic '99 Bottles of Beer', using the Unix dc utility.  ]sd
+[                                                                    ]sd
+[ Run this one by typing 'dc < bottles.dc' at the Unix prompt, where ]sd
+[ bottles.dc is the file containing these lines.                     ]sd
+[                                                                    ]sd
+[ bottles of beer]sb[ on the wall]sw[,]sc
+[take one down, pass it around]st[.]sp[no more]sk
+[10lplwlbln1-10lclt10lclbln32lclwlbln]sl
+[lzxPPPPlzxPPPPPPlzxPPPP]so[lkP]sx[dZselyxsd]su
+[d10le1-dse^ /d10/10*-48+P le0<y]sy[d0=xd0<u]sz
+[llxloxln1-dsn0<r]sr[Plf1-dsf0<g]sg
+99snlrx10P
