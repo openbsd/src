@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.16 2003/10/03 16:44:49 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.17 2003/12/22 20:38:07 jmc Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1358,7 +1358,7 @@ dcmsetischeme(brd, flags)
 		       sc->sc_dev.dv_xname, perchar, dis->dis_perchar,
 		       dis->dis_intr, dis->dis_char);
 	if ((flags & DIS_RESET) == 0 && perchar == dis->dis_perchar) {
-		printf("%s: dcmsetischeme: redundent request %d\n",
+		printf("%s: dcmsetischeme: redundant request %d\n",
 		       sc->sc_dev.dv_xname, perchar);
 		return;
 	}

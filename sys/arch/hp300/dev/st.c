@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.17 2003/12/20 20:08:13 miod Exp $	*/
+/*	$OpenBSD: st.c,v 1.18 2003/12/22 20:38:07 jmc Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -633,7 +633,7 @@ stclose(dev, flag, mode, p)
 #ifdef NOTDEF
 	/* wait until more stable before trying [XXX Needed ?] */
 	if (!hit && (sc->sc_flags & SFT_WMODE))
-		/* force out any any bufferd write data */
+		/* force out any buffered write data */
 		stcommand(dev, MTFSR, 0); 
 #endif
 	/* make stats available */
@@ -1384,7 +1384,7 @@ prtmodsel(msd, modlen)
 	int modlen;
 {
 	printf("Modsel command. len is 0x%x.\n", modlen);
-	printf("rsvd1 0x%x rsvd2 0x%x rsvd3 0x%x bufferd 0x%x speed 0x%x bckdeslen 0x%x\n",
+	printf("rsvd1 0x%x rsvd2 0x%x rsvd3 0x%x buffered 0x%x speed 0x%x bckdeslen 0x%x\n",
 	       msd->rsvd1,msd->rsvd2,msd->rsvd3,msd->buff,msd->speed,msd->blkdeslen);
 	printf("density 0x%x blks2 0x%x blks1 0x%x blks0 0x%x rsvd 0x%x blklen2 0x%x blklen1 0x%x blklen0 0x%x\n",
 	       msd->density,msd->blks2,msd->blks1,msd->blks0,msd->rsvd4,msd->blklen2,msd->blklen1,msd->blklen0);
