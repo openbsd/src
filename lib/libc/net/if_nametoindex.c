@@ -56,9 +56,9 @@ unsigned int if_nametoindex(const char *name)
   ifconf.ifc_buf = 0;
   if (ioctl(fd, SIOCGIFCONF, (void *)&ifconf))
     goto ret;
-  if (ifconf->ifc_len < IFNAMSIZ)
+  if (ifconf.ifc_len < IFNAMSIZ)
     goto ret;
-  if (!(ifconf->ifc_buf = malloc(ifconf->ifc_len)))
+  if (!(ifconf.ifc_buf = malloc(ifconf.ifc_len)))
     goto ret;
   if (ioctl(fd, SIOCGIFCONF, (void *)&ifconf))
     goto ret;
