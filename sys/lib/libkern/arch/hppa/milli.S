@@ -459,7 +459,7 @@ len2:  .equ 2
 
 len4:  .equ 4
 
-
+#if 0
 $$dyncall: 
 	.proc
 	.callinfo NO_CALLS
@@ -476,7 +476,7 @@ noshlibs:
 	be	0(sr0,r22)
 	stw	rp,-24(sp)
 	.procend
-
+#endif
 temp: .EQU	r1
 
 retreg: .EQU	ret1	; r29
