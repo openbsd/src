@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.13 1999/01/07 21:50:52 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.14 1999/01/08 07:47:54 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -85,7 +85,12 @@ struct inpcb {
 #define	inp_ip		inp_hu.hu_ip
 #define	inp_ipv6	inp_hu.hu_ipv6
 	struct	  mbuf *inp_options;	/* IP options */
-	struct	  ip_moptions *inp_moptions; /* IP multicast options */
+	union {
+		struct ip_moptions *mou_mo;    /* IPv4 multicast options */
+		struct ipv6_moptions *mou_mo6; /* IPv6 multicast options */
+	} inp_mou;
+#define inp_moptions inp_mou.mou_mo
+#define inp_moptions6 inp_mou.mou_mo6
 	u_char	  inp_seclevel[3];	/* Only the first 3 are used for now */
 #define SL_AUTH           0             /* Authentication level */
 #define SL_ESP_TRANS      1             /* ESP transport level */
@@ -172,6 +177,11 @@ void	 in_pcbdisconnect __P((void *));
 struct inpcb *
 	 in_pcbhashlookup __P((struct inpcbtable *, struct in_addr,
 			       u_int, struct in_addr, u_int));
+#ifdef INET6
+struct inpcb *
+	 in6_pcbhashlookup __P((struct inpcbtable *, struct in6_addr *,
+			       u_int, struct in6_addr *, u_int));
+#endif /* INET6 */
 void	 in_pcbinit __P((struct inpcbtable *, int));
 struct inpcb *
 	 in_pcblookup __P((struct inpcbtable *, void *, u_int, void *,
