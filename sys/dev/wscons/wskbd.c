@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.17 2001/06/08 03:20:31 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.18 2001/06/08 03:23:26 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -203,6 +203,7 @@ struct wskbd_softc {
 #define MOD_ANYCONTROL		(MOD_CONTROL_L | MOD_CONTROL_R)
 #define MOD_ANYMETA		(MOD_META_L | MOD_META_R)
 
+	/* these should result in precise 0 or 1, see wskbd_translate() XXX */
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
 
