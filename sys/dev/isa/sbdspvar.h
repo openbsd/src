@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.11 1999/08/05 05:32:41 deraadt Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.12 2001/02/03 05:22:24 mickey Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #if NMIDI > 0
 #include <dev/ic/mpuvar.h>
 #endif
+
+#include <sys/timeout.h>
 
 #define SB_MASTER_VOL	0
 #define SB_MIDI_VOL	1
@@ -100,6 +102,7 @@ struct sbdsp_softc {
 	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
 	struct device *sc_isa;
+	struct timeout sc_tmo;
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
@@ -118,13 +121,13 @@ struct sbdsp_softc {
 #define SB_LEFT 0
 #define SB_RIGHT 1
 #define SB_LR 0
-	
+
 	u_int	in_mask;		/* input ports */
 	u_int	in_port;		/* XXX needed for MI interface */
 	u_int	in_filter;		/* one of SB_TREBLE_EQ, SB_BASS_EQ, 0 */
 
 	u_int	spkr_state;		/* non-null is on */
-	
+
 	struct sbdsp_state {
 		u_int	rate;		/* Sample rate */
 		u_char	tc;		/* Time constant */
@@ -237,7 +240,7 @@ int	sbdsp_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	sbdsp_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	sbdsp_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 
-void 	*sb_malloc __P((void *, unsigned long, int, int));
+void	*sb_malloc __P((void *, unsigned long, int, int));
 void	sb_free __P((void *, void *, int));
 unsigned long sb_round __P((void *, unsigned long));
 int	sb_mappage __P((void *, void *, int, int));
@@ -245,7 +248,7 @@ int	sb_mappage __P((void *, void *, int, int));
 int	sbdsp_get_props __P((void *));
 
 
-int	sbdsp_midi_open __P((void *, int, 
+int	sbdsp_midi_open __P((void *, int,
 			     void (*iintr)__P((void *, int)),
 			     void (*ointr)__P((void *)), void *arg));
 void	sbdsp_midi_close __P((void *));
