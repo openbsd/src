@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.32 1998/04/08 02:42:37 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.33 1998/04/11 10:14:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.32 1998/04/08 02:42:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.33 1998/04/11 10:14:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1581,6 +1581,7 @@ getdisktype(lp, banner)
 	if (lp->d_type > DKMAXTYPES || lp->d_type == 0) {
 		puts(banner);
 		puts("Possible values are:");
+		printf("\"IDE\", ");
 		for (i = 1; i < DKMAXTYPES; i++) {
 			printf("\"%s\"", dktypenames[i]);
 			if (i < DKMAXTYPES - 1)
