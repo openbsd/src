@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.6 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: grp.h,v 1.7 2003/06/25 21:06:33 deraadt Exp $	*/
 /*	$NetBSD: grp.h,v 1.7 1995/04/29 05:30:40 cgd Exp $	*/
 
 /*-
@@ -56,7 +56,11 @@ struct group {
 
 __BEGIN_DECLS
 struct group	*getgrgid(gid_t);
+int		getgrgid_r(gid_t, struct group *, char *,
+		    size_t, struct group **);
 struct group	*getgrnam(const char *);
+int		getgrnam_r(const char *, struct group *, char *,
+		    size_t, struct group **);
 #ifndef _POSIX_SOURCE
 struct group	*getgrent(void);
 void		 setgrent(void);
