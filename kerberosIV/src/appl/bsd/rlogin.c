@@ -36,7 +36,7 @@
  */
 #include "bsd_locl.h"
 
-RCSID("$KTH: rlogin.c,v 1.67.2.1 2000/06/23 02:35:44 assar Exp $");
+RCSID("$KTH: rlogin.c,v 1.67.2.2 2000/10/10 12:54:26 assar Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -241,6 +241,8 @@ reader(void)
 		rcvcnt = 0;
 
 		FD_ZERO (&readfds);
+		if (rem >= FD_SETSIZE)
+		    errx (1, "fd too large");
 		FD_SET (rem, &readfds);
 		FD_ZERO (&exceptfds);
 		if (kludgep)

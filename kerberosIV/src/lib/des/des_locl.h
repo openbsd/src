@@ -223,7 +223,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 
 /* used in des_read and des_write */
 #define MAXWRITE	(1024*16)
-#define BSIZE		(MAXWRITE+4)
+#define des_BSIZE	(MAXWRITE+4)
 
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    , \
 			 l|=((DES_LONG)(*((c)++)))<< 8L, \

@@ -251,7 +251,7 @@ esac
 ])
 
 dnl
-dnl $KTH: shared-libs.m4,v 1.4.14.1 2000/03/27 01:10:45 assar Exp $
+dnl $KTH: shared-libs.m4,v 1.4.14.3 2000/12/07 18:03:00 bg Exp $
 dnl
 dnl Shared library stuff has to be different everywhere
 dnl
@@ -336,9 +336,14 @@ changequote([,])dnl
 	LDSHARED='ld -shared -expect_unresolved \*'
 	;;
 *-*-solaris2*)
+	LDSHARED='$(CC) -shared -Wl,-h$(LIBNAME).so.'"${SHLIB_SONAME}"
+	REAL_SHLIBEXT=so.$SHLIB_VERSION
+	build_symlink_command='$(LN_S) [$][@] $(LIBNAME).so'
+	install_symlink_command='$(LN_S) $(LIB) $(DESTDIR)$(libdir)/$(LIBNAME).so.'"${SHLIB_SONAME}"';$(LN_S) $(LIB) $(DESTDIR)$(libdir)/$(LIBNAME).so'
+	install_symlink_command2='$(LN_S) $(LIB2) $(DESTDIR)$(libdir)/$(LIBNAME2).so.'"${SHLIB_SONAME}"';$(LN_S) $(LIB2) $(DESTDIR)$(libdir)/$(LIBNAME2).so'
 	REAL_LD_FLAGS='-Wl,-R$(libdir)'
 	if test -z "$GCC"; then
-		LDSHARED='$(CC) -G'
+		LDSHARED='$(CC) -G -h$(LIBNAME).so.'"${SHLIB_SONAME}"
 		REAL_PICFLAGS="-Kpic"
 	fi
 	;;
@@ -795,7 +800,7 @@ else
   $1_FALSE=
 fi])
 
-dnl $KTH: krb-find-db.m4,v 1.5 1999/05/08 02:24:04 assar Exp $
+dnl $KTH: krb-find-db.m4,v 1.5.16.1 2000/08/16 04:11:57 assar Exp $
 dnl
 dnl find a suitable database library
 dnl
@@ -825,6 +830,8 @@ for i in $1; do
 #include <fcntl.h>
 #if defined(HAVE_NDBM_H)
 #include <ndbm.h>
+#elif defined(HAVE_GDBM_NDBM_H)
+#include <gdbm/ndbm.h>
 #elif defined(HAVE_DBM_H)
 #include <dbm.h>
 #elif defined(HAVE_RPCSVC_DBM_H)

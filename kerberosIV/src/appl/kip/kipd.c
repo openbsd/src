@@ -33,7 +33,7 @@
 
 #include "kip.h"
 
-RCSID("$KTH: kipd.c,v 1.16.2.2 2000/06/28 19:07:59 assar Exp $");
+RCSID("$KTH: kipd.c,v 1.16.2.3 2000/10/18 20:46:45 assar Exp $");
 
 static int
 recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
@@ -109,7 +109,7 @@ doit(int sock)
      if (this < 0)
 	  fatal (sock, "Cannot open " _PATH_DEV TUNDEV, schedule, &key);
 
-     strlcpy(cmd, LIBEXECDIR "kipd-control", sizeof(cmd));
+     strlcpy(cmd, LIBEXECDIR "/kipd-control", sizeof(cmd));
 
      ret = kip_exec (cmd, msg, sizeof(msg), "kipd-control",
 		     "up", tun_if_name, inet_ntoa(thataddr.sin_addr), user,

@@ -1,5 +1,5 @@
 dnl
-dnl $KTH: shared-libs.m4,v 1.4.14.1 2000/03/27 01:10:45 assar Exp $
+dnl $KTH: shared-libs.m4,v 1.4.14.3 2000/12/07 18:03:00 bg Exp $
 dnl
 dnl Shared library stuff has to be different everywhere
 dnl
@@ -84,9 +84,14 @@ changequote([,])dnl
 	LDSHARED='ld -shared -expect_unresolved \*'
 	;;
 *-*-solaris2*)
+	LDSHARED='$(CC) -shared -Wl,-h$(LIBNAME).so.'"${SHLIB_SONAME}"
+	REAL_SHLIBEXT=so.$SHLIB_VERSION
+	build_symlink_command='$(LN_S) [$][@] $(LIBNAME).so'
+	install_symlink_command='$(LN_S) $(LIB) $(DESTDIR)$(libdir)/$(LIBNAME).so.'"${SHLIB_SONAME}"';$(LN_S) $(LIB) $(DESTDIR)$(libdir)/$(LIBNAME).so'
+	install_symlink_command2='$(LN_S) $(LIB2) $(DESTDIR)$(libdir)/$(LIBNAME2).so.'"${SHLIB_SONAME}"';$(LN_S) $(LIB2) $(DESTDIR)$(libdir)/$(LIBNAME2).so'
 	REAL_LD_FLAGS='-Wl,-R$(libdir)'
 	if test -z "$GCC"; then
-		LDSHARED='$(CC) -G'
+		LDSHARED='$(CC) -G -h$(LIBNAME).so.'"${SHLIB_SONAME}"
 		REAL_PICFLAGS="-Kpic"
 	fi
 	;;

@@ -1,5 +1,5 @@
 #
-# $KTH: Makefile.in,v 1.53.2.1 2000/03/10 22:58:39 assar Exp $
+# $KTH: Makefile.in,v 1.53.2.2 2000/10/19 20:27:21 assar Exp $
 #
 
 SHELL = /bin/sh
@@ -51,15 +51,19 @@ LIB = $(LIBNAME).$(LIBEXT)
 
 # Generated with lorder *.o | tsort | xargs echo
 
-LIBSRC = xcbc_enc.c sha.c rnd_keys.c read_pwd.c qud_cksm.c pcbc_enc.c \
-	ofb_enc.c ofb64enc.c ofb64ede.c ncbc_enc.c md4.c key_par.c fcrypt.c \
-	ede_enc.c ecb3_enc.c cfb_enc.c cfb64enc.c cfb64ede.c cbc3_enc.c \
-	str2key.c set_key.c md5.c cbc_enc.c cbc_cksm.c ecb_enc.c des_enc.c
+LIBSRC = \
+	xcbc_enc.c sha.c rnd_keys.c rc4_skey.c rc4_enc.c qud_cksm.c	      \
+	ofb_enc.c ofb64enc.c ofb64ede.c ncbc_enc.c md4.c key_par.c fcrypt.c   \
+	enc_writ.c enc_read.c ede_enc.c des.c cfb_enc.c cfb64enc.c cfb64ede.c \
+	cbc3_enc.c read_pwd.c pcbc_enc.c md5.c ecb_enc.c ecb3_enc.c cbc_enc.c \
+	str2key.c set_key.c cbc_cksm.c des_enc.c
 
-LIBOBJ = xcbc_enc.o sha.o rnd_keys.o read_pwd.o qud_cksm.o pcbc_enc.o \
-	ofb_enc.o ofb64enc.o ofb64ede.o ncbc_enc.o md4.o key_par.o fcrypt.o \
-	ede_enc.o ecb3_enc.o cfb_enc.o cfb64enc.o cfb64ede.o cbc3_enc.o \
-	str2key.o set_key.o md5.o cbc_enc.o cbc_cksm.o ecb_enc.o des_enc.o
+LIBOBJ = \
+	xcbc_enc.o sha.o rnd_keys.o rc4_skey.o rc4_enc.o qud_cksm.o	      \
+	ofb_enc.o ofb64enc.o ofb64ede.o ncbc_enc.o md4.o key_par.o fcrypt.o   \
+	enc_writ.o enc_read.o ede_enc.o des.o cfb_enc.o cfb64enc.o cfb64ede.o \
+	cbc3_enc.o read_pwd.o pcbc_enc.o md5.o ecb_enc.o ecb3_enc.o cbc_enc.o \
+	str2key.o set_key.o cbc_cksm.o des_enc.o
 
 all: $(LIB) $(PROGS)
 
@@ -83,7 +87,7 @@ des_enc.o: des_enc.c
 
 install: all
 	$(MKINSTALLDIRS) $(DESTDIR)$(libdir)
-	$(INSTALL_DATA) -m 0555 $(LIB) $(DESTDIR)$(libdir)/$(LIB)
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)/$(LIB)
 	@install_symlink_command@
 	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
 	for x in $(PROGS2INSTALL); do \
@@ -115,12 +119,17 @@ distclean: clean
 realclean: distclean
 	rm -f TAGS
 
+$(LIBNAME)_pic.a: $(LIBOBJ)
+	rm -f $@
+	$(AR) cr $@ $(LIBOBJ)
+	-$(RANLIB) $@
+
 $(LIBNAME).a: $(LIBOBJ)
 	rm -f $@
 	$(AR) cr $@ $(LIBOBJ)
 	-$(RANLIB) $@
 
-$(LIBNAME).$(SHLIBEXT): $(LIBOBJ)
+$(LIBNAME).$(SHLIBEXT): $(LIBOBJ) $(LIBNAME)_pic.a
 	rm -f $@
 	$(LDSHARED) -o $@ $(LIBOBJ) $(LIB_DEPS)
 	@build_symlink_command@

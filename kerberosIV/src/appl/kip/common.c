@@ -33,7 +33,7 @@
 
 #include "kip.h"
 
-RCSID("$KTH: common.c,v 1.13.2.2 2000/06/28 19:07:59 assar Exp $");
+RCSID("$KTH: common.c,v 1.13.2.4 2000/10/18 23:31:51 assar Exp $");
 
 sig_atomic_t disconnect = 0;
 int isserver = 0;
@@ -62,6 +62,11 @@ copy_packets (int tundev, int netdev, int mtu, des_cblock *iv,
      while(!disconnect) {
 	  fd_set fdset;
 	  int ret, len;
+
+	  if (tundev >= FD_SETSIZE || netdev >= FD_SETSIZE) {
+	      warnx ("fd too large");
+	      return 1;
+	  }
 
 	  FD_ZERO(&fdset);
 	  FD_SET(tundev, &fdset);
@@ -254,6 +259,9 @@ kip_exec (const char *cmd, char *msg, size_t len, ...)
 		return 1;
 	    }
 	} else if (WIFSIGNALED(status)) {
+#ifndef WCOREDUMP
+#define WCOREDUMP(X) 0
+#endif
 	    snprintf (msg, len, "terminated by signal num %d %s",
 		      WTERMSIG(status), 
 		      WCOREDUMP(status) ? " coredumped" : "");

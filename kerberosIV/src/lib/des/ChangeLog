@@ -1,3 +1,9 @@
+2000-10-19  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.in (LIBSRC, LIBOBJ): add rc4* and enc_{read,write}
+	files so that this library contains the same things as libdes in
+	Heimdal
+
 1999-11-29  Assar Westerlund  <assar@sics.se>
 
 	* fcrypt.c (crypt_md5): add trailing $

@@ -87,17 +87,17 @@ des_cblock (*iv);
 
 	if (tmpbuf == NULL)
 		{
-		tmpbuf=(char *)malloc(BSIZE);
+		tmpbuf=(char *)malloc(des_BSIZE);
 		if (tmpbuf == NULL) return(-1);
 		}
 	if (net == NULL)
 		{
-		net=(unsigned char *)malloc(BSIZE);
+		net=(unsigned char *)malloc(des_BSIZE);
 		if (net == NULL) return(-1);
 		}
 	if (unnet == NULL)
 		{
-		unnet=(char *)malloc(BSIZE);
+		unnet=(char *)malloc(des_BSIZE);
 		if (unnet == NULL) return(-1);
 		}
 	/* left over data from last decrypt */

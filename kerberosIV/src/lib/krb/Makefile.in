@@ -1,5 +1,5 @@
 #
-# $KTH: Makefile.in,v 1.113.2.1 2000/06/23 03:20:01 assar Exp $
+# $KTH: Makefile.in,v 1.113.2.2 2000/12/07 16:44:12 assar Exp $
 #
 SHELL = /bin/sh
 
@@ -292,12 +292,17 @@ distclean: clean
 realclean: distclean
 	rm -f TAGS
 
+$(LIBNAME)_pic.a: $(OBJECTS) $(SHLIB_LIBADD)
+	rm -f $@
+	$(AR) cr $@ $(OBJECTS) $(SHLIB_LIBADD)
+	-$(RANLIB) $@
+
 $(LIBNAME).a: $(OBJECTS)
 	rm -f $@
 	$(AR) cr $@ $(OBJECTS)
 	-$(RANLIB) $@
 
-$(LIBNAME).$(SHLIBEXT): $(OBJECTS) $(SHLIB_LIBADD)
+$(LIBNAME).$(SHLIBEXT): $(OBJECTS) $(SHLIB_LIBADD) $(LIBNAME)_pic.a
 	rm -f $@
 	$(LDSHARED) -o $@ $(OBJECTS) $(SHLIB_LIBADD) $(LIB_DEPS)
 	@build_symlink_command@

@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$KTH: dest_tkt.c,v 1.11.14.1 2000/06/28 19:36:40 assar Exp $");
+RCSID("$KTH: dest_tkt.c,v 1.11.14.2 2000/10/18 20:26:42 assar Exp $");
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -43,57 +43,65 @@ dest_tkt(void)
     int i, fd;
     struct stat sb1, sb2;
     char buf[BUFSIZ];
+    int error = 0;
 
-    errno = 0;
-    if (lstat (filename, &sb1) < 0)
+    if (lstat (filename, &sb1) < 0) {
+	error = errno;
 	goto out;
+    }
 
     fd = open (filename, O_RDWR | O_BINARY);
-    if (fd < 0)
+    if (fd < 0) {
+	error = errno;
 	goto out;
+    }
 
     if (unlink (filename) < 0) {
-	int save_errno = errno;
-
+	error = errno;
 	close(fd);
-	errno = save_errno;
 	goto out;
     }
 
     if (fstat (fd, &sb2) < 0) {
-	int save_errno = errno;
-
+	error = errno;
 	close(fd);
-	errno = save_errno;
 	goto out;
     }
 
     if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
 	close (fd);
-	errno = EPERM;
+	error = EPERM;
 	goto out;
     }
 
     if (sb2.st_nlink != 0) {
 	close (fd);
-	errno = EPERM;
+	error = EPERM;
 	goto out;
     }
 
-    for (i = 0; i < sb2.st_size; i += sizeof(buf))
-	if (write(fd, buf, sizeof(buf)) != sizeof(buf)) {
+    for (i = 0; i < sb2.st_size; i += sizeof(buf)) {
+	int ret;
+	
+	ret = write(fd, buf, sizeof(buf));
+	if (ret != sizeof(buf)) {
+	    if (ret < 0)
+		error = errno;
+	    else
+		error = EINVAL;
 	    fsync(fd);
 	    close(fd);
 	    goto out;
 	}
+    }
 
     fsync(fd);
     close(fd);
     
 out:
-    if (errno == ENOENT)
+    if (error == ENOENT)
 	return RET_TKFIL;
-    else if (errno != 0)
+    else if (error != 0)
 	return KFAILURE;
     else
 	return(KSUCCESS);

@@ -1,3 +1,29 @@
+Changes in release 1.0.4:
+
+* Only allow a small list of environment variables in telnetd
+
+* Fix one buffer overflow in libkrb
+
+* Make su handle multiple local realms
+
+* Build pic-ed archives (to be used with the pam module)
+
+* do not handle environment variables, use krb.extra instead
+
+* Disable KRBCONFDIR environment variable for root
+
+* fix shared libraries building on solaris
+
+Changes in release 1.0.3:
+
+* Handle DoS attacks in the KDC and the admin server better.
+
+* updated config.guess and config.sub
+
+* better db/gdbm discovery
+
+* bug fixes
+
 Changes in release 1.0.2:
 
 * Fix syslog(LOG_FOO, bug) calls in kauthd, kipd

@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$KTH: sys_term.c,v 1.89.2.1 2000/03/26 20:05:36 assar Exp $");
+RCSID("$KTH: sys_term.c,v 1.89.2.6 2000/12/08 23:34:05 assar Exp $");
 
 #if defined(_CRAY) || (defined(__hpux) && !defined(HAVE_UTMPX_H))
 # define PARENT_DOES_UTMP
@@ -1205,26 +1205,50 @@ init_env(void)
 /*
  * scrub_env()
  *
- * Remove variables from the environment that might cause login to
- * behave in a bad manner. To avoid this, login should be staticly
- * linked.
+ * We only accept the environment variables listed below.
  */
 
-static void scrub_env(void)
+static void
+scrub_env(void)
 {
-    static char *remove[] = { "LD_", "_RLD_", "LIBPATH=", "IFS=", NULL };
+    static const char *reject[] = {
+	"TERMCAP=/",
+	NULL
+    };
+
+    static const char *accept[] = {
+	"XAUTH=", "XAUTHORITY=", "DISPLAY=",
+	"TERM=",
+	"EDITOR=",
+	"PAGER=",
+	"PRINTER=",
+	"LOGNAME=",
+	"POSIXLY_CORRECT=",
+	"TERMCAP=",
+	NULL
+    };
 
     char **cpp, **cpp2;
-    char **p;
+    const char **p;
   
     for (cpp2 = cpp = environ; *cpp; cpp++) {
-	for(p = remove; *p; p++)
+	int reject_it = 0;
+
+	for(p = reject; *p; p++)
+	    if(strncmp(*cpp, *p, strlen(*p)) == 0) {
+		reject_it = 1;
+		break;
+	    }
+	if (reject_it)
+	    continue;
+
+	for(p = accept; *p; p++)
 	    if(strncmp(*cpp, *p, strlen(*p)) == 0)
 		break;
-	if(*p == NULL)
+	if(*p != NULL)
 	    *cpp2++ = *cpp;
     }
-    *cpp2 = 0;
+    *cpp2 = NULL;
 }
 
 

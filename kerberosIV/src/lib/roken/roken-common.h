@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken-common.h,v 1.19.2.1 2000/06/28 20:22:29 assar Exp $ */
+/* $KTH: roken-common.h,v 1.19.2.2 2000/08/16 03:37:26 assar Exp $ */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__
@@ -256,4 +256,10 @@ socket_set_tos (int sock, int tos);
 void
 socket_set_reuseaddr (int sock, int val);
 
+char **
+vstrcollect(va_list *ap);
+
+char **
+strcollect(char *first, ...);
+ 
 #endif /* __ROKEN_COMMON_H__ */

@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: rsh.c,v 1.43.2.1 2000/06/23 02:38:05 assar Exp $");
+RCSID("$KTH: rsh.c,v 1.43.2.2 2000/10/10 12:53:50 assar Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -107,7 +107,10 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	goto done;
     bp = buf;
 
-    rewrite:	FD_ZERO(&rembits);
+    rewrite:   
+    FD_ZERO(&rembits);
+    if (rem >= FD_SETSIZE)
+	errx(1, "fd too large");
     FD_SET(rem, &rembits);
     if (select(rem + 1, 0, &rembits, 0, 0) < 0) {
 	if (errno != EINTR) 
@@ -140,6 +143,8 @@ talk(int nflag, sigset_t omask, int pid, int rem)
     if (sigprocmask(SIG_SETMASK, &omask, 0) != 0)
 	warn("sigprocmask");
     FD_ZERO(&readfrom);
+    if (rem >= FD_SETSIZE || rfd2 >= FD_SETSIZE)
+	errx(1, "fd too large");
     FD_SET(rem, &readfrom);
     FD_SET(rfd2, &readfrom);
     do {

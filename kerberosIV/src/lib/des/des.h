@@ -78,7 +78,7 @@ extern "C" {
 /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
  * %20 speed up (longs are 8 bytes, int's are 4). */
 #ifndef DES_LONG
-#if defined(__alpha) || defined(__sparcv9) || _MIPS_SZLONG == 64
+#if defined(__alpha) || defined(__sparcv9) || defined(__sparc_v9__) || _MIPS_SZLONG == 64
 #define DES_LONG unsigned int
 #else /* Not a 64 bit machine */
 #define DES_LONG unsigned long

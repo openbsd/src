@@ -1,5 +1,5 @@
 #
-# $KTH: Makefile.in,v 1.30 1999/09/16 20:41:44 assar Exp $
+# $KTH: Makefile.in,v 1.30.2.1 2000/10/10 14:34:33 assar Exp $
 #
 
 SHELL = /bin/sh
@@ -35,7 +35,8 @@ PICFLAGS = @PICFLAGS@
  
 LIB_DEPS = @lib_deps_yes@ -lc
 build_symlink_command   = @build_symlink_command@
-install_symlink_command = @install_symlink_command@
+#install_symlink_command = @install_symlink_command@
+install_symlink_command = @true
 
 LIBNAME = $(LIBPREFIX)com_err
 #LIBEXT = @LIBEXT@ Always build archive library!

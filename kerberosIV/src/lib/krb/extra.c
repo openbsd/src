@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$KTH: extra.c,v 1.7 1999/12/02 16:58:41 joda Exp $");
+RCSID("$KTH: extra.c,v 1.7.2.1 2000/12/07 16:06:09 assar Exp $");
 
 struct value {
     char *variable;
@@ -70,30 +70,6 @@ define_variable(const char *variable, const char *value)
 
 #ifndef WIN32
 
-struct obsolete {
-    const char *from;
-    const char *to;
-} obsolete [] = {
-    { "KDC_TIMESYNC", "kdc_timesync" },
-    { "KRB_REVERSE_DIRECTION", "reverse_lsb_test"},
-    { "krb4_proxy", "krb4_proxy"},
-    { NULL, NULL }
-};
-    
-static void
-check_obsolete(void)
-{
-    struct obsolete *r;
-    for(r = obsolete; r->from; r++) {
-	if(getenv(r->from)) {
-	    krb_warning("The environment variable `%s' is obsolete;\n"
-			"set `%s' in your `krb.extra' file instead\n", 
-			r->from, r->to);
-	    define_variable(r->to, getenv(r->from));
-	}
-    }
-}
-
 static int
 read_extra_file(void)
 {
@@ -103,7 +79,6 @@ read_extra_file(void)
     if(_krb_extra_read)
 	return 0;
     _krb_extra_read = 1;
-    check_obsolete();
     while(krb_get_krbextra(i++, file, sizeof(file)) == 0) {
 	FILE *f = fopen(file, "r");
 	if(f == NULL)
