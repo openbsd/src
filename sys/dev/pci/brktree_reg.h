@@ -1,3 +1,6 @@
+/*	$OpenBSD: brktree_reg.h,v 1.4 1999/01/30 23:43:57 niklas Exp $	*/
+/*	$FreeBSD: brktree_reg.h,v 1.24 1999/01/23 11:28:16 roger Exp $	*/
+
 /*
  * Copyright (c) 1995 Mark Tinguely and Jim Lowe
  * All rights reserved.
@@ -328,7 +331,6 @@ struct TVTUNER {
 struct TUNER {
 	char*		name;
 	u_char		type;
-	u_char		pllAddr;
 	u_char		pllControl[4];
 	u_char		bandLimits[ 2 ];
 	u_char		bandAddrs[ 4 ];        /* 3 first for the 3 TV 
@@ -343,7 +345,8 @@ struct TUNER {
 struct CARDTYPE {
 	unsigned int		card_id;	/* card id (from #define's) */
 	char*			name;
-	const struct TUNER*	tuner;
+	const struct TUNER*	tuner;		/* Tuner details */
+	u_char			tuner_pllAddr;	/* Tuner i2c address */
 	u_char			dbx;		/* Has DBX chip? */
 	u_char			msp3400c;	/* Has msp3400c chip? */
 	u_char			eepromAddr;
@@ -367,6 +370,12 @@ struct format_params {
   int iform_xtsel;
 };
 
+#ifdef __FreeBSD__
+struct bktr_i2c_softc {
+	device_t iicbus;
+	device_t smbus;
+};
+#endif
 
 typedef struct bktr_clip bktr_clip_t;
 /*
@@ -378,6 +387,9 @@ struct bktr_softc {
     struct isadev bktr_id;	/* ISA device */
     struct intrhand bktr_ih;	/* interrupt vectoring */
 #define pcici_t pci_devaddr_t
+#endif
+#ifdef __FreeBSD__
+    struct bktr_i2c_softc i2c_sc;	/* bt848_i2c device */
 #endif
 #if defined(__NetBSD__)
     struct device bktr_dev;	/* base device */
@@ -403,8 +415,12 @@ struct bktr_softc {
 #endif 
     bt848_ptr_t base;		/* Bt848 register physical address */
     vm_offset_t phys_base;	/* Bt848 register physical address */
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#ifdef __FreeBSD__
     pcici_t	tag;		/* PCI tag, for doing PCI commands */
+#endif
+#ifdef __OpenBSD__
+    pci_chipset_tag_t	pc;	/* Opaque PCI chipset tag */
+    pcitag_t		tag;	/* PCI tag, for doing PCI commands */
 #endif
     vm_offset_t bigbuf;		/* buffer that holds the captured image */
     int		alloc_pages;	/* number of pages in bigbuf */
@@ -505,6 +521,11 @@ struct bktr_softc {
     int                 bt848_tuner;
     int                 bt848_card;
     u_long              id;
+#define BT848_USE_XTALS 0
+#define BT848_USE_PLL   1
+    int                 xtal_pll_mode;	/* Use XTAL or PLL mode for PAL/SECAM */    int                 remote_control;      /* remote control detected */
+    int                 remote_control_addr; /* remote control i2c address */
+
 };
 
 typedef struct bktr_softc bktr_reg_t;

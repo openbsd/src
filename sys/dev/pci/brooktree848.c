@@ -1,6 +1,6 @@
-/*	$OpenBSD: brooktree848.c,v 1.5 1998/11/20 16:55:59 deraadt Exp $	*/
-/* $FreeBSD: brooktree848.c,v 1.56 1998/10/01 09:35:48 sos Exp $ */
-/* BT848 Driver for Brooktree's Bt848 based cards.
+/*	$OpenBSD: brooktree848.c,v 1.6 1999/01/30 23:43:57 niklas Exp $	*/
+/* $FreeBSD: brooktree848.c,v 1.64 1999/01/28 17:47:47 roger Exp $ */
+/* BT848 Driver for Brooktree's Bt848, Bt849, Bt878 and Bt 879 based cards.
    The Brooktree  BT848 Driver driver is based upon Mark Tinguely and
    Jim Lowe's driver for the Matrox Meteor PCI card . The 
    Philips SAA 7116 and SAA 7196 are very different chipsets than
@@ -86,6 +86,8 @@
  */
 
 /*		Change History:
+Note: These version numbers represent the authors own numbering.
+They are unrelated to Revision Control numbering of FreeBSD or any other system.
 1.0		1/24/97	   First Alpha release
 
 1.1		2/20/97	   Added video ioctl so we can do PCI To PCI
@@ -317,6 +319,22 @@
                            Hauppauge Tech Support confirmed all Hauppauge 878
                            PAL/SECAM boards will use PLL mode.
 			   Added to card probe. Thanks to Ken and Fred.
+
+1.56          21 Jan 1998  Roger Hardiman <roger@cs.strath.ac.uk>
+                           Added detection of Hauppauge IR remote control.
+			   and MSP34xx Audio chip. Fixed i2c read error.
+                           Hauppauge supplied details of new Tuner Types.
+                           Danny Braniss <danny@cs.huji.ac.il> submitted Bt878
+                           AverMedia detection with PCI subsystem vendor id.
+
+1.57          26 Jan 1998  Roger Hardiman <roger@cs.strath.ac.uk>
+                           Support for MSP3410D / MSP3415D Stereo/Mono audio
+                           using the audio format Auto Detection Mode.
+                           Nicolas Souchu <nsouch@freebsd.org> ported the
+                           msp_read/write/reset functions to smbus/iicbus.
+                           METEOR_INPUT_DEV2 now selects a composite camera on
+                           the SVIDEO port for Johan Larsson<gozer@ludd.luth.se>
+                           For true SVIDEO, use METEOR_INPUT_DEV_SVIDEO
 */
 
 #if !defined(__NetBSD__) && !defined(__OpenBSD__)
@@ -360,7 +378,13 @@
 
 #include <machine/ioctl_meteor.h>
 #include <machine/ioctl_bt848.h>	/* extensions to ioctl_meteor.h */
+#include <sys/bus.h>
 #include <pci/brktree_reg.h>
+#include <pci/bt848_i2c.h>
+#include <dev/smbus/smbconf.h>
+#include <dev/iicbus/iiconf.h>
+#include "smbus_if.h"
+#include "iicbus_if.h"
 #include <sys/sysctl.h>
 static int bt848_card = -1;
 static int bt848_tuner = -1;
@@ -481,7 +505,7 @@ static bktr_reg_t brooktree[ NBKTR ];
 #define MINOR(x)	((x >> 4) & 0x0f)
 #define ATTACH_ARGS	pcici_t tag, int unit
 
-static char*	bktr_probe( pcici_t tag, pcidi_t type );
+static const char*	bktr_probe( pcici_t tag, pcidi_t type );
 static void	bktr_attach( ATTACH_ARGS );
 
 static u_long	bktr_count;
@@ -610,7 +634,7 @@ int bktr_close __P((dev_t, int, int, struct proc *));
 int bktr_read __P((dev_t, struct uio *, int));
 int bktr_write __P((dev_t, struct uio *, int));
 int bktr_ioctl __P((dev_t, ioctl_cmd_t, caddr_t, int, struct proc*));
-int bktr_mmap __P((dev_t, int, int));
+int bktr_mmap __P((dev_t, vm_offset_t, int));
 
 vm_offset_t vm_page_alloc_contig(vm_offset_t, vm_offset_t,
 				 vm_offset_t, vm_offset_t);
@@ -820,6 +844,12 @@ static struct {
 /* 20000 is equivalent to 20000MHz/16 = 1.25GHz - this area is unused.	*/
 #define RADIO_OFFSET		20000
 
+/* address(s) of the Hauppauge Infra-Red Remote Control adapter */
+#define HAUP_REMOTE_INT_WADDR   0x30
+#define HAUP_REMOTE_INT_RADDR   0x31
+ 
+#define HAUP_REMOTE_EXT_WADDR   0x34
+#define HAUP_REMOTE_EXT_RADDR   0x35
 
 /* address of BTSC/SAP decoder chip */
 #define TDA9850_WADDR		0xb6
@@ -836,6 +866,7 @@ static struct {
 
 
 /* EEProm (256 * 8) on a Hauppauge card */
+/* and on most BT878s cards to store the sub-system vendor id */
 #define PFC8582_WADDR		0xa0
 #define PFC8582_RADDR		0xa1
 
@@ -925,7 +956,6 @@ static const struct TUNER tuners[] = {
 	/* NO_TUNER */
 	{ "<none>",				/* the 'name' */
 	   TTYPE_XXX,				/* input type */
-  	   0x00,				/* PLL write address */
  	   { 0x00,				/* control byte for PLL */
  	     0x00,
  	     0x00,
@@ -936,7 +966,6 @@ static const struct TUNER tuners[] = {
 	/* TEMIC_NTSC */
 	{ "Temic NTSC",				/* the 'name' */
 	   TTYPE_NTSC,				/* input type */
-	   TEMIC_NTSC_WADDR,			/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -947,7 +976,6 @@ static const struct TUNER tuners[] = {
 	/* TEMIC_PAL */
 	{ "Temic PAL",				/* the 'name' */
 	   TTYPE_PAL,				/* input type */
-	   TEMIC_PALI_WADDR,			/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -958,7 +986,6 @@ static const struct TUNER tuners[] = {
 	/* TEMIC_SECAM */
 	{ "Temic SECAM",			/* the 'name' */
 	   TTYPE_SECAM,				/* input type */
-	   0x00,				/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -969,7 +996,6 @@ static const struct TUNER tuners[] = {
 	/* PHILIPS_NTSC */
 	{ "Philips NTSC",			/* the 'name' */
 	   TTYPE_NTSC,				/* input type */
-	   PHILIPS_NTSC_WADDR,			/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -980,7 +1006,6 @@ static const struct TUNER tuners[] = {
 	/* PHILIPS_PAL */
 	{ "Philips PAL",			/* the 'name' */
 	   TTYPE_PAL,				/* input type */
-  	   PHILIPS_PAL_WADDR,			/* PLL write address */
 	   { TSA552x_FCONTROL,			/* control byte for PLL */
 	     TSA552x_FCONTROL,
 	     TSA552x_FCONTROL,
@@ -991,7 +1016,6 @@ static const struct TUNER tuners[] = {
 	/* PHILIPS_SECAM */
 	{ "Philips SECAM",			/* the 'name' */
 	   TTYPE_SECAM,				/* input type */
-	   0x00,				/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -1002,7 +1026,6 @@ static const struct TUNER tuners[] = {
 	/* TEMIC_PAL I */
 	{ "Temic PAL I",			/* the 'name' */
 	   TTYPE_PAL,				/* input type */
-	   TEMIC_PALI_WADDR,			/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -1013,7 +1036,6 @@ static const struct TUNER tuners[] = {
 	/* PHILIPS_PAL */
 	{ "Philips PAL I",			/* the 'name' */
 	   TTYPE_PAL,				/* input type */
-  	   TEMIC_PALI_WADDR,			/* PLL write address */
 	   { TSA552x_SCONTROL,			/* control byte for PLL */
 	     TSA552x_SCONTROL,
 	     TSA552x_SCONTROL,
@@ -1024,7 +1046,6 @@ static const struct TUNER tuners[] = {
        /* PHILIPS_FR1236_NTSC */
        { "Philips FR1236 NTSC FM",             /* the 'name' */
           TTYPE_NTSC,                          /* input type */
-          PHILIPS_FR1236_NTSC_WADDR,           /* PLL write address */
 	  { TSA552x_SCONTROL,			/* control byte for PLL */
 	    TSA552x_SCONTROL,
 	    TSA552x_SCONTROL,
@@ -1035,7 +1056,6 @@ static const struct TUNER tuners[] = {
 	/* PHILIPS_FR1216_PAL */
 	{ "Philips FR1216 PAL" ,		/* the 'name' */
 	   TTYPE_PAL,				/* input type */
-  	   PHILIPS_FR1216_PAL_WADDR,		/* PLL write address */
 	   { TSA552x_FCONTROL,			/* control byte for PLL */
 	     TSA552x_FCONTROL,
 	     TSA552x_FCONTROL,
@@ -1046,7 +1066,6 @@ static const struct TUNER tuners[] = {
 	/* PHILIPS_FR1236_SECAM */
 	{ "Philips FR1236 SECAM FM",		/* the 'name' */
 	   TTYPE_SECAM,				/* input type */
-  	   PHILIPS_FR1236_SECAM_WADDR,		/* PLL write address */
 	   { TSA552x_FCONTROL,			/* control byte for PLL */
 	     TSA552x_FCONTROL,
 	     TSA552x_FCONTROL,
@@ -1090,6 +1109,7 @@ static const struct CARDTYPE cards[] = {
 	{  CARD_UNKNOWN,			/* the card id */
 	  "Unknown",				/* the 'name' */
 	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
 	   0,					/* dbx unknown */
 	   0,
 	   0,					/* EEProm unknown */
@@ -1099,6 +1119,7 @@ static const struct CARDTYPE cards[] = {
 	{  CARD_MIRO,				/* the card id */
 	  "Miro TV",				/* the 'name' */
 	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
 	   0,					/* dbx unknown */
 	   0,
 	   0,					/* EEProm unknown */
@@ -1108,6 +1129,7 @@ static const struct CARDTYPE cards[] = {
 	{  CARD_HAUPPAUGE,			/* the card id */
 	  "Hauppauge WinCast/TV",		/* the 'name' */
 	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
 	   0,					/* dbx is optional */
 	   0,
 	   PFC8582_WADDR,			/* EEProm type */
@@ -1117,6 +1139,7 @@ static const struct CARDTYPE cards[] = {
 	{  CARD_STB,				/* the card id */
 	  "STB TV/PCI",				/* the 'name' */
 	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
 	   0,					/* dbx is optional */
 	   0,
 	   X24C01_WADDR,			/* EEProm type */
@@ -1126,6 +1149,7 @@ static const struct CARDTYPE cards[] = {
 	{  CARD_INTEL,				/* the card id */
 	  "Intel Smart Video III/VideoLogic Captivator PCI", /* the 'name' */
 	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
 	   0,
 	   0,
 	   0,
@@ -1135,6 +1159,7 @@ static const struct CARDTYPE cards[] = {
 	{  CARD_IMS_TURBO,			/* the card id */
 	  "IMS TV Turbo",			/* the 'name' */
 	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
 	   0,					/* dbx is optional */
 	   0,
 	   PFC8582_WADDR,			/* EEProm type */
@@ -1144,6 +1169,7 @@ static const struct CARDTYPE cards[] = {
         {  CARD_AVER_MEDIA,			/* the card id */
           "AVer Media TV/FM",                   /* the 'name' */
            NULL,                                /* the tuner */
+	   0,					/* the tuner i2c address */
            0,                                   /* dbx is optional */
            0,
            0,                                   /* EEProm type */
@@ -1259,6 +1285,13 @@ static int	set_audio( bktr_ptr_t bktr, int mode );
 static void	temp_mute( bktr_ptr_t bktr, int flag );
 static int	set_BTSC( bktr_ptr_t bktr, int control );
 
+static void	msp_autodetect( bktr_ptr_t bktr );
+static void	msp_read_id( bktr_ptr_t bktr );
+static void	msp_reset( bktr_ptr_t bktr );
+static unsigned int	msp_read(bktr_ptr_t bktr, unsigned char dev,
+                        unsigned int addr);
+static void 	msp_write( bktr_ptr_t bktr, unsigned char dev,
+                unsigned int addr, unsigned int data);
 
 /*
  * ioctls common to both video & tuner.
@@ -1277,12 +1310,23 @@ static int	writeEEProm( bktr_ptr_t bktr, int offset, int count,
 static int	readEEProm( bktr_ptr_t bktr, int offset, int count,
 			    u_char* data );
 
+#ifndef __FreeBSD__
+/*
+ * i2c primatives for low level control of i2c bus. Added for MSP34xx control
+ */
+static void     i2c_start( bktr_ptr_t bktr);
+static void     i2c_stop( bktr_ptr_t bktr);
+static int      i2c_write_byte( bktr_ptr_t bktr, unsigned char data);
+static int      i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last );
+#endif
+
 
 #ifdef __FreeBSD__
+
 /*
  * the boot time probe routine.
  */
-static char*
+static const char*
 bktr_probe( pcici_t tag, pcidi_t type )
 {
 	switch (type) {
@@ -1298,10 +1342,8 @@ bktr_probe( pcici_t tag, pcidi_t type )
 
 	return ((char *)0);
 }
+
 #endif /* __FreeBSD__ */
-
-
-
 
 /*
  * the attach routine.
@@ -1335,6 +1377,9 @@ bktr_attach( ATTACH_ARGS )
 	fun = pci_conf_read(tag, 0x40);
 	pci_conf_write(tag, 0x40, fun | 1);
 
+	/* XXX call bt848_i2c dependent attach() routine */
+	if (bt848_i2c_attach(unit, bktr->base, &bktr->i2c_sc))
+		printf("bktr%d: i2c_attach: can't attach\n", unit);
 
 #ifdef BROOKTREE_IRQ		/* from the configuration file */
 	old_irq = pci_conf_read(tag, PCI_INTERRUPT_REG);
@@ -1371,6 +1416,9 @@ bktr_attach( ATTACH_ARGS )
 
 	bktr = (bktr_ptr_t)self;
 	unit = bktr->bktr_dev.dv_unit;
+
+	bktr->pc = pa->pa_pc;
+	bktr->tag = pa->pa_tag;
 
 	/*
 	 * map memory
@@ -1581,6 +1629,10 @@ bktr_attach( ATTACH_ARGS )
 	bktr->reverse_mute = -1;
 
 	probeCard( bktr, TRUE );
+
+	/* If there is an MSP Audio device, reset it and display the model */
+	if (bktr->card.msp3400c)msp_reset(bktr);
+	if (bktr->card.msp3400c)msp_read_id(bktr);
 
 #ifdef DEVFS
 	/* XXX This just throw away the token, which should probably be fixed when
@@ -2069,15 +2121,19 @@ tuner_open( bktr_ptr_t bktr )
         bktr->tuner.radio_mode = 0;
 
 	/* enable drivers on the GPIO port that control the MUXes */
-	bktr->base->gpio_out_en = GPIO_AUDIOMUX_BITS;
+	bktr->base->gpio_out_en |= GPIO_AUDIOMUX_BITS;
 
 	/* unmute the audio stream */
 	set_audio( bktr, AUDIO_UNMUTE );
 
-	/* enable stereo if appropriate */
+	/* enable stereo if appropriate on TDA audio chip */
 	if ( bktr->card.dbx )
 		set_BTSC( bktr, 0 );
 
+	/* reset the MSP34xx stereo audio chip */
+	if ( bktr->card.msp3400c )
+		msp_reset( bktr );
+	
 	return( 0 );
 }
 
@@ -2155,7 +2211,7 @@ tuner_close( bktr_ptr_t bktr )
 	set_audio( bktr, AUDIO_MUTE );
 
 	/* disable drivers on the GPIO port that control the MUXes */
-	bktr->base->gpio_out_en = 0;
+	bktr->base->gpio_out_en = bktr->base->gpio_out_en & ~GPIO_AUDIOMUX_BITS;
 
 	return( 0 );
 }
@@ -2292,10 +2348,6 @@ video_ioctl( bktr_ptr_t bktr, int unit, int cmd, caddr_t arg, struct proc* pr )
 	struct meteor_video	*video;
 	struct bktr_capture_area *cap_area;
 	vm_offset_t		buf;
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-	struct format_params	*fp;
-	int			tmp_int;
-#endif
 	char			char_temp;
 	int                     i;
  
@@ -2924,6 +2976,11 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, int cmd, caddr_t arg, struct proc* pr )
 		if ( temp < 0 )
 			return( EINVAL );
 		*(unsigned long *)arg = temp;
+
+		/* after every channel change, we must restart the MSP34xx */
+		/* audio chip to reselect NICAM STEREO or MONO audio */
+		if ( bktr->card.msp3400c )
+		  msp_autodetect( bktr );
 		break;
 
 	case TVTUNER_GETCHNL:
@@ -2953,6 +3010,11 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, int cmd, caddr_t arg, struct proc* pr )
 		if ( temp < 0 )
 			return( EINVAL );
 		*(unsigned long *)arg = temp;
+
+		/* after every channel change, we must restart the MSP34xx */
+		/* audio chip to reselect NICAM STEREO or MONO audio */
+		if ( bktr->card.msp3400c )
+		  msp_autodetect( bktr );
 		break;
 
 	case TVTUNER_GETFREQ:
@@ -3288,11 +3350,21 @@ common_ioctl( bktr_ptr_t bktr, bt848_ptr_t bt848, int cmd, caddr_t arg )
 			set_audio( bktr, AUDIO_TUNER );
 			break;
 
-		/* this is the S-VHS input */
+		/* this is the S-VHS input, but with a composite camera */
 		case METEOR_INPUT_DEV2:
-		case METEOR_INPUT_DEV_SVIDEO:
 			bktr->flags = (bktr->flags & ~METEOR_DEV_MASK)
 				| METEOR_DEV2;
+			bt848->iform &= ~BT848_IFORM_MUXSEL;
+			bt848->iform |= BT848_IFORM_M_MUX2;
+			bt848->e_control &= ~BT848_E_CONTROL_COMP;
+			bt848->o_control &= ~BT848_O_CONTROL_COMP;
+			set_audio( bktr, AUDIO_EXTERN );
+			break;
+
+		/* this is the S-VHS input */
+		case METEOR_INPUT_DEV_SVIDEO:
+			bktr->flags = (bktr->flags & ~METEOR_DEV_MASK)
+				| METEOR_DEV_SVIDEO;
 			bt848->iform &= ~BT848_IFORM_MUXSEL;
 			bt848->iform |= BT848_IFORM_M_MUX2;
 			bt848->e_control |= BT848_E_CONTROL_COMP;
@@ -3308,7 +3380,15 @@ common_ioctl( bktr_ptr_t bktr, bt848_ptr_t bt848, int cmd, caddr_t arg )
 			bktr->flags = (bktr->flags & ~METEOR_DEV_MASK)
 				| METEOR_DEV3;
 			bt848->iform &= ~BT848_IFORM_MUXSEL;
-			bt848->iform |= BT848_IFORM_M_MUX3;
+
+			/* work around for new Hauppauge 878 cards */
+			if ((bktr->card.card_id == CARD_HAUPPAUGE) &&
+				(bktr->id==BROOKTREE_878_ID ||
+				 bktr->id==BROOKTREE_879_ID) )
+				bt848->iform |= BT848_IFORM_M_MUX1;
+			else
+				bt848->iform |= BT848_IFORM_M_MUX3;
+
 			bt848->e_control &= ~BT848_E_CONTROL_COMP;
 			bt848->o_control &= ~BT848_O_CONTROL_COMP;
 			set_audio( bktr, AUDIO_EXTERN );
@@ -3375,7 +3455,7 @@ common_ioctl( bktr_ptr_t bktr, bt848_ptr_t bt848, int cmd, caddr_t arg )
  * 
  */
 int
-bktr_mmap( dev_t dev, int offset, int nprot )
+bktr_mmap( dev_t dev, vm_offset_t offset, int nprot )
 {
 	int		unit;
 	bktr_ptr_t	bktr;
@@ -3549,7 +3629,7 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
   /*     must be Blue.                                                      */
   start_skip = 0;
   if (( pf->type == METEOR_PIXTYPE_RGB ) && ( pf->Bpp == 3 ))
-	  switch ( ((uintptr_t) (void *) *target_buffer) % 4 ) {
+	  switch ( ((uintptr_t) (volatile void *) *target_buffer) % 4 ) {
 	  case 2 : start_skip = 4 ; break;
 	  case 1 : start_skip = 8 ; break;
 	  }
@@ -3572,7 +3652,7 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
 
      *(*dma_prog)++ = operation | flag  | (width * pixel_width - skip);
      if (operation != OP_SKIP ) 
-	 *(*dma_prog)++ = (uintptr_t) (void *) *target_buffer;
+	 *(*dma_prog)++ = (uintptr_t) (volatile void *) *target_buffer;
 
      *target_buffer += width * pixel_width;
      bktr->current_col += width;
@@ -3603,7 +3683,7 @@ static bool_t split(bktr_reg_t * bktr, volatile u_long **dma_prog, int width ,
 	*(*dma_prog)++ = operation  | flag |
 	      (width * pixel_width / 2 - skip);
 	if (operation != OP_SKIP ) 
-	      *(*dma_prog)++ = (uintptr_t) (void *) *target_buffer ;
+	      *(*dma_prog)++ = (uintptr_t) (volatile void *) *target_buffer ;
 	*target_buffer +=  (width * pixel_width / 2) ;
 
 	if ( operation == OP_WRITE )
@@ -4627,9 +4707,139 @@ static int oformat_meteor_to_bt( u_long format )
 				 BT848_DATA_CTL_I2CSCL |	\
 				 BT848_DATA_CTL_I2CSDA)
 
+/* Select between old i2c code and new iicbus / smbus code */
+#if defined(__FreeBSD__)
 
 /*
- * 
+ * The hardware interface is actually SMB commands
+ */
+static int
+i2cWrite( bktr_ptr_t bktr, int addr, int byte1, int byte2 )
+{
+	char cmd;
+
+	if (bktr->id == BROOKTREE_848_ID ||
+	    bktr->id == BROOKTREE_849_ID)
+		cmd = I2C_COMMAND;
+	else
+		cmd = I2C_COMMAND_878;
+
+	if (byte2 != -1) {
+		if (smbus_writew(bktr->i2c_sc.smbus, addr, cmd,
+			(short)(((byte2 & 0xff) << 8) | (byte1 & 0xff))))
+			return (-1);
+	} else {
+		if (smbus_writeb(bktr->i2c_sc.smbus, addr, cmd,
+			(char)(byte1 & 0xff)))
+			return (-1);
+	}
+
+	/* return OK */
+	return( 0 );
+}
+
+static int
+i2cRead( bktr_ptr_t bktr, int addr )
+{
+	char result;
+	char cmd;
+
+	if (bktr->id == BROOKTREE_848_ID ||
+	    bktr->id == BROOKTREE_849_ID)
+		cmd = I2C_COMMAND;
+	else
+		cmd = I2C_COMMAND_878;
+
+	if (smbus_readb(bktr->i2c_sc.smbus, addr, cmd, &result))
+		return (-1);
+
+	return ((int)((unsigned char)result));
+}
+
+#define IICBUS(bktr) ((bktr)->i2c_sc.iicbus)
+
+/* The MSP34xx Audio chip require i2c bus writes of up to 5 bytes which the */
+/* bt848 automated i2c bus controller cannot handle */
+/* Therefore we need low level control of the i2c bus hardware */
+
+/* Write to the MSP registers */
+static void
+msp_write(bktr_ptr_t bktr, unsigned char dev, unsigned int addr, unsigned int data)
+{
+	unsigned char addr_l, addr_h, data_h, data_l ;
+
+	addr_h = (addr >>8) & 0xff;
+	addr_l = addr & 0xff;
+	data_h = (data >>8) & 0xff;
+	data_l = data & 0xff;
+
+	iicbus_start(IICBUS(bktr), MSP3400C_WADDR, 0 /* no timeout? */);
+
+	iicbus_write_byte(IICBUS(bktr), dev, 0);
+	iicbus_write_byte(IICBUS(bktr), addr_h, 0);
+	iicbus_write_byte(IICBUS(bktr), addr_l, 0);
+	iicbus_write_byte(IICBUS(bktr), data_h, 0);
+	iicbus_write_byte(IICBUS(bktr), data_l, 0);
+
+	iicbus_stop(IICBUS(bktr));
+
+	return;
+}
+
+/* Write to the MSP registers */
+static unsigned int
+msp_read(bktr_ptr_t bktr, unsigned char dev, unsigned int addr)
+{
+	unsigned int data;
+	unsigned char addr_l, addr_h, dev_r;
+	int read;
+	u_char data_read[2];
+
+	addr_h = (addr >>8) & 0xff;
+	addr_l = addr & 0xff;
+	dev_r = dev+1;
+
+	/* XXX errors ignored */
+	iicbus_start(IICBUS(bktr), MSP3400C_WADDR, 0 /* no timeout? */);
+
+	iicbus_write_byte(IICBUS(bktr), dev_r, 0);
+	iicbus_write_byte(IICBUS(bktr), addr_h, 0);
+	iicbus_write_byte(IICBUS(bktr), addr_l, 0);
+
+	iicbus_repeated_start(IICBUS(bktr), MSP3400C_RADDR, 0 /* no timeout? */);
+	iicbus_read(IICBUS(bktr), data_read, 2, &read, IIC_LAST_READ, 0);
+	iicbus_stop(IICBUS(bktr));
+
+	data = (data_read[0]<<8) | data_read[1];
+
+	return (data);
+}
+
+/* Reset the MSP chip */
+static void
+msp_reset( bktr_ptr_t bktr )
+{
+	/* put into reset mode */
+	iicbus_start(IICBUS(bktr), MSP3400C_WADDR, 0 /* no timeout? */);
+	iicbus_write_byte(IICBUS(bktr), 0x00, 0);
+	iicbus_write_byte(IICBUS(bktr), 0x80, 0);
+	iicbus_write_byte(IICBUS(bktr), 0x00, 0);
+	iicbus_stop(IICBUS(bktr));
+
+	/* put back to operational mode */
+	iicbus_start(IICBUS(bktr), MSP3400C_WADDR, 0 /* no timeout? */);
+	iicbus_write_byte(IICBUS(bktr), 0x00, 0);
+	iicbus_write_byte(IICBUS(bktr), 0x00, 0);
+	iicbus_write_byte(IICBUS(bktr), 0x00, 0);
+	iicbus_stop(IICBUS(bktr));
+
+	return;
+}
+
+#else /* defined(__FreeBSD__) */
+
+/*
+ * Program the i2c bus directly
  */
 static int
 i2cWrite( bktr_ptr_t bktr, int addr, int byte1, int byte2 )
@@ -4710,6 +4920,173 @@ i2cRead( bktr_ptr_t bktr, int addr )
 	/* it was a read */
 	return( (bt848->i2c_data_ctl >> 8) & 0xff );
 }
+
+/* The MSP34xx Audio chip require i2c bus writes of up to 5 bytes which the */
+/* bt848 automated i2c bus controller cannot handle */
+/* Therefore we need low level control of the i2c bus hardware */
+/* Idea for the following functions are from elsewhere in this driver and */
+/* from the Linux BTTV i2c driver by Gerd Knorr <kraxel@cs.tu-berlin.de> */
+
+#define BITD    40
+static void i2c_start( bktr_ptr_t bktr) {
+        bt848_ptr_t     bt848;
+        bt848 = bktr->base;
+
+        bt848->i2c_data_ctl = 1; DELAY( BITD ); /* release data */
+        bt848->i2c_data_ctl = 3; DELAY( BITD ); /* release clock */
+        bt848->i2c_data_ctl = 2; DELAY( BITD ); /* lower data */
+        bt848->i2c_data_ctl = 0; DELAY( BITD ); /* lower clock */
+}
+
+static void i2c_stop( bktr_ptr_t bktr) {
+        bt848_ptr_t     bt848;
+        bt848 = bktr->base;
+
+        bt848->i2c_data_ctl = 0; DELAY( BITD ); /* lower clock & data */
+        bt848->i2c_data_ctl = 2; DELAY( BITD ); /* release clock */
+        bt848->i2c_data_ctl = 3; DELAY( BITD ); /* release data */
+}
+
+static int i2c_write_byte( bktr_ptr_t bktr, unsigned char data) {
+        int x;
+        int status;
+        bt848_ptr_t     bt848;
+        bt848 = bktr->base;
+
+        /* write out the byte */
+        for ( x = 7; x >= 0; --x ) {
+                if ( data & (1<<x) ) {
+                        bt848->i2c_data_ctl = 1;
+                        DELAY( BITD );          /* assert HI data */
+                        bt848->i2c_data_ctl = 3;
+                        DELAY( BITD );          /* strobe clock */
+                        bt848->i2c_data_ctl = 1;
+                        DELAY( BITD );          /* release clock */
+                }
+                else {
+                        bt848->i2c_data_ctl = 0;
+                        DELAY( BITD );          /* assert LO data */
+                        bt848->i2c_data_ctl = 2;
+                        DELAY( BITD );          /* strobe clock */
+                        bt848->i2c_data_ctl = 0;
+                        DELAY( BITD );          /* release clock */
+                }
+        }
+
+        /* look for an ACK */
+        bt848->i2c_data_ctl = 1; DELAY( BITD ); /* float data */
+        bt848->i2c_data_ctl = 3; DELAY( BITD ); /* strobe clock */
+        status = bt848->i2c_data_ctl & 1;       /* read the ACK bit */
+        bt848->i2c_data_ctl = 1; DELAY( BITD ); /* release clock */
+
+        return( status );
+}
+
+static int i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last ) {
+        int x;
+        int bit;
+        int byte = 0;
+        bt848_ptr_t     bt848;
+        bt848 = bktr->base;
+
+        /* read in the byte */
+        bt848->i2c_data_ctl = 1;
+        DELAY( BITD );                          /* float data */
+        for ( x = 7; x >= 0; --x ) {
+                bt848->i2c_data_ctl = 3;
+                DELAY( BITD );                  /* strobe clock */
+                bit = bt848->i2c_data_ctl & 1;  /* read the data bit */
+                if ( bit ) byte |= (1<<x);
+                bt848->i2c_data_ctl = 1;
+                DELAY( BITD );                  /* release clock */
+        }
+        /* After reading the byte, send an ACK */
+        /* (unless that was the last byte, for which we send a NAK */
+        if (last) { /* send NAK - same a writing a 1 */
+                bt848->i2c_data_ctl = 1;
+                DELAY( BITD );                  /* set data bit */
+                bt848->i2c_data_ctl = 3;
+                DELAY( BITD );                  /* strobe clock */
+                bt848->i2c_data_ctl = 1;
+                DELAY( BITD );                  /* release clock */
+        } else { /* send ACK - same as writing a 0 */
+                bt848->i2c_data_ctl = 0;
+                DELAY( BITD );                  /* set data bit */
+                bt848->i2c_data_ctl = 2;
+                DELAY( BITD );                  /* strobe clock */
+                bt848->i2c_data_ctl = 0;
+                DELAY( BITD );                  /* release clock */
+        }
+
+        *data=byte;
+	return 0;
+}
+#undef BITD
+
+/* Write to the MSP registers */
+static void msp_write( bktr_ptr_t bktr, unsigned char dev, unsigned int addr, unsigned int data){
+	unsigned int msp_w_addr = MSP3400C_WADDR;
+	unsigned char addr_l, addr_h, data_h, data_l ;
+	addr_h = (addr >>8) & 0xff;
+	addr_l = addr & 0xff;
+	data_h = (data >>8) & 0xff;
+	data_l = data & 0xff;
+
+	i2c_start(bktr);
+	i2c_write_byte(bktr, msp_w_addr);
+	i2c_write_byte(bktr, dev);
+	i2c_write_byte(bktr, addr_h);
+	i2c_write_byte(bktr, addr_l);
+	i2c_write_byte(bktr, data_h);
+	i2c_write_byte(bktr, data_l);
+	i2c_stop(bktr);
+}
+
+/* Write to the MSP registers */
+static unsigned int msp_read(bktr_ptr_t bktr, unsigned char dev, unsigned int addr){
+	unsigned int data;
+	unsigned char addr_l, addr_h, data_1, data_2, dev_r ;
+	addr_h = (addr >>8) & 0xff;
+	addr_l = addr & 0xff;
+	dev_r = dev+1;
+
+	i2c_start(bktr);
+	i2c_write_byte(bktr,MSP3400C_WADDR);
+	i2c_write_byte(bktr,dev_r);
+	i2c_write_byte(bktr,addr_h);
+	i2c_write_byte(bktr,addr_l);
+
+	i2c_start(bktr);
+	i2c_write_byte(bktr,MSP3400C_RADDR);
+	i2c_read_byte(bktr,&data_1, 0);
+	i2c_read_byte(bktr,&data_2, 1);
+	i2c_stop(bktr);
+	data = (data_1<<8) | data_2;
+	return data;
+}
+
+/* Reset the MSP chip */
+static void msp_reset( bktr_ptr_t bktr ) {
+
+	/* put into reset mode */
+	i2c_start(bktr);
+	i2c_write_byte(bktr, MSP3400C_WADDR);
+	i2c_write_byte(bktr, 0x00);
+	i2c_write_byte(bktr, 0x80);
+	i2c_write_byte(bktr, 0x00);
+	i2c_stop(bktr);
+
+	/* put back to operational mode */
+	i2c_start(bktr);
+	i2c_write_byte(bktr, MSP3400C_WADDR);
+	i2c_write_byte(bktr, 0x00);
+	i2c_write_byte(bktr, 0x00);
+	i2c_write_byte(bktr, 0x00);
+	i2c_stop(bktr);
+
+}
+
+#endif /* !define(__FreeBSD__) */
 
 #if defined( I2C_SOFTWARE_PROBE )
 
@@ -4827,6 +5204,8 @@ readEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data )
 	return( 0 );
 }
 
+#define ABSENT		(-1)
+
 /*
  * get a signature of the card
  * read all 128 possible i2c read addresses from 0x01 thru 0xff
@@ -4834,7 +5213,6 @@ readEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data )
  *
  * XXX FIXME: use offset & count args
  */
-#define ABSENT		(-1)
 static int
 signCard( bktr_ptr_t bktr, int offset, int count, u_char* sig )
 {
@@ -4877,34 +5255,74 @@ static int check_for_i2c_devices( bktr_ptr_t bktr ){
   if ((i2c_all_0) || (i2c_all_absent)) return 0;
   else return 1;
 }
-#undef ABSENT
 
 /*
  * determine the card brand/model
  * OVERRIDE_CARD, OVERRIDE_TUNER, OVERRIDE_DBX and OVERRIDE_MSP
  * can be used to select a specific device, regardless of the
  * autodetection and i2c device checks.
+ *
+ * The scheme used for probing cards has one major drawback:
+ *  on bt848/849 based cards, it is impossible to work out which type
+ *  of tuner is actually fitted, or if there is extra hardware on board
+ *  connected to GPIO pins (eg radio chips or MSP34xx reset logic)
+ *  The driver cannot tell if the Tuner is PAL,NTSC, Temic or Philips.
+ *
+ *  All Hauppauge cards have a configuration eeprom which tells us the
+ *  tuner type and other features of the their cards.
+ *  Also, Bt878 based cards (certainly Hauppauge and AverMedia) should support 
+ *  sub-system vendor id, identifying the make and model of the card.
+ *
+ * The current probe code works as follows
+ * 1) Check if it is a BT878. If so, read the sub-system vendor id.
+ *    Select the required tuner and other onboard features.
+ * 2) If it is a BT848, 848A or 849, continue on:
+ *   3) Some cards have no I2C devices. Check if the i2c bus is empty
+ *      and if so, our detection job is nearly over.
+ *   4) Check I2C address 0xa0. If present this will be a Hauppauge card.
+ *      Use the Hauppauge EEPROM to determine on board tuner type and other
+ *       features. 
+ *   4) Check I2C address 0xa8. If present this is a STB card.
+ *      Still have to guess on the tuner type.
+ *   5) Otherwise we are in the dark. Miro cards have the tuner type
+ *      hard-coded on the GPIO pins, but we do not actually know if we have 
+ *      a Miro card.
+ *      Some older makes of card put Philips tuners and Temic tuners at
+ *      different I2C addresses, so an i2c bus probe can help, but it is
+ *      really just a guess.
+ *              
+ * 6) After determining the Tuner Type, we probe the i2c bus for other
+ *    devices at known locations, eg IR-Remote Control, MSP34xx and TDA
+ *    stereo chips.
  */
-#define ABSENT		(-1)
+
+#define VENDOR_AVER_MEDIA 0x1431
+#define VENDOR_HAUPPAUGE  0x0070
+
+
 static void
 probeCard( bktr_ptr_t bktr, int verbose )
 {
-	int	card, i,j, card_found;
-	int	status;
+	int		card, i,j, card_found;
+	int		status;
 	bt848_ptr_t	bt848;
-	u_char probe_signature[128], *probe_temp;
-        int   any_i2c_devices;
-	u_char probe_eeprom[128];
-	u_long tuner_code = 0;
-
+	u_char 		probe_signature[128], *probe_temp;
+        int   		any_i2c_devices;
+	u_char 		probe_eeprom[128];
+	u_char 		tuner_code = 0;
+	int 		tuner_i2c_address = -1;
+        u_int  subsystem_vendor_id; /* vendors own PCI-SIG registered ID */
+        u_int  subsystem_id;        /* the boards revision/version number */
 
         any_i2c_devices = check_for_i2c_devices( bktr );
 	bt848 = bktr->base;
 
+	/* Select all GPIO bits as inputs */
 	bt848->gpio_out_en = 0;
 	if (bootverbose)
 	    printf("bktr: GPIO is 0x%08x\n", bt848->gpio_data);
 
+	/* Check for a user specified override on the card selection */
 #if defined( OVERRIDE_CARD )
 	bktr->card = cards[ (card = OVERRIDE_CARD) ];
 	goto checkTuner;
@@ -4915,7 +5333,50 @@ probeCard( bktr_ptr_t bktr, int verbose )
 	}
 
 
-   /* Check for i2c devices */
+	/* No override, so try and determine the make of the card */
+
+        /* On BT878/879 cards, read the sub-system vendor id */
+        if (bktr->id==BROOKTREE_878_ID || bktr->id==BROOKTREE_879_ID) {
+
+#ifdef __FreeBSD__
+            subsystem_vendor_id =
+                pci_conf_read( bktr->tag, PCIR_SUBVEND_0) & 0xffff;
+            subsystem_id        =
+               (pci_conf_read( bktr->tag, PCIR_SUBVEND_0) >> 16) & 0xffff;
+#endif
+#ifdef __OpenBSD__
+            subsystem_vendor_id =
+                pci_conf_read( bktr->pc, bktr->tag, PCI_SUBVEND_0) & 0xffff;
+            subsystem_id        =
+               (pci_conf_read( bktr->pc, bktr->tag, PCI_SUBVEND_0) >> 16) &
+	       0xffff;
+#endif
+
+	    if ( bootverbose ) 
+	        printf("subsytem %x %x\n",subsystem_vendor_id,subsystem_id);
+
+            if (subsystem_vendor_id == VENDOR_AVER_MEDIA) {
+                bktr->card = cards[ (card = CARD_AVER_MEDIA) ];
+		bktr->card.eepromAddr = 0xa0;
+		bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+                goto checkTuner;
+            }
+
+            if (subsystem_vendor_id == VENDOR_HAUPPAUGE) {
+                bktr->card = cards[ (card = CARD_HAUPPAUGE) ];
+                goto checkTuner;
+            }
+
+           /* Vendor is unknown. We will use the standard probe code which */
+           /* may not give best results */
+           printf("Warning - card vendor %4x unknown. This can cause poor performance\n",subsystem_vendor_id);
+        } /* end of subsystem vendor id code */
+
+	/* So, we must have a Bt848/848a/849 card or a Bt878 with an unknown */
+        /* subsystem vendor id */
+        /* Try and determine the make of card by clever i2c probing */
+
+   	/* Check for i2c devices. If none, move on */
 	if (!any_i2c_devices) {
 		bktr->card = cards[ (card = CARD_INTEL) ];
 		goto checkTuner;
@@ -4928,16 +5389,22 @@ probeCard( bktr_ptr_t bktr, int verbose )
 		goto checkDBX;
 	}
 
-	/* look for a hauppauge card */
-	if ( (status = i2cRead( bktr, PFC8582_RADDR )) != ABSENT ) {
-		bktr->card = cards[ (card = CARD_HAUPPAUGE) ];
-		goto checkTuner;
-	}
+        /* Look for Hauppauge and STB cards by the presence of an EEPROM */
+        /* Note: Bt878 based cards also use EEPROMs so we can only do this */
+        /* test on BT848/848a and 849 based cards. */
+	if (bktr->id==BROOKTREE_848_ID || bktr->id==BROOKTREE_849_ID) {
+            /* look for a hauppauge card */
+            if ( (status = i2cRead( bktr, PFC8582_RADDR )) != ABSENT ) {
+                    bktr->card = cards[ (card = CARD_HAUPPAUGE) ];
+                    goto checkTuner;
+            }
 
-	/* look for an STB card */
-	if ( (status = i2cRead( bktr, X24C01_RADDR )) != ABSENT ) {
-		bktr->card = cards[ (card = CARD_STB) ];
-		goto checkTuner;
+            /* look for an STB card */
+            if ( (status = i2cRead( bktr, X24C01_RADDR )) != ABSENT ) {
+                    bktr->card = cards[ (card = CARD_STB) ];
+                    goto checkTuner;
+            }
+
 	}
 
 	signCard( bktr, 1, 128, (u_char *)  &probe_signature );
@@ -4982,7 +5449,7 @@ checkTuner:
 	  goto checkDBX;
 	}
 
-   /* Check for i2c devices */
+	/* Check for i2c devices */
 	if (!any_i2c_devices) {
 		bktr->card.tuner = &tuners[ NO_TUNER ];
 		goto checkDBX;
@@ -5006,32 +5473,46 @@ checkTuner:
 	    break;
 
 	case CARD_HAUPPAUGE:
-	    /* The Hauppauge Windows driver gives the following Tuner Table */
-	    /* To the right of this is the tuner models we select */
+	    /* Hauppauge kindly supplied the following Tuner Table */
+	    /* FIXME: I think the tuners the driver selects for types */
+	    /* 0x08, 0xa and 0x15 are incorrect but no one has complained. */
 	    /*
-	    1 External
-	    2 Unspecified
-	    3 Phillips FI1216
-	    4 Phillips FI1216MF
-	    5 Phillips FI1236           PHILIPS_NTSC
-	    6 Phillips FI1246
-	    7 Phillips FI1256
-	    8 Phillips FI1216 MK2       PHILIPS_PALI
-	    9 Phillips FI1216MF MK2
-	    a Phillips FI1236 MK2       PHILIPS_FR1236_NTSC
-	    b Phillips FI1246 MK2       PHILIPS_PALI
-	    c Phillips FI1256 MK2
-	    d Temic 4032FY5
-	    e Temic 4002FH5              TEMIC_PAL
-	    f Temic 4062FY5              TEMIC_PALI
-	    10 Phillips FR1216 MK2
-	    11 Phillips FR1216MF MK2
-	    12 Phillips FR1236 MK2       PHILIPS_FR1236_NTSC
-	    13 Phillips FR1246 MK2
-	    14 Phillips FR1256 MK2
-	    15 Phillips FM1216           PHILIPS_FR1216_PAL
-	    16 Phillips FM1216MF
-	    17 Phillips FM1236           PHILIPS_FR1236_NTSC
+   	    	ID Tuner Model          Format         	We select Format
+	   	 0 NONE               
+		 1 EXTERNAL             
+		 2 OTHER                
+		 3 Philips FI1216       BG 
+		 4 Philips FI1216MF     BGLL' 
+		 5 Philips FI1236       MN 		PHILIPS_NTSC
+		 6 Philips FI1246       I 
+		 7 Philips FI1256       DK 
+		 8 Philips FI1216 MK2   BG 		PHILIPS_PALI
+		 9 Philips FI1216MF MK2 BGLL' 
+		 a Philips FI1236 MK2   MN 		PHILIPS_FR1236_NTSC
+		 b Philips FI1246 MK2   I 		PHILIPS_PALI
+		 c Philips FI1256 MK2   DK 
+		 d Temic 4032FY5        NTSC		TEMIC_NTSC
+		 e Temic 4002FH5        BG		TEMIC_PAL
+		 f Temic 4062FY5        I 		TEMIC_PALI
+		10 Philips FR1216 MK2   BG 
+		11 Philips FR1216MF MK2 BGLL' 
+		12 Philips FR1236 MK2   MN 		PHILIPS_FR1236_NTSC
+		13 Philips FR1246 MK2   I 
+		14 Philips FR1256 MK2   DK 
+		15 Philips FM1216       BG 		PHILIPS_FR1216_PAL
+		16 Philips FM1216MF     BGLL' 
+		17 Philips FM1236       MN 		PHILIPS_FR1236_NTSC
+		18 Philips FM1246       I 
+		19 Philips FM1256       DK 
+		1a Temic 4036FY5        MN - FI1236 MK2 clone
+		1b Samsung TCPN9082D    MN 
+		1c Samsung TCPM9092P    Pal BG/I/DK 
+		1d Temic 4006FH5        BG 
+		1e Samsung TCPN9085D    MN/Radio 
+		1f Samsung TCPB9085P    Pal BG/I/DK / Radio 
+		20 Samsung TCPL9091P    Pal BG & Secam L/L' 
+		21 Temic 4039FY5        NTSC Radio
+
 	    */
 
 	    readEEProm(bktr, 0, 128, (u_char *) &probe_eeprom );
@@ -5040,6 +5521,7 @@ checkTuner:
 	    switch (tuner_code) {
 
 	       case 0x5:
+	       case 0x1a:
 		 bktr->card.tuner = &tuners[ PHILIPS_NTSC  ];
 		 goto checkDBX;
 
@@ -5065,8 +5547,10 @@ checkTuner:
                case 0x15:
 		 bktr->card.tuner = &tuners[ PHILIPS_FR1216_PAL];
 		 goto checkDBX;
+
+	       default :
+		 printf("Warning - Unknown Hauppauge Tuner 0x%x\n",tuner_code);
 	    }
-	    /* Unknown Tuner Byte */
 	    break;
 
 	} /* end switch(card) */
@@ -5120,19 +5604,80 @@ checkDBX:
 		bktr->card.dbx = 1;
 
 checkMSP:
+	/* If this is a Hauppauge Bt878 card, we need to enable the
+	 * MSP 34xx audio chip. 
+         * The chip's reset line is wired to GPIO pin 5 and a pulldown
+	 * resistor holds the device in reset until we set GPIO pin 5
+         */
+	if ((card == CARD_HAUPPAUGE) &&
+	    (bktr->id==BROOKTREE_878_ID || bktr->id==BROOKTREE_879_ID) ) {
+            bt848->gpio_out_en = bt848->gpio_out_en | (1<<5);
+            bt848->gpio_data   = bt848->gpio_data | (1<<5);  /* write '1' */
+            DELAY(10); /* wait 10us */
+            bt848->gpio_data   = bt848->gpio_data & ~(1<<5); /* write '0' */
+            DELAY(10); /* wait 10us */
+            bt848->gpio_data   = bt848->gpio_data | (1<<5);  /* write '1' */
+            DELAY(10); /* wait 10us */
+        }
+
 #if defined( OVERRIDE_MSP )
 	bktr->card.msp3400c = OVERRIDE_MSP;
-	goto checkEnd;
+	goto checkMSPEnd;
 #endif
-   /* Check for i2c devices */
+
+	/* Check for i2c devices */
 	if (!any_i2c_devices) {
-		goto checkEnd;
+		goto checkMSPEnd;
 	}
 
 	if ( i2cRead( bktr, MSP3400C_RADDR ) != ABSENT )
 		bktr->card.msp3400c = 1;
 
-checkEnd:
+checkMSPEnd:
+
+/* Start of Check Remote */
+        /* Check for the Hauppauge IR Remote Control */
+        /* If there is an external unit, the internal will be ignored */
+
+        bktr->remote_control = 0; /* initial value */
+
+        if (any_i2c_devices) {
+            if (i2cRead( bktr, HAUP_REMOTE_EXT_RADDR ) != ABSENT )
+                {
+                bktr->remote_control      = 1;
+                bktr->remote_control_addr = HAUP_REMOTE_EXT_RADDR;
+                }
+            else if (i2cRead( bktr, HAUP_REMOTE_INT_RADDR ) != ABSENT )
+                {
+                bktr->remote_control      = 1;
+                bktr->remote_control_addr = HAUP_REMOTE_INT_RADDR;
+                }
+
+        }
+        /* If a remote control is found, poll it 5 times to turn off the LED */
+        if (bktr->remote_control) {
+               int i;
+               for (i=0; i<5; i++)
+                        i2cRead( bktr, bktr->remote_control_addr );
+        }
+/* End of Check Remote */
+
+#if defined( BKTR_USE_PLL )
+	bktr->xtal_pll_mode = BT848_USE_PLL;
+	goto checkPLLEnd;
+#endif
+	/* Enable PLL mode for PAL/SECAM users on Hauppauge 878 cards */
+	bktr->xtal_pll_mode = BT848_USE_XTALS;
+
+	if ((card == CARD_HAUPPAUGE) &&
+	   (bktr->id==BROOKTREE_878_ID || bktr->id==BROOKTREE_879_ID) )
+		bktr->xtal_pll_mode = BT848_USE_PLL;
+#if defined( BKTR_USE_PLL )
+checkPLLEnd:
+#endif
+
+
+	bktr->card.tuner_pllAddr = tuner_i2c_address;
 
 	if ( verbose ) {
 		printf( "%s", bktr->card.name );
@@ -5142,6 +5687,8 @@ checkEnd:
 			printf( ", dbx stereo" );
 		if ( bktr->card.msp3400c )
 			printf( ", msp3400c stereo" );
+                if ( bktr->remote_control )
+                        printf( ", remote control" );
 		printf( ".\n" );
 	}
 }
@@ -5557,7 +6104,7 @@ tv_freq( bktr_ptr_t bktr, int frequency )
 	}
   
 	/* set the address of the PLL */
-	addr    = tuner->pllAddr;
+	addr    = bktr->card.tuner_pllAddr;
 	control = tuner->pllControl[ N ];
 	band    = tuner->bandAddrs[ N ];
 	if(!(band && control))			/* Don't try to set un-	*/
@@ -5825,6 +6372,32 @@ set_BTSC( bktr_ptr_t bktr, int control )
 	return( i2cWrite( bktr, TDA9850_WADDR, CON3ADDR, control ) );
 }
 
+/*
+ * setup the MSP34xx Stereo Audio Chip
+ * This uses the Auto Configuration Option on MSP3410D and MSP3415D
+ * chips. For MSP3400C support, the full programming sequence is required
+ * and so is not yet supported.
+ */
+
+/* Read the MSP version string */
+static void msp_read_id( bktr_ptr_t bktr ){
+    int rev1=0, rev2=0;
+    rev1 = msp_read(bktr, 0x12, 0x001e);
+    rev2 = msp_read(bktr, 0x12, 0x001f);
+
+    printf("Detected a MSP34%02d%c-%c%d \n",
+      (rev2>>8)&0xff, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@', rev2&0x1f);
+}
+
+
+/* Configure the MSP chip to Auto-detect the audio format */
+static void msp_autodetect( bktr_ptr_t bktr ) {
+    msp_write(bktr, 0x12, 0x0000,0x7300); /* Set volume to 0db gain */
+    msp_write(bktr, 0x10, 0x0020,0x0001); /* Enable Auto format detection */
+    msp_write(bktr, 0x10, 0x0021,0x0001); /* Auto selection of NICAM/MONO mode */
+    /* uncomment the following line to enable the MSP34xx 1Khz Tone Generator */
+    /* msp_write(bktr, 0x12, 0x0014, 0x7f40); */
+}
 
 /******************************************************************************
  * magic:
