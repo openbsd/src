@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.1 2001/06/25 20:48:16 provos Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.2 2001/06/25 21:07:44 art Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -15,7 +15,7 @@
  *
  * Copyright (C) 1995, 1996, 1997, 1998 by John Ioannidis, Angelos D. Keromytis
  * and Niels Provos.
- * Copyright (c) 2001, Angelos D. Keromytis.
+ * Copyright (c) 2001, Angelos D. Keromytis, Niels Provos.
  *
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
@@ -31,10 +31,6 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
- */
-
-/*
- * Encapsulation interface driver.
  */
 
 #include <sys/param.h>
@@ -62,14 +58,6 @@
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
-#ifdef ISO
-extern struct ifqueue clnlintrq;
-#endif
-
-#ifdef NS
-extern struct ifqueue nsintrq;
-#endif
-
 #include "bpfilter.h"
 #include "pflog.h"
 
@@ -87,12 +75,12 @@ extern struct ifqueue nsintrq;
 
 struct pflog_softc pflogif[NPFLOG];
 
-void	pflogattach __P((int));
-int	pflogoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    	       struct rtentry *));
-int	pflogioctl __P((struct ifnet *, u_long, caddr_t));
-void	pflogrtrequest __P((int, struct rtentry *, struct sockaddr *));
-void	pflogstart __P((struct ifnet *));
+void	pflogattach(int);
+int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+	    	       struct rtentry *);
+int	pflogioctl(struct ifnet *, u_long, caddr_t);
+void	pflogrtrequest(int, struct rtentry *, struct sockaddr *);
+void	pflogstart(struct ifnet *);
 
 extern int ifqmaxlen;
 
@@ -131,8 +119,7 @@ pflogattach(int npflog)
  * Start output on the pflog interface.
  */
 void
-pflogstart(ifp)
-    struct ifnet *ifp;
+pflogstart(struct ifnet *ifp)
 {
 	struct mbuf *m;
 	int s;
@@ -151,11 +138,8 @@ pflogstart(ifp)
 }
 
 int
-pflogoutput(ifp, m, dst, rt)
-    struct ifnet *ifp;
-    register struct mbuf *m;
-    struct sockaddr *dst;
-    register struct rtentry *rt;
+pflogoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+	struct rtentry *rt)
 {
 	m_freem(m);
 	return 0;
@@ -163,21 +147,15 @@ pflogoutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 void
-pflogrtrequest(cmd, rt, sa)
-int cmd;
-struct rtentry *rt;
-struct sockaddr *sa;
+pflogrtrequest(int cmd, struct rtentry *rt, struct sockaddr *sa)
 {
-    if (rt)
-	    rt->rt_rmx.rmx_mtu = PFLOGMTU;
+	if (rt)
+		rt->rt_rmx.rmx_mtu = PFLOGMTU;
 }
 
 /* ARGSUSED */
 int
-pflogioctl(ifp, cmd, data)
-    register struct ifnet *ifp;
-    u_long cmd;
-    caddr_t data;
+pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -189,7 +167,6 @@ pflogioctl(ifp, cmd, data)
 		else
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
-
 	default:
 		return EINVAL;
 	}
