@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.91 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.92 2004/05/03 04:44:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -459,7 +459,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 				if (imsg.hdr.len != IMSG_HEADER_SIZE +
 				    sizeof(struct bgpd_addr))
 					log_warnx("wrong imsg len");
-				else kr_nexthop_delete(imsg.data);
+				else
+					kr_nexthop_delete(imsg.data);
 			break;
 		case IMSG_CTL_RELOAD:
 			if (idx != PFD_PIPE_SESSION)
