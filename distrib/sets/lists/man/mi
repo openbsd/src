@@ -1048,6 +1048,7 @@
 ./usr/share/man/cat4/iopsp.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ip6.0
+./usr/share/man/cat4/ipcomp.0
 ./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
@@ -1593,6 +1594,7 @@
 ./usr/share/man/cat8/inetd.0
 ./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/intro.0
+./usr/share/man/cat8/iopctl.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipsecadm.0
 ./usr/share/man/cat8/isakmpd.0

@@ -357,13 +357,9 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/unpcb.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/user.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/utsname.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/vadvise.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/vcmd.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/vlimit.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/vmmeter.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/vnode.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/vnode_if.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/vsio.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/wait.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sysexits.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/syslog.ph
@@ -406,6 +402,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cryptodev.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/i2o
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/i2o/i2o.ph
@@ -517,6 +514,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/pfvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_ipcomp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6protosw.ph

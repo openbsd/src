@@ -7,6 +7,7 @@
 ./etc/wsconsctl.conf
 ./sbin/ancontrol
 ./sbin/fdisk
+./sbin/iopctl
 ./sbin/ldconfig
 ./sbin/wicontrol
 ./sbin/wsconsctl
@@ -499,6 +500,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/cryptosoft.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/podd.ph
@@ -1332,6 +1334,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_ether.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_gre.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_icmp.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_ipcomp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_ipip.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_ipsp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet/ip_mroute.ph
@@ -1722,13 +1725,9 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/utsname.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vadvise.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vcmd.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vlimit.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vnode_if.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vsio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/wait.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/syslog.ph

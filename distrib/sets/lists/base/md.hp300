@@ -480,6 +480,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/castsb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/cryptosoft.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/podd.ph
@@ -1414,6 +1415,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_ether.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_gre.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_icmp.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_ipcomp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_ipip.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_ipsp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_mroute.ph
@@ -1804,13 +1806,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/utsname.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vadvise.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vcmd.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vlimit.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vnode_if.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/sys/vsio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/wait.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sysexits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/syslog.ph

@@ -65,6 +65,7 @@
 ./usr/include/crypto/castsb.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
+./usr/include/crypto/deflate.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/podd.h
@@ -949,6 +950,7 @@
 ./usr/include/netinet/ip_ether.h
 ./usr/include/netinet/ip_gre.h
 ./usr/include/netinet/ip_icmp.h
+./usr/include/netinet/ip_ipcomp.h
 ./usr/include/netinet/ip_ipip.h
 ./usr/include/netinet/ip_ipsp.h
 ./usr/include/netinet/ip_mroute.h
@@ -1350,13 +1352,9 @@
 ./usr/include/sys/unpcb.h
 ./usr/include/sys/user.h
 ./usr/include/sys/utsname.h
-./usr/include/sys/vadvise.h
-./usr/include/sys/vcmd.h
-./usr/include/sys/vlimit.h
 ./usr/include/sys/vmmeter.h
 ./usr/include/sys/vnode.h
 ./usr/include/sys/vnode_if.h
-./usr/include/sys/vsio.h
 ./usr/include/sys/wait.h
 ./usr/include/sysexits.h
 ./usr/include/syslog.h
