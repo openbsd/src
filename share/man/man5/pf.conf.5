@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.88 2002/09/28 22:49:19 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.89 2002/09/30 23:41:46 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -692,7 +692,7 @@ Normalization is used to sanitize packet content in such
 a way that there are no ambiguities in packet interpretation on
 the receiving side.
 .Pp
-The normalizer does full IP fragment reassembly to prevent attacks
+The normalizer does IP fragment reassembly to prevent attacks
 that confuse intrusion detection systems by sending overlapping
 IP fragments.
 .Ss no-df
@@ -744,26 +744,53 @@ expands to
     block in inet from 10.0.0.1 to any 
 .Ed
 .Sh FRAGMENT HANDLING
-IP datagrams (packets) can have a size of up to 65535 bytes.
-Most network links, however, have a maximum transmission unit (MTU)
-that is significantly lower (1500 bytes is common).
-When an IP packet's size exceeds the MTU of the interface it has to
-be sent out through, the packet is fragmented.
-In general, a fragment only contains an IP header, which is sufficient
-for the receiver to reassemble the complete packet.
-The headers of subprotocols like TCP, UDP or ICMP are only data payload
-on IP level, and such headers are not part of all fragments of a packet.
-It's even possible that no fragment contains a complete subprotocol
-header, because that header is split among fragments.
+The size of IP datagrams (packets) can be significantly larger than the
+the maximum transmission unit (MTU) of the network.  In cases when it is
+necessary or more effecient to send such large packets, the large packet
+will be fragmented into many smaller packets that will each fit onto the
+wire.  Unfortunately for a firewalling device, only the first logical
+fragment will contain the necessary header information for the
+subprotocol that allows
+.Em pf
+to filter on things such as TCP ports or to perform NAT.
 .Pp
-There are two options for handling fragments in the packet filter:
+There are four options for handling fragments in the packet filter:
 .Pp
 Using scrub rules, fragments can be reassembled by normalization.
-In this case, fragments are cached until they form a complete
-packet, and only complete packets are passed on to the filter.
+In this case, fragments are buffered until they form a complete
+packet, and only the completed packet is passed on to the filter.
 The advantage is that filter rules have to deal only with complete
-packets, and can ignore fragments.
-The drawback of caching fragments is the additional memory cost.
+packets, and can ignore fragments.  The drawback of caching fragments
+is the additional memory cost.  But the full reassembly method is the
+only method that currently works with NAT.
+Full reassembly is triggered by the
+.Pa fragment reassemble
+modifier on a
+.Pa scrub
+rule.  This is the default behavior of a
+.Pa scrub
+rule if no fragmentation modifier is supplied.
+.Pp
+Scrub also has two additional methods to track fragments without the
+high memory cost of full reassembly.  The first is enabled via the
+.Pa fragment crop
+modifier.
+.Em pf
+will track the fragments and cache a small range descriptor.  Duplicate
+fragments are dropped and overlaps are cropped.  Thus data will only
+occur once on the wire with ambiguities resolving to the first occurance.
+Unlike the
+.Pa fragment reassemble
+modifier, fragments are not buffered, they are passed as soon as they
+are received.  This reassembly mechanism does not yet work with NAT.
+.Pp
+Scrub's other method is the
+.Pa fragment drop-ovl
+modifier.  It is almost identical to the
+.Pa fragment crop
+modifier except that all overlapping or duplicate fragments will be
+dropped and will cause the following corresponding fragments to be
+dropped as well.
 .Pp
 The alternative is to filter individual fragments with filter rules.
 If no scrub rule applies to a fragment, it is passed to the filter.
@@ -794,7 +821,9 @@ rules.
 .Pp
 In most cases, the benefits of reassembly outweigh the additional
 memory cost, and it's recommended to use scrub rules to reassemble
-all fragments.
+all fragments via the
+.Pa fragment reassemble
+modifier.
 .Pp
 The memory allocated for fragment caching can be limited using
 .Xr pfctl 8 .
@@ -814,7 +843,7 @@ are blocked unconditionally.
 ext_if = "kue0"
 
 # normalize all incoming traffic
-scrub in on $ext_if all
+scrub in on $ext_if all fragment reassemble
 
 # block and log everything by default
 block             out log on $ext_if           all
@@ -976,7 +1005,7 @@ pf_rule        = action ( "in" | "out" )
                  [ icmp-type | ipv6-icmp-type ]
                  [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ]
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
-                 [ "max-mss" number ] [ "allow-opts" ]
+                 [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ]
                  [ "label" string ] .
 
 nat_rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
@@ -1048,6 +1077,9 @@ icmp-list      = icmp-type-code [ [ "," ] icmp-list ] .
 
 state-opts     = state-opt [ [ "," ] state-opts ] .
 state-opt      = ( "max" seconds ) | ( timeout seconds ) .
+
+fragmentation  = [ "fragment reassemble" | "fragment crop" |
+                   "fragment drop-ovl" ] .
 
 timeout-list   = timeout [ [ "," ] timeout-list ] .
 timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
