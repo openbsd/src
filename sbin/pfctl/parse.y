@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.147 2002/09/12 10:05:08 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.148 2002/09/12 12:43:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -391,6 +391,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af {
 				r.af = $4;
 
 				j = calloc(1, sizeof(struct node_if));
+				if (j == NULL)
+					errx(1, "antispoof: calloc");
 				strlcpy(j->ifname, i->ifname, IFNAMSIZ);
 				j->not = 1;
 				h = ifa_lookup(j->ifname, PFCTL_IFLOOKUP_NET);
