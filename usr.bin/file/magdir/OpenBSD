@@ -216,10 +216,6 @@
 0	belong&0377777777	045600507	OpenBSD/sparc64 core
 >12	string			>\0		from '%s'
 
-# OpenBSD/m88k core files
-0	belong&0377777777	046200507	OpenBSD/m88k core
->12	string			>\0		from '%s'
-
 # OpenBSD/hppa core files
 0	belong&0377777777	046400507	OpenBSD/hppa core
 >12	string			>\0		from '%s'
