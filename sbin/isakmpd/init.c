@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.11 2000/01/26 15:21:08 niklas Exp $	*/
-/*	$EOM: init.c,v 1.19 1999/10/10 22:48:36 angelos Exp $	*/
+/*	$OpenBSD: init.c,v 1.12 2000/01/31 08:19:05 niklas Exp $	*/
+/*	$EOM: init.c,v 1.21 2000/01/31 05:28:50 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -80,16 +80,16 @@ init ()
   connection_init ();
   cookie_init ();
 
-  /* Depends on conf_init having run */
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+  /* policy_init depends on conf_init having run.  */
+  policy_init ();
+#endif
+
+  /* Depends on conf_init and policy_init having run */
   cert_init ();
 
   sa_init ();
   transport_init ();
   udp_init ();
   ui_init ();
-
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
-  /* policy_init depends on conf_init having run.  */
-  policy_init ();
-#endif
 }
