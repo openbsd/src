@@ -1,8 +1,8 @@
-/*	$OpenBSD: rndvar.h,v 1.12 2000/03/19 17:38:03 mickey Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.13 2000/04/10 19:44:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
- * 
+ *
  * This software derived from one contributed by Theodore Ts'o.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 #ifndef __RNDVAR_H__
 #define __RNDVAR_H__
 
-#define POOLWORDS 128    /* Power of 2 - note that this is 32-bit words */
+#define POOLWORDS 64	/* Power of 2 - note that this is 32-bit words */
 
 #define	RND_RND		0	/* real randomness like nuclear chips */
 #define	RND_SRND	1	/* strong random source */
@@ -46,42 +46,51 @@
 #define RND_ARND	4	/* aRC4 based random number generator */
 #define RND_NODEV	5	/* First invalid minor device number */
 
+#define	RND_SRC_TRUE	0
+#define	RND_SRC_TIMER	1
+#define	RND_SRC_MOUSE	2
+#define	RND_SRC_TTY	3
+#define	RND_SRC_DISK	4
+#define	RND_SRC_NET	5
+#define	RND_SRC_AUDIO	6
+#define	RND_SRC_NUM	8
+
 struct rndstats {
-	u_long rnd_total; /* total bits of entropy generated */
-	u_long rnd_used;  /* strong data bits read so far */
-	u_long arc4_reads;/* aRC4 data bytes read so far */
+	quad_t rnd_total;	/* total bits of entropy generated */
+	quad_t rnd_used;	/* strong data bits read so far */
+	quad_t rnd_reads;	/* strong read calls */
+	quad_t arc4_reads;	/* aRC4 data bytes read so far */
+	quad_t arc4_nstirs;	/* arc4 pool stirs */
+	quad_t arc4_stirs;	/* arc4 pool stirs (bits used) */
 
-	u_long rnd_timer; /* timer calls */
-	u_long rnd_mouse; /* mouse calls */
-	u_long rnd_tty;   /* tty calls */
-	u_long rnd_disk;  /* block devices calls */
-	u_long rnd_net;   /* net calls */
+	quad_t rnd_pad[5];
 
-	u_long rnd_reads; /* strong read calls */
-	u_long rnd_waits; /* sleep for data */
-	u_long rnd_enqs;  /* enqueue calls */
-	u_long rnd_deqs;  /* dequeue calls */
-	u_long rnd_drops; /* queue-full drops */
-	u_long rnd_drople;/* queue low watermark low entropy drops */
+	quad_t rnd_waits;	/* sleeps for data */
+	quad_t rnd_enqs;	/* enqueue calls */
+	quad_t rnd_deqs;	/* dequeue calls */
+	quad_t rnd_drops;	/* queue-full drops */
+	quad_t rnd_drople;	/* queue low watermark low entropy drops */
 
-	u_long rnd_asleep;/* sleeping for the data */
-	u_long rnd_queued;/* queued for processing */
-	u_long arc4_stirs;/* arc4 pool stirs */
-
-	u_long rnd_ed[32];/* entropy feed distribution */
+	quad_t rnd_ed[32];	/* entropy feed distribution */
+	quad_t rnd_sc[RND_SRC_NUM]; /* add* calls */
+	quad_t rnd_sb[RND_SRC_NUM]; /* add* bits */
 };
 
 #ifdef _KERNEL
 extern struct rndstats rndstats;
 
-extern void add_mouse_randomness __P((u_int32_t));
-extern void add_net_randomness __P((int));
-extern void add_disk_randomness __P((u_int32_t));
-extern void add_tty_randomness __P((int));
+#define	add_true_randomness(d)	enqueue_randomness(RND_SRC_TRUE,  (int)(d))
+#define	add_timer_randomness(d)	enqueue_randomness(RND_SRC_TIMER, (int)(d))
+#define	add_mouse_randomness(d)	enqueue_randomness(RND_SRC_MOUSE, (int)(d))
+#define	add_tty_randomness(d)	enqueue_randomness(RND_SRC_TTY,   (int)(d))
+#define	add_disk_randomness(d)	enqueue_randomness(RND_SRC_DISK,  (int)(d))
+#define	add_net_randomness(d)	enqueue_randomness(RND_SRC_NET,   (int)(d))
+#define	add_audio_randomness(d)	enqueue_randomness(RND_SRC_AUDIO, (int)(d))
 
-extern void get_random_bytes __P((void *, size_t));
-extern u_int32_t arc4random __P((void));
-extern int arc4random_8 __P((void));
+void enqueue_randomness __P((int, int));
+void get_random_bytes __P((void *, size_t));
+u_int32_t arc4random __P((void));
+int arc4random_8 __P((void));
 
 #endif /* _KERNEL */
 
