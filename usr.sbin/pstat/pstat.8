@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pstat.8	8.4 (Berkeley) 4/19/94
-.\"	$Id: pstat.8,v 1.2 1995/12/08 19:48:42 deraadt Exp $
+.\"	$Id: pstat.8,v 1.3 1996/01/11 17:54:00 deraadt Exp $
 .\"
 .Dd April 19, 1994
 .Dt PSTAT 8
@@ -73,7 +73,8 @@ The core location of this table entry.
 The type of object the file table entry points to.
 .It FLG
 Miscellaneous state variables encoded thus:
-.Bl -tag -width indent
+.Pp
+.Bl -tag -width indent -compact
 .It R
 open for reading
 .It W
@@ -125,7 +126,7 @@ Number of characters in raw input queue.
 .It CAN
 Number of characters in canonicalized input queue.
 .It OUT
-Number of characters in putput queue.
+Number of characters in output queue.
 .It MODE
 See
 .Xr tty 4 .
@@ -137,7 +138,8 @@ Number of delimiters (newlines) in canonicalized input queue.
 Calculated column position of terminal.
 .It STATE
 Miscellaneous state variables encoded thus:
-.Bl -tag -width indent
+.Pp
+.Bl -tag -width indent -compact
 .It T
 delay timeout in progress
 .It W
@@ -208,9 +210,9 @@ Location of this vnode.
 .It TYP
 File type.
 .It VFLAG
-.Pp
 A list of letters representing vnode flags:
-.Bl -tag -width indent
+.Pp
+.Bl -tag -width indent -compact
 .It R
 \- VROOT
 .It T
@@ -244,8 +246,7 @@ this is the inode number.
 Miscellaneous filesystem specific state variables encoded thus:
 .Bl -tag -width indent
 .It "For ufs:"
-.Pp
-.Bl -tag -width indent
+.Bl -tag -width indent -compact
 .It L
 locked
 .It U
@@ -270,7 +271,7 @@ contains modifications
 has a rename in progress
 .El
 .It "For nfs:"
-.Bl -tag -width indent
+.Bl -tag -width indent -compact
 .It W
 waiting for I/O buffer flush to complete
 .It P
