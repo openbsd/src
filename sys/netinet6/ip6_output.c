@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.60 2002/05/29 23:38:58 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.61 2002/05/31 03:20:01 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1179,7 +1179,9 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup)
 			ifp = ro_pmtu->ro_rt->rt_ifp;
 		ifmtu = IN6_LINKMTU(ifp);
 		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
-		if (mtu > ifmtu || mtu == 0) {
+		if (mtu == 0)
+			mtu = ifmtu;
+		else if (mtu > ifmtu) {
 			/*
 			 * The MTU on the route is larger than the MTU on
 			 * the interface!  This shouldn't happen, unless the
@@ -1192,10 +1194,8 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup)
 			 * this case happens with path MTU discovery timeouts.
 			 */
 			mtu = ifmtu;
-			if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU)) {
-				/* XXX */
+			if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU))
 				ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu;
-			}
 		}
 	} else if (ifp) {
 		mtu = IN6_LINKMTU(ifp);
