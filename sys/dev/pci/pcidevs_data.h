@@ -81,6 +81,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c595 10Mbps-MII",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
+	    0,
+	    "3Com",
+	    "3c555 100Base-TX",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
 	    0,
 	    "3Com",
