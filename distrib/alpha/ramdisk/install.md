@@ -1,4 +1,5 @@
-#       $OpenBSD: install.md,v 1.19 1998/03/27 23:28:12 deraadt Exp $
+#       $OpenBSD: install.md,v 1.20 1998/03/29 00:08:06 millert Exp $
+#
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -186,13 +187,12 @@ md_welcome_banner() {
 		echo "Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put OpenBSD on your disk in a simple and
+This program is designed to help you put OpenBSD on your system in a simple and
 rational way.
 __welcome_banner_1
 
 	else
-		echo ""
-		echo "Welcome to the OpenBSD/alpha ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your OpenBSD system in a
