@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/09/21 11:44:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 1997/12/20 16:14:55 deraadt Exp $
 
 PCAPDIR=${.CURDIR}/../../lib/libpcap
 
@@ -15,7 +15,5 @@ BINOWN=	root
 LDADD=	-lpcap -lutil
 DPADD=	${LIBPCAP} ${LIBUTIL}
 CFLAGS+= -I. -I${PCAPDIR} -DHAVE_PATHS_H -DIPX_CHANGE -DPPP_FILTER -DUSE_CRYPT
-
-MLINKS=	pppd.8 ppp.8
 
 .include <bsd.prog.mk>
