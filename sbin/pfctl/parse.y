@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.120 2002/07/15 18:13:53 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.121 2002/07/16 15:46:55 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -126,6 +126,8 @@ struct peer {
 };
 
 int	rule_consistent(struct pf_rule *);
+int	nat_consistent(struct pf_nat *);
+int	rdr_consistent(struct pf_rdr *);
 int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
 void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
@@ -325,7 +327,10 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 				r.rule_flag |= $8;
 
 			r.nr = pf->rule_nr++;
-			pfctl_add_rule(pf, &r);
+			if (rule_consistent(&r) < 0)
+				yyerror("skipping scrub rule due to errors");
+			else
+				pfctl_add_rule(pf, &r);
 
 		}
 		;
@@ -1432,13 +1437,6 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				free($11);
 			}
 
-			if (rdr.proto && rdr.proto != IPPROTO_TCP &&
-			    rdr.proto != IPPROTO_UDP &&
-			    (rdr.dport || rdr.dport2 || rdr.rport)) {
-				yyerror("rdr ports are only valid for proto tcp/udp");
-				YYERROR;
-			}
-
 			expand_rdr(&rdr, $3, $5, $7, $9);
 		}
 		;
@@ -1619,6 +1617,36 @@ rule_consistent(struct pf_rule *r)
 	}
 	if (r->action == PF_DROP && r->keep_state) {
 		yyerror("keep state on block rules doesn't make sense");
+		problems++;
+	}
+	return (-problems);
+}
+
+int
+nat_consistent(struct pf_nat *r)
+{
+	int problems = 0;
+
+	if (!r->af && (r->raddr.addr_dyn != NULL)) {
+		yyerror("dynamic addresses require address family (inet/inet6)");
+		problems++;
+	}
+	return (-problems);
+}
+
+int
+rdr_consistent(struct pf_rdr *r)
+{
+	int problems = 0;
+
+	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
+	    (r->dport || r->dport2 || r->rport)) {
+		yyerror("port only applies to tcp/udp");
+		problems++;
+	}
+	if (!r->af && (r->saddr.addr_dyn != NULL ||
+	    r->daddr.addr_dyn != NULL || r->raddr.addr_dyn != NULL)) {
+		yyerror("dynamic addresses require address family (inet/inet6)");
 		problems++;
 	}
 	return (-problems);
@@ -1886,7 +1914,7 @@ expand_rule(struct pf_rule *r,
 		}
 
 		if (rule_consistent(r) < 0 || nomatch)
-			yyerror("skipping rule due to errors");
+			yyerror("skipping filter rule due to errors");
 		else {
 			r->nr = pf->rule_nr++;
 			pfctl_add_rule(pf, r);
@@ -1979,8 +2007,12 @@ expand_nat(struct pf_nat *n,
 		n->dst.port[1] = dst_port->port[1];
 		n->dst.port_op = dst_port->op;
 
-		pfctl_add_nat(pf, n);
-		added++;
+		if (nat_consistent(n) < 0)
+			yyerror("skipping nat rule due to errors");
+		else {
+			pfctl_add_nat(pf, n);
+			added++;
+		}
 
 	))))));
 
@@ -2050,8 +2082,13 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		r->daddr = dst_host->addr;
 		r->dmask = dst_host->mask;
 
-		pfctl_add_rdr(pf, r);
-		added++;
+		if (rdr_consistent(r) < 0)
+			yyerror("skipping rdr rule due to errors");
+		else {
+			pfctl_add_rdr(pf, r);
+			added++;
+		}
+
 	))));
 
 	FREE_LIST(struct node_if, interfaces);
