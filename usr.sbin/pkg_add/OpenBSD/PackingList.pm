@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.38 2004/11/13 12:49:58 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.39 2004/11/13 13:55:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -62,12 +62,13 @@ sub read
 {
 	my ($a, $fh, $code) = @_;
 	my $plist;
+	$code = \&defaultCode if !defined $code;
 	if (ref $a) {
 		$plist = $a;
 	} else {
 		$plist = new $a;
+		$plist->{code} = $code;
 	}
-	$code = \&defaultCode if !defined $code;
 	&$code($fh,
 		sub {
 			local $_ = shift;
@@ -343,7 +344,6 @@ sub from_installation
 	    	$o->fromfile(OpenBSD::PackageInfo::installed_contents($pkgname), 
 		    $code);
 	    if (defined $plist) {
-	    	$plist->{code} = $code;
 		$plist_cache->{$code}->{$pkgname} = $plist;
 		return $plist;
 	    } else {
@@ -375,7 +375,9 @@ sub forget
 {
 	my ($self) = @_;
 
-	delete $plist_cache->{$self->{code}}->{$self->pkgname()};
+	if (defined $plist_cache->{$self->{code}}) {
+		delete $plist_cache->{$self->{code}}->{$self->pkgname()};
+	}
 }
 
 1;
