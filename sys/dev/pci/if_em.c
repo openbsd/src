@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.23 2004/06/18 20:42:34 mcbride Exp $ */
+/* $OpenBSD: if_em.c,v 1.24 2004/07/14 01:25:31 deraadt Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -567,8 +567,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize eeprom parameters */
 	em_init_eeprom_params(&sc->hw);
 
-	tsize = EM_ROUNDUP(sc->num_tx_desc *
-			   sizeof(struct em_tx_desc), 4096);
+	tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
+	    EM_MAX_TXD * sizeof(struct em_tx_desc));
+	tsize = EM_ROUNDUP(tsize, PAGE_SIZE);
 
 	/* Allocate Transmit Descriptor ring */
 	if (em_dma_malloc(sc, tsize, &sc->txdma, BUS_DMA_NOWAIT)) {
@@ -579,8 +580,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->tx_desc_base = (struct em_tx_desc *)sc->txdma.dma_vaddr;
 
-	rsize = EM_ROUNDUP(sc->num_rx_desc *
-			   sizeof(struct em_rx_desc), 4096);
+	rsize = EM_ROUNDUP(sc->num_rx_desc * sizeof(struct em_rx_desc),
+	    EM_MAX_RXD * sizeof(struct em_tx_desc));
+	rsize = EM_ROUNDUP(rsize, PAGE_SIZE);
 
 	/* Allocate Receive Descriptor ring */
 	if (em_dma_malloc(sc, rsize, &sc->rxdma, BUS_DMA_NOWAIT)) {
