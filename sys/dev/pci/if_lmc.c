@@ -70,7 +70,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-/*#include <sys/proc.h>	only for declaration of wakeup() used by vm.h */
+#include <sys/proc.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
@@ -1115,6 +1115,7 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	lmc_spl_t s;
 #endif
+	struct proc *p = curproc;
 	int error = 0;
 	struct ifreq *ifr = (struct ifreq *)data;
 	u_int32_t new_state;
@@ -1133,11 +1134,9 @@ lmc_ifioctl(struct ifnet * ifp, ioctl_cmd_t cmd, caddr_t data)
 		break;
 
 	case LMCIOCSINFO:
-#if 0 /* XXX */
 		error = suser(p->p_ucred, &p->p_acflag);
 		if (error)
 			goto out;
-#endif
 
 		error = copyin(ifr->ifr_data, &ctl, sizeof(lmc_ctl_t));
 		if (error != 0)
