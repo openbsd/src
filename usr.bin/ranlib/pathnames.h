@@ -1,4 +1,4 @@
-/* *	$OpenBSD: pathnames.h,v 1.2 1996/06/26 05:38:04 deraadt Exp $*/
+/* *	$OpenBSD: pathnames.h,v 1.3 1999/08/27 08:43:22 fgsch Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,5 +34,5 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/16/91
  */
 
-#define _NAME_RANTMP	"ranlib.XXXXXX"
-#define _PATH_RANTMP	"/tmp/ranlib.XXXXXX"
+#define _NAME_RANTMP	"ranlib.XXXXXXXXXX"
+#define _PATH_RANTMP	"/tmp/ranlib.XXXXXXXXXX"

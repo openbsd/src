@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/01/17 07:13:11 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1999/08/27 08:43:22 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	5.2 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1997/01/17 07:13:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1999/08/27 08:43:22 fgsch Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,9 +67,10 @@ tmp()
 	}
 
 	if (envtmp)
-		(void)snprintf(path, MAXPATHLEN, "%s/%s", envtmp, _NAME_RANTMP);
+		(void)snprintf(path, sizeof(path), "%s/%s", envtmp,
+		    _NAME_RANTMP);
 	else
-		bcopy(_PATH_RANTMP, path, sizeof(_PATH_RANTMP));
+		strlcpy(path, _PATH_RANTMP, sizeof(path));
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGHUP);
