@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.2 1997/07/24 00:25:23 deraadt Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.3 2001/05/26 07:14:02 angelos Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -461,10 +461,11 @@ at_pcballoc( so )
     struct socket	*so;
 {
     struct ddpcb	*ddp;
-    struct mbuf		*m;
 
-    m = m_getclr( M_WAIT, MT_PCB );
-    ddp = mtod( m, struct ddpcb * );
+    MALLOC(ddp, struct ddpcb *, sizeof(*ddp), M_PCB, M_NOWAIT);
+    if ( ddp == NULL ) {
+	return (ENOBUFS);
+    }
     ddp->ddp_lsat.sat_port = ATADDR_ANYPORT;
 
     ddp->ddp_next = ddpcb;
@@ -516,7 +517,7 @@ at_pcbdetach( so, ddp )
 	ddp->ddp_next->ddp_prev = ddp->ddp_prev;
     }
 
-    (void) m_free( dtom( ddp ));
+    free(ddp, M_PCB);
 }
 
 /*
