@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.14 2000/12/08 13:46:11 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.15 2001/02/25 09:04:25 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -113,7 +113,7 @@ sub verify_subject
 }
 
 
-# add_unformated_subject($lines, $toadd, $section):
+# add_unformated_subject($lines, $toadd, $section, $filename, $toexpand):
 #
 #   build subject from list of $toadd lines, and add it to the list
 #   of current subjects as section $section
@@ -283,7 +283,8 @@ sub handle_unformated
 			    $macro eq 'Nx' and s/^/NetBSD /;
 			    if ($macro eq 'Nd') {
 				if (@keep != 0) {
-				    add_unformated_subject(\@lines, \@keep, $section);
+				    add_unformated_subject(\@lines, \@keep, 
+				    	$section, $filename, \%toexpand);
 				    @keep = ();
 				}
 				push(@subject, "\\-");
@@ -298,8 +299,9 @@ sub handle_unformated
 			push(@subject, $_) unless m/^\s*$/;
 		    }
 		    unshift(@subject, @keep) if @keep != 0;
-		    add_unformated_subject(\@lines, \@subject, $section)
-			if @subject != 0;
+		    add_unformated_subject(\@lines, \@subject, $section,
+		    	$filename, \%toexpand)
+			    if @subject != 0;
 		    return \@lines;
 		}
 	    }
