@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.10 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.11 2003/03/04 20:27:58 deraadt Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tty_subs.c,v 1.10 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tty_subs.c,v 1.11 2003/03/04 20:27:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,6 +201,6 @@ syswarn(int set, int errnum, const char *fmt, ...)
 	 * format and print the errno
 	 */
 	if (errnum > 0)
-		(void)fprintf(stderr, " <%s>", strerror(errnum));
+		(void)fprintf(stderr, ": %s", strerror(errnum));
 	(void)fputc('\n', stderr);
 }
