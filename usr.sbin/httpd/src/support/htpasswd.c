@@ -246,9 +246,7 @@ static int mkrecord(char *user, char *record, size_t rlen, char *passwd,
 	ap_cpystrn(record, "resultant record too long", (rlen - 1));
 	return ERR_OVERFLOW;
     }
-    strcpy(record, user);
-    strcat(record, ":");
-    strcat(record, cpw);
+    snprintf(record, rlen, "%s:%s", user, cpw);
     return 0;
 }
 
@@ -454,14 +452,14 @@ int main(int argc, char *argv[])
 	    fprintf(stderr, "%s: filename too long\n", argv[0]);
 	    return ERR_OVERFLOW;
 	}
-	strcpy(pwfilename, argv[i]);
+	strlcpy(pwfilename, argv[i], sizeof(pwfilename));
 	if (strlen(argv[i + 1]) > (sizeof(user) - 1)) {
 	    fprintf(stderr, "%s: username too long (>%lu)\n", argv[0],
 		    (unsigned long)(sizeof(user) - 1));
 	    return ERR_OVERFLOW;
 	}
     }
-    strcpy(user, argv[i + 1]);
+    strlcpy(user, argv[i + 1], sizeof(user));
     if ((arg = strchr(user, ':')) != NULL) {
 	fprintf(stderr, "%s: username contains illegal character '%c'\n",
 		argv[0], *arg);
@@ -473,7 +471,7 @@ int main(int argc, char *argv[])
 		    (unsigned long)(sizeof(password) - 1));
 	    return ERR_OVERFLOW;
 	}
-	strcpy(password, argv[i + 2]);
+	strlcpy(password, argv[i + 2], sizeof(password));
     }
 
 #ifdef WIN32
@@ -565,7 +563,7 @@ int main(int argc, char *argv[])
      * to add or update.  Let's do it..
      */
     errno = 0;
-    strcpy(tempfilename, "/tmp/htpasswd-XXXXXX");
+    strlcpy(tempfilename, "/tmp/htpasswd-XXXXXX", sizeof(tempfilename));
     tfd = mkstemp(tempfilename);
     if (tfd == -1 || (ftemp = fdopen(tfd, "w+")) == NULL) {
 	fprintf(stderr, "%s: unable to create temporary file '%s'\n", argv[0],
@@ -588,7 +586,7 @@ int main(int argc, char *argv[])
 		putline(ftemp, line);
 		continue;
 	    }
-	    strcpy(scratch, line);
+	    strlcpy(scratch, line, sizeof(scratch));
 	    /*
 	     * See if this is our user.
 	     */
