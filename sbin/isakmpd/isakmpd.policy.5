@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.5 2000/03/23 21:39:56 aaron Exp $
-.\" $EOM: isakmpd.policy.5,v 1.11 2000/02/10 16:25:01 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.6 2000/04/07 22:06:00 niklas Exp $
+.\" $EOM: isakmpd.policy.5,v 1.12 2000/03/13 20:59:31 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
 .\"
@@ -266,6 +266,12 @@ Set to
 if the local daemon is initiating the Phase 2 SA,
 .Va no
 otherwise.
+.It phase_1
+Set to
+.Va aggressive
+if aggressive mode was used to establish the Phase 1 SA, or
+.Va main
+if main mode was used instead.
 .It pfs
 Set to
 .Va yes
