@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.11 1998/11/24 01:25:47 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.12 1999/01/04 08:11:53 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -123,9 +123,7 @@ rmtgetconn()
 	register char *cp;
 	static struct servent *sp = NULL;
 	static struct passwd *pwd = NULL;
-#ifdef notdef
 	static int on = 1;
-#endif
 	char *tuser, *name;
 	int size;
 	int maxseg;
@@ -168,10 +166,7 @@ rmtgetconn()
 	(void)setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG, &maxseg,
 		sizeof(maxseg));
 
-#ifdef notdef
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) < 0)
-		perror("TCP_NODELAY setsockopt");
-#endif
+	(void) setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
 }
 
 static int
