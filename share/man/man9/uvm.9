@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.8 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: uvm.9,v 1.9 2001/12/29 17:33:45 mickey Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -936,17 +936,22 @@ UVM is also further documented in a August 1998 dissertation
 by Charles D. Cranor.
 .Pp
 UVM appeared in
-.Nx 1.4 .
+.Ox 2.9 .
 .Sh AUTHORS
-Charles D. Cranor <chuck@ccrc.wustl.edu> designed and implemented UVM.
+.An Charles D. Cranor Aq chuck@ccrc.wustl.edu
+designed and implemented UVM.
 .Pp
-Matthew Green <mrg@eterna.com.au> wrote the swap-space management code
-and handled the logistical issues involved with merging UVM into the
-.Nx
-source tree.
+.An Matthew Green Aq mrg@eterna.com.au
+wrote the swap-space management code.
 .Pp
-Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
+.An Chuck Silvers Aq <chuq@chuq.com>
+implemented the aobj pager, thus allowing
 UVM to support System V shared memory and process swapping.
+.Pp
+.An Artur Grabowski Aq art@openbsd.org
+handled the logistical issues involved with merging UVM into the
+.Ox
+source tree.
 .Sh SEE ALSO
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
