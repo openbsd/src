@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.39 1999/12/19 01:57:07 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.40 2000/01/04 10:39:21 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -592,8 +592,10 @@ in_setpeeraddr(inp, nam)
 	register struct sockaddr_in *sin;
 	
 #ifdef INET6
-	if (sotopf(inp->inp_socket) == PF_INET6)
+	if (sotopf(inp->inp_socket) == PF_INET6) {
 		in6_setpeeraddr(inp, nam);
+		return;
+	}
 #endif /* INET6 */
 
 	nam->m_len = sizeof (*sin);
