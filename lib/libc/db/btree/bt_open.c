@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.11 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.12 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.11 (Berkeley) 11/2/95";
 #else
-static const char rcsid[] = "$OpenBSD: bt_open.c,v 1.11 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_open.c,v 1.12 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,10 +89,8 @@ static int tmp(void);
  *
  */
 DB *
-__bt_open(fname, flags, mode, openinfo, dflags)
-	const char *fname;
-	int flags, mode, dflags;
-	const BTREEINFO *openinfo;
+__bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
+    int dflags)
 {
 	struct stat sb;
 	BTMETA m;
@@ -352,8 +350,7 @@ err:	if (t) {
  *	RET_ERROR, RET_SUCCESS
  */
 static int
-nroot(t)
-	BTREE *t;
+nroot(BTREE *t)
 {
 	PAGE *meta, *root;
 	pgno_t npg;
@@ -393,7 +390,7 @@ nroot(t)
 }
 
 static int
-tmp()
+tmp(void)
 {
 	sigset_t set, oset;
 	int fd;
@@ -414,7 +411,7 @@ tmp()
 }
 
 static int
-byteorder()
+byteorder(void)
 {
 	u_int32_t x;
 	u_char *p;
@@ -432,8 +429,7 @@ byteorder()
 }
 
 int
-__bt_fd(dbp)
-	const DB *dbp;
+__bt_fd(const DB *dbp)
 {
 	BTREE *t;
 

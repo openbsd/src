@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: rec_utils.c,v 1.5 2003/06/02 20:18:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_utils.c,v 1.6 2005/03/23 19:34:59 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -55,11 +55,7 @@ static const char rcsid[] = "$OpenBSD: rec_utils.c,v 1.5 2003/06/02 20:18:34 mil
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__rec_ret(t, e, nrec, key, data)
-	BTREE *t;
-	EPG *e;
-	recno_t nrec;
-	DBT *key, *data;
+__rec_ret(BTREE *t, EPG *e, recno_t nrec, DBT *key, DBT *data)
 {
 	RLEAF *rl;
 	void *p;

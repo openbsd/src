@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_get.c,v 1.6 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_get.c,v 1.7 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_get.c	8.6 (Berkeley) 7/20/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_get.c,v 1.6 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_get.c,v 1.7 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,11 +62,7 @@ static const char rcsid[] = "$OpenBSD: bt_get.c,v 1.6 2003/06/02 20:18:33 miller
  *	RET_ERROR, RET_SUCCESS and RET_SPECIAL if the key not found.
  */
 int
-__bt_get(dbp, key, data, flags)
-	const DB *dbp;
-	const DBT *key;
-	DBT *data;
-	u_int flags;
+__bt_get(const DB *dbp, const DBT *key, DBT *data, u_int flags)
 {
 	BTREE *t;
 	EPG *e;

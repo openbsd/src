@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_conv.c,v 1.7 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_conv.c,v 1.8 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_conv.c	8.5 (Berkeley) 8/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_conv.c,v 1.7 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_conv.c,v 1.8 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,10 +60,7 @@ static void mswap(PAGE *);
  *	h:	page to convert
  */
 void
-__bt_pgin(t, pg, pp)
-	void *t;
-	pgno_t pg;
-	void *pp;
+__bt_pgin(void *t, pgno_t pg, void *pp)
 {
 	PAGE *h;
 	indx_t i, top;
@@ -128,10 +125,7 @@ __bt_pgin(t, pg, pp)
 }
 
 void
-__bt_pgout(t, pg, pp)
-	void *t;
-	pgno_t pg;
-	void *pp;
+__bt_pgout(void *t, pgno_t pg, void *pp)
 {
 	PAGE *h;
 	indx_t i, top;
@@ -202,8 +196,7 @@ __bt_pgout(t, pg, pp)
  *	p:	page to convert
  */
 static void
-mswap(pg)
-	PAGE *pg;
+mswap(PAGE *pg)
 {
 	char *p;
 

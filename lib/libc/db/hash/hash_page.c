@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.15 2005/01/03 22:46:43 millert Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.16 2005/03/23 19:34:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: hash_page.c,v 1.15 2005/01/03 22:46:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hash_page.c,v 1.16 2005/03/23 19:34:59 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,9 +94,7 @@ static int	  ugly_split(HTAB *, u_int32_t, BUFHEAD *, BUFHEAD *, int, int);
  * stuff on.
  */
 static void
-putpair(p, key, val)
-	char *p;
-	const DBT *key, *val;
+putpair(char *p, const DBT *key, const DBT *val)
 {
 	u_int16_t *bp, n, off;
 
@@ -125,11 +123,8 @@ putpair(p, key, val)
  *	 0 OK
  *	-1 error
  */
-extern int
-__delpair(hashp, bufp, ndx)
-	HTAB *hashp;
-	BUFHEAD *bufp;
-	int ndx;
+int
+__delpair(HTAB *hashp, BUFHEAD *bufp, int ndx)
 {
 	u_int16_t *bp, newoff, pairlen;
 	int n;
@@ -177,10 +172,8 @@ __delpair(hashp, bufp, ndx)
  *	 0 ==> OK
  *	-1 ==> Error
  */
-extern int
-__split_page(hashp, obucket, nbucket)
-	HTAB *hashp;
-	u_int32_t obucket, nbucket;
+int
+__split_page(HTAB *hashp, u_int32_t obucket, u_int32_t nbucket)
 {
 	BUFHEAD *new_bufp, *old_bufp;
 	u_int16_t *ino;
@@ -274,12 +267,12 @@ __split_page(hashp, obucket, nbucket)
  *	-1 ==> failure
  */
 static int
-ugly_split(hashp, obucket, old_bufp, new_bufp, copyto, moved)
-	HTAB *hashp;
-	u_int32_t obucket;	/* Same as __split_page. */
-	BUFHEAD *old_bufp, *new_bufp;
-	int copyto;	/* First byte on page which contains key/data values. */
-	int moved;	/* Number of pairs moved to new page. */
+ugly_split(HTAB *hashp,
+    u_int32_t obucket,	/* Same as __split_page. */
+    BUFHEAD *old_bufp,
+    BUFHEAD *new_bufp,
+    int copyto,		/* First byte on page which contains key/data values. */
+    int moved)		/* Number of pairs moved to new page. */
 {
 	BUFHEAD *bufp;	/* Buffer header for ino */
 	u_int16_t *ino;	/* Page keys come off of */
@@ -394,11 +387,8 @@ ugly_split(hashp, obucket, old_bufp, new_bufp, copyto, moved)
  *	0 ==> OK
  *	1 ==> failure
  */
-extern int
-__addel(hashp, bufp, key, val)
-	HTAB *hashp;
-	BUFHEAD *bufp;
-	const DBT *key, *val;
+int
+__addel(HTAB *hashp, BUFHEAD *bufp, const DBT *key, const DBT *val)
 {
 	u_int16_t *bp, *sop;
 	int do_expand;
@@ -467,10 +457,8 @@ stats:
  *	pointer on success
  *	NULL on error
  */
-extern BUFHEAD *
-__add_ovflpage(hashp, bufp)
-	HTAB *hashp;
-	BUFHEAD *bufp;
+BUFHEAD *
+__add_ovflpage(HTAB *hashp, BUFHEAD *bufp)
 {
 	u_int16_t *sp, ndx, ovfl_num;
 #ifdef DEBUG1
@@ -519,12 +507,9 @@ __add_ovflpage(hashp, bufp)
  *	 0 indicates SUCCESS
  *	-1 indicates FAILURE
  */
-extern int
-__get_page(hashp, p, bucket, is_bucket, is_disk, is_bitmap)
-	HTAB *hashp;
-	char *p;
-	u_int32_t bucket;
-	int is_bucket, is_disk, is_bitmap;
+int
+__get_page(HTAB *hashp, char *p, u_int32_t bucket, int is_bucket, int is_disk,
+    int is_bitmap)
 {
 	int fd, page, size, rsize;
 	u_int16_t *bp;
@@ -577,12 +562,8 @@ __get_page(hashp, p, bucket, is_bucket, is_disk, is_bitmap)
  *	 0 ==> OK
  *	-1 ==>failure
  */
-extern int
-__put_page(hashp, p, bucket, is_bucket, is_bitmap)
-	HTAB *hashp;
-	char *p;
-	u_int32_t bucket;
-	int is_bucket, is_bitmap;
+int
+__put_page(HTAB *hashp, char *p, u_int32_t bucket, int is_bucket, int is_bitmap)
 {
 	int fd, page, size, wsize;
 
@@ -623,10 +604,8 @@ __put_page(hashp, p, bucket, is_bucket, is_bitmap)
  * Initialize a new bitmap page.  Bitmap pages are left in memory
  * once they are read in.
  */
-extern int
-__ibitmap(hashp, pnum, nbits, ndx)
-	HTAB *hashp;
-	int pnum, nbits, ndx;
+int
+__ibitmap(HTAB *hashp, int pnum, int nbits, int ndx)
 {
 	u_int32_t *ip;
 	int clearbytes, clearints;
@@ -647,8 +626,7 @@ __ibitmap(hashp, pnum, nbits, ndx)
 }
 
 static u_int32_t
-first_free(map)
-	u_int32_t map;
+first_free(u_int32_t map)
 {
 	u_int32_t i, mask;
 
@@ -662,8 +640,7 @@ first_free(map)
 }
 
 static u_int16_t
-overflow_page(hashp)
-	HTAB *hashp;
+overflow_page(HTAB *hashp)
 {
 	u_int32_t *freep;
 	int max_free, offset, splitnum;
@@ -815,10 +792,8 @@ found:
 /*
  * Mark this overflow page as free.
  */
-extern void
-__free_ovflpage(hashp, obufp)
-	HTAB *hashp;
-	BUFHEAD *obufp;
+void
+__free_ovflpage(HTAB *hashp, BUFHEAD *obufp)
 {
 	u_int16_t addr;
 	u_int32_t *freep;
@@ -862,8 +837,7 @@ __free_ovflpage(hashp, obufp)
  *	-1 failure
  */
 static int
-open_temp(hashp)
-	HTAB *hashp;
+open_temp(HTAB *hashp)
 {
 	sigset_t set, oset;
 	char *envtmp = NULL;
@@ -890,9 +864,7 @@ open_temp(hashp)
  * an overflow pair, so we need to shift things.
  */
 static void
-squeeze_key(sp, key, val)
-	u_int16_t *sp;
-	const DBT *key, *val;
+squeeze_key(u_int16_t *sp, const DBT *key, const DBT *val)
 {
 	char *p;
 	u_int16_t free_space, n, off, pageno;
@@ -917,9 +889,7 @@ squeeze_key(sp, key, val)
 }
 
 static u_int32_t *
-fetch_bitmap(hashp, ndx)
-	HTAB *hashp;
-	int ndx;
+fetch_bitmap(HTAB *hashp, int ndx)
 {
 	if (ndx >= hashp->nmaps)
 		return (NULL);
@@ -935,8 +905,7 @@ fetch_bitmap(hashp, ndx)
 
 #ifdef DEBUG4
 int
-print_chain(addr)
-	int addr;
+print_chain(int addr)
 {
 	BUFHEAD *bufp;
 	short *bp, oaddr;

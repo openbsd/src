@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_seq.c,v 1.6 2003/06/02 20:18:34 millert Exp $	*/
+/*	$OpenBSD: rec_seq.c,v 1.7 2005/03/23 19:34:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_utils.c	8.6 (Berkeley) 7/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: rec_seq.c,v 1.6 2003/06/02 20:18:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_seq.c,v 1.7 2005/03/23 19:34:59 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,7 @@ static const char rcsid[] = "$OpenBSD: rec_seq.c,v 1.6 2003/06/02 20:18:34 mille
  *	RET_ERROR, RET_SUCCESS or RET_SPECIAL if there's no next key.
  */
 int
-__rec_seq(dbp, key, data, flags)
-	const DB *dbp;
-	DBT *key, *data;
-	u_int flags;
+__rec_seq(const DB *dbp, DBT *key, DBT *data, u_int flags)
 {
 	BTREE *t;
 	EPG *e;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_debug.c,v 1.7 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_debug.c,v 1.8 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_debug.c	8.5 (Berkeley) 8/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_debug.c,v 1.7 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_debug.c,v 1.8 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,8 +57,7 @@ static const char rcsid[] = "$OpenBSD: bt_debug.c,v 1.7 2003/06/02 20:18:33 mill
  *	dbp:	pointer to the DB
  */
 void
-__bt_dump(dbp)
-	DB *dbp;
+__bt_dump(DB *dbp)
 {
 	BTREE *t;
 	PAGE *h;
@@ -100,8 +99,7 @@ __bt_dump(dbp)
  *	h:	pointer to the PAGE
  */
 void
-__bt_dmpage(h)
-	PAGE *h;
+__bt_dmpage(PAGE *h)
 {
 	BTMETA *m;
 	char *sep;
@@ -134,9 +132,7 @@ __bt_dmpage(h)
  *	n:	page number to dump.
  */
 void
-__bt_dnpage(dbp, pgno)
-	DB *dbp;
-	pgno_t pgno;
+__bt_dnpage(DB *dbp, pgno_t pgno)
 {
 	BTREE *t;
 	PAGE *h;
@@ -153,8 +149,7 @@ __bt_dnpage(dbp, pgno)
  *	h:	pointer to the PAGE
  */
 void
-__bt_dpage(h)
-	PAGE *h;
+__bt_dpage(PAGE *h)
 {
 	BINTERNAL *bi;
 	BLEAF *bl;
@@ -249,8 +244,7 @@ __bt_dpage(h)
  *	dbp:	pointer to the DB
  */
 void
-__bt_stat(dbp)
-	DB *dbp;
+__bt_stat(DB *dbp)
 {
 	extern u_long bt_cache_hit, bt_cache_miss, bt_pfxsaved, bt_rootsplit;
 	extern u_long bt_sortsplit, bt_split;

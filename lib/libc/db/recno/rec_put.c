@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_put.c,v 1.8 2005/01/03 22:30:29 millert Exp $	*/
+/*	$OpenBSD: rec_put.c,v 1.9 2005/03/23 19:34:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_put.c	8.7 (Berkeley) 8/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: rec_put.c,v 1.8 2005/01/03 22:30:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_put.c,v 1.9 2005/03/23 19:34:59 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,11 +61,7 @@ static const char rcsid[] = "$OpenBSD: rec_put.c,v 1.8 2005/01/03 22:30:29 mille
  *	already in the tree and R_NOOVERWRITE specified.
  */
 int
-__rec_put(dbp, key, data, flags)
-	const DB *dbp;
-	DBT *key;
-	const DBT *data;
-	u_int flags;
+__rec_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 {
 	BTREE *t;
 	DBT fdata, tdata;
@@ -191,11 +187,7 @@ einval:		errno = EINVAL;
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__rec_iput(t, nrec, data, flags)
-	BTREE *t;
-	recno_t nrec;
-	const DBT *data;
-	u_int flags;
+__rec_iput(BTREE *t, recno_t nrec, const DBT *data, u_int flags)
 {
 	DBT tdata;
 	EPG *e;

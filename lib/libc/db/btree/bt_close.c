@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_close.c,v 1.7 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_close.c,v 1.8 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_close.c	8.7 (Berkeley) 8/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_close.c,v 1.7 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_close.c,v 1.8 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,8 +63,7 @@ static int bt_meta(BTREE *);
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__bt_close(dbp)
-	DB *dbp;
+__bt_close(DB *dbp)
 {
 	BTREE *t;
 	int fd;

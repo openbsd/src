@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_page.c,v 1.7 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_page.c,v 1.8 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_page.c	8.3 (Berkeley) 7/14/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_page.c,v 1.7 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_page.c,v 1.8 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,9 +59,7 @@ static const char rcsid[] = "$OpenBSD: bt_page.c,v 1.7 2003/06/02 20:18:33 mille
  *	mpool_put's the page.
  */
 int
-__bt_free(t, h)
-	BTREE *t;
-	PAGE *h;
+__bt_free(BTREE *t, PAGE *h)
 {
 	/* Insert the page at the head of the free list. */
 	h->prevpg = P_INVALID;
@@ -85,9 +83,7 @@ __bt_free(t, h)
  *	Pointer to a page, NULL on error.
  */
 PAGE *
-__bt_new(t, npg)
-	BTREE *t;
-	pgno_t *npg;
+__bt_new(BTREE *t, pgno_t *npg)
 {
 	PAGE *h;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_overflow.c,v 1.7 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: bt_overflow.c,v 1.8 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_overflow.c	8.5 (Berkeley) 7/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_overflow.c,v 1.7 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_overflow.c,v 1.8 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,12 +79,7 @@ static const char rcsid[] = "$OpenBSD: bt_overflow.c,v 1.7 2003/06/02 20:18:33 m
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__ovfl_get(t, p, ssz, buf, bufsz)
-	BTREE *t;
-	void *p;
-	size_t *ssz;
-	void **buf;
-	size_t *bufsz;
+__ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 {
 	PAGE *h;
 	pgno_t pg;
@@ -140,10 +135,7 @@ __ovfl_get(t, p, ssz, buf, bufsz)
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__ovfl_put(t, dbt, pg)
-	BTREE *t;
-	const DBT *dbt;
-	pgno_t *pg;
+__ovfl_put(BTREE *t, const DBT *dbt, pgno_t *pg)
 {
 	PAGE *h, *last;
 	void *p;
@@ -194,9 +186,7 @@ __ovfl_put(t, dbt, pg)
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__ovfl_delete(t, p)
-	BTREE *t;
-	void *p;
+__ovfl_delete(BTREE *t, void *p)
 {
 	PAGE *h;
 	pgno_t pg;

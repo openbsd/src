@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_func.c,v 1.8 2003/06/02 20:18:33 millert Exp $	*/
+/*	$OpenBSD: hash_func.c,v 1.9 2005/03/23 19:34:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_func.c	8.4 (Berkeley) 11/7/95";
 #else
-static const char rcsid[] = "$OpenBSD: hash_func.c,v 1.8 2003/06/02 20:18:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hash_func.c,v 1.9 2005/03/23 19:34:59 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,9 +68,7 @@ u_int32_t (*__default_hash)(const void *, size_t) = hash4;
 #define PRIME2		1048583
 
 u_int32_t
-hash1(key, len)
-	const void *key;
-	size_t len;
+hash1(const void *key, size_t len)
 {
 	u_int32_t h;
 	u_int8_t *k;
@@ -90,9 +88,7 @@ hash1(key, len)
 #define dcharhash(h, c)	((h) = 0x63c63cd9*(h) + 0x9c39c33d + (c))
 
 u_int32_t
-hash2(key, len)
-	const void *key;
-	size_t len;
+hash2(const void *key, size_t len)
 {
 	u_int32_t h;
 	u_int8_t *e, c, *k;
@@ -118,9 +114,7 @@ hash2(key, len)
  * Ozan Yigit's original sdbm hash.
  */
 u_int32_t
-hash3(key, len)
-	const void *key;
-	size_t len;
+hash3(const void *key, size_t len)
 {
 	u_int32_t n, loop;
 	u_int8_t *k;
@@ -160,9 +154,7 @@ hash3(key, len)
 
 /* Chris Torek's hash function. */
 u_int32_t
-hash4(key, len)
-	const void *key;
-	size_t len;
+hash4(const void *key, size_t len)
 {
 	u_int32_t h, loop;
 	u_int8_t *k;

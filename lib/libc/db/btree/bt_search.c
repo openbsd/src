@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_search.c,v 1.8 2005/01/03 22:30:28 millert Exp $	*/
+/*	$OpenBSD: bt_search.c,v 1.9 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_search.c	8.8 (Berkeley) 7/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_search.c,v 1.8 2005/01/03 22:30:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_search.c,v 1.9 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +65,7 @@ static int __bt_sprev(BTREE *, PAGE *, const DBT *, int *);
  *	the bt_cur field of the tree.  A pointer to the field is returned.
  */
 EPG *
-__bt_search(t, key, exactp)
-	BTREE *t;
-	const DBT *key;
-	int *exactp;
+__bt_search(BTREE *t, const DBT *key, int *exactp)
 {
 	PAGE *h;
 	indx_t base, idx, lim;
@@ -150,11 +147,7 @@ next:		BT_PUSH(t, h->pgno, idx);
  *	If an exact match found.
  */
 static int
-__bt_snext(t, h, key, exactp)
-	BTREE *t;
-	PAGE *h;
-	const DBT *key;
-	int *exactp;
+__bt_snext(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 {
 	EPG e;
 
@@ -189,11 +182,7 @@ __bt_snext(t, h, key, exactp)
  *	If an exact match found.
  */
 static int
-__bt_sprev(t, h, key, exactp)
-	BTREE *t;
-	PAGE *h;
-	const DBT *key;
-	int *exactp;
+__bt_sprev(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 {
 	EPG e;
 

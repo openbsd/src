@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_search.c,v 1.9 2005/01/03 22:46:43 millert Exp $	*/
+/*	$OpenBSD: rec_search.c,v 1.10 2005/03/23 19:34:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_search.c	8.4 (Berkeley) 7/14/94";
 #else
-static const char rcsid[] = "$OpenBSD: rec_search.c,v 1.9 2005/01/03 22:46:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_search.c,v 1.10 2005/03/23 19:34:59 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,10 +63,7 @@ static const char rcsid[] = "$OpenBSD: rec_search.c,v 1.9 2005/01/03 22:46:43 mi
  *	the bt_cur field of the tree.  A pointer to the field is returned.
  */
 EPG *
-__rec_search(t, recno, op)
-	BTREE *t;
-	recno_t recno;
-	enum SRCHOP op;
+__rec_search(BTREE *t, recno_t recno, enum SRCHOP op)
 {
 	indx_t idx;
 	PAGE *h;

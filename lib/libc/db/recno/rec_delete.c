@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_delete.c,v 1.8 2005/01/03 22:30:29 millert Exp $	*/
+/*	$OpenBSD: rec_delete.c,v 1.9 2005/03/23 19:34:59 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #else
-static const char rcsid[] = "$OpenBSD: rec_delete.c,v 1.8 2005/01/03 22:30:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_delete.c,v 1.9 2005/03/23 19:34:59 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,10 +63,7 @@ static int rec_rdelete(BTREE *, recno_t);
  *	RET_ERROR, RET_SUCCESS and RET_SPECIAL if the key not found.
  */
 int
-__rec_delete(dbp, key, flags)
-	const DB *dbp;
-	const DBT *key;
-	u_int flags;
+__rec_delete(const DB *dbp, const DBT *key, u_int flags)
 {
 	BTREE *t;
 	recno_t nrec;
@@ -119,9 +116,7 @@ einval:		errno = EINVAL;
  *	RET_ERROR, RET_SUCCESS and RET_SPECIAL if the key not found.
  */
 static int
-rec_rdelete(t, nrec)
-	BTREE *t;
-	recno_t nrec;
+rec_rdelete(BTREE *t, recno_t nrec)
 {
 	EPG *e;
 	PAGE *h;
@@ -153,10 +148,7 @@ rec_rdelete(t, nrec)
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__rec_dleaf(t, h, idx)
-	BTREE *t;
-	PAGE *h;
-	u_int32_t idx;
+__rec_dleaf(BTREE *t, PAGE *h, u_int32_t idx)
 {
 	RLEAF *rl;
 	indx_t *ip, cnt, offset;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_put.c,v 1.11 2005/01/03 22:30:28 millert Exp $	*/
+/*	$OpenBSD: bt_put.c,v 1.12 2005/03/23 19:34:58 otto Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c   8.8 (Berkeley) 7/26/94";
 #else
-static const char rcsid[] = "$OpenBSD: bt_put.c,v 1.11 2005/01/03 22:30:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: bt_put.c,v 1.12 2005/03/23 19:34:58 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,11 +66,7 @@ static EPG *bt_fast(BTREE *, const DBT *, const DBT *, int *);
  *	tree and R_NOOVERWRITE specified.
  */
 int
-__bt_put(dbp, key, data, flags)
-	const DB *dbp;
-	DBT *key;
-	const DBT *data;
-	u_int flags;
+__bt_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 {
 	BTREE *t;
 	DBT tkey, tdata;
@@ -268,10 +264,7 @@ u_long bt_cache_hit, bt_cache_miss;
  * 	EPG for new record or NULL if not found.
  */
 static EPG *
-bt_fast(t, key, data, exactp)
-	BTREE *t;
-	const DBT *key, *data;
-	int *exactp;
+bt_fast(BTREE *t, const DBT *key, const DBT *data, int *exactp)
 {
 	PAGE *h;
 	u_int32_t nbytes;
