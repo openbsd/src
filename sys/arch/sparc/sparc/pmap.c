@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2001/12/09 04:29:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2001/12/09 04:44:20 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -599,9 +599,7 @@ VA2PA(caddr_t addr)
  * Assumes level 3 mapping (for now).
  */
 u_int *
-getptep4m(pm, va)
-        struct pmap *pm;
-        vaddr_t va;
+getptep4m(struct pmap *pm, vaddr_t va)
 {
         struct regmap *rm;
         struct segmap *sm;
@@ -629,9 +627,7 @@ getptep4m(pm, va)
  * Set the pte at "ptep" to "pte".
  */
 static __inline void
-setpgt4m(ptep, pte)
-	int *ptep;
-	int pte;
+setpgt4m(int *ptep, int pte)
 {
 	swap(ptep, pte);
 }
@@ -640,9 +636,7 @@ setpgt4m(ptep, pte)
  * Set the page table entry for va to pte. Only legal for kernel mappings.
  */
 void
-setpte4m(va, pte)
-	vaddr_t va;
-	int pte;
+setpte4m(vaddr_t va, int pte)
 {
 	int *ptep;
 
@@ -687,23 +681,21 @@ setpte4m(va, pte)
 } while (0)
 
 
-static void sortm __P((struct memarr *, int));
-void	ctx_alloc __P((struct pmap *));
-void	ctx_free __P((struct pmap *));
-void	pv_flushcache __P((struct pvlist *));
+static void sortm(struct memarr *, int);
+void	ctx_alloc(struct pmap *);
+void	ctx_free(struct pmap *);
+void	pv_flushcache(struct pvlist *);
 #ifdef DEBUG
-void	pm_check __P((char *, struct pmap *));
-void	pm_check_k __P((char *, struct pmap *));
-void	pm_check_u __P((char *, struct pmap *));
+void	pm_check(char *, struct pmap *);
+void	pm_check_k(char *, struct pmap *);
+void	pm_check_u(char *, struct pmap *);
 #endif
 
 /*
  * Sort a memory array by address.
  */
 static void
-sortm(mp, n)
-	struct memarr *mp;
-	int n;
+sortm(struct memarr *mp, int n)
 {
 	struct memarr *mpj;
 	int i, j;
@@ -727,21 +719,11 @@ sortm(mp, n)
 }
 
 /*
- * For our convenience, vm_page.c implements:
- *       vm_bootstrap_steal_memory()
- * using the functions:
- *       pmap_virtual_space(), pmap_free_pages(), pmap_next_page(),
- * which are much simpler to implement.
- */
-
-/*
  * How much virtual space does this kernel have?
  * (After mapping kernel text, data, etc.)
  */
 void
-pmap_virtual_space(v_start, v_end)
-        vaddr_t *v_start;
-        vaddr_t *v_end;
+pmap_virtual_space(vaddr_t *v_start, vaddr_t *v_end)
 {
         *v_start = virtual_avail;
         *v_end   = virtual_end;
@@ -751,8 +733,7 @@ pmap_virtual_space(v_start, v_end)
  * Helper routine that hands off available physical pages to the VM system.
  */
 static void
-pmap_page_upload(first_pa)
-	paddr_t first_pa;
+pmap_page_upload(paddr_t first_pa)
 {
 	int	n = 0;
 	paddr_t start, end;
@@ -785,8 +766,7 @@ pmap_page_upload(first_pa)
 }
 
 int
-pmap_pa_exists(pa)
-	paddr_t pa;
+pmap_pa_exists(paddr_t pa)
 {
 	return (pa < phys_avail || (pvhead(atop(pa)) != NULL));
 }
