@@ -13,7 +13,7 @@
 
 #include <sys/param.h>
 #include <skipjack.h>
-#include <sys/malloc.h>
+#include <stdlib.h>
 
 static const u_int8_t ftable[0x100] =
 { 
