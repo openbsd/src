@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.46 2004/07/23 10:35:44 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.47 2004/08/26 21:29:18 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -6943,17 +6943,19 @@ to be used in a
 .\"
 .Sh VERIFY
 .Nm openssl verify
-.Op Fl CApath Ar directory
-.Op Fl CAfile Ar file
-.Op Fl purpose Ar purpose
-.Op Fl untrusted Ar file
+.Bk -words
+.Op Fl crl_check
 .Op Fl help
 .Op Fl issuer_checks
 .Op Fl verbose
-.Op Fl crl_check
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
 .Op Fl engine Ar id
+.Op Fl purpose Ar purpose
+.Op Fl untrusted Ar file
 .Op Fl
 .Op Ar certificates
+.Ek
 .Pp
 The
 .Nm verify
@@ -6961,7 +6963,7 @@ command verifies certificate chains.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl CApath directory
+.It Fl CApath Ar directory
 A
 .Ar directory
 of trusted certificates.
@@ -6998,8 +7000,10 @@ Without this option no chain verification will be done.
 Currently accepted uses are
 .Ar sslclient , sslserver ,
 .Ar nssslserver , smimesign ,
+.Ar smimeencrypt , crlsign ,
+.Ar any ,
 and
-.Ar smimeencrypt .
+.Ar ocsphelper .
 See the
 .Sx VERIFY OPERATION
 section for more information.
@@ -7051,23 +7055,23 @@ after an error, whereas normally the verify operation would halt on the
 first error.
 This allows all the problems with a certificate chain to be determined.
 .Pp
-The verify operation consists of a number of separate steps.
+The verify operation consists of a number of separate steps:
 .Pp
 Firstly a certificate chain is built up starting from the supplied certificate
 and ending in the root CA.
 It is an error if the whole chain cannot be built up.
-The chain is built up by looking up the issuers certificate of the current
+The chain is built up by looking up the issuer's certificate of the current
 certificate.
 If a certificate is found which is its own issuer, it is assumed
 to be the root CA.
 .Pp
 The process of
-.Qq looking up the issuers certificate
+.Qq looking up the issuer's certificate
 itself involves a number of steps.
 In versions of
 .Nm OpenSSL
 before 0.9.5a the first certificate whose subject name matched the issuer
-of the current certificate was assumed to be the issuers certificate.
+of the current certificate was assumed to be the issuer's certificate.
 In
 .Nm OpenSSL
 0.9.6 and later all certificates whose subject name matches the issuer name
@@ -7140,7 +7144,7 @@ Finally a text version of the error number is presented.
 .Pp
 An exhaustive list of the error codes and messages is shown below; this also
 includes the name of the error code as defined in the header file
-.Aq Pa x509_vfy.h .
+.Aq Pa openssl/x509_vfy.h .
 Some of the error codes are defined but never returned: these are described
 as
 .Qq unused .
@@ -7281,7 +7285,7 @@ be recognised.
 .Pp
 Previous versions of
 .Nm OpenSSL
-assume certificates with matching subject name are identical and
+assumed certificates with matching subject name were identical and
 mishandled them.
 .\"
 .\" VERSION
