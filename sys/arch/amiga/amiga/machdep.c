@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1997/01/17 05:53:39 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1997/01/18 12:48:01 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.82 1996/12/17 07:32:54 is Exp $	*/
 
 /*
@@ -1034,17 +1034,6 @@ bootsync(void)
 	if (waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now unless
-		 * the system was sitting in ddb.
-		 */
-		if ((howto & RB_TIMEBAD) == 0) {
-			resettodr();
-		} else {
-			printf("WARNING: not updating battery clock\n");
-		}
 	}
 }
 
@@ -1057,8 +1046,20 @@ boot(howto)
 		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0)
+	if ((howto & RB_NOSYNC) == 0) {
 		bootsync();
+
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
+		 */
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
+	}
 
 	/* Disable interrupts. */
 	spl7();
