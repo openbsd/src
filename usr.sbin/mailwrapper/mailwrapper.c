@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.10 2002/02/16 21:28:04 millert Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.11 2002/12/09 11:05:22 deraadt Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -57,8 +57,7 @@ static void freearg(struct arglist *, int);
 extern const char *__progname;	/* from crt0.o */
 
 static void
-initarg(al)
-	struct arglist *al;
+initarg(struct arglist *al)
 {
 	al->argc = 0;
 	al->maxc = 10;
@@ -67,13 +66,10 @@ initarg(al)
 }
 
 static void
-addarg(al, arg, copy)
-	struct arglist *al;
-	const char *arg;
-	int copy;
+addarg(struct arglist *al, const char *arg, int copy)
 {
 	char **argv2;
- 
+
 	if (al->argc == al->maxc) {
 		al->maxc <<= 1;
 
@@ -95,9 +91,7 @@ addarg(al, arg, copy)
 }
 
 static void
-freearg(al, copy)
-	struct arglist *al;
-	int copy;
+freearg(struct arglist *al, int copy)
 {
 	size_t i;
 	if (copy)
@@ -107,10 +101,7 @@ freearg(al, copy)
 }
 
 int
-main(argc, argv, envp)
-	int argc;
-	char *argv[];
-	char *envp[];
+main(int argc, char *argv[], char *envp[])
 {
 	FILE *config;
 	char *line, *cp, *from, *to, *ap;
@@ -160,10 +151,10 @@ main(argc, argv, envp)
 			goto parse_error;
 
 		if (strcmp(from, __progname) == 0) {
-			for (ap = strsep(&cp, WS); ap != NULL; 
+			for (ap = strsep(&cp, WS); ap != NULL;
 			    ap = strsep(&cp, WS))
-			    if (*ap)
-				    addarg(&al, ap, 0);
+				if (*ap)
+					addarg(&al, ap, 0);
 			break;
 		}
 
