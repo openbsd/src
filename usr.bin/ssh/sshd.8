@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.56 2000/07/06 04:06:56 aaron Exp $
+.\" $Id: sshd.8,v 1.57 2000/07/22 09:14:36 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -443,6 +443,23 @@ Additional connections will be dropped until authentication succeeds or the
 .Cm LoginGraceTime
 expires for a connection.
 The default is 10.
+.Pp
+Alternatively, random early drop can be enabled by specifying
+the three colon separated values
+.Dq start:rate:full
+(e.g. "10:30:60").
+.Nm
+will refuse connection attempts with a probabillity of
+.Dq rate/100
+(30%)
+if there are currently
+.Dq start
+(10)
+unauthenticated connections.
+The probabillity increases linearly and all connection attempts
+are refused if the number of unauthenticated connections reaches
+.Dq full
+(60).
 .It Cm PasswordAuthentication
 Specifies whether password authentication is allowed.
 The default is

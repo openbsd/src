@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.123 2000/07/18 01:25:01 djm Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.124 2000/07/22 09:14:37 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -393,6 +393,35 @@ destroy_sensitive_data(void)
 		RSA_free(sensitive_data.host_key);
 	if (sensitive_data.dsa_host_key != NULL)
 		key_free(sensitive_data.dsa_host_key);
+}
+
+/*
+ * returns 1 if connection should be dropped, 0 otherwise.
+ * dropping starts at connection #max_startups_begin with a probability
+ * of (max_startups_rate/100). the probability increases linearly until
+ * all connections are dropped for startups > max_startups
+ */
+int
+drop_connection(int startups)
+{
+	double p, r;
+
+	if (startups < options.max_startups_begin)
+		return 0;
+	if (startups >= options.max_startups)
+		return 1;
+	if (options.max_startups_rate == 100)
+		return 1;
+
+	p  = 100 - options.max_startups_rate;
+	p *= startups - options.max_startups_begin;
+	p /= (double) (options.max_startups - options.max_startups_begin);
+	p += options.max_startups_rate;
+	p /= 100.0;
+	r = arc4random() / (double) UINT_MAX;
+
+	debug("drop_connection: p %g, r %g", p, r);
+	return (r < p) ? 1 : 0;
 }
 
 int *startup_pipes = NULL;	/* options.max_startup sized array of fd ints */
@@ -814,7 +843,8 @@ main(int ac, char **av)
 					error("newsock del O_NONBLOCK: %s", strerror(errno));
 					continue;
 				}
-				if (startups >= options.max_startups) {
+				if (drop_connection(startups) == 1) {
+					debug("drop connection #%d", startups);
 					close(newsock);
 					continue;
 				}

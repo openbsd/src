@@ -51,3 +51,4 @@ PermitEmptyPasswords no
 #UseLogin no
 
 #Subsystem	sftp	/usr/local/sbin/sftpd
+#MaxStartup 10:30:60
