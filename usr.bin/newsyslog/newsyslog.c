@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.79 2004/04/09 19:21:15 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.80 2004/05/10 05:32:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.79 2004/04/09 19:21:15 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.80 2004/05/10 05:32:16 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -192,8 +192,8 @@ main(int argc, char **argv)
 {
 	struct conf_entry *p, *q, *x, *y;
 	struct pidinfo *pidlist, *pl;
-	char **av;
 	int status, listlen;
+	char **av;
 	
 	parse_args(argc, argv);
 	argc -= optind;
@@ -295,9 +295,9 @@ main(int argc, char **argv)
 void
 do_entry(struct conf_entry *ent)
 {
+	struct stat sb;
 	int modtime;
 	off_t size;
-	struct stat sb;
 
 	if (lstat(ent->log, &sb) != 0)
 		return;
@@ -371,10 +371,10 @@ run_command(char *cmd)
 void
 send_signal(char *pidfile, int signal)
 {
-	pid_t pid;
-	FILE *f;
 	char line[BUFSIZ], *ep, *err;
+	pid_t pid;
 	long lval;
+	FILE *f;
 
 	if ((f = fopen(pidfile, "r")) == NULL) {
 		warn("can't open %s", pidfile);
@@ -416,8 +416,8 @@ send_signal(char *pidfile, int signal)
 void
 parse_args(int argc, char **argv)
 {
-	int ch;
 	char *p;
+	int ch;
 
 	timenow = time(NULL);
 	daytime = ctime(&timenow) + 4;
@@ -478,15 +478,14 @@ usage(void)
 struct conf_entry *
 parse_file(int *nentries)
 {
-	FILE *f;
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
-	int lineno;
-	long l;
-	struct conf_entry *first = NULL;
-	struct conf_entry *working = NULL;
+	struct conf_entry *working = NULL, *first = NULL;
 	struct passwd *pwd;
 	struct group *grp;
 	struct stat sb;
+	int lineno;
+	FILE *f;
+	long l;
 
 	if (strcmp(conf, "-") == 0)
 		f = stdin;
@@ -503,12 +502,12 @@ parse_file(int *nentries)
 			err(1, "strdup");
 		(*nentries)++;
 		if (!first) {
-			working = (struct conf_entry *) malloc(sizeof(struct conf_entry));
+			working = malloc(sizeof(struct conf_entry));
 			if (working == NULL)
 				err(1, "malloc");
 			first = working;
 		} else {
-			working->next = (struct conf_entry *) malloc(sizeof(struct conf_entry));
+			working->next = malloc(sizeof(struct conf_entry));
 			if (working->next == NULL)
 				err(1, "malloc");
 			working = working->next;
@@ -543,7 +542,6 @@ parse_file(int *nentries)
 			if (*q) {
 				if (!(isnumberstr(q))) {
 					if ((grp = getgrnam(q)) == NULL)
-
 						errx(1, "%s:%d: unknown group: %s",
 						    conf, lineno, q);
 					working->gid = grp->gr_gid;
@@ -755,8 +753,7 @@ dotrim(struct conf_entry *ent)
 {
 	char    file1[MAXPATHLEN], file2[MAXPATHLEN];
 	char    oldlog[MAXPATHLEN], *suffix;
-	int     fd;
-	int	numdays = ent->numlogs;
+	int	numdays = ent->numlogs, fd;
 
 	/* Is there a separate backup dir? */
 	if (ent->backdir != NULL)
@@ -864,8 +861,8 @@ log_trim(char *log)
 void
 compress_log(struct conf_entry *ent)
 {
-	pid_t pid;
 	char *base, tmp[MAXPATHLEN];
+	pid_t pid;
 
 	if (ent->backdir != NULL)
 		snprintf(tmp, sizeof(tmp), "%s/%s.0", ent->backdir,
@@ -906,8 +903,8 @@ sizefile(struct stat *sb)
 int
 age_old_log(struct conf_entry *ent)
 {
-	struct stat sb;
 	char file[MAXPATHLEN];
+	struct stat sb;
 
 	if (ent->backdir != NULL)
 		(void)snprintf(file, sizeof(file), "%s/%s.0", ent->backdir,
@@ -958,10 +955,10 @@ isnumberstr(char *string)
 int
 domonitor(struct conf_entry *ent)
 {
-	struct stat sb, tsb;
 	char fname[MAXPATHLEN], *flog, *p, *rb = NULL;
-	FILE *fp;
+	struct stat sb, tsb;
 	off_t osize;
+	FILE *fp;
 	int rd;
 
 	if (stat(ent->log, &sb) < 0)
@@ -1067,8 +1064,8 @@ cleanup:
 FILE *
 openmail(void)
 {
-	FILE *ret;
 	char *cmdbuf = NULL;
+	FILE *ret;
 
 	if (asprintf(&cmdbuf, "%s -t", SENDMAIL) != -1) {
 		ret = popen(cmdbuf, "w");
@@ -1137,8 +1134,8 @@ lstat_log(char *file, size_t size, int flags)
 time_t
 parse8601(char *s)
 {
-	char *t;
 	struct tm tm, *tmp;
+	char *t;
 	long l;
 
 	tmp = localtime(&timenow);
@@ -1175,8 +1172,8 @@ parse8601(char *s)
 	}
 
 	/* sanity check */
-	if (tm.tm_year < 70 || tm.tm_mon < 0 || tm.tm_mon > 12
-	    || tm.tm_mday < 1 || tm.tm_mday > 31)
+	if (tm.tm_year < 70 || tm.tm_mon < 0 || tm.tm_mon > 12 ||
+	    tm.tm_mday < 1 || tm.tm_mday > 31)
 		return (-1);
 
 	if (*t != '\0') {
@@ -1201,8 +1198,8 @@ parse8601(char *s)
 		}
 
 		/* sanity check */
-		if (tm.tm_sec < 0 || tm.tm_sec > 60 || tm.tm_min < 0
-		    || tm.tm_min > 59 || tm.tm_hour < 0 || tm.tm_hour > 23)
+		if (tm.tm_sec < 0 || tm.tm_sec > 60 || tm.tm_min < 0 ||
+		    tm.tm_min > 59 || tm.tm_hour < 0 || tm.tm_hour > 23)
 			return (-1);
 	}
 	return (mktime(&tm));
@@ -1225,13 +1222,11 @@ parse8601(char *s)
 time_t
 parseDWM(char *s)
 {
-	char *t;
-	struct tm tm, *tmp;
-	long l;
-	int nd;
 	static int mtab[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	int WMseen = 0;
-	int Dseen = 0;
+	int WMseen = 0, Dseen = 0, nd;
+	struct tm tm, *tmp;
+	char *t;
+	long l;
 
 	tmp = localtime(&timenow);
 	tm = *tmp;
