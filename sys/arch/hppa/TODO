@@ -18,7 +18,6 @@ hardware and installation notes (distrib/notes/hppa/*):	fries@
          BOOT_ADMIN> boot lan isl
 
 hardware manuals (man4.hppa/*):				mickey@
-* sti manual
 * ie manual
 * siop manual
 * hil manual
@@ -52,7 +51,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.17 2002/05/19 23:03:24 mickey Exp $
+$OpenBSD: TODO,v 1.18 2002/05/19 23:48:34 mickey Exp $
 
 --
 	paranoic mickey
