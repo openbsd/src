@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.12 2000/01/05 11:04:22 itojun Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.13 2000/05/24 13:17:08 itojun Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.12 2000/01/05 11:04:22 itojun Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.13 2000/05/24 13:17:08 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -292,7 +292,7 @@ enter(inp, so, state, proto)
 			if (p->nif_lport != inp->inp_lport ||
 			    !IN6_ARE_ADDR_EQUAL(&p->nif_laddr6, &inp->inp_laddr6))
 				continue;
-			if (IN6_ARE_ADDR_EQUAL(&p->nif_faddr, &inp->inp_faddr) &&
+			if (IN6_ARE_ADDR_EQUAL(&p->nif_faddr6, &inp->inp_faddr6) &&
 			    p->nif_fport == inp->inp_fport)
 				break;
 		}
