@@ -1,7 +1,6 @@
-/*
- * Copyright (c) 1996 Nivas Madhur
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,44 +29,20 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.6 1997/03/25 17:07:37 rahnds Exp $
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#if defined(LIBC_SCCS) && !defined(lint)
+	.data
+	/*.asciz "from: @(#)setlogin.s	5.1 (Berkeley) 5/6/91"*/
+	.asciz "$Id: setlogin.S,v 1.1 1997/03/25 17:07:24 rahnds Exp $"
+	.text
+#endif /* LIBC_SCCS and not lint */
 
-#define	MCOUNT \
-extern void mcount() asm("mcount");					\
-void									\
-mcount()								\
-{									\
-	register int selfret;						\
-	register int callerret;						\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * selfret = ret pushed by mcount call				\
-	 */								\
-	asm volatile("or %0,r1,0" : "=r" (selfret));			\
-	/*								\
-	 * callerret = ret pushed by call into self.			\
-	 */								\
-	/*								\
-	 * This may not be right. It all depends on where the		\
-	 * caller stores the return address. XXX			\
-	 */								\
-	asm volatile("addu	 r10,r31,48");				\
-	asm volatile("ld %0,r10,36" : "=r" (callerret));		\
-	_mcount(callerret, selfret);					\
-}
+#include "SYS.h"
 
-#ifdef KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+	.globl	___logname_valid		/* in getlogin() */
+
+SYSCALL(setlogin)
+	or.u	r2,r0,hi16(___logname_valid)
+	st	r0,r2,lo16(___logname_valid)
+	jmp	r1				/* setlogin(name) */

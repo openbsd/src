@@ -1,7 +1,6 @@
-/*
- * Copyright (c) 1996 Nivas Madhur
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,44 +29,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.6 1997/03/25 17:07:37 rahnds Exp $
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#if defined(LIBC_SCCS) && !defined(lint)
+/*static char sccsid[] = "from: @(#)isinf.c	5.1 (Berkeley) 3/18/91";*/
+static char rcsid[] = "$Id: isinf.c,v 1.1 1997/03/25 17:07:02 rahnds Exp $";
+#endif /* LIBC_SCCS and not lint */
 
-#define	MCOUNT \
-extern void mcount() asm("mcount");					\
-void									\
-mcount()								\
-{									\
-	register int selfret;						\
-	register int callerret;						\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * selfret = ret pushed by mcount call				\
-	 */								\
-	asm volatile("or %0,r1,0" : "=r" (selfret));			\
-	/*								\
-	 * callerret = ret pushed by call into self.			\
-	 */								\
-	/*								\
-	 * This may not be right. It all depends on where the		\
-	 * caller stores the return address. XXX			\
-	 */								\
-	asm volatile("addu	 r10,r31,48");				\
-	asm volatile("ld %0,r10,36" : "=r" (callerret));		\
-	_mcount(callerret, selfret);					\
+#include <sys/types.h>
+
+isnan(d)
+	double d;
+{
+	register struct IEEEdp {
+		u_int sign :  1;
+		u_int  exp : 11;
+		u_int manh : 20;
+		u_int manl : 32;
+	} *p = (struct IEEEdp *)&d;
+
+	return(p->exp == 2047 && (p->manh || p->manl));
 }
 
-#ifdef KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+isinf(d)
+	double d;
+{
+	register struct IEEEdp {
+		u_int sign :  1;
+		u_int  exp : 11;
+		u_int manh : 20;
+		u_int manl : 32;
+	} *p = (struct IEEEdp *)&d;
+
+	return(p->exp == 2047 && !p->manh && !p->manl);
+}

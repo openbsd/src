@@ -39,8 +39,10 @@
 #define EH_DEBUG 0
 #endif	EH_DEBUG
 
+#if 0
 /* this gives the offsets into various structures of various elements, etc */
 #include "assym.s"
+#endif
 
 #define	ENTRY(NAME) \
     .align 8; .globl FUNC(NAME); FUNC(NAME):

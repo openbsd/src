@@ -1,7 +1,10 @@
-/*
- * Copyright (c) 1996 Nivas Madhur
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,44 +33,29 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.6 1997/03/25 17:07:37 rahnds Exp $
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#if defined(LIBC_SCCS) && !defined(lint)
+	.data
+	/*.asciz "from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90"*/
+	.asciz "$Id: sigprocmask.S,v 1.1 1997/03/25 17:07:25 rahnds Exp $"
+	.text
+#endif /* LIBC_SCCS and not lint */
 
-#define	MCOUNT \
-extern void mcount() asm("mcount");					\
-void									\
-mcount()								\
-{									\
-	register int selfret;						\
-	register int callerret;						\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * selfret = ret pushed by mcount call				\
-	 */								\
-	asm volatile("or %0,r1,0" : "=r" (selfret));			\
-	/*								\
-	 * callerret = ret pushed by call into self.			\
-	 */								\
-	/*								\
-	 * This may not be right. It all depends on where the		\
-	 * caller stores the return address. XXX			\
-	 */								\
-	asm volatile("addu	 r10,r31,48");				\
-	asm volatile("ld %0,r10,36" : "=r" (callerret));		\
-	_mcount(callerret, selfret);					\
-}
+#include "SYS.h"
 
-#ifdef KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+ENTRY(sigprocmask)
+	bcnd	ne0,r3,L1		/* if new sigset pointer is null */
+	or	r2,r0,1			/* how = SIG_BLOCK and do it */
+	br	L2
+L1:
+	ld	r3,r3,0			/* else load set from *set and do it */
+L2:
+	or	r13,r0,SYS_sigprocmask
+	tb0	0,r0,128
+	br	cerror
+	bcnd	eq0,r4,out		/* if old mask not requested, done */
+	st	r2,r4,0			/* otherwise, set it */
+out:
+	jmp.n	r1
+	or	r2,r0,0

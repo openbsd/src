@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.5 1997/03/21 00:48:41 niklas Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.6 1997/03/25 17:07:39 rahnds Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -95,7 +95,9 @@ db_stop_at_pc(regs, is_breakpoint)
 		return (TRUE);	/* stop here */
 	    }
 	} else if (*is_breakpoint) {
+#ifndef m88k
 		PC_REGS(regs) += BKPT_SIZE;
+#endif
 	}
 		
 	*is_breakpoint = FALSE;
@@ -260,6 +262,7 @@ db_set_single_step(regs)
 	 */
 	inst = db_get_value(pc, sizeof(int), FALSE);
 	if (inst_branch(inst) || inst_call(inst)) {
+	    extern unsigned getreg_val();
 
 	    brpc = branch_taken(inst, pc, getreg_val, regs);
 	    if (brpc != pc) {	/* self-branches are hopeless */

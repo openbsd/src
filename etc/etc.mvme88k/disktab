@@ -1,0 +1,63 @@
+# Disk geometry and partition layout tables. 
+# Key:
+#	dt	controller type
+#	ty	type of disk (fixed, removeable, simulated)
+#	d[0-4]	drive-type-dependent parameters
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	sc	#sectors/cylinder, ns*nt default
+#	su	#sectors/unit, sc*nc default
+#	se	sector size, DEV_BSIZE default
+#	rm	rpm, 3600 default
+#	sf	supports bad144-style bad sector forwarding
+#	sk	sector skew per track, default 0
+#	cs	sector skew per cylinder, default 0
+#	hs	headswitch time, default 0
+#	ts	one-cylinder seek time, default 0
+#	il	sector interleave (n:1), 1 default
+#	bs	boot block size, default BBSIZE
+#	sb	superblock size, default SBSIZE
+#	o[a-h]	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#	t[a-h]	partition types (filesystem, swap, etc)
+#
+# All partition sizes reserve space for bad sector tables.
+# (5 cylinders needed for maintenance + replacement sectors)
+#
+fuji2614S|fuji171|FUJITSU M2614S:\
+	:ty=SCSI:se#512:nt#8:ns#32:nc#1336:\
+	:pa#29952:oa#256:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#60416:ob#30208:tb=swap:\
+	:pc#342016:oc#0:\
+	:ph#251392:oh#90624:bh#8192:fh#1024:th=4.2BSD:\
+
+CDC94351|CDC 164 MB SCSI disk:\
+	:ty=SCSI:se#512:nt#9:rm#3600:ns#34:nc#1068:\
+        :pa#30294:oa#306:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#61200:ob#30600:tb=swap:\
+	:pc#326808:oc#0:\
+	:ph#235008:oh#91800:bh#8192:fh#1024:th=4.2BSD:
+
+fuji2624S|FUJITSU 2624S:\
+        :ty=winchester:dt=SCSI:se#512:nt#11:ns#64:nc#1429:\
+        :pa#29568:oa#704:ba#8192:fa#1024:ta=4.2BSD:\
+        :pb#39424:ob#30272:tb=swap:\
+        :pc#1006016:oc#0:\
+        :pg#299904:og#69696:bg#8192:fg#1024:tg=4.2BSD:\
+        :ph#636416:oh#369600:bh#8192:fh#1024:th=4.2BSD:
+
+cdc94181|CDC 94181-15:\
+        :ty=winchester:dt=SCSI:se#512:nt#15:ns#51:nc#1546:\
+        :pa#29835:oa#765:ba#8192:fa#1024:ta=4.2BSD:\
+        :pb#79560:ob#30600:tb=swap:\
+        :pc#1182690:oc#0:\
+        :pg#306000:og#110160:bg#8192:fg#1024:tg=4.2BSD:\
+        :ph#766530:oh#416160:bh#8192:fh#1024:th=4.2BSD:
+
+miniroot|2Meg Miniroot:\
+        :ty=winchester:se#512:nt#1:ns#10:nc#400:\
+        :pa#4000:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+        :pc#4000:oc#0:

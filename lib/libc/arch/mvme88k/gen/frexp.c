@@ -1,7 +1,10 @@
 /*
- * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,43 +34,46 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.6 1997/03/25 17:07:37 rahnds Exp $
+ * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
+ * $Id: frexp.c,v 1.1 1997/03/25 17:07:01 rahnds Exp $
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
+#endif /* LIBC_SCCS and not lint */
 
-#define	MCOUNT \
-extern void mcount() asm("mcount");					\
-void									\
-mcount()								\
-{									\
-	register int selfret;						\
-	register int callerret;						\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * selfret = ret pushed by mcount call				\
-	 */								\
-	asm volatile("or %0,r1,0" : "=r" (selfret));			\
-	/*								\
-	 * callerret = ret pushed by call into self.			\
-	 */								\
-	/*								\
-	 * This may not be right. It all depends on where the		\
-	 * caller stores the return address. XXX			\
-	 */								\
-	asm volatile("addu	 r10,r31,48");				\
-	asm volatile("ld %0,r10,36" : "=r" (callerret));		\
-	_mcount(callerret, selfret);					\
-}
+#include <sys/types.h>
+#include <machine/ieee.h>
 
-#ifdef KERNEL
 /*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
+ * Split the given value into a fraction in the range [0.5, 1.0) and
+ * an exponent, such that frac * (2^exp) == value.  If value is 0,
+ * return 0.
  */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
-#endif /* KERNEL */
+double
+frexp(value, eptr)
+	double value;
+	int *eptr;
+{
+	union {
+                double v;
+		struct ieee_double s;
+	} u;
+
+	if (value) {
+		/*
+		 * Fractions in [0.5..1.0) have an exponent of 2^-1.
+		 * Leave Inf and NaN alone, however.
+		 * WHAT ABOUT DENORMS?
+		 */
+		u.v = value;
+		if (u.s.dbl_exp != DBL_EXP_INFNAN) {
+			*eptr = u.s.dbl_exp - (DBL_EXP_BIAS - 1);
+			u.s.dbl_exp = DBL_EXP_BIAS - 1;
+		}
+		return (u.v);
+	} else {
+		*eptr = 0;
+		return ((double)0);
+	}
+}
