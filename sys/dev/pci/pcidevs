@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.44 1998/04/02 20:16:32 deraadt Exp $
+$OpenBSD: pcidevs,v 1.45 1998/04/03 07:22:39 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -932,7 +932,7 @@ product SIS 85C496		0x0496	85C496
 product SIS 85C596		0x0496	85C596
 product SIS 85C601		0x0601	85C601
 product SIS 5511		0x5511	5511
-product SIS 5513		0x5512	5512
+product SIS 5512		0x5512	5512
 product SIS 5513		0x5513	5513
 product SIS 5581		0x5581	5581
 product SIS 5582		0x5582	5582
