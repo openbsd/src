@@ -1387,7 +1387,7 @@ fddmadone(sc, timeo)
 		sc->flags &= ~FDF_DIRTY;
 		if (timeo)
 			printf("%s: write of track cache timed out.\n",
-			    sc->dv.dv_xname);
+			    sc->sc_dv.dv_xname);
 		if (sc->flags & FDF_JUSTFLUSH) {
 			sc->flags &= ~FDF_JUSTFLUSH;
 			/*
