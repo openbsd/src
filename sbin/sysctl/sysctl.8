@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.46 2000/05/18 13:31:12 jason Exp $
+.\"	$OpenBSD: sysctl.8,v 1.47 2000/05/23 12:38:28 itojun Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -349,10 +349,12 @@ definitions for third level profiling identifiers
 .It Pa <vm/vm_param.h>
 definitions for second level virtual memory identifiers
 .It Pa <netinet/in.h>
-definitions for third level Internet identifiers and
-fourth level IP identifiers
+definitions for third level IPv4/v6 identifiers and
+fourth level IPv4/v6 identifiers
 .It Pa <netinet/icmp_var.h>
 definitions for fourth level ICMP identifiers
+.It Pa <netinet6/icmp6.h>
+definitions for fourth level ICMPv6 identifiers
 .It Pa <netinet/tcp_var.h>
 definitions for fourth level TCP identifiers
 .It Pa <netinet/udp_var.h>
