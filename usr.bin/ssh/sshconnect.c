@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.25 1999/11/02 19:42:36 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.26 1999/11/07 22:38:39 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1014,6 +1014,7 @@ void ssh_login(int host_key_valid,
   BIGNUM *key;
   RSA *host_key, *file_key;
   RSA *public_key;
+  int bits, rbits;
   unsigned char session_key[SSH_SESSION_KEY_LENGTH];
   const char *server_user, *local_user;
   char *cp, *host, *ip = NULL;
@@ -1060,7 +1061,7 @@ void ssh_login(int host_key_valid,
 
   /* Get the public key. */
   public_key = RSA_new();
-  packet_get_int();	/* bits */
+  bits = packet_get_int();	/* bits */
   public_key->e = BN_new();
   packet_get_bignum(public_key->e, &clen);
   sum_len += clen;
@@ -1068,15 +1069,29 @@ void ssh_login(int host_key_valid,
   packet_get_bignum(public_key->n, &clen);
   sum_len += clen;
 
+  rbits = BN_num_bits(public_key->n);
+  if (bits != rbits) {
+    log("Warning: Server lies about size of server public key,");
+    log("Warning: this may be due to an old implementation of ssh.");
+    log("Warning: (actual size %d bits, announced size %d bits)", rbits, bits);
+  }
+
   /* Get the host key. */
   host_key = RSA_new();
-  packet_get_int();	/* bits */
+  bits = packet_get_int();	/* bits */
   host_key->e = BN_new();
   packet_get_bignum(host_key->e, &clen);
   sum_len += clen;
   host_key->n = BN_new();
   packet_get_bignum(host_key->n, &clen);
   sum_len += clen;
+
+  rbits = BN_num_bits(host_key->n);
+  if (bits != rbits) {
+    log("Warning: Server lies about size of server host key,");
+    log("Warning: this may be due to an old implementation of ssh.");
+    log("Warning: (actual size %d bits, announced size %d bits)", rbits, bits);
+  }
 
   /* Store the host key from the known host file in here
    * so that we can compare it with the key for the IP
