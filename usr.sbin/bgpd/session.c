@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.181 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.182 2004/07/04 03:51:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,7 +158,7 @@ setup_listeners(u_int *la_cnt)
 int
 session_main(struct bgpd_config *config, struct peer *cpeers,
     struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2])
+    struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2])
 {
 	int			 nfds, i, j, timeout;
 	int			 idx_peers, idx_listeners, idx_mrts;
@@ -224,6 +224,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	log_info("session engine ready");
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
+	close(pipe_m2r[0]);
+	close(pipe_m2r[1]);
 	init_conf(conf);
 	imsg_init(&ibuf_rde, pipe_s2r[0]);
 	imsg_init(&ibuf_main, pipe_m2s[1]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.123 2004/07/04 03:37:03 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.124 2004/07/04 03:51:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,7 +105,7 @@ u_int32_t	nexthophashsize = 64;
 int
 rde_main(struct bgpd_config *config, struct network_head *net_l,
     struct filter_head *rules, struct mrt_head *mrt_l,
-    int pipe_m2r[2], int pipe_s2r[2])
+    int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2])
 {
 	pid_t			 pid;
 	struct passwd		*pw;
@@ -148,6 +148,8 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 
 	close(pipe_s2r[0]);
 	close(pipe_m2r[0]);
+	close(pipe_m2s[0]);
+	close(pipe_m2s[1]);
 
 	/* initialize the RIB structures */
 	imsg_init(&ibuf_se, pipe_s2r[1]);
