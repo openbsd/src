@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.5 1999/07/12 18:10:35 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.6 1999/08/14 04:22:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -142,7 +142,7 @@ gscattach(parent, self, aux)
 
 	printf ("\n");
 
-	sc->sc_ih = cpu_intr_establish(IPL_HIGH, ga->ga_irq,
+	sc->sc_ih = cpu_intr_establish(IPL_IO, ga->ga_irq,
 				       gsc_intr, sc, sc->sc_dev.dv_xname);
 	/* DMA guts */
 	sc->sc_dmatag._cookie = sc;
@@ -230,7 +230,7 @@ gsc_intr(v)
 	register u_int32_t mask;
 	int ret;
 
-#ifdef GSCDEBUG
+#ifdef GSCDEBUG_INTR
 	printf("gsc_intr(%p)\n", v);
 #endif
 	ret = 0;
@@ -241,12 +241,12 @@ gsc_intr(v)
 		i = ffs(mask) - 1;
 		iv = &sc->sc_intrvs[i];
 
-#ifdef GSCDEBUG
+#ifdef GSCDEBUG_INTR
 		printf("gsc_intr: got mask=0x%08x i=%d iv=%p\n", mask, i, iv);
 #endif
 		if (iv->handler) {
 			int s;
-#ifdef GSCDEBUG
+#ifdef GSCDEBUG_INTR
 			printf("gsc_intr: calling %p for irq %d\n", v, i);
 #endif
 			s = splx(iv->pri);
