@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.127 2004/01/12 05:42:47 jolan Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.128 2004/01/18 07:55:34 sturm Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1566,6 +1566,8 @@ Extra directory used to store local ports before committing them.
 All depend targets will normally look there after the normal lookup fails.
 See
 .Ev PORTSDIR_PATH .
+.It Pa systrace.filter
+List of additional port specific filters, included automatically.
 .El
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
