@@ -867,15 +867,17 @@ lessopen.sh:
 .br
 	case "$1" in
 .br
-	*.Z)	uncompress -c $1  >/tmp/less.$$  2>/dev/null
+	*.Z|*.gz)	TFILE=`mktemp /tmp/less.XXXXXX` || exit 1
 .br
-		if [ -s /tmp/less.$$ ]; then 
+		gunzip -c $1 >${TFILE} 2>/dev/null
 .br
-			echo /tmp/less.$$
+		if [ -s ${TFILE} ]; then 
+.br
+			echo ${TFILE}
 .br
 		else
 .br
-			rm -f /tmp/less.$$
+			rm -f ${TFILE}
 .br
 		fi
 .br
