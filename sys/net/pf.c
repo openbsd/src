@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.436 2004/04/24 23:22:54 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.437 2004/04/25 00:34:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -129,7 +129,7 @@ void			 pf_change_icmp(struct pf_addr *, u_int16_t *,
 void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
-			    u_int8_t, u_int16_t, u_int16_t, u_int8_t);
+			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
 			    sa_family_t, struct pf_rule *);
 struct pf_rule		*pf_match_translation(struct pf_pdesc *, struct mbuf *,
@@ -796,8 +796,8 @@ pf_purge_expired_states(void)
 				pf_send_tcp(cur->rule.ptr, cur->af,
 				    &cur->ext.addr, &cur->lan.addr,
 				    cur->ext.port, cur->lan.port,
-				    cur->src.seqhi, cur->src.seqlo + 1, 0,
-				    TH_RST|TH_ACK, 0, 0);
+				    cur->src.seqhi, cur->src.seqlo + 1,
+				    TH_RST|TH_ACK, 0, 0, 0, 1);
 			RB_REMOVE(pf_state_tree_ext_gwy,
 			    &cur->u.s.kif->pfik_ext_gwy, cur);
 			RB_REMOVE(pf_state_tree_lan_ext,
@@ -1258,10 +1258,9 @@ void
 pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
-    u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl)
+    u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag)
 {
 	struct mbuf	*m;
-	struct m_tag	*mtag;
 	int		 len, tlen;
 #ifdef INET
 	struct ip	*h;
@@ -1291,17 +1290,22 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	}
 
 	/* create outgoing mbuf */
-	mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
-	if (mtag == NULL)
-		return;
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
-	if (m == NULL) {
-		m_tag_free(mtag);
+	if (m == NULL)
 		return;
+	if (tag) {
+		struct m_tag	*mtag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_GENERATED, 0, M_NOWAIT);
+		if (mtag == NULL) {
+			m_freem(m);
+			return;
+		}
+		m_tag_prepend(m, mtag);
 	}
-	m_tag_prepend(m, mtag);
 #ifdef ALTQ
 	if (r != NULL && r->qid) {
+		struct m_tag	*mtag;
 		struct altq_tag *atag;
 
 		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
@@ -2571,7 +2575,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_send_tcp(r, af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ack, TH_RST|TH_ACK, 0, 0,
-			    r->return_ttl);
+			    r->return_ttl, 1);
 		} else if ((af == AF_INET) && r->return_icmp)
 			pf_send_icmp(m, r->return_icmp >> 8,
 			    r->return_icmp & 255, af, r);
@@ -2758,7 +2762,7 @@ cleanup:
 			s->src.mss = mss;
 			pf_send_tcp(r, af, daddr, saddr, th->th_dport,
 			    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
-			    TH_SYN|TH_ACK, 0, s->src.mss, 0);
+			    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1);
 			return (PF_SYNPROXY_DROP);
 		}
 	}
@@ -3702,7 +3706,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    (*state)->src.seqhi, ntohl(th->th_seq) + 1,
-			    TH_SYN|TH_ACK, 0, (*state)->src.mss, 0);
+			    TH_SYN|TH_ACK, 0, (*state)->src.mss, 0, 1);
 			return (PF_SYNPROXY_DROP);
 		} else if (!(th->th_flags & TH_ACK) ||
 		    (ntohl(th->th_ack) != (*state)->src.seqhi + 1) ||
@@ -3732,7 +3736,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->dst.seqhi, 0, TH_SYN, 0,
-			    (*state)->src.mss, 0);
+			    (*state)->src.mss, 0, 0);
 			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
 		    (TH_SYN|TH_ACK)) ||
@@ -3744,11 +3748,11 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
-			    TH_ACK, (*state)->src.max_win, 0, 0);
+			    TH_ACK, (*state)->src.max_win, 0, 0, 1);
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->src.seqhi + 1, (*state)->src.seqlo + 1,
-			    TH_ACK, (*state)->dst.max_win, 0, 0);
+			    TH_ACK, (*state)->dst.max_win, 0, 0, 0);
 			(*state)->src.seqdiff = (*state)->dst.seqhi -
 			    (*state)->src.seqlo;
 			(*state)->dst.seqdiff = (*state)->src.seqhi -
@@ -4011,7 +4015,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    pd->dst, pd->src, th->th_dport,
 				    th->th_sport, ntohl(th->th_ack), ack,
 				    TH_RST|TH_ACK, 0, 0,
-				    (*state)->rule.ptr->return_ttl);
+				    (*state)->rule.ptr->return_ttl, 1);
 			}
 			src->seqlo = 0;
 			src->seqhi = 1;
