@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.11 2000/09/30 14:07:10 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.12 2000/10/07 16:15:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2038,12 +2038,11 @@ void xl_init(xsc)
 	 * Enable interrupts.
 	 */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|0xFF);
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|XL_INTRS);
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|XL_INTRS);
 
 	if (sc->intr_ack)
 		(*sc->intr_ack)(sc);
-
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|XL_INTRS);
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|XL_INTRS);
 
 	/* Set the RX early threshold */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_THRESH|(XL_PACKET_SIZE >>2));
@@ -2371,11 +2370,8 @@ void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|0);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|0);
 
-#if 0
-	if (sc->xl_bustype == XL_BUS_CARDBUS)
-		bus_space_write_4(sc->xl_funct, sc->xl_funch, XL_CARDBUS_INTR,
-		    XL_CARDBUS_INTR_ACK);
-#endif
+	if (sc->intr_ack)
+		(*sc->intr_ack)(sc);
 
 	/* Stop the stats updater. */
 	untimeout(xl_stats_update, sc);
