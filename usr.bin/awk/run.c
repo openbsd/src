@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.23 2003/08/06 21:08:07 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.24 2004/05/08 22:08:51 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -64,6 +64,7 @@ void tempfree(Cell *p) {
 #endif
 
 jmp_buf env;
+int use_arc4 = 1;
 extern	int	pairstack[];
 
 Node	*winner = NULL;	/* root of parse tree */
@@ -1501,15 +1502,19 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		u = (Awkfloat) system(getsval(x)) / 256;   /* 256 is unix-dep */
 		break;
 	case FRAND:
-		/* in principle, rand() returns something in 0..RAND_MAX */
-		u = (Awkfloat) (rand() % RAND_MAX) / RAND_MAX;
+		if (use_arc4)
+			u = (Awkfloat) (arc4random() % RAND_MAX) / RAND_MAX;
+		else
+			u = (Awkfloat) (random() % RAND_MAX) / RAND_MAX;
 		break;
 	case FSRAND:
-		if (isrec(x))	/* no argument provided */
-			u = time((time_t *)0);
-		else
+		if (isrec(x))	/* no argument provided, want arc4random() */
+			use_arc4 = 1;
+		else {
 			u = getfval(x);
-		srand((unsigned int) u);
+			srandom((unsigned int) u);
+			use_arc4 = 0;
+		}
 		break;
 	case FTOUPPER:
 	case FTOLOWER:
