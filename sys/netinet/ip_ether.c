@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.17 2001/01/31 08:32:17 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.18 2001/02/01 00:14:14 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -97,7 +97,8 @@ va_dcl
 {
     union sockaddr_union ssrc, sdst;
     struct ether_header eh;
-    int iphlen;
+    struct mbuf *mrest, *m0;
+    int iphlen, clen;
     u_int8_t v;
     va_list ap;
 
@@ -229,6 +230,32 @@ va_dcl
 
     /* Trim the beginning of the mbuf, to remove the ethernet header */
     m_adj(m, sizeof(struct ether_header));
+
+    /* Copy out the first MHLEN bytes of data to ensure correct alignment */
+    MGETHDR(m0, M_DONTWAIT, MT_DATA);
+    if (m0 == NULL) {
+	    m_freem(m);
+	    etheripstat.etherip_adrops++;
+	    return;
+    }
+    M_COPY_PKTHDR(m0, m);
+    clen = min(MHLEN, m->m_pkthdr.len);
+    if (m->m_pkthdr.len == clen)
+      mrest = NULL;
+    else {
+	mrest = m_split(m, clen, M_DONTWAIT);
+	if (mrest == NULL) {
+	    m_freem(m);
+	    m_freem(m0);
+	    etheripstat.etherip_adrops++;
+	    return;
+	}
+    }
+    m0->m_next = mrest;
+    m0->m_len = clen;
+    m_copydata(m, 0, clen, mtod(m0, caddr_t));
+    m_freem(m);
+    m = m0;
 
 #if NGIF > 0
     /* Find appropriate gif(4) interface */
