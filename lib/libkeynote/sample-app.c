@@ -1,4 +1,4 @@
-/* $OpenBSD: sample-app.c,v 1.1 1999/11/05 00:27:18 angelos Exp $ */
+/* $OpenBSD: sample-app.c,v 1.2 2001/03/08 21:50:12 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -128,7 +128,7 @@ main(int argc, char **argv)
     if (sessionid == -1)
     {
 	fprintf(stderr, "Failed to create a new session.\n");
-	exit(-1);
+	exit(1);
     }
 
     /*
@@ -142,7 +142,7 @@ main(int argc, char **argv)
     if (decomposed == NULL)
     {
 	fprintf(stderr, "Failed to allocate memory for policy assertions.\n");
-	exit(-1);
+	exit(1);
     }
 
     /*
@@ -154,7 +154,7 @@ main(int argc, char **argv)
     {
 	free(decomposed);
 	fprintf(stderr, "No policy assertions provided.\n");
-	exit(-1);
+	exit(1);
     }
 
     /*
@@ -222,7 +222,7 @@ main(int argc, char **argv)
     {
 	fprintf(stderr, "Failed to allocate memory for credential "
 		"assertions.\n");
-	exit(-1);
+	exit(1);
     }
 
     /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.10 1999/11/05 00:27:18 angelos Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.11 2001/03/08 21:50:12 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -71,32 +71,32 @@ keynote_sigver(int argc, char *argv[])
     if (fd < 0)
     {
 	perror(argv[1]);
-	exit(-1);
+	exit(1);
     }
 
     if (fstat(fd, &sb) < 0)
     {
 	perror("fstat()");
-	exit(-1);
+	exit(1);
     }
 
     if (sb.st_size == 0) /* Paranoid */
     {
 	fprintf(stderr, "Illegal assertion-file size 0\n");
-	exit(-1);
+	exit(1);
     }
 
     buf = (char *) calloc(sb.st_size + 1, sizeof(char));
     if (buf == (char *) NULL)
     {
 	perror("calloc()");
-	exit(-1);
+	exit(1);
     }
 
     if (read(fd, buf, sb.st_size) < 0)
     {
 	perror("read()");
-	exit(-1);
+	exit(1);
     }
 
     close(fd);
@@ -106,14 +106,14 @@ keynote_sigver(int argc, char *argv[])
     {
       	fprintf(stderr, "Out of memory while allocating memory for "
 		"assertions.\n");
-	exit(-1);
+	exit(1);
     }
 
     if (n == 0)
     {
 	fprintf(stderr, "No assertions found in %s.\n", argv[1]);
 	free(assertlist);
-	exit(-1);
+	exit(1);
     }
 
     free(buf);

@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.10 1999/11/03 03:17:58 angelos Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.11 2001/03/08 21:50:12 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -68,7 +68,7 @@ keynote_sign(int argc, char *argv[])
 	(argc != 7))
     {
 	signusage();
-	exit(-1);
+	exit(1);
     }
 
     if (!strcmp("-v", argv[1]))
@@ -80,7 +80,7 @@ keynote_sign(int argc, char *argv[])
         if (begin <= -1)
         {
             fprintf(stderr, "Erroneous value for print-offset parameter.\n");
-            exit(-1);
+            exit(1);
         }
     }
         
@@ -90,7 +90,7 @@ keynote_sign(int argc, char *argv[])
         if (prlen <= 0)
         {
             fprintf(stderr, "Erroneous value for print-length parameter.\n");
-            exit(-1);
+            exit(1);
         }
     }
 
@@ -103,7 +103,7 @@ keynote_sign(int argc, char *argv[])
 	if (algname == (char *) NULL)
 	{
 	    perror("calloc()");
-	    exit(-1);
+	    exit(1);
 	}
 
 	strcpy(algname, argv[1 + flg]);
@@ -117,19 +117,19 @@ keynote_sign(int argc, char *argv[])
     if (fd < 0)
     {
 	perror(argv[2 + flg]);
-	exit(-1);
+	exit(1);
     }
 
     if (fstat(fd, &sb) < 0)
     {
 	perror("fstat()");
-	exit(-1);
+	exit(1);
     }
 
     if (sb.st_size == 0) /* Paranoid */
     {
 	fprintf(stderr, "Error: zero-sized assertion-file.\n");
-	exit(-1);
+	exit(1);
     }
 
     buflen = sb.st_size + 1;
@@ -137,13 +137,13 @@ keynote_sign(int argc, char *argv[])
     if (buf == (char *) NULL)
     {
 	perror("calloc()");
-	exit(-1);
+	exit(1);
     }
 
     if (read(fd, buf, buflen - 1) < 0)
     {
 	perror("read()");
-	exit(-1);
+	exit(1);
     }
 
     close(fd);
@@ -153,32 +153,32 @@ keynote_sign(int argc, char *argv[])
     if (fd < 0)
     {
 	perror(argv[3 + flg]);
-	exit(-1);
+	exit(1);
     }
 
     if (fstat(fd, &sb) < 0)
     {
 	perror("fstat()");
-	exit(-1);
+	exit(1);
     }
 
     if (sb.st_size == 0) /* Paranoid */
     {
 	fprintf(stderr, "Illegal key-file size 0\n");
-	exit(-1);
+	exit(1);
     }
 
     buf2 = (char *) calloc(sb.st_size + 1, sizeof(char));
     if (buf2 == (char *) NULL)
     {
 	perror("calloc()");
-	exit(-1);
+	exit(1);
     }
 
     if (read(fd, buf2, sb.st_size) < 0)
     {
 	perror("read()");
-	exit(-1);
+	exit(1);
     }
 
     close(fd);
@@ -206,7 +206,7 @@ keynote_sign(int argc, char *argv[])
 		fprintf(stderr, "Unknown error while creating signature.\n");
 	}
 
-	exit(-1);
+	exit(1);
     }
 
     /* Print signature string */

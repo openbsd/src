@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.8 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.9 2001/03/08 21:50:12 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -85,13 +85,13 @@ keynote_verify(int argc, char *argv[])
     if (argc == 1)
     {
 	verifyusage();
-	exit(-1);
+	exit(1);
     }
 
     if ((buf = (char *) calloc(cl, sizeof(char))) == (char *) NULL)
     {
 	perror("calloc()");
-	exit(-1);
+	exit(1);
     }
 
 #ifdef LoopTesting
@@ -101,7 +101,7 @@ keynote_verify(int argc, char *argv[])
     if ((retv = (char **) calloc(numretv, sizeof(char *))) == (char **) NULL)
     {
 	perror("calloc()");
-	exit(-1);
+	exit(1);
     }
 
     /* "ac" and "av" are used for stress-testing, ignore otherwise */
@@ -123,7 +123,7 @@ keynote_verify(int argc, char *argv[])
 	{
 	    case 'e':
 		if (read_environment(optarg) == -1)
-	 	  exit(-1);
+	 	  exit(1);
 		se = 1;
 		break;
 
@@ -133,13 +133,13 @@ keynote_verify(int argc, char *argv[])
 		if ((fd = open(optarg, O_RDONLY, 0)) < 0)
 		{
 		    perror(optarg);
-		    exit(-1);
+		    exit(1);
 		}
 
 		if (fstat(fd, &sb) < 0)
 		{
 		    perror("fstat()");
-		    exit(-1);
+		    exit(1);
 		}
 
 		if (sb.st_size > cl - 1)
@@ -150,7 +150,7 @@ keynote_verify(int argc, char *argv[])
 		    if (buf == (char *) NULL)
 		    {
 			perror("calloc()");
-			exit(-1);
+			exit(1);
 		    }
 		}
 
@@ -158,7 +158,7 @@ keynote_verify(int argc, char *argv[])
 		if (i < 0)
 		{
 		    perror("read()");
-		    exit(-1);
+		    exit(1);
 		}
 
 		close(fd);
@@ -172,11 +172,11 @@ keynote_verify(int argc, char *argv[])
 		    case ERROR_SYNTAX:
 			fprintf(stderr, "Syntax error adding authorizer "
 				"%s\n", optarg);
-			exit(-1);
+			exit(1);
 
 		    case ERROR_MEMORY:
 			perror("Out of memory.\n");
-			exit(-1);
+			exit(1);
 
 		    default:
 			fprintf(stderr, "Unknown error (%d).\n",
@@ -194,7 +194,7 @@ keynote_verify(int argc, char *argv[])
 		{
 		    fprintf(stderr,
 			    "Do not define two sets of return values.\n");
-		    exit(-1);
+		    exit(1);
 		}
 
 		sn = 1;
@@ -216,7 +216,7 @@ keynote_verify(int argc, char *argv[])
 			     * little sloppy.
 			     */
 			    perror("calloc()");
-			    exit(-1);
+			    exit(1);
 			}
 
 			memcpy(foov, retv, numretv * sizeof(char **));
@@ -230,7 +230,7 @@ keynote_verify(int argc, char *argv[])
 		    {
 			/* Comment from above applies here as well */
 			perror("calloc()");
-			exit(-1);
+			exit(1);
 		    }
 
 		    /* Copy */
@@ -243,7 +243,7 @@ keynote_verify(int argc, char *argv[])
 		if (retv[numret] == (char *) NULL)
 		{
 		    perror("calloc()");
-		    exit(-1);
+		    exit(1);
 		}
 
 		numret++;
@@ -253,13 +253,13 @@ keynote_verify(int argc, char *argv[])
 		if ((fd = open(optarg, O_RDONLY, 0)) < 0)
 		{
 		    perror(optarg);
-		    exit(-1);
+		    exit(1);
 		}
 
 		if (fstat(fd, &sb) < 0)
 		{
 		    perror("fstat()");
-		    exit(-1);
+		    exit(1);
 		}
 
 		if (sb.st_size > cl - 1)
@@ -270,7 +270,7 @@ keynote_verify(int argc, char *argv[])
 		    if (buf == (char *) NULL)
 		    {
 			perror("calloc()");
-			exit(-1);
+			exit(1);
 		    }
 		}
 
@@ -278,7 +278,7 @@ keynote_verify(int argc, char *argv[])
 		if (i < 0)
 		{
 		    perror("read()");
-		    exit(-1);
+		    exit(1);
 		}
 
 		close(fd);
@@ -298,7 +298,7 @@ keynote_verify(int argc, char *argv[])
 	    case '?':
 	    default:
 		verifyusage();
-		exit(-1);
+		exit(1);
 	}
     }
 
@@ -314,26 +314,26 @@ keynote_verify(int argc, char *argv[])
     {
 	fprintf(stderr,
 		"Should set return values before evaluations begin.\n");
-	exit(-1);
+	exit(1);
     }
 
     if (se == 0)
     {
 	fprintf(stderr, "Should set environment before evaluations begin.\n");
-	exit(-1);
+	exit(1);
     }
 
     if (sk == 0)
     {
 	fprintf(stderr, "Should specify at least one action authorizer.\n");
-	exit(-1);
+	exit(1);
     }
 
     if (sl == 0)
     {
 	fprintf(stderr,
 		"Should specify at least one trusted assertion (POLICY).\n");
-	exit(-1);
+	exit(1);
     }
 
     while (argc--)
@@ -341,13 +341,13 @@ keynote_verify(int argc, char *argv[])
 	if ((fd = open(argv[argc], O_RDONLY, 0)) < 0)
 	{
 	    perror(argv[argc]);
-	    exit(-1);
+	    exit(1);
 	}
 
 	if (fstat(fd, &sb) < 0)
 	{
 	    perror("fstat()");
-	    exit(-1);
+	    exit(1);
 	}
 
 	if (sb.st_size > cl - 1)
@@ -358,7 +358,7 @@ keynote_verify(int argc, char *argv[])
 	    if (buf == (char *) NULL)
 	    {
 		perror("calloc()");
-		exit(-1);
+		exit(1);
 	    }
 	}
 
@@ -366,7 +366,7 @@ keynote_verify(int argc, char *argv[])
 	if (i < 0)
 	{
 	    perror("read()");
-	    exit(-1);
+	    exit(1);
 	}
 
 	close(fd);
@@ -390,23 +390,23 @@ keynote_verify(int argc, char *argv[])
     {
 	case ERROR_MEMORY:
 	    printf("<out of memory>\n");
-	    exit(-1);
+	    exit(1);
 
 	case ERROR_SYNTAX:
 	    printf("<uninitialized authorizers or all POLICY "
 		   "assertions are malformed!>\n");
-	    exit(-1);
+	    exit(1);
 
 	case ERROR_NOTFOUND:
 	    printf("<session or other information not found!>\n");
-	    exit(-1);
+	    exit(1);
 
 	case 0:	/* No errors */
 	    break;
 
 	default:
 	    printf("<should never happen (%d)!>\n", keynote_errno);
-	    exit(-1);
+	    exit(1);
     }
 
     printf("%s\n", retv[p]);

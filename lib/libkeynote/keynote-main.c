@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-main.c,v 1.6 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-main.c,v 1.7 2001/03/08 21:50:11 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
     if (argc < 2)
     {
 	mainusage();
-	exit(-1);
+	exit(1);
     }
 
     if (!strcmp(argv[1], "sign"))
@@ -78,5 +78,5 @@ main(int argc, char *argv[])
 	    keynote_keygen(argc - 1, argv + 1);
 
     mainusage();
-    exit(-1);
+    exit(1);
 }
