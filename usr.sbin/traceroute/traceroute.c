@@ -1,4 +1,5 @@
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.17 1997/06/09 00:21:16 denny Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -497,6 +498,7 @@ main(argc, argv)
 			int cc;
 			struct timeval t1, t2;
 			struct timezone tz;
+			int code;
 
 			(void) gettimeofday(&t1, &tz);
 			send_probe(++seq, ttl, &to);
@@ -506,54 +508,86 @@ main(argc, argv)
 					cc = 0;
 					break;
 				}
-				if ((i = packet_ok(packet, cc, &from, seq))) {
-					if (from.sin_addr.s_addr != lastaddr) {
-						print(packet, cc, &from);
-						lastaddr = from.sin_addr.s_addr;
-					}
-					ip = (struct ip *)packet;
-					Printf("  %g ms", deltaT(&t1, &t2));
-					if (ttl_flag)
-						Printf(" (%d)", ip->ip_ttl);
-					switch(i - 1) {
-					case ICMP_UNREACH_PORT:
+				i = packet_ok(packet, cc, &from, seq);
+				/* Skip short packet */
+				if (i == 0)
+					continue;
+				if (from.sin_addr.s_addr != lastaddr) {
+					print(packet, cc, &from);
+					lastaddr = from.sin_addr.s_addr;
+				}
+				Printf("  %g ms", deltaT(&t1, &t2));
+				ip = (struct ip *)packet;
+				if (ttl_flag)
+					Printf(" (%d)", ip->ip_ttl);
+				if (i == -2) {
 #ifndef ARCHAIC
-						ip = (struct ip *)packet;
-						if (ip->ip_ttl <= 1)
-							Printf(" !");
+					ip = (struct ip *)packet;
+					if (ip->ip_ttl <= 1)
+						Printf(" !");
+#endif
+					++got_there;
+					break;
+				}
+				/* time exceeded in transit */
+				if (i == -1)
+					break;
+				code = i - 1;
+				switch (code) {
+				case ICMP_UNREACH_PORT:
+#ifndef ARCHAIC
+					ip = (struct ip *)packet;
+					if (ip->ip_ttl <= 1)
+						Printf(" !");
 #endif ARCHAIC
-						++got_there;
-						break;
-					case ICMP_UNREACH_NET:
-						++unreachable;
-						Printf(" !N");
-						break;
-					case ICMP_UNREACH_HOST:
-						++unreachable;
-						Printf(" !H");
-						break;
-					case ICMP_UNREACH_PROTOCOL:
-						++got_there;
-						Printf(" !P");
-						break;
-					case ICMP_UNREACH_NEEDFRAG:
-						++unreachable;
-						Printf(" !F");
-						break;
-					case ICMP_UNREACH_SRCFAIL:
-						++unreachable;
-						Printf(" !S");
-						break;
-					case ICMP_UNREACH_FILTER_PROHIB:
-					case ICMP_UNREACH_NET_PROHIB: /*misuse*/
-						++unreachable;
-						Printf(" !A");
-						break;
-					case ICMP_UNREACH_HOST_PROHIB:
-						++unreachable;
-						Printf(" !C");
-						break;
-					}
+					++got_there;
+					break;
+				case ICMP_UNREACH_NET:
+					++unreachable;
+					Printf(" !N");
+					break;
+				case ICMP_UNREACH_HOST:
+					++unreachable;
+					Printf(" !H");
+					break;
+				case ICMP_UNREACH_PROTOCOL:
+					++got_there;
+					Printf(" !P");
+					break;
+				case ICMP_UNREACH_NEEDFRAG:
+					++unreachable;
+					Printf(" !F");
+					break;
+				case ICMP_UNREACH_SRCFAIL:
+					++unreachable;
+					Printf(" !S");
+					break;
+				case ICMP_UNREACH_FILTER_PROHIB:
+				case ICMP_UNREACH_NET_PROHIB: /*misuse*/
+					++unreachable;
+					Printf(" !A");
+					break;
+				case ICMP_UNREACH_HOST_PROHIB:
+					++unreachable;
+					Printf(" !C");
+					break;
+				case ICMP_UNREACH_NET_UNKNOWN:
+				case ICMP_UNREACH_HOST_UNKNOWN:
+					++unreachable;
+					Printf(" !U");
+					break;
+				case ICMP_UNREACH_ISOLATED:
+					++unreachable;
+					Printf(" !I");
+					break;
+				case ICMP_UNREACH_TOSNET:
+				case ICMP_UNREACH_TOSHOST:
+					++unreachable;
+					Printf(" !T");
+					break;
+				default:
+					++unreachable;
+					Printf(" !<%d>", i - 1);
 					break;
 				}
 			}
@@ -675,12 +709,12 @@ pr_type(t)
 	static char *ttab[] = {
 	"Echo Reply",	"ICMP 1",	"ICMP 2",	"Dest Unreachable",
 	"Source Quench", "Redirect",	"ICMP 6",	"ICMP 7",
-	"Echo",		"ICMP 9",	"ICMP 10",	"Time Exceeded",
+	"Echo",		"Router Advert",	"Router Solicit",	"Time Exceeded",
 	"Param Problem", "Timestamp",	"Timestamp Reply", "Info Request",
-	"Info Reply"
+	"Info Reply", "Mask Request", "Mask Reply"
 	};
 
-	if(t > 16)
+	if (t > 18)
 		return("OUT-OF-RANGE");
 
 	return(ttab[t]);
@@ -817,38 +851,31 @@ inetname(in)
 	struct in_addr in;
 {
 	register char *cp;
-	static char line[MAXHOSTNAMELEN];
-	struct hostent *hp;
-	static char domain[MAXHOSTNAMELEN + 1];
+	register struct hostent *hp;
 	static int first = 1;
+	static char domain[MAXHOSTNAMELEN + 1], line[MAXHOSTNAMELEN + 1];
 
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = strchr(domain, '.')))
-			(void) strcpy(domain, cp + 1);
-		else
-			domain[0] = 0;
+		    (cp = strchr(domain, '.')) != NULL) {
+			(void)strncpy(domain, cp + 1, sizeof(domain) - 1);
+			domain[sizeof(domain) - 1] = '\0';
+		} else
+			domain[0] = '\0';
 	}
-	cp = 0;
 	if (!nflag && in.s_addr != INADDR_ANY) {
-		hp = gethostbyaddr((char *)&in, sizeof (in), AF_INET);
-		if (hp) {
-			if ((cp = strchr(hp->h_name, '.')) &&
-			    !strcmp(cp + 1, domain))
-				*cp = 0;
-			cp = hp->h_name;
+		hp = gethostbyaddr((char *)&in, sizeof(in), AF_INET);
+		if (hp != NULL) {
+			if ((cp = strchr(hp->h_name, '.')) != NULL &&
+			    strcmp(cp + 1, domain) == 0)
+				*cp = '\0';
+			(void)strncpy(line, hp->h_name, sizeof(line) - 1);
+			line[sizeof(line) - 1] = '\0';
+			return (line);
 		}
 	}
-	if (cp)
-		(void) strcpy(line, cp);
-	else {
-		in.s_addr = ntohl(in.s_addr);
-#define C(x)	((x) & 0xff)
-		Sprintf(line, "%lu.%lu.%lu.%lu", C(in.s_addr >> 24),
-			C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
-	}
-	return (line);
+	return (inet_ntoa(in));
 }
 
 void
