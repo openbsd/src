@@ -1,3 +1,4 @@
+/*	$OpenBSD: mulaw.c,v 1.6 2001/05/01 01:49:48 aaron Exp $ */
 /*	$NetBSD: mulaw.c,v 1.13 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*
