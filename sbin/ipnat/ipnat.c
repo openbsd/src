@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.14 1997/06/17 10:42:08 provos Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.15 1997/06/23 01:16:16 deraadt Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -460,7 +460,7 @@ int	*resolved;
 		}
 		return np->n_net;
 	}
-	return *(u_long *)hp->h_addr;
+	return *(u_int32_t *)hp->h_addr;
 }
 
 
