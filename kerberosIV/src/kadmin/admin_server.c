@@ -117,7 +117,7 @@ static RETSIGTYPE
 sigalrm(int sig)
 {
     kerb_fini();	/* not a signal race -- kerb_fini() does NOTHING */
-    _exit(val);
+    _exit(1);
 }
 
 /*
