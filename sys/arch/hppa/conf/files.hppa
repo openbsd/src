@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.26 2000/06/07 00:41:23 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.27 2001/01/13 20:14:00 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -213,8 +213,7 @@ file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sys_machdep.c
 file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/vm_machdep.c
-#file	arch/hppa/hppa/in_cksum.S		inet
-file	netinet/in_cksum.c			inet
+file	arch/hppa/hppa/in_cksum.c		inet
 file	arch/hppa/dev/clock.c
 file	arch/hppa/hppa/fpemu.S			fpemul
 
