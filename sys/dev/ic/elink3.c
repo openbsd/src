@@ -139,6 +139,13 @@ epconfig(sc, conn)
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
+	bus_io_write_2(bc, ioh, EP_COMMAND, SET_TX_AVAIL_THRESH | 1800 );
+	GO_WINDOW(5);
+	i = bus_io_read_2(bc, ioh, EP_W5_TX_AVAIL_THRESH);
+	GO_WINDOW(1);
+	if (i == 1800*4)
+		sc->txashift = 2;
+
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = epstart;
@@ -337,13 +344,13 @@ startagain:
 
 	if (bus_io_read_2(bc, ioh, EP_W1_FREE_TX) < len + pad + 4) {
 		bus_io_write_2(bc, ioh, EP_COMMAND,
-		    SET_TX_AVAIL_THRESH | (len + pad + 4));
+		    SET_TX_AVAIL_THRESH | ((len + pad + 4) >> sc->txashift));
 		/* not enough room in FIFO */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	} else {
 		bus_io_write_2(bc, ioh, EP_COMMAND,
-		    SET_TX_AVAIL_THRESH | 2044);
+		    SET_TX_AVAIL_THRESH | (2044 >> sc->txashift));
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m0);

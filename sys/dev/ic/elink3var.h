@@ -40,7 +40,6 @@ struct ep_softc {
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
 	bus_chipset_tag_t sc_bc;	/* bus cookie			*/
 	bus_io_handle_t sc_ioh;		/* bus i/o handle		*/
-	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -48,6 +47,9 @@ struct ep_softc {
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	int	tx_succ_ok;		/* # packets sent in sequence   */
 					/* w/o underrun			*/
+
+	char    ep_connectors;		/* Connectors on this card.	*/
+	u_char	txashift;		/* shift in SET_TX_AVAIL_THRESH */
 	u_char	bustype;
 #define EP_BUS_ISA	  	0x0
 #define	EP_BUS_PCMCIA	  	0x1
