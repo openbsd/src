@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.37 2004/09/15 23:24:13 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.38 2005/01/04 09:57:04 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -122,10 +122,14 @@ Additionally, the macro
 .Em user_id
 is assigned the user name.
 .Pp
-Filter and nat rules will first be searched for in
+Filter and translation rules are stored in a file called
+.Pa authpf.rules .
+This file will first be searched for in
 .Pa /etc/authpf/users/$USER/
 and then in
 .Pa /etc/authpf/ .
+Only one of these files will be used if both are present.
+.Pp
 Per-user rules from the
 .Pa /etc/authpf/users/$USER/
 directory are intended to be used when non-default rules
@@ -133,21 +137,11 @@ are needed on an individual user basis.
 It is important to ensure that a user can not write or change
 these configuration files.
 .Pp
-Filter and translation rules are loaded from the file
-.Pa /etc/authpf/users/$USER/authpf.rules .
-If this file does not exist the file
-.Pa /etc/authpf/authpf.rules
-is used.
 The
 .Pa authpf.rules
 file must exist in one of the above locations for
 .Nm
 to run.
-.Pp
-Translation rules are also loaded from this file.
-The use of translation rules in an
-.Pa authpf.rules
-file is optional.
 .Sh CONFIGURATION
 Options are controlled by the
 .Pa /etc/authpf/authpf.conf
