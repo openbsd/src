@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2001/05/13 17:19:56 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2001/06/27 04:05:45 art Exp $
 #	$NetBSD: genassym.cf,v 1.11 1998/02/16 20:58:29 thorpej Exp $
 
 #
@@ -47,9 +47,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
@@ -157,11 +155,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
