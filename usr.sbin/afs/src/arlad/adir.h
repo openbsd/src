@@ -1,4 +1,4 @@
-/*	$OpenBSD: adir.h,v 1.1.1.1 1998/09/14 21:52:54 art Exp $	*/
+/*	$OpenBSD: adir.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +41,7 @@
  * Interface to directory handling routines
  */
 
-/* $KTH: adir.h,v 1.8 1998/03/18 14:14:17 assar Exp $ */
+/* $KTH: adir.h,v 1.10 1998/11/14 04:04:02 lha Exp $ */
 
 #ifndef _ADIR_H_
 #define _ADIR_H_
@@ -52,6 +52,20 @@
 
 int adir_lookup (VenusFid dir, const char *name, VenusFid *file,
 		 CredCacheEntry *ce);
+
+int
+adir_lookup_fcacheentry (FCacheEntry *centry,  const char *name,
+			 VenusFid *file, CredCacheEntry *ce);
+
+int
+adir_changefid (VenusFid dir,
+		const char *name,
+		VenusFid *file,
+		CredCacheEntry *ce);
+
+int
+adir_emptyp (VenusFid dir,
+	     CredCacheEntry *ce);
 
 int adir_readdir (VenusFid dir,
 		  void (*)(VenusFid *, const char *name, void *), 

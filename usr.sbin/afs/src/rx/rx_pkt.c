@@ -1,12 +1,15 @@
-/*	$OpenBSD: rx_pkt.c,v 1.1.1.1 1998/09/14 21:53:16 art Exp $	*/
+/*	$OpenBSD: rx_pkt.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_pkt.c,v 1.9 1998/03/14 13:40:22 assar Exp $");
+RCSID("$KTH: rx_pkt.c,v 1.11 1999/03/04 01:44:19 assar Exp $");
 
 struct rx_packet *rx_mallocedP = 0;
 struct rx_cbuf *rx_mallocedC = 0;
 
-char cml_version_number[4711];	       /* XXX - What is this? */
+/* string to send to rxdebug */
+#define CML_VERSION_NUMBER_SIZE 65
+static char cml_version_number[CML_VERSION_NUMBER_SIZE]= PACKAGE "-" VERSION ; 
+
 extern int (*rx_almostSent) ();
 
 /*
@@ -623,6 +626,11 @@ rxi_ReadPacket(int socket, struct rx_packet *p,
     p->wirevec[--p->niovecs].iov_base = NULL;
     p->wirevec[p->niovecs].iov_len = 0;
 
+    if (nbytes < 0) {
+	/* ignore error? */
+	return 0;
+    }
+
     p->length = (nbytes - RX_HEADER_SIZE);
     if ((nbytes > tlen) || (nbytes < (int)RX_HEADER_SIZE)) { /* Bogus packet */
 	if (nbytes > 0)
@@ -674,7 +682,9 @@ osi_NetSend(osi_socket socket, char *addr, struct iovec *dvec,
 	fd_set sfds;
 
 	rx_stats.sendSelects++;
-	if (errno != EWOULDBLOCK && errno != ENOBUFS) {
+	if (errno != EWOULDBLOCK
+	    && errno != ENOBUFS
+	    && errno != ECONNREFUSED) {
 	    (osi_Msg "rx failed to send packet: ");
 	    perror("rx_send");	       /* translates the message to English */
 	    return 3;
@@ -1010,7 +1020,7 @@ rxi_ReceiveVersionPacket(struct rx_packet *ap, osi_socket asocket,
 {
     long tl;
 
-    rx_packetwrite(ap, 0, 65, cml_version_number + 4);
+    rx_packetwrite(ap, 0, CML_VERSION_NUMBER_SIZE, cml_version_number);
     tl = ap->length;
     ap->length = 65;
     rxi_SendDebugPacket(ap, asocket, ahost, aport);

@@ -1,6 +1,6 @@
-/*	$OpenBSD: recvmsg.c,v 1.1.1.1 1998/09/14 21:53:06 art Exp $	*/
+/*	$OpenBSD: recvmsg.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: recvmsg.c,v 1.1 1998/03/29 01:24:44 assar Exp $");
+RCSID("$KTH: recvmsg.c,v 1.2 1998/09/08 03:17:51 assar Exp $");
 #endif
 
 #include "roken.h"
@@ -68,6 +68,7 @@ recvmsg(int s, struct msghdr *msg, int flags)
 	memcpy (iov->iov_base, p, cnt);
 	p += cnt;
 	nb -= cnt;
+	++iov;
     }
     free(buf);
     return ret;

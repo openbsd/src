@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.c,v 1.1.1.1 1998/09/14 21:52:57 art Exp $	*/
+/*	$OpenBSD: kernel.c,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -38,7 +38,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: kernel.c,v 1.12 1998/07/13 19:19:02 assar Exp $");
+RCSID("$KTH: kernel.c,v 1.17 1998/12/06 20:48:40 lha Exp $");
 
 /*
  * The fd we use to talk with the kernel on.
@@ -54,26 +54,42 @@ static unsigned recv_count[20];
 
 static unsigned recv_count_overflow;
 
-static int
-process_message (int fd)
+/*
+ * Number of workers used and high
+ */
+
+static unsigned long workers_high, workers_used;
+
+
+unsigned long
+kernel_highworkers(void)
 {
-     static char data[MAX_XMSG_SIZE];
-     int res;
+    return workers_high;
+}
+
+unsigned long
+kernel_usedworkers(void)
+{
+    return workers_used;
+}
+
+/*
+ *
+ */
+
+static int
+process_message (int msg_length, char *msg)
+{
      struct xfs_message_header *header;
      char *p;
      int cnt;
 
-     res = read (fd, data, sizeof (data));
-
-     if (res < 0) {
-	  arla_warn (ADEBWARN, errno, "read");
-	  /* XXX process the errno? Are we supposed to exit on every error?*/
-	  return -1;
-     }
      cnt = 0;
-     for (p = data; res > 0; p += header->size, res -= header->size) {
+     for (p = msg;
+	  msg_length > 0;
+	  p += header->size, msg_length -= header->size) {
 	 header = (struct xfs_message_header *)p;
-	 xfs_message_receive (fd, header, header->size);
+	 xfs_message_receive (kernel_fd, header, header->size);
 	 ++cnt;
      }
      if (cnt < sizeof(recv_count)/sizeof(recv_count[0]))
@@ -84,15 +100,65 @@ process_message (int fd)
      return 0;
 }
 
+/*
+ * The work threads.
+ */
+
+struct worker {
+    char data[MAX_XMSG_SIZE];
+    PROCESS pid;
+    int  msg_length;
+    int  busyp;
+    int  number;
+} *workers;
+
+static void
+sub_thread (void *v_myself)
+{
+    struct worker *self = (struct worker *)v_myself;
+
+    for (;;) {
+	arla_warnx (ADEBKERNEL, "worker %d waiting", self->number);
+	LWP_WaitProcess (self);
+	self->busyp = 1;
+	++workers_used;
+	arla_warnx (ADEBKERNEL, "worker %d: processing", self->number);
+	process_message (self->msg_length, self->data);
+	arla_warnx (ADEBKERNEL, "worker %d: done", self->number);
+	--workers_used;
+	self->busyp = 0;
+    }
+}
+
+#define WORKER_STACKSIZE (16*1024)
+
 void
-kernel_interface (char *device)
+kernel_interface (struct kernel_args *args)
 {
      int fd;
+     int i;
 
-     fd = open (device, O_RDWR);
+     fd = open (args->device, O_RDWR);
      if (fd < 0)
-	 arla_err (1, ADEBERROR, errno, "open %s", device);
+	 arla_err (1, ADEBERROR, errno, "open %s", args->device);
      kernel_fd = fd;
+
+     workers = malloc (sizeof(*workers) * args->num_workers);
+     if (workers == NULL)
+	 arla_err (1, ADEBERROR, errno, "malloc %u failed",
+		   sizeof(*workers) * args->num_workers);
+
+     workers_high = args->num_workers;
+     workers_used = 0;
+ 
+    for (i = 0; i < args->num_workers; ++i) {
+	 workers[i].busyp  = 0;
+	 workers[i].number = i;
+	 if (LWP_CreateProcess (sub_thread, WORKER_STACKSIZE, 1,
+				(char *)&workers[i],
+				"worker", &workers[i].pid))
+	     arla_errx (1, ADEBERROR, "CreateProcess of worker failed");
+     }
 
      arla_warnx(ADEBKERNEL, "Arla: selecting on fd: %d", fd);
 
@@ -111,9 +177,21 @@ kernel_interface (char *device)
 	      arla_warnx (ADEBKERNEL,
 			  "Arla: select returned with 0. strange.");
 	  else if (FD_ISSET(fd, &readset)) {
-	      
-	      if (process_message (fd))
-		  arla_errx (1, ADEBKERNEL, "error processing message");
+	      for (i = 0; i < args->num_workers; ++i) {
+		  if (workers[i].busyp == 0) {
+		      ret = read (fd, workers[i].data,
+				  sizeof(workers[i].data));
+		      if (ret <= 0) {
+			  arla_warn (ADEBWARN, errno, "read");
+		      } else {
+			  workers[i].msg_length = ret;
+			  LWP_SignalProcess (&workers[i]);
+		      }
+		      break;
+		  }
+	      }
+	      if (i == args->num_workers)
+		  arla_warnx (ADEBWARN, "kernel: all workers busy");
 	  }
      }
 }

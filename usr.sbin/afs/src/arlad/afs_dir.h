@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_dir.h,v 1.1.1.1 1998/09/14 21:52:54 art Exp $	*/
+/*	$OpenBSD: afs_dir.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +41,7 @@
  * The directory structure used by AFS.
  */
 
-/* $KTH: afs_dir.h,v 1.4 1998/02/21 17:19:59 assar Exp $ */
+/* $KTH: afs_dir.h,v 1.5 1998/12/01 22:45:14 assar Exp $ */
 
 #ifndef _AFS_DIR_
 #define _AFS_DIR_
@@ -50,9 +50,9 @@
 #define ADIRHASHSIZE 128
 #define ENTRIESPERPAGE 64
 
-#define MAXPAGES 128
+/* number of pages in map */
 
-/* Is this really so? */
+#define MAXPAGES 128
 
 /*
  * We only save vnode and unique in the directory. Everything else is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: koerror.c,v 1.1.1.1 1998/09/14 21:53:00 art Exp $	*/
+/*	$OpenBSD: koerror.c,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: koerror.c,v 1.7 1998/04/03 03:36:32 assar Exp $");
+RCSID("$KTH: koerror.c,v 1.11 1999/03/19 08:21:45 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -49,13 +49,16 @@ RCSID("$KTH: koerror.c,v 1.7 1998/04/03 03:36:32 assar Exp $");
 
 #include <vldb.h>
 #include <volumeserver.h>
+#include <pts.h>
 #ifdef KERBEROS
-#include <kerberosIV/krb.h>
+#include <krb.h>
 #include <des.h>
+#include <rx/rx.h>
+#include <rx/rxgencon.h>
 #include <rxkad.h>
 #endif
 #include <ko.h>
-
+#include <fs_errors.h>
 
 struct koerr {
     koerr_t code;
@@ -116,6 +119,32 @@ static struct koerr koerrmsg[] = {
     {VOLSERMULTIRWVOL,        "More then one read/write volume."},
     {VOLSERFAILEDOP,          "Failed volume server operation."},
 
+    {PREXIST, 		      "Entry exist."},
+    {PRIDEXIST,		      "Id exist."},
+    {PRNOIDS,		      "No Ids."},
+    {PRDBFAIL,		      "Protection-database failed."},
+    {PRNOENT,		      "No entry."},
+    {PRPERM,		      "Permission denied."},
+    {PRNOTGROUP,	      "Not a group."},
+    {PRNOTUSER,	              "Not a user."},
+    {PRBADNAM,	              "Bad name."},
+    {PRBADARG,	              "Bad argument."},
+    {PRNOMORE,	              "No more (?)."},
+    {PRDBBAD,	              "Protection-database went bad."},
+    {PRGROUPEMPTY,	      "Empty group."},
+    {PRINCONSISTENT,	      "Database inconsistency."},
+    {PRBADDR,	              "Bad address."},
+    {PRTOOMANY,	              "Too many."},
+
+    {RXGEN_CC_MARSHAL,	      "rxgen - cc_marshal"},
+    {RXGEN_CC_UNMARSHAL,      "rxgen - cc_unmarshal"},
+    {RXGEN_SS_MARSHAL,	      "rxgen - ss_marshal"},
+    {RXGEN_SS_UNMARSHAL,      "rxgen - ss_unmarshal"},
+    {RXGEN_DECODE,	      "rxgen - decode"},
+    {RXGEN_OPCODE,	      "rxgen - opcode"},
+    {RXGEN_SS_XDRFREE,	      "rxgen - ss_xdrfree"},
+    {RXGEN_CC_XDRFREE,	      "rxgen - cc_xdrfree"},
+
 #ifdef KERBEROS
     /* rxkad - XXX more sane messages */
 
@@ -134,6 +163,20 @@ static struct koerr koerrmsg[] = {
     {RXKADILLEGALLEVEL,       "rxkad - Illegal level."},
 
 #endif
+
+    {ARLA_VSALVAGE,           "arla-fs-error - salvaging"},
+    {ARLA_VNOVNODE,           "arla-fs-error - no such vnode"},
+    {ARLA_VNOVOL,             "arla-fs-error - no such volume"},
+    {ARLA_VVOLEXISTS,         "arla-fs-error - volume already exists"},
+    {ARLA_VNOSERVICE,         "arla-fs-error - no service"},
+    {ARLA_VOFFLINE,           "arla-fs-error - volume offline"},
+    {ARLA_VONLINE,            "arla-fs-error - volume online"},
+    {ARLA_VDISKFULL,          "arla-fs-error - disk full"},
+    {ARLA_VOVERQUOTA,         "arla-fs-error - quoua full"},
+    {ARLA_VBUSY,              "arla-fs-error - busy volume"},
+    {ARLA_VMOVED,             "arla-fs-error - moved volume"},
+    {ARLA_VIO,                "arla-fs-error - I/O error"},
+    {ARLA_VRESTARTING,        "arla-fs-error - restarting"},
 
     /* Not a known error */
 

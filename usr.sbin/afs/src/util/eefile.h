@@ -1,6 +1,6 @@
-/*	$OpenBSD: mem.h,v 1.1.1.1 1998/09/14 21:53:24 art Exp $	*/
+/*	$OpenBSD: eefile.h,v 1.1 1999/04/30 01:59:16 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,14 +37,25 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: mem.h,v 1.2 1997/11/09 23:48:55 assar Exp $ */
+/* $KTH: eefile.h,v 1.1 1999/02/27 11:02:39 assar Exp $ */
 
-#ifndef _MEM_
-#define _MEM_
+#ifndef _EEFILE_
+#define _EEFILE_
 
+#include <stdio.h>
 #include <stdlib.h>
 
-void *emalloc(size_t sz);
-void *erealloc(void *ptr, size_t sz);
+struct _fileblob {
+  FILE *stream;
+  char *curname;
+  char *newname;
+};
 
-#endif /* _MEM_ */
+typedef struct _fileblob fileblob;
+void eefopen(const char *name, const char *mode, fileblob *f);
+void eefclose(fileblob *);
+size_t eefread (void *ptr, size_t size, size_t nitems, fileblob *stream);
+size_t eefwrite (const void *ptr, size_t size, size_t nitems,
+		 fileblob *stream);
+
+#endif /* _EEFILE_ */

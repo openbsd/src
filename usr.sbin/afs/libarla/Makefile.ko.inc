@@ -1,7 +1,7 @@
 ### ko stuff
 OS_VER	!= uname -r
 
-SRCS		+= koerror.c kocell.c ports.c kodebug.c
+SRCS		+= koerror.c kocell.c ports.c kodebug.c vlmisc.c
 SRCS		+= sysname.c
 CLEANFILES	+= sysname.c gensysname
 CFLAGS		+= -I${.CURDIR}/../src/lib/ko

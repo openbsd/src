@@ -1,6 +1,6 @@
-/*	$OpenBSD: efile.h,v 1.1.1.1 1998/09/14 21:53:22 art Exp $	*/
+/*	$OpenBSD: efile.h,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: efile.h,v 1.2 1997/11/09 23:48:47 assar Exp $ */
+/* $KTH: efile.h,v 1.3 1999/02/27 11:04:50 assar Exp $ */
 
 #ifndef _EFILE_
 #define _EFILE_
@@ -45,7 +45,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-FILE *efopen(char *name, char *mode);
+FILE *efopen(const char *name, const char *mode);
 void efclose(FILE *);
 size_t efread (void *ptr, size_t size, size_t nitems, FILE *stream);
 size_t efwrite (const void *ptr, size_t size, size_t nitems, FILE *stream);

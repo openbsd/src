@@ -1,4 +1,4 @@
-/*	$OpenBSD: rxkad_locl.h,v 1.1.1.1 1998/09/14 21:53:19 art Exp $	*/
+/*	$OpenBSD: rxkad_locl.h,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,12 +37,12 @@
  * SUCH DAMAGE.
  */
 
-/* @(#)$KTH: rxkad_locl.h,v 1.8 1998/03/28 16:35:49 lha Exp $ */
+/* @(#)$KTH: rxkad_locl.h,v 1.9 1998/10/23 02:15:47 lha Exp $ */
 
 #ifndef __RXKAD_LOCL_H
 #define __RXKAD_LOCL_H
 
-/* $KTH: rxkad_locl.h,v 1.8 1998/03/28 16:35:49 lha Exp $ */
+/* $KTH: rxkad_locl.h,v 1.9 1998/10/23 02:15:47 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -61,13 +61,17 @@
 #endif
 
 #ifdef NDEBUG
+#ifndef assert
 #define assert(e) ((void)0)
+#endif
 #else
+#ifndef assert
 #define assert(e) ((e) ? (void)0 : (void)osi_Panic("assert(%s) failed: file %s, line %d\n", #e, __FILE__, __LINE__, #e))
+#endif
 #endif
 
 #include <des.h>
-#include <kerberosIV/krb.h>
+#include <krb.h>
 
 #undef RCSID
 #include <rx/rx.h>

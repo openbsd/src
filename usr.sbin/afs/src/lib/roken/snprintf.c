@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.1.1.1 1998/09/14 21:53:08 art Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: snprintf.c,v 1.7 1998/03/18 19:31:44 art Exp $");
+RCSID("$KTH: snprintf.c,v 1.8 1998/12/20 15:52:38 assar Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -61,12 +61,12 @@ enum format_flags {
  */
 
 struct state {
-  char *str;
-  char *s;
-  char *theend;
+  unsigned char *str;
+  unsigned char *s;
+  unsigned char *theend;
   size_t sz;
   size_t max_sz;
-  int (*append_char)(struct state *, char);
+  int (*append_char)(struct state *, unsigned char);
   int (*reserve)(struct state *, size_t);
   /* XXX - methods */
 };
@@ -80,7 +80,7 @@ sn_reserve (struct state *state, size_t n)
 
 
 static int
-sn_append_char (struct state *state, char c)
+sn_append_char (struct state *state, unsigned char c)
 {
   if (sn_reserve (state, 1)) {
     return 1;
@@ -96,7 +96,7 @@ as_reserve (struct state *state, size_t n)
 {
   if (state->s + n > state->theend) {
     int off = state->s - state->str;
-    char *tmp;
+    unsigned char *tmp;
 
     if (state->max_sz && state->sz >= state->max_sz)
       return 1;
@@ -115,7 +115,7 @@ as_reserve (struct state *state, size_t n)
 }
 
 static int
-as_append_char (struct state *state, char c)
+as_append_char (struct state *state, unsigned char c)
 {
   if(as_reserve (state, 1))
     return 1;
@@ -127,7 +127,7 @@ as_append_char (struct state *state, char c)
 
 static int
 append_number(struct state *state,
-	      unsigned long num, unsigned base, char *rep,
+	      unsigned long num, unsigned base, unsigned char *rep,
 	      int width, int prec, int flags, int minusp)
 {
   int len = 0;
@@ -216,7 +216,7 @@ append_number(struct state *state,
 
 static int
 append_string (struct state *state,
-	       char *arg,
+	       unsigned char *arg,
 	       int width,
 	       int prec,
 	       int flags)
@@ -247,7 +247,7 @@ append_string (struct state *state,
 
 static int
 append_char(struct state *state,
-	    char arg,
+	    unsigned char arg,
 	    int width,
 	    int flags)
 {
@@ -281,9 +281,10 @@ else \
  */
 
 static int
-xyzprintf (struct state *state, const char *format, va_list ap)
+xyzprintf (struct state *state, const char *char_format, va_list ap)
 {
-  char c;
+  const unsigned char *format = (const unsigned char *)char_format;
+  unsigned char c;
 
   while((c = *format++)) {
     if (c == '%') {
@@ -358,7 +359,7 @@ xyzprintf (struct state *state, const char *format, va_list ap)
 	break;
       case 's' :
 	if (append_string(state,
-			  va_arg(ap, char*),
+			  va_arg(ap, unsigned char*),
 			  width,
 			  prec, 
 			  flags))

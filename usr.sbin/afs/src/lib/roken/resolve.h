@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.1.1.1 1998/09/14 21:53:06 art Exp $	*/
+/*	$OpenBSD: resolve.h,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,16 +37,12 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: resolve.h,v 1.2 1998/05/23 05:59:01 assar Exp $ */
+/* $KTH: resolve.h,v 1.3 1999/01/03 01:44:53 assar Exp $ */
 
 #ifndef __RESOLVE_H__
 #define __RESOLVE_H__
 
 /* We use these, but they are not always present in <arpa/nameser.h> */
-
-#ifndef T_A
-#define T_A		1
-#endif
 
 #ifndef T_TXT
 #define T_TXT		16
@@ -95,6 +91,10 @@ struct resource_record{
 
 #ifndef T_A /* XXX if <arpa/nameser.h> isn't included */
 typedef int HEADER; /* will never be used */
+#endif
+
+#ifndef T_A
+#define T_A 1
 #endif
 
 struct dns_reply{

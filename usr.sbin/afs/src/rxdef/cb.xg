@@ -6,9 +6,12 @@
 
 package RXAFSCB_
 
-%#include <atypes.h>
-%#include <rx/rx.h>
-%#include <rx/rx_null.h>
+%#include <config.h>
+%#include <roken.h>
+%#include <fs_errors.h>
+
+error-function conv_to_arla_errno
+
 /*%#include "fs.h"*/
 
 /*

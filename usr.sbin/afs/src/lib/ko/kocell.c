@@ -1,6 +1,6 @@
-/*	$OpenBSD: kocell.c,v 1.1.1.1 1998/09/14 21:53:00 art Exp $	*/
+/*	$OpenBSD: kocell.c,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,16 +41,8 @@
  * Cell information
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-#include <stdio.h>
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
+#include "ko_locl.h"
+
 #ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
 #endif
@@ -59,32 +51,18 @@
 #endif
 
 #ifdef KERBEROS
-#include <kerberosIV/krb.h>
+#include <krb.h>
 #endif
 
-#include "ko_locl.h"
 #include "resolve.h"
 
-RCSID("$KTH: kocell.c,v 1.13 1998/07/28 14:54:08 assar Exp $");
+RCSID("$KTH: kocell.c,v 1.19 1999/01/04 23:11:00 assar Exp $");
 
 #define TRANSARCSYSCONFDIR "/usr/vice/etc"
 #define CELLFILENAME "CellServDB"
 #define THISCELLFILENAME "ThisCell"
-
+#define SUIDCELLSFILENAME "SuidCells"
 #define DEFCELLCACHESIZE 499
-
-typedef struct {
-     const char *name;
-     struct in_addr addr;
-} DbServerEntry;
-
-typedef struct {
-     int32_t id;		/* Cell-ID */
-     const char *name;		/* Domain-style name */
-     const char *expl;		/* Longer name */
-     unsigned ndbservs;		/* # of database servers */
-     DbServerEntry *dbservs;	/* Database servers */
-} CellEntry;
 
 /*
  * hash tables by name and by number
@@ -105,8 +83,8 @@ static char *thiscell = NULL;
 static int
 cellnamecmp (void *a, void *b)
 {
-     CellEntry *c1 = (CellEntry *)a;
-     CellEntry *c2 = (CellEntry *)b;
+     cell_entry *c1 = (cell_entry *)a;
+     cell_entry *c2 = (cell_entry *)b;
 
      return strcmp (c1->name, c2->name);
 }
@@ -114,7 +92,7 @@ cellnamecmp (void *a, void *b)
 static unsigned
 cellnamehash (void *a)
 {
-     CellEntry *c = (CellEntry *)a;
+     cell_entry *c = (cell_entry *)a;
 
      return hashadd (c->name);
 }
@@ -122,8 +100,8 @@ cellnamehash (void *a)
 static int
 cellnumcmp (void *a, void *b)
 {
-     CellEntry *c1 = (CellEntry *)a;
-     CellEntry *c2 = (CellEntry *)b;
+     cell_entry *c1 = (cell_entry *)a;
+     cell_entry *c2 = (cell_entry *)b;
 
      return c1->id != c2->id;
 }
@@ -131,9 +109,36 @@ cellnumcmp (void *a, void *b)
 static unsigned
 cellnumhash (void *a)
 {
-     CellEntry *c = (CellEntry *)a;
+     cell_entry *c = (cell_entry *)a;
 
      return c->id;
+}
+
+/*
+ * New cell from cellserver-database file
+ */
+
+static cell_entry *
+newcell (char *line)
+{
+     char *hash;
+     cell_entry *c;
+     int len;
+
+     len = strcspn (line, " \t#");
+     line[len] = '\0';
+     c = cell_new (line);
+     if (c == NULL)
+	 err (1, "malloc failed");
+
+     line += len + 1;
+     hash = strchr (line, '#');
+     if (hash != NULL) {
+	  c->expl = strdup (hash+1);
+	  if (c->expl == NULL)
+	      err (1, "strdup");
+     }
+     return c;
 }
 
 /*
@@ -141,58 +146,145 @@ cellnumhash (void *a)
  */
 
 static void
-recordcell (CellEntry *c, int dbnum, DbServerEntry *dbservs)
+recordcell (cell_entry *c, int dbnum, cell_db_entry *dbservers)
 {
      if(dbnum == 0)
 	  KODEB (KODEBMISC, ("No db-servers for cell %s\n", c->name));
 
-     c->ndbservs = dbnum;
-     c->dbservs  = (DbServerEntry*)malloc (dbnum * sizeof(DbServerEntry));
-     if (c->dbservs == NULL)
-	 err (1, "malloc %u", dbnum * sizeof(DbServerEntry));
-     memcpy (c->dbservs, dbservs, dbnum * sizeof (DbServerEntry));
-							 
-     hashtabadd (cellnamehtab, c);
-     hashtabadd (cellnumhtab, c);
+     c->ndbservers  = dbnum;
+     c->dbservers = (cell_db_entry *)malloc (dbnum * sizeof(cell_db_entry));
+     if (c->dbservers == NULL)
+	 err (1, "malloc %u", dbnum * sizeof(cell_db_entry));
+     memcpy (c->dbservers, dbservers, dbnum * sizeof (cell_db_entry));
 }
 
 /*
- * New cell from cellserver-database file
+ * try to lookup `cell' in DNS
  */
 
-static CellEntry *
-newcell (const char *line, int *dbnum)
+static void
+try_to_find_cell(const char *cell)
 {
-     static long cellno = 0;
-     char *hash;
-     CellEntry *c;
-     int len;
-     char *tmp;
+    struct dns_reply *r;
+    struct resource_record *rr;
+    cell_entry *c = NULL;
+    int dbnum = 0;
+    cell_db_entry dbservers[256];
 
-     c = (CellEntry *)malloc (sizeof (*c));
-     if (c == NULL)
-	 err (1, "malloc %u", sizeof(*c));
-     len = strcspn (line, " \t#");
-     tmp = malloc (len + 1);
-     if (tmp == NULL)
-	 err (1, "strdup");
-     strncpy (tmp, line, len);
-     tmp[len] = '\0';
-     c->name = tmp;
-     if (strcmp (c->name, cell_getthiscell ()) == 0)
-	  c->id = 0;
-     else
-	  c->id = ++cellno;
-     line += len + 1;
-     hash = strchr (line, '#');
-     if (hash != NULL) {
-	  c->expl = strdup (hash+1);
-	  if (c->expl == NULL)
-	      err (1, "strdup");
-     } else
-	  c->expl = NULL;
-     *dbnum = 0;
-     return c;
+    r = dns_lookup(cell, "AFSDB");
+    if (r == NULL)
+	return;
+    for(rr = r->head; rr;rr=rr->next){
+	switch(rr->type){
+	case T_AFSDB: {
+	    struct mx_record *mx = (struct mx_record*)rr->u.data;
+
+	    if (mx->preference != 1) {
+		KODEB (KODEBMISC,
+		       ("Ignoring host with cell type %d in cell %s",
+			mx->preference, c->name));
+		break;
+	    }
+	    if (c == NULL)
+		c = cell_new (cell);
+	    if (dbnum >= sizeof (dbservers) / sizeof(*dbservers)) {
+		KODEB (KODEBMISC, ("Too many database servers for "
+				   "cell %s. Ignoring\n", c->name));
+	        break;
+	    }
+	    dbservers[dbnum].name = strdup (mx->domain);
+	    if (dbservers[dbnum].name == NULL)
+		err (1, "strdup");
+	    dbservers[dbnum].addr.s_addr = inet_addr ("0.0.0.0");
+	    ++dbnum;
+	    break;
+	}
+	}
+    }
+    for(rr = r->head; rr;rr=rr->next){
+	int i;
+
+	switch(rr->type){
+	case T_A: {
+	    for (i = 0; i < dbnum; i++) {
+		if (strcmp(dbservers[i].name,rr->domain) == 0) {
+		    dbservers[i].addr = *(rr->u.a);
+		    break;
+		}
+	    }
+	}
+	}
+    }
+    if (c)
+	recordcell (c, dbnum, dbservers);
+    dns_free_data(r);
+}
+
+/*
+ *
+ */
+
+cell_entry *
+cell_get_by_name (const char *cellname)
+{
+    cell_entry key, *data;
+
+    key.name = cellname;
+    data = (cell_entry *)hashtabsearch (cellnamehtab, &key);
+    if (data == NULL) {
+	try_to_find_cell (cellname);
+	data = (cell_entry *)hashtabsearch (cellnamehtab, &key);
+    }
+    return data;
+}
+
+/*
+ *
+ */
+
+cell_entry *
+cell_get_by_id (int32_t cell)
+{
+    cell_entry key;
+
+    key.id = cell;
+    return (cell_entry *)hashtabsearch (cellnumhtab, &key);
+}
+
+/*
+ * cells are assigned monotonically increasing numbers
+ */
+
+static long cellno = 0;
+
+/*
+ *
+ */
+
+cell_entry *
+cell_new (const char *name)
+{
+    cell_entry *c;
+
+    c = (cell_entry *)malloc (sizeof (*c));
+    if (c == NULL)
+	return NULL;
+    c->name = strdup (name);
+    if (c->name == NULL) {
+	free (c);
+	return NULL;
+    }
+    if (strcmp (c->name, cell_getthiscell ()) == 0)
+	c->id = 0;
+    else
+	c->id = ++cellno;
+    c->expl       = NULL;
+    c->ndbservers = 0;
+    c->dbservers  = NULL;
+    c->suid_cell = NOSUID_CELL;
+    hashtabadd (cellnamehtab, c);
+    hashtabadd (cellnumhtab, c);
+    return c;
 }
 
 /*
@@ -200,8 +292,8 @@ newcell (const char *line, int *dbnum)
  */
 
 static int
-readdb (char *line, CellEntry* c, int *dbnum, int maxdbs,
-	DbServerEntry *dbservs, int lineno)
+readdb (char *line, cell_entry* c, int *dbnum, int maxdbs,
+	cell_db_entry *dbservs, int lineno)
 {
      struct in_addr numaddr;
      char *hostname;
@@ -236,10 +328,10 @@ readcellservdb (const char *filename)
 {
      FILE *f;
      char line[256];
-     CellEntry *c = NULL;
+     cell_entry *c = NULL;
      int lineno = 0;
      int dbnum;
-     DbServerEntry dbservs[256];
+     cell_db_entry dbservs[256];
 
      f = fopen (filename, "r");
      if (f == NULL) {
@@ -260,7 +352,8 @@ readcellservdb (const char *filename)
 	  if (*line == '>') {
 	       if (c != NULL)
 		    recordcell (c, dbnum, dbservs);
-	       c = newcell (line + 1, &dbnum);
+	       c = newcell (line + 1);
+	       dbnum = 0;
 	  } else {
 	       if (readdb(line, c, &dbnum, sizeof (dbservs) /
 			  sizeof(*dbservs),
@@ -295,11 +388,48 @@ readthiscell (const char *filename)
 		  filename);
 	  return 1;
      }
+     cell[sizeof(cell)-1] = '\0';
      if (cell[strlen(cell) - 1] == '\n')
 	 cell[strlen(cell) - 1] = '\0';
      thiscell = strdup (cell);
      if (thiscell == NULL)
 	 err (1, "strdup");
+     fclose (f);
+     return 0;
+}
+
+/*
+ * Read suidcells file and set suidcell flag
+ */
+
+static int
+readsuidcell (const char *filename)
+{
+     FILE *f;
+     char cell[256];
+
+     f = fopen (filename, "r");
+     if (f == NULL) {
+	 fprintf(stderr, "Can't open file %s.\n", filename);
+	 return 1;
+     }
+
+     while (fgets (cell, sizeof(cell), f) != NULL) {
+	 int i;
+	 cell_entry *e;
+
+	 cell[sizeof(cell)-1] = '\0';
+	 i = strlen (cell);
+	 if (cell[i - 1] == '\n')
+	     cell[i - 1] = '\0';
+
+	 e = cell_get_by_name (cell);
+	 if (e == NULL) {
+	     fprintf (stderr, "cell %s doesn't exist in the db\n", cell);
+	 } else {
+	     e->suid_cell = SUID_CELL;
+	 }
+     }
      fclose (f);
      return 0;
 }
@@ -348,61 +478,30 @@ cell_init (int cellcachesize)
 		    "will use DNS AFSDB entries\n");
 	}
     }
+    if (readsuidcell (SYSCONFDIR "/" SUIDCELLSFILENAME)) {
+	fprintf (stderr, "Falling back on: " TRANSARCSYSCONFDIR "\n");
+	if (readsuidcell (TRANSARCSYSCONFDIR "/" SUIDCELLSFILENAME))
+	    fprintf (stderr, "Cant read suid cells, ignoring\n");
+    }
 }
 
 /*
- * Find a DB server to talk to for a given cell.
+ * Return all db servers for `cell' with the count in `num'.
+ * NULL on error.
  */
 
-struct in_addr
-cell_finddbserver (int32_t cell)
+const cell_db_entry *
+cell_dbservers (int32_t cell, int *num)
 {
-     CellEntry key;
-     CellEntry *data;
-     struct in_addr addr;
+    cell_entry *data = cell_get_by_id (cell);
 
-     key.id = cell;
-     data = hashtabsearch (cellnumhtab, &key);
-     if (data == NULL) {
-	  KODEB (KODEBMISC, ("Cannot find cell %d\n", cell));
-	  return addr;
-     }
-     if (data->ndbservs == 0) {
-	  KODEB (KODEBMISC, ("No DB servers for cell %d\n", cell));
-	  return addr;
-     }
-     if (ipgetaddr (data->dbservs[0].name, &addr))
-	  return addr;
-     else
-	  return data->dbservs[0].addr;
-}
-
-/*
- * Return DB server number "index" for a given cell.
- */
-
-u_long
-cell_listdbserver (int32_t cell, int index)
-{
-    CellEntry key;
-    CellEntry *data;
-    struct in_addr addr;
-    
-    key.id = cell;
-    data = hashtabsearch (cellnumhtab, &key);
     if (data == NULL) {
 	KODEB (KODEBMISC, ("Cannot find cell %d\n", cell));
-	return 0;
+	return NULL;
     }
-    if (data->ndbservs <= index) {
-	return 0;
-    }
-    if (ipgetaddr (data->dbservs[index].name, &addr))
-	return addr.s_addr;
-    else
-	return data->dbservs[index].addr.s_addr;
+    *num = data->ndbservers;
+    return data->dbservers;
 }
-
 
 /*
  * Find the name of DB server to talk to for a given cell.
@@ -414,80 +513,18 @@ cell_listdbserver (int32_t cell, int index)
 const char *
 cell_findnamedbbyname (const char *cell)
 {
-     CellEntry key;
-     CellEntry *data;
+     cell_entry *data = cell_get_by_name (cell);
 
-     key.name = cell;
-     data = hashtabsearch (cellnamehtab, &key);
      if (data == NULL) {
 	  KODEB (KODEBMISC, ("Cannot find cell %d\n", cell));
 	  return NULL;
      }
-     if (data->ndbservs == 0) {
+     if (data->ndbservers == 0) {
 	  KODEB (KODEBMISC, ("No DB servers for cell %d\n", cell));
 	  return NULL;
      }
-     return data->dbservs[0].name ;
+     return data->dbservers[0].name ;
 }
-
-static void
-try_to_find_cell(const char *cell)
-{
-    struct dns_reply *r;
-    struct resource_record *rr;
-    CellEntry *c = NULL;
-    int dbnum;
-    DbServerEntry dbservs[256];
-
-    r = dns_lookup(cell, "AFSDB");
-    if (r == NULL)
-	return;
-    for(rr = r->head; rr;rr=rr->next){
-	switch(rr->type){
-	case T_AFSDB: {
-	    struct mx_record *mx = (struct mx_record*)rr->u.data;
-
-	    if (mx->preference != 1) {
-		KODEB (KODEBMISC,
-		       ("Ignoring host with cell type %d in cell %s",
-			mx->preference, c->name));
-		break;
-	    }
-	    if (c == NULL)
-		c = newcell (cell, &dbnum);
-	    if (dbnum >= sizeof (dbservs) / sizeof(*dbservs)) {
-		KODEB (KODEBMISC, ("Too many database servers for "
-				   "cell %s. Ignoring\n", c->name));
-	        break;
-	    }
-	    dbservs[dbnum].name = strdup (mx->domain);
-	    if (dbservs[dbnum].name == NULL)
-		err (1, "strdup");
-	    dbservs[dbnum].addr.s_addr = inet_addr ("0.0.0.0");
-	    ++dbnum;
-	    break;
-	}
-	}
-    }
-    for(rr = r->head; rr;rr=rr->next){
-	int i;
-
-	switch(rr->type){
-	case T_A: {
-	    for (i = 0; i < dbnum; i++) {
-		if (strcmp(dbservs[i].name,rr->domain) == 0) {
-		    dbservs[i].addr = *(rr->u.a);
-		    break;
-		}
-	    }
-	}
-	}
-    }
-    if (c)
-	recordcell (c, dbnum, dbservs);
-    dns_free_data(r);
-}
-
 
 /*
  * Get the cell of the host
@@ -522,20 +559,12 @@ cell_getcellbyhost(const char *host)
 int32_t
 cell_name2num (const char *cell)
 {
-     CellEntry key, *data;
+     cell_entry *data = cell_get_by_name (cell);
 
-     key.name = cell;
-     data = hashtabsearch (cellnamehtab, (void *)&key);
-     if (data)
-	  return data->id;
-     else {
-	 try_to_find_cell(cell);
-	 data = hashtabsearch (cellnamehtab, (void *)&key);
-	 if (data)
-	     return data->id;
-	 else
-	     return -1;
-     }
+     if (data != NULL)
+	 return data->id;
+     else
+	 return -1;
 }
 
 /*
@@ -545,11 +574,9 @@ cell_name2num (const char *cell)
 const char *
 cell_num2name (int32_t cell)
 {
-    CellEntry key, *data;
+    cell_entry *data = cell_get_by_id (cell);
 
-    key.id = cell;
-    data = hashtabsearch (cellnumhtab, (void *)&key);
-    if (data)
+    if (data != NULL)
 	return data->name;
     else
 	return NULL;
@@ -563,4 +590,48 @@ const char *
 cell_getthiscell (void)
 {
      return thiscell;
+}
+
+/*
+ * Return if this is a suid cell
+ */
+
+Bool
+cell_issuid (cell_entry *c)
+{
+    assert (c);
+
+    return c->suid_cell == SUID_CELL;
+}
+
+Bool
+cell_issuid_by_num (int32_t cell)
+{
+    cell_entry *c = cell_get_by_id (cell);
+    if (c == NULL)
+	return FALSE;
+    
+    return cell_issuid (c);
+}
+
+Bool
+cell_issuid_by_name (const char *cell)
+{
+    cell_entry *c = cell_get_by_name (cell);
+    if (c == NULL)
+	return FALSE;
+    
+    return cell_issuid (c);
+}
+
+Bool
+cell_setsuid_by_num (int32_t cell)
+{
+    cell_entry *c = cell_get_by_id (cell);
+    if (c == NULL)
+	return FALSE;
+    
+    c->suid_cell = SUID_CELL;
+
+    return 0;
 }

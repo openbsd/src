@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,8 +39,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: lex.l,v 1.1.1.1 1998/09/14 21:53:27 art Exp $");
+RCSID("$Id: lex.l,v 1.2 1999/04/30 01:59:19 art Exp $");
 #endif
+
+/*
+ * This is to handle the definition of this symbol in some AIX
+ * headers, which will conflict with the definition that lex will
+ * generate for it.  It's only a problem for AIX lex.
+ */
 
 #undef ECHO
 
@@ -64,10 +70,10 @@ static void parse_lineno (char *s);
 %}
 
 %%
-^\#[ ][0-9]+[ ]\"[^\n\"]*\".*$	{ parse_filename (yytext); }
-^\#line[ ][0-9]+[ ]\"[^\n\"]*\".*$	{ parse_filename (yytext); }
-^\#[ ][0-9]+			{ parse_lineno (yytext); }
-^\#line[ ][0-9]+		{ parse_lineno (yytext); }
+^\#[ ][0-9]+[ ]\"[^\n\"]*\".*\n	{ parse_filename (yytext); }
+^\#line[ ][0-9]+[ ]\"[^\n\"]*\".*\n	{ parse_filename (yytext); }
+^\#[ ][0-9]+.*\n		{ parse_lineno (yytext); }
+^\#line[ ][0-9]+.*\n		{ parse_lineno (yytext); }
 ^\#ident.*$			{ }
 const				{ return T_CONST; }
 enum				{ return T_ENUM; }
@@ -88,6 +94,9 @@ char				{ return T_CHAR; }
 string				{ return T_STRING; }
 opaque				{ return T_OPAQUE; }
 package				{ return T_PACKAGE; }
+prefix				{ return T_PREFIX; }
+proc				{ return T_PROC; }
+error-function			{ return T_ERROR_FUNCTION; }
 split				{ return T_SPLIT; }
 multi				{ return T_MULTI; }
 IN				{ return T_IN; }
@@ -111,11 +120,11 @@ if (sym == NULL) {
 else if (sym->type == TTYPEDEF || sym->type == TENUM || sym->type == TSTRUCT)
     return T_IDTYPE;
 else
-    error_message ("Ignoring \"%s\"\n", yytext);
+    error_message (0, "Ignoring \"%s\"\n", yytext);
 }
 [ \t]				;
 \n				{ lineno++; }
-.				{ error_message("Ignoring char(%c)\n", *yytext); }
+.				{ error_message(0, "Ignoring char(%c)\n", *yytext); }
 %%
 
 #ifndef yywrap
@@ -127,7 +136,7 @@ yywrap (void)
 #endif /* !yywrap */
 
 void
-error_message (char *format, ...)
+error_message (int errorp, char *format, ...)
 {
      va_list args;
 
@@ -135,6 +144,8 @@ error_message (char *format, ...)
      fprintf (stderr, "%s:%d: ", filename, lineno);
      vfprintf (stderr, format, args);
      va_end (args);
+     if (errorp)
+	 parse_errors = 1;
 }
 
 static void

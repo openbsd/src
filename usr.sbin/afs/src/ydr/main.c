@@ -1,6 +1,6 @@
-/*	$OpenBSD: main.c,v 1.1.1.1 1998/09/14 21:53:27 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 1999/04/30 01:59:19 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,14 +39,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: main.c,v 1.9 1998/03/13 04:46:33 assar Exp $");
+RCSID("$KTH: main.c,v 1.15 1999/03/01 08:45:13 assar Exp $");
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <mem.h>
+#include <roken.h>
 #include <fnameutil.h>
 #include "sym.h"
 #include "output.h"
@@ -54,6 +54,8 @@ RCSID("$KTH: main.c,v 1.9 1998/03/13 04:46:33 assar Exp $");
 #include <roken.h>
 
 extern FILE *yyin;
+
+int parse_errors;
 
 /*
  * ydr - generate stub routines for encode/decoding and RX
@@ -110,9 +112,32 @@ main (int argc, char **argv)
     yyin = popen (arg, "r");
     free (arg);
     ret = yyparse ();
-    generate_server_switch (serverfile, serverhdrfile);
+    generate_server_switch (serverfile.stream, serverhdrfile.stream);
+    generate_tcpdump_patches (td_file.stream, filename);
     pclose (yyin);
     close_generator (filename);
     unlink (tmp_filename);
-    return ret;
+
+    if (getenv("USER") && strcmp(getenv("USER"), "art") == 0) {
+	char *foo;
+	
+	if (asprintf(&foo, "indent %s.cs.c", filename) > 0) {
+	    system(foo);
+	    free(foo);
+	}
+	if (asprintf(&foo, "indent %s.ss.c", filename) > 0) {
+	    system(foo);
+	    free(foo);
+	}
+	if (asprintf(&foo, "indent %s.ydr.c", filename) > 0) {
+	    system(foo);
+	    free(foo);
+	}
+	if (asprintf(&foo, "indent %s.h", filename) > 0) {
+	    system(foo);
+	    free(foo);
+	}
+    }
+
+    return ret + parse_errors;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.1.1.1 1998/09/14 21:53:23 art Exp $	*/
+/*	$OpenBSD: list.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +43,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: list.c,v 1.7 1998/07/05 18:25:55 assar Exp $");
+RCSID("$KTH: list.c,v 1.10 1998/12/27 02:11:06 assar Exp $");
 #endif
 
 #include <assert.h>
@@ -163,16 +163,6 @@ listaddtail (List *list, void *data)
 }
 
 /*
- * TRUE iff the list is empty.
- */
-
-Bool
-listemptyp (List *list)
-{
-     return list->head == NULL;
-}
-
-/*
  * Remove an element from the head of the list.
  * Return this element.
  */
@@ -236,36 +226,6 @@ listdel (List *list, Listitem *item)
      if (item == list->tail)
 	  list->tail = item->prev;
      free (item);
-}
-
-Listitem *
-listhead (List *list)
-{
-     return list->head;
-}
-
-Listitem *
-listtail (List *list)
-{
-     return list->tail;
-}
-
-Listitem *
-listprev (List *list, Listitem *item)
-{
-     return item->prev;
-}
-
-Listitem *
-listnext (List *list, Listitem *item)
-{
-     return item->next;
-}
-
-void *
-listdata (Listitem *item)
-{
-     return item->data;
 }
 
 /*

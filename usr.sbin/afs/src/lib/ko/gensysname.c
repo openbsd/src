@@ -1,6 +1,6 @@
-/*	$OpenBSD: gensysname.c,v 1.1.1.1 1998/09/14 21:53:00 art Exp $	*/
+/*	$OpenBSD: gensysname.c,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,9 +39,11 @@
 
 #include "ko_locl.h"
 
-RCSID("$KTH: gensysname.c,v 1.13 1998/08/23 22:50:24 assar Exp $");
+RCSID("$KTH: gensysname.c,v 1.24 1999/01/04 23:21:29 lha Exp $");
 
 typedef int (*test_sysname)(void);
+typedef void (*gen_sysname)(char*, size_t, const char*, 
+			    const char*, const char*);
 
 struct sysname {
     const char *sysname;
@@ -49,9 +51,10 @@ struct sysname {
     const char *vendor;
     const char *os;
     test_sysname atest;
+    gen_sysname gen;
 };
 
-enum { O_C, O_TEXT, O_MACHINE } output = O_TEXT;
+enum { OUTPUT_C, OUTPUT_TEXT, OUTPUT_MACHINE } output = OUTPUT_TEXT;
 
 /* 
  * HELP:
@@ -76,17 +79,48 @@ linux_glibc_test(void)
     return ret == 0;
 }
 
+#ifdef HAVE_SYS_UTSNAME_H
+static void
+bsd_gen_sysname(char *buf, 
+		size_t len, 
+		const char *cpu, 
+		const char *vendor, 
+		const char *os)
+{
+    struct utsname uts;
+    int major, minor;
+    const char *name;
+    if(uname(&uts) < 0) {
+	warn("uname");
+	strcpy(buf, "bsdhost");
+	return;
+    }
+    if(strcmp(uts.sysname, "FreeBSD") == 0)
+	name = "fbsd";
+    else if(strcmp(uts.sysname, "NetBSD") == 0)
+	name = "nbsd";
+    else if(strcmp(uts.sysname, "OpenBSD") == 0)
+	name = "obsd";
+    else if(strcmp(uts.sysname, "BSD/OS") == 0)
+	name = "bsdi";
+    else
+	name = "bsd";
+    /* this is perhaps a bit oversimplified */
+    if(sscanf(uts.release, "%d.%d", &major, &minor) == 2)
+	snprintf(buf, len, "%s_%s%d%d", uts.machine, name, major, minor);
+    else
+	snprintf(buf, len, "%s_%s", uts.machine, name);
+}
+#endif
+
 struct sysname sysnames[] = {
-    { "sparc_nbsd13", "sparc", "*", "netbsd1.3*", NULL },
-    { "sparc_obsd23", "sparc", "*", "openbsd2.3*", NULL },
     { "sparc_linux6", "sparc", "*", "linux-gnu*", &linux_glibc_test },
     { "sparc_linux5", "sparc", "*", "linux-gnu*", NULL },
-    { "i386_obsd23", "i*86*", "*", "openbsd2.3*", NULL },
-    { "i386_fbsd30", "i*86*", "*", "freebsd3.0*", NULL },
     { "i386_linux6", "i*86*", "*pc*", "linux-gnu*", &linux_glibc_test },
     { "i386_linux5", "i*86*", "*pc*", "linux-gnu*", NULL },
     { "alpha_linux6", "alpha", "*", "linux-gnu*", &linux_glibc_test },
     { "alpha_linux5", "alpha", "*", "linux-gnu*", NULL },
+    { "alpha_dux40",  "alpha", "*", "osf4.0*", NULL },
     { "sun4x_54",     "sparc", "*", "solaris2.4*", NULL },
     { "sun4x_551",    "sparc", "*", "solaris2.5.1*", NULL },
     { "sun4x_55",     "sparc", "*", "solaris2.5*", NULL },
@@ -97,6 +131,11 @@ struct sysname sysnames[] = {
     { "sunx86_55",    "i386", "*", "solaris2.5*", NULL },
     { "sunx86_56",    "i386", "*", "solaris2.6*", NULL },
     { "sunx86_57",    "i386", "*", "solaris2.7*", NULL },
+    { "i386_nt35",    "i*86*", "*", "cygwin*", NULL },
+#ifdef HAVE_SYS_UTSNAME_H
+    /* catch-all bsd entry */
+    { "",	      "*",    "*", "*bsd*",       NULL, &bsd_gen_sysname },
+#endif
     {NULL}
 };
 
@@ -104,14 +143,14 @@ static void
 printsysname(const char *sysname)
 {
     switch (output) {
-    case O_TEXT:
+    case OUTPUT_TEXT:
 	printf("%s\n", sysname);
 	break;
-    case O_MACHINE:
+    case OUTPUT_MACHINE:
 	printf("%s\n", sysname);
 	break;
-    case O_C:
-	printf("/* Generated from $KTH: gensysname.c,v 1.13 1998/08/23 22:50:24 assar Exp $ */\n");
+    case OUTPUT_C:
+	printf("/* Generated from $KTH: gensysname.c,v 1.24 1999/01/04 23:21:29 lha Exp $ */\n");
 	printf("const char *arla_getsysname(void) { return \"%s\" ; }\n", 
 	       sysname);
 	break;
@@ -143,7 +182,7 @@ struct getargs args[] = {
 static void
 usage(void)
 {
-    arg_printusage(args, NULL, "[sysname]");
+    arg_printusage(args, NULL, "[sysname]", 0);
     exit(1);
     
 }
@@ -190,14 +229,14 @@ main(int argc, char **argv)
 	usage();
 
     if (versionflag)
-	errx(0, "Version: $KTH: gensysname.c,v 1.13 1998/08/23 22:50:24 assar Exp $");
+	errx(0, "Version: $KTH: gensysname.c,v 1.24 1999/01/04 23:21:29 lha Exp $");
 
     if (ccodeflag)
-	output = O_C;
+	output = OUTPUT_C;
     if (humanflag)
-	output = O_TEXT;
+	output = OUTPUT_TEXT;
     if (machineflag)
-	output = O_MACHINE;
+	output = OUTPUT_MACHINE;
 
     if (sysnameflag) {
 	printf ("%s-%s-%s\n", cpu, vendor, os);
@@ -221,13 +260,20 @@ main(int argc, char **argv)
     try_parsing (&argc, &argv, &os);
 
     while (sysname->sysname && !found) {
+	char sn[64];
 	if (!strmatch(sysname->cpu, cpu) &&
 	    !strmatch(sysname->vendor, vendor) &&
 	    !strmatch(sysname->os, os) &&
 	    (sysname->atest == NULL || ((*(sysname->atest))()))) {
 	    
 	    found = 1;
-	    printsysname(sysname->sysname);   
+	    if(sysname->gen != NULL)
+		(*sysname->gen)(sn, sizeof(sn), cpu, vendor, os);
+	    else {
+		strncpy(sn, sysname->sysname, sizeof(sn));
+		sn[sizeof(sn) - 1] = '\0';
+	    }
+	    printsysname(sn);   
 	}
 	sysname++;
     }

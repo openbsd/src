@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbuf.h,v 1.1.1.1 1998/09/14 21:52:56 art Exp $	*/
+/*	$OpenBSD: fbuf.h,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: fbuf.h,v 1.5 1998/02/22 08:09:09 assar Exp $ */
+/* $KTH: fbuf.h,v 1.7 1998/11/19 16:18:46 assar Exp $ */
 
 #ifndef _FBUF_H_
 #define _FBUF_H_
@@ -56,6 +56,8 @@ typedef struct fbuf fbuf;
 int fbuf_create (fbuf *fbuf, int fd, size_t len, fbuf_flags flags);
 int fbuf_truncate (fbuf *fbuf, size_t new_len);
 int fbuf_end (fbuf *fbuf);
+size_t fbuf_len (fbuf *f);
+void *fbuf_buf (fbuf *f);
 
 int copyrx2fd (struct rx_call *call, int fd, size_t len);
 int copyfd2rx (int fd, struct rx_call *call, size_t len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbuf.c,v 1.1.1.1 1998/09/14 21:52:56 art Exp $	*/
+/*	$OpenBSD: fbuf.c,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -38,17 +38,21 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: fbuf.c,v 1.16 1998/07/29 13:37:29 assar Exp $") ;
+RCSID("$KTH: fbuf.c,v 1.22 1998/12/25 20:25:58 assar Exp $") ;
 
 #ifdef BROKEN_MMAP
 #undef HAVE_MMAP
 #endif
 
-#if defined(HAVE_MMAP) && !defined(MAP_FAILED)
+#ifdef HAVE_MMAP
+
+#if !defined(MAP_FAILED)
 #define MAP_FAILED ((void *)(-1))
 #endif
 
-#ifdef HAVE_MMAP
+/*
+ * Map fbuf_flags in `flags' to mmap dito
+ */
 
 static int
 mmap_flags (fbuf_flags flags)
@@ -61,6 +65,11 @@ mmap_flags (fbuf_flags flags)
 	ret = MAP_SHARED;
     return ret;
 }
+
+/*
+ * Create a fbuf with (fd, len, flags).
+ * Returns 0 or error.
+ */
 
 static int
 mmap_create (fbuf *f, int fd, size_t len, fbuf_flags flags)
@@ -83,6 +92,12 @@ mmap_create (fbuf *f, int fd, size_t len, fbuf_flags flags)
     return 0;
 }
 
+/*
+ * Change the size of the underlying file and the fbuf to `new_len'
+ * bytes.
+ * Returns 0 or error.
+ */
+
 static int
 mmap_truncate (fbuf *f, size_t new_len)
 {
@@ -103,6 +118,11 @@ mmap_truncate (fbuf *f, size_t new_len)
     return mmap_create (f, f->fd, new_len, f->flags);
 }
 
+/*
+ * End using `f'.
+ * Returns 0 or error.
+ */
+
 static int
 mmap_end (fbuf *f)
 {
@@ -115,51 +135,65 @@ mmap_end (fbuf *f)
     return ret;
 }
 
+/*
+ * Copy `len' bytes from the rx call `call' to the file `fd'.
+ * Returns 0 or error
+ */
+
 static int 
 mmap_copyrx2fd (struct rx_call *call, int fd, size_t len)
 {
     void *buf;
     int r_len;
-    int save_errno;
+    int ret = 0;
 	     
+    if (len == 0)
+	return 0;
+
     if(ftruncate (fd, len) < 0)
 	return errno;
     buf = mmap (0, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (buf == (void *) MAP_FAILED)
 	return errno;
     r_len = rx_Read (call, buf, len);
-    save_errno = errno;
+    if (r_len != len)
+	ret = rx_Error(call);
     munmap (buf, len);
     ftruncate (fd, len);
-    close (fd);
-    if (r_len != len) {
-	return save_errno;
-    } else {
-	return 0;
-    }
+    return ret;
 }
+
+/*
+ * Copy `len' bytes from `fd' to `call'.
+ * Returns 0 or error.
+ */
 
 static int
 mmap_copyfd2rx (int fd, struct rx_call *call, size_t len)
 {
     void *buf;
     int r_write;
-    int save_errno;
+    int ret = 0;
+
+    if (len == 0)
+	return 0;
 
     buf = mmap (0, len, PROT_READ, MAP_PRIVATE, fd, 0);
     if (buf == (void *) MAP_FAILED)
 	return errno;
     r_write = rx_Write (call, buf, len);
-    save_errno = errno;
-    munmap (buf, len);
-    close (fd);
     if (r_write != len)
-	return save_errno;
-    else
-	return 0;
+	ret = rx_Error(call);
+    munmap (buf, len);
+    return ret;
 }
 
 #else /* !HAVE_MMAP */
+
+/*
+ * Create a fbuf with (fd, len, flags).
+ * Returns 0 or error.
+ */
 
 static int
 malloc_create (fbuf *f, int fd, size_t len, fbuf_flags flags)
@@ -171,7 +205,8 @@ malloc_create (fbuf *f, int fd, size_t len, fbuf_flags flags)
 	close(fd);
 	return ENOMEM;
     }
-    if (read (fd, buf, len) != len) {
+    if (lseek(fd, 0, SEEK_SET) == -1 ||
+	read (fd, buf, len) != len) {
 	free(buf);
 	close(fd);
 	return errno;
@@ -182,6 +217,11 @@ malloc_create (fbuf *f, int fd, size_t len, fbuf_flags flags)
     f->flags = flags;
     return 0;
 }
+
+/*
+ * Write out the data of `f' to the file.
+ * Returns 0 or error.
+ */
 
 static int
 malloc_flush (fbuf *f)
@@ -194,6 +234,11 @@ malloc_flush (fbuf *f)
     return 0;
 }
 
+/*
+ * End using `f'.
+ * Returns 0 or error.
+ */
+
 static int
 malloc_end (fbuf *f)
 {
@@ -204,6 +249,12 @@ malloc_end (fbuf *f)
     close (f->fd);
     return ret;
 }
+
+/*
+ * Change the size of the underlying file and the fbuf to `new_len'
+ * bytes.
+ * Returns 0 or error.
+ */
 
 static int
 malloc_truncate (fbuf *f, size_t new_len)
@@ -237,6 +288,11 @@ fail:
     return ret;
 }
 
+/*
+ * Copy `len' bytes from the rx call `call' to the file `fd'.
+ * Returns 0 or error
+ */
+
 static int 
 malloc_copyrx2fd (struct rx_call *call, int fd, size_t len)
 {
@@ -246,6 +302,9 @@ malloc_copyrx2fd (struct rx_call *call, int fd, size_t len)
     u_long nread;
     size_t reallen = len;
     int ret = 0;
+
+    if (len == 0)
+	return 0;
 
     if (fstat (fd, &statbuf)) {
 	arla_warn (ADEBFBUF, errno, "fstat");
@@ -267,10 +326,14 @@ malloc_copyrx2fd (struct rx_call *call, int fd, size_t len)
     }
     if (ftruncate (fd, reallen) < 0)
 	ret = errno;
-    close (fd);
     free (buf);
     return ret;
 }
+
+/*
+ * Copy `len' bytes from `fd' to `call'.
+ * Returns 0 or error.
+ */
 
 static int
 malloc_copyfd2rx (int fd, struct rx_call *call, size_t len)
@@ -280,6 +343,9 @@ malloc_copyfd2rx (int fd, struct rx_call *call, size_t len)
     u_long bufsize;
     u_long nread;
     int ret = 0;
+
+    if (len == 0)
+	return 0;
 
     if (fstat (fd, &statbuf)) {
 	arla_warn (ADEBFBUF, errno, "fstat");
@@ -299,11 +365,30 @@ malloc_copyfd2rx (int fd, struct rx_call *call, size_t len)
 	}
 	len -= nread;
     }
-    close (fd);
     free (buf);
     return ret;
 }
 #endif /* !HAVE_MMAP */
+
+/*
+ * Accessor functions.
+ */
+
+size_t
+fbuf_len (fbuf *f)
+{
+    return f->len;
+}
+
+/*
+ * 
+ */
+
+void *
+fbuf_buf (fbuf *f)
+{
+    return f->buf;
+}
 
 /*
  * Return a pointer to a copy of this file contents. If we have mmap,
@@ -364,6 +449,8 @@ copyrx2fd (struct rx_call *call, int fd, size_t len)
 
 /*
  * Copy from a file descriptor to a RX call.
+ *
+ * Returns: error number if failed
  */
 
 int

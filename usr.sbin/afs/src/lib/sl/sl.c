@@ -1,4 +1,4 @@
-/*	$OpenBSD: sl.c,v 1.1.1.1 1998/09/14 21:53:10 art Exp $	*/
+/*	$OpenBSD: sl.c,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,10 +39,26 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: sl.c,v 1.3 1998/06/21 21:35:58 lha Exp $");
+RCSID("$KTH: sl.c,v 1.6 1999/03/06 17:57:07 lha Exp $");
 #endif
 
 #include "sl_locl.h"
+
+static size_t __attribute__ ((unused))
+print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
+{
+    if(mdoc){
+	if(longp)
+	    fprintf(stream, "= Ns");
+	fprintf(stream, " Ar ");
+    }else
+	if (longp)
+	    putc ('=', stream);
+	else
+	    putc (' ', stream);
+
+    return 1;
+}
 
 static void
 mandoc_template(SL_cmd *cmds,
@@ -282,4 +298,12 @@ sl_loop (SL_cmd *cmds, char *prompt)
     }
     free (ptr);
     return 0;
+}
+
+void
+sl_apropos (SL_cmd *cmd, char *topic)
+{
+    for (; cmd->name != NULL; ++cmd)
+        if (cmd->usage != NULL && strstr(cmd->usage, topic) != NULL)
+	    printf ("%-20s%s\n", cmd->name, cmd->usage);
 }

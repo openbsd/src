@@ -1,4 +1,4 @@
-/*	$OpenBSD: rxk_serv.c,v 1.1.1.1 1998/09/14 21:53:20 art Exp $	*/
+/*	$OpenBSD: rxk_serv.c,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +43,7 @@
 #include <krb5.h>
 #endif
 
-RCSID("$KTH: rxk_serv.c,v 1.4 1998/02/22 21:12:27 lha Exp $");
+RCSID("$KTH: rxk_serv.c,v 1.5 1999/04/18 22:21:43 map Exp $");
 
 /* Security object specific server data */
 typedef struct rxkad_serv_class {
@@ -330,7 +330,8 @@ decode_krb4_ticket(rxkad_serv_class *obj,
   {
     time_t end = krb_life_to_time(start, klife);
     time_t now = time(0);
-    start -= CLOCK_SKEW;
+    if (start > CLOCK_SKEW) /* Transarc sends 0 as start if localauth */
+      start -= CLOCK_SKEW;
     if (now < start)
       return RXKADNOAUTH;
     else if (now > end)

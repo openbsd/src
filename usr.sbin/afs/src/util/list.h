@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.h,v 1.1.1.1 1998/09/14 21:53:23 art Exp $	*/
+/*	$OpenBSD: list.h,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,12 +41,13 @@
  * list handling functions
  */
 
-/* $KTH: list.h,v 1.4 1998/07/05 18:25:00 assar Exp $ */
+/* $KTH: list.h,v 1.9 1999/01/11 02:24:33 rb Exp $ */
 
 #ifndef _LIST_
 #define _LIST_
 
 #include "bool.h"
+#include <roken.h>
 
 struct listitem {
      void *data;
@@ -81,19 +82,53 @@ void *listdelhead (List *list);
 
 void *listdeltail (List *list);
 
-Bool listemptyp (List *list);
-
-Listitem *listhead (List *list);
-
-Listitem *listtail (List *list);
-
-Listitem *listprev (List *list, Listitem *item);
-
-Listitem *listnext (List *list, Listitem *item);
-
-void *listdata (Listitem *item);
-
 void listiter (List *list, Bool (*fn)(List *, Listitem *, void *arg),
 	       void *arg);
+
+/*
+ * inline functions
+ */
+
+static inline Listitem * __attribute__ ((unused))
+listhead (List *list)
+{
+     return list->head;
+}
+
+static inline Listitem * __attribute__ ((unused))
+listtail (List *list)
+{
+    return list->tail;
+}
+
+static inline Listitem * __attribute__ ((unused))
+listprev (List *list, Listitem *item)
+{
+    return item->prev;
+}
+
+static inline Listitem * __attribute__ ((unused))
+listnext (List *list, Listitem *item)
+{
+     return item->next;
+}
+
+static inline void * __attribute__ ((unused))
+listdata (Listitem *item)
+{
+     return item->data;
+}
+
+static inline Bool __attribute__ ((unused))
+listemptyp (List *list)
+{
+     return (Bool)(list->head == NULL);
+}
+
+static inline Bool __attribute__ ((unused))
+listnextp(Listitem *item)
+{
+    return (Bool)(item->next != NULL);
+}
 
 #endif /* _LIST_ */

@@ -1,6 +1,6 @@
-/*	$OpenBSD: timeprio.h,v 1.1.1.1 1998/09/14 21:53:26 art Exp $	*/
+/*	$OpenBSD: erealloc.c,v 1.1 1999/04/30 01:59:12 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,34 +37,26 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _TIMEPRIO_H
-#define _TIMEPRIO_H 1
-
-#include <time.h>
-#include "prio.h"
-#include "bool.h"
-
-typedef struct tpel {
-    time_t time;
-    void *data;
-} Tpel;
-
-typedef Prio	Timeprio;
-
-Timeprio *timeprionew(unsigned size);
-
-void timepriofree(Timeprio *prio);
-
-int  timeprioinsert(Timeprio *prio, time_t time, void *data);
-
-void *timepriohead(Timeprio *prio);
-
-void timeprioremove(Timeprio *prio);
-
-Bool timeprioemptyp(Timeprio *prio);
-
-time_t timepriotimehead(Timeprio *prio);
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+RCSID("$KTH: erealloc.c,v 1.2 1999/02/13 05:10:56 assar Exp $");
 #endif
 
+#include <stdlib.h>
+#include <err.h>
 
+#include <roken.h>
+
+/*
+ * Like realloc but never fails.
+ */
+
+void *
+erealloc (void *ptr, size_t sz)
+{
+    void *tmp = realloc (ptr, sz);
+
+    if (tmp == NULL && sz != 0)
+	err (1, "realloc %u", sz);
+    return tmp;
+}

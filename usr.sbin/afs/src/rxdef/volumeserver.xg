@@ -2,72 +2,78 @@
  * Interface to Volumeserver, 
  * reference /afs/nada.kth.se/misc/reference/programming/afs/shadow/
  *
- * $Id: volumeserver.xg,v 1.1.1.1 1998/09/14 21:53:18 art Exp $
+ * $Id: volumeserver.xg,v 1.2 1999/04/30 01:59:16 art Exp $
  */
 
 package VOLSER_
 
-%#include <atypes.h>
-%#include <rx/rx.h>
-%#include <rx/rx_null.h>
+%#include <config.h>
+%#include <roken.h>
+%#include <fs_errors.h>
 
-const VLDB_MAXSERVER = 80;
-const VOLSERVICE_PORT = 7005;
-const VOLSERVICE_ID = 4;
-const INVALID_BID = 0;
-const VOLSER_MAXVOLNAME = 65;
-const VOLSER_OLDMAXVOLNAME = 32;
-const VOLSER_MAX_REPSITES = 7;
-const VNAMESIZE = 32;
+error-function conv_to_arla_errno
 
+const VLDB_MAXSERVER		= 80;
+const VOLSERVICE_PORT		= 7005;
+const VOLSERVICE_ID		= 4;
+const INVALID_BID		= 0;
+const VOLSER_MAXVOLNAME		= 65;
+const VOLSER_OLDMAXVOLNAME	= 32;
+const VOLSER_MAX_REPSITES	= 7;
+const VNAMESIZE			= 32;
 
-const VOLCREATEVOLUME = 100;
-const VOLDELETEVOLUME = 101;
-const VOLRESTORE = 102;
-const VOLFORWARD = 103;
-const VOLENDTRANS = 104;
-const VOLCLONE = 105;
-const VOLSETFLAGS = 106;
-const VOLGETFLAGS = 107;
-const VOLTRANSCREATE = 108;
-const VOLDUMP = 109;
-const VOLGETNTHVOLUME = 110;
-const VOLSETFORWARDING = 111;
-const VOLGETNAME = 112;
-const VOLGETSTATUS = 113;
-const VOLSIGRESTORE = 114;
-const VOLLISTPARTITIONS = 115;
-const VOLLISTVOLS = 116;
-const VOLSETIDTYPES = 117;
-const VOLMONITOR = 118;
-const VOLDISKPART = 119;
-const VOLRECLOSE = 120;
-const VOLLISTONEVOL = 121;
-const VOLNUKE = 122;
-const VOLSETDATE = 123;
+const VOLCREATEVOLUME	= 100;
+const VOLDELETEVOLUME	= 101;
+const VOLRESTORE	= 102;
+const VOLFORWARD	= 103;
+const VOLENDTRANS	= 104;
+const VOLCLONE		= 105;
+const VOLSETFLAGS	= 106;
+const VOLGETFLAGS	= 107;
+const VOLTRANSCREATE	= 108;
+const VOLDUMP		= 109;
+const VOLGETNTHVOLUME	= 110;
+const VOLSETFORWARDING	= 111;
+const VOLGETNAME	= 112;
+const VOLGETSTATUS	= 113;
+const VOLSIGNALRESTORE	= 114;
+const VOLLISTPARTITIONS	= 115;
+const VOLLISTVOLUMES	= 116;
+const VOLSETIDTYPES	= 117;
+const VOLMONITOR	= 118;
+const VOLPARTITIONINFO	= 119;
+const VOLRECLONE	= 120;
+const VOLLISTONEVOLUME	= 121;
+const VOLNUKEVOLUME	= 122;
+const VOLSETDATE	= 123;
+const VOLXLISTVOLUMES	= 124;
+const VOLXLISTONEVOL	= 125;
+const VOLSETINFO	= 126;
+const VOLXLISTPARTITIONS= 127;
+const VOLFORWARDMULTIPLE= 128;
 
-const PARTVALID = 0x01;
-const VOK = 0x02;
-const VBUSY = 110;
+const PARTVALID	= 0x01;
+const VOK	= 0x02;
+const VBUSY	= 110;
 
-const VOLSERTRELE_ERROR       = 1492325120 ;
-const VOLSERNO_OP             = 1492325121 ;
-const VOLSERREAD_DUMPERROR    = 1492325122 ;
-const VOLSERDUMPERROR         = 1492325123 ;
-const VOLSERATTACH_ERROR      = 1492325124 ;
-const VOLSERILLEGAL_PARTITION = 1492325125 ;
-const VOLSERDETACH_ERROR      = 1492325126 ;
-const VOLSERBAD_ACCESS        = 1492325127 ;
-const VOLSERVLDB_ERROR        = 1492325128 ;
-const VOLSERBADNAME           = 1492325129 ;
-const VOLSERVOLMOVED          = 1492325130 ;
-const VOLSERBADOP             = 1492325131 ;
-const VOLSERBADRELEASE        = 1492325132 ;
-const VOLSERVOLBUSY           = 1492325133 ;
-const VOLSERNO_MEMORY         = 1492325134 ;
-const VOLSERNOVOL	      = 1492325135 ;
-const VOLSERMULTIRWVOL        = 1492325136 ;
-const VOLSERFAILEDOP          = 1492325137 ;
+const VOLSERTRELE_ERROR       = 1492325120;
+const VOLSERNO_OP             = 1492325121;
+const VOLSERREAD_DUMPERROR    = 1492325122;
+const VOLSERDUMPERROR         = 1492325123;
+const VOLSERATTACH_ERROR      = 1492325124;
+const VOLSERILLEGAL_PARTITION = 1492325125;
+const VOLSERDETACH_ERROR      = 1492325126;
+const VOLSERBAD_ACCESS        = 1492325127;
+const VOLSERVLDB_ERROR        = 1492325128;
+const VOLSERBADNAME           = 1492325129;
+const VOLSERVOLMOVED          = 1492325130;
+const VOLSERBADOP             = 1492325131;
+const VOLSERBADRELEASE        = 1492325132;
+const VOLSERVOLBUSY           = 1492325133;
+const VOLSERNO_MEMORY         = 1492325134;
+const VOLSERNOVOL	      = 1492325135;
+const VOLSERMULTIRWVOL        = 1492325136;
+const VOLSERFAILEDOP          = 1492325137;
 
 struct volser_trans { 
     volser_trans *next;
@@ -153,12 +159,52 @@ struct volintInfo {
     long spare3;
 };
 
+struct xvolintInfo {
+    char name[VNAMESIZE];
+    long volid;
+    long type;
+    long backupID;
+    long parentID;
+    long cloneID;
+    long status;
+    long copyDate;
+    char inUse;
+    long creationDate;
+    long accessDate;
+    long updateDate;
+    long backupDate;
+    long dayUse;
+    long filecount;
+    long maxquota;
+    long size;
+    int32_t stat_reads[4];
+    int32_t stat_writes[4];
+    int32_t stat_fileSameAuthor[6];
+    int32_t stat_fileDiffAuthor[6];
+    int32_t stat_dirSameAuthor[6];
+    int32_t stat_dirDiffAuthor[6];
+};
+
+/*
+ * same site total, same site authenticated
+ * diff site total, diff site authenticated
+ */
+
+/*
+ * 0-60 s
+ * 1-10 min
+ * 10-60 min
+ * 1-24 hour
+ * 1-7 days
+ * >7 days
+ */
+
 struct transDebugInfo {
     long tid;
     long time;
     long creationTime;
     long returnCode;
-    long volid ;
+    long volid;
     long partition;
     short iflags;
     char vflags;
@@ -172,7 +218,7 @@ struct transDebugInfo {
 };
 
 struct pIDs {
-    long partIds[26];
+    long partIds[26];		/* -1 if none */
 };
 
 struct diskPartition {
@@ -193,47 +239,124 @@ struct restoreCookie {
   
 typedef transDebugInfo transDebugEntries<>;
 typedef volintInfo volEntries<>;
+typedef xvolintInfo xvolEntries<>;
+typedef int32_t part_entries<>;
+typedef int32_t multi_results<>;
 
+struct replica {
+    int32_t trans_id;
+    struct destServer destserver;
+};
+
+typedef replica replicas<>;
 
 AFSVolCreateVolume(IN long partition,
-	     IN char *name,
-	     IN long type,
-	     IN long parent,
-	     INOUT long *volid,
-	     OUT long *trans) = 100 ;
+		   IN string name,
+		   IN long type,
+		   IN long parent,
+		   INOUT long *volid,
+		   OUT long *trans) = VOLCREATEVOLUME;
+
+AFSVolDeleteVolume(IN long trans) = VOLDELETEVOLUME;
+
+AFSVolNukeVolume(IN long partID,
+		 IN long volID) = VOLNUKEVOLUME;
+
+AFSVolDump(IN long fromTrans,
+	   IN long fromDate) split = VOLDUMP;
+
+AFSVolSignalRestore(IN char *name,
+		    IN int type,
+		    IN long pid,
+		    IN long cloneid) = VOLSIGNALRESTORE;
+
+AFSVolRestore(IN long toTrans,
+	      IN long flags,
+	      IN restoreCookie *cookie) split = VOLRESTORE;
+
+AFSVolForward(IN int32_t fromTrans,
+	      IN int32_t fromData,
+	      IN struct destServer *destination,
+	      IN long destTrans,
+	      IN struct restoreCookie *cookie) = VOLFORWARD;
+
+AFSVolClone(IN long trans,
+	    IN long purgeVol,
+	    IN long newType,
+	    IN char *newName,
+	    INOUT long *newVol) = VOLCLONE;
+
+AFSVolReClone(IN long tid,
+	      IN long cloneID) = VOLRECLONE;
+
+AFSVolSetForwarding(IN long tid,
+		    IN long newsite) = VOLSETFORWARDING;
 
 AFSVolTransCreate(IN long volume,
-	    IN long partition,
-	    IN long flags,
-	    OUT long *trans) = 108 ;
+		  IN long partition,
+		  IN long flags,
+		  OUT long *trans) = VOLTRANSCREATE;
 
 AFSVolEndTrans(IN long trans,
-	 OUT long *rcode) = 104 ;
+	       OUT long *rcode) = VOLENDTRANS;
 
 AFSVolGetFlags(IN long trans,
-	 OUT long *flags) = 107 ;
+	       OUT long *flags) = VOLGETFLAGS;
 
 AFSVolSetFlags(IN long trans,
-	 IN long flags) = 106 ;
+	       IN long flags) = VOLSETFLAGS;
 
 AFSVolGetName(IN long tid,
-	      OUT string tname<256>) = 112 ;
+	      OUT string tname<256>) = VOLGETNAME;
+
+AFSVolGetStatus(IN long tid,
+		OUT volser_status *status) = VOLGETSTATUS;
+
+AFSVolSetIdsTypes(IN long tId,
+		  IN char *name,
+		  IN long type,
+		  IN long pId,
+		  IN long cloneId,
+		  IN long backupId) = VOLSETIDTYPES;
 
 AFSVolSetDate(IN long tid,
-	      IN long newDate) = 123 ;
+	      IN long newDate) = VOLSETDATE;
 
-AFSVolListPartitions(OUT struct pIDs *partIDs) = 115 ;
+AFSVolListPartitions(OUT struct pIDs *partIDs) = VOLLISTPARTITIONS;
 
 AFSVolPartitionInfo(IN string name<>, 
-		    OUT struct diskPartition *partition) = 119 ;
+		    OUT struct diskPartition *partition) = VOLPARTITIONINFO;
 
 AFSVolListVolumes(IN long partID,
 		  IN long flags,
-		  OUT struct volEntries *resultEntries) = 116 ;
+		  OUT struct volEntries *resultEntries) = VOLLISTVOLUMES;
 
 AFSVolListOneVolume(IN long partID,
-	      IN long volid,
-	      OUT struct volEntries *resultEntries) = 121 ;
+		    IN long volid,
+		    OUT struct volEntries *resultEntries) = VOLLISTONEVOLUME;
 
-AFSVolMonitor(OUT transDebugEntries *result) = 118 ;
+AFSVolGetNthVolume(IN long index,
+		   OUT long *volume,
+		   OUT long *partition) = VOLGETNTHVOLUME;
+
+AFSVolMonitor(OUT transDebugEntries *result) = VOLMONITOR;
     
+AFSVolXListVolumes(IN long partID,
+		   IN long flags,
+		   OUT struct xvolEntries *resultEntries) = VOLXLISTVOLUMES;
+
+AFSVolXListOneVolume(IN long partID,
+		     IN long volid,
+		     OUT struct xvolEntries *resultEntries) = VOLXLISTONEVOL;
+
+AFSVolSetInfo(IN long transid,
+	      IN volintInfo *volinfo) = VOLSETINFO;
+
+AFSVolXListPartitions(OUT part_entries *ent) = VOLXLISTPARTITIONS;
+
+AFSVolForwardMultiple(IN int32_t fromTrans,
+		      IN int32_t fromData,
+		      IN replicas *destinations,
+		      IN long spare0,
+		      IN struct restoreCookie *cookie,
+		      IN multi_results *results) = VOLFORWARDMULTIPLE;

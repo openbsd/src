@@ -1,4 +1,3 @@
-/*	$OpenBSD: xfs_dev.h,v 1.2 1998/08/31 05:13:23 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,34 +36,128 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: xfs_dev.h,v 1.4 1998/04/05 18:19:50 art Exp $ */
+/* $Id: xfs_dev.h,v 1.3 1999/04/30 01:59:00 art Exp $ */
 
-#ifndef _XFS_XFS_DEV_H_
-#define _XFS_XFS_DEV_H_
+#ifndef _xfs_dev_h
+#define _xfs_dev_h
 
-int xfs_devopen __P((dev_t dev, int flags, int devtype, struct proc * p));
+/*
+ * Queues of xfs_links hold outbound messages and processes sleeping
+ * for replies. The last field is used to return error to sleepers and
+ * to keep record of memory to be deallocated when messages have been
+ * delivered or dropped.
+ */
 
-int xfs_install_device __P((void));
-int xfs_uninstall_device __P((void));
+struct xfs_link {
+    struct xfs_link *prev, *next;
+    struct xfs_message_header *message;
+    u_int error_or_size;	       /* error on sleepq and size on
+				        * messageq */
+};
 
-int xfs_install_filesys __P((void));
-int xfs_uninstall_filesys __P((void));
-
-int xfs_stat_filesys __P((void));
-int xfs_stat_device __P((void));
-
-int xfs_message_send __P((int fd, struct xfs_message_header *message,
-			  u_int size));
-int xfs_message_rpc __P((int fd, struct xfs_message_header *message,
-			 u_int size));
-int xfs_message_receive __P((int fd,struct xfs_message_header *message,
-			     u_int size,struct proc *p));
-int xfs_message_wakeup __P((int fd, struct xfs_message_wakeup *message,
-			    u_int size, struct proc *p));
-int xfs_message_wakeup_data __P((int fd,
-				 struct xfs_message_wakeup_data *message,
-				 u_int size, struct proc *p));
-#define USE_SELECT
-
+struct xfs_channel {
+    struct xfs_link messageq;	       /* Messages not yet read */
+    struct xfs_link sleepq;	       /* Waiting for reply message */
+    u_int nsequence;
+#ifdef __osf__
+    sel_queue_t sel_q;
+#else
+    struct selinfo selinfo;
 #endif
+    struct xfs_message_header *message_buffer;
+    int status;
+#define CHANNEL_OPENED	0x1
+#define CHANNEL_WAITING 0x2
+};
 
+extern struct xfs_channel xfs_channel[NXFS];
+
+/*
+ * These are variant dependent
+ */
+
+int xfs_func_is_devopen(void*);
+void xfs_select_wakeup(struct xfs_channel *);
+
+int xfs_install_device(void);
+int xfs_uninstall_device(void);
+
+int xfs_install_filesys(void);
+int xfs_may_uninstall_filesys(void);
+int xfs_uninstall_filesys(void);
+
+int xfs_stat_filesys(void);
+int xfs_stat_device(void);
+
+/*
+ * And these should be generic
+ */
+
+void
+xfs_initq(struct xfs_link *q);
+
+int
+xfs_emptyq(struct xfs_link *q);
+
+int
+xfs_onq(struct xfs_link *link);
+
+void
+xfs_appendq(struct xfs_link *q, struct xfs_link *p);
+
+void
+xfs_outq(struct xfs_link *p);
+
+int
+xfs_devopen_common(dev_t dev);
+
+#ifndef __osf__ /* XXX - we should do the same for osf */
+int xfs_devopen(dev_t dev, int flag, int devtype, struct proc *proc);
+int xfs_devclose(dev_t dev, int flag, int devtype, struct proc *proc);
+int xfs_devioctl(dev_t dev,
+#if  defined(__NetBSD__) || defined(__OpenBSD__)
+		 u_long cmd,
+#else /* if defined(__FreeBSD__) */
+		 int cmd,
+#endif
+		 caddr_t data, int flags, struct proc *p);
+int xfs_devselect(dev_t dev, int which, struct proc *p);
+#endif /* ! __osf__ */
+
+int
+xfs_devclose_common(dev_t dev, struct proc *p);
+
+int
+xfs_devread(dev_t dev, struct uio * uiop, int ioflag);
+
+int
+xfs_devwrite(dev_t dev, struct uio *uiop, int ioflag);
+
+int
+xfs_message_send(int fd, struct xfs_message_header * message, u_int size);
+
+int
+xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size);
+
+int
+xfs_message_receive(int fd,
+		    struct xfs_message_header *message,
+		    u_int size,
+		    struct proc *p);
+
+int
+xfs_message_wakeup(int fd,
+		   struct xfs_message_wakeup *message,
+		   u_int size,
+		   struct proc *p);
+
+int
+xfs_message_wakeup_data(int fd,
+			struct xfs_message_wakeup_data * message,
+			u_int size,
+			struct proc *p);
+
+int
+xfs_uprintf_device(void);
+
+#endif /* _xfs_dev_h */

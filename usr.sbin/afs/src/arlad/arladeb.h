@@ -1,4 +1,4 @@
-/*	$OpenBSD: arladeb.h,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
+/*	$OpenBSD: arladeb.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -38,7 +38,7 @@
  */
 
 /*
- * $KTH: arladeb.h,v 1.16 1998/05/23 05:25:47 assar Exp $
+ * $KTH: arladeb.h,v 1.19 1999/04/20 20:58:07 map Exp $
  */
 
 #ifndef _arladeb_h
@@ -62,13 +62,19 @@
 #define ADEBKERNEL	0x00000100      /* kernel interface */
 #define ADEBMSG		0x00000200	/* messages */
 #define ADEBFBUF	0x00000400	/* fbuf */
+#define ADEBDISCONN	0x00000800	/* disconn */
 #define ADEBWARN	0x08000000      /* don't ignore warning */
 #define ADEBERROR	0x10000000      /* don't ignore error */
+#define ADEBVLOG	0x20000000	/* venuslog output */
+
+extern struct units arla_deb_units[];
 
 void arla_log(unsigned level, char *fmt, ...);
 void arla_loginit(char *log);
 int arla_log_set_level (const char *s);
+void arla_log_set_level_num (unsigned level);
 void arla_log_get_level (char *s, size_t len);
+unsigned arla_log_get_level_num (void);
 void arla_log_print_levels (FILE *f);
 
 void

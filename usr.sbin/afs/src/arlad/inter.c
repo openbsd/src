@@ -1,6 +1,6 @@
-/*	$OpenBSD: inter.c,v 1.1.1.1 1998/09/14 21:52:56 art Exp $	*/
+/*	$OpenBSD: inter.c,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -42,7 +42,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: inter.c,v 1.55 1998/07/29 21:31:59 assar Exp $") ;
+RCSID("$KTH: inter.c,v 1.71 1999/02/05 02:43:33 assar Exp $") ;
 
 #include <xfs/xfs_message.h>
 
@@ -154,7 +154,12 @@ log_operation (const char *fmt, ...)
  */
 
 Result
-cm_open (VenusFid fid, CredCacheEntry* ce, u_int tokens)
+cm_open (VenusFid fid,
+	 CredCacheEntry* ce,
+	 u_int tokens,
+	 xfs_cache_handle *cache_handle,
+	 char *cache_name,
+	 size_t cache_name_sz)
 {
      FCacheEntry *entry;
      Result ret;
@@ -172,7 +177,7 @@ cm_open (VenusFid fid, CredCacheEntry* ce, u_int tokens)
 
      error = fcache_get_data (entry, ce);
      if(error) {
-	 ReleaseWriteLock (&entry->lock);
+	 fcache_release(entry);
 	 ret.res = -1;
 	 ret.error = error;
 	 return ret;
@@ -198,21 +203,24 @@ cm_open (VenusFid fid, CredCacheEntry* ce, u_int tokens)
      }
 
      if (checkright (entry, mask, ce)) {
-	  ret.res = entry->inode;
 	  entry->flags.datausedp = TRUE;
 	  entry->tokens |= tokens;
-
-	  ret.res = entry->inode;
+	  ret.res    = 0;
+	  ret.error  = 0;
 	  ret.tokens = entry->tokens;
+	  
+	  *cache_handle = entry->handle;
+	  fcache_file_name (entry, cache_name, cache_name_sz);
 
 	  log_operation ("open (%ld,%lu,%lu,%lu) %u\n",
-		   fid.Cell, fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique,
-		   mask);
+			 fid.Cell,
+			 fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique,
+			 mask);
      } else {
 	  ret.res = -1;
 	  ret.error = EACCES;
      }
-     ReleaseWriteLock (&entry->lock);
+     fcache_release(entry);
 
      return ret;
 }
@@ -223,7 +231,7 @@ cm_open (VenusFid fid, CredCacheEntry* ce, u_int tokens)
  */
 
 Result
-cm_close (VenusFid fid, int flag, CredCacheEntry* ce)
+cm_close (VenusFid fid, int flag, AFSStoreStatus *status, CredCacheEntry* ce)
 {
     FCacheEntry *entry;
     Result ret;
@@ -231,19 +239,19 @@ cm_close (VenusFid fid, int flag, CredCacheEntry* ce)
 
     error = fcache_get (&entry, fid, ce);
     if (error) {
-	ret.res = -1;
+	ret.res   = -1;
 	ret.error = error;
 	return ret;
     }
 
     if (flag & XFS_WRITE) {
-	error = write_data (entry, ce);
+	error = write_data (entry, status, ce);
 
 	if (error) {
-	    ReleaseWriteLock (&entry->lock);
+	    fcache_release(entry);
 	    arla_warn (ADEBCM, error, "writing back file");
-	    ret.res = -1 ;
-	    ret.error = EPERM ;
+	    ret.res   = -1;
+	    ret.error = error;
 	    return ret;
 	}
     }
@@ -252,8 +260,9 @@ cm_close (VenusFid fid, int flag, CredCacheEntry* ce)
 	     fid.Cell, fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique,
 	     flag);
 
-    ReleaseWriteLock (&entry->lock);
-    ret.res = 0;
+    fcache_release(entry);
+    ret.res   = 0;
+    ret.error = 0;
     return ret;
 }
 
@@ -274,15 +283,15 @@ cm_getattr (VenusFid fid,
 
      error = fcache_get (&entry, fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_attr (entry, ce);
      if (error) {
-	 ReleaseWriteLock (&entry->lock);
-	 ret.res = -1;
+	 fcache_release(entry);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
@@ -291,10 +300,10 @@ cm_getattr (VenusFid fid,
 		     entry->status.FileType == TYPE_FILE ? AREAD : ALIST,
 		     ce)) {
 	  *attr = entry->status;
-	  ret.res = 0;
+	  ret.res   = 0;
+	  ret.error = 0;
 	  entry->flags.attrusedp = TRUE;
-	  entry->flags.kernelp = TRUE;
-	  entry->tokens |= XFS_ATTR_R;
+	  entry->flags.kernelp   = TRUE;
 	  if (ae != NULL)
 	      *ae = entry->acccache;
 
@@ -305,12 +314,8 @@ cm_getattr (VenusFid fid,
 	  ret.res   = -1;
 	  ret.error = EACCES;
      }
-     if(entry->flags.mountp)
-	 *realfid = entry->realfid;
-     else
-	 *realfid = fid;
-
-     ReleaseWriteLock (&entry->lock);
+     *realfid = entry->realfid;
+     fcache_release(entry);
      ret.tokens = entry->tokens;
      return ret;
 }
@@ -329,32 +334,31 @@ cm_setattr (VenusFid fid, AFSStoreStatus *attr, CredCacheEntry* ce)
 
      error = fcache_get (&entry, fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_attr (entry, ce);
      if (error) {
-	 ReleaseWriteLock (&entry->lock);
-	 ret.res = -1;
+	 fcache_release(entry);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
      if (checkright (entry, AWRITE, ce)) {
 	  arla_warnx (ADEBCM, "cm_setattr: Writing status");
-	  ret.res = write_attr (entry, attr, ce);
-	  if (ret.res != 0)
-	      ret.error = ret.res;
+	  ret.res   = write_attr (entry, attr, ce);
+	  ret.error = ret.res;
 
 	  log_operation ("setattr (%ld,%lu,%lu,%lu)\n",
 		   fid.Cell, fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique);
 
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
-     ReleaseWriteLock (&entry->lock);
+     fcache_release(entry);
      return ret;
 }
 
@@ -371,30 +375,31 @@ cm_ftruncate (VenusFid fid, off_t size, CredCacheEntry* ce)
 
      error = fcache_get (&entry, fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_attr (entry, ce);
      if (error) {
-	 ReleaseWriteLock (&entry->lock);
-	 ret.res = -1;
+	 fcache_release(entry);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      if (checkright (entry, AWRITE, ce)) {
-	  ret.res = truncate_file (entry, size, ce);
+	  ret.res   = truncate_file (entry, size, ce);
+	  ret.error = ret.res;
 
 	  log_operation ("ftruncate (%ld,%lu,%lu,%lu) %lu\n",
 		   fid.Cell, fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique,
 		   (unsigned long)size);
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
-     ReleaseWriteLock (&entry->lock);
+     fcache_release(entry);
      return ret;
 }
 
@@ -411,30 +416,31 @@ cm_access (VenusFid fid, int mode, CredCacheEntry* ce)
 
      error = fcache_get (&entry, fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_attr (entry, ce);
      if (error) {
-	 ReleaseWriteLock (&entry->lock);
-	 ret.res = -1;
+	 fcache_release(entry);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      if (checkright (entry, AWRITE, ce)) {
-	  ret.res = 0;		/**/
+	  ret.res   = 0;		/**/
+	  ret.error = 0;
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
 
      log_operation ("access (%ld,%lu,%lu,%lu)\n",
 	      fid.Cell, fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique);
 
-     ReleaseWriteLock (&entry->lock);
+     fcache_release(entry);
      return ret;
 }
 
@@ -519,6 +525,7 @@ cm_lookup (VenusFid dir_fid,
      } else {
 	  ret.res    = 0;
 	  ret.tokens = 0;
+	  ret.error  = 0;
      }
 
      /* Assume that this means a bad .. */
@@ -532,25 +539,29 @@ cm_lookup (VenusFid dir_fid,
 
 	  error = fcache_get (&e, dir_fid, *ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	      return ret;
 	  }
 
 	  error = fcache_get_attr (e, *ce);
 	  if (error) {
-	      ReleaseWriteLock (&e->lock);
-	      ret.res = -1;
+	      fcache_release(e);
+	      ret.res   = -1;
 	      ret.error = error;
 	      return ret;
 	  }
 
 	  assert (e->flags.mountp);
 
+#if 0
+	  *res = e->mp_traversal->parent;
+#endif
 	  *res = e->parent;
-	  ret.res = 0;
+	  ret.res    = 0;
+	  ret.error  = 0;
 	  ret.tokens = e->tokens;
-	  ReleaseWriteLock (&e->lock);
+	  fcache_release(e);
      }
      
      log_operation ("lookup (%ld,%lu,%lu,%lu) %s\n",
@@ -576,14 +587,14 @@ cm_create (VenusFid dir_fid, const char *name, AFSStoreStatus *store_attr,
 
      error = fcache_get (&dire, dir_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (dire, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
@@ -592,19 +603,20 @@ cm_create (VenusFid dir_fid, const char *name, AFSStoreStatus *store_attr,
 	  error = create_file (dire, name, store_attr,
 			       res, fetch_attr, ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	  } else {
 	      error = adir_creat (dire, name, res->fid);
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 	      } else {
-		  ret.res = 0;
+		  ret.res   = 0;
+		  ret.error = 0;
 	      }
 	  }
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
 out:
@@ -613,7 +625,7 @@ out:
 	      dir_fid.fid.Volume, dir_fid.fid.Vnode, dir_fid.fid.Unique,
 	      name);
 
-     ReleaseWriteLock (&dire->lock);
+     fcache_release(dire);
      return ret;
 }
 
@@ -633,14 +645,14 @@ cm_mkdir (VenusFid dir_fid, const char *name,
 
      error = fcache_get (&dire, dir_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (dire, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
@@ -649,19 +661,20 @@ cm_mkdir (VenusFid dir_fid, const char *name,
 	  error = create_directory (dire, name, store_attr,
 				    res, fetch_attr, ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	  } else {
 	      error = adir_creat (dire, name, res->fid);
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 	      } else {
-		  ret.res = 0;
+		  ret.res   = 0;
+		  ret.error = 0;
 	      }
 	  }
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
 
@@ -671,7 +684,7 @@ cm_mkdir (VenusFid dir_fid, const char *name,
 	      name);
 
 out:
-     ReleaseSharedLock (&dire->lock);
+     ReleaseWriteLock (&dire->lock);
      return ret;
 }
 
@@ -686,52 +699,81 @@ cm_symlink (VenusFid dir_fid,
 	    const char *contents,
 	    CredCacheEntry* ce)
 {
-     FCacheEntry *dire;
+     FCacheEntry *dire, *symlink_entry;
      Result ret;
      int error;
 
      error = fcache_get (&dire, dir_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (dire, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
 
-     if (checkright (dire, AINSERT, ce)) {
-	  error = create_symlink (dire, name, store_attr,
-				  res, fetch_attr,
-				  contents, ce);
-	  if (error) {
-	      ret.res = -1;
-	      ret.error = error;
-	  } else {
-	      error = adir_creat (dire, name, res->fid);
-	      if (error) {
-		  ret.res = -1;
-		  ret.error = error;
-	      } else {
-		  ret.res = 0;
-	      }
-	  }
-     } else {
-	  ret.res = -1;
-	  ret.error = EACCES;
+     if (!checkright (dire, AINSERT, ce)) {
+	 ret.res   = -1;
+	 ret.error = EACCES;
+	 goto out;
      }
+
+     error = create_symlink (dire, name, store_attr,
+			     res, fetch_attr,
+			     contents, ce);
+     if (error) {
+	 ret.res   = -1;
+	 ret.error = error;
+	 goto out;
+     }
+
+     error = adir_creat (dire, name, res->fid);
+     if (error) {
+	 ret.res   = -1;
+	 ret.error = error;
+	 goto out;
+     }
+
+     error = followmountpoint(res, &dir_fid, &ce);
+     if (error) {
+	 ret.res   = -1;
+	 ret.error = error;
+	 goto out;
+     }
+     
+     error = fcache_get (&symlink_entry, *res, ce);
+     if (error) {
+	 ret.res   = -1;
+	 ret.error = error;
+	 goto out;
+     }
+
+     error = fcache_get_attr (symlink_entry, ce);
+     if (error) {
+	 fcache_release (symlink_entry);
+	 ret.res   = -1;
+	 ret.error = error;
+	 goto out;
+     }
+
+     *fetch_attr = symlink_entry->status;
+     fcache_release (symlink_entry);
+     ret.res   = 0;
+     ret.error = 0;
+
      log_operation ("symlink (%ld,%lu,%lu,%lu) %s %s\n",
-	      dir_fid.Cell,
-	      dir_fid.fid.Volume, dir_fid.fid.Vnode, dir_fid.fid.Unique,
-	      name,
-	      contents);
+		    dir_fid.Cell,
+		    dir_fid.fid.Volume, dir_fid.fid.Vnode, dir_fid.fid.Unique,
+		    name,
+		    contents);
 
 out:
-     ReleaseWriteLock (&dire->lock);
+     fcache_release(dire);
      return ret;
 }
 
@@ -752,52 +794,52 @@ cm_link (VenusFid dir_fid,
 
      error = fcache_get (&dire, dir_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (dire, ce);
      if (error) {
-	 ReleaseWriteLock (&dire->lock);
-	 ret.res = -1;
+	 fcache_release(dire);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get (&file, existing_fid, ce);
      if (error) {
-	 ReleaseWriteLock (&dire->lock);
-	 ret.res = -1;
+	 fcache_release(dire);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_attr (file, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
 
      if (checkright (dire, AINSERT, ce)) {
-	  error = create_link (dire, name, 
-			       file, ce);
+	  error = create_link (dire, name, file, ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	  } else {
 	      error = adir_creat (dire, name, existing_fid.fid);
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 	      } else {
 		  *existing_status = file->status;
-		  ret.res = 0;
+		  ret.res   = 0;
+		  ret.error = 0;
 	      }
 	  }
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
      log_operation ("link (%ld,%lu,%lu,%lu) (%ld,%lu,%lu,%lu) %s\n",
@@ -810,12 +852,13 @@ cm_link (VenusFid dir_fid,
 	      name);
 
 out:
-     ReleaseWriteLock (&dire->lock);
-     ReleaseWriteLock (&file->lock);
+     fcache_release(dire);
+     fcache_release(file);
      return ret;
 }
+
 /*
- *
+ * Remove the file named `name' in the directory `dir_fid'.
  */
 
 Result
@@ -828,14 +871,14 @@ cm_remove(VenusFid dir_fid,
 
      error = fcache_get (&dire, dir_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (dire, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
@@ -843,19 +886,20 @@ cm_remove(VenusFid dir_fid,
      if (checkright (dire, ADELETE, ce)) {
 	  error = remove_file (dire, name, ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	  } else {
 	      error = adir_remove (dire, name);
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 	      } else {
-		  ret.res = 0;
+		  ret.res   = 0;
+		  ret.error = 0;
 	      }
 	  }
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
      log_operation ("remove (%ld,%lu,%lu,%lu) %s\n",
@@ -864,12 +908,12 @@ cm_remove(VenusFid dir_fid,
 	      name);
 
 out:
-     ReleaseWriteLock (&dire->lock);
+     fcache_release(dire);
      return ret;
 }
 
 /*
- *
+ * Remove the directory named `name' in the directory `dir_fid'.
  */
 
 Result
@@ -882,14 +926,14 @@ cm_rmdir(VenusFid dir_fid,
 
      error = fcache_get (&dire, dir_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (dire, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
@@ -897,19 +941,20 @@ cm_rmdir(VenusFid dir_fid,
      if (checkright (dire, ADELETE, ce)) {
 	  error = remove_directory (dire, name, ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	  } else {
 	      error = adir_remove (dire, name);
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 	      } else {
-		  ret.res = 0;
+		  ret.res   = 0;
+		  ret.error = 0;
 	      }
 	  }
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
 
@@ -919,12 +964,12 @@ cm_rmdir(VenusFid dir_fid,
 	      name);
 
 out:
-     ReleaseWriteLock (&dire->lock);
+     fcache_release(dire);
      return ret;
 }
 
 /*
- *
+ * Rename (old_parent_fid, old_name) -> (new_parent_fid, new_name)
  */
 
 Result
@@ -941,15 +986,15 @@ cm_rename(VenusFid old_parent_fid, const char *old_name,
 
      error = fcache_get (&old_dir, old_parent_fid, ce);
      if (error) {
-	 ret.res = -1;
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
 
      error = fcache_get_data (old_dir, ce);
      if (error) {
-	 ReleaseWriteLock (&old_dir->lock);
-	 ret.res = -1;
+	 fcache_release(old_dir);
+	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
@@ -961,15 +1006,15 @@ cm_rename(VenusFid old_parent_fid, const char *old_name,
 
 	 error = fcache_get (&new_dir, new_parent_fid, ce);
 	 if (error) {
-	     ReleaseWriteLock (&old_dir->lock);
-	     ret.res = -1;
+	     fcache_release(old_dir);
+	     ret.res   = -1;
 	     ret.error = error;
 	     return ret;
 	 }
 
 	 error = fcache_get_data (new_dir, ce);
 	 if (error) {
-	     ret.res = -1;
+	     ret.res   = -1;
 	     ret.error = error;
 	     goto out;
 	 }
@@ -985,32 +1030,50 @@ cm_rename(VenusFid old_parent_fid, const char *old_name,
 			      new_dir, new_name,
 			      ce);
 	  if (error) {
-	      ret.res = -1;
+	      ret.res   = -1;
 	      ret.error = error;
 	  } else {
-	      VenusFid foo_fid;
+	      VenusFid new_fid, old_fid;
 
-	      ReleaseWriteLock (&old_dir->lock);
-	      error = adir_lookup (old_dir->fid, old_name, &foo_fid, ce);
-	      ObtainWriteLock (&old_dir->lock);
+	      /*
+	       * Lookup the old name (to get the fid of the new name)
+	       */
+
+	      error = adir_lookup_fcacheentry (old_dir, old_name, &new_fid, ce);
 
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 		  goto out;
 	      }
-	      error = adir_remove (old_dir, old_name)
-		  || adir_creat (new_dir, new_name, foo_fid.fid);
+
+	      /*
+	       * Lookup the new name, if it exists we need to clear it out.
+	       * XXX Should we check the lnkcount and clear it from fcache ?
+	       */
+
+	      error = adir_lookup_fcacheentry (new_dir, new_name, &old_fid, ce);
+	      if (error == 0)
+		  adir_remove (new_dir, new_name);
+
+	      /*
+	       * Now do the rename, ie create the new name and remove
+	       * the old name.
+	       */
+
+	      error = adir_creat (new_dir, new_name,  new_fid.fid)
+		  || adir_remove (old_dir, old_name);
 
 	      if (error) {
-		  ret.res = -1;
+		  ret.res   = -1;
 		  ret.error = error;
 	      } else {
-		  ret.res = 0;
+		  ret.res   = 0;
+		  ret.error = 0;
 	      }
 	  }
      } else {
-	  ret.res = -1;
+	  ret.res   = -1;
 	  ret.error = EACCES;
      }
 
@@ -1026,9 +1089,9 @@ cm_rename(VenusFid old_parent_fid, const char *old_name,
 	      old_name, new_name);
 
 out:
-     ReleaseWriteLock (&old_dir->lock);
+     fcache_release(old_dir);
      if (old_parent_fid.fid.Vnode != new_parent_fid.fid.Vnode
 	 || old_parent_fid.fid.Unique != new_parent_fid.fid.Unique)
-	 ReleaseWriteLock (&new_dir->lock);
+	 fcache_release(new_dir);
      return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sl.h,v 1.1.1.1 1998/09/14 21:53:11 art Exp $	*/
+/*	$OpenBSD: sl.h,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: sl.h,v 1.2 1998/06/21 21:35:59 lha Exp $ */
+/* $KTH: sl.h,v 1.3 1999/03/06 14:44:37 lha Exp $ */
 
 #ifndef _SL_H
 #define _SL_H
@@ -58,6 +58,7 @@ typedef struct sl_cmd SL_cmd;
 void sl_help (SL_cmd *, int argc, char **argv);
 int  sl_loop (SL_cmd *, char *prompt);
 int  sl_command (SL_cmd *cmds, int argc, char **argv);
+void sl_apropos (SL_cmd *cmd, char *topic);
 
 
 #endif /* _SL_H */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rx.h,v 1.1.1.1 1998/09/14 21:53:14 art Exp $	*/
-/* $KTH: rx.h,v 1.8 1998/03/01 15:26:57 assar Exp $ */
+/*	$OpenBSD: rx.h,v 1.2 1999/04/30 01:59:15 art Exp $	*/
+/* $KTH: rx.h,v 1.10 1998/10/20 02:49:53 art Exp $ */
 
 /*
 ****************************************************************************
@@ -38,6 +38,7 @@
 #endif
 #include <atypes.h>
 #include <stdio.h>
+#include <sys/param.h>
 #include "rx_mach.h"
 #include "rx_user.h"
 #include "rx_clock.h"

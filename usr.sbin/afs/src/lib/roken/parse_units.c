@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_units.c,v 1.1.1.1 1998/09/14 21:53:06 art Exp $	*/
+/*	$OpenBSD: parse_units.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: parse_units.c,v 1.3 1998/03/21 14:51:05 assar Exp $");
+RCSID("$KTH: parse_units.c,v 1.5 1998/12/20 15:52:37 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -85,18 +85,16 @@ parse_something (const char *s, const struct units *units,
 	size_t u_len;
 	unsigned partial;
 
-	while(isspace(*p) || *p == ',')
+	while(isspace((unsigned char)*p) || *p == ',')
 	    ++p;
 
 	val = strtod (p, &next); /* strtol(p, &next, 0); */
 	if (val == 0 && p == next) {
-	    if(accept_no_val_p)
-		val = 1;
-	    else
+	    if(!accept_no_val_p)
 		return -1;
 	}
 	p = next;
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 	    ++p;
 	if (*p == '\0') {
 	    res = (*func)(res, val, def_mult);
@@ -105,6 +103,7 @@ parse_something (const char *s, const struct units *units,
 	    break;
 	} else if (*p == '+') {
 	    ++p;
+	    val = 1;
 	} else if (*p == '-') {
 	    ++p;
 	    val = -1;
@@ -151,6 +150,9 @@ parse_something (const char *s, const struct units *units,
 static int
 acc_units(int res, int val, unsigned mult)
 {
+    if (val == 0)
+	val = 1;
+
     return res + val * mult;
 }
 
@@ -174,6 +176,8 @@ acc_flags(int res, int val, unsigned mult)
 	return res | mult;
     else if(val == -1)
 	return res & ~mult;
+    else if (val == 0)
+	return mult;
     else
 	return -1;
 }

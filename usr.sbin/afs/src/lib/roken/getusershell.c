@@ -1,4 +1,4 @@
-/*	$OpenBSD: getusershell.c,v 1.1.1.1 1998/09/14 21:53:03 art Exp $	*/
+/*	$OpenBSD: getusershell.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,12 +36,13 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: getusershell.c,v 1.2 1998/02/12 01:01:58 assar Exp $");
+RCSID("$KTH: getusershell.c,v 1.3 1999/01/03 01:42:03 assar Exp $");
 
 #ifndef HAVE_GETUSERSHELL
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #ifdef HAVE_PATHS_H
 #include <paths.h>
 #endif

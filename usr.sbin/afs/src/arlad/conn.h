@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.h,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
+/*	$OpenBSD: conn.h,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +41,7 @@
  * Header for connection cache
  */
 
-/* $KTH: conn.h,v 1.11 1998/02/19 05:39:03 assar Exp $ */
+/* $KTH: conn.h,v 1.20 1999/04/14 15:27:34 map Exp $ */
 
 #ifndef _CONN_H_
 #define _CONN_H_
@@ -50,27 +50,46 @@
 #include <xfs/xfs_message.h>
 #include <cred.h>
 
-typedef struct {
+struct conncacheentry {
     u_int32_t host;		/* IP address of host */
     u_int16_t port;		/* port number at host */
     u_int16_t service;		/* RX service # */
     int32_t cell;		/* cell of host */
     int securityindex;
+    int (*probe)(struct rx_connection *);
     pag_t cred;
     struct rx_connection *connection;
     struct {
 	unsigned alivep : 1;
 	unsigned killme : 1;
+	unsigned old : 1;	/* Old server,vldb -> only VL_GetEntryByName */
     } flags;
     unsigned refcount;
-} ConnCacheEntry;
+    Listitem *probe_le;
+    unsigned probe_next;
+    unsigned ntries;
+    struct conncacheentry *parent;
+    int rtt;
+};
+
+typedef struct conncacheentry ConnCacheEntry;
 
 void
 conn_init (unsigned nentries);
 
 ConnCacheEntry *
 conn_get (int32_t cell, u_int32_t host, u_int16_t port, u_int16_t service,
+	  int (*probe)(struct rx_connection *),
 	  CredCacheEntry *ce);
+
+void
+conn_dead (ConnCacheEntry *);
+
+void
+conn_alive (ConnCacheEntry *);
+
+void
+conn_probe (ConnCacheEntry *);
 
 void
 conn_free (ConnCacheEntry *e);
@@ -82,9 +101,22 @@ Bool
 conn_serverupp (u_int32_t host, u_int16_t port, u_int16_t service);
 
 void
-conn_status (FILE *);
+conn_status (void);
 
 void
 conn_clearcred (int32_t cell, pag_t cred, int securityindex);
+
+void
+conn_downhosts(int32_t cell, u_int32_t *hosts, int *num, int flags);
+
+int
+conn_rtt_cmp (const void *v1, const void *v2);
+
+/*
+ * Random factor to add to rtts when comparing them.
+ * This is in milliseconds/8
+ */
+
+static const int RTT_FUZZ = 400;
 
 #endif /* _CONN_H_ */

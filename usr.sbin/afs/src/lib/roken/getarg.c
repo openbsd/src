@@ -1,6 +1,6 @@
-/*	$OpenBSD: getarg.c,v 1.1.1.1 1998/09/14 21:53:02 art Exp $	*/
+/*	$OpenBSD: getarg.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getarg.c,v 1.9 1998/08/23 22:47:54 assar Exp $");
+RCSID("$KTH: getarg.c,v 1.14 1999/03/03 15:45:50 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -49,7 +49,8 @@ RCSID("$KTH: getarg.c,v 1.9 1998/08/23 22:47:54 assar Exp $");
 #define ISFLAG(X) ((X)->type == arg_flag || (X)->type == arg_negative_flag)
 
 static size_t
-print_arg (FILE *stream, int mdoc, int longp, struct getargs *arg)
+print_arg (FILE *stream, int mdoc, int longp, struct getargs *arg,
+	   int style)
 {
     const char *s = NULL;
 
@@ -61,7 +62,7 @@ print_arg (FILE *stream, int mdoc, int longp, struct getargs *arg)
 	    fprintf(stream, "= Ns");
 	fprintf(stream, " Ar ");
     }else
-	if (longp)
+	if (longp && !(style & ARG_TRANSLONG))
 	    putc ('=', stream);
 	else
 	    putc (' ', stream);
@@ -73,17 +74,20 @@ print_arg (FILE *stream, int mdoc, int longp, struct getargs *arg)
     else if (arg->type == arg_string)
 	s = "string";
     else
-	s = "<undefined>";
+	s = "undefined";
 
-    fprintf (stream, "%s", s);
+    if (style & ARG_TRANSLONG)
+	fprintf (stream, "<%s>", s);
+    else
+	fprintf (stream, "%s", s);
     return 1 + strlen(s);
 }
 
 static void
 mandoc_template(struct getargs *args,
-		const char *extra_string)
+		const char *extra_string,
+		int style)
 {
-    int i;
     struct getargs *arg;
     char timestr[64], cmd[64];
     const char *p;
@@ -114,12 +118,12 @@ mandoc_template(struct getargs *args,
     for(arg = args; arg->type; arg++) {
 	if(arg->short_name){
 	    printf(".Op Fl %c", arg->short_name);
-	    print_arg(stdout, 1, 0, args + i);
+	    print_arg(stdout, 1, 0, args, style);
 	    printf("\n");
 	}
 	if(arg->long_name){
-	    printf(".Op Fl -%s", arg->long_name);
-	    print_arg(stdout, 1, 1, args + i);
+	    printf(".Op Fl %s%s", style & ARG_TRANSLONG ? "" : "-", arg->long_name);
+	    print_arg(stdout, 1, 1, args, style);
 	    printf("\n");
 	}
     /*
@@ -135,12 +139,12 @@ mandoc_template(struct getargs *args,
     for(arg = args; arg->type; arg++) {
 	if(arg->short_name){
 	    printf(".It Fl %c", arg->short_name);
-	    print_arg(stdout, 1, 0, args + i);
+	    print_arg(stdout, 1, 0, args, style);
 	    printf("\n");
 	}
 	if(arg->long_name){
-	    printf(".It Fl -%s", arg->long_name);
-	    print_arg(stdout, 1, 1, args + i);
+	    printf(".It Fl %s%s", style & ARG_TRANSLONG ? "" : "-", arg->long_name);
+	    print_arg(stdout, 1, 1, args, style);
 	    printf("\n");
 	}
 	if(arg->help)
@@ -165,36 +169,48 @@ mandoc_template(struct getargs *args,
 void
 arg_printusage (struct getargs *args,
 		const char *progname,
-		const char *extra_string)
+		const char *extra_string,
+		int style)
 {
     struct getargs *arg;
     size_t max_len = 0;
 
+    if (progname == NULL)
+	progname = __progname;
+
     if(getenv("GETARGMANDOC")){
-	mandoc_template(args, extra_string);
+	mandoc_template(args, extra_string, style);
 	return;
     }
-    fprintf (stderr, "Usage: %s", __progname);
+    fprintf (stderr, "Usage: %s", progname);
     for (arg = args; arg->type; arg++) {
 	size_t len = 0;
 
 	if (arg->long_name) {
-	    fprintf (stderr, " [--");
+	    if (style & ARG_TRANSLONG) {
+		if (arg->mandatoryp)
+		    fprintf (stderr, " -");
+		else
+		    fprintf (stderr, " [-");
+	    } else
+		fprintf (stderr, " [--");
+
 	    if (arg->type == arg_negative_flag) {
 		fprintf (stderr, "no-");
 		len += 3;
 	    }
 	    fprintf (stderr, "%s", arg->long_name);
 	    len += 2 + strlen(arg->long_name);
-	    len += print_arg (stderr, 0, 1, arg);
-	    putc (']', stderr);
+	    len += print_arg (stderr, 0, 1, arg, style);
+	    if(!(style & ARG_TRANSLONG) || !arg->mandatoryp)
+		putc (']', stderr);
 	    if(arg->type == arg_strings)
 		fprintf (stderr, "...");
 	}
 	if (arg->short_name) {
 	    len += 2;
 	    fprintf (stderr, " [-%c", arg->short_name);
-	    len += print_arg (stderr, 0, 0, arg);
+	    len += print_arg (stderr, 0, 0, arg, style);
 	    putc (']', stderr);
 	    if(arg->type == arg_strings)
 		fprintf (stderr, "...");
@@ -214,21 +230,21 @@ arg_printusage (struct getargs *args,
 	    if (arg->short_name) {
 		fprintf (stderr, "-%c", arg->short_name);
 		count += 2;
-		count += print_arg (stderr, 0, 0, arg);
+		count += print_arg (stderr, 0, 0, arg, style);
 	    }
 	    if (arg->short_name && arg->long_name) {
 		fprintf (stderr, " or ");
 		count += 4;
 	    }
 	    if (arg->long_name) {
-		fprintf (stderr, "--");
+		fprintf (stderr, "-%s", style & ARG_TRANSLONG ? "" : "-");
 		if (arg->type == arg_negative_flag) {
 		    fprintf (stderr, "no-");
 		    count += 3;
 		}
 		fprintf (stderr, "%s", arg->long_name);
 		count += 2 + strlen(arg->long_name);
-		count += print_arg (stderr, 0, 1, arg);
+		count += print_arg (stderr, 0, 1, arg, style);
 	    }
 	    while(count++ <= max_len)
 		putc (' ', stderr);
@@ -292,7 +308,7 @@ parse_option(struct getargs *arg, char *optarg, int negate)
 
 static int
 arg_match_long(struct getargs *args,
-	       char **argv, int style)
+	       char **argv, int style, int *next)
 {
     char *optarg = NULL;
     int negate = 0;
@@ -303,12 +319,16 @@ arg_match_long(struct getargs *args,
     int argv_len;
     char *p, *q;
 
-    if (style & ARG_LONGARG)
+    if (style & ARG_LONGARG) {
 	q = *argv + 2;
-    else if (style & ARG_TRANSLONG)
+	*next = 0;
+    } else if (style & ARG_TRANSLONG) {
 	q = *argv + 1;
-    else
+	*next = 0;
+    } else {
+	*next = 0;
 	q = *argv;
+    }
 
     argv_len = strlen(q);
     p = strchr (q, '=');
@@ -325,9 +345,16 @@ arg_match_long(struct getargs *args,
 	    for (;;) {
 		if (strncmp (arg->long_name, p, len) == 0) {
 		    current = arg;
-		    if (style & ARG_TRANSLONG && *(argv +1))
-			optarg = *(argv + 1);
-		    else if(p[len] == '\0')
+		    if (style & ARG_TRANSLONG) {
+			if (ISFLAG(arg)) {
+			    optarg = "";
+			    *next = 0;
+			} else if (*(argv +1)) {
+			    optarg = *(argv + 1);
+			    *next = 1;
+			} else
+			    optarg = "";
+		    } else if(p[len] == '\0')
 			optarg = p + len;
 		    else
 			optarg = p + len + 1;
@@ -336,7 +363,17 @@ arg_match_long(struct getargs *args,
 				    p_len) == 0) {
 		    ++partial_match;
 		    partial = arg;
-		    optarg  = p + p_len +1 ;
+		    if (style & ARG_TRANSLONG) {
+			if (ISFLAG(arg)) {
+			    optarg = "";
+			    *next = 0;
+			} else if (*(argv + 1)) {
+			    optarg = *(argv + 1);
+			    *next = 1;
+			} else
+			    optarg = "";
+		    } else
+			optarg  = p + p_len +1 ;
 		} else if (ISFLAG(arg) && strncmp (p, "no-", 3) == 0) {
 		    negate = !negate;
 		    p += 3;
@@ -388,11 +425,10 @@ getarg(struct getargs *args,
 		break;
 	    }
 	    swcount = -1;
-	    ret = arg_match_long (args, &argv[i], style);
+	    ret = arg_match_long (args, &argv[i], style, &j);
 	    if(ret)
 		return ret;
-	    if (style & ARG_TRANSLONG && argv[i+1])
-		++i;
+	    i += j;
 	}else if (style & ARG_SHORTARG) {
 	    for(j = 1; argv[i][j]; j++) {
 		for(arg = args; arg->type; arg++) {

@@ -1,6 +1,6 @@
-/*	$OpenBSD: sym.h,v 1.1.1.1 1998/09/14 21:53:27 art Exp $	*/
+/*	$OpenBSD: sym.h,v 1.2 1999/04/30 01:59:20 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: sym.h,v 1.5 1998/02/19 05:15:52 assar Exp $ */
+/* $KTH: sym.h,v 1.6 1999/03/04 06:43:03 assar Exp $ */
 
 #ifndef _SYM_
 #define _SYM_
@@ -54,7 +54,7 @@ typedef enum
      TUNDEFINED, TSTRUCT, TENUM, TCONST, TENUMVAL, TTYPEDEF, TPROC
 } SymbolType;
 
-enum { TSPLIT = 1, TSIMPLE = 2};
+enum { TSPLIT = 1, TSIMPLE = 2, TMULTI = 4};
 
 typedef struct {
      SymbolType type;

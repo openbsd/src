@@ -1,6 +1,6 @@
-/*	$OpenBSD: output.h,v 1.1.1.1 1998/09/14 21:53:27 art Exp $	*/
+/*	$OpenBSD: output.h,v 1.2 1999/04/30 01:59:19 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,27 +37,38 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: output.h,v 1.7 1998/04/27 20:17:17 assar Exp $ */
+/* $KTH: output.h,v 1.12 1999/03/04 06:43:03 assar Exp $ */
 
 #ifndef _OUTPUT_
 #define _OUTPUT_
 
 #include <stdio.h>
 #include <bool.h>
+#include <eefile.h>
 
 void generate_header (Symbol *s, FILE *f);
 void generate_sizeof (Symbol *s, FILE *f);
 void generate_function (Symbol *s, FILE *f, Bool encodep);
 void generate_function_prototype (Symbol *s, FILE *f, Bool encodep);
+void generate_printfunction (Symbol *s, FILE *f);
+void generate_printfunction_prototype (Symbol *s, FILE *f);
 void generate_client_stub (Symbol *s, FILE *f, FILE *headerf);
-void generate_server_stub (Symbol *s, FILE *f, FILE *headerf);
+void generate_server_stub (Symbol *s, FILE *f, FILE *headerf, FILE *h_file);
+void generate_tcpdump_stub (Symbol *s, FILE *f);
 void generate_server_switch (FILE *c_f, FILE *h_file);
-void init_generate (char *filename);
-void close_generator (char *filename);
+void generate_tcpdump_patches(FILE *td_file, const char *filename);
+void init_generate (const char *filename);
+void close_generator (const char *filename);
 
 extern char *package;
 
-extern FILE *headerfile, *clientfile, *serverfile, *clienthdrfile,
-    *serverhdrfile, *ydrfile;
+extern char *prefix;
+
+extern fileblob headerfile, clientfile, serverfile, clienthdrfile,
+    serverhdrfile, ydrfile, td_file;
+
+extern char *error_function;
+
+extern int parse_errors;
 
 #endif /* _OUTPUT_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1.1.1 1998/09/14 21:53:23 art Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +43,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: log.c,v 1.12 1998/07/09 19:57:26 art Exp $");
+RCSID("$KTH: log.c,v 1.13 1998/10/04 19:41:10 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -171,20 +171,22 @@ log_vprint_file (Log_method *lm,  char *fmt, va_list args)
     struct timeval tv = { 0, 0 };
     char *time;
     time_t t;
+    FILE *f = (FILE *)lm->data.v;
 
     gettimeofday(&tv, NULL);
     t = tv.tv_sec;
     time = strdup(ctime(&t));
     if (time) {
 	time[strlen(time)-1] = '\0';
-	fprintf ((FILE *)lm->data.v, "%s: ", time);
+	fprintf (f, "%s: ", time);
 	free(time);
     } else
-	fprintf ((FILE *)lm->data.v, "unknown time:");
+	fprintf (f, "unknown time:");
 
-    fprintf ((FILE *)lm->data.v, "%s: ", __progname);
-    vfprintf ((FILE *)lm->data.v, fmt, args);
-    putc ('\n', (FILE *)lm->data.v);
+    fprintf (f, "%s: ", __progname);
+    vfprintf (f, fmt, args);
+    putc ('\n', f);
+    fflush (f);
 }
 
 static void

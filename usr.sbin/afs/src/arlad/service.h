@@ -1,4 +1,4 @@
-/*	$OpenBSD: service.h,v 1.1.1.1 1998/09/14 21:52:57 art Exp $	*/
+/*	$OpenBSD: service.h,v 1.2 1999/04/30 01:59:10 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,13 +37,14 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: service.h,v 1.4 1998/07/14 16:00:50 lha Exp $ */
+/* $KTH: service.h,v 1.5 1998/09/03 18:45:36 lha Exp $ */
 
 /*
  * Service IDs
  */
 
 #define VLDB_SERVICE_ID 52
+#define VOLSER_SERVICE_ID 54
 #define PR_SERVICE_ID   73
 #define FS_SERVICE_ID    1
 #define CM_SERVICE_ID    1

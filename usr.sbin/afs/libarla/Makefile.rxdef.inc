@@ -11,7 +11,7 @@ CLEANFILES 	+= vldb.ss.c vldb.cs.c vldb.ydr.c vldb.ss.h vldb.cs.h vldb.h \
 		   volumeserver.ss.h volumeserver.cs.h volumeserver.h \
 		   ubik.ss.c ubik.cs.c ubik.ydr.c ubik.cs.h ubik.ss.h ubik.h
 
-CFLAGS		+= -I${.CURDIR}/../src/rxdef
+CFLAGS		+= -I${.CURDIR}/../src/rxdef -I${.CURDIR}/../src/arlad
 
 YDR		= ../ydr/ydr
 YDRFLAGS	= -I${.CURDIR}

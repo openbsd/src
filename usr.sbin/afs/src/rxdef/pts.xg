@@ -6,10 +6,11 @@
 
 package PR_
 
-%#include <atypes.h>
-%#include <rx/rx.h>
-%#include <rx/rx_null.h>
+%#include <config.h>
+%#include <roken.h>
+%#include <fs_errors.h>
 
+error-function conv_to_arla_errno
 
 /*
  * Interface
@@ -237,7 +238,7 @@ NameToID(IN namelist *nlist,
 IDToName(IN idlist *ilist,
 	 OUT namelist *nlist) = 505;
 
-NewEntry(IN char name[PR_MAXNAMELEN],
+NewEntry(IN string name<PR_MAXNAMELEN>,
 	 IN long flag,
 	 IN long oid,
 	 OUT long *id) = 509;
@@ -253,17 +254,17 @@ DumpEntry(IN long pos,
 	  OUT struct prdebugentry *entry) = 502;
 
 ChangeEntry(IN long id,
-	    IN char name[PR_MAXNAMELEN],
+	    IN string name<PR_MAXNAMELEN>,
 	    IN long oid,
 	    IN long newid) = 513;
 
-SetFieldesEntry(IN long id,
-		IN long mask,
-		IN long flags,
-		IN long ngroups,
-		IN long nusers,
-		IN long spare1,
-		IN long spare2) = 516;
+SetFieldsEntry(IN long id,
+	       IN long mask,
+	       IN long flags,
+	       IN long ngroups,
+	       IN long nusers,
+	       IN long spare1,
+	       IN long spare2) = 516;
 
 Delete(IN long id) = 506;
 

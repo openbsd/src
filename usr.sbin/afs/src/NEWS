@@ -1,3 +1,197 @@
+Changes in release 0.23:
+
+* changed volume cache
+
+* bsd: lock node when vget
+
+* updated vos command
+
+* removed Solaris umount_xfs command
+
+* flush kernel acl when doing setacl
+
+* Linux devfs support
+
+* misc. bugfixes
+
+Changes in release 0.22:
+
+* getcwd magic for linux
+
+* added fallback code for old vl-servers
+
+* added plwp, LWP on pthreads form Derrick J Brashear <shadow@dementia.org>
+
+* port to Irix 6.4
+
+* random bugfixes
+
+Changes in release 0.21:
+
+* improve libgetcwd.so installation procedure
+
+* correct some bugs with the counting of used bytes
+
+* return better error codes
+
+* should work with KLD/LKMs on FreeBSD [34]
+
+* correct errors when setting and reading sysnames
+
+* make --with-sys work
+
+* fix refcount bug in volcache
+
+* works once again on NT/cygwin
+
+* add cellstatus and suid cells
+
+* update tests
+
+* port to Solaris 2.7 in 64-bit mode
+
+Changes in release 0.20:
+
+* more correct error codes
+
+* fs newcell
+
+* fs apropos (command locate by keyword)
+
+* linux getcwd fix from Brandon S. Allbery <allbery@ece.cmu.edu>
+
+* some code reorganized
+
+* lots of bug fixes
+
+Changes in release 0.19:
+
+* support for Solaris 7
+
+* tests: add support for running somewhere else than /afs
+
+* some more bug fixes
+
+Changes in release 0.18:
+
+* implement selection of filservers based on rtts
+
+* fix bugs related to 8bit characters in filenames
+
+* revised error messages in vol/fcache
+
+* lots of new test cases
+
+* new shell-script run-tests to run tests
+
+* implement `fs checkservers' and `fs rmm'
+
+* return correct number of blocks on linux
+
+* the usual collection of bug fixes
+
+Changes in release 0.17.1:
+
+* fixed memory leak bug
+
+Changes in release 0.17:
+
+* new graphical program `amon' for monitoring the state of the cache.
+
+* `fs xfsdebug' and `fs arladebug' for manipulating the details of the
+  debug output.
+
+* more warning messages from arla (when credentials expire, hosts go
+  up and down, volumes are busy, ...)
+
+* keep track of which servers are up and down, probe them periodically
+  and fallback to servers that are up.
+
+* more test-cases
+
+* work-around a bug in Linux 2.1.131 that made it impossible to have
+  filenames with 8bit characters
+
+* correct timestamps (use ClientModTime instead of ServerModTime)
+
+* bug fixes
+
+Changes in release 0.16:
+
+* better handling of large directories
+
+* even more bug fixes
+
+Changes in release 0.15:
+
+* added disconnected mode code from WUWEI SHEN <wwshen@engin.umich.edu>
+
+* more support for FreeBSD3.0
+
+* multiple worker-threads
+
+* bugfixes
+
+* more test cases
+
+Changes in release 0.14.1:
+
+* now even builds
+
+Changes in release 0.14:
+
+* added an experimental pre-greek letter AFS server, milko
+
+* FreeBSD 3.0 support
+
+* more Digital UNIX support
+
+* updated IRIX port
+
+* transarc compat gc pag support in fs appl
+
+* new pts functions implemented
+
+* Linux SMP fixes
+
+* arlad now supports viocgetcacheparams
+
+* lwp now supports Fujitsu UXP/V architecture
+
+* cookies implemented in xfs_readdir
+
+* many bug fixes
+
+Changes in release 0.13:
+
+* irix port much improved
+
+* smp detection on Linux works better
+
+* plugged some memory leaks in the linux kernel module
+
+* random bug fixes
+
+Changes in release 0.12:
+
+* works better on OpenBSD and Linux
+
+* builds SMP-able modules on Linux
+
+* lwp stack size bumped
+
+Changes in release 0.11:
+
+* works better on NetBSD and modern Linux
+
+* bug fixes
+
+Changes in release 0.10:
+
+* cache files are now opened using inode number on BSD and Solaris
+
+* lots of bug fixes
+
 Changes in release 0.9:
 
 * merging of all BSD codes

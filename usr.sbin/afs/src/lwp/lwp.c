@@ -1,4 +1,4 @@
-/*	$OpenBSD: lwp.c,v 1.1.1.1 1998/09/14 21:53:12 art Exp $	*/
+/*	$OpenBSD: lwp.c,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -38,7 +38,7 @@
 
 #include "lwp.h"
 
-RCSID("$KTH: lwp.c,v 1.10 1998/02/22 20:02:25 joda Exp $");
+RCSID("$KTH: lwp.c,v 1.14 1999/01/12 04:13:44 assar Exp $");
 
 #ifdef	AFS_AIX32_ENV
 #include <ulimit.h>
@@ -68,7 +68,7 @@ extern char PRE_Block;	/* from preempt.c */
  * now I don't get any unalinged memory access on my alpha /lha 
  */
 
-#ifdef __alpha
+#if defined(__alpha) || defined(__uxpv__) || defined(__sparcv9)
 #define REGSIZE 8
 #else
 #define REGSIZE 4

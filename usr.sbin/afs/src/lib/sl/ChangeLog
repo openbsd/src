@@ -1,3 +1,9 @@
+1999-03-06  Love  <lha@s3.kth.se>
+
+	* sl.h: Added prototype
+
+	* sl.c (sl_apropos): New function
+
 Tue Mar  3 00:03:17 1998  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.in (install): removed '-m 444'

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd-subr.c,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
+/*	$OpenBSD: bsd-subr.c,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,18 +43,36 @@
 #define _BSD
 #endif
 #include "arla_local.h"
-RCSID("$KTH: bsd-subr.c,v 1.24 1998/05/02 02:28:46 assar Exp $");
+RCSID("$KTH: bsd-subr.c,v 1.32 1998/12/22 13:15:54 lha Exp $");
 
-static long blocksize = 1024;	/* XXX */
+#ifdef __linux__
+#include <xfs/xfs_dirent.h>
+#else
+#define XFS_DIRENT_BLOCKSIZE 1024
+#define xfs_dirent dirent
+#endif
+#if defined(GENERIC_DIRSIZ_IN_SYS_DIRENT_H)
+#include <sys/dirent.h>
+#elif defined(DIRSIZ_IN_DIRENT_H)
+#include <dirent.h>
+#elif defined(DIRSIZ_IN_SYS_DIR_H)
+#include <sys/dir.h>
+#endif
+
+static long blocksize = XFS_DIRENT_BLOCKSIZE;	/* XXX */
 
 struct args {
     int fd;
     off_t off;
     char *buf;
     char *ptr;
-    struct dirent *last;
+    struct xfs_dirent *last;
     FCacheEntry *e; 
 };
+
+/*
+ * Write out all remaining data in `args'
+ */
 
 static void
 flushbuf (struct args *args)
@@ -62,31 +80,36 @@ flushbuf (struct args *args)
      unsigned inc = blocksize - (args->ptr - args->buf);
 
      args->last->d_reclen += inc;
-#if 0
-     args->last->d_off    += inc;
-#endif
      if (write (args->fd, args->buf, blocksize) != blocksize)
 	  arla_warn (ADEBWARN, errno, "write");
      args->ptr = args->buf;
      args->last = NULL;
 }
 
+/*
+ * Write a dirent to the args buf in `arg' containg `fid' and `name'.
+ */
+
 static void
 write_dirent(VenusFid *fid, const char *name, void *arg)
 {
-     struct dirent dirent, *real;
+     struct xfs_dirent dirent, *real;
      struct args *args = (struct args *)arg;
 
      dirent.d_namlen = strlen (name);
+#ifdef _GENERIC_DIRSIZ
+     dirent.d_reclen = _GENERIC_DIRSIZ(&dirent);
+#else
      dirent.d_reclen = DIRSIZ(&dirent);
+#endif
 
      if (args->ptr + dirent.d_reclen > args->buf + blocksize)
 	  flushbuf (args);
-     real = (struct dirent *)args->ptr;
+     real = (struct xfs_dirent *)args->ptr;
 
      real->d_namlen = dirent.d_namlen;
      real->d_reclen = dirent.d_reclen;
-#ifdef HAVE_STRUCT_DIRENT_D_TYPE
+#if defined(HAVE_STRUCT_DIRENT_D_TYPE) && !defined(__linux__)
      real->d_type   = DT_UNKNOWN;
 #endif
      
@@ -114,23 +137,34 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
  */
 
 Result
-conv_dir (FCacheEntry *e, char *handle, size_t handle_size,
-	  CredCacheEntry *ce, u_int tokens)
+conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
+	  xfs_cache_handle *cache_handle,
+	  char *cache_name, size_t cache_name_sz)
 {
      struct args args;
      Result res;
+     int ret;
 
      e->flags.extradirp = TRUE;
-     fcache_extra_file_name (e, handle, handle_size);
+     fcache_extra_file_name (e, cache_name, cache_name_sz);
      res.tokens = e->tokens |= XFS_DATA_R | XFS_OPEN_NR;
 
-     args.fd = open (handle, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+     args.fd = open (cache_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
      if (args.fd == -1) {
 	  res.res = -1;
 	  res.error = errno;
-	  arla_warn (ADEBWARN, errno, "open %s", handle);
+	  arla_warn (ADEBWARN, errno, "open %s", cache_name);
 	  return res;
      }
+     ret = fcache_fhget (cache_name, cache_handle);
+     if(ret) {
+	 res.res = -1;
+	 res.error = errno;
+	 close (args.fd);
+	 arla_warn (ADEBWARN, res.error, "fcache_fhget(%s)", cache_name);
+	 return res;
+     }
+
      args.off  = 0;
      args.buf  = (char *)malloc (blocksize);
      if (args.buf == NULL) {
@@ -143,9 +177,9 @@ conv_dir (FCacheEntry *e, char *handle, size_t handle_size,
      args.ptr  = args.buf;
      args.last = NULL;
      args.e = e;
-     ReleaseWriteLock (&e->lock);
+     ReleaseWriteLock (&e->lock); /* XXX */
      adir_readdir (e->fid, write_dirent, (void *)&args, ce);
-     ObtainWriteLock (&e->lock);
+     ObtainWriteLock (&e->lock); /* XXX */
      if (args.last)
 	  flushbuf (&args);
      free (args.buf);

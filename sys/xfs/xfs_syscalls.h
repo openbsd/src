@@ -1,6 +1,5 @@
-/*	$OpenBSD: xfs_syscalls.h,v 1.2 1998/08/31 05:13:29 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -37,14 +36,58 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: xfs_syscalls.h,v 1.2 1998/01/21 01:03:57 mho Exp $ */
+/* $Id: xfs_syscalls.h,v 1.3 1999/04/30 01:59:01 art Exp $ */
 
-#ifndef  _XFS_XFS_SYSCALLS_H_
-#define  _XFS_XFS_SYSCALLS_H_
+#ifndef  __xfs_syscalls
+#define  __xfs_syscalls
 
-int xfs_install_syscalls __P((void));
-int xfs_uninstall_syscalls __P((void));
-int xfs_stat_syscalls __P((void));
-pag_t xfs_get_pag __P((struct ucred *));
-
+#include <xfs/xfs_common.h>
+#include <xfs/xfs_message.h>
+#ifdef HAVE_SYS_SYSCALLARGS_H
+#include <sys/syscallargs.h>
 #endif
+
+/*
+ * XXX
+ */
+
+#ifndef SCARG
+#define SCARG(a, b) ((a)->b.datum)
+#define syscallarg(x)   union { x datum; register_t pad; }
+#endif
+
+#ifndef syscallarg
+#define syscallarg(x)   x
+#endif
+
+#ifndef HAVE_REGISTER_T
+typedef int register_t;
+#endif
+
+struct sys_pioctl_args {
+    syscallarg(int) operation;
+    syscallarg(char *) a_pathP;
+    syscallarg(int) a_opcode;
+    syscallarg(struct ViceIoctl *) a_paramsP;
+    syscallarg(int) a_followSymlinks;
+};
+
+struct xfs_fh_args {
+    syscallarg(fsid_t) fsid;
+    syscallarg(long)   fileid;
+    syscallarg(long)   gen;
+};
+
+int xfs_install_syscalls(void);
+int xfs_uninstall_syscalls(void);
+int xfs_stat_syscalls(void);
+pag_t xfs_get_pag(struct ucred *);
+
+int xfs_setpag_call(struct ucred **ret_cred);
+int xfs_pioctl_call(struct proc *proc,
+		    struct sys_pioctl_args *args,
+		    register_t *return_value);
+
+int sys_xfspioctl(struct proc *proc, void *varg, register_t *retval);
+
+#endif				       /* __xfs_syscalls */

@@ -1,4 +1,3 @@
-/*	$OpenBSD: timeprio.c,v 1.1.1.1 1998/09/14 21:53:24 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,78 +36,30 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-RCSID("$KTH: timeprio.c,v 1.1 1998/07/07 15:57:11 lha Exp $");
+/* $Id: xfs_debug.h,v 1.1 1999/04/30 01:59:00 art Exp $ */
+
+#ifndef __XFS_DEBUG_H
+#define __XFS_DEBUG_H
+
+/* 
+ * These are GLOBAL xfs debugging masks
+ *
+ *   Define HAVE_XDEB in your local xfs_deb.h if
+ *   you want your fs to handle the debugging flags.
+ */
+
+/* Masks for the debug macro */
+#define XDEBDEV		0x00000001	/* device handling */
+#define XDEBMSG		0x00000002	/* message sending */
+#define XDEBDNLC	0x00000004	/* name cache */
+#define XDEBNODE	0x00000008	/* xfs nodes */
+#define XDEBVNOPS	0x00000010	/* vnode operations */
+#define XDEBVFOPS	0x00000020	/* vfs operations */
+#define XDEBLKM         0x00000040	/* LKM handling */
+#define XDEBSYS	        0x00000080	/* syscalls */
+#define XDEBMEM		0x00000100	/* memory allocation */
+#define XDEBREADDIR     0x00000200      /* readdir (linux) */
+#define XDEBLOCK	0x00000400	/* locking (linux) */
+#define XDEBCACHE       0x00000800      /* Cache handeling (linux) */
+
 #endif
-
-#include <stdlib.h>
-#include "bool.h"
-#include "timeprio.h"
-
-
-static int 
-timeprio_cmp(void *a1, void *b1)
-{
-    Tpel *a = a1, *b = b1;
-
-    return a->time > b->time;
-}
-
-
-Timeprio *
-timeprionew(unsigned size)
-{
-    return (Timeprio *) prionew(size, timeprio_cmp);
-}
-
-void
-timepriofree(Timeprio *prio)
-{
-    priofree(prio);
-}
-
-int
-timeprioinsert(Timeprio *prio, time_t time, void *data)
-{
-    Tpel *el = malloc(sizeof(Tpel));
-    if (!el)
-	return -1;
-
-    el->time = time;
-    el->data = data;
-    if (prioinsert(prio, el)) {
-	free(el);
-	el = NULL;
-    }
-    return el ? 0 : -1;
-}
-
-void *
-timepriohead(Timeprio *prio)
-{
-    Tpel *el = priohead(prio);
-    
-    return el->data;
-}
-
-void
-timeprioremove(Timeprio *prio)
-{
-    void *el;
-
-    if (timeprioemptyp((Prio *)prio))
-	return;
-
-    el = priohead(prio);
-    if (el) free (el);
-    
-    prioremove((Prio *)prio);
-}
-    
-Bool 
-timeprioemptyp(Timeprio *prio)
-{
-    return prioemptyp(prio); 
-}
-

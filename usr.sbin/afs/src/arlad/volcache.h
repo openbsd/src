@@ -1,4 +1,4 @@
-/*	$OpenBSD: volcache.h,v 1.1.1.1 1998/09/14 21:52:57 art Exp $	*/
+/*	$OpenBSD: volcache.h,v 1.2 1999/04/30 01:59:10 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +41,7 @@
  * Our cache of volume information.
  */
 
-/* $KTH: volcache.h,v 1.13 1998/07/29 21:29:10 assar Exp $ */
+/* $KTH: volcache.h,v 1.17 1999/04/14 15:27:37 map Exp $ */
 
 #ifndef _VOLCACHE_
 #define _VOLCACHE_
@@ -56,16 +56,18 @@ struct num_ptr {
     int32_t cell;
     u_int32_t vol;
     struct volcacheentry *ptr;
+    int32_t type;
 };
 
 struct name_ptr {
     int32_t cell;
     char name[VLDB_MAXNAMELEN];
     struct volcacheentry *ptr;
+    int32_t type;
 };
 
 struct volcacheentry {
-    vldbentry entry;
+    nvldbentry entry;
     AFSVolSync volsync;
     int32_t cell;
     unsigned refcount;
@@ -84,13 +86,17 @@ void volcache_set_rootvolume (const char *volname);
 
 void volcache_init (unsigned nentries, Bool recover);
 
-VolCacheEntry *volcache_getbyname (const char *volname,
-				   int32_t cell,
-				   CredCacheEntry *ce);
+int volcache_getbyname (const char *volname,
+			int32_t cell,
+			CredCacheEntry *ce,
+			VolCacheEntry **e,
+			int32_t *type);
 
-VolCacheEntry *volcache_getbyid (u_int32_t id,
-				 int32_t cell,
-				 CredCacheEntry *ce);
+int volcache_getbyid (u_int32_t id,
+		      int32_t cell,
+		      CredCacheEntry *ce,
+		      VolCacheEntry **e,
+		      int32_t *type);
 
 void volcache_update_volsync (VolCacheEntry *e, AFSVolSync volsync);
 
@@ -98,9 +104,12 @@ void volcache_free (VolCacheEntry *e);
 
 void volcache_invalidate (u_int32_t id, int32_t cell);
 
-void volcache_status (FILE *f);
+int volume_make_uptodate (VolCacheEntry *e, CredCacheEntry *ce);
+
+void volcache_status (void);
 
 int
 volcache_store_state (void);
 
 #endif /* _VOLCACHE_ */
+

@@ -3,7 +3,7 @@
 # make-process.o.sh
 #  Try to make process.o various ways.
 #
-#  $Id: make-process.o.sh.in,v 1.1.1.1 1998/09/14 21:53:12 art Exp $
+#  $Id: make-process.o.sh.in,v 1.2 1999/04/30 01:59:13 art Exp $
 #
 
 srcdir=@srcdir@
@@ -11,7 +11,7 @@ srcdir=@srcdir@
 CC="@CC@"
 GCC="@GCC@"
 CPP="@CPP@"
-AS=as
+AS="as"
 RM=rm
 HOST_CPU="@host_cpu@"
 HOST_OS="@host_os@"
@@ -52,6 +52,7 @@ case "$HOST_CPU" in
     hppa*) CPUDEF="" ;;
     powerpc) CPUDEF="-D__powerpc__" ;;
     rs6000) CPUDEF="-DRIOS" ;;
+    f301) ;;
     *)  echo "Unknown host_cpu, good luck" ;;
 esac 
 
@@ -60,15 +61,20 @@ esac
 #
 
 case "$HOST_OS" in 
-    *bsd*) OSDEF="-DAFS_NETBSD_ENV" ;; 
+    *bsd*) OSDEF="-DHAVE_PIC -DAFS_BSD_ENV" ;; 
     *linux*) OSDEF="-DAFS_LINUX_ENV" ;; 
-    *irix*) OSDEF="-Dsgi" ;; 
     *dux* | *osf*) OSDEF="-DAFS_OSF_ENV" ;; 
     *solaris*) OSDEF="-DAFS_SUN5_ENV -D_ASM" USE_AS="yes" ;; 
-    *irix*) OSDEF="-Dsgi" ;; 
+    *irix*) OSDEF="-Dsgi -n32 -DHAVE_PIC"; ASDEF="-n32" ;; 
     *hpux*) OSDEF="-DAFS_HPUX_ENV" PROCESS_S="process.s.hpux" ;; 
-    rhapsody*) OSDEF="-DAFS_NETBSD_ENV" ;; 
+    rhapsody*) OSDEF="-DAFS_BSD_ENV" ;; 
     aix*) CPUDEF="-DRIOS"; OSDEF="" ;; 
+    uxpv*) 
+	$CPP -P ${srcdir}/process-vpp.s > foo.s
+	$AS -o process.o foo.s && $RM -f foo.s && exit 0
+	$RM -f foo.s
+	exit 1
+	;;
     *) ;; 
 esac 
 
@@ -81,8 +87,8 @@ esac
 # Can we use $CC to do the asm for us ? (GCC)
 #   
 
-if test "$GCC" = "yes" -a "$USE_AS" = "no"; then 
-    ${CC} $MYDEF $CPUDEF $OSDEF -c ${srcdir}/${PROCESS_S} ; 
+if test "X$GCC" = "Xyes" -a "X$USE_AS" = "Xno"; then 
+    ${CC} -I../include $MYDEF $CPUDEF $OSDEF -c ${srcdir}/${PROCESS_S} ; 
 
 # process.o there ?
     $CC -o testprocess testprocess.o process.o preempt.o lwp.o && exit 0
@@ -93,7 +99,7 @@ fi
 # Try to use $AS -P for assably 
 #
 
-$AS -P $MYDEF $CPUDEF $OSDEF ${srcdir}/${PROCESS_S} -o process.o
+$AS -P -I../include $MYDEF $CPUDEF $OSDEF ${srcdir}/${PROCESS_S} -o process.o
 
 # process.o there ?
 $CC -o testprocess testprocess.o process.o preempt.o lwp.o && exit 0
@@ -106,7 +112,7 @@ $RM -f process.o
 #
 
 if test -s process.i ; then
-    $AS process.i -o process.o
+    $AS $ASDEF process.i -o process.o
     $RM -f process.i
 
     # process.o there ?
@@ -118,7 +124,7 @@ fi
 # Try to use $AS (without -P) for assably 
 #
 
-$AS $MYDEF $CPUDEF $OSDEF ${srcdir}/${PROCESS_S} -o process.o
+$AS -I../include $MYDEF $CPUDEF $OSDEF ${srcdir}/${PROCESS_S} -o process.o
 
 # process.o there ?
 $CC -o testprocess testprocess.o process.o preempt.o lwp.o && exit 0
@@ -144,7 +150,8 @@ fi
 #
 
 $RM -f foo.c && $LN_S ${srcdir}/${PROCESS_S} foo.c 
-$CPP $MYDEF $CPUDEF $OSDEF foo.c > process.ss 
+$CPP -I../include $MYDEF $CPUDEF $OSDEF foo.c > process.ss 
+$RM -f foo.c
 $AS process.ss -o process.o 
 $RM -f process.ss
 
@@ -154,8 +161,3 @@ $RM -f process.o
 
 echo "WE HAVE NO process.o !"
 exit 1
-
-
-
-
-

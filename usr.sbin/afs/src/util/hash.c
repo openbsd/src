@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.1.1.1 1998/09/14 21:53:23 art Exp $	*/
+/*	$OpenBSD: hash.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +43,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: hash.c,v 1.10 1998/03/18 19:30:03 art Exp $");
+RCSID("$KTH: hash.c,v 1.12 1998/12/02 00:48:38 assar Exp $");
 #endif
 
 #include <assert.h>
@@ -113,17 +113,19 @@ hashtabsearch(Hashtab * htab, void *ptr)
 /* if already there, set new value */
 /* !NULL if succesful */
 
-void *
-hashtabadd(Hashtab * htab, void *ptr)
+static void *
+_add(Hashtab * htab, void *ptr, Bool unique)
 {
     Hashentry *h = _search(htab, ptr);
     Hashentry **tabptr;
 
     assert(htab && ptr);
 
-    if (h)
+    if (h) {
+	if (unique)
+	    return NULL;
 	free((void *) h->ptr);
-    else {
+    } else {
 	h = (Hashentry *) malloc(sizeof(Hashentry));
 	if (h == NULL) {
 	    return NULL;
@@ -137,6 +139,18 @@ hashtabadd(Hashtab * htab, void *ptr)
     }
     h->ptr = ptr;
     return h;
+}
+
+void *
+hashtabaddreplace (Hashtab *htab, void *ptr)
+{
+    return _add (htab, ptr, FALSE);
+}
+
+void *
+hashtabadd (Hashtab *htab, void *ptr)
+{
+    return _add (htab, ptr, TRUE);
 }
 
 /* delete element with key key. Iff freep, free Hashentry->ptr */

@@ -1,6 +1,5 @@
-/*	$OpenBSD: xfs_deb.c,v 1.1 1998/08/30 16:47:20 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -38,15 +37,24 @@
  */
 
 #include <xfs/xfs_deb.h>
+#include <xfs/xfs_debug.h>
 
-/* $KTH: xfs_deb.c,v 1.3 1998/03/20 21:02:32 art Exp $ */
+/* $Id: xfs_deb.c,v 1.2 1999/04/30 01:59:00 art Exp $ */
 
 /* X is on */
 #define X(y) y
 /* and x is off */
 #define x(y) 0
 
-int xfsdeb = (0
-	      |
-	      x(XDEBANY)
+unsigned int xfsdeb = (0   |
+	      x(XDEBDEV)   |
+	      x(XDEBMSG)   |
+	      x(XDEBDNLC)  |
+	      x(XDEBNODE)  |
+	      x(XDEBVNOPS) |
+	      x(XDEBVFOPS) |
+	      x(XDEBLKM)   |
+	      x(XDEBSYS)   |
+	      x(XDEBMEM)   |
+		       0
 );

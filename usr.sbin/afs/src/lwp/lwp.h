@@ -1,4 +1,4 @@
-/*	$OpenBSD: lwp.h,v 1.1.1.1 1998/09/14 21:53:12 art Exp $	*/
+/*	$OpenBSD: lwp.h,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 
 /*
 ****************************************************************************
@@ -29,7 +29,7 @@
 * 								    *
 \*******************************************************************/
 
-/* $KTH: lwp.h,v 1.8 1998/07/20 02:52:24 assar Exp $ */ 
+/* $KTH: lwp.h,v 1.12 1999/01/12 04:11:44 assar Exp $ */ 
 
 #ifndef __LWP_INCLUDE_
 #define	__LWP_INCLUDE_	1
@@ -84,7 +84,13 @@ struct lwp_context {	/* saved context for dispatcher */
     char *topstack;	/* ptr to top of process stack */
 #ifdef sparc
 #ifdef	save_allregs
-    long globals[7+1+32+2+32+2];    /* g1-g7, y reg, f0-f31, fsr, fq, c0-c31, csr, cq. */
+#ifdef __sparcv9
+#define nregs (7+1+62+2)
+#else
+#define nregs (7+1+32+2+32+2)     /* g1-g7, y reg, f0-f31, fsr, fq, c0-c31, csr, cq. */
+#endif
+    long globals[nregs];
+#undef nregs
 #else
     long globals[8];    /* g1-g7 and y registers. */
 #endif
@@ -173,9 +179,9 @@ extern
  * overflow problems.
  */
 #if defined(AFS_HPUX_ENV) || defined(AFS_NEXT_ENV) /*|| defined(AFS_SUN5_ENV)*/
-#define AFS_LWP_MINSTACKSIZE	(24 * 1024)
+#define AFS_LWP_MINSTACKSIZE	(100 * 1024)
 #else
-#define AFS_LWP_MINSTACKSIZE	(16 * 1024)
+#define AFS_LWP_MINSTACKSIZE	(100 * 1024)
 #endif /* defined(AFS_HPUX_ENV) */
 
 /* Action to take on stack overflow. */

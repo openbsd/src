@@ -1,4 +1,3 @@
-/*	$OpenBSD: xfs_deb.h,v 1.2 1998/08/31 05:13:22 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,27 +36,30 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _XFS_XFS_DEB_H_
-#define _XFS_XFS_DEB_H_
+/* $Id: xfs_deb.h,v 1.3 1999/04/30 01:59:00 art Exp $ */
 
-/* masks */
-#define XDEBANY		0xffffffff
-#define XDEBDEV		0x00000001
-#define XDEBMSG		0x00000002
-#define XDEBDNLC	0x00000004
-#define XDEBNODE	0x00000008
-#define XDEBVNOPS	0x00000010
-#define XDEBVFOPS	0x00000020
-#define XDEBLKM         0x00000040
-#define XDEBSYS	        0x00000080
-#define XDEBMEM		0x00000100
+#ifndef _xfs_deb_h
+#define _xfs_deb_h
 
-extern int xfsdeb;
+#include <xfs/xfs_debug.h>
 
-#ifdef DEBUG
+#define HAVE_XDEBDEV
+#define HAVE_XDEBMSG
+#define HAVE_XDEBDNLC
+#define HAVE_XDEBNODE
+#define HAVE_XDEBVNOPS
+#define HAVE_XDEBVFOPS
+#define HAVE_XDEBLKM
+#define HAVE_XDEBSYS
+#define HAVE_XDEBMEM
+#define HAVE_XDEBSYS
+
+extern unsigned int xfsdeb;
+
+#ifdef XFS_DEBUG
 #define XFSDEB(mask, args) do { if (mask&xfsdeb) printf args; } while (0)
 #else
 #define XFSDEB(mask, args) do { ; } while (0)
 #endif
 
-#endif
+#endif				       /* _xfs_deb_h */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: rx_trace.c,v 1.1.1.1 1998/09/14 21:53:17 art Exp $	*/
+/*	$OpenBSD: rx_trace.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_trace.c,v 1.4 1998/02/22 19:55:04 joda Exp $");
+RCSID("$KTH: rx_trace.c,v 1.5 1998/09/09 10:17:53 assar Exp $");
 
 #ifdef RXTRACEON
 char rxi_tracename[80] = "/tmp/rxcalltrace";
@@ -10,6 +10,9 @@ char rxi_tracename[80] = "/tmp/rxcalltrace";
 char rxi_tracename[80] = "\0Change This pathname (and preceding NUL) to initiate tracing";
 
 #endif
+
+#ifdef RXDEBUG
+
 int rxi_logfd = 0;
 char rxi_tracebuf[4096];
 unsigned long rxi_tracepos = 0;
@@ -26,7 +29,6 @@ struct rx_trace {
 
 struct rx_trace rxtinfo;
 
-#ifdef RXDEBUG
 void 
 rxi_flushtrace(void)
 {
@@ -99,7 +101,8 @@ rxi_calltrace(unsigned int event, struct rx_call *call)
     if (rxi_tracepos >= (4096 - sizeof(struct rx_trace)))
 	rxi_flushtrace();
 }
-#endif
+
+#endif /* RXDEBUG */
 
 #ifdef DUMPTRACE
 

@@ -1,6 +1,6 @@
-/*	$OpenBSD: efile.c,v 1.1.1.1 1998/09/14 21:53:22 art Exp $	*/
+/*	$OpenBSD: efile.c,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,34 +43,28 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: efile.c,v 1.4 1998/02/22 11:22:14 assar Exp $");
+RCSID("$KTH: efile.c,v 1.5 1999/02/27 11:04:50 assar Exp $");
 #endif
 
 #include <stdio.h>
 #include "efile.h"
 
 FILE *
-efopen (char *name, char *mode)
+efopen (const char *name, const char *mode)
 {
      FILE *tmp;
 
      tmp = fopen (name, mode);
-     if (tmp == NULL) {
-	  fprintf (stderr, "Could not open file %s in mode %s\n",
-		   name, mode);
-	  perror ("open");
-	  exit (1);
-     }
+     if (tmp == NULL)
+	 err (1, "open %s mode %s", name, mode);
      return tmp;
 }
 
 void
 efclose (FILE *f)
 {
-     if (fclose (f)) {
-	  fprintf (stderr, "Problems closing a file\n");
-	  perror ("close");
-     }
+     if (fclose (f))
+	 err (1, "close");
 }
 
 size_t
@@ -79,11 +73,8 @@ efread (void *ptr, size_t size, size_t nitems, FILE *stream)
      size_t res;
 
      res = fread (ptr, size, nitems, stream);
-     if (res == 0) {
-	  fprintf (stderr, "Error reading\n");
-	  perror ("read");
-	  exit (1);
-     }
+     if (res == 0)
+	 err (1, "read");
      return res;
 }
 
@@ -93,10 +84,7 @@ efwrite (const void *ptr, size_t size, size_t nitems, FILE *stream)
      size_t res;
 
      res = fwrite (ptr, size, nitems, stream);
-     if (res == 0) {
-	  fprintf (stderr, "Error writing\n");
-	  perror ("read");
-	  exit (1);
-     }
+     if (res == 0)
+	 err (1, "write");
      return res;
 }

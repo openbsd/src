@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 1998/09/14 21:53:33 art Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/04/30 01:59:02 art Exp $
 PROG	= afsd
 MAN	= afsd.8
 BINDIR	= /usr/libexec
-SRCS	= adir.c arla.c arladeb.c cmcb.c conn.c cred.c fbuf.c fcache.c \
-	  fprio.c inter.c kernel.c messages.c volcache.c bsd-subr.c
+SRCS	= adir.c arla.c arladeb.c cmcb.c conn.c cred.c darla.c discon_log.c \
+	  fbuf.c fcache.c fprio.c inter.c kernel.c messages.c reconnect.c \
+	  volcache.c bsd-subr.c
 
 .include "../Applflags.inc"
 

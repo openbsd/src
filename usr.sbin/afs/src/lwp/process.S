@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/process.S,v 1.3 1999/02/01 16:23:14 pefo Exp $ */
+/* $Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/process.S,v 1.4 1999/04/30 01:59:14 art Exp $ */
 /* $Source: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/process.S,v $ */
 
 /*
@@ -21,6 +21,8 @@
 * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.    *
 ****************************************************************************
 */
+
+#include <config.h>
 
 #if defined(RIOS)
 
@@ -266,42 +268,44 @@ _returnto:
 	clrb	_PRE_Block
 	rts				| Return to previous process
 #endif /* mc68000 */
-#ifdef	sparc
-#ifdef	AFS_SUN5_ENV
-#include	<sys/asm_linkage.h>
-#include  <sys/trap.h>
-#else
-#ifdef AFS_NETBSD_ENV
+	
+#ifdef sparc
+#if defined(AFS_SUN5_ENV)
+#include <sys/asm_linkage.h>
+#include <sys/trap.h>
+#ifndef STACK_BIAS
+#define STACK_BIAS 0
+#endif	
+#elif defined(AFS_BSD_ENV)
 #include <machine/trap.h>
 #define ST_FLUSH_WINDOWS ST_FLUSHWIN
 #define MINFRAME 92
 #define SA(x) (((x)+7)&~7)
 #define STACK_ALIGN 8
-#else 
-#ifdef AFS_LINUX_ENV
+#define STACK_BIAS 0
+#elif defined(AFS_LINUX_ENV)
 #define AFS_SUN5_ENV 1          /* Make believe this is Solaris */ 
 #define ST_FLUSH_WINDOWS 0x03   /* XXX:  from asm/traps.h */
 #define MINFRAME 92
 #define SA(x) (((x)+7)&~7)
 #define STACK_ALIGN 8
-#else /* SunOS 4: */
-#include	<sun4/asm_linkage.h>
-#include  <sun4/trap.h>
+#define STACK_BIAS 0
+#else				/* SunOS4 */
+#include <sun4/asm_linkage.h>
+#include <sun4/trap.h>
 #endif
-#endif
-#endif
+
 	.data	
 #ifdef	AFS_SUN5_ENV
 	.globl	PRE_Block
 #else
 	.globl	_PRE_Block
 #endif
-topstack	= 0
-globals = 4
 /*
 # savecontext(f, area1, newsp)
 #     int (*f)(); struct savearea *area1; char *newsp;
 */
+	
 	.text
 #ifdef	AFS_SUN5_ENV
 	.globl	savecontext
@@ -315,13 +319,117 @@ _savecontext:
 
 	/* The following 3 lines do the equivalent of: _PRE_Block = 1 */
 #ifdef	AFS_SUN5_ENV
-	set	PRE_Block, %l0
-#else
+	
+#ifdef	__sparcv9	
+	sethi	%hh(PRE_Block),%l0
+	or	%l0,%hm(PRE_Block),%l0
+	sethi	%lm(PRE_Block),%g1
+	or	%g1,%lo(PRE_Block),%g1
+	sllx	%l0,32,%l0
+	or	%l0,%g1,%l0
+#else	
+	sethi	%hi(PRE_Block),%l0
+	or	%l0,%lo(PRE_Block),%l0
+#endif
+#else   /* AFS_SUN5_ENV */
 	set	_PRE_Block, %l0
 #endif
 	mov	1,%l1
 	stb	%l1, [%l0]
 
+#ifdef	__sparcv9
+	
+topstack	= 0
+globals = 8
+
+	stx	%fp,[%i1+topstack]		! area1->topstack = sp
+	
+	stx	%g1, [%i1 + globals + 0]		/* Save all globals just in case */
+	stx	%g2, [%i1 + globals + 8]
+	stx	%g3, [%i1 + globals + 16]
+	stx	%g4, [%i1 + globals + 24]
+	stx	%g5, [%i1 + globals + 32]
+	stx	%g6, [%i1 + globals + 40]
+	stx	%g7, [%i1 + globals + 48]
+	mov	%y, %g1
+	stx	%g1, [%i1 + globals + 56]
+
+#ifdef	save_allregs
+	stx	%f0,  [%i1 + globals + 64 + 0]
+	stx	%f1,  [%i1 + globals + 64 + 8]
+	stx	%f2,  [%i1 + globals + 64 + 16]
+	stx	%f3,  [%i1 + globals + 64 + 24]
+	stx	%f4,  [%i1 + globals + 64 + 32]
+	stx	%f5,  [%i1 + globals + 64 + 40]
+	stx	%f6,  [%i1 + globals + 64 + 48]
+	stx	%f7,  [%i1 + globals + 64 + 56]
+	stx	%f8,  [%i1 + globals + 64 + 64]
+	stx	%f9,  [%i1 + globals + 64 + 72]
+	stx	%f10, [%i1 + globals + 64 + 80]
+	stx	%f11, [%i1 + globals + 64 + 88]
+	stx	%f12, [%i1 + globals + 64 + 96]
+	stx	%f13, [%i1 + globals + 64 + 104]
+	stx	%f14, [%i1 + globals + 64 + 112]
+	stx	%f15, [%i1 + globals + 64 + 120]
+	stx	%f16, [%i1 + globals + 64 + 128]
+	stx	%f17, [%i1 + globals + 64 + 136]
+	stx	%f18, [%i1 + globals + 64 + 144]
+	stx	%f19, [%i1 + globals + 64 + 152]
+	stx	%f20, [%i1 + globals + 64 + 160]
+	stx	%f21, [%i1 + globals + 64 + 168]
+	stx	%f22, [%i1 + globals + 64 + 176]
+	stx	%f23, [%i1 + globals + 64 + 184]
+	stx	%f24, [%i1 + globals + 64 + 192]
+	stx	%f25, [%i1 + globals + 64 + 200]
+	stx	%f26, [%i1 + globals + 64 + 208]
+	stx	%f27, [%i1 + globals + 64 + 216]
+	stx	%f28, [%i1 + globals + 64 + 224]
+	stx	%f29, [%i1 + globals + 64 + 232]
+	stx	%f30, [%i1 + globals + 64 + 240]
+	stx	%f31, [%i1 + globals + 64 + 248]
+	stx	%f32, [%i1 + globals + 64 + 256]
+	stx	%f33, [%i1 + globals + 64 + 264]
+	stx	%f34, [%i1 + globals + 64 + 272]
+	stx	%f35, [%i1 + globals + 64 + 280]
+	stx	%f36, [%i1 + globals + 64 + 288]
+	stx	%f37, [%i1 + globals + 64 + 296]
+	stx	%f38, [%i1 + globals + 64 + 304]
+	stx	%f39, [%i1 + globals + 64 + 312]
+	stx	%f40, [%i1 + globals + 64 + 320]
+	stx	%f41, [%i1 + globals + 64 + 328]
+	stx	%f42, [%i1 + globals + 64 + 336]
+	stx	%f43, [%i1 + globals + 64 + 344]
+	stx	%f44, [%i1 + globals + 64 + 352]
+	stx	%f45, [%i1 + globals + 64 + 360]
+	stx	%f46, [%i1 + globals + 64 + 368]
+	stx	%f47, [%i1 + globals + 64 + 376]
+	stx	%f48, [%i1 + globals + 64 + 384]
+	stx	%f49, [%i1 + globals + 64 + 392]
+	stx	%f50, [%i1 + globals + 64 + 400]
+	stx	%f51, [%i1 + globals + 64 + 408]
+	stx	%f52, [%i1 + globals + 64 + 416]
+	stx	%f53, [%i1 + globals + 64 + 424]
+	stx	%f54, [%i1 + globals + 64 + 432]
+	stx	%f55, [%i1 + globals + 64 + 440]
+	stx	%f56, [%i1 + globals + 64 + 448]
+	stx	%f57, [%i1 + globals + 64 + 456]
+	stx	%f59, [%i1 + globals + 64 + 464]
+	stx	%f60, [%i1 + globals + 64 + 472]
+	stx	%f61, [%i1 + globals + 64 + 480]
+#ifdef	notdef
+	mov	%fsr,%g1
+	stx	%g1, [%i1 + globals + 64 + 488]
+	mov	%fq,%g1
+	stx	%g1, [%i1 + globals + 64 + 496]
+#endif
+	
+#endif	
+	
+#else	/* !__sparcv9 */
+
+topstack	= 0
+globals = 4
+	
 	st	%fp,[%i1+topstack]		! area1->topstack = sp
 	
 	st	%g1, [%i1 + globals + 0]		/* Save all globals just in case */
@@ -413,6 +521,9 @@ _savecontext:
 	st	%g1, [%i1 + globals + 200 + 100]
 #endif
 #endif
+	
+#endif  /* __sparcv9 */
+
 	cmp	%i2, 0
 	be,a	L1				! if (newsp == 0) no stack switch
 	nop
@@ -433,7 +544,7 @@ _savecontext:
 	add	%o2, STACK_ALIGN - 1, %o2
 	and	%o2, ~(STACK_ALIGN - 1), %o2	
 	call	%o0
-	sub	%o2, SA(MINFRAME), %sp
+	sub	%o2, SA(MINFRAME) + STACK_BIAS, %sp
 #endif	
 
 L1:	call	%i0			! call f()
@@ -450,10 +561,100 @@ returnto:
 _returnto:
 #endif
 	ta	ST_FLUSH_WINDOWS		! FLush all other active windows
+
+#ifdef	__sparcv9
+
+#ifdef	save_allregs
+	ldx	[%i1 + globals + 64 + 0], %f0
+	ldx	[%i1 + globals + 64 + 8], %f1
+	ldx	[%i1 + globals + 64 + 16], %f2
+	ldx	[%i1 + globals + 64 + 24], %f3
+	ldx	[%i1 + globals + 64 + 32], %f4
+	ldx	[%i1 + globals + 64 + 40], %f5
+	ldx	[%i1 + globals + 64 + 48], %f6
+	ldx	[%i1 + globals + 64 + 56], %f7
+	ldx	[%i1 + globals + 64 + 64], %f8
+	ldx	[%i1 + globals + 64 + 72], %f9
+	ldx	[%i1 + globals + 64 + 80], %f10
+	ldx	[%i1 + globals + 64 + 88], %f11
+	ldx	[%i1 + globals + 64 + 96], %f12
+	ldx	[%i1 + globals + 64 + 104], %f13
+	ldx	[%i1 + globals + 64 + 112], %f14
+	ldx	[%i1 + globals + 64 + 120], %f15
+	ldx	[%i1 + globals + 64 + 128], %f16
+	ldx	[%i1 + globals + 64 + 136], %f17
+	ldx	[%i1 + globals + 64 + 144], %f18
+	ldx	[%i1 + globals + 64 + 152], %f19
+	ldx	[%i1 + globals + 64 + 160], %f20
+	ldx	[%i1 + globals + 64 + 168], %f21
+	ldx	[%i1 + globals + 64 + 176], %f22
+	ldx	[%i1 + globals + 64 + 184], %f23
+	ldx	[%i1 + globals + 64 + 192], %f24
+	ldx	[%i1 + globals + 64 + 200], %f25
+	ldx	[%i1 + globals + 64 + 208], %f26
+	ldx	[%i1 + globals + 64 + 216], %f27
+	ldx	[%i1 + globals + 64 + 224], %f28
+	ldx	[%i1 + globals + 64 + 232], %f29
+	ldx	[%i1 + globals + 64 + 240], %f30
+	ldx	[%i1 + globals + 64 + 248], %f31
+	ldx	[%i1 + globals + 64 + 256], %f32
+	ldx	[%i1 + globals + 64 + 264], %f33
+	ldx	[%i1 + globals + 64 + 272], %f34
+	ldx	[%i1 + globals + 64 + 280], %f35
+	ldx	[%i1 + globals + 64 + 288], %f36
+	ldx	[%i1 + globals + 64 + 296], %f37
+	ldx	[%i1 + globals + 64 + 304], %f38
+	ldx	[%i1 + globals + 64 + 312], %f39
+	ldx	[%i1 + globals + 64 + 320], %f40
+	ldx	[%i1 + globals + 64 + 328], %f41
+	ldx	[%i1 + globals + 64 + 336], %f42
+	ldx	[%i1 + globals + 64 + 344], %f43
+	ldx	[%i1 + globals + 64 + 352], %f44
+	ldx	[%i1 + globals + 64 + 360], %f45
+	ldx	[%i1 + globals + 64 + 368], %f46
+	ldx	[%i1 + globals + 64 + 376], %f47
+	ldx	[%i1 + globals + 64 + 384], %f48
+	ldx	[%i1 + globals + 64 + 392], %f49
+	ldx	[%i1 + globals + 64 + 400], %f50
+	ldx	[%i1 + globals + 64 + 408], %f51
+	ldx	[%i1 + globals + 64 + 416], %f52
+	ldx	[%i1 + globals + 64 + 424], %f53
+	ldx	[%i1 + globals + 64 + 432], %f54
+	ldx	[%i1 + globals + 64 + 440], %f55
+	ldx	[%i1 + globals + 64 + 448], %f56
+	ldx	[%i1 + globals + 64 + 456], %f57
+	ldx	[%i1 + globals + 64 + 464], %f59
+	ldx	[%i1 + globals + 64 + 472], %f60
+	ldx	[%i1 + globals + 64 + 480], %f61
+#ifdef	notdef
+	mov	%fsr,%g1
+	ldx	[%i1 + globals + 64 + 488], %g1
+	mov	%fq,%g1
+	ldx	[%i1 + globals + 64 + 496], %g1
+#endif
+	
+#endif
+	
+	ldx	[%o0+topstack],%g1		! sp = area1->topstack
+	sub	%g1, SA(MINFRAME), %fp	! Adjust sp to the right place
+	sub	%fp, SA(MINFRAME), %sp
+	
+	ldx	[%o0 + globals + 56], %g1		! Restore global regs back
+	mov	%g1, %y
+	ldx	[%o0 + globals + 0], %g1
+	ldx	[%o0 + globals + 8], %g2
+	ldx	[%o0 + globals + 16], %g3
+	ldx	[%o0 + globals + 24],%g4
+	ldx	[%o0 + globals + 32],%g5
+	ldx	[%o0 + globals + 40],%g6
+	ldx	[%o0 + globals + 48],%g7
+	
+#else	/* !__sparcv9 */
+
 	ld	[%o0+topstack],%g1		! sp = area1->topstack
 	sub	%g1, SA(MINFRAME), %fp	! Adjust sp to the right place
 	sub	%fp, SA(MINFRAME), %sp
-
+	
 #ifdef	save_allregs
 	ld	[%o0 + globals + 32 + 0],%f0		! Restore floating-point registers 
 	ld	[%o0 + globals + 32 + 4],%f1
@@ -542,11 +743,23 @@ _returnto:
 	ld	[%o0 + globals + 16],%g5
 	ld	[%o0 + globals + 20],%g6
 	ld	[%o0 + globals + 24],%g7
+	
+#endif	/* __sparcv9 */
 
 	/* The following 3 lines are equivalent to: _PRE_Block = 0 */
 #ifdef	AFS_SUN5_ENV
-	set	PRE_Block, %l0
+#ifdef	__sparcv9	
+	sethi	%hh(PRE_Block),%l0
+	or	%l0,%hm(PRE_Block),%l0
+	sethi	%lm(PRE_Block),%g1
+	or	%g1,%lo(PRE_Block),%g1
+	sllx	%l0,32,%l0
+	or	%l0,%g1,%l0
 #else
+	sethi	%hi(PRE_Block),%l0
+	or	%l0,%lo(PRE_Block),%l0
+#endif
+#else   /* AFS_SUN5_ENV */
 	set	_PRE_Block, %l0
 #endif
 	mov	0,%l1
@@ -825,13 +1038,15 @@ _returnto:
 #endif
 
 #ifdef mips
-#if defined(sgi) || defined(__OpenBSD__)
+#ifdef HAVE_PIC
 	.option	pic2
-#if defined(sgi)
-#include <regdef.h> /* Allow use of symbolic names for registers. */
-#else
-#include <machine/regdef.h> /* Allow use of symbolic names for registers. */
+
+#if defined(HAVE_MACHINE_REGDEF_H)
+#include <machine/regdef.h>
+#elif defined(HAVE_REGDEF_H)
+#include <regdef.h>
 #endif
+	
 /* 9 sregs, ra, 6 fp regs, gp, pad to 8 byte boundary */
 #define regspace 9 * 4 + 4 + 6 * 8 + 4 + 4
 #define floats 0
@@ -920,11 +1135,27 @@ returnto:
 /* Code for MIPS R2000/R3000 architecture
  * Written by Zalman Stern April 30th, 1989.
  */
-#ifndef __OpenBSD__
+
+#if defined(HAVE_REGDEF_H)	
 #include <regdef.h> /* Allow use of symbolic names for registers. */
 #else
-#include <machine/regdef.h>
+#define sp     $29
+#define ra     $31
+#define t0     $8
+#define a0     $4
+#define a1     $5
+#define a2     $6
+#define s0     $16
+#define s1     $17
+#define s2     $18
+#define s3     $19
+#define s4     $20
+#define s5     $21
+#define s6     $22
+#define s7     $23
+#define s8     $30
 #endif
+	
 #define regspace 9 * 4 + 4 + 6 * 8
 #define floats 0
 #define registers floats + 6 * 8
@@ -992,8 +1223,8 @@ returnto:
 	sb	$0, PRE_Block
 	j	ra
 	.end	returnto
-#endif	/* sgi */
-#endif
+#endif	/* HAVE_PIC */
+#endif  /* mips */
 
 #ifdef AFS_HPUX_ENV
 #include "process.s.hpux"
@@ -1092,7 +1323,7 @@ ENTRY(returnto)
 
 #endif /* AFS_386i_ENV */
 
-#ifdef __alpha
+#ifdef alpha
 /* Code for DEC Alpha architecture */
 #ifdef	AFS_OSF_ENV
 #include <machine/asm.h>
@@ -1180,11 +1411,11 @@ x:				;                       \
 
 #define IMPORT(sym, size)                               \
 	        .extern sym,size
-#elif AFS_NETBSD_ENV
+#elif defined(HAVE_MACHINE_ASM_H)	/* BSD */
 #include <machine/asm.h>
-#else	/* OSF */
+#elif defined(HAVE_MACH_ALPHA_ASM_H)	/* OSF */
 #include <mach/alpha/asm.h>
-#endif	/* OSF */
+#endif
 
 #define FRAMESIZE ((8*8)+8+(7*8))
 #define floats 0
@@ -1216,7 +1447,7 @@ NESTED(savecontext,3,FRAMESIZE,ra,0x0400f700,0x000003fc)
 /* Save return address */
 	stq	ra, returnaddr(sp)
 
-#if !defined(AFS_NETBSD_ENV)
+#if !defined(AFS_BSD_ENV)
 	.mask	(M_S0|M_S1|M_S2|M_S3|M_S4|M_S5|M_S6|M_RA), -FRAMESIZE
 #endif
 

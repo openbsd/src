@@ -1,4 +1,4 @@
-/*	$OpenBSD: rx_user.c,v 1.1.1.1 1998/09/14 21:53:17 art Exp $	*/
+/*	$OpenBSD: rx_user.c,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -27,7 +27,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx_user.c,v 1.10 1998/04/08 05:19:34 lha Exp $");
+RCSID("$KTH: rx_user.c,v 1.14 1999/03/05 04:18:16 assar Exp $");
 
 #ifndef	IPPORT_USERRESERVED
 /*
@@ -141,50 +141,37 @@ rxi_StartServerProcs(int nExistingProcs)
 osi_socket
 rxi_GetUDPSocket(u_short port)
 {
-    int binds, code;
-    register int socketFd = OSI_NULLSOCKET;
+    int code;
+    int socketFd = OSI_NULLSOCKET;
     struct sockaddr_in taddr;
     char *name = "rxi_GetUDPSocket: ";
 
-#if 0				       /* We dont want to have this error
-				        * message, don't bother us */
-    if (port >= IPPORT_RESERVED && port < IPPORT_USERRESERVED) {
-	(osi_Msg "%s*WARNING* port number %d is not a reserved port number."
-	 "Use port numbers above %d\n",
-	 name, port, IPPORT_USERRESERVED);
-    }
-#endif				       /* 0 */
-
-    if (port > 0 && port < IPPORT_RESERVED && geteuid() != 0) {
-	(osi_Msg "%sport number %d is a reserved port number which may only"
-	 " be used by root.  Use port numbers above %d\n",
-	 name, port, IPPORT_USERRESERVED);
-	goto error;
-    }
     socketFd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    /* IOMGR_Select doesn't deal with arbitrarily large select masks */
-    if (socketFd > 31) {
-	(osi_Msg "%ssocket descriptor > 31\n", name);
-	goto error;
+    if (socketFd < 0) {
+	perror("socket");
+	(osi_Msg "%sunable to create UDP socket\n", name);
+	return OSI_NULLSOCKET;
     }
+
+#ifdef SO_BSDCOMPAT
+    {
+	int one = 1;
+	setsockopt (socketFd, SOL_SOCKET, SO_BSDCOMPAT, &one, sizeof(one));
+    }
+#endif    
+
     FD_SET(socketFd, &rx_selectMask);
     if (socketFd > rx_maxSocketNumber)
 	rx_maxSocketNumber = socketFd;
 
-    taddr.sin_addr.s_addr = 0;
+    memset (&taddr, 0, sizeof(taddr));
     taddr.sin_family = AF_INET;
-    taddr.sin_port = port;
-#define MAX_RX_BINDS 10
-    for (binds = 0; binds < MAX_RX_BINDS; binds++) {
-	code = bind(socketFd, (const struct sockaddr *) & taddr, sizeof(taddr));
-	if (!code)
-	    break;
-	sleep(10);
-    }
-    if (code) {
+    taddr.sin_port   = port;
+
+    code = bind(socketFd, (const struct sockaddr *) &taddr, sizeof(taddr));
+    if (code < 0) {
 	perror("bind");
-	(osi_Msg "%sbind failed\n", name);
+	(osi_Msg "%sunable to bind UDP socket\n", name);
 	goto error;
     }
 
@@ -316,12 +303,12 @@ rxi_Listener(void)
 	lastPollWorked = 0;	       /* default is that it didn't find
 				        * anything */
 
-	fds = (*rx_select) (FD_SETSIZE, &rfds, 0, 0, tvp);
+	fds = (*rx_select) (rx_maxSocketNumber + 1, &rfds, 0, 0, tvp);
 	clock_NewTime();
 	if (fds > 0) {
 	    if (doingPoll)
 		lastPollWorked = 1;
-	    for(socket = 0; socket < FD_SETSIZE; ++socket) {
+	    for(socket = 0; socket < rx_maxSocketNumber + 1; ++socket) {
 		if(p == NULL)
 		    break;
 		if(FD_ISSET(socket, &rfds) && 

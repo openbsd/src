@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomgr.c,v 1.1.1.1 1998/09/14 21:53:11 art Exp $	*/
+/*	$OpenBSD: iomgr.c,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -36,7 +36,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: iomgr.c,v 1.18 1998/07/09 19:56:27 art Exp $");
+RCSID("$KTH: iomgr.c,v 1.21 1998/10/01 16:53:39 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -322,7 +322,7 @@ IOMGR(char *dummy)
 		if (wfds)
 		    FD_OR(wfds, req->wfds);
 		else {
-		    wfds = &readfds;
+		    wfds = &writefds;
 		    FD_COPY(req->wfds, wfds);
 		}
 	    }
@@ -331,7 +331,7 @@ IOMGR(char *dummy)
 		if (efds)
 		    FD_OR(efds, req->efds);
 		else {
-		    efds = &readfds;
+		    efds = &exceptfds;
 		    FD_COPY(req->efds, efds);
 		}
 	    }
@@ -349,7 +349,9 @@ IOMGR(char *dummy)
 		if (timeout.tv_sec == -1 && timeout.tv_usec == -1)
 		    puts("INFINITE)]");
 		else
-		    printf("<%d, %d>)]\n", timeout.tv_sec, timeout.tv_usec);
+		    printf("<%ld, %lu>)]\n",
+			   (long)timeout.tv_sec,
+			   (unsigned long)timeout.tv_usec);
 	    }
 #endif /* DEBUG */
 	    iomgr_timeout = timeout;
@@ -651,7 +653,7 @@ IOMGR_Poll(void)
 	    if (wfds)
 		FD_OR(wfds, req->wfds);
 	    else {
-		wfds = &readfds;
+		wfds = &writefds;
 		FD_COPY(req->wfds, wfds);
 	    }
 	}
@@ -660,7 +662,7 @@ IOMGR_Poll(void)
 	    if (efds)
 		FD_OR(efds, req->efds);
 	    else {
-		efds = &readfds;
+		efds = &exceptfds;
 		FD_COPY(req->efds, efds);
 	    }
 	}
@@ -669,7 +671,7 @@ IOMGR_Poll(void)
     
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    code = select(nfds, &readfds, &writefds, &exceptfds, &tv);
+    code = select(nfds, rfds, wfds, efds, &tv);
 
     if (code > 0) {
 	SignalIO(code, rfds, wfds, efds);

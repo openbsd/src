@@ -1,4 +1,4 @@
-/*	$OpenBSD: ko_locl.h,v 1.1.1.1 1998/09/14 21:52:59 art Exp $	*/
+/*	$OpenBSD: ko_locl.h,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +39,7 @@
 
 /*
  *  Include file for whole arlad
- *  $KTH: ko_locl.h,v 1.2 1998/07/16 01:14:26 lha Exp $
+ *  $KTH: ko_locl.h,v 1.4 1999/01/03 08:27:07 lha Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -61,6 +61,9 @@
 #include <sys/uio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_UTSNAME_H
+#include <sys/utsname.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -72,6 +75,8 @@
 
 #include <hash.h>
 #include <ip.h>
+
+#include <bool.h>
 
 #include "ko.h"
 #include "kodebug.h"

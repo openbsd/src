@@ -1,4 +1,4 @@
-/*	$OpenBSD: arladeb.c,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
+/*	$OpenBSD: arladeb.c,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,30 +39,39 @@
 
 #include "arla_local.h"
 
-RCSID("$KTH: arladeb.c,v 1.12 1998/04/03 03:30:17 assar Exp $");
+RCSID("$KTH: arladeb.c,v 1.15 1999/04/20 20:58:07 map Exp $");
 
 static Log_method* arla_log_method = NULL;
 
+#define all (ADEBERROR | ADEBWARN | ADEBDISCONN | ADEBFBUF |		\
+	     ADEBMSG | ADEBKERNEL | ADEBCLEANER | ADEBCALLBACK |	\
+	     ADEBCM | ADEBVOLCACHE | ADEBFCACHE | ADEBINIT |		\
+	     ADEBCONN | ADEBMISC | ADEBVLOG)
+
+#define DEFAULT_LOG (ADEBWARN | ADEBERROR)
+
 struct units arla_deb_units[] = {
-    { "all",		(unsigned)(~0) >> 1 },
-    { "miscellaneous",	ADEBMISC },
-    { "connection",	ADEBCONN },
-    { "initialization",	ADEBINIT },
-    { "file-cache",	ADEBFCACHE },
-    { "volume-cache",	ADEBVOLCACHE },
-    { "cache-manager",	ADEBCM },
-    { "callbacks",	ADEBCALLBACK },
-    { "cleaner",	ADEBCLEANER },
-    { "kernel",		ADEBKERNEL },
-    { "messages",	ADEBMSG },
-    { "fbuf",		ADEBFBUF },
-    { "warnings",	ADEBWARN },
+    { "all",		all},
+    { "almost-all",	all & ~ADEBCLEANER},
     { "errors",		ADEBERROR },
+    { "warnings",	ADEBWARN },
+    { "disconn",	ADEBDISCONN },
+    { "fbuf",		ADEBFBUF },
+    { "messages",	ADEBMSG },
+    { "kernel",		ADEBKERNEL },
+    { "cleaner",	ADEBCLEANER },
+    { "callbacks",	ADEBCALLBACK },
+    { "cache-manager",	ADEBCM },
+    { "volume-cache",	ADEBVOLCACHE },
+    { "file-cache",	ADEBFCACHE },
+    { "initialization",	ADEBINIT },
+    { "connection",	ADEBCONN },
+    { "miscellaneous",	ADEBMISC },
+    { "venuslog",	ADEBVLOG },
+    { "default",	DEFAULT_LOG },
     { "none",		0 },
     { NULL }
 };
-
-#define DEFAULT_LOG (ADEBWARN | ADEBERROR)
 
 void
 arla_log(unsigned level, char *fmt, ...)
@@ -100,10 +109,22 @@ arla_log_set_level (const char *s)
 }
 
 void
+arla_log_set_level_num (unsigned level)
+{
+    log_set_mask (arla_log_method, level);
+}
+
+void
 arla_log_get_level (char *s, size_t len)
 {
     unparse_flags (log_get_mask (arla_log_method),
 		   arla_deb_units, s, len);
+}
+
+unsigned
+arla_log_get_level_num (void)
+{
+    return log_get_mask (arla_log_method);
 }
 
 void

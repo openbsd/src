@@ -1,6 +1,6 @@
-/*	$OpenBSD: strutil.c,v 1.1.1.1 1998/09/14 21:53:25 art Exp $	*/
+/*	$OpenBSD: strutil.c,v 1.2 1999/04/30 01:59:18 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,7 +43,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: strutil.c,v 1.5 1998/03/18 19:30:42 art Exp $");
+RCSID("$KTH: strutil.c,v 1.7 1998/12/20 15:56:33 assar Exp $");
 #endif
 
 #include <string.h>
@@ -55,10 +55,11 @@ RCSID("$KTH: strutil.c,v 1.5 1998/03/18 19:30:42 art Exp $");
  */
 
 char *
-strtrim (char *str)
+strtrim (char *s_str)
 {
-     char *s;
-     unsigned len = strlen (str);
+     unsigned len = strlen (s_str);
+     unsigned char *str = (unsigned char *)s_str;
+     unsigned char *s;
 
      for (s = str + len - 1; s >= str && *s && isspace(*s); --s)
 	  ;
@@ -67,39 +68,6 @@ strtrim (char *str)
      for (s = str; *s && isspace(*s); ++s)
 	  ;
      if (s != str)
-#ifdef HAVE_MEMMOVE
 	  memmove (str, s, len - (str - s));
-#else
-	  bcopy (s, str, len - (str - s));
-#endif
-     return str;
+     return s_str;
 }
-
-/*
- * Uppercase all characters in string and return it.
- */
-
-char *
-strupr (char *s)
-{
-     char *t = s;
-
-     for (; *t; t++)
-	  *t = toupper (*t);
-     return s;
-}
-
-/*
- * Lowercase all characters in string and return it.
- */
-
-char *
-strlwr (char *s)
-{
-     char *t = s;
-
-     for (; *t; t++)
-	  *t = tolower (*t);
-     return s;
-}
-

@@ -1,6 +1,6 @@
-/*	$OpenBSD: arlalib.c,v 1.1.1.1 1998/09/14 21:52:52 art Exp $	*/
+/*	$OpenBSD: arlalib.c,v 1.2 1999/04/30 01:59:04 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +39,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$KTH: arlalib.c,v 1.12 1998/07/19 23:58:58 mattiasa Exp $");
+RCSID("$KTH: arlalib.c,v 1.19 1999/04/06 18:31:30 lha Exp $");
 
 
 static struct rx_securityClass *secureobj = NULL ; 
@@ -47,39 +47,54 @@ int secureindex = -1 ;
 int rx_initlizedp = 0;
 
 #ifdef KERBEROS
+
 static int
-arlalib_get_cred(const char *host, CREDENTIALS *c)
+get_cred(const char *princ, const char *inst, const char *krealm, 
+         CREDENTIALS *c)
+{
+  KTEXT_ST foo;
+  int k_errno;
+
+  k_errno = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, c);
+
+  if(k_errno != KSUCCESS) {
+    k_errno = krb_mk_req(&foo, (char*)princ, (char*)inst, (char*)krealm, 0);
+    if (k_errno == KSUCCESS)
+      k_errno = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, c);
+  }
+  return k_errno;
+}
+
+static int
+arlalib_get_cred(const char *cell, const char *host, CREDENTIALS *c,
+		 arlalib_authflags_t auth)
 {
     char krealm[REALM_SZ];
     char *rrealm;
-    char *princ = "afs";
-    char *inst = "" ;
-    KTEXT_ST foo;
     int k_errno;
+    int ret;
 
-    rrealm = krb_realmofhost(host);
-    strncpy(krealm, rrealm, REALM_SZ);
-    krealm[REALM_SZ-1] = '\0';
-
-    
-    k_errno = krb_get_cred(princ, inst, krealm, c);
-    
-    if(k_errno != KSUCCESS) {
-	k_errno = krb_mk_req(&foo, princ, inst, krealm, 0);
-	if (k_errno == KSUCCESS)
-	    k_errno = krb_get_cred(princ, inst, krealm, c);
+    if (auth & (AUTHFLAGS_TICKET|AUTHFLAGS_ANY)) {
+	rrealm = krb_realmofhost(host);
+	strncpy(krealm, rrealm, REALM_SZ);
+	krealm[REALM_SZ-1] = '\0';
+	
+	k_errno = get_cred("afs", cell ? cell : "", krealm, c);
+	if (k_errno != KSUCCESS)
+	    k_errno = get_cred("afs", "", krealm, c);
+	
+	if (k_errno != KSUCCESS) {
+	    fprintf(stderr,
+		    "Can't get a ticket for realm %s: %s\n",
+		    krealm, krb_get_err_text(k_errno));
+	    return -1;
+	} 
+	ret = k_errno;
     }
 
-
-    if (k_errno != KSUCCESS) {
-	fprintf(stderr, "Can't get a ticket for realm %s\n", krealm);
-	return -1;
-    } 
-
-    return k_errno;
+    return ret;
 }
 #endif /* KERBEROS */
-
 
 int
 arlalib_getservername(u_int32_t serverNumber, char **servername)
@@ -90,15 +105,20 @@ arlalib_getservername(u_int32_t serverNumber, char **servername)
 
     if (he != NULL)
 	*servername = strdup(he->h_name);
-    else 
-	*servername = strdup("");
+    else {
+	struct in_addr addr;
+	addr.s_addr = serverNumber;
+	    
+	*servername = strdup(inet_ntoa(addr));
+    }
 
     return (*servername == NULL);
 }
 
 
-static struct rx_securityClass*
-arlalib_getsecurecontext(const char *host, int noauth)
+struct rx_securityClass*
+arlalib_getsecurecontext(const char *cell, const char *host, 
+			 arlalib_authflags_t auth)
 {
 #ifdef KERBEROS
     CREDENTIALS c;
@@ -110,15 +130,15 @@ arlalib_getsecurecontext(const char *host, int noauth)
     
 #ifdef KERBEROS
     
-    if (!noauth && 
-	arlalib_get_cred(host, &c) == KSUCCESS) {
+    if (auth  && 
+	arlalib_get_cred(cell, host, &c, auth) == KSUCCESS) {
 
 	sec = rxkad_NewClientSecurityObject(rxkad_auth,
 					    &c.session,
 					    c.kvno,
 					    c.ticket_st.length,
 					    c.ticket_st.dat);
-	secureindex = 2 ;
+	secureindex = 2;
     } else {
 #endif /* KERBEROS */
 	
@@ -137,9 +157,9 @@ arlalib_getsecurecontext(const char *host, int noauth)
 
 
 struct rx_connection *
-arlalib_getconnbyaddr(int32_t addr,
+arlalib_getconnbyaddr(const char *cell, int32_t addr,
 		      const char *host, int32_t port, int32_t servid,
-		      int noauth)
+		      arlalib_authflags_t auth)
 {
     struct rx_connection *conn;
     int allocedhost = 0;
@@ -156,7 +176,7 @@ arlalib_getconnbyaddr(int32_t addr,
 	host = serv;
     }
     
-    if (arlalib_getsecurecontext(host, noauth)== NULL) 
+    if (arlalib_getsecurecontext(cell, host, auth)== NULL) 
 	return NULL;
 
     conn = rx_NewConnection (addr, 
@@ -175,8 +195,9 @@ arlalib_getconnbyaddr(int32_t addr,
 }
 
 struct rx_connection *
-arlalib_getconnbyname(const char *host,
-		      int32_t port, int32_t servid, int noauth)
+arlalib_getconnbyname(const char *cell, const char *host,
+		      int32_t port, int32_t servid, 
+		      arlalib_authflags_t auth)
 {
     struct in_addr server;
 
@@ -185,8 +206,8 @@ arlalib_getconnbyname(const char *host,
 	return  NULL;
     }
 
-    return arlalib_getconnbyaddr(server.s_addr, host, port, servid, noauth);
-
+    return arlalib_getconnbyaddr(cell, server.s_addr, host, port, servid,
+				 auth);
 }
 
 int
@@ -214,7 +235,7 @@ arlalib_destroyconn(struct rx_connection *conn)
 
 int 
 arlalib_getsyncsite(const char *cell, const char *host, int32_t port, 
-		    u_int32_t *synchost, int noauth)
+		    u_int32_t *synchost, arlalib_authflags_t auth)
 {
     struct rx_connection *conn;
     ubik_debug db;
@@ -225,15 +246,22 @@ arlalib_getsyncsite(const char *cell, const char *host, int32_t port,
 
     if (cell == NULL && host != NULL) 
 	cell = cell_getcellbyhost(host);
-    if (cell == NULL)
+    if (cell == NULL) {
 	cell = cell_getthiscell();
-    if (host == NULL)
+	if (cell == NULL)
+	    return ENOENT;
+    }
+    if (host == NULL) {
 	host = cell_findnamedbbyname (cell);
+	if (host == NULL)
+	    return ENOENT;
+    }
 
-    conn = arlalib_getconnbyname(host,
+    conn = arlalib_getconnbyname(cell,
+				 host,
 				 port,
 				 VOTE_SERVICE_ID,
-				 noauth);
+				 auth);
 
     if (conn == NULL)
 	return ENETDOWN;
@@ -245,4 +273,34 @@ arlalib_getsyncsite(const char *cell, const char *host, int32_t port,
 
     return error;
 }
+
+
+/*
+ * get a arlalib_authflags_t type
+ */
+
+arlalib_authflags_t 
+arlalib_getauthflag (int noauth,
+		     int localauth,
+		     int ticket,
+		     int token)
+{
+    arlalib_authflags_t ret = AUTHFLAGS_ANY;
+
+    if (noauth)
+	ret = AUTHFLAGS_NOAUTH;
+    if (localauth)
+	ret |= AUTHFLAGS_LOCALAUTH;
+    if (ticket)
+	ret |= AUTHFLAGS_TICKET;
+    if (token)
+	ret |= AUTHFLAGS_TOKEN;
+    
+    return ret;
+}
+
+/*
+ *
+ */
+
 

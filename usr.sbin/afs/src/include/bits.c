@@ -1,4 +1,4 @@
-/*	$OpenBSD: bits.c,v 1.1.1.1 1998/09/14 21:52:59 art Exp $	*/
+/*	$OpenBSD: bits.c,v 1.2 1999/04/30 01:59:10 art Exp $	*/
 /*
  * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: bits.c,v 1.4 1998/03/28 09:24:30 lha Exp $");
+RCSID("$KTH: bits.c,v 1.6 1998/12/20 15:55:29 assar Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -50,10 +50,10 @@ RCSID("$KTH: bits.c,v 1.4 1998/03/28 09:24:30 lha Exp $");
 static void
 strupr(char *s)
 {
-    char *p = s;
+    unsigned char *p = (unsigned char *)s;
     while(*p){
-	if(islower((int)*p))
-	    *p = toupper((int)*p);
+	if(islower(*p))
+	    *p = toupper(*p);
 	p++;
     }	
 }
@@ -77,7 +77,11 @@ strupr(char *s)
     }								\
 }
 
-static void
+#ifndef HAVE___ATTRIBUTE__
+#define __attribute__(x)
+#endif
+
+static void __attribute__ ((unused))
 try_signed(FILE *f, int len)
 {
     BITSIZE(signed char);
@@ -90,7 +94,7 @@ try_signed(FILE *f, int len)
     fprintf(f, "/* There is no %d bit type */\n", len);
 }
 
-static void
+static void __attribute__ ((unused))
 try_unsigned(FILE *f, int len)
 {
     BITSIZE(unsigned char);
@@ -103,7 +107,7 @@ try_unsigned(FILE *f, int len)
     fprintf(f, "/* There is no %d bit type */\n", len);
 }
 
-static int
+static int __attribute__ ((unused))
 print_bt(FILE *f, int flag)
 {
     if(flag == 0){
@@ -138,7 +142,7 @@ int main(int argc, char **argv)
     }
     fprintf(f, "/* %s -- this file was generated for %s by\n", fn, HOST);
     fprintf(f, "   %*s    %s */\n\n", strlen(fn), "", 
-	    "$KTH: bits.c,v 1.4 1998/03/28 09:24:30 lha Exp $");
+	    "$KTH: bits.c,v 1.6 1998/12/20 15:55:29 assar Exp $");
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");

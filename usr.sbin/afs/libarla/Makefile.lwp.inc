@@ -3,7 +3,7 @@ SRCS		+= lwp.c lock.c iomgr.c timer.c fasttime.c preempt.c q.c
 OBJS		+= process.o
 CLEANFILES	+= process.o
 .PATH:	${.CURDIR}/../src/lwp
-CFLAGS	+= -DFD_SPEED_HACK -I${.CURDIR}/../src/lwp
+CFLAGS	+= -DAFS_BSD_ENV -DFD_SPEED_HACK -I${.CURDIR}/../src/lwp
 
 
 process.o: process.S
@@ -20,4 +20,4 @@ process.o: process.S
 		*)  echo "Unknown host_cpu, good luck" ;; \
 	esac; \
 	OSDEF="-DAFS_NETBSD_ENV"; \
-	${CC} $$CPUDEF $$OSDEF -c ${.CURDIR}/../src/lwp/process.S
+	${CC} ${CFLAGS} $$CPUDEF $$OSDEF -c ${.CURDIR}/../src/lwp/process.S

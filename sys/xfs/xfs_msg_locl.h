@@ -1,4 +1,3 @@
-/*	$OpenBSD: xfs_msg_locl.h,v 1.2 1998/08/31 05:13:27 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,25 +36,45 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: xfs_msg_locl.h,v 1.1 1998/03/26 02:25:53 assar Exp $ */
+/* $Id: xfs_msg_locl.h,v 1.3 1999/04/30 01:59:00 art Exp $ */
 
-#ifndef _XFS_XFS_MSG_LOCL_H_
-#define _XFS_XFS_MSG_LOCL_H_
+#ifndef _xfs_msg_locl_h
+#define _xfs_msg_locl_h
 
-int xfs_message_installroot __P((int fd,
-				 struct xfs_message_installroot *message,
-				 u_int size, struct proc *p));
-int xfs_message_installnode __P((int fd,
-				 struct xfs_message_installnode *message,
-				 u_int size,struct proc *p));
-int xfs_message_installattr __P((int fd,
-				 struct xfs_message_installattr *message,
-				 u_int size,struct proc *p));
-int xfs_message_installdata __P((int fd,
-				 struct xfs_message_installdata *message,
-				 u_int size, struct proc *p));
-int xfs_message_invalidnode __P((int fd,
-				 struct xfs_message_invalidnode *message,
-				 u_int size, struct proc *p));
+int
+xfs_message_installroot(int fd,
+			struct xfs_message_installroot * message,
+			u_int size,
+			struct proc *p);
 
-#endif
+int
+xfs_message_installnode(int fd,
+			struct xfs_message_installnode * message,
+			u_int size,
+			struct proc *p);
+
+int
+xfs_message_installattr(int fd,
+			struct xfs_message_installattr * message,
+			u_int size,
+			struct proc *p);
+
+int
+xfs_message_installdata(int fd,
+			struct xfs_message_installdata * message,
+			u_int size,
+			struct proc *p);
+
+int
+xfs_message_invalidnode(int fd,
+			struct xfs_message_invalidnode * message,
+			u_int size,
+			struct proc *p);
+
+int
+xfs_message_updatefid(int fd,
+		      struct xfs_message_updatefid * message,
+		      u_int size,
+		      struct proc *p);
+
+#endif				       /* _xfs_msg_locl_h */

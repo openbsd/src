@@ -1,6 +1,6 @@
-/*	$OpenBSD: ip.h,v 1.1.1.1 1998/09/14 21:53:23 art Exp $	*/
+/*	$OpenBSD: ip.h,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ip.h,v 1.3 1998/03/13 04:38:25 assar Exp $ */
+/* $KTH: ip.h,v 1.4 1999/01/03 01:55:08 assar Exp $ */
 
 #ifndef _IP_
 #define _IP_
@@ -47,6 +47,6 @@
 #include <arpa/inet.h>
 
 struct in_addr *ipgetaddr (const char *addr, struct in_addr *ret);
-char *ipgetname (struct in_addr *addr);
+const char *ipgetname (struct in_addr *addr);
 
 #endif /* _IP_ */

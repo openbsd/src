@@ -1,6 +1,6 @@
-/*	$OpenBSD: xfs_pioctl.h,v 1.2 1998/09/17 20:47:15 art Exp $	*/
+/*	$OpenBSD: xfs_pioctl.h,v 1.3 1999/04/30 01:59:01 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska HÅˆgskolan
+ * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Hˆgskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by the Kungliga Tekniska
- *      HÅˆgskolan and its contributors.
+ *      Hˆgskolan and its contributors.
  *
  * 4. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -37,8 +37,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_SYS_PIOCTL_H_
-#define	_SYS_PIOCTL_H_
+#ifndef	_XFS_XFS_PIOCTL_H_
+#define	_XFS_XFS_PIOCTL_H_
 
 /*
  */
@@ -111,9 +111,28 @@
 #define VIOC_TWIDDLE		_VICEIOCTL(45)
 #define VIOC_SETSPREFS		_VICEIOCTL(46)
 #define VIOC_STORBEHIND		_VICEIOCTL(47)
-#define VIOC_GETRXKCRYPT	_VICEIOCTL(48)
-#define VIOC_SETRXKCRYPT	_VICEIOCTL(49)
-#define VIOC_FPRIOSTATUS	_VICEIOCTL(50)
+#define VIOC_GCPAGS		_VICEIOCTL(48)
+#define VIOC_GETRXKCRYPT	_VICEIOCTL(49)
+#define VIOC_SETRXKCRYPT	_VICEIOCTL(50)
+#define VIOC_FPRIOSTATUS	_VICEIOCTL(51)
+
+#define VIOC_FHGET		_VICEIOCTL(52)
+#define VIOC_FHOPEN		_VICEIOCTL(53)
+
+#define VIOC_XFSDEBUG		_VICEIOCTL(54)
+#define VIOC_ARLADEBUG		_VICEIOCTL(55)
+
+#define VIOC_AVIATOR		_VICEIOCTL(56)
+
+#define VIOC_XFSDEBUG_PRINT	_VICEIOCTL(57)
+
+/*
+ * GETCELLSTATUS flags
+ */
+
+#define CELLSTATUS_PRIMARY	0x01 /* this is the `primary' cell */
+#define CELLSTATUS_SETUID	0x02 /* setuid honored for this cell */
+#define CELLSTATUS_OBSOLETE_VL	0x04 /* uses obsolete VL servers */
 
 /*
  * VIOCCONNECTMODE arguments
@@ -123,6 +142,7 @@
 #define CONNMODE_CONN		1
 #define CONNMODE_FETCH		2
 #define CONNMODE_DISCONN	3
+#define CONNMODE_PARCONNECTED	4
 
 /*
  * The struct for VIOC_FPRIOSTATUS
@@ -145,6 +165,16 @@ struct vioc_fprio {
 	int32_t Vnode;
 	int32_t Unique;
 };
+
+/*
+ * Flags for VIOCCKSERV
+ */
+
+#define CKSERV_DONTPING     1
+#define CKSERV_FSONLY       2
+
+#define CKSERV_MAXSERVERS   16 /* limitation of VIOCCKSERV number of 
+				  returned servers */
 
 struct ViceIoctl {
 	caddr_t	in, out;

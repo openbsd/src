@@ -1,4 +1,4 @@
-/*	$OpenBSD: preempt.c,v 1.1.1.1 1998/09/14 21:53:12 art Exp $	*/
+/*	$OpenBSD: preempt.c,v 1.2 1999/04/30 01:59:13 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -30,10 +30,10 @@
 
 #include <sys/time.h>
 #include <signal.h>
-#include "lwp.h"
+#include <lwp.h>
 #include "preempt.h"
 
-RCSID("$KTH: preempt.c,v 1.5 1998/02/06 03:18:30 art Exp $");
+RCSID("$KTH: preempt.c,v 1.6 1999/02/01 04:56:13 assar Exp $");
 
 char PRE_Block = 0;		/* used in lwp.c and process.s */
 

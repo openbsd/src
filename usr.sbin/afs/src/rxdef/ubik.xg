@@ -1,14 +1,16 @@
 /* -*- C -*- */
 
 /*
- * $Id: ubik.xg,v 1.1.1.1 1998/09/14 21:53:18 art Exp $
+ * $Id: ubik.xg,v 1.2 1999/04/30 01:59:15 art Exp $
  */
 
 package Ubik_
 
-%#include <atypes.h>
-%#include <rx/rx.h>
-%#include <rx/rx_null.h>
+%#include <config.h>
+%#include <roken.h>
+%#include <fs_errors.h>
+
+error-function conv_to_arla_errno
 
 /*
  * Interface
@@ -31,14 +33,14 @@ struct ubik_debug {
         long lowestTime;
         long syncHost;
         long syncTime;
-        struct net_version syncVersion;
-        struct net_tid syncTid;
+        net_version syncVersion;
+        net_tid syncTid;
         long amSyncSite;
         long syncSiteUntil;
         long nServers;
         long lockedPages;
         long writeLockedPages;
-        struct net_version localVersion;
+        net_version localVersion;
         long activeWrite;
         long tidCounter;
         long anyReadLocks;
@@ -54,7 +56,7 @@ struct ubik_sdebug {
         long lastVoteTime;
         long lastBeaconSent;
         long lastVote;
-        struct net_version remoteVersion;
+        net_version remoteVersion;
         long currentDB;
         long beaconSinceDown;
         long up;

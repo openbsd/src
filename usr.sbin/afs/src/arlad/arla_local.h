@@ -1,4 +1,4 @@
-/*	$OpenBSD: arla_local.h,v 1.1.1.1 1998/09/14 21:52:54 art Exp $	*/
+/*	$OpenBSD: arla_local.h,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -39,7 +39,7 @@
 
 /*
  *  Include file for whole arlad
- *  $KTH: arla_local.h,v 1.32 1998/07/03 12:38:19 assar Exp $
+ *  $KTH: arla_local.h,v 1.42 1999/02/05 07:28:36 lha Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -52,12 +52,12 @@
 #include <assert.h>
 #include <ctype.h>
 #include <time.h>
+#include <limits.h>
 #include <errno.h>
 #include <sys/time.h>
-#ifdef HAVE_DIRENT_H
+#if defined(HAVE_DIRENT_H)
 #include <dirent.h>
-#endif
-#ifdef USE_SYS_DIR_H
+#elif defined(HAVE_SYS_DIR_H)
 #include <sys/dir.h>
 #endif
 #include <unistd.h>
@@ -80,6 +80,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <err.h>
 #include <parse_units.h>
 #include <roken.h>
@@ -89,10 +90,11 @@
 
 #include <rx/rx.h>
 #include <rx/rx_null.h>
+#include <rx/rxgencon.h>
 
 #ifdef KERBEROS
 #include <des.h>
-#include <kerberosIV/krb.h>
+#include <krb.h>
 #include <rxkad.h>
 #endif
 
@@ -100,7 +102,7 @@
 #include <mmaptime.h>
 #endif
 
-#include <kerberosIV/kafs.h>
+#include <kafs.h>
 
 #include "log.h"
 
@@ -112,14 +114,13 @@
 #include "vldb.cs.h"
 #include "volcache.h"
 #include "fbuf.h"
-#include "fcache.h"
 #include "hash.h"
 #include "afs_dir.h"
 #include "ip.h"
 #include "service.h"
 #include "ports.h"
-#include "fcache.h"
 #include "conn.h"
+#include "fcache.h"
 #include "inter.h"
 #include "cred.h"
 #include "adir.h"
@@ -131,11 +132,9 @@
 #include "kernel.h"
 #include "messages.h"
 #include "strutil.h"
+#include "fs_errors.h"
 #include "arladeb.h"
 #include "ko.h"
-
-#define SYSNAMEMAXLEN 2048
-extern char arlasysname[SYSNAMEMAXLEN];
 
 enum connected_mode { CONNECTED  = 0,
 		      FETCH_ONLY = 1,
@@ -143,6 +142,15 @@ enum connected_mode { CONNECTED  = 0,
                       CONNECTEDLOG = 4};
 
 extern enum connected_mode connected_mode;
+
+#include "darla.h"
+#include "discon_log.h"
+#include "discon.h"
+#include "reconnect.h"
+
+#define SYSNAMEMAXLEN 2048
+extern char arlasysname[SYSNAMEMAXLEN];
+
 
 #define ARLA_NUMCONNS 200
 #define ARLA_HIGH_VNODES 4000

@@ -1,6 +1,6 @@
-/*	$OpenBSD: fnameutil.c,v 1.1.1.1 1998/09/14 21:53:21 art Exp $	*/
+/*	$OpenBSD: fnameutil.c,v 1.2 1999/04/30 01:59:17 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -43,12 +43,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: fnameutil.c,v 1.6 1998/03/13 04:36:32 assar Exp $");
+RCSID("$KTH: fnameutil.c,v 1.7 1999/02/13 04:41:26 assar Exp $");
 #endif
 
 #include <string.h>
 #include <ctype.h>
-#include <mem.h>
+#include <roken.h>
 #include "fnameutil.h"
 
 /*

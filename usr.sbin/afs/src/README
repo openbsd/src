@@ -1,15 +1,15 @@
-README for arla-0.9 ($Name:  $)
-$Id: README,v 1.1.1.1 1998/09/14 21:52:51 art Exp $
+README for arla-0.23 ($Name:  $)
+$Id: README,v 1.2 1999/04/30 01:59:03 art Exp $
 
 1. What is arla?
 
-Arla is a free AFS cache-manager/client implementation.
+Arla is a free AFS cache-manager implementation.
 
 2. Where do I find this file?
 
 This file is contained inside
-ftp://ftp.stacken.kth.se/pub/arla/arla-0.9.tar.gz
-(aka /afs/stacken.kth.se/ftp/pub/arla/arla-0.9.tar.gz).
+ftp://ftp.stacken.kth.se/pub/arla/arla-0.23.tar.gz
+(aka /afs/stacken.kth.se/ftp/pub/arla/arla-0.23.tar.gz).
 
 3. What is AFS?
 
@@ -22,16 +22,19 @@ for more information.
 There is kernel support (with different level of functionality) for
 the following operating systems:
 
-- FreeBSD 2.2
-- OpenBSD 2.2 and 2.3
+- FreeBSD 2.2, 3.0, and 4.0
+- OpenBSD 2.2, 2.3 and 2.4
 - NetBSD 1.2 and 1.3
-- Linux 2.0.x and 2.1.x
+- Linux 2.0.x, 2.1.x, and 2.2.x
 - SunOS 4
-- Solaris 2.5, 2.6 and 2.7 beta
+- Solaris 2.5, 2.6 and 7
 - AIX 4.x
 - IRIX 6.x
 - Digital Unix 4.0 (OSF/1)
 - Rhapsody DR2
+
+Userland only:
+- Ultrix 4.4
 
 A cache manager (arlad) that works both in user-level mode and with
 the kernel module.  The user-level mode is quite portable and has even
@@ -42,6 +45,8 @@ Some simple programs (fs, vos and pts).
 Programs for acquiring tokens (kauth, afslog) are not included but are
 part of the kth-krb distribution.
 
+An experimental AFS server called milko.
+
 5. What's the status or arla?
 
 This is a snapshot and pre-greek letters.
@@ -49,7 +54,7 @@ This is a snapshot and pre-greek letters.
 Most of the functionality is there.  You can read and write files and
 directories, with or without authentication.  It's not as stable or
 high-performing as we would like, yet.  It only does whole-file
-caching, but that's probably good enough.
+caching, but that's probably good enough for now.
 
 6. What do I need to run arla?
 
@@ -86,13 +91,22 @@ See the file INSTALL
 Report it with as much detail as possible (including patches) to
 <arla-drinkers@stacken.kth.se>.
 
+If you find a bug, and do not have a clue what is wrong, please run
+arlad with `arlad -n -z --debug=almost-all' and append the output the
+the mail.  You can also turn on debug on an already running arlad with
+`fs arladebug <debug-level>'.  To enable debugging in the xfs kernel
+module, use `fs xfsdebug <debug-level>'.  The output will end up in
+your syslog (like /var/log/messages or /var/adm/messages).
+
+Without this info we are probably as lost as you are.
+
 9. How do I adjust the amount of debug information?
 
 Both arlad and the xfs (the kernel module) has variables for
 controlling what type of debug messages should be printed.
 
-They are controlled by the `--debug' option to arlad and by setting
-the `xfsdeb' variable in xfs (see xfs/<system>/xfs_deb.c).
+They are controlled by the `--debug' option to arlad and then by
+running `fs arladebug' and `fs xfsdebug'.
 
 10. How hard is it to port arla to a new operating system?
 
@@ -105,10 +119,9 @@ interested in doing the port, send mail to
 
 11. Known problems.
 
-OpenBSD 2.3 (current) and OpenBSD 2.2 on some architectures have
-serious problems with mmap.  If arlad doesn't seem to work om your
-system run configure with `--disable-mmap'. This problem has only
-been noticed on sun4m platforms (probably just Microsparc 2).
+OpenBSD on some architectures have serious problems with mmap.  If arlad
+doesn't seem to work om your system run configure with `--disable-mmap'.
+This problem has only been noticed on sun4m platforms.
 
 If you have problems with stale data cached or arlad is misbehaving a
 lot try zapping the entire cache directory (`/usr/arla/cache' per
@@ -116,6 +129,10 @@ default) and restarting arlad.
 
 If you are using Digital's cc you should probably use the
 options -std1 (ie setting CC to "cc -std1" when runing configure).
+
+Solaris does not have an `memcpy' in the kernel and gcc can somtimes
+generate calls to it.  If you get unresolved symbol errors on memcpy,
+either compile with Sun's compiler or define memcpy in terms of bcopy.
 
 12. How can I help?
 
@@ -138,10 +155,12 @@ lwp and rx are copyrighted by IBM.  We're grateful to Derrick J
 Brashear <shadow@dementia.org> and Jim Doyle <jrd@bu.edu> for making
 them available.
 
-the rxkad implementation was written by Björn Grönvall <bg@sics.se>
+The rxkad implementation was written by Björn Grönvall <bg@sics.se>
 and is also part of the kth-krb distribution.
 
 editline was written by Simmule Turner and Rich Salz.
+
+The code for disconnected operation was written by Wuwei Shen.
 
 The code for gluing these together were written by ourselves.
 

@@ -1,6 +1,6 @@
-/*	$OpenBSD: roken.h,v 1.1.1.1 1998/09/14 21:53:07 art Exp $	*/
+/*	$OpenBSD: roken.h,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: roken.h,v 1.9 1998/06/07 05:19:20 map Exp $ */
+/* $KTH: roken.h,v 1.14 1999/02/13 05:16:59 assar Exp $ */
 
 #ifndef __ROKEN_H__
 #define __ROKEN_H__
@@ -64,6 +64,9 @@
 #endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -203,8 +206,7 @@ char *hstrerror(int herr);
 extern int h_errno;
 #endif
 
-#ifndef HAVE_INET_ATON
-/* Minimal implementation of inet_aton. Doesn't handle hex numbers. */
+#if !defined(HAVE_INET_ATON) || defined(NEED_INET_ATON_PROTO)
 int inet_aton(const char *cp, struct in_addr *adr);
 #endif
 
@@ -251,6 +253,13 @@ int rcmd(char **ahost, unsigned short inport, const char *locuser,
 	 const char *remuser, const char *cmd, int *fd2p);
 #endif
 
+#ifndef HAVE_STRUCT_IOVEC
+struct iovec {
+  void		*iov_base;
+  size_t	 iov_len;
+};
+#endif
+
 #ifndef HAVE_WRITEV
 ssize_t
 writev(int d, const struct iovec *iov, int iovcnt);
@@ -259,6 +268,28 @@ writev(int d, const struct iovec *iov, int iovcnt);
 #ifndef HAVE_READV
 ssize_t
 readv(int d, const struct iovec *iov, int iovcnt);
+#endif
+
+#ifndef HAVE_STRUCT_MSGHDR
+struct msghdr {
+  void		*msg_name;
+  size_t	 msg_namelen;
+  struct iovec	*msg_iov;
+  int		 msg_iovlen;
+  void		*msg_control;
+  size_t	 msg_controllen;
+  int		 msg_flags;
+};
+#endif
+
+#ifndef HAVE_RECVMSG
+ssize_t
+recvmsg(int s, struct msghdr *msg, int flags);
+#endif
+
+#ifndef HAVE_SENDMSG
+ssize_t
+sendmsg(int s, const struct msghdr *msg, int flags);
 #endif
 
 #ifndef HAVE_FLOCK
@@ -454,5 +485,13 @@ typedef int ssize_t;  /* XXX real hot stuff */
 #define htons(x) __cpu_to_be16(x)
 #define ntohs(x) __be16_to_cpu(x)
 #endif
+
+#if !defined(NSIG) && defined(_NSIG)
+#define NSIG _NSIG
+#endif
+
+void *emalloc (size_t sz);
+void *erealloc (void *ptr, size_t sz);
+char *estrdup (const char *);
 
 #endif /*  __ROKEN_H__ */

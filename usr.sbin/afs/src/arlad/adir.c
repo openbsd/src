@@ -1,4 +1,4 @@
-/*	$OpenBSD: adir.c,v 1.1.1.1 1998/09/14 21:52:54 art Exp $	*/
+/*	$OpenBSD: adir.c,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,14 +43,14 @@
 
 #include "arla_local.h"
 
-RCSID("$KTH: adir.c,v 1.33 1998/07/29 14:38:51 assar Exp $") ;
+RCSID("$KTH: adir.c,v 1.55 1998/12/25 04:39:55 assar Exp $") ;
 
 /*
  * Hash the filename of one entry.
  */
 
 static unsigned
-hashentry (const char *entry)
+hashentry (const unsigned char *entry)
 {
      int s = 0, h;
 
@@ -65,220 +65,111 @@ hashentry (const char *entry)
 }
 
 /*
- * Return the entry in the directory given the number.
- * The directory must be contiounsly in memory after page0.
+ * Return the number of additional DirEntries used by an entry with
+ * the filename `name`.
+ */
+
+static unsigned
+additional_entries (const char *filename)
+{
+    static DirEntry dummy;
+
+    return (strlen(filename) - sizeof(dummy.name) + 1
+	    + sizeof(DirEntry) - 1)
+	/ sizeof(DirEntry);
+}
+
+/*
+ * Return a pointer to page number `pageno'.
+ */
+
+static DirPage1 *
+getpage (DirPage0 *page0, unsigned pageno)
+{
+    return (DirPage1 *)((char *)page0 + AFSDIR_PAGESIZE * pageno);
+}
+
+/*
+ * Return the entry `num' in the directory `page0'.
+ * The directory must be continuous in memory after page0.
  */
 
 static DirEntry *
 getentry (DirPage0 *page0,
 	  unsigned short num)
 {
-     DirPage1 *page;
+     DirPage1 *page = getpage (page0, num / ENTRIESPERPAGE);
 
-     page = (DirPage1 *)((char *)page0 +
-			 AFSDIR_PAGESIZE * (num / ENTRIESPERPAGE));
      assert (page->header.pg_tag == htons(AFSDIRMAGIC));
      return &page->entry[num % ENTRIESPERPAGE];
 }
 
 /*
- *
+ * Return a pointer to the entry with name `name' in the directory `page0'.
  */
 
-static unsigned
+static DirEntry *
+find_entry(DirPage0 *page0, const char *name)
+{
+    DirEntry *entry;
+    unsigned i;
+
+    for (i = ntohs(page0->dheader.hash[hashentry (name)]);
+	 i != 0;
+	 i = ntohs(entry->next)) {
+	entry = getentry (page0, i - 1);
+
+	if (strcmp (entry->name, name) == 0)
+	    return entry;
+    }
+    return NULL;
+}
+
+/*
+ * Return the fid for the entry with `name' in `page0'.  `fid' is set
+ * to the fid of that file.  `dir' should be the fid of the directory.
+ * Return zero if succesful, and -1 otherwise.
+ */
+
+static int
 find_by_name (DirPage0 *page0,
 	      const char *name,
 	      VenusFid *fid,
 	      const VenusFid *dir)
 {
-    unsigned i;
+    const DirEntry *entry = find_entry (page0, name);
 
-    i = ntohs(page0->dheader.hash[hashentry (name)]);
-    while (i != 0) {
-	const DirEntry *entry = getentry (page0, i - 1);
-
-	if (strcmp (entry->name, name) == 0) {
-	    fid->Cell = dir->Cell;
-	    fid->fid.Volume = dir->fid.Volume;
-	    fid->fid.Vnode  = ntohl (entry->fid.Vnode);
-	    fid->fid.Unique = ntohl (entry->fid.Unique);
-	    return i;
-	}
-	i = ntohs(entry->next);
-    }
-    return i;
+    if (entry == NULL)
+	return -1;
+    fid->Cell       = dir->Cell;
+    fid->fid.Volume = dir->fid.Volume;
+    fid->fid.Vnode  = ntohl (entry->fid.Vnode);
+    fid->fid.Unique = ntohl (entry->fid.Unique);
+    return 0;
 }
 
-
 /*
- * Lookup `name' in the AFS directory identified by `dir' and return
- * the Fid in `file'.  All operations are done as `cred' and return
- * value is 0 or error code.
+ * Change the fid for `name' to `fid'.  Return 0 or -1.
  */
 
-int
-adir_lookup (VenusFid dir,
-	     const char *name,
-	     VenusFid *file,
-	     CredCacheEntry *ce)
+static int
+update_fid_by_name (DirPage0 *page0,
+		    const char *name,
+		    const VenusFid *fid,
+		    const VenusFid *dir)
 {
-     int fd;
-     DirPage0 *page0;
-     FCacheEntry *centry;
-     unsigned ind;
-     unsigned len;
-     int ret;
-     fbuf the_fbuf;
-     struct stat sb;
+    DirEntry *entry = find_entry (page0, name);
 
-     ret = fcache_get (&centry, dir, ce);
-     if (ret) {
-	 ReleaseWriteLock (&centry->lock);
-	 return ret;
-     }
+    if (entry == NULL)
+	return -1;
 
-     ret = fcache_get_data (centry, ce);
-     if (ret) {
-	 ReleaseWriteLock (&centry->lock);
-	 return ret;
-     }
-
-     if (centry->status.FileType != TYPE_DIR) {
-	 ReleaseWriteLock (&centry->lock);
-	 return ENOTDIR;
-     }
-
-#if 0
-     len = centry->status.Length;
-#endif
-
-     fd = fcache_open_file (centry, O_RDONLY, 0);
-     if (fd < 0) {
-	 ReleaseWriteLock (&centry->lock);
-	 return errno;
-     }
-
-     if (fstat (fd, &sb)) {
-	 close (fd);
-	 ReleaseWriteLock (&centry->lock);
-	 return errno;
-     }
-
-     len = sb.st_size;
-
-     ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ);
-     if (ret) {
-	 close (fd);
-	 ReleaseWriteLock (&centry->lock);
-	 return ret;
-     }
-
-     page0 = (DirPage0 *)(the_fbuf.buf);
-     ind = find_by_name (page0, name, file, &dir);
-
-     fbuf_end (&the_fbuf);
-     ReleaseWriteLock (&centry->lock);
-     if (ind != 0)
-	  return 0;
-     else
-	  return ENOENT;
+    entry->fid.Vnode = htonl (fid->fid.Vnode);
+    entry->fid.Vnode = htonl (fid->fid.Unique);
+    return 0;
 }
 
 /*
- * Read all entries in the AFS directory identified by `dir' and call
- * `func' on each entry with the fid, the name, and `arg'.
- */
-
-int
-adir_readdir (VenusFid dir,
-	      void (*func)(VenusFid *, const char *, void *), 
-	      void *arg,
-	      CredCacheEntry *ce)
-{
-     int fd;
-     fbuf the_fbuf;
-     DirPage0 *page0;
-     unsigned i;
-     FCacheEntry *centry;
-     int ret;
-     unsigned ind, dotind, dotdotind;
-     VenusFid fid;
-     unsigned len;
-     struct stat sb;
-
-     ret = fcache_get (&centry, dir, ce);
-     if (ret)
-	 return ret;
-
-     ret = fcache_get_data (centry, ce);
-     if (ret) {
-	 ReleaseWriteLock (&centry->lock);
-	 return ret;
-     }
-
-     if (centry->status.FileType != TYPE_DIR) {
-	 ReleaseWriteLock (&centry->lock);
-	 return ENOTDIR;
-     }
-
-     fd = fcache_open_file (centry, O_RDONLY, 0);
-     if (fd < 0) {
-	 ReleaseWriteLock (&centry->lock);
-	 return errno;
-     }
-
-     if (fstat (fd, &sb)) {
-	 ReleaseWriteLock (&centry->lock);
-	 close (fd);
-	 return errno;
-     }
-
-     len = sb.st_size;
-
-     ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ);
-     if (ret) {
-	 ReleaseWriteLock (&centry->lock);
-	 close (fd);
-	 return ret;
-     }
-     page0 = (DirPage0 *)(the_fbuf.buf);
-
-     /*
-      * Begin with placing `.' and `..' first. (some system seem to need that)
-      */
-
-     dotind = find_by_name (page0, ".", &fid, &dir);
-     assert (dotind != 0);
-     (*func)(&fid, ".", arg);
-
-     dotdotind = find_by_name (page0, "..", &fid, &dir);
-     assert (dotind != 0);
-     (*func)(&fid, "..", arg);
-
-     for (i = 0; i < ADIRHASHSIZE; ++i) {
-	  const DirEntry *entry;
-
-	  for(ind = ntohs(page0->dheader.hash[i]);
-	      ind;
-	      ind = ntohs(entry->next)) {
-
-	      entry = getentry (page0, ind - 1);
-	      
-	      fid.Cell = dir.Cell;
-	      fid.fid.Volume = dir.fid.Volume;
-	      fid.fid.Vnode  = ntohl (entry->fid.Vnode);
-	      fid.fid.Unique = ntohl (entry->fid.Unique);
-	      if (ind != dotind && ind != dotdotind) /* already did them */
-		  (*func)(&fid, entry->name, arg);
-	  }
-     }
-     fbuf_end (&the_fbuf);
-     ReleaseWriteLock (&centry->lock);
-     return 0;
-}
-
-/*
- *
+ * Return true if slot `off' on `page' is being used.
  */
 
 static int
@@ -288,7 +179,7 @@ used_slot (DirPage1 *page, int off)
 }
 
 /*
- *
+ * Mark slot `off' on `page' as being used.
  */
 
 static void
@@ -298,7 +189,40 @@ set_used (DirPage1 *page, int off)
 }
 
 /*
- * Add a new page to a directory.
+ * Mark slot `off' on `page' as not being used.
+ */
+
+static void
+set_unused (DirPage1 *page, int off)
+{
+    page->header.pg_bitmap[off / 8] &= ~(1 << (off % 8));
+}
+
+/*
+ * Is this page `pageno' empty?
+ */
+
+static int
+is_page_empty (DirPage0 *page0, unsigned pageno)
+{
+    DirPage1 *page;
+    int i;
+
+    if (pageno < MAXPAGES)
+	return page0->dheader.map[pageno] == ENTRIESPERPAGE - 1;
+    page = getpage (page0, pageno);
+    if (page->header.pg_bitmap[0] != 1)
+	return 0;
+    for (i = 1; i < sizeof(page->header.pg_bitmap); ++i)
+	if (page->header.pg_bitmap[i] != 0)
+	    return 0;
+    return 1;
+}
+
+/*
+ * Add a new page to the directory in `the_fbuf', returning a pointer
+ * to the new page in `ret_page'.
+ * Return 0 iff succesful.
  */
 
 static int
@@ -325,7 +249,9 @@ create_new_page (DirPage1 **ret_page,
 }
 
 /*
- * return index into `page'
+ * Create a new entry with name `filename', fid `fid', and next
+ * pointer `next' in the page `page' with page number `pageno'.
+ * Return the index in the page or -1 if unsuccesful.
  */
 
 static int
@@ -336,16 +262,12 @@ add_to_page (DirPage0 *page0,
 	     AFSFid fid,
 	     unsigned next)
 {
-    int len = strlen (filename);
     int i, j;
-    unsigned n = 1;
+    unsigned n;
 
-    for (len = strlen(filename), n = 1;
-	 len > 15;
-	 len -= sizeof(DirEntry), ++n)
-	;
+    n = 1 + additional_entries (filename);
 
-    if (page0->dheader.map[pageno] < n)
+    if (pageno < MAXPAGES && page0->dheader.map[pageno] < n)
 	return -1;
 
     for (i = 0; i < ENTRIESPERPAGE - n;) {
@@ -357,14 +279,15 @@ add_to_page (DirPage0 *page0,
 	    for (k = i + 1; k < i + j + 1; ++k)
 		page->header.pg_bitmap[k / 8] |= (1 << (k % 8));
 
-	    page->entry[i].flag = 0;
+	    page->entry[i].flag = 1;
 	    page->entry[i].length = 0;
 	    page->entry[i].next = next;
 	    page->entry[i].fid.Vnode  = htonl(fid.Vnode);
 	    page->entry[i].fid.Unique = htonl(fid.Unique);
 	    strcpy (page->entry[i].name, filename);
 	    memset(page->entry[i + j - 1].fill, 0, 4);
-	    page0->dheader.map[pageno] -= n;
+	    if (pageno < MAXPAGES)
+		page0->dheader.map[pageno] -= n;
 	    return i;
 	}
 	i += j + 1;
@@ -373,7 +296,7 @@ add_to_page (DirPage0 *page0,
 }
 
 /*
- *
+ * Remove the entry `off' from the page `page' (page number `pageno').
  */
 
 static int
@@ -383,23 +306,348 @@ remove_from_page (DirPage0 *page0,
 		  unsigned off)
 {
     DirEntry *entry = &page->entry[off];
-    int len;
-    unsigned n = 1, i;
+    unsigned n, i;
 
-    for (len = strlen(entry->name), n = 1;
-	 len > 15;
-	 len -= sizeof(DirEntry), ++n)
-	;
+    n = 1 + additional_entries (entry->name);
 
-    page0->dheader.map[pageno] += n;
+    if (pageno < MAXPAGES)
+	page0->dheader.map[pageno] += n;
 
     entry->next = 0;
     entry->fid.Vnode  = 0;
     entry->fid.Unique = 0;
 
     for (i = off + 1; i < off + n + 1; ++i)
-	page->header.pg_bitmap[i / 8] &= ~(1 << (i % 8));
+	set_unused (page, i);
     return 0;
+}
+
+/*
+ * Lookup `name' in the AFS directory identified by `centry' and return
+ * the Fid in `file'.  All operations are done as `cred' and return
+ * value is 0 or error code.
+ *
+ *
+ * Locking:
+ *            In        Out       Fail
+ *    centry: Locked    Locked    Locked
+ *  
+ */
+
+int
+adir_lookup_fcacheentry (FCacheEntry *centry,
+			 const char *name,
+			 VenusFid *file,
+			 CredCacheEntry *ce)
+{
+     int fd;
+     DirPage0 *page0;
+     unsigned ind;
+     unsigned len;
+     int ret;
+     int close_ret;
+     fbuf the_fbuf;
+     struct stat sb;
+
+     assert (CheckLock (&centry->lock) == -1);
+
+     if (centry->status.FileType != TYPE_DIR) {
+	 return ENOTDIR;
+     }
+
+     assert (CheckLock (&centry->lock) == -1);
+
+     fd = fcache_open_file (centry, O_RDONLY);
+     if (fd < 0) {
+	 return errno;
+     }
+
+     assert (CheckLock (&centry->lock) == -1);
+
+     if (fstat (fd, &sb)) {
+	 close_ret = close (fd);
+	 assert (close_ret == 0);
+	 return errno;
+     }
+
+     len = sb.st_size;
+
+     assert (CheckLock (&centry->lock) == -1);
+
+     ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ);
+     if (ret) 
+	 return ret;
+
+     assert (CheckLock (&centry->lock) == -1);
+
+     page0 = (DirPage0 *)(the_fbuf.buf);
+     ind = find_by_name (page0, name, file, &centry->fid);
+     fbuf_end (&the_fbuf);
+
+     if (ind == 0)
+	 return 0;
+     else
+	 return ENOENT;
+}
+
+/*
+ * Lookup `name' in the AFS directory identified by `dir' and return
+ * the Fid in `file'.  All operations are done as `cred' and return
+ * value is 0 or error code.
+ */
+
+int
+adir_lookup (VenusFid dir,
+	     const char *name,
+	     VenusFid *file,
+	     CredCacheEntry *ce)
+{
+    FCacheEntry *centry;
+    int ret;
+
+    ret = fcache_get (&centry, dir, ce);
+    if (ret)
+	return ret;
+    
+    assert (CheckLock (&centry->lock) == -1);
+    
+    ret = fcache_get_data (centry, ce);
+    if (ret) {
+	fcache_release (centry);
+	return ret;
+    }
+    
+    ret = adir_lookup_fcacheentry (centry, name, file, ce);
+
+    fcache_release (centry);
+    
+    return ret;
+	
+}
+
+/*
+ * Lookup `name' in the AFS directory identified by `dir' and change the
+ * fid to `fid'.
+ */
+
+int
+adir_changefid (VenusFid dir,
+		const char *name,
+		VenusFid *file,
+		CredCacheEntry *ce)
+{
+    int fd;
+    DirPage0 *page0;
+    FCacheEntry *centry;
+    unsigned len;
+    int ret;
+    int close_ret;
+    fbuf the_fbuf;
+    struct stat sb;
+
+    ret = fcache_get (&centry, dir, ce);
+    if (ret)
+	return ret;
+
+    ret = fcache_get_data (centry, ce);
+    if (ret) {
+	fcache_release (centry);
+	return ret;
+    }
+
+    if (centry->status.FileType != TYPE_DIR) {
+	fcache_release(centry);
+	return ENOTDIR;
+    }
+
+    fd = fcache_open_file (centry, O_RDWR);
+    if (fd < 0) {
+	fcache_release(centry);
+	return errno;
+    }
+
+    if (fstat (fd, &sb)) {
+	close_ret = close (fd);
+	assert (close_ret == 0);
+	fcache_release(centry);
+	return errno;
+    }
+
+    len = sb.st_size;
+
+    ret = fbuf_create (&the_fbuf, fd, len, FBUF_WRITE);
+    if (ret) {
+	fcache_release(centry);
+	return ret;
+    }
+
+    page0 = (DirPage0 *)(the_fbuf.buf);
+    ret = update_fid_by_name (page0, name, file, &dir);
+    fcache_release(centry);
+    fbuf_end (&the_fbuf);
+
+    if (ret == 0)
+	return 0;
+    else
+	return ENOENT;
+}
+
+/*
+ * Return TRUE if dir is empty.
+ */
+
+int
+adir_emptyp (VenusFid dir,
+	     CredCacheEntry *ce)
+{
+     int fd;
+     DirPage0 *page0;
+     FCacheEntry *centry;
+     unsigned len;
+     int ret;
+     int close_ret;
+     fbuf the_fbuf;
+     struct stat sb;
+     unsigned npages;
+
+     ret = fcache_get (&centry, dir, ce);
+     if (ret)
+	 return ret;
+
+     ret = fcache_get_data (centry, ce);
+     if (ret) {
+	 fcache_release (centry);
+	 return ret;
+     }
+
+     if (centry->status.FileType != TYPE_DIR) {
+	 fcache_release (centry);
+	 return ENOTDIR;
+     }
+
+     fd = fcache_open_file (centry, O_RDONLY);
+     if (fd < 0) {
+	 fcache_release(centry);
+	 return errno;
+     }
+
+     if (fstat (fd, &sb)) {
+	 fcache_release(centry);
+	 close_ret = close (fd);
+	 assert (close_ret == 0);
+	 return errno;
+     }
+
+     len = sb.st_size;
+
+     ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ);
+     if (ret) {
+	 fcache_release(centry);
+	 return ret;
+     }
+     page0 = (DirPage0 *)(the_fbuf.buf);
+     npages = ntohs(page0->header.pg_pgcount);
+
+     ret = (npages == 1) && (page0->dheader.map[0] == 2);
+     fbuf_end (&the_fbuf);
+     fcache_release (centry);
+     return ret;
+}
+
+/*
+ * Read all entries in the AFS directory identified by `dir' and call
+ * `func' on each entry with the fid, the name, and `arg'.
+ */
+
+int
+adir_readdir (VenusFid dir,
+	      void (*func)(VenusFid *, const char *, void *), 
+	      void *arg,
+	      CredCacheEntry *ce)
+{
+     int fd;
+     fbuf the_fbuf;
+     DirPage0 *page0;
+     unsigned i, j;
+     FCacheEntry *centry;
+     int ret;
+     int close_ret;
+     VenusFid fid;
+     unsigned len;
+     struct stat sb;
+     unsigned npages;
+
+     ret = fcache_get (&centry, dir, ce);
+     if (ret)
+	 return ret;
+
+     ret = fcache_get_data (centry, ce);
+     if (ret) {
+	 fcache_release (centry);
+	 return ret;
+     }
+
+     if (centry->status.FileType != TYPE_DIR) {
+	 fcache_release (centry);
+	 return ENOTDIR;
+     }
+
+     fd = fcache_open_file (centry, O_RDONLY);
+     if (fd < 0) {
+	 fcache_release(centry);
+	 return errno;
+     }
+
+     if (fstat (fd, &sb)) {
+	 fcache_release(centry);
+	 close_ret = close (fd);
+	 assert (close_ret == 0);
+	 return errno;
+     }
+
+     len = sb.st_size;
+
+     ret = fbuf_create (&the_fbuf, fd, len, FBUF_READ);
+     if (ret) {
+	 fcache_release(centry);
+	 return ret;
+     }
+     page0 = (DirPage0 *)(the_fbuf.buf);
+     npages = ntohs(page0->header.pg_pgcount);
+
+     if (npages < len / AFSDIR_PAGESIZE)
+	 npages = len / AFSDIR_PAGESIZE;
+
+     for (i = 0; i < npages; ++i) {
+	 DirPage1 *page = getpage (page0, i);
+	 unsigned first_slot;
+
+	 if (i == 0)
+	     first_slot = 12;
+	 else
+	     first_slot = 0;
+
+	 for (j = first_slot; j < ENTRIESPERPAGE - 1; ++j) {
+	     if (used_slot (page, j + 1)) {
+		 DirEntry *entry = &page->entry[j];
+
+		 assert (entry->flag);
+
+		 fid.Cell       = dir.Cell;
+		 fid.fid.Volume = dir.fid.Volume;
+		 fid.fid.Vnode  = ntohl (entry->fid.Vnode);
+		 fid.fid.Unique = ntohl (entry->fid.Unique);
+
+		 (*func)(&fid, entry->name, arg);
+
+		 j += additional_entries (entry->name);
+	     }
+	 }
+     }
+
+     fbuf_end (&the_fbuf);
+     fcache_release(centry);
+     return 0;
 }
 
 /*
@@ -419,12 +667,19 @@ adir_mkdir (FCacheEntry *dir,
     int ind;
     int i;
     int tmp;
+    int close_ret;
 
     assert (CheckLock(&dir->lock) == -1);
 
-    fd = fcache_open_file (dir, O_RDWR | O_CREAT | O_TRUNC, 0666);
+    fd = fcache_open_file (dir, O_RDWR);
     if (fd < 0)
 	return errno;
+
+    if (ftruncate (fd, 0) < 0) {
+	close_ret = close (fd);
+	assert (close_ret == 0);
+	return errno;
+    }
 
     ret = fbuf_create (&the_fbuf, fd, 0, FBUF_WRITE);
     if (ret)
@@ -462,13 +717,13 @@ adir_mkdir (FCacheEntry *dir,
     page0->dheader.hash[hashentry("..")] = htons(ind + 1);
 
 out:
-    assert (dir->status.Length == the_fbuf.len);
+    fcache_update_length (dir, fbuf_len(&the_fbuf));
     fbuf_end (&the_fbuf);
     return ret;
 }
 
 /*
- * Create a new entry with name `filename' and contents `fid' in `dir.
+ * Create a new entry with name `filename' and contents `fid' in `dir'.
  */
 
 int
@@ -478,6 +733,7 @@ adir_creat (FCacheEntry *dir,
 {
     fbuf the_fbuf;
     int ret;
+    int close_ret;
     int fd;
     int i;
     size_t len;
@@ -492,12 +748,13 @@ adir_creat (FCacheEntry *dir,
 
     assert (dir->flags.datap);
 
-    fd = fcache_open_file (dir, O_RDWR, 0);
+    fd = fcache_open_file (dir, O_RDWR);
     if (fd < 0)
 	return errno;
 
     if(fstat (fd, &statbuf) < 0) {
-	close (fd);
+	close_ret = close (fd);
+	assert (close_ret == 0);
 	return errno;
     }
 
@@ -507,6 +764,8 @@ adir_creat (FCacheEntry *dir,
     if (ret)
 	return ret;
 
+    assert (the_fbuf.len != 0);
+
     page0 = (DirPage0 *)(the_fbuf.buf);
     npages = ntohs(page0->header.pg_pgcount);
 
@@ -515,20 +774,20 @@ adir_creat (FCacheEntry *dir,
     hash_value = hashentry (name);
     next = page0->dheader.hash[hash_value];
 
-    for (i = 0; i < npages; ++i)
-	if (page0->dheader.map[i]) {
-	    page = (DirPage1 *)((char *)page0 + i * AFSDIR_PAGESIZE);
-	    ind = add_to_page (page0, page, i, name, fid, next);
-	    if (ind >= 0)
-		break;
-	}
+    for (i = 0; i < npages; ++i) {
+	page = getpage (page0, i);
+	ind = add_to_page (page0, page, i, name, fid, next);
+	if (ind >= 0)
+	    break;
+    }
     if (i == npages) {
 	ret = create_new_page (&page, &the_fbuf);
 	if (ret)
 	    goto out;
 	page0 = (DirPage0 *)(the_fbuf.buf);
 	page0->header.pg_pgcount = htons(npages + 1);
-	page0->dheader.map[i] = ENTRIESPERPAGE - 1;
+	if (i < MAXPAGES)
+	    page0->dheader.map[i] = ENTRIESPERPAGE - 1;
 	ind = add_to_page (page0, page, i, name, fid, next);
 	assert (ind >= 0);
     }
@@ -537,7 +796,7 @@ adir_creat (FCacheEntry *dir,
     page0->dheader.hash[hash_value] = htons(ind + 1);
     
 out:
-    /* assert (dir->status.Length == the_fbuf.len); */
+    fcache_update_length (dir, fbuf_len(&the_fbuf));
     fbuf_end (&the_fbuf);
     return ret;
 }
@@ -552,6 +811,7 @@ adir_remove (FCacheEntry *dir,
 {
     fbuf the_fbuf;
     int ret;
+    int close_ret;
     int fd;
     int i;
     unsigned len;
@@ -569,23 +829,22 @@ adir_remove (FCacheEntry *dir,
 
     assert (dir->flags.datap);
 
-    fd = fcache_open_file (dir, O_RDWR, 0);
+    fd = fcache_open_file (dir, O_RDWR);
     if (fd < 0)
 	return errno;
 
-#if 0
-    len = dir->status.Length;
-#endif
     if (fstat (fd, &sb)) {
-	close (fd);
+	close_ret = close (fd);
+	assert (close_ret == 0);
 	return errno;
     }
+
+    assert (dir->status.Length == sb.st_size);
 
     len = sb.st_size;
 
     ret = fbuf_create (&the_fbuf, fd, len, FBUF_WRITE);
     if (ret) {
-	close (fd);
 	return ret;
     }
 
@@ -617,17 +876,18 @@ adir_remove (FCacheEntry *dir,
 	    prev_entry->next = entry->next;
 
 	pageno = (i - 1) / ENTRIESPERPAGE;
-	page = (DirPage1 *)((char *)page0 + pageno * AFSDIR_PAGESIZE);
+	page = getpage (page0, pageno);
 	remove_from_page (page0, page, pageno, (i - 1) % ENTRIESPERPAGE);
 	if (pageno == npages - 1
-	    && page0->dheader.map[pageno] == ENTRIESPERPAGE - 1) {
+	    && is_page_empty (page0, pageno)) {
 	    do {
 		len -= AFSDIR_PAGESIZE;
 		--pageno;
 		--npages;
-	    } while(page0->dheader.map[pageno] == ENTRIESPERPAGE - 1);
+	    } while(is_page_empty(page0, pageno));
 	    page0->header.pg_pgcount = htons(npages);
 	    fbuf_truncate (&the_fbuf, len);
+	    fcache_update_length (dir, len);
 	}
 	fbuf_end (&the_fbuf);
 	return 0;

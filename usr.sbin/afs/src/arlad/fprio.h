@@ -1,4 +1,4 @@
-/*	$OpenBSD: fprio.h,v 1.1.1.1 1998/09/14 21:52:56 art Exp $	*/
+/*	$OpenBSD: fprio.h,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +41,7 @@
  * Our cache of volume information.
  */
 
-/* $KTH: fprio.h,v 1.3 1998/06/08 18:55:13 lha Exp $ */
+/* $KTH: fprio.h,v 1.4 1999/04/14 15:27:36 map Exp $ */
 
 #ifndef _FPRIO_
 #define _FPRIO_
@@ -61,7 +61,7 @@ void fprio_remove(VenusFid fid);
 void fprio_set(VenusFid fid, unsigned prio);
 int  fprio_readin(char *file);
 int  fprio_get(VenusFid fid);
-void fprio_status (FILE *f);
+void fprio_status (void);
 
 #endif /* _FPRIO_ */
 

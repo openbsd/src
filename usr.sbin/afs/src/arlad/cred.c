@@ -1,4 +1,4 @@
-/*	$OpenBSD: cred.c,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
+/*	$OpenBSD: cred.c,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,7 +42,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: cred.c,v 1.22 1998/06/08 22:26:59 map Exp $");
+RCSID("$KTH: cred.c,v 1.28 1999/04/20 20:58:07 map Exp $");
 
 #define CREDCACHESIZE 101
 
@@ -134,7 +134,7 @@ internal_get (long cell, pag_t cred, int type)
     e = (CredCacheEntry *)hashtabsearch (credhtab, (void *)&key);
 
     if (e == NULL && type == CRED_NONE) {
-	e = cred_add (cred, type, 0, cell, 0, NULL, 0);
+	e = cred_add (cred, type, 0, cell, 0, NULL, 0, 0);
     }
 
     if (e != NULL)
@@ -201,7 +201,8 @@ get_free_cred (void)
 
 CredCacheEntry *
 cred_add (pag_t cred, int type, int securityindex, long cell,
-	  time_t expire, void *cred_data, size_t cred_data_sz)
+	  time_t expire, void *cred_data, size_t cred_data_sz,
+	  uid_t uid)
 {
     void *data;
     CredCacheEntry *e;
@@ -222,7 +223,8 @@ cred_add (pag_t cred, int type, int securityindex, long cell,
     e->securityindex = securityindex;
     e->cell          = cell;
     e->expire        = expire;
-    e->cred_data = data;
+    e->cred_data     = data;
+    e->uid           = uid;
 
     old = hashtabsearch (credhtab, e);
     if (old != NULL)
@@ -235,7 +237,7 @@ cred_add (pag_t cred, int type, int securityindex, long cell,
 
 #if KERBEROS
 CredCacheEntry *
-cred_add_krb4 (pag_t cred, CREDENTIALS *c)
+cred_add_krb4 (pag_t cred, uid_t uid, CREDENTIALS *c)
 {
     CredCacheEntry *ce;
     char *cellname;
@@ -250,7 +252,7 @@ cred_add_krb4 (pag_t cred, CREDENTIALS *c)
     free (cellname);
     assert (cellnum != -1);
 
-    ce = cred_add (cred, CRED_KRB4, 2, cellnum, -1, c, sizeof(*c));
+    ce = cred_add (cred, CRED_KRB4, 2, cellnum, -1, c, sizeof(*c), uid);
     return ce;
 }
 #endif
@@ -275,6 +277,24 @@ cred_delete (CredCacheEntry *ce)
 void
 cred_expire (CredCacheEntry *ce)
 {
+    const char *cell_name = cell_num2name (ce->cell);
+    struct passwd *pwd = getpwuid (ce->uid);
+    const char *user_name;
+
+    if (pwd != NULL)
+	user_name = pwd->pw_name;
+    else
+	user_name = "<who-are-you?>";
+
+    if (cell_name != NULL)
+	arla_warnx (ADEBWARN,
+		    "Credentials for %s (%u) in cell %s has expired",
+		    user_name, (unsigned)ce->uid, cell_name);
+    else
+	arla_warnx (ADEBWARN,
+		    "Credentials for %s (%u) in cell unknown %ld has expired",
+		    user_name, (unsigned)ce->uid, ce->cell);
+
     cred_delete (ce);
 }
 
@@ -299,19 +319,18 @@ static Bool
 print_cred (void *ptr, void *arg)
 {
     CredCacheEntry *e = (CredCacheEntry *)ptr;
-    FILE *f = (FILE *)arg;
 
-    fprintf (f, "cred = %u, type = %d, securityindex = %d\n"
-	     "cell = %ld, refcount = %u, killme = %d\n\n",
+    arla_log(ADEBVLOG, "cred = %u, type = %d, securityindex = %d\n"
+	     "cell = %ld, refcount = %u, killme = %d, uid = %lu\n\n",
 	     e->cred, e->type, e->securityindex, e->cell, e->refcount,
-	     e->flags.killme);
+	     e->flags.killme, (unsigned long)e->uid);
     return FALSE;
 }
 
 void
-cred_status (FILE *f)
+cred_status (void)
 {
-    fprintf (f, "%u(%u) credentials\n",
+    arla_log(ADEBVLOG, "%u(%u) credentials\n",
 	     nactive_credentials, ncredentials);
-    hashtabforeach (credhtab, print_cred, f);
+    hashtabforeach (credhtab, print_cred, NULL);
 }

@@ -1,6 +1,6 @@
-/*	$OpenBSD: volcache.c,v 1.1.1.1 1998/09/14 21:52:57 art Exp $	*/
+/*	$OpenBSD: volcache.c,v 1.2 1999/04/30 01:59:10 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -42,7 +42,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: volcache.c,v 1.39 1998/07/29 21:31:06 assar Exp $") ;
+RCSID("$KTH: volcache.c,v 1.67 1999/04/20 20:58:09 map Exp $") ;
 
 /*
  * Suffixes for volume names.
@@ -169,27 +169,31 @@ recycle_entry (VolCacheEntry *e)
     int i;
 
     for (i = 0; i < MAXTYPES; ++i) {
-	if (e->name_ptr[i].ptr != NULL) {
+	if (e->num_ptr[i].ptr != NULL) {
 	    FCacheEntry *fe;
 	    int ret;
 	    VenusFid fid;
-
-	    assert (e->num_ptr[i].ptr != NULL);
 
 	    fid.Cell       = e->cell;
 	    fid.fid.Vnode  = fid.fid.Unique = 1;
 	    fid.fid.Volume = e->num_ptr[i].vol;
 	    ret = fcache_find (&fe, fid);
 	    if (ret == 0 && fe != NULL) {
-		assert (fe->refcount > 0 && fe->flags.mountp);
-		--fe->refcount;
+		if (fe->refcount > 0)
+		    --fe->refcount;
+		fcache_release (fe);
 	    }
-
-	    hashtabdel (volnamehashtab, &e->name_ptr[i]);
 	    hashtabdel (volidhashtab, &e->num_ptr[i]);
 	}
+	if (e->name_ptr[i].ptr != NULL) {
+	    hashtabdel (volnamehashtab, &e->name_ptr[i]);
+	}
     }
-    memset (e, 0, sizeof(*e));
+    memset (&e->entry, 0, sizeof(e->entry));
+    memset (&e->volsync, 0, sizeof(e->volsync));
+    e->flags.validp = FALSE;
+    memset (&e->name_ptr, 0, sizeof(e->name_ptr));
+    memset (&e->num_ptr, 0, sizeof(e->num_ptr));
 }
 
 /*
@@ -348,42 +352,44 @@ volcache_init (unsigned nentries, Bool recover)
 }
 
 /*
+ * Add a clone to `e' of type `type' with suffix `slot_type' in slot
+ * slot_type
+ */
+
+static void
+add_clone (VolCacheEntry *e, int type, int suffix_type)
+{
+    struct num_ptr *num_ptr = &e->num_ptr[type];
+    struct name_ptr *name_ptr = &e->name_ptr[suffix_type];
+
+    if (type == suffix_type) {
+	num_ptr->cell = e->cell;
+	num_ptr->vol  = e->entry.volumeId[type];
+	num_ptr->ptr  = e;
+	num_ptr->type = type;
+	hashtabadd (volidhashtab, (void *) num_ptr);
+    }
+
+    name_ptr->cell = e->cell;
+    snprintf (name_ptr->name, VLDB_MAXNAMELEN,
+	      "%s%s", e->entry.name, volsuffixes[suffix_type]);
+    name_ptr->ptr  = e;
+    name_ptr->type = type;
+    hashtabadd (volnamehashtab, (void *) name_ptr);
+}
+
+/*
  *
  */
 
 static int
-get_info (VolCacheEntry *e, const char *volname, CredCacheEntry *ce)
+get_info_common (VolCacheEntry *e)
 {
-    ConnCacheEntry *conn;
-    u_long addr = cell_finddbserver (e->cell).s_addr;
-    int error, i;
-
-    conn = conn_get (e->cell, addr, afsvldbport, VLDB_SERVICE_ID, ce);
-    if (conn == NULL) {
-	struct in_addr ia;
-
-	ia.s_addr = addr;
-	arla_warnx (ADEBVOLCACHE,
-		    "volcache: failed to make rx-connection to vldb %s",
-		    inet_ntoa(ia));
-	return -1;
-    }
-
-    error = VL_GetEntryByName(conn->connection, volname, &e->entry);
-    conn_free (conn);
-    if (error) {
-	arla_warn (ADEBVOLCACHE, error,
-		   "VL_GetEntryByName(%s)",
-		    volname);
-	return -1;
-    }
-    
-    i = min(strlen(volname), VLDB_MAXNAMELEN);
-    if (strncmp(volname, e->entry.name, i)) {
-	arla_warnx (ADEBERROR, "get_info: we asked for %s and got %s",
-		    volname, e->entry.name);
-    }
-
+    if (e->entry.flags & VLF_DFSFILESET)
+	arla_warnx (ADEBWARN,
+		    "get_info: %s is really a DFS volume. "
+		    "This might not work",
+		    e->entry.name);
 
     if ((e->entry.volumeId[RWVOL] == e->entry.volumeId[ROVOL] &&
 	 e->entry.flags & VLF_RWEXISTS && e->entry.flags & VLF_ROEXISTS) ||
@@ -393,58 +399,239 @@ get_info (VolCacheEntry *e, const char *volname, CredCacheEntry *ce)
 	 e->entry.flags & VLF_RWEXISTS && e->entry.flags & VLF_BOEXISTS)) {
       
 	arla_warnx (ADEBERROR, "get_info: same id on diffrent volumes: %s",
-		  volname);
+		    e->entry.name);
 	return -1;
     }
 
-    if (e->entry.flags & VLF_RWEXISTS) {
-	e->num_ptr[RWVOL].cell = e->cell;
-	e->num_ptr[RWVOL].vol  = e->entry.volumeId[RWVOL];
-	e->num_ptr[RWVOL].ptr  = e;
-	hashtabadd (volidhashtab, (void *)&e->num_ptr[RWVOL]);
-
-	e->name_ptr[RWVOL].cell = e->cell;
-	snprintf (e->name_ptr[RWVOL].name, VLDB_MAXNAMELEN,
-		  "%s%s", e->entry.name, volsuffixes[RWVOL]);
-	e->name_ptr[RWVOL].ptr  = e;
-	hashtabadd (volnamehashtab, (void *)&e->name_ptr[RWVOL]);
-
-    }
-    if (e->entry.flags & VLF_ROEXISTS) {
-	e->num_ptr[ROVOL].cell = e->cell;
-	e->num_ptr[ROVOL].vol  = e->entry.volumeId[ROVOL];
-	e->num_ptr[ROVOL].ptr  = e;
-	hashtabadd (volidhashtab, (void *)&e->num_ptr[ROVOL]);
-
-	e->name_ptr[ROVOL].cell = e->cell;
-	snprintf (e->name_ptr[ROVOL].name, VLDB_MAXNAMELEN,
-		  "%s%s", e->entry.name, volsuffixes[ROVOL]);
-	e->name_ptr[ROVOL].ptr  = e;
-	hashtabadd (volnamehashtab, (void *)&e->name_ptr[ROVOL]);
-    }
-    if (e->entry.flags & VLF_BOEXISTS) {
-	e->num_ptr[BACKVOL].cell = e->cell;
-	e->num_ptr[BACKVOL].vol  = e->entry.volumeId[BACKVOL];
-	e->num_ptr[BACKVOL].ptr  = e;
-	hashtabadd (volidhashtab, (void *)&e->num_ptr[BACKVOL]);
-
-	e->name_ptr[BACKVOL].cell = e->cell;
-	snprintf (e->name_ptr[BACKVOL].name, VLDB_MAXNAMELEN,
-		  "%s%s", e->entry.name, volsuffixes[BACKVOL]);
-	e->name_ptr[BACKVOL].ptr  = e;
-	hashtabadd (volnamehashtab, (void *)&e->name_ptr[BACKVOL]);
-    }
+    if (e->entry.flags & VLF_RWEXISTS)
+	add_clone (e, RWVOL, RWVOL);
+    else
+	add_clone (e, ROVOL, RWVOL);
+    if (e->entry.flags & VLF_ROEXISTS)
+	add_clone (e, ROVOL, ROVOL);
+    if (e->entry.flags & VLF_BOEXISTS)
+	add_clone (e, BACKVOL, BACKVOL);
     e->flags.validp = TRUE;
     return 0;
+}
+
+/*
+ * A function for checking if a service is up.  Return 0 if succesful.
+ */
+
+static int
+vl_probe (struct rx_connection *conn)
+{
+    return VL_Probe (conn);
+}
+
+/*
+ * Get all the db servers for `e->cell', sort them in order by rtt
+ * (with some fuzz) and try to retrieve the entry for `name'.
+ *
+ * Return 0 if succesful, else error.
+ */
+
+static int
+get_info_loop (VolCacheEntry *e, const char *name, CredCacheEntry *ce)
+{
+    const cell_db_entry *db_servers;
+    int num_db_servers;
+    int num_working_db_servers;
+    int error = 0;
+    int cell = e->cell;
+    ConnCacheEntry **conns;
+    int i, j;
+    Bool try_again;
+
+    db_servers = cell_dbservers (cell, &num_db_servers);
+    if (db_servers == NULL || num_db_servers == 0) {
+	arla_warnx (ADEBWARN,
+		    "Cannot find any db servers in cell %d(%s)",
+		    cell, cell_num2name(cell));
+	return ENOENT;
+    }
+
+    conns = malloc (num_db_servers * sizeof(*conns));
+    if (conns == NULL)
+	return ENOMEM;
+
+    for (i = 0, j = 0; i < num_db_servers; ++i) {
+	ConnCacheEntry *conn;
+
+	conn = conn_get (cell, db_servers[i].addr.s_addr, afsvldbport,
+			 VLDB_SERVICE_ID, vl_probe, ce);
+	if (conn != NULL) {
+	    conn->rtt = rx_PeerOf(conn->connection)->rtt
+		+ rand() % RTT_FUZZ - RTT_FUZZ / 2;
+	    conns[j++] = conn;
+	}
+    }
+    num_working_db_servers = j;
+
+    qsort (conns, num_working_db_servers, sizeof(*conns),
+	   conn_rtt_cmp);
+
+    try_again = TRUE;
+
+    for (i = 0; i < num_working_db_servers; ++i) {
+	if (conns[i] != NULL) {
+	retry:
+	    if (try_again) {
+		if (conns[i]->flags.old) {
+		    vldbentry entry;
+		    error = VL_GetEntryByName (conns[i]->connection,
+					       name, &entry);
+		    if (error == 0)
+			vldb2vldbN(&entry, &e->entry);
+		} else
+		    error = VL_GetEntryByNameN (conns[i]->connection,
+						name, &e->entry);
+		if (error == RX_CALL_DEAD)
+		    conn_dead (conns[i]);
+		switch (error) {
+		case 0 :
+		    try_again = FALSE;
+		    break;
+		case VL_NOENT :
+		    error = ENOENT;
+		    try_again = FALSE;
+		    break;
+		case RXGEN_OPCODE:
+		    if (conns[i]->flags.old == FALSE) {
+			conns[i]->flags.old = TRUE;
+			goto retry;
+		    }
+		    break;
+		default :
+		    arla_warn (ADEBVOLCACHE, error,
+			       "VL_GetEntryByName%s(%s)", 
+			       conns[i]->flags.old ? "" : "N",
+			       name);
+		    break;
+		}
+	    }
+	    conn_free (conns[i]);
+	}
+    }
+
+    free (conns);
+
+    if (try_again) {
+	arla_warnx (ADEBWARN,
+		    "Failed to contact any db servers in cell %d(%s)",
+		    cell, cell_num2name(cell));
+	error = ETIMEDOUT;
+    }
+
+    return error;
+}
+
+/*
+ *
+ */
+
+static int
+get_info_byid (VolCacheEntry *e, u_int32_t id, CredCacheEntry *ce)
+{
+    int error;
+    char s[11];
+
+    snprintf (s, sizeof(s), "%u", id);
+    error = get_info_loop (e, s, ce);
+    if (error)
+	return error;
+    return get_info_common (e);
+}
+
+
+/*
+ *
+ */
+
+static int
+get_info_byname (VolCacheEntry *e, const char *volname, CredCacheEntry *ce)
+{
+    int error;
+    int i;
+    size_t entry_name_len;
+    int name_matched;
+
+    error = get_info_loop (e, volname, ce);
+    if (error)
+	return error;
+
+    entry_name_len = strlen(e->entry.name);
+    name_matched = FALSE;
+
+    for (i = 0; i < MAXTYPES; ++i) {
+	if (strncmp (volname, e->entry.name, entry_name_len) == 0
+	    && strcmp (volname + entry_name_len, volsuffixes[i]) == 0) {
+	    name_matched = TRUE;
+	    break;
+	}
+    }
+
+    /*
+     * If the name we looked up is different from the one we got back,
+     * replace that one with the canonical looked up name.  Otherwise,
+     * we're not going to be able to find the volume in question.
+     */
+
+    if (!name_matched) {
+	size_t volname_len = strlen(volname);
+
+	arla_warnx (ADEBWARN,
+		    "get_info: different volnames: %s - %s",
+		    volname, e->entry.name);
+
+	for (i = MAXTYPES - 1; i >= 0; --i)
+	    if (strcmp (volname + volname_len - strlen(volsuffixes[i]),
+			volsuffixes[i]) == 0) {
+		volname_len -= strlen(volsuffixes[i]);
+		break;
+	    }
+
+	strncpy (e->entry.name, volname, volname_len);
+	e->entry.name[volname_len] = '\0';
+    }
+
+    return get_info_common (e);
 }
 
 /*
  * Add an entry for (volname, cell) to the hash table.
  */
 
-static VolCacheEntry *
-add_entry (const char *volname, int32_t cell, CredCacheEntry *ce)
+static int
+add_entry_byname (VolCacheEntry **ret, const char *volname,
+		  int32_t cell, CredCacheEntry *ce)
 {
+    VolCacheEntry *e;
+    int error;
+
+    e = get_free_entry ();
+
+    e->cell = cell;
+    e->refcount = 0;
+
+    error = get_info_byname (e, volname, ce);
+    if (error == 0) {
+	*ret = e;
+	++nactive_volcacheentries;
+    }
+    return error;
+}
+
+/*
+ * Add an entry for (volname, cell) to the hash table.
+ */
+
+static int
+add_entry_byid (VolCacheEntry **ret, u_int32_t id,
+		int32_t cell, CredCacheEntry *ce)
+{
+    int error;
     VolCacheEntry *e;
 
     e = get_free_entry ();
@@ -452,12 +639,12 @@ add_entry (const char *volname, int32_t cell, CredCacheEntry *ce)
     e->cell = cell;
     e->refcount = 0;
 
-    if(get_info (e, volname, ce) == 0) {
+    error = get_info_byid (e, id, ce);
+    if (error == 0) {
 	++nactive_volcacheentries;
-	return e;
-    } else {
-	return NULL;
+	*ret = e;
     }
+    return error;
 }
 
 /*
@@ -465,10 +652,11 @@ add_entry (const char *volname, int32_t cell, CredCacheEntry *ce)
  * add it.
  */
 
-VolCacheEntry *
-volcache_getbyname (const char *volname, int32_t cell, CredCacheEntry *ce)
+int
+volcache_getbyname (const char *volname, int32_t cell, CredCacheEntry *ce,
+		    VolCacheEntry **e, int32_t *type)
 {
-    VolCacheEntry *e;
+    int error = 0;
     struct name_ptr *n;
     struct name_ptr key;
 
@@ -476,22 +664,27 @@ volcache_getbyname (const char *volname, int32_t cell, CredCacheEntry *ce)
     strncpy (key.name, volname, VLDB_MAXNAMELEN);
     key.name[VLDB_MAXNAMELEN - 1] = '\0';
 
-    n = (struct name_ptr *)hashtabsearch (volnamehashtab, (void *)&key);
-    if (n == NULL)
-	e = add_entry (volname, cell, ce);
-    else
-	e = n->ptr;
-
-    if (e != NULL && !volume_uptodatep (e)) {
-	recycle_entry (e);
-	e->cell = cell;
-	if (get_info (e, volname, ce))
-	    e = NULL;
+    for(;;) {
+	n = (struct name_ptr *)hashtabsearch (volnamehashtab, (void *)&key);
+	if (n == NULL) {
+	    error = add_entry_byname (e, volname, cell, ce);
+	    if (error)
+		return error;
+	    continue;
+	}
+	*e = n->ptr;
+	*type = n->type;
+	++(*e)->refcount;
+	if (volume_uptodatep (*e)) {
+	    return 0;
+	} else {
+	    recycle_entry (*e);
+	    error = get_info_byname (*e, volname, ce);
+	    --(*e)->refcount;
+	    if (error)
+		return error;
+	}
     }
-
-    if (e != NULL)
-	++e->refcount;
-    return e;
 }
 
 /*
@@ -499,36 +692,38 @@ volcache_getbyname (const char *volname, int32_t cell, CredCacheEntry *ce)
  * add it.
  */
 
-VolCacheEntry *
-volcache_getbyid (u_int32_t id, int32_t cell, CredCacheEntry *ce)
+int
+volcache_getbyid (u_int32_t volid, int32_t cell, CredCacheEntry *ce,
+		  VolCacheEntry **e, int32_t *type)
 {
-    VolCacheEntry *e;
+    int error = 0;
     struct num_ptr *n;
     struct num_ptr key;
-    char s[11];
-
-    snprintf (s, sizeof(s), "%u", id);
 
     key.cell = cell;
-    key.vol  = id;
+    key.vol  = volid;
 
-    n = (struct num_ptr *)hashtabsearch (volidhashtab, (void *)&key);
-    if (n == NULL) {
-	e = add_entry (s, cell, ce);
-    } else {
-	e = n->ptr;
+    for(;;) {
+	n = (struct num_ptr *)hashtabsearch (volidhashtab, (void *)&key);
+	if (n == NULL) {
+	    error = add_entry_byid (e, volid, cell, ce);
+	    if (error)
+		return error;
+	    continue;
+	}
+	*e = n->ptr;
+	*type = n->type;
+	++(*e)->refcount;
+	if (volume_uptodatep (*e)) {
+	    return 0;
+	} else {
+	    recycle_entry (*e);
+	    error = get_info_byid (*e, volid, ce);
+	    --(*e)->refcount;
+	    if (error)
+		return error;
+	}
     }
-
-    if (e != NULL && !volume_uptodatep (e)) {
-	recycle_entry (e);
-	e->cell = cell;
-	if (get_info (e, s, ce))
-	    e = NULL;
-    }
-
-    if (e != NULL)
-	++e->refcount;
-    return e;
 }
 
 /*
@@ -584,34 +779,46 @@ print_entry (void *ptr, void *arg)
 {
     struct num_ptr *n = (struct num_ptr *)ptr;
     VolCacheEntry *e = n->ptr;
-    FILE *f = (FILE *)arg;
     int i;
     struct in_addr tmp;
 
     if (n->vol != e->entry.volumeId[RWVOL])
 	return FALSE;
 
-    fprintf (f, "cell = %d (%s)\n"
-	     "name = \"%s\", volumeType = %d(%s), nServers = %d\n",
+    arla_log(ADEBVLOG, "cell = %d (%s)\n"
+	     "name = \"%s\", nServers = %d\n",
 	     e->cell, cell_num2name (e->cell),
 	     e->entry.name,
-	     e->entry.volumeType, volsuffixes[e->entry.volumeType],
 	     e->entry.nServers);
     for (i = 0; i < e->entry.nServers; ++i) {
 	tmp.s_addr = htonl(e->entry.serverNumber[i]);
-	fprintf (f, "%d: server = %s, part = %d(%c), flags = %d\n",
+	arla_log(ADEBVLOG, "%d: server = %s, part = %d(%c), flags = %d\n",
 		 i, inet_ntoa(tmp), e->entry.serverPartition[i],
 		 'a' + e->entry.serverPartition[i],
 		 e->entry.serverFlags[i]);
     }
     if (e->entry.flags & VLF_RWEXISTS)
-	fprintf (f, "rw clone: %d\n", e->entry.volumeId[RWVOL]);
+	arla_log(ADEBVLOG, "rw clone: %d\n", e->entry.volumeId[RWVOL]);
     if (e->entry.flags & VLF_ROEXISTS)
-	fprintf (f, "ro clone: %d\n", e->entry.volumeId[ROVOL]);
+	arla_log(ADEBVLOG, "ro clone: %d\n", e->entry.volumeId[ROVOL]);
     if (e->entry.flags & VLF_BACKEXISTS)
-	fprintf (f, "rw clone: %d\n", e->entry.volumeId[BACKVOL]);
-    fprintf (f, "refcount = %u\n\n", e->refcount);
+	arla_log(ADEBVLOG, "rw clone: %d\n", e->entry.volumeId[BACKVOL]);
+    arla_log(ADEBVLOG, "refcount = %u\n\n", e->refcount);
     return FALSE;
+}
+
+/*
+ *
+ */
+
+int
+volume_make_uptodate (VolCacheEntry *e, CredCacheEntry *ce)
+{
+    if (connected_mode != CONNECTED ||
+	volume_uptodatep (e))
+	return 0;
+    
+    return get_info_byname (e, e->entry.name, ce);
 }
 
 /*
@@ -619,9 +826,9 @@ print_entry (void *ptr, void *arg)
  */
 
 void
-volcache_status (FILE *f)
+volcache_status (void)
 {
-    fprintf (f, "%u(%u) volume entries\n",
+    arla_log(ADEBVLOG, "%u(%u) volume entries\n",
 	     nactive_volcacheentries, nvolcacheentries);
-    hashtabforeach (volidhashtab, print_entry, f);
+    hashtabforeach (volidhashtab, print_entry, NULL);
 }

@@ -1,4 +1,3 @@
-/*	$OpenBSD: xfs_node.h,v 1.3 1998/09/06 01:48:58 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,36 +36,90 @@
  * SUCH DAMAGE.
  */
 
-/* 	$KTH: xfs_node.h,v 1.3 1998/07/13 20:36:37 art Exp $	 */
+/* 	$Id: xfs_node.h,v 1.4 1999/04/30 01:59:01 art Exp $	 */
 
-#ifndef _XFS_XFS_NODE_H_
-#define _XFS_XFS_NODE_H_
+#ifndef _xfs_xnode_h
+#define _xfs_xnode_h
 
-#if 0
 #include <sys/types.h>
 #include <sys/time.h>
+#if defined(_KERNEL) || !defined(__OpenBSD__)
 #include <sys/vnode.h>
 #endif
+#ifdef __NetBSD__
+#include <sys/lockf.h>
+#endif /* __NetBSD__ */
 
 #include <xfs/xfs_attr.h>
 #include <xfs/xfs_message.h>
 
 struct xfs_node {
-	struct vnode	*vn;
-	struct vnode	*data;
-	struct vattr	attr;
-	u_int		flags;
-	u_int		tokens;
-	xfs_handle	handle;
-	pag_t		id[MAXRIGHTS];
-	u_char		rights[MAXRIGHTS];
-	u_char		anonrights;
+    struct vnode *vn;
+    struct vnode *data;
+    struct vattr attr;
+    u_int flags;
+    u_int tokens;
+    xfs_handle handle;
+    pag_t id[MAXRIGHTS];
+    u_char rights[MAXRIGHTS];
+    u_char anonrights;
+    int vnlocks;
+#ifdef __NetBSD__
+    struct   lockf *i_lockf;
+#endif
 };
 
+int xfs_getnewvnode(struct mount *mp, struct vnode **vpp,
+                struct xfs_handle *handle);
+
+
 #define DATA_FROM_VNODE(vp) DATA_FROM_XNODE(VNODE_TO_XNODE(vp))
+
 #define DATA_FROM_XNODE(xp) ((xp)->data)
 
 #define XNODE_TO_VNODE(xp) ((xp)->vn)
 #define VNODE_TO_XNODE(vp) ((struct xfs_node *) (vp)->v_data)
 
+#if defined(HAVE_THREE_ARGUMENT_VGET)
+#define xfs_do_vget(vp, lockflag, proc) vget((vp), (lockflag), (proc))
+#elif !defined(__osf__)
+#define xfs_do_vget(vp, lockflag, proc) vget((vp), (lockflag))
+#else
+#define xfs_do_vget(vp, lockflag, proc) vget((vp))
 #endif
+
+#ifndef HAVE_VOP_T
+typedef int vop_t (void *);
+#endif
+
+#ifdef LK_INTERLOCK
+#define HAVE_LK_INTERLOCK
+#else
+#define LK_INTERLOCK 0
+#endif
+
+#ifdef LK_RETRY
+#define HAVE_LK_RETRY
+#else
+#define LK_RETRY 0
+#endif
+
+/*
+ * This is compat code for older vfs that have a 
+ * vget that only take a integer (really boolean) argument
+ * that the the returned vnode will be returned locked
+ */
+
+#ifdef LK_EXCLUSIVE
+#define HAVE_LK_EXCLUSIVE 1
+#else
+#define LK_EXCLUSIVE 1
+#endif
+
+#ifdef LK_SHARED
+#define HAVE_LK_SHARED 1
+#else
+#define LK_SHARED 1
+#endif
+
+#endif				       /* _xfs_xnode_h */

@@ -1,6 +1,6 @@
-/*	$OpenBSD: lex.h,v 1.1.1.1 1998/09/14 21:53:26 art Exp $	*/
+/*	$OpenBSD: lex.h,v 1.2 1999/04/30 01:59:19 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,11 +37,11 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: lex.h,v 1.3 1998/02/19 05:11:49 assar Exp $ */
+/* $KTH: lex.h,v 1.4 1999/03/01 08:38:22 assar Exp $ */
 
 #ifndef _LEX_
 #define _LEX_
 
-void error_message (char *, ...);
+void error_message (int errorp, char *, ...);
 
 #endif /* _LEX_ */

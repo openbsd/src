@@ -1,3 +1,8 @@
+1999-01-03  Love  <lha@s3.kth.se>
+
+	* getarg.c (arg_match_long): Unbreak ARG_TRANSLONG and FLAGS (by
+	passing up optarg)
+
 Sun Nov  9 04:48:46 1997  Johan Danielsson  <joda@emma.pdc.kth.se>
 
 	* fnmatch.c: Add fnmatch from NetBSD

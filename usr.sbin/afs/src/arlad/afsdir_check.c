@@ -1,4 +1,4 @@
-/*	$OpenBSD: afsdir_check.c,v 1.1.1.1 1998/09/14 21:52:54 art Exp $	*/
+/*	$OpenBSD: afsdir_check.c,v 1.2 1999/04/30 01:59:06 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -43,7 +43,7 @@
 
 #include "arla_local.h"
 
-RCSID("$KTH: afsdir_check.c,v 1.7 1998/04/05 03:33:09 assar Exp $");
+RCSID("$KTH: afsdir_check.c,v 1.8 1998/12/01 22:44:14 assar Exp $");
 
 /*
  * Hash the filename of one entry.
@@ -96,7 +96,7 @@ check (const char *filename)
     unsigned page_entry_count;
     unsigned hash_entry_count;
     unsigned noverfill;
-    u_int8_t my_bitmaps[MAXPAGES][ENTRIESPERPAGE / 8];
+    u_int8_t **my_bitmaps = NULL;
 
     fd = open (filename, O_RDONLY | O_BINARY, 0);
     if (fd < 0)
@@ -124,8 +124,12 @@ check (const char *filename)
 
     npages = len / AFSDIR_PAGESIZE;
 
+    my_bitmaps = malloc (npages * sizeof(*my_bitmaps));
+    if (my_bitmaps == NULL)
+	err (1, "malloc %u", npages * sizeof(*my_bitmaps));
+
     printf ("map: ");
-    for (i = 0; i < npages; ++i) {
+    for (i = 0; i < min(npages, MAXPAGES); ++i) {
 	printf ("%u ", page0->dheader.map[i]);
     }
     printf ("\n");
@@ -135,6 +139,13 @@ check (const char *filename)
     for (i = 0; i < npages; ++i) {
 	PageHeader *ph = (PageHeader *)((char *)page0 + i * AFSDIR_PAGESIZE);
 	int start;
+	size_t sz = ENTRIESPERPAGE / 8 * sizeof(*my_bitmaps[i]);
+
+	my_bitmaps[i] = malloc (sz);
+	if (my_bitmaps[i] == NULL)
+	    err (1, "malloc %u", sz);
+
+	memset (my_bitmaps[i], 0, sz);
 
 	if (ph->pg_tag != htons(AFSDIRMAGIC)) {
 	    printf ("page %d: wrong tag: %u\n", i, htons(ph->pg_tag));
@@ -182,8 +193,6 @@ check (const char *filename)
 
     hash_entry_count = 0;
     noverfill = 0;
-
-    memset (my_bitmaps, 0, sizeof(my_bitmaps));
 
     for (i = 0; i < ADIRHASHSIZE; ++i) {
 	const DirEntry *entry;
@@ -265,6 +274,11 @@ check (const char *filename)
 
 out:    
     fbuf_end (&the_fbuf);
+    if (my_bitmaps) {
+	for (i = 0; i < npages; ++i)
+	    free (my_bitmaps[i]);
+	free (my_bitmaps);
+    }
     return ret;
 }
 

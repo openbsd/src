@@ -1,6 +1,6 @@
-/*	$OpenBSD: date_rfc822.c,v 1.1.1.1 1998/09/14 21:53:21 art Exp $	*/
+/*	$OpenBSD: date_rfc822.c,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,12 +38,12 @@
  */
 
 /*
- * $KTH: date_rfc822.c,v 1.5 1998/02/11 03:43:32 art Exp $
+ * $KTH: date_rfc822.c,v 1.6 1999/01/03 01:49:21 assar Exp $
  */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: date_rfc822.c,v 1.5 1998/02/11 03:43:32 art Exp $");
+RCSID("$KTH: date_rfc822.c,v 1.6 1999/01/03 01:49:21 assar Exp $");
 #endif
 
 #include <roken.h>
@@ -51,8 +51,9 @@ RCSID("$KTH: date_rfc822.c,v 1.5 1998/02/11 03:43:32 art Exp $");
 #include "date_rfc822.h"
 
 /*
- * Return current date in RFC822-format with timezone GMT.
- * Memory is allocated with strdup.
+ * Return current date in RFC822-format (actually not 822, but
+ * according to section 5.2.14 of rfc1123) with timezone GMT.  Memory
+ * is allocated with strdup.
  */
 
 char *
@@ -60,21 +61,6 @@ date_time2rfc822 (time_t t)
 {
      char tmp [80];
 
-     strftime (tmp, sizeof (tmp), "%A, %d-%h-%y %H:%M:%S %Z", gmtime (&t));
+     strftime (tmp, sizeof (tmp), "%A, %d-%h-%Y %H:%M:%S %Z", gmtime (&t));
      return strdup (tmp);
 }
-
-#if 0 /* XXX */
-/*
- * Convert from RFC 822 representation of date into a time_t.
- */
-
-time_t
-date_rfc8222time (char *s)
-{
-     struct tm tm;
-
-     strptime (s, "%d-%h-%y %H:%M:%S ", &tm);
-     return timegm (&tm);
-}
-#endif

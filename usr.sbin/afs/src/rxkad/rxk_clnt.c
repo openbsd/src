@@ -1,6 +1,6 @@
-/*	$OpenBSD: rxk_clnt.c,v 1.1.1.1 1998/09/14 21:53:19 art Exp $	*/
+/*	$OpenBSD: rxk_clnt.c,v 1.2 1999/04/30 01:59:16 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +39,7 @@
 
 #include "rxkad_locl.h"
 
-RCSID("$KTH: rxk_clnt.c,v 1.4 1998/02/22 21:12:25 lha Exp $");
+RCSID("$KTH: rxk_clnt.c,v 1.5 1999/03/12 17:09:44 assar Exp $");
 
 /* This code also links into the kernel so we need to use osi_Alloc()
  * to avoid calling malloc(). Similar trick with memcpy() */
@@ -163,8 +163,9 @@ client_GetResponse(const struct rx_securityClass *obj_,
   if (rx_SlowReadPacket(pkt, 0, sizeof(c), &c) != sizeof(c))
     return RXKADPACKETSHORT;
 
-  if (ntohl(c.version) != RXKAD_VERSION)
-    return RXKADINCONSISTENCY;
+  if (ntohl(c.version) < RXKAD_VERSION)
+    return RXKADINCONSISTENCY;	/* Don't know how to make vers 1 response. */
+  /* Always make a vers 2 response. */
     
   if (ntohl(c.min_level) > obj->level)
     return RXKADLEVELFAIL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: verr.c,v 1.1.1.1 1998/09/14 21:53:07 art Exp $	*/
+/*	$OpenBSD: verr.c,v 1.2 1999/04/30 01:59:12 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan 
  * (Royal Institute of Technology, Stockholm, Sweden).  
@@ -39,7 +39,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: verr.c,v 1.1 1998/01/13 16:25:46 lha Exp $");
+RCSID("$KTH: verr.c,v 1.2 1998/12/20 15:52:38 assar Exp $");
 #endif
 
 #include "err.h"
@@ -48,4 +48,5 @@ void
 verr(int eval, const char *fmt, va_list ap)
 {
     warnerr(1, eval, 1, fmt, ap);
+    exit(eval);
 }

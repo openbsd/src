@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmcb.c,v 1.1.1.1 1998/09/14 21:52:55 art Exp $	*/
+/*	$OpenBSD: cmcb.c,v 1.2 1999/04/30 01:59:07 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -42,7 +42,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$KTH: cmcb.c,v 1.19 1998/04/03 03:32:38 assar Exp $") ;
+RCSID("$KTH: cmcb.c,v 1.20 1998/11/09 20:33:44 assar Exp $") ;
 
 #include "cb.ss.h"
 
@@ -57,19 +57,15 @@ cmcb_init (void)
      static struct rx_securityClass *(securityObjects[1]);
 
      nullSecObjP = rxnull_NewClientSecurityObject ();
-     if (nullSecObjP == NULL) {
-	  arla_warnx (ADEBWARN, "Cannot create null security object.");
-	  return;
-     }
+     if (nullSecObjP == NULL)
+	  arla_errx (1, ADEBWARN, "Cannot create null security object.");
      
      securityObjects[0] = nullSecObjP;
 
      if (rx_NewService (0, CM_SERVICE_ID, "cm", securityObjects,
 			sizeof(securityObjects) / sizeof(*securityObjects),
-			(long (*)())RXAFSCB_ExecuteRequest) == NULL ) {
-	  arla_warnx (ADEBWARN, "Cannot install callback service");
-	  return;
-     }
+			(long (*)())RXAFSCB_ExecuteRequest) == NULL )
+	  arla_errx (1, ADEBWARN, "Cannot install callback service");
      rx_StartServer (0);
 }
 
@@ -142,11 +138,9 @@ RXAFSCB_CallBack (struct rx_call *a_rxCallP,
 	      fcache_purge_volume (fid);
 	      volcache_invalidate (fid.fid.Volume, fid.Cell);
 	  } else if (i < a_callBackArrayP->len)
-	      fcache_stale_entry (fid,
-				  a_callBackArrayP->val[i]);
+	      fcache_stale_entry (fid, a_callBackArrayP->val[i]);
 	  else
-	      fcache_stale_entry (fid,
-				  broken_callback);
+	      fcache_stale_entry (fid, broken_callback);
      }
 
      return 0;

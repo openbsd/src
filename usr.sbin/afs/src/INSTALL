@@ -1,4 +1,4 @@
-$Id: INSTALL,v 1.1.1.1 1998/09/14 21:52:51 art Exp $ ($Name:  $)
+$Id: INSTALL,v 1.2 1999/04/30 01:59:03 art Exp $ ($Name:  $)
 
 Building arla
 
@@ -25,6 +25,12 @@ are also some arla-specific arguments to configure:
   --disable-mmap	  don't use mmap at all
   --enable-mmaptime       use mmap:ed time from /dev/kmem
                           (known to work in FreeBSD)
+  --disable-dynamic-afs	  don't use loaded AFS library with AIX
+  --enable-smp		  compile for SMP (currently only on Linux)
+  --enable-knfs		  enable code to nfsmount AFS (*BSD only).
+  --enable-kld		  build KLD modules (for FreeBSD3-current)
+  --without-x		  don't build X code
+  --with-pthreads=dir	  use the pthreads library in dir
 
 By default configure will use gcc if it finds it.  If you want to use
 a specific compiler or some special options you can specify that when
@@ -97,22 +103,29 @@ Linux:
   mkdir /afs
   mount -t xfs arla /afs
 
-  If you are using Linux 2.1, you may want to copy /usr/arla/lib/getcwd.so
-  to /lib and add this line to your /etc/ld.so.preload:
+  If you are using Linux 2.1 or 2.2 and libc4, libc5 or glibc 2.0,
+  you may want to enable the getcwd syscall, which works much better
+  than the old way of doing getcwd. In order to do this, follow
+  these steps:
 
-  /lib/getcwd.so
-
-  This enables the getcwd syscall, which works much better than the old
-  way of doing getcwd. Be careful though, and execute /bin/pwd as a test
-  before you exit your editor. If /bin/pwd fails with a message like
-  "/bin/pwd: can't load library '/lib/getcwd.so'", remove the line from
-  /etc/ld.so.preload, and report the problem.
+  1. Copy /usr/arla/lib/libgetcwd.so.X (where X is the arla version)
+     to /lib.
+  2. Run "/sbin/ldconfig".
+  3. Run "LD_PRELOAD=/lib/libgetcwd.so.0 /bin/pwd". If this fails
+     with "/bin/pwd: can't load library '/lib/libgetcwd.so.0'" or
+     some other error message, report this error.
+  4. If the previous step went well, add this line to /etc/ld.so.preload:
+     /lib/libgetcwd.so.0
 
   DO NOT load the file from /usr/arla/lib, since /usr probably is not
   part of the root partition of your system. If you do this, your system
   will probably not be able to boot, even in single user, since in most
   Linux installations, init, sh, mount and other programs are dynamically
   linked.
+
+  If you use glibc 2.1 or later, the above method is unnecessary and
+  the line /lib/libgetcwd.so.0 should be removed from /etc/ld.so.preload
+  if present.
 
 SunOS4:
 
@@ -130,24 +143,27 @@ SunOS4:
   /usr/arla/bin/mount_xfs /dev/xfs0 /afs
   /usr/arla/bin/arlad
 
-FreeBSD
+FreeBSD:
   
-Do like in {Net|Open} except for doing the modload you can just do:
+Do like in {Net|Open} except that after the first time (when /dev/xfs0
+exists) you can skip the modload since the module with automatically
+be loaded by mount_xfs assuming you have copied xfs_mod.o to /lkm with
+something like the following commands:
 
   mkdir /lkm
   cp /usr/arla/bin/xfs_mod.o /lkm/xfs_mod.o
   
-And mount_xfs vill load the filesystem into the kernel.
+And mount_xfs will load the filesystem into the kernel.
 
 Solaris:
 
-add a line to /etc/name_to_major with (134 should be any unused number)
+add a line to /etc/name_to_major with (138 should be any unused number)
 
-  xfs 134
+  xfs 138
 
 and another one to /etc/name_to_sysnum (105 is the preferred system
-call number, if that's already used by Transarc AFS on your machine,
-pick some other number)
+call number, if that's already used by Transarc AFS on your machine or
+you are using Solaris 7 (which uses 105 itself), pick some other number)
 
   xfs 105
 
@@ -163,9 +179,9 @@ and then run:
 
   drvconfig -i xfs
 
-Create a device with the name_to_major number and a directory:
+Create a /dev link and a directory:
 
-  mknod /dev/xfs0 c 134 0
+  ln -s "/devices/pseudo/xfs@0:" /dev/xfs0
   mkdir /afs
 
 Now you can try mounting the file system and start the daemon:
@@ -173,6 +189,9 @@ Now you can try mounting the file system and start the daemon:
   /usr/arla/bin/mount_xfs /dev/xfs0 /afs
   /usr/arla/bin/arlad
 
+Note that if you are using a syscall other than 105, you have to use a
+new kth-krb (with afssys.c 1.59 or newer) and set AFS_SYSCALL=xfs
+before starting arlad.
 
 If you want to, you can copy the xfs/solaris/xfs module to /kernel/fs
 and xfs/solaris/bin/mount_xfs to /lib/fs/xfs/mount which enables you to
@@ -190,12 +209,15 @@ And add a line like the following to /etc/vfs:
 
 Now you can try mounting the file system and start the daemon:
 
+  /usr/arla/bin/xfs_load /usr/arla/bin/xfs
   /usr/arla/bin/mount_xfs /dev/xfs0 /afs
   /usr/arla/bin/arlad
 
-Digital Unix (aka OSF/1)
+Tru64 Unix (aka Digital Unix (aka OSF/1)):
 
-Copy the xfs.mod to /subsystems.
+Copy the xfs.mod to some of /subsys, /var/subsys, /sys/BINARY,
+or /subsystems. Depending on what your kloadsrv thinks is the
+right thing<tm>.
 
 Load (configure) the module with sysconfig -c xfs
 

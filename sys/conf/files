@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.115 1999/04/20 20:06:10 niklas Exp $
+#	$OpenBSD: files,v 1.116 1999/04/30 01:58:59 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -570,14 +570,19 @@ file ufs/ext2fs/ext2fs_readwrite.c	ext2fs
 file ufs/ext2fs/ext2fs_subr.c		ext2fs
 file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
 file ufs/ext2fs/ext2fs_vnops.c		ext2fs
-file xfs/xfs_common.c			xfs
+file xfs/xfs_common-bsd.c		xfs
 file xfs/xfs_deb.c			xfs
-file xfs/xfs_dev.c			xfs
+file xfs/xfs_dev-bsd.c			xfs
+file xfs/xfs_dev-common.c		xfs
 file xfs/xfs_message.c			xfs
-file xfs/xfs_node.c			xfs
-file xfs/xfs_syscalls.c
-file xfs/xfs_vfsops.c			xfs
-file xfs/xfs_vnodeops.c			xfs
+file xfs/xfs_node-bsd.c			xfs
+file xfs/xfs_syscalls-common.c		xfs
+file xfs/xfs_vfsops-bsd.c		xfs
+file xfs/xfs_vfsops-common.c		xfs
+file xfs/xfs_vfsops-openbsd.c		xfs
+file xfs/xfs_vnodeops-bsd.c		xfs
+file xfs/xfs_vnodeops-common.c		xfs
+file xfs/xfs_syscalls-dummy.c		!xfs
 file vm/device_pager.c			!uvm & devpager
 file vm/swap_pager.c			!uvm & swappager
 file vm/vm_fault.c			!uvm

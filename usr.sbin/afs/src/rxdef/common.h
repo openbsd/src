@@ -1,9 +1,9 @@
-/*	$OpenBSD: common.h,v 1.1.1.1 1998/09/14 21:53:18 art Exp $	*/
+/*	$OpenBSD: common.h,v 1.2 1999/04/30 01:59:15 art Exp $	*/
 /*
  * Common defintions for cb.xg and fs.xg
  */
 
-/* $KTH: common.h,v 1.8 1998/09/03 18:47:29 lha Exp $ */
+/* $KTH: common.h,v 1.9 1998/10/31 02:29:18 lha Exp $ */
 
 %#ifndef _COMMON_
 %#define _COMMON_
@@ -79,7 +79,7 @@ const SS_MODTIME     = 0x01 ;
 const SS_OWNER       = 0x02 ;
 const SS_GROUP       = 0x04 ;
 const SS_MODEBITS    = 0x08 ;
-const SS_SEGSIZE     = 0x0F ;
+const SS_SEGSIZE     = 0x10 ;
 
 struct AFSStoreStatus {
      unsigned long Mask;

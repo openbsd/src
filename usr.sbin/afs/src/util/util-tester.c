@@ -1,6 +1,6 @@
-/*	$OpenBSD: util-tester.c,v 1.1.1.1 1998/09/14 21:53:26 art Exp $	*/
+/*	$OpenBSD: util-tester.c,v 1.2 1999/04/30 01:59:19 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -42,7 +42,6 @@
 #include <sys/time.h>
 
 #include "bool.h"
-#include "timeprio.h"
 #include "hash.h"
 
 struct timeval time1, time2;
@@ -72,30 +71,6 @@ endtesting(int bool)
     return bool;
 }
 
-
-int
-test_timeprio(void)
-{
-    Timeprio *tp = timeprionew(100);
-
-    starttesting("timeprio");
-
-    timeprioinsert(tp, 10, "ten");
-    timeprioinsert(tp, 40, "fourty");
-    timeprioinsert(tp, 30, "thirty");
-
-
-    while(!timeprioemptyp(tp)) {
-	printf("timepriohead(tp) = %s\n", (char *) timepriohead(tp));
-	timeprioremove(tp);
-    }
-
-    timepriofree(tp);
-
-    endtesting(0);
-
-    return 0;
-}
 
 int
 hash_cmp(void *foo, void *bar)
@@ -151,11 +126,5 @@ test_hash(void)
 int 
 main(int argc, char **argv)
 {
-    test_timeprio();
-    test_hash();
-    return 0;
+    return test_hash();
 }
-
-
-
-

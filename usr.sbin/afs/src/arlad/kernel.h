@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.1.1.1 1998/09/14 21:52:57 art Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,13 +37,25 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: kernel.h,v 1.2 1998/02/19 05:48:20 assar Exp $ */
+/* $KTH: kernel.h,v 1.4 1998/12/06 20:49:11 lha Exp $ */
 
 #ifndef _KERNEL_H_
 #define _KERNEL_H_
 
-void kernel_interface (char *device);
+struct kernel_args {
+    const char *device;
+    unsigned num_workers;
+};
+
+void kernel_interface (struct kernel_args *args);
 
 extern int kernel_fd;
+
+unsigned long
+kernel_highworkers(void);
+
+unsigned long
+kernel_usedworkers(void);
+
 
 #endif /* _KERNEL_H_ */

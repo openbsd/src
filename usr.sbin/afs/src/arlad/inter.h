@@ -1,4 +1,4 @@
-/*	$OpenBSD: inter.h,v 1.1.1.1 1998/09/14 21:52:57 art Exp $	*/
+/*	$OpenBSD: inter.h,v 1.2 1999/04/30 01:59:08 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -41,7 +41,7 @@
  * The interface to the cache manager.
  */
 
-/* $KTH: inter.h,v 1.14 1998/07/22 07:04:06 assar Exp $ */
+/* $KTH: inter.h,v 1.16 1999/01/10 20:25:58 map Exp $ */
 
 #ifndef _INTER_H_
 #define _INTER_H_
@@ -54,9 +54,9 @@
  */
 
 typedef struct {
-     int res;
-     int error;
-     u_int tokens;
+    int res;			/* result */
+    int error;			/* error if res == -1 */
+    u_int tokens;		/* resulting tokens (if res == 0) */
 } Result;
 
 void
@@ -66,10 +66,11 @@ void
 cm_store_state (void);
 
 Result
-cm_open (VenusFid fid, CredCacheEntry *ce, u_int tokens);
+cm_open (VenusFid fid, CredCacheEntry *ce, u_int tokens,
+	 xfs_cache_handle *, char *, size_t);
 
 Result
-cm_close (VenusFid fid, int flag, CredCacheEntry *ce);
+cm_close (VenusFid fid, int flag, AFSStoreStatus *, CredCacheEntry *ce);
 
 Result
 cm_getattr (VenusFid fid,

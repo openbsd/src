@@ -1,6 +1,6 @@
-/*	$OpenBSD: ko.h,v 1.1.1.1 1998/09/14 21:53:00 art Exp $	*/
+/*	$OpenBSD: ko.h,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -37,12 +37,13 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: ko.h,v 1.10 1998/07/25 15:18:48 map Exp $ */
+/* $KTH: ko.h,v 1.16 1999/03/03 15:39:51 assar Exp $ */
 
 #ifndef __KO_H
 #define __KO_H 1
 
 #include <atypes.h>
+#include <bool.h>
 
 typedef int32_t koerr_t;
 
@@ -60,26 +61,48 @@ const char *arla_getsysname(void);
 
 
 /*
- * Cell manglening
+ * Cell managing
  */
+
+typedef struct {
+     const char *name;
+     struct in_addr addr;
+} cell_db_entry;
+
+typedef struct {
+    int32_t id;		/* Cell-ID */
+    const char *name;		/* Domain-style name */
+    const char *expl;		/* Longer name */
+    unsigned ndbservers;	/* # of database servers */
+    cell_db_entry *dbservers;	/* Database servers */
+    enum { NOSUID_CELL, SUID_CELL } suid_cell ; /* if this is a suid cell */
+} cell_entry;
 
 void           cell_init (int cellcachesize);
 
-struct in_addr cell_finddbserver (int32_t cell);
-u_long         cell_listdbserver (int32_t cell, int index);
+const cell_db_entry *cell_dbservers (int32_t cell, int *);
+
 const char    *cell_findnamedbbyname (const char *cell);
 const char    *cell_getthiscell (void);
 const char    *cell_getcellbyhost(const char *host);
 int32_t        cell_name2num (const char *cell);
 const char    *cell_num2name (int32_t cell);
+cell_entry    *cell_get_by_name (const char *cellname);
+cell_entry    *cell_get_by_id (int32_t cell);
+cell_entry    *cell_new (const char *name);
+Bool           cell_issuid (cell_entry *c);
+Bool           cell_issuid_by_num (int32_t cell);
+Bool           cell_issuid_by_name (const char *cell);
+Bool	       cell_setsuid_by_num (int32_t cell);
 
-/* NIY
-int            cell_serverdown (struct in_addr addr);
-int            cell_cellup_p (int32_t cell);
-int            cell_probe(int32_t cell);
-int            cell_probeserver(struct in_addr addr);
-*/
+/*
+ * misc vl
+ */
 
-#endif
+#include <vldb.h>
+#include <volumeserver.h>
 
+void vldb2vldbN (const vldbentry *old, nvldbentry *new);
+void volintInfo2xvolintInfo (const volintInfo *old, xvolintInfo *new);
 
+#endif /* __KO_H */

@@ -1,0 +1,77 @@
+/* rx_pkt.xg,v 1.3 1994/12/27 03:37:04 assar Exp */
+
+/* header of a RPC packet */
+
+enum rx_header_type {
+     HT_DATA = 1,
+     HT_ACK = 2,
+     HT_BUSY = 3,
+     HT_ABORT = 4,
+     HT_ACKALL = 5,
+     HT_CHAL = 6,
+     HT_RESP = 7,
+     HT_DEBUG = 8
+};
+
+/* For flags in header */
+
+enum rx_header_flag {
+     HF_CLIENT_INITIATED = 1,
+     HF_REQ_ACK = 2,
+     HF_LAST = 4,
+     HF_MORE = 8
+};
+
+%#define MAXCALLS 4
+
+%#define CALL_MASK (MAXCALLS-1)
+%#define CONNID_MASK (~(MAXCALLS-1))
+
+const RX_HEADER_SIZE=28;
+
+struct rx_header {
+     unsigned epoch;
+     unsigned connid;		/* And channel ID */
+     unsigned callid;
+     unsigned seqno;
+     unsigned serialno;
+     u_char type;
+     u_char flags;
+     u_char status;
+     u_char secindex;
+     u_short reserved;	/* ??? verifier? */
+     u_short serviceid;
+/* This should be the other way around according to everything but */
+/* tcpdump */
+};
+
+enum rx_ack_reason {
+     RX_ACK_REQUESTED = 1, 
+     RX_ACK_DUPLICATE = 2,
+     RX_ACK_OUT_OF_SEQUENCE = 3,
+     RX_ACK_EXEEDS_WINDOW = 4,
+     RX_ACK_NOSPACE = 5,
+     RX_ACK_PING = 6,
+     RX_ACK_PING_RESPONSE = 7,
+     RX_ACK_DELAY = 8
+};
+
+enum rx_ack_type {
+     RX_ACK_TYPE_NACK = 0,
+     RX_ACK_TYPE_ACK = 1
+};
+
+const RXMAXACKS=255;
+
+struct rx_ack_header {
+     u_short bufferspace;	/* # of packet buffers available */
+     u_short maxskew;
+     u_long firstpacket;	/* First packet in acks below */
+     u_long prevpacket;
+     u_long serial;		/* Packet that prompted this one */
+     u_char reason;		/* rx_ack_reason */
+/*     u_char nacks;*/		/* # of acks */
+     u_char acks<u_char>;
+/*     u_char acks[RXMAXACKS];*/	/* acks (rx_ack_type) */
+};
+

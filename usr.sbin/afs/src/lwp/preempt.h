@@ -1,9 +1,9 @@
-/*	$OpenBSD: preempt.h,v 1.1.1.1 1998/09/14 21:53:12 art Exp $	*/
-/* $Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/preempt.h,v 1.1.1.1 1998/09/14 21:53:12 art Exp $ */
+/*	$OpenBSD: preempt.h,v 1.2 1999/04/30 01:59:13 art Exp $	*/
+/* $Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/preempt.h,v 1.2 1999/04/30 01:59:13 art Exp $ */
 /* $Source: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/preempt.h,v $ */
 
 #if !defined(lint) && !defined(LOCORE) && defined(RCS_HDRS)
-static char *rcsidpreempt = "$Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/preempt.h,v 1.1.1.1 1998/09/14 21:53:12 art Exp $";
+static char *rcsidpreempt = "$Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/preempt.h,v 1.2 1999/04/30 01:59:13 art Exp $";
 #endif
 
 /*
@@ -41,3 +41,7 @@ static char *rcsidpreempt = "$Header: /home/cvs/src/usr.sbin/afs/src/lwp/Attic/p
 #define PRE_EndCritical()	lwp_cpptr->level--
 
 #define DEFAULTSLICE	10
+
+int PRE_InitPreempt(struct timeval *);
+int PRE_EndPreempt(void);
+

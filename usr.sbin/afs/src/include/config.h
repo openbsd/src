@@ -1,9 +1,11 @@
-/*	$OpenBSD: config.h,v 1.1.1.1 1998/09/14 21:52:59 art Exp $	*/
 /* include/config.h.  Generated automatically by configure.  */
 /* include/config.h.in.  Generated automatically from configure.in by autoheader.  */
 
 /* Define if you have a working `mmap' system call.  */
 #define HAVE_MMAP 1
+
+/* Define as __inline if that's what the C compiler calls it.  */
+/* #undef inline */
 
 /* Define as the return type of signal handlers (int or void).  */
 #define RETSIGTYPE void
@@ -14,6 +16,9 @@
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #define TIME_WITH_SYS_TIME 1
 
+/* Define if the X Window System is missing or not being used.  */
+/* #undef X_DISPLAY_MISSING */
+
 /*  Define this if we can include both sys/dir.h and dirent.h */
 #define USE_SYS_DIR_H 1
 
@@ -22,6 +27,12 @@
 
 /*  Define this if struct winsize is declared in sys/termios.h */
 #define HAVE_STRUCT_WINSIZE 1
+
+/*  Define this if struct msghdr is declared in sys/socket.h */
+#define HAVE_STRUCT_MSGHDR 1
+
+/*  Define this if struct iovec is declared in sys/uio.h */
+#define HAVE_STRUCT_IOVEC 1
 
 /*  Define this if struct winsize have ws_xpixel */
 #define HAVE_WS_XPIXEL 1
@@ -33,7 +44,7 @@
 #define SOCKADDR_HAS_SA_LEN 1
 
 /* define if the system is missing a prototype for strtok_r() */
-#define NEED_STRTOK_R_PROTO 1
+/* #undef NEED_STRTOK_R_PROTO */
 
 /* define if you have h_errno */
 #define HAVE_H_ERRNO 1
@@ -70,6 +81,12 @@
 
 /* Define if you have the FOUR_ARGUMENT_VFS_BUSY function.  */
 #define HAVE_FOUR_ARGUMENT_VFS_BUSY 1
+
+/* Define if you have the FOUR_ARGUMENT_VFS_OBJECT_CREATE function.  */
+/* #undef HAVE_FOUR_ARGUMENT_VFS_OBJECT_CREATE */
+
+/* Define if you have the ONE_ARGUMENT_VOP_LOCK function.  */
+/* #undef HAVE_ONE_ARGUMENT_VOP_LOCK */
 
 /* Define if you have the THREE_ARGUMENT_VFS_BUSY function.  */
 /* #undef HAVE_THREE_ARGUMENT_VFS_BUSY */
@@ -272,6 +289,9 @@
 /* Define if you have the tgetent function.  */
 #define HAVE_TGETENT 1
 
+/* Define if you have the thr_yield function.  */
+/* #undef HAVE_THR_YIELD */
+
 /* Define if you have the unsetenv function.  */
 #define HAVE_UNSETENV 1
 
@@ -320,11 +340,17 @@
 /* Define if you have the <arpa/nameser.h> header file.  */
 #define HAVE_ARPA_NAMESER_H 1
 
+/* Define if you have the <asm/smp_lock.h> header file.  */
+/* #undef HAVE_ASM_SMP_LOCK_H */
+
+/* Define if you have the <asm/smplock.h> header file.  */
+/* #undef HAVE_ASM_SMPLOCK_H */
+
 /* Define if you have the <crypt.h> header file.  */
 /* #undef HAVE_CRYPT_H */
 
 /* Define if you have the <dbm.h> header file.  */
-/* #undef HAVE_DBM_H */
+#define HAVE_DBM_H 1
 
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
@@ -350,8 +376,23 @@
 /* Define if you have the <libelf/nlist.h> header file.  */
 /* #undef HAVE_LIBELF_NLIST_H */
 
+/* Define if you have the <linux/devfs_fs.h> header file.  */
+/* #undef HAVE_LINUX_DEVFS_FS_H */
+
+/* Define if you have the <linux/modversions.h> header file.  */
+/* #undef HAVE_LINUX_MODVERSIONS_H */
+
 /* Define if you have the <linux/types.h> header file.  */
 /* #undef HAVE_LINUX_TYPES_H */
+
+/* Define if you have the <machine/alpha/asm.h> header file.  */
+/* #undef HAVE_MACHINE_ALPHA_ASM_H */
+
+/* Define if you have the <machine/asm.h> header file.  */
+#define HAVE_MACHINE_ASM_H 1
+
+/* Define if you have the <machine/regdef.h> header file.  */
+/* #undef HAVE_MACHINE_REGDEF_H */
 
 /* Define if you have the <miscfs/genfs/genfs.h> header file.  */
 /* #undef HAVE_MISCFS_GENFS_GENFS_H */
@@ -383,6 +424,9 @@
 /* Define if you have the <pwd.h> header file.  */
 #define HAVE_PWD_H 1
 
+/* Define if you have the <regdef.h> header file.  */
+/* #undef HAVE_REGDEF_H */
+
 /* Define if you have the <resolv.h> header file.  */
 #define HAVE_RESOLV_H 1
 
@@ -398,9 +442,6 @@
 /* Define if you have the <sys/cdefs.h> header file.  */
 #define HAVE_SYS_CDEFS_H 1
 
-/* Define if you have the <sys/dirent.h> header file.  */
-#define HAVE_SYS_DIRENT_H 1
-
 /* Define if you have the <sys/filedesc.h> header file.  */
 #define HAVE_SYS_FILEDESC_H 1
 
@@ -415,6 +456,9 @@
 
 /* Define if you have the <sys/mman.h> header file.  */
 #define HAVE_SYS_MMAN_H 1
+
+/* Define if you have the <sys/module.h> header file.  */
+/* #undef HAVE_SYS_MODULE_H */
 
 /* Define if you have the <sys/mount.h> header file.  */
 #define HAVE_SYS_MOUNT_H 1
@@ -446,6 +490,9 @@
 /* Define if you have the <sys/stat.h> header file.  */
 #define HAVE_SYS_STAT_H 1
 
+/* Define if you have the <sys/syscallargs.h> header file.  */
+#define HAVE_SYS_SYSCALLARGS_H 1
+
 /* Define if you have the <sys/sysconfig.h> header file.  */
 /* #undef HAVE_SYS_SYSCONFIG_H */
 
@@ -470,6 +517,12 @@
 /* Define if you have the <sys/uio.h> header file.  */
 #define HAVE_SYS_UIO_H 1
 
+/* Define if you have the <sys/user.h> header file.  */
+#define HAVE_SYS_USER_H 1
+
+/* Define if you have the <sys/utsname.h> header file.  */
+#define HAVE_SYS_UTSNAME_H 1
+
 /* Define if you have the <sys/vfs.h> header file.  */
 /* #undef HAVE_SYS_VFS_H */
 
@@ -481,6 +534,24 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
+
+/* Define if you have the <vm/vm.h> header file.  */
+#define HAVE_VM_VM_H 1
+
+/* Define if you have the <vm/vm_extern.h> header file.  */
+#define HAVE_VM_VM_EXTERN_H 1
+
+/* Define if you have the <vm/vm_object.h> header file.  */
+#define HAVE_VM_VM_OBJECT_H 1
+
+/* Define if you have the <vm/vm_pager.h> header file.  */
+#define HAVE_VM_VM_PAGER_H 1
+
+/* Define if you have the <vm/vm_zone.h> header file.  */
+/* #undef HAVE_VM_VM_ZONE_H */
+
+/* Define if you have the <vm/vnode_pager.h> header file.  */
+#define HAVE_VM_VNODE_PAGER_H 1
 
 /* Define if you have the curses library (-lcurses).  */
 /* #undef HAVE_LIBCURSES */
@@ -531,6 +602,7 @@
 #define HAVE_REGISTER_T 1
 /* #undef HAVE_INT32 */
 /* #undef HAVE_U_INT32 */
+/* #undef HAVE_INTPTR_T */
 
 #define EFF_NTOHL ntohl
 
@@ -538,7 +610,7 @@
 #define RCSID(msg) \
 static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
-#define VERSION "0.9"
+#define VERSION "0.24pre"
 #define PACKAGE "arla"
 
 /* Check for posix signals */
@@ -558,6 +630,10 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* We have krb_principal from kth-krb ? */
 #define HAVE_KRB_PRINCIPAL 1
 
+/* Define if you have a krb_get_err_text (otherwise, you should really
+   get more modern kerberos code) */
+#define HAVE_KRB_GET_ERR_TEXT 1
+
 /* If we have _res */
 /* #undef HAVE__RES */
 
@@ -572,6 +648,15 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Define if your kernel has a vop_noislocked */
 /* #undef HAVE_KERNEL_VOP_NOISLOCKED */
+
+/* Define if your kernel has a vop_stdnolock */
+/* #undef HAVE_KERNEL_VOP_STDLOCK */
+
+/* Define if your kernel has a vop_stdnounlock */
+/* #undef HAVE_KERNEL_VOP_STDUNLOCK */
+
+/* Define if your kernel has a vop_stdnoislocked */
+/* #undef HAVE_KERNEL_VOP_STDISLOCKED */
 
 /* Define if your kernel has a vop_revoke */
 /* #undef HAVE_KERNEL_VOP_REVOKE */
@@ -588,17 +673,50 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define if your kernel has a genfs_revoke */
 /* #undef HAVE_KERNEL_GENFS_REVOKE */
 
+/* Define if your kernel has a vfs_opv_init */
+#define HAVE_KERNEL_VFS_OPV_INIT 1
+
 /* Define if your kernel has a vfs_opv_init_default */
 #define HAVE_KERNEL_VFS_OPV_INIT_DEFAULT 1
+
+/* Define if your kernel has a vfs_opv_init_explicit */
+#define HAVE_KERNEL_VFS_OPV_INIT_EXPLICIT 1
+
+/* Define if your kernel has a vfs_add_vnodeops */
+/* #undef HAVE_KERNEL_VFS_ADD_VNODEOPS */
 
 /* Define if your kernel has a vfs_attach */
 /* #undef HAVE_KERNEL_VFS_ATTACH */
 
+/* Define if your kernel has a vfs_register */
+#define HAVE_KERNEL_VFS_REGISTER 1
+
 /* Define if your kernel has a vfs_getnewfsid */
 #define HAVE_KERNEL_VFS_GETNEWFSID 1
 
-/* Define if your kernel has a vfs_opv_init_explicit */
-#define HAVE_KERNEL_VFS_OPV_INIT_EXPLICIT 1
+/* Define if your kernel has a vfs_getvfs */
+#define HAVE_KERNEL_VFS_GETVFS 1
+
+/* Define if your kernel has a vfs_object_create */
+/* #undef HAVE_KERNEL_VFS_OBJECT_CREATE */
+
+/* Define if your kernel has a zfreei */
+/* #undef HAVE_KERNEL_ZFREEI */
+
+/* Define if your kernel has a vfs_cache_lookup */
+/* #undef HAVE_KERNEL_VFS_CACHE_LOOKUP */
+
+/* Define if your kernel has a vnode_pager_generic_putpages */
+/* #undef HAVE_KERNEL_VNODE_PAGER_GENERIC_PUTPAGES */
+
+/* Define if your kernel has a vnode_pager_generic_getpages */
+/* #undef HAVE_KERNEL_VNODE_PAGER_GENERIC_GETPAGES */
+
+/* Define if your kernel has a vnode_pager_setsize */
+#define HAVE_KERNEL_VNODE_PAGER_SETSIZE 1
+
+/* Define if your kernel has a doforce */
+#define HAVE_KERNEL_DOFORCE 1
 
 /* Define if your struct dirent has a field d_type */
 #define HAVE_STRUCT_DIRENT_D_TYPE 1
@@ -606,14 +724,26 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define if your struct vfsconf has a field vfc_refcount */
 #define HAVE_STRUCT_VFSCONF_VFC_REFCOUNT 1
 
+/* Define if your struct vfsconf has a field vfc_mountroot */
+/* #undef HAVE_STRUCT_VFSCONF_VFC_MOUNTROOT */
+
 /* Define if your struct uio has a field uio_procp */
-/* #undef HAVE_STRUCT_UIO_UIO_PROCP */
+#define HAVE_STRUCT_UIO_UIO_PROCP 1
 
 /* Define if your struct vfsops has a field vfs_opv_descs */
 /* #undef HAVE_STRUCT_VFSOPS_VFS_OPV_DESCS */
 
 /* Define if your struct vfsops has a field vfs_name */
 /* #undef HAVE_STRUCT_VFSOPS_VFS_NAME */
+
+/* Define if your struct vfsops has a field vfs_oid */
+/* #undef HAVE_STRUCT_VFSOPS_VFS_OID */
+
+/* Define if your struct vfsops has a field vfs_checkexp */
+/* #undef HAVE_STRUCT_VFSOPS_VFS_CHECKEXP */
+
+/* Define if your struct vfsops has a field vfs_uninit */
+/* #undef HAVE_STRUCT_VFSOPS_VFS_UNINIT */
 
 /* Define if you want to use mmap:ed time */
 /* #undef USE_MMAPTIME */
@@ -623,6 +753,9 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Define if your hstrerror need proto */
 /* #undef NEED_HSTRERROR_PROTO */
+
+/* define if the system is missing a prototype for inet_aton() */
+/* #undef NEED_INET_ATON_PROTO */
 
 /* Define if you have gnu libc */
 /* #undef HAVE_GLIBC */
@@ -646,12 +779,68 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* #undef HAVE_LINUX_KERNEL_U_INT32_T */
 /* #undef HAVE_LINUX_KERNEL_U_INT64_T */
 
+/* Define this if you have a struct new_stat */
+/* #undef HAVE_STRUCT_NEW_STAT */
+
 /* Define this if you have a type vop_t */
 /* #undef HAVE_VOP_T */
 
 /* Define this is you have a vfssw */
 /* #undef HAVE_VFSSW */
 
+/* Define this if struct mount have mnt_syncer */
+#define HAVE_STRUCT_MOUNT_MNT_SYNCER 1
+
 /* Define this if struct proc have p_sigmask */
 #define HAVE_STRUCT_PROC_P_SIGMASK 1
 
+/* Define this if you have struct a_flags instead of a_waitfor in vop_fseek*/
+/* #undef HAVE_STRUCT_VOP_FSYNC_ARGS_A_FLAGS */
+
+/* Define this if struct proc have p_retval */
+/* #undef HAVE_STRUCT_PROC_P_RETVAL */
+
+/* Define this if struct file_operations has flush */
+/* #undef HAVE_STRUCT_FILE_OPERATIONS_FLUSH */
+
+/* Define this if the read_super superoperation takes the dir_d argument */
+/* #undef HAVE_READ_SUPER_FOUR_ARGS */
+
+/* Define this if the follow_link inode-operation takes the follow argument */
+/* #undef HAVE_FOLLOW_LINK_THREE_ARGS */
+
+/* Define this if your full_name_hash works with 8bit characters */
+/* #undef HAVE_FULL_NAME_HASH_8BIT */
+
+/* Define if your getvfsbyname takes two arguments */
+/* #undef HAVE_GETVFSBYNAME_TWO_ARGS */
+
+/* Define if you have DIRSIZ in <dirent.h> */
+/* #undef DIRSIZ_IN_DIRENT_H */
+
+/* Define if you have DIRSIZ in <sys/dir.h> */
+#define DIRSIZ_IN_SYS_DIR_H 1
+
+/* Define if you have GENERIC_DIRENT in <sys/dirent.h> */
+/* #undef GENERIC_DIRSIZ_IN_SYS_DIRENT_H */
+
+/* Define if running on Irix 6.4 or later */
+/* #undef IRIX_64 */
+
+/*
+ * Defintions that are ugly but needed to get all the symbols used
+ */
+
+/*
+ * Defining this enables lots of useful (and used) extensions on
+ * glibc-based systems such as Linux
+ */
+
+#define _GNU_SOURCE
+
+/*
+ * Defining this enables us to get the definition of `sigset_t' and
+ * other importatnt definitions on Solaris.
+ */
+
+#define __EXTENSIONS__

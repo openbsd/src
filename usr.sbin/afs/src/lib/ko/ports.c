@@ -1,4 +1,4 @@
-/*	$OpenBSD: ports.c,v 1.1.1.1 1998/09/14 21:53:00 art Exp $	*/
+/*	$OpenBSD: ports.c,v 1.2 1999/04/30 01:59:11 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -53,7 +53,7 @@
 #include <netinet/in.h>
 #endif
 
-RCSID("$KTH: ports.c,v 1.5 1998/06/07 05:44:38 map Exp $") ;
+RCSID("$KTH: ports.c,v 1.6 1998/12/06 07:40:56 assar Exp $") ;
 
 typedef struct {
      const char *name;		/* Name of the service */
@@ -84,7 +84,7 @@ Port ports[] = {
  */
 
 void
-initports (void)
+ports_init (void)
 {
      int i;
 
@@ -101,4 +101,21 @@ initports (void)
 	  } else
 	       *(ports[i].port) = ntohs (service->s_port);
      }
+}
+
+/*
+ * port -> name
+ */
+
+const char *
+ports_num2name (int port)
+{
+     int i;
+
+     for (i = 0; i < sizeof (ports) / sizeof (*ports); ++i) {
+
+	 if (*(ports[i].port) == port)
+	     return ports[i].name;
+     }
+     return NULL;
 }

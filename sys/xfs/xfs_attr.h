@@ -1,4 +1,3 @@
-/*	$OpenBSD: xfs_attr.h,v 1.1 1998/08/31 05:13:21 art Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -37,10 +36,10 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: xfs_attr.h,v 1.7 1998/07/12 15:29:09 map Exp $ */
+/* $Id: xfs_attr.h,v 1.2 1999/04/30 01:58:59 art Exp $ */
 
-#ifndef _SYS_XFS_ATTR_H_
-#define _SYS_XFS_ATTR_H_
+#ifndef _XFS_ATTR_H
+#define _XFS_ATTR_H
 
 #define XA_V_NONE       0
 #define XA_V_MODE	(1 <<  0)
@@ -55,11 +54,11 @@
 #define XA_V_TYPE       (1 <<  9)
 
 enum xfs_file_type { XFS_FILE_NON, XFS_FILE_REG, XFS_FILE_DIR,
-		XFS_FILE_BLK, XFS_FILE_CHR, XFS_FILE_LNK,
-		XFS_FILE_SOCK, XFS_FILE_FIFO, XFS_FILE_BAD };
+		     XFS_FILE_BLK, XFS_FILE_CHR, XFS_FILE_LNK,
+		     XFS_FILE_SOCK, XFS_FILE_FIFO, XFS_FILE_BAD };
 
 #define XA_CLEAR(xa_p) \
-	((xa_p)->valid = XA_V_NONE)
+        ((xa_p)->valid = XA_V_NONE)
 #define XA_SET_MODE(xa_p, value) \
 	(((xa_p)->valid) |= XA_V_MODE, ((xa_p)->xa_mode) = value)
 #define XA_SET_NLINK(xa_p, value) \
@@ -117,17 +116,17 @@ typedef gid_t __kernel_gid_t;
 #endif
 
 struct xfs_attr {
-	u_int32_t		valid;
-	__kernel_mode_t		xa_mode;
-	__kernel_nlink_t	xa_nlink;
-	__kernel_off_t		xa_size;
-	__kernel_uid_t		xa_uid;
-	__kernel_gid_t		xa_gid;
-	time_t			xa_atime;
-	time_t			xa_mtime;
-	time_t			xa_ctime;
-	u_int32_t		xa_fileid;
-	enum xfs_file_type	xa_type;
+    u_int32_t		valid;
+    __kernel_mode_t	xa_mode;
+    __kernel_nlink_t	xa_nlink;
+    __kernel_off_t	xa_size;
+    __kernel_uid_t	xa_uid;
+    __kernel_gid_t	xa_gid;
+    time_t		xa_atime;
+    time_t		xa_mtime;
+    time_t		xa_ctime;
+    u_int32_t		xa_fileid;
+    enum xfs_file_type  xa_type;
 };
 
 #endif /* _XFS_ATTR_H */

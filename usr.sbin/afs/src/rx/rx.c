@@ -1,4 +1,4 @@
-/*	$OpenBSD: rx.c,v 1.1.1.1 1998/09/14 21:53:14 art Exp $	*/
+/*	$OpenBSD: rx.c,v 1.2 1999/04/30 01:59:14 art Exp $	*/
 /*
 ****************************************************************************
 *        Copyright IBM Corporation 1988, 1989 - All Rights Reserved        *
@@ -24,7 +24,7 @@
 
 #include "rx_locl.h"
 
-RCSID("$KTH: rx.c,v 1.5 1998/02/24 01:36:30 art Exp $");
+RCSID("$KTH: rx.c,v 1.6 1998/09/09 10:17:52 assar Exp $");
 
 /*
  * quota system: each attached server process must be able to make
@@ -65,7 +65,7 @@ long Rx0 = 0, Rx1 = 0;
 struct rx_serverQueueEntry *rx_waitForPacket = 0;
 struct rx_packet *rx_allocedP = 0;
 #if 0
-static char rxrcsid[] = "@(#)$KTH: rx.c,v 1.5 1998/02/24 01:36:30 art Exp $";
+static char rxrcsid[] = "@(#)$KTH: rx.c,v 1.6 1998/09/09 10:17:52 assar Exp $";
 #endif
 
 /* ------------Exported Interfaces------------- */

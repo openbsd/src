@@ -9,4 +9,8 @@ DPADD	+= ${LIBKAFS}
 
 .PATH: ${.CURDIR}/../src/appl
 
+SRCS	+= arladeb.c
+
+.PATH: ${.CURDIR}/../src/arlad
+
 .include <bsd.prog.mk>

@@ -1,6 +1,6 @@
-/*	$OpenBSD: fs.c,v 1.1.1.1 1998/09/14 21:52:52 art Exp $	*/
+/*	$OpenBSD: fs.c,v 1.2 1999/04/30 01:59:04 art Exp $	*/
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -40,14 +40,63 @@
 
 #include <sl.h>
 #include "appl_locl.h"
-#include <kerberosIV/kafs.h>
+#include <kafs.h>
+#include <parse_units.h>
+#include <xfs/xfs_debug.h>
+#include <xfs/xfs_deb.h>
 #include "fs_local.h"
+#include <arladeb.h>
 
-RCSID("$KTH: fs.c,v 1.41 1998/07/28 14:35:06 assar Exp $");
+RCSID("$KTH: fs.c,v 1.65 1999/03/06 14:36:37 lha Exp $");
+
+static int empty_cmd (int argc, char **argv);
+static int apropos_cmd (int argc, char **argv);
+static int arladebug_cmd (int argc, char **argv);
+static int checkservers_cmd (int argc, char **argv);
+static int diskfree_cmd (int argc, char **argv);
+static int examine_cmd (int argc, char **argv);
+static int flush_cmd (int argc, char **argv);
+static int flushvolume_cmd (int argc, char **argv);
+static int gc_cmd (int argc, char **argv);
+static int getcache_cmd (int argc, char **argv);
+static int getcrypt_cmd (int argc, char **argv);
+static int getcellstatus_cmd (int argc, char **argv);
+static int getfid_cmd (int argc, char **argv);
+static int getprio_cmd (int argc, char **argv);
+static int getmaxprio_cmd (int argc, char **argv);
+static int help_cmd (int argc, char **argv);
+static int listacl_cmd (int argc, char **argv);
+static int listcells_cmd (int argc, char **argv);
+static int suidcells_cmd (int argc, char **argv);
+static int listquota_cmd (int argc, char **argv);
+static int lsmount_cmd (int argc, char **argv);
+static int mkmount_cmd (int argc, char **argv);
+static int connect_cmd (int argc, char **argv);
+static int newcell_cmd (int argc, char **argv);
+static int nop_cmd (int argc, char **argv);
+static int quit_cmd (int argc, char **argv);
+static int quota_cmd (int argc, char **argv);
+static int rmmount_cmd (int argc, char **argv);
+static int rmprio_cmd (int argc, char **argv);
+static int setacl_cmd (int argc, char **argv);
+static int setcache_cmd (int argc, char **argv);
+static int setprio_cmd (int argc, char **argv);
+static int setmaxprio_cmd (int argc, char **argv);
+static int setquota_cmd (int argc, char **argv);
+static int setcrypt_cmd (int argc, char **argv);
+static int sysname_cmd (int argc, char **argv);
+static int fsversion_cmd (int argc, char **argv);
+static int venuslog_cmd (int argc, char **argv);
+static int whereis_cmd (int argc, char **argv);
+static int whichcell_cmd (int argc, char **argv);
+static int wscell_cmd (int argc, char **argv);
+static int xfsdebug_cmd (int argc, char **argv);
+static int xfsdebug_print_cmd (int argc, char **argv);
 
 static SL_cmd cmds[] = {
-    {"apropos",        empty_cmd,	"locate commands by keyword"},
-    {"checkservers",   empty_cmd,	"check servers in servers"},
+    {"apropos",        apropos_cmd,	"locate commands by keyword"},
+    {"arladebug",      arladebug_cmd,	"tweek arla-debugging flags"},
+    {"checkservers",   checkservers_cmd,"check if servers is up"},
     {"checkvolumes",   empty_cmd,	"lookup mappings between volume-Id's and names"},
     {"cleanacl",       empty_cmd,	"clear out numeric acl-entries"},
     {"copyacl",        empty_cmd,	"copy acl"},
@@ -55,7 +104,8 @@ static SL_cmd cmds[] = {
     {"examine",        examine_cmd,	"examine volume status"},
     {"flush",          flush_cmd,	"remove file from cache"},
     {"flushvolume",    flushvolume_cmd,	"remove volumedata (and files in volume) from cache"},
-    {"getcacheparms",  empty_cmd,	"get cache usage"},
+    {"gcpags",         gc_cmd,          "garbage collect pags"},
+    {"getcacheparms",  getcache_cmd,	"get cache usage"},
     {"getcrypt",       getcrypt_cmd,	"get encrypt status"},
     {"getcellstatus",  getcellstatus_cmd, "get suid cell status"},
     {"getfid",         getfid_cmd,      "get fid"},
@@ -75,8 +125,8 @@ static SL_cmd cmds[] = {
     {"mkmount",        mkmount_cmd,	"create mount point"},
     {"connect",        connect_cmd,     "connect mode"},
     {"monitor",        empty_cmd,	"set remote logging host"},
-    {"newcell",        empty_cmd,	"add new cell"},
-    {"nop",            nop_cmd,         "do a picol-nop"},
+    {"newcell",        newcell_cmd,	"add new cell"},
+    {"nop",            nop_cmd,         "do a pioctl-nop"},
     {"quit",           quit_cmd,	"leave interactive mode"},
     {"exit"},
     {"quota",          quota_cmd,	"show quota"},
@@ -97,12 +147,15 @@ static SL_cmd cmds[] = {
     {"setcrypt",       setcrypt_cmd,	"set encryption on/off"},
     {"setvol",         empty_cmd,	"change status of volume"},
 /*  {"storebehind",    empty_cmd,	""}, */
+    {"suidcells",      suidcells_cmd,	"list status of cells"},
     {"sysname",        sysname_cmd,	"read/change sysname"},
     {"version",        fsversion_cmd,   "get version of fs and fs_lib"},
     {"venuslog",       venuslog_cmd,    "make arlad print status"},
     {"whereis",        whereis_cmd,     "show server(s) of file"},
     {"whichcell",      whichcell_cmd,   "show cell of file"},
     {"wscell",         wscell_cmd,      "display cell of workstation"},
+    {"xfsdebug",       xfsdebug_cmd,    "tweek xfs-debugging flags"},
+    {"xfsprint",       xfsdebug_print_cmd,"make xfs print debug info"},
     {NULL}
 };
 
@@ -131,6 +184,7 @@ main(int argc, char **argv)
   return ret;
 }
 
+
 static int
 nop_cmd(int argc, char **argv)
 {
@@ -146,6 +200,75 @@ static int
 connect_usage(void)
 {
     printf("connect [connected|fetch|disconnected]\n");
+    return 0;
+}
+
+static int 
+checkservers_cmd (int argc, char **argv)
+{
+    char *cell = NULL;
+    int flags = 0;
+    int nopoll = 0;
+    int onlyfs = 0;
+    int optind = 0;
+    u_int32_t hosts[CKSERV_MAXSERVERS + 1];
+    int ret;
+    int i;
+
+    struct getargs cksargs[] = {
+	{"cell",	0, arg_string,  NULL, "cell", NULL},
+	{"onlyfs",	0, arg_flag,    NULL, "poll only fs-servers", NULL},
+	{"nopoll",	0, arg_flag,    NULL, "dont ping each server, "
+	                                       "use internal info", NULL},
+	{NULL,      0, arg_end, NULL}}, 
+					 *arg;
+
+    arg = cksargs;
+    arg->value = &cell;   arg++;
+    arg->value = &onlyfs;     arg++;
+    arg->value = &nopoll;   arg++;
+
+    if (getarg (cksargs, argc, argv, &optind, ARG_AFSSTYLE)) {
+	arg_printusage(cksargs, "checkservers", NULL, ARG_AFSSTYLE);
+	return 0;
+    }
+
+    if (onlyfs)
+	flags |= CKSERV_FSONLY;
+    if (nopoll)
+	flags |= CKSERV_DONTPING;
+    
+    ret = fs_checkservers(cell, flags, hosts, sizeof(hosts)/sizeof(hosts[0]));
+    if (ret) {
+	if (ret == ENOENT)
+	    fprintf (stderr, "%s: cell `%s' doesn't exist\n",
+		     PROGNAME, cell);
+	else
+	    fserr (PROGNAME, ret, NULL);
+	return 0;
+    }
+
+    if (hosts[0] == 0)
+	printf ("All servers are up");
+
+    for (i = 1; i < min(CKSERV_MAXSERVERS, hosts[0]) + 1; ++i) {
+	if (hosts[i]) {
+	    struct hostent *he;
+
+	    he = gethostbyaddr ((char *)&hosts[i], sizeof(hosts[i]), AF_INET);
+
+	    if (he != NULL) {
+		printf ("%s ", he->h_name);
+	    } else {
+		struct in_addr in;
+
+		in.s_addr = hosts[i];
+		printf ("%s ", inet_ntoa(in));
+
+	    }
+	}
+    }
+    printf("\n");
     return 0;
 }
 
@@ -179,7 +302,7 @@ connect_cmd(int argc, char **argv)
 	    printf("Unknown or error\n");
 	    break;
 	}
-	return flags;
+	return 0;
     }
 
     if (strncmp("dis", *argv, 3) == 0) 
@@ -244,16 +367,16 @@ examine_cmd (int argc, char **argv)
 static int
 flushvolume_cmd (int argc, char **argv)
 {
-    int   i;
+    int i;
 
     argc--;
     argv++;
 
     if (argc == 0)
-	afs_flushvolume (".");
+	fs_flushvolume (".");
     else
 	for (i = 0; i < argc; i++)
-	    afs_flushvolume (argv[i]);
+	    fs_flushvolume (argv[i]);
 
     return 0;
 }
@@ -267,10 +390,28 @@ flush_cmd (int argc, char **argv)
     argv++;
 
     if (argc == 0)
-	afs_flush (".");
+	fs_flush (".");
     else
 	for (i = 0; i < argc; i++)
-	    afs_flush (argv[i]);
+	    fs_flush (argv[i]);
+
+    return 0;
+}
+
+static int
+gc_cmd (int argc, char **argv)
+{
+    int ret;
+
+    argc--;
+    argv++;
+
+    if (argc != 0)
+	printf ("gcpags: extraneous arguments ignored\n");
+    
+    ret = fs_gcpags();
+    if (ret)
+	fserr(PROGNAME, ret, NULL);
 
     return 0;
 }
@@ -443,14 +584,24 @@ setprio_cmd (int argc, char **argv)
 static int
 help_cmd (int argc, char **argv)
 {
-    SL_cmd  *cmd = cmds;
+    SL_cmd *cmd;
 
-    while (cmd->name != NULL) {
+    for (cmd = cmds; cmd->name != NULL; ++cmd)
         if (cmd->usage != NULL)
-	  printf ("%-20s%s\n", cmd->name, cmd->usage);
-	cmd++;
+	    printf ("%-20s%s\n", cmd->name, cmd->usage);
+
+    return 0;
+}
+
+static int
+apropos_cmd (int argc, char **argv)
+{
+    if (argc == 0) {
+	printf ("apropos: missing topic\n");
+	return 0;
     }
 
+    sl_apropos (cmds, argv[1]);
     return 0;
 }
 
@@ -504,7 +655,97 @@ listacl_cmd (int argc, char **argv)
 static int
 listcells_cmd (int argc, char **argv)
 {
-    afs_listcells ();
+    int printhosts = 1;
+    int resolve = 1;
+    int printsuid = 0;
+    int optind = 0;
+
+    struct getargs lcargs[] = {
+	{"servers", 's', arg_negative_flag,  
+	 NULL,"print servers in cell", NULL},
+	{"resolve",	 'r', arg_negative_flag,   
+	 NULL,"resolve hostnames", NULL},
+        {"suid",	 'p', arg_flag,   
+	 NULL,"print if cell is suid", NULL },
+        {NULL,      0, arg_end, NULL}}, 
+				  *arg;
+
+    arg = lcargs;
+    arg->value = &printhosts;   arg++;
+    arg->value = &resolve;     arg++;
+    arg->value = &printsuid;   arg++;
+
+    if (getarg (lcargs, argc, argv, &optind, ARG_AFSSTYLE)) {
+	arg_printusage(lcargs, "listcells", NULL, ARG_AFSSTYLE);
+	return 0;
+    }
+
+    printf ("%d %d %d\n", printhosts, resolve, printsuid);
+    
+    afs_listcells (printhosts,resolve,printsuid);
+
+    return 0;
+}
+
+static int
+suidcells_cmd (int argc, char **argv)
+{
+    afs_listcells (0, 0, 1);
+
+    return 0;
+}
+
+static int
+newcell_cmd (int argc, char **argv)
+{
+    char *cell = NULL;
+    getarg_strings servers = { 0, NULL };
+    int ret, help = 0;
+    int optind = 0;
+
+    struct getargs ncargs[] = {
+	{"cell", 'c', arg_string,  
+	 NULL, "new cell", NULL},
+	{"servers", 's', arg_strings,
+	 NULL, "server in cell", "one server"},
+	{"help", 'h', arg_flag,
+	 NULL, "get help", NULL},
+        {NULL,      0, arg_end, NULL}}, 
+				  *arg;
+			       
+    arg = ncargs;
+    arg->value = &cell; arg++;
+    arg->value = &servers; arg++;
+    arg->value = &help; arg++;
+
+    if (getarg (ncargs, argc, argv, &optind, ARG_AFSSTYLE)) {
+	arg_printusage(ncargs, "newcell", NULL, ARG_AFSSTYLE);
+	return 0;
+    }
+
+    if (help) {
+	arg_printusage(ncargs, "newcell", NULL, ARG_AFSSTYLE);
+	goto out;
+    }
+
+    if (cell == NULL) {
+	fprintf (stderr, "You have to give a cell\n");
+	goto out;
+    }
+
+    if (servers.num_strings == 0) {
+	fprintf (stderr, "You didn't give servers, will use DNS\n");
+	goto out;
+    }
+
+    ret = fs_newcell (cell, servers.num_strings, servers.strings);
+    if (ret)
+	fprintf (stderr, "fs_newcell failed with %s (%d)\n",
+		 koerr_gettext(ret), ret);
+    
+ out:
+    if (servers.strings)
+	free (servers.strings);
 
     return 0;
 }
@@ -588,10 +829,10 @@ getmaxprio_cmd (int argc, char **argv)
     ret = fs_getmaxfprio(&prio);
     if (ret) {
 	fserr(PROGNAME, ret, NULL);
-	return ret;
+	return 0;
     }
 
-    return ret;
+    return 0;
 }
 
 
@@ -653,14 +894,15 @@ setcache_cmd (int argc, char **argv)
 	    sscanf(argv[1], "%d", &hv) &&
 	    sscanf(argv[2], "%d", &lb) &&
 	    sscanf(argv[3], "%d", &hb))
-	    return afs_setcache(lv, hv, lb, hb);
+	    afs_setcache(lv, hv, lb, hb);
 	else
 	    setcache_usage();
-    } else 
+    } else {
 	if (sscanf(argv[0], "%d", &lv))
 	    afs_setcache(lv, 0, 0, 0);
 	else 
 	    setcache_usage();
+    }
 
     return 0;
 }
@@ -766,9 +1008,9 @@ sysname_cmd (int argc, char **argv)
     argc--;
     argv++;
     if (argc == 0)
-	afs_sysname (NULL);
+	afs_print_sysname ();
     else
-	afs_sysname (argv[0]);
+	afs_set_sysname (argv[0]);
 
     return 0;
 }
@@ -818,8 +1060,9 @@ wscell_cmd (int argc, char **argv)
 static int
 venuslog_cmd (int argc, char **argv)
 {
-    afs_venuslog();
-
+    int ret = fs_venuslog();
+    if (ret)
+	fserr (PROGNAME, ret, NULL);
     return 0;
 }
 
@@ -830,12 +1073,231 @@ fsversion_cmd(int argc, char **argv)
 	printf ("version: extraneous arguments ignored\n");
 
     printf("fs: %s\nfs_lib: %s\n",
-	   "$KTH: fs.c,v 1.41 1998/07/28 14:35:06 assar Exp $",
+	   "$KTH: fs.c,v 1.65 1999/03/06 14:36:37 lha Exp $",
 	   fslib_version());
     return 0;
 }
 
-void afs_getfid(char *path)
+static const unsigned all = (0
+#ifdef HAVE_XDEBDEV
+			     | XDEBDEV
+#endif
+#ifdef HAVE_XDEBMSG
+			     | XDEBMSG
+#endif
+#ifdef HAVE_XDEBDNLC
+			     | XDEBDNLC
+#endif
+#ifdef HAVE_XDEBNODE
+			     | XDEBNODE
+#endif
+#ifdef HAVE_XDEBVNOPS
+			     | XDEBVNOPS
+#endif
+#ifdef HAVE_XDEBVFOPS
+			     | XDEBVFOPS
+#endif
+#ifdef HAVE_XDEBLKM
+			     | XDEBLKM
+#endif
+#ifdef HAVE_XDEBSYS
+			     | XDEBSYS
+#endif
+#ifdef HAVE_XDEBMEM
+			     | XDEBMEM
+#endif
+#ifdef HAVE_XDEBREADDIR
+			     | XDEBREADDIR
+#endif
+#ifdef HAVE_XDEBLOCK
+			     | XDEBLOCK
+#endif
+#ifdef HAVE_XDEBCACHE
+			     | XDEBCACHE
+#endif
+    );
+
+static const unsigned almost_all_mask = (0
+#ifdef HAVE_XDEBDEV
+					 | XDEBDEV
+#endif
+#ifdef HAVE_XDEBMEM
+					 | XDEBMEM
+#endif	       
+#ifdef HAVE_XDEBREADDIR
+					 | XDEBREADDIR
+#endif
+    );
+
+static struct units xfsdebug_units[] = {
+    {"all",		0},
+    {"almost-all",  0},
+#ifdef HAVE_XDEBCACHE
+    {"cache",	XDEBCACHE},
+#endif
+#ifdef HAVE_XDEBLOCK
+    {"lock",	XDEBLOCK},
+#endif
+#ifdef HAVE_XDEBREADDIR
+    {"readdir",	XDEBREADDIR},
+#endif
+#ifdef HAVE_XDEBMEM
+    {"mem",		XDEBMEM},
+#endif
+#ifdef HAVE_XDEBSYS
+    {"sys",		XDEBSYS},
+#endif
+#ifdef HAVE_XDEBLKM
+    {"lkm",		XDEBLKM},
+#endif
+#ifdef HAVE_XDEBVFOPS
+    {"vfsops",	XDEBVFOPS},
+#endif
+#ifdef HAVE_XDEBVNOPS
+    {"vnops",	XDEBVNOPS},
+#endif
+#ifdef HAVE_XDEBNODE
+    {"node",	XDEBNODE},
+#endif
+#ifdef HAVE_XDEBDNLC
+    {"dnlc",	XDEBDNLC},
+#endif
+#ifdef HAVE_XDEBMSG
+    {"msg",		XDEBMSG},
+#endif
+#ifdef HAVE_XDEBDEV
+    {"dev",		XDEBDEV},
+#endif
+    {"none",	0 },
+    { NULL, 0 }
+};
+
+static int
+xfsdebug_cmd (int argc, char **argv)
+{
+    int ret;
+    int flags;
+
+    xfsdebug_units[0].mult = all;
+    xfsdebug_units[1].mult = all & ~almost_all_mask;
+
+    if (argc != 1 && argc != 2) {
+	fprintf (stderr, "usage: xfsdebug [");
+	print_flags_table (xfsdebug_units, stderr);
+	fprintf (stderr, "]\n");
+	return 0;
+    }
+
+    ret = xfs_debug (-1, &flags);
+    if (ret) {
+	fprintf (stderr, "xfs_debug: %s\n", strerror(ret));
+	return 0;
+    }
+
+    if (argc == 1) {
+	char buf[1024];
+
+	unparse_flags (flags, xfsdebug_units, buf, sizeof(buf));
+	printf("xfsdebug is: %s\n", buf);
+    } else if (argc == 2) {
+	char *textflags;
+	
+	textflags = argv[1];
+    
+	ret = parse_flags (textflags, xfsdebug_units, flags);
+	
+	if (ret < 0) {
+	    fprintf (stderr, "xfsdebug: unknown/bad flags `%s'\n",
+		     textflags);
+	    return 0;
+	}
+	
+	flags = ret;
+	ret = xfs_debug(flags, NULL);
+	if (ret)
+	    fprintf (stderr, "xfs_debug: %s\n", strerror(ret));
+    }
+    return 0;
+}
+
+static int
+xfsdebug_print_cmd (int argc, char **argv)
+{
+    int ret;
+    int flags = 0;
+    char *textflags;
+
+    xfsdebug_units[0].mult = all;
+    xfsdebug_units[1].mult = all & ~almost_all_mask;
+
+    if (argc != 2) {
+	fprintf (stderr, "usage: xfsprint <");
+	print_flags_table (xfsdebug_units, stderr);
+	fprintf (stderr, ">\n");
+	return 0;
+    }
+
+    textflags = argv[1];
+    
+    ret = parse_flags (textflags, xfsdebug_units, flags);
+    
+    if (ret < 0) {
+	fprintf (stderr, "xfsprint: unknown/bad flags `%s'\n",
+		 textflags);
+	return 0;
+    }
+    
+    flags = ret;
+    ret = xfs_debug_print(flags);
+    if (ret)
+	fprintf (stderr, "xfsprint: %s\n", strerror(ret));
+    return 0;
+}
+
+static int
+arladebug_cmd (int argc, char **argv)
+{
+    int ret;
+    int flags;
+
+    if (argc != 1 && argc != 2) {
+	fprintf (stderr, "usage: arladebug [");
+	arla_log_print_levels (stderr);
+	fprintf (stderr, "]\n");
+	return 0;
+    }
+
+    ret = arla_debug (-1, &flags);
+    if (ret) {
+	fprintf (stderr, "arla_debug: %s\n", strerror(ret));
+	return 0;
+    }
+
+    if (argc == 1) {
+	char buf[1024];
+
+	unparse_flags (flags, arla_deb_units, buf, sizeof(buf));
+	printf ("arladebug is: %s\n", buf);
+    } else if (argc == 2) {
+	const char *textflags = argv[1];
+
+	ret = parse_flags (textflags, arla_deb_units, flags);
+	if (ret < 0) {
+	    fprintf (stderr, "arladebug: unknown/bad flags `%s'\n",
+		     textflags);
+	    return 0;
+	}
+
+	flags = ret;
+	ret = arla_debug (flags, NULL);
+	if (ret)
+	    fprintf (stderr, "arla_debug: %s\n", strerror(ret));
+    }
+    return 0;
+}
+
+void
+afs_getfid(char *path)
 {
     VenusFid fid;
     int ret;
@@ -858,7 +1320,8 @@ void afs_getfid(char *path)
 }
 
 
-void afs_listacl(char *path)
+void
+afs_listacl(char *path)
 {
     struct Acl *acl;
     struct AclEntry *position;
@@ -918,7 +1381,8 @@ void afs_listacl(char *path)
     }
 }
 
-void afs_setacl(char *path, char *user, char *rights)
+void
+afs_setacl(char *path, char *user, char *rights)
 {
     struct Acl *acl;
     struct AclEntry *position;
@@ -1018,7 +1482,8 @@ void afs_setacl(char *path, char *user, char *rights)
     /*    free(oldacl);   and its contents */
 }
 
-struct Acl *afs_getacl(char *path)
+struct Acl *
+afs_getacl(char *path)
 {
     struct Acl *oldacl;
     struct ViceIoctl a_params;
@@ -1099,53 +1564,41 @@ struct Acl *afs_getacl(char *path)
     return oldacl;
 }
 
-void afs_sysname(char *name)
+/*
+ * Print current sysname.
+ */
+
+void
+afs_print_sysname (void)
 {
-    struct ViceIoctl a_params;
-    int32_t get;
-    char *space=malloc(MAXSIZE);
-    char *curptr;
+    int ret;
+    char buf[2048];
 
-    if(space == NULL) {
-	printf("fs: Out of memory\n");
-	return;
-    }
-
-    if(!name) {
-	get=0;
-	memcpy(space,&get,sizeof(int32_t));
-	a_params.in_size=sizeof(int32_t);
-    }
-    else {
-	char *ptr=space;
-	get=1;
-	memcpy(space,&get,sizeof(int32_t));
-	ptr+=sizeof(int32_t);
-	strncpy(ptr,name,100-sizeof(int32_t));
-	a_params.in_size=sizeof(int32_t)+strlen(ptr)+1;
-    }
-    
-    a_params.out_size=MAXSIZE;
-    a_params.in=space;
-    a_params.out=space;
-  
-    if(k_pioctl(NULL,VIOC_AFS_SYSNAME,&a_params,1)==-1) {
-	fserr(PROGNAME, errno, NULL);
-	free(space);
-	return;
-    }
-
-    curptr=a_params.out;
-    if(!name) {
-	curptr+=sizeof(int32_t);
-	printf("Current sysname is '%s'\n",curptr);
-    }
+    ret = fs_get_sysname (buf, sizeof(buf));
+    if (ret)
+	fserr (PROGNAME, ret, NULL);
     else
-	printf("fs: new sysname set.\n");
-    free(space);
+	printf ("Current sysname is `%s'\n", buf);
 }
 
-void afs_listquota(char *path)
+/*
+ * Set sysname
+ */
+
+void
+afs_set_sysname (const char *sys)
+{
+    int ret;
+
+    ret = fs_set_sysname (sys);
+    if (ret)
+	fserr (PROGNAME, ret, NULL);
+    else
+	printf ("fs: new sysname set to `%s'\n", sys);
+}
+
+void
+afs_listquota(char *path)
 {
     struct ViceIoctl a_params;
     struct VolumeStatus *vs;
@@ -1198,7 +1651,8 @@ void afs_listquota(char *path)
     free(a_params.out);
 }
 
-void afs_setmaxquota(char *path, int32_t maxquota)
+void
+afs_setmaxquota(char *path, int32_t maxquota)
 {
     struct ViceIoctl a_params;
     struct VolumeStatus *vs;
@@ -1240,7 +1694,8 @@ void afs_setmaxquota(char *path, int32_t maxquota)
     free(a_params.in);
 }
 
-void afs_whereis(char *path)
+void
+afs_whereis(char *path)
 {
     struct ViceIoctl a_params;
     struct in_addr addr;
@@ -1268,10 +1723,10 @@ void afs_whereis(char *path)
 
     while(curptr[i] && i<8) {
 	struct hostent *h;
-	addr.s_addr=curptr[i];
+	addr.s_addr=htonl(curptr[i]);
 	h=gethostbyaddr((const char *) &addr, sizeof(addr), AF_INET);
 	if (h == NULL)
-	    printf ("%s", inet_ntoa (addr));
+	    printf (" %s", inet_ntoa (addr));
 	else {
 	    printf(" %s",h->h_name);
 	}
@@ -1281,7 +1736,13 @@ void afs_whereis(char *path)
     free(a_params.out);
 }
 
-void afs_lsmount (char *path)
+/*
+ * Separate `path' into directory and last component and call
+ * pioctl with `pioctl_cmd'.
+ */
+
+static int
+internal_mp (const char *path, int pioctl_cmd, char **res)
 {
     struct ViceIoctl    a_params;
     char               *last;
@@ -1291,86 +1752,80 @@ void afs_lsmount (char *path)
     path_bkp = strdup (path);
     if (path_bkp == NULL) {
 	printf ("fs: Out of memory\n");
-	return;
+	return ENOMEM;
     }
 
     a_params.out = malloc (MAXSIZE);
     if (a_params.out == NULL) {
 	printf ("fs: Out of memory\n");
 	free (path_bkp);
+	return ENOMEM;
     }
 
     /* If path contains more than the filename alone - split it */
 
     last = strrchr (path_bkp, '/');
-    if (last) {
+    if (last != NULL) {
 	*last = '\0';
 	a_params.in = last + 1;
-    }
-    else
-	a_params.in = path;
+    } else
+	a_params.in = (char *)path;
 
     a_params.in_size = strlen (a_params.in) + 1;
     a_params.out_size = MAXSIZE;
 
     error = k_pioctl (last ? path_bkp : "." ,
-		      VIOC_AFS_STAT_MT_PT, &a_params, 0);
-    if ((error == -1) && (errno != EINVAL)) {
-	fserr(PROGNAME, errno, path);
+		      pioctl_cmd, &a_params, 0);
+    if (error < 0) {
+	if (errno == EINVAL) {
+	    fserr(PROGNAME, errno, path);
+	} else {
+	    printf ("'%s' is not a mount point.\n", path);
+	}
 	free (a_params.out);
 	free (path_bkp);
-	return;
-    } else if ((error == -1) && (errno == EINVAL)) {
-	printf ("'%s' is not a mount point.\n", path);
-	free (a_params.out);
-	free (path_bkp);
-	return;	
+	return errno;
     }
 
-    printf ("'%s' is a mount point for volume '%s'\n", path, a_params.out);
-    free (a_params.out);
+    if (res != NULL)
+	*res = a_params.out;
+    else
+	free (a_params.out);
     free (path_bkp);
+    return 0;
 }
 
-void afs_rmmount (char *path)
+void
+afs_lsmount (const char *path)
 {
-    struct ViceIoctl a_params;
+    char *res;
+    int error = internal_mp (path, VIOC_AFS_STAT_MT_PT, &res);
 
-    a_params.in_size = strlen (path) + 1;
-    a_params.out_size = 0;
-    a_params.in = path;
-    a_params.out = NULL;
-
-    if (k_pioctl (".", VIOC_AFS_DELETE_MT_PT, &a_params, 0) == -1) {
-	fserr(PROGNAME, errno, path);
-	return;
+    if (error == 0) {
+	printf ("'%s' is a mount point for volume '%s'\n", path, res);
+	free (res);
     }
+}
+
+void
+afs_rmmount (const char *path)
+{
+    internal_mp (path, VIOC_AFS_DELETE_MT_PT, NULL);
 }
 
 int
 afs_setcache(int lv, int hv, int lb, int hb)
 {
-    struct ViceIoctl a_params;
-    u_int32_t s[4];
+    int ret;
 
-    s[0] = lv;
-    s[1] = hv;
-    s[2] = lb;
-    s[3] = hb;
-
-    a_params.in_size = ((hv == 0) ? 1 : 4) * sizeof(u_int32_t);
-    a_params.out_size = 0;
-    a_params.in = (void *)s;
-    a_params.out = NULL;
-
-    if (k_pioctl(NULL, VIOCSETCACHESIZE, &a_params, 0) == -1) {
-	fserr(PROGNAME, errno, ".");
-	return 0;
-    }
-    return 0;
+    ret = fs_setcache (lv, hv, lb, hb);
+    if (ret)
+	fserr(PROGNAME, ret, ".");
+    return ret;
 }
 
-void afs_examine (char *path)
+void
+afs_examine (char *path)
 {
     struct ViceIoctl      a_params;
     struct VolumeStatus  *status;
@@ -1385,7 +1840,7 @@ void afs_examine (char *path)
 	return;
     }
 
-    if (k_pioctl (path, VIOCGETVOLSTAT, &a_params, 0) == -1) {
+    if (k_pioctl (path, VIOCGETVOLSTAT, &a_params, 1) == -1) {
 	fserr(PROGNAME, errno, path);
 	free(a_params.out);
 	return;
@@ -1405,76 +1860,20 @@ void afs_examine (char *path)
 void
 afs_wscell (void)
 {
-    struct ViceIoctl a_params;
+    char buf[2048];
+    int ret;
 
-    a_params.in_size = 0;
-    a_params.out_size = MAXSIZE;
-    a_params.in = NULL;
-    a_params.out = malloc (MAXSIZE);
-
-    if (a_params.out == NULL) {
-	printf ("fs: Out of memory\n");
+    ret = fs_wscell (buf, sizeof(buf));
+    if (ret) {
+	fserr (PROGNAME, ret, NULL);
 	return;
     }
 
-    if (k_pioctl (NULL, VIOC_GET_WS_CELL, &a_params, 0) == -1) {
-	fserr(PROGNAME, errno, NULL);
-	free(a_params.out);
-	return;
-    }
-
-    printf ("This workstation belongs to cell '%s'\n", a_params.out);
-
-    free (a_params.out);
+    printf ("This workstation belongs to cell '%s'\n", buf);
 }
 
-void afs_flushvolume (char *path)
-{
-    struct ViceIoctl a_params;
-
-    a_params.in_size = 0;
-    a_params.out_size = 0;
-    a_params.in = NULL;
-    a_params.out = NULL;
-
-    if (k_pioctl (path, VIOC_FLUSHVOLUME, &a_params, 0) == -1) {
-	perror ("fs");
-	exit (1);
-    }
-}
-
-void afs_flush (char *path)
-{
-    struct ViceIoctl a_params;
-
-    a_params.in_size = 0;
-    a_params.out_size = 0;
-    a_params.in = NULL;
-    a_params.out = NULL;
-
-    if (k_pioctl (path, VIOCFLUSH, &a_params, 0) == -1) {
-	perror ("fs");
-	exit (1);
-    }
-}
-
-void afs_venuslog (void)
-{
-    struct ViceIoctl a_params;
-    int32_t status = 0;   /* XXX not really right, but anyway */
-
-    a_params.in_size = sizeof(int32_t);
-    a_params.out_size = 0;
-    a_params.in = (caddr_t) &status;
-    a_params.out = NULL;
-
-    if (k_pioctl (NULL, VIOC_VENUSLOG, &a_params, 0) == -1) {
-	perror ("fs");
-	exit (1);
-    }
-}
-
-void afs_whichcell (char *path)
+void
+afs_whichcell (char *path)
 {
     struct ViceIoctl a_params;
 
@@ -1498,7 +1897,8 @@ void afs_whichcell (char *path)
     free (a_params.out);
 }
 
-void afs_diskfree (char *path)
+void
+afs_diskfree (char *path)
 {
     struct ViceIoctl      a_params;
     struct VolumeStatus  *status;
@@ -1513,7 +1913,7 @@ void afs_diskfree (char *path)
 	return;
     }
 
-    if (k_pioctl (path, VIOCGETVOLSTAT, &a_params, 0) == -1) {
+    if (k_pioctl (path, VIOCGETVOLSTAT, &a_params, 1) == -1) {
 	fserr(PROGNAME, errno, path);
 	free(a_params.out);
 	return;
@@ -1531,7 +1931,8 @@ void afs_diskfree (char *path)
     free (a_params.out);
 }
 
-void afs_quota (char *path)
+void
+afs_quota (char *path)
 {
     struct ViceIoctl      a_params;
     struct VolumeStatus  *status;
@@ -1546,7 +1947,7 @@ void afs_quota (char *path)
 	return;
     }
 
-    if (k_pioctl (path, VIOCGETVOLSTAT, &a_params, 0) == -1) {
+    if (k_pioctl (path, VIOCGETVOLSTAT, &a_params, 1) == -1) {
 	fserr(PROGNAME, errno, path);
 	free(a_params.out);
 	return;
@@ -1555,12 +1956,13 @@ void afs_quota (char *path)
     status = (struct VolumeStatus *) a_params.out;
   
     printf("%.0f%% of quota used.\n",
-	   (1.0 - (float) status->BlocksInUse / status->MaxQuota) * 100);
+	   ((float) status->BlocksInUse / status->MaxQuota) * 100);
 
     free(a_params.out);
 }
 
-void afs_getcellstatus (char *cell)
+void
+afs_getcellstatus (char *cell)
 {
     struct ViceIoctl   a_params;
     int32_t            flags;
@@ -1578,60 +1980,94 @@ void afs_getcellstatus (char *cell)
     printf ("Cell %s status: %ssetuid allowed\n", cell, NO_SETUID_HONORED(flags) ? "no " : "");
 }
 
-void afs_listcells (void)
+/* 
+ * List all the known cells, with servers iff printservers, resolving
+ * IP addresses to names iff resolve and printing suid status iff
+ * suid.
+ */
+
+int
+afs_listcells (int printservers, int resolve, int suid)
 {
-    struct ViceIoctl   a_params;
     struct in_addr     addr;
-    int32_t            *ip;
-    int32_t            i, j;
+    int		       i, j;
+    char               cellname[MAXSIZE];
+    u_int32_t	       servers[8];
+    int 	       ret;
+    unsigned	       max_servers = sizeof(servers)/sizeof(servers[0]);
 
-    a_params.in_size = sizeof (int32_t);
-    a_params.out_size = MAXSIZE;
-    a_params.in = (char *) &i;
-    a_params.out = malloc (MAXSIZE);
+    for (i = 0;
+	 (ret = fs_getcells (i, servers, 
+			     max_servers,
+			     cellname, sizeof (cellname))) == 0;
+	 ++i) {
+	printf ("%s", cellname);
 
-    if (a_params.out == NULL) {
-	printf ("fs: Out of memory\n");
-	return;
-    }
+	if (printservers) {
+	    printf (": ");
 
-    i = 0;
-
-    while (k_pioctl (NULL, VIOCGETCELL, &a_params, 0) != -1) {
-	ip = (int32_t *) a_params.out;
-	printf ("Cell %s on hosts", a_params.out + 8 * sizeof (int32_t));
-
-	j = 0;
-
-	while (ip[j] && j<8) {
-	    struct hostent  *h;
-	    addr.s_addr = ip[j];
-	    h = gethostbyaddr ((const char *) &addr, sizeof(addr), AF_INET);
-	    if (h == NULL) {
-		printf (" %s", inet_ntoa (addr));
+	    for (j = 0; j < max_servers && servers[j]; ++j) {
+		struct hostent  *h = NULL;
+		addr.s_addr = servers[j];
+		if (resolve)
+		    h = gethostbyaddr ((const char *) &addr, 
+				       sizeof(addr), 
+				       AF_INET);
+		if (h == NULL) {
+		    printf (" %s", inet_ntoa (addr));
+		} else {
+		    printf (" %s", h->h_name);
+		}
 	    }
+	}
+	if (suid) {
+	    ret = fs_getcellstatus (cellname, &j);
+	    if (ret)
+		fserr (PROGNAME, ret, NULL);
 	    else {
-		printf (" %s", h->h_name);
+		if (!(j & CELLSTATUS_SETUID))
+		    printf (", suid cell");
 	    }
-	    j++;
 	}
 	printf (".\n");
-	i++;
     }
 
-    if (errno) {
+    if (errno != EDOM)
 	fserr(PROGNAME, errno, NULL);
-	free(a_params.out);
-	return;
-    }
 
-    free (a_params.out);
+    return 0;
 }
 
-void skipline(char **curptr)
+void
+skipline(char **curptr)
 {
   while(**curptr!='\n') (*curptr)++;
   (*curptr)++;
 }
 
 
+/*
+ *
+ */
+
+static int
+getcache_cmd (int argc, char **argv)
+{
+    int ret;
+    u_int32_t max_kbytes, used_kbytes, max_vnodes, used_vnodes;
+
+    ret = fs_getfilecachestats (&max_kbytes,
+				&used_kbytes,
+				&max_vnodes,
+				&used_vnodes);
+    if (ret) {
+	fserr (PROGNAME, ret, NULL);
+	return 0;
+    }
+    printf("Arla is using %lu of the cache's available %lu 1K byte blocks\n",
+	   (unsigned long)used_kbytes, (unsigned long)max_kbytes);
+    if (max_vnodes)
+	printf("(and %lu of the cache's available %lu vnodes)\n",
+	       (unsigned long)used_vnodes, (unsigned long)max_vnodes);
+    return 0;
+}
