@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.11 2003/06/12 12:59:53 jmc Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.12 2003/06/26 18:28:00 jmc Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -244,7 +244,7 @@ mail.*							/var/log/maillog
 
 # Save mail and news errors of level err and higher in a
 # special file.
-uucp,news.crit						/var/log/spoolerr
+mail,news.err						/var/log/spoolerr
 
 # Save ftpd transactions along with mail and news
 !ftpd
@@ -263,7 +263,7 @@ along with
 .Sh BUGS
 The effects of multiple selectors are sometimes not intuitive.
 For example
-.Dq mail.crit,*.err
+.Dq mail.crit;*.err
 will select
 .Dq mail
 facility messages at the level of
