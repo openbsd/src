@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.3 2005/03/29 22:13:37 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.4 2005/04/04 22:36:29 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -75,6 +75,7 @@ typedef struct _bioc_capabilities {
 #define BIOC_STATUS       0x10
 #define BIOC_SCSICMD      0x20
 #define BIOC_STARTSTOP    0x40
+#define BIOC_BLINK        0x80
 	u_int32_t raid_types; /* bit field, 1 supported raid type */
 #define BIOC_RAID0  0x01
 #define BIOC_RAID1  0x02
@@ -179,3 +180,16 @@ typedef struct _bioc_status {
 #define BIOC_BATTEMP	0x04		/* battery over/under temp*/
 	/* NOTYET: encloure status & temperature status */
 } bioc_status;
+
+/* OPTIONAL */
+/* depending on the controller it is handled either in userland or in kernel */
+#define BIOCBLINK _IOWR('B', 38, bioc_blink)
+typedef struct _bioc_blink {
+	void *cookie;
+	u_int8_t opcode;
+#define BIOCSBLINK_BLINK   0x00
+#define BIOCSBLINK_UNBLINK 0x01
+	u_int8_t channel;
+	u_int8_t target;
+} bioc_blink;
+
