@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.26 2004/12/11 02:06:47 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.27 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1676,7 +1676,8 @@ int wb_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			wb_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				wb_setmulti(sc);
 			error = 0;
 		}
 		break;

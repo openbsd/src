@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.27 2004/11/29 07:22:44 jsg Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.28 2005/01/15 05:24:11 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -510,7 +510,8 @@ int sf_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			sf_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				sf_setmulti(sc);
 			error = 0;
 		}
 		break;

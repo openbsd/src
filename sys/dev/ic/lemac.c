@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.5 2003/10/30 02:30:48 itojun Exp $ */
+/* $OpenBSD: lemac.c,v 1.6 2005/01/15 05:24:11 brad Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -846,7 +846,8 @@ lemac_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (error == ENETRESET) {
 			/* Reset multicast filtering. */
-			lemac_init(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				lemac_init(sc);
 			error = 0;
 		}
 		break;

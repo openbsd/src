@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.33 2004/09/28 00:21:23 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.34 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1188,7 +1188,8 @@ hme_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			hme_setladrf(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				hme_setladrf(sc);
 			error = 0;
 		}
 		break;

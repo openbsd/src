@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.44 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.45 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1672,7 +1672,8 @@ vr_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			vr_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				vr_setmulti(sc);
 			error = 0;
 		}
 		break;

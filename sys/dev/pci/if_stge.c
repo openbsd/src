@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.9 2004/11/10 10:18:31 grange Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.10 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.4 2001/07/25 15:44:48 thorpej Exp $	*/
 
 /*-
@@ -1024,13 +1024,16 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
+
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			stge_init(ifp);
-			error = 0;
+			if (ifp->if_flags & IFF_RUNNING)
+				error = stge_init(ifp);
+			else
+				error = 0;
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.35 2004/11/21 18:50:43 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.36 2005/01/15 05:24:11 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1127,7 +1127,8 @@ int rl_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			rl_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				rl_setmulti(sc);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.15 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: qe.c,v 1.16 2005/01/15 05:24:12 brad Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -1001,7 +1001,8 @@ qeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			qe_mcreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				qe_mcreset(sc);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.61 2004/11/01 02:03:45 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.62 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2464,10 +2464,12 @@ xl_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			if (sc->xl_type == XL_TYPE_905B)
-				xl_setmulti_hash(sc);
-			else
-				xl_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				if (sc->xl_type == XL_TYPE_905B)
+					xl_setmulti_hash(sc);
+				else
+					xl_setmulti(sc);
+			}
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.16 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.17 2005/01/15 05:24:10 brad Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -896,8 +896,10 @@ bmac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			bmac_init(sc);
-			bmac_setladrf(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				bmac_init(sc);
+				bmac_setladrf(sc);
+			}
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.5 2004/07/07 23:10:43 deraadt Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.6 2005/01/15 05:24:10 brad Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -763,7 +763,8 @@ niioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ni_setup(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ni_setup(sc);
 			error = 0;
 		}
 		break;

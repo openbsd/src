@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.6 2004/09/29 17:57:35 pefo Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.7 2005/01/15 05:24:10 brad Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -1095,12 +1095,14 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ac) :
 		    ether_delmulti(ifr, &sc->sc_ac);
+
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			mec_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				mec_init(ifp);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.64 2005/01/14 18:14:12 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.65 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1730,7 +1730,8 @@ fxp_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			fxp_init(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				fxp_init(sc);
 			error = 0;
 		}
 		break;

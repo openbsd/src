@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.20 2004/05/12 06:35:11 tedu Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.21 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1979,7 +1979,8 @@ fe_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			fe_setmode(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				fe_setmode(sc);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.27 2004/11/21 18:04:09 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.28 2005/01/15 05:24:11 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1335,7 +1335,8 @@ int ste_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			ste_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ste_setmulti(sc);
 			error = 0;
 		}
 		break;

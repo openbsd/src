@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.17 2004/09/28 01:02:14 brad Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.18 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -387,8 +387,10 @@ efioctl(ifp, cmd, data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
+
 		if (error == ENETRESET) {
-			efreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				efreset(sc);
 			error = 0;
 		}
 		efsetmulti(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.37 2005/01/01 03:59:52 brad Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.38 2005/01/15 05:24:10 brad Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -909,7 +909,8 @@ am7990_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			am7990_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				am7990_reset(sc);
 			error = 0;
 		}
 		break;

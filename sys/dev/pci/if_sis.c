@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.42 2004/09/28 04:37:33 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.43 2005/01/15 05:24:11 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1966,10 +1966,12 @@ int sis_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			if (sc->sis_type == SIS_TYPE_83815)
-				sis_setmulti_ns(sc);
-			else
-				sis_setmulti_sis(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				if (sc->sis_type == SIS_TYPE_83815)
+					sis_setmulti_ns(sc);
+				else
+					sis_setmulti_sis(sc);
+			}
 			error = 0;
 		}
 		break;

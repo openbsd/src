@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.25 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: qe.c,v 1.26 2005/01/15 05:24:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -663,7 +663,7 @@ qeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_UP)
+			if (ifp->if_flags & IFF_RUNNING)
 				qeinit(sc);
 			error = 0;
 		}

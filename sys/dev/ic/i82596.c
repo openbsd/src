@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.24 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.25 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1945,7 +1945,8 @@ i82596_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ie_mc_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ie_mc_reset(sc);
 			error = 0;
 		}
 		break;

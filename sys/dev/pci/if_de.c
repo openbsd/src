@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.62 2004/11/08 21:16:47 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.63 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4562,8 +4562,10 @@ tulip_ifioctl(
 	    error = ether_delmulti(ifr, TULIP_ETHERCOM(sc));
 
 	if (error == ENETRESET) {
-	    tulip_addr_filter(sc); /* reset multicast filtering */
-	    tulip_init(sc);
+	    if (ifp->if_flags & IFF_RUNNING) {
+		tulip_addr_filter(sc); /* reset multicast filtering */
+		tulip_init(sc);
+	    }
 	    error = 0;
 	}
 	break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.24 2004/11/26 21:21:24 miod Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.25 2005/01/15 05:24:09 brad Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -831,8 +831,10 @@ aeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			aestop(sc);	/* XXX for ds_setmcaf? */
-			aeinit(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				aestop(sc);	/* XXX for ds_setmcaf? */
+				aeinit(sc);
+			}
 			error = 0;
 		}
 		break;

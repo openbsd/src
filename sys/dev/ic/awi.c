@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.15 2004/11/23 21:12:23 fgsch Exp $	*/
+/*	$OpenBSD: awi.c,v 1.16 2005/01/15 05:24:10 brad Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -526,7 +526,7 @@ awi_ioctl(ifp, cmd, data)
 		 * Do not rescan BSS.  Rather, just reset multicast filter.
 		 */
 		if (error == ENETRESET) {
-			if (sc->sc_enabled)
+			if (ifp->if_flags & IFF_RUNNING)
 				error = awi_init(sc);
 			else
 				error = 0;

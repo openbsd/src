@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.39 2004/09/27 23:59:27 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.40 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1432,7 +1432,8 @@ gem_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			gem_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				gem_init(ifp);
 			error = 0;
 		}
 		break;

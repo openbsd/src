@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.27 2004/12/31 04:27:52 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.28 2005/01/15 05:24:10 brad Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -4007,7 +4007,7 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 
 		if (error == ENETRESET) {
-			if (ATW_IS_ENABLED(sc))
+			if (ifp->if_flags & IFF_RUNNING)
 				atw_filter_setup(sc); /* do not rescan */
 			error = 0;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.2 2005/01/14 01:32:45 pvalchev Exp $	*/
+/*	$OpenBSD: re.c,v 1.3 2005/01/15 05:24:11 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1896,7 +1896,8 @@ re_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			re_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				re_setmulti(sc);
 			error = 0;
 		}
 		break;

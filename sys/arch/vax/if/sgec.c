@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.7 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.8 2005/01/15 05:24:10 brad Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -552,7 +552,8 @@ zeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ze_setup(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ze_setup(sc);
 			error = 0;
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.26 2004/06/06 17:56:36 mcbride Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.27 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -902,8 +902,10 @@ dp8390_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			dp8390_stop(sc);	/* XXX for ds_setmcaf? */
-			dp8390_init(sc);
+			if (ifp->if_flags & IFF_RUNNING) {
+				dp8390_stop(sc);	/* XXX for ds_setmcaf? */
+				dp8390_init(sc);
+			}
 			error = 0;
 		}
 		break;

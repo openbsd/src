@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.59 2005/01/02 01:46:17 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.60 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1051,7 +1051,8 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			sk_setmulti(sc_if);
+			if (ifp->if_flags & IFF_RUNNING)
+				sk_setmulti(sc_if);
 			error = 0;
 		}
 		break;

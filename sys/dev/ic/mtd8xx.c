@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.7 2004/09/28 04:37:32 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.8 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -631,7 +631,8 @@ mtd_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			mtd_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mtd_setmulti(sc);
 			error = 0;
 		}
 		break;

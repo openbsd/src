@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.35 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: be.c,v 1.36 2005/01/15 05:24:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -644,7 +644,8 @@ beioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			be_mcreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				be_mcreset(sc);
 			error = 0;
 		}
 		break;

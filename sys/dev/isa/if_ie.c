@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.29 2004/05/18 11:16:33 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.30 2005/01/15 05:24:11 brad Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -2205,7 +2205,8 @@ ieioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			mc_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mc_reset(sc);
 			error = 0;
 		}
 		break;

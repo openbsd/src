@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.79 2005/01/14 15:04:51 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.80 2005/01/15 05:24:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3096,7 +3096,8 @@ dc_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			dc_setfilt(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				dc_setfilt(sc);
 			error = 0;
 		}
 		break;
