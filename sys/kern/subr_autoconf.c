@@ -1,4 +1,5 @@
-/*	$NetBSD: subr_autoconf.c,v 1.16 1994/11/04 06:40:11 mycroft Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.2 1996/03/03 17:19:59 niklas Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.17 1996/02/04 02:16:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +50,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <lib/libkern/libkern.h>
+#include <sys/systm.h>
 #include <machine/limits.h>
 
 /*
@@ -73,6 +74,9 @@ struct matchinfo {
 	void	*match, *aux;
 	int	indirect, pri;
 };
+
+static char *number __P((char *, int));
+static void mapply __P((struct matchinfo *, struct cfdata *));
 
 /*
  * Apply the matching function and choose the best.  This is used

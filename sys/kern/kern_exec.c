@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_exec.c,v 1.73 1995/12/09 04:11:00 mycroft Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.3 1996/03/03 17:19:43 niklas Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -50,6 +51,9 @@
 #include <sys/mman.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
 
 #include <sys/syscallargs.h>
 
@@ -90,7 +94,6 @@ check_exec(p, epp)
 {
 	int error, i;
 	struct vnode *vp;
-	char *cp, *ep, *name;
 	struct nameidata *ndp;
 	int resid;
 
@@ -98,7 +101,7 @@ check_exec(p, epp)
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
 	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME;
 	/* first get the vnode */
-	if (error = namei(ndp))
+	if ((error = namei(ndp)) != 0)
 		return error;
 	epp->ep_vp = vp = ndp->ni_vp;
 
@@ -109,7 +112,7 @@ check_exec(p, epp)
 	}
 
 	/* get attributes */
-	if (error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p))
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, p)) != 0)
 		goto bad1;
 
 	/* Check mount point */
@@ -121,7 +124,7 @@ check_exec(p, epp)
 		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
 
 	/* check access.  for root we have to see if any exec bit on */
-	if (error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p))
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
 		goto bad1;
 	if ((epp->ep_vap->va_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
 		error = EACCES;
@@ -129,12 +132,13 @@ check_exec(p, epp)
 	}
 
 	/* try to open it */
-	if (error = VOP_OPEN(vp, FREAD, p->p_ucred, p))
+	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
 		goto bad1;
 
 	/* now we have the file, get the exec header */
-	if (error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p))
+	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
+			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
+	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
 
@@ -200,6 +204,7 @@ bad1:
  * exec system call
  */
 /* ARGSUSED */
+int
 sys_execve(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -257,7 +262,7 @@ sys_execve(p, v, retval)
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */
-	if (error = check_exec(p, &pack))
+	if ((error = check_exec(p, &pack)) != 0)
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
@@ -280,7 +285,7 @@ sys_execve(p, v, retval)
 			cp = *tmpfap;
 			while (*cp)
 				*dp++ = *cp++;
-			*dp++;
+			dp++;
 
 			FREE(*tmpfap, M_EXEC);
 			tmpfap++; argc++;
@@ -300,11 +305,11 @@ sys_execve(p, v, retval)
 
 	while (1) {
 		len = argp + ARG_MAX - dp;
-		if (error = copyin(cpp, &sp, sizeof(sp)))
+		if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
 			goto bad;
 		if (!sp)
 			break;
-		if (error = copyinstr(sp, dp, len, &len)) {
+		if ((error = copyinstr(sp, dp, len, &len)) != 0) {
 			if (error == ENAMETOOLONG)
 				error = E2BIG;
 			goto bad;
@@ -315,14 +320,15 @@ sys_execve(p, v, retval)
 	}
 
 	envc = 0;
-	if (cpp = SCARG(uap, envp)) {	/* environment need not be there */
+	/* environment need not be there */
+	if ((cpp = SCARG(uap, envp)) != NULL ) {
 		while (1) {
 			len = argp + ARG_MAX - dp;
-			if (error = copyin(cpp, &sp, sizeof(sp)))
+			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
 				goto bad;
 			if (!sp)
 				break;
-			if (error = copyinstr(sp, dp, len, &len)) {
+			if ((error = copyinstr(sp, dp, len, &len)) != 0) {
 				if (error == ENAMETOOLONG)
 					error = E2BIG;
 				goto bad;
@@ -436,10 +442,8 @@ sys_execve(p, v, retval)
 	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
 	 */
 	p->p_flag &= ~P_SUGID;
-	if (((attr.va_mode & VSUID) != 0 &&
-	    p->p_ucred->cr_uid != attr.va_uid)
-	    || (attr.va_mode & VSGID) != 0 &&
-	    p->p_ucred->cr_gid != attr.va_gid) {
+	if (((attr.va_mode & VSUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
+	 || ((attr.va_mode & VSGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
 		/*

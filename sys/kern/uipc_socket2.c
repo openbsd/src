@@ -1,4 +1,5 @@
-/*	$NetBSD: uipc_socket2.c,v 1.10 1995/08/16 01:03:19 mycroft Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.2 1996/03/03 17:20:20 niklas Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -45,6 +46,7 @@
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/signalvar.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers
@@ -292,9 +294,10 @@ sb_lock(sb)
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
-		if (error = tsleep((caddr_t)&sb->sb_flags, 
-		    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK|PCATCH,
-		    netio, 0))
+		error = tsleep((caddr_t)&sb->sb_flags, 
+			       (sb->sb_flags & SB_NOINTR) ?
+					PSOCK : PSOCK|PCATCH, netio, 0);
+		if (error)
 			return (error);
 	}
 	sb->sb_flags |= SB_LOCK;
@@ -454,7 +457,7 @@ sbappend(sb, m)
 
 	if (m == 0)
 		return;
-	if (n = sb->sb_mb) {
+	if ((n = sb->sb_mb) != NULL) {
 		while (n->m_nextpkt)
 			n = n->m_nextpkt;
 		do {
@@ -504,7 +507,7 @@ sbappendrecord(sb, m0)
 
 	if (m0 == 0)
 		return;
-	if (m = sb->sb_mb)
+	if ((m = sb->sb_mb) != NULL)
 		while (m->m_nextpkt)
 			m = m->m_nextpkt;
 	/*
@@ -540,7 +543,7 @@ sbinsertoob(sb, m0)
 
 	if (m0 == 0)
 		return;
-	for (mp = &sb->sb_mb; m = *mp; mp = &((*mp)->m_nextpkt)) {
+	for (mp = &sb->sb_mb; (m = *mp) != NULL; mp = &((*mp)->m_nextpkt)) {
 	    again:
 		switch (m->m_type) {
 
@@ -548,7 +551,7 @@ sbinsertoob(sb, m0)
 			continue;		/* WANT next train */
 
 		case MT_CONTROL:
-			if (m = m->m_next)
+			if ((m = m->m_next) != NULL)
 				goto again;	/* inspect THIS train further */
 		}
 		break;
@@ -609,7 +612,7 @@ panic("sbappendaddr");
 	m->m_next = control;
 	for (n = m; n; n = n->m_next)
 		sballoc(sb, n);
-	if (n = sb->sb_mb) {
+	if ((n = sb->sb_mb) != NULL) {
 		while (n->m_nextpkt)
 			n = n->m_nextpkt;
 		n->m_nextpkt = m;
@@ -641,7 +644,7 @@ sbappendcontrol(sb, m0, control)
 	n->m_next = m0;			/* concatenate data to control */
 	for (m = control; m; m = m->m_next)
 		sballoc(sb, m);
-	if (n = sb->sb_mb) {
+	if ((n = sb->sb_mb) != NULL) {
 		while (n->m_nextpkt)
 			n = n->m_nextpkt;
 		n->m_nextpkt = control;
@@ -776,6 +779,6 @@ sbdroprecord(sb)
 		do {
 			sbfree(sb, m);
 			MFREE(m, mn);
-		} while (m = mn);
+		} while ((m = mn) != NULL);
 	}
 }

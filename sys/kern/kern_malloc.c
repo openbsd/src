@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_malloc.c,v 1.11 1995/05/01 22:39:11 cgd Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.2 1996/03/03 17:19:49 niklas Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.13 1996/02/09 18:59:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -40,6 +41,7 @@
 #include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -65,7 +67,7 @@ long addrmask[] = { 0,
  * The WEIRD_ADDR is used as known text to copy into free objects so
  * that modifications after frees can be detected.
  */
-#define WEIRD_ADDR	0xdeadbeef
+#define WEIRD_ADDR	((unsigned) 0xdeadbeef)
 #define MAX_COPY	32
 
 /*
@@ -224,7 +226,8 @@ malloc(size, type, flags)
 			continue;
 		printf("%s %d of object %p size %d %s %s (%p != %p)\n",
 			"Data modified on freelist: word", lp - (int32_t *)va,
-			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
+			va, size, "previous type", savedtype, (void *)*lp,
+			(void *) WEIRD_ADDR);
 		break;
 	}
 
@@ -359,6 +362,7 @@ free(addr, type)
 /*
  * Initialize the kernel memory allocator
  */
+void
 kmeminit()
 {
 	register long indx;

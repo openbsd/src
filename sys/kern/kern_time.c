@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_time.c,v 1.16 1995/10/07 06:28:28 mycroft Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.2 1996/03/03 17:19:57 niklas Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.19 1996/02/13 21:10:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,9 +42,14 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/signalvar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#if defined(NFSCLIENT) || defined(NFSSERVER)
+#include <nfs/nfs_var.h>
+#endif
 
 #include <machine/cpu.h>
 
@@ -73,8 +79,9 @@ sys_gettimeofday(p, v, retval)
 
 	if (SCARG(uap, tp)) {
 		microtime(&atv);
-		if (error = copyout((caddr_t)&atv, (caddr_t)SCARG(uap, tp),
-		    sizeof (atv)))
+		error = copyout((caddr_t)&atv, (caddr_t)SCARG(uap, tp),
+				sizeof (atv));
+		if (error)
 			return (error);
 	}
 	if (SCARG(uap, tzp))
@@ -98,7 +105,7 @@ sys_settimeofday(p, v, retval)
 	struct timezone atz;
 	int error, s;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	/* Verify all parameters before changing time. */
 	if (SCARG(uap, tv) && (error = copyin((caddr_t)SCARG(uap, tv),
@@ -145,10 +152,12 @@ sys_adjtime(p, v, retval)
 	register long ndelta, ntickdelta, odelta;
 	int s, error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	if (error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
-	    sizeof(struct timeval)))
+
+	error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
+		       sizeof(struct timeval));
+	if (error)
 		return (error);
 
 	/*
@@ -250,7 +259,7 @@ sys_getitimer(p, v, retval)
 int
 sys_setitimer(p, v, retval)
 	struct proc *p;
-	void *v;
+	register void *v;
 	register_t *retval;
 {
 	register struct sys_setitimer_args /* {

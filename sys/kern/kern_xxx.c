@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_xxx.c,v 1.29 1995/10/07 06:28:30 mycroft Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.2 1996/03/03 17:19:58 niklas Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.31 1996/02/09 18:59:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +43,7 @@
 #include <sys/reboot.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
-
+#include <sys/cpu.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
@@ -58,7 +59,7 @@ sys_reboot(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	boot(SCARG(uap, opt));
 	return (0);

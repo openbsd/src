@@ -1,4 +1,5 @@
-/*	$NetBSD: init_main.c,v 1.80 1996/01/07 22:03:47 thorpej Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.4 1996/03/03 17:19:39 niklas Exp $	*/
+/*	$NetBSD: init_main.c,v 1.82 1996/02/09 18:59:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -62,6 +63,18 @@
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
+#include <sys/cpu.h>
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#include <sys/domain.h>
+#include <sys/mbuf.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -71,6 +84,10 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
+#include <vm/vm_pageout.h>
+
+#include <net/if.h>
+#include <net/raw_cb.h>
 
 char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n\tThe Regents of the University of California.  All rights reserved.\n\n";
@@ -96,6 +113,7 @@ struct	timeval runtime;
 
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
+void main __P((void *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -131,7 +149,7 @@ struct emul emul_netbsd = {
  * hard work is done in the lower-level initialization routines including
  * startup(), which does memory initialization and autoconfiguration.
  */
-int
+void
 main(framep)
 	void *framep;				/* XXX should go away */
 {
@@ -380,7 +398,7 @@ start_init(p)
 	int options, i, error;
 	register_t retval[2];
 	char flags[4], *flagsp;
-	char **pathp, *path, *ucp, **uap, *arg0, *arg1;
+	char **pathp, *path, *ucp, **uap, *arg0, *arg1 = NULL;
 
 	/*
 	 * Now in process 1.

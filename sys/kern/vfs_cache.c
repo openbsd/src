@@ -1,4 +1,5 @@
-/*	$NetBSD: vfs_cache.c,v 1.12 1995/09/08 14:15:07 ws Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.2 1996/03/03 17:20:23 niklas Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -166,6 +167,7 @@ cache_lookup(dvp, vpp, cnp)
 /*
  * Add an entry to the cache
  */
+void
 cache_enter(dvp, vp, cnp)
 	struct vnode *dvp;
 	struct vnode *vp;
@@ -188,7 +190,7 @@ cache_enter(dvp, vp, cnp)
 			malloc((u_long)sizeof *ncp, M_CACHE, M_WAITOK);
 		bzero((char *)ncp, sizeof *ncp);
 		numcache++;
-	} else if (ncp = nclruhead.tqh_first) {
+	} else if ((ncp = nclruhead.tqh_first) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 		if (ncp->nc_hash.le_prev != 0) {
 			LIST_REMOVE(ncp, nc_hash);
@@ -220,6 +222,7 @@ cache_enter(dvp, vp, cnp)
 /*
  * Name cache initialization, from vfs_init() when we are booting
  */
+void
 nchinit()
 {
 
@@ -231,6 +234,7 @@ nchinit()
  * Cache flush, a particular vnode; called when a vnode is renamed to
  * hide entries that would now be invalid
  */
+void
 cache_purge(vp)
 	struct vnode *vp;
 {
@@ -257,6 +261,7 @@ cache_purge(vp)
  * if the cache lru chain is modified while we are dumping the
  * inode.  This makes the algorithm O(n^2), but do you think I care?
  */
+void
 cache_purgevfs(mp)
 	struct mount *mp;
 {

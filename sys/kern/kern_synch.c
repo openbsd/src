@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_synch.c,v 1.33 1995/06/08 23:51:03 mycroft Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.2 1996/03/03 17:19:55 niklas Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.35 1996/02/09 18:59:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -47,15 +48,21 @@
 #include <sys/buf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
-#include <sys/vmmeter.h>
+#include <vm/vm.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/cpu.h>
 
 #include <machine/cpu.h>
 
 u_char	curpriority;		/* usrpri of curproc */
 int	lbolt;			/* once a second sleep address */
+
+void roundrobin __P((void *));
+void schedcpu __P((void *));
+void updatepri __P((struct proc *));
+void endtsleep __P((void *));
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -335,7 +342,7 @@ tsleep(ident, priority, wmesg, timo)
 	 */
 	if (catch) {
 		p->p_flag |= P_SINTR;
-		if (sig = CURSIG(p)) {
+		if ((sig = CURSIG(p)) != 0) {
 			if (p->p_wchan)
 				unsleep(p);
 			p->p_stat = SRUN;
@@ -369,7 +376,7 @@ resume:
 		}
 	} else if (timo)
 		untimeout(endtsleep, (void *)p);
-	if (catch && (sig != 0 || (sig = CURSIG(p)))) {
+	if (catch && (sig != 0 || (sig = CURSIG(p)) != 0)) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_CSW))
 			ktrcsw(p->p_tracep, 0, 0);
@@ -513,9 +520,9 @@ wakeup(ident)
 	s = splhigh();
 	qp = &slpque[LOOKUP(ident)];
 restart:
-	for (q = &qp->sq_head; p = *q; ) {
+	for (q = &qp->sq_head; (p = *q) != NULL; ) {
 #ifdef DIAGNOSTIC
-		if (p->p_back || p->p_stat != SSLEEP && p->p_stat != SSTOP)
+		if (p->p_back || (p->p_stat != SSLEEP && p->p_stat != SSTOP))
 			panic("wakeup");
 #endif
 		if (p->p_wchan == ident) {
@@ -683,11 +690,16 @@ resetpriority(p)
 }
 
 #ifdef DDB
+#include <machine/db_machdep.h>
+
+#include <ddb/db_interface.h>
+#include <ddb/db_output.h>
+
 void
 db_show_all_procs(addr, haddr, count, modif)
-	long addr;
+	db_expr_t addr;
 	int haddr;
-	int count;
+	db_expr_t count;
 	char *modif;
 {
 	int map = modif[0] == 'm';

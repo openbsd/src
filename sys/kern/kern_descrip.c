@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_descrip.c,v 1.37 1995/10/07 06:28:09 mycroft Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.3 1996/03/03 17:19:42 niklas Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.39 1996/02/09 18:59:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -60,13 +61,21 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <vm/vm.h>
+
+#include <kern/kern_conf.h>
+
 /*
  * Descriptor management.
  */
 struct filelist filehead;	/* head of list of open files */
 int nfiles;			/* actual number of open files */
 
-static __inline
+static __inline void fd_used __P((struct filedesc *, int));
+static __inline void fd_unused __P((struct filedesc *, int));
+int finishdup __P((struct filedesc *, int, int, register_t *));
+
+static __inline void
 fd_used(fdp, fd)
 	register struct filedesc *fdp;
 	register int fd;
@@ -76,7 +85,7 @@ fd_used(fdp, fd)
 		fdp->fd_lastfile = fd;
 }
 
-static __inline
+static __inline void
 fd_unused(fdp, fd)
 	register struct filedesc *fdp;
 	register int fd;
@@ -104,6 +113,7 @@ fd_unused(fdp, fd)
  * Duplicate a file descriptor.
  */
 /* ARGSUSED */
+int
 sys_dup(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -119,7 +129,7 @@ sys_dup(p, v, retval)
 
 	if ((u_int)old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL)
 		return (EBADF);
-	if (error = fdalloc(p, 0, &new))
+	if ((error = fdalloc(p, 0, &new)) != 0)
 		return (error);
 	return (finishdup(fdp, old, new, retval));
 }
@@ -128,6 +138,7 @@ sys_dup(p, v, retval)
  * Duplicate a file descriptor to a particular value.
  */
 /* ARGSUSED */
+int
 sys_dup2(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -150,7 +161,7 @@ sys_dup2(p, v, retval)
 		return (0);
 	}
 	if (new >= fdp->fd_nfiles) {
-		if (error = fdalloc(p, new, &i))
+		if ((error = fdalloc(p, new, &i)) != 0)
 			return (error);
 		if (new != i)
 			panic("dup2: fdalloc");
@@ -164,6 +175,7 @@ sys_dup2(p, v, retval)
  * The file control system call.
  */
 /* ARGSUSED */
+int
 sys_fcntl(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -192,7 +204,7 @@ sys_fcntl(p, v, retval)
 		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    (u_int)newmin >= maxfiles)
 			return (EINVAL);
-		if (error = fdalloc(p, newmin, &i))
+		if ((error = fdalloc(p, newmin, &i)) != 0)
 			return (error);
 		return (finishdup(fdp, fd, i, retval));
 
@@ -302,7 +314,8 @@ sys_fcntl(p, v, retval)
 			return (error);
 		if (fl.l_whence == SEEK_CUR)
 			fl.l_start += fp->f_offset;
-		if (error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX))
+		error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX);
+		if (error)
 			return (error);
 		return (copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
 		    sizeof (fl)));
@@ -359,6 +372,7 @@ fdrelease(p, fd)
  * Close a file descriptor.
  */
 /* ARGSUSED */
+int
 sys_close(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -379,6 +393,7 @@ sys_close(p, v, retval)
  * Return status information about a file descriptor.
  */
 /* ARGSUSED */
+int
 sys_fstat(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -421,6 +436,7 @@ sys_fstat(p, v, retval)
  * Return pathconf information about a file descriptor.
  */
 /* ARGSUSED */
+int
 sys_fpathconf(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -461,6 +477,7 @@ sys_fpathconf(p, v, retval)
  */
 int fdexpand;
 
+int
 fdalloc(p, want, result)
 	struct proc *p;
 	int want;
@@ -527,6 +544,7 @@ fdalloc(p, want, result)
  * Check to see whether n user file descriptors
  * are available to the process p.
  */
+int
 fdavail(p, n)
 	struct proc *p;
 	register int n;
@@ -549,6 +567,7 @@ fdavail(p, n)
  * Create a new open file structure and allocate
  * a file decriptor for the process that refers to it.
  */
+int
 falloc(p, resultfp, resultfd)
 	register struct proc *p;
 	struct file **resultfp;
@@ -557,7 +576,7 @@ falloc(p, resultfp, resultfd)
 	register struct file *fp, *fq;
 	int error, i;
 
-	if (error = fdalloc(p, 0, &i))
+	if ((error = fdalloc(p, 0, &i)) != 0)
 		return (error);
 	if (nfiles >= maxfiles) {
 		tablefull("file");
@@ -572,7 +591,7 @@ falloc(p, resultfp, resultfd)
 	nfiles++;
 	MALLOC(fp, struct file *, sizeof(struct file), M_FILE, M_WAITOK);
 	bzero(fp, sizeof(struct file));
-	if (fq = p->p_fd->fd_ofiles[0]) {
+	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
@@ -591,11 +610,10 @@ falloc(p, resultfp, resultfd)
 /*
  * Free a file descriptor.
  */
+void
 ffree(fp)
 	register struct file *fp;
 {
-	register struct file *fq;
-
 	LIST_REMOVE(fp, f_list);
 	crfree(fp->f_cred);
 #ifdef DIAGNOSTIC
@@ -738,6 +756,7 @@ fdfree(p)
  * Note: p may be NULL when closing a file
  * that was being passed in a message.
  */
+int
 closef(fp, p)
 	register struct file *fp;
 	register struct proc *p;
@@ -791,6 +810,7 @@ closef(fp, p)
  * the entire file (l_whence = SEEK_SET, l_start = 0, l_len = 0).
  */
 /* ARGSUSED */
+int
 sys_flock(p, v, retval)
 	struct proc *p;
 	void *v;

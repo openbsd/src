@@ -1,4 +1,5 @@
-/*	$NetBSD: subr_prof.c,v 1.8 1995/11/22 23:07:26 cgd Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.3 1996/03/03 17:20:01 niklas Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.10 1996/02/09 19:00:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-
+#include <sys/cpu.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
@@ -57,6 +58,8 @@ struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
 extern char etext[];
 
+
+void
 kmstartup()
 {
 	char *cp;
@@ -146,6 +149,7 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
  * 1.0 is represented as 0x10000.  A scale factor of 0 turns off profiling.
  */
 /* ARGSUSED */
+int
 sys_profil(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -153,8 +157,8 @@ sys_profil(p, v, retval)
 {
 	register struct sys_profil_args /* {
 		syscallarg(caddr_t) samples;
-		syscallarg(size_t) size;
-		syscallarg(u_long) offset;
+		syscallarg(u_int) size;
+		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
 	register struct uprof *upp;

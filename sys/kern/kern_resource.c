@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_resource.c,v 1.32 1995/12/09 04:09:34 mycroft Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.3 1996/03/03 17:19:53 niklas Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.34 1996/02/09 18:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -53,9 +54,7 @@
 
 #include <vm/vm.h>
 
-int	donice __P((struct proc *curp, struct proc *chgp, int n));
-int	dosetrlimit __P((struct proc *p, u_int which, struct rlimit *limp));
-
+void limfree __P((struct plimit *));
 /*
  * Resource controls and accounting.
  */
@@ -214,8 +213,9 @@ sys_setrlimit(p, v, retval)
 	struct rlimit alim;
 	int error;
 
-	if (error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&alim,
-	    sizeof (struct rlimit)))
+	error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&alim,
+		       sizeof (struct rlimit));
+	if (error)
 		return (error);
 	return (dosetrlimit(p, SCARG(uap, which), &alim));
 }
@@ -235,7 +235,7 @@ dosetrlimit(p, which, limp)
 	alimp = &p->p_rlimit[which];
 	if (limp->rlim_cur > alimp->rlim_max || 
 	    limp->rlim_max > alimp->rlim_max)
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 	if (limp->rlim_cur > limp->rlim_max)
 		limp->rlim_cur = limp->rlim_max;

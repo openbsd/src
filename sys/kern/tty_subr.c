@@ -1,4 +1,5 @@
-/*	$NetBSD: tty_subr.c,v 1.11 1994/10/30 21:48:03 cgd Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.2 1996/03/03 17:20:12 niklas Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -64,6 +65,14 @@
 #define QMEM(n)		(n)
 #endif
 
+void	cinit __P((void));
+int	ndqb __P((struct clist *, int));
+int	putc __P((int, struct clist *));
+#ifdef QBITS
+void	clrbits __P((u_char *, int, int));
+#endif
+int	b_to_q __P((u_char *, int, struct clist *));
+u_char *firstc __P((struct clist *, int *));
 
 /*
  * Initialize clists.
@@ -191,6 +200,7 @@ q_to_b(clp, cp, count)
  * Return count of contiguous characters in clist.
  * Stop counting if flag&character is non-null.
  */
+int
 ndqb(clp, flag)
 	struct clist *clp;
 	int flag;
@@ -275,9 +285,7 @@ putc(c, clp)
 	int c;
 	struct clist *clp;
 {
-	register u_char *q;
 	register int i;
-	int r = -1;
 	int s;
 
 	s = spltty();
@@ -371,9 +379,9 @@ b_to_q(cp, count, clp)
 	int count;
 	struct clist *clp;
 {
-	register int i, cc;
+	register int cc;
 	register u_char *p = cp;
-	int off, s;
+	int s;
 
 	if (count <= 0)
 		return 0;
@@ -477,9 +485,7 @@ firstc(clp, c)
 	struct clist *clp;
 	int *c;
 {
-	int empty = 0;
 	register u_char *cp;
-	register int i;
 
 	cc = clp->c_cc;
 	if (cc == 0)

@@ -1,4 +1,5 @@
-/*	$NetBSD: vfs_lookup.c,v 1.15 1995/03/08 01:20:50 cgd Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.2 1996/03/03 17:20:27 niklas Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -145,7 +146,7 @@ namei(ndp)
 			VREF(dp);
 		}
 		ndp->ni_startdir = dp;
-		if (error = lookup(ndp)) {
+		if ((error = lookup(ndp)) != 0) {
 			FREE(cnp->cn_pnbuf, M_NAMEI);
 			return (error);
 		}
@@ -178,7 +179,8 @@ namei(ndp)
 		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_procp = (struct proc *)0;
 		auio.uio_resid = MAXPATHLEN;
-		if (error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred)) {
+		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
+		if (error) {
 			if (ndp->ni_pathlen > 1)
 				free(cp, M_NAMEI);
 			break;
@@ -375,7 +377,7 @@ dirloop:
 	 */
 unionlookup:
 	ndp->ni_dvp = dp;
-	if (error = VOP_LOOKUP(dp, &ndp->ni_vp, cnp)) {
+	if ((error = VOP_LOOKUP(dp, &ndp->ni_vp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
 			panic("leaf should be empty");
@@ -442,7 +444,7 @@ unionlookup:
 			sleep((caddr_t)mp, PVFS);
 			continue;
 		}
-		if (error = VFS_ROOT(dp->v_mountedhere, &tdp))
+		if ((error = VFS_ROOT(dp->v_mountedhere, &tdp)) != 0)
 			goto bad2;
 		vput(dp);
 		ndp->ni_vp = dp = tdp;
@@ -587,7 +589,7 @@ relookup(dvp, vpp, cnp)
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 */
-	if (error = VOP_LOOKUP(dp, vpp, cnp)) {
+	if ((error = VOP_LOOKUP(dp, vpp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (*vpp != NULL)
 			panic("leaf should be empty");

@@ -1,4 +1,5 @@
-/*	$NetBSD: sysv_msg.c,v 1.17 1995/10/07 06:28:40 mycroft Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.2 1996/03/03 17:20:05 niklas Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -36,11 +37,12 @@ int nfree_msgmaps;		/* # of free map entries */
 short free_msgmaps;		/* head of linked list of free map entries */
 struct msg *free_msghdrs;	/* list of free msg headers */
 
-int
+static void msg_freehdr __P((struct msg *));
+
+void
 msginit()
 {
 	register int i;
-	vm_offset_t whocares1, whocares2;
 
 	/*
 	 * msginfo.msgssz should be a power of two for efficiency reasons.
@@ -132,7 +134,7 @@ sys_msgctl(p, v, retval)
 	int cmd = SCARG(uap, cmd);
 	struct msqid_ds *user_msqptr = SCARG(uap, buf);
 	struct ucred *cred = p->p_ucred;
-	int i, rval, eval;
+	int rval, eval;
 	struct msqid_ds msqbuf;
 	register struct msqid_ds *msqptr;
 
@@ -173,7 +175,7 @@ sys_msgctl(p, v, retval)
 	case IPC_RMID:
 	{
 		struct msg *msghdr;
-		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
+		if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
 			return(eval);
 		/* Free the message headers */
 		msghdr = msqptr->msg_first;
@@ -265,7 +267,7 @@ sys_msgget(p, v, retval)
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr;
+	register struct msqid_ds *msqptr = NULL;
 
 #ifdef MSG_DEBUG_OK
 	printf("msgget(0x%x, 0%o)\n", key, msgflg);
@@ -422,11 +424,11 @@ sys_msgsnd(p, v, retval)
 		int need_more_resources = 0;
 
 		/*
-		 * check msgsz
+		 * check msgsz [cannot be negative since it is unsigned]
 		 * (inside this loop in case msg_qbytes changes while we sleep)
 		 */
 
-		if (msgsz < 0 || msgsz > msqptr->msg_qbytes) {
+		if (msgsz > msqptr->msg_qbytes) {
 #ifdef MSG_DEBUG_OK
 			printf("msgsz > msqptr->msg_qbytes\n");
 #endif
@@ -749,12 +751,15 @@ sys_msgrcv(p, v, retval)
 		return(eval);
 	}
 
+#if 0
+	/* cannot happen, msgsz is unsigned */
 	if (msgsz < 0) {
 #ifdef MSG_DEBUG_OK
 		printf("msgsz < 0\n");
 #endif
 		return(EINVAL);
 	}
+#endif
 
 	msghdr = NULL;
 	while (msghdr == NULL) {

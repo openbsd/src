@@ -1,4 +1,5 @@
-/*	$NetBSD: subr_rmap.c,v 1.9 1994/06/29 06:33:02 cgd Exp $	*/
+/*	$OpenBSD: subr_rmap.c,v 1.2 1996/03/03 17:20:02 niklas Exp $	*/
+/*	$NetBSD: subr_rmap.c,v 1.10 1996/02/04 02:16:49 christos Exp $	*/
 
 /*
  * Copyright (C) 1992, 1994 Wolfgang Solfrank.
@@ -33,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/map.h>
+#include <sys/systm.h>
 
 /*
  * Resource allocation map handling.
@@ -206,14 +208,15 @@ rmfree(mp, size, addr)
 		 */
 		if (fp->m_size > size) {
 			/* range to free is smaller, so drop that */
-			printf("rmfree: map '%s' loses space (%d)\n", mp->m_name,
-			       size);
+			printf("rmfree: map '%s' loses space (%d)\n",
+			       mp->m_name, size);
 			return;
 		} else {
 			/* drop the smallest slot in the list */
-			printf("rmfree: map '%s' loses space (%d)\n", mp->m_name,
-			       fp->m_size);
-			ovbcopy(fp + 1,fp,(char *)(mp->m_limit - 1) - (char *)fp);
+			printf("rmfree: map '%s' loses space (%d)\n",
+			       mp->m_name, fp->m_size);
+			ovbcopy(fp + 1, fp,
+				(char *)(mp->m_limit - 1) - (char *)fp);
 			mp->m_limit[-1].m_addr = 0;
 			/* now retry */
 		}

@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_proc.c,v 1.12 1995/03/19 23:44:49 mycroft Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.2 1996/03/03 17:19:51 niklas Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -73,6 +74,11 @@ struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
 struct proclist allproc;
 struct proclist zombproc;
+
+static void orphanpg __P((struct pgrp *));
+#ifdef DEBUG
+void pgrpdump __P((void));
+#endif
 
 /*
  * Initialize global process hashing structures.
@@ -280,8 +286,6 @@ pgdelete(pgrp)
 	FREE(pgrp, M_PGRP);
 }
 
-static void orphanpg();
-
 /*
  * Adjust pgrp jobc counters when specified process changes process group.
  * We count the number of processes in each process group that "qualify"
@@ -351,6 +355,7 @@ orphanpg(pg)
 }
 
 #ifdef DEBUG
+void
 pgrpdump()
 {
 	register struct pgrp *pgrp;
@@ -358,7 +363,7 @@ pgrpdump()
 	register i;
 
 	for (i = 0; i <= pgrphash; i++) {
-		if (pgrp = pgrphashtbl[i].lh_first) {
+		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
 				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",

@@ -1,4 +1,5 @@
-/*	$NetBSD: sysv_sem.c,v 1.24 1995/10/07 06:28:42 mycroft Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.2 1996/03/03 17:20:06 niklas Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -21,11 +22,15 @@
 int	semtot = 0;
 struct	proc *semlock_holder = NULL;
 
-int
+void semlock __P((struct proc *));
+struct sem_undo *semu_alloc __P((struct proc *));
+int semundo_adjust __P((struct proc *, struct sem_undo **, int, int, int));
+void semundo_clear __P((int, int));
+
+void
 seminit()
 {
 	register int i;
-	vm_offset_t whocares1, whocares2;
 
 	if (sema == NULL)
 		panic("sema is NULL");
@@ -170,6 +175,7 @@ semu_alloc(p)
 			panic("semu_alloc - second attempt failed");
 		}
 	}
+	return NULL;
 }
 
 /*
@@ -274,7 +280,7 @@ semundo_clear(semid, semnum)
 int
 sys___semctl(p, v, retval)
 	struct proc *p;
-	void *v;
+	register void *v;
 	register_t *retval;
 {
 	register struct sys___semctl_args /* {
@@ -313,7 +319,7 @@ sys___semctl(p, v, retval)
 
 	switch (cmd) {
 	case IPC_RMID:
-		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)) != 0)
 			return(eval);
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
@@ -565,12 +571,12 @@ sys_semop(p, v, retval)
 	int nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];
 	register struct semid_ds *semaptr;
-	register struct sembuf *sopptr;
-	register struct sem *semptr;
+	register struct sembuf *sopptr = NULL;
+	register struct sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	struct ucred *cred = p->p_ucred;
 	int i, j, eval;
-	int all_ok, do_wakeup, do_undos;
+	int do_wakeup, do_undos;
 
 #ifdef SEM_DEBUG
 	printf("call to semop(%d, %p, %d)\n", semid, sops, nsops);
@@ -641,7 +647,8 @@ sys_semop(p, v, retval)
 #endif
 
 			if (sopptr->sem_op < 0) {
-				if (semptr->semval + sopptr->sem_op < 0) {
+				if ((int)(semptr->semval +
+					  sopptr->sem_op) < 0) {
 #ifdef SEM_DEBUG
 					printf("semop:  can't do it now\n");
 #endif
@@ -824,6 +831,7 @@ done:
  * Go through the undo structures for this process and apply the adjustments to
  * semaphores.
  */
+void
 semexit(p)
 	struct proc *p;
 {

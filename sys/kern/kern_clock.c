@@ -1,3 +1,4 @@
+/*	$OpenBSD: kern_clock.c,v 1.7 1996/03/03 17:19:41 niklas Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.23 1995/12/28 19:16:41 thorpej Exp $	*/
 
 /*-
@@ -64,6 +65,10 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/signalvar.h>
+#include <sys/cpu.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 #include <sys/timex.h>
 
 #include <machine/cpu.h>
@@ -915,6 +920,7 @@ statclock(frame)
 /*
  * Return information about system clocks.
  */
+int
 sysctl_clockrate(where, sizep)
 	register char *where;
 	size_t *sizep;
@@ -934,10 +940,16 @@ sysctl_clockrate(where, sizep)
 #ifdef DDB
 #include <machine/db_machdep.h>
 
+#include <ddb/db_interface.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
 
-void db_show_callout(long addr, int haddr, int count, char *modif)
+void db_show_callout(addr, haddr, count, modif)
+	db_expr_t addr; 
+	int haddr; 
+	db_expr_t count;
+	char *modif;
 {
 	register struct callout *p1;
 	register int	cum;

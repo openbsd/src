@@ -1,4 +1,5 @@
-/*	$NetBSD: sys_generic.c,v 1.21 1995/10/07 06:28:34 mycroft Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.2 1996/03/03 17:20:03 niklas Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.23 1996/02/09 19:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,6 +48,7 @@
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
+#include <sys/signalvar.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/stat.h>
@@ -58,10 +60,14 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+int selscan __P((struct proc *, fd_set *, fd_set *, int, register_t *));
+int seltrue __P((dev_t, int, struct proc *));
+
 /*
  * Read system call.
  */
 /* ARGSUSED */
+int
 sys_read(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -103,7 +109,8 @@ sys_read(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = SCARG(uap, nbyte);
-	if (error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred))
+	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
@@ -120,6 +127,7 @@ sys_read(p, v, retval)
 /*
  * Scatter read system call.
  */
+int
 sys_readv(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -162,14 +170,18 @@ sys_readv(p, v, retval)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	if (error = copyin((caddr_t)SCARG(uap, iovp), (caddr_t)iov, iovlen))
+	error = copyin((caddr_t)SCARG(uap, iovp), (caddr_t)iov, iovlen);
+	if (error)
 		goto done;
 	auio.uio_resid = 0;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
+#if 0
+		/* Cannot happen iov_len is unsigned */
 		if (iov->iov_len < 0) {
 			error = EINVAL;
 			goto done;
 		}
+#endif
 		auio.uio_resid += iov->iov_len;
 		if (auio.uio_resid < 0) {
 			error = EINVAL;
@@ -187,7 +199,8 @@ sys_readv(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	if (error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred))
+	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
@@ -210,6 +223,7 @@ done:
 /*
  * Write system call
  */
+int
 sys_write(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -251,7 +265,8 @@ sys_write(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = SCARG(uap, nbyte);
-	if (error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred)) {
+	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
@@ -271,6 +286,7 @@ sys_write(p, v, retval)
 /*
  * Gather write system call
  */
+int
 sys_writev(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -313,14 +329,18 @@ sys_writev(p, v, retval)
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	if (error = copyin((caddr_t)SCARG(uap, iovp), (caddr_t)iov, iovlen))
+	error = copyin((caddr_t)SCARG(uap, iovp), (caddr_t)iov, iovlen);
+	if (error)
 		goto done;
 	auio.uio_resid = 0;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
+#if 0
+		/* Cannot happen iov_len is unsigned */
 		if (iov->iov_len < 0) {
 			error = EINVAL;
 			goto done;
 		}
+#endif
 		auio.uio_resid += iov->iov_len;
 		if (auio.uio_resid < 0) {
 			error = EINVAL;
@@ -338,7 +358,8 @@ sys_writev(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	if (error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred)) {
+	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
@@ -365,6 +386,7 @@ done:
  * Ioctl system call
  */
 /* ARGSUSED */
+int
 sys_ioctl(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -437,7 +459,7 @@ sys_ioctl(p, v, retval)
 	switch (com) {
 
 	case FIONBIO:
-		if (tmp = *(int *)data)
+		if ((tmp = *(int *)data) != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
@@ -445,7 +467,7 @@ sys_ioctl(p, v, retval)
 		break;
 
 	case FIOASYNC:
-		if (tmp = *(int *)data)
+		if ((tmp = *(int *)data) != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
@@ -503,6 +525,7 @@ int	selwait, nselcoll;
 /*
  * Select system call.
  */
+int
 sys_select(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -568,7 +591,7 @@ retry:
 	s = splhigh();
 	/* this should be timercmp(&time, &atv, >=) */
 	if (SCARG(uap, tv) && (time.tv_sec > atv.tv_sec ||
-	    time.tv_sec == atv.tv_sec && time.tv_usec >= atv.tv_usec)) {
+	    (time.tv_sec == atv.tv_sec && time.tv_usec >= atv.tv_usec))) {
 		splx(s);
 		goto done;
 	}
@@ -603,6 +626,7 @@ done:
 	return (error);
 }
 
+int
 selscan(p, ibits, obits, nfd, retval)
 	struct proc *p;
 	fd_set *ibits, *obits;
@@ -636,6 +660,7 @@ selscan(p, ibits, obits, nfd, retval)
 }
 
 /*ARGSUSED*/
+int
 seltrue(dev, flag, p)
 	dev_t dev;
 	int flag;

@@ -1,4 +1,5 @@
-/*	$NetBSD: uipc_domain.c,v 1.12 1994/06/29 06:33:33 cgd Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.2 1996/03/03 17:20:16 niklas Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -195,7 +196,7 @@ pfctlinput(cmd, sa)
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_ctlinput)
-				(*pr->pr_ctlinput)(cmd, sa, (caddr_t)0);
+				(*pr->pr_ctlinput)(cmd, sa, NULL);
 }
 
 void

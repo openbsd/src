@@ -1,4 +1,5 @@
-/*	$NetBSD: tty_conf.c,v 1.16 1995/10/10 01:27:01 mycroft Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.2 1996/03/03 17:20:11 niklas Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.17 1996/02/04 02:17:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -54,8 +55,7 @@
 #define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
 #define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
 
-int	nullioctl __P((struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p));
+int	nullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 
 #include "tb.h"
 #if NTB > 0
@@ -137,6 +137,7 @@ int	nlinesw = sizeof (linesw) / sizeof (linesw[0]);
  * discipline specific ioctl command.
  */
 /*ARGSUSED*/
+int
 nullioctl(tp, cmd, data, flags, p)
 	struct tty *tp;
 	u_long cmd;

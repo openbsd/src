@@ -1,4 +1,5 @@
-/*	$NetBSD: uipc_proto.c,v 1.5 1994/06/29 06:33:36 cgd Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.2 1996/03/03 17:20:18 niklas Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -40,13 +41,16 @@
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
+#include <sys/un.h> 
+#include <sys/socketvar.h>
+                        
+#include <net/if.h>
+#include <net/raw_cb.h>
 
 /*
  * Definitions of protocols supported in the UNIX domain.
  */
 
-int	uipc_usrreq(), raw_usrreq();
-void	raw_init(), raw_input(), raw_ctlinput();
 extern	struct domain unixdomain;		/* or at least forward */
 
 struct protosw unixsw[] = {
@@ -66,8 +70,6 @@ struct protosw unixsw[] = {
   raw_init,	0,		0,		0,
 }
 };
-
-int	unp_externalize(), unp_dispose();
 
 struct domain unixdomain =
     { AF_UNIX, "unix", 0, unp_externalize, unp_dispose,

@@ -1,4 +1,5 @@
-/*	$NetBSD: exec_elf.c,v 1.4 1996/01/16 23:07:18 fvdl Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.3 1996/03/03 17:19:37 niklas Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.6 1996/02/09 18:59:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -55,7 +56,8 @@
 #include <compat/svr4/svr4_exec.h>
 #endif
 
-int (*elf_probe_funcs[])() = {
+int (*elf_probe_funcs[]) __P((struct proc *, struct exec_package *,
+			      char *, u_long *)) = {
 #ifdef COMPAT_SVR4
 	svr4_elf_probe,
 #endif
@@ -63,6 +65,10 @@ int (*elf_probe_funcs[])() = {
 	linux_elf_probe
 #endif
 };
+
+int elf_check_header __P((Elf32_Ehdr *, int));
+int elf_load_file __P((struct proc *, char *, struct exec_vmcmd_set *,
+		       u_long *, struct elf_args *, u_long *));
 
 static int elf_read_from __P((struct proc *, struct vnode *, u_long,
 	caddr_t, int));
@@ -491,6 +497,14 @@ exec_elf_makecmds(p, epp)
 			break;
 		}
 	}
+
+	/*
+	 * If no position to load the interpreter was set by a probe
+	 * function, pick the same address that a non-fixed mmap(0, ..)
+	 * would (i.e. something safely out of the way).
+	 */
+	if (pos == ELF32_NO_ADDR)
+		pos = round_page(epp->ep_daddr + MAXDSIZ);
 
 	/*
          * Check if we found a dynamically linked binary and arrange to load

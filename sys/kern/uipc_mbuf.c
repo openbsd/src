@@ -1,4 +1,5 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.13 1994/10/30 21:48:06 cgd Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.2 1996/03/03 17:20:17 niklas Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.15 1996/02/09 19:00:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -73,6 +74,7 @@ bad:
  * Must be called at splimp.
  */
 /* ARGSUSED */
+int
 m_clalloc(ncl, nowait)
 	register int ncl;
 	int nowait;
@@ -135,6 +137,7 @@ m_retryhdr(i, t)
 	return (m);
 }
 
+void
 m_reclaim()
 {
 	register struct domain *dp;
@@ -207,7 +210,7 @@ m_freem(m)
 		return;
 	do {
 		MFREE(m, n);
-	} while (m = n);
+	} while ((m = n) != NULL);
 }
 
 /*
@@ -321,6 +324,7 @@ nospace:
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
  * continuing for "len" bytes, into the indicated buffer.
  */
+void
 m_copydata(m, off, len, cp)
 	register struct mbuf *m;
 	register int off;
@@ -356,6 +360,7 @@ m_copydata(m, off, len, cp)
  * Both chains must be of the same type (e.g. MT_DATA).
  * Any m_pkthdr is not updated.
  */
+void
 m_cat(m, n)
 	register struct mbuf *m, *n;
 {
@@ -445,7 +450,7 @@ m_adj(mp, req_len)
 			}
 			count -= m->m_len;
 		}
-		while (m = m->m_next)
+		while ((m = m->m_next) != NULL)
 			m->m_len = 0;
 	}
 }
@@ -591,7 +596,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 	char *buf;
 	int totlen, off0;
 	struct ifnet *ifp;
-	void (*copy)();
+	void (*copy) __P((const void *, void *, size_t));
 {
 	register struct mbuf *m;
 	struct mbuf *top = 0, **mp = &top;
@@ -644,9 +649,9 @@ m_devget(buf, totlen, off0, ifp, copy)
 				len = m->m_len;
 		}
 		if (copy)
-			copy(cp, mtod(m, caddr_t), (unsigned)len);
+			copy(cp, mtod(m, caddr_t), (size_t)len);
 		else
-			bcopy(cp, mtod(m, caddr_t), (unsigned)len);
+			bcopy(cp, mtod(m, caddr_t), (size_t)len);
 		cp += len;
 		*mp = m;
 		mp = &m->m_next;

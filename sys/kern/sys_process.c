@@ -1,4 +1,5 @@
-/*	$NetBSD: sys_process.c,v 1.52 1995/10/07 06:28:36 mycroft Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.2 1996/03/03 17:20:04 niklas Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.54 1996/02/09 19:00:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -64,6 +65,8 @@
 #include <sys/syscallargs.h>
 
 #include <machine/reg.h>
+
+#include <miscfs/procfs/procfs.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -240,13 +243,14 @@ sys_ptrace(p, v, retval)
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		if (error = process_sstep(t, SCARG(uap, req) == PT_STEP))
+		error = process_sstep(t, SCARG(uap, req) == PT_STEP);
+		if (error)
 			goto relebad;
 #endif
 
 		/* If the address paramter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
-			if (error = process_set_pc(t, SCARG(uap, addr)))
+			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
 				goto relebad;
 
 		PRELE(t);
@@ -356,8 +360,10 @@ sys_ptrace(p, v, retval)
 #ifdef DIAGNOSTIC
 	panic("ptrace: impossible");
 #endif
+	return 0;
 }
 
+int
 trace_req(a1)
 	struct proc *a1;
 {

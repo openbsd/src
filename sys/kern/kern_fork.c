@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_fork.c,v 1.27 1995/12/10 08:26:02 mycroft Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.5 1996/03/03 17:19:45 niklas Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -46,6 +47,7 @@
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
@@ -53,10 +55,9 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 
-#include <vm/vm.h>
-
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
 
 int	nprocs = 1;		/* process 0 */
 
@@ -64,6 +65,9 @@ int	nprocs = 1;		/* process 0 */
 #define	ISVFORK	1
 #define	ISRFORK	2
 
+int fork1 __P((struct proc *, int, int, register_t *));
+
+/*ARGSUSED*/
 int
 sys_fork(p, v, retval)
 	struct proc *p;
@@ -73,6 +77,7 @@ sys_fork(p, v, retval)
 	return (fork1(p, ISFORK, 0, retval));
 }
 
+/*ARGSUSED*/
 int
 sys_vfork(p, v, retval)
 	struct proc *p;
@@ -105,7 +110,6 @@ fork1(p1, forktype, rforkflags, retval)
 	register struct proc *p2;
 	register uid_t uid;
 	struct proc *newproc;
-	struct proc **hash;
 	int count;
 	static int nextpid, pidchecked = 0;
 	int dupfd = 1, cleanfd = 0;
