@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.194 2004/03/15 15:25:44 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.195 2004/04/14 10:51:10 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,6 +62,7 @@ void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned);
 void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
 		    struct pf_rule_addr *, u_int8_t, u_int8_t, int);
+int		 ifa_skip_if(const char *filter, struct node_host *p);
 
 struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *, int);
@@ -1158,19 +1159,17 @@ struct node_host *
 ifa_lookup(const char *ifa_name, int flags)
 {
 	struct node_host	*p = NULL, *h = NULL, *n = NULL;
-	int			 return_all = 0, got4 = 0, got6 = 0;
+	int			 got4 = 0, got6 = 0;
 	const char		 *last_if = NULL;
 
 	if (!strncmp(ifa_name, "self", IFNAMSIZ))
-		return_all = 1;
+		ifa_name = NULL;
 
 	if (iftab == NULL)
 		ifa_load();
 
 	for (p = iftab; p; p = p->next) {
-		if (!((p->af == AF_INET || p->af == AF_INET6) &&
-		    (!strncmp(p->ifname, ifa_name, strlen(ifa_name)) ||
-		    return_all)))
+		if (ifa_skip_if(ifa_name, p))
 			continue;
 		if ((flags & PFI_AFLAG_BROADCAST) && p->af != AF_INET)
 			continue;
@@ -1233,6 +1232,28 @@ ifa_lookup(const char *ifa_name, int flags)
 	}
 	return (h);
 }
+
+int
+ifa_skip_if(const char *filter, struct node_host *p)
+{
+	int	n;
+
+	if (p->af != AF_INET && p->af != AF_INET6)
+		return (1);
+	if (filter == NULL || !*filter)
+		return (0);
+	if (!strcmp(p->ifname, filter))
+		return (0);	/* exact match */
+	n = strlen(filter);
+	if (n < 1 || n >= IFNAMSIZ)
+		return (1);	/* sanity check */
+	if (filter[n-1] >= '0' && filter[n-1] <= '9')
+		return (1);	/* only do exact match in that case */
+	if (strncmp(p->ifname, filter, n))
+		return (1);	/* prefix doesn't match */
+	return (p->ifname[n] < '0' || p->ifname[n] > '9');
+}
+
 
 struct node_host *
 host(const char *s)
