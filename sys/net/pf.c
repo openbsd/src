@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.285 2002/12/27 15:20:30 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.286 2002/12/27 16:55:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1576,9 +1576,10 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 	while (r && rm == NULL) {
 		struct pf_rule_addr	*src = NULL;
 
-		if (r->action == PF_BINAT && direction == PF_IN)
-			src = &r->rpool.cur->addr;
-		else
+		if (r->action == PF_BINAT && direction == PF_IN) {
+			if (r->rpool.cur != NULL)
+				src = &r->rpool.cur->addr;
+		} else
 			src = &r->src;
 
 		r->evaluations++;
@@ -1591,12 +1592,13 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (!PF_AZERO(&src->addr.mask, af) &&
+		else if (src != NULL && !PF_AZERO(&src->addr.mask, af) &&
 		    !PF_MATCHA(src->not,
 		    &src->addr.addr, &src->addr.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
-		else if (src->port_op && !pf_match_port(src->port_op,
-		    src->port[0], src->port[1], sport))
+		else if (src != NULL && src->port_op &&
+		    !pf_match_port(src->port_op, src->port[0],
+		    src->port[1], sport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
 		else if (!PF_AZERO(&r->dst.addr.mask, af) &&
 		    !PF_MATCHA(r->dst.not,
