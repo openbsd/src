@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.161 2004/04/28 02:51:58 cedric Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.162 2004/05/18 10:31:09 dhartmei Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1581,7 +1581,7 @@ ip_pcbopts(pcbopt, m)
 			ovbcopy((caddr_t)(&cp[IPOPT_OFFSET+1] +
 			    sizeof(struct in_addr)),
 			    (caddr_t)&cp[IPOPT_OFFSET+1],
-			    (unsigned)cnt + sizeof(struct in_addr));
+			    (unsigned)cnt - (IPOPT_OFFSET+1));
 			break;
 		}
 	}
