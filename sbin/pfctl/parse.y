@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2002/06/08 20:59:52 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.86 2002/06/08 21:09:59 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -374,7 +374,7 @@ blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 			$$.b2 = 0;
 		}
 		| RETURNICMP '(' STRING ')'	{
-			struct icmpcodeent *p;
+			const struct icmpcodeent *p;
 
 			if ((p = geticmpcodebyname(ICMP_UNREACH, $3,
 			    AF_INET)) == NULL) {
@@ -389,7 +389,7 @@ blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 			$$.b2 = 0;
 		}
 		| RETURNICMP6 '(' STRING ')'	{
-			struct icmpcodeent *p;
+			const struct icmpcodeent *p;
 
 			if ((p = geticmpcodebyname(ICMP6_DST_UNREACH, $3,
 			    AF_INET6)) == NULL) {
@@ -921,7 +921,7 @@ icmp_item	: icmptype		{
 			$$->next = NULL;
 		}
 		| icmptype CODE STRING	{
-			struct icmpcodeent *p;
+			const struct icmpcodeent *p;
 
 			$$ = malloc(sizeof(struct node_icmp));
 			if ($$ == NULL)
@@ -961,7 +961,7 @@ icmp6_item	: icmp6type		{
 			$$->next = NULL;
 		}
 		| icmp6type CODE STRING	{
-			struct icmpcodeent *p;
+			const struct icmpcodeent *p;
 
 			$$ = malloc(sizeof(struct node_icmp));
 			if ($$ == NULL)
@@ -979,7 +979,7 @@ icmp6_item	: icmp6type		{
 		;
 
 icmptype	: STRING			{
-			struct icmptypeent *p;
+			const struct icmptypeent *p;
 
 			if ((p = geticmptypebyname($1, AF_INET)) == NULL) {
 				yyerror("unknown icmp-type %s", $1);
@@ -997,7 +997,7 @@ icmptype	: STRING			{
 		;
 
 icmp6type	: STRING			{
-			struct icmptypeent *p;
+			const struct icmptypeent *p;
 
 			if ((p = geticmptypebyname($1, AF_INET6)) == NULL) {
 				yyerror("unknown ipv6-icmp-type %s", $1);

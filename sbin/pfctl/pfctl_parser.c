@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.81 2002/06/08 16:44:15 drahn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.82 2002/06/08 21:09:59 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,7 +61,7 @@ void		 print_flags (u_int8_t);
 
 char *tcpflags = "FSRPAUEW";
 
-struct icmptypeent icmp_type[] = {
+static const struct icmptypeent icmp_type[] = {
 	{ "echoreq",	ICMP_ECHO },
 	{ "echorep",	ICMP_ECHOREPLY },
 	{ "unreach",	ICMP_UNREACH },
@@ -89,7 +89,7 @@ struct icmptypeent icmp_type[] = {
 	{ "photuris",	ICMP_PHOTURIS }
 };
 
-struct icmptypeent icmp6_type[] = {
+static const struct icmptypeent icmp6_type[] = {
 	{ "unreach",	ICMP6_DST_UNREACH },
 	{ "toobig",	ICMP6_PACKET_TOO_BIG },
 	{ "timex",	ICMP6_TIME_EXCEEDED },
@@ -118,7 +118,7 @@ struct icmptypeent icmp6_type[] = {
 	{ "mtrace",	MLD6_MTRACE }
 };
 
-struct icmpcodeent icmp_code[] = {
+static const struct icmpcodeent icmp_code[] = {
 	{ "net-unr",		ICMP_UNREACH,	ICMP_UNREACH_NET },
 	{ "host-unr",		ICMP_UNREACH,	ICMP_UNREACH_HOST },
 	{ "proto-unr",		ICMP_UNREACH,	ICMP_UNREACH_PROTOCOL },
@@ -151,7 +151,7 @@ struct icmpcodeent icmp_code[] = {
 	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED }
 };
 
-struct icmpcodeent icmp6_code[] = {
+static const struct icmpcodeent icmp6_code[] = {
 	{ "admin-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN },
 	{ "noroute-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE },
 	{ "notnbr-unr",	ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOTNEIGHBOR },
@@ -186,7 +186,7 @@ const struct pf_timeout pf_timeouts[] = {
 	{ NULL,			0 }
 };
 
-struct icmptypeent *
+const struct icmptypeent *
 geticmptypebynumber(u_int8_t type, u_int8_t af)
 {
 	unsigned int i;
@@ -206,7 +206,7 @@ geticmptypebynumber(u_int8_t type, u_int8_t af)
 	return (NULL);
 }
 
-struct icmptypeent *
+const struct icmptypeent *
 geticmptypebyname(char *w, u_int8_t af)
 {
 	unsigned int i;
@@ -226,7 +226,7 @@ geticmptypebyname(char *w, u_int8_t af)
 	return (NULL);
 }
 
-struct icmpcodeent *
+const struct icmpcodeent *
 geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
 {
 	unsigned int i;
@@ -248,7 +248,7 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
 	return (NULL);
 }
 
-struct icmpcodeent *
+const struct icmpcodeent *
 geticmpcodebyname(u_long type, char *w, u_int8_t af)
 {
 	unsigned int i;
@@ -563,7 +563,7 @@ print_rule(struct pf_rule *r)
 			else 
 				printf("return-rst(ttl %d) ", r->return_ttl);
 		} else if (r->return_icmp) {
-			struct icmpcodeent *ic;
+			const struct icmpcodeent *ic;
 
 			if (r->af != AF_INET6)
 				printf("return-icmp");
@@ -682,7 +682,7 @@ print_rule(struct pf_rule *r)
 		printf(" ");
 	}
 	if (r->type) {
-		struct icmptypeent *p;
+		const struct icmptypeent *p;
 
 		p = geticmptypebynumber(r->type-1, r->af);
 		if (r->af != AF_INET6)
@@ -694,7 +694,7 @@ print_rule(struct pf_rule *r)
 		else
 			printf(" %u ", r->type-1);
 		if (r->code) {
-			struct icmpcodeent *p;
+			const struct icmpcodeent *p;
 
 			p = geticmpcodebynumber(r->type-1, r->code-1, r->af);
 			if (p != NULL)

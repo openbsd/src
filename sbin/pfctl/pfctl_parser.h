@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.19 2002/06/08 07:58:07 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.20 2002/06/08 21:09:59 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -81,10 +81,10 @@ struct icmpcodeent {
 	u_int8_t code;
 };
 
-struct icmptypeent	 *geticmptypebynumber(u_int8_t, u_int8_t);
-struct icmptypeent	 *geticmptypebyname(char *, u_int8_t);
-struct icmpcodeent	 *geticmpcodebynumber(u_int8_t, u_int8_t, u_int8_t);
-struct icmpcodeent	 *geticmpcodebyname(u_long, char *, u_int8_t);
+const struct icmptypeent *geticmptypebynumber(u_int8_t, u_int8_t);
+const struct icmptypeent *geticmptypebyname(char *, u_int8_t);
+const struct icmpcodeent *geticmpcodebynumber(u_int8_t, u_int8_t, u_int8_t);
+const struct icmpcodeent *geticmpcodebyname(u_long, char *, u_int8_t);
 
 struct pf_timeout {
 	const char	*name;
