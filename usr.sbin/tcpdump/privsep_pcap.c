@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.1 2004/01/28 19:44:55 canacar Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.2 2004/02/05 22:12:06 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -223,7 +223,7 @@ pcap_live(const char *device, int snaplen, int promisc)
 pcap_t *
 priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
 {
-	int fd;
+	int fd, err;
 	struct bpf_version bv;
 	u_int v;
 	pcap_t *p;
@@ -249,9 +249,11 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms, char *ebuf)
 	write_string(priv_fd, dev);
 
 	fd = receive_fd(priv_fd);
+	must_read(priv_fd, &err, sizeof(int));
 	if (fd < 0) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE,
-		    "Failed open bpf descriptor in privileged process.");
+		    "Failed to open bpf device for %s: %s",
+		    dev, strerror(err));
 		goto bad;
 	}
 
@@ -350,7 +352,7 @@ priv_pcap_offline(const char *fname, char *errbuf)
 	register pcap_t *p;
 	register FILE *fp;
 	struct pcap_file_header hdr;
-	int linklen;
+	int linklen, err;
 
 	if (priv_fd < 0)
 		errx(1, "%s: called from privileged portion", __func__);
@@ -369,9 +371,11 @@ priv_pcap_offline(const char *fname, char *errbuf)
 	} else {
 		write_command(priv_fd, PRIV_OPEN_DUMP);
 		p->fd = receive_fd(priv_fd);
+		must_read(priv_fd, &err, sizeof(int));
 		if (p->fd < 0) {
 			snprintf(errbuf, PCAP_ERRBUF_SIZE,
-			    "Failed open input file in privileged process.");
+			    "Failed to open input file %s: %s",
+			    fname, strerror(err));
 			goto bad;
 		}
 
@@ -472,7 +476,7 @@ sf_write_header(FILE *fp, int linktype, int thiszone, int snaplen)
 pcap_dumper_t *
 priv_pcap_dump_open(pcap_t *p, char *fname)
 {
-	int fd;
+	int fd, err;
 	FILE *f;
 
 	if (priv_fd < 0)
@@ -483,6 +487,13 @@ priv_pcap_dump_open(pcap_t *p, char *fname)
 	else {
 		write_command(priv_fd, PRIV_OPEN_OUTPUT);
 		fd = receive_fd(priv_fd);
+		must_read(priv_fd, &err, sizeof(err));
+		if (fd < 0)  {
+			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+			    "Failed to open output file %s: %s",
+			    fname, strerror(err));
+			return (NULL);
+		}
 		f = fdopen(fd, "w");
 		if (f == NULL) {
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",

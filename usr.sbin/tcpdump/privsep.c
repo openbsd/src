@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.3 2004/02/04 09:47:10 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.4 2004/02/05 22:12:06 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -275,7 +275,7 @@ priv_init(int argc, char **argv)
 static void
 parent_open_bpf(int fd, int *bpfd)
 {
-	int snaplen, promisc;
+	int snaplen, promisc, err;
 	char device[IFNAMSIZ];
 	size_t iflen;
 
@@ -287,18 +287,20 @@ parent_open_bpf(int fd, int *bpfd)
 	if (iflen == 0)
 		errx(1, "Invalid interface size specified");
 	*bpfd = pcap_live(device, snaplen, promisc);
+	err = errno;
 	if (*bpfd < 0)
-		logmsg(LOG_NOTICE,
+		logmsg(LOG_DEBUG,
 		    "[priv]: failed to open bpf device for %s: %s",
 		    device, strerror(errno));
 	send_fd(fd, *bpfd);
+	must_write(fd, &err, sizeof(int));
 	/* do not close bpfd until filter is set */
 }
 
 static void
 parent_open_dump(int fd, const char *RFileName)
 {
-	int file;
+	int file, err;
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_OPEN_DUMP received");
 
@@ -307,27 +309,31 @@ parent_open_dump(int fd, const char *RFileName)
 		logmsg(LOG_ERR, "[priv]: No offline file specified");
 	} else {
 		file = open(RFileName, O_RDONLY, 0);
+		err = errno;
 		if (file < 0)
-			logmsg(LOG_NOTICE, "[priv]: failed to open %s: %s",
+			logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 			    RFileName, strerror(errno));
 	}
 	send_fd(fd, file);
+	must_write(fd, &err, sizeof(int));
 	close(file);
 }
 
 static void
 parent_open_output(int fd, const char *WFileName)
 {
-	int file;
+	int file, err;
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_OPEN_OUTPUT received");
 
 	file = open(WFileName, O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	err = errno;
 	if (file < 0)
-		logmsg(LOG_NOTICE, "[priv]: failed to open %s: %s",
+		logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 		    WFileName, strerror(errno));
 
 	send_fd(fd, file);
+	must_write(fd, &err, sizeof(int));
 	close(file);
 }
 
