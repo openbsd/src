@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.1 1998/07/04 07:57:52 deraadt Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.2 1998/07/04 20:20:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct be_softc {
+struct besoftc {
 	struct	device sc_dev;
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
@@ -43,4 +43,6 @@ struct be_softc {
 	long	sc_addr;
 	int	sc_conf3;
 	u_int	sc_rev;
+
+	int	sc_promisc;
 };
