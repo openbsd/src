@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.30 2000/05/02 18:21:48 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.31 2000/06/18 03:16:09 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -155,7 +155,6 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 			args[i++] = "-4";
 		if (IPv6)
 			args[i++] = "-6";
-		args[i++] = "-oFallBackToRsh no";
 		if (verbose_mode)
 			args[i++] = "-v";
 		if (compress)
@@ -1006,7 +1005,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.30 2000/05/02 18:21:48 deraadt Exp $
+ *	$Id: scp.c,v 1.31 2000/06/18 03:16:09 markus Exp $
  */
 
 char *
