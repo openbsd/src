@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.7 1997/07/27 21:01:36 deraadt Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.8 1997/09/05 04:35:14 deraadt Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -346,16 +346,22 @@ linux_sys_fcntl(p, v, retval)
 		return sys_fcntl(p, &fca, retval);
 	case LINUX_F_GETLK:
 		sg = stackgap_init(p->p_emul);
+		if ((error = copyin(arg, &lfl, sizeof lfl)))
+			return error;
+		linux_to_bsd_flock(&lfl, &bfl);
 		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_GETLK;
 		SCARG(&fca, arg) = bfp;
+		if ((error = copyout(&bfl, bfp, sizeof bfl)))
+			return error;
 		if ((error = sys_fcntl(p, &fca, retval)))
 			return error;
 		if ((error = copyin(bfp, &bfl, sizeof bfl)))
 			return error;
 		bsd_to_linux_flock(&bfl, &lfl);
-		return copyout(&lfl, arg, sizeof lfl);
+		error = copyout(&lfl, arg, sizeof lfl);
+		return error;
 		break;
 	case LINUX_F_SETLK:
 	case LINUX_F_SETLKW:
