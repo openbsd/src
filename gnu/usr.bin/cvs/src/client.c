@@ -4661,8 +4661,11 @@ start_rsh_server (tofdp, fromfdp)
 	   remain "rsh", and tell HPUX users to specify remsh, for
 	   example in CVS_RSH or other such mechanisms to be devised,
 	   if that is what they want (the manual already tells them
-	   that).  */
-	cvs_rsh = "rsh";
+	   that).
+	   Nowadays, however, ssh is pretty much everywhere, so we start
+	   to default to ssh instead.
+        */
+	cvs_rsh = "ssh";
     if (!cvs_server)
 	cvs_server = "cvs";
 
@@ -4719,7 +4722,7 @@ start_rsh_server (tofdp, fromfdp)
     char *command;
 
     if (!cvs_rsh)
-	cvs_rsh = "rsh";
+	cvs_rsh = "ssh";
     if (!cvs_server)
 	cvs_server = "cvs";
 
