@@ -40,7 +40,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <alpha/common/vgavar.h>
+#include <alpha/dev/vgavar.h>
 #include <alpha/pci/vga_pcivar.h>
 
 struct vga_pci_softc {

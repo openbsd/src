@@ -38,7 +38,7 @@
 
 #include <dev/isa/isavar.h>
 
-#include <alpha/common/vgavar.h>
+#include <alpha/dev/vgavar.h>
 #include <alpha/isa/vga_isavar.h>
 
 struct vga_isa_softc {

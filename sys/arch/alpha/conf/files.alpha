@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.13 1997/07/06 18:34:28 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.14 1997/07/09 02:58:32 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -14,11 +14,11 @@ define  wsconsdev {[console = -1]}
 
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
-file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
+file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa
 
 device	vga: wsconsdev
-file	arch/alpha/common/vga.c		vga
+file	arch/alpha/dev/vga.c		vga
 
 #
 # Bus-independent devices
