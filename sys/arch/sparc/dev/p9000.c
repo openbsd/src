@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.1 2003/06/17 21:21:32 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.2 2003/06/18 17:40:32 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -128,12 +128,12 @@ void	p9000_ras_eraserows(void *, int, int, long int);
 int	p9000match(struct device *, void *, void *);
 void	p9000attach(struct device *, struct device *, void *);
 
-struct cfattach p9k_ca = {
+struct cfattach pninek_ca = {
 	sizeof (struct p9000_softc), p9000match, p9000attach
 };
 
-struct cfdriver p9k_cd = {
-	NULL, "p9k", DV_DULL
+struct cfdriver pninek_cd = {
+	NULL, "pninek", DV_DULL
 };
 
 /*
