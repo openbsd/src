@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.2 1996/06/26 05:39:08 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.3 1997/09/11 11:21:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: process.c,v 1.2 1996/06/26 05:39:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: process.c,v 1.3 1997/09/11 11:21:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -445,7 +445,7 @@ flush_appends()
 			 */
 			if ((f = fopen(appends[i].s, "r")) == NULL)
 				break;
-			while (count = fread(buf, sizeof(char), sizeof(buf), f))
+			while ((count = fread(buf, sizeof(char), sizeof(buf), f)))
 				(void)fwrite(buf, sizeof(char), count, stdout);
 			(void)fclose(f);
 			break;
@@ -465,7 +465,7 @@ lputs(s)
 	static int termwidth = -1;
 
 	if (termwidth == -1)
-		if (p = getenv("COLUMNS"))
+		if ((p = getenv("COLUMNS")))
 			termwidth = atoi(p);
 		else if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) == 0 &&
 		    win.ws_col > 0)
@@ -484,7 +484,7 @@ lputs(s)
 		} else {
 			escapes = "\\\a\b\f\n\r\t\v";
 			(void)putchar('\\');
-			if (p = strchr(escapes, *s)) {
+			if ((p = strchr(escapes, *s))) {
 				(void)putchar("\\abfnrtv"[p - escapes]);
 				count += 2;
 			} else {
