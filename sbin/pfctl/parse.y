@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.423 2003/11/22 13:44:20 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.424 2003/11/29 10:05:55 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3122,10 +3122,6 @@ filter_consistent(struct pf_rule *r)
 		yyerror("port only applies to tcp/udp");
 		problems++;
 	}
-	if (r->src.port_op == PF_OP_RRG || r->dst.port_op == PF_OP_RRG) {
-		yyerror("the ':' port operator only applies to rdr");
-		problems++;
-	}
 	if (r->proto != IPPROTO_ICMP && r->proto != IPPROTO_ICMPV6 &&
 	    (r->type || r->code)) {
 		yyerror("icmp-type/code only applies to icmp");
@@ -3185,10 +3181,6 @@ nat_consistent(struct pf_rule *r)
 	int			 problems = 0;
 	struct pf_pooladdr	*pa;
 
-	if (r->src.port_op == PF_OP_RRG || r->dst.port_op == PF_OP_RRG) {
-		yyerror("the ':' port operator only applies to rdr");
-		problems++;
-	}
 	if (!r->af) {
 		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
 			if (pa->addr.type == PF_ADDR_DYNIFTL) {
@@ -3225,11 +3217,6 @@ rdr_consistent(struct pf_rule *r)
 	if (r->dst.port_op &&
 	    r->dst.port_op != PF_OP_EQ && r->dst.port_op != PF_OP_RRG) {
 		yyerror("invalid port operator for rdr destination port");
-		problems++;
-	}
-	if (r->src.port_op == PF_OP_RRG) {
-		yyerror("the ':' port operator only applies to rdr "
-		    "destination port");
 		problems++;
 	}
 	if (!r->af) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.283 2003/11/24 16:06:00 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.284 2003/11/29 10:05:55 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1224,15 +1224,19 @@ Ports and ranges of ports are specified by using these operators:
 <=	(less than or equal)
 >	(greater than)
 >=	(greater than or equal)
-><	(range)
+:	(range including boundaries)
+><	(range excluding boundaries)
 <>	(except range)
 .Ed
 .Pp
->< and <>
-are binary operators (they take two arguments), and the range
-does not include the limits.
+><, <> and :
+are binary operators (they take two arguments).
 For instance:
 .Bl -tag -width Fl
+.It Ar port 2000:2004
+means
+.Sq all ports >= 2000 and <= 2004 ,
+hence ports 2000, 2001, 2002, 2003 and 2004.
 .It Ar port 2000 >< 2004
 means
 .Sq all ports > 2000 and < 2004 ,
