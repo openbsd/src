@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.6 1997/03/31 02:38:44 deraadt Exp $
+.\" $OpenBSD: crypt.3,v 1.7 1997/11/05 11:44:49 provos Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -59,15 +59,19 @@ The
 function performs password encryption, based on the
 .Tn NBS
 Data Encryption Standard (DES).
-Additional code has been added to deter key search attempts.
+Additional code has been added to deter key search attempts and to use
+stronger hashing algorithms.
 The first argument to
 .Fn crypt
 is a
 .Dv null Ns -terminated
 string, typically a user's typed password.
-The second is in one of two forms:
+The second is in one of three forms:
 if it begins with an underscore (``_'') then an extended format is used
-in interpreting both the key and the setting, as outlined below.
+in interpreting both the key and the setting, as outlined below. If it begins
+with an string character (``$'') and a number then a different algorithm
+is used depending on the number. At the moment a ``$1'' chooses MD5 hashing
+and a ``$2'' chooses Blowfish hashing, see below for more information.
 .Ss Extended crypt:
 .Pp
 The
@@ -88,6 +92,51 @@ This allows 24 bits for both
 .Fa count
 and
 .Fa salt .
+.Ss "MD5" crypt:
+.Pp
+For 
+.Tn MD5 
+crypt the version number, 
+.Fa salt 
+and the hashed password are separated
+by the ``$'' character. A valid password looks like this: 
+.Pp
+``$1$caeiHQwX$hsKqOjrFRRN6K32OWkCBf1''.
+.Pp
+The whole password string is passed as 
+.Fa setting
+for interpretation.
+.Ss "Blowfish" crypt:
+.Pp
+The 
+.Tn Blowfish 
+version of crypt has 128 bits of 
+.Fa salt 
+in order to make building
+dictionaries of common passwords space consuming. The initial state
+of the 
+.Tn Blowfish 
+cipher is expanded using the 
+.Fa salt
+and the
+.Fa password 
+repeating the process a variable number of rounds, which is encoded in
+the password string. The final password entry is created by encrypting
+the string ``OrpheanBeholderScryDoubt'' with the 
+.Tn Blowfish 
+state 64 times.
+.Pp
+The version number, the logarithm of the number of rounds and 
+the concatenation of salt and
+hashed password are separated by the ``$'' character. An encoded ``8''
+would specify 64 rounds.
+A valid password looks like this:
+.Pp
+``$2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC''.
+.Pp
+The whole password string is passed as 
+.Fa setting
+for interpretation.
 .Ss "Traditional" crypt:
 .Pp
 The first 8 bytes of the key are null-padded, and the low-order 7 bits of
@@ -101,7 +150,7 @@ Thus only 12 bits of
 are used.
 .Fa count
 is set to 25.
-.Ss Algorithm:
+.Ss DES Algorithm:
 .Pp
 The
 .Fa salt
@@ -210,7 +259,9 @@ functions all manipulate the same key space.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr passwd 1 ,
+.Xr blowfish 3 ,
 .Xr getpass 3 ,
+.Xr md5 3 ,
 .Xr passwd 5
 .Sh BUGS
 The
