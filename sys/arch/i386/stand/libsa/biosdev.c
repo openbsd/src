@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.43 1997/10/24 22:49:58 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.44 1997/10/25 02:07:08 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,6 +38,7 @@
 #include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <lib/libsa/saerrno.h>
+#include "debug.h"
 #include "libsa.h"
 #include "biosdev.h"
 
@@ -61,16 +62,16 @@ struct EDD_CB {
 };
 
 /*
- * return a word that represents the max number
- * of sectors and heads for this device
- *
+ * Fill out a bios_diskinfo_t for this device.
+ * Return 0 if all ok.
+ * Return 1 if not ok.
  */
 int
 bios_getinfo(dev, pdi)
 	int dev;
 	bios_diskinfo_t *pdi;
 {
-	u_int rv, bm;
+	u_int rv;
 #ifdef BIOS_DEBUG
 	printf("getinfo: try #8, %x,%p\n", dev, pdi);
 #endif
@@ -94,16 +95,30 @@ bios_getinfo(dev, pdi)
 	if (rv & 0xff || !pdi->bios_cylinders)
 		return(1);
 
+#if 0
+	/* NOTE:
+	 * This currently hangs/reboots some machines
+	 * The IBM Thinkpad 750ED for one.
+	 *
+	 * Funny that an IBM/MS extension would not be
+	 * implemented by an IBM system...
+	 */
 	if (dev & 0x80) {
+		int bm;
 		/* EDD support check */
-		__asm __volatile(DOINT(0x13) "; setc %b0"
+		__asm __volatile("int $2;" DOINT(0x13) "; setc %b0"
 			 : "=a" (rv), "=c" (bm)
 			 : "0" (0x4100), "2" (0x55aa), "d" (dev) : "cc");
+		DUMP_REGS;
 		if (!(rv & 0xff) && (BIOS_regs.biosr_bx & 0xffff) == 0xaa55)
 			pdi->bios_edd = bm & 0xffff;
 		else
 			pdi->bios_edd = -1;
-	}
+	}else
+		pdi->bios_edd = -1;
+#else
+	pdi->bios_edd = -1;
+#endif
 
 	/*
 	 * NOTE: This seems to hang on certain machines.  Use function #8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.6 1997/10/24 22:22:57 mickey Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.7 1997/10/25 02:07:10 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -77,6 +77,10 @@ diskprobe()
 		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(2, 0, 0, drive, 0);
 		i++;
 	}
+
+#ifdef BIOS_DEBUG
+	printf("/");
+#endif
 
 	/* Hard disks */
 	for(drive = 0x80; drive < 0x88; drive++) {

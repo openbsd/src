@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.17 1997/10/24 22:22:56 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.18 1997/10/25 02:07:09 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -139,20 +139,22 @@ bad:
 	return 0;
 }
 
-int
+static int
 Xmemory()
 {
 	bios_memmap_t *tm = memory_map;
-	int total = 0;
+	int count, total = 0;
 
-	printf ("Map:");
-	for(; tm->type != BIOS_MAP_END; tm++){
-		printf(" [%luK]@0x%lx", (long)tm->size, (long)tm->addr);
-		if(tm->type == BIOS_MAP_FREE)
-			total += tm->size;
+	for(count = 0; tm[count].type != BIOS_MAP_END; count++){
+		printf("Region %d: type %u at 0x%lx for %luKB\n", count,
+			tm[count].type, (long)tm[count].addr, (long)tm[count].size);
+
+		if(tm[count].type == BIOS_MAP_FREE)
+			total += tm[count].size;
 	}
 
-	printf("\nTotal: %uK, Low: %uK, High: %uK\n", total, cnvmem, extmem);
+	printf("Low ram: %dKB  High ram: %dKB\n", cnvmem, extmem);
+	printf("Total free memory: %dKB\n", total);
 
 	return 0;
 }
