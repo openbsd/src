@@ -1,3 +1,4 @@
+/*	$OpenBSD: acl.h,v 1.5 1998/02/18 11:53:40 art Exp $	*/
 /* $KTH: acl.h,v 1.5 1997/04/01 08:17:52 joda Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdb_destroy.c,v 1.4 1998/02/18 11:53:48 art Exp $	*/
 /* $KTH: kdb_destroy.c,v 1.7 1997/03/31 02:25:21 assar Exp $ */
 
 /*-

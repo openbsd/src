@@ -1,12 +1,29 @@
+/*	$OpenBSD: kadm.h,v 1.3 1998/02/18 11:53:40 art Exp $	*/
+/* $KTH: kadm.h,v 1.13 1997/08/17 07:30:24 assar Exp $ */
+
 /*
- * $KTH: kadm.h,v 1.13 1997/08/17 07:30:24 assar Exp $
+ * This software may now be redistributed outside the US.
+ */
+
+/*-
+ * Copyright (C) 1989 by the Massachusetts Institute of Technology
  *
- * Copyright 1988 by the Massachusetts Institute of Technology.
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
  *
- * For copying and distribution information, please see the file
- * <mit-copyright.h>.
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
  *
- * Definitions for Kerberos administration server & client
  */
 
 #ifndef KADM_DEFS

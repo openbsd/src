@@ -1,4 +1,9 @@
-/*	$Id: kadm_server.h,v 1.2 1997/06/29 10:48:35 provos Exp $	*/
+/*	$OpenBSD: kadm_server.h,v 1.3 1998/02/18 11:53:34 art Exp $	*/
+/*	$Id: kadm_server.h,v 1.3 1998/02/18 11:53:34 art Exp $	*/
+
+/*
+ * This software may now be redistributed outside the US.
+ */
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology

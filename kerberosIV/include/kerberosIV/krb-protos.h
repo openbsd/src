@@ -1,3 +1,4 @@
+/*	$OpenBSD: krb-protos.h,v 1.2 1998/02/18 11:53:42 art Exp $	*/
 /* $KTH: krb-protos.h,v 1.3 1997/12/05 08:54:38 joda Exp $ */
 
 /*

@@ -1,12 +1,32 @@
-/*	$OpenBSD: kdb_util.c,v 1.2 1997/12/12 05:30:13 art Exp $	*/
+/*	$OpenBSD: kdb_util.c,v 1.3 1998/02/18 11:53:52 art Exp $	*/
 /* $KTH: kdb_util.c,v 1.36 1997/12/05 04:21:50 assar Exp $ */
 
 /*
- * Copyright 1987, 1988 by the Massachusetts Institute of Technology.
- * 
- * For copying and distribution information, please see the file
- * <mit-copyright.h>.
+ * This software may now be redistributed outside the US.
+ */
+
+/*-
+ * Copyright (C) 1987, 1988 by the Massachusetts Institute of Technology
  *
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
+ */
+
+/*
  * Kerberos database manipulation utility. This program allows you to
  * dump a kerberos database to an ascii readable file and load this
  * file into the database. Read locking of the database is done during a

@@ -1,4 +1,4 @@
-/*	$Id: slav_locl.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
+/*	$OpenBSD: slav_locl.h,v 1.2 1998/02/18 11:53:39 art Exp $	*/
 
 #ifndef __slav_locl_h
 #define __slav_locl_h

@@ -1,14 +1,32 @@
-/*	$OpenBSD: krb-archaeology.h,v 1.1 1997/12/12 05:30:24 art Exp $	*/
+/*	$OpenBSD: krb-archaeology.h,v 1.2 1998/02/18 11:54:01 art Exp $	*/
+/* $KTH: krb-archaeology.h,v 1.2 1997/12/05 02:04:44 joda Exp $ */
+
 /*
- * $KTH: krb-archaeology.h,v 1.2 1997/12/05 02:04:44 joda Exp $
- *
+ * This software may now be redistributed outside the US.
+ */
+
+/*
  * Most of the cruft in this file is probably:
  *
  * Copyright 1985, 1986, 1987, 1988 by the Massachusetts Institute
  * of Technology.
  *
- * For copying and distribution information, please see the file
- * <mit-copyright.h>.
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
  */
 
 #ifndef __KRB_ARCHAEOLOGY_H__

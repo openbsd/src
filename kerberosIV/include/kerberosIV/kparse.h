@@ -1,4 +1,4 @@
-/*	$Id: kparse.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
+/*	$OpenBSD: kparse.h,v 1.2 1998/02/18 11:53:41 art Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board

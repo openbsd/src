@@ -1,13 +1,28 @@
-/*	$Id: ksrvtgt.c,v 1.3 1997/08/18 03:11:22 millert Exp $	*/
+/*	$OpenBSD: ksrvtgt.c,v 1.4 1998/02/18 11:54:07 art Exp $	*/
+
+/*
+ * This software may now be redistributed outside the US.
+ */
 
 /*-
- * Copyright 1988 by the Massachusetts Institute of Technology. 
+ * Copyright (C) 1988 by the Massachusetts Institute of Technology
  *
- * For copying and distribution information, please see the file
- * <mit-copyright.h>. 
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
  *
- * Get a ticket-granting-ticket given a service key file (srvtab)
- * The lifetime is the shortest allowed [1 five-minute interval]
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
  */
 
 #include <stdio.h>
@@ -17,7 +32,7 @@
 #include <kerberosIV/krb.h>
 
 const char rcsid[] =
-    "$Id: ksrvtgt.c,v 1.3 1997/08/18 03:11:22 millert Exp $";
+    "$Id: ksrvtgt.c,v 1.4 1998/02/18 11:54:07 art Exp $";
 
 main(argc,argv)
     int argc;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdb_init.c,v 1.4 1998/02/18 11:53:50 art Exp $	*/
 /* $KTH: kdb_init.c,v 1.23 1997/03/30 17:45:05 assar Exp $ */
 
 /*-

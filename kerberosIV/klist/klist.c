@@ -1,12 +1,32 @@
-/*	$OpenBSD: klist.c,v 1.3 1997/12/12 05:30:17 art Exp $	*/
+/*	$OpenBSD: klist.c,v 1.4 1998/02/18 11:53:56 art Exp $	*/
 /* $KTH: klist.c,v 1.28 1997/05/26 17:33:50 bg Exp $ */
 
 /*
- * Copyright 1987, 1988 by the Massachusetts Institute of Technology. 
+ * This software may now be redistributed outside the US.
+ */
+
+/*-
+ * Copyright (C) 1989 by the Massachusetts Institute of Technology
  *
- * For copying and distribution information, please see the file
- * <mit-copyright.h>. 
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
  *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
+ */
+
+/*
  * Lists your current Kerberos tickets.
  * Written by Bill Sommerfeld, MIT Project Athena.
  */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: kadmin.c,v 1.7 1998/02/18 11:53:45 art Exp $	*/
 /* $KTH: kadmin.c,v 1.50 1997/11/03 19:51:46 assar Exp $ */
 
 /* 

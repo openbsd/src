@@ -1,3 +1,4 @@
+/*	$OpenBSD: kadm_locl.h,v 1.5 1998/02/18 11:53:33 art Exp $	*/
 /* $KTH: kadm_locl.h,v 1.26 1997/09/02 18:13:26 assar Exp $ */
 
 /*
