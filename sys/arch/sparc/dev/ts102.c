@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.9 2003/06/28 16:40:52 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.10 2003/07/02 21:32:48 todd Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -554,6 +554,10 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 	DELAY(20 * 1000);
+
+	/* We need level-triggered interrupts for PC Card hardware */
+	TSLOT_WRITE(td, TS102_REG_CARD_A_STS,
+		TSLOT_READ(td, TS102_REG_CARD_A_STS) | TS102_CARD_STS_LVL);
 
 	/*
 	 * Wait until the card is unbusy. If it is still busy after 3 seconds,
