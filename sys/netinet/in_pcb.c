@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.78 2004/06/25 03:04:24 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.79 2004/08/04 20:45:09 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -656,8 +656,8 @@ in_pcbnotifyall(table, dst, errno, notify)
 	if (faddr.s_addr == INADDR_ANY)
 		return;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;) {
+	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	    inp != CIRCLEQ_END(&table->inpt_queue);) {
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6) {
 			inp = CIRCLEQ_NEXT(inp, inp_queue);
@@ -670,7 +670,7 @@ in_pcbnotifyall(table, dst, errno, notify)
 			continue;
 		}
 		oinp = inp;
-		inp = inp->inp_queue.cqe_next;
+		inp = CIRCLEQ_NEXT(inp, inp_queue);
 		if (notify)
 			(*notify)(oinp, errno);
 	}
