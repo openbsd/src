@@ -12,7 +12,7 @@
  */
 #endif /* APPLE_HYB */
 
-static char rcsid[] ="$Id: match.c,v 1.1 2000/10/10 20:40:17 beck Exp $";
+static char rcsid[] ="$Id: match.c,v 1.2 2002/11/03 20:27:03 pvalchev Exp $";
 
 #include "config.h"
 #include <prototyp.h>
@@ -24,6 +24,7 @@ static char rcsid[] ="$Id: match.c,v 1.1 2000/10/10 20:40:17 beck Exp $";
 #include <stdlib.h>
 #endif
 #endif
+#include <inttypes.h>
 #include <string.h>
 #include "match.h"
 
@@ -114,9 +115,9 @@ char * fn;
   return 0; /* not found -> not excluded */
 }
 
-int i_ishidden()
+intptr_t i_ishidden()
 {
-  return((int)i_mat[0]);
+  return((intptr_t)i_mat[0]);
 }
 
 /* Joliet hide */
@@ -164,9 +165,9 @@ char * fn;
   return 0; /* not found -> not excluded */
 }
 
-int j_ishidden()
+intptr_t j_ishidden()
 {
-  return((int)j_mat[0]);
+  return((intptr_t)j_mat[0]);
 }
 
 #ifdef APPLE_HYB
@@ -234,9 +235,9 @@ char * fn;
   return 0; /* not found -> not excluded */
 }
 
-int hfs_ishidden()
+intptr_t hfs_ishidden()
 {
-  return((int)hfs_mat[0]);
+  return((intptr_t)hfs_mat[0]);
 }
 
 /* These will probably appear in mkisofs in the future */
