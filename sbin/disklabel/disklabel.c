@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.91 2004/09/18 23:23:17 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.92 2004/09/28 17:57:46 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.91 2004/09/18 23:23:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.92 2004/09/28 17:57:46 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,22 +121,15 @@ void	makedisktab(FILE *, struct disklabel *);
 void	makelabel(char *, char *, struct disklabel *);
 int	writelabel(int, char *, struct disklabel *);
 void	l_perror(char *);
-struct disklabel *readlabel(int);
-struct disklabel *makebootarea(char *, struct disklabel *, int);
-void	display(FILE *, struct disklabel *, char);
-void	display_partition(FILE *, struct disklabel *, char **, int, char, int);
-int	width_partition(struct disklabel *, int);
-int	editor(struct disklabel *, int, char *, char *);
 int	edit(struct disklabel *, int);
 int	editit(void);
 char	*skip(char *);
 char	*word(char *);
 int	getasciilabel(FILE *, struct disklabel *);
-int	checklabel(struct disklabel *);
 int	cmplabel(struct disklabel *, struct disklabel *);
 void	setbootflag(struct disklabel *);
 void	usage(void);
-u_short	dkcksum(struct disklabel *);
+u_int32_t getnum(char *, u_int32_t, u_int32_t, const char **);
 
 int
 main(int argc, char *argv[])
@@ -972,29 +965,16 @@ makedisktab(FILE *f, struct disklabel *lp)
 	(void)fflush(f);
 }
 
-int
-width_partition(struct disklabel *lp, int unit)
-{
-	unit = toupper(unit);
-	switch (unit) {
-	case 'K':
-		return 10;
-	}
-	return 8;
-}
-
 /*
  * Display a particular partition.
  */
 void
 display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
-    char unit, int width)
+    char unit)
 {
 	volatile struct partition *pp = &lp->d_partitions[i];
 	double p_size, p_offset;
 
-	if (width == 0)
-		width = 8;
 	unit = toupper(unit);
 	p_size = -1.0;			/* no conversion by default */
 	p_offset = 0.0;
@@ -1027,49 +1007,51 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 
 	if (pp->p_size) {
 		if (p_size < 0)
-			fprintf(f, "  %c: %*u %*u  ", 'a' + i,
-			    width, pp->p_size, width, pp->p_offset);
+			fprintf(f, "  %c: %13u %13u ", 'a' + i,
+			    pp->p_size, pp->p_offset);
 		else
-			fprintf(f, "  %c: %*.1f%c %*.1f%c  ", 'a' + i,
-			    width-1, p_size, unit, width-1, p_offset, unit);
+			fprintf(f, "  %c: %12.*f%c %12.*f%c ", 'a' + i,
+			    unit == 'B' ? 0 : 1, p_size, unit,
+			    unit == 'B' ? 0 : 1, p_offset, unit);
 		if ((unsigned) pp->p_fstype < FSMAXTYPES)
-			fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
+			fprintf(f, "%6.6s", fstypenames[pp->p_fstype]);
 		else
-			fprintf(f, "%8d", pp->p_fstype);
+			fprintf(f, "%6d", pp->p_fstype);
 		switch (pp->p_fstype) {
 
 		case FS_UNUSED:				/* XXX */
-			fprintf(f, "    %5u %5u %5.5s ",
+			fprintf(f, "  %5u %5u %5.5s ",
 			    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
 			break;
 
 		case FS_BSDFFS:
-			fprintf(f, "    %5u %5u %5hu ",
+			fprintf(f, "  %5u %5u %5hu ",
 			    pp->p_fsize, pp->p_fsize * pp->p_frag,
 			    pp->p_cpg);
 			break;
 
 		default:
-			fprintf(f, "%22.22s", "");
+			fprintf(f, "%20.20s", "");
 			break;
 		}
 		if (mp != NULL) {
 			if (mp[i] != NULL)
-				fprintf(f, " # %s", mp[i]);
+				fprintf(f, "# %s", mp[i]);
 		} else if (lp->d_secpercyl) {
-			fprintf(f, "\t# (Cyl. %4u",
+			fprintf(f, "# Cyl %5u",
 			    pp->p_offset / lp->d_secpercyl);
 			if (pp->p_offset % lp->d_secpercyl)
 				putc('*', f);
 			else
 				putc(' ', f);
-			fprintf(f, "- %u",
+			fprintf(f, "-%6u",
 			    (pp->p_offset +
 			    pp->p_size + lp->d_secpercyl - 1) /
 			    lp->d_secpercyl - 1);
 			if ((pp->p_offset + pp->p_size) % lp->d_secpercyl)
 				putc('*', f);
-			putc(')', f);
+			else
+				putc(' ', f);
 		}
 		putc('\n', f);
 	}
@@ -1079,7 +1061,6 @@ void
 display(FILE *f, struct disklabel *lp, char unit)
 {
 	int i, j;
-	int width;
 
 	fprintf(f, "# %s:\n", specname);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
@@ -1118,12 +1099,10 @@ display(FILE *f, struct disklabel *lp, char unit)
 	for (j = 0; j <= i; j++)
 		fprintf(f, "%d ", lp->d_drivedata[j]);
 	fprintf(f, "\n\n%hu partitions:\n", lp->d_npartitions);
-	width = width_partition(lp, 0);
-	fprintf(f,
-	    "#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
-	    width, width, "size", width, width, "offset");
+	fprintf(f, "#    %13.13s %13.13s fstype [fsize bsize   cpg]\n",
+	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(f, lp, NULL, i, unit, width);
+		display_partition(f, lp, NULL, i, unit);
 	fflush(f);
 }
 

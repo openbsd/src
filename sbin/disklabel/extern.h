@@ -15,4 +15,18 @@
  */
 
 u_short	dkcksum(struct disklabel *);
+int	checklabel(struct disklabel *);
+void	display(FILE *, struct disklabel *, char);
+void	display_partition(FILE *, struct disklabel *, char **, int, char);
 
+struct disklabel *readlabel(int);
+struct disklabel *makebootarea(char *, struct disklabel *, int);
+int	editor(struct disklabel *, int, char *, char *);
+
+int	writelabel(int, char *, struct disklabel *);
+extern  char bootarea[], *specname;
+extern  int donothing;
+
+#ifdef DOSLABEL
+extern  struct dos_partition *dosdp;    /* DOS partition, if found */
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.94 2004/08/03 09:30:12 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.95 2004/09/28 17:57:46 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.94 2004/08/03 09:30:12 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.95 2004/09/28 17:57:46 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$OpenBSD: editor.c,v 1.94 2004/08/03 09:30:12 otto Exp $"
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "extern.h"
 #include "pathnames.h"
 
 /* flags for getuint() */
@@ -67,7 +68,6 @@ struct mountinfo {
 };
 
 void	edit_parms(struct disklabel *, u_int32_t *);
-int	editor(struct disklabel *, int, char *, char *);
 void	editor_add(struct disklabel *, char **, u_int32_t *, char *);
 void	editor_change(struct disklabel *, u_int32_t *, char *);
 void	editor_countfree(struct disklabel *, u_int32_t *);
@@ -105,21 +105,6 @@ void	zero_partitions(struct disklabel *, u_int32_t *);
 static u_int32_t starting_sector;
 static u_int32_t ending_sector;
 static int expert;
-
-/* from disklabel.c */
-int	checklabel(struct disklabel *);
-void	display(FILE *, struct disklabel *, char);
-void	display_partition(FILE *, struct disklabel *, char **, int, char, int);
-int	width_partition(struct disklabel *, int);
-
-struct disklabel *readlabel(int);
-struct disklabel *makebootarea(char *, struct disklabel *, int);
-int	writelabel(int, char *, struct disklabel *);
-extern	char *bootarea, *specname;
-extern	int donothing;
-#ifdef DOSLABEL
-extern	struct dos_partition *dosdp;	/* DOS partition, if found */
-#endif
 
 /*
  * Simple partition editor.  Primarily intended for new labels.
@@ -803,7 +788,6 @@ void
 editor_display(struct disklabel *lp, char **mp, u_int32_t *freep, char unit)
 {
 	int i;
-	int width;
 
 	printf("device: %s\n", specname);
 	printf("type: %s\n", dktypenames[lp->d_type]);
@@ -818,11 +802,10 @@ editor_display(struct disklabel *lp, char **mp, u_int32_t *freep, char unit)
 	printf("free sectors: %u\n", *freep);
 	printf("rpm: %hu\n", lp->d_rpm);
 	printf("\n%hu partitions:\n", lp->d_npartitions);
-	width = width_partition(lp, unit);
-	printf("#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
-		width, width, "size", width, width, "offset");
+	printf("#    %13.13s %13.13s fstype [fsize bsize   cpg]\n",
+	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(stdout, lp, mp, i, unit, width);
+		display_partition(stdout, lp, mp, i, unit);
 }
 
 /*
@@ -1197,8 +1180,8 @@ has_overlap(struct disklabel *lp, u_int32_t *freep, int resolve)
 				printf("\nError, partitions %c and %c overlap:\n",
 				    'a' + i, 'a' + j);
 				puts("         size   offset    fstype   [fsize bsize   cpg]");
-				display_partition(stdout, lp, NULL, i, 0, 0);
-				display_partition(stdout, lp, NULL, j, 0, 0);
+				display_partition(stdout, lp, NULL, i, 0);
+				display_partition(stdout, lp, NULL, j, 0);
 
 				/* Did they ask us to resolve it ourselves? */
 				if (resolve != 1) {
