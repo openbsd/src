@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.51 2000/08/01 13:45:26 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.52 2000/10/08 19:36:09 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.51 2000/08/01 13:45:26 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.52 2000/10/08 19:36:09 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1509,6 +1509,8 @@ static int ncr_cache; /* to be aligned _NOT_ static */
 #define	NCR_895_ID	(0x000c1000ul)
 #define	NCR_895A_ID	(0x00121000ul)
 #define	NCR_896_ID	(0x000b1000ul)
+#define	NCR_1510_ID	(0x00101000ul)
+#define	NCR_1510D_ID	(0x000a1000ul)
 
 #ifdef __OpenBSD__
 
@@ -3494,6 +3496,12 @@ static ncr_chip ncr_chip_table[] = {
  FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
  {NCR_896_ID, 0x00,	7, 31, 7,
+ FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
+ ,
+ {NCR_1510_ID, 0x00,	7, 31, 7,
+ FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
+ ,
+ {NCR_1510D_ID, 0x00,	7, 31, 7,
  FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 };
 
