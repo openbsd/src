@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.63 2004/01/04 20:21:07 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.64 2004/01/04 23:08:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -274,10 +274,10 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 		timeout = nextaction - time(NULL);
 		if (timeout < 0)
 			timeout = 0;
-		nfds = poll(pfd, i, timeout * 1000);
-		/*
-		 * what do we do on poll error?
-		 */
+		if ((nfds = poll(pfd, i, timeout * 1000)) == -1)
+			if (errno != EINTR)
+				fatal("poll error");
+
 		if (nfds > 0 && pfd[PFD_LISTEN].revents & POLLIN) {
 			nfds--;
 			session_accept(sock);
