@@ -1,5 +1,4 @@
-/*	$OpenBSD: scsi96.c,v 1.3 1996/05/26 18:35:34 briggs Exp $	*/
-/*	$NetBSD: scsi96.c,v 1.17 1996/05/05 06:17:19 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.21 1996/10/13 03:21:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -28,12 +27,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * WARNING!  This is a non-working driver at the moment!
- *		That means it does not work!  Contact Allen Briggs
- *		(briggs@mail.vt.edu) for current status of this driver.
- */
-
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/param.h>
@@ -45,6 +38,7 @@
 #include <sys/device.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>
+#include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
 #include <machine/scsi96reg.h>
@@ -57,8 +51,7 @@
 #endif
 
 extern vm_offset_t SCSIBase;
-static volatile unsigned char *ncr53c96base =
-(volatile unsigned char *) 0xF000;	/* Offset from IOBase */
+static volatile unsigned char *ncr53c96base;
 
 struct ncr53c96_softc {
 	struct device sc_dev;
@@ -68,8 +61,9 @@ struct ncr53c96_softc {
 	struct scsi_link sc_link;
 };
 #define WAIT_FOR(reg, val) { \
-	int	timeo=100000; \
+	int	timeo=10000; \
 	while (!(reg & val)) { \
+		delay(100); \
 		if (!(--timeo)) { \
 			printf("scsi96: WAIT_FOR timeout.\n"); \
 			goto have_error; \
@@ -80,10 +74,12 @@ struct ncr53c96_softc {
 static void ncr53c96_minphys(struct buf * bp);
 static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 
-static int ncr53c96_show_scsi_cmd(struct scsi_xfer * xs);
+/* static int ncr53c96_show_scsi_cmd(struct scsi_xfer * xs); */
 static int ncr53c96_reset_target(int adapter, int target);
 static int ncr53c96_poll(int adapter, int timeout);
 static int ncr53c96_send_cmd(struct scsi_xfer * xs);
+static int scsiprint __P((void *, char *));
+static void resetchip __P((void));
 
 struct scsi_adapter ncr53c96_switch = {
 	ncr53c96_scsi_cmd,	/* scsi_cmd()		 */
@@ -111,16 +107,6 @@ struct cfdriver ncr96scsi_cd = {
 	NULL, "ncr96scsi", DV_DULL, NULL, 0
 };
 
-static int ncr96_print __P((void *, char *));
-static int
-ncr96_print(aux, name)
-	void   *aux;
-	char   *name;
-{
-	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); return UNCONF; */
-	return UNCONF;
-}
-
 static int
 ncr96probe(parent, match, aux)
 	struct device *parent;
@@ -129,16 +115,25 @@ ncr96probe(parent, match, aux)
 {
 	static int probed = 0;
 
-		return 0;
 	if (!mac68k_machine.scsi96) {
 		return 0;
 	}
 
 	if (!probed) {
 		probed = 1;
-		ncr53c96base += SCSIBase;
+		ncr53c96base = (volatile u_char *)SCSIBase;
 	}
 	return 1;
+}
+
+static int
+scsiprint(auxp, name)
+	void	*auxp;
+	char	*name;
+{
+	if (name == NULL)
+		return (UNCONF);
+	return (QUIET);
 }
 
 static void
@@ -146,23 +141,26 @@ ncr96attach(parent, dev, aux)
 	struct device *parent, *dev;
 	void   *aux;
 {
-	int     unit = dev->dv_unit;
 	struct ncr53c96_softc *ncr53c96;
 
 	ncr53c96 = (struct ncr53c96_softc *) dev;
 
-	ncr53c96->sc_link.scsibus = unit;
+	ncr53c96->sc_link.adapter_softc = ncr53c96;
 	ncr53c96->sc_link.adapter_target = 7;
 	ncr53c96->sc_link.adapter = &ncr53c96_switch;
 	ncr53c96->sc_link.device = &ncr53c96_dev;
 	ncr53c96->sc_link.openings = 1;
 #ifdef SCSIDEBUG
-	ncr53c96->sc_link.flags = SDEV_DB1 | SDEV_DB2 /* | SDEV_DB3 | SDEV_DB4 */ ;
+	ncr53c96->sc_link.flags = 0 /* SDEV_DB1 | SDEV_DB2 | SDEV_DB3 | SDEV_DB4 */ ;
+#else
+	ncr53c96->sc_link.flags = 0;
 #endif
+
+	resetchip();
 
 	printf("\n");
 
-	config_found(dev, &(ncr53c96->sc_link), ncr96_print);
+	config_found(dev, &(ncr53c96->sc_link), scsiprint);
 
 	/*
 	 * Enable IRQ and DRQ interrupts.
@@ -256,6 +254,7 @@ ncr53c96_scsi_cmd(struct scsi_xfer * xs)
 */
 }
 
+#if 0
 static int
 ncr53c96_show_scsi_cmd(struct scsi_xfer * xs)
 {
@@ -279,6 +278,7 @@ ncr53c96_show_scsi_cmd(struct scsi_xfer * xs)
 	}
 	return 0;
 }
+#endif
 
 /*
  * Actual chip control.
@@ -320,27 +320,46 @@ ncr53c96_poll(int adapter, int timeout)
 return 0;
 }
 
+static void
+resetchip(void)
+{
+	struct ncr53c96regs *ncr = (struct ncr53c96regs *) ncr53c96base;
+
+	ncr->cmdreg = NCR96_CMD_RESETDEV;
+	delay(25);
+	ncr->cmdreg = NCR96_CMD_NOOP;
+	delay(25);
+	ncr->clkfactorreg = 5;	/* Is this right? */
+	delay(25);
+
+	ncr->soffsetreg = 0;    /* make sure we use async xfers */
+	ncr->stimreg = 0x99;	/* Value corresponding to clkfactorreg of 5 */
+	ncr->ctrlreg1 = 0x7;	/* Our ID */
+	ncr->ctrlreg2 = 0;
+	ncr->ctrlreg3 = NCR96_C3_LBTM;
+}
+
 static int
 do_send_cmd(struct scsi_xfer * xs)
 {
 	struct ncr53c96regs *ncr = (struct ncr53c96regs *) ncr53c96base;
 	u_char *cmd;
 	int     i, stat, is, intr;
-	int     msg, phase;
+	int     msg, phase, ds=0;
 
 	xs->resid = 0;
 	i = (int) ncr->statreg;	/* clear interrupts */
+	i = (int) ncr->instreg;
 	ncr->cmdreg = NCR96_CMD_CLRFIFO;	/* and fifo */
 
+	ncr->sdidreg = xs->sc_link->target;
+	ncr->fifo = MSG_IDENTIFY(xs->sc_link->lun, 0);
 	cmd = (u_char *) xs->cmd;
 	for (i = 0; i < xs->cmdlen; i++)
 		ncr->fifo = *cmd++;
-	ncr->tcreg_lsb = xs->cmdlen;
+	ncr->tcreg_lsb = xs->cmdlen + 1;
 	ncr->tcreg_msb = 0;
-	ncr->stimreg = 122;	/* XXX */
-	ncr->sdidreg = xs->sc_link->target;
-/*	ncr->ctrlreg1 = 0x47; from the mac -- inherited*/
-	ncr->cmdreg = NCR96_CMD_SEL;
+	ncr->cmdreg = NCR96_CMD_SELATN;
 
 	WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
 
@@ -348,48 +367,78 @@ do_send_cmd(struct scsi_xfer * xs)
 	is = ncr->isreg;
 	intr = ncr->instreg;
 	if ((is & 0x07) != 0x4 || intr != 0x18) {
-		if ((is & 0x7) != 0x0 || intr != 0x20) {
+		if ((is & 0x7) == 2 && intr == 0x18) {
+			/* Target selected, but invalid LUN */
+			resetchip();
+			xs->error = XS_SELTIMEOUT;
+			return COMPLETE;
+		} else if ((is & 0x7) != 0x0 || intr != 0x20) {
 			printf("scsi96: stat = 0x%x, is = 0x%x, intr = 0x%x\n",
 			    stat, is, intr);
+			goto have_error;
 		}
-		goto have_error;
+		xs->error = XS_SELTIMEOUT;
+		return COMPLETE;
 	}
+	ds = 1;
+/*
 	printf("scsi96: before loop: stat = 0x%x, is = 0x%x, intr = 0x%x, "
 	    "datalen = %d\n", stat, is, intr, xs->datalen);
+*/
 	phase = ncr->statreg & NCR96_STAT_PHASE;
 	if (((phase == 0x01) || (phase == 0x00)) && xs->datalen) {
-		printf("data = %p, datalen = 0x%x.\n", xs->data, xs->datalen);
+		/* printf("data = %p, datalen = 0x%x.\n", xs->data, xs->datalen); */
 		stat = ncr->statreg;
 		is = ncr->isreg;
 		intr = ncr->instreg;
-		printf("entering info xfer...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
-		    stat, is, intr);
+		/* printf("entering info xfer...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
+		    stat, is, intr); */
 		ncr->tcreg_lsb = (xs->datalen & 0xff);
 		ncr->tcreg_msb = (xs->datalen >> 8) & 0xff;
-		ncr->cmdreg = 0x80 | NCR96_CMD_INFOXFER;
-		printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
+/*		ncr->cmdreg = 0x80 | NCR96_CMD_INFOXFER; */
+		/* printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8)); */
 		i = 0;
 		while (i < xs->datalen) {
-			int     d, stat;
+			int     d, stat, newphase;
 
-			WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
+			ncr->cmdreg = NCR96_CMD_INFOXFER;
 
-			stat = ncr->statreg;
+			if (phase == 1) {
+				WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
 
-			for (d = 1000000; d && !(via_reg(VIA2, vIFR) & 0x01); d--);
-			if (d <= 0)
-				printf("read timeout.\n");
-			d = ncr->fifostatereg & NCR96_CF_MASK;
+				stat = ncr->statreg;
+				newphase = stat & NCR96_STAT_PHASE;
 
-			while (d--) {
-				xs->data[i++] = ncr->fifo;
-				printf("0x%x,", xs->data[i - 1]);
+		        	d = ncr->fifostatereg & NCR96_CF_MASK;
+			  
+				while (d--) {
+			  		xs->data[i++] = ncr->fifo;
+				/* printf("0x%x,", xs->data[i - 1]);*/
+				}
+			} else {
+				/* printf("out %02x ", xs->data[i]); */
+				ncr->fifo = xs->data[i++];
+				WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
+
+				stat = ncr->statreg;
+				newphase = stat & NCR96_STAT_PHASE;
 			}
 
 			intr = ncr->instreg;
-			printf("\nin loop.  stat = 0x%x, intr = 0x%x",
-			    stat, intr);
-			printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
+
+#if 0
+			if (phase == 0)
+				printf("in loop.  stat = 0x%x, intr = 0x%x\n",
+				    stat, intr);
+#endif
+
+			if ((i != xs->datalen) && (phase != newphase)) {
+				intr = ncr->instreg;
+				if (phase == 0)
+					printf("Unexpected phase change during data out from %d to %d, got %d of %d\n", phase, newphase, i, xs->datalen);
+				break;
+			}
+
 		}
 /*	} else {
 		WAIT_FOR(ncr->statreg, NCR96_STAT_INT); */
@@ -397,8 +446,14 @@ do_send_cmd(struct scsi_xfer * xs)
 	stat = ncr->statreg;
 	is = ncr->isreg;
 	intr = ncr->instreg;
+/*
 	printf("past loop...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
 	    stat, is, intr);
+*/
+
+	phase = stat & NCR96_STAT_PHASE;
+	if (phase != 3)
+	  printf("Expected to be in phase 3, but in phase %d\n", phase);
 
 	ncr->cmdreg = NCR96_CMD_ICCS;
 
@@ -411,6 +466,10 @@ do_send_cmd(struct scsi_xfer * xs)
 	xs->status = ncr->fifo;
 	msg = ncr->fifo;
 
+/*
+	printf("got Status %d, Message %d, stat = 0x%x, is = 0x%x, intr = 0x%x\n", xs->status, msg, stat, is, intr);
+*/
+
 	ncr->cmdreg = NCR96_CMD_MSGACC;
 
 	WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
@@ -418,10 +477,15 @@ do_send_cmd(struct scsi_xfer * xs)
 	stat = ncr->statreg;
 	is = ncr->isreg;
 	intr = ncr->instreg;
-	if (intr == 0x20 && stat == 0x90)
+	if ((intr == 0x20) && (stat & 0x80)) {
+		xs->error = XS_NOERROR;
 		return COMPLETE;
+	}
 
 have_error:
+	printf("Driver stuffup...stat=0x%x, is=0x%x, intr=0x%x, ds=%d\n",
+	    stat, is, intr, ds);
+	resetchip();
 	xs->error = XS_DRIVER_STUFFUP;
 	return COMPLETE;
 }
@@ -429,17 +493,5 @@ have_error:
 static int
 ncr53c96_send_cmd(struct scsi_xfer * xs)
 {
-	int     r = COMPLETE;
-
-	if (xs->sc_link->target >= 5)
-		ncr53c96_show_scsi_cmd(xs);
-	switch (xs->cmd->opcode) {
-	case 0:		/* TUN */
-	case 0x12:		/* INQUIRY */
-		r = do_send_cmd(xs);
-	default:
-		xs->error = XS_DRIVER_STUFFUP;
-		r = COMPLETE;
-	}
-	return r;
+	return do_send_cmd(xs);
 }

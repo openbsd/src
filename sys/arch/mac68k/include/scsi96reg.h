@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi96reg.h,v 1.3 1996/05/26 18:36:03 briggs Exp $	*/
+/*	$OpenBSD: scsi96reg.h,v 1.4 1996/10/23 04:52:03 briggs Exp $	*/
 /*	$NetBSD: scsi96reg.h,v 1.5 1996/05/05 06:18:02 briggs Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct ncr53c96regs {
 	v_uchar	isreg;		/* internal state reg */
 	PAD(pad6);
 	v_uchar	fifostatereg;	/* fifo state reg */
+#define soffsetreg fifostatereg
 	PAD(pad7);
 	v_uchar	ctrlreg1;	/* control register 1 */
 	PAD(pad8);
@@ -166,7 +167,7 @@ struct ncr53c96regs {
 
 #define NCR96_CNTLREG3	0xC	/* Control register three.	R/W */
 #define   NCR96_C3_LBTM		0x04	/* Last byte transfer mode */
-#define   NCR96_C3_MDM		0x02	/* Modity DMA mode */
+#define   NCR96_C3_MDM		0x02	/* Modify DMA mode */
 #define   NCR96_C3_BS8		0x01	/* Burst Size 8 */
 
 #define NCR96_DALREG	0xF	/* Data alignment register.	W   */
