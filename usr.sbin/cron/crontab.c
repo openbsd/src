@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.32 2002/07/09 18:58:25 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.33 2002/07/11 20:17:04 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.32 2002/07/09 18:58:25 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.33 2002/07/11 20:17:04 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -289,7 +289,6 @@ edit_cmd(void) {
 	struct stat statbuf;
 	struct timespec mtimespec;
 	struct timeval tv[2];
-	off_t size;
 	WAIT_T waiter;
 	PID_T pid, xpid;
 
@@ -315,7 +314,6 @@ edit_cmd(void) {
 		perror("fstat");
 		goto fatal;
 	}
-	size = statbuf.st_size;
 	memcpy(&mtimespec, &statbuf.st_mtimespec, sizeof(mtimespec));
 	TIMESPEC_TO_TIMEVAL(&tv[0], &statbuf.st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &statbuf.st_mtimespec);
@@ -451,8 +449,7 @@ edit_cmd(void) {
 		perror("fstat");
 		goto fatal;
 	}
-	if (timespeccmp(&mtimespec, &statbuf.st_mtimespec, -) == 0 &&
-	    size == statbuf.st_size) {   
+	if (timespeccmp(&mtimespec, &statbuf.st_mtimespec, -) == 0) {
 		fprintf(stderr, "%s: no changes made to crontab\n",
 			ProgramName);
 		goto remove;
