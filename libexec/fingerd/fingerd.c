@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.21 2001/07/08 21:18:07 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.22 2001/08/18 18:31:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.21 2001/07/08 21:18:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.22 2001/08/18 18:31:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ main(argc, argv)
 		sa = (struct sockaddr *)&ss;
 		if (getnameinfo(sa, sa->sa_len, hostbuf, sizeof(hostbuf),
 		    NULL, 0, 0) != 0) {
-			strncpy(hostbuf, "?", sizeof(hostbuf));
+			strlcpy(hostbuf, "?", sizeof(hostbuf));
 		}
 		hname = hostbuf;
 	}
