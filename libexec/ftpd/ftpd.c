@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.147 2003/10/01 08:06:31 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.148 2003/11/12 19:32:01 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.147 2003/10/01 08:06:31 itojun Exp $";
+    "$OpenBSD: ftpd.c,v 1.148 2003/11/12 19:32:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1429,70 +1429,70 @@ dataconn(char *name, off_t size, char *mode)
 	if (usedefault)
 		data_dest = his_addr;
 	usedefault = 1;
-	file = getdatasock(mode);
-	if (file == NULL) {
-		char hbuf[MAXHOSTNAMELEN], pbuf[10];
+	do {
+		file = getdatasock(mode);
+		if (file == NULL) {
+			char hbuf[MAXHOSTNAMELEN], pbuf[10];
 
-		getnameinfo((struct sockaddr *)&data_source, data_source.su_len,
-		    hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
-		    NI_NUMERICHOST | NI_NUMERICSERV);
-		reply(425, "Can't create data socket (%s,%s): %s.",
-		    hbuf, pbuf, strerror(errno));
-		return (NULL);
-	}
-	data = fileno(file);
-
-	/*
-	 * attempt to connect to reserved port on client machine;
-	 * this looks like an attack
-	 */
-	switch (data_dest.su_family) {
-	case AF_INET:
-		p = (in_port_t *)&data_dest.su_sin.sin_port;
-		fa = (u_char *)&data_dest.su_sin.sin_addr;
-		ha = (u_char *)&his_addr.su_sin.sin_addr;
-		alen = sizeof(struct in_addr);
-		break;
-	case AF_INET6:
-		p = (in_port_t *)&data_dest.su_sin6.sin6_port;
-		fa = (u_char *)&data_dest.su_sin6.sin6_addr;
-		ha = (u_char *)&his_addr.su_sin6.sin6_addr;
-		alen = sizeof(struct in6_addr);
-		break;
-	default:
-		perror_reply(425, "Can't build data connection");
-		(void) fclose(file);
-		pdata = -1;
-		return (NULL);
-	}
-	if (data_dest.su_family != his_addr.su_family ||
-	    ntohs(*p) < IPPORT_RESERVED || ntohs(*p) == 2049) {	/* XXX */
-		perror_reply(425, "Can't build data connection");
-		(void) fclose(file);
-		data = -1;
-		return NULL;
-	}
-	if (portcheck && memcmp(fa, ha, alen) != 0) {
-		perror_reply(435, "Can't build data connection");
-		(void) fclose(file);
-		data = -1;
-		return NULL;
-	}
-	while (connect(data, (struct sockaddr *)&data_dest,
-	    data_dest.su_len) < 0) {
-		if (errno == EADDRINUSE && retry < swaitmax) {
-			sleep((unsigned) swaitint);
-			retry += swaitint;
-			continue;
+			getnameinfo((struct sockaddr *)&data_source, 
+			    data_source.su_len, hbuf, sizeof(hbuf), pbuf, 
+			    sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV);
+			reply(425, "Can't create data socket (%s,%s): %s.",
+			    hbuf, pbuf, strerror(errno));
+			return (NULL);
 		}
-		perror_reply(425, "Can't build data connection");
+
+		/*
+		 * attempt to connect to reserved port on client machine;
+		 * this looks like an attack
+		 */
+		switch (data_dest.su_family) {
+		case AF_INET:
+			p = (in_port_t *)&data_dest.su_sin.sin_port;
+			fa = (u_char *)&data_dest.su_sin.sin_addr;
+			ha = (u_char *)&his_addr.su_sin.sin_addr;
+			alen = sizeof(struct in_addr);
+			break;
+		case AF_INET6:
+			p = (in_port_t *)&data_dest.su_sin6.sin6_port;
+			fa = (u_char *)&data_dest.su_sin6.sin6_addr;
+			ha = (u_char *)&his_addr.su_sin6.sin6_addr;
+			alen = sizeof(struct in6_addr);
+			break;
+		default:
+			perror_reply(425, "Can't build data connection");
+			(void) fclose(file);
+			pdata = -1;
+			return (NULL);
+		}
+		if (data_dest.su_family != his_addr.su_family ||
+	    	ntohs(*p) < IPPORT_RESERVED || ntohs(*p) == 2049) { /* XXX */
+			perror_reply(425, "Can't build data connection");
+			(void) fclose(file);
+			return NULL;
+		}
+		if (portcheck && memcmp(fa, ha, alen) != 0) {
+			perror_reply(435, "Can't build data connection");
+			(void) fclose(file);
+			return NULL;
+		}
+
+		if (connect(fileno(file), (struct sockaddr *)&data_dest,
+		    data_dest.su_len) == 0) {
+			reply(150, "Opening %s mode data connection for '%s'%s.",
+			    type == TYPE_A ? "ASCII" : "BINARY", name, sizebuf);
+			data = fileno(file);
+			return (file);
+		}
+		if (errno != EADDRINUSE)
+			break;
 		(void) fclose(file);
-		data = -1;
-		return (NULL);
-	}
-	reply(150, "Opening %s mode data connection for '%s'%s.",
-	    type == TYPE_A ? "ASCII" : "BINARY", name, sizebuf);
-	return (file);
+		sleep((unsigned) swaitint);
+		retry += swaitint;
+	} while (retry <= swaitmax);
+	perror_reply(425, "Can't build data connection");
+	(void) fclose(file);
+	return (NULL);
 }
 
 /*
