@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.15 1999/09/05 18:51:08 jason Exp $	*/
+/*	$OpenBSD: fb.c,v 1.16 2001/09/08 18:02:29 jason Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -65,6 +65,8 @@
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
 #endif
+
+#include "kbd.h"
 
 static struct fbdevice *devfb;
 
@@ -382,7 +384,9 @@ static void
 fb_bell(on)
 	int on;
 {
+#if NKBD > 0
 	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
+#endif
 }
 
 #include <sparc/dev/rcons_font.h>
