@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2002/03/14 19:19:21 jason Exp $
+#	$OpenBSD: GENERIC,v 1.53 2002/03/14 20:15:00 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -91,6 +91,9 @@ wsmouse* at pmsi?				#   generic mouse
 
 audioce*	at ebus?
 audio*		at audioce?
+
+# parallel ports
+lpt*	at ebus?
 
 uperf*	at sbus? slot ? offset ?
 
