@@ -52,4 +52,4 @@ Prints a picture of a skull, not a tombstone, upon death.
 The save/restore game function is faster and machine-independent, but sometimes
     requires modification when new variables are added to the source.
 The potion of detect monster lasts for the whole level.
-Their is no wand of light.
+There is no wand of light.
