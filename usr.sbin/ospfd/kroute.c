@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2005/03/15 22:03:56 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.7 2005/03/23 11:07:42 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -121,7 +121,7 @@ kif_init(void)
 int
 kr_init(int fs)
 {
-	int opt;
+	int opt = 0;
 
 	kr_state.fib_sync = fs;
 
