@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.18 2003/06/12 12:59:53 jmc Exp $
+.\"	$OpenBSD: syslogd.8,v 1.19 2004/01/04 08:28:49 djm Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl m Ar mark_interval
 .Op Fl a Ar path
 .Op Fl p Ar log_socket
+.Op Fl s Ar reporting_socket
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -90,6 +91,11 @@ Up to about 20 additional logging sockets can be specified.
 The primary use for this is to place additional log sockets in
 .Pa /dev/log
 of various chroot filespaces.
+.It Fl s Ar reporting_socket
+Specify path to an
+.Dv AF_LOCAL
+socket for use in reporting logs stored in memory buffers using
+.Xr syslogc 8 .
 .El
 .Pp
 .Nm
@@ -160,7 +166,8 @@ kernel log device
 .Xr syslog 3 ,
 .Xr services 5 ,
 .Xr syslog.conf 5 ,
-.Xr newsyslog 8
+.Xr newsyslog 8 ,
+.Xr syslogc 8
 .Sh HISTORY
 The
 .Nm

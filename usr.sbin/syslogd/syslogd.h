@@ -36,6 +36,8 @@ int  receive_fd(int);
 #define MAXFUNIX	21
 extern int nfunix;
 extern char *funixn[MAXFUNIX];
+extern char *ctlsock_path;
+
 #define dprintf		if (Debug) printf
 extern int Debug;
 extern int Startup;
@@ -43,6 +45,19 @@ extern int Startup;
 /* fds to poll */
 #define PFD_KLOG	0		/* Offset of /dev/klog entry */
 #define PFD_INET	1		/* Offset of inet socket entry */
-#define PFD_UNIX_0	2		/* Start of Unix socket entries */
+#define PFD_CTLSOCK	2		/* Offset of control socket entry */
+#define PFD_CTLCONN	3		/* Offset of control connection entry */
+#define PFD_UNIX_0	4		/* Start of Unix socket entries */
 #define N_PFD		(PFD_UNIX_0 + MAXFUNIX)	/* # of pollfd entries */
 extern struct pollfd pfd[N_PFD];
+
+struct ringbuf {
+	char *buf;
+	size_t len, start, end;
+};
+
+struct ringbuf *ringbuf_init(size_t);
+void		ringbuf_clear(struct ringbuf *);
+size_t		ringbuf_used(struct ringbuf *);
+int		ringbuf_append_line(struct ringbuf *, char *);
+ssize_t		ringbuf_to_string(char *, size_t, struct ringbuf *);
