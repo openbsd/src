@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)localtime.c	7.64";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.14 1998/11/20 11:18:55 d Exp $";
+static char elsieid[] = "@(#)localtime.c	7.66";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.15 1999/02/01 08:19:36 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -199,24 +199,11 @@ detzcode(codep)
 const char * const	codep;
 {
 	register long	result;
+	register int	i;
 
-	/*
-        ** The first character must be sign extended on systems with >32bit
-        ** longs.  This was solved differently in the master tzcode sources
-        ** (the fix first appeared in tzcode95c.tar.gz).  But I believe 
-	** that this implementation is superior.
-        */
-
-#ifdef __STDC__
-#define SIGN_EXTEND_CHAR(x)	((signed char) x)
-#else
-#define SIGN_EXTEND_CHAR(x)	((x & 0x80) ? ((~0 << 8) | x) : x)
-#endif
-
-	result = (SIGN_EXTEND_CHAR(codep[0]) << 24) \
-	       | (codep[1] & 0xff) << 16 \
-	       | (codep[2] & 0xff) << 8
-	       | (codep[3] & 0xff);
+	result = (codep[0] & 0x80) ? ~0L : 0L;
+	for (i = 0; i < 4; ++i)
+		result = (result << 8) | (codep[i] & 0xff);
 	return result;
 }
 
@@ -302,7 +289,7 @@ register struct state * const	sp;
 		if (!doaccess) {
 			if ((p = TZDIR) == NULL)
 				return -1;
-			if ((strlen(p) + 1 + strlen(name)) >= sizeof fullname)
+			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
 				return -1;
 			(void) strcpy(fullname, p);
 			(void) strcat(fullname, "/");
@@ -1274,7 +1261,7 @@ const time_t * const	timep;
 {
 /*
 ** Section 4.12.3.2 of X3.159-1989 requires that
-**	The ctime funciton converts the calendar time pointed to by timer
+**	The ctime function converts the calendar time pointed to by timer
 **	to local time in the form of a string.  It is equivalent to
 **		asctime(localtime(timer))
 */
@@ -1284,9 +1271,10 @@ const time_t * const	timep;
 char *
 ctime_r(timep, buf)
 const time_t * const	timep;
-char * buf;
+char *			buf;
 {
-	struct tm tm;
+	struct tm	tm;
+
 	return asctime_r(localtime_r(timep, &tm), buf);
 }
 
@@ -1450,7 +1438,7 @@ const int		do_norm_secs;
 				t += 2;
 				break;
 			}
-#else
+#endif
 				return WRONG;
 #endif
 			if (bits < 0)
