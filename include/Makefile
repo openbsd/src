@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 1996/02/05 22:34:09 jtc Exp $
+#	$NetBSD: Makefile,v 1.57 1996/04/25 00:55:44 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
@@ -31,7 +31,7 @@ NOOBJ=	noobj
 .include <bsd.own.mk>
 SYS_INCLUDE?=	copies
 
-realinstall:
+includes:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
@@ -67,9 +67,6 @@ realinstall:
 		xargs chmod a=r
 	find ${DESTDIR}/usr/include -type d | \
 		xargs chmod u=rwx,go=rx
-
-beforeinstall:
-	install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/usr/include
 
 copies:
 	@echo copies: ${LDIRS}
@@ -117,6 +114,6 @@ symlinks:
 		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 	fi
 
-.include <bsd.prog.mk>
+includes: ${SYS_INCLUDE}
 
-realinstall: ${SYS_INCLUDE}
+.include <bsd.prog.mk>
