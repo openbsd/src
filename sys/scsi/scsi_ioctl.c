@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.11 2001/01/25 03:50:53 todd Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.12 2001/04/30 21:21:54 csapuntz Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -416,6 +416,10 @@ scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCDECONFIG:
 		return EINVAL;
 	default:
-		return ENOTTY;
+		if (sc_link->adapter->ioctl)
+			return (sc_link->adapter->ioctl)(sc_link, cmd, addr, 
+			    flag);
+		else
+			return ENOTTY;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.25 2000/11/23 08:55:35 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.26 2001/04/30 21:21:54 csapuntz Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ typedef	int			boolean;
 
 struct buf;
 struct scsi_xfer;
+struct scsi_link;
 
 /*
  * Temporary hack 
@@ -104,6 +105,8 @@ struct scsi_adapter {
 	void		(*scsi_minphys) __P((struct buf *));
 	int		(*open_target_lu) __P((void));
 	int		(*close_target_lu) __P((void));
+	int             (*ioctl) __P((struct scsi_link *, u_long cmd,
+					 caddr_t addrp, int flag));
 };
 
 /*
