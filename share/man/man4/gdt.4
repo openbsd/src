@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.7 2000/07/04 23:25:20 niklas Exp $
+.\"	$OpenBSD: gdt.4,v 1.8 2000/10/17 06:27:15 niklas Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -49,6 +49,7 @@ driver provides support for the following adapters:
 .Tn GDT6x28RD ,
 .Tn GDT6x38RD ,
 .Tn GDT6x58RD ,
+.Tn GDT6518RS ,
 .Tn GDT7x18RN ,
 .Tn GDT7x28RN ,
 .Tn GDT7x38RN ,
@@ -58,13 +59,25 @@ driver provides support for the following adapters:
 .Tn GDT7x19RN ,
 .Tn GDT7x29RN .
 .Pp
-However, only the
+Although only the
 .Tn GDT6x27RP
-has been tested as that was the adapter that was available to the author.
+and the
+.Tn GDT6518RS
+has been tested by the author, the interface the driver sees is uniform over
+all the models and should therefore work just fine.
 .Pp
 Although the controllers are actual RAID controllers the driver makes them
 look just like SCSI controllers.  All RAID configuration is done through
 the controllers' BIOSes.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "pci_mem_find: expected mem type 00000000, found 00000002\n"
+This message occurs during autoconfiguration if jumper J4 is set to map
+the controller memory below 1MB in physical memory.  The driver primarily
+wants this jumper to be set the other way round, but it will work with it in
+any setting.  If the diagnostic is considered a nuisance, just alter jumper
+J4's setting.
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
