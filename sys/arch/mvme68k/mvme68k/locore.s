@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.32 2002/04/18 21:41:02 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.33 2003/01/04 17:21:31 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -284,7 +284,6 @@ is167:
 
 	RELOC(memsize1x7, a1)		| how much memory?
 	jbsr	a1@
-	movl	d0, d2
 
 	RELOC(mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
@@ -330,7 +329,6 @@ is177:
 	
 	RELOC(memsize1x7, a1)		| how much memory?
 	jbsr	a1@
-	movl	d0, d2
         
         /* enable Super Scalar Dispatch */        
 	.word	0x4e7a,0x0808		| movc	pcr,d0
@@ -372,33 +370,6 @@ is16x:
 	movl	a0, sp@-
 	BUGCALL(MVMEPROM_NETCTRL)	| ask the rom
 	addl	#4, sp
-
-#if 0
-	/* 
-	 * get memory size using ENVIRON. unfortunately i've not managed
-	 * to get this working.
-	 */
-	RELOC(rompkt, a0)
-	movl	#ENVIRONCMD_READ, sp@-	| request environment information
-	movl	#ROMPKT_LEN, sp@-	| max length
-	movl	a0, sp@-		| point to info packet
-	BUGCALL(MVMEPROM_ENVIRON)	| ask the rom
-	addl	#12, sp
-	| XXX should check return values
-
-	clrl	d2			| memsize = 0
-1:	clrl	d0
-	movb	a0@+, d0		| look for a "memsize" chunk in the
-	cmpb	#ENVIRONTYPE_EOL, d0	| environment
-	beq	3f
-	cmpb	#ENVIRONTYPE_MEMSIZE, d0
-	beq	2f
-	movb	a0@+, d0
-	addl	d0, a0
-	bra	1b
-2:	movl	a0@(7), d2		| XXX memory size (fix @(7) offset!)
-3:
-#endif
 
 	| if memory size is unknown, print a diagnostic and make an
 	| assumption
@@ -601,6 +572,57 @@ Lnocache0:
 	jra	_C_LABEL(main)		| main()
 	PANIC("main() returned")
 	/* NOTREACHED */
+
+#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined(MVME172)
+/*
+ * Figure out the size of onboard DRAM by querying the memory controller(s).
+ * This has to be done in locore as badaddr() can not yet be used at this
+ * point.
+ */
+GLOBAL(memsize1x7)
+	movl	#0xfff43008,a0		| MEMC040/MEMECC Controller #1
+	jbsr	memc040read
+	movl	d0,d2
+
+	movl	#0xfff43108,a0		| MEMC040/MEMECC Controller #2
+	jbsr	memc040read
+	addl	d0,d2
+
+	rts
+
+/*
+ * Probe for a memory controller ASIC (MEMC040 or MEMECC) at the
+ * address in a0. If found, return the size in bytes of any RAM
+ * controller by the ASIC in d0. Otherwise return zero.
+ */
+ASLOCAL(memc040read)
+	moveml	d1-d2/a1-a2,sp@-	| save scratch regs
+	movc	vbr,d2			| Save vbr
+	RELOC(vectab,a2)		| Install our own vectab, temporarily
+	movc	a2,vbr
+	ASRELOC(Lmemc040berr,a1)	| get address of bus error handler
+	movl	a2@(8),sp@-		| Save current bus error handler addr
+	movl	a1,a2@(8)		| Install our own handler
+	movl	sp,d0			| Save current stack pointer value
+	movql	#0x07,d1
+	andb	a0@,d1			| Access MEMC040/MEMECC
+	movl	#0x400000,d0
+	lsll	d1,d0			| Convert to memory size, in bytes
+Lmemc040ret:
+	movc	d2,vbr			| Restore original vbr
+	movl	sp@+,a2@(8)		| Restore original bus error handler
+	moveml	sp@+,d1-d2/a1-a2
+	rts
+/*
+ * If the memory controller doesn't exist, we get a bus error trying
+ * to access a0@ above. Control passes here, where we flag 'no bytes',
+ * ditch the exception frame and return as normal.
+ */
+Lmemc040berr:
+	movl	d0,sp			| Get rid of the exception frame
+	clrl	d0			| No ASIC at this location, then!
+	jbra	Lmemc040ret		| Done
+#endif
 
 /*
  * proc_trampoline: call function in register a2 with a3 as an arg

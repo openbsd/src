@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2002/12/17 23:11:32 millert Exp $ */
+/*	$OpenBSD: machdep.c,v 1.73 2003/01/04 17:21:31 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -196,7 +196,7 @@ void netintr(void *);
 void myetheraddr(u_char *);
 int fpu_gettype(void);
 int memsize162(void);
-int memsize1x7(void);
+int memsize1x7(void);	/* in locore */
 int memsize(void);
 
 void
@@ -1189,25 +1189,6 @@ memsize162()
 			 */
 			return (memsize1x7());
 	}
-}
-#endif
-
-#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined(MVME172)
-#include <mvme68k/dev/memcreg.h>
-/*
- * XXX
- * finish writing this
- * 1) it is ugly
- * 2) it only looks at the first MEMC040/MCECC controller
- */
-int
-memsize1x7()
-{
-	struct memcreg *memc = (struct memcreg *)0xfff43000;
-	u_long   x;
-
-	x = MEMC_MEMCONF_RTOB(memc->memc_memconf);
-	return (x);
 }
 #endif
 
