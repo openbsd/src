@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteenreg.h,v 1.2 2002/08/12 10:44:03 miod Exp $	*/
+/*	$OpenBSD: cgfourteenreg.h,v 1.3 2002/08/21 20:27:35 miod Exp $	*/
 /*	$NetBSD: cgfourteenreg.h,v 1.1 1996/09/30 22:41:02 abrown Exp $ */
 
 /*
@@ -37,6 +37,12 @@
 /*
  * Register/dac/clut/cursor definitions for cgfourteen frame buffer
  */
+
+/* Control registers */
+#define	CG14_REG_CONTROL	0
+#define	CG14_REG_VRAM		1
+
+#define	CG14_NREG		2
 
 /* Locations of control registers in cg14 register set */
 #define	CG14_OFFSET_CURS	0x1000

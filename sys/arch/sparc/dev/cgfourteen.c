@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.11 2002/08/12 10:44:03 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.12 2002/08/21 20:27:35 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -116,7 +116,6 @@
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
-#define	CG3REG_MEM	0x800000
 #include <sparc/dev/cgfourteenreg.h>
 
 /*
@@ -248,6 +247,8 @@ cgfourteenattach(parent, self, args)
 
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");
+	if (*nam == '\0')
+		nam = getpropstring(node, "name");
 	printf(": %s", nam);
 
 	isconsole = node == fbnode;
@@ -259,8 +260,8 @@ cgfourteenattach(parent, self, args)
 		panic("\ncgfourteen: expected %x bytes of registers, got %x",
 		    0x10000, ca->ca_ra.ra_len);
 	}
-	sc->sc_ctl = (struct cg14ctl *) mapiodev(ca->ca_ra.ra_reg, 0,
-						 ca->ca_ra.ra_len);
+	sc->sc_ctl = (struct cg14ctl *) mapiodev(
+	    &ca->ca_ra.ra_reg[CG14_REG_CONTROL], 0, ca->ca_ra.ra_len);
 
 	sc->sc_hwc = (struct cg14curs *) ((u_int)sc->sc_ctl +
 					  CG14_OFFSET_CURS);
@@ -280,10 +281,10 @@ cgfourteenattach(parent, self, args)
 	/*
 	 * Stash the physical address of the framebuffer for use by mmap
 	 */
-	if (ca->ca_ra.ra_nreg < 2)
-		panic("\ncgfourteen: expected 2 registers, got %d",
-			ca->ca_ra.ra_nreg);
-	sc->sc_phys = ca->ca_ra.ra_reg[1];
+	if (ca->ca_ra.ra_nreg < CG14_NREG)
+		panic("\ncgfourteen: expected %d registers, got %d",
+		    CG14_NREG, ca->ca_ra.ra_nreg);
+	sc->sc_phys = ca->ca_ra.ra_reg[CG14_REG_VRAM];
 
 	/*
 	 * Reset frame buffer controls
@@ -308,9 +309,8 @@ cgfourteenattach(parent, self, args)
 	depth = 8;
 #endif
 	fb_setsize(&sc->sc_sunfb, depth, 1152, 900, node, ca->ca_bustype);
-	/* XXX is this right? */
-	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg,
-	    CG3REG_MEM, round_page(sc->sc_sunfb.sf_fbsize));
+	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[CG14_REG_VRAM],
+	    0, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
