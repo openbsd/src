@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.5 1999/07/22 07:45:48 deraadt Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.6 1999/07/23 04:24:31 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -194,6 +194,7 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_channel = aa_link->aa_channel;
 	as->sc_adapterlink.adapter_softc = as;
 	as->sc_adapterlink.adapter_target = 7;
+	as->sc_adapterlink.adapter_buswidth = 2;
 	as->sc_adapterlink.adapter = &atapiscsi_switch;
 	as->sc_adapterlink.device = &atapiscsi_dev;
 	as->sc_adapterlink.openings = 1;
@@ -881,20 +882,14 @@ again:
 	case IDENTIFY_WAIT:
 		errstring = "IDENTIFY";
 		
-		if (wdcwait(chp, 0, 0, delay)) 
+		/* Some ATAPI devices need to try to read the media
+		   before responding. Well, let's hope resets while
+		   polling are few and far between */
+		if (wdcwait(chp, 0, 0, (irq == 0) ? 10000 : 0)) 
 			goto timeout;
 
-		if (chp->ch_status & WDCS_ERR) {
-			chp->ch_error = bus_space_read_1(chp->cmd_iot,
-							 chp->cmd_ioh, 
-							 wd_error);
-			goto error;
-		}
-
-		if (wdcwait(chp, WDCS_DRQ, WDCS_DRQ, 1000)) 
-			goto timeout;
-
-		if (chp->ch_status & WDCS_ERR) {
+		if (!(chp->ch_status & WDCS_DRQ) &&
+		    chp->ch_status & WDCS_ERR) {
 			chp->ch_error = bus_space_read_1(chp->cmd_iot,
 							 chp->cmd_ioh, 
 							 wd_error);
