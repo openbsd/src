@@ -102,7 +102,7 @@ void	uvaxII_settodr __P((time_t));
 #define	KA630CLK_RSTRT	010
 #define	KA630CLK_LANG	0360
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct ka630clock {
 	u_short	sec;
 	u_short	secalrm;

@@ -244,7 +244,7 @@ struct ubinfo {
 	(((bdp) << 28) | ((nmr) << 20) | ((mr) << 9) | (off))
 #endif
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #ifdef _KERNEL
 #define	ubago(ui)	ubaqueue(ui, 0)
 
@@ -267,4 +267,4 @@ void	ubareset __P((int));
 int	ubasetup __P((int, struct buf *, int));
 
 #endif /* _KERNEL */
-#endif !LOCORE
+#endif /* !_LOCORE */

@@ -39,7 +39,7 @@
 #define	RAW_PART	3			/* raw partition: xx?c (XXX) */
 
 /* Just a dummy */
-#ifndef LOCORE
+#ifndef _LOCORE
 struct cpu_disklabel {
 	int	cd_dummy;			/* must have one element. */
 };

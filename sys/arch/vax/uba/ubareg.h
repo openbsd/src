@@ -95,7 +95,7 @@
 #define	UBAIOADDR	0760000		/* start of I/O page */
 #define	UBAIOPAGES	16
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * DWBUA hardware registers.
  */

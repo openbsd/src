@@ -79,7 +79,7 @@
 #define DMASER_BITS \
 "\20\20BHALT\17DCNEG\10QBNXM\6QBPE\5MEMERR\4LOSTERR\3NOGRANT\1DMANXM"
 
-#ifndef LOCORE
+#ifndef _LOCORE
 /*
  * Local registers (in I/O space)
  * This is done in disjoint sections.  Map names are set in locore.s
@@ -207,7 +207,7 @@ struct ka650_ipcr {
 };
 #define KA650_IPCR	0x20001e00
 
-#endif	LOCORE
+#endif	/* _LOCORE */
 
 /*
  * Physical start address of the Qbus memory.

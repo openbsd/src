@@ -135,7 +135,7 @@ extern caddr_t *nex_vec;
 
 #define	NEX_CFGFLT	(0xfc000000)
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #if defined(VAX780) || defined(VAX8600)
 #define	NEXFLT_BITS \
 "\20\40PARFLT\37WSQFLT\36URDFLT\35ISQFLT\34MXTFLT\33XMTFLT"
