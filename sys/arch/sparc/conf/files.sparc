@@ -102,6 +102,12 @@ device	si at vmes: scsi, ncr5380sbc
 device	sw at obio: scsi, ncr5380sbc
 file	arch/sparc/dev/si.c		si sw
 
+# ENI ATM driver
+device  en: atm, ifnet
+attach  en at sbus with en_sbus
+file    arch/sparc/dev/if_en_sbus.c     en
+file    dev/ic/midway.c                 en
+
 pseudo-device	kbd
 
 file	arch/sparc/dev/cons.c
