@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 1995/03/28 18:14:04 jtc Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 1995/11/23 02:36:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -58,17 +58,15 @@ typedef u_int64_t	pt_entry_t;
 #define	PG_PROT		0x000000000000ff00
 #define	PG_RSVD		0x000000000000cc80	/* Reserved fpr hardware */
 #define	PG_WIRED	0x0000000000010000	/* Wired. [SOFTWARE] */
-#define	PG_MOD		0x0000000000020000	/* Modified. [SOFTWARE] */
-#define	PG_USED		0x0000000000040000	/* Referenced. [SOFTWARE] */
 #define	PG_FRAME	0xffffffff00000000
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#if defined(_KERNEL) && !defined(LOCORE)
 #define	K0SEG_BEGIN	0xfffffc0000000000	/* unmapped, cached */
 #define	K0SEG_END	0xfffffe0000000000
 #define PHYS_UNCACHED	0x0000000040000000
 
+#if !defined(LOCORE)
 #define	k0segtophys(x)	((vm_offset_t)(x) & 0x00000003ffffffff)
 #define	phystok0seg(x)	((vm_offset_t)(x) | K0SEG_BEGIN)
 
@@ -81,9 +79,10 @@ typedef u_int64_t	pt_entry_t;
 #define	vatopa(va) \
 	((PG_PFNUM(*kvtopte(va)) << PGSHIFT) | ((vm_offset_t)(va) & PGOFSET))
 
-#define	ALPHA_STSIZE		NBPG			/* 8k */
-#define	ALPHA_MAX_PTSIZE	(NPTEPG * NBPG)		/* 8M */
+#define	ALPHA_STSIZE		((u_long)NBPG)			/* 8k */
+#define	ALPHA_MAX_PTSIZE	((u_long)(NPTEPG * NBPG))	/* 8M */
 
+#ifdef _KERNEL
 /*
  * Kernel virtual address to Sysmap entry and visa versa.
  */
@@ -106,4 +105,5 @@ typedef u_int64_t	pt_entry_t;
 extern	pt_entry_t *Lev1map;		/* Alpha Level One page table */
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	vm_size_t Sysmapsize;		/* number of pte's in Sysmap */
+#endif
 #endif

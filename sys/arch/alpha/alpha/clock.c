@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1995/08/03 00:53:34 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 1995/11/23 02:33:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,12 +47,20 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/rpb.h>
+#include <machine/autoconf.h>
 
 #include <alpha/alpha/clockvar.h>
+
+#include "asic.h"
+#if NASIC
 #include <alpha/tc/asic.h>			/* XXX */
+#endif
+
+#include "isa.h"
+#if NISA
 #include <dev/isa/isavar.h>			/* XXX */
+#endif
 
 /* Definition of the driver for autoconfig. */
 static int	clockmatch __P((struct device *, void *, void *));
@@ -62,7 +70,8 @@ struct cfdriver clockcd =
 	sizeof(struct clock_softc) };
 
 #if defined(DEC_3000_500) || defined(DEC_3000_300) || \
-    defined(DEC_2000_300) || defined(DEC_2100_A50)
+    defined(DEC_2000_300) || defined(DEC_2100_A50) || \
+    defined(DEC_KN20AA)
 void	mcclock_attach __P((struct device *parent,
 	    struct device *self, void *aux));
 #endif
@@ -82,29 +91,21 @@ clockmatch(parent, cfdata, aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
+#if NASIC
+	extern struct cfdriver asiccd;
 
-	/* See how many clocks this system has */	
-	switch (hwrpb->rpb_type) {
-#if defined(DEC_3000_500) || defined(DEC_3000_300)
-
-#if defined(DEC_3000_500)
-	case ST_DEC_3000_500:
-#endif
-#if defined(DEC_3000_300)
-	case ST_DEC_3000_300:
-#endif
+	if (parent->dv_cfdata->cf_driver == &asiccd) {
 		/* make sure that we're looking for this type of device. */
 		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
 			return (0);
 
 		if (cf->cf_unit >= 1)
 			return (0);
-
-		break;
+	} else
 #endif
+#if NISA
+	if ((parent->dv_cfdata->cf_driver == &isacd)) {
 
-#if defined(DEC_2100_A50)
-	case ST_DEC_2100_A50:
 		/* Just say yes.  XXX */
 
 		if (cf->cf_unit >= 1)
@@ -112,28 +113,19 @@ clockmatch(parent, cfdata, aux)
 
 		/* XXX XXX XXX */
 		{
-			struct isa_attach_args *ia = aux;
+			struct isadev_attach_args *ida = aux;
 
-			if (ia->ia_iobase != 0x70 &&		/* XXX */
-			    ia->ia_iobase != -1)		/* XXX */
+			if (ida->ida_port[0] != 0x70 &&		/* XXX */
+			    ida->ida_port[0] != -1)		/* XXX */
 				return (0);
 
-			ia->ia_iobase = 0x70;			/* XXX */
-			ia->ia_iosize = 2;			/* XXX */
-			ia->ia_msize = 0;
+			ida->ida_port[0] = 0x70;		/* XXX */
+			ida->ida_nports[0] = 2;			/* XXX */
+			ida->ida_iosiz[0] = 0;
 		}
-
-		break;
+	} else
 #endif
-
-#if defined(DEC_2000_300)
-	case ST_DEC_2000_300:
-		panic("clockmatch on jensen");
-#endif
-
-	default:
-		panic("unknown CPU");
-	}
+		return (0);
 
 	return (1);
 }
@@ -145,34 +137,20 @@ clockattach(parent, self, aux)
 	void *aux;
 {
 
-	switch (hwrpb->rpb_type) {
-#if defined(DEC_3000_500) || defined(DEC_3000_300) || \
-    defined(DEC_2000_300) || defined(DEC_2100_A50)
-#if defined(DEC_3000_500)
-	case ST_DEC_3000_500:
-#endif
-#if defined(DEC_2000_300)
-	case ST_DEC_2000_300:
-#endif
-#if defined(DEC_3000_300)
-	case ST_DEC_3000_300:
-#endif
-#if defined(DEC_2100_A50)
-	case ST_DEC_2100_A50:
-#endif
-		mcclock_attach(parent, self, aux);
-		break;
-#endif /* defined(at least one of lots of system types) */
-
-	default:
-		panic("clockattach: it didn't get here.  really.");
-	}
-
+	/*
+	 * XXX deal with other clock type, if the system
+	 * XXX supports the other clock.  get systype
+	 * from RPB.
+	 */
+	mcclock_attach(parent, self, aux);
 
 	/*
 	 * establish the clock interrupt; it's a special case
 	 */
-	set_clockintr(hardclock);
+	set_clockintr();
+#ifdef EVCNT_COUNTERS
+	evcnt_attach(self, "intr", &clock_intr_evcnt);
+#endif
 
 	printf("\n");
 }
@@ -197,8 +175,12 @@ clockattach(parent, self, aux)
 cpu_initclocks()
 {
 	extern int tickadj;
-	struct clock_softc *csc = (struct clock_softc *)clockcd.cd_devs[0];
+	struct clock_softc *csc;
 	int fractick;
+
+	if (clockcd.cd_devs == NULL ||
+	    (csc = (struct clock_softc *)clockcd.cd_devs[0]) == NULL)
+		panic("cpu_initclocks: no clock attached");
 
 	hz = 1024;		/* 1024 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */

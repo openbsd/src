@@ -1,104 +1,46 @@
-I'm pleased to (finally) announce the release of NetBSD/Alpha.
-
-As some of you may know, NetBSD is a freely-available and freely-
-redistributable BSD-derived system that runs on a variety of hardware
-platforms, including i386's, Amigas, SPARCs, and DECstations.  The Alpha
-port is unique, because it's the first port of NetBSD to a 64-bit
-architecture.
-
-The Alpha port of NetBSD is a true 64-bit port: pointers and longs are 64
-bits.  This involved a _LOT_ of changes to "machine-independent" kernel,
-and to many of the user-land programs.
-
-So, some details on the status of the port, and a list of supported hardware:
-
-	The port is self-hosting; it is stable enough to build all of its
-	constituent binaries  (including GCC and the rest of the tool chain)
-	many times over.  I've seen uptimes of more than a week, with
-	multiple compiles going 24 hours a day.  It is in "production use"
-	for its own development, and will soon be in use by computer science
-	researchers.  It's _not_ simply a kernel hacker's toy at this point.
-
-	Lots of things still don't work properly.  In particular, a lot of
-	(poorly-written) user-land programs don't work.  As far as I'm
-	aware, however, there are no found-but-yet-unfixed bugs in the
-	libraries, which makes getting programs working a bit easier.
-	Unfortunately, at this time, GDB isn't capable of actually debugging
-	programs (though it is good for disassembling them, if you know
-	where they crashed).  It's worth noting that the internet protocol
-	suite works well (and, indeed, I do most of my work remotedly
-	logged in), and the SunRPC library also works.  (Both required serious
-	modifications to make them work with 64 bit pointers and longs.)
-	Because formatting the manual pages would have required making g++
-	and groff work, there are no formatted man pages included and
-	there's no easy way to format them.  If you need the manual pages,
-	I'd suggest that you look on another NetBSD system.  If you
-	absolutely can't do that, OSF/1 manual pages should be OK for
-	most tasks.
-
-	There's rudimentary support for running OSF/1 binaries, which I
-	originally used when bootstrapping the system.  However, it is only
-	capable of running statically linked binaries, so it's not very
-	useful except for bootstrapping.  It's hoped that eventually we'll
-	be able to run dynamically-linked OSF/1 binaries.  (If you wish to
-	work on this, please get in touch with me!)  NetBSD/Alpha can safely
-	read and write OSF/1 (v2.0; I would guess v1.x and v3.x as well)
-	file systems (assuming you don't have OSF/1's security features
-	enabled).  Additionally, the NetBSD/Alpha disklabel format is
-	compatible with OSF/1's.
-
-	Supported hardware:
-		DEC 3000/[456789]00 (I've only tested it on the 400 and
-		600, but the rest should "just work) using the following
-		peripherals:
-
-			Serial ports -- barely; the serial driver needs a
-				lot of help and is not useful for many
-				complex tasks.
-			LANCE ethernet -- only the on-board model; I've
-				not tried any TurboChannel boards, and
-				didn't write complete support for them into
-				the driver.
-			SCSI system -- it recognizes and can use both
-				on-board SCSI controller chips.  However,
-				it has trouble working with both at the
-				same time.
-
-			At this time neither the Smart Frame Buffer nor the
-			ISDN/Audio interface is supported.
-
-		DEC 3000/300 (with the same hardware supported as above;
-		I've not tested these very much at all, on any of the
-		3000/300 models.)
-
-	Unfortunately, at this time none of the following systems are
-	supported:
-		AlphaPCs -- the EISA-bus Alpha systems
-		AlphaStations -- the PCI-bus Alpha systems
-		The Futurebus-based Alpha server systems
-		The multiprocessor Alpha systems
+$NetBSD: README,v 1.7 1995/11/23 02:33:17 cgd Exp $
 
 Obtaining NetBSD/Alpha sources and binaries:
 
-	This release is being made in two parts, source and binary.  The
-	source distribution is a gzipped tar file containing all of the
-	sources used to build the system, including the compiler and
-	user-land sources.  (Most of the kernel and user-land changes
-	have made it back into the NetBSD source tree.  Many have not,
-	however, and the compiler shipped with NetBSD doesn't work on
-	the Alpha; if you're using NetBSD on the Alpha, you _need_ my
-	source distribution.) The binary distribution is a gzipped disk
-	image from an rz25 disk; it's approximately 406M ungzipped
-	(63M gzipped), and you install it by dd'ing it on to a raw disk;
-	more on this later.
+	NetBSD/Alpha sources and binaries are available from:
+		ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
+	See the README.files file there to figure out which of
+	the following items corresponds to what file(s) in the FTP
+	archive.
 
-	If you wish to obtain the source or binaries for the NetBSD/Alpha
-	distribution, send me (cgd@cs.cmu.edu) mail, and I'll arrange to
-	get them to you.  They're sufficiently large that I've not yet
-	found an FTP site for them, and also, given the preliminary nature
-	of this distribution, I want to keep in close contact with
-	the people who are using them.
+	There are two sets of system binaries available:
+		(1) an rz25 disk image, for first-time installation
+		    (see below), and
+		(2) two tar files of the binaries, for updates.
+		    (one of the tar files is the contents of /etc,
+		    one is everything else, except a kernel.
+		    There are no instructions on how to use these.
+		    Good luck!  8-)
 
+	There are also two precompiled kernels available: one generic
+	kernel which will prompt for a root device, and one which tries
+	to boot diskless.  The generic kernel is included in the rz25
+	disk image.
+
+	X11 client binaries are packaged seperately.  (There is no
+	server at this time.)
+
+	There are several sets of sources available:
+		(1) kernel source snapshot (complete kernel sources),
+		(2) compiler toolchain source snapshot (complete
+		    toolchain sources),
+		(3) diffs to the NetBSD-current sources as of the date
+		    of the release to make them match what's used on
+		    the alpha port.  (You should be able to get the
+		    NetBSD-current sources, replace the kernel sources
+		    with the ones i'm distributing, add in these
+		    diffs and the toolchain sources, and compile up a
+		    complete system.)
+		(4) diffs to the XFree86 3.1.2 sources to make them
+		    work with NetBSD/Alpha.  (If you add these to
+		    the XFree86 3.1.2 sources, you should be able to
+		    compile up the X clients.)
+	
 	If you are interested in the NetBSD/Alpha port, I suggest that you
 	subscribe to the NetBSD "port-alpha" mailing list by sending an
 	email message to majordomo@netbsd.org with no subject and with a
@@ -143,12 +85,14 @@ Installing the NetBSD/Alpha distribution:
 		/etc/myname (the hostname of the machine)
 		/etc/mygate (the LAN's gateway's IP address, if your network
 			setup requires that it be named explicitly)
-		/etc/hostname.le0 (to describe the enet addr, etc., for the
-			Alpha's ethernet.  The format can be discerned by
-			looking in /etc/netstart. As an example, for
-			my development machine, it's:
+		/etc/hostname.le0 (on TurboChannel machines, to describe
+			the enet addr, etc., for the Alpha's ethernet.  The
+			format can be discerned by looking in /etc/netstart.
+			As an example, for my development machine, it's:
 			inet macallan.dssc.cs.cmu.edu 0xffff0000 128.2.255.255
 			     ^^^^^^^^^^^^^^^hostname  ^^^netmask ^^^broadcast)
+		/etc/hostname.de0 (on PCI machines; same format as
+			hostname.le0 would have.)
 		/etc/fstab (a prototype is in /etc/fstab.sd)
 	(You can also create the files mentioned above by mounting the
 	disk's file systems under OSF/1 and filling in the appropriate
@@ -169,30 +113,14 @@ Using NetBSD/Alpha:
 	that's what I do, and it works just fine.  If you'd like tips on
 	good ways to keep the NetBSD sources under source control, just ask.
 
-	A fair number of binaries don't work properly.  For example:
-		GDB won't properly run programs or debug core files; someone
-			needs to write support for NetBSD/Alpha.
-		diff dumps core if there are differences in the files being
-			compared (but it _doesn't_ dump core if they're the
-			same!)
-		ps and w don't work properly, for several reasons:
-			(a) they don't know how to read an ECOFF binary's
-				namelist, so can't find the addresses of
-				things in core
-			(b) I've thus far been lazy, and didn't bother
-				creating some of the necessary entries in
-				the device switches (e.g. /dev/drum),
-				because I knew nothing could use them
-				because of (a) anyway...
+	A fair number of binaries don't work properly.  For example, GDB
+	won't properly run programs or debug core files; someone needs
+	to write support for NetBSD/Alpha.
 
-	As noted above, the SCSI code is reliable only when being used with
-	one SCSI bus at a time; this is obviously a bug.  Additionally, the
-	SCSI driver seems unhappy about dealing with certain types of disk
-	drives (e.g. the IBM Lightning).  I don't know why these problems
-	exist yet, but it's worth noting that somebody's in the process of
-	rewriting the 53c94 chip support from the ground up because the
-	current support is "somewhat lacking."  (This should solve at least
-	the latter problem.)
+	As noted above, the SCSI code on TurboChannel machines is reliable
+	only when being used with one SCSI bus at a time; this is obviously
+	a bug.  Additionally, the SCSI driver seems unhappy about dealing
+	with certain types of disk drives (e.g. the IBM Lightning).
 
 	Because I've been working on getting the system up and running, then
 	out the door, I've not had much time to do performance analysis on
@@ -201,26 +129,6 @@ Using NetBSD/Alpha:
 	I'm seeing performance comparable to that of OSF/1 on the same
 	hardware, so I've not gone too far wrong anywhere.
 
-	I've run 'paranoia' on NetBSD/Alpha, and it reports one defect (the
-	same result as for OSF/1).
-
-Thanks to:
-	Carnegie Mellon University, for funding for this project.
-	Digital Equipment Corporation, for the hardware and documentation.
-	Keith Bostic, for writing and/or working on a large chunk of the
-		code, and for general moral corruption and good humor.
-	Kirk McKusick, for being the Final Arbiter of Taste and Style.
-	Jeff Mogul, for providing moral support, documentation, and
-		pointers thereto.
-	Various people working on NetBSD, for suggestions, sanity checking,
-		drivers, etc.
-	Whoever I'm forgetting, for things that I don't remember right now.
-
-
-That's it for now; get in touch if you'd like to get copies of the software
-and/or would like to contribute to the development effort.  I'll be sending
-out status reports to various places (probably including the place(s) you
-saw this announcement) as things progress.
 
 
 Chris Demetriou

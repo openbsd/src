@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.2 1995/02/16 02:32:55 cgd Exp $	*/
+/*	$NetBSD: disk.c,v 1.3 1995/11/23 02:39:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,8 @@
 
 #include <machine/prom.h>
 
+#include "disk.h"
+
 struct	disk_softc {
 	int	sc_fd;			/* PROM channel number */
 	int	sc_ctlr;		/* controller number */
@@ -54,19 +56,24 @@ struct	disk_softc {
 };
 
 int
-diskstrategy(devdata, rw, bn, reqcnt, addr, cnt)
+diskstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 	void *devdata;
 	int rw;
 	daddr_t bn;
-	u_int reqcnt;
-	char *addr;
-	u_int *cnt;	/* out: number of bytes transfered */
+	size_t reqcnt;
+	void *addrvoid;
+	size_t *cnt;	/* out: number of bytes transfered */
 {
+	char *addr = addrvoid;
 	struct disk_softc *sc;
 	struct partition *pp;
 	prom_return_t ret;
 	int s;
 
+	if ((reqcnt & 0xffffff) != reqcnt ||
+	    reqcnt == 0)
+		asm("call_pal 0");
+	    
 	twiddle();
 
 	/* Partial-block transfers not handled. */
@@ -92,7 +99,8 @@ diskopen(f, ctlr, unit, part)
 {
 	struct disklabel *lp;
 	prom_return_t ret;
-	int cnt, devlen, i;
+	size_t cnt;
+	int devlen, i;
 	char *msg, buf[DEV_BSIZE], devname[32];
 	static struct disk_softc *sc;
 

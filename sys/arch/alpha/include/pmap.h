@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 1995/04/10 12:41:38 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 1995/11/23 02:36:25 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -100,6 +100,12 @@ typedef struct pv_entry {
 
 #define PV_PTPAGE	0x01	/* header: entry maps a page table page */
 
+/*
+ * bits of pmap_attributes[]
+ */
+#define	PMAP_ATTR_MOD	0x01			/* modified */
+#define	PMAP_ATTR_REF	0x02			/* referenced */
+
 #ifdef _KERNEL
 pv_entry_t	pv_table;		/* array of entries, one per page */
 
@@ -111,6 +117,10 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 
 extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
+
+/* Machine-specific functions. */
+void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
+		int user, int write));
 #endif /* _KERNEL */
 
 #endif /* _PMAP_MACHINE_ */

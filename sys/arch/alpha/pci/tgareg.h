@@ -1,4 +1,4 @@
-/*	$NetBSD: tgareg.h,v 1.2 1995/08/03 01:17:34 cgd Exp $	*/
+/*	$NetBSD: tgareg.h,v 1.3 1995/11/23 02:38:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef _ALPHA_PCI_TGAREG_H_
+#define _ALPHA_PCI_TGAREG_H_
 
 /*
  * Device-specific PCI register offsets and contents.
@@ -152,3 +155,5 @@ typedef int32_t tga_reg_t;
 #define	TGA_REG_SCSR	0x07e		/* Command Status */
 
 /*	reserved	0x07f */
+
+#endif /* _ALPHA_PCI_TGAREG_H_ */

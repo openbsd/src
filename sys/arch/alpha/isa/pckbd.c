@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbd.c,v 1.1 1995/08/03 00:48:25 cgd Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.2 1995/11/23 02:37:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -53,11 +53,15 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <alpha/isa/pckbdreg.h>
+
+#include "wsc.h"
+#if NWSC
+#include <alpha/pci/wsconsvar.h>
+#endif
 
 static volatile u_char ack, nak;	/* Don't ask. */
 static u_char async, kernel, polling;	/* Really, you don't want to know. */
@@ -65,6 +69,11 @@ static u_char lock_state = 0x00,	/* all off */
 	      old_lock_state = 0xff,
 	      typematic_rate = 0xff,	/* don't update until set by user */
 	      old_typematic_rate = 0xff;
+
+__const struct isa_intr_fns *pckbd_intr_fns;			/* XXX */
+void *pckbd_intr_arg;						/* XXX */
+__const struct isa_pio_fns *pckbd_pio_fns;			/* XXX */
+void *pckbd_pio_arg;						/* XXX */
 
 struct pckbd_softc {
         struct  device sc_dev;
@@ -100,10 +109,10 @@ void pccnpollc __P((void *, int));
 #define	NONE		0x0400	/* no function */
 
 #define	KBD_DELAY \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); }
+	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); } \
+	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); } \
+	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); } \
+	{ u_char x = INB(pckbd_pio_fns, pckbd_pio_arg, 0x84); }
 
 static inline int
 kbd_wait_output()
@@ -111,7 +120,8 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_IBF) == 0) {
+		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_IBF)
+		    == 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -124,7 +134,8 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		    != 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -137,10 +148,11 @@ kbd_flush_input()
 	u_int i;
 
 	for (i = 10; i; i--) {
-		if ((inb(KBSTATP) & KBS_DIB) == 0)
+		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		    == 0)
 			return;
 		KBD_DELAY;
-		(void) inb(KBDATAP);
+		(void) INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP);
 	}
 }
 
@@ -154,10 +166,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	outb(KBCMDP, K_RDCMDBYTE);
+	OUTB(pckbd_pio_fns, pckbd_pio_arg, KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return inb(KBDATAP);
+	return INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP);
 }
 #endif
 
@@ -171,10 +183,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	outb(KBCMDP, K_LDCMDBYTE);
+	OUTB(pckbd_pio_fns, pckbd_pio_arg, KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	outb(KBOUTP, val);
+	OUTB(pckbd_pio_fns, pckbd_pio_arg, KBOUTP, val);
 	return 1;
 }
 
@@ -193,14 +205,16 @@ kbd_cmd(val, polling)
 		if (!kbd_wait_output())
 			return 0;
 		ack = nak = 0;
-		outb(KBOUTP, val);
+		OUTB(pckbd_pio_fns, pckbd_pio_arg, KBOUTP, val);
 		if (polling)
 			for (i = 100000; i; i--) {
-				if (inb(KBSTATP) & KBS_DIB) {
+				if (INB(pckbd_pio_fns, pckbd_pio_arg,
+				    KBSTATP) & KBS_DIB) {
 					register u_char c;
 
 					KBD_DELAY;
-					c = inb(KBDATAP);
+					c = INB(pckbd_pio_fns, pckbd_pio_arg,
+					    KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
 						return 1;
@@ -210,13 +224,15 @@ kbd_cmd(val, polling)
 						break;
 					}
 #ifdef DIAGNOSTIC
-					printf("kbd_cmd: input char %x lost\n", c);
+					printf("kbd_cmd: input char %x lost\n",
+					    c);
 #endif
 				}
 			}
 		else
 			for (i = 100000; i; i--) {
-				(void) inb(KBSTATP);
+				(void) INB(pckbd_pio_fns, pckbd_pio_arg,
+				    KBSTATP);
 				if (ack)
 					return 1;
 				if (nak)
@@ -236,8 +252,11 @@ pckbdprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct isa_attach_args *ia = aux;
+	struct isadev_attach_args *ida = aux;
 	u_int i;
+
+	pckbd_pio_fns = ida->ida_piofns;			/* XXX */
+	pckbd_pio_arg = ida->ida_pioarg;			/* XXX */
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -254,11 +273,13 @@ pckbdprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		    != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
+	if (i == 0 || INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP)
+	    != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -308,8 +329,8 @@ lose:
 	 */
 #endif
 
-	ia->ia_iosize = 16;
-	ia->ia_msize = 0;
+	ida->ida_nports[0] = 16;
+	ida->ida_iosiz[0] = 0;
 	return 1;
 }
 
@@ -319,12 +340,21 @@ pckbdattach(parent, self, aux)
 	void *aux;
 {
 	struct pckbd_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
+	struct isadev_attach_args *ida = aux;
 
+	pckbd_intr_fns = ida->ida_intrfns;			/* XXX */
+	pckbd_intr_arg = ida->ida_intrarg;			/* XXX */
+	pckbd_pio_fns = ida->ida_piofns;			/* XXX */
+	pckbd_pio_arg = ida->ida_pioarg;			/* XXX */
+	
+	sc->sc_ih = ISA_INTR_ESTABLISH(pckbd_intr_fns, pckbd_intr_arg,
+	    ida->ida_irq[0], ISA_IST_EDGE, ISA_IPL_TTY, pckbdintr, sc);
+#if NWSC
 	printf("\n");
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-	    pckbdintr, sc);
 	wscattach_input(self, self, pccngetc, pccnpollc);
+#else
+	printf(": no wsc driver; no input possible\n");
+#endif
 }
 
 /*
@@ -339,15 +369,17 @@ pckbdintr(arg)
 	struct pckbd_softc *sc = arg;
 	u_char *cp;
 
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
 	do {
 		cp = sget();
+#if NWSC
 		if (cp)
 			wscons_kbdinput(cp);
-	} while (inb(KBSTATP) & KBS_DIB);
+#endif
+	} while (INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB);
 	return 1;
 }
 
@@ -609,7 +641,7 @@ sget()
 
 top:
 	KBD_DELAY;
-	dt = inb(KBDATAP);
+	dt = INB(pckbd_pio_fns, pckbd_pio_arg, KBDATAP);
 
 	switch (dt) {
 	case KBR_ACK:
@@ -806,7 +838,7 @@ top:
 
 	extended = 0;
 loop:
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB) == 0)
 		return 0;
 	goto top;
 }
@@ -826,7 +858,8 @@ pccngetc(cookie)
 
         do {
                 /* wait for byte */
-                while ((inb(KBSTATP) & KBS_DIB) == 0);
+                while ((INB(pckbd_pio_fns, pckbd_pio_arg, KBSTATP) & KBS_DIB)
+		    == 0);
                 /* see if it's worthwhile */
                 cp = sget();
         } while (!cp);

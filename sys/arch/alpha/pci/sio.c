@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.2 1995/08/03 01:17:25 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.3 1995/11/23 02:38:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,17 +32,26 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <dev/isa/isavar.h>
+#include <dev/eisa/eisavar.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/autoconf.h>
+#include <alpha/pci/siovar.h>
 
 int	siomatch __P((struct device *, void *, void *));
 void	sioattach __P((struct device *, struct device *, void *));
 
 struct cfdriver siocd = {
 	NULL, "sio", siomatch, sioattach, DV_DULL, sizeof(struct device)
+};
+
+int	pcebmatch __P((struct device *, void *, void *));
+
+struct cfdriver pcebcd = {
+	NULL, "pceb", pcebmatch, sioattach, DV_DULL, sizeof(struct device)
 };
 
 static int	sioprint __P((void *, char *pnp));
@@ -53,10 +62,25 @@ siomatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pci_attach_args *pa = aux;
+	struct pcidev_attach_args *pda = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_SIO)
+	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_INTEL_SIO)
+		return (0);
+
+	return (1);
+}
+
+int
+pcebmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct pcidev_attach_args *pda = aux;
+
+	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_INTEL ||
+	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_INTEL_PCEB)
 		return (0);
 
 	return (1);
@@ -67,31 +91,56 @@ sioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
-	struct confargs nca;
-	u_int rev;
-	char *type;
+	struct pcidev_attach_args *pda = aux;
+	struct isa_attach_args ia;
+	struct eisa_attach_args ea;
+	int sio, haseisa;
+	char devinfo[256];
 
-	rev = pa->pa_class & 0xff;
-	if (rev < 3) {
-		type = "I";
-		/* XXX PCI IRQ MAPPING FUNCTION */
-	} else {
-		type = "II";
-		/* XXX PCI IRQ MAPPING FUNCTION */
+	sio = (PCI_PRODUCT(pda->pda_id) == PCI_PRODUCT_INTEL_SIO);
+	haseisa = (PCI_PRODUCT(pda->pda_id) == PCI_PRODUCT_INTEL_PCEB);
+
+	pci_devinfo(pda->pda_id, pda->pda_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pda->pda_class));
+
+	if (sio) {
+		pci_revision_t rev;
+
+		rev = PCI_REVISION(pda->pda_class);
+		
+		if (rev < 3)
+			printf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
+			    self->dv_xname);
 	}
-	printf(": Saturn %s PCI->ISA bridge (revision 0x%x)\n", type, rev);
-	if (rev < 3)
-		printf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
-		    parent->dv_xname);
 
-	/* attach the ISA bus that hangs off of it... */
-	nca.ca_name = "isa";
-	nca.ca_slot = 0;
-	nca.ca_offset = 0;
-	nca.ca_bus = NULL;
-	if (!config_found(self, &nca, sioprint))
-		panic("sioattach: couldn't attach ISA bus");
+#ifdef EVCNT_COUNTERS
+	evcnt_attach(self, "intr", &sio_intr_evcnt);
+#endif
+
+	ia.ia_bus = BUS_ISA;
+	ia.ia_dmafns = pda->pda_dmafns;
+	ia.ia_dmaarg = pda->pda_dmaarg;
+	ia.ia_intrfns = &sio_isa_intr_fns;
+	ia.ia_intrarg = NULL;			/* XXX needs nothing */
+	ia.ia_memfns = pda->pda_memfns;
+	ia.ia_memarg = pda->pda_memarg;
+	ia.ia_piofns = pda->pda_piofns;
+	ia.ia_pioarg = pda->pda_pioarg;
+	config_found(self, &ia, sioprint);
+
+	if (haseisa) {
+		ea.ea_bus = BUS_EISA;
+		ea.ea_dmafns = pda->pda_dmafns;
+		ea.ea_dmaarg = pda->pda_dmaarg;
+		ea.ea_intrfns = &sio_isa_intr_fns;
+		ea.ea_intrarg = NULL;		/* XXX needs nothing */
+		ea.ea_memfns = pda->pda_memfns;
+		ea.ea_memarg = pda->pda_memarg;
+		ea.ea_piofns = pda->pda_piofns;
+		ea.ea_pioarg = pda->pda_pioarg;
+		config_found(self, &ea, sioprint);
+	}
 }
 
 static int
@@ -99,9 +148,14 @@ sioprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-        register struct confargs *ca = aux;
+        register struct isa_attach_args *ia = aux;
+
+	/*
+	 * XXX Assumes that the first fields of 'struct isa_attach_args'
+	 * XXX and 'struct eisa_attach_args' are the same.
+	 */
 
         if (pnp)
-                printf("%s at %s", ca->ca_name, pnp);
+                printf("%s at %s", isa_bustype_name(ia->ia_bus), pnp);
         return (UNCONF);
 }

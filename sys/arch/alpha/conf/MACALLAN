@@ -1,15 +1,13 @@
-#	$NetBSD: MACALLAN,v 1.5 1995/08/03 00:09:22 cgd Exp $
+#	$NetBSD: MACALLAN,v 1.6 1995/11/23 02:35:13 cgd Exp $
 #
 # Kernel for macallan.dssc.cs.cmu.edu.
 
-machine		alpha
-
-makeoptions	DEBUG="-g"
+include	"std.alpha"
 
 maxusers 8
 
 # CPU Support
-options		DEC_3000_500		# 3000/[4-9]00
+options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -32,16 +30,21 @@ options		INET		# Internet protocol suite
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
+# Binary compatibility with previous versions of NetBSD.
+options		COMPAT_10
+
 # Loadable Kernel Modules
 options		LKM
 
 config		netbsd	root on sd0 swap on sd0 and sd1
 
 mainbus0 at	root
-
 cpu*	at	mainbus0
 
+# TurboChannel bus support
 tc*	at	mainbus0
+
+# TurboChannel devices
 asic0	at	tc? slot ? offset ?
 clock0	at	asic? offset ?
 le0	at	asic? offset ?
@@ -52,9 +55,11 @@ esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
 #sfb*	at	tc? slot ? offset ?
 
+# SCSI bus support
 scsibus0 at	esp0
 scsibus* at	esp?
 
+# SCSI devices
 sd0	at	scsibus0 target 0 lun 0
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?

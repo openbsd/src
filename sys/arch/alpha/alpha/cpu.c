@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3 1995/06/28 02:45:01 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4 1995/11/23 02:33:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -73,12 +73,13 @@ cpuattach(parent, dev, aux)
 		"EV5 (21164)",			/* PCS_PROC_EV5 */
 		"EV45 (21064A)",		/* PCS_PROC_EV45 */
 	};
-	char *cpu_minor[] = {
+	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
+	char *dc21064_cpu_minor[] = {
 		"Pass 2 or 2.1",
 		"Pass 3",
 	};
-	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
-	int ncpu_minor = sizeof(cpu_minor) / sizeof(cpu_minor[0]);
+	int ndc21064_cpu_minor =
+	    sizeof(dc21064_cpu_minor) / sizeof(dc21064_cpu_minor[0]);
 	u_int32_t major, minor;
 	int needcomma, needrev, i;
 
@@ -96,10 +97,22 @@ cpuattach(parent, dev, aux)
 
 	printf(", ");
 
-	if (minor < ncpu_minor)
-		printf("%s", cpu_minor[minor]);
-	else
+	switch (major) {
+	case PCS_PROC_EV4:
+		if (minor < ndc21064_cpu_minor)
+			printf("%s", dc21064_cpu_minor[minor]);
+		else
+			printf("UNKNOWN MINOR TYPE (%d)", minor);
+		break;
+
+	case PCS_PROC_EV45:
+	case PCS_PROC_EV5:
+		printf("Pass %d", minor + 1);
+		break;
+
+	default:
 		printf("UNKNOWN MINOR TYPE (%d)", minor);
+	}
 
 	if (p->pcs_proc_revision[0] != 0) {		/* XXX bad test? */
 		printf(", ");
@@ -133,20 +146,12 @@ cpuattach(parent, dev, aux)
 		printf("\n");
 	}
 
-	if (major == PCS_PROC_LCA4) {
-		struct confargs nca;
-
-		/*
-		 * If the processor is an LCA, then it's got the PCI
-		 * bus interface built in.  Attach it here. (!!!)
-		 */
-		nca.ca_name = "lca";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = NULL;
-		if (!config_found(dev, &nca, cpuprint))
-			panic("cpuattach: couldn't attach LCA bus interface");
-	}
+	/*
+	 * Though we could (should?) attach the LCA's PCI
+	 * bus here there is no good reason to do so, and
+	 * the bus attachment code is easier to understand
+	 * and more compact if done the 'normal' way.
+	 */
 }
 
 static int

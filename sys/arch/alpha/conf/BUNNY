@@ -1,4 +1,4 @@
-#	$NetBSD: BUNNY,v 1.2 1995/08/03 00:09:18 cgd Exp $
+#	$NetBSD: BUNNY,v 1.3 1995/11/23 02:34:55 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -9,9 +9,7 @@
 # It also has no support for devices which aren't actually used
 # (sound, parallel port, keyboard, mouse, SCSI tape or CD-ROM, etc.).
 
-machine		alpha
-
-makeoptions	DEBUG="-g"
+include	"std.alpha"
 
 maxusers 8
 
@@ -34,6 +32,7 @@ options		KTRACE			# System call tracing support
 options		FIFO		# POSIX fifo support (in all file systems)
 options		FFS		# Fast file system
 options		MFS		# Memory-based file system
+options		NFSSERVER	# Sun NFS-compatible file system server
 options		NFSCLIENT	# Sun NFS-compatible file system client
 
 # Networking options
@@ -42,6 +41,9 @@ options		INET		# Internet protocol suite
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
+# Binary compatibility with previous versions of NetBSD.
+options		COMPAT_10
+
 # Loadable Kernel Modules
 options		LKM
 
@@ -49,7 +51,7 @@ options		LKM
 #options	INSECURE
 
 # Misc. options
-options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		PCIVERBOSE	# recognize "unknown" PCI devices
 
 config		netbsd		root on sd0 swap on sd0
 
@@ -64,11 +66,11 @@ pci*	at	apecs?
 
 # PCI devices
 de*	at	pci?
+ncr0	at	pci?
 sio*	at	pci?
-ncr*	at	pci?
 
-# ISA bus support
-isa0	at	sio?
+# ISA/EISA bus support
+isa*	at	sio?
 
 # ISA devices
 clock0	at	isa? port 0x70

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 1995/08/03 00:52:13 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1995/11/25 01:31:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -62,9 +62,10 @@
 #include <alpha/tc/asic.h>
 #include <alpha/tc/if_levar.h>
 #include <dev/ic/am7990reg.h>
+#define	LE_NEED_BUF_CONTIG
+#define	LE_NEED_BUF_GAP2
+#define	LE_NEED_BUF_GAP16
 #include <dev/ic/am7990var.h>
-
-#define	SPARSE
 
 /* access LANCE registers */
 void lewritereg();
@@ -87,12 +88,6 @@ int leintr __P((void *));
 struct cfdriver lecd = {
 	NULL, "le", lematch, leattach, DV_IFNET, sizeof (struct le_softc)
 };
-
-void copytobuf_gap16 __P((struct le_softc *, void *, int, int));
-void copyfrombuf_gap16 __P((struct le_softc *, void *, int, int));
-void zerobuf_gap16 __P((struct le_softc *, int, int));
-void copytobuf_gap2 __P((struct le_softc *, void *, int, int));
-void copyfrombuf_gap2 __P((struct le_softc *, void *, int, int));
 
 integrate void
 lewrcsr(sc, port, val)
@@ -172,9 +167,7 @@ leattach(parent, self, aux)
 		volatile u_int *ldp;
 
 		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
-#ifdef SPARSE
 		sc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
-#endif
 		sc->sc_mem = (void *)le_iomem;
 /* XXX */	cp = (u_char *)ASIC_SYS_ETHER_ADDRESS(asic_base);
 
@@ -201,8 +194,8 @@ leattach(parent, self, aux)
 		    (BUS_CVTADDR(ca) + LE_OFFSET_RAM);
 		cp = (u_char *)(BUS_CVTADDR(ca) + LE_OFFSET_ROM + 2);
 
-		sc->sc_copytodesc = copytodesc_contig;		/* XXX desc */
-		sc->sc_copyfromdesc = copyfromdesc_contig;	/* XXX desc */
+		sc->sc_copytodesc = copytobuf_contig;
+		sc->sc_copyfromdesc = copyfrombuf_contig;
 		sc->sc_copytobuf = copytobuf_contig;
 		sc->sc_copyfrombuf = copyfrombuf_contig;
 		sc->sc_zerobuf = zerobuf_contig;
@@ -251,157 +244,6 @@ lewritereg(regptr, val)
 		}
 		DELAY(100);
 	}
-}
-
-/*
- * Routines for accessing the transmit and receive buffers. Unfortunately,
- * CPU addressing of these buffers is done in one of 3 ways:
- * - contiguous (for the 3max and turbochannel option card)
- * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
- *   spaces (for the pmax)
- * - gap16, which means 16bytes interspersed with 16byte spaces
- *   for buffers which must begin on a 32byte boundary (for 3min and maxine)
- * The buffer offset is the logical byte offset, assuming contiguous storage.
- */
-
-/*
- * For the 3min and maxine, the buffers are in main memory filled in with
- * 16byte blocks interspersed with 16byte spaces.
- */
-void
-copytobuf_gap16(sc, fromv, boff, len)
-	struct le_softc *sc;
-	void *fromv;
-	int boff;
-	register int len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register caddr_t bptr;
-	register int xfer;
-
-	bptr = buf + ((boff << 1) & ~0x1f);
-	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bcopy(from, bptr + boff, xfer);
-		from += xfer;
-		bptr += 32;
-		boff = 0;
-		len -= xfer;
-		xfer = min(len, 16);
-	}
-}
-
-void
-copyfrombuf_gap16(sc, tov, boff, len)
-	struct le_softc *sc;
-	void *tov;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register caddr_t bptr;
-	register int xfer;
-
-	bptr = buf + ((boff << 1) & ~0x1f);
-	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bcopy(bptr + boff, to, xfer);
-		to += xfer;
-		bptr += 32;
-		boff = 0;
-		len -= xfer;
-		xfer = min(len, 16);
-	}
-}
-
-void
-zerobuf_gap16(sc, boff, len)
-	struct le_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t bptr;
-	register int xfer;
-
-	bptr = buf + ((boff << 1) & ~0x1f);
-	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bzero(bptr + boff, xfer);
-		bptr += 32;
-		boff = 0;
-		len -= xfer;
-		xfer = min(len, 16);
-	}
-}
-
-/*
- * For the pmax the buffer consists of shorts (2 bytes) interspersed with
- * short (2 byte) spaces and must be accessed with halfword load/stores.
- * (don't worry about doing an extra byte)
- */
-void
-copytobuf_gap2(sc, fromv, boff, len)
-	struct le_softc *sc;
-	void *fromv;
-	int boff;
-	register int len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_short *bptr;
-	register int xfer;
-
-	if (boff & 0x1) {
-		/* handle unaligned first byte */
-		bptr = ((volatile u_short *)buf) + (boff - 1);
-		*bptr = (*from++ << 8) | (*bptr & 0xff);
-		bptr += 2;
-		len--;
-	} else
-		bptr = ((volatile u_short *)buf) + boff;
-	while (len > 1) {
-		*bptr = (from[1] << 8) | (from[0] & 0xff);
-		bptr += 2;
-		from += 2;
-		len -= 2;
-	}
-	if (len == 1)
-		*bptr = (u_short)*from;
-}
-
-void
-copyfrombuf_gap2(sc, tov, boff, len)
-	struct le_softc *sc;
-	void *tov;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_short *bptr;
-	register u_short tmp;
-	register int xfer;
-
-	if (boff & 0x1) {
-		/* handle unaligned first byte */
-		bptr = ((volatile u_short *)buf) + (boff - 1);
-		*to++ = (*bptr >> 8) & 0xff;
-		bptr += 2;
-		len--;
-	} else
-		bptr = ((volatile u_short *)buf) + boff;
-	while (len > 1) {
-		tmp = *bptr;
-		*to++ = tmp & 0xff;
-		*to++ = (tmp >> 8) & 0xff;
-		bptr += 2;
-		len -= 2;
-	}
-	if (len == 1)
-		*to = *bptr & 0xff;
 }
 
 #include <dev/ic/am7990.c>

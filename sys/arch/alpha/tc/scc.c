@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.9 1995/08/03 00:52:17 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.10 1995/11/23 02:41:29 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -96,7 +96,9 @@
 #include <dev/ic/z8530reg.h>
 #include <alpha/tc/sccreg.h>
 #include <alpha/tc/sccvar.h>
+#if 0
 #include <pmax/dev/fbreg.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
@@ -874,6 +876,7 @@ sccintr(xxxunit)
 		 * Now for mousey
 		 */
 		} else if (tp == scc_tty[SCCMOUSE_PORT] && sccMouseButtons) {
+#if 0
 			register MouseReport *mrp;
 			static MouseReport currentRep;
 
@@ -906,6 +909,7 @@ sccintr(xxxunit)
 				}
 				(*sccMouseButtons)(mrp);
 			}
+#endif
 			continue;
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {

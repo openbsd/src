@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 1995/11/23 02:35:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -69,6 +69,10 @@ struct confargs {
 	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
-void	set_clockintr __P((void (*)(struct clockframe *)));
+void	set_clockintr __P((void));
 void	set_iointr __P((void (*)(void *, int)));
 int	badaddr			__P((void *, u_int64_t));
+
+#ifdef EVCNT_COUNTERS
+extern struct evcnt clock_intr_evcnt;
+#endif

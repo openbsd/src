@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_isa.c,v 1.3 1995/08/03 01:16:53 cgd Exp $	*/
+/*	$NetBSD: apecs_isa.c,v 1.4 1995/11/23 02:37:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -30,65 +30,88 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 #include <vm/vm.h>
 
-#include <machine/pio.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isadmavar.h>
-#include <alpha/isa/isa_dma.h>
+#include <dev/isa/isavar.h>
 
 #include <alpha/pci/apecsreg.h>
+#include <alpha/pci/apecsvar.h>
 
-static u_int8_t		apecs_inb __P((int port));
-/* static void		apecs_insb __P((int port, void *addr, int cnt)); */
+/*
+ * Allocation/deallocation functions.
+ */
+int	apecs_pio_alloc __P((void *, isa_iooffset_t, isa_iosize_t));
+int	apecs_pio_dealloc __P((void *, isa_iooffset_t, isa_iosize_t));
+
+/*
+ * Byte functions.
+ */
+isa_byte_t	apecs_inb __P((void *, isa_iooffset_t));
 #define	apecs_insb	0					/* XXX */
-static u_int16_t	apecs_inw __P((int port));
-/* static void		apecs_insw __P((int port, void *addr, int cnt)); */
-#define	apecs_insw	0					/* XXX */
-u_int32_t		apecs_inl __P((int port));
-/* static void		apecs_insl __P((int port, void *addr, int cnt)); */
-#define	apecs_insl	0					/* XXX */
-
-static void		apecs_outb __P((int port, u_int8_t datum));
-/* static void		apecs_outsb __P((int port, void *addr, int cnt)); */
+void		apecs_outb __P((void *, isa_iooffset_t, isa_byte_t));
 #define	apecs_outsb	0					/* XXX */
-static void		apecs_outw __P((int port, u_int16_t datum));
-/* static void		apecs_outsw __P((int port, void *addr, int cnt)); */
+
+/*
+ * Word functions.
+ */
+isa_word_t	apecs_inw __P((void *, isa_iooffset_t));
+#define	apecs_insw	0					/* XXX */
+void		apecs_outw __P((void *, isa_iooffset_t, isa_word_t));
 #define	apecs_outsw	0					/* XXX */
-static void		apecs_outl __P((int port, u_int32_t datum));
-/* static void		apecs_outsl __P((int port, void *addr, int cnt)); */
+
+/*
+ * Longword functions.
+ */
+isa_long_t	apecs_inl __P((void *, isa_iooffset_t));
+#define	apecs_insl	0					/* XXX */
+void		apecs_outl __P((void *, isa_iooffset_t, isa_long_t));
 #define	apecs_outsl	0					/* XXX */
 
-struct isa_pio_fcns apecs_pio_fcns = {
+__const struct pci_pio_fns apecs_pio_fns = {
+	/* Allocation/deallocation functions. */
+	apecs_pio_alloc,	apecs_pio_dealloc,
+
+	/* Byte functions. */
 	apecs_inb,	apecs_insb,
-	apecs_inw,	apecs_insw,
-	apecs_inl,	apecs_insl,
 	apecs_outb,	apecs_outsb,
+
+	/* Word functions. */
+	apecs_inw,	apecs_insw,
 	apecs_outw,	apecs_outsw,
+
+	/* Longword functions. */
+	apecs_inl,	apecs_insl,
 	apecs_outl,	apecs_outsl,
 };
 
-static int	apecs_isadma_map __P((caddr_t addr, vm_size_t size,
-		    vm_offset_t *mappings, int flags));
-static void	apecs_isadma_unmap __P((caddr_t addr, vm_size_t size,
-		    int nmappings, vm_offset_t *mappings));
-static void	apecs_isadma_copytobuf __P((caddr_t addr, vm_size_t size,
-		    int nmappings, vm_offset_t *mappings));
-static void	apecs_isadma_copyfrombuf __P((caddr_t addr, vm_size_t size,
-		    int nmappings, vm_offset_t *mappings));
+int
+apecs_pio_alloc(ipfarg, start, size)
+	void *ipfarg;
+	isa_iooffset_t start;
+	isa_iosize_t size;
+{
 
-struct isadma_fcns apecs_isadma_fcns = {
-	apecs_isadma_map,	apecs_isadma_unmap,
-	apecs_isadma_copytobuf,	apecs_isadma_copyfrombuf,
-};
+	/* XXX should do something */
+}
 
-u_int8_t
-apecs_inb(ioaddr)
-	int ioaddr;
+int
+apecs_pio_dealloc(ipfarg, start, size)
+	void *ipfarg;
+	isa_iooffset_t start;
+	isa_iosize_t size;
+{
+
+	/* XXX should do something */
+}
+
+isa_byte_t
+apecs_inb(ipfa, ioaddr)
+	void *ipfa;
+	isa_iooffset_t ioaddr;
 {
 	u_int32_t *port, val;
-	u_int8_t rval;
+	isa_byte_t rval;
 	int offset;
 
 	wbflush();
@@ -101,12 +124,31 @@ apecs_inb(ioaddr)
 	return rval;
 }
 
-u_int16_t
-apecs_inw(ioaddr)
-	int ioaddr;
+void
+apecs_outb(ipfa, ioaddr, val)
+	void *ipfa;
+	isa_iooffset_t ioaddr;
+	isa_byte_t val;
+{
+	u_int32_t *port, nval;
+	int offset;
+
+	offset = ioaddr & 3;
+	nval = val /*<< (8 * offset)*/;
+	nval = val << (8 * offset);
+	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 0 << 3 | ioaddr << 5);
+
+	*port = nval;
+	wbflush();
+}
+
+isa_word_t
+apecs_inw(ipfa, ioaddr)
+	void *ipfa;
+	isa_iooffset_t ioaddr;
 {
 	u_int32_t *port, val;
-	u_int16_t rval;
+	isa_word_t rval;
 	int offset;
 
 	wbflush();
@@ -121,12 +163,30 @@ panic("inw(0x%x) => 0x%x @ %p => 0x%x\n", ioaddr, val, port, rval);
 	return rval;
 }
 
-u_int32_t
-apecs_inl(ioaddr)
-	int ioaddr;
+void
+apecs_outw(ipfa, ioaddr, val)
+	void *ipfa;
+	isa_iooffset_t ioaddr;
+	isa_word_t val;
+{
+	u_int32_t *port, nval;
+	int offset;
+
+	offset = ioaddr & 3;
+	nval = val /*<< (8 * offset)*/;
+	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 1 << 3 | ioaddr << 5);
+
+	*port = nval;
+	wbflush();
+}
+
+isa_long_t
+apecs_inl(ipfa, ioaddr)
+	void *ipfa;
+	isa_iooffset_t ioaddr;
 {
 	u_int32_t *port, val;
-	u_int32_t rval;
+	isa_long_t rval;
 	int offset;
 
 	wbflush();
@@ -140,42 +200,10 @@ apecs_inl(ioaddr)
 }
 
 void
-apecs_outb(ioaddr, val)
-	int ioaddr;
-	u_int8_t val;
-{
-	u_int32_t *port, nval;
-	int offset;
-
-	offset = ioaddr & 3;
-	nval = val /*<< (8 * offset)*/;
-	nval = val << (8 * offset);
-	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 0 << 3 | ioaddr << 5);
-
-	*port = nval;
-	wbflush();
-}
-
-void
-apecs_outw(ioaddr, val)
-	int ioaddr;
-	u_int16_t val;
-{
-	u_int32_t *port, nval;
-	int offset;
-
-	offset = ioaddr & 3;
-	nval = val /*<< (8 * offset)*/;
-	port = (int32_t *)phystok0seg(APECS_PCI_SIO | 1 << 3 | ioaddr << 5);
-
-	*port = nval;
-	wbflush();
-}
-
-void
-apecs_outl(ioaddr, val)
-	int ioaddr;
-	u_int32_t val;
+apecs_outl(ipfa, ioaddr, val)
+	void *ipfa;
+	isa_iooffset_t ioaddr;
+	isa_long_t val;
 {
 	u_int32_t *port, nval;
 	int offset;
@@ -188,156 +216,131 @@ apecs_outl(ioaddr, val)
 	wbflush();
 }
 
-static caddr_t bounced_addr;
-static caddr_t bounce_buffer;
-static vm_size_t bounce_size;
+/* XXX XXX XXX */
+
+#define pf(fn, args)	fn args { panic(__STRING(fn)); }
+
+void	pf(apecs_dma_cascade, (void *idfa, isa_drq_t chan))
+void	pf(apecs_dma_copytobuf, ())
+void	pf(apecs_dma_copyfrombuf, ())
+void	pf(apecs_dma_start, (void *idfa, vm_offset_t addr,
+	    isa_msize_t size, isa_drq_t chan, int flags))
+void	pf(apecs_dma_abort, (void *idfa, isa_drq_t chan))
+void	pf(apecs_dma_done, (void *idfa, isa_drq_t chan))
+
+int	apecs_dma_map __P((void *, vm_offset_t, isa_msize_t,
+	    isa_moffset_t *, int));
+void	apecs_dma_unmap __P((void *, vm_offset_t, isa_msize_t, int,
+	    isa_moffset_t *));
+
+__const struct isa_dma_fns apecs_dma_fns = {
+	apecs_dma_cascade,
+	apecs_dma_map,
+	apecs_dma_unmap,
+	apecs_dma_copytobuf,
+	apecs_dma_copyfrombuf,
+	apecs_dma_start,
+	apecs_dma_abort,
+	apecs_dma_done,
+};
 
 int
-apecs_isadma_map(addr, size, mappings, flags)
-	caddr_t addr;
-	vm_size_t size;
-	vm_offset_t *mappings;
+apecs_dma_map(idfa, va, isasize, mappingsp, flags)
+	void *idfa;
+	vm_offset_t va;
+	isa_msize_t isasize;
+	isa_moffset_t *mappingsp;
 	int flags;
 {
-	vm_offset_t off, truncaddr;
-	vm_offset_t isa_truncpa;			/* XXX? */
-	vm_size_t alignment;
-	int i, npages, waitok;
+	struct apecs_config *acp = idfa;
+	long todo;
+	int i;
 
-	/*
-	 * ISADMA_MAP_{,NO}BOUNCE and ISADMA_MAP_{CONTIG,SCATTER} are
-	 * completely ignored, because all allocations will be in the
-	 * low 16M and will be contiguous.  I LOVE VIRTUAL DMA!
-	 */
+	if (ISA_DMA_NEEDCONTIG(flags) && isasize > NBPG ||
+	    ISA_DMA_SIZEBOUND(flags) != ISA_DMA_SIZEBOUND_NONE ||
+	    ISA_DMA_ADDRBOUND(flags) != ISA_DMA_ADDRBOUND_NONE)
+		panic("apecs_dma_map: punt");
 
-	truncaddr = trunc_page(addr);
-	off = (vm_offset_t)addr - truncaddr;
-	npages = num_pages(size + off);
-	if (npages == 0)
-		panic("apecs_isadma_map: map nothing");
+	i = 0;
+	todo = isasize;
 
-	alignment = 64 * 1024;
-	if ((flags & ISADMA_MAP_16BIT) != 0)
-		alignment <<= 1;
-	waitok = (flags & ISADMA_MAP_WAITOK) != 0;
-
-	if (npages > atop(alignment)) {
-		int s;
-		void *tmpbb;
-
-		/*
-		 * Allocate a bounce buffer.
-		 */
-		s = splhigh();
-retry:
-		while (bounce_buffer != NULL) {
-			/*
-			 * If a bounce buffer is in use and we can't
-			 * wait, bug out now, otherwise sleep.
-			 */
-			if (!waitok) {
-				splx(s);
-				return 0;
-			}
-
-			tsleep(&bounce_buffer, PRIBIO+1, "apecsbb", 0);
-		}
-
-		/*
-		 * Try to allocate a bounce buffer.
-		 */
-		tmpbb = malloc(alignment, M_DEVBUF,
-		    waitok ? M_WAITOK : M_NOWAIT);
-		if (tmpbb == NULL) {	/* couldn't wait, and failed */
-			splx(s);
-			return 0;
-		}
-
-		/*
-		 * If we slept in malloc() and somebody else got it,
-		 * give it up and try it again!
-		 */
-		if (bounce_buffer != NULL) {
-			free(tmpbb, M_DEVBUF);
-			goto retry;
-		}
-
-		/*
-		 * It's ours, all ours!
-		 */
-		bounce_buffer = tmpbb;
-		splx(s);
-
-		bounced_addr = addr;
-		bounce_size = size;
-		truncaddr = (vm_offset_t)bounce_buffer;
-		npages = atop(alignment);
+	while (todo > 0) {
+		mappingsp[i] = vtophys(va) | 0x40000000;
+#if 0
+		printf("a_pd_m mapping %d: %lx -> %lx -> %lx\n", i, va,
+		    vtophys(va), mappingsp[i]);
+#endif
+		i++;
+		todo -= PAGE_SIZE - (va - trunc_page(va));
+		va += PAGE_SIZE - (va - trunc_page(va));
 	}
-
-	isa_truncpa = apecs_sgmap_alloc(truncaddr, npages, alignment, waitok);
-
-	mappings[0] = isa_truncpa + off;
-	for (i = 1; i < npages; i++)
-		mappings[i] = isa_truncpa + ptoa(i);
-
-	return (npages);
+	return (i);
 }
 
 void
-apecs_isadma_unmap(addr, size, nmappings, mappings)
-	caddr_t addr;
-	vm_size_t size;
+apecs_dma_unmap(idfa, va, isasize, nmappings, mappingsp)
+	void *idfa;
+	vm_offset_t va;
+	isa_msize_t isasize;
 	int nmappings;
-	vm_offset_t *mappings;
+	isa_moffset_t *mappingsp;
 {
-	int npages;
 
-	npages = nmappings;
-	if (npages == 0)
-		panic("apecs_isadma_unmap: unmap nothing");
-	apecs_sgmap_dealloc(trunc_page(mappings[0]), npages);
+	printf("apecs_dma_unmap: called\n");
+}
 
-	if (addr == bounced_addr) {
-		/*
-		 * Free the bounce buffer and wake up anybody who
-		 * wants to bounce.
-		 */
-		bounced_addr = NULL;
-		bounce_size = 0;
-		free(bounce_buffer, M_DEVBUF);
-		bounce_buffer = NULL;
-		wakeup(&bounce_buffer);
-	}
+vm_offset_t	apecs_mem_map __P((void *, isa_moffset_t, isa_msize_t, int));
+void		apecs_mem_unmap __P((void *, vm_offset_t, isa_msize_t));
+
+#if 0
+void		apecs_mem_copytoisa __P((void *, char *, vm_offset_t,
+		    isa_moffset_t, isa_msize_t));
+void		apecs_mem_copyfromisa __P((void *, char *, vm_offset_t,
+		    isa_moffset_t, isa_msize_t));
+void		apecs_mem_zero __P((void *, vm_offset_t, isa_moffset_t,
+		    isa_msize_t));
+#else
+void		pf(apecs_mem_copytoisa, ())
+void		pf(apecs_mem_copyfromisa, ())
+void		pf(apecs_mem_zero, ())
+#endif
+
+__const struct isa_mem_fns apecs_mem_fns = {
+	apecs_mem_map,
+	apecs_mem_unmap,
+	apecs_mem_copytoisa,
+	apecs_mem_copyfromisa,
+	apecs_mem_zero,
+};
+
+vm_offset_t
+apecs_mem_map(imfa, isapa, isasize, cacheable)
+	void *imfa;
+	isa_moffset_t isapa;
+	isa_msize_t isasize;
+	int cacheable;
+{
+	vm_offset_t sbpa;
+
+	/* XXX sanity checks on sizes, use of windows, etc. */
+
+	/* XXX MAGIC NUMBERS */
+	if (cacheable)
+		sbpa = (isapa & 0xffffffff) | APECS_PCI_DENSE;
+	else
+		sbpa = ((isapa & 0x7ffffff) << 5) | APECS_PCI_SPARSE;
+
+	return phystok0seg(sbpa);
 }
 
 void
-apecs_isadma_copytobuf(addr, size, nmappings, mappings)
-	caddr_t addr;
-	vm_size_t size;
-	int nmappings;
-	vm_offset_t *mappings;
+apecs_mem_unmap(imfa, va, isasize)
+	void *imfa;
+	vm_offset_t va;
+	isa_msize_t isasize;
 {
 
-	if (addr != bounced_addr)
-		return;
+	/* XXX sanity checks on va */
 
-	log(LOG_NOTICE, "apecs_isa_copytobuf: copied %d byte buffer\n",
-	    bounce_size);
-	bcopy(addr, bounce_buffer, bounce_size);
-}
-
-void
-apecs_isadma_copyfrombuf(addr, size, nmappings, mappings)
-	caddr_t addr;
-	vm_size_t size;
-	int nmappings;
-	vm_offset_t *mappings;
-{
-
-	if (addr != bounced_addr)
-		return;
-
-	log(LOG_NOTICE, "apecs_isa_copyfrombuf: copied %d byte buffer\n",
-	    bounce_size);
-	bcopy(bounce_buffer, addr, bounce_size);
+	/* Nothing to do; mapping was done in direct-mapped segment. */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 1995/09/19 23:00:53 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 1995/11/23 02:34:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,12 +34,12 @@
 #include <sys/syscallargs.h>
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sysarch_args /* {
+	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;

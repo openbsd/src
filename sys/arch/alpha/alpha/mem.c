@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 1995/06/28 02:45:13 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.5 1995/11/23 02:34:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,6 +103,7 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
+kmemphys:
 #ifndef DEBUG
 			/* allow reads only in RAM (except for DEBUG) */
 			if (v < ctob(firstusablepage) ||
@@ -117,6 +118,12 @@ mmrw(dev, uio, flags)
 /* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
+
+			if (v >= K0SEG_BEGIN && v < K0SEG_END) {
+				v = k0segtophys(v);
+				goto kmemphys;
+			}
+
 			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1995/10/07 06:25:19 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 1995/11/23 02:34:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -81,6 +81,15 @@
 #ifdef DEC_2100_A50
 #include <alpha/alpha/dec_2100_a50.h>
 #endif
+#ifdef DEC_KN20AA
+#include <alpha/alpha/dec_kn20aa.h>
+#endif
+#ifdef DEC_AXPPCI_33
+#include <alpha/alpha/dec_axppci_33.h>
+#endif
+#ifdef DEC_21000
+#include <alpha/alpha/dec_21000.h>
+#endif
 
 #include <net/netisr.h>
 #include "ether.h"
@@ -141,9 +150,11 @@ char	*model_names[] = {
 	"DEC 2100/A500 (\"Sable\")",
 	"AXPvme 64",
 	"AXPpci 33 (\"NoName\")",
-	"UNKNOWN (12)",
+	"DEC 21000 (\"TurboLaser\")",
 	"DEC 2100/A50 (\"Avanti\") family",
 	"Mustang",
+	"DEC KN20AA",
+	"UNKNOWN (16)",
 	"DEC 1000 (\"Mikasa\")",
 };
 int	nmodel_names = sizeof model_names/sizeof model_names[0];
@@ -333,6 +344,8 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	 * find out this CPU's page size
 	 */
 	PAGE_SIZE = hwrpb->rpb_page_size;
+	if (PAGE_SIZE != 8192)
+		panic("page size %d != 8192?!", PAGE_SIZE);
 
 	v = (caddr_t)alpha_round_page(_end);
 	/*
@@ -374,6 +387,24 @@ alpha_init(pfn, ptb, argc, argv, envp)
 		break;
 #endif
 
+#ifdef DEC_KN20AA
+	case ST_DEC_KN20AA:
+		cpu_modelname = dec_kn20aa_modelname;
+		cpu_consinit = dec_kn20aa_consinit;
+		cpu_bootdev = dec_kn20aa_bootdev;
+		cpu_iobus = "cia";
+		break;
+#endif
+
+#ifdef DEC_AXPPCI_33
+	case ST_DEC_AXPPCI_33:
+		cpu_modelname = dec_axppci_33_modelname;
+		cpu_consinit = dec_axppci_33_consinit;
+		cpu_bootdev = dec_axppci_33_bootdev;
+		cpu_iobus = "lca";
+		break;
+#endif
+
 #ifdef DEC_2000_300
 	case ST_DEC_2000_300:
 		cpu_modelname = dec_2000_300_modelname;
@@ -381,13 +412,16 @@ alpha_init(pfn, ptb, argc, argv, envp)
 		cpu_bootdev = dec_2000_300_bootdev;
 		cpu_iobus = "ibus";
 	XXX DEC 2000/300 NOT SUPPORTED
+		break;
 #endif
 
-#if defined(ADU) || defined(DEC_4000) || defined(DEC_7000) || \
-    defined(DEC_2100_A500) || defined(DEC_AXPVME_64) || \
-    defined(DEC_AXPPCI_33) || defined(DEC_MUSTANG) || \
-    defined(DEC_1000)
-	THIS SYSTEM NOT SUPPORTED
+#ifdef DEC_21000
+	case ST_DEC_21000:
+		cpu_modelname = dec_21000_modelname;
+		cpu_consinit = dec_21000_consinit;
+		cpu_bootdev = dec_21000_bootdev;
+		cpu_iobus = "tlsb";
+		break;
 #endif
 
 	default:
@@ -445,9 +479,9 @@ alpha_init(pfn, ptb, argc, argv, envp)
 	 * to map these into virtual address space.
 	 */
 #define valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
+	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
 #define valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+	    (name) = (type *)v; v = (caddr_t)ALIGN((lim) = ((name)+(num)))
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
@@ -605,7 +639,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 consinit()
 {
 
-	cpu_consinit(boot_console);
+	(*cpu_consinit)(boot_console);
 	pmap_unmap_prom();
 }
 
@@ -769,10 +803,10 @@ boot(howto)
 		dumpsys();
 	}
 
+haltsys:
+
 	/* run any shutdown hooks */
 	doshutdownhooks();
-
-haltsys:
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
@@ -1462,10 +1496,8 @@ cpu_exec_ecoff_hook(p, epp, eap)
 		epp->ep_emul = &emul_netbsd;
 		break;
 
-#ifdef DIAGNOSTIC
 	default:
-		panic("cpu_exec_ecoff_hook: can't get here from there.");
-#endif
+		return ENOEXEC;
 	}
 	return 0;
 }

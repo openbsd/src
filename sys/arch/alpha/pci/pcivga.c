@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivga.c,v 1.2 1995/08/03 01:17:17 cgd Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.3 1995/11/23 02:38:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -35,7 +35,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
-#include <machine/pio.h>
 
 #include <dev/pseudo/ansicons.h>
 #include <dev/pci/pcireg.h>
@@ -43,6 +42,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <alpha/pci/pcivgavar.h>
+#include <alpha/pci/wsconsvar.h>
 
 int	pcivgamatch __P((struct device *, void *, void *));
 void	pcivgaattach __P((struct device *, struct device *, void *));
@@ -52,8 +52,19 @@ struct cfdriver pcivgacd = {
 	    sizeof(struct pcivga_softc)
 };
 
+void	pcivga_getdevconfig __P((__const struct pci_conf_fns *, void *,
+	    __const struct pci_mem_fns *, void *,
+	    __const struct pci_pio_fns *, void *,
+	    pci_conftag_t tag, struct pcivga_devconfig *dc));
+
 struct pcivga_devconfig pcivga_console_dc;
 
+void	pcivga_cursor __P((void *, int, int));
+void	pcivga_putstr __P((void *, int, int, char *, int));
+void	pcivga_copycols __P((void *, int, int, int,int));
+void	pcivga_erasecols __P((void *, int, int, int));
+void	pcivga_copyrows __P((void *, int, int, int));
+void	pcivga_eraserows __P((void *, int, int));
 void	pcivga_bell __P((void *));			/* XXX */
 
 struct ansicons_functions pcivga_acf = {
@@ -74,54 +85,43 @@ pcivgamatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pci_attach_args *pa = aux;
+	struct pcidev_attach_args *pda = aux;
 
 	/*
 	 * If it's prehistoric/vga or display/vga, we match.
 	 */
-	if ((PCI_CLASS(pa->pa_class) == PCI_CLASS_PREHISTORIC &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA) ||
-	    (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA))
+	if (PCI_CLASS(pda->pda_class) == PCI_CLASS_PREHISTORIC &&
+	    PCI_SUBCLASS(pda->pda_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
+		return (1);
+	if (PCI_CLASS(pda->pda_class) == PCI_CLASS_DISPLAY &&
+	     PCI_SUBCLASS(pda->pda_class) == PCI_SUBCLASS_DISPLAY_VGA)
 		return (1);
 
 	return (0);
 }
 
 void
-pcivga_getdevconfig(tag, dc)
-	pcitag_t tag;
+pcivga_getdevconfig(pcf, pcfa, pmf, pmfa, ppf, ppfa, tag, dc)
+	__const struct pci_conf_fns *pcf;
+	__const struct pci_mem_fns *pmf;
+	__const struct pci_pio_fns *ppf;
+	void *pcfa, *pmfa, *ppfa;
+	pci_conftag_t tag;
 	struct pcivga_devconfig *dc;
 {
 
+	dc->dc_pcf = pcf;
+	dc->dc_pcfa = pcfa;
+	dc->dc_pmf = pmf;
+	dc->dc_pmfa = pmfa;
+	dc->dc_ppf = ppf;
+	dc->dc_ppfa = ppfa;
 	dc->dc_pcitag = tag;
 
-#if 0
-	vm_offset_t pciva, pcipa;
-	int i;
+	/* XXX deal with mapping foo */
 
-	dc->dc_vaddr = 0;
-	if (pci_map_mem(tag, 0x10, &dc->dc_vaddr, &pcipa))
-		return;
-#endif
-
-#if 0
-	int i;
-	pcireg_t old;
-
-	printf("\n");
-	for (i = PCI_MAP_REG_START; i < PCI_MAP_REG_END; i += 4) {
-		old = pci_conf_read(tag, i);
-		pci_conf_write(tag, i, 0xffffffff);
-		printf("pcivga_getdevconfig: ");
-		printf("mapping reg @ %d = 0x%x (mask 0x%x)\n",
-			i, old, pci_conf_read(tag, i));
-		pci_conf_write(tag, i, old);
-	}
-	printf("foo");
-#endif
-
-	dc->dc_crtat = (u_short *)phystok0seg(0xb8000 | (3L << 32)); /* XXX */
+	/* XXX */
+	dc->dc_crtat = (u_short *)PCI_MEM_MAP(pmf, pmfa, 0xb8000, 0x8000, 1);
 	dc->dc_iobase = 0x3d4;			/* XXX */
 
 	dc->dc_nrow = 25;
@@ -141,26 +141,29 @@ pcivgaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
+	struct pcidev_attach_args *pda = aux;
 	struct pcivga_softc *sc = (struct pcivga_softc *)self;
 	char devinfo[256];
 	int console;
 
-	console = (pa->pa_tag == pcivga_console_dc.dc_pcitag);
+	console = (pda->pda_tag == pcivga_console_dc.dc_pcitag);
 	if (console)
 		sc->sc_dc = &pcivga_console_dc;
 	else {
 		sc->sc_dc = (struct pcivga_devconfig *)
 		    malloc(sizeof(struct pcivga_devconfig), M_DEVBUF, M_WAITOK);
-		pcivga_getdevconfig(pa->pa_tag, sc->sc_dc);
+		pcivga_getdevconfig(pda->pda_conffns, pda->pda_confarg,
+		    pda->pda_memfns, pda->pda_memarg, pda->pda_piofns,
+		    pda->pda_memarg, pda->pda_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_crtat == NULL) {
 		printf(": couldn't map memory space; punt!\n");
 		return;
 	}
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, NULL);
-	printf(": %s (revision 0x%x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	pci_devinfo(pda->pda_id, pda->pda_class, 0, devinfo);
+	printf(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pda->pda_class));
 
 #if 0
 	if (sc->sc_dc->dc_tgaconf == NULL) {
@@ -209,21 +212,28 @@ tgammap(dev, offset, nprot)
 #endif
 
 void
-pcivga_console(bus, device, function)
-	int bus, device, function;
+pcivga_console(pcf, pcfa, pmf, pmfa, ppf, ppfa, bus, device, function)
+	__const struct pci_conf_fns *pcf;
+	__const struct pci_mem_fns *pmf;
+	__const struct pci_pio_fns *ppf;
+	void *pcfa, *pmfa, *ppfa;
+	pci_bus_t bus;
+	pci_device_t device;
+	pci_function_t function;
 {
 	struct pcivga_devconfig *dcp = &pcivga_console_dc;
 
-	pcivga_getdevconfig(pci_make_tag(bus, device, function), dcp);
+	pcivga_getdevconfig(pcf, pcfa, pmf, pmfa, ppf, ppfa,
+	    PCI_MAKE_TAG(bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_crtat == NULL)
-		panic("pcivga_console(%d, %d, %d): couldn't map memory space",
-		    bus, device, function);
+		panic("pcivga_console(%d, %d): couldn't map memory space",
+		    device, function);
 #if 0
 	if (dcp->dc_pcivgaconf == NULL)
-		panic("pcivga_console(%d, %d, %d): unknown board configuration",
-		    bus, device, function);
+		panic("pcivga_console(%d, %d): unknown board configuration",
+		    device, function);
 #endif
 
 	wsc_console(&dcp->dc_ansicons, &pcivga_acf, dcp,
@@ -265,10 +275,10 @@ pcivga_cursor(id, row, col)
 
 	pos = row * dc->dc_ncol + col;
 
-	outb(dc->dc_iobase, 14);
-	outb(dc->dc_iobase+1, pos >> 8);
-	outb(dc->dc_iobase, 15);
-	outb(dc->dc_iobase+1, pos);
+	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase, 14);
+	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase+1, pos >> 8);
+	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase, 15);
+	OUTB(dc->dc_ppf, dc->dc_ppfa, dc->dc_iobase+1, pos);
 }
 
 void

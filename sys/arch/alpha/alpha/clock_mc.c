@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.3 1995/11/23 02:33:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,11 +48,21 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/rpb.h>
 #include <machine/pte.h>		/* XXX */
 
 #include <alpha/alpha/clockvar.h>
 #include <dev/ic/mc146818reg.h>
+
+#include "tc.h"
+#if NTC
+	/* XXX */
+#endif
+
+#include "isa.h"
+#if NISA
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#endif
 
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));
@@ -66,6 +76,8 @@ struct mcclockdata {
 	void	(*mc_write) __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 	u_int	(*mc_read) __P((struct clock_softc *csc, u_int reg));
+	__const void *mc_accessfns;
+	void	*mc_accessarg;
 	void	*mc_addr;
 };
 
@@ -74,14 +86,14 @@ struct mcclockdata {
 #define	mc146818_read(sc, reg)						\
 	    (*((struct mcclockdata *)sc->sc_data)->mc_read)(sc, reg)
 
-#if defined(DEC_3000_500) || defined(DEC_3000_300)
+#if NTC
 static void	mc_write_tc __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_tc __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_tc = { mc_write_tc, mc_read_tc };
 #endif
 
-#if defined(DEC_2000_300) || defined(DEC_2100_A50)
+#if NISA
 static void	mc_write_isa __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_isa __P((struct clock_softc *csc, u_int reg));
@@ -95,9 +107,12 @@ mcclock_attach(parent, self, aux)
 	void *aux;
 {
 	struct clock_softc *csc = (struct clock_softc *)self;
-
+	struct isadev_attach_args *ida = aux;
 	register volatile struct chiptime *c;
 	struct confargs *ca = aux;
+#if NTC
+	extern struct cfdriver asiccd;				/* XXX */
+#endif
 
 	printf(": mc146818 or compatible");
 
@@ -105,41 +120,30 @@ mcclock_attach(parent, self, aux)
 	csc->sc_get = mcclock_get;
 	csc->sc_set = mcclock_set;
 
-        switch (hwrpb->rpb_type) {
-#if defined(DEC_3000_500) || defined(DEC_3000_300)
-#if defined(DEC_3000_500)
-        case ST_DEC_3000_500:
-#endif
-#if defined(DEC_3000_300)
-        case ST_DEC_3000_300:
-#endif
+#if NTC
+	if (parent->dv_cfdata->cf_driver == &asiccd) {
 		/* 
 		 * XXX should really allocate a new one and copy, or
 		 * something.  unlikely we'll have more than one...
 		 */
 		csc->sc_data = &mcclockdata_tc;
 		mcclockdata_tc.mc_addr = BUS_CVTADDR(ca);
-		break;
+	} else
 #endif
-
-#if defined(DEC_2000_300) || defined(DEC_2100_A50)
-#if defined(DEC_2000_300)
-        case ST_DEC_2000_300:
-#endif
-#if defined(DEC_2100_A50)
-        case ST_DEC_2100_A50:
-#endif
+#if NISA
+	if (parent->dv_cfdata->cf_driver == &isacd) {
 		/* 
 		 * XXX should really allocate a new one and copy, or
 		 * something.  unlikely we'll have more than one...
 		 */
 		csc->sc_data = &mcclockdata_isa;
-		break;
+		mcclockdata_isa.mc_accessfns = ida->ida_piofns;
+		mcclockdata_isa.mc_accessarg = ida->ida_pioarg;
+	} else
 #endif
-
-	default:
+	{
 		printf("\n");
-		panic("don't know how to set up for other system types.");
+		panic("clockattach: can't tell what bus we're on");
 	}
 
 	/* Turn interrupts off, just in case. */
@@ -210,7 +214,7 @@ mcclock_set(csc, ct)
 }
 
 
-#if defined(DEC_3000_500) || defined(DEC_3000_300)
+#if NTC
 struct tc_clockdatum {
 	u_char	datum;
 	char	pad[3];
@@ -243,21 +247,21 @@ mc_read_tc(csc, reg)
 
 	return (dp[reg].datum);
 }
-#endif /* DEC_3000_500 || DEC_3000_300 */
+#endif /* NTC */
 
 
-#if defined(DEC_2000_300) || defined(DEC_2100_A50)
-#include <dev/isa/isareg.h>
-#include <machine/pio.h>
-
+#if NISA
 static void
 mc_write_isa(csc, reg, datum)
 	struct clock_softc *csc;
 	u_int reg, datum;
 {
+	struct mcclockdata *cdp = csc->sc_data;
+	__const struct isa_pio_fns *ipf = cdp->mc_accessfns;
+	void *ipfa = cdp->mc_accessarg;
 
-	outb(IO_RTC, reg);
-	outb(IO_RTC + 1, datum);
+	OUTB(ipf, ipfa, IO_RTC, reg);
+	OUTB(ipf, ipfa, IO_RTC + 1, datum);
 }
 
 static u_int
@@ -265,8 +269,11 @@ mc_read_isa(csc, reg)
 	struct clock_softc *csc;
 	u_int reg;
 {
+	struct mcclockdata *cdp = csc->sc_data;
+	__const struct isa_pio_fns *ipf = cdp->mc_accessfns;
+	void *ipfa = cdp->mc_accessarg;
 
-	outb(IO_RTC, reg);
-	return inb(IO_RTC + 1);
+	OUTB(ipf, ipfa, IO_RTC, reg);
+	return INB(ipf, ipfa, IO_RTC + 1);
 }
-#endif /* DEC_3000_500 || DEC_3000_300 */
+#endif /* NISA */

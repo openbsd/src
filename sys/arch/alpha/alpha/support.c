@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.1 1995/02/13 23:07:13 cgd Exp $	*/
+/*	$NetBSD: support.c,v 1.2 1995/11/23 02:34:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,26 +32,6 @@
  */
 #include <sys/param.h>
 #include <sys/errno.h>
-
-void
-blkclr(void *b, size_t len)
-{
-	bzero(b, len);
-}
-
-void
-ovbcopy(void *a, void *b, size_t len)
-{
-	if (b < a) {
-		while (len--)
-			*((char *)b)++ = *((char *)a)++;
-	} else {
-		((char *)a) += len;
-		((char *)b) += len;
-		while (len--)
-			*--((char *)b) = *--((char *)a);
-	}
-}
 
 struct qelem {
 	struct qelem *q_forw;

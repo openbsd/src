@@ -1,0 +1,15 @@
+#!/bin/sh -
+
+dirlist=`find . -type d ! \( -name . -o -name CVS \) -prune | \
+	sed -e s,./,, | sort`
+
+for dir in $dirlist; do
+	echo === $dir
+	echo ""
+	echo "***"
+	echo ""
+	(cd $dir ; time make -k)
+	echo ""
+	echo "***"
+	echo ""
+done

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 1995/08/03 00:54:28 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4 1995/11/23 02:34:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,6 +35,12 @@
 #include <machine/autoconf.h>
 #include <machine/reg.h>
 
+#ifdef EVCNT_COUNTERS
+#include <sys/device.h>
+#else
+#include <machine/intrcnt.h>
+#endif
+
 struct logout {
 #define	LOGOUT_RETRY	0x1000000000000000	/* Retry bit. */
 #define	LOGOUT_LENGTH	0xffff			/* Length mask. */
@@ -49,6 +55,10 @@ static void	nullintr __P((void *, int));
 static void	(*iointr) __P((void *, int)) = nullintr;
 static void	(*clockintr) __P((void *, int)) = nullintr;
 static int	mc_expected, mc_received;
+
+#ifdef EVCNT_COUNTERS
+struct evcnt	clock_intr_evcnt;	/* event counter for clock intrs. */
+#endif
 
 void
 interrupt(framep, type, vec, logoutp)
@@ -75,15 +85,28 @@ nullintr(framep, vec)
 {
 }
 
+static void
+real_clockintr(framep, vec)
+	void *framep;
+	int vec;
+{
+
+#ifdef EVCNT_COUNTERS
+	clock_intr_evcnt.ev_count++;
+#else
+	intrcnt[INTRCNT_CLOCK]++;
+#endif
+	hardclock(framep);
+}
+
 void
-set_clockintr(nclockintr)
-	void (*nclockintr) __P((struct clockframe *));
+set_clockintr()
 {
 
 	if (clockintr != nullintr)
 		panic("set clockintr twice");
 
-	clockintr = (void (*) __P((void *, int)))nclockintr;
+	clockintr = real_clockintr;
 }
 
 void

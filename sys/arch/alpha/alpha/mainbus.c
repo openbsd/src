@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1995/08/03 01:01:26 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1995/11/23 02:34:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -125,12 +125,6 @@ mbattach(parent, self, aux)
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
 	}
-
-	/*
-	 * XXX: note that the following should be at various places in
-	 * machdep.c.
-	 */
-	/* WEIRD: Note that the "LCA" CPU attches the PCI bus directly... */
 }
 
 static int
@@ -139,8 +133,6 @@ mbprint(aux, pnp)
 	char *pnp;
 {
 
-	if (pnp)
-		return (QUIET);
 	return (UNCONF);
 }
 

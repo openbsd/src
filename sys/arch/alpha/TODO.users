@@ -1,4 +1,4 @@
-$NetBSD: TODO.users,v 1.1 1995/04/25 18:16:15 cgd Exp $
+$NetBSD: TODO.users,v 1.2 1995/11/23 02:33:29 cgd Exp $
 
 The NetBSD/Alpha "User" To-Do List
 
@@ -18,18 +18,14 @@ Once you've done something on this list, send me context diffs.
 Chris Demetriou
 cgd@netbsd.org
 --
-
 Make GDB work.
-	(1) for debugging live processes; shouldn't require kernel work.
-	(2) for debugging core dumps; may require kernel work.
+	(1) function arguments and local variables don't seem to work.
 
 Test programs; find and fix bugs.  In particular:
 	(1) make sure accounting works
 	(2) figure out why strip doesn't seem to work
 	(3) last i checked, 'file' core dumped
 	(4) /usr/games
-
-Compile some of the more useful X clients.  (e.g. xterm and resize.)
 
 Make TurboChannel option slots work reasonably.  This will require
     different sets of code to be written on the 3000/[4-9]00 and on the
@@ -50,4 +46,5 @@ Make DDB work.  (For completeness, may require a.out kernel binaries
     and/or some ecoff symbol handling code to be written; the former
     is strongly preferred.)
 
-Make CVS work.  I've no reason to think that it shouldn't, but...
+Track down bugs caused by compiling the kernel with -O.  (At least
+    some of these are likely to be code generation bugs.)

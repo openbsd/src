@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1995/06/28 00:58:48 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1995/11/23 02:39:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,15 +39,16 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <sys/param.h>
 #include <sys/exec.h>
 
 #include <machine/prom.h>
 
-#include "../../include/coff.h"
+#include "include/coff.h"
 #define _KERNEL
-#include "../../include/pte.h"
+#include "include/pte.h"
 
 static int aout_exec __P((int, struct exec *, u_int64_t *));
 static int coff_exec __P((int, struct exechdr *, u_int64_t *));

@@ -1,61 +1,51 @@
-#	$NetBSD: Makefile,v 1.4 1995/06/28 00:58:44 cgd Exp $
-#
-# BSD Boot blocks for the Alpha
-#
-# XXX should generate a primary boot block, too...
+#	$NetBSD: Makefile,v 1.5 1995/11/23 02:39:20 cgd Exp $
 
-INCPATH=-I../../../.. -I.
+.PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
-# Boot relocation address
-RELOC1=	20020000
-# Low memory test program relocation address
-#RELOC2=	20004000
-# High memory test program relocation address
-RELOC2=	fffffc0000230000
+BOOT_PROG = boot
+BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
-# Compiler and assembler flags used to generate boot blocks.
-#
-DEFS=	-DSTANDALONE
-AFLAGS+=-DASSEMBLER ${INCPATH}
-CFLAGS= -mno-fp-regs ${INCPATH} ${DEFS}
+BOOT_SRCS = start.S boot.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c
+BOOT_SRCS+= getfile.c gets.c ioctl.c lseek.c open.c printf.c read.c
+BOOT_SRCS+= strcmp.c ufs.c write.c bcopy.c filesystem.c strlen.c
+BOOT_SRCS+= ntohl.c prom_swpal.S
+BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 
-LIBS=	libsa/libsa.a -lc
-SRCS=	boot.c disk.c conf.c prom.c test.c
+HEADERSIZE_PROG = headersize
 
-all: boot
+AFLAGS += -DASSEMBLER
+CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../..
+CFLAGS = -Werror -mno-fp-regs -g -DCOMPAT_UFS
 
-libsa/libsa.a::
-	cd libsa; make
+CLEANFILES+= vers.c vers.o
 
-# This boot is supposed to be installed in this way:
-#	cp boot <true_root_of_disk>/boot
-BOBJS=	boot.o conf.o disk.o prom.o prom_disp.o prom_swpal.o vers.o
-boot: start.o ${BOBJS} ${LIBS}
-	${LD} -Ttext ${RELOC1} -N \
-	    -e start -o ${.TARGET} start.o ${BOBJS} ${LIBS}
+.PATH: ${.CURDIR}/../../../../lib/libkern
 
-# This boot is supposed to be installed in this way:
-#	cp test_boot <true_root_of_disk>/test_boot
-#
-# It is used presumably in this way:
-#	boot -fi "test_boot" dka300
-TOBJS=	prom.o prom_disp.o prom_swpal.o test.o
-test_boot: start.o ${TOBJS} ${LIBS}
-	${LD} -T ${RELOC2} -N -e start -o ${.TARGET} start.o ${TOBJS} ${LIBS}
+all: ${BOOT_PROG}
 
-clean cleandir:
-	rm -f .depend *.o *.exe *.i errs make.out core* vers.c
-	rm -f a.out boot test_boot
-	cd libsa && make cleandir
+${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
+	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
+	${COMPILE.c} vers.c
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.coff \
+	     ${BOOT_OBJS} vers.o -lc # XXX
+	size ${BOOT_PROG}.coff
+	strip ${BOOT_PROG}.coff
+	dd if=${BOOT_PROG}.coff of=${BOOT_PROG} \
+	    bs=`./${HEADERSIZE_PROG} < ${BOOT_PROG}.coff` skip=1
 
 install:
-	install -c -o root -g wheel -m 555 boot ${DESTDIR}/
+	install -c -o bin -g bin -m 444 ${BOOT_PROG} \
+	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
 
-depend: ${SRCS}
-	mkdep -p ${INCPATH} ${DEFS} ${SRCS}
-	cd libsa && make depend
+clean: _SUBDIRUSE
+	rm -f a.out [Ee]rrs mklog core *.core \
+	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
+	    ${BOOT_PROG}.coff ${HEADERSIZE_PROG}
 
-newvers:
-	sh newvers.sh
+cleandir: _SUBDIRUSE clean
 
-vers.c: newvers
+.include "${.CURDIR}/../Makefile.inc"
+.include <bsd.obj.mk>
+.include <bsd.dep.mk>
+.include <bsd.subdir.mk>

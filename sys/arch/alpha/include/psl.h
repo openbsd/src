@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.3 1995/08/03 00:03:09 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.4 1995/11/23 02:36:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#ifndef __ALPHA_PSL_H__
+#define	__ALPHA_PSL_H__
 
 /*
  * Processor Status register definitions.
@@ -70,16 +73,17 @@
 /*
  * Cache invalidation/flush routines.
  */
-#if 0
-#define	wbflush()	alpha_mb()	/* Flush all write buffers */
-#else
+
 /* Flush all write buffers */
-#define	wbflush()	__asm __volatile("mb")
-#endif
+static __inline int wbflush() { __asm __volatile("mb"); }	/* XXX? wmb */
+
 #define	IMB()		pal_imb()	/* Sync instruction cache w/data */
 
 void alpha_mb __P((void));		/* Flush all write buffers */
 void pal_imb __P((void));		/* Sync instruction cache */
 u_int64_t pal_swpipl __P((u_int64_t));	/* write new IPL, return old */
+u_int64_t profile_swpipl __P((u_int64_t));	/* pal_swpipl w/o profiling */
 void pal_tbi __P((u_int64_t, void *));	/* Invalidate TLB entries */
 #endif /* _KERNEL */
+
+#endif /* !__ALPHA_PSL_H__ */

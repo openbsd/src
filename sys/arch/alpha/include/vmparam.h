@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 1995/02/13 23:08:01 cgd Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 1995/11/23 02:36:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -169,7 +169,6 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
 
 /* some Alpha-specific constants */
-#define	VM_MAX_PHYSADDR	((vm_offset_t)0x0000000080000000) /* max phys addr */
 #define	VPTBASE		((vm_offset_t)0xfffffffc00000000) /* Virt. pg table */
 
 #ifdef THESE_ARE_WRONG

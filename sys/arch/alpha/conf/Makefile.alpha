@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.7 1995/09/19 23:28:06 thorpej Exp $
+#	$NetBSD: Makefile.alpha,v 1.8 1995/11/23 02:35:16 cgd Exp $
 #
 # Makefile for NetBSD
 #
@@ -34,7 +34,8 @@ ALPHA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	-Werror -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
+CFLAGS=	-Werror -fno-builtin -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
+#CFLAGS+=-Wmissing-prototypes -Wmissing-declarations
 AFLAGS=	${COPTS}
 
 ### find out what to use for libkern
@@ -90,10 +91,15 @@ SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	-@echo ${LD} ${LDFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ${XXX}; \
 		${LD} ${LDFLAGS} -o $@ ${SYSTEM_OBJ} vers.o ${XXX}
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
-#.if ${DEBUG} == "-g"
-#SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-#		echo strip -d $@; strip -d $@
-#.endif
+.if ${DEBUG} == "-g"
+.if 0
+SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo strip -d $@; strip -d $@
+.else
+SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo strip -g -X -x $@; strip -g -X -x $@
+.endif
+.endif
 
 %LOAD
 
@@ -107,7 +113,7 @@ clean::
 
 
 locore.o: ${ALPHA}/alpha/locore.s ${ALPHA}/alpha/pal.s \
-	  ${ALPHA}/alpha/prom_disp.s assym.s
+	  ${ALPHA}/alpha/prom_disp.s ${ALPHA}/include/intrcnt.h assym.s
 	${NORMAL_S_C}
 
 # depend on maxusers

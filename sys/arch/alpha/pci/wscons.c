@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.2 1995/08/03 01:17:40 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.3 1995/11/23 02:38:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -39,6 +39,7 @@
 
 #include <dev/cons.h>
 #include <dev/pseudo/ansicons.h>
+#include <alpha/pci/wsconsvar.h>
 
 #define	NWSC	16			/* XXX XXX XXX */
 
@@ -105,6 +106,7 @@ wscattach_output(dev, console, acp, acf, acfarg, mrow, mcol, crow, ccol)
 	}
 
 	wsc_sc[nextowsc].sc_flags |= WSC_OUTPUT;
+	wsc_sc[nextowsc].sc_tty = ttymalloc();
 
 	printf("wsc%d: %s attached as output\n", nextowsc, dev->dv_xname);
 	if (console)
@@ -149,9 +151,8 @@ wscopen(dev, flag, mode, p)
 		return ENXIO;
 
 	if (!sc->sc_tty)
-		tp = sc->sc_tty = ttymalloc();
-	else
-		tp = sc->sc_tty;
+		panic("wscopen: no tty!");
+	tp = sc->sc_tty;
 
 	tp->t_oproc = wscstart;
 	tp->t_param = wscparam;

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1995/08/13 00:03:11 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1995/11/23 02:36:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,7 +70,7 @@
 #define	NBSEG		(1 << SEGSHIFT)			/* bytes/segment (8M) */
 #define	SEGOFSET	(NBSEG-1)			/* byte off. into seg */
 
-#define	KERNBASE	0xfffffe0000000000	/* start of kernel virtual */
+#define	KERNBASE	0xfffffc0000230000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512

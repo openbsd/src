@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1995/06/28 02:45:21 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 1995/11/23 02:34:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -119,7 +119,7 @@ trap(type, code, v, framep)
 		p->p_md.md_tf = framep;
 	}
 #ifdef DDB
-	if (type == T_TRACE || type == T_BREAKPOINT) {
+	if (type == T_BPT) {
 		if (kdb_trap(type, framep))
 			return;
 	}
@@ -202,23 +202,19 @@ sigfpe:		i = SIGFPE;
 			goto sigfpe;
 	case T_BPT|T_USER:
 	case T_BUGCHK|T_USER:
+		ucode = code;
+		i = SIGTRAP;
+		break;
+
 	case T_OPDEC|T_USER:
 		ucode = code;
-                i = SIGILL;
+		i = SIGILL;
 		break;
 
 	case T_INVALTRANS:
 	case T_INVALTRANS|T_USER:
 	case T_ACCESS:
 	case T_ACCESS|T_USER:
-#ifdef notdef				/* None of these should happen. */
-	case T_FOR:
-	case T_FOR|T_USER:
-	case T_FOE:
-	case T_FOE|T_USER:
-	case T_FOW:
-	case T_FOW|T_USER:
-#endif
 	    {
 		register vm_offset_t va;
 		register struct vmspace *vm;
@@ -302,6 +298,18 @@ sigfpe:		i = SIGFPE;
 		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
 		break;
 	    }
+
+	case T_FOR:
+	case T_FOR|T_USER:
+	case T_FOE:
+	case T_FOE|T_USER:
+		pmap_emulate_reference(p, v, (type & T_USER) != 0, 0);
+		goto out;
+
+	case T_FOW:
+	case T_FOW|T_USER:
+		pmap_emulate_reference(p, v, (type & T_USER) != 0, 1);
+		goto out;
 	}
 
 	trapsignal(p, i, ucode);
@@ -449,9 +457,28 @@ syscall(code, framep)
 	scdebug_ret(p, code, error, rval);
 #endif
 
-	userret(p, framep, sticks, (u_int)0, 0);
+	userret(p, framep->tf_pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
+#endif
+}
+
+/*
+ * Process the tail end of a fork() for the child.
+ */
+void
+child_return(p)
+	struct proc *p;
+{
+
+	/*
+	 * Return values in the frame set by cpu_fork().
+	 */
+
+	userret(p, p->p_md.md_tf->tf_pc, 0);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 }

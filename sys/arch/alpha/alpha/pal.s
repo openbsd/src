@@ -1,4 +1,4 @@
-/*	$NetBSD: pal.s,v 1.1 1995/02/13 23:07:06 cgd Exp $	*/
+/*	$NetBSD: pal.s,v 1.2 1995/11/23 02:34:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -208,6 +208,11 @@ LEAF(pal_swpipl,1)
 	call_pal PAL_OSF1_swpipl
 	RET
 	END(pal_swpipl)
+
+LEAF_NOPROFILE(profile_swpipl,1)
+	call_pal PAL_OSF1_swpipl
+	RET
+	END(profile_swpipl)
 
 /*
  * pal_tbi: Translation buffer invalidate. [PRIVILEGED]

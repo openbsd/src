@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.5 1995/06/28 01:14:41 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.6 1995/11/23 02:36:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -58,8 +58,10 @@ struct rpb {
 #define	ST_DEC_2100_A500	9		/* "Sable" (?) */
 #define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
 #define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA?) */
+#define	ST_DEC_21000		12		/* "TurboLaser" (?) */
 #define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
 #define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
+#define	ST_DEC_KN20AA		15		/* kn20aa (PCI/EISA) */
 #define	ST_DEC_1000		17		/* "Mikasa" (PCI/ISA?) */
 
 	u_int64_t	rpb_type;		/*  50: */

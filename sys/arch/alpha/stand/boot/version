@@ -1,5 +1,7 @@
-$NetBSD: version,v 1.3 1995/06/28 00:58:52 cgd Exp $
+$NetBSD: version,v 1.4 1995/11/23 02:40:09 cgd Exp $
 
 1.1:	Initial version
 1.2:	don't forget the Id string!
 1.3:	make it work on AlphaStations
+1.4:	Re-import from master sources.
+1.5:	Complete rewrite of boot block code.

@@ -1,4 +1,4 @@
-$NetBSD: STATUS,v 1.1 1995/04/25 18:59:14 cgd Exp $
+$NetBSD: STATUS,v 1.2 1995/11/23 02:33:26 cgd Exp $
 
 NetBSD/Alpha's Status
 
@@ -9,7 +9,7 @@ Supported hardware:
 	600, but the rest should "just work) using the following
 	peripherals:
 
-		Serial ports
+		Built-in serial ports
 		LANCE ethernet -- only the on-board interface.  (see below.)
 		SCSI system -- it recognizes and can use both on-board SCSI
 		    controller chips.  However, it has trouble working with
@@ -23,88 +23,71 @@ Supported hardware:
 
 	DEC 3000/300 family, with same hardware above.
 
-NetBSD/Alpha has actually been run on the following types of machines:
-	DEC 3000/400
-	DEC 3000/600
-	[ XXX THERE ARE MORE; if you're running it on a machine not
-	    listed, mail me about it.]
+	*** NOTE THAT I HAVE NOT TESTED NEW KERNELS THOROUGHLY ON
+	    DEC 3000/[3-900] SYSTEMS!
 
+	AlphaStation {200,250,400} systems using the following
+	peripherals:
+
+		On-board NRC 53c810 SCSI.
+		On-board ns16550-based serial ports.
+		DC21040-based ethernet (on-board or in an option
+		    slot).
+		DC21050-based PCI-PCI bridges (though other
+		    types of PCI-PCI bridges should work).
+		PCI VGA video boards.
+		DEC ZLXp-E1 (DC21030-based, "TGA") video boards.
+		Keyboard.
+
+		Things that ARE NOT supported at this time:
+			DEC ZLXp-E2 and ZLXp-E3 video boards.
+			Mouse.
+			Sound hardware (Windows Sound System).
+
+	AlphaStation 600 systems, with the same supported hardware
+	list as the AlphaStation {200,250,400} systems.  (NOTE THAT
+	THAT MEANS THE AlphaStation 600's BUILT-IN SCSI CONTROLLERS
+	DO NOT WORK.  You'll need to get a 53c810 board, or
+	something.)
+
+	AXPpci systems, with the same supported hardware list as
+	the AlphaStation {200,250,400} systems.  (AXPpci support
+	was written by Jeffrey Hsu.  Thanks, Jeff!)
 
 At this time none of the following systems are supported:
-	DECpc AXP systems -- the Alpha systems with EISA busses
-	AlphaStations -- the Alpha systems with PCI busses (i.e.
-	    PCI/ISA or PCI/EISA)
-	The Futurebus-based Alpha server systems
-	The multiprocessor Alpha systems
+	DECpc AXP systems (EISA-bus PC-like systems)
+	Alpha "server" systems
+	Multiprocessor Alpha systems
 
-I am in the process of porting NetBSD/Alpha to the PCI-based systems,
-in particular, to the AlphaStation 400 4/233.  I was hoping to get a
-DECpc AXP port working "for free" based on the PCI work, but the
-DECpc AXP is a very different (and, in my opinion, very alien) piece
-of hardware.  If somebody wants to make NetBSD/Alpha run on the
-DECpc AXP system, get in touch and I'll do what I can to help you
-get started.  (Right now, it can detect devices on the EISA bus, etc.,
-but the I/O layout is distinctly _not_ what I'd expected and/or hoped
-for.  It's significantly more difficult to deal with than I'd expected.)
-
-It's unclear how much support for other PCI-based systems (i.e. the
-AlphaStation 200 and AlphaStation 250 machines) will be won by getting
-the AlphaStation 400 supported.  It should at least make porting to
-those machines easier.
+I was hoping to get a DECpc AXP port working "for free" based on
+the PCI work, but the DECpc AXP is a very different (and, in my
+opinion, very alien) piece of hardware.  If somebody wants to make
+NetBSD/Alpha run on the DECpc AXP system, get in touch and I'll do
+what I can to help you get started.
 
 
-Because no frame buffers are supported, NetBSD/Alpha _must_ be used with
-a serial console.  To do that on:
+Console frame buffers & keyboard are supported only on the AlphaStation
+and AXPpci families of machines.  On the TurboChannel-baesd machines,
+NetBSD/Alpha _must_ be used with a serial console.  To configure various
+Alpha systems to use a serial console, do the following depending on
+the model:
 
 	DEC 3000/[4-9]00's:
 		Flip the appropriate switch on the back of the machine.
+		(See your owner's manual for more details.)
 
 	DEC 3000/300 family machines:
 		Boot the machine with the keyboard/mouse connector
 		unplugged.
 
-	DECpc AXP's and AlphaStations:
-		Boot the machine with the keyboard unplugged.  (Note:
-		I've never actually booted one of these machines with
-		a serial console, so I can't verify that this is
-		correct.  Also, people who've booted test kernels for
-		me have reported trouble using these boxes with a
-		serial console, but I'm not sure why; the kernel for
-		these systems is not advanced enough to have its own
-		serial driver yet, and so is using the PROM routines.)
-
-There actually is hope of getting somebody to come up with working
-graphics board drivers and even an X server.  More on that as things
-develop.
+	DECpc AXPs, AXPpcis, and AlphaStations:
+		Get to the console prompt.  Set the variable
+		"console" to be "serial", and "init" or power cycle
+		the system.
 
 
-Getting people running with my latest sources still isn't as easy as
-it should be; not all of my sources are integrated into the NetBSD
-master source tree yet.  Most of the diffs are in, however, and I
-suggest the following tactic for people who are trying to get running
-with an "up to date" system:
-
-	Get the latest NetBSD sources from:
-	ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/tar_files
-
-	Replace that 'sys' tree with the latest snapshot I've put up
-	for ftp under the directory:
-	ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
-
-	If you'd like to compile the compiler and tool chain, add to
-	that the GNU tools tree (src/devo) from my original source
-	distribution tar file, which can also be found under:
-	ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
-	(Unfortunately, there's not a way to get just that part of the
-	source distribution; I'll fix that in a day or two.)
-
-That won't be perfect, but it'll get you most of the way there.
-
-I'm planning to put up a new 'sys' snapshot, as well as new kernel
-image, in a couple of days.  Hopefully by that time, all of the
-user-land changes will have been merged into the master NetBSD source
-tree.
-
+See the file src/sys/arch/alpha/README to find out how to get the
+latest sources and/or binaries.
 
 Please see the file src/sys/arch/alpha/TODO.users for a list of things
 that users can do to help NetBSD/Alpha improve.  If you're interested

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.1 1995/06/28 01:26:13 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.2 1995/11/23 02:38:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -33,11 +33,15 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 
-#include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
-#include <alpha/isa/isa_intr.h>
+#include <dev/isa/isavar.h>
+#include <alpha/pci/siovar.h>
 
-#include <machine/pio.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
+
+#include "sio.h"
 
 /*
  * To add to the long history of wonderful PROM console traits,
@@ -49,18 +53,25 @@
  */
 #define	BROKEN_PROM_CONSOLE
 
-static void	sio_intr_setup __P((void));
-static void	*sio_intr_establish __P((int intr, isa_intrtype type,
-		    isa_intrlevel level, int (*ih_fun)(void *), void *ih_arg));
-static void	sio_intr_disestablish __P((void *handler));
-static void	sio_iointr __P((void *framep, int vec));
+/*
+ * Private functions and variables.
+ */
+static void	*sio_intr_establish __P((void *, isa_irq_t,
+		    isa_intrsharetype_t, isa_intrlevel_t,
+		    int (*)(void *), void *));
+static void	sio_intr_disestablish __P((void *, void *));
+static void	sio_strayintr __P((isa_irq_t));
 
-struct	isa_intr_fcns sio_intr_fcns = {
-	sio_intr_setup, sio_intr_establish,
-	sio_intr_disestablish, sio_iointr,
+static __const struct isa_pio_fns *sio_ipf;		/* XXX */
+static void *sio_ipfa;					/* XXX */
+
+void		sio_intr_setup __P((__const struct isa_pio_fns *, void *));
+void		sio_iointr __P((void *framep, int vec));
+
+struct	isa_intr_fns sio_isa_intr_fns = {
+	sio_intr_establish,
+	sio_intr_disestablish,
 };
-
-static void	sio_strayintr __P((int irq));
 
 /*
  * Interrupt handler chains.  sio_intr_establish() inserts a handler into
@@ -78,8 +89,11 @@ struct intrhand {
 #define	ICU_LEN		16		/* number of ISA IRQs */
 
 static struct intrhand *sio_intrhand[ICU_LEN];
-static isa_intrtype sio_intrtype[ICU_LEN];
+static isa_intrsharetype_t sio_intrsharetype[ICU_LEN];
 static u_long sio_strayintrcnt[ICU_LEN];
+#ifdef EVCNT_COUNTERS
+struct evcnt sio_intr_evcnt;
+#endif
 
 #ifndef STRAY_MAX
 #ifdef BROKEN_PROM_CONSOLE
@@ -112,7 +126,7 @@ u_int8_t initial_elcr[2];
 void
 sio_setirqstat(irq, enabled, type)
 	int irq, enabled;
-	isa_intrtype type;
+	isa_intrsharetype_t type;
 {
 	u_int8_t ocw1[2], elcr[2];
 	int icu, bit;
@@ -122,15 +136,15 @@ sio_setirqstat(irq, enabled, type)
 	    enabled ? "enabled" : "disabled", isa_intr_typename(type));
 #endif
 
-	sio_intrtype[irq] = type;
+	sio_intrsharetype[irq] = type;
 
 	icu = irq / 8;
 	bit = irq % 8;
 
-	ocw1[0] = inb(IO_ICU1 + 1);
-	ocw1[1] = inb(IO_ICU2 + 1);
-	elcr[0] = inb(0x4d0);				/* XXX */
-	elcr[1] = inb(0x4d1);				/* XXX */
+	ocw1[0] = INB(sio_ipf, sio_ipfa, IO_ICU1 + 1);
+	ocw1[1] = INB(sio_ipf, sio_ipfa, IO_ICU2 + 1);
+	elcr[0] = INB(sio_ipf, sio_ipfa, 0x4d0);		/* XXX */
+	elcr[1] = INB(sio_ipf, sio_ipfa, 0x4d1);		/* XXX */
 
 	/*
 	 * interrupt enable: set bit to mask (disable) interrupt.
@@ -174,25 +188,30 @@ sio_setirqstat(irq, enabled, type)
 	}
 #endif
 
-	outb(IO_ICU1 + 1, ocw1[0]);
-	outb(IO_ICU2 + 1, ocw1[1]);
-	outb(0x4d0, elcr[0]);				/* XXX */
-	outb(0x4d1, elcr[1]);				/* XXX */
+	OUTB(sio_ipf, sio_ipfa, IO_ICU1 + 1, ocw1[0]);
+	OUTB(sio_ipf, sio_ipfa, IO_ICU2 + 1, ocw1[1]);
+	OUTB(sio_ipf, sio_ipfa, 0x4d0, elcr[0]);		/* XXX */
+	OUTB(sio_ipf, sio_ipfa, 0x4d1, elcr[1]);		/* XXX */
 }
 
 void
-sio_intr_setup()
+sio_intr_setup(ipf, ipfa)
+	__const struct isa_pio_fns *ipf;
+	void *ipfa;
 {
 	int i;
+
+	sio_ipf = ipf;
+	sio_ipfa = ipfa;
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
 	 * Remember the initial values, because the prom is stupid.
 	 */
-	initial_ocw1[0] = inb(IO_ICU1 + 1);
-	initial_ocw1[1] = inb(IO_ICU2 + 1);
-	initial_elcr[0] = inb(0x4d0);			/* XXX */
-	initial_elcr[1] = inb(0x4d1);			/* XXX */
+	initial_ocw1[0] = INB(sio_ipf, sio_ipfa, IO_ICU1 + 1);
+	initial_ocw1[1] = INB(sio_ipf, sio_ipfa, IO_ICU2 + 1);
+	initial_elcr[0] = INB(sio_ipf, sio_ipfa, 0x4d0);	/* XXX */
+	initial_elcr[1] = INB(sio_ipf, sio_ipfa, 0x4d1);	/* XXX */
 #if 0
 	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
 	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
@@ -245,10 +264,11 @@ sio_intr_setup()
 }
 
 void *
-sio_intr_establish(irq, type, level, ih_fun, ih_arg)
-        int irq;
-        isa_intrtype type;
-        isa_intrlevel level;
+sio_intr_establish(siifa, irq, type, level, ih_fun, ih_arg)
+	void *siifa;
+        isa_irq_t irq;
+        isa_intrsharetype_t type;
+        isa_intrlevel_t level;
         int (*ih_fun)(void *);
         void *ih_arg;
 {
@@ -260,19 +280,19 @@ sio_intr_establish(irq, type, level, ih_fun, ih_arg)
 	if (ih == NULL)
 		panic("sio_intr_establish: can't malloc handler info");
 
-	if (irq < 0 || irq > ICU_LEN || type == ISA_IST_NONE)
+	if (irq > ICU_LEN || type == ISA_IST_NONE)
 		panic("sio_intr_establish: bogus irq or type");
 
-	switch (sio_intrtype[irq]) {
+	switch (sio_intrsharetype[irq]) {
 	case ISA_IST_EDGE:
 	case ISA_IST_LEVEL:
-		if (type == sio_intrtype[irq])
+		if (type == sio_intrsharetype[irq])
 			break;
 	case ISA_IST_PULSE:
 		if (type != ISA_IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-			    isa_intr_typename(sio_intrtype[irq]),
-			    isa_intr_typename(type));
+			    isa_intrsharetype_name(sio_intrsharetype[irq]),
+			    isa_intrsharetype_name(type));
 		break;
         }
 
@@ -301,7 +321,8 @@ sio_intr_establish(irq, type, level, ih_fun, ih_arg)
 }
 
 void
-sio_intr_disestablish(handler)
+sio_intr_disestablish(siifa, handler)
+	void *siifa;
 	void *handler;
 {
 
@@ -317,7 +338,7 @@ sio_intr_disestablish(handler)
  */
 void
 sio_strayintr(irq)
-	int irq;
+	isa_irq_t irq;
 {
 
 	if (++sio_strayintrcnt[irq] <= STRAY_MAX)
@@ -338,6 +359,14 @@ sio_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 	if (irq > ICU_LEN || irq < 0)
 		panic("sio_iointr: irq out of range (%d)", irq);
+#endif
+
+#ifdef EVCNT_COUNTERS
+	sio_intr_evcnt.ev_count++;
+#else
+	if (ICU_LEN != INTRCNT_ISA_IRQ_LEN)
+		panic("sio interrupt counter sizes inconsistent");
+	intrcnt[INTRCNT_ISA_IRQ + irq]++;
 #endif
 
 	/*
@@ -373,6 +402,8 @@ sio_iointr(framep, vec)
 	 * by the interrupt handler.
 	 */
 	if (irq > 7)
-		outb(IO_ICU2 + 0, 0x20 | (irq & 0x07));		/* XXX */
-	outb(IO_ICU1 + 0, 0x20 | (irq > 7 ? 2 : irq));		/* XXX */
+		OUTB(sio_ipf, sio_ipfa,
+		    IO_ICU2 + 0, 0x20 | (irq & 0x07));		/* XXX */
+	OUTB(sio_ipf, sio_ipfa,
+	    IO_ICU1 + 0, 0x20 | (irq > 7 ? 2 : irq));		/* XXX */
 }

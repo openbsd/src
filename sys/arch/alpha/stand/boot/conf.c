@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1995/02/16 02:32:54 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 1995/11/23 02:39:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,11 +41,11 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
 
-int	errno;
-int	noioctl __P((void));
+#include "disk.h"
 
-int	diskstrategy(), diskopen(), diskclose();
-#define	diskioctl	noioctl
+int	diskopen __P((struct open_file *, ...));	/* XXX */
+
+int	errno;
 
 struct devsw devsw[] = {
 	{ "disk", diskstrategy,	diskopen, diskclose, diskioctl }, /*0*/

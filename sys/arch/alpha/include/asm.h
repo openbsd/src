@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 1995/02/13 23:07:30 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 1995/11/23 02:35:45 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -195,6 +195,28 @@
  */
 
 /*
+ * MCOUNT
+ */
+
+#ifndef PROF
+#define MCOUNT	/* nothing */
+#else
+#define MCOUNT							\
+	lda	sp, -16(sp);					\
+	stq	pv, 0(sp);					\
+								\
+	br	pv, 1f;						\
+1:	ldgp	gp, 0(pv);					\
+	lda	pv, _mcount;					\
+	jsr	at_reg, (pv);					\
+	br	pv, 2f;						\
+2:	ldgp	gp, 0(pv);					\
+								\
+	ldq	pv, 0(sp);					\
+	lda	sp, 16(sp)
+#endif
+
+/*
  * LEAF
  *	Declare a global leaf function.
  *	A leaf function does not call other functions AND does not
@@ -202,6 +224,17 @@
  *	the stack pointer.
  */
 #define	LEAF(_name_,_n_args_)					\
+	.globl	_name_;						\
+	.ent	_name_ 0;					\
+_name_:;							\
+	.frame	sp,0,ra;					\
+	MCOUNT
+/* should have been
+	.proc	_name_,_n_args_;				\
+	.frame	0,ra,0,0
+*/
+
+#define	LEAF_NOPROFILE(_name_,_n_args_)					\
 	.globl	_name_;						\
 	.ent	_name_ 0;					\
 _name_:;							\
@@ -218,7 +251,8 @@ _name_:;							\
 #define STATIC_LEAF(_name_,_n_args_)				\
 	.ent	_name_ 0;					\
 _name_:;							\
-	.frame	sp,0,ra
+	.frame	sp,0,ra;					\
+	MCOUNT
 /* should have been
 	.proc	_name_,_n_args_;				\
 	.frame	0,ra,0,0
@@ -257,6 +291,18 @@ _name_:
 	.ent	_name_ 0;					\
 _name_:;							\
 	.frame	sp,_framesize_,_pc_reg_;			\
+	.livereg _i_mask_,_f_mask_;				\
+	MCOUNT
+/* should have been
+	.proc	_name_,_n_args_;				\
+	.frame	_framesize_, _pc_reg_, _i_mask_, _f_mask_
+*/
+
+#define	NESTED_NOPROFILE(_name_, _n_args_, _framesize_, _pc_reg_, _i_mask_, _f_mask_ ) \
+	.globl	_name_;						\
+	.ent	_name_ 0;					\
+_name_:;							\
+	.frame	sp,_framesize_,_pc_reg_;			\
 	.livereg _i_mask_,_f_mask_
 /* should have been
 	.proc	_name_,_n_args_;				\
@@ -271,7 +317,8 @@ _name_:;							\
 	.ent	_name_ 0;					\
 _name_:;							\
 	.frame	sp,_framesize_,_pc_reg_;			\
-	.livereg _i_mask_,_f_mask_
+	.livereg _i_mask_,_f_mask_;				\
+	MCOUNT
 /* should have been
 	.proc	_name_,_n_args_;				\
 	.frame	_framesize_, _pc_reg_, _i_mask_, _f_mask_
@@ -385,11 +432,7 @@ _name_:;							\
  * MSG
  *	Allocate space for a message (a read-only ascii string)
  */
-#ifdef __ALPHA_AS__
-#define	ASCIZ	.asciiz
-#else
 #define	ASCIZ	.asciz
-#endif
 #define	MSG(msg,reg)						\
 	lda reg, 9f;						\
 	.data;							\
@@ -555,15 +598,8 @@ _name_:;							\
  */
 #define	SETGP(pv)	ldgp	gp,0(pv)
 
-#ifdef __ALPHA_AS__
-#define	MF_FPCR(x)	mf_fpcr x,x,x
-#define	MT_FPCR(x)	mt_fpcr x,x,x
-#define	JMP(loc)	jmp	loc
-#define	CONST(c,reg)	mov	c, reg
-#else
 #define	MF_FPCR(x)	mf_fpcr x
 #define	MT_FPCR(x)	mt_fpcr x
 #define	JMP(loc)	br	zero,loc
 #define	CONST(c,reg)	ldiq	reg, c
-#endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.2 1995/08/03 01:17:28 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.3 1995/11/23 02:38:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,8 +32,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
-#include <dev/pseudo/raster.h>
+#include <dev/rcons/raster.h>
 #include <dev/pseudo/rcons.h>
 #include <dev/pseudo/ansicons.h>
 
@@ -43,6 +44,7 @@
 #include <alpha/pci/tgareg.h>
 #include <alpha/pci/tgavar.h>
 #include <alpha/pci/bt485reg.h>
+#include <alpha/pci/wsconsvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
@@ -54,11 +56,20 @@ struct cfdriver tgacd = {
 	NULL, "tga", tgamatch, tgaattach, DV_DULL, sizeof(struct tga_softc)
 };
 
+int	tga_identify __P((tga_reg_t *));
+__const struct tga_conf *tga_getconf __P((int));
+void	tga_getdevconfig __P((__const struct pci_conf_fns *, void *,
+	    __const struct pci_mem_fns *, void *,
+	    pci_conftag_t tag, struct tga_devconfig *dc));
+
+void	tga_bell __P((void *));			/* XXX */
+
 struct tga_devconfig tga_console_dc;
 
-int	tga_identify __P((tga_reg_t *));
-struct	tga_conf *tga_getconf __P((int));
-void	tga_bell __P((void *));
+#if 0
+dev_decl(tga, mmap);
+dev_decl(tga, ioctl);
+#endif
 
 struct ansicons_functions tga_acf = {
 	tga_bell,
@@ -72,19 +83,23 @@ struct ansicons_functions tga_acf = {
 
 #define	TGAUNIT(dev)	minor(dev)
 
-struct tga_ramdac_conf tga_ramdac_bt463 = {
+void	tga_builtin_set_cpos __P((struct tga_devconfig *, int, int));
+void	tga_builtin_get_cpos __P((struct tga_devconfig *, int *, int *));
+
+__const struct tga_ramdac_conf tga_ramdac_bt463 = {
 	"Bt463",
-#if 0
-	XXX,
-	YYY,
-#endif
+	tga_builtin_set_cpos,
+	tga_builtin_get_cpos,
 	/* XXX */
 };
+
+void	tga_bt485_wr_reg __P((volatile tga_reg_t *, u_int, u_int8_t));
+u_int8_t tga_bt485_rd_reg __P((volatile tga_reg_t *, u_int));
 
 void	tga_bt485_set_cpos __P((struct tga_devconfig *, int, int));
 void	tga_bt485_get_cpos __P((struct tga_devconfig *, int *, int *));
 
-struct tga_ramdac_conf tga_ramdac_bt485 = {
+__const struct tga_ramdac_conf tga_ramdac_bt485 = {
 	"Bt485",
 	tga_bt485_set_cpos,
 	tga_bt485_get_cpos,
@@ -96,7 +111,7 @@ struct tga_ramdac_conf tga_ramdac_bt485 = {
 #undef MB
 #define	MB		* 1024 * 1024
 
-struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
+__const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_01 */
 	{
 		"T8-01",
@@ -177,10 +192,10 @@ tgamatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct pci_attach_args *pa = aux;
+	struct pcidev_attach_args *pda = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_DEC ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_DEC_21030)
+	if (PCI_VENDOR(pda->pda_id) != PCI_VENDOR_DEC ||
+	    PCI_PRODUCT(pda->pda_id) != PCI_PRODUCT_DEC_21030)
 		return (0);
 
 	return (1);
@@ -241,7 +256,7 @@ tga_identify(regs)
 	return (type);
 }
 
-struct tga_conf *
+__const struct tga_conf *
 tga_getconf(type)
 	int type;
 {
@@ -253,31 +268,51 @@ tga_getconf(type)
 }
 
 void
-tga_getdevconfig(tag, dc)
-	pcitag_t tag;
+tga_getdevconfig(pcf, pcfa, pmf, pmfa, tag, dc)
+	__const struct pci_conf_fns *pcf;
+	__const struct pci_mem_fns *pmf;
+	void *pcfa, *pmfa;
+	pci_conftag_t tag;
 	struct tga_devconfig *dc;
 {
-	struct tga_conf *tgac;
-	struct tga_ramdac_conf *tgar;
+	__const struct tga_conf *tgac;
+	__const struct tga_ramdac_conf *tgar;
 	struct raster *rap;
 	struct rcons *rcp;
-	vm_offset_t pcipa;
-	int i;
+	pci_msize_t pcisize;
+	int i, cacheable;
+
+	dc->dc_pcf = pcf;
+	dc->dc_pcfa = pcfa;
+	dc->dc_pmf = pmf;
+	dc->dc_pmfa = pmfa;
 
 	dc->dc_pcitag = tag;
 
-	dc->dc_vaddr = 0;
-	if (pci_map_mem(tag, 0x10, &dc->dc_vaddr, &pcipa))
+	/* XXX MAGIC NUMBER */
+	PCI_FIND_MEM(pcf, pcfa, tag, 0x10, &dc->dc_pcipaddr, &pcisize,
+	    &cacheable);
+	if (!cacheable)						/* sanity */
+		panic("tga_getdevconfig: memory not cacheable?");
+
+	dc->dc_vaddr = PCI_MEM_MAP(pmf, pmfa, dc->dc_pcipaddr, pcisize, 1);
+	if (dc->dc_vaddr == 0)
 		return;
 
-	/* PA filled in by pci_map_mem is the PCI-bus PA, i.e. not shifted */
-	dc->dc_paddr = k0segtophys(dc->dc_vaddr);
+	dc->dc_paddr = k0segtophys(dc->dc_vaddr);		/* XXX */
 
 	dc->dc_regs = (tga_reg_t *)(dc->dc_vaddr + TGA_MEM_CREGS);
 	dc->dc_tga_type = tga_identify(dc->dc_regs);
 	tgac = dc->dc_tgaconf = tga_getconf(dc->dc_tga_type);
 	if (tgac == NULL)
 		return;
+
+#if 0
+	/* XXX on the Alpha, pcisize = 4 * cspace_size. */
+	if (tgac->tgac_cspace_size != pcisize)			/* sanity */
+		panic("tga_getdevconfig: memory size mismatch?");
+#endif
+
 	tgar = tgac->tgac_ramdac;
 
 	switch (dc->dc_regs[TGA_REG_VHCR] & 0x1ff) {		/* XXX */
@@ -306,6 +341,13 @@ tga_getdevconfig(tag, dc)
 	dc->dc_regs[TGA_REG_VVBR] = 1;
 	dc->dc_videobase = dc->dc_vaddr + tgac->tgac_dbuf[0] +
 	    1 * tgac->tgac_vvbr_units;
+	
+	/*
+	 * Set all bits in the pixel mask, to enable writes to all pixels.
+	 * It seems that the console firmware clears some of them
+	 * under some circumstances, which causes cute vertical stripes.
+	 */
+	dc->dc_regs[TGA_REG_GPXR_P] = 0xffffffff;
 
 	/* disable the cursor */
 	(*tgar->tgar_set_cpos)(dc, TGA_CURSOR_OFF, 0);
@@ -342,19 +384,19 @@ tgaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
+	struct pcidev_attach_args *pda = aux;
 	struct tga_softc *sc = (struct tga_softc *)self;
 	pci_revision_t rev;
-	pcireg_t pci_intrdata;
 	int console;
 
-	console = (pa->pa_tag == tga_console_dc.dc_pcitag);
+	console = (pda->pda_tag == tga_console_dc.dc_pcitag);
 	if (console)
 		sc->sc_dc = &tga_console_dc;
 	else {
 		sc->sc_dc = (struct tga_devconfig *)
 		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
-		tga_getdevconfig(pa->pa_tag, sc->sc_dc);
+		tga_getdevconfig(pda->pda_conffns, pda->pda_confarg,
+		    pda->pda_memfns, pda->pda_memarg, pda->pda_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
 		printf(": couldn't map memory space; punt!\n");
@@ -362,7 +404,7 @@ tgaattach(parent, self, aux)
 	}
 
 	printf(": DC21030 ");
-	rev = PCI_REVISION(pa->pa_class);
+	rev = PCI_REVISION(pda->pda_class);
 	switch (rev) {
 	case 1: case 2: case 3:
 		printf("step %c", 'A' + rev - 1);
@@ -381,23 +423,11 @@ tgaattach(parent, self, aux)
 	printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
 	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
 	    sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_tgaconf->tgac_phys_depth, 
+	    sc->sc_dc->dc_tgaconf->tgac_phys_depth,
 	    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_name);
-#if 0
-	/* not done here; printed by wscons attach. */
-	if (console)
-		printf("%s: console\n", sc->sc_dev.dv_xname);
-#endif
 
 #if 0
-	pci_intrdata = pci_conf_read(sc->sc_pcitag, PCI_INTERRUPT_REG);
-	if (PCI_INTERRUPT_PIN(pci_intrdata) != PCI_INTERRUPT_PIN_NONE) {
-		sc->sc_intr = pci_map_int(sc->sc_pcitag, PCI_IPL_TTY,
-		    tgaintr, sc);
-		if (sc->sc_intr == NULL)
-			printf("%s: WARNING: couldn't map interrupt\n",
-			    sc->sc_dev.dv_xname);
-	}
+	/* XXX intr foo? */
 #endif
 
 	if (!wscattach_output(self, console, &sc->sc_dc->dc_ansicons, &tga_acf,
@@ -408,35 +438,7 @@ tgaattach(parent, self, aux)
 	}
 }
 
-int
-tgaopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	struct tga_softc *sc;
-	int unit = TGAUNIT(dev);
-
-	if (unit >= tgacd.cd_ndevs)
-		return ENXIO;
-	sc = tgacd.cd_devs[unit];
-	if ((sc = tgacd.cd_devs[unit]) == NULL || sc->sc_dc->dc_tgaconf == NULL)
-		return ENXIO;
-
-	return (0);
-}
-
-int
-tgaclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	struct tga_softc *sc = tgacd.cd_devs[TGAUNIT(dev)];
-
-	return (0);
-}
-
+#if 0
 int
 tgaioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -462,6 +464,7 @@ tgammap(dev, offset, nprot)
 		return -1;
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
+#endif
 
 void
 tga_bell(id)
@@ -472,6 +475,43 @@ tga_bell(id)
 	printf("tga_bell: not implemented\n");
 }
 
+void
+tga_builtin_set_cpos(dc, x, y)
+	struct tga_devconfig *dc;
+	int x, y;
+{
+
+	if (x == TGA_CURSOR_OFF || y == TGA_CURSOR_OFF) {
+
+		dc->dc_regs[TGA_REG_VVVR] &= ~0x04;		/* XXX */
+		wbflush();
+		return;
+	}
+
+	/*
+	 * TGA builtin cursor is 0-based, and position is top-left corner.
+	 */
+	dc->dc_regs[TGA_REG_CXYR] =
+	    (x & 0xfff) | ((y & 0xfff) << 12);			/* XXX */
+	wbflush();
+}
+
+void
+tga_builtin_get_cpos(dc, xp, yp)
+	struct tga_devconfig *dc;
+	int *xp, *yp;
+{
+	tga_reg_t regval;
+
+	if ((dc->dc_regs[TGA_REG_VVVR] & 0x04) == 0) {		/* XXX */
+		*xp = *yp = TGA_CURSOR_OFF;
+		return;
+	}
+
+	regval = dc->dc_regs[TGA_REG_CXYR];
+	*xp = regval & 0xfff;					/* XXX */
+	*yp = (regval >> 12) & 0xfff;				/* XXX */
+}
 
 /*
  * Bt485-specific functions.
@@ -521,6 +561,7 @@ tga_bt485_set_cpos(dc, x, y)
 		regval &= ~0x03;				/* XXX */
 		regval |= 0x00;					/* XXX */
 		tga_bt485_wr_reg(dc->dc_regs, BT485_REG_COMMAND_2, regval);
+		return;
 	}
 
 	/*
@@ -531,14 +572,14 @@ tga_bt485_set_cpos(dc, x, y)
 	y += 64;
 
 	/* XXX CONSTANTS */
-	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_X_LOW,
-	    x & 0xff);
-	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_X_HIGH,
-	    (x >> 8) & 0x0f);
-	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_Y_LOW,
-	    y & 0xff);
-	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_Y_HIGH,
-	    (y >> 8) & 0x0f);
+	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_X_LOW/*,
+	    x & 0xff*/);
+	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_X_HIGH/*,
+	    (x >> 8) & 0x0f*/);
+	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_Y_LOW/*,
+	    y & 0xff*/);
+	tga_bt485_rd_reg(dc->dc_regs, BT485_REG_CURSOR_Y_HIGH/*,
+	    (y >> 8) & 0x0f*/);
 }
 
 void
@@ -573,20 +614,27 @@ tga_bt485_get_cpos(dc, xp, yp)
 }
 
 void
-tga_console(bus, device, function)
-	int bus, device, function;
+tga_console(pcf, pcfa, pmf, pmfa, ppf, ppfa, bus, device, function)
+	__const struct pci_conf_fns *pcf;
+	__const struct pci_mem_fns *pmf;
+	__const struct pci_pio_fns *ppf;
+	void *pcfa, *pmfa, *ppfa;
+	pci_bus_t bus;
+	pci_device_t device;
+	pci_function_t function;
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
 
-	tga_getdevconfig(pci_make_tag(bus, device, function), dcp);
+	tga_getdevconfig(pcf, pcfa, pmf, pmfa,
+	    PCI_MAKE_TAG(bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
-		panic("tga_console(%d, %d, %d): couldn't map memory space",
-		    bus, device, function);
+		panic("tga_console(%d, %d): couldn't map memory space",
+		    device, function);
 	if (dcp->dc_tgaconf == NULL)
-		panic("tga_console(%d, %d, %d): unknown board configuration",
-		    bus, device, function);
+		panic("tga_console(%d, %d): unknown board configuration",
+		    device, function);
 
 	wsc_console(&dcp->dc_ansicons, &tga_acf, &dcp->dc_rcons,
 	    dcp->dc_rcons.rc_maxrow, dcp->dc_rcons.rc_maxcol, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.2 1995/08/03 01:12:15 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.3 1995/11/23 02:33:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,12 +32,15 @@
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
-#include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/pci/pci_chipset.h>
+
+#include <alpha/pci/apecsreg.h>
+#include <alpha/pci/apecsvar.h>
+
+#include <alpha/alpha/dec_2100_a50.h>
 
 char *
 dec_2100_a50_modelname()
@@ -57,6 +60,10 @@ dec_2100_a50_modelname()
 		return "AlphaStation 200 4/233 (\"Mustang II\")";
 		break;
 
+	case 0x2000:
+		return "AlphaStation 250 4/266";
+		break;
+
 	case SV_ST_MUSTANG2_4_100:
 		return "AlphaStation 200 4/100 (\"Mustang II\")";
 		break;
@@ -73,8 +80,11 @@ dec_2100_a50_consinit(constype)
 	char *constype;
 {
 	struct ctb *ctb;
+	struct apecs_config *acp;
+	extern struct apecs_config apecs_configuration;
 
-	apecs_init();
+	acp = &apecs_configuration;
+	apecs_init(acp);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
@@ -92,14 +102,18 @@ dec_2100_a50_consinit(constype)
 			extern int comcngetc __P((dev_t));
 			extern void comcnputc __P((dev_t, int));
 			extern void comcnpollc __P((dev_t, int));
+			extern __const struct isa_pio_fns *comconsipf;
+			extern __const void *comconsipfa;
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
-
-			cominit(0, comdefaultrate);
+			cominit(acp->ac_piofns, acp->ac_pioarg, 0,
+			    comdefaultrate);
 			comconsole = 0;				/* XXX */
 			comconsaddr = 0x3f8;			/* XXX */
 			comconsinit = 0;
+			comconsipf = acp->ac_piofns;
+			comconsipfa = acp->ac_pioarg;
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -109,7 +123,9 @@ dec_2100_a50_consinit(constype)
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(0, ctb->ctb_turboslot & 0xffff, 0);
+		pci_display_console(acp->ac_conffns, acp->ac_confarg,
+		    acp->ac_memfns, acp->ac_memarg, acp->ac_piofns,
+		    acp->ac_pioarg, 0, ctb->ctb_turboslot & 0xffff, 0);
 		break;
 
 	default:

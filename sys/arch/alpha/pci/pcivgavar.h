@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivgavar.h,v 1.2 1995/08/03 01:17:21 cgd Exp $	*/
+/*	$NetBSD: pcivgavar.h,v 1.3 1995/11/23 02:38:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,8 +27,17 @@
  * rights to redistribute these changes.
  */
 
+#include <dev/pseudo/ansicons.h>
+
 struct pcivga_devconfig {
-	pcitag_t	dc_pcitag;	/* PCI tag */
+	__const struct pci_conf_fns *dc_pcf;
+	void		*dc_pcfa;
+	__const struct pci_mem_fns *dc_pmf;
+	void		*dc_pmfa;
+	__const struct pci_pio_fns *dc_ppf;
+	void		*dc_ppfa;
+
+	pci_tag_t	dc_pcitag;	/* PCI tag */
 
 	u_int16_t	*dc_crtat;	/* VGA screen memory */
 	int		dc_iobase;	/* VGA I/O address */
@@ -52,9 +61,13 @@ struct pcivga_softc {
 
 #define	PCIVGA_CURSOR_OFF	-1	/* pass to pcivga_cpos to disable */
 
-void	pcivga_cursor __P((void *, int, int));
-void	pcivga_putstr __P((void *, int, int, char *, int));
-void	pcivga_copycols __P((void *, int, int, int,int));
-void	pcivga_erasecols __P((void *, int, int, int));
-void	pcivga_copyrows __P((void *, int, int, int));
-void	pcivga_eraserows __P((void *, int, int));
+#define	DEVICE_IS_PCIVGA(class, id)					\
+	    ((PCI_CLASS(class) == PCI_CLASS_DISPLAY &&			\
+	      PCI_SUBCLASS(class) == PCI_SUBCLASS_DISPLAY_VGA) ||	\
+	     (PCI_CLASS(class) == PCI_CLASS_PREHISTORIC &&		\
+	      PCI_SUBCLASS(class) == PCI_SUBCLASS_PREHISTORIC_VGA))
+
+void    pcivga_console __P((__const struct pci_conf_fns *, void *, 
+	    __const struct pci_mem_fns *, void *,
+	    __const struct pci_pio_fns *, void *,
+	    pci_bus_t, pci_device_t, pci_function_t));

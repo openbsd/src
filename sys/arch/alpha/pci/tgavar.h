@@ -1,4 +1,4 @@
-/*	$NetBSD: tgavar.h,v 1.2 1995/08/03 01:17:37 cgd Exp $	*/
+/*	$NetBSD: tgavar.h,v 1.3 1995/11/23 02:38:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <alpha/pci/tgareg.h>
+#include <dev/rcons/raster.h>
+#include <dev/pseudo/rcons.h>
+#include <dev/pseudo/ansicons.h>
+
 struct tga_devconfig;
 
 struct tga_ramdac_conf {
@@ -42,7 +47,7 @@ struct tga_ramdac_conf {
 struct tga_conf {
 	char	    *tgac_name;		/* name for this board type */
 
-	struct tga_ramdac_conf
+	__const struct tga_ramdac_conf
 		    *tgac_ramdac;	/* the RAMDAC type; see above */
 	int	    tgac_phys_depth;	/* physical frame buffer depth */
 	vm_size_t   tgac_cspace_size;	/* core space size */
@@ -58,12 +63,20 @@ struct tga_conf {
 };
 
 struct tga_devconfig {
-	pcitag_t    dc_pcitag;		/* PCI tag */
+	__const struct pci_conf_fns *dc_pcf;
+	void		*dc_pcfa;
+	__const struct pci_mem_fns *dc_pmf;
+	void		*dc_pmfa;
+	__const struct pci_pio_fns *dc_ppf;
+	void		*dc_ppfa;
+
+	pci_conftag_t    dc_pcitag;	/* PCI tag */
+	pci_moffset_t	 dc_pcipaddr;	/* PCI phys addr. */
 
 	tga_reg_t   *dc_regs;		/* registers; XXX: need aliases */
 
 	int	    dc_tga_type;	/* the device type; see below */
-	struct tga_conf *dc_tgaconf;	/* device buffer configuration */
+	__const struct tga_conf *dc_tgaconf; /* device buffer configuration */
 
 	vm_offset_t dc_vaddr;		/* memory space virtual base address */
 	vm_offset_t dc_paddr;		/* memory space physical base address */
@@ -96,3 +109,12 @@ struct tga_softc {
 #define	TGA_TYPE_UNKNOWN	7	/* unknown */
 
 #define	TGA_CURSOR_OFF		-1	/* pass to tgar_cpos to disable */
+
+#define	DEVICE_IS_TGA(class, id)					\
+	    (PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
+	     PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030)
+
+void    tga_console __P((__const struct pci_conf_fns *, void *, 
+	    __const struct pci_mem_fns *, void *,
+	    __const struct pci_pio_fns *, void *,
+	    pci_bus_t, pci_device_t, pci_function_t));

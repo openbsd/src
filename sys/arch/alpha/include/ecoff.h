@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff.h,v 1.1 1995/02/13 23:07:35 cgd Exp $	*/
+/*	$NetBSD: ecoff.h,v 1.2 1995/11/23 02:35:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -48,3 +48,45 @@
 	    ex->ef_magic != ECOFF_MAGIC_NETBSD_ALPHA)
 
 #define ECOFF_SEGMENT_ALIGNMENT(eap) (eap->ea_vstamp < 23 ? 8 : 16)
+
+struct ecoff_symhdr {
+	int16_t		sh_magic;
+	int16_t		sh_vstamp;
+	int32_t		sh_linemax;
+	int32_t		sh_densenummax;
+	int32_t		sh_procmax;
+	int32_t		sh_lsymmax;
+	int32_t		sh_optsymmax;
+	int32_t		sh_auxxymmax;
+	int32_t		sh_lstrmax;
+	int32_t		sh_estrmax;
+	int32_t		sh_fdmax;
+	int32_t		sh_rfdmax;
+	int32_t		sh_esymmax;
+	long		sh_linesize;
+	long		sh_lineoff;
+	long		sh_densenumoff;
+	long		sh_procoff;
+	long		sh_lsymoff;
+	long		sh_optsymoff;
+	long		sh_auxsymoff;
+	long		sh_lstroff;
+	long		sh_estroff;
+	long		sh_fdoff;
+	long		sh_rfdoff;
+	long		sh_esymoff;
+};
+
+struct ecoff_extsym {
+	long		es_value;
+	int		es_strindex;
+	unsigned	es_type:6;
+	unsigned	es_class:5;
+	unsigned	:1;
+	unsigned	es_symauxindex:20;
+	unsigned	es_jmptbl:1;
+	unsigned	es_cmain:1;
+	unsigned	es_weakext:1;
+	unsigned	:29;
+	int		es_indexfld;
+};
