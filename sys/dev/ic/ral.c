@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.18 2005/03/11 19:45:19 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.19 2005/03/11 19:49:29 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2371,11 +2371,14 @@ ral_init(struct ifnet *ifp)
 	for (i = 0; i < N(ral_def_mac); i++)
 		RAL_WRITE(sc, ral_def_mac[i].reg, ral_def_mac[i].val);
 
-	/* set basic rates mask */
-	RAL_WRITE(sc, RAL_ARCSR1, 0x15f);
-
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	ral_set_macaddr(sc, ic->ic_myaddr);
+
+	/* set power mode (CAM) */
+	RAL_WRITE(sc, RAL_TXCSR7, 0);
+
+	/* set supported basic rates (1, 2, 6, 12, 24) */
+	RAL_WRITE(sc, RAL_ARCSR1, 0x153);
 
 	ral_update_plcp(sc);
 	ral_update_led(sc, 0, 0);
