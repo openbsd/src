@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.33 2001/08/22 10:29:42 niklas Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.34 2001/08/26 06:25:10 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -890,8 +890,6 @@ svr4_sys_pgrpsys(p, v, retval)
 		return EINVAL;
 	}
 }
-
-#define syscallarg(x)   union { x datum; register_t pad; }
 
 struct svr4_hrtcntl_args {
 	syscallarg(int) 			cmd;
