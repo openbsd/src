@@ -30,20 +30,22 @@ Installing applications from the the CD-ROM package collection:
 
 			i386	sparc	amiga	m68k	alpha	mips
 	emacs-20.2	yes	yes	no	yes	yes	no
-	bash-2.01.1	yes	yes	no	yes	yes	no
-	tcsh-6.07.02	yes	yes	no	yes	yes	no
+	bash-2.01.1	yes	yes	yes	yes	yes	no
+	tcsh-6.07.02	yes	yes	yes	yes	yes	no
 	pine-3.96	yes	yes	no	yes	yes	no
 
 	(the amiga is treated specially due to its 8k hardware pagesize
 	aka NBPG, it's very well possible amiga will run the other m68k
-	arch's binaries, but we make no guarantees at this point).
+	arch's binaries, but we make no guarantees at this point,
+	better safe than sorry).
 
 	To install one or more of these packages you must
 	1) become the superuser (root)
 	2) mount CD-ROM number 2
 	3) use the ``pkg_add'' command to install the software
 
-	Example:
+	Example (in which we use su(1) to get superuser privileges, thus
+	you have to be in group "wheel", see the manual page for su(1)).
 
     $ su
     Password: <enter your root password>
