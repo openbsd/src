@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.8 2001/08/24 19:26:12 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.9 2001/08/24 19:32:06 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -663,7 +663,7 @@ dartparam(tp, t)
 		/* hang up on zero baud rate */
 		if (tp->t_ispeed == 0) {
 			dprintf(("dartparam: ispeed == 0 -> HUP\n"));
-			dartmctl(tp, HUPCL, DMSET);
+			dartmctl(dev, HUPCL, DMSET);
 			return 0;
 		} else {
 			/* set baudrate */
