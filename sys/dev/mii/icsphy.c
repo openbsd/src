@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.6 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.7 2001/06/03 15:54:44 deraadt Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@
 
 /*
  * driver for Integrated Circuit Systems' ICS1890 ethernet 10/100 PHY
+ * and its successor ICS1892
  * datasheet from www.icst.com
  */
 
@@ -115,6 +116,10 @@ icsphymatch(parent, match, aux)
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1890)
 		return (10);
+   
+        if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1892)
+		return (10);
 
 	return (0);
 }
@@ -128,8 +133,15 @@ icsphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_xxICS_1890,
-	    MII_REV(ma->mii_id2));
+        if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1890)
+	       	printf(": %s, rev. %d\n", MII_STR_xxICS_1890,
+	          MII_REV(ma->mii_id2));
+
+        if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1892)
+	       	printf(": %s, rev. %d\n", MII_STR_xxICS_1892,
+	          MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -266,4 +278,11 @@ icsphy_reset(sc)
 
 	mii_phy_reset(sc);
 	PHY_WRITE(sc, MII_ICSPHY_ECR2, ECR2_10TPROT|ECR2_Q10T);
+   
+	/*
+	 * XXX the ICS1892 doesn't set the BMCR properly after
+	 * XXX reset, which breaks autonegotiation.
+	 */
+	PHY_WRITE(sc, MII_BMCR, BMCR_S100|BMCR_AUTOEN|BMCR_FDX);
+
 }
