@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.16 2004/10/26 00:37:07 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.17 2005/01/10 11:58:52 dlg Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ int	uplcomdebug = 0;
 
 #define	UPLCOM_SET_REQUEST	0x01
 #define	UPLCOM_SET_CRTSCTS	0x41
+#define RSAQ_STATUS_CTS		0x80
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
 
@@ -705,10 +706,18 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	pstatus = buf[8];
+	if (ISSET(pstatus, RSAQ_STATUS_CTS))
+		sc->sc_msr |= UMSR_CTS;
+	else
+		sc->sc_msr &= ~UMSR_CTS;
 	if (ISSET(pstatus, RSAQ_STATUS_DSR))
 		sc->sc_msr |= UMSR_DSR;
+	else
+		sc->sc_msr &= ~UMSR_DSR;
 	if (ISSET(pstatus, RSAQ_STATUS_DCD))
 		sc->sc_msr |= UMSR_DCD;
+	else
+		sc->sc_msr &= ~UMSR_DCD;
 	ucom_status_change((struct ucom_softc *) sc->sc_subdev);
 }
 
