@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.1 2002/11/29 18:25:22 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.2 2002/12/11 18:31:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -74,8 +74,8 @@ struct pfsync_header {
 } while (0)
 
 #ifdef _KERNEL
-int pfsync_clear_state __P((struct pf_state *));
-int pfsync_pack_state __P((u_int8_t, struct pf_state *));
+int pfsync_clear_state(struct pf_state *);
+int pfsync_pack_state(u_int8_t, struct pf_state *);
 #define pfsync_insert_state(st)	pfsync_pack_state(PFSYNC_ACT_INS, (st))
 #define pfsync_update_state(st)	pfsync_pack_state(PFSYNC_ACT_UPD, (st))
 #define pfsync_delete_state(st)	pfsync_pack_state(PFSYNC_ACT_DEL, (st))
