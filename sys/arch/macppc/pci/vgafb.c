@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.14 2002/06/27 19:45:03 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.15 2002/07/21 16:31:15 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -41,12 +41,6 @@
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
 #include <macppc/macppc/ofw_machdep.h>
-
-#if 0
-#include <dev/ic/mc6845.h>
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/vgareg.h>
-#endif
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -133,46 +127,12 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 		gotio_d = 1;
 	}
 	if (mmiosize != 0) {
-#if 0
-		printf("vgafb_common_probe, mmio base %x size %x\n",
-			mmiobase, mmiosize);
-#endif
 		if (bus_space_map(iot, mmiobase, mmiosize, 0, &mmioh))
 			goto bad;
-		printf("vgafb_common_probe, mmio done\n");
 		gotmmio = 1;
 	}
-#if 0
-	printf("vgafb_common_probe, mem base %x size %x memt %x\n",
-		membase, memsize, memt);
-#endif
 
-#if 0
-	if (bus_space_map(memt, membase, memsize, 0, &memh))
-		goto bad;
-	gotmem = 1;
-
-	/* CR1 - Horiz. Display End */
-	bus_space_write_1(iot, ioh_d, MC6845_INDEX, CRTC_HDISPLE);
-	width = bus_space_read_1(iot, ioh_d, MC6845_DATA);
-	/* this is not bit width yet */
-
-	/* use CR17 - mode control for this?? */
-	if ((width != 0xff) && (width < 600)) {
-		/* not accessable or in graphics mode? */
-		goto bad;
-	}
-#endif
-
-#if 0
-	vgadata = bus_space_read_2(memt, memh, 0);
-	bus_space_write_2(memt, memh, 0, 0xa55a);
-	rv = (bus_space_read_2(memt, memh, 0) == 0xa55a);
-	bus_space_write_2(memt, memh, 0, vgadata);
-#else
 	rv = 1;
-#endif
-
 
 bad:
 	if (gotio_b)
@@ -212,62 +172,14 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
            if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0, &vc->vc_mmioh))
 		panic("vgafb_common_setup: couldn't map mmio");
 	}
-#if 0
-	printf("commons setup mapping mem base %x size %x\n", membase, memsize);
-#endif
+
 	/* memsize should only be visible region for console */
 	memsize = cons_height * cons_linebytes;
         if (bus_space_map(vc->vc_memt, membase, memsize, 1, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
 	cons_display_mem_h = vc->vc_memh;
 	vc->vc_ofh = cons_display_ofh;
-#if 0
-	printf("display_mem_h %x\n", cons_display_mem_h );
-#endif
 
-#if 0
-	if (iosize != 0) {
-		/* CR1 - Horiz. Display End */
-		bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_HDISPLE);
-		width = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
-		/* (stored value + 1) * depth -> pixel width */
-		width = (width + 1) * 8;   
-
-		/* CR1 - Horiz. Display End */
-		{ 
-			u_int8_t t1, t2, t3;
-			bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_VDE);
-			t1 = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
-
-			bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_OVERFLL);
-			t2 = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
-			height = t1 + ((t2&0x40) << 3) 
-				    + ((t2&0x02) << 7) + 1; 
-			bus_space_write_1(iot, vc->vc_ioh_d, MC6845_INDEX, CRTC_MODE);
-			t3 = bus_space_read_1(iot, vc->vc_ioh_d, MC6845_DATA);
-			if (t3 & 0x04) {
-				height *= 2;
-			}
-			if (t1 == 0xff && t2 == 0xff && t3 == 0xff) {
-				/* iospace not working??? */
-				/* hope, better guess than 2048x2048 */
-				width = 640;
-				height = 480;
-			}
-		}
-		vc->vc_ncol = width / FONT_WIDTH;
-		vc->vc_nrow = height / FONT_HEIGHT;
-	} else {
-		/* iosize == 0
-		 * default to 640x480 and hope 
-		 */
-		vc->vc_ncol = 640 / FONT_WIDTH;
-		vc->vc_nrow = 480 / FONT_HEIGHT;
-	}
-	vc->vc_ncol = cons_width / FONT_WIDTH;
-	vc->vc_nrow = cons_height / FONT_HEIGHT;
-	printf(", %dx%d", vc->vc_ncol, vc->vc_nrow);
-#endif
 
 	vc->vc_crow = vc->vc_ccol = 0; /* Has to be some onscreen value */
 	vc->vc_so = 0;
@@ -276,22 +188,12 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	/*
 	*/
 
-#if defined(alpha)
-	/*
-	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
-	 * XXX Therefore, though the comments say "blue bg", the code uses
-	 * XXX the value for a red background!
-	 */
-	vc->vc_at = 0x40 | 0x0f;		/* blue bg|white fg */
-	vc->vc_so_at = 0x40 | 0x0f | 0x80;	/* blue bg|white fg|blink */
-#else
 	vc->vc_at = 0x00 | 0xf;			/* black bg|white fg */
 	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
-#endif
+
 	if (cons_depth == 8) { 
 		vgafb_restore_default_colors(vc);
 	}
-
 }
 
 void
@@ -503,16 +405,6 @@ vgafb_cnprobe(cp)
 	} 
 
 	cp->cn_pri = CN_REMOTE;
-#if 0
-	for (j = 0; j < 2; j++) {
-		for (i = 0; i < cons_width * cons_height; i++) {
-			bus_space_write_1(cons_membus,
-				cons_display_mem_h, i, j);
-
-		}
-	}
-#endif
-
 }
 
 void
@@ -525,19 +417,7 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 
 	struct vgafb_devconfig *dc = &vgafb_console_dc;
         struct rasops_info *ri = &dc->dc_rinfo;
-#if 0
-	ri->rc_sp = &vgafb_raster;
 
-	ri->rc_sp->width = cons_width;
-	ri->rc_sp->height = cons_height;
-	ri->rc_sp->depth = cons_depth;
-	ri->rc_sp->linelongs = cons_linebytes / 4; /* XXX */
-	ri->rc_sp->pixels = (void *)cons_display_mem_h;
-
-	ri->rc_crow = ri->rc_ccol = -1;
-	ri->rc_crowp = &ri->rc_crow;
-	ri->rc_ccolp = &ri->rc_ccol;
-#endif
 	ri->ri_flg = RI_CENTER;
 	ri->ri_depth = cons_depth;
 	ri->ri_bits = (void *)cons_display_mem_h;
