@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.5 1997/06/05 03:20:47 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.6 1997/12/16 22:59:12 provos Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -663,14 +663,15 @@ recvit(p, s, mp, namelenp, retsize)
 		if (len <= 0 || from == 0)
 			len = 0;
 		else {
+		        /* save sa_len before it is destroyed by MSG_COMPAT */
+			if (len > from->m_len)
+				len = from->m_len;
+			/* else if len < from->m_len ??? */
 #ifdef COMPAT_OLDSOCK
 			if (mp->msg_flags & MSG_COMPAT)
 				mtod(from, struct osockaddr *)->sa_family =
 				    mtod(from, struct sockaddr *)->sa_family;
 #endif
-			if (len > from->m_len)
-				len = from->m_len;
-			/* else if len < from->m_len ??? */
 			error = copyout(mtod(from, caddr_t),
 					(caddr_t)mp->msg_name, (unsigned)len);
 			if (error)
