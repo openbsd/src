@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.38 2004/08/09 18:08:51 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.39 2004/09/20 18:52:37 espie Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -95,7 +95,7 @@ CTAGS?=		/usr/bin/ctags
 	rm -f $*.o
 .endif
 .c.ln:
-	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
+	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 # C++
 .cc:
