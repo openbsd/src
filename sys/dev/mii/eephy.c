@@ -1,4 +1,4 @@
-/* $OpenBSD: eephy.c,v 1.4 2002/04/02 13:05:09 nate Exp $ */
+/* $OpenBSD: eephy.c,v 1.5 2002/04/02 14:52:27 lebel Exp $ */
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -89,7 +89,9 @@ eephymatch(struct device *parent, void *match, void *aux)
 		return (10);
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3)
+	    (MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_6))
 		return (10);
 
 	return(0);
