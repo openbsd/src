@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.11 1997/02/28 04:03:45 angelos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.12 1997/06/06 11:12:13 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1032,7 +1032,7 @@ sogetopt(so, level, optname, mp)
 			m->m_len = sizeof(struct timeval);
 			mtod(m, struct timeval *)->tv_sec = val / hz;
 			mtod(m, struct timeval *)->tv_usec =
-			    (val % hz) / tick;
+			    (val % hz) * tick;
 			break;
 		    }
 
