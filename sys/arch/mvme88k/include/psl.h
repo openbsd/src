@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.8 2001/03/09 05:44:40 smurph Exp $ */
+/*	$OpenBSD: psl.h,v 1.9 2001/07/01 23:26:35 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -59,36 +59,19 @@
 /*
  * processor status register
  */
-#ifndef PSR_MODE
 #define PSR_MODE	0x80000000U	/* supervisor/user mode */
-#endif
 #define PSR_BO		0x40000000U	/* byte-ordering 0:big 1:little */
 #define PSR_SER		0x20000000U	/* serial mode */
 #define PSR_C		0x10000000U	/* carry */
 #define PSR_SFD		0x000003F0U	/* SFU disable */
 #define PSR_SFD1	0x00000008U	/* SFU1 (FPU) disable */
-#ifndef PSR_MXM
 #define PSR_MXM		0x00000004U	/* misaligned access enable */
-#endif
-#ifndef PSR_IND
 #define PSR_IND		0x00000002U	/* interrupt disable */
-#endif
-#ifndef PSR_SFRZ
 #define PSR_SFRZ	0x00000001U	/* shadow freeze */
-#endif
 /*
  *	This is used in ext_int() and hard_clock().
  */
 #define PSR_IPL		0x00001000	/* for basepri */
-#define PSR_IPL_LOG	12		/* = log2(PSR_IPL) */
-
-#define PSR_MODE_LOG	31		/* = log2(PSR_MODE) */
-#define PSR_BO_LOG	30		/* = log2(PSR_BO) */
-#define PSR_SER_LOG	29		/* = log2(PSR_SER) */
-#define PSR_SFD1_LOG	3		/* = log2(PSR_SFD1) */
-#define PSR_MXM_LOG	2		/* = log2(PSR_MXM) */
-#define PSR_IND_LOG	1		/* = log2(PSR_IND) */
-#define PSR_SFRZ_LOG	0		/* = log2(PSR_SFRZ) */
 
 #define PSR_SUPERVISOR	(PSR_MODE | PSR_SFD)
 #define PSR_USER	(PSR_SFD)
