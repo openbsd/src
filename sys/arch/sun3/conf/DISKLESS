@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.14 2000/05/23 23:09:29 miod Exp $
+#	$OpenBSD: DISKLESS,v 1.15 2000/05/26 00:07:26 miod Exp $
 #	$NetBSD: DISKLESS,v 1.12.4.1 1996/08/19 23:35:03 gwr Exp $
 
 #
@@ -37,7 +37,7 @@ option	 	PROCFS		# /proc
 # Networking options
 option	 	INET		# IP prototol stack support
 #option		GATEWAY		# IP packet forwarding
-option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 option	 	NFS_BOOT_RWSIZE=1024
 

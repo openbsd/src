@@ -1,4 +1,4 @@
-#	$OpenBSD: SMD_TEST,v 1.11 2000/04/30 15:27:57 miod Exp $
+#	$OpenBSD: SMD_TEST,v 1.12 2000/05/26 00:07:27 miod Exp $
 #	$NetBSD: SMD_TEST,v 1.2.4.1 1996/08/19 23:35:11 gwr Exp $
 
 #
@@ -44,7 +44,7 @@ option	 	INET		# IP prototol stack support
 option		IPFILTER	# IP packet filter for security
 option		IPFILTER_LOG	# use /dev/ipl to log IPF
 #option		GATEWAY		# IP packet forwarding
-option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 option	 	NFS_BOOT_RWSIZE=1024
 
