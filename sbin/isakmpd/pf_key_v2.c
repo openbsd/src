@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.92 2002/01/03 09:19:52 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.93 2002/01/23 17:21:16 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
 
   for (i = 0; i < cnt; i++)
     {
-      sprintf (header, "pf_key_v2_write: iov[%d]", i);
+      snprintf (header, 80, "pf_key_v2_write: iov[%d]", i);
       LOG_DBG_BUF ((LOG_SYSDEP, 80, header, (u_int8_t *)iov[i].iov_base,
 		    iov[i].iov_len));
     }
@@ -2094,7 +2094,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 		     addrbuf, ADDRESS_MAX) == NULL)
 	return 0;
       *reslen = strlen (addrbuf) + 3;
-      strcat (addrbuf, "/32");
+      strlcat (addrbuf, "/32", ADDRESS_MAX + 5);
       res = strdup (addrbuf);
       if (!res)
 	return 0;
@@ -2107,7 +2107,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 		     addrbuf, ADDRESS_MAX) == NULL)
 	return 0;
       *reslen = strlen (addrbuf) + 4;
-      strcat (addrbuf, "/128");
+      strlcat (addrbuf, "/128", ADDRESS_MAX + 5);
       res = strdup (addrbuf);
       if (!res)
 	return 0;
@@ -2266,7 +2266,7 @@ pf_key_v2_conf_refinc (int af, char *section)
     if (num == 0)
       return 0;
 
-    sprintf (conn, "%d", num + 1);
+    snprintf (conn, 22, "%d", num + 1);
     conf_set (af, section, "Refcount", conn, 1, 0);
     return 0;
 }
@@ -2294,7 +2294,7 @@ pf_key_v2_conf_refhandle (int af, char *section)
     else
       if (num != 0)
         {
-	  sprintf (conn, "%d", num - 1);
+	  snprintf (conn, 22, "%d", num - 1);
 	  conf_set (af, section, "Refcount", conn, 1, 0);
 	}
 
@@ -3079,7 +3079,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	      goto fail;
 	    }
 
-	  sprintf (srcid, "ID:Address/%s", (char *)(srcident + 1));
+	  snprintf (srcid, slen, "ID:Address/%s", (char *)(srcident + 1));
 
 	  /* Set the section if it doesn't already exist. */
 	  af = conf_begin ();
@@ -3247,7 +3247,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	      goto fail;
 	    }
 
-	  sprintf (dstid, "ID:Address/%s", (char *)(dstident + 1));
+	  snprintf (dstid, slen, "ID:Address/%s", (char *)(dstident + 1));
 
 	  /* Set the section if it doesn't already exist. */
 	  af = conf_begin ();
@@ -3369,8 +3369,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   /* Get a new connection sequence number. */
   for (;; connection_seq++)
     {
-      sprintf (conn, "Connection-%u", connection_seq);
-      sprintf (configname, "Config-Phase2-%u", connection_seq);
+      snprintf (conn, 22, "Connection-%u", connection_seq);
+      snprintf (configname, 30, "Config-Phase2-%u", connection_seq);
 
       /* Does it exist ? */
       if (!conf_get_str (conn, "Phase")
@@ -3398,9 +3398,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
    *                  exists -- otherwise use the defaults)
    */
 
-  peer = malloc (strlen (dstbuf) + strlen (srcbuf)
-                 + (srcid ? strlen (srcid) : 0)
-		 + (dstid ? strlen (dstid) : 0) + sizeof "Peer-/-/");
+  slen = strlen (dstbuf) + strlen (srcbuf) + (srcid ? strlen (srcid) : 0)
+    + (dstid ? strlen (dstid) : 0) + sizeof "Peer-/-/";
+  peer = malloc (slen);
   if (!peer)
     goto fail;
 
@@ -3415,9 +3415,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
    * - Peer-dstaddr-/dstid
    * - Peer-dstaddr-srcid
    */
-  sprintf (peer, "Peer-%s%s%s%s%s%s%s", dstbuf, srcaddr ? "/" : "",
-	   srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
-	   dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "");
+  snprintf (peer, slen, "Peer-%s%s%s%s%s%s%s", dstbuf, srcaddr ? "/" : "",
+	    srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
+	    dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "");
 
   /*
    * Set the IPsec connection section. Refcount is set to 2, because
@@ -3434,7 +3434,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   /* Set the sequence number. */
-  sprintf (lname, "%u", msg->sadb_msg_seq);
+  snprintf (lname, 100, "%u", msg->sadb_msg_seq);
   if (conf_set (af, conn, "Acquire-ID", lname, 0, 0))
     {
       conf_end (af, 0);
@@ -3442,7 +3442,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   /* Set Phase 2 IDs -- this is the Local-ID section. */
-  sprintf (lname, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask, tproto, sport);
+  snprintf (lname, 100, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask, tproto,
+	    sport);
   if (conf_set (af, conn, "Local-ID", lname, 0, 0))
     {
       conf_end (af, 0);
@@ -3478,7 +3479,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
       if (tproto)
         {
-	  sprintf (tmbuf, "%u", tproto);
+	  snprintf (tmbuf, sizeof sport * 3 + 1, "%u", tproto);
 	  if (conf_set (af, lname, "Protocol", tmbuf, 0, 0))
 	    {
 	      conf_end (af, 0);
@@ -3487,7 +3488,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
 	  if (sport)
 	    {
-	      sprintf (tmbuf, "%u", ntohs (sport));
+	      snprintf (tmbuf, sizeof sport * 3 + 1, "%u", ntohs (sport));
 	      if (conf_set (af, lname, "Port", tmbuf, 0, 0))
 	        {
 		  conf_end (af, 0);
@@ -3500,7 +3501,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     pf_key_v2_conf_refinc (af, lname);
 
   /* Set Remote-ID section. */
-  sprintf (dname, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask, tproto, dport);
+  snprintf (dname, 100, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask, tproto,
+	    dport);
   if (conf_set (af, conn, "Remote-ID", dname, 0, 0))
     {
       conf_end (af, 0);
@@ -3537,7 +3539,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
       if (tproto)
         {
-	  sprintf (tmbuf, "%u", tproto);
+	  snprintf (tmbuf, sizeof dport * 3 + 1, "%u", tproto);
 	  if (conf_set (af, dname, "Protocol", tmbuf, 0, 0))
 	    {
 	      conf_end (af, 0);
@@ -3546,7 +3548,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
 	  if (dport)
 	    {
-	      sprintf (tmbuf, "%u", ntohs (dport));
+	      snprintf (tmbuf, sizeof dport * 3 + 1, "%u", ntohs (dport));
 	      if (conf_set (af, dname, "Port", tmbuf, 0, 0))
 	        {
 		  conf_end (af, 0);
@@ -3614,7 +3616,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  goto fail;
 	}
 
-      sprintf (confname, "ISAKMP-Configuration-%s", peer);
+      snprintf (confname, 120, "ISAKMP-Configuration-%s", peer);
       if (conf_set (af, peer, "Configuration", confname, 0, 0))
         {
 	  conf_end (af, 0);
@@ -3643,11 +3645,11 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  switch (cred->sadb_x_cred_type)
 	    {
 	    case SADB_X_CREDTYPE_X509:
-	      sprintf (num, "%d", ISAKMP_CERTENC_X509_SIG);
+	      snprintf (num, 10, "%d", ISAKMP_CERTENC_X509_SIG);
 	      handler = cert_get (ISAKMP_CERTENC_X509_SIG);
 	      break;
 	    case SADB_X_CREDTYPE_KEYNOTE:
-	      sprintf (num, "%d", ISAKMP_CERTENC_KEYNOTE);
+	      snprintf (num, 10, "%d", ISAKMP_CERTENC_KEYNOTE);
 	      handler = cert_get (ISAKMP_CERTENC_KEYNOTE);
 	      break;
 	    default:
