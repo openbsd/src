@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.23 2004/02/25 21:56:12 espie Exp $
+# $OpenBSD: pkg_delete,v 1.24 2004/06/21 16:33:45 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -29,6 +29,7 @@ use strict;
 use warnings;
 use Getopt::Std;
 use OpenBSD::PackingList;
+use OpenBSD::PackingOld;
 use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
 use OpenBSD::Logger;

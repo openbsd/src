@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.8 2004/03/30 08:53:35 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.9 2004/06/21 16:33:45 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -33,6 +33,7 @@ use OpenBSD::PackageInfo;
 package OpenBSD::PackingElement;
 use File::Basename;
 our %keyword;
+our %oldkeyword;
 
 sub Factory
 {
@@ -43,6 +44,9 @@ sub Factory
 
 		if (defined $keyword{$cmd}) {
 			$keyword{$cmd}->add(@_, $args);
+		} elsif (defined $oldkeyword{$cmd}) {
+			$oldkeyword{$cmd}->add(@_, $args);
+			print STDERR "Warning: obsolete construct: \@$cmd $args\n";
 		} else {
 		    print STDERR "Unknown element: \@$cmd $args\n";
 		    exit(1);
@@ -55,6 +59,11 @@ sub Factory
 sub setKeyword {
 	my ($class, $k) = @_;
 	$keyword{$k} = $class;
+}
+
+sub setOldKeyword {
+	my ($class, $k) = @_;
+	$oldkeyword{$k} = $class;
 }
 
 sub category() { 'items' }
