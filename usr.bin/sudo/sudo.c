@@ -287,9 +287,6 @@ main(argc, argv, envp)
 	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", *user_runas);
     }
 
-    /* Build up custom environment that avoids any nasty bits. */
-    new_environ = rebuild_env(sudo_mode, envp);
-
     /* This goes after the sudoers parse since we honor sudoers options. */
     if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE) {
 	remove_timestamp((sudo_mode == MODE_KILL));
@@ -334,6 +331,9 @@ main(argc, argv, envp)
     /* Require a password unless the NOPASS tag was set.  */
     if (!(validated & FLAG_NOPASS))
 	check_user();
+
+    /* Build up custom environment that avoids any nasty bits. */
+    new_environ = rebuild_env(sudo_mode, envp);
 
     if (validated & VALIDATE_OK) {
 	/* Finally tell the user if the command did not exist. */
@@ -950,17 +950,15 @@ set_fqdn()
     struct hostent *hp;
     char *p;
 
-    if (def_flag(I_FQDN)) {
-	if (!(hp = gethostbyname(user_host))) {
-	    log_error(MSG_ONLY|NO_EXIT,
-		"unable to lookup %s via gethostbyname()", user_host);
-	} else {
-	    free(user_host);
-	    user_host = estrdup(hp->h_name);
-	}
+    if (!(hp = gethostbyname(user_host))) {
+	log_error(MSG_ONLY|NO_EXIT,
+	    "unable to lookup %s via gethostbyname()", user_host);
+    } else {
+	if (user_shost != user_host)
+	    free(user_shost);
+	free(user_host);
+	user_host = estrdup(hp->h_name);
     }
-    if (user_shost != user_host)
-	free(user_shost);
     if ((p = strchr(user_host, '.'))) {
 	*p = '\0';
 	user_shost = estrdup(user_host);

@@ -157,29 +157,32 @@ zero_env(envp)
 	    case 'H':
 		if (strncmp("HOME=", *ep, 5) == 0)
 		    break;
+		continue;
 	    case 'L':
 		if (strncmp("LOGNAME=", *ep, 8) == 0)
 		    break;
+		continue;
 	    case 'P':
 		if (strncmp("PATH=", *ep, 5) == 0) {
 		    user_path = *ep + 5;
 		    /* XXX - set to sane default instead of user's? */
 		    break;
 		}
+		continue;
 	    case 'S':
-		if (strncmp("SHELL=", *ep, 6) == 0) {
+		if (strncmp("SHELL=", *ep, 6) == 0)
 		    user_shell = *ep + 6;
-		    continue;
-		} else if (!user_prompt && !strncmp("SUDO_PROMPT=", *ep, 12)) {
+		else if (!user_prompt && !strncmp("SUDO_PROMPT=", *ep, 12))
 		    user_prompt = *ep + 12;
-		    continue;
-		}
+		continue;
 	    case 'T':
 		if (strncmp("TZ=", *ep, 3) == 0)
 		    break;
+		continue;
 	    case 'U':
 		if (strncmp("USER=", *ep, 5) == 0)
 		    break;
+		continue;
 	    default:
 		continue;
 	}
