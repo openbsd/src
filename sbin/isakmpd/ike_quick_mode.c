@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.52 2001/06/29 18:52:16 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.53 2001/07/01 20:11:53 niklas Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -108,9 +108,9 @@ static int
 check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
   char *return_values[RETVALUES_NUM];
-  char **principal = NULL;
+  char **principal = 0;
   int i, result = 0, nprinc = 0;
-  int *x509_ids = NULL, *keynote_ids = NULL;
+  int *x509_ids = 0, *keynote_ids = 0;
   unsigned char hashbuf[20]; /* Set to the largest digest result */
 #ifdef USE_X509
   struct keynote_deckey dc;
@@ -179,55 +179,56 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
        */
       nprinc = 3;
       principal = calloc (nprinc, sizeof *principal);
-      if (principal == NULL)
+      if (!principal)
         {
-	  log_error ("check_policy: failed to allocate %d bytes",
-		     nprinc * sizeof *principal);
+	  log_error ("check_policy: calloc (%d, %d) failed", nprinc,
+		     sizeof *principal);
 	  goto policydone;
 	}
 
-      principal[0] = calloc (strlen (isakmp_sa->recv_key) + 1 +
-			     strlen ("passphrase:"), sizeof (char));
-      if (principal[0] == NULL)
+      principal[0] = calloc (strlen (isakmp_sa->recv_key)
+			     + sizeof "passphrase:", sizeof (char));
+      if (!principal[0])
         {
-	  log_error ("check_policy: failed to allocate %d bytes",
-		     strlen (isakmp_sa->recv_key) + 1 +
-		     strlen ("passphrase:"));
+	  log_error ("check_policy: calloc (%d, %d) failed",
+		     strlen (isakmp_sa->recv_key) + sizeof "passphrase:",
+		     sizeof (char));
 	  goto policydone;
 	}
 
+      /* XXX Consider changing the magic hash lengths with constants.  */
       strcpy (principal[0], "passphrase:");
-      memcpy (principal[0] + strlen ("passphrase:"), isakmp_sa->recv_key,
+      memcpy (principal[0] + sizeof "passphrase:" - 1, isakmp_sa->recv_key,
 	      strlen (isakmp_sa->recv_key));
 
-      principal[1] = calloc (strlen ("passphrase-md5-hex:") +
-			     32 + 1, sizeof (char));
-      if (principal[1] == NULL)
+      principal[1] = calloc (sizeof "passphrase-md5-hex:" + 2 * 16,
+			     sizeof (char));
+      if (!principal[1])
         {
-	  log_error ("check_policy: failed to allocate %d bytes",
-		     strlen ("passphrase-md5-hex:") + 33);
+	  log_error ("check_policy: calloc (%d, %d) failed",
+		     sizeof "passphrase-md5-hex:" + 2 * 16, sizeof (char));
 	  goto policydone;
 	}
 
       strcpy (principal[1], "passphrase-md5-hex:");
       MD5 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 16; i++)
-	sprintf (principal[1] + (2 * i) + strlen ("passphrase-md5-hex:"),
+	sprintf (principal[1] + 2 * i + sizeof "passphrase-md5-hex:" - 1,
 		 "%02x", hashbuf[i]);
-      
-      principal[2] = calloc (strlen ("passphrase-sha1-hex:") +
-			     32 + 1, sizeof (char));
-      if (principal[2] == NULL)
+
+      principal[2] = calloc (sizeof "passphrase-sha1-hex:" + 2 * 20,
+			     sizeof (char));
+      if (!principal[2])
         {
-	  log_error ("check_policy: failed to allocate %d bytes",
-		     strlen ("passphrase-sha1-hex:") + 33);
+	  log_error ("check_policy: calloc (%d, %d) failed",
+		     sizeof "passphrase-sha1-hex:" + 2 * 20, sizeof (char));
 	  goto policydone;
 	}
 
       strcpy (principal[2], "passphrase-sha1-hex:");
       SHA1 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 20; i++)
-	sprintf (principal[2] + (2 * i) + strlen ("passphrase-sha1-hex:"),
+	sprintf (principal[2] + 2 * i + sizeof "passphrase-sha1-hex:" - 1,
 		 "%02x", hashbuf[i]);
       break;
 
@@ -236,19 +237,19 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       nprinc = 1;
 
       principal = calloc (nprinc, sizeof *principal);
-      if (principal == NULL)
+      if (!principal)
         {
-	  log_error ("check_policy: failed to allocate %d bytes",
-		     nprinc * sizeof *principal);
+	  log_error ("check_policy: calloc (%d, %d) failed", nprinc,
+		     sizeof *principal);
 	  goto policydone;
 	}
 
       /* Dup the keys */
       principal[0] = strdup (isakmp_sa->keynote_key);
-      if (principal[0] == NULL)
+      if (!principal[0])
         {
-	  log_error ("check_policy: failed to allocate %d bytes",
-		     strlen (isakmp_sa->keynote_key));
+	  log_error ("check_policy: calloc (%d, %d) failed",
+		     strlen (isakmp_sa->keynote_key), sizeof (char));
 	  goto policydone;
 	}
 #endif
@@ -257,9 +258,9 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     case ISAKMP_CERTENC_X509_SIG:
 #ifdef USE_X509
       principal = calloc (2, sizeof *principal);
-      if (principal == NULL)
+      if (!principal)
         {
-	  log_error ("check_policy: failed to get memory for principal");
+	  log_error ("check_policy: calloc (2, %d) failed", sizeof *principal);
 	  goto policydone;
 	}
 
@@ -281,34 +282,35 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	  goto policydone;
 	}
 
-      if (principal[0] == NULL)
+      if (!principal[0])
 	{
 	  log_print ("check_policy: failed to allocate memory for principal");
 	  goto policydone;
 	}
 
-      principal[1] = calloc (strlen (principal[0]) + strlen ("rsa-hex:") + 1,
+      principal[1] = calloc (strlen (principal[0]) + sizeof "rsa-hex:",
 			     sizeof (char));
-      if (principal[1] == NULL)
+      if (!principal[1])
 	{
-	  log_error ("check_policy: failed to allocate memory for principal");
+	  log_error ("check_policy: calloc (%d, %d) failed",
+		     strlen (principal[0]) + sizeof "rsa-hex:", sizeof (char));
 	  goto policydone;
 	}
 
-      strcpy (principal[1], "rsa-hex:");
-      strcpy (principal[1] + strlen ("rsa-hex:"), principal[0]);
+      sprintf (principal[1], "rsa-hex:%s", principal[0]);
       free (principal[0]);
       principal[0] = principal[1];
-      principal[1] = NULL;
+      principal[1] = 0;
 
-      /* Generate a "DN:" principal */
+      /* Generate a "DN:" principal.  */
       subject = LC (X509_get_subject_name, (isakmp_sa->recv_cert));
       if (subject)
 	{
           principal[1] = calloc (259, sizeof (char));
-          if (principal[1] == NULL)
+          if (!principal[1])
             {
-	      log_error ("check_policy: failed to allocate memory for principal[1]");
+	      log_error ("check_policy: calloc (259, %d) failed",
+			 sizeof (char));
 	      goto policydone;
             }
 	  strcpy (principal[1], "DN:");
@@ -374,7 +376,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     }
 
   free (principal);
-  principal = NULL;
+  principal = 0;
   nprinc = 0;
 
   /* Check what policy said.  */
@@ -877,10 +879,10 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	       exchange->name);
   else if (remote_id)
     /* This code supports the "road warrior" case, where the initiator doesn't
-     * have a fixed IP address, but wants to specify a particular remote 
+     * have a fixed IP address, but wants to specify a particular remote
      * network to talk to.
      * -- Adrian Close <adrian@esec.com.au>
-     */ 
+     */
     {
       log_print ("initiator_send_HASH_SA_NONCE: "
 	       "Remote-ID given without Local-ID for \"%s\"",
@@ -912,7 +914,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  free (id);
 	  return -1;
 	}
-      memcpy (id + ISAKMP_ID_DATA_OFF, sockaddr_data (src), 
+      memcpy (id + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
 	      sockaddr_len (src));
 
       LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDic",
@@ -1014,7 +1016,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
     return -1;
 
   prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		"initiator_recv_HASH_SA_NONCE: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
@@ -1153,10 +1155,12 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
 	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
 	  break;
+
 	case AF_INET6:
 	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV6_ADDR);
 	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV6_ADDR);
 	  break;
+
 	default:
 	  log_error ("initiator_recv_HASH_SA_NONCE: unknown sa_family %d",
 		     src->sa_family);
@@ -1166,7 +1170,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 	}
       memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
 	      sockaddr_len (src));
-      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (dst), 
+      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (dst),
 	      sockaddr_len (dst));
     }
 
@@ -1255,7 +1259,7 @@ initiator_send_HASH (struct message *msg)
     }
 
   /* Allocate the prf and start calculating our HASH(3).  XXX Share?  */
-  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: SKEYID_a", 
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: SKEYID_a",
 		isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
@@ -1362,8 +1366,8 @@ post_quick_mode (struct message *msg)
 		  /* If PFS is used hash in g^xy.  */
 		  if (ie->g_xy)
 		    {
-		      LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
-				    "post_quick_mode: g^xy", ie->g_xy, 
+		      LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
+				    "post_quick_mode: g^xy", ie->g_xy,
 				    ie->g_x_len));
 		      prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
 		    }
@@ -1446,7 +1450,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   if (!prf)
     goto cleanup;
   prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
 		"responder_recv_HASH_SA_NONCE: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
@@ -1544,7 +1548,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	{
 	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
 		     ie->id_ci_sz);
-	  goto cleanup; 
+	  goto cleanup;
 	}
 
       if (src->sa_family != dst->sa_family)
@@ -1559,18 +1563,21 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
 	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
 	  break;
+
 	case AF_INET6:
 	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV6_ADDR);
 	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV6_ADDR);
 	  break;
+
 	default:
 	  log_error ("initiator_recv_HASH_SA_NONCE: unknown sa_family %d",
 		     src->sa_family);
 	  goto cleanup;
 	}
+
       memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
 	      sockaddr_len (src));
-      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (dst), 
+      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (dst),
 	      sockaddr_len (dst));
     }
 
@@ -1802,8 +1809,8 @@ responder_send_HASH_SA_NONCE (struct message *msg)
   if (!prf)
     return -1;
   prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_NEGOTIATION, 90, 
-		"responder_send_HASH_SA_NONCE: message_id", 
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 90,
+		"responder_send_HASH_SA_NONCE: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_send_HASH_SA_NONCE: NONCE_I_b",
