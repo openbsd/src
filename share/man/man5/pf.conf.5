@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.15 2001/09/15 14:04:20 jakob Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.16 2001/09/25 19:55:25 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -317,7 +317,7 @@ For ICMP queries, keep state creates an ICMP state, and
 knows how to match ICMP replies to states.
 For example
 .Bd -literal
-    pass out proto icmp all icmp-type echoreq keep state
+    pass out inet proto icmp all icmp-type echoreq keep state
 .Ed
 .Pp
 lets echo requests 
@@ -415,8 +415,8 @@ block in log quick on kue0 from { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 255
 # so replies (like 0/0 for 8/0) will match queries
 # ICMP error messages (which always refer to a TCP/UDP packet) are
 # handled by the TCP/UDP states
-pass out on kue0 proto icmp all icmp-type 8 code 0 keep state
-pass in  on kue0 proto icmp all icmp-type 8 code 0 keep state
+pass out on kue0 inet proto icmp all icmp-type 8 code 0 keep state
+pass in  on kue0 inet proto icmp all icmp-type 8 code 0 keep state
 
 # -----------------------------------------------------------------------
 # UDP
