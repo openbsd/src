@@ -1,3 +1,4 @@
+/*	$OpenBSD: lsi64854var.h,v 1.2 2001/08/25 14:58:32 jason Exp $	*/
 /*	$NetBSD: lsi64854var.h,v 1.4 2001/03/29 02:58:39 petrov Exp $ */
 
 /*-
