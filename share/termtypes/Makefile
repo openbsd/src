@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/12/07 20:07:21 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/12/16 19:37:33 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 # master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
@@ -33,9 +33,9 @@ realinstall:
 	     ${DESTDIR}${BINDIR}/misc/terminfo.db
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 termcap.db \
 	     ${DESTDIR}${BINDIR}/misc/termcap.db
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 termcap.src \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 termcap.src \
 	     ${DESTDIR}${BINDIR}/misc/termcap
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
 	     ${DESTDIR}${BINDIR}/misc/map3270
 	ln -fs ${BINDIR}/misc/termcap ${DESTDIR}/etc/termcap
 
