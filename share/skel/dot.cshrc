@@ -22,6 +22,10 @@ if ($?prompt) then
 	set ignoreeof
 	set mail = (/var/mail/$USER)
 	set mch = `hostname -s`
-	set prompt = "$mch:q:$cwd:t {\!} "
-	umask 2
+	alias prompt 'set prompt = "$mch:q"":$cwd:t {\!} "'
+	alias cd 'cd \!*; prompt'
+	alias popd 'popd \!*; prompt'
+	alias pushd 'pushd \!*; prompt'
+	cd .
+	umask 22
 endif
