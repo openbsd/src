@@ -32,10 +32,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: random.c,v 1.9 2000/04/04 14:27:00 millert Exp $";
+static char *rcsid = "$OpenBSD: random.c,v 1.10 2002/12/06 17:43:34 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -237,7 +238,7 @@ srandom(x)
 void
 srandomdev()
 {
-	int fd;
+	int fd, i, mib[2], n;
 	size_t len;
 
 	if (rand_type == TYPE_0)
@@ -245,19 +246,35 @@ srandomdev()
 	else
 		len = rand_deg * sizeof(state[0]);
 
+	/*
+	 * To get seed data, first try reading from /dev/arandom.
+	 * If that fails, try the KERN_ARND sysctl() (one int at a time).
+	 * As a last resort, call srandom().
+	 */
 	if ((fd = open("/dev/arandom", O_RDONLY, 0)) != -1 &&
 	    read(fd, (void *) state, len) == (ssize_t) len) {
 		close(fd);
 	} else {
-		struct timeval tv;
-		u_int junk;
-
-		/* XXX - this could be better */
-		gettimeofday(&tv, NULL);
-		srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec ^ junk);
 		if (fd != -1)
 			close(fd);
-		return;
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_ARND;
+		n = len / sizeof(int);
+		len = sizeof(int);
+		for (i = 0; i < n; i++) {
+			if (sysctl(mib, 2, (char *)((int *)state + i), &len,
+			    NULL, 0) == -1)
+				break;
+		}
+		if (i != n) {
+			struct timeval tv;
+			u_int junk;
+
+			/* XXX - this could be better */
+			gettimeofday(&tv, NULL);
+			srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec ^ junk);
+			return;
+		}
 	}
 
 	if (rand_type != TYPE_0) {
