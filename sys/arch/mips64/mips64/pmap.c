@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2004/09/17 19:19:08 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 2004/09/21 05:54:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -68,6 +68,7 @@ int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
 int	pmap_alloc_tlbpid(struct proc *);
 int	pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, u_int *);
+int	pmap_page_alloc(vaddr_t *);
 void	pmap_page_cache(vm_page_t, int);
 void	pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
 
@@ -266,6 +267,30 @@ pg_to_pvh(struct vm_page *pg)
 	return &pg->mdpage.pvent;
 }
 
+int
+pmap_page_alloc(vaddr_t *ret)
+{
+	vm_page_t pg;
+	pv_entry_t pv;
+	vaddr_t va;
+
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+	if (pg == NULL)
+		return ENOMEM;
+
+	pv = pg_to_pvh(pg);
+	va = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
+	if ((pv->pv_flags & PV_CACHED) &&
+	   ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+		Mips_SyncDCachePage(pv->pv_va);
+	}
+	pv->pv_va = va;
+	pv->pv_flags = PV_CACHED;
+
+	*ret = va;
+	return 0;
+}
+
 /*
  *	Create and return a physical map.
  */
@@ -294,27 +319,12 @@ extern struct user *proc0paddr;
 		pmap->pm_segtab->seg_tab[0] = NULL;
 	} else {
 		struct segtab *stp;
-		vm_page_t pg;
-		pv_entry_t pv;
 		vaddr_t va;
 
-		do {
-			pg = uvm_pagealloc(NULL, 0, NULL,
-			    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
-			if (pg == NULL) {
-				/* XXX What else can we do?  Deadlocks?  */
-				uvm_wait("pmap_create");
-			}
-		} while (pg == NULL);
-
-		pv = pg_to_pvh(pg);
-		va = PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg));
-		if ((pv->pv_flags & PV_CACHED) &&
-		   ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
-			Mips_SyncDCachePage(pv->pv_va);
+		while (pmap_page_alloc(&va) != 0) {
+			/* XXX What else can we do?  Deadlocks?  */
+			uvm_wait("pmap_create");
 		}
-		pv->pv_va = va;
-		pv->pv_flags = PV_CACHED;
 
 		pmap->pm_segtab = stp = (struct segtab *)va;
 
@@ -870,20 +880,15 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 *  User space mapping. Do table build.
 	 */
 	if (!(pte = pmap_segmap(pmap, va))) {
-		vm_page_t npg;	/* do not clobber pg! */
+		vaddr_t nva;
 
-		do {
-			npg = uvm_pagealloc(NULL, 0, NULL,
-			    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
-			if (npg == NULL) {
-				if (flags & PMAP_CANFAIL)
-					return ENOMEM;
-				uvm_wait("pmap_enter");
-			}
-		} while (npg == NULL);
+		while (pmap_page_alloc(&nva) != 0) {
+			if (flags & PMAP_CANFAIL)
+				return ENOMEM;
+			uvm_wait("pmap_enter");
+		}
 
-		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
-		    (vaddr_t)PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(npg));
+		pmap_segmap(pmap, va) = pte = (pt_entry_t *)nva;
 	}
 
 	if (pg != NULL) {
