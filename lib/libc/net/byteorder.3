@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.4 1997/04/05 21:13:05 millert Exp $
+.\"	$OpenBSD: byteorder.3,v 1.5 1997/11/19 23:30:17 niklas Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,8 +38,18 @@
 .Nm htonl ,
 .Nm htons ,
 .Nm ntohl ,
-.Nm ntohs
-.Nd convert values between host and network byte order
+.Nm ntohs ,
+.Nm htobe32 ,
+.Nm htobe16 ,
+.Nm betoh32 ,
+.Nm betoh16 ,
+.Nm htole32 ,
+.Nm htole16 ,
+.Nm letoh32 ,
+.Nm letoh16 ,
+.Nm swap32 ,
+.Nm swap16
+.Nd convert values between different byte orderings
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <machine/endian.h>
@@ -51,8 +61,63 @@
 .Fn ntohl "u_int32_t net32"
 .Ft u_int16_t
 .Fn ntohs "u_int16_t net16"
+.Ft u_int32_t
+.Fn htobe32 "u_int32_t host32"
+.Ft u_int16_t
+.Fn htobe16 "u_int16_t host16"
+.Ft u_int32_t
+.Fn betoh32 "u_int32_t big32"
+.Ft u_int16_t
+.Fn betoh16 "u_int16_t big16"
+.Ft u_int32_t
+.Fn htole32 "u_int32_t host32"
+.Ft u_int16_t
+.Fn htole16 "u_int16_t host16"
+.Ft u_int32_t
+.Fn letoh32 "u_int32_t little32"
+.Ft u_int16_t
+.Fn letoh16 "u_int16_t little16"
+.Ft u_int32_t
+.Fn swap32 "u_int32_t val32"
+.Ft u_int16_t
+.Fn swap16 "u_int16_t val16"
 .Sh DESCRIPTION
-These routines convert 16 and 32 bit quantities between network
+These routines convert 16 and 32 bit quantities between different
+byte orderings.  The "swap" functions reverse the byte ordering of
+the given quantity, the others converts either from/to the native
+byte order used by the host to/from either little- or big-endian (a.k.a
+network) order.
+.Pp
+Apart from the "swap" functions, the names can be described by this form:
+{src-order}to{dst-order}{size}.
+Both {src-order} and {dst-order} can take the following forms:
+.Bl -tag -width "be "
+.It Em h
+host order
+.It Em n
+network order (big-endian)
+.It Em be
+big-endian (Most significant byte first)
+.It Em le
+little-endian (Least significant byte first)
+.El
+.Pp
+One of the specified orderings must be "h".
+{Size} will take these forms:
+.Bl -tag -width "32 "
+.It Em l
+long (32-bit, used in conjunction with forms involving "n")
+.It Em s
+short (16-bit, used in conjunction with forms involving "n")
+.It Em 16
+16-bit
+.It Em 32
+32-bit
+.El
+.Pp
+The "swap" functions are of the form: swap{size}.
+.Pp
+Names involving "n" convert quantities between network
 byte order and host byte order.  The last letter (s/l) is a mnemonic
 for the traditional names for such quantities, short and long,
 respectively.  Today, the C concept of "short"/"long" integers
@@ -60,8 +125,14 @@ need not coincide with this traditional misunderstanding.
 On machines which have a byte order which is the same as the network
 order, routines are defined as null macros.
 .Pp
-These routines are most often used in conjunction with Internet
-addresses and ports as returned by
+The functions involving either "be", "le" or "swap" use the numbers
+(16/32) for specifying the bitwidth of the quantities they operate on.
+Currently all supported architectures are either big- or little-endian
+so either the "be" or the "le" variants are implemented as null macros.
+.Pp
+The routines mentioned above which have either {src-order} or {dst-order}
+set to "n" are most often used in
+conjunction with Internet addresses and ports as returned by
 .Xr gethostbyname 3
 and
 .Xr getservent 3 .
@@ -75,9 +146,10 @@ functions appeared in
 .Bx 4.2 .
 .Sh BUGS
 On the
-.Tn VAX ,
-.Tn ALPHA ,
-and
-.Tn iX86
+.Tn vax ,
+.Tn alpha ,
+.Tn i386 ,
+and so far
+.Tn mips
 bytes are handled backwards from most everyone else in
 the world.  This is not expected to be fixed in the near future.

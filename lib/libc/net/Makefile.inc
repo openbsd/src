@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 1997/07/28 16:27:16 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 1997/11/19 23:30:18 niklas Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -26,7 +26,10 @@ MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
 	rcmd.3 rcmdsh.3 resolver.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
-	byteorder.3 ntohs.3
+	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
+	byteorder.3 betoh16.3 byteorder.3 betoh32.3 byteorder.3 htole16.3 \
+	byteorder.3 htole32.3 byteorder.3 letoh16.3 byteorder.3 letoh32.3 \
+	swap16.3 swap32.3
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
 	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3
 MLINKS+=gethostbyname.3 endhostent.3 gethostbyname.3 gethostbyaddr.3 \
