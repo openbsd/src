@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.31 2000/07/01 02:55:57 pjanzen Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.32 2000/09/17 22:00:01 pjanzen Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  * respective subsystem header files.
  */
 
-#define CTL_MAXNAME	12	/* largest number of components supported */
+#define	CTL_MAXNAME	12	/* largest number of components supported */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -94,10 +94,10 @@ struct ctlname {
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
 #define	CTL_DDB		9		/* DDB user interface, see db_var.h */
-#define CTL_VFS         10              /* VFS sysctl's */
+#define	CTL_VFS		10		/* VFS sysctl's */
 #define	CTL_MAXID	11		/* number of valid top-level ids */
 
-#define CTL_NAMES { \
+#define	CTL_NAMES { \
 	{ 0, 0 }, \
 	{ "kern", CTLTYPE_NODE }, \
 	{ "vm", CTLTYPE_NODE }, \
@@ -137,24 +137,24 @@ struct ctlname {
 #define	KERN_BOOTTIME		21	/* struct: time kernel was booted */
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
-#define KERN_RAWPARTITION	24	/* int: raw partition number */
+#define	KERN_RAWPARTITION	24	/* int: raw partition number */
 #define	KERN_NTPTIME		25	/* struct: extended-precision time */
 #define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
 #define	KERN_OSVERSION		27	/* string: kernel build version */
 #define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
 #define	KERN_SOMINCONN		29	/* int: half-open controllable param */
 #define	KERN_USERMOUNT		30	/* int: users may mount filesystems */
-#define KERN_RND		31	/* struct: rnd(4) statistics */
-#define KERN_NOSUIDCOREDUMP	32	/* int: no setuid coredumps ever */ 
-#define	KERN_FSYNC		33      /* int: file synchronization support */
-#define	KERN_SYSVMSG		34      /* int: SysV message queue suppoprt */
-#define	KERN_SYSVSEM		35      /* int: SysV semaphore support */
-#define	KERN_SYSVSHM		36      /* int: SysV shared memory support */
+#define	KERN_RND		31	/* struct: rnd(4) statistics */
+#define	KERN_NOSUIDCOREDUMP	32	/* int: no setuid coredumps ever */ 
+#define	KERN_FSYNC		33	/* int: file synchronization support */
+#define	KERN_SYSVMSG		34	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVSEM		35	/* int: SysV semaphore support */
+#define	KERN_SYSVSHM		36	/* int: SysV shared memory support */
 #define	KERN_ARND		37	/* int: random integer from arc4rnd */
 #define	KERN_MSGBUFSIZE		38	/* int: size of message buffer */
 #define	KERN_MAXID		39	/* number of valid kern ids */
 
-#define CTL_KERN_NAMES { \
+#define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
 	{ "ostype", CTLTYPE_STRING }, \
 	{ "osrelease", CTLTYPE_STRING }, \
@@ -199,14 +199,14 @@ struct ctlname {
 /*
  * KERN_PROC subtypes
  */
-#define KERN_PROC_ALL		0	/* everything but kernel threads */
+#define	KERN_PROC_ALL		0	/* everything but kernel threads */
 #define	KERN_PROC_PID		1	/* by process id */
 #define	KERN_PROC_PGRP		2	/* by process group id */
 #define	KERN_PROC_SESSION	3	/* by session of pid */
 #define	KERN_PROC_TTY		4	/* by controlling tty */
 #define	KERN_PROC_UID		5	/* by effective uid */
 #define	KERN_PROC_RUID		6	/* by real uid */
-#define KERN_PROC_KTHREAD	7	/* also return kernel threads */
+#define	KERN_PROC_KTHREAD	7	/* also return kernel threads */
 
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
@@ -235,7 +235,7 @@ struct kinfo_proc {
 #define	EPROC_CTTY	0x01	/* controlling tty vnode active */
 #define	EPROC_SLEADER	0x02	/* session leader */
 		char	e_login[MAXLOGNAME];	/* setlogin() name */
-#define EMULNAMELEN	7
+#define	EMULNAMELEN	7
 		char	e_emul[EMULNAMELEN+1];	/* syscall emulation name */
 	        rlim_t	e_maxrss;
 	} kp_eproc;
@@ -277,7 +277,7 @@ struct kinfo_proc {
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MAXID	10		/* number of valid hw ids */
 
-#define CTL_HW_NAMES { \
+#define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
 	{ "machine", CTLTYPE_STRING }, \
 	{ "model", CTLTYPE_STRING }, \
