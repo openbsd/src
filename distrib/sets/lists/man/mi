@@ -257,9 +257,9 @@
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
 ./usr/share/man/cat1/ipcs.0
-./usr/share/man/cat1/ipf.0
+./usr/share/man/cat8/ipf.0
 ./usr/share/man/cat1/ipftest.0
-./usr/share/man/cat1/ipnat.0
+./usr/share/man/cat8/ipnat.0
 ./usr/share/man/cat1/ipresend.0
 ./usr/share/man/cat1/ipsecadm.0
 ./usr/share/man/cat1/ipsend.0

@@ -378,3 +378,9 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
+./usr/lib/perl5/site_perl/alpha-openbsd/machine/spinlock.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/pthread_np.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/sched.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/spinlock.ph
+./usr/lib/perl5/site_perl/alpha-openbsd/sys/kthread.ph
