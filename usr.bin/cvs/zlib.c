@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.1 2005/01/13 18:59:03 jfb Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.2 2005/01/13 20:22:55 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,20 +26,14 @@
 
 #include <sys/param.h>
 
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 
 #include "log.h"
 #include "cvs.h"
 #include "zlib.h"
 
-
 #define CVS_ZLIB_BUFSIZE  1024
-
-
 
 struct cvs_zlib_ctx {
 	int       z_level;
@@ -111,6 +105,9 @@ cvs_zlib_free(CVSZCTX *ctx)
 /*
  * cvs_zlib_inflate()
  *
+ * Decompress the first <slen> bytes of <src> using the zlib context <ctx> and
+ * store the resulting data in <dst>.
+ * Returns the number of bytes inflated on success, or -1 on failure.
  */
 int
 cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
@@ -141,11 +138,8 @@ cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 
 	} while (ret != Z_STREAM_END);
 
-	cvs_log(LP_WARN, "%u bytes decompressed to %d bytes", slen, bytes);
-
 	return (bytes);
 }
-
 
 /*
  * cvs_zlib_deflate()
@@ -172,9 +166,6 @@ cvs_zlib_deflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 		ctx->z_destrm.avail_out = sizeof(buf);
 		ret = deflate(&(ctx->z_destrm), Z_FINISH);
 		if ((ret == Z_STREAM_ERROR) || (ret == Z_BUF_ERROR)) {
-#if 0
-		if (ret != Z_OK) {
-#endif
 			cvs_log(LP_ERR, "deflate error: %s", ctx->z_destrm.msg);
 			return (-1);
 		}
@@ -184,8 +175,6 @@ cvs_zlib_deflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 			return (-1);
 		bytes += sizeof(buf) - ctx->z_destrm.avail_out;
 	} while (ret != Z_STREAM_END);
-
-	cvs_log(LP_WARN, "%u bytes compressed to %d bytes", slen, bytes);
 
 	return (bytes);
 }
