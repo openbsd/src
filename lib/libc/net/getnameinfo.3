@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.32 2004/12/20 22:30:10 millert Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.33 2004/12/20 22:33:09 millert Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -197,6 +197,60 @@ function is defined by the
 draft specification and documented in
 .Tn "RFC 2553" ,
 .Dq Basic Socket Interface Extensions for IPv6 .
+.Sh CAVEATS
+.Fn getnameinfo
+can return both numeric and FQDN forms of the address specified in
+.Fa sa .
+There is no return value that indicates whether the string returned in
+.Fa host
+is a result of binary to numeric-text translation (like
+.Xr inet_ntop 3 ) ,
+or is the result of a DNS reverse lookup.
+Because of this, malicious parties could set up a PTR record as follows:
+.Bd -literal -offset indent
+1.0.0.127.in-addr.arpa. IN PTR  10.1.1.1
+.Ed
+.Pp
+and trick the caller of
+.Fn getnameinfo
+into believing that
+.Fa sa
+is
+.Li 10.1.1.1
+when it is actually
+.Li 127.0.0.1 .
+.Pp
+To prevent such attacks, the use of
+.Dv NI_NAMEREQD
+is recommended when you use the result of
+.Fn getnameinfo
+for access control purposes:
+.Bd -literal -offset indent
+struct sockaddr *sa;
+socklen_t salen;
+char addr[NI_MAXHOST];
+struct addrinfo hints, *res;
+int error;
+
+error = getnameinfo(sa, salen, addr, sizeof(addr),
+    NULL, 0, NI_NAMEREQD);
+if (error == 0) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(addr, "0", &hints, &res) == 0) {
+		/* malicious PTR record */
+		freeaddrinfo(res);
+		printf("bogus PTR record\\n");
+		return -1;
+	}
+	/* addr is FQDN as a result of PTR lookup */
+} else {
+	/* addr is numeric string */
+	error = getnameinfo(sa, salen, addr, sizeof(addr),
+	    NULL, 0, NI_NUMERICHOST);
+}
+.Ed
 .Sh BUGS
 Due to the use of dynamic allocation,
 .Fn getaddrinfo
