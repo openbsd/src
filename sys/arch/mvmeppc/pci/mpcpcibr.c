@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.14 2004/01/29 10:58:10 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.15 2004/01/29 20:27:37 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -46,14 +46,16 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/bus.h>
+#include <machine/pcb.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <mvmeppc/pci/pcibrvar.h>
 #include <mvmeppc/dev/ravenreg.h>
+#include <mvmeppc/dev/ravenvar.h>
 
 int    mpcpcibrmatch(struct device *, void *, void *);
 void   mpcpcibrattach(struct device *, struct device *, void *);
@@ -97,16 +99,6 @@ int      mpcpcibrprint(void *, const char *pnp);
 
 struct pcibr_config mpc_config;
 
-/*
- * config types
- * bit meanings
- * 0 - standard cf8/cfc type configurations,
- *     sometimes the base addresses for these are different
- * 1 - Config Method #2 configuration - uni-north
- *
- * 2 - 64 bit config bus, data for accesses &4 is at daddr+4;
- */
-
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	NULL,
 	_bus_dmamap_create,
@@ -135,10 +127,7 @@ mpcpcibrmatch(parent, match, aux)
 	/* We must be a child of the raven device */
 	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
 		return (0);
-#if 0
-	if (strcmp(ca->ca_name, mpcpcibr_cd.cd_name) != 0)
-		return (0);
-#endif 
+
 	return 1;
 }
 
@@ -150,13 +139,9 @@ mpcpcibrattach(parent, self, aux)
 	struct pcibr_softc *sc = (struct pcibr_softc *)self;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
-	char *bridge;
 
 	lcp = sc->sc_pcibr = &mpc_config;
 
-	/*
-addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
-*/
 	sc->sc_membus_space = prep_mem_space_tag;
 	sc->sc_iobus_space = prep_io_space_tag;
 
@@ -185,9 +170,8 @@ addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
 	lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 	lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
-	printf(": Raven, Revision 0x%x.\n", 
-			 mpc_cfg_read_1(lcp, RAVEN_PCI_REVID));
-	bridge = "RAVEN";
+	printf(": revision 0x%x\n", 
+	    mpc_cfg_read_1(lcp, RAVEN_PCI_REVID));
 	pba.pba_dmat = &pci_bus_dma_tag;
 
 	pba.pba_busname = "pci";
@@ -195,21 +179,20 @@ addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
 	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0; 
-/*	
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
-*/
+
 #if 0
 	/* set up prep environment */
-	*(unsigned int *)RAVEN_MSADD0 = RAVEN_MSADD0_PREP;
-	*(unsigned int *)RAVEN_MSOFF0 = RAVEN_MSOFF0_PREP;
-	*(unsigned int *)RAVEN_MSADD1 = RAVEN_MSADD1_PREP;
-	*(unsigned int *)RAVEN_MSOFF1 = RAVEN_MSOFF1_PREP;
-	*(unsigned int *)RAVEN_MSADD2 = RAVEN_MSADD2_PREP;
-	*(unsigned int *)RAVEN_MSOFF2 = RAVEN_MSOFF2_PREP;
-	*(unsigned int *)RAVEN_MSADD3 = RAVEN_MSADD3_PREP;
-	*(unsigned int *)RAVEN_MSOFF3 = RAVEN_MSOFF3_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSADD0) = RAVEN_MSADD0_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSOFF0) = RAVEN_MSOFF0_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSADD1) = RAVEN_MSADD1_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSOFF1) = RAVEN_MSOFF1_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSADD2) = RAVEN_MSADD2_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSOFF2) = RAVEN_MSOFF2_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSADD3) = RAVEN_MSADD3_PREP;
+	*(u_int32_t *)(ravenregs + RAVEN_MSOFF3) = RAVEN_MSOFF3_PREP;
 
 	/* set up PCI local bus */
+	mpc_cfg_write_4(lcp, RAVEN_PCI_MEM, MPCIC_BASE);
 	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD0, RAVEN_PCI_PSADD0_VAL);
 	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF0, RAVEN_PCI_PSOFF0_VAL);
 	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD1, RAVEN_PCI_PSADD1_VAL);
@@ -261,13 +244,12 @@ vtophys(paddr_t pa)
 	vaddr_t va = (vaddr_t) pa;
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
-		return pa;
-	else {
-		if (pmap_extract(pmap_kernel(), va, &pa))
-			return pa;
-	}
+		pa = va;
+	else
+		if (pmap_extract(pmap_kernel(), va, &pa) != 0)
+			return NULL;
 
-	return NULL;
+	return pa;
 }
 
 void
@@ -373,21 +355,24 @@ mpc_conf_read(cpv, tag, offset)
 	int offset;
 {
 	struct pcibr_config *cp = cpv;
-
 	pcireg_t data;
 	u_int32_t reg;
 	int s;
 	int daddr = 0;
+	faultbuf env;
+	void *oldh;
 
 	if (offset & 3 || offset < 0 || offset >= 0x100) {
+#ifdef DEBUG_CONFIG
 		printf ("pci_conf_read: bad reg %x\n", offset);
+#endif
 		return (~0);
 	}
 
 	reg = mpc_gen_config_reg(cpv, tag, offset);
 	/* if invalid tag, return -1 */
 	if (reg == 0xffffffff) {
-		return 0xffffffff;
+		return (~0);
 	}
 
 	if ((cp->config_type & 2) && (offset & 0x04)) {
@@ -396,11 +381,20 @@ mpc_conf_read(cpv, tag, offset)
 
 	s = splhigh();
 
+	oldh = curpcb->pcb_onfault;
+	if (setfault(&env)) {
+		/* did we fault during the read? */
+		curpcb->pcb_onfault = oldh;
+		return (~0);
+	}
+
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 	data = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, daddr);
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
 	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+
+	curpcb->pcb_onfault = oldh;
 
 	splx(s);
 #ifdef DEBUG_CONFIG
@@ -435,9 +429,9 @@ mpc_conf_write(cpv, tag, offset, data)
 	if (reg == 0xffffffff) {
 		return;
 	}
-	if ((cp->config_type & 2) && (offset & 0x04)) {
+	if ((cp->config_type & 2) && (offset & 0x04))
 		daddr += 4;
-	}
+
 #ifdef DEBUG_CONFIG
 	{
 		unsigned int bus, dev, fcn;
@@ -460,7 +454,7 @@ mpc_conf_write(cpv, tag, offset, data)
 	splx(s);
 }
 
-
+/*ARGSUSED*/
 int
 mpc_intr_map(lcv, bustag, buspin, line, ihp)
 	void *lcv;
@@ -472,8 +466,7 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
 
 	*ihp = -1;
 	if (buspin == 0) {
-		/* No IRQ used. */
-		error = 1;
+		error = 1; /* No IRQ used. */
 	} else if (buspin > 4) {
 		printf("mpc_intr_map: bad interrupt pin %d\n", buspin);
 		error = 1;
@@ -519,7 +512,7 @@ mpc_intr_establish(lcv, ih, level, func, arg, name)
 	char *name;
 {
 	return (*intr_establish_func)(lcv, ih, IST_LEVEL, level, func, arg,
-											name);
+		name);
 }
 
 void
