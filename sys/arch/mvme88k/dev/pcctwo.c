@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.21 2004/01/14 20:52:52 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.22 2004/04/14 13:42:54 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -179,7 +179,7 @@ void *args;
 		sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
 		/*
 		 * fake up our address so that pcc2 child devices
-		 * are offeset of 0xFFF00000 - XXX smurph
+		 * are offset of 0xFFF00000 - XXX smurph
 		 */
                 sc->sc_paddr -= PCC2_PCC2CHIP_OFF;
                 sc->sc_vaddr -= PCC2_PCC2CHIP_OFF;
