@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.44 1998/09/26 19:10:55 fgsch Exp $
+#	$OpenBSD: files.isa,v 1.45 1998/09/28 02:26:50 jason Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -142,7 +142,7 @@ file	dev/isa/wt.c			wt needs-flag
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 # MUST be first: probe is non invasive, and registers are clobbered
 # by other drivers's probe
-device	we: ether, ifnet, dp8390nic
+device	we: ether, ifnet, dp8390nic, ifmedia
 attach	we at isa
 file	dev/isa/if_we.c			we
 
@@ -151,7 +151,7 @@ define	elink
 file	dev/isa/elink.c			elink
 
 # 3Com 3C503
-device	ec: ether, ifnet, dp8390nic
+device	ec: ether, ifnet, dp8390nic, ifmedia
 attach	ec at isa
 file	dev/isa/if_ec.c			ec
 
