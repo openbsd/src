@@ -17,6 +17,17 @@ If you purchased the OpenBSD CD-ROM you already have several popular
 ``packages'', the ``ports'' collection, and some of the ``ports''
 source file releases.
 
+ NOTE:	Some important packages which are not permitted on the CD (due to
+	patents) are available on our FTP servers.  In 	particular, we
+	provide  the USA and international versions of both SSH and PGP.
+	The filenames are:
+		ssh-usa-1.2.26.tgz	ssh-intl-1.2.26.tgz
+		pgp-usa-2.6.3.tgz	pgp-intl-2.6.3.tgz
+
+	You are STRONGLY urged to install one of the above ssh packages and
+	use ssh instead of telnet, rlogin, or rsh.  See below for
+	instructions on installing packages using ftp.
+
 Instructions for installing applications from the various sources using
 the different installation methods follow.  If emacs is to be installed
 it should be installed first as it creates the ``info'' directory file
@@ -26,13 +37,14 @@ Installing applications from the CD-ROM package collection:
 
 	The OpenBSD CD-ROM ships with several applications pre-built
 	for various hardware architectures.  The number of applications
-	vary according to available disk space.  Check the packages
-	directory on CD-ROM number 2 to see what packages are actually
-	available for your hardware architecture.
+	vary according to available disk space.  Check the directory
+	OSREV/packages/MACHINE to see which packages are available for
+	your hardware architecture.  That directory will be on the same
+	CD-ROM containing the OS installation files for your architecture.
 
 	To install one or more of these packages you must
 	1) become the superuser (root)
-	2) mount CD-ROM number 2
+	2) mount the appropriage CD-ROM
 	3) use the ``pkg_add'' command to install the software
 
 	Example (in which we use su(1) to get superuser privileges, thus
@@ -42,24 +54,19 @@ Installing applications from the CD-ROM package collection:
     Password: <enter your root password>
     # mkdir -p /cdrom
     # mount /dev/cd0a /cdrom
-    # pkg_add /cdrom/packages/<arch>/<package-name>
+    {:-#-:} pkg_add /cdrom/OSREV/packages/MACHINE/<package-name>
     # <add more packages if desired>
     # umount /cdrom
 	
-	Your hardware architecture can be determined by issuing
-	the command ``arch''.  The response will be something like
-	``OpenBSD.sparc''.  ``sparc'' is the architecture.
-
 	Package names are usually the application name and version
 	with .tgz appended, e.g. emacs-20.3.tgz
 
 Installing applications from the ftp.openbsd.org package collection:
 
-	All packages have been placed on ftp.openbsd.org in the directory
-	pub/OpenBSD/OSREV/packages/<arch>/ where <arch> is the supported
-	hardware architecture.  You may want to peruse the directory for
-	your architecture to see what packages are available.  The packages
-	are also on the OpenBSD FTP mirror sites.  See
+	All available packages for your architecture have been placed on
+	ftp.openbsd.org in the directory pub/OpenBSD/OSREV/packages/MACHINE/
+	You may want to peruse this to see what packages are available.  The
+	packages are also on the OpenBSD FTP mirror sites.  See
 
 		http://www.openbsd.org/ftp.html
 
@@ -82,7 +89,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	RSAREF, a legal requirement for use within the United States due
 	to patent issues.
 
-	Packages available {:-include-:}:
+	Packages available {:-include-:} (at least):
 
 		ImageMagick-4.0.6.tgz		mpeg_lib-1.2.1.tgz
 		Xaw3d-1.3.tgz			netpipes-4.1.1-export.tgz
@@ -114,7 +121,8 @@ Installing applications from the ftp.openbsd.org package collection:
 		mm-2.7.tgz
 
 	Note: these packages may not exist for all architectures; other
-	packages may be added.
+	packages may be added.  Some packages are only available via
+	ftp.
 
 Installing applications from the CD-ROM ports collection:
 
