@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_getconf.3,v 1.8 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: pw_getconf.3,v 1.9 2002/11/24 20:46:40 millert Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -78,3 +78,10 @@ An empty string is also returned for other errors.
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
 .Xr passwd.conf 5
+.Sh HISTORY
+The
+.Fn pw_getconf
+function appeared in
+.Ox 2.1
+and was deprecated in
+.Ox 3.0 .
