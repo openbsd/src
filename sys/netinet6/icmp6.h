@@ -1,4 +1,3 @@
-/*	$OpenBSD: icmp6.h,v 1.6 2000/02/07 05:45:55 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.7 2000/02/09 07:37:15 itojun Exp $	*/
 
-/* just for backward compatibility, will be nuked shortly */
-#include <netinet/icmp6.h>
+#error "do not include netinet6/ip6.h, include netinet/ip6.h"

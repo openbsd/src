@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.37 2000/01/26 03:43:17 deraadt Exp $	*/
+/*	$OpenBSD: in.h,v 1.38 2000/02/09 07:37:14 itojun Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -478,7 +478,9 @@ struct ip_mreq {
 }
 
 /* INET6 stuff */
+#define __KAME_NETINET_IN_H_INCLUDED_
 #include <netinet6/in6.h>
+#undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifndef _KERNEL
 
