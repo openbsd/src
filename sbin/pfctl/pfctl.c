@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.151 2003/02/17 15:11:29 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.152 2003/02/17 15:33:07 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -64,7 +64,6 @@ int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int);
-void	 pfctl_clear_pool(struct pf_pool *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, int, int);
 int	 pfctl_show_nat(int, int);
