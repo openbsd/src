@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.1 1999/08/13 06:52:43 fgsch Exp $
+.\"	$OpenBSD: usb.4,v 1.2 1999/08/13 14:47:50 aaron Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@
 .Cd "#include <dev/usb/usbhid.h>"
 .Sh INTRODUCTION
 .Ox
-provides machine-independent bus support and drivers for
-.Tn USB
+provides machine-independent bus support and drivers for Universal Serial Bus
+.Pq Tn USB
 devices.
 .Pp
 The
@@ -85,7 +85,7 @@ The
 .Cm uhub
 device controls
 .Tn USB
-hubs and must always be present since there is at least a root hub in any
+hubs and must always be present since there is at least one root hub in any
 .Tn USB
 system.
 .Pp
@@ -109,13 +109,13 @@ is individually addressed and the addresses are static.
 Each of these endpoints will communicate in one of four different modes:
 control, isochronous, bulk, or interrupt.
 A device always has at least one endpoint.
-This endpoint has address 0 and is a control
-endpoint and is used to give commands to and extract basic data,
+This is a control endpoint at address 0
+and is used to give commands to the device and extract basic data,
 such as descriptors, from the device.
 Each endpoint, except the control endpoint, is unidirectional.
 .Pp
 The endpoints in a device are grouped into interfaces.
-An interface is a logical unit within a device; e.g.
+An interface is a logical unit within a device; e.g.,
 a compound device with both a keyboard and a trackball would present
 one interface for each.
 An interface can sometimes be set into different modes,
@@ -133,21 +133,21 @@ Each device located on a hub has several
 locators:
 .Bl -tag -compact -width xxxxxxx
 .It Cd port
-this is the number of the port on closest upstream hub.
+Number of the port on closest upstream hub.
 .It Cd configuration
-this is the configuration the device must be in for this driver to attach.
+Configuration the device must be in for this driver to attach.
 This locator does not set the configuration; it is iterated by the bus
 enumeration.
 .It Cd interface
-this is the interface number within a device that an interface driver
-attaches to.
+Interface number within a device that an interface driver attaches to.
 .It Cd vendor
-this is the 16 bit vendor id of the device.
+16-bit vendor ID of the device.
 .It Cd product
-this is the 16 bit product id of the device.
+16-bit product ID of the device.
 .It Cd release
-this is the 16 bit release (revision) number of the device.
+16-bit release (revision) number of the device.
 .El
+.Pp
 The first locator can be used to pin down a particular device
 according to its physical position in the device tree.
 The last three locators can be used to pin down a particular
@@ -175,14 +175,14 @@ driver can attach.
 .Sh USB CONTROLLER INTERFACE
 Use the following to get access to the
 .Tn USB
-specific structurs and defines.
+specific structures and defines.
 .Bd -literal
 #include <sys/dev/usb.h>
 .Ed
 .Pp
 The
 .Pa /dev/usbN
-can be opened and a few operations can be performed on it.
+device can be opened and a few operations can be performed on it.
 The
 .Xr poll 2
 system call will say that I/O is possible on the controller device when a
@@ -292,7 +292,7 @@ The naming convention of the fields for the various
 descriptors exactly follows the naming in the
 .Tn USB
 specification.
-Byte sized fields can be accessed directly, but word (16 bit)
+Byte sized fields can be accessed directly, but word (16-bit)
 sized fields must be access by the
 .Fn UGETW field
 and
@@ -309,11 +309,7 @@ There should be a serial number locator, but
 .Ox
 does not have string valued locators.
 .Sh SEE ALSO
-The 
-.Tn USB 
-specifications can be found at
-.Dv http://www.usb.org/developers/docs.htm .
-.Pp
+.Xr usb 3 ,
 .Xr pci 4 ,
 .\".Xr uaudio 4 ,
 .Xr ugen 4 ,
@@ -321,12 +317,18 @@ specifications can be found at
 .\".Xr ukbd 4 ,
 .\".Xr ulpt 4 ,
 .\".Xr ums 4 ,
-.Xr usb 3 ,
 .Xr usbd 8 ,
 .Xr usbdevs 8
+.Pp
+The 
+.Tn USB 
+specifications can be found at:
+.Pp
+.Dl http://www.usb.org/developers/docs.htm
+.Pp
 .Sh HISTORY
 The
 .Nm
 driver
 appeared in
-.Ox 2.5 .
+.Ox 2.6 .

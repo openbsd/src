@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uhid.4,v 1.1 1999/08/13 06:34:59 fgsch Exp $
+.\"	$OpenBSD: uhid.4,v 1.2 1999/08/13 14:47:50 aaron Exp $
 .\"	$NetBSD: uhid.4,v 1.6 1999/05/11 21:05:09 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ this feature.
 .It Dv USB_GET_REPORT (struct usb_ctl_report)
 Get a report from the device without waiting for data on
 the interrupt pipe.  The 
-.Dv report
+.Fa report
 field indicates which report is requested.  It should be
 .Dv UHID_INPUT_REPORT ,
 .Dv UHID_OUTPUT_REPORT ,
@@ -104,12 +104,12 @@ Use
 send data to the device.  Data should be written in chunks of the
 size prescribed by the report descriptor.
 .Sh SEE ALSO
+.Xr usbhidctl 1 ,
 .Xr usb 3 ,
-.Xr usb 4 ,
-.Xr usbhidctl 1
+.Xr usb 4
 .Sh HISTORY
 The
 .Nm
 driver
 appeared in
-.Ox 2.5 .
+.Ox 2.6 .
