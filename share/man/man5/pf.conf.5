@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.166 2003/01/21 19:59:09 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.167 2003/01/23 01:51:55 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -720,7 +720,7 @@ Common protocols are
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr icmp 4 ,
-and 
+and
 .Xr icmp6 4 .
 For a list of all protocol name to number mappings used by
 .Xr pfctl 8 ,
@@ -755,7 +755,7 @@ useful with
 .Pa nat .
 .Pp
 Ports can be specified either by number or by name.
-For example, port 80 can be specified as 
+For example, port 80 can be specified as
 .Pa www .
 For a list of all port name to number mappings used by
 .Xr pfctl 8 ,
@@ -1025,50 +1025,33 @@ option prevents
 from modifying the source port on tcp and udp packets.
 .El
 .Sh TABLES
-Tables are named structures which can hold a collections of addresses and
+Tables are named structures which can hold a collection of addresses and
 networks.
-Internally, they are implemented as PATRICIA trees, like the kernel routing
-table.
+Lookups against tables in
+.Xr pf 4
+are quite fast, making a single rule with tables much more efficient, both in
+processor usage and memory consumption, than a large number of rules which
+differ only in IP address (either created explicitly or automatically by rule
+expansion).
+.Pp
 Tables can be used as the source or destination of filter rules,
 .Pa scrub
 rules
 or
+translation rules such as
 .Pa nat
-rules where it makes sense.
-They cannot, however, be used for things like the redirect address of a
-.Pa rdr
-rule,
-.Pa dup-to
-construct or similar, as one would guess.
+or
+.Pa rdr .
+Tables cannot be used for things like the redirect address of
+translation rules, nor can they be used in the routing options of
+filter rules.
 .Pp
-Tables may be defined with the following two attributes:
-.Bl -tag -width persist
-.It Pa persist
-The
-.Pa persist
-flag inform the kernel that we want to keep the table even when no rule
-refer to that table.
-If that flag is not set, the kernel will automagically remove the table
-when the last rule refering to it is flushed.
-.It Pa const
-The
-.Pa const
-flag prevent the user to alter the content of the table once it has been
-created.
-Without that flag,
+Tables can be defined with any of the following
 .Xr pfctl 8
-can be used to add or remove addresses from the table at any time, even
-when running with
-.Xr securelevel 7
-= 2.
-.El
-.Pp
-Tables can be defined with any of the following 
-.Xr pfctl 8
-mechanism:
+mechanisms:
 .Bl -tag -width "manually"
-.It Pa manually 
-Persistant tables can be manually created with the
+.It Pa manually
+Persistent tables can be manually created with the
 .Pa create
 option of pfctl, before or after the ruleset has been loaded.
 .It Pa pf.conf
@@ -1078,15 +1061,62 @@ Table definitions inside
 .Pa pf.conf
 use the
 .Pa table
-statement, and are especially useful to define non-persistant tables.
-The content of preexisting tables defined without initializer ('{' and '}')
-is not altered when (re-)loaded from
-.Pa pf.conf.
+statement, and are especially useful to define non-persistent tables.
+The content of a pre-existing table defined without a list of addresses
+to initialize it is not altered when
+.Pa pf.conf
+is loaded.
+A table initialized with the empty list
+.Pa { }
+will be cleared on load.
 .El
 .Pp
+Tables may be defined with the following two attributes:
+.Bl -tag -width persist
+.It Pa persist
+The
+.Pa persist
+flag forces the kernel to keep the table even when no rules refer to it.
+If that flag is not set, the kernel will automatically remove the table
+when the last rule referring to it is flushed.
+.It Pa const
+The
+.Pa const
+flag prevents the user from altering the contents of the table once it
+has been created.
+Without that flag,
+.Xr pfctl 8
+can be used to add or remove addresses from the table at any time, even
+when running with
+.Xr securelevel 7
+= 2.
+.El
+.Pp
+For example,
+.Bd -literal
+    table <private> const {  10/8, 172.16/12, 192.168/16 }
+    table <badhosts> persist
+    block on fxp0 from { <private>, <badhosts> } to any
+.Ed
+.Pp
+creates a table called private, and then blocks all traffic coming from
+RFC 1918 style private network blocks.
+Later, addresses may be added to the rule with the following commands so that
+traffic from these hosts can be dropped:
+.Bd -literal
+    # pfctl -t badhosts -Tadd 204.92.77.111
+.Ed
+.Pp
+When no active rules which refer to the badhosts table exist (such as when the
+rules are flushed), the
+.Pa persist
+keyword ensures that the table will not be lost.
+.Pp
+In addition to being specified by IP address, hosts may also be specified
+by their hostname.
 When the resolver is called to add a hostname to a table,
 .Pa all
-resulting IP addresses are placed into the table, IPv4 as well as IPv6.
+resulting IPv4 and IPv6 addresses are placed into the table.
 .Sh STATEFUL INSPECTION
 .Xr pf 4
 is a stateful packet filter, which means it can track the state of
@@ -1317,7 +1347,7 @@ For instance, the rule
 .Bd -literal
     pass in proto tcp from any to any port 80
 .Ed
-.Pp 
+.Pp
 never applies to a fragment, even if the fragment is part of a TCP
 packet with destination port 80, because without reassembly this information
 is not available for each fragment.
@@ -1673,7 +1703,7 @@ queue-rule     = "queue" string queueopts-list queue-list
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" | " %") ] |
                  [ "qlimit" number ] | [ "tbrsize" number ] |
-                 [ "priority" number ] | [ schedulers ] | 
+                 [ "priority" number ] | [ schedulers ] |
                  [ "qlimit" number ]
 schedulers     = cbq-def
 
