@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.128 2004/03/10 11:38:33 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.129 2004/03/10 13:45:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,6 @@ int	timer_due(time_t);
 void	start_timer_holdtime(struct peer *);
 void	start_timer_keepalive(struct peer *);
 void	session_close_connection(struct peer *);
-void	session_terminate(void);
 void	change_state(struct peer *, enum session_state, enum session_events);
 int	session_setup_socket(struct peer *);
 void	session_accept(int);
@@ -631,19 +630,6 @@ session_close_connection(struct peer *peer)
 		close(peer->sock);
 	}
 	peer->sock = peer->wbuf.sock = -1;
-}
-
-void
-session_terminate(void)
-{
-	struct peer	*p;
-
-	for (p = peers; p != NULL; p = p->next)
-		bgp_fsm(p, EVNT_STOP);
-
-	shutdown(sock, SHUT_RDWR);
-	close(sock);
-	sock = -1;
 }
 
 void
