@@ -515,12 +515,19 @@ static const char *cmd_rewritemap(cmd_parms *cmd, void *dconf, char *a1,
     new->fpin  = -1;
     new->fpout = -1;
 
+    /* yes, we do it twice. needed for restart awareness */
+    ap_server_strip_chroot(new->checkfile, 0);
+    ap_server_strip_chroot(new->datafile, 0);
+
     if (new->checkfile && (sconf->state == ENGINE_ENABLED)
         && (stat(new->checkfile, &st) == -1)) {
         return ap_pstrcat(cmd->pool,
                           "RewriteMap: map file or program not found:",
                           new->checkfile, NULL);
     }
+
+    ap_server_strip_chroot(new->checkfile, 1);
+    ap_server_strip_chroot(new->datafile, 1);
 
     return NULL;
 }
