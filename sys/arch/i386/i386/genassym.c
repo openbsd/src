@@ -44,6 +44,9 @@
 #include <sys/resourcevar.h>
 #include <sys/device.h>
 #include <sys/user.h>
+#ifdef INET
+#include <sys/mbuf.h>
+#endif
 
 #include <vm/vm.h>
 
@@ -129,6 +132,12 @@ main()
 	off("SC_FS", struct sigcontext, sc_fs);
 	off("SC_GS", struct sigcontext, sc_gs);
 	off("SC_EFLAGS", struct sigcontext, sc_eflags);
+
+#ifdef INET
+	off("M_NEXT", struct mbuf, m_next);
+	off("M_DATA", struct mbuf, m_data);
+	off("M_LEN", struct mbuf, m_len);
+#endif
 
 #ifdef COMPAT_SVR4
 	off("SVR4_SIGF_HANDLER", struct svr4_sigframe, sf_handler);

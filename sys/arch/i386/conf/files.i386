@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.19 1996/06/16 10:33:20 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.20 1996/06/22 21:52:51 tholo Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -17,7 +17,7 @@ file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/db_magic.s	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/in_cksum.c	inet
+file	arch/i386/i386/in_cksum.s	inet
 file	arch/i386/i386/ipx_cksum.c	ipx
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate
