@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.30 1997/03/13 12:22:37 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.31 1997/04/05 22:59:13 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -110,6 +110,8 @@ struct ss_quirk_inquiry_pattern {
 	struct scsi_inquiry_pattern pattern;
 	struct quirkdata quirkdata;
 };
+
+struct  quirkdata ss_gen_quirks;
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
@@ -349,6 +351,11 @@ ss_identify_scanner(ss, inqbuf)
 		printf("\n%s: %s\n", ss->sc_dev.dv_xname, ss->quirkdata->name);
 	} else {
 		printf("\n%s: generic scanner\n", ss->sc_dev.dv_xname);
+		bzero(&ss_gen_quirks, sizeof(ss_gen_quirks));
+#if 0
+		ss_gen_quirks.name = "generic";
+#endif
+		ss->quirkdata = &ss_gen_quirks;
 		ss->sio.scan_scanner_type = GENERIC_SCSI2;
 	}
 }
@@ -954,3 +961,36 @@ get_buffer_status(ss, bp)
 	}
 	bp->b_bcount = MIN(_3btol(buf_sz_retn.tgt_send_buf_len), bp->b_bcount);
 }
+
+#ifdef NOTYET
+int
+umax_compute_sizes(ss)
+	struct ss_softc *ss;
+{
+	ss->sio.scan_lines = ;
+	ss->sio.scan_window_size = ;
+}
+
+int
+calc_umax_row_len(dpi, ww)
+	int dpi;
+	int ww;
+{
+	int st[301];
+	int i;
+	int rowB = 0;
+
+	for (i = 1; i <= 300; i++)
+		st[i] = 1;
+
+	for (i = 1; i <= 300 - dpi; i++)
+		st[i * 300 / (300 - dpi)] = 0;
+
+	for (i = 1; i <= (ww % 1200) / 4; i++) {
+		if (st[i])
+			rowB++;
+	}
+
+	return ((ww / 1200) * dpi + rowB);
+}
+#endif
