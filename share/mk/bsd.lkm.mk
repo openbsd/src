@@ -1,5 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.8 1996/08/01 10:17:53 niklas Exp $
-#	from @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
+#	$OpenBSD: bsd.lkm.mk,v 1.9 1996/08/01 11:35:45 niklas Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -9,6 +8,9 @@
 
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
+# XXX In order to at least diminish the brokenness of trusting /sys to point
+# to the tree we're actually belonging to we check BSDSRCDIR.  On multi-tree
+# machines /sys isn't always a link to the correct tree.
 .if defined(BSDSRCDIR)
 CFLAGS+=	${COPTS} -D_KERNEL -I${BSDSRCDIR}/sys -I${BSDSRCDIR}/sys/arch
 .else
