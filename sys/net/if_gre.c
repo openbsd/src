@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.5 2000/01/11 08:26:45 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.6 2000/01/16 00:34:39 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -306,7 +306,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			break;
 #ifdef NETATALK
 		case AF_APPLETALK:
-			etype = ETHERTYPE_ATALK;
+			etype = ETHERTYPE_AT;
 			break;
 #endif
 #ifdef NS
