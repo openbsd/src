@@ -1,5 +1,5 @@
-/*	$OpenBSD: device_pager.c,v 1.4 1996/08/02 00:05:54 niklas Exp $	*/
-/*	$NetBSD: device_pager.c,v 1.21 1996/03/16 23:15:18 christos Exp $	*/
+/*	$OpenBSD: device_pager.c,v 1.5 1997/11/10 09:09:49 niklas Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.24 1997/01/03 18:03:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -118,7 +118,7 @@ dev_pager_alloc(handle, size, prot, foff)
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
 		printf("dev_pager_alloc(%p, %lx, %x, %lx)\n",
-		       handle, size, prot, foff);
+		    handle, size, prot, foff);
 #endif
 #ifdef DIAGNOSTIC
 	/*
@@ -199,7 +199,7 @@ top:
 #ifdef DEBUG
 		if (dpagerdebug & DDB_ALLOC) {
 			printf("dev_pager_alloc: pager %p devp %p object %p\n",
-			       pager, devp, object);
+			    pager, devp, object);
 			vm_object_print(object, FALSE);
 		}
 #endif
@@ -270,7 +270,7 @@ dev_pager_getpage(pager, mlist, npages, sync)
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
 		printf("dev_pager_getpage(%p, %p, %x, %x)\n",
-		       pager, mlist, npages, sync);
+		    pager, mlist, npages, sync);
 #endif
 
 	if (npages != 1)
@@ -323,7 +323,7 @@ dev_pager_putpage(pager, mlist, npages, sync)
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
 		printf("dev_pager_putpage(%p, %p, %x, %x)\n",
-		       pager, mlist, npages, sync);
+		    pager, mlist, npages, sync);
 #endif
 	if (pager == NULL)
 		return (FALSE);
