@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.13 1998/02/24 02:05:20 millert Exp $	*/
+/*	$OpenBSD: sio.c,v 1.14 1998/06/29 05:32:54 downsj Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -191,6 +191,7 @@ sio_bridge_callback(v)
 	ic.ic_attach_hook = sio_isa_attach_hook;
 	ic.ic_intr_establish = sio_intr_establish;
 	ic.ic_intr_disestablish = sio_intr_disestablish;
+	ic.ic_intr_check = sio_intr_check;
 
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;

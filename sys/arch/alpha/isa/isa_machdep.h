@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.4 1997/01/24 19:57:24 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.5 1998/06/29 05:32:53 downsj Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.3 1996/11/19 04:53:07 cgd Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ struct alpha_isa_chipset {
 	void	*(*ic_intr_establish) __P((void *, int, int, int,
 		    int (*)(void *), void *, char *));
 	void	(*ic_intr_disestablish) __P((void *, void *));
+	int	(*ic_intr_check) __P((void *, int, int));
 };
 
 /*
@@ -52,6 +53,8 @@ struct alpha_isa_chipset {
     (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a), (nm))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
+#define isa_intr_check(c, i, t)						\
+    (*(c)->ic_intr_check)((c)->ic_v, (i), (t))
 
 /*
  * alpha-specific ISA functions.

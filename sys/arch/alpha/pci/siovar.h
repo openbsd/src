@@ -1,4 +1,4 @@
-/*	$OpenBSD: siovar.h,v 1.5 1996/12/08 00:20:50 niklas Exp $	*/
+/*	$OpenBSD: siovar.h,v 1.6 1998/06/29 05:32:57 downsj Exp $	*/
 /*	$NetBSD: siovar.h,v 1.5 1996/10/23 04:12:34 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@ void	sio_intr_setup __P((bus_space_tag_t));
 void	sio_iointr __P((void *framep, unsigned long vec));
 
 const char *sio_intr_string __P((void *, int));
+int	sio_intr_check __P((void *, int, int));
 void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
 void	sio_intr_disestablish __P((void *, void *));

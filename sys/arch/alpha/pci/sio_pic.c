@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.10 1998/03/18 00:48:29 angelos Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.11 1998/06/29 05:32:55 downsj Exp $	*/
 /*	$NetBSD: sio_pic.c,v 1.16 1996/11/17 02:05:26 cgd Exp $	*/
 
 /*
@@ -268,6 +268,17 @@ sio_intr_string(v, irq)
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
+}
+
+int
+sio_intr_check(v, irq, type)
+	void *v;
+	int irq, type;
+{
+	if (irq > ICU_LEN || type == IST_NONE)
+		return (0);
+
+	return (alpha_shared_intr_check(sio_intr, irq, type));
 }
 
 void *
