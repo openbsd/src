@@ -88,7 +88,7 @@ typedef struct {
 
 typedef long	nl_item;
 
-extern nl_catd 	catopen __P((__const char *, int));
+extern nl_catd 	catopen __P((const char *, int));
 extern char    *catgets __P((nl_catd, int, int, const char *));
 extern int	catclose __P((nl_catd));
 
