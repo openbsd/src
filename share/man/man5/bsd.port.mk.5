@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.66 2002/04/17 17:12:59 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.67 2002/04/24 21:38:36 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -314,6 +314,12 @@ package name.
 is a comma separated list of flavors.
 By default, the dependency will build the default flavor.
 Build dependencies are checked at the beginning of the extract stage.
+.Pp
+Build dependencies that are not the default 
+.Ar package or 
+.Ar install 
+target will be processed in a subdirectory of the working directory,
+specifically, in ${WRKDIR}/directory.
 .It Ev BULK
 If set to 
 .Sq Yes ,
