@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.2 1996/12/20 00:22:19 downsj Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.3 1996/12/21 21:17:49 tholo Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@ static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #endif /* not lint */
 
 #include "gomoku.h"
-#include <stdio.h>
 #include <curses.h>
+#include <string.h>
 
 #define	SCRNH		24		/* assume 24 lines for the moment */
 #define	SCRNW		80		/* assume 80 chars for the moment */
@@ -52,22 +52,20 @@ static	char	pcolor[] = "*O.?";
 /*
  * Initialize screen display.
  */
+void
 cursinit()
 {
-
 	initscr();
 	noecho();
 	cbreak();
-	leaveok(stdscr, TRUE);
 }
 
 /*
  * Restore screen display.
  */
+void
 cursfini()
 {
-
-	leaveok(stdscr, FALSE);
 	move(23, 0);
 	clrtoeol();
 	refresh();
@@ -77,6 +75,7 @@ cursfini()
 /*
  * Initialize board display.
  */
+void
 bdisp_init()
 {
 	register int i, j;
@@ -108,6 +107,7 @@ bdisp_init()
 /*
  * Update who is playing whom.
  */
+void
 bdwho(update)
 	int update;
 {
@@ -131,6 +131,7 @@ bdwho(update)
 /*
  * Update the board display after a move.
  */
+void
 bdisp()
 {
 	register int i, j, c;
@@ -197,6 +198,7 @@ bdump(fp)
 /*
  * Display a transcript entry
  */
+void
 dislog(str)
 	char *str;
 {
@@ -217,6 +219,7 @@ dislog(str)
 /*
  * Display a question.
  */
+void
 ask(str)
 	char *str;
 {
@@ -229,12 +232,13 @@ ask(str)
 	refresh();
 }
 
+int
 getline(buf, size)
 	char *buf;
 	int size;
 {
 	register char *cp, *end;
-	register int c;
+	register int c = EOF;
 	extern int interactive;
 
 	cp = buf;

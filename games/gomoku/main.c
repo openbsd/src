@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1996/12/20 00:22:21 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1996/12/21 21:17:51 tholo Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,15 +45,13 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #endif /* not lint */
 
+#include "gomoku.h"
 #include <curses.h>
 #include <err.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "gomoku.h"
 
 #define USER	0		/* get input from standard input */
 #define PROGRAM	1		/* get input from program */
@@ -78,17 +76,13 @@ int	movelog[BSZ * BSZ];		/* log of all the moves */
 int	movenum;			/* current move number */
 char	*plyr[2];			/* who's who */
 
-extern void quit();
-#ifdef DEBUG
-extern void whatsup();
-#endif
-
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	char buf[128];
-	int color, curmove, i, ch;
+	int color = BLACK, curmove = 0, i, ch;
 	int input[2];
 	static char *fmt[2] = {
 		"%3d %-6s",
@@ -308,7 +302,7 @@ again:
 		replay:
 			ask("replay? ");
 			if (getline(buf, sizeof(buf)) &&
-			    buf[0] == 'y' || buf[0] == 'Y')
+			    (buf[0] == 'y' || buf[0] == 'Y'))
 				goto again;
 			if (strcmp(buf, "save") == 0) {
 				FILE *fp;
@@ -327,9 +321,11 @@ again:
 			}
 		}
 	}
-	quit();
+	quit(0);
+	/* NOTREACHED */
 }
 
+int
 readinput(fp)
 	FILE *fp;
 {
@@ -359,16 +355,16 @@ whatsup(signum)
 	struct combostr *cbp;
 
 	if (!interactive)
-		quit();
+		quit(0);
 top:
 	ask("cmd? ");
 	if (!getline(fmtbuf, sizeof(fmtbuf)))
-		quit();
+		quit(0);
 	switch (*fmtbuf) {
 	case '\0':
 		goto top;
 	case 'q':		/* conservative quit */
-		quit();
+		quit(0);
 	case 'd':		/* set debug level */
 		debug = fmtbuf[1] - '0';
 		sprintf(fmtbuf, "Debug set to %d", debug);
@@ -489,6 +485,7 @@ syntax:
 /*
  * Display debug info.
  */
+void
 dlog(str)
 	char *str;
 {
@@ -501,6 +498,7 @@ dlog(str)
 		fprintf(stderr, "%s\n", str);
 }
 
+void
 log(str)
 	char *str;
 {
@@ -513,8 +511,10 @@ log(str)
 		printf("%s\n", str);
 }
 
+/* ARGSUSED */
 void
-quit()
+quit(sig)
+	int sig;
 {
 	if (interactive) {
 		bdisp();		/* show final board */
@@ -526,10 +526,11 @@ quit()
 /*
  * Die gracefully.
  */
+void
 panic(str)
 	char *str;
 {
 	fprintf(stderr, "%s: %s\n", prog, str);
 	fputs("resign\n", stdout);
-	quit();
+	quit(0);
 }

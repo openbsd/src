@@ -1,4 +1,4 @@
-/*	$OpenBSD: gomoku.h,v 1.1.1.1 1996/12/16 06:56:08 downsj Exp $	*/
+/*	$OpenBSD: gomoku.h,v 1.2 1996/12/21 21:17:50 tholo Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
  *	@(#)gomoku.h	8.2 (Berkeley) 5/3/95
  */
 
+#include <stdio.h>
 #include <sys/types.h>
 
 /* board dimensions */
@@ -260,8 +261,53 @@ extern	int	movelog[BSZ * BSZ];		/* history of moves */
 extern	int	movenum;
 extern	int	debug;
 
-extern	char    *copy();
-extern	char    *stoc();
-extern	char    *tail();
+extern	void	addframes __P((int));
+extern	void	appendcombo __P((struct combostr *));
+extern	void	ask __P((char *));
+extern	void	bdinit __P((struct spotstr *));
+extern	void	bdisp __P((void));
+extern	void	bdisp_init __P((void));
+#ifdef DEBUG
+extern	void	bdump __P((FILE *));
+#endif
+extern	void	bdwho __P((int));
+extern	int	better __P((struct spotstr *, struct spotstr *, int));
+extern	int	checkframes __P((struct combostr *, struct combostr *,
+				 struct spotstr *, int, struct ovlp_info *));
+#ifdef DEBUG
+extern	void	clearcombo __P((struct combostr *, int));
+#endif
+extern	int	ctos __P((char *));
+extern	void	cursfini __P((void));
+extern	void	cursinit __P((void));
+extern	void	dislog __P((char *));
+extern	void	dlog __P((char *));
+extern	int	getline __P((char *, int));
+extern	void	init_overlap __P((void));
+#ifdef DEBUG
+extern	int	list_eq __P((struct combostr **, struct combostr **, int));
+#endif
+extern	void	log __P((char *));
+extern	int	lton __P((int));
+extern	void	makecombo __P((struct combostr *, struct spotstr *, int, int));
+extern	void	makecombo2 __P((struct combostr *, struct spotstr *, int, int));
+extern	void	makeempty __P((struct combostr *));
+extern	int	makemove __P((int, int));
+#ifdef DEBUG
+extern	void	markcombo __P((struct combostr *));
+#endif
+extern	void	panic __P((char *));
+extern	int	pickmove __P((int));
+extern	void	printcombo __P((struct combostr *, char *));
+extern	void	quit __P((int));
+extern	int	readinput __P((FILE *));
+extern	void	scanframes __P((int));
+extern	int	sortcombo __P((struct combostr **, struct combostr **, struct combostr *));
+extern	char	*stoc __P((int));
+extern	void	updatecombo __P((struct combostr *, int));
+extern	void	update_overlap __P((struct spotstr *));
+#ifdef DEBUG
+extern	void	whatsup __P((int));
+#endif
 
 #define ASSERT(x)
