@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.9 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.10 2004/09/27 19:20:57 jason Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -141,6 +141,7 @@ struct iommu_strbuf {
 #define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
 #define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
 #define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no (sbus only). */
+#define INTMAP_IGN_SHIFT	6
 #define INTMAP_INO	0x00000003fLL	/* Interrupt number */
 #define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
 #define INTMAP_SBUSSLOT	0x000000018LL	/* SBUS slot # */
