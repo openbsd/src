@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.18 2002/07/27 20:11:34 jakob Exp $
+.\"	$OpenBSD: rdate.8,v 1.19 2002/09/08 12:33:42 jakob Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -37,7 +37,7 @@
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
 .Nm rdate
-.Op Fl nNpsav
+.Op Fl ncpsav
 .Ar host
 .Sh DESCRIPTION
 .Nm
@@ -55,8 +55,14 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
 Use SNTP (RFC1361) instead of the RFC868 time protocol.
-.It Fl N
-Use SNTP (RFC1361) instead of the RFC868 time protocol and correct leap seconds.
+.It Fl c
+Correct leap seconds.
+Sometimes required when synchronizing to an NTP server.
+If using the RFC868 protocol, use only if the server does not correctly
+account for leap seconds.
+You can determine if you need this parameter if you sync against an NTP
+server (with this parameter) or (recommended) check with a local radio
+controlled watch or phone service.
 .It Fl p
 Do not set, just print the remote time.
 .It Fl s
@@ -68,11 +74,32 @@ call to gradually skew the local time to the
 remote time rather than just hopping.
 .It Fl v
 Verbose output.
+Always show the adjustment.
+.El
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact
 .It Pa /var/log/wtmp
 record of date resets and time changes
 .El
+.Sh EXAMPLES
+To get the legal time in Germany, set the
+.Pa /etc/localtime
+symlink to
+.Pa /usr/share/zoneinfo/right/Europe/Berlin
+and issue the following command:
+.Pp
+.D1 Li "rdate -ncv ptbtime1.ptb.de"
+.Pp
+The command of course assumes you have a working internet connection
+and DNS set up to connect to the server at
+.Sy Physikalisch-Technische Bundesanstalt
+in Braunschweig, Germany.
+.Pp
+To gradually adjust time once a hour after the first
+.Qq step
+adjustment, put the following line into root's crontab:
+.Pp
+.D1 Li "58  *  *  *  *  rdate -ncav ptbtime1.ptb.de | logger -t NTP"
 .Sh SEE ALSO
 .Xr adjtime 2 ,
 .Xr gettimeofday 2 ,

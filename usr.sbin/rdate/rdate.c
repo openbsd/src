@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.18 2002/08/10 21:37:28 jakob Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.19 2002/09/08 12:33:42 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.18 2002/08/10 21:37:28 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.19 2002/09/08 12:33:42 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -63,18 +63,17 @@ static const char rcsid[] = "$OpenBSD: rdate.c,v 1.18 2002/08/10 21:37:28 jakob 
 #define logwtmp(a,b,c)
 #endif
 
-void rfc868time_client (const char *, struct timeval *, struct timeval *);
-void ntp_client (const char *, struct timeval *, struct timeval *);
+void rfc868time_client (const char *, struct timeval *, struct timeval *, int);
+void ntp_client (const char *, struct timeval *, struct timeval *, int);
 
 extern char    *__progname;
-extern int	corrleaps;
 
 void
 usage()
 {
-	(void) fprintf(stderr, "Usage: %s [-npsa] host\n", __progname);
+	(void) fprintf(stderr, "Usage: %s [-ncpsa] host\n", __progname);
 	(void) fprintf(stderr, "  -n: use SNTP instead of RFC868 time protocol\n");
-	(void) fprintf(stderr, "  -N: use SNTP and correct leap seconds\n");
+	(void) fprintf(stderr, "  -c: correct leap second count\n");
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
 	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
@@ -85,14 +84,14 @@ int
 main(int argc, char **argv)
 {
 	int             pr = 0, silent = 0, ntp = 0, verbose = 0;
-	int		slidetime = 0;
+	int		slidetime = 0, corrleaps = 0;
 	char           *hname;
 	extern int      optind;
 	int             c;
 
 	struct timeval new, adjust;
 
-	while ((c = getopt(argc, argv, "psanNv")) != -1)
+	while ((c = getopt(argc, argv, "psancv")) != -1)
 		switch (c) {
 		case 'p':
 			pr++;
@@ -108,11 +107,9 @@ main(int argc, char **argv)
 
 		case 'n':
 			ntp++;
-			corrleaps = 0;
 			break;
 
-		case 'N':
-			ntp++;
+		case 'c':
 			corrleaps = 1;
 			break;
 
@@ -132,9 +129,9 @@ main(int argc, char **argv)
 	hname = argv[optind];
 
 	if (ntp)
-		ntp_client(hname, &new, &adjust);
+		ntp_client(hname, &new, &adjust, corrleaps);
 	else
-		rfc868time_client(hname, &new, &adjust);
+		rfc868time_client(hname, &new, &adjust, corrleaps);
 
 	if (!pr) {
 		if (!slidetime) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.4 2002/08/10 21:37:28 jakob Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.5 2002/09/08 12:33:42 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -34,15 +34,16 @@
 /*
  * rdate.c: Set the date from the specified host
  *
- *	Uses the rfc868 time protocol at socket 37.
+ *	Uses the rfc868 time protocol at socket 37 (tcp).
  *	Time is returned as the number of seconds since
  *	midnight January 1st 1900.
  */
+
 #ifndef lint
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.4 2002/08/10 21:37:28 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.5 2002/09/08 12:33:42 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -59,23 +60,29 @@ static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.4 2002/08/10 21:37:28 ja
 #include <unistd.h>
 #include <time.h>
 
+/* Obviously it is not just for SNTP clients... */
+#include "ntpleaps.h"
+
 /* seconds from midnight Jan 1900 - 1970 */
 #define DIFFERENCE 2208988800UL
 
 
 void
-rfc868time_client (const char *hostname,
-	     struct timeval *new, struct timeval *adjust)
+rfc868time_client (const char *hostname, struct timeval *new,
+    struct timeval *adjust, int leapflag)
 {
 	struct addrinfo hints, *res0, *res;
 	struct timeval old;
-	time_t tim;
+	u_int32_t tim;	/* RFC 868 states clearly this is an uint32 */
 	int s;
 	int error;
+	u_int64_t td;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	/* XXX what about rfc868 UDP
+	 * probably not due to the Y2038 issue  -mirabile */
 	error = getaddrinfo(hostname, "time", &hints, &res0);
 	if (error) {
 		errx(1, "%s: %s", hostname, gai_strerror(error));
@@ -100,7 +107,7 @@ rfc868time_client (const char *hostname,
 		err(1, "Could not connect socket");
 	freeaddrinfo(res0);
 
-	if (read(s, &tim, sizeof(time_t)) != sizeof(time_t))
+	if (read(s, &tim, sizeof(tim)) != sizeof(tim))
 		err(1, "Could not read data");
 
 	(void) close(s);
@@ -109,9 +116,13 @@ rfc868time_client (const char *hostname,
 	if (gettimeofday(&old, NULL) == -1)
 		err(1, "Could not get local time of day");
 
-	adjust->tv_sec = tim - old.tv_sec;
+	td = SEC_TO_TAI64(old.tv_sec);
+	if (leapflag)
+		ntpleaps_sub(&td);
+
+	adjust->tv_sec = tim - TAI64_TO_SEC(td);
 	adjust->tv_usec = 0;
 
-	new->tv_sec = tim;
+	new->tv_sec = old.tv_sec + adjust->tv_sec;
 	new->tv_usec = 0;
 }

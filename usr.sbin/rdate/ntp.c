@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.12 2002/08/10 21:37:28 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.13 2002/09/08 12:33:42 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -101,7 +101,7 @@ struct ntp_data {
 	double	current;
 };
 
-void	ntp_client(const char *, struct timeval *, struct timeval *);
+void	ntp_client(const char *, struct timeval *, struct timeval *, int);
 int	sync_ntp(int, const struct sockaddr *, double *, double *);
 void	make_packet(struct ntp_data *);
 int	write_packet(int, const struct sockaddr *, struct ntp_data *);
@@ -111,10 +111,11 @@ void	unpack_ntp(struct ntp_data *, u_char *, int);
 double	current_time(double);
 void	create_timeval(double, struct timeval *, struct timeval *);
 
-int	corrleaps = 0;
+int	corrleaps;
 
 void
-ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
+ntp_client(const char *hostname, struct timeval *new,
+    struct timeval *adjust, int leapflag)
 {
 	struct addrinfo hints, *res0, *res;
 	double offset, error;
@@ -129,6 +130,7 @@ ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 		/*NOTREACHED*/
 	}
 
+	corrleaps = leapflag;
 	if (corrleaps)
 		ntpleaps_init();
 
