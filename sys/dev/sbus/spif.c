@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.5 2003/02/11 19:20:28 mickey Exp $	*/
+/*	$OpenBSD: spif.c,v 1.6 2003/02/14 22:04:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -780,7 +780,6 @@ spifstcintr_rxexception(sc, needsoftp)
 {
 	struct stty_port *sp;
 	u_int8_t channel, *ptr;
-	int cnt;
 
 	channel = CD180_GSCR_CHANNEL(STC_READ(sc, STC_GSCR1));
 	sp = &sc->sc_ttys->sc_port[channel];
@@ -796,10 +795,8 @@ spifstcintr_rxexception(sc, needsoftp)
 		SET(sp->sp_flags, STTYF_RING_OVERFLOW);
 	}
 	STC_WRITE(sc, STC_EOSRR, 0);
-	if (cnt) {
-		*needsoftp = 1;
-		sp->sp_rput = ptr;
-	}
+	*needsoftp = 1;
+	sp->sp_rput = ptr;
 	return (1);
 }
 
