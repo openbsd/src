@@ -14,7 +14,7 @@ Functions for connecting the local authentication agent.
 */
 
 #include "includes.h"
-RCSID("$Id: authfd.c,v 1.10 1999/11/16 22:52:55 markus Exp $");
+RCSID("$Id: authfd.c,v 1.11 1999/11/18 11:09:39 ho Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -207,7 +207,7 @@ ssh_get_next_identity(AuthenticationConnection *auth,
   *comment = buffer_get_string(&auth->identities, NULL);
 
   if (bits != BN_num_bits(n))
-    error("Warning: keysize mismatch: actual %d, announced %s",
+    error("Warning: keysize mismatch: actual %d, announced %u",
 	  BN_num_bits(n), bits);
 
   /* Decrement the number of remaining entries. */
