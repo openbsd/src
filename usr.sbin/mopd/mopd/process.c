@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.13 2004/04/12 20:01:12 henning Exp $ */
+/*	$OpenBSD: process.c,v 1.14 2004/04/15 21:42:53 henning Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: process.c,v 1.13 2004/04/12 20:01:12 henning Exp $";
+    "$OpenBSD: process.c,v 1.14 2004/04/15 21:42:53 henning Exp $";
 #endif
 
 #include "os.h"
@@ -459,8 +459,7 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 		bcopy(src, dl_rpr->eaddr, 6);
 		mopProcessInfo(pkt, index, moplen, dl_rpr, trans);
 
-		snprintf(filename, sizeof(filename), "%s/%s.SYS",
-		    MOP_FILE_PATH, pfile);
+		snprintf(filename, sizeof(filename), "%s.SYS", pfile);
 		if ((mopCmpEAddr(dst, dl_mcst) == 0)) {
 			if ((nfd = open(filename, O_RDONLY, 0)) != -1) {
 				close(nfd);

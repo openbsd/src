@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.10 2004/04/12 20:01:11 henning Exp $ */
+/*	$OpenBSD: mopd.c,v 1.11 2004/04/15 21:42:53 henning Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: mopd.c,v 1.10 2004/04/12 20:01:11 henning Exp $";
+    "$OpenBSD: mopd.c,v 1.11 2004/04/15 21:42:53 henning Exp $";
 #endif
 
 /*
@@ -47,6 +47,8 @@ static const char rcsid[] =
 #include "common/dl.h"
 #include "common/rc.h"
 #include "process.h"
+
+#include "pwd.h"
 
 /*
  * The list of all interfaces that are being listened to. 
@@ -71,9 +73,10 @@ extern char *__progname;
 int
 main(int argc, char *argv[])
 {
-	int	c, devnull, f;
-	char   *interface;
-	pid_t	pid;
+	int		 c, devnull, f;
+	char		*interface;
+	pid_t		 pid;
+	struct passwd	*pw;
 
 	extern char version[];
 
@@ -116,6 +119,9 @@ main(int argc, char *argv[])
 	/* All error reporting is done through syslogs. */
 	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
+	if ((pw = getpwnam("_mopd")) == NULL)
+		err(1, "getpwnam");
+
 	if ((!ForegroundFlag) && DebugFlag)
 		fprintf(stdout, "%s: not running as daemon, -d given.\n",
 		    __progname);
@@ -130,6 +136,22 @@ main(int argc, char *argv[])
 		deviceInitAll();
 	else
 		deviceInitOne(interface);
+
+	if (chroot(MOP_FILE_PATH) == -1) {
+		syslog(LOG_CRIT, "chroot %s: %m", MOP_FILE_PATH);
+		exit(1);
+	}
+	if (chdir("/") == -1) {
+		syslog(LOG_CRIT, "chdir(\"/\"): %m");
+		exit(1);
+	}
+	if (setgroups(1, &pw->pw_gid) ||
+	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
+	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+		syslog(LOG_CRIT, "can't drop privileges: %m");
+		exit(1);
+	}
+	endpwent();
 
 	Loop();
 }
