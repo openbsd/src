@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.5 1996/08/29 15:17:34 deraadt Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.6 1996/10/14 13:01:32 mickey Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ struct lkm_table {
 		name,				\
 		devslot,			\
 		devtype,			\
-		(void *)devp			\
+		{(void *)devp}			\
 	};
 
 #define	MOD_EXEC(name,execslot,execsw)		\
@@ -255,6 +255,7 @@ struct lkm_table {
 
 extern int	lkm_nofunc __P((struct lkm_table *lkmtp, int cmd));
 extern struct lkm_table *lkm_list __P((struct lkm_table *));
+extern int lkmdispatch __P((struct lkm_table *, int));
 
 /*
  * DISPATCH -- body function for use in module entry point function;
@@ -273,15 +274,15 @@ extern struct lkm_table *lkm_list __P((struct lkm_table *));
 	int	error;							\
 	case LKM_E_LOAD:						\
 		lkmtp->private.lkm_any = (struct lkm_any *)&_module;	\
-		if (error = load(lkmtp, cmd))				\
+		if ((error = load(lkmtp, cmd)) != 0)			\
 			return error;					\
 		break;							\
 	case LKM_E_UNLOAD:						\
-		if (error = unload(lkmtp, cmd))				\
+		if ((error = unload(lkmtp, cmd)) != 0)			\
 			return error;					\
 		break;							\
 	case LKM_E_STAT:						\
-		if (error = stat(lkmtp, cmd))				\
+		if ((error = stat(lkmtp, cmd)) != 0)			\
 			return error;					\
 		break;							\
 	}								\
