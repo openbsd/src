@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.126 2002/11/26 22:46:27 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.127 2002/11/26 22:50:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -375,7 +375,7 @@ level can be set.
 The range is 0..7 with a default of 1.
 Queues with a higher priority level are preferred in the case of overload.
 The scheduler can get additional parameters with
-.Pa cbq( <parameters> ) .
+.Pa cbq( <parameters> No ) .
 Parameters are as follows:
 .Pp
 .Bl -tag -width Fl
