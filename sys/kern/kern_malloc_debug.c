@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.8 2001/07/18 10:47:05 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.9 2001/07/18 13:50:40 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -38,7 +38,7 @@
  * default malloc because we'll run out of memory really fast. Adding
  * more types will also add to the complexity of the code.
  *
- * This is really is simple. Every malloc() allocates two virtual pages,
+ * This is really simple. Every malloc() allocates two virtual pages,
  * the second page is left unmapped, and the the value returned is aligned
  * so that it ends at (or very close to) the page boundary to catch overflows.
  * Every free() changes the protection of the first page to VM_PROT_NONE so
