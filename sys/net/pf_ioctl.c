@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.84 2003/10/08 15:06:08 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.85 2003/10/19 06:50:07 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,9 +79,11 @@ void			 pf_init_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
+#ifdef ALTQ
 int			 pf_begin_altq(u_int32_t *);
 int			 pf_rollback_altq(u_int32_t);
 int			 pf_commit_altq(u_int32_t);
+#endif /* ALTQ */
 int			 pf_begin_rules(u_int32_t *, int, char *, char *);
 int			 pf_rollback_rules(u_int32_t, int, char *, char *);
 int			 pf_commit_rules(u_int32_t, int, char *, char *);
@@ -505,8 +507,9 @@ pf_tag_unref(u_int16_t tag)
 	}
 }
 
+#ifdef ALTQ
 int
-pf_begin_altq(u_int32_t *ticket) 
+pf_begin_altq(u_int32_t *ticket)
 {
 	struct pf_altq	*altq;
 	int		 error = 0;
@@ -549,7 +552,7 @@ pf_rollback_altq(u_int32_t ticket)
 }
 
 int
-pf_commit_altq(u_int32_t ticket) 
+pf_commit_altq(u_int32_t ticket)
 {
 	struct pf_altqqueue	*old_altqs;
 	struct pf_altq		*altq;
@@ -608,6 +611,7 @@ pf_commit_altq(u_int32_t ticket)
 	altqs_inactive_open = 0;
 	return (error);
 }
+#endif /* ALTQ */
 
 int
 pf_begin_rules(u_int32_t *ticket, int rs_num, char *anchor, char *ruleset)
@@ -2234,6 +2238,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				goto fail;
 			}
 			switch(ioe.rs_num) {
+#ifdef ALTQ
 			case PF_RULESET_ALTQ:
 				if (ioe.anchor[0] || ioe.ruleset[0]) {
 					error = EINVAL;
@@ -2242,6 +2247,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if ((error = pf_begin_altq(&ioe.ticket)))
 					goto fail;
 				break;
+#endif /* ALTQ */
 			case PF_RULESET_TABLE:
 				bzero(&table, sizeof(table));
 				strlcpy(table.pfrt_anchor, ioe.anchor,
@@ -2282,6 +2288,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				goto fail;
 			}
 			switch(ioe.rs_num) {
+#ifdef ALTQ
 			case PF_RULESET_ALTQ:
 				if (ioe.anchor[0] || ioe.ruleset[0]) {
 					error = EINVAL;
@@ -2290,6 +2297,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if ((error = pf_rollback_altq(ioe.ticket)))
 					goto fail; /* really bad */
 				break;
+#endif /* ALTQ */
 			case PF_RULESET_TABLE:
 				bzero(&table, sizeof(table));
 				strlcpy(table.pfrt_anchor, ioe.anchor,
@@ -2328,6 +2336,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				goto fail;
 			}
 			switch (ioe.rs_num) {
+#ifdef ALTQ
 			case PF_RULESET_ALTQ:
 				if (ioe.anchor[0] || ioe.ruleset[0]) {
 					error = EINVAL;
@@ -2339,6 +2348,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail;
 				}
 				break;
+#endif /* ALTQ */
 			case PF_RULESET_TABLE:
 				rs = pf_find_ruleset(ioe.anchor, ioe.ruleset);
 				if (rs == NULL || !rs->topen || ioe.ticket !=
@@ -2347,7 +2357,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					goto fail;
 				}
 				break;
-			default:	
+			default:
 				if (ioe.rs_num < 0 || ioe.rs_num >=
 				    PF_RULESET_MAX) {
 					error = EINVAL;
@@ -2371,10 +2381,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				goto fail;
 			}
 			switch (ioe.rs_num) {
+#ifdef ALTQ
 			case PF_RULESET_ALTQ:
 				if ((error = pf_commit_altq(ioe.ticket)))
 					goto fail; /* really bad */
 				break;
+#endif /* ALTQ */
 			case PF_RULESET_TABLE:
 				bzero(&table, sizeof(table));
 				strlcpy(table.pfrt_anchor, ioe.anchor,
