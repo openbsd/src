@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.12 2004/07/20 18:58:41 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.13 2004/07/22 22:23:26 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -52,7 +52,11 @@ sub Factory
 		    exit(1);
 		}
 	} else {
-		OpenBSD::PackingElement::File->add(@_, $_);
+		if ($_ =~ m|/$|) {
+			OpenBSD::PackingElement::Dir->add(@_, $`);
+		} else {
+			OpenBSD::PackingElement::File->add(@_, $_);
+		}
 	}
 }
 
@@ -90,10 +94,27 @@ sub add
 
 sub keyword() { return; }
 
+sub needs_keyword() { 1; }
+	
 sub write
 {
 	my ($self, $fh) = @_;
-	print $fh "\@", $self->keyword(), " ", $self->stringize(), "\n";
+	if ($self->needs_keyword()) {
+		print $fh "\@", $self->keyword(), " ", $self->stringize(), "\n";
+	} else {
+		print $fh $self->stringize(), "\n";
+	}
+}
+
+# needed for comment checking
+sub fullstring
+{
+	my ($self, $fh) = @_;
+	if ($self->needs_keyword()) {
+		return "\@".$self->keyword()." ".$self->stringize()."\n";
+	} else {
+		return $self->stringize()."\n";
+	}
 }
 
 sub stringize($)
@@ -174,11 +195,7 @@ sub write
 	my ($self, $fh) = @_;
 	print $fh "\@ignore\n" if defined $self->{ignore};
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
-	if ($self->needs_keyword()) {
-		$self->SUPER::write($fh);
-	} else {
-		print $fh $self->stringize(), "\n";
-	}
+	$self->SUPER::write($fh);
 	if (defined $self->{md5}) {
 		print $fh "\@md5 ", $self->{md5}, "\n";
 	}
@@ -606,13 +623,23 @@ package OpenBSD::PackingElement::Dir;
 our @ISA=qw(OpenBSD::PackingElement::Dirs OpenBSD::PackingElement);
 
 __PACKAGE__->setKeyword('dir');
-sub keyword() { "dir" }
 
 sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state);
 	$self->compute_modes($state);
+}
+
+sub needs_keyword
+{
+	my $self = shift;
+	return $self->stringize() =~ m/\^@/;
+}
+
+sub stringize($)
+{
+	return $_[0]->{name}."/";
 }
 
 package OpenBSD::PackingElement::Extra;
