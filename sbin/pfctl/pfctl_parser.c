@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.134 2003/01/25 22:53:45 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.135 2003/01/30 15:03:49 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,7 +62,7 @@ void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
 		    u_int8_t, u_int8_t, int);
 
-struct node_host	*host_if(char *, int);
+struct node_host	*host_if(char *, int, int);
 struct node_host	*host_v4(char *);
 struct node_host	*host_v6(char *, int);
 struct node_host	*host_dns(char *, int, int);
@@ -1142,6 +1142,7 @@ host(char *s, int mask)
 	struct node_host	*h = NULL;
 	int			 v4mask, v6mask, cont = 1;
 	char			*buf = NULL, *p, *q, *ps;
+	int			 mode = PFCTL_IFLOOKUP_HOST;
 
 	if ((p = strrchr(s, '/')) != NULL) {
 		if (mask != -1) {
@@ -1156,10 +1157,28 @@ host(char *s, int mask)
 		}
 		if (asprintf(&buf, "%s", s) == -1)
 			err(1, "host: asprintf");
-		if ((ps = malloc(strlen(s) + 1)) == NULL)
+		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
 			err(1, "host: malloc");
 		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
 		v4mask = v6mask = mask;
+	} else if ((p = strrchr(s, ':')) != NULL &&
+	    (!strcmp(p+1, "network") || !strcmp(p+1, "broadcast"))) {
+		if (!strcmp(p+1, "network"))
+			mode = PFCTL_IFLOOKUP_NET;
+		if (!strcmp(p+1, "broadcast"))
+			mode = PFCTL_IFLOOKUP_BCAST;
+		if (mask > -1) {
+			fprintf(stderr, "network or broadcast lookup, but "
+			    "extra netmask given\n");
+			return (NULL);
+		}
+		if (asprintf(&buf, "%s", s) == -1)
+			err(1, "host: asprintf");
+		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
+			err(1, "host: malloc");
+		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
+		v4mask = 32;
+		v6mask = 128;
 	} else {
 		if (asprintf(&ps, "%s", s) == -1)
 			err(1, "host: asprintf");
@@ -1179,7 +1198,7 @@ host(char *s, int mask)
 	}
 
 	/* interface with this name exists? */
-	if (cont && (h = host_if(ps, mask)) != NULL)
+	if (cont && (h = host_if(ps, mask, mode)) != NULL)
 		cont = 0;
 
 	/* IPv4 address? */
@@ -1204,13 +1223,13 @@ host(char *s, int mask)
 }
 
 struct node_host *
-host_if(char *s, int mask)
+host_if(char *s, int mask, int mode)
 {
 	struct node_host	*n, *h = NULL;
 
 	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
-		h = ifa_lookup(s, PFCTL_IFLOOKUP_HOST);
+		h = ifa_lookup(s, mode);
 		for (n = h; n != NULL && mask > -1; n = n->next)
 			set_ipmask(n, mask);
 	}
