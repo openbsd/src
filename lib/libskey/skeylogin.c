@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.32 1999/08/16 14:46:56 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.33 1999/11/26 19:26:17 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ getskeyprompt(mp, name, prompt)
 		return(0);
 	case 1:		/* User not found */
 		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(-1);
 	}
 	return(-1);	/* Can't happen */
@@ -100,6 +101,7 @@ skeychallenge(mp, name, ss)
 		return(0);
 	case 1:		/* User not found */
 		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(-1);
 	}
 	return(-1);	/* Can't happen */
@@ -257,6 +259,7 @@ skeyverify(mp, response)
 
 	if (response == NULL) {
 		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(-1);
 	}
 	rip(response);
@@ -265,6 +268,7 @@ skeyverify(mp, response)
 	if (etob(key, response) != 1 && atob8(key, response) != 0) {
 		/* Neither english words or ascii hex */
 		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(-1);
 	}
 
@@ -292,6 +296,7 @@ skeyverify(mp, response)
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf) {
 		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(-1);
 	}
 	rip(mp->buf);
@@ -308,6 +313,7 @@ skeyverify(mp, response)
 	if (memcmp(filekey, fkey, SKEY_BINKEY_SIZE) != 0){
 		/* Wrong response */
 		(void)fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(1);
 	}
 
@@ -329,14 +335,14 @@ skeyverify(mp, response)
 			      mp->seed, mp->val, tbuf);
 
 	(void)fclose(mp->keyfile);
-	
+	mp->keyfile = NULL;
 	return(0);
 }
 
 /*
  * skey_haskey()
  *
- * Returns: 1 user doesnt exist, -1 fle error, 0 user exists.
+ * Returns: 1 user doesnt exist, -1 file error, 0 user exists.
  *
  */
 int
@@ -344,8 +350,15 @@ skey_haskey(username)
 	char *username;
 {
 	struct skey skey;
+	int i;
  
-	return(skeylookup(&skey, username));
+	i = skeylookup(&skey, username);
+
+	if (skey.keyfile != NULL) {
+		fclose(skey.keyfile);
+		skey.keyfile = NULL;
+	}
+	return(i);
 }
  
 /*
@@ -367,6 +380,10 @@ skey_keyinfo(username)
 	if (i == -1)
 		return(0);
 
+	if (skey.keyfile != NULL) {
+		fclose(skey.keyfile);
+		skey.keyfile = NULL;
+	}
 	return(str);
 }
  
@@ -590,10 +607,11 @@ skeyzero(mp, response)
 	(void)fseek(mp->keyfile, mp->recstart, SEEK_SET);
 	if (fputc('#', mp->keyfile) == EOF) {
 		fclose(mp->keyfile);
+		mp->keyfile = NULL;
 		return(-1);
 	}
 
 	(void)fclose(mp->keyfile);
-	
+	mp->keyfile = NULL;
 	return(0);
 }
