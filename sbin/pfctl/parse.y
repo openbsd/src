@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.359 2003/04/13 20:16:06 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.360 2003/04/13 20:41:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -982,7 +982,8 @@ scheduler	: CBQ				{
 		}
 		| HFSC				{
 			$$.qtype = ALTQT_HFSC;
-			$$.data.hfsc_opts.flags = 0;
+			bzero(&$$.data.hfsc_opts,
+			    sizeof(struct node_hfsc_opts));
 		}
 		| HFSC '(' hfscflags_list ')'	{
 			$$.qtype = ALTQT_HFSC;

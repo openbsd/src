@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.55 2003/04/13 20:16:06 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.56 2003/04/13 20:41:37 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,18 +93,32 @@ struct node_host {
 	struct node_host	*tail;
 };
 
+struct node_queue_bw {
+	u_int32_t	bw_absolute;
+	u_int16_t	bw_percent;
+};
+
+struct node_hfsc_sc {
+	struct node_queue_bw	m1;	/* slope of 1st segment; bps */
+	u_int			d;	/* x-projection of m1; msec */
+	struct node_queue_bw	m2;	/* slope of 2nd segment; bps */
+	u_int8_t		used;
+};
+
+struct node_hfsc_opts {
+	struct node_hfsc_sc	realtime;
+	struct node_hfsc_sc	linkshare;
+	struct node_hfsc_sc	upperlimit;
+	int			flags;
+};
+
 struct node_queue_opt {
 	int			 qtype;
 	union {
 		struct cbq_opts		cbq_opts;
 		struct priq_opts	priq_opts;
-		struct hfsc_opts	hfsc_opts;
+		struct node_hfsc_opts	hfsc_opts;
 	}			 data;
-};
-
-struct node_queue_bw {
-	u_int32_t	bw_absolute;
-	u_int16_t	bw_percent;
 };
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
