@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.461 2004/12/04 07:58:51 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.462 2004/12/05 10:11:29 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2864,6 +2864,8 @@ state_opt_item	: MAXIMUM number		{
 			$$->type = PF_STATE_OPT_MAX_SRC_CONN_RATE;
 			$$->data.max_src_conn_rate.limit = $2;
 			$$->data.max_src_conn_rate.seconds = $4;
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		| OVERLOAD '<' STRING '>' flush		{
 			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
