@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gus.4,v 1.7 1999/06/05 13:18:35 aaron Exp $
+.\"	$OpenBSD: gus.4,v 1.8 1999/07/06 19:27:36 deraadt Exp $
 .\"	$NetBSD: gus.4,v 1.7 1997/10/08 21:59:55 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 Gravis UltraSound/UltraSound MAX device driver
 .Sh SYNOPSIS
 .Cd "gus0 at isa? port 0xPPP irq X drq Y drq2 Z"
+.Cd "gus* at isapnp?"
 .Cd "audio* at gus?"
 .Sh DESCRIPTION
 The

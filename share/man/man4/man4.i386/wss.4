@@ -1,4 +1,4 @@
-.\"   $OpenBSD: wss.4,v 1.4 1998/05/12 09:29:45 provos Exp $
+.\"   $OpenBSD: wss.4,v 1.5 1999/07/06 19:27:37 deraadt Exp $
 .\"   $NetBSD: wss.4,v 1.8 1998/01/19 20:22:30 augustss Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
@@ -35,6 +35,7 @@
 .Sh SYNOPSIS
 .Cd "device wss0 at isa? port 0x530 irq 10 drq 0 drq2 1"
 .Cd "device wss0 at isa? port 0x530 irq 10 drq 0 flags 1"
+.Cd "device wss* at isapnp?"
 .Cd "audio* at wss?"
 .Sh DESCRIPTION
 The
