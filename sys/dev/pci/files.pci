@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.22 1998/09/22 18:58:02 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.23 1998/09/27 03:38:09 downsj Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -19,6 +19,13 @@ file	dev/pci/vga_pci.c		vga_pci	needs-flag
 attach	ahc at pci with ahc_pci
 file	dev/pci/ahc_pci.c		ahc_pci
 file	dev/ic/smc93cx6.c		ahc_pci
+
+# AdvanSys 1200A, 1200B, and ULTRA SCSI controllers
+# device declaration in sys/conf/files
+attach	adv at pci with adv_pci
+file	dev/pci/adv_pci.c		adv_pci
+file	dev/ic/advlib.c			adv_pci
+file	dev/ic/advmcode.c		adv_pci
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/dev/isa/files.isa
