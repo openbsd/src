@@ -1,3 +1,4 @@
+/*	$OpenBSD: fly.c,v 1.3 1997/06/30 19:56:35 kstailey Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: com3.c,v 1.2 1997/06/30 19:56:30 kstailey Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*

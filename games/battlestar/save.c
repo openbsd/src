@@ -1,3 +1,4 @@
+/*	$OpenBSD: save.c,v 1.4 1997/06/30 19:56:41 kstailey Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $	*/
 
 /*

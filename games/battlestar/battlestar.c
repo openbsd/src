@@ -1,3 +1,4 @@
+/*	$OpenBSD: battlestar.c,v 1.4 1997/06/30 19:56:28 kstailey Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*

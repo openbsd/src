@@ -1,3 +1,4 @@
+/*	$OpenBSD: parse.c,v 1.2 1997/06/30 19:56:39 kstailey Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
