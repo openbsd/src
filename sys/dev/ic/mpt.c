@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.14 2004/11/21 04:49:25 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.15 2004/12/29 06:57:11 deraadt Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ mpt_soft_reset(mpt_softc_t *mpt)
 }
 
 /* This is a magic diagnostic reset that resets all the ARM
- * processors in the chip. 
+ * processors in the chip.
  */
 void
 mpt_hard_reset(mpt_softc_t *mpt)
@@ -368,14 +368,14 @@ mpt_send_cmd(mpt_softc_t *mpt, request_t *req)
 void
 mpt_free_reply(mpt_softc_t *mpt, u_int32_t ptr)
 {
-     mpt_write(mpt, MPT_OFFSET_REPLY_Q, ptr);
+	mpt_write(mpt, MPT_OFFSET_REPLY_Q, ptr);
 }
 
 /* Get a reply from the IOC */
 u_int32_t
 mpt_pop_reply_queue(mpt_softc_t *mpt)
 {
-     return mpt_read(mpt, MPT_OFFSET_REPLY_Q);
+	return mpt_read(mpt, MPT_OFFSET_REPLY_Q);
 }
 
 /*
@@ -393,9 +393,9 @@ mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
 	/* Check condition of the IOC */
 	data = mpt_rd_db(mpt);
 	if (((MPT_STATE(data) != MPT_DB_STATE_READY)	&&
-	     (MPT_STATE(data) != MPT_DB_STATE_RUNNING)	&&
-	     (MPT_STATE(data) != MPT_DB_STATE_FAULT))	||
-	    (  MPT_DB_IS_IN_USE(data) )) {
+	    (MPT_STATE(data) != MPT_DB_STATE_RUNNING)	&&
+	    (MPT_STATE(data) != MPT_DB_STATE_FAULT))	||
+	    (MPT_DB_IS_IN_USE(data))) {
 		mpt_prt(mpt, "handshake aborted due to invalid doorbell state");
 		mpt_print_db(data);
 		return(EBUSY);
@@ -411,7 +411,7 @@ mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
 
 	/*
 	 * Tell the handshake reg. we are going to send a command
-         * and how long it is going to be.
+	 * and how long it is going to be.
 	 */
 	data = (MPI_FUNCTION_HANDSHAKE << MPI_DOORBELL_FUNCTION_SHIFT) |
 	    (len << MPI_DOORBELL_ADD_DWORDS_SHIFT);
@@ -519,7 +519,7 @@ mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 {
 	MSG_IOC_FACTS f_req;
 	int error;
-	
+
 	bzero(&f_req, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_IOC_FACTS;
 	f_req.MsgContext =  0x12071942;
@@ -535,7 +535,7 @@ mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
 {
 	MSG_PORT_FACTS f_req;
 	int error;
-	
+
 	/* XXX: Only getting PORT FACTS for Port 0 */
 	bzero(&f_req, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_PORT_FACTS;
@@ -642,7 +642,7 @@ mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
 	} while (req->debug == REQ_ON_CHIP);
 
 	reply = (MSG_CONFIG_REPLY *) MPT_REPLY_PTOV(mpt, req->sequence);
-        if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
+	if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
 		mpt_prt(mpt, "mpt_read_cfg_header: Config Info Status %x",
 		    reply->IOCStatus);
 		mpt_free_reply(mpt, (req->sequence << 1));
@@ -673,7 +673,7 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	cfgp->Action = MPI_CONFIG_ACTION_PAGE_READ_CURRENT;
 	cfgp->Function = MPI_FUNCTION_CONFIG;
 	cfgp->Header = *hdr;
- 	amt = (cfgp->Header.PageLength * sizeof (u_int32_t));
+	amt = (cfgp->Header.PageLength * sizeof (u_int32_t));
 	cfgp->Header.PageType &= MPI_CONFIG_PAGETYPE_MASK;
 	cfgp->PageAddress = PageAddress;
 	se = (SGE_SIMPLE32 *) &cfgp->PageBufferSGE;
@@ -698,7 +698,7 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	} while (req->debug == REQ_ON_CHIP);
 
 	reply = (MSG_CONFIG_REPLY *) MPT_REPLY_PTOV(mpt, req->sequence);
-        if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
+	if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
 		mpt_prt(mpt, "mpt_read_cfg_page: Config Info Status %x",
 		    reply->IOCStatus);
 		mpt_free_reply(mpt, (req->sequence << 1));
@@ -770,7 +770,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	cfgp->Action = MPI_CONFIG_ACTION_PAGE_WRITE_CURRENT;
 	cfgp->Function = MPI_FUNCTION_CONFIG;
 	cfgp->Header = *hdr;
- 	amt = (cfgp->Header.PageLength * sizeof (u_int32_t));
+	amt = (cfgp->Header.PageLength * sizeof (u_int32_t));
 	cfgp->PageAddress = PageAddress;
 
 	se = (SGE_SIMPLE32 *) &cfgp->PageBufferSGE;
@@ -816,7 +816,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	} while (req->debug == REQ_ON_CHIP);
 
 	reply = (MSG_CONFIG_REPLY *) MPT_REPLY_PTOV(mpt, req->sequence);
-        if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
+	if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
 		mpt_prt(mpt, "mpt_write_cfg_page: Config Info Status %x",
 		    reply->IOCStatus);
 		mpt_free_reply(mpt, (req->sequence << 1));
@@ -1272,7 +1272,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 			    mpt->mpt_dev_page0[i].Header.PageNumber,
 			    mpt->mpt_dev_page0[i].Header.PageType);
 		}
-		
+
 		rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_SCSI_DEVICE,
 		    1, i, &mpt->mpt_dev_page1[i].Header);
 		if (rv) {
@@ -1324,7 +1324,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 		    mpt->mpt_port_page2.PortSettings);
 		for (i = 0; i < 16; i++) {
 			mpt_prt(mpt,
-		  	    "SPI Port Page 2 Tgt %d: timo %x SF %x Flags %x",
+			    "SPI Port Page 2 Tgt %d: timo %x SF %x Flags %x",
 			    i, mpt->mpt_port_page2.DeviceSettings[i].Timeout,
 			    mpt->mpt_port_page2.DeviceSettings[i].SyncFactor,
 			    mpt->mpt_port_page2.DeviceSettings[i].DeviceFlags);
@@ -1411,7 +1411,7 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
 		mpt->mpt_dev_page1[i] = tmp;
 		if (mpt->verbose > 1) {
 			mpt_prt(mpt,
-		 	    "SPI Tgt %d Page 1: RParm %x Configuration %x", i,
+			    "SPI Tgt %d Page 1: RParm %x Configuration %x", i,
 			    mpt->mpt_dev_page1[i].RequestedParameters,
 			    mpt->mpt_dev_page1[i].Configuration);
 		}
@@ -1504,7 +1504,7 @@ void
 mpt_disable_ints(mpt_softc_t *mpt)
 {
 	/* Mask all interrupts */
-	mpt_write(mpt, MPT_OFFSET_INTR_MASK, 
+	mpt_write(mpt, MPT_OFFSET_INTR_MASK,
 	    MPT_INTR_REPLY_MASK | MPT_INTR_DB_MASK);
 }
 
@@ -1512,14 +1512,14 @@ mpt_disable_ints(mpt_softc_t *mpt)
 int
 mpt_init(mpt_softc_t *mpt, u_int32_t who)
 {
-        int try;
-        MSG_IOC_FACTS_REPLY facts;
-        MSG_PORT_FACTS_REPLY pfp;
+	int try;
+	MSG_IOC_FACTS_REPLY facts;
+	MSG_PORT_FACTS_REPLY pfp;
 	u_int32_t pptr;
-        int val;
+	int val;
 
 	/* Put all request buffers (back) on the free list */
-        SLIST_INIT(&mpt->request_free_list);
+	SLIST_INIT(&mpt->request_free_list);
 	for (val = 0; val < MPT_MAX_REQUESTS(mpt); val++) {
 		mpt_init_request(mpt, &mpt->request_pool[val]);
 	}
@@ -1541,7 +1541,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	default:
 		break;
 	}
-	
+
 	for (try = 0; try < MPT_MAX_TRYS; try++) {
 		/*
 		 * No need to reset if the IOC is already in the READY state.
@@ -1549,7 +1549,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		 * Force reset if initialization failed previously.
 		 * Note that a hard_reset of the second channel of a '929
 		 * will stop operation of the first channel.  Hopefully, if the
-		 * first channel is ok, the second will not require a hard 
+		 * first channel is ok, the second will not require a hard
 		 * reset.
 		 */
 		if ((mpt_rd_db(mpt) & MPT_DB_STATE_MASK) !=
@@ -1631,9 +1631,9 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		 *
 		 * Do *not* except global credits.
 		 */
-		for (val = 0, pptr = mpt->reply_phys; 
-		    (pptr + MPT_REPLY_SIZE) < (mpt->reply_phys + PAGE_SIZE); 
-		     pptr += MPT_REPLY_SIZE) {
+		for (val = 0, pptr = mpt->reply_phys;
+		    (pptr + MPT_REPLY_SIZE) < (mpt->reply_phys + PAGE_SIZE);
+		    pptr += MPT_REPLY_SIZE) {
 			mpt_free_reply(mpt, pptr);
 			if (++val == mpt->mpt_global_credits - 1)
 				break;
@@ -1853,7 +1853,7 @@ mpt_do_upload(mpt_softc_t *mpt)
 	error = mpt_recv_handshake_reply(mpt, sizeof(reply), &reply);
 
 	if (error == 0) {
-		/* 
+		/*
 		 * Handshake transfer was complete and successfull.
 		 * Check the Reply Frame
 		 */
@@ -1898,7 +1898,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 	int			fw_size;
 	u_int32_t		diag0;
 #if MPT_DEBUG
-	u_int32_t		diag1;	
+	u_int32_t		diag1;
 #endif
 	int			count = 0;
 	u_int32_t		*ptr = NULL;
@@ -1927,7 +1927,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 	if (!mpt->fw)
 		return -2;
 
-	/* 
+	/*
 	 * Write magic sequence to WriteSequence register
 	 * until enter diagnostic mode
 	 */
@@ -1939,7 +1939,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_3);
 		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_4);
 		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_5);
-		
+
 		/* wait 100msec */
 		DELAY(100);
 
@@ -1974,7 +1974,7 @@ mpt_downloadboot(mpt_softc_t *mpt)
 	count = (fwhdr->ImageSize + 3)/4;
 	nextimg = fwhdr->NextImageHeaderOffset;
 
-	/* 
+	/*
 	 * write the LoadStartAddress to the DiagRw Address Register
 	 * XXX linux is using programmed IO for the RWADDR and RWDATA
 	 */
@@ -2025,8 +2025,8 @@ mpt_downloadboot(mpt_softc_t *mpt)
 
 	/* clear the RW enable and DISARM bits */
 	diag0 = mpt_read(mpt, MPT_OFFSET_DIAGNOSTIC);
-	diag0 &= ~(MPI_DIAG_DISABLE_ARM | MPI_DIAG_RW_ENABLE
-	       	| MPI_DIAG_FLASH_BAD_SIG);
+	diag0 &= ~(MPI_DIAG_DISABLE_ARM | MPI_DIAG_RW_ENABLE |
+	    MPI_DIAG_FLASH_BAD_SIG);
 	mpt_write(mpt, MPT_OFFSET_DIAGNOSTIC, diag0);
 
 	/* write 0xFF to reset the sequencer */

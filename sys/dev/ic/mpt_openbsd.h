@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.14 2004/11/21 04:49:26 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.15 2004/12/29 06:57:11 deraadt Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -90,7 +90,7 @@
  * Additional Copyright (c) 2002 by Matthew Jacob under same license.
  */
 
-/* 
+/*
  * mpt_openbsd.h:
  *
  * OpenBSD-specific definitions for LSI Fusion adapters.
@@ -162,7 +162,7 @@
  * assume we have 480-48 == 432 bytes to have simple SG elements and/or
  * chain elements. If we assume 32 bit addressing, this works out to
  * 54 SG or chain elements. If we assume 5 chain elements, then we have
- * a maximum of 49 seperate actual SG segments. 
+ * a maximum of 49 seperate actual SG segments.
  */
 #define	MPT_SGL_MAX		49
 
@@ -321,7 +321,7 @@ typedef struct mpt_softc {
 	uint32_t		timeouts;	/* timeout count */
 	uint32_t		success;	/* success after timeout */
 
-	uint8_t                 vmware;      	/* If set, running in vmware */
+	uint8_t                 vmware;		/* If set, running in vmware */
 	uint8_t                 upload_fw;      /* If set, do a fw upload */
 	/* Firmware memory */
 	bus_dmamap_t            fw_dmap;
