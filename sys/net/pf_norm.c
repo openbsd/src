@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.13 2001/10/07 21:34:27 provos Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.14 2001/10/17 22:21:42 markus Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -231,7 +231,9 @@ pf_remove_fragment(struct pf_fragment *frag)
 {
 	struct pf_tree_key key;
 
+	/* XXX keep in sync with pf_ip2key */
 	key.proto = frag->fr_p;
+	key.af = AF_INET;
 	key.addr[0].addr32[0] = frag->fr_src.s_addr;
 	key.addr[1].addr32[0] = frag->fr_dst.s_addr;
 	key.port[0] = frag->fr_id;
