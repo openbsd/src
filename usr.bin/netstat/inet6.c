@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.5 2000/02/28 11:57:32 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.6 2000/05/17 11:54:50 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.5 2000/02/28 11:57:32 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.6 2000/05/17 11:54:50 itojun Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -853,9 +853,9 @@ icmp6_stats(off, name)
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
     printf(m, icmp6stat.f, plural(icmp6stat.f))
 
-	p(icp6s_error, "\t%qu call%s to icmp_error\n");
+	p(icp6s_error, "\t%qu call%s to icmp6_error\n");
 	p(icp6s_canterror,
-	    "\t%qu error%s not generated because old message was icmp or so\n");
+	    "\t%qu error%s not generated because old message was icmp6 or so\n");
 	for (first = 1, i = 0; i < 256; i++)
 		if (icmp6stat.icp6s_outhist[i] != 0) {
 			if (first) {
