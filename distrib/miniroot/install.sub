@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.193 2002/03/30 01:29:18 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.194 2002/03/30 13:34:51 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -752,7 +752,8 @@ enable_network() {
 				ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 				cmd="dhclient $if"
 				;;
-			"up")	# The only one of these guaranteed to be set is $if
+			"up")
+				# The only one of these guaranteed to be set is $if
 				# the remaining ones exist so that media controls work
 				cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
 				;;
@@ -787,7 +788,8 @@ enable_network() {
 					fi
 					[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
 					;;
-				inet6)	# Ignore IPv6 setup
+				inet6)
+					# Ignore IPv6 setup
 					continue
 					;;
 				*)	cmd="$cmd $mask $bcaddr"
