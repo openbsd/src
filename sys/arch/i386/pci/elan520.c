@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.3 2003/09/01 18:17:10 markus Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.4 2003/10/07 13:01:18 markus Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -105,8 +105,6 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	uint16_t rev;
 	uint8_t ressta, cpuctl;
-
-	printf("\n");
 
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, NBPG, 0,
