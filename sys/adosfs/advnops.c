@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.14 1998/08/21 22:04:42 deraadt Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.15 1998/08/21 23:03:16 csapuntz Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -1011,7 +1011,9 @@ adosfs_reclaim(v)
 #endif
 	vp = sp->a_vp;
 	ap = VTOA(vp);
-	LIST_REMOVE(ap, link);
+
+	adosfs_aremhash(ap);
+
 	cache_purge(vp);
 	if (vp->v_type == VDIR && ap->tab)
 		free(ap->tab, M_ANODE);

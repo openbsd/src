@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.13 1998/02/08 22:41:31 tholo Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.14 1998/08/21 23:03:15 csapuntz Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -366,6 +366,7 @@ adosfs_vget(mp, an, vpp)
 	/* 
 	 * check hash table. we are done if found
 	 */
+ retry:
 	if ((*vpp = adosfs_ahashget(mp, an)) != NULL)
 		return (0);
 
@@ -383,7 +384,16 @@ adosfs_vget(mp, an, vpp)
 	ap->amp = amp;
 	ap->block = AINOTOBLK(an);
 	ap->nwords = amp->nwords;
-	adosfs_ainshash(amp, ap);
+	error = adosfs_ainshash(amp, ap);
+
+	if (error) {
+		vrele (vp);
+
+		if (error == EEXIST)
+			goto retry;
+
+		return (error);
+	}
 
 	if ((error = bread(amp->devvp, an * amp->secsperblk, amp->bsize,
 	    NOCRED, &bp)) != 0) {

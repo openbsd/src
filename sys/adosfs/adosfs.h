@@ -1,4 +1,4 @@
-/*	$OpenBSD: adosfs.h,v 1.7 1997/11/10 23:57:04 niklas Exp $	*/
+/*	$OpenBSD: adosfs.h,v 1.8 1998/08/21 23:03:13 csapuntz Exp $	*/
 /*	$NetBSD: adosfs.h,v 1.12 1996/10/08 22:18:02 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ int		 adunixprot __P((int));
 int		 adosfs_getblktype __P((struct adosfsmount *, struct buf *));
 
 struct vnode	*adosfs_ahashget __P((struct mount *, ino_t));
-void		 adosfs_ainshash __P((struct adosfsmount *, struct anode *));
+int		 adosfs_ainshash __P((struct adosfsmount *, struct anode *));
 void		 adosfs_aremhash __P((struct anode *));
 
 int		 adosfs_lookup __P((void *));
