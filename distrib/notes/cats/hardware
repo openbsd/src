@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.13 2005/01/29 05:51:45 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.14 2005/01/29 06:22:25 jsg Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -106,7 +106,7 @@ Supported devices {:-include-:}:
 		    D-Link DUBE100
 		    LinkSys USB200M
 		    Netgear FA120
-		    Sitecm LN029
+		    Sitecom LN-029
 		    SnapPort USB 2.0 LAN Adapter
 		    System TALKS SGC-X2UL
 		CATC USB-EL1210A-based USB adapters, including:

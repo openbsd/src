@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.175 2005/01/29 05:51:45 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.176 2005/01/29 06:22:25 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -338,7 +338,7 @@ Supported hardware {:-include-:}:
 		    D-Link DUBE100
 		    LinkSys USB200M
 		    Netgear FA120
-		    Sitecm LN029
+		    Sitecom LN-029
 		    SnapPort USB 2.0 LAN Adapter
 		    System TALKS SGC-X2UL
 		AMD LANCE and PCnet-based ISA Ethernet adapters, including: [B]
