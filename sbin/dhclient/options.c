@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.11 2004/05/06 22:29:15 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.12 2004/09/15 18:15:18 henning Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -458,7 +458,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 
 	/* Code should be between 0 and 255. */
 	if (code > 255)
-		error("pretty_print_option: bad code %d\n", code);
+		error("pretty_print_option: bad code %d", code);
 
 	if (emit_commas)
 		comma = ',';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.17 2004/08/24 15:06:03 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.18 2004/09/15 18:15:18 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -453,7 +453,7 @@ make_client_state(struct interface_info *ip)
 {
 	ip->client = malloc(sizeof(*(ip->client)));
 	if (!ip->client)
-		error("no memory for state on %s\n", ip->name);
+		error("no memory for state on %s", ip->name);
 	memset(ip->client, 0, sizeof(*(ip->client)));
 }
 
@@ -462,7 +462,7 @@ make_client_config(struct interface_info *ip, struct client_config *config)
 {
 	ip->client->config = malloc(sizeof(struct client_config));
 	if (!ip->client->config)
-		error("no memory for config for %s\n", ip->name);
+		error("no memory for config for %s", ip->name);
 	memset(ip->client->config, 0, sizeof(*(ip->client->config)));
 	memcpy(ip->client->config, config, sizeof(*config));
 }
@@ -493,7 +493,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 
 	lease = malloc(sizeof(struct client_lease));
 	if (!lease)
-		error("no memory for lease.\n");
+		error("no memory for lease.");
 	memset(lease, 0, sizeof(*lease));
 	lease->is_static = is_static;
 
