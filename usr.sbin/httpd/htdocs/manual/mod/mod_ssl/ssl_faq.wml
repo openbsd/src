@@ -69,7 +69,7 @@ author.
     <a name="<get-var ref>"></a>
     <strong id="faq">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.7/ssl_faq.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.8/ssl_faq.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
@@ -922,6 +922,16 @@ browsers complain that they cannot verify the server certificate?
 
 <ul>
 
+<faq ref="random-errors" toc="Random SSL errors under heavy load?">
+Why do I get lots of random SSL protocol errors under heavy server load?
+</faq>
+
+    There can be a number of reasons for this, but the main one
+    is problems with the SSL session Cache specified by the
+    <tt>SSLSessionCache</tt> directive. The DBM session cache is most
+    likely the source of the problem, so trying the SHM session cache or
+    no cache at all may help.
+
 <faq ref="load" toc="Why has the server a higher load?">
 Why has my webserver a higher load now that I run SSL there?
 </faq>
@@ -1087,6 +1097,13 @@ Explorer (MSIE) I get various I/O errors. What is the reason?
     qualified domain name (FQDN) of the website in hyperlinks instead, because
     MSIE 5.x has an error in the way it handles the SGC negotiation.
 
+    <p>
+    And finally there are versions of MSIE which seem to require that
+    an SSL session can be reused (a totally non standard-conforming
+    behaviour, of course). Connection with those MSIE versions only work
+    if a SSL session cache is used. So, as a work-around, make sure you
+    are using a session cache (see <tt>SSLSessionCache</tt> directive).
+
 <faq ref="io-ns" toc="Why do I get I/O errors with NS clients?">
 When I connect via HTTPS to an Apache+mod_ssl server with Netscape Navigator I
 get I/O errors and the message "Netscape has encountered bad data from the
@@ -1118,14 +1135,14 @@ In case of problems you should search here first.
 <p>
 <ol>
 <li><em>Answers in the User Manual's F.A.Q. List (this)</em><br>
-    <a href="http://www.modssl.org/docs/2.7/ssl_faq.html">
-    http://www.modssl.org/docs/2.7/ssl_faq.html</a><br>
+    <a href="http://www.modssl.org/docs/2.8/ssl_faq.html">
+    http://www.modssl.org/docs/2.8/ssl_faq.html</a><br>
     First look inside the F.A.Q. (this text), perhaps your problem is such
     popular that it was already answered a lot of times in the past.
 <p>
 <li><em>Postings from the modssl-users Support Mailing List</em>
-    <a href="http://www.modssl.org/news/list.html">
-    http://www.modssl.org/news/list.html</a><br>
+    <a href="http://www.modssl.org/support/">
+    http://www.modssl.org/support/</a><br>
     Second search for your problem in one of the existing archives of the
     modssl-users mailing list.  Perhaps your problem popped up at least once for
     another user, too.

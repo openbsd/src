@@ -3,7 +3,7 @@
 <title>mod_ssl: Reference</title>
 
 <!--
-  Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
+  Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -1107,8 +1107,8 @@ specify the preference and order for the ciphers (see <a href="#table1">Table
 <tr id="H"><td><code>SSLv3</code></td>  <td>all SSL version 3.0 ciphers</td> </tr>
 <tr id="D"><td><code>TLSv1</code></td>  <td>all TLS version 1.0 ciphers</td> </tr>
 <tr id="H"><td><code>EXP</code></td>    <td>all export ciphers</td>  </tr>
-<tr id="D"><td><code>EXP40</code></td>  <td>all 40-bit export ciphers only</td>  </tr>
-<tr id="H"><td><code>EXP56</code></td>  <td>all 56-bit export ciphers only</td>  </tr>
+<tr id="D"><td><code>EXPORT40</code></td> <td>all 40-bit export ciphers only</td>  </tr>
+<tr id="H"><td><code>EXPORT56</code></td> <td>all 56-bit export ciphers only</td>  </tr>
 <tr id="D"><td><code>LOW</code></td>    <td>all low strength ciphers (no export, single DES)</td></tr>
 <tr id="H"><td><code>MEDIUM</code></td> <td>all ciphers with 128 bit encryption</td> </tr>
 <tr id="D"><td><code>HIGH</code></td>   <td>all ciphers using Triple-DES</td>     </tr>
@@ -2516,12 +2516,12 @@ CustomLog logs/ssl_request_log \
         <td><table width="598" summary="">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
-        <a href="http://www.modssl.org/">mod_ssl</a> 2.7, User Manual<br>
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.8, User Manual<br>
         The Apache Interface to OpenSSL
         </font>
         </td>
         <td align="right"><font face="Arial,Helvetica">
-        Copyright &copy; 1998-2000
+        Copyright &copy; 1998-2001
         <a href="http://www.engelschall.com/">Ralf S. Engelschall</a><br>
         All Rights Reserved<br>
         </font>

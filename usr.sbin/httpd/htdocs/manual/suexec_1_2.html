@@ -42,6 +42,8 @@ match your local Apache installation.
 
 <P ALIGN="LEFT">
 <EM>From support/suexec.h</EM>
+</P>
+
 <PRE>
      /*
       * HTTPD_USER -- Define as the username under which Apache normally
@@ -105,7 +107,6 @@ match your local Apache installation.
       */
      #define SAFE_PATH "/usr/local/bin:/usr/bin:/bin"
 </PRE>
-</P>
 
 <P ALIGN="LEFT">
 <STRONG>COMPILING THE SUEXEC WRAPPER</STRONG><BR>
@@ -123,13 +124,14 @@ location.
 
 <P ALIGN="LEFT">
 <EM>From src/include/httpd.h</EM>
+</P>
+
 <PRE>
      /* The path to the suExec wrapper, can be overridden in Configuration */
      #ifndef SUEXEC_BIN
      #define SUEXEC_BIN  HTTPD_ROOT "/sbin/suexec"
      #endif
 </PRE>
-</P>
 
 <P ALIGN="LEFT">
 If your installation requires location of the wrapper program in a different
@@ -172,6 +174,8 @@ executable, you must kill and restart the Apache server.  A simple
 Upon startup of the web-server, if Apache finds a properly configured
 <STRONG>suexec</STRONG> wrapper, it will print the following message to
 the console (Apache 1.2):
+</P>
+
 <PRE>
     Configuring Apache for use with suexec wrapper.
 </PRE>
@@ -180,7 +184,7 @@ error log:
 <PRE>
     [notice] suEXEC mechanism enabled (wrapper: <EM>/path/to/suexec</EM>)
 </PRE>
-</P>
+
 <P ALIGN="LEFT">
 If you don't see this message at server startup, the server is most
 likely not finding the wrapper program where it expects it, or the

@@ -199,7 +199,7 @@ of
         struct rlimit rlp;
 
         rlp.rlim_cur = rlp.rlim_max = 512;
-        if (setrlimit(RLIMIT_NPROC, &rlp)) {
+        if (setrlimit(RLIMIT_NPROC, &amp;rlp)) {
             fprintf(stderr, "setrlimit(RLIMIT_NPROC) failed.\n");
             exit(1);
         }

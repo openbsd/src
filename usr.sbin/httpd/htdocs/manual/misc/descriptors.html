@@ -129,6 +129,23 @@ situation somewhat.  Here is a partial list of systems and workarounds
     between 60 and 11000, the default is 110.  Relink and reboot, 
     and the new number of descriptors will be available.
 
+    <P>
+
+    <DT><STRONG>Compaq Tru64 UNIX/Digital UNIX/OSF</STRONG>
+    <DD><OL>
+    <LI>Raise <code>open_max_soft</code> and <code>open_max_hard</code>
+        to 4096 in the proc subsystem.
+        Do a man on sysconfig, sysconfigdb, and sysconfigtab.
+    <LI>Raise <code>max-vnodes</code> to a large number which is greater 
+        than the number of apache processes * 4096
+        (Setting it to 250,000 should be good for most people).
+        Do a man on sysconfig, sysconfigdb, and sysconfigtab.
+    <LI>If you are using Tru64 5.0, 5.0A, or 5.1, define 
+        <code>NO_SLACK</code> to work around a bug in the OS.
+        <code>CFLAGS="-DNO_SLACK" ./configure</code>
+    </OL>
+
+    <P>
 
     <DT><STRONG>Others</STRONG>
     <DD>If you have details on another operating system, please submit

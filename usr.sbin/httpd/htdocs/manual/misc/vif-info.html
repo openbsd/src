@@ -203,7 +203,7 @@ vifattach()
 
         for (i=0; i&lt;NVIF; i++)
         {
-                ifp = &vif_softc[i].vif_if;
+                ifp = &amp;vif_softc[i].vif_if;
                 ifp-&gt;if_name = "vif";
                 ifp-&gt;if_unit = i;
                 ifp-&gt;if_mtu = VIFMTU;
@@ -285,7 +285,7 @@ vifoutput(ifp, m0, dst)
                  * Place interface pointer before the data
                  * for the receiving protocol.
                  */
-                if (m0-&gt;m_off &lt;= MMAXOFF &&
+                if (m0-&gt;m_off &lt;= MMAXOFF &amp;&amp;
                     m0-&gt;m_off &gt;= MMINOFF + sizeof(struct ifnet *)) {
                         m0-&gt;m_off -= sizeof(struct ifnet *);
                         m0-&gt;m_len += sizeof(struct ifnet *);

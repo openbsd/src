@@ -49,18 +49,23 @@ REL="Help"
   <P>
   The <SAMP>mod_setenvif</SAMP> module allows you to set environment
   variables according to whether different aspects of the request match
-  regular expressions you specify.  These envariables can be used by
+  <a href="../misc/FAQ.html#regex">regular expressions</a>
+  you specify.  These environment variables can be used by
   other parts of the server to make decisions about actions to be taken.
   </P>
   <P>The directives are considered in the order they appear in the
   configuration files.  So more complex sequences can be used, such
   as this example, which sets <CODE>netscape</CODE> if the browser
   is mozilla but not MSIE.
+  </P>
+
   <BLOCKQUOTE><PRE>
   BrowserMatch ^Mozilla netscape
   BrowserMatch MSIE !netscape
   </PRE></BLOCKQUOTE>
-  </P>
+
+  <p>For additional information, we proved a document on
+  <a href="../env.html">Environment Variables in Apache</a>.</p>
 
   <H2>Directives</H2>
   <UL>
@@ -80,7 +85,8 @@ REL="Help"
   <A
    HREF="directive-dict.html#Syntax"
    REL="Help"
-  ><STRONG>Syntax:</STRONG></A> BrowserMatch <EM>regex envar[=value] [...]</EM>
+  ><STRONG>Syntax:</STRONG></A> BrowserMatch <EM>regex 
+   envar</em>[=<em>value</em>] [<em>envar</em>[=<em>value</em>]] ...
   <BR>
   <A
    HREF="directive-dict.html#Default"
@@ -182,8 +188,8 @@ REL="Help"
   <A
    HREF="directive-dict.html#Syntax"
    REL="Help"
-  ><STRONG>Syntax:</STRONG></A> BrowserMatchNoCase <EM>regex envar[=value]
-  [...]</EM>
+  ><STRONG>Syntax:</STRONG></A> BrowserMatchNoCase <EM>regex
+   envar</em>[=<em>value</em>] [<em>envar</em>[=<em>value</em>]] ...
   <BR>
   <A
    HREF="directive-dict.html#Default"
@@ -256,8 +262,8 @@ REL="Help"
   <A
    HREF="directive-dict.html#Syntax"
    REL="Help"
-  ><STRONG>Syntax:</STRONG></A> SetEnvIf <EM> attribute regex envar[=value]
-  [...]</EM>
+  ><STRONG>Syntax:</STRONG></A> SetEnvIf <EM> attribute regex
+   envar</em>[=<em>value</em>] [<em>envar</em>[=<em>value</em>]] ...
   <BR>
   <A
    HREF="directive-dict.html#Default"
@@ -353,7 +359,7 @@ REL="Help"
    SetEnvIf object_is_image xbm XBIT_PROCESSING=1
   </PRE>
   <P>
-  The first three will set the envariable <SAMP>object_is_image</SAMP> if the
+  The first three will set the environment variable <SAMP>object_is_image</SAMP> if the
   request was for an image file, and the fourth sets
   <SAMP>intra_site_referral</SAMP> if the referring page was somewhere
   on the <SAMP>www.mydomain.com</SAMP> Web site.
@@ -368,8 +374,8 @@ REL="Help"
   <A
    HREF="directive-dict.html#Syntax"
    REL="Help"
-  ><STRONG>Syntax:</STRONG></A> SetEnvIfNoCase
-   <EM> attribute regex envar[=value] [...]</EM>
+  ><STRONG>Syntax:</STRONG></A> SetEnvIfNoCase  <EM> attribute regex
+   envar</em>[=<em>value</em>] [<em>envar</em>[=<em>value</em>]] ...
   <BR>
   <A
    HREF="directive-dict.html#Default"
@@ -417,7 +423,7 @@ REL="Help"
    SetEnvIfNoCase Host Apache\.Org site=apache
   </PRE>
   <P>
-  This will cause the <SAMP>site</SAMP> envariable to be set to
+  This will cause the <SAMP>site</SAMP> environment variable to be set to
   &quot;<SAMP>apache</SAMP>&quot; if the HTTP request header field
   <SAMP>Host:</SAMP> was included and contained <SAMP>Apache.Org</SAMP>,
   <SAMP>apache.org</SAMP>, or any other combination.

@@ -56,8 +56,6 @@ ServerType standalone
 # (available at <URL:http://www.apache.org/docs/mod/core.html#lockfile>);
 # you will save yourself a lot of trouble.
 #
-# Do NOT add a slash at the end of the directory path.
-#
 ServerRoot "@@ServerRoot@@"
 
 #
@@ -672,7 +670,7 @@ ServerSignature On
     # avoid the ambiguity with the common suffix for perl scripts.
     #
     # Note 2: The example entries below illustrate that in quite
-    # some cases the two character 'Language' abbriviation is not
+    # some cases the two character 'Language' abbreviation is not
     # identical to the two character 'Country' code for its country,
     # E.g. 'Danmark/dk' versus 'Danish/da'.
     #
@@ -713,6 +711,7 @@ ServerSignature On
     AddLanguage sv .se
     AddLanguage cz .cz
     AddLanguage ru .ru
+    AddLanguage zh-tw .tw
     AddLanguage tw .tw
     AddCharset Big5         .Big5    .big5
     AddCharset WINDOWS-1251 .cp-1251
@@ -1048,7 +1047,7 @@ SSLEngine on
 #   SSL Cipher Suite:
 #   List the ciphers that the client is permitted to negotiate.
 #   See the mod_ssl documentation for a complete list.
-#SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
+SSLCipherSuite ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 
 #   Server Certificate:
 #   Point SSLCertificateFile at a PEM encoded certificate.  If
@@ -1113,7 +1112,7 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 #   mixture between C and Perl.  See the mod_ssl documentation
 #   for more details.
 #<Location />
-#SSLRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)-/ \
+#SSLRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)/ \
 #            and %{SSL_CLIENT_S_DN_O} eq "Snake Oil, Ltd." \
 #            and %{SSL_CLIENT_S_DN_OU} in {"Staff", "CA", "Dev"} \
 #            and %{TIME_WDAY} >= 1 and %{TIME_WDAY} <= 5 \

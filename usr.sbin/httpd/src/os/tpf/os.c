@@ -1,5 +1,8 @@
 /* ====================================================================
- * Copyright (c) 1998-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,46 +16,44 @@
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 /*
@@ -67,12 +68,13 @@
 #include "http_log.h"
 #include "http_conf_globals.h"
 #ifdef __PIPE_
-#include "ipc.h"
-#include "shm.h"
+#include <ipc.h>
+#include <shm.h>
 static TPF_FD_LIST *tpf_fds = NULL;
 #endif
 
 void *tpf_shm_static_ptr = NULL;
+unsigned short zinet_model;
 
 static FILE *sock_fp;
 
@@ -132,7 +134,7 @@ int tpf_select(int maxfds, fd_set *reads, fd_set *writes, fd_set *excepts, struc
     int no_writes = 0;
     int no_excepts = 0;
     int timeout = 0;
-    int rv;
+    int rv = 0;
     
     if(maxfds) {
         if(tv)
@@ -144,7 +146,29 @@ int tpf_select(int maxfds, fd_set *reads, fd_set *writes, fd_set *excepts, struc
         sockets[0] = 0;
         
     ap_check_signals();
-    rv = select(sockets, no_reads, no_writes, no_excepts, timeout);
+    if ((no_reads + no_writes + no_excepts == 0) &&
+        (tv) && (tv->tv_sec + tv->tv_usec != 0)) {
+        /* TPF's select immediately returns if the sum of
+           no_reads, no_writes, and no_excepts is zero.
+           This means that the select calls in http_main.c
+           for shutdown don't actually wait while killing children.
+           The following code makes TPF's select work a little closer
+           to everyone else's select:
+        */
+#ifndef NO_SAWNC
+        struct ev0bk evnblock;
+
+        timeout = tv->tv_sec;
+        if (tv->tv_usec) {
+            timeout++; /* round up to seconds (like TPF's select does) */
+        }
+        evnblock.evnpstinf.evnbkc1 = 1; /* nbr of posts needed */
+        evntc(&evnblock, EVENT_CNT, 'N', timeout, EVNTC_1052);
+        tpf_sawnc(&evnblock, EVENT_CNT);
+#endif
+    } else {
+        rv = select(sockets, no_reads, no_writes, no_excepts, timeout);
+    }
     ap_check_signals();
     
     return rv;
@@ -351,10 +375,10 @@ pid_t os_fork(server_rec *s, int slot)
         ap_log_error(APLOG_MARK, APLOG_CRIT, s,
         "unable to replace stdout with sock device driver");
     input_parms.generation = ap_my_generation;
-#ifdef SCOREBOARD_FILE
-    input_parms.scoreboard_fd = scoreboard_fd;
-#else /* must be USE_TPF_SCOREBOARD or USE_SHMGET_SCOREBOARD */
+#if defined(USE_TPF_SCOREBOARD) || defined(USE_SHMGET_SCOREBOARD)
     input_parms.scoreboard_heap = ap_scoreboard_image;
+#else
+    input_parms.scoreboard_fd = scoreboard_fd;
 #endif
 
     lr = ap_listeners;
@@ -378,18 +402,69 @@ pid_t os_fork(server_rec *s, int slot)
     return tpf_fork(&fork_input);
 }
 
-int os_check_server(char *server) {
-    #ifndef USE_TPF_DAEMON
-    int rv;
-    int *current_acn;
-    if((rv = inetd_getServerStatus(server)) == INETD_SERVER_STATUS_INACTIVE)
-        return 1;
-    else {
-        current_acn = (int *)cinfc_fast(CINFC_CMMACNUM);
-        if(ecbp2()->ce2acn != *current_acn)
-            return 1;
+void ap_tpf_zinet_checks(int standalone,
+                        const char *servername,
+                        server_rec *s) {
+
+    INETD_IDCT_ENTRY_PTR idct;
+
+    /* explicitly disallow "ServerType inetd" on TPF */
+    if (!standalone) {
+        ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, s,
+                     TPF_SERVERTYPE_MSG);
+        exit(1); /* abort start-up of server */
     }
-    #endif
+
+    /* figure out zinet model for our server from the idct slot */
+    idct = inetd_getServer(servername);
+    if (idct) {
+        zinet_model = idct->model;
+        free(idct);
+    } else {
+        ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, s,
+                     TPF_UNABLE_TO_DETERMINE_ZINET_MODEL);
+        exit(1); /* abort start-up of server */
+    }
+
+    /* check for valid zinet models */
+    if (zinet_model != INETD_IDCF_MODEL_DAEMON &&
+        zinet_model != INETD_IDCF_MODEL_NOLISTEN) {
+        ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, s,
+                     TPF_STANDALONE_CONFLICT_MSG);
+        exit(1); /* abort start-up of server */
+    }
+
+#ifdef TPF_NOLISTEN_WARNING
+/* nag about switching to DAEMON model */
+    if (zinet_model == INETD_IDCF_MODEL_NOLISTEN) {
+        ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, s,
+                     TPF_NOLISTEN_WARNING);
+    }
+#endif
+
+}
+
+int os_check_server(char *server) {
+    int *current_acn;
+
+    if (zinet_model == INETD_IDCF_MODEL_NOLISTEN) {
+        /* if NOLISTEN model, check with ZINET for status */
+        if (inetd_getServerStatus(server) == INETD_SERVER_STATUS_INACTIVE) {
+            return 1;
+        }
+        /* and check that program activation number hasn't changed */
+        current_acn = (int *)cinfc_fast(CINFC_CMMACNUM);
+        if (ecbp2()->ce2acn != *current_acn) {
+            return 1;
+        }
+
+    } else {
+        /* if DAEMON model, just make sure parent is still around */
+        if (getppid() == 1) {
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -661,4 +736,26 @@ int ap_check_shm_space(struct pool *a, int size)
     }
     else
          return (0);
+}
+
+/*
+   This function serves as an interim killpg for Apache shutdown purposes.
+   TPF won't have an actual killpg for a very long time, if ever.
+   (And kill with a negative pid doesn't work on TPF either.)
+*/
+int killpg(pid_t pgrp, int sig)
+{
+    int i;
+
+    ap_sync_scoreboard_image();
+
+    for (i = 0; i < HARD_SERVER_LIMIT; ++i) {
+        int pid = ap_scoreboard_image->parent[i].pid;
+        /* the pgrp check is so that we don't kill ourself: */
+        if (pid && pid != pgrp) {
+            kill(pid, sig);
+        }
+    }
+
+    return(0);
 }

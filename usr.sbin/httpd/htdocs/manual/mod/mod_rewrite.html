@@ -328,12 +328,12 @@ of the available directives.
  HREF="directive-dict.html#Syntax"
  REL="Help"
 ><STRONG>Syntax:</STRONG></A>
-    <CODE>RewriteEngine</CODE> {<CODE>on,off</CODE>}<BR>
+    RewriteEngine on|off<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
 ><STRONG>Default:</STRONG></A>
-    <STRONG><CODE>RewriteEngine off</CODE></STRONG><BR>
+    <CODE>RewriteEngine off</CODE><BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -379,7 +379,7 @@ directive for each virtual host in which you wish to use it.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteOptions</CODE> <EM>Option</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteOptions <EM>Option</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -428,7 +428,7 @@ strings can be one of the following:
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteLog</CODE> <EM>Filename</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteLog <EM>Filename</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -502,11 +502,11 @@ RewriteLog "/usr/local/var/apache/logs/rewrite.log"
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteLogLevel</CODE> <EM>Level</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteLogLevel <EM>Level</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
-><STRONG>Default:</STRONG></A> <STRONG><CODE>RewriteLogLevel 0</CODE></STRONG>
+><STRONG>Default:</STRONG></A> <CODE>RewriteLogLevel 0</CODE>
 <BR>
 <A
  HREF="directive-dict.html#Context"
@@ -565,7 +565,7 @@ RewriteLogLevel 3
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteLock</CODE> <EM>Filename</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteLock <EM>Filename</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -606,8 +606,8 @@ other types of rewriting maps.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteMap</CODE> <EM>MapName </EM>
-    <EM>MapType</EM><CODE>:</CODE><EM>MapSource</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteMap <EM>MapName </EM>
+    <EM>MapType</EM>:<EM>MapSource</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -850,7 +850,7 @@ external lookup only happens once!
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteBase</CODE> <EM>BaseURL</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteBase <EM>BaseURL</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -981,7 +981,7 @@ sure the design and implementation is correct.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteCond</CODE> <EM>TestString</EM>
+><STRONG>Syntax:</STRONG></A> RewriteCond <EM>TestString</EM>
     <EM>CondPattern</EM><BR>
 <A
  HREF="directive-dict.html#Default"
@@ -1045,6 +1045,15 @@ the form
 (1 &lt;= N &lt;= 9) which provide access to the grouped parts (parentheses!) of
 the pattern from the last matched <CODE>RewriteCond</CODE> directive in the
 current bunch of conditions.
+
+<P>
+<LI><STRONG>RewriteMap expansions</STRONG>: These are expansions of the form
+
+<BLOCKQUOTE><STRONG>
+<CODE>${mapname:key|default}</CODE>
+</STRONG></BLOCKQUOTE>
+
+See <A HREF="#mapfunc">the documentation for RewriteMap</A> for more details.
 
 <P>
 <LI><STRONG>Server-Variables</STRONG>: These are variables
@@ -1281,6 +1290,9 @@ is a comma-separated list of the following flags:
     This makes the test case-insensitive, <EM>i.e.</EM>, there is
     no difference between 'A-Z' and 'a-z' both in the expanded
     <EM>TestString</EM> and the <EM>CondPattern</EM>.
+    This flag is effective only for comparisons between
+    <EM>TestString</EM> and <EM>CondPattern</EM>.  It has no
+    effect on filesystem and subrequest checks.
 <P>
 <LI>'<STRONG><CODE>ornext|OR</CODE></STRONG>' (<STRONG>or</STRONG> next condition)<BR>
     Use this to combine rule conditions with a local OR instead of the
@@ -1327,7 +1339,7 @@ use any other browser you get the standard homepage.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> <CODE>RewriteRule</CODE> <EM>Pattern</EM> <EM>Substitution</EM><BR>
+><STRONG>Syntax:</STRONG></A> RewriteRule <EM>Pattern</EM> <EM>Substitution</EM><BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -1702,7 +1714,7 @@ external redirect or proxy throughput (if flag <STRONG>P</STRONG> is used!) is f
 <TR><TD>
 <STRONG>Note:</STRONG> To enable the rewriting engine for per-directory configuration files
 you need to set ``<CODE>RewriteEngine On</CODE>'' in these files <STRONG>and</STRONG>
-``<CODE>Option FollowSymLinks</CODE>'' must be enabled. If your administrator has
+``<CODE>Options FollowSymLinks</CODE>'' must be enabled. If your administrator has
 disabled override of <CODE>FollowSymLinks</CODE> for a user's directory, then
 you cannot use the rewriting engine.  This restriction is needed for
 security reasons.

@@ -1,5 +1,8 @@
 /* ====================================================================
- * Copyright (c) 1996-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,46 +16,44 @@
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 
@@ -2258,41 +2259,64 @@ static void do_expand(request_rec *r, char *input, char *buffer, int nbuf,
 	/* now we have a '$' or a '%' */
 	if (inp[1] == '{') {
 	    char *endp;
-	    endp = strchr(inp, '}');
+	    endp = find_closing_bracket(inp+2, '{', '}');
 	    if (endp == NULL) {
 		goto skip;
 	    }
-	    *endp = '\0';
+	    /*
+	     * These lookups may be recursive in a very convoluted
+	     * fashion -- see the LA-U and LA-F variable expansion
+	     * prefixes -- so we copy lookup keys to a separate buffer
+	     * rather than adding zero bytes in order to use them in
+	     * place.
+	     */
 	    if (inp[0] == '$') {
 		/* ${...} map lookup expansion */
-		char *key, *dflt, *result;
-		key = strchr(inp, ':');
-		if (key == NULL) {
+		/*
+		 * To make rewrite maps useful the lookup key and
+		 * default values must be expanded, so we make
+		 * recursive calls to do the work. For security
+		 * reasons we must never expand a string that includes
+		 * verbatim data from the network. The recursion here
+		 * isn't a problem because the result of expansion is
+		 * only passed to lookup_map() so it cannot be
+		 * re-expanded, only re-looked-up. Another way of
+		 * looking at it is that the recursion is entirely
+		 * driven by the syntax of the nested curly brackets.
+		 */
+		char *map, *key, *dflt, *result;
+		char xkey[MAX_STRING_LEN];
+		char xdflt[MAX_STRING_LEN];
+		key = find_char_in_brackets(inp+2, ':', '{', '}');
+		if (key == NULL)
 		    goto skip;
+		map  = ap_pstrndup(r->pool, inp+2, key-inp-2);
+		dflt = find_char_in_brackets(key+1, '|', '{', '}');
+		if (dflt == NULL) {
+		    key  = ap_pstrndup(r->pool, key+1, endp-key-1);
+		    dflt = "";
+		} else {
+		    key  = ap_pstrndup(r->pool, key+1, dflt-key-1);
+		    dflt = ap_pstrndup(r->pool, dflt+1, endp-dflt-1);
 		}
-		*key++ = '\0';
-		dflt = strchr(key, '|');
-		if (dflt) {
-		    *dflt++ = '\0';
-		}
-		result = lookup_map(r, inp+2, key);
-		if (result == NULL) {
-		    result = dflt ? dflt : "";
-		}
-		span = ap_cpystrn(outp, result, space) - outp;
-		key[-1] = ':';
-		if (dflt) {
-		    dflt[-1] = '|';
+		do_expand(r, key,  xkey,  sizeof(xkey),  briRR, briRC);
+		result = lookup_map(r, map, xkey);
+		if (result) {
+		    span = ap_cpystrn(outp, result, space) - outp;
+		} else {
+		    do_expand(r, dflt, xdflt, sizeof(xdflt), briRR, briRC);
+		    span = ap_cpystrn(outp, xdflt, space) - outp;
 		}
 	    }
 	    else if (inp[0] == '%') {
 		/* %{...} variable lookup expansion */
-		span = ap_cpystrn(outp, lookup_variable(r, inp+2), space) - outp;
+		char *var;
+		var  = ap_pstrndup(r->pool, inp+2, endp-inp-2);
+		span = ap_cpystrn(outp, lookup_variable(r, var), space) - outp;
 	    }
 	    else {
 		span = 0;
 	    }
-	    *endp = '}';
 	    inp = endp+1;
 	    outp += span;
 	    space -= span;
@@ -4150,6 +4174,46 @@ static int compare_lexicography(char *cpNum1, char *cpNum2)
         }
     }
     return 0;
+}
+
+/*
+**
+**  Bracketed expression handling
+**  s points after the opening bracket
+**
+*/
+
+static char *find_closing_bracket(char *s, int left, int right)
+{
+    int depth;
+
+    for (depth = 1; *s; ++s) {
+	if (*s == right && --depth == 0) {
+	    return s;
+	}
+	else if (*s == left) {
+	    ++depth;
+	}
+    }
+    return NULL;
+}
+
+static char *find_char_in_brackets(char *s, int c, int left, int right)
+{
+    int depth;
+
+    for (depth = 1; *s; ++s) {
+	if (*s == c && depth == 1) {
+	    return s;
+	}
+	else if (*s == right && --depth == 0) {
+	    return NULL;
+	}
+	else if (*s == left) {
+	    ++depth;
+	}
+    }
+    return NULL;
 }
 
 /*EOF*/

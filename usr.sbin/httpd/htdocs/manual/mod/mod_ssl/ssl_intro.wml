@@ -505,7 +505,7 @@ choices, including the choice to perform no encryption:
     <ul>
     <li>RC2 with 40 bit key
     <li>DES with 40 bit key
-    <li>DES with 54 bit key
+    <li>DES with 56 bit key
     <li>Triple-DES with 168 bit key
     <li>Idea (128 bit key)
     <li>Fortezza (96 bit key)

@@ -117,7 +117,8 @@ HREF="mod_dir.html#directoryindex">DirectoryIndex</A>.</p>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddAlt <EM>string file file...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddAlt <EM>string file</em>
+[<em>file</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -149,8 +150,8 @@ image-incapable or has image loading disabled.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddAltByEncoding <EM>string MIME-encoding
-    MIME-encoding...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddAltByEncoding <EM>string MIME-encoding</em>
+    [<em>MIME-encoding</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -182,8 +183,8 @@ image-incapable or has image loading disabled.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddAltByType <EM>string MIME-type MIME-type
-    ...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddAltByType <EM>string MIME-type</em>
+   [<em>MIME-type</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -216,7 +217,8 @@ image-incapable or has image loading disabled.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddDescription <EM>string file file...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddDescription <EM>string file</em>
+    [<em>file</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -259,7 +261,7 @@ may contain HTML markup, such as tags and character entities.  If the
 width of the description column should happen to truncate a tagged
 element (such as cutting off the end of a bolded phrase), the results
 may affect the rest of the directory listing.
-</P>
+
 <HR>
 
 <H2><A NAME="addicon">AddIcon</A> directive</H2>
@@ -267,7 +269,8 @@ may affect the rest of the directory listing.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddIcon <EM>icon name name ...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddIcon <EM>icon name</em>
+   [<em>name</em>] ...</EM><BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -308,8 +311,8 @@ AddIcon, when possible.<P><HR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddIconByEncoding <EM>icon MIME-encoding
-    MIME-encoding ...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddIconByEncoding <EM>icon MIME-encoding</em>
+    [<em>MIME-encoding</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -345,8 +348,8 @@ AddIconByEncoding /icons/compressed.gif x-compress
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddIconByType <EM>icon MIME-type MIME-type
-    ...</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddIconByType <EM>icon MIME-type</em>
+   [<em>MIME-type</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -412,7 +415,7 @@ DefaultIcon /icon/unknown.xbm
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> FancyIndexing <EM>boolean</EM><BR>
+><STRONG>Syntax:</STRONG></A> FancyIndexing on|off<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -432,8 +435,7 @@ DefaultIcon /icon/unknown.xbm
 ><STRONG>Module:</STRONG></A> mod_autoindex
 <P>
 The FancyIndexing directive sets the FancyIndexing option for a directory.
-<EM>Boolean</EM> can be <CODE>on</CODE> or <CODE>off</CODE>. The
-<A HREF="#indexoptions">IndexOptions</A> directive should be used in
+The <A HREF="#indexoptions">IndexOptions</A> directive should be used in
 preference.
 </P>
 <BLOCKQUOTE>
@@ -523,7 +525,7 @@ See also <A HREF="#readmename">ReadmeName</A>.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> IndexIgnore <EM>file file ...</EM><BR>
+><STRONG>Syntax:</STRONG></A> IndexIgnore <EM>file</em> [<em>file</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -556,15 +558,14 @@ IndexIgnore README .htaccess *~
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> IndexOptions <EM>option option ...</EM>
- (Apache 1.3.2 and earlier)
+><STRONG>Syntax:</STRONG></A> IndexOptions <EM>option</em> 
+   [<em>option</em>] ... (Apache 1.3.2 and earlier)
 <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> IndexOptions <EM>[+|-]option [+|-]option
- ...</EM>
- (Apache 1.3.3 and later)
+><STRONG>Syntax:</STRONG></A> IndexOptions [+|-]<em>option</em> 
+   [[+|-]<em>option</em>] ... (Apache 1.3.3 and later)
 <BR>
 <A
  HREF="directive-dict.html#Context"
@@ -591,7 +592,8 @@ IndexIgnore README .htaccess *~
  <SAMP>IndexOptions</SAMP> directives is only available with
  Apache 1.3.3 and later; the <samp>FoldersFirst</samp> and
  <samp>DescriptionWidth</samp> options are only
- available with Apache 1.3.10 and later
+ available with Apache 1.3.10 and later; the <samp>TrackModified</samp> 
+option is only available with Apache 1.3.15 and later
 <P>
 
 The IndexOptions directive specifies the behavior of the directory indexing.
@@ -706,6 +708,18 @@ indexing listings.
 <DD>
 <!--%plaintext &lt;?INDEX {\tt SuppressSize} index option&gt; -->
 This will suppress the file size in fancy indexing listings.
+<DT><A NAME="indexoptions:trackmodified">TrackModified 
+(<EM>Apache 1.3.15 and later</EM>)</A>
+<DD>
+<!--%plaintext &lt;?INDEX {\tt TrackModified} index option&gt; -->
+This returns the Last-Modified and ETag values for the listed directory
+in the HTTP header.  It is only valid if the operating system and file 
+system return legitimate stat() results.  Most Unix systems do so, as 
+do OS2's JFS and Win32's NTFS volumes.  OS2 and Win32 FAT volumes,
+for example, do not.  Once this feature is enabled, the client or proxy 
+can track changes to the list of files when they perform a HEAD request.
+Note some operating systems correctly track new and removed files, but
+do not track changes for sizes or dates of the files within the directory.
 </DL>
 <P>
 There are some noticeable differences in the behaviour of this
@@ -728,7 +742,7 @@ the options are not merged. For example:
 </pre></BLOCKQUOTE>
 then only <CODE>ScanHTMLTitles</CODE> will be set for the /web/docs/spec
 directory.
-</P>
+
 </DD>
 <DT>Apache 1.3.3 and later:</DT>
 <DD>
@@ -781,7 +795,7 @@ keywords without either '+' or '-' prefixes.
  HREF="directive-dict.html#Syntax"
  REL="Help"
 ><STRONG>Syntax:</STRONG></A> IndexOrderDefault
-    <EM>Ascending|Descending</EM> <EM>Name|Date|Size|Description</EM>
+    Ascending|Descending Name|Date|Size|Description
 <BR>
 <A
  HREF="directive-dict.html#Context"

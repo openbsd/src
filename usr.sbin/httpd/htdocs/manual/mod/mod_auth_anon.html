@@ -93,27 +93,27 @@ the error log file
 </UL>
 <P>
 Excerpt of access.conf:
-<BLOCKQUOTE><CODE>
-Anonymous_NoUserId      off<BR>
-Anonymous_MustGiveEmail on<BR>
-Anonymous_VerifyEmail    on<BR>
-Anonymous_LogEmail      on<BR>
-Anonymous        anonymous guest www test welcome<P>
-<P>
-AuthName                "Use 'anonymous' &amp; Email address for guest entry"<BR>
+<BLOCKQUOTE><pre>
+Anonymous_NoUserId      off
+Anonymous_MustGiveEmail on
+Anonymous_VerifyEmail    on
+Anonymous_LogEmail      on
+Anonymous        anonymous guest www test welcome
+
+AuthName                "Use 'anonymous' &amp; Email address for guest entry"
 AuthType                basic
-<P>
-# An AuthUserFile/AuthDBUserFile/AuthDBMUserFile<BR>
-# directive must be specified, or use<BR>
-# Anonymous_Authoritative for public access.<BR>
-# In the .htaccess for the public directory, add:<BR>
-&lt;Files *&gt;<BR>
-Order Deny,Allow          <BR>
-Allow from all            <BR>
-<P>
-Require valid-user        <BR>
-&lt;/Files&gt;<BR>
-</CODE></BLOCKQUOTE>
+
+# An AuthUserFile/AuthDBUserFile/AuthDBMUserFile
+# directive must be specified, or use
+# Anonymous_Authoritative for public access.
+# In the .htaccess for the public directory, add:
+&lt;Files *&gt;
+Order Deny,Allow          
+Allow from all            
+
+Require valid-user        
+&lt;/Files&gt;
+</pre></BLOCKQUOTE>
 
 <HR>
 
@@ -122,7 +122,7 @@ Require valid-user        <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> Anonymous <EM>user user ...</EM><BR>
+><STRONG>Syntax:</STRONG></A> Anonymous <EM>user</em> [<em>user</em>] ...<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -167,7 +167,7 @@ Require valid-user        <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> Anonymous_Authoritative <EM>on | off</EM><BR>
+><STRONG>Syntax:</STRONG></A> Anonymous_Authoritative on|off<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -204,7 +204,7 @@ Require valid-user        <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> Anonymous_LogEmail <EM>on | off</EM><BR>
+><STRONG>Syntax:</STRONG></A> Anonymous_LogEmail on|off<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -235,8 +235,7 @@ Require valid-user        <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> Anonymous_MustGiveEmail <EM>on</EM>
- | <EM>off</EM><BR>
+><STRONG>Syntax:</STRONG></A> Anonymous_MustGiveEmail on|off<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -266,7 +265,7 @@ Require valid-user        <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> Anonymous_NoUserID <EM>on | off</EM><BR>
+><STRONG>Syntax:</STRONG></A> Anonymous_NoUserID on|off<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -300,7 +299,7 @@ Require valid-user        <BR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> Anonymous_VerifyEmail <EM>on | off</EM><BR>
+><STRONG>Syntax:</STRONG></A> Anonymous_VerifyEmail on|off<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"

@@ -21,7 +21,6 @@
 
 <H1 ALIGN="CENTER">Apache suEXEC Support</H1>
 
-<P ALIGN="LEFT">
 <OL>
         <LI><BIG><STRONG>CONTENTS</STRONG></BIG></LI>
         <LI><A HREF="#what">What is suEXEC?</A></LI>
@@ -34,7 +33,6 @@
         <LI><A HREF="#jabberwock">Beware the Jabberwock: Warnings &amp;
          Examples</A></LI>
 </OL>
-</P>
 
 <H3><A NAME="what">What is suEXEC?</A></H3>
 <P ALIGN="LEFT">
@@ -131,6 +129,8 @@ user and group IDs under which the program is to execute.
 The wrapper then employs the following process to determine success or
 failure -- if any one of these conditions fail, the program logs the failure
 and exits with an error, otherwise it will continue:
+</P>
+
 <OL>
  <LI><STRONG>Was the wrapper called with the proper number of
   arguments?</STRONG>
@@ -275,7 +275,6 @@ and exits with an error, otherwise it will continue:
   </BLOCKQUOTE>
  </LI>
 </OL>
-</P>
 
 <P ALIGN="LEFT">
 This is the standard operation of the the suEXEC wrapper's security model.
@@ -309,6 +308,8 @@ for Apache 1.3 with the AutoConf-style interface (APACI).
 
 <P ALIGN="LEFT">
 <STRONG>APACI's suEXEC configuration options</STRONG><BR>
+</P>
+
 <DL>
 <DT><CODE>--enable-suexec</CODE>
 <DD>This option enables the suEXEC feature which is never installed or
@@ -364,7 +365,6 @@ for Apache 1.3 with the AutoConf-style interface (APACI).
 <DD>Define a safe PATH environment to pass to CGI executables.
     Default value is "/usr/local/bin:/usr/bin:/bin".
 </DL>
-</P>
 
 <P ALIGN="LEFT">
 <STRONG>Checking your suEXEC setup</STRONG><BR>
@@ -372,6 +372,8 @@ Before you compile and install the suEXEC wrapper you can check
 the configuration with the --layout option.
 <BR>
 Example output:
+</P>
+
 <PRE>
     suEXEC setup:
             suexec binary: /usr/local/apache/sbin/suexec
@@ -383,7 +385,6 @@ Example output:
           minimum user ID: 100
          minimum group ID: 100
 </PRE>
-</P>
 
 <P ALIGN="LEFT">
 <STRONG>Compiling and installing the suEXEC wrapper</STRONG><BR>
@@ -412,9 +413,13 @@ Upon startup of Apache, it looks for the file "suexec" in the "sbin"
 directory (default is "/usr/local/apache/sbin/suexec").
 If Apache finds a properly configured suEXEC wrapper, it will print
 the following message to the error log:
+</P>
+
 <PRE>
     [notice] suEXEC mechanism enabled (wrapper: <EM>/path/to/suexec</EM>)
 </PRE>
+
+<p>
 If you don't see this message at server startup, the server is most
 likely not finding the wrapper program where it expects it, or the
 executable is not installed <EM>setuid root</EM>.
@@ -425,7 +430,7 @@ Restarting it with a simple HUP or USR1 signal will not be enough.
 <BR>
 If you want to disable suEXEC you should kill and restart Apache after
 you have removed the "suexec" file.
-</P>
+</p>
 
 <P ALIGN="CENTER">
 <STRONG><A HREF="suexec.html">BACK TO CONTENTS</A></STRONG>

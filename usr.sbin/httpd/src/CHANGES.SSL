@@ -17,6 +17,65 @@
   _INTENTIONALLY_ no contributor names attached to the entries. Instead all
   contributors are listed in the CREDITS file.
 
+      ____    ___  
+     |___ \  ( _ ) 
+       __) | / _ \ 
+      / __/ | (_) |
+  __ |_____(_)___/ ___________________________________________
+              
+  Changes with mod_ssl 2.8.1 (30-Jan-2001 to 03-Mar-2001)
+
+   *) Conditionally adjusted source to build quietly also under
+      latest OpenSSL 0.9.7-dev versions.
+
+   *) Added a bunch of (untested!) adjustments and fixes for 
+      the Win32 platform as posted to modssl-users some time
+      ago by various people.
+
+   *) Fixed SSLCipherSuite example in httpd.conf-dist: 
+      The string EXP56 is actually EXPORT56, although OpenSSL
+      internally the variable is named SSL_TXT_EXP56.
+
+   *) Upgraded to Apache 1.3.19 as base version.
+
+   *) Extended FAQ entry for MSIE problems.
+
+   *) Added FAQ entry for questions "Why do I get lots of random SSL
+      errors under heavy load?"
+
+  Changes with mod_ssl 2.8.0 (14-Oct-2000 to 30-Jan-2001)
+   
+   *) Upgraded to Apache 1.3.17 as base version.
+   
+   *) Changed ApacheModuleSSL.dll to mod_ssl.so in Makefile.Win32 to
+      make mod_ssl not too broken after Apache 1.3.16's Win32 changes.
+
+   *) Enhanced ApacheCore.def patch for Win32 folks.
+
+   *) Upgraded to Apache 1.3.16 as base version.
+    
+   *) Fixed ssl_intro.wml: DES uses 56 bit, not 54 bit.
+
+   *) Allow %{ENV:variable} in SSLRequire expressions, too.
+
+   *) Fixed version parsing for APXS stuff in configure.
+
+   *) Fixed Geoff Thorpe's Email addresses in various places.
+
+   *) Fixed typo in INSTALL document.
+
+   *) Make sure the user is not able to fake the client certificate
+      based authentication by just entering an X.509 Subject DN
+      ("/XX=YYY/XX=YYY/..") as the username and "password" as the
+      password if "SSLVerifyClient optional" is used in combination
+      with "SSLOptions +FakeBasicAuth".
+
+   *) Fixed URLs in FAQ.
+
+   *) Various fixes for the Win32 world:
+      reflect renaming of "makefile.nt" to "makefile.win"; scache
+      reorganisation adjustments; etc.
+
       ____   _____ 
      |___ \ |___  |
        __) |   / / 

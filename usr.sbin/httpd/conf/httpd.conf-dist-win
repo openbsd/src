@@ -58,8 +58,6 @@ ServerType standalone
 # ServerRoot: The top of the directory tree under which the server's
 # configuration, error, and log files are kept.
 #
-# Do NOT add a slash at the end of the directory path.
-#
 ServerRoot "@@ServerRoot@@"
 
 #
@@ -189,20 +187,20 @@ ThreadsPerChild 50
 # Note: The order in which modules are loaded is important.  Don't change
 # the order below without expert advice.
 #
-#LoadModule anon_auth_module modules/ApacheModuleAuthAnon.dll
-#LoadModule dbm_auth_module modules/ApacheModuleAuthDBM.dll
-#LoadModule digest_auth_module modules/ApacheModuleAuthDigest.dll
-#LoadModule cern_meta_module modules/ApacheModuleCERNMeta.dll
-#LoadModule digest_module modules/ApacheModuleDigest.dll
-#LoadModule expires_module modules/ApacheModuleExpires.dll
-#LoadModule headers_module modules/ApacheModuleHeaders.dll
-#LoadModule proxy_module modules/ApacheModuleProxy.dll
-#LoadModule rewrite_module modules/ApacheModuleRewrite.dll
-#LoadModule speling_module modules/ApacheModuleSpeling.dll
-#LoadModule info_module modules/ApacheModuleInfo.dll
-#LoadModule status_module modules/ApacheModuleStatus.dll
-#LoadModule usertrack_module modules/ApacheModuleUserTrack.dll
-#LoadModule ssl_module modules/ApacheModuleSSL.dll
+#LoadModule anon_auth_module modules/mod_auth_anon.so
+#LoadModule dbm_auth_module modules/mod_auth_dbm.so
+#LoadModule digest_auth_module modules/mod_auth_digest.so
+#LoadModule cern_meta_module modules/mod_cern_meta.so
+#LoadModule digest_module modules/mod_digest.so
+#LoadModule expires_module modules/mod_expires.so
+#LoadModule headers_module modules/mod_headers.so
+#LoadModule proxy_module modules/mod_proxy.so
+#LoadModule rewrite_module modules/mod_rewrite.so
+#LoadModule speling_module modules/mod_speling.so
+#LoadModule info_module modules/mod_info.so
+#LoadModule status_module modules/mod_status.so
+#LoadModule usertrack_module modules/mod_usertrack.so
+#LoadModule ssl_module modules/mod_ssl.so
 
 #
 # ExtendedStatus controls whether Apache will generate "full" status
@@ -587,6 +585,11 @@ ServerSignature On
     #
     # FancyIndexing is whether you want fancy directory indexing or standard
     #
+    # Note, add the option TrackModified to the IndexOptions default list only
+    # if all indexed directories reside on NTFS volumes.  The TrackModified flag
+    # will report the Last-Modified date to assist caches and proxies to properly
+    # track directory changes, but it does _not_ work on FAT volumes.
+    #
     IndexOptions FancyIndexing
 
     #
@@ -687,7 +690,7 @@ ServerSignature On
     # avoid the ambiguity with the common suffix for perl scripts.
     #
     # Note 2: The example entries below illustrate that in quite
-    # some cases the two character 'Language' abbriviation is not
+    # some cases the two character 'Language' abbreviation is not
     # identical to the two character 'Country' code for its country,
     # E.g. 'Danmark/dk' versus 'Danish/da'.
     #
@@ -729,6 +732,7 @@ ServerSignature On
     AddLanguage cz .cz
     AddLanguage ru .ru
     AddLanguage tw .tw
+    AddLanguage zh-tw .tw
     AddCharset Big5         .Big5    .big5
     AddCharset WINDOWS-1251 .cp-1251
     AddCharset CP866        .cp866

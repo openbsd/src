@@ -37,12 +37,12 @@
       Type:         MANDATORY
 
    o  Package:      mod_ssl
-      Version:      2.7.x
+      Version:      2.8.x
       Description:  The Apache Interface to OpenSSL
       Reason:       The interface module for Apache
       Homepage:     http://www.modssl.org/
       Distribution: ftp://ftp.modssl.org/source/
-      Tarball:      mod_ssl-2.7.x-1.3.x.tar.gz
+      Tarball:      mod_ssl-2.8.x-1.3.x.tar.gz
       Location:     Zurich, Switzerland, Europe
       Author(s):    Ralf S. Engelschall <rse@engelschall.com>
       Type:         MANDATORY
@@ -115,7 +115,7 @@
   2. Extract the required packages:
 
      $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -                          ALL
-     $ gzip -d -c mod_ssl-2.7.x-1.3.x.tar.gz | tar xvf -                   ALL
+     $ gzip -d -c mod_ssl-2.8.x-1.3.x.tar.gz | tar xvf -                   ALL
      $ gzip -d -c openssl-0.9.x.tar.gz | tar xvf -                         ALL
      $ gzip -d -c mm-1.1.x.tar.gz | tar xvf -                         OPTIONAL
 
@@ -182,7 +182,7 @@
         variable but get no intermediate chance to add more third-party
         Apache modules (e.g. mod_perl, PHP3, etc).
 
-        $ cd mod_ssl-2.7.x-1.3.x                                           ALL
+        $ cd mod_ssl-2.8.x-1.3.x                                           ALL
         $ ./configure \                                                    ALL
               --with-apache=../apache_1.3.x \                              ALL
               --with-ssl=../openssl-0.9.x \                                ALL
@@ -255,7 +255,7 @@
         existing certificate manually to conf/ssl.crt/server.crt or use
         `make certificate':
 
-        $ cd mod_ssl-2.7.x-1.3.x                                           ALL
+        $ cd mod_ssl-2.8.x-1.3.x                                           ALL
         $ ./configure \                                                    ALL
               --with-apache=../apache_1.3.x \                              ALL
               --with-crt=/path/to/your/server.crt \                   OPTIONAL
@@ -329,7 +329,7 @@
         you have to install the Apache package manually, too. But feel
         free to be masochistic ;-)
 
-        $ cd mod_ssl-2.7.x-1.3.x                                           ALL
+        $ cd mod_ssl-2.8.x-1.3.x                                           ALL
         $ ./configure \                                                    ALL
               --with-apache=../apache_1.3.x \                              ALL
               --with-crt=/path/to/your/server.crt \                   OPTIONAL
@@ -399,7 +399,7 @@
      o Read the mod_ssl user manual very carefully to
        understand the SSL-part of your Apache configuration:
 
-       $ netscape http://www.modssl.org/docs/2.7/                 (official)
+       $ netscape http://www.modssl.org/docs/2.8/                 (official)
        $ netscape http://localhost/manual/mod/mod_ssl/            (local copy)
        
      o Adjust your Apache configuration to your personal requirements.
@@ -426,7 +426,7 @@
   long as the Extended API (EAPI) didn't change and you've OpenSSL installed
   somewhere. For this you can use the following procedure:
 
-    $ cd mod_ssl-2.7.x-1.3.x                                               ALL
+    $ cd mod_ssl-2.8.x-1.3.x                                               ALL
     $ ./configure \                                                        ALL
           --with-apxs[=/path/to/apache/bin/apxs] \                         ALL
           --with-ssl=/path/to/openssl                                      ALL
@@ -464,11 +464,11 @@
 
     #   extract the packages
     $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -
-    $ gzip -d -c mod_ssl-2.7.x-1.3.x.tar.gz | tar xvf -
+    $ gzip -d -c mod_ssl-2.8.x-1.3.x.tar.gz | tar xvf -
     $ gzip -d -c mod_perl-1.xx.tar.gz | tar xvf -
 
     #   apply mod_ssl to Apache source tree
-    $ cd mod_ssl-2.7.x-1.3.x
+    $ cd mod_ssl-2.8.x-1.3.x
     $ ./configure \
           --with-apache=../apache_1.3.x
     $ cd ..
@@ -488,7 +488,7 @@
 
     #   build/install Apache with mod_ssl and mod_perl
     $ cd apache_1.3.x
-    $ SSL_BASE=/path/to/openssl 
+    $ SSL_BASE=/path/to/openssl \
       ./configure \
           --prefix=/path/to/apache \
           --enable-module=ssl \
@@ -501,7 +501,7 @@
 
     #   cleanup after work
     $ rm -rf mod_perl-1.xx
-    $ rm -rf mod_ssl-2.7.x-1.3.x
+    $ rm -rf mod_ssl-2.8.x-1.3.x
     $ rm -rf apache_1.3.x
 
   o Apache + mod_ssl/OpenSSL + PHP3/MySQL
@@ -518,11 +518,11 @@
 
     #   extract the packages
     $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -
-    $ gzip -d -c mod_ssl-2.7.x-1.3.x.tar.gz | tar xvf -
+    $ gzip -d -c mod_ssl-2.8.x-1.3.x.tar.gz | tar xvf -
     $ gzip -d -c php-3.0.x.tar.gz | tar xvf -
 
     #   apply mod_ssl to Apache source tree
-    $ cd /mod_ssl-2.7.x-1.3.x
+    $ cd /mod_ssl-2.8.x-1.3.x
     $ ./configure \
           --with-apache=../apache_1.3.x
     $ cd ..
@@ -560,6 +560,6 @@
     
     #   cleanup after work
     $ rm -rf php-3.0.x
-    $ rm -rf mod_ssl-2.7.x-1.3.x
+    $ rm -rf mod_ssl-2.8.x-1.3.x
     $ rm -rf apache_1.3.x
 

@@ -1,5 +1,8 @@
 /* ====================================================================
- * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,46 +16,44 @@
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 /*
@@ -168,7 +169,25 @@ static const char *set_user_dir(cmd_parms *cmd, void *dummy, char *arg)
          * If the first (only?) value isn't one of our keywords, just copy
          * the string to the userdir string.
          */
+        if (!ap_os_is_path_absolute(arg) && !strchr(arg, ':'))
+#if defined(WIN32) || defined(NETWARE)
+            return "UserDir must specify an absolute redirect or absolute "
+                   "file path";
+#else
+            if (strchr(arg, '*'))
+                 return "UserDir cannot specify a both a relative path and "
+                        "'*' substitution";
+#endif
         s_cfg->userdir = ap_pstrdup(cmd->pool, arg);
+#if defined(WIN32) || defined(OS2) || defined(NETWARE)
+        /* This is an incomplete path, so we cannot canonicalize it yet.
+         * but any backslashes will confuse the parser, later, so simply
+         * change them to slash form.
+         */
+        arg = s_cfg->userdir;
+        while (arg = strchr(arg, '\\'))
+            *(arg++) = '/';
+#endif
         return NULL;
     }
     /*
@@ -197,7 +216,6 @@ static int translate_userdir(request_rec *r)
     const char *userdirs = s_cfg->userdir;
     const char *w, *dname;
     char *redirect;
-    char *x = NULL;
     struct stat statbuf;
 
     /*
@@ -256,44 +274,68 @@ static int translate_userdir(request_rec *r)
     while (*userdirs) {
         const char *userdir = ap_getword_conf(r->pool, &userdirs);
         char *filename = NULL;
+        int is_absolute = ap_os_is_path_absolute(userdir);
 
-        if (strchr(userdir, '*'))
-            x = ap_getword(r->pool, &userdir, '*');
-
-	if (userdir[0] == '\0' || ap_os_is_path_absolute(userdir)) {
-            if (x) {
-#ifdef HAVE_DRIVE_LETTERS
-                /*
-                 * Crummy hack. Need to figure out whether we have been
-                 * redirected to a URL or to a file on some drive. Since I
-                 * know of no protocols that are a single letter, if the : is
-                 * the second character, I will assume a file was specified
-                 *
-                 * Still no good for NETWARE, since : is embedded (sys:/home)
+        if (strchr(userdir, '*')) {
+            /* token '*' embedded:
+             */
+            char *x = ap_getword(r->pool, &userdir, '*');
+            if (is_absolute) {
+                /* token '*' within absolute path
+                 * serves [UserDir arg-pre*][user][UserDir arg-post*]
+                 * /somepath/ * /somedir + /~smith -> /somepath/smith/somedir
                  */
-                if (strchr(x + 2, ':'))
-#else
-                if (strchr(x, ':'))
-#endif /* def HAVE_DRIVE_LETTERS */
-		{
-                    redirect = ap_pstrcat(r->pool, x, w, userdir, dname, NULL);
-                    ap_table_setn(r->headers_out, "Location", redirect);
-                    return REDIRECT;
-                }
-                else
-                    filename = ap_pstrcat(r->pool, x, w, userdir, NULL);
+                filename = ap_pstrcat(r->pool, x, w, userdir, NULL);
             }
+            else if (strchr(x, ':')) {
+                /* token '*' within a redirect path
+                 * serves [UserDir arg-pre*][user][UserDir arg-post*]
+                 * http://server/user/ * + /~smith/foo -> http://server/user/smith/foo
+                 */
+                redirect = ap_pstrcat(r->pool, x, w, userdir, dname, NULL);
+                ap_table_setn(r->headers_out, "Location", redirect);
+                return REDIRECT;
+            }
+            else {
+                /* Not a redirect, not an absolute path, '*' token:
+                 * serves [homedir]/[UserDir arg]
+                 * something/ * /public_html
+                 * Shouldn't happen, we trap for this in set_user_dir
+                 */
+                return DECLINED;
+            }
+        }
+        else if (is_absolute) {
+            /* An absolute path, no * token:
+             * serves [UserDir arg]/[user]
+             * /home + /~smith -> /home/smith
+             */
+            if (userdir[strlen(userdir) - 1] == '/')
+                filename = ap_pstrcat(r->pool, userdir, w, NULL);
             else
                 filename = ap_pstrcat(r->pool, userdir, "/", w, NULL);
         }
         else if (strchr(userdir, ':')) {
-            redirect = ap_pstrcat(r->pool, userdir, "/", w, dname, NULL);
+            /* A redirect, not an absolute path, no * token:
+             * serves [UserDir arg]/[user][dname]
+             * http://server/ + /~smith/foo -> http://server/smith/foo
+             */
+            if (userdir[strlen(userdir) - 1] == '/')
+                redirect = ap_pstrcat(r->pool, userdir, w, dname, NULL);
+            else
+                redirect = ap_pstrcat(r->pool, userdir, "/", w, dname, NULL);
             ap_table_setn(r->headers_out, "Location", redirect);
             return REDIRECT;
         }
         else {
+            /* Not a redirect, not an absolute path, no * token:
+             * serves [homedir]/[UserDir arg]
+             * e.g. /~smith -> /home/smith/public_html
+             */
 #if defined(WIN32) || defined(NETWARE)
-            /* Need to figure out home dirs on NT and NetWare */
+            /* Need to figure out home dirs on NT and NetWare 
+             * Shouldn't happen here, though, we trap for this in set_user_dir
+             */
             return DECLINED;
 #else                           /* WIN32 & NetWare */
             struct passwd *pw;

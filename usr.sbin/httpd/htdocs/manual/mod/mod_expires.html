@@ -38,6 +38,11 @@ REL="Help"
 HREF="module-dict.html#ModuleIdentifier"
 REL="Help"
 ><STRONG>Module Identifier:</STRONG></A> expires_module
+<BR>
+<A
+HREF="module-dict.html#Compatibility"
+REL="Help"
+><STRONG>Compatibility:</STRONG></A> Available in Apache 1.2 and later.
 </P>
 
 
@@ -164,7 +169,7 @@ REL="Help"
   <A
    HREF="directive-dict.html#Syntax"
    REL="Help"
-  ><STRONG>Syntax:</STRONG></A> ExpiresActive <EM>boolean</EM>
+  ><STRONG>Syntax:</STRONG></A> ExpiresActive on|off
   <BR>
   <A
    HREF="directive-dict.html#Context"
@@ -273,7 +278,6 @@ REL="Help"
   <P>
   <STRONG>Example:</STRONG>
   </P>
-  <P>
   <PRE>
    ExpiresActive On                  # enable expirations
    ExpiresByType image/gif A2592000  # expire GIF images after a month
@@ -282,7 +286,6 @@ REL="Help"
                                      #  week from the time they were
                                      #  changed, period
   </PRE>
-  </P>
   <P>
   Note that this directive only has effect if <CODE>ExpiresActive
   On</CODE> has been specified.  It overrides, for the specified MIME

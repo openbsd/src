@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -232,7 +232,7 @@ int yyinput(char *buf, int max_size);
  /*
   * Identifiers
   */
-[a-zA-Z][a-zA-Z0-9_-]* {
+[a-zA-Z][a-zA-Z0-9_:-]* {
     yylval.cpVal = ap_pstrdup(ssl_expr_info.pool, yytext);
     return T_ID;
 }

@@ -12,9 +12,12 @@
 # The default installation directory is \Apache. This can be changed
 # with the INSTDIR macro, for example:
 #
-#   nmake /f Makefile.nt INSTDIR="d:\Program Files\Apache" installr
+#   nmake /f Makefile.win INSTDIR="d:\Program Files\Apache" installr
 #
 # Note: this does *NOT* change the compiled in default "server root"
+# Also be aware that certain awk's will not accept backslahed names,
+# so the server root should be given in forward slashes (quoted),
+# preferably with the drive designation!
 
 !IF "$(INSTDIR)" == ""
 INSTDIR=\Apache
@@ -53,16 +56,13 @@ _cleand:
 	$(MAKE) $(MAKEOPT) -f Makefile.win SHORT=D LONG=Debug   CTARGET=CLEAN _build
 
 clean:	_cleanr _cleand
-	$(MAKE) $(MAKEOPT) -f Makefile.win SHORT=R LONG=Release CTARGET=CLEAN _installdll
-
-installdll:
-	$(MAKE) $(MAKEOPT) -f Makefile.win SHORT=R LONG=Release _installdll
 
 
 _build:
 #	echo LONG $(LONG) SHORT $(SHORT) x
 	cd os\win32
 	 $(MAKE) $(MAKEOPT) -f ApacheOS.mak CFG="ApacheOS - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f Win9xConHook.mak CFG="Win9xConHook - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	cd ..\..
 	cd regex
 	 $(MAKE) $(MAKEOPT) -f regex.mak CFG="regex - Win32 $(LONG)" RECURSE=0 $(CTARGET)
@@ -76,69 +76,138 @@ _build:
 	 $(MAKE) $(MAKEOPT) -f logresolve.mak CFG="logresolve - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	 $(MAKE) $(MAKEOPT) -f rotatelogs.mak CFG="rotatelogs - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	cd ..
-	cd lib/expat-lite
+	cd lib\expat-lite
 	 $(MAKE) $(MAKEOPT) -f xmltok.mak CFG="xmltok - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	 $(MAKE) $(MAKEOPT) -f xmlparse.mak CFG="xmlparse - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	cd ../..
-	cd lib/sdbm
+	cd ..\..
+	cd lib\sdbm
 	 $(MAKE) $(MAKEOPT) -f sdbm.mak CFG="sdbm - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	cd ../..
+	cd ..\..
 	cd main
 	 $(MAKE) $(MAKEOPT) -f gen_uri_delims.mak CFG="gen_uri_delims - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	 $(MAKE) $(MAKEOPT) -f gen_test_char.mak CFG="gen_test_char - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	cd ..
-	 -del Core$(SHORT)\buildmark.obj
+	 -del $(LONG)\buildmark.obj
 	 $(MAKE) $(MAKEOPT) -f ApacheCore.mak CFG="ApacheCore - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	 $(MAKE) $(MAKEOPT) -f Apache.mak CFG="Apache - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	cd os\win32
-	 set CFG=ApacheModuleStatus - Win32 $(LONG)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleStatus.mak CFG="ApacheModuleStatus - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleInfo.mak CFG="ApacheModuleInfo - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleAuthAnon.mak CFG="ApacheModuleAuthAnon - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleDigest.mak CFG="ApacheModuleDigest - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleCERNMeta.mak CFG="ApacheModuleCERNMeta - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleExpires.mak CFG="ApacheModuleExpires - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleHeaders.mak CFG="ApacheModuleHeaders - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleSpeling.mak CFG="ApacheModuleSpeling - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleUserTrack.mak CFG="ApacheModuleUserTrack - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleRewrite.mak CFG="ApacheModuleRewrite - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleAuthDigest.mak CFG="ApacheModuleAuthDigest - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleAuthDBM.mak CFG="ApacheModuleAuthDBM - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	cd ..\..
-	cd modules\proxy
-	 $(MAKE) $(MAKEOPT) -f ApacheModuleProxy.mak CFG="ApacheModuleProxy - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_status.mak CFG="mod_status - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_info.mak CFG="mod_info - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_auth_anon.mak CFG="mod_auth_anon - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_digest.mak CFG="mod_digest - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_cern_meta.mak CFG="mod_cern_meta - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_expires.mak CFG="mod_expires - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_headers.mak CFG="mod_headers - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_speling.mak CFG="mod_speling - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_usertrack.mak CFG="mod_usertrack - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_rewrite.mak CFG="mod_rewrite - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_auth_digest.mak CFG="mod_auth_digest - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_auth_dbm.mak CFG="mod_auth_dbm - Win32 $(LONG)" RECURSE=0 $(CTARGET)
+	 $(MAKE) $(MAKEOPT) -f mod_proxy.mak CFG="mod_proxy - Win32 $(LONG)" RECURSE=0 $(CTARGET)
 	cd ..\..
 
 _install:
-	-mkdir $(INSTDIR)
-	-mkdir $(INSTDIR)\modules
-	-mkdir $(INSTDIR)\logs
-	-mkdir $(INSTDIR)\conf
-	-mkdir $(INSTDIR)\bin
-	copy Apache$(SHORT)\Apache.exe $(INSTDIR)
-	copy Core$(SHORT)\ApacheCore.dll $(INSTDIR)
-	copy lib\expat-lite\$(LONG)\xmltok.dll $(INSTDIR)
-	copy lib\expat-lite\$(LONG)\xmlparse.dll $(INSTDIR)
-	copy os\win32\ApacheModuleStatus$(SHORT)\ApacheModuleStatus.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleInfo$(SHORT)\ApacheModuleInfo.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleAuthAnon$(SHORT)\ApacheModuleAuthAnon.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleDigest$(SHORT)\ApacheModuleDigest.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleCERNMeta$(SHORT)\ApacheModuleCERNMeta.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleExpires$(SHORT)\ApacheModuleExpires.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleHeaders$(SHORT)\ApacheModuleHeaders.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleRewrite$(SHORT)\ApacheModuleRewrite.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleSpeling$(SHORT)\ApacheModuleSpeling.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleUserTrack$(SHORT)\ApacheModuleUserTrack.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleAuthDigest$(SHORT)\ApacheModuleAuthDigest.dll $(INSTDIR)\modules
-	copy os\win32\ApacheModuleAuthDBM$(SHORT)\ApacheModuleAuthDBM.dll $(INSTDIR)\modules
-	copy modules\proxy\$(LONG)\ApacheModuleProxy.dll $(INSTDIR)\modules
-	copy support\$(LONG)\htpasswd.exe $(INSTDIR)\bin
-	copy support\$(LONG)\htdigest.exe $(INSTDIR)\bin
-	copy support\$(LONG)\logresolve.exe $(INSTDIR)\bin
-	copy support\$(LONG)\rotatelogs.exe $(INSTDIR)\bin
-        copy support\dbmmanage $(INSTDIR)\bin\dbmmanage.pl
-
-_installdll:
- 	cd os\win32\installer\installdll
-	 $(MAKE) $(MAKEOPT) -f install.mak CFG="install - Win32 $(LONG)" RECURSE=0 $(CTARGET)
-	cd ..\..\..
+	-mkdir "$(INSTDIR)"
+	-mkdir "$(INSTDIR)\bin"
+	-mkdir "$(INSTDIR)\cgi-bin"
+	-mkdir "$(INSTDIR)\conf"
+        -mkdir "$(INSTDIR)\htdocs"
+        -mkdir "$(INSTDIR)\icons"
+        -mkdir "$(INSTDIR)\include"
+        -mkdir "$(INSTDIR)\include\regex"
+        -mkdir "$(INSTDIR)\include\sdbm"
+        -mkdir "$(INSTDIR)\include\xml"
+	-mkdir "$(INSTDIR)\lib"
+	-mkdir "$(INSTDIR)\libexec"
+	-mkdir "$(INSTDIR)\logs"
+	-mkdir "$(INSTDIR)\modules"
+	-mkdir "$(INSTDIR)\proxy"
+	copy $(LONG)\Apache.exe "$(INSTDIR)"
+	copy $(LONG)\ApacheCore.dll "$(INSTDIR)"
+	copy os\win32\$(LONG)\Win9xConHook.dll "$(INSTDIR)"
+	copy lib\expat-lite\$(LONG)\xmltok.dll "$(INSTDIR)"
+	copy lib\expat-lite\$(LONG)\xmlparse.dll "$(INSTDIR)"
+	copy os\win32\$(LONG)\mod_status.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_info.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_auth_anon.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_digest.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_cern_meta.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_expires.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_headers.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_rewrite.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_speling.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_usertrack.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_auth_digest.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_auth_dbm.so "$(INSTDIR)\modules"
+	copy os\win32\$(LONG)\mod_proxy.so "$(INSTDIR)\modules"
+	copy support\$(LONG)\htpasswd.exe "$(INSTDIR)\bin"
+	copy support\$(LONG)\htdigest.exe "$(INSTDIR)\bin"
+	copy support\$(LONG)\logresolve.exe "$(INSTDIR)\bin"
+	copy support\$(LONG)\rotatelogs.exe "$(INSTDIR)\bin"
+	copy ..\cgi-bin\printenv "$(INSTDIR)\cgi-bin\printenv.pl"
+        -xcopy ..\htdocs "$(INSTDIR)\htdocs" /s /d < <<
+A
+<<
+	xcopy include\*.h "$(INSTDIR)\include" /d < <<
+A
+<<
+	xcopy os\win32\*.h "$(INSTDIR)\include" /d < <<
+A
+<<
+	xcopy regex\*.h "$(INSTDIR)\include\regex" /d < <<
+A
+<<
+	xcopy lib\sdbm\*.h "$(INSTDIR)\include\sdbm" /d < <<
+A
+<<
+	xcopy lib\expat-lite\*.h "$(INSTDIR)\include\xml" /d < <<
+A
+<<
+        -xcopy ..\icons "$(INSTDIR)\icons" /s /d < <<
+A
+<<
+	copy ap\Lib$(SHORT)\ap.lib "$(INSTDIR)\lib"
+	copy os\win32\Lib$(SHORT)\ApacheOS.lib "$(INSTDIR)\lib"
+	copy regex\Lib$(SHORT)\regex.lib "$(INSTDIR)\lib"
+	copy lib\sdbm\Lib$(SHORT)\sdbm.lib "$(INSTDIR)\lib"
+	copy $(LONG)\ApacheCore.exp "$(INSTDIR)\libexec"
+	copy $(LONG)\ApacheCore.lib "$(INSTDIR)\libexec"
+	copy os\win32\$(LONG)\Win9xConHook.exp "$(INSTDIR)\libexec"
+	copy os\win32\$(LONG)\Win9xConHook.lib "$(INSTDIR)\libexec"
+	copy lib\expat-lite\$(LONG)\xmltok.exp "$(INSTDIR)\libexec"
+	copy lib\expat-lite\$(LONG)\xmltok.lib "$(INSTDIR)\libexec"
+	copy lib\expat-lite\$(LONG)\xmlparse.exp "$(INSTDIR)\libexec"
+	copy lib\expat-lite\$(LONG)\xmlparse.lib "$(INSTDIR)\libexec"
+        copy ..\conf\magic "$(INSTDIR)\conf\magic.default"
+        if not exist "$(INSTDIR)\conf\magic" \
+            copy "$(INSTDIR)\conf\magic.default" "$(INSTDIR)\conf\magic"
+        copy ..\conf\mime.types "$(INSTDIR)\conf\mime.types.default"
+        if not exist "$(INSTDIR)\conf\mime.types" \
+            copy "$(INSTDIR)\conf\mime.types.default" "$(INSTDIR)\conf\mime.types"
+	copy ..\conf\access.conf-dist "$(INSTDIR)\conf\access.default.conf"
+	if not exist "$(INSTDIR)\conf\access.conf" \
+            copy "$(INSTDIR)\conf\access.default.conf" "$(INSTDIR)\conf\access.conf"
+	copy ..\conf\srm.conf-dist "$(INSTDIR)\conf\srm.default.conf"
+	if not exist "$(INSTDIR)\conf\srm.conf" \
+            copy "$(INSTDIR)\conf\srm.default.conf" "$(INSTDIR)\conf\srm.conf"
+	awk -f <<script.awk "..\conf\httpd.conf-dist-win" "$(INSTDIR)\conf\httpd.default.conf" "$(INSTDIR)"
+    BEGIN { 
+        srcfl = ARGV[1];
+        dstfl = ARGV[2];
+        serverroot = ARGV[3];
+        gsub( /\\/, "/", serverroot );
+        while ( ( getline < srcfl ) > 0 ) {
+            gsub( /@@ServerRoot@@/, serverroot );
+            print $$0 > dstfl;
+        }
+    }
+<<
+	if not exist "$(INSTDIR)\conf\httpd.conf" \
+            copy "$(INSTDIR)\conf\httpd.default.conf" "$(INSTDIR)\conf\httpd.conf" 
+	awk -f <<script.awk "support\dbmmanage" >"$(INSTDIR)\bin\dbmmanage.pl"
+    { if ( $$0 !~ /^#.*-lsdbm/) {
+          gsub( /AnyDBM_File::ISA = qw\(.*\)/, "AnyDBM_File::ISA = qw(SDBM_File)" ); 
+      } 
+      print $$0;
+    }
+<<

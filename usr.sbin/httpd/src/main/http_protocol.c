@@ -1,5 +1,8 @@
 /* ====================================================================
- * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,46 +16,44 @@
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 /*
@@ -140,48 +141,139 @@ static const char *make_content_type(request_rec *r, const char *type) {
     return type;
 }
 
-static int parse_byterange(char *range, long clength, long *start, long *end)
+enum byterange_token {
+    BYTERANGE_OK,
+    BYTERANGE_EMPTY,
+    BYTERANGE_BADSYNTAX,
+    BYTERANGE_UNSATISFIABLE
+};
+
+static enum byterange_token
+    parse_byterange(request_rec *r, long *start, long *end)
 {
-    char *dash = strchr(range, '-');
+    /* parsing first, semantics later */
 
-    if (!dash)
-        return 0;
+    while (ap_isspace(*r->range))
+        ++r->range;
 
-    if ((dash == range)) {
-        /* In the form "-5" */
-        *start = clength - atol(dash + 1);
-        *end = clength - 1;
+    /* check for an empty range, which is OK */
+    if (*r->range == '\0') {
+	return BYTERANGE_EMPTY;
+    }
+    else if (*r->range == ',') {
+	++r->range;
+	return BYTERANGE_EMPTY;
+    }
+
+    if (ap_isdigit(*r->range))
+	*start = strtol(r->range, (char **)&r->range, 10);
+    else
+	*start = -1;
+
+    while (ap_isspace(*r->range))
+        ++r->range;
+
+    if (*r->range != '-')
+	return BYTERANGE_BADSYNTAX;
+    ++r->range;
+
+    while (ap_isspace(*r->range))
+        ++r->range;
+
+    if (ap_isdigit(*r->range))
+	*end = strtol(r->range, (char **)&r->range, 10);
+    else
+	*end = -1;
+
+    while (ap_isspace(*r->range))
+        ++r->range;
+
+    /* check the end of the range */
+    if (*r->range == ',') {
+	++r->range;
+    }
+    else if (*r->range != '\0') {
+	return BYTERANGE_BADSYNTAX;
+    }
+
+    /* parsing done; now check the numbers */
+
+    if (*start < 0) { /* suffix-byte-range-spec */
+	if (*end < 0) /* no numbers */
+	    return BYTERANGE_BADSYNTAX;
+	*start = r->clength - *end;
+	if (*start < 0)
+	    *start = 0;
+	*end = r->clength - 1;
     }
     else {
-        *dash = '\0';
-        dash++;
-        *start = atol(range);
-        if (*dash)
-            *end = atol(dash);
-        else                    /* "5-" */
-            *end = clength - 1;
+	if (*end >= 0 && *start > *end) /* out-of-order range */
+	    return BYTERANGE_BADSYNTAX;
+	if (*end < 0 || *end >= r->clength)
+	    *end = r->clength - 1;
     }
+    /* RFC 2616 is somewhat unclear about what we should do if the end
+     * is missing and the start is after the clength. The robustness
+     * principle says we should accept it as an unsatisfiable range.
+     * We accept suffix-byte-range-specs like -0 for the same reason.
+     */
+    if (*start >= r->clength)
+	return BYTERANGE_UNSATISFIABLE;
 
-    if (*start < 0)
-	*start = 0;
-
-    if (*end >= clength)
-        *end = clength - 1;
-
-    if (*start > *end)
-	return 0;
-
-    return (*start > 0 || *end < clength - 1);
+    return BYTERANGE_OK;
 }
 
-static int internal_byterange(int, long *, request_rec *, const char **, long *,
-                              long *);
+/* If this function is called with output=1, it will spit out the
+ * correct headers for a byterange chunk. If output=0 it will not
+ * output anything but just return the number of bytes it would have
+ * output. If start or end are less than 0 then it will do a byterange
+ * chunk trailer instead of a header.
+ */
+static int byterange_boundary(request_rec *r, long start, long end, int output)
+{
+    int length = 0;
+
+#ifdef CHARSET_EBCDIC
+    /* determine current setting of conversion flag,
+     * set to ON (protocol strings MUST be converted)
+     * and reset to original setting before returning
+     */
+    PUSH_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client, 1);
+#endif /*CHARSET_EBCDIC*/
+
+    if (start < 0 || end < 0) {
+	if (output)
+	    ap_rvputs(r, CRLF "--", r->boundary, "--" CRLF, NULL);
+	else
+	    length = 4 + strlen(r->boundary) + 4;
+    }
+    else {
+	const char *ct = make_content_type(r, r->content_type);
+	char ts[MAX_STRING_LEN];
+
+	ap_snprintf(ts, sizeof(ts), "%ld-%ld/%ld", start, end, r->clength);
+	if (output)
+	    ap_rvputs(r, CRLF "--", r->boundary, CRLF "Content-type: ",
+		      ct, CRLF "Content-range: bytes ", ts, CRLF CRLF,
+		      NULL);
+	else
+	    length = 4 + strlen(r->boundary) + 16
+		+ strlen(ct) + 23 + strlen(ts) + 4;
+    }
+
+#ifdef CHARSET_EBCDIC
+    POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client);
+#endif /*CHARSET_EBCDIC*/
+
+    return length;
+}
 
 API_EXPORT(int) ap_set_byterange(request_rec *r)
 {
     const char *range, *if_range, *match;
-    long range_start, range_end;
-
+    long length, start, end, one_start = 0, one_end = 0;
+    int ranges, empty;
+    
     if (!r->clength || r->assbackwards)
         return 0;
 
@@ -201,6 +293,7 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
     if (!range || strncasecmp(range, "bytes=", 6)) {
         return 0;
     }
+    range += 6;
 
     /* Check the If-Range header for Etag or Date.
      * Note that this check will return false (as required) if either
@@ -217,127 +310,100 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
             return 0;
     }
 
-    if (!strchr(range, ',')) {
-        /* A single range */
-        if (!parse_byterange(ap_pstrdup(r->pool, range + 6), r->clength,
-                             &range_start, &range_end))
-            return 0;
+    /*
+     * Parse the byteranges, counting how many of them there are and
+     * the total number of bytes we will send to the client. This is a
+     * dummy run for the while(ap_each_byterange()) loop that the
+     * caller will perform if we return 1.
+     */
+    r->range = range;
+    r->boundary = ap_psprintf(r->pool, "%lx%lx",
+			      r->request_time, (long) getpid());
+    length = 0;
+    ranges = 0;
+    empty = 1;
+    do {
+	switch (parse_byterange(r, &start, &end)) {
+	case BYTERANGE_UNSATISFIABLE:
+	    empty = 0;
+	    break;
+	default:
+	    /* be more defensive here? */
+	case BYTERANGE_BADSYNTAX:
+	    r->boundary = NULL;
+	    r->range = NULL;
+	    return 0;
+	case BYTERANGE_EMPTY:
+	    break;
+	case BYTERANGE_OK:
+	    ++ranges;
+	    length += byterange_boundary(r, start, end, 0)
+		+ end - start + 1;
+	    /* save in case of unsatisfiable ranges */
+	    one_start = start;
+	    one_end = end;
+	    break;
+	}
+    } while (*r->range != '\0');
 
-        r->byterange = 1;
-
+    if (ranges == 0) {
+	/* no ranges or only unsatisfiable ranges */
+	if (empty || if_range) {
+	    r->boundary = NULL;
+	    r->range = NULL;
+	    return 0;
+	}
+	else {
+	    ap_table_setn(r->headers_out, "Content-Range",
+		ap_psprintf(r->pool, "bytes */%ld", r->clength));
+	    r->boundary = NULL;
+	    r->range = range;
+	    r->header_only = 1;
+	    r->status = HTTP_RANGE_NOT_SATISFIABLE;
+	    return 1;
+	}
+    }
+    else if (ranges == 1) {
+	/* simple handling of a single range -- no boundaries */
         ap_table_setn(r->headers_out, "Content-Range",
 	    ap_psprintf(r->pool, "bytes %ld-%ld/%ld",
-		range_start, range_end, r->clength));
-        ap_table_setn(r->headers_out, "Content-Length",
-	    ap_psprintf(r->pool, "%ld", range_end - range_start + 1));
+		one_start, one_end, r->clength));
+	ap_table_setn(r->headers_out, "Content-Length",
+	    ap_psprintf(r->pool, "%ld", one_end - one_start + 1));
+	r->boundary = NULL;
+	r->byterange = 1;
+	r->range = range;
+	r->status = PARTIAL_CONTENT;
+	return 1;
     }
     else {
-        /* a multiple range */
-        const char *r_range = ap_pstrdup(r->pool, range + 6);
-        long tlength = 0;
-	int ret;
-	
-        r->boundary = ap_psprintf(r->pool, "%lx%lx",
-				r->request_time, (long) getpid());
-        do {
-	    /* Loop while we have another range spec to process */
-	    ret = internal_byterange(0, &tlength, r, &r_range, NULL, NULL);
-	} while (ret == 1);
-	/* If an error occured processing one of the range specs, we
-	 * must fail */
-	if (ret < 0)
-	    return 0;
-        ap_table_setn(r->headers_out, "Content-Length",
-	    ap_psprintf(r->pool, "%ld", tlength));
-        r->byterange = 2;
+	/* multiple ranges */
+	length += byterange_boundary(r, -1, -1, 0);
+	ap_table_setn(r->headers_out, "Content-Length",
+	    ap_psprintf(r->pool, "%ld", length));
+	r->byterange = 2;
+	r->range = range;
+	r->status = PARTIAL_CONTENT;
+	return 1;
     }
-
-    r->status = PARTIAL_CONTENT;
-    r->range = range + 6;
-
-    return 1;
 }
 
 API_EXPORT(int) ap_each_byterange(request_rec *r, long *offset, long *length)
 {
-    return internal_byterange(1, NULL, r, &r->range, offset, length);
-}
+    long start, end;
 
-/* If this function is called with realreq=1, it will spit out
- * the correct headers for a byterange chunk, and set offset and
- * length to the positions they should be.
- *
- * If it is called with realreq=0, it will add to tlength the length
- * it *would* have used with realreq=1.
- *
- * Either case will return 1 if it should be called again, 0 when done,
- * or -1 if an error occurs AND realreq=0.
- */
-static int internal_byterange(int realreq, long *tlength, request_rec *r,
-                              const char **r_range, long *offset, long *length)
-{
-    long range_start, range_end;
-    char *range;
-#ifdef CHARSET_EBCDIC
-    /* determine current setting of conversion flag,
-     * set to ON (protocol strings MUST be converted)
-     * and reset to original setting before returning
-     */
-    PUSH_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client, 1);
-#endif /*CHARSET_EBCDIC*/
-
-    if (!**r_range) {
-        if (r->byterange > 1) {
-            if (realreq)
-                ap_rvputs(r, CRLF "--", r->boundary, "--" CRLF, NULL);
-            else
-                *tlength += 4 + strlen(r->boundary) + 4;
-        }
-#ifdef CHARSET_EBCDIC
-        POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client);
-#endif /*CHARSET_EBCDIC*/
-        return 0;
-    }
-
-    range = ap_getword(r->pool, r_range, ',');
-    if (!parse_byterange(range, r->clength, &range_start, &range_end)) {
-#ifdef CHARSET_EBCDIC
-        POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client);
-#endif /*CHARSET_EBCDIC*/
-	if (!realreq)
-	    /* Return error on invalid syntax */
-	    return -1;
-	else
-	    /* Should never get here */
-	    return 0;
-    }
-
-    if (r->byterange > 1) {
-        const char *ct = make_content_type(r, r->content_type);
-        char ts[MAX_STRING_LEN];
-
-        ap_snprintf(ts, sizeof(ts), "%ld-%ld/%ld", range_start, range_end,
-                    r->clength);
-        if (realreq)
-            ap_rvputs(r, CRLF "--", r->boundary, CRLF "Content-type: ",
-                   ct, CRLF "Content-range: bytes ", ts, CRLF CRLF,
-                   NULL);
-        else
-            *tlength += 4 + strlen(r->boundary) + 16 + strlen(ct) + 23 +
-                        strlen(ts) + 4;
-    }
-
-    if (realreq) {
-        *offset = range_start;
-        *length = range_end - range_start + 1;
-    }
-    else {
-        *tlength += range_end - range_start + 1;
-    }
-#ifdef CHARSET_EBCDIC
-    POP_EBCDIC_OUTPUTCONVERSION_STATE(r->connection->client);
-#endif /*CHARSET_EBCDIC*/
-    return 1;
+    do {
+	if (parse_byterange(r, &start, &end) == BYTERANGE_OK) {
+	    if (r->byterange > 1)
+		byterange_boundary(r, start, end, 1);
+	    *offset = start;
+	    *length = end - start + 1;
+	    return 1;
+	}
+    } while (*r->range != '\0');
+    if (r->byterange > 1)
+	byterange_boundary(r, -1, -1, 1);
+    return 0;
 }
 
 API_EXPORT(int) ap_set_content_length(request_rec *r, long clength)
@@ -1119,13 +1185,20 @@ request_rec *ap_read_request(conn_rec *conn)
         r->status = HTTP_BAD_REQUEST;
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
                       "client sent HTTP/1.1 request without hostname "
-                      "(see RFC2068 section 9, and 14.23): %s", r->uri);
+                      "(see RFC2616 section 14.23): %s", r->uri);
     }
     if (r->status != HTTP_OK) {
         ap_send_error_response(r, 0);
         ap_log_transaction(r);
         return r;
     }
+
+    if ((access_status = ap_run_post_read_request(r))) {
+        ap_die(access_status, r);
+        ap_log_transaction(r);
+        return NULL;
+    }
+
     if (((expect = ap_table_get(r->headers_in, "Expect")) != NULL) &&
         (expect[0] != '\0')) {
         /*
@@ -1147,12 +1220,6 @@ request_rec *ap_read_request(conn_rec *conn)
             ap_log_transaction(r);
             return r;
         }
-    }
-
-    if ((access_status = ap_run_post_read_request(r))) {
-        ap_die(access_status, r);
-        ap_log_transaction(r);
-        return NULL;
     }
 
     return r;

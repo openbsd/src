@@ -33,6 +33,8 @@
 
  <P>
  The port was started initially to
+ </P>
+
   <UL>
   <LI> prove the feasibility of porting
        <A HREF="http://dev.apache.org/">the Apache HTTP server</A>
@@ -44,7 +46,6 @@
        easily outperform the accept-fork-serve model used by CERN by a
        factor of 5 or more.
   </UL>
- </P>
 
  <P>
   This document serves as a rationale to describe some of the design
@@ -75,6 +76,8 @@
   time, so a BUFF flag was added which defines whether a BUFF object
   has currently enabled conversion or not. This flag is modified at
   several points in the HTTP protocol:
+ </P>
+
   <UL>
    <LI><STRONG>set</STRONG> before a request is received (because the
        request and the request header lines are always in ASCII
@@ -91,10 +94,9 @@
        sent - depending on the content type of the response body
        (because the response body may contain text or a binary file)
   </UL>
- </P>
 
 <H2 ALIGN=CENTER>Porting Notes</H2>
- <P>
+
   <OL>
    <LI>
    The relevant changes in the source are #ifdef'ed into two
@@ -111,8 +113,9 @@
 	mainframe platform only. This deals with include file
 	differences and socket implementation topics which are
 	only required on the BS2000/OSD platform.
+   <BR>
    </DL>
-   </LI><BR>
+   </LI>
 
    <LI>
     The possibility to translate between ASCII and EBCDIC at the
@@ -131,7 +134,8 @@
     therefore be inadequate.<BR>
     (In the case of text files of course, provisions must be made so
     that EBCDIC documents are always served in ASCII)
-   </LI><BR>
+   <BR>
+   </LI>
 
    <LI>
     This port therefore features a built-in protocol level conversion
@@ -143,7 +147,8 @@
     not be converted to ASCII a second time. This exception is
     only relevant for server-generated strings; and <EM>external</EM>
     EBCDIC documents are not expected to contain ASCII newline characters.
-   </LI><BR>
+   <BR>
+   </LI>
 
    <LI>
     By examining the call hierarchy for the BUFF management
@@ -163,7 +168,8 @@
     based on the type of document being served, whether the
     document body (except for the chunking information, of
     course) is in ASCII already or must be converted from EBCDIC.
-   </LI><BR>
+   <BR>
+   </LI>
 
    <LI>
     For Text documents (MIME types text/plain, text/html <EM>etc.</EM>),
@@ -181,20 +187,23 @@
       </PRE></BLOCKQUOTE>
     Similarly, any text/XXXX MIME type can be served as "raw ASCII" by
     configuring a MIME type "text/x-ascii-XXXX" for it using AddType.
-   </LI><BR>
+   <BR>
+   </LI>
 
    <LI>
     Non-text documents are always served "binary" without conversion.
     This seems to be the most sensible choice for, .<EM>e.g.</EM>, GIF/ZIP/AU
     file types. This of course requires the user to copy them to the
     mainframe host using the "rcp -b" binary switch.
-   </LI><BR>
+   <BR>
+   </LI>
 
    <LI>
     Server parsed files are always assumed to be in native (<EM>i.e.</EM>,
     EBCDIC) format as used on the machine, and are converted after
     processing.
-   </LI><BR>
+   <BR>
+   </LI>
 
    <LI>
     For CGI output, the CGI script determines whether a conversion is
@@ -202,9 +211,9 @@
     can be converted, or GIF output can be passed through unmodified.
     An example for the latter case is the wwwcount program which we ported
     as well.
-   </LI><BR>
+   <BR>
+   </LI>
   </OL>
- </P>
 
  <H2 ALIGN=CENTER>Document Storage Notes</H2>
   <H3 ALIGN=CENTER>Binary Files</H3>
@@ -238,7 +247,7 @@
    </P>
 
  <H2 ALIGN=CENTER>Apache Modules' Status</H2>
- <TABLE BORDER ALIGN=middle>
+ <TABLE BORDER="1" ALIGN="middle">
   <TR>
    <TH>Module
    <TH>Status
@@ -463,7 +472,7 @@
  </TABLE>
 
  <H2 ALIGN=CENTER>Third Party Modules' Status</H2>
- <TABLE BORDER ALIGN=middle>
+ <TABLE BORDER="1" ALIGN="middle">
   <TR>
    <TH>Module
    <TH>Status

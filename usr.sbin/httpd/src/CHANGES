@@ -1,3 +1,292 @@
+Changes with Apache 1.3.19
+
+  *) Rewrite ap_unparse_uri_components() to make it safer and more readable
+     ["Jeffrey W. Baker" <jwbaker@acm.org>]
+
+  *) Under certain circumstances, Apache did not supply the
+     right response headers when requiring authentication.
+     [Gertjan van Wingerde <Gertjan.van.Wingerde@cmg.nl>] PR#7114
+
+  *) Clean up some end-of-loop not reached warnings [Jim Jagielski,
+     Aris Stathakis <aris@sco.COM>]
+
+  *) Add the correct language tag for interoperation with the Taiwanese
+     versions of MSIE and Netscape. [Clive Lin <clive@CirX.ORG>] PR#7142
+
+  *) Fixed system shutdown on Windows 2000 to assure that the modules have
+     an opportunity to clean up.  Note there is a _very_ limited amount of
+     time in which to execute all cleanups [see MSKB Q146092] so all of
+     the modules may still not be given an opportunity to complete their
+     cleanups if they require more than 20 seconds total.  [William Rowe]
+
+Changes with Apache 1.3.18 [not released]
+
+  *) Workaround enabled for a core dump which appeared in broken
+     NameVirtualHost configurations. [Martin Kraemer]
+
+  *) Sporadic core dump in ap_default_port_for_scheme() with
+     internal requests fixed by [Jeffrey W. Baker <jwbaker@acm.org>]
+
+  *) PORT: Allow for build under latest dev. version of NonStopUX
+     on Compaq. [Tom Bates <tom.bates@compaq.com>]
+
+  *) mod_user on Win32 bug introduced in 1.3.17 is corrected.  The parsing
+     is completely rewritten so all platforms share the same file/redirect
+     logic interpreting UserDir directives.  Specifying a Win32 or Netware
+     relative path or a relative path on any platform using an '*' now
+     emits an error when httpd.conf is first parsed.  [William Rowe]
+
+  *) Apache/Win32 no longer holds open the console on error, unless invoked
+     by a shortcut with the new -w option.  [William Rowe]
+
+  *) The Win32 -t test config now holds the console open on "SYNTAX OK".
+     [William Rowe]
+
+  *) Apache on Win9x now ensures the service is stopped before removal.
+     [William Rowe]
+
+  *) SECURITY: The default installation could lead to mod_negotiation
+     and mod_dir/mod_autoindex displaying a directory listing instead of
+     the index.html.* files, if a very long path was created artificially
+     by using many slashes. Now a 403 FORBIDDEN is returned.
+     [Martin Kraemer]
+     
+  *) Trailing slashes (if they exist) are now removed from ServerRoot,
+     because there were known problems with them.
+     ["William A. Rowe, Jr." <wrowe@rowe-clan.net>]
+
+  *) Changed ap_os_is_filename_valid on NetWare to accept 
+     SERVER/VOLUME:/PATH/FILE as a valid filename pattern. 
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Win32/Netware: correct relative paths and eliminate trailing slash
+     in the -d serverroot argument.  -d Serverroot may be relative to 
+     the path of the Apache.exe file.  [William Rowe]
+
+  *) Win32; fix the ServerRoot as the path of the Apache.exe file.
+     Eliminates the requirement of a 'backup' registry key to locate
+     the server root.  [William Rowe]
+
+  *) NetWare MOD_TLS fixes to disable nagles properly when making an SSL
+     connection, and properly detect an SSL connection based on the port
+     and work around the r->server->port 80 bug.  
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) TPF startup/shutdown fixes. [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) Correct a typo in httpd.conf.
+     [Kunihiro Tanaka <tanaka@apache.or.jp>] PR#7154 
+
+  *) Get the correct IP address if ServerName isn't set and we can't
+     find a fully-qualified domain name at startup.
+     [Danek Duvall <dduvall@eng.sun.com>] PR#7170
+
+  *) Fix pointer arithmetic in mod_rewrite map expansion.
+     [Christopher A. Bongaarts <cab@tc.umn.edu>] PR#7157, 7158
+
+  *) Fixed a problem with file extensions being truncated during
+     the call to ap_os_canonical_filename().
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+Changes with Apache 1.3.17
+
+  *) Normalize the Netware path names to close a potential security
+     hole in comparing paths when the adminstrator specifies both
+     sys:foo and sys:/foo formats in the same httpd.conf file.
+     [Brad Nicholes]
+
+  *) Fix an unlikely segfault provided a zero length string in the
+     translate_userdir() call on win32/os2, and accept backslashes
+     in the UserDir directive on those platforms [William Rowe]
+
+  *) Fixed translate_userdir() in MOD_USERDIR.C so that it correctly
+     recognizes NetWare absolute paths.  This fixes the problem where
+     MOD_USERDIR was trying to redirect to an absolute NetWare path
+     rather than opening the file at the specified location.  This 
+     patch fixes PR5826 & 6283. [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Fixed ap_os_is_path_absolute() in OS.H so that it can tell the
+     between a NetWare path (SYS:/path) and a URL (HTTP://path).
+     [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Fixed the sdbm.h bundled in Apache for Win32, bringing it in sync
+     with Perl.  Because it didn't have the same geometry as Perl, 
+     users reported the first user added with dbmmanage was not 
+     recognized.  [William Rowe]
+
+  *) Fixed ap_os_canonical_filename to append a the default volume 
+     name if the the path is a full path and does not include the
+     volume name.  Since NetWare's current working directory always 
+     defaults to the SYS: volume regardless of where the executible 
+     started, the default volume will be the volume that is specified 
+     in ap_server_root.  [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Handle port numbers in Host headers properly again after
+     the code was broken in 1.3.15. [Tony Finch]
+
+Changes with Apache 1.3.16 [not released]
+
+  *) None from 1.3.15 [repository tags were the issue, no code altered]
+
+Changes with Apache 1.3.15 [not released]
+
+  *) Fix a new problem introduced with the -k config syntax, that the
+     service installed with the -i flag would attempt to re-install
+     itself when starting the server.  [William Rowe, Andrew Braund]
+
+  *) Fix the declaration of the module structure in mod_example.
+     [Gururaj Upadhye <gururaj@enertec.com>] PR#7095
+
+  *) Fix the handling of variable expansion look-ahead in mod_rewrite,
+     i.e. syntax like %{LA-U:REMOTE_USER}, and also fix the parsing of
+     more complicated nested RewriteMap lookups. [Tony Finch] PR#7087
+
+  *) Fix the RFC number mentioned when complaining about a missing
+     Host: header. [Alexey Toptygin <alexeyt@wam.umd.edu>] PR#7079
+
+  *) Fix Range header processing to properly parse the syntax specified
+     in RFC 2616, and properly handle unsatisfiable requests by returning
+     a 416 error. [Tony Finch, William Rowe] PR#6973
+
+  *) Remove some human-readable fluff from the machine-readable mod_status
+     display. [Youichirou Koga <y-koga@apache.or.jp>] PR#7025
+
+  *) The new Win32 command line option, -k config, replaces the default
+     options for the existing, named service with the options given on 
+     the -k config command line.  Apache -n servicename -t now displays
+     the default options before it tests the httpd.conf.  Use the syntax
+     apache -k config -n servicename -f conffile to upgrade an existing
+     1.3.x service to the new 1.3.15 default arguments.  [William Rowe]
+
+  *) All Win32 services now support default command line options when
+     starting an Apache service.  The command line options given with
+     the apache -k install command, including -d, -f, -D, -C and -c, 
+     are all saved in the registry.  This change superceeds the old
+     ConfPath entry, so existing services must be reconfigured when
+     upgrading to 1.3.15.  [William Rowe]
+
+  *) The Win32 build is overhauled to use mod_foo.so for all dynamic
+     Apache modules.  [William Rowe]
+
+  *) The Win32 build scripts (makefile.win, Apache.dsw) now build
+     all the usual targets, including the directories htdocs, include,
+     lib, libexec, and cgi-bin.  [William Rowe]
+
+  *) WinNT/2K service can be started from the command line with any
+     desired args (e.g. Apache -k start -n apache-1.3 -D FOO will
+     start the service with the -D FOO option.)  This extends what
+     Apache on Win9x already does, even running as a service.
+     [William Rowe]
+
+  *) WinNT/2K can be started from the Services control panel adding
+     whatever args are desired (e.g. -D ARG) in the 'Start Parameters'
+     box of the start service dialog.  These will be passed on and
+     recognized by the service as it starts.  [William Rowe]
+
+  *) Support -k install/-k uninstall on Win32 for compatibility with 
+     Apache 2.0.  [William Rowe]
+
+  *) mod_cgi on Win32 and Netware now does a more effective job of
+     capturing all stderr output from user's scripts.  PR6161
+     [Hardy Braunsdorf <hardy.braunsdorf@metechnology.com>, Will Rowe]
+
+  *) mod_status now respects ?refresh=n of 1 or greater.  If the given
+     refresh value is not a number, ?refresh is set to 1 second.
+     [William Rowe, Dirk Ahlers <there@darkride.net> PR5067]
+
+  *) Restore child process consoles to correct 16-bit CGI execution
+     on Windows.  Relies on Win9xConHook.dll for Win9x.  This patch
+     also assures the Apache window remains titled 'Apache', rather
+     than flickering to the cgi app titles.  [William Rowe]
+
+  *) Added Win9xConHook.dll, which uses hidden console spy windows to 
+     handle the shutdown, logoff and Close button events, and dispatch
+     them to Apache just as SetConsoleCtrlHandler does on Win NT/2K.
+     The close button on Win9x now works, and the Win9x service support
+     code moved into this module.  [William Rowe]
+
+  *) Fix messages from the -k start/stop/restart command options on
+     Windows.  [William Rowe]
+
+  *) Allow Win32 users to build mod_isapi, regardless of the age of
+     their Win32 SDK headers.  Warning provided if features must be
+     disabled due to old headers.  [William Rowe]
+
+  *) The ScriptInterpreterSource Registry source will now handle any
+     post-scriptname arguments (e.g. cmd script -q), substitute any
+     environment variables (e.g. "%windir%\sysapp.exe") and use the
+     short or long path name as appropriate (e.g. "doit %1" uses the
+     short form, no spaces, while "doit "%1"" uses the long form of
+     the script name, in quotes.)  Also, passes all script names in
+     backslash delimited format (instead of slashes).  [William Rowe]
+
+  *) Accomodate an out-of-space condition in the piped logs and the
+     rotatelogs.c code, and no longer churn log processes for this
+     condition.  [Victor J. Orlikowski]
+
+  *) Make cgi-bin work as a regular directory when using mod_vhost_alias
+     with no VirtualScriptAlias directives. [Tony Finch] PR#6829
+
+  *) Move the check of the Expect request header field after the hook
+     for ap_post_read_request, since that is the only opportunity for
+     modules to handle Expect extensions.
+     [Justin Erenkrantz <jerenkrantz@eBuilt.com>]
+
+  *) Add default CacheGcInterval of one hour [ Chuck Murcko ]
+
+  *) Each Netware thread is created in its own thread group to ensure 
+     that any context change applies only to the thread in which the 
+     change was made.  [Brad Nicholes <BNICHOLES@novell.com>]
+
+  *) Relax the syntax checking of Host: headers in order to support
+     iDNS. [Tony Finch] PR#6635
+
+  *) Fix Content-Length calculation when doing Range header processing.
+     This makes PDF byteserving work again. [Tony Finch] PR#6711
+
+  *) Link with libresolv on UnixWare 7 so that PHP works.
+     [Larry Rosenman <ler@lerctr.org>] PR#6780
+
+  *) Linux 2.2.x and later do not need a serialised single listener,
+     and sysv semaphores scale better than fcntl.  Updated GuessOS
+     to distinguish 2.0.x from 2.2.x -- 2.0.x will still use fcntl.
+     [Andrew Morton <andrewm@uow.edu.au>, Dean Gaudet]
+
+  *) Eliminate caching problems of mod_autoindex results, so the last
+     modified date of the directory is returned as the Last-Modified 
+     and ETag HTTP header tags are sent if IndexOptions TrackModified
+     directive/option is used. [William Rowe]
+
+  *) Corrected file path arguments from server conf directives to
+     their canonical form (excluding OS2 - which uses alternate 
+     logic.)  Resolves a long list of PRs reporting that Win32 paths
+     of the syntax x:\foo were mis-concatinated to the server root
+     as of release 1.3.14.  [William Rowe]
+
+  *) Correct an issue with Alias and ScriptAlias directives that 
+     file path arguments were not normalized in canonical form.
+     This correction makes no attempt to normalize regular expression
+     forms of Alias or ScriptAlias.  [William Rowe]
+
+  *) Add a new LogFormat directive, %c, that will log connection
+     status at the end of the response as follows:
+     'X' - connection aborted before the response completed.
+     '+' - connection may be kept-alive by the server.
+     '-' - connection will be closed by the server.
+     [Bill Stoddard <stoddard@apache.org>]
+     
+  *) Normalize all NetWare config directive paths and filespecs to
+     their canonical names.  [Brad Nicholes <bnicholes@novell.com>]
+
+  *) Update the mime.types file to the registered media types as
+     of 2000-10-19. [Carsten Klapp <carsten.klapp@home.net>,
+     Tony Finch] PR#6613
+
+  *) Restore functionality broken by the mod_rewrite security fix:
+     rewrite map lookup keys and default values are now expanded
+     so that the lookup can depend on the requested URI etc.
+     [Tony Finch] PR #6671
+
 Changes with Apache 1.3.14
 
   *) Fixes to allow compilation on NetWare [Brad Nicholes
@@ -187,7 +476,7 @@ Changes with Apache 1.3.13 [not released]
   *) Fix mod_expires to merge its settings for Cache-Control into any
      existing value for the field.  It was unconditionally setting it,
      wiping out anything from, say, a 'Header Append Cache-Control'.
-     PR#5769 [Ken Coar]
+     [Ken Coar] PR#5769
 
   *) Add Win32 option -k stop as an alias of -k shutdown, to correspond to
      the NET START/NET STOP syntax. [William Rowe]
@@ -201,7 +490,7 @@ Changes with Apache 1.3.13 [not released]
 
   *) Expand mod_setenvif so its directives can be used in <Files> and
      <Directory> containers, and in .htaccess files when FileInfo
-     overriding is allowed.  PR#3000 [Ken Coar]
+     overriding is allowed.  [Ken Coar] PR#3000
 
   *) Fix Win32 bug when pathname length exactly equals MAX_PATH. 
      This bug caused directory index to be displayed rather than
@@ -918,7 +1207,7 @@ Changes with Apache 1.3.7 [not released]
      "Vary: host, negotiate, host, accept-language") are reduced to
      single instances.  This is a better solution than the force-no-vary
      one (which is still valid for clients that can't cope with Vary
-     at all).  PR#3118 [Dean Gaudet, Roy Fielding, Ken Coar]
+     at all).  [Dean Gaudet, Roy Fielding, Ken Coar] PR#3118
 
   *) Portability changes for BeOS. [David Reid abb37@dial.pipex.com]
 
@@ -1030,7 +1319,7 @@ Changes with Apache 1.3.7 [not released]
      as header fields and request attributes.  [Ken Coar]
 
   *) Fix mod_autoindex's handling of ScanHTMLTitles when file
-     content-types are "text/html;parameters".  PR#4524  [Ken Coar]
+     content-types are "text/html;parameters".  [Ken Coar]  PR#4524
 
   *) Remove "mxb" support from mod_negotiation -- it was a draft feature
      never accepted into any standard, and it opens up certain DoS
@@ -2709,7 +2998,7 @@ Changes with Apache 1.3.1
 
   *) Cache a proxied request in the event that the client cancels the
      transfer, provided that the configured percentage of the file has
-     already been transfered. It works for HTTP transfers only.  The 
+     already been transferred. It works for HTTP transfers only.  The 
      new configuration directive is called CacheForceCompletion. 
      [Glen Parker <glenebob@nwlink.com>] PR#2277
 
@@ -5622,7 +5911,7 @@ Changes with Apache 1.2.5
      permissions, deny access to the directory with a HTTP_FORBIDDEN.  
      The previous behavior was to ignore the htaccess file if it could not
      be read.  This change may make some setups with unreadable
-     htaccess files stop working.  PR#817  [Marc Slemko]
+     htaccess files stop working.  [Marc Slemko]  PR#817
 
   *) SECURITY: no2slash() was O(n^2) in the length of the input.  
      Make it O(n).  This inefficiency could be used to mount a denial 
@@ -5665,8 +5954,8 @@ Changes with Apache 1.2.3
 
   *) The request to a remote proxy was mangled if it was generated as the
      result of a ProxyPass directive. URL schemes other than http:// were not
-     supported when ProxyRemote was used. PR#260, PR#656, PR#699, PR#713,
-     PR#812 [Lars Eilebrecht]
+     supported when ProxyRemote was used. [Lars Eilebrecht] PR#260, PR#656,
+     PR#699, PR#713, PR#812
 
   *) Fixed proxy-pass-through feature of mod_rewrite; Added error logging
      information for case where proxy module is not available. [Marc Slemko]

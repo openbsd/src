@@ -56,8 +56,6 @@ ServerType standalone
 # (available at <URL:http://www.apache.org/docs/mod/core.html#lockfile>);
 # you will save yourself a lot of trouble.
 #
-# Do NOT add a slash at the end of the directory path.
-#
 ServerRoot "sys:/apache"
 
 #
@@ -290,7 +288,7 @@ DocumentRoot "sys:/apache/htdocs"
 # directory if a ~user request is received.
 #
 <IfModule mod_userdir.c>
-    UserDir public_html
+    UserDir /home/*/public_html
 </IfModule>
 
 #
@@ -617,7 +615,7 @@ ServerSignature On
     # avoid the ambiguity with the common suffix for perl scripts.
     #
     # Note 2: The example entries below illustrate that in quite
-    # some cases the two character 'Language' abbriviation is not
+    # some cases the two character 'Language' abbreviation is not
     # identical to the two character 'Country' code for its country,
     # E.g. 'Danmark/dk' versus 'Danish/da'.
     #
@@ -659,6 +657,7 @@ ServerSignature On
     AddLanguage cz .cz
     AddLanguage ru .ru
     AddLanguage tw .tw
+    AddLanguage zh-tw .tw
     AddCharset Big5         .Big5    .big5
     AddCharset WINDOWS-1251 .cp-1251
     AddCharset CP866        .cp866

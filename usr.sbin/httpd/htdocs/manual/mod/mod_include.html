@@ -21,7 +21,7 @@
 
 <H1 ALIGN="CENTER">Module mod_include</H1>
 
-<p>This module provides for server-parsed html documents.</p>
+<p>This module provides for documents with Server Side Includes (SSI).</p>
 
 <P><A
 HREF="module-dict.html#Status"
@@ -36,7 +36,7 @@ REL="Help"
 <A
 HREF="module-dict.html#ModuleIdentifier"
 REL="Help"
-><STRONG>Module Identifier:</STRONG></A> include_module
+><STRONG>Module Identifier:</STRONG></A> includes_module
 </P>
 
 <h2>Summary</h2>
@@ -47,6 +47,10 @@ formated SGML comments, referred to as <em>elements</em>.  These
 elements allow conditional text, the inclusion other files or
 programs, as well as the setting and printing of environment
 variables.</p>
+
+<p>For an introduction to this topic, we also provide a
+<a href="../howto/ssi.html">tutorial on Server Side Includes</a>.</p>
+
 
 <H2>Directives</H2>
 <UL>
@@ -378,7 +382,7 @@ elements are:
         <DD>true if <EM>test_condition</EM> is true
 <DT>! <EM>test_condition</EM>
         <DD>true if <EM>test_condition</EM> is false
-<DT><EM>test_condition1</EM> && <EM>test_condition2</EM>
+<DT><EM>test_condition1</EM> &amp;&amp; <EM>test_condition2</EM>
         <DD>true if both <EM>test_condition1</EM> and
         <EM>test_condition2</EM> are true
 <DT><EM>test_condition1</EM> || <EM>test_condition2</EM>
@@ -386,13 +390,13 @@ elements are:
         <EM>test_condition2</EM> is true
 </DL>
 
-<P> "<EM>=</EM>" and "<EM>!=</EM>" bind more tightly than "<EM>&&</EM>" and
+<P> "<EM>=</EM>" and "<EM>!=</EM>" bind more tightly than "<EM>&amp;&amp;</EM>" and
     "<EM>||</EM>".
     "<EM>!</EM>" binds most tightly.  Thus, the following are equivalent:
 
 <PRE>
-    &lt;!--#if expr="$a = test1 && $b = test2" --&gt;
-    &lt;!--#if expr="($a = test1) && ($b = test2)" --&gt;
+    &lt;!--#if expr="$a = test1 &amp;&amp; $b = test2" --&gt;
+    &lt;!--#if expr="($a = test1) &amp;&amp; ($b = test2)" --&gt;
 </PRE>
 
 <P> Anything that's not recognized as a variable or an operator is
@@ -421,7 +425,7 @@ customized server error documents.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> XBitHack <EM>status</EM><BR>
+><STRONG>Syntax:</STRONG></A> XBitHack on|off|full<BR>
 <A
  HREF="directive-dict.html#Default"
  REL="Help"
@@ -445,8 +449,7 @@ customized server error documents.
 
 The XBitHack directives controls the parsing of ordinary html documents.
 This directive only affects files associated with the MIME type
-<CODE>text/html</CODE>.
-<EM>Status</EM> can have the following values:
+<CODE>text/html</CODE>.  XBitHack can take on the following values:
 <DL>
 <DT>off
 <DD>No special treatment of executable files.

@@ -63,7 +63,7 @@ coherences.
     <a name="<get-var ref>"></a>
     <strong id="howto">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.7/ssl_howto.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.8/ssl_howto.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
@@ -278,11 +278,13 @@ host (so it applies to both HTTPS and HTTP):
 
 <p>
 <config>
+SSLCACertificateFile conf/ssl.crt/company-ca.crt
+
 &lt;Directory /usr/local/apache/htdocs&gt;
 \#   Outside the subarea only Intranet access is granted
 Order                deny,allow
 Deny                 from all
-Allow                192.160.1.0/24
+Allow                from 192.168.1.0/24
 &lt;/Directory&gt;
 
 &lt;Directory /usr/local/apache/htdocs/subarea&gt;
@@ -294,7 +296,6 @@ Allow                192.160.1.0/24
 \#   Additionally allow client certs as alternative to basic auth.
 SSLVerifyClient      optional
 SSLVerifyDepth       1
-SSLCACertificateFile conf/ssl.crt/company-ca.crt
 SSLOptions           +FakeBasicAuth +StrictRequire
 SSLRequire           %{SSL_CIPHER_USEKEYSIZE} &gt;= 128
 
@@ -310,7 +311,7 @@ Satisfy              any
 \#   Network Access Control
 Order                deny,allow
 Deny                 from all
-Allow                192.160.1.0/24
+Allow                192.168.1.0/24
 
 \#   HTTP Basic Authentication
 AuthType             basic

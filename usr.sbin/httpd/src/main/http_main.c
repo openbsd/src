@@ -1,58 +1,59 @@
 /* ====================================================================
- * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 /*
@@ -673,37 +674,36 @@ static void accept_mutex_on(void)
 	perror("sigprocmask(SIG_BLOCK)");
 	clean_child_exit(APEXIT_CHILDFATAL);
     }
+    /* We need to block alarms here, since if we get killed *right* after 
+     * locking the mutex, have_accept_mutex will not be set, and our
+     * child cleanup will not work.
+     */
+    ap_block_alarms();
     if ((err = pthread_mutex_lock(accept_mutex))) {
 	errno = err;
 	perror("pthread_mutex_lock");
 	clean_child_exit(APEXIT_CHILDFATAL);
     }
     have_accept_mutex = 1;
+    ap_unblock_alarms();
 }
 
 static void accept_mutex_off(void)
 {
     int err;
 
+    /* Have to block alarms here, or else we might have a double-unlock, which
+     * is possible with pthread mutexes, since they are designed to be fast,
+     * and hence not necessarily make checks for ownership or multiple unlocks.
+     */
+    ap_block_alarms(); 
     if ((err = pthread_mutex_unlock(accept_mutex))) {
 	errno = err;
 	perror("pthread_mutex_unlock");
 	clean_child_exit(APEXIT_CHILDFATAL);
     }
-    /* There is a slight race condition right here... if we were to die right
-     * now, we'd do another pthread_mutex_unlock.  Now, doing that would let
-     * another process into the mutex.  pthread mutexes are designed to be
-     * fast, as such they don't have protection for things like testing if the
-     * thread owning a mutex is actually unlocking it (or even any way of
-     * testing who owns the mutex).
-     *
-     * If we were to unset have_accept_mutex prior to releasing the mutex
-     * then the race could result in the server unable to serve hits.  Doing
-     * it this way means that the server can continue, but an additional
-     * child might be in the critical section ... at least it's still serving
-     * hits.
-     */
     have_accept_mutex = 0;
+    ap_unblock_alarms();
     if (sigprocmask(SIG_SETMASK, &accept_previous_mask, NULL)) {
 	perror("sigprocmask(SIG_SETMASK)");
 	clean_child_exit(1);
@@ -1072,6 +1072,11 @@ static void usage(char *bin)
     for (i = 0; i < strlen(bin); i++)
 	pad[i] = ' ';
     pad[i] = '\0';
+#ifdef WIN32
+    fprintf(stderr, "Usage: %s [-D name] [-d directory] [-f file] [-n service]\n", bin);
+    fprintf(stderr, "       %s [-C \"directive\"] [-c \"directive\"] [-k signal]\n", pad);
+    fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-L] [-S] [-t] [-T]\n", pad);
+#else /* !WIN32 */
 #ifdef SHARED_CORE
     fprintf(stderr, "Usage: %s [-R directory] [-D name] [-d directory] [-f file]\n", bin);
 #else
@@ -1079,13 +1084,11 @@ static void usage(char *bin)
 #endif
     fprintf(stderr, "       %s [-C \"directive\"] [-c \"directive\"]\n", pad);
     fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-L] [-S] [-t] [-T]\n", pad);
-#ifdef WIN32
-    fprintf(stderr, "       %s [-n service] [-k signal] [-i] [-u]\n", pad);
-#endif
     fprintf(stderr, "Options:\n");
 #ifdef SHARED_CORE
     fprintf(stderr, "  -R directory     : specify an alternate location for shared object files\n");
 #endif
+#endif /* !WIN32 */
     fprintf(stderr, "  -D name          : define a name for use in <IfDefine name> directives\n");
     fprintf(stderr, "  -d directory     : specify an alternate initial ServerRoot\n");
     fprintf(stderr, "  -f file          : specify an alternate ServerConfigFile\n");
@@ -1103,12 +1106,13 @@ static void usage(char *bin)
     fprintf(stderr, "  -t               : run syntax check for config files (with docroot check)\n");
     fprintf(stderr, "  -T               : run syntax check for config files (without docroot check)\n");
 #ifdef WIN32
-    fprintf(stderr, "  -n name          : set service name and use its ServerConfigFile\n");
-    fprintf(stderr, "  -k shutdown      : tell running Apache to shutdown\n");
+    fprintf(stderr, "  -n name          : name the Apache service for -k options below;\n");
+    fprintf(stderr, "  -k stop|shutdown : tell running Apache to shutdown\n");
     fprintf(stderr, "  -k restart       : tell running Apache to do a graceful restart\n");
     fprintf(stderr, "  -k start         : tell Apache to start\n");
-    fprintf(stderr, "  -i               : install an Apache service\n");
-    fprintf(stderr, "  -u               : uninstall an Apache service\n");
+    fprintf(stderr, "  -k install   | -i: install an Apache service\n");
+    fprintf(stderr, "  -k config        : reconfigure an installed Apache service\n");
+    fprintf(stderr, "  -k uninstall | -u: uninstall an Apache service\n");
 #endif
 
 #ifdef NETWARE
@@ -2883,6 +2887,7 @@ static void signal_parent(int type)
      * "apache-signal" event here.
      */
 
+    /* XXX: This is no good, can't we please die in -X mode :-? */
     if (one_process) {
 	return;
     }
@@ -3154,7 +3159,7 @@ static void detach(void)
 
 static void set_group_privs(void)
 {
-#if !defined(WIN32) && !defined(NETWARE) && !defined(BEOS)
+#if !defined(WIN32) && !defined(NETWARE) && !defined(BEOS) && !defined(BONE)
     if (!geteuid()) {
 	char *name;
 
@@ -3608,11 +3613,6 @@ static void setup_listeners(pool *p)
 	else {
 	    ap_note_cleanups_for_socket(p, fd);
 	}
-	if (fd >= 0) {
-	    FD_SET(fd, &listenfds);
-	    if (fd > listenmaxfd)
-		listenmaxfd = fd;
-	}
 	FD_SET(fd, &listenfds);
 	if (fd > listenmaxfd)
 	    listenmaxfd = fd;
@@ -3742,8 +3742,8 @@ static void show_compile_settings(void)
 #ifdef USE_TPF_SCOREBOARD
     printf(" -D USE_TPF_SCOREBOARD\n");
 #endif
-#ifdef USE_TPF_DAEMON
-    printf(" -D USE_TPF_DAEMON\n");
+#ifdef NO_SAWNC
+    printf(" -D NO_SAWNC\n");
 #endif
 #ifdef USE_OS2_SCOREBOARD
     printf(" -D USE_OS2_SCOREBOARD\n");
@@ -5123,13 +5123,14 @@ int REALMAIN(int argc, char *argv[])
 	STANDALONE_MAIN(argc, argv);
     }
 #else
+    if (!tpf_child) {
+        memcpy(tpf_server_name, input_parms.parent.servname,
+               INETD_SERVNAME_LENGTH);
+        tpf_server_name[INETD_SERVNAME_LENGTH + 1] = '\0';
+        ap_open_logs(server_conf, pconf);
+        ap_tpf_zinet_checks(ap_standalone, tpf_server_name, server_conf);
+    }
     if (ap_standalone) {
-        if(!tpf_child) {
-            memcpy(tpf_server_name, input_parms.parent.servname,
-                   INETD_SERVNAME_LENGTH);
-            tpf_server_name[INETD_SERVNAME_LENGTH+1] = '\0';
-            ap_open_logs(server_conf, pconf);
-        }
         ap_set_version();
         ap_init_modules(pconf, server_conf);
         version_locked++;
@@ -5188,12 +5189,7 @@ int REALMAIN(int argc, char *argv[])
 	    exit(0);
 	}
 
-#ifdef TPF
-/* TPF's Internet Daemon passes the incoming socket nbr (inetd mode only) */
-    sock_in = sock_out = input_parms.parent.socket;
-/* TPF also needs a signal set for alarm in inetd mode */
-    signal(SIGALRM, alrm_handler);
-#elif defined(MPE)
+#ifdef MPE
 /* HP MPE 5.5 inetd only passes the incoming socket as stdin (fd 0), whereas
    HPUX inetd passes the incoming socket as stdin (fd 0) and stdout (fd 1).
    Go figure.  SR 5003355016 has been submitted to request that the existing
@@ -6275,6 +6271,8 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
     HANDLE hPipeRead = NULL;
     HANDLE hPipeWrite = NULL;
     HANDLE hPipeWriteDup;
+    HANDLE hNullOutput = NULL;
+    HANDLE hNullError = NULL;
     HANDLE hCurrentProcess;
     SECURITY_ATTRIBUTES sa = {0};  
 
@@ -6308,7 +6306,13 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
         return -1;
     }
     
-    pCommand = ap_psprintf(p, "\"%s\" -Z %s -f \"%s\"", buf, exit_event_name, ap_server_confname);  
+	/* service children must be created with the -z option,
+	 * while console mode (interactive apache) children are created
+	 * with the -Z option
+	 */
+    pCommand = ap_psprintf(p, "\"%s\" -%c %s -f \"%s\"", buf, 
+		                   isProcessService() ? 'z' : 'Z',
+		                   exit_event_name, ap_server_confname);  
 
     for (i = 1; i < argc; i++) {
         if ((argv[i][0] == '-') && ((argv[i][1] == 'k') || (argv[i][1] == 'n')))
@@ -6321,6 +6325,26 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
     if (!CreatePipe(&hPipeRead, &hPipeWrite, &sa, 0)) {
         ap_log_error(APLOG_MARK, APLOG_WIN32ERROR | APLOG_CRIT, server_conf,
                      "Parent: Unable to create pipe to child process.\n");
+        return -1;
+    }
+
+    /* Open a null handle to soak info from the child */
+    hNullOutput = CreateFile("nul", GENERIC_READ | GENERIC_WRITE, 
+                             FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                             &sa, OPEN_EXISTING, 0, NULL);
+    if (hNullOutput == INVALID_HANDLE_VALUE) {
+        ap_log_error(APLOG_MARK, APLOG_WIN32ERROR | APLOG_CRIT, server_conf,
+                     "Parent: Unable to create null output pipe for child process.\n");
+        return -1;
+    }
+
+    /* Open a null handle to soak info from the child */
+    hNullError = CreateFile("nul", GENERIC_READ | GENERIC_WRITE, 
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, 
+                            &sa, OPEN_EXISTING, 0, NULL);
+    if (hNullError == INVALID_HANDLE_VALUE) {
+        ap_log_error(APLOG_MARK, APLOG_WIN32ERROR | APLOG_CRIT, server_conf,
+                     "Parent: Unable to create null error pipe for child process.\n");
         return -1;
     }
 
@@ -6338,9 +6362,11 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
     memset(&si, 0, sizeof(si));
     memset(&pi, 0, sizeof(pi));
     si.cb = sizeof(si);
-    si.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+    si.dwFlags     = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_HIDE;
     si.hStdInput   = hPipeRead;
+    si.hStdOutput  = hNullOutput;
+    si.hStdError   = hNullError;
 
     if (!CreateProcess(NULL, pCommand, NULL, NULL, 
                        TRUE,      /* Inherit handles */
@@ -6355,6 +6381,10 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
          */ 
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
+        CloseHandle(hPipeRead);
+        CloseHandle(hPipeWrite);        
+        CloseHandle(hNullOutput);
+        CloseHandle(hNullError);        
 
         return -1;
     }
@@ -6401,6 +6431,8 @@ static int create_process(pool *p, HANDLE *handles, HANDLE *events,
     }
     CloseHandle(hPipeRead);
     CloseHandle(hPipeWrite);        
+    CloseHandle(hNullOutput);
+    CloseHandle(hNullError);        
 
     return 0;
 }
@@ -6726,22 +6758,6 @@ void post_parse_init()
     set_group_privs();
 }
 
-int service_init()
-{
-    common_init();
- 
-    ap_cpystrn(ap_server_root, HTTPD_ROOT, sizeof(ap_server_root));
-    if (ap_registry_get_service_conf(pconf, ap_server_confname, sizeof(ap_server_confname),
-                                     ap_server_argv0))
-        return FALSE;
-
-    ap_setup_prelinked_modules();
-    server_conf = ap_read_config(pconf, ptrans, ap_server_confname);
-    ap_log_pid(pconf, ap_pid_fname);
-    post_parse_init();
-    return TRUE;
-}
-
 
 #ifdef NETWARE
 extern char *optarg;
@@ -6775,20 +6791,24 @@ int REALMAIN(int argc, char *argv[])
     char *cp;
     char *s;
     int conf_specified = 0;
-    char cwd[MAX_STRING_LEN];
-
+    
 #ifdef WIN32
+    jmp_buf reparse_args;
     char *service_name = NULL;
     int install = 0;
+    int reparsed = 0;
+    int is_child_of_service = 0;
     char *signal_to_send = NULL;
 
-    /* Service application under WinNT */
-    if (isWindowsNT()) 
+    /* Service application under WinNT the first time through only...
+     * service_main immediately resets real_exit_code to zero
+     */
+    if (real_exit_code && isWindowsNT()) 
     {
         if (((argc == 1) && isProcessService()) 
             || ((argc == 2) && !strcmp(argv[1], "--ntservice")))
         {
-            service_main(master_main, argc, argv);
+            service_main(apache_main, argc, argv);
             clean_parent_exit(0);
         }
     }
@@ -6814,24 +6834,62 @@ int REALMAIN(int argc, char *argv[])
 
     common_init();
     ap_setup_prelinked_modules();
-    
+
+    /* initialize ap_server_root to the directory of the executable, in case
+     * the user chooses a relative path for the -d serverroot arg a bit later
+     */
+
 #ifdef NETWARE
     if(!*ap_server_root) {
         ap_cpystrn(ap_server_root, bslash2slash(remove_filename(argv[0])),
                    sizeof(ap_server_root));
     }
-#else
-    if(!GetCurrentDirectory(sizeof(cwd),cwd)) {
-       ap_log_error(APLOG_MARK,APLOG_EMERG|APLOG_WIN32ERROR, NULL,
-       "GetCurrentDirectory() failure");
-       return -1;
-    }
-
-    ap_cpystrn(cwd, ap_os_canonical_filename(pcommands, cwd), sizeof(cwd));
-    ap_cpystrn(ap_server_root, cwd, sizeof(ap_server_root));
 #endif
 
-    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVlLZ:iusStThk:n:")) != -1) {
+#ifdef WIN32
+    if(!*ap_server_root) {
+        if (GetModuleFileName(NULL, ap_server_root, sizeof(ap_server_root))) {
+            ap_cpystrn(ap_server_root,
+                       ap_os_canonical_filename(pcommands, ap_server_root), 
+                       sizeof(ap_server_root));
+            if (ap_os_is_path_absolute(ap_server_root) 
+                    && strchr(ap_server_root, '/'))
+                *strrchr(ap_server_root, '/') = '\0';
+            else 
+                *ap_server_root = '\0';
+        }
+    }
+#endif
+
+    /* Fallback position if argv[0] wasn't deciphered
+     */
+    if (!*ap_server_root)
+        ap_cpystrn(ap_server_root, HTTPD_ROOT, sizeof(ap_server_root));
+
+    chdir (ap_server_root);
+
+#ifdef WIN32
+    /* If this is a service, we will need to fall back here and 
+     * reparse the entire options list.
+     */
+    if (setjmp(reparse_args)) {
+        /* Reset and reparse the command line */
+        ap_server_pre_read_config  = ap_make_array(pcommands, 1, sizeof(char *));
+        ap_server_post_read_config = ap_make_array(pcommands, 1, sizeof(char *));
+        ap_server_config_defines   = ap_make_array(pcommands, 1, sizeof(char *));
+
+        /* Reset optreset and optind to allow getopt to work correctly
+         * the second time around, and assure we never come back here.
+         */
+        optreset = 1;
+        optind = 1;
+        reparsed = 1;
+    }
+
+    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVlLz:Z:wiuStThk:n:")) != -1) {
+#else /* !WIN32 */
+    while ((c = getopt(argc, argv, "D:C:c:Xd:f:vVlLsStTh")) != -1) {
+#endif
         char **new;
 	switch (c) {
 	case 'c':
@@ -6847,7 +6905,20 @@ int REALMAIN(int argc, char *argv[])
 	    *new = ap_pstrdup(pcommands, optarg);
 	    break;
 #ifdef WIN32
-	case 'Z':
+        /* Shortcuts; include the -w option to hold the window open on error.
+         * This must not be toggled once we reset real_exit_code to 0!
+         */
+        case 'w':
+            if (real_exit_code)
+                real_exit_code = 2;
+            break;
+	/* service children must be created with the -z option,
+	 * while console mode (interactive apache) children are created
+	 * with the -Z option
+	 */
+        case 'z':
+            is_child_of_service = 1;
+        case 'Z':
             /* Prevent holding open the (nonexistant) console */
             real_exit_code = 0;
 	    exit_event = open_event(optarg);
@@ -6864,17 +6935,20 @@ int REALMAIN(int argc, char *argv[])
             service_name = ap_pstrdup(pcommands, optarg);
             break;
 	case 'i':
-	    install = 1;
+            install = 2;
 	    break;
 	case 'u':
-	    install = -1;
-	    break;
-	case 'S':
-	    ap_dump_settings = 1;
+            install = -1;
 	    break;
 	case 'k':
             if (!strcasecmp(optarg, "stop"))
                 signal_to_send = "shutdown";
+            else if (!strcasecmp(optarg, "install"))
+                install = 2;
+            else if (!strcasecmp(optarg, "config"))
+                install = 1;
+            else if (!strcasecmp(optarg, "uninstall"))
+                install = -1;
             else
                 signal_to_send = optarg;
 	    break;
@@ -6884,17 +6958,21 @@ int REALMAIN(int argc, char *argv[])
             DestroyScreen(GetCurrentScreen());
             break;
 #endif
+	case 'S':
+	    ap_dump_settings = 1;
+	    break;
 	case 'd':
             optarg = ap_os_canonical_filename(pcommands, optarg);
             if (!ap_os_is_path_absolute(optarg)) {
-	        optarg = ap_pstrcat(pcommands, cwd, optarg, NULL);
-                ap_getparents(optarg);
+	        optarg = ap_pstrcat(pcommands, ap_server_root, "/", 
+                                    optarg, NULL);
             }
-            if (optarg[strlen(optarg)-1] != '/')
-                optarg = ap_pstrcat(pcommands, optarg, "/", NULL);
-            ap_cpystrn(ap_server_root,
-                       optarg,
-                       sizeof(ap_server_root));
+            ap_cpystrn(ap_server_root, optarg, sizeof(ap_server_root));
+            ap_getparents(ap_server_root);
+            ap_no2slash(ap_server_root);
+            if (ap_server_root[0] 
+                    && ap_server_root[strlen(ap_server_root) - 1] == '/')
+                ap_server_root[strlen(ap_server_root) - 1] = '\0';
 	    break;
 	case 'f':
             ap_cpystrn(ap_server_confname,
@@ -6906,35 +6984,35 @@ int REALMAIN(int argc, char *argv[])
 	    ap_set_version();
 	    printf("Server version: %s\n", ap_get_server_version());
 	    printf("Server built:   %s\n", ap_get_server_built());
-#ifdef NETWARE
-            clean_parent_exit(0);
-#else
+#ifdef WIN32
             clean_parent_exit(1);
+#else
+            clean_parent_exit(0);
 #endif
 
         case 'V':
 	    ap_set_version();
 	    show_compile_settings();
-#ifdef NETWARE
-            clean_parent_exit(0);
-#else
+#ifdef WIN32
             clean_parent_exit(1);
+#else
+            clean_parent_exit(0);
 #endif
 
 	case 'l':
 	    ap_show_modules();
-#ifdef NETWARE
-            clean_parent_exit(0);
-#else
+#ifdef WIN32
             clean_parent_exit(1);
+#else
+            clean_parent_exit(0);
 #endif
 
 	case 'L':
 	    ap_show_directives();
-#ifdef NETWARE
-            clean_parent_exit(0);
-#else
+#ifdef WIN32
             clean_parent_exit(1);
+#else
+            clean_parent_exit(0);
 #endif
 
 	case 'X':
@@ -6959,23 +7037,61 @@ int REALMAIN(int argc, char *argv[])
     }       /* while  */
 
 #ifdef WIN32
+
     if (!service_name && install) {
         service_name = DEFAULTSERVICENAME;
     }
 
     if (service_name && isValidService(service_name)) 
     {
-        ap_registry_get_service_conf(pconf, ap_server_confname, 
-                                     sizeof(ap_server_confname),
-                                     service_name);
-        conf_specified = 1;
-        if (install > 0) {
+        if (install == 2) {
             ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, NULL,
                          "Service \"%s\" is already installed!", service_name);
             clean_parent_exit(1);
         }
+        /* Don't proceed if we are configuring, uninstalling 
+         * or already merged and reparsed the service args
+         */
+        if (!install && !reparsed)
+        {
+            int svcargc;
+            char **newargv, **svcargv;
+            if (ap_configtestonly)
+                fprintf(stderr, "Default command options for service %s:\n", 
+                        service_name);
+                    
+            /* Merge the service's default args */
+            if (ap_registry_get_service_args(pcommands, &svcargc, &svcargv, 
+                                             service_name) > 0) {
+                newargv = (char**)malloc((svcargc + argc + 1) * sizeof(char*));
+                newargv[0] = argv[0];  /* The true executable name */
+                memcpy(newargv + 1, svcargv, svcargc * sizeof(char*)); 
+                memcpy(newargv + 1 + svcargc, argv + 1, 
+                       (argc - 1) * sizeof(char*));
+                argc += svcargc; /* Add the startup options args */
+                argv = newargv;
+                argv[argc] = NULL;
+
+                if (ap_configtestonly) {
+                    while (svcargc-- > 0) {
+                        if ((**svcargv == '-') && strchr("dfDCc", svcargv[0][1])
+                            && svcargc) {
+                            fprintf(stderr, "    %s %s\n", 
+                                    *svcargv, *(svcargv + 1));
+                            svcargv += 2; --svcargc;
+                        }
+                        else
+                            fprintf(stderr, "    %s\n", *(svcargv++));
+                    }
+                }
+                /* Run through the command line args all over again */
+                longjmp(reparse_args, 1);
+            }
+            else if (ap_configtestonly)
+                fprintf (stderr, "    (none)\n");
+        }
     }
-    else if (service_name && (install <= 0))
+    else if (service_name && (install <= 1))
     {
         ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, NULL,
                      "Service \"%s\" is not installed!", service_name);
@@ -6983,41 +7099,31 @@ int REALMAIN(int argc, char *argv[])
     }
 #endif
 
-    /* ServerConfFile is found in this order:
-     * (1) -f or -n
-     * (2) [-d]/SERVER_CONFIG_FILE
-     * (3) ./SERVER_CONFIG_FILE
-     * (4) [Registry: HKLM\Software\[product]\ServerRoot]/SERVER_CONFIG_FILE
-     * (5) /HTTPD_ROOT/SERVER_CONFIG_FILE
+    /* ServerRoot/ServerConfFile are found in this order:
+     * (1) serverroot set to Apache.exe's path, or HTTPD_ROOT if unparsable
+     * (2) arguments are grabbed for the -n named service, if given
+     * (3) the -d argument is taken from the given command line
+     * (4) the -d argument is taken from the service's default args
+     * (5) the -f argument is taken from the given command line
+     * (6) the -f argument is taken from the service's default args
+     * (7) if -f is omitted, then initialized to SERVER_CONFIG_FILE
+     * (8) if ap_server_confname is not absolute, then merge it to serverroot
      */
-     
-    if (!conf_specified) {
+    
+    if (!conf_specified)
         ap_cpystrn(ap_server_confname, SERVER_CONFIG_FILE, sizeof(ap_server_confname));
-        if (access(ap_server_root_relative(pcommands, ap_server_confname), 0)) {
-#ifndef NETWARE
-            ap_registry_get_server_root(pconf, ap_server_root, sizeof(ap_server_root));
-#endif
-            if (!*ap_server_root)
-                ap_cpystrn(ap_server_root, HTTPD_ROOT, sizeof(ap_server_root));
-            ap_cpystrn(ap_server_root, ap_os_canonical_filename(pcommands, ap_server_root),
-                       sizeof(ap_server_root));
-        }
-    }
 
 #ifdef EAPI
     ap_init_alloc_shared(TRUE);
 #endif
 
-    if (!ap_os_is_path_absolute(ap_server_confname)) {
-        char *full_conf_path;
-
-        full_conf_path = ap_pstrcat(pcommands, ap_server_root, "/", ap_server_confname, NULL);
-        full_conf_path = ap_os_canonical_filename(pcommands, full_conf_path);
-        ap_cpystrn(ap_server_confname, full_conf_path, sizeof(ap_server_confname));
-    }
+    if (!ap_os_is_path_absolute(ap_server_confname))
+        ap_cpystrn(ap_server_confname,
+                   ap_server_root_relative(pcommands, ap_server_confname),
+                   sizeof(ap_server_confname));
     ap_getparents(ap_server_confname);
     ap_no2slash(ap_server_confname);
-
+    
 #ifdef WIN32
     /* Read the conf now unless we are uninstalling the service,
      * or shutting down a running service 
@@ -7032,23 +7138,17 @@ int REALMAIN(int argc, char *argv[])
         if (!service_name)
             service_name = ap_pstrdup(pconf, DEFAULTSERVICENAME);
         if (install > 0) 
-            InstallService(service_name, ap_server_root_relative(pcommands, 
-                                                         ap_server_confname));
+            InstallService(pconf, service_name, argc, argv, install == 1);
         else
             RemoveService(service_name);
         clean_parent_exit(0);
-    }
-
-    if (service_name && !conf_specified) {
-        printf("Unknown service: %s\n", service_name);
-        clean_parent_exit(1);
     }
 
     /* All NT signals, and all but the 9x start signal are handled entirely.
      * Die if we failed, are on NT, or are not "start"ing the service
      */
     if (service_name && signal_to_send) {
-        if (send_signal_to_service(service_name, signal_to_send))
+        if (send_signal_to_service(service_name, signal_to_send, argc, argv))
             clean_parent_exit(0);
         if (isWindowsNT() || strcasecmp(signal_to_send, "start"))
             clean_parent_exit(1);
@@ -7065,11 +7165,19 @@ int REALMAIN(int argc, char *argv[])
 
     if (ap_configtestonly) {
         fprintf(stderr, "%s: Syntax OK\n", ap_server_root_relative(pcommands, ap_server_confname));
+#ifdef WIN32
+        clean_parent_exit(1);
+#else
         clean_parent_exit(0);
+#endif
     }
 
     if (ap_dump_settings) {
+#ifdef WIN32
+        clean_parent_exit(1);
+#else
         clean_parent_exit(0);
+#endif
     }
 
 #ifdef WIN32
@@ -7122,14 +7230,23 @@ int REALMAIN(int argc, char *argv[])
 	if (!exit_event || !start_mutex)
 	    exit(-1);
 #ifdef WIN32
-	if (child)
-	    FreeConsole();
+        if (child)
+            ap_start_child_console(is_child_of_service);
+        else
+            ap_start_console_monitor();
 #endif
 	worker_main();
 	ap_destroy_mutex(start_mutex);
 	destroy_event(exit_event);
     } 
 #ifdef WIN32
+    /* Windows NT service second time around ... we have all the overrides 
+     * from the NT SCM, so go to town and return to the SCM when we quit.
+     */
+    if (isWindowsNT() && isProcessService())
+    {
+        master_main(argc, argv);
+    }
     else if (service_name && signal_to_send && !isWindowsNT()
              && !strcasecmp(signal_to_send, "start")) {
         /* service95_main will call master_main() */

@@ -1,58 +1,59 @@
 /* ====================================================================
- * Copyright (c) 1995-1999 The Apache Group.  All rights reserved.
+ * The Apache Software License, Version 1.1
+ *
+ * Copyright (c) 2000 The Apache Software Foundation.  All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
  *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
+ * 4. The names "Apache" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
  *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
  *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
  * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  * ====================================================================
  *
  * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
  *
+ * Portions of this software are based upon public domain software
+ * originally written at the National Center for Supercomputing Applications,
+ * University of Illinois, Urbana-Champaign.
  */
 
 #define CORE_PRIVATE
@@ -844,25 +845,36 @@ static char* get_interpreter_from_win32_registry(pool *p, const char* ext)
         return NULL;
 
     /*
+     * The command entry may contain embedded %envvar% entries,
+     * e.g. %winsysdir%\somecommand.exe %1
+     *
+     * Resolve them here
+     */
+    size = ExpandEnvironmentStrings(buffer, NULL, 0);
+    if (size) {
+        s = ap_palloc(p, size);
+        if (ExpandEnvironmentStrings(buffer, s, size))
+            buffer = s;
+    }
+
+    /*
      * The canonical way shell command entries are entered in the Win32 
      * registry is as follows:
-     *   shell [options] "%1"
+     *   shell [options] "%1" [options] [%*]
      * where
      *   shell - full path name to interpreter or shell to run.
      *           E.g., c:\usr\local\ntreskit\perl\bin\perl.exe
      *   options - optional switches
-     *              E.g., \C
+     *              E.g., /C or -w
      *   "%1" - Place holder for file to run the shell against. 
-     *          Typically quoted.
+     *          Quoted for if long path names are accepted.
+     *          Not quoted if only short paths are acceptd
      *
-     * If we find a %1 or a quoted %1, lop it off. 
+     *   %* - additional arguments
+     *
+     * Effective in v. 1.3.15, the responsibility is the consumer's
+     * to make these substitutions.
      */
-    if (buffer && *buffer) {
-        if ((s = strstr(buffer, "\"%1")))
-            *s = '\0';
-        else if ((s = strstr(buffer, "%1"))) 
-            *s = '\0';
-    }
 
     return buffer;
 }
@@ -896,8 +908,29 @@ API_EXPORT (file_type_e) ap_get_win32_interpreter(const  request_rec *r,
     }
     ext = strrchr(exename, '.');
 
-    if (ext && (!strcasecmp(ext,".bat") || !strcasecmp(ext,".cmd"))) {
-        return eFileTypeEXE32;
+    if (ext && (!strcasecmp(ext,".bat") || !strcasecmp(ext,".cmd")) &&
+        d->script_interpreter_source != INTERPRETER_SOURCE_REGISTRY) 
+    {
+        /* The registry does these for us unless INTERPRETER_SOURCE_REGISTRY
+         * was not enabled.
+         */
+        char *p, *shellcmd = getenv("COMSPEC");
+        if (!shellcmd)
+            shellcmd = SHELL_PATH;
+        p = strchr(shellcmd, '\0');
+        if ((p - shellcmd >= 11) && !strcasecmp(p - 11, "command.com")) 
+        {
+            /* Command.com doesn't like long paths, doesn't do .cmd
+             */
+            if (!strcasecmp(ext,".cmd"))
+                return eFileTypeUNKNOWN;
+            *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C %1", NULL);
+        }
+        else
+            /* Assume any other likes long paths, and knows .cmd
+             */
+            *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C \"%1\"", NULL);
+        return eFileTypeSCRIPT;
     }
 
     /* If the file has an extension and it is not .com and not .exe and
@@ -2046,6 +2079,9 @@ static const char *set_server_root(cmd_parms *cmd, void *dummy, char *arg)
     if (!ap_is_directory(arg)) {
         return "ServerRoot must be a valid directory";
     }
+    /* ServerRoot is never '/' terminated */
+    while (strlen(ap_server_root) > 1 && ap_server_root[strlen(ap_server_root)-1] == '/')
+        ap_server_root[strlen(ap_server_root)-1] = '\0';
     ap_cpystrn(ap_server_root, arg,
 	       sizeof(ap_server_root));
     return NULL;
@@ -2993,10 +3029,10 @@ static const command_rec core_cmds[] = {
 #endif
 #ifdef WIN32
 { "ScriptInterpreterSource", set_interpreter_source, NULL, OR_FILEINFO, TAKE1,
-  "Where to find interpreter to run Win32 scripts (Registry or script shebang line)" },
+  "Where to find interpreter to run Win32 scripts - Registry or Script (shebang line)" },
 #endif
 { "ServerTokens", set_serv_tokens, NULL, RSRC_CONF, TAKE1,
-  "Determine tokens displayed in the Server: header - Min(imal), OS or Full" },
+  "Tokens displayed in the Server: header - Min[imal], OS, Prod[uctOnly], Full" },
 { "LimitRequestLine", set_limit_req_line, NULL, RSRC_CONF, TAKE1,
   "Limit on maximum size of an HTTP request line"},
 { "LimitRequestFieldsize", set_limit_req_fieldsize, NULL, RSRC_CONF, TAKE1,

@@ -1,6 +1,6 @@
 ##
 ## ssl_template.inc -- mod_ssl User Manual: The Heart
-## Copyright (c) 1998-2000 Ralf S. Engelschall, All Rights Reserved. 
+## Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved. 
 ##
 
 #use wml::std::page
@@ -16,7 +16,7 @@
 <head>\
 <protect>
 <!--
-  Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
+  Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions
@@ -232,13 +232,13 @@ H4 {
         <tr>
         <td align=left>\
         <font face="Arial,Helvetica"> 
-        <a href="http://www.modssl.org/">mod_ssl</a> 2.7, User Manual<br>
+        <a href="http://www.modssl.org/">mod_ssl</a> 2.8, User Manual<br>
         The Apache Interface to OpenSSL
         </font>
         </td>
         <td align=right>\
         <font face="Arial,Helvetica"> 
-        Copyright &copy; 1998-2000
+        Copyright &copy; 1998-2001
         <a href="http://www.engelschall.com/">Ralf S. Engelschall</a><br>
         All Rights Reserved<br>
         </font>

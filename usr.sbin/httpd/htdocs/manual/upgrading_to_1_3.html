@@ -107,17 +107,17 @@ document, or in the <CODE>src/CHANGES</CODE> file.
     in <SAMP>.htaccess</SAMP> or server configuration files if they contain
     blank characters (like spaces). For example, if you use
     an <SAMP>AuthName</SAMP> directive like this:
-    <P>
+    
     <PRE>
      AuthName This and That
     </PRE>
-    </P>
+    
     you will need to change it to
-    <P>
+    
     <PRE>
      AuthName "This and That"
     </PRE>
-    </P>
+    
     This change was made for consistency in the config language.
   <LI><STRONG>As of Apache 1.3.1, methods listed in <SAMP>&lt;Limit&gt;</SAMP>
     directives must be uppercase.</STRONG>  Method names, such as
@@ -152,7 +152,7 @@ document, or in the <CODE>src/CHANGES</CODE> file.
     Previously this support was given implicitly on the "main server
     address".  Now it has to be explicitly listed so as to avoid many
     problems that users had.
-    Please see the <A HREF="vhosts/index.html">Apache Virtual Host
+    Please see the <A HREF="vhosts/">Apache Virtual Host
     documentation</A> for further details on configuration.
 
   <LI>The precedence of virtual hosts has been reversed (applies mainly to

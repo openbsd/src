@@ -31,7 +31,7 @@
    Contributions are welcomed, please submit your code or suggestions to the 
    bug report page, or join the new-httpd mailing list.</P>
 
-<P>The bug reporting page and new-httpd mailing list are <EMP>not</EMP> 
+<P>The bug reporting page and new-httpd mailing list are <em>not</em> 
    provided to answer questions about configuration or running Apache.  
    Before you submit a bug report or request, first consult this document, the 
    <A HREF="misc/FAQ.html">Frequently Asked Questions</A> page and the other 
@@ -48,10 +48,10 @@
 
 <P><STRONG>Warning: Apache on NT has not yet been optimized for performance.
    </STRONG>Apache still performs best, and is most reliable on Unix platforms.
-   Over time we will improve NT performance, and great progress is being made
+   Over time NT performance has improved, and great progress is being made
    in the upcoming version 2.0 of Apache for the Windows platforms. Folks doing
-   comparative reviews of webserver performance are asked to compare against 
-   Apache on a Unix platform such as Solaris, FreeBSD, or Linux.</P>
+   comparative reviews of webserver performance are still asked to compare 
+   against Apache on a Unix platform such as Solaris, FreeBSD, or Linux.</P>
 
 <P>Most of this document assumes that you are installing Windows from a
    binary distribution. If you want to compile Apache yourself (possibly
@@ -107,33 +107,58 @@
    list the current release, any more recent alpha or beta-test releases,
    together with details of mirror web and anonymous FTP sites.</P>
 
-<P>You should download the version of Apache for Windows with the
-   <CODE>.exe</CODE> extension. This is a single file containing Apache,
-   ready to install and run. There may also be a <CODE>.zip</CODE> file
-   containing the source code, to compile Apache yourself.  (If there is
-   no <SAMP>.zip</SAMP> file, the source will be available in a
-   <SAMP>.tar.gz</SAMP> file but this will contain Unix line endings. You
-   will have to convert at least the <SAMP>.mak</SAMP> and
-   <SAMP>.dsp</SAMP> files to have DOS line endings before MSVC will
-   understand them).</P>
+<P>You should download the binary build of Apache for Windows named as
+   <CODE>apache_1_3_#-win32-with_src.msi</CODE> if you are interested in
+   the source code, or simply <CODE>apache_1_3_#-win32-no_src.msi</CODE> 
+   if you don't plan to do anything with the source code and appreciate
+   a faster download.  Each of these files contains the complete Apache
+   runtime.  You must have the Microsoft Installer version 1.10 installed
+   on your PC before you can install the Apache runtime distributions.
+   Windows 2000 and Windows ME are both delivered with the Microsoft
+   Installer support, others will need to download it.  Instructions on
+   locating the Microsoft Installer, as well as the binary distributions
+   of Apache, are found at <A HREF="http://httpd.apache.org/dist/binaries/win32/"
+   >http://httpd.apache.org/dist/binaries/win32/</A></P>
+
+<P>The source code is available in the <CODE>-with_src.msi</CODE> distribution,
+   or from the <A HREF="http://httpd.apache.org/dist/">http://httpd.apache.org/dist/</A>
+   distribution directory as a <CODE>.zip</CODE> file.  If you plan on compiling
+   Apache yourself, there is no need to install either <CODE>.msi</CODE> package.
+   The <CODE>.zip</CODE> file contains only source code, with MS-DOS line endings
+   (that is cr/lf line endings, instead of the single lf used for Unix files.)</P>
+
+<P>While the source is also available as a <SAMP>.tar.gz</SAMP> <SAMP>.tar.Z</SAMP>
+   archive, these contain unix lf line endings that cause grief for Windows users.
+   To use those archives, you must convert at least the <SAMP>.mak</SAMP> and
+   <SAMP>.dsp</SAMP> files to have DOS line endings before MSVC can understand them.
+   Please stick with the <SAMP>.zip</SAMP> file to spare yourself the headache.</P>
+
+<P>Note: prior to 1.3.17 Apache was distributed as an InstallShield 2.0 <SAMP>.exe</SAMP>
+   file.  With an increasing number of users unable to run the InstallShield package
+   [on Windows ME or Windows 2000] the binaries were repackaged into the readily 
+   available Microsoft Installer <SAMP>.msi</SAMP> format.
 
 <H2><A NAME="inst">Installing Apache for Windows</A></H2>
 
-<P>Run the Apache <SAMP>.exe</SAMP> file you downloaded above. This will
-   ask for:</P>
+<P>Run the Apache <SAMP>.msi</SAMP> file you downloaded above. This will
+   prompt you for:</P>
 
 <UL>
 
+ <LI>your name and company name, and on Windows NT/2000, whether or not you want
+     all users to access Apache as a Service, or if you want it installed to run
+     when you choose the Start Apache shortcut.
+
+ <LI>your Server name, Domain name and administrative email account.
+
  <LI>the directory to install Apache into (the default is 
-    <CODE>\Program Files\Apache Group\Apache</CODE> although you can
-    change this to any other directory)
-
- <LI>the start menu name (default is "Apache Web Server")
-
- <LI>the installation type. The "Typical" option installs
-    everything except the source code. The "Minimum" option does not
-    install the manuals or source code. Choose the "Custom" install if
-    you want to install the source code.
+     <CODE>C:\Program Files\Apache Group\Apache</CODE> although you can
+     change this to any other directory you wish)
+ 
+ <LI>the installation type. The "Complete" option installs everything, including
+     the source code if you downloaded the <SAMP>-with_src.msi</SAMP> package.
+     Choose the "Custom" install if you choose not to install the documentation,
+     or the source code from that package.
 
 </UL>
 
@@ -164,6 +189,14 @@
    subdirectory <SAMP>htdocs</SAMP>. There are lots of other options
    which should be set before you start really using Apache. However to
    get started quickly the files should work as installed.</P>
+
+<P>If you eventually uninstall Apache, your configuration files will not
+   be removed.  You will need to delete the installation directory tree
+   ("C:\Program Files\Apache Group" by default) yourself if you do not 
+   care to keep your configuration and other web files.  Since the 
+   httpd.conf file is a your accumulated effort in using Apache, you need
+   to take the effort to remove it.  The same happens for all other files
+   you may have created, as well as any log files Apache created.</P>
 
 <H2><A NAME="run">Running Apache for Windows</A></H2>
 
@@ -196,8 +229,9 @@
    with version 1.3.13, Apache will also gladly stop if you select 'Close'
    from the system menu (clicking the icon on the top-left corner of the
    console window) or click the close (X) button on the top-right corner.
-   But do <EM>not</em> try any of these approaches on earlier versions of the
-   Apache server, since Apache did not shut down cleanly.</P>
+   The Close menu item and close (X) button also work on Windows 95/98 as of 
+   Apache version 1.3.15. But do <EM>not</em> try any of these approaches on 
+   earlier versions of the Apache server, since Apache would not clean up.</P>
 
 <H2><A NAME="test">Testing Apache for Windows</A></H2>
 
@@ -319,6 +353,14 @@
       directive must be used. For example, to active the status module,
       use the following (in addition to the status-activating directives
       in <CODE>access.conf</CODE>):
+<PRE>
+    LoadModule status_module modules/mod_status.so
+</PRE>
+      <P>Information on <A HREF="mod/mod_so.html#creating">creating loadable
+         modules</A> is also available.  Note that some 3rd party modules
+         may be distributed in the old style names, ApacheModuleFoo.dll.
+         Always set the LoadModule command as directed as documented by the
+         3rd party module's own documentation.</P>
   <LI>Apache for Windows version 1.3 series is implemented in synchronous
       calls.  This poses an enormous problem for CGI authors, who won't
       see unbuffered results sent immediately to the browser.  This is not
@@ -326,16 +368,10 @@
       the Windows port.  Apache 2.0 is making progress to implement the
       expected asynchronous behavior, and we hope to discover that the
       NT/2000 implementation allows CGI's to behave as documented.
-<PRE>
-    LoadModule status_module modules/ApacheModuleStatus.dll
-</PRE>
-      <P>Information on <A HREF="mod/mod_so.html#creating">creating loadable
-         modules</A> is also available.</P>
   <LI><P>Apache can also load ISAPI Extensions (<EM>i.e.</EM>, Internet Server
          Applications), such as those used by Microsoft's IIS, and other
          Windows servers. <A HREF="mod/mod_isapi.html">More information
-         is available.</A>  Note that Apache <EM>CANNOT</EM> load ISAPI
-		 Filters.
+         is available.</A> Note that Apache <EM>CANNOT</EM> load ISAPI Filters.
 </UL>
 
 

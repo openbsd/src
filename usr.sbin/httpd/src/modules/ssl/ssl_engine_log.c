@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -230,7 +230,7 @@ void ssl_log(server_rec *s, int level, const char *msg, ...)
         ap_snprintf(tstr+i, 80-i, " %05d] ", (unsigned int)getpid());
     }
 
-    /*  determine whether newline should be writteni  */
+    /*  determine whether newline should be written */
     if (add & SSL_NO_NEWLINE)
         nstr[0] = NUL;
     else {

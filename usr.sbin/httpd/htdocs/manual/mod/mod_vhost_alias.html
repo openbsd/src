@@ -78,6 +78,8 @@ directive for details on how this is determined) or the IP address of
 the virtual host on the server in dotted-quad format. The
 interpolation is controlled by specifiers inspired by
 <CODE>printf</CODE> which have a number of formats:
+</P>
+
 <DL>
   <DT><CODE>%%</CODE>
     <DD>insert a <CODE>%</CODE>
@@ -86,7 +88,6 @@ interpolation is controlled by specifiers inspired by
   <DT><CODE>%N.M</CODE>
     <DD>insert (part of) the name
 </DL>
-</P>
 
 <P>
 <CODE>N</CODE> and <CODE>M</CODE> are used to specify substrings of
@@ -113,6 +114,8 @@ to zero if it isn't present; the dot must be present if and only if
   <DT><CODE>1+</CODE> and <CODE>-1+</CODE>
     <DD>the same as <CODE>0</CODE>
 </DL>
+
+<p>
 If <CODE>N</CODE> or <CODE>M</CODE> is greater than the number of
 parts available a single underscore is interpolated.
 </P>
@@ -122,10 +125,13 @@ parts available a single underscore is interpolated.
 <P>
 For simple name-based virtual hosts you might use the following
 directives in your server configuration file:
+</p>
 <PRE>
 	UseCanonicalName	Off
 	VirtualDocumentRoot	/usr/local/apache/vhosts/%0
 </PRE>
+
+<p>
 A request for <CODE>http://www.example.com/directory/file.html</CODE>
 will be satisfied by the file
 <CODE>/usr/local/apache/vhosts/www.example.com/directory/file.html</CODE>.
@@ -153,7 +159,8 @@ Alternatively you might use:
 <PRE>
 	VirtualDocumentRoot	/usr/local/apache/vhosts/%3+/%2.1/%2.2/%2.3/%2.4+
 </PRE>
-The example request would come from
+
+<p>The example request would come from
 <CODE>/usr/local/apache/vhosts/isp.com/e/x/a/mple/directory/file.html</CODE>.
 </P>
 
@@ -165,6 +172,8 @@ configuration file:
 	VirtualDocumentRootIP	/usr/local/apache/vhosts/%1/%2/%3/%4/docs
 	VirtualScriptAliasIP	/usr/local/apache/vhosts/%1/%2/%3/%4/cgi-bin
 </PRE>
+
+<p>
 A request for <CODE>http://www.example.isp.com/directory/file.html</CODE>
 would be satisfied by the file
 <CODE>/usr/local/apache/vhosts/10/20/30/40/docs/directory/file.html</CODE> if
@@ -182,6 +191,8 @@ following way:
 <PRE>
 	VirtualDocumentRoot	/usr/local/apache/vhosts/%2.0.%3.0
 </PRE>
+
+<p>
 A request for <CODE>http://www.example.isp.com/directory/file.html</CODE>
 will be satisfied by the file
 <CODE>/usr/local/apache/vhosts/example.isp/directory/file.html</CODE>.
@@ -229,7 +240,7 @@ name. The result of expanding <EM>interpolated-directory</EM> is used
 as the root of the document tree in a similar manner to the
 <A HREF="core.html#documentroot"><CODE>DocumentRoot</CODE></A>
 directive's argument. If <EM>interpolated-directory</EM> is
-<CODE>none</CODE> then <CODE>VirtaulDocumentRoot</CODE> is turned off.
+<CODE>none</CODE> then <CODE>VirtualDocumentRoot</CODE> is turned off.
 This directive cannot be used in the same context as
 <A HREF="#virtualdocumentrootip"><CODE>VirtualDocumentRootIP</CODE></A>.
 </P>

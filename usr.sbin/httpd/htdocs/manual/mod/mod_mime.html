@@ -129,8 +129,8 @@ mod_imap imagemap file.
 
 <H2><A NAME="addcharset">AddCharset</A> directive</H2>
 <A HREF="directive-dict.html#Syntax" REL="Help"
-><STRONG>Syntax:</STRONG></A> AddCharset <i>charset extension
- [extension...]</i><br>
+><STRONG>Syntax:</STRONG></A> AddCharset <em>charset extension</em>
+ [<em>extension</em>] ...<br>
 <A HREF="directive-dict.html#Context" REL="Help"
 ><STRONG>Context:</STRONG></A> server config, virtual host, directory, .htaccess<BR>
 <A
@@ -176,6 +176,10 @@ for <A HREF="../content-negotiation.html">content negotiation</A>, where
 the server returns one from several documents based on the client's
 charset preference.
 </P>
+
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
+
 <P>
 <STRONG>See also</STRONG>: <A HREF="mod_negotiation.html">mod_negotiation</A>
 </P>
@@ -187,7 +191,8 @@ charset preference.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddEncoding <EM>MIME-enc extension [extension ...]</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddEncoding <EM>MIME-enc extension</em>
+    [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -212,7 +217,9 @@ to any already in force, overriding any mappings that already exist
 for the same <EM>extension</EM>.
 
 Example:
-<BLOCKQUOTE><CODE> AddEncoding x-gzip gz<BR> AddEncoding x-compress Z
+<BLOCKQUOTE><CODE>
+AddEncoding x-gzip .gz<BR> 
+AddEncoding x-compress .Z
 </CODE></BLOCKQUOTE>
 
 This will cause filenames containing the .gz extension to be marked as
@@ -231,6 +238,9 @@ you should always use <CODE>x-gzip</CODE> and <CODE>x-compress</CODE>
 for these two specific encodings.  More recent encodings, such as
 <CODE>deflate</CODE> should be specified without the <CODE>x-</CODE>.
 
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
+
 <P>
 
 <STRONG>See also</STRONG>: <A HREF="#multipleext">Files with
@@ -243,7 +253,8 @@ multiple extensions</A>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddHandler <EM>handler-name extension [extension ...]</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddHandler <EM>handler-name extension</em>
+     [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -274,12 +285,15 @@ already exist for the same <EM>extension</EM>.
 For example, to activate CGI scripts
 with the file extension "<CODE>.cgi</CODE>", you might use:
 <PRE>
-    AddHandler cgi-script cgi
+    AddHandler cgi-script .cgi
 </PRE>
 
 <P>Once that has been put into your srm.conf or httpd.conf file, any
 file containing the "<CODE>.cgi</CODE>" extension will be treated as a
 CGI program.</P> 
+
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
 
 <P>
 
@@ -293,7 +307,8 @@ multiple extensions</A>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddLanguage <EM>MIME-lang extension [extension ...]</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddLanguage <EM>MIME-lang extension</em>
+    [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -312,17 +327,19 @@ multiple extensions</A>
 ><STRONG>Module:</STRONG></A> mod_mime
 
 <P>
-The AddLanguage directive maps the given filename extension tos the
+The AddLanguage directive maps the given filename extension to the
 specified content language. <EM>MIME-lang</EM> is the MIME language of
 filenames containing <EM>extension</EM>.  This mapping is added to any
 already in force, overriding any mappings that already exist for the
 same <EM>extension</EM>.
 </P>
 <P>
-Example: <BLOCKQUOTE><CODE>
-AddEncoding x-compress Z<BR> AddLanguage en .en<BR> AddLanguage fr
+Example:
+</p>
+<BLOCKQUOTE><CODE>
+AddEncoding x-compress .Z<BR> AddLanguage en .en<BR> AddLanguage fr
 .fr<BR> </CODE></BLOCKQUOTE>
-</P>
+
 <P>
 Then the document <CODE>xxxx.en.Z</CODE> will be treated as being a
 compressed English document (as will the document
@@ -347,6 +364,10 @@ case of:
 documents with the extension "<CODE>.en</CODE>" would be treated as
 being "<CODE>en-us</CODE>".
 </P>
+
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
+
 <P>
 <STRONG>See also</STRONG>: <A HREF="#multipleext">Files with
 multiple extensions</A>
@@ -362,7 +383,8 @@ HREF="./mod_negotiation.html">mod_negotiation</A>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> AddType <EM>MIME-type extension [extension ...]</EM><BR>
+><STRONG>Syntax:</STRONG></A> AddType <EM>MIME-type extension</em>
+   [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -390,12 +412,15 @@ HREF="#typesconfig">TypesConfig</A></CODE> directive).
 
 Example:
 <BLOCKQUOTE><CODE>
-AddType image/gif GIF
+AddType image/gif .gif
 </CODE></BLOCKQUOTE>
 It is recommended that new MIME types be added using the AddType directive
 rather than changing the <A HREF="#typesconfig">TypesConfig</A> file.<P>
 Note that, unlike the NCSA httpd, this directive cannot be used to set the
 type of particular files.<P>
+
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
 
 <P>
 
@@ -465,7 +490,7 @@ multiple extensions</A>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> ForceType <EM>media type</EM><BR>
+><STRONG>Syntax:</STRONG></A> ForceType <EM>media-type</EM><BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -501,7 +526,8 @@ the media type.</P><HR>
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> RemoveEncoding <i>extension [extension ...]</i><BR>
+><STRONG>Syntax:</STRONG></A> RemoveEncoding <em>extension</em>
+     [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -548,6 +574,9 @@ gzip method, but <code>foo.gz.asc</code> as an unencoded plaintext file.
 AddEncoding directives, so it is possible they may undo the effects
 of the latter if both occur within the same directory configuration.
 </p>
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
+
 <HR>
 
 <H2><A NAME="removehandler">RemoveHandler</A> directive</H2>
@@ -555,7 +584,8 @@ of the latter if both occur within the same directory configuration.
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> RemoveHandler <EM>extension [extension ...]</EM><BR>
+><STRONG>Syntax:</STRONG></A> RemoveHandler <EM>extension</em>
+     [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -593,6 +623,9 @@ This has the effect of returning <SAMP>.html</SAMP> files in the
 files, rather than as candidates for parsing (see the
 <A HREF="mod_include.html"><SAMP>mod_include</SAMP></A> module).
 </P>
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
+
 <HR>
 
 <H2><A NAME="removetype">RemoveType</A> directive</H2>
@@ -600,7 +633,8 @@ files, rather than as candidates for parsing (see the
 <A
  HREF="directive-dict.html#Syntax"
  REL="Help"
-><STRONG>Syntax:</STRONG></A> RemoveType <i>extension [extension ...]</i><BR>
+><STRONG>Syntax:</STRONG></A> RemoveType <em>extension</em>
+     [<em>extension</em>] ...<BR>
 <A
  HREF="directive-dict.html#Context"
  REL="Help"
@@ -640,6 +674,9 @@ treated as being of the <a href="core.html#defaulttype">default type</a>.
 <code>AddType</code> directives, so it is possible they may undo the effects
 of the latter if both occur within the same directory configuration.
 </p>
+<p>The <em>extension</em> argument is case-insensitive, and can
+be specified with or without a leading dot.</p>
+
 <HR>
 
 <H2><A NAME="sethandler">SetHandler</A> directive</H2>

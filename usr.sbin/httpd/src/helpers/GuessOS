@@ -114,8 +114,12 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-sgi-irix64"; exit 0
 	;;
 
+    Linux:2.0.*)
+    	echo "${MACHINE}-whatever-linux20"; exit 0
+	;;
+
     Linux:[2-9].*)
-	echo "${MACHINE}-whatever-linux2"; exit 0
+	echo "${MACHINE}-whatever-linux22"; exit 0
 	;;
 
     Linux:1.*)
@@ -269,6 +273,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     NonStop-UX:4.[02]*:[BC]*:*)
 	echo "${MACHINE}-tandem-sysv4"; exit 0;
+	;;
+
+    NonStop-UX:*:*:*)
+	echo "${MACHINE}-compaq-sysv4"; exit 0;
 	;;
 
     Rhapsody:*:*:*)

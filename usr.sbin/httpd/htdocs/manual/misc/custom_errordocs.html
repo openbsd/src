@@ -36,6 +36,7 @@ customized international server error responses</H1>
 </UL>
 <HR>
 <H2><A NAME="intro">Introduction</A></H2>
+<p>
 This document describes an easy way to provide your apache WWW server
 with a set of customized error messages which take advantage of
 <A HREF="../content-negotiation.html">Content Negotiation</A>
@@ -66,6 +67,8 @@ You have full flexibility in designing your error documents to
 your personal taste (or your company's conventions). For demonstration
 purposes, we present a simple generic error document scheme.
 For this hypothetic server, we assume that all error messages...
+</P>
+
 <UL>
 <LI>possibly are served by different virtual hosts (different host name,
     different IP address, or different port) on the server machine,
@@ -77,7 +80,6 @@ For this hypothetic server, we assume that all error messages...
 <LI>display an apache logo and a feedback email address at the bottom
     of the error message.
 </UL>
-</P>
 
 <P>
 An example of a "document not found" message for a german client might
@@ -309,7 +311,7 @@ A simple shell script to do it (execute within the errordocs/ dir):
  variable within an error document:
 </P>
 <PRE>
- &lt;!--#if expr="\"$REDIRECT_ERROR_NOTES\" = \"\"" --&gt;
+ &lt;!--#if expr="$REDIRECT_ERROR_NOTES = ''" --&gt;
   &lt;p&gt;
    The server encountered an unexpected condition
    which prevented it from fulfilling the request. 
@@ -346,7 +348,7 @@ documents, or to translate the error documents to different languages.
    modifications.
    &lt;/P&gt;
    &lt;P&gt;
-   &lt;!--#if expr="\"$HTTP_REFERER\" != \"\"" --&gt;
+   &lt;!--#if expr="$HTTP_REFERER != ''" --&gt;
     Please inform the owner of
     &lt;A HREF="&lt;!--#echo var="HTTP_REFERER" --&gt;"&gt;the referring page&lt;/A&gt; about 
     the malformed link.
@@ -367,7 +369,7 @@ appears to support it (the latter requires server configuration lines
 of the form <BR><CODE>BrowserMatch "^Mozilla/[2-4]" anigif</CODE><BR>
 for browser types which support animated GIFs).
 <HR><PRE>
-&lt;!--#if expr="\"$SERVER_NAME\" = /.*\.mycompany\.com/" 
+&lt;!--#if expr="$SERVER_NAME = /.*\.mycompany\.com/" 
 --&gt;&lt;!--#set var="IMG_CorpLogo"
             value="http://$SERVER_NAME:$SERVER_PORT/errordocs/CorpLogo.gif" 
 --&gt;&lt;!--#set var="ALT_CorpLogo" value="Powered by Linux!" 

@@ -10,7 +10,7 @@
 
 ##
 ##  ====================================================================
-##  Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
+##  Copyright (c) 1998-2001 Ralf S. Engelschall. All rights reserved.
 ## 
 ##  Redistribution and use in source and binary forms, with or without
 ##  modification, are permitted provided that the following conditions
@@ -77,8 +77,8 @@ LDFLAGS  = /nologo
 RM       = del
 
 #   name and extension of generated mod_ssl library file
-LIBNAME  = ApacheModuleSSL
-LIBEXT   = dll
+LIBNAME  = mod_ssl
+LIBEXT   = so
 LIBFILE  = $(LIBNAME).$(LIBEXT)
 
 #   mod_ssl object files
@@ -95,9 +95,12 @@ OBJS=\
  ssl_engine_log.obj\
  ssl_engine_mutex.obj\
  ssl_engine_pphrase.obj\
- ssl_engine_scache.obj\
  ssl_engine_vars.obj\
  ssl_engine_ext.obj\
+ ssl_scache.obj\
+ ssl_scache_dbm.obj\
+ ssl_scache_shmcb.obj\
+ ssl_scache_shmht.obj\
  ssl_expr.obj\
  ssl_expr_scan.obj\
  ssl_expr_parse.obj\
@@ -116,10 +119,10 @@ $(LIBNAME).lib: $(OBJS)
 	$(LD) $(LDFLAGS) /lib /out:$@ \
 		$(OBJS)
 
-$(LIBNAME).dll: $(OBJS)
+$(LIBNAME).so: $(OBJS)
 	$(LD) $(LDFLAGS) /dll /out:$@ \
 		$(OBJS) \
-		..\..\CoreR\ApacheCore.lib \
+		..\..\Release\ApacheCore.lib \
 		$(SSL_LIB)\ssleay32.lib \
 		$(SSL_LIB)\libeay32.lib \
 		wsock32.lib gdi32.lib

@@ -7,8 +7,8 @@
  mod_ssl                               ``Ralf Engelschall has released an
  Apache Interface to OpenSSL             excellent module that integrates
  http://www.modssl.org/                  Apache and SSLeay.''                 
- Version 2.7                                               -- Tim J. Hudson
-                                           
+ Version 2.8                                               -- Tim J. Hudson
+
  SYNOPSIS
 
  This Apache module provides strong cryptography for the Apache 1.3 webserver
