@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.110 2003/03/10 12:07:01 henning Exp $
+# $OpenBSD: Makefile,v 1.111 2003/03/11 10:57:11 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -19,6 +19,7 @@ PFSIMPLE=1 2
 PFSETUP=1 2 3
 PFLOAD=1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 24 25 26 27 28 29
 PFLOAD+=30 31 32 34 36 38 39 40 44 46 47 49 54 56
+PFALTQ=1
 # disabled; no altq in anchors
 # PFLOAD+=33 35 37 42 43 45 51 58 59
 # disabled; no table def in anchors
@@ -174,6 +175,26 @@ pfsetup-update:	${PFSETUP_UPDATES}
 REGRESS_TARGETS+=pfsetup
 UPDATE_TARGETS+=pfsetup-update
 .endif
+
+.for n in ${PFALTQ}
+PFALTQ_TARGETS+=pfaltq${n}
+PFALTQ_UPDATES+=pfaltq${n}-update
+
+pfaltq${n}:
+	${SUDO} pfctl -Fq -f - < ${.CURDIR}/pfaltq${n}.in
+	${SUDO} pfctl -gsq | \
+	    diff -u ${.CURDIR}/pfaltq${n}.ok /dev/stdin
+	${SUDO} pfctl -Fq >/dev/null 2>&1
+
+pfaltq${n}-update:
+	${SUDO} pfctl -Fq -f - < ${.CURDIR}/pfaltq${n}.in
+	${SUDO} pfctl -gsq > ${.CURDIR}/pfaltq${n}.ok
+	${SUDO} pfctl -Fq >/dev/null 2>&1
+
+.endfor
+
+pfaltq:		${PFALTQ_TARGETS}
+pfaltq-update:	${PFALTQ_UPDATES}
 
 update:	${UPDATE_TARGETS}
 
