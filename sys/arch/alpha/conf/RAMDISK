@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.19 1998/09/23 19:29:17 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.20 1998/11/11 20:12:54 jason Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -122,10 +122,14 @@ sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 
 # Media Independent Interface (mii) drivers
-#exphy* at mii? phy ?				# 3Com internal PHYs
-inphy*  at mii? phy ?				# Intel 82555 PHYs
-#nsphy* at mii? phy ?				# NS and compatible PHYs
-#qsphy* at mii? phy ?				# Quality Semi QS6612 PHYs
+#exphy*	at mii? phy ?				# 3Com internal PHYs
+inphy*	at mii? phy ?				# Intel 82555 PHYs
+#icsphy*	at mii? phy ?				# ICS 1890 PHYs
+#lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
+#nsphy*	at mii? phy ?				# NS and compatible PHYs
+#qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+#sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
+#ukphy*	at mii? phy ?				# "unknown" PHYs
 
 # ISA/EISA bus support
 isa*	at	pceb?
