@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.38 1999/04/28 23:20:59 alex Exp $
+#	$OpenBSD: files.pci,v 1.39 1999/07/01 23:10:39 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -92,6 +92,14 @@ file	dev/pci/ppb.c			ppb
 # Cyclades Cyclom-8/16/32 
 attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
+
+# Lan Media Corporation T1/HSSI/DS3 adapter
+device	lmc: ifnet, sppp
+attach	lmc at pci
+file	dev/pci/if_lmc.c		lmc
+file	dev/pci/if_lmc_common.c		lmc
+file	dev/pci/if_lmc_media.c		lmc
+file	dev/pci/if_lmc_obsd.c		lmc
 
 # Intel EtherExpress PRO 10/100B
 device	fxp: ether, ifnet, mii, ifmedia

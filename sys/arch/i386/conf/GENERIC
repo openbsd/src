@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 1999/06/22 14:12:42 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.111 1999/07/01 23:10:39 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -178,6 +178,7 @@ ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet
 fea*	at eisa? slot ?				# DEC DEFEA FDDI
+lmc*	at pci? dev ? function ?		# Lan Media Corp SSI/T3/HSSI
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet
 le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet
