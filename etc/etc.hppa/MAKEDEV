@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.8 2002/05/16 21:11:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.9 2002/10/01 21:10:43 mickey Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.51 2002/08/29 23:43:16 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -64,8 +64,11 @@
 #	ch*	SCSI media changer
 #	ss*	SCSI scanners
 #	uk*	SCSI Unknown device
+#	ses*	SES/SAF-TE SCSI devices
 #	pdc	PDC device
 #	systrace*	system call tracing device
+#	audio*	audio device
+#	crypto	hardware crypto access driver
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -201,8 +204,27 @@ std)
 	M klog		c 6 0 600
 	;;
 
+crypto)
+	M crypto c 36 0
+	;;
+
+audio*)
+	M sound$U	c 35 $U
+	M mixer$U	c 35 $(($U+16))
+	M audio$U	c 35 $(($U+128))
+	M audioctl$U	c 35 $(($U+192))
+	MKlist="$MKlist;[ -e audio ] || ln -s audio$U audio"
+	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
+	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
+	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
+	;;
+
 systrace)
 	M systrace c 34 0 644
+	;;
+
+ses*)
+	M ses$U c 37 $U 640 operator
 	;;
 
 uk*)
@@ -355,8 +377,9 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C fd1D
 	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R xfs0 ss0 ss1 ch0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2
-	R lkm tty00 tty01 tty02 tty03 pf altq systrace std st0 st1 fd
+	R xfs0 ss0 ss1 ch0 ses0 audio0 uk0 random lpa0 lpa1 lpa2 lpt0
+	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 crypto pf altq
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)
