@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.41 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.42 2002/05/28 03:04:38 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1473,6 +1473,8 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&ip6_use_deprecated);
 	case IPV6CTL_RR_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
+	case IPV6CTL_MAXFRAGS:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
 	default:
 		return EOPNOTSUPP;
 	}

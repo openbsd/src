@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.26 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: in6.h,v 1.27 2002/05/28 03:04:38 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -531,9 +531,11 @@ struct in6_pktinfo {
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
 /*#define IPV6CTL_MAPPED_ADDR	23	not for openbsd */
+/* 24 to 40: resrved */
+#define IPV6CTL_MAXFRAGS	41	/* max fragments */
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
-#define IPV6CTL_MAXID		24
+#define IPV6CTL_MAXID		42
 
 #define IPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -560,6 +562,23 @@ struct in6_pktinfo {
 	{ "use_deprecated", CTLTYPE_INT }, \
 	{ "rr_prune", CTLTYPE_INT }, \
 	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "maxfrags", CTLTYPE_INT }, \
 }
 
 #endif /* !_XOPEN_SOURCE */
