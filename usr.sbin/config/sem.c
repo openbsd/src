@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.20 2001/01/23 17:43:21 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.21 2001/01/24 20:13:00 art Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "config.h"
 #include "sem.h"
 
