@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.19 1997/06/01 21:35:55 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.20 1997/06/02 08:08:01 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.19 1997/06/01 21:35:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.20 1997/06/02 08:08:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ main(argc, argv)
 		for (i = 8; i < datalen; ++i)
 			*datap++ = i;
 
-	ident = getpid() & 0xFFFF;
+	ident = (getpid() & 0x00FF) | (arc4random() & 0xFF00);
 
 	if (options & F_SADDR) {
 		if (IN_MULTICAST(ntohl(to->sin_addr.s_addr)))
@@ -551,10 +551,10 @@ pinger()
 	icp->icmp_type = ICMP_ECHO;
 	icp->icmp_code = 0;
 	icp->icmp_cksum = 0;
-	icp->icmp_seq = ntransmitted++;
+	icp->icmp_seq = htons(ntransmitted++);
 	icp->icmp_id = ident;			/* ID */
 
-	CLR(icp->icmp_seq % mx_dup_ck);
+	CLR(ntohs(icp->icmp_seq) % mx_dup_ck);
 
 	if (timing)
 		(void)gettimeofday((struct timeval *)&outpack[8],
@@ -647,12 +647,12 @@ pr_pack(buf, cc, from)
 				tmax = triptime;
 		}
 
-		if (TST(icp->icmp_seq % mx_dup_ck)) {
+		if (TST(ntohs(icp->icmp_seq) % mx_dup_ck)) {
 			++nrepeats;
 			--nreceived;
 			dupflag = 1;
 		} else {
-			SET(icp->icmp_seq % mx_dup_ck);
+			SET(ntohs(icp->icmp_seq) % mx_dup_ck);
 			dupflag = 0;
 		}
 
@@ -664,7 +664,7 @@ pr_pack(buf, cc, from)
 		else {
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			   inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
-			   icp->icmp_seq);
+			   ntohs(icp->icmp_seq));
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (timing)
 				(void)printf(" time=%d.%03d ms",
