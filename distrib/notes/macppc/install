@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2002/10/25 18:11:47 drahn Exp $
+dnl	$OpenBSD: install,v 1.14 2002/10/26 14:03:35 drahn Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -114,9 +114,9 @@ OpenBSDInstallPart4({:-If you have DOS or Linux
 	an HFS partitioned disk. For proper layout, the disk should be
 	paritioned with MacOS or MacOS X first with unused space or a
 	spare partition where OpenBSD can be installed.  No low disk
-	boundaries exist on MACHINE. MACPPC is unable to install the
-	bootloader into the HFS(+) parition to boot OpenBSD/MACHINE so
-	it is necessary copy 'ofwboot' from the installation media into
+	boundaries exist on MACHINE. MACHINE is unable to install the
+	bootloader into the HFS(+) parition to boot OpenBSD so it is
+	necessary copy 'ofwboot' from the installation media into
 	the first HFS(+) parition using MacOS or MacOS X.
 
 	If the disk is parititioned using MBR, the bootloader is
