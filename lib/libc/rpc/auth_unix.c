@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_unix.c,v 1.7 1996/12/14 06:49:40 tholo Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.8 1997/07/17 06:36:46 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -213,14 +213,14 @@ authunix_marshal(auth, xdrs)
 static bool_t
 authunix_validate(auth, verf)
 	register AUTH *auth;
-	struct opaque_auth verf;
+	struct opaque_auth *verf;
 {
 	register struct audata *au;
 	XDR xdrs;
 
-	if (verf.oa_flavor == AUTH_SHORT) {
+	if (verf->oa_flavor == AUTH_SHORT) {
 		au = AUTH_PRIVATE(auth);
-		xdrmem_create(&xdrs, verf.oa_base, verf.oa_length, XDR_DECODE);
+		xdrmem_create(&xdrs, verf->oa_base, verf->oa_length, XDR_DECODE);
 
 		if (au->au_shcred.oa_base != NULL) {
 			mem_free(au->au_shcred.oa_base,
