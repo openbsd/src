@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.7 1996/10/15 10:17:32 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.8 1996/12/29 12:21:26 graichen Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -385,7 +385,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	(void)fclose(fp);
 
 	/* Create the core file. */
-	(void)snprintf(path, sizeof(path), "%s/%s.%d.core%s",
+	(void)snprintf(path, sizeof(path), "%s%s.%d.core%s",
 	    dirname, _PATH_UNIX, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
@@ -447,7 +447,7 @@ err2:			syslog(LOG_WARNING,
 
 	/* Copy the kernel. */
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
-	(void)snprintf(path, sizeof(path), "%s/%s.%d%s",
+	(void)snprintf(path, sizeof(path), "%s%s.%d%s",
 	    dirname, _PATH_UNIX, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
