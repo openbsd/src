@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.4 1996/10/05 07:23:03 deraadt Exp $
+ * $Id: bootparamd.c,v 1.5 1996/12/10 15:13:31 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -39,7 +39,7 @@ int     debug = 0;
 int     dolog = 0;
 unsigned long route_addr, inet_addr();
 struct sockaddr_in my_addr;
-char   *progname;
+extern char *__progname;
 char   *bootpfile = _PATH_BOOTPARAMS;
 
 extern char *optarg;
@@ -50,6 +50,7 @@ usage()
 {
 	fprintf(stderr,
 	    "usage: rpc.bootparamd [-d] [-s] [-r router] [-f bootparmsfile]\n");
+	exit(1);
 }
 
 
@@ -69,12 +70,6 @@ main(argc, argv)
 	char   *optstring;
 	int    c;
 
-	progname = rindex(argv[0], '/');
-	if (progname)
-		progname++;
-	else
-		progname = argv[0];
-
 	while ((c = getopt(argc, argv, "dsr:f:")) != -1)
 		switch (c) {
 		case 'd':
@@ -87,10 +82,8 @@ main(argc, argv)
 			}
 			he = gethostbyname(optarg);
 			if (!he) {
-				fprintf(stderr, "%s: No such host %s\n",
-				    progname, optarg);
+				warnx("no such host: %s", optarg);
 				usage();
-				exit(1);
 			}
 			bcopy(he->h_addr, (char *) &route_addr, sizeof(route_addr));
 			break;
@@ -100,46 +93,41 @@ main(argc, argv)
 		case 's':
 			dolog = 1;
 #ifndef LOG_DAEMON
-			openlog(progname, 0, 0);
+			openlog(__progname, 0, 0);
 #else
-			openlog(progname, 0, LOG_DAEMON);
+			openlog(__progname, 0, LOG_DAEMON);
 			setlogmask(LOG_UPTO(LOG_NOTICE));
 #endif
 			break;
 		default:
 			usage();
-			exit(1);
 		}
 
-	if (stat(bootpfile, &buf)) {
-		fprintf(stderr, "%s: ", progname);
-		perror(bootpfile);
-		exit(1);
-	}
+	if (stat(bootpfile, &buf))
+		err(1, "%s", bootpfile);
+
 	if (!route_addr) {
 		get_myaddress(&my_addr);
 		bcopy(&my_addr.sin_addr.s_addr, &route_addr, sizeof(route_addr));
 	}
-	if (!debug)
-		daemon();
+	if (!debug) {
+		if (daemon(0, 0))
+			err(1, "can't detach from terminal");
+	}
 
 	(void) pmap_unset(BOOTPARAMPROG, BOOTPARAMVERS);
 
 	transp = svcudp_create(RPC_ANYSOCK);
-	if (transp == NULL) {
-		fprintf(stderr, "cannot create udp service.\n");
-		exit(1);
-	}
-	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS,
-		bootparamprog_1, IPPROTO_UDP)) {
-		fprintf(stderr,
-		    "bootparamd: unable to register BOOTPARAMPROG version %d, udp)\n",
+	if (transp == NULL)
+		errx(1, "can't create udp service");
+
+	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS, bootparamprog_1,
+	    IPPROTO_UDP))
+		errx(1, "unable to register BOOTPARAMPROG version %d, udp",
 		    BOOTPARAMVERS);
-		exit(1);
-	}
+
 	svc_run();
-	fprintf(stderr, "svc_run returned\n");
-	exit(1);
+	errx(1, "svc_run returned");
 }
 
 bp_whoami_res *
@@ -151,7 +139,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	static bp_whoami_res res;
 
 	if (debug)
-		fprintf(stderr, "whoami got question for %d.%d.%d.%d\n",
+		warnx("whoami got question for %d.%d.%d.%d",
 		    255 & whoami->client_address.bp_address_u.ip_addr.net,
 		    255 & whoami->client_address.bp_address_u.ip_addr.host,
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
@@ -170,9 +158,9 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		goto failed;
 
 	if (debug)
-		fprintf(stderr, "This is host %s\n", he->h_name);
+		warnx("This is host %s", he->h_name);
 	if (dolog)
-		syslog(LOG_NOTICE, "This is host %s\n", he->h_name);
+		syslog(LOG_NOTICE, "This is host %s", he->h_name);
 
 	strncpy(askname, he->h_name, sizeof askname-1);
 	askname[sizeof askname-1] = '\0';
@@ -186,7 +174,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 			bcopy(&route_addr, &res.router_address.bp_address_u.ip_addr, 4);
 		}
 		if (debug)
-			fprintf(stderr, "Returning %s   %s    %d.%d.%d.%d\n",
+			warnx("Returning %s   %s    %d.%d.%d.%d",
 			    res.client_name, res.domain_name,
 			    255 & res.router_address.bp_address_u.ip_addr.net,
 			    255 & res.router_address.bp_address_u.ip_addr.host,
@@ -204,7 +192,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	}
 failed:
 	if (debug)
-		fprintf(stderr, "whoami failed\n");
+		warnx("whoami failed");
 	if (dolog)
 		syslog(LOG_NOTICE, "whoami failed\n");
 	return (NULL);
@@ -221,7 +209,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	int     err;
 
 	if (debug)
-		fprintf(stderr, "getfile got question for \"%s\" and file \"%s\"\n",
+		warnx("getfile got question for \"%s\" and file \"%s\"",
 		    getfile->client_name, getfile->file_id);
 
 	if (dolog)
@@ -251,17 +239,15 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	} else {
 failed:
 		if (debug)
-			fprintf(stderr, "getfile failed for %s\n",
-			    getfile->client_name);
+			warnx("getfile failed for %s", getfile->client_name);
 		if (dolog)
 			syslog(LOG_NOTICE,
-			    "getfile failed for %s\n", getfile->client_name);
+			    "getfile failed for %s", getfile->client_name);
 		return (NULL);
 	}
 
 	if (debug)
-		fprintf(stderr,
-		    "returning server:%s path:%s address: %d.%d.%d.%d\n",
+		warnx("returning server:%s path:%s address: %d.%d.%d.%d",
 		    res.server_name, res.server_path,
 		    255 & res.server_address.bp_address_u.ip_addr.net,
 		    255 & res.server_address.bp_address_u.ip_addr.host,
