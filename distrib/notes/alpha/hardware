@@ -165,6 +165,12 @@ Supported hardware:
                Almost all other variants work.
     FDDI Adapters
           Digital DEFPA PCI FDDI adapters (fpa)
+    Cryptography Accelerators
+          Hi/Fn 7751-based boards (hifn), including:
+               GTGI PowerCrypt Encryption Accelerator
+               NETSEC 7751
+               HiFn reference board
+               Invertex AEON
     Sound Devices
           Ensoniq AudioPCI (eap)
           SoundBlaster PCI128 (eap)
