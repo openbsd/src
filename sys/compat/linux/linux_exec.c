@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.5 1997/06/17 11:11:10 deraadt Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.6 1998/02/22 01:07:56 niklas Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_olf.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -127,14 +128,14 @@ linux_aout_copyargs(pack, arginfo, stack, argp)
 	int envc = arginfo->ps_nenvstr;
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
-		return NULL;
+		return (NULL);
 
 	/* leave room for envp and argv */
 	cpp += 2;
 	if (copyout(&cpp, &stk[1], sizeof (cpp)))
-		return NULL;
+		return (NULL);
 
-	dp = (char *) (cpp + argc + envc + 2);
+	dp = (char *)(cpp + argc + envc + 2);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
@@ -143,25 +144,25 @@ linux_aout_copyargs(pack, arginfo, stack, argp)
 	for (; --argc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+			return (NULL);
 
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+		return (NULL);
 
 	if (copyout(&cpp, &stk[2], sizeof (cpp)))
-		return NULL;
+		return (NULL);
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+			return (NULL);
 
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+		return (NULL);
 
-	return cpp;
+	return (cpp);
 }
 
 int
@@ -196,7 +197,7 @@ exec_linux_aout_makecmds(p, epp)
 	}
 	if (error == 0)
 		epp->ep_emul = &emul_linux_aout;
-	return error;
+	return (error);
 }
 
 /*
@@ -233,7 +234,7 @@ exec_linux_aout_prep_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_setup_stack(p, epp);
+	return (exec_setup_stack(p, epp));
 }
 
 /*
@@ -272,7 +273,7 @@ exec_linux_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_setup_stack(p, epp);
+	return (exec_setup_stack(p, epp));
 }
 
 /*
@@ -316,7 +317,7 @@ exec_linux_aout_prep_omagic(p, epp)
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_setup_stack(p, epp);
+	return (exec_setup_stack(p, epp));
 }
 
 int
@@ -343,7 +344,7 @@ exec_linux_aout_prep_qmagic(p, epp)
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-		return ETXTBSY;
+		return (ETXTBSY);
 	}
 	epp->ep_vp->v_flag |= VTEXT;
 
@@ -362,15 +363,16 @@ exec_linux_aout_prep_qmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_setup_stack(p, epp);
+	return (exec_setup_stack(p, epp));
 }
 
 int
-linux_elf_probe(p, epp, itp, pos)
+linux_elf_probe(p, epp, itp, pos, os)
 	struct proc *p;
 	struct exec_package *epp;
 	char *itp;
 	u_long *pos;
+	u_int8_t *os;
 {
 	char *bp;
 	int error;
@@ -378,14 +380,15 @@ linux_elf_probe(p, epp, itp, pos)
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
-			return error;
+			return (error);
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
+			return (error);
 		free(bp, M_TEMP);
 	}
 	epp->ep_emul = &emul_linux_elf;
 	*pos = ELF32_NO_ADDR;
-	return 0;
+	*os = OOS_LINUX;
+	return (0);
 }
 
 /*
@@ -428,7 +431,7 @@ linux_sys_uselib(p, v, retval)
 	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	if ((error = namei(&ni)))
-		return error;
+		return (error);
 
 	vp = ni.ni_vp;
 
@@ -436,16 +439,16 @@ linux_sys_uselib(p, v, retval)
 			     0, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
 			     &rem, p))) {
 		vrele(vp);
-		return error;
+		return (error);
 	}
 
 	if (rem != 0) {
 		vrele(vp);
-		return ENOEXEC;
+		return (ENOEXEC);
 	}
 
 	if (LINUX_N_MACHTYPE(&hdr) != LINUX_MID_MACHINE)
-		return ENOEXEC;
+		return (ENOEXEC);
 
 	magic = LINUX_N_MAGIC(&hdr);
 	taddr = hdr.a_entry & (~(NBPG - 1));
@@ -455,18 +458,17 @@ linux_sys_uselib(p, v, retval)
 
 	if ((hdr.a_text != 0 || hdr.a_data != 0) && vp->v_writecount != 0) {
 		vrele(vp);
-                return ETXTBSY;
+                return (ETXTBSY);
         }
 	vp->v_flag |= VTEXT;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
 
-	NEW_VMCMD(&vcset,
-		  magic == ZMAGIC ? vmcmd_map_readvn : vmcmd_map_pagedvn,
-		  hdr.a_text + hdr.a_data, taddr,
-		  vp, LINUX_N_TXTOFF(hdr, magic),
-		  VM_PROT_READ|VM_PROT_EXECUTE|VM_PROT_WRITE);
+	NEW_VMCMD(
+	    &vcset, magic == ZMAGIC ? vmcmd_map_readvn : vmcmd_map_pagedvn,
+	    hdr.a_text + hdr.a_data, taddr, vp, LINUX_N_TXTOFF(hdr, magic),
+	    VM_PROT_READ|VM_PROT_EXECUTE|VM_PROT_WRITE);
 
 	baddr = roundup(daddr + hdr.a_data, NBPG);
 	bsize = daddr + dsize - baddr;
@@ -486,7 +488,7 @@ linux_sys_uselib(p, v, retval)
 
 	vrele(vp);
 
-	return error;
+	return (error);
 }
 
 /*
@@ -514,5 +516,5 @@ linux_sys_execve(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return sys_execve(p, &ap, retval);
+	return (sys_execve(p, &ap, retval));
 }

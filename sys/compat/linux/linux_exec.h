@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.h,v 1.2 1996/04/17 05:23:47 mickey Exp $	*/
+/*	$OpenBSD: linux_exec.h,v 1.3 1998/02/22 01:07:57 niklas Exp $	*/
 /*	$NetBSD: linux_exec.h,v 1.5 1995/10/07 06:27:01 mycroft Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
 int exec_linux_elf_makecmds __P((struct proc *, struct exec_package *));
 
-int linux_elf_probe __P((struct proc *p, struct exec_package *epp, char *itp,
-	 u_long *pos));
+int linux_elf_probe __P((struct proc *, struct exec_package *, char *,
+    u_long *, u_int8_t *));
 
 #endif /* !_LINUX_EXEC_H */

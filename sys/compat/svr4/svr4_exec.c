@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.5 1996/09/13 17:09:53 niklas Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.6 1998/02/22 01:07:58 niklas Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_olf.h>
 
 #include <sys/mman.h>
 #include <vm/vm.h>
@@ -85,8 +86,8 @@ svr4_copyargs(pack, arginfo, stack, argp)
 {
 	AuxInfo *a;
 
-	if (!(a = (AuxInfo *) elf_copyargs(pack, arginfo, stack, argp)))
-		return NULL;
+	if (!(a = (AuxInfo *)elf_copyargs(pack, arginfo, stack, argp)))
+		return (NULL);
 #ifdef SVR4_COMPAT_SOLARIS2
 	if (pack->ep_emul_arg) {
 		a->au_id = AUX_sun_uid;
@@ -106,15 +107,16 @@ svr4_copyargs(pack, arginfo, stack, argp)
 		a++;
 	}
 #endif
-	return a;
+	return (a);
 }
 
 int
-svr4_elf_probe(p, epp, itp, pos)
+svr4_elf_probe(p, epp, itp, pos, os)
 	struct proc *p;
 	struct exec_package *epp;
 	char *itp;
 	u_long *pos;
+	u_int8_t *os;
 {
 	char *bp;
 	int error;
@@ -122,12 +124,13 @@ svr4_elf_probe(p, epp, itp, pos)
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, svr4_emul_path, itp, &bp, 0)))
-			return error;
+			return (error);
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
+			return (error);
 		free(bp, M_TEMP);
 	}
 	epp->ep_emul = &emul_svr4;
 	*pos = SVR4_INTERP_ADDR;
-	return 0;
+	*os = OOS_SVR4;
+	return (0);
 }
