@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.49 2004/03/31 08:20:57 jmc Exp $
+.\"	$OpenBSD: pf.4,v 1.50 2004/05/22 16:06:07 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -54,6 +54,11 @@ multiple concurrent manipulations.
 .Pp
 Fields of ioctl parameter structures that refer to packet data (like
 addresses and ports) are generally expected in network byte-order.
+.Pp
+Anchor and ruleset manipulations can be supplied with empty strings for
+these parameters, in which case modifications will manipulate the
+.Dq main
+packet filter ruleset.
 .Sh IOCTL INTERFACE
 .Nm
 supports the following
@@ -70,7 +75,7 @@ Start the ALTQ bandwidth control system (see
 .Xr altq 9 ) .
 .It Dv DIOCSTOPALTQ
 Stop the ALTQ bandwidth control system.
-.It Dv DIOCBEGINADDRS Fa "struct pfioc_pooladdr"
+.It Dv DIOCBEGINADDRS Fa "struct pfioc_pooladdr *pp"
 .Bd -literal
 struct pfioc_pooladdr {
 	u_int32_t		action;
@@ -94,7 +99,7 @@ for subsequent
 and
 .Dv DIOCCHANGERULE
 calls.
-.It Dv DIOCADDADDR Fa "struct pfioc_pooladdr"
+.It Dv DIOCADDADDR Fa "struct pfioc_pooladdr *pp"
 .Pp
 Add the pool address
 .Va addr
@@ -104,7 +109,7 @@ or
 .Dv DIOCCHANGERULE
 call.
 All other members of the structure are ignored.
-.It Dv DIOCADDRULE Fa "struct pfioc_rule"
+.It Dv DIOCADDRULE Fa "struct pfioc_rule *pr"
 .Bd -literal
 struct pfioc_rule {
 	u_int32_t	action;
@@ -140,7 +145,7 @@ names indicate the anchor and ruleset in which to append the rule.
 and
 .Va action
 are ignored.
-.It Dv DIOCADDALTQ Fa "struct pfioc_altq"
+.It Dv DIOCADDALTQ Fa "struct pfioc_altq *pa"
 Add an ALTQ discipline or queue.
 .Bd -literal
 struct pfioc_altq {
@@ -150,7 +155,7 @@ struct pfioc_altq {
 	struct pf_altq  altq;
 };
 .Ed
-.It Dv DIOCGETRULES Fa "struct pfioc_rule"
+.It Dv DIOCGETRULES Fa "struct pfioc_rule *pr"
 Get a
 .Va ticket
 for subsequent
@@ -158,7 +163,7 @@ for subsequent
 calls and the number
 .Va nr
 of rules in the active ruleset.
-.It Dv DIOCGETRULE Fa "struct pfioc_rule"
+.It Dv DIOCGETRULE Fa "struct pfioc_rule *pr"
 Get a
 .Va rule
 by its number
@@ -168,7 +173,7 @@ using the
 obtained through a preceding
 .Dv DIOCGETRULES
 call.
-.It Dv DIOCGETADDRS Fa "struct pfioc_pooladdr"
+.It Dv DIOCGETADDRS Fa "struct pfioc_pooladdr *pp"
 Get a
 .Va ticket
 for subsequent
@@ -181,7 +186,7 @@ of pool addresses in the rule specified with
 .Va anchor ,
 and
 .Va ruleset .
-.It Dv DIOCGETADDR Fa "struct pfioc_pooladdr"
+.It Dv DIOCGETADDR Fa "struct pfioc_pooladdr *pp"
 Get the pool address
 .Va addr
 by its number
@@ -197,7 +202,7 @@ using the
 obtained through a preceding
 .Dv DIOCGETADDRS
 call.
-.It Dv DIOCGETALTQS Fa "struct pfioc_altq"
+.It Dv DIOCGETALTQS Fa "struct pfioc_altq *pa"
 Get a
 .Va ticket
 for subsequent
@@ -205,17 +210,17 @@ for subsequent
 calls and the number
 .Va nr
 of queues in the active list.
-.It Dv DIOCGETALTQ Fa "struct pfioc_altq"
+.It Dv DIOCGETALTQ Fa "struct pfioc_altq *pa"
 Get the queueing discipline
 .Va altq
 by its number
 .Va nr
-using a
+using the
 .Va ticket
 obtained through a preceding
 .Dv DIOCGETALTQS
 call.
-.It Dv DIOCGETQSTATS Fa "struct pfioc_qstats"
+.It Dv DIOCGETQSTATS Fa "struct pfioc_qstats *pq"
 Get the statistics on a queue.
 .Bd -literal
 struct pfioc_qstats {
@@ -233,7 +238,61 @@ of length
 .Va nbytes ,
 for the queue specified by
 .Va nr .
-.It Dv DIOCADDSTATE Fa "struct pfioc_state"
+.It Dv DIOCGETANCHORS Fa "struct pfioc_anchor *pa"
+.Bd -literal
+struct pfioc_anchor {
+	u_int32_t	 nr;
+	char		 name[PF_ANCHOR_NAME_SIZE];
+};
+.Ed
+.Pp
+Get the number
+.Va nr
+of anchors in the active list for use in subsequent
+.Dv DIOCGETANCHOR
+calls.
+.It Dv DIOCGETANCHOR Fa "struct pfioc_anchor *pa"
+Get an anchor by its number
+.Va nr ,
+the maximum number of which can be obtained from a preceding
+.Dv DIOCGETANCHORS
+call.
+This ioctl returns
+.Er EBUSY
+if another process is concurrently updating an anchor.
+.It Dv DIOCGETRULESETS Fa "struct pfioc_ruleset *pr"
+.Bd -literal
+struct pfioc_ruleset {
+	u_int32_t	 nr;
+	char		 anchor[PF_ANCHOR_NAME_SIZE];
+	char		 name[PF_RULESET_NAME_SIZE];
+};
+.Ed
+.Pp
+Get the number
+.Va nr
+of rulesets in the given
+.Va anchor
+for use in subsequent
+.Dv DIOCGETRULESET
+calls.
+This ioctl returns
+.Er EINVAL
+if the given anchor does not exist.
+.It Dv DIOCGETRULESET Fa "struct pfioc_ruleset *pr"
+Get a ruleset by its number
+.Va nr
+from the given
+.Va anchor ,
+the maximum number of which can be obtained from a preceding
+.Dv DIOCGETRULESETS
+call.
+This ioctl returns
+.Er EINVAL
+if the given anchor does not exist or
+.Er EBUSY
+if another process is concurrently updating a ruleset.
+.It Dv DIOCADDSTATE Fa "struct pfioc_state *ps"
 Add a state entry.
 .Bd -literal
 struct pfioc_state {
@@ -241,13 +300,13 @@ struct pfioc_state {
 	struct pf_state	 state;
 };
 .Ed
-.It Dv DIOCGETSTATE Fa "struct pfioc_state"
+.It Dv DIOCGETSTATE Fa "struct pfioc_state *ps"
 Extract the entry with the specified number
 .Va nr
 from the state table.
-.It Dv DIOCKILLSTATES Fa "struct pfioc_state_kill"
+.It Dv DIOCKILLSTATES Fa "struct pfioc_state_kill *psk"
 Remove matching entries from the state table.
-This call returns the number of killed states in
+This ioctl returns the number of killed states in
 .Va psk_af .
 .Bd -literal
 struct pfioc_state_kill {
@@ -258,7 +317,7 @@ struct pfioc_state_kill {
 	char			psk_ifname[IFNAMSIZ];
 };
 .Ed
-.It Dv DIOCCLRSTATES Fa "struct pfioc_state_kill"
+.It Dv DIOCCLRSTATES Fa "struct pfioc_state_kill *psk"
 Clear all states.
 It works like
 .Dv DIOCKILLSTATES ,
@@ -271,14 +330,14 @@ and
 fields of the
 .Va pfioc_state_kill
 structure.
-.It Dv DIOCSETSTATUSIF Fa "struct pfioc_if"
+.It Dv DIOCSETSTATUSIF Fa "struct pfioc_if *pi"
 Specify the interface for which statistics are accumulated.
 .Bd -literal
 struct pfioc_if {
 	char		 ifname[IFNAMSIZ];
 };
 .Ed
-.It Dv DIOCGETSTATUS Fa "struct pf_status"
+.It Dv DIOCGETSTATUS Fa "struct pf_status *s"
 Get the internal packet filter statistics.
 .Bd -literal
 struct pf_status {
@@ -299,7 +358,7 @@ struct pf_status {
 .Ed
 .It Dv DIOCCLRSTATUS
 Clear the internal packet filter statistics.
-.It Dv DIOCNATLOOK Fa "struct pfioc_natlook"
+.It Dv DIOCNATLOOK Fa "struct pfioc_natlook *pnl"
 Look up a state table entry by source and destination addresses and ports.
 .Bd -literal
 struct pfioc_natlook {
@@ -316,13 +375,13 @@ struct pfioc_natlook {
 	u_int8_t	 direction;
 };
 .Ed
-.It Dv DIOCSETDEBUG Fa "u_int32_t"
+.It Dv DIOCSETDEBUG Fa "u_int32_t *level"
 Set the debug level.
 .Bd -literal
 enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC,
 	  PF_DEBUG_NOISY };
 .Ed
-.It Dv DIOCGETSTATES Fa "struct pfioc_states"
+.It Dv DIOCGETSTATES Fa "struct pfioc_states *ps"
 Get state table entries.
 .Bd -literal
 struct pfioc_states {
@@ -351,7 +410,7 @@ is non-zero, as many states that can fit into
 as possible will be gathered, and
 .Va ps_len
 will be updated to the size those rules take in memory.
-.It Dv DIOCCHANGERULE Fa "struct pfioc_rule"
+.It Dv DIOCCHANGERULE Fa "struct pfioc_rule *pcr"
 Add or remove the
 .Va rule
 in the ruleset specified by
@@ -390,7 +449,8 @@ indicates the rule number against which
 or
 .Dv PF_CHANGE_REMOVE
 actions are applied.
-.It Dv DIOCCHANGEADDR Fa "struct pfioc_pooladdr"
+.\" It Dv DIOCCHANGEALTQ Fa "struct pfioc_altq *pcr"
+.It Dv DIOCCHANGEADDR Fa "struct pfioc_pooladdr *pca"
 Add or remove the pool address
 .Va addr
 from the rule specified by
@@ -399,7 +459,7 @@ from the rule specified by
 .Va anchor ,
 and
 .Va ruleset .
-.It Dv DIOCSETTIMEOUT Fa "struct pfioc_tm"
+.It Dv DIOCSETTIMEOUT Fa "struct pfioc_tm *pt"
 .Bd -literal
 struct pfioc_tm {
 	int		 timeout;
@@ -419,7 +479,7 @@ consult the
 .Dv PFTM_*
 values in
 .Aq Pa net/pfvar.h .
-.It Dv DIOCGETTIMEOUT Fa "struct pfioc_tm"
+.It Dv DIOCGETTIMEOUT Fa "struct pfioc_tm *pt"
 Get the state timeout of
 .Va timeout .
 The value will be placed into the
@@ -427,7 +487,7 @@ The value will be placed into the
 field.
 .It Dv DIOCCLRRULECTRS
 Clear per-rule statistics.
-.It Dv DIOCSETLIMIT Fa "struct pfioc_limit"
+.It Dv DIOCSETLIMIT Fa "struct pfioc_limit *pl"
 Set the hard limits on the memory pools used by the packet filter.
 .Bd -literal
 struct pfioc_limit {
@@ -437,12 +497,12 @@ struct pfioc_limit {
 
 enum { PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS };
 .Ed
-.It Dv DIOCGETLIMIT Fa "struct pfioc_limit"
+.It Dv DIOCGETLIMIT Fa "struct pfioc_limit *pl"
 Get the hard
 .Va limit
 for the memory pool indicated by
 .Va index .
-.It Dv DIOCRCLRTABLES Fa "struct pfioc_table"
+.It Dv DIOCRCLRTABLES Fa "struct pfioc_table *io"
 Clear all tables.
 All the ioctls that manipulate radix tables
 use the same structure described below.
@@ -470,7 +530,7 @@ struct pfioc_table {
 #define pfrio_setflag   pfrio_size2
 #define pfrio_clrflag   pfrio_nadd
 .Ed
-.It Dv DIOCRADDTABLES Fa "struct pfioc_table"
+.It Dv DIOCRADDTABLES Fa "struct pfioc_table *io"
 Create one or more tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
@@ -489,7 +549,7 @@ struct pfr_table {
 	u_int8_t	pfrt_fback;
 };
 .Ed
-.It Dv DIOCRDELTABLES Fa "struct pfioc_table"
+.It Dv DIOCRDELTABLES Fa "struct pfioc_table *io"
 Delete one or more tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
@@ -499,7 +559,7 @@ structures.
 On exit,
 .Va pfrio_nadd
 contains the number of tables effectively deleted.
-.It Dv DIOCRGETTABLES Fa "struct pfioc_table"
+.It Dv DIOCRGETTABLES Fa "struct pfioc_table *io"
 Get the list of all tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
@@ -511,7 +571,7 @@ On exit,
 contains the number of tables written into the buffer.
 If the buffer is too small, the kernel does not store anything but just
 returns the required buffer size, without error.
-.It Dv DIOCRGETTSTATS Fa "struct pfioc_table"
+.It Dv DIOCRGETTSTATS Fa "struct pfioc_table *io"
 This call is like
 .Dv DIOCRGETTABLES
 but is used to get an array of
@@ -533,7 +593,7 @@ struct pfr_tstats {
 #define pfrts_name	 pfrts_t.pfrt_name
 #define pfrts_flags	 pfrts_t.pfrt_flags
 .Ed
-.It Dv DIOCRCLRTSTATS Fa "struct pfioc_table"
+.It Dv DIOCRCLRTSTATS Fa "struct pfioc_table *io"
 Clear the statistics of one or more tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
@@ -543,7 +603,7 @@ structures.
 On exit,
 .Va pfrio_nzero
 contains the number of tables effectively cleared.
-.It Dv DIOCRCLRADDRS Fa "struct pfioc_table"
+.It Dv DIOCRCLRADDRS Fa "struct pfioc_table *io"
 Clear all addresses in a table.
 On entry,
 .Va pfrio_table
@@ -551,7 +611,7 @@ contains the table to clear.
 On exit,
 .Va pfrio_ndel
 contains the number of addresses removed.
-.It Dv DIOCRADDADDRS Fa "struct pfioc_table"
+.It Dv DIOCRADDADDRS Fa "struct pfioc_table *io"
 Add one or more addresses to a table.
 On entry,
 .Va pfrio_table
@@ -577,7 +637,7 @@ struct pfr_addr {
 #define pfra_ip4addr    pfra_u._pfra_ip4addr
 #define pfra_ip6addr    pfra_u._pfra_ip6addr
 .Ed
-.It Dv DIOCRDELADDRS Fa "struct pfioc_table"
+.It Dv DIOCRDELADDRS Fa "struct pfioc_table *io"
 Delete one or more addresses from a table.
 On entry,
 .Va pfrio_table
@@ -589,7 +649,7 @@ structures to delete.
 On exit,
 .Va pfrio_ndel
 contains the number of addresses effectively deleted.
-.It Dv DIOCRSETADDRS Fa "struct pfioc_table"
+.It Dv DIOCRSETADDRS Fa "struct pfioc_table *io"
 Replace the content of a table by a new address list.
 This is the most complicated command, which uses all the structure members.
 .Pp
@@ -619,7 +679,7 @@ was set on entry,
 .Va pfrio_size2
 will point to the size of the buffer used, exactly like
 .Dv DIOCRGETADDRS .
-.It Dv DIOCRGETADDRS Fa "struct pfioc_table"
+.It Dv DIOCRGETADDRS Fa "struct pfioc_table *io"
 Get all the addresses of a table.
 On entry,
 .Va pfrio_table
@@ -633,7 +693,7 @@ On exit,
 contains the number of addresses written into the buffer.
 If the buffer was too small, the kernel does not store anything but just
 returns the required buffer size, without returning an error.
-.It Dv DIOCRGETASTATS Fa "struct pfioc_table"
+.It Dv DIOCRGETASTATS Fa "struct pfioc_table *io"
 This call is like
 .Dv DIOCRGETADDRS
 but is used to get an array of
@@ -649,7 +709,7 @@ struct pfr_astats {
 	long		 pfras_tzero;
 };
 .Ed
-.It Dv DIOCRCLRASTATS Fa "struct pfioc_table"
+.It Dv DIOCRCLRASTATS Fa "struct pfioc_table *io"
 Clear the statistics of one or more addresses.
 On entry,
 .Va pfrio_table
@@ -661,7 +721,7 @@ structures to clear.
 On exit,
 .Va pfrio_nzero
 contains the number of addresses effectively cleared.
-.It Dv DIOCRTSTADDRS Fa "struct pfioc_table"
+.It Dv DIOCRTSTADDRS Fa "struct pfioc_table *io"
 Test if the given addresses match a table.
 On entry,
 .Va pfrio_table
@@ -675,7 +735,7 @@ On exit, the kernel updates the
 table by setting the
 .Va pfra_fback
 member appropriately.
-.It Dv DIOCRSETTFLAGS Fa "struct pfioc_table"
+.It Dv DIOCRSETTFLAGS Fa "struct pfioc_table *io"
 Change the
 .Dv PFR_TFLAG_CONST
 or
@@ -698,7 +758,26 @@ contain the number of tables altered or deleted by the kernel.
 Yes, tables can be deleted if one removes the
 .Dv PFR_TFLAG_PERSIST
 flag of an unreferenced table.
-.It Dv DIOCRINADEFINE Fa "struct pfioc_table"
+.It Dv DIOCBEGINALTQS Fa "u_int32_t *ticket"
+Clear all inactive ALTQ disciplines and get a
+.Va ticket
+for subsequent ALTQ discipline additions, as well as for the
+.Dv DIOCCOMMITALTQS
+and
+.Dv DIOCXROLLBACK
+calls.
+.Pp
+Unfortunately, there is currently no
+.Dv DIOCROLLBACKALTQS
+ioctl, so
+.Dv DIOCXROLLBACK
+must be used to achieve the desired effect.
+.It Dv DIOCCOMMITALTQS Fa "u_int32_t *ticket"
+Switch all inactive ALTQ disciplines to the active ruleset.
+This ioctl returns
+.Er EBUSY
+if another process is concurrently updating the ALTQ ruleset.
+.It Dv DIOCRINADEFINE Fa "struct pfioc_table *io"
 Defines a table in the inactive set.
 On entry,
 .Va pfrio_table
@@ -711,14 +790,84 @@ A valid ticket must also be supplied to
 .Va pfrio_ticket .
 On exit,
 .Va pfrio_nadd
-contains 0 if the table was already defined in the inactive list,
+contains 0 if the table was already defined in the inactive list
 or 1 if a new table has been created.
 .Va pfrio_naddr
 contains the number of addresses effectively put in the table.
-.It Dv DIOCXBEGIN Fa "struct pfioc_trans"
+.It Dv DIOCRINABEGIN Fa "struct pfioc_table *io"
+Clear all addresses in the inactive table and get a
+.Va ticket
+for subsequent table address entry modifications, as well as for the
+.Dv DIOCRINACOMMIT
+and
+.Dv DIOCXROLLBACK
+calls.
+.Pp
+On exit,
+.Va pfrio_ndel
+contains the number of addresses that were removed from the inactive
+table.
+.Pp
+Unfortunately, there is currently no
+.Dv DIOCRINAROLLBACK
+ioctl, so
+.Dv DIOCXROLLBACK
+must be used to achieve the desired effect.
+.It Dv DIOCRINACOMMIT Fa "struct pfioc_table *io"
+Switch an inactive table of addresses to the active ruleset.
+.Pp
+On entry, a valid
+.Va ticket
+from a previous
+.Dv DIOCRINABEGIN
+call must be supplied.
+On exit,
+.Va pfrio_nadd
+will contain the number of addresses added to the table and
+.Va pfrio_nchange
+will contain the number of addresses changed (negated).
+.Pp
+This ioctl returns
+.Er EBUSY
+if another process is concurrently updating the same table.
+.It Dv DIOCBEGINRULES Fa "struct pfioc_rule *pr"
+Clear all inactive rules in the given
+.Va anchor
+and
+.Va ruleset
+and get a
+.Va ticket
+for subsequent rule additions, as well as for the
+.Dv DIOCCOMMITRULES
+and
+.Dv DIOCXROLLBACK
+calls.
+This ioctl returns
+.Er EINVAL
+if the given
+.Va anchor
+and
+.Va ruleset
+do not exist.
+.Pp
+Unfortunately, there is currently no
+.Dv DIOCROLLBACKRULES
+ioctl, so
+.Dv DIOCXROLLBACK
+must be used to achieve the desired effect.
+.It Dv DIOCCOMMITRULES Fa "struct pfioc_rule *pr"
+Switch an inactive ruleset to the active ruleset using the
+.Va ticket
+obtained from a preceding
+.Dv DIOCBEGINRULES
+call.
+This ioctl returns
+.Er EINVAL
+if the given anchor and ruleset is invalid or
+.Er EBUSY
+if another process is concurrently updating the same ruleset.
+.It Dv DIOCXBEGIN Fa "struct pfioc_trans *io"
 .Bd -literal
-#define PF_RULESET_ALTQ         (PF_RULESET_MAX)
-#define PF_RULESET_TABLE        (PF_RULESET_MAX+1)
 struct pfioc_trans {
 	int		 size;	/* number of elements */
 	int		 esize;	/* size of each element in bytes */
@@ -740,24 +889,48 @@ as well as for the
 and
 .Dv DIOCXROLLBACK
 calls.
-.It Dv DIOCXCOMMIT Fa "struct pfioc_trans"
+.Pp
+Ruleset types, identified by
+.Va rs_num ,
+include the following:
+.Pp
+.Bl -tag -width PF_RULESET_FILTER -offset ind -compact
+.It Dv PF_RULESET_SCRUB
+Scrub (packet normalization) rules.
+.It Dv PF_RULESET_FILTER
+Filter rules.
+.It Dv PF_RULESET_NAT
+NAT (Network Address Translation) rules.
+.It Dv PF_RULESET_BINAT
+Bidirectional NAT rules.
+.It Dv PF_RULESET_RDR
+Redirect rules.
+.It Dv PF_RULESET_ALTQ
+ALTQ disciplines.
+.It Dv PF_RULESET_TABLE
+Address tables.
+.El
+.It Dv DIOCXCOMMIT Fa "struct pfioc_trans *io"
 Atomically switch a vector of inactive rulesets to the active rulesets.
 This call is implemented as a standard two-phase commit, which will either
 fail for all rulesets or completely succeed.
 All tickets need to be valid.
-Returns
+This ioctl returns
 .Er EBUSY
-if a concurrent process is trying to update some of the same rulesets
-concurrently.
-.It Dv DIOCXROLLBACK Fa "struct pfioc_trans"
+if another process is concurrently updating some of the same rulesets.
+.It Dv DIOCXROLLBACK Fa "struct pfioc_trans *io"
 Clean up the kernel by undoing all changes that have taken place on the
 inactive rulesets since the last
 .Dv DIOCXBEGIN .
 .Dv DIOCXROLLBACK
 will silently ignore rulesets for which the ticket is invalid.
+.It Dv DIOCSETHOSTID Fa "u_int32_t *hostid"
+Set the host ID, which is used by
+.Xr pfsync 4
+to identify which host created state table entries.
 .It Dv DIOCOSFPFLUSH
 Flush the passive OS fingerprint table.
-.It Dv DIOCOSFPADD Fa "struct pf_osfp_ioctl"
+.It Dv DIOCOSFPADD Fa "struct pf_osfp_ioctl *io"
 .Bd -literal
 struct pf_osfp_ioctl {
 	struct pf_osfp_entry {
@@ -829,7 +1002,7 @@ member is not used with this ioctl.
 The structure's slack space must be zeroed for correct operation;
 .Xr memset 3
 the whole structure to zero before filling and sending to the kernel.
-.It Dv DIOCOSFPGET Fa "struct pf_osfp_ioctl"
+.It Dv DIOCOSFPGET Fa "struct pf_osfp_ioctl *io"
 Get the passive OS fingerprint number
 .Va fp_getnum
 from the kernel's fingerprint list.
@@ -838,7 +1011,7 @@ Get the whole list by repeatedly incrementing the
 .Va fp_getnum
 number until the ioctl returns
 .Er EBUSY .
-.It Dv DIOCGETSRCNODES Fa "struct pfioc_src_nodes"
+.It Dv DIOCGETSRCNODES Fa "struct pfioc_src_nodes *psn"
 .Bd -literal
 struct pfioc_src_nodes {
 	int	psn_len;
@@ -871,7 +1044,7 @@ After that call,
 will be set to the length of the buffer actually used.
 .It Dv DIOCCLRSRCNODES
 Clear the tree of source tracking nodes.
-.It Dv DIOCIGETIFACES Fa "struct pfioc_iface"
+.It Dv DIOCIGETIFACES Fa "struct pfioc_iface *io"
 Get the list of interfaces and interface drivers known to
 .Nm .
 All the ioctls that manipulate interfaces
@@ -934,7 +1107,7 @@ struct pfi_if {
 #define PFI_IFLAG_DYNAMIC	0x0020	/* dynamic group */
 #define PFI_IFLAG_ATTACHED	0x0040	/* interface attached */
 .Ed
-.It Dv DIOCICLRISTATS Fa "struct pfioc_iface"
+.It Dv DIOCICLRISTATS Fa "struct pfioc_iface *io"
 Clear the statistics counters of one or more interfaces.
 .Va pfiio_name
 and
