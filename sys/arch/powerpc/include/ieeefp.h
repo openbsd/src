@@ -1,4 +1,5 @@
-/*	$OpenBSD: ieeefp.h,v 1.6 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.7 2004/05/03 16:53:24 drahn Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.2 1999/07/07 01:52:26 danw Exp $	*/
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
@@ -17,8 +18,8 @@ typedef int fp_except;
 typedef enum {
     FP_RN=0,			/* round to nearest representable number */
     FP_RZ=1,			/* round to zero (truncate) */
-    FP_RM=2,			/* round toward negative infinity */
-    FP_RP=3			/* round toward positive infinity */
+    FP_RP=2,			/* round toward positive infinity */
+    FP_RM=3			/* round toward negative infinity */
 } fp_rnd;
 
 #endif /* _POWERPC_IEEEFP_H_ */
