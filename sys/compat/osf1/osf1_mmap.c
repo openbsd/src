@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_mmap.c,v 1.1 2000/08/04 15:47:55 ericj Exp $ */
+/* $OpenBSD: osf1_mmap.c,v 1.2 2000/11/08 20:32:50 art Exp $ */
 /* $NetBSD: osf1_mmap.c,v 1.5 2000/04/11 05:26:27 chs Exp $ */
 
 /*
@@ -37,7 +37,8 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <vm/vm.h>				/* XXX see mmap emulation */
+#include <vm/vm.h>
+#include <uvm/uvm.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
@@ -183,7 +184,7 @@ osf1_sys_mmap(p, v, retval)
 
 		/* if non-NULL address given, start looking there */
 		/* XXX - UVM */
-		if (addr != 0 && vm_map_findspace(&p->p_vmspace->vm_map,
+		if (addr != 0 && uvm_map_findspace(&p->p_vmspace->vm_map,
 		    addr, size, &addr, NULL, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
