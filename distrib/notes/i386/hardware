@@ -160,7 +160,7 @@ Supported devices {:-include-:}:
 			STB TV PCI Television Tuner
 			Miro PC TV
 			Intel Smart Video Recorder III
-		APM v1.0 power management.
+		APM v1.1 power management.
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
