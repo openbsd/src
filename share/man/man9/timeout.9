@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.15 2001/07/17 02:32:51 krw Exp $
+.\"	$OpenBSD: timeout.9,v 1.16 2001/11/07 10:23:33 art Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -147,13 +147,6 @@ The
 and
 .Fn timeout_del
 functions clear the triggered state for that timeout.
-.Pp
-The old
-.Fn timeout
-and
-.Fn untimeout
-interface is implemented as wrappers around the new API, but it's
-obsolete and will be removed in the future.
 .Sh CODE REFERENCES
 These functions are implemented in the file
 .Pa sys/kern/kern_timeout.c .
