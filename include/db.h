@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.5 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: db.h,v 1.6 2002/05/31 20:42:34 itojun Exp $	*/
 /*	$NetBSD: db.h,v 1.13 1994/10/26 00:55:48 cgd Exp $	*/
 
 /*-
@@ -47,22 +47,6 @@
 #define	RET_ERROR	-1		/* Return values. */
 #define	RET_SUCCESS	 0
 #define	RET_SPECIAL	 1
-
-#ifndef	__BIT_TYPES_DEFINED__
-#define	__BIT_TYPES_DEFINED__
-typedef	__signed char		   int8_t;
-typedef	unsigned char		 u_int8_t;
-typedef	short			  int16_t;
-typedef	unsigned short		u_int16_t;
-typedef	int			  int32_t;
-typedef	unsigned int		u_int32_t;
-#ifdef WE_DONT_NEED_QUADS
-/* LONGLONG */
-typedef	long long		  int64_t;
-/* LONGLONG */
-typedef	unsigned long long	u_int64_t;
-#endif
-#endif
 
 #define	MAX_PAGE_NUMBER	0xffffffff	/* >= # of pages in a file */
 typedef u_int32_t	pgno_t;
