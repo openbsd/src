@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.33 2001/07/15 03:03:35 mickey Exp $
+$OpenBSD: usbdevs,v 1.34 2001/09/02 11:47:54 jakob Exp $
 /* $NetBSD: usbdevs,v 1.127 2000/11/15 14:36:09 augustss Exp $ */
 
 /*
@@ -269,6 +269,7 @@ vendor ASAHIOPTICAL	0x0a17	Asahi Optical
 vendor BOCASYSTEMS	0x0a43	Boca Systems
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GEOCAST		0x0a79	Geocast Network Systems
+vendor TODOS		0x0b0c	Todos Data System
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor BELKIN2		0x1293	Belkin Components
@@ -797,6 +798,9 @@ product TI TUSB2046		0x2046	TUSB2046 hub
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
+
+/* Todos Data System products */
+product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
