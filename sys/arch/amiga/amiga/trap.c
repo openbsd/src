@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2002/03/25 18:09:13 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -949,6 +949,11 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;
+	caddr_t oonfault = curpcb->pcb_onfault;
+	int rv = 0;
+
+	/* A fault in here must *not* go to the registered fault handler.  */
+	curpcb->pcb_onfault = NULL;
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -986,8 +991,10 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			    trunc_page((vm_offset_t)wb_addr), 
 			    0, VM_PROT_READ | VM_PROT_WRITE);
 
-			if (wb_rc)
-				return (wb_rc);
+			if (wb_rc) {
+				rv = wb_rc;
+				goto out;
+			}
 #ifdef DEBUG
 			if (mmudebug)
 				printf("wb3: first page brought in.\n");
@@ -1018,8 +1025,10 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			wb_rc = uvm_fault(wb_map,
 			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
 			    0, VM_PROT_READ | VM_PROT_WRITE);
-			if (wb_rc)
-				return (wb_rc);
+			if (wb_rc) {
+				rv = wb_rc;
+				goto out;
+			}
 		}
 #ifdef DEBUG
 		if (mmudebug)
@@ -1028,8 +1037,9 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	}
 
 	/* Actually do the write now */
-	if ((wb_sts & WBS_TMMASK) == FC_USERD && !curpcb->pcb_onfault)
-	    	curpcb->pcb_onfault = (caddr_t)_wb_fault;
+	if ((wb_sts & WBS_TMMASK) == FC_USERD && oonfault != NULL)
+		__asm volatile("movl #Lwberr,%0@" : :
+		     "a" (&curpcb->pcb_onfault));
 
 	switch(wb_sts & WBS_SZMASK) {
 	case WBS_SIZE_BYTE :
@@ -1047,22 +1057,19 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		    "d" (wb_sts & WBS_TMMASK), "d" (wb_data), "a" (wb_addr));
 		break;
 
+	default:
+		/*
+		 * This is trickery, we need this assembly somewhere out
+		 * of the default execution path, but still not detectable as
+		 * dead code that the compiler can throw away erroneously.
+		 */
+		__asm volatile("Lwberr: addql #1,%0" : "=d" (rv));
 	}
-	if (curpcb->pcb_onfault == (caddr_t)_wb_fault)
-		curpcb->pcb_onfault = NULL;
+	curpcb->pcb_onfault = NULL;
 	if ((wb_sts & WBS_TMMASK) != FC_USERD)
 		__asm volatile("movec %0,dfc\n" : : "d" (FC_USERD));
-	return (0);
-}
 
-/*
- * fault handler for write back
- */
-void
-_wb_fault()
-{
-#ifdef DEBUG
-	printf ("trap: writeback fault\n");
-#endif
-	return;
+ out:
+	curpcb->pcb_onfault = oonfault;
+	return (rv);
 }
