@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.23 2003/03/09 19:22:25 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.24 2003/03/09 19:27:30 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -714,7 +714,7 @@ main(int argc, char *argv[])
 		errx(1, "Can't find service \"spamd\" in /etc/services");
 	port = ntohs(ent->s_port);
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
-		errx(1, "Can't find service \"spamd-cff\" in /etc/services");
+		errx(1, "Can't find service \"spamd-cfg\" in /etc/services");
 	cfg_port = ntohs(ent->s_port);
 
 	if (gethostname(hostname, sizeof hostname) == -1)
