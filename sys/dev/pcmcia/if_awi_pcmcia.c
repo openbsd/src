@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.10 2002/03/14 01:27:00 millert Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.11 2002/09/15 22:18:11 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ awi_pcmcia_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		goto no_interrupt;
 	}
-	sc->sc_ifp = &sc->sc_ec.ac_if;
+	sc->sc_ifp = &sc->sc_arpcom.ac_if;
 	sc->sc_cansleep = 1;
 
 	if (awi_attach(sc) != 0) {
