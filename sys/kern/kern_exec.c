@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.69 2002/07/25 01:21:51 nordin Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.70 2002/08/22 22:04:42 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -154,9 +154,12 @@ check_exec(p, epp)
 	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
 		goto bad1;
 
+	/* unlock vp, we need it unlocked from here */
+	VOP_UNLOCK(vp, 0, p);
+
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, p);
+	    UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
@@ -171,7 +174,6 @@ check_exec(p, epp)
 
 		if (execsw[i].es_check == NULL)
 			continue;
-
 		newerror = (*execsw[i].es_check)(p, epp);
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
@@ -202,10 +204,8 @@ check_exec(p, epp)
 
 bad2:
 	/*
-	 * unlock and close the vnode, free the
-	 * pathname buf, and punt.
+	 * close the vnode, free the pathname buf, and punt.
 	 */
-	VOP_UNLOCK(vp, 0, p);
 	vn_close(vp, FREAD, p->p_ucred, p);
 	FREE(ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 	return (error);
@@ -578,8 +578,7 @@ sys_execve(p, v, retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
+	vn_close(pack.ep_vp, FREAD, cred, p);
 
 	/*
 	 * notify others that we exec'd
@@ -623,8 +622,7 @@ bad:
 		(void) fdrelease(p, pack.ep_fd);
 	}
 	/* close and put the exec'd file */
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
+	vn_close(pack.ep_vp, FREAD, cred, p);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
@@ -644,8 +642,7 @@ exec_abort:
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
-	vput(pack.ep_vp);
+	vn_close(pack.ep_vp, FREAD, cred, p);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 free_pack_abort:

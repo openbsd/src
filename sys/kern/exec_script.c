@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.15 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.16 2002/08/22 22:04:42 art Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -76,6 +76,13 @@ exec_script_makecmds(p, epp)
 	gid_t script_gid = -1;
 	u_short script_sbits;
 #endif
+
+	/*
+	 * remember the old vp and pnbuf for later, so we can restore
+	 * them if check_exec() fails.
+	 */
+	scriptvp = epp->ep_vp;
+	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
 	/*
 	 * if the magic isn't that of a shell script, or we've already
@@ -160,7 +167,10 @@ check_shell:
 	 * close all open fd's when the start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
-	if (VOP_ACCESS(epp->ep_vp, VREAD, p->p_ucred, p) == EACCES
+	vn_lock(scriptvp, LK_EXCLUSIVE|LK_RETRY, p);
+	error = VOP_ACCESS(scriptvp, VREAD, p->p_ucred, p);
+	VOP_UNLOCK(scriptvp, 0, p);
+	if (error == EACCES
 #ifdef SETUIDSCRIPTS
 	    || script_sbits
 #endif
@@ -178,7 +188,7 @@ check_shell:
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
-		fp->f_data = (caddr_t) epp->ep_vp;
+		fp->f_data = (caddr_t) scriptvp;
 		fp->f_flag = FREAD;
 		FILE_SET_MATURE(fp);
 	}
@@ -220,15 +230,6 @@ check_shell:
 	 * the header from the new executable
 	 */
 	epp->ep_hdrvalid = 0;
-
-	/*
-	 * remember the old vp and pnbuf for later, so we can restore
-	 * them if check_exec() fails.
-	 */
-	scriptvp = epp->ep_vp;
-	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
-
-	VOP_UNLOCK(scriptvp, 0, p);
 
 	if ((error = check_exec(p, epp)) == 0) {
 		/* note that we've clobbered the header */
