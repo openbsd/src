@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2005/01/20 23:47:04 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2005/03/02 10:12:15 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.65 2005/01/20 23:47:04 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.66 2005/03/02 10:12:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,9 @@ FILE *active;			/* active output file pointer  */
 int ilevel = 0; 		/* input file stack pointer    */
 int oindex = 0; 		/* diversion index..	       */
 char *null = "";                /* as it says.. just a null..  */
-char *m4wraps = "";             /* m4wrap string default..     */
+char **m4wraps = NULL;		/* m4wraps array.     	       */
+int maxwraps = 0;		/* size of m4wraps array       */
+int wrapindex = 0;		/* current offset in m4wraps   */
 char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character  (`)   */
 char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
 char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
@@ -258,11 +260,24 @@ main(int argc, char *argv[])
 		    	release_input(infile);
 		}
 
-	if (*m4wraps) { 		/* anything for rundown ??   */
+	if (wrapindex) {
+		int i;
+
 		ilevel = 0;		/* in case m4wrap includes.. */
 		bufbase = bp = buf;	/* use the entire buffer   */
-		pbstr(m4wraps); 	/* user-defined wrapup act   */
-		macro();		/* last will and testament   */
+		if (mimic_gnu) {
+			while (wrapindex != 0) {
+				for (i = 0; i < wrapindex; i++)
+					pbstr(m4wraps[i]);
+				wrapindex =0;
+				macro();
+			}
+		} else {
+			for (i = 0; i < wrapindex; i++) {
+				pbstr(m4wraps[i]);
+				macro();
+		    	}
+		}
 	}
 
 	if (active != stdout)

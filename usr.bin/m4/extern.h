@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.39 2003/11/17 17:12:10 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.40 2005/03/02 10:12:15 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -159,7 +159,10 @@ extern char *bbase[];		/* buffer base per ilevel */
 extern char ecommt[MAXCCHARS+1];/* end character for comment */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[MAXCCHARS+1];/* left quote character (`) */
-extern char *m4wraps;		/* m4wrap string default. */
+extern char **m4wraps;		/* m4wrap string default. */
+extern int maxwraps;		/* size of m4wraps array */
+extern int wrapindex;		/* current index in m4wraps */
+
 extern char *null;		/* as it says.. just a null. */
 extern char rquote[MAXCCHARS+1];/* right quote character (') */
 extern char scommt[MAXCCHARS+1];/* start character for comment */
