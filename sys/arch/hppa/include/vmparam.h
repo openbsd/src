@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 1998/07/29 00:40:03 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 1998/08/29 01:20:38 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -42,6 +42,7 @@
 #define	P1PAGES		0
 #define	LOWPAGES	0
 #define	HIGHPAGES	UPAGES
+#define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
 
 #define	INTSTACK_SIZE	(5 * NBPG)		/* interrupt stack size */
 
@@ -49,7 +50,7 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
@@ -133,5 +134,10 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
+
+#define	VM_PHYSSEG_MAX	8	/* this many physmem segments */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
 #endif	/* _HPPA_VMPARAM_H_ */
