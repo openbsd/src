@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2002/12/17 21:54:25 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2002/12/19 21:08:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -391,7 +391,8 @@ trap(type, frame)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if (va >= (vaddr_t)vm->vm_maxsaddr + ctob(vm->vm_ssize)) {
+		if (space != 0 && va < (vaddr_t)vm->vm_minsaddr &&
+		    va >= (vaddr_t)vm->vm_maxsaddr + ctob(vm->vm_ssize)) {
 			if (ret == 0) {
 				vsize_t nss = btoc(va - USRSTACK + NBPG - 1);
 				if (nss > vm->vm_ssize)
