@@ -1,31 +1,46 @@
-#	$OpenBSD: changelist,v 1.7 1999/03/15 22:41:31 todd Exp $
+#	$OpenBSD: changelist,v 1.8 1999/09/13 23:32:05 pjanzen Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
 
 /etc/Distfile
 /etc/aliases
+/etc/bootparams
+/etc/bootptab
 /etc/changelist
 /etc/crontab
 /etc/csh.cshrc
 /etc/csh.login
+/etc/csh.logout
 /etc/daily
 /etc/daily.local
 /etc/distfile
 /etc/exports
 /etc/fstab
 /etc/ftpusers
+/etc/gettytab
 /etc/group
+/etc/hosts
+/etc/hosts.allow
+/etc/hosts.deny
 /etc/hosts.equiv
+/etc/ifaliases
+/etc/inetd.conf
 /etc/ipf.rules
 /etc/mail.rc
 /etc/master.passwd
 /etc/monthly
+/etc/monthly.local
+/etc/mygate
+/etc/myname
 /etc/named.boot
+/etc/netgroup
+/etc/newsyslog.conf
 /etc/ipnat.rules
 /etc/netstart
 /etc/networks
 /etc/passwd
+/etc/passwd.conf
 /etc/printcap
 /etc/protocols
 /etc/rc
@@ -33,6 +48,8 @@
 /etc/rc.local
 /etc/rc.securelevel
 /etc/remote
+/etc/resolv.conf
+/etc/rpc
 /etc/security
 /etc/sendmail.cf
 /etc/sendmail.cw
@@ -54,8 +71,13 @@
 /root/.rhosts
 /root/.shosts
 /root/.ssh/authorized_keys
+/var/cron/allow
+/var/cron/deny
+/var/cron/tabs/root
 /var/named/named.boot
 /var/www/conf/httpd.conf
 /var/www/conf/srm.conf
 /var/www/conf/access.conf
 /var/www/conf/mime.types
+/var/yp/Makefile.main
+/var/yp/Makefile.yp
