@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.41 2002/03/23 14:14:25 deraadt Exp $
+#	$OpenBSD: files.sparc,v 1.42 2002/07/09 15:27:59 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -325,7 +325,7 @@ file	arch/sparc/dev/fga.c		fga needs-flag
 
 device daadio {}
 attach daadio at fvme
-file	arch/sparc/dev/daadio.c		daadio
+file	arch/sparc/dev/daadio.c		daadio needs-flag
 
 device tctrl {}
 attach tctrl at obio

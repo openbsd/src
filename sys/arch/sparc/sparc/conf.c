@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2002/05/16 21:11:17 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2002/07/09 15:27:59 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -90,6 +90,7 @@
 #include "scf.h"
 #include "flash.h"
 #include "fga.h"
+#include "daadio.h"
 
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -241,8 +242,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 94 */
 	cdev_notdef(),			/* 95 */
 	cdev_notdef(),			/* 96 */
-	cdev_notdef(),			/* 97 */
-	cdev_fga_init(NFGA,fga),	/* 98 */
+	cdev_daadio_init(NDAADIO,daadio), /* 97: daadio */
+	cdev_fga_init(NFGA,fga),	/* 98: fga */
 	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
 	cdev_tty_init(NMTTY,mtty),	/* 100: magma */
 	cdev_gen_init(NMBPP,mbpp),	/* 101: magma */

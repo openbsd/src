@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.13 2001/12/11 23:19:02 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.14 2002/07/09 15:27:59 jason Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -119,5 +119,12 @@ cdev_decl(flash);
 	(dev_type_stop((*))) nullop, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 cdev_decl(fga);
+
+#define	cdev_daadio_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+cdev_decl(daadio);
 
 cdev_decl(ksyms);
