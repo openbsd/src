@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.10 2001/07/19 21:24:27 rees Exp $ */
+/* $Id: cyberflex.c,v 1.11 2001/07/20 15:52:54 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -44,7 +44,6 @@ such damages.
 #endif
 #include <sha1.h>
 #include <sectok.h>
-#include <sc7816.h>
 
 #include "sc.h"
 
@@ -86,7 +85,7 @@ get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
 	    dflag = 1;
 	    break;
 	case 'x':
-	    if (parse_input(optarg, digest, 8) != 8) {
+	    if (sectok_parse_input(optarg, digest, 8) != 8) {
 		printf("AUT0 must be length 8\n");
 		return -1;
 	    }
@@ -194,22 +193,23 @@ int jatr(int ac, char *av[])
     unsigned char buf[64];
     int n = 0, sw;
 
-    if (fd < 0 && reset(0, NULL) < 0)
-	return -1;
-
     buf[n++] = 0x90;
     buf[n++] = 0x94;		/* TA1 */
     buf[n++] = 0x40;		/* TD1 */
     buf[n++] = 0x28;		/* TC2 (WWT=4sec) */
     if (ac > optind) {
 	/* set historical bytes from command line */
-	n += parse_input(av[1], &buf[n], 15);
+	n += sectok_parse_input(av[1], &buf[n], 15);
     } else {
 	/* no historical bytes given, use default */
 	memmove(&buf[n], DFLTATR, sizeof DFLTATR);
 	n += sizeof DFLTATR;
     }
     buf[0] |= ((n - 2) & 0xf);
+
+    if (fd < 0 && reset(0, NULL) < 0)
+	return -1;
+
     sectok_apdu(fd, cla, 0xfa, 0, 0, n, buf, 0, NULL, &sw);
     if (!sectok_swOK(sw)) {
 	/* error */
@@ -531,10 +531,10 @@ int jload(int ac, char *av[])
     while ((i = getopt(ac, av, "p:c:s:i:a:v")) != -1) {
 	switch (i) {
 	case 'p':
-	    parse_input(optarg, progID, 2);
+	    sectok_parse_input(optarg, progID, 2);
 	    break;
 	case 'c':
-	    parse_input(optarg, contID, 2);
+	    sectok_parse_input(optarg, contID, 2);
 	    break;
 	case 's':
 	    sscanf(optarg, "%d", &cont_size);
@@ -543,7 +543,7 @@ int jload(int ac, char *av[])
 	    sscanf(optarg, "%d", &inst_size);
 	    break;
 	case 'a':
-	    aid_len = parse_input(optarg, aid, sizeof aid);
+	    aid_len = sectok_parse_input(optarg, aid, sizeof aid);
 	    break;
 	case 'v':
 	    vflag = 1;
@@ -726,10 +726,10 @@ int junload(int ac, char *av[])
     while ((i = getopt(ac, av, "p:c:v")) != -1) {
 	switch (i) {
 	case 'p':
-	    parse_input(optarg, progID, 2);
+	    sectok_parse_input(optarg, progID, 2);
 	    break;
 	case 'c':
-	    parse_input(optarg, contID, 2);
+	    sectok_parse_input(optarg, contID, 2);
 	    break;
 	case 'v':
 	    vflag = 1;
@@ -796,10 +796,10 @@ int jselect(int ac, char *av[])
 	    aid_len = 0;
 	    break;
 	case 'p':
-	    parse_input(optarg, progID, 2);
+	    sectok_parse_input(optarg, progID, 2);
 	    break;
 	case 'c':
-	    parse_input(optarg, contID, 2);
+	    sectok_parse_input(optarg, contID, 2);
 	    break;
 	case 's':
 	    sscanf(optarg, "%d", &cont_size);
@@ -808,7 +808,7 @@ int jselect(int ac, char *av[])
 	    sscanf(optarg, "%d", &inst_size);
 	    break;
 	case 'a':
-	    aid_len = parse_input(optarg, aid, sizeof aid);
+	    aid_len = sectok_parse_input(optarg, aid, sizeof aid);
 	    break;
 	case 'v':
 	    vflag = 1;

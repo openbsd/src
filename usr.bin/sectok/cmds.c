@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.10 2001/07/19 21:24:27 rees Exp $ */
+/* $Id: cmds.c,v 1.11 2001/07/20 15:52:54 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -41,7 +41,6 @@ such damages.
 #include <signal.h>
 #include <string.h>
 #include <sectok.h>
-#include <sc7816.h>
 
 #include "sc.h"
 
@@ -61,7 +60,7 @@ struct {
 
     /* 7816-4 commands */
     { "apdu", "[ -c class ] ins p1 p2 p3 data ...", apdu },
-    { "fid", "fid", selfid },
+    { "fid", "[ -v ] fid", selfid },
     { "isearch", "", isearch },
     { "class", "[ class ]", class },
     { "read", "[ -x ] filesize", dread },
@@ -166,7 +165,7 @@ int reset(int ac, char *av[])
 
     n = sectok_reset(fd, rflags, atr, &sw);
     if (vflag)
-	parse_atr(fd, SCRV, atr, n, &param);
+	sectok_parse_atr(fd, STRV, atr, n, &param);
     if (!sectok_swOK(sw)) {
 	printf("sectok_reset: %s\n", sectok_get_sw(sw));
 	dclose(0, NULL);
@@ -179,7 +178,7 @@ int reset(int ac, char *av[])
 int dclose(int ac, char *av[])
 {
     if (fd >= 0) {
-	scclose(fd);
+	sectok_close(fd);
 	fd = -1;
     }
     return 0;
@@ -235,39 +234,54 @@ int apdu(int ac, char *av[])
 
 int selfid(int ac, char *av[])
 {
-    unsigned char fid[2];
-    int sw;
+    unsigned char fid[2], obuf[256];
+    int i, n, olen = 0, sw;
 
-    if (ac != 2) {
-	printf("usage: f fid\n");
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "v")) != -1) {
+	switch (i) {
+	case 'v':
+	    olen = sizeof obuf;
+	    break;
+	}
+    }
+
+    if (ac - optind != 1) {
+	printf("usage: f [ -v ] fid\n");
 	return -1;
     }
+    sectok_parse_fname(av[optind++], fid);
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
-    sectok_parse_fname(av[1], fid);
-    if (sectok_selectfile(fd, cla, fid, &sw) < 0) {
-	printf("selectfile: %s\n", sectok_get_sw(sw));
+    n = sectok_apdu(fd, cla, 0xa4, 0, 0, 2, fid, olen, obuf, &sw);
+    if (!sectok_swOK(sw)) {
+	printf("Select %02x%02x: %s\n", fid[0], fid[1], sectok_get_sw(sw));
 	return -1;
     }
+
+    if (olen)
+	sectok_dump_reply(obuf, n, sw);
 
     return 0;
 }
 
 int isearch(int ac, char *av[])
 {
-    int i, r1, r2;
-    unsigned char buf[256];
+    int i, r1, sw;
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
     /* find instructions */
-    for (i = 0; i < 0xff; i += 2)
-	if (scread(fd, cla, i, 0, 0, 0, buf, &r1, &r2) == 0
-	    && r1 != 0x6d && r1 != 0x6e)
-	    printf("%02x %s %s\n", i, lookup_cmdname(i), get_r1r2s(r1, r2));
+    for (i = 0; i < 0xff; i += 2) {
+	sectok_apdu(fd, cla, i, 0, 0, 0, NULL, 0, NULL, &sw);
+	r1 = sectok_r1(sw);
+	if (r1 != 0x06 && r1 != 0x6d && r1 != 0x6e)
+	    printf("%02x %s %s\n", i, sectok_get_ins(i), sectok_get_sw(sw));
+    }
     return 0;
 }
 
@@ -295,7 +309,7 @@ int dread(int ac, char *av[])
 	}
     }
 
-    if (ac - optind < 1) {
+    if (ac - optind != 1) {
 	printf("usage: read [ -x ] filesize\n");
 	return -1;
     }
@@ -309,7 +323,7 @@ int dread(int ac, char *av[])
 	n = (fsize < CARDIOSIZE) ? fsize : CARDIOSIZE;
 	n = sectok_apdu(fd, cla, 0xb0, p3 >> 8, p3 & 0xff, 0, NULL, n, buf, &sw);
 	if (!sectok_swOK(sw)) {
-	    printf("read binary: %s\n", sectok_get_sw(sw));
+	    printf("ReadBinary: %s\n", sectok_get_sw(sw));
 	    break;
 	}
 	if (xflag) {
@@ -331,7 +345,7 @@ int dread(int ac, char *av[])
 
 int dwrite(int ac, char *av[])
 {
-    int n, p3, r1, r2;
+    int n, p3, sw;
     FILE *f;
     unsigned char buf[CARDIOSIZE];
 
@@ -351,12 +365,9 @@ int dwrite(int ac, char *av[])
 
     n = 0;
     while ((p3 = fread(buf, 1, CARDIOSIZE, f)) > 0) {
-	if (scwrite(fd, cla, 0xd6, n >> 8, n & 0xff, p3, buf, &r1, &r2) < 0) {
-	    printf("scwrite failed\n");
-	    break;
-	}
-	if (r1 != 0x90 && r1 != 0x61) {
-	    print_r1r2(r1, r2);
+	sectok_apdu(fd, cla, 0xd6, n >> 8, n & 0xff, p3, buf, 0, NULL, &sw);
+	if (!sectok_swOK(sw)) {
+	    printf("UpdateBinary: %s\n", sectok_get_sw(sw));
 	    break;
 	}
 	n += p3;
