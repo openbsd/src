@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 2001/12/07 19:09:00 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.7 2002/01/10 00:06:17 nordin Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -511,6 +511,8 @@ clockattach_rtc(parent, self, aux)
 	/* Setup our todr_handle */
 	sz = ALIGN(sizeof(struct todr_chip_handle)) + sizeof(struct rtc_info);
 	handle = malloc(sz, M_DEVBUF, M_NOWAIT);
+	if (handle == NULL)
+		panic("clockattach_rtc");
 	rtc = (struct rtc_info*)((u_long)handle +
 				 ALIGN(sizeof(struct todr_chip_handle)));
 	handle->cookie = rtc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.10 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: obio.c,v 1.11 2002/01/10 00:06:17 nordin Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -302,6 +302,8 @@ vmesattach(parent, self, args)
 	if (vmeints == NULL) {
 		vmeints = (struct intrhand **)malloc(256 *
 		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
+		if (vmeints == NULL)
+			panic("vmesattach: can't allocate intrhand");
 		bzero(vmeints, 256 * sizeof(struct intrhand *));
 	}
 	(void)config_search(vmes_scan, self, args);
@@ -323,6 +325,8 @@ vmelattach(parent, self, args)
 	if (vmeints == NULL) {
 		vmeints = (struct intrhand **)malloc(256 *
 		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
+		if (vmeints == NULL)
+			panic("vmelattach: can't allocate intrhand");
 		bzero(vmeints, 256 * sizeof(struct intrhand *));
 	}
 	(void)config_search(vmel_scan, self, args);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2001/11/28 05:32:11 jason Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2002/01/10 00:06:17 nordin Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -282,6 +282,8 @@ intr_establish(level, ih)
 		if (q->ih_fun != intr_list_handler) {
 			nih = (struct intrhand *)malloc(sizeof(struct intrhand),
 			    M_DEVBUF, M_NOWAIT);
+			if (nih == NULL)
+				panic("intr_establish");
 			/* Point the old IH at the new handler */
 			*nih = *q;
 			q->ih_fun = intr_list_handler;
@@ -290,6 +292,8 @@ intr_establish(level, ih)
 		}
 		nih = (struct intrhand *)malloc(sizeof(struct intrhand),
 		    M_DEVBUF, M_NOWAIT);
+		if (nih == NULL)
+			panic("intr_establish");
 		*nih = *ih;
 		/* Add the ih to the head of the list */
 		nih->ih_next = (struct intrhand *)q->ih_arg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.9 2001/12/14 14:55:57 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.10 2002/01/10 00:06:17 nordin Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -522,6 +522,8 @@ psycho_set_intr(sc, ipl, handler, mapper, clearer)
 
 	ih = (struct intrhand *)malloc(sizeof(struct intrhand),
 	    M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		panic("couldn't malloc intrhand");
 	ih->ih_arg = sc;
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.8 2002/01/04 05:19:25 jason Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.9 2002/01/10 00:06:17 nordin Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -337,6 +337,8 @@ sbus_attach(parent, self, aux)
 	/* Enable the over temp intr */
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		panic("couldn't malloc intrhand");
 	ih->ih_map = &sc->sc_sysio->therm_int_map;
 	ih->ih_clr = NULL; /* &sc->sc_sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
