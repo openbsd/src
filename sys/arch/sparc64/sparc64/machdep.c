@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2002/07/20 19:24:57 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2002/10/06 20:18:54 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -148,6 +148,15 @@ int bus_space_debug = 0; /* This may be used by macros elsewhere. */
 
 struct vm_map *exec_map = NULL;
 extern vaddr_t avail_end;
+
+/*
+ * Declare these as initialized data so we can patch them.
+ */
+#ifdef	NBUF
+int	nbuf = NBUF;
+#else
+int	nbuf = 0;
+#endif
 
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 5
