@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.35 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.36 2003/03/03 18:23:13 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.35 2003/02/20 20:38:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.36 2003/03/03 18:23:13 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -701,7 +701,8 @@ process_jobs(int argc, char **argv, int what)
 		job_matches = (argc == 0) ? 1 : 0;
 		if (!job_matches) {
 			for (i = 0; i < jobs_len; i++) {
-				if (strcmp(dirent->d_name, jobs[i]) == 0) {
+				if (jobs[i] != NULL &&
+				    strcmp(dirent->d_name, jobs[i]) == 0) {
 					jobs[i] = NULL;
 					job_matches = 1;
 					break;
