@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.6 2000/06/04 17:06:14 krw Exp $
+.\"	$OpenBSD: timeout.9,v 1.7 2000/06/05 07:24:08 art Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -53,9 +53,9 @@ timer which executes
 times a second.
 The function will be called at softclock interrupt level.
 .Pp
-It's the caller responsibility to provide those functions with
-pre-allocated timeout structures. All functions in this API may
-be used in interrupt context below
+It is the responsibility of the caller to provide these functions with
+pre-allocated timeout structures.
+All functions in this API may be used in interrupt context below
 .Fn splclock .
 .Pp
 This API replaces the historic functions
@@ -71,7 +71,7 @@ to be used in future calls to
 .Fn timeout_add
 and
 .Fn timeout_del .
-The timeout will be prepared to call the function given in the
+The timeout will be prepared to call the function specified by the
 .Fa fn
 argument with a
 .Fa void *
@@ -88,8 +88,8 @@ and doesn't need to be reinitialized unless you wish to
 change the function called and/or the argument to it.
 .Pp
 The function
-.Fn timeout_del
-schedules an execution of the
+.Fn timeout_add
+schedules the execution of the
 .Fa to
 timeout in at least
 .Fa ticks Ns No /hz
@@ -144,7 +144,7 @@ These functions are implemented in the file
 .Sh BUGS
 The
 .Fn timeout_add
-function executes in linear speed depending on the number of pending
+function executes in linear time depending on the number of pending
 timeouts. It will also block all interrupts while inserting the timeout
 to the timeout queue. Thus it is not recommended to use a large number
 of timeouts in the system.
