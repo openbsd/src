@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: bktr.4,v 1.18 2004/10/15 08:59:32 jsg Exp $
+.\" $OpenBSD: bktr.4,v 1.19 2005/02/24 20:24:41 mickey Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -77,7 +77,7 @@ STB TV PCI Television Tuner
 Terratec TerraTVplus
 Video Highway XTreme
 VideoLogic Captivator PCI
-Zoltrix TV
+Zoltrix TV and Genie TV/FM
 .Ed
 .Pp
 The driver currently supports the following features:
@@ -146,6 +146,8 @@ Terratec TerraTVplus
 Video Highway XTreme
 .It ZOLTRIX
 Zoltrix TV
+.It ZOLTRIX_GENIE_FM
+Zoltrix Genie TV/FM
 .El
 .It Cd option BKTR_OVERRIDE_MSP=n
 Specifies whether the MSP3400C chip is present (overrides autodetection).
