@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.13 1997/10/20 14:56:09 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.14 1997/10/21 02:42:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -120,7 +120,7 @@ Xboot()
 	printf("[%x,%d]\n", dev, part);
 
 	/* Read boot sector from device */
-	st = biosd_io(F_READ, dev, 0, 0, 1, 1, buf);
+	st = biosd_rw(F_READ, dev, 0, 0, 1, 1, buf);
 	if(st) goto bad;
 
 	/* Frob boot flag in buffer from HD */
