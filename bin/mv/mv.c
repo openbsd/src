@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.15 1999/12/24 22:38:06 angelos Exp $	*/
+/*	$OpenBSD: mv.c,v 1.16 2001/01/06 19:38:21 millert Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.15 1999/12/24 22:38:06 angelos Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.16 2001/01/06 19:38:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -224,11 +224,21 @@ do_move(from, to)
 	if (!rename(from, to))
 		return (0);
 
-	if (errno == EXDEV) {
+	if (errno != EXDEV) {
+		warn("rename %s to %s", from, to);
+		return (1);
+	}
+
+	if (lstat(from, &sb)) {
+		warn("%s", from);
+		return (1);
+	}
+
+	/* Disallow moving a mount point. */
+	if (S_ISDIR(sb.st_mode)) {
 		struct statfs sfs;
 		char path[MAXPATHLEN];
 
-		/* Can't mv(1) a mount point. */
 		if (realpath(from, path) == NULL) {
 			warnx("cannot resolve %s: %s", from, path);
 			return (1);
@@ -237,9 +247,6 @@ do_move(from, to)
 			warnx("cannot rename a mount point");
 			return (1);
 		}
-	} else {
-		warn("rename %s to %s", from, to);
-		return (1);
 	}
 
 	/*
@@ -248,7 +255,7 @@ do_move(from, to)
 	 *	message to the standard error and do nothing more with the
 	 *	current source file...
 	 */
-	if (!stat(to, &sb)) {
+	if (!lstat(to, &sb)) {
 		if ((S_ISDIR(sb.st_mode)) ? rmdir(to) : unlink(to)) {
 			warn("can't remove %s", to);
 			return (1);
@@ -259,10 +266,6 @@ do_move(from, to)
 	 * (5)	The file hierarchy rooted in source_file shall be duplicated
 	 *	as a file hiearchy rooted in the destination path...
 	 */
-	if (stat(from, &sb)) {
-		warn("%s", from);
-		return (1);
-	}
 	return (S_ISREG(sb.st_mode) ?
 	    fastcopy(from, to, &sb) : copy(from, to));
 }
