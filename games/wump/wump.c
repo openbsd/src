@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.9 1999/06/10 22:58:24 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.10 1999/07/31 18:52:00 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.9 1999/06/10 22:58:24 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.10 1999/07/31 18:52:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -782,7 +782,7 @@ int
 int_compare(a, b)
 	const void *a, *b;
 {
-	return(*(int *)a < *(int *)b ? -1 : 1);
+	return(*(const int *)a < *(const int *)b ? -1 : 1);
 }
 
 void
