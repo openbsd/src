@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.258 2000/05/15 21:51:00 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.259 2000/05/22 16:52:45 chris Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -634,6 +634,7 @@ product ADMTEK AN985		0x0985	AN985
 /* Adaptec products */
 product ADP AIC7810		0x1078	AIC-7810
 product ADP 2940AU_CN		0x2178	AHA-2940AU/CN
+product ADP 2930CU		0x3860	AHA-2930CU
 product ADP AIC7850		0x5078	AIC-7850
 product ADP AIC7855		0x5578	AIC-7855
 product ADP AIC5900		0x5900	AIC-5900 ATM
