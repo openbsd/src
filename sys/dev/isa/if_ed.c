@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.21 1996/10/16 12:34:36 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.22 1996/11/07 08:36:50 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
 
 /*
@@ -2771,6 +2771,19 @@ ed_shared_writemem(sc, from, card, len)
 	 * have to be careful.
 	 */
 	if (sc->isa16bit) {
+		/*
+		 * If writing to an odd location, we need to align first.
+		 * This requires a read-modify-write cycle as we should
+		 * keep accesses 16-bit wide.
+		 */
+		if (len > 0 && (card & 1)) {
+			word = bus_mem_read_2(bc, memh, card & ~1);
+			word = word & 0xff | (*from << 8);
+			bus_mem_write_2(bc, memh, card & ~1, word);
+			from++;
+			card++;
+			len--;
+		}
 		while (len > 1) {
 			word = (u_int8_t)from[0] | (u_int8_t)from[1] << 8;
 			bus_mem_write_2(bc, memh, card, word);
