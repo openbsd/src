@@ -1,4 +1,4 @@
-.\"	$OpenBSD: emu.4,v 1.4 2002/09/26 07:55:39 miod Exp $
+.\"	$OpenBSD: emu.4,v 1.5 2002/10/29 18:08:16 mickey Exp $
 .\"	$NetBSD: emuxki.4,v 1.1 2001/10/18 18:40:16 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,6 +101,14 @@ and ported to
 .Ox 3.1
 by
 .An Michael Shalayeff Aq mickey@openbsd.org .
+.Sh CAVEATS
+ATTENTION!
+.Pp
+Hardware interface of this card contains registers not used
+for normal operation, but potentially dangerous
+and not possible to disable.
+Potential damage ranges from frying the card to frying
+motherboard or external equipment connected to it's outputs.
 .Sh BUGS
 Currently, this driver does not support recording,
 MIDI, joystick input or the multi-voice capability.
