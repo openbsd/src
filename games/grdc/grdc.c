@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.13 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.14 2004/11/29 09:32:47 jsg Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -35,7 +35,7 @@ short disp[11] = {
 long old[6], next[6], new[6], mask;
 char scrol;
 
-int sigtermed=0;
+volatile sig_atomic_t sigtermed = 0;
 
 int hascolor = 0;
 
