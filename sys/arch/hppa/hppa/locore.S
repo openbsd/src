@@ -1,7 +1,7 @@
-/*	$OpenBSD: locore.S,v 1.102 2003/01/14 12:09:53 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.103 2003/01/15 12:33:34 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2002 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,9 +79,6 @@
 #include <machine/pdc.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
-#ifdef	GPROF
-#include <machine/gprof.h>
-#endif
 #include "assym.h"
 
 /*
