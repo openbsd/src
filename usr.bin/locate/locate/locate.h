@@ -1,4 +1,4 @@
-/*	$OpenBSD: locate.h,v 1.9 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: locate.h,v 1.10 2003/09/29 16:03:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@
 #undef CHAR_MAX
 #define CHAR_MAX 127
 /*	128-255 bigram codes (128 most common, as determined by 'updatedb') */
-#define BIGRAM_MIN    (UCHAR_MAX - CHAR_MAX) 
+#define BIGRAM_MIN    (UCHAR_MAX - CHAR_MAX)
 #define BIGRAM_MAX    UCHAR_MAX
 
 /*	32-127  single character (printable) ascii residue (ie, literal) */

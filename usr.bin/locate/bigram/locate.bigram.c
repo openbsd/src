@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.9 2003/07/10 00:06:51 david Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.10 2003/09/29 16:03:16 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.9 2003/07/10 00:06:51 david Exp $
+ * 	$Id: locate.bigram.c,v 1.10 2003/09/29 16:03:16 deraadt Exp $
  */
 
 #ifndef lint
@@ -41,7 +41,7 @@ static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.9 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.10 2003/09/29 16:03:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
- *  bigram < sorted_file_names | sort -nr | 
+ *  bigram < sorted_file_names | sort -nr |
  *  	awk 'NR <= 128 { printf $2 }' > bigrams
  *
  * List bigrams for 'updatedb' script.
@@ -69,13 +69,13 @@ u_int bigram[UCHAR_MAX + 1][UCHAR_MAX + 1];
 int
 main(void)
 {
-  	u_char *cp;
+	u_char *cp;
 	u_char *oldpath = buf1, *path = buf2;
 	u_int i, j;
 
-     	while (fgets(path, sizeof(buf2), stdin) != NULL) {
+	while (fgets(path, sizeof(buf2), stdin) != NULL) {
 
-		/* 
+		/*
 		 * We don't need remove newline character '\n'.
 		 * '\n' is less than ASCII_MIN and will be later
 		 * ignored at output.
@@ -93,14 +93,14 @@ main(void)
 		}
 
 		/* swap pointers */
-		if (path == buf1) { 
+		if (path == buf1) {
 			path = buf2;
 			oldpath = buf1;
 		} else {
 			path = buf1;
 			oldpath = buf2;
 		}
-   	}
+	}
 
 	/* output, boundary check */
 	for (i = ASCII_MIN; i <= ASCII_MAX; i++)

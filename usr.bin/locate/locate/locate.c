@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.16 2003/07/07 21:36:16 deraadt Exp $
+ *	$OpenBSD: locate.c,v 1.17 2003/09/29 16:03:16 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.16 2003/07/07 21:36:16 deraadt Exp $
+ *      $Id: locate.c,v 1.17 2003/09/29 16:03:16 deraadt Exp $
  */
 
 #ifndef lint
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.16 2003/07/07 21:36:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.17 2003/09/29 16:03:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,86 +144,86 @@ extern int      optind;
 int
 main(int argc, char *argv[])
 {
-        int ch;
-        char **dbv = NULL;
+	int ch;
+	char **dbv = NULL;
 #ifdef MMAP
-        f_mmap = 1;		/* mmap is default */
+	f_mmap = 1;		/* mmap is default */
 #endif
 	(void) setlocale(LC_ALL, "");
 
-        while ((ch = getopt(argc, argv, "Scd:il:ms")) != -1)
-                switch(ch) {
-                case 'S':	/* statistic lines */   
-                        f_statistic = 1;
-                        break;
-                case 'l': /* limit number of output lines, 0 == infinite */
-                        f_limit = atoi(optarg);
-                        break;
-                case 'd':	/* database */
-                        dbv = colon(dbv, optarg, _PATH_FCODES);
-                        break;
-                case 'i':	/* ignore case */
-                        f_icase = 1;
-                        break;
-                case 'm':	/* mmap */
+	while ((ch = getopt(argc, argv, "Scd:il:ms")) != -1)
+		switch (ch) {
+		case 'S':	/* statistic lines */
+			f_statistic = 1;
+			break;
+		case 'l': /* limit number of output lines, 0 == infinite */
+			f_limit = atoi(optarg);
+			break;
+		case 'd':	/* database */
+			dbv = colon(dbv, optarg, _PATH_FCODES);
+			break;
+		case 'i':	/* ignore case */
+			f_icase = 1;
+			break;
+		case 'm':	/* mmap */
 #ifdef MMAP
-                        f_mmap = 1;
+			f_mmap = 1;
 #else
 			(void)fprintf(stderr, "mmap(2) not implemented\n");
 #endif
-                        break;
-                case 's':	/* stdio lib */
-                        f_mmap = 0;
-                        break;
-                case 'c': /* suppress output, show only count of matches */
-                        f_silent = 1;
-                        break;
-                default:
-                        usage();
-                }
-        argv += optind;
-        argc -= optind;
+			break;
+		case 's':	/* stdio lib */
+			f_mmap = 0;
+			break;
+		case 'c': /* suppress output, show only count of matches */
+			f_silent = 1;
+			break;
+		default:
+			usage();
+		}
+	argv += optind;
+	argc -= optind;
 
-        /* to few arguments */
-        if (argc < 1 && !(f_statistic))
-                usage();
+	/* to few arguments */
+	if (argc < 1 && !(f_statistic))
+		usage();
 
-        /* no (valid) database as argument */
-        if (dbv == NULL || *dbv == NULL) {
-                /* try to read database from environment */
-                if ((path_fcodes = getenv("LOCATE_PATH")) == NULL ||
-		     *path_fcodes == '\0')
-                        /* use default database */
-                        dbv = colon(dbv, _PATH_FCODES, _PATH_FCODES);
-                else		/* $LOCATE_PATH */
-                        dbv = colon(dbv, path_fcodes, _PATH_FCODES);
-        }
+	/* no (valid) database as argument */
+	if (dbv == NULL || *dbv == NULL) {
+		/* try to read database from environment */
+		if ((path_fcodes = getenv("LOCATE_PATH")) == NULL ||
+		    *path_fcodes == '\0')
+			/* use default database */
+			dbv = colon(dbv, _PATH_FCODES, _PATH_FCODES);
+		else		/* $LOCATE_PATH */
+			dbv = colon(dbv, path_fcodes, _PATH_FCODES);
+	}
 
-        if (f_icase && UCHAR_MAX < 4096) /* init tolower lookup table */
-                for (ch = 0; ch < UCHAR_MAX + 1; ch++)
-                        myctype[ch] = tolower(ch);
+	if (f_icase && UCHAR_MAX < 4096) /* init tolower lookup table */
+		for (ch = 0; ch < UCHAR_MAX + 1; ch++)
+			myctype[ch] = tolower(ch);
 
-        /* foreach database ... */
-        while((path_fcodes = *dbv) != NULL) {
-                dbv++;
+	/* foreach database ... */
+	while ((path_fcodes = *dbv) != NULL) {
+		dbv++;
 
-                if (!strcmp(path_fcodes, "-"))
-                        f_stdin = 1;
+		if (!strcmp(path_fcodes, "-"))
+			f_stdin = 1;
 		else
 			f_stdin = 0;
 
 #ifndef MMAP
 		f_mmap = 0;	/* be paranoid */
 #endif
-                if (!f_mmap || f_stdin || f_statistic) 
+		if (!f_mmap || f_stdin || f_statistic)
 			search_fopen(path_fcodes, argv);
-                else 
+		else
 			search_mmap(path_fcodes, argv);
-        }
+	}
 
-        if (f_silent)
-                print_matches(counter);
-        exit(0);
+	if (f_silent)
+		print_matches(counter);
+	exit(0);
 }
 
 
@@ -232,19 +232,19 @@ search_fopen(char *db, char **s)
 {
 	FILE *fp;
 #ifdef DEBUG
-        long t0;
+	long t0;
 #endif
-	       
+
 	/* can only read stdin once */
-	if (f_stdin) { 
+	if (f_stdin) {
 		fp = stdin;
 		if (*(s+1) != NULL) {
-			(void)fprintf(stderr, 
-				      "read database from stdin, use only");
+			(void)fprintf(stderr,
+			    "read database from stdin, use only");
 			(void)fprintf(stderr, " `%s' as pattern\n", *s);
 			*(s+1) = NULL;
 		}
-	} 
+	}
 	else if ((fp = fopen(path_fcodes, "r")) == NULL)
 		err(1,  "`%s'", path_fcodes);
 
@@ -256,7 +256,7 @@ search_fopen(char *db, char **s)
 	}
 
 	/* foreach search string ... */
-	while(*s != NULL) {
+	while (*s != NULL) {
 #ifdef DEBUG
 		t0 = cputime();
 #endif
@@ -272,29 +272,28 @@ search_fopen(char *db, char **s)
 		(void)fprintf(stderr, "fastfind %ld ms\n", cputime () - t0);
 #endif
 		s++;
-	} 
+	}
 	(void)fclose(fp);
-} 
+}
 
 #ifdef MMAP
 void
 search_mmap(char *db, char **s)
 {
-        struct stat sb;
-        int fd;
-        caddr_t p;
-        off_t len;
+	struct stat sb;
+	int fd;
+	caddr_t p;
+	off_t len;
 #ifdef DEBUG
-        long t0;
+	long t0;
 #endif
 	if ((fd = open(path_fcodes, O_RDONLY)) == -1 ||
 	    fstat(fd, &sb) == -1)
 		err(1, "`%s'", path_fcodes);
 	len = sb.st_size;
 
-	if ((p = mmap((caddr_t)0, (size_t)len,
-		      PROT_READ, MAP_SHARED,
-		      fd, (off_t)0)) == MAP_FAILED)
+	if ((p = mmap((caddr_t)0, (size_t)len, PROT_READ, MAP_SHARED,
+	    fd, (off_t)0)) == MAP_FAILED)
 		err(1, "mmap ``%s''", path_fcodes);
 
 	/* foreach search string ... */
@@ -314,7 +313,7 @@ search_mmap(char *db, char **s)
 
 	if (munmap(p, (size_t)len) == -1)
 		warn("munmap %s", path_fcodes);
-	
+
 	(void)close(fd);
 }
 #endif /* MMAP */
@@ -333,11 +332,11 @@ cputime(void)
 void
 usage(void)
 {
-        (void)fprintf(stderr, "usage: locate [-Scims] [-l limit] ");
+	(void)fprintf(stderr, "usage: locate [-Scims] [-l limit] ");
 	(void)fprintf(stderr, "[-d database] pattern ...\n");
-        (void)fprintf(stderr, "default database: `%s' or $LOCATE_PATH\n", 
-		      _PATH_FCODES);
-        exit(1);
+	(void)fprintf(stderr, "default database: `%s' or $LOCATE_PATH\n",
+	    _PATH_FCODES);
+	exit(1);
 }
 
 

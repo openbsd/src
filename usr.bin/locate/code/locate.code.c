@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.code.c,v 1.11 2003/07/07 21:36:16 deraadt Exp $
+ *	$OpenBSD: locate.code.c,v 1.12 2003/09/29 16:03:16 deraadt Exp $
  *
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.code.c,v 1.11 2003/07/07 21:36:16 deraadt Exp $
+ * 	$Id: locate.code.c,v 1.12 2003/09/29 16:03:16 deraadt Exp $
  */
 
 #ifndef lint
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.11 2003/07/07 21:36:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.12 2003/09/29 16:03:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,17 +78,17 @@ static char rcsid[] = "$OpenBSD: locate.code.c,v 1.11 2003/07/07 21:36:16 deraad
  *	128-255 bigram codes (128 most common, as determined by 'updatedb')
  *	32-127  single character (printable) ascii residue (ie, literal)
  *
- * The locate database store any character except newline ('\n') 
+ * The locate database store any character except newline ('\n')
  * and NUL ('\0'). The 8-bit character support don't wast extra
  * space until you have characters in file names less than 32
  * or greather than 127.
- * 
+ *
  *
  * SEE ALSO:	updatedb.sh, ../bigram/locate.bigram.c
  *
  * AUTHOR:	James A. Woods, Informatics General Corp.,
  *		NASA Ames Research Center, 10/82
- *              8-bit file names characters: 
+ *              8-bit file names characters:
  *              	Wolfram Schneider, Berlin September 1996
  */
 
@@ -102,7 +102,7 @@ static char rcsid[] = "$OpenBSD: locate.code.c,v 1.11 2003/07/07 21:36:16 deraad
 
 #define	BGBUFSIZE	(NBG * 2)	/* size of bigram buffer */
 
-u_char buf1[MAXPATHLEN] = " ";	
+u_char buf1[MAXPATHLEN] = " ";
 u_char buf2[MAXPATHLEN];
 u_char bigrams[BGBUFSIZE + 1] = { 0 };
 
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	int i, j;
 
 	while ((ch = getopt(argc, argv, "")) != -1)
-		switch(ch) {
+		switch (ch) {
 		default:
 			usage();
 		}
@@ -155,11 +155,11 @@ main(int argc, char *argv[])
 #ifdef LOOKUP
 	/* init lookup table */
 	for (i = 0; i < UCHAR_MAX + 1; i++)
-	    	for (j = 0; j < UCHAR_MAX + 1; j++) 
+	    	for (j = 0; j < UCHAR_MAX + 1; j++)
 			big[i][j] = (bg_t)-1;
 
 	for (cp = bigrams, i = 0; *cp != '\0'; i += 2, cp += 2)
-	        big[(u_char)*cp][(u_char)*(cp + 1)] = (bg_t)i;
+		big[(u_char)*cp][(u_char)*(cp + 1)] = (bg_t)i;
 
 #endif /* LOOKUP */
 
@@ -202,30 +202,26 @@ main(int argc, char *argv[])
 			if ((code = BGINDEX(cp)) != (bg_t)-1) {
 				/*
 				 * print *one* as bigram
-				 * Found, so mark byte with 
-				 *  parity bit. 
+				 * Found, so mark byte with
+				 *  parity bit.
 				 */
 				if (putchar((code / 2) | PARITY) == EOF)
 					err(1, "stdout");
 				cp += 2;
-			}
-
-			else {
+			} else {
 				for (i = 0; i < 2; i++) {
 					if (*cp == '\0')
 						break;
 
 					/* print umlauts in file names */
-					if (*cp < ASCII_MIN || 
+					if (*cp < ASCII_MIN ||
 					    *cp > ASCII_MAX) {
 						if (putchar(UMLAUT) == EOF ||
 						    putchar(*cp++) == EOF)
 							err(1, "stdout");
-					} 
-
-					else {
+					} else {
 						/* normal character */
-						if(putchar(*cp++) == EOF)
+						if (putchar(*cp++) == EOF)
 							err(1, "stdout");
 					}
 				}

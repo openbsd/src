@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.7 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.8 2003/09/29 16:03:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -32,13 +32,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.7 2003/06/03 02:56:10 millert Exp $
+ * $Id: fastfind.c,v 1.8 2003/09/29 16:03:16 deraadt Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
 #define _LOCATE_STATISTIC_
 
-void 
+void
 statistic (fp, path_fcodes)
 	FILE *fp;               /* open database */
 	char *path_fcodes;  	/* for error message */
@@ -64,7 +64,7 @@ statistic (fp, path_fcodes)
 			zwerg++;
 		} else
 			count += c - OFFSET;
-		
+
 		for (p = path + count; (c = getc(fp)) > SWITCH; size++)
 			if (c < PARITY) {
 				if (c == UMLAUT) {
@@ -86,10 +86,10 @@ statistic (fp, path_fcodes)
 
 	(void)printf("\nDatabase: %s\n", path_fcodes);
 	(void)printf("Compression: Front: %2.2f%%, ",
-		     (float)(100 * (size + big - (2 * NBG))) / chars);
+	    (float)(100 * (size + big - (2 * NBG))) / chars);
 	(void)printf("Bigram: %2.2f%%, ", (float)(100 * (size - big)) / size);
-	(void)printf("Total: %2.2f%%\n", 
-		     (float)(100 * (size - (2 * NBG))) / chars);
+	(void)printf("Total: %2.2f%%\n",
+	    (float)(100 * (size - (2 * NBG))) / chars);
 	(void)printf("Filenames: %d, ", lines);
 	(void)printf("Characters: %d, ", chars);
 	(void)printf("Database size: %d\n", size);
@@ -154,7 +154,7 @@ fastfind
 		(void)fprintf(stderr, "database too small: %s\n", database);
 		exit(1);
 	}
-	
+
 	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++, len-= 2) {
 		p[c] = check_bigram_char(*paddr++);
 		s[c] = check_bigram_char(*paddr++);
@@ -217,8 +217,8 @@ fastfind
 
 		for (;;) {
 #ifdef FF_MMAP
-			c = (u_char)*paddr++; 
-		        len--;
+			c = (u_char)*paddr++;
+			len--;
 #else
 			c = getc(fp);
 #endif /* FF_MMAP */
@@ -239,7 +239,7 @@ fastfind
 #else
 						c = getc(fp);
 #endif /* FF_MMAP */
-						
+
 					} else
 						break; /* SWITCH */
 				}
@@ -250,8 +250,7 @@ fastfind
 #endif /* FF_ICASE */
 					foundchar = p;
 				*p++ = c;
-			}
-			else {		
+			} else {
 				/* bigrams are parity-marked */
 				TO7BIT(c);
 
@@ -269,15 +268,15 @@ fastfind
 				*p++ = bigram2[c];
 			}
 		}
-		
-		if (found) {                     /* previous line matched */
+
+		if (found) {			/* previous line matched */
 			cutoff = path;
 			*p-- = '\0';
 			foundchar = p;
 		} else if (foundchar >= path + count) { /* a char matched */
 			*p-- = '\0';
 			cutoff = path + count;
-		} else                           /* nothing to do */
+		} else				/* nothing to do */
 			continue;
 
 		found = 0;
@@ -288,7 +287,7 @@ fastfind
 #endif /* FF_ICASE */
 			    ) {	/* fast first char check */
 				for (p = patend - 1, q = s - 1; *p != '\0';
-				     p--, q--)
+				    p--, q--)
 					if (*q != *p
 #ifdef FF_ICASE
 					    && TOLOWER(*q) != *p
