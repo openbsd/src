@@ -1,4 +1,4 @@
-/*	$OpenBSD: fix_options.c,v 1.3 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: fix_options.c,v 1.4 2002/02/24 02:24:37 deraadt Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) fix_options.c 1.4 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: fix_options.c,v 1.3 2000/10/14 00:56:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: fix_options.c,v 1.4 2002/02/24 02:24:37 deraadt Exp $";
 #endif
 #endif
 
@@ -58,7 +58,7 @@ struct request_info *request;
      */
     sslen = sizeof(ss);
     if (getsockname(fd, (struct sockaddr *)&ss, &sslen) < 0) {
-	syslog(LOG_ERR, "getpeername: %m");
+	syslog(LOG_ERR, "getsockname: %m");
 	clean_exit(request);
     }
     if (ss.ss_family != AF_INET)
