@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_mv.c,v 1.15 1997/05/02 00:59:52 briggs Exp $	*/
-/*	$NetBSD: grf_mv.c,v 1.23 1997/05/02 00:54:29 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.16 1997/05/03 02:30:29 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -57,6 +57,7 @@ static void	grfmv_intr_generic __P((void *vsc, int slot));
 static void	grfmv_intr_radius __P((void *vsc, int slot));
 static void	grfmv_intr_cti __P((void *vsc, int slot));
 static void	grfmv_intr_cb264 __P((void *vsc, int slot));
+static void	grfmv_intr_cb364 __P((void *vsc, int slot));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
@@ -238,8 +239,10 @@ grfmv_attach(parent, self, aux)
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc);
 		break;
 	case NUBUS_DRHW_CB264:
-	case NUBUS_DRHW_CB364:
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc);
+		break;
+	case NUBUS_DRHW_CB364:
+		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb364, sc);
 		break;
 	case NUBUS_DRHW_SE30:
 		/* Do nothing--SE/30 interrupts are disabled */
@@ -409,4 +412,95 @@ grfmv_intr_cb264(vsc, slot)
 		_mv_intr_fin:
 			movl	#0x1,a0@(0xff6014)"
 		: : "g" (slotbase) : "a0","d0","d1");
+}
+
+/*
+ * Support for the Colorboard 364 might be more complex than it needs to
+ * be.  If we can find more information about this card, this might be
+ * significantly simplified.  Contributions welcome...  :-)
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_cb364(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc;
+	volatile char *slotbase;
+
+	sc = (struct grfbus_softc *)vsc;
+	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	asm volatile("	movl	%0,a0
+			movl	a0@(0xfe6028),d0
+			andl	#0x2,d0
+			beq	_cb364_intr4
+			movql	#0x3,d0
+			movl	a0@(0xfe6018),d1
+			movl	#0x3,a0@(0xfe6018)
+			movw	a0@(0xfe7010),d2
+			movl	d1,a0@(0xfe6018)
+			movl	a0@(0xfe6020),d1
+			btst	#0x06,d2
+			beq	_cb364_intr0
+			btst	#0x00,d1
+			beq	_cb364_intr5
+			bsr	_cb364_intr1
+			bra	_cb364_intr_out
+		_cb364_intr0:
+			btst	#0x00,d1
+			bne	_cb364_intr5
+			bsr	_cb364_intr1
+			bra	_cb364_intr_out
+		_cb364_intr1:
+			movl	d0,a0@(0xfe600c)
+			nop
+			tstb	d0
+			beq	_cb364_intr3
+			movl	#0x0002,a0@(0xfe6040)
+			movl	#0x0105,a0@(0xfe6048)
+			movl	#0x000e,a0@(0xfe604c)
+			movl	#0x00c3,a0@(0xfe6058)
+			movl	#0x0061,a0@(0xfe605c)
+			btst	#0x06,d2
+			beq	_cb364_intr2
+			movl	#0x001c,a0@(0xfe6050)
+			movl	#0x00bc,a0@(0xfe6054)
+			movl	#0x0012,a0@(0xfe6060)
+			movl	#0x000e,a0@(0xfe6044)
+			movl	#0x00c3,a0@(0xfe6064)
+			movl	#0x0061,a0@(0xfe6020)
+			rts
+		_cb364_intr2:
+			movl	#0x0016,a0@(0xfe6050)
+			movl	#0x00b6,a0@(0xfe6054)
+			movl	#0x0011,a0@(0xfe6060)
+			movl	#0x0101,a0@(0xfe6044)
+			movl	#0x00bf,a0@(0xfe6064)
+			movl	#0x0001,a0@(0xfe6020)
+			rts
+		_cb364_intr3:
+			movl	#0x0002,a0@(0xfe6040)
+			movl	#0x0209,a0@(0xfe6044)
+			movl	#0x020c,a0@(0xfe6048)
+			movl	#0x000f,a0@(0xfe604c)
+			movl	#0x0027,a0@(0xfe6050)
+			movl	#0x00c7,a0@(0xfe6054)
+			movl	#0x00d7,a0@(0xfe6058)
+			movl	#0x006b,a0@(0xfe605c)
+			movl	#0x0029,a0@(0xfe6060)
+			oril	#0x0040,a0@(0xfe6064)
+			movl	#0x0000,a0@(0xfe6020)
+			rts
+		_cb364_intr4:
+			movq	#0x00,d0
+		_cb364_intr5:
+			movl	a0@(0xfe600c),d1
+			andl	#0x3,d1
+			cmpl	d1,d0
+			beq	_cb364_intr_out
+			bsr	_cb364_intr1
+		_cb364_intr_out:
+			movl	#0x1,a0@(0xfe6014)
+		_cb364_intr_quit:
+		" : : "g" (slotbase) : "a0","d0","d1","d2");
 }
