@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.54 2005/03/06 05:30:07 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.55 2005/03/06 06:51:53 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2781,6 +2781,7 @@ ohci_device_ctrl_start(usbd_xfer_handle xfer)
 
 	if (sc->sc_bus.use_polling)
 		ohci_waitintr(sc, xfer);
+
 	return (USBD_IN_PROGRESS);
 }
 
@@ -2928,6 +2929,9 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 #endif
 
 	splx(s);
+
+	if (sc->sc_bus.use_polling)
+		ohci_waitintr(sc, xfer);
 
 	return (USBD_IN_PROGRESS);
 }
