@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ut.4,v 1.2 1996/03/29 10:17:37 niklas Exp $
+.\"	$OpenBSD: ut.4,v 1.3 1999/06/05 13:18:39 aaron Exp $
 .\"	$NetBSD: ut.4,v 1.3 1996/03/03 17:14:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt UT 4 vax
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm ut
 .Nd
@@ -46,10 +46,10 @@ tri-density tape drive interface
 .Cd "controller ut0 at uba0 csr 0172440 vector utintr"
 .Cd "tape tj0 at ut0 drive 0"
 .Sh DESCRIPTION
-The 
+The
 .Nm ut
 interface provides access to a standard tape drive interface as
-describe in 
+describe in
 .Xr mtio 4 .
 Hardware implementing this on the
 .Tn VAX

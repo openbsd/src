@@ -1,4 +1,4 @@
-.\"	$OpenBSD: en.4,v 1.3 1999/05/16 19:57:27 alex Exp $
+.\"	$OpenBSD: en.4,v 1.4 1999/06/05 13:18:38 aaron Exp $
 .\"	$NetBSD: en.4,v 1.3 1996/03/03 17:13:32 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt EN 4 vax
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm en
 .Nd Xerox 3 Mb/s Ethernet interface
@@ -62,7 +62,7 @@ is specified at boot time with an
 .Xr ioctl 2 .
 The station address is discovered by probing the on-board Ethernet
 address register, and is used to verify the protocol addresses.
-No packets will be sent or accepted until 
+No packets will be sent or accepted until
 a network address is supplied.
 .Pp
 The interface software implements an exponential backoff algorithm
@@ -138,12 +138,12 @@ painful.
 The hardware does word at a time
 .Tn DMA
 without byte swapping.
-To compensate, byte swapping of user data must either be done 
+To compensate, byte swapping of user data must either be done
 by the user or by the system.  A kludge to byte swap only
 .Tn IP
 packets is provided if the
 .Dv ENF_SWABIPS
 flag is defined in
-the driver and set at boot time with an 
-.Dv SIOCSIFFLAGS 
+the driver and set at boot time with an
+.Dv SIOCSIFFLAGS
 .Xr ioctl .

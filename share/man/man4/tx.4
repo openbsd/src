@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tx.4,v 1.3 1999/05/16 19:56:40 alex Exp $
+.\"     $OpenBSD: tx.4,v 1.4 1999/06/05 13:18:34 aaron Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -20,7 +20,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, 
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
 .\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 .\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 .\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -31,7 +31,7 @@
 .\"
 .Dd September 21, 1998
 .Dt TX 4
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm tx
 .Nd
@@ -39,7 +39,7 @@ SMC 9432 10/100 Mbps Ethernet device driver
 .Sh SYNOPSIS
 .Cd "tx* at pci? dev ? function ?"
 .Sh DESCRIPTION
-The 
+The
 .Nm
 interface provides access to the 10Mb/s and 100Mb/s Ethernet networks via the
 .Tn SMC
@@ -103,7 +103,7 @@ No media connected. Displayed at startup only.
 .It "tx%d: cannot allocate mbuf header/cluster"
 Failed to allocate memory for a received packet. Packet was dropped.
 .It "tx%d: can't stop %s DMA"
-While resetting, the driver failed to stop the device correctly. 
+While resetting, the driver failed to stop the device correctly.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,

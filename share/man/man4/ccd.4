@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.10 1998/09/05 17:41:48 deraadt Exp $
+.\"	$OpenBSD: ccd.4,v 1.11 1999/06/05 13:18:31 aaron Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -35,7 +35,7 @@
 .\"
 .Dd August 9, 1995
 .Dt CCD 4
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm ccd
 .Nd Concatenated Disk Driver
@@ -76,12 +76,12 @@ memory is allocated for at boot time.  In this example, no more than 4
 may be configured.
 .Pp
 A
-.Nm ccd
+.Nm
 may be either serially concatenated or interleaved.
 To serially concatenate partitions specify an interleave factor of 0.
 .Pp
 If a
-.Nm ccd
+.Nm
 is interleaved correctly, a
 .Dq striping
 effect is achieved, which can increase performance.  Finding the optimum
@@ -110,7 +110,7 @@ See
 for more information.
 .Sh WARNINGS
 If just one (or more) of the disks in a
-.Nm ccd
+.Nm
 fails, the entire
 file system will be lost.
 .Sh FILES

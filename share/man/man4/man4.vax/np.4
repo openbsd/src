@@ -1,4 +1,4 @@
-.\"	$OpenBSD: np.4,v 1.3 1999/05/16 19:57:33 alex Exp $
+.\"	$OpenBSD: np.4,v 1.4 1999/06/05 13:18:39 aaron Exp $
 .\"	$NetBSD: np.4,v 1.3 1996/03/03 17:13:55 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt NP 4 vax
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm np
 .Nd Interlan Np100 10 Mb/s Ethernet interface
@@ -109,7 +109,7 @@ Probably indicates hardware problems with the board, as do the following:
 .It "Panic from NP100 unit %d!"
 .It "Panic Message: %s."
 An occurrence on the board was deemed serious enough
-to have the vax print it out.  
+to have the vax print it out.
 .Pp
 .It NP100 unit #%d available!
 The board was successfully loaded and started.

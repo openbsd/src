@@ -37,7 +37,7 @@
 .\"
 .Dd July 19, 1993
 .Dt BITSTRING 3
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm bit_alloc ,
 .Nm bit_clear ,
@@ -69,7 +69,7 @@ These macros operate on strings of bits.
 The
 .Fn bit_alloc
 macro returns a pointer of type
-.Fa "bitstr_t *"
+.Li "bitstr_t *"
 to sufficient space to store
 .Fa nbits
 bits, or
@@ -85,7 +85,7 @@ bits on the stack.
 The
 .Fn bitstr_size
 macro returns the number of elements of type
-.Fa bitstr_t
+.Li bitstr_t
 necessary to store
 .Fa nbits
 bits.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uda.4,v 1.3 1999/05/12 13:26:50 aaron Exp $
+.\"	$OpenBSD: uda.4,v 1.4 1999/06/05 13:18:39 aaron Exp $
 .\"	$NetBSD: uda.4,v 1.3 1996/03/03 17:14:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt UDA 4 vax
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm uda
 .Nd
@@ -603,7 +603,7 @@ this could be a cabling problem, or a version mismatch.  A `positioner'
 error means the drive seek hardware is ailing; `lost rd/wr ready'
 means the drive read/write logic is sick; and `drive clock dropout'
 means that the drive clock logic is bad, or the media is hopelessly
-scrambled.  I have no idea what `lost recvr ready' means.  A `drive 
+scrambled.  I have no idea what `lost recvr ready' means.  A `drive
 detected error' is a catch-all for drive hardware trouble; `ctlr
 detected pulse or parity' errors are often caused by cabling problems.
 .Ed

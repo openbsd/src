@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aria.4,v 1.3 1998/09/01 16:38:21 deraadt Exp $
+.\"	$OpenBSD: aria.4,v 1.4 1999/06/05 13:18:35 aaron Exp $
 .\"	aria.4
 .\" Copyright (c) 1996 Roland C. Dowdeswell
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .Dd January 21, 1996
 .Dt ARIA 4 i386
-.Os 
+.Os
 .Sh NAME
 .Nm aria
 .Nd
@@ -41,7 +41,7 @@ Aria 16 device driver
 .Cd "aria0 at isa? port 0xPPP irq X drq Y flags Z"
 .Sh DESCRIPTION
 The
-.Nm aria
+.Nm
 driver provides support for sound cards based on Sierra Semiconductor's
 Aria chipset.  Cards based on this chipset are capable of recording and
 playing 8- or 16-bit samples in mono or stereo up to 44.1KHz.  Some chipsets
@@ -67,11 +67,13 @@ The driver has only been tested on a Prometheus Aria 16.
 .Pp
 No DMA support, yet, so don't bother setting a DRQ.
 .Pp
-The full-duplex features are horribly inconsistent.  (i.e. unusable.)
+The full-duplex features are horribly inconsistent (i.e., unusable).
 .Pp
 The card sometimes drops out, and needs to be reset.  This can be
-accomplished by opening and closing /dev/audio, e.g.
-  echo -n >/dev/audio
+accomplished by opening and closing
+.Pa /dev/audio ,
+e.g.,
+.Dq echo -n >/dev/audio
 .Pp
 The joystick and MIDI port interfaces are not supported.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hy.4,v 1.3 1999/05/16 19:57:29 alex Exp $
+.\"	$OpenBSD: hy.4,v 1.4 1999/06/05 13:18:38 aaron Exp $
 .\"	$NetBSD: hy.4,v 1.3 1996/03/03 17:13:41 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt HY 4 vax
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm hy
 .Nd Network Systems Hyperchannel interface
@@ -51,7 +51,7 @@ Systems Corporation Hyperchannel Adapter.
 The network to which the interface is attached
 is specified at boot time with an
 .Dv SIOCSIFADDR
-.Xr ioctl 2 .  
+.Xr ioctl 2 .
 The host's address is discovered by reading the adapter status
 register.  The interface will not transmit or receive
 packets until the network number is known.

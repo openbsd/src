@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dn.4,v 1.2 1996/03/29 10:16:43 niklas Exp $
+.\"	$OpenBSD: dn.4,v 1.3 1999/06/05 13:18:38 aaron Exp $
 .\"	$NetBSD: dn.4,v 1.3 1996/03/03 17:13:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt DN 4 vax
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm dn
 .Nd
@@ -63,7 +63,7 @@ When the connection has been
 established, the open on the modem line
 .Pa /dev/cul?
 will return and the process will be connected.
-A timer is normally used to timeout the opening of 
+A timer is normally used to timeout the opening of
 the modem line.
 .Pp
 The codes for the phone numbers are:

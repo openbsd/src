@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.7 1998/10/31 23:17:40 espie Exp $
+.\"	$OpenBSD: fxp.4,v 1.8 1999/06/05 13:18:32 aaron Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -26,7 +26,7 @@
 .\"
 .Dd April 28, 1998
 .Dt FXP 4
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm fxp
 .Nd
@@ -38,9 +38,43 @@ The
 .Nm
 driver provides support for the EtherExpress Pro/10 and Pro/100B PCI Fast Ethernet
 adapters based on the Intel i82557 and i82558 ethernet chip.
+<<<<<<< fxp.4
+.Pp
+.\" The
+.\" .Nm
+.\" driver supports the following media types:
+.\" .Pp
+.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.\" .It autoselect
+.\" Enable autoselection of the media type and options
+.\" .It 10baseT/UTP
+.\" Set 10Mbps operation
+.\" .It 100baseTX
+.\" Set 100Mbps (fast ethernet) operation
+.\" .El
+.\" .Pp
+.\" The
+.\" .Nm
+.\" driver supports the following media options:
+.\" .Pp
+.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.\" .It full-duplex
+.\" Set full duplex operation
+.\" .El
+.\" .Pp
+.\" Note that 100baseTX media type is only available on the Pro/100B. For further information
+.\" on configuring this device, see
+.\" .Xr ifconfig 8 .
+.Pp
+Media types and options are set by specifying link flags to
+.Xr ifconfig 8 .
+If none are specified, the ethernet card will perform auto-negotiation of
+link speed and options.
+=======
 The
 .Nm
 driver supports the following media types:
+>>>>>>> 1.6
 .Pp
 .Bl -tag -width xxxxxxxx
 .It media autoselect

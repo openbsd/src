@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rl.4,v 1.5 1999/03/10 23:17:34 jason Exp $
+.\"	$OpenBSD: rl.4,v 1.6 1999/06/05 13:18:34 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .Dd November 4, 1998
 .Dt RL 4
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm rl
 .Nd
@@ -146,7 +146,7 @@ the card should be configured correctly.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr netintro 4 , 
+.Xr netintro 4 ,
 .Xr ifconfig 8
 .Rs
 .%B The RealTek 8129 and 8139 datasheets
@@ -191,5 +191,5 @@ The driver can check for an incomplete frame by inspecting the frame
 length in the header preceeding the actual packet data: an incomplete
 frame will have the magic length of 0xFFF0. When the driver encounters
 this value, it knows that it has finished processing all currently
-available packets. Neither this magic value nor its significance are 
+available packets. Neither this magic value nor its significance are
 documented anywhere in the RealTek data sheets.

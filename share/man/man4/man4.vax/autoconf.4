@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autoconf.4,v 1.2 1996/03/29 10:16:22 niklas Exp $
+.\"	$OpenBSD: autoconf.4,v 1.3 1999/06/05 13:18:37 aaron Exp $
 .\"	$NetBSD: autoconf.4,v 1.3 1996/03/03 17:13:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -36,7 +36,7 @@
 .\"
 .Dd March 27, 1991
 .Dt AUTOCONF 4
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm autoconf
 .Nd "diagnostics from the autoconfiguration code"
@@ -81,7 +81,7 @@ devices are located by probing to see if their control-status
 registers respond.  If not, they are silently ignored.  If the control
 status register responds but the device cannot be made to interrupt,
 a diagnostic warning will be printed on the console and the device
-will not be available to the system. 
+will not be available to the system.
 .Pp
 Normally, the system uses the disk from which it was loaded as the root
 filesystem.
@@ -253,7 +253,7 @@ to be.
 .Pp
 .It %s%d at %s%d slave %d.
 (For UNIBUS devices).
-Which would look like 
+Which would look like
 .Dq Li up0 at sc0 slave 0 ,
 where
 .Dq Li up0
