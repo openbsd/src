@@ -1,0 +1,95 @@
+.\" $OpenBSD: library-specs.7,v 1.1 2001/11/16 13:36:42 espie Exp $
+.\"
+.\" Copyright (c) 2001 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 9, 2001
+.Dt LIBRARY-SPECS 7
+.Os
+.Sh NAME
+.Nm library-specs
+.Nd shared library name specifications
+.Sh DESCRIPTION
+Each
+.Ev LIB_DEPENDS
+item in the port tree conforms to
+.Sq lib_specs:[pkgspec]:directory[,-subpackage][,flavor ...][:target] ,
+where
+.Sq lib_specs ,
+is a comma-separated list of
+.Sq lib_spec
+of the form:
+.Sq libname[.major[.minor]] .
+.Pp
+All libraries that a port needs must be mentioned in that list, either 
+directly or indirectly through recursive dependencies (except, of course,
+for system libraries).
+.Pp
+The package system will embed correct dependency checks in the built
+package, according to the normal shared library semantics: any library with
+the same major number, and a greater or equal minor number will do.
+.Pp
+Therefore, porters must strive to respect correct shared library semantics
+in their own ports: by bumping the minor number each time the interface is
+augmented, and by bumping the major number each time the interface changes.
+Note that adding functions to a library is an interface augmentation.
+Removing functions is an interface change.
+.Pp
+The major.minor components of the library specification are used only as a build
+time check.
+Any library which is more recent than the given major.minor version will
+do.
+If the minor component is left empty, any minor will do.
+If both components are left empty, any version will do.
+If a specific major number is needed, use the form
+.Sq libname.=major[.minor] .
+.Pp
+The 
+.Sq pkgspec
+part is always checked, both a build-time, and at
+.Xr pkg_add 1
+time.
+If
+.Sq pkgspec
+is left empty, any package will do: in effect, the pkgspec used is
+.Sq stem-* .
+.Pp
+If a given architecture does not support shared libraries, all
+.Ev LIB_DEPENDS
+will be turned into simple
+.Ev BUILD_DEPENDS
+checks.
+Failure to mention
+.Ev RUN_DEPENDS
+if the port needs anything beyond libraries from the dependent port will
+lead to strange errors.
+.Sh HISTORY
+Full support for library specifications first appeared in
+.Ox 3.1
+.Sh SEE ALSO
+.Xr pkg_add 1 ,
+.Xr bsd.port.mk 5 ,
+.Xr packages-specs 7 ,
+.Xr packages 7 ,
+.Xr ports 7
