@@ -1,3 +1,4 @@
+/* $OpenBSD: alpha.h,v 1.2 2000/11/08 21:27:14 ericj Exp $ */
 /* $NetBSD: alpha.h,v 1.11 2000/08/15 22:16:18 thorpej Exp $ */
 
 /*

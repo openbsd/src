@@ -1,3 +1,4 @@
+/* $OpenBSD: alpha_cpu.h,v 1.6 2000/11/08 21:27:15 ericj Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.41 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
