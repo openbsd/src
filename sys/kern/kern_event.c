@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.17 2002/03/01 12:17:58 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.18 2002/10/01 14:06:53 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -77,7 +77,7 @@ struct fileops kqueueops = {
 };
 
 void	knote_attach(struct knote *kn, struct filedesc *fdp);
-void	knote_drop(struct knote *kn, struct proc *p);
+void	knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
 #define knote_alloc() ((struct knote *)pool_get(&knote_pool, PR_WAITOK))
@@ -481,7 +481,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 			knote_attach(kn, fdp);
 			if ((error = fops->f_attach(kn)) != 0) {
-				knote_drop(kn, p);
+				knote_drop(kn, p, fdp);
 				goto done;
 			}
 		} else {
@@ -502,7 +502,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 	} else if (kev->flags & EV_DELETE) {
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p);
+		knote_drop(kn, p, p->p_fd);
 		goto done;
 	}
 
@@ -622,7 +622,7 @@ start:
 			kq->kq_count--;
 			splx(s);
 			kn->kn_fop->f_detach(kn);
-			knote_drop(kn, p);
+			knote_drop(kn, p, p->p_fd);
 			s = splhigh();
 		} else if (kn->kn_flags & EV_CLEAR) {
 			kn->kn_data = 0;
@@ -802,7 +802,7 @@ knote_remove(struct proc *p, struct klist *list)
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
 		kn->kn_fop->f_detach(kn);
-		knote_drop(kn, p);
+		knote_drop(kn, p, p->p_fd);
 	}
 }
 
@@ -858,9 +858,8 @@ done:
  * while calling closef and free.
  */
 void
-knote_drop(struct knote *kn, struct proc *p)
+knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp)
 {
-	struct filedesc *fdp = p->p_fd;
 	struct klist *list;
 
 	if (kn->kn_fop->f_isfd)
