@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.160 2001/05/08 18:19:43 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.161 2001/05/13 19:06:52 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2903,7 +2903,7 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 		return (EINVAL);
 
 	first = 1;
-	seg = 1;
+	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
