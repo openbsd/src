@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.25 2004/07/09 21:52:21 mickey Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.26 2004/07/09 23:51:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.25 2004/07/09 21:52:21 mickey Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.26 2004/07/09 23:51:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,7 +76,9 @@ pid_t pid = -1;
 #include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
 #include <compat/netbsd/netbsd_syscall.h>
+#if defined(__hppa__) || defined(__m68k__)
 #include <compat/hpux/hpux_syscall.h>
+#endif
 #include <compat/ibcs2/ibcs2_syscall.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -98,7 +100,9 @@ pid_t pid = -1;
 #include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
 #include <compat/netbsd/netbsd_syscalls.c>
+#if defined(__hppa__) || defined(__m68k__)
 #include <compat/hpux/hpux_syscalls.c>
+#endif
 #include <compat/ibcs2/ibcs2_syscalls.c>
 #include <compat/linux/linux_syscalls.c>
 #include <compat/osf1/osf1_syscalls.c>
@@ -123,7 +127,9 @@ struct emulation {
 
 static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
+#if defined(__hppa__) || defined(__m68k__)
 	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
+#endif
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },
