@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.7 1998/12/13 07:31:07 pjanzen Exp $	*/
+/*	$OpenBSD: day.c,v 1.8 1999/03/04 03:34:35 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.7 1998/12/13 07:31:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.8 1999/03/04 03:34:35 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -404,6 +404,20 @@ isnow(endp)
 			memcpy(&tmtmp, tp, sizeof(struct tm));
 			tmtmp.tm_mday = dayp;
 			tmtmp.tm_mon = monthp - 1;
+			if (vwd) {
+			/* We want the event next year if it's late now
+			 * this year.  The 50-day limit means we don't have to
+			 * worry if next year is or isn't a leap year.
+			 */
+				if (tp->tm_yday > 300 && tmtmp.tm_mon <= 1)
+					variable_weekday(&vwd, tmtmp.tm_mon + 1,
+					    tmtmp.tm_year + TM_YEAR_BASE + 1);
+				else
+					variable_weekday(&vwd, tmtmp.tm_mon + 1,
+					    tmtmp.tm_year + TM_YEAR_BASE);
+				day = cumdays[tmtmp.tm_mon + 1] + vwd;
+				tmtmp.tm_mday = vwd;
+			}
 			v2 = day - tp->tm_yday;
 			if ((v2 > v1) || (v2 < 0)) {
 				if ((v2 += isleap(tp->tm_year + TM_YEAR_BASE) ? 366 : 365)
