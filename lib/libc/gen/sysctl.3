@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.134 2004/03/02 16:41:58 markus Exp $
+.\"	$OpenBSD: sysctl.3,v 1.135 2004/03/02 22:16:27 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -976,6 +976,8 @@ The currently defined protocols and names are:
 .Bl -column "Protocol name" "ipsec-soft-bytes " "integer" -offset indent
 .It Sy Protocol name	Variable name	Type	Changeable
 .It ah	enable	integer	yes
+.It bpf	bufsize	integer	yes
+.It bpf	maxbufsize	integer	yes
 .It carp	allow	integer	yes
 .It carp	arpbalance	integer	yes
 .It carp	log	integer	yes
@@ -1056,6 +1058,10 @@ Enabled by default.
 See
 .Xr ipsec 4
 for more information.
+.It Li bpf.bufsize
+The initial size of BPF buffers.
+.It Li bpf.maxbufsize
+The maximum size a user may request a BPF buffer to be.
 .It Li carp.allow
 If set to 0, incoming
 .Tn CARP
