@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.16 1999/07/02 21:22:14 cmetz Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.17 1999/07/06 18:01:55 cmetz Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -80,10 +80,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/tcpipv6.h>
 #include <sys/domain.h>
 #endif /* INET6 */
-
-#if defined(INET) && defined(INET6)
-#define defined(INET) && defined(INET6) 1
-#endif /* defined(INET) && defined(INET6) */
 
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
