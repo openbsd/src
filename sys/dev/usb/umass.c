@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.33 2004/07/21 07:51:04 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.34 2004/07/21 07:55:51 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -608,15 +608,17 @@ USB_ATTACH(umass)
 USB_DETACH(umass)
 {
 	USB_DETACH_START(umass, sc);
-	struct umassbus_softc *scbus = sc->bus;
+	struct umassbus_softc *scbus;
 	int rv = 0, i, s;
 
 	DPRINTF(UDMASS_USB, ("%s: detached\n", USBDEVNAME(sc->sc_dev)));
 
 	/* Abort the pipes to wake up any waiting processes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
-		if (sc->sc_pipe[i] != NULL)
+		if (sc->sc_pipe[i] != NULL) {
 			usbd_abort_pipe(sc->sc_pipe[i]);
+			sc->sc_pipe[i] = NULL;
+		}
 	}
 
 	/* Do we really need reference counting?  Perhaps in ioctl() */
@@ -630,6 +632,7 @@ USB_DETACH(umass)
 	}
 	splx(s);
 
+	scbus = sc->bus;
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
 			rv = config_detach(scbus->sc_child, flags);
