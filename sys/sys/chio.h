@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.h,v 1.4 1996/04/21 22:31:32 deraadt Exp $	*/
+/*	$OpenBSD: chio.h,v 1.5 2002/10/17 17:47:24 mickey Exp $	*/
 /*	$NetBSD: chio.h,v 1.8 1996/04/03 00:25:21 thorpej Exp $	*/
 
 /*
@@ -141,12 +141,23 @@ struct changer_element_status {
 #define CESTATUS_BITS	\
 	"\20\6INEAB\5EXENAB\4ACCESS\3EXCEPT\2IMPEXP\1FULL"
 
-#define CHIOMOVE	_IOW('c', 0x01, struct changer_move)
-#define CHIOEXCHANGE	_IOW('c', 0x02, struct changer_exchange)
-#define CHIOPOSITION	_IOW('c', 0x03, struct changer_position)
-#define CHIOGPICKER	_IOR('c', 0x04, int)
-#define CHIOSPICKER	_IOW('c', 0x05, int)
-#define CHIOGPARAMS	_IOR('c', 0x06, struct changer_params)
-#define CHIOGSTATUS	_IOW('c', 0x08, struct changer_element_status)
+/*
+ * XXX we have to renumber this since it chashes w/ the
+ * cdio ioctls, O* interface goes away right after 3.3
+ */
+#define OCHIOMOVE	_IOW('c', 0x01, struct changer_move)
+#define CHIOMOVE	_IOW('c', 0x41, struct changer_move)
+#define OCHIOEXCHANGE	_IOW('c', 0x02, struct changer_exchange)
+#define CHIOEXCHANGE	_IOW('c', 0x42, struct changer_exchange)
+#define OCHIOPOSITION	_IOW('c', 0x03, struct changer_position)
+#define CHIOPOSITION	_IOW('c', 0x43, struct changer_position)
+#define OCHIOGPICKER	_IOR('c', 0x04, int)
+#define CHIOGPICKER	_IOR('c', 0x44, int)
+#define OCHIOSPICKER	_IOW('c', 0x05, int)
+#define CHIOSPICKER	_IOW('c', 0x45, int)
+#define OCHIOGPARAMS	_IOR('c', 0x06, struct changer_params)
+#define CHIOGPARAMS	_IOR('c', 0x46, struct changer_params)
+#define OCHIOGSTATUS	_IOW('c', 0x08, struct changer_element_status)
+#define CHIOGSTATUS	_IOW('c', 0x48, struct changer_element_status)
 
 #endif /* _SYS_CHIO_H_ */
