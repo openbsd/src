@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.31 2003/06/28 01:04:57 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.32 2003/07/29 14:46:06 henning Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -861,6 +861,8 @@ do_server_reply(struct csiob *server, struct csiob *client)
 	 * Watch out for "227 Entering Passive Mode ..." replies
 	 */
 	code = strtol((char *)server->line_buffer, &p, 10);
+	if (isspace(server->line_buffer[0]))
+		code = 0;
 	if (!*(server->line_buffer) || (*p != ' ' && *p != '-')) {
 		if (continuing)
 			goto sendit;
