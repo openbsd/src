@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.26 2005/02/16 14:37:06 aaron Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.27 2005/03/11 13:35:47 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -172,6 +172,7 @@ macintr_collect_preconf_intr()
 {
 	int i;
 	for (i = 0; i < ppc_configed_intr_cnt; i++) {
+#ifdef DEBUG
 		printf("\n\t%s irq %d level %d fun %p arg %p",
 			ppc_configed_intr[i].ih_what,
 			ppc_configed_intr[i].ih_irq,
@@ -179,6 +180,7 @@ macintr_collect_preconf_intr()
 			ppc_configed_intr[i].ih_fun,
 			ppc_configed_intr[i].ih_arg
 			);
+#endif
 		macintr_establish(NULL,
 			ppc_configed_intr[i].ih_irq,
 			IST_LEVEL,
