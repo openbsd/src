@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.20 2001/02/17 22:51:26 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.21 2001/02/17 22:55:07 deraadt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,6 @@
 #include <string.h>
 #include <limits.h>
 #include <err.h>
-#include <nlist.h>
 #include <math.h>
 #include <kvm.h>
 #include <unistd.h>
@@ -51,7 +50,6 @@
 #include <err.h>
 #endif
 
-static int check_nlist __P((struct nlist *));
 static int getkval __P((unsigned long, int *, int, char *));
 static int swapmode __P((int *, int *));
 
@@ -77,17 +75,9 @@ struct handle {
 /* what we consider to be process size: */
 #define PROCSIZE(pp) (VP((pp), vm_tsize) + VP((pp), vm_dsize) + VP((pp), vm_ssize))
 
-/* definitions for indices in the nlist array */
-#define X_CP_TIME	0
-
-static struct nlist nlst[] = {
-	{"_cp_time"},		/* 0 */
-	{0}
-};
 /*
  *  These definitions control the format of the per-process area
  */
-
 static char header[] =
 "  PID X        PRI NICE  SIZE   RES STATE WAIT     TIME    CPU COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
@@ -190,21 +180,9 @@ machine_init(statics)
 	setegid(getgid());
 	setgid(getgid());
 
-	/* get the list of symbols we want to access in the kernel */
-	if (kvm_nlist(kd, nlst) < 0) {
-		warnx("nlist failed");
-		return (-1);
-	}
-	/* make sure they were all found */
-	if (i > 0 && check_nlist(nlst) > 0)
-		return (-1);
-
 	stathz = getstathz();
 	if (stathz == -1)
 		return (-1);
-
-	/* stash away certain offsets for later use */
-	cp_time_offset = nlst[X_CP_TIME].n_value;
 
 	pbase = NULL;
 	pref = NULL;
@@ -252,15 +230,24 @@ get_system_info(si)
 {
 	static int sysload_mib[] = {CTL_VM, VM_LOADAVG};
 	static int vmtotal_mib[] = {CTL_VM, VM_METER};
+	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	struct loadavg sysload;
 	struct vmtotal vmtotal;
 	double *infoloadp;
 	int total, i;
 	size_t  size;
 
+#if 1
+	size = sizeof(cp_time);
+	if (sysctl(cp_time_mib, 2, &cp_time, &size, NULL, 0) < 0) {
+		warn("sysctl kern.cp_time failed");
+		total = 0;
+	}
+#else
 	/* get the cp_time array */
 	(void) getkval(cp_time_offset, (int *) cp_time, sizeof(cp_time),
 	    "_cp_time");
+#endif
 
 	size = sizeof(sysload);
 	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0) {
@@ -444,67 +431,7 @@ format_next_process(handle, get_userid)
 	return (fmt);
 }
 
-
-/*
- * check_nlist(nlst) - checks the nlist to see if any symbols were not
- *		found.  For every symbol that was not found, a one-line
- *		message is printed to stderr.  The routine returns the
- *		number of symbols NOT found.
- */
-int
-check_nlist(nlst)
-	struct nlist *nlst;
-{
-	int i;
-
-	/* check to see if we got ALL the symbols we requested */
-	/* this will write one line to stderr for every symbol not found */
-
-	i = 0;
-	while (nlst->n_name != NULL) {
-		if (nlst->n_type == 0) {
-			/* this one wasn't found */
-			(void) fprintf(stderr, "kernel: no symbol named `%s'\n",
-			    nlst->n_name);
-			i = 1;
-		}
-		nlst++;
-	}
-
-	return (i);
-}
-
-
-/*
- *  getkval(offset, ptr, size, refstr) - get a value out of the kernel.
- *	"offset" is the byte offset into the kernel for the desired value,
- *  	"ptr" points to a buffer into which the value is retrieved,
- *  	"size" is the size of the buffer (and the object to retrieve),
- *  	"refstr" is a reference string used when printing error meessages,
- *	    if "refstr" starts with a '!', then a failure on read will not
- *  	    be fatal (this may seem like a silly way to do things, but I
- *  	    really didn't want the overhead of another argument).
- *
- */
-int 
-getkval(offset, ptr, size, refstr)
-	unsigned long offset;
-	int    *ptr;
-	int     size;
-	char   *refstr;
-{
-	if (kvm_read(kd, offset, ptr, size) != size) {
-		if (*refstr == '!') {
-			return (0);
-		} else {
-			warn("kvm_read for %s", refstr);
-			quit(23);
-		}
-	}
-	return (1);
-}
 /* comparison routine for qsort */
-
 static unsigned char sorted_state[] =
 {
 	0,			/* not used		 */
