@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2001/04/03 01:32:24 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2001/04/07 17:17:28 niklas Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -97,6 +97,14 @@
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	2*NBPG		/* default message buffer size */
+#endif
+
+#if !defined(UVM) && defined(PMAP_NEW)
+#error PMAP_NEW is not compatible with old VM
+#elif defined(UVM) && !defined(PMAP_NEW) && !defined(PMAP_OLD)
+#define PMAP_NEW
+#elif defined(PMAP_NEW) && defined(PMAP_OLD)
+#error Both PMAP_NEW and PMAP_OLD cannot be defined concurrently
 #endif
 
 /*
