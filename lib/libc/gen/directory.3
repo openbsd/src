@@ -1,4 +1,4 @@
-.\"	$OpenBSD: directory.3,v 1.10 1999/07/09 13:35:16 aaron Exp $
+.\"	$OpenBSD: directory.3,v 1.11 2000/03/23 22:09:39 d Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 .Sh NAME
 .Nm opendir ,
 .Nm readdir ,
+.Nm readdir_r ,
 .Nm telldir ,
 .Nm seekdir ,
 .Nm rewinddir ,
@@ -50,6 +51,8 @@
 .Fn opendir "const char *filename"
 .Ft struct dirent *
 .Fn readdir "DIR *dirp"
+.Ft int
+.Fn readdir_r "DIR *dirp" "struct dirent *entry" "struct dirent **result"
 .Ft long
 .Fn telldir "const DIR *dirp"
 .Ft void
@@ -88,6 +91,30 @@ It returns
 upon reaching the end of the directory or detecting an invalid
 .Fn seekdir
 operation.
+.Pp
+The
+.Fn readdir_r
+function (much like
+.Fn readdir )
+initalizes the dirent structure referenced by
+.Fa entry
+to represent the next directory entry in the named directory stream
+.Fa dirp ,
+and stores a pointer to this structure at the location referenced by
+.Fa result .
+The storage pointed to by
+.Fa entry
+must be large enough for a dirent with a
+.Fa d_name
+array member containing at least
+.Dv NAME_MAX
+plus one elements.
+On successful return, the pointer returned at
+.Fa "*result"
+will have the same value as the argument
+.Fa entry .
+Upon reaching the end of the directory stream, this pointer shall have the value
+.Dv NULL.
 .Pp
 The
 .Fn telldir
