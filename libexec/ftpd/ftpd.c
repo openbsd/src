@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.9 1996/07/29 05:32:59 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.10 1996/08/07 03:04:22 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -840,7 +840,8 @@ retrieve(cmd, name)
 	} else {
 		char line[BUFSIZ];
 
-		(void) sprintf(line, cmd, name), name = line;
+		(void) snprintf(line, sizeof(line), cmd, name);
+		name = line;
 		fin = ftpd_popen(line, "r"), closefunc = ftpd_pclose;
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
@@ -1044,10 +1045,11 @@ dataconn(name, size, mode)
 
 	file_size = size;
 	byte_count = 0;
-	if (size != (off_t) -1)
-		(void) sprintf(sizebuf, " (%qd bytes)", size);
-	else
-		(void) strcpy(sizebuf, "");
+	if (size != (off_t) -1) {
+		(void) snprintf(sizebuf, sizeof(sizebuf), " (%qd bytes)", 
+				size);
+	} else
+		sizebuf[0] = '\0';
 	if (pdata >= 0) {
 		struct sockaddr_in from;
 		int s, fromlen = sizeof(from);
@@ -1762,7 +1764,7 @@ gunique(local)
 	cp = new + strlen(new);
 	*cp++ = '.';
 	for (count = 1; count < 100; count++) {
-		(void)sprintf(cp, "%d", count);
+		(void)snprintf(cp, sizeof(new) - (cp - new), "%d", count);
 		if (stat(new, &st) < 0)
 			return (new);
 	}
@@ -1871,7 +1873,8 @@ send_file_list(whichf)
 			    dir->d_namlen == 2)
 				continue;
 
-			sprintf(nbuf, "%s/%s", dirname, dir->d_name);
+			snprintf(nbuf, sizeof(nbuf), "%s/%s", dirname,
+				 dir->d_name);
 
 			/*
 			 * We have to do a stat to insure it's
