@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.7.2.2 1995/10/22 21:17:59 leo Exp $
+#	$NetBSD: GENERIC,v 1.7.2.3 1995/11/15 21:56:08 leo Exp $
 #
 # Generic atari
 #
@@ -59,10 +59,11 @@ options		NFSCLIENT	# Network File System client side code
 #
 # Compatability options for various existing systems
 #
-options		"COMPAT_43"	# 4.3 BSD compatible system calls (required)
-#options	"COMPAT_09"	# has no meaning on the atari
+options		COMPAT_43	# 4.3 BSD compatible system calls (required)
+options		COMPAT_10	# Compatibility to NetBSD1.0
+#options	COMPAT_09	# has no meaning on the atari
 #options	COMPAT_SUNOS	# Support to run Sun-3 executables
-#options	"TCP_COMPAT_42"	# Disable UDP checksums (not needed)
+#options	TCP_COMPAT_42	# Disable UDP checksums (not needed)
 
 #
 # Support for System V IPC facilities.
