@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.24 2004/08/06 22:31:30 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.25 2004/09/14 22:13:50 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -91,7 +91,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
@@ -140,3 +140,5 @@ extern hppa_hpa_t conaddr;
 extern int conunit;
 #endif
 #endif
+
+#define	__SWAP_BROKEN
