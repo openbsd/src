@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.75 1998/06/03 17:12:03 millert Exp $
+#	$OpenBSD: rc,v 1.76 1998/06/13 03:38:15 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -85,7 +85,7 @@ rm -f /var/spool/uucp/STST/*
 
 echo 'starting system logger'
 rm -f /dev/log
-if [ "X${named_chroot}" != "X" ]; then
+if [ "X${named_flags}" != X"NO" -a "X${named_chroot}" != "X" ]; then
 	rm -f ${named_chroot}/dev/log
 	syslogd_flags="${syslogd_flags} -a ${named_chroot}/dev/log"
 fi
