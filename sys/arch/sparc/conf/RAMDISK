@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.20 1999/03/05 02:55:34 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.21 1999/04/18 19:27:34 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -112,6 +112,10 @@ zs1	at obio0 addr 0xf0000000 level 12 flags 0x103	# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# sun4/100
 zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
 
+# SUNW,xbox SBus Expansion Subsystem
+xbox*	at sbus? slot ? offset ?			# SBus Expansion box
+sbus*	at xbox?
+
 #
 # Note the flags on the esp entries below, that work around
 # deficiencies in the current driver:
@@ -139,13 +143,14 @@ dma*	at sbus? slot ? offset ?			# SBus SCSI
 esp*	at sbus? slot ? offset ? flags 0xff0f		# two flavours
 esp*	at dma? flags 0xff0f				# depending on model
 
-# sun4m Ethernet - an AMD 7990 LANCE behind
-# specialized DMA glue
-ledma0	at sbus0 slot ? offset ?			# sun4m on-board
+# sun4m Ethernet - an AMD 7990 LANCE behind specialized DMA glue
+ledma0	at sbus? slot ? offset ?			# sun4m on-board
 le0	at ledma0					#
 
 # Additional SBus LANCE devices - glued on by lebuffer
-lebuffer*	at sbus0 slot ? offset ?		# sun4m SBus
+lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
+lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
+le0	at lebuffer0					#
 le*	at lebuffer?					#
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
@@ -171,7 +176,7 @@ nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 # Quad-ethernet glue device, and sub-devices
-qec*	at sbus0 slot ? offset ?
+qec*	at sbus? slot ? offset ?
 qe*	at qec?
 be*	at qec?
 
