@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_entry.c,v 1.1 1996/08/27 10:32:47 downsj Exp $	*/
+/*	$OpenBSD: fpu_entry.c,v 1.2 2003/01/09 22:27:11 miod Exp $	*/
 /*
  *  fpu_entry.c
  *
@@ -260,7 +260,7 @@ math_emulate(struct trapframe * tframe)
 do_another_FPU_instruction:
 
 	REENTRANT_CHECK(OFF);
-	code = fuword((u_int *) FPU_EIP);
+	copyin((u_int *)FPU_EIP, &code, sizeof(u_int));
 	REENTRANT_CHECK(ON);
 	if ((code & 0xff) == 0x9b) {	/* fwait */
 		if (status_word & SW_Summary)
@@ -313,7 +313,7 @@ do_another_FPU_instruction:
 	if ((code & 0xff) == 0x66) {	/* size prefix */
 		FPU_EIP++;
 		REENTRANT_CHECK(OFF);
-		code = fuword((u_int *) FPU_EIP);
+		copyin((u_int *)FPU_EIP, &code, sizeof(u_int));
 		REENTRANT_CHECK(ON);
 	}
 	FPU_EIP += 2;
@@ -486,14 +486,15 @@ if (--lookahead_limit)
 		/* (This test should generate no machine code) */
 		while (1) {
 			REENTRANT_CHECK(OFF);
-			next = fubyte((u_char *) FPU_EIP);
+			copyin((u_char *)FPU_EIP, &next, sizeof(u_char));
 			REENTRANT_CHECK(ON);
 			if (((next & 0xf8) == 0xd8) || (next == 0x9b)) {	/* fwait */
 				goto do_another_FPU_instruction;
 			} else
 				if (next == 0x66) {	/* size prefix */
 					REENTRANT_CHECK(OFF);
-					next = fubyte((u_char *) (FPU_EIP + 1));
+					copyin((u_char *)FPU_EIP + 1, &next,
+					    sizeof(u_char));
 					REENTRANT_CHECK(ON);
 					if ((next & 0xf8) == 0xd8) {
 						FPU_EIP++;

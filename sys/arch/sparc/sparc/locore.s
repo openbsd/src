@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.55 2002/08/20 12:57:54 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.56 2003/01/09 22:27:10 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4833,148 +4833,6 @@ ENTRY(proc_trampoline)
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
 
-/*
- * {fu,su}{,i}{byte,word}
- */
-ALTENTRY(fuiword)
-ENTRY(fuword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE...
-	bgeu	Lfsbadaddr
-	EMPTY
-	btst	3, %o0			! or has low bits set...
-	bnz	Lfsbadaddr		!	go return -1
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	ld	[%o0], %o0		! fetch the word
-	retl				! phew, made it, return the word
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-Lfserr:
-	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-Lfsbadaddr:
-	retl				! and return error indicator
-	 mov	-1, %o0
-
-	/*
-	 * This is just like Lfserr, but it's a global label that allows
-	 * mem_access_fault() to check to see that we don't want to try to
-	 * page in the fault.  It's used by fuswintr() etc.
-	 */
-	.globl	_C_LABEL(Lfsbail)
-_C_LABEL(Lfsbail):
-	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
-	retl				! and return error indicator
-	 mov	-1, %o0
-
-	/*
-	 * Like fusword but callable from interrupt context.
-	 * Fails if data isn't resident.
-	 */
-ENTRY(fuswintr)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	_C_LABEL(Lfsbail), %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	lduh	[%o0], %o0		! fetch the halfword
-	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-ENTRY(fusword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	lduh	[%o0], %o0		! fetch the halfword
-	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-ALTENTRY(fuibyte)
-ENTRY(fubyte)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	ldub	[%o0], %o0		! fetch the byte
-	retl				! made it
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-
-ALTENTRY(suiword)
-ENTRY(suword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE ...
-	bgeu	Lfsbadaddr
-	EMPTY
-	btst	3, %o0			! or has low bits set ...
-	bnz	Lfsbadaddr		!	go return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	st	%o1, [%o0]		! store the word
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-ENTRY(suswintr)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	go return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = _Lfsbail;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	_C_LABEL(Lfsbail), %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	sth	%o1, [%o0]		! store the halfword
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-ENTRY(susword)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	go return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	sth	%o1, [%o0]		! store the halfword
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
-ALTENTRY(suibyte)
-ENTRY(subyte)
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr >= KERNBASE
-	bgeu	Lfsbadaddr		!	go return error
-	EMPTY
-	sethi	%hi(_C_LABEL(cpcb)), %o2		! cpcb->pcb_onfault = Lfserr;
-	ld	[%o2 + %lo(_C_LABEL(cpcb))], %o2
-	set	Lfserr, %o3
-	st	%o3, [%o2 + PCB_ONFAULT]
-	stb	%o1, [%o0]		! store the byte
-	st	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	retl				! and return 0
-	clr	%o0
-
 /* probeget and probeset are meant to be used during autoconfiguration */
 
 /*
@@ -5003,6 +4861,22 @@ ENTRY(probeget)
 	 ld	[%o0], %o0		!	value = *(int *)addr;
 0:	retl				! made it, clear onfault and return
 	 st	%g0, [%o2 + PCB_ONFAULT]
+
+Lfserr:
+	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	retl				! and return error indicator
+	 mov	-1, %o0
+
+	/*
+	 * This is just like Lfserr, but it's a global label that allows
+	 * mem_access_fault() to check to see that we don't want to try to
+	 * page in the fault.  It's used by xldcontrolb().
+	 */
+	 .globl	_C_LABEL(Lfsbail)
+Lfsbail:
+	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	retl				! and return error indicator
+	 mov	-1, %o0
 
 /*
  * probeset(addr, size, val) caddr_t addr; int size, val;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.10 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.11 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -139,11 +139,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp, *kfp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
+	struct proc *p = curproc;
+	struct sigframe *fp, *kfp;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
 	int oonstack, fsize;
 
 	frame = (struct frame *)p->p_md.md_regs;
@@ -352,17 +352,13 @@ sys_sigreturn(p, v, retval)
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
 	 */
-	flags = fuword((caddr_t)rf);
+	if (copyin((caddr_t)rf, &flags, sizeof(int)) != 0)
+		return (EINVAL);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn(%d): sc_ap %x flags %x\n",
 		       p->p_pid, rf, flags);
 #endif
-	/*
-	 * fuword failed (bogus sc_ap value).
-	 */
-	if (flags == -1)
-		return (EINVAL);
 	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
 		return (EJUSTRETURN);
 #ifdef DEBUG

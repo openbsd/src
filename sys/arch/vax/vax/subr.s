@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.17 2002/06/11 09:36:24 hugh Exp $     */
+/*	$OpenBSD: subr.s,v 1.18 2003/01/09 22:27:11 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -491,48 +491,6 @@ ENTRY(copystr,0)
 	incl	r1		# null byte accounts for outlen...
 	movl	r1,(r3)		# save len copied
 4:	clrl	*pcbtrap
-	ret
-
-ENTRY(subyte,0)
-	movl	4(ap),r0
-	blss	3f		# illegal space
-	movab	1f,*pcbtrap
-	movb	8(ap),(r0)
-	clrl	r1
-1:	clrl	*pcbtrap
-	movl	r1,r0
-	ret
-
-ENTRY(suword,0)
-	movl	4(ap),r0
-	blss	3f		# illegal space
-	movab	1f,*pcbtrap
-	movl	8(ap),(r0)
-	clrl	r1
-1:	clrl	*pcbtrap
-	movl	r1,r0
-	ret
-
-ENTRY(suswintr,0)
-	movl	4(ap),r0
-	blss	3f		# illegal space
-	movab	1f,*pcbtrap
-	movw	8(ap),(r0)
-	clrl	r1
-1:	clrl	*pcbtrap
-	movl	r1,r0
-	ret
-
-3:	mnegl	$1,r0
-	ret
-
-ENTRY(fuswintr,0)
-	movl	4(ap),r0
-	blss	3b		# illegal space
-	movab	1f,*pcbtrap
-	movzwl	(r0),r1
-1:	clrl	*pcbtrap
-	movl	r1,r0
 	ret
 
 #

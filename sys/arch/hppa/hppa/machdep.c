@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2002/12/19 00:46:21 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.94 2003/01/09 22:27:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1163,14 +1163,15 @@ copyout(src, dst, size)
  */
 void
 setregs(p, pack, stack, retval)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
-	register struct trapframe *tf = p->p_md.md_regs;
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	register_t zero;
 #ifdef DEBUG
 	/*extern int pmapdebug;*/
 	/*pmapdebug = 13;
@@ -1189,8 +1190,9 @@ setregs(p, pack, stack, retval)
 	stack = hppa_round_page(stack);
 	tf->tf_r3 = stack;
 	tf->tf_sp = stack += HPPA_FRAME_SIZE;
-	suword((caddr_t)(stack - HPPA_FRAME_SIZE), 0);
-	suword((caddr_t)(stack + HPPA_FRAME_CRP), 0);
+	zero = 0;
+	copyout(&zero, (caddr_t)(stack - HPPA_FRAME_SIZE), sizeof(register_t));
+	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP), sizeof(register_t));
 
 	/* reset any of the pending FPU exceptions */
 	pcb->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
@@ -1224,6 +1226,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigcontext ksc, *scp;
 	siginfo_t ksi, *sip;
 	int sss;
+	register_t zero;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1264,8 +1267,11 @@ sendsig(catcher, sig, mask, code, type, val)
 		sigexit(p, SIGILL);
 
 	sss += HPPA_FRAME_SIZE;
-	if (suword((caddr_t)scp + sss - HPPA_FRAME_SIZE, 0) ||
-	    suword((caddr_t)scp + sss + HPPA_FRAME_CRP, 0))
+	zero = 0;
+	if (copyout(&zero, (caddr_t)scp + sss - HPPA_FRAME_SIZE,
+	      sizeof(register_t)) ||
+	    copyout(&zero, (caddr_t)scp + sss + HPPA_FRAME_CRP,
+	      sizeof(register_t)))
 		sigexit(p, SIGILL);
 
 #ifdef DEBUG

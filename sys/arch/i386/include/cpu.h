@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2002/09/24 00:06:23 nordin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.44 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -175,8 +175,6 @@ void	i386_proc0_tss_ldt_init(void);
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
 void	fillw(short, void *, size_t);
-short	fusword(u_short *);
-int	susword(u_short *t, u_short);
 
 struct pcb;
 void	savectx(struct pcb *);

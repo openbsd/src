@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -239,7 +239,6 @@ trap(type, code, v, frame)
 	u_int v;
 	struct frame frame;
 {
-	extern char fubail[], subail[];
 	struct proc *p;
 	int i, s;
 	u_int ucode;
@@ -546,15 +545,6 @@ copyfault:
 		goto out;
 
 	case T_MMUFLT:		/* Kernel mode page fault */
-		/*
-		 * If we were doing profiling ticks or other user mode
-		 * stuff from interrupt code, Just Say No.
-		 */
-		if (p->p_addr->u_pcb.pcb_onfault == fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == subail)
-			goto copyfault;
-		/* fall into... */
-
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
 		vaddr_t va;
@@ -783,7 +773,8 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(long *)f->f_wb1a = wb1d;
 			else
-				err = suword((caddr_t)f->f_wb1a, wb1d);
+				err = copyout(&wb1d, (caddr_t)f->f_wb1a,
+						sizeof(int));
 			break;
 		case SSW4_SZB:
 			off = 24 - off;
@@ -791,8 +782,12 @@ writeback(fp, docachepush)
 				wb1d >>= off;
 			if (KDFAULT(f->f_wb1s))
 				*(char *)f->f_wb1a = wb1d;
-			else
-				err = subyte((caddr_t)f->f_wb1a, wb1d);
+			else {
+				char tmp = wb1d;
+
+				err = copyout(&tmp, (caddr_t)f->f_wb1a,
+						sizeof(char));
+			}
 			break;
 		case SSW4_SZW:
 			off = (off + 16) % 32;
@@ -800,8 +795,12 @@ writeback(fp, docachepush)
 				wb1d = (wb1d >> (32 - off)) | (wb1d << off);
 			if (KDFAULT(f->f_wb1s))
 				*(short *)f->f_wb1a = wb1d;
-			else
-				err = susword((caddr_t)f->f_wb1a, wb1d);
+			else {
+				short tmp = wb1d;
+
+				err = copyout(&tmp, (caddr_t)f->f_wb1a,
+						sizeof(short));
+			}
 			break;
 		}
 		if (err) {
@@ -833,19 +832,28 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb2s))
 				*(long *)f->f_wb2a = f->f_wb2d;
 			else
-				err = suword((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = copyout(&f->f_wb2d, (caddr_t)f->f_wb2a,
+						sizeof(int));
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb2s))
 				*(char *)f->f_wb2a = f->f_wb2d;
-			else
-				err = subyte((caddr_t)f->f_wb2a, f->f_wb2d);
+			else {
+				char tmp = f->f_wb2d;
+
+				err = copyout(&tmp, (caddr_t)f->f_wb2a,
+						sizeof(char));
+			}
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb2s))
 				*(short *)f->f_wb2a = f->f_wb2d;
-			else
-				err = susword((caddr_t)f->f_wb2a, f->f_wb2d);
+			else {
+				short tmp = f->f_wb2d;
+
+				err = copyout(&tmp, (caddr_t)f->f_wb2a,
+						sizeof(short));
+			}
 			break;
 		}
 		if (err) {
@@ -873,19 +881,28 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb3s))
 				*(long *)f->f_wb3a = f->f_wb3d;
 			else
-				err = suword((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = copyout(&f->f_wb3d, (caddr_t)f->f_wb3a,
+						sizeof(int));
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb3s))
 				*(char *)f->f_wb3a = f->f_wb3d;
-			else
-				err = subyte((caddr_t)f->f_wb3a, f->f_wb3d);
+			else {
+				char tmp = f->f_wb3d;
+				
+				err = copyout(&tmp, (caddr_t)f->f_wb3a,
+						sizeof(char));
+			}
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb3s))
 				*(short *)f->f_wb3a = f->f_wb3d;
-			else
-				err = susword((caddr_t)f->f_wb3a, f->f_wb3d);
+			else {
+				short tmp = f->f_wb3d;
+
+				err = copyout(&tmp, (caddr_t)f->f_wb3a,
+						sizeof(short));
+			}
 			break;
 #ifdef DEBUG
 		case SSW4_SZLN:
@@ -947,6 +964,7 @@ dumpwb(num, s, a, d)
 {
 	struct proc *p = curproc;
 	paddr_t pa;
+	int tmp;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
@@ -954,8 +972,12 @@ dumpwb(num, s, a, d)
 	printf("               PA ");
 	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
 		printf("<invalid address>");
-	else
-		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
+	else {
+		if (copyin((caddr_t)a, &tmp, sizeof(int)) == 0)
+			printf("%lx, current value %lx", pa, tmp);
+		else
+			printf("%lx, current value inaccessible", pa);
+	}
 	printf("\n");
 }
 #endif
@@ -997,7 +1019,9 @@ syscall(code, frame)
 		 * code assumes the kernel pops the syscall argument the
 		 * glue pushed on the stack. Sigh...
 		 */
-		code = fuword((caddr_t)frame.f_regs[SP]);
+		if (copyin((caddr_t)frame.f_regs[SP], &code,
+		   sizeof(register_t)) != 0)
+			code = -1;
 
 		/*
 		 * XXX
@@ -1025,7 +1049,8 @@ syscall(code, frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params);
+		if (copyin(params, &code, sizeof(register_t)) != 0)
+			code = -1;
 		params += sizeof(int);
 		/*
 		 * XXX sigreturn requires special stack manipulation
@@ -1042,7 +1067,9 @@ syscall(code, frame)
 		 */
 		if (callp != sysent)
 			break;
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		if (copyin(params + _QUAD_LOWWORD * sizeof(int), &code,
+		    sizeof(register_t)) != 0)
+			code = -1;
 		params += sizeof(quad_t);
 		break;
 	default:

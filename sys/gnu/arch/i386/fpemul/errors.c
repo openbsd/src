@@ -1,4 +1,4 @@
-/*	$OpenBSD: errors.c,v 1.1 1996/08/27 10:32:42 downsj Exp $	*/
+/*	$OpenBSD: errors.c,v 1.2 2003/01/09 22:27:11 miod Exp $	*/
 /*
  *  errors.c
  *
@@ -97,8 +97,8 @@ Un_impl(void)
 	unsigned char byte1, FPU_modrm;
 
 	REENTRANT_CHECK(OFF);
-	byte1 = fubyte((unsigned char *) FPU_ORIG_EIP);
-	FPU_modrm = fubyte(1 + (unsigned char *) FPU_ORIG_EIP);
+	copyin((u_char *)FPU_ORIG_EIP, &byte1, sizeof(u_char));
+	copyin((u_char *)FPU_ORIG_EIP + 1, &FPU_modrm, sizeof(u_char));
 
 	printf("Unimplemented FPU Opcode at eip=%p : %02x ",
 	    FPU_ORIG_EIP, byte1);
@@ -125,8 +125,8 @@ emu_printall()
 	unsigned char byte1, FPU_modrm;
 
 	REENTRANT_CHECK(OFF);
-	byte1 = fubyte((unsigned char *) FPU_ORIG_EIP);
-	FPU_modrm = fubyte(1 + (unsigned char *) FPU_ORIG_EIP);
+	copyin((u_char *)FPU_ORIG_EIP, &byte1, sizeof(u_char));
+	copyin((u_char *)FPU_ORIG_EIP + 1, &FPU_modrm, sizeof(u_char));
 
 #ifdef DEBUGGING
 	if (status_word & SW_Backward)

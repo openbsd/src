@@ -1,4 +1,4 @@
-#	$OpenBSD: files.powerpc,v 1.36 2002/06/08 16:02:14 miod Exp $
+#	$OpenBSD: files.powerpc,v 1.37 2003/01/09 22:27:10 miod Exp $
 #
 
 file    arch/powerpc/powerpc/setjmp.S			ddb
@@ -6,14 +6,9 @@ file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/bcopy.c
 file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/fpu.c
-file	arch/powerpc/powerpc/fubyte.c
-file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
 file	arch/powerpc/powerpc/pmap.c
 file	arch/powerpc/powerpc/process_machdep.c
-file	arch/powerpc/powerpc/subyte.c
-file	arch/powerpc/powerpc/suword.c
-file	arch/powerpc/powerpc/suswintr.c
 file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/trap.c
 file	arch/powerpc/powerpc/vm_machdep.c

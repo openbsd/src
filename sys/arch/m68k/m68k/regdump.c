@@ -1,4 +1,4 @@
-/*	$OpenBSD: regdump.c,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: regdump.c,v 1.4 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: regdump.c,v 1.1 1997/04/09 19:21:47 thorpej Exp $	*/
 
 /*
@@ -104,11 +104,11 @@ regdump(tf, sbytes)
 
 void
 dumpmem(ptr, sz, ustack)
-	register int *ptr;
+	int *ptr;
 	int sz, ustack;
 {
-	register int i, val;
-	register int limit;
+	int i, val;
+	int limit;
 
 	/* Stay in the same page */
 	limit = ((int)ptr) | (NBPG-3);
@@ -119,7 +119,7 @@ dumpmem(ptr, sz, ustack)
 		else
 			printf(" ");
 		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
+			if (copyin(ptr++, &val, sizeof(int)) != 0)
 				break;
 		} else {
 			if (((int) ptr) >= limit)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg_ld_str.c,v 1.1 1996/08/27 10:32:59 downsj Exp $	*/
+/*	$OpenBSD: reg_ld_str.c,v 1.2 2003/01/09 22:27:12 miod Exp $	*/
 /*
  *  reg_ld_str.c
  *
@@ -113,9 +113,9 @@ reg_load_extended(void)
 	REENTRANT_CHECK(OFF);
 	/* Use temporary variables here because FPU_loaded data is static and
 	 * hence re-entrancy problems can arise */
-	sigl = fuword((unsigned long *) s);
-	sigh = fuword(1 + (unsigned long *) s);
-	exp = fusword(4 + (unsigned short *) s);
+	copyin((unsigned long *)s, &sigl, sizeof(unsigned long));
+	copyin(1 + (unsigned long *)s, &sigh, sizeof(unsigned long));
+	copyin(4 + (unsigned short *)s, &exp, sizeof(unsigned short));
 	REENTRANT_CHECK(ON);
 
 	FPU_loaded_data.sigl = sigl;
@@ -176,8 +176,8 @@ reg_load_double(void)
 	unsigned m64, l64;
 
 	REENTRANT_CHECK(OFF);
-	m64 = fuword(1 + (unsigned long *) dfloat);
-	l64 = fuword((unsigned long *) dfloat);
+	copyin(1 + (unsigned long *)dfloat, &m64, sizeof(unsigned));
+	copyin((unsigned long *)dfloat, &l64, sizeof(unsigned));
 	REENTRANT_CHECK(ON);
 
 	if (m64 & 0x80000000)
@@ -243,7 +243,7 @@ reg_load_single(void)
 	int     exp;
 
 	REENTRANT_CHECK(OFF);
-	m32 = fuword((unsigned long *) single);
+	copyin((unsigned long *)single, &m32, sizeof(unsigned));
 	REENTRANT_CHECK(ON);
 
 	if (m32 & 0x80000000)
@@ -302,8 +302,10 @@ reg_load_int64(void)
 	long long s;
 
 	REENTRANT_CHECK(OFF);
-	((unsigned long *) &s)[0] = fuword((unsigned long *) _s);
-	((unsigned long *) &s)[1] = fuword(1 + (unsigned long *) _s);
+	copyin((unsigned long *)_s, &(((unsigned long *)&s)[0]),
+	    sizeof(unsigned long));
+	copyin(1 + (unsigned long *)_s, &(((unsigned long *)&s)[1]),
+	    sizeof(unsigned long));
 	REENTRANT_CHECK(ON);
 
 	if (s == 0) {
@@ -329,12 +331,11 @@ reg_load_int64(void)
 void
 reg_load_int32(void)
 {
-	long   *_s = (long *) FPU_data_address;
 	long    s;
 	int     e;
 
 	REENTRANT_CHECK(OFF);
-	s = (long) fuword((unsigned long *) _s);
+	copyin((long *)FPU_data_address, &s, sizeof(long));
 	REENTRANT_CHECK(ON);
 
 	if (s == 0) {
@@ -361,13 +362,14 @@ reg_load_int32(void)
 void
 reg_load_int16(void)
 {
-	short  *_s = (short *) FPU_data_address;
+	short	tmp;
 	int     s, e;
 
 	REENTRANT_CHECK(OFF);
-	/* Cast as short to get the sign extended. */
-	s = (short) fusword((unsigned short *) _s);
+	copyin((short *)FPU_data_address, &tmp, sizeof(short));
 	REENTRANT_CHECK(ON);
+	/* Cast as short to get the sign extended. */
+	s = (short)tmp;
 
 	if (s == 0) {
 		reg_move(&CONST_Z, &FPU_loaded_data);
@@ -396,13 +398,13 @@ reg_load_bcd(void)
 {
 	char   *s = (char *) FPU_data_address;
 	int     pos;
-	unsigned char bcd;
+	unsigned char bcd, tmp;
 	long long l = 0;
 
 	for (pos = 8; pos >= 0; pos--) {
 		l *= 10;
 		REENTRANT_CHECK(OFF);
-		bcd = (unsigned char) fubyte((unsigned char *) s + pos);
+		copyin(s + pos, &bcd, sizeof(u_char));
 		REENTRANT_CHECK(ON);
 		l += bcd >> 4;
 		l *= 10;
@@ -412,10 +414,9 @@ reg_load_bcd(void)
 	/* Finish all access to user memory before putting stuff into the
 	 * static FPU_loaded_data */
 	REENTRANT_CHECK(OFF);
-	FPU_loaded_data.sign =
-	    ((unsigned char) fubyte((unsigned char *) s + 9)) & 0x80 ?
-	    SIGN_NEG : SIGN_POS;
+	copyin(s + 9, &tmp, sizeof(u_char));
 	REENTRANT_CHECK(ON);
+	FPU_loaded_data.sign = tmp & 0x80 ? SIGN_NEG : SIGN_POS;
 
 	if (l == 0) {
 		char    sign = FPU_loaded_data.sign;
@@ -528,11 +529,12 @@ reg_store_extended(void)
 						ls = 1;
 						ms = 0x80000000;
 					}
+	sign |= (unsigned short)e;
 	REENTRANT_CHECK(OFF);
 /*	    verify_area(VERIFY_WRITE, d, 10); */
-	suword((unsigned long *) d, ls);
-	suword(1 + (unsigned long *) d, ms);
-	susword(4 + (short *) d, (unsigned short) e | sign);
+	copyout(&ls, (unsigned long *)d, sizeof(int));
+	copyout(&ms, 1 + (unsigned long *)d, sizeof(int));
+	copyout(&sign, 4 + (short *)d, sizeof(short));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -660,7 +662,9 @@ reg_store_double(void)
 			if (FPU_st0_tag == TW_Infinity) {
 				l[0] = 0;
 				l[1] = 0x7ff00000;
-			} else
+			} else {
+				long tmpl;
+
 				if (FPU_st0_tag == TW_NaN) {
 					/* See if we can get a valid NaN from
 					 * the FPU_REG */
@@ -686,12 +690,15 @@ reg_store_double(void)
 							/* Put out the QNaN
 							 * indefinite */
 					put_indefinite:
+
 							REENTRANT_CHECK(OFF);
 							/* verify_area(VERIFY_W
 							 * RITE, (void *)
 							 * dfloat, 8); */
-							suword((unsigned long *) dfloat, 0);
-							suword(1 + (unsigned long *) dfloat, 0xfff80000);
+							tmpl = 0;
+							copyout(&tmpl, dfloat, sizeof(long));
+							tmpl = 0xfff80000;
+							copyout(&tmpl, 1 + (long *)dfloat, sizeof(long));
 							REENTRANT_CHECK(ON);
 							return 1;
 						} else
@@ -708,16 +715,14 @@ reg_store_double(void)
 							EXCEPTION(EX_Underflow);
 						}
 #endif
+			}
 	if (FPU_st0_ptr->sign)
 		l[1] |= 0x80000000;
 
 	REENTRANT_CHECK(OFF);
 /*	    verify_area(VERIFY_WRITE, (void *) dfloat, 8);*/
-	suword((u_long *) dfloat, l[0]);
-	suword((u_long *) dfloat + 1, l[1]);
-/*
-	suword(l[0], (unsigned long *) dfloat);
-	suword(l[1], 1 + (unsigned long *) dfloat);*/
+	copyout(&l[0], (u_long *)dfloat, sizeof(int));
+	copyout(&l[1], (u_long *)dfloat + 1, sizeof(int));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -862,7 +867,8 @@ reg_store_single(void)
 					put_indefinite:
 							REENTRANT_CHECK(OFF);
 /*							    verify_area(VERIFY_WRITE, (void *) single, 4); */
-							suword((unsigned long *) single, 0xffc00000);
+							templ = 0xffc00000;
+							copyout(&templ, single, sizeof(long));
 							REENTRANT_CHECK(ON);
 							return 1;
 						} else
@@ -890,7 +896,7 @@ reg_store_single(void)
 
 	REENTRANT_CHECK(OFF);
 /*	    verify_area(VERIFY_WRITE, (void *) single, 4); */
-	suword((unsigned long *) single, templ);
+	copyout(&templ, (unsigned long *)single, sizeof(int));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -936,8 +942,8 @@ reg_store_int64(void)
 
 	REENTRANT_CHECK(OFF);
 /*	    verify_area(VERIFY_WRITE, (void *) d, 8); */
-	suword((unsigned long *) d, ((long *) &tll)[0]);
-	suword(1 + (unsigned long *) d, ((long *) &tll)[1]);
+	copyout(&tll, d, sizeof(long));
+	copyout(1 + (long *)&tll, 1 + (long *)d, sizeof(long));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -955,11 +961,14 @@ reg_store_int32(void)
 		/* Empty register (stack underflow) */
 		EXCEPTION(EX_StackUnder);
 		if (control_word & EX_Invalid) {
+			long tmpl;
+
 			/* The masked response */
 			/* Put out the QNaN indefinite */
 			REENTRANT_CHECK(OFF);
 /*			    verify_area(VERIFY_WRITE, d, 4);*/
-			suword((unsigned long *) d, 0x80000000);
+			tmpl = 0x80000000;
+			copyout(&tmpl, d, sizeof(long));
 			REENTRANT_CHECK(ON);
 			return 1;
 		} else
@@ -983,7 +992,7 @@ reg_store_int32(void)
 
 	REENTRANT_CHECK(OFF);
 /*	    verify_area(VERIFY_WRITE, d, 4); */
-	suword((unsigned long *) d, t.sigl);
+	copyout(&t.sigl, d, sizeof(long));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -996,7 +1005,8 @@ reg_store_int16(void)
 {
 	short  *d = (short *) FPU_data_address;
 	FPU_REG t;
-	short   ts;
+	short   ts;	/* XXX bug! incorrectly used -- miod */
+	int16_t tmp;
 
 	if (FPU_st0_tag == TW_Empty) {
 		/* Empty register (stack underflow) */
@@ -1006,7 +1016,8 @@ reg_store_int16(void)
 			/* Put out the QNaN indefinite */
 			REENTRANT_CHECK(OFF);
 /*			    verify_area(VERIFY_WRITE, d, 2);*/
-			susword((unsigned short *) d, 0x8000);
+			tmp = 0x8000;
+			copyout(&tmp, d, sizeof(int16_t));
 			REENTRANT_CHECK(ON);
 			return 1;
 		} else
@@ -1030,7 +1041,7 @@ reg_store_int16(void)
 
 	REENTRANT_CHECK(OFF);
 /*	    verify_area(VERIFY_WRITE, d, 2); */
-	susword((short *) d, (short) t.sigl);
+	copyout(&t.sigl, d, sizeof(int16_t));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -1070,11 +1081,12 @@ reg_store_bcd(void)
 		if (control_word & EX_Invalid) {
 	put_indefinite:
 			/* Produce "indefinite" */
+			b = 0xff;
 			REENTRANT_CHECK(OFF);
 /*			    verify_area(VERIFY_WRITE, d, 10);*/
-			subyte((unsigned char *) d + 7, 0xff);
-			subyte((unsigned char *) d + 8, 0xff);
-			subyte((unsigned char *) d + 9, 0xff);
+			copyout(&b, (unsigned char *)d + 7, sizeof(char));
+			copyout(&b, (unsigned char *)d + 8, sizeof(char));
+			copyout(&b, (unsigned char *)d + 9, sizeof(char));
 			REENTRANT_CHECK(ON);
 			return 1;
 		} else
@@ -1085,11 +1097,11 @@ reg_store_bcd(void)
 		b = div_small(&ll, 10);
 		b |= (div_small(&ll, 10)) << 4;
 		REENTRANT_CHECK(OFF);
-		subyte((unsigned char *) d + i, b);
+		copyout(&b, (unsigned char *)d + i, sizeof(char));
 		REENTRANT_CHECK(ON);
 	}
 	REENTRANT_CHECK(OFF);
-	subyte((unsigned char *) d + 9, sign);
+	copyout(&sign, (unsigned char *)d + 9, sizeof(char));
 	REENTRANT_CHECK(ON);
 
 	return 1;
@@ -1169,13 +1181,16 @@ fldenv(void)
 	int     i;
 
 	REENTRANT_CHECK(OFF);
-	control_word = fusword((unsigned short *) s);
-	status_word = fusword((unsigned short *) (s + 4));
-	tag_word = fusword((unsigned short *) (s + 8));
-	ip_offset = fuword((unsigned long *) (s + 0x0c));
-	cs_selector = fuword((unsigned long *) (s + 0x10));
-	data_operand_offset = fuword((unsigned long *) (s + 0x14));
-	operand_selector = fuword((unsigned long *) (s + 0x18));
+	copyin((unsigned short *)s, &control_word, sizeof(unsigned short));
+	copyin((unsigned short *)(s + 4), &status_word, sizeof(unsigned short));
+	copyin((unsigned short *)(s + 8), &tag_word, sizeof(unsigned short));
+	copyin((unsigned long *)(s + 0x0c), &ip_offset, sizeof(unsigned long));
+	copyin((unsigned long *)(s + 0x10), &cs_selector,
+	    sizeof(unsigned long));
+	copyin((unsigned long *)(s + 0x14), &data_operand_offset,
+	    sizeof(unsigned long));
+	copyin((unsigned long *)(s + 0x18), &operand_selector,
+	    sizeof(unsigned long));
 	REENTRANT_CHECK(ON);
 
 	top = (status_word >> SW_Top_Shift) & 7;
@@ -1279,6 +1294,7 @@ char   *
 fstenv(void)
 {
 	char   *d = (char *) FPU_data_address;
+	int16_t tmp;
 
 /*	verify_area(VERIFY_WRITE, d, 28);*/
 
@@ -1288,13 +1304,15 @@ fstenv(void)
 #endif				/****/
 
 	REENTRANT_CHECK(OFF);
-	susword((unsigned short *) d, control_word);
-	susword((unsigned short *) (d + 4), (status_word & ~SW_Top) | ((top & 7) << SW_Top_Shift));
-	susword((unsigned short *) (d + 8), tag_word());
-	suword((unsigned long *) (d + 0x0c), ip_offset);
-	suword((unsigned long *) (d + 0x10), cs_selector);
-	suword((unsigned long *) (d + 0x14), data_operand_offset);
-	suword((unsigned long *) (d + 0x18), operand_selector);
+	copyout(&control_word, d, sizeof(int16_t));
+	tmp = (status_word & ~SW_Top) | ((top & 7) << SW_Top_Shift);
+	copyout(&tmp, d + 4, sizeof(int16_t));
+	tmp = tag_word();
+	copyout(&tmp, d + 8, sizeof(int16_t));
+	copyout(&ip_offset, d + 0x0c, sizeof(int32_t));
+	copyout(&cs_selector, d + 0x10, sizeof(int32_t));
+	copyout(&data_operand_offset, d + 0x14, sizeof(int32_t));
+	copyout(&operand_selector, d + 0x18, sizeof(int32_t));
 	REENTRANT_CHECK(ON);
 
 	return d + 0x1c;
@@ -1308,6 +1326,7 @@ fsave(void)
 	FPU_REG tmp, *rp;
 	int     i;
 	short   e;
+	int32_t	tmpl;
 
 	d = fstenv();
 /*	verify_area(VERIFY_WRITE, d, 80);*/
@@ -1320,9 +1339,10 @@ fsave(void)
 		if (rp->tag == TW_Valid) {
 			if (e >= 0x7fff) {
 				/* Overflow to infinity */
+				tmpl = 0;
 				REENTRANT_CHECK(OFF);
-				suword((unsigned long *) (d + i * 10), 0);
-				suword((unsigned long *) (d + i * 10 + 4), 0);
+				copyout(&tmpl, d + i * 10, sizeof(int32_t));
+				copyout(&tmpl, d + i * 10 + 4, sizeof(int32_t));
 				REENTRANT_CHECK(ON);
 				e = 0x7fff;
 			} else
@@ -1333,55 +1353,77 @@ fsave(void)
 						tmp.exp += -EXTENDED_Emin + 63;	/* largest exp to be 62 */
 						round_to_int(&tmp);
 						REENTRANT_CHECK(OFF);
-						suword((unsigned long *) (d + i * 10), tmp.sigl);
-						suword((unsigned long *) (d + i * 10 + 4), tmp.sigh);
+						copyout(&tmp.sigl,
+						    d + i * 10,
+						    sizeof(int32_t));
+						copyout(&tmp.sigh,
+						    d + i * 10 + 4,
+						    sizeof(int32_t));
 						REENTRANT_CHECK(ON);
 					} else {
 						/* Underflow to zero */
+						tmpl = 0;
 						REENTRANT_CHECK(OFF);
-						suword((unsigned long *) (d + i * 10), 0);
-						suword((unsigned long *) (d + i * 10 + 4), 0);
+						copyout(&tmpl, d + i * 10,
+						    sizeof(int32_t));
+						copyout(&tmpl, d + i * 10 + 4,
+						    sizeof(int32_t));
 						REENTRANT_CHECK(ON);
 					}
 					e = 0;
 				} else {
 					REENTRANT_CHECK(OFF);
-					suword((unsigned long *) (d + i * 10), rp->sigl);
-					suword((unsigned long *) (d + i * 10 + 4), rp->sigh);
+					copyout(&rp->sigl, d + i * 10,
+					    sizeof(int32_t));
+					copyout(&rp->sigh, d + i * 10 + 4,
+					    sizeof(int32_t));
 					REENTRANT_CHECK(ON);
 				}
 		} else
 			if (rp->tag == TW_Zero) {
+				tmpl = 0;
 				REENTRANT_CHECK(OFF);
-				suword((unsigned long *) (d + i * 10), 0);
-				suword((unsigned long *) (d + i * 10 + 4), 0);
+				copyout(&tmpl, d + i * 10, sizeof(int32_t));
+				copyout(&tmpl, d + i * 10 + 4, sizeof(int32_t));
 				REENTRANT_CHECK(ON);
 				e = 0;
 			} else
 				if (rp->tag == TW_Infinity) {
 					REENTRANT_CHECK(OFF);
-					suword((unsigned long *) (d + i * 10), 0);
-					suword((unsigned long *) (d + i * 10 + 4), 0x80000000);
+					tmpl = 0;
+					copyout(&tmpl, d + i * 10,
+					   sizeof(int32_t));
+					tmpl = 0x80000000;
+					copyout(&tmpl, d + i * 10 + 4,
+					    sizeof(int32_t));
 					REENTRANT_CHECK(ON);
 					e = 0x7fff;
 				} else
 					if (rp->tag == TW_NaN) {
 						REENTRANT_CHECK(OFF);
-						suword((unsigned long *) (d + i * 10), rp->sigl);
-						suword((unsigned long *) (d + i * 10 + 4), rp->sigh);
+						copyout(&rp->sigl,
+						    d + i * 10,
+						    sizeof(int32_t));
+						copyout(&rp->sigh,
+						    d + i * 10 + 4,
+						    sizeof(int32_t));
 						REENTRANT_CHECK(ON);
 						e = 0x7fff;
 					} else
 						if (rp->tag == TW_Empty) {
 							/* just copy the reg */
 							REENTRANT_CHECK(OFF);
-							suword((unsigned long *) (d + i * 10), rp->sigl);
-							suword((unsigned long *) (d + i * 10 + 4), rp->sigh);
+							copyout(&rp->sigl,
+							    d + i * 10,
+							    sizeof(int32_t));
+							copyout(&rp->sigh,
+							    d + i * 10 + 4,
+							    sizeof(int32_t));
 							REENTRANT_CHECK(ON);
 						}
 		e |= rp->sign == SIGN_POS ? 0 : 0x8000;
 		REENTRANT_CHECK(OFF);
-		susword((unsigned short *) (d + i * 10 + 8), e);
+		copyout(&e, d + i * 10 + 8, sizeof(int16_t));
 		REENTRANT_CHECK(ON);
 	}
 

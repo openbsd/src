@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.22 2002/03/14 20:31:31 mickey Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.23 2003/01/09 22:27:11 miod Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -654,9 +654,11 @@ svr4_sys_systeminfo(p, v, retval)
 		return 0;
 
 	if (len > rlen) {
+		char nul = 0;
+
 		/* if str overruns buffer, put NUL in last place */
 		len = rlen - 1;
-		if (subyte(SCARG(uap, buf) + len, 0) < 0)
+		if (copyout(&nul, SCARG(uap, buf), sizeof(char)) != 0)
 			return EFAULT;
 	}
 

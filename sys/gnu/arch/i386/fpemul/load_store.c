@@ -1,4 +1,4 @@
-/*	$OpenBSD: load_store.c,v 1.1 1996/08/27 10:32:52 downsj Exp $	*/
+/*	$OpenBSD: load_store.c,v 1.2 2003/01/09 22:27:11 miod Exp $	*/
 /*
  *  load_store.c
  *
@@ -206,7 +206,8 @@ load_store_instr(char type)
 		break;
 	case 024:		/* fldcw */
 		REENTRANT_CHECK(OFF);
-		control_word = fusword((unsigned short *) FPU_data_address);
+		copyin((u_long *)FPU_data_address, &control_word,
+		    sizeof(u_long));
 		REENTRANT_CHECK(ON);
 #ifdef NO_UNDERFLOW_TRAP
 		if (!(control_word & EX_Underflow)) {
@@ -244,7 +245,8 @@ load_store_instr(char type)
 	case 034:		/* fstcw m16int */
 		REENTRANT_CHECK(OFF);
 /*		    verify_area(VERIFY_WRITE, FPU_data_address, 2);*/
-		susword( (short *) FPU_data_address,control_word);
+		copyout(&control_word, (short *)FPU_data_address,
+		    sizeof(int16_t));
 		REENTRANT_CHECK(ON);
 		FPU_data_address = (void *) data_operand_offset;	/* We want no net effect */
 		FPU_entry_eip = ip_offset;	/* We want no net effect */
@@ -259,7 +261,8 @@ load_store_instr(char type)
 		status_word |= (top & 7) << SW_Top_Shift;
 		REENTRANT_CHECK(OFF);
 /*		    verify_area(VERIFY_WRITE, FPU_data_address, 2);*/
-		susword( (short *) FPU_data_address,status_word);
+		copyout(&status_word, (short *)FPU_data_address,
+		    sizeof(int16_t));
 		REENTRANT_CHECK(ON);
 		FPU_data_address = (void *) data_operand_offset;	/* We want no net effect */
 		FPU_entry_eip = ip_offset;	/* We want no net effect */

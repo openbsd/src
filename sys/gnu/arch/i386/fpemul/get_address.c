@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_address.c,v 1.2 2002/03/14 03:16:09 millert Exp $	*/
+/*	$OpenBSD: get_address.c,v 1.3 2003/01/09 22:27:11 miod Exp $	*/
 /*
  *  get_address.c
  *
@@ -91,10 +91,10 @@ static void *
 sib(int mod)
 {
 	unsigned char ss, index, base;
-	long    offset;
+	long    tmp, offset;
 
 	REENTRANT_CHECK(OFF);
-	base = fubyte((char *) FPU_EIP);	/* The SIB byte */
+	copyin((char *)FPU_EIP, &base, sizeof(u_char));	/* The SIB byte */
 	REENTRANT_CHECK(ON);
 	FPU_EIP++;
 	ss = base >> 6;
@@ -118,7 +118,8 @@ sib(int mod)
 	if (mod == 1) {
 		/* 8 bit signed displacement */
 		REENTRANT_CHECK(OFF);
-		offset += (signed char) fubyte((char *) FPU_EIP);
+		copyin((char *)FPU_EIP, &tmp, sizeof(u_char));
+		offset += (signed char)tmp;
 		REENTRANT_CHECK(ON);
 		FPU_EIP++;
 	} else
@@ -126,8 +127,9 @@ sib(int mod)
 						 * has mod==0 */
 			/* 32 bit displacment */
 			REENTRANT_CHECK(OFF);
-			offset += (signed) fuword((unsigned long *) FPU_EIP);
+			copyin((u_long *)FPU_EIP, &tmp, sizeof(u_long));
 			REENTRANT_CHECK(ON);
+			offset += (signed)tmp;
 			FPU_EIP += 4;
 		}
 	return (void *) offset;
@@ -156,7 +158,8 @@ get_address(unsigned char FPU_modrm)
 {
 	unsigned char mod;
 	long   *cpu_reg_ptr;
-	int     offset = 0;	/* Initialized just to stop compiler warnings. */
+	int     tmp = 0;
+	int	offset = 0;	/* Initialized just to stop compiler warnings. */
 
 	mod = (FPU_modrm >> 6) & 3;
 
@@ -170,7 +173,7 @@ get_address(unsigned char FPU_modrm)
 		if (FPU_rm == 5) {
 			/* Special case: disp32 */
 			REENTRANT_CHECK(OFF);
-			offset = fuword((unsigned long *) FPU_EIP);
+			copyin((u_long *)FPU_EIP, &offset, sizeof(u_long));
 			REENTRANT_CHECK(ON);
 			FPU_EIP += 4;
 			FPU_data_address = (void *) offset;
@@ -184,15 +187,17 @@ get_address(unsigned char FPU_modrm)
 	case 1:
 		/* 8 bit signed displacement */
 		REENTRANT_CHECK(OFF);
-		offset = (signed char) fubyte((char *) FPU_EIP);
+		copyin((char *)FPU_EIP, &tmp, sizeof(char));
 		REENTRANT_CHECK(ON);
+		offset = (signed char)tmp;
 		FPU_EIP++;
 		break;
 	case 2:
 		/* 32 bit displacement */
 		REENTRANT_CHECK(OFF);
-		offset = (signed) fuword((unsigned long *) FPU_EIP);
+		copyin((u_long *)FPU_EIP, &offset, sizeof(u_long));
 		REENTRANT_CHECK(ON);
+		offset = (signed)tmp;
 		FPU_EIP += 4;
 		break;
 	case 3:

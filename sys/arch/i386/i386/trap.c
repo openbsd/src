@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2002/12/12 07:41:45 ish Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -181,8 +181,7 @@ trap(frame)
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
 	struct pcb *pcb = NULL;
-	extern char fusubail[],
-		    resume_iret[], resume_pop_ds[], resume_pop_es[];
+	extern char resume_iret[], resume_pop_ds[], resume_pop_es[];
 	struct trapframe *vframe;
 	int resume;
 	vm_prot_t vftype, ftype;
@@ -406,12 +405,6 @@ trap(frame)
 		if (p == 0 || p->p_addr == 0)
 			goto we_re_toast;
 		pcb = &p->p_addr->u_pcb;
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
-		if (pcb->pcb_onfault == fusubail)
-			goto copyfault;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame.tf_err & PGEX_P)
@@ -640,7 +633,7 @@ syscall(frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = fuword(params);
+		copyin(params, &code, sizeof(int));
 		params += sizeof(int);
 		break;
 	case SYS___syscall:
@@ -658,7 +651,7 @@ syscall(frame)
 #endif
 		    )
 			break;
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+		copyin(params + _QUAD_LOWWORD * sizeof(int), &code, sizeof(int));
 		params += sizeof(quad_t);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.7 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: smg.c,v 1.8 2003/01/09 22:27:11 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -433,14 +433,14 @@ setcursor(struct wsdisplay_cursor *v)
 	}
 	if (v->which & WSDISPLAY_CURSOR_DOCMAP) {
 		/* First background */
-		red = fuswintr(v->cmap.red);
-		green = fuswintr(v->cmap.green);
-		blue = fuswintr(v->cmap.blue);
+		copyin(v->cmap.red, &red, sizeof(u_short));
+		copyin(v->cmap.green, &green, sizeof(u_short));
+		copyin(v->cmap.blue, &blue, sizeof(u_short));
 		bgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
 		    (((1<<8)-1)*50)) ? ~0 : 0;
-		red = fuswintr(v->cmap.red+2);
-		green = fuswintr(v->cmap.green+2);
-		blue = fuswintr(v->cmap.blue+2);
+		copyin(v->cmap.red + 2, &red, sizeof(u_short));
+		copyin(v->cmap.green + 2, &green, sizeof(u_short));
+		copyin(v->cmap.blue + 2, &blue, sizeof(u_short));
 		fgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
 		    (((1<<8)-1)*50)) ? ~0 : 0;
 	}

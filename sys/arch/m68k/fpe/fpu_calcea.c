@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_calcea.c,v 1.8 2002/03/14 03:15:54 millert Exp $	*/
+/*	$OpenBSD: fpu_calcea.c,v 1.9 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: fpu_calcea.c,v 1.7 1996/10/16 06:27:05 scottr Exp $	*/
 
 /*
@@ -196,8 +196,8 @@ decode_ea6(frame, insn, ea, modreg)
     int bd_size, od_size;
     int sig;
 
-    extword = fusword((void *) (frame->f_pc + insn->is_advance));
-    if (extword < 0) {
+    if (copyin((void *)(frame->f_pc + insn->is_advance), &extword,
+	sizeof(int)) != 0) {
 	return SIGSEGV;
     }
     insn->is_advance += 2;
@@ -546,8 +546,8 @@ fetch_immed(frame, insn, dst)
     ext_bytes = insn->is_datasize;
 
     if (0 < ext_bytes) {
-	data = fusword((void *) (frame->f_pc + insn->is_advance));
-	if (data < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	if (ext_bytes == 1) {
@@ -567,8 +567,8 @@ fetch_immed(frame, insn, dst)
 	dst[0] = data;
     }
     if (2 < ext_bytes) {
-	data = fusword((void *) (frame->f_pc + insn->is_advance));
-	if (data < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	insn->is_advance += 2;
@@ -576,26 +576,26 @@ fetch_immed(frame, insn, dst)
 	dst[0] |= data;
     }
     if (4 < ext_bytes) {
-	data = fusword((void *) (frame->f_pc + insn->is_advance));
-	if (data < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	dst[1] = data << 16;
-	data = fusword((void *) (frame->f_pc + insn->is_advance + 2));
-	if (data < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance + 2), &data,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	insn->is_advance += 4;
 	dst[1] |= data;
     }
     if (8 < ext_bytes) {
-	data = fusword((void *) (frame->f_pc + insn->is_advance));
-	if (data < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	dst[2] = data << 16;
-	data = fusword((void *) (frame->f_pc + insn->is_advance + 2));
-	if (data < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance + 2), &data,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	insn->is_advance += 4;
@@ -617,8 +617,8 @@ fetch_disp(frame, insn, size, res)
     int disp, word;
 
     if (size == 1) {
-	word = fusword((void *) (frame->f_pc + insn->is_advance));
-	if (word < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance), &word,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	disp = word & 0xffff;
@@ -628,13 +628,13 @@ fetch_disp(frame, insn, size, res)
 	}
 	insn->is_advance += 2;
     } else if (size == 2) {
-	word = fusword((void *) (frame->f_pc + insn->is_advance));
-	if (word < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance), &word,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	disp = word << 16;
-	word = fusword((void *) (frame->f_pc + insn->is_advance + 2));
-	if (word < 0) {
+	if (copyin((void *)(frame->f_pc + insn->is_advance + 2), &word,
+	  sizeof(int)) != 0) {
 	    return SIGSEGV;
 	}
 	disp |= (word & 0xffff);
@@ -689,13 +689,11 @@ calc_ea(ea, ptr, eaddr)
 		printf("  calc_ea: addr fetched from %p\n", ptr);
 	    }
 	    /* memory indirect modes */
-	    word = fusword(ptr);
-	    if (word < 0) {
+	    if (copyin(ptr, &word, sizeof(int)) != 0) {
 		return SIGSEGV;
 	    }
 	    word <<= 16;
-	    data = fusword(ptr + 2);
-	    if (data < 0) {
+	    if (copyin(ptr + 2, &data, sizeof(int)) != 0) {
 		return SIGSEGV;
 	    }
 	    word |= data;

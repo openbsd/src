@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.23 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.24 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -574,8 +574,12 @@ linux_machdepioctl(p, v, retval)
 		com = VT_GETSTATE;
 		break;
 	case LINUX_KDGKBTYPE:
+	{
+		char tmp = KB_101;
+
 		/* This is what Linux does */
-		return (subyte(SCARG(uap, data), KB_101));
+		return copyout(&tmp, SCARG(uap, data), sizeof(char));
+	}
 #endif
 	default:
 		/*

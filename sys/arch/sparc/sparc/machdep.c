@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.91 2003/01/09 22:27:10 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -578,7 +578,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	write_user_windows();
 	/* XXX do not copyout siginfo if not needed */
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
+	    copyout(&oldsp, &((struct rwindow *)newsp)->rw_in[6],
+	      sizeof(register_t)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.

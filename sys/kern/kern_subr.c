@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.22 2002/07/12 13:31:20 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.23 2003/01/09 22:27:12 miod Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -141,8 +141,12 @@ again:
 	switch (uio->uio_segflg) {
 
 	case UIO_USERSPACE:
-		if (subyte(iov->iov_base, c) < 0)
+	{
+		char tmp = c;
+
+		if (copyout(&tmp, iov->iov_base, sizeof(char)) != 0)
 			return (EFAULT);
+	}
 		break;
 
 	case UIO_SYSSPACE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.21 2002/10/30 20:10:48 millert Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.22 2003/01/09 22:27:11 miod Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -256,7 +256,10 @@ hpux_sys_waitpid(p, v, retval)
 		 * pull it back, change the signal portion, and write
 		 * it back out.
 		 */
-		rv = fuword((caddr_t)SCARG(uap, status));
+		if ((error = copyin((caddr_t)SCARG(uap, status), &rv,
+		    sizeof(int))) != 0)
+			return error;
+
 		if (WIFSTOPPED(rv)) {
 			sig = WSTOPSIG(rv);
 			rv = W_STOPCODE(bsdtohpuxsig(sig));
@@ -266,7 +269,7 @@ hpux_sys_waitpid(p, v, retval)
 			rv = W_EXITCODE(xstat, bsdtohpuxsig(sig)) |
 				WCOREDUMP(rv);
 		}
-		(void)suword((caddr_t)SCARG(uap, status), rv);
+		error = copyout(&rv, (caddr_t)SCARG(uap, status), sizeof(int));
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.99 2003/01/01 21:05:36 pvalchev Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.100 2003/01/09 22:27:12 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -480,7 +480,8 @@ start_init(arg)
 		syscallarg(char **) argp;
 		syscallarg(char **) envp;
 	} */ args;
-	int options, i, error;
+	int options, error;
+	long i;
 	register_t retval[2];
 	char flags[4], *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1 = NULL;
@@ -572,10 +573,11 @@ start_init(arg)
 		/*
 		 * Move out the arg pointers.
 		 */
-		(void)suword((caddr_t)--uap, 0);	/* terminator */
+		i = 0;
+		copyout(&i, (caddr_t)--uap, sizeof(register_t)); /* terminator */
 		if (options != 0)
-			(void)suword((caddr_t)--uap, (long)arg1);
-		(void)suword((caddr_t)--uap, (long)arg0);
+			copyout(&arg1, (caddr_t)--uap, sizeof(register_t));
+		copyout(&arg0, (caddr_t)--uap, sizeof(register_t));
 
 		/*
 		 * Point at the arguments.

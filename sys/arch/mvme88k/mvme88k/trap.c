@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2003/01/03 23:17:43 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2003/01/09 22:27:10 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -337,19 +337,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		if (frame->dmt0 & DMT_DAS)
 			map = kernel_map;
 
-		/* 
-		 * We don't want to call vm_fault() if it is fuwintr() or
-		 * suwintr(). These routines are for copying from interrupt
-		 * context and vm_fault() can potentially sleep. You may
-		 * wonder if it isn't bad karma for an interrupt handler to	
-		 * touch the current process. Indeed it is, but clock interrupt
-		 * does it while doing profiling. It is OK in that context.
-		 */
-
-		if (p->p_addr->u_pcb.pcb_onfault == (int)fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == (int)subail)
-			goto outtahere;
-
 		/* data fault on the user address */
 		if (type == T_DATAFLT && (frame->dmt0 & DMT_DAS) == 0) {
 			type = T_DATAFLT + T_USER;
@@ -452,7 +439,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		if (!p->p_addr->u_pcb.pcb_onfault)
 			panictrap(frame->vector, frame);
 
-outtahere:
 		frame->snip = ((unsigned)p->p_addr->u_pcb.pcb_onfault    ) | FIP_V;
 		frame->sfip = ((unsigned)p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
 		frame->sxip = 0;
@@ -591,7 +577,7 @@ outtahere:
 			va = pc;
 
 			/* read break instruction */
-			instr = fuiword((caddr_t)pc);
+			copyin((caddr_t)pc, &instr, sizeof(unsigned));
 #if 0
 			printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
 			       p->p_comm, p->p_pid, instr, pc,
@@ -867,19 +853,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 			}
 		}
 
-		/* 
-		 * We don't want to call vm_fault() if it is fuwintr() or
-		 * suwintr(). These routines are for copying from interrupt
-		 * context and vm_fault() can potentially sleep. You may
-		 * wonder if it isn't bad karma for an interrupt handler to	
-		 * touch the current process. Indeed it is, but clock interrupt
-		 * does it while doing profiling. It is OK in that context.
-		 */
-
-		if (p->p_addr->u_pcb.pcb_onfault == (int)fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == (int)subail)
-			goto m88110_outtahere;
-
 		/* data fault on the user address */
 		if (type == T_DATAFLT && (frame->dsr & CMMU_DSR_SU) == 0) {
 			type = T_DATAFLT + T_USER;
@@ -941,7 +914,6 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 		if (!p->p_addr->u_pcb.pcb_onfault)
 			panictrap(frame->vector, frame);
 
-m88110_outtahere:
 		frame->exip = ((unsigned)p->p_addr->u_pcb.pcb_onfault);
 		return;
 	case T_INSTFLT+T_USER:
@@ -1095,7 +1067,7 @@ m88110_user_fault:
 			va = pc;
 
 			/* read break instruction */
-			instr = fuiword((caddr_t)pc);
+			copyin((caddr_t)pc, &instr, sizeof(unsigned));
 #if 1
 			printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
 			       p->p_comm, p->p_pid, instr, pc,

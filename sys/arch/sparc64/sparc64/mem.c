@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2003/01/09 22:27:11 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -180,14 +180,23 @@ mmrw(dev, uio, flags)
 					
 				case UIO_USERSPACE:
 					if (uio->uio_rw == UIO_READ)
-						while (cnt--)
-							if(subyte(d++, lduba(v++, ASI_PHYS_CACHED))) {
-								error = EFAULT;
-								goto unlock;
-							}
+						while (cnt--) {
+							char tmp;
+
+							tmp = lduba(v++, ASI_PHYS_CACHED);
+							error = copyout(&tmp, d++, sizeof(tmp));
+							if (error != 0)
+								break;
+						}
 					else
-						while (cnt--)
-							stba(v++, ASI_PHYS_CACHED, fubyte(d++));
+						while (cnt--) {
+							char tmp;
+
+							error = copyin(d++, &tmp, sizeof(tmp));
+							if (error != 0)
+								break;
+							stba(v++, ASI_PHYS_CACHED, tmp);
+						}
 					if (error)
 						goto unlock;
 					break;

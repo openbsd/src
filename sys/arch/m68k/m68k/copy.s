@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.s,v 1.13 2002/01/21 20:35:49 miod Exp $	*/
+/*	$OpenBSD: copy.s,v 1.14 2003/01/09 22:27:09 miod Exp $	*/
 /*	$NetBSD: copy.s,v 1.30 1998/03/04 06:39:14 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 
 /*
  * This file contains the functions for user-space access:
- * copyin/copyout, fuword/suword, etc.
+ * copyin/copyout, etc.
  */
 
 #include <sys/errno.h>
@@ -350,142 +350,3 @@ Lkcfault:
 	addl    #16,sp			| pop args and return address
 	moveq   #EFAULT,d0		| indicate a fault
 	bra     Lkcdone
-
-/*
- * fuword(caddr_t uaddr);
- * Fetch an int from the user's address space.
- */
-ENTRY(fuword)
-	CHECK_SFC
-	movl	sp@(4),a0		| address to read
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#Lferr,a1@(PCB_ONFAULT)
-	movsl	a0@,d0			| do read from user space
-	bra	Lfdone
-
-/*
- * fusword(caddr_t uaddr);
- * Fetch a short from the user's address space.
- */
-ENTRY(fusword)
-	CHECK_SFC
-	movl	sp@(4),a0		| address to read
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#Lferr,a1@(PCB_ONFAULT)
-	moveq	#0,d0
-	movsw	a0@,d0			| do read from user space
-	bra	Lfdone
-
-/*
- * fuswintr(caddr_t uaddr);
- * Fetch a short from the user's address space.
- * Can be called during an interrupt.
- */
-ENTRY(fuswintr)
-	CHECK_SFC
-	movl	sp@(4),a0		| address to read
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#_fubail,a1@(PCB_ONFAULT)
-	moveq	#0,d0
-	movsw	a0@,d0			| do read from user space
-	bra	Lfdone
-
-/*
- * fubyte(caddr_t uaddr);
- * Fetch a byte from the user's address space.
- */
-ENTRY(fubyte)
-	CHECK_SFC
-	movl	sp@(4),a0		| address to read
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#Lferr,a1@(PCB_ONFAULT)
-	moveq	#0,d0
-	movsb	a0@,d0			| do read from user space
-	bra	Lfdone
-
-/*
- * Error routine for fuswintr.  The fault handler in trap.c
- * checks for pcb_onfault set to this fault handler and
- * "bails out" before calling the VM fault handler.
- * (We can not call VM code from interrupt level.)
- * Same code as Lferr but must have a different address.
- */
-ENTRY(fubail)
-	nop
-Lferr:
-	moveq	#-1,d0			| error indicator
-Lfdone:
-	clrl	a1@(PCB_ONFAULT) 	| clear fault handler
-	rts
-
-/*
- * suword(caddr_t uaddr, int x);
- * Store an int in the user's address space.
- */
-ENTRY(suword)
-	CHECK_DFC
-	movl	sp@(4),a0		| address to write
-	movl	sp@(8),d0		| value to put there
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#Lserr,a1@(PCB_ONFAULT)
-	movsl	d0,a0@			| do write to user space
-	moveq	#0,d0			| indicate no fault
-	bra	Lsdone
-
-/*
- * susword(caddr_t uaddr, short x);
- * Store a short in the user's address space.
- */
-ENTRY(susword)
-	CHECK_DFC
-	movl	sp@(4),a0		| address to write
-	movw	sp@(10),d0		| value to put there
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#Lserr,a1@(PCB_ONFAULT)
-	movsw	d0,a0@			| do write to user space
-	moveq	#0,d0			| indicate no fault
-	bra	Lsdone
-
-/*
- * suswintr(caddr_t uaddr, short x);
- * Store a short in the user's address space.
- * Can be called during an interrupt.
- */
-ENTRY(suswintr)
-	CHECK_DFC
-	movl	sp@(4),a0		| address to write
-	movw	sp@(10),d0		| value to put there
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#_subail,a1@(PCB_ONFAULT)
-	movsw	d0,a0@			| do write to user space
-	moveq	#0,d0			| indicate no fault
-	bra	Lsdone
-
-/*
- * subyte(caddr_t uaddr, char x);
- * Store a byte in the user's address space.
- */
-ENTRY(subyte)
-	CHECK_DFC
-	movl	sp@(4),a0		| address to write
-	movb	sp@(11),d0		| value to put there
-	movl	_C_LABEL(curpcb),a1	| set fault handler
-	movl	#Lserr,a1@(PCB_ONFAULT)
-	movsb	d0,a0@			| do write to user space
-	moveq	#0,d0			| indicate no fault
-	bra	Lsdone
-
-/*
- * Error routine for suswintr.  The fault handler in trap.c
- * checks for pcb_onfault set to this fault handler and
- * "bails out" before calling the VM fault handler.
- * (We can not call VM code from interrupt level.)
- * Same code as Lserr but must have a different address.
- */
-ENTRY(subail)
-	nop
-Lserr:
-	moveq	#-1,d0			| error indicator
-Lsdone:
-	clrl	a1@(PCB_ONFAULT) 	| clear fault handler
-	rts

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.100 2002/12/17 22:46:31 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.101 2003/01/09 22:27:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2441,55 +2441,6 @@ LEAF_ENTRY(longjmp)
 	copy	arg1,ret0	/* Move return value to where it belongs. */
 EXIT(longjmp)
 
-
-	.align	32
-
-#define	FUSUX(name)				  \
-LEAF_ENTRY(name)				! \
-	ldil	L%VM_MAXUSER_ADDRESS, t1	! \
-	comb,>>= arg0, t1, fusubadaddr		! \
-	ldil	L%curproc, t1			! \
-	ldw	R%curproc(t1), t1		! \
-	ldw	P_ADDR(t1), t1			! \
-	ldil	L%fusufault, t2			! \
-	ldo	R%fusufault(t2), t2		! \
-	ldw	U_PCB+PCB_ONFAULT(t1), r1	! \
-	stw	t2, U_PCB+PCB_ONFAULT(t1)	! \
-	ldw	U_PCB+PCB_SPACE(t1), t2		! \
-	mtsp	t2, sr1
-
-#define	FUX(name,insn)				  \
-	FUSUX(name)				! \
-	insn	0(sr1, arg0), ret0		! \
-	mtsp	r0, sr1				! \
-	bv	r0(rp)				! \
-	stw	r1, U_PCB+PCB_ONFAULT(t1)	! \
-EXIT(name)
-
-#define	SUX(name,insn)				  \
-	FUSUX(name)				! \
-	insn	arg1, 0(sr1, arg0)		! \
-	mtsp	r0, sr1				! \
-	bv	r0(rp)				! \
-	stw	r1, U_PCB+PCB_ONFAULT(t1)	! \
-EXIT(name)
-
-LEAF_ENTRY(fusufault)
-	mtsp	r0, sr1
-	stw	r1, U_PCB+PCB_ONFAULT(t1)
-ALTENTRY(fusubadaddr)
-	bv	0(rp)
-	ldi	-1, ret0
-EXIT(fusuexit)
-
-FUX(fubyte,   ldb)
-FUX(fusword,  ldh)
-FUX(fuword,   ldw)
-FUX(fuswintr, ldh)
-SUX(subyte,   stb)
-SUX(susword,  sth)
-SUX(suword,   stw)
-SUX(suswintr, sth)
 
 	.align	32
 

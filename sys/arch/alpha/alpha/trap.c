@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.38 2002/07/24 00:33:49 art Exp $ */
+/* $OpenBSD: trap.c,v 1.39 2003/01/09 22:27:03 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -455,24 +455,6 @@ trap(a0, a1, a2, entry, framep)
 			}
 	
 do_fault:
-			/*
-			 * If it was caused by fuswintr or suswintr,
-			 * just punt.  Note that we check the faulting
-			 * address against the address accessed by
-			 * [fs]uswintr, in case another fault happens
-			 * when they are running.
-			 */
-			if (!user &&
-			    p != NULL &&
-			    p->p_addr->u_pcb.pcb_onfault ==
-			      (unsigned long)fswintrberr &&
-			    p->p_addr->u_pcb.pcb_accessaddr == a0) {
-				framep->tf_regs[FRAME_PC] =
-				    p->p_addr->u_pcb.pcb_onfault;
-				p->p_addr->u_pcb.pcb_onfault = 0;
-				goto out;
-			}
-
 			/*
 			 * It is only a kernel address space fault iff:
 			 *	1. !user and
