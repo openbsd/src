@@ -28,6 +28,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsdiff.c,v $
+ * Revision 1.2  1996/01/15 21:40:37  niklas
+ * Fix typo so two -L options can be fed to rcsdiff.
+ *
  * Revision 1.1.1.1  1995/10/18 08:41:03  deraadt
  * initial import of NetBSD tree
  *
@@ -150,7 +153,7 @@ static int exitstatus;
 static RILE *workptr;
 static struct stat workstat;
 
-mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.1.1.1 1995/10/18 08:41:03 deraadt Exp $")
+mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.2 1996/01/15 21:40:37 niklas Exp $")
 {
     static char const cmdusage[] =
 	    "\nrcsdiff usage: rcsdiff -ksubst -q -rrev1 [-rrev2] -Vn -xsuff -zzone [diff options] file ...";
@@ -211,7 +214,7 @@ mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.1.1.1 1995/10/18 08:41:03 der
 		    /* fall into */
 	    case 'C': case 'F': case 'I': case 'L': case 'W':
 #if DIFF_L
-		    if (c == 'L'  &&  ++file_labels == 2)
+		    if (c == 'L'  &&  file_labels++ == 2)
 			faterror("too many -L options");
 #endif
 		    *dcp++ = c;
