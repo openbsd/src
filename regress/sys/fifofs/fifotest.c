@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
@@ -13,21 +29,15 @@ void usage(void);
 void sigalrm(int);
 void dopoll(int, int, char *);
 
-#if defined(__OpenBSD__) || defined(__linux__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+    defined(__linux__)
 extern char *__progname;
 #else
 char *__progname;
 #endif
 
 /*
- * Test FIFOs and poll(2)
- * Expected results:
- *  testing POLLIN|POLLOUT
- *  1 fd(s) ready, revents == POLLOUT
- *  testing POLLIN
- *  0 fd(s) ready
- *  testing POLLOUT
- *  1 fd(s) ready, revents == POLLOUT
+ * Test FIFOs and poll(2) both with an emtpy and full FIFO.
  */
 int main(int argc, char **argv)
 {
@@ -36,7 +46,8 @@ int main(int argc, char **argv)
 	int fd;
 	char *fifo, buf[BUFSIZ];
 
-#if !defined(__OpenBSD__) && !defined(__linux__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+    defined(__linux__)
 	__progname = argv[0];
 #endif
 	if (argc != 2)
