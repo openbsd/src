@@ -45,11 +45,15 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 #include <sys/buf.h>
+#include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <sys/disklabel.h>
+#include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/dkio.h>
 #include <sys/dkstat.h>		/* XXX */
 
 /*
@@ -411,4 +415,78 @@ disk_resetstat(diskp)
 	timerclear(&diskp->dk_time);
 
 	splx(s);
+}
+
+
+int
+dk_mountroot()
+{
+	dev_t rawdev, rrootdev;
+	int part = DISKPART(rootdev);
+	int (*mountrootfn) __P((void));
+	extern struct proc *curproc;
+	struct disklabel dl;
+	int error;
+
+	rrootdev = blktochr(rootdev);
+	rawdev = MAKEDISKDEV(major(rrootdev), DISKUNIT(rootdev), RAW_PART);
+	printf("rootdev=0x%x rrootdev=0x%x rawdev=0x%x\n", rootdev,
+	    rrootdev, rawdev);
+
+	/*
+	 * open device, ioctl for the disklabel, and close it.
+	 */
+	error = (cdevsw[major(rrootdev)].d_open)(rawdev, FREAD,
+	    S_IFCHR, curproc);
+	if (error)
+		panic("cannot open disk, 0x%x/0x%x, error %d",
+		    rootdev, rrootdev, error);
+	error = (cdevsw[major(rrootdev)].d_ioctl)(rawdev, DIOCGDINFO,
+	    (caddr_t)&dl, FREAD, curproc);
+	if (error)
+		panic("cannot read disk label, 0x%x/0x%x, error %d",
+		    rootdev, rrootdev, error);
+	(void) (cdevsw[major(rrootdev)].d_close)(rawdev, FREAD,
+	    S_IFCHR, curproc);
+
+	if (dl.d_partitions[part].p_size == 0)
+		panic("root filesystem has size 0");
+	switch (dl.d_partitions[part].p_fstype) {
+#ifdef EXT2FS
+	case FS_EXT2FS:
+		{
+		extern int ext2fs_mountroot __P((void));
+		mountrootfn = ext2fs_mountroot;
+		}
+		break;
+#endif
+#ifdef FFS
+	case FS_BSDFFS:
+		{
+		extern int ffs_mountroot __P((void));
+		mountrootfn = ffs_mountroot;
+		}
+		break;
+#endif
+#ifdef LFS
+	case FS_BSDLFS:
+		{
+		extern int lfs_mountroot __P((void));
+		mountrootfn = lfs_mountroot;
+		}
+		break;
+#endif
+#ifdef CD9660
+	case FS_ISO9660:
+		{
+		extern int cd9660_mountroot __P((void));
+		mountrootfn = cd9660_mountroot;
+		}
+		break;
+#endif
+	default:
+		panic("filesystem type %d not known",
+		    dl.d_partitions[part].p_fstype);
+	}
+	return (*mountrootfn)();
 }
