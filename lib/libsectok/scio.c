@@ -1,4 +1,4 @@
-/* $Id: scio.c,v 1.9 2001/07/30 15:51:16 rees Exp $ */
+/* $Id: scio.c,v 1.10 2001/09/19 22:29:20 rees Exp $ */
 
 /*
 copyright 1997
@@ -64,7 +64,7 @@ static int todos_scfdopen(int ttyn, int fd, int flags, int *ep);
 static int todos_sccts(int ttyn);
 
 #ifdef __linux
-static char ttynametmpl[] = "/dev/cua%01d";
+static char ttynametmpl[] = "/dev/ttyS%01d";
 #elif _AIX
 static char ttynametmpl[] = "/dev/tty%01d";
 #elif __OpenBSD__
