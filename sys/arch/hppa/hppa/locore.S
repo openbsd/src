@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.47 2002/02/02 21:14:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -501,8 +501,8 @@ $bsd_syscall
 	 */
 	.import $syscall,code
 	.call
-	ldil	L%$syscall,r1
-	be,n	R%$syscall(sr7,r1)
+	ldil	L%$syscall, t2
+	be,n	R%$syscall(sr7, t2)
 	nop
 
 	.align	NBPG
@@ -520,36 +520,38 @@ $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
 $syscall
 	/*
 	 *
-	 * t1:	curproc
+	 * t1:	syscall number
 	 * t2:	user
 	 * t3:	args
 	 * t4:	user stack
 	 *
-	 * N.B. we are trying to rely on the fact that bottom of kernel
-	 *	stack contains a print of some past trapframe, so
-	 *	we do not save hard to get information, but do restore
-	 *	the whole context later on return anyway.
-	 * XXXXXX this is very bad. everything must be saved
 	 */
 	ldil	L%curproc, t3
 	ldw	R%curproc(sr1, t3), t3
+	copy	sp, t4
 	ldw	P_ADDR(sr1, t3), t2	/* XXX can use ,sl */
 
 	/* calculate kernel sp, load, create kernel stack frame */
-	copy	sp, t4
 	ldo	NBPG+TRAPFRAME_SIZEOF(t2), t3
 	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
 	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
 	stw	t4, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
-	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem */
+	ldil	L%kpsw, t1
+	ldw	R%kpsw(t1), t1
+	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem ,bc */
+	stw	t1, TF_CR22-TRAPFRAME_SIZEOF(sr1, t3)	/* ipsw */
+	mfsp	sr3, t1
+	stw	t1, TF_SR3-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r28, TF_CR8-TRAPFRAME_SIZEOF(sr1, t3)	/* pidr1 */
+	/* now we can allow interrupts to happen */
 	mtctl	r1, eiem
 
 	/*
 	 * we believe that any callee-save registers
 	 * will be saved accordingly in either syscall()
-	 * or deeper called functions
+	 * or deeper called functions and caller-save
+	 * are saved in userland.
 	 */
-	stw	r27, TF_R27-TRAPFRAME_SIZEOF(sr1, t3)	/* dp */
 	stw	r3 , TF_R3 -TRAPFRAME_SIZEOF(sr1, t3)
 #ifdef DDB
 	/* save callee-save registers */
@@ -569,6 +571,7 @@ $syscall
 	stw	r17, TF_R17-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	r18, TF_R18-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
+	stw	r27, TF_R27-TRAPFRAME_SIZEOF(sr1, t3)	/* dp */
 	stw	r0, 0(sr1, t3)	/* terminate frame */
 	copy	r0 , r3
 	stw	r0, HPPA_FRAME_PSP(sr1, sp)
@@ -603,25 +606,19 @@ $syscall
 	/*
 	 * Save the rest of the CPU context
 	 */
+	mfsp	sr0, arg0				/* use ,bc */
+	stw	arg0, TF_IISQH-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg0, TF_IISQT-TRAPFRAME_SIZEOF(sr1, t3)
 
 	ldo	4(r31), arg1
 	stw	r31, TF_IIOQH-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	arg1, TF_IIOQT-TRAPFRAME_SIZEOF(sr1, t3)
 
-	mfsp	sr0, arg0
-	stw	arg0, TF_IISQH-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	arg0, TF_IISQT-TRAPFRAME_SIZEOF(sr1, t3)
-
-	stw	arg0, TF_CR20-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg0, TF_CR20-TRAPFRAME_SIZEOF(sr1, t3)	/* use ,bc */
 	stw	r31, TF_CR21-TRAPFRAME_SIZEOF(sr1, t3)
 
-	mfsp	sr3, arg0
-	stw	arg0, TF_SR3-TRAPFRAME_SIZEOF(sr1, t3)
-	stw	r28, TF_CR8-TRAPFRAME_SIZEOF(sr1, t3)	/* pidr1 */
-
-	mfctl	iir, arg0	/* XXX bogus */
 	ldil	TFF_LAST|TFF_SYS, arg1
-	stw	arg0, TF_CR19-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	r0, TF_CR19-TRAPFRAME_SIZEOF(sr1, t3)	/* iir */
 	stw	arg1, TF_FLAGS-TRAPFRAME_SIZEOF(sr1, t3)
 
 	mfsp	sr0, arg0
@@ -663,6 +660,8 @@ $syscall
 	stw	arg0, TF_CR25-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	arg1, TF_CR28-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
+	mfctl	cr30, arg0
+	stw	arg0, TF_CR30(sr1, t3)
 
 	/* setup kernel context */
 	mtsp	r0, sr0
@@ -687,6 +686,7 @@ $syscall
 	.call
 	blr	r0, rp
 	bv,n	0(r1)
+	nop
 
 	ldil	L%curproc, r1
 	ldw	R%curproc(r1), r1
@@ -842,7 +842,7 @@ $syscall_end
 	mtctl	r1, tr7			! \
 	ldil	L%TLABEL(name), r1	! \
 	.call				! \
-	be	R%TLABEL(name)(sr4, r1)	! \
+	be	R%TLABEL(name)(sr7, r1)	! \
 	ldi	num, r1			! \
 	.align	32
 
@@ -1244,12 +1244,16 @@ LEAF_ENTRY(desidhash_s)
 ALTENTRY(desidhash_x)
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
+	nop
+	nop
 	depi	0, DR0_PCXS_DHE, 3, t1	/* 3 4 DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
 	depi	1, DR0_PCXS_EQWSTO, 1, t1
 	depi	0, DR0_PCXS_DHPMC, 1, t1
 	depi	0, DR0_PCXS_ILPMC, 1, t1
 	MTCPU_T(22,DR_CPUCFG)
 	MTCPU_T(22,DR_CPUCFG)
+	nop
+	nop
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_s)
@@ -1262,12 +1266,16 @@ EXIT(desidhash_s)
 LEAF_ENTRY(desidhash_t)
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
+	nop
+	nop
 	depi	0, DR0_PCXT_IHE, 1, t1
 	depi	0, DR0_PCXT_DHE, 1, t1
 	depi	0, DR0_PCXT_DHPMC, 1, t1
 	depi	0, DR0_PCXT_ILPMC, 1, t1
 	MTCPU_T(22,DR_CPUCFG)
 	MTCPU_T(22,DR_CPUCFG)
+	nop
+	nop
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_t)
@@ -1416,11 +1424,15 @@ LEAF_ENTRY(pbtlb_l)
 	ldil	L%0xc041, t1
 	dep	arg0, 30, 3, t1
 	MTCPU_T(22,DR_DTLB)	/* t1 */
+	nop
+	nop
 	mtsp	r0, sr1
 	idtlba	r0,(sr1,r0)
 	idtlbp	r0,(sr1,r0)
 	zdepi	-1, 18, 1, t1
 	MTCPU_T(22,DR_DTLB)
+	nop
+	nop
 	bv	0(rp)
 	mtsm	t4
 EXIT(pbtlb_l)
@@ -1430,6 +1442,8 @@ EXIT(pbtlb_l)
  */
 LEAF_ENTRY(desidhash_l)
 	MFCPU_C(DR_CPUCFG,22)	/* t1 */
+	nop
+	nop
 	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
 	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
@@ -1437,6 +1451,8 @@ LEAF_ENTRY(desidhash_l)
 	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
 		/* set DR0_PCXL_L1ICACHE_EN ??? */
 	MTCPU_C(22,DR_CPUCFG)
+	nop
+	nop
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_l)
@@ -1820,7 +1836,7 @@ $trapnowvirt
 	 * form trap type in the first argument to trap()
 	 */
 	ldw	TF_FLAGS(t3), arg0
-	dep	r0, 26, 27, arg0
+	dep	r0, 24, 25, arg0
 	copy	t3, arg1
 
 #ifdef DDB
@@ -2232,9 +2248,9 @@ LEAF_ENTRY(microtime)
 	/* splx(t4) */
 	mtctl	t4, eiem
 
-	add	1, t2, t2
+	addi	1, t2, t2
 	addb,<	t2, t3, microtime_no
-	add	1, t1, t1
+	addi	1, t1, t1
 
 	copy	t3, t2
 
@@ -2350,7 +2366,7 @@ remrunqueue_ok
 	comb,<>	t4, arg0, Lqnempty
 	nop
 
-	vdepi	1, 1, t3
+	vdepi	0, 1, t3
 	stw	t3, R%whichqs(t2)
 Lqnempty
 	bv	0(rp)
