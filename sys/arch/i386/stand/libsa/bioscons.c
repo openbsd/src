@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.22 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.23 2003/07/07 07:42:51 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -164,7 +164,12 @@ comspeed(dev, sp)
 	if (115200 < sp || sp < 75)
 		return -1;
 
-	for (i = sp; i != 75; i >>= 1)
+	/*
+	 * Accepted speeds:
+	 *   75 150 300 600 1200 2400 4800 9600 19200 38400 76800 and
+	 *   14400 28800 57600 115200
+	 */
+	for (i = sp; i != 75 && i != 14400; i >>= 1)
 		if (i & 1)
 			return -1;
 
