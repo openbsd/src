@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.6 1995/02/27 03:42:57 cgd Exp $	*/
+/*	$NetBSD: exec.c,v 1.7 1995/12/14 16:51:27 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.6 1995/02/27 03:42:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.7 1995/12/14 16:51:27 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,39 +58,6 @@ static char rcsid[] = "$NetBSD: exec.c,v 1.6 1995/02/27 03:42:57 cgd Exp $";
 
 extern char **environ;
 
-static char **
-buildargv(ap, arg, envpp)
-	va_list ap;
-	const char *arg;
-	char ***envpp;
-{
-	static size_t memsize;
-	static char **argv;
-	register size_t off;
-
-	argv = NULL;
-	for (off = 0;; ++off) {
-		if (off >= memsize) {
-			memsize += 50;	/* Starts out at 0. */
-			memsize *= 2;	/* Ramp up fast. */
-			if (!(argv = realloc(argv, memsize * sizeof(char *)))) {
-				memsize = 0;
-				return (NULL);
-			}
-			if (off == 0) {
-				argv[0] = (char *)arg;
-				off = 1;
-			}
-		}
-		if (!(argv[off] = va_arg(ap, char *)))
-			break;
-	}
-	/* Get environment pointer if user supposed to provide one. */
-	if (envpp)
-		*envpp = va_arg(ap, char **);
-	return (argv);
-}
-
 int
 #if __STDC__
 execl(const char *name, const char *arg, ...)
@@ -102,21 +69,31 @@ execl(name, arg, va_alist)
 #endif
 {
 	va_list ap;
-	int sverrno;
 	char **argv;
+	int i;
 
 #if __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	if (argv = buildargv(ap, arg, NULL))
-		(void)execve(name, argv, environ);
+	for (i = 1; va_arg(ap, char *) != NULL; i++)
+		;
 	va_end(ap);
-	sverrno = errno;
-	free(argv);
-	errno = sverrno;
-	return (-1);
+
+	argv = alloca (i * sizeof (char *));
+	
+#if __STDC__
+	va_start(ap, arg);
+#else
+	va_start(ap);
+#endif
+	argv[0] = (char *) arg;
+	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
+		;
+	va_end(ap);
+	
+	return execve(name, argv, environ);
 }
 
 int
@@ -130,21 +107,32 @@ execle(name, arg, va_alist)
 #endif
 {
 	va_list ap;
-	int sverrno;
 	char **argv, **envp;
+	int i;
 
 #if __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	if (argv = buildargv(ap, arg, &envp))
-		(void)execve(name, argv, envp);
+	for (i = 1; va_arg(ap, char *) != NULL; i++)
+		;
 	va_end(ap);
-	sverrno = errno;
-	free(argv);
-	errno = sverrno;
-	return (-1);
+
+	argv = alloca (i * sizeof (char *));
+	
+#if __STDC__
+	va_start(ap, arg);
+#else
+	va_start(ap);
+#endif
+	argv[0] = (char *) arg;
+	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
+		;
+	envp = (char **) va_arg(ap, char **);
+	va_end(ap);
+
+	return execve(name, argv, envp);
 }
 
 int
@@ -158,21 +146,31 @@ execlp(name, arg, va_alist)
 #endif
 {
 	va_list ap;
-	int sverrno;
 	char **argv;
+	int i;
 
 #if __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	if (argv = buildargv(ap, arg, NULL))
-		(void)execvp(name, argv);
+	for (i = 1; va_arg(ap, char *) != NULL; i++)
+		;
 	va_end(ap);
-	sverrno = errno;
-	free(argv);
-	errno = sverrno;
-	return (-1);
+
+	argv = alloca (i * sizeof (char *));
+	
+#if __STDC__
+	va_start(ap, arg);
+#else
+	va_start(ap);
+#endif
+	argv[0] = (char *) arg;
+	for (i = 1; (argv[i] = va_arg(ap, char *)) != NULL; i++) 
+		;
+	va_end(ap);
+	
+	return execvp(name, argv);
 }
 
 int
@@ -180,8 +178,7 @@ execv(name, argv)
 	const char *name;
 	char * const *argv;
 {
-	(void)execve(name, argv, environ);
-	return (-1);
+	return execve(name, argv, environ);
 }
 
 int
