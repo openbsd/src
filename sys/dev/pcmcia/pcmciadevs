@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.51 2001/03/27 07:36:08 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.52 2001/03/27 07:52:15 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -352,4 +352,5 @@ product ADDTRON AWP100		{ "Addtron", "AWP-100", "Version&sp01.02", NULL }
 product NEC CMZ_RT_WP		{ "NEC", "Wireless&spCard&spCMZ-RT-WP", "Version&sp01.01", NULL }
 product NTT_ME WLAN		{ "NTT-ME", "11Mbps&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product SMC 2632W		{ "SMC", "SMC2632W", "Version&sp01.02", NULL }
-product NANOSPEED PRISM2        { "NANOSPEED", "HFA384x/IEEE", "Version&sp01.02", NULL }
+product NANOSPEED PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version&sp01.02", NULL }
+product CABLETRON ROAMABOUT	{ "Cabletron", "RoamAbout&sp802.11&spDS", "Version&sp01.01", NULL }
