@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2002/12/17 16:16:08 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2003/01/06 18:09:22 mickey Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -36,7 +36,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.19 2002/12/17 16:16:08 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.20 2003/01/06 18:09:22 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ main(argc, argv)
 	decomp = 0;
 	if (!strcmp(p, "zcat")) {
 		decomp++;
-		cat++;
+		cat = 1;
 	} else {
 		if (p[0] == 'u' && p[1] == 'n') {
 			p += 2;
@@ -205,7 +205,7 @@ main(argc, argv)
 				errx(1, "illegal bit count -- %s", optarg);
 			break;
 		case 'c':
-			cat++;
+			cat = 1;
 			break;
 		case 'd':		/* Backward compatible. */
 			decomp++;
@@ -235,7 +235,7 @@ main(argc, argv)
 			if (strlcpy(outfile, optarg,
 			    sizeof(outfile)) >= sizeof(outfile))
 				errx(1, "-o argument is too long");
-			oflag++;
+			oflag = 1;
 			break;
 		case 'q':
 			verbose = -1;
@@ -248,7 +248,7 @@ main(argc, argv)
 			p = optarg;
 			break;
 		case 't':
-			testmode++;
+			testmode = 1;
 			break;
 		case 'V':
 			printf("%s\n%s\n%s\n", main_rcsid,
@@ -280,10 +280,11 @@ main(argc, argv)
 		argv[0] = "/dev/stdin";
 		argv[1] = NULL;
 		pipin++;
-		cat++;
+		cat = 1;
 	}
 	if (oflag && (recurse || argc > 1))
 		errx(1, "-o option may only be used with a single input file");
+
 	if (cat + testmode + oflag > 1)
 		errx(1, "may not mix -o, -c, or -t options");
 
@@ -323,7 +324,7 @@ main(argc, argv)
 			error = 1;
 			continue;
 		default:
-			if (!S_ISREG(entry->fts_statp->st_mode)) {
+			if (!S_ISREG(entry->fts_statp->st_mode) && !pipin) {
 				warnx("%s not a regular file: unchanged",
 				    infile);
 				continue;
