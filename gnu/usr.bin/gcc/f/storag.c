@@ -131,8 +131,8 @@ ffestorag_dump (ffestorag s)
   if (s->symbol != NULL)
     fprintf (dmpout, "\"%s\" ", ffesymbol_text (s->symbol));
 
-  fprintf (dmpout, "at %" ffetargetOffset_f "u size %" ffetargetOffset_f
-	   "u, align loc%%%"
+  fprintf (dmpout, "at %" ffetargetOffset_f "d size %" ffetargetOffset_f
+	   "d, align loc%%%"
 	   ffetargetAlign_f "u=%" ffetargetAlign_f "u, bt=%s, kt=%s",
 	   s->offset,
 	   s->size, (unsigned int) s->alignment, (unsigned int) s->modulo,

@@ -149,6 +149,8 @@ DEFNAME	("FPMAKE",	"fpmake",	"FPMake",	genFPMAKE,	specNONE)	/* F2C */
 DEFNAME	("FPRRSP",	"fprrsp",	"FPRRSp",	genFPRRSP,	specNONE)	/* F2C */
 DEFNAME	("FPSCAL",	"fpscal",	"FPScal",	genFPSCAL,	specNONE)	/* F2C */
 DEFNAME	("FRACTION",	"fraction",	"Fraction",	genNONE,	specFRACTION)	/* F90 */
+DEFNAME	("FSEEK",	"fseek",	"FSeek",	genNONE,	specFSEEK)	/* UNIX */
+DEFNAME	("FTELL",	"ftell",	"FTell",	genNONE,	specFTELL)	/* UNIX */
 DEFNAME	("GETARG",	"getarg",	"GetArg",	genNONE,	specGETARG)	/* UNIX */
 DEFNAME	("GETENV",	"getenv",	"GetEnv",	genNONE,	specGETENV)	/* UNIX */
 DEFNAME	("HUGE",	"huge",	"Huge",	genNONE,	specHUGE)	/* F90 */
@@ -1267,6 +1269,18 @@ DEFSPEC (FFEINTRIN_specFRACTION,
     FFEINTRIN_familyF90,
     FFEINTRIN_impNONE
   )
+DEFSPEC (FFEINTRIN_specFSEEK,
+    "FSEEK",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFSEEK
+  )
+DEFSPEC (FFEINTRIN_specFTELL,
+    "FTELL",
+    FALSE,
+    FFEINTRIN_familyF2U,
+    FFEINTRIN_impFTELL
+  )
 DEFSPEC (FFEINTRIN_specGETARG,
     "GETARG",
     FALSE,
@@ -2314,12 +2328,16 @@ DEFSPEC (FFEINTRIN_specNONE,
      2    (COMPLEX*16, INTEGER*1, LOGICAL*1, REAL*8)
      3    (INTEGER*2, LOGICAL*2)
      A    Same as first argument
+     g    GOTO label (alternate-return form of CALL)
      s    Signal handler (INTEGER FUNCTION, SUBROUTINE or dummy/global
           default INTEGER variable) (arg-base-type * only)
 
    <arg-extra> is:
 
+          (default) Arg is (scalar) variable or constant
      &    Arg can have its address taken (LOC(), for example)
+     g    GOTO label (alternate-return form of CALL)
+     s    Signal handler (see <arg-kind>)
      w    Arg is INTENT(OUT)
      x    Arg is INTENT(INOUT)
 
@@ -2481,6 +2499,8 @@ DEFIMP	(ERF,		"ERF",		ERF,		"R0:-:X=R0")
 DEFIMP	(ERFC,		"ERFC",		ERFC,		"R0:-:X=R0")
 DEFIMP	(EXIT,		"EXIT",		EXIT,		"--:-:Status=?I0")
 DEFIMP	(FLUSH,		"FLUSH",	FLUSH,		"--:-:Unit=?I0")
+DEFIMP	(FSEEK,		"FSEEK",	FSEEK,		"--:-:Unit=I0,Offset=I0,Whence=I0,ErrLab=?-gg")
+DEFIMP	(FTELL,		"FTELL",	FTELL,		"I1:-:Unit=?I0")
 DEFIMP	(GETARG,	"GETARG",	GETARG,		"--:-:Pos=I0,Value=A1w")
 DEFIMP	(GETENV,	"GETENV",	GETENV,		"--:-:Name=A1,Value=A1w")
 DEFIMP	(IACHAR,	"IACHAR",	,		"I1:-:C=A0")
@@ -2499,7 +2519,7 @@ DEFIMP	(MVBITS,	"MVBITS",	,		"--:-:From=I0,FromPos=I0,Len=I0,TO=IAx,ToPos=I0")
 DEFIMP	(NOT,		"NOT",		,		"I0:*:I=I0")
 DEFIMP	(OR,		"OR",		,		"B0:*:I=B0,J=B0")
 DEFIMP	(RSHIFT,	"RSHIFT",	,		"I0:1:I=I0,Shift=I0")
-DEFIMP	(SIGNAL,	"SIGNAL",	,		"--:-:Number=I0,Handler=-s")
+DEFIMP	(SIGNAL,	"SIGNAL",	,		"--:-:Number=I0,Handler=-ss")
 DEFIMP	(SYSTEM,	"SYSTEM",	,		"--:-:Command=A1,Status=?I1")
 DEFIMP	(XOR,		"XOR",		,		"B0:*:I=B0,J=B0")
 DEFIMP	(NONE,		"none",		,		"")

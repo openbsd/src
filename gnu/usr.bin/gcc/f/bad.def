@@ -104,6 +104,12 @@ FFEBAD_MSGS2 (FFEBAD_INVALID_DOTDOT, FATAL,
 FFEBAD_MSGS2 (FFEBAD_QUOTE_MISSES_DIGITS, FATAL,
 "Double-quote at %0 not followed by a string of valid octal digits at %1",
 "Invalid octal constant at %0")
+FFEBAD_MSGS2 (FFEBAD_INVALID_BINARY_DIGIT, FATAL,
+"Invalid binary digit(s) found in string of digits at %0",
+"Invalid binary constant at %0")
+FFEBAD_MSGS2 (FFEBAD_INVALID_HEX_DIGIT, FATAL,
+"Invalid hexadecimal digit(s) found in string of digits at %0",
+"Invalid hexadecimal constant at %0")
 FFEBAD_MSGS2 (FFEBAD_INVALID_OCTAL_DIGIT, FATAL,
 "Invalid octal digit(s) found in string of digits at %0",
 "Invalid octal constant at %0")
@@ -167,7 +173,7 @@ FFEBAD_MSGS2 (FFEBAD_UNREC_STMT, FATAL,
 "Unrecognized statement name at %0 and invalid form for assignment or statement-function definition at %1",
 "Invalid statement at %0")
 FFEBAD_MSGS2 (FFEBAD_UNIMPL_STMT, FATAL,
-"Unimplemented or invalid form of statement at %0 (this is a catchall diagnostic that currently applies to a wide variety of errors, including things like invalid ordering of statements)",
+"Unimplemented or invalid form of statement at %0 (this is a catchall diagnostic that currently applies to a wide variety of errors, including things like invalid ordering of statements and invalid reference to intrinsic procedure)",
 "Invalid statement at %0")
 FFEBAD_MSGS2 (FFEBAD_INVALID_STMT_FORM, FATAL,
 "Invalid form for %A statement at %0",
@@ -563,7 +569,7 @@ FFEBAD_MSGS1 (FFEBAD_EQUIV_COMMON, FATAL,
 FFEBAD_MSGS1 (FFEBAD_EQUIV_ALIGN, FATAL,
 "Can't place `%A' as directed by EQUIVALENCE due to alignment restrictions")
 FFEBAD_MSGS1 (FFEBAD_EQUIV_MISMATCH, FATAL,
-"Mismatched EQUIVALENCE requirements for placement of `%A'")
+"Mismatched EQUIVALENCE requirements for placement of `%A' at both %C and %D bytes offset from `%B'")
 FFEBAD_MSGS1 (FFEBAD_EQUIV_RANGE, FATAL,
 "Array or substring specification for `%A' out of range in EQUIVALENCE statement")
 FFEBAD_MSGS1 (FFEBAD_EQUIV_SUBSTR, FATAL,
@@ -576,7 +582,7 @@ FFEBAD_MSGS2 (FFEBAD_COMMON_PAD, WARN,
 "Padding of %A %D required before `%B' in common block `%C' at %0 -- consider reordering members, largest-type-size first",
 "Padding of %A %D required before `%B' in common block `%C' at %0")
 FFEBAD_MSGS1 (FFEBAD_COMMON_NEG, FATAL,
-"Attempt to extend COMMON/EQUIVALENCE area beyond its starting point via EQUIVALENCE of `%A'")
+"Attempt to extend COMMON area beyond its starting point via EQUIVALENCE of `%A'")
 FFEBAD_MSGS1 (FFEBAD_EQUIV_FEW, FATAL,
 "Too few elements in reference to array `%A' in EQUIVALENCE statement")
 FFEBAD_MSGS1 (FFEBAD_EQUIV_MANY, FATAL,

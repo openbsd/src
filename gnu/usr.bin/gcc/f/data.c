@@ -100,7 +100,7 @@ static bool ffedata_reported_error_;	/* Error has been reported. */
 static ffesymbol ffedata_symbol_ = NULL;	/* Symbol being initialized. */
 static ffeinfoBasictype ffedata_basictype_;	/* Info on symbol. */
 static ffeinfoKindtype ffedata_kindtype_;
-static ffestorag ffedata_storage_;	/* If non-NULL, inits go here. */
+static ffestorag ffedata_storage_;	/* If non-NULL, inits go into this parent. */
 static ffeinfoBasictype ffedata_storage_bt_;	/* Info on storage. */
 static ffeinfoKindtype ffedata_storage_kt_;
 static ffetargetOffset ffedata_storage_size_;	/* Size of entire storage. */
@@ -1192,7 +1192,8 @@ ffedata_gather_ (ffestorag mst, ffestorag st)
 			    kt);/* Find out unit size of source datum. */
   assert (units % ffedata_storage_units_ == 0);
   units_expected = ffedata_charexpected_ * units / ffedata_storage_units_;
-  offset = ffestorag_offset (st) / ffedata_storage_units_;
+  offset = (ffestorag_offset (st) - ffestorag_offset (mst))
+    / ffedata_storage_units_;
 
   /* Does an accretion array exist?  If not, create it. */
 
@@ -1560,7 +1561,8 @@ ffedata_value_ (ffebld value, ffelexToken token)
       assert (units % ffedata_storage_units_ == 0);
       units_expected = ffedata_charexpected_ * units / ffedata_storage_units_;
       offset *= units / ffedata_storage_units_;
-      offset += ffestorag_offset (ffesymbol_storage (ffedata_symbol_))
+      offset += (ffestorag_offset (ffesymbol_storage (ffedata_symbol_))
+		 - ffestorag_offset (ffedata_storage_))
 	/ ffedata_storage_units_;
 
       assert (offset + units_expected - 1 <= ffedata_storage_size_);

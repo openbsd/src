@@ -2,7 +2,7 @@
 #include "fio.h"
 #include "fmt.h"
 #include "lio.h"
-#include "ctype.h"
+#include <ctype.h>
 #include "fp.h"
 
 extern char *f__fmtbuf;
@@ -20,7 +20,7 @@ int (*f__lioproc)(), (*l_getc)(), (*l_ungetc)();
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
+#include <stdlib.h>
 int (*f__lioproc)(ftnint*, char*, ftnlen, ftnint), (*l_getc)(void),
 	(*l_ungetc)(int,FILE*);
 #endif
@@ -524,7 +524,7 @@ l_read(ftnint *number, char *ptr, ftnlen len, ftnint type)
 				GETC(ch);
 				switch(ch) {
 				case EOF:
-					goto loopend;
+					err(f__elist->ciend,(EOF),"list in")
 				case ' ':
 				case '\t':
 				case '\n':
@@ -578,13 +578,9 @@ l_read(ftnint *number, char *ptr, ftnlen len, ftnint type)
 		Ungetc(ch,f__cf);
 	loopend:
 		if(f__lquit) return(0);
-		if(f__cf) {
-			if (feof(f__cf))
-				err(f__elist->ciend,(EOF),"list in")
-			else if(ferror(f__cf)) {
-				clearerr(f__cf);
-				errfl(f__elist->cierr,errno,"list in");
-				}
+		if(f__cf && ferror(f__cf)) {
+			clearerr(f__cf);
+			errfl(f__elist->cierr,errno,"list in");
 			}
 		if(f__ltype==0) goto bump;
 		switch((int)type)

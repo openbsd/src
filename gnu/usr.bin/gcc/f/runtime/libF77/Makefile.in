@@ -1,7 +1,7 @@
 # Makefile for GNU F77 compiler runtime.
 # Copyright 1990 - 1994 by AT&T Bell Laboratories and Bellcore (see the
 # file `Notice').
-#   Portions of this file Copyright (C) 1995 Free Software Foundation, Inc.
+#   Portions of this file Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 #   Contributed by Dave Love (d.love@dl.ac.uk).
 #
 #This file is part of GNU Fortran.
@@ -38,7 +38,7 @@ DEFS = @DEFS@
 CGFLAGS = -g0
 # f2c.h should already be installed in xgcc's include directory but add that
 # to -I anyhow in case not using xgcc.
-ALL_CFLAGS = -I$(srcdir) -I../../include $(CPPFLAGS) $(DEFS) $(CFLAGS)
+ALL_CFLAGS = -I$(srcdir) -I../../../include $(CPPFLAGS) $(DEFS) $(CFLAGS)
 AR = @AR@
 AR_FLAGS = rc
 RANLIB = @RANLIB@
@@ -75,6 +75,7 @@ HALF =	h_abs.o h_dim.o h_dnnt.o h_indx.o h_len.o h_mod.o  h_nint.o h_sign.o
 CMP =	l_ge.o l_gt.o l_le.o l_lt.o hl_ge.o hl_gt.o hl_le.o hl_lt.o
 EFL =	ef1asc_.o ef1cmc_.o
 CHAR =	s_cat.o s_cmp.o s_copy.o
+F90BIT = lbitbits.o lbitshft.o
 
 lib = ../../../libf2c.a
 
@@ -108,6 +109,6 @@ clean:
 
 # Not quite all these actually do depend on f2c.h...
 $(MISC) $(POW) $(CX) $(DCX) $(REAL) $(DBL) $(INT) \
-  $(HALF) $(CMP) $(EFL) $(CHAR): $(F2C_H)
+  $(HALF) $(CMP) $(EFL) $(CHAR): $(F2C_H) $(F90BIT)
 
 force:

@@ -5,7 +5,7 @@ double sqrt();
 double r_sqrt(x) real *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double r_sqrt(real *x)
 #endif
 {

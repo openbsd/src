@@ -1,5 +1,5 @@
-#include "stdio.h"
-#include "signal.h"
+#include <stdio.h>
+#include <signal.h>
 
 #ifndef SIGIOT
 #ifdef SIGABRT
@@ -10,7 +10,7 @@
 #ifdef KR_headers
 void sig_die(s, kill) register char *s; int kill;
 #else
-#include "stdlib.h"
+#include <stdlib.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

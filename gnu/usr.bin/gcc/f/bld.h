@@ -586,6 +586,8 @@ ffebldConstant ffebld_constant_new_integer7_val (ffetargetInteger7 val);
 ffebldConstant ffebld_constant_new_integer8 (ffelexToken t);
 ffebldConstant ffebld_constant_new_integer8_val (ffetargetInteger8 val);
 #endif
+ffebldConstant ffebld_constant_new_integerbinary (ffelexToken t);
+ffebldConstant ffebld_constant_new_integerhex (ffelexToken t);
 ffebldConstant ffebld_constant_new_integeroctal (ffelexToken t);
 #if FFETARGET_okLOGICAL1
 ffebldConstant ffebld_constant_new_logical1 (bool truth);

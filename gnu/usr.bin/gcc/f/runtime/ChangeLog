@@ -1,3 +1,108 @@
+Sun Dec  1 21:25:27 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* configure: Regenerated using autoconf-2.12.
+
+Mon Nov 25 21:16:15 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* configure: Regenerated using autoconf-2.11.
+
+1996-11-19  Dave Love  <d.love@dl.ac.uk>
+
+	* libI77/backspace.c: Include sys/types.h for size_t.
+
+Wed Nov  6 14:17:27 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* f2c.h.in: Properly comment out the unsupported stuff so
+	we don't get build-time errors.
+
+	* libF77/Version.c, libI77/Version.c: Restore macro definition
+	of version information.
+
+	* libI77/Makefile.in (OBJ): Add ftell_.o to list of objects.
+
+	* libI77/uio.c (do_ud): Fix up casts in PAD_UDread case just
+	like they were fixed in the other case.
+
+Thu Oct 31 22:27:45 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* libI77/ftell_.c (fseek_): Map incoming whence argument to
+	system's actual SEEK_CUR, SEEK_SET, or SEEK_END macro for
+	fseek(), and crash (gracefully) if the argument is invalid.
+
+1996-10-19  Dave Love  <d.love@dl.ac.uk>
+
+	* configure.in: Add check that we have the tools to cross-compile
+ 	if appropriate.
+	(NO_EOF_CHAR_CHECK,Skip_f2c_Undefs): Define.
+
+	* libF77/Makefile.in (F90BIT): New routines from Netlib.
+
+	* f2c.h.in:
+	Use more sanitary #error (indented for K&R compliance if necessary) if
+	f2c_i2 defined.
+	Sync with Netlib: Add `uninteger'.  (Commented out) integer*8 stuff.
+	bit_{test,clear,set} macros.
+
+1996-10-19  Dave Love  <d.love@dl.ac.uk>
+
+	Update to Netlib version of 1996-09-26.
+	
+	* libI77/Version.c: Use <stdio.h>, not "stdio.h".
+	* libF77/Version.c: Likewise.
+
+Wed Aug 28 13:25:29 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* libI77/rsne.c (x_rsne): Use size_t instead f int.
+
+	* libI77/endfile.c (copy): Use size_t in place of int.
+
+Wed Aug 28 13:22:20 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* libI77/backspace.c (f_back): Cast fread arg to size_t.
+
+Tue Aug 27 19:11:30 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* libI77/Version.c: Supply */ to avoid apparent nested comment.
+
+Tue Aug 20 09:21:43 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* libF77/Makefile.in (ALL_CFLAGS): Fix missing ../ for include.
+	* libI77/Makefile.in (ALL_CFLAGS): Likewise.
+
+Sat Aug 17 13:00:47 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* (libF77/qbitshft.c, libF77/qbitbits.c, libF77/lbitshft.c,
+ 	libF77/lbitbits.c): New file from Netlib.  qbit... not currently
+	compiled.
+
+Sun Jul  7 18:06:33 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* libF77/z_sqrt.c, libF77/z_sin.c, libF77/z_exp.c, libF77/z_log.c,
+ 	libF77/system_.c, libF77/z_cos.c, libF77/signal_.c,
+ 	libF77/s_stop.c, libF77/sig_die.c, libF77/s_paus.c,
+ 	libF77/s_rnge.c, libF77/s_cat.c, libF77/r_tan.c, libF77/r_tanh.c,
+ 	libF77/r_sinh.c, libF77/r_sqrt.c, libF77/r_sin.c, libF77/r_mod.c,
+ 	libF77/r_nint.c, libF77/r_lg10.c, libF77/r_log.c, libF77/r_exp.c,
+ 	libF77/r_int.c, libF77/r_cosh.c, libF77/r_atn2.c, libF77/r_cos.c,
+ 	libF77/r_asin.c, libF77/r_atan.c, libF77/r_acos.c,
+ 	libF77/pow_dd.c, libF77/pow_zz.c, libF77/main.c, libF77/i_dnnt.c,
+ 	libF77/i_nint.c, libF77/h_dnnt.c, libF77/h_nint.c, libF77/exit.c,
+ 	libF77/d_tan.c, libF77/d_tanh.c, libF77/d_sqrt.c, libF77/d_sin.c,
+ 	libF77/d_sinh.c, libF77/d_mod.c, libF77/d_nint.c, libF77/d_log.c,
+ 	libF77/d_int.c, libF77/d_lg10.c, libF77/d_cosh.c, libF77/d_exp.c,
+ 	libF77/d_atn2.c, libF77/d_cos.c, libF77/d_atan.c, libF77/d_acos.c,
+ 	libF77/d_asin.c, libF77/c_sqrt.c, libF77/cabs.c, libF77/c_sin.c,
+ 	libF77/c_exp.c, libF77/c_log.c, libF77/c_cos.c, libF77/F77_aloc.c,
+ 	libF77/abort_.c, libI77/xwsne.c, libI77/wref.c, libI77/util.c,
+ 	libI77/uio.c, libI77/rsne.c, libI77/rdfmt.c, libI77/rawio.h,
+ 	libI77/open.c, libI77/lread.c, libI77/inquire.c, libI77/fio.h,
+ 	libI77/err.c, libI77/endfile.c, libI77/close.c:
+	Use #include <...>, not #include "..." for mkdeps
+
+Sat Jul  6 21:39:21 1996  Dave Love  <d.love@dl.ac.uk>
+
+	* libI77/ftell_.c: Added from Netlib distribution.
+
 Sat Mar 30 20:57:24 1996  Dave Love  <d.love@dl.ac.uk>
 
 	* configure.in: Eliminate explicit use of

@@ -6,7 +6,7 @@ integer f_clos(a) cllist *a;
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
+#include <stdlib.h>
 #ifdef NON_UNIX_STDIO
 #ifndef unlink
 #define unlink remove

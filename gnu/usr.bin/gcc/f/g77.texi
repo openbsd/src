@@ -102,16 +102,16 @@ was contributed to Craig by David Ronis (@code{ronis@@onsager.chem.mcgill.ca}).
 @sp 2
 @center James Craig Burley
 @sp 3
-@center Last updated 1996-03-23
+@center Last updated 1996-12-03
 @sp 1
 @c The version number appears some more times in this file.
 
-@center for version 0.5.18
+@center for version 0.5.19
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @sp 2
-For GNU Fortran Version 0.5.18*
+For GNU Fortran Version 0.5.19*
 @sp 1
 Published by the Free Software Foundation @*
 59 Temple Place - Suite 330@*
@@ -152,19 +152,19 @@ original English.
 @ifset USING
 This manual documents how to run, install and port the GNU Fortran
 compiler, as well as its new features and incompatibilities, and how to
-report bugs.  It corresponds to GNU Fortran version 0.5.18.
+report bugs.  It corresponds to GNU Fortran version 0.5.19.
 @end ifset
 @end ifset
 
 @ifclear INTERNALS
 This manual documents how to run and install the GNU Fortran compiler,
 as well as its new features and incompatibilities, and how to report
-bugs.  It corresponds to GNU Fortran version 0.5.18.
+bugs.  It corresponds to GNU Fortran version 0.5.19.
 @end ifclear
 @ifclear USING
 This manual documents how to port the GNU Fortran compiler,
 as well as its new features and incompatibilities, and how to report
-bugs.  It corresponds to GNU Fortran version 0.5.18.
+bugs.  It corresponds to GNU Fortran version 0.5.19.
 @end ifclear
 
 @end ifinfo
@@ -1223,8 +1223,8 @@ appropriately before submitting it to the @code{gcc} command.
 @cindex g77 options, -v
 @cindex options, -v
 @cindex -@w{}-driver option
-@cindex g77 options, --driver
-@cindex options, --driver
+@cindex g77 options, -@w{}-driver
+@cindex options, -@w{}-driver
 Use the @samp{-v} option with @code{g77}
 to see what is going on---the first line of output is the invocation
 of the @code{gcc} command.
@@ -1251,11 +1251,11 @@ the @code{gcc} command:
 @table @code
 @cindex -@w{}-driver option
 @cindex g77 options, driver
-@cindex options, --driver
+@cindex options, -@w{}-driver
 @item --driver=@var{command}
 Specifies that @var{command}, rather than @code{gcc}, is to
 be invoked by @code{g77} to do its job.
-For example, within the gcc build directory after
+For example, within the @samp{gcc} build directory after
 building GNU Fortran (but without having to install it),
 @samp{./g77 --driver=./xgcc foo.f -B./}.
 @end table
@@ -1275,6 +1275,7 @@ one is not the default.
 * Overall Options::     Controlling the kind of output:
                         an executable, object files, assembler files,
                         or preprocessed source.
+* Shorthand Options::   Options that are shorthand for other options.
 * Fortran Dialect Options::  Controlling the variant of Fortran language
                              compiled.
 * Warning Options::     How picky should the compiler be?
@@ -1300,6 +1301,15 @@ by type.  Explanations are in the following sections.
 @xref{Overall Options,,Options Controlling the Kind of Output}.
 @smallexample
 --driver  -fversion  -fset-g77-defaults
+-fno-silent
+@end smallexample
+
+@item Shorthand Options
+@xref{Shorthand Options}.
+@smallexample
+-ff66  -fno-f66
+-ff77  -fno-f77
+-fugly  -fno-ugly
 @end smallexample
 
 @item Fortran Language Options
@@ -1307,6 +1317,9 @@ by type.  Explanations are in the following sections.
 @smallexample
 -ffree-form  -fno-fixed-form  -ff90  -fvxt-not-f90
 -ff90-not-vxt  -fdollar-ok  -fno-backslash
+-fno-ugly-args  -fno-ugly-assumed  -fugly-comma
+-fugly-init  -fugly-logint
+-fonetrip  -fno-typeless-boz
 -fintrin-case-initcap  -fintrin-case-upper
 -fintrin-case-lower  -fintrin-case-any
 -fmatch-case-initcap  -fmatch-case-upper
@@ -1335,9 +1348,8 @@ by type.  Explanations are in the following sections.
 @xref{Warning Options,,Options to Request or Suppress Warnings}.
 @smallexample
 -fsyntax-only  -pedantic  -pedantic-errors  -fpedantic
--fugly  -fno-ugly-args  -fno-ugly-init  -w  -Wimplicit
--Wunused  -Wuninitialized  -Wall  -Wsurprising  -Werror
--W
+-w  -Wimplicit -Wunused  -Wuninitialized  -Wall  -Wsurprising
+-Werror  -W
 @end smallexample
 
 @item Debugging Options
@@ -1371,7 +1383,8 @@ by type.  Explanations are in the following sections.
 -ff2c-library  -fno-underscoring  -fno-ident
 -fpcc-struct-return  -freg-struct-return
 -fshort-double  -fno-common  -fpack-struct
--fzeros
+-fzeros  -fno-second-underscore
+-fdebug-kludge
 @end smallexample
 @end table
 
@@ -1379,6 +1392,7 @@ by type.  Explanations are in the following sections.
 * Overall Options::     Controlling the kind of output:
                         an executable, object files, assembler files,
                         or preprocessed source.
+* Shorthand Options::   Options that are shorthand for other options.
 * Fortran Dialect Options::  Controlling the variant of Fortran language
                              compiled.
 * Warning Options::     How picky should the compiler be?
@@ -1477,7 +1491,7 @@ information on this option.
 @item -fversion
 Ensure that the @code{g77}-specific version of the compiler phase is reported,
 if run.
-(This is supplied automatically when @samp{-v} or @samp{--version}
+(This is supplied automatically when @samp{-v} or @samp{--verbose}
 is specified as a command-line option for @code{g77} or @code{gcc}
 and when the resulting commands compile Fortran source files.)
 
@@ -1486,7 +1500,7 @@ and when the resulting commands compile Fortran source files.)
 @item -fset-g77-defaults
 Set up whatever @code{gcc} options are to apply to Fortran
 compilations.
-For version 0.5.18, this is equivalent to @samp{-fmove-all-movables
+As of version 0.5.18, this is equivalent to @samp{-fmove-all-movables
 -freduce-all-givs -frerun-loop-opt}.
 (This is supplied automatically when compiling Fortran code.
 The description of this option is here so that users seeing
@@ -1495,12 +1509,112 @@ there.
 Also, developers who run @code{f771} directly might want to specify it
 by hand to get the same defaults as they would running @code{f771}
 via @code{g77} or @code{gcc}.)
+
+@cindex -fno-silent option
+@cindex options, -fno-silent
+@cindex @code{f2c} compatibility
+@cindex compatibility, @code{f2c}
+@cindex status, compilation
+@cindex compilation status
+@cindex reporting compilation status
+@cindex printing compilation status
+@item -fno-silent
+Print (to @code{stderr}) the names of the program units as
+they are compiled, in a form similar to that used by popular
+UNIX @code{f77} implementations and @code{f2c}.
 @end table
 
 @xref{Overall Options,,Options Controlling the Kind of Output,
 gcc,Using and Porting GNU CC}, for information
 on more options that control the overall operation of the @code{gcc} command
 (and, by extension, the @code{g77} command).
+
+@node Shorthand Options
+@section Shorthand Options
+@cindex shorthand options
+@cindex options, shorthand
+@cindex macro options
+@cindex options, macro
+
+The following options serve as ``shorthand''
+for other options accepted by the compiler:
+
+@table @code
+@cindex -fugly option
+@cindex options, -fugly
+@item -fugly
+@cindex ugly features
+@cindex features, ugly
+Specify that certain ``ugly'' constructs are to be quietly accepted.
+Same as:
+
+@smallexample
+-fugly-args -fugly-assumed -fugly-comma -fugly-init -fugly-logint
+@end smallexample
+
+These constructs are considered inappropriate to use in new
+or well-maintained portable Fortran code, but widely used
+in old code.
+@xref{Distensions}, for more information.
+
+@cindex -fno-ugly option
+@cindex options, -fno-ugly
+@item -fno-ugly
+@cindex ugly features
+@cindex features, ugly
+Specify that all ``ugly'' constructs are to be noisily rejected.
+Same as:
+
+@smallexample
+-fno-ugly-args -fno-ugly-assumed -fno-ugly-comma -fno-ugly-init
+-fno-ugly-logint
+@end smallexample
+
+@cindex -ff66 option
+@cindex options, -ff66
+@item -ff66
+@cindex FORTRAN 66
+@cindex compatibility, FORTRAN 66
+Specify that the program is written in idiomatic FORTRAN 66.
+Same as @samp{-fonetrip -fugly-assumed}.
+
+The @samp{-fno-f66} option is the inverse of @samp{-ff66}.
+As such, it is the same as @samp{-fno-onetrip -fno-ugly-assumed}.
+
+The meaning of this option is likely to be refined as future
+versions of @code{g77} provide more compatibility with other
+existing and obsolete Fortran implementations.
+
+@cindex -ff77 option
+@cindex options, -ff77
+@item -ff77
+@cindex UNIX f77
+@cindex @code{f2c} compatibility
+@cindex compatibility, @code{f2c}
+@cindex @code{f77} compatibility
+@cindex compatibility, @code{f77}
+Specify that the program is written in idiomatic UNIX FORTRAN 77
+and/or the dialect accepted by the @code{f2c} product.
+Same as @samp{-fbackslash -fno-typeless-boz}.
+
+The meaning of this option is likely to be refined as future
+versions of @code{g77} provide more compatibility with other
+existing and obsolete Fortran implementations.
+
+@cindex -fno-f77 option
+@cindex options, -fno-f77
+@item -fno-f77
+@cindex UNIX f77
+The @samp{-fno-f77} option is @emph{not} the inverse
+of @samp{-ff77}.
+It specifies that the program is not written in idiomatic UNIX
+FORTRAN 77 or @code{f2c}, but in a more widely portable dialect.
+@samp{-fno-f77} is the same as @samp{-fno-backslash}.
+
+The meaning of this option is likely to be refined as future
+versions of @code{g77} provide more compatibility with other
+existing and obsolete Fortran implementations.
+@end table
 
 @node Fortran Dialect Options
 @section Options Controlling Fortran Dialect
@@ -1592,9 +1706,136 @@ whereas other compilers that support backslash might not support
 the three-octal-digit form, and thus treat that string as longer
 than three characters.
 
-@xref{Non-bugs,,Certain Changes We Don't Want to Make}, for
+@xref{Backslash in Constants}, for
 information on why @samp{-fbackslash} is the default
 instead of @samp{-fno-backslash}.
+
+@cindex -fno-ugly-args option
+@cindex options, -fno-ugly-args
+@item -fno-ugly-args
+Disallow passing Hollerith and typeless constants as actual
+arguments (for example, @samp{CALL FOO(4HABCD)}).
+
+@xref{Ugly Implicit Argument Conversion}, for more information.
+
+@cindex -fugly-assumed option
+@cindex options, -fugly-assumed
+@item -fugly-assumed
+Assume any array with a final dimension specified as @samp{1}
+is really an assumed-size array, as if @samp{*} had been specified
+instead.
+
+For example, @samp{DIMENSION X(1)} is treated as if it
+had read @samp{DIMENSION X(*)}.
+
+@xref{Ugly Assumed-Size Arrays}, for more information.
+
+@cindex -fugly-comma option
+@cindex options, -fugly-comma
+@item -fugly-comma
+Treat a trailing comma in an argument list as specification
+of a trailing null argument, and treat an empty argument
+list as specification of a single null argument.
+
+For example, @samp{CALL FOO(,)} is treated as
+@samp{CALL FOO(%VAL(0), %VAL(0))}.
+That is, @emph{two} null arguments are specified
+by the procedure call when @samp{-fugly-comma} is in force.
+And @samp{F = FUNC()} is treated as @samp{F = FUNC(%VAL(0))}.
+
+The default behavior, @samp{-fno-ugly-comma}, is to ignore
+a single trailing comma in an argument list.
+
+@xref{Ugly Null Arguments}, for more information.
+
+@cindex -fno-ugly-init option
+@cindex options, -fno-ugly-init
+@item -fno-ugly-init
+Disallow use of Hollerith and typeless constants as initial
+values (in @code{PARAMETER} and @code{DATA} statements), and
+use of character constants to
+initialize numeric types and vice versa.
+
+For example, @samp{DATA I/'F'/, CHRVAR/65/, J/4HABCD/} is disallowed by
+@samp{-fno-ugly-init}.
+
+@xref{Ugly Conversion of Initializers}, for more information.
+
+@cindex -fugly-logint option
+@cindex options, -fugly-logint
+@item -fugly-logint
+Treat @samp{INTEGER} and @samp{LOGICAL} variables and
+expressions as potential stand-ins for each other.
+
+For example, automatic conversion between @samp{INTEGER} and
+@samp{LOGICAL} is enabled, for many contexts, via this option.
+
+@xref{Ugly Integer Conversions}, for more information.
+
+@cindex -fonetrip option
+@cindex options, -fonetrip
+@item -fonetrip
+@cindex FORTRAN 66
+@cindex DO loops, one-trip
+@cindex one-trip DO loops
+@cindex compatibility, FORTRAN 66
+Imperative executable @samp{DO} loops are to be executed at
+least once each time they are reached.
+
+ANSI FORTRAN 77 and more recent versions of the Fortran standard
+specify that the body of an imperative @samp{DO} loop is not executed
+if the number of iterations calculated from the parameters of the
+loop is less than 1.
+(For example, @samp{DO 10 I = 1, 0}.)
+Such a loop is called a @dfn{zero-trip loop}.
+
+Prior to ANSI FORTRAN 77, many compilers implemented @samp{DO} loops
+such that the body of a loop would be executed at least once, even
+if the iteration count was zero.
+Fortran code written assuming this behavior is said to require
+@dfn{one-trip loops}.
+For example, some code written to the FORTRAN 66 standard
+expects this behavior from its @samp{DO} loops, although that
+standard did not specify this behavior.
+
+The @samp{-fonetrip} option specifies that the source file(s) being
+compiled require one-trip loops.
+
+This option affects only those loops specified by the (imperative) @samp{DO}
+statement and by implied-@samp{DO} lists in I/O statements.
+Loops specified by implied-@samp{DO} lists in @samp{DATA} and
+specification (non-executable) statements are not affected.
+
+@cindex -fno-typeless-boz option
+@cindex options, -fno-typeless-boz
+@cindex prefix-radix constants
+@cindex constants, prefix-radix
+@cindex constants, types
+@cindex types, constants
+@item -fno-typeless-boz
+Specifies that prefix-radix non-decimal constants, such as
+@samp{Z'ABCD'}, as @samp{INTEGER} instead of typeless.
+
+Currently plans call for this option being the default as of
+version 0.5.20.
+
+You can test for yourself whether a particular compiler treats
+the prefix form as @samp{INTEGER} or typeless by running the
+following program:
+
+@smallexample
+EQUIVALENCE (I, R)
+R = Z'ABCD1234'
+J = Z'ABCD1234'
+IF (J .EQ. I) PRINT *, 'Prefix form is TYPELESS'
+IF (J .NE. I) PRINT *, 'Prefix form is INTEGER'
+END
+@end smallexample
+
+Reports indicate that many compilers process this form as
+@samp{INTEGER}, though a few as typeless, and at least one
+based on a command-line option specifying some kind of
+compatibility.
 
 @cindex -fintrin-case-initcap option
 @cindex options, -fintrin-case-initcap
@@ -1792,13 +2033,16 @@ For example, if your code invokes @code{FLUSH} as
 a library function and thus works with other UNIX Fortran
 compilers or earlier version of @code{g77}, either add the
 @samp{EXTERNAL FLUSH} statement or, perhaps
-more convenient for you, compile with the -funix-intrinsics-hide or
--funix-intrinsics-delete option.
+more convenient for you, compile with the
+@samp{-funix-intrinsics-hide} or
+@samp{-funix-intrinsics-delete} option.
 
 @cindex ABORT() intrinsic
 @cindex intrinsics, ABORT()
 @cindex EXIT() intrinsic
 @cindex intrinsics, EXIT()
+@cindex FSEEK() intrinsic
+@cindex intrinsics, FSEEK()
 @cindex SIGNAL() intrinsic
 @cindex intrinsics, SIGNAL()
 @cindex SYSTEM() intrinsic
@@ -1809,10 +2053,12 @@ more convenient for you, compile with the -funix-intrinsics-hide or
 @cindex functions, intrinsic
 @cindex side effects
 @cindex intrinsics, side effects of
-Note that @code{ABORT}, @code{EXIT}, @code{FLUSH}, @code{SIGNAL}, and
+Note that @code{ABORT}, @code{EXIT}, @code{FLUSH}, @code{FSEEK},
+@code{SIGNAL}, and
 @code{SYSTEM} are intrinsic subroutines, not functions (since they have
-side effects), so to get the return values from @code{SIGNAL} and
-@code{SYSTEM}, append a final argument specifying an @samp{INTEGER}
+side effects), so to get the return values from @code{FSEEK},
+@code{SIGNAL}, and @code{SYSTEM}, append a final argument specifying
+an @samp{INTEGER}
 variable or array element to receive the returned status.
 (For example, @samp{CALL SYSTEM('rm foo',ISTAT)}.)
 
@@ -1929,35 +2175,6 @@ warnings.
 @item -fpedantic
 Like @samp{-pedantic}, but applies only to Fortran constructs.
 
-@cindex -fugly option
-@cindex options, -fugly
-@item -fugly
-@cindex ugly features
-@cindex features, ugly
-Specify that certain ``ugly'' constructs are to be quietly accepted.
-Implies @samp{-fugly-args} and @samp{-fugly-init} as well.
-
-For example, with @samp{-fno-ugly}, @samp{CALL FOO(,)} means to pass
-one null argument, whereas with @samp{-fugly}, it means to pass two null
-arguments.
-
-@cindex -fno-ugly-args option
-@cindex options, -fno-ugly-args
-@item -fno-ugly-args
-Disallow passing Hollerith and typeless constants as actual
-arguments (for example, @samp{CALL FOO(4HABCD)}).
-
-@cindex -fno-ugly-init option
-@cindex options, -fno-ugly-init
-@item -fno-ugly-init
-Disallow use of Hollerith and typeless constants as initial
-values (in @code{PARAMETER} and @code{DATA} statements), and
-use of character constants to
-initialize numeric types and vice versa.
-
-For example, @samp{DATA I/'F'/, CHRVAR/65/, J/4HABCD/} is disallowed by
-@samp{-fno-ugly-init}.
-
 @cindex -w option
 @cindex options, -w
 @item -w
@@ -1999,12 +2216,13 @@ when optimizing.  If you don't specify @samp{-O}, you simply won't
 get these warnings.
 
 These warnings occur only for variables that are candidates for
-register allocation.  Therefore, they do not occur for a variable that
-is declared @code{volatile}, or whose address is taken, or whose size
+register allocation.  Therefore, they do not occur for a variable
+@c that is declared @code{VOLATILE}, or
+whose address is taken, or whose size
 is other than 1, 2, 4 or 8 bytes.  Also, they do not occur for
 arrays, even when they are in registers.
 
-Note that there may be no warning about a variable that is used only
+Note that there might be no warning about a variable that is used only
 to compute a value that itself is never used, because such
 computations may be deleted by data flow analysis before the warnings
 are printed.
@@ -2031,7 +2249,7 @@ another common case:
 @example
 SUBROUTINE MAYBE(FLAG)
 LOGICAL FLAG
-IF (FLAG) VALUE = 3.14
+IF (FLAG) VALUE = 9.4
 @dots{}
 IF (FLAG) PRINT *, VALUE
 END
@@ -2107,6 +2325,17 @@ For example, @samp{-2**2} produces a warning, because
 the precedence is @samp{-(2**2)}, yielding -4, not
 @samp{(-2)**2}, which yields 4, and which might represent
 what a programmer expects.
+
+An example of an expression producing different results
+in a surprising way is @samp{-I*S}, where @var{I} holds
+the value @samp{-2147483648} and @var{S} holds @samp{0.5}.
+On many systems, negating @var{I} results in the same
+value, not a positive number, because it is already the
+lower bound of what an @samp{INTEGER} variable can hold.
+So, the expression evaluates to a positive number, while
+the ``expected'' interpretation, @samp{(-I)*S}, would
+evaluate to a negative number.
+
 Even cases such as @samp{-I*J} produce warnings,
 even though, in most configurations and situations,
 there is no computational difference between the
@@ -2235,6 +2464,13 @@ Support for this option in Fortran programs is incomplete.
 In particular, names of variables and arrays in common blocks
 or that are storage-associated via @samp{EQUIVALENCE} are
 unavailable to the debugger.
+
+However, version 0.5.19 of @code{g77} does provide this information
+in a rudimentary way, as controlled by the
+@samp{-fdebug-kludge} option.
+
+@xref{Code Gen Options,,Options for Code Generation Conventions},
+for more information.
 @end table
 
 @xref{Debugging Options,,Options for Debugging Your Program or GNU CC,
@@ -2413,7 +2649,7 @@ Also note that the general behavior of @samp{-I} and
 @samp{#include} in the @code{cpp} preprocessor, with regard to
 looking for @file{header.gcc} files and other such things.
 
-@xref{Directory Optoins,,Options for Directory Search,
+@xref{Directory Options,,Options for Directory Search,
 gcc,Using and Porting GNU CC}, for information on the @samp{-I} option.
 @end table
 
@@ -2505,7 +2741,9 @@ source file by appending underscores to them.
 With @samp{-funderscoring} in effect, @code{g77} appends two underscores
 to names with underscores and one underscore to external names with
 no underscores.  (@code{g77} also appends two underscores to internal
-names with underscores to avoid naming collisions with external names.)
+names with underscores to avoid naming collisions with external names.
+The @samp{-fno-second-underscore} option disables appending of the
+second underscore in all cases.)
 
 This is done to ensure compatibility with code produced by many
 UNIX Fortran compilers, including @code{f2c}, which perform the
@@ -2575,7 +2813,7 @@ interfaces.
 Do not append a second underscore to names of entities specified
 in the Fortran source file.
 
-This option has no effect if @samp{-fno-underscoring} is not
+This option has no effect if @samp{-fno-underscoring} is
 in effect.
 
 Otherwise, with this option, an external name such as @samp{MAX_COUNT}
@@ -2610,6 +2848,75 @@ all initializations, zero or otherwise.
 differently.
 The interpretation changes will affect only non-standard
 programs; standard-conforming programs should not be affected.
+
+@cindex -fdebug-kludge option
+@cindex options, -fdebug-kludge
+@item -fdebug-kludge
+Emit information on @samp{COMMON} and @samp{EQUIVALENCE} members
+that might help users of debuggers work around lack of proper debugging
+information on such members.
+
+As of version 0.5.19, @code{g77} offers this option to emit
+information on members of aggregate areas to help users while debugging.
+This information consists of establishing the type and contents of each
+such member so that, when a debugger is asked to print the contents,
+the printed information provides rudimentary debugging information.
+This information identifies the name of the aggregate area (either the
+@samp{COMMON} block name, or the @code{g77}-assigned name for the
+@samp{EQUIVALENCE} name) and the offset, in bytes, of the member from
+the beginning of the area.
+
+Using @code{gdb}, this information is not coherently displayed in the Fortran
+language mode, so temporarily switching to the C language mode to display the
+information is suggested.
+Use @samp{set language c} and @samp{set language fortran} to accomplish this.
+
+For example:
+
+@example
+      COMMON /X/A,B
+      EQUIVALENCE (C,D)
+      CHARACTER XX*50
+      EQUIVALENCE (I,XX(20:20))
+      END
+
+GDB is free software and you are welcome to distribute copies of it
+ under certain conditions; type "show copying" to see the conditions.
+There is absolutely no warranty for GDB; type "show warranty" for details.
+GDB 4.16 (lm-gnits-dwim), Copyright 1996 Free Software Foundation, Inc...
+(gdb) b MAIN__
+Breakpoint 1 at 0t1200000201120112: file cd.f, line 5.
+(gdb) r
+Starting program: /home/user/a.out
+
+Breakpoint 1, MAIN__ () at cd.f:5
+Current language:  auto; currently fortran
+(gdb) set language c
+Warning: the current language does not match this frame.
+(gdb) p a
+$2 = "At (COMMON) `x_' plus 0 bytes"
+(gdb) p b
+$3 = "At (COMMON) `x_' plus 4 bytes"
+(gdb) p c
+$4 = "At (EQUIVALENCE) `__g77_equiv_c' plus 0 bytes"
+(gdb) p d
+$5 = "At (EQUIVALENCE) `__g77_equiv_c' plus 0 bytes"
+(gdb) p i
+$6 = "At (EQUIVALENCE) `__g77_equiv_xx' plus 20 bytes"
+(gdb) p xx
+$7 = "At (EQUIVALENCE) `__g77_equiv_xx' plus 1 bytes"
+(gdb) set language fortran
+(gdb) 
+@end example
+
+Use @samp{-fdebug-kludge} to generate this information,
+which might make some programs noticably larger.
+
+@emph{Caution:} Future versions of @code{g77} might disregard this option
+(and its negative form).
+Current plans call for this to happen when published versions of @code{g77}
+and @code{gdb} exist that provide proper access to debugging information on
+@samp{COMMON} and @samp{EQUIVALENCE} members.
 @end table
 
 @xref{Code Gen Options,,Options for Code Generation Conventions,
@@ -2678,12 +2985,77 @@ or whatever is the equivalent on your system.
 instead, or use @samp{gate-2}, @samp{gate-3}, @samp{gate-4}, and so on,
 instead of @samp{gate-1}.)
 
-Alternatively, retrieve @file{gnu.ai.mit.edu:/g77.plan} via
+Alternatively, retrieve @url{ftp://gnu.ai.mit.edu/g77.plan} via
 anonymous ftp, or if you cannot do that, email
 @samp{fortran@@gnu.ai.mit.edu} asking for a recent copy of the
 GNU Fortran @file{.plan} file.
 (The @code{finger} command shown above obtains the most recent
 copy of all these methods.)
+
+@heading In 0.5.19:
+
+@itemize @bullet
+@item
+A temporary kludge option provides bare-bones information on
+@samp{COMMON} and @samp{EQUIVALENCE} members at debug time.
+@xref{Code Gen Options,,Options for Code Generation Conventions},
+for information on the @samp{-fdebug-kludge} option.
+
+@item
+New @samp{-fonetrip} option specifies FORTRAN-66-style
+one-trip @samp{DO} loops.
+
+@item
+New @samp{-fno-silent} option causes names of program units
+to be printed as they are compiled, in a fashion similar to
+UNIX @samp{f77} and @samp{f2c}.
+
+@item
+New @samp{-fugly-assumed} option specifies that arrays
+dimensioned via @samp{DIMENSION X(1)}, for example, are to be
+treated as assumed-size.
+
+@item
+New @samp{-fno-typeless-boz} option specifies that non-decimal-radix
+constants using the prefixed-radix form (such as @samp{Z'1234'})
+are to be interpreted as @samp{INTEGER} constants.
+
+@item
+New @samp{-ff66} option is a ``shorthand'' option that specifies
+behaviors considered appropriate for FORTRAN 66 programs.
+
+@item
+New @samp{-ff77} option is a ``shorthand'' option that specifies
+behaviors considered appropriate for UNIX @samp{f77} programs.
+
+@item
+New @samp{-fugly-comma} and @samp{-fugly-logint} options provided
+to perform some of what @samp{-fugly} used to do.
+@samp{-fugly} and @samp{-fno-ugly} are now ``shorthand'' options,
+in that they do nothing more than enable (or disable) other
+@samp{-fugly-*} options.
+
+@item
+Change code generation for list-directed I/O so it allows
+for new versions of @samp{libf2c} that might return non-zero
+status codes for some operations previously assumed to always
+return zero.
+
+This change not only affects how @samp{IOSTAT=} variables
+are set by list-directed I/O, it also affects whether
+@samp{END=} and @samp{ERR=} labels are reached by these
+operations.
+
+@item
+Add intrinsic support for new @samp{FTELL} and @samp{FSEEK}
+procedures in @samp{libf2c}.
+
+@item
+Add options @samp{--help} and @samp{--version} to the
+@code{g77} command, to conform to GNU coding guidelines.
+Also add printing of @code{g77} version number when
+the @samp{--verbose} (@samp{-v}) option is used.
+@end itemize
 
 @heading In 0.5.18:
 
@@ -2800,7 +3172,7 @@ of better bug reports easily.
 Many improvements to the @code{g77} command to better fulfill its role as
 a front-end to the @code{gcc} driver.
 For example, @code{g77} now
-recognizes @samp{--version} as a verbose way of specifying @samp{-v}.
+recognizes @samp{--verbose} as a verbose way of specifying @samp{-v}.
 
 @item
 Compiling preprocessed (@file{*.F} and @file{*.fpp}) files now
@@ -2887,7 +3259,8 @@ dummy arguments.
 
 @item
 Block data program units now may contain @samp{NAMELIST}, @samp{EXTERNAL},
-@samp{INTRINSIC}, and @samp{VOLATILE} statements.
+@c @samp{INTRINSIC}, and @samp{VOLATILE} statements.
+and @samp{INTRINSIC} statements.
 
 @item
 Zero-length character expressions now supported.
@@ -2903,9 +3276,13 @@ lines allowed, now lifted.
 @node Language
 @chapter The GNU Fortran Language
 
+@cindex standard, ANSI FORTRAN 77
+@cindex ANSI FORTRAN 77 standard
 GNU Fortran supports a variety of extensions to, and dialects
 of, the Fortran language.
-Its primary base is the ANSI FORTRAN 77 standard.
+Its primary base is the ANSI FORTRAN 77 standard, currently available on
+the network at @url{http://kumo.swcp.com/fortran/F77_std/f77_std.html}
+or in @url{ftp://ftp.ast.cam.ac.uk/pub/michael/}.
 It offers some extensions that are popular among users
 of UNIX @code{f77} and @code{f2c} compilers, some that
 are popular among users of other compilers (such as Digital
@@ -3252,18 +3629,14 @@ in future versions of @code{g77}---avoid writing code depending
 on them.
 @end table
 
-For now, @code{g77} does not support numeric types other
-than the ones listed above.
-So, on a typical 32-bit machine, only @samp{INTEGER*4}, @samp{REAL*4},
-@samp{LOGICAL*4}, @samp{COMPLEX*8}, and so on, will work.
 Other types supported by @code{g77}
 are derived from gcc types such as @samp{char}, @samp{short},
 @samp{int}, @samp{long int}, @samp{long long int}, @samp{long double},
 and so on.
-That is, whatever types @samp{gcc} already supports, @code{g77} probably
-will support in a future version.
-The rules for the @samp{@var{numeric-type}*@var{n}} notation will
-apply to the new types,
+That is, whatever types @samp{gcc} already supports, @code{g77} supports
+now or probably will support in a future version.
+The rules for the @samp{@var{numeric-type}*@var{n}} notation
+apply to these types,
 and new values for @samp{@var{numeric-type}(KIND=@var{n})} will be
 assigned in a way that encourages clarity, consistency, and portability.
 
@@ -3273,12 +3646,12 @@ assigned in a way that encourages clarity, consistency, and portability.
 @cindex types, constants
 
 @code{g77} strictly assigns types to all constants not
-documented as ``typeless'' (the typeless constants include things like
-@samp{Z'1'}).
+documented as ``typeless'' (typeless constants including @samp{'1'Z},
+for example).
 Context is never a determining factor for the type, and hence
 the interpretation, of a typed constant.
 Examples: @samp{1} is always type @samp{INTEGER},
-@samp{3.141592653545256234} is always type @samp{REAL} (even if the
+@samp{9.435784839284958} is always type @samp{REAL} (even if the
 additional precision specified is lost, and even when used in a @samp{DOUBLE
 PRECISION} context), @samp{1E0} is always type @samp{REAL}, and @samp{1D0}
 is always type @samp{DOUBLE PRECISION}.
@@ -3424,6 +3797,7 @@ result).
 @item
 Automatic conversion of numeric
 expressions to @samp{INTEGER} in contexts such as:
+
 @itemize --
 @item
 Array-reference indexes.
@@ -3529,7 +3903,8 @@ Low-level switches are identified in this discussion thusly:
 
 @itemize @w{}
 @item A
-Source Case Conversion
+Source Case Conversion:
+
 @itemize @w{}
 @item 0
 Preserve (see Note 1)
@@ -3541,6 +3916,7 @@ Convert to Lower Case
 
 @item B
 Built-in Keyword Matching:
+
 @itemize @w{}
 @item 0
 Match Any Case (per-character basis)
@@ -3554,6 +3930,7 @@ Match InitialCaps Only (see tables for spellings)
 
 @item C
 Built-in Intrinsic Matching:
+
 @itemize @w{}
 @item 0
 Match Any Case (per-character basis)
@@ -3566,7 +3943,8 @@ Match InitialCaps Only (see tables for spellings)
 @end itemize
 
 @item D
-User-defined Symbol Possibilities (warnings only)
+User-defined Symbol Possibilities (warnings only):
+
 @itemize @w{}
 @item 0
 Allow Any Case (per-character basis)
@@ -3604,6 +3982,7 @@ in uppercase but will someday be lowercase (when a @samp{libg77} is written),
 but that seems to be overkill for a product in beta test.
 
 Note 2: Rules for InitialCaps names are:
+
 @itemize --
 @item
 Must be a single uppercase letter, @strong{or}
@@ -3934,7 +4313,7 @@ either.)
 @section Object Compatibility
 @cindex object code
 @cindex code, object
-@cindex compatibility
+@cindex compatibility, @code{f2c}
 @cindex f2c compatibility
 @cindex compilers, compatibility
 
@@ -4101,41 +4480,23 @@ command.
 @cindex ugly features
 @cindex features, ugly
 
-The @samp{-fugly} command-line options determine whether certain
+The @samp{-fugly-*} command-line options determine whether certain
 features supported by VAX FORTRAN and other such compilers, but considered
 too ugly to be in code that can be changed to use safer and/or more
 portable constructs, are accepted.
 These are humorously referred to as ``distensions'',
 extensions that just plain look ugly in the harsh light of day.
 
-The constructs enabled via @samp{-fugly} include:
+@menu
+* Ugly Implicit Argument Conversion::  Disabled via @samp{-fno-ugly-args}.
+* Ugly Assumed-Size Arrays::           Enabled via @samp{-fugly-assumed}.
+* Ugly Null Arguments::                Enabled via @samp{-fugly-comma}.
+* Ugly Conversion of Initializers::    Disabled via @samp{-fno-ugly-init}.
+* Ugly Integer Conversions::           Enabled via @samp{-fugly-logint}.
+@end menu
 
-@itemize @bullet
-@item
-Automatic conversion between @samp{INTEGER} and @samp{LOGICAL} as
-dictated by
-context (typically implies nonportable dependencies on how a
-particular implementation encodes @samp{.TRUE.} and @samp{.FALSE.}).
-
-@item
-Use of typeless and Hollerith constants in non-standard places
-(the ``standard'' here being the appendix in ANSI FORTRAN 77 and
-the descriptions in MIL-STD 1753), plus in places controlled
-by @samp{-fugly-args} and @samp{-fugly-init}.
-
-@item
-Use of a @samp{LOGICAL} variable in @samp{ASSIGN} and assigned-@samp{GOTO}
-statements.
-
-@item
-Use of a single trailing comma to mean ``pass an extra trailing null
-argument'' in a list of actual arguments to a procedure other than a
-statement function.
-
-For example, @samp{CALL FOO(,)} means ``pass
-two null arguments'' when @samp{-fugly} is used, rather than
-``pass one null argument''.
-@end itemize
+@node Ugly Implicit Argument Conversion
+@subsection Implicit Argument Conversion
 
 The construct disabled via @samp{-fno-ugly-args} is:
 
@@ -4147,7 +4508,97 @@ Passing of typeless and Hollerith constants as actual arguments
 in procedure invocations.
 
 For example, @samp{CALL FOO(4HABCD)}.
+
+This construct can be too easily used to create non-portable
+code, but is not considered as ``ugly'' as others.
+Further, it is widely used in existing Fortran source code
+in ways that often are quite portable.
+Therefore, it is enabled by default.
 @end itemize
+
+@cindex arrays, assumed-size
+@cindex assumed-size arrays
+@cindex DIMENSION X(1)
+@node Ugly Assumed-Size Arrays
+@subsection Ugly Assumed-Size Arrays
+
+The construct enabled via @samp{-fugly-assumed} is:
+
+@itemize @bullet
+@item
+Treatment of any array with a final dimension specified as @samp{1}
+as an assumed-size array, as if @samp{*} had been specified
+instead.
+
+For example, @samp{DIMENSION X(1)} is treated as if it
+had read @samp{DIMENSION X(*)}.
+
+Use an explicit lower bound to avoid this interpretation.
+For example, @samp{DIMENSION X(1:1)} is never treated as if
+it had read @samp{DIMENSION X(*)} or @samp{DIMENSION X(1:*)}.
+
+This option prevents a warning being issued about an apparent
+out-of-bounds reference such as @samp{X(2) = 99}.
+
+It also prevents the array from being used in contexts that
+disallow assumed-size arrays, such as @samp{PRINT *,X}.
+
+This construct is used only in very old code that pre-exists
+the widespread acceptance of adjustable and assumed-size
+arrays in the Fortran community.
+@end itemize
+
+@cindex trailing commas
+@cindex commas, trailing
+@cindex null arguments
+@cindex arguments, null
+@node Ugly Null Arguments
+@subsection Ugly Null Arguments
+
+The construct enabled via @samp{-fugly-comma} is:
+
+@itemize @bullet
+@item
+Use of a single trailing comma to mean ``pass an extra trailing null
+argument'' in a list of actual arguments to a procedure other than a
+statement function, and an empty list of arguments to
+mean ``pass a single null argument''.
+
+@cindex omitting arguments
+@cindex arguments, omitting
+(Null arguments often are used in some procedure-calling
+schemes to indicate omitted arguments.)
+
+For example, @samp{CALL FOO(,)} means ``pass
+two null arguments'', rather than ``pass one null argument''.
+Also, @samp{CALL BAR()} means ``pass one null argument''.
+
+This construct is considered ``ugly'' because it does not
+provide an elegant way to pass a single null argument
+that is syntactically distinct from passing no arguments.
+That is, this construct changes the meaning of code that
+makes no use of the construct.
+
+So, with @samp{-fugly-comma} in force, @samp{CALL FOO()}
+and @samp{I = JFUNC()} pass a single null argument, instead
+of passing no arguments as required by the Fortran 77 and
+90 standards.
+
+@emph{Note:} Many systems gracefully allow the case
+where a procedure call passes one extra argument that the
+called procedure does not expect.
+
+So, in practice, there might be no difference in
+the behavior of a program that does @samp{CALL FOO()}
+or @samp{I = JFUNC()} and is compiled with @samp{-fugly-comma}
+in force as compared to its behavior when compiled
+with the default, @samp{-fno-ugly-comma}, in force,
+assuming @samp{FOO} and @samp{JFUNC} do not expect any
+arguments to be passed.
+@end itemize
+
+@node Ugly Conversion of Initializers
+@subsection Ugly Conversion of Initializers
 
 The constructs disabled by @samp{-fno-ugly-init} are:
 
@@ -4160,20 +4611,84 @@ initial (compile-time) values for variables, arrays, and named
 constants---that is, @samp{DATA} and @samp{PARAMETER} statements, plus
 type-declaration statements specifying initial values.
 
+Here are some sample initializations that are disabled by the
+@samp{-fno-ugly-init} option:
+
+@example
+PARAMETER (VAL='9A304FFE'X)
+REAL*8 STRING/8HOUTPUT00/
+DATA VAR/4HABCD/
+@end example
+
 @cindex character constants
 @cindex constants, character
 @item
 In the same contexts as above, use of character constants to initialize
 numeric items and vice versa (one constant per item).
 
+Here are more sample initializations that are disabled by the
+@samp{-fno-ugly-init} option:
+
+@example
+INTEGER IA
+CHARACTER BELL
+PARAMETER (IA = 'A')
+PARAMETER (BELL = 7)
+@end example
+
 @item
 Use of Hollerith and typeless constants on the right-hand side
 of assignment statements to numeric types, and in other
-contexts (such as passing arguments to in invocations of
+contexts (such as passing arguments in invocations of
 intrinsic procedures and statement functions) that
 are treated as assignments to known types (the dummy
 arguments, in these cases).
+
+Here are sample statements that are disabled by the
+@samp{-fno-ugly-init} option:
+
+@example
+IVAR = 4HABCD
+PRINT *, IMAX0(2HAB, 2HBA)
+@end example
 @end itemize
+
+The above constructs, when used,
+can tend to result in non-portable code.
+But, they are widely used in existing Fortran code in ways
+that often are quite portable.
+Therefore, they are enabled by default.
+
+@node Ugly Integer Conversions
+@subsection Ugly Integer Conversions
+
+The constructs enabled via @samp{-fugly-logint} are:
+
+@itemize @bullet
+@item
+Automatic conversion between @samp{INTEGER} and @samp{LOGICAL} as
+dictated by
+context (typically implies nonportable dependencies on how a
+particular implementation encodes @samp{.TRUE.} and @samp{.FALSE.}).
+
+@item
+Use of a @samp{LOGICAL} variable in @samp{ASSIGN} and assigned-@samp{GOTO}
+statements.
+@end itemize
+
+The above constructs are disabled by default because use
+of them tends to lead to non-portable code.
+Even existing Fortran code that uses that often turns out
+to be non-portable, if not outright buggy.
+
+Some of this is due to differences among implementations as
+far as how @samp{.TRUE.} and @samp{.FALSE.} are encoded as
+@samp{INTEGER} values---Fortran code that assumes a particular
+coding is likely to use one of the above constructs, and is
+also likely to not work correctly on implementations using
+different encodings.
+
+@xref{Equivalence Versus Equality}, for more information.
 
 @include install.texi
 
@@ -4260,9 +4775,13 @@ the transformation certainly improves the chances of colliding with
 incompatible externals written in other languages---but that
 might be intentional.
 
+@cindex -fno-underscoring
+@cindex -fno-second-underscore
 When @samp{-funderscoring} is in force, any name (external or local)
 that already has at least one underscore in it is
 implemented by @code{g77} by appending two underscores.
+(This second underscore can be disabled via the
+@samp{-fno-second-underscore} option.)
 External names are changed this way for @code{f2c} compatibility.
 Local names are changed this way to avoid collisions with external names
 that are different in the source code---@code{f2c} does the same thing, but
@@ -4295,7 +4814,7 @@ case, or to leave them exactly as written in the source file.
 For example:
 
 @example
-Foo = 3.14159
+Foo = 9.436
 @end example
 
 @noindent
@@ -4605,7 +5124,7 @@ Since the user program cannot (legitimately) change the value
 of the temporary during execution of the procedure, the size
 of the array remains constant during each invocation.
 
-For alternate entry points, the code @samp{g77} generates takes into
+For alternate entry points, the code @code{g77} generates takes into
 account the possibility that a dummy adjustable array is not actually
 passed to the actual entry point being invoked at that time.
 In that case, the public procedure implementing the entry point
@@ -4706,8 +5225,26 @@ When @samp{-fno-f2c} is in force, @samp{REAL} functions return @samp{float}.
 @code{g77} names and lays out @samp{COMMON} areas the same way f2c does,
 for compatibility with f2c.
 
-Currently, @code{g77} does not emit any debugging information for
-items in a @samp{COMMON} area, due to an apparent bug in the GBE.
+Currently, @code{g77} does not emit ``true'' debugging information for
+members of a @samp{COMMON} area, due to an apparent bug in the GBE.
+
+(As of Version 0.5.19, @code{g77} emits debugging information for such
+members in the form of a constant string specifying the base name of
+the aggregate area and the offset of the member in bytes from the start
+of the area.
+Use the @samp{-fdebug-kludge} option to enable this behavior.
+In @code{gdb}, use @samp{set language c} before printing the value
+of the member, then @samp{set language fortran} to restore the default
+language, since @code{gdb} doesn't provide a way to print a readable
+version of a character string in Fortran language mode.
+
+This kludge will be removed in a future version of @code{g77} that,
+in conjunction with a contemporary version of @code{gdb},
+properly supports Fortran-language debugging, including access
+to members of @samp{COMMON} areas.)
+
+@xref{Code Gen Options,,Options for Code Generation Conventions},
+for information on the @samp{-fdebug-kludge} option.
 
 Moreover, @code{g77} currently implements a @samp{COMMON} area such that its
 type is an array of the C @samp{char} data type.
@@ -4745,16 +5282,36 @@ A local @samp{EQUIVALENCE} area is a collection of variables and arrays
 connected to each other in any way via @samp{EQUIVALENCE}, none of which are
 listed in a @samp{COMMON} statement.
 
-Currently, @code{g77} does not emit any debugging information for
-items in a local @samp{EQUIVALENCE} area, due to an apparent bug in the GBE.
+Currently, @code{g77} does not emit ``true'' debugging information for
+members in a local @samp{EQUIVALENCE} area, due to an apparent bug in the GBE.
+
+(As of Version 0.5.19, @code{g77} does emit debugging information for such
+members in the form of a constant string specifying the base name of
+the aggregate area and the offset of the member in bytes from the start
+of the area.
+Use the @samp{-fdebug-kludge} option to enable this behavior.
+In @code{gdb}, use @samp{set language c} before printing the value
+of the member, then @samp{set language fortran} to restore the default
+language, since @code{gdb} doesn't provide a way to print a readable
+version of a character string in Fortran language mode.
+
+This kludge will be removed in a future version of @code{g77} that,
+in conjunction with a contemporary version of @code{gdb},
+properly supports Fortran-language debugging, including access
+to members of @samp{EQUIVALENCE} areas.)
+
+@xref{Code Gen Options,,Options for Code Generation Conventions},
+for information on the @samp{-fdebug-kludge} option.
 
 Moreover, @code{g77} implements a local @samp{EQUIVALENCE} area such that its
 type is an array of the C @samp{char} data type.
 
 The name @code{g77} gives this array of @samp{char} type is @samp{__g77_equiv_@var{x}},
-where @var{x} is the name of the first item listed in the @samp{EQUIVALENCE}
-statements for that area that is placed at the beginning (offset 0)
+where @var{x} is the name of the item that is placed at the beginning (offset 0)
 of this array.
+If more than one such item is placed at the beginning, @var{x} is
+the name that sorts to the top in an alphabetical sort of the list of
+such items.
 
 When debugging, you must therefore access members of @samp{EQUIVALENCE}
 areas by specifying the appropriate @samp{__g77_equiv_@var{x}}
@@ -4762,11 +5319,15 @@ array section with the appropriate offset.
 See the explanation of debugging @samp{COMMON} blocks
 for info applicable to debugging local @samp{EQUIVALENCE} areas.
 
-(Note: @code{g77} version 0.5.16 fixed a bug in how certain
-@samp{EQUIVALENCE} cases were handled.
-The bug caused the debugger to not know the size of the
-array if any variable or array in the @samp{EQUIVALENCE} was given an initial
-value via @samp{DATA} or similar.)
+(@emph{Note:} @code{g77} version 0.5.18 and earlier chose the name
+for @var{x} using a different method when more than one name was
+in the list of names of entities placed at the beginning of the
+array.
+Though the documentation specified that the first name listed in
+the @samp{EQUIVALENCE} statements was chosen for @var{x}, @code{g77}
+in fact chose the name using a method that was so complicated,
+it seemed easier to change it to an alphabetical sort than to describe the
+previous method in the documentation.)
 
 @node Alternate Entry Points
 @section Alternate Entry Points (ENTRY)
@@ -5070,8 +5631,8 @@ are to be treated as if they were named in @samp{SAVE} statements.)
 Many other compilers do this automatically, which means lots of
 Fortran code developed with those compilers depends on it.
 
-The effect of this is that all variables and arrays are made
-static, that is, not placed on the stack or in heap storage.
+The effect of this is that all non-automatic variables and arrays
+are made static, that is, not placed on the stack or in heap storage.
 This might cause a buggy program to appear to work better.
 If so, rather than relying on this command-line option (and hoping all
 compilers provide the equivalent one), add @samp{SAVE}
@@ -5085,6 +5646,21 @@ The default is @samp{-fautomatic}, which tells @code{g77} to try
 and put variables and arrays on the stack (or in fast registers)
 where possible and reasonable.
 This tends to make programs faster.
+
+@cindex automatic arrays
+@cindex arrays, automatic
+@emph{Note:} Automatic variables and arrays are not affected
+by this option.
+These are variables and arrays that are @emph{necessarily} automatic,
+either due to explicit statements, or due to the way they are
+declared.
+Examples include local variables and arrays not given the
+@samp{SAVE} attribute in procedures declared @samp{RECURSIVE},
+and local arrays declared with non-constant bounds (automatic
+arrays).
+Currently, @code{g77} supports only automatic arrays, not
+@samp{RECURSIVE} procedures or other means of explicitly
+specifying that variables or arrays are automatic.
 
 @cindex -fugly option
 @cindex options, -fugly
@@ -5189,7 +5765,8 @@ options in a given program actually needs to
 be so affected.
 
 For example, @samp{-fno-automatic}, which effectively @samp{SAVE}s
-every local variable and array, affects even things like @samp{DO} iteration
+every local non-automatic variable and array, affects even things like
+@samp{DO} iteration
 variables, which rarely need to be @samp{SAVE}d, and this often reduces
 run-time performances.
 Similarly, @samp{-fno-init-local-zero} forces such
@@ -5401,7 +5978,7 @@ Consider the following program:
 A C-like view of @samp{DO} would hold that the two ``exclamatory''
 @samp{PRINT} are never executed.
 However, this is the output of running the above program
-as compiled by @code{g77} on a Linux ix86 system:
+as compiled by @code{g77} on a GNU/Linux ix86 system:
 
 @smallexample
  .100000001
@@ -5422,7 +5999,7 @@ the loop is correctly implemented by @code{g77}, in that
 it has 30 iterations.
 This trip count of 30 is correct when evaluated using
 the floating-point representations for the @var{begin},
-@var{end}, and @var{incr} values (.1, .31, .007) on Linux
+@var{end}, and @var{incr} values (.1, .31, .007) on GNU/Linux
 ix86 are used.
 On other systems, an apparently more accurate trip count
 of 31 might result, but, nevertheless, @code{g77} is
@@ -5625,7 +6202,7 @@ system than @code{f2c}.
 This section describes known problems that affect users of GNU Fortran.
 Most of these are not GNU Fortran bugs per se---if they were, we would
 fix them.
-But the result for a user may be like the result of a bug.
+But the result for a user might be like the result of a bug.
 
 Some of these problems are due to bugs in other software, some are
 missing features that are too much work to add, and some are places
@@ -5686,7 +6263,7 @@ might be @emph{thought} to indicate bugs.
 @cindex linker errors
 @cindex ld errors
 @cindex errors, linker
-On some older Linux systems, programs with common blocks larger
+On some older GNU/Linux systems, programs with common blocks larger
 than 16MB cannot be linked without some kind of error
 message being produced.
 
@@ -5701,7 +6278,7 @@ compiled by @code{g77}.
 Inadequate investigation as of the release of 0.5.16 results in not
 knowing which products are the culprit, but @file{gdb-4.14} definitely
 crashes when, for example, an attempt is made to print the contents
-of a @samp{COMPLEX*16} dummy array, on at least some Linux machines, plus
+of a @samp{COMPLEX*16} dummy array, on at least some GNU/Linux machines, plus
 some others.
 
 @item
@@ -5802,6 +6379,96 @@ quietly accept.
 
 Some of these conversions are accepted by @code{g77}
 when the @samp{-fugly} option is specified.
+
+@cindex stack overflow
+@cindex segmentation violation
+@item
+@code{g77} code might fail at runtime (probably with a ``segmentation
+violation'') due to overflowing the stack.
+This happens most often on systems with an environment
+that provides substantially more heap space (for use
+when arbitrarily allocating and freeing memory) than stack
+space.
+
+Often this can be cured by
+increasing or removing your shell's limit on stack usage, typically
+using @kbd{limit stacksize} (in @code{csh} and derivatives) or
+@kbd{ulimit -s} (in @code{sh} and derivatives).
+
+Increasing the allowed stack size might, however, require
+changing some operating system or system configuration parameters.
+
+You might be able to work around the problem by compiling with the
+@samp{-fno-automatic} option to reduce stack usage, probably at the
+expense of speed.
+
+@xref{Maximum Stackable Size}, for information on patching
+@code{g77} to use different criteria for placing local
+non-automatic variables and arrays on the stack.
+
+@cindex automatic arrays
+@cindex arrays, automatic
+However, if your program uses large automatic arrays
+(for example, has declarations like @samp{REAL A(N)} where
+@samp{A} is a local array and @samp{N} is a dummy or
+@samp{COMMON} variable that can have a large value),
+neither use of @samp{-fno-automatic},
+nor changing the cut-off point for @code{g77} for using the stack,
+will solve the problem by changing the placement of these
+large arrays, as they are @emph{necessarily} automatic.
+
+@code{g77} currently provides no means to specify that
+automatic arrays are to be allocated on the heap instead
+of the stack.
+So, other than increasing the stack size, your best bet is to
+change your source code to avoid large automatic arrays.
+Methods for doing this currently are outside the scope of
+this document.
+
+(@emph{Note:} If your system puts stack and heap space in the
+same memory area, such that they are effectively combined, then
+a stack overflow probably indicates a program that is either
+simply too large for the system, or buggy.)
+
+@cindex segmentation violation
+@cindex bus error
+@cindex overwritten data
+@cindex data, overwritten
+@item
+@code{g77} code might fail at runtime with ``segmentation violation'',
+``bus error'', or even something as subtle as a procedure call
+overwriting a variable or array element that it is not supposed
+to touch.
+
+These can be symptoms of a wide variety of actual bugs that
+occurred earlier during the program's run, but manifested
+themselves as @emph{visible} problems some time later.
+
+Overflowing the bounds of an array---usually by writing beyond
+the end of it---is one of two kinds of bug that often occurs
+in Fortran code.
+
+The other kind of bug is a mismatch between the actual arguments
+passed to a procedure and the dummy arguments as declared by that
+procedure.
+
+Both of these kinds of bugs, and some others as well, can be
+difficult to track down, because the bug can change its behavior,
+or even appear to not occur, when using a debugger.
+
+That is, these bugs can be quite sensitive to data, including
+data representing the placement of other data in memory (that is,
+pointers, such as the placement of stack frames in memory).
+
+Plans call for improving @code{g77} so that it can offer the
+ability to catch and report some of these problems at compile, link, or
+run time, such as by generating code to detect references to
+beyond the bounds of an array, or checking for agreement between
+calling and called procedures.
+
+In the meantime, finding and fixing the programming
+bugs that lead to these behaviors is, ultimately, the user's
+responsibility, as difficult as that task can sometimes be.
 @end itemize
 
 @include bugs.texi
@@ -5859,7 +6526,7 @@ for them.
 
 @item
 @code{g77} rejects things other compilers accept,
-like @samp{INTRINSIC SIN,SIN}.
+like @samp{INTRINSIC SQRT,SQRT}.
 As time permits in the future, some of these things that are easy for
 humans to read and write and unlikely to be intended to mean something
 else will be accepted by @code{g77} (though @samp{-fpedantic} should
@@ -5960,6 +6627,59 @@ lower on the list of large, important things to add to @code{g77}, partly
 because it requires a great deal of work either upgrading or
 replacing @code{libf2c}.
 
+@cindex ENCODE statement
+@cindex statements, ENCODE
+@cindex DECODE statement
+@cindex statements, DECODE
+@item
+@code{g77} doesn't support @samp{ENCODE} or @samp{DECODE}.
+
+These statements are best replaced by READ and WRITE statements
+involving internal files (CHARACTER variables and arrays).
+
+For example, replace a code fragment like
+
+@example
+      INTEGER*1 LINE(80)
+@dots{}
+      DECODE (80, 9000, LINE) A, B, C
+@dots{}
+9000  FORMAT (1X, 3(F10.5))
+@end example
+
+with:
+
+@example
+      CHARACTER*80 LINE
+@dots{}
+      READ (UNIT=LINE, FMT=9000) A, B, C
+@dots{}
+9000  FORMAT (1X, 3(F10.5))
+@end example
+
+Similarly, replace a code fragment like
+
+@example
+      INTEGER*1 LINE(80)
+@dots{}
+      ENCODE (80, 9000, LINE) A, B, C
+@dots{}
+9000  FORMAT (1X, 'OUTPUT IS ', 3(F10.5))
+@end example
+
+with:
+
+@example
+      CHARACTER*80 LINE
+@dots{}
+      WRITE (UNIT=LINE, FMT=9000) A, B, C
+@dots{}
+9000  FORMAT (1X, 'OUTPUT IS ', 3(F10.5))
+@end example
+
+It is entirely possible that @samp{ENCODE} and @samp{DECODE} will
+be supported by a future version of @code{g77}.
+
 @cindex disposition of files
 @cindex OPEN statement
 @cindex statements, OPEN
@@ -5997,6 +6717,33 @@ in implementing this feature soon afterwards.
 @code{g77} doesn't support @samp{FORMAT(I<J>)} and the like.
 Supporting this requires a significant redesign or replacement
 of @code{libf2c}.
+
+@cindex RECURSIVE keyword
+@cindex keywords, RECURSIVE
+@cindex recursion, lack of
+@cindex lack of recursion
+@item
+@code{g77} doesn't support the @samp{RECURSIVE} keyword that
+F90 compilers do.
+Nor does it provide any means for compiling procedures
+designed to do recursion.
+
+@cindex automatic arrays
+@cindex arrays, automatic
+@item
+Automatic arrays are always allocated on the stack.
+For situations where the stack cannot be made large enough,
+@code{g77} should offer a compiler option that specifies
+allocation of automatic arrays in heap storage.
+
+@cindex threads
+@cindex parallel processing
+@item
+Neither the code produced by @code{g77} nor the @code{libf2c} library
+are thread-safe, nor does @code{g77} have support for parallel processing
+(other than the instruction-level parallelism available on some
+processors).
+A package such as PVM might help here.
 
 @item
 Need option to suppress information messages (notes).
@@ -6040,6 +6787,11 @@ This includes allowing arbitrarily long
 lines for free-form source as well as fixed-form source and providing
 various limits and diagnostics as appropriate.
 
+@cindex array elements, in adjustable array bounds
+@cindex function references, in adjustable array bounds
+@cindex array bounds, adjustable
+@cindex DIMENSION statement
+@cindex statements, DIMENSION
 @item
 Support more general expressions to dimension
 arrays, such as array element references, function
@@ -6050,11 +6802,6 @@ A @samp{FLUSH} statement that does what many systems provide via
 @samp{CALL FLUSH},
 but that supports @samp{*} as the unit designator (same unit as for
 @samp{PRINT}).
-
-@item
-Finish support for old-style @samp{PARAMETER} statement (like F77
-@samp{PARAMETER}, but type of destination is set from type of
-source expression).
 
 @item
 Character-type selector/cases for @samp{SELECT CASE}.
@@ -6149,8 +6896,8 @@ For example, warn about cases like this:
 
 @example
 DOUBLE PRECISION FOO
-PARAMETER (PI = 3.14159)
-FOO = PI * 3D0
+PARAMETER (TZPHI = 9.435784839284958)
+FOO = TZPHI * 3D0
 @end example
 
 @item
@@ -6218,6 +6965,33 @@ The sort of routines usually found in the BSD-ish @code{libU77} should be
 provided in addition to the few utility routines in @code{libf2c}.
 Much of this work has already been done, and is awaiting
 integration into @code{g77}.
+
+@cindex floating point exceptions
+@cindex exceptions, floating point
+@cindex FPE handling
+@cindex NaN values
+@item
+The GCC backend and, consequently, @code{g77} currently provides no
+control over whether or not floating point exceptions are trapped or
+ignored.
+(Ignoring them typically results in NaN values being
+propagated in systems that conform to IEEE 754).
+The behaviour is inherited from the system-dependent startup code.
+
+Most systems provide some C-callable mechanism to change this; this can
+be invoked at startup using GCC's @samp{constructor} attribute.
+For example, just compiling and linking the following C with your
+program will turn on exception trapping for the ``common'' exceptions
+on an x86-based GNU system:
+
+@smallexample
+#include <fpu_control.h>
+void __attribute__ ((constructor))
+trapfpe () @{
+  (void) __setfpucw (_FPU_DEFAULT &
+                     ~(_FPU_MASK_IM | _FPU_MASK_ZM | _FPU_MASK_OM));
+@}
+@end smallexample
 @end itemize
 
 @node Disappointments
@@ -6226,14 +7000,21 @@ integration into @code{g77}.
 These problems are perhaps regrettable, but we don't know any practical
 way around them for now.
 
-@itemize @bullet
-@item
+@menu
+* Limitation on Implicit Declarations::     No @samp{IMPLICIT CHARACTER*(*)}.
+* Multiple Definitions of External Names::  No doing both @samp{COMMON /FOO/}
+                                              and @samp{SUBROUTINE FOO}.
+* Mangling of Names::                       @samp{SUBROUTINE FOO} is given
+                                              external name @samp{foo_}.
+@end menu
+
 @cindex IMPLICIT CHARACTER*(*) statement
 @cindex statements, IMPLICIT CHARACTER*(*)
+@node Limitation on Implicit Declarations
+@subsection Limitation on Implicit Declarations
+
 @code{g77} disallows @samp{IMPLICIT CHARACTER*(*)}.
-This is not standard-conforming,
-and there are some very good reasons for that.
-When I next remember any, I'll try to write them down.
+This is not standard-conforming.
 
 @cindex block data
 @cindex BLOCK DATA statement
@@ -6241,7 +7022,9 @@ When I next remember any, I'll try to write them down.
 @cindex COMMON statement
 @cindex statements, COMMON
 @cindex naming conflicts
-@item
+@node Multiple Definitions of External Names
+@subsection Multiple Definitions of External Names
+
 @code{g77} doesn't allow a common block and an external procedure or
 @samp{BLOCK DATA} to have the same name.
 Some systems allow this, but @code{g77} does not,
@@ -6269,7 +7052,14 @@ didn't have its name translated the same way.
 @samp{BLOCK DATA}, but that probably invites more trouble than it's
 worth.)
 
-@item
+@cindex naming issues
+@cindex external names
+@cindex COMMON block names
+@cindex name space
+@cindex underscores
+@node Mangling of Names
+@subsection Mangling of Names in Source Code
+
 The current external-interface design, which includes naming of
 external procedures, COMMON blocks, and the library interface,
 has various usability problems, including things like adding
@@ -6282,7 +7072,6 @@ Project GNU should at least get all this ``right'' for systems
 it fully controls, such as the Hurd, and provide defaults and
 options for compatibility with existing systems and interoperability
 with popular existing compilers.
-@end itemize
 
 @node Non-bugs
 @section Certain Changes We Don't Want to Make
@@ -6290,14 +7079,32 @@ with popular existing compilers.
 This section lists changes that people frequently request, but which
 we do not make because we think GNU Fortran is better without them.
 
-@itemize @bullet
+@menu
+* Backslash in Constants::           Why @samp{'\\'} is a constant that
+                                       is one, not two, characters long.
+* Context-Sensitive Constants::      Why @samp{9.435784839284958} is a
+                                       single-precision (@samp{REAL}) constant,
+                                       and might be interpreted as
+                                       @samp{9.435785} or similar.
+* Equivalence Versus Equality::      Why @samp{.TRUE. .EQ. .TRUE.} won't work.
+* Context-Sensitive Intrinsicness::  Why @samp{CALL SQRT} won't work.
+* Initializing Before Specifying::   Why @samp{DATA VAR/1/} can't precede
+                                       @samp{COMMON VAR}.
+* Order of Side Effects::            Why @samp{J = IFUNC() - IFUNC()} might
+                                       not behave as expected.
+@end menu
+
 @cindex backslash
 @cindex f77 support
 @cindex support, f77
-@item
-@samp{-fno-backslash} should be the default, not @samp{-fbackslash}.
+@node Backslash in Constants
+@subsection Backslash in Constants
 
-First of all, you  can always specify
+In the opinion of many experienced Fortran users,
+@samp{-fno-backslash} should be the default, not @samp{-fbackslash},
+as currently set by @code{g77}.
+
+First of all, you can always specify
 @samp{-fno-backslash} to turn off this processing.
 
 Despite not being within the spirit (though apparently within the
@@ -6328,8 +7135,8 @@ The primary focus on compatibility is at the source-code
 level, and the question became ``What will users expect
 a replacement for @code{f77} to do, by default?''
 Although at least one UNIX @code{f77} does not provide
-@samp{-fbackslash} as a default, it appears that, by far,
-the majority of them do, which suggests that, by far,
+@samp{-fbackslash} as a default, it appears that
+the majority of them do, which suggests that
 the majority of code that is compiled by UNIX @code{f77}
 compilers expects @samp{-fbackslash} to be the default.
 
@@ -6408,18 +7215,23 @@ be used instead, for readability.)
 In this way, users can write programs which have the same meaning
 in many Fortran dialects.
 
-@item
+@cindex constants, context-sensitive
+@cindex context-sensitive constants
+@node Context-Sensitive Constants
+@subsection Context-Sensitive Constants
+
 @code{g77} does not use context to determine the types of
-constants or named constants (@samp{PARAMETER}).
+constants or named constants (@samp{PARAMETER}), except
+for (non-standard) typeless constants such as @samp{'123'O}.
 
 For example, consider the following statement:
 
 @example
-PRINT *, 3.1415926535 * 2D0
+PRINT *, 9.435784839284958 * 2D0
 @end example
 
 @code{g77} will interpret the (truncated) constant
-@samp{3.1415926535} as a @samp{REAL}, not @samp{DOUBLE PRECISION},
+@samp{9.435784839284958} as a @samp{REAL}, not @samp{DOUBLE PRECISION},
 constant, because the suffix @samp{D0} is not specified.
 
 As a result, the output of the above statement when
@@ -6488,23 +7300,104 @@ interpret constants' types based on context, so anything
 @code{g77} can do to help flag cases of this in such code
 could be very helpful.
 
-@item
+@cindex .EQV., with integer operands
+@cindex comparing logical expressions
+@cindex logical expressions, comparing
+@node Equivalence Versus Equality
+@subsection Equivalence Versus Equality
+
+Use of @samp{.EQ.} and @samp{.NE.} on @samp{LOGICAL} operands
+is not supported, except via @samp{-fugly}, which is not
+recommended except for legacy code (where the behavior expected
+by the @emph{code} is assumed).
+
+Legacy code should be changed, as resources permit, to use @samp{.EQV.}
+and @samp{.NEQV.} instead, as these are permitted by the various
+Fortran standards.
+
+New code should never be written expecting @samp{.EQ.} or @samp{.NE.}
+to work if either of its operands is @samp{LOGICAL}.
+
+The problem with supporting this ``feature'' is that there is
+unlikely to be consensus on how it works, as illustrated by the
+following sample program:
+
+@example
+LOGICAL L,M,N
+DATA L,M,N /3*.FALSE./
+IF (L.AND.M.EQ.N) PRINT *,'L.AND.M.EQ.N'
+END
+@end example
+
+The issue raised by the above sample program is, what is the
+precedence of @samp{.EQ.} (and @samp{.NE.}) when applied to
+@samp{LOGICAL} operands?
+
+Some programmers will argue that it is the same as the precedence
+for @samp{.EQ.} when applied to numeric (such as @samp{INTEGER})
+operands.
+By this interpretation, the subexpression @samp{M.EQ.N} must be
+evaluated first in the above program, resulting in a program that,
+when run, does not execute the @samp{PRINT} statement.
+
+Other programmers will argue that the precedence is the same as
+the precedence for @samp{.EQV.}, which is restricted by the standards
+to @samp{LOGICAL} operands.
+By this interpretation, the subexpression @samp{L.AND.M} must be
+evaluated first, resulting in a program that @emph{does} execute
+the @samp{PRINT} statement.
+
+Assigning arbitrary semantic interpretations to syntactic expressions
+that might legitimately have more than one ``obvious'' interpretation
+is generally unwise.
+
+The creators of the various Fortran standards have done a good job
+in this case, requiring a distinct set of operators (which have their
+own distinct precedence) to compare @samp{LOGICAL} operands.
+This requirement results in expression syntax with more certain
+precedence (without requiring substantial context), making it easier
+for programmers to read existing code.
+@code{g77} will avoid muddying up elements of the Fortran language
+that were well-designed in the first place.
+
+(Ask C programmers about the precedence of expressions such as
+@samp{(a) & (b)} and @samp{(a) - (b)}---they cannot even tell
+you, without knowing more context, whether the @samp{&} and @samp{-}
+operators are infix (binary) or unary!)
+
+@cindex intrinsics, context-sensitive
+@cindex context-sensitive intrinsics
+@node Context-Sensitive Intrinsicness
+@subsection Context-Sensitive Intrinsicness
+
 @code{g77} treats procedure references to @emph{possible} intrinsic
 names as always enabling their intrinsic nature, regardless of
 whether the @emph{form} of the reference is valid for that
 intrinsic.
 
-For example, @samp{CALL IFIX} is interpreted by @code{g77} first as
-a reference to the @samp{IFIX} intrinsic, because the reference
-is a procedure invocation (as compared to @samp{J=IFIX}); only
-after establishing that, in the program unit being compiled,
-@samp{IFIX} is in fact an intrinsic and not a local name that
-happens to have the same name as an intrinsic, does @code{g77}
-recognize that the form of the reference is invalid for that
-particular intrinsic.
+For example, @samp{CALL SQRT} is interpreted by @code{g77} as
+an invalid reference to the @samp{SQRT} intrinsic function,
+because the reference is a subroutine invocation.
+
+First, @code{g77} recognizes the statement @samp{CALL SQRT}
+as a reference to a @emph{procedure} named @samp{SQRT}, not
+to a @emph{variable} with that name (as it would for a statement
+such as @samp{V = SQRT}).
+
+Next, @code{g77} establishes that, in the program unit being compiled,
+@samp{SQRT} is an intrinsic---not a subroutine that
+happens to have the same name as an intrinsic (as would be
+the case if, for example, @samp{EXTERNAL SQRT} was present).
+
+Finally, @code{g77} recognizes that the @emph{form} of the
+reference is invalid for that particular intrinsic.
+That is, it recognizes that it is invalid for an intrinsic
+@emph{function}, such as @samp{SQRT}, to be invoked as
+a @emph{subroutine}.
+
 At that point, @code{g77} issues a diagnostic.
 
-Some users claim that it is ``obvious'' that @samp{CALL IFIX}
+Some users claim that it is ``obvious'' that @samp{CALL SQRT}
 references an external subroutine of their own, not an
 intrinsic function.
 
@@ -6518,13 +7411,25 @@ of intrinsics that are not functions, just as it (and most compilers)
 rejects invocations of intrinsics with the wrong number (or types)
 of arguments.
 
-Use the @samp{EXTERNAL IFIX} statement in a program unit that calls
-a user-written subroutine named @samp{IFIX}.
+So, use the @samp{EXTERNAL SQRT} statement in a program unit that calls
+a user-written subroutine named @samp{SQRT}.
 
-@item
-Allow @samp{DATA VAR/.../} to come before @samp{COMMON /.../ ...,VAR,...}.
+@cindex initialization, statement placement
+@cindex placing initialization statements
+@node Initializing Before Specifying
+@subsection Initializing Before Specifying
 
-It is @emph{possible} @code{g77} will someday allow this.
+@code{g77} does not allow @samp{DATA VAR/1/} to appear in the
+source code before @samp{COMMON VAR},
+@samp{DIMENSION VAR(10)}, @samp{INTEGER VAR}, and so on.
+In general, @code{g77} requires initialization of a variable
+or array to be specified @emph{after} all other specifications
+of attributes (type, size, placement, and so on) of that variable
+or array are specified (though @emph{confirmation} of data type is
+permitted).
+
+It is @emph{possible} @code{g77} will someday allow all of this,
+even though it is not allowed by the FORTRAN 77 standard.
 
 Then again, maybe it is better to have
 @code{g77} always require placement of @samp{DATA}
@@ -6536,11 +7441,17 @@ be immediately writable to canonical assembler, unless it's already known
 to be in a @samp{COMMON} area following as-yet-uninitialized stuff,
 and to do this it cannot be followed by @samp{COMMON A}.
 
-@item
-Making side effects happen in the same order as in some other compiler.
-
 @cindex side effects, order of evaluation
 @cindex order of evaluation, side effects
+@node Order of Side Effects
+@subsection Order of Side Effects
+
+@code{g77} does not necessarily produce code that, when run, performs
+side effects (such as those performed by function invocations)
+in the same order as in some other compiler---or even in the same
+order as another version, port, or invocation (using different
+command-line options) of @code{g77}.
+
 It is never safe to depend on the order of evaluation of side effects.
 For example, an expression like this may very well behave differently
 from one compiler to another:
@@ -6582,7 +7493,6 @@ Such a function can be safely used in expressions, because
 if the compiler optimizes away one or more calls to the
 function, operation of the program is unaffected (aside
 from being speeded up).
-@end itemize
 
 @node Warnings and Errors
 @section Warning Messages and Error Messages
@@ -6649,33 +7559,6 @@ Please consider offering useful answers to these questions!
 
 @itemize @bullet
 @item
-@code{g77} treats constants like @samp{Z'ABCD'} and @samp{'ABCD'Z}
-as typeless.
-It seems like maybe the prefix-letter form, @samp{Z'ABCD'}, should
-be @samp{INTEGER} instead.
-
-You can test for yourself whether a particular compiler treats
-the prefix form as @samp{INTEGER} or typeless by running the
-following program:
-
-@smallexample
-EQUIVALENCE (I, R)
-R = Z'ABCD'
-J = Z'ABCD'
-IF (J .EQ. I) PRINT *, 'Prefix form is TYPELESS'
-IF (J .NE. I) PRINT *, 'Prefix form is INTEGER'
-END
-@end smallexample
-
-If you wish to report the results of this test to the
-maintainers of @code{g77}, please include full information
-on the compiler, system, and version information you're
-using.
-(We already know how @code{g77} handles it, of course.)
-
-Perhaps this will be changed in version 0.6.
-
-@item
 @samp{LOC()} and other intrinsics are probably somewhat misclassified.
 Is the a need for more precise classification of intrinsics, and if so,
 what are the appropriate groupings?
@@ -6738,8 +7621,9 @@ Reliable compilers never crash---they just remain obsolete.
 @cindex invalid assembly code
 @cindex assembly code, invalid
 @item
-If the compiler produces invalid assembly code, for any input whatever
-(except an @code{asm} statement), that is a compiler bug, unless the
+If the compiler produces invalid assembly code, for any input whatever,
+@c (except an @code{asm} statement),
+that is a compiler bug, unless the
 compiler reports errors (not just warnings) which would ordinarily
 prevent the assembler from being run.
 
@@ -6798,7 +7682,7 @@ mailing them.
 This sometimes appears to work, but it has one problem which can be
 crucial: a newsgroup posting does not contain a mail path back to the
 sender.
-Thus, if maintainers need more information, they may be unable
+Thus, if maintainers need more information, they might be unable
 to reach you.  For this reason, you should always send bug reports by
 mail to the proper mailing list.
 
@@ -6928,7 +7812,7 @@ and so on.
 It is not necessary to replace the @samp{INCLUDE} statements
 with the actual files in the version of the source file that
 you send, but it might make submitting the bug report easier
-on the ends.
+in the end.
 However, be sure to @emph{reproduce} the bug using the @emph{exact}
 version of the source material you submit, to avoid wild-goose
 chases.
@@ -7072,7 +7956,7 @@ Most GNU Fortran bugs involve just one function, so the most straightforward
 way to simplify an example is to delete all the function definitions
 except the one where the bug occurs.  Those earlier in the file may be
 replaced by external declarations if the crucial function depends on
-them.  (Exception: inline functions may affect compilation of functions
+them.  (Exception: inline functions might affect compilation of functions
 defined later in the file.)
 
 However, simplification is not vital; if you don't want to do this,
@@ -7271,8 +8155,7 @@ help clarify its nature.
 @emph{Fortran options} are options that apply only
 when compiling Fortran programs.
 They are accepted by @code{g77} and @code{gcc}, but
-they mean something only when these commands actually
-compile Fortran programs.
+they apply only when compiling Fortran programs.
 
 @item
 @emph{Compiler options} are options that apply
@@ -7281,9 +8164,9 @@ when compiling most any kind of program.
 
 @emph{Fortran options} are listed in the file
 @file{gcc/f/lang-options.h},
-which is used when during the build of @code{gcc} to
+which is used during the build of @code{gcc} to
 build a list of all options that are accepted by
-at last one language's compiler.
+at least one language's compiler.
 This list goes into the @samp{lang_options} array
 in @file{gcc/toplev.c}, which uses this array to
 determine whether a particular option should be
@@ -7292,7 +8175,7 @@ by calling @samp{lang_option_decode}, which, for
 @code{g77}, is in @file{gcc/f/com.c} and just
 calls @samp{ffe_decode_option}.
 
-Even if the linked-in front end ``rejects'' a
+If the linked-in front end ``rejects'' a
 particular option passed to it, @file{toplev.c}
 just ignores the option, because @emph{some}
 language's compiler is willing to accept it.
@@ -7319,11 +8202,15 @@ of each option.
 
 The defaults for Fortran options are set in their
 global definitions, also found in @file{gcc/f/top.c}.
-Some of these defaults are actually macros defined
+Many of these defaults are actually macros defined
 in @file{gcc/f/target.h}, since they might be
-machine-specific, although, in practice, GNU compilers
+machine-specific.
+However, since, in practice, GNU compilers
 should behave the same way on all configurations
-(especially when it comes to language constructs).
+(especially when it comes to language constructs),
+the practice of setting defaults in @file{target.h}
+is likely to be deprecated and, ultimately, stopped
+in future versions of @code{g77}.
 
 Accessor macros for Fortran options, used by code
 in the @code{g77} FFE, are defined in @file{gcc/f/top.h}.

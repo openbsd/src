@@ -54,8 +54,8 @@ un_getc(x,f__cf) int x; FILE *f__cf;
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
-#include "string.h"
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef ungetc
  static int
@@ -340,7 +340,7 @@ x_rsne(cilist *a)
 #endif
 		}
  have_amp:
-	if (ch = getname(buf,sizeof(buf)))
+	if (ch = getname(buf,(int) sizeof(buf)))
 		return ch;
 	nl = (Namelist *)a->cifmt;
 	if (strcmp(buf, nl->name))
@@ -395,7 +395,7 @@ x_rsne(cilist *a)
 				if (ch <= ' ' && ch >= 0 || ch == ',')
 					continue;
 				Ungetc(ch,f__cf);
-				if (ch = getname(buf,sizeof(buf)))
+				if (ch = getname(buf,(int) sizeof(buf)))
 					return ch;
 				goto havename;
 			}

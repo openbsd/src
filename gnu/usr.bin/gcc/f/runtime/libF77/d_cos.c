@@ -5,7 +5,7 @@ double cos();
 double d_cos(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double d_cos(doublereal *x)
 #endif
 {

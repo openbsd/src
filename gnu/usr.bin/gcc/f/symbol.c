@@ -836,7 +836,8 @@ ffesymbol_dump (ffesymbol s)
 void
 ffesymbol_error (ffesymbol s, ffelexToken t)
 {
-  if (ffest_ffebad_start (FFEBAD_SYMERR))
+  if ((t != NULL)
+      && ffest_ffebad_start (FFEBAD_SYMERR))
     {
       ffebad_string (ffesymbol_text (s));
       ffebad_here (0, ffelex_token_where_line (t),
@@ -1003,13 +1004,13 @@ ffesymbol_report (ffesymbol s)
 
   if (s->accretion != NULL)
     {
-      fprintf (dmpout, "  accretion (%" ffetargetOffset_f "u left): ",
+      fprintf (dmpout, "  accretion (%" ffetargetOffset_f "d left): ",
 	       s->accretes);
       ffebld_dump (s->accretion);
       fputs ("\n", dmpout);
     }
   else if (s->accretes != 0)
-    fprintf (dmpout, "  accretes!! = %" ffetargetOffset_f "u left\n",
+    fprintf (dmpout, "  accretes!! = %" ffetargetOffset_f "d left\n",
 	     s->accretes);
 
   if (s->dummy_args != NULL)

@@ -1,7 +1,7 @@
 /* STARTUP PROCEDURE FOR UNIX FORTRAN PROGRAMS */
 
-#include "stdio.h"
-#include "signal.h"
+#include <stdio.h>
+#include <signal.h>
 
 #ifndef SIGIOT
 #ifdef SIGABRT
@@ -11,7 +11,7 @@
 
 #ifndef KR_headers
 #undef VOID
-#include "stdlib.h"
+#include <stdlib.h>
 #endif
 
 #ifndef VOID

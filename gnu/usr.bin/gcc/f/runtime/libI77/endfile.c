@@ -1,6 +1,6 @@
 #include "f2c.h"
 #include "fio.h"
-#include "sys/types.h"
+#include <sys/types.h>
 #include "rawio.h"
 
 #ifdef KR_headers
@@ -9,8 +9,8 @@ extern char *strcpy();
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
-#include "string.h"
+#include <stdlib.h>
+#include <string.h>
 #endif
 
 #ifdef NON_UNIX_STDIO
@@ -79,7 +79,7 @@ copy(from, len, to) char *from, *to; register long len;
 copy(char *from, register long len, char *to)
 #endif
 {
-	register int n;
+	register size_t n;
 	int k, rc = 0, tmp;
 	char buf[BUFSIZ];
 
@@ -87,7 +87,7 @@ copy(char *from, register long len, char *to)
 		return 1;
 	if ((tmp = creat(to,0666)) < 0)
 		return 1;
-	while((n = read(k, buf, len > BUFSIZ ? BUFSIZ : (int)len)) > 0) {
+	while((n = read(k, buf, (size_t) (len > BUFSIZ ? BUFSIZ : (int)len))) > 0) {
 		if (write(tmp, buf, n) != n)
 			{ rc = 1; break; }
 		if ((len -= n) <= 0)

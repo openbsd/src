@@ -53,6 +53,14 @@ dnl AC_PROG_MAKE_SET
 dnl Checks for libraries.
 
 dnl Checks for header files.
+# Sanity check for the cross-compilation case:
+AC_CHECK_HEADER(stdio.h,:,
+  [AC_MSG_ERROR([Can't find stdio.h.
+You must have a usable C system for the target already installed, at least
+including headers and, preferably, the library, before you can configure
+the G77 runtime system.  If necessary, install gcc now with \`LANGUAGES=c',
+then the target library, then build with \`LANGUAGES=f77'.])])
+
 AC_HEADER_STDC
 dnl We could do this if we didn't know we were using gcc
 dnl AC_MSG_CHECKING(for prototype-savvy compiler)
@@ -116,7 +124,6 @@ else true
 fi
 
 # This should always succeed on unix:
-dnl Unfortunately, the mesage implies we're just checking for -lm...
 AC_CHECK_FUNC(fstat,,AC_DEFINE(NON_UNIX_STDIO))
 # This is necessary for e.g. Linux:
 AC_MSG_CHECKING([for necessary members of struct FILE])
@@ -130,6 +137,7 @@ if test $ac_cv_struct_FILE = no; then
 fi
 
 dnl perhaps should check also for remainder
+dnl Unfortunately, the message implies we're just checking for -lm...
 AC_CHECK_LIB(m,drem,AC_DEFINE(IEEE_drem))
 
 dnl for U77:
@@ -229,6 +237,12 @@ dnl maybe check for drem/remainder
 
 AC_SUBST(CROSS)
 
+
+# This EOF_CHAR is a misfeature on unix.
+AC_DEFINE(NO_EOF_CHAR_CHECK)
+
+AC_DEFINE(Skip_f2c_Undefs)
+
 dnl Craig had these in f2c.h, but they're only relevant for building libf2c
 dnl anyway.
 
@@ -272,3 +286,9 @@ dnl   not s_cat.o)
 dnl * change unit preconnexion in libI77/err.c (f_init.c)
 dnl * -DALWAYS_FLUSH in libI77
 dnl * -DOMIT_BLANK_CC in libI77
+
+dnl Local Variables:
+dnl comment-start: "dnl "
+dnl comment-end: ""
+dnl comment-start-skip: "\\bdnl\\b\\s *"
+dnl End:

@@ -6964,7 +6964,7 @@ ffeexpr_convert (ffebld source, ffelexToken source_token, ffelexToken dest_token
 	      break;
 
 	    case FFEINFO_basictypeINTEGER:
-	      bad = !ffe_is_ugly ();
+	      bad = !ffe_is_ugly_logint ();
 	      break;
 
 	    case FFEINFO_basictypeCHARACTER:
@@ -6989,7 +6989,7 @@ ffeexpr_convert (ffebld source, ffelexToken source_token, ffelexToken dest_token
 	      break;
 
 	    case FFEINFO_basictypeLOGICAL:
-	      bad = !ffe_is_ugly ();
+	      bad = !ffe_is_ugly_logint ();
 	      break;
 
 	    case FFEINFO_basictypeCHARACTER:
@@ -9620,7 +9620,7 @@ ffeexpr_reduce_ ()
 	{
 	case FFEEXPR_operatorADD_:
 	  reduced = ffebld_new_uplus (expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly1_ (reduced, operator, operand);
 	  reduced = ffeexpr_reduced_math1_ (reduced, operator, operand);
 	  reduced = ffeexpr_collapse_uplus (reduced, operator->token);
@@ -9629,7 +9629,7 @@ ffeexpr_reduce_ ()
 	case FFEEXPR_operatorSUBTRACT_:
 	  submag = TRUE;	/* Ok to negate a magic number. */
 	  reduced = ffebld_new_uminus (expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly1_ (reduced, operator, operand);
 	  reduced = ffeexpr_reduced_math1_ (reduced, operator, operand);
 	  reduced = ffeexpr_collapse_uminus (reduced, operator->token);
@@ -9637,7 +9637,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorNOT_:
 	  reduced = ffebld_new_not (expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly1log_ (reduced, operator, operand);
 	  reduced = ffeexpr_reduced_bool1_ (reduced, operator, operand);
 	  reduced = ffeexpr_collapse_not (reduced, operator->token);
@@ -9676,7 +9676,7 @@ ffeexpr_reduce_ ()
 	{
 	case FFEEXPR_operatorADD_:
 	  reduced = ffebld_new_add (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_math2_ (reduced, left_operand, operator,
@@ -9688,7 +9688,7 @@ ffeexpr_reduce_ ()
 	  submag = TRUE;	/* Just to pick the right error if magic
 				   number. */
 	  reduced = ffebld_new_subtract (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_math2_ (reduced, left_operand, operator,
@@ -9698,7 +9698,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorMULTIPLY_:
 	  reduced = ffebld_new_multiply (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_math2_ (reduced, left_operand, operator,
@@ -9708,7 +9708,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorDIVIDE_:
 	  reduced = ffebld_new_divide (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_math2_ (reduced, left_operand, operator,
@@ -9718,7 +9718,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorPOWER_:
 	  reduced = ffebld_new_power (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_power_ (reduced, left_operand, operator,
@@ -9735,7 +9735,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorLT_:
 	  reduced = ffebld_new_lt (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_relop2_ (reduced, left_operand, operator,
@@ -9745,7 +9745,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorLE_:
 	  reduced = ffebld_new_le (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_relop2_ (reduced, left_operand, operator,
@@ -9755,7 +9755,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorEQ_:
 	  reduced = ffebld_new_eq (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_eqop2_ (reduced, left_operand, operator,
@@ -9765,7 +9765,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorNE_:
 	  reduced = ffebld_new_ne (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_eqop2_ (reduced, left_operand, operator,
@@ -9775,7 +9775,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorGT_:
 	  reduced = ffebld_new_gt (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_relop2_ (reduced, left_operand, operator,
@@ -9785,7 +9785,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorGE_:
 	  reduced = ffebld_new_ge (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2_ (reduced, left_operand, operator,
 					      operand);
 	  reduced = ffeexpr_reduced_relop2_ (reduced, left_operand, operator,
@@ -9795,7 +9795,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorAND_:
 	  reduced = ffebld_new_and (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2log_ (reduced, left_operand, operator,
 						 operand);
 	  reduced = ffeexpr_reduced_bool2_ (reduced, left_operand, operator,
@@ -9805,7 +9805,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorOR_:
 	  reduced = ffebld_new_or (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2log_ (reduced, left_operand, operator,
 						 operand);
 	  reduced = ffeexpr_reduced_bool2_ (reduced, left_operand, operator,
@@ -9815,7 +9815,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorXOR_:
 	  reduced = ffebld_new_xor (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2log_ (reduced, left_operand, operator,
 						 operand);
 	  reduced = ffeexpr_reduced_bool2_ (reduced, left_operand, operator,
@@ -9825,7 +9825,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorEQV_:
 	  reduced = ffebld_new_eqv (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2log_ (reduced, left_operand, operator,
 						 operand);
 	  reduced = ffeexpr_reduced_bool2_ (reduced, left_operand, operator,
@@ -9835,7 +9835,7 @@ ffeexpr_reduce_ ()
 
 	case FFEEXPR_operatorNEQV_:
 	  reduced = ffebld_new_neqv (left_expr, expr);
-	  if (ffe_is_ugly ())
+	  if (ffe_is_ugly_logint ())
 	    reduced = ffeexpr_reduced_ugly2log_ (reduced, left_operand, operator,
 						 operand);
 	  reduced = ffeexpr_reduced_bool2_ (reduced, left_operand, operator,
@@ -9917,7 +9917,7 @@ ffeexpr_reduced_bool1_ (ffebld reduced, ffeexprExpr_ op, ffeexprExpr_ r)
   rwh = ffeinfo_where (rinfo);
 
   if (((rbt == FFEINFO_basictypeLOGICAL)
-       || (ffe_is_ugly () && (rbt == FFEINFO_basictypeINTEGER)))
+       || (ffe_is_ugly_logint () && (rbt == FFEINFO_basictypeINTEGER)))
       && (rrk == 0))
     {
       switch (rwh)
@@ -9942,7 +9942,7 @@ ffeexpr_reduced_bool1_ (ffebld reduced, ffeexprExpr_ op, ffeexprExpr_ r)
     }
 
   if ((rbt != FFEINFO_basictypeLOGICAL)
-      && (!ffe_is_ugly () || (rbt != FFEINFO_basictypeINTEGER)))
+      && (!ffe_is_ugly_logint () || (rbt != FFEINFO_basictypeINTEGER)))
     {
       if ((rbt != FFEINFO_basictypeANY)
 	  && ffebad_start (FFEBAD_BOOL_ARG_TYPE))
@@ -10012,7 +10012,7 @@ ffeexpr_reduced_bool2_ (ffebld reduced, ffeexprExpr_ l, ffeexprExpr_ op,
   ffeexpr_type_combine (&nbt, &nkt, lbt, lkt, rbt, rkt, op->token);
 
   if (((nbt == FFEINFO_basictypeLOGICAL)
-       || (ffe_is_ugly () && (nbt == FFEINFO_basictypeINTEGER)))
+       || (ffe_is_ugly_logint () && (nbt == FFEINFO_basictypeINTEGER)))
       && (lrk == 0) && (rrk == 0))
     {
       switch (lwh)
@@ -10066,10 +10066,10 @@ ffeexpr_reduced_bool2_ (ffebld reduced, ffeexprExpr_ l, ffeexprExpr_ op,
     }
 
   if ((lbt != FFEINFO_basictypeLOGICAL)
-      && (!ffe_is_ugly () || (lbt != FFEINFO_basictypeINTEGER)))
+      && (!ffe_is_ugly_logint () || (lbt != FFEINFO_basictypeINTEGER)))
     {
       if ((rbt != FFEINFO_basictypeLOGICAL)
-	  && (!ffe_is_ugly () || (rbt != FFEINFO_basictypeINTEGER)))
+	  && (!ffe_is_ugly_logint () || (rbt != FFEINFO_basictypeINTEGER)))
 	{
 	  if ((lbt != FFEINFO_basictypeANY) && (rbt != FFEINFO_basictypeANY)
 	      && ffebad_start (FFEBAD_BOOL_ARGS_TYPE))
@@ -10092,7 +10092,7 @@ ffeexpr_reduced_bool2_ (ffebld reduced, ffeexprExpr_ l, ffeexprExpr_ op,
 	}
     }
   else if ((rbt != FFEINFO_basictypeLOGICAL)
-	   && (!ffe_is_ugly () || (rbt != FFEINFO_basictypeINTEGER)))
+	   && (!ffe_is_ugly_logint () || (rbt != FFEINFO_basictypeINTEGER)))
     {
       if ((rbt != FFEINFO_basictypeANY)
 	  && ffebad_start (FFEBAD_BOOL_ARG_TYPE))
@@ -12208,7 +12208,7 @@ again:				/* :::::::::::::::::::: */
       switch (ffeinfo_basictype (info))
 	{
 	case FFEINFO_basictypeLOGICAL:
-	  error = !ffe_is_ugly ();
+	  error = !ffe_is_ugly_logint ();
 	  if (!ffeexpr_stack_->is_rhs)
 	    break;		/* Don't convert lhs variable. */
 	  expr = ffeexpr_convert (expr, ft, ft, FFEINFO_basictypeINTEGER,
@@ -12276,7 +12276,7 @@ again:				/* :::::::::::::::::::: */
 	  break;
 
 	case FFEINFO_basictypeLOGICAL:
-	  error = !ffe_is_ugly ()
+	  error = !ffe_is_ugly_logint ()
 	    || (ffeinfo_kindtype (info) != FFEINFO_kindtypeLOGICALDEFAULT);
 	  break;
 
@@ -12576,7 +12576,7 @@ again:				/* :::::::::::::::::::: */
       switch (ffeinfo_basictype (info))
 	{
 	case FFEINFO_basictypeLOGICAL:
-	  error = error && !ffe_is_ugly ();
+	  error = error && !ffe_is_ugly_logint ();
 	  if (!ffeexpr_stack_->is_rhs)
 	    break;		/* Don't convert lhs variable. */
 	  expr = ffeexpr_convert (expr, ft, ft, FFEINFO_basictypeINTEGER,
@@ -15418,6 +15418,47 @@ ffeexpr_token_name_apos_name_ (ffelexToken t)
     {
       ffetargetCharacterSize size;
 
+      if (!ffe_is_typeless_boz ()) {
+
+      switch (c)
+	{
+	case FFESRC_CASE_MATCH_INIT ('B', 'b', imatch_b, no_imatch):
+	  e->u.operand = ffebld_new_conter (ffebld_constant_new_integerbinary
+					    (ffeexpr_tokens_[2]));
+	  break;
+
+	case FFESRC_CASE_MATCH_INIT ('O', 'o', imatch_o, no_imatch):
+	  e->u.operand = ffebld_new_conter (ffebld_constant_new_integeroctal
+					    (ffeexpr_tokens_[2]));
+	  break;
+
+	case FFESRC_CASE_MATCH_INIT ('X', 'x', imatch_x, no_imatch):
+	  e->u.operand = ffebld_new_conter (ffebld_constant_new_integerhex
+					    (ffeexpr_tokens_[2]));
+	  break;
+
+	case FFESRC_CASE_MATCH_INIT ('Z', 'z', imatch_z, no_imatch):
+	  e->u.operand = ffebld_new_conter (ffebld_constant_new_integerhex
+					    (ffeexpr_tokens_[2]));
+	  break;
+
+	default:
+	no_imatch:		/* :::::::::::::::::::: */
+	  assert ("not BOXZ!" == NULL);
+	  abort ();
+	}
+
+	ffebld_set_info (e->u.operand,
+			 ffeinfo_new (FFEINFO_basictypeINTEGER,
+				      FFEINFO_kindtypeINTEGERDEFAULT, 0,
+				      FFEINFO_kindENTITY, FFEINFO_whereCONSTANT,
+				      FFETARGET_charactersizeNONE));
+	ffeexpr_exprstack_push_operand_ (e);
+	ffelex_token_kill (ffeexpr_tokens_[1]);
+	ffelex_token_kill (ffeexpr_tokens_[2]);
+	return (ffelexHandler) ffeexpr_token_binary_;
+      }
+
       switch (c)
 	{
 	case FFESRC_CASE_MATCH_INIT ('B', 'b', match_b, no_match):
@@ -15784,7 +15825,7 @@ ffeexpr_declare_unadorned_ (ffelexToken t, bool maybe_intrin)
 	  break;		/* Will turn into errors below. */
 
 	default:
-	  assert ("UNCERTAIN/NONE bad context" == NULL);
+	  ffesymbol_error (s, t);
 	  break;
 	}
       /* Fall through. */
@@ -15922,7 +15963,6 @@ ffeexpr_declare_unadorned_ (ffelexToken t, bool maybe_intrin)
 	  break;
 
 	default:
-	  assert ("UNDERSTOOD bad context" == NULL);
 	  bad = TRUE;
 	  break;
 	}
@@ -16001,7 +16041,7 @@ ffeexpr_declare_unadorned_ (ffelexToken t, bool maybe_intrin)
 	  goto understood;	/* :::::::::::::::::::: */
 
 	default:
-	  assert ("SEEN bad context" == NULL);
+	  ffesymbol_error (s, t);
 	  break;
 	}
       return s;
@@ -17506,7 +17546,7 @@ ffeexpr_declare_parenthesized_ (ffelexToken t, bool maybe_intrin,
 	  break;		/* Will turn into errors below. */
 
 	default:
-	  assert ("UNCERTAIN/NONE bad context" == NULL);
+	  ffesymbol_error (s, t);
 	  break;
 	}
       /* Fall through. */
@@ -17607,7 +17647,6 @@ ffeexpr_declare_parenthesized_ (ffelexToken t, bool maybe_intrin,
 	  break;
 
 	default:
-	  assert ("UNDERSTOOD bad context" == NULL);
 	  bad = TRUE;
 	  break;
 	}
@@ -17734,11 +17773,9 @@ ffeexpr_declare_parenthesized_ (ffelexToken t, bool maybe_intrin,
 	case FFEEXPR_contextDIMLISTCOMMON:
 	case FFEEXPR_contextINITVAL:
 	case FFEEXPR_contextEQVINDEX_:
-	  ffesymbol_error (s, t);
 	  break;
 
 	case FFEEXPR_contextINCLUDE:
-	  bad = TRUE;
 	  break;
 
 	case FFEEXPR_contextINDEX_:
@@ -17756,7 +17793,6 @@ ffeexpr_declare_parenthesized_ (ffelexToken t, bool maybe_intrin,
 	  goto understood;	/* :::::::::::::::::::: */
 
 	default:
-	  assert ("SEEN bad context" == NULL);
 	  break;
 	}
       k = ffesymbol_kind (s);
@@ -18133,7 +18169,7 @@ ffeexpr_token_arguments_ (ffelexToken ft, ffebld expr, ffelexToken t)
 	    }
 	}
     }
-  else if ((expr != NULL) || ffe_is_ugly ()
+  else if ((expr != NULL) || ffe_is_ugly_comma ()
 	   || (ffelex_token_type (t) == FFELEX_typeCOMMA))
     ffebld_append_item (&ffeexpr_stack_->bottom, expr);
 

@@ -1,3 +1,340 @@
+Fri Dec  6 12:23:55 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* g77.c: Default to assuming "f77" is in $LANGUAGES, since
+	the LANGUAGE_F77 macro isn't defined by anyone anymore (but
+	might as well leave the no-f77 code in just in case).
+	* Make-lang.in (g77, g77-cross): Don't define LANGUAGE_F77
+	anymore.
+
+1996-12-06  Dave Love  <d.love@dl.ac.uk>
+
+	* Make-lang.in (g77, g77-cross): Revert to building `g77' or not
+	conditional on `f77' in LANGUAGES.
+
+Wed Dec  4 13:08:44 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* Make-lang.in (g77, g77-cross): No libs or lib dependencies
+	in case where "f77" is not in $LANGUAGES.
+
+	* lex.c (ffelex_image_char_, ffelex_file_fixed,
+	ffelex_file_free): Fixes to properly handle lines with
+	null character, and too-long lines as well.
+
+	* lex.c: Call ffebad_start_msg_lex instead of
+	ffebad_start_msg throughout.
+
+Sun Dec  1 21:19:55 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	Fix-up for 1996-11-25 changes:
+	* com.c (ffecom_member_phase2_): Subtract out 0 offset for
+	elegance and consistency with EQUIVALENCE aggregates.
+	(ffecom_sym_transform_): Ditto for LOCAL/COMMON, and
+	ensure we get the same parent storage area.
+	* data.c (ffedata_gather_, ffedata_value_): Subtract out
+	aggregate offset.
+
+Wed Nov 27 13:55:57 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* proj.h: Quote the text of the #error message, to avoid
+	strange-looking diagnostics from non-gcc ANSI compilers.
+
+	* top.c: Make -fno-debug-kludge the default.
+
+Mon Nov 25 20:13:45 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	Provide more info on EQUIVALENCE mismatches:
+	* bad.def (FFEBAD_EQUIV_MISMATCH): More detailed message.
+	* equiv.c (ffeequiv_layout_local_, ffeequiv_layout_cblock):
+	More details for FFEBAD_EQUIV_MISMATCH.
+
+	Fix problem with EQUIVALENCE handling:
+	* equiv.c (ffeequiv_layout_local_): Redesign algorithm --
+	old one was broken, resulting in rejection of good code.
+	(ffeequiv_offset_): Add argument, change callers.
+	Clean up the code, fix up the (probably unused) negative-value
+	case for SYMTER.
+	* com.c (ffecom_sym_transform_): For local EQUIVALENCE
+	member, subtract out aggregate offset (which is <= 0).
+
+Thu Nov 21 12:44:56 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	Change type of ffetargetOffset from `unsigned long' to `long long':
+	* bld.c (ffebld_constantarray_dump): Change printf formats.
+	* storag.c (ffestorag_dump): Ditto.
+	* symbol.c (ffesymbol_report): Ditto.
+	* target.h (ffetargetOffset_f): Ditto and change type itself.
+
+	Handle situation where list of languages does not include f77:
+	* Make-lang.in: Define LANGUAGE_F77 to 1 only if `f77' is in
+	the $LANGUAGES macro for the build.
+	* g77.c: Compile to a (nearly) no-op program if LANGUAGE_F77
+	is not defined to 1.
+
+	Fixes to delay confirmation of READ, WRITE, and GOTO statements
+	so the corresponding assignments to same-named CHAR*(*) arrays
+	work:
+	* stb.c (ffestb_R90915_, ffestb_91014_): New functions.
+	(ffestb_goto3_, ffestb_goto5_): Move confirmation from 3 to 5
+	for the OPEN_PAREN case.
+	(ffestb_R9091_, ffestb_R9094_, ffestb_R90913_, ffestb_R90914_,
+	ffestb_R91012_, ffestb_R91013_): Use new functions, and confirm
+	except for the OPEN_PAREN case.
+
+	Fixes to not confirm declarations with an open paren where
+	an equal sign or other assignment-like token might be, so the
+	corresponding assignments to same-named CHAR*(*) arrays work:
+	(ffestb_decl_entsp_5_): Move assertion so we crash on that first,
+	if it turns out to be wrong, before the less-debuggable crash
+	on mistaken confirmation.
+	(ffestb_decl_entsp_6_, ffestb_decl_entsp_7_, ffestb_decl_entsp_8_):
+	Include OPEN_PAREN in list of assignment-only tokens.
+
+	Fix more diagnosed-crash bugs:
+	* stu.c (ffestu_sym_end_transition): ANY-ize an adjustable array
+	with bad dimension expressions even if still stateUNCERTAIN.
+	(ffestu_symter_end_transition_, ffestu_symter_exec_transition_):
+	Return TRUE for opANY as well.
+	For code elegance, move opSYMTER case into first switch.
+
+1996-11-17  Dave Love  <d.love@dl.ac.uk>
+
+	* lex.c: Fix last change.
+
+1996-11-14  Dave Love  <d.love@dl.ac.uk>
+
+	* Make-lang.in, config-lang.in: Remove the (broken) libU77 stuff,
+	pending 0.5.20.
+
+Thu Nov 14 15:40:59 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* bad.def (FFEBAD_UNIMPL_STMT): Explain that invalid
+	intrinsic references can trigger this message, too.
+
+1996-11-12  Dave Love  <d.love@dl.ac.uk>
+
+        * lex.c: Declare dwarfout routines.
+
+        * config-lang.in: Sink grep o/p.
+
+Mon Nov 11 14:21:13 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* g77.c (main): Might as well print version number
+	for --verbose as well.
+
+Thu Nov  7 18:41:41 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* expr.c, lang-options.h, target.h, top.c, top.h: Split out
+	remaining -fugly stuff into -fugly-logint and -fugly-comma,
+	leaving -fugly as simply a `macro' that expands into other
+	options, and eliminate defaults for some of the ugly stuff
+	in target.h.
+
+	* Make-lang.in (gcc-cross): Compile zzz.c, not version.o (!),
+	in to get version info for this target.
+
+	* config-lang.in: Test for GBE patch application based
+	on whether 2.6.x or 2.7.x GBE is detected.
+
+Wed Nov  6 14:19:45 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* Make-lang.in (g77): Compile zzz.c in to get version info.
+	* g77.c: Add support for --help and --version.
+
+	* g77.c (lookup_option): Short-circuit long-winded tests
+	when second char is not hyphen, just to save a spot of time.
+
+Sat Nov  2 13:50:31 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* intrin.def: Add FTELL and FSEEK intrinsics, plus new
+	`g' codes for alternate-return (GOTO) arguments.
+	* intrin.c (ffeintrin_check_): Support `g' codes.
+	* com-rt.def: Add ftell_() and fseek_() to database.
+	* com.c (ffecom_expr_intrinsic_): Ditto.  Also, let each
+	subroutine intrinsic decide for itself what to do with
+	tree_type, the default being NULL_TREE once again (so
+	ffecom_call_ doesn't think it's supposed to cast the
+	function call to the type in the fall-through case).
+
+	* ste.c (ffeste_R909_finish): Don't special-case list-directed
+	I/O, now that libf2c can return non-zero status codes.
+	(ffeste_R910_finish): Ditto.
+	(ffeste_io_call_): Simplify logic.
+	(ffeste_io_impdo_):
+	(ffeste_subr_beru_):
+	(ffeste_R904):
+	(ffeste_R907):
+	(ffeste_R909_start):
+	(ffeste_R909_item):
+	(ffeste_R909_finish):
+	(ffeste_R910_start):
+	(ffeste_R910_item):
+	(ffeste_R910_finish):
+	(ffeste_R911_start):
+	(ffeste_R923A): Ditto all the above.
+
+Thu Oct 31 20:56:28 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* config-lang.in, Make-lang.in: Rename flag file
+	build-u77 to build-libu77, for consistency with
+	install-libf2c and such.
+
+	* config-lang.in: Don't complain about failure to patch
+	if pre-2.7.0 gcc is involved (since our patch for that
+	doesn't add support for tooning).
+
+Sat Oct 26 00:45:42 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* target.c (ffetarget_integerhex): Fix dumb bug.
+
+1996-10-20  Dave Love  <d.love@dl.ac.uk>
+
+	* gbe/2.7.2.1.diff: New file.
+
+	* Makefile.in (F771_LDFLAGS): Add -bbigtoc for AIX4.1 up, suggested by
+	endo@material.tohoku.ac.jp [among others!].
+
+Sat Oct 19 03:11:14 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* bad.def, bld.c, bld.h, expr.c, lang-options.h, target.c,
+	target.h, top.c, top.h (ffebld_constant_new_integerbinary,
+	ffebld_constant_new_integerhex, ffebld_constant_new_integeroctal,
+	ffeexpr_token_name_apos_name_, ffetarget_integerbinary,
+	ffetarget_integerhex, ffetarget_integeroctal): Support
+	new -fno-typeless-boz option with new functions, mods to
+	existing octal-handling functions, new macros, new error
+	messages, and so on.
+
+	* com.c, lang-options.h, top.c, top.h (ffecom_notify_primary_entry):
+	Print program unit name on stderr if -fno-silent (new option).
+
+	* lang-options.h, top.c, top.h, stt.c (ffestt_dimlist_as_expr):
+	Treat ([...,]1) in dimlist as ([...,]*) if -fugly-assumed
+	(new option).
+
+	* lang-options.h: Comment out options duplicated in gcc/toplev.c,
+	because, somehow, having them commented in and building on my
+	DEC Alpha results in a cc1 that always segfaults, and gdb that
+	also segfaults whenever it debugs it up to init_lex() calling
+	xmalloc() or so.
+
+Thu Oct 17 00:39:27 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* stb.c (ffestb_R10013_): Don't change meaning of .sign until
+	after previous meaning/value used to set sign of value
+	(960507-1.f).
+
+Sun Oct 13 22:15:23 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* top.c (ffe_decode_option): Don't set back-end flags
+	that are nonexistent prior to gcc 2.7.0.
+
+Wed Oct  2 21:57:12 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* com.c (ffecom_debug_kludge_): Set DECL_IN_SYSTEM_HEADER so
+	-Wunused doesn't complain about these manufactured decls.
+	(ffecom_expr_): Ditto, for original (non-ASSIGN'ed) variable.
+	(ffecom_transform_equiv_): Clear DECL_IGNORED_P for aggregate
+	area so it shows up as a debug-accessible symbol.
+	(pushdecl): Default for "invented" identifiers (a g77-specific
+	concept for now) is that they are artificial, in system header,
+	ignored for debugging purposes, used, and (for types) suppressed.
+	This ought to be overkill.
+
+Fri Sep 27 23:13:07 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* ste.c (ffeste_begin_iterdo_, ffeste_end_iterdo_): Support
+	one-trip DO loops (F66-style).
+	* lang-options.h, top.c, top.h (-fonetrip): New option.
+
+Thu Sep 26 00:18:40 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* com.c (ffecom_debug_kludge_): New function.
+	(ffecom_sym_transform_): Use new function for COMMON and EQUIVALENCE
+	members.
+
+	* lang-options.h, top.c, top.h (-fno-debug-kludge):
+	New option.
+  
+1996-09-24  Dave Love  <d.love@dl.ac.uk>
+
+	* Make-lang.in (include/f2c.h):
+	Remove dependencies on xmake_file and tmake_file.
+	They expand inconsistently in 2.8 c.f. 2.7; $(GCC_PARTS) depends on
+	them anyhow.
+
+1996-09-22  Dave Love  <d.love@dl.ac.uk>
+
+	* config-lang.in: Add --enable-libu77 option handling.
+
+	* Make-lang.in:
+	Conditionally add --enable-libu77 when running runtime configure.
+	Define LIBU77STAGESTUFF and use it in relevant rules.
+
+1996-08-21  Dave Love  <d.love@dl.ac.uk>
+
+	* Make-lang.in (f77-runtime):
+	`stmp-hdrs' should have been `stmp-headers'.
+
+1996-08-20  Dave Love  <d.love@dl.ac.uk>
+
+	* Make-lang.in (f77-runtime):
+	Depend on stmp-hdrs, not stmp-int-hdrs, since libF77
+	needs float.h.
+
+1996-05-20  Dave Love  <d.love@dl.ac.uk>
+
+	* config-lang.in:
+	Test for patch being applied with flag_move_all_movables in toplev.c.
+
+	* install.texi (Patching GNU Fortran):
+	Mention overriding X_CFLAGS rather than
+	editing proj.h on SunOS4.
+
+	* Make-lang.in (F77_FLAGS_TO_PASS):
+	Add X_CFLAGS (convenient for SunOS4 kluge, in
+	particular).
+	(f77.{,mostly,dist}clean): Reorder things, in particular not to delete
+	Makefiles too early.
+
+	* g77.c (DEFAULT_SWITCH_TAKES_ARG): Define a la gcc.c in the
+	current GCC snapshot.
+
+Tue Apr 16 14:08:28 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* top.c (ffe_decode_option): -Wall no longer implies
+	-Wsurprising.
+
+Sat Apr 13 14:50:06 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* com.c (ffecom_char_args_): If item is error_mark_node,
+	set *length that way, too.
+
+	* com.c (ffecom_expr_power_integer_): If either operand
+	is error_mark_node, return that.
+
+	* com.c (ffecom_intrinsic_len_): If item is error_mark_node,
+	return that for length.
+
+	* expr.c (ffeexpr_declare_unadorned_,
+	ffeexpr_declare_parenthesized_): Instead of crashing
+	on unexpected contexts, produce a diagnostic.
+
+	* intrin.c (ffeintrin_check_), intrin.def (impSIGNAL):
+	Allow procedure as second arg to SIGNAL intrinsic.
+
+	* stu.c (ffestu_symter_end_transition_): New function.
+	(ffestu_symter_exec_transition_): Return bool arg.
+	Always transition symbol (don't inhibit when !whereNONE).
+	(ffestu_sym_end_transition): If DUMMY/LOCAL arg has any
+	opANY exprs in its dimlist, diagnose it so it doesn't
+	make it through to later stages that try to deal with
+	dimlist stuff.
+	(ffestu_sym_exec_transition): If sym has any opANY exprs
+	in its dimlist, diagnose it so it becomes opANY itself.
+
+	* symbol.c (ffesymbol_error): If token arg is NULL,
+	just ANY-ize the symbol -- don't produce diagnostic.
+
 Mon Apr  1 10:14:02 1996  Craig Burley  <burley@gnu.ai.mit.edu>
 
 	* Version 0.5.18 released.

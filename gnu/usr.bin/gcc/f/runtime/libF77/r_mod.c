@@ -12,7 +12,7 @@ double r_mod(x,y) real *x, *y;
 double drem(double, double);
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 #endif
 double r_mod(real *x, real *y)
 #endif

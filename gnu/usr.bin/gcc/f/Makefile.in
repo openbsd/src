@@ -138,8 +138,11 @@ ALL_CFLAGS = $(INTERNAL_CFLAGS) $(X_CFLAGS) $(T_CFLAGS) $(CFLAGS) $(XCFLAGS) -W 
 ALL_CPPFLAGS = $(CPPFLAGS) $(X_CPPFLAGS) $(T_CPPFLAGS)
 
 # f771 is so big, need to tell linker on m68k-next-nextstep* to make enough
-# room for it.
-F771_LDFLAGS = ` case "${target}" in m68k-next-nextstep*) echo -segaddr __DATA 6000000 ;; esac `
+# room for it.  On AIX, linking f771 overflows the linker TOC.  -bbigtoc is
+# appropriate for the linker on AIX 4.1 and above.
+F771_LDFLAGS = `case "${target}" in\
+ m68k-next-nextstep*) echo -segaddr __DATA 6000000;;\
+ *-*-aix[4-9]*) echo -Wl,-bbigtoc;; esac`
 
 # Even if ALLOCA is set, don't use it if compiling with GCC.
 

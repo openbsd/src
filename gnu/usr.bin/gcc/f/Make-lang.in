@@ -1,5 +1,5 @@
-# Top level makefile fragment for GNU Fortran.
-#   Copyright (C) 1995 Free Software Foundation, Inc.
+# Top level makefile fragment for GNU Fortran.           -*-makefile-*-
+#   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 
 #This file is part of GNU Fortran.
 
@@ -48,6 +48,7 @@ F77_FLAGS_TO_PASS = \
 	BISONFLAGS="$(BISONFLAGS)" \
 	CC="$(CC)" \
 	CFLAGS="$(CFLAGS)" \
+	X_CFLAGS="$(X_CFLAGS)" \
 	LDFLAGS="$(LDFLAGS)" \
 	LEX="$(LEX)" \
 	LEXFLAGS="$(LEXFLAGS)" \
@@ -107,14 +108,23 @@ F77 f77: f771 f77-runtime
   f77.maintainer-clean f77.realclean f77.stage1 f77.stage2 f77.stage3 \
   f77.stage4 f77.distdir f77.rebuilt
 
-# Create the compiler driver for g77.
+# Create the compiler driver for g77 (only if `f77' is in LANGUAGES).
 g77: f/g77.c $(CONFIG_H) $(LIBDEPS)
-	$(CC) $(ALL_CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(srcdir)/f/g77.c $(LIBS)
+	case '$(LANGUAGES)' in \
+	*f77*) \
+	  $(CC) $(ALL_CFLAGS) $(INCLUDES) $(LDFLAGS) \
+	    -o $@ $(srcdir)/f/g77.c $(srcdir)/f/zzz.c $(LIBS) ;; \
+	esac
 
-# Create a version of the g77 driver which calls the cross-compiler.
+# Create a version of the g77 driver which calls the cross-compiler
+# (only if `f77' is in LANGUAGES).
 g77-cross: f/g77.c version.o $(LIBDEPS)
-	$(CC) $(ALL_CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ \
-	   -DGCC_NAME=\"$(GCC_CROSS_NAME)\" $(srcdir)/f/g77.c version.o $(LIBS)
+	case '$(LANGUAGES)' in \
+	*f77*) \
+	  $(CC) $(ALL_CFLAGS) $(INCLUDES) $(LDFLAGS) \
+	    -DGCC_NAME=\"$(GCC_CROSS_NAME)\" \
+	    -o $@ $(srcdir)/f/g77.c $(srcdir)/f/zzz.c $(LIBS) ;; \
+	esac
 
 # g77 documentation.
 $(build_infodir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi
@@ -241,8 +251,9 @@ f/Makefile: $(srcdir)/f/Makefile.in $(srcdir)/configure
 # to keep stage? links around everywhere) unless this value has been
 # overridden from the default "./xgcc -B./", hence the case statement.
 # We depend on GCC_PASSES through f/runtime/Makefile.
-stmp-int-hdrs = stmp-int-hdrs	# to be overrideable in unsafe version
-f77-runtime:  f/runtime/Makefile include/f2c.h $(stmp-int-headers) \
+stmp-headers = stmp-headers	# to be overrideable in unsafe version
+# Depend on stmp-headers, not stmp-int-hdrs, since libF77 needs float.h.
+f77-runtime:  f/runtime/Makefile include/f2c.h $(stmp-headers) \
   f/runtime/libF77/Makefile f/runtime/libI77/Makefile
 	case "$(LANGUAGES)" in \
 	*f77*) top=`pwd`; \
@@ -257,7 +268,7 @@ f77-runtime:  f/runtime/Makefile include/f2c.h $(stmp-int-headers) \
 # This one doesn't depend on cc1 etc. but f2c.h may not be found,
 # in particular, at present...
 f77-runtime-unsafe:
-	$(MAKE) stmp-int-hdrs= GCC_PARTS= f77-runtime
+	$(MAKE) stmp-headers= GCC_PARTS= f77-runtime
 
 # The configuration of the runtime system relies on an autoconf-type
 # configure, not a Cygnus-type one.  It needs to be run *after* the
@@ -269,7 +280,7 @@ f/runtime/libF77/Makefile f/runtime/libI77/Makefile: \
   $(srcdir)/f/com.h f/proj.h $(srcdir)/f/runtime/Makefile.in \
   $(srcdir)/f/runtime/libF77/Makefile.in \
   $(srcdir)/f/runtime/libI77/Makefile.in \
-  $(GCC_PARTS) $(srcdir)/config/$(xmake_file) $(srcdir)/config/$(tmake_file)
+  $(GCC_PARTS)
 # The make "stage?" in compiler spec. is fully qualified as above
 	top=`pwd`; \
 	src=`cd $(srcdir); pwd`; \
@@ -281,7 +292,7 @@ f/runtime/libF77/Makefile f/runtime/libI77/Makefile: \
 	  $${src}/f/runtime/configure --srcdir=$${src}/f/runtime
 
 #For now, omit f2c stuff.  -- burley
-#f2c: stmp-int-hdrs f/f2c/Makefile
+#f2c: stmp-headers f/f2c/Makefile
 #	cd f/f2c; $(MAKE) all
 #
 #f/f2c/Makefile: $(srcdir)/f/f2c/Makefile.in $(GCC_PARTS) \
@@ -460,11 +471,13 @@ f77.mostlyclean:
 	-rm -f f/*$(objext)
 	-rm -f f/fini f/f771 f/stamp-str f/str-*.h f/str-*.j
 	-cd f/runtime; $(MAKE) mostlyclean
-f77.clean: f77.mostlyclean
-	-cd f/runtime; $(MAKE) clean
-f77.distclean: f77.clean
-	-rm -f f/Makefile
+f77.clean:
+	-cd f/runtime; $(MAKE) mostlyclean
+	-$(MAKE) f77.mostlyclean
+f77.distclean:
 	-cd f/runtime; $(MAKE) distclean
+	-$(MAKE) f77.clean
+	-rm -f f/Makefile
 # like gcc's extraclean, which does clean f/ for us, but not f/gbe,
 # f/runtime, f/runtime/libF77, and f/runtime/libI77, so do those.
 f77.extraclean: f77.distclean

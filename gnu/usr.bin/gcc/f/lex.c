@@ -34,6 +34,13 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "tree.j"
 #endif
 
+#ifdef DWARF_DEBUGGING_INFO
+void dwarfout_resume_previous_source_file (register unsigned);
+void dwarfout_start_new_source_file (register char *);
+void dwarfout_define (register unsigned, register char *);
+void dwarfout_undef (register unsigned, register char *);
+#endif DWARF_DEBUGGING_INFO
+
 static void ffelex_append_to_token_ (char c);
 static int ffelex_backslash_ (int c, ffewhereColumnNumber col);
 static void ffelex_bad_1_ (ffebad errnum, ffewhereLineNumber ln0,
@@ -271,8 +278,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 	case 'x':
 	  if (warn_traditional)
 	    {
-	      ffebad_start_msg ("The meaning of `\\x' (at %0) varies with -traditional",
-				FFEBAD_severityWARNING);
+	      ffebad_start_msg_lex ("The meaning of `\\x' (at %0) varies with -traditional",
+				    FFEBAD_severityWARNING);
 	      ffelex_bad_here_ (0, line, column);
 	      ffebad_finish ();
 	    }
@@ -321,8 +328,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 	case 'a':
 	  if (warn_traditional)
 	    {
-	      ffebad_start_msg ("The meaning of `\\a' (at %0) varies with -traditional",
-				FFEBAD_severityWARNING);
+	      ffebad_start_msg_lex ("The meaning of `\\a' (at %0) varies with -traditional",
+				    FFEBAD_severityWARNING);
 	      ffelex_bad_here_ (0, line, column);
 	      ffebad_finish ();
 	    }
@@ -350,8 +357,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 
 	      m[0] = c;
 	      m[1] = '\0';
-	      ffebad_start_msg ("Non-ANSI-C-standard escape sequence `\\%A' at %0",
-				FFEBAD_severityPEDANTIC);
+	      ffebad_start_msg_lex ("Non-ANSI-C-standard escape sequence `\\%A' at %0",
+				    FFEBAD_severityPEDANTIC);
 	      ffelex_bad_here_ (0, line, column);
 	      ffebad_string (m);
 	      ffebad_finish ();
@@ -368,16 +375,16 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 
 	      m[0] = c;
 	      m[1] = '\0';
-	      ffebad_start_msg ("Unknown escape sequence `\\%A' at %0",
-				FFEBAD_severityPEDANTIC);
+	      ffebad_start_msg_lex ("Unknown escape sequence `\\%A' at %0",
+				    FFEBAD_severityPEDANTIC);
 	      ffelex_bad_here_ (0, line, column);
 	      ffebad_string (m);
 	      ffebad_finish ();
 	    }
 	  else if (c == EOF)
 	    {
-	      ffebad_start_msg ("Unterminated escape sequence `\\' at %0",
-				FFEBAD_severityPEDANTIC);
+	      ffebad_start_msg_lex ("Unterminated escape sequence `\\' at %0",
+				    FFEBAD_severityPEDANTIC);
 	      ffelex_bad_here_ (0, line, column);
 	      ffebad_finish ();
 	    }
@@ -386,8 +393,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 	      char m[20];
 
 	      sprintf (&m[0], "%x", c);
-	      ffebad_start_msg ("Unknown escape sequence `\\' followed by char code 0x%A at %0",
-				FFEBAD_severityPEDANTIC);
+	      ffebad_start_msg_lex ("Unknown escape sequence `\\' followed by char code 0x%A at %0",
+				    FFEBAD_severityPEDANTIC);
 	      ffelex_bad_here_ (0, line, column);
 	      ffebad_string (m);
 	      ffebad_finish ();
@@ -421,8 +428,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 
       if (! nonnull)
 	{
-	  ffebad_start_msg ("\\x used at %0 with no following hex digits",
-			    FFEBAD_severityFATAL);
+	  ffebad_start_msg_lex ("\\x used at %0 with no following hex digits",
+				FFEBAD_severityFATAL);
 	  ffelex_bad_here_ (0, line, column);
 	  ffebad_finish ();
 	}
@@ -434,8 +441,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
 		   && ((1 << (TYPE_PRECISION (integer_type_node) - (count - 1) * 4))
 		       <= (int) firstdig)))
 	{
-	  ffebad_start_msg ("Hex escape at %0 out of range",
-			    FFEBAD_severityPEDANTIC);
+	  ffebad_start_msg_lex ("Hex escape at %0 out of range",
+				FFEBAD_severityPEDANTIC);
 	  ffelex_bad_here_ (0, line, column);
 	  ffebad_finish ();
 	}
@@ -467,8 +474,8 @@ ffelex_backslash_ (int c, ffewhereColumnNumber col)
       && TYPE_PRECISION (char_type_node) < HOST_BITS_PER_INT
       && code >= (1 << TYPE_PRECISION (char_type_node)))
     {
-      ffebad_start_msg ("Escape sequence at %0 out of range for character",
-			FFEBAD_severityFATAL);
+      ffebad_start_msg_lex ("Escape sequence at %0 out of range for character",
+			    FFEBAD_severityFATAL);
       ffelex_bad_here_ (0, line, column);
       ffebad_finish ();
     }
@@ -1407,6 +1414,7 @@ ffelex_image_char_ (int c, ffewhereColumnNumber column)
 	  ffelex_card_length_ = column + 3;
 	  ffelex_bad_1_ (FFEBAD_LINE_TOO_LONG,
 			 ffelex_linecount_current_, column + 1);
+	  column += 3;
 	  return column;
 	}
 
@@ -1436,10 +1444,11 @@ ffelex_image_char_ (int c, ffewhereColumnNumber column)
 	  ffelex_bad_line_ = TRUE;
 	  strcpy (&ffelex_card_image_[column], "[\\0]");
 	  ffelex_card_length_ = column + 4;
-	  ffebad_start_msg ("Null character at %0 -- line ignored",
-			    FFEBAD_severityFATAL);
+	  ffebad_start_msg_lex ("Null character at %0 -- line ignored",
+				FFEBAD_severityFATAL);
 	  ffelex_bad_here_ (0, ffelex_linecount_current_, column + 1);
 	  ffebad_finish ();
+	  column += 4;
 	}
       break;
 
@@ -1935,7 +1944,11 @@ ffelex_file_fixed (ffewhereFile wf, FILE *f)
     column = ffelex_image_char_ (c, column);
 
   if (ffelex_bad_line_)
-    goto comment_line;		/* :::::::::::::::::::: */
+    {
+      ffelex_card_image_[column] = '\0';
+      ffelex_card_length_ = column;
+      goto comment_line;		/* :::::::::::::::::::: */
+    }
 
   /* If no tab, cut off line after column 72/132.  */
 
@@ -3058,7 +3071,11 @@ ffelex_file_free (ffewhereFile wf, FILE *f)
     column = ffelex_image_char_ (c, column);
 
   if (ffelex_bad_line_)
-    goto comment_line;		/* :::::::::::::::::::: */
+    {
+      ffelex_card_image_[column] = '\0';
+      ffelex_card_length_ = column;
+      goto comment_line;		/* :::::::::::::::::::: */
+    }
 
   /* If no tab, cut off line after column 132.  */
 

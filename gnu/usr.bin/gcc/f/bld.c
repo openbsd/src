@@ -1486,11 +1486,49 @@ ffebld_constant_new_integer4_val (ffetargetInteger4 val)
 }
 
 #endif
+/* ffebld_constant_new_integerbinary -- Return binary constant object from token
+
+   See prototype.
+
+   Parses the token as a binary integer constant, thus it must be an
+   FFELEX_typeNUMBER.  */
+
+ffebldConstant
+ffebld_constant_new_integerbinary (ffelexToken t)
+{
+  ffetargetIntegerDefault val;
+
+  assert ((ffelex_token_type (t) == FFELEX_typeNAME)
+	  || (ffelex_token_type (t) == FFELEX_typeNUMBER));
+
+  ffetarget_integerbinary (&val, t);
+  return ffebld_constant_new_integerdefault_val (val);
+}
+
+/* ffebld_constant_new_integerhex -- Return hex constant object from token
+
+   See prototype.
+
+   Parses the token as a hex integer constant, thus it must be an
+   FFELEX_typeNUMBER.  */
+
+ffebldConstant
+ffebld_constant_new_integerhex (ffelexToken t)
+{
+  ffetargetIntegerDefault val;
+
+  assert ((ffelex_token_type (t) == FFELEX_typeNAME)
+	  || (ffelex_token_type (t) == FFELEX_typeNUMBER));
+
+  ffetarget_integerhex (&val, t);
+  return ffebld_constant_new_integerdefault_val (val);
+}
+
 /* ffebld_constant_new_integeroctal -- Return octal constant object from token
 
    See prototype.
 
-   Parses the token as a decimal integer constant, thus it must be an
+   Parses the token as a octal integer constant, thus it must be an
    FFELEX_typeNUMBER.  */
 
 ffebldConstant
@@ -1498,7 +1536,8 @@ ffebld_constant_new_integeroctal (ffelexToken t)
 {
   ffetargetIntegerDefault val;
 
-  assert (ffelex_token_type (t) == FFELEX_typeNUMBER);
+  assert ((ffelex_token_type (t) == FFELEX_typeNAME)
+	  || (ffelex_token_type (t) == FFELEX_typeNUMBER));
 
   ffetarget_integeroctal (&val, t);
   return ffebld_constant_new_integerdefault_val (val);
@@ -1995,10 +2034,10 @@ ffebld_constantarray_dump (ffebldConstantArray array, ffeinfoBasictype bt,
 	  if (value && (length != 0))
 	    {
 	      if (length == 1)
-		fprintf (dmpout, "[%" ffetargetOffset_f "u]:", offset);
+		fprintf (dmpout, "[%" ffetargetOffset_f "d]:", offset);
 	      else
 		fprintf (dmpout,
-		      "[%" ffetargetOffset_f "u..%" ffetargetOffset_f "u]:",
+		      "[%" ffetargetOffset_f "u..%" ffetargetOffset_f "d]:",
 			 offset, offset + length - 1);
 	      for (i = 0; i < length; ++i, ++offset)
 		{

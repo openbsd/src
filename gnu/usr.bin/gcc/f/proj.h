@@ -25,7 +25,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define _H_f_proj
 
 #if !defined (__GNUC__) || (__GNUC__ < 2)
-#error You have to use gcc 2.x to build g77 (might be fixed in g77-0.6).
+#error "You have to use gcc 2.x to build g77 (might be fixed in g77-0.6)."
 #endif
 
 #ifndef BUILT_WITH_270

@@ -57,7 +57,8 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 /* Static functions (internal). */
 
 static void ffestu_list_exec_transition_ (ffebld list);
-static void ffestu_symter_exec_transition_ (ffebld expr);
+static bool ffestu_symter_end_transition_ (ffebld expr);
+static bool ffestu_symter_exec_transition_ (ffebld expr);
 static bool ffestu_dummies_transition_ (ffesymbol (*symfunc) (),
 					ffebld list);
 
@@ -98,6 +99,14 @@ ffestu_sym_end_transition (ffesymbol s)
 	  ffesymbol_error (s, ffesta_tokens[0]);
 	  return s;
 	}
+      else if (((swh == FFEINFO_whereLOCAL)
+		|| (swh == FFEINFO_whereNONE))
+	       && (skd == FFEINFO_kindENTITY)
+	       && ffestu_symter_end_transition_ (ffesymbol_dims (s)))
+	{			/* Bad dimension expressions. */
+	  ffesymbol_error (s, NULL);
+	  return s;
+	}
       break;
 
     case FFESYMBOL_stateUNDERSTOOD:
@@ -106,10 +115,23 @@ ffestu_sym_end_transition (ffesymbol s)
 	      || (skd == FFEINFO_kindSUBROUTINE)))
 	ffestu_dummies_transition_ (ffecom_sym_end_transition,
 				    ffesymbol_dummyargs (s));
-      else if ((swh == FFEINFO_whereDUMMY)
-	       && (ffesymbol_numentries (s) == 0))
-	{			/* Not actually in any dummy list! */
-	  ffesymbol_error (s, ffesta_tokens[0]);
+      else if (swh == FFEINFO_whereDUMMY)
+	{
+	  if (ffesymbol_numentries (s) == 0)
+	    {			/* Not actually in any dummy list! */
+	      ffesymbol_error (s, ffesta_tokens[0]);
+	      return s;
+	    }
+	  if (ffestu_symter_end_transition_ (ffesymbol_dims (s)))
+	    {			/* Bad dimension expressions. */
+	      ffesymbol_error (s, NULL);
+	      return s;
+	    }
+	}
+      else if ((swh == FFEINFO_whereLOCAL)
+	       && ffestu_symter_end_transition_ (ffesymbol_dims (s)))
+	{			/* Bad dimension expressions. */
+	  ffesymbol_error (s, NULL);
 	  return s;
 	}
 
@@ -195,6 +217,12 @@ ffestu_sym_end_transition (ffesymbol s)
       assert (!(sa & ~(FFESYMBOL_attrsARRAY
 		       | FFESYMBOL_attrsADJUSTABLE
 		       | FFESYMBOL_attrsTYPE)));
+
+      if (ffestu_symter_end_transition_ (ffesymbol_dims (s)))
+	{
+	  ffesymbol_error (s, NULL);
+	  return s;
+	}
 
       if (sa & FFESYMBOL_attrsADJUSTABLE)
 	{			/* Not actually in any dummy list! */
@@ -443,15 +471,16 @@ ffestu_sym_exec_transition (ffesymbol s)
 
       nwh = FFEINFO_whereDUMMY;
 
-      if (sa & (FFESYMBOL_attrsADJUSTABLE | FFESYMBOL_attrsANYSIZE))
-	ffestu_symter_exec_transition_ (ffesymbol_dims (s));
+      if (ffestu_symter_exec_transition_ (ffesymbol_dims (s)))
+	na = FFESYMBOL_attrsetNONE;
+
       if (sa & (FFESYMBOL_attrsADJUSTS
 		| FFESYMBOL_attrsARRAY
 		| FFESYMBOL_attrsANYLEN
 		| FFESYMBOL_attrsNAMELIST
 		| FFESYMBOL_attrsSFARG))
 	nkd = FFEINFO_kindENTITY;
-      else
+      else if (sa & FFESYMBOL_attrsDUMMY)	/* Still okay. */
 	{
 	  if (!(sa & FFESYMBOL_attrsTYPE))
 	    needs_type = FALSE;	/* Don't assign type to SUBROUTINE! */
@@ -598,12 +627,13 @@ ffestu_sym_exec_transition (ffesymbol s)
 
       nkd = FFEINFO_kindENTITY;
 
-      if (sa & FFESYMBOL_attrsADJUSTABLE)
-	  ffestu_symter_exec_transition_ (ffesymbol_dims (s));
+      if (ffestu_symter_exec_transition_ (ffesymbol_dims (s)))
+	na = FFESYMBOL_attrsetNONE;
 
       if (sa & (FFESYMBOL_attrsANYLEN | FFESYMBOL_attrsANYSIZE))
 	nwh = FFEINFO_whereDUMMY;
-      else
+      else if (sa & (FFESYMBOL_attrsADJUSTABLE | FFESYMBOL_attrsANYSIZE))
+	/* Still okay.  */
 	{
 	  nwh = FFEINFO_whereNONE;	/* DUMMY, LOCAL. */
 	  ns = FFESYMBOL_stateUNCERTAIN;
@@ -848,20 +878,19 @@ ffestu_list_exec_transition_ (ffebld list)
   in_progress = FALSE;
 }
 
-/* ffestu_symter_exec_transition_ -- Update SYMTERs in expr w/in symbol
+/* ffestu_symter_end_transition_ -- Update SYMTERs in expr w/in symbol
 
    ffebld expr;
-   ffestu_symter_exec_transition_(expr);
+   ffestu_symter_end_transition_(expr);
 
    Any SYMTER in expr's tree with whereNONE gets updated to the
-   (recursively transitioned) sym it identifies (DUMMY or COMMON).
+   (recursively transitioned) sym it identifies (DUMMY or COMMON).  */
 
-   Make sure we don't get called recursively ourselves!	 */
-
-static void
-ffestu_symter_exec_transition_ (ffebld expr)
+static bool
+ffestu_symter_end_transition_ (ffebld expr)
 {
   ffesymbol symbol;
+  bool any = FALSE;
 
   /* Label used for tail recursion (reset expr and go here instead of calling
      self). */
@@ -869,18 +898,30 @@ ffestu_symter_exec_transition_ (ffebld expr)
 tail:				/* :::::::::::::::::::: */
 
   if (expr == NULL)
-    return;
+    return any;
 
   switch (ffebld_op (expr))
     {
     case FFEBLD_opITEM:
       while (ffebld_trail (expr) != NULL)
 	{
-	  ffestu_symter_exec_transition_ (ffebld_head (expr));
+	  if (ffestu_symter_end_transition_ (ffebld_head (expr)))
+	    any = TRUE;
 	  expr = ffebld_trail (expr);
 	}
       expr = ffebld_head (expr);
       goto tail;		/* :::::::::::::::::::: */
+
+    case FFEBLD_opSYMTER:
+      symbol = ffecom_sym_end_transition (ffebld_symter (expr));
+      if ((symbol != NULL)
+	  && ffesymbol_attr (symbol, FFESYMBOL_attrANY))
+	any = TRUE;
+      ffebld_set_info (expr, ffesymbol_info (symbol));
+      break;
+
+    case FFEBLD_opANY:
+      return TRUE;
 
     default:
       break;
@@ -889,7 +930,8 @@ tail:				/* :::::::::::::::::::: */
   switch (ffebld_arity (expr))
     {
     case 2:
-      ffestu_symter_exec_transition_ (ffebld_left (expr));
+      if (ffestu_symter_end_transition_ (ffebld_left (expr)))
+	any = TRUE;
       expr = ffebld_right (expr);
       goto tail;		/* :::::::::::::::::::: */
 
@@ -898,22 +940,78 @@ tail:				/* :::::::::::::::::::: */
       goto tail;		/* :::::::::::::::::::: */
 
     default:
-      switch (ffebld_op (expr))
-	{
-	case FFEBLD_opSYMTER:
-	  if (ffeinfo_where (ffebld_info (expr)) != FFEINFO_whereNONE)
-	    break;		/* Already have needed info. */
-	  symbol = ffecom_sym_exec_transition (ffebld_symter (expr));
-	  ffebld_set_info (expr, ffesymbol_info (symbol));
-	  break;
-
-	default:
-	  break;
-	}
       break;
     }
 
-  return;
+  return any;
+}
+
+/* ffestu_symter_exec_transition_ -- Update SYMTERs in expr w/in symbol
+
+   ffebld expr;
+   ffestu_symter_exec_transition_(expr);
+
+   Any SYMTER in expr's tree with whereNONE gets updated to the
+   (recursively transitioned) sym it identifies (DUMMY or COMMON).  */
+
+static bool
+ffestu_symter_exec_transition_ (ffebld expr)
+{
+  ffesymbol symbol;
+  bool any = FALSE;
+
+  /* Label used for tail recursion (reset expr and go here instead of calling
+     self). */
+
+tail:				/* :::::::::::::::::::: */
+
+  if (expr == NULL)
+    return any;
+
+  switch (ffebld_op (expr))
+    {
+    case FFEBLD_opITEM:
+      while (ffebld_trail (expr) != NULL)
+	{
+	  if (ffestu_symter_exec_transition_ (ffebld_head (expr)))
+	    any = TRUE;
+	  expr = ffebld_trail (expr);
+	}
+      expr = ffebld_head (expr);
+      goto tail;		/* :::::::::::::::::::: */
+
+    case FFEBLD_opSYMTER:
+      symbol = ffecom_sym_exec_transition (ffebld_symter (expr));
+      if ((symbol != NULL)
+	  && ffesymbol_attr (symbol, FFESYMBOL_attrANY))
+	any = TRUE;
+      ffebld_set_info (expr, ffesymbol_info (symbol));
+      break;
+
+    case FFEBLD_opANY:
+      return TRUE;
+
+    default:
+      break;
+    }
+
+  switch (ffebld_arity (expr))
+    {
+    case 2:
+      if (ffestu_symter_exec_transition_ (ffebld_left (expr)))
+	any = TRUE;
+      expr = ffebld_right (expr);
+      goto tail;		/* :::::::::::::::::::: */
+
+    case 1:
+      expr = ffebld_left (expr);
+      goto tail;		/* :::::::::::::::::::: */
+
+    default:
+      break;
+    }
+
+  return any;
 }
 
 /* ffestu_dummies_transition_ -- Update SYMTERs in ITEM list w/in entry

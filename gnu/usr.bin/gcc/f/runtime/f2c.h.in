@@ -10,6 +10,7 @@
 /* F2C_INTEGER will normally be `int' but would be `long' on 16-bit systems */
 /* we assume short, float are OK */
 typedef @F2C_INTEGER@ /* long int */ integer;
+typedef unsigned @F2C_INTEGER@ /* long */ uinteger;
 typedef char *address;
 typedef short int shortint;
 typedef float real;
@@ -20,6 +21,13 @@ typedef @F2C_INTEGER@ /* long int */ logical;
 typedef short int shortlogical;
 typedef char logical1;
 typedef char integer1;
+/* integer*8 support from f2c not currently supported: */
+#if 0
+typedef @F2C_LONGINT@ /* long long */ longint; /* system-dependent */
+typedef unsigned @F2C_LONGINT@ ulongint;	/* system-dependent */
+#define qbit_clear(a,b)	((a) & ~((ulongint)1 << (b)))
+#define qbit_set(a,b)	((a) |  ((ulongint)1 << (b)))
+#endif
 typedef long long int longint;
 
 #define TRUE_ (1)
@@ -33,7 +41,7 @@ typedef long long int longint;
 /* I/O stuff */
 
 #ifdef f2c_i2
-WARNING: will not work with g77!!!!  (This line is intended to kill compiles.)
+  #error f2c_i2 will not work with g77!!!!
 /* for -i2 */
 typedef short flag;
 typedef short ftnlen;
@@ -134,7 +142,7 @@ union Multitype {	/* for multiple entry points */
 
 typedef union Multitype Multitype;
 
-typedef long Long;	/* No longer used; formerly in Namelist */
+/*typedef long int Long;*/	/* No longer used; formerly in Namelist */
 
 struct Vardesc {	/* for Namelist */
 	char *name;
@@ -157,6 +165,9 @@ typedef struct Namelist Namelist;
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 #define dmin(a,b) (doublereal)min(a,b)
 #define dmax(a,b) (doublereal)max(a,b)
+#define bit_test(a,b)	((a) >> (b) & 1)
+#define bit_clear(a,b)	((a) & ~((uinteger)1 << (b)))
+#define bit_set(a,b)	((a) |  ((uinteger)1 << (b)))
 
 /* procedure parameter types for -A and -C++ */
 

@@ -5,7 +5,7 @@ double floor();
 double d_nint(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double d_nint(doublereal *x)
 #endif
 {

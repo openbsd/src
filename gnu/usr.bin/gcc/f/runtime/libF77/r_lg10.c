@@ -7,7 +7,7 @@ double log();
 double r_lg10(x) real *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double r_lg10(real *x)
 #endif
 {

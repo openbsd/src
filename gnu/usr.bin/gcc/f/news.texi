@@ -5,7 +5,7 @@
 @c The text of this file appears in the file BUGS
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1996-04-01
+@c 1996-12-03
 
 @ifclear NEWSONLY
 @node News
@@ -13,6 +13,131 @@
 @end ifclear
 @cindex versions, recent
 @cindex recent versions
+@c [In 0.5.20?]
+@c @item
+@c New option @samp{--enable-libu77} for use by installers
+@c at configuration time to indicate that a version of the
+@c @samp{libU77} is present and to be built and installed
+@c along with the rest of @samp{libf2c}.
+
+@heading In 0.5.19:
+@itemize @bullet
+@item
+Fix @samp{FORMAT} statement parsing so negative values for
+specifiers such as @samp{P} (e.g. @samp{FORMAT(-1PF8.1)})
+are correctly processed as negative.
+
+@item
+Fix @samp{SIGNAL} intrinsic so it once again accepts a
+procedure as its second argument.
+
+@item
+A temporary kludge option provides bare-bones information on
+@samp{COMMON} and @samp{EQUIVALENCE} members at debug time.
+
+@item
+New @samp{-fonetrip} option specifies FORTRAN-66-style
+one-trip @samp{DO} loops.
+
+@item
+New @samp{-fno-silent} option causes names of program units
+to be printed as they are compiled, in a fashion similar to
+UNIX @samp{f77} and @samp{f2c}.
+
+@item
+New @samp{-fugly-assumed} option specifies that arrays
+dimensioned via @samp{DIMENSION X(1)}, for example, are to be
+treated as assumed-size.
+
+@item
+New @samp{-fno-typeless-boz} option specifies that non-decimal-radix
+constants using the prefixed-radix form (such as @samp{Z'1234'})
+are to be interpreted as @samp{INTEGER} constants.
+
+@item
+New @samp{-ff66} option is a ``shorthand'' option that specifies
+behaviors considered appropriate for FORTRAN 66 programs.
+
+@item
+New @samp{-ff77} option is a ``shorthand'' option that specifies
+behaviors considered appropriate for UNIX @samp{f77} programs.
+
+@item
+New @samp{-fugly-comma} and @samp{-fugly-logint} options provided
+to perform some of what @samp{-fugly} used to do.
+@samp{-fugly} and @samp{-fno-ugly} are now ``shorthand'' options,
+in that they do nothing more than enable (or disable) other
+@samp{-fugly-*} options.
+
+@item
+Fix parsing of assignment statements involving targets that
+are substrings of elements of @samp{CHARACTER} arrays having
+names such as @samp{READ}, @samp{WRITE}, @samp{GOTO}, and
+@samp{REALFUNCTIONFOO}.
+
+@item
+Fix crashes involving diagnosed code.
+
+@item
+Fix handling of local @samp{EQUIVALENCE} areas so certain cases
+of valid Fortran programs are not misdiagnosed as improperly
+extending the area backwards.
+
+@item
+Support @code{gcc} version 2.7.2.1.
+
+@item
+Upgrade to @code{libf2c} as of 1996-09-26, and
+fix up some of the build procedures.
+
+@item
+Change code generation for list-directed I/O so it allows
+for new versions of @samp{libf2c} that might return non-zero
+status codes for some operations previously assumed to always
+return zero.
+
+This change not only affects how @samp{IOSTAT=} variables
+are set by list-directed I/O, it also affects whether
+@samp{END=} and @samp{ERR=} labels are reached by these
+operations.
+
+@item
+Add intrinsic support for new @samp{FTELL} and @samp{FSEEK}
+procedures in @samp{libf2c}.
+
+@item
+Modify @samp{fseek_()} in @samp{libf2c} to be more portable
+(though, in practice, there might be no systems where this
+matters) and to catch invalid @samp{whence} arguments.
+
+@item
+Some useless warnings from the @samp{-Wunused} option have
+been eliminated.
+
+@item
+Fix a problem building the @samp{f771} executable
+on AIX systems by linking with the @samp{-bbigtoc} option.
+
+@item
+Abort configuration if @samp{gcc} has not been patched
+using the patch file provided in the @samp{gcc/f/gbe/}
+subdirectory.
+
+@item
+Add options @samp{--help} and @samp{--version} to the
+@code{g77} command, to conform to GNU coding guidelines.
+Also add printing of @code{g77} version number when
+the @samp{--verbose} (@samp{-v}) option is used.
+
+@item
+Change internally generated name for local @samp{EQUIVALENCE}
+areas to one based on the alphabetically sorted first name
+in the list of names for entities placed at the beginning
+of the areas.
+
+@item
+Improvements to documentation and indexing.
+@end itemize
 
 @heading In 0.5.18:
 @itemize @bullet
@@ -189,6 +314,9 @@ using that wider type (wider
 than default @samp{INTEGER}) must be rewritten.)
 
 @item
+Support @code{gcc} version 2.7.2.
+
+@item
 Upgrade to @code{libf2c} as of 1996-03-23, and
 fix up some of the build procedures.
 
@@ -308,7 +436,7 @@ Upgrade to @code{libf2c} as of 1995-11-15.
 @itemize @bullet
 @item
 Fix a code-generation bug involving complicated @samp{EQUIVALENCE} statements
-not involving @samp{COMMON}
+not involving @samp{COMMON}.
 
 @item
 Fix code-generation bugs involving invoking ``gratis'' library procedures

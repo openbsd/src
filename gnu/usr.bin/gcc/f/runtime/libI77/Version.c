@@ -1,9 +1,9 @@
-static char junk[] = "\n@(#) LIBI77 VERSION pjw,dmg-mods 19960315\n";
+static char junk[] = "\n@(#) LIBI77 VERSION pjw,dmg-mods 19960925\n";
 
 /*
 */
 
-char __G77_LIBI77_VERSION__[] = "0.5.18";
+char __G77_LIBI77_VERSION__[] = "0.5.19";
 
 /*
 2.01	$ format added
@@ -100,7 +100,7 @@ wrtfmt.c:
 /* 17 Oct. 1991: change type of length field in sequential unformatted
 		 records from int to long (for systems where sizeof(int)
 		 can vary, depending on the compiler or compiler options). */
-/* 14 Nov. 1991: change uint to Uint in fmt.h, rdfmt.c, wrtfmt.c.
+/* 14 Nov. 1991: change uint to Uint in fmt.h, rdfmt.c, wrtfmt.c. */
 /* 25 Nov. 1991: change uint to Uint in lwrite.c; change sizeof(int) to
 		 sizeof(uioint) in fseeks in sue.c (missed on 17 Oct.). */
 /* 1 Dec. 1991:  uio.c: add test for read failure (seq. unformatted reads);
@@ -233,7 +233,17 @@ wrtfmt.c:
 		 to err.c */
 /* 15 Mar. 1996: lread.c, rsfe.c: honor END= in READ stmt with empty iolist */
 
-#include "stdio.h"
+/* 13 May 1996:  add ftell_.c and fseek_.c */
+/* 9 June 1996:  Adjust rsli.c and lread.c so internal list input with
+		 too few items in the input string will honor end= . */
+/* 12 Sept. 1995:fmtlib.c: fix glitch in printing the most negative integer. */
+/* 25 Sept. 1995:fmt.h: for formatted writes of negative integer*1 values,
+		 make ic signed on ANSI systems.  If formatted writes of
+		 integer*1 values trouble you when using a K&R C compiler,
+		 switch to an ANSI compiler or use a compiler flag that
+		 makes characters signed. */
+
+#include <stdio.h>
 
 void
 g77_libi77_version ()

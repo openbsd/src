@@ -2,7 +2,7 @@
 #include "fio.h"
 #include "fmt.h"
 #include "fp.h"
-#include "ctype.h"
+#include <ctype.h>
 
 extern int f__cursor;
 #ifdef KR_headers
@@ -11,7 +11,7 @@ extern double atof();
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
+#include <stdlib.h>
 #endif
 
  static int

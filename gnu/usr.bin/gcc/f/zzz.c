@@ -29,7 +29,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    Modifications:
 */
 
-#include "proj.h"
 #include "zzz.h"
 
 /* If you want to override the version date/time info with your own
@@ -37,12 +36,21 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    go ahead!  */
 
 #ifndef FFEZZZ_DATE
+#ifdef __DATE__
 #define FFEZZZ_DATE __DATE__
-#endif
-#ifndef FFEZZZ_TIME
-#define FFEZZZ_TIME __TIME__
-#endif
+#else	/* !defined (__DATE__) */
+#define FFEZZZ_DATE "date unknown"
+#endif	/* !defined (__DATE__) */
+#endif	/* !defined (FFEZZZ_DATE) */
 
-char *ffezzz_version_string = "0.5.18";
+#ifndef FFEZZZ_TIME
+#ifdef __TIME__
+#define FFEZZZ_TIME __TIME__
+#else	/* !defined (__TIME__) */
+#define FFEZZZ_TIME "time unknown"
+#endif	/* !defined (__TIME__) */
+#endif	/* !defined (FFEZZZ_TIME) */
+
+char *ffezzz_version_string = "0.5.19";
 char *ffezzz_date = FFEZZZ_DATE;
 char *ffezzz_time = FFEZZZ_TIME;

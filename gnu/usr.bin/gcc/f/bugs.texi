@@ -5,7 +5,7 @@
 @c The text of this file appears in the file BUGS
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1996-03-25
+@c 1996-11-27
 
 @ifclear BUGSONLY
 @node Actual Bugs
@@ -70,9 +70,6 @@ The @code{g77} command itself should more faithfully process
 options the way the @code{gcc} command does.
 For example, @code{gcc} accepts abbreviated forms of long options,
 @code{g77} generally doesn't.
-
-@item
-@code{g77} could use a @samp{--help} option of some sort.
 
 @item
 Some confusion in diagnostics concerning failing @samp{INCLUDE}
@@ -148,11 +145,18 @@ one debug format---perhaps it works with others.
 And it turns out there's a similar bug for
 local equivalence areas, so that has been disabled as well.
 
-@item
+As of Version 0.5.19, a temporary kludge solution is provided whereby
+some rudimentary information on a member is written as a string that
+is the member's value as a character string.
+
+@xref{Code Gen Options,,Options for Code Generation Conventions},
+for information on the @samp{-fdebug-kludge} option.
+
 @cindex code, displaying main source
 @cindex displaying main source code
 @cindex debugging main source code
 @cindex printing main source
+@item
 When debugging, after starting up the debugger but before being able
 to see the source code for the main program unit, the user must currently
 set a breakpoint at @samp{MAIN__} (or @samp{MAIN___} or @samp{MAIN_} if
@@ -204,10 +208,9 @@ The known problem shows up only when compiling the Fortran program with
 @cindex support, Alpha
 @item
 @code{g77} doesn't work on 64-bit configurations such as the Alpha.
-The problem is not yet adequately investigated, and some
-Alpha users are having quite a bit of success, so perhaps
-it depends on the OS and configuration of @code{gcc} they
-are using.
+This problem is expected to be largely resolved as of version 0.5.20,
+and version 0.6 should solve most or all related problems (such as
+64-bit machines other than DEC Alphas).
 
 @cindex COMPLEX support
 @cindex support, COMPLEX
@@ -220,12 +223,10 @@ the problems affect only the more-general facilities for gcc's
 (where the real and imaginary parts are integers) that GNU
 Fortran does not use.
 
-But there might well be some problems with the portions of @samp{__complex__}
-support in the back end that @code{g77} uses to implement @samp{COMPLEX} and
-@samp{DOUBLE COMPLEX}.
-More investigation is needed, but bug reports
-are definitely welcome, since that can help speed investigation of
-problem areas.
+Version 0.5.20 of @code{g77} is expected to work around this
+problem by not using the back end's support for @samp{COMPLEX}.
+This work has already been done, and is being tested by
+developers.
 
 @cindex ELF support
 @cindex support, ELF

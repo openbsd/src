@@ -1,9 +1,9 @@
-static char junk[] = "\n@(#)LIBF77 VERSION 2.01 19 Mar. 1996\n";
+static char junk[] = "\n@(#)LIBF77 VERSION 19960619\n";
 
 /*
 */
 
-char __G77_LIBF77_VERSION__[] = "0.5.18";
+char __G77_LIBF77_VERSION__[] = "0.5.19";
 
 /*
 2.00	11 June 1980.  File version.c added to library.
@@ -45,9 +45,11 @@ char __G77_LIBF77_VERSION__[] = "0.5.18";
 	6 Sept. 1995: fix return type of system_ under -DKR_headers.
 	19 Dec. 1995: s_cat.c: fix bug when 2nd or later arg overlaps lhs.
 	19 Mar. 1996: s_cat.c: supply missing break after overlap detection.
+	13 May 1996:  add [lq]bitbits.c and [lq]bitshft.c (f90 bit intrinsics).
+	19 June 1996: add casts to unsigned in [lq]bitshft.c.
 */
 
-#include "stdio.h"
+#include <stdio.h>
 
 void
 g77_libf77_version ()

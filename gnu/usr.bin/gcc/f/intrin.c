@@ -225,6 +225,8 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
       basic = *(argc++);
       kind = *(argc++);
       if ((*argc == '&')
+	  || (*argc == 'g')
+	  || (*argc == 's')
 	  || (*argc == 'w')
 	  || (*argc == 'x'))
 	extra = *(argc++);
@@ -374,6 +376,15 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		      && (ffebld_op (a) != FFEBLD_opSUBSTR)
 		      && (ffebld_op (a) != FFEBLD_opARRAYREF)))
 		okay = FALSE;
+	      break;
+
+	    case 'g':
+	      if ((ffebld_op (a) != FFEBLD_opLABTER)
+		  && (ffebld_op (a) != FFEBLD_opLABTOK))
+		okay = FALSE;
+	      break;
+
+	    case 's':
 	      break;
 
 	    case 'w':
@@ -695,6 +706,8 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
       basic = *(argc++);
       kind = *(argc++);
       if ((*argc == '&')
+	  || (*argc == 'g')
+	  || (*argc == 's')
 	  || (*argc == 'w')
 	  || (*argc == 'x'))
 	extra = *(argc++);
@@ -863,6 +876,15 @@ ffeintrin_check_ (ffeintrinImp imp, ffebldOp op,
 		      && (ffebld_op (a) != FFEBLD_opSUBSTR)
 		      && (ffebld_op (a) != FFEBLD_opARRAYREF)))
 		okay = FALSE;
+	      break;
+
+	    case 'g':
+	      if ((ffebld_op (a) != FFEBLD_opLABTER)
+		  && (ffebld_op (a) != FFEBLD_opLABTOK))
+		okay = FALSE;
+	      break;
+
+	    case 's':
 	      break;
 
 	    case 'w':
@@ -1452,7 +1474,8 @@ ffeintrin_init_0 ()
 	      break;
 	    }
 	  if ((c[3] == '&')
-	      || (c[3] == 'w')
+	      || (c[3] == 's')
+	  || (c[3] == 'w')
 	  || (c[3] == 'x'))
 	    ++c;
 	  if (c[3] == ',')

@@ -1,6 +1,0 @@
-1996-03-07
-
-This file would have been 124K long in the g77-0.5.18 distribution,
-so, since 2.7.2.diff is available, this file has been omitted.
-If you insist on using gcc-2.7.1 with g77-0.5.18, you should be
-okay, except you won't get some of the nifty new optimizations.

@@ -87,10 +87,11 @@ external Fortran routines.
 	cmd to the system's command processor (on systems where
 	this can be done).
 
-The makefile does not attempt to compile pow_qq.c, which is meant
-for use with INTEGER*8.  To use it, you must modify f2c.h to
-declare longint appropriately; then add pow_qq.o to the POW =
-line in the makefile.
+The makefile does not attempt to compile pow_qq.c, qbitbits.c,
+and qbitshft.c, which are meant for use with INTEGER*8.  To use
+INTEGER*8, you must modify f2c.h to declare longint and ulongint
+appropriately; then add pow_qq.o to the POW = line in the makefile,
+and add " qbitbits.o qbitshft.o" to the makefile's F90BIT = line.
 
 Following Fortran 90, s_cat.c and s_copy.c allow the target of a
 (character string) assignment to be appear on its right-hand, at

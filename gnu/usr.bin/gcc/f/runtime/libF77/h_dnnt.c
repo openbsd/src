@@ -5,7 +5,7 @@ double floor();
 shortint h_dnnt(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 shortint h_dnnt(doublereal *x)
 #endif
 {

@@ -12,7 +12,7 @@ double d_mod(x,y) doublereal *x, *y;
 double drem(double, double);
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 #endif
 double d_mod(doublereal *x, doublereal *y)
 #endif

@@ -44,8 +44,6 @@ port, build, and install `g77', *Note Problems Installing::.
      the way the `gcc' command does.  For example, `gcc' accepts
      abbreviated forms of long options, `g77' generally doesn't.
 
-   * `g77' could use a `--help' option of some sort.
-
    * Some confusion in diagnostics concerning failing `INCLUDE'
      statements from within `INCLUDE''d or `#include''d files.
 
@@ -99,6 +97,13 @@ port, build, and install `g77', *Note Problems Installing::.
      similar bug for local equivalence areas, so that has been disabled
      as well.
 
+     As of Version 0.5.19, a temporary kludge solution is provided
+     whereby some rudimentary information on a member is written as a
+     string that is the member's value as a character string.
+
+     *Note Options for Code Generation Conventions: Code Gen Options,
+     for information on the `-fdebug-kludge' option.
+
    * When debugging, after starting up the debugger but before being
      able to see the source code for the main program unit, the user
      must currently set a breakpoint at `MAIN__' (or `MAIN___' or
@@ -132,9 +137,9 @@ port, build, and install `g77', *Note Problems Installing::.
      up only when compiling the Fortran program with `-O'.
 
    * `g77' doesn't work on 64-bit configurations such as the Alpha.
-     The problem is not yet adequately investigated, and some Alpha
-     users are having quite a bit of success, so perhaps it depends on
-     the OS and configuration of `gcc' they are using.
+     This problem is expected to be largely resolved as of version
+     0.5.20, and version 0.6 should solve most or all related problems
+     (such as 64-bit machines other than DEC Alphas).
 
    * Maintainers of gcc report that the back end definitely has "broken"
      support for `COMPLEX' types.  Based on their input, it seems many
@@ -142,11 +147,9 @@ port, build, and install `g77', *Note Problems Installing::.
      `__complex__' type, such as `__complex__ int' (where the real and
      imaginary parts are integers) that GNU Fortran does not use.
 
-     But there might well be some problems with the portions of
-     `__complex__' support in the back end that `g77' uses to implement
-     `COMPLEX' and `DOUBLE COMPLEX'.  More investigation is needed, but
-     bug reports are definitely welcome, since that can help speed
-     investigation of problem areas.
+     Version 0.5.20 of `g77' is expected to work around this problem by
+     not using the back end's support for `COMPLEX'.  This work has
+     already been done, and is being tested by developers.
 
    * There seem to be some problems with passing constants, and perhaps
      general expressions (other than simple variables/arrays), to

@@ -5,7 +5,7 @@ double sin(), cos(), sinh(), cosh();
 VOID z_sin(r, z) doublecomplex *r, *z;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 void z_sin(doublecomplex *r, doublecomplex *z)
 #endif
 {

@@ -51,7 +51,7 @@ follow the `g77' installation instructions:
      Without an applicable `gcc' source tree, you cannot build `g77'.
      You can obtain an FSF distribution of `gcc' from the FSF.
 
-`g77-0.5.18.tar.gz'
+`g77-0.5.19.tar.gz'
      You probably have already unpacked this distribution, or you are
      reading an advanced copy of this manual, which is contained in
      this distribution.  This distribution approximately 1MB large.
@@ -61,7 +61,7 @@ follow the `g77' installation instructions:
 
 100MB disk space
      For a complete "bootstrap" build, about 100MB of disk space is
-     required for `g77' by the author's current Linux system.
+     required for `g77' by the author's current GNU/Linux system.
 
      Some juggling can reduce the amount of space needed; during the
      bootstrap process, once Stage 3 starts, during which the version
@@ -177,11 +177,10 @@ General Problems
      `LD' and `AR' in the appropriate ways.
 
    * `g77' currently requires application of a patch file to the gcc
-     compiler tree (at least up through gcc version 2.7.0).  The
-     necessary patches should be folded in to the mainline gcc
-     distribution.
+     compiler tree.  The necessary patches should be folded in to the
+     mainline gcc distribution.
 
-     (Some combinations of versions of `g77' and `gcc' might actually
+     Some combinations of versions of `g77' and `gcc' might actually
      *require* no patches, but the patch files will be provided anyway
      as long as there are more changes expected in subsequent releases.
      These patch files might contain unnecessary, but possibly helpful,
@@ -260,7 +259,7 @@ is assumed that the source distributions themselves already reside in
 system:
 
      /usr/FSF/gcc-2.7.2.tar.gz
-     /usr/FSF/g77-0.5.18.tar.gz
+     /usr/FSF/g77-0.5.19.tar.gz
 
    Users of the following systems should not blindly follow these
 quick-start instructions, because of problems their systems have coping
@@ -283,49 +282,49 @@ trouble, including possibly breaking existing programs for other users
 of your system.  Before doing so, it is wise to review the explanations
 of some of the steps.  These explanations follow this list of steps.
 
-     sh[ 1]# `cd /usr/src'
+     sh[ 1]# cd /usr/src
      
-     sh[ 2]# `gunzip -c < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -'
+     sh[ 2]# gunzip -c < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -
      
      [Might say "Broken pipe"...that is normal on some systems.]
-     sh[ 3]# `gunzip -c < /usr/FSF/g77-0.5.18.tar.gz | tar xf -'
+     sh[ 3]# gunzip -c < /usr/FSF/g77-0.5.19.tar.gz | tar xf -
      
      ["Broken pipe" again possible.]
-     sh[ 4]# `ln -s gcc-2.7.2 gcc'
+     sh[ 4]# ln -s gcc-2.7.2 gcc
      
-     sh[ 5]# `ln -s g77-0.5.18 g77'
+     sh[ 5]# ln -s g77-0.5.19 g77
      
-     sh[ 6]# `mv -i g77/* gcc'
+     sh[ 6]# mv -i g77/* gcc
      
      [No questions should be asked by mv here; or, you made a mistake.]
-     sh[ 7]# `patch -p1 -V t -d gcc-2.7.2 < gcc-2.7.2/f/gbe/2.7.2.diff'
+     sh[ 7]# patch -p1 -V t -d gcc-2.7.2 < gcc-2.7.2/f/gbe/2.7.2.diff
      
      [Unless patch complains about rejected patches, this step worked.]
-     sh[ 8]# `cd gcc'
-     sh[ 9]# `touch f77-install-ok'
+     sh[ 8]# cd gcc
+     sh[ 9]# touch f77-install-ok
      
      [Do not do the above if your system already has an f77
      command, unless you've checked that overwriting it
      is okay.]
-     sh[10]# `touch f2c-install-ok'
+     sh[10]# touch f2c-install-ok
      
      [Do not do the above if your system already has an f2c
      command, unless you've checked that overwriting it
-     is okay.  Else, `touch f2c-exists-ok'.]
-     sh[11]# `./configure --prefix=/usr'
+     is okay.  Else, touch f2c-exists-ok.]
+     sh[11]# ./configure --prefix=/usr
      
      [Do not do the above if gcc is not installed in /usr/bin.
-     You might need a different `--prefix=...', as
+     You might need a different --prefix=..., as
      described below.]
-     sh[12]# `make bootstrap'
+     sh[12]# make bootstrap
      
      [This takes a long time, and is where most problems occur.]
-     sh[13]# `rm -fr stage1'
+     sh[13]# rm -fr stage1
      
-     sh[14]# `make -k install'
+     sh[14]# make -k install
      
      [The actual installation.]
-     sh[15]# `g77 -v'
+     sh[15]# g77 -v
      
      [Verify that g77 is installed, obtain version info.]
      sh[16]#
@@ -344,7 +343,7 @@ Step 1: `cd /usr/src'
      installed version of `g77' and `gcc' in any case.
 
 Step 4: `ln -s gcc-2.7.2 gcc'
-Step 5: `ln -s g77-0.5.18 g77'
+Step 5: `ln -s g77-0.5.19 g77'
      These commands mainly help reduce typing, and help reduce visual
      clutter in examples in this manual showing what to type to install
      `g77'.
@@ -354,7 +353,7 @@ Step 5: `ln -s g77-0.5.18 g77'
 
 Step 6: `mv -i g77/* gcc'
      After doing this, you can, if you like, type `rm g77' and `rmdir
-     g77-0.5.18' to remove the empty directory and the symbol link to
+     g77-0.5.19' to remove the empty directory and the symbol link to
      it.  But, it might be helpful to leave them around as quick
      reminders of which version(s) of `g77' are installed on your
      system.
@@ -462,12 +461,12 @@ generally only the documentation is immediately usable.
 
    A sequence of commands typically used to unpack `gcc' and `g77' is:
 
-     sh# `cd /usr/src'
-     sh# `gunzip -d < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -'
-     sh# `gunzip -d < /usr/FSF/g77-0.5.18.tar.gz | tar xf -'
-     sh# `ln -s gcc-2.7.2 gcc'
-     sh# `ln -s g77-0.5.18 g77'
-     sh# `mv -i g77/* gcc'
+     sh# cd /usr/src
+     sh# gunzip -d < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -
+     sh# gunzip -d < /usr/FSF/g77-0.5.19.tar.gz | tar xf -
+     sh# ln -s gcc-2.7.2 gcc
+     sh# ln -s g77-0.5.19 g77
+     sh# mv -i g77/* gcc
 
    *Notes:* The commands beginning with `gunzip...' might print `Broken
 pipe...' as they complete.  That is nothing to worry about, unless you
@@ -520,6 +519,12 @@ are using either an old, unsupported version, or a release one that is
 newer than the newest `gcc' version supported by the version of `g77'
 you have.
 
+   As of version 0.5.18, `g77' modifies the version number of `gcc' via
+the pertinent patches.  This is done because the resulting version of
+`gcc' is deemed sufficiently different from the vanilla distribution to
+make it worthwhile to present, to the user, information signaling the
+fact that there are some differences.
+
    GNU version numbers make it easy to figure out whether a particular
 version of a distribution is newer or older than some other version of
 that distribution.  The format is, generally, MAJOR.MINOR.PATCH, with
@@ -547,10 +552,11 @@ the version number for `gcc' differs only in the PATCH field, you might
 as well try applying the `g77' patch that is for the newest version of
 `gcc' having the same MAJOR and MINOR fields, as this is likely to work.
 
-   So, for example, if `g77' has support for versions 2.7.0 and 2.7.1,
-it is likely that `gcc-2.7.2' would work well with `g77' by using the
-`2.7.1.diff' patch file provided with `g77' (aside from some offsets
-reported by `patch', which usually are harmless).
+   So, for example, if a particular version of `g77' has support for
+`gcc' versions 2.7.0 and 2.7.1, it is likely that `gcc-2.7.2' would
+work well with `g77' by using the `2.7.1.diff' patch file provided with
+`g77' (aside from some offsets reported by `patch', which usually are
+harmless).
 
    However, `gcc-2.8.0' would almost certainly not work with that
 version of `g77' no matter which patch file was used, so a new version
@@ -592,16 +598,12 @@ type `rm -i *.~*~'.
 
    *Note:* `g77''s configuration file `gcc/f/config-lang.in' ensures
 that the source code for the version of `gcc' being configured has at
-least one GBE function required specifically by `g77'.  This function
-was added to `gcc-2.7.1', making the patch file
-`g77-0.5.17/f/gbe/2.7.1.diff' empty of actual patches.
-
-   For `gcc-2.7.0' and earlier, this configuration-time checking should
-catch failure to apply the correct patch and, if so caught, it should
-abort the configuration with an explanation.  *Please* do not try to
-disable the check, otherwise `g77' might well appear to build and
-install correctly, and even appear to compile correctly, but could
-easily produce broken code.
+least one indication of being patched as required specifically by `g77'.
+This configuration-time checking should catch failure to apply the
+correct patch and, if so caught, should abort the configuration with an
+explanation.  *Please* do not try to disable the check, otherwise `g77'
+might well appear to build and install correctly, and even appear to
+compile correctly, but could easily produce broken code.
 
    `diff -rcp2N' is used to create the patch files in `gcc/f/gbe/'.
 
@@ -700,7 +702,11 @@ change to `gcc/f/proj.h': edit the line reading
 
      #define FFEPROJ_STRTOUL 1  ...
 
-by replacing the `1' with `0'.
+by replacing the `1' with `0'.  Or, you can avoid editing the source by
+adding
+     CFLAGS='-DFFEPROJ_STRTOUL=0 -g'
+   to the command line for `make' when you invoke it.  (`-g' is the
+default for `CFLAGS'.)
 
    This causes a minimal version of `strtoul()' provided as part of the
 `g77' distribution to be compiled and linked into whatever `g77'
@@ -709,7 +715,8 @@ function in their system libraries.
 
    Similarly, a minimal version of `bsearch()' is available and can be
 enabled by editing a line similar to the one for `strtoul()' above in
-`gcc/f/proj.h', if your system libraries lack `bsearch()'.
+`gcc/f/proj.h', if your system libraries lack `bsearch()'.  The method
+of overriding `X_CFLAGS' may also be used.
 
    These are not problems with `g77', which requires an ANSI C
 environment.  You should upgrade your system to one that provides a
@@ -942,8 +949,8 @@ work.
    Here are some commands you can try, and output typically printed by
 them when they work:
 
-     sh# `cd /usr/src/gcc'
-     sh# `./g77 --driver=./xgcc -B./ -v'
+     sh# cd /usr/src/gcc
+     sh# ./g77 --driver=./xgcc -B./ -v
       ./xgcc -B./ -v -fnull-version -o /tmp/gfa03648 ...
      Reading specs from ./specs
      gcc version 2.7.1
@@ -959,11 +966,11 @@ them when they work:
      End of search list.
       ./f771 /tmp/cca03648.i -quiet -dumpbase null.F -version ...
      GNU F77 version 2.7.1 (80386, BSD syntax) compiled ...
-     GNU Fortran Front End version 0.5.18 compiled: ...
+     GNU Fortran Front End version 0.5.19 compiled: ...
       as -o /tmp/cca036481.o /tmp/cca03648.s
       ld -m i386linux -o /tmp/gfa03648 /usr/lib/crt0.o -L. ...
      /usr/lib/crt0.o(.text+0x35): undefined reference to `main'
-     sh# `./xgcc -B./ -v -o /tmp/delete-me -xc /dev/null -xnone'
+     sh# ./xgcc -B./ -v -o /tmp/delete-me -xc /dev/null -xnone
      Reading specs from ./specs
      gcc version 2.7.1
       ./cpp -lang-c -v -isystem ./include -undef ...
@@ -1077,9 +1084,9 @@ other versions of `gcc', this was called `make realclean'), and, to
 ensure that `bison' is not invoked by `make' during the build, type
 these commands:
 
-     sh# `cd gcc'
-     sh# `touch bi-parser.c bi-parser.h c-parse.c c-parse.h cexp.c'
-     sh# `touch cp/parse.c cp/parse.h objc-parse.c'
+     sh# cd gcc
+     sh# touch bi-parser.c bi-parser.h c-parse.c c-parse.h cexp.c
+     sh# touch cp/parse.c cp/parse.h objc-parse.c
      sh#
 
    These commands update the date-time-modified information for all the
@@ -1116,7 +1123,7 @@ file `gcc/COPYING' thoroughly).
    Then, consider your target audience and decide where `g77' should be
 installed.
 
-   For systems like Linux that have no native Fortran compiler (or
+   For systems like GNU/Linux that have no native Fortran compiler (or
 where `g77' could be considered the native compiler for Fortran and
 `gcc' for C, etc.), you should definitely configure `g77' for
 installation in `/usr/bin' instead of `/usr/local/bin'.  Specify the
@@ -1247,6 +1254,11 @@ larger-sized entities to be put on the stack (which can improve
 run-time performance, as it presents more opportunities for the GBE to
 optimize the generated code).
 
+   *Note:* Putting more variables and arrays on the stack might cause
+problems due to system-dependent limits on stack size.  Also, the value
+of `FFECOM_sizeMAXSTACKITEM' has no effect on automatic variables and
+arrays.  *Note But-bugs::, for more information.
+
 Floating-point Bit Patterns
 ---------------------------
 
@@ -1257,8 +1269,7 @@ improvements for g77-0.6 will give it the capabilities it needs to not
 have to crash the build but rather generate correct code for the target.
 (Currently, `g77' would generate bad code under such circumstances if
 it didn't crash during the build, e.g. when compiling a source file
-that does something like `EQUIVALENCE (I,R)' and `DATA
-R/3.1415926535/'.)
+that does something like `EQUIVALENCE (I,R)' and `DATA R/9.43578/'.)
 
 Initialization of Large Aggregate Areas
 ---------------------------------------
@@ -1298,14 +1309,9 @@ Alpha Problems
 target configuration that is not basically a 32-bit machine (such as an
 Alpha, which is a 64-bit machine, especially if it has a 64-bit
 operating system running on it).  This is because `g77' is known to not
-work properly on such configurations, although the reasons for this are
-not fully explored.  This is expected to be fixed at 0.6, at which
-point the warning would be dropped.  (The reason the unexplored
-problems are expected to be fixed at 0.6 is because some known internal
-design problems `g77' has, which reduce portability and the ability to
-configure it as a cross-compiler, are presumed to be at least partly
-responsible for the problems being encountered on the Alpha.  The
-problems remain unexplored partly because the known problems exist and
-are scheduled to be addressed anyway.  Plus, the `g77' maintainer does
-not yet possess an Alpha workstation of his own.)
+work properly on such configurations.  This is expected to be
+completely fixed at 0.6, at which point the warning would be dropped.
+
+   (Version 0.5.20 is expected to solve most of these problems, though,
+as of this writing, work is still progressing in this area.)
 

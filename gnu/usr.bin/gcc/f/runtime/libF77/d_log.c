@@ -5,7 +5,7 @@ double log();
 double d_log(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double d_log(doublereal *x)
 #endif
 {

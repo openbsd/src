@@ -15,7 +15,7 @@ nl_donewrec(Void)
 #ifdef KR_headers
 x_wsne(a) cilist *a;
 #else
-#include "string.h"
+#include <string.h>
 
  VOID
 x_wsne(cilist *a)

@@ -776,6 +776,8 @@ static ffelexHandler ffestb_R90912_ (ffelexToken t);
 static ffelexHandler ffestb_R90913_ (ffelexToken t);
 static ffelexHandler ffestb_R90914_ (ffelexToken ft, ffebld expr,
 				     ffelexToken t);
+static ffelexHandler ffestb_R90915_ (ffelexToken ft, ffebld expr,
+				     ffelexToken t);
 static ffelexHandler ffestb_R9101_ (ffelexToken t);
 static ffelexHandler ffestb_R9102_ (ffelexToken t);
 static ffelexHandler ffestb_R9103_ (ffelexToken ft, ffebld expr,
@@ -792,6 +794,8 @@ static ffelexHandler ffestb_R91010_ (ffelexToken t);
 static ffelexHandler ffestb_R91011_ (ffelexToken t);
 static ffelexHandler ffestb_R91012_ (ffelexToken t);
 static ffelexHandler ffestb_R91013_ (ffelexToken ft, ffebld expr,
+				     ffelexToken t);
+static ffelexHandler ffestb_R91014_ (ffelexToken ft, ffebld expr,
 				     ffelexToken t);
 static ffelexHandler ffestb_R9111_ (ffelexToken ft, ffebld expr,
 				    ffelexToken t);
@@ -3524,6 +3528,8 @@ ffestb_goto3_ (ffelexToken t)
 
     default:
       ffesta_confirmed ();
+      /* Fall through. */
+    case FFELEX_typeOPEN_PAREN:	/* Could still be assignment!! */
       return (ffelexHandler) (*((ffelexHandler)
 		      ffeexpr_rhs (ffesta_output_pool, FFEEXPR_contextCGOTO,
 				   (ffeexprCallback) ffestb_goto5_)))
@@ -3597,6 +3603,7 @@ ffestb_goto5_ (ffelexToken ft, ffebld expr, ffelexToken t)
     case FFELEX_typeSEMICOLON:
       if (expr == NULL)
 	break;
+      ffesta_confirmed ();
       if (!ffesta_is_inhibited ())
 	ffestc_R837 (ffestb_subrargs_.label_list.labels, expr, ft);
       ffelex_token_kill (ffesta_tokens[1]);
@@ -9155,12 +9162,12 @@ ffestb_R10013_ (ffelexToken t)
   switch (ffelex_token_type (t))
     {
     case FFELEX_typeNUMBER:
-      ffestb_local_.format.sign = TRUE;	/* Sign present. */
       ffestb_local_.format.pre.present = TRUE;
       ffestb_local_.format.pre.rtexpr = FALSE;
       unsigned_val = strtoul (ffelex_token_text (t), NULL, 10);
       ffestb_local_.format.pre.u.signed_val = ffestb_local_.format.sign
 	? unsigned_val : -unsigned_val;
+      ffestb_local_.format.sign = TRUE;	/* Sign present. */
       return (ffelexHandler) ffestb_R10014_;
 
     default:
@@ -15098,7 +15105,7 @@ ffestb_R9091_ (ffelexToken ft, ffebld expr, ffelexToken t)
       if (ffelex_token_type (t) == FFELEX_typeCOMMA)
 	return (ffelexHandler) ffeexpr_lhs (ffesta_output_pool,
 					    ffestc_context_iolist (),
-					  (ffeexprCallback) ffestb_R90914_);
+					  (ffeexprCallback) ffestb_R90915_);
       if (!ffesta_is_inhibited ())
 	ffestc_R909_finish ();
       return (ffelexHandler) ffesta_zero (t);
@@ -15217,7 +15224,7 @@ ffestb_R9094_ (ffelexToken ft, ffebld expr, ffelexToken t)
 	    return (ffelexHandler)
 	      ffeexpr_lhs (ffesta_output_pool,
 			   ffestc_context_iolist (),
-			   (ffeexprCallback) ffestb_R90914_);
+			   (ffeexprCallback) ffestb_R90915_);
 	  if (!ffesta_is_inhibited ())
 	    ffestc_R909_finish ();
 	  return (ffelexHandler) ffesta_zero (t);
@@ -15636,16 +15643,14 @@ ffestb_R90913_ (ffelexToken t)
       return (ffelexHandler) ffesta_zero (t);
 
     default:
+      ffesta_confirmed ();
+      /* Fall through. */
+    case FFELEX_typeOPEN_PAREN:	/* Could still be assignment!! */
       break;
     }
 
   /* If token isn't NAME or OPEN_PAREN, ffeexpr_lhs will ultimately whine
      about it, so leave it up to that code. */
-
-  ffesta_confirmed ();
-  if (!ffesta_is_inhibited ())
-    ffestc_R909_start (FALSE);
-  ffestb_subr_kill_read_ ();
 
   /* EXTENSION: Allow an optional preceding COMMA here if not pedantic.	 (f2c
      provides this extension, as do other compilers, supposedly.) */
@@ -15677,11 +15682,63 @@ ffestb_R90914_ (ffelexToken ft, ffebld expr, ffelexToken t)
     case FFELEX_typeCOMMA:
       if (expr == NULL)
 	break;
+
+      ffesta_confirmed ();
+      if (!ffesta_is_inhibited ())
+	ffestc_R909_start (FALSE);
+      ffestb_subr_kill_read_ ();
+
       if (!ffesta_is_inhibited ())
 	ffestc_R909_item (expr, ft);
       return (ffelexHandler) ffeexpr_lhs (ffesta_output_pool,
 					  ffestc_context_iolist (),
-					  (ffeexprCallback) ffestb_R90914_);
+					  (ffeexprCallback) ffestb_R90915_);
+
+    case FFELEX_typeEOS:
+    case FFELEX_typeSEMICOLON:
+      if (expr == NULL)
+	break;
+
+      ffesta_confirmed ();
+      if (!ffesta_is_inhibited ())
+	ffestc_R909_start (FALSE);
+      ffestb_subr_kill_read_ ();
+
+      if (!ffesta_is_inhibited ())
+	{
+	  ffestc_R909_item (expr, ft);
+	  ffestc_R909_finish ();
+	}
+      return (ffelexHandler) ffesta_zero (t);
+
+    default:
+      break;
+    }
+
+  ffestb_subr_kill_read_ ();
+  ffesta_ffebad_1st (FFEBAD_INVALID_STMT_FORM, "READ", t);
+  return (ffelexHandler) ffelex_swallow_tokens (t, (ffelexHandler) ffesta_zero);
+}
+
+/* ffestb_R90915_ -- "READ(...)" expr COMMA expr
+
+   (ffestb_R90915_)  // to expression handler
+
+   Handle COMMA or EOS/SEMICOLON here.	*/
+
+static ffelexHandler
+ffestb_R90915_ (ffelexToken ft, ffebld expr, ffelexToken t)
+{
+  switch (ffelex_token_type (t))
+    {
+    case FFELEX_typeCOMMA:
+      if (expr == NULL)
+	break;
+      if (!ffesta_is_inhibited ())
+	ffestc_R909_item (expr, ft);
+      return (ffelexHandler) ffeexpr_lhs (ffesta_output_pool,
+					  ffestc_context_iolist (),
+					  (ffeexprCallback) ffestb_R90915_);
 
     case FFELEX_typeEOS:
     case FFELEX_typeSEMICOLON:
@@ -16198,9 +16255,8 @@ ffestb_R91012_ (ffelexToken t)
 
     default:
       ffesta_confirmed ();
-      if (!ffesta_is_inhibited ())
-	ffestc_R910_start ();
-      ffestb_subr_kill_write_ ();
+      /* Fall through. */
+    case FFELEX_typeOPEN_PAREN:	/* Could still be assignment!! */
 
       /* EXTENSION: Allow an optional preceding COMMA here if not pedantic.
 	 (f2c provides this extension, as do other compilers, supposedly.) */
@@ -16237,10 +16293,61 @@ ffestb_R91013_ (ffelexToken ft, ffebld expr, ffelexToken t)
     case FFELEX_typeCOMMA:
       if (expr == NULL)
 	break;
+
+      ffesta_confirmed ();
+      if (!ffesta_is_inhibited ())
+	ffestc_R910_start ();
+      ffestb_subr_kill_write_ ();
+
       if (!ffesta_is_inhibited ())
 	ffestc_R910_item (expr, ft);
       return (ffelexHandler) ffeexpr_rhs (ffesta_output_pool,
-		ffestc_context_iolist (), (ffeexprCallback) ffestb_R91013_);
+		ffestc_context_iolist (), (ffeexprCallback) ffestb_R91014_);
+
+    case FFELEX_typeEOS:
+    case FFELEX_typeSEMICOLON:
+      if (expr == NULL)
+	break;
+
+      ffesta_confirmed ();
+      if (!ffesta_is_inhibited ())
+	ffestc_R910_start ();
+      ffestb_subr_kill_write_ ();
+
+      if (!ffesta_is_inhibited ())
+	{
+	  ffestc_R910_item (expr, ft);
+	  ffestc_R910_finish ();
+	}
+      return (ffelexHandler) ffesta_zero (t);
+
+    default:
+      break;
+    }
+
+  ffestb_subr_kill_write_ ();
+  ffesta_ffebad_1st (FFEBAD_INVALID_STMT_FORM, "WRITE", t);
+  return (ffelexHandler) ffelex_swallow_tokens (t, (ffelexHandler) ffesta_zero);
+}
+
+/* ffestb_R91014_ -- "WRITE(...)" expr COMMA expr
+
+   (ffestb_R91014_)  // to expression handler
+
+   Handle COMMA or EOS/SEMICOLON here.	*/
+
+static ffelexHandler
+ffestb_R91014_ (ffelexToken ft, ffebld expr, ffelexToken t)
+{
+  switch (ffelex_token_type (t))
+    {
+    case FFELEX_typeCOMMA:
+      if (expr == NULL)
+	break;
+      if (!ffesta_is_inhibited ())
+	ffestc_R910_item (expr, ft);
+      return (ffelexHandler) ffeexpr_rhs (ffesta_output_pool,
+		ffestc_context_iolist (), (ffeexprCallback) ffestb_R91014_);
 
     case FFELEX_typeEOS:
     case FFELEX_typeSEMICOLON:
@@ -22795,9 +22902,9 @@ ffestb_decl_entsp_5_ (ffelexToken t)
       break;
     }
 
+  assert (ffestb_local_.decl.aster_after);
   ffesta_confirmed ();		/* We've seen an ASTERISK, so even EQUALS
 				   confirmed. */
-  assert (ffestb_local_.decl.aster_after);
   ffestb_subr_ambig_to_ents_ ();
   ffestb_subrargs_.dim_list.dims = NULL;
   return (ffelexHandler) ffestb_decl_ents_7_ (t);
@@ -22842,6 +22949,7 @@ ffestb_decl_entsp_6_ (ffelexToken t)
     case FFELEX_typePOINTS:
     case FFELEX_typePERCENT:
     case FFELEX_typePERIOD:
+    case FFELEX_typeOPEN_PAREN:
       if ((ffestb_local_.decl.kindt != NULL)
 	  || (ffestb_local_.decl.lent != NULL))
 	break;			/* type(params)name or type*val name, either
@@ -22887,6 +22995,7 @@ ffestb_decl_entsp_7_ (ffelexToken t)
     case FFELEX_typePOINTS:
     case FFELEX_typePERCENT:
     case FFELEX_typePERIOD:
+    case FFELEX_typeOPEN_PAREN:
       if ((ffestb_local_.decl.kindt != NULL)
 	  || (ffestb_local_.decl.lent != NULL))
 	break;			/* type(params)name or type*val name, either
@@ -22941,6 +23050,7 @@ ffestb_decl_entsp_8_ (ffelexToken t)
     case FFELEX_typePOINTS:
     case FFELEX_typePERCENT:
     case FFELEX_typePERIOD:
+    case FFELEX_typeOPEN_PAREN:
       if ((ffestb_local_.decl.kindt != NULL)
 	  || (ffestb_local_.decl.lent != NULL))
 	break;			/* type(params)name or type*val name, either

@@ -15,7 +15,7 @@ extern sig_type signal();
 
 ftnint signal_(sigp, proc) integer *sigp; sig_type proc;
 #else
-#include "signal.h"
+#include <signal.h>
 typedef int (*sig_proc)(int);
 
 ftnint signal_(integer *sigp, sig_proc proc)

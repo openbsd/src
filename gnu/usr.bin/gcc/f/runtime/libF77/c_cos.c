@@ -6,7 +6,7 @@ extern double sin(), cos(), sinh(), cosh();
 VOID c_cos(r, z) complex *r, *z;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 
 void c_cos(complex *r, complex *z)
 #endif

@@ -1,4 +1,4 @@
-#include "stdio.h"
+#include <stdio.h>
 #include "f2c.h"
 
 /* called when a subscript is out of range */

@@ -1,6 +1,6 @@
 #ifndef NON_UNIX_STDIO
-#include "sys/types.h"
-#include "sys/stat.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 #include "f2c.h"
 #include "fio.h"

@@ -5,7 +5,7 @@ double floor();
 integer i_dnnt(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 integer i_dnnt(doublereal *x)
 #endif
 {

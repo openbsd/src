@@ -214,6 +214,7 @@ ffestt_dimlist_as_expr (ffesttDimList list, ffeinfoRank *rank,
   ffeinfoRank r;
   ffeinfoKindtype nkt;
   ffetargetIntegerDefault low;
+  ffetargetIntegerDefault high;
   bool zero = FALSE;		/* Zero-size array. */
   bool any = FALSE;
   bool star = FALSE;		/* Adjustable array. */
@@ -233,9 +234,20 @@ ffestt_dimlist_as_expr (ffesttDimList list, ffeinfoRank *rank,
 	    low = 1;
 	  else
 	    low = ffebld_constant_integerdefault (ffebld_conter (next->lower));
+	  high = ffebld_constant_integerdefault (ffebld_conter (next->upper));
 	  if (low
-	      > ffebld_constant_integerdefault (ffebld_conter (next->upper)))
+	      > high)
 	    zero = TRUE;
+	  if ((next->next == list)
+	      && ffe_is_ugly_assumed ()
+	      && (next->lower == NULL)
+	      && (high == 1))
+	    {
+	      star = TRUE;
+	      ffebld_append_item (&bottom,
+				  ffebld_new_bounds (NULL, ffebld_new_star ()));
+	      continue;
+	    }
 	}
       else if (((next->lower != NULL)
 		&& (ffebld_op (next->lower) == FFEBLD_opANY))

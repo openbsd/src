@@ -68,6 +68,7 @@ bool ffe_is_backslash_ = FFETARGET_defaultIS_BACKSLASH;
 bool ffe_is_underscoring_ = FFETARGET_defaultEXTERNAL_UNDERSCORED
   || FFETARGET_defaultUNDERSCORED_EXTERNAL_UNDERSCORED;
 bool ffe_is_second_underscore_ = FFETARGET_defaultUNDERSCORED_EXTERNAL_UNDERSCORED;
+bool ffe_is_debug_kludge_ = FALSE;
 bool ffe_is_dollar_ok_ = FFETARGET_defaultIS_DOLLAR_OK;
 bool ffe_is_f2c_ = FFETARGET_defaultIS_F2C;
 bool ffe_is_f2c_library_ = FFETARGET_defaultIS_F2C_LIBRARY;
@@ -77,11 +78,16 @@ bool ffe_is_ident_ = TRUE;
 bool ffe_is_init_local_zero_ = FFETARGET_defaultIS_INIT_LOCAL_ZERO;
 bool ffe_is_mainprog_;		/* TRUE if current prog unit known to be
 				   main. */
+bool ffe_is_onetrip_ = FALSE;
+bool ffe_is_silent_ = TRUE;
+bool ffe_is_typeless_boz_ = TRUE;	/* Will become FALSE as of 0.5.20 or so. */
 bool ffe_is_pedantic_ = FFETARGET_defaultIS_PEDANTIC;
 bool ffe_is_saveall_;		/* TRUE if mainprog or SAVE (no args) seen. */
-bool ffe_is_ugly_ = FFETARGET_defaultIS_UGLY;
-bool ffe_is_ugly_args_ = FFETARGET_defaultIS_UGLY_ARGS;
-bool ffe_is_ugly_init_ = FFETARGET_defaultIS_UGLY_INIT;
+bool ffe_is_ugly_args_ = TRUE;
+bool ffe_is_ugly_assumed_ = FALSE;	/* DIMENSION X([...,]1) => DIMENSION X([...,]*) */
+bool ffe_is_ugly_comma_ = FALSE;
+bool ffe_is_ugly_init_ = TRUE;
+bool ffe_is_ugly_logint_ = FALSE;
 bool ffe_is_version_ = FALSE;
 bool ffe_is_vxt_not_90_ = FFETARGET_defaultIS_VXT_NOT_90;
 bool ffe_is_warn_implicit_ = FALSE;
@@ -162,14 +168,35 @@ ffe_decode_option (char *opt)
       else if (strcmp (&opt[2], "set-g77-defaults") == 0)
 	{
 	  ffe_is_do_internal_checks_ = 0;
+#if BUILT_FOR_270	/* User must have applied patch (circa 2.7.2 and beyond). */
 	  flag_move_all_movables = 1;
 	  flag_reduce_all_givs = 1;
 	  flag_rerun_loop_opt = 1;
+#endif
 	}
       else if (strcmp (&opt[2], "ident") == 0)
 	ffe_set_is_ident (TRUE);
       else if (strcmp (&opt[2], "no-ident") == 0)
 	ffe_set_is_ident (FALSE);
+      else if (strcmp (&opt[2], "f66") == 0)
+	{
+	  ffe_set_is_onetrip (TRUE);
+	  ffe_set_is_ugly_assumed (TRUE);
+	}
+      else if (strcmp (&opt[2], "no-f66") == 0)
+	{
+	  ffe_set_is_onetrip (FALSE);
+	  ffe_set_is_ugly_assumed (FALSE);
+	}
+      else if (strcmp (&opt[2], "f77") == 0)
+	{
+	  ffe_set_is_backslash (TRUE);
+	  ffe_set_is_typeless_boz (FALSE);
+	}
+      else if (strcmp (&opt[2], "no-f77") == 0)
+	{
+	  ffe_set_is_backslash (FALSE);
+	}
       else if (strcmp (&opt[2], "f90") == 0)
 	ffe_set_is_90 (TRUE);
       else if (strcmp (&opt[2], "no-f90") == 0)
@@ -208,24 +235,40 @@ ffe_decode_option (char *opt)
 	ffe_set_is_vxt_not_90 (FALSE);
       else if (strcmp (&opt[2], "ugly") == 0)
 	{
-	  ffe_set_is_ugly (TRUE);
 	  ffe_set_is_ugly_args (TRUE);
+	  ffe_set_is_ugly_assumed (TRUE);
+	  ffe_set_is_ugly_comma (TRUE);
 	  ffe_set_is_ugly_init (TRUE);
+	  ffe_set_is_ugly_logint (TRUE);
 	}
       else if (strcmp (&opt[2], "no-ugly") == 0)
 	{
-	  ffe_set_is_ugly (FALSE);
 	  ffe_set_is_ugly_args (FALSE);
+	  ffe_set_is_ugly_assumed (FALSE);
+	  ffe_set_is_ugly_comma (FALSE);
 	  ffe_set_is_ugly_init (FALSE);
+	  ffe_set_is_ugly_logint (FALSE);
 	}
       else if (strcmp (&opt[2], "ugly-args") == 0)
 	ffe_set_is_ugly_args (TRUE);
       else if (strcmp (&opt[2], "no-ugly-args") == 0)
 	ffe_set_is_ugly_args (FALSE);
+      else if (strcmp (&opt[2], "ugly-assumed") == 0)
+	ffe_set_is_ugly_assumed (TRUE);
+      else if (strcmp (&opt[2], "no-ugly-assumed") == 0)
+	ffe_set_is_ugly_assumed (FALSE);
+      else if (strcmp (&opt[2], "ugly-comma") == 0)
+	ffe_set_is_ugly_comma (TRUE);
+      else if (strcmp (&opt[2], "no-ugly-comma") == 0)
+	ffe_set_is_ugly_comma (FALSE);
       else if (strcmp (&opt[2], "ugly-init") == 0)
 	ffe_set_is_ugly_init (TRUE);
       else if (strcmp (&opt[2], "no-ugly-init") == 0)
 	ffe_set_is_ugly_init (FALSE);
+      else if (strcmp (&opt[2], "ugly-logint") == 0)
+	ffe_set_is_ugly_logint (TRUE);
+      else if (strcmp (&opt[2], "no-ugly-logint") == 0)
+	ffe_set_is_ugly_logint (FALSE);
       else if (strcmp (&opt[2], "debug") == 0)
 	ffe_set_is_ffedebug (TRUE);
       else if (strcmp (&opt[2], "no-debug") == 0)
@@ -246,6 +289,26 @@ ffe_decode_option (char *opt)
 	ffe_set_is_second_underscore (TRUE);
       else if (strcmp (&opt[2], "no-second-underscore") == 0)
 	ffe_set_is_second_underscore (FALSE);
+      else if (strcmp (&opt[2], "zeros") == 0)
+	ffe_set_is_zeros (TRUE);
+      else if (strcmp (&opt[2], "no-zeros") == 0)
+	ffe_set_is_zeros (FALSE);
+      else if (strcmp (&opt[2], "debug-kludge") == 0)
+	ffe_set_is_debug_kludge (TRUE);
+      else if (strcmp (&opt[2], "no-debug-kludge") == 0)
+	ffe_set_is_debug_kludge (FALSE);
+      else if (strcmp (&opt[2], "onetrip") == 0)
+	ffe_set_is_onetrip (TRUE);
+      else if (strcmp (&opt[2], "no-onetrip") == 0)
+	ffe_set_is_onetrip (FALSE);
+      else if (strcmp (&opt[2], "silent") == 0)
+	ffe_set_is_silent (TRUE);
+      else if (strcmp (&opt[2], "no-silent") == 0)
+	ffe_set_is_silent (FALSE);
+      else if (strcmp (&opt[2], "typeless-boz") == 0)
+	ffe_set_is_typeless_boz (TRUE);
+      else if (strcmp (&opt[2], "no-typeless-boz") == 0)
+	ffe_set_is_typeless_boz (FALSE);
       else if (strcmp (&opt[2], "intrin-case-initcap") == 0)
 	ffe_set_case_intrin (FFE_caseINITCAP);
       else if (strcmp (&opt[2], "intrin-case-upper") == 0)
@@ -366,10 +429,6 @@ ffe_decode_option (char *opt)
 	ffe_set_intrinsic_state_vxt (FFE_intrinsicstateDISABLED);
       else if (strcmp (&opt[2], "vxt-intrinsics-enable") == 0)
 	ffe_set_intrinsic_state_vxt (FFE_intrinsicstateENABLED);
-      else if (strcmp (&opt[2], "zeros") == 0)
-	ffe_set_is_zeros (TRUE);
-      else if (strcmp (&opt[2], "no-zeros") == 0)
-	ffe_set_is_zeros (FALSE);
       else if (strncmp (&opt[2], "fixed-line-length-",
 			strlen ("fixed-line-length-")) == 0)
 	{
@@ -419,7 +478,6 @@ ffe_decode_option (char *opt)
 	  if (warn_uninitialized != 1)
 	    warn_uninitialized = 2;
 	  warn_unused = 1;
-	  ffe_set_is_warn_surprising (TRUE);
 	}
       else
 	return 0;

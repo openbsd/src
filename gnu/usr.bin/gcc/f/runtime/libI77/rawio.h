@@ -34,7 +34,7 @@ extern char *mktemp(char*);
 #endif
 
 #ifndef NO_FCNTL
-#include "fcntl.h"
+#include <fcntl.h>
 #endif
 
 #ifndef O_WRONLY

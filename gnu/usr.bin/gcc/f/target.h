@@ -82,15 +82,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef FFETARGET_defaultIS_PEDANTIC
 #define FFETARGET_defaultIS_PEDANTIC 0
 #endif
-#ifndef FFETARGET_defaultIS_UGLY
-#define FFETARGET_defaultIS_UGLY 0
-#endif
-#ifndef FFETARGET_defaultIS_UGLY_ARGS
-#define FFETARGET_defaultIS_UGLY_ARGS 1
-#endif
-#ifndef FFETARGET_defaultIS_UGLY_INIT
-#define FFETARGET_defaultIS_UGLY_INIT 1
-#endif
 #ifndef FFETARGET_defaultIS_VXT_NOT_90
 #define FFETARGET_defaultIS_VXT_NOT_90 0
 #endif
@@ -203,11 +194,23 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef FFETARGET_integerALMOST_BIG_MAGICAL
 #define FFETARGET_integerALMOST_BIG_MAGICAL 214748364
 #endif
+#ifndef FFETARGET_integerALMOST_BIG_OVERFLOW_BINARY
+#define FFETARGET_integerALMOST_BIG_OVERFLOW_BINARY 0x80000000
+#endif
+#ifndef FFETARGET_integerALMOST_BIG_OVERFLOW_HEX
+#define FFETARGET_integerALMOST_BIG_OVERFLOW_HEX 0x10000000
+#endif
 #ifndef FFETARGET_integerALMOST_BIG_OVERFLOW_OCTAL
-#define FFETARGET_integerALMOST_BIG_OVERFLOW_OCTAL 04000000000
+#define FFETARGET_integerALMOST_BIG_OVERFLOW_OCTAL 0x20000000
 #endif
 #ifndef FFETARGET_integerFINISH_BIG_MAGICAL
 #define FFETARGET_integerFINISH_BIG_MAGICAL 8
+#endif
+#ifndef FFETARGET_integerFINISH_BIG_OVERFLOW_BINARY
+#define FFETARGET_integerFINISH_BIG_OVERFLOW_BINARY 0
+#endif
+#ifndef FFETARGET_integerFINISH_BIG_OVERFLOW_HEX
+#define FFETARGET_integerFINISH_BIG_OVERFLOW_HEX 0
 #endif
 #ifndef FFETARGET_integerFINISH_BIG_OVERFLOW_OCTAL
 #define FFETARGET_integerFINISH_BIG_OVERFLOW_OCTAL 0
@@ -261,8 +264,8 @@ typedef long ffetargetCharacterSize;
 typedef void (*ffetargetCopyfunc) (void *, void *, size_t);
 typedef ffetargetCharacterSize ffetargetHollerithSize;
 #define ffetargetHollerithSize_f "l"
-typedef unsigned long ffetargetOffset;
-#define ffetargetOffset_f "l"
+typedef long long ffetargetOffset;
+#define ffetargetOffset_f "ll"
 
 #if FFETARGET_okINTEGER1
 typedef long int ffetargetInteger1;
@@ -682,6 +685,10 @@ bool ffetarget_integer7 (ffetargetInteger7 *val, ffelexToken integer);
 #if FFETARGET_okINTEGER8
 bool ffetarget_integer8 (ffetargetInteger8 *val, ffelexToken integer);
 #endif
+bool ffetarget_integerbinary (ffetargetIntegerDefault *val,
+			     ffelexToken integer);
+bool ffetarget_integerhex (ffetargetIntegerDefault *val,
+			     ffelexToken integer);
 bool ffetarget_integeroctal (ffetargetIntegerDefault *val,
 			     ffelexToken integer);
 void ffetarget_integer_bad_magical (ffelexToken t);

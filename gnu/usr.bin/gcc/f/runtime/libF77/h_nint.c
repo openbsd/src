@@ -5,7 +5,7 @@ double floor();
 shortint h_nint(x) real *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 shortint h_nint(real *x)
 #endif
 {

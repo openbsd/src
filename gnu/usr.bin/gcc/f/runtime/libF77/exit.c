@@ -13,7 +13,7 @@
 #undef min
 #undef max
 #ifndef KR_headers
-#include "stdlib.h"
+#include <stdlib.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -72,7 +72,7 @@ static struct _ffeequiv_list_ ffeequiv_list_;
 static void ffeequiv_layout_local_ (ffeequiv eq);
 static bool ffeequiv_offset_ (ffetargetOffset *offset, ffesymbol s,
 			      ffebld expr, bool subtract,
-			      ffetargetOffset adjust);
+			      ffetargetOffset adjust, bool no_precede);
 
 /* Internal macros. */
 
@@ -84,25 +84,25 @@ static bool ffeequiv_offset_ (ffetargetOffset *offset, ffesymbol s,
 
    Makes a single master ffestorag object that contains all the vars
    in the equivalence, and makes subordinate ffestorag objects for the
-   vars with the correct offsets.  */
+   vars with the correct offsets.
+
+   The resulting var offsets are relative not necessarily to 0 -- the
+   are relative to the offset of the master area, which might be 0 or
+   negative, but should never be positive.  */
 
 static void
 ffeequiv_layout_local_ (ffeequiv eq)
 {
-  ffesymbol s;			/* Symbol. */
   ffestorag st;			/* Equivalence storage area. */
   ffebld list;			/* List of list of equivalences. */
   ffebld item;			/* List of equivalences. */
-  ffebld eqv;			/* Equivalence item. */
-  ffebld root;			/* Expression for (1st) root sym (offset=0). */
-  ffestorag rst;		/* Storage for root. */
-  ffetargetOffset root_offset;	/* Negative offset for root. */
-  ffesymbol sr;			/* Root itself. */
-  ffebld var;			/* Expression for equivalence. */
-  ffestorag vst;		/* Storage for var. */
-  ffetargetOffset var_offset;	/* Offset for var into equiv area (from
-				   root). */
-  ffesymbol sv;			/* Var itself. */
+  ffebld root_exp;		/* Expression for root sym. */
+  ffestorag root_st;		/* Storage for root. */
+  ffesymbol root_sym;		/* Root itself. */
+  ffebld rooted_exp;		/* Expression for rooted sym in an eqlist. */
+  ffestorag rooted_st;		/* Storage for rooted. */
+  ffesymbol rooted_sym;		/* Rooted symbol itself. */
+  ffetargetOffset eqlist_offset;/* Offset for eqlist from rooted sym. */
   ffetargetAlign alignment;
   ffetargetAlign modulo;
   ffetargetAlign pad;
@@ -110,7 +110,6 @@ ffeequiv_layout_local_ (ffeequiv eq)
   ffetargetOffset num_elements;
   bool new_storage;		/* Established new storage info. */
   bool need_storage;		/* Have need for more storage info. */
-  bool ok;
   bool init;
 
   assert (eq != NULL);
@@ -121,62 +120,59 @@ ffeequiv_layout_local_ (ffeequiv eq)
       return;
     }
 
-  /* First find the symbol which, in the list of lists, has the reference
-     with the greatest offset, which means that symbol is the root symbol (it
-     will end up with an offset of zero in the equivalence area). */
-
-  root_offset = 0;		/* Lowest possible value, to find max value. */
-  sr = NULL;			/* No sym found yet. */
-  ok = TRUE;
+  /* Find the symbol for the first valid item in the list of lists, use that
+     as the root symbol.  Doesn't matter if it won't end up at the beginning
+     of the list, though.  */
 
 #if FFEEQUIV_DEBUG
   fprintf (stderr, "Equiv1:\n");
 #endif
+
+  root_sym = NULL;
+  root_exp = NULL;
 
   for (list = ffeequiv_list (eq);
        list != NULL;
        list = ffebld_trail (list))
     {				/* For every equivalence list in the list of
 				   equivs */
-#if FFEEQUIV_DEBUG
-      fprintf (stderr, "(");
-#endif
-
       for (item = ffebld_head (list);
 	   item != NULL;
 	   item = ffebld_trail (item))
 	{			/* For every equivalence item in the list */
-	  eqv = ffebld_head (item);
-	  s = ffeequiv_symbol (eqv);
-	  if (s == NULL)
+	  ffetargetOffset ign;	/* Ignored. */
+
+	  root_exp = ffebld_head (item);
+	  root_sym = ffeequiv_symbol (root_exp);
+	  if (root_sym == NULL)
 	    continue;		/* Ignore me. */
 
-#if FFEEQUIV_DEBUG
-	  fprintf (stderr, "%s,", ffesymbol_text (s));
-#endif
+	  assert (ffesymbol_storage (root_sym) == NULL);	/* No storage yet. */
 
-	  assert (ffesymbol_storage (s) == NULL);	/* No storage yet. */
-	  ffesymbol_set_equiv (s, NULL);	/* Equiv area slated for
-						   death. */
-	  if (!ffeequiv_offset_ (&var_offset, s, eqv, FALSE, 0))
-	    ok = FALSE;		/* Can't calc shape of equivalence area. */
-	  if ((var_offset > root_offset) || (sr == NULL))
+	  if (!ffeequiv_offset_ (&ign, root_sym, root_exp, FALSE, 0, FALSE))
 	    {
-	      root_offset = var_offset;
-	      sr = s;
+	      ffesymbol_set_equiv (root_sym, NULL);	/* Equiv area slated for
+							   death. */
+	      root_sym = NULL;
+	      continue;		/* Something's wrong with eqv expr, try another. */
 	    }
-	}
-#if FFEEQUIV_DEBUG
-      fprintf (stderr, ")\n");
-#endif
 
+	  break;	/* Use first valid eqv expr for root exp/sym. */
+	}
+      if (root_sym != NULL)
+	break;
     }
 
-  if (!ok || (sr == NULL))
+  if (root_sym == NULL)
     {
       ffeequiv_kill (eq);
       return;
     }
+
+
+#if FFEEQUIV_DEBUG
+  fprintf (stderr, "  Root: `%s'\n", ffesymbol_text (root_sym));
+#endif
 
   /* We've got work to do, so make the LOCAL storage object that'll hold all
      the equivalenced vars inside it. */
@@ -185,75 +181,70 @@ ffeequiv_layout_local_ (ffeequiv eq)
   ffestorag_set_parent (st, NULL);	/* Initializations happen here. */
   ffestorag_set_init (st, NULL);
   ffestorag_set_accretion (st, NULL);
-  ffestorag_set_symbol (st, NULL);	/* LOCAL equiv collection has no
-					   single sym. */
-  ffestorag_set_offset (st, 0);
+  ffestorag_set_offset (st, 0);		/* Assume equiv will be at root offset 0 for now. */
   ffestorag_set_alignment (st, 1);
   ffestorag_set_modulo (st, 0);
   ffestorag_set_type (st, FFESTORAG_typeLOCAL);
-  ffestorag_set_basictype (st, ffesymbol_basictype (sr));
-  ffestorag_set_kindtype (st, ffesymbol_kindtype (sr));
-  ffestorag_set_typesymbol (st, sr);
+  ffestorag_set_basictype (st, ffesymbol_basictype (root_sym));
+  ffestorag_set_kindtype (st, ffesymbol_kindtype (root_sym));
+  ffestorag_set_typesymbol (st, root_sym);
   ffestorag_set_is_save (st, ffeequiv_is_save (eq));
-  if (ffesymbol_is_save (sr))
+  if (ffesymbol_is_save (root_sym))
     ffestorag_update_save (st);
   ffestorag_set_is_init (st, ffeequiv_is_init (eq));
-  if (ffesymbol_is_init (sr))
+  if (ffesymbol_is_init (root_sym))
     ffestorag_update_init (st);
+  ffestorag_set_symbol (st, root_sym);	/* Assume this will be the root until
+					   we know better (used only to generate
+					   the internal name for the aggregate area,
+					   e.g. for debugging). */
 
   /* Make the EQUIV storage object for the root symbol. */
 
-  if (ffesymbol_rank (sr) == 0)
+  if (ffesymbol_rank (root_sym) == 0)
     num_elements = 1;
   else
     num_elements = ffebld_constant_integerdefault (ffebld_conter
-						(ffesymbol_arraysize (sr)));
-  ffetarget_layout (ffesymbol_text (sr), &alignment, &modulo, &size,
-		    ffesymbol_basictype (sr), ffesymbol_kindtype (sr),
-		    ffesymbol_size (sr), num_elements);
+						(ffesymbol_arraysize (root_sym)));
+  ffetarget_layout (ffesymbol_text (root_sym), &alignment, &modulo, &size,
+		    ffesymbol_basictype (root_sym), ffesymbol_kindtype (root_sym),
+		    ffesymbol_size (root_sym), num_elements);
+  ffestorag_set_size (st, size);	/* Set initial size of aggregate area. */
+
   pad = ffetarget_align (ffestorag_ptr_to_alignment (st),
 			 ffestorag_ptr_to_modulo (st), 0, alignment,
 			 modulo);
   assert (pad == 0);
 
-  rst = ffestorag_new (ffestorag_list_equivs (st));
-  ffestorag_set_parent (rst, st);	/* Initializations happen there. */
-  ffestorag_set_init (rst, NULL);
-  ffestorag_set_accretion (rst, NULL);
-  ffestorag_set_symbol (rst, sr);
-  ffestorag_set_size (rst, size);
-  ffestorag_set_offset (rst, 0);
-  ffestorag_set_alignment (rst, alignment);
-  ffestorag_set_modulo (rst, modulo);
-  ffestorag_set_type (rst, FFESTORAG_typeEQUIV);
-  ffestorag_set_basictype (rst, ffesymbol_basictype (sr));
-  ffestorag_set_kindtype (rst, ffesymbol_kindtype (sr));
-  ffestorag_set_typesymbol (rst, sr);
-  ffestorag_set_is_save (rst, FALSE);	/* Assume FALSE, then... */
+  root_st = ffestorag_new (ffestorag_list_equivs (st));
+  ffestorag_set_parent (root_st, st);	/* Initializations happen there. */
+  ffestorag_set_init (root_st, NULL);
+  ffestorag_set_accretion (root_st, NULL);
+  ffestorag_set_symbol (root_st, root_sym);
+  ffestorag_set_size (root_st, size);
+  ffestorag_set_offset (root_st, 0);	/* Will not change; always 0 relative to itself! */
+  ffestorag_set_alignment (root_st, alignment);
+  ffestorag_set_modulo (root_st, modulo);
+  ffestorag_set_type (root_st, FFESTORAG_typeEQUIV);
+  ffestorag_set_basictype (root_st, ffesymbol_basictype (root_sym));
+  ffestorag_set_kindtype (root_st, ffesymbol_kindtype (root_sym));
+  ffestorag_set_typesymbol (root_st, root_sym);
+  ffestorag_set_is_save (root_st, FALSE);	/* Assume FALSE, then... */
   if (ffestorag_is_save (st))	/* ...update to TRUE if needed. */
-    ffestorag_update_save (rst);
-  ffestorag_set_is_init (rst, FALSE);	/* Assume FALSE, then... */
+    ffestorag_update_save (root_st);
+  ffestorag_set_is_init (root_st, FALSE);	/* Assume FALSE, then... */
   if (ffestorag_is_init (st))	/* ...update to TRUE if needed. */
-    ffestorag_update_init (rst);
-  ffestorag_set_size (st, size);
-  ffesymbol_set_storage (sr, rst);
-  ffesymbol_signal_unreported (sr);
-  init = ffesymbol_is_init (sr);
+    ffestorag_update_init (root_st);
+  ffesymbol_set_storage (root_sym, root_st);
+  ffesymbol_signal_unreported (root_sym);
+  init = ffesymbol_is_init (root_sym);
 
   /* Now that we know the root (offset=0) symbol, revisit all the lists and
      do the actual storage allocation.	Keep doing this until we've gone
      through them all without making any new storage objects. */
 
-#if FFEEQUIV_DEBUG
-  fprintf (stderr, "Equiv2:\n");
-#endif
-
   do
     {
-#if FFEEQUIV_DEBUG
-      fprintf (stderr, "  Equiv3:\n");
-#endif
-
       new_storage = FALSE;
       need_storage = FALSE;
       for (list = ffeequiv_list (eq);
@@ -261,160 +252,250 @@ ffeequiv_layout_local_ (ffeequiv eq)
 	   list = ffebld_trail (list))
 	{			/* For every equivalence list in the list of
 				   equivs */
-#if FFEEQUIV_DEBUG
-	  fprintf (stderr, "  (");
-#endif
+	  /* Now find a "rooted" symbol in this list.  That is, find the
+	     first item we can that is valid and whose symbol already
+	     has a storage area, because that means we know where it
+	     belongs in the equivalence area and can then allocate the
+	     rest of the items in the list accordingly.  */
 
-	  root_offset = 0;
-	  sr = NULL;
-	  root = NULL;
+	  rooted_sym = NULL;
+	  rooted_exp = NULL;
+	  eqlist_offset = 0;
+
 	  for (item = ffebld_head (list);
 	       item != NULL;
 	       item = ffebld_trail (item))
 	    {			/* For every equivalence item in the list */
-	      var = ffebld_head (item);
-	      sv = ffeequiv_symbol (var);
-	      if (sv == NULL)
-		continue;	/* Ignore me. */
-
-#if FFEEQUIV_DEBUG
-	      fprintf (stderr, "%s,", ffesymbol_text (sv));
-#endif
+	      rooted_exp = ffebld_head (item);
+	      rooted_sym = ffeequiv_symbol (rooted_exp);
+	      if ((rooted_sym == NULL)
+		  || (ffesymbol_equiv (rooted_sym) == NULL))
+		{
+		  rooted_sym = NULL;
+		  continue;	/* Ignore me. */
+		}
 
 	      need_storage = TRUE;	/* Somebody is likely to need
 					   storage. */
-	      if ((vst = ffesymbol_storage (sv)) == NULL)
-		continue;	/* No storage for this guy, try another. */
-
-	      ffeequiv_offset_ (&var_offset, sv, var, FALSE,
-				ffestorag_offset (vst));
-	      if ((var_offset > root_offset) || (sr == NULL))
+	      if ((rooted_st = ffesymbol_storage (rooted_sym)) == NULL)
 		{
-		  root = var;
-		  root_offset = var_offset;
-		  sr = sv;
-		  rst = vst;
+		  rooted_sym = NULL;
+		  continue;	/* No storage for this guy, try another. */
 		}
+
+#if FFEEQUIV_DEBUG
+	      fprintf (stderr, "  Rooted: `%s' at %" ffetargetOffset_f "d\n",
+		       ffesymbol_text (rooted_sym),
+		       ffestorag_offset (rooted_st));
+#endif
+
+	      /* The offset of this symbol from the equiv's root symbol
+		 is already known, and the size of this symbol is already
+		 incorporated in the size of the equiv's aggregate area.
+		 What we now determine is the offset of this equivalence
+		 _list_ from the equiv's root symbol.
+
+		 For example, if we know that A is at offset 16 from the
+		 root symbol, given EQUIVALENCE (B(24),A(2)), we're looking
+		 at A(2), meaning that the offset for this equivalence list
+		 is 20 (4 bytes beyond the beginning of A, assuming typical
+		 array types, dimensions, and type info).  */
+
+	      if (!ffeequiv_offset_ (&eqlist_offset, rooted_sym, rooted_exp, FALSE,
+				     ffestorag_offset (rooted_st), FALSE))
+
+		{	/* Can't use this one. */
+		  ffesymbol_set_equiv (rooted_sym, NULL);/* Equiv area slated for
+							    death. */
+		  rooted_sym = NULL;
+		  continue;		/* Something's wrong with eqv expr, try another. */
+		}
+
+#if FFEEQUIV_DEBUG
+	      fprintf (stderr, "  Eqlist offset: %" ffetargetOffset_f "d\n",
+		       eqlist_offset);
+#endif
+
+	      break;
 	    }
-	  if (sr == NULL)	/* No storage to go on, try later. */
+
+	  /* If no rooted symbol, it means this list has no roots -- yet.
+	     So, forget this list this time around, but we'll get back
+	     to it after the outer loop iterates at least one more time,
+	     and, ultimately, it will have a root.  */
+
+	  if (rooted_sym == NULL)
 	    {
 #if FFEEQUIV_DEBUG
-	      fprintf (stderr, ")\n");
+	      fprintf (stderr, "No roots.\n");
 #endif
 	      continue;
 	    }
 
-#if FFEEQUIV_DEBUG
-	  fprintf (stderr, ") %s:\n  (", ffesymbol_text (sr));
-#endif
-
-	  /* We now know the root symbol/expr and the operating offset of
-	     that root into the equivalence area.  The other expressions in
-	     the list all identify an initial storage unit that must have the
+	  /* We now have a rooted symbol/expr and the offset of this equivalence
+	     list from the root symbol.  The other expressions in this
+	     list all identify an initial storage unit that must have the
 	     same offset. */
 
 	  for (item = ffebld_head (list);
 	       item != NULL;
 	       item = ffebld_trail (item))
 	    {			/* For every equivalence item in the list */
-	      var = ffebld_head (item);
-	      sv = ffeequiv_symbol (var);
-	      if (sv == NULL)
-		continue;	/* Except erroneous stuff (opANY). */
-	      if (var == root)
+	      ffebld item_exp;			/* Expression for equivalence. */
+	      ffestorag item_st;		/* Storage for var. */
+	      ffesymbol item_sym;		/* Var itself. */
+	      ffetargetOffset item_offset;	/* Offset for var from root. */
+
+	      item_exp = ffebld_head (item);
+	      item_sym = ffeequiv_symbol (item_exp);
+	      if ((item_sym == NULL)
+		  || (ffesymbol_equiv (item_sym) == NULL))
+		continue;	/* Ignore me. */
+
+	      if (item_sym == rooted_sym)
+		continue;	/* Rooted sym already set up. */
+
+	      if (!ffeequiv_offset_ (&item_offset, item_sym, item_exp, TRUE,
+				     eqlist_offset, FALSE))
 		{
-		  /* The last root symbol we see must therefore
-		     (by static deduction) be the first-listed "rooted" item
-		     in the EQUIVALENCE statements pertaining to this area.  */
-		  ffestorag_set_symbol (st, sv);
-		  continue;	/* Root sym already set up. */
+		  ffesymbol_set_equiv (item_sym, NULL);	/* Don't bother with me anymore. */
+		  continue;
 		}
 
-	      if (!ffeequiv_offset_ (&var_offset, sv, var, TRUE, root_offset))
-		continue;	/* Attempt to start sym prior to equiv area! */
-
 #if FFEEQUIV_DEBUG
-	      fprintf (stderr, "%s:%ld,", ffesymbol_text (sv),
-		       (long) var_offset);
+	      fprintf (stderr, "  Item `%s' at %" ffetargetOffset_f "d",
+		       ffesymbol_text (item_sym), item_offset);
 #endif
 
-	      if (ffesymbol_rank (sv) == 0)
+	      if (ffesymbol_rank (item_sym) == 0)
 		num_elements = 1;
 	      else
 		num_elements = ffebld_constant_integerdefault (ffebld_conter
-						(ffesymbol_arraysize (sv)));
-	      ffetarget_layout (ffesymbol_text (sv), &alignment, &modulo,
-				&size, ffesymbol_basictype (sv),
-				ffesymbol_kindtype (sv), ffesymbol_size (sv),
+						(ffesymbol_arraysize (item_sym)));
+	      ffetarget_layout (ffesymbol_text (item_sym), &alignment, &modulo,
+				&size, ffesymbol_basictype (item_sym),
+				ffesymbol_kindtype (item_sym), ffesymbol_size (item_sym),
 				num_elements);
 	      pad = ffetarget_align (ffestorag_ptr_to_alignment (st),
 				     ffestorag_ptr_to_modulo (st),
-				     var_offset, alignment, modulo);
+				     item_offset, alignment, modulo);
 	      if (pad != 0)
 		{
 		  ffebad_start (FFEBAD_EQUIV_ALIGN);
-		  ffebad_string (ffesymbol_text (sv));
+		  ffebad_string (ffesymbol_text (item_sym));
 		  ffebad_finish ();
 		  continue;
 		}
 
-	      /* The last symbol we see with a zero offset must therefore
-		 (by static deduction) be the first-listed "rooted" item
-		 in the EQUIVALENCE statements pertaining to this area.  */
-	      if (var_offset == 0)
-		ffestorag_set_symbol (st, sv);
+	      /* If the variable's offset is less than the offset for the
+		 aggregate storage area, it means it has to expand backwards
+		 -- i.e. the new known starting point of the area precedes the
+		 old one.  This can't happen with COMMON areas (the standard,
+		 and common sense, disallow it), but it is normal for local
+		 EQUIVALENCE areas.
 
-	      if ((vst = ffesymbol_storage (sv)) == NULL)
+		 Also handle choosing the "documented" rooted symbol for this
+		 area here.  It's the symbol at the bottom (lowest offset)
+		 of the aggregate area, with ties going to the name that would
+		 sort to the top of the list of ties.  */
+
+	      if (item_offset == ffestorag_offset (st))
+		{
+		  if ((item_sym != ffestorag_symbol (st))
+		      && (strcmp (ffesymbol_text (item_sym),
+				  ffesymbol_text (ffestorag_symbol (st)))
+			  < 0))
+		    ffestorag_set_symbol (st, item_sym);
+		}
+	      else if (item_offset < ffestorag_offset (st))
+		{
+		  ffetargetOffset new_size;
+
+		  /* Increase size of equiv area to start for lower offset relative
+		     to root symbol.  */
+
+		  if (!ffetarget_offset_add (&new_size,
+					     ffestorag_offset (st) - item_offset,
+					     ffestorag_size (st)))
+		    ffetarget_offset_overflow (ffesymbol_text (s));
+		  else
+		    ffestorag_set_size (st, new_size);
+
+		  ffestorag_set_symbol (st, item_sym);
+		  ffestorag_set_offset (st, item_offset);
+
+#if FFEEQUIV_DEBUG
+		  fprintf (stderr, " [eq offset=%" ffetargetOffset_f
+			   "d, size=%" ffetargetOffset_f "d]",
+			   item_offset, new_size);
+#endif
+		}
+
+	      if ((item_st = ffesymbol_storage (item_sym)) == NULL)
 		{		/* Create new ffestorag object, extend equiv
 				   area. */
+#if FFEEQUIV_DEBUG
+		  fprintf (stderr, ".\n");
+#endif
 		  new_storage = TRUE;
-		  vst = ffestorag_new (ffestorag_list_equivs (st));
-		  ffestorag_set_parent (vst, st);	/* Initializations
+		  item_st = ffestorag_new (ffestorag_list_equivs (st));
+		  ffestorag_set_parent (item_st, st);	/* Initializations
 							   happen there. */
-		  ffestorag_set_init (vst, NULL);
-		  ffestorag_set_accretion (vst, NULL);
-		  ffestorag_set_symbol (vst, sv);
-		  ffestorag_set_size (vst, size);
-		  ffestorag_set_offset (vst, var_offset);
-		  ffestorag_set_alignment (vst, alignment);
-		  ffestorag_set_modulo (vst, modulo);
-		  ffestorag_set_type (vst, FFESTORAG_typeEQUIV);
-		  ffestorag_set_basictype (vst, ffesymbol_basictype (sv));
-		  ffestorag_set_kindtype (vst, ffesymbol_kindtype (sv));
-		  ffestorag_set_typesymbol (vst, sv);
-		  ffestorag_set_is_save (vst, FALSE);	/* Assume FALSE... */
+		  ffestorag_set_init (item_st, NULL);
+		  ffestorag_set_accretion (item_st, NULL);
+		  ffestorag_set_symbol (item_st, item_sym);
+		  ffestorag_set_size (item_st, size);
+		  ffestorag_set_offset (item_st, item_offset);
+		  ffestorag_set_alignment (item_st, alignment);
+		  ffestorag_set_modulo (item_st, modulo);
+		  ffestorag_set_type (item_st, FFESTORAG_typeEQUIV);
+		  ffestorag_set_basictype (item_st, ffesymbol_basictype (item_sym));
+		  ffestorag_set_kindtype (item_st, ffesymbol_kindtype (item_sym));
+		  ffestorag_set_typesymbol (item_st, item_sym);
+		  ffestorag_set_is_save (item_st, FALSE);	/* Assume FALSE... */
 		  if (ffestorag_is_save (st))	/* ...update TRUE */
-		    ffestorag_update_save (vst);	/* if needed. */
-		  ffestorag_set_is_init (vst, FALSE);	/* Assume FALSE... */
+		    ffestorag_update_save (item_st);	/* if needed. */
+		  ffestorag_set_is_init (item_st, FALSE);	/* Assume FALSE... */
 		  if (ffestorag_is_init (st))	/* ...update TRUE */
-		    ffestorag_update_init (vst);	/* if needed. */
-		  if (!ffetarget_offset_add (&size, var_offset, size))
-		    /* Find one size of equiv area, complain if overflow. */
+		    ffestorag_update_init (item_st);	/* if needed. */
+		  ffesymbol_set_storage (item_sym, item_st);
+		  ffesymbol_signal_unreported (item_sym);
+		  if (ffesymbol_is_init (item_sym))
+		    init = TRUE;
+
+		  /* Determine new size of equiv area, complain if overflow.  */
+
+		  if (!ffetarget_offset_add (&size, item_offset, size)
+		      || !ffetarget_offset_add (&size, -ffestorag_offset (st), size))
 		    ffetarget_offset_overflow (ffesymbol_text (s));
 		  else if (size > ffestorag_size (st))
-		    /* Extend equiv area if necessary. */
 		    ffestorag_set_size (st, size);
-		  ffesymbol_set_storage (sv, vst);
-		  ffesymbol_signal_unreported (sv);
-		  ffestorag_update (st, sv, ffesymbol_basictype (sv),
-				    ffesymbol_kindtype (sv));
-		  if (ffesymbol_is_init (sv))
-		    init = TRUE;
+		  ffestorag_update (st, item_sym, ffesymbol_basictype (item_sym),
+				    ffesymbol_kindtype (item_sym));
 		}
 	      else
 		{
+#if FFEEQUIV_DEBUG
+		  fprintf (stderr, " (was %" ffetargetOffset_f "d).\n",
+			   ffestorag_offset (item_st));
+#endif
 		  /* Make sure offset agrees with known offset. */
-		  if (var_offset != ffestorag_offset (vst))
+		  if (item_offset != ffestorag_offset (item_st))
 		    {
+		      char io1[40];
+		      char io2[40];
+
+		      sprintf (&io1[0], "%" ffetargetOffset_f "d", item_offset);
+		      sprintf (&io2[0], "%" ffetargetOffset_f "d", ffestorag_offset (item_st));
 		      ffebad_start (FFEBAD_EQUIV_MISMATCH);
-		      ffebad_string (ffesymbol_text (sv));
+		      ffebad_string (ffesymbol_text (item_sym));
+		      ffebad_string (ffesymbol_text (root_sym));
+		      ffebad_string (io1);
+		      ffebad_string (io2);
 		      ffebad_finish ();
 		    }
 		}
 	    }			/* (For every equivalence item in the list) */
-#if FFEEQUIV_DEBUG
-	  fprintf (stderr, ")\n");
-#endif
 	  ffebld_set_head (list, NULL);	/* Don't do this list again. */
 	}			/* (For every equivalence list in the list of
 				   equivs) */
@@ -444,7 +525,8 @@ ffeequiv_layout_local_ (ffeequiv eq)
 
 static bool
 ffeequiv_offset_ (ffetargetOffset *offset, ffesymbol s UNUSED,
-		  ffebld expr, bool subtract, ffetargetOffset adjust)
+		  ffebld expr, bool subtract, ffetargetOffset adjust,
+		  bool no_precede)
 {
   ffetargetIntegerDefault value = 0;
   ffetargetOffset cval;		/* Converted value. */
@@ -470,15 +552,23 @@ again:				/* :::::::::::::::::::: */
 	if (ffesymbol_basictype (sym) == FFEINFO_basictypeANY)
 	  return FALSE;
 
+	ffetarget_layout (ffesymbol_text (sym), &a, &m, &size,
+			  ffesymbol_basictype (sym),
+			  ffesymbol_kindtype (sym), 1, 1);
+
 	if (value < 0)
 	  {			/* Really invalid, as in A(-2:5), but in case
 				   it's wanted.... */
 	    if (!ffetarget_offset (&cval, -value))
 	      return FALSE;
+
+	    if (!ffetarget_offset_multiply (&cval, cval, size))
+	      return FALSE;
+
 	    if (subtract)
 	      return ffetarget_offset_add (offset, cval, adjust);
 
-	    if (cval > adjust)
+	    if (no_precede && (cval > adjust))
 	      {
 	      neg:		/* :::::::::::::::::::: */
 		ffebad_start (FFEBAD_COMMON_NEG);
@@ -486,28 +576,22 @@ again:				/* :::::::::::::::::::: */
 		ffebad_finish ();
 		return FALSE;
 	      }
-	    *offset = adjust - cval;
-	    return TRUE;
+	    return ffetarget_offset_add (offset, -cval, adjust);
 	  }
 
 	if (!ffetarget_offset (&cval, value))
 	  return FALSE;
 
-	ffetarget_layout (ffesymbol_text (sym), &a, &m, &size,
-			  ffesymbol_basictype (sym),
-			  ffesymbol_kindtype (sym), 1, 1);
-
 	if (!ffetarget_offset_multiply (&cval, cval, size))
 	  return FALSE;
 
-	if (subtract)
-	  if (cval > adjust)
-	    goto neg;		/* :::::::::::::::::::: */
-	  else
-	    *offset = adjust - cval;
-	else if (!ffetarget_offset_add (offset, cval, adjust))
-	  return FALSE;
-	return TRUE;
+	if (!subtract)
+	  return ffetarget_offset_add (offset, cval, adjust);
+
+	if (no_precede && (cval > adjust))
+	  goto neg;		/* :::::::::::::::::::: */
+
+	return ffetarget_offset_add (offset, -cval, adjust);
       }
 
     case FFEBLD_opARRAYREF:
@@ -881,7 +965,7 @@ ffeequiv_layout_cblock (ffestorag st)
 		{
 		  root = ffebld_head (root);	/* Lose its opITEM. */
 		  ok = ffeequiv_offset_ (&root_offset, sr, root, FALSE,
-					 ffestorag_offset (rst));
+					 ffestorag_offset (rst), TRUE);
 		  /* Equiv point prior to start of common area? */
 		}
 	      else if (altroot != NULL)
@@ -890,7 +974,8 @@ ffeequiv_layout_cblock (ffestorag st)
 		  root = ffebld_head (altroot);
 		  ok = ffeequiv_offset_ (&root_offset, altrootsym, root,
 					 FALSE,
-			 ffestorag_offset (ffesymbol_storage (altrootsym)));
+			 ffestorag_offset (ffesymbol_storage (altrootsym)),
+					 TRUE);
 		  ffesymbol_set_equiv (altrootsym, NULL);
 		}
 	      else
@@ -920,7 +1005,7 @@ ffeequiv_layout_cblock (ffestorag st)
 		  if (!ok
 		      || !ffeequiv_offset_ (&var_offset, sv,
 					    ffebld_head (var), TRUE,
-					    root_offset))
+					    root_offset, TRUE))
 		    continue;	/* Can't do negative offset wrt COMMON. */
 
 		  if (ffesymbol_rank (sv) == 0)
@@ -988,8 +1073,16 @@ ffeequiv_layout_cblock (ffestorag st)
 		      /* Make sure offset agrees with known offset. */
 		      if (var_offset != ffestorag_offset (vst))
 			{
+			  char io1[40];
+			  char io2[40];
+
+			  sprintf (&io1[0], "%" ffetargetOffset_f "d", var_offset);
+			  sprintf (&io2[0], "%" ffetargetOffset_f "d", ffestorag_offset (vst));
 			  ffebad_start (FFEBAD_EQUIV_MISMATCH);
 			  ffebad_string (ffesymbol_text (sv));
+			  ffebad_string (ffesymbol_text (s));
+			  ffebad_string (io1);
+			  ffebad_string (io2);
 			  ffebad_finish ();
 			}
 		    }

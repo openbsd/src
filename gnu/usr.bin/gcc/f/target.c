@@ -1249,6 +1249,196 @@ ffetarget_integer1 (ffetargetInteger1 *val, ffelexToken integer)
 }
 
 #endif
+/* ffetarget_integerbinary -- Convert token to a binary integer
+
+   ffetarget_integerbinary x;
+   if (ffetarget_integerdefault_8(&x,integer_token))
+       // conversion ok.
+
+   Token use count not affected overall.  */
+
+bool
+ffetarget_integerbinary (ffetargetIntegerDefault *val, ffelexToken integer)
+{
+  ffetargetIntegerDefault x;
+  char *p;
+  char c;
+  bool bad_digit;
+
+  assert ((ffelex_token_type (integer) == FFELEX_typeNAME)
+	  || (ffelex_token_type (integer) == FFELEX_typeNUMBER));
+
+  p = ffelex_token_text (integer);
+  x = 0;
+
+  /* Skip past leading zeros. */
+
+  while (((c = *p) != '\0') && (c == '0'))
+    ++p;
+
+  /* Interpret rest of number. */
+
+  bad_digit = FALSE;
+  while (c != '\0')
+    {
+      if ((c >= '0') && (c <= '1'))
+	c -= '0';
+      else
+	{
+	  bad_digit = TRUE;
+	  c = 0;
+	}
+
+#if 0				/* Don't complain about signed overflow; just
+				   unsigned overflow. */
+      if ((x == FFETARGET_integerALMOST_BIG_OVERFLOW_BINARY)
+	  && (c == FFETARGET_integerFINISH_BIG_OVERFLOW_BINARY)
+	  && (*(p + 1) == '\0'))
+	{
+	  *val = FFETARGET_integerBIG_OVERFLOW_BINARY;
+	  return TRUE;
+	}
+      else
+#endif
+#if FFETARGET_integerFINISH_BIG_OVERFLOW_BINARY == 0
+      if ((x & FFETARGET_integerALMOST_BIG_OVERFLOW_BINARY) != 0)
+#else
+      if (x == FFETARGET_integerALMOST_BIG_OVERFLOW_BINARY)
+	{
+	  if ((c > FFETARGET_integerFINISH_BIG_OVERFLOW_BINARY)
+	      || (*(p + 1) != '\0'))
+	    {
+	      ffebad_start (FFEBAD_INTEGER_TOO_LARGE);
+	      ffebad_here (0, ffelex_token_where_line (integer),
+			   ffelex_token_where_column (integer));
+	      ffebad_finish ();
+	      *val = 0;
+	      return FALSE;
+	    }
+	}
+      else if (x > FFETARGET_integerALMOST_BIG_OVERFLOW_BINARY)
+#endif
+	{
+	  ffebad_start (FFEBAD_INTEGER_TOO_LARGE);
+	  ffebad_here (0, ffelex_token_where_line (integer),
+		       ffelex_token_where_column (integer));
+	  ffebad_finish ();
+	  *val = 0;
+	  return FALSE;
+	}
+      x = (x << 1) + c;
+      c = *(++p);
+    };
+
+  if (bad_digit)
+    {
+      ffebad_start (FFEBAD_INVALID_BINARY_DIGIT);
+      ffebad_here (0, ffelex_token_where_line (integer),
+		   ffelex_token_where_column (integer));
+      ffebad_finish ();
+    }
+
+  *val = x;
+  return !bad_digit;
+}
+
+/* ffetarget_integerhex -- Convert token to a hex integer
+
+   ffetarget_integerhex x;
+   if (ffetarget_integerdefault_8(&x,integer_token))
+       // conversion ok.
+
+   Token use count not affected overall.  */
+
+bool
+ffetarget_integerhex (ffetargetIntegerDefault *val, ffelexToken integer)
+{
+  ffetargetIntegerDefault x;
+  char *p;
+  char c;
+  bool bad_digit;
+
+  assert ((ffelex_token_type (integer) == FFELEX_typeNAME)
+	  || (ffelex_token_type (integer) == FFELEX_typeNUMBER));
+
+  p = ffelex_token_text (integer);
+  x = 0;
+
+  /* Skip past leading zeros. */
+
+  while (((c = *p) != '\0') && (c == '0'))
+    ++p;
+
+  /* Interpret rest of number. */
+
+  bad_digit = FALSE;
+  while (c != '\0')
+    {
+      if ((c >= 'A') && (c <= 'F'))
+	c = c - 'A' + 10;
+      else if ((c >= 'a') && (c <= 'f'))
+	c = c - 'a' + 10;
+      else if ((c >= '0') && (c <= '9'))
+	c -= '0';
+      else
+	{
+	  bad_digit = TRUE;
+	  c = 0;
+	}
+
+#if 0				/* Don't complain about signed overflow; just
+				   unsigned overflow. */
+      if ((x == FFETARGET_integerALMOST_BIG_OVERFLOW_HEX)
+	  && (c == FFETARGET_integerFINISH_BIG_OVERFLOW_HEX)
+	  && (*(p + 1) == '\0'))
+	{
+	  *val = FFETARGET_integerBIG_OVERFLOW_HEX;
+	  return TRUE;
+	}
+      else
+#endif
+#if FFETARGET_integerFINISH_BIG_OVERFLOW_HEX == 0
+      if (x >= FFETARGET_integerALMOST_BIG_OVERFLOW_HEX)
+#else
+      if (x == FFETARGET_integerALMOST_BIG_OVERFLOW_HEX)
+	{
+	  if ((c > FFETARGET_integerFINISH_BIG_OVERFLOW_HEX)
+	      || (*(p + 1) != '\0'))
+	    {
+	      ffebad_start (FFEBAD_INTEGER_TOO_LARGE);
+	      ffebad_here (0, ffelex_token_where_line (integer),
+			   ffelex_token_where_column (integer));
+	      ffebad_finish ();
+	      *val = 0;
+	      return FALSE;
+	    }
+	}
+      else if (x > FFETARGET_integerALMOST_BIG_OVERFLOW_HEX)
+#endif
+	{
+	  ffebad_start (FFEBAD_INTEGER_TOO_LARGE);
+	  ffebad_here (0, ffelex_token_where_line (integer),
+		       ffelex_token_where_column (integer));
+	  ffebad_finish ();
+	  *val = 0;
+	  return FALSE;
+	}
+      x = (x << 4) + c;
+      c = *(++p);
+    };
+
+  if (bad_digit)
+    {
+      ffebad_start (FFEBAD_INVALID_HEX_DIGIT);
+      ffebad_here (0, ffelex_token_where_line (integer),
+		   ffelex_token_where_column (integer));
+      ffebad_finish ();
+    }
+
+  *val = x;
+  return !bad_digit;
+}
+
 /* ffetarget_integeroctal -- Convert token to an octal integer
 
    ffetarget_integeroctal x;
@@ -1265,7 +1455,8 @@ ffetarget_integeroctal (ffetargetIntegerDefault *val, ffelexToken integer)
   char c;
   bool bad_digit;
 
-  assert (ffelex_token_type (integer) == FFELEX_typeNUMBER);
+  assert ((ffelex_token_type (integer) == FFELEX_typeNAME)
+	  || (ffelex_token_type (integer) == FFELEX_typeNUMBER));
 
   p = ffelex_token_text (integer);
   x = 0;
@@ -1280,10 +1471,18 @@ ffetarget_integeroctal (ffetargetIntegerDefault *val, ffelexToken integer)
   bad_digit = FALSE;
   while (c != '\0')
     {
+      if ((c >= '0') && (c <= '7'))
+	c -= '0';
+      else
+	{
+	  bad_digit = TRUE;
+	  c = 0;
+	}
+
 #if 0				/* Don't complain about signed overflow; just
 				   unsigned overflow. */
       if ((x == FFETARGET_integerALMOST_BIG_OVERFLOW_OCTAL)
-	  && (c == '0' + FFETARGET_integerFINISH_BIG_OVERFLOW_OCTAL)
+	  && (c == FFETARGET_integerFINISH_BIG_OVERFLOW_OCTAL)
 	  && (*(p + 1) == '\0'))
 	{
 	  *val = FFETARGET_integerBIG_OVERFLOW_OCTAL;
@@ -1296,7 +1495,7 @@ ffetarget_integeroctal (ffetargetIntegerDefault *val, ffelexToken integer)
 #else
       if (x == FFETARGET_integerALMOST_BIG_OVERFLOW_OCTAL)
 	{
-	  if ((c > '0' + FFETARGET_integerFINISH_BIG_OVERFLOW_OCTAL)
+	  if ((c > FFETARGET_integerFINISH_BIG_OVERFLOW_OCTAL)
 	      || (*(p + 1) != '\0'))
 	    {
 	      ffebad_start (FFEBAD_INTEGER_TOO_LARGE);
@@ -1317,9 +1516,7 @@ ffetarget_integeroctal (ffetargetIntegerDefault *val, ffelexToken integer)
 	  *val = 0;
 	  return FALSE;
 	}
-      x = (x << 3) + c - '0';
-      if (c >= '8')
-	bad_digit = TRUE;
+      x = (x << 3) + c;
       c = *(++p);
     };
 

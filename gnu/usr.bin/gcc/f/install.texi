@@ -5,7 +5,7 @@
 @c The text of this file appears in the file INSTALL
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1996-03-15
+@c 1996-12-01
 
 @ifclear INSTALLONLY
 @node Installation
@@ -78,7 +78,7 @@ Without an applicable @code{gcc} source tree, you cannot
 build @code{g77}.
 You can obtain an FSF distribution of @code{gcc} from the FSF.
 
-@item @file{g77-0.5.18.tar.gz}
+@item @file{g77-0.5.19.tar.gz}
 You probably have already unpacked this distribution,
 or you are reading an advanced copy of this manual,
 which is contained in this distribution.
@@ -90,7 +90,7 @@ the same way you obtained @code{gcc}.
 @item 100MB disk space
 For a complete @dfn{bootstrap} build, about 100MB
 of disk space is required for @code{g77} by the author's
-current Linux system.
+current GNU/Linux system.
 
 Some juggling can reduce the amount of space needed;
 during the bootstrap process, once Stage 3 starts,
@@ -239,10 +239,10 @@ ways.
 @cindex GBE
 @item
 @code{g77} currently requires application of a patch file to the gcc compiler
-tree (at least up through gcc version 2.7.0).
+tree.
 The necessary patches should be folded in to the mainline gcc distribution.
 
-(Some combinations
+Some combinations
 of versions of @code{g77} and @code{gcc} might actually @emph{require} no
 patches, but the patch files will be provided anyway as long as
 there are more changes expected in subsequent releases.
@@ -346,7 +346,7 @@ used by the author of @code{g77} on his own system:
 
 @example
 /usr/FSF/gcc-2.7.2.tar.gz
-/usr/FSF/g77-0.5.18.tar.gz
+/usr/FSF/g77-0.5.19.tar.gz
 @end example
 
 Users of the following systems should not blindly follow
@@ -384,12 +384,12 @@ sh[ 1]# @kbd{cd /usr/src}
 sh[ 2]# @kbd{gunzip -c < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -}
 @set unpack-gcc 2
 [Might say "Broken pipe"...that is normal on some systems.]
-sh[ 3]# @kbd{gunzip -c < /usr/FSF/g77-0.5.18.tar.gz | tar xf -}
+sh[ 3]# @kbd{gunzip -c < /usr/FSF/g77-0.5.19.tar.gz | tar xf -}
 @set unpack-g77 3
 ["Broken pipe" again possible.]
 sh[ 4]# @kbd{ln -s gcc-2.7.2 gcc}
 @set link-gcc 4
-sh[ 5]# @kbd{ln -s g77-0.5.18 g77}
+sh[ 5]# @kbd{ln -s g77-0.5.19 g77}
 @set link-g77 5
 sh[ 6]# @kbd{mv -i g77/* gcc}
 @set merge-g77 6
@@ -448,10 +448,10 @@ installed version of @code{g77} and @code{gcc} in any case.
 @c Some systems have a version of @code{tar} that support
 @c uncompressing @code{gzip} files.
 @c
-@c @item Step @value{unpack-g77}: @kbd{gunzip -d < /usr/FSF/g77-0.5.18.tar.gz | tar xf -}
+@c @item Step @value{unpack-g77}: @kbd{gunzip -d < /usr/FSF/g77-0.5.19.tar.gz | tar xf -}
 
 @item Step @value{link-gcc}: @kbd{ln -s gcc-2.7.2 gcc}
-@item Step @value{link-g77}: @kbd{ln -s g77-0.5.18 g77}
+@item Step @value{link-g77}: @kbd{ln -s g77-0.5.19 g77}
 These commands mainly help reduce typing,
 and help reduce visual clutter in examples
 in this manual showing what to type to install @code{g77}.
@@ -462,7 +462,7 @@ other than the FSF.
 
 @item Step @value{merge-g77}: @kbd{mv -i g77/* gcc}
 After doing this, you can, if you like, type
-@samp{rm g77} and @samp{rmdir g77-0.5.18} to remove
+@samp{rm g77} and @samp{rmdir g77-0.5.19} to remove
 the empty directory and the symbol link to it.
 But, it might be helpful to leave them around as
 quick reminders of which version(s) of @code{g77} are
@@ -615,9 +615,9 @@ and @code{g77} is:
 @example
 sh# @kbd{cd /usr/src}
 sh# @kbd{gunzip -d < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -}
-sh# @kbd{gunzip -d < /usr/FSF/g77-0.5.18.tar.gz | tar xf -}
+sh# @kbd{gunzip -d < /usr/FSF/g77-0.5.19.tar.gz | tar xf -}
 sh# @kbd{ln -s gcc-2.7.2 gcc}
-sh# @kbd{ln -s g77-0.5.18 g77}
+sh# @kbd{ln -s g77-0.5.19 g77}
 sh# @kbd{mv -i g77/* gcc}
 @end example
 
@@ -691,6 +691,17 @@ does not exist, you are using either an old, unsupported version,
 or a release one that is newer than the newest @code{gcc} version
 supported by the version of @code{g77} you have.
 
+@cindex gcc version numbering
+@cindex version numbering
+@cindex g77 version number
+@cindex GNU version numbering
+As of version 0.5.18, @code{g77} modifies the version number
+of @code{gcc} via the pertinent patches.
+This is done because the resulting version of @code{gcc} is
+deemed sufficiently different from the vanilla distribution
+to make it worthwhile to present, to the user, information
+signaling the fact that there are some differences.
+
 GNU version numbers make it easy to figure out whether a
 particular version of a distribution is newer or older than
 some other version of that distribution.
@@ -728,7 +739,8 @@ If the version number for @code{gcc} differs only in the
 that is for the newest version of @code{gcc} having the same
 @var{major} and @var{minor} fields, as this is likely to work.
 
-So, for example, if @code{g77} has support for versions 2.7.0 and 2.7.1,
+So, for example, if a particular version of @code{g77} has support for
+@code{gcc} versions 2.7.0 and 2.7.1,
 it is likely that @file{gcc-2.7.2} would work well with @code{g77}
 by using the @file{2.7.1.diff} patch file provided
 with @code{g77} (aside from some offsets reported by @code{patch},
@@ -786,15 +798,11 @@ To remove these, after @kbd{cd gcc}, type @kbd{rm -i *.~*~}.
 @pindex config-lang.in
 @emph{Note:} @code{g77}'s configuration file @file{gcc/f/config-lang.in}
 ensures that the source code for the version of @code{gcc}
-being configured has at least one GBE function required specifically
-by @code{g77}.
-This function was added to @file{gcc-2.7.1}, making
-the patch file @file{g77-0.5.17/f/gbe/2.7.1.diff} empty of
-actual patches.
-
-For @file{gcc-2.7.0} and earlier, this configuration-time
+being configured has at least one indication of being patched
+as required specifically by @code{g77}.
+This configuration-time
 checking should catch failure to apply the correct patch and,
-if so caught, it should abort the configuration with an explanation.
+if so caught, should abort the configuration with an explanation.
 @emph{Please} do not try to disable the check,
 otherwise @code{g77} might well appear to build
 and install correctly, and even appear to compile correctly,
@@ -928,6 +936,12 @@ change to @file{gcc/f/proj.h}: edit the line reading
 
 @noindent
 by replacing the @samp{1} with @samp{0}.
+Or, you can avoid editing the source by adding
+@example
+CFLAGS='-DFFEPROJ_STRTOUL=0 -g'
+@end example
+to the command line for @code{make} when you invoke it.
+(@samp{-g} is the default for @samp{CFLAGS}.)
 
 This causes a minimal version of @samp{strtoul()} provided
 as part of the @code{g77} distribution to be compiled and
@@ -939,6 +953,7 @@ Similarly, a minimal version of @samp{bsearch()} is available
 and can be enabled by editing a line similar to the one
 for @samp{strtoul()} above in @file{gcc/f/proj.h}, if
 your system libraries lack @samp{bsearch()}.
+The method of overriding @samp{X_CFLAGS} may also be used.
 
 These are not problems with @code{g77}, which requires an
 ANSI C environment.
@@ -1265,7 +1280,7 @@ GNU CPP version 2.7.1 (80386, BSD syntax)
 End of search list.
  ./f771 /tmp/cca03648.i -quiet -dumpbase null.F -version @dots{}
 GNU F77 version 2.7.1 (80386, BSD syntax) compiled @dots{}
-GNU Fortran Front End version 0.5.18 compiled: @dots{}
+GNU Fortran Front End version 0.5.19 compiled: @dots{}
  as -o /tmp/cca036481.o /tmp/cca03648.s
  ld -m i386linux -o /tmp/gfa03648 /usr/lib/crt0.o -L. @dots{}
 /usr/lib/crt0.o(.text+0x35): undefined reference to `main'
@@ -1465,7 +1480,7 @@ the file @file{gcc/COPYING} thoroughly).
 Then, consider your target audience and decide where @code{g77} should
 be installed.
 
-For systems like Linux that have no native Fortran compiler (or
+For systems like GNU/Linux that have no native Fortran compiler (or
 where @code{g77} could be considered the native compiler for Fortran and
 @code{gcc} for C, etc.), you should definitely configure
 @code{g77} for installation
@@ -1621,6 +1636,8 @@ be pertinent in future versions of @code{g77}.
 @vindex FFECOM_sizeMAXSTACKITEM
 @cindex code, stack variables
 @cindex maximum stackable size
+@cindex stack allocation
+@cindex segmentation violation
 @code{g77}, on most machines, puts many variables and arrays on the stack
 where possible, and can be configured (by changing
 @samp{FFECOM_sizeMAXSTACKITEM} in @file{gcc/f/com.c}) to force
@@ -1628,6 +1645,12 @@ smaller-sized entities into static storage (saving
 on stack space) or permit larger-sized entities to be put on the
 stack (which can improve run-time performance, as it presents
 more opportunities for the GBE to optimize the generated code).
+
+@emph{Note:} Putting more variables and arrays on the stack
+might cause problems due to system-dependent limits on stack size.
+Also, the value of @samp{FFECOM_sizeMAXSTACKITEM} has no
+effect on automatic variables and arrays.
+@xref{But-bugs}, for more information.
 
 @node Floating-point Bit Patterns
 @subsection Floating-point Bit Patterns
@@ -1645,7 +1668,7 @@ but rather generate correct code for the target.
 (Currently, @code{g77}
 would generate bad code under such circumstances if it didn't crash
 during the build, e.g. when compiling a source file that does
-something like @samp{EQUIVALENCE (I,R)} and @samp{DATA R/3.1415926535/}.)
+something like @samp{EQUIVALENCE (I,R)} and @samp{DATA R/9.43578/}.)
 
 @node Large Initialization
 @subsection Initialization of Large Aggregate Areas
@@ -1700,20 +1723,10 @@ for a target configuration that is not basically a 32-bit
 machine (such as an Alpha, which is a 64-bit machine, especially
 if it has a 64-bit operating system running on it).
 This is because @code{g77} is known to not work
-properly on such configurations, although the reasons
-for this are not fully explored.
-This is expected to be fixed
+properly on such configurations.
+This is expected to be completely fixed
 at 0.6, at which point the warning would be dropped.
-(The reason the unexplored problems are expected to be
-fixed at 0.6 is because some known internal design
-problems @code{g77} has, which reduce portability and
-the ability to configure it as a cross-compiler, are
-presumed to be at least partly responsible for the
-problems being encountered on the Alpha.
-The problems remain unexplored partly because the
-known problems exist and are scheduled to be addressed
-anyway.
-Plus, the @code{g77} maintainer does not yet possess
-an Alpha workstation of his own.)
 
-
+(Version 0.5.20 is expected to solve most of these
+problems, though, as of this writing, work is still
+progressing in this area.)

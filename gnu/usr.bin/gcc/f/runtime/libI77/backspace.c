@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include "f2c.h"
 #include "fio.h"
 #ifdef KR_headers
@@ -58,7 +59,7 @@ integer f_back(alist *a)
 		else
 			x -= sizeof(buf);
 		(void) fseek(b->ufd,x,SEEK_SET);
-		n=fread(buf,1,(int)(y-x), b->ufd);
+		n=fread(buf,1,(size_t)(y-x), b->ufd);
 		for(i = n - ndec; --i >= 0; )
 		{
 			if(buf[i]!='\n') continue;

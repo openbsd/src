@@ -11,7 +11,7 @@ system_(s, n) register char *s; ftnlen n;
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
+#include <stdlib.h>
 extern char *F77_aloc(ftnlen, char*);
 
  integer

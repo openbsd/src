@@ -6,6 +6,93 @@ notice and permission notice.
 News About GNU Fortran
 **********************
 
+In 0.5.19:
+==========
+
+   * Fix `FORMAT' statement parsing so negative values for specifiers
+     such as `P' (e.g. `FORMAT(-1PF8.1)') are correctly processed as
+     negative.
+
+   * Fix `SIGNAL' intrinsic so it once again accepts a procedure as its
+     second argument.
+
+   * A temporary kludge option provides bare-bones information on
+     `COMMON' and `EQUIVALENCE' members at debug time.
+
+   * New `-fonetrip' option specifies FORTRAN-66-style one-trip `DO'
+     loops.
+
+   * New `-fno-silent' option causes names of program units to be
+     printed as they are compiled, in a fashion similar to UNIX `f77'
+     and `f2c'.
+
+   * New `-fugly-assumed' option specifies that arrays dimensioned via
+     `DIMENSION X(1)', for example, are to be treated as assumed-size.
+
+   * New `-fno-typeless-boz' option specifies that non-decimal-radix
+     constants using the prefixed-radix form (such as `Z'1234'') are to
+     be interpreted as `INTEGER' constants.
+
+   * New `-ff66' option is a "shorthand" option that specifies
+     behaviors considered appropriate for FORTRAN 66 programs.
+
+   * New `-ff77' option is a "shorthand" option that specifies
+     behaviors considered appropriate for UNIX `f77' programs.
+
+   * New `-fugly-comma' and `-fugly-logint' options provided to perform
+     some of what `-fugly' used to do.  `-fugly' and `-fno-ugly' are
+     now "shorthand" options, in that they do nothing more than enable
+     (or disable) other `-fugly-*' options.
+
+   * Fix parsing of assignment statements involving targets that are
+     substrings of elements of `CHARACTER' arrays having names such as
+     `READ', `WRITE', `GOTO', and `REALFUNCTIONFOO'.
+
+   * Fix crashes involving diagnosed code.
+
+   * Fix handling of local `EQUIVALENCE' areas so certain cases of
+     valid Fortran programs are not misdiagnosed as improperly
+     extending the area backwards.
+
+   * Support `gcc' version 2.7.2.1.
+
+   * Upgrade to `libf2c' as of 1996-09-26, and fix up some of the build
+     procedures.
+
+   * Change code generation for list-directed I/O so it allows for new
+     versions of `libf2c' that might return non-zero status codes for
+     some operations previously assumed to always return zero.
+
+     This change not only affects how `IOSTAT=' variables are set by
+     list-directed I/O, it also affects whether `END=' and `ERR='
+     labels are reached by these operations.
+
+   * Add intrinsic support for new `FTELL' and `FSEEK' procedures in
+     `libf2c'.
+
+   * Modify `fseek_()' in `libf2c' to be more portable (though, in
+     practice, there might be no systems where this matters) and to
+     catch invalid `whence' arguments.
+
+   * Some useless warnings from the `-Wunused' option have been
+     eliminated.
+
+   * Fix a problem building the `f771' executable on AIX systems by
+     linking with the `-bbigtoc' option.
+
+   * Abort configuration if `gcc' has not been patched using the patch
+     file provided in the `gcc/f/gbe/' subdirectory.
+
+   * Add options `--help' and `--version' to the `g77' command, to
+     conform to GNU coding guidelines.  Also add printing of `g77'
+     version number when the `--verbose' (`-v') option is used.
+
+   * Change internally generated name for local `EQUIVALENCE' areas to
+     one based on the alphabetically sorted first name in the list of
+     names for entities placed at the beginning of the areas.
+
+   * Improvements to documentation and indexing.
+
 In 0.5.18:
 ==========
 
@@ -137,6 +224,8 @@ In 0.5.18:
      using that wider type (wider than default `INTEGER') must be
      rewritten.)
 
+   * Support `gcc' version 2.7.2.
+
    * Upgrade to `libf2c' as of 1996-03-23, and fix up some of the build
      procedures.
 
@@ -233,7 +322,7 @@ In 0.5.16:
 ==========
 
    * Fix a code-generation bug involving complicated `EQUIVALENCE'
-     statements not involving `COMMON'
+     statements not involving `COMMON'.
 
    * Fix code-generation bugs involving invoking "gratis" library
      procedures in `libf2c' from code compiled with `-fno-f2c' by

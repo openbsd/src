@@ -51,7 +51,27 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    handling of arguments, primarily to make it more consistent with
    `gcc' itself.  */
 
+#ifndef LANGUAGE_F77
+#define LANGUAGE_F77 1	/* Assume f77 language wanted. */
+#endif
+
+#if LANGUAGE_F77 != 1
+#include <stdio.h>
+
+int
+main (argc, argv)
+     int argc;
+     char **argv;
+{
+  fprintf (stderr, "\
+g77: `f77' language not included in list of languages\n\
+     built with this installation of gcc.\n");
+  exit (1);
+}
+
+#else	/* LANGUAGE_F77 == 1 */
 #include "config.j"
+#include "zzz.h"
 #include <sys/types.h>
 #include <errno.h>
 
@@ -204,6 +224,7 @@ typedef enum
   OPTION_c,			/* Aka --compile. */
   OPTION_driver,		/* Wrapper-specific option. */
   OPTION_E,			/* Aka --preprocess. */
+  OPTION_help,			/* --help. */
   OPTION_i,			/* -imacros, -include, -include-*. */
   OPTION_M,			/* Aka --dependencies. */
   OPTION_MM,			/* Aka --user-dependencies. */
@@ -212,21 +233,24 @@ typedef enum
   OPTION_P,			/* Aka --print-*-name. */
   OPTION_S,			/* Aka --assemble. */
   OPTION_v,			/* Aka --verbose. */
+  OPTION_version,		/* --version. */
   OPTION_V,			/* Aka --use-version. */
   OPTION_x,			/* Aka --language. */
   OPTION_			/* Unrecognized or unimportant. */
 } Option;
 
-/* THE FOLLOWING COMES STRAIGHT FROM gcc-2.7.0/gcc.c:  */
+/* THE FOLLOWING COMES STRAIGHT FROM prerelease gcc-2.8.0/gcc.c:  */
 
 /* This defines which switch letters take arguments.  */
 
-#ifndef SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR)      \
+#define DEFAULT_SWITCH_TAKES_ARG(CHAR)      \
   ((CHAR) == 'D' || (CHAR) == 'U' || (CHAR) == 'o' \
    || (CHAR) == 'e' || (CHAR) == 'T' || (CHAR) == 'u' \
    || (CHAR) == 'I' || (CHAR) == 'm' || (CHAR) == 'x' \
    || (CHAR) == 'L' || (CHAR) == 'A')
+
+#ifndef SWITCH_TAKES_ARG
+#define SWITCH_TAKES_ARG(CHAR) DEFAULT_SWITCH_TAKES_ARG(CHAR)
 #endif
 
 /* This defines which multi-letter switches take arguments.  */
@@ -753,12 +777,16 @@ lookup_option (xopt, xskip, xarg, text)
 	   "imacros", "aux-info", "idirafter", "iprefix",
 	   "iwithprefix", "iwithprefixbefore", "isystem".  */
 	;
+      else if (text[1] != '-')
+	skip = 0;
       else if (strcmp (text, "--assemble") == 0)
 	opt = OPTION_S;
       else if (strcmp (text, "--compile") == 0)
 	opt = OPTION_c;
       else if (opteq (&skip, &arg, text, "--driver") == 0)
 	opt = OPTION_driver;
+      else if (strcmp (text, "--help") == 0)
+	opt = OPTION_help;
       else if ((opteq (&skip, &arg, text, "--imacros") == 0)
 	       || (opteq (&skip, &arg, text, "--include") == 0)
 	       || (opteq (&skip, &arg, text, "--include-directory-after") == 0)
@@ -793,6 +821,8 @@ lookup_option (xopt, xskip, xarg, text)
 	opt = OPTION_V;
       else if (strcmp (text, "--verbose") == 0)
 	opt = OPTION_v;
+      else if (strcmp (text, "--version") == 0)
+	opt = OPTION_version;
       else if (strcmp (text, "-Xlinker") == 0)
 	skip = 1;
       else if ((opteq (&skip, &arg, text, "--assert") == 0)
@@ -962,6 +992,7 @@ main (argc, argv)
 
 	case OPTION_v:
 	  verbose = 1;
+	  printf ("g77 version %s\n", ffezzz_version_string);
 	  break;
 
 	case OPTION_b:
@@ -971,6 +1002,55 @@ main (argc, argv)
 	case OPTION_V:
 	  /* These options are useful in conjunction with -v to get
 	     appropriate version info.  */
+	  break;
+
+	case OPTION_version:
+	  printf ("\
+GNU Fortran %s\n\
+Copyright (C) 1996 Free Software Foundation, Inc.\n\
+For more version information on components of the GNU Fortran\n\
+compilation system, especially useful when reporting bugs,\n\
+type the command `g77 --verbose'.\n\
+\n\
+GNU Fortran comes with NO WARRANTY, to the extent permitted by law.\n\
+You may redistribute copies of GNU Fortran\n\
+under the terms of the GNU General Public License.\n\
+For more information about these matters, see the file named COPYING\n\
+or type the command `info -f g77 Copying'.\n\
+", ffezzz_version_string);
+	  exit (0);
+	  break;
+
+	case OPTION_help:
+	  printf ("\
+Usage: g77 [OPTION]... FORTRAN-SOURCE...\n\
+\n\
+Compile and link Fortran source code to produce an executable program,\n\
+which by default is named `a.out', and can be invoked with the UNIX\n\
+command `./a.out'.\n\
+\n\
+Options:\n\
+--debug                include debugging information in executable.\n\
+--driver=COMMAND       specify preprocessor/compiler/linker driver\n\
+                         to use instead of the default `gcc'.\n\
+--help                 display this help and exit.\n\
+--optimize[=LEVEL]     take extra time and memory to make generated\n\
+                         executable run faster.  LEVEL is 0 for no\n\
+                         optimization, 1 for normal optimization, and\n\
+                         increases through 3 for more optimization.\n\
+--output=PROGRAM       name the executable PROGRAM instead of a.out;\n\
+                         invoke with the command `./PROGRAM'.\n\
+--version              display version information and exit.\n\
+\n\
+Many other options exist to tailor the compilation process, specify\n\
+the dialect of the Fortran source code, specify details of the\n\
+code-generation methodology, and so on.\n\
+\n\
+For more information on g77 and gcc, type the commands `info -f g77'\n\
+and `info -f gcc' to read the Info documentation on these commands.\n\
+\n\
+Report bugs to fortran@gnu.ai.mit.edu.\n");
+	  exit (0);
 	  break;
 
 	default:
@@ -1166,3 +1246,4 @@ main (argc, argv)
 
   return 0;
 }
+#endif	/* LANGUAGE_F77 == 1 */

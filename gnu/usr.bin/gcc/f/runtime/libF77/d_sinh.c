@@ -5,7 +5,7 @@ double sinh();
 double d_sinh(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double d_sinh(doublereal *x)
 #endif
 {

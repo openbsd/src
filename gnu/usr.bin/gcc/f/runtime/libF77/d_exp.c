@@ -5,7 +5,7 @@ double exp();
 double d_exp(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double d_exp(doublereal *x)
 #endif
 {

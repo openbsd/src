@@ -5,7 +5,7 @@ double pow();
 double pow_dd(ap, bp) doublereal *ap, *bp;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double pow_dd(doublereal *ap, doublereal *bp)
 #endif
 {

@@ -1,10 +1,10 @@
 #ifndef NON_UNIX_STDIO
-#include "sys/types.h"
-#include "sys/stat.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 #include "f2c.h"
 #include "fio.h"
-#include "string.h"
+#include <string.h>
 #include "rawio.h"
 
 #ifdef KR_headers
@@ -14,7 +14,7 @@ extern integer f_clos();
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
+#include <stdlib.h>
 extern int f__canseek(FILE*);
 extern integer f_clos(cllist*);
 #endif

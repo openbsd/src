@@ -421,6 +421,8 @@ static ffecomConcatList_
 static void ffecom_concat_list_kill_ (ffecomConcatList_ catlist);
 static ffecomConcatList_ ffecom_concat_list_new_ (ffebld expr,
 						ffetargetCharacterSize max);
+static void ffecom_debug_kludge_ (tree aggr, char *aggr_type, ffesymbol member,
+				  tree member_type, ffetargetOffset offset);
 static void ffecom_do_entry_ (ffesymbol fn, int entrynum);
 static tree ffecom_expr_ (ffebld expr, tree dest_tree,
 			  ffebld dest, bool *dest_used,
@@ -1342,6 +1344,8 @@ ffecom_char_args_ (tree *xitem, tree *length, ffebld expr)
 		TREE_TYPE (*length) = ffecom_f2c_ftnlen_type_node;
 	      }
 	  }
+	else if (item == error_mark_node)
+	  *length = error_mark_node;
 	else			/* FFEINFO_kindFUNCTION: */
 	  *length = NULL_TREE;
 	if (!ffesymbol_hook (s).addr
@@ -1809,6 +1813,92 @@ ffecom_concat_list_new_ (ffebld expr, ffetargetCharacterSize max)
 }
 
 #endif
+
+/* Provide some kind of useful info on member of aggregate area,
+   since current g77/gcc technology does not provide debug info
+   on these members.  */
+
+#if FFECOM_targetCURRENT == FFECOM_targetGCC
+static void
+ffecom_debug_kludge_ (tree aggr, char *aggr_type, ffesymbol member,
+		      tree member_type UNUSED, ffetargetOffset offset)
+{
+  tree value;
+  tree decl;
+  int len;
+  char *buff;
+  char space[120];
+#if 0
+  tree type_id;
+
+  for (type_id = member_type;
+       TREE_CODE (type_id) != IDENTIFIER_NODE;
+       )
+    {
+      switch (TREE_CODE (type_id))
+	{
+	case INTEGER_TYPE:
+	case REAL_TYPE:
+	  type_id = TYPE_NAME (type_id);
+	  break;
+
+	case ARRAY_TYPE:
+	case COMPLEX_TYPE:
+	  type_id = TREE_TYPE (type_id);
+	  break;
+
+	default:
+	  assert ("no IDENTIFIER_NODE for type!" == NULL);
+	  type_id = error_mark_node;
+	  break;
+	}
+    }
+#endif
+
+  if (ffecom_transform_only_dummies_
+      || !ffe_is_debug_kludge ())
+    return;	/* Can't do this yet, maybe later. */
+
+  len = 60
+    + strlen (aggr_type)
+    + IDENTIFIER_LENGTH (DECL_NAME (aggr));
+#if 0
+    + IDENTIFIER_LENGTH (type_id);
+#endif
+
+  if (((size_t) len) >= ARRAY_SIZE (space))
+    buff = malloc_new_ks (malloc_pool_image (), "debug_kludge", len + 1);
+  else
+    buff = &space[0];
+
+  sprintf (&buff[0], "At (%s) `%s' plus %ld bytes",
+	   aggr_type,
+	   IDENTIFIER_POINTER (DECL_NAME (aggr)),
+	   (long int) offset);
+
+  value = build_string (len, buff);
+  TREE_TYPE (value)
+    = build_type_variant (build_array_type (char_type_node,
+					    build_range_type
+					    (integer_type_node,
+					     integer_one_node,
+					     build_int_2 (strlen (buff), 0))),
+			  1, 0);
+  decl = build_decl (VAR_DECL,
+		     ffecom_get_identifier_ (ffesymbol_text (member)),
+		     TREE_TYPE (value));
+  TREE_CONSTANT (decl) = 1;
+  TREE_STATIC (decl) = 1;
+  DECL_INITIAL (decl) = error_mark_node;
+  DECL_IN_SYSTEM_HEADER (decl) = 1;	/* Don't let -Wunused complain. */
+  decl = start_decl (decl, FALSE);
+  finish_decl (decl, value, FALSE);
+
+  if (buff != &space[0])
+    malloc_kill_ks (malloc_pool_image (), buff, len + 1);
+}
+#endif
+
 /* ffecom_do_entry_ -- Do compilation of a particular entrypoint
 
    ffesymbol fn;  // the SUBROUTINE, FUNCTION, or ENTRY symbol itself
@@ -2322,6 +2412,10 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
       s = ffebld_symter (expr);
       if (assignp)
 	{			/* ASSIGN'ed-label expr. */
+	  t = ffesymbol_hook (s).decl_tree;
+	  if (t != NULL_TREE)
+	    DECL_IN_SYSTEM_HEADER (t) = 1;	/* Don't let -Wunused complain. */
+
 	  t = ffesymbol_hook (s).assign_tree;
 	  if (t == NULL_TREE)
 	    {
@@ -3004,8 +3098,6 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
   bt = ffeinfo_basictype (ffebld_info (expr));
   kt = ffeinfo_kindtype (ffebld_info (expr));
   tree_type = ffecom_tree_type[bt][kt];
-  if (tree_type == NULL_TREE)
-    tree_type = void_type_node;	/* For SUBROUTINEs. */
 
   if (list != NULL)
     {
@@ -4047,25 +4139,23 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 		      arg1_tree);
 #endif
 	expr_tree
-	  = ffecom_2s (MODIFY_EXPR, tree_type,
+	  = ffecom_2s (MODIFY_EXPR, void_type_node,
 		       arg4_tree,
 		       prep_arg1);
 	/* Make sure SAVE_EXPRs get referenced early enough. */
 	expr_tree
-	  = ffecom_2 (COMPOUND_EXPR, tree_type,
-		      convert (tree_type, arg1_tree),
-		      ffecom_2 (COMPOUND_EXPR, tree_type,
-				convert (tree_type, arg3_tree),
-				ffecom_2 (COMPOUND_EXPR, tree_type,
-					  convert (tree_type,
-						   arg5_tree),
-					  ffecom_2 (COMPOUND_EXPR, tree_type,
-						    convert (tree_type,
-							     arg5_plus_arg3),
+	  = ffecom_2 (COMPOUND_EXPR, void_type_node,
+		      arg1_tree,
+		      ffecom_2 (COMPOUND_EXPR, void_type_node,
+				arg3_tree,
+				ffecom_2 (COMPOUND_EXPR, void_type_node,
+					  arg5_tree,
+					  ffecom_2 (COMPOUND_EXPR, void_type_node,
+						    arg5_plus_arg3,
 						    expr_tree))));
 	expr_tree
-	  = ffecom_2 (COMPOUND_EXPR, tree_type,
-		      convert (tree_type, arg4_tree),
+	  = ffecom_2 (COMPOUND_EXPR, void_type_node,
+		      arg4_tree,
 		      expr_tree);
 
       }
@@ -4226,6 +4316,8 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
     case FFEINTRIN_impABORT:
     case FFEINTRIN_impGETARG:
     case FFEINTRIN_impGETENV:
+    case FFEINTRIN_impFTELL:
+    case FFEINTRIN_impFSEEK:
       break;
 
     default:
@@ -5142,6 +5234,10 @@ ffecom_expr_power_integer_ (ffebld left, ffebld right)
   tree ltype = TREE_TYPE (l);
   tree rtype = TREE_TYPE (r);
   tree result = NULL_TREE;
+
+  if (l == error_mark_node
+      || r == error_mark_node)
+    return error_mark_node;
 
   if (TREE_CODE (r) == INTEGER_CST)
     {
@@ -6181,6 +6277,8 @@ ffecom_intrinsic_len_ (ffebld expr)
 		TREE_TYPE (length) = ffecom_f2c_ftnlen_type_node;
 	      }
 	  }
+	else if (item == error_mark_node)
+	  length = error_mark_node;
 	else			/* FFEINFO_kindFUNCTION: */
 	  length = NULL_TREE;
       }
@@ -6635,7 +6733,8 @@ ffecom_member_phase2_ (ffestorag mst, ffestorag st)
     = gen_rtx (MEM, TYPE_MODE (type),
 	       plus_constant (XEXP (DECL_RTL (mt), 0),
 			      ffestorag_modulo (mst)
-			      + ffestorag_offset (st)));
+			      + ffestorag_offset (st)
+			      - ffestorag_offset (mst)));
 
   t = start_decl (t, FALSE);
 
@@ -7079,9 +7178,12 @@ ffecom_sym_transform_ (ffesymbol s)
 		yes = suspend_momentary ();
 
 		offset = ffestorag_modulo (est)
-		  + ffestorag_offset (ffesymbol_storage (s));
+		  + ffestorag_offset (ffesymbol_storage (s))
+		  - ffestorag_offset (est);
 
-		/* (t_type *) (((void *) &et) + offset */
+		ffecom_debug_kludge_ (et, "EQUIVALENCE", s, type, offset);
+
+		/* (t_type *) (((char *) &et) + offset) */
 
 		t = convert (string_type_node,	/* (char *) */
 			     ffecom_1 (ADDR_EXPR,
@@ -7541,7 +7643,10 @@ ffecom_sym_transform_ (ffesymbol s)
 
 	    cs = ffesymbol_common (s);	/* The COMMON area itself.  */
 	    if (st != NULL)	/* Else not laid out. */
-	      ffecom_transform_common_ (cs);
+	      {
+		ffecom_transform_common_ (cs);
+		st = ffesymbol_storage (s);
+	      }
 
 	    yes = suspend_momentary ();
 
@@ -7560,11 +7665,18 @@ ffecom_sym_transform_ (ffesymbol s)
 	    else
 	      {
 		ffetargetOffset offset;
+		ffestorag cst;
 
-		offset = ffestorag_modulo (ffesymbol_storage (cs))
-		  + ffestorag_offset (st);
+		cst = ffestorag_parent (st);
+		assert (cst == ffesymbol_storage (cs));
 
-		/* (t_type *) (((char *) &ct) + offset */
+		offset = ffestorag_modulo (cst)
+		  + ffestorag_offset (st)
+		  - ffestorag_offset (cst);
+
+		ffecom_debug_kludge_ (ct, "COMMON", s, type, offset);
+
+		/* (t_type *) (((char *) &ct) + offset) */
 
 		t = convert (string_type_node,	/* (char *) */
 			     ffecom_1 (ADDR_EXPR,
@@ -8222,6 +8334,11 @@ ffecom_transform_equiv_ (ffestorag eqst)
     DECL_INITIAL (eqt) = NULL_TREE;
 
   eqt = start_decl (eqt, FALSE);
+
+  /* Make sure this shows up as a debug symbol, which is not normally
+     the case for invented identifiers.  */
+
+  DECL_IGNORED_P (eqt) = 0;
 
   /* Make sure that any type can live in EQUIVALENCE and be referenced
      without getting a bus error.  We could pick the most restrictive
@@ -11434,6 +11551,14 @@ ffecom_notify_primary_entry (ffesymbol s)
   else
     ffecom_primary_entry_is_proc_ = FALSE;
 
+  if (!ffe_is_silent ())
+    {
+      if (ffecom_primary_entry_kind_ == FFEINFO_kindPROGRAM)
+	fprintf (stderr, "%s:\n", ffesymbol_text (s));
+      else
+	fprintf (stderr, "  %s:\n", ffesymbol_text (s));
+    }
+
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
   if (ffecom_primary_entry_kind_ == FFEINFO_kindSUBROUTINE)
     {
@@ -13588,6 +13713,18 @@ pushdecl (x)
 
   if (name)
     {
+      if (IDENTIFIER_INVENTED (name))
+	{
+#if BUILT_FOR_270
+	  DECL_ARTIFICIAL (x) = 1;
+#endif
+	  DECL_IN_SYSTEM_HEADER (x) = 1;
+	  DECL_IGNORED_P (x) = 1;
+	  TREE_USED (x) = 1;
+	  if (TREE_CODE (x) == TYPE_DECL)
+	    TYPE_DECL_SUPPRESS_DEBUG (x) = 1;
+	}
+
       t = lookup_name_current_level (name);
 
       assert ((t == NULL_TREE) || (DECL_CONTEXT (x) == NULL_TREE));

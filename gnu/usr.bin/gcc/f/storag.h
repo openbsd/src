@@ -78,7 +78,9 @@ struct _ffestorag_
     ffestoragList_ equivs_;	/* NULL if typeLOCAL and not an EQUIVALENCE
 				   area. */
     ffetargetOffset size;	/* Size of area. */
-    ffetargetOffset offset;	/* Offset of entity within area. */
+    ffetargetOffset offset;	/* Offset of entity within area, 0 for CBLOCK
+				   and non-equivalence LOCAL, <= 0 for equivalence
+				   LOCAL. */
     ffetargetAlign alignment;	/* Initial alignment for entity. */
     ffetargetAlign modulo;	/* Modulo within alignment. */
 #ifdef FFECOM_storageHOOK

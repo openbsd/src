@@ -5,7 +5,7 @@ double cosh();
 double d_cosh(x) doublereal *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double d_cosh(doublereal *x)
 #endif
 {

@@ -337,38 +337,43 @@ ffeste_begin_iterdo_ (ffestw block, tree *xtvar, tree *xtincr,
 
   {				/* For warnings only, nothing else
 				   happens here.  */
-    tree try = ffecom_2 (MINUS_EXPR, TREE_TYPE (tvar),
-			 tend,
-			 tstart);
+    tree try;
 
-    try = ffecom_2 (PLUS_EXPR, TREE_TYPE (tvar),
-		     try,
-		    tincr);
-
-    if (TREE_CODE (TREE_TYPE (tvar)) != REAL_TYPE)
-      try = ffecom_2 (TRUNC_DIV_EXPR, integer_type_node, try,
-		      tincr);
-    else
-      try = convert (integer_type_node,
-		     ffecom_2 (RDIV_EXPR, TREE_TYPE (tvar),
-			       try,
-			       tincr));
-
-    /* Warn if loop never executed, since we've done the evaluation
-       of the unofficial iteration count already.  */
-
-    try = ffecom_truth_value (ffecom_2 (LE_EXPR, integer_type_node,
-					try,
-					convert (TREE_TYPE (tvar),
-						 integer_zero_node)));
-
-    if (integer_onep (try))
+    if (!ffe_is_onetrip ())
       {
-	ffebad_start (FFEBAD_DO_NULL);
-	ffebad_here (0, ffelex_token_where_line (start_token),
-		     ffelex_token_where_column (start_token));
-	ffebad_string (msg);
-	ffebad_finish ();
+	try = ffecom_2 (MINUS_EXPR, TREE_TYPE (tvar),
+			tend,
+			tstart);
+
+	try = ffecom_2 (PLUS_EXPR, TREE_TYPE (tvar),
+			try,
+			tincr);
+
+	if (TREE_CODE (TREE_TYPE (tvar)) != REAL_TYPE)
+	  try = ffecom_2 (TRUNC_DIV_EXPR, integer_type_node, try,
+			  tincr);
+	else
+	  try = convert (integer_type_node,
+			 ffecom_2 (RDIV_EXPR, TREE_TYPE (tvar),
+				   try,
+				   tincr));
+
+	/* Warn if loop never executed, since we've done the evaluation
+	   of the unofficial iteration count already.  */
+
+	try = ffecom_truth_value (ffecom_2 (LE_EXPR, integer_type_node,
+					    try,
+					    convert (TREE_TYPE (tvar),
+						     integer_zero_node)));
+
+	if (integer_onep (try))
+	  {
+	    ffebad_start (FFEBAD_DO_NULL);
+	    ffebad_here (0, ffelex_token_where_line (start_token),
+			 ffelex_token_where_column (start_token));
+	    ffebad_string (msg);
+	    ffebad_finish ();
+	  }
       }
 
     /* Warn if end plus incr would overflow.  */
@@ -397,9 +402,12 @@ ffeste_begin_iterdo_ (ffestw block, tree *xtvar, tree *xtincr,
 		   tend,
 		   TREE_CONSTANT (tstart) ? tstart : tvar);
 
-  expr = ffecom_2 (PLUS_EXPR, TREE_TYPE (expr),
-		   expr,
-		   convert (TREE_TYPE (expr), tincr_saved));
+  if (!ffe_is_onetrip ())
+    {
+      expr = ffecom_2 (PLUS_EXPR, TREE_TYPE (expr),
+		       expr,
+		       convert (TREE_TYPE (expr), tincr_saved));
+    }
 
   if (TREE_CODE (TREE_TYPE (tvar)) != REAL_TYPE)
     expr = ffecom_2 (TRUNC_DIV_EXPR, TREE_TYPE (expr),
@@ -437,17 +445,20 @@ ffeste_begin_iterdo_ (ffestw block, tree *xtvar, tree *xtincr,
     ffestw_set_do_hook (block,
 			expand_start_loop_continue_elsewhere (1));
 
-  expr = ffecom_truth_value
-    (ffecom_2 (GE_EXPR, integer_type_node,
-	       ffecom_2 (PREDECREMENT_EXPR,
-			 TREE_TYPE (niters),
-			 niters,
-			 convert (TREE_TYPE (niters),
-				  ffecom_integer_one_node)),
-	       convert (TREE_TYPE (niters),
-			ffecom_integer_zero_node)));
+  if (!ffe_is_onetrip ())
+    {
+      expr = ffecom_truth_value
+	(ffecom_2 (GE_EXPR, integer_type_node,
+		   ffecom_2 (PREDECREMENT_EXPR,
+			     TREE_TYPE (niters),
+			     niters,
+			     convert (TREE_TYPE (niters),
+				      ffecom_integer_one_node)),
+		   convert (TREE_TYPE (niters),
+			    ffecom_integer_zero_node)));
 
-  expand_exit_loop_if_false (0, expr);
+      expand_exit_loop_if_false (0, expr);
+    }
 
   clear_momentary ();		/* Discard the above now that we're done with
 				   DO stmt. */
@@ -476,8 +487,25 @@ static void
 ffeste_end_iterdo_ (tree tvar, tree tincr, tree itersvar)
 {
   tree expr;
+  tree niters = itersvar;
 
   expand_loop_continue_here ();
+
+  if (ffe_is_onetrip ())
+    {
+      expr = ffecom_truth_value
+	(ffecom_2 (GE_EXPR, integer_type_node,
+		   ffecom_2 (PREDECREMENT_EXPR,
+			     TREE_TYPE (niters),
+			     niters,
+			     convert (TREE_TYPE (niters),
+				      ffecom_integer_one_node)),
+		   convert (TREE_TYPE (niters),
+			    ffecom_integer_zero_node)));
+
+      expand_exit_loop_if_false (0, expr);
+    }
+
   expr = ffecom_modify (void_type_node, tvar,
 			ffecom_2 (PLUS_EXPR, TREE_TYPE (tvar),
 				  tvar,
@@ -519,18 +547,16 @@ ffeste_io_call_ (tree call, bool do_check)
     }
   expand_expr_stmt (call);
 
-  if (!do_check)
+  if (!do_check
+      || (ffeste_io_abort_ == NULL_TREE)
+      || (TREE_CODE (ffeste_io_abort_) == ERROR_MARK))
     return;
 
   /* Generate optional test. */
 
-  if ((ffeste_io_abort_ != NULL_TREE)
-      && (TREE_CODE (ffeste_io_abort_) != ERROR_MARK))
-    {
-      expand_start_cond (ffecom_truth_value (ffeste_io_iostat_), 0);
-      expand_goto (ffeste_io_abort_);
-      expand_end_cond ();
-    }
+  expand_start_cond (ffecom_truth_value (ffeste_io_iostat_), 0);
+  expand_goto (ffeste_io_abort_);
+  expand_end_cond ();
 }
 
 #endif
@@ -1523,8 +1549,7 @@ ffeste_io_impdo_ (ffebld impdo, ffelexToken impdo_token)
       if (ffebld_op (item) == FFEBLD_opIMPDO)
 	ffeste_io_impdo_ (item, impdo_token);
       else
-	ffeste_io_call_ ((*ffeste_io_driver_) (item),
-			 (ffeste_io_abort_ != NULL_TREE));
+	ffeste_io_call_ ((*ffeste_io_driver_) (item), TRUE);
       clear_momentary ();
     }
 
@@ -2012,8 +2037,7 @@ ffeste_subr_beru_ (ffestpBeruStmt *info, ffecomGfrt rt)
      label, since we're gonna fall through to there anyway. */
 
   ffeste_io_call_ (ffecom_call_gfrt (rt, alist),
-		   !ffeste_io_abort_is_temp_
-		   && (ffeste_io_abort_ != NULL_TREE));
+		   !ffeste_io_abort_is_temp_);
 
   /* If we've got a temp label, generate its code here. */
 
@@ -3272,7 +3296,7 @@ ffeste_R904 (ffestpOpenStmt *info)
        label, since we're gonna fall through to there anyway. */
 
     ffeste_io_call_ (ffecom_call_gfrt (FFECOM_gfrtFOPEN, args),
-	      !ffeste_io_abort_is_temp_ && (ffeste_io_abort_ != NULL_TREE));
+		     !ffeste_io_abort_is_temp_);
 
     /* If we've got a temp label, generate its code here. */
 
@@ -3379,7 +3403,7 @@ ffeste_R907 (ffestpCloseStmt *info)
        label, since we're gonna fall through to there anyway. */
 
     ffeste_io_call_ (ffecom_call_gfrt (FFECOM_gfrtFCLOS, args),
-	      !ffeste_io_abort_is_temp_ && (ffeste_io_abort_ != NULL_TREE));
+		     !ffeste_io_abort_is_temp_);
 
     /* If we've got a temp label, generate its code here. */
 
@@ -3654,9 +3678,7 @@ ffeste_R909_start (ffestpReadStmt *info, bool only_format UNUSED,
        label, since we're gonna fall through to there anyway.  */
 
     ffeste_io_call_ (ffecom_call_gfrt (start, cilist),
-		     (ffeste_io_abort_ != NULL_TREE)
-		     && (!ffeste_io_abort_is_temp_
-			 || (end != FFECOM_gfrt)));
+		     !ffeste_io_abort_is_temp_ || (end != FFECOM_gfrt));
   }
 
 #undef specified
@@ -3693,8 +3715,7 @@ ffeste_R909_item (ffebld expr, ffelexToken expr_token)
   if (ffebld_op (expr) == FFEBLD_opIMPDO)
     ffeste_io_impdo_ (expr, expr_token);
   else
-    ffeste_io_call_ ((*ffeste_io_driver_) (expr),
-		     (ffeste_io_abort_ != NULL_TREE));
+    ffeste_io_call_ ((*ffeste_io_driver_) (expr), TRUE);
   clear_momentary ();
 #else
 #error
@@ -3719,21 +3740,10 @@ ffeste_R909_finish ()
   /* Don't generate "if (iostat != 0) goto label;" if label is temp abort
      label, since we're gonna fall through to there anyway. */
 
-  /* SPECIAL CASE: for e_rsle and e_rsli, don't generate the check AND don't
-     even let ffeste_io_call_ bother writing to IOSTAT=, since
-     dmg@bell-labs.com claims that e_[rw]sl[ei] always return 0. */
-
   {
-    tree iostat = ffeste_io_iostat_;
-
-    if (ffeste_io_driver_ == ffeste_io_dolio_)
-      ffeste_io_iostat_ = NULL_TREE;
-
     if (ffeste_io_endgfrt_ != FFECOM_gfrt)
       ffeste_io_call_ (ffecom_call_gfrt (ffeste_io_endgfrt_, NULL_TREE),
-		       !ffeste_io_abort_is_temp_
-		       && (ffeste_io_abort_ != NULL_TREE)
-		       && (ffeste_io_driver_ != ffeste_io_dolio_));
+		       !ffeste_io_abort_is_temp_);
 
     clear_momentary ();
     pop_momentary ();
@@ -3754,7 +3764,7 @@ ffeste_R909_finish ()
 	  {
 	    expand_start_cond (ffecom_truth_value
 			       (ffecom_2 (LT_EXPR, integer_type_node,
-					  iostat,
+					  ffeste_io_iostat_,
 					  ffecom_integer_zero_node)),
 			       0);
 	    expand_goto (ffeste_io_end_);
@@ -3768,7 +3778,7 @@ ffeste_R909_finish ()
 	  {
 	    expand_start_cond (ffecom_truth_value
 			       (ffecom_2 (GT_EXPR, integer_type_node,
-					  iostat,
+					  ffeste_io_iostat_,
 					  ffecom_integer_zero_node)),
 			       0);
 	    expand_goto (ffeste_io_err_);
@@ -3979,9 +3989,7 @@ ffeste_R910_start (ffestpWriteStmt *info, ffestvUnit unit,
        label, since we're gonna fall through to there anyway.  */
 
     ffeste_io_call_ (ffecom_call_gfrt (start, cilist),
-		     (ffeste_io_abort_ != NULL_TREE)
-		     && (!ffeste_io_abort_is_temp_
-			 || (end != FFECOM_gfrt)));
+		     !ffeste_io_abort_is_temp_ || (end != FFECOM_gfrt));
   }
 
 #undef specified
@@ -4014,8 +4022,7 @@ ffeste_R910_item (ffebld expr, ffelexToken expr_token)
   if (ffebld_op (expr) == FFEBLD_opIMPDO)
     ffeste_io_impdo_ (expr, expr_token);
   else
-    ffeste_io_call_ ((*ffeste_io_driver_) (expr),
-		     (ffeste_io_abort_ != NULL_TREE));
+    ffeste_io_call_ ((*ffeste_io_driver_) (expr), TRUE);
   clear_momentary ();
 #else
 #error
@@ -4040,19 +4047,10 @@ ffeste_R910_finish ()
   /* Don't generate "if (iostat != 0) goto label;" if label is temp abort
      label, since we're gonna fall through to there anyway. */
 
-  /* SPECIAL CASE: for e_rsle and e_rsli, don't generate the check AND don't
-     even let ffeste_io_call_ bother writing to IOSTAT=, since
-     dmg@bell-labs.com claims that e_[rw]sl[ei] always return 0. */
-
   {
-    if (ffeste_io_driver_ == ffeste_io_dolio_)
-      ffeste_io_iostat_ = NULL_TREE;
-
     if (ffeste_io_endgfrt_ != FFECOM_gfrt)
       ffeste_io_call_ (ffecom_call_gfrt (ffeste_io_endgfrt_, NULL_TREE),
-		       !ffeste_io_abort_is_temp_
-		       && (ffeste_io_abort_ != NULL_TREE)
-		       && (ffeste_io_driver_ != ffeste_io_dolio_));
+		       !ffeste_io_abort_is_temp_);
 
     clear_momentary ();
     pop_momentary ();
@@ -4178,9 +4176,7 @@ ffeste_R911_start (ffestpPrintStmt *info, ffestvFormat format)
        label, since we're gonna fall through to there anyway.  */
 
     ffeste_io_call_ (ffecom_call_gfrt (start, cilist),
-		     (ffeste_io_abort_ != NULL_TREE)
-		     && (!ffeste_io_abort_is_temp_
-			 || (end != FFECOM_gfrt)));
+		     !ffeste_io_abort_is_temp_ || (end != FFECOM_gfrt));
   }
 
   push_momentary ();
@@ -4445,7 +4441,7 @@ ffeste_R923A (ffestpInquireStmt *info, bool by_file UNUSED)
        label, since we're gonna fall through to there anyway. */
 
     ffeste_io_call_ (ffecom_call_gfrt (FFECOM_gfrtFINQU, args),
-	      !ffeste_io_abort_is_temp_ && (ffeste_io_abort_ != NULL_TREE));
+		     !ffeste_io_abort_is_temp_);
 
     /* If we've got a temp label, generate its code here. */
 

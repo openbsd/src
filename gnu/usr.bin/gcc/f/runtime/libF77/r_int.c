@@ -5,7 +5,7 @@ double floor();
 double r_int(x) real *x;
 #else
 #undef abs
-#include "math.h"
+#include <math.h>
 double r_int(real *x)
 #endif
 {

@@ -1,4 +1,4 @@
-#include "stdio.h"
+#include <stdio.h>
 #include "f2c.h"
 #define PAUSESIG 15
 
@@ -11,8 +11,8 @@
 #undef abs
 #undef min
 #undef max
-#include "stdlib.h"
-#include "signal.h"
+#include <stdlib.h>
+#include <signal.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
