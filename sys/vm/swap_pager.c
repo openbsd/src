@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.14 1998/12/30 10:21:52 art Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.15 1999/02/08 01:10:58 art Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -1123,7 +1123,7 @@ swap_pager_remove(pager, from, to)
 
 		/*
 		 *	When coming to the end-block we need to
-		 *	adjust the mask in the othher end, as well as
+		 *	adjust the mask in the other end, as well as
 		 *	ensuring this will be the last iteration.
 		 */
 		if (blk == to_blk) {
