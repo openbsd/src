@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.40 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.41 2002/02/17 17:20:49 millert Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -232,12 +232,12 @@ struct sendlist {
 
 
 static int
-	send_esc P((void)),
-	send_help P((void)),
-	send_docmd P((char *)),
-	send_dontcmd P((char *)),
-	send_willcmd P((char *)),
-	send_wontcmd P((char *));
+	send_esc(void),
+	send_help(void),
+	send_docmd(char *),
+	send_dontcmd(char *),
+	send_willcmd(char *),
+	send_wontcmd(char *);
 
 static struct sendlist Sendlist[] = {
     { "ao",	"Send Telnet Abort output",		1, 0, 0, 2, AO },
@@ -602,15 +602,15 @@ togxbinary(val)
 }
 
 
-static int togglehelp P((void));
+static int togglehelp(void);
 #if	defined(AUTHENTICATION)
-extern int auth_togdebug P((int));
+extern int auth_togdebug(int);
 #endif
 #if    defined(ENCRYPTION)
-extern int EncryptAutoEnc P((int));
-extern int EncryptAutoDec P((int));
-extern int EncryptDebug P((int));
-extern int EncryptVerbose P((int));
+extern int EncryptAutoEnc(int);
+extern int EncryptAutoDec(int);
+extern int EncryptDebug(int);
+extern int EncryptVerbose(int);
 #endif
 
 
@@ -1539,7 +1539,7 @@ struct envlist {
 	int	narg;
 };
 
-static void	env_help P((void));
+static void	env_help(void);
 
 struct envlist EnvList[] = {
     { "define",	"Define an environment variable",
@@ -1887,7 +1887,7 @@ struct authlist {
 };
 
 static int
-	auth_help P((void));
+	auth_help(void);
 
 struct authlist AuthList[] = {
     { "status",	"Display current status of authentication information",
