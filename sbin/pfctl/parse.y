@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.167 2002/10/11 12:57:53 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.168 2002/10/14 12:58:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1362,14 +1362,14 @@ rport		: STRING			{
 		;
 
 redirection	: /* empty */			{ $$ = NULL; }
-		| ARROW address			{
+		| ARROW host			{
 			$$ = malloc(sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: malloc");
 			$$->address = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
-		| ARROW address PORT rport	{
+		| ARROW host PORT rport	{
 			$$ = malloc(sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: malloc");
@@ -1440,7 +1440,7 @@ natrule		: no NAT interface af proto fromto redirection
 		}
 		;
 
-binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
+binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 		{
 			struct pf_binat binat;
 
@@ -1482,8 +1482,10 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = $7->af;
-				memcpy(&binat.saddr, &$7->addr,
-				    sizeof(binat.saddr));
+				memcpy(&binat.saddr.addr, &$7->addr.addr,
+				    sizeof(binat.saddr.addr));
+				memcpy(&binat.smask, &$7->mask,
+				    sizeof(binat.smask));
 				free($7);
 			}
 			if ($9 != NULL) {
@@ -1504,8 +1506,8 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = $9->af;
-				memcpy(&binat.daddr, &$9->addr,
-				    sizeof(binat.daddr));
+				memcpy(&binat.daddr.addr, &$9->addr.addr,
+				    sizeof(binat.daddr.addr));
 				memcpy(&binat.dmask, &$9->mask,
 				    sizeof(binat.dmask));
 				binat.dnot  = $9->not;
@@ -1542,8 +1544,17 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = n->af;
-				memcpy(&binat.raddr, &n->addr,
-				    sizeof(binat.raddr));
+				memcpy(&binat.raddr.addr, &n->addr.addr,
+				    sizeof(binat.raddr.addr));
+				memcpy(&binat.rmask, &n->mask,
+				    sizeof(binat.rmask));
+				if (!PF_AZERO(&binat.smask, binat.af) &&
+				    !PF_AEQ(&binat.smask,
+				    &binat.rmask, binat.af)) {
+					yyerror("'binat' source mask and "
+					    "redirect mask must be the same");
+					YYERROR;
+				} 
 				free($10->address);
 				free($10);
 			}

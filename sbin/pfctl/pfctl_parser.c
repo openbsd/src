@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.99 2002/10/07 13:23:46 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.100 2002/10/14 12:58:28 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -462,7 +462,7 @@ print_binat(struct pf_binat *b)
 			printf("proto %u ", b->proto);
 	}
 	printf("from ");
-	print_addr(&b->saddr, NULL, b->af);
+	print_addr(&b->saddr, &b->smask, b->af);
 	printf(" ");
 	printf("to ");
 	if (!PF_AZERO(&b->daddr.addr, b->af) || !PF_AZERO(&b->dmask, b->af)) {
@@ -474,7 +474,7 @@ print_binat(struct pf_binat *b)
 		printf("any ");
 	if (!b->no) {
 		printf("-> ");
-		print_addr(&b->raddr, NULL, b->af);
+		print_addr(&b->raddr, &b->rmask, b->af);
 	}
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.97 2002/10/10 12:29:33 mickey Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.98 2002/10/14 12:58:28 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -143,6 +143,9 @@ struct pf_addr_dyn {
 #define PF_ACPY(a, b, f) \
 	pf_addrcpy(a, b, f)
 
+#define PF_POOLMASK(a, b, c, d, f) \
+	pf_poolmask(a, b, c, d, f)
+
 #else
 
 /* Just IPv6 */
@@ -172,6 +175,9 @@ struct pf_addr_dyn {
 #define PF_ACPY(a, b, f) \
 	pf_addrcpy(a, b, f)
 
+#define PF_POOLMASK(a, b, c, d, f) \
+	pf_poolmask(a, b, c, d, f)
+
 #else
 
 /* Just IPv4 */
@@ -192,6 +198,11 @@ struct pf_addr_dyn {
 #define PF_ACPY(a, b, f) \
 	(a)->v4.s_addr = (b)->v4.s_addr
 
+#define PF_POOLMASK(a, b, c, d, f) \
+       do { \
+               (a)->addr32[0] = ((b)->addr32[0] & (c)->addr32[0]) | \
+               (((c)->addr32[0] ^ 0xffffffff ) & (d)->addr32[0]); \
+       } while (0)
 
 #endif /* PF_INET_ONLY */
 #endif /* PF_INET6_ONLY */
@@ -360,7 +371,9 @@ struct pf_binat {
 	struct pf_addr_wrap	 saddr;
 	struct pf_addr_wrap	 daddr;
 	struct pf_addr_wrap	 raddr;
+	struct pf_addr		 smask;
 	struct pf_addr		 dmask;
+	struct pf_addr		 rmask;
 	u_int8_t		 af;
 	u_int8_t		 proto;
 	u_int8_t		 dnot;

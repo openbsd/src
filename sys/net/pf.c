@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.254 2002/10/08 05:12:08 kjc Exp $ */
+/*	$OpenBSD: pf.c,v 1.255 2002/10/14 12:58:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -194,7 +194,8 @@ struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t,
 			    struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t, int);
 struct pf_binat		*pf_get_binat(int, struct ifnet *, u_int8_t,
-			    struct pf_addr *, struct pf_addr *, int);
+			    struct pf_addr *, struct pf_addr *,
+			    struct pf_addr *, int);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t,
 			    struct pf_addr *, struct pf_addr *, u_int16_t, int);
 int			 pf_test_tcp(struct pf_rule **, int, struct ifnet *,
@@ -221,6 +222,10 @@ int			 pf_test_state_other(struct pf_state **, int,
 void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 			    u_short *, u_short *, int);
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
+#ifdef INET6
+void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
+			    struct pf_addr *, struct pf_addr *, u_int8_t);
+#endif /* INET6 */
 int			 pf_get_sport(u_int8_t, u_int8_t,
 			    struct pf_addr *, struct pf_addr *,
 			    u_int16_t, u_int16_t *, u_int16_t, u_int16_t);
@@ -446,11 +451,15 @@ pf_compare_binats(struct pf_binat *a, struct pf_binat *b)
 		return (1);
 	if (PF_ANEQ(&a->saddr.addr, &b->saddr.addr, a->af))
 		return (1);
+	if (PF_ANEQ(&a->smask, &b->smask, a->af))
+		return (1);
 	if (PF_ANEQ(&a->daddr.addr, &b->daddr.addr, a->af))
 		return (1);
 	if (PF_ANEQ(&a->dmask, &b->dmask, a->af))
 		return (1);
 	if (PF_ANEQ(&a->raddr.addr, &b->raddr.addr, a->af))
+		return (1);
+	if (PF_ANEQ(&a->rmask, &b->rmask, a->af))
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -1362,6 +1371,32 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 	return (pf_match(op, a1, a2, g));
 }
 
+#ifdef INET6
+void
+pf_poolmask(struct pf_addr *naddr, struct pf_addr *raddr,
+    struct pf_addr *rmask, struct pf_addr *saddr, u_int8_t af)
+{
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		naddr->addr32[0] = (raddr->addr32[0] & rmask->addr32[0]) |
+		((rmask->addr32[0] ^ 0xffffffff ) & saddr->addr32[0]); 
+		break;
+#endif /* INET */
+	case AF_INET6:
+		naddr->addr32[0] = (raddr->addr32[0] & rmask->addr32[0]) |
+		((rmask->addr32[0] ^ 0xffffffff ) & saddr->addr32[0]); 
+		naddr->addr32[1] = (raddr->addr32[1] & rmask->addr32[1]) |
+		((rmask->addr32[1] ^ 0xffffffff ) & saddr->addr32[1]); 
+		naddr->addr32[2] = (raddr->addr32[2] & rmask->addr32[2]) |
+		((rmask->addr32[2] ^ 0xffffffff ) & saddr->addr32[2]); 
+		naddr->addr32[3] = (raddr->addr32[3] & rmask->addr32[3]) |
+		((rmask->addr32[3] ^ 0xffffffff ) & saddr->addr32[3]); 
+		break;
+	}
+}
+#endif /* INET6 */
+
 int
 pf_get_sport(u_int8_t af, u_int8_t proto,
     struct pf_addr *daddr, struct pf_addr *raddr,
@@ -1465,12 +1500,9 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, struct pf_addr *saddr,
 
 struct pf_binat *
 pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
-    struct pf_addr *saddr, struct pf_addr *daddr, int af)
+    struct pf_addr *saddr, struct pf_addr *daddr, struct pf_addr *naddr, int af)
 {
 	struct pf_binat *b, *bm = NULL;
-	struct pf_addr fullmask;
-
-	memset(&fullmask, 0xff, sizeof(fullmask));
 
 	b = TAILQ_FIRST(pf_binats_active);
 	while (b && bm == NULL) {
@@ -1479,7 +1511,7 @@ pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
 		    (!b->af || b->af == af) &&
 		    (b->saddr.addr_dyn == NULL ||
 		    !b->saddr.addr_dyn->undefined) &&
-		    PF_MATCHA(0, &b->saddr.addr, &fullmask, saddr, af) &&
+		    PF_MATCHA(0, &b->saddr.addr, &b->smask, saddr, af) &&
 		    (b->daddr.addr_dyn == NULL ||
 		    !b->daddr.addr_dyn->undefined) &&
 		    PF_MATCHA(b->dnot, &b->daddr.addr, &b->dmask, daddr, af))
@@ -1489,7 +1521,7 @@ pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
 		    (!b->af || b->af == af) &&
 		    (b->raddr.addr_dyn == NULL ||
 		    !b->raddr.addr_dyn->undefined) &&
-		    PF_MATCHA(0, &b->raddr.addr, &fullmask, saddr, af) &&
+		    PF_MATCHA(0, &b->raddr.addr, &b->rmask, saddr, af) &&
 		    (b->daddr.addr_dyn == NULL ||
 		    !b->daddr.addr_dyn->undefined) &&
 		    PF_MATCHA(b->dnot, &b->daddr.addr, &b->dmask, daddr, af))
@@ -1497,14 +1529,29 @@ pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
 		else
 			b = TAILQ_NEXT(b, entries);
 	}
-	if (bm && bm->no)
-		return (NULL);
-	if (bm && direction == PF_OUT && bm->raddr.addr_dyn != NULL &&
-	    bm->raddr.addr_dyn->undefined)
-		return (NULL);
-	if (bm && direction == PF_IN && bm->saddr.addr_dyn != NULL &&
-	    bm->saddr.addr_dyn->undefined)
-		return (NULL);
+	if (bm) {
+		if (bm->no)
+			return (NULL);
+		switch (direction) {
+		case PF_OUT:
+			if (bm->raddr.addr_dyn != NULL &&
+			    bm->raddr.addr_dyn->undefined)
+				return (NULL);
+			else
+				PF_POOLMASK(naddr, &bm->raddr.addr,
+				    &bm->rmask, saddr, af); 
+			break;
+		case PF_IN:
+			if (bm->saddr.addr_dyn != NULL &&
+			    bm->saddr.addr_dyn->undefined)
+				return (NULL);
+			else
+				PF_POOLMASK(naddr, &bm->saddr.addr,
+				    &bm->smask, saddr, af); 
+			break;
+		}
+	}
+
 	return (bm);
 }
 
@@ -1609,7 +1656,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
-	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
+	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	struct tcphdr *th = pd->hdr.tcp;
 	u_int16_t bport, nport = 0, af = pd->af;
 	int lookup = -1;
@@ -1624,11 +1671,11 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
 		if ((binat = pf_get_binat(PF_OUT, ifp, IPPROTO_TCP,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, daddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			bport = th->th_sport;
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			    &th->th_sum, &binat->raddr.addr, th->th_sport, 0, af);
+			    &th->th_sum, &naddr, th->th_sport, 0, af);
 			rewrite++;
 		}
 		/* check outgoing packet for NAT */
@@ -1669,11 +1716,11 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check incoming packet for BINAT */
 		else if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_TCP,
-		    daddr, saddr, af)) != NULL) {
+		    daddr, saddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			bport = th->th_dport;
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
-			    &th->th_sum, &binat->saddr.addr, th->th_dport, 0, af);
+			    &th->th_sum, &naddr, th->th_dport, 0, af);
 			rewrite++;
 		}
 	}
@@ -1875,7 +1922,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
-	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
+	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	struct udphdr *uh = pd->hdr.udp;
 	u_int16_t bport, nport = 0, af = pd->af;
 	int lookup = -1;
@@ -1890,11 +1937,11 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
 		if ((binat = pf_get_binat(PF_OUT, ifp, IPPROTO_UDP,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, daddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			bport = uh->uh_sport;
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
-			    &uh->uh_sum, &binat->raddr.addr, uh->uh_sport, 1, af);
+			    &uh->uh_sum, &naddr, uh->uh_sport, 1, af);
 			rewrite++;
 		}
 		/* check outgoing packet for NAT */
@@ -1936,11 +1983,11 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check incoming packet for BINAT */
 		else if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_UDP,
-		    daddr, saddr, af)) != NULL) {
+		    daddr, saddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			bport = uh->uh_dport;
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
-			    &uh->uh_sum, &binat->saddr.addr, uh->uh_dport, 1, af);
+			    &uh->uh_sum, &naddr, uh->uh_dport, 1, af);
 			rewrite++;
 		}
 	}
@@ -2118,7 +2165,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
-	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
+	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	struct pf_rule *r;
 	u_short reason;
 	u_int16_t icmpid, af = pd->af;
@@ -2163,19 +2210,19 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
 		if ((binat = pf_get_binat(PF_OUT, ifp, IPPROTO_ICMP,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, daddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
-				    binat->raddr.addr.v4.s_addr, 0);
+				    naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &binat->raddr.addr, 0);
+				    &naddr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
@@ -2224,19 +2271,19 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check incoming packet for BINAT */
 		else if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_ICMP,
-		    daddr, saddr, af)) != NULL) {
+		    daddr, saddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, binat->saddr.addr.v4.s_addr, 0);
+				    pd->ip_sum, naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
 				pf_change_a6(daddr, &pd->hdr.icmp6->icmp6_cksum,
-				    &binat->saddr.addr, 0);
+				    &naddr, 0);
 				rewrite++;
 				break;
 #endif /* INET6 */
@@ -2383,7 +2430,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
-	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
+	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr, naddr;
 	u_int8_t af = pd->af;
 	u_short reason;
 
@@ -2393,18 +2440,18 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
 		if ((binat = pf_get_binat(PF_OUT, ifp, pd->proto,
-		    saddr, daddr, af)) != NULL) {
+		    saddr, daddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, saddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
-				    binat->raddr.addr.v4.s_addr, 0);
+				    naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(saddr, &binat->raddr.addr, af);
+				PF_ACPY(saddr, &naddr, af);
 				break;
 #endif /* INET6 */
 			}
@@ -2448,18 +2495,18 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		}
 		/* check incoming packet for BINAT */
 		else if ((binat = pf_get_binat(PF_IN, ifp, pd->proto,
-		    daddr, saddr, af)) != NULL) {
+		    daddr, saddr, &naddr, af)) != NULL) {
 			PF_ACPY(&baddr, daddr, af);
 			switch (af) {
 #ifdef INET
 			case AF_INET:
 				pf_change_a(&daddr->v4.s_addr,
-				    pd->ip_sum, binat->saddr.addr.v4.s_addr, 0);
+				    pd->ip_sum, naddr.v4.s_addr, 0);
 				break;
 #endif /* INET */
 #ifdef INET6
 			case AF_INET6:
-				PF_ACPY(daddr, &binat->saddr.addr, af);
+				PF_ACPY(daddr, &naddr, af);
 				break;
 #endif /* INET6 */
 			}
