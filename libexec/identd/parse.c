@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.21 2001/04/13 20:16:53 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.22 2001/04/14 02:49:19 hugh Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -191,6 +191,7 @@ parse(fd, laddr, faddr)
 	int fd;
 	struct in_addr *laddr, *faddr;
 {
+	char	token[21];
 	char	buf[BUFSIZ], *p;
 	struct	in_addr laddr2, faddr2;
 	struct	passwd *pw;
@@ -278,8 +279,9 @@ parse(fd, laddr, faddr)
 			    "getpwuid() could not map uid (%d) to name",
 			    uid);
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
-		    lport, fport, charset_name ? " , " : "",
+		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
@@ -306,35 +308,13 @@ parse(fd, laddr, faddr)
 		return 0;
 	}
 
-	if (userident_flag) {
-                char token[21];
-                
-                if (getuserident(pw->pw_dir, token, sizeof token)) {
-	                syslog(LOG_NOTICE, "token \"%s\" == uid %u (%s)",
-			    token, uid, pw->pw_name);
-	                n = snprintf(buf, sizeof(buf),
-        	            "%d , %d : USERID : OTHER%s%s :%s\r\n",
-	                    lport, fport, charset_name ? " , " : "",
-	                    charset_name ? charset_name : "", token);
-	                if (timed_write(fd, buf, n, IO_TIMEOUT) != n &&
-			    syslog_flag) {
-	                        syslog(LOG_NOTICE, "write to %s: %m",
-				    gethost(faddr));
-	                        return 1;
-	                }
-	                return 0;
-		}
-	}
-
-	if (token_flag) {
-		char token[21];
-
-		gentoken(token, sizeof token);
-		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
-		    pw->pw_name);
+	if (userident_flag && getuserident(pw->pw_dir, token, sizeof token)) {
+		syslog(LOG_NOTICE, "token \"%s\" == uid %u (%s)",
+		    token, uid, pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : OTHER%s%s :%s\r\n",
-		    lport, fport, charset_name ? " , " : "",
+		    "%d , %d : USERID : %s%s%s :%s\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
 		    charset_name ? charset_name : "", token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
@@ -342,10 +322,28 @@ parse(fd, laddr, faddr)
 		}
 		return 0;
 	}
+
+	if (token_flag) {
+		gentoken(token, sizeof token);
+		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
+		    pw->pw_name);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : %s%s%s :%s\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
+		    charset_name ? charset_name : "", token);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
+		return 0;
+	}
+
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
-		    lport, fport, charset_name ? " , " : "",
+		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
@@ -371,6 +369,7 @@ parse6(fd, laddr, faddr)
 	int fd;
 	struct sockaddr_in6 *laddr, *faddr;
 {
+	char	token[21];
 	char	buf[BUFSIZ], *p;
 	struct	sockaddr_in6 laddr2, faddr2;
 	struct	passwd *pw;
@@ -458,8 +457,9 @@ parse6(fd, laddr, faddr)
 			    "getpwuid() could not map uid (%d) to name",
 			    uid);
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
-		    lport, fport, charset_name ? " , " : "",
+		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
@@ -486,35 +486,13 @@ parse6(fd, laddr, faddr)
 		return 0;
 	}
 
-	if (userident_flag) {
-                char token[21];
-                
-                if (getuserident(pw->pw_dir, token, sizeof(token))) {
-	                syslog(LOG_NOTICE, "token \"%s\" == uid %u (%s)",
-			    token, uid, pw->pw_name);
-	                n = snprintf(buf, sizeof(buf),
-        	            "%d , %d : USERID : OTHER%s%s :%s\r\n",
-	                    lport, fport, charset_name ? " , " : "",
-	                    charset_name ? charset_name : "", token);
-	                if (timed_write(fd, buf, n, IO_TIMEOUT) != n &&
-			    syslog_flag) {
-	                        syslog(LOG_NOTICE, "write to %s: %m",
-				    gethost6(faddr));
-	                        return 1;
-	                }
-	                return 0;
-		}
-	}
-
-	if (token_flag) {
-		char token[21];
-
-		gentoken(token, sizeof token);
-		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
-		    pw->pw_name);
+	if (userident_flag && getuserident(pw->pw_dir, token, sizeof token)) {
+		syslog(LOG_NOTICE, "token \"%s\" == uid %u (%s)",
+		    token, uid, pw->pw_name);
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : OTHER%s%s :%s\r\n",
-		    lport, fport, charset_name ? " , " : "",
+		    "%d , %d : USERID : %s%s%s :%s\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
 		    charset_name ? charset_name : "", token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
@@ -522,10 +500,28 @@ parse6(fd, laddr, faddr)
 		}
 		return 0;
 	}
+
+	if (token_flag) {
+		gentoken(token, sizeof token);
+		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
+		    pw->pw_name);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : %s%s%s :%s\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
+		    charset_name ? charset_name : "", token);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
+			return 1;
+		}
+		return 0;
+	}
+
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
-		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
-		    lport, fport, charset_name ? " , " : "",
+		    "%d , %d : USERID : %s%s%s :%d\r\n",
+		    lport, fport, other_flag ? "OTHER" : "UNIX",
+		    charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
@@ -533,6 +529,7 @@ parse6(fd, laddr, faddr)
 		}
 		return 0;
 	}
+
 	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
 	    lport, fport, other_flag ? "OTHER" : "UNIX",
 	    charset_name ? " , " : "",
