@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.20 1996/12/03 05:16:36 kstailey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.21 1997/05/14 01:17:22 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -424,6 +424,9 @@ cdev_decl(st);
 
 bdev_decl(cd);
 cdev_decl(cd);
+
+bdev_decl(rd);
+cdev_decl(rd);
 
 bdev_decl(uk);
 cdev_decl(uk);
