@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.22 2003/06/03 01:27:31 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.23 2004/06/20 01:04:28 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -109,7 +109,7 @@ int
 debug_malloc(unsigned long size, int type, int flags, void **addr)
 {
 	struct debug_malloc_entry *md = NULL;
-	int s, wait = flags & M_NOWAIT;
+	int s, wait = (flags & M_NOWAIT) == 0;
 
 	/* Careful not to compare unsigned long to int -1 */
 	if (((type != debug_malloc_type && debug_malloc_type != 0) ||
@@ -241,7 +241,7 @@ debug_malloc_allocate_free(int wait)
 		return;
 
 	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object, PAGE_SIZE * 2,
-	    UVM_KMF_VALLOC | (wait ? UVM_KMF_NOWAIT : 0));
+	    UVM_KMF_VALLOC | (wait ? 0: UVM_KMF_NOWAIT));
 	if (va == 0) {
 		pool_put(&debug_malloc_pool, md);
 		return;
@@ -281,6 +281,24 @@ debug_malloc_print(void)
 {
 
 	debug_malloc_printit(printf, NULL);
+}
+
+void
+debug_malloc_assert_allocated(void *addr, const char *func)
+{
+	struct debug_malloc_entry *md;
+	vaddr_t va = (vaddr_t)addr;
+
+	TAILQ_FOREACH(md, &debug_malloc_freelist, md_list) {
+		if (va >= md->md_va &&
+		    va < md->md_va + 2 * PAGE_SIZE)
+			panic("debug_malloc: (%s): %p - freed", func, addr);
+	}
+	TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list) {
+		if (va >= md->md_va + PAGE_SIZE &&
+		    va < md->md_va + 2 * PAGE_SIZE)
+			panic("debug_malloc: (%s): %p - overflow", func, addr);
+	}
 }
 
 void
