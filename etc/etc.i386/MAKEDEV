@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.23 2004/04/11 18:05:23 millert Exp 
-#	OpenBSD: MAKEDEV.common,v 1.8 2004/05/29 04:07:30 deraadt Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.24 2004/05/30 08:17:18 grange Exp 
+#	OpenBSD: MAKEDEV.common,v 1.9 2004/05/30 08:17:17 grange Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -79,6 +79,7 @@
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
 #	gpr*	GPR400 smartcard reader
+#	hotplug	devices hot plugging
 #	iop*	I2O controller devices
 #	joy*	Joystick driver
 #	lkm	Loadable kernel modules interface
@@ -339,6 +340,10 @@ iop*)
 	M iop$U c 75 $U 660
 	;;
 
+hotplug)
+	M hotplug c 82 $U 400
+	;;
+
 gpr*)
 	M gpr$U c 80 $U
 	;;
@@ -573,8 +578,8 @@ all)
 	R sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3
 	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E
 	R fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0
-	R ss0 ss1 ch0 ses0 ptm gpr0 local wscons pci iop0 iop1 uall
-	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	R ss0 ss1 ch0 ses0 hotplug ptm gpr0 local wscons pci iop0 iop1
+	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	R tuner0 radio0 music0 speaker audio0 wdt0 wt0 uk0 random joy0
 	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
 	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm

@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.18 2004/04/11 18:05:23 millert Exp 
-#	OpenBSD: MAKEDEV.common,v 1.8 2004/05/29 04:07:30 deraadt Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.19 2004/05/30 08:17:18 grange Exp 
+#	OpenBSD: MAKEDEV.common,v 1.9 2004/05/30 08:17:17 grange Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -69,6 +69,7 @@
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
+#	hotplug	devices hot plugging
 #	iop*	I2O controller devices
 #	lkm	Loadable kernel modules interface
 #	pci	PCI bus device
@@ -288,6 +289,10 @@ iop*)
 	M iop$U c 73 $U 660
 	;;
 
+hotplug)
+	M hotplug c 78 $U 400
+	;;
+
 fd)
 	RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
@@ -468,10 +473,10 @@ ramdisk)
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 ptm local
-	R wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0 random
-	R lkm tty00 tty01 tty02 tty03 apm crypto pf systrace wd0 wd1
-	R wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 hotplug ptm
+	R local wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0
+	R random lkm tty00 tty01 tty02 tty03 apm crypto pf systrace
+	R wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)
