@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.9 2000/02/05 18:47:10 imp Exp $	*/
+/*	$OpenBSD: umount.c,v 1.10 2000/04/11 18:38:32 millert Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.9 2000/02/05 18:47:10 imp Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.10 2000/04/11 18:38:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,11 +178,10 @@ umountfs(oname)
 	char *delimp, *hostp, *mntpt;
 	char *name, *newname, rname[MAXPATHLEN], type[MFSNAMELEN];
 
-	if (realpath(oname, rname) == NULL) {
-		warn("%s", oname);
-		return (1);
-	}
-	mntpt = name = rname;
+	if (realpath(oname, rname) == NULL)
+		mntpt = name = oname;
+	else
+		mntpt = name = rname;
 	newname = NULL;
 
 	if (stat(name, &sb) < 0) {
