@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.9 1997/07/17 09:08:43 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.10 2001/08/30 17:38:13 millert Exp $ */
 /*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
 
 /*
@@ -36,16 +36,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: pac.c,v 1.9 1997/07/17 09:08:43 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pac.c,v 1.10 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,8 +113,8 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register FILE *acct;
-	register char *cp;
+	FILE *acct;
+	char *cp;
 
 	euid = geteuid();	/* these aren't used in pac(1) */
 	uid = getuid();
@@ -213,13 +213,13 @@ fprintf(stderr,
  */
 static void
 account(acct)
-	register FILE *acct;
+	FILE *acct;
 {
 	char linebuf[BUFSIZ];
 	double t;
-	register char *cp, *cp2;
-	register struct hent *hp;
-	register int ic;
+	char *cp, *cp2;
+	struct hent *hp;
+	int ic;
 
 	while (fgets(linebuf, BUFSIZ, acct) != NULL) {
 		cp = linebuf;
@@ -258,8 +258,8 @@ static void
 dumpit()
 {
 	struct hent **base;
-	register struct hent *hp, **ap;
-	register int hno, c, runs;
+	struct hent *hp, **ap;
+	int hno, c, runs;
 	float feet;
 
 	hp = hashtab[0];
@@ -295,9 +295,9 @@ dumpit()
 static void
 rewrite()
 {
-	register struct hent *hp;
-	register int i;
-	register FILE *acctf;
+	struct hent *hp;
+	int i;
+	FILE *acctf;
 
 	if ((acctf = fopen(sumfile, "w")) == NULL) {
 		perror(sumfile);
@@ -336,8 +336,8 @@ static struct hent *
 enter(name)
 	char name[];
 {
-	register struct hent *hp;
-	register int h;
+	struct hent *hp;
+	int h;
 
 	if ((hp = lookup(name)) != NULL)
 		return(hp);
@@ -362,8 +362,8 @@ static struct hent *
 lookup(name)
 	char name[];
 {
-	register int h;
-	register struct hent *hp;
+	int h;
+	struct hent *hp;
 
 	h = hash(name);
 	for (hp = hashtab[h]; hp != NULL; hp = hp->h_link)
@@ -380,8 +380,8 @@ static int
 hash(name)
 	char name[];
 {
-	register int h;
-	register char *cp;
+	int h;
+	char *cp;
 
 	for (cp = name, h = 0; *cp; h = (h << 2) + *cp++)
 		;
@@ -396,8 +396,8 @@ any(ch, str)
 	int ch;
 	char str[];
 {
-	register int c = ch;
-	register char *cp = str;
+	int c = ch;
+	char *cp = str;
 
 	while (*cp)
 		if (*cp++ == c)
@@ -414,8 +414,8 @@ static int
 qucmp(a, b)
 	const void *a, *b;
 {
-	register struct hent *h1, *h2;
-	register int r;
+	struct hent *h1, *h2;
+	int r;
 
 	h1 = *(struct hent **)a;
 	h2 = *(struct hent **)b;
@@ -432,7 +432,7 @@ qucmp(a, b)
  */
 static int
 chkprinter(s)
-	register char *s;
+	char *s;
 {
 	int stat;
 

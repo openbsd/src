@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.8 2000/11/21 07:22:53 deraadt Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.9 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
+static const char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpc.c,v 1.8 2000/11/21 07:22:53 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpc.c,v 1.9 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	euid = geteuid();
 	uid = getuid();
@@ -147,7 +147,7 @@ void
 cmdscanner(top)
 	int top;
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	if (!top)
 		putchar('\n');
@@ -181,11 +181,11 @@ cmdscanner(top)
 
 struct cmd *
 getcmd(name)
-	register char *name;
+	char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 
 	longest = 0;
 	nmatches = 0;
@@ -214,9 +214,9 @@ getcmd(name)
 void
 makeargv()
 {
-	register char *cp;
-	register char **argp = margv;
-	register int n = 0;
+	char *cp;
+	char **argp = margv;
+	int n = 0;
 
 	margc = 0;
 	for (cp = cmdline; *cp && (cp - cmdline) < sizeof(cmdline) &&
@@ -246,10 +246,10 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	if (argc == 1) {
-		register int i, j, w;
+		int i, j, w;
 		int columns, width = 0, lines;
 		extern int NCMDS;
 
@@ -284,7 +284,7 @@ help(argc, argv)
 		return;
 	}
 	while (--argc > 0) {
-		register char *arg;
+		char *arg;
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
@@ -304,10 +304,10 @@ int
 ingroup(grname)
 	char *grname;
 {
+	gid_t gid;
+	int i;
 	static struct group *gptr = NULL;
 	static gid_t groups[NGROUPS];
-	register gid_t gid;
-	register int i;
 	static int maxgroups;
 
 	if (gptr == NULL) {

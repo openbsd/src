@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.7 1997/01/17 16:12:44 millert Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.8 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
+static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: lpq.c,v 1.7 1997/01/17 16:12:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.8 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,8 @@ void usage __P((void));
 
 int
 main(argc, argv)
-	register int	argc;
-	register char	**argv;
+	int	argc;
+	char	**argv;
 {
 	extern char	*optarg;
 	extern int	optind;
@@ -163,7 +163,7 @@ static int
 ckqueue(cap)
 	char *cap;
 {
-	register struct dirent *d;
+	struct dirent *d;
 	DIR *dirp;
 	char *spooldir;
 

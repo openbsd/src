@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpdchar.c,v 1.2 1997/01/17 16:12:41 millert Exp $	*/
+/*	$OpenBSD: lpdchar.c,v 1.3 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lpdchar.c,v 1.2 1997/01/17 16:12:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpdchar.c,v 1.3 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 

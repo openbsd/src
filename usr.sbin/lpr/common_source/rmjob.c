@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.10 2001/08/30 17:25:35 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.11 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
+static const char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: rmjob.c,v 1.10 2001/08/30 17:25:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.11 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ static	void	do_unlink __P((char *));
 void
 rmjob()
 {
-	register int i, nitems;
+	int i, nitems;
 	int assasinated = 0;
 	struct dirent **files;
 	char *cp;
@@ -166,8 +166,8 @@ int
 lockchk(s)
 	char *s;
 {
-	register FILE *fp;
-	register int i, n;
+	FILE *fp;
+	int i, n;
 
 	seteuid(euid);
 	if ((fp = fopen(s, "r")) == NULL) {
@@ -246,8 +246,8 @@ int
 chk(file)
 	char *file;
 {
-	register int *r, n;
-	register char **u, *cp;
+	int *r, n;
+	char **u, *cp;
 	FILE *cfp;
 
 	/*
@@ -320,8 +320,8 @@ isowner(owner, file)
 void
 rmremote()
 {
-	register char *cp;
-	register int i, rem;
+	char *cp;
+	int i, rem;
 	char buf[BUFSIZ];
 
 	if (!remote)

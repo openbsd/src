@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.11 2001/04/05 16:59:49 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.12 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
+static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: common.c,v 1.11 2001/04/05 16:59:49 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.12 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,9 +202,9 @@ int
 getline(cfp)
 	FILE *cfp;
 {
-	register int linel = 0;
-	register char *lp = line;
-	register c;
+	int linel = 0;
+	char *lp = line;
+	int c;
 
 	while ((c = getc(cfp)) != '\n' && linel+1<sizeof(line)) {
 		if (c == EOF)
@@ -232,9 +232,9 @@ int
 getq(namelist)
 	struct queue *(*namelist[]);
 {
-	register struct dirent *d;
-	register struct queue *q, **queue;
-	register int nitems;
+	struct dirent *d;
+	struct queue *q, **queue;
+	int nitems;
 	struct stat stbuf;
 	DIR *dirp;
 	int arraysz;
@@ -318,7 +318,7 @@ char *
 checkremote()
 {
 	char name[MAXHOSTNAMELEN];
-	register struct hostent *hp;
+	struct hostent *hp;
 	static char errbuf[128];
 	char *rp, *rp_b;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.19 1997/07/25 20:12:13 mickey Exp $ */
+/*	$OpenBSD: lpr.c,v 1.20 2001/08/30 17:38:13 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -41,16 +41,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
+static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.19 1997/07/25 20:12:13 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.20 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(argc, argv)
 {
 	struct passwd *pw;
 	struct group *gptr;
-	register char *arg, *cp;
+	char *arg, *cp;
 	char buf[BUFSIZ];
 	int i, f;
 	struct stat stb;
@@ -422,7 +422,7 @@ copy(f, n)
 	int f;
 	char n[];
 {
-	register int fd, i, nr, nc;
+	int fd, i, nr, nc;
 	char buf[BUFSIZ];
 
 	if (format == 'p')
@@ -462,11 +462,11 @@ copy(f, n)
  */
 static char *
 linked(file)
-	register char *file;
+	char *file;
 {
-	register char *cp;
+	char *cp;
 	static char nfile[MAXPATHLEN];
-	register int ret;
+	int ret;
 
 	if (*file != '/') {
 		if (getcwd(nfile, sizeof(nfile)) == NULL)
@@ -502,12 +502,12 @@ linked(file)
  */
 static void
 card(c, p2)
-	register int c;
-	register char *p2;
+	int c;
+	char *p2;
 {
 	char buf[BUFSIZ];
-	register char *p1 = buf;
-	register int len = 2;
+	char *p1 = buf;
+	int len = 2;
 
 	*p1++ = c;
 	while ((c = *p2++) != '\0' && len < sizeof(buf)) {
@@ -525,7 +525,7 @@ static int
 nfile(n)
 	char *n;
 {
-	register int f;
+	int f;
 	int oldumask = umask(0);		/* should block signals */
 
 	seteuid(euid);
@@ -558,7 +558,7 @@ static void
 cleanup(signo)
 	int signo;
 {
-	register i;
+	int i;
 
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
@@ -594,8 +594,8 @@ test(file)
 	char *file;
 {
 	struct exec execb;
-	register int fd;
-	register char *cp;
+	int fd;
+	char *cp;
 
 	if ((fd = open(file, O_RDONLY)) < 0) {
 		printf("%s: cannot open %s\n", name, file);
@@ -648,10 +648,10 @@ bad:
  */
 static char *
 itoa(i)
-	register int i;
+	int i;
 {
 	static char b[10] = "########";
-	register char *p;
+	char *p;
 
 	p = &b[8];
 	do
@@ -693,8 +693,8 @@ chkprinter(s)
 static void
 mktemps()
 {
-	register int len, fd, n;
-	register char *cp;
+	int len, fd, n;
+	char *cp;
 	char buf[BUFSIZ];
 	char *lmktemp();
 
@@ -737,7 +737,7 @@ lmktemp(id, num, len)
 	char	*id;
 	int	num, len;
 {
-	register char *s;
+	char *s;
 
 	if ((s = malloc(len)) == NULL)
 		fatal2("out of memory");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.2 1997/01/17 16:12:40 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.3 2001/08/30 17:38:13 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
+static const char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.2 1997/01/17 16:12:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: key.c,v 1.3 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 

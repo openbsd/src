@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttcompat.c,v 1.3 1997/01/17 16:12:43 millert Exp $	*/
+/*	$OpenBSD: ttcompat.c,v 1.4 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -40,7 +40,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ttcompat.c,v 1.3 1997/01/17 16:12:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ttcompat.c,v 1.4 2001/08/30 17:38:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,11 +67,11 @@ static int
 sttygetoflags(tp)
 	struct termios *tp;
 {
-	register tcflag_t iflag = tp->c_iflag;
-	register tcflag_t lflag = tp->c_lflag;
-	register tcflag_t oflag = tp->c_oflag;
-	register tcflag_t cflag = tp->c_cflag;
-	register int flags = 0;
+	tcflag_t iflag = tp->c_iflag;
+	tcflag_t lflag = tp->c_lflag;
+	tcflag_t oflag = tp->c_oflag;
+	tcflag_t cflag = tp->c_cflag;
+	int flags = 0;
 
 	if (ISSET(cflag, PARENB)) {
 		if (ISSET(iflag, INPCK)) {
@@ -108,10 +108,10 @@ sttysetoflags(tp, flags)
 	struct termios *tp;
 	int flags;
 {
-	register tcflag_t iflag = tp->c_iflag;
-	register tcflag_t oflag = tp->c_oflag;
-	register tcflag_t lflag = tp->c_lflag;
-	register tcflag_t cflag = tp->c_cflag;
+	tcflag_t iflag = tp->c_iflag;
+	tcflag_t oflag = tp->c_oflag;
+	tcflag_t lflag = tp->c_lflag;
+	tcflag_t cflag = tp->c_cflag;
 
 	if (ISSET(flags, RAW)) {
 		iflag &= IXOFF;
@@ -176,11 +176,11 @@ sttyclearflags(tp, flags)
 	struct termios *tp;
 	int flags;
 {
-	register tcflag_t iflag = tp->c_iflag;
-	register tcflag_t oflag = tp->c_oflag;
-	register tcflag_t lflag = tp->c_lflag;
-	register tcflag_t cflag = tp->c_cflag;
-	register int oflags = sttygetoflags(tp) & ~flags;
+	tcflag_t iflag = tp->c_iflag;
+	tcflag_t oflag = tp->c_oflag;
+	tcflag_t lflag = tp->c_lflag;
+	tcflag_t cflag = tp->c_cflag;
+	int oflags = sttygetoflags(tp) & ~flags;
 
 	if (ISSET(flags, TANDEM))
 		CLR(iflag, IXOFF);
@@ -212,11 +212,11 @@ sttysetflags(tp, flags)
 	struct termios *tp;
 	int flags;
 {
-	register tcflag_t iflag = tp->c_iflag;
-	register tcflag_t oflag = tp->c_oflag;
-	register tcflag_t lflag = tp->c_lflag;
-	register tcflag_t cflag = tp->c_cflag;
-	register int oflags = sttygetoflags(tp) | flags;
+	tcflag_t iflag = tp->c_iflag;
+	tcflag_t oflag = tp->c_oflag;
+	tcflag_t lflag = tp->c_lflag;
+	tcflag_t cflag = tp->c_cflag;
+	int oflags = sttygetoflags(tp) | flags;
 
 	if (ISSET(flags, TANDEM))
 		SET(iflag, IXOFF);
@@ -247,11 +247,11 @@ sttyclearlflags(tp, flags)
 	struct termios *tp;
 	int flags;
 {
-	register tcflag_t iflag = tp->c_iflag;
-	register tcflag_t oflag = tp->c_oflag;
-	register tcflag_t lflag = tp->c_lflag;
-	register tcflag_t cflag = tp->c_cflag;
-	register int oflags = sttygetoflags(tp) & ~flags;
+	tcflag_t iflag = tp->c_iflag;
+	tcflag_t oflag = tp->c_oflag;
+	tcflag_t lflag = tp->c_lflag;
+	tcflag_t cflag = tp->c_cflag;
+	int oflags = sttygetoflags(tp) & ~flags;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))
@@ -284,11 +284,11 @@ sttysetlflags(tp, flags)
 	struct termios *tp;
 	int flags;
 {
-	register tcflag_t iflag = tp->c_iflag;
-	register tcflag_t oflag = tp->c_oflag;
-	register tcflag_t lflag = tp->c_lflag;
-	register tcflag_t cflag = tp->c_cflag;
-	register int oflags = sttygetoflags(tp) | flags;
+	tcflag_t iflag = tp->c_iflag;
+	tcflag_t oflag = tp->c_oflag;
+	tcflag_t lflag = tp->c_lflag;
+	tcflag_t cflag = tp->c_cflag;
+	int oflags = sttygetoflags(tp) | flags;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.3 1997/01/17 16:12:42 millert Exp $	*/
+/*	$OpenBSD: modes.c,v 1.4 2001/08/30 17:38:13 millert Exp $	*/
 /*	$NetBSD: modes.c,v 1.1 1995/10/03 15:02:45 hpeyerl Exp $	*/
 
 /*-
@@ -36,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
+static const char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: modes.c,v 1.3 1997/01/17 16:12:42 millert Exp $";
+static const char rcsid[] = "$OpenBSD: modes.c,v 1.4 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 

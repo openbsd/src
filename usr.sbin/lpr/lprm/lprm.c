@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.6 2001/02/15 05:20:35 deraadt Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.7 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lprm.c,v 1.6 2001/02/15 05:20:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lprm.c,v 1.7 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *arg;
+	char *arg;
 	struct passwd *p;
 
 	uid = getuid();

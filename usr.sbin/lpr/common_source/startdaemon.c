@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.3 1997/01/17 16:11:38 millert Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.4 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
+static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-static char rcsid[] = "$OpenBSD: startdaemon.c,v 1.3 1997/01/17 16:11:38 millert Exp $";
+static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.4 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ startdaemon(printer)
 	char *printer;
 {
 	struct sockaddr_un un;
-	register int s, n;
+	int s, n;
 	char buf[BUFSIZ];
 
 	s = socket(AF_UNIX, SOCK_STREAM, 0);

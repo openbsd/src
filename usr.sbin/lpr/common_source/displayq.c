@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.13 2001/08/30 17:23:59 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.14 2001/08/30 17:38:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
+static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: displayq.c,v 1.13 2001/08/30 17:23:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.14 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,9 +93,9 @@ void
 displayq(format)
 	int format;
 {
-	register struct queue *q;
-	register int i, nitems, fd, ret, len;
-	register char	*cp, *ecp;
+	struct queue *q;
+	int i, nitems, fd, ret, len;
+	char *cp, *ecp;
 	struct queue **queue;
 	struct stat statb;
 	FILE *fp;
@@ -303,7 +303,7 @@ void
 inform(cf)
 	char *cf;
 {
-	register int j;
+	int j;
 	FILE *cfp;
 
 	/*
@@ -368,8 +368,8 @@ int
 inlist(name, file)
 	char *name, *file;
 {
-	register int *r, n;
-	register char **u, *cp;
+	int *r, n;
+	char **u, *cp;
 
 	if (users == 0 && requests == 0)
 		return(1);
@@ -392,7 +392,7 @@ inlist(name, file)
 
 void
 show(nfile, file, copies)
-	register char *nfile, *file;
+	char *nfile, *file;
 	int copies;
 {
 	if (strcmp(nfile, " ") == 0)
@@ -408,7 +408,7 @@ show(nfile, file, copies)
  */
 void
 blankfill(n)
-	register int n;
+	int n;
 {
 	while (col++ < n)
 		putchar(' ');
@@ -422,7 +422,7 @@ dump(nfile, file, copies)
 	char *nfile, *file;
 	int copies;
 {
-	register short n, fill;
+	short n, fill;
 	struct stat lbuf;
 
 	/*

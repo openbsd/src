@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.24 2001/08/30 17:25:35 millert Exp $ */
+/*	$OpenBSD: printjob.c,v 1.25 2001/08/30 17:38:13 millert Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -36,13 +36,13 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
+static const char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #endif /* not lint */
 
 
@@ -70,6 +70,7 @@ static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -138,9 +139,9 @@ void
 printjob()
 {
 	struct stat stb;
-	register struct queue *q, **qp;
+	struct queue *q, **qp;
 	struct queue **queue;
-	register int i, nitems;
+	int i, nitems;
 	off_t pidoff;
 	int errcnt, count = 0;
 
@@ -315,7 +316,7 @@ static int
 printit(file)
 	char *file;
 {
-	register int i;
+	int i;
 	char *cp;
 	int bombed = OK;
 
@@ -515,8 +516,8 @@ print(format, file)
 	int format;
 	char *file;
 {
-	register int n;
-	register char *prog;
+	int n;
+	char *prog;
 	int fi, fo;
 	FILE *fp;
 	char *av[15], buf[BUFSIZ];
@@ -746,7 +747,7 @@ static int
 sendit(file)
 	char *file;
 {
-	register int i, err = OK;
+	int i, err = OK;
 	char *cp, last[BUFSIZ];
 
 	/*
@@ -833,7 +834,7 @@ sendfile(type, file)
 	int type;
 	char *file;
 {
-	register int f, i, amt;
+	int f, i, amt;
 	struct stat stb;
 	char buf[BUFSIZ];
 	int sizerr, resp;
@@ -955,11 +956,11 @@ banner(name1, name2)
 
 static char *
 scnline(key, p, c)
-	register int key;
-	register char *p;
+	int key;
+	char *p;
 	int c;
 {
-	register scnwidth;
+	int scnwidth;
 
 	for (scnwidth = WIDTH; --scnwidth;) {
 		key <<= 1;
@@ -975,8 +976,8 @@ scan_out(scfd, scsp, dlm)
 	int scfd, dlm;
 	char *scsp;
 {
-	register char *strp;
-	register nchrs, j;
+	char *strp;
+	int nchrs, j;
 	char outbuf[LINELEN+1], *sp, c, cc;
 	int d, scnhgt;
 	extern char scnkey[][HEIGHT];	/* in lpdchar.c */
@@ -1034,9 +1035,9 @@ sendmail(user, bombed)
 	char *user;
 	int bombed;
 {
-	register int i, nofile;
+	int i, nofile;
 	int p[2], s;
-	register char *cp = NULL;
+	char *cp = NULL;
 	struct stat stb;
 	FILE *fp;
 
@@ -1113,7 +1114,7 @@ static int
 dofork(action)
 	int action;
 {
-	register int i, pid;
+	int i, pid;
 	struct passwd *pw;
 
 	for (i = 0; i < 20; i++) {
@@ -1254,7 +1255,7 @@ init()
 static void
 openpr()
 {
-	register int i, nofile;
+	int i, nofile;
 	char *cp;
 
 	if (!remote && *LP) {
@@ -1308,7 +1309,7 @@ static void
 opennet(cp)
 	char *cp;
 {
-	register int i;
+	int i;
 	int resp, port;
 	char save_ch;
 
@@ -1352,7 +1353,7 @@ opennet(cp)
 static void
 opentty()
 {
-	register int i;
+	int i;
 
 	for (i = 1; ; i = i < 32 ? i << 1 : i) {
 		pfd = open(LP, RW ? O_RDWR : O_WRONLY);
@@ -1380,7 +1381,7 @@ opentty()
 static void
 openrem()
 {
-	register int i, n;
+	int i, n;
 	int resp;
 
 	for (i = 1; ; i = i < 256 ? i << 1 : i) {
@@ -1456,7 +1457,7 @@ setty()
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 		cfsetspeed(&i.t, BR);
 #else
-		register struct bauds *bp;
+		struct bauds *bp;
 		for (bp = bauds; bp->baud; bp++)
 			if (BR == bp->baud)
 				break;
@@ -1542,7 +1543,7 @@ pstatus(msg, va_alist)
         va_dcl
 #endif
 {
-	register int fd;
+	int fd;
 	char buf[BUFSIZ];
 	va_list ap;
 #ifdef __STDC__

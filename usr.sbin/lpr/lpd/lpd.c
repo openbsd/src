@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.17 2001/06/22 15:27:20 lebel Exp $ */
+/*	$OpenBSD: lpd.c,v 1.18 2001/08/30 17:38:13 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -36,16 +36,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
+static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: lpd.c,v 1.17 2001/06/22 15:27:20 lebel Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.18 2001/08/30 17:38:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ static char rcsid[] = "$OpenBSD: lpd.c,v 1.17 2001/06/22 15:27:20 lebel Exp $";
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <netdb.h>
 #include <unistd.h>
@@ -346,8 +347,8 @@ char	*cmdnames[] = {
 static void
 doit()
 {
-	register char *cp;
-	register int n;
+	char *cp;
+	int n;
 
 	for (;;) {
 		cp = cbuf;
@@ -455,7 +456,7 @@ static void
 startup()
 {
 	char *buf;
-	register char *cp;
+	char *cp;
 	int pid;
 
 	/*
@@ -494,7 +495,7 @@ static int
 ckqueue(cap)
 	char *cap;
 {
-	register struct dirent *d;
+	struct dirent *d;
 	DIR *dirp;
 	char *spooldir;
 
@@ -521,8 +522,8 @@ static void
 chkhost(f)
 	struct sockaddr_in *f;
 {
-	register struct hostent *hp;
-	register FILE *hostf;
+	struct hostent *hp;
+	FILE *hostf;
 	int first = 1;
 	int good = 0;
 
