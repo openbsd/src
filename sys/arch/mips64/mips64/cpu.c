@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.3 2004/08/09 21:00:54 pefo Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -122,8 +122,9 @@ cpuattach(parent, dev, aux)
 		printf("Unknown CPU type (0x%x)",sys_config.cpu[cpuno].type);
 		break;
 	}
-	printf(" Rev. %d.%d with ", sys_config.cpu[cpuno].vers_maj,
-		sys_config.cpu[cpuno].vers_min);
+	printf(" rev %d.%d %d MHz with ", sys_config.cpu[cpuno].vers_maj,
+		sys_config.cpu[cpuno].vers_min,
+		sys_config.cpu[cpuno].clock / 1000000);
 
 
 	switch(sys_config.cpu[cpuno].fptype) {
@@ -132,77 +133,73 @@ cpuattach(parent, dev, aux)
 		printf("Software emulation float");
 		break;
 	case MIPS_R4010:
-		printf("MIPS R4010 FPC");
+		printf("R4010 FPC");
 		break;
 	case MIPS_R10010:
-		printf("MIPS R10000 FPU");
+		printf("R10000 FPU");
 		break;
 	case MIPS_R4210:
-		printf("NEC VR4200 FPC (ICE)");
+		printf("VR4200 FPC (ICE)");
 		break;
 	case MIPS_R4600:
-		printf("QED R4600 Orion FPC");
+		printf("R4600 Orion FPC");
 		break;
 	case MIPS_R4700:
-		printf("QED R4700 Orion FPC");
+		printf("R4700 Orion FPC");
 		break;
 	case MIPS_R5000:
-		printf("MIPS R5000 based FPC");
+		printf("R5000 based FPC");
 		break;
 	case MIPS_RM52XX:
-		printf("PMC-Sierra RM52X0 FPC");
+		printf("RM52X0 FPC");
 		break;
 	case MIPS_RM7000:
-		printf("PMC-Sierra RM7000 FPC");
+		printf("RM7000 FPC");
 		break;
 	case MIPS_RM9000:
-		printf("PMC-Sierra RM9000 FPC");
+		printf("RM9000 FPC");
 		break;
 	case MIPS_UNKF1:
 	default:
 		printf("Unknown FPU type (0x%x)", sys_config.cpu[cpuno].fptype);
 		break;
 	}
-	printf(" Rev. %d.%d", sys_config.cpu[cpuno].fpvers_maj,
+	printf(" rev %d.%d", sys_config.cpu[cpuno].fpvers_maj,
 		sys_config.cpu[cpuno].fpvers_min);
 	printf("\n");
 
-	printf("cpu%d: L1 Cache: I size %dkb(%d line),", cpuno,
-		CpuPrimaryInstCacheSize / 1024,
-		CpuPrimaryInstCacheLSize);
-	printf(" D size %dkb(%d line), ",
-		CpuPrimaryDataCacheSize / 1024,
-		CpuPrimaryDataCacheLSize);
+	printf("cpu%d: cache L1-I %dKB", cpuno,
+		CpuPrimaryInstCacheSize / 1024);
+	printf(" D %dKB ",
+		CpuPrimaryDataCacheSize / 1024);
 	switch(CpuNWayCache) {
 	case 2:
-		printf("two way.\n");
+		printf("2 way");
 		break;
 	case 4:
-		printf("four way.\n");
+		printf("4 way");
 		break;
 	default:	
-		printf("direct mapped.\n");
+		printf("1 way");
 		break;
 	}
 	if(CpuSecondaryCacheSize != 0) {
 		switch(sys_config.cpu[cpuno].type) {
 		case MIPS_RM7000:
 		case MIPS_RM9000:
-			printf("cpu%d: L2 Cache: Size %dkb, four way\n",
-				cpuno, CpuSecondaryCacheSize / 1024);
+			printf(", L2 %dKB 4 way", CpuSecondaryCacheSize / 1024);
 			break;
 
 		default:
-			printf("cpu%d: L2 Cache: Size %dkb, direct mapped\n",
-				cpuno, CpuSecondaryCacheSize / 1024);
+			printf(", L2 %dKB direct", CpuSecondaryCacheSize / 1024);
 			break;
 		}
 
 	}
 	if(CpuTertiaryCacheSize != 0) {
-		printf("cpu%d: L3 Cache: Size %dkb, direct mapped\n",
-			cpuno, CpuTertiaryCacheSize / 1024);
+		printf(", L3 %dKB direct", CpuTertiaryCacheSize / 1024);
 	}
+	printf("\n");
 
 #ifdef DEBUG
 	printf("cpu%d: Setsize %d:%d\n", cpuno,
