@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.8 1997/04/04 18:41:25 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.9 1997/04/12 16:32:10 kstailey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.8 1997/04/04 18:41:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.9 1997/04/12 16:32:10 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ void	 maketypelist __P((char *));
 long	 regetmntinfo __P((struct statfs **, long));
 void	 usage __P((void));
 
-int	iflag, kflag, lflag, nflag;
+int	hflag, iflag, kflag, lflag, nflag;
 char	**typelist = NULL;
 struct	ufs_args mdev;
 
@@ -89,13 +89,18 @@ main(argc, argv)
 	int ch, i, maxwidth, width;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "iklnt:")) != -1)
+	while ((ch = getopt(argc, argv, "hiklnt:")) != -1)
 		switch (ch) {
+		case 'h':
+			hflag = 1;
+			kflag = 0;
+			break;
 		case 'i':
 			iflag = 1;
 			break;
 		case 'k':
 			kflag = 1;
+			hflag = 0;
 			break;
 		case 'l':
 			lflag = 1;
@@ -289,6 +294,14 @@ regetmntinfo(mntbufp, mntsize)
 	return (j);
 }
 
+void
+prthuman(sfsp, used, availblks)
+	struct statfs *sfsp;
+	long used, availblks;
+{
+	
+}
+
 /*
  * Convert statfs returned filesystem size into BLOCKSIZE units.
  * Attempts to avoid overflow for large filesystems.
@@ -313,7 +326,11 @@ prtstat(sfsp, maxwidth)
 	if (maxwidth < 11)
 		maxwidth = 11;
 	if (++timesthrough == 1) {
-		if (kflag) {
+		if (hflag) {
+			blocksize = 1024; /* temp */
+			header = "Size";
+			headerlen = strlen(header);
+		} else if (kflag) {
 			blocksize = 1024;
 			header = "1K-blocks";
 			headerlen = strlen(header);
@@ -328,10 +345,13 @@ prtstat(sfsp, maxwidth)
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
 	availblks = sfsp->f_bavail + used;
-	(void)printf(" %*ld %8ld %8ld", headerlen,
-	    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
-	    fsbtoblk(used, sfsp->f_bsize, blocksize),
-	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
+	if (hflag)
+		prthuman(sfsp, used, availblks);
+	else
+		(void)printf(" %*ld %8ld %8ld", headerlen,
+		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
+		    fsbtoblk(used, sfsp->f_bsize, blocksize),
+		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
 	(void)printf(" %5.0f%%",
 	    availblks == 0 ? 100.0 : (double)used / (double)availblks * 100.0);
 	if (iflag) {
