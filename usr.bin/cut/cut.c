@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.4 1997/09/12 04:12:51 millert Exp $	*/
+/*	$OpenBSD: cut.c,v 1.5 1997/11/05 00:18:44 deraadt Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: cut.c,v 1.4 1997/09/12 04:12:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: cut.c,v 1.5 1997/11/05 00:18:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -278,6 +278,8 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage:\tcut -c list [file1 ...]\n\tcut -f list [-s] [-d delim] [file ...]\n");
+		"usage:\tcut -c list [file1 ...]\n"
+		"\tcut -f list [-s] [-d delim] [file ...]\n"
+		"\tcut -b list [-n] [file ...]\n");
 	exit(1);
 }
