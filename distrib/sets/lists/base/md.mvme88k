@@ -379,6 +379,8 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/zlib.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/bsd_auth.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rijndael.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/amireg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/amivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cacreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/iha.ph

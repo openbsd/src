@@ -110,6 +110,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/am7990var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/am79c930reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/am79c930var.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/amireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/amivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/anreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/anvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/awireg.ph

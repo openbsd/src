@@ -118,6 +118,8 @@
 ./usr/include/dev/ic/am7990var.h
 ./usr/include/dev/ic/am79c930reg.h
 ./usr/include/dev/ic/am79c930var.h
+./usr/include/dev/ic/amireg.h
+./usr/include/dev/ic/amivar.h
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
 ./usr/include/dev/ic/awireg.h
@@ -1646,6 +1648,7 @@
 ./usr/share/man/cat2/mkfifo.0
 ./usr/share/man/cat2/mknod.0
 ./usr/share/man/cat2/mlock.0
+./usr/share/man/cat2/mlockall.0
 ./usr/share/man/cat2/mmap.0
 ./usr/share/man/cat2/mount.0
 ./usr/share/man/cat2/mprotect.0
@@ -1655,6 +1658,7 @@
 ./usr/share/man/cat2/msgsnd.0
 ./usr/share/man/cat2/msync.0
 ./usr/share/man/cat2/munlock.0
+./usr/share/man/cat2/munlockall.0
 ./usr/share/man/cat2/munmap.0
 ./usr/share/man/cat2/nanosleep.0
 ./usr/share/man/cat2/nfssvc.0
@@ -4146,6 +4150,7 @@
 ./usr/share/man/cat9/vm_map_inherit.0
 ./usr/share/man/cat9/vm_map_protect.0
 ./usr/share/man/cat9/vm_protect.0
+./usr/share/man/cat9/vn_lock.0
 ./usr/share/man/cat9/vnode.0
 ./usr/share/man/cat9/vprintf.0
 ./usr/share/man/cat9/wakeup.0

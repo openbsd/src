@@ -910,6 +910,7 @@
 ./usr/share/man/cat4/alpha/pms.0
 ./usr/share/man/cat4/alpha/scc.0
 ./usr/share/man/cat4/alpha/wd.0
+./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amiga
 ./usr/share/man/cat4/amiga/ae.0
 ./usr/share/man/cat4/amiga/afsc.0
@@ -1019,6 +1020,7 @@
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
+./usr/share/man/cat4/i386/bios.0
 ./usr/share/man/cat4/i386/bktr.0
 ./usr/share/man/cat4/i386/gus.0
 ./usr/share/man/cat4/i386/ie.0
@@ -2046,4 +2048,3 @@
 ./var/www/htdocs/manual/new_features_2_0.html
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
-./usr/share/man/cat4/i386/bios.0

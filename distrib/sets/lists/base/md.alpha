@@ -501,6 +501,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/am7990var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/am79c930reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/am79c930var.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/amireg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/amivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/anreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/anvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/awireg.ph
