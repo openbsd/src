@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.14 2001/12/05 01:57:14 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.15 2002/01/10 01:26:49 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -63,7 +63,7 @@
 
 #define	MACHINE_STACK_GROWS_UP	1	/* stack grows to higher addresses */
 
-#define	SSIZE		(1)		/* initial stack size/NBPG */
+#define	SSIZE		(4)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
 #define	UADDR		0x7ffe6000	/* u-area lives here */
@@ -94,7 +94,7 @@
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
