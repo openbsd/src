@@ -37,9 +37,6 @@
 #include "saerrno.h"
 #include "stand.h"
 
-size_t	strlen __P((const char *));				/* XXX */
-char	*strcpy __P((char *, const char *));			/* XXX */
-
 char *
 strerror(err)
 	int err;

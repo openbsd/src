@@ -65,7 +65,10 @@
  */
 
 #include "stand.h"
+
+#ifndef atari
 struct open_file files[SOPEN_MAX];
+#endif
 
 /*
  *	File primitives proper
@@ -123,42 +126,3 @@ err:
 	errno = error;
 	return (-1);
 }
-
-/*
- * Null filesystem
- */
-int	null_open (char *path, struct open_file *f)
-{
-	errno  = EIO;
-	return -1;
-}
-
-int	null_close(struct open_file *f)
-{
-	return 0;
-}
-
-ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
-{
-	errno = EIO;
-	return -1;
-}
-
-ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
-{
-	errno = EIO;
-	return -1;
-}
-
-off_t	null_seek (struct open_file *f, off_t offset, int where)
-{
-	errno = EIO;
-	return -1;
-}
-
-int	null_stat (struct open_file *f, struct stat *sb)
-{
-	errno = EIO;
-	return -1;
-}
-

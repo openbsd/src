@@ -15,8 +15,8 @@ SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
 	printf.c strerror.c
 
 # io routines
-SRCS+=	close.c dev.c disklabel.c ioctl.c lseek.c open.c read.c \
-	stat.c write.c
+SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
+	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c
 
 .if !defined(NO_NET)
 # network routines

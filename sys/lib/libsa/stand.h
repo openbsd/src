@@ -63,6 +63,7 @@ struct fs_ops {
 };
 
 extern struct fs_ops file_system[];
+extern int nfsys;
 
 /* where values for lseek(2) */
 #define	SEEK_SET	0	/* set file offset to offset */
@@ -93,7 +94,6 @@ struct open_file {
 
 #define	SOPEN_MAX	4
 extern struct open_file files[];
-extern int nfsys;
 
 /* f_flags values */
 #define	F_READ		0x0001	/* file opened for reading */
@@ -111,18 +111,19 @@ void	*alloc __P((unsigned int));
 void	free __P((void *, unsigned int));
 struct	disklabel;
 char	*getdisklabel __P((const char *, struct disklabel *));
+int	dkcksum __P((struct disklabel *));
 
 void	printf __P((const char *, ...));
 void	sprintf __P((char *, const char *, ...));
 void	twiddle __P((void));
 void	gets __P((char *));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
-__dead void _rtt __P((void)) __attribute__((noreturn));
+__dead void	_rtt __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
-int	getchar __P((void));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));
 int	close __P((int));
+void	closeall __P((void));
 ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
     

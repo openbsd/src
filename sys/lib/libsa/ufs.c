@@ -147,7 +147,7 @@ read_inode(inumber, f)
 	}
 out:
 	free(buf, fs->fs_bsize);
-	return (0);	 
+	return (rc);	 
 }
 
 /*

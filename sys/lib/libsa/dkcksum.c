@@ -1,11 +1,8 @@
-/*	$NetBSD: close.c,v 1.5 1995/09/06 19:53:29 pk Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.3 1994/10/26 05:44:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * The Mach Operating System project at Carnegie-Mellon University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,60 +32,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)close.c	8.1 (Berkeley) 6/11/93
- *  
- *
- * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
- * All Rights Reserved.
- *
- * Author: Alessandro Forin
- * 
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- * 
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+ *	@(#)disklabel.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/param.h>
+#include <sys/disklabel.h>
 #include "stand.h"
 
+/*
+ * Compute checksum for disk label.
+ */
 int
-close(fd)
-	int fd;
+dkcksum(lp)
+	register struct disklabel *lp;
 {
-	register struct open_file *f = &files[fd];
-	int err1 = 0, err2 = 0;
+	register u_short *start, *end;
+	register u_short sum = 0;
 
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (!(f->f_flags & F_RAW) && f->f_ops)
-		err1 = (f->f_ops->close)(f);
-	if (!(f->f_flags & F_NODEV) && f->f_dev)
-		err2 = (f->f_dev->dv_close)(f);
-	f->f_flags = 0;
-	if (err1) {
-		errno = err1;
-		return (-1);
-	}
-	if (err2) {
-		errno = err2;
-		return (-1);
-	}
-	return (0);
+	start = (u_short *)lp;
+	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	while (start < end)
+		sum ^= *start++;
+	return (sum);
 }

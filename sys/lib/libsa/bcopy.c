@@ -36,6 +36,7 @@
  */
 
 #include <sys/types.h>
+#include "stand.h"
 
 /*
  * This is designed to be small, not fast.

@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.5 1995/09/06 19:53:29 pk Exp $	*/
+/*	$NetBSD: open.c,v 1.9 1995/09/19 09:16:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)close.c	8.1 (Berkeley) 6/11/93
+ *	@(#)open.c	8.1 (Berkeley) 6/11/93
  *  
  *
  * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
@@ -66,29 +66,40 @@
 
 #include "stand.h"
 
-int
-close(fd)
-	int fd;
+/*
+ * Null filesystem
+ */
+int	null_open (char *path, struct open_file *f)
 {
-	register struct open_file *f = &files[fd];
-	int err1 = 0, err2 = 0;
+	errno  = EIO;
+	return -1;
+}
 
-	if ((unsigned)fd >= SOPEN_MAX || f->f_flags == 0) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (!(f->f_flags & F_RAW) && f->f_ops)
-		err1 = (f->f_ops->close)(f);
-	if (!(f->f_flags & F_NODEV) && f->f_dev)
-		err2 = (f->f_dev->dv_close)(f);
-	f->f_flags = 0;
-	if (err1) {
-		errno = err1;
-		return (-1);
-	}
-	if (err2) {
-		errno = err2;
-		return (-1);
-	}
-	return (0);
+int	null_close(struct open_file *f)
+{
+	return 0;
+}
+
+ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
+{
+	errno = EIO;
+	return -1;
+}
+
+ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
+{
+	errno = EIO;
+	return -1;
+}
+
+off_t	null_seek (struct open_file *f, off_t offset, int where)
+{
+	errno = EIO;
+	return -1;
+}
+
+int	null_stat (struct open_file *f, struct stat *sb)
+{
+	errno = EIO;
+	return -1;
 }
