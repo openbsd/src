@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.7 1997/09/11 08:27:02 niklas Exp $
+#	$OpenBSD: sendbug.sh,v 1.8 1999/01/20 06:10:59 millert Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -75,11 +75,11 @@ umask 077
 if [ -f /bin/domainname ]; then
   if [ "`/bin/domainname`" != ""  -a -f /usr/bin/ypcat ]; then
     PASSWD="/usr/bin/ypcat passwd 2>/dev/null | cat - /etc/passwd | grep '^$LOGNAME:' |
-      cut -f5 -d':' | sed -e 's/,.*//'"
+      cut -f5 -d':' | sed -e 's/,.*//' -e 's/\&/$LOGNAME/g'"
   fi
 fi
 if [ "$PASSWD" = "" ]; then
-  PASSWD="cat /etc/passwd | grep '^$LOGNAME:' | cut -f5 -d':' | sed -e 's/,.*//'"
+  PASSWD="cat /etc/passwd | grep '^$LOGNAME:' | cut -f5 -d':' | sed -e 's/,.*//' -e 's/\&/$LOGNAME/g'"
 fi
 
 if [ "`echo -n foo`" = foo ]; then
