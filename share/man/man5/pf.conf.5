@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.18 2001/10/01 18:44:36 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.19 2001/10/01 19:04:16 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -385,61 +385,63 @@ bit from a matching ip packet.
 Enforces a minium ttl for matching ip packets.
 .Sh EXAMPLES
 .Bd -literal
-# My external interface is kue0 (157.161.48.183, my only routable address)
-# and the private network is 10.0.0.0/8, for which i'm doing NAT.
+# The external interface is kue0 (157.161.48.183, the only routable address)
+# and the private network is 10.0.0.0/8, for which we are doing NAT.
+
+# use a macro for the interface name, so it can be changed easily
+ext_if = "kue0"
+
+# normalize all incoming traffic
+scrub in on $ext_if all
 
 # block and log everything by default
-block             out log on kue0           all
-block             in  log on kue0           all
-block return-rst  out log on kue0 proto tcp all
-block return-rst  in  log on kue0 proto tcp all
-block return-icmp out log on kue0 proto udp all
-block return-icmp in  log on kue0 proto udp all
+block             out log on $ext_if           all
+block             in  log on $ext_if           all
+block return-rst  out log on $ext_if proto tcp all
+block return-rst  in  log on $ext_if proto tcp all
+block return-icmp out log on $ext_if proto udp all
+block return-icmp in  log on $ext_if proto udp all
 
-# block and log outgoing packets that don't have my address as source,
+# block and log outgoing packets that don't have our address as source,
 # they are either spoofed or something is misconfigured (NAT disabled,
 # for instance), we want to be nice and don't send out garbage.
-block out log quick on kue0 from ! 157.161.48.183 to any
+block out log quick on $ext_if from ! 157.161.48.183 to any
 
 # silently drop broadcasts (cable modem noise)
-block in quick on kue0 from any to 255.255.255.255
+block in quick on $ext_if from any to 255.255.255.255
 
 # block and log incoming packets from reserved address space and invalid
 # addresses, they are either spoofed or misconfigured, we can't reply to
 # them anyway (hence, no return-rst).
-block in log quick on kue0 from { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 255.255.255.255/32 } to any
+block in log quick on $ext_if from { 10.0.0.0/8, 172.16.0.0/12, \\
+	192.168.0.0/16, 255.255.255.255/32 } to any
 
-# -----------------------------------------------------------------------
 # ICMP
-# -----------------------------------------------------------------------
 
 # pass out/in certain ICMP queries and keep state (ping)
 # state matching is done on host addresses and ICMP id (not type/code),
 # so replies (like 0/0 for 8/0) will match queries
 # ICMP error messages (which always refer to a TCP/UDP packet) are
 # handled by the TCP/UDP states
-pass out on kue0 inet proto icmp all icmp-type 8 code 0 keep state
-pass in  on kue0 inet proto icmp all icmp-type 8 code 0 keep state
+pass out on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
+pass in  on $ext_if inet proto icmp all icmp-type 8 code 0 keep state
 
-# -----------------------------------------------------------------------
 # UDP
-# -----------------------------------------------------------------------
 
 # pass out all UDP connections and keep state
-pass out on kue0 proto udp all keep state
+pass out on $ext_if proto udp all keep state
 
 # pass in certain UDP connections and keep state (DNS)
-pass in on kue0 proto udp from any to any port = domain keep state
+pass in on $ext_if proto udp from any to any port = domain keep state
 
-# -----------------------------------------------------------------------
 # TCP
-# -----------------------------------------------------------------------
 
 # pass out all TCP connections and modulate state
-pass out on kue0 proto tcp all modulate state
+pass out on $ext_if proto tcp all modulate state
 
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
-pass in on kue0 proto tcp from any to any port { ssh, smtp, domain, auth } keep state
+pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \\
+	auth } keep state
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/pf.conf" -compact
