@@ -212,7 +212,7 @@ Boston, MA 02111-1307, USA.  */
     HALF_PIC_DECLARE (NAME);						\
   } while (0)
 
-/* Assemble generic sections.
+/* Assemble generic sections. */
 /* Write the extra assembler code needed to declare an object properly.  */
 
 #undef ASM_DECLARE_OBJECT_NAME
