@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_de.c,v 1.9 1997/05/28 23:10:59 niklas Exp $	*/
 /*	$NetBSD: if_de.c,v 1.25 1996/11/15 03:11:19 thorpej Exp $	*/
 
 /*
@@ -448,17 +449,14 @@ deintr(unit)
 		ifxp = &ds->ds_ifw[ds->ds_xindex];
 		/* check for unusual conditions */
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
-			if (rp->r_flags & XFLG_ERRS) {
+		if (rp->r_flags & XFLG_ERRS) {
 				/* output error */
 				ds->ds_if.if_oerrors++;
 				if (dedebug) {
-					char bits[64];
-					printf("de%d: oerror, flags=%s ",
-					    unit, bitmask_snprintf(rp->r_flags,
-					    XFLG_BITS, bits, sizeof(bits)));
-					printf("tdrerr%s (len=%d)\n",
-					    rp->r_tdrerr, XERR_BITS,
-					    bits, sizeof(bits));
+					printf("de%d: oerror, flags=%b ",
+					    unit, rp->r_flags, XFLG_BITS);
+					printf("tdrerr=%b\n",
+					    rp->r_tdrerr, XERR_BITS);
 				}
 			} else if (rp->r_flags & XFLG_ONE) {
 				/* one collision */
@@ -528,14 +526,10 @@ derecv(unit)
 		    len < ETHERMIN || len > ETHERMTU) {
 			ds->ds_if.if_ierrors++;
 			if (dedebug) {
-				char bits[64];
-				printf("de%d: ierror, flags=%s ",
-				    unit, bitmask_snprintf(rp->r_flags,
-				    RFLG_BITS, bits, sizeof(bits)));
-				printf("lenerr=%s (len=%d)\n",
-				    bitmask_snprintf(rp->r_lenerr,
-				    RERR_BITS, bits, sizeof(bits)),
-				    len);
+				printf("de%d: ierror, flags=%b ",
+				    unit, rp->r_flags, RFLG_BITS);
+				printf("lenerr=%b (len=%d)\n",
+				    rp->r_lenerr, RERR_BITS, len);
 			}
 		} else
 			deread(ds, &ds->ds_ifr[ds->ds_rindex], len);
@@ -682,11 +676,9 @@ dewait(ds, fn)
 	csr0 = addr->pcsr0;
 	addr->pchigh = csr0 >> 8;
 	if (csr0 & PCSR0_PCEI) {
-		char bits[64];
-		printf("de%d: %s failed, csr0=%s ", ds->ds_dev.dv_unit, fn,
-		    bitmask_snprintf(csr0, PCSR0_BITS, bits, sizeof(bits)));
-		printf("csr1=%s\n", bitmask_snprintf(addr->pcsr1, PCSR1_BITS,
-		    bits, sizeof(bits)));
+		printf("de%d: %s failed, csr0=%b ", ds->ds_dev.dv_unit, fn,
+		    csr0, PCSR0_BITS);
+		printf("csr1=%b\n", addr->pcsr1, PCSR1_BITS);
 	}
 	return (csr0 & PCSR0_PCEI);
 }
