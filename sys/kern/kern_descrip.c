@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.35 2001/09/29 20:10:43 gluk Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.36 2001/10/01 16:55:57 gluk Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -933,7 +933,8 @@ fdfree(p)
 		free(fdp->fd_himap, M_FILEDESC);
 		free(fdp->fd_lomap, M_FILEDESC);
 	}
-	vrele(fdp->fd_cdir);
+	if (fdp->fd_cdir)
+		vrele(fdp->fd_cdir);
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
 	if (fdp->fd_knlist)
