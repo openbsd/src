@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.10 1997/09/05 04:32:33 millert Exp $	*/
+/*	$OpenBSD: auth.c,v 1.11 1997/09/28 15:35:50 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.32 1997/07/14 03:52:33 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.10 1997/09/05 04:32:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.11 1997/09/28 15:35:50 deraadt Exp $";
 #endif
 #endif
 
@@ -48,6 +48,8 @@ static char rcsid[] = "$OpenBSD: auth.c,v 1.10 1997/09/05 04:32:33 millert Exp $
 #include <unistd.h>
 #include <syslog.h>
 #include <pwd.h>
+#include <utmp.h>
+#include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -817,6 +819,22 @@ login(user, passwd, msg, msglen)
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
     logwtmp(tty, user, remote_name);		/* Add wtmp login entry */
+
+#ifdef _PATH_LASTLOG
+{
+    struct lastlog ll;
+    int fd;
+
+    if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
+	(void)lseek(fd, (off_t)pw->pw_uid * sizeof(ll), SEEK_SET);
+	memset(&ll, 0, sizeof(ll));
+	time(&ll.ll_time);
+	strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
+	write(fd, (char *)&ll, sizeof(ll));
+	close(fd);
+    }
+}
+#endif
     logged_in = TRUE;
 
     return (UPAP_AUTHACK);
