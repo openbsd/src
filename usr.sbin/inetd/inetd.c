@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.107 2002/09/06 19:46:52 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.108 2002/11/11 23:46:29 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.107 2002/09/06 19:46:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.108 2002/11/11 23:46:29 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -191,7 +191,7 @@ sigset_t emptymask;
 
 /* Reserve some descriptors, 3 stdio + at least: 1 log, 1 conf. file */
 #define FD_MARGIN	(8)
-typeof(((struct rlimit *)0)->rlim_cur)	rlim_nofile_cur = OPEN_MAX;
+__typeof(((struct rlimit *)0)->rlim_cur)	rlim_nofile_cur = OPEN_MAX;
 
 struct rlimit	rlim_nofile;
 
@@ -688,7 +688,7 @@ doconfig(void)
 		if (sep != 0) {
 			int i;
 
-#define SWAP(type, a, b) {type c=(type)a; (type)a=(type)b; (type)b=(type)c;}
+#define SWAP(type, a, b) {type c=(type)a; a=(type)b; b=(type)c;}
 
 			sigprocmask(SIG_BLOCK, &blockmask, &omask);
 			/*
