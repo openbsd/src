@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.3 1996/05/05 19:04:21 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.4 1996/08/06 18:05:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.3 1996/05/05 19:04:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.4 1996/08/06 18:05:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -408,7 +408,7 @@ vtrans(vp, i, flag)
 				badtype = "error";
 			break;
 		default: {
-			static char unknown[10];
+			static char unknown[20];
 			sprintf(badtype = unknown, "?(%x)", vn.v_tag);
 			break;;
 		}
@@ -588,7 +588,7 @@ socktrans(sock, i)
 	struct inpcb	inpcb;
 	struct unpcb	unpcb;
 	int len;
-	char dname[32], *strcpy();
+	char dname[32];
 
 	PREFIX(i);
 
