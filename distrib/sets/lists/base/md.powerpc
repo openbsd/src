@@ -144,6 +144,9 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/machine/va-ppc.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/machine/varargs.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/machine/vmparam.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/machine/kbio.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/machine/vuid_event.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/machine/wsconsio.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/malloc.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/math.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/md4.ph

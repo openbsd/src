@@ -49,6 +49,9 @@
 ./usr/include/machine/va-ppc.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
+./usr/include/machine/kbio.h
+./usr/include/machine/vuid_event.h
+./usr/include/machine/wsconsio.h
 ./usr/include/obstack.h
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h
