@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 1998/06/29 05:32:51 downsj Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2000/07/06 15:25:02 ho Exp $	*/
 /*	$NetBSD: intr.h,v 1.4 1996/12/03 17:34:47 cgd Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #define splx(s)								\
 	    (s == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
 #define splsoft()               alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
+#define spllowersoftclock()     splsoft()
 #define splsoftclock()          splsoft()
 #define splsoftnet()            splsoft()
 #define splnet()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)

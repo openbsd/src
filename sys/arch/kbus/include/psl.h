@@ -173,8 +173,9 @@ setpil15 (void)
 extern int name __P((void)); 
 
 SPL(splsoftint, SPL_NET)
-#define	splsoftclock	splsoftint
-#define	splsoftnet	splsoftint
+#define	spllowersoftclock	splsoftint
+#define	splsoftclock		splsoftint
+#define	splsoftnet		splsoftint
 
 /* Block devices */
 SPL(splbio, SPL_BIO)

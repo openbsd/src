@@ -65,6 +65,8 @@ void setsoftnet   __P((void));
 void clearsoftnet __P((void));
 int  splsoftnet   __P((void));
 
+#define spllowersoftclock() splsoftclock()
+
 struct clockframe;
 void set_intr __P((int, int(*)(u_int, struct clockframe *), int));
 

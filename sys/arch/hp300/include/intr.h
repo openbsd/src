@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 1999/05/04 19:57:25 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2000/07/06 15:25:03 ho Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -142,17 +142,18 @@ extern	unsigned short hp300_impipl;
 #define	splsoft()	spl1()
 
 /* These spl calls are used by machine-independent code. */
-#define	splsoftclock()	splsoft()
-#define	splsoftnet()	splsoft()
-#define	splbio()	_splraise(hp300_bioipl)
-#define	splnet()	_splraise(hp300_netipl)
-#define	spltty()	_splraise(hp300_ttyipl)
-#define	splimp()	_splraise(hp300_impipl)
-#define	splclock()	spl6()
-#define	splstatclock()	spl6()
-#define	splvm()		spl6()
-#define	splhigh()	spl7()
-#define	splsched()	spl7()
+#define	spllowersoftclock()	splsoft()
+#define	splsoftclock()		splsoft()
+#define	splsoftnet()		splsoft()
+#define	splbio()		_splraise(hp300_bioipl)
+#define	splnet()		_splraise(hp300_netipl)
+#define	spltty()		_splraise(hp300_ttyipl)
+#define	splimp()		_splraise(hp300_impipl)
+#define	splclock()		spl6()
+#define	splstatclock()		spl6()
+#define	splvm()			spl6()
+#define	splhigh()		spl7()
+#define	splsched()		spl7()
 
 /* watch out for side effects */
 #define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())

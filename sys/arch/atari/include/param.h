@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 1997/02/28 22:57:36 niklas Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2000/07/06 15:25:02 ho Exp $	*/
 /*	$NetBSD: param.h,v 1.10 1996/01/07 22:30:41 leo Exp $	*/
 
 /*
@@ -188,11 +188,12 @@
 #define spl6()	_spl(PSL_S|PSL_IPL6)
 #define spl7()	_spl(PSL_S|PSL_IPL7)
 
-#define splnone()	spl0()
-#define splsoftclock()	spl1()
-#define splsoftnet()	spl1()
-#define splbio()	spl3()
-#define splnet()	spl3()
+#define splnone()		spl0()
+#define spllowersoftclock()	spl1()
+#define splsoftclock()		spl1()
+#define splsoftnet()		spl1()
+#define splbio()		spl3()
+#define splnet()		spl3()
 /*
  * lowered to spl4 to allow for serial input into
  * private ringbuffer inspite of spltty

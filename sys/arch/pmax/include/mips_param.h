@@ -60,6 +60,7 @@
 #ifndef _LOCORE
 typedef int spl_t;
 extern spl_t splx __P((spl_t));
+#define spllowersoftclock splsoftclock
 extern spl_t splsoftnet __P((void)), splsoftclock __P((void));
 extern spl_t splhigh __P((void));
 extern spl_t spl0 __P((void));	/* XXX should not enable TC on 3min */

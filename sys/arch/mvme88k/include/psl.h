@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
+/*	$OpenBSD: psl.h,v 1.5 2000/07/06 15:25:04 ho Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -82,18 +82,19 @@ above...
 #define IPL_NMI		7
 #define IPL_ABORT	7
 
-#define splnone		spl0
-#define splsoftclock()	setipl(IPL_SOFTCLOCK)
-#define splsoftnet()	setipl(IPL_SOFTNET)
-#define splbio()	setipl(IPL_BIO)
-#define splnet()	setipl(IPL_NET)
-#define spltty()	setipl(IPL_TTY)
-#define splclock()	setipl(IPL_CLOCK)
-#define splstatclock()	setipl(IPL_STATCLOCK)
-#define splimp()	setipl(IPL_IMP)
-#define splvm()		setipl(IPL_VM)
-#define splhigh()	setipl(IPL_HIGH)
-#define splsched()	setipl(IPL_SCHED)
+#define splnone			spl0
+#define spllowersoftclock()	setipl(IPL_SOFTCLOCK)
+#define splsoftclock()		setipl(IPL_SOFTCLOCK)
+#define splsoftnet()		setipl(IPL_SOFTNET)
+#define splbio()		setipl(IPL_BIO)
+#define splnet()		setipl(IPL_NET)
+#define spltty()		setipl(IPL_TTY)
+#define splclock()		setipl(IPL_CLOCK)
+#define splstatclock()		setipl(IPL_STATCLOCK)
+#define splimp()		setipl(IPL_IMP)
+#define splvm()			setipl(IPL_VM)
+#define splhigh()		setipl(IPL_HIGH)
+#define splsched()		setipl(IPL_SCHED)
 
 #define splx(x)		((x) ? setipl((x)) : spl0())
 

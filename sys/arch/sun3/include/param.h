@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.19 2000/04/30 15:29:47 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.20 2000/07/06 15:25:04 ho Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -132,8 +132,9 @@
 #define splx(x)  _spl(x)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
-#define splsoftclock()  spl1()
-#define splsoftnet()    spl1()
+#define spllowersoftclock() spl1()
+#define splsoftclock()      spl1()
+#define splsoftnet()        spl1()
 
 /* Highest block device (strategy) IPL. */
 #define splbio()        spl2()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 2000/01/06 03:27:00 smurph Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2000/07/06 15:25:04 ho Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,16 +62,17 @@ u_long	allocate_sir __P((void (*proc)(), void *arg));
 #define	spl6()	_spl(PSL_S|PSL_IPL6)
 #define	spl7()	_spl(PSL_S|PSL_IPL7)
 
-#define	splsoftclock()	spl1()
-#define	splsoftnet()	spl1()
-#define	splbio()	spl2()
-#define	splnet()	spl3()
-#define	splimp()	spl3()
-#define	spltty()	spl3()
-#define	splclock()	spl5()
-#define	splstatclock()	spl5()
-#define	splhigh()	spl7()
-#define	splsched()	spl7()
+#define	spllowersoftclock()	spl1()
+#define	splsoftclock()		spl1()
+#define	splsoftnet()		spl1()
+#define	splbio()		spl2()
+#define	splnet()		spl3()
+#define	splimp()		spl3()
+#define	spltty()		spl3()
+#define	splclock()		spl5()
+#define	splstatclock()		spl5()
+#define	splhigh()		spl7()
+#define	splsched()		spl7()
 
 /* watch out for side effects */
 #define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
