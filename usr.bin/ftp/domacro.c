@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.7 1997/07/25 21:56:19 millert Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.8 2003/01/22 05:35:39 itojun Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: domacro.c,v 1.7 1997/07/25 21:56:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: domacro.c,v 1.8 2003/01/22 05:35:39 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ domacro(argc, argv)
 	char *argv[];
 {
 	int i, j, count = 2, loopflg = 0;
-	char *cp1, *cp2, line2[200];
+	char *cp1, *cp2, line2[FTPBUFLEN];
 	struct cmd *c;
 
 	if (argc < 2 && !another(&argc, &argv, "macro name")) {
@@ -73,7 +73,7 @@ domacro(argc, argv)
 		code = -1;
 		return;
 	}
-	(void)strcpy(line2, line);
+	(void)strlcpy(line2, line, sizeof(line2));
 TOP:
 	cp1 = macros[i].mac_start;
 	while (cp1 != macros[i].mac_end) {
@@ -94,7 +94,8 @@ TOP:
 				    }
 				    cp1--;
 				    if (argc - 2 >= j) {
-					(void)strcpy(cp2, argv[j+1]);
+					(void)strlcpy(cp2, argv[j+1],
+					    sizeof(line) - (cp2 - line));
 					cp2 += strlen(argv[j+1]);
 				    }
 				    break;
@@ -103,7 +104,8 @@ TOP:
 					loopflg = 1;
 					cp1++;
 					if (count < argc) {
-					   (void)strcpy(cp2, argv[count]);
+					   (void)strlcpy(cp2, argv[count],
+					       sizeof(line) - (cp2 - line));
 					   cp2 += strlen(argv[count]);
 					}
 					break;
@@ -141,7 +143,7 @@ TOP:
 			if (bell && c->c_bell) {
 				(void)putc('\007', ttyout);
 			}
-			(void)strcpy(line, line2);
+			(void)strlcpy(line, line2, sizeof(line));
 			makeargv();
 			argc = margc;
 			argv = margv;
