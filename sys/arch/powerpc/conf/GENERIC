@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2001/01/28 19:51:48 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.23 2001/02/04 10:07:02 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -110,24 +110,18 @@ usb*	at ohci? flags 0x1
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
-# USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
-
-# USB HID Keyboard devices
-ukbd*	at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhub? port ? configuration ? interface ?
-wsmouse*	at ums? mux 0
-
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Scanner driver
-uscanner*  at uhub? port ? configuration ? interface ?
-
-# USB Generic driver
-ugen*  at uhub? port ? configuration ? interface ?
+uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
+ukbd*	at uhub? port ? configuration ?	# USB HID Keyboard devices
+ums*	at uhub? port ? configuration ?	# USB Mice
+wsmouse* at ums? mux 0
+ulpt*	at uhub? port ? configuration ?	# USB Printer
+uscanner*  at uhub? port ?		# USB Scanner driver
+usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
+scsibus* at usscanner?
+#uyap*	at uhub? port ?			# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? # USB Generic driver
+umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+scsibus* at umass?
 
 #### Workstation Console attachments
 
