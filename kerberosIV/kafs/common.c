@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.3 1997/12/12 11:46:32 art Exp $	*/
+/*	$OpenBSD: common.c,v 1.4 1998/03/24 03:05:50 art Exp $	*/
 /* $KTH: common.c,v 1.3 1997/11/03 20:35:24 bg Exp $ */
 
 /*
@@ -217,6 +217,8 @@ _kafs_afslog_all_local_cells(kafs_data *data, uid_t uid)
     }
     find_cells(_PATH_THESECELLS, &cells, &index);
     find_cells(_PATH_THISCELL, &cells, &index);
+    find_cells(_PATH_ARLA_THESECELLS, &cells, &index);
+    find_cells(_PATH_ARLA_THISCELL, &cells, &index);
     
     ret = afslog_cells(data, cells, index, uid);
     while(index > 0) {
@@ -247,14 +249,12 @@ realm_of_cell(kafs_data *data, const char *cell, char **realm)
     char *p;
     int ret = -1;
 
-    if ((F = fopen(_PATH_CELLSERVDB, "r")))
-      {
-	while (fgets(buf, sizeof(buf), F))
-	  {
+    if ((F = fopen(_PATH_CELLSERVDB, "r"))
+	|| (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))) {
+	while (fgets(buf, sizeof(buf), F)) {
 	    if (buf[0] != '>')
 	      continue;		/* Not a cell name line, try next line */
-	    if (strncmp(buf + 1, cell, strlen(cell)) == 0)
-	      {
+	    if (strncmp(buf + 1, cell, strlen(cell)) == 0) {
 		/*
 		 * We found the cell name we're looking for.
 		 * Read next line on the form ip-address '#' hostname
