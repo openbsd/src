@@ -1,5 +1,5 @@
-/*	$OpenBSD: hash.c,v 1.4 1997/01/18 02:24:15 briggs Exp $	*/
-/*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
+/*	$OpenBSD: hash.c,v 1.5 1997/08/07 10:22:25 downsj Exp $	*/
+/*	$NetBSD: hash.c,v 1.5 1997/03/14 00:14:12 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,4 +292,28 @@ ht_lookup(ht, nam)
 		if (hp->h_name == nam)
 			return (hp->h_value);
 	return (NULL);
+}
+
+/*
+ * first parameter to callback is the entry name from the hash table
+ * second parameter is the value from the hash table
+ * third argument is passed through from the "arg" parameter to ht_enumerate()
+ */
+
+int
+ht_enumerate(ht, cbfunc, arg)
+	struct hashtab *ht;
+	ht_callback cbfunc;
+	void *arg;
+{
+	struct hashent *hp, **hpp;
+	register u_int i;
+	int rval = 0;
+
+	for (i = 0; i < ht->ht_size; i++) {
+		hpp = &ht->ht_tab[i];
+		for (; (hp = *hpp) != NULL; hpp = &hp->h_next)
+			rval += (*cbfunc)(hp->h_name, hp->h_value, arg);
+	}
+	return rval;
 }
