@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.4 2000/05/29 21:39:06 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.5 2000/06/06 01:02:26 fgsch Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -260,15 +260,16 @@ pcmcia_scan_cis(dev, fct, arg)
 				}
 				break;
 			case PCMCIA_CISTPL_LONGLINK_MFC:
-				if (tuple.length < 1) {
+				if (tuple.length < 6) {
 					DPRINTF(("CISTPL_LONGLINK_MFC too "
 					    "short %d\n", tuple.length));
 					break;
 				}
-				/*
-				 * this is kind of ad hoc, as I don't have
-				 * any real documentation
-				 */
+				if (((tuple.length - 1) % 5) != 0) {
+					DPRINTF(("CISTPL_LONGLINK_MFC bogus "
+					    "length %d\n", tuple.length));
+					break;
+				}
 				{
 					int i;
 
@@ -450,7 +451,8 @@ pcmcia_print_cis(sc)
 		else if (card->cis1_minor == 1)
 			printf("PCMCIA 2.0 or 2.1\n");
 	} else if (card->cis1_major >= 5)
-		printf("PC Card Standard %d.%d\n", card->cis1_major, card->cis1_minor);
+		printf("PC Card Standard %d.%d\n", card->cis1_major,
+		    card->cis1_minor);
 	else
 		printf("unknown (major=%d, minor=%d)\n",
 		    card->cis1_major, card->cis1_minor);
@@ -508,6 +510,9 @@ pcmcia_print_cis(sc)
 			break;
 		case PCMCIA_FUNCTION_INSTRUMENT:
 			printf("Instrument");
+			break;
+		case PCMCIA_FUNCTION_IOBUS:
+			printf("Serial I/O Bus Adapter");
 			break;
 		default:
 			printf("unknown (%d)", pf->function);
@@ -766,7 +771,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		break;
 
 	case PCMCIA_CISTPL_FUNCID:
-		if (tuple->length < 1) {
+		if (tuple->length < 2) {
 			DPRINTF(("CISTPL_FUNCID too short %d\n",
 			    tuple->length));
 			break;
@@ -812,7 +817,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		break;
 
 	case PCMCIA_CISTPL_CONFIG:
-		if (tuple->length < 3) {
+		if (tuple->length < 5) {
 			DPRINTF(("CISTPL_CONFIG too short %d\n",
 			    tuple->length));
 			break;
@@ -872,7 +877,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		break;
 
 	case PCMCIA_CISTPL_CFTABLE_ENTRY:
-		{
+		if (tuple->length < 2) {
+			DPRINTF(("CISTPL_CFTABLE_ENTRY too short %d\n",
+			    tuple->length));
+			break;
+		} {
 			int idx, i, j;
 			u_int reg, reg2;
 			u_int intface, def, num;
@@ -957,6 +966,10 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			if (intface) {
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
+				cfe->flags &= ~(PCMCIA_CFE_MWAIT_REQUIRED
+				    | PCMCIA_CFE_RDYBSY_ACTIVE
+				    | PCMCIA_CFE_WP_ACTIVE
+				    | PCMCIA_CFE_BVD_ACTIVE);
 				if (reg & PCMCIA_TPCE_IF_MWAIT)
 					cfe->flags |= PCMCIA_CFE_MWAIT_REQUIRED;
 				if (reg & PCMCIA_TPCE_IF_RDYBSY)
@@ -1164,8 +1177,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					reg = pcmcia_tuple_read_1(tuple, idx);
 					idx++;
 
-					cfe->num_memspace = reg &
-					    PCMCIA_TPCE_MS_COUNT;
+					cfe->num_memspace = (reg &
+					    PCMCIA_TPCE_MS_COUNT) + 1;
 
 					if (cfe->num_memspace >
 					    (sizeof(cfe->memspace) /
