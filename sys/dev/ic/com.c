@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.76 2001/10/05 21:01:10 mickey Exp $	*/
+/*	$OpenBSD: com.c,v 1.77 2002/01/23 06:45:32 ericj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ com_attach_subr(sc)
 	 * the kgdb device, it has exclusive use.
 	 */
 
-	if (iot == com_kgdb_iot && iobase == com_kgdb_addr &&
+	if (iot == com_kgdb_iot && sc->sc_iobase == com_kgdb_addr &&
 	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
 		SET(sc->sc_hwflags, COM_HW_KGDB);
