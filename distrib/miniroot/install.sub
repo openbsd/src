@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.214 2002/04/29 01:38:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.215 2002/04/29 01:49:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1773,7 +1773,8 @@ __EOT
 			# don't necessarily have to come from the same media.
 			ask "\nExtract more sets?" n
 			case $resp in
-			y*|Y*)	# Force loop to repeat
+			y*|Y*)	
+				# Force loop to repeat
 				resp=
 				;;
 			esac
@@ -2100,7 +2101,7 @@ finish_up() {
 	exit 0
 }
 
-########################################################################
+# #######################################################################
 #
 # Initial actions common to both installs and upgrades.
 #
@@ -2108,7 +2109,7 @@ finish_up() {
 # call functions defined above, so it's safest to put this
 # code here rather than at the top of the file.
 #
-########################################################################
+# #######################################################################
 
 ROOTDISK=
 VERSION=31
