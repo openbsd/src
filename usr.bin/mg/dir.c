@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.9 2002/07/01 14:33:44 vincent Exp $	*/
+/*	$OpenBSD: dir.c,v 1.10 2004/03/05 22:02:18 vincent Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -19,8 +19,11 @@ static char	cwd[NFILEN];
 void
 dirinit(void)
 {
-	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
-		panic("Can't get current directory!");
+	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL) {
+		ewprintf("Can't get current directory!");
+		chdir("/");
+		strlcpy(cwd, "/", sizeof(cwd));
+	}
 }
 
 /*
