@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.32 1998/11/13 22:24:17 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.33 1998/12/26 12:35:11 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ ip_init()
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
-	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
 

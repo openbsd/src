@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.20 1998/07/29 22:18:49 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.21 1998/12/26 12:35:11 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -224,8 +224,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo->ip_hl = 5;
     ipo->ip_tos = ipi->ip_tos;
     ipo->ip_len = htons(ilen + sizeof(struct ip));
-/*  ipo->ip_id = htons(ip_id++); */
-    get_random_bytes((void *) &(ipo->ip_id), sizeof(ipo->ip_id));
+    ipo->ip_id = htons(ip_randomid());
     ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* keep C and DF */
 
     if (tdb->tdb_flags & TDBF_SAME_TTL)

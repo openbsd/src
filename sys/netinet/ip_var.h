@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.8 1998/02/14 18:50:36 mickey Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.9 1998/12/26 12:35:12 provos Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ struct	ipstat {
 
 struct	  ipstat ipstat;
 LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
-u_int16_t ip_id;			/* ip packet ctr, for ids */
 int	  ip_defttl;			/* default IP ttl */
 
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
@@ -181,6 +180,8 @@ struct in_ifaddr *
 	 in_iawithaddr __P((struct in_addr, struct mbuf *));
 struct in_ifaddr *
 	 ip_rtaddr __P((struct in_addr));
+u_int16_t	
+	 ip_randomid __P((void));
 int	 ip_setmoptions __P((int, struct ip_moptions **, struct mbuf *));
 void	 ip_slowtimo __P((void));
 struct mbuf *
