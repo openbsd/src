@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2002/04/29 07:35:18 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.15 2002/05/22 18:43:45 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -112,7 +112,22 @@ static __inline int spllower(int);
 static __inline void softintr(int);
 
 /* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define splassert(wantipl) do { /* nada */ } while (0)
+#endif
 
 /*
  * Raise current interrupt priority level, and return the old one.

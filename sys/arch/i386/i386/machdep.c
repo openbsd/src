@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.207 2002/05/18 19:39:01 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.208 2002/05/22 18:43:45 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3389,6 +3389,16 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 
 	return (0);
 }
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	if (cpl < wantipl) {
+		splassert_fail(wantipl, cpl, func);
+	}
+}
+#endif
 
 /* If SMALL_KERNEL this results in an out of line definition of splx.  */
 SPLX_OUTLINED_BODY
