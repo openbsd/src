@@ -1,5 +1,5 @@
-/*	$OpenBSD: zs.c,v 1.4 1996/06/09 03:17:48 briggs Exp $	*/
-/*	$NetBSD: zs.c,v 1.5 1996/06/09 04:27:59 briggs Exp $	*/
+/*	$OpenBSD: zs.c,v 1.5 1996/10/13 15:29:09 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.10 1996/10/13 03:21:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -185,7 +185,7 @@ static u_char zs_init_reg[16] = {
 /* Definition of the driver for autoconfig. */
 static int	zsc_match __P((struct device *, void *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
-static int	zsc_print __P((void *aux, char *name));
+static int	zsc_print __P((void *aux, const char *name));
 
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
@@ -214,7 +214,7 @@ zsc_match(parent, vcf, aux)
 static int
 zsc_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct zsc_attach_args *args = aux;
 
@@ -678,7 +678,10 @@ zscninit(struct consdev * cp)
         mac68k_set_io_offsets(IOBase);
 	zs_conschan = (struct zschan *) -1;
 	zs_consunit = chan;
-	zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE | ZS_HWFLAG_CONABRT;
+	zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE;
+#ifdef ZS_CONSOLE_ABORT
+	zs_hwflags[0][zs_consunit] |= ZS_HWFLAG_CONABRT;
+#endif
 	zs_init();
         /*
 	 * zsinit will set up the addresses of the scc. It will also, if
@@ -783,6 +786,9 @@ zs_abort(zst)
 	register volatile struct zschan *zc = zs_conschan;
 	int rr0;
 	register long wait = 0;
+
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONABRT) == 0)
+		return;
 
 	/* Wait for end of break to avoid PROM abort. */
 	/* XXX - Limit the wait? */
