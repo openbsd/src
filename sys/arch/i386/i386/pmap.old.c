@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.13 1996/09/26 14:04:27 deraadt Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.14 1996/10/18 15:33:08 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -191,6 +191,9 @@ __inline void pmap_remove_pv __P((pmap_t, vm_offset_t, u_int));
 __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int));
 void pmap_deactivate __P((pmap_t, struct pcb *));
 void pmap_remove_all __P((vm_offset_t));
+void pads __P((pmap_t pm));
+void pmap_dump_pvlist __P((vm_offset_t phys, char *m));
+void pmap_pvdump __P((vm_offset_t pa));
 
 #if BSDVM_COMPAT
 #include <sys/msgbuf.h>
@@ -1702,6 +1705,7 @@ pmap_changebit(pa, setbits, maskbits)
 }
 
 #ifdef DEBUG
+void
 pmap_pvdump(pa)
 	vm_offset_t pa;
 {
@@ -1716,6 +1720,7 @@ pmap_pvdump(pa)
 }
 
 #ifdef notyet
+void
 pmap_check_wiring(str, va)
 	char *str;
 	vm_offset_t va;
@@ -1743,6 +1748,7 @@ pmap_check_wiring(str, va)
 #endif
 
 /* print address space of pmap*/
+void
 pads(pm)
 	pmap_t pm;
 {
