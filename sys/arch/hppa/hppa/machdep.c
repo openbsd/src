@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.94 2003/01/09 22:27:09 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.95 2003/01/13 19:53:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -406,12 +406,13 @@ hppa_init(start)
 	avail_end = ctob(totalphysmem);
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
-	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
-	    !pdc_hwtlb.min_size && !pdc_hwtlb.max_size) {
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
+	    pdc_hwtlb.min_size && pdc_hwtlb.max_size)
+		cpu_features |= HPPA_FTRS_HVT;
+	else {
 		printf("WARNING: no HPT support, fine!\n");
 		pmap_hptsize = 0;
-	} else
-		cpu_features |= HPPA_FTRS_HVT;
+	}
 #endif
 
 	/*
