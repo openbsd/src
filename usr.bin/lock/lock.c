@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.18 2002/08/04 01:08:54 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.19 2002/08/15 21:49:40 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.18 2002/08/04 01:08:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.19 2002/08/15 21:49:40 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	lc = login_getclass(pw->pw_class);
 	
 	while ((ch = getopt(argc, argv, "a:npt:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			if (lc) {
 				style = login_getstyle(lc, optarg, "auth-lock");
