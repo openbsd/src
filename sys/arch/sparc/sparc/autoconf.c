@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.58 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.59 2003/06/23 09:23:31 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -136,6 +136,14 @@ LIST_HEAD(, mountroot_hook) mrh_list;
 #ifdef RAMDISK_HOOKS
 static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
 #endif
+
+/* Translate SBus interrupt level to processor IPL */
+int	intr_sbus2ipl_4c[] = {
+	0, 1, 2, 3, 5, 7, 8, 9
+};
+int	intr_sbus2ipl_4m[] = {
+	0, 2, 3, 5, 7, 9, 11, 13
+};
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -981,7 +989,7 @@ romprop(rp, cp, node)
 	const char *cp;
 	register int node;
 {
-	register int len;
+	int len, n;
 	union { char regbuf[256]; struct rom_reg rr[RA_MAXREG]; } u;
 	static const char pl[] = "property length";
 
@@ -1020,6 +1028,32 @@ romprop(rp, cp, node)
 	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
 	if (len == -1)
 		len = 0;
+
+	/*
+	 * Some SBus cards only provide an "interrupts" properly, listing
+	 * SBus levels. But since obio devices will usually also provide
+	 * both properties, only check for "interrupts" last.
+	 */
+	if (len == 0) {
+		u_int32_t *interrupts;
+		len = getproplen(node, "interrupts");
+		if (len > 0 &&
+		    (interrupts = malloc(len, M_TEMP, M_NOWAIT)) != NULL) {
+			/* Build rom_intr structures from the list */
+			getprop(node, "interrupts", interrupts, len);
+			len /= sizeof(u_int32_t);
+			for (n = 0; n < len; n++) {
+				rp->ra_intr[n].int_pri = CPU_ISSUN4M ?
+				    intr_sbus2ipl_4m[interrupts[n]] :
+				    intr_sbus2ipl_4c[interrupts[n]];
+				rp->ra_intr[n].int_vec = 0;
+			};
+			len *= sizeof(struct rom_intr);
+			free(interrupts, M_TEMP);
+		} else
+			len = 0;
+	}
+
 	if (len & 7) {
 		printf("%s \"intr\" %s = %d (need multiple of 8)\n",
 		    cp, pl, len);
@@ -1037,7 +1071,6 @@ romprop(rp, cp, node)
 		if (CPU_ISSUN4M) {
 			/* What's in these high bits anyway? */
 			rp->ra_intr[len].int_pri &= 0xf;
-			/* Look at "interrupts" property too? */
 		}
 #endif
 
