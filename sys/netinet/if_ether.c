@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.32 2001/06/09 06:14:11 angelos Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.33 2001/07/08 12:31:12 niklas Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -76,10 +76,10 @@ int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
 int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 #define	rt_expire rt_rmx.rmx_expire
 
-static	void arptfree __P((struct llinfo_arp *));
+void arptfree __P((struct llinfo_arp *));
 void arptimer __P((void *));
-static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
-static	void in_arpinput __P((struct mbuf *));
+struct llinfo_arp *arplookup __P((u_int32_t, int, int));
+void in_arpinput __P((struct mbuf *));
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
@@ -97,10 +97,10 @@ struct ifnet *myip_ifp = NULL;
 #ifdef DDB
 #include <vm/vm.h>
 
-static void db_print_sa __P((struct sockaddr *));
-static void db_print_ifa __P((struct ifaddr *));
-static void db_print_llinfo __P((caddr_t));
-static int db_show_radix_node __P((struct radix_node *, void *));
+void	db_print_sa __P((struct sockaddr *));
+void	db_print_ifa __P((struct ifaddr *));
+void	db_print_llinfo __P((caddr_t));
+int	db_show_radix_node __P((struct radix_node *, void *));
 #endif
 
 /*
@@ -441,7 +441,7 @@ arpintr()
  * We no longer reply to requests for ETHERTYPE_TRAIL protocol either,
  * but formerly didn't normally send requests.
  */
-static void
+void
 in_arpinput(m)
 	struct mbuf *m;
 {
@@ -596,7 +596,7 @@ reply:
 /*
  * Free an arp entry.
  */
-static void
+void
 arptfree(la)
 	register struct llinfo_arp *la;
 {
@@ -619,7 +619,7 @@ arptfree(la)
 /*
  * Lookup or enter a new address in arptab.
  */
-static struct llinfo_arp *
+struct llinfo_arp *
 arplookup(addr, create, proxy)
 	u_int32_t addr;
 	int create, proxy;
@@ -846,7 +846,7 @@ revarpwhoami(in, ifp)
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-static void
+void
 db_print_sa(sa)
 	struct sockaddr *sa;
 {
@@ -871,7 +871,7 @@ db_print_sa(sa)
 	db_printf("]\n");
 }
 
-static void
+void
 db_print_ifa(ifa)
 	struct ifaddr *ifa;
 {
@@ -887,7 +887,7 @@ db_print_ifa(ifa)
 	    ifa->ifa_flags, ifa->ifa_refcnt, ifa->ifa_metric);
 }
 
-static void
+void
 db_print_llinfo(li)
 	caddr_t li;
 {
@@ -904,7 +904,7 @@ db_print_llinfo(li)
  * Function to pass to rn_walktree().
  * Return non-zero error to abort walk.
  */
-static int
+int
 db_show_radix_node(rn, w)
 	struct radix_node *rn;
 	void *w;
