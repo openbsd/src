@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2000/06/08 22:25:19 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2001/02/08 00:46:35 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -341,12 +341,12 @@ int
 kvtop(addr)
 	register caddr_t addr;
 {
-	vm_offset_t va;
+	vm_offset_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (va == 0)
+	pa = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+	if (pa == 0)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
