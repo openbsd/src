@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.6 1999/11/09 00:20:42 rahnds Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.7 2000/09/07 03:30:10 rahnds Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -145,6 +145,43 @@ OF_getprop(handle, prop, buf, buflen)
 		ofbcopy(OF_buf, buf, args.size);
 	return args.size;
 }
+
+int
+OF_interpret(char *cmd, int nreturns, ...)
+{
+	va_list ap;
+	int i;
+	static struct {
+		char *name;  
+		int nargs;
+		int nreturns;
+		char *cmd; 
+		int status;
+		int results[8];
+	} args = {
+		"interpret",
+		1,
+		2,
+	};
+
+	ofw_stack();
+	if (nreturns > 8)
+		return -1;
+	if ((i = strlen(cmd)) >= NBPG)
+		return -1;
+	ofbcopy(cmd, OF_buf, i + 1);
+	args.cmd = OF_buf;
+	args.nargs = 1;
+	args.nreturns = nreturns + 1;
+	if (openfirmware(&args) == -1)
+		return -1;
+	va_start(ap, nreturns);
+	for (i = 0; i < nreturns; i++)
+		*va_arg(ap, int *) = args.results[i];
+	va_end(ap);
+	return args.status;
+}
+
 
 int
 OF_finddevice(name)
