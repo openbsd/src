@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.156 2004/06/26 06:43:14 alex Exp $
+#	$OpenBSD: files.pci,v 1.157 2004/07/28 17:15:12 tholo Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -505,3 +505,8 @@ file dev/pci/if_san_common.c 	san
 file dev/pci/if_san_obsd.c 	san
 file dev/pci/if_san_te1.c 	san
 file dev/pci/if_san_xilinx.c 	san
+
+# PIIX4 power management controller
+device	piixpm {}
+attach	piixpm at pci
+file	dev/pci/piixpm.c		piixpm

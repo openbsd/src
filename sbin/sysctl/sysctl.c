@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.113 2004/04/15 00:23:17 tedu Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.114 2004/07/28 17:15:12 tholo Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.113 2004/04/15 00:23:17 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.114 2004/07/28 17:15:12 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,7 @@ struct ctlname ttyname[] = CTL_KERN_TTY_NAMES;
 struct ctlname semname[] = CTL_KERN_SEMINFO_NAMES;
 struct ctlname shmname[] = CTL_KERN_SHMINFO_NAMES;
 struct ctlname watchdogname[] = CTL_KERN_WATCHDOG_NAMES;
+struct ctlname tcname[] = CTL_KERN_TIMECOUNTER_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -207,6 +208,7 @@ int sysctl_malloc(char *, char **, int *, int, int *);
 int sysctl_seminfo(char *, char **, int *, int, int *);
 int sysctl_shminfo(char *, char **, int *, int, int *);
 int sysctl_watchdog(char *, char **, int *, int, int *);
+int sysctl_tc(char *, char **, int *, int, int *);
 int sysctl_sensors(char *, char **, int *, int, int *);
 int sysctl_emul(char *, char *, int);
 #ifdef CPU_CHIPSET
@@ -430,6 +432,12 @@ parse(char *string, int flags)
 			break;
 		case KERN_WATCHDOG:
 			len = sysctl_watchdog(string, &bufp, mib, flags,
+			    &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_TIMECOUNTER:
+			len = sysctl_tc(string, &bufp, mib, flags,
 			    &type);
 			if (len < 0)
 				return;
@@ -1417,6 +1425,7 @@ struct list ttylist = { ttyname, KERN_TTY_MAXID };
 struct list semlist = { semname, KERN_SEMINFO_MAXID };
 struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
 struct list watchdoglist = { watchdogname, KERN_WATCHDOG_MAXID };
+struct list tclist = { tcname, KERN_TIMECOUNTER_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -1971,6 +1980,26 @@ sysctl_watchdog(char *string, char **bufpp, int mib[], int flags,
 		return (-1);
 	mib[2] = indx;
 	*typep = watchdoglist.list[indx].ctl_type;
+	return (3);
+}
+
+/*
+ * Handle timecounter support
+ */
+int
+sysctl_tc(char *string, char **bufpp, int mib[], int flags,
+    int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &tclist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &tclist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = tclist.list[indx].ctl_type;
 	return (3);
 }
 

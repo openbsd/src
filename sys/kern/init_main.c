@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.118 2004/07/20 20:19:52 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.119 2004/07/28 17:15:12 tholo Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -423,11 +423,15 @@ main(framep)
 	 * from the file system.  Reset p->p_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
+#ifdef __HAVE_TIMECOUNTER
+	microtime(&boottime);
+#else
+	boottime = mono_time = time;	
+#endif
+	p->p_stats->p_start = boottime;	
 #ifdef __HAVE_CPUINFO
-	p->p_stats->p_start = mono_time = boottime = time;
 	microuptime(&p->p_cpu->ci_schedstate.spc_runtime);
 #else
-	p->p_stats->p_start = runtime = mono_time = boottime = time;	
 	microuptime(&runtime);
 #endif
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.117 2004/06/28 01:34:46 aaron Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.118 2004/07/28 17:15:12 tholo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -62,6 +62,9 @@
 #include <sys/exec.h>
 #include <sys/mbuf.h>
 #include <sys/sensors.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 #ifdef __HAVE_EVCOUNT
 #include <sys/evcount.h>
 #endif
@@ -284,6 +287,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		case KERN_EMUL:
 #ifdef __HAVE_EVCOUNT
 		case KERN_EVCOUNT:
+#endif
+#ifdef __HAVE_TIMECOUNTER
+		case KERN_TIMECOUNTER:
 #endif
 			break;
 		default:
@@ -526,6 +532,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #ifdef __HAVE_EVCOUNT
 	case KERN_EVCOUNT:
 		return (evcount_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#ifdef __HAVE_TIMECOUNTER
+	case KERN_TIMECOUNTER:
+		return (sysctl_tc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.3 2002/11/04 17:12:34 fgsch Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.4 2004/07/28 17:15:12 tholo Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -48,6 +51,23 @@
 
 #include <dev/rndvar.h>
 #include <dev/pci/amdpmreg.h>
+
+#ifdef __HAVE_TIMECOUNTER
+unsigned amdpm_get_timecount(struct timecounter *tc);
+
+#ifndef AMDPM_FREQUENCY
+#define AMDPM_FREQUENCY 3579545
+#endif
+
+static struct timecounter amdpm_timecounter = {
+	amdpm_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffff,		/* counter_mask */
+	AMDPM_FREQUENCY,	/* frequency */
+	"AMDPM",		/* name */
+	1000			/* quality */
+};
+#endif
 
 struct amdpm_softc {
 	struct device sc_dev;
@@ -90,7 +110,8 @@ amdpm_match(struct device *parent, void *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_766_PMC))
 		return (1);
 	return (0);
 }
@@ -101,15 +122,15 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
 	struct timeval tv1, tv2;
-	pcireg_t reg;
+	pcireg_t cfg_reg, reg;
 	int i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	if ((reg & AMDPM_PMIOEN) == 0) {
+	cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+	if ((cfg_reg & AMDPM_PMIOEN) == 0) {
 		printf(": PMxx space isn't enabled\n");
 		return;
 	}
@@ -120,8 +141,22 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	if (reg & AMDPM_RNGEN) {
+#ifdef __HAVE_TIMECOUNTER
+	if ((cfg_reg & AMDPM_TMRRST) == 0 &&
+	    (cfg_reg & AMDPM_STOPTMR) == 0 &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC) {
+		printf(": %d-bit timer at %dHz",
+		    (cfg_reg & AMDPM_TMR32) ? 32 : 24,
+		    amdpm_timecounter.tc_frequency);
+
+		amdpm_timecounter.tc_priv = sc;
+		if (cfg_reg & AMDPM_TMR32)
+			amdpm_timecounter.tc_counter_mask = 0xffffffffu;
+		tc_init(&amdpm_timecounter);
+	}
+#endif
+
+	if (cfg_reg & AMDPM_RNGEN) {
 		/* Check to see if we can read data from the RNG. */
 		(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    AMDPM_RNGDATA);
@@ -155,6 +190,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, sc);
 		amdpm_rnd_callout(sc);
 	}
+
+	printf("\n");
 }
 
 void
@@ -179,3 +216,26 @@ amdpm_rnd_callout(void *v)
 		AMDPM_RNDCNT_INCR(&sc->sc_rnd_miss);
 	timeout_add(&sc->sc_rnd_ch, 1);
 }
+
+#ifdef __HAVE_TIMECOUNTER
+unsigned
+amdpm_get_timecount(struct timecounter *tc)
+{
+	struct amdpm_softc *sc = tc->tc_priv;
+	unsigned u2;
+#if 0
+	unsigned u1, u3;
+#endif
+
+	u2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_TMR);
+#if 0
+	u3 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_TMR);
+	do {
+		u1 = u2;
+		u2 = u3;
+		u3 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_TMR);
+	} while (u1 > u2 || u2 > u3);
+#endif
+	return (u2);
+}
+#endif

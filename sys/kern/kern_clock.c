@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.46 2004/06/24 19:35:24 tholo Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.47 2004/07/28 17:15:12 tholo Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -49,6 +49,9 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/sched.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <machine/cpu.h>
 
@@ -101,10 +104,12 @@ int	profprocs;
 int	ticks;
 static int psdiv, pscnt;		/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
-int	tickfix, tickfixinterval;	/* used if tick not really integral */
-static int tickfixcnt;			/* accumulated fractional error */
 
 long cp_time[CPUSTATES];
+
+#ifndef __HAVE_TIMECOUNTER
+int	tickfix, tickfixinterval;	/* used if tick not really integral */
+static int tickfixcnt;			/* accumulated fractional error */
 
 volatile time_t time_second;
 volatile time_t time_uptime;
@@ -112,6 +117,7 @@ volatile time_t time_uptime;
 volatile struct	timeval time
 	__attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
+#endif
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	*softclock_si;
@@ -135,6 +141,9 @@ void
 initclocks()
 {
 	int i;
+#ifdef __HAVE_TIMECOUNTER
+	extern void inittimecounter(void);
+#endif
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softclock_si = softintr_establish(IPL_SOFTCLOCK, generic_softclock, NULL);
@@ -156,6 +165,9 @@ initclocks()
 	if (profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
+#ifdef __HAVE_TIMECOUNTER
+	inittimecounter();
+#endif
 }
 
 /*
@@ -165,11 +177,13 @@ void
 hardclock(struct clockframe *frame)
 {
 	struct proc *p;
+#ifndef __HAVE_TIMECOUNTER
 	int delta;
 	extern int tickdelta;
 	extern long timedelta;
 #ifdef __HAVE_CPUINFO
 	struct cpu_info *ci = curcpu();
+#endif
 #endif
 
 	p = curproc;
@@ -189,6 +203,7 @@ hardclock(struct clockframe *frame)
 			psignal(p, SIGPROF);
 	}
 
+#ifndef __HAVE_TIMECOUNTER
 	/*
 	 * If no separate statistics clock is available, run it from here.
 	 */
@@ -216,6 +231,7 @@ hardclock(struct clockframe *frame)
 	 * ``tickdelta'' may also be added in.
 	 */
 	ticks++;
+
 	delta = tick;
 
 	if (tickfix) {
@@ -231,14 +247,13 @@ hardclock(struct clockframe *frame)
 		timedelta -= tickdelta;
 	}
 
-#ifdef notyet
-	microset();
-#endif
-
 	BUMPTIME(&time, delta);
 	BUMPTIME(&mono_time, delta);
 	time_second = time.tv_sec;
 	time_uptime = mono_time.tv_sec;
+#else
+	tc_ticktock();
+#endif
 
 #ifdef CPU_CLOCKUPDATE
 	CPU_CLOCKUPDATE();
@@ -539,6 +554,7 @@ sysctl_clockrate(where, sizep)
 	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
 }
 
+#ifndef __HAVE_TIMECOUNTER
 /*
  * Placeholders until everyone uses the timecounters code.
  * Won't improve anything except maybe removing a bunch of bugs in fixed code.
@@ -609,3 +625,4 @@ getmicrouptime(struct timeval *tvp)
 	*tvp = mono_time;
 	splx(s);
 }
+#endif /* __HAVE_TIMECOUNTERS */

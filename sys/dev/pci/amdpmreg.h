@@ -40,9 +40,12 @@
 
 /* 0x40: General Configuration 1 Register */
 #define	AMDPM_RNGEN	0x00000080	/* random number generator enable */
+#define	AMDPM_STOPTMR	0x00000040	/* stop free-running timer */
 
 /* 0x41: General Configuration 2 Register */
 #define	AMDPM_PMIOEN	0x00008000	/* system management IO space enable */
+#define	AMDPM_TMRRST	0x00004000	/* reset free-running timer */
+#define	AMDPM_TMR32	0x00000800	/* extended (32 bit) timer enable */
 
 /* 0x42: SCI Interrupt Configuration Register */
 /* 0x43: Previous Power State Register */
@@ -53,6 +56,8 @@
 #define	AMDPM_PMSIZE	256		/* PMxx space size */
 
 /* Registers in PMxx space */
+#define	AMDPM_TMR	0x08		/* 24/32 bit timer register */
+
 #define	AMDPM_RNGDATA	0xf0		/* 32 bit random data register */
 #define	AMDPM_RNGSTAT	0xf4		/* RNG status register */
 #define	AMDPM_RNGDONE	0x00000001	/* Random number generation complete */

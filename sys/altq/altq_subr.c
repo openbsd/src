@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.18 2004/06/24 19:35:22 tholo Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.19 2004/07/28 17:15:12 tholo Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -744,6 +744,14 @@ init_machclk(void)
 	machclk_usepcc = 0;
 #endif
 #if defined(__NetBSD__) && defined(MULTIPROCESSOR)
+	machclk_usepcc = 0;
+#endif
+#if defined(__OpenBSD__) && defined(__HAVE_TIMECOUNTER)
+	/*
+	 * If we have timecounters, microtime is good enough and we can
+	 * avoid problems on machines with variable cycle counter
+	 * frequencies.
+	 */
 	machclk_usepcc = 0;
 #endif
 #ifdef __i386__

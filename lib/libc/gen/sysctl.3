@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.139 2004/06/03 17:09:12 espie Exp $
+.\"	$OpenBSD: sysctl.3,v 1.140 2004/07/28 17:15:12 tholo Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -385,6 +385,7 @@ information.
 .It Dv KERN_SYSVMSG No "	integer	no"
 .It Dv KERN_SYSVSEM No "	integer	no"
 .It Dv KERN_SYSVSHM No "	integer	no"
+.It Dv KERN_TIMECOUNTER No "	node	not applicable"
 .It Dv KERN_TTY No "	node	not applicable"
 .It Dv KERN_TTYCOUNT No "	integer	no"
 .It Dv KERN_USERASYMCRYPTO No "	integer	yes"
@@ -836,6 +837,33 @@ system, otherwise 0.
 .It Dv KERN_SYSVSHM
 Returns 1 if System V style share memory functionality is available on this
 system, otherwise 0.
+.It Dv KERN_TIMECOUNTER
+Return statistics information about the kernel time counter.
+The third level names information is detailed below.
+The changeable column shows whether a process with appropriate
+privileges may change the value.
+.Bl -column "KERN_TIMECOUNTER_TIMESTEPWARNINGS" "integer" -offset indent
+.It Sy Third level name	Type	Changeable
+.It Dv KERN_TIMECOUNTER_CHOICE No "	string	no"
+.It Dv KERN_TIMECOUNTER_HARDWARE No "	string	yes"
+.It Dv KERN_TIMECOUNTER_TICK No "	integer	no"
+.It Dv KERN_TIMECOUNTER_TIMESTEPWARNINGS No "	integer	no"
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_TIMECOUNTER_CHOICE
+Get the list of kernel time counter sources and their claimed
+quality (higher is better).
+.It Dv KERN_TIMECOUNTER_HARDWARE
+Get or set the kernel time counter source by name.
+.It Dv KERN_TIMECOUNTER_TICK
+Get the number of times we have reset the kernel time counter
+information.
+.It Dv KERN_TIMECOUNTER_TIMESTEPWARNINGS
+Get or set a flag to log a message when the kernel time is
+stepped.
+.El
 .It Dv KERN_TTY
 Return statistics information about tty input/output.
 The third level names information is detailed below.
