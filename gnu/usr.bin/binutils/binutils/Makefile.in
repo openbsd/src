@@ -112,7 +112,7 @@ MANPAGES= ar nm objdump ranlib size strings strip objcopy nlmconv
 # want them installed.
 INSTALL_MAN = install-man
 
-PROGS = $(SIZE_PROG) $(OBJDUMP_PROG) $(NM_PROG) $(AR_PROG) $(STRINGS_PROG) $(STRIP_PROG) $(RANLIB_PROG) $(DEMANGLER_PROG) $(OBJCOPY_PROG) @BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@
+PROGS = $(SIZE_PROG) $(OBJDUMP_PROG) $(NM_PROG) $(AR_PROG) $(STRINGS_PROG) $(STRIP_PROG) $(RANLIB_PROG) $(OBJCOPY_PROG) @BUILD_NLMCONV@ @BUILD_SRCONV@ @BUILD_DLLTOOL@
 STAGESTUFF = $(PROGS) *.o
 # Files that can be generated, but should be in the distribution.
 # Don't build $(DEMANGLER_PROG).1, since its name may vary with the
@@ -368,7 +368,7 @@ sysinfo.o: sysinfo.c
 srconv: srconv.o coffgrok.o $(ADDL_DEPS)
 	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ srconv.o coffgrok.o $(ADDL_LIBS) $(EXTRALIBS)
 
-dlltool: dlltool.o defparse.o deflex.o cplus-dem.o $(ADDL_DEPS)
+dlltool: dlltool.o defparse.o deflex.o $(ADDL_DEPS)
 	$(HLDENV) $(CC) $(HLDFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ dlltool.o defparse.o deflex.o $(ADDL_LIBS) $(EXTRALIBS)
 
 defparse.c:defparse.y
