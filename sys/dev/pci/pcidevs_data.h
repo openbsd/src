@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.520 2002/06/06 20:50:16 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.522 2002/06/11 05:40:39 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -895,6 +895,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mach32",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_BB,
+	    "Radeon 8500 BB",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
 	    "Mach64 CT",
 	},
@@ -919,8 +923,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mach64 GI",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GL,
+	    "Mach64 GL",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GM,
 	    "Mach64 GM",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GN,
+	    "Mach64 GN",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GO,
+	    "Mach64 GO",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
@@ -933,6 +949,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEXL,
 	    "Rage XL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GS,
+	    "Mach64 GS",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
@@ -971,6 +991,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mach64 LD",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_LE,
+	    "Rage128 LE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3,
 	    "Mobility M3",
 	},
@@ -987,16 +1011,48 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mobility 1",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LN,
+	    "Mach64 LN",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
 	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LQ,
+	    "Mach64 LQ",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PM,
 	    "Rage P/M",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64LS,
+	    "Mach64 LS",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M7LW,
+	    "Radeon Mobility M7 LW",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6LY,
 	    "Radeon Mobility M6 LY",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6LZ,
+	    "Radeon Mobility M6 LZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_MF,
+	    "Rage 128 Mobility MF",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_ML,
+	    "Rage 128 Mobility ML",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PD,
+	    "Rage 128 Pro PD",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
@@ -1011,12 +1067,60 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AIW Radeon",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QE,
+	    "Radeon QE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QF,
+	    "Radeon QF",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QG,
+	    "Radeon QG",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QL,
+	    "Radeon 8500 QL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QN,
+	    "Radeon 8500 QN",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_QO,
+	    "Radeon 8500 QO",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV200_QW,
+	    "Radeon 7500 QW",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QY,
+	    "Radeon VE QY",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QZ,
+	    "Radeon VE QZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_Ql,
+	    "Radeon 8500 Ql",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_GL,
 	    "Rage 128 GL",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,
 	    "Rage Magnum",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_RG,
+	    "Rage 128 RG",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_RK,
+	    "Rage 128 RK",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_VR,
@@ -1044,7 +1148,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_TF,
-	    "Rage 128 TF",
+	    "Rage 128 Pro TF",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_TL,
+	    "Rage 128 Pro TL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_TR,
+	    "Rage 128 Pro TR",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
@@ -3039,8 +3151,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA 1064SG",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G400_TH,
+	    "MGA G400 Twin Head",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G550_AGP,
 	    "MGA G550 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_G200_SD,
+	    "MGA Millennium G200 SD",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PROD_G100_SD,
+	    "MGA Produktiva G100 SD",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYST_G200_SD,
+	    "MGA Mystique G200 SD",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_G200_SG,
+	    "MGA Millennium G200 SG",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MARV_G200_SD,
+	    "MGA Marvel G200 SD",
 	},
 	{
 	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_GUI,
@@ -3503,12 +3639,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Vanta",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ITNT2,
+	    "Aladdin TNT2",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256,
 	    "GeForce256",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256_DDR,
 	    "GeForce256 DDR",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADOR,
+	    "Quadro",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX,
@@ -3523,12 +3667,68 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce2 Go",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2_MXR,
+	    "Quadro2 MXR",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GTS,
 	    "GeForce2 GTS",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2TI,
+	    "GeForce2 Ti",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2ULTRA,
 	    "GeForce2 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2PRO,
+	    "Quadro2 Pro",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MX460,
+	    "GeForce4 MX 460",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MX440,
+	    "GeForce4 MX 440",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4MX420,
+	    "GeForce4 MX 420",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4440GO,
+	    "GeForce4 440 Go",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4420GO,
+	    "GeForce4 420 Go",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4420GOM32,
+	    "GeForce4 420 Go M32",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4500XGL,
+	    "Quadro4 500XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4440GOM64,
+	    "GeForce4 440 Go M32",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4200,
+	    "Quadro4 200/400NVS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4550XGL,
+	    "Quadro4 550XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4500GOGL,
+	    "Quadro4 GoGL",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2_11,
@@ -3569,6 +3769,46 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_IDE,
 	    "nForce IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3,
+	    "GeForce3",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3TI200,
+	    "GeForce3 Ti 200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3TI500,
+	    "GeForce3 Ti 500",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_DCC,
+	    "Quadro DCC",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4600,
+	    "GeForce4 Ti 4600",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4400,
+	    "GeForce4 Ti 4400",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4200,
+	    "GeForce4 Ti 4200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4900XGL,
+	    "Quadro4 900 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4750XGL,
+	    "Quadro4 750 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4700XGL,
+	    "Qaudro4 700 XGL",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
@@ -4060,6 +4300,14 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_1764,
+	    "STG 1764",
+	},
+	{
+	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_KYROII,
+	    "Kyro-II",
+	},
+	{
+	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_1764X,
 	    "STG 1764X",
 	},
 	{
@@ -4583,6 +4831,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CyberBlade i1",
 	},
 	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADEI1AGP,
+	    "CyberBlade i1 AGP",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADEAI1,
+	    "CyberBlade Ai1",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADEAI1AGP,
+	    "CyberBlade Ai1 AGP",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADEXPAI1,
+	    "CyberBlade XP/Ai1",
+	},
+	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
 	    "TGUI 9320",
 	},
@@ -4641,6 +4905,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_BLADE_3D,
 	    "Blade 3D",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_BLADE_XP,
+	    "CyberBlade XP",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343,
