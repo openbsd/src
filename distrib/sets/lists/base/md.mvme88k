@@ -292,7 +292,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/lock.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/lockf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/malloc.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/map.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/mbuf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/md5k.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/midiio.ph
@@ -563,6 +562,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readline/tilde.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/readpassphrase.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sectok.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/conf_api.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/dso.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/engine.ph

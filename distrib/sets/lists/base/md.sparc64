@@ -1164,6 +1164,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sectok.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sha1.ph
@@ -1343,7 +1344,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/malloc.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/map.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/md5k.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/memrange.ph

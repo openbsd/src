@@ -1127,6 +1127,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sectok.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sha1.ph
@@ -1253,7 +1254,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/malloc.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/map.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/md5k.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/memrange.ph

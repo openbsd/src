@@ -1587,6 +1587,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi/ssvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/search.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sectok.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sha1.ph
@@ -1713,7 +1714,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/malloc.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/map.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/mbuf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/md5k.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/memrange.ph
