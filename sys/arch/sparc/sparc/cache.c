@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.5 1999/03/03 22:02:21 jason Exp $	*/
+/*	$OpenBSD: cache.c,v 1.6 1999/03/15 17:55:31 deraadt Exp $	*/
 /*	$NetBSD: cache.c,v 1.33 1997/07/29 09:41:56 fair Exp $ */
 
 /*
@@ -272,9 +272,15 @@ cypress_cache_enable()
 			sta(i, ASI_DCACHETAG, 0);
 
 	pcr |= CYPRESS_PCR_CE;
+
+#if 1
+	pcr &= ~CYPRESS_PCR_CM;		/* XXX Disable write-back mode */
+#else
 	/* If put in write-back mode, turn it on */
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
 		pcr |= CYPRESS_PCR_CM;
+#endif
+
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
