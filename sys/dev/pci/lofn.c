@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.7 2001/06/26 23:34:18 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.8 2001/07/08 18:05:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,7 @@
  */
 
 /*
- * Driver for the Hi/Fn 6500 assymmetric encryption processor.
+ * Driver for the Hifn 6500 assymmetric encryption processor.
  */
 
 #include <sys/param.h>

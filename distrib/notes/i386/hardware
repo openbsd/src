@@ -359,10 +359,10 @@ Supported hardware {:-include-:}:
 		interfaces
 	Cryptography Accelerators
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820
-		Hi/Fn 7751-based boards, including:
+		Hifn 7751-based boards, including:
 			GTGI PowerCrypt Encryption Accelerator
 			NETSEC 7751
-			HiFn reference board
+			Hifn reference board
 			Invertex AEON
 	PC Cards (PCMCIA and Carbus)
 		ATA cards, including:

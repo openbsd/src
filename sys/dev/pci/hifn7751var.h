@@ -1,7 +1,7 @@
-/*	$OpenBSD: hifn7751var.h,v 1.27 2001/06/27 03:33:53 angelos Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.28 2001/07/08 18:05:42 brad Exp $	*/
 
 /*
- * Invertex AEON / Hi/fn 7751 driver
+ * Invertex AEON / Hifn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
  * Copyright (c) 2000-2001 Network Security Technologies, Inc.
