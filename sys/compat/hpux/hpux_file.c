@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.6 1997/07/06 07:27:59 downsj Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.7 2000/09/07 17:52:22 ericj Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
@@ -451,9 +451,9 @@ hpux_stat1(p, v, retval, dolstat)
 
 	sg = stackgap_init(p->p_emul);
 
+	st = stackgap_alloc(&sg, sizeof (struct stat));
 	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 

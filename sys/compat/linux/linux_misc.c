@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.31 2000/07/23 22:35:38 jasoni Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.32 2000/09/07 17:52:24 ericj Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -859,6 +859,7 @@ linux_sys_utime(p, v, retval)
 	struct linux_utimbuf lut;
 
 	sg = stackgap_init(p->p_emul);
+	tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
@@ -869,7 +870,6 @@ linux_sys_utime(p, v, retval)
 		tv[0].tv_usec = tv[1].tv_usec = 0;
 		tv[0].tv_sec = lut.l_actime;
 		tv[1].tv_sec = lut.l_modtime;
-		tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
 		if ((error = copyout(tv, tvp, sizeof tv)))
 			return error;
 		SCARG(&ua, tptr) = tvp;

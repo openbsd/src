@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.18 2000/06/24 21:00:30 fgsch Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.19 2000/09/07 17:52:24 ericj Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -170,10 +170,10 @@ svr4_sys_stat(p, v, retval)
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
 
 	if ((error = sys_stat(p, &cup, retval)) != 0)
@@ -215,10 +215,10 @@ svr4_sys_lstat(p, v, retval)
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
 	if ((error = sys_lstat(p, &cup, retval)) != 0)
 		return error;
@@ -292,10 +292,10 @@ svr4_sys_xstat(p, v, retval)
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
 	if ((error = sys_stat(p, &cup, retval)) != 0)
 		return error;
@@ -327,10 +327,10 @@ svr4_sys_lxstat(p, v, retval)
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
 
 	if ((error = sys_lstat(p, &cup, retval)) != 0)
 		return error;
@@ -711,6 +711,7 @@ svr4_sys_utime(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
+	SCARG(&ap, tptr) = stackgap_alloc(&sg, sizeof(tbuf));
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&ap, path) = SCARG(uap, path);
 	if (SCARG(uap, ubuf) != NULL) {
@@ -720,7 +721,6 @@ svr4_sys_utime(p, v, retval)
 		tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = ub.modtime;
 		tbuf[1].tv_usec = 0;
-		SCARG(&ap, tptr) = stackgap_alloc(&sg, sizeof(tbuf));
 		error = copyout(tbuf, (struct timeval *)SCARG(&ap, tptr), sizeof(tbuf));
 		if (error)
 			return error;

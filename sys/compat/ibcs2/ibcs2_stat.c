@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_stat.c,v 1.4 1997/01/23 16:12:19 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_stat.c,v 1.5 2000/09/07 17:52:23 ericj Exp $	*/
 /*	$NetBSD: ibcs2_stat.c,v 1.5 1996/05/03 17:05:32 christos Exp $	*/
 
 /*
@@ -171,9 +171,10 @@ ibcs2_sys_stat(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+
 	if ((error = compat_43_sys_stat(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
@@ -199,9 +200,10 @@ ibcs2_sys_lstat(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+
 	if ((error = compat_43_sys_lstat(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)

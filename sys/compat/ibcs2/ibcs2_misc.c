@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.15 2000/03/05 20:32:13 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.16 2000/09/07 17:52:23 ericj Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -1018,6 +1018,7 @@ ibcs2_sys_utime(p, v, retval)
 	struct timeval *tp;
 	caddr_t sg = stackgap_init(p->p_emul);
 
+	tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
         IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
@@ -1027,7 +1028,6 @@ ibcs2_sys_utime(p, v, retval)
 		    sizeof(ubuf));
 		if (error)
 			return error;
-		tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
 		tp[0].tv_sec = ubuf.actime;
 		tp[0].tv_usec = 0;
 		tp[1].tv_sec = ubuf.modtime;

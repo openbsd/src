@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.14 2000/07/23 22:24:37 jasoni Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.15 2000/09/07 17:52:23 ericj Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -519,9 +519,9 @@ linux_stat1(p, v, retval, dolstat)
 
 	sg = stackgap_init(p->p_emul);
 
+	st = stackgap_alloc(&sg, sizeof (struct stat));
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
