@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.72 2002/07/18 14:00:53 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.73 2002/07/25 04:49:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -543,14 +543,11 @@ $bsd_syscall
 	ldi	HPPA_PID_KERNEL, t2
 	mtctl	t2, pidr1
 
-	/*
-	 * now call the syscall handler
-	 */
 	.import $syscall,code
 	.call
 	ldil	L%$syscall, t2
-	be,n	R%$syscall(sr1, t2)
-	nop
+	be	R%$syscall(sr1, t2)
+	nop ! nop ! nop ! nop
 
 	.align	NBPG
 	.export	gateway_page_end, entry
@@ -571,14 +568,15 @@ $syscall
 	 */
 	ldil	L%curproc, t3
 	ldw	R%curproc(sr1, t3), t3
-	copy	sp, t4
 	ldw	P_ADDR(sr1, t3), t2	/* XXX can use ,sl */
 
 	/* calculate kernel sp, load, create kernel stack frame */
 	ldo	NBPG+TRAPFRAME_SIZEOF(t2), t3
-	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
+	stw	t4, TF_R19 -TRAPFRAME_SIZEOF(sr1, t3)	/* t4 for vfork() */
 	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
-	stw	t4, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
+	stw	sp, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
+	copy	sp, t4
+	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
 	ldil	L%kpsw, t1
 	ldw	R%kpsw(sr1, t1), t1
 	stw	r1, TF_CR15-TRAPFRAME_SIZEOF(sr1, t3)	/* eiem ,bc */
@@ -595,6 +593,7 @@ $syscall
 	 * or deeper called functions and caller-save
 	 * are saved in userland.
 	 */
+	stw	r2 , TF_R2 -TRAPFRAME_SIZEOF(sr1, t3)
 	stw	r3 , TF_R3 -TRAPFRAME_SIZEOF(sr1, t3)
 #ifdef DDB
 	/* save callee-save registers */
@@ -614,6 +613,11 @@ $syscall
 	stw	r17, TF_R17-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	r18, TF_R18-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
+	/* gotta save the args, in case we gonna restart */
+	stw	arg3, TF_R23-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg2, TF_R24-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg1, TF_R25-TRAPFRAME_SIZEOF(sr1, t3)
+	stw	arg0, TF_R26-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	r27, TF_R27-TRAPFRAME_SIZEOF(sr1, t3)	/* dp */
 	stw	r0, 0(sr1, t3)	/* terminate frame */
 	copy	r0 , r3
@@ -635,16 +639,16 @@ $syscall
 	stw	arg1, 2*4(sr1, t3)
 	stw	arg2, 3*4(sr1, t3)
 	stw	arg3, 4*4(sr1, t3)
-	ldw	HPPA_FRAME_ARG( 4)(t4), arg0
-	ldw	HPPA_FRAME_ARG( 5)(t4), arg1
-	ldw	HPPA_FRAME_ARG( 6)(t4), arg2
-	ldw	HPPA_FRAME_ARG( 7)(t4), arg3
+	ldw	HPPA_FRAME_ARG( 4)(sr2, t4), arg0
+	ldw	HPPA_FRAME_ARG( 5)(sr2, t4), arg1
+	ldw	HPPA_FRAME_ARG( 6)(sr2, t4), arg2
+	ldw	HPPA_FRAME_ARG( 7)(sr2, t4), arg3
 	stw	arg0, 5*4(sr1, t3)
 	stw	arg1, 6*4(sr1, t3)
 	stw	arg2, 7*4(sr1, t3)
 	stw	arg3, 8*4(sr1, t3)
-	ldw	HPPA_FRAME_ARG( 8)(t4), arg0
-	ldw	HPPA_FRAME_ARG( 9)(t4), arg1
+	ldw	HPPA_FRAME_ARG( 8)(sr2, t4), arg0
+	ldw	HPPA_FRAME_ARG( 9)(sr2, t4), arg1
 	stw	arg0, 9*4(sr1, t3)
 	stw	arg1,10*4(sr1, t3)
 
@@ -666,8 +670,7 @@ $syscall
 	stw	r0, TF_CR19-TRAPFRAME_SIZEOF(sr1, t3)	/* iir */
 	stw	arg1, TF_FLAGS-TRAPFRAME_SIZEOF(sr1, t3)
 
-	mfsp	sr0, arg0
-	mfsp	sr0, arg1
+	copy	arg0, arg1
 	mfsp	sr2, arg2
 	mfsp	sr4, arg3
 	stw	arg0, TF_SR0-TRAPFRAME_SIZEOF(sr1, t3)
@@ -705,8 +708,6 @@ $syscall
 	stw	arg0, TF_CR25-TRAPFRAME_SIZEOF(sr1, t3)
 	stw	arg1, TF_CR28-TRAPFRAME_SIZEOF(sr1, t3)
 #endif
-	mfctl	cr30, arg0
-	stw	arg0, TF_CR30(sr1, t3)
 
 	/* setup kernel context */
 	mtsp	r0, sr0
@@ -758,23 +759,20 @@ $syscall_return
 	 *	hopefully no page fault would happen on or after the copy,
 	 *	and interrupts are disabled.
 	 */
-	copy	t3, arg0
-	ldil	L%$trap_tmp_save, arg1
-	ldi	TF_PHYS-4, arg2		/* not all of it is needed, unroll */
-$syscall_return_copy_loop
-	ldwm	4(arg0), t1
-	addib,>,n -4, arg2, $syscall_return_copy_loop
-	stwm	t1, 4(arg1)
-
-#if 0
-	ldw	TF_IIOQH(t3), t1
-	dep	r0, 31, 2, t1
-	comb,<>,n r0, t1, $syscall_return_ok
-	nop
-	break	0, 8
-
-$syscall_return_ok
-#endif
+	ldil	L%$trap_tmp_save, t2
+	/* use ,bc each cache line */
+	ldw  0(t3), r1 ! ldw  4(t3), t1 ! stw r1,  0(t2) ! stw t1,  4(t2)
+	ldw  8(t3), r1 ! ldw 12(t3), t1 ! stw r1,  8(t2) ! stw t1, 12(t2)
+	ldw 16(t3), r1 ! ldw 20(t3), t1 ! stw r1, 16(t2) ! stw t1, 20(t2)
+	ldw 24(t3), r1 ! ldw 28(t3), t1 ! stw r1, 24(t2) ! stw t1, 28(t2)
+	fdc	r0(t2)
+	ldi	32, t4
+	ldw 32(t3), r1 ! ldw 36(t3), t1 ! stw r1, 32(t2) ! stw t1, 36(t2)
+	ldw 40(t3), r1 ! ldw 44(t3), t1 ! stw r1, 40(t2) ! stw t1, 44(t2)
+	ldw 48(t3), r1 ! ldw 52(t3), t1 ! stw r1, 48(t2) ! stw t1, 52(t2)
+	ldw 56(t3), r1 ! ldw 60(t3), t1 ! stw r1, 56(t2) ! stw t1, 60(t2)
+	fdc	t4(t2)
+	sync
 
 	/* 1b. restore most of the general registers */
 	ldw	TF_CR11(t3), t1
@@ -1559,7 +1557,7 @@ $trap_from_kernel
 	copy	sp, t3
 	ldo	HPPA_FRAME_SIZE+TRAPFRAME_SIZEOF(sp), sp
 	rfir
-	nop
+	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
 $trapnowvirt
 	/*
 	 * t3 contains the virtual address of the trapframe
@@ -1605,17 +1603,15 @@ $trapnowvirt
 	 * Save all general registers that we haven't saved already
 	 */
 
-#ifdef DDB
-	stw	rp, HPPA_FRAME_CRP(sp)
-	stw	r0, -HPPA_FRAME_SIZE(sp)
-#endif
-	stw	t3, -HPPA_FRAME_SIZE+4(sp)
-
 	mfctl	sar, t1			/* use ,bc each cache line */
 	stw	t1, TF_CR11(t3)
 	stw	r1, TF_R1(t3)
 	stw	r2, TF_R2(t3)
 	stw	r3, TF_R3(t3)
+
+	copy	sp, r3
+	stw,mb	r0, -HPPA_FRAME_SIZE(r3)
+	stw	t3, HPPA_FRAME_ARG(1)(sp)
 
 	/*
 	 * Copy partially saved state from the store into the frame
@@ -1702,9 +1698,6 @@ $trapnowvirt
 	dep	r0, 24, 25, arg0
 	copy	t3, arg1
 
-#ifdef DDB
-	ldo	-HPPA_FRAME_SIZE(sp), r3
-#endif
 	.import	trap, code
 	ldil	L%trap,t1
 	ldo	R%trap(t1),t1
@@ -1713,7 +1706,7 @@ $trapnowvirt
 	bv,n	r0(t1)
 	nop
 
-	ldw	-HPPA_FRAME_SIZE+4(sp), t3
+	ldw	HPPA_FRAME_ARG(1)(sp), t3
 	/* see if curproc have changed */
 	ldw	TF_FLAGS(t3), arg0
 	bb,>=,n	arg0, TFF_LAST_POS, $syscall_return
@@ -1723,7 +1716,7 @@ $trapnowvirt
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
 	comb,=,n r0, t2, $syscall_return
-	ldw	-HPPA_FRAME_SIZE+4(sp), t3
+	nop
 
 	/* means curproc have actually changed */
 	b	$syscall_return
@@ -2261,12 +2254,11 @@ SUX(suswintr, sth)
 
 	.align	64
 
-LEAF_ENTRY($copy_on_fault)
+LEAF_ENTRY(copy_on_fault)
 	stw	r1, PCB_ONFAULT+U_PCB(t4)
-ALTENTRY(copy_on_fault)		/* for kcopy() */
 	bv	0(rp)
 	ldi	EFAULT, %ret0
-EXIT($copy_on_fault)
+EXIT(copy_on_fault)
 
 /*
  * int spstrcpy (pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
@@ -2279,8 +2271,8 @@ LEAF_ENTRY(spstrcpy)
 	ldw	R%curproc(t4), t4
 	ldw	P_ADDR(t4), t4
 	ldw	PCB_ONFAULT+U_PCB(t4), r1
-	ldil	L%$copy_on_fault, t2
-	ldo	R%$copy_on_fault(t2), t2
+	ldil	L%copy_on_fault, t2
+	ldo	R%copy_on_fault(t2), t2
 	stw	t2, PCB_ONFAULT+U_PCB(t4)
 
 	ldw	HPPA_FRAME_ARG(4)(sp), ret1
