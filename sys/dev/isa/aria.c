@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.1 1996/05/04 13:29:32 deraadt Exp $ */
+/*	$OpenBSD: aria.c,v 1.2 1996/08/01 15:29:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -50,6 +50,9 @@
  *           between logarithmic scales and the one byte that
  *           we are passed.
  *       o   Deal better with cards that have no mixer.
+ *
+ * roland@imrryr.org
+ * update from http://www.imrryr.org/NetBSD/hacks/aria/
  */
 
 #include "aria.h"
