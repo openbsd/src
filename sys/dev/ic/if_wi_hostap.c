@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.19 2002/06/25 01:59:52 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.20 2002/08/13 03:49:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -192,7 +192,7 @@ wihap_init(struct wi_softc *sc)
 
 	bzero(whi, sizeof(struct wihap_info));
 
-	if (sc->wi_ptype != WI_PORTTYPE_AP)
+	if (sc->wi_ptype != WI_PORTTYPE_HOSTAP)
 		return;
 
 	whi->apflags = WIHAPFL_ACTIVE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.25 2002/07/10 19:29:15 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.26 2002/08/13 03:49:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -485,7 +485,7 @@ struct wi_ltv_pcf {
 #define WI_PORTTYPE_WDS		0x2
 #define WI_PORTTYPE_ADHOC	0x3
 #define WI_PORTTYPE_IBSS	0x4
-#define WI_PORTTYPE_AP		0x6
+#define WI_PORTTYPE_HOSTAP	0x6
 
 /*
  * Mac addresses.

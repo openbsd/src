@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.76 2002/08/08 18:53:10 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.77 2002/08/13 03:49:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.76 2002/08/08 18:53:10 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.77 2002/08/13 03:49:51 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -593,7 +593,7 @@ wi_rxeof(sc)
 		m->m_pkthdr.rcvif = ifp;
 
 		if (msg_type == WI_STAT_MGMT &&
-		    sc->wi_ptype == WI_PORTTYPE_AP) {
+		    sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 
 			u_int16_t rxlen = letoh16(rx_frame.wi_dat_len);
 
@@ -690,7 +690,7 @@ wi_rxeof(sc)
 
 		ifp->if_ipackets++;
 
-		if (sc->wi_ptype == WI_PORTTYPE_AP) {
+		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 			/*
 			 * Give host AP code first crack at data packets.
 			 * If it decides to handle it (or drop it), it will
@@ -1069,7 +1069,7 @@ wi_write_record(sc, ltv)
 				    sc->sc_firmware_type == WI_SYMBOL)
 					val |= EXCLUDE_UNENCRYPTED;
 				/* TX encryption is broken in Host AP mode. */
-				if (sc->wi_ptype == WI_PORTTYPE_AP)
+				if (sc->wi_ptype == WI_PORTTYPE_HOSTAP)
 					val |= HOST_ENCRYPT;
 				p2ltv.wi_val = htole16(val);
 			} else
@@ -1469,12 +1469,12 @@ wi_ioctl(ifp, command, data)
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
 			    !(sc->wi_if_flags & IFF_PROMISC)) {
-				if (sc->wi_ptype != WI_PORTTYPE_AP)
+				if (sc->wi_ptype != WI_PORTTYPE_HOSTAP)
 					WI_SETVAL(WI_RID_PROMISC, 1);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->wi_if_flags & IFF_PROMISC) {
-				if (sc->wi_ptype != WI_PORTTYPE_AP)
+				if (sc->wi_ptype != WI_PORTTYPE_HOSTAP)
 					WI_SETVAL(WI_RID_PROMISC, 0);
 			} else
 				wi_init(sc);
@@ -1748,7 +1748,7 @@ wi_init(sc)
 	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
 
 	/* Specify the IBSS name */
-	if (sc->wi_net_name.i_len != 0 && (sc->wi_ptype == WI_PORTTYPE_AP ||
+	if (sc->wi_net_name.i_len != 0 && (sc->wi_ptype == WI_PORTTYPE_HOSTAP ||
 	    (sc->wi_create_ibss && sc->wi_ptype == WI_PORTTYPE_IBSS)))
 		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_net_name);
 	else
@@ -1775,7 +1775,7 @@ wi_init(sc)
 	 *	and always reset promisc mode in Host-AP regime,
 	 *	it shows us all the packets anyway.
 	 */
-	if (sc->wi_ptype != WI_PORTTYPE_AP && ifp->if_flags & IFF_PROMISC)
+	if (sc->wi_ptype != WI_PORTTYPE_HOSTAP && ifp->if_flags & IFF_PROMISC)
 		WI_SETVAL(WI_RID_PROMISC, 1);
 	else
 		WI_SETVAL(WI_RID_PROMISC, 0);
@@ -2001,7 +2001,7 @@ nextpkt:
 	id = sc->wi_tx_data_id;
 	eh = mtod(m0, struct ether_header *);
 
-	if (sc->wi_ptype == WI_PORTTYPE_AP) {
+	if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 		if (!wihap_check_tx(&sc->wi_hostap_info, eh->ether_dhost,
 		    &tx_frame.wi_tx_rate) && !(ifp->if_flags & IFF_PROMISC)) {
 			if (ifp->if_flags & IFF_DEBUG)
@@ -2023,7 +2023,7 @@ nextpkt:
 	    eh->ether_type == htons(ETHERTYPE_IPV6)) {
 		bcopy((char *)&eh->ether_dhost,
 		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
-		if (sc->wi_ptype == WI_PORTTYPE_AP) {
+		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_FROMDS);
 			if (sc->wi_use_wep)
@@ -2046,7 +2046,7 @@ nextpkt:
 		tx_frame.wi_len = htons(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
 		tx_frame.wi_type = eh->ether_type;
 
-		if (sc->wi_ptype == WI_PORTTYPE_AP && sc->wi_use_wep) {
+		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP && sc->wi_use_wep) {
 
 			/* Do host encryption. */
 			bcopy(&tx_frame.wi_dat[0], &sc->wi_txbuf[4], 8);
@@ -2084,7 +2084,7 @@ nextpkt:
 	} else {
 		tx_frame.wi_dat_len = htole16(m0->m_pkthdr.len);
 
-		if (sc->wi_ptype == WI_PORTTYPE_AP && sc->wi_use_wep) {
+		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP && sc->wi_use_wep) {
 
 			/* Do host encryption. (XXX - not implemented) */
 			printf(WI_PRT_FMT
@@ -2381,7 +2381,7 @@ wi_sync_media(sc, ptype, txrate)
 	case WI_PORTTYPE_ADHOC:
 		options |= IFM_IEEE80211_ADHOC;
 		break;
-	case WI_PORTTYPE_AP:
+	case WI_PORTTYPE_HOSTAP:
 		options |= IFM_IEEE80211_HOSTAP;
 		break;
 	case WI_PORTTYPE_IBSS:
@@ -2427,7 +2427,7 @@ wi_media_change(ifp)
 		sc->wi_ptype = WI_PORTTYPE_ADHOC;
 		break;
 	case IFM_IEEE80211_HOSTAP:
-		sc->wi_ptype = WI_PORTTYPE_AP;
+		sc->wi_ptype = WI_PORTTYPE_HOSTAP;
 		break;
 	case IFM_IEEE80211_IBSSMASTER:
 	case IFM_IEEE80211_IBSSMASTER|IFM_IEEE80211_IBSS:
