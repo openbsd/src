@@ -99,6 +99,7 @@ void	delay __P((int));
 /*
  * High resolution clock support (Pentium only)
  */
+void	calibrate_cyclecounter __P((void));
 extern u_quad_t pentium_base_tsc;
 #define CPU_CLOCKUPDATE(otime, ntime)					\
 	do {								\
@@ -152,6 +153,8 @@ void	cpu_reset __P((void));
 struct region_descriptor;
 void	lgdt __P((struct region_descriptor *));
 void	fillw __P((short, void *, size_t));
+short	fusword __P((u_short *));
+int	susword __P((u_short *t, u_short));
 
 struct pcb;
 void	savectx __P((struct pcb *));
