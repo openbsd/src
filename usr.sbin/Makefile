@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 1997/11/17 11:46:38 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.30 1997/11/17 17:39:01 deraadt Exp $
 
 # not yet done: catman
 
@@ -21,7 +21,7 @@ SUBDIR+=ypbind yppoll ypset ypserv
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
-SUBDIR+=apm apmd bad144 dbsym eeprom fdformat grfconfig grfinfo \
+SUBDIR+=apm apmd bad144 eeprom fdformat grfconfig grfinfo \
 	hilinfo iteconfig pccon pcmciad screenblank videomode
 .elif ${MACHINE} == "amiga" 
 SUBDIR+=grfconfig iteconfig screenblank videomode
