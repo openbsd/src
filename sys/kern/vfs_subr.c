@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.98 2004/04/25 02:48:03 itojun Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.99 2004/05/27 08:25:53 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1790,10 +1790,14 @@ vfs_unmountall(void)
 void
 vfs_shutdown()
 {
+	extern void acct_shutdown(void);
+
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 
 	printf("syncing disks... ");
+
+	acct_shutdown();
 
 	if (panicstr == 0) {
 		/* Sync before unmount, in case we hang on something. */
