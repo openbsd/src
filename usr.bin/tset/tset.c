@@ -1119,8 +1119,8 @@ main(int argc, char **argv)
 			add_mapping("plugboard", optarg);
 			break;
 		case 'Q':		/* don't output control key settings */
-			break;
 			quiet = 1;
+			break;
 		case 'S':		/* OBSOLETE: output TERM & TERMCAP */
 			Sflag = 1;
 			break;
