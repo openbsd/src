@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.5 2004/03/15 22:01:03 grange Exp $
+dnl	$OpenBSD: hardware,v 1.6 2004/03/15 22:24:58 grange Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based designs.
 
 OpenBSD does not currently support multiple processors (SMP), but will
@@ -111,8 +111,8 @@ Supported hardware {:-include-:}:
 		    and probably other vendors' controllers supporting
 		    I2O, including Intel and Mylex (untested)
 	CD-ROM and DVD-ROM Drives
-		Most SCSI CD-ROM, CD-R, CD-RW, and DVD drives
-		Most ATAPI CD-ROM, CD-R, CD-RW, and DVD drives
+		Most SCSI CD-ROM, CD-R, CD-RW, DVD and DVD-RW drives
+		Most ATAPI CD-ROM, CD-R, CD-RW, DVD and DVD-RW drives
 	Tape Drives
 		Most SCSI tape drives
 		Most SCSI tape changers
