@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.58 2004/05/09 05:33:59 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.59 2004/05/13 01:56:09 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
 int	sc_err1(struct scsi_xfer *, int);
 int	scsi_interpret_sense(struct scsi_xfer *);
-char   *scsi_decode_sense(void *, int);
+char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
 /* Values for flag parameter to scsi_decode_sense. */
 #define	DECODE_SENSE_KEY	1
@@ -673,37 +673,25 @@ int
 scsi_interpret_sense(xs)
 	struct scsi_xfer *xs;
 {
-	struct scsi_sense_data *sense;
+	struct scsi_sense_data *sense = &xs->sense;
 	struct scsi_link *sc_link = xs->sc_link;
-	u_int8_t key;
-	u_int32_t info;
+	u_int8_t serr, skey;
 	int error;
 
-	sense = &xs->sense;
+	SC_DEBUG(sc_link, SDEV_DB1,
+	    ("code:%#x valid:%d key:%#x ili:%d eom:%d fmark:%d extra:%d\n",
+	    sense->error_code & SSD_ERRCODE,
+	    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0,
+	    sense->flags & SSD_KEY,
+	    sense->flags & SSD_ILI ? 1 : 0,
+	    sense->flags & SSD_EOM ? 1 : 0,
+	    sense->flags & SSD_FILEMARK ? 1 : 0,
+	    sense->extra_len));
 #ifdef	SCSIDEBUG
-	if ((sc_link->flags & SDEV_DB1) != 0) {
-		int count;
-		printf("code%x valid%x ",
-		    sense->error_code & SSD_ERRCODE,
-		    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
-		printf("seg%x key%x ili%x eom%x fmark%x\n",
-		    sense->segment,
-		    sense->flags & SSD_KEY,
-		    sense->flags & SSD_ILI ? 1 : 0,
-		    sense->flags & SSD_EOM ? 1 : 0,
-		    sense->flags & SSD_FILEMARK ? 1 : 0);
-		printf("info: %x %x %x %x followed by %d extra bytes\n",
-		    sense->info[0],
-		    sense->info[1],
-		    sense->info[2],
-		    sense->info[3],
-		    sense->extra_len);
-		printf("extra: ");
-		for (count = 0; count < sense->extra_len; count++)
-			printf("%x ", sense->cmd_spec_info[count]);
-		printf("\n");
-	}
+	if ((sc_link->flags & SDEV_DB1) != 0)
+		show_mem((u_char *)&xs->sense, sizeof xs->sense);
 #endif	/* SCSIDEBUG */
+
 	/*
 	 * If the device has it's own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
@@ -716,27 +704,23 @@ scsi_interpret_sense(xs)
 			return error;		/* error >= 0  better ? */
 	}
 	/* otherwise use the default */
-	switch (sense->error_code & SSD_ERRCODE) {
+	serr = sense->error_code & SSD_ERRCODE;
+	skey = sense->flags & SSD_KEY;
+	switch (serr) {
 		/*
 		 * If it's code 70, use the extended stuff and interpret the key
 		 */
 	case 0x71:		/* delayed error */
 		sc_print_addr(sc_link);
-		key = sense->flags & SSD_KEY;
-		printf(" DEFERRED ERROR, key = 0x%x\n", key);
+		printf(" DEFERRED ERROR, key = 0x%x\n", skey);
 		/* FALLTHROUGH */
 	case 0x70:
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0)
-			info = _4btol(sense->info);
-		else
-			info = 0;
-		key = sense->flags & SSD_KEY;
-
-		switch (key) {
+		switch (skey) {
 		case SKEY_NO_SENSE:
 		case SKEY_RECOVERED_ERROR:
 			if (xs->resid == xs->datalen)
 				xs->resid = 0;	/* not short read */
+			/* FALLTHROUGH */
 		case SKEY_EQUAL:
 			error = 0;
 			break;
@@ -789,7 +773,7 @@ scsi_interpret_sense(xs)
 			break;
 		}
 
-		if (key && (xs->flags & SCSI_SILENT) == 0)
+		if (skey && (xs->flags & SCSI_SILENT) == 0)
 			scsi_print_sense(xs);
 
 		return error;
@@ -799,8 +783,7 @@ scsi_interpret_sense(xs)
 	 */
 	default:
 		sc_print_addr(sc_link);
-		printf("Sense Error Code %d",
-		    sense->error_code & SSD_ERRCODE);
+		printf("Sense Error Code %d", serr);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsi_sense_data_unextended *usense =
 			    (struct scsi_sense_data_unextended *)sense;
@@ -1442,79 +1425,64 @@ void
 scsi_print_sense(xs)
 	struct scsi_xfer *xs;
 {
+	struct scsi_sense_data *sense = &xs->sense;
 	int32_t info;
-	char *sbs, *s;
+	char *sbs;
 
 	sc_print_addr(xs->sc_link);
-	s = (char *) &xs->sense;
+
+	/* XXX For error 0x71, current opcode is not the relevant one. */
 	printf("Check Condition on opcode 0x%x\n", xs->cmd->opcode);
+	printf("    SENSE KEY: %s\n", scsi_decode_sense(sense,
+	    DECODE_SENSE_KEY));
 
-	/*
-	 * Basics- print out SENSE KEY
-	 */
-	printf("    SENSE KEY: %s\n", scsi_decode_sense(s, DECODE_SENSE_KEY));
-
-	/*
- 	 * Print out, unqualified but aligned, FMK, EOM and ILI status.
-	 */
-	if (s[2] & 0xe0) {
+	if (sense->flags & (SSD_FILEMARK | SSD_EOM | SSD_ILI)) {
 		char pad = ' ';
 
 		printf("             ");
-		if (s[2] & SSD_FILEMARK) {
+		if (sense->flags & SSD_FILEMARK) {
 			printf("%c Filemark Detected", pad);
 			pad = ',';
 		}
-		if (s[2] & SSD_EOM) {
+		if (sense->flags & SSD_EOM) {
 			printf("%c EOM Detected", pad);
 			pad = ',';
 		}
-		if (s[2] & SSD_ILI)
+		if (sense->flags & SSD_ILI)
 			printf("%c Incorrect Length Indicator Set", pad);
 		printf("\n");
 	}
+
 	/*
-	 * Now we should figure out, based upon device type, how
-	 * to format the information field. Unfortunately, that's
-	 * not convenient here, so we'll print it as a signed
-	 * 32 bit integer.
+	 * It is inconvenient to use device type to figure out how to
+	 * format the info fields. So print them as 32 bit integers.
 	 */
-	info = _4btol(&s[3]);
+	info = _4btol(&sense->info[0]);
 	if (info)
-		printf("   INFO FIELD: %u\n", info);
+		printf("         INFO: 0x%x (VALID flag %s)\n", info,
+		    sense->error_code & SSD_ERRCODE_VALID ? "on" : "off");
 
-	/*
-	 * Now we check additional length to see whether there is
-	 * more information to extract.
-	 */
-
-	/* enough for command specific information? */
-	if (s[7] < 4)
+	if (sense->extra_len < 4)
 		return;
-	info = _4btol(&s[8]);
+
+	info = _4btol(&sense->cmd_spec_info[0]);
 	if (info)
-		printf(" COMMAND INFO: %d (0x%x)\n", info, info);
-
-	/*
-	 * Decode ASC && ASCQ info, plus FRU, plus the rest...
-	 */
-
-	sbs = scsi_decode_sense(s, DECODE_ASC_ASCQ);
+		printf(" COMMAND INFO: 0x%x\n", info);
+	sbs = scsi_decode_sense(sense, DECODE_ASC_ASCQ);
 	if (strlen(sbs) > 0)
 		printf("     ASC/ASCQ: %s\n", sbs);
-	if (s[14] != 0)
-		printf("     FRU CODE: 0x%x\n", s[14] & 0xff);
-	sbs = scsi_decode_sense(s, DECODE_SKSV);
+	if (sense->fru != 0)
+		printf("     FRU CODE: 0x%x\n", sense->fru);
+	sbs = scsi_decode_sense(sense, DECODE_SKSV);
 	if (strlen(sbs) > 0)
 		printf("         SKSV: %s\n", sbs);
 }
 
 char *
-scsi_decode_sense(sinfo, flag)
-	void *sinfo;
+scsi_decode_sense(sense, flag)
+	struct scsi_sense_data *sense;
 	int flag;
 {
-	struct scsi_sense_data *sense = sinfo;
 	static char rqsbuf[132];
 	u_int16_t count;
 	u_int8_t skey, spec_1;
