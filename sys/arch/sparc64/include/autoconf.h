@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.h,v 1.3 2001/08/20 20:23:52 jason Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-

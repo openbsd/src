@@ -1,3 +1,4 @@
+/*	$OpenBSD: openpromio.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
 /*	$NetBSD: openpromio.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
 
 /*
