@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.38 2005/02/07 15:03:50 mcbride Exp $ */
+/* $OpenBSD: if_em.c,v 1.39 2005/03/16 11:59:09 markus Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3689,9 +3689,11 @@ em_update_stats_counters(struct em_softc *sc)
 	ifp = &sc->interface_data.ac_if;
 
 	/* Fill out the OS statistics structure */
+#ifndef __OpenBSD__
 	ifp->if_ibytes = sc->stats.gorcl;
 	ifp->if_obytes = sc->stats.gotcl;
 	ifp->if_imcasts = sc->stats.mprc;
+#endif
 	ifp->if_collisions = sc->stats.colc;
 
 	/* Rx Errors */
