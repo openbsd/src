@@ -359,7 +359,7 @@ case "${targ}" in
     ;;
   mips*-*-openbsd*)
     targ_defvec=bfd_elf32_bigmips_vec
-    targ_selvecs="bfd_elf32_littlemips_vec bfd_elf64_bigmips_vec bfd_elf64_littlemips_vec"
+    targ_selvecs="bfd_elf32_littlemips_vec"
     ;;
   mips*-big-*)
     targ_defvec=ecoff_big_vec
