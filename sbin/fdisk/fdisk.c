@@ -148,7 +148,7 @@ struct part_type {
 	{0x83, "Linux filesystem"},
 	{0x93, "Amoeba filesystem"},
 	{0x94, "Amoeba bad block table"},
-	{0xA5, "NetBSD or 386BSD"},
+	{0xA5, "OpenBSD/NetBSD/FreeBSD/386BSD"},
 	{0xB7, "BSDI BSD/386 filesystem"},
 	{0xB8, "BSDI BSD/386 swap"},
 	{0xDB, "Concurrent CPM or C.DOS or CTOS"},
