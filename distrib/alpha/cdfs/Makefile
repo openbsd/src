@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/03/06 00:02:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/08/12 03:58:28 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -23,9 +23,9 @@ ${CDROM}:
 	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
 	mount -t cd9660 /dev/svnd0a /mnt
 	/usr/mdec/installboot -v \
-	    -s `cat log | grep -v 'Name' | egrep '/cd-dir/3.3/alpha/boot$$' | cut -d' ' -f1` \
-	    -e `cat log | grep -v 'Name' | egrep '/cd-dir/3.3/alpha/boot$$' | cut -d' ' -f2` \
-	    /mnt/3.3/alpha/boot /usr/mdec/bootxx /dev/rsvnd0c
+	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/alpha/boot$$" | cut -d' ' -f1` \
+	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/alpha/boot$$" | cut -d' ' -f2` \
+	    /mnt/${OSREV}/alpha/boot /usr/mdec/bootxx /dev/rsvnd0c
 	#disklabel -w svnd0 fakecdrom "OpenBSD/alpha   "
 	umount /mnt
 	vnconfig -u svnd0
