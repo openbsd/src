@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.14 1997/01/16 09:23:36 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.15 1997/02/21 11:21:57 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -25,6 +25,7 @@ option		DEVPAGER
 # Networking option
 #
 option		INET		# IP networking support (Required)
+option		IPSEC		# IP-SEC networking support
 #option		ISO		# ISO Networking support
 #option		TPIP		# ARGO TP networking support
 #option		CCITT		# CCITT X.25
@@ -243,6 +244,12 @@ acd*	at atapibus? drive ?
 # XXX should be ed0 but clashes with Zorro ed device
 isaed0	at isa? port 0x300 iomem 0xcc000 irq 10	# WD/SMC, 3C503, and NE[12]000
 						#   ethernetcards
+
+tel0    at isa? iomem 0xe0000 irq 9	# Teles S0, NICCY 1000, Creatix 8bit
+tel1    at isa? port 0xe80 iomem 0xde000 irq 11	# Teles S0/16, NICCY 1016,
+						# Creatix 16bit
+tel2    at isa? port 0xd80 irq 5	# Teles S0/16.3 card (no shared memory)
+
 
 fd*	at fdc0 unit ?
 
