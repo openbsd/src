@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.20 2004/01/07 11:58:21 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.21 2004/01/07 12:46:48 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1940,7 +1940,7 @@ Set the number of lines about which the editor reports changes or yanks.
 .Nm vi
 only.
 Display a row/column ruler on the colon command line.
-.It Cm scroll , scr Bq "window / 2"
+.It Cm scroll , scr Bq "($LINES \- 1) / 2"
 Set the number of lines scrolled.
 .It Cm searchincr Bq off
 Makes the
@@ -2021,18 +2021,18 @@ Select an alternate erase algorithm.
 .Nm vi
 only.
 Display an error message for every error.
-.\" .It Cm w300 Bq no default
-.\" .Nm vi
-.\" only.
-.\" Set the window size if the baud rate is less than 1200 baud.
-.\" .It Cm w1200 Bq no default
-.\" .Nm vi
-.\" only.
-.\" Set the window size if the baud rate is equal to 1200 baud.
-.\" .It Cm w9600 Bq no default
-.\" .Nm vi
-.\" only.
-.\" Set the window size if the baud rate is greater than 1200 baud.
+.It Cm w300 Bq no default
+.Nm vi
+only.
+Set the window size if the baud rate is less than 1200 baud.
+.It Cm w1200 Bq no default
+.Nm vi
+only.
+Set the window size if the baud rate is equal to 1200 baud.
+.It Cm w9600 Bq no default
+.Nm vi
+only.
+Set the window size if the baud rate is greater than 1200 baud.
 .It Cm warn Bq on
 .Nm ex
 only.
