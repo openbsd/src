@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.15 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.16 2004/10/11 17:40:09 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -104,14 +104,7 @@ wsdisplay*	at vga?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-#pccom3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#pccom*	at ast?
-#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#pccom*	at boca?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#pccom*	at rtfps?
+
 #pccom*	at pcmcia?			# PCMCIA modem cards
 
 # option for using CD1400 handshaking for incoming data
@@ -145,7 +138,7 @@ scsibus* at mpt?
 #scsibus* at iha?
 #isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #scsibus* at isp?
-#aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
+#aic*	at pcmcia?		# PCMCIA Adaptec 152[02] SCSI
 #scsibus* at aic?
 #ncr*	at pci?			# NCR 538XX SCSI controllers(old)
 #scsibus* at ncr?
