@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.5 2005/01/05 00:46:28 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.6 2005/01/09 05:29:42 drahn Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -318,7 +318,7 @@ struct pxa2x0_dma_desc {
 #define GPIO_GEDR3  0x148	/* edge detect PXA270 [120:96] */
 
 #define	GPIO_REG(r, pin)	((r) + \
-				((pin > 95) ? GPIO_GPLR3 : (((pin) / 32) * 4)))
+    ((pin > 95) ? GPIO_GPLR3 : (((pin) / 32) * 4)))
 #define	GPIO_BANK(pin)		((pin) / 32)
 #define	GPIO_BIT(pin)		(1u << ((pin) & 0x1f))
 #define	GPIO_FN_REG(pin)	(GPIO_GAFR0_L + (((pin) / 16) * 4))
@@ -343,7 +343,7 @@ struct pxa2x0_dma_desc {
 #define	GPIO_IS_GPIO_IN(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_IN)
 #define	GPIO_IS_GPIO_OUT(n)	(((n) & (GPIO_FN_MASK|GPIO_OUT)) == GPIO_OUT)
 
-#define	GPIO_NPINS    120
+#define	GPIO_NPINS    121
 
 /*
  * memory controller
