@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.49 2005/01/23 03:37:42 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.50 2005/01/26 13:05:49 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -111,6 +111,8 @@ struct atu_type atu_devs[] = {
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C503A,
 	  RadioIntersil,	ATU_NO_QUIRK },
+	{ USB_VENDOR_BELKIN,	USB_PRODUCT_BELKIN_F5D6050,
+	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LEXAR,	USB_PRODUCT_LEXAR_2662WAR,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_WUSB11,
