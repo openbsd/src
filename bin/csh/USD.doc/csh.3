@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.3,v 1.4 2003/10/30 19:04:47 jmc Exp $
+.\"	$OpenBSD: csh.3,v 1.5 2004/04/21 08:11:15 jmc Exp $
 .\"	$NetBSD: csh.3,v 1.3 1995/03/21 09:03:38 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ Introduction
 It is possible to place commands in files and to cause shells to be
 invoked to read and execute commands from these files,
 which are called
-.I "shell scripts."
+.I "shell scripts" .
 We here detail those features of the shell useful to the writers of such
 scripts.
 .NH 2
@@ -59,8 +59,8 @@ which contains definitions of the commands used to create these
 different files when changes occur.
 Definitions of the means for printing listings, cleaning up the directory
 in which the files reside, and installing the resultant programs
-are easily, and most appropriately placed in this
-.I makefile.
+are easily, and most appropriately, placed in this
+.I makefile .
 This format is superior and preferable to maintaining a group of shell
 procedures to maintain these files.
 .PP
@@ -143,7 +143,7 @@ expands to `1' if name is
 .I set
 or to `0'
 if name is not
-.I set.
+.I set .
 It is the fundamental mechanism used for checking whether particular
 variables have been assigned values.
 All other forms of reference to undefined variables cause errors.
@@ -153,7 +153,7 @@ The notation
 $#name
 .DE
 expands to the number of elements in the variable
-.I name.
+.I name .
 Thus
 .DS
 % set argv=(a b c)
@@ -165,7 +165,7 @@ Thus
 % echo $?argv
 0
 % echo $argv
-Undefined variable: argv.
+argv: Undefined variable.
 %
 .DE
 .PP
@@ -307,21 +307,22 @@ of the shell and some of its control structure follows:
 # to the directory ~/backup if they differ from the files
 # already in ~/backup
 #
+set backdir = ~/backup
 set noglob
-foreach i ($argv) 
+foreach i ($argv)
 
         if ($i !~ *.c) continue  # not a .c file so do nothing
 
-        if (! \-r ~/backup/$i:t) then
-                echo $i:t not in backup... not cp\e\'ed
+        if (! \-r $backdir/$i:t) then
+                echo $i:t not in backup... not cp\'ed
                 continue
         endif
 
-        cmp \-s $i ~/backup/$i:t # to set $status
+        cmp -s $i $backdir/$i:t # to set $status
 
         if ($status != 0) then
                 echo new backup of $i
-                cp $i ~/backup/$i:t
+                cp $i $backdir/$i:t
         endif
 end
 .DE
@@ -336,7 +337,7 @@ for each of the values given between `(' and `)' with the named
 variable, in this case `i' set to successive values in the list.
 Within this loop we may use the command
 .I break
-to stop executing the loop 
+to stop executing the loop
 and
 .I continue
 to prematurely terminate one iteration
@@ -350,7 +351,7 @@ has the value at the last iteration.
 We set the variable
 .I noglob
 here to prevent filename expansion of the members of
-.I argv.
+.I argv .
 This is a good idea, in general, if the arguments to a shell script
 are filenames which have already been expanded or if the arguments
 may contain filename expansion metacharacters.
@@ -412,7 +413,7 @@ statements above also admit a sequence of
 pairs followed by a single
 .I else
 and an
-.I endif,
+.I endif ,
 e.g.:
 .DS
 \fBif\fR ( expression ) \fBthen\fR
@@ -429,7 +430,7 @@ e.g.:
 Another important mechanism used in shell scripts is the `:' modifier.
 We can use the modifier `:r' here to extract a root of a filename or
 `:e' to extract the
-.I extension.
+.I extension .
 Thus if the variable
 .I i
 has the value
@@ -515,7 +516,7 @@ and
 \fBendsw\fR
 .DE
 For details see the manual section for
-.I csh.
+.I csh .
 C programmers should note that we use
 .I breaksw
 to exit from a

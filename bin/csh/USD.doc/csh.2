@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.2,v 1.8 2004/03/18 09:37:25 jmc Exp $
+.\"	$OpenBSD: csh.2,v 1.9 2004/04/21 08:11:15 jmc Exp $
 .\"	$NetBSD: csh.2,v 1.3 1995/03/21 09:03:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -47,15 +47,15 @@ We will later see what kinds of commands are usefully placed there.
 For now we need not have this file and the shell does not complain about
 its absence.
 .PP
-A 
+A
 .I "login shell" ,
 executed after you login to the system,
 will, after it reads commands from
-.I \&.cshrc,
+.I \&.cshrc ,
 read commands from a file
 .I \&.login
 also in your home directory.
-This file contains commands which you wish to do each time you login
+This file contains commands which you wish to do each time you log in
 to the \s-2UNIX\s0 system.
 My
 .I \&.login
@@ -76,7 +76,7 @@ endif
 .DE
 .PP
 This file contains several commands to be executed by \s-2UNIX\s0
-each time I login.
+each time I log in.
 The first is a
 .I set
 command which is interpreted directly by the shell.  It sets the shell
@@ -95,21 +95,14 @@ An alternative to this is to put the command
 biff y
 .DE
 in place of this
-.I set;
+.I set ;
 this will cause me to be notified immediately when mail arrives, and to
 be shown the first few lines of the new message.
-.PP
-Next I set the shell variable `time' to `15' causing the shell to automatically
-print out statistics lines for commands which execute for at least 15 seconds
-of \s-2CPU\s+2 time.  The variable `history' is set to 10 indicating that
-I want the shell to remember the last 10 commands I type in its
-.I "history list" ,
-(described later).
 .PP
 I create an
 .I alias
 ``ts'' which executes a
-\fItset\fR\|(1) command setting up the modes of the terminal.
+tset(1) command setting up the modes of the terminal.
 The parameters to
 .I tset
 indicate the kinds of terminal which I usually use when not on a hardwired
@@ -117,6 +110,13 @@ port.  I then execute ``ts'' and also use the
 .I stty
 command to change the interrupt character to ^C and the line kill
 character to ^U.
+.PP
+Next I set the shell variable `time' to `15' causing the shell to automatically
+print out statistics lines for commands which execute for at least 15 seconds
+of \s-2CPU\s+2 time.  The variable `history' is set to 10 indicating that
+I want the shell to remember the last 10 commands I type in its
+.I "history list" ,
+(described later).
 .PP
 I then run the `msgs' program, which provides me with any
 system messages which I have not seen before; the `\-f' option here prevents
@@ -129,7 +129,7 @@ processing my
 .I \&.login
 file and begin reading commands from the terminal, prompting for each with
 `% '.
-When I log off (by giving the 
+When I log off (by giving the
 .I logout
 command) the shell
 will print `logout' and execute commands from the file `.logout'
@@ -143,7 +143,7 @@ and will take no further input from my terminal.
 Shell variables
 .PP
 The shell maintains a set of
-.I variables.
+.I variables .
 We saw above the variables
 .I history
 and
@@ -151,7 +151,7 @@ and
 which had values `10' and `15'.
 In fact, each shell variable has as value an array of
 zero or more
-.I strings.
+.I strings .
 Shell variables may be assigned values by the set command.  It has
 several forms, the most useful of which was given above and is
 .DS
@@ -166,14 +166,14 @@ By changing the values of these variables one can directly affect the
 behavior of the shell.
 .PP
 One of the most important variables is the variable
-.I path.
+.I path .
 This variable contains a sequence of directory names where the shell
 searches for commands.
 The
 .I set
 command with no arguments
 shows the value of all variables currently defined (we usually say
-.I set)
+.I set )
 in the shell.
 The default value for path will be shown by
 .I set
@@ -182,9 +182,9 @@ to be
 % set
 .ta .75i
 argv	()
-cwd	/usr/bill
-home	/usr/bill
-path	(. /usr/ucb /bin /usr/bin)
+cwd	/home/bill
+home	/home/bill
+path	(/bin /usr/bin .)
 prompt	%
 shell	/bin/csh
 status	0
@@ -193,19 +193,20 @@ user	bill
 %
 .so tabs
 .DE
-This output indicates that the variable path points to the current
-directory `.' and then `/usr/ucb', `/bin' and `/usr/bin'.
+This output indicates that the variable path points to
+`/bin', `/usr/bin', and the current directory `.'.
 Commands which you may write might be in `.' (usually one of
 your directories).
-Commands developed at Berkeley, live in `/usr/ucb'
-while commands developed at Bell Laboratories live in `/bin' and `/usr/bin'.
+.\" Commands developed at Berkeley live in `/usr/ucb',
+.\" while commands developed at Bell Laboratories live in `/bin' and `/usr/bin'.
+Other commands may live in /bin and /usr/bin.
 .PP
 A number of locally developed programs on the system live in the directory
-`/usr/local'.
+`/usr/local/bin'.
 If we wish that all shells which we invoke to have
 access to these new programs we can place the command
 .DS
-set path=(. /usr/ucb /bin /usr/bin /usr/local)
+set path=(/bin /usr/bin /usr/local/bin .)
 .DE
 in our file
 .I \&.cshrc
@@ -217,10 +218,10 @@ set
 again to see that the value assigned to
 .I path
 has changed.
-.FS \(dg
-Another directory that might interest you is /usr/new, which contains
-many useful user-contributed programs provided with Berkeley Unix.
-.FE
+.\" .FS \(dg
+.\" Another directory that might interest you is /usr/new, which contains
+.\" many useful user-contributed programs provided with Berkeley Unix.
+.\" .FE
 .PP
 One thing you should be aware of is that the shell examines each directory
 which you insert into your path and determines which commands are contained
@@ -239,12 +240,12 @@ placing it at the end of the path specification usually works equivalently
 and reduces overhead.
 .PP
 Other useful built in variables are the variable
-.I home
-which shows your home directory,
-.I cwd
-which contains your current working directory,
-the variable
-.I ignoreeof
+.I home ,
+which shows your home directory;
+.I cwd ,
+which contains your current working directory;
+and the variable
+.I ignoreeof ,
 which can be set in your
 .I \&.login
 file to tell the shell not to exit when it receives an end-of-file from
@@ -254,7 +255,7 @@ is one of several variables which the shell does not care about the
 value of, only whether they are
 .I set
 or
-.I unset.
+.I unset .
 Thus to set this variable you simply do
 .DS
 set ignoreeof
@@ -269,12 +270,12 @@ Finally, some other built-in shell variables of use are the
 variables
 .I noclobber
 and
-.I mail.
+.I mail .
 The metasyntax
 .DS
 > filename
 .DE
-which redirects the standard output of a command
+which redirects the standard output of a command,
 will overwrite and destroy the previous contents of the named file.
 In this way you may accidentally overwrite a file which is valuable.
 If you would prefer that the shell not overwrite files in this
@@ -326,11 +327,11 @@ main()
 	printf("hello);
 }
 % cc !$
-cc bug.c 
-"bug.c", line 4: newline in string or char constant
-"bug.c", line 5: syntax error
+cc bug.c
+bug.c:4: unterminated string or character constant
+bug.c:4: possible real start of unterminated constant
 % ed !$
-ed bug.c 
+ed bug.c
 29
 4s/);/"&/p
         printf("hello");
@@ -338,10 +339,10 @@ w
 30
 q
 % !c
-cc bug.c 
+cc bug.c
 % a.out
 hello% !e
-ed bug.c 
+ed bug.c
 30
 4s/lo/lo\e\en/p
         printf("hello\en");
@@ -351,25 +352,26 @@ q
 % !c \-o bug
 cc bug.c \-o bug
 % size a.out bug
-a.out: 2784+364+1028 = 4176b = 0x1050b
-bug: 2784+364+1028 = 4176b = 0x1050b
+text	data	bss	dec	hex
+1022	208	288	1518	5ee	a.out
+1022	208	288	1518	5ee	bug
 % ls \-l !*
-ls \-l a.out bug 
+ls \-l a.out bug
 \(mirwxr\(mixr\(mix 1 bill       3932 Dec 19 09:41 a.out
 \(mirwxr\(mixr\(mix 1 bill       3932 Dec 19 09:42 bug
 % bug
 hello
-% num bug.c | spp
-spp: Command not found.
-% ^spp^ssp
-num bug.c | ssp 
+% cay -n bug.c
+cay: Command not found.
+% ^cay^cat
+cat -n bug.c
     1	main()
     3	{
     4		printf("hello\en");
     5	}
 % !! | lpr
-num bug.c | ssp | lpr
-% 
+cat -n bug.c | lpr
+%
 .DE
 .KE
 In this example we have a very simple C program which has a bug (or two)
@@ -401,9 +403,9 @@ we have created were, and then an `ls \-l' command with the same argument
 list, denoting the argument list `\!*'.
 Finally we ran the program `bug' to see that its output is indeed correct.
 .PP
-To make a numbered listing of the program we ran the `num' command on the file `bug.c'.
-In order to compress out blank lines in the output of `num' we ran the
-output through the filter `ssp', but misspelled it as spp.  To correct this
+To make a numbered listing of the program we ran the `cat' command on the file `bug.c', with the `-n' flag.
+Unfortunately, we mispelled `cat' as `cay'.
+To correct this
 we used a shell substitute, placing the old text and new text between `^'
 characters.  This is similar to the substitute command in the editor.
 Finally, we repeated the same command with `!!', but sent its output to the
@@ -467,7 +469,7 @@ dir ~bill
 .DE
 then the shell will translate this to
 .DS
-ls \-s /mnt/bill
+ls \-s /home/bill
 .DE
 .PP
 Thus the
@@ -541,7 +543,7 @@ command |\|& lpr
 .DE
 to route both standard and diagnostic output through the pipe
 to the line printer daemon
-.I lpr.\(dd
+.I lpr .\(dd
 .FS
 \(dd A command of the form
 .br
@@ -611,13 +613,13 @@ would run the
 .I du
 program, which reports on the disk usage of your working directory (as well as
 any directories below it), put the output into the file `usage' and return
-immediately with a prompt for the next command without out waiting for
+immediately with a prompt for the next command without waiting for
 .I du
 to finish.  The
 .I du
 program would continue executing in the background
 until it finished, even though you can type and execute more commands in the
-mean time.
+meantime.
 When a background
 job terminates, a message is typed by the shell just before the next prompt
 telling you that the job has completed.
@@ -641,9 +643,9 @@ EOT
 %
 .so tabs
 .DE
-If the job did not terminate normally the `Done' message might say
+If the job did not terminate normally, the `Done' message might say
 something else like `Killed'.
-If you want the 
+If you want the
 terminations of background jobs to be reported at the time they occur
 (possibly interrupting the output of other foreground jobs), you can set
 the
@@ -655,16 +657,16 @@ Background jobs are unaffected by any signals from the keyboard like
 the \s-2STOP\s0, \s-2INTERRUPT\s0, or \s-2QUIT\s0 signals mentioned earlier.
 .PP
 Jobs are recorded in a table inside the shell until they terminate.
-In this table, the shell remembers the command names, arguments and the
+In this table, the shell remembers the command names, arguments, and the
 .I "process numbers"
-of all commands in the job as well as the working directory where the job was
+of all commands in the job, as well as the working directory where the job was
 started.
 Each job in the table is either running
 .I "in the foreground"
 with the shell waiting for it to terminate, running
-.I "in the background,"
+.I "in the background" ,
 or
-.I suspended.
+.I suspended .
 Only one job can be running in the foreground at one time, but several
 jobs can be suspended or running in the background at once.  As each job
 is started, it is assigned a small identifying
@@ -693,7 +695,7 @@ a new command, leaving the job running simultaneously.
 .PP
 As mentioned in section 1.8, foreground jobs become
 .I suspended
-by typing ^Z
+by typing ^Z,
 which sends a \s-2STOP\s0 signal to the currently running
 foreground job.  A background job can become suspended by using the
 .I stop
@@ -705,10 +707,10 @@ For foreground jobs this looks like
 .DS
 % du > usage
 ^Z
-Stopped
+Suspended
 %
 .DE
-`Stopped' message is typed by the shell when it notices that the
+The `Suspended' message is typed by the shell when it notices that the
 .I du
 program stopped.
 For background jobs, using the
@@ -719,7 +721,7 @@ command, it is
 [1] 2345
 % stop %1
 .ta 1.75i
-[1] + Stopped (signal)	sort usage
+[1] + Suspended (signal)	sort usage
 %
 .so tabs
 .DE
@@ -751,7 +753,7 @@ job.
 All job name arguments begin with the character `%', since some of the
 job control commands also accept process numbers (printed by the
 .I ps
-command.)
+command).
 The default job (when no argument is given) is called the
 .I current
 job and is identified by a `+' in the output of the
@@ -764,10 +766,10 @@ If a job is stopped while running in the foreground it becomes the
 job and the existing current job becomes the
 .I previous
 job \- identified by a `\-' in the output of
-.I jobs.
+.I jobs .
 When the current job terminates, the previous job becomes the current job.
 When given, the argument is either `%\-' (indicating
-the previous job); `%#', where # is the job number; 
+the previous job); `%#', where # is the job number;
 `%pref' where pref is some unique prefix of the command name
 and arguments of one of the jobs; or `%?' followed by some string found
 in only one of the jobs.
@@ -775,7 +777,7 @@ in only one of the jobs.
 The
 .I jobs
 command types the table of jobs, giving the job number,
-commands and status (`Stopped' or `Running') of each background or
+commands and status (`Suspended' or `Running') of each background or
 suspended job.  With the `\-l' option the process numbers are also
 typed.
 .DS
@@ -790,7 +792,7 @@ Stopped
 .ta 1.75i
 [1] \(mi Running	du > usage
 [2]    Running	ls \-s | sort \-n > myfile
-[3] \(pl Stopped	mail bill
+[3] \(pl Suspended	mail bill
 % fg %ls
 ls \-s | sort \-n > myfile
 % more myfile
@@ -853,24 +855,24 @@ text editor might take a long time.
 120000
 1,$s/thisword/thatword/
 ^Z
-Stopped
+Suspended
 % bg
 [1] ed bigfile &
-% 
+%
  . . .  some foreground commands
 .ta 1.75i
-[1] Stopped (tty input)	ed bigfile
+[1] Suspended (tty input)	ed bigfile
 % fg
 ed bigfile
 w
 120000
 q
-% 
+%
 .so tabs
 .DE
 So after the `s' command was issued, the `ed' job was stopped with ^Z
 and then put in the background using
-.I bg.
+.I bg .
 Some time later when the `s' command was finished,
 .I ed
 tried to read another command and was stopped because jobs
@@ -892,7 +894,7 @@ can be used for interactive programs that sometimes have long
 periods without interaction.  Thus each time it outputs a prompt for more
 input it will stop before the prompt.  It can then be run in the
 foreground using
-.I fg,
+.I fg ,
 more input can be given and, if necessary stopped and returned to
 the background.  This
 .I stty
@@ -934,13 +936,13 @@ command only prints jobs started in the currently executing shell,
 it knows nothing about background jobs started in other login sessions
 or within shell files.  The
 .I ps
-can be used in this case to find out about background jobs not started
+command can be used in this case to find out about background jobs not started
 in the current shell.
 .NH 2
 Working Directories
 .PP
 As mentioned in section 1.6, the shell is always in a particular
-.I "working directory."
+.I "working directory" .
 The `change directory' command
 .I chdir
 (its
@@ -954,7 +956,7 @@ are located in.
 It is useful to make a directory for each project you wish to work on
 and to place all files related to that project in that directory.
 The `make directory' command,
-.I mkdir,
+.I mkdir ,
 creates a new directory.
 The
 .I pwd
@@ -965,16 +967,16 @@ located in.
 Thus in the example below:
 .DS
 % pwd
-/usr/bill
+/home/bill
 % mkdir newpaper
 % chdir newpaper
 % pwd
-/usr/bill/newpaper
+/home/bill/newpaper
 %
 .DE
 the user has created and moved to the
 directory
-.I newpaper.
+.I newpaper ,
 where, for example, he might
 place a group of related files.
 .PP
@@ -1006,7 +1008,7 @@ permits you to switch easily between them.
 .PP
 The shell always remembers the pathname of its current working directory in
 the variable
-.I cwd.
+.I cwd .
 The shell can also be requested to remember the previous directory when
 you change to a new working directory.  If the `push directory' command
 .I pushd
@@ -1018,7 +1020,7 @@ on a
 before changing to the new one.
 You can see this list at any time by typing the `directories'
 command
-.I dirs.
+.I dirs .
 .ID
 .nf
 % pushd newpaper/references
@@ -1035,7 +1037,7 @@ command
 .DE
 The list is printed in a horizontal line, reading left to right,
 with a tilde (~) as
-shorthand for your home directory\(emin this case `/usr/bill'.
+shorthand for your home directory\(emin this case `/home/bill'.
 The directory stack is printed whenever there is more than one
 entry on it and it changes.
 It is also printed by a
@@ -1082,14 +1084,14 @@ working directory of the currently running foreground job is different
 from that of the shell.
 .DS
 % dirs \-l
-/mnt/bill
+/home/bill
 % cd myproject
 % dirs
 ~/myproject
 % ed prog.c
 1143
 ^Z
-Stopped
+Suspended
 % cd ..
 % ls
 myproject
@@ -1099,8 +1101,8 @@ ed prog.c (wd: ~/myproject)
 .DE
 This way the shell warns you when there
 is an implied change of working directory, even though no cd command was
-issued.  In the above example the `ed' job was still in `/mnt/bill/project'
-even though the shell had changed to `/mnt/bill'.
+issued.  In the above example the `ed' job was still in `/home/bill/project'
+even though the shell had changed to `/home/bill'.
 A similar warning is given when such a foreground job
 terminates or is suspended (using the \s-2STOP\s0 signal) since
 the return to the shell again implies a change of working directory.
@@ -1152,7 +1154,7 @@ The numbers given with the history events can be used to reference
 previous events which are difficult to reference using the
 contextual mechanisms introduced above.
 There is also a shell variable called
-.I prompt.
+.I prompt .
 By placing a `!' character in its value the shell will there substitute
 the number of the current command in the history list.
 You can use this number to refer to this command in a history substitution.
@@ -1228,9 +1230,9 @@ exists which will print out the environment.
 It might then show:
 .DS
 % printenv
-HOME=/usr/bill
+HOME=/home/bill
 SHELL=/bin/csh
-PATH=:/usr/ucb:/bin:/usr/bin:/usr/local
+PATH=:/bin:/usr/bin:/usr/local/bin
 TERM=adm3a
 USER=bill
 %
@@ -1254,11 +1256,11 @@ command can be used to cause a command to be timed no matter how much
 \s-2CPU\s0 time it takes.
 Thus
 .DS
-% time cp /etc/rc /usr/bill/rc
+% time cp /etc/rc /home/bill/rc
 0.0u 0.1s 0:01 8% 2+1k 3+2io 1pf+0w
-% time wc /etc/rc /usr/bill/rc
+% time wc /etc/rc /home/bill/rc
      52    178   1347 /etc/rc
-     52    178   1347 /usr/bill/rc
+     52    178   1347 /home/bill/rc
     104    356   2694 total
 0.1u 0.1s 0:00 13% 3+3k 5+3io 7pf+0w
 %
@@ -1268,7 +1270,7 @@ indicates that the
 command used a negligible amount of user time (u)
 and about 1/10th of a system time (s); the elapsed time was 1 second (0:01),
 there was an average memory usage of 2k bytes of program space and 1k
-bytes of data space over the cpu time involved (2+1k); the program
+bytes of data space over the CPU time involved (2+1k); the program
 did three disk reads and two disk writes (3+2io), and took one page fault
 and was not swapped (1pf+0w).
 The word count command
