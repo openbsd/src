@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.13 2002/10/10 20:27:46 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.14 2002/10/11 13:31:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -773,131 +773,131 @@ struct wi_card_ident {
 
 #define WI_CARD_IDS							\
 	{								\
-		htole16(WI_NIC_LUCENT),					\
+		WI_NIC_LUCENT,						\
 		"Lucent WaveLAN/IEEE",					\
 		WI_LUCENT						\
 	}, {								\
-		htole16(WI_NIC_SONY),					\
+		WI_NIC_SONY,						\
 		"Sony WaveLAN/IEEE",					\
 		WI_LUCENT						\
 	}, {								\
-		htole16(WI_NIC_LUCENT_EMB),				\
+		WI_NIC_LUCENT_EMB,					\
 		"Lucent Embedded WaveLAN/IEEE",				\
 		WI_LUCENT						\
 	}, {								\
-		htole16(WI_NIC_EVB2),					\
+		WI_NIC_EVB2,						\
 		"PRISM2 HFA3841(EVB2)",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_HWB3763),				\
+		WI_NIC_HWB3763,						\
 		"PRISM2 HWB3763 rev.B",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_HWB3163),				\
+		WI_NIC_HWB3163,						\
 		"PRISM2 HWB3163 rev.A",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_HWB3163B),				\
+		WI_NIC_HWB3163B,					\
 		"PRISM2 HWB3163 rev.B",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_EVB3),					\
+		WI_NIC_EVB3,						\
 		"PRISM2 HFA3842(EVB3)",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_HWB1153),				\
+		WI_NIC_HWB1153,						\
 		"PRISM1 HWB1153",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P2_SST),					\
+		WI_NIC_P2_SST,						\
 		"PRISM2 HWB3163 SST-flash",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_EVB2_SST),				\
+		WI_NIC_EVB2_SST,					\
 		"PRISM2 HWB3163(EVB2) SST-flash",			\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_EVA),				\
+		WI_NIC_3842_EVA,					\
 		"PRISM2 HFA3842(EVAL)",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCMCIA_AMD),			\
+		WI_NIC_3842_PCMCIA_AMD,					\
 		"PRISM2.5 ISL3873",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCMCIA_SST),			\
+		WI_NIC_3842_PCMCIA_SST,					\
 		"PRISM2.5 ISL3873",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCMCIA_ATL),			\
+		WI_NIC_3842_PCMCIA_ATL,					\
 		"PRISM2.5 ISL3873",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCMCIA_ATS),			\
+		WI_NIC_3842_PCMCIA_ATS,					\
 		"PRISM2.5 ISL3873",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_MINI_AMD),				\
+		WI_NIC_3842_MINI_AMD,					\
 		"PRISM2.5 ISL3874A(Mini-PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_MINI_SST),				\
+		WI_NIC_3842_MINI_SST,					\
 		"PRISM2.5 ISL3874A(Mini-PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_MINI_ATL),				\
+		WI_NIC_3842_MINI_ATL,					\
 		"PRISM2.5 ISL3874A(Mini-PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_MINI_ATS),				\
+		WI_NIC_3842_MINI_ATS,					\
 		"PRISM2.5 ISL3874A(Mini-PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCI_AMD),				\
+		WI_NIC_3842_PCI_AMD,					\
 		"PRISM2.5 ISL3874A(PCI-bridge)",			\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCI_SST),				\
+		WI_NIC_3842_PCI_SST,					\
 		"PRISM2.5 ISL3874A(PCI-bridge)",			\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCI_ATS),				\
+		WI_NIC_3842_PCI_ATS,					\
 		"PRISM2.5 ISL3874A(PCI-bridge)",			\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_3842_PCI_ATL),				\
+		WI_NIC_3842_PCI_ATL,					\
 		"PRISM2.5 ISL3874A(PCI-bridge)",			\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_PCMCIA_AMD),				\
+		WI_NIC_P3_PCMCIA_AMD,					\
 		"PRISM3 ISL37300P",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_PCMCIA_SST),				\
+		WI_NIC_P3_PCMCIA_SST,					\
 		"PRISM3 ISL37300P",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_PCMCIA_ATL),				\
+		WI_NIC_P3_PCMCIA_ATL,					\
 		"PRISM3 ISL37300P",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_PCMCIA_ATS),				\
+		WI_NIC_P3_PCMCIA_ATS,					\
 		"PRISM3 ISL37300P",					\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_MINI_AMD),				\
+		WI_NIC_P3_MINI_AMD,					\
 		"PRISM3 ISL37300P(PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_MINI_SST),				\
+		WI_NIC_P3_MINI_SST,					\
 		"PRISM3 ISL37300P(PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_MINI_ATL),				\
+		WI_NIC_P3_MINI_ATL,					\
 		"PRISM3 ISL37300P(PCI)",				\
 		WI_INTERSIL						\
 	}, {								\
-		htole16(WI_NIC_P3_MINI_ATS),				\
+		WI_NIC_P3_MINI_ATS,					\
 		"PRISM3 ISL37300P(PCI)",				\
 		WI_INTERSIL						\
 	}, {								\

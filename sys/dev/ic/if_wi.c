@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.81 2002/10/10 20:27:46 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.82 2002/10/11 13:31:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.81 2002/10/10 20:27:46 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.82 2002/10/11 13:31:49 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2246,7 +2246,7 @@ wi_get_id(sc)
 	ver.wi_len = 5;
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	for (id = wi_card_ident; id->firm_type != WI_NOTYPE; id++) {
-		if (ver.wi_ver[0] == id->card_id)
+		if (letoh16(ver.wi_ver[0]) == id->card_id)
 			break;
 	}
 	if (id->firm_type != WI_NOTYPE) {
