@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.91 2004/06/21 23:10:31 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.92 2004/08/10 16:17:05 ho Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -116,8 +116,8 @@ static const struct sadb_alg calgs[] = {
 	{ SADB_X_CALG_LZS, 0, 0, 0}
 };
 
-extern uint32_t sadb_exts_allowed_out[SADB_MAX+1];
-extern uint32_t sadb_exts_required_out[SADB_MAX+1];
+extern uint64_t sadb_exts_allowed_out[SADB_MAX+1];
+extern uint64_t sadb_exts_required_out[SADB_MAX+1];
 
 extern struct pool ipsec_policy_pool;
 
@@ -509,6 +509,11 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 	    sa->tdb_exp_timeout || sa->tdb_exp_first_use)
 		i += sizeof(struct sadb_lifetime);
 
+#if defined (SADB_X_EXT_LIFETIME_LASTUSE)
+	if (sa->tdb_last_used)
+		i += sizeof(struct sadb_lifetime);
+#endif
+
 	if (sa->tdb_src.sa.sa_family)
 		i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa));
 
@@ -572,6 +577,13 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
 		headers[SADB_EXT_LIFETIME_HARD] = p;
 		export_lifetime(&p, sa, PFKEYV2_LIFETIME_HARD);
 	}
+
+#if defined (SADB_X_EXT_LIFETIME_LASTUSE)
+	if (sa->tdb_last_used) {
+		headers[SADB_X_EXT_LIFETIME_LASTUSE] = p;
+		export_lifetime(&p, sa, PFKEYV2_LIFETIME_LASTUSE);
+	}
+#endif
 
 	/* Export TDB source address */
 	headers[SADB_EXT_ADDRESS_SRC] = p;
@@ -981,8 +993,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]);
-			import_udpencap(newsa,
-			    headers[SADB_X_EXT_UDPENCAP]);
+			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
 
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
@@ -1028,8 +1039,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    PFKEYV2_LIFETIME_SOFT);
 			import_lifetime(sa2, headers[SADB_EXT_LIFETIME_HARD],
 			    PFKEYV2_LIFETIME_HARD);
-			import_udpencap(sa2,
-			    headers[SADB_X_EXT_UDPENCAP]);
+			import_udpencap(sa2, headers[SADB_X_EXT_UDPENCAP]);
 		}
 
 		splx(s);
@@ -1138,8 +1148,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]);
-			import_udpencap(newsa,
-			    headers[SADB_X_EXT_UDPENCAP]);
+			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
 
 			headers[SADB_EXT_KEY_AUTH] = NULL;
 			headers[SADB_EXT_KEY_ENCRYPT] = NULL;
@@ -1166,8 +1175,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	case SADB_DELETE:
 		ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
-		sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
-		    sizeof(struct sadb_address));
+		sunionp =
+		    (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
+			sizeof(struct sadb_address));
 		s = spltdb();
 
 		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
@@ -1200,8 +1210,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	case SADB_GET:
 		ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
-		sunionp = (union sockaddr_union *) (headers[SADB_EXT_ADDRESS_DST] +
-		    sizeof(struct sadb_address));
+		sunionp =
+		    (union sockaddr_union *)(headers[SADB_EXT_ADDRESS_DST] +
+			sizeof(struct sadb_address));
+
 		s = spltdb();
 
 		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
@@ -1727,11 +1739,11 @@ ret:
 
 		smsg->sadb_msg_errno = abs(rval);
 	} else {
-		uint32_t seen = 0;
+		uint64_t seen = 0LL;
 
 		for (i = 1; i <= SADB_EXT_MAX; i++)
 			if (headers[i])
-				seen |= (1 << i);
+				seen |= (1LL << i);
 
 		if ((seen & sadb_exts_allowed_out[smsg->sadb_msg_type])
 		    != seen)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.50 2004/01/27 09:27:17 markus Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.51 2004/08/10 16:17:05 ho Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -252,7 +252,8 @@ struct sadb_x_udpencap {
 #define SADB_X_EXT_REMOTE_AUTH        29
 #define SADB_X_EXT_SUPPORTED_COMP     30
 #define SADB_X_EXT_UDPENCAP           31
-#define SADB_EXT_MAX                  31
+#define SADB_X_EXT_LIFETIME_LASTUSE   32
+#define SADB_EXT_MAX                  32
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -330,6 +331,7 @@ struct sadb_x_udpencap {
 #define PFKEYV2_LIFETIME_HARD      0
 #define PFKEYV2_LIFETIME_SOFT      1
 #define PFKEYV2_LIFETIME_CURRENT   2
+#define PFKEYV2_LIFETIME_LASTUSE   3
 
 #define PFKEYV2_IDENTITY_SRC       0
 #define PFKEYV2_IDENTITY_DST       1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.38 2004/03/31 10:24:00 henning Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.39 2004/08/10 16:17:05 ho Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -84,46 +84,47 @@ extern int encdebug;
 #define DPRINTF(x)
 #endif
 
-#define BITMAP_SA                      (1 << SADB_EXT_SA)
-#define BITMAP_LIFETIME_CURRENT        (1 << SADB_EXT_LIFETIME_CURRENT)
-#define BITMAP_LIFETIME_HARD           (1 << SADB_EXT_LIFETIME_HARD)
-#define BITMAP_LIFETIME_SOFT           (1 << SADB_EXT_LIFETIME_SOFT)
-#define BITMAP_ADDRESS_SRC             (1 << SADB_EXT_ADDRESS_SRC)
-#define BITMAP_ADDRESS_DST             (1 << SADB_EXT_ADDRESS_DST)
-#define BITMAP_ADDRESS_PROXY           (1 << SADB_EXT_ADDRESS_PROXY)
-#define BITMAP_KEY_AUTH                (1 << SADB_EXT_KEY_AUTH)
-#define BITMAP_KEY_ENCRYPT             (1 << SADB_EXT_KEY_ENCRYPT)
-#define BITMAP_IDENTITY_SRC            (1 << SADB_EXT_IDENTITY_SRC)
-#define BITMAP_IDENTITY_DST            (1 << SADB_EXT_IDENTITY_DST)
-#define BITMAP_SENSITIVITY             (1 << SADB_EXT_SENSITIVITY)
-#define BITMAP_PROPOSAL                (1 << SADB_EXT_PROPOSAL)
-#define BITMAP_SUPPORTED_AUTH          (1 << SADB_EXT_SUPPORTED_AUTH)
-#define BITMAP_SUPPORTED_ENCRYPT       (1 << SADB_EXT_SUPPORTED_ENCRYPT)
-#define BITMAP_SPIRANGE                (1 << SADB_EXT_SPIRANGE)
+#define BITMAP_SA                      (1LL << SADB_EXT_SA)
+#define BITMAP_LIFETIME_CURRENT        (1LL << SADB_EXT_LIFETIME_CURRENT)
+#define BITMAP_LIFETIME_HARD           (1LL << SADB_EXT_LIFETIME_HARD)
+#define BITMAP_LIFETIME_SOFT           (1LL << SADB_EXT_LIFETIME_SOFT)
+#define BITMAP_ADDRESS_SRC             (1LL << SADB_EXT_ADDRESS_SRC)
+#define BITMAP_ADDRESS_DST             (1LL << SADB_EXT_ADDRESS_DST)
+#define BITMAP_ADDRESS_PROXY           (1LL << SADB_EXT_ADDRESS_PROXY)
+#define BITMAP_KEY_AUTH                (1LL << SADB_EXT_KEY_AUTH)
+#define BITMAP_KEY_ENCRYPT             (1LL << SADB_EXT_KEY_ENCRYPT)
+#define BITMAP_IDENTITY_SRC            (1LL << SADB_EXT_IDENTITY_SRC)
+#define BITMAP_IDENTITY_DST            (1LL << SADB_EXT_IDENTITY_DST)
+#define BITMAP_SENSITIVITY             (1LL << SADB_EXT_SENSITIVITY)
+#define BITMAP_PROPOSAL                (1LL << SADB_EXT_PROPOSAL)
+#define BITMAP_SUPPORTED_AUTH          (1LL << SADB_EXT_SUPPORTED_AUTH)
+#define BITMAP_SUPPORTED_ENCRYPT       (1LL << SADB_EXT_SUPPORTED_ENCRYPT)
+#define BITMAP_SPIRANGE                (1LL << SADB_EXT_SPIRANGE)
 #define BITMAP_LIFETIME (BITMAP_LIFETIME_CURRENT | BITMAP_LIFETIME_HARD | BITMAP_LIFETIME_SOFT)
 #define BITMAP_ADDRESS (BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_ADDRESS_PROXY)
 #define BITMAP_KEY      (BITMAP_KEY_AUTH | BITMAP_KEY_ENCRYPT)
 #define BITMAP_IDENTITY (BITMAP_IDENTITY_SRC | BITMAP_IDENTITY_DST)
 #define BITMAP_MSG                     1
-#define BITMAP_X_SRC_MASK              (1 << SADB_X_EXT_SRC_MASK)
-#define BITMAP_X_DST_MASK              (1 << SADB_X_EXT_DST_MASK)
-#define BITMAP_X_PROTOCOL              (1 << SADB_X_EXT_PROTOCOL)
-#define BITMAP_X_SRC_FLOW              (1 << SADB_X_EXT_SRC_FLOW)
-#define BITMAP_X_DST_FLOW              (1 << SADB_X_EXT_DST_FLOW)
-#define BITMAP_X_FLOW_TYPE             (1 << SADB_X_EXT_FLOW_TYPE)
-#define BITMAP_X_SA2                   (1 << SADB_X_EXT_SA2)
-#define BITMAP_X_DST2                  (1 << SADB_X_EXT_DST2)
-#define BITMAP_X_POLICY                (1 << SADB_X_EXT_POLICY)
-#define BITMAP_X_LOCAL_CREDENTIALS     (1 << SADB_X_EXT_LOCAL_CREDENTIALS)
-#define BITMAP_X_REMOTE_CREDENTIALS    (1 << SADB_X_EXT_REMOTE_CREDENTIALS)
-#define BITMAP_X_LOCAL_AUTH            (1 << SADB_X_EXT_LOCAL_AUTH)
-#define BITMAP_X_REMOTE_AUTH           (1 << SADB_X_EXT_REMOTE_AUTH)
+#define BITMAP_X_SRC_MASK              (1LL << SADB_X_EXT_SRC_MASK)
+#define BITMAP_X_DST_MASK              (1LL << SADB_X_EXT_DST_MASK)
+#define BITMAP_X_PROTOCOL              (1LL << SADB_X_EXT_PROTOCOL)
+#define BITMAP_X_SRC_FLOW              (1LL << SADB_X_EXT_SRC_FLOW)
+#define BITMAP_X_DST_FLOW              (1LL << SADB_X_EXT_DST_FLOW)
+#define BITMAP_X_FLOW_TYPE             (1LL << SADB_X_EXT_FLOW_TYPE)
+#define BITMAP_X_SA2                   (1LL << SADB_X_EXT_SA2)
+#define BITMAP_X_DST2                  (1LL << SADB_X_EXT_DST2)
+#define BITMAP_X_POLICY                (1LL << SADB_X_EXT_POLICY)
+#define BITMAP_X_LOCAL_CREDENTIALS     (1LL << SADB_X_EXT_LOCAL_CREDENTIALS)
+#define BITMAP_X_REMOTE_CREDENTIALS    (1LL << SADB_X_EXT_REMOTE_CREDENTIALS)
+#define BITMAP_X_LOCAL_AUTH            (1LL << SADB_X_EXT_LOCAL_AUTH)
+#define BITMAP_X_REMOTE_AUTH           (1LL << SADB_X_EXT_REMOTE_AUTH)
 #define BITMAP_X_CREDENTIALS           (BITMAP_X_LOCAL_CREDENTIALS | BITMAP_X_REMOTE_CREDENTIALS | BITMAP_X_LOCAL_AUTH | BITMAP_X_REMOTE_AUTH)
 #define BITMAP_X_FLOW                  (BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_FLOW_TYPE)
-#define BITMAP_X_SUPPORTED_COMP        (1 << SADB_X_EXT_SUPPORTED_COMP)
-#define BITMAP_X_UDPENCAP              (1 << SADB_X_EXT_UDPENCAP)
+#define BITMAP_X_SUPPORTED_COMP        (1LL << SADB_X_EXT_SUPPORTED_COMP)
+#define BITMAP_X_UDPENCAP              (1LL << SADB_X_EXT_UDPENCAP)
+#define BITMAP_X_LIFETIME_LASTUSE      (1LL << SADB_X_EXT_LIFETIME_LASTUSE)
 
-uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
+uint64_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
 	/* RESERVED */
 	~0,
@@ -159,7 +160,7 @@ uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 	BITMAP_X_POLICY,
 };
 
-uint32_t sadb_exts_required_in[SADB_MAX+1] =
+uint64_t sadb_exts_required_in[SADB_MAX+1] =
 {
 	/* RESERVED */
 	0,
@@ -172,7 +173,7 @@ uint32_t sadb_exts_required_in[SADB_MAX+1] =
 	/* DELETE */
 	BITMAP_SA | BITMAP_ADDRESS_DST,
 	/* GET */
-	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
+	BITMAP_SA | BITMAP_ADDRESS_DST,
 	/* ACQUIRE */
 	0,
 	/* REGISTER */
@@ -195,7 +196,7 @@ uint32_t sadb_exts_required_in[SADB_MAX+1] =
 	BITMAP_X_POLICY,
 };
 
-uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
+uint64_t sadb_exts_allowed_out[SADB_MAX+1] =
 {
 	/* RESERVED */
 	~0,
@@ -208,7 +209,7 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
 	/* DELETE */
 	BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
 	/* GET */
-	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY,
+	BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS | BITMAP_X_UDPENCAP | BITMAP_X_LIFETIME_LASTUSE,
 	/* ACQUIRE */
 	BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL | BITMAP_X_CREDENTIALS,
 	/* REGISTER */
@@ -231,7 +232,7 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
 	BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW | BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_FLOW_TYPE | BITMAP_X_POLICY,
 };
 
-uint32_t sadb_exts_required_out[SADB_MAX+1] =
+uint64_t sadb_exts_required_out[SADB_MAX+1] =
 {
 	/* RESERVED */
 	0,
@@ -276,7 +277,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 {
 	struct sadb_ext *sadb_ext;
 	int i, left = len;
-	uint32_t allow, seen = 1;
+	uint64_t allow, seen = 1;
 	struct sadb_msg *sadb_msg = (struct sadb_msg *) p;
 
 	bzero(headers, (SADB_EXT_MAX + 1) * sizeof(void *));
@@ -360,7 +361,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			return (EINVAL);
 		}
 
-		if (!(allow & (1 << sadb_ext->sadb_ext_type))) {
+		if (!(allow & (1LL << sadb_ext->sadb_ext_type))) {
 			DPRINTF(("pfkeyv2_parsemessage: extension header %d "
 			    "not permitted on message type %d\n",
 			    sadb_ext->sadb_ext_type, sadb_msg->sadb_msg_type));
@@ -373,7 +374,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			return (EINVAL);
 		}
 
-		seen |= (1 << sadb_ext->sadb_ext_type);
+		seen |= (1LL << sadb_ext->sadb_ext_type);
 
 		switch (sadb_ext->sadb_ext_type) {
 		case SADB_EXT_SA:
@@ -448,6 +449,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		case SADB_EXT_LIFETIME_CURRENT:
 		case SADB_EXT_LIFETIME_HARD:
 		case SADB_EXT_LIFETIME_SOFT:
+		case SADB_X_EXT_LIFETIME_LASTUSE:
 			if (i != sizeof(struct sadb_lifetime)) {
 				DPRINTF(("pfkeyv2_parsemessage: bad header "
 				    "length for LIFETIME extension header "
@@ -949,7 +951,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	}
 
 	{
-		uint32_t required;
+		uint64_t required;
 
 		required = sadb_exts_required_in[sadb_msg->sadb_msg_type];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.20 2004/06/24 19:35:25 tholo Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.21 2004/08/10 16:17:05 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -398,6 +398,13 @@ export_lifetime(void **p, struct tdb *tdb, int type)
 		sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_cur_bytes;
 		sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_established;
 		sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_first_use;
+		break;
+
+	case PFKEYV2_LIFETIME_LASTUSE:
+		sadb_lifetime->sadb_lifetime_allocations = 0;
+		sadb_lifetime->sadb_lifetime_bytes = 0;
+		sadb_lifetime->sadb_lifetime_addtime = 0;
+		sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_last_used;
 		break;
 	}
 
