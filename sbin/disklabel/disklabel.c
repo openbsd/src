@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.92 2004/09/28 17:57:46 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.93 2004/10/04 15:09:41 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.92 2004/09/28 17:57:46 otto Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.93 2004/10/04 15:09:41 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1014,24 +1014,24 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 			    unit == 'B' ? 0 : 1, p_size, unit,
 			    unit == 'B' ? 0 : 1, p_offset, unit);
 		if ((unsigned) pp->p_fstype < FSMAXTYPES)
-			fprintf(f, "%6.6s", fstypenames[pp->p_fstype]);
+			fprintf(f, "%7.7s", fstypenames[pp->p_fstype]);
 		else
-			fprintf(f, "%6d", pp->p_fstype);
+			fprintf(f, "%7d", pp->p_fstype);
 		switch (pp->p_fstype) {
 
 		case FS_UNUSED:				/* XXX */
-			fprintf(f, "  %5u %5u %5.5s ",
+			fprintf(f, "  %5u %5u %4.4s ",
 			    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
 			break;
 
 		case FS_BSDFFS:
-			fprintf(f, "  %5u %5u %5hu ",
+			fprintf(f, "  %5u %5u %4hu ",
 			    pp->p_fsize, pp->p_fsize * pp->p_frag,
 			    pp->p_cpg);
 			break;
 
 		default:
-			fprintf(f, "%20.20s", "");
+			fprintf(f, "%19.19s", "");
 			break;
 		}
 		if (mp != NULL) {
@@ -1099,7 +1099,7 @@ display(FILE *f, struct disklabel *lp, char unit)
 	for (j = 0; j <= i; j++)
 		fprintf(f, "%d ", lp->d_drivedata[j]);
 	fprintf(f, "\n\n%hu partitions:\n", lp->d_npartitions);
-	fprintf(f, "#    %13.13s %13.13s fstype [fsize bsize   cpg]\n",
+	fprintf(f, "#    %13.13s %13.13s  fstype [fsize bsize  cpg]\n",
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
 		display_partition(f, lp, NULL, i, unit);

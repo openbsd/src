@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.95 2004/09/28 17:57:46 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.96 2004/10/04 15:09:41 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.95 2004/09/28 17:57:46 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.96 2004/10/04 15:09:41 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -802,7 +802,7 @@ editor_display(struct disklabel *lp, char **mp, u_int32_t *freep, char unit)
 	printf("free sectors: %u\n", *freep);
 	printf("rpm: %hu\n", lp->d_rpm);
 	printf("\n%hu partitions:\n", lp->d_npartitions);
-	printf("#    %13.13s %13.13s fstype [fsize bsize   cpg]\n",
+	printf("#    %13.13s %13.13s  fstype [fsize bsize  cpg]\n",
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
 		display_partition(stdout, lp, mp, i, unit);
