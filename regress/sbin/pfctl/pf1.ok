@@ -1,6 +1,6 @@
 @0 pass in all 
 @0 pass in all 
-@0 pass in proto tcp from any port <= 1024 to any 
+@0 pass in proto tcp from any port <= 1024 to any label foo_bar
 @0 pass in proto tcp from any to any port = smtp 
 @0 pass in inet proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3/32 port != ssh 
 @0 pass in inet proto igmp from 10.0.0.0/8 to 10.1.1.1/32 allow-opts 
