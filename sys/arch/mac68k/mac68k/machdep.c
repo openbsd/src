@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 1999/05/24 23:09:03 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 1999/06/11 06:19:08 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2414,6 +2414,12 @@ mac68k_set_io_offsets(base)
 		switch (current_mac_model->machineid) {
 		case MACH_MACQ900:
 		case MACH_MACQ950:
+			/*
+			 * Note that sccA base address is based on having
+			 * the serial port in `compatible' mode (set in
+			 * the Serial Switch control panel before booting).
+			 */
+			sccA = (volatile u_char *) base + 0xc020;
 			mac68k_machine.scsi96_2 = 1;
 		case MACH_MACQ700:
 			SCSIBase = base + 0xf000;
