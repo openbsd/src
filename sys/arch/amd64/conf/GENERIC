@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2004/02/28 23:52:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2004/02/28 23:58:15 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -10,8 +10,9 @@ include "../../../conf/GENERIC"
 #option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
+#option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
-option		MTRR		# CPU memory range attributes control
+#option		MTRR		# CPU memory range attributes control
 
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600
