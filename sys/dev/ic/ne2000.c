@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.10 2001/03/13 06:02:00 aaron Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.11 2001/03/29 01:39:32 aaron Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -166,6 +166,7 @@ ne2000_attach(nsc, myea)
 	case NE2000_TYPE_NE2000:
 	case NE2000_TYPE_AX88190:		/* XXX really? */
 	case NE2000_TYPE_DL10019:
+	case NE2000_TYPE_DL10022:
 		memsize = 8192 * 2;
 		break;
 	}
@@ -789,4 +790,12 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
 	 */
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait);
+}
+
+int
+ne2000_detach(sc, flags)
+	struct ne2000_softc *sc;
+	int flags;
+{
+	return (dp8390_detach(&sc->sc_dp8390, flags));
 }

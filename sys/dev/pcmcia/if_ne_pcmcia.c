@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.38 2001/03/27 10:23:44 peter Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.39 2001/03/29 01:39:33 aaron Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -49,11 +49,17 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
+#include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
+
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/ic/dl10019reg.h>
+#include <dev/ic/dl10019var.h>
 
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
@@ -98,8 +104,8 @@ const struct ne2000dev {
     int enet_maddr;
     unsigned char enet_vendor[3];
     int flags;
-#define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
-#define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
+#define NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
+#define NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_AMBICOM_AMB8002T,
@@ -160,6 +166,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_NDC_ND5100_E,
       0, -1, { 0x00, 0x80, 0xc6 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_NETGEAR_FA410TX,
+      0, -1, { 0x00, 0xe0, 0x98 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_TAMARACK_NE2000,
@@ -613,6 +623,15 @@ again:
 		dsc->sc_media_init = rtl80x9_media_init;
 	}
 
+	if (nsc->sc_type == NE2000_TYPE_DL10019 ||
+	    nsc->sc_type == NE2000_TYPE_DL10022) {
+		dsc->sc_mediachange = dl10019_mediachange;
+		dsc->sc_mediastatus = dl10019_mediastatus;
+		dsc->init_card = dl10019_init_card;
+		dsc->sc_media_init = dl10019_media_init;
+		dsc->sc_media_fini = dl10019_media_fini;
+	}
+
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
 	    dsc);
@@ -654,22 +673,24 @@ ne_pcmcia_detach(dev, flags)
 	int flags;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dev;
-	struct dp8390_softc *dsc = &psc->sc_ne2000.sc_dp8390;
-	struct ifnet *ifp = &dsc->sc_arpcom.ac_if;
-	int rv = 0;
+	int error;
 
 	if (psc->sc_nic_io_window == -1)
 		/* Nothing to detach. */
 		return (0);
 
+	error = ne2000_detach(&psc->sc_ne2000, flags);
+	if (error != 0)
+		return (error);
+
+	/* Unmap our i/o windows. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+
+	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	return (rv);
+	return (0);
 }
 
 int
@@ -779,17 +800,27 @@ ne_pcmcia_dl10019_get_enaddr(psc, myea)
 {
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	u_int8_t sum;
-	int j;
+	int j, type;
 
-	for (j = 0, sum = 0; j < 8; j++)
+	for (j = 0, sum = 0; j < 8; j++) {
 		sum += bus_space_read_1(nsc->sc_asict, nsc->sc_asich,
 		    0x04 + j);
+	}
 	if (sum != 0xff)
 		return (NULL);
-	for (j = 0; j < ETHER_ADDR_LEN; j++)
+
+	for (j = 0; j < ETHER_ADDR_LEN; j++) {
 		myea[j] = bus_space_read_1(nsc->sc_asict,
 		    nsc->sc_asich, 0x04 + j);
-	nsc->sc_type = NE2000_TYPE_DL10019;
+	}
+
+	/* XXX - magic values from Linux */
+	type = bus_space_read_1(nsc->sc_asict, nsc->sc_asich, 0x0f);
+	if (type == 0x91 || type == 0x99)
+		nsc->sc_type = NE2000_TYPE_DL10022;
+	else
+		nsc->sc_type = NE2000_TYPE_DL10019;
+
 	return (myea);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.11 2001/03/25 06:17:33 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.12 2001/03/29 01:39:32 aaron Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -1250,4 +1250,26 @@ dp8390_disable(sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
 	}
+}
+
+int
+dp8390_detach(sc, flags)
+	struct dp8390_softc *sc;
+	int flags;
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	/* dp8390_disable() checks sc->sc_enabled */
+	dp8390_disable(sc);
+
+	if (sc->sc_media_fini != NULL)
+		(*sc->sc_media_fini)(sc);
+
+	/* Delete all reamining media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (0);
 }
