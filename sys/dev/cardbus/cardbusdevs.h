@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.16 2004/04/07 15:48:09 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.17 2004/07/06 09:23:31 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.15 2004/04/07 15:47:52 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.16 2004/07/06 09:22:31 brad Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -58,6 +58,7 @@
 #define	CARDBUS_VENDOR_COREGA	0x1259		/* Corega */
 #define	CARDBUS_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* Abocom */
+#define	CARDBUS_VENDOR_PLANEX	0x14ea		/* Planex */
 #define	CARDBUS_VENDOR_NETGEAR	0x168c		/* Netgear */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
@@ -83,6 +84,10 @@
 #define	CARDBUS_PRODUCT_ABOCOM_PCM200	0xab03		/* PCM200 */
 #define	CARDBUS_PRODUCT_ABOCOM_TE100	0xab06		/* TE100 */
 
+/* Planex products */
+#define	CARDBUS_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_PLANEX_FNW_3800_TX	0xab07		/* FNW-3800-TX 10/100 Ethernet */
+
 /* Accton products */
 #define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX503x */
 #define	CARDBUS_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 */
@@ -95,6 +100,7 @@
 
 /* Corega products */
 #define	CARDBUS_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_COREGA_2CB_TXD	0xa11e		/* FEther II CB-TXD 10/100 Ethernet */
 
 /* DEC products */
 #define	CARDBUS_PRODUCT_DEC_21142	0x0019		/* 21142/3 */

@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.16 2004/04/07 15:48:09 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.17 2004/07/06 09:23:31 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.15 2004/04/07 15:47:52 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.16 2004/07/06 09:22:31 brad Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -85,6 +85,14 @@ struct cardbus_known_product cardbus_known_product[] = {
 	    "TE100",
 	},
 	{
+	    CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3603_TX,
+	    "FNW-3603-TX 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3800_TX,
+	    "FNW-3800-TX 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
 	    "MPX503x",
 	},
@@ -103,6 +111,10 @@ struct cardbus_known_product cardbus_known_product[] = {
 	{
 	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
 	    "FEther CB-TXD 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_2CB_TXD,
+	    "FEther II CB-TXD 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
@@ -199,6 +211,10 @@ struct cardbus_known_vendor cardbus_known_vendors[] = {
 	{
 	    CARDBUS_VENDOR_ABOCOM, 0,
 	    "Abocom",
+	},
+	{
+	    CARDBUS_VENDOR_PLANEX, 0,
+	    "Planex",
 	},
 	{
 	    CARDBUS_VENDOR_NETGEAR, 0,
