@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.4 2004/02/26 08:50:40 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.5 2004/02/26 08:52:58 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -426,7 +426,8 @@ greywatcher(void)
 		/* if we are dropping privs, chown to that user */
 		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1))
 			err(1, "can't chown %s", PATH_SPAMD_DB);
-	} else if (i != -1)
+	} 
+	if (i != -1)
 		close(i);
 
 	/*
