@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.2 2002/04/24 22:33:41 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/28 18:28:34 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -13,7 +13,7 @@ COMMONDIR=	${TOP}/ramdisk
 MOUNT_POINT?=	${TOP}/${BASE}/fs
 
 CRUNCHCONF?=	${COMMONDIR}/${CBIN}.conf
-MTREE=		${COMMONDIR}/mtree.conf
+MTREE=		${UTILS}/mtree.conf
 RAWLABEL=	
 
 ${CBIN}.conf: ${LISTS}

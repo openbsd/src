@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.2 2002/04/25 22:10:28 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/28 18:28:34 deraadt Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -12,7 +12,7 @@ MOUNT_POINT?=	${TOP}/${BASE}/fs
 
 LISTS=		${.CURDIR}/list
 CRUNCHCONF?=	${COMMONDIR}/${CBIN}.conf
-MTREE=		${COMMONDIR}/mtree.conf
+MTREE=		${UTILS}/mtree.conf
 RAWLABEL=	
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}

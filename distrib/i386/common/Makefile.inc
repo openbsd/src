@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2002/04/25 22:10:27 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/28 18:28:33 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -11,7 +11,7 @@ LISTS?=		${.CURDIR}/../common/list ${.CURDIR}
 UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
-MTREE=		${.CURDIR}/../common/mtree.conf
+MTREE=		${UTILS}/mtree.conf
 
 XNAME?=		floppy
 FS?=		${XNAME}${REV}.fs

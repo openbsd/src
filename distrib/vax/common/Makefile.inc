@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2002/04/25 22:10:28 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2002/04/28 18:28:34 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -16,7 +16,7 @@ MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
-MTREE=		${COMMONDIR}/mtree.conf
+MTREE=		${UTILS}/mtree.conf
 
 all: ${CBIN} bootroot
 	dd if=/dev/zero of=${IMAGE} bs=64k count=32
