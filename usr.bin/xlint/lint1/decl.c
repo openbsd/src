@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.3 1998/07/27 16:53:39 deraadt Exp $	*/
+/*	$OpenBSD: decl.c,v 1.4 1998/07/29 03:14:48 millert Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.3 1998/07/27 16:53:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.4 1998/07/29 03:14:48 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1427,7 +1427,7 @@ sym_t *
 dname(sym)
 	sym_t	*sym;
 {
-	scl_t	sc;
+	scl_t	sc = NOSCL;
 
 	if (sym->s_scl == NOSCL) {
 		dcs->d_rdcsym = NULL;
@@ -1557,7 +1557,7 @@ mktag(tag, kind, decl, semi)
 	tspec_t	kind;
 	int	decl, semi;
 {
-	scl_t	scl;
+	scl_t	scl = NOSCL;
 	type_t	*tp;
 
 	if (kind == STRUCT) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chk.c,v 1.4 1998/07/27 16:53:43 deraadt Exp $	*/
+/*	$OpenBSD: chk.c,v 1.5 1998/07/29 03:14:51 millert Exp $	*/
 /*	$NetBSD: chk.c,v 1.2 1995/07/03 21:24:42 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: chk.c,v 1.4 1998/07/27 16:53:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chk.c,v 1.5 1998/07/29 03:14:51 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -701,7 +701,7 @@ printflike(hte, call, n, fmt, ap)
 	const	char *fp;
 	int	fc;
 	int	fwidth, prec, left, sign, space, alt, zero;
-	tspec_t	sz, t1, t2;
+	tspec_t	sz, t1, t2 = NOTSPEC;
 	type_t	*tp;
 
 	fp = fmt;
@@ -931,7 +931,7 @@ scanflike(hte, call, n, fmt, ap)
 	const	char *fp;
 	int	fc;
 	int	noasgn, fwidth;
-	tspec_t	sz, t1, t2;
+	tspec_t	sz, t1 = NOTSPEC, t2 = NOTSPEC;
 	type_t	*tp;
 
 	fp = fmt;

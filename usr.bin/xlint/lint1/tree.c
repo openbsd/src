@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.3 1998/07/27 16:53:41 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.4 1998/07/29 03:14:50 millert Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.3 1998/07/27 16:53:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.4 1998/07/29 03:14:50 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -769,7 +769,8 @@ typeok(op, arg, ln, rn)
 	tnode_t	*ln, *rn;
 {
 	mod_t	*mp;
-	tspec_t	lt, rt, lst, rst, olt, ort;
+	tspec_t	lt, rt = NOTSPEC, lst = NOTSPEC, rst = NOTSPEC,
+		olt = NOTSPEC, ort = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp, *rstp;
 	tnode_t	*tn;
 
@@ -1194,7 +1195,7 @@ asgntypok(op, arg, ln, rn)
 	int	arg;
 	tnode_t	*ln, *rn;
 {
-	tspec_t	lt, rt, lst, rst;
+	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp, *rstp;
 	mod_t	*mp;
 	const	char *lts, *rts;
@@ -1647,7 +1648,7 @@ convert(op, arg, tp, tn)
 	tnode_t	*tn;
 {
 	tnode_t	*ntn;
-	tspec_t	nt, ot, ost;
+	tspec_t	nt, ot, ost = NOTSPEC;
 
 	if (tn->tn_lvalue)
 		lerror("convert() 1");
@@ -1889,7 +1890,7 @@ cvtcon(op, arg, tp, nv, v)
 	val_t	*nv, *v;
 {
 	tspec_t	ot, nt;
-	ldbl_t	max, min;
+	ldbl_t	max = 0, min = 0;
 	int	sz, rchk;
 	quad_t	xmask, xmsk1;
 	int	osz, nsz;
@@ -3854,7 +3855,7 @@ precconf(tn)
 	tnode_t	*tn;
 {
 	tnode_t	*ln, *rn;
-	op_t	lop, rop;
+	op_t	lop, rop = NOOP;
 	int	lparn, rparn;
 	mod_t	*mp;
 	int	warn;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.2 1996/06/26 05:44:23 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.3 1998/07/29 03:14:52 millert Exp $	*/
 /*	$NetBSD: hash.c,v 1.2 1995/07/03 21:24:47 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hash.c,v 1.2 1996/06/26 05:44:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1998/07/29 03:14:52 millert Exp $";
 #endif
 
 #include <stddef.h>
@@ -97,6 +97,7 @@ hsearch(s, mknew)
 
 	/* create a new hte */
 	hte = xalloc(sizeof (hte_t));
+	memset(hte, 0, sizeof (hte_t));
 	hte->h_name = xstrdup(s);
 	hte->h_lsym = &hte->h_syms;
 	hte->h_lcall = &hte->h_calls;
