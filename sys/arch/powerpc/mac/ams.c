@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.8 2000/01/08 02:57:25 takemura Exp $	*/
+/*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -39,10 +39,10 @@
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 
+#include <machine/autoconf.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
-
-#include <machine/autoconf.h>
 
 #include <powerpc/mac/adbvar.h>
 #include <powerpc/mac/aedvar.h>
@@ -58,27 +58,15 @@ static void	amsattach __P((struct device *, struct device *, void *));
 static void	ems_init __P((struct ams_softc *));
 static void	ms_processevent __P((adb_event_t *event, struct ams_softc *));
 
-/*
- * Global variables.
- */
-extern int	kbd_polling; /* Are we polling (Debugger mode)? from kbd.c */
-
-/*
- * Local variables.
- */
-static volatile int extdms_done;  /* Did ADBOp() complete? */
-
-
-/* Driver definition. */
-struct cfdriver ams_cd = {
-	NULL, "ams", DV_DULL
-};
 /* Driver definition. */
 struct cfattach ams_ca = {
 	sizeof(struct ams_softc), amsmatch, amsattach
 };
+/* Driver definition. */
+struct cfdriver ams_cd = {
+	NULL, "ams", DV_DULL
+};
 
-extern struct cfdriver ms_cd;
 
 int ams_enable __P((void *));
 int ams_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
@@ -96,7 +84,7 @@ amsmatch(parent, cf, aux)
 	void *cf;
 	void *aux;
 {
-	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 
 	if (aa_args->origaddr == ADBADDR_MS)
 		return 1;
@@ -111,7 +99,7 @@ amsattach(parent, self, aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct ams_softc *sc = (struct ams_softc *)self;
-	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 	int error;
 	struct wsmousedev_attach_args a;
 
@@ -150,6 +138,9 @@ amsattach(parent, self, aux)
 		break;
 	case ADBMS_UCONTOUR:
 		printf("Contour mouse, default parameters\n");
+		break;
+	case ADBMS_TURBO:
+		printf("Kensington Turbo Mouse\n");
 		break;
 	case ADBMS_EXTENDED:
 		if (sc->sc_devid[0] == '\0') {
@@ -197,7 +188,7 @@ amsattach(parent, self, aux)
 	error = SetADBInfo(&adbinfo, sc->adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
-		printf("ms: returned %d from SetADBInfo\n", error);
+		printf("ams: returned %d from SetADBInfo\n", error);
 #endif
 
 	a.accessops = &ams_accessops;
@@ -220,7 +211,7 @@ void
 ems_init(sc)
 	struct ams_softc *sc;
 {
-	int adbaddr, count;
+	int adbaddr;
 	short cmd;
 	u_char buffer[9];
 
@@ -230,7 +221,7 @@ ems_init(sc)
 	if (sc->handler_id == ADBMS_USPEED ||
 	    sc->handler_id == ADBMS_UCONTOUR) {
 		/* Found MicroSpeed Mouse Deluxe Mac or Contour Mouse */
-		cmd = ((adbaddr<<4)&0xF0)|0x9;	/* listen 1 */
+		cmd = ADBLISTEN(adbaddr, 1);
 
 		/*
 		 * To setup the MicroSpeed or the Contour, it appears
@@ -256,69 +247,68 @@ ems_init(sc)
 		buffer[4] = 0x07;	/* Locking mask = 0000b,
 					 * enable buttons = 0111b
 					 */
-		extdms_done = 0;
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-		while (!extdms_done)
-			/* busy wait until done */;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 
 		sc->sc_buttons = 3;
 		sc->sc_res = 200;
 		return;
 	}
+	if (sc->handler_id == ADBMS_TURBO) {
+		/* Found Kensington Turbo Mouse */
+		static u_char data1[] =
+			{ 8, 0xe7, 0x8c, 0, 0, 0, 0xff, 0xff, 0x94 };
+		static u_char data2[] =
+			{ 8, 0xa5, 0x14, 0, 0, 0x69, 0xff, 0xff, 0x27 };
+
+		buffer[0] = 0;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
+
+		adb_op_sync((Ptr)data1, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
+
+		buffer[0] = 0;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
+
+		adb_op_sync((Ptr)data2, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
+		return;
+	}
 	if ((sc->handler_id == ADBMS_100DPI) ||
 	    (sc->handler_id == ADBMS_200DPI)) {
 		/* found a mouse */
-		cmd = ((adbaddr << 4) & 0xf0) | 0x3;
-
-		extdms_done = 0;
-		cmd = (cmd & 0xf3) | 0x0c; /* talk command */
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-
-		/* Wait until done, but no more than 2 secs */
-		count = 40000;
-		while (!extdms_done && count-- > 0)
-			delay(50);
-
-		if (!extdms_done) {
+		cmd = ADBTALK(adbaddr, 3);
+		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
 #ifdef ADB_DEBUG
 			if (adb_debug)
-				printf("adb: extdms_init timed out\n");
+				printf("adb: ems_init timed out\n");
 #endif
 			return;
 		}
 
 		/* Attempt to initialize Extended Mouse Protocol */
-		buffer[2] = '\004'; /* make handler ID 4 */
-		extdms_done = 0;
-		cmd = (cmd & 0xf3) | 0x08; /* listen command */
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-		while (!extdms_done)
-			/* busy wait until done */;
+		buffer[2] = 4; /* make handler ID 4 */
+		cmd = ADBLISTEN(adbaddr, 3);
+		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+#ifdef ADB_DEBUG
+			if (adb_debug)
+				printf("adb: ems_init timed out\n");
+#endif
+			return;
+		}
 
 		/*
 		 * Check to see if successful, if not
 		 * try to initialize it as other types
 		 */
-		cmd = ((adbaddr << 4) & 0xf0) | 0x3;
-		extdms_done = 0;
-		cmd = (cmd & 0xf3) | 0x0c; /* talk command */
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&extdms_done, cmd);
-		while (!extdms_done)
-			/* busy wait until done */;
-
-		if (buffer[2] == ADBMS_EXTENDED) {
+		cmd = ADBTALK(adbaddr, 3);
+		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
+		    buffer[2] == ADBMS_EXTENDED) {
 			sc->handler_id = ADBMS_EXTENDED;
-			extdms_done = 0;
-			/* talk register 1 */
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			    (Ptr)&extdms_done, (adbaddr << 4) | 0xd);
-			while (!extdms_done)
-				/* busy-wait until done */;
-			if (buffer[0] == 8) {
+			cmd = ADBTALK(adbaddr, 1);
+			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+#ifdef ADB_DEBUG
+				if (adb_debug)
+					printf("adb: ems_init timed out\n");
+#endif
+			} else if (buffer[0] == 8) {
 				/* we have a true EMP device */
 				sc->sc_class = buffer[7];
 				sc->sc_buttons = buffer[8];
@@ -331,42 +321,30 @@ ems_init(sc)
 				 * button bits in 3rd byte instead of sending
 				 * via pseudo keyboard device.
 				 */
-				extdms_done = 0;
-				/* listen register 1 */
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x00;
 				buffer[2]=0x81;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
-				extdms_done = 0;
-				/* listen register 1 */
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x01;
 				buffer[2]=0x81;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
-				extdms_done = 0;
-				/* listen register 1 */
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x02;
 				buffer[2]=0x81;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
-				extdms_done = 0;
-				/* listen register 1 */
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
+				cmd = ADBLISTEN(adbaddr, 1);
 				buffer[0]=2;
 				buffer[1]=0x03;
 				buffer[2]=0x38;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				      (Ptr)&extdms_done, (adbaddr << 4) | 0x9);
-				while (!extdms_done)
-					/* busy-wait until done */;
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
+
 				sc->sc_buttons = 3;
 				sc->sc_res = 400;
 				if (buffer[2] == 0x21)
@@ -378,29 +356,25 @@ ems_init(sc)
 		} else {
 			/* Attempt to initialize as an A3 mouse */
 			buffer[2] = 0x03; /* make handler ID 3 */
-			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x08; /* listen command */
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			    (Ptr)&extdms_done, cmd);
-			while (!extdms_done)
-				/* busy wait until done */;
+			cmd = ADBLISTEN(adbaddr, 3);
+			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
+#ifdef ADB_DEBUG
+				if (adb_debug)
+					printf("adb: ems_init timed out\n");
+#endif
+				return;
+			}
 
 			/*
 			 * Check to see if successful, if not
 			 * try to initialize it as other types
 			 */
-			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
-			extdms_done = 0;
-			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
-			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-			    (Ptr)&extdms_done, cmd);
-			while (!extdms_done)
-				/* busy wait until done */;
-
-			if (buffer[2] == ADBMS_MSA3) {
+			cmd = ADBTALK(adbaddr, 3);
+			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0
+			    && buffer[2] == ADBMS_MSA3) {
 				sc->handler_id = ADBMS_MSA3;
 				/* Initialize as above */
-				cmd = ((adbaddr << 4) & 0xF0) | 0xA;
+				cmd = ADBLISTEN(adbaddr, 2);
 				/* listen 2 */
 				buffer[0] = 3;
 				buffer[1] = 0x00;
@@ -410,11 +384,7 @@ ems_init(sc)
 				 * enable 3 button mode = 0111b,
 				 * speed = normal
 				 */
-				extdms_done = 0;
-				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-				    (Ptr)&extdms_done, cmd);
-				while (!extdms_done)
-					/* busy wait until done */;
+				adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 				sc->sc_buttons = 3;
 				sc->sc_res = 300;
 			} else {
@@ -435,7 +405,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 	int adb_command;
 {
 	adb_event_t event;
-	struct ams_softc *msc;
+	struct ams_softc *sc;
 	int adbaddr;
 #ifdef ADB_DEBUG
 	int i;
@@ -444,10 +414,10 @@ ms_adbcomplete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
-	msc = (struct ams_softc *)data_area;
+	adbaddr = ADB_CMDADDR(adb_command);
+	sc = (struct ams_softc *)data_area;
 
-	if ((msc->handler_id == ADBMS_EXTENDED) && (msc->sc_devid[0] == 0)) {
+	if ((sc->handler_id == ADBMS_EXTENDED) && (sc->sc_devid[0] == 0)) {
 		/* massage the data to look like EMP data */
 		if ((buffer[3] & 0x04) == 0x04)
 			buffer[1] &= 0x7f;
@@ -464,14 +434,14 @@ ms_adbcomplete(buffer, data_area, adb_command)
 	}
 
 	event.addr = adbaddr;
-	event.hand_id = msc->handler_id;
-	event.def_addr = msc->origaddr;
+	event.hand_id = sc->handler_id;
+	event.def_addr = sc->origaddr;
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("ms: from %d at %d (org %d) %d:", event.addr,
+		printf("ams: from %d at %d (org %d) %d:", event.addr,
 		    event.hand_id, event.def_addr, buffer[0]);
 		for (i = 1; i <= buffer[0]; i++)
 			printf(" %x", buffer[i]);
@@ -481,7 +451,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
 
 	microtime(&event.timestamp);
 
-	ms_processevent(&event, msc);
+	ms_processevent(&event, sc);
 }
 
 /*
@@ -489,9 +459,9 @@ ms_adbcomplete(buffer, data_area, adb_command)
  * x- and y-axis motion, and handoff the event to the appropriate subsystem.
  */
 static void
-ms_processevent(event, msc)
+ms_processevent(event, sc)
 	adb_event_t *event;
-	struct ams_softc *msc;
+	struct ams_softc *sc;
 {
 	adb_event_t new_event;
 	int i, button_bit, max_byte, mask, buttons;
@@ -542,14 +512,14 @@ ms_processevent(event, msc)
 		}
 		break;
 	}
-	new_event.u.m.buttons = msc->sc_mb | buttons;
+	new_event.u.m.buttons = sc->sc_mb | buttons;
 	new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
 				((event->bytes[1] & 0x40) ? 64 : 0);
 	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
-	if (msc->sc_wsmousedev)
-		wsmouse_input(msc->sc_wsmousedev, new_event.u.m.buttons,
+	if (sc->sc_wsmousedev)
+		wsmouse_input(sc->sc_wsmousedev, new_event.u.m.buttons,
 			      new_event.u.m.dx, -new_event.u.m.dy, 0,
 			      WSMOUSE_INPUT_DELTA);
 #if NAED > 0
