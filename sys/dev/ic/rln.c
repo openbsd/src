@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.2 1999/08/08 21:46:15 niklas Exp $	*/
+/*	$OpenBSD: rln.c,v 1.3 1999/08/19 06:14:44 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -48,38 +48,37 @@ struct cfdriver rln_cd = {
 	NULL, "rln", DV_IFNET
 };
 
-static void	rlninit __P((struct rln_softc *));
-static void	rlnstart __P((struct ifnet*));
-static void	rlnwatchdog __P((struct ifnet*));
-static int	rlnioctl __P((struct ifnet *, u_long, caddr_t));
-static int	rln_probe __P((struct rln_softc *));
-static void	rlnstop __P((struct rln_softc *));
+void	rlninit __P((struct rln_softc *));
+void	rlnstart __P((struct ifnet*));
+void	rlnwatchdog __P((struct ifnet*));
+int	rlnioctl __P((struct ifnet *, u_long, caddr_t));
+void	rlnstop __P((struct rln_softc *));
 
 /* Interrupt handler. */
-static void	rlnsoftintr __P((void *));
+void	rlnsoftintr __P((void *));
 
 /* Packet I/O. */
-static int	rln_transmit __P((struct rln_softc *, struct mbuf *,
+int	rln_transmit __P((struct rln_softc *, struct mbuf *,
 			int, int));
-static struct mbuf * rlnget __P((struct rln_softc *, struct rln_mm_cmd *,
+struct mbuf * rlnget __P((struct rln_softc *, struct rln_mm_cmd *,
 			int));
 
 /* Card protocol-level functions. */
-static int	rln_getenaddr __P((struct rln_softc *, u_int8_t *));
-static int	rln_getpromvers __P((struct rln_softc *, char *, int));
-static int	rln_sendinit __P((struct rln_softc *));
+int	rln_getenaddr __P((struct rln_softc *, u_int8_t *));
+int	rln_getpromvers __P((struct rln_softc *, char *, int));
+int	rln_sendinit __P((struct rln_softc *));
 #if notyet
-static int	rln_roamconfig __P((struct rln_softc *));
-static int	rln_roam __P((struct rln_softc *));
-static int	rln_multicast __P((struct rln_softc *, int));
-static int	rln_searchsync __P((struct rln_softc *));
-static int	rln_iosetparam __P((struct rln_softc *, struct rln_param *));
-static int	rln_lockprom __P((struct rln_softc *));
-static int	rln_ito __P((struct rln_softc *));
-static int	rln_standby __P((struct rln_softc *));
+int	rln_roamconfig __P((struct rln_softc *));
+int	rln_roam __P((struct rln_softc *));
+int	rln_multicast __P((struct rln_softc *, int));
+int	rln_searchsync __P((struct rln_softc *));
+int	rln_iosetparam __P((struct rln_softc *, struct rln_param *));
+int	rln_lockprom __P((struct rln_softc *));
+int	rln_ito __P((struct rln_softc *));
+int	rln_standby __P((struct rln_softc *));
 #endif
 
-/* Back-end attach and configure. */
+/* Back-end attach and configure. Assumes card has been reset. */
 void
 rlnconfig(sc)
 	struct rln_softc * sc;
@@ -96,6 +95,7 @@ rlnconfig(sc)
 	/* Initialise values in the soft state. */
 	sc->sc_pktseq = 0;	/* rln_newseq() */
 	sc->sc_txseq = 0;
+	sc->sc_state = 0;
 
 	/* Initialise user-configurable params. */
 	sc->sc_param.rp_roam_config = RLN_ROAM_NORMAL;
@@ -118,10 +118,6 @@ rlnconfig(sc)
 		printf(" oem");
 	if (sc->sc_cardtype & RLN_CTYPE_UISA)
 		printf(" micro-isa");
-
-	/* Probe/reset the card. */
-	if (rln_probe(sc))
-		return;
 
 	/* Read the card's PROM revision. */
 	if (rln_getpromvers(sc, promvers, sizeof promvers)) {
@@ -153,7 +149,7 @@ rlnconfig(sc)
 }
 
 /* Bring device up. */
-static void
+void
 rlninit(sc)
 	struct rln_softc * sc;
 {
@@ -216,7 +212,7 @@ rlninit(sc)
 }
 
 /* Start outputting on interface. This is always called at splnet(). */
-static void
+void
 rlnstart(ifp)
 	struct ifnet *	ifp;
 {
@@ -299,7 +295,7 @@ oerror:
 }
 
 /* Transmit one packet. */
-static int
+int
 rln_transmit(sc, m0, len, pad)
 	struct rln_softc *	sc;
 	struct mbuf *	m0;
@@ -341,6 +337,7 @@ rln_transmit(sc, m0, len, pad)
 
 	cmd.mm_cmd.cmd_seq = rln_newseq(sc);
 
+	/* Send the SENDPACKET command header  */
 #ifdef RLNDUMP
 	printf("%s: send %c%d seq %d data ", sc->sc_dev.dv_xname,
 	    cmd.mm_cmd.cmd_letter, cmd.mm_cmd.cmd_fn, cmd.mm_cmd.cmd_seq);
@@ -349,6 +346,9 @@ rln_transmit(sc, m0, len, pad)
 #endif
 	rln_msg_tx_data(sc, &cmd, sizeof cmd, &state);
 
+	/* XXX do we need to add trailer information here??? */
+
+	/* Follow the header immediately with the packet payload */
 	actlen = 0;
 	for (m = m0; m; m = m->m_next)	{
 		if (m->m_len) {
@@ -386,7 +386,7 @@ rln_transmit(sc, m0, len, pad)
 }
 
 /* (Supposedly) called when interrupts are suspiciously absent. */
-static void
+void
 rlnwatchdog(ifp)
 	struct ifnet * ifp;
 {
@@ -422,7 +422,7 @@ rlnintr(arg)
 }
 
 /* Process earlier card interrupt at splnetintr. */
-static void
+void
 rlnsoftintr(arg)
 	void * arg;
 {
@@ -459,7 +459,8 @@ rlnsoftintr(arg)
 	rln_wakeup(sc, w);
 
 	/* Check for more interrupts. */
-	if (rln_status_rx_ready(sc)) {
+	if ((sc->sc_state & RLN_STATE_NEEDINIT) == 0 && 
+	    rln_status_rx_ready(sc)) {
 		if (rln_status_rx_read(sc) == RLN_STATUS_RX_ERROR) {
 #ifdef DIAGNOSTIC
 			printf("%s: protocol error\n", sc->sc_dev.dv_xname);
@@ -584,11 +585,12 @@ rlnread(sc, hdr, len)
 		}
 #endif
 		/* XXX Jean's driver dealt with RFC893 trailers here */
-		eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
+		/* Split the ether header from the mbuf */
+		eh = mtod(m, struct ether_header *);
 		m_adj(m, sizeof (struct ether_header));
 		ether_input(ifp, eh, m);
 		return;
@@ -688,7 +690,7 @@ rlnread(sc, hdr, len)
 }
 
 /* Extract a received network packet from the card. */
-static struct mbuf *
+struct mbuf *
 rlnget(sc, hdr, totlen)
 	struct rln_softc *sc;
 	struct rln_mm_cmd *hdr;
@@ -696,20 +698,32 @@ rlnget(sc, hdr, totlen)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int len;
+	int pad;
 	struct mbuf *m, **mp, *top;
 	struct rln_pdata pd = RLN_PDATA_INIT;
-	u_int8_t  hwhdr[20];
+	struct {
+		u_int8_t rssi;
+		u_int8_t xxx1;	/* always 00? */
+		u_int16_t len;	/* payload length */
+		u_int8_t xxx2;	/* always 00? */
+		u_int8_t xxx3;	/* always c0? */
+		u_int8_t seq;
+		u_int8_t xxx4;
+		struct	ether_addr to;	 /* destination station addr */
+		struct	ether_addr from; /* sending station addr */
+	} hwhdr;
 
 	dprintf(" [get]");
 
 #ifdef RLNDUMP
+	/* Decode the command header: */
 	printf("%s: recv %c%d seq %d data ", sc->sc_dev.dv_xname,
 	    hdr->cmd_letter, hdr->cmd_fn, hdr->cmd_seq);
 	RLNDUMPHEX(hdr, sizeof hdr);
 	printf(":");
 #endif
-
 	totlen -= sizeof *hdr;
+
 #ifdef DIAGNOSTIC
 	if (totlen <= 0) {
 		printf("%s: empty packet", sc->sc_dev.dv_xname);
@@ -717,11 +731,11 @@ rlnget(sc, hdr, totlen)
 	}
 #endif
 
+	/* Decode the hardware header: */
+	rln_rx_pdata(sc, &hwhdr, sizeof hwhdr, &pd);
 	totlen -= sizeof hwhdr;
-	/* Skip the hardware header. */
-	rln_rx_pdata(sc, hwhdr, sizeof hwhdr, &pd);
 #ifdef RLNDUMP
-	RLNDUMPHEX(hwhdr, sizeof hwhdr);
+	RLNDUMPHEX(&hwhdr, sizeof hwhdr);
 	printf("/");
 #endif
 	/* (Most of the following code fleeced from elink3.c.) */
@@ -731,14 +745,16 @@ rlnget(sc, hdr, totlen)
 		goto drop;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
-	len = MHLEN;
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	m->m_data += pad;
+	len = MHLEN - pad;
 	top = 0;
 	mp = &top;
 
 	while (totlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (!m)	 {
+			if (m == NULL) {
 				m_freem(top);
 				goto drop;
 			}
@@ -775,7 +791,7 @@ drop:
 }
 
 /* Interface control. */
-static int
+int
 rlnioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
@@ -785,6 +801,9 @@ rlnioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error;
 	int need_init;
+
+	printf("%s: ioctl cmd[%c/%d] data=%x\n", sc->sc_dev.dv_xname,
+		IOCGROUP(cmd), IOCBASECMD(cmd), data);
 
 	s = splnet();
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) != 0) {
@@ -869,7 +888,7 @@ rlnioctl(ifp, cmd, data)
 }
 
 /* Stop output from the card. */
-static void
+void
 rlnstop(sc)
 	struct rln_softc *sc;
 {
@@ -881,19 +900,8 @@ rlnstop(sc)
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
-/* Test for existence of card. */
-static int
-rln_probe(sc)
-	struct rln_softc *sc;
-{
-
-	dprintf(" [probe]");
-	/* If we can reset it, it's there. */
-	return (rln_reset(sc));
-}
-
 /* Get MAC address from card. */
-static int
+int
 rln_getenaddr(sc, enaddr)
 	struct rln_softc *sc;
 	u_int8_t * enaddr;
@@ -909,7 +917,7 @@ rln_getenaddr(sc, enaddr)
 };
 
 /* Get firmware version string from card. */
-static int
+int
 rln_getpromvers(sc, ver, verlen)
 	struct rln_softc *sc;
 	char *ver;
@@ -935,7 +943,7 @@ rln_getpromvers(sc, ver, verlen)
 };
 
 /* Set default operational parameters on card. */
-static int
+int
 rln_sendinit(sc)
 	struct rln_softc *sc;
 {
@@ -1007,7 +1015,7 @@ rln_sendinit(sc)
 
 #if notyet
 /* Configure the way the card leaves a basestation. */
-static int
+int
 rln_roamconfig(sc)
 	struct rln_softc *sc;
 {
@@ -1036,7 +1044,7 @@ rln_roamconfig(sc)
 }
 
 /* Enable roaming. */
-static int
+int
 rln_roam(sc)
 	struct rln_softc *sc;
 {
@@ -1048,7 +1056,7 @@ rln_roam(sc)
 }
 
 /* Enable multicast capability. */
-static int
+int
 rln_multicast(sc, enable)
 	struct rln_softc *sc;
 	int enable;
@@ -1072,7 +1080,7 @@ rln_multicast(sc, enable)
 }
 
 /* Search for and sync with any master. */
-static int
+int
 rln_searchsync(sc)
 	struct rln_softc *sc;
 {
@@ -1092,7 +1100,7 @@ rln_searchsync(sc)
 }
 
 /* Set values from an external parameter block. */
-static int
+int
 rln_iosetparam(sc, param)
 	struct rln_softc *sc;
 	struct rln_param *param;
@@ -1119,7 +1127,7 @@ rln_iosetparam(sc, param)
 }
 
 /* Protect the eeprom from storing a security ID(?) */
-static int
+int
 rln_lockprom(sc)
 	struct rln_softc *sc;
 {
@@ -1132,7 +1140,7 @@ rln_lockprom(sc)
 }
 
 /* Set the h/w Inactivity Time Out timer on the card. */
-static int
+int
 rln_ito(sc)
 	struct rln_softc * sc;
 {
@@ -1151,7 +1159,7 @@ rln_ito(sc)
 }
 
 /* Put the card into standby mode. */
-static int
+int
 rln_standby(sc)
 	struct rln_softc * sc;
 {
