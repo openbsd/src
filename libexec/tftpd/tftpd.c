@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.16 2001/03/08 02:23:56 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.17 2001/05/09 18:06:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.16 2001/03/08 02:23:56 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.17 2001/05/09 18:06:35 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -373,7 +373,7 @@ validate_access(filename, mode)
 	}
 
 	/*
-	 * We use different a different permissions scheme if `cancreate' is
+	 * We use a different permissions scheme if `cancreate' is
 	 * set.
 	 */
 	wmode = O_TRUNC;
