@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.1 2001/03/08 08:00:16 maja Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.2 2001/05/04 15:49:10 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -188,7 +188,7 @@ kbd_set(name, verbose)
 		n++;
 	}
 	if (map == 0)
-		errx(1, "unknown encodeing %s", buf);
+		errx(1, "unknown encoding %s", buf);
 	while(*c == '.') {
 		b = buf;
 		c++;
