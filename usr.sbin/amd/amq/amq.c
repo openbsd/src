@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.8 2002/08/05 07:24:26 pvalchev Exp $
+ *	$Id: amq.c,v 1.9 2002/09/10 05:34:39 deraadt Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.8 2002/08/05 07:24:26 pvalchev Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.9 2002/09/10 05:34:39 deraadt Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #include <netdb.h>
 #include <unistd.h>
 
-static int privsock();
+static int privsock(int);
 
 static int flush_flag;
 static int minfo_flag;
@@ -98,62 +98,53 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid,
 		int mw = strlen(mt->mt_mountinfo);
 		int dw = strlen(mt->mt_directory);
 		int tw = strlen(mt->mt_type);
-		if (mw > *mwid) *mwid = mw;
-		if (dw > *dwid) *dwid = dw;
-		if (tw > *twid) *twid = tw;
-	} break;
+
+		if (mw > *mwid)
+			*mwid = mw;
+		if (dw > *dwid)
+			*dwid = dw;
+		if (tw > *twid)
+			*twid = tw;
+		break;
+	    }
 
 	case Full: {
 		struct tm *tp = localtime((time_t *) &mt->mt_mounttime);
-printf("%-*.*s %-*.*s %-*.*s %s\n\t%-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%02d\n",
-			*dwid, *dwid,
-			*mt->mt_directory ? mt->mt_directory : "/",	/* XXX */
-			*twid, *twid,
-			mt->mt_type,
-			*mwid, *mwid, 
-			mt->mt_mountinfo,
-			mt->mt_mountpoint,
 
-			mt->mt_mountuid,
-			mt->mt_getattr,
-			mt->mt_lookup,
-			mt->mt_readdir,
-			mt->mt_readlink,
-			mt->mt_statfs,
-
-			tp->tm_year > 99 ? tp->tm_year - 100 : tp->tm_year,
-			tp->tm_mon+1, tp->tm_mday,
-			tp->tm_hour, tp->tm_min, tp->tm_sec);
-	} break;
+		printf("%-*.*s %-*.*s %-*.*s %s\n\t%-5d %-7d %-6d"
+		    " %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%02d\n",
+		    *dwid, *dwid, *mt->mt_directory ? mt->mt_directory : "/",
+		    *twid, *twid, mt->mt_type, *mwid, *mwid, 
+		    mt->mt_mountinfo, mt->mt_mountpoint, mt->mt_mountuid,
+		    mt->mt_getattr, mt->mt_lookup, mt->mt_readdir,
+		    mt->mt_readlink, mt->mt_statfs,
+		    tp->tm_year > 99 ? tp->tm_year - 100 : tp->tm_year,
+		    tp->tm_mon+1, tp->tm_mday,
+		    tp->tm_hour, tp->tm_min, tp->tm_sec);
+		break;
+	    }
 
 	case Stats: {
 		struct tm *tp = localtime((time_t *) &mt->mt_mounttime);
-printf("%-*.*s %-5d %-7d %-6d %-7d %-7d %-6d %02d/%02d/%02d %02d:%02d:%02d\n",
-			*dwid, *dwid,
-			*mt->mt_directory ? mt->mt_directory : "/",	/* XXX */
 
-			mt->mt_mountuid,
-			mt->mt_getattr,
-			mt->mt_lookup,
-			mt->mt_readdir,
-			mt->mt_readlink,
-			mt->mt_statfs,
-
-			tp->tm_year > 99 ? tp->tm_year - 100 : tp->tm_year,
-			tp->tm_mon+1, tp->tm_mday,
-			tp->tm_hour, tp->tm_min, tp->tm_sec);
-	} break;
+		printf("%-*.*s %-5d %-7d %-6d %-7d %-7d %-6d"
+		    " %02d/%02d/%02d %02d:%02d:%02d\n",
+		    *dwid, *dwid, *mt->mt_directory ? mt->mt_directory : "/",
+		    mt->mt_mountuid, mt->mt_getattr, mt->mt_lookup,
+		    mt->mt_readdir, mt->mt_readlink, mt->mt_statfs,
+		    tp->tm_year > 99 ? tp->tm_year - 100 : tp->tm_year,
+		    tp->tm_mon+1, tp->tm_mday,
+		    tp->tm_hour, tp->tm_min, tp->tm_sec);
+		break;
+	    }
 
 	case Short: {
 		printf("%-*.*s %-*.*s %-*.*s %s\n",
-			*dwid, *dwid,
-			*mt->mt_directory ? mt->mt_directory : "/",
-			*twid, *twid,
-			mt->mt_type,
-			*mwid, *mwid,
-			mt->mt_mountinfo,
-			mt->mt_mountpoint);
-	} break;
+		    *dwid, *dwid, *mt->mt_directory ? mt->mt_directory : "/",
+		    *twid, *twid, mt->mt_type, *mwid, *mwid,
+		    mt->mt_mountinfo, mt->mt_mountpoint);
+		break;
+	    }
 	}
 }
 
@@ -184,28 +175,34 @@ show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid,
 			int mw = strlen(mi->mi_mountinfo);
 			int dw = strlen(mi->mi_mountpt);
 			int tw = strlen(mi->mi_type);
-			if (mw > *mwid) *mwid = mw;
-			if (dw > *dwid) *dwid = dw;
-			if (tw > *twid) *twid = tw;
+
+			if (mw > *mwid)
+				*mwid = mw;
+			if (dw > *dwid)
+				*dwid = dw;
+			if (tw > *twid)
+				*twid = tw;
 		}
-	} break;
+		break;
+	    }
 
 	case Full: {
 		for (i = 0; i < ml->amq_mount_info_list_len; i++) {
 			amq_mount_info *mi = &ml->amq_mount_info_list_val[i];
 			printf("%-*.*s %-*.*s %-*.*s %-3d %s is %s",
-						*mwid, *mwid, mi->mi_mountinfo,
-						*dwid, *dwid, mi->mi_mountpt,
-						*twid, *twid, mi->mi_type,
-						mi->mi_refc, mi->mi_fserver,
-						mi->mi_up > 0 ? "up" :
-						mi->mi_up < 0 ? "starting" : "down");
+			    *mwid, *mwid, mi->mi_mountinfo,
+			    *dwid, *dwid, mi->mi_mountpt,
+			    *twid, *twid, mi->mi_type,
+			    mi->mi_refc, mi->mi_fserver,
+			    mi->mi_up > 0 ? "up" :
+			    mi->mi_up < 0 ? "starting" : "down");
 			if (mi->mi_error > 0) {
 #ifdef HAS_STRERROR
 				printf(" (%s)", strerror(mi->mi_error));
 #else
 				extern char *sys_errlist[];
 				extern int sys_nerr;
+
 				if (mi->mi_error < sys_nerr)
 					printf(" (%s)", sys_errlist[mi->mi_error]);
 				else
@@ -216,7 +213,8 @@ show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid,
 			}
 			fputc('\n', stdout);
 		}
-	} break;
+		break;
+	    }
 	}
 }
 
@@ -226,43 +224,20 @@ show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid,
 static void
 show_ms(amq_mount_stats *ms)
 {
-	printf("\
-requests  stale     mount     mount     unmount\n\
-deferred  fhandles  ok        failed    failed\n\
-%-9d %-9d %-9d %-9d %-9d\n",
-	ms->as_drops, ms->as_stale, ms->as_mok, ms->as_merr, ms->as_uerr);
+	printf("requests  stale     mount     mount     unmount\n"
+	    "deferred  fhandles  ok        failed    failed\n"
+	    "%-9d %-9d %-9d %-9d %-9d\n",
+	    ms->as_drops, ms->as_stale, ms->as_mok, ms->as_merr, ms->as_uerr);
 }
 
 static bool_t
 xdr_pri_free(xdrproc_t xdr_args, void *args_ptr)
 {
 	XDR xdr;
+
 	xdr.x_op = XDR_FREE;
 	return ((*xdr_args)(&xdr, args_ptr));
 }
-
-#ifdef hpux
-#include <cluster.h>
-static char *
-cluster_server()
-{
-	struct cct_entry *cp;
-
-	if (cnodeid() == 0) {
-		/*
-		 * Not clustered
-		 */
-		return def_server;
-	}
-
-	while (cp = getccent())
-		if (cp->cnode_type == 'r')
-			return cp->cnode_name;
-
-
-	return def_server;
-}
-#endif /* hpux */
 
 /*
  * MAIN
@@ -270,17 +245,11 @@ cluster_server()
 int
 main(int argc, char *argv[])
 {
-	int opt_ch;
-	int errs = 0;
-	char *server;
+	int nodefault = 0, opt_ch, errs = 0, s;
 	struct sockaddr_in server_addr;
-
-	/* In order to pass the Amd security check, we must use a priv port. */
-	int s;
-
-	CLIENT *clnt;
 	struct hostent *hp;
-	int nodefault = 0;
+	CLIENT *clnt;
+	char *server;
 
 	/*
 	 * Parse arguments
@@ -348,20 +317,13 @@ main(int argc, char *argv[])
 	
 	if (errs) {
 show_usage:
-		fprintf(stderr, "\
-Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
-\t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n", __progname);
+		fprintf(stderr, "usage: %s [-h host] [[-f] [-m] [-v] [-s]]"
+		    " | [[-u] directory ...]] |\n"
+		    "\t[-l logfile|\"syslog\"] [-x log_flags] "
+		    "[-D dbg_opts] [-M mapent]\n", __progname);
 		exit(1);
 	}
 
-#ifdef hpux
-	/*
-	 * Figure out root server of cluster
-	 */
-	if (def_server == localhost)
-		server = cluster_server();
-	else
-#endif /* hpux */
 	server = def_server;
 
 	/*
@@ -389,7 +351,8 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 	if (clnt == 0) {
 		close(s);
 		s = privsock(SOCK_DGRAM);
-		clnt = clntudp_create(&server_addr, AMQ_PROGRAM, AMQ_VERSION, TIMEOUT, &s);
+		clnt = clntudp_create(&server_addr, AMQ_PROGRAM,
+		    AMQ_VERSION, TIMEOUT, &s);
 	}
 	if (clnt == 0) {
 		fprintf(stderr, "%s: ", __progname);
@@ -407,10 +370,13 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = debug_opts;
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (rc && *rc < 0) {
-			fprintf(stderr, "%s: daemon not compiled for debug", __progname);
+			fprintf(stderr,
+			    "%s: daemon not compiled for debug", __progname);
 			errs = 1;
 		} else if (!rc || *rc > 0) {
-			fprintf(stderr, "%s: debug setting for \"%s\" failed\n", __progname, debug_opts);
+			fprintf(stderr,
+			    "%s: debug setting for \"%s\" failed\n",
+			    __progname, debug_opts);
 			errs = 1;
 		}
 	}
@@ -425,7 +391,8 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = xlog_optstr;
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (!rc || *rc) {
-			fprintf(stderr, "%s: setting log level to \"%s\" failed\n", __progname, xlog_optstr);
+			fprintf(stderr, "%s: setting log level to \"%s\" failed\n",
+			    __progname, xlog_optstr);
 			errs = 1;
 		}
 	}
@@ -440,7 +407,8 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = logfile;
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (!rc || *rc) {
-			fprintf(stderr, "%s: setting logfile to \"%s\" failed\n", __progname, logfile);
+			fprintf(stderr, "%s: setting logfile to \"%s\" failed\n",
+			    __progname, logfile);
 			errs = 1;
 		}
 	}
@@ -455,7 +423,9 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 		opt.as_str = "";
 		rc = amqproc_setopt_1(&opt, clnt);
 		if (!rc || *rc) {
-			fprintf(stderr, "%s: amd on %s cannot flush the map cache\n", __progname, server);
+			fprintf(stderr,
+			    "%s: amd on %s cannot flush the map cache\n",
+			    __progname, server);
 			errs = 1;
 		}
 	}
@@ -471,9 +441,9 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 			show_mi(ml, Calc, &mwid, &dwid, &twid);
 			mwid++; dwid++; twid++;
 			show_mi(ml, Full, &mwid, &dwid, &twid);
-
 		} else {
-			fprintf(stderr, "%s: amd on %s cannot provide mount info\n", __progname, server);
+			fprintf(stderr, "%s: amd on %s cannot provide mount info\n",
+			    __progname, server);
 		}
 	}
 
@@ -504,7 +474,8 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 			printf("%s.\n", *spp);
 			free(*spp);
 		} else {
-			fprintf(stderr, "%s: failed to get version information\n", __progname);
+			fprintf(stderr, "%s: failed to get version information\n",
+			    __progname);
 			errs = 1;
 		}
 	}
@@ -529,13 +500,21 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 					amq_mount_tree *mt = *mtp;
 					if (mt) {
 						int mwid = 0, dwid = 0, twid = 0;
+
 						show_mt(mt, Calc, &mwid, &dwid, &twid);
-						mwid++; dwid++, twid++;
-		printf("%-*.*s Uid   Getattr Lookup RdDir   RdLnk   Statfs Mounted@\n",
-			dwid, dwid, "What");
+						mwid++;
+						dwid++;
+						twid++;
+
+						printf("%-*.*s Uid   Getattr "
+						    "Lookup RdDir   RdLnk   "
+						    "Statfs Mounted@\n",
+						    dwid, dwid, "What");
 						show_mt(mt, Stats, &mwid, &dwid, &twid);
 					} else {
-						fprintf(stderr, "%s: %s not automounted\n", __progname, fs);
+						fprintf(stderr,
+						    "%s: %s not automounted\n",
+						    __progname, fs);
 					}
 					xdr_pri_free(xdr_amq_mount_tree_p, mtp);
 				} else {
@@ -586,12 +565,11 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
  * secure port.
  * returns: The bound socket, or -1 to indicate an error.
  */
-static int inetresport(ty)
-int ty;
+static int
+inetresport(int ty)
 {
-	int alport;
 	struct sockaddr_in addr;
-	int sock;
+	int alport, sock;
 
 	/* Use internet address family */
 	addr.sin_family = AF_INET;
@@ -618,8 +596,8 @@ int ty;
  * indicates to RPC that it should make its own socket.
  * returns: A privileged socket # or RPC_ANYSOCK.
  */
-static int privsock(ty)
-int ty;
+static int
+privsock(int ty)
 {
 	int sock = inetresport(ty);
 
@@ -632,9 +610,8 @@ int ty;
 }
 
 #ifdef DEBUG
-xfree(f, l, p)
-char *f, *l;
-void *p;
+void
+xfree(char *f, char *l, void *p)
 {
 	free(p);
 }
