@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.679 2003/10/08 20:52:43 jason Exp $
+	$OpenBSD: pcidevs,v 1.680 2003/10/11 17:23:41 nordin Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -636,6 +636,7 @@ product ATI RADEON_QE		0x5145	Radeon QE
 product ATI RADEON_QF		0x5146	Radeon QF
 product ATI RADEON_QG		0x5147	Radeon QG
 product ATI R200_QL		0x514C	Radeon 8500 QL
+product ATI R200_QM		0x514D	Radeon 9100 QM
 product ATI R200_QN		0x514E	Radeon 8500 QN
 product ATI R200_QO		0x514F	Radeon 8500 QO
 product ATI RV200_QW		0x5157	Radeon 7500 QW
