@@ -1,5 +1,5 @@
-/*	$OpenBSD: vfontedpr.c,v 1.6 2002/02/16 21:27:56 millert Exp $	*/
-/*	$NetBSD: vfontedpr.c,v 1.4 1996/03/21 18:08:30 jtc Exp $	*/
+/*	$OpenBSD: vfontedpr.c,v 1.7 2003/02/19 07:32:36 deraadt Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.7 1998/12/19 23:41:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.6 2002/02/16 21:27:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.7 2003/02/19 07:32:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -289,7 +289,7 @@ main(argc, argv)
 	incomm = FALSE;
 	instr = FALSE;
 	inchr = FALSE;
-	_escaped = FALSE;
+	x_escaped = FALSE;
 	blklevel = 0;
 	for (psptr=0; psptr<PSMAX; psptr++) {
 	    pstack[psptr][0] = NULL;
@@ -365,8 +365,8 @@ putScp(os)
     char *blksptr;			/* end of a lexical block start */
     char *blkeptr;			/* end of a lexical block end */
 
-    _start = os;			/* remember the start for expmatch */
-    _escaped = FALSE;
+    x_start = os;			/* remember the start for expmatch */
+    x_escaped = FALSE;
     if (nokeyw || incomm || instr)
 	goto skip;
     if (isproc(s)) {
@@ -559,14 +559,14 @@ putKcp (start, end, force)
 	if (*start == '\t') {
 	    while (*start == '\t')
 		start++;
-	    i = tabs(_start, start) - margin / 8;
+	    i = tabs(x_start, start) - margin / 8;
 	    printf("\\h'|%dn'", i * 10 + 1 - margin % 8);
 	    continue;
 	}
 
 	if (!nokeyw && !force)
 	    if ((*start == '#' || isidchr(*start)) 
-	    && (start == _start || !isidchr(start[-1]))) {
+	    && (start == x_start || !isidchr(start[-1]))) {
 		i = iskw(start);
 		if (i > 0) {
 		    ps("\\*(+K");

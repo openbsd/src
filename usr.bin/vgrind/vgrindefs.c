@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgrindefs.c,v 1.3 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: vgrindefs.c,v 1.4 2003/02/19 07:32:36 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.3 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.4 2003/02/19 07:32:36 deraadt Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -308,7 +308,7 @@ tgetstr(id, area)
 }
 
 /*
- * Tdecode does the grung work to decode the
+ * Tdecode does the grunt work to decode the
  * string capability escapes.
  */
 static char *

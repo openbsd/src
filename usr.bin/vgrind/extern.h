@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2003/02/19 07:32:36 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1994/11/17 08:27:59 jtc Exp $	*/
 
 /*
@@ -39,8 +39,8 @@
 
 typedef int boolean;
 
-extern boolean	 _escaped;             /* if last character was an escape */
-extern char    *_start;                /* start of the current string */
+extern boolean	 x_escaped;             /* if last character was an escape */
+extern char    *x_start;                /* start of the current string */
 extern char    *l_acmbeg;              /* string introducing a comment */
 extern char    *l_acmend;              /* string ending a comment */
 extern char    *l_blkbeg;              /* string begining of a block */
