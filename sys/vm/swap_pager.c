@@ -780,6 +780,14 @@ swap_pager_io(swp, mlist, npages, flags)
 		       bp, swb->swb_block+btodb(off), kva, VM_PAGE_TO_PHYS(m));
 #endif
 	VOP_STRATEGY(bp);
+	if (flags & B_READ) {
+		cnt.v_swpin++;
+		cnt.v_pswpin += npages;
+	}
+	else {
+		cnt.v_swpout++;
+		cnt.v_pswpout += npages;
+	}
 	if ((flags & (B_READ|B_ASYNC)) == B_ASYNC) {
 #ifdef DEBUG
 		if (swpagerdebug & SDB_IO)
