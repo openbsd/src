@@ -1,5 +1,5 @@
 
-# $OpenBSD: Makefile,v 1.9 2002/02/15 21:21:55 todd Exp $
+# $OpenBSD: Makefile,v 1.10 2002/02/18 10:43:48 art Exp $
 
 MAKEDEVARCHS+=alpha amiga hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 sun3 vax
@@ -32,7 +32,7 @@ clean:
 	for f in ${MAKEDEVARCHS}; do rm -rf test.$$f; done
 	rm -f ${CLEANFILES}
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 regress ${MAKEDEVARCHS}
+.PHONY: ${MAKEDEVARCHS}
 CLEANFILES+=t1.*.out
 
 .include <bsd.regress.mk>
