@@ -165,9 +165,10 @@ void discover_interfaces (state)
 			if (!tmp)
 				error ("Insufficient memory to %s %s",
 				       "record interface", ifp -> ifr_name);
-			strlcpy (tmp -> name, ifp -> ifr_name, IFNAMSIZ);
+			strlcpy (tmp -> name, ifp -> ifr_name, sizeof(tmp->name));
 			tmp -> next = interfaces;
 			tmp -> flags = ir;
+			tmp -> noifmedia = tmp -> dead = tmp->errors = 0;
 			interfaces = tmp;
 		}
 
@@ -318,8 +319,9 @@ void discover_interfaces (state)
 	}
 
 	/* Now register all the remaining interfaces as protocols. */
-	for (tmp = interfaces; tmp; tmp = tmp -> next)
+	for (tmp = interfaces; tmp; tmp = tmp -> next) {
 		add_protocol (tmp -> name, tmp -> rfdesc, got_one, tmp);
+	}
 
 	close (sock);
 
@@ -414,9 +416,10 @@ void dispatch ()
 
 		/* Set up the descriptors to be polled. */
 		i = 0;
+		
 		for (l = protocols; l; l = l -> next) {
 			struct interface_info *ip = l -> local;
-			if (ip && !ip->dead) {
+			if (ip && (l->handler != got_one || !ip->dead)) {
 				fds [i].fd = l -> fd;
 				fds [i].events = POLLIN;
 				fds [i].revents = 0;
@@ -445,9 +448,12 @@ void dispatch ()
 
 		i = 0;
 		for (l = protocols; l; l = l -> next) {
+		        struct interface_info *ip;
+			ip = l->local;
 			if ((fds [i].revents & POLLIN)) {
 				fds [i].revents = 0;
-				if (l -> handler)
+				if (ip && (l->handler != got_one ||
+				     !ip->dead))
 					(*(l -> handler)) (l);
 				if (interfaces_invalidated)
 					break;
