@@ -106,8 +106,11 @@ struct fdc_softc {
 int fdcprobe __P((struct device *, void *, void *));
 void fdcattach __P((struct device *, struct device *, void *));
 
-struct cfdriver fdccd = {
-	NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc)
+struct cfattach fdc_ca = {
+	sizeof(struct fdc_softc), fdcprobe, fdcattach
+};
+struct cfdriver fdc_cd = {
+	NULL, "fdc", DV_DULL, NULL, 0
 };
 
 /*
@@ -144,7 +147,7 @@ struct fd_type fd_types[] = {
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
 	struct device sc_dev;
-	struct dkdevice sc_dk;
+	struct disk sc_dk;
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
@@ -162,6 +165,8 @@ struct fd_softc {
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
 
+	void *sc_sdhook;        /* saved shutdown hook for drive. */
+
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
@@ -171,8 +176,11 @@ struct fd_softc {
 int fdprobe __P((struct device *, void *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
-struct cfdriver fdcd = {
-	NULL, "fd", fdprobe, fdattach, DV_DISK, sizeof(struct fd_softc)
+struct cfattach fd_ca = {
+	sizeof(struct fd_softc), fdprobe, fdattach
+};
+struct cfdriver fd_cd = {
+	NULL, "fd", DV_DISK, NULL, 0
 };
 
 void fdgetdisklabel __P((struct fd_softc *));
@@ -354,9 +362,13 @@ fdattach(parent, self, aux)
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
+	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dev);
+
+	/* Needed to power off if the motor is on when we halt. */
+	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 }
 
 /*
@@ -418,8 +430,8 @@ fdstrategy(bp)
  	int s;
 
 	/* Valid unit, controller, and request? */
-	if (unit >= fdcd.cd_ndevs ||
-	    (fd = fdcd.cd_devs[unit]) == 0 ||
+	if (unit >= fd_cd.cd_ndevs ||
+	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
@@ -637,7 +649,7 @@ out_fdc(iobase, x)
 }
 
 int
-Fdopen(dev, flags)
+fdopen(dev, flags)
 	dev_t dev;
 	int flags;
 {
@@ -646,9 +658,9 @@ Fdopen(dev, flags)
 	struct fd_type *type;
 
 	unit = FDUNIT(dev);
-	if (unit >= fdcd.cd_ndevs)
+	if (unit >= fd_cd.cd_ndevs)
 		return ENXIO;
-	fd = fdcd.cd_devs[unit];
+	fd = fd_cd.cd_devs[unit];
 	if (fd == 0)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
@@ -671,7 +683,7 @@ fdclose(dev, flags)
 	dev_t dev;
 	int flags;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
@@ -1081,7 +1093,7 @@ fdioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel buffer;
 	int error;
 

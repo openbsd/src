@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.2 1995/10/28 15:47:06 deraadt Exp $
+ *      $Id: dma.c,v 1.3 1996/05/01 16:59:32 pefo Exp $
  */
 
 /*
@@ -54,6 +54,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/pte.h>
+#include <machine/pio.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -207,7 +208,6 @@ picaDmaTLBMap(dma_softc_t *sc)
 		va += PICA_DMA_PAGE_SIZE;
 		nbytes -= PICA_DMA_PAGE_SIZE;
 	}
-	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
 }
 
 /*
@@ -235,6 +235,7 @@ picaDmaStart(sc, addr, size, datain)
 
 	/* Map up the request viritual dma space */
 	picaDmaTLBMap(sc);
+	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
 
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->next_va;
@@ -275,6 +276,19 @@ picaDmaMap(sc, addr, size, offset)
 }
 
 /*
+ *  Prepare for new dma by flushing
+ */
+void
+picaDmaFlush(sc, addr, size, datain)
+	struct dma_softc *sc;
+	char	*addr;
+	size_t  size;
+	int     datain;
+{
+	out32(PICA_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+}
+
+/*
  *  Stop/Reset a DMA channel
  */
 void
@@ -286,6 +300,25 @@ picaDmaReset(dma_softc_t *sc)
 	regs->dma_enab = 0;
 	regs->dma_mode = 0;
 	sc->sc_active = 0;
+}
+
+/*
+ *  End dma operation, return byte count left.
+ */
+int
+picaDmaEnd(dma_softc_t *sc)
+{
+	pDmaReg regs = sc->dma_reg;
+	int res;
+
+	res = regs->dma_count = sc->next_size;
+
+	/* Halt DMA */
+	regs->dma_enab = 0;
+	regs->dma_mode = 0;
+	sc->sc_active = 0;
+
+	return res;
 }
 
 /*
@@ -312,10 +345,11 @@ asc_dma_init(dma_softc_t *sc)
 	sc->map = picaDmaMap;
 	sc->isintr = picaDmaNull;
 	sc->intr = picaDmaNull;
+	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)PICA_SYS_DMA0_REGS;
 	sc->pte_size = 32;
-	sc->mode = PICA_DMA_MODE_80NS | PICA_DMA_MODE_16;
+	sc->mode = PICA_DMA_MODE_160NS | PICA_DMA_MODE_16;
 	picaDmaTLBAlloc(sc);
 }
 /*
@@ -328,8 +362,10 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->reset = picaDmaReset;
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
+	sc->map = picaDmaMap;
 	sc->isintr = picaDmaNull;
 	sc->intr = picaDmaNull;
+	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)PICA_SYS_DMA1_REGS;
 	sc->pte_size = 32;
@@ -345,10 +381,11 @@ sn_dma_init(dma_softc_t *sc, int pages)
 {
 	sc->reset = picaDmaNull;
 	sc->enintr = picaDmaNull;
+	sc->start = picaDmaFlush;
 	sc->map = picaDmaMap;
-	sc->start = picaDmaNull;
 	sc->isintr = picaDmaNull;
 	sc->intr = picaDmaNull;
+	sc->end = picaDmaNull;
 
 	sc->dma_reg = (pDmaReg)NULL;
 	sc->pte_size = pages;

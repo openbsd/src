@@ -116,8 +116,11 @@ struct sn_softc {
 int snmatch __P((struct device *, void *, void *));
 void snattach __P((struct device *, struct device *, void *));
 
-struct cfdriver sncd = {
-	NULL, "sn", snmatch, snattach, DV_IFNET, sizeof(struct sn_softc)
+struct cfattach sn_ca = {
+	sizeof(struct sn_softc), snmatch, snattach
+};
+struct cfdriver sn_cd = {
+	NULL, "sn", DV_IFNET, NULL, 0
 };
 
 #include <assert.h>
@@ -188,15 +191,6 @@ void snreset __P((struct sn_softc *sc));
 
 #define UPPER(x) ((unsigned)(x) >> 16)
 #define LOWER(x) ((unsigned)(x) & 0xffff)
-
-/*
- * buffer sizes in 32 bit mode
- * 1 TXpkt is 4 hdr words + (3 * FRAGMAX) + 1 link word
- * FRAGMAX == 16 => 54 words == 216 bytes
- *
- * 1 RxPkt is 7 words == 28 bytes
- * 1 Rda   is 4 words == 16 bytes
- */
 
 #define NRRA	32		/* # receive resource descriptors */
 #define RRAMASK	0x1f		/* why it must be poer of two */
@@ -314,15 +308,17 @@ snattach(parent, self, aux)
 	p = SONICBUF;
 	pp = SONICBUF - (FRAGMAX * NTDA * PICA_DMA_PAGE_SIZE);
 
+	if ((p ^ (p + TDASIZE)) & 0x10000)
+		p = (p + 0x10000) & ~0xffff;
+	p_tda = (struct TXpkt *) p;
+	v_tda = (struct TXpkt *)(p - pp + sc->dma->dma_va);
+	p += TDASIZE;
+
 	if ((p ^ (p + RRASIZE + CDASIZE)) & 0x10000)
 		p = (p + 0x10000) & ~0xffff;
 	p_rra = (struct RXrsrc *) p;
 	v_rra = (struct RXrsrc *)(p - pp + sc->dma->dma_va);
 	p += RRASIZE;
-
-	p_cda = (struct CDA *) p;
-	v_cda = (struct CDA *)(p - pp + sc->dma->dma_va);
-	p += CDASIZE;
 
 	if ((p ^ (p + RDASIZE)) & 0x10000)
 		p = (p + 0x10000) & ~0xffff;
@@ -330,11 +326,9 @@ snattach(parent, self, aux)
 	v_rda = (struct RXpkt *)(p - pp + sc->dma->dma_va);
 	p += RDASIZE;
 
-	if ((p ^ (p + TDASIZE)) & 0x10000)
-		p = (p + 0x10000) & ~0xffff;
-	p_tda = (struct TXpkt *) p;
-	v_tda = (struct TXpkt *)(p - pp + sc->dma->dma_va);
-	p += TDASIZE;
+	p_cda = (struct CDA *) p;
+	v_cda = (struct CDA *)(p - pp + sc->dma->dma_va);
+	p += CDASIZE;
 
 	p += PICA_DMA_PAGE_SIZE - (p & (PICA_DMA_PAGE_SIZE -1));
 	p_rba = (char *)p;
@@ -379,7 +373,7 @@ snioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa;
-	struct sn_softc *sc = sncd.cd_devs[ifp->if_unit];
+	struct sn_softc *sc = sn_cd.cd_devs[ifp->if_unit];
 	int     s = splnet(), err = 0;
 	int	temp;
 
@@ -475,7 +469,7 @@ void
 snstart(ifp)
 	struct ifnet *ifp;
 {
-	struct sn_softc *sc = sncd.cd_devs[ifp->if_unit];
+	struct sn_softc *sc = sn_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m;
 	int	len;
 
@@ -490,7 +484,9 @@ snstart(ifp)
 	 * the Tx ring, then send the packet directly.  Otherwise append
 	 * it to the o/p queue.
 	 */
-	len = sonicput(sc, m);
+	if (!sonicput(sc, m)) { /* not enough space */
+		IF_PREPEND(&sc->sc_if.if_snd, m);
+	}
 #if NBPFILTER > 0
 	/*
 	 * If bpf is listening on this interface, let it
@@ -532,7 +528,7 @@ int
 sninit(unit)
 	int unit;
 {
-	struct sn_softc *sc = sncd.cd_devs[unit];
+	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	struct sonic_reg *csr = sc->sc_csr;
 	int s, error;
 
@@ -601,7 +597,7 @@ int
 snstop(unit)
 	int unit;
 {
-	struct sn_softc *sc = sncd.cd_devs[unit];
+	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	struct mtd *mtd;
 	int s = splnet();
 
@@ -637,7 +633,7 @@ void
 snwatchdog(unit)
 	int unit;
 {
-	struct sn_softc *sc = sncd.cd_devs[unit];
+	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	int temp;
 
 	if (mtdhead && mtdhead->mtd_mbuf) {
@@ -690,9 +686,11 @@ sonicput(sc, m0)
 		unsigned va = (unsigned) mtod(m, caddr_t);
 		int resid = m->m_len;
 
-		MachHitFlushDCache(va, resid);
+		if(resid != 0) {
+			MachHitFlushDCache(va, resid);
+			DMA_MAP(sc->dma, (caddr_t)va, resid, fragoffset);
+		}
 		len += resid;
-		DMA_MAP(sc->dma, (caddr_t)va, resid, fragoffset);
 
 		while (resid) {
 			unsigned pa;
@@ -714,6 +712,25 @@ sonicput(sc, m0)
 			fragoffset += PICA_DMA_PAGE_SIZE;
 		}
 	}
+	/*
+	 * pad out last fragment for minimum size
+	 */
+        if (len < ETHERMIN + sizeof(struct ether_header) && fr < FRAGMAX) {
+                int pad = ETHERMIN + sizeof(struct ether_header) - len;
+                static char zeros[64];
+                unsigned pa;
+
+                DMA_MAP(sc->dma, (caddr_t)zeros, pad, fragoffset);
+                pa = sc->dma->dma_va + ((unsigned)zeros & PGOFSET) + fragoffset;
+                SWR(txp->u[fr].frag_ptrlo, LOWER(pa));
+                SWR(txp->u[fr].frag_ptrhi, UPPER(pa));
+                SWR(txp->u[fr].frag_size, pad);
+                fr++;
+                len = ETHERMIN + sizeof(struct ether_header);
+        }
+
+	DMA_START(sc->dma, (caddr_t)0, 0, 0); /* Flush dma tlb */
+
 	if (fr > FRAGMAX) {
 		mtd_free(mtdnew);
 		m_freem(m0);
@@ -723,18 +740,6 @@ sonicput(sc, m0)
 		return (len);
 	}
 
-	/*
-	 * pad out last fragment for minimum size
-	 * 
-	 * XXX is this incorrectly done? does it cause random bytes of
-	 * mem to be sent? if so, it should instead point to a zero'd
-	 * zone of mem.
-	 */
-	if (len < ETHERMIN + sizeof(struct ether_header)) {
-		int pad = ETHERMIN + sizeof(struct ether_header) - len;
-		SWR(txp->u[fr - 1].frag_size, pad + SRD(txp->u[fr - 1].frag_size));
-		len = ETHERMIN + sizeof(struct ether_header);
-	}
 	SWR(txp->frag_count, fr);
 	SWR(txp->pkt_size, len);
 
@@ -982,6 +987,7 @@ initialise_rra(sc)
 	csr->s_rsa = LOWER(v_rra);
 	csr->s_rea = LOWER(&v_rra[NRRA]);
 	csr->s_rrp = LOWER(v_rra);
+	csr->s_rsc = 0;
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
@@ -1153,6 +1159,8 @@ sonicrxint(sc)
 
 		assert(SRD(rxp->pkt_ptrhi) == SRD(p_rra[orra].buff_ptrhi));
 		assert(SRD(rxp->pkt_ptrlo) == SRD(p_rra[orra].buff_ptrlo));
+if(SRD(rxp->pkt_ptrlo) != SRD(p_rra[orra].buff_ptrlo))
+printf("%x,%x\n",SRD(rxp->pkt_ptrlo),SRD(p_rra[orra].buff_ptrlo));
 		assert(SRD(p_rra[orra].buff_wclo));
 
 		/*

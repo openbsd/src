@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dma.h	8.1 (Berkeley) 6/10/93
- *      $Id: dma.h,v 1.2 1995/10/28 15:47:07 deraadt Exp $
+ *      $Id: dma.h,v 1.3 1996/05/01 16:59:35 pefo Exp $
  */
 
 /*
@@ -133,6 +133,7 @@ typedef struct dma_softc {
 						/* Start routine pointer */
 	int (*isintr)(struct dma_softc *);	/* Int check routine pointer */
 	int (*intr)(struct dma_softc *);	/* Interrupt routine pointer */
+	int (*end)(struct dma_softc *);	/* Interrupt routine pointer */
 } dma_softc_t;
 
 #define	DMA_TO_DEV	0
@@ -146,4 +147,4 @@ typedef struct dma_softc {
 #define	DMA_MAP(a, b, c, d)	((a->map)(a, b, c, d))
 #define	DMA_INTR(r)		((r->intr)(r))
 #define	DMA_DRAIN(r)
-#define	DMA_END(r)		((r->reset)(r))
+#define	DMA_END(r)		((r->end)(r))

@@ -43,6 +43,7 @@ struct RXpkt {
 	u_long	seq_no;		/* + RBA sequence numbers */
 	u_long	rlink;		/* link to next receive descriptor */
 	u_long	in_use;		/* + packet available to SONIC */
+	u_long	pad;		/* pad to multiple of 16 bytes */
 };
 #endif
 #define RBASEQ(x) (((x)>>8)&0xff)
@@ -52,7 +53,7 @@ struct RXpkt {
  * Transmit Descriptor
  * This structure holds information about packets to be transmitted.
  */
-#define FRAGMAX	32		/* maximum number of fragments in a packet */
+#define FRAGMAX	31		/* maximum number of fragments in a packet */
 #if SONICDW == 32
 struct TXpkt {
 	u_long	status;		/* + transmitted packet status */
@@ -68,8 +69,7 @@ struct TXpkt {
 		struct {
 			u_long	_tlink;		/* link to next transmit descriptor */
 		} u_link;
-	} u[FRAGMAX];
-	u_long	:32;		/* This makes tcp->u[FRAGMAX].u_link.link valid! */
+	} u[FRAGMAX+1];	/* +1 makes tcp->u[FRAGMAX].u_link.link valid! */
 };
 #endif
 
