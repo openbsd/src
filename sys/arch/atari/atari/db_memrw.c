@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1995/06/09 19:53:45 leo Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1996/01/19 13:51:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -32,6 +32,9 @@
  * To write in the text segment, we have to first make
  * the page writable, do the write, then restore the PTE.
  * For reads, validate address first to avoid MMU trap.
+ *
+ * Note the special handling for 2/4 byte sizes. This is done to make
+ * it work sensibly for device registers.
  */
 
 #include <sys/param.h>
@@ -43,27 +46,25 @@
 #include <machine/pte.h>
 
 /*
- * Read one byte somewhere in the kernel.
- * It does not matter if this is slow. -gwr
+ * Check if access is allowed to 'addr'. Mask should contain
+ * PG_V for read access, PV_V|PG_RO for write access.
  */
-static char
-db_read_data(src)
-	char *src;
+static int
+db_check(addr, mask)
+	char	*addr;
+	u_int	mask;
 {
-	u_int *pte;
-	vm_offset_t pgva;
-	int ch;
+	u_int	*pte;
 
-	pgva = atari_trunc_page((long)src);
-	pte = kvtopte(pgva);
+	pte  = kvtopte((vm_offset_t)addr);
 
-	if ((*pte & PG_V) == 0) {
-		db_printf(" address 0x%x not a valid page\n", src);
+	if ((*pte & mask) != PG_V) {
+		db_printf(" address 0x%x not a valid page\n", addr);
 		return 0;
 	}
-	return (*src);
+	return 1;
 }
-
+	
 /*
  * Read bytes from kernel address space for debugger.
  * It does not matter if this is slow. -gwr
@@ -74,14 +75,24 @@ db_read_bytes(addr, size, data)
 	register int	size;
 	register char	*data;
 {
-	char	*src, *limit;
+	u_int8_t	*src, *dst, *limit;
 
-	src = (char *)addr;
+	src   = (u_int8_t *)addr;
+	dst   = (u_int8_t *)data;
 	limit = src + size;
 
+	if (size == 2 || size == 4) {
+		if(db_check(src, PG_V) && db_check(limit, PG_V)) {
+			if (size == 2)
+				*(u_int16_t*)data = *(u_int16_t*)addr;
+			else *(u_int32_t*)data = *(u_int32_t*)addr;
+			return;
+		}
+	}
+
 	while (src < limit) {
-		*data = db_read_data(src);
-		data++;
+		*dst = db_check(src, PG_V) ? *src : 0;
+		dst++;
 		src++;
 	}
 }
@@ -92,8 +103,8 @@ db_read_bytes(addr, size, data)
  */
 static void
 db_write_text(dst, ch)
-	char *dst;
-	int ch;
+	u_int8_t *dst;
+	u_int8_t ch;
 {
 	u_int *pte, oldpte;
 
@@ -108,31 +119,11 @@ db_write_text(dst, ch)
 	*pte &= ~PG_RO;
 	TBIS(dst);
 
-	*dst = (char) ch;
+	*dst = ch;
 
 	*pte = oldpte;
 	TBIS(dst);
 	cachectl (4, dst, 1);
-}
-
-/*
- * Write one byte somewhere outside kernel text.
- * It does not matter if this is slow. -gwr
- */
-static void
-db_write_data(dst, ch)
-	char *dst;
-	int ch;
-{
-	u_int *pte;
-
-	pte = kvtopte((vm_offset_t)dst);
-
-	if ((*pte & (PG_V | PG_RO)) != PG_V) {
-		db_printf(" address 0x%x not a valid page\n", dst);
-		return;
-	}
-	*dst = (char) ch;
 }
 
 /*
@@ -141,21 +132,30 @@ db_write_data(dst, ch)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	int	size;
-	char	*data;
+	int		size;
+	char		*data;
 {
 	extern char	etext[] ;
-	char	*dst, *limit;
+	u_int8_t	*dst, *src, *limit;
 
-	dst = (char *)addr;
+	dst   = (u_int8_t *)addr;
+	src   = (u_int8_t *)data;
 	limit = dst + size;
 
+	if ((char*)dst >= etext && (size == 2 || size == 4)) {
+		if(db_check(dst, PG_V|PG_RO) && db_check(limit, PG_V|PG_RO)) {
+			if (size == 2)
+				*(u_int16_t*)addr = *(u_int16_t*)data;
+			else *(u_int32_t*)addr = *(u_int32_t*)data;
+			return;
+		}
+	}
 	while (dst < limit) {
-		if (dst < etext)	/* kernel text starts at 0 */
-			db_write_text(dst, *data);
-		else
-			db_write_data(dst, *data);
+		if ((char*)dst < etext)	/* kernel text starts at 0 */
+			db_write_text(dst, *src);
+		else if (db_check(dst, PG_V|PG_RO))
+				*dst = *src;
 		dst++;
-		data++;
+		src++;
 	}
 }
