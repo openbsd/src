@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.77 2002/09/11 09:50:44 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.78 2002/12/03 16:08:13 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -679,7 +680,8 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
   dir = opendir (name);
   if (!dir)
     {
-      log_error ("x509_read_from_dir: opendir (\"%s\") failed", name);
+      LOG_DBG ((LOG_CRYPTO, 10, "x509_read_from_dir: opendir (\"%s\") failed:"
+		"%s", name, strerror (errno)));
       return 0;
     }
 
@@ -783,10 +785,11 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
   LOG_DBG ((LOG_CRYPTO, 40, "x509_read_crls_from_dir: reading CRLs from %s",
 	    name));
 
-  dir = opendir(name);
+  dir = opendir (name);
   if (!dir)
     {
-      log_error ("x509_read_crls_from_dir: opendir (\"%s\") failed", name);
+      LOG_DBG ((LOG_CRYPTO, 10, "x509_read_crls_from_dir: opendir (\"%s\") "
+		"failed: %s", name, strerror (errno)));
       return 0;
     }
 
