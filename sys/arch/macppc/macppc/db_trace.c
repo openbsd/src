@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 2001/09/09 23:56:40 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 2001/09/15 21:15:03 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -128,8 +128,8 @@ db_dumpframe(u_int32_t pframe)
 
 	db_find_sym_and_offset(lr-4, &name, &offset);
 	if (!name) {
-		name = "?";
-		offset = 65536;
+		name = "0";
+		offset = lr-4;
 	}
 	db_printf("%08x: %s+0x%x fp %x nfp %x\n",
 		lr-4, name, offset, pframe, nextframe);
