@@ -25,10 +25,10 @@ gcc/egcs/binutils:					espie@ mickey@
 * move to binutils 2.9.1
 
 boots (sys/arch/hppa/stand/*):				mickey@ fries@
-* w/ all the debugging code turned off hangs early (;
+* loading elf symbol table, i have some code, testing
+* almost could be considered working/done, fixes and such (;
 
 kernel (sys/arch/hppa/*):				mickey@
-* sync mickey's sources to the repo
 * HPPA STACK GROWS UP, major kernel cleanup
 * user-land support
 * ddb (stack trace, breakpoints left, fix disasm)
@@ -55,7 +55,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.2 1999/04/20 21:18:48 mickey Exp $
+$OpenBSD: TODO,v 1.3 1999/06/01 17:36:31 mickey Exp $
 
 --
 	paranoic mickey
