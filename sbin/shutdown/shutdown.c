@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.27 2002/12/08 16:50:07 millert Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.28 2003/04/16 15:01:58 mickey Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.27 2002/12/08 16:50:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.28 2003/04/16 15:01:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,10 +125,8 @@ main(int argc, char *argv[])
 	int arglen, ch, len, readstdin;
 
 #ifndef DEBUG
-	if (geteuid()) {
-		(void)fprintf(stderr, "shutdown: NOT super-user\n");
-		exit(1);
-	}
+	if (geteuid())
+		errx(1, "NOT super-user");
 #endif
 	readstdin = 0;
 	while ((ch = getopt(argc, argv, "dfhknpr-")) != -1)
@@ -504,11 +502,8 @@ getoffset(char *timearg)
 		lt->tm_sec = 0;
 		if ((shuttime = mktime(lt)) == -1)
 			badtime();
-		if ((offset = shuttime - now) < 0) {
-			(void)fprintf(stderr,
-			    "shutdown: that time is already past.\n");
-			exit(1);
-		}
+		if ((offset = shuttime - now) < 0)
+			errx(1, "that time is already past.");
 		break;
 	default:
 		badtime();
