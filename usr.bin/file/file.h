@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.6 1998/10/13 07:51:51 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.7 1999/09/26 20:47:28 ian Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -37,7 +37,7 @@ typedef u_int32_t uint32;
 #ifndef HOWMANY
 # define HOWMANY 8192		/* how much of the file to look at */
 #endif
-#define MAXMAGIS 1000		/* max entries in /etc/magic */
+#define MAXMAGIS 5000		/* max entries in /etc/magic */
 #define MAXDESC	50		/* max leng of text description */
 #define MAXstring 32		/* max leng of "string" types */
 

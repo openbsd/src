@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.7 1998/08/21 04:25:02 deraadt Exp $	*/
+/*	$OpenBSD: apprentice.c,v 1.8 1999/09/26 20:47:28 ian Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: apprentice.c,v 1.7 1998/08/21 04:25:02 deraadt Exp $";
+static char *moduleid = "$OpenBSD: apprentice.c,v 1.8 1999/09/26 20:47:28 ian Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -52,6 +52,7 @@ static int parse	__P((char *, int *, int));
 static void eatsize	__P((char **));
 
 static int maxmagic = 0;
+static int alloc_incr = 256;
 
 static int apprentice_1	__P((char *, int));
 
@@ -181,11 +182,10 @@ int *ndx, check;
 	struct magic *m;
 	char *t, *s;
 
-#define ALLOC_INCR	20
 	if (nd+1 >= maxmagic){
 	    struct magic *mtmp;
 
-	    maxmagic += ALLOC_INCR;
+	    maxmagic += alloc_incr;
 	    if ((mtmp = (struct magic *) realloc(magic, 
 						  sizeof(struct magic) * 
 						  maxmagic)) == NULL) {
@@ -198,7 +198,8 @@ int *ndx, check;
 			exit(1);
 	    }
 	    magic = mtmp;
-	    memset(&magic[*ndx], 0, sizeof(struct magic) * ALLOC_INCR);
+	    memset(&magic[*ndx], 0, sizeof(struct magic) * alloc_incr);
+	    alloc_incr *= 2;
 	}
 	m = &magic[*ndx];
 	m->flag = 0;
