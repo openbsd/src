@@ -380,6 +380,8 @@
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
+./usr/share/man/cat1/rt.0
+./usr/share/man/cat1/rtdelete.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
 ./usr/share/man/cat1/rusers.0
@@ -403,6 +405,7 @@
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/splain.0
 ./usr/share/man/cat1/split.0
+./usr/share/man/cat1/startkey.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
@@ -431,12 +434,14 @@
 ./usr/share/man/cat1/tsort.0
 ./usr/share/man/cat1/tty.0
 ./usr/share/man/cat1/ul.0
+./usr/share/man/cat1/ulimit.0
 ./usr/share/man/cat1/uname.0
 ./usr/share/man/cat1/uncompress.0
 ./usr/share/man/cat1/unexpand.0
 ./usr/share/man/cat1/unifdef.0
 ./usr/share/man/cat1/uniq.0
 ./usr/share/man/cat1/units.0
+./usr/share/man/cat1/unlimit.0
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
 ./usr/share/man/cat1/users.0
@@ -815,8 +820,6 @@
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
 ./usr/share/man/cat8/rstatd.0
-./usr/share/man/cat8/rt.0
-./usr/share/man/cat8/rtdelete.0
 ./usr/share/man/cat8/rtquery.0
 ./usr/share/man/cat8/rusersd.0
 ./usr/share/man/cat8/rwalld.0
@@ -839,7 +842,6 @@
 ./usr/share/man/cat8/smtpfwdd.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
-./usr/share/man/cat8/startkey.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
