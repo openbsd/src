@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.18 2003/01/11 21:50:57 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.19 2003/01/11 21:54:43 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -436,11 +436,8 @@ next_token(char buf[BUF_SIZE], FILE *fp)
 			buf[i++] = next_ch;
 		next_ch = fgetc(fp);
 	} while (!feof(fp) && !isspace(next_ch));
-	if (i >= BUF_SIZE) {
-		fprintf(stderr, "%s: address too long (%d bytes)\n",
-		    __progname, i);
-		exit(1);
-	}
+	if (i >= BUF_SIZE)
+		errx(1, "address too long (%d bytes)", i);
 	buf[i] = '\0';
 	return (1);
 }
@@ -477,30 +474,21 @@ append_addr(char *s, int test)
 
 	if (p) {
 		net = strtol(p+1, &q, 0);
-		if (!q || *q) {
-			fprintf(stderr, "%s: illegal network: \"%s\"\n",
-			    __progname, p+1);
-			exit(1);
-		}
+		if (!q || *q)
+			errx(1, "illegal network: \"%s\"", p+1);
 		*p++ = '\0';
 	}
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_socktype = SOCK_DGRAM;
 	rv = getaddrinfo(buf, NULL, &hints, &res);
-	if (rv) {
-		fprintf(stderr, "%s: illegal address: \"%s\"\n", __progname,
-		    buf);
-		exit(1);
-	}
+	if (rv)
+		errx(1, "illegal address: \"%s\"", buf);
 	for (ai = res; ai; ai = ai->ai_next) {
 		switch (ai->ai_family) {
 		case AF_INET:
-			if (net > 32) {
-				fprintf(stderr, "%s: network too big: %d\n",
-				    __progname, net);
-				exit(1);
-			}
+			if (net > 32)
+				errx(1, "invalid netmask %d", net);
 			if (size >= msize)
 				grow_buffer(sizeof(struct pfr_addr), 0);
 			buffer.addrs[size].pfra_ip4addr =
@@ -511,11 +499,8 @@ append_addr(char *s, int test)
 			size++;
 			break;
 		case AF_INET6:
-			if (net > 128) {
-				fprintf(stderr, "%s: network too big: %d\n",
-				    __progname, net);
-				exit(1);
-			}
+			if (net > 128)
+				errx(1, "invalid netmask %d", net);
 			if (size >= msize)
 				grow_buffer(sizeof(struct pfr_addr), 0);
 			buffer.addrs[size].pfra_ip6addr =
