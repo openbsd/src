@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.42 2001/11/18 20:46:49 aaron Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.43 2001/12/04 00:00:36 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -129,6 +129,7 @@
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
@@ -221,8 +222,8 @@ isa_defaultirq()
 
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN; i++)
-		setgate(&idt[ICU_OFFSET + i], IDTVEC(intr)[i], 0, SDT_SYS386IGT,
-		    SEL_KPL, GICODE_SEL);
+		setgate(&idt[ICU_OFFSET + i], IDTVEC(intr)[i], 0,
+		    SDT_SYS386IGT, SEL_KPL, GICODE_SEL);
   
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
@@ -260,13 +261,13 @@ isa_defaultirq()
 int
 isa_nmi()
 {
-
 	/* This is historic garbage; these ports are not readable */
 	log(LOG_CRIT, "No-maskable interrupt, may be parity error\n");
 	return(0);
 }
 
-u_long	intrstray[ICU_LEN] = {0};
+u_long  intrstray[ICU_LEN];
+
 /*
  * Caught a stray interrupt, notify
  */
@@ -287,6 +288,7 @@ isa_strayintr(irq)
 
 int fastvec;
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
+int iminlevel[ICU_LEN], imaxlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
 /*
@@ -305,45 +307,49 @@ intr_calculatemasks()
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
+			levels |= 1 << IPL(q->ih_level);
 		intrlevel[irq] = levels;
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
+	for (level = 0; level < NIPL; level++) {
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SIR_ALLMASK;
+		imask[level] = irqs;
 	}
 
 	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
+	 * Initialize soft interrupt masks to block themselves.
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	IMASK(IPL_SOFTCLOCK) |= 1 << SIR_CLOCK;
+	IMASK(IPL_SOFTNET) |= 1 << SIR_NET;
+	IMASK(IPL_SOFTTTY) |= 1 << SIR_TTY;
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
-	imask[IPL_NET] |= imask[IPL_BIO];
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
+	for (level = 0; level < NIPL - 1; level++)
+		imask[level + 1] |= imask[level];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SIR_ALLMASK;
+		int minlevel = IPL_NONE;
+		int maxlevel = IPL_NONE;
+
+		for (q = intrhand[irq]; q; q = q->ih_next) {
+			irqs |= IMASK(q->ih_level);
+			if (minlevel == IPL_NONE || q->ih_level < minlevel)
+				minlevel = q->ih_level;
+			if (q->ih_level > maxlevel)
+				maxlevel = q->ih_level;
+		}
+		intrmask[irq] = irqs;
+		iminlevel[irq] = minlevel;
+		imaxlevel[irq] = maxlevel;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
@@ -357,13 +363,16 @@ intr_calculatemasks()
 		imen = ~irqs;
 		SET_ICUS();
 	}
+
+	/* For speed of splx, provide the inverse of the interrupt masks. */
+	for (irq = 0; irq < ICU_LEN; irq++)
+		iunmask[irq] = ~imask[irq];
 }
 
 int
 fakeintr(arg)
 	void *arg;
 {
-
 	return 0;
 }
 
