@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2004/12/14 13:45:09 mickey Exp $
+#	$OpenBSD: Makefile,v 1.15 2005/02/14 14:45:40 aaron Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -8,6 +8,7 @@ SRCS=	kdump.c ioctl.c subr.c
 CLEANFILES+=ioctl.c
 
 ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
+	CC="${CC}" DESTDIR="${DESTDIR}" \
 	/bin/sh ${.CURDIR}/mkioctls ${DESTDIR}/usr/include/sys/ioctl.h \
 	    ${DESTDIR}/usr/include/sys/ioctl_compat.h \
 	    ${DESTDIR}/usr/include/crypto/cryptodev.h \
