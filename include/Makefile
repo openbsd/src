@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1996/06/02 22:39:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 1996/06/03 22:28:40 niklas Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -11,9 +11,9 @@
 FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	disktab.h elf_abi.h err.h fnmatch.h fstab.h fts.h glob.h \
 	grp.h ieeefp.h iso646.h kvm.h langinfo.h limits.h locale.h \
-	malloc.h math.h memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h \
-	nl_types.h paths.h poll.h pwd.h ranlib.h re_comp.h regex.h regexp.h \
-	resolv.h \
+	malloc.h math.h md2.h md4.h md5.h memory.h mpool.h ndbm.h netdb.h \
+	netgroup.h nlist.h nl_types.h paths.h poll.h pwd.h ranlib.h re_comp.h \
+	regex.h regexp.h resolv.h \
 	search.h setjmp.h sgtty.h signal.h stab.h stddef.h stdio.h stdlib.h \
 	string.h strings.h struct.h sysexits.h tar.h time.h ttyent.h tzfile.h \
 	unistd.h util.h utime.h utmp.h vis.h
