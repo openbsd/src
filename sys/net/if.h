@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.18 2000/08/26 20:04:16 nate Exp $	*/
+/*	$OpenBSD: if.h,v 1.19 2000/08/28 18:30:38 deraadt Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct	if_data {
 	u_char	ifi_type;		/* ethernet, tokenring, etc. */
 	u_char	ifi_addrlen;		/* media address length */
 	u_char	ifi_hdrlen;		/* media header length */
-	int	ifi_link_state;		/* current link state */
+	u_char	ifi_link_state;		/* current link state */
 	u_long	ifi_mtu;		/* maximum transmission unit */
 	u_long	ifi_metric;		/* routing metric (external only) */
 	u_long	ifi_baudrate;		/* linespeed */
