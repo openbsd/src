@@ -522,7 +522,7 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		ucode = v;
-		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		sig = SIGSEGV;
 		break;
 	} /* T_MMUFLT */
 	} /* switch */

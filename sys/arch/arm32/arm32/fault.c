@@ -679,8 +679,7 @@ copyfault:
 			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
 			    fault_pc);
 			postmortem(frame);
-			trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-			    ? SIGBUS : SIGSEGV, FAULT_PERM_P);
+			trapsignal(p, SIGSEGV, FAULT_PERM_P);
 			break;
 		}
 	}            
@@ -860,8 +859,7 @@ nogo:
 		    fault_pc);
 		disassemble(fault_pc);
 				postmortem(frame);
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, FAULT_TRANS_P);
+		trapsignal(p, SIGSEGV, FAULT_TRANS_P);
 		break;
 		}            
 /*		panic("Page Fault - Halting\n");*/
@@ -977,8 +975,7 @@ nogo1:
 			goto we_re_toast;
 		}
 		postmortem(frame);
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-		    ? SIGBUS : SIGSEGV, FAULT_TRANS_S);
+		trapsignal(p, SIGSEGV, FAULT_TRANS_S);
 		break;
 		}            
 /*		panic("Section Fault - Halting\n");
