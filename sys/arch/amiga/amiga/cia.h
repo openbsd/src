@@ -54,7 +54,7 @@ struct CIA {
 };
 
 #ifdef _KERNEL
-#ifndef LOCORE
+#ifndef _LOCORE
 vm_offset_t CIAAbase, CIABbase, CIAADDR;
 #define CIABASE		(0x00BFC000)
 #define CIATOP		(0x00C00000)
