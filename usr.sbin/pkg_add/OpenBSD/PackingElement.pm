@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.64 2004/11/12 19:42:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.65 2004/11/12 22:39:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -161,7 +161,7 @@ sub compute_fullname
 			die "Absolute name forbidden: $fullname";
 		}
 	} else {
-		$fullname = File::Spec->catfile($state->{cwd}, $fullname);
+		$fullname = $self->{cwd}."/".$fullname;
 	}
 	$fullname = File::Spec->canonpath($fullname);
 	$self->{fullname} = $fullname;
