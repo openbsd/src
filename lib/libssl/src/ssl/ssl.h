@@ -391,9 +391,8 @@ struct ssl_ctx_st
 	 * SSL_SESSION_free() when it has finished using it.  Otherwise,
 	 * on 0, it means the callback has finished with it.
 	 * If remove_session_cb is not null, it will be called when
-	 * a session-id is removed from the cache.  Again, a return
-	 * of 0 mens that SSLeay should not SSL_SESSION_free() since
-	 * the application is doing something with it. */
+	 * a session-id is removed from the cache.  After the call,
+	 * OpenSSL will SSL_SESSION_free() it. */
 	int (*new_session_cb)(struct ssl_st *ssl,SSL_SESSION *sess);
 	void (*remove_session_cb)(struct ssl_ctx_st *ctx,SSL_SESSION *sess);
 	SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl,
@@ -1215,6 +1214,7 @@ int SSL_COMP_add_compression_method(int id,char *cm);
 #define SSL_F_SSL2_SET_CERTIFICATE			 126
 #define SSL_F_SSL2_WRITE				 127
 #define SSL_F_SSL3_ACCEPT				 128
+#define SSL_F_SSL3_CALLBACK_CTRL			 233
 #define SSL_F_SSL3_CHANGE_CIPHER_STATE			 129
 #define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM		 130
 #define SSL_F_SSL3_CLIENT_HELLO				 131
