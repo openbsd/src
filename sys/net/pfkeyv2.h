@@ -222,7 +222,8 @@ struct sadb_protocol {
 #define SADB_X_EALG_BLF       3
 #define SADB_X_EALG_CAST      4
 #define SADB_X_EALG_SKIPJACK  5
-#define SADB_EALG_MAX         5
+#define SADB_X_EALG_AES       6
+#define SADB_EALG_MAX         6
 
 #define SADB_SAFLAGS_PFS         	0x001    /* perfect forward secrecy */
 #define SADB_X_SAFLAGS_HALFIV    	0x002    /* Used for ESP-old */
