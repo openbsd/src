@@ -1,0 +1,49 @@
+TODOs for KAME/OpenBSD
+Jun-ichiro Hagino, KAME project
+KAME Id: TODO,v 1.32 1999/12/08 05:49:27 itojun Exp
+$OpenBSD: TODO,v 1.1 1999/12/08 06:30:51 itojun Exp $
+
+
+Please refrain from making too much changes to sys/netinet6 tree (even if
+cosmetic), as we (KAME team) shares these code in all KAME/*BSD.  If you
+keep the tree untouched, that will help us upgrade to more recent KAME tree.
+
+
+Things we can do with the current code:
+- ip6 layer
+	ip6 output, ip6 input
+- icmp6 layer
+	replies to ping, DAD
+- raw6 socket input/output
+- tcp6 socket input/output (both daemon and client)
+- udp6 socket input/output (need more testing)
+- "options IPSEC" compiles (enabled by default in sys/conf/files), but
+  it means OpenBSD IPsec for IPv4 only.  KAME IPsec is not available
+  (and will never be available as OpenBSD group will not be switching
+  IPsec code).  Because of this IPv6 IPsec is not available.
+- hoplimit control advapi works fine.
+- works just fine on i386 and sparc.
+
+Things we can't do with the current code:
+- setsockopt(), ioctl and advapi needs checking
+- ipv4 mapped address
+- check advanced APIs (both userland and kernel)
+- multicast related items need checking
+- ip6_output() does not consult /128 routes, and will not obey icmp6 redir.
+- if you login via ssh, over IPv4 traffic to AF_INET6 socket (using IPv4
+  mapped addres), login(1) or some other program *sometimes* dies with SEGV
+  (string too long on wtmp?)
+  workaround: run sshd -4, then sshd -6.  strangely enough no error will
+  be raised with this configuration.
+- due to library twists, you can't specify IPv6 network name to ifconfig(8).
+  it will be fixed once libinet6 is integrated into libc.
+- ssh6 port does not work on sparc (ssh does not work.  sshd works fine - why?)
+
+Cleanup todo:
+- organize kame/sys/netinet6/in6_src.c and kame/sys/netinet6/in6_pcb.c better
+  for maximum code sharing.
+- nuke unnecessary #ifdef in NRL tcp/udp layer, for more readability
+	(is it okay to do it?)
+- security auditing :-)
+- when both INET and INET6 listening sockets are available, route IPv4
+  connection to INET socket (instead of INET6 socket with using mapped addr).
