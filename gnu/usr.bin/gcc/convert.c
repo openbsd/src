@@ -1,5 +1,5 @@
 /* Utility routines for data type conversion for GNU C.
-   Copyright (C) 1987, 88, 91, 92, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 91, 92, 94, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU C.
 
@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* These routines are somewhat language-independent utility function
-   intended to be called by the language-specific convert () functions. */
+   intended to be called by the language-specific convert () functions.  */
 
 #include "config.h"
 #include "tree.h"
@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 /* Convert EXPR to some pointer or reference type TYPE.
 
    EXPR must be pointer, reference, integer, enumeral, or literal zero;
-   in other cases error is called. */
+   in other cases error is called.  */
 
 tree
 convert_to_pointer (type, expr)
@@ -74,7 +74,7 @@ convert_to_pointer (type, expr)
 /* Convert EXPR to some floating-point type TYPE.
 
    EXPR must be float, integer, or enumeral;
-   in other cases error is called. */
+   in other cases error is called.  */
 
 tree
 convert_to_real (type, expr)
@@ -397,7 +397,10 @@ convert_to_integer (type, expr)
 				      convert (type, TREE_OPERAND (expr, 2))));
 	      }
 	  }
+	  break;
 
+	default:
+	  break;
 	}
 
       return build1 (NOP_EXPR, type, expr);

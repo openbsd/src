@@ -1,5 +1,5 @@
 /* Expand the basic unary and binary arithmetic operations, for GNU compiler.
-   Copyright (C) 1987, 88, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,6 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "tree.h"
 #include "flags.h"
@@ -88,7 +89,7 @@ optab strlen_optab;
 /* Tables of patterns for extending one integer mode to another.  */
 enum insn_code extendtab[MAX_MACHINE_MODE][MAX_MACHINE_MODE][2];
 
-/* Tables of patterns for converting between fixed and floating point. */
+/* Tables of patterns for converting between fixed and floating point.  */
 enum insn_code fixtab[NUM_MACHINE_MODES][NUM_MACHINE_MODES][2];
 enum insn_code fixtrunctab[NUM_MACHINE_MODES][NUM_MACHINE_MODES][2];
 enum insn_code floattab[NUM_MACHINE_MODES][NUM_MACHINE_MODES][2];
@@ -117,6 +118,14 @@ rtx memcmp_libfunc;
 rtx bcmp_libfunc;
 rtx memset_libfunc;
 rtx bzero_libfunc;
+
+rtx throw_libfunc;
+rtx sjthrow_libfunc;
+rtx sjpopnthrow_libfunc;
+rtx terminate_libfunc;
+rtx setjmp_libfunc;
+rtx longjmp_libfunc;
+rtx get_dynamic_handler_chain_libfunc;
 
 rtx eqhf2_libfunc;
 rtx nehf2_libfunc;
@@ -200,6 +209,12 @@ rtx fixunsxfti_libfunc;
 rtx fixunstfsi_libfunc;
 rtx fixunstfdi_libfunc;
 rtx fixunstfti_libfunc;
+
+rtx chkr_check_addr_libfunc;
+rtx chkr_set_right_libfunc;
+rtx chkr_copy_bitmap_libfunc;
+rtx chkr_check_exec_libfunc;
+rtx chkr_check_str_libfunc;
 
 /* Indexed by the rtx-code for a conditional (eg. EQ, LT,...)
    gives the gen_function to make a branch to test that condition.  */
@@ -438,7 +453,7 @@ expand_binop (mode, binoptab, op0, op1, target, unsignedp, methods)
 	temp = gen_reg_rtx (mode);
 
       /* If it is a commutative operator and the modes would match
-	 if we would swap the operands, we can save the conversions. */
+	 if we would swap the operands, we can save the conversions.  */
       if (commutative_op)
 	{
 	  if (GET_MODE (op0) != mode0 && GET_MODE (op1) != mode1
@@ -919,12 +934,11 @@ expand_binop (mode, binoptab, op0, op1, target, unsignedp, methods)
 	    {
 	      /* Store carry from main add/subtract.  */
 	      carry_out = gen_reg_rtx (word_mode);
-	      carry_out = emit_store_flag (carry_out,
-					   binoptab == add_optab ? LTU : GTU,
-					   x, op0_piece,
-					   word_mode, 1, normalizep);
-	      if (carry_out == 0)
-		break;
+	      carry_out = emit_store_flag_force (carry_out,
+						 (binoptab == add_optab
+						  ? LTU : GTU),
+						 x, op0_piece,
+						 word_mode, 1, normalizep);
 	    }
 
 	  if (i > 0)
@@ -943,11 +957,11 @@ expand_binop (mode, binoptab, op0, op1, target, unsignedp, methods)
 		{
 		  /* THIS CODE HAS NOT BEEN TESTED.  */
 		  /* Get out carry from adding/subtracting carry in.  */
-		  carry_tmp = emit_store_flag (carry_tmp,
-					       binoptab == add_optab
-					         ? LTU : GTU,
-					       x, carry_in,
-					       word_mode, 1, normalizep);
+		  carry_tmp = emit_store_flag_force (carry_tmp,
+						     binoptab == add_optab
+						     ? LTU : GTU,
+						     x, carry_in,
+						     word_mode, 1, normalizep);
 
 		  /* Logical-ior the two poss. carry together.  */
 		  carry_out = expand_binop (word_mode, ior_optab,
@@ -963,13 +977,16 @@ expand_binop (mode, binoptab, op0, op1, target, unsignedp, methods)
 
       if (i == GET_MODE_BITSIZE (mode) / BITS_PER_WORD)
 	{
-	  rtx temp = emit_move_insn (target, target);
+	  if (mov_optab->handlers[(int) mode].insn_code != CODE_FOR_nothing)
+	    {
+	      rtx temp = emit_move_insn (target, target);
 
-	  REG_NOTES (temp) = gen_rtx (EXPR_LIST, REG_EQUAL,
-				      gen_rtx (binoptab->code, mode,
-					       copy_rtx (xop0),
-					       copy_rtx (xop1)),
-				      REG_NOTES (temp));
+	      REG_NOTES (temp) = gen_rtx (EXPR_LIST, REG_EQUAL,
+					  gen_rtx (binoptab->code, mode,
+						   copy_rtx (xop0),
+						   copy_rtx (xop1)),
+					  REG_NOTES (temp));
+	    }
 	  return target;
 	}
       else
@@ -1143,12 +1160,15 @@ expand_binop (mode, binoptab, op0, op1, target, unsignedp, methods)
 
 	  if (temp != 0)
 	    {
-	      temp = emit_move_insn (product, product);
-	      REG_NOTES (temp) = gen_rtx (EXPR_LIST, REG_EQUAL,
-					  gen_rtx (MULT, mode, copy_rtx (op0),
-						   copy_rtx (op1)),
-					  REG_NOTES (temp));
-
+	      if (mov_optab->handlers[(int) mode].insn_code != CODE_FOR_nothing)
+		{
+		  temp = emit_move_insn (product, product);
+		  REG_NOTES (temp) = gen_rtx (EXPR_LIST, REG_EQUAL,
+					      gen_rtx (MULT, mode,
+						       copy_rtx (op0),
+						       copy_rtx (op1)),
+					      REG_NOTES (temp));
+		}
 	      return product;
 	    }
 	}
@@ -2116,6 +2136,13 @@ expand_abs (mode, op0, target, unsignedp, safe)
     }
 
   /* If that does not win, use conditional jump and negate.  */
+
+  /* It is safe to use the target if it is the same
+     as the source if this is also a pseudo register */
+  if (op0 == target && GET_CODE (op0) == REG
+      && REGNO (op0) >= FIRST_PSEUDO_REGISTER)
+    safe = 1;
+
   op1 = gen_label_rtx ();
   if (target == 0 || ! safe
       || GET_MODE (target) != mode
@@ -2374,7 +2401,10 @@ emit_unop_insn (icode, target, op0, code)
 
   op0 = protect_from_queue (op0, 0);
 
-  if (flag_force_mem)
+  /* Sign and zero extension from memory is often done specially on
+     RISC machines, so forcing into a register here can pessimize
+     code.  */
+  if (flag_force_mem && code != SIGN_EXTEND && code != ZERO_EXTEND)
     op0 = force_not_mem (op0);
 
   /* Now, if insn does not accept our operands, put them into pseudos.  */
@@ -2603,8 +2633,10 @@ emit_libcall_block (insns, target, result, equiv)
     }
 
   last = emit_move_insn (target, result);
-  REG_NOTES (last) = gen_rtx (EXPR_LIST,
-			      REG_EQUAL, copy_rtx (equiv), REG_NOTES (last));
+  if (mov_optab->handlers[(int) GET_MODE (target)].insn_code
+      != CODE_FOR_nothing)
+    REG_NOTES (last) = gen_rtx (EXPR_LIST,
+				REG_EQUAL, copy_rtx (equiv), REG_NOTES (last));
 
   if (prev == 0)
     first = get_insns ();
@@ -2741,18 +2773,32 @@ emit_cmp_insn (x, y, comparison, size, mode, unsignedp, align)
       else
 #endif
 	{
+	  rtx result;
+
 #ifdef TARGET_MEM_FUNCTIONS
 	  emit_library_call (memcmp_libfunc, 0,
 			     TYPE_MODE (integer_type_node), 3,
 			     XEXP (x, 0), Pmode, XEXP (y, 0), Pmode,
-			     size, Pmode);
+			     convert_to_mode (TYPE_MODE (sizetype), size,
+					      TREE_UNSIGNED (sizetype)),
+			     TYPE_MODE (sizetype));
 #else
 	  emit_library_call (bcmp_libfunc, 0,
 			     TYPE_MODE (integer_type_node), 3,
 			     XEXP (x, 0), Pmode, XEXP (y, 0), Pmode,
-			     size, Pmode);
+			     convert_to_mode (TYPE_MODE (integer_type_node),
+					      size,
+					      TREE_UNSIGNED (integer_type_node)),
+			     TYPE_MODE (integer_type_node));
 #endif
-	  emit_cmp_insn (hard_libcall_value (TYPE_MODE (integer_type_node)),
+
+	  /* Immediately move the result of the libcall into a pseudo
+	     register so reload doesn't clobber the value if it needs
+	     the return register for a spill reg.  */
+	  result = gen_reg_rtx (TYPE_MODE (integer_type_node));
+	  emit_move_insn (result,
+			  hard_libcall_value (TYPE_MODE (integer_type_node)));
+	  emit_cmp_insn (result,
 			 const0_rtx, comparison, NULL_RTX,
 			 TYPE_MODE (integer_type_node), 0, 0);
 	}
@@ -2829,6 +2875,8 @@ emit_cmp_insn (x, y, comparison, size, mode, unsignedp, align)
       && class != MODE_FLOAT)
     {
       rtx libfunc = cmp_optab->handlers[(int) mode].libfunc;
+      rtx result;
+
       /* If we want unsigned, and this mode has a distinct unsigned
 	 comparison routine, use that.  */
       if (unsignedp && ucmp_optab->handlers[(int) mode].libfunc)
@@ -2837,11 +2885,16 @@ emit_cmp_insn (x, y, comparison, size, mode, unsignedp, align)
       emit_library_call (libfunc, 1,
 			 word_mode, 2, x, mode, y, mode);
 
+      /* Immediately move the result of the libcall into a pseudo
+	 register so reload doesn't clobber the value if it needs
+	 the return register for a spill reg.  */
+      result = gen_reg_rtx (word_mode);
+      emit_move_insn (result, hard_libcall_value (word_mode));
+
       /* Integer comparison returns a result that must be compared against 1,
 	 so that even if we do an unsigned compare afterward,
 	 there is still a value that can represent the result "less than".  */
-
-      emit_cmp_insn (hard_libcall_value (word_mode), const1_rtx,
+      emit_cmp_insn (result, const1_rtx,
 		     comparison, NULL_RTX, word_mode, unsignedp, 0);
       return;
     }
@@ -2880,6 +2933,7 @@ emit_float_lib_cmp (x, y, comparison)
 {
   enum machine_mode mode = GET_MODE (x);
   rtx libfunc = 0;
+  rtx result;
 
   if (mode == HFmode)
     switch (comparison)
@@ -2906,6 +2960,9 @@ emit_float_lib_cmp (x, y, comparison)
 
       case LE:
 	libfunc = lehf2_libfunc;
+	break;
+
+      default:
 	break;
       }
   else if (mode == SFmode)
@@ -2934,6 +2991,9 @@ emit_float_lib_cmp (x, y, comparison)
       case LE:
 	libfunc = lesf2_libfunc;
 	break;
+
+      default:
+	break;
       }
   else if (mode == DFmode)
     switch (comparison)
@@ -2960,6 +3020,9 @@ emit_float_lib_cmp (x, y, comparison)
 
       case LE:
 	libfunc = ledf2_libfunc;
+	break;
+
+      default:
 	break;
       }
   else if (mode == XFmode)
@@ -2988,6 +3051,9 @@ emit_float_lib_cmp (x, y, comparison)
       case LE:
 	libfunc = lexf2_libfunc;
 	break;
+
+      default:
+	break;
       }
   else if (mode == TFmode)
     switch (comparison)
@@ -3014,6 +3080,9 @@ emit_float_lib_cmp (x, y, comparison)
 
       case LE:
 	libfunc = letf2_libfunc;
+	break;
+
+      default:
 	break;
       }
   else
@@ -3044,7 +3113,13 @@ emit_float_lib_cmp (x, y, comparison)
   emit_library_call (libfunc, 1,
 		     word_mode, 2, x, mode, y, mode);
 
-  emit_cmp_insn (hard_libcall_value (word_mode), const0_rtx, comparison,
+  /* Immediately move the result of the libcall into a pseudo
+     register so reload doesn't clobber the value if it needs
+     the return register for a spill reg.  */
+  result = gen_reg_rtx (word_mode);
+  emit_move_insn (result, hard_libcall_value (word_mode));
+
+  emit_cmp_insn (result, const0_rtx, comparison,
 		 NULL_RTX, word_mode, 0, 0);
 }
 
@@ -3487,7 +3562,7 @@ expand_float (to, from, unsignedp)
 	  /* There is no such mode.  Pretend the target is wide enough.  */
 	  fmode = GET_MODE (to);
 
-	  /* Avoid double-rounding when TO is narrower than FROM. */
+	  /* Avoid double-rounding when TO is narrower than FROM.  */
 	  if ((significand_size (fmode) + 1)
 	      < GET_MODE_BITSIZE (GET_MODE (from)))
 	    {
@@ -3785,13 +3860,16 @@ expand_fix (to, from, unsignedp)
 
 	  emit_label (lab2);
 
-	  /* Make a place for a REG_NOTE and add it.  */
-	  insn = emit_move_insn (to, to);
-	  REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_EQUAL,
-				      gen_rtx (UNSIGNED_FIX, GET_MODE (to),
-					       copy_rtx (from)),
-				      REG_NOTES (insn));
-
+	  if (mov_optab->handlers[(int) GET_MODE (to)].insn_code
+	      != CODE_FOR_nothing)
+	    {
+	      /* Make a place for a REG_NOTE and add it.  */
+	      insn = emit_move_insn (to, to);
+	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_EQUAL,
+					  gen_rtx (UNSIGNED_FIX, GET_MODE (to),
+						   copy_rtx (from)),
+					  REG_NOTES (insn));
+	    }
 	  return;
 	}
 #endif
@@ -3877,10 +3955,13 @@ expand_fix (to, from, unsignedp)
 				   GET_MODE (to), from));
     }
       
-  if (GET_MODE (to) == GET_MODE (target))
-    emit_move_insn (to, target);
-  else
-    convert_move (to, target, 0);
+  if (target != to)
+    {
+      if (GET_MODE (to) == GET_MODE (target))
+        emit_move_insn (to, target);
+      else
+        convert_move (to, target, 0);
+    }
 }
 
 static optab
@@ -4079,6 +4160,7 @@ init_optabs ()
   for (i = 0; i < NUM_MACHINE_MODES; i++)
     {
       movstr_optab[i] = CODE_FOR_nothing;
+      clrstr_optab[i] = CODE_FOR_nothing;
 
 #ifdef HAVE_SECONDARY_RELOADS
       reload_in_optab[i] = reload_out_optab[i] = CODE_FOR_nothing;
@@ -4213,6 +4295,19 @@ init_optabs ()
   memset_libfunc = gen_rtx (SYMBOL_REF, Pmode, "memset");
   bzero_libfunc = gen_rtx (SYMBOL_REF, Pmode, "bzero");
 
+  throw_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__throw");
+  sjthrow_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__sjthrow");
+  sjpopnthrow_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__sjpopnthrow");
+  terminate_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__terminate");
+#ifndef DONT_USE_BUILTIN_SETJMP
+  setjmp_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__builtin_setjmp");
+  longjmp_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__builtin_longjmp");
+#else
+  setjmp_libfunc = gen_rtx (SYMBOL_REF, Pmode, "setjmp");
+  longjmp_libfunc = gen_rtx (SYMBOL_REF, Pmode, "longjmp");
+#endif
+  get_dynamic_handler_chain_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__get_dynamic_handler_chain");
+
   eqhf2_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__eqhf2");
   nehf2_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__nehf2");
   gthf2_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__gthf2");
@@ -4296,6 +4391,13 @@ init_optabs ()
   fixunstfdi_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__fixunstfdi");
   fixunstfti_libfunc = gen_rtx (SYMBOL_REF, Pmode, "__fixunstfti");
 
+  /* For check-memory-usage.  */
+  chkr_check_addr_libfunc = gen_rtx (SYMBOL_REF, VOIDmode, "chkr_check_addr");
+  chkr_set_right_libfunc = gen_rtx (SYMBOL_REF, VOIDmode, "chkr_set_right");
+  chkr_copy_bitmap_libfunc = gen_rtx (SYMBOL_REF, VOIDmode, "chkr_copy_bitmap");
+  chkr_check_exec_libfunc = gen_rtx (SYMBOL_REF, VOIDmode, "chkr_check_exec");
+  chkr_check_str_libfunc = gen_rtx (SYMBOL_REF, VOIDmode, "chkr_check_str");
+
 #ifdef INIT_TARGET_OPTABS
   /* Allow the target to add more libcalls or rename some, etc.  */
   INIT_TARGET_OPTABS;
@@ -4304,7 +4406,7 @@ init_optabs ()
 
 #ifdef BROKEN_LDEXP
 
-/* SCO 3.2 apparently has a broken ldexp. */
+/* SCO 3.2 apparently has a broken ldexp.  */
 
 double
 ldexp(x,n)

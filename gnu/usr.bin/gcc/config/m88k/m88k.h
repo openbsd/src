@@ -1,9 +1,8 @@
 /* Definitions of target machine for GNU compiler for
    Motorola m88100 in an 88open OCS/BCS environment.
-   Copyright (C) 1988, 89, 90, 91, 93, 94, 1995 Free Software Foundation, Inc.
-   Contributed by Michael Tiemann (tiemann@cygnus.com)
-   Enhanced by Michael Meissner (meissner@cygnus.com)
-   Version 2 port by Tom Wood (twood@pets.sps.mot.com)
+   Copyright (C) 1988, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Contributed by Michael Tiemann (tiemann@cygnus.com).
+   Currently maintained by (gcc@dg-rtp.dg.com)
 
 This file is part of GNU CC.
 
@@ -197,15 +196,15 @@ extern char * reg_names[];
 
 /* Print subsidiary information on the compiler version in use.
    Redefined in sysv4.h, and luna.h.  */
-#define VERSION_INFO1	"88open OCS/BCS, "
+#define VERSION_INFO1	"m88k, "
 #ifndef VERSION_INFO2
-#define VERSION_INFO2   "$Revision: 1.1.1.1 $"
+#define VERSION_INFO2   "$Revision: 1.1.1.2 $"
 #endif
 
 #ifndef VERSION_STRING
 #define VERSION_STRING  version_string
 #ifdef __STDC__
-#define TM_RCS_ID      "@(#)" __FILE__ " $Revision: 1.1.1.1 $ " __DATE__
+#define TM_RCS_ID      "@(#)" __FILE__ " $Revision: 1.1.1.2 $ " __DATE__
 #else
 #define TM_RCS_ID      "$What: <@(#) m88k.h,v	1.1.1.2.2.2> $"
 #endif  /* __STDC__ */
@@ -295,6 +294,7 @@ extern char * reg_names[];
     { "no-serialize-volatile",		 MASK_NO_SERIALIZE_VOLATILE }, \
     { "serialize-volatile",		-MASK_NO_SERIALIZE_VOLATILE }, \
     { "omit-leaf-frame-pointer",	 MASK_OMIT_LEAF_FRAME_POINTER }, \
+    { "no-omit-leaf-frame-pointer",     -MASK_OMIT_LEAF_FRAME_POINTER }, \
     SUBTARGET_SWITCHES \
     /* Default switches */ \
     { "",				 TARGET_DEFAULT }, \
@@ -361,6 +361,8 @@ extern char * reg_names[];
 	if (flag_pic)							     \
 	  error ("-mshort-data-%s and PIC are incompatible", m88k_short_data); \
       }									     \
+    if (TARGET_OMIT_LEAF_FRAME_POINTER)       /* keep nonleaf frame pointers */    \
+      flag_omit_frame_pointer = 1;                                         \
   } while (0)
 
 /*** Storage Layout ***/
@@ -1046,7 +1048,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS for a call to a
    function whose data type is FNTYPE.  For a library call, FNTYPE is 0. */
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME) ((CUM) = 0)
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT) ((CUM) = 0)
 
 /* A C statement (sans semicolon) to update the summarizer variable
    CUM to advance past an argument in the argument list.  The values
@@ -1545,6 +1547,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Tell when to handle #pragma weak.  This is only done for V.4.  */
 #define SUPPORTS_WEAK TARGET_SVR4
+#define SUPPORTS_ONE_ONLY TARGET_SVR4
 
 /* Max number of bytes we can move from memory to memory
    in one reasonably fast instruction.  */
@@ -1706,10 +1709,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
       (COST) -= 4; /* 88110 store reservation station.  */		\
   } while (0)
 
-/* Define this to be nonzero if the character `$' should be allowed
-   by default in identifier names.  */
-#define	DOLLARS_IN_IDENTIFIERS	1
-
 /* Do not break .stabs pseudos into continuations.  */
 #define DBX_CONTIN_LENGTH 0
 
@@ -1717,12 +1716,18 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Control the assembler format that we output.  */
 
+/* A C string constant describing how to begin a comment in the target
+   assembler language.  The compiler assumes that the comment will end at
+   the end of the line.  */
+#define ASM_COMMENT_START ";"
+
 /* Allow pseudo-ops to be overridden.  Override these in svr[34].h.  */
 #undef	INT_ASM_OP
 #undef	ASCII_DATA_ASM_OP
 #undef	CONST_SECTION_ASM_OP
 #undef	CTORS_SECTION_ASM_OP
 #undef	DTORS_SECTION_ASM_OP
+#undef  ASM_OUTPUT_SECTION_NAME
 #undef	INIT_SECTION_ASM_OP
 #undef	FINI_SECTION_ASM_OP
 #undef	TYPE_ASM_OP
@@ -2029,6 +2034,11 @@ do {									 \
     assemble_name (FILE, NAME);				\
     putc ('\n', FILE);					\
   } while (0)
+
+/* The prefix to add to user-visible assembler symbols.
+   Override svr[34].h.  */
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output a reference to a user-level label named NAME.
    Override svr[34].h.  */

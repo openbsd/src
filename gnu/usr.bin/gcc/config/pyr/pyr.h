@@ -1,6 +1,6 @@
 /* Definitions of target machine parameters for GNU compiler,
    for Pyramid 90x, 9000, and MIServer Series.
-   Copyright (C) 1989, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -495,7 +495,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    We may nevertheless provide this as an option.   */
 
 #define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE)   \
-  ((TARGET_RETD && TREE_CODE (FUNTYPE) != IDENTIFIER_NODE	\
+  ((TARGET_RETD && (!(FUNDECL) || TREE_CODE (FUNDECL) != IDENTIFIER_NODE)	\
     && (TYPE_ARG_TYPES (FUNTYPE) == 0				\
 	|| (TREE_VALUE (tree_last (TYPE_ARG_TYPES (FUNTYPE)))	\
 	    == void_type_node)))				\
@@ -629,7 +629,7 @@ extern int inner_param_safe_helper();
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0.   */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
   ((CUM) = (FNTYPE && !flag_pcc_struct_return		\
 	    && aggregate_value_p (TREE_TYPE (FNTYPE))))
 
@@ -1177,10 +1177,9 @@ extern int swap_operands;
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs (".globl ", FILE); assemble_name (FILE, NAME); fputs ("\n", FILE);} while (0)
 
-/* This is how to output a reference to a user-level label named NAME.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-   fprintf (FILE, "_%s", NAME);
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */

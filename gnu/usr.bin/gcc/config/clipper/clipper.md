@@ -1,5 +1,5 @@
 ;;- Machine description for GNU compiler, Clipper Version
-;;   Copyright (C) 1987, 1988, 1991, 1993, 1994 Free Software Foundation, Inc.
+;;   Copyright (C) 1987, 88, 91, 93, 94, 1997 Free Software Foundation, Inc.
 ;; Contributed by Holger Teutsch (holger@hotbso.rhein-main.de)
 
 ;; This file is part of GNU CC.
@@ -532,8 +532,8 @@
   operands[6] = addr0;
   operands[7] = addr1;
 
-  operands[0] = gen_rtx (MEM, BLKmode, addr0);
-  operands[1] = gen_rtx (MEM, BLKmode, addr1);
+  operands[0] = change_address (operands[0], VOIDmode, addr0);
+  operands[1] = change_address (operands[1], VOIDmode, addr1);
 
   if (GET_CODE (operands[2]) != CONST_INT)
     operands[2] = force_reg (SImode, operands[2]);
@@ -1361,6 +1361,43 @@
   ;; Operand 2 not used on the clipper
   ""
   "call   sp,%1")
+
+;; Call subroutine returning any type.
+
+(define_expand "untyped_call"
+  [(parallel [(call (match_operand 0 "" "")
+		    (const_int 0))
+	      (match_operand 1 "" "")
+	      (match_operand 2 "" "")])]
+  ""
+  "
+{
+  int i;
+
+  emit_call_insn (gen_call (operands[0], const0_rtx, NULL, const0_rtx));
+
+  for (i = 0; i < XVECLEN (operands[2], 0); i++)
+    {
+      rtx set = XVECEXP (operands[2], 0, i);
+      emit_move_insn (SET_DEST (set), SET_SRC (set));
+    }
+
+  /* The optimizer does not know that the call sets the function value
+     registers we stored in the result block.  We avoid problems by
+     claiming that all hard registers are used and clobbered at this
+     point.  */
+  emit_insn (gen_blockage ());
+
+  DONE;
+}")
+
+;; UNSPEC_VOLATILE is considered to use and clobber all hard registers and
+;; all of memory.  This blocks insns from being moved across this point.
+
+(define_insn "blockage"
+  [(unspec_volatile [(const_int 0)] 0)]
+  ""
+  "")
 
 (define_insn "indirect_jump"
   [(set (pc) (match_operand:SI 0 "register_operand" "r"))]

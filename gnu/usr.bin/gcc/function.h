@@ -1,5 +1,5 @@
 /* Structure for saving state for a nested function.
-   Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -70,6 +70,7 @@ struct function
   int pops_args;
   int returns_struct;
   int returns_pcc_struct;
+  int returns_pointer;
   int needs_context;
   int calls_setjmp;
   int calls_longjmp;
@@ -77,6 +78,7 @@ struct function
   int has_nonlocal_label;
   int has_nonlocal_goto;
   int contains_functions;
+  int is_thunk;
   rtx nonlocal_goto_handler_slot;
   rtx nonlocal_goto_stack_level;
   tree nonlocal_labels;
@@ -94,7 +96,7 @@ struct function
   rtx save_expr_regs;
   rtx stack_slot_list;
   rtx parm_birth_insn;
-  int frame_offset;
+  HOST_WIDE_INT frame_offset;
   rtx tail_recursion_label;
   rtx tail_recursion_reentry;
   rtx internal_arg_pointer;
@@ -109,6 +111,7 @@ struct function
   /* This slot is initialized as 0 and is added to
      during the nested function.  */
   struct var_refs_queue *fixup_var_refs_queue;
+  CUMULATIVE_ARGS args_info;
 
   /* For stmt.c  */
   struct nesting *block_stack;
@@ -126,10 +129,19 @@ struct function
   int emit_lineno;
   struct goto_fixup *goto_fixup_chain;
 
+  /* For exception handling information.  */
+  struct eh_stack ehstack;
+  struct eh_queue ehqueue;
+  rtx catch_clauses;
+  struct label_node *false_label_stack;
+  struct label_node *caught_return_label_stack;
+  tree protect_list;
+  rtx dhc;
+  rtx dcc;
+
   /* For expr.c.  */
   int pending_stack_adjust;
   int inhibit_defer_pop;
-  tree cleanups_this_call;
   rtx saveregs_value;
   rtx apply_args_value;
   rtx forced_labels;
@@ -145,6 +157,7 @@ struct function
   int last_linenum;
   char *last_filename;
   char *regno_pointer_flag;
+  char *regno_pointer_align;
   int regno_pointer_flag_length;
   rtx *regno_reg_rtx;
 
@@ -187,6 +200,7 @@ struct function
   struct pool_sym **const_rtx_sym_hash_table;
   struct pool_constant *first_pool, *last_pool;
   int pool_offset;
+  rtx const_double_chain;
 };
 
 /* The FUNCTION_DECL for an inline function currently being expanded.  */
@@ -213,15 +227,32 @@ extern struct function *outer_function_chain;
    the index of that block in the vector.  */
 extern tree *identify_blocks PROTO((tree, rtx));
 
+/* Return size needed for stack frame based on slots so far allocated.
+   This size counts from zero.  It is not rounded to STACK_BOUNDARY;
+   the caller may have to do that.  */
+extern HOST_WIDE_INT get_frame_size PROTO((void));
+
 /* These variables hold pointers to functions to
    save and restore machine-specific data,
    in push_function_context and pop_function_context.  */
-extern void (*save_machine_status) ();
-extern void (*restore_machine_status) ();
+extern void (*save_machine_status) PROTO((struct function *));
+extern void (*restore_machine_status) PROTO((struct function *));
 
-/* Save and restore varasm.c status for a nested function.  */
-extern void save_varasm_status		PROTO((struct function *));
+/* Save and restore status information for a nested function.  */
+extern void save_tree_status		PROTO((struct function *, tree));
+extern void restore_tree_status		PROTO((struct function *, tree));
+extern void save_varasm_status		PROTO((struct function *, tree));
 extern void restore_varasm_status	PROTO((struct function *));
+extern void save_eh_status		PROTO((struct function *));
+extern void restore_eh_status		PROTO((struct function *));
+extern void save_stmt_status		PROTO((struct function *));
+extern void restore_stmt_status		PROTO((struct function *));
+extern void save_expr_status		PROTO((struct function *));
+extern void restore_expr_status		PROTO((struct function *));
+extern void save_emit_status		PROTO((struct function *));
+extern void restore_emit_status		PROTO((struct function *));
+extern void save_storage_status		PROTO((struct function *));
+extern void restore_storage_status	PROTO((struct function *));
 
 #ifdef rtx
 #undef rtx

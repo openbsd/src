@@ -1,5 +1,5 @@
 /* Definitions for DECstation running BSD as target machine for GNU compiler.
-   Copyright (C) 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -30,11 +30,11 @@ Boston, MA 02111-1307, USA.  */
 #define GCC_INCLUDE_DIR "/usr/include"
 
 #undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS		\
-  {					\
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },	\
-    { GCC_INCLUDE_DIR, 0, 0 },		\
-    { 0, 0, 0 }				\
+#define INCLUDE_DEFAULTS			\
+  {						\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
+    { 0, 0, 0, 0 }				\
   }
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
@@ -50,7 +50,7 @@ Boston, MA 02111-1307, USA.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
-   %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp %{static:-Bstatic} %{assert*}"
+   %{!nostartfiles:%{!r*:%{!e*:-e __start}}} -dc -dp %{static:-Bstatic} %{assert*}"
 
 /* We have atexit(3).  */
 
@@ -69,26 +69,8 @@ Boston, MA 02111-1307, USA.  */
 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
 #endif
 
-/* Always uses gas.  */
-#ifndef ASM_SPEC
-#define ASM_SPEC "\
-%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} %{v} \
-%{noasmopt:-O0} \
-%{!noasmopt:%{O:-O2} %{O1:-O2} %{O2:-O2} %{O3:-O3}} \
-%{g} %{g0} %{g1} %{g2} %{g3} \
-%{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} \
-%{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
-%{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
-%{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3}"
-#endif
-
-#ifndef CPP_SPEC
-#define CPP_SPEC "\
-%{posix:-D_POSIX_SOURCE} \
-%{mlong64:-D__SIZE_TYPE__=long\\ unsigned\\ int -D__PTRDIFF_TYPE__=long\\ int} \
-%{!mlong64:-D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int} \
-%{mips3:-U__mips -D__mips=3 -D__mips64} \
-%{mgp32:-U__mips64} %{mgp64:-D__mips64}"
+#ifndef SUBTARGET_CPP_SPEC
+#define SUBTARGET_CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
 #endif
 
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
@@ -100,8 +82,6 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_DEFAULT MASK_GAS
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
-#define LOCAL_LABEL_PREFIX	"."
 
 #include "mips/mips.h"
 
@@ -225,7 +205,23 @@ do {									 \
       }									\
   } while (0)
 
+/*
+ A C statement to output something to the assembler file to switch to section
+ NAME for object DECL which is either a FUNCTION_DECL, a VAR_DECL or
+ NULL_TREE.  Some target formats do not support arbitrary sections.  Do not
+ define this macro in such cases.
+*/
+#define ASM_OUTPUT_SECTION_NAME(F, DECL, NAME, RELOC)                        \
+do {                                                                         \
+  extern FILE *asm_out_text_file;                                            \
+  if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL)                           \
+    fprintf (asm_out_text_file, "\t.section %s,\"ax\",@progbits\n", (NAME)); \
+  else if ((DECL) && DECL_READONLY_SECTION (DECL, RELOC))                    \
+    fprintf (F, "\t.section %s,\"a\",@progbits\n", (NAME));                  \
+  else                                                                       \
+    fprintf (F, "\t.section %s,\"aw\",@progbits\n", (NAME));                 \
+} while (0)
+
 /* Since gas and gld are standard on NetBSD, we don't need these */
 #undef ASM_FINAL_SPEC
 #undef STARTFILE_SPEC
-

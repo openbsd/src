@@ -1,5 +1,5 @@
 /* Save and restore call-clobbered registers which are live across a call.
-   Copyright (C) 1989, 1992, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1992, 1994, 1995, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -19,6 +19,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "insn-config.h"
 #include "flags.h"
@@ -182,7 +183,8 @@ init_caller_save ()
 	  reg_save_code[i][j] = recog_memoized (saveinsn);
 	  reg_restore_code[i][j] = recog_memoized (restinsn);
 
-	  /* Now extract both insns and see if we can meet their constraints. */
+	  /* Now extract both insns and see if we can meet their
+             constraints.  */
 	  ok = (reg_save_code[i][j] != -1 && reg_restore_code[i][j] != -1);
 	  if (ok)
 	    {
@@ -261,7 +263,7 @@ setup_save_areas (pchanged)
   /* Find and record all call-used hard-registers in this function.  */
   CLEAR_HARD_REG_SET (hard_regs_used);
   for (i = FIRST_PSEUDO_REGISTER; i < max_regno; i++)
-    if (reg_renumber[i] >= 0 && reg_n_calls_crossed[i] > 0)
+    if (reg_renumber[i] >= 0 && REG_N_CALLS_CROSSED (i) > 0)
       {
 	int regno = reg_renumber[i];
 	int endregno 
@@ -307,7 +309,7 @@ setup_save_areas (pchanged)
 	      ok &= (TEST_HARD_REG_BIT (hard_regs_used, regno) != 0);
 	    }
 
-	/* We have found an acceptable mode to store in. */
+	/* We have found an acceptable mode to store in.  */
 	if (ok)
 	  {
 
@@ -315,7 +317,7 @@ setup_save_areas (pchanged)
 	      = assign_stack_local (regno_save_mode[i][j],
 				    GET_MODE_SIZE (regno_save_mode[i][j]), 0);
 
-	    /* Setup single word save area just in case... */
+	    /* Setup single word save area just in case...  */
 	    for (k = 0; k < j; k++)
 	      {
 		/* This should not depend on WORDS_BIG_ENDIAN.
@@ -334,7 +336,7 @@ setup_save_areas (pchanged)
     for (j = 1; j <= MOVE_MAX / UNITS_PER_WORD; j++)
       if (regno_save_mem[i][j] != 0)
 	ok &= strict_memory_address_p (GET_MODE (regno_save_mem[i][j]),
-				       XEXP (eliminate_regs (regno_save_mem[i][j], 0, NULL_RTX), 0));
+				       XEXP (eliminate_regs (regno_save_mem[i][j], 0, NULL_RTX, 1), 0));
 
   return ok;
 }
@@ -356,8 +358,7 @@ save_call_clobbered_regs (insn_mode)
     {
       regset regs_live = basic_block_live_at_start[b];
       rtx prev_block_last = PREV_INSN (basic_block_head[b]);
-      REGSET_ELT_TYPE bit;
-      int offset, i, j;
+      int i, j;
       int regno;
 
       /* Compute hard regs live at start of block -- this is the
@@ -366,31 +367,20 @@ save_call_clobbered_regs (insn_mode)
 	 saved because we restore all of them before the end of the basic
 	 block.  */
 
-#ifdef HARD_REG_SET
-      hard_regs_live = *regs_live;
-#else
-      COPY_HARD_REG_SET (hard_regs_live, regs_live);
-#endif
-
+      REG_SET_TO_HARD_REG_SET (hard_regs_live, regs_live);
       CLEAR_HARD_REG_SET (hard_regs_saved);
       CLEAR_HARD_REG_SET (hard_regs_need_restore);
       n_regs_saved = 0;
 
-      for (offset = 0, i = 0; offset < regset_size; offset++)
-	{
-	  if (regs_live[offset] == 0)
-	    i += REGSET_ELT_BITS;
-	  else
-	    for (bit = 1; bit && i < max_regno; bit <<= 1, i++)
-	      if ((regs_live[offset] & bit)
-		  && (regno = reg_renumber[i]) >= 0)
-		for (j = regno;
-		     j < regno + HARD_REGNO_NREGS (regno,
-						   PSEUDO_REGNO_MODE (i));
-		     j++)
-		  SET_HARD_REG_BIT (hard_regs_live, j);
-
-	}
+      EXECUTE_IF_SET_IN_REG_SET (regs_live, 0, i,
+				 {
+				   if ((regno = reg_renumber[i]) >= 0)
+				     for (j = regno;
+					  j < regno + HARD_REGNO_NREGS (regno,
+									PSEUDO_REGNO_MODE (i));
+					  j++)
+				       SET_HARD_REG_BIT (hard_regs_live, j);
+				 });
 
       /* Now scan the insns in the block, keeping track of what hard
 	 regs are live as we go.  When we see a call, save the live

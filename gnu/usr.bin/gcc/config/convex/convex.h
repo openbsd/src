@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Convex version.
-   Copyright (C) 1988, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -45,7 +45,7 @@ extern int target_flags;
    An empty string NAME is used to identify the default VALUE.  */
 
 #ifndef TARGET_DEFAULT
-#error Use one of convex1.h, convex2.h, etc.
+#define TARGET_DEFAULT 0
 #endif
 
 #define TARGET_SWITCHES \
@@ -62,7 +62,7 @@ extern int target_flags;
     { "volatile-nocache", 0400 }, \
     { "long64", 01000 }, \
     { "long32", -01000 }, \
-    { "", TARGET_DEFAULT }}
+    { "", TARGET_DEFAULT | TARGET_CPU_DEFAULT}}
 
 /* Macros used in the machine description to test the flags.  */
 
@@ -77,12 +77,9 @@ extern int target_flags;
 
 #define OVERRIDE_OPTIONS						\
 {									\
-  extern int dollars_in_ident;						\
   init_convex ();							\
-  /* To compile system header files, allow $ in identifiers even if -ansi */ \
-  dollars_in_ident = 1;							\
-  if ((target_flags & 077) != (TARGET_DEFAULT & 077))			\
-    target_flags &= ~TARGET_DEFAULT;					\
+  if ((target_flags & 077) != ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 077)) \
+    target_flags &= ~ (TARGET_DEFAULT | TARGET_CPU_DEFAULT);		\
   if (target_flags & 001)						\
     target_cpu = 0;							\
   else if (target_flags & 006)						\
@@ -106,7 +103,7 @@ extern int target_flags;
    Make a target-dependent __convex_cxx__ define to relay the target cpu
    to the program being compiled. */
 
-#if TARGET_DEFAULT & 1
+#if (TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 1
 
 /* C1 default */
 
@@ -158,7 +155,7 @@ extern int target_flags;
 
 #endif
 
-#if TARGET_DEFAULT & 2
+#if (TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 2
 
 /* C2 default */
 
@@ -210,7 +207,7 @@ extern int target_flags;
 
 #endif
 
-#if TARGET_DEFAULT & 4
+#if (TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 4
 
 /* C32 default */
 
@@ -262,7 +259,7 @@ extern int target_flags;
 
 #endif
 
-#if TARGET_DEFAULT & 010
+#if (TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 010
 
 /* C34 default */
 
@@ -314,7 +311,7 @@ extern int target_flags;
 
 #endif
 
-#if TARGET_DEFAULT & 020
+#if (TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 020
 
 /* C38 default */
 
@@ -416,10 +413,6 @@ extern int target_flags;
 /* Use /path/libgcc.a instead of -lgcc, makes bootstrap work more smoothly. */
 
 #define LINK_LIBGCC_SPECIAL_1
-
-/* Allow $ in identifiers. */
-
-#define DOLLARS_IN_IDENTIFIERS 2
 
 /* Since IEEE support was added to gcc, most things seem to like it
    better if we disable exceptions and check afterward for infinity. */
@@ -791,7 +784,7 @@ enum reg_class {
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0. */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME) \
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT) \
   ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -1182,7 +1175,7 @@ extern double atof();
 
 /* Check a `double' value for validity for a particular machine mode.  */
 #define CHECK_FLOAT_VALUE(MODE, D, OVERFLOW) \
-   overflow = check_float_value (MODE, &D, OVERFLOW)
+   OVERFLOW = check_float_value (MODE, &D, OVERFLOW)
 
 /* Tell final.c how to eliminate redundant test instructions.  */
 
@@ -1236,21 +1229,6 @@ extern double atof();
 /* Output before uninitialized data.  */
 
 #define BSS_SECTION_ASM_OP (current_section_is_text = 0, ".bss") 
-
-/* Define the .bss section for ASM_OUTPUT_LOCAL to use. */
-
-#define EXTRA_SECTIONS in_bss
-
-#define EXTRA_SECTION_FUNCTIONS						\
-void									\
-bss_section ()								\
-{									\
-  if (in_section != in_bss)						\
-    {									\
-      fprintf (asm_out_file, "%s\n", BSS_SECTION_ASM_OP);		\
-      in_section = in_bss;						\
-    }									\
-}
 
 /* This is how to output an assembler line
    that says to advance the location counter
@@ -1307,10 +1285,9 @@ bss_section ()								\
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs (".globl ", FILE); assemble_name (FILE, NAME); fputs ("\n", FILE);} while (0)
 
-/* This is how to output a reference to a user-level label named NAME.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */

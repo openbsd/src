@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Vxworks i960 version.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,11 +18,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* This file just exists to give specs for the 960 running on VxWorks.  */
-
-#include "i960/i960-coff.h"
-
-/* VxWorks does all the library stuff itself.  */
+/* This file just exists to give specs for the 960 running on VxWorks.
+   VxWorks does all the library stuff itself.  */
 
 #undef LIB_SPEC
 #define LIB_SPEC ""
@@ -38,7 +35,10 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES "-Di960 -Di80960 -DI960 -DI80960 -Dvxworks -Acpu(i960) -Amachine(i960)"
 
 /* The VxWorks header files expect the compiler to define CPU to a
-   magic number.  */
+   magic number.  Note that we define CPU here even if the user
+   has specified -ansi.  This violates user namespace, but the VxWorks
+   headers, and potentially user code, all explicitly rely upon the
+   definition of CPU in order to get the proper processor information.  */
 
 #undef CPP_SPEC
 #define	CPP_SPEC "%{mic*:-D__i960\
@@ -47,16 +47,16 @@ Boston, MA 02111-1307, USA.  */
 			%{mmc:-D__i960MC}\
 			%{mca:-D__i960CA}%{mcc:-D__i960CC}\
 			%{mcf:-D__i960CF}}\
-	%{mka:-D__i960KA__ -D__i960_KA__ %{!ansi:-DCPU=I960KA}}\
-	%{mkb:-D__i960KB__ -D__i960_KB__ %{!ansi:-DCPU=I960KB}}\
+	%{mka:-D__i960KA__ -D__i960_KA__ -DCPU=I960KA}\
+	%{mkb:-D__i960KB__ -D__i960_KB__ -DCPU=I960KB}\
 	%{msa:-D__i960SA__ -D__i960_SA__}\
 	%{msb:-D__i960SB__ -D__i960_SB__}\
 	%{mmc:-D__i960MC__ -D__i960_MC__}\
-	%{mca:-D__i960CA__ -D__i960_CA__ %{!ansi:-DCPU=I960CA}}\
+	%{mca:-D__i960CA__ -D__i960_CA__ -DCPU=I960CA}\
 	%{mcc:-D__i960CC__ -D__i960_CC__}\
 	%{mcf:-D__i960CF__ -D__i960_CF__}\
 	%{!mka:%{!mkb:%{!msa:%{!msb:%{!mmc:%{!mca:\
-		%{!mcc:%{!mcf:-D__i960_CA -D__i960CA__ %{!ansi:-DCPU=I960CA}\
+		%{!mcc:%{!mcf:-D__i960_CA -D__i960CA__ -DCPU=I960CA\
 			      %{mic*:-D__i960CA}}}}}}}}}"
 
 /* Default to -mca.  */

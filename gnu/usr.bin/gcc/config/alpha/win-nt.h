@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler, for DEC Alpha
    running Windows/NT.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GNU CC.
@@ -19,11 +19,6 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-
-/* Say this is Windows/NT for the other config files.  */
-#define WINDOWS_NT 1
-
-#include "alpha/alpha.h"
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
@@ -45,6 +40,11 @@ Boston, MA 02111-1307, USA.  */
 /* "long" is 32 bits.  */
 #undef LONG_TYPE_SIZE
 #define LONG_TYPE_SIZE 32
+
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "short unsigned int"
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 16
 
 /* We can't do any debugging.  */
 #undef SDB_DEBUGGING_INFO

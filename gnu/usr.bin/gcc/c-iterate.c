@@ -1,5 +1,5 @@
 /* Build expressions with type checking for C compiler.
-   Copyright (C) 1987, 1988, 1989, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 92, 93, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -30,20 +30,6 @@ Boston, MA 02111-1307, USA.  */
 #include "flags.h"
 #include "obstack.h"
 #include "rtl.h"
-
-static void expand_stmt_with_iterators_1 ();
-static tree collect_iterators ();
-static void iterator_loop_prologue ();
-static void iterator_loop_epilogue ();
-static void add_ixpansion ();
-static void delete_ixpansion();
-static int top_level_ixpansion_p ();
-static void istack_sublevel_to_current ();
-
-/* A special obstack, and a pointer to the start of
-   all the data in it (so we can free everything easily).  */
-static struct obstack ixp_obstack;
-static char *ixp_firstobj;
 
 /*
 		KEEPING TRACK OF EXPANSIONS
@@ -96,11 +82,26 @@ struct iter_stack_node
 };
 
 struct iter_stack_node *iter_stack;
-
 struct iter_stack_node sublevel_ixpansions;
+
+/* A special obstack, and a pointer to the start of
+   all the data in it (so we can free everything easily).  */
+static struct obstack ixp_obstack;
+static char *ixp_firstobj;
 
 /* During collect_iterators, a list of SAVE_EXPRs already scanned.  */
 static tree save_exprs;
+
+static void expand_stmt_with_iterators_1 PROTO((tree, tree));
+static tree collect_iterators		PROTO((tree, tree));
+static void iterator_loop_prologue	PROTO((tree, rtx *, rtx *));
+static void iterator_loop_epilogue	PROTO((tree, rtx *, rtx *));
+static int top_level_ixpansion_p	PROTO((void));
+static void isn_append			PROTO((struct iter_stack_node *,
+					       struct iter_stack_node *));
+static void istack_sublevel_to_current	PROTO((void));
+static void add_ixpansion		PROTO((tree, rtx, rtx, rtx, rtx));
+static void delete_ixpansion		PROTO((tree));
 
 /* Initialize our obstack once per compilation.  */
 
@@ -254,6 +255,8 @@ collect_iterators (exp, list)
 		break;
 	      case RTL_EXPR:
 		return list;
+	      default:
+		break;
 	      }
 		
 	    for (i = 0; i < num_args; i++)
@@ -343,7 +346,9 @@ iterator_loop_epilogue (idecl, start_note, end_note)
   ITERATOR_BOUND_P (idecl) = 0;
   /* we can reset rtl since there is not chance that this expansion */
   /* would be superseded by a higher level one */
-  if (top_level_ixpansion_p ())
+  /* but don't do this if the decl is static, since we need to share */
+  /* the same decl in that case.  */
+  if (top_level_ixpansion_p () && ! TREE_STATIC (idecl))
     DECL_RTL (idecl) = 0;
   if (end_note)
     *end_note = emit_note (0, NOTE_INSN_DELETED);
@@ -409,7 +414,7 @@ void
 push_iterator_stack ()
 {
   struct iter_stack_node *new_top
-    = (struct iter_stack_node*) 
+    = (struct iter_stack_node *) 
       obstack_alloc (&ixp_obstack, sizeof (struct iter_stack_node));
 
   new_top->first = 0;
@@ -442,15 +447,15 @@ add_ixpansion (idecl, pro_start, pro_end, epi_start, epi_end)
      tree idecl;
      rtx pro_start, pro_end, epi_start, epi_end;
 {
-  struct ixpansion* newix;
+  struct ixpansion *newix;
     
   /* Do nothing if we are not inside "({...})",
      as in that case this expansion can't need subsequent RTL modification.  */
   if (iter_stack == 0)
     return;
 
-  newix = (struct ixpansion*) obstack_alloc (&ixp_obstack,
-					     sizeof (struct ixpansion));
+  newix = (struct ixpansion *) obstack_alloc (&ixp_obstack,
+					      sizeof (struct ixpansion));
   newix->ixdecl = idecl;
   newix->ixprologue_start = pro_start;
   newix->ixprologue_end   = pro_end;
@@ -471,7 +476,7 @@ static void
 delete_ixpansion (idecl)
      tree idecl;
 {
-  struct ixpansion* previx = 0, *ix;
+  struct ixpansion *previx = 0, *ix;
 
   for (ix = sublevel_ixpansions.first; ix; ix = ix->next)
     if (ix->ixdecl == idecl)
@@ -577,7 +582,7 @@ pixl (head)
   return head;
 }
 
-/* Print Iterator Stack*/
+/* Print Iterator Stack.  */
 
 void
 pis ()

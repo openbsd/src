@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.
    Intel 386 (OSF/1 with OSF/rose) version.
-   Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1992, 1993, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -36,16 +36,7 @@ Boston, MA 02111-1307, USA.  */
    -z* options (for the linker).  */
 
 #define SWITCH_TAKES_ARG(CHAR) \
-  (   (CHAR) == 'D' \
-   || (CHAR) == 'U' \
-   || (CHAR) == 'o' \
-   || (CHAR) == 'e' \
-   || (CHAR) == 'T' \
-   || (CHAR) == 'u' \
-   || (CHAR) == 'I' \
-   || (CHAR) == 'm' \
-   || (CHAR) == 'L' \
-   || (CHAR) == 'A' \
+  (DEFAULT_SWITCH_TAKES_ARG(CHAR) \
    || (CHAR) == 'h' \
    || (CHAR) == 'z')
 
@@ -99,10 +90,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Change default predefines.  */
 #undef	CPP_PREDEFINES
-#define CPP_PREDEFINES "-DOSF -DOSF1 -Dunix -Di386 -Asystem(unix) -Asystem(xpg4) -Acpu(i386) -Amachine(i386)"
+#define CPP_PREDEFINES "-DOSF -DOSF1 -Dunix -Asystem(xpg4)"
 
 #undef  CPP_SPEC
-#define CPP_SPEC "\
+#define CPP_SPEC "%(cpp_cpu) %[cpp_cpu] \
 %{!melf: -D__ROSE__ %{!pic-none: -D__SHARED__}} \
 %{melf: -D__ELF__ %{fpic: -D__SHARED__}} \
 %{mno-underscores: -D__NO_UNDERSCORES__} \
@@ -372,6 +363,12 @@ while (0)
 #define ASM_OUTPUT_INTERNAL_LABEL(FILE,PREFIX,NUM)			\
   fprintf (FILE, "%s%s%d:\n", (TARGET_UNDERSCORES) ? "" : ".",		\
 	   PREFIX, NUM)
+
+/* The prefix to add to user-visible assembler symbols. */
+
+/* target_flags is not accessible by the preprocessor */
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output a reference to a user-level label named NAME.  */
 

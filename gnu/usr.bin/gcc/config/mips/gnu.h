@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  MIPS GNU Hurd version.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
+
+#define TARGET_DEFAULT MASK_GAS
 
 #include <mips/mips.h>
 
@@ -81,11 +83,7 @@ Boston, MA 02111-1307, USA.  */
 /* Switch  Recognition by gcc.c.  Add -G xx support */
 #undef SWITCH_TAKES_ARG
 #define SWITCH_TAKES_ARG(CHAR)						\
-  ((CHAR) == 'D' || (CHAR) == 'U' || (CHAR) == 'o'			\
-   || (CHAR) == 'e' || (CHAR) == 'T' || (CHAR) == 'u'			\
-   || (CHAR) == 'I' || (CHAR) == 'm'					\
-   || (CHAR) == 'h' || (CHAR) == 'z'					\
-   || (CHAR) == 'L' || (CHAR) == 'A' || (CHAR) == 'G')
+  (DEFAULT_SWITCH_TAKES_ARG(CHAR) || (CHAR) == 'G')
 
 #undef DEFAULT_PCC_STRUCT_RETURN
 #define DEFAULT_PCC_STRUCT_RETURN 1
@@ -99,24 +97,6 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_PREDEFINES GNU_CPP_PREDEFINES("mips") \
 "-DMIPSEB -DR3000 -D_MIPSEB -D_R3000 \
 -D_MIPS_SZINT=32 -D_MIPS_SZLONG=32 -D_MIPS_SZPTR=32"
-
-#undef ASM_SPEC
-#define ASM_SPEC "\
-%{mmips-as: \
-	%{!.s:-nocpp} %{.s: %{cpp} %{nocpp}} \
-	%{pipe: %e-pipe is not supported.} \
-	%{K}} \
-%{!mmips-as: \
-	%{mcpu=*}} \
-%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} %{v} \
-%{noasmopt:-O0} \
-%{!noasmopt:%{O:-O2} %{O1:-O2} %{O2:-O2} %{O3:-O3}} \
-%{g} %{g0} %{g1} %{g2} %{g3} \
-%{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} \
-%{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
-%{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
-%{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} \
-%{membedded-pic}"
 
 #undef LINK_SPEC
 #define LINK_SPEC "\

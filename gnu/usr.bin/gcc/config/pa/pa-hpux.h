@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for HP-UX.
-   Copyright (C) 1991, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,11 +18,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifndef TARGET_DEFAULT
+#undef TARGET_DEFAULT
 #define TARGET_DEFAULT 0
-#endif
-
-#include "pa/pa.h"
 
 /* Make GCC agree with types.h.  */
 #undef SIZE_TYPE
@@ -31,21 +28,21 @@ Boston, MA 02111-1307, USA.  */
 #define SIZE_TYPE "unsigned int"
 #define PTRDIFF_TYPE "int"
 
-/* HPUX doesn't use any debugging format that GCC knows about.  */
-#undef DBX_DEBUGGING_INFO
-#undef DEFAULT_GDB_EXTENSIONS
-#define DEFAULT_GDB_EXTENSIONS 0
-
 /* Like the default, except no -lg.  */
 #undef LIB_SPEC
 #define LIB_SPEC "%{!shared:%{!p:%{!pg:-lc}}%{p: -L/lib/libp/ -lc}%{pg: -L/lib/libp/ -lc}}"
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dhppa -Dhp9000s800 -D__hp9000s800 -Dhp9k8 -DPWB -Dhpux -Dunix -D_HPUX_SOURCE -Asystem(unix) -Asystem(hpux) -Acpu(hppa) -Amachine(hppa)"
+#define CPP_PREDEFINES "-Dhppa -Dhp9000s800 -D__hp9000s800 -Dhp9k8 -DPWB -Dhpux -Dunix -Asystem(unix) -Asystem(hpux) -Acpu(hppa) -Amachine(hppa)"
 
 #undef LINK_SPEC
+#if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 1)
 #define LINK_SPEC \
-  "%{!shared:-u main} %{static:-a archive} %{g*:-a archive} %{shared:-b}"
+  "%{!mpa-risc-1-0:%{!shared:-L/lib/pa1.1 -L/usr/lib/pa1.1 }}%{mlinker-opt:-O} %{!shared:-u main} %{static:-a archive} %{g*:-a archive} %{shared:-b}"
+#else
+#define LINK_SPEC \
+  "%{mlinker-opt:-O} %{!shared:-u main} %{static:-a archive} %{g*:-a archive} %{shared:-b}"
+#endif
 
 /* hpux8 and later have C++ compatible include files, so do not
    pretend they are `extern "C"'.  */

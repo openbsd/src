@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for IBM RS/6000 POWER running AIX version 3.x with the fixed assembler.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com).
 
 This file is part of GNU CC.
@@ -21,31 +21,23 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 
+/* Enable AIX XL compiler calling convention breakage compatibility.  */
+#define MASK_XL_CALL		0x40000000
+#define	TARGET_XL_CALL		(target_flags & MASK_XL_CALL)
+#undef  SUBTARGET_SWITCHES
+#define SUBTARGET_SWITCHES		\
+  {"xl-call", 		MASK_XL_CALL},	\
+  {"no-xl-call",	- MASK_XL_CALL},
+
 #include "rs6000/rs6000.h"
 
 /* Tell the assembler to assume that all undefined names are external.  */
 
 #undef ASM_SPEC
-#define ASM_SPEC "-u \
-%{!mcpu*: \
-  %{mpower: %{!mpowerpc*: %{!mpower2: -mpwr}}} \
-  %{mpower2: -mpwrx} \
-  %{mno-power: %{mpowerpc*: -mppc}} \
-  %{mno-power: %{!mpowerpc*: -mcom}} \
-  %{!mno-power: %{mpowerpc*: -m601}} \
-  %{!mno-power: %{!mpowerpc*: %{!mpower2: -mpwr}}}} \
-%{mcpu=common: -mcom} \
-%{mcpu=power: -mpwr} \
-%{mcpu=powerpc: -mppc} \
-%{mcpu=rios: -mpwr} \
-%{mcpu=rios1: -mpwr} \
-%{mcpu=rios2: -mpwrx} \
-%{mcpu=rsc: -mpwr} \
-%{mcpu=rsc1: -mpwr} \
-%{mcpu=403: -mppc} \
-%{mcpu=601: -m601} \
-%{mcpu=603: -mppc} \
-%{mcpu=604: -mppc}"
+#define ASM_SPEC "-u %(asm_cpu)"
+
+#undef ASM_DEFAULT_SPEC
+#define ASM_DEFAULT_SPEC "-mpwr"
 
 /* Define the options for the binder: Start text at 512, align all segments
    to 512 bytes, and warn if there is text relocation.
@@ -65,10 +57,17 @@ Boston, MA 02111-1307, USA.  */
    as per README.RS6000.  */
 
 #undef	LINK_SPEC
+#ifndef CROSS_COMPILE
 #define LINK_SPEC "-T512 -H512 %{!r:-btextro} -bhalt:4 -bnodelcsect\
    %{static:-bnso -bI:/lib/syscalls.exp} \
    %{mcpu=common: milli.exp%s} \
    %{!shared:%{g*:-bexport:/usr/lib/libg.exp}} %{shared:-bM:SRE}"
+#else
+#define LINK_SPEC "-T512 -H512 %{!r:-btextro} -bhalt:4 -bnodelcsect\
+   %{static:-bnso} \
+   %{mcpu=common: milli.exp%s} \
+   %{shared:-bM:SRE}"
+#endif
 
 /* These are not necessary when we pass -u to the assembler, and undefining
    them saves a great deal of space in object files.  */
@@ -79,7 +78,6 @@ Boston, MA 02111-1307, USA.  */
 { rtx _symref = XEXP (DECL_RTL (DECL), 0);	\
   if ((TREE_CODE (DECL) == VAR_DECL		\
        || TREE_CODE (DECL) == FUNCTION_DECL)	\
-      && (NAME)[0] != '*'			\
       && (NAME)[strlen (NAME) - 1] != ']')	\
     {						\
       char *_name = (char *) permalloc (strlen (XSTR (_symref, 0)) + 5); \

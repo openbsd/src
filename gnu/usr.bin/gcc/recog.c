@@ -1,5 +1,5 @@
 /* Subroutines used by or related to instruction recognition.
-   Copyright (C) 1987, 88, 91, 92, 93, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 1988, 91-6, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
-#include "rtl.h"
 #include <stdio.h>
+#include "rtl.h"
 #include "insn-config.h"
 #include "insn-attr.h"
 #include "insn-flags.h"
@@ -43,8 +43,7 @@ Boston, MA 02111-1307, USA.  */
 /* Import from final.c: */
 extern rtx alter_subreg ();
 
-int strict_memory_address_p ();
-int memory_address_p ();
+static rtx *find_single_use_1 PROTO((rtx, rtx *));
 
 /* Nonzero means allow operands to be volatile.
    This should be 0 if you are generating rtl, such as if you are calling
@@ -374,15 +373,28 @@ validate_replace_rtx_1 (loc, from, to, object)
 	}
     }
 
+  /* Note that if CODE's RTX_CLASS is "c" or "<" we will have already
+     done the substitution, otherwise we won't.  */
+
   switch (code)
     {
     case PLUS:
       /* If we have have a PLUS whose second operand is now a CONST_INT, use
 	 plus_constant to try to simplify it.  */
       if (GET_CODE (XEXP (x, 1)) == CONST_INT && XEXP (x, 1) == to)
-	validate_change (object, loc, 
-			 plus_constant (XEXP (x, 0), INTVAL (XEXP (x, 1))), 1);
+	validate_change (object, loc, plus_constant (XEXP (x, 0), INTVAL (to)),
+			 1);
       return;
+
+    case MINUS:
+      if (GET_CODE (to) == CONST_INT && XEXP (x, 1) == from)
+	{
+	  validate_change (object, loc,
+			   plus_constant (XEXP (x, 0), - INTVAL (to)),
+			   1);
+	  return;
+	}
+      break;
       
     case ZERO_EXTEND:
     case SIGN_EXTEND:
@@ -491,6 +503,9 @@ validate_replace_rtx_1 (loc, from, to, object)
 	    }
 	}
 
+      break;
+      
+    default:
       break;
     }
       
@@ -614,6 +629,9 @@ find_single_use_1 (dest, loc)
     case MEM:
     case SUBREG:
       return find_single_use_1 (dest, &XEXP (x, 0));
+      
+    default:
+      break;
     }
 
   /* If it wasn't one of the common cases above, check each expression and
@@ -806,10 +824,18 @@ general_operand (op, mode)
       register rtx y = XEXP (op, 0);
       if (! volatile_ok && MEM_VOLATILE_P (op))
 	return 0;
+      if (GET_CODE (y) == ADDRESSOF)
+	return 1;
       /* Use the mem's mode, since it will be reloaded thus.  */
       mode = GET_MODE (op);
       GO_IF_LEGITIMATE_ADDRESS (mode, y, win);
     }
+
+  /* Pretend this is an operand for now; we'll run force_operand
+     on its replacement in fixup_var_refs_1.  */
+  if (code == ADDRESSOF)
+    return 1;
+
   return 0;
 
  win:
@@ -871,7 +897,9 @@ register_operand (op, mode)
 	  && TEST_HARD_REG_BIT (reg_class_contents[(int) CLASS_CANNOT_CHANGE_SIZE],
 				REGNO (SUBREG_REG (op)))
 	  && (GET_MODE_SIZE (mode)
-	      != GET_MODE_SIZE (GET_MODE (SUBREG_REG (op)))))
+	      != GET_MODE_SIZE (GET_MODE (SUBREG_REG (op))))
+	  && GET_MODE_CLASS (GET_MODE (SUBREG_REG (op))) != MODE_COMPLEX_INT
+	  && GET_MODE_CLASS (GET_MODE (SUBREG_REG (op))) != MODE_COMPLEX_FLOAT)
 	return 0;
 #endif
 
@@ -1043,6 +1071,9 @@ memory_address_p (mode, addr)
      enum machine_mode mode;
      register rtx addr;
 {
+  if (GET_CODE (addr) == ADDRESSOF)
+    return 1;
+  
   GO_IF_LEGITIMATE_ADDRESS (mode, addr, win);
   return 0;
 
@@ -1650,6 +1681,11 @@ constrain_operands (insn_code_num, strict)
 
 	  earlyclobber[opno] = 0;
 
+	  /* A unary operator may be accepted by the predicate, but it
+	     is irrelevant for matching constraints.  */
+	  if (GET_RTX_CLASS (GET_CODE (op)) == '1')
+	    op = XEXP (op, 0);
+
 	  if (GET_CODE (op) == SUBREG)
 	    {
 	      if (GET_CODE (SUBREG_REG (op)) == REG
@@ -1765,8 +1801,9 @@ constrain_operands (insn_code_num, strict)
 		break;
 
 	      case 'X':
-		/* This is used for a MATCH_SCRATCH in the cases when we
-		   don't actually need anything.  So anything goes any time. */
+		/* This is used for a MATCH_SCRATCH in the cases when
+		   we don't actually need anything.  So anything goes
+		   any time.  */
 		win = 1;
 		break;
 
@@ -1862,7 +1899,12 @@ constrain_operands (insn_code_num, strict)
 
 	      case 'V':
 		if (GET_CODE (op) == MEM
-		    && ! offsettable_memref_p (op))
+		    && ((strict > 0 && ! offsettable_memref_p (op))
+			|| (strict < 0
+			    && !(CONSTANT_P (op) || GET_CODE (op) == MEM))
+			|| (reload_in_progress
+			    && !(GET_CODE (op) == REG
+				 && REGNO (op) >= FIRST_PSEUDO_REGISTER))))
 		  win = 1;
 		break;
 
@@ -1916,11 +1958,11 @@ constrain_operands (insn_code_num, strict)
 		  if ((GET_CODE (recog_operand[opno]) == MEM
 		       || op_types[opno] != OP_OUT)
 		      && opno != eopno
-		      /* Ignore things like match_operator operands. */
-		      && *constraints[opno] != 0
+		      /* Ignore things like match_operator operands.  */
+		      && *insn_operand_constraint[insn_code_num][opno] != 0
 		      && ! (matching_operands[opno] == eopno
-			    && rtx_equal_p (recog_operand[opno],
-					    recog_operand[eopno]))
+			    && operands_match_p (recog_operand[opno],
+						 recog_operand[eopno]))
 		      && ! safe_from_earlyclobber (recog_operand[opno],
 						   recog_operand[eopno]))
 		    lose = 1;
@@ -1949,7 +1991,7 @@ constrain_operands (insn_code_num, strict)
 }
 
 /* Return 1 iff OPERAND (assumed to be a REG rtx)
-   is a hard reg in class CLASS when its regno is offsetted by OFFSET
+   is a hard reg in class CLASS when its regno is offset by OFFSET
    and changed to mode MODE.
    If REG occupies multiple hard regs, all of them must be in CLASS.  */
 

@@ -1,6 +1,5 @@
 /* Subroutines for insn-output.c for Clipper
-   Copyright (C) 1987, 1988, 1991 Free Software Foundation, Inc.
-
+   Copyright (C) 1987, 1988, 1991, 1997 Free Software Foundation, Inc.
    Contributed by Holger Teutsch (holger@hotbso.rhein-main.de)
 
 This file is part of GNU CC.
@@ -20,8 +19,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -438,10 +437,45 @@ clipper_builtin_saveregs (arglist)
 				    gen_rtx (CONST_INT, Pmode, 16))),
 		  scratch);
 
+
+  if (flag_check_memory_usage)
+    {
+      emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
+			 addr, ptr_mode,
+			 GEN_INT (5 * GET_MODE_SIZE (SImode)),
+			 TYPE_MODE (sizetype),
+			 GEN_INT (MEMORY_USE_RW),
+			 TYPE_MODE (integer_type_node));
+
+      emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
+			 f0_addr, ptr_mode,
+			 GEN_INT (GET_MODE_SIZE (DFmode)),
+			 TYPE_MODE (sizetype),
+			 GEN_INT (MEMORY_USE_RW), 
+			 TYPE_MODE (integer_type_node));
+      emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
+			 f1_addr, ptr_mode,
+			 GEN_INT (GET_MODE_SIZE (DFmode)),
+			 TYPE_MODE (sizetype),
+			 GEN_INT (MEMORY_USE_RW), 
+			 TYPE_MODE (integer_type_node));
+      emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
+			 r0_addr, ptr_mode,
+			 GEN_INT (GET_MODE_SIZE (SImode)),
+			 TYPE_MODE (sizetype),
+			 GEN_INT (MEMORY_USE_RW),
+			 TYPE_MODE (integer_type_node));
+      emit_library_call (chkr_set_right_libfunc, 1, VOIDmode, 3,
+			 r1_addr, ptr_mode,
+			 GEN_INT (GET_MODE_SIZE (SImode)),
+			 TYPE_MODE (sizetype),
+			 GEN_INT (MEMORY_USE_RW),
+			 TYPE_MODE (integer_type_node));
+    }
+
   /* Return the address of the va_list constructor, but don't put it in a
      register.  This fails when not optimizing and produces worse code when
      optimizing.  */
-
   return XEXP (block, 0);
 }
 

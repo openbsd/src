@@ -1,5 +1,5 @@
 /* Allocate and read RTL for GNU C Compiler.
-   Copyright (C) 1987, 1988, 1991, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 1988, 1991, 1994, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -172,14 +172,20 @@ char *note_insn_name[] = { 0                    , "NOTE_INSN_DELETED",
 			   "NOTE_INSN_FUNCTION_END", "NOTE_INSN_SETJMP",
 			   "NOTE_INSN_LOOP_CONT", "NOTE_INSN_LOOP_VTOP",
 			   "NOTE_INSN_PROLOGUE_END", "NOTE_INSN_EPILOGUE_BEG",
-			   "NOTE_INSN_DELETED_LABEL", "NOTE_INSN_FUNCTION_BEG"};
+			   "NOTE_INSN_DELETED_LABEL", "NOTE_INSN_FUNCTION_BEG",
+			   "NOTE_INSN_EH_REGION_BEG", "NOTE_INSN_EH_REGION_END",
+			   "NOTE_REPEATED_LINE_NUMBER" };
 
 char *reg_note_name[] = { "", "REG_DEAD", "REG_INC", "REG_EQUIV", "REG_WAS_0",
 			  "REG_EQUAL", "REG_RETVAL", "REG_LIBCALL",
 			  "REG_NONNEG", "REG_NO_CONFLICT", "REG_UNUSED",
 			  "REG_CC_SETTER", "REG_CC_USER", "REG_LABEL",
-			  "REG_DEP_ANTI", "REG_DEP_OUTPUT" };
+			  "REG_DEP_ANTI", "REG_DEP_OUTPUT", "REG_BR_PROB",
+			  "REG_EXEC_COUNT" };
 
+static void dump_and_abort	PROTO((int, int, FILE *));
+static void read_name		PROTO((char *, FILE *));
+
 /* Allocate an rtx vector of N elements.
    Store the length, and initialize all elements to zero.  */
 
@@ -195,9 +201,10 @@ rtvec_alloc (n)
 			      + (( n - 1) * sizeof (rtunion)));
 
   /* clear out the vector */
-  PUT_NUM_ELEM(rt, n);
-  for (i=0; i < n; i++)
-    rt->elem[i].rtvec = NULL;	/* @@ not portable due to rtunion */
+  PUT_NUM_ELEM (rt, n);
+
+  for (i = 0; i < n; i++)
+    rt->elem[i].rtwint = 0;
 
   return rt;
 }
@@ -278,7 +285,8 @@ copy_rtx (orig)
     case PC:
     case CC0:
     case SCRATCH:
-      /* SCRATCH must be shared because they represent distinct values. */
+      /* SCRATCH must be shared because they represent distinct values.  */
+    case ADDRESSOF:
       return orig;
 
     case CONST:
@@ -294,6 +302,9 @@ copy_rtx (orig)
 	 the constant address may need to be reloaded.  If the mem is shared,
 	 then reloading one copy of this mem will cause all copies to appear
 	 to have been reloaded.  */
+
+    default:
+      break;
     }
 
   copy = rtx_alloc (code);
@@ -380,6 +391,8 @@ copy_most_rtx (orig, may_share)
     case PC:
     case CC0:
       return orig;
+    default:
+      break;
     }
 
   copy = rtx_alloc (code);
@@ -838,14 +851,3 @@ init_rtl ()
 	}
     }
 }
-
-#ifdef memset
-gcc_memset (dest, value, len)
-     char *dest;
-     int value;
-     int len;
-{
-  while (len-- > 0)
-    *dest++ = value;
-}
-#endif /* memset */

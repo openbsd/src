@@ -1,4 +1,4 @@
-@c Copyright (C) 1988, 1989, 1992, 1994 Free Software Foundation, Inc.
+@c Copyright (C) 1988, 1989, 1992, 1994, 1997 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -1212,6 +1212,14 @@ by incrementing it, but there is no need to mention this in the RTL.
 This RTX represents a reference to main memory at an address
 represented by the expression @var{addr}.  @var{m} specifies how large
 a unit of memory is accessed.
+
+@findex addressof
+@item (addressof:@var{m} @var{reg})
+This RTX represents a request for the address of register @var{reg}.  Its mode
+is always @code{Pmode}.  If there are any @code{addressof}
+expressions left in the function after CSE, @var{reg} is forced into the
+stack and the @code{addressof} expression is replaced with a @code{plus}
+expression for the address of its stack slot.
 @end table
 
 @node Arithmetic, Comparisons, Regs and Memory, RTL
@@ -1584,7 +1592,8 @@ option @code{BITS_BIG_ENDIAN} says which end of the memory unit
 If @var{loc} is in memory, its mode must be a single-byte integer mode.
 If @var{loc} is in a register, the mode to use is specified by the
 operand of the @code{insv} or @code{extv} pattern
-(@pxref{Standard Names}) and is usually a full-word integer mode.
+(@pxref{Standard Names}) and is usually a full-word integer mode,
+which is the default if none is specified.
 
 The mode of @var{pos} is machine-specific and is also specified
 in the @code{insv} or @code{extv} pattern.
@@ -2290,6 +2299,14 @@ These types of notes indicate the position of the beginning and end
 of a level of scoping of variable names.  They control the output
 of debugging information.
 
+@findex NOTE_INSN_EH_REGION_BEG
+@findex NOTE_INSN_EH_REGION_END
+@item NOTE_INSN_EH_REGION_BEG
+@itemx NOTE_INSN_EH_REGION_END
+These types of notes indicate the position of the beginning and end of a
+level of scoping for exception handling.  @code{NOTE_BLOCK_NUMBER}
+identifies which @code{CODE_LABEL} is associated with the given region.
+
 @findex NOTE_INSN_LOOP_BEG
 @findex NOTE_INSN_LOOP_END
 @item NOTE_INSN_LOOP_BEG
@@ -2376,8 +2393,8 @@ nor a label may come between the related insns.
 @findex REG_NOTES
 @item REG_NOTES (@var{i})
 A list (chain of @code{expr_list} and @code{insn_list} expressions)
-giving miscellaneous information about the insn.  It is often information
-pertaining to the registers used in this insn.
+giving miscellaneous information about the insn.  It is often
+information pertaining to the registers used in this insn.
 @end table
 
 The @code{LOG_LINKS} field of an insn is a chain of @code{insn_list}
@@ -2402,11 +2419,11 @@ mode @code{VOIDmode}.
 
 The @code{REG_NOTES} field of an insn is a chain similar to the
 @code{LOG_LINKS} field but it includes @code{expr_list} expressions in
-addition to @code{insn_list} expressions.  There are several kinds
-of register notes, which are distinguished by the machine mode, which
-in a register note is really understood as being an @code{enum reg_note}.
+addition to @code{insn_list} expressions.  There are several kinds of
+register notes, which are distinguished by the machine mode, which in a
+register note is really understood as being an @code{enum reg_note}.
 The first operand @var{op} of the note is data whose meaning depends on
-the kind of note. 
+the kind of note.
 
 @findex REG_NOTE_KIND
 @findex PUT_REG_NOTE_KIND
@@ -2503,6 +2520,17 @@ a note of this kind records that the register is equivalent to the stack
 slot where the parameter was passed.  Although in this case the register
 may be set by other insns, it is still valid to replace the register
 by the stack slot throughout the function.
+
+A @code{REG_EQUIV} note is also used on an instruction which copies a
+register parameter into a pseudo-register at entry to a function, if
+there is a stack slot where that parameter could be stored.  Although
+other insns may set the pseudo-register, it is valid for the compiler to
+replace the pseudo-register by stack slot throughout the function,
+provided the compiler ensures that the stack slot is properly
+initialized by making the replacement in the initial copy instruction as
+well.  This is used on machines for which the calling convention
+allocates stack space for register parameters.  See
+@code{REG_PARM_STACK_SPACE} in @ref{Stack Arguments}.
 
 In the case of @code{REG_EQUAL}, the register that is set by this insn
 will be equal to @var{op} at run time at the end of this insn but not
@@ -2602,6 +2630,25 @@ This indicates an anti dependence (a write after read dependence).
 @findex REG_DEP_OUTPUT
 @item REG_DEP_OUTPUT
 This indicates an output dependence (a write after write dependence).
+@end table
+
+These notes describe information gathered from gcov profile data.  They
+are stored in the @code{REG_NOTES} field of an insn as an
+@code{expr_list}.
+
+@table @code
+@findex REG_EXEC_COUNT
+@item REG_EXEC_COUNT
+This is used to indicate the number of times a basic block was executed
+according to the profile data.  The note is attached to the first insn in
+the basic block.
+
+@findex REG_BR_PROB
+@item REG_BR_PROB
+This is used to specify the ratio of branches to non-branches of a
+branch insn according to the profile data.  The value is stored as a
+value between 0 and REG_BR_PROB_BASE; larger values indicate a higher
+probability that the branch will be taken.
 @end table
 
 For convenience, the machine mode in an @code{insn_list} or

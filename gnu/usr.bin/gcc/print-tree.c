@@ -1,5 +1,5 @@
 /* Prints out tree in human readable form - GNU C-compiler
-   Copyright (C) 1990, 1991, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -109,38 +109,18 @@ print_node_brief (file, prefix, node, indent)
       if (TREE_CONSTANT_OVERFLOW (node))
 	fprintf (file, " overflow");
 
+      fprintf (file, " ");
       if (TREE_INT_CST_HIGH (node) == 0)
-	fprintf (file,
-#if HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_INT
-		 " %1u",
-#else
-		 " %1lu",
-#endif
-		 TREE_INT_CST_LOW (node));
+	fprintf (file, HOST_WIDE_INT_PRINT_UNSIGNED, TREE_INT_CST_LOW (node));
       else if (TREE_INT_CST_HIGH (node) == -1
 	       && TREE_INT_CST_LOW (node) != 0)
-	fprintf (file,
-#if HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_INT
-		 " -%1u",
-#else
-		 " -%1lu",
-#endif
+	{
+	  fprintf (file, "-");
+	  fprintf (file, HOST_WIDE_INT_PRINT_UNSIGNED,
 		 -TREE_INT_CST_LOW (node));
+	}
       else
-	fprintf (file,
-#if HOST_BITS_PER_WIDE_INT == 64
-#if HOST_BITS_PER_WIDE_INT != HOST_BITS_PER_INT
-		 " 0x%lx%016lx",
-#else
-		 " 0x%x%016x",
-#endif
-#else
-#if HOST_BITS_PER_WIDE_INT != HOST_BITS_PER_INT
-		 " 0x%lx%08lx",
-#else
-		 " 0x%x%08x",
-#endif
-#endif
+	fprintf (file, HOST_WIDE_INT_PRINT_DOUBLE_HEX,
 		 TREE_INT_CST_HIGH (node), TREE_INT_CST_LOW (node));
     }
   if (TREE_CODE (node) == REAL_CST)
@@ -231,7 +211,7 @@ print_node (file, prefix, node, indent)
       return;
     }
 
-  /* It is unsafe to look at any other filds of an ERROR_MARK node. */
+  /* It is unsafe to look at any other filds of an ERROR_MARK node.  */
   if (TREE_CODE (node) == ERROR_MARK)
     {
       print_node_brief (file, prefix, node, indent);
@@ -417,7 +397,6 @@ print_node (file, prefix, node, indent)
 	       DECL_SOURCE_FILE (node), DECL_SOURCE_LINE (node));
 
       print_node (file, "size", DECL_SIZE (node), indent + 4);
-      print_node (file, "attributes", TYPE_ATTRIBUTES (node), indent + 4);
       indent_to (file, indent + 3);
       if (TREE_CODE (node) != FUNCTION_DECL)
 	fprintf (file, " align %d", DECL_ALIGN (node));
@@ -562,9 +541,8 @@ print_node (file, prefix, node, indent)
     case '2':
     case 'r':
     case 's':
-      switch (TREE_CODE (node))
+      if (TREE_CODE (node) == BIND_EXPR)
 	{
-	case BIND_EXPR:
 	  print_node (file, "vars", TREE_OPERAND (node, 0), indent + 4);
 	  print_node (file, "body", TREE_OPERAND (node, 1), indent + 4);
 	  print_node (file, "block", TREE_OPERAND (node, 2), indent + 4);
@@ -591,6 +569,8 @@ print_node (file, prefix, node, indent)
 	  break;
 	case RTL_EXPR:
 	  first_rtl = 0;
+	default:
+	  break;
 	}
       for (i = 0; i < len; i++)
 	{
@@ -622,38 +602,19 @@ print_node (file, prefix, node, indent)
 	  if (TREE_CONSTANT_OVERFLOW (node))
 	    fprintf (file, " overflow");
 
+	  fprintf (file, " ");
 	  if (TREE_INT_CST_HIGH (node) == 0)
-	    fprintf (file,
-#if HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_INT
-		     " %1u",
-#else
-		     " %1lu",
-#endif
+	    fprintf (file, HOST_WIDE_INT_PRINT_UNSIGNED,
 		     TREE_INT_CST_LOW (node));
 	  else if (TREE_INT_CST_HIGH (node) == -1
 		   && TREE_INT_CST_LOW (node) != 0)
-	    fprintf (file,
-#if HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_INT
-		     " -%1u",
-#else
-		     " -%1lu",
-#endif
-		     -TREE_INT_CST_LOW (node));
+	    {
+	      fprintf (file, "-");
+	      fprintf (file, HOST_WIDE_INT_PRINT_UNSIGNED,
+		       -TREE_INT_CST_LOW (node));
+	    }
 	  else
-	    fprintf (file,
-#if HOST_BITS_PER_WIDE_INT == 64
-#if HOST_BITS_PER_WIDE_INT != HOST_BITS_PER_INT
-		     " 0x%lx%016lx",
-#else
-		     " 0x%x%016x",
-#endif
-#else
-#if HOST_BITS_PER_WIDE_INT != HOST_BITS_PER_INT
-		     " 0x%lx%08lx",
-#else
-		     " 0x%x%08x",
-#endif
-#endif
+	    fprintf (file, HOST_WIDE_INT_PRINT_DOUBLE_HEX,
 		     TREE_INT_CST_HIGH (node), TREE_INT_CST_LOW (node));
 	  break;
 
@@ -729,6 +690,10 @@ print_node (file, prefix, node, indent)
 	case OP_IDENTIFIER:
 	  print_node (file, "op1", TREE_PURPOSE (node), indent + 4);
 	  print_node (file, "op2", TREE_VALUE (node), indent + 4);
+	  break;
+
+	default:
+	  break;
 	}
 
       break;

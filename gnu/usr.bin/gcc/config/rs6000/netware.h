@@ -1,6 +1,6 @@
 /* Core target definitions for GNU compiler
    for IBM RS/6000 PowerPC running NetWare
-   Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GNU CC.
@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#define TARGET_AIX 0
+
 #include "rs6000/powerpc.h"
 
 /* Don't generate XCOFF debugging information.  */
@@ -32,8 +34,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* The XCOFF support uses weird symbol suffixes, which we don't want
    for ELF.  */
 
-#undef RS6000_OUTPUT_BASENAME
-#define RS6000_OUTPUT_BASENAME(FILE, NAME) assemble_name (FILE, NAME)
+#undef STRIP_NAME_ENCODING
 
 /* Don't bother to output .extern pseudo-ops.  They are not needed by
    ELF assemblers.  */
@@ -180,11 +181,9 @@ toc_section ()								\
 #define ASM_OUTPUT_INTERNAL_LABEL_PREFIX(FILE,PREFIX)	\
   fprintf (FILE, ".%s", PREFIX)
 
-/* Pass -m601 to the assembler, since that is what powerpc.h currently
-   implies.  */
 #undef ASM_SPEC
-#define ASM_SPEC \
-  "-u -m601 %{V} %{v:%{!V:-V}} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
+#define ASM_SPEC "-u %(asm_cpu) \
+{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
 /* This is the end of what might become sysv4.h.  */
 
 /* Enable output of DBX (stabs) debugging information when asked for it.  */

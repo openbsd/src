@@ -80,7 +80,7 @@ struct candidate
   int h_len;			/* The length of the harshness vector.  */
 
   tree function;		/* A FUNCTION_DECL */
-  tree basetypes;		/* The path to function. */
+  tree basetypes;		/* The path to function.  */
   tree arg;			/* first parm to function.  */
 
   /* Indexed by argument number, encodes evil, user, d_to_b, and easy
@@ -103,7 +103,7 @@ struct candidate
 				   -5 if contravariance violation.  */
     } u;
 };
-int rank_for_overload ();
+int rank_for_overload PROTO ((struct candidate *, struct candidate *));
 
 /* Variables shared between class.c and call.c.  */
 

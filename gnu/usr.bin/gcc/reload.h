@@ -1,5 +1,5 @@
 /* Communication between reload.c and reload1.c.
-   Copyright (C) 1987, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -39,6 +39,8 @@ Boston, MA 02111-1307, USA.  */
 /* Maximum number of reloads we can need.  */
 #define MAX_RELOADS (2 * MAX_RECOG_OPERANDS * (MAX_REGS_PER_ADDRESS + 1))
 
+extern enum reg_class reload_address_base_reg_class;
+extern enum reg_class reload_address_index_reg_class;
 extern rtx reload_in[MAX_RELOADS];
 extern rtx reload_out[MAX_RELOADS];
 extern rtx reload_in_reg[MAX_RELOADS];
@@ -68,7 +70,9 @@ extern rtx reload_reg_rtx[MAX_RELOADS];
 				something used before or after the insn
    RELOAD_FOR_INPUT_ADDRESS	reload for parts of the address of an object
 				that is an input reload
-   RELOAD_FOR_OUTPUT_ADDRESS	likewise, for output reload
+   RELOAD_FOR_INPADDR_ADDRESS	reload needed for RELOAD_FOR_INPUT_ADDRESS
+   RELOAD_FOR_OUTPUT_ADDRESS	like RELOAD_FOR INPUT_ADDRESS, for output
+   RELOAD_FOR_OUTADDR_ADDRESS	reload needed for RELOAD_FOR_OUTPUT_ADDRESS
    RELOAD_FOR_OPERAND_ADDRESS	reload for the address of a non-reloaded
 				operand; these don't conflict with
 				any other addresses.
@@ -84,7 +88,8 @@ extern rtx reload_reg_rtx[MAX_RELOADS];
 enum reload_type
 {
   RELOAD_FOR_INPUT, RELOAD_FOR_OUTPUT, RELOAD_FOR_INSN, 
-  RELOAD_FOR_INPUT_ADDRESS, RELOAD_FOR_OUTPUT_ADDRESS,
+  RELOAD_FOR_INPUT_ADDRESS, RELOAD_FOR_INPADDR_ADDRESS,
+  RELOAD_FOR_OUTPUT_ADDRESS, RELOAD_FOR_OUTADDR_ADDRESS,
   RELOAD_FOR_OPERAND_ADDRESS, RELOAD_FOR_OPADDR_ADDR,
   RELOAD_OTHER, RELOAD_FOR_OTHER_ADDRESS
 };
@@ -139,11 +144,6 @@ extern void clear_secondary_mem PROTO((void));
 /* Transfer all replacements that used to be in reload FROM to be in
    reload TO.  */
 extern void transfer_replacements PROTO((int, int));
-
-/* Return 1 if ADDR is a valid memory address for mode MODE,
-   and check that each pseudo reg has the proper kind of
-   hard reg.  */
-extern int strict_memory_address_p PROTO((enum machine_mode, rtx));
 
 /* Like rtx_equal_p except that it allows a REG and a SUBREG to match
    if they are the same hard reg, and has special hacks for
@@ -207,7 +207,7 @@ extern int regno_clobbered_p PROTO((int, rtx));
 extern void init_reload PROTO((void));
 
 /* The reload pass itself.  */
-extern int reload STDIO_PROTO((rtx, int, FILE *));
+extern int reload PROTO((rtx, int, FILE *));
 
 /* Mark the slots in regs_ever_live for the hard regs
    used by pseudo-reg number REGNO.  */
@@ -215,7 +215,7 @@ extern void mark_home_live PROTO((int));
 
 /* Scan X and replace any eliminable registers (such as fp) with a
    replacement (such as sp), plus an offset.  */
-extern rtx eliminate_regs PROTO((rtx, enum machine_mode, rtx));
+extern rtx eliminate_regs PROTO((rtx, enum machine_mode, rtx, int));
 
 /* Emit code to perform a reload from IN (which may be a reload register) to
    OUT (which may also be a reload register).  IN or OUT is from operand

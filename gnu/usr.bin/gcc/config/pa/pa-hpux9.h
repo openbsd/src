@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for HP PA-RISC 1.1
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
    Contributed by Tim Moore (moore@defmacro.cs.utah.edu)
 
 This file is part of GNU CC.
@@ -19,11 +19,13 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#define TARGET_DEFAULT 0
-
-#include "pa/pa-hpux.h"
-
-/* We can debug dynamically linked executables on hpux9.  */
+/* We can debug dynamically linked executables on hpux9; we also want
+   dereferencing of a NULL pointer to cause a SEGV.  */
 #undef LINK_SPEC
+#if ((TARGET_DEFAULT | TARGET_CPU_DEFAULT) & 1)
 #define LINK_SPEC \
-  "%{!shared:-u main} %{static:-a archive} %{shared:-b}"
+  "%{!mpa-risc-1-0:%{!shared:-L/lib/pa1.1 -L/usr/lib/pa1.1 }} -z %{mlinker-opt:-O} %{!shared:-u main} %{static:-a archive} %{shared:-b}"
+#else
+#define LINK_SPEC \
+  "-z %{mlinker-opt:-O} %{!shared:-u main} %{static:-a archive} %{shared:-b}"
+#endif

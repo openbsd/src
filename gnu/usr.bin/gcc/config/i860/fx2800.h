@@ -1,9 +1,7 @@
 /* Target definitions for GNU compiler for Alliant FX/2800
    running Concentrix 2.2
-
-   Copyright (C) 1991 Free Software Foundation, Inc.
-
-   Written by Howard Chu (hyc@hanauma.jpl.nasa.gov).
+   Copyright (C) 1991, 1996 Free Software Foundation, Inc.
+   Contributed by Howard Chu (hyc@hanauma.jpl.nasa.gov).
 
 This file is part of GNU CC.
 
@@ -21,10 +19,6 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-
-#define OUTPUT_TDESC
-
-#include "i860/sysv4.h"
 
 /* The Alliant fx2800 running Concentrix 2.x is weird.  This is basically
    a BSD 4.3 based operating system, but it uses svr4 ELF format object
@@ -336,9 +330,27 @@ Boston, MA 02111-1307, USA.  */
 
 #undef DWARF_DEBUGGING_INFO
 
-#undef ASM_OUTPUT_LABELREF
-#define ASM_OUTPUT_LABELREF(FILE,NAME) fprintf (FILE, "_%s", NAME)
+/* The prefix to add to user-visible assembler symbols. */
+
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX "_"
+
 #undef ASM_OUTPUT_EXTERNAL_LIBCALL
 
+/* ??? Is this used anywhere?  */
 #undef BSS_ASM_OP
 #define BSS_ASM_OP	"\t.lcomm"
+
+#undef ASM_FILE_END
+#define ASM_FILE_END(FILE)					\
+do {				 				\
+     if (current_function_original_name != NULL) {		\
+       tdesc_section();						\
+       fprintf ((FILE), "%s __ETEXT\n", ASM_LONG);		\
+       fprintf ((FILE), "%s 0\n", ASM_LONG);			\
+       text_section();						\
+       fputs("__ETEXT:\n", (FILE));				\
+     }								\
+     fprintf ((FILE), "\t.ident\t\"GCC: (GNU) %s\"\n",		\
+	      version_string);					\
+   } while (0)

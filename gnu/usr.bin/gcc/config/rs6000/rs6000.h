@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GNU CC.
@@ -32,6 +32,11 @@ Boston, MA 02111-1307, USA.  */
 /* Print subsidiary information on the compiler version in use.  */
 #define TARGET_VERSION ;
 
+/* Default string to use for cpu if not specified.  */
+#ifndef TARGET_CPU_DEFAULT
+#define TARGET_CPU_DEFAULT ((char *)0)
+#endif
+
 /* Tell the assembler to assume that all undefined names are external.
 
    Don't do this until the fixed IBM assembler is more generally available.
@@ -40,21 +45,25 @@ Boston, MA 02111-1307, USA.  */
    longer be needed.  Also, the extern declaration of mcount in ASM_FILE_START
    will no longer be needed.  */
 
-/* #define ASM_SPEC "-u" */
+/* #define ASM_SPEC "-u %(asm_cpu)" */
 
 /* Define appropriate architecture macros for preprocessor depending on
    target switches.  */
 
-#define CPP_SPEC "\
-%{posix: -D_POSIX_SOURCE} \
-%{!mcpu*: \
+#define CPP_SPEC "%{posix: -D_POSIX_SOURCE} %(cpp_cpu)"
+
+/* Common CPP definitions used by CPP_SPEC among the various targets
+   for handling -mcpu=xxx switches.  */
+#define CPP_CPU_SPEC \
+"%{!mcpu*: \
   %{mpower: %{!mpower2: -D_ARCH_PWR}} \
   %{mpower2: -D_ARCH_PWR2} \
   %{mpowerpc*: -D_ARCH_PPC} \
   %{mno-power: %{!mpowerpc*: -D_ARCH_COM}} \
-  %{!mno-power: %{!mpower2: -D_ARCH_PWR}}} \
+  %{!mno-power: %{!mpower2: %(cpp_default)}}} \
 %{mcpu=common: -D_ARCH_COM} \
 %{mcpu=power: -D_ARCH_PWR} \
+%{mcpu=power2: -D_ARCH_PWR2} \
 %{mcpu=powerpc: -D_ARCH_PPC} \
 %{mcpu=rios: -D_ARCH_PWR} \
 %{mcpu=rios1: -D_ARCH_PWR} \
@@ -62,9 +71,109 @@ Boston, MA 02111-1307, USA.  */
 %{mcpu=rsc: -D_ARCH_PWR} \
 %{mcpu=rsc1: -D_ARCH_PWR} \
 %{mcpu=403: -D_ARCH_PPC} \
+%{mcpu=505: -D_ARCH_PPC} \
 %{mcpu=601: -D_ARCH_PPC -D_ARCH_PWR} \
+%{mcpu=602: -D_ARCH_PPC} \
 %{mcpu=603: -D_ARCH_PPC} \
-%{mcpu=604: -D_ARCH_PPC}"
+%{mcpu=603e: -D_ARCH_PPC} \
+%{mcpu=604: -D_ARCH_PPC} \
+%{mcpu=620: -D_ARCH_PPC} \
+%{mcpu=821: -D_ARCH_PPC} \
+%{mcpu=860: -D_ARCH_PPC}"
+
+#ifndef CPP_DEFAULT_SPEC
+#define CPP_DEFAULT_SPEC "-D_ARCH_PWR"
+#endif
+
+#ifndef CPP_SYSV_SPEC
+#define CPP_SYSV_SPEC ""
+#endif
+
+#ifndef CPP_ENDIAN_SPEC
+#define CPP_ENDIAN_SPEC ""
+#endif
+
+#ifndef CPP_ENDIAN_DEFAULT_SPEC
+#define CPP_ENDIAN_DEFAULT_SPEC ""
+#endif
+
+#ifndef CPP_SYSV_DEFAULT_SPEC
+#define CPP_SYSV_DEFAULT_SPEC ""
+#endif
+
+/* Common ASM definitions used by ASM_SPEC among the various targets
+   for handling -mcpu=xxx switches.  */
+#define ASM_CPU_SPEC \
+"%{!mcpu*: \
+  %{mpower: %{!mpower2: -mpwr}} \
+  %{mpower2: -mpwrx} \
+  %{mpowerpc*: -mppc} \
+  %{mno-power: %{!mpowerpc*: -mcom}} \
+  %{!mno-power: %{!mpower2: %(asm_default)}}} \
+%{mcpu=common: -mcom} \
+%{mcpu=power: -mpwr} \
+%{mcpu=power2: -mpwrx} \
+%{mcpu=powerpc: -mppc} \
+%{mcpu=rios: -mpwr} \
+%{mcpu=rios1: -mpwr} \
+%{mcpu=rios2: -mpwrx} \
+%{mcpu=rsc: -mpwr} \
+%{mcpu=rsc1: -mpwr} \
+%{mcpu=403: -mppc} \
+%{mcpu=505: -mppc} \
+%{mcpu=601: -m601} \
+%{mcpu=602: -mppc} \
+%{mcpu=603: -mppc} \
+%{mcpu=603e: -mppc} \
+%{mcpu=604: -mppc} \
+%{mcpu=620: -mppc} \
+%{mcpu=821: -mppc} \
+%{mcpu=860: -mppc}"
+
+#ifndef ASM_DEFAULT_SPEC
+#define ASM_DEFAULT_SPEC ""
+#endif
+
+/* This macro defines names of additional specifications to put in the specs
+   that can be used in various specifications like CC1_SPEC.  Its definition
+   is an initializer with a subgrouping for each command option.
+
+   Each subgrouping contains a string constant, that defines the
+   specification name, and a string constant that used by the GNU CC driver
+   program.
+
+   Do not define this macro if it does not need to do anything.  */
+
+#ifndef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS
+#endif
+
+#define EXTRA_SPECS							\
+  { "cpp_cpu",			CPP_CPU_SPEC },				\
+  { "cpp_default",		CPP_DEFAULT_SPEC },			\
+  { "cpp_sysv",			CPP_SYSV_SPEC },			\
+  { "cpp_sysv_default",		CPP_SYSV_DEFAULT_SPEC },		\
+  { "cpp_endian_default",	CPP_ENDIAN_DEFAULT_SPEC },		\
+  { "cpp_endian",		CPP_ENDIAN_SPEC },			\
+  { "asm_cpu",			ASM_CPU_SPEC },				\
+  { "asm_default",		ASM_DEFAULT_SPEC },			\
+  { "link_syscalls",		LINK_SYSCALLS_SPEC },			\
+  { "link_libg",		LINK_LIBG_SPEC },			\
+  SUBTARGET_EXTRA_SPECS
+
+/* Default location of syscalls.exp under AIX */
+#ifndef CROSS_COMPILE
+#define LINK_SYSCALLS_SPEC "-bI:/lib/syscalls.exp"
+#else
+#define LINK_SYSCALLS_SPEC ""
+#endif
+
+/* Default location of libg.exp under AIX */
+#ifndef CROSS_COMPILE
+#define LINK_LIBG_SPEC "-bexport:/usr/lib/libg.exp"
+#else
+#define LINK_LIBG_SPEC ""
+#endif
 
 /* Define the options for the binder: Start text at 512, align all segments
    to 512 bytes, and warn if there is text relocation.
@@ -81,8 +190,8 @@ Boston, MA 02111-1307, USA.  */
    export list with the -Wl,-bE option.  */
 
 #define LINK_SPEC "-T512 -H512 %{!r:-btextro} -bhalt:4 -bnodelcsect\
-   %{static:-bnso -bI:/lib/syscalls.exp} \
-   %{!shared:%{g*:-bexport:/usr/lib/libg.exp}} %{shared:-bM:SRE}"
+   %{static:-bnso %(link_syscalls) } \
+   %{!shared:%{g*: %(link_libg) }} %{shared:-bM:SRE}"
 
 /* Profiled library versions are used by linking with special directories.  */
 #define LIB_SPEC "%{pg:-L/lib/profiled -L/usr/lib/profiled}\
@@ -99,33 +208,33 @@ Boston, MA 02111-1307, USA.  */
 extern int target_flags;
 
 /* Use POWER architecture instructions and MQ register.  */
-#define MASK_POWER		0x01
+#define MASK_POWER		0x00000001
 
 /* Use POWER2 extensions to POWER architecture.  */
-#define MASK_POWER2		0x02
+#define MASK_POWER2		0x00000002
 
 /* Use PowerPC architecture instructions.  */
-#define MASK_POWERPC		0x04
+#define MASK_POWERPC		0x00000004
 
 /* Use PowerPC General Purpose group optional instructions, e.g. fsqrt.  */
-#define MASK_PPC_GPOPT		0x08
+#define MASK_PPC_GPOPT		0x00000008
 
 /* Use PowerPC Graphics group optional instructions, e.g. fsel.  */
-#define MASK_PPC_GFXOPT		0x10
+#define MASK_PPC_GFXOPT		0x00000010
 
 /* Use PowerPC-64 architecture instructions.  */
-#define MASK_POWERPC64		0x20
+#define MASK_POWERPC64		0x00000020
 
 /* Use revised mnemonic names defined for PowerPC architecture.  */
-#define MASK_NEW_MNEMONICS	0x40
+#define MASK_NEW_MNEMONICS	0x00000040
 
 /* Disable placing fp constants in the TOC; can be turned on when the
    TOC overflows.  */
-#define MASK_NO_FP_IN_TOC	0x80
+#define MASK_NO_FP_IN_TOC	0x00000080
 
 /* Disable placing symbol+offset constants in the TOC; can be turned on when
    the TOC overflows.  */
-#define MASK_NO_SUM_IN_TOC	0x100
+#define MASK_NO_SUM_IN_TOC	0x00000100
 
 /* Output only one TOC entry per module.  Normally linking fails if
    there are more than 16K unique variables/constants in an executable.  With
@@ -133,26 +242,28 @@ extern int target_flags;
    if there are more than 16K unique variables/constant in a single module.
 
    This is at the cost of having 2 extra loads and one extra store per
-   function, and one less allocatable register.  */
-#define MASK_MINIMAL_TOC	0x200
+   function, and one less allocable register.  */
+#define MASK_MINIMAL_TOC	0x00000200
 
 /* Nonzero for the 64bit model: ints, longs, and pointers are 64 bits.  */
-#define MASK_64BIT		0x400
+#define MASK_64BIT		0x00000400
 
 /* Disable use of FPRs.  */
-#define MASK_SOFT_FLOAT		0x800
+#define MASK_SOFT_FLOAT		0x00000800
 
 /* Enable load/store multiple, even on powerpc */
-#define	MASK_MULTIPLE		0x1000
-#define	MASK_MULTIPLE_SET	0x2000
+#define	MASK_MULTIPLE		0x00001000
+#define	MASK_MULTIPLE_SET	0x00002000
 
 /* Use string instructions for block moves */
-#define MASK_STRING		0x4000
-#define MASK_STRING_SET		0x8000
+#define MASK_STRING		0x00004000
+#define MASK_STRING_SET		0x00008000
 
-/* Temporary debug switches */
-#define MASK_DEBUG_STACK	0x10000
-#define MASK_DEBUG_ARG		0x20000
+/* Disable update form of load/store */
+#define MASK_NO_UPDATE		0x00010000
+
+/* Disable fused multiply/add operations */
+#define MASK_NO_FUSED_MADD	0x00020000
 
 #define TARGET_POWER		(target_flags & MASK_POWER)
 #define TARGET_POWER2		(target_flags & MASK_POWER2)
@@ -170,10 +281,13 @@ extern int target_flags;
 #define	TARGET_MULTIPLE_SET	(target_flags & MASK_MULTIPLE_SET)
 #define TARGET_STRING		(target_flags & MASK_STRING)
 #define TARGET_STRING_SET	(target_flags & MASK_STRING_SET)
-#define	TARGET_DEBUG_STACK	(target_flags & MASK_DEBUG_STACK)
-#define	TARGET_DEBUG_ARG	(target_flags & MASK_DEBUG_ARG)
+#define TARGET_NO_UPDATE	(target_flags & MASK_NO_UPDATE)
+#define TARGET_NO_FUSED_MADD	(target_flags & MASK_NO_FUSED_MADD)
 
+#define TARGET_32BIT		(! TARGET_64BIT)
 #define TARGET_HARD_FLOAT	(! TARGET_SOFT_FLOAT)
+#define TARGET_UPDATE		(! TARGET_NO_UPDATE)
+#define TARGET_FUSED_MADD	(! TARGET_NO_FUSED_MADD)
 
 /* Pseudo target to indicate whether the object format is ELF
    (to get around not having conditional compilation in the md file)  */
@@ -185,6 +299,29 @@ extern int target_flags;
 #ifndef TARGET_NO_TOC
 #define TARGET_NO_TOC		0
 #define	TARGET_TOC		1
+#endif
+
+/* Pseudo target to say whether this is Windows NT */
+#ifndef	TARGET_WINDOWS_NT
+#define	TARGET_WINDOWS_NT 0
+#endif
+
+/* Pseudo target to say whether this is MAC */
+#ifndef	TARGET_MACOS
+#define	TARGET_MACOS 0
+#endif
+
+/* Pseudo target to say whether this is AIX */
+#ifndef TARGET_AIX
+#if (TARGET_ELF || TARGET_WINDOWS_NT || TARGET_MACOS)
+#define TARGET_AIX 0
+#else
+#define TARGET_AIX 1
+#endif
+#endif
+
+#ifndef TARGET_XL_CALL
+#define TARGET_XL_CALL 0
 #endif
 
 /* Run-time compilation parameters selecting different hardware subsets.
@@ -233,8 +370,10 @@ extern int target_flags;
   {"string",		MASK_STRING | MASK_STRING_SET},			\
   {"no-string",		- MASK_STRING},					\
   {"no-string",		MASK_STRING_SET},				\
-  {"debug-stack",	MASK_DEBUG_STACK},				\
-  {"debug-arg",		MASK_DEBUG_ARG},				\
+  {"update",		- MASK_NO_UPDATE},				\
+  {"no-update",		MASK_NO_UPDATE},				\
+  {"fused-madd",	- MASK_NO_FUSED_MADD},				\
+  {"no-fused-madd",	MASK_NO_FUSED_MADD},				\
   SUBTARGET_SWITCHES							\
   {"",			TARGET_DEFAULT}}
 
@@ -244,6 +383,7 @@ extern int target_flags;
 enum processor_type
  {PROCESSOR_RIOS1,
   PROCESSOR_RIOS2,
+  PROCESSOR_MPCCORE,
   PROCESSOR_PPC403,
   PROCESSOR_PPC601,
   PROCESSOR_PPC603,
@@ -258,7 +398,7 @@ extern enum processor_type rs6000_cpu;
 /* Define generic processor types based upon current deployment.  */
 #define PROCESSOR_COMMON  PROCESSOR_PPC601
 #define PROCESSOR_POWER   PROCESSOR_RIOS1
-#define PROCESSOR_POWERPC PROCESSOR_PPC601
+#define PROCESSOR_POWERPC PROCESSOR_PPC604
 
 /* Define the default processor.  This is overridden by other tm.h files.  */
 #define PROCESSOR_DEFAULT PROCESSOR_RIOS1
@@ -284,10 +424,38 @@ extern enum processor_type rs6000_cpu;
 	extern char *m88k_short_data;
 	#define TARGET_OPTIONS { { "short-data-", &m88k_short_data } }  */
 
-#define TARGET_OPTIONS		\
-{ {"cpu=", &rs6000_cpu_string}}
+/* This is meant to be overridden in target specific files.  */
+#ifndef SUBTARGET_OPTIONS
+#define	SUBTARGET_OPTIONS
+#endif
 
-extern char *rs6000_cpu_string;
+#define TARGET_OPTIONS				\
+{						\
+   {"cpu=",  &rs6000_select[1].string},		\
+   {"tune=", &rs6000_select[2].string},		\
+   {"debug-", &rs6000_debug_name},		\
+   {"debug=", &rs6000_debug_name},		\
+   SUBTARGET_OPTIONS				\
+}
+
+/* rs6000_select[0] is reserved for the default cpu defined via --with-cpu */
+struct rs6000_cpu_select
+{
+  char *string;
+  char *name;
+  int set_tune_p;
+  int set_arch_p;
+};
+
+extern struct rs6000_cpu_select rs6000_select[];
+
+/* Debug support */
+extern char *rs6000_debug_name;		/* Name for -mdebug-xxxx option */
+extern int rs6000_debug_stack;		/* debug stack applications */
+extern int rs6000_debug_arg;		/* debug argument handling */
+
+#define	TARGET_DEBUG_STACK	rs6000_debug_stack
+#define	TARGET_DEBUG_ARG	rs6000_debug_arg
 
 /* Sometimes certain combinations of command options do not make sense
    on a particular target machine.  You can define a macro
@@ -297,7 +465,7 @@ extern char *rs6000_cpu_string;
 
    On the RS/6000 this is used to define the target cpu type.  */
 
-#define OVERRIDE_OPTIONS rs6000_override_options ()
+#define OVERRIDE_OPTIONS rs6000_override_options (TARGET_CPU_DEFAULT)
 
 /* Show we can debug even without a frame pointer.  */
 #define CAN_DEBUG_WITHOUT_FP
@@ -308,7 +476,7 @@ extern char *rs6000_cpu_string;
 #define REAL_ARITHMETIC
 
 /* Define this macro if it is advisable to hold scalars in registers
-   in a wider mode than that declared by the program.  In such cases, 
+   in a wider mode than that declared by the program.  In such cases,
    the value is constrained to be within the bounds of the declared
    type, but kept valid in the wider mode.  The signedness of the
    extension may differ from that of the type.  */
@@ -328,7 +496,7 @@ extern char *rs6000_cpu_string;
 #define BYTES_BIG_ENDIAN 1
 
 /* Define this if most significant word of a multiword number is lowest
-   numbered. 
+   numbered.
 
    For RS/6000 we can decide arbitrarily since there are no machine
    instructions for them.  Might as well be consistent with bits and bytes. */
@@ -341,11 +509,11 @@ extern char *rs6000_cpu_string;
    Note that this is not necessarily the width of data type `int';
    if using 16-bit ints on a 68000, this would still be 32.
    But on a machine with 16-bit registers, this would be 16.  */
-#define BITS_PER_WORD (TARGET_POWERPC64 ? 64 : 32)
+#define BITS_PER_WORD (! TARGET_POWERPC64 ? 32 : 64)
 #define MAX_BITS_PER_WORD 64
 
 /* Width of a word, in units (bytes).  */
-#define UNITS_PER_WORD (TARGET_POWERPC64 ? 8 : 4)
+#define UNITS_PER_WORD (! TARGET_POWERPC64 ? 4 : 8)
 #define MIN_UNITS_PER_WORD 4
 #define UNITS_PER_FP_WORD 8
 
@@ -367,13 +535,12 @@ extern char *rs6000_cpu_string;
 /* A C expression for the size in bits of the type `int' on the
    target machine.  If you don't define this, the default is one
    word.  */
-#define INT_TYPE_SIZE (TARGET_64BIT ? 64 : 32)
-#define MAX_INT_TYPE_SIZE 64
+#define INT_TYPE_SIZE 32
 
 /* A C expression for the size in bits of the type `long' on the
    target machine.  If you don't define this, the default is one
    word.  */
-#define LONG_TYPE_SIZE (TARGET_64BIT ? 64 : 32)
+#define LONG_TYPE_SIZE (TARGET_32BIT ? 32 : 64)
 #define MAX_LONG_TYPE_SIZE 64
 
 /* A C expression for the size in bits of the type `long long' on the
@@ -404,10 +571,10 @@ extern char *rs6000_cpu_string;
 
 /* Width in bits of a pointer.
    See also the macro `Pmode' defined below.  */
-#define POINTER_SIZE (TARGET_64BIT ? 64 : 32)
+#define POINTER_SIZE (TARGET_32BIT ? 32 : 64)
 
 /* Allocation boundary (in *bits*) for storing arguments in argument list.  */
-#define PARM_BOUNDARY (TARGET_64BIT ? 64 : 32)
+#define PARM_BOUNDARY (TARGET_32BIT ? 32 : 64)
 
 /* Boundary (in *bits*) on which stack pointer should be aligned.  */
 #define STACK_BOUNDARY 64
@@ -416,7 +583,11 @@ extern char *rs6000_cpu_string;
 #define FUNCTION_BOUNDARY 32
 
 /* No data type wants to be aligned rounder than this.  */
-#define BIGGEST_ALIGNMENT (TARGET_64BIT ? 64 : 32)
+#define BIGGEST_ALIGNMENT 64
+
+/* AIX word-aligns FP doubles but doubleword-aligns 64-bit ints.  */
+#define ADJUST_FIELD_ALIGN(FIELD, COMPUTED) \
+  (DECL_MODE (FIELD) != DFmode ? (COMPUTED) : MIN ((COMPUTED), 32))
 
 /* Alignment of field after `int : 0' in a structure.  */
 #define EMPTY_FIELD_BOUNDARY 32
@@ -426,6 +597,17 @@ extern char *rs6000_cpu_string;
 
 /* A bitfield declared as `int' forces `int' alignment for the struct.  */
 #define PCC_BITFIELD_TYPE_MATTERS 1
+
+/* AIX increases natural record alignment to doubleword if the first
+   field is an FP double while the FP fields remain word aligned.  */
+#define ROUND_TYPE_ALIGN(STRUCT, COMPUTED, SPECIFIED)	\
+  ((TREE_CODE (STRUCT) == RECORD_TYPE			\
+    || TREE_CODE (STRUCT) == UNION_TYPE			\
+    || TREE_CODE (STRUCT) == QUAL_UNION_TYPE)		\
+   && TYPE_FIELDS (STRUCT) != 0				\
+   && DECL_MODE (TYPE_FIELDS (STRUCT)) == DFmode	\
+   ? MAX (MAX ((COMPUTED), (SPECIFIED)), BIGGEST_ALIGNMENT) \
+   : MAX ((COMPUTED), (SPECIFIED)))
 
 /* Make strings word-aligned so strcpy from constants will be faster.  */
 #define CONSTANT_ALIGNMENT(EXP, ALIGN)  \
@@ -457,14 +639,19 @@ extern char *rs6000_cpu_string;
    In addition, the difference between the frame and argument pointers is
    a function of the number of registers saved, so we need to have a
    register for AP that will later be eliminated in favor of SP or FP.
-   This is a normal register, but it is fixed.  */
+   This is a normal register, but it is fixed.
 
-#define FIRST_PSEUDO_REGISTER 76
+   We also create a pseudo register for float/int conversions, that will
+   really represent the memory location used.  It is represented here as
+   a register, in order to work around problems in allocating stack storage
+   in inline functions.  */
+
+#define FIRST_PSEUDO_REGISTER 77
 
 /* 1 for registers that have pervasive standard uses
    and are not available for the register allocator.
 
-   On RS/6000, r1 is used for the stack and r2 is used as the TOC pointer.  
+   On RS/6000, r1 is used for the stack and r2 is used as the TOC pointer.
 
    cr5 is not supposed to be used.
 
@@ -479,7 +666,7 @@ extern char *rs6000_cpu_string;
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-   0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0}
+   0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1}
 
 /* 1 for registers not available across function calls.
    These must include the FIXED_REGISTERS and also any
@@ -493,7 +680,7 @@ extern char *rs6000_cpu_string;
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-   1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1}
+   1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1}
 
 /* List the order in which to allocate registers.  Each register must be
    listed once, even those in FIXED_REGISTERS.
@@ -530,7 +717,7 @@ extern char *rs6000_cpu_string;
    31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19,	\
    18, 17, 16, 15, 14, 13, 12,				\
    64, 66, 65, 						\
-   73, 1, 2, 67}
+   73, 1, 2, 67, 76}
 
 /* True if register is floating-point.  */
 #define FP_REGNO_P(N) ((N) >= 32 && (N) <= 63)
@@ -541,6 +728,10 @@ extern char *rs6000_cpu_string;
 /* True if register is an integer register.  */
 #define INT_REGNO_P(N) ((N) <= 31 || (N) == 67)
 
+/* True if register is the temporary memory location used for int/float
+   conversion.  */
+#define FPMEM_REGNO_P(N) ((N) == FPMEM_REGNUM)
+
 /* Return number of consecutive hard regs needed starting at reg REGNO
    to hold something of mode MODE.
    This is ordinarily the length in words of a value of mode MODE
@@ -549,8 +740,8 @@ extern char *rs6000_cpu_string;
    On RS/6000, ordinary registers hold 32 bits worth;
    a single floating point register holds 64 bits worth.  */
 
-#define HARD_REGNO_NREGS(REGNO, MODE)   \
-  (FP_REGNO_P (REGNO)			\
+#define HARD_REGNO_NREGS(REGNO, MODE)					\
+  (FP_REGNO_P (REGNO) || FPMEM_REGNO_P (REGNO)				\
    ? ((GET_MODE_SIZE (MODE) + UNITS_PER_FP_WORD - 1) / UNITS_PER_FP_WORD) \
    : ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD))
 
@@ -560,13 +751,14 @@ extern char *rs6000_cpu_string;
    can hold CC modes.  We cannot put TImode anywhere except general
    register and it must be able to fit within the register set. */
 
-#define HARD_REGNO_MODE_OK(REGNO, MODE) \
-  (FP_REGNO_P (REGNO) ?						\
-   (GET_MODE_CLASS (MODE) == MODE_FLOAT				\
-    || (GET_MODE_CLASS (MODE) == MODE_INT			\
-	&& GET_MODE_SIZE (MODE) == UNITS_PER_FP_WORD))		\
-   : CR_REGNO_P (REGNO) ? GET_MODE_CLASS (MODE) == MODE_CC	\
-   : ! INT_REGNO_P (REGNO) ? (GET_MODE_CLASS (MODE) == MODE_INT	\
+#define HARD_REGNO_MODE_OK(REGNO, MODE)					\
+  (FP_REGNO_P (REGNO) ?							\
+   (GET_MODE_CLASS (MODE) == MODE_FLOAT					\
+    || (GET_MODE_CLASS (MODE) == MODE_INT				\
+	&& GET_MODE_SIZE (MODE) == UNITS_PER_FP_WORD))			\
+   : CR_REGNO_P (REGNO) ? GET_MODE_CLASS (MODE) == MODE_CC		\
+   : FPMEM_REGNO_P (REGNO) ? ((MODE) == DImode || (MODE) == DFmode)	\
+   : ! INT_REGNO_P (REGNO) ? (GET_MODE_CLASS (MODE) == MODE_INT		\
 			      && GET_MODE_SIZE (MODE) <= UNITS_PER_WORD) \
    : 1)
 
@@ -600,7 +792,7 @@ extern char *rs6000_cpu_string;
        || (CLASS1) == LINK_OR_CTR_REGS)				\
       && ((CLASS2) == SPECIAL_REGS || (CLASS2) == MQ_REGS	\
 	  || (CLASS2) == LINK_REGS || (CLASS2) == CTR_REGS	\
-	  || (CLASS2) == LINK_OR_CTR_REGS)) ? 10 \
+	  || (CLASS2) == LINK_OR_CTR_REGS)) ? 10		\
    : 2)
 
 /* A C expressions returning the cost of moving data of MODE from a register to
@@ -670,10 +862,22 @@ extern char *rs6000_cpu_string;
 /* Place to put static chain when calling a function that requires it.  */
 #define STATIC_CHAIN_REGNUM 11
 
+/* count register number for special purposes */
+#define COUNT_REGISTER_REGNUM 66
+
+/* Special register that represents memory, used for float/int conversions.  */
+#define FPMEM_REGNUM 76
+
+/* Register to use as a placeholder for the GOT/allocated TOC register.
+   FINALIZE_PIC will change all uses of this register to a an appropriate
+   pseudo register when it adds the code to setup the GOT.  We use r2
+   because it is a reserved register in all of the ABI's.  */
+#define GOT_TOC_REGNUM 2
+
 /* Place that structure value return address is placed.
 
    On the RS/6000, it is passed as an extra parameter.  */
-#define STRUCT_VALUE	0
+#define STRUCT_VALUE 0
 
 /* Define the classes of registers for register constraints in the
    machine description.  Also define ranges of constants.
@@ -694,7 +898,7 @@ extern char *rs6000_cpu_string;
 
    For any two classes, it is very desirable that there be another
    class that represents their union.  */
-   
+
 /* The RS/6000 has three types of registers, fixed-point, floating-point,
    and condition registers, plus three special registers, MQ, CTR, and the
    link register.
@@ -703,49 +907,103 @@ extern char *rs6000_cpu_string;
    So make a class for registers valid as base registers.
 
    Also, cr0 is the only condition code register that can be used in
-   arithmetic insns, so make a separate class for it. */
+   arithmetic insns, so make a separate class for it.
 
-enum reg_class { NO_REGS, BASE_REGS, GENERAL_REGS, FLOAT_REGS,
-  NON_SPECIAL_REGS, MQ_REGS, LINK_REGS, CTR_REGS, LINK_OR_CTR_REGS,
-  SPECIAL_REGS, SPEC_OR_GEN_REGS, CR0_REGS, CR_REGS, NON_FLOAT_REGS,
-  ALL_REGS, LIM_REG_CLASSES };
+   There is a special 'register' (76), which is not a register, but a
+   placeholder for memory allocated to convert between floating point and
+   integral types.  This works around a problem where if we allocate memory
+   with allocate_stack_{local,temp} and the function is an inline function, the
+   memory allocated will clobber memory in the caller.  So we use a special
+   register, and if that is used, we allocate stack space for it.  */
+
+enum reg_class
+{
+  NO_REGS,
+  BASE_REGS,
+  GENERAL_REGS,
+  FLOAT_REGS,
+  NON_SPECIAL_REGS,
+  MQ_REGS,
+  LINK_REGS,
+  CTR_REGS,
+  LINK_OR_CTR_REGS,
+  SPECIAL_REGS,
+  SPEC_OR_GEN_REGS,
+  CR0_REGS,
+  CR_REGS,
+  NON_FLOAT_REGS,
+  FPMEM_REGS,
+  FLOAT_OR_FPMEM_REGS,
+  ALL_REGS,
+  LIM_REG_CLASSES
+};
 
 #define N_REG_CLASSES (int) LIM_REG_CLASSES
 
 /* Give names of register classes as strings for dump file.   */
 
-#define REG_CLASS_NAMES					 	\
-  { "NO_REGS", "BASE_REGS", "GENERAL_REGS", "FLOAT_REGS",	\
-    "NON_SPECIAL_REGS", "MQ_REGS", "LINK_REGS", "CTR_REGS",	\
-    "LINK_OR_CTR_REGS", "SPECIAL_REGS", "SPEC_OR_GEN_REGS",	\
-    "CR0_REGS", "CR_REGS", "NON_FLOAT_REGS", "ALL_REGS" }
+#define REG_CLASS_NAMES							\
+{									\
+  "NO_REGS",								\
+  "BASE_REGS",								\
+  "GENERAL_REGS",							\
+  "FLOAT_REGS",								\
+  "NON_SPECIAL_REGS",							\
+  "MQ_REGS",								\
+  "LINK_REGS",								\
+  "CTR_REGS",								\
+  "LINK_OR_CTR_REGS",							\
+  "SPECIAL_REGS",							\
+  "SPEC_OR_GEN_REGS",							\
+  "CR0_REGS",								\
+  "CR_REGS",								\
+  "NON_FLOAT_REGS",							\
+  "FPMEM_REGS",								\
+  "FLOAT_OR_FPMEM_REGS",						\
+  "ALL_REGS"								\
+}
 
 /* Define which registers fit in which classes.
    This is an initializer for a vector of HARD_REG_SET
    of length N_REG_CLASSES.  */
 
-#define REG_CLASS_CONTENTS				\
-  { {0, 0, 0}, {0xfffffffe, 0, 8}, {~0, 0, 8},		\
-    {0, ~0, 0}, {~0, ~0, 8}, {0, 0, 1}, {0, 0, 2},	\
-    {0, 0, 4}, {0, 0, 6}, {0, 0, 7}, {~0, 0, 15},	\
-    {0, 0, 16}, {0, 0, 0xff0}, {~0, 0, 0xffff},		\
-    {~0, ~0, 0xffff} }
+#define REG_CLASS_CONTENTS						\
+{									\
+  { 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
+  { 0xfffffffe, 0x00000000, 0x00000008 },	/* BASE_REGS */		\
+  { 0xffffffff, 0x00000000, 0x00000008 },	/* GENERAL_REGS */	\
+  { 0x00000000, 0xffffffff, 0x00000000 },	/* FLOAT_REGS */	\
+  { 0xffffffff, 0xffffffff, 0x00000008 },	/* NON_SPECIAL_REGS */	\
+  { 0x00000000, 0x00000000, 0x00000001 },	/* MQ_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000002 },	/* LINK_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000004 },	/* CTR_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000006 },	/* LINK_OR_CTR_REGS */	\
+  { 0x00000000, 0x00000000, 0x00000007 },	/* SPECIAL_REGS */	\
+  { 0xffffffff, 0x00000000, 0x0000000f },	/* SPEC_OR_GEN_REGS */	\
+  { 0x00000000, 0x00000000, 0x00000010 },	/* CR0_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000ff0 },	/* CR_REGS */		\
+  { 0xffffffff, 0x00000000, 0x0000ffff },	/* NON_FLOAT_REGS */	\
+  { 0x00000000, 0x00000000, 0x00010000 },	/* FPMEM_REGS */	\
+  { 0x00000000, 0xffffffff, 0x00010000 },	/* FLOAT_OR_FPMEM_REGS */ \
+  { 0xffffffff, 0xffffffff, 0x0001ffff }	/* ALL_REGS */		\
+}
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
    reg number REGNO.  This could be a conditional expression
    or could index an array.  */
 
-#define REGNO_REG_CLASS(REGNO)	\
- ((REGNO) == 0 ? GENERAL_REGS	\
-  : (REGNO) < 32 ? BASE_REGS	\
-  : FP_REGNO_P (REGNO) ? FLOAT_REGS \
-  : (REGNO) == 68 ? CR0_REGS	\
-  : CR_REGNO_P (REGNO) ? CR_REGS \
-  : (REGNO) == 64 ? MQ_REGS	\
-  : (REGNO) == 65 ? LINK_REGS	\
-  : (REGNO) == 66 ? CTR_REGS	\
-  : (REGNO) == 67 ? BASE_REGS	\
+#define REGNO_REG_CLASS(REGNO)		\
+ ((REGNO) == 0 ? GENERAL_REGS		\
+  : (REGNO) < 32 ? BASE_REGS		\
+  : FP_REGNO_P (REGNO) ? FLOAT_REGS	\
+  : (REGNO) == 68 ? CR0_REGS		\
+  : CR_REGNO_P (REGNO) ? CR_REGS	\
+  : (REGNO) == 64 ? MQ_REGS		\
+  : (REGNO) == 65 ? LINK_REGS		\
+  : (REGNO) == 66 ? CTR_REGS		\
+  : (REGNO) == 67 ? BASE_REGS		\
+  : (REGNO) == 76 ? FPMEM_REGS		\
   : NO_REGS)
 
 /* The class value for index registers, and the one for base regs.  */
@@ -763,6 +1021,7 @@ enum reg_class { NO_REGS, BASE_REGS, GENERAL_REGS, FLOAT_REGS,
    : (C) == 'l' ? LINK_REGS	\
    : (C) == 'x' ? CR0_REGS	\
    : (C) == 'y' ? CR_REGS	\
+   : (C) == 'z' ? FPMEM_REGS	\
    : NO_REGS)
 
 /* The letters I, J, K, L, M, N, and P in a register constraint string
@@ -771,7 +1030,7 @@ enum reg_class { NO_REGS, BASE_REGS, GENERAL_REGS, FLOAT_REGS,
    C is the letter, and VALUE is a constant value.
    Return 1 if VALUE is in the range specified by C.
 
-   `I' is signed 16-bit constants 
+   `I' is signed 16-bit constants
    `J' is a constant with only the high-order 16 bits non-zero
    `K' is a constant with only the low-order 16 bits non-zero
    `L' is a constant that can be placed into a mask operand
@@ -780,49 +1039,61 @@ enum reg_class { NO_REGS, BASE_REGS, GENERAL_REGS, FLOAT_REGS,
    `O' is the constant zero
    `P' is a constant whose negation is a signed 16-bit constant */
 
-#define CONST_OK_FOR_LETTER_P(VALUE, C)				\
-   ( (C) == 'I' ? (unsigned) ((VALUE) + 0x8000) < 0x10000	\
-   : (C) == 'J' ? ((VALUE) & 0xffff) == 0			\
-   : (C) == 'K' ? ((VALUE) & 0xffff0000) == 0			\
-   : (C) == 'L' ? mask_constant (VALUE)				\
-   : (C) == 'M' ? (VALUE) > 31					\
-   : (C) == 'N' ? exact_log2 (VALUE) >= 0			\
-   : (C) == 'O' ? (VALUE) == 0					\
-   : (C) == 'P' ? (unsigned) ((- (VALUE)) + 0x8000) < 0x1000	\
+#define CONST_OK_FOR_LETTER_P(VALUE, C)					\
+   ( (C) == 'I' ? (unsigned HOST_WIDE_INT) ((VALUE) + 0x8000) < 0x10000	\
+   : (C) == 'J' ? ((VALUE) & 0xffff) == 0				\
+   : (C) == 'K' ? ((VALUE) & 0xffff0000) == 0				\
+   : (C) == 'L' ? mask_constant (VALUE)					\
+   : (C) == 'M' ? (VALUE) > 31						\
+   : (C) == 'N' ? exact_log2 (VALUE) >= 0				\
+   : (C) == 'O' ? (VALUE) == 0						\
+   : (C) == 'P' ? (unsigned HOST_WIDE_INT) ((- (VALUE)) + 0x8000) < 0x1000 \
    : 0)
 
 /* Similar, but for floating constants, and defining letters G and H.
    Here VALUE is the CONST_DOUBLE rtx itself.
 
    We flag for special constants when we can copy the constant into
-   a general register in two insns for DF and one insn for SF.  */
+   a general register in two insns for DF/DI and one insn for SF.
 
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)  \
-  ((C) == 'G' ? easy_fp_constant (VALUE, GET_MODE (VALUE)) : 0)
+   'H' is used for DI/DF constants that take 3 insns.  */
+
+#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)				\
+  (  (C) == 'G' ? (num_insns_constant (VALUE, GET_MODE (VALUE))		\
+		   == ((GET_MODE (VALUE) == SFmode) ? 1 : 2))		\
+   : (C) == 'H' ? (num_insns_constant (VALUE, GET_MODE (VALUE)) == 3)	\
+   : 0)
 
 /* Optional extra constraints for this machine.
 
-   For the RS/6000, `Q' means that this is a memory operand that is just
-   an offset from a register.  */
+   'Q' means that is a memory operand that is just an offset from a reg.
+   'R' is for AIX TOC entries.
+   'S' is for Windows NT SYMBOL_REFs
+   'T' is for Windows NT LABEL_REFs.
+   'U' is for V.4 small data references.  */
 
 #define EXTRA_CONSTRAINT(OP, C)						\
   ((C) == 'Q' ? GET_CODE (OP) == MEM && GET_CODE (XEXP (OP, 0)) == REG	\
    : (C) == 'R' ? LEGITIMATE_CONSTANT_POOL_ADDRESS_P (OP)		\
+   : (C) == 'S' ? (TARGET_WINDOWS_NT && DEFAULT_ABI == ABI_NT && GET_CODE (OP) == SYMBOL_REF)\
+   : (C) == 'T' ? (TARGET_WINDOWS_NT && DEFAULT_ABI == ABI_NT && GET_CODE (OP) == LABEL_REF) \
+   : (C) == 'U' ? ((DEFAULT_ABI == ABI_V4 || DEFAULT_ABI == ABI_SOLARIS) \
+		   && small_data_operand (OP, GET_MODE (OP)))		\
    : 0)
 
 /* Given an rtx X being reloaded into a reg required to be
    in class CLASS, return the class of reg to actually use.
    In general this is just CLASS; but on some machines
-   in some cases it is preferable to use a more restrictive class. 
+   in some cases it is preferable to use a more restrictive class.
 
    On the RS/6000, we have to return NO_REGS when we want to reload a
    floating-point CONST_DOUBLE to force it to be copied to memory.  */
 
-#define PREFERRED_RELOAD_CLASS(X,CLASS)	\
+#define PREFERRED_RELOAD_CLASS(X,CLASS)			\
   ((GET_CODE (X) == CONST_DOUBLE			\
     && GET_MODE_CLASS (GET_MODE (X)) == MODE_FLOAT)	\
    ? NO_REGS : (CLASS))
-   
+
 /* Return the register class of a scratch register needed to copy IN into
    or out of a register in CLASS in MODE.  If it can be done directly,
    NO_REGS is returned.  */
@@ -841,15 +1112,16 @@ enum reg_class { NO_REGS, BASE_REGS, GENERAL_REGS, FLOAT_REGS,
 
    On RS/6000, this is the size of MODE in words,
    except in the FP regs, where a single reg is enough for two words.  */
-#define CLASS_MAX_NREGS(CLASS, MODE)	\
- ((CLASS) == FLOAT_REGS			\
+#define CLASS_MAX_NREGS(CLASS, MODE)					\
+ (((CLASS) == FLOAT_REGS || (CLASS) == FPMEM_REGS			\
+   || (CLASS) == FLOAT_OR_FPMEM_REGS)					\
   ? ((GET_MODE_SIZE (MODE) + UNITS_PER_FP_WORD - 1) / UNITS_PER_FP_WORD) \
   : ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD))
 
 /* If defined, gives a class of registers that cannot be used as the
    operand of a SUBREG that changes the size of the object.  */
 
-#define CLASS_CANNOT_CHANGE_SIZE	FLOAT_REGS
+#define CLASS_CANNOT_CHANGE_SIZE	FLOAT_OR_FPMEM_REGS
 
 /* Stack layout; function entry, exit and calling.  */
 
@@ -857,8 +1129,20 @@ enum reg_class { NO_REGS, BASE_REGS, GENERAL_REGS, FLOAT_REGS,
 enum rs6000_abi {
   ABI_NONE,
   ABI_AIX,			/* IBM's AIX */
-  ABI_V4			/* System V.4/eabi */
+  ABI_AIX_NODESC,		/* AIX calling sequence minus function descriptors */
+  ABI_V4,			/* System V.4/eabi */
+  ABI_NT,			/* Windows/NT */
+  ABI_SOLARIS			/* Solaris */
 };
+
+extern enum rs6000_abi rs6000_current_abi;	/* available for use by subtarget */
+
+/* Default ABI to compile code for */
+#ifndef DEFAULT_ABI
+#define DEFAULT_ABI ABI_AIX
+/* The prefix to add to user-visible assembler symbols. */
+#define USER_LABEL_PREFIX "."
+#endif
 
 /* Structure used to define the rs6000 stack */
 typedef struct rs6000_stack {
@@ -866,23 +1150,34 @@ typedef struct rs6000_stack {
   int first_fp_reg_save;	/* first callee saved FP register used */
   int lr_save_p;		/* true if the link reg needs to be saved */
   int cr_save_p;		/* true if the CR reg needs to be saved */
+  int toc_save_p;		/* true if the TOC needs to be saved */
   int push_p;			/* true if we need to allocate stack space */
   int calls_p;			/* true if the function makes any calls */
+  int main_p;			/* true if this is main */
+  int main_save_p;		/* true if this is main and we need to save args */
+  int fpmem_p;			/* true if float/int conversion temp needed */
   enum rs6000_abi abi;		/* which ABI to use */
   int gp_save_offset;		/* offset to save GP regs from initial SP */
   int fp_save_offset;		/* offset to save FP regs from initial SP */
   int lr_save_offset;		/* offset to save LR from initial SP */
   int cr_save_offset;		/* offset to save CR from initial SP */
+  int toc_save_offset;		/* offset to save the TOC pointer */
   int varargs_save_offset;	/* offset to save the varargs registers */
+  int main_save_offset;		/* offset to save main's args */
+  int fpmem_offset;		/* offset for float/int conversion temp */
   int reg_size;			/* register size (4 or 8) */
   int varargs_size;		/* size to hold V.4 args passed in regs */
   int vars_size;		/* variable save area size */
   int parm_size;		/* outgoing parameter size */
+  int main_size;		/* size to hold saving main's args */
   int save_size;		/* save area size */
   int fixed_size;		/* fixed size of stack frame */
   int gp_size;			/* size of saved GP registers */
   int fp_size;			/* size of saved FP registers */
   int cr_size;			/* size to hold CR if not in save_size */
+  int lr_size;			/* size to hold LR if not in save_size */
+  int fpmem_size;		/* size to hold float/int conversion */
+  int toc_size;			/* size to hold TOC if not in save_size */
   int total_size;		/* total bytes allocated for stack */
 } rs6000_stack_t;
 
@@ -900,10 +1195,18 @@ typedef struct rs6000_stack {
 /* #define FRAME_GROWS_DOWNWARD */
 
 /* Size of the outgoing register save area */
-#define RS6000_REG_SAVE (TARGET_64BIT ? 64 : 32)
+#define RS6000_REG_SAVE (TARGET_32BIT ? 32 : 64)
 
 /* Size of the fixed area on the stack */
-#define RS6000_SAVE_AREA (TARGET_64BIT ? 48 : 24)
+#define RS6000_SAVE_AREA (TARGET_32BIT ? 24 : 48)
+
+/* Address to save the TOC register */
+#define RS6000_SAVE_TOC plus_constant (stack_pointer_rtx, 20)
+
+/* Offset & size for fpmem stack locations used for converting between
+   float and integral types.  */
+extern int rs6000_fpmem_offset;
+extern int rs6000_fpmem_size;
 
 /* Size of the V.4 varargs area if needed */
 #define RS6000_VARARGS_AREA 0
@@ -912,28 +1215,44 @@ typedef struct rs6000_stack {
 extern int rs6000_sysv_varargs_p;
 
 /* Align an address */
-#define ALIGN(n,a) (((n) + (a) - 1) & ~((a) - 1))
+#define RS6000_ALIGN(n,a) (((n) + (a) - 1) & ~((a) - 1))
+
+/* Initialize data used by insn expanders.  This is called from
+   init_emit, once for each function, before code is generated. */
+#define INIT_EXPANDERS rs6000_init_expanders ()
 
 /* Size of V.4 varargs area in bytes */
 #define RS6000_VARARGS_SIZE \
-  ((GP_ARG_NUM_REG * (TARGET_64BIT ? 8 : 4)) + (FP_ARG_NUM_REG * 8) + 8)
+  ((GP_ARG_NUM_REG * (TARGET_32BIT ? 4 : 8)) + (FP_ARG_NUM_REG * 8) + 8)
 
 /* Offset of V.4 varargs area */
-#define RS6000_VARARGS_OFFSET \
-  (ALIGN (current_function_outgoing_args_size, 8) + RS6000_SAVE_AREA)
+#define RS6000_VARARGS_OFFSET						\
+  (RS6000_ALIGN (current_function_outgoing_args_size, 8)		\
+   + RS6000_SAVE_AREA)
 
 /* Offset within stack frame to start allocating local variables at.
    If FRAME_GROWS_DOWNWARD, this is the offset to the END of the
    first local allocated.  Otherwise, it is the offset to the BEGINNING
-   of the first local allocated. 
+   of the first local allocated.
 
    On the RS/6000, the frame pointer is the same as the stack pointer,
    except for dynamic allocations.  So we start after the fixed area and
    outgoing parameter area.  */
 
-#define STARTING_FRAME_OFFSET (ALIGN (current_function_outgoing_args_size, 8) \
-			       + RS6000_VARARGS_AREA \
-			       + RS6000_SAVE_AREA)
+#define STARTING_FRAME_OFFSET						\
+  (RS6000_ALIGN (current_function_outgoing_args_size, 8)		\
+   + RS6000_VARARGS_AREA						\
+   + RS6000_SAVE_AREA)
+
+/* Offset from the stack pointer register to an item dynamically
+   allocated on the stack, e.g., by `alloca'.
+
+   The default value for this macro is `STACK_POINTER_OFFSET' plus the
+   length of the outgoing arguments.  The default is correct for most
+   machines.  See `function.c' for details.  */
+#define STACK_DYNAMIC_OFFSET(FUNDECL)					\
+  (RS6000_ALIGN (current_function_outgoing_args_size, 8)		\
+   + (STACK_POINTER_OFFSET))
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.
@@ -978,7 +1297,7 @@ extern int rs6000_sysv_varargs_p;
    If the precise function being called is known, FUNC is its FUNCTION_DECL;
    otherwise, FUNC is 0.
 
-   On RS/6000 an integer value is in r3 and a floating-point value is in 
+   On RS/6000 an integer value is in r3 and a floating-point value is in
    fp1, unless -msoft-float.  */
 
 #define FUNCTION_VALUE(VALTYPE, FUNC)	\
@@ -994,10 +1313,12 @@ extern int rs6000_sysv_varargs_p;
 /* The definition of this macro implies that there are cases where
    a scalar value cannot be returned in registers.
 
-   For the RS/6000, any structure or union type is returned in memory.  */
+   For the RS/6000, any structure or union type is returned in memory, except for
+   Solaris, which returns structures <= 8 bytes in registers.  */
 
-#define RETURN_IN_MEMORY(TYPE) \
-  (TYPE_MODE (TYPE) == BLKmode)
+#define RETURN_IN_MEMORY(TYPE)						\
+  (TYPE_MODE (TYPE) == BLKmode						\
+   && (DEFAULT_ABI != ABI_SOLARIS || int_size_in_bytes (TYPE) > 8))
 
 /* Minimum and maximum general purpose registers used to hold arguments.  */
 #define GP_ARG_MIN_REG 3
@@ -1006,12 +1327,21 @@ extern int rs6000_sysv_varargs_p;
 
 /* Minimum and maximum floating point registers used to hold arguments.  */
 #define FP_ARG_MIN_REG 33
-#define FP_ARG_MAX_REG 45
+#define	FP_ARG_AIX_MAX_REG 45
+#define	FP_ARG_V4_MAX_REG  40
+#define FP_ARG_MAX_REG FP_ARG_AIX_MAX_REG
 #define FP_ARG_NUM_REG (FP_ARG_MAX_REG - FP_ARG_MIN_REG + 1)
 
 /* Return registers */
 #define GP_ARG_RETURN GP_ARG_MIN_REG
 #define FP_ARG_RETURN FP_ARG_MIN_REG
+
+/* Flags for the call/call_value rtl operations set up by function_arg */
+#define CALL_NORMAL		0x00000000	/* no special processing */
+#define CALL_NT_DLLIMPORT	0x00000001	/* NT, this is a DLL import call */
+#define CALL_V4_CLEAR_FP_ARGS	0x00000002	/* V.4, no FP args passed */
+#define CALL_V4_SET_FP_ARGS	0x00000004	/* V.4, FP args were passed */
+#define CALL_LONG		0x00000008	/* always call indirect */
 
 /* Define cutoff for using external functions to save floating point */
 #define FP_SAVE_INLINE(FIRST_REG) ((FIRST_REG) == 62 || (FIRST_REG) == 63)
@@ -1052,6 +1382,7 @@ typedef struct rs6000_args
   int orig_nargs;		/* Original value of nargs_prototype */
   int varargs_offset;		/* offset of the varargs save area */
   int prototype;		/* Whether a prototype was defined */
+  int call_cookie;		/* Do special things for this call */
 } CUMULATIVE_ARGS;
 
 /* Define intermediate macro to compute the size (in registers) of an argument
@@ -1067,7 +1398,7 @@ typedef struct rs6000_args
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME) \
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT) \
   init_cumulative_args (&CUM, FNTYPE, LIBNAME, FALSE)
 
 /* Similar, but when scanning the definition of a procedure.  We always
@@ -1130,8 +1461,24 @@ typedef struct rs6000_args
 #define FUNCTION_ARG_PASS_BY_REFERENCE(CUM, MODE, TYPE, NAMED) \
   function_arg_pass_by_reference(&CUM, MODE, TYPE, NAMED)
 
+/* If defined, a C expression which determines whether, and in which
+   direction, to pad out an argument with extra space.  The value
+   should be of type `enum direction': either `upward' to pad above
+   the argument, `downward' to pad below, or `none' to inhibit
+   padding.  */
+
+#define FUNCTION_ARG_PADDING(MODE, TYPE) \
+  function_arg_padding (MODE, TYPE)
+
+/* If defined, a C expression that gives the alignment boundary, in bits,
+   of an argument with the specified mode and type.  If it is not defined,
+   PARM_BOUNDARY is used for all arguments.  */
+
+#define FUNCTION_ARG_BOUNDARY(MODE, TYPE) \
+  function_arg_boundary (MODE, TYPE)
+
 /* Perform any needed actions needed for a function that is receiving a
-   variable number of arguments. 
+   variable number of arguments.
 
    CUM is as above.
 
@@ -1198,44 +1545,47 @@ typedef struct rs6000_args
 
 #define FUNCTION_EPILOGUE(FILE, SIZE) output_epilog (FILE, SIZE)
 
-/* Output assembler code for a block containing the constant parts
-   of a trampoline, leaving space for the variable parts.
-
-   The trampoline should set the static chain pointer to value placed
-   into the trampoline and should branch to the specified routine.
-
-   On the RS/6000, this is not code at all, but merely a data area,
-   since that is the way all functions are called.  The first word is
-   the address of the function, the second word is the TOC pointer (r2),
-   and the third word is the static chain value.  */
-
-#define TRAMPOLINE_TEMPLATE(FILE) { fprintf (FILE, "\t.long 0, 0, 0\n"); }
+/* TRAMPOLINE_TEMPLATE deleted */
 
 /* Length in units of the trampoline for entering a nested function.  */
 
-#define TRAMPOLINE_SIZE    12
+#define TRAMPOLINE_SIZE rs6000_trampoline_size ()
 
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
    CXT is an RTX for the static chain value for the function.  */
 
 #define INITIALIZE_TRAMPOLINE(ADDR, FNADDR, CXT)		\
-{								\
-  emit_move_insn (gen_rtx (MEM, SImode,				\
-			   memory_address (SImode, (ADDR))),	\
-		  gen_rtx (MEM, SImode,				\
-			   memory_address (SImode, (FNADDR))));	\
-  emit_move_insn (gen_rtx (MEM, SImode,				\
-			   memory_address (SImode,		\
-					   plus_constant ((ADDR), 4))), \
-		  gen_rtx (MEM, SImode,				\
-			   memory_address (SImode,		\
-					   plus_constant ((FNADDR), 4)))); \
-  emit_move_insn (gen_rtx (MEM, SImode,				\
-			   memory_address (SImode,		\
-					   plus_constant ((ADDR), 8))), \
-		  force_reg (SImode, (CXT)));			\
-}
+  rs6000_initialize_trampoline (ADDR, FNADDR, CXT)
+
+/* If defined, a C expression whose value is nonzero if IDENTIFIER
+   with arguments ARGS is a valid machine specific attribute for DECL.
+   The attributes in ATTRIBUTES have previously been assigned to DECL.  */
+
+#define VALID_MACHINE_DECL_ATTRIBUTE(DECL, ATTRIBUTES, NAME, ARGS) \
+  (rs6000_valid_decl_attribute_p (DECL, ATTRIBUTES, NAME, ARGS))
+
+/* If defined, a C expression whose value is nonzero if IDENTIFIER
+   with arguments ARGS is a valid machine specific attribute for TYPE.
+   The attributes in ATTRIBUTES have previously been assigned to TYPE.  */
+
+#define VALID_MACHINE_TYPE_ATTRIBUTE(TYPE, ATTRIBUTES, NAME, ARGS) \
+  (rs6000_valid_type_attribute_p (TYPE, ATTRIBUTES, NAME, ARGS))
+
+/* If defined, a C expression whose value is zero if the attributes on
+   TYPE1 and TYPE2 are incompatible, one if they are compatible, and
+   two if they are nearly compatible (which causes a warning to be
+   generated).  */
+
+#define COMP_TYPE_ATTRIBUTES(TYPE1, TYPE2) \
+  (rs6000_comp_type_attributes (TYPE1, TYPE2))
+
+/* If defined, a C statement that assigns default attributes to newly
+   defined TYPE.  */
+
+#define SET_DEFAULT_TYPE_ATTRIBUTES(TYPE) \
+  (rs6000_set_default_type_attributes (TYPE))
+
 
 /* Definitions for __builtin_return_address and __builtin_frame_address.
    __builtin_return_address (0) should give link register (65), enable
@@ -1247,13 +1597,16 @@ typedef struct rs6000_args
    (mrs) */
 /* #define RETURN_ADDR_IN_PREVIOUS_FRAME */
 
-/* Number of bytes into the frame return addresses can be found.  */
-#ifndef TARGET_V4_CALLS
-#define RETURN_ADDRESS_OFFSET 8
-#else
-#define RETURN_ADDRESS_OFFSET \
- ((TARGET_V4_CALLS) ?  (TARGET_64BIT ? 8 : 4) : 8)
-#endif
+/* Number of bytes into the frame return addresses can be found.  See
+   rs6000_stack_info in rs6000.c for more information on how the different
+   abi's store the return address.  */
+#define RETURN_ADDRESS_OFFSET						\
+ ((DEFAULT_ABI == ABI_AIX						\
+   || DEFAULT_ABI == ABI_AIX_NODESC)	? 8 :				\
+  (DEFAULT_ABI == ABI_V4						\
+   || DEFAULT_ABI == ABI_SOLARIS)	? (TARGET_32BIT ? 4 : 8) :	\
+  (DEFAULT_ABI == ABI_NT)		? -4 :				\
+  (fatal ("RETURN_ADDRESS_OFFSET not supported"), 0))
 
 /* The current return address is in link register (65).  The return address
    of anything farther back is accessed normally at an offset of 8 from the
@@ -1416,13 +1769,15 @@ typedef struct rs6000_args
    plus a constant), a short (16-bit signed) constant plus a register,
    the sum of two registers, or a register indirect, possibly with an
    auto-increment.  For DFmode and DImode with an constant plus register,
-   we must ensure that both words are addressable.  */
+   we must ensure that both words are addressable or PowerPC64 with offset
+   word aligned.  */
 
 #define LEGITIMATE_CONSTANT_POOL_BASE_P(X)				\
   (TARGET_TOC && GET_CODE (X) == SYMBOL_REF				\
    && CONSTANT_POOL_ADDRESS_P (X)					\
    && ASM_OUTPUT_SPECIAL_POOL_ENTRY_P (get_pool_constant (X)))
 
+/* TARGET_64BIT TOC64 guaranteed to have 64 bit alignment.  */
 #define LEGITIMATE_CONSTANT_POOL_ADDRESS_P(X)				\
   (LEGITIMATE_CONSTANT_POOL_BASE_P (X)					\
    || (TARGET_TOC							\
@@ -1430,9 +1785,15 @@ typedef struct rs6000_args
        && GET_CODE (XEXP (XEXP (X, 0), 1)) == CONST_INT			\
        && LEGITIMATE_CONSTANT_POOL_BASE_P (XEXP (XEXP (X, 0), 0))))
 
+#define LEGITIMATE_SMALL_DATA_P(MODE, X)				\
+  ((DEFAULT_ABI == ABI_V4 || DEFAULT_ABI == ABI_SOLARIS)		\
+   && !flag_pic && !TARGET_TOC						\
+   && (GET_CODE (X) == SYMBOL_REF || GET_CODE (X) == CONST)		\
+   && small_data_operand (X, MODE))
+
 #define LEGITIMATE_ADDRESS_INTEGER_P(X,OFFSET)				\
  (GET_CODE (X) == CONST_INT						\
-  && (unsigned) (INTVAL (X) + (OFFSET) + 0x8000) < 0x10000)
+  && (unsigned HOST_WIDE_INT) (INTVAL (X) + (OFFSET) + 0x8000) < 0x10000)
 
 #define LEGITIMATE_OFFSET_ADDRESS_P(MODE,X)		\
  (GET_CODE (X) == PLUS					\
@@ -1440,7 +1801,14 @@ typedef struct rs6000_args
   && REG_OK_FOR_BASE_P (XEXP (X, 0))			\
   && LEGITIMATE_ADDRESS_INTEGER_P (XEXP (X, 1), 0)	\
   && (((MODE) != DFmode && (MODE) != DImode)		\
-      || LEGITIMATE_ADDRESS_INTEGER_P (XEXP (X, 1), 4)))
+      || (TARGET_32BIT					\
+	  ? LEGITIMATE_ADDRESS_INTEGER_P (XEXP (X, 1), 4) \
+	  : ! (INTVAL (XEXP (X, 1)) & 3)))		\
+  && ((MODE) != TImode					\
+      || (TARGET_32BIT					\
+	  ? LEGITIMATE_ADDRESS_INTEGER_P (XEXP (X, 1), 12) \
+	  : (LEGITIMATE_ADDRESS_INTEGER_P (XEXP (X, 1), 8) \
+	     && ! (INTVAL (XEXP (X, 1)) & 3)))))
 
 #define LEGITIMATE_INDEXED_ADDRESS_P(X)		\
  (GET_CODE (X) == PLUS				\
@@ -1456,6 +1824,7 @@ typedef struct rs6000_args
 
 #define LEGITIMATE_LO_SUM_ADDRESS_P(MODE, X)		\
   (TARGET_ELF						\
+   && !flag_pic && !TARGET_TOC				\
    && (MODE) != DImode					\
    && (MODE) != TImode					\
    && (TARGET_HARD_FLOAT || (MODE) != DFmode)		\
@@ -1467,18 +1836,19 @@ typedef struct rs6000_args
 #define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)		\
 { if (LEGITIMATE_INDIRECT_ADDRESS_P (X))		\
     goto ADDR;						\
-  if (GET_CODE (X) == PRE_INC				\
+  if ((GET_CODE (X) == PRE_INC || GET_CODE (X) == PRE_DEC) \
+      && TARGET_UPDATE					\
       && LEGITIMATE_INDIRECT_ADDRESS_P (XEXP (X, 0)))	\
     goto ADDR;						\
-  if (GET_CODE (X) == PRE_DEC				\
-      && LEGITIMATE_INDIRECT_ADDRESS_P (XEXP (X, 0)))	\
+  if (LEGITIMATE_SMALL_DATA_P (MODE, X))		\
     goto ADDR;						\
   if (LEGITIMATE_CONSTANT_POOL_ADDRESS_P (X))		\
     goto ADDR;						\
   if (LEGITIMATE_OFFSET_ADDRESS_P (MODE, X))		\
     goto ADDR;						\
-  if ((MODE) != DImode && (MODE) != TImode		\
-      && (TARGET_HARD_FLOAT || (MODE) != DFmode)	\
+  if ((MODE) != TImode					\
+      && (TARGET_HARD_FLOAT || TARGET_64BIT || (MODE) != DFmode) \
+      && (TARGET_64BIT || (MODE) != DImode)		\
       && LEGITIMATE_INDEXED_ADDRESS_P (X))		\
     goto ADDR;						\
   if (LEGITIMATE_LO_SUM_ADDRESS_P (MODE, X))		\
@@ -1502,7 +1872,7 @@ typedef struct rs6000_args
    integer that is out of range.  If so, generate code to add the
    constant with the low-order 16 bits masked to the register and force
    this result into another register (this can be done with `cau').
-   Then generate an address of REG+(CONST&0xffff), allowing for the 
+   Then generate an address of REG+(CONST&0xffff), allowing for the
    possibility of bit 16 being a one.
 
    Then check for the sum of a register and something not constant, try to
@@ -1511,30 +1881,30 @@ typedef struct rs6000_args
 #define LEGITIMIZE_ADDRESS(X,OLDX,MODE,WIN)				\
 { if (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 0)) == REG		\
     && GET_CODE (XEXP (X, 1)) == CONST_INT				\
-    && (unsigned) (INTVAL (XEXP (X, 1)) + 0x8000) >= 0x10000)		\
-    { int high_int, low_int;						\
-      high_int = INTVAL (XEXP (X, 1)) >> 16;				\
+    && (unsigned HOST_WIDE_INT) (INTVAL (XEXP (X, 1)) + 0x8000) >= 0x10000) \
+    { HOST_WIDE_INT high_int, low_int;					\
+      rtx sum;								\
+      high_int = INTVAL (XEXP (X, 1)) & (~ (HOST_WIDE_INT) 0xffff);	\
       low_int = INTVAL (XEXP (X, 1)) & 0xffff;				\
       if (low_int & 0x8000)						\
-	high_int += 1, low_int |= 0xffff0000;				\
-      (X) = gen_rtx (PLUS, SImode,					\
-		     force_operand					\
-		     	(gen_rtx (PLUS, SImode, XEXP (X, 0),		\
-				  gen_rtx (CONST_INT, VOIDmode,		\
-						      high_int << 16)), 0), \
-		     gen_rtx (CONST_INT, VOIDmode, low_int));		\
+	high_int += 0x10000, low_int |= ((HOST_WIDE_INT) -1) << 16;	\
+      sum = force_operand (gen_rtx (PLUS, Pmode, XEXP (X, 0),		\
+				    GEN_INT (high_int)), 0);		\
+      (X) = gen_rtx (PLUS, Pmode, sum, GEN_INT (low_int));		\
       goto WIN;								\
     }									\
   else if (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 0)) == REG	\
 	   && GET_CODE (XEXP (X, 1)) != CONST_INT			\
-	   && (TARGET_HARD_FLOAT || (MODE) != DFmode)			\
-	   && (MODE) != DImode && (MODE) != TImode)			\
+	   && (TARGET_HARD_FLOAT || TARGET_64BIT || (MODE) != DFmode)	\
+	   && (TARGET_64BIT || (MODE) != DImode)			\
+	   && (MODE) != TImode)						\
     {									\
-      (X) = gen_rtx (PLUS, SImode, XEXP (X, 0),				\
-		     force_reg (SImode, force_operand (XEXP (X, 1), 0))); \
+      (X) = gen_rtx (PLUS, Pmode, XEXP (X, 0),				\
+		     force_reg (Pmode, force_operand (XEXP (X, 1), 0))); \
       goto WIN;								\
     }									\
-  else if (TARGET_ELF && !TARGET_64BIT && TARGET_NO_TOC			\
+  else if (TARGET_ELF && TARGET_32BIT && TARGET_NO_TOC			\
+	   && !flag_pic							\
 	   && GET_CODE (X) != CONST_INT					\
 	   && GET_CODE (X) != CONST_DOUBLE && CONSTANT_P (X)		\
 	   && (TARGET_HARD_FLOAT || (MODE) != DFmode)			\
@@ -1558,15 +1928,70 @@ typedef struct rs6000_args
 #define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR,LABEL)		\
 { if (GET_CODE (ADDR) == PLUS					\
       && LEGITIMATE_ADDRESS_INTEGER_P (XEXP (ADDR, 1), 0)	\
-      && ! LEGITIMATE_ADDRESS_INTEGER_P (XEXP (ADDR, 1), 4))	\
+      && ! LEGITIMATE_ADDRESS_INTEGER_P (XEXP (ADDR, 1),	\
+					 (TARGET_32BIT ? 4 : 8))) \
     goto LABEL;							\
-  if (GET_CODE (ADDR) == PRE_INC)				\
+  if (TARGET_UPDATE && GET_CODE (ADDR) == PRE_INC)		\
     goto LABEL;							\
-  if (GET_CODE (ADDR) == PRE_DEC)				\
+  if (TARGET_UPDATE && GET_CODE (ADDR) == PRE_DEC)		\
     goto LABEL;							\
   if (GET_CODE (ADDR) == LO_SUM)				\
     goto LABEL;							\
 }
+
+/* The register number of the register used to address a table of
+   static data addresses in memory.  In some cases this register is
+   defined by a processor's "application binary interface" (ABI).
+   When this macro is defined, RTL is generated for this register
+   once, as with the stack pointer and frame pointer registers.  If
+   this macro is not defined, it is up to the machine-dependent files
+   to allocate such a register (if necessary).  */
+
+/* #define PIC_OFFSET_TABLE_REGNUM */
+
+/* Define this macro if the register defined by
+   `PIC_OFFSET_TABLE_REGNUM' is clobbered by calls.  Do not define
+   this macro if `PPIC_OFFSET_TABLE_REGNUM' is not defined. */
+
+/* #define PIC_OFFSET_TABLE_REG_CALL_CLOBBERED */
+
+/* By generating position-independent code, when two different
+   programs (A and B) share a common library (libC.a), the text of
+   the library can be shared whether or not the library is linked at
+   the same address for both programs.  In some of these
+   environments, position-independent code requires not only the use
+   of different addressing modes, but also special code to enable the
+   use of these addressing modes.
+
+   The `FINALIZE_PIC' macro serves as a hook to emit these special
+   codes once the function is being compiled into assembly code, but
+   not before.  (It is not done before, because in the case of
+   compiling an inline function, it would lead to multiple PIC
+   prologues being included in functions which used inline functions
+   and were compiled to assembly language.)  */
+
+#define FINALIZE_PIC rs6000_finalize_pic ()
+
+/* A C expression that is nonzero if X is a legitimate immediate
+   operand on the target machine when generating position independent
+   code.  You can assume that X satisfies `CONSTANT_P', so you need
+   not check this.  You can also assume FLAG_PIC is true, so you need
+   not check it either.  You need not define this macro if all
+   constants (including `SYMBOL_REF') can be immediate operands when
+   generating position independent code.  */
+
+/* #define LEGITIMATE_PIC_OPERAND_P (X) */
+
+/* In rare cases, correct code generation requires extra machine
+   dependent processing between the second jump optimization pass and
+   delayed branch scheduling.  On those machines, define this macro
+   as a C statement to act on the code starting at INSN.
+
+   On the RS/6000, we use it to make sure the GOT_TOC register marker
+   that FINALIZE_PIC is supposed to remove actually got removed.  */
+
+#define MACHINE_DEPENDENT_REORG(INSN) rs6000_reorg (INSN)
+
 
 /* Define this if some processing needs to be done immediately before
    emitting code for an insn.  */
@@ -1575,7 +2000,7 @@ typedef struct rs6000_args
 
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.  */
-#define CASE_VECTOR_MODE SImode
+#define CASE_VECTOR_MODE (TARGET_32BIT ? SImode : DImode)
 
 /* Define this if the tablejump instruction expects the table
    to contain offsets from the address of the table.
@@ -1598,7 +2023,7 @@ typedef struct rs6000_args
 
 /* Max number of bytes we can move from memory to memory
    in one reasonably fast instruction.  */
-#define MOVE_MAX (TARGET_POWERPC64 ? 8 : 4)
+#define MOVE_MAX (! TARGET_POWERPC64 ? 4 : 8)
 #define MAX_MOVE_MAX 8
 
 /* Nonzero if access to memory by bytes is no faster than for words.
@@ -1636,10 +2061,15 @@ typedef struct rs6000_args
 
 /* We don't have GAS for the RS/6000 yet, so don't write out special
    .stabs in cc1plus.  */
-   
+
 #define FASCIST_ASSEMBLER
+
+#ifndef ASM_OUTPUT_CONSTRUCTOR
 #define ASM_OUTPUT_CONSTRUCTOR(file, name)
+#endif
+#ifndef ASM_OUTPUT_DESTRUCTOR
 #define ASM_OUTPUT_DESTRUCTOR(file, name)
+#endif
 
 /* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
    is done just by pretending it is already truncated.  */
@@ -1648,12 +2078,12 @@ typedef struct rs6000_args
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
-#define Pmode (TARGET_64BIT ? DImode : SImode)
+#define Pmode (TARGET_32BIT ? SImode : DImode)
 
 /* Mode of a function address in a call instruction (for indexing purposes).
 
    Doesn't matter on RS/6000.  */
-#define FUNCTION_MODE (TARGET_64BIT ? DImode : SImode)
+#define FUNCTION_MODE (TARGET_32BIT ? SImode : DImode)
 
 /* Define this if addresses of constant functions
    shouldn't be put through pseudo regs where they can be cse'd.
@@ -1693,52 +2123,74 @@ typedef struct rs6000_args
 /* Provide the costs of a rtl expression.  This is in the body of a
    switch on CODE.  */
 
-#define RTX_COSTS(X,CODE,OUTER_CODE)			\
-  case MULT:						\
-  switch (rs6000_cpu)					\
-    {							\
-    case PROCESSOR_RIOS1:				\
-      return (GET_CODE (XEXP (X, 1)) != CONST_INT	\
-	      ? COSTS_N_INSNS (5)			\
-	      : INTVAL (XEXP (X, 1)) >= -256 && INTVAL (XEXP (X, 1)) <= 255 \
-	      ? COSTS_N_INSNS (3) : COSTS_N_INSNS (4));	\
-    case PROCESSOR_RIOS2:				\
-      return COSTS_N_INSNS (2);				\
-    case PROCESSOR_PPC601:				\
-    case PROCESSOR_PPC603:				\
-      return COSTS_N_INSNS (5);				\
-    case PROCESSOR_PPC403:				\
-    case PROCESSOR_PPC604:				\
-    case PROCESSOR_PPC620:				\
-      return COSTS_N_INSNS (4);				\
-    }							\
-  case DIV:						\
-  case MOD:						\
-    if (GET_CODE (XEXP (X, 1)) == CONST_INT		\
-	&& exact_log2 (INTVAL (XEXP (X, 1))) >= 0)	\
-      return COSTS_N_INSNS (2);				\
-    /* otherwise fall through to normal divide.  */	\
-  case UDIV:						\
-  case UMOD:						\
-  switch (rs6000_cpu)					\
-    {							\
-    case PROCESSOR_RIOS1:				\
-      return COSTS_N_INSNS (19);			\
-    case PROCESSOR_RIOS2:				\
-      return COSTS_N_INSNS (13);			\
-    case PROCESSOR_PPC403:				\
-      return COSTS_N_INSNS (33);			\
-    case PROCESSOR_PPC601:				\
-      return COSTS_N_INSNS (36);			\
-    case PROCESSOR_PPC603:				\
-      return COSTS_N_INSNS (37);			\
-    case PROCESSOR_PPC604:				\
-    case PROCESSOR_PPC620:				\
-      return COSTS_N_INSNS (20);			\
-    }							\
-  case FFS:						\
-    return COSTS_N_INSNS (4);				\
-  case MEM:						\
+#define RTX_COSTS(X,CODE,OUTER_CODE)					\
+  case PLUS:								\
+    return ((GET_CODE (XEXP (X, 1)) == CONST_INT			\
+	     && (unsigned HOST_WIDE_INT) ((INTVAL (XEXP (X, 1))		\
+					   + 0x8000) >= 0x10000))	\
+	    ? COSTS_N_INSNS (2)						\
+	    : COSTS_N_INSNS (1));					\
+  case AND:								\
+    return ((non_and_cint_operand (XEXP (X, 1), SImode))		\
+	    ? COSTS_N_INSNS (2)						\
+	    : COSTS_N_INSNS (1));					\
+  case IOR:								\
+  case XOR:								\
+    return ((non_logical_cint_operand (XEXP (X, 1), SImode))		\
+	    ? COSTS_N_INSNS (2)						\
+	    : COSTS_N_INSNS (1));					\
+  case MULT:								\
+    switch (rs6000_cpu)							\
+      {									\
+      case PROCESSOR_RIOS1:						\
+        return (GET_CODE (XEXP (X, 1)) != CONST_INT			\
+		? COSTS_N_INSNS (5)					\
+		: INTVAL (XEXP (X, 1)) >= -256 && INTVAL (XEXP (X, 1)) <= 255 \
+		? COSTS_N_INSNS (3) : COSTS_N_INSNS (4));		\
+      case PROCESSOR_RIOS2:						\
+      case PROCESSOR_MPCCORE:						\
+        return COSTS_N_INSNS (2);					\
+      case PROCESSOR_PPC601:						\
+        return COSTS_N_INSNS (5);					\
+      case PROCESSOR_PPC603:						\
+        return (GET_CODE (XEXP (X, 1)) != CONST_INT			\
+		? COSTS_N_INSNS (5)					\
+		: INTVAL (XEXP (X, 1)) >= -256 && INTVAL (XEXP (X, 1)) <= 255 \
+		? COSTS_N_INSNS (2) : COSTS_N_INSNS (3));		\
+      case PROCESSOR_PPC403:						\
+      case PROCESSOR_PPC604:						\
+      case PROCESSOR_PPC620:						\
+        return COSTS_N_INSNS (4);					\
+      }									\
+  case DIV:								\
+  case MOD:								\
+    if (GET_CODE (XEXP (X, 1)) == CONST_INT				\
+	&& exact_log2 (INTVAL (XEXP (X, 1))) >= 0)			\
+      return COSTS_N_INSNS (2);						\
+    /* otherwise fall through to normal divide.  */			\
+  case UDIV:								\
+  case UMOD:								\
+    switch (rs6000_cpu)							\
+      {									\
+      case PROCESSOR_RIOS1:						\
+	return COSTS_N_INSNS (19);					\
+      case PROCESSOR_RIOS2:						\
+	return COSTS_N_INSNS (13);					\
+      case PROCESSOR_MPCCORE:						\
+	return COSTS_N_INSNS (6);					\
+      case PROCESSOR_PPC403:						\
+	return COSTS_N_INSNS (33);					\
+      case PROCESSOR_PPC601:						\
+	return COSTS_N_INSNS (36);					\
+      case PROCESSOR_PPC603:						\
+	return COSTS_N_INSNS (37);					\
+      case PROCESSOR_PPC604:						\
+      case PROCESSOR_PPC620:						\
+	return COSTS_N_INSNS (20);					\
+      }									\
+  case FFS:								\
+    return COSTS_N_INSNS (4);						\
+  case MEM:								\
     /* MEM should be slightly more expensive than (plus (reg) (const)) */ \
     return 5;
 
@@ -1799,8 +2251,8 @@ extern int rs6000_trunc_used;
 
 /* Function names to call to do floating point truncation.  */
 
-#define RS6000_ITRUNC "itrunc"
-#define RS6000_UITRUNC "uitrunc"
+#define RS6000_ITRUNC "__itrunc"
+#define RS6000_UITRUNC "__uitrunc"
 
 /* Prefix and suffix to use to saving floating point */
 #ifndef SAVE_FP_PREFIX
@@ -1814,14 +2266,16 @@ extern int rs6000_trunc_used;
 #define RESTORE_FP_SUFFIX ""
 #endif
 
+/* Function name to call to do profiling.  */
+#define RS6000_MCOUNT ".__mcount"
+
 
 /* Control the assembler format that we output.  */
 
-/* Common macro to output the options used to the asm file.  */
-#define ASM_OUTPUT_OPTIONS(FILE)					 \
-  output_options (FILE,							 \
-		  f_options, sizeof (f_options) / sizeof (f_options[0]), \
-		  W_options, sizeof (W_options) / sizeof (W_options[0])) \
+/* A C string constant describing how to begin a comment in the target
+   assembler language.  The compiler assumes that the comment will end at
+   the end of the line.  */
+#define ASM_COMMENT_START " #"
 
 /* Output at beginning of assembler file.
 
@@ -1834,13 +2288,12 @@ extern int rs6000_trunc_used;
    [RW] section emitted.
 
    We then switch back to text to force the gcc2_compiled. label and the space
-   allocated after it (when profiling) into the text section.  
+   allocated after it (when profiling) into the text section.
 
    Finally, declare mcount when profiling to make the assembler happy.  */
 
 #define ASM_FILE_START(FILE)					\
 {								\
-  ASM_OUTPUT_OPTIONS (FILE);					\
   rs6000_gen_section_name (&xcoff_bss_section_name,		\
 			   main_input_filename, ".bss_");	\
   rs6000_gen_section_name (&xcoff_private_data_section_name,	\
@@ -1854,7 +2307,8 @@ extern int rs6000_trunc_used;
     private_data_section ();					\
   text_section ();						\
   if (profile_flag)						\
-    fprintf (FILE, "\t.extern .mcount\n");			\
+    fprintf (FILE, "\t.extern %s\n", RS6000_MCOUNT);		\
+  rs6000_file_start (FILE, TARGET_CPU_DEFAULT);			\
 }
 
 /* Output at end of assembler file.
@@ -1864,9 +2318,9 @@ extern int rs6000_trunc_used;
 #define ASM_FILE_END(FILE)					\
 {								\
   text_section ();						\
-  fprintf (FILE, "_section_.text:\n");				\
+  fputs ("_section_.text:\n", FILE);				\
   data_section ();						\
-  fprintf (FILE, "\t.long _section_.text\n");			\
+  fputs ("\t.long _section_.text\n", FILE);			\
 }
 
 /* We define this to prevent the name mangler from putting dollar signs into
@@ -1896,6 +2350,13 @@ extern int rs6000_trunc_used;
 /* Define the name of our readonly data section.  */
 
 #define READONLY_DATA_SECTION read_only_data_section
+
+
+/* Define the name of the section to use for the exception tables.
+   TODO: test and see if we can use read_only_data_section, if so,
+   remove this.  */
+
+#define EXCEPTION_SECTION data_section
 
 /* If we are referencing a function that is static or is known to be
    in this file, make the SYMBOL_REF special.  We can use this to indicate
@@ -1954,32 +2415,33 @@ toc_section ()						\
 {							\
   if (TARGET_MINIMAL_TOC)				\
     {							\
-      static int toc_initialized = 0;			\
-							\
       /* toc_section is always called at least once from ASM_FILE_START, \
 	 so this is guaranteed to always be defined once and only once   \
 	 in each file.  */						 \
       if (! toc_initialized)				\
 	{						\
-	  fprintf (asm_out_file, ".toc\nLCTOC..0:\n");	\
-	  fprintf (asm_out_file, "\t.tc toc_table[TC],toc_table[RW]\n"); \
+	  fputs (".toc\nLCTOC..0:\n", asm_out_file);	\
+	  fputs ("\t.tc toc_table[TC],toc_table[RW]\n", asm_out_file); \
 	  toc_initialized = 1;				\
 	}						\
 							\
       if (in_section != toc)				\
-	fprintf (asm_out_file, ".csect toc_table[RW]\n"); \
+	fputs (".csect toc_table[RW]\n", asm_out_file); \
     }							\
   else							\
     {							\
       if (in_section != toc)				\
-        fprintf (asm_out_file, ".toc\n");		\
+        fputs (".toc\n", asm_out_file);			\
     }							\
   in_section = toc;					\
 }
 
+/* Flag to say the TOC is initialized */
+extern int toc_initialized;
+
 /* This macro produces the initial definition of a function name.
    On the RS/6000, we need to place an extra '.' in the function name and
-   output the function descriptor.  
+   output the function descriptor.
 
    The csect for the function will have already been created by the
    `text_section' call previously done.  We do have to go back to that
@@ -1990,27 +2452,27 @@ toc_section ()						\
 #define ASM_DECLARE_FUNCTION_NAME(FILE,NAME,DECL)		\
 { if (TREE_PUBLIC (DECL))					\
     {								\
-      fprintf (FILE, "\t.globl .");				\
+      fputs ("\t.globl .", FILE);				\
       RS6000_OUTPUT_BASENAME (FILE, NAME);			\
-      fprintf (FILE, "\n");					\
+      putc ('\n', FILE);					\
     }								\
   else								\
     {								\
-      fprintf (FILE, "\t.lglobl .");				\
+      fputs ("\t.lglobl .", FILE);				\
       RS6000_OUTPUT_BASENAME (FILE, NAME);			\
-      fprintf (FILE, "\n");					\
+      putc ('\n', FILE);					\
     }								\
-  fprintf (FILE, ".csect ");					\
+  fputs (".csect ", FILE);					\
   RS6000_OUTPUT_BASENAME (FILE, NAME);				\
-  fprintf (FILE, "[DS]\n");					\
+  fputs ("[DS]\n", FILE);					\
   RS6000_OUTPUT_BASENAME (FILE, NAME);				\
-  fprintf (FILE, ":\n");					\
-  fprintf (FILE, "\t.long .");					\
+  fputs (":\n", FILE);						\
+  fputs ((TARGET_32BIT) ? "\t.long ." : "\t.llong .", FILE);	\
   RS6000_OUTPUT_BASENAME (FILE, NAME);				\
-  fprintf (FILE, ", TOC[tc0], 0\n");				\
-  fprintf (FILE, ".csect .text[PR]\n.");			\
+  fputs (", TOC[tc0], 0\n", FILE);				\
+  fputs (".csect .text[PR]\n.", FILE);				\
   RS6000_OUTPUT_BASENAME (FILE, NAME);				\
-  fprintf (FILE, ":\n");					\
+  fputs (":\n", FILE);						\
   if (write_symbols == XCOFF_DEBUG)				\
     xcoffout_declare_function (FILE, DECL, NAME);		\
 }
@@ -2106,25 +2568,23 @@ toc_section ()						\
   do									\
     {									\
       char *_name = (NAME);						\
+      int _len;								\
       if (_name[0] == '*')						\
-	(VAR) = _name+1;						\
+	_name++;							\
+      _len = strlen (_name);						\
+      if (_name[_len - 1] != ']')					\
+	(VAR) = _name;							\
       else								\
 	{								\
-	  int _len = strlen (_name);					\
-	  if (_name[_len - 1] != ']')					\
-	    (VAR) = _name;						\
-	  else								\
-	    {								\
-	      (VAR) = (char *) alloca (_len + 1);			\
-	      strcpy ((VAR), _name);					\
-	      (VAR)[_len - 4] = '\0';					\
-	    }								\
+	  (VAR) = (char *) alloca (_len + 1);				\
+	  strcpy ((VAR), _name);					\
+	  (VAR)[_len - 4] = '\0';					\
 	}								\
     }									\
   while (0)
 
 /* Output something to declare an external symbol to the assembler.  Most
-   assemblers don't need this.  
+   assemblers don't need this.
 
    If we haven't already, add "[RW]" (or "[DS]" for a function) to the
    name.  Normally we write this out along with the name.  In the few cases
@@ -2134,7 +2594,6 @@ toc_section ()						\
 { rtx _symref = XEXP (DECL_RTL (DECL), 0);	\
   if ((TREE_CODE (DECL) == VAR_DECL		\
        || TREE_CODE (DECL) == FUNCTION_DECL)	\
-      && (NAME)[0] != '*'			\
       && (NAME)[strlen (NAME) - 1] != ']')	\
     {						\
       char *_name = (char *) permalloc (strlen (XSTR (_symref, 0)) + 5); \
@@ -2142,23 +2601,23 @@ toc_section ()						\
       strcat (_name, TREE_CODE (DECL) == FUNCTION_DECL ? "[DS]" : "[RW]"); \
       XSTR (_symref, 0) = _name;		\
     }						\
-  fprintf (FILE, "\t.extern ");			\
+  fputs ("\t.extern ", FILE);			\
   assemble_name (FILE, XSTR (_symref, 0));	\
   if (TREE_CODE (DECL) == FUNCTION_DECL)	\
     {						\
-      fprintf (FILE, "\n\t.extern .");		\
+      fputs ("\n\t.extern .", FILE);		\
       RS6000_OUTPUT_BASENAME (FILE, XSTR (_symref, 0));	\
     }						\
-  fprintf (FILE, "\n");				\
+  putc ('\n', FILE);				\
 }
 
 /* Similar, but for libcall.  We only have to worry about the function name,
    not that of the descriptor. */
 
 #define ASM_OUTPUT_EXTERNAL_LIBCALL(FILE, FUN)	\
-{ fprintf (FILE, "\t.extern .");		\
+{ fputs ("\t.extern .", FILE);			\
   assemble_name (FILE, XSTR (FUN, 0));		\
-  fprintf (FILE, "\n");				\
+  putc ('\n', FILE);				\
 }
 
 /* Output to assembler file text saying following lines
@@ -2182,17 +2641,111 @@ toc_section ()						\
 /* How to refer to registers in assembler output.
    This sequence is indexed by compiler's hard-register-number (see above).  */
 
-#define REGISTER_NAMES \
- {"0", "1", "2", "3", "4", "5", "6", "7", 		\
-  "8", "9", "10", "11", "12", "13", "14", "15",		\
-  "16", "17", "18", "19", "20", "21", "22", "23",	\
-  "24", "25", "26", "27", "28", "29", "30", "31",	\
-  "0", "1", "2", "3", "4", "5", "6", "7",		\
-  "8", "9", "10", "11", "12", "13", "14", "15",		\
-  "16", "17", "18", "19", "20", "21", "22", "23",	\
-  "24", "25", "26", "27", "28", "29", "30", "31",	\
-  "mq", "lr", "ctr", "ap",				\
-  "0", "1", "2", "3", "4", "5", "6", "7" }
+extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0). */
+
+#define REGISTER_NAMES							\
+{									\
+  &rs6000_reg_names[ 0][0],	/* r0   */				\
+  &rs6000_reg_names[ 1][0],	/* r1	*/				\
+  &rs6000_reg_names[ 2][0],     /* r2	*/				\
+  &rs6000_reg_names[ 3][0],	/* r3	*/				\
+  &rs6000_reg_names[ 4][0],	/* r4	*/				\
+  &rs6000_reg_names[ 5][0],	/* r5	*/				\
+  &rs6000_reg_names[ 6][0],	/* r6	*/				\
+  &rs6000_reg_names[ 7][0],	/* r7	*/				\
+  &rs6000_reg_names[ 8][0],	/* r8	*/				\
+  &rs6000_reg_names[ 9][0],	/* r9	*/				\
+  &rs6000_reg_names[10][0],	/* r10  */				\
+  &rs6000_reg_names[11][0],	/* r11  */				\
+  &rs6000_reg_names[12][0],	/* r12  */				\
+  &rs6000_reg_names[13][0],	/* r13  */				\
+  &rs6000_reg_names[14][0],	/* r14  */				\
+  &rs6000_reg_names[15][0],	/* r15  */				\
+  &rs6000_reg_names[16][0],	/* r16  */				\
+  &rs6000_reg_names[17][0],	/* r17  */				\
+  &rs6000_reg_names[18][0],	/* r18  */				\
+  &rs6000_reg_names[19][0],	/* r19  */				\
+  &rs6000_reg_names[20][0],	/* r20  */				\
+  &rs6000_reg_names[21][0],	/* r21  */				\
+  &rs6000_reg_names[22][0],	/* r22  */				\
+  &rs6000_reg_names[23][0],	/* r23  */				\
+  &rs6000_reg_names[24][0],	/* r24  */				\
+  &rs6000_reg_names[25][0],	/* r25  */				\
+  &rs6000_reg_names[26][0],	/* r26  */				\
+  &rs6000_reg_names[27][0],	/* r27  */				\
+  &rs6000_reg_names[28][0],	/* r28  */				\
+  &rs6000_reg_names[29][0],	/* r29  */				\
+  &rs6000_reg_names[30][0],	/* r30  */				\
+  &rs6000_reg_names[31][0],	/* r31  */				\
+									\
+  &rs6000_reg_names[32][0],     /* fr0  */				\
+  &rs6000_reg_names[33][0],	/* fr1  */				\
+  &rs6000_reg_names[34][0],	/* fr2  */				\
+  &rs6000_reg_names[35][0],	/* fr3  */				\
+  &rs6000_reg_names[36][0],	/* fr4  */				\
+  &rs6000_reg_names[37][0],	/* fr5  */				\
+  &rs6000_reg_names[38][0],	/* fr6  */				\
+  &rs6000_reg_names[39][0],	/* fr7  */				\
+  &rs6000_reg_names[40][0],	/* fr8  */				\
+  &rs6000_reg_names[41][0],	/* fr9  */				\
+  &rs6000_reg_names[42][0],	/* fr10 */				\
+  &rs6000_reg_names[43][0],	/* fr11 */				\
+  &rs6000_reg_names[44][0],	/* fr12 */				\
+  &rs6000_reg_names[45][0],	/* fr13 */				\
+  &rs6000_reg_names[46][0],	/* fr14 */				\
+  &rs6000_reg_names[47][0],	/* fr15 */				\
+  &rs6000_reg_names[48][0],	/* fr16 */				\
+  &rs6000_reg_names[49][0],	/* fr17 */				\
+  &rs6000_reg_names[50][0],	/* fr18 */				\
+  &rs6000_reg_names[51][0],	/* fr19 */				\
+  &rs6000_reg_names[52][0],	/* fr20 */				\
+  &rs6000_reg_names[53][0],	/* fr21 */				\
+  &rs6000_reg_names[54][0],	/* fr22 */				\
+  &rs6000_reg_names[55][0],	/* fr23 */				\
+  &rs6000_reg_names[56][0],	/* fr24 */				\
+  &rs6000_reg_names[57][0],	/* fr25 */				\
+  &rs6000_reg_names[58][0],	/* fr26 */				\
+  &rs6000_reg_names[59][0],	/* fr27 */				\
+  &rs6000_reg_names[60][0],	/* fr28 */				\
+  &rs6000_reg_names[61][0],	/* fr29 */				\
+  &rs6000_reg_names[62][0],	/* fr30 */				\
+  &rs6000_reg_names[63][0],	/* fr31 */				\
+									\
+  &rs6000_reg_names[64][0],     /* mq   */				\
+  &rs6000_reg_names[65][0],	/* lr   */				\
+  &rs6000_reg_names[66][0],	/* ctr  */				\
+  &rs6000_reg_names[67][0],	/* ap   */				\
+									\
+  &rs6000_reg_names[68][0],	/* cr0  */				\
+  &rs6000_reg_names[69][0],	/* cr1  */				\
+  &rs6000_reg_names[70][0],	/* cr2  */				\
+  &rs6000_reg_names[71][0],	/* cr3  */				\
+  &rs6000_reg_names[72][0],	/* cr4  */				\
+  &rs6000_reg_names[73][0],	/* cr5  */				\
+  &rs6000_reg_names[74][0],	/* cr6  */				\
+  &rs6000_reg_names[75][0],	/* cr7  */				\
+									\
+  &rs6000_reg_names[76][0],	/* fpmem */				\
+}
+
+/* print-rtl can't handle the above REGISTER_NAMES, so define the
+   following for it.  Switch to use the alternate names since
+   they are more mnemonic.  */
+
+#define DEBUG_REGISTER_NAMES						\
+{									\
+     "r0", "r1",   "r2",  "r3",  "r4",  "r5",  "r6",  "r7",		\
+     "r8", "r9",  "r10", "r11", "r12", "r13", "r14", "r15",		\
+    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",		\
+    "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",		\
+     "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",		\
+     "f8",  "f9", "f10", "f11", "f12", "f13", "f14", "f15",		\
+    "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",		\
+    "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",		\
+     "mq",  "lr", "ctr",  "ap",						\
+    "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",		\
+  "fpmem"								\
+}
 
 /* Table of additional register names to use in user input.  */
 
@@ -2216,7 +2769,7 @@ toc_section ()						\
   /* no additional names for: mq, lr, ctr, ap */	\
   "cr0",  68, "cr1",  69, "cr2",  70, "cr3",  71,	\
   "cr4",  72, "cr5",  73, "cr6",  74, "cr7",  75,	\
-  "cc",   68 }
+  "cc",   68, "sp",    1, "toc",   2 }
 
 /* How to renumber registers for dbx and gdb.  */
 
@@ -2243,7 +2796,7 @@ toc_section ()						\
    `assemble_name' uses this.  */
 
 #define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, NAME)
+  fputs (NAME, FILE)
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -2270,7 +2823,7 @@ toc_section ()						\
    This is suitable for output with `assemble_name'.  */
 
 #define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)	\
-  sprintf (LABEL, "%s..%d", PREFIX, NUM)
+  sprintf (LABEL, "*%s..%d", PREFIX, NUM)
 
 /* This is how to output an assembler line defining a `double' constant.  */
 
@@ -2315,22 +2868,39 @@ toc_section ()						\
 
 /* This is how to output an assembler line defining an `int' constant.  */
 
+#define ASM_OUTPUT_DOUBLE_INT(FILE,VALUE)				\
+do {									\
+  if (TARGET_32BIT)							\
+    {									\
+      assemble_integer (operand_subword ((VALUE), 0, 0, DImode),	\
+                        UNITS_PER_WORD, 1);				\
+      assemble_integer (operand_subword ((VALUE), 1, 0, DImode),	\
+                        UNITS_PER_WORD, 1);				\
+    }									\
+  else									\
+    {									\
+      fputs ("\t.llong ", FILE);					\
+      output_addr_const (FILE, (VALUE));				\
+      putc ('\n', FILE);						\
+    }									\
+} while (0)
+
 #define ASM_OUTPUT_INT(FILE,VALUE)  \
-( fprintf (FILE, "\t.long "),			\
+( fputs ("\t.long ", FILE),			\
   output_addr_const (FILE, (VALUE)),		\
-  fprintf (FILE, "\n"))
+  putc ('\n', FILE))
 
 /* Likewise for `char' and `short' constants.  */
 
 #define ASM_OUTPUT_SHORT(FILE,VALUE)  \
-( fprintf (FILE, "\t.short "),			\
+( fputs ("\t.short ", FILE),			\
   output_addr_const (FILE, (VALUE)),		\
-  fprintf (FILE, "\n"))
+  putc ('\n', FILE))
 
 #define ASM_OUTPUT_CHAR(FILE,VALUE)  \
-( fprintf (FILE, "\t.byte "),			\
+( fputs ("\t.byte ", FILE),			\
   output_addr_const (FILE, (VALUE)),		\
-  fprintf (FILE, "\n"))
+  putc ('\n', FILE))
 
 /* This is how to output an assembler line for a numeric constant byte.  */
 
@@ -2343,12 +2913,17 @@ toc_section ()						\
 #define ASM_OUTPUT_ASCII(FILE, P, N)  output_ascii ((FILE), (P), (N))
 
 /* This is how to output code to push a register on the stack.
-   It need not be very fast code.  */
+   It need not be very fast code.
+
+   On the rs6000, we must keep the backchain up to date.  In order
+   to simplify things, always allocate 16 bytes for a push (System V
+   wants to keep stack aligned to a 16 byte boundary).  */
 
 #define ASM_OUTPUT_REG_PUSH(FILE,REGNO)					\
 do {									\
   extern char *reg_names[];						\
-  asm_fprintf (FILE, "\{tstu|stwu} %s,-4(%s)\n", reg_names[REGNO],	\
+  asm_fprintf (FILE, "\t{stu|stwu} %s,-16(%s)\n\t{st|stw} %s,8(%s)\n",	\
+	       reg_names[1], reg_names[1], reg_names[REGNO],		\
 	       reg_names[1]);						\
 } while (0)
 
@@ -2358,34 +2933,34 @@ do {									\
 #define ASM_OUTPUT_REG_POP(FILE,REGNO)					\
 do {									\
   extern char *reg_names[];						\
-  asm_fprintf (FILE, "\t{l|lwz} %s,0(%s)\n\t{ai|addic} %s,%s,4\n",	\
+  asm_fprintf (FILE, "\t{l|lwz} %s,8(%s)\n\t{ai|addic} %s,%s,16\n",	\
 	       reg_names[REGNO], reg_names[1], reg_names[1],		\
 	       reg_names[1]);						\
 } while (0)
 
-/* This is how to output an element of a case-vector that is absolute. 
+/* This is how to output an element of a case-vector that is absolute.
    (RS/6000 does not use such vectors, but we must define this macro
    anyway.)   */
 
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)		\
   do { char buf[100];					\
-       fprintf (FILE, "\t.long ");			\
+       fputs ((TARGET_32BIT) ? "\t.long " : "\t.llong ", FILE);	\
        ASM_GENERATE_INTERNAL_LABEL (buf, "L", VALUE);	\
        assemble_name (FILE, buf);			\
-       fprintf (FILE, "\n");				\
+       putc ('\n', FILE);				\
      } while (0)
 
 /* This is how to output an element of a case-vector that is relative.  */
 
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)	\
   do { char buf[100];					\
-       fprintf (FILE, "\t.long ");			\
+       fputs ((TARGET_32BIT) ? "\t.long " : "\t.llong ", FILE);	\
        ASM_GENERATE_INTERNAL_LABEL (buf, "L", VALUE);	\
        assemble_name (FILE, buf);			\
-       fprintf (FILE, "-");				\
+       putc ('-', FILE);				\
        ASM_GENERATE_INTERNAL_LABEL (buf, "L", REL);	\
        assemble_name (FILE, buf);			\
-       fprintf (FILE, "\n");				\
+       putc ('\n', FILE);				\
      } while (0)
 
 /* This is how to output an assembler line
@@ -2402,10 +2977,14 @@ do {									\
 /* This says how to output an assembler line
    to define a global common symbol.  */
 
-#define ASM_OUTPUT_COMMON(FILE, NAME, SIZE, ROUNDED)	\
+#define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGNMENT)	\
   do { fputs (".comm ", (FILE));			\
        RS6000_OUTPUT_BASENAME ((FILE), (NAME));		\
-       fprintf ((FILE), ",%d\n", (SIZE)); } while (0)
+       if ( (SIZE) > 4)					\
+         fprintf ((FILE), ",%d,3\n", (SIZE));		\
+       else						\
+	 fprintf( (FILE), ",%d\n", (SIZE));		\
+  } while (0)
 
 /* This says how to output an assembler line
    to define a local common symbol.  */
@@ -2447,7 +3026,8 @@ do {									\
 
 /* Define which CODE values are valid.  */
 
-#define PRINT_OPERAND_PUNCT_VALID_P(CODE)  ((CODE) == '.' || (CODE) == '*')
+#define PRINT_OPERAND_PUNCT_VALID_P(CODE)  \
+  ((CODE) == '.' || (CODE) == '*' || (CODE) == '$')
 
 /* Print a memory address as an operand to reference that memory location.  */
 
@@ -2455,7 +3035,7 @@ do {									\
 
 /* Define the codes that are matched by predicates in rs6000.c.  */
 
-#define PREDICATE_CODES \
+#define PREDICATE_CODES						\
   {"short_cint_operand", {CONST_INT}},				\
   {"u_short_cint_operand", {CONST_INT}},			\
   {"non_short_cint_operand", {CONST_INT}},			\
@@ -2465,11 +3045,13 @@ do {									\
   {"reg_or_neg_short_operand", {SUBREG, REG, CONST_INT}},	\
   {"reg_or_u_short_operand", {SUBREG, REG, CONST_INT}},		\
   {"reg_or_cint_operand", {SUBREG, REG, CONST_INT}},		\
+  {"got_operand", {SYMBOL_REF, CONST, LABEL_REF}},		\
+  {"got_no_const_operand", {SYMBOL_REF, LABEL_REF}},		\
   {"easy_fp_constant", {CONST_DOUBLE}},				\
   {"reg_or_mem_operand", {SUBREG, MEM, REG}},			\
   {"lwa_operand", {SUBREG, MEM, REG}},				\
+  {"volatile_mem_operand", {MEM}},				\
   {"offsettable_addr_operand", {REG, SUBREG, PLUS}},		\
-  {"fp_reg_or_mem_operand", {SUBREG, MEM, REG}},		\
   {"mem_or_easy_const_operand", {SUBREG, MEM, CONST_DOUBLE}},	\
   {"add_operand", {SUBREG, REG, CONST_INT}},			\
   {"non_add_cint_operand", {CONST_INT}},			\
@@ -2478,6 +3060,8 @@ do {									\
   {"logical_operand", {SUBREG, REG, CONST_INT}},		\
   {"non_logical_cint_operand", {CONST_INT}},			\
   {"mask_operand", {CONST_INT}},				\
+  {"count_register_operand", {REG}},				\
+  {"fpmem_operand", {REG}},					\
   {"call_operand", {SYMBOL_REF, REG}},				\
   {"current_file_function_operand", {SYMBOL_REF}},		\
   {"input_operand", {SUBREG, MEM, REG, CONST_INT, SYMBOL_REF}},	\
@@ -2488,11 +3072,29 @@ do {									\
   {"scc_comparison_operator", {EQ, NE, LE, LT, GE,		\
 			       GT, LEU, LTU, GEU, GTU}},
 
+
+/* uncomment for disabling the corresponding default options */
+/* #define  MACHINE_no_sched_interblock */
+/* #define  MACHINE_no_sched_speculative */
+/* #define  MACHINE_no_sched_speculative_load */
+
+/* indicate that issue rate is defined for this machine
+   (no need to use the default) */
+#define ISSUE_RATE get_issue_rate ()
+
+/* General flags.  */
+extern int flag_pic;
+extern int optimize;
+extern int flag_expensive_optimizations;
+extern int frame_pointer_needed;
+
 /* Declare functions in rs6000.c */
 extern void output_options ();
 extern void rs6000_override_options ();
+extern void rs6000_file_start ();
 extern struct rtx_def *rs6000_float_const ();
 extern struct rtx_def *rs6000_immed_double_const ();
+extern struct rtx_def *rs6000_got_register ();
 extern int direct_return ();
 extern int any_operand ();
 extern int short_cint_operand ();
@@ -2504,10 +3106,12 @@ extern int reg_or_short_operand ();
 extern int reg_or_neg_short_operand ();
 extern int reg_or_u_short_operand ();
 extern int reg_or_cint_operand ();
+extern int got_operand ();
+extern int got_no_const_operand ();
+extern int num_insns_constant ();
 extern int easy_fp_constant ();
 extern int volatile_mem_operand ();
 extern int offsettable_addr_operand ();
-extern int fp_reg_or_mem_operand ();
 extern int mem_or_easy_const_operand ();
 extern int add_operand ();
 extern int non_add_cint_operand ();
@@ -2516,14 +3120,18 @@ extern int non_logical_operand ();
 extern int mask_constant ();
 extern int mask_operand ();
 extern int and_operand ();
+extern int count_register_operand ();
+extern int fpmem_operand ();
 extern int non_and_cint_operand ();
 extern int reg_or_mem_operand ();
 extern int lwa_operand ();
 extern int call_operand ();
 extern int current_file_function_operand ();
 extern int input_operand ();
+extern int small_data_operand ();
 extern void init_cumulative_args ();
 extern void function_arg_advance ();
+extern int function_arg_boundary ();
 extern struct rtx_def *function_arg ();
 extern int function_arg_partial_nregs ();
 extern int function_arg_pass_by_reference ();
@@ -2541,13 +3149,17 @@ extern int registers_ok_for_quad_peep ();
 extern int addrs_ok_for_quad_peep ();
 extern enum reg_class secondary_reload_class ();
 extern int ccr_bit ();
+extern void rs6000_finalize_pic ();
+extern void rs6000_reorg ();
+extern void rs6000_save_machine_status ();
+extern void rs6000_restore_machine_status ();
+extern void rs6000_init_expanders ();
 extern void print_operand ();
 extern void print_operand_address ();
 extern int first_reg_to_save ();
 extern int first_fp_reg_to_save ();
 extern int rs6000_makes_calls ();
 extern rs6000_stack_t *rs6000_stack_info ();
-extern void svr4_traceback ();
 extern void output_prolog ();
 extern void output_epilog ();
 extern void output_toc ();
@@ -2555,3 +3167,16 @@ extern void output_ascii ();
 extern void rs6000_gen_section_name ();
 extern void output_function_profiler ();
 extern int rs6000_adjust_cost ();
+extern void rs6000_trampoline_template ();
+extern int rs6000_trampoline_size ();
+extern void rs6000_initialize_trampoline ();
+extern int rs6000_comp_type_attributes ();
+extern int rs6000_valid_decl_attribute_p ();
+extern int rs6000_valid_type_attribute_p ();
+extern void rs6000_set_default_type_attributes ();
+extern struct rtx_def *rs6000_dll_import_ref ();
+extern struct rtx_def *rs6000_longcall_ref ();
+
+/* See nonlocal_goto_receiver for when this must be set.  */
+
+#define DONT_ACCESS_GBLS_AFTER_EPILOGUE (TARGET_TOC && TARGET_MINIMAL_TOC)

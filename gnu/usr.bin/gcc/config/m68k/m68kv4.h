@@ -1,7 +1,7 @@
 /* Target definitions for GNU compiler for mc680x0 running System V.4
-   Copyright (C) 1991, 1993, 1994, 1995 Free Software Foundation, Inc.
-
-   Written by Ron Guilmette (rfg@netcom.com) and Fred Fish (fnf@cygnus.com).
+   Copyright (C) 1991, 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Contributed by Ron Guilmette (rfg@monkeys.com) and
+   Fred Fish (fnf@cygnus.com).
 
 This file is part of GNU CC.
 
@@ -36,7 +36,7 @@ Boston, MA 02111-1307, USA.  */
 /* See m68k.h.  7 means 68020 with 68881.  */
 
 #ifndef TARGET_DEFAULT
-#define	TARGET_DEFAULT (5 /*68020*/ + 2 /*68881*/)
+#define	TARGET_DEFAULT (MASK_BITFIELD|MASK_68881|MASK_68020)
 #endif
 
 /* When using an SGS assembler, modify the name of the artificial label which
@@ -84,7 +84,7 @@ while (0)
    If a 68881 is not the default, gcc will only define __HAVE_68881__ if
    -m68881 is specified. */
 
-#if TARGET_DEFAULT & 2
+#if TARGET_DEFAULT & MASK_68881
 #define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__}"
 #else
 #define CPP_SPEC "%{m68881:-D__HAVE_68881__}"
@@ -103,6 +103,7 @@ while (0)
 
 /* Local common symbols are declared to the assembler with ".lcomm" rather
    than ".bss", so override the definition in svr4.h */
+/* ??? svr4.h no longer defines this, and this is only used by m68k/amix.h.  */
 
 #undef BSS_ASM_OP
 #define BSS_ASM_OP	".lcomm"
@@ -112,6 +113,13 @@ while (0)
 
 #undef STRUCT_VALUE_REGNUM
 #define STRUCT_VALUE_REGNUM 8
+
+/* Register in which static-chain is passed to a function.  The
+   default in m68k.h is a0, but that is already the struct value
+   regnum.  Make it a1 instead.  */
+
+#undef STATIC_CHAIN_REGNUM
+#define STATIC_CHAIN_REGNUM 9
 
 #define ASM_COMMENT_START "#"
 
@@ -186,7 +194,8 @@ do {									\
 
 #undef LIBCALL_VALUE
 #define LIBCALL_VALUE(MODE)						\
-  (((MODE) == SFmode || (MODE) == DFmode) && TARGET_68881		\
+  ((((MODE) == SFmode || (MODE) == DFmode || (MODE) == XFmode)		\
+    && TARGET_68881)							\
    ? gen_rtx (REG, (MODE), 16)						\
    : gen_rtx (REG, (MODE), 0))
 
@@ -301,4 +310,37 @@ int switch_table_difference_label_flag;
   if (flag_pic) flag_no_function_cse = 1; \
   if (! TARGET_68020 && flag_pic == 2)	\
     error("-fPIC is not currently supported on the 68000 or 68010\n");	\
+}
+
+/* Output assembler code for a block containing the constant parts
+   of a trampoline, leaving space for the variable parts.  */
+
+/* On m68k svr4, the trampoline is different from the generic version
+   in that we use a1 as the static call chain.  */
+
+#undef TRAMPOLINE_TEMPLATE
+#define TRAMPOLINE_TEMPLATE(FILE)					\
+{									\
+  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x227a));	\
+  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 8));		\
+  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x2f3a));	\
+  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 8));		\
+  ASM_OUTPUT_SHORT (FILE, gen_rtx (CONST_INT, VOIDmode, 0x4e75));	\
+  ASM_OUTPUT_INT (FILE, const0_rtx);					\
+  ASM_OUTPUT_INT (FILE, const0_rtx);					\
+}
+
+/* Redefine since we are using a different trampoline */
+#undef TRAMPOLINE_SIZE
+#define TRAMPOLINE_SIZE 18
+
+/* Emit RTL insns to initialize the variable parts of a trampoline.
+   FNADDR is an RTX for the address of the function's pure code.
+   CXT is an RTX for the static chain value for the function.  */
+
+#undef INITIALIZE_TRAMPOLINE
+#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)                       \
+{                                                                       \
+  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 10)), CXT); \
+  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 14)), FNADDR); \
 }

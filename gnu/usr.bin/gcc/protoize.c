@@ -1,5 +1,5 @@
 /* Protoize program - Original version by Ron Guilmette (rfg@segfault.us.com).
-   Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 92-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Any reasonable C++ compiler should have all of the same features
    as __STDC__ plus more, so make sure that __STDC__ is defined if
-   __cplusplus is defined. */
+   __cplusplus is defined.  */
 
 #if defined(__cplusplus) && !defined(__STDC__)
 #define __STDC__ 1
@@ -65,7 +65,7 @@ Boston, MA 02111-1307, USA.  */
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifndef _WIN32
+#if ! defined (_WIN32) || defined (__CYGWIN32__)
 #if defined(POSIX) || defined(CONCURRENT)
 #include <dirent.h>
 #else
@@ -73,6 +73,20 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 #include <setjmp.h>
+
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+#endif
+
+#include "gansidecl.h"
 
 /* Include getopt.h for the sake of getopt_long.
    We don't need the declaration of getopt, and it could conflict
@@ -87,11 +101,7 @@ extern int errno;
 
 #ifndef HAVE_STRERROR
 extern int sys_nerr;
-#if defined(bsd4_4)
-extern const char *const sys_errlist[];
-#else
 extern char *sys_errlist[];
-#endif
 #else
 extern char *strerror();
 #endif
@@ -107,13 +117,22 @@ extern char *version_string;
 
 #define my_access(file,flag)	access((char *)file, flag)
 #define my_stat(file,pkt)	stat((char *)file, pkt)
-#define my_execvp(prog,argv)	execvp((char *)prog, (char **)argv)
 #define my_link(file1, file2)	link((char *)file1, (char *)file2)
 #define my_unlink(file)		unlink((char *)file)
 #define my_open(file, mode, flag)	open((char *)file, mode, flag)
 #define my_chmod(file, mode)	chmod((char *)file, mode)
 
 extern char *getpwd ();
+
+extern char *choose_temp_base PROTO ((void));
+
+extern int pexecute PROTO ((const char *, char * const *, const char *,
+			    const char *, char **, char **, int));
+extern int pwait PROTO ((int, int *, int));
+/* Flag arguments to pexecute.  */
+#define PEXECUTE_FIRST  1
+#define PEXECUTE_LAST   2
+#define PEXECUTE_SEARCH 4
 
 /* Aliases for pointers to void.
    These were made to facilitate compilation with old brain-dead DEC C
@@ -166,21 +185,12 @@ typedef char * const_pointer_type;
 /* Declaring stat or __flsbuf with a prototype
    causes conflicts with system headers on some systems.  */
 
-#ifndef abort
-typedef void voidfn ();
-extern VOLATILE voidfn abort;
-#endif
-#ifndef _WIN32
-extern int kill ();
-#endif
 extern int creat ();
 #if 0 /* These conflict with stdio.h on some systems.  */
 extern int fprintf (FILE *, const char *, ...);
 extern int printf (const char *, ...);
 extern int open (const char *, int, ...);
 #endif /* 0 */
-extern void exit ();
-extern void free ();
 extern int read ();
 extern int write ();
 extern int close ();
@@ -189,10 +199,11 @@ extern int atoi ();
 extern int puts ();
 extern int fputs ();
 extern int fputc ();
+#if !defined(_WIN32)
 extern int link ();
+#endif
 extern int unlink ();
 extern int access ();
-extern int execvp ();
 
 #if 0 /* size_t from sys/types.h may fail to match GCC.
 	 If so, we would get a warning from this.  */
@@ -207,7 +218,9 @@ extern size_t   strlen ()
 
 #endif /* !defined (POSIX) */
 
+#ifdef NEED_DECLARATION_RINDEX
 extern char *rindex ();
+#endif
 
 /* Look for these where the `const' qualifier is intentionally cast aside.  */
 
@@ -254,7 +267,7 @@ static char * syscalls_absolute_filename;
 
 #endif /* !defined (UNPROTOIZE) */
 
-/* Type of the structure that holds information about macro unexpansions. */
+/* Type of the structure that holds information about macro unexpansions.  */
 
 struct unexpansion_struct {
   const char *expanded;
@@ -295,39 +308,41 @@ static const int hash_mask = (HASH_TABLE_SIZE - 1);
 #define LOCAL_INCLUDE_DIR "/usr/local/include"
 #endif
 
-struct default_include { const char *fname; int x1, x2; } include_defaults[]
+struct default_include { const char *fname; 
+			 const char *component;
+			 int x1, x2; } include_defaults[]
 #ifdef INCLUDE_DEFAULTS
   = INCLUDE_DEFAULTS;
 #else
   = {
     /* Pick up GNU C++ specific include files.  */
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },
 #ifdef CROSS_COMPILE
     /* This is the dir for fixincludes.  Put it just before
        the files that we fix.  */
-    { GCC_INCLUDE_DIR, 0, 0 },
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },
     /* For cross-compilation, this dir name is generated
        automatically in Makefile.in.  */
-    { CROSS_INCLUDE_DIR, 0, 0 },
+    { CROSS_INCLUDE_DIR, 0, 0, 0 },
     /* This is another place that the target system's headers might be.  */
-    { TOOL_INCLUDE_DIR, 0, 0 },
+    { TOOL_INCLUDE_DIR, "BINUTILS", 0, 0 },
 #else /* not CROSS_COMPILE */
     /* This should be /use/local/include and should come before
        the fixincludes-fixed header files.  */
-    { LOCAL_INCLUDE_DIR, 0, 1 },
+    { LOCAL_INCLUDE_DIR, 0, 0, 1 },
     /* This is here ahead of GCC_INCLUDE_DIR because assert.h goes here.
        Likewise, behind LOCAL_INCLUDE_DIR, where glibc puts its assert.h.  */
-    { TOOL_INCLUDE_DIR, 0, 0 },
+    { TOOL_INCLUDE_DIR, "BINUTILS", 0, 0 },
     /* This is the dir for fixincludes.  Put it just before
        the files that we fix.  */
-    { GCC_INCLUDE_DIR, 0, 0 },
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },
     /* Some systems have an extra dir of include files.  */
 #ifdef SYSTEM_INCLUDE_DIR
-    { SYSTEM_INCLUDE_DIR, 0, 0 },
+    { SYSTEM_INCLUDE_DIR, 0, 0, 0 },
 #endif
-    { STANDARD_INCLUDE_DIR, 0, 0},
+    { STANDARD_INCLUDE_DIR, 0, 0, 0},
 #endif /* not CROSS_COMPILE */
-    { 0, 0, 0}
+    { 0, 0, 0, 0}
     };
 #endif /* no INCLUDE_DEFAULTS */
 
@@ -501,7 +516,7 @@ static const char *indent_string = "     ";	/* Indentation for newly
 static int local_flag = 0;		/* Insert new local decls (when?).  */
 static int global_flag = 0;		/* set by -g option */
 static int cplusplus_flag = 0;		/* Rename converted files to *.C.  */
-static const char* nondefault_syscalls_dir = 0; /* Dir to look for
+static const char *nondefault_syscalls_dir = 0; /* Dir to look for
 						   SYSCALLS.c.X in.  */
 #endif /* !defined (UNPROTOIZE) */
 
@@ -536,7 +551,7 @@ static const char *convert_filename;
 
 /* Pointer to relative root string (taken from aux_info file) which indicates
    where directory the user was in when he did the compilation step that
-   produced the containing aux_info file. */
+   produced the containing aux_info file.  */
 
 static const char *invocation_filename;
 
@@ -659,7 +674,7 @@ xmalloc (byte_count)
   if (rv == NULL)
     {
       fprintf (stderr, "\n%s: virtual memory exceeded\n", pname);
-      exit (1);
+      exit (FATAL_EXIT_CODE);
       return 0;		/* avoid warnings */
     }
   else
@@ -679,7 +694,7 @@ xrealloc (old_space, byte_count)
   if (rv == NULL)
     {
       fprintf (stderr, "\n%s: virtual memory exceeded\n", pname);
-      exit (1);
+      exit (FATAL_EXIT_CODE);
       return 0;		/* avoid warnings */
     }
   else
@@ -732,7 +747,7 @@ void
 fancy_abort ()
 {
   fprintf (stderr, "%s: internal abort\n", pname);
-  exit (1);
+  exit (FATAL_EXIT_CODE);
 }
 
 /* Make a duplicate of the first N bytes of a given string in a newly
@@ -867,10 +882,10 @@ usage ()
   fprintf (stderr, "%s: usage '%s [ -VqfnkN ] [ -i <istring> ] [ filename ... ]'\n",
 	   pname, pname);
 #else /* !defined (UNPROTOIZE) */
-  fprintf (stderr, "%s: usage '%s [ -VqfnkNlgC ] [ -B <diname> ] [ filename ... ]'\n",
+  fprintf (stderr, "%s: usage '%s [ -VqfnkNlgC ] [ -B <dirname> ] [ filename ... ]'\n",
 	   pname, pname);
 #endif /* !defined (UNPROTOIZE) */
-  exit (1);
+  exit (FATAL_EXIT_CODE);
 }
 
 /* Return true if the given filename (assumed to be an absolute filename)
@@ -1023,14 +1038,14 @@ needs_to_be_converted (file_p)
 
 #ifndef UNPROTOIZE
 
-      /* ... and if we a protoizing and this function is in old style ... */
+      /* ... and if we a protoizing and this function is in old style ...  */
       !ddp->prototyped
-      /* ... and if this a definition or is a decl with an associated def ... */
+      /* ... and if this a definition or is a decl with an associated def ...  */
       && (ddp->is_func_def || (!ddp->is_func_def && ddp->definition))
 
 #else /* defined (UNPROTOIZE) */
 
-      /* ... and if we are unprotoizing and this function is in new style ... */
+      /* ... and if we are unprotoizing and this function is in new style ...  */
       ddp->prototyped
 
 #endif /* defined (UNPROTOIZE) */
@@ -1216,7 +1231,7 @@ unexpand_if_needed (aux_info_line)
 {
   static char *line_buf = 0;
   static int line_buf_size = 0;
-  const unexpansion* unexp_p;
+  const unexpansion *unexp_p;
   int got_unexpanded = 0;
   const char *s;
   char *copy_p = line_buf;
@@ -1357,18 +1372,18 @@ abspath (cwd, rel_filename)
                     while (outp >= abs_buffer && *outp != '/')
               	outp--;
                     if (outp < abs_buffer)
-                {
-                  /* Catch cases like /.. where we try to backup to a
-                     point above the absolute root of the logical file
-                     system.  */
+		      {
+			/* Catch cases like /.. where we try to backup to a
+			   point above the absolute root of the logical file
+			   system.  */
 
-              	  fprintf (stderr, "%s: invalid file name: %s\n",
-			   pname, rel_filename);
-              	  exit (1);
-              	}
+			fprintf (stderr, "%s: invalid file name: %s\n",
+				 pname, rel_filename);
+			exit (FATAL_EXIT_CODE);
+		      }
                     *++outp = '\0';
                     continue;
-            }
+		  }
         }
       *outp++ = *inp++;
     }
@@ -1534,7 +1549,7 @@ aux_info_corrupted ()
 {
   fprintf (stderr, "\n%s: fatal error: aux info file corrupted at line %d\n",
 	   pname, current_aux_info_lineno);
-  exit (1);
+  exit (FATAL_EXIT_CODE);
 }
 
 /* ??? This comment is vague.  Say what the condition is for.  */
@@ -1690,7 +1705,7 @@ save_def_or_dec (l, is_syscalls)
   /* Check that this record describes a new-style, old-style, or implicit
      definition or declaration.  */
 
-  p++;	/* Skip over the `:'. */
+  p++;	/* Skip over the `:'.  */
   check_aux_info ((*p == 'N') || (*p == 'O') || (*p == 'I'));
 
   /* Is this a new style (ANSI prototyped) definition or declaration? */
@@ -1781,8 +1796,8 @@ save_def_or_dec (l, is_syscalls)
       const char *left_paren_p = find_corresponding_lparen (p);
 #ifndef UNPROTOIZE
       {
-        f_list_chain_item *cip =
-          (f_list_chain_item *) xmalloc (sizeof (f_list_chain_item));
+        f_list_chain_item *cip
+	  = (f_list_chain_item *) xmalloc (sizeof (f_list_chain_item));
 
         cip->formals_list
 	  = dupnstr (left_paren_p + 1, (size_t) (p - (left_paren_p+1)));
@@ -1860,7 +1875,7 @@ save_def_or_dec (l, is_syscalls)
 			 def_dec_p->file->hash_entry->symbol,
 			 def_dec_p->line,
 			 def_dec_p->hash_entry->symbol);
-                exit (1);
+                exit (FATAL_EXIT_CODE);
               }
             free_def_dec (def_dec_p);
             return;
@@ -1896,7 +1911,7 @@ save_def_or_dec (l, is_syscalls)
       check_aux_info (*++p == '(');
 
       {
-        const char *kr_names_start = ++p;   /* Point just inside '('. */
+        const char *kr_names_start = ++p;   /* Point just inside '('.  */
 
         while (*p++ != ')')
           continue;
@@ -2085,14 +2100,14 @@ munge_compile_params (params_list)
 }
 
 /* Do a recompilation for the express purpose of generating a new aux_info
-   file to go with a specific base source file.  */
+   file to go with a specific base source file.
+
+   The result is a boolean indicating success.  */
 
 static int
 gen_aux_info_file (base_filename)
      const char *base_filename;
 {
-  int child_pid;
-
   if (!input_file_name_index)
     munge_compile_params ("");
 
@@ -2109,79 +2124,48 @@ gen_aux_info_file (base_filename)
     fprintf (stderr, "%s: compiling `%s'\n",
 	     pname, compile_params[input_file_name_index]);
 
-  if (child_pid = fork ())
-    {
-      if (child_pid == -1)
-        {
-          fprintf (stderr, "%s: could not fork process: %s\n",
-		   pname, my_strerror(errno));
-          return 0;
-        }
+  {
+    char *errmsg_fmt, *errmsg_arg;
+    int wait_status, pid;
+    char *temp_base = choose_temp_base ();
 
-#if 0
-      /* Print out the command line that the other process is now executing.  */
+    pid = pexecute (compile_params[0], (char * const *) compile_params,
+		    pname, temp_base, &errmsg_fmt, &errmsg_arg,
+		    PEXECUTE_FIRST | PEXECUTE_LAST | PEXECUTE_SEARCH);
 
-      if (!quiet_flag)
-        {
-          const char **arg;
-  
-          fputs ("\t", stderr);
-          for (arg = compile_params; *arg; arg++)
-            {
-              fputs (*arg, stderr);
-              fputc (' ', stderr);
-            }
-          fputc ('\n', stderr);
-          fflush (stderr);
-        }
-#endif /* 0 */
-
+    if (pid == -1)
       {
-        int wait_status;
+	int errno_val = errno;
+	fprintf (stderr, "%s: ", pname);
+	fprintf (stderr, errmsg_fmt, errmsg_arg);
+	fprintf (stderr, ": %s\n", my_strerror (errno_val));
+	return 0;
+      }
 
-        if (wait (&wait_status) == -1)
-          {
-            fprintf (stderr, "%s: wait failed: %s\n",
-		     pname, my_strerror(errno));
-            return 0;
-          }
-	if (WIFSIGNALED (wait_status))
-	  {
-	    fprintf (stderr, "%s: subprocess got fatal signal %d",
-		     pname, WTERMSIG (wait_status));
-	    return 0;
-	  }
-	if (WIFEXITED (wait_status) && WEXITSTATUS (wait_status) != 0)
+    pid = pwait (pid, &wait_status, 0);
+    if (pid == -1)
+      {
+	fprintf (stderr, "%s: wait: %s\n", pname, my_strerror (errno));
+	return 0;
+      }
+    if (WIFSIGNALED (wait_status))
+      {
+	fprintf (stderr, "%s: subprocess got fatal signal %d\n",
+		 pname, WTERMSIG (wait_status));
+	return 0;
+      }
+    if (WIFEXITED (wait_status))
+      {
+	if (WEXITSTATUS (wait_status) != 0)
 	  {
 	    fprintf (stderr, "%s: %s exited with status %d\n",
-		     pname, base_filename, WEXITSTATUS (wait_status));
+		     pname, compile_params[0], WEXITSTATUS (wait_status));
 	    return 0;
 	  }
 	return 1;
       }
-    }
-  else
-    {
-      if (my_execvp (compile_params[0], (char *const *) compile_params))
-        {
-	  int e = errno, f = fileno (stderr);
-	  write (f, pname, strlen (pname));
-	  write (f, ": ", 2);
-	  write (f, compile_params[0], strlen (compile_params[0]));
-	  write (f, ": ", 2);
-#ifdef HAVE_STRERROR
-	  {
-	    char *p = strerror(e);
-	    write (f, p, strlen (p));
-	  }
-#else
-	  write (f, sys_errlist[e], strlen (sys_errlist[e]));
-#endif
-	  write (f, "\n", 1);
-          _exit (1);
-        }
-      return 1;		/* Never executed.  */
-    }
+    abort ();
+  }
 }
 
 /* Read in all of the information contained in a single aux_info file.
@@ -2618,7 +2602,7 @@ find_extern_def (head, user)
     if (dd_p->is_func_def && !dd_p->is_static)
       {
         if (!extern_def_p)	/* Previous definition? */
-          extern_def_p = dd_p;	/* Remember the first definition found. */
+          extern_def_p = dd_p;	/* Remember the first definition found.  */
         else
           {
             /* Ignore definition just found if it came from SYSCALLS.c.X.  */
@@ -2738,7 +2722,7 @@ find_extern_def (head, user)
 
 /* Find the (only?) static definition for a particular function name in a
    given file.  Here we get the function-name and the file info indirectly
-   from the def_dec_info record pointer which is passed in. */
+   from the def_dec_info record pointer which is passed in.  */
 
 static const def_dec_info *
 find_static_definition (user)
@@ -3434,11 +3418,11 @@ edit_formals_lists (end_formals, f_list_count, def_dec_p)
   return 0;
 }
 
-/* Given a pointer to a byte in the clean text buffer which points to the
-   beginning of a line that contains a "follower" token for a function
-   definition header, do whatever is necessary to find the right closing
-   paren for the rightmost formals list of the function definition header.
-*/
+/* Given a pointer to a byte in the clean text buffer which points to
+   the beginning of a line that contains a "follower" token for a
+   function definition header, do whatever is necessary to find the
+   right closing paren for the rightmost formals list of the function
+   definition header.  */
 
 static const char *
 find_rightmost_formals_list (clean_text_p)
@@ -3706,7 +3690,7 @@ add_global_decls (file_p, clean_text_p)
 
   /* Now scan forward for the first non-whitespace character.  In theory,
      this should be the first character of the following function definition
-     header.  We will put in the added declarations just prior to that. */
+     header.  We will put in the added declarations just prior to that.  */
 
   scan_p++;
   while (isspace (*scan_p))
@@ -4386,8 +4370,8 @@ edit_file (hp)
 
   if (!nosave_flag)
     {
-      char *new_filename =
-          (char *) xmalloc (strlen (convert_filename) + strlen (save_suffix) + 2);
+      char *new_filename
+	= (char *) xmalloc (strlen (convert_filename) + strlen (save_suffix) + 2);
   
       strcpy (new_filename, convert_filename);
       strcat (new_filename, save_suffix);
@@ -4599,7 +4583,7 @@ main (argc, argv)
     {
       fprintf (stderr, "%s: cannot get working directory: %s\n",
 	       pname, my_strerror(errno));
-      exit (1);
+      exit (FATAL_EXIT_CODE);
     }
 
   /* By default, convert the files in the current directory.  */
@@ -4613,7 +4597,7 @@ main (argc, argv)
 #endif
 			   longopts, &longind)) != EOF)
     {
-      if (c == 0)		/* Long option. */
+      if (c == 0)		/* Long option.  */
 	c = longopts[longind].val;
       switch (c)
 	{
@@ -4683,8 +4667,8 @@ main (argc, argv)
 
   /* Now actually make a list of the base source filenames.  */
 
-  base_source_filenames =
-    (const char **) xmalloc ((n_base_source_files + 1) * sizeof (char *));
+  base_source_filenames
+    = (const char **) xmalloc ((n_base_source_files + 1) * sizeof (char *));
   n_base_source_files = 0;
   for (; optind < argc; optind++)
     {
@@ -4724,9 +4708,8 @@ main (argc, argv)
         fprintf (stderr, "%s: %s\n", pname, version_string);
       do_processing ();
     }
-  if (errors)
-    exit (1);
-  else
-    exit (0);
+
+  exit (errors ? FATAL_EXIT_CODE : SUCCESS_EXIT_CODE);
+
   return 1;
 }

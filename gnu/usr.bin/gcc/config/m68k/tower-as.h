@@ -1,13 +1,8 @@
 /* Definitions of target machine for GNU compiler.
    For NCR Tower 32/4x0 and 32/6x0 running System V Release 3.
-   Copyright (C) 1990, 1993, 1994 Free Software Foundation, Inc.
-   Written by Robert Andersson (ra@intsys.no), International Systems,
+   Copyright (C) 1990, 1993, 1994, 1996, 1997 Free Software Foundation, Inc.
+   Contributed by Robert Andersson (ra@intsys.no), International Systems,
    Oslo, Norway.
-
-   This file outputs assembler source suitable for the native Tower as
-   and with sdb debugging symbols.  See tower.h for more comments.
-
-   This file was based on m68k.h, hp320.h and 3b1.h as of the 1.37.1 version.
 
 This file is part of GNU CC.
 
@@ -26,6 +21,12 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+
+/* This file outputs assembler source suitable for the native Tower as
+   and with sdb debugging symbols.  See tower.h for more comments.
+
+   This file was based on m68k.h, hp320.h and 3b1.h as of the
+   1.37.1 version.  */
 
 #include "m68k/tower.h"
 #undef SELECT_RTX_SECTION
@@ -48,6 +49,12 @@ Boston, MA 02111-1307, USA.  */
    See ASM_OUTPUT_INTERNAL_LABEL.  */
 #undef LOCAL_LABEL_PREFIX
 #define LOCAL_LABEL_PREFIX ""
+
+/* The prefix to add to user-visible assembler symbols.  */
+/* We do not want leading underscores.  */
+
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX ""
 
 /* These four macros control how m68k.md is expanded.  */
 
@@ -322,6 +329,27 @@ do { long l;					\
 #define ASM_OUTPUT_SKIP(FILE,SIZE)  \
   fprintf (FILE, "\tspace %d\n", (SIZE))
 
+/* Output a float value (represented as a C double) as an immediate operand.
+   This macro is a 68k-specific macro.  */
+
+#undef ASM_OUTPUT_FLOAT_OPERAND
+#define ASM_OUTPUT_FLOAT_OPERAND(CODE,FILE,VALUE)			\
+ do { long l;								\
+      REAL_VALUE_TO_TARGET_SINGLE (r, l);				\
+      /* Use hex representation even if CODE is f.  as needs it.  */	\
+      fprintf ((FILE), "&0x%lx", l);					\
+    } while (0)
+
+/* Output a double value (represented as a C double) as an immediate operand.
+   This macro is a 68k-specific macro.  */
+#undef ASM_OUTPUT_DOUBLE_OPERAND
+#define ASM_OUTPUT_DOUBLE_OPERAND(FILE,VALUE)				\
+ do { long l[2];							\
+      REAL_VALUE_TO_TARGET_DOUBLE (VALUE, l);				\
+      fprintf ((FILE), "&0x%lx%08lx", l[0], l[1]);			\
+    } while (0)
+
+#if 0
 #undef PRINT_OPERAND
 #define PRINT_OPERAND(FILE, X, CODE)  \
 { if (CODE == '.') fprintf (FILE, ".");					\
@@ -353,6 +381,7 @@ do { long l;					\
       REAL_VALUE_FROM_CONST_DOUBLE (r, X);				\
       ASM_OUTPUT_LONG_DOUBLE_OPERAND (FILE, r); }			\
   else { putc ('&', FILE); output_addr_const (FILE, X); }}
+#endif
 
 /* Note that this contains a kludge that knows that the only reason
    we have an address (plus (label_ref...) (reg...))
@@ -585,9 +614,3 @@ do { fprintf (asm_out_file, "\ttag\t");	\
     assemble_name (FILE, NAME);			\
     fprintf (FILE, ",-(%%sp)\n");		\
   } while (0)
-
-/* We do not want leading underscores.  */
-
-#undef ASM_OUTPUT_LABELREF
-#define ASM_OUTPUT_LABELREF(FILE,NAME)  \
-  fprintf (FILE, "%s", NAME)

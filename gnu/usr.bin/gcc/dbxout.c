@@ -1,5 +1,5 @@
 /* Output dbx-format symbol table information from GNU compiler.
-   Copyright (C) 1987, 88, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -67,11 +67,11 @@ Boston, MA 02111-1307, USA.  */
 
    For more on data type definitions, see `dbxout_type'.  */
 
-/* Include these first, because they may define MIN and MAX.  */
+#include "config.h"
+
 #include <stdio.h>
 #include <errno.h>
 
-#include "config.h"
 #include "tree.h"
 #include "rtl.h"
 #include "flags.h"
@@ -127,9 +127,20 @@ extern int errno;
 #endif
 
 /* Nonzero means if the type has methods, only output debugging
-   information if methods are actually written to the asm file.  */
+   information if methods are actually written to the asm file.  This
+   optimization only works if the debugger can detect the special C++
+   marker.  */
 
-static int flag_minimal_debug = 1;
+#define MINIMAL_DEBUG 1
+
+#ifdef NO_DOLLAR_IN_LABEL
+#ifdef NO_DOT_IN_LABEL
+#undef MINIMAL_DEBUG
+#define MINIMAL_DEBUG 0
+#endif
+#endif
+
+static int flag_minimal_debug = MINIMAL_DEBUG;
 
 /* Nonzero if we have actually used any of the GDB extensions
    to the debugging format.  The idea is that we use them for the
@@ -142,6 +153,8 @@ static int have_used_extensions = 0;
    for the N_SO filename stabs label.  */
 
 static int source_label_number = 1;
+
+static int scope_labelno = 0;
 
 char *getpwd ();
 
@@ -156,7 +169,7 @@ char *getpwd ();
 #define FORCE_TEXT
 #endif
 
-#if defined (USG) || defined (NO_STAB_H)
+#if defined (USG) || defined (NO_STAB_H) || defined (CROSS_COMPILE)
 #include "gstab.h"  /* If doing DBX on sysV, use our own stab.h.  */
 #else
 #include <stab.h>  /* On BSD, use the system's stab.h.  */
@@ -205,15 +218,28 @@ static char *cwd;
 
 enum typestatus {TYPE_UNSEEN, TYPE_XREF, TYPE_DEFINED};
 
-/* Vector recording the status of describing C data types.
+/* Structure recording information about a C data type.
+   The status element says whether we have yet output
+   the definition of the type.  TYPE_XREF says we have
+   output it as a cross-reference only.
+   The file_number and type_number elements are used if DBX_USE_BINCL
+   is defined.  */
+
+struct typeinfo
+{
+  enum typestatus status;
+#ifdef DBX_USE_BINCL
+  int file_number;
+  int type_number;
+#endif
+};
+
+/* Vector recording information about C data types.
    When we first notice a data type (a tree node),
    we assign it a number using next_type_number.
-   That is its index in this vector.
-   The vector element says whether we have yet output
-   the definition of the type.  TYPE_XREF says we have
-   output it as a cross-reference only.  */
+   That is its index in this vector.  */
 
-enum typestatus *typevec;
+struct typeinfo *typevec;
 
 /* Number of elements of space allocated in `typevec'.  */
 
@@ -224,6 +250,29 @@ static int typevec_len;
    The number, once assigned, is in the TYPE_SYMTAB_ADDRESS field.  */
 
 static int next_type_number;
+
+#ifdef DBX_USE_BINCL
+
+/* When using N_BINCL in dbx output, each type number is actually a
+   pair of the file number and the type number within the file.
+   This is a stack of input files.  */
+
+struct dbx_file
+{
+  struct dbx_file *next;
+  int file_number;
+  int next_type_number;
+};
+
+/* This is the top of the stack.  */
+
+static struct dbx_file *current_file;
+
+/* This is the next file number to use.  */
+
+static int next_file_number;
+
+#endif /* DBX_USE_BINCL */
 
 /* In dbx output, we must assign symbol-blocks id numbers
    in the order in which their beginnings are encountered.
@@ -275,121 +324,46 @@ static int current_sym_nchars;
 void dbxout_types ();
 void dbxout_args ();
 void dbxout_symbol ();
-static void dbxout_type_name ();
-static void dbxout_type ();
-static void dbxout_typedefs ();
-static void dbxout_symbol_name ();
-static void dbxout_symbol_location ();
-static void dbxout_prepare_symbol ();
-static void dbxout_finish_symbol ();
-static void dbxout_continue ();
-static void print_int_cst_octal ();
-static void print_octal ();
+
+static void dbxout_function_end		PROTO((void));
+static void dbxout_typedefs		PROTO((tree));
+static void dbxout_type_index		PROTO((tree));
+static void dbxout_continue		PROTO((void));
+static void dbxout_type_fields		PROTO((tree));
+static void dbxout_type_method_1	PROTO((tree, char *));
+static void dbxout_type_methods		PROTO((tree));
+static void dbxout_range_type		PROTO((tree));
+static void dbxout_type			PROTO((tree, int, int));
+static void print_int_cst_octal		PROTO((tree));
+static void print_octal			PROTO((unsigned HOST_WIDE_INT, int));
+static void dbxout_type_name		PROTO((tree));
+static void dbxout_symbol_location	PROTO((tree, tree, char *, rtx));
+static void dbxout_symbol_name		PROTO((tree, char *, int));
+static void dbxout_prepare_symbol	PROTO((tree));
+static void dbxout_finish_symbol	PROTO((tree));
+static void dbxout_block		PROTO((tree, int, tree));
+static void dbxout_really_begin_function PROTO((tree));
 
-#if 0 /* Not clear we will actually need this.  */
-
-/* Return the absolutized filename for the given relative
-   filename.  Note that if that filename is already absolute, it may
-   still be returned in a modified form because this routine also
-   eliminates redundant slashes and single dots and eliminates double
-   dots to get a shortest possible filename from the given input
-   filename.  The absolutization of relative filenames is made by
-   assuming that the given filename is to be taken as relative to
-   the first argument (cwd) or to the current directory if cwd is
-   NULL.  */
-
-static char *
-abspath (rel_filename)
-     char *rel_filename;
+static void
+dbxout_function_end ()
 {
-  /* Setup the current working directory as needed.  */
-  char *abs_buffer
-    = (char *) alloca (strlen (cwd) + strlen (rel_filename) + 1);
-  char *endp = abs_buffer;
-  char *outp, *inp;
-  char *value;
+  char lscope_label_name[100];
+  /* Convert Ltext into the appropriate format for local labels in case
+     the system doesn't insert underscores in front of user generated
+     labels.  */
+  ASM_GENERATE_INTERNAL_LABEL (lscope_label_name, "Lscope", scope_labelno);
+  ASM_OUTPUT_INTERNAL_LABEL (asmfile, "Lscope", scope_labelno);
+  scope_labelno++;
 
-  /* Copy the filename (possibly preceded by the current working
-     directory name) into the absolutization buffer.  */
-
-  {
-    char *src_p;
-
-    if (rel_filename[0] != '/')
-      {
-        src_p = cwd;
-        while (*endp++ = *src_p++)
-          continue;
-        *(endp-1) = '/';        		/* overwrite null */
-      }
-    src_p = rel_filename;
-    while (*endp++ = *src_p++)
-      continue;
-    if (endp[-1] == '/')
-      *endp = '\0';
-
-  /* Now make a copy of abs_buffer into abs_buffer, shortening the
-     filename (by taking out slashes and dots) as we go.  */
-
-  outp = inp = abs_buffer;
-  *outp++ = *inp++;        	/* copy first slash */
-  for (;;)
-    {
-      if (!inp[0])
-        break;
-      else if (inp[0] == '/' && outp[-1] == '/')
-        {
-          inp++;
-          continue;
-        }
-      else if (inp[0] == '.' && outp[-1] == '/')
-        {
-          if (!inp[1])
-                  break;
-          else if (inp[1] == '/')
-            {
-                    inp += 2;
-                    continue;
-            }
-          else if ((inp[1] == '.') && (inp[2] == 0 || inp[2] == '/'))
-            {
-                    inp += (inp[2] == '/') ? 3 : 2;
-                    outp -= 2;
-                    while (outp >= abs_buffer && *outp != '/')
-              	outp--;
-                    if (outp < abs_buffer)
-                {
-                  /* Catch cases like /.. where we try to backup to a
-                     point above the absolute root of the logical file
-                     system.  */
-
-              	  fprintf (stderr, "%s: invalid file name: %s\n",
-			   pname, rel_filename);
-              	  exit (1);
-              	}
-                    *++outp = '\0';
-                    continue;
-            }
-        }
-      *outp++ = *inp++;
-    }
-
-  /* On exit, make sure that there is a trailing null, and make sure that
-     the last character of the returned string is *not* a slash.  */
-
-  *outp = '\0';
-  if (outp[-1] == '/')
-    *--outp  = '\0';
-
-  /* Make a copy (in the heap) of the stuff left in the absolutization
-     buffer and return a pointer to the copy.  */
-
-  value = (char *) oballoc (strlen (abs_buffer) + 1);
-  strcpy (value, abs_buffer);
-  return value;
+  /* By convention, GCC will mark the end of a function with an N_FUN
+     symbol and an empty string.  */
+  fprintf (asmfile, "%s \"\",%d,0,0,", ASM_STABS_OP, N_FUN);
+  assemble_name (asmfile, lscope_label_name);
+  fputc ('-', asmfile);
+  assemble_name (asmfile, XSTR (XEXP (DECL_RTL (current_function_decl), 0), 0));
+  fprintf (asmfile, "\n");
 }
-#endif /* 0 */
-
+
 /* At the beginning of compilation, start writing the symbol table.
    Initialize `typevec' and output the standard data types of C.  */
 
@@ -404,7 +378,7 @@ dbxout_init (asm_file, input_file_name, syms)
   asmfile = asm_file;
 
   typevec_len = 100;
-  typevec = (enum typestatus *) xmalloc (typevec_len * sizeof typevec[0]);
+  typevec = (struct typeinfo *) xmalloc (typevec_len * sizeof typevec[0]);
   bzero ((char *) typevec, typevec_len * sizeof typevec[0]);
 
   /* Convert Ltext into the appropriate format for local labels in case
@@ -464,6 +438,14 @@ dbxout_init (asm_file, input_file_name, syms)
   next_type_number = 1;
   next_block_number = 2;
 
+#ifdef DBX_USE_BINCL
+  current_file = (struct dbx_file *) xmalloc (sizeof *current_file);
+  current_file->next = NULL;
+  current_file->file_number = 0;
+  current_file->next_type_number = 1;
+  next_file_number = 1;
+#endif
+
   /* Make sure that types `int' and `char' have numbers 1 and 2.
      Definitions of other integer types will refer to those numbers.
      (Actually it should no longer matter what their numbers are.
@@ -499,10 +481,45 @@ dbxout_typedefs (syms)
 	  tree type = TREE_TYPE (syms);
 	  if (TYPE_NAME (type)
 	      && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
+	      && TYPE_SIZE (type) != NULL_TREE
 	      && ! TREE_ASM_WRITTEN (TYPE_NAME (type)))
 	    dbxout_symbol (TYPE_NAME (type), 0);
 	}
     }
+}
+
+/* Change to reading from a new source file.  Generate a N_BINCL stab.  */
+
+void
+dbxout_start_new_source_file (filename)
+     char *filename;
+{
+#ifdef DBX_USE_BINCL
+  struct dbx_file *n = (struct dbx_file *) xmalloc (sizeof *n);
+
+  n->next = current_file;
+  n->file_number = next_file_number++;
+  n->next_type_number = 1;
+  current_file = n;
+  fprintf (asmfile, "%s ", ASM_STABS_OP);
+  output_quoted_string (asmfile, filename);
+  fprintf (asmfile, ",%d,0,0,0\n", N_BINCL);
+#endif
+}
+
+/* Revert to reading a previous source file.  Generate a N_EINCL stab.  */
+
+void
+dbxout_resume_previous_source_file ()
+{
+#ifdef DBX_USE_BINCL
+  struct dbx_file *next;
+
+  fprintf (asmfile, "%s %d,0,0,0\n", ASM_STABN_OP, N_EINCL);
+  next = current_file->next;
+  free (current_file);
+  current_file = next;
+#endif
 }
 
 /* Output debugging info to FILE to switch to sourcefile FILENAME.  */
@@ -556,7 +573,7 @@ dbxout_source_line (file, filename, lineno)
 
 /* At the end of compilation, finish writing the symbol table.
    Unless you define DBX_OUTPUT_MAIN_SOURCE_FILE_END, the default is
-   to do nothing. */
+   to do nothing.  */
 
 void
 dbxout_finish (file, filename)
@@ -566,6 +583,22 @@ dbxout_finish (file, filename)
 #ifdef DBX_OUTPUT_MAIN_SOURCE_FILE_END
   DBX_OUTPUT_MAIN_SOURCE_FILE_END (file, filename);
 #endif /* DBX_OUTPUT_MAIN_SOURCE_FILE_END */
+}
+
+/* Output the index of a type.  */
+
+static void
+dbxout_type_index (type)
+     tree type;
+{
+#ifndef DBX_USE_BINCL
+  fprintf (asmfile, "%d", TYPE_SYMTAB_ADDRESS (type));
+  CHARS (3);
+#else
+  struct typeinfo *t = &typevec[TYPE_SYMTAB_ADDRESS (type)];
+  fprintf (asmfile, "(%d,%d)", t->file_number, t->type_number);
+  CHARS (7);
+#endif
 }
 
 /* Continue a symbol-description that gets too big.
@@ -609,6 +642,8 @@ dbxout_type_fields (type)
 		   || TREE_CODE (DECL_SIZE (tem)) != INTEGER_CST))
 	continue;
       /* Omit here the nameless fields that are used to skip bits.  */
+      else if (DECL_IGNORED_P (tem))
+	continue;
       else if (TREE_CODE (tem) != CONST_DECL)
 	{
 	  /* Continue the line if necessary,
@@ -805,7 +840,7 @@ dbxout_type_methods (type)
 	  /* This is the "mangled" name of the method.
 	     It encodes the argument types.  */
 	  char *debug_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (fndecl));
-	  int destructor = 0;
+	  int show_arg_types = 0;
 
 	  CONTIN;
 
@@ -816,10 +851,23 @@ dbxout_type_methods (type)
 
 	  if (flag_minimal_debug)
 	    {
+	      char marker;
+
+	      /* We can't optimize a method which uses an anonymous
+                 class, because the debugger will not be able to
+                 associate the arbitrary class name with the actual
+                 class.  */
+#ifndef NO_DOLLAR_IN_LABEL
+	      marker = '$';
+#else
+	      marker = '.';
+#endif
+	      if (strchr (debug_name, marker))
+		show_arg_types = 1;
 	      /* Detect ordinary methods because their mangled names
 		 start with the operation name.  */
-	      if (!strncmp (IDENTIFIER_POINTER (name), debug_name,
-			    IDENTIFIER_LENGTH (name)))
+	      else if (!strncmp (IDENTIFIER_POINTER (name), debug_name,
+				 IDENTIFIER_LENGTH (name)))
 		{
 		  debug_name += IDENTIFIER_LENGTH (name);
 		  if (debug_name[0] == '_' && debug_name[1] == '_')
@@ -829,7 +877,7 @@ dbxout_type_methods (type)
 		      /* Get past const and volatile qualifiers.  */
 		      while (*method_name == 'C' || *method_name == 'V')
 			method_name++;
-		      /* Skip digits for length of type_encoding. */
+		      /* Skip digits for length of type_encoding.  */
 		      while (*method_name == *length_ptr && *length_ptr)
 			  length_ptr++, method_name++;
 		      if (! strncmp (method_name,
@@ -846,7 +894,7 @@ dbxout_type_methods (type)
 		  char *length_ptr = formatted_type_identifier_length;
 		  while (*ctor_name == 'C' || *ctor_name == 'V')
 		    ctor_name++;
-		  /* Skip digits for length of type_encoding. */
+		  /* Skip digits for length of type_encoding.  */
 		  while (*ctor_name == *length_ptr && *length_ptr)
 		      length_ptr++, ctor_name++;
 		  if (!strncmp (IDENTIFIER_POINTER (type_encoding), ctor_name,
@@ -855,7 +903,7 @@ dbxout_type_methods (type)
 		}
 	      /* The other alternative is a destructor.  */
 	      else
-		destructor = 1;
+		show_arg_types = 1;
 
 	      /* Output the operation name just once, for the first method
 		 that we output.  */
@@ -867,7 +915,7 @@ dbxout_type_methods (type)
 		}
 	    }
 
-	  dbxout_type (TREE_TYPE (fndecl), 0, destructor);
+	  dbxout_type (TREE_TYPE (fndecl), 0, show_arg_types);
 
 	  dbxout_type_method_1 (fndecl, debug_name);
 	}
@@ -881,7 +929,7 @@ dbxout_type_methods (type)
 
 /* Emit a "range" type specification, which has the form:
    "r<index type>;<lower bound>;<upper bound>;".
-   TYPE is an INTEGER_TYPE. */
+   TYPE is an INTEGER_TYPE.  */
 
 static void
 dbxout_range_type (type)
@@ -894,9 +942,12 @@ dbxout_range_type (type)
     dbxout_type (type, 0, 0); /* E.g. Pascal's ARRAY [BOOLEAN] of INTEGER */
   else
     {
-      /* This used to say `r1' and we used to take care
-	 to make sure that `int' was type number 1.  */
-      fprintf (asmfile, "%d", TYPE_SYMTAB_ADDRESS (integer_type_node));
+      /* Traditionally, we made sure 'int' was type 1, and builtin types
+	 were defined to be sub-ranges of int.  Unfortunately, this
+	 does not allow us to distinguish true sub-ranges from integer
+	 types.  So, instead we define integer (non-sub-range) types as
+	 sub-ranges of themselves.  */
+      dbxout_type_index (type);
     }
   if (TREE_CODE (TYPE_MIN_VALUE (type)) == INTEGER_CST)
     fprintf (asmfile, ";%d", 
@@ -939,7 +990,18 @@ dbxout_type (type, full, show_arg_types)
     type = integer_type_node;
   else
     {
-      type = TYPE_MAIN_VARIANT (type);
+      /* Try to find the "main variant" with the same name but not const
+	 or volatile.  (Since stabs does not distinguish const and volatile,
+	 there is no need to make them separate types.  But types with
+	 different names are usefully distinguished.) */
+	 
+      for (tem = TYPE_MAIN_VARIANT (type); tem; tem = TYPE_NEXT_VARIANT (tem))
+	if (!TYPE_READONLY (tem) && !TYPE_VOLATILE (tem)
+	    && TYPE_NAME (tem) == TYPE_NAME (type))
+	  {
+	    type = tem;
+	    break;
+	  }
       if (TYPE_NAME (type)
 	  && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
 	  && TYPE_DECL_SUPPRESS_DEBUG (TYPE_NAME (type)))
@@ -955,18 +1017,24 @@ dbxout_type (type, full, show_arg_types)
 
       if (next_type_number == typevec_len)
 	{
-	  typevec =
-	    (enum typestatus *) xrealloc (typevec,
-					  typevec_len * 2 * sizeof typevec[0]);
+	  typevec
+	    = (struct typeinfo *) xrealloc (typevec,
+					    typevec_len * 2 * sizeof typevec[0]);
 	  bzero ((char *) (typevec + typevec_len),
 		 typevec_len * sizeof typevec[0]);
 	  typevec_len *= 2;
 	}
+
+#ifdef DBX_USE_BINCL
+      typevec[TYPE_SYMTAB_ADDRESS (type)].file_number
+	= current_file->file_number;
+      typevec[TYPE_SYMTAB_ADDRESS (type)].type_number
+	= current_file->next_type_number++;
+#endif
     }
 
   /* Output the number of this type, to refer to it.  */
-  fprintf (asmfile, "%d", TYPE_SYMTAB_ADDRESS (type));
-  CHARS (3);
+  dbxout_type_index (type);
 
 #ifdef DBX_TYPE_DEFINED
   if (DBX_TYPE_DEFINED (type))
@@ -976,7 +1044,7 @@ dbxout_type (type, full, show_arg_types)
   /* If this type's definition has been output or is now being output,
      that is all.  */
 
-  switch (typevec[TYPE_SYMTAB_ADDRESS (type)])
+  switch (typevec[TYPE_SYMTAB_ADDRESS (type)].status)
     {
     case TYPE_UNSEEN:
       break;
@@ -1014,7 +1082,7 @@ dbxout_type (type, full, show_arg_types)
 	/* No way in DBX fmt to describe a variable size.  */
 	|| TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST)
       {
-	typevec[TYPE_SYMTAB_ADDRESS (type)] = TYPE_XREF;
+	typevec[TYPE_SYMTAB_ADDRESS (type)].status = TYPE_XREF;
 	return;
       }
 #endif
@@ -1027,7 +1095,14 @@ dbxout_type (type, full, show_arg_types)
   /* Mark it as defined, so that if it is self-referent
      we will not get into an infinite recursion of definitions.  */
 
-  typevec[TYPE_SYMTAB_ADDRESS (type)] = TYPE_DEFINED;
+  typevec[TYPE_SYMTAB_ADDRESS (type)].status = TYPE_DEFINED;
+
+  if (TYPE_NAME (type) && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
+      && DECL_ORIGINAL_TYPE (TYPE_NAME (type)))
+    { 
+      dbxout_type (DECL_ORIGINAL_TYPE (TYPE_NAME (type)), 0, 0);
+      return;
+    }
 
   switch (TREE_CODE (type))
     {
@@ -1038,25 +1113,30 @@ dbxout_type (type, full, show_arg_types)
 	 without saying what it is.  The debugger will make it
 	 a void type when the reference is seen, and nothing will
 	 ever override that default.  */
-      fprintf (asmfile, "%d", TYPE_SYMTAB_ADDRESS (type));
-      CHARS (3);
+      dbxout_type_index (type);
       break;
 
     case INTEGER_TYPE:
       if (type == char_type_node && ! TREE_UNSIGNED (type))
-	/* Output the type `char' as a subrange of itself!
-	   I don't understand this definition, just copied it
-	   from the output of pcc.
-	   This used to use `r2' explicitly and we used to
-	   take care to make sure that `char' was type number 2.  */
-	fprintf (asmfile, "r%d;0;127;", TYPE_SYMTAB_ADDRESS (type));
+	{
+	  /* Output the type `char' as a subrange of itself!
+	     I don't understand this definition, just copied it
+	     from the output of pcc.
+	     This used to use `r2' explicitly and we used to
+	     take care to make sure that `char' was type number 2.  */
+	  fprintf (asmfile, "r");
+	  dbxout_type_index (type);
+	  fprintf (asmfile, ";0;127;");
+	}
       else if (use_gnu_debug_info_extensions
 	       && (TYPE_PRECISION (type) > TYPE_PRECISION (integer_type_node)
 		   || TYPE_PRECISION (type) > HOST_BITS_PER_WIDE_INT))
 	{
 	  /* This used to say `r1' and we used to take care
 	     to make sure that `int' was type number 1.  */
-	  fprintf (asmfile, "r%d;", TYPE_SYMTAB_ADDRESS (integer_type_node));
+	  fprintf (asmfile, "r");
+	  dbxout_type_index (integer_type_node);
+	  fprintf (asmfile, ";");
 	  print_int_cst_octal (TYPE_MIN_VALUE (type));
 	  fprintf (asmfile, ";");
 	  print_int_cst_octal (TYPE_MAX_VALUE (type));
@@ -1064,15 +1144,16 @@ dbxout_type (type, full, show_arg_types)
 	}
       else /* Output other integer types as subranges of `int'.  */
 	dbxout_range_type (type);
-      CHARS (25);
+      CHARS (22);
       break;
 
     case REAL_TYPE:
       /* This used to say `r1' and we used to take care
 	 to make sure that `int' was type number 1.  */
-      fprintf (asmfile, "r%d;%d;0;", TYPE_SYMTAB_ADDRESS (integer_type_node),
-	       int_size_in_bytes (type));
-      CHARS (16);
+      fprintf (asmfile, "r");
+      dbxout_type_index (integer_type_node);
+      fprintf (asmfile, ";%d;0;", int_size_in_bytes (type));
+      CHARS (13);
       break;
 
     case CHAR_TYPE:
@@ -1080,10 +1161,13 @@ dbxout_type (type, full, show_arg_types)
 	fprintf (asmfile, "@s%d;-20;",
 		 BITS_PER_UNIT * int_size_in_bytes (type));
       else
-	/* Output the type `char' as a subrange of itself.
-	   That is what pcc seems to do.  */
-      fprintf (asmfile, "r%d;0;%d;", TYPE_SYMTAB_ADDRESS (char_type_node),
-	       TREE_UNSIGNED (type) ? 255 : 127);
+	{
+	  /* Output the type `char' as a subrange of itself.
+	     That is what pcc seems to do.  */
+	  fprintf (asmfile, "r");
+	  dbxout_type_index (char_type_node);
+	  fprintf (asmfile, ";0;%d;", TREE_UNSIGNED (type) ? 255 : 127);
+	}
       CHARS (9);
       break;
 
@@ -1107,10 +1191,11 @@ dbxout_type (type, full, show_arg_types)
 
       if (TREE_CODE (TREE_TYPE (type)) == REAL_TYPE)
 	{
-	  fprintf (asmfile, "r%d;%d;0;",
-		   TYPE_SYMTAB_ADDRESS (type),
+	  fprintf (asmfile, "r");
+	  dbxout_type_index (type);
+	  fprintf (asmfile, ";%d;0;",
 		   int_size_in_bytes (TREE_TYPE (type)));
-	  CHARS (15);		/* The number is probably incorrect here.  */
+	  CHARS (12);		/* The number is probably incorrect here.  */
 	}
       else
 	{
@@ -1141,7 +1226,7 @@ dbxout_type (type, full, show_arg_types)
 	  fprintf (asmfile, "@s%d;",
 		   BITS_PER_UNIT * int_size_in_bytes (type));
 	  /* Check if a bitstring type, which in Chill is
-	     different from a [power]set. */
+	     different from a [power]set.  */
 	  if (TYPE_STRING_FLAG (type))
 	    fprintf (asmfile, "@S;");
 	}
@@ -1156,7 +1241,7 @@ dbxout_type (type, full, show_arg_types)
 	 followed by a reference to the target-type.
 	 ar1;0;N;M for a C array of type M and size N+1.  */
       /* Check if a character string type, which in Chill is
-	 different from an array of characters. */
+	 different from an array of characters.  */
       if (TYPE_STRING_FLAG (type) && use_gnu_debug_info_extensions)
 	{
 	  have_used_extensions = 1;
@@ -1164,14 +1249,17 @@ dbxout_type (type, full, show_arg_types)
 	}
       tem = TYPE_DOMAIN (type);
       if (tem == NULL)
-	fprintf (asmfile, "ar%d;0;-1;",
-		 TYPE_SYMTAB_ADDRESS (integer_type_node));
+	{
+	  fprintf (asmfile, "ar");
+	  dbxout_type_index (integer_type_node);
+	  fprintf (asmfile, ";0;-1;");
+	}
       else
 	{
 	  fprintf (asmfile, "a");
 	  dbxout_range_type (tem);
 	}
-      CHARS (17);
+      CHARS (14);
       dbxout_type (TREE_TYPE (type), 0, 0);
       break;
 
@@ -1215,7 +1303,7 @@ dbxout_type (type, full, show_arg_types)
 	    else
 	      fprintf (asmfile, "$$%d", anonymous_type_number++);
 	    fprintf (asmfile, ":");
-	    typevec[TYPE_SYMTAB_ADDRESS (type)] = TYPE_XREF;
+	    typevec[TYPE_SYMTAB_ADDRESS (type)].status = TYPE_XREF;
 	    break;
 	  }
 
@@ -1312,7 +1400,7 @@ dbxout_type (type, full, show_arg_types)
 	  fprintf (asmfile, "xe");
 	  CHARS (3);
 	  dbxout_type_name (type);
-	  typevec[TYPE_SYMTAB_ADDRESS (type)] = TYPE_XREF;
+	  typevec[TYPE_SYMTAB_ADDRESS (type)].status = TYPE_XREF;
 	  fprintf (asmfile, ":");
 	  return;
 	}
@@ -1363,6 +1451,7 @@ dbxout_type (type, full, show_arg_types)
 	      /* Normally, just output the return type.
 		 The argument types are encoded in the method name.  */
 	      putc ('#', asmfile);
+	      CHARS (1);
 	      dbxout_type (TREE_TYPE (type), 0, 0);
 	      putc (';', asmfile);
 	      CHARS (1);
@@ -1593,7 +1682,7 @@ dbxout_symbol (decl, local)
 
       /* If this typedef name was defined by outputting the type,
 	 don't duplicate it.  */
-      if (typevec[TYPE_SYMTAB_ADDRESS (type)] == TYPE_DEFINED
+      if (typevec[TYPE_SYMTAB_ADDRESS (type)].status == TYPE_DEFINED
 	  && TYPE_NAME (TREE_TYPE (decl)) == decl)
 	return;
 #endif
@@ -1625,10 +1714,7 @@ dbxout_symbol (decl, local)
 		&& !TREE_ASM_WRITTEN (TYPE_NAME (type))
 		/* Distinguish the implicit typedefs of C++
 		   from explicit ones that might be found in C.  */
-                && (!strcmp (lang_identify (), "cplusplus") 
-		    /* The following line maybe unnecessary;
-		       in 2.6, try removing it.  */
-		    || DECL_SOURCE_LINE (decl) == 0))
+                && DECL_ARTIFICIAL (decl))
 	      {
 		tree name = TYPE_NAME (type);
 		if (TREE_CODE (name) == TYPE_DECL)
@@ -1653,7 +1739,10 @@ dbxout_symbol (decl, local)
 	    if ((TREE_CODE (type) == RECORD_TYPE
 		 || TREE_CODE (type) == UNION_TYPE
 		 || TREE_CODE (type) == QUAL_UNION_TYPE)
-		&& TYPE_NAME (type) == decl)
+		&& TYPE_NAME (type) == decl
+		/* Distinguish the implicit typedefs of C++
+		   from explicit ones that might be found in C.  */
+                && DECL_ARTIFICIAL (decl))
 	      {
 		if (use_gnu_debug_info_extensions && have_used_extensions)
 		  {
@@ -1774,13 +1863,17 @@ dbxout_symbol (decl, local)
 	  /* else it is something we handle like a normal variable.  */
 	}
 
-      DECL_RTL (decl) = eliminate_regs (DECL_RTL (decl), 0, NULL_RTX);
+      DECL_RTL (decl) = eliminate_regs (DECL_RTL (decl), 0, NULL_RTX, 0);
 #ifdef LEAF_REG_REMAP
       if (leaf_function)
 	leaf_renumber_regs_insn (DECL_RTL (decl));
 #endif
 
       dbxout_symbol_location (decl, type, 0, DECL_RTL (decl));
+      break;
+      
+    default:
+      break;
     }
 }
 
@@ -2086,8 +2179,8 @@ dbxout_parms (parms)
 	/* Perform any necessary register eliminations on the parameter's rtl,
 	   so that the debugging output will be accurate.  */
 	DECL_INCOMING_RTL (parms)
-	  = eliminate_regs (DECL_INCOMING_RTL (parms), 0, NULL_RTX);
-	DECL_RTL (parms) = eliminate_regs (DECL_RTL (parms), 0, NULL_RTX);
+	  = eliminate_regs (DECL_INCOMING_RTL (parms), 0, NULL_RTX, 0);
+	DECL_RTL (parms) = eliminate_regs (DECL_RTL (parms), 0, NULL_RTX, 0);
 #ifdef LEAF_REG_REMAP
 	if (leaf_function)
 	  {
@@ -2513,6 +2606,14 @@ dbxout_function (decl)
   dbxout_block (DECL_INITIAL (decl), 0, DECL_ARGUMENTS (decl));
 #ifdef DBX_OUTPUT_FUNCTION_END
   DBX_OUTPUT_FUNCTION_END (asmfile, decl);
+#endif
+#if defined(ASM_OUTPUT_SECTION_NAME)
+  if (use_gnu_debug_info_extensions
+#if defined(NO_DBX_FUNCTION_END)
+      && ! NO_DBX_FUNCTION_END
+#endif
+      )
+    dbxout_function_end ();
 #endif
 }
 #endif /* DBX_DEBUGGING_INFO */

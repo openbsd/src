@@ -1,8 +1,7 @@
 /* This is a software floating point library which can be used instead of
    the floating point routines in libgcc1.c for targets without hardware
-   floating point.  */
-
-/* Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   floating point. 
+ Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -61,6 +60,49 @@ Boston, MA 02111-1307, USA.  */
    NO_NANS: Disable nan and infinity handling
    SMALL_MACHINE: Useful when operations on QIs and HIs are faster
      than on an SI */
+
+/* We don't currently support extended floats (long doubles) on machines
+   without hardware to deal with them.
+
+   These stubs are just to keep the linker from complaining about unresolved
+   references which can be pulled in from libio & libstdc++, even if the
+   user isn't using long doubles.  However, they may generate an unresolved
+   external to abort if abort is not used by the function, and the stubs
+   are referenced from within libc, since libgcc goes before and after the
+   system library.  */
+
+#ifdef EXTENDED_FLOAT_STUBS
+__truncxfsf2 (){ abort(); }
+__extendsfxf2 (){ abort(); }
+__addxf3 (){ abort(); }
+__divxf3 (){ abort(); }
+__eqxf2 (){ abort(); }
+__extenddfxf2 (){ abort(); }
+__gtxf2 (){ abort(); }
+__lexf2 (){ abort(); }
+__ltxf2 (){ abort(); }
+__mulxf3 (){ abort(); }
+__negxf2 (){ abort(); }
+__nexf2 (){ abort(); }
+__subxf3 (){ abort(); }
+__truncxfdf2 (){ abort(); }
+
+__trunctfsf2 (){ abort(); }
+__extendsftf2 (){ abort(); }
+__addtf3 (){ abort(); }
+__divtf3 (){ abort(); }
+__eqtf2 (){ abort(); }
+__extenddftf2 (){ abort(); }
+__gttf2 (){ abort(); }
+__letf2 (){ abort(); }
+__lttf2 (){ abort(); }
+__multf3 (){ abort(); }
+__negtf2 (){ abort(); }
+__netf2 (){ abort(); }
+__subtf3 (){ abort(); }
+__trunctfdf2 (){ abort(); }
+#else	/* !EXTENDED_FLOAT_STUBS, rest of file */
+
 
 typedef SFtype __attribute__ ((mode (SF)));
 typedef DFtype __attribute__ ((mode (DF)));
@@ -199,7 +241,7 @@ typedef unsigned int UDItype __attribute__ ((mode (DI)));
 /* numeric parameters */
 /* F_D_BITOFF is the number of bits offset between the MSB of the mantissa
    of a float and of a double. Assumes there are only two float types.
-   (double::FRAC_BITS+double::NGARGS-(float::FRAC_BITS-float::NGARDS))
+   (double::FRAC_BITS+double::NGARDS-(float::FRAC_BITS-float::NGARDS))
  */
 #define F_D_BITOFF (52+8-(23+7))
 
@@ -414,7 +456,7 @@ pack_d ( fp_number_type *  src)
     }
 
   /* We previously used bitfields to store the number, but this doesn't
-     handle little/big endian systems conviently, so use shifts and
+     handle little/big endian systems conveniently, so use shifts and
      masks */
 #ifdef FLOAT_BIT_ORDER_MISMATCH
   dst.bits.fraction = fraction;
@@ -441,7 +483,7 @@ static void
 unpack_d (FLO_union_type * src, fp_number_type * dst)
 {
   /* We previously used bitfields to store the number, but this doesn't
-     handle little/big endian systems conviently, so use shifts and
+     handle little/big endian systems conveniently, so use shifts and
      masks */
   fractype fraction;
   int exp;
@@ -504,13 +546,13 @@ unpack_d (FLO_union_type * src, fp_number_type * dst)
       else
 	{
 	  /* Non zero fraction, means nan */
-	  if (sign)
+	  if (fraction & QUIET_NAN)
 	    {
-	      dst->class = CLASS_SNAN;
+	      dst->class = CLASS_QNAN;
 	    }
 	  else
 	    {
-	      dst->class = CLASS_QNAN;
+	      dst->class = CLASS_SNAN;
 	    }
 	  /* Keep the fraction part as the nan number */
 	  dst->fraction.ll = fraction;
@@ -901,13 +943,15 @@ _fpdiv_parts (fp_number_type * a,
     {
       return b;
     }
+
+  a->sign = a->sign ^ b->sign;
+
   if (isinf (a) || iszero (a))
     {
       if (a->class == b->class)
 	return nan ();
       return a;
     }
-  a->sign = a->sign ^ b->sign;
 
   if (isinf (b))
     {
@@ -1229,7 +1273,7 @@ float_to_si (FLO_type arg_a)
     return 0;
   /* get reasonable MAX_SI_INT... */
   if (isinf (&a))
-    return a.sign ? MAX_SI_INT : (-MAX_SI_INT)-1;
+    return a.sign ? (-MAX_SI_INT)-1 : MAX_SI_INT;
   /* it is a number, but a small one */
   if (a.normal_exp < 0)
     return 0;
@@ -1256,19 +1300,19 @@ float_to_usi (FLO_type arg_a)
     return 0;
   if (isnan (&a))
     return 0;
-  /* get reasonable MAX_USI_INT... */
-  if (isinf (&a))
-    return a.sign ? MAX_USI_INT : 0;
   /* it is a negative number */
   if (a.sign)
     return 0;
+  /* get reasonable MAX_USI_INT... */
+  if (isinf (&a))
+    return MAX_USI_INT;
   /* it is a number, but a small one */
   if (a.normal_exp < 0)
     return 0;
   if (a.normal_exp > 31)
     return MAX_USI_INT;
   else if (a.normal_exp > (FRACBITS + NGARDS))
-    return a.fraction.ll << ((FRACBITS + NGARDS) - a.normal_exp);
+    return a.fraction.ll << (a.normal_exp - (FRACBITS + NGARDS));
   else
     return a.fraction.ll >> ((FRACBITS + NGARDS) - a.normal_exp);
 }
@@ -1343,10 +1387,19 @@ SFtype
 df_to_sf (DFtype arg_a)
 {
   fp_number_type in;
+  USItype sffrac;
 
   unpack_d ((FLO_union_type *) & arg_a, &in);
-  return __make_fp (in.class, in.sign, in.normal_exp,
-		    in.fraction.ll >> F_D_BITOFF);
+
+  sffrac = in.fraction.ll >> F_D_BITOFF;
+
+  /* We set the lowest guard bit in SFFRAC if we discarded any non
+     zero bits.  */
+  if ((in.fraction.ll & (((USItype) 1 << F_D_BITOFF) - 1)) != 0)
+    sffrac |= 1;
+
+  return __make_fp (in.class, in.sign, in.normal_exp, sffrac);
 }
 
 #endif
+#endif /* !EXTENDED_FLOAT_STUBS */

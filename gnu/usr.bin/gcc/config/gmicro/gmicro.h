@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Gmicro (TRON) version.
-   Copyright (C) 1987, 1988, 1989, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 95, 96, 1997 Free Software Foundation, Inc.
    Contributed by Masanobu Yuhara, Fujitsu Laboratories LTD.
    (yuhara@flab.fujitsu.co.jp)
 
@@ -460,10 +460,10 @@ extern enum reg_class regno_reg_class[];
    for the Gmicro. The option name may be changed in the future. */
 
 #define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE)   \
-  ((TARGET_RTD && TREE_CODE (FUNTYPE) != IDENTIFIER_NODE	\
+  ((TARGET_RTD && (!(FUNDECL) || TREE_CODE (FUNDECL) != IDENTIFIER_NODE)	\
     && (TYPE_ARG_TYPES (FUNTYPE) == 0				\
 	|| (TREE_VALUE (tree_last (TYPE_ARG_TYPES (FUNTYPE)))	\
-	    = void_type_node)))					\
+	    == void_type_node)))					\
    ? (SIZE) : 0)
 
 /* Define how to find the value returned by a function.
@@ -516,7 +516,7 @@ extern enum reg_class regno_reg_class[];
 
    On the Gmicro, the offset starts at 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
  ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -1279,18 +1279,6 @@ extern enum reg_class regno_reg_class[];
 
 #define BSS_SECTION_ASM_OP ".section bss,data,align=4"
 
-#define EXTRA_SECTIONS in_bss
-
-#define EXTRA_SECTION_FUNCTIONS	\
-void								\
-bss_section ()							\
-{								\
-    if (in_section != in_bss) {					\
-	fprintf (asm_out_file, "%s\n", BSS_SECTION_ASM_OP);	\
-	in_section = in_bss;					\
-    }								\
-}
-
 /* Output at beginning of assembler file.
    It is not appropriate for this to print a list of the options used,
    since that's not the convention that we use.  */
@@ -1365,11 +1353,9 @@ bss_section ()							\
 }
 
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for ROMP chip.
-   Copyright (C) 1989, 1991, 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1991, 1993, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@nyu.edu)
 
 This file is part of GNU CC.
@@ -591,7 +591,7 @@ struct rt_cargs {int gregs, fregs; };
    when the function gets a structure-value-address as an
    invisible first argument.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
   (CUM).gregs = 0,				\
   (CUM).fregs = 0
 
@@ -1419,11 +1419,9 @@ extern int romp_debugger_arg_correction();
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs ("\t.globl ", FILE); assemble_name (FILE, NAME); fputs ("\n", FILE);} while (0)
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1508,10 +1506,9 @@ extern int romp_debugger_arg_correction();
   fprintf (FILE, "\t.long L%d\n", VALUE)
 
 /* This is how to output an element of a case-vector that is relative.
-   (ROMP does not use such vectors,
-   but we must define this macro anyway.)  */
+   Don't define this if it is not supported. */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  abort ()
+/* #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) */
 
 /* This is how to output an assembler line
    that says to advance the location counter

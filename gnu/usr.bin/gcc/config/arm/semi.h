@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  ARM on semi-hosted platform
-   Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (richard.earnshaw@armltd.co.uk)
 
 This file is part of GNU CC.
@@ -23,16 +23,18 @@ Boston, MA 02111-1307, USA.  */
 
 #define LIB_SPEC "-lc"
 
-#define LINK_SPEC "-X"
-
 #define CPP_PREDEFINES \
-    "-Darm -Dsemi -Acpu(arm) -Amachine(arm)"
+    "-Darm -D__semi__ -Acpu(arm) -Amachine(arm)"
+
+#define ASM_SPEC "%{mbig-endian:-EB}"
+
+#define LINK_SPEC "%{mbig-endian:-EB} -X"
 
 #define TARGET_VERSION fputs (" (ARM/semi-hosted)", stderr);
 
-#define TARGET_DEFAULT 8	/* APCS-32 (ARM 6) */
+#define TARGET_DEFAULT ARM_FLAG_APCS_32
 
-/* Currently we have no support for atexit.  */
-#define EXIT_BODY {}
+#include "arm/aout.h"
 
-#include "arm/arm.h"
+#undef CPP_APCS_PC_DEFAULT_SPEC
+#define CPP_APCS_PC_DEFAULT_SPEC "-D__APCS_32__"

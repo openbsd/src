@@ -1,5 +1,5 @@
 # We have to use the cross-compiler we just built to compile it.
-CC = gcc -b $(target)
+CC = gcc -b $(host)
 
 # Need those to compile binaries running on host machine.
 # It is configured by
@@ -23,6 +23,9 @@ HOST_OBSTACK=$(OBSTACK)
 # for the target are already fixed. And /usr/include is for host, not
 # target.
 FIXINCLUDES=Makefile.in
+
+# Don't run fixproto either
+STMP_FIXPROTO =
 
 # Cause installation using install-build. We do nothing here.
 INSTALL_TARGET = install-build

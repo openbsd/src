@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Clipper version.
-   Copyright (C) 1987, 88, 91, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 91, 93-95, 1996 Free Software Foundation, Inc.
    Contributed by Holger Teutsch (holger@hotbso.rhein-main.de)
 
 This file is part of GNU CC.
@@ -461,7 +461,7 @@ struct _clipper_cum_args { int num; int size; };
 
    clipper passes the address of a struct in r0, set num = 1 in this case */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME) \
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT) \
   ((CUM).num = ((FNTYPE) != 0 && aggregate_value_p (TREE_TYPE (FNTYPE))), \
    (CUM).size = 0)
 
@@ -1055,6 +1055,7 @@ do									      \
 
 /* This says how to output an assembler line
    to define a local common symbol.  */
+/* ??? The use of .bss here seems odd.  */
 
 #define ASM_OUTPUT_ALIGNED_LOCAL(FILE,NAME,SIZE,ALIGN)	\
 ( data_section (),					\

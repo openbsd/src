@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for mc680x0 running NeXTSTEP
-   Copyright (C) 1989, 90, 91, 92, 93, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1989, 90-94, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,12 +20,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include "m68k/m68k.h"
 #include "nextstep.h"
-#include "machmode.h"
-#include "real.h"
 
 /* See m68k.h.  0407 means 68040 (or 68030 or 68020, with 68881/2).  */
 
-#define TARGET_DEFAULT 0407
+#define TARGET_DEFAULT (MASK_68040|MASK_BITFIELD|MASK_68881|MASK_68020)
 
 /* Boundary (in *bits*) on which stack pointer should be aligned.  */
 
@@ -34,7 +32,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
-#define CPP_PREDEFINES "-Dmc68000 -Dm68k -DNeXT -Dunix -D__MACH__ -D__BIG_ENDIAN__ -D__ARCHITECTURE__=\"m68k\" -Asystem(unix)  -Asystem(mach) -Acpu(m68k) -Amachine(m68k)"
+#define CPP_PREDEFINES "-Dmc68000 -Dm68k -DNeXT -Dunix -D__MACH__ -D__BIG_ENDIAN__ -D__ARCHITECTURE__=\"m68k\" -Asystem(unix)  -Asystem(mach) -Acpu(m68k) -Amachine(m68k) -D_NEXT_SOURCE"
 
 /* Every structure or union's size must be a multiple of 2 bytes.
    (Why isn't this in m68k.h?)  */
@@ -174,7 +172,7 @@ Boston, MA 02111-1307, USA.  */
    Previously, references to labels generated pc-relative addressing modes
    while references to symbol names generated absolute addressing modes.  */
 
-#undef	GO_IF_INDEXABLE_BASE(X, ADDR)
+#undef	GO_IF_INDEXABLE_BASE
 #define GO_IF_INDEXABLE_BASE(X, ADDR)	\
 { if (LEGITIMATE_BASE_REG_P (X)) goto ADDR; }
 
@@ -183,21 +181,13 @@ Boston, MA 02111-1307, USA.  */
 #define OBJC_FORWARDING_STACK_OFFSET 8
 #define OBJC_FORWARDING_MIN_OFFSET 8
 
-/* INITIALIZE_TRAMPOLINE is changed so that it also enables executable
-   stack.  The __enable_execute_stack also clears the insn cache. */
+/* FINALIZE_TRAMPOLINE enables executable stack.  The
+   __enable_execute_stack also clears the insn cache. */
 
-/* NOTE: part of this is copied from m68k.h */
-#undef INITIALIZE_TRAMPOLINE
-#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)                          \
-{                                                                          \
-  rtx _addr, _func;                                                        \
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 2)), TRAMP);   \
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 18)), CXT);    \
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 22)), FNADDR); \
-  _addr = memory_address (SImode, (TRAMP));                                  \
-  _func =  gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack");          \
-  emit_library_call (_func, 0, VOIDmode, 1, _addr, Pmode);                   \
-}
+#undef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP) \
+  emit_library_call(gen_rtx(SYMBOL_REF, Pmode, "__enable_execute_stack"), \
+		    0, VOIDmode, 1, memory_address(SImode, (TRAMP)), Pmode)
 
 /* A C expression used to clear the instruction cache from 
    address BEG to address END.   On NeXTSTEP this i a system trap. */

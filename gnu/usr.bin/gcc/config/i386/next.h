@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for Intel x86 CPU running NeXTSTEP
-   Copyright (C) 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -124,8 +124,8 @@ Boston, MA 02111-1307, USA.  */
 
    GAS requires the %cl argument, so override unx386.h. */
 
-#undef	AS3_SHIFT_DOUBLE
-#define AS3_SHIFT_DOUBLE(a,b,c,d) AS3 (a,b,c,d)
+#undef	SHIFT_DOUBLE_OMITS_COUNT
+#define SHIFT_DOUBLE_OMITS_COUNT 0
 
 /* Print opcodes the way that GAS expects them. */
 #define GAS_MNEMONICS 1
@@ -216,7 +216,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef	RETURN_POPS_ARGS
 #define RETURN_POPS_ARGS(FUNDECL,FUNTYPE,SIZE) 				\
-  (TREE_CODE (FUNTYPE) == IDENTIFIER_NODE			\
+  ((FUNDECL) && TREE_CODE (FUNDECL) == IDENTIFIER_NODE		\
    ? 0								\
    : (TARGET_RTD						\
       && (TYPE_ARG_TYPES (FUNTYPE) == 0				\

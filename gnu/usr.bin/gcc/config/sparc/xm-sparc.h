@@ -1,5 +1,5 @@
 /* Configuration for GNU C-compiler for Sun Sparc.
-   Copyright (C) 1988, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1993, 1995, 1997 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com).
 
 This file is part of GNU CC.

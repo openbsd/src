@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Clipper/Clix version.
-   Copyright (C) 1988, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1993, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,10 +18,6 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include "clipper/clipper.h"
-
-#include "svr3.h"
-
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #define CPP_PREDEFINES "-Dclipper -Dunix -Asystem(unix) -Asystem(svr3) -Acpu(clipper) -Amachine(clipper)"
@@ -34,6 +30,8 @@ Boston, MA 02111-1307, USA.  */
 #define ENDFILE_SPEC "crtend.o%s crtn.o%s"
 
 #undef LIB_SPEC
+
+#define TARGET_MEM_FUNCTIONS
 
 #undef HAVE_ATEXIT
 #define HAVE_ATEXIT

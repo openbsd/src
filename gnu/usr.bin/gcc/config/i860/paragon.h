@@ -1,10 +1,9 @@
 /* Target definitions for GNU compiler for Intel 80860 running OSF/1AD
-   Copyright (C) 1991 Free Software Foundation, Inc.
-
-   Based upon original work of Ron Guilmette (rfg@netcom.com).
-   Whacked into submission by Andy Pfiffer (andyp@ssd.intel.com).
+   Copyright (C) 1991, 1996 Free Software Foundation, Inc.
+   Based upon original work of Ron Guilmette (rfg@monkeys.com).
+   Contributed by Andy Pfiffer (andyp@ssd.intel.com).
    Partially inspired by
-	Pete Beckman @ Indiana University (beckman@cs.indiana.edu)
+	Pete Beckman of Indiana University (beckman@cs.indiana.edu)
 	Harry Dolan of Intel Corporation (dolan@ssd.intel.com)
 
 This file is part of GNU CC.
@@ -23,9 +22,6 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-
-#include "i860/i860.h"
-#include "svr3.h"
 
 /* For the sake of libgcc2.c, indicate target supports atexit.  */
 #define HAVE_ATEXIT
@@ -54,17 +50,17 @@ Boston, MA 02111-1307, USA.  */
 #define CPP_SPEC "%{mnx:-D__NODE}"
 
 /* autoinit.o autolaunches NX applications */
-#define STARTFILE_SPEC "-ycrt0.o%s %{mnx:-yoptions/autoinit.o%s}"
+#define STARTFILE_SPEC "crt0.o%s %{mnx:-yoptions/autoinit.o%s}"
 
 /* libic.a is the PGI intrinsic library */
 /* libpm.o and guard.o are for the performance monitoring modules (ignored) */
 /* /usr/lib/noieee contains non-IEEE compliant (but faster) math routines */
 #if	HAVE_DASH_G
-#define LIB_SPEC "%{mnoieee:-L/usr/lib/noieee} -L/usr/lib %{mnx:-lnx -lmach} %
-{g*:-lg} -lc -lic"
+#define LIB_SPEC \
+"%{mnoieee:-L/usr/lib/noieee} %{mnx:-lnx} %{g*:-lg} -lc -lmach -lc -lic"
 #else	/* HAVE_DASH_G */
 /* can't use -g for -lg; libg.a doesn't have a symbol table and ld complains */
-#define LIB_SPEC "%{mnoieee:-L/usr/lib/noieee} -L/usr/lib %{mnx:-lnx -lmach} -lc -lic"
+#define LIB_SPEC "%{mnoieee:-L/usr/lib/noieee} %{mnx:-lnx} -lc -lmach -lc -lic"
 #endif	/* HAVE_DASH_G */
 
 /* Get rid of definition from svr3.h.  */
@@ -237,7 +233,4 @@ Boston, MA 02111-1307, USA.  */
 
 #define	BSS_SECTION_ASM_OP	".bss"		/* XXX */
 #undef EXTRA_SECTIONS
-#define	EXTRA_SECTIONS	in_bss
 #undef EXTRA_SECTION_FUNCTIONS
-#define	EXTRA_SECTION_FUNCTIONS		\
-	BSS_SECTION_FUNCTION

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.
    Motorola m88100 running DG/UX.
-   Copyright (C) 1988, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1988, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@mcc.com)
    Currently maintained by (gcc@dg-rtp.dg.com)
 
@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
   (TARGET_SVR4 ? DWARF_DEBUG : SDB_DEBUG)
 
 #ifndef VERSION_INFO2
-#define VERSION_INFO2   "$Revision: 1.1.1.1 $"
+#define VERSION_INFO2   "$Revision: 1.1.1.2 $"
 #endif
 #ifndef NO_BUGS
 #define AS_BUG_IMMEDIATE_LABEL
@@ -83,24 +83,13 @@ Boston, MA 02111-1307, USA.  */
    -traditional, or restricting include files to one specific source
    target, specify full DG/UX features.  */
 #undef	CPP_SPEC
-#define	CPP_SPEC "%{!m88000:%{!m88100:%{m88110:-D__m88110__}}} \
-		  %{!m88000:%{!m88110:%{m88100:-D__m88100__}}} \
-		  %{!ansi:%{!traditional:-D__OPEN_NAMESPACE__}} \
-		  %{msvr3:-D_M88KBCS_TARGET} %{!msvr3:-D_DGUX_TARGET}"
+#define	CPP_SPEC "%(cpp_cpu) %{msvr3:-D_M88KBCS_TARGET} %{!msvr3:-D_DGUX_TARGET}"
 
 /* Assembler support (-V, silicon filter, legends for mxdb).  */
 #undef	ASM_SPEC
-#define ASM_SPEC "\
-%{V} %{v:%{!V:-V}} %{pipe:%{!.s: - }\
-%{!msvr3:%{!m88110:-KV3 }%{m88110:-KV04.00 }}}\
-%{g:\
-%{mno-legend:-Wc,off}\
-%{!mno-legend:-Wc,-fix-bb,-s\"%i\"\
-%{traditional:,-lc}%{!traditional:,-lansi-c}\
-%{mstandard:,-keep-std}\
-%{mkeep-coff:,-keep-coff}\
-%{mexternal-legend:,-external}\
-%{mocs-frame-position:,-ocs}}}"
+#define ASM_SPEC "%{pipe:%{!.s: - }\
+		   %{!msvr3:%{!m88110:-KV3 }%{m88110:-KV04.00 }}}\
+		  %(asm_cpu)"
 
 /* Override svr4.h.  */
 #undef	ASM_FINAL_SPEC
@@ -120,19 +109,60 @@ Boston, MA 02111-1307, USA.  */
 #undef	LIB_SPEC
 #define LIB_SPEC "%{!msvr3:%{!shared:-lstaticdgc}} %{!shared:%{!symbolic:-lc}}"
 #undef	LINK_SPEC
-#define LINK_SPEC "%{z*} %{h*} %{V} %{v:%{!V:-V}} \
+#define LINK_SPEC "%{z*} %{h*} %{v:-V} \
 		   %{static:-dn -Bstatic} \
 		   %{shared:-G -dy} \
 		   %{symbolic:-Bsymbolic -G -dy} \
 		   %{pg:-L/usr/lib/libp}%{p:-L/usr/lib/libp}"
 #undef	STARTFILE_SPEC
-#define STARTFILE_SPEC "%{!shared:%{!symbolic:%{pg:gcrt0.o%s} \
+#define STARTFILE_SPEC "%(startfile_default)"
+
+
+/* This macro defines names of additional specifications to put in the specs
+   that can be used in various specifications like CC1_SPEC.  Its definition
+   is an initializer with a subgrouping for each command option.
+
+   Each subgrouping contains a string constant, that defines the
+   specification name, and a string constant that used by the GNU CC driver
+   program.
+
+   Do not define this macro if it does not need to do anything.  */
+
+#define EXTRA_SPECS                                     \
+  { "cpp_cpu",          CPP_CPU_SPEC },                 \
+  { "asm_cpu",          ASM_CPU_SPEC },                 \
+  { "startfile_default", STARTFILE_DEFAULT_SPEC },  \
+  { "startfile_crtbegin", STARTFILE_CRTBEGIN_SPEC }
+   
+/* Keep this left justified, no white space is allowed between
+   the arguments to the -Wc option */
+#define ASM_CPU_SPEC "\
+%{v:-V} \
+%{g:\
+%{mno-legend:-Wc,off}\
+%{!mno-legend:-Wc,-fix-bb,-s\"%i\"\
+%{traditional:,-lc}\
+%{!traditional:,-lansi-c}\
+%{mstandard:,-keep-std}\
+%{mexternal-legend:,-external}\
+%{mocs-frame-position:,-ocs}}}"
+
+#define CPP_CPU_SPEC "\
+                  %{!m88000:%{!m88100:%{m88110:-D__m88110__}}} \
+		  %{!m88000:%{!m88110:%{m88100:-D__m88100__}}} \
+		  %{!ansi:%{!traditional:-D__OPEN_NAMESPACE__}}"
+
+#define STARTFILE_DEFAULT_SPEC "\
+                        %{!shared:%{!symbolic:%{pg:gcrt0.o%s} \
 			 %{!pg:%{p:/lib/mcrt0.o}%{!p:/lib/crt0.o}} \
-			 %{msvr3:m88kdgux.ld%s bcscrtbegin.o%s} \
-			 %{!msvr3:crtbegin.o%s} \
+			  %(startfile_crtbegin) \
 			 %{svr4:%{ansi:/lib/values-Xc.o} \
 			  %{!ansi:%{traditional:/lib/values-Xt.o} \
 			   %{!traditional:/usr/lib/values-Xa.o}}}}}"
+
+#define STARTFILE_CRTBEGIN_SPEC "\
+			 %{msvr3:m88kdgux.ld%s bcscrtbegin.o%s} \
+			 %{!msvr3:crtbegin.o%s}"
 
 #undef	GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/opt/g++/lib/g++-include"

@@ -1,5 +1,5 @@
 /* Bytecode conversion definitions for GNU C-compiler.
-   Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,6 +20,10 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
+#include <stdio.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 #include "tree.h"
 #include "rtl.h"
 #include "machmode.h"
@@ -33,7 +37,6 @@ Boston, MA 02111-1307, USA.  */
 #define obstack_chunk_free free
 
 extern char *xmalloc ();
-extern void free ();
 
 /* Table relating interpreter typecodes to machine modes.  */
 #define GET_TYPECODE_MODE(CODE) (typecode_mode[((int) CODE)])
@@ -56,8 +59,8 @@ static enum typecode unsigned_mode_to_code_map[MAX_MACHINE_MODE+1];
 static struct conversion_recipe
 {
   unsigned char *opcodes;	/* Bytecodes to emit in order.  */
-  int nopcodes;			/* Count of bytecodes. */
-  int cost;			/* A rather arbitrary cost function. */
+  int nopcodes;			/* Count of bytecodes.  */
+  int cost;			/* A rather arbitrary cost function.  */
 } conversion_recipe[NUM_TYPECODES][NUM_TYPECODES];
 
 /* Binary operator tables.  */
@@ -406,6 +409,7 @@ struct conversion_list
    * Either sign extensions or zero extensions may be present, but not both.
    * No widening conversions occur after a signed/unsigned conversion.
    * The sequence of sizes must be strict nonincreasing or nondecreasing.  */
+
 static int
 conversion_reasonable_p (conversion, list)
      struct conversion_info *conversion;
@@ -518,6 +522,7 @@ conversion_reasonable_p (conversion, list)
 
 /* Exhaustively search all reasonable conversions to find one to
    convert the given types.  */
+
 static struct conversion_recipe
 deduce_conversion (from, to)
      enum typecode from, to;
@@ -535,9 +540,9 @@ deduce_conversion (from, to)
 
   obstack_init (&recipe_obstack);
   curr.next = (struct rl *) obstack_alloc (&recipe_obstack, sizeof (struct rl));
-  curr.next->list =
-    (struct conversion_list *) obstack_alloc (&recipe_obstack,
-					      sizeof (struct conversion_list));
+  curr.next->list
+    = (struct conversion_list *) obstack_alloc (&recipe_obstack,
+						sizeof (struct conversion_list));
   curr.next->list->opcode = -1;
   curr.next->list->to = from;
   curr.next->list->cost = 0;
@@ -615,6 +620,7 @@ deduce_conversion (from, to)
 
 
 /* Emit a conversion between the given scalar types.  */
+
 void
 emit_typecode_conversion (from, to)
      enum typecode from, to;
@@ -628,6 +634,7 @@ emit_typecode_conversion (from, to)
 
 
 /* Initialize mode_to_code_map[] */
+
 void
 bc_init_mode_to_code_map ()
 {
@@ -635,9 +642,9 @@ bc_init_mode_to_code_map ()
 
   for (mode = 0; mode < MAX_MACHINE_MODE + 1; mode++)
     {
-      signed_mode_to_code_map[mode] = 
-	unsigned_mode_to_code_map[mode] =
-	  LAST_AND_UNUSED_TYPECODE;
+      signed_mode_to_code_map[mode]
+	= unsigned_mode_to_code_map[mode]
+	= LAST_AND_UNUSED_TYPECODE;
     }
 
 #define DEF_MODEMAP(SYM, CODE, UCODE, CONST, LOAD, STORE) \
@@ -651,6 +658,7 @@ bc_init_mode_to_code_map ()
 }
 
 /* Given a machine mode return the preferred typecode.  */
+
 enum typecode
 preferred_typecode (mode, unsignedp)
      enum machine_mode mode;
@@ -669,6 +677,7 @@ preferred_typecode (mode, unsignedp)
 
 
 /* Expand a conversion between the given types.  */
+
 void
 bc_expand_conversion (from, to)
      tree from, to;
@@ -682,6 +691,7 @@ bc_expand_conversion (from, to)
 }
 
 /* Expand a conversion of the given type to a truth value.  */
+
 void
 bc_expand_truth_conversion (from)
      tree from;
@@ -693,6 +703,7 @@ bc_expand_truth_conversion (from)
 }
 
 /* Emit an appropriate binary operation.  */
+
 void
 bc_expand_binary_operation (optab, resulttype, arg0, arg1)
      struct binary_operator optab[];
@@ -734,6 +745,7 @@ bc_expand_binary_operation (optab, resulttype, arg0, arg1)
 }
 
 /* Emit an appropriate unary operation.  */
+
 void
 bc_expand_unary_operation (optab, resulttype, arg0)
      struct unary_operator optab[];
@@ -770,6 +782,7 @@ bc_expand_unary_operation (optab, resulttype, arg0)
 
 
 /* Emit an appropriate increment.  */
+
 void
 bc_expand_increment (optab, type)
      struct increment_operator optab[];

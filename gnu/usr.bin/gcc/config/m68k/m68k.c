@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Motorola 68000 family.
-   Copyright (C) 1987, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,8 +20,8 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* Some output-actions in m68k.md need these.  */
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -31,6 +31,7 @@ Boston, MA 02111-1307, USA.  */
 #include "insn-flags.h"
 #include "output.h"
 #include "insn-attr.h"
+#include "tree.h"
 
 /* Needed for use_return_insn.  */
 #include "flags.h"
@@ -53,6 +54,76 @@ static rtx find_addr_reg ();
 rtx legitimize_pic_address ();
 
 
+/* Alignment to use for loops and jumps */
+/* Specify power of two alignment used for loops. */
+char *m68k_align_loops_string;
+/* Specify power of two alignment used for non-loop jumps. */
+char *m68k_align_jumps_string;
+/* Specify power of two alignment used for functions. */
+char *m68k_align_funcs_string;
+
+/* Specify power of two alignment used for loops. */
+int m68k_align_loops;
+/* Specify power of two alignment used for non-loop jumps. */
+int m68k_align_jumps;
+/* Specify power of two alignment used for functions. */
+int m68k_align_funcs;
+
+/* Nonzero if the last compare/test insn had FP operands.  The
+   sCC expanders peek at this to determine what to do for the
+   68060, which has no fsCC instructions.  */
+int m68k_last_compare_had_fp_operands;
+
+/* Sometimes certain combinations of command options do not make
+   sense on a particular target machine.  You can define a macro
+   `OVERRIDE_OPTIONS' to take account of this.  This macro, if
+   defined, is executed once just after all the command options have
+   been parsed.
+
+   Don't use this macro to turn on various extra optimizations for
+   `-O'.  That is what `OPTIMIZATION_OPTIONS' is for.  */
+
+void
+override_options ()
+{
+  int def_align;
+
+  def_align = 1;
+
+  /* Validate -malign-loops= value, or provide default */
+  if (m68k_align_loops_string)
+    {
+      m68k_align_loops = atoi (m68k_align_loops_string);
+      if (m68k_align_loops < 1 || m68k_align_loops > MAX_CODE_ALIGN)
+	fatal ("-malign-loops=%d is not between 1 and %d",
+	       m68k_align_loops, MAX_CODE_ALIGN);
+    }
+  else
+    m68k_align_loops = def_align;
+
+  /* Validate -malign-jumps= value, or provide default */
+  if (m68k_align_jumps_string)
+    {
+      m68k_align_jumps = atoi (m68k_align_jumps_string);
+      if (m68k_align_jumps < 1 || m68k_align_jumps > MAX_CODE_ALIGN)
+	fatal ("-malign-jumps=%d is not between 1 and %d",
+	       m68k_align_jumps, MAX_CODE_ALIGN);
+    }
+  else
+    m68k_align_jumps = def_align;
+
+  /* Validate -malign-functions= value, or provide default */
+  if (m68k_align_funcs_string)
+    {
+      m68k_align_funcs = atoi (m68k_align_funcs_string);
+      if (m68k_align_funcs < 1 || m68k_align_funcs > MAX_CODE_ALIGN)
+	fatal ("-malign-functions=%d is not between 1 and %d",
+	       m68k_align_funcs, MAX_CODE_ALIGN);
+    }
+  else
+    m68k_align_funcs = def_align;
+}
+
 /* Emit a (use pic_offset_table_rtx) if we used PIC relocation in the 
    function at any time during the compilation process.  In the future 
    we should try and eliminate the USE if we can easily determine that 
@@ -94,6 +165,7 @@ output_function_prologue (stream, size)
   int num_saved_regs = 0;
   extern char call_used_regs[];
   int fsize = (size + 3) & -4;
+  int cfa_offset = INCOMING_FRAME_SP_OFFSET, cfa_store_offset = cfa_offset;
   
 
   if (frame_pointer_needed)
@@ -142,18 +214,76 @@ output_function_prologue (stream, size)
 		       reg_names[FRAME_POINTER_REGNUM], -fsize);
 #endif
 	}
+      if (dwarf2out_do_frame ())
+	{
+	  char *l = dwarf2out_cfi_label ();
+
+	  cfa_store_offset += 4;
+	  cfa_offset = cfa_store_offset;
+	  dwarf2out_def_cfa (l, FRAME_POINTER_REGNUM, cfa_offset);
+	  dwarf2out_reg_save (l, FRAME_POINTER_REGNUM, -cfa_store_offset);
+	  cfa_store_offset += fsize;
+	}
     }
   else if (fsize)
     {
-      /* Adding negative number is faster on the 68040.  */
       if (fsize + 4 < 0x8000)
 	{
-	/* asm_fprintf() cannot handle %. */
+#ifdef NO_ADDSUB_Q
+	  if (fsize + 4 <= 8)
+	    {
+	      if (!TARGET_5200)
+		{
+		  /* asm_fprintf() cannot handle %. */
 #ifdef MOTOROLA
-	  asm_fprintf (stream, "\tadd.w %0I%d,%Rsp\n", - (fsize + 4));
+		  asm_fprintf (stream, "\tsubq.w %OI%d,%Rsp\n", fsize + 4);
 #else
-	  asm_fprintf (stream, "\taddw %0I%d,%Rsp\n", - (fsize + 4));
+		  asm_fprintf (stream, "\tsubqw %OI%d,%Rsp\n", fsize + 4);
 #endif
+		}
+	      else
+		{
+		  /* asm_fprintf() cannot handle %. */
+#ifdef MOTOROLA
+		  asm_fprintf (stream, "\tsubq.l %OI%d,%Rsp\n", fsize + 4);
+#else
+		  asm_fprintf (stream, "\tsubql %OI%d,%Rsp\n", fsize + 4);
+#endif
+		}
+	    }
+	  else if (fsize + 4 <= 16 && TARGET_CPU32)
+	    {
+	      /* On the CPU32 it is faster to use two subqw instructions to
+		 subtract a small integer (8 < N <= 16) to a register. */
+	      /* asm_fprintf() cannot handle %. */
+#ifdef MOTOROLA
+	      asm_fprintf (stream, "\tsubq.w %OI8,%Rsp\n\tsubq.w %OI%d,%Rsp\n",
+			   fsize + 4);
+#else
+	      asm_fprintf (stream, "\tsubqw %OI8,%Rsp\n\tsubqw %OI%d,%Rsp\n",
+			   fsize + 4);
+#endif
+	    }
+	  else 
+#endif /* NO_ADDSUB_Q */
+	  if (TARGET_68040)
+	    {
+	      /* Adding negative number is faster on the 68040.  */
+	      /* asm_fprintf() cannot handle %. */
+#ifdef MOTOROLA
+	      asm_fprintf (stream, "\tadd.w %0I%d,%Rsp\n", - (fsize + 4));
+#else
+	      asm_fprintf (stream, "\taddw %0I%d,%Rsp\n", - (fsize + 4));
+#endif
+	    }
+	  else
+	    {
+#ifdef MOTOROLA
+	      asm_fprintf (stream, "\tlea (%d,%Rsp),%Rsp\n", - (fsize + 4));
+#else
+	      asm_fprintf (stream, "\tlea %Rsp@(%d),%Rsp\n", - (fsize + 4));
+#endif
+	    }
 	}
       else
 	{
@@ -163,6 +293,12 @@ output_function_prologue (stream, size)
 #else
 	  asm_fprintf (stream, "\taddl %0I%d,%Rsp\n", - (fsize + 4));
 #endif
+	}
+      if (dwarf2out_do_frame ())
+	{
+	  cfa_store_offset += fsize;
+	  cfa_offset = cfa_store_offset;
+	  dwarf2out_def_cfa ("", STACK_POINTER_REGNUM, cfa_offset);
 	}
     }
 #ifdef SUPPORT_SUN_FPA
@@ -176,20 +312,55 @@ output_function_prologue (stream, size)
 	asm_fprintf (stream, "\tfpmoved %s,%Rsp@-\n",
 		     reg_names[regno]);
 #endif
+	if (dwarf2out_do_frame ())
+	  {
+	    char *l = dwarf2out_cfi_label ();
+
+	    cfa_store_offset += 8;
+	    if (! frame_pointer_needed)
+	      {
+		cfa_offset = cfa_store_offset;
+		dwarf2out_def_cfa (l, STACK_POINTER_REGNUM, cfa_offset);
+	      }
+	    dwarf2out_reg_save (l, regno, -cfa_store_offset);
+	  }
       }
 #endif
-  for (regno = 16; regno < 24; regno++)
-    if (regs_ever_live[regno] && ! call_used_regs[regno])
-       mask |= 1 << (regno - 16);
-  if ((mask & 0xff) != 0)
+  if (TARGET_68881)
     {
+      for (regno = 16; regno < 24; regno++)
+	if (regs_ever_live[regno] && ! call_used_regs[regno])
+	  {
+	    mask |= 1 << (regno - 16);
+	    num_saved_regs++;
+	  }
+      if ((mask & 0xff) != 0)
+	{
 #ifdef MOTOROLA
-      asm_fprintf (stream, "\tfmovm %0I0x%x,-(%Rsp)\n", mask & 0xff);
+	  asm_fprintf (stream, "\tfmovm %0I0x%x,-(%Rsp)\n", mask & 0xff);
 #else
-      asm_fprintf (stream, "\tfmovem %0I0x%x,%Rsp@-\n", mask & 0xff);
+	  asm_fprintf (stream, "\tfmovem %0I0x%x,%Rsp@-\n", mask & 0xff);
 #endif
+	  if (dwarf2out_do_frame ())
+	    {
+	      char *l = dwarf2out_cfi_label ();
+	      int n_regs;
+
+	      cfa_store_offset += num_saved_regs * 12;
+	      if (! frame_pointer_needed)
+		{
+		  cfa_offset = cfa_store_offset;
+		  dwarf2out_def_cfa (l, STACK_POINTER_REGNUM, cfa_offset);
+		}
+	      for (regno = 16, n_regs = 0; regno < 24; regno++)
+		if (mask & (1 << (regno - 16)))
+		  dwarf2out_reg_save (l, regno,
+				      -cfa_store_offset + n_regs++ * 12);
+	    }
+	}
+      mask = 0;
+      num_saved_regs = 0;
     }
-  mask = 0;
   for (regno = 0; regno < 16; regno++)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
@@ -203,7 +374,15 @@ output_function_prologue (stream, size)
     }
 
 #if NEED_PROBE
-  fprintf (stream, "\ttstl sp@(%d)\n", NEED_PROBE - num_saved_regs * 4);
+#ifdef MOTOROLA
+#ifdef CRDS
+  asm_fprintf (stream, "\ttstl %d(%Rsp)\n", NEED_PROBE - num_saved_regs * 4);
+#else
+  asm_fprintf (stream, "\ttst.l %d(%Rsp)\n", NEED_PROBE - num_saved_regs * 4);
+#endif
+#else
+  asm_fprintf (stream, "\ttstl %Rsp@(%d)\n", NEED_PROBE - num_saved_regs * 4);
+#endif
 #endif
 
   if (num_saved_regs <= 2)
@@ -218,21 +397,81 @@ output_function_prologue (stream, size)
       /* Undo the work from above. */
       for (i = 0; i< 16; i++)
         if (mask & (1 << i))
-          asm_fprintf (stream,
+	  {
+	    asm_fprintf (stream,
 #ifdef MOTOROLA
-		       "\t%Omove.l %s,-(%Rsp)\n",
+			 "\t%Omove.l %s,-(%Rsp)\n",
 #else
-		       "\tmovel %s,%Rsp@-\n",
+			 "\tmovel %s,%Rsp@-\n",
 #endif
-		       reg_names[15 - i]);
+			 reg_names[15 - i]);
+	    if (dwarf2out_do_frame ())
+	      {
+		char *l = dwarf2out_cfi_label ();
+
+		cfa_store_offset += 4;
+ 		if (! frame_pointer_needed)
+ 		  {
+ 		    cfa_offset = cfa_store_offset;
+ 		    dwarf2out_def_cfa (l, STACK_POINTER_REGNUM, cfa_offset);
+ 		  }
+ 		dwarf2out_reg_save (l, 15 - i, -cfa_store_offset);
+	      }
+	  }
     }
   else if (mask)
     {
+      if (TARGET_5200)
+	{
+	  /* The coldfire does not support the predecrement form of the 
+	     movml instruction, so we must adjust the stack pointer and
+	     then use the plain address register indirect mode.  We also
+	     have to invert the register save mask to use the new mode.
+
+	     FIXME: if num_saved_regs was calculated earlier, we could
+	     combine the stack pointer adjustment with any adjustment
+	     done when the initial stack frame is created.  This would
+	     save an instruction */
+	     
+	  int newmask = 0;
+	  int i;
+
+	  for (i = 0; i < 16; i++)
+	    if (mask & (1 << i))
+		newmask |= (1 << (15-i));
+
 #ifdef MOTOROLA
-      asm_fprintf (stream, "\tmovm.l %0I0x%x,-(%Rsp)\n", mask);
+	  asm_fprintf (stream, "\tlea (%d,%Rsp),%Rsp\n", -num_saved_regs*4);
+	  asm_fprintf (stream, "\tmovm.l %0I0x%x,(%Rsp)\n", newmask);
 #else
-      asm_fprintf (stream, "\tmoveml %0I0x%x,%Rsp@-\n", mask);
+	  asm_fprintf (stream, "\tlea %Rsp@(%d),%Rsp\n", -num_saved_regs*4);
+	  asm_fprintf (stream, "\tmoveml %0I0x%x,%Rsp@\n", newmask);
 #endif
+	}
+      else
+	{
+#ifdef MOTOROLA
+	  asm_fprintf (stream, "\tmovm.l %0I0x%x,-(%Rsp)\n", mask);
+#else
+	  asm_fprintf (stream, "\tmoveml %0I0x%x,%Rsp@-\n", mask);
+#endif
+	}
+      if (dwarf2out_do_frame ())
+	{
+	  char *l = dwarf2out_cfi_label ();
+	  int n_regs;
+
+	  cfa_store_offset += num_saved_regs * 4;
+	  if (! frame_pointer_needed)
+	    {
+	      cfa_offset = cfa_store_offset;
+	      dwarf2out_def_cfa (l, STACK_POINTER_REGNUM, cfa_offset);
+	    }
+	  for (regno = 0, n_regs = 0; regno < 16; regno++)
+	    if (mask & (1 << (15 - regno)))
+	      dwarf2out_reg_save (l, regno,
+				  -cfa_store_offset + n_regs++ * 4);
+	}
     }
   if (flag_pic && current_function_uses_pic_offset_table)
     {
@@ -290,6 +529,7 @@ output_function_epilogue (stream, size)
   int fsize = (size + 3) & -4;
   int big = 0;
   rtx insn = get_last_insn ();
+  int restore_from_sp = 0;
   
   /* If the last insn was a BARRIER, we don't have to write any code.  */
   if (GET_CODE (insn) == NOTE)
@@ -302,6 +542,13 @@ output_function_epilogue (stream, size)
       return;
     }
 
+#ifdef FUNCTION_BLOCK_PROFILER_EXIT
+  if (profile_block_flag == 2)
+    {
+      FUNCTION_BLOCK_PROFILER_EXIT (stream);
+    }
+#endif
+
 #ifdef FUNCTION_EXTRA_EPILOGUE
   FUNCTION_EXTRA_EPILOGUE (stream, size);
 #endif
@@ -313,12 +560,15 @@ output_function_epilogue (stream, size)
   fpoffset = nregs * 8;
 #endif
   nregs = 0;
-  for (regno = 16; regno < 24; regno++)
-    if (regs_ever_live[regno] && ! call_used_regs[regno])
-      {
-        nregs++;
-	fmask |= 1 << (23 - regno);
-      }
+  if (TARGET_68881)
+    {
+      for (regno = 16; regno < 24; regno++)
+	if (regs_ever_live[regno] && ! call_used_regs[regno])
+	  {
+	    nregs++;
+	    fmask |= 1 << (23 - regno);
+	  }
+    }
   foffset = fpoffset + nregs * 12;
   nregs = 0;  mask = 0;
   if (frame_pointer_needed)
@@ -330,8 +580,13 @@ output_function_epilogue (stream, size)
 	mask |= 1 << regno;
       }
   offset = foffset + nregs * 4;
+  /* FIXME : leaf_function_p below is too strong.
+     What we really need to know there is if there could be pending
+     stack adjustment needed at that point. */
+  restore_from_sp = ! frame_pointer_needed
+	     || (! current_function_calls_alloca && leaf_function_p ());
   if (offset + fsize >= 0x8000
-      && frame_pointer_needed
+      && ! restore_from_sp
       && (mask || fmask || fpoffset))
     {
 #ifdef MOTOROLA
@@ -341,7 +596,7 @@ output_function_epilogue (stream, size)
 #endif
       fsize = 0, big = 1;
     }
-  if (nregs <= 2)
+  if (TARGET_5200 || nregs <= 2)
     {
       /* Restore each separately in the same order moveml does.
          Using two movel instructions instead of a single moveml
@@ -367,7 +622,7 @@ output_function_epilogue (stream, size)
 			     offset + fsize, reg_names[i]);
 #endif
 	      }
-            else if (! frame_pointer_needed)
+            else if (restore_from_sp)
 	      {
 #ifdef MOTOROLA
 		asm_fprintf (stream, "\t%Omove.l (%Rsp)+,%s\n",
@@ -408,7 +663,7 @@ output_function_epilogue (stream, size)
 		       offset + fsize, mask);
 #endif
 	}
-      else if (! frame_pointer_needed)
+      else if (restore_from_sp)
 	{
 #ifdef MOTOROLA
 	  asm_fprintf (stream, "\tmovm.l (%Rsp)+,%0I0x%x\n", mask);
@@ -445,7 +700,7 @@ output_function_epilogue (stream, size)
 		       foffset + fsize, fmask);
 #endif
 	}
-      else if (! frame_pointer_needed)
+      else if (restore_from_sp)
 	{
 #ifdef MOTOROLA
 	  asm_fprintf (stream, "\tfmovm (%Rsp)+,%0I0x%x\n", fmask);
@@ -484,7 +739,7 @@ output_function_epilogue (stream, size)
 			   fpoffset + fsize, reg_names[regno]);
 #endif
 	    }
-	  else if (! frame_pointer_needed)
+	  else if (restore_from_sp)
 	    {
 #ifdef MOTOROLA
 	      asm_fprintf (stream, "\tfpmovd (%Rsp)+,%s\n",
@@ -514,14 +769,60 @@ output_function_epilogue (stream, size)
 	     reg_names[FRAME_POINTER_REGNUM]);
   else if (fsize)
     {
+#ifdef NO_ADDSUB_Q
+      if (fsize + 4 <= 8) 
+	{
+	  if (!TARGET_5200)
+	    {
+#ifdef MOTOROLA
+	      asm_fprintf (stream, "\taddq.w %OI%d,%Rsp\n", fsize + 4);
+#else
+	      asm_fprintf (stream, "\taddqw %OI%d,%Rsp\n", fsize + 4);
+#endif
+	    }
+	  else
+	    {
+#ifdef MOTOROLA
+	      asm_fprintf (stream, "\taddq.l %OI%d,%Rsp\n", fsize + 4);
+#else
+	      asm_fprintf (stream, "\taddql %OI%d,%Rsp\n", fsize + 4);
+#endif
+	    }
+	}
+      else if (fsize + 4 <= 16 && TARGET_CPU32)
+	{
+	  /* On the CPU32 it is faster to use two addqw instructions to
+	     add a small integer (8 < N <= 16) to a register. */
+	  /* asm_fprintf() cannot handle %. */
+#ifdef MOTOROLA
+	  asm_fprintf (stream, "\taddq.w %OI8,%Rsp\n\taddq.w %OI%d,%Rsp\n",
+		       fsize + 4);
+#else
+	  asm_fprintf (stream, "\taddqw %OI8,%Rsp\n\taddqw %OI%d,%Rsp\n",
+		       fsize + 4);
+#endif
+	}
+      else
+#endif /* NO_ADDSUB_Q */
       if (fsize + 4 < 0x8000)
 	{
-	/* asm_fprintf() cannot handle %. */
+	  if (TARGET_68040)
+	    { 
+	      /* asm_fprintf() cannot handle %. */
 #ifdef MOTOROLA
-	  asm_fprintf (stream, "\tadd.w %0I%d,%Rsp\n", fsize + 4);
+	      asm_fprintf (stream, "\tadd.w %0I%d,%Rsp\n", fsize + 4);
 #else
-	  asm_fprintf (stream, "\taddw %0I%d,%Rsp\n", fsize + 4);
+	      asm_fprintf (stream, "\taddw %0I%d,%Rsp\n", fsize + 4);
 #endif
+	    }
+	  else
+	    {
+#ifdef MOTOROLA
+	      asm_fprintf (stream, "\tlea (%d,%Rsp),%Rsp\n", fsize + 4);
+#else
+	      asm_fprintf (stream, "\tlea %Rsp@(%d),%Rsp\n", fsize + 4);
+#endif
+	    }
 	}
       else
 	{
@@ -562,13 +863,8 @@ valid_dbcc_comparison_p (x, mode)
      rtx x;
      enum machine_mode mode;
 {
-  /* We could add support for these in the future */
-  if (cc_prev_status.flags & CC_IN_68881)
-    return 0;
-
   switch (GET_CODE (x))
     {
-
       case EQ: case NE: case GTU: case LTU:
       case GEU: case LEU:
         return 1;
@@ -582,16 +878,23 @@ valid_dbcc_comparison_p (x, mode)
     }
 }
 
+/* Return non-zero if flags are currently in the 68881 flag register.  */
+int
+flags_in_68881 ()
+{
+  /* We could add support for these in the future */
+  return cc_status.flags & CC_IN_68881;
+}
+
 /* Output a dbCC; jCC sequence.  Note we do not handle the 
    floating point version of this sequence (Fdbcc).  We also
    do not handle alternative conditions when CC_NO_OVERFLOW is
-   set.  It is assumed that valid_dbcc_comparison_p will kick
-   those out before we get here.  */
+   set.  It is assumed that valid_dbcc_comparison_p and flags_in_68881 will
+   kick those out before we get here.  */
 
 output_dbcc_and_branch (operands)
      rtx *operands;
 {
- 
   switch (GET_CODE (operands[3]))
     {
       case EQ:
@@ -707,6 +1010,9 @@ output_scc_di(op, operand1, operand2, dest)
 {
   rtx loperands[7];
   enum rtx_code op_code = GET_CODE (op);
+
+  /* This does not produce a usefull cc.  */
+  CC_STATUS_INIT;
 
   /* The m68k cmp.l instruction requires operand1 to be a reg as used
      below.  Swap the operands and change the op if these requirements
@@ -1006,6 +1312,8 @@ legitimize_pic_address (orig, mode, reg)
 			 gen_rtx (PLUS, Pmode,
 				  pic_offset_table_rtx, orig));
       current_function_uses_pic_offset_table = 1;
+      if (reload_in_progress)
+	regs_ever_live[PIC_OFFSET_TABLE_REGNUM] = 1;
       RTX_UNCHANGING_P (pic_ref) = 1;
       emit_move_insn (reg, pic_ref);
       return reg;
@@ -1042,11 +1350,7 @@ legitimize_pic_address (orig, mode, reg)
 
 typedef enum { MOVL, SWAP, NEGW, NOTW, NOTB, MOVQ } CONST_METHOD;
 
-use_movq (i)
-     int i;
-{
-  return (i >= -128 && i <= 127);
-}
+#define USE_MOVQ(i)	((unsigned)((i) + 128) <= 255)
 
 CONST_METHOD
 const_method (constant)
@@ -1056,22 +1360,28 @@ const_method (constant)
   unsigned u;
 
   i = INTVAL (constant);
-  if (use_movq (i))
+  if (USE_MOVQ (i))
     return MOVQ;
-  /* if -256 < N < 256 but N is not in range for a moveq
-     N^ff will be, so use moveq #N^ff, dreg; not.b dreg. */
-  if (use_movq (i ^ 0xff))
-    return NOTB;
-  /* Likewise, try with not.w */
-  if (use_movq (i ^ 0xffff))
-    return NOTW;
-  /* This is the only value where neg.w is useful */
-  if (i == -65408)
-    return NEGW;
-  /* Try also with swap */
-  u = i;
-  if (use_movq ((u >> 16) | (u << 16)))
-    return SWAP;
+
+  /* The Coldfire doesn't have byte or word operations. */
+  /* FIXME: This may not be useful for the m68060 either */
+  if (!TARGET_5200) 
+    {
+      /* if -256 < N < 256 but N is not in range for a moveq
+	 N^ff will be, so use moveq #N^ff, dreg; not.b dreg. */
+      if (USE_MOVQ (i ^ 0xff))
+	return NOTB;
+      /* Likewise, try with not.w */
+      if (USE_MOVQ (i ^ 0xffff))
+	return NOTW;
+      /* This is the only value where neg.w is useful */
+      if (i == -65408)
+	return NEGW;
+      /* Try also with swap */
+      u = i;
+      if (USE_MOVQ ((u >> 16) | (u << 16)))
+	return SWAP;
+    }
   /* Otherwise, use move.l */
   return MOVL;
 }
@@ -1150,6 +1460,216 @@ output_move_const_into_data_reg (operands)
     }
 }
 
+char *
+output_move_simode_const (operands)
+     rtx *operands;
+{
+  if (operands[1] == const0_rtx
+      && (DATA_REG_P (operands[0])
+	  || GET_CODE (operands[0]) == MEM)
+      /* clr insns on 68000 read before writing.
+	 This isn't so on the 68010, but we have no TARGET_68010.  */
+      && ((TARGET_68020 || TARGET_5200)
+	  || !(GET_CODE (operands[0]) == MEM
+	       && MEM_VOLATILE_P (operands[0]))))
+    return "clr%.l %0";
+  else if (DATA_REG_P (operands[0]))
+    return output_move_const_into_data_reg (operands);
+  else if (ADDRESS_REG_P (operands[0])
+	   && INTVAL (operands[1]) < 0x8000
+	   && INTVAL (operands[1]) >= -0x8000)
+    return "move%.w %1,%0";
+  else if (GET_CODE (operands[0]) == MEM
+      && GET_CODE (XEXP (operands[0], 0)) == PRE_DEC
+      && REGNO (XEXP (XEXP (operands[0], 0), 0)) == STACK_POINTER_REGNUM
+	   && INTVAL (operands[1]) < 0x8000
+	   && INTVAL (operands[1]) >= -0x8000)
+    return "pea %a1";
+  return "move%.l %1,%0";
+}
+
+char *
+output_move_simode (operands)
+     rtx *operands;
+{
+  if (GET_CODE (operands[1]) == CONST_INT)
+    return output_move_simode_const (operands);
+  else if ((GET_CODE (operands[1]) == SYMBOL_REF
+	    || GET_CODE (operands[1]) == CONST)
+	   && push_operand (operands[0], SImode))
+    return "pea %a1";
+  else if ((GET_CODE (operands[1]) == SYMBOL_REF
+	    || GET_CODE (operands[1]) == CONST)
+	   && ADDRESS_REG_P (operands[0]))
+    return "lea %a1,%0";
+  return "move%.l %1,%0";
+}
+
+char *
+output_move_himode (operands)
+     rtx *operands;
+{
+ if (GET_CODE (operands[1]) == CONST_INT)
+    {
+      if (operands[1] == const0_rtx
+	  && (DATA_REG_P (operands[0])
+	      || GET_CODE (operands[0]) == MEM)
+	  /* clr insns on 68000 read before writing.
+	     This isn't so on the 68010, but we have no TARGET_68010.  */
+	  && ((TARGET_68020 || TARGET_5200)
+	      || !(GET_CODE (operands[0]) == MEM
+		   && MEM_VOLATILE_P (operands[0]))))
+	return "clr%.w %0";
+      else if (DATA_REG_P (operands[0])
+	       && INTVAL (operands[1]) < 128
+	       && INTVAL (operands[1]) >= -128)
+	{
+#if defined(MOTOROLA) && !defined(CRDS)
+	  return "moveq%.l %1,%0";
+#else
+	  return "moveq %1,%0";
+#endif
+	}
+      else if (INTVAL (operands[1]) < 0x8000
+	       && INTVAL (operands[1]) >= -0x8000)
+	return "move%.w %1,%0";
+    }
+  else if (CONSTANT_P (operands[1]))
+    return "move%.l %1,%0";
+#ifndef SGS_NO_LI
+  /* Recognize the insn before a tablejump, one that refers
+     to a table of offsets.  Such an insn will need to refer
+     to a label on the insn.  So output one.  Use the label-number
+     of the table of offsets to generate this label.  This code,
+     and similar code below, assumes that there will be at most one
+     reference to each table.  */
+  if (GET_CODE (operands[1]) == MEM
+      && GET_CODE (XEXP (operands[1], 0)) == PLUS
+      && GET_CODE (XEXP (XEXP (operands[1], 0), 1)) == LABEL_REF
+      && GET_CODE (XEXP (XEXP (operands[1], 0), 0)) != PLUS)
+    {
+      rtx labelref = XEXP (XEXP (operands[1], 0), 1);
+#if defined (MOTOROLA) && !defined (SGS_SWITCH_TABLES)
+#ifdef SGS
+      asm_fprintf (asm_out_file, "\tset %LLI%d,.+2\n",
+		   CODE_LABEL_NUMBER (XEXP (labelref, 0)));
+#else /* not SGS */
+      asm_fprintf (asm_out_file, "\t.set %LLI%d,.+2\n",
+		   CODE_LABEL_NUMBER (XEXP (labelref, 0)));
+#endif /* not SGS */
+#else /* SGS_SWITCH_TABLES or not MOTOROLA */
+      ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, "LI",
+				 CODE_LABEL_NUMBER (XEXP (labelref, 0)));
+#ifdef SGS_SWITCH_TABLES
+      /* Set flag saying we need to define the symbol
+	 LD%n (with value L%n-LI%n) at the end of the switch table.  */
+      switch_table_difference_label_flag = 1;
+#endif /* SGS_SWITCH_TABLES */
+#endif /* SGS_SWITCH_TABLES or not MOTOROLA */
+    }
+#endif /* SGS_NO_LI */
+  return "move%.w %1,%0";
+}
+
+char *
+output_move_qimode (operands)
+     rtx *operands;
+{
+  rtx xoperands[4];
+
+  /* This is probably useless, since it loses for pushing a struct
+     of several bytes a byte at a time.	 */
+  /* 68k family always modifies the stack pointer by at least 2, even for
+     byte pushes.  The 5200 (coldfire) does not do this.  */
+  if (GET_CODE (operands[0]) == MEM
+      && GET_CODE (XEXP (operands[0], 0)) == PRE_DEC
+      && XEXP (XEXP (operands[0], 0), 0) == stack_pointer_rtx
+      && ! ADDRESS_REG_P (operands[1])
+      && ! TARGET_5200)
+    {
+      xoperands[1] = operands[1];
+      xoperands[2]
+	= gen_rtx (MEM, QImode,
+		   gen_rtx (PLUS, VOIDmode, stack_pointer_rtx, const1_rtx));
+      /* Just pushing a byte puts it in the high byte of the halfword.	*/
+      /* We must put it in the low-order, high-numbered byte.  */
+      if (!reg_mentioned_p (stack_pointer_rtx, operands[1]))
+	{
+	  xoperands[3] = stack_pointer_rtx;
+#ifndef NO_ADDSUB_Q
+	  output_asm_insn ("subq%.l %#2,%3\n\tmove%.b %1,%2", xoperands);
+#else
+	  output_asm_insn ("sub%.l %#2,%3\n\tmove%.b %1,%2", xoperands);
+#endif
+	}
+      else
+	output_asm_insn ("move%.b %1,%-\n\tmove%.b %@,%2", xoperands);
+      return "";
+    }
+
+  /* clr and st insns on 68000 read before writing.
+     This isn't so on the 68010, but we have no TARGET_68010.  */
+  if (!ADDRESS_REG_P (operands[0])
+      && ((TARGET_68020 || TARGET_5200)
+	  || !(GET_CODE (operands[0]) == MEM && MEM_VOLATILE_P (operands[0]))))
+    {
+      if (operands[1] == const0_rtx)
+	return "clr%.b %0";
+      if ((!TARGET_5200 || DATA_REG_P (operands[0]))
+	  && GET_CODE (operands[1]) == CONST_INT
+	  && (INTVAL (operands[1]) & 255) == 255)
+	{
+	  CC_STATUS_INIT;
+	  return "st %0";
+	}
+    }
+  if (GET_CODE (operands[1]) == CONST_INT
+      && DATA_REG_P (operands[0])
+      && INTVAL (operands[1]) < 128
+      && INTVAL (operands[1]) >= -128)
+    {
+#if defined(MOTOROLA) && !defined(CRDS)
+      return "moveq%.l %1,%0";
+#else
+      return "moveq %1,%0";
+#endif
+    }
+  if (GET_CODE (operands[1]) != CONST_INT && CONSTANT_P (operands[1]))
+    return "move%.l %1,%0";
+  /* 68k family doesn't support byte moves to from address registers.  The
+     5200 (coldfire) does not have this restriction.  */
+  if ((ADDRESS_REG_P (operands[0]) || ADDRESS_REG_P (operands[1]))
+      && ! TARGET_5200)
+    return "move%.w %1,%0";
+  return "move%.b %1,%0";
+}
+
+char *
+output_move_stricthi (operands)
+     rtx *operands;
+{
+  if (operands[1] == const0_rtx
+      /* clr insns on 68000 read before writing.
+	 This isn't so on the 68010, but we have no TARGET_68010.  */
+      && ((TARGET_68020 || TARGET_5200)
+	  || !(GET_CODE (operands[0]) == MEM && MEM_VOLATILE_P (operands[0]))))
+    return "clr%.w %0";
+  return "move%.w %1,%0";
+}
+
+char *
+output_move_strictqi (operands)
+     rtx *operands;
+{
+  if (operands[1] == const0_rtx
+      /* clr insns on 68000 read before writing.
+         This isn't so on the 68010, but we have no TARGET_68010.  */
+      && ((TARGET_68020 || TARGET_5200)
+          || !(GET_CODE (operands[0]) == MEM && MEM_VOLATILE_P (operands[0]))))
+    return "clr%.b %0";
+  return "move%.b %1,%0";
+}
+
 /* Return the best assembler insn template
    for moving operands[1] into operands[0] as a fullword.  */
 
@@ -1161,14 +1681,9 @@ singlemove_string (operands)
   if (FPA_REG_P (operands[0]) || FPA_REG_P (operands[1]))
     return "fpmoves %1,%0";
 #endif
-  if (DATA_REG_P (operands[0])
-      && GET_CODE (operands[1]) == CONST_INT)
-      return output_move_const_into_data_reg (operands);
-  if (operands[1] != const0_rtx)
-    return "move%.l %1,%0";
-  if (! ADDRESS_REG_P (operands[0]))
-    return "clr%.l %0";
-  return "sub%.l %0,%0";
+  if (GET_CODE (operands[1]) == CONST_INT)
+    return output_move_simode_const (operands);
+  return "move%.l %1,%0";
 }
 
 
@@ -1550,6 +2065,97 @@ find_addr_reg (addr)
     return addr;
   abort ();
 }
+
+/* Output assembler code to perform a 32 bit 3 operand add.  */
+
+char *
+output_addsi3 (operands)
+     rtx *operands;
+{
+  if (! operands_match_p (operands[0], operands[1]))
+    {
+      if (!ADDRESS_REG_P (operands[1]))
+	{
+	  rtx tmp = operands[1];
+
+	  operands[1] = operands[2];
+	  operands[2] = tmp;
+	}
+
+      /* These insns can result from reloads to access
+	 stack slots over 64k from the frame pointer.  */
+      if (GET_CODE (operands[2]) == CONST_INT
+	  && INTVAL (operands[2]) + 0x8000 >= (unsigned) 0x10000)
+        return "move%.l %2,%0\n\tadd%.l %1,%0";
+#ifdef SGS
+      if (GET_CODE (operands[2]) == REG)
+	return "lea 0(%1,%2.l),%0";
+      else
+	return "lea %c2(%1),%0";
+#else /* not SGS */
+#ifdef MOTOROLA
+      if (GET_CODE (operands[2]) == REG)
+	return "lea (%1,%2.l),%0";
+      else
+	return "lea (%c2,%1),%0";
+#else /* not MOTOROLA (MIT syntax) */
+      if (GET_CODE (operands[2]) == REG)
+	return "lea %1@(0,%2:l),%0";
+      else
+	return "lea %1@(%c2),%0";
+#endif /* not MOTOROLA */
+#endif /* not SGS */
+    }
+  if (GET_CODE (operands[2]) == CONST_INT)
+    {
+#ifndef NO_ADDSUB_Q
+      if (INTVAL (operands[2]) > 0
+	  && INTVAL (operands[2]) <= 8)
+	return "addq%.l %2,%0";
+      if (INTVAL (operands[2]) < 0
+	  && INTVAL (operands[2]) >= -8)
+        {
+	  operands[2] = gen_rtx (CONST_INT, VOIDmode,
+			         - INTVAL (operands[2]));
+	  return "subq%.l %2,%0";
+	}
+      /* On the CPU32 it is faster to use two addql instructions to
+	 add a small integer (8 < N <= 16) to a register.
+	 Likewise for subql. */
+      if (TARGET_CPU32 && REG_P (operands[0]))
+	{
+	  if (INTVAL (operands[2]) > 8
+	      && INTVAL (operands[2]) <= 16)
+	    {
+	      operands[2] = gen_rtx (CONST_INT, VOIDmode, 
+				      INTVAL (operands[2]) - 8);
+	      return "addq%.l %#8,%0\n\taddq%.l %2,%0";
+	    }
+	  if (INTVAL (operands[2]) < -8
+	      && INTVAL (operands[2]) >= -16)
+	    {
+	      operands[2] = gen_rtx (CONST_INT, VOIDmode,
+				      - INTVAL (operands[2]) - 8);
+	      return "subq%.l %#8,%0\n\tsubq%.l %2,%0";
+	    }
+	}
+#endif
+      if (ADDRESS_REG_P (operands[0])
+	  && INTVAL (operands[2]) >= -0x8000
+	  && INTVAL (operands[2]) < 0x8000)
+	{
+	  if (TARGET_68040)
+	    return "add%.w %2,%0";
+	  else
+#ifdef MOTOROLA  
+	    return "lea (%c2,%0),%0";
+#else
+	    return "lea %0@(%c2),%0";
+#endif
+	}
+    }
+  return "add%.l %2,%0";
+}
 
 /* Store in cc_status the expressions that the condition codes will
    describe after execution of an instruction whose pattern is EXP.
@@ -1644,8 +2250,10 @@ notice_update_cc (exp, insn)
       {
       case PLUS: case MINUS: case MULT:
       case DIV: case UDIV: case MOD: case UMOD: case NEG:
+#if 0 /* These instructions always clear the overflow bit */
       case ASHIFT: case ASHIFTRT: case LSHIFTRT:
       case ROTATE: case ROTATERT:
+#endif
 	if (GET_MODE (cc_status.value2) != VOIDmode)
 	  cc_status.flags |= CC_NO_OVERFLOW;
 	break;
@@ -1776,11 +2384,11 @@ init_68881_table ()
   REAL_VALUE_TYPE r;
   enum machine_mode mode;
 
-  mode = DFmode;
+  mode = SFmode;
   for (i = 0; i < 7; i++)
     {
       if (i == 6)
-        mode = SFmode;
+        mode = DFmode;
       r = REAL_VALUE_ATOF (strings_68881[i], mode);
       values_68881[i] = r;
     }
@@ -2061,7 +2669,7 @@ standard_sun_fpa_constant_p (x)
    '@' for a reference to the top word on the stack:
        sp@, (sp) or (%sp) depending on the style of syntax.
    '#' for an immediate operand prefix (# in MIT and Motorola syntax
-       but & in SGS syntax).
+       but & in SGS syntax, $ in CRDS/UNOS syntax).
    '!' for the cc register (used in an `and to cc' insn).
    '$' for the letter `s' in an op code, but only on the 68040.
    '&' for the letter `d' in an op code, but only on the 68040.
@@ -2090,7 +2698,7 @@ print_operand (file, op, letter)
 
   if (letter == '.')
     {
-#ifdef MOTOROLA
+#if defined (MOTOROLA) && !defined (CRDS)
       asm_fprintf (file, ".");
 #endif
     }
@@ -2174,7 +2782,11 @@ print_operand (file, op, letter)
 	       && INTVAL (XEXP (op, 0)) < 0x8000
 	       && INTVAL (XEXP (op, 0)) >= -0x8000))
 	{
+#ifdef MOTOROLA
+	  fprintf (file, ".l");
+#else
 	  fprintf (file, ":l");
+#endif
 	}
     }
 #ifdef SUPPORT_SUN_FPA
@@ -2439,7 +3051,11 @@ print_operand_address (file, addr)
 	      {
 		output_addr_const (file, addr);
 	        if (flag_pic && (breg == pic_offset_table_rtx))
-	          fprintf (file, "@GOT");
+		  {
+		    fprintf (file, "@GOT");
+		    if (flag_pic == 1)
+		      fprintf (file, ".w");
+		  }
 	      }
 	    fprintf (file, "(%s", reg_names[REGNO (breg)]);
 	    if (ireg != 0)
@@ -2617,4 +3233,123 @@ const_sint32_operand (op, mode)
   /* All allowed constants will fit a CONST_INT.  */
   return (GET_CODE (op) == CONST_INT
 	  && (INTVAL (op) >= (-0x7fffffff - 1) && INTVAL (op) <= 0x7fffffff));
+}
+
+char *
+output_andsi3 (operands)
+     rtx *operands;
+{
+  int logval;
+  if (GET_CODE (operands[2]) == CONST_INT
+      && (INTVAL (operands[2]) | 0xffff) == 0xffffffff
+      && (DATA_REG_P (operands[0])
+	  || offsettable_memref_p (operands[0]))
+      && !TARGET_5200)
+    {
+      if (GET_CODE (operands[0]) != REG)
+        operands[0] = adj_offsettable_operand (operands[0], 2);
+      operands[2] = gen_rtx (CONST_INT, VOIDmode,
+			     INTVAL (operands[2]) & 0xffff);
+      /* Do not delete a following tstl %0 insn; that would be incorrect.  */
+      CC_STATUS_INIT;
+      if (operands[2] == const0_rtx)
+        return "clr%.w %0";
+      return "and%.w %2,%0";
+    }
+  if (GET_CODE (operands[2]) == CONST_INT
+      && (logval = exact_log2 (~ INTVAL (operands[2]))) >= 0
+      && (DATA_REG_P (operands[0])
+          || offsettable_memref_p (operands[0])))
+    {
+      if (DATA_REG_P (operands[0]))
+        {
+          operands[1] = gen_rtx (CONST_INT, VOIDmode, logval);
+        }
+      else
+        {
+	  operands[0] = adj_offsettable_operand (operands[0], 3 - (logval / 8));
+	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval % 8);
+        }
+      /* This does not set condition codes in a standard way.  */
+      CC_STATUS_INIT;
+      return "bclr %1,%0";
+    }
+  return "and%.l %2,%0";
+}
+
+char *
+output_iorsi3 (operands)
+     rtx *operands;
+{
+  register int logval;
+  if (GET_CODE (operands[2]) == CONST_INT
+      && INTVAL (operands[2]) >> 16 == 0
+      && (DATA_REG_P (operands[0])
+	  || offsettable_memref_p (operands[0]))
+      && !TARGET_5200)
+    {
+      if (GET_CODE (operands[0]) != REG)
+        operands[0] = adj_offsettable_operand (operands[0], 2);
+      /* Do not delete a following tstl %0 insn; that would be incorrect.  */
+      CC_STATUS_INIT;
+      if (INTVAL (operands[2]) == 0xffff)
+	return "mov%.w %2,%0";
+      return "or%.w %2,%0";
+    }
+  if (GET_CODE (operands[2]) == CONST_INT
+      && (logval = exact_log2 (INTVAL (operands[2]))) >= 0
+      && (DATA_REG_P (operands[0])
+	  || offsettable_memref_p (operands[0])))
+    {
+      if (DATA_REG_P (operands[0]))
+	{
+	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval);
+	}
+      else
+        {
+	  operands[0] = adj_offsettable_operand (operands[0], 3 - (logval / 8));
+	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval % 8);
+	}
+      CC_STATUS_INIT;
+      return "bset %1,%0";
+    }
+  return "or%.l %2,%0";
+}
+
+char *
+output_xorsi3 (operands)
+     rtx *operands;
+{
+  register int logval;
+  if (GET_CODE (operands[2]) == CONST_INT
+      && INTVAL (operands[2]) >> 16 == 0
+      && (offsettable_memref_p (operands[0]) || DATA_REG_P (operands[0]))
+      && !TARGET_5200)
+    {
+      if (! DATA_REG_P (operands[0]))
+	operands[0] = adj_offsettable_operand (operands[0], 2);
+      /* Do not delete a following tstl %0 insn; that would be incorrect.  */
+      CC_STATUS_INIT;
+      if (INTVAL (operands[2]) == 0xffff)
+	return "not%.w %0";
+      return "eor%.w %2,%0";
+    }
+  if (GET_CODE (operands[2]) == CONST_INT
+      && (logval = exact_log2 (INTVAL (operands[2]))) >= 0
+      && (DATA_REG_P (operands[0])
+	  || offsettable_memref_p (operands[0])))
+    {
+      if (DATA_REG_P (operands[0]))
+	{
+	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval);
+	}
+      else
+        {
+	  operands[0] = adj_offsettable_operand (operands[0], 3 - (logval / 8));
+	  operands[1] = gen_rtx (CONST_INT, VOIDmode, logval % 8);
+	}
+      CC_STATUS_INIT;
+      return "bchg %1,%0";
+    }
+  return "eor%.l %2,%0";
 }

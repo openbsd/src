@@ -1,9 +1,7 @@
 /* Specialized bits of code needed to support construction and
    destruction of file-scope objects in C++ code.
-
-   Written by Ron Guilmette (rfg@netcom.com) with help from Richard Stallman.
-
-Copyright (C) 1991, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Contributed by Ron Guilmette (rfg@monkeys.com).
 
 This file is part of GNU CC.
 
@@ -54,6 +52,9 @@ Boston, MA 02111-1307, USA.  */
    do not apply.  */
 
 #include "tm.h"
+#include "defaults.h"
+#include <stddef.h>
+#include "frame.h"
 
 /* Provide default definitions for the pseudo-ops used to switch to the
    .ctors and .dtors sections.
@@ -76,6 +77,9 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #ifndef DTORS_SECTION_ASM_OP
 #define DTORS_SECTION_ASM_OP	".section\t.dtors,\"aw\""
+#endif
+#if !defined (EH_FRAME_SECTION_ASM_OP) && defined (DWARF2_UNWIND_INFO) && defined(ASM_OUTPUT_SECTION_NAME)
+#define EH_FRAME_SECTION_ASM_OP	".section\t.eh_frame,\"aw\""
 #endif
 
 #ifdef OBJECT_FORMAT_ELF
@@ -113,18 +117,32 @@ typedef void (*func_ptr) (void);
    functions in each root executable and one in each shared library, but
    although they all have the same code, each one is unique in that it
    refers to one particular associated `__DTOR_LIST__' which belongs to the
-   same particular root executable or shared library file.  */
+   same particular root executable or shared library file.
 
+   On some systems, this routine is run more than once from the .fini,
+   when exit is called recursively, so we arrange to remember where in
+   the list we left off processing, and we resume at that point,
+   should we be re-invoked.  */
+
+static char __EH_FRAME_BEGIN__[];
 static func_ptr __DTOR_LIST__[];
 static void
 __do_global_dtors_aux ()
 {
-  func_ptr *p;
-  for (p = __DTOR_LIST__ + 1; *p; p++)
-    (*p) ();
+  static func_ptr *p = __DTOR_LIST__ + 1;
+  while (*p)
+    {
+      p++;
+      (*(p-1)) ();
+    }
+
+#ifdef EH_FRAME_SECTION_ASM_OP
+  __deregister_frame_info (__EH_FRAME_BEGIN__);
+#endif
 }
 
 /* Stick a call to __do_global_dtors_aux into the .fini section.  */
+
 static void
 fini_dummy ()
 {
@@ -136,6 +154,30 @@ fini_dummy ()
   asm (TEXT_SECTION_ASM_OP);
 }
 
+#ifdef EH_FRAME_SECTION_ASM_OP
+/* Stick a call to __register_frame_info into the .init section.  For some
+   reason calls with no arguments work more reliably in .init, so stick the
+   call in another function.  */
+
+static void
+frame_dummy ()
+{
+  static struct object object;
+  __register_frame_info (__EH_FRAME_BEGIN__, &object);
+}
+
+static void
+init_dummy ()
+{
+  asm (INIT_SECTION_ASM_OP);
+  frame_dummy ();
+#ifdef FORCE_INIT_SECTION_ALIGN
+  FORCE_INIT_SECTION_ALIGN;
+#endif
+  asm (TEXT_SECTION_ASM_OP);
+}
+#endif /* EH_FRAME_SECTION_ASM_OP */
+
 #else  /* OBJECT_FORMAT_ELF */
 
 /* The function __do_global_ctors_aux is compiled twice (once in crtbegin.o
@@ -144,6 +186,7 @@ fini_dummy ()
    function.  It is externally callable so that __main can invoke it when
    INVOKE__main is defined.  This has the additional effect of forcing cc1
    to switch to the .text section.  */
+
 static void __do_global_ctors_aux ();
 void __do_global_ctors ()
 {
@@ -163,7 +206,7 @@ asm (INIT_SECTION_ASM_OP);	/* cc1 doesn't know that we are switching! */
    crti.o may do something, such as bump the stack, which we have to 
    undo before we reach the function prologue code for __do_global_ctors 
    (directly below).  For such systems, define the macro INIT_SECTION_PREAMBLE
-   to expand into the code needed to undo the actions of the crti.o file. */
+   to expand into the code needed to undo the actions of the crti.o file.  */
 
 #ifdef INIT_SECTION_PREAMBLE
   INIT_SECTION_PREAMBLE;
@@ -186,6 +229,29 @@ __do_global_ctors_aux ()	/* prologue goes in .init section */
 }
 
 #endif /* OBJECT_FORMAT_ELF */
+
+#else /* defined(INIT_SECTION_ASM_OP) */
+
+#ifdef HAS_INIT_SECTION
+/* This case is used by the Irix 6 port, which supports named sections but
+   not an SVR4-style .fini section.  __do_global_dtors can be non-static
+   in this case because we protect it with -hidden_symbol.  */
+
+static char __EH_FRAME_BEGIN__[];
+static func_ptr __DTOR_LIST__[];
+void
+__do_global_dtors ()
+{
+  func_ptr *p;
+  for (p = __DTOR_LIST__ + 1; *p; p++)
+    (*p) ();
+
+#ifdef EH_FRAME_SECTION_ASM_OP
+  __deregister_frame_info (__EH_FRAME_BEGIN__);
+#endif
+}
+#endif
+
 #endif /* defined(INIT_SECTION_ASM_OP) */
 
 /* Force cc1 to switch to .data section.  */
@@ -219,6 +285,17 @@ asm (DTORS_SECTION_ASM_OP);	/* cc1 doesn't know that we are switching! */
 STATIC func_ptr __DTOR_LIST__[1] = { (func_ptr) (-1) };
 #endif
 
+#ifdef EH_FRAME_SECTION_ASM_OP
+/* Stick a label at the beginning of the frame unwind info so we can register
+   and deregister it with the exception handling library code.  */
+
+asm (EH_FRAME_SECTION_ASM_OP);
+#ifdef INIT_SECTION_ASM_OP
+STATIC
+#endif
+char __EH_FRAME_BEGIN__[] = { };
+#endif /* EH_FRAME_SECTION_ASM_OP */
+
 #endif /* defined(CRT_BEGIN) */
 
 #ifdef CRT_END
@@ -237,6 +314,7 @@ __do_global_ctors_aux ()
 }
 
 /* Stick a call to __do_global_ctors_aux into the .init section.  */
+
 static void
 init_dummy ()
 {
@@ -247,12 +325,12 @@ init_dummy ()
 #endif
   asm (TEXT_SECTION_ASM_OP);
 
-/* This is a kludge. The Linux dynamic linker needs  ___brk_addr, __environ
-   and atexit (). We have to make sure they are in the .dynsym section. We
-   accomplish it by making a dummy call here. This
-   code is never reached. */
+/* This is a kludge. The i386 GNU/Linux dynamic linker needs ___brk_addr,
+   __environ and atexit (). We have to make sure they are in the .dynsym
+   section. We accomplish it by making a dummy call here. This
+   code is never reached.  */
  
-#if defined(__linux__) && defined(__PIC__)
+#if defined(__linux__) && defined(__PIC__) && defined(__i386__)
   {
     extern void *___brk_addr;
     extern char **__environ;
@@ -284,7 +362,7 @@ init_dummy ()
    other libraries, etc.  That's because those other initializations may
    include setup operations for very primitive things (e.g. initializing
    the state of the floating-point coprocessor, etc.) which should be done
-   before we start to execute any of the user's code. */
+   before we start to execute any of the user's code.  */
 
 static void
 __do_global_ctors_aux ()	/* prologue goes in .text section */
@@ -292,9 +370,34 @@ __do_global_ctors_aux ()	/* prologue goes in .text section */
   asm (INIT_SECTION_ASM_OP);
   DO_GLOBAL_CTORS_BODY;
   ON_EXIT (__do_global_dtors, 0);
+#ifdef FORCE_INIT_SECTION_ALIGN
+  FORCE_INIT_SECTION_ALIGN;
+#endif
+  asm (TEXT_SECTION_ASM_OP);
 }				/* epilogue and body go in .init section */
 
 #endif /* OBJECT_FORMAT_ELF */
+
+#else /* defined(INIT_SECTION_ASM_OP) */
+
+#ifdef HAS_INIT_SECTION
+/* This case is used by the Irix 6 port, which supports named sections but
+   not an SVR4-style .init section.  __do_global_ctors can be non-static
+   in this case because we protect it with -hidden_symbol.  */
+extern char __EH_FRAME_BEGIN__[];
+static func_ptr __CTOR_END__[];
+void
+__do_global_ctors ()
+{
+  func_ptr *p;
+#ifdef EH_FRAME_SECTION_ASM_OP
+  static struct object object;
+  __register_frame_info (__EH_FRAME_BEGIN__, &object);
+#endif
+  for (p = __CTOR_END__ - 1; *p != (func_ptr) -1; p--)
+    (*p) ();
+}
+#endif
 
 #endif /* defined(INIT_SECTION_ASM_OP) */
 
@@ -320,5 +423,14 @@ DTOR_LIST_END;
 asm (DTORS_SECTION_ASM_OP);	/* cc1 doesn't know that we are switching! */
 STATIC func_ptr __DTOR_END__[1] = { (func_ptr) 0 };
 #endif
+
+#ifdef EH_FRAME_SECTION_ASM_OP
+/* Terminate the frame unwind info section with a 4byte 0 as a sentinel;
+   this would be the 'length' field in a real FDE.  */
+
+typedef unsigned int ui32 __attribute__ ((mode (SI)));
+asm (EH_FRAME_SECTION_ASM_OP);
+STATIC ui32 __FRAME_END__[] = { 0 };
+#endif /* EH_FRAME_SECTION */
 
 #endif /* defined(CRT_END) */

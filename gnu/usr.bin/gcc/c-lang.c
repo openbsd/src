@@ -1,5 +1,5 @@
 /* Language-specific hook definitions for C front end.
-   Copyright (C) 1991, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1995, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -37,10 +37,12 @@ lang_decode_option (p)
 void
 lang_init ()
 {
+#if !USE_CPPLIB
   /* the beginning of the file is a new line; check for # */
   /* With luck, we discover the real source file's name from that
      and put it in input_filename.  */
   ungetc (check_newline (), finput);
+#endif
 }
 
 void
@@ -129,12 +131,12 @@ GNU_xref_end ()
   fatal ("GCC does not yet support XREF");
 }
 
-/* called at end of parsing, but before end-of-file processing.  */
+/* Called at end of parsing, but before end-of-file processing.  */
+
 void
 finish_file ()
 {
   extern tree static_ctors, static_dtors;
-  extern tree get_file_function_name ();
   extern tree build_function_call                 PROTO((tree, tree));
   tree void_list_node = build_tree_list (NULL_TREE, void_type_node);
 #ifndef ASM_OUTPUT_CONSTRUCTOR

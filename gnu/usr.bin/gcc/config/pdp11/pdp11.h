@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for the pdp-11
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Michael K. Gschwind (mike@vlsivie.tuwien.ac.at).
 
 This file is part of GNU CC.
@@ -378,7 +378,7 @@ enum reg_class { NO_REGS, MUL_REGS, GENERAL_REGS, LOAD_FPU_REGS, NO_LOAD_FPU_REG
 #define N_REG_CLASSES (int) LIM_REG_CLASSES
 
 /* have to allow this till cmpsi/tstsi are fixed in a better way !! */
-#define SMALL_REGISTER_CLASSES 
+#define SMALL_REGISTER_CLASSES 1
 
 /* Since GENERAL_REGS is the same class as ALL_REGS,
    don't give it a different class number; just make it an alias.  */
@@ -598,7 +598,7 @@ maybe ac0 ? - as option someday! */
    when the function gets a structure-value-address as an
    invisible first argument.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
  ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -1079,11 +1079,9 @@ fprintf (FILE, "$help$: . = .+8 ; space for tmp moves!\n")	\
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs ("\t.globl ", FILE); assemble_name (FILE, NAME); fputs("\n", FILE); } while (0)
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1149,11 +1147,9 @@ fprintf (FILE, "$help$: . = .+8 ; space for tmp moves!\n")	\
   fprintf (FILE, "\t.word L_%d\n", VALUE)
 
 /* This is how to output an element of a case-vector that is relative.
-   (the pdp does not use such vectors,
-   but we must define this macro anyway.)  */
+   Don't define this if it is not supported. */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
-  fprintf (FILE, "\tERROR @L%d-@L%d ! error should not be used\n", VALUE, REL)
+/* #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) */
 
 /* This is how to output an assembler line
    that says to advance the location counter

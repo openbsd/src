@@ -1,5 +1,5 @@
 /* Emit RTL for the GNU C-Compiler expander.
-   Copyright (C) 1987, 88, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -35,6 +35,7 @@ Boston, MA 02111-1307, USA.  */
    is the kind of rtx's they make and what arguments they use.  */
 
 #include "config.h"
+#include <stdio.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
@@ -43,10 +44,12 @@ Boston, MA 02111-1307, USA.  */
 #include "rtl.h"
 #include "tree.h"
 #include "flags.h"
+#include "except.h"
 #include "function.h"
 #include "expr.h"
 #include "regs.h"
 #include "insn-config.h"
+#include "recog.h"
 #include "real.h"
 #include "obstack.h"
 
@@ -56,9 +59,6 @@ Boston, MA 02111-1307, USA.  */
 #include "bc-typecd.h"
 #include "bc-optab.h"
 #include "bc-emit.h"
-
-#include <stdio.h>
-
 
 /* Opcode names */
 #ifdef BCDEBUG_PRINT_CODE
@@ -73,9 +73,9 @@ char *opcode_name[] =
 
 /* Commonly used modes.  */
 
-enum machine_mode byte_mode;	/* Mode whose width is BITS_PER_UNIT. */
-enum machine_mode word_mode;	/* Mode whose width is BITS_PER_WORD. */
-enum machine_mode ptr_mode;	/* Mode whose width is POINTER_SIZE. */
+enum machine_mode byte_mode;	/* Mode whose width is BITS_PER_UNIT.  */
+enum machine_mode word_mode;	/* Mode whose width is BITS_PER_WORD.  */
+enum machine_mode ptr_mode;	/* Mode whose width is POINTER_SIZE.  */
 
 /* This is reset to LAST_VIRTUAL_REGISTER + 1 at the start of each function.
    After rtl generation, it is 1 plus the largest register number used.  */
@@ -159,6 +159,10 @@ rtx static_chain_rtx;		/* (REG:Pmode STATIC_CHAIN_REGNUM) */
 rtx static_chain_incoming_rtx;	/* (REG:Pmode STATIC_CHAIN_INCOMING_REGNUM) */
 rtx pic_offset_table_rtx;	/* (REG:Pmode PIC_OFFSET_TABLE_REGNUM) */
 
+/* This is used to implement __builtin_return_address for some machines.
+   See for instance the MIPS port.  */
+rtx return_address_pointer_rtx;	/* (REG:Pmode RETURN_ADDRESS_POINTER_REGNUM) */
+
 rtx virtual_incoming_args_rtx;	/* (REG:Pmode VIRTUAL_INCOMING_ARGS_REGNUM) */
 rtx virtual_stack_vars_rtx;	/* (REG:Pmode VIRTUAL_STACK_VARS_REGNUM) */
 rtx virtual_stack_dynamic_rtx;	/* (REG:Pmode VIRTUAL_STACK_DYNAMIC_REGNUM) */
@@ -208,6 +212,11 @@ static char *last_filename = 0;
 char *regno_pointer_flag;
 int regno_pointer_flag_length;
 
+/* Indexed by pseudo register number, if nonzero gives the known alignment
+   for that pseudo (if regno_pointer_flag is set).
+   Allocated in parallel with regno_pointer_flag.  */
+char *regno_pointer_align;
+
 /* Indexed by pseudo register number, gives the rtx for that pseudo.
    Allocated in parallel with regno_pointer_flag.  */
 
@@ -240,6 +249,9 @@ struct sequence_stack *sequence_stack;
 static struct sequence_stack *sequence_element_free_list;
 static rtx sequence_result[SEQUENCE_RESULT_SIZE];
 
+/* During RTL generation, we also keep a list of free INSN rtl codes.  */
+static rtx free_insn;
+
 extern int rtx_equal_function_value_matters;
 
 /* Filename and line number of last line-number note,
@@ -247,13 +259,9 @@ extern int rtx_equal_function_value_matters;
 extern char *emit_filename;
 extern int emit_lineno;
 
-rtx change_address ();
-void init_emit ();
-
-extern struct obstack *rtl_obstack;
-
-extern int stack_depth;
-extern int max_stack_depth;
+static rtx make_jump_insn_raw		PROTO((rtx));
+static rtx make_call_insn_raw		PROTO((rtx));
+static rtx find_line_node		PROTO((rtx));
 
 /* rtx gen_rtx (code, mode, [element1, ..., elementn])
 **
@@ -344,6 +352,11 @@ gen_rtx VPROTO((enum rtx_code code, enum machine_mode mode, ...))
       if (arg_pointer_rtx && regno == ARG_POINTER_REGNUM && mode == Pmode
 	  && ! reload_in_progress)
 	return arg_pointer_rtx;
+#endif
+#ifdef RETURN_ADDRESS_POINTER_REGNUM
+      if (return_address_pointer_rtx && regno == RETURN_ADDRESS_POINTER_REGNUM
+	  && mode == Pmode && ! reload_in_progress)
+	return return_address_pointer_rtx;
 #endif
       if (stack_pointer_rtx && regno == STACK_POINTER_REGNUM && mode == Pmode
 	  && ! reload_in_progress)
@@ -452,6 +465,25 @@ gen_rtvec_v (n, argp)
 
   return rt_val;
 }
+
+rtvec
+gen_rtvec_vv (n, argp)
+     int n;
+     rtunion *argp;
+{
+  register int i;
+  register rtvec rt_val;
+
+  if (n == 0)
+    return NULL_RTVEC;		/* Don't allocate an empty rtvec...	*/
+
+  rt_val = rtvec_alloc (n);	/* Allocate an rtvec...			*/
+
+  for (i = 0; i < n; i++)
+    rt_val->elem[i].rtx = (argp++)->rtx;
+
+  return rt_val;
+}
 
 /* Generate a REG rtx for a new pseudo register of mode MODE.
    This pseudo is assigned the next sequential register number.  */
@@ -497,12 +529,17 @@ gen_reg_rtx (mode)
     {
       rtx *new1;
       char *new =
-	(char *) oballoc (regno_pointer_flag_length * 2);
+	(char *) savealloc (regno_pointer_flag_length * 2);
       bcopy (regno_pointer_flag, new, regno_pointer_flag_length);
       bzero (&new[regno_pointer_flag_length], regno_pointer_flag_length);
       regno_pointer_flag = new;
 
-      new1 = (rtx *) oballoc (regno_pointer_flag_length * 2 * sizeof (rtx));
+      new = (char *) savealloc (regno_pointer_flag_length * 2);
+      bcopy (regno_pointer_align, new, regno_pointer_flag_length);
+      bzero (&new[regno_pointer_flag_length], regno_pointer_flag_length);
+      regno_pointer_align = new;
+
+      new1 = (rtx *) savealloc (regno_pointer_flag_length * 2 * sizeof (rtx));
       bcopy ((char *) regno_reg_rtx, (char *) new1,
 	     regno_pointer_flag_length * sizeof (rtx));
       bzero ((char *) &new1[regno_pointer_flag_length],
@@ -517,13 +554,35 @@ gen_reg_rtx (mode)
   return val;
 }
 
-/* Identify REG as a probable pointer register.  */
+/* Identify REG (which may be a CONCAT) as a user register.  */
 
 void
-mark_reg_pointer (reg)
+mark_user_reg (reg)
      rtx reg;
 {
+  if (GET_CODE (reg) == CONCAT)
+    {
+      REG_USERVAR_P (XEXP (reg, 0)) = 1;
+      REG_USERVAR_P (XEXP (reg, 1)) = 1;
+    }
+  else if (GET_CODE (reg) == REG)
+    REG_USERVAR_P (reg) = 1;
+  else
+    abort ();
+}
+
+/* Identify REG as a probable pointer register and show its alignment
+   as ALIGN, if nonzero.  */
+
+void
+mark_reg_pointer (reg, align)
+     rtx reg;
+     int align;
+{
   REGNO_POINTER_FLAG (REGNO (reg)) = 1;
+
+  if (align)
+    REGNO_POINTER_ALIGN (REGNO (reg)) = align;
 }
 
 /* Return 1 plus largest pseudo reg number used in the current function.  */
@@ -726,7 +785,7 @@ gen_lowpart_common (mode, x)
 	low = CONST_DOUBLE_LOW (x), high = CONST_DOUBLE_HIGH (x);
 
       /* REAL_VALUE_TARGET_DOUBLE takes the addressing order of the
-	 target machine. */
+	 target machine.  */
       if (WORDS_BIG_ENDIAN)
 	i[0] = high, i[1] = low;
       else
@@ -754,6 +813,26 @@ gen_lowpart_common (mode, x)
       return CONST_DOUBLE_FROM_REAL_VALUE (u.d, mode);
     }
 #endif
+
+  /* We need an extra case for machines where HOST_BITS_PER_WIDE_INT is the
+     same as sizeof (double), such as the alpha.  We only handle the
+     REAL_ARITHMETIC case, which is easy.  Testing HOST_BITS_PER_WIDE_INT
+     is not strictly necessary, but is done to restrict this code to cases
+     where it is known to work.  */
+#ifdef REAL_ARITHMETIC
+  else if (mode == SFmode
+	   && GET_CODE (x) == CONST_INT
+	   && GET_MODE_BITSIZE (mode) * 2 == HOST_BITS_PER_WIDE_INT)
+    {
+      REAL_VALUE_TYPE r;
+      HOST_WIDE_INT i;
+
+      i = INTVAL (x);
+      r = REAL_VALUE_FROM_TARGET_SINGLE (i);
+      return CONST_DOUBLE_FROM_REAL_VALUE (r, mode);
+    }
+#endif
+
   /* Similarly, if this is converting a floating-point value into a
      single-word integer.  Only do this is the host and target parameters are
      compatible.  */
@@ -766,7 +845,7 @@ gen_lowpart_common (mode, x)
 	   && GET_CODE (x) == CONST_DOUBLE
 	   && GET_MODE_CLASS (GET_MODE (x)) == MODE_FLOAT
 	   && GET_MODE_BITSIZE (mode) == BITS_PER_WORD)
-    return operand_subword (x, 0, 0, GET_MODE (x));
+    return operand_subword (x, word, 0, GET_MODE (x));
 
   /* Similarly, if this is converting a floating-point value into a
      two-word integer, we can do this one word at a time and make an
@@ -782,8 +861,10 @@ gen_lowpart_common (mode, x)
 	   && GET_MODE_CLASS (GET_MODE (x)) == MODE_FLOAT
 	   && GET_MODE_BITSIZE (mode) == 2 * BITS_PER_WORD)
     {
-      rtx lowpart = operand_subword (x, WORDS_BIG_ENDIAN, 0, GET_MODE (x));
-      rtx highpart = operand_subword (x, ! WORDS_BIG_ENDIAN, 0, GET_MODE (x));
+      rtx lowpart
+	= operand_subword (x, word + WORDS_BIG_ENDIAN, 0, GET_MODE (x));
+      rtx highpart
+	= operand_subword (x, word + ! WORDS_BIG_ENDIAN, 0, GET_MODE (x));
 
       if (lowpart && GET_CODE (lowpart) == CONST_INT
 	  && highpart && GET_CODE (highpart) == CONST_INT)
@@ -863,6 +944,7 @@ gen_lowpart (mode, x)
       result = gen_lowpart_common (mode, copy_to_reg (x));
       if (result == 0)
 	abort ();
+      return result;
     }
   else if (GET_CODE (x) == MEM)
     {
@@ -880,6 +962,8 @@ gen_lowpart (mode, x)
 
       return change_address (x, mode, plus_constant (XEXP (x, 0), offset));
     }
+  else if (GET_CODE (x) == ADDRESSOF)
+    return gen_lowpart (mode, force_reg (GET_MODE (x), x));
   else
     abort ();
 }
@@ -947,7 +1031,7 @@ gen_highpart (mode, x)
        */
 
       if (REGNO (x) < FIRST_PSEUDO_REGISTER
-	  /* integrate.c can't handle parts of a return value register. */
+	  /* integrate.c can't handle parts of a return value register.  */
 	  && (! REG_FUNCTION_VALUE_P (x)
 	      || ! rtx_equal_function_value_matters)
 	  /* We want to keep the stack, frame, and arg pointers special.  */
@@ -974,6 +1058,8 @@ subreg_lowpart_p (x)
 {
   if (GET_CODE (x) != SUBREG)
     return 1;
+  else if (GET_MODE (SUBREG_REG (x)) == VOIDmode)
+    return 0;
 
   if (WORDS_BIG_ENDIAN
       && GET_MODE_SIZE (GET_MODE (SUBREG_REG (x))) > UNITS_PER_WORD)
@@ -1132,6 +1218,20 @@ operand_subword (op, i, validate_address, mode)
       else
 	abort ();
     }
+  else if (HOST_BITS_PER_WIDE_INT >= BITS_PER_WORD
+	   && GET_MODE_CLASS (mode) == MODE_FLOAT
+	   && GET_MODE_BITSIZE (mode) > 64
+	   && GET_CODE (op) == CONST_DOUBLE)
+  {
+    long k[4];
+    REAL_VALUE_TYPE rv;
+
+    REAL_VALUE_FROM_CONST_DOUBLE (rv, op);
+    REAL_VALUE_TO_TARGET_LONG_DOUBLE (rv, k);
+
+    if (BITS_PER_WORD == 32)
+      return GEN_INT ((HOST_WIDE_INT) k[i]);
+  }
 #else /* no REAL_ARITHMETIC */
   if (((HOST_FLOAT_FORMAT == TARGET_FLOAT_FORMAT
 	&& HOST_BITS_PER_WIDE_INT == BITS_PER_WORD)
@@ -1173,6 +1273,7 @@ operand_subword (op, i, validate_address, mode)
   if (((HOST_FLOAT_FORMAT == TARGET_FLOAT_FORMAT
 	&& HOST_BITS_PER_WIDE_INT == BITS_PER_WORD)
        || flag_pretend_float)
+      && sizeof (float) * 8 == HOST_BITS_PER_WIDE_INT
       && GET_MODE_CLASS (mode) == MODE_FLOAT
       && GET_MODE_SIZE (mode) == UNITS_PER_WORD
       && GET_CODE (op) == CONST_DOUBLE)
@@ -1183,6 +1284,22 @@ operand_subword (op, i, validate_address, mode)
       REAL_VALUE_FROM_CONST_DOUBLE (d, op);
 
       u.f = d;
+      return GEN_INT (u.i);
+    }
+  if (((HOST_FLOAT_FORMAT == TARGET_FLOAT_FORMAT
+	&& HOST_BITS_PER_WIDE_INT == BITS_PER_WORD)
+       || flag_pretend_float)
+      && sizeof (double) * 8 == HOST_BITS_PER_WIDE_INT
+      && GET_MODE_CLASS (mode) == MODE_FLOAT
+      && GET_MODE_SIZE (mode) == UNITS_PER_WORD
+      && GET_CODE (op) == CONST_DOUBLE)
+    {
+      double d;
+      union {double d; HOST_WIDE_INT i; } u;
+
+      REAL_VALUE_FROM_CONST_DOUBLE (d, op);
+
+      u.d = d;
       return GEN_INT (u.i);
     }
 #endif /* no REAL_ARITHMETIC */
@@ -1314,6 +1431,9 @@ change_address (memref, mode, addr)
   else
     addr = memory_address (mode, addr);
 	
+  if (rtx_equal_p (addr, XEXP (memref, 0)) && mode == GET_MODE (memref))
+    return memref;
+
   new = gen_rtx (MEM, mode, addr);
   MEM_VOLATILE_P (new) = MEM_VOLATILE_P (memref);
   RTX_UNCHANGING_P (new) = RTX_UNCHANGING_P (memref);
@@ -1330,7 +1450,8 @@ gen_label_rtx ()
 
   label = (output_bytecode
 	   ? gen_rtx (CODE_LABEL, VOIDmode, NULL, bc_get_bytecode_label ())
-	   : gen_rtx (CODE_LABEL, VOIDmode, 0, 0, 0, label_num++, NULL_PTR));
+	   : gen_rtx (CODE_LABEL, VOIDmode, 0, NULL_RTX,
+		      NULL_RTX, label_num++, NULL_PTR));
 
   LABEL_NUSES (label) = 0;
   return label;
@@ -1346,7 +1467,8 @@ gen_inline_header_rtx (first_insn, first_parm_insn, first_labelno,
 		       last_labelno, max_parm_regnum, max_regnum, args_size,
 		       pops_args, stack_slots, forced_labels, function_flags,
 		       outgoing_args_size, original_arg_vector,
-		       original_decl_initial)
+		       original_decl_initial, regno_rtx, regno_flag,
+		       regno_align, parm_reg_stack_loc)
      rtx first_insn, first_parm_insn;
      int first_labelno, last_labelno, max_parm_regnum, max_regnum, args_size;
      int pops_args;
@@ -1356,6 +1478,10 @@ gen_inline_header_rtx (first_insn, first_parm_insn, first_labelno,
      int outgoing_args_size;
      rtvec original_arg_vector;
      rtx original_decl_initial;
+     rtvec regno_rtx;
+     char *regno_flag;
+     char *regno_align;
+     rtvec parm_reg_stack_loc;
 {
   rtx header = gen_rtx (INLINE_HEADER, VOIDmode,
 			cur_insn_uid++, NULL_RTX,
@@ -1363,20 +1489,31 @@ gen_inline_header_rtx (first_insn, first_parm_insn, first_labelno,
 			first_labelno, last_labelno,
 			max_parm_regnum, max_regnum, args_size, pops_args,
 			stack_slots, forced_labels, function_flags,
-			outgoing_args_size,
-			original_arg_vector, original_decl_initial);
+			outgoing_args_size, original_arg_vector,
+			original_decl_initial,
+			regno_rtx, regno_flag, regno_align,
+			parm_reg_stack_loc);
   return header;
 }
 
 /* Install new pointers to the first and last insns in the chain.
+   Also, set cur_insn_uid to one higher than the last in use.
    Used for an inline-procedure after copying the insn chain.  */
 
 void
 set_new_first_and_last_insn (first, last)
      rtx first, last;
 {
+  rtx insn;
+
   first_insn = first;
   last_insn = last;
+  cur_insn_uid = 0;
+
+  for (insn = first; insn; insn = NEXT_INSN (insn))
+    cur_insn_uid = MAX (cur_insn_uid, INSN_UID (insn));
+
+  cur_insn_uid++;
 }
 
 /* Set the range of label numbers found in the current function.
@@ -1408,6 +1545,7 @@ save_emit_status (p)
   p->last_linenum = last_linenum;
   p->last_filename = last_filename;
   p->regno_pointer_flag = regno_pointer_flag;
+  p->regno_pointer_align = regno_pointer_align;
   p->regno_pointer_flag_length = regno_pointer_flag_length;
   p->regno_reg_rtx = regno_reg_rtx;
 }
@@ -1432,13 +1570,17 @@ restore_emit_status (p)
   last_linenum = p->last_linenum;
   last_filename = p->last_filename;
   regno_pointer_flag = p->regno_pointer_flag;
+  regno_pointer_align = p->regno_pointer_align;
   regno_pointer_flag_length = p->regno_pointer_flag_length;
   regno_reg_rtx = p->regno_reg_rtx;
 
-  /* Clear our cache of rtx expressions for start_sequence and gen_sequence. */
+  /* Clear our cache of rtx expressions for start_sequence and
+     gen_sequence.  */
   sequence_element_free_list = 0;
   for (i = 0; i < SEQUENCE_RESULT_SIZE; i++)
     sequence_result[i] = 0;
+
+  free_insn = 0;
 }
 
 /* Go through all the RTL insn bodies and copy any invalid shared structure.
@@ -1500,7 +1642,7 @@ copy_rtx_if_shared (orig)
     case PC:
     case CC0:
     case SCRATCH:
-      /* SCRATCH must be shared because they represent distinct values. */
+      /* SCRATCH must be shared because they represent distinct values.  */
       return x;
 
     case CONST:
@@ -1540,6 +1682,10 @@ copy_rtx_if_shared (orig)
 	  x->used = 1;
 	  return x;
 	}
+      break;
+
+    default:
+      break;
     }
 
   /* This rtx may not be shared.  If it has already been seen,
@@ -1580,7 +1726,7 @@ copy_rtx_if_shared (orig)
 	      int len = XVECLEN (x, i);
 
 	      if (copied && len > 0)
-		XVEC (x, i) = gen_rtvec_v (len, &XVECEXP (x, i, 0));
+		XVEC (x, i) = gen_rtvec_vv (len, XVEC (x, i)->elem);
 	      for (j = 0; j < len; j++)
 		XVECEXP (x, i, j) = copy_rtx_if_shared (XVECEXP (x, i, j));
 	    }
@@ -1629,6 +1775,9 @@ reset_used_flags (x)
     case BARRIER:
       /* The chain of insns is not being copied.  */
       return;
+      
+    default:
+      break;
     }
 
   x->used = 0;
@@ -1811,7 +1960,7 @@ prev_nonnote_insn (insn)
 
 /* Return the next INSN, CALL_INSN or JUMP_INSN after INSN;
    or 0, if there is none.  This routine does not look inside
-   SEQUENCEs. */
+   SEQUENCEs.  */
 
 rtx
 next_real_insn (insn)
@@ -2086,9 +2235,17 @@ make_insn_raw (pattern)
 {
   register rtx insn;
 
-  insn = rtx_alloc (INSN);
-  INSN_UID (insn) = cur_insn_uid++;
+  /* If in RTL generation phase, see if FREE_INSN can be used.  */
+  if (free_insn != 0 && rtx_equal_function_value_matters)
+    {
+      insn = free_insn;
+      free_insn = NEXT_INSN (free_insn);
+      PUT_CODE (insn, INSN);
+    }
+  else
+    insn = rtx_alloc (INSN);
 
+  INSN_UID (insn) = cur_insn_uid++;
   PATTERN (insn) = pattern;
   INSN_CODE (insn) = -1;
   LOG_LINKS (insn) = NULL;
@@ -3055,12 +3212,17 @@ gen_sequence ()
      (Now that we cache SEQUENCE expressions, it isn't worth special-casing
      the case of an empty list.)  */
   if (len == 1
+      && ! RTX_FRAME_RELATED_P (first_insn)
       && (GET_CODE (first_insn) == INSN
 	  || GET_CODE (first_insn) == JUMP_INSN
 	  /* Don't discard the call usage field.  */
 	  || (GET_CODE (first_insn) == CALL_INSN
 	      && CALL_INSN_FUNCTION_USAGE (first_insn) == NULL_RTX)))
-    return PATTERN (first_insn);
+    {
+      NEXT_INSN (first_insn) = free_insn;
+      free_insn = first_insn;
+      return PATTERN (first_insn);
+    }
 
   /* Put them in a vector.  See if we already have a SEQUENCE of the
      appropriate length around.  */
@@ -3080,145 +3242,6 @@ gen_sequence ()
     XVECEXP (result, 0, i) = tem;
 
   return result;
-}
-
-/* Set up regno_reg_rtx, reg_rtx_no and regno_pointer_flag
-   according to the chain of insns starting with FIRST.
-
-   Also set cur_insn_uid to exceed the largest uid in that chain.
-
-   This is used when an inline function's rtl is saved
-   and passed to rest_of_compilation later.  */
-
-static void restore_reg_data_1 ();
-
-void
-restore_reg_data (first)
-     rtx first;
-{
-  register rtx insn;
-  int i;
-  register int max_uid = 0;
-
-  for (insn = first; insn; insn = NEXT_INSN (insn))
-    {
-      if (INSN_UID (insn) >= max_uid)
-	max_uid = INSN_UID (insn);
-
-      switch (GET_CODE (insn))
-	{
-	case NOTE:
-	case CODE_LABEL:
-	case BARRIER:
-	  break;
-
-	case JUMP_INSN:
-	case CALL_INSN:
-	case INSN:
-	  restore_reg_data_1 (PATTERN (insn));
-	  break;
-	}
-    }
-
-  /* Don't duplicate the uids already in use.  */
-  cur_insn_uid = max_uid + 1;
-
-  /* If any regs are missing, make them up.  
-
-     ??? word_mode is not necessarily the right mode.  Most likely these REGs
-     are never used.  At some point this should be checked.  */
-
-  for (i = FIRST_PSEUDO_REGISTER; i < reg_rtx_no; i++)
-    if (regno_reg_rtx[i] == 0)
-      regno_reg_rtx[i] = gen_rtx (REG, word_mode, i);
-}
-
-static void
-restore_reg_data_1 (orig)
-     rtx orig;
-{
-  register rtx x = orig;
-  register int i;
-  register enum rtx_code code;
-  register char *format_ptr;
-
-  code = GET_CODE (x);
-
-  switch (code)
-    {
-    case QUEUED:
-    case CONST_INT:
-    case CONST_DOUBLE:
-    case SYMBOL_REF:
-    case CODE_LABEL:
-    case PC:
-    case CC0:
-    case LABEL_REF:
-      return;
-
-    case REG:
-      if (REGNO (x) >= FIRST_PSEUDO_REGISTER)
-	{
-	  /* Make sure regno_pointer_flag and regno_reg_rtx are large
-	     enough to have an element for this pseudo reg number.  */
-	  if (REGNO (x) >= reg_rtx_no)
-	    {
-	      reg_rtx_no = REGNO (x);
-
-	      if (reg_rtx_no >= regno_pointer_flag_length)
-		{
-		  int newlen = MAX (regno_pointer_flag_length * 2,
-				    reg_rtx_no + 30);
-		  rtx *new1;
-		  char *new = (char *) oballoc (newlen);
-		  bzero (new, newlen);
-		  bcopy (regno_pointer_flag, new, regno_pointer_flag_length);
-
-		  new1 = (rtx *) oballoc (newlen * sizeof (rtx));
-		  bzero ((char *) new1, newlen * sizeof (rtx));
-		  bcopy ((char *) regno_reg_rtx, (char *) new1,
-			 regno_pointer_flag_length * sizeof (rtx));
-
-		  regno_pointer_flag = new;
-		  regno_reg_rtx = new1;
-		  regno_pointer_flag_length = newlen;
-		}
-	      reg_rtx_no ++;
-	    }
-	  regno_reg_rtx[REGNO (x)] = x;
-	}
-      return;
-
-    case MEM:
-      if (GET_CODE (XEXP (x, 0)) == REG)
-	mark_reg_pointer (XEXP (x, 0));
-      restore_reg_data_1 (XEXP (x, 0));
-      return;
-    }
-
-  /* Now scan the subexpressions recursively.  */
-
-  format_ptr = GET_RTX_FORMAT (code);
-
-  for (i = 0; i < GET_RTX_LENGTH (code); i++)
-    {
-      switch (*format_ptr++)
-	{
-	case 'e':
-	  restore_reg_data_1 (XEXP (x, i));
-	  break;
-
-	case 'E':
-	  if (XVEC (x, i) != NULL)
-	    {
-	      register int j;
-
-	      for (j = 0; j < XVECLEN (x, i); j++)
-		restore_reg_data_1 (XVECEXP (x, i, j));
-	    }
-	  break;
-	}
-    }
 }
 
 /* Initialize data structures and variables in this file
@@ -3244,17 +3267,22 @@ init_emit ()
   sequence_element_free_list = 0;
   for (i = 0; i < SEQUENCE_RESULT_SIZE; i++)
     sequence_result[i] = 0;
+  free_insn = 0;
 
   /* Init the tables that describe all the pseudo regs.  */
 
   regno_pointer_flag_length = LAST_VIRTUAL_REGISTER + 101;
 
   regno_pointer_flag 
-    = (char *) oballoc (regno_pointer_flag_length);
+    = (char *) savealloc (regno_pointer_flag_length);
   bzero (regno_pointer_flag, regno_pointer_flag_length);
 
+  regno_pointer_align
+    = (char *) savealloc (regno_pointer_flag_length);
+  bzero (regno_pointer_align, regno_pointer_flag_length);
+
   regno_reg_rtx 
-    = (rtx *) oballoc (regno_pointer_flag_length * sizeof (rtx));
+    = (rtx *) savealloc (regno_pointer_flag_length * sizeof (rtx));
   bzero ((char *) regno_reg_rtx, regno_pointer_flag_length * sizeof (rtx));
 
   /* Put copies of all the virtual register rtx into regno_reg_rtx.  */
@@ -3274,6 +3302,23 @@ init_emit ()
   REGNO_POINTER_FLAG (VIRTUAL_STACK_VARS_REGNUM) = 1;
   REGNO_POINTER_FLAG (VIRTUAL_STACK_DYNAMIC_REGNUM) = 1;
   REGNO_POINTER_FLAG (VIRTUAL_OUTGOING_ARGS_REGNUM) = 1;
+
+#ifdef STACK_BOUNDARY
+  REGNO_POINTER_ALIGN (STACK_POINTER_REGNUM) = STACK_BOUNDARY / BITS_PER_UNIT;
+  REGNO_POINTER_ALIGN (FRAME_POINTER_REGNUM) = STACK_BOUNDARY / BITS_PER_UNIT;
+  REGNO_POINTER_ALIGN (HARD_FRAME_POINTER_REGNUM)
+    = STACK_BOUNDARY / BITS_PER_UNIT;
+  REGNO_POINTER_ALIGN (ARG_POINTER_REGNUM) = STACK_BOUNDARY / BITS_PER_UNIT;
+
+  REGNO_POINTER_ALIGN (VIRTUAL_INCOMING_ARGS_REGNUM)
+    = STACK_BOUNDARY / BITS_PER_UNIT;
+  REGNO_POINTER_ALIGN (VIRTUAL_STACK_VARS_REGNUM)
+    = STACK_BOUNDARY / BITS_PER_UNIT;
+  REGNO_POINTER_ALIGN (VIRTUAL_STACK_DYNAMIC_REGNUM)
+    = STACK_BOUNDARY / BITS_PER_UNIT;
+  REGNO_POINTER_ALIGN (VIRTUAL_OUTGOING_ARGS_REGNUM)
+    = STACK_BOUNDARY / BITS_PER_UNIT;
+#endif
 
 #ifdef INIT_EXPANDERS
   INIT_EXPANDERS;
@@ -3391,6 +3436,11 @@ init_emit_once (line_numbers)
     arg_pointer_rtx = stack_pointer_rtx;
   else
     arg_pointer_rtx = gen_rtx (REG, Pmode, ARG_POINTER_REGNUM);
+
+#ifdef RETURN_ADDRESS_POINTER_REGNUM
+  return_address_pointer_rtx = gen_rtx (REG, Pmode,
+					RETURN_ADDRESS_POINTER_REGNUM);
+#endif
 
   /* Create the virtual registers.  Do so here since the following objects
      might reference them.  */

@@ -1,5 +1,5 @@
 /* Perform instruction reorganizations for delay slot filling.
-   Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu).
    Hacked by Michael Tiemann (tiemann@cygnus.com).
 
@@ -115,8 +115,8 @@ Boston, MA 02111-1307, USA.  */
    The HP-PA can conditionally nullify insns, providing a similar
    effect to the ARM, differing mostly in which insn is "in charge".   */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "insn-config.h"
 #include "conditions.h"
@@ -129,6 +129,13 @@ Boston, MA 02111-1307, USA.  */
 #include "output.h"
 #include "obstack.h"
 #include "insn-attr.h"
+
+/* Import list of registers used as spill regs from reload.  */
+extern HARD_REG_SET used_spill_regs;
+
+/* Import highest label used in function at end of reload.  */
+extern int max_label_num_after_reload;
+
 
 #ifdef DELAY_SLOTS
 
@@ -163,8 +170,8 @@ static rtx *unfilled_firstobj;
 struct resources
 {
   char memory;			/* Insn sets or needs a memory location.  */
-  char unch_memory;		/* Insn sets of needs a "unchanging" MEM. */
-  char volatil;			/* Insn sets or needs a volatile memory loc. */
+  char unch_memory;		/* Insn sets of needs a "unchanging" MEM.  */
+  char volatil;			/* Insn sets or needs a volatile memory loc.  */
   char cc;			/* Insn sets or needs the condition codes.  */
   HARD_REG_SET regs;		/* Which registers are set or needed.  */
 };
@@ -252,6 +259,7 @@ static int find_basic_block	PROTO((rtx));
 static void update_block	PROTO((rtx, rtx));
 static int reorg_redirect_jump PROTO((rtx, rtx));
 static void update_reg_dead_notes PROTO((rtx, rtx));
+static void fix_reg_dead_note PROTO((rtx, rtx));
 static void update_reg_unused_notes PROTO((rtx, rtx));
 static void update_live_status	PROTO((rtx, rtx));
 static rtx next_insn_no_annul	PROTO((rtx));
@@ -328,6 +336,7 @@ mark_referenced_resources (x, res, include_delayed_effects)
 
     case UNSPEC_VOLATILE:
     case ASM_INPUT:
+    case TRAP_IF:
       /* Traditional asm's are always volatile.  */
       res->volatil = 1;
       return;
@@ -386,7 +395,7 @@ mark_referenced_resources (x, res, include_delayed_effects)
 	  rtx next = NEXT_INSN (x);
 	  int i;
 
-	  /* If we are part of a delay slot sequence, point at the SEQUENCE. */
+	  /* If we are part of a delay slot sequence, point at the SEQUENCE.  */
 	  if (NEXT_INSN (insn) != x)
 	    {
 	      next = NEXT_INSN (NEXT_INSN (insn));
@@ -445,7 +454,7 @@ mark_referenced_resources (x, res, include_delayed_effects)
 	  }
 	}
 
-      /* ... fall through to other INSN processing ... */
+      /* ... fall through to other INSN processing ...  */
 
     case INSN:
     case JUMP_INSN:
@@ -804,7 +813,7 @@ find_end_label ()
       end_of_function_label = gen_label_rtx ();
       LABEL_NUSES (end_of_function_label) = 0;
 
-      /* Put the label before an USE insns that may proceed the RETURN insn. */
+      /* Put the label before an USE insns that may proceed the RETURN insn.  */
       while (GET_CODE (temp) == USE)
 	temp = PREV_INSN (temp);
 
@@ -861,14 +870,14 @@ emit_delay_sequence (insn, list, length, avail)
   register rtx li;
   int had_barrier = 0;
 
-  /* Allocate the the rtvec to hold the insns and the SEQUENCE. */
+  /* Allocate the the rtvec to hold the insns and the SEQUENCE.  */
   rtvec seqv = rtvec_alloc (length + 1);
   rtx seq = gen_rtx (SEQUENCE, VOIDmode, seqv);
   rtx seq_insn = make_insn_raw (seq);
   rtx first = get_insns ();
   rtx last = get_last_insn ();
 
-  /* Make a copy of the insn having delay slots. */
+  /* Make a copy of the insn having delay slots.  */
   rtx delay_insn = copy_rtx (insn);
 
   /* If INSN is followed by a BARRIER, delete the BARRIER since it will only
@@ -885,15 +894,22 @@ emit_delay_sequence (insn, list, length, avail)
   NEXT_INSN (seq_insn) = NEXT_INSN (insn);
   PREV_INSN (seq_insn) = PREV_INSN (insn);
 
+  if (insn != last)
+    PREV_INSN (NEXT_INSN (seq_insn)) = seq_insn;
+
+  if (insn != first)
+    NEXT_INSN (PREV_INSN (seq_insn)) = seq_insn;
+
+  /* Note the calls to set_new_first_and_last_insn must occur after
+     SEQ_INSN has been completely spliced into the insn stream.
+
+     Otherwise CUR_INSN_UID will get set to an incorrect value because
+     set_new_first_and_last_insn will not find SEQ_INSN in the chain.  */
   if (insn == last)
     set_new_first_and_last_insn (first, seq_insn);
-  else
-    PREV_INSN (NEXT_INSN (seq_insn)) = seq_insn;
 
   if (insn == first)
     set_new_first_and_last_insn (seq_insn, last);
-  else
-    NEXT_INSN (PREV_INSN (seq_insn)) = seq_insn;
 
   /* Build our SEQUENCE and rebuild the insn chain.  */
   XVECEXP (seq, 0, 0) = delay_insn;
@@ -1218,6 +1234,7 @@ optimize_skip (insn)
 
     Non conditional branches return no direction information and
     are predicted as very likely taken.  */
+
 static int
 get_jump_flags (insn, label)
      rtx insn, label;
@@ -1340,6 +1357,26 @@ mostly_true_jump (jump_insn, condition)
   int rare_dest = rare_destination (target_label);
   int rare_fallthrough = rare_destination (NEXT_INSN (jump_insn));
 
+  /* If branch probabilities are available, then use that number since it
+     always gives a correct answer.  */
+  if (flag_branch_probabilities)
+    {
+      rtx note = find_reg_note (jump_insn, REG_BR_PROB, 0);;
+      if (note)
+	{
+	  int prob = XINT (note, 0);
+
+	  if (prob >= REG_BR_PROB_BASE * 9 / 10)
+	    return 2;
+	  else if (prob >= REG_BR_PROB_BASE / 2)
+	    return 1;
+	  else if (prob >= REG_BR_PROB_BASE / 10)
+	    return 0;
+	  else
+	    return -1;
+	}
+    }
+
   /* If this is a branch outside a loop, it is highly unlikely.  */
   if (GET_CODE (PATTERN (jump_insn)) == SET
       && GET_CODE (SET_SRC (PATTERN (jump_insn))) == IF_THEN_ELSE
@@ -1373,7 +1410,7 @@ mostly_true_jump (jump_insn, condition)
     }
 
   /* Look at the relative rarities of the fallthrough and destination.  If
-     they differ, we can predict the branch that way. */
+     they differ, we can predict the branch that way.  */
 
   switch (rare_fallthrough - rare_dest)
     {
@@ -1960,6 +1997,11 @@ redundant_insn (insn, target, delay_list)
   struct resources needed, set;
   int i;
 
+  /* If INSN has any REG_UNUSED notes, it can't match anything since we
+     are allowed to not actually assign to such a register.  */
+  if (find_reg_note (insn, REG_UNUSED, NULL_RTX) != 0)
+    return 0;
+
   /* Scan backwards looking for a match.  */
   for (trial = PREV_INSN (target); trial; trial = PREV_INSN (trial))
     {
@@ -1998,7 +2040,8 @@ redundant_insn (insn, target, delay_list)
 	     resource requirements as we go.  */
 	  for (i = XVECLEN (pat, 0) - 1; i > 0; i--)
 	    if (GET_CODE (XVECEXP (pat, 0, i)) == GET_CODE (insn)
-		&& rtx_equal_p (PATTERN (XVECEXP (pat, 0, i)), ipat))
+		&& rtx_equal_p (PATTERN (XVECEXP (pat, 0, i)), ipat)
+		&& ! find_reg_note (XVECEXP (pat, 0, i), REG_UNUSED, NULL_RTX))
 	      break;
 
 	  /* If found a match, exit this loop early.  */
@@ -2006,7 +2049,8 @@ redundant_insn (insn, target, delay_list)
 	    break;
 	}
 
-      else if (GET_CODE (trial) == GET_CODE (insn) && rtx_equal_p (pat, ipat))
+      else if (GET_CODE (trial) == GET_CODE (insn) && rtx_equal_p (pat, ipat)
+	       && ! find_reg_note (trial, REG_UNUSED, NULL_RTX))
 	break;
     }
 
@@ -2304,6 +2348,38 @@ update_reg_dead_notes (insn, delayed_insn)
       }
 }
 
+/* Called when an insn redundant with start_insn is deleted.  If there
+   is a REG_DEAD note for the target of start_insn between start_insn
+   and stop_insn, then the REG_DEAD note needs to be deleted since the
+   value no longer dies there.
+
+   If the REG_DEAD note isn't deleted, then mark_target_live_regs may be
+   confused into thinking the register is dead.  */
+
+static void
+fix_reg_dead_note (start_insn, stop_insn)
+     rtx start_insn, stop_insn;
+{
+  rtx p, link, next;
+
+  for (p = next_nonnote_insn (start_insn); p != stop_insn;
+       p = next_nonnote_insn (p))
+    for (link = REG_NOTES (p); link; link = next)
+      {
+	next = XEXP (link, 1);
+
+	if (REG_NOTE_KIND (link) != REG_DEAD
+	    || GET_CODE (XEXP (link, 0)) != REG)
+	  continue;
+
+	if (reg_set_p (XEXP (link, 0), PATTERN (start_insn)))
+	  {
+	    remove_note (p, link);
+	    return;
+	  }
+      }
+}
+
 /* Delete any REG_UNUSED notes that exist on INSN but not on REDUNDANT_INSN.
 
    This handles the case of udivmodXi4 instructions which optimize their
@@ -2399,6 +2475,188 @@ next_insn_no_annul (insn)
   return insn;
 }
 
+/* A subroutine of mark_target_live_regs.  Search forward from TARGET
+   looking for registers that are set before they are used.  These are dead. 
+   Stop after passing a few conditional jumps, and/or a small
+   number of unconditional branches.  */
+
+static rtx
+find_dead_or_set_registers (target, res, jump_target, jump_count, set, needed)
+     rtx target;
+     struct resources *res;
+     rtx *jump_target;
+     int jump_count;
+     struct resources set, needed;
+{
+  HARD_REG_SET scratch;
+  rtx insn, next;
+  rtx jump_insn = 0;
+  int i;
+
+  for (insn = target; insn; insn = next)
+    {
+      rtx this_jump_insn = insn;
+
+      next = NEXT_INSN (insn);
+      switch (GET_CODE (insn))
+	{
+	case CODE_LABEL:
+	  /* After a label, any pending dead registers that weren't yet
+	     used can be made dead.  */
+	  AND_COMPL_HARD_REG_SET (pending_dead_regs, needed.regs);
+	  AND_COMPL_HARD_REG_SET (res->regs, pending_dead_regs);
+	  CLEAR_HARD_REG_SET (pending_dead_regs);
+
+	  if (CODE_LABEL_NUMBER (insn) < max_label_num_after_reload)
+	    {
+	      /* All spill registers are dead at a label, so kill all of the
+		 ones that aren't needed also.  */
+	      COPY_HARD_REG_SET (scratch, used_spill_regs);
+	      AND_COMPL_HARD_REG_SET (scratch, needed.regs);
+	      AND_COMPL_HARD_REG_SET (res->regs, scratch);
+	    }
+	  continue;
+
+	case BARRIER:
+	case NOTE:
+	  continue;
+
+	case INSN:
+	  if (GET_CODE (PATTERN (insn)) == USE)
+	    {
+	      /* If INSN is a USE made by update_block, we care about the
+		 underlying insn.  Any registers set by the underlying insn
+		 are live since the insn is being done somewhere else.  */
+	      if (GET_RTX_CLASS (GET_CODE (XEXP (PATTERN (insn), 0))) == 'i')
+		mark_set_resources (XEXP (PATTERN (insn), 0), res, 0, 1);
+
+	      /* All other USE insns are to be ignored.  */
+	      continue;
+	    }
+	  else if (GET_CODE (PATTERN (insn)) == CLOBBER)
+	    continue;
+	  else if (GET_CODE (PATTERN (insn)) == SEQUENCE)
+	    {
+	      /* An unconditional jump can be used to fill the delay slot
+		 of a call, so search for a JUMP_INSN in any position.  */
+	      for (i = 0; i < XVECLEN (PATTERN (insn), 0); i++)
+		{
+		  this_jump_insn = XVECEXP (PATTERN (insn), 0, i);
+		  if (GET_CODE (this_jump_insn) == JUMP_INSN)
+		    break;
+		}
+	    }
+	}
+
+      if (GET_CODE (this_jump_insn) == JUMP_INSN)
+	{
+	  if (jump_count++ < 10)
+	    {
+	      if (simplejump_p (this_jump_insn)
+		  || GET_CODE (PATTERN (this_jump_insn)) == RETURN)
+		{
+		  next = JUMP_LABEL (this_jump_insn);
+		  if (jump_insn == 0)
+		    {
+		      jump_insn = insn;
+		      if (jump_target)
+			*jump_target = JUMP_LABEL (this_jump_insn);
+		    }
+		}
+	      else if (condjump_p (this_jump_insn)
+		       || condjump_in_parallel_p (this_jump_insn))
+		{
+		  struct resources target_set, target_res;
+		  struct resources fallthrough_res;
+
+		  /* We can handle conditional branches here by following
+		     both paths, and then IOR the results of the two paths
+		     together, which will give us registers that are dead
+		     on both paths.  Since this is expensive, we give it
+		     a much higher cost than unconditional branches.  The
+		     cost was chosen so that we will follow at most 1
+		     conditional branch.  */
+
+		  jump_count += 4;
+		  if (jump_count >= 10)
+		    break;
+
+		  mark_referenced_resources (insn, &needed, 1);
+
+		  /* For an annulled branch, mark_set_resources ignores slots
+		     filled by instructions from the target.  This is correct
+		     if the branch is not taken.  Since we are following both
+		     paths from the branch, we must also compute correct info
+		     if the branch is taken.  We do this by inverting all of
+		     the INSN_FROM_TARGET_P bits, calling mark_set_resources,
+		     and then inverting the INSN_FROM_TARGET_P bits again.  */
+
+		  if (GET_CODE (PATTERN (insn)) == SEQUENCE
+		      && INSN_ANNULLED_BRANCH_P (this_jump_insn))
+		    {
+		      for (i = 1; i < XVECLEN (PATTERN (insn), 0); i++)
+			INSN_FROM_TARGET_P (XVECEXP (PATTERN (insn), 0, i))
+			  = ! INSN_FROM_TARGET_P (XVECEXP (PATTERN (insn), 0, i));
+
+		      target_set = set;
+		      mark_set_resources (insn, &target_set, 0, 1);
+
+		      for (i = 1; i < XVECLEN (PATTERN (insn), 0); i++)
+			INSN_FROM_TARGET_P (XVECEXP (PATTERN (insn), 0, i))
+			  = ! INSN_FROM_TARGET_P (XVECEXP (PATTERN (insn), 0, i));
+
+		      mark_set_resources (insn, &set, 0, 1);
+		    }
+		  else
+		    {
+		      mark_set_resources (insn, &set, 0, 1);
+		      target_set = set;
+		    }
+
+		  target_res = *res;
+		  COPY_HARD_REG_SET (scratch, target_set.regs);
+		  AND_COMPL_HARD_REG_SET (scratch, needed.regs);
+		  AND_COMPL_HARD_REG_SET (target_res.regs, scratch);
+
+		  fallthrough_res = *res;
+		  COPY_HARD_REG_SET (scratch, set.regs);
+		  AND_COMPL_HARD_REG_SET (scratch, needed.regs);
+		  AND_COMPL_HARD_REG_SET (fallthrough_res.regs, scratch);
+
+		  find_dead_or_set_registers (JUMP_LABEL (this_jump_insn),
+					      &target_res, 0, jump_count,
+					      target_set, needed);
+		  find_dead_or_set_registers (next,
+					      &fallthrough_res, 0, jump_count,
+					      set, needed);
+		  IOR_HARD_REG_SET (fallthrough_res.regs, target_res.regs);
+		  AND_HARD_REG_SET (res->regs, fallthrough_res.regs);
+		  break;
+		}
+	      else
+		break;
+	    }
+	  else
+	    {
+	      /* Don't try this optimization if we expired our jump count
+		 above, since that would mean there may be an infinite loop
+		 in the function being compiled.  */
+	      jump_insn = 0;
+	      break;
+	    }
+	}
+
+      mark_referenced_resources (insn, &needed, 1);
+      mark_set_resources (insn, &set, 0, 1);
+
+      COPY_HARD_REG_SET (scratch, set.regs);
+      AND_COMPL_HARD_REG_SET (scratch, needed.regs);
+      AND_COMPL_HARD_REG_SET (res->regs, scratch);
+    }
+
+  return jump_insn;
+}
+
 /* Set the resources that are live at TARGET.
 
    If TARGET is zero, we refer to the end of the current function and can
@@ -2509,8 +2767,7 @@ mark_target_live_regs (target, res)
   if (b != -1)
     {
       regset regs_live = basic_block_live_at_start[b];
-      int offset, j;
-      REGSET_ELT_TYPE bit;
+      int j;
       int regno;
       rtx start_insn, stop_insn;
 
@@ -2518,26 +2775,18 @@ mark_target_live_regs (target, res)
 	 marked live, plus live pseudo regs that have been renumbered to
 	 hard regs.  */
 
-#ifdef HARD_REG_SET
-      current_live_regs = *regs_live;
-#else
-      COPY_HARD_REG_SET (current_live_regs, regs_live);
-#endif
+      REG_SET_TO_HARD_REG_SET (current_live_regs, regs_live);
 
-      for (offset = 0, i = 0; offset < regset_size; offset++)
-	{
-	  if (regs_live[offset] == 0)
-	    i += REGSET_ELT_BITS;
-	  else
-	    for (bit = 1; bit && i < max_regno; bit <<= 1, i++)
-	      if ((regs_live[offset] & bit)
-		  && (regno = reg_renumber[i]) >= 0)
-		for (j = regno;
-		     j < regno + HARD_REGNO_NREGS (regno,
-						   PSEUDO_REGNO_MODE (i));
-		     j++)
-		  SET_HARD_REG_BIT (current_live_regs, j);
-	}
+      EXECUTE_IF_SET_IN_REG_SET
+	(regs_live, FIRST_PSEUDO_REGISTER, i,
+	 {
+	   if ((regno = reg_renumber[i]) >= 0)
+	     for (j = regno;
+		  j < regno + HARD_REGNO_NREGS (regno,
+						PSEUDO_REGNO_MODE (i));
+		  j++)
+	       SET_HARD_REG_BIT (current_live_regs, j);
+	 });
 
       /* Get starting and ending insn, handling the case where each might
 	 be a SEQUENCE.  */
@@ -2669,92 +2918,18 @@ mark_target_live_regs (target, res)
        in use.  This should happen only extremely rarely.  */
     SET_HARD_REG_SET (res->regs);
 
-  /* Now step forward from TARGET looking for registers that are set before
-     they are used.  These are dead.  If we pass a label, any pending dead
-     registers that weren't yet used can be made dead.  Stop when we pass a
-     conditional JUMP_INSN; follow the first few unconditional branches.  */
-
   CLEAR_RESOURCE (&set);
   CLEAR_RESOURCE (&needed);
 
-  for (insn = target; insn; insn = next)
-    {
-      rtx this_jump_insn = insn;
-
-      next = NEXT_INSN (insn);
-      switch (GET_CODE (insn))
-	{
-	case CODE_LABEL:
-	  AND_COMPL_HARD_REG_SET (pending_dead_regs, needed.regs);
-	  AND_COMPL_HARD_REG_SET (res->regs, pending_dead_regs);
-	  CLEAR_HARD_REG_SET (pending_dead_regs);
-	  continue;
-
-	case BARRIER:
-	case NOTE:
-	  continue;
-
-	case INSN:
-	  if (GET_CODE (PATTERN (insn)) == USE)
-	    {
-	      /* If INSN is a USE made by update_block, we care about the
-		 underlying insn.  Any registers set by the underlying insn
-		 are live since the insn is being done somewhere else.  */
-	      if (GET_RTX_CLASS (GET_CODE (XEXP (PATTERN (insn), 0))) == 'i')
-		mark_set_resources (XEXP (PATTERN (insn), 0), res, 0, 1);
-
-	      /* All other USE insns are to be ignored.  */
-	      continue;
-	    }
-	  else if (GET_CODE (PATTERN (insn)) == CLOBBER)
-	    continue;
-	  else if (GET_CODE (PATTERN (insn)) == SEQUENCE)
-	    {
-	      /* An unconditional jump can be used to fill the delay slot
-		 of a call, so search for a JUMP_INSN in any position.  */
-	      for (i = 0; i < XVECLEN (PATTERN (insn), 0); i++)
-		{
-		  this_jump_insn = XVECEXP (PATTERN (insn), 0, i);
-		  if (GET_CODE (this_jump_insn) == JUMP_INSN)
-		    break;
-		}
-	    }
-	}
-
-      if (GET_CODE (this_jump_insn) == JUMP_INSN)
-	{
-	  if (jump_count++ < 10
-	      && (simplejump_p (this_jump_insn)
-		  || GET_CODE (PATTERN (this_jump_insn)) == RETURN))
-	    {
-	      next = next_active_insn (JUMP_LABEL (this_jump_insn));
-	      if (jump_insn == 0)
-		{
-		  jump_insn = insn;
-		  jump_target = JUMP_LABEL (this_jump_insn);
-		}
-	    }
-	  else
-	    break;
-	}
-
-      mark_referenced_resources (insn, &needed, 1);
-      mark_set_resources (insn, &set, 0, 1);
-
-      COPY_HARD_REG_SET (scratch, set.regs);
-      AND_COMPL_HARD_REG_SET (scratch, needed.regs);
-      AND_COMPL_HARD_REG_SET (res->regs, scratch);
-    }
+  jump_insn = find_dead_or_set_registers (target, res, &jump_target, 0,
+					  set, needed);
 
   /* If we hit an unconditional branch, we have another way of finding out
      what is live: we can see what is live at the branch target and include
      anything used but not set before the branch.  The only things that are
-     live are those that are live using the above test and the test below.
+     live are those that are live using the above test and the test below.  */
 
-     Don't try this if we expired our jump count above, since that would
-     mean there may be an infinite loop in the function being compiled.  */
-
-  if (jump_insn && jump_count < 10)
+  if (jump_insn)
     {
       struct resources new_resources;
       rtx stop_insn = next_active_insn (jump_insn);
@@ -2804,7 +2979,7 @@ fill_simple_delay_slots (first, non_jumps_p)
   register int i, j;
   int num_unfilled_slots = unfilled_slots_next - unfilled_slots_base;
   struct resources needed, set;
-  register int slots_to_fill, slots_filled;
+  int slots_to_fill, slots_filled;
   rtx delay_list;
 
   for (i = 0; i < num_unfilled_slots; i++)
@@ -3136,6 +3311,19 @@ fill_simple_delay_slots (first, non_jumps_p)
 	    }
 	}
 
+      /* If this is an unconditional jump, then try to get insns from the
+	 target of the jump.  */
+      if (GET_CODE (insn) == JUMP_INSN
+	  && simplejump_p (insn)
+	  && slots_filled != slots_to_fill)
+	delay_list
+	  = fill_slots_from_thread (insn, const_true_rtx,
+				    next_active_insn (JUMP_LABEL (insn)),
+				    NULL, 1, 1,
+				    own_thread_p (JUMP_LABEL (insn),
+						  JUMP_LABEL (insn), 0),
+				    0, slots_to_fill, &slots_filled);
+
       if (delay_list)
 	unfilled_slots_base[i]
 	  = emit_delay_sequence (insn, delay_list,
@@ -3180,6 +3368,14 @@ fill_simple_delay_slots (first, non_jumps_p)
     }
   else
     SET_HARD_REG_BIT (needed.regs, STACK_POINTER_REGNUM);
+
+#ifdef EPILOGUE_USES
+  for (i = 0; i <FIRST_PSEUDO_REGISTER; i++)
+    {
+      if (EPILOGUE_USES (i))
+	SET_HARD_REG_BIT (needed.regs, i);
+    }
+#endif
 
   for (trial = get_last_insn (); ! stop_search_p (trial, 1);
        trial = PREV_INSN (trial))
@@ -3347,6 +3543,7 @@ fill_slots_from_thread (insn, condition, thread, opposite_thread, likely,
 	     we did.  */
 	  if (prior_insn = redundant_insn (trial, insn, delay_list))
 	    {
+	      fix_reg_dead_note (prior_insn, insn);
 	      if (own_thread)
 		{
 		  update_block (trial, thread);
@@ -3422,6 +3619,12 @@ fill_slots_from_thread (insn, condition, thread, opposite_thread, likely,
 		  if (own_thread)
 		    {
 		      update_block (trial, thread);
+		      if (trial == thread)
+			{
+			  thread = next_active_insn (thread);
+			  if (new_thread == trial)
+			    new_thread = thread;
+			}
 		      delete_insn (trial);
 		    }
 		  else
@@ -3524,7 +3727,10 @@ fill_slots_from_thread (insn, condition, thread, opposite_thread, likely,
      depend on the destination register.  If so, try to place the opposite
      arithmetic insn after the jump insn and put the arithmetic insn in the
      delay slot.  If we can't do this, return.  */
-  if (delay_list == 0 && likely && new_thread && GET_CODE (new_thread) == INSN)
+  if (delay_list == 0 && likely && new_thread
+      && GET_CODE (new_thread) == INSN
+      && GET_CODE (PATTERN (new_thread)) != ASM_INPUT
+      && asm_noperands (PATTERN (new_thread)) < 0)
     {
       rtx pat = PATTERN (new_thread);
       rtx dest;
@@ -3570,6 +3776,12 @@ fill_slots_from_thread (insn, condition, thread, opposite_thread, likely,
 	  if (own_thread)
 	    {
 	      update_block (trial, thread);
+	      if (trial == thread)
+		{
+		  thread = next_active_insn (thread);
+		  if (new_thread == trial)
+		    new_thread = thread;
+		}
 	      delete_insn (trial);
 	    }
 	  else
@@ -3903,11 +4115,20 @@ relax_delay_slots (first)
 	  if (trial && GET_CODE (PATTERN (trial)) != SEQUENCE
 	      && redundant_insn (trial, insn, 0))
 	    {
-	      trial = next_active_insn (trial);
-	      if (trial == 0)
-		target_label = find_end_label ();
-	      else
-		target_label = get_label_before (trial);
+	      rtx tmp;
+
+	      /* Figure out where to emit the special USE insn so we don't
+		 later incorrectly compute register live/death info.  */
+	      tmp = next_active_insn (trial);
+	      if (tmp == 0)
+		tmp = find_end_label ();
+
+	      /* Insert the special USE insn and update dataflow info.  */
+              update_block (trial, tmp);
+
+	      /* Now emit a label before the special USE insn, and
+		 redirect our jump to the new label.  */ 
+	      target_label = get_label_before (PREV_INSN (tmp));
 	      reorg_redirect_jump (delay_insn, target_label);
 	      next = insn;
 	      continue;
@@ -4271,13 +4492,16 @@ dbr_schedule (first, file)
   else
     SET_HARD_REG_BIT (end_of_function_needs.regs, STACK_POINTER_REGNUM);
 
-  if (current_function_return_rtx != 0
-      && GET_CODE (current_function_return_rtx) == REG)
+  if (current_function_return_rtx != 0)
     mark_referenced_resources (current_function_return_rtx,
 			       &end_of_function_needs, 1);
 
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-    if (global_regs[i])
+    if (global_regs[i]
+#ifdef EPILOGUE_USES
+	|| EPILOGUE_USES (i)
+#endif
+	)
       SET_HARD_REG_BIT (end_of_function_needs.regs, i);
 
   /* The registers required to be live at the end of the function are

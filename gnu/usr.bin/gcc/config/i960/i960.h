@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for Intel 80960
-   Copyright (C) 1992, 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1995, 1996 Free Software Foundation, Inc.
    Contributed by Steven McGeady, Intel Corp.
    Additional Work by Glenn Colon-Bonet, Jonathan Shapiro, Andy Wilson
    Converted to GCC 2.0 by Jim Wilson and Michael Tiemann, Cygnus Support.
@@ -30,6 +30,8 @@ Boston, MA 02111-1307, USA.  */
 /* Name to predefine in the preprocessor for processor variations.  */
 #define	CPP_SPEC "%{mic*:-D__i960\
 			%{mka:-D__i960KA}%{mkb:-D__i960KB}\
+			%{mja:-D__i960JA}%{mjd:-D__i960JD}%{mjf:-D__i960JF}\
+			%{mrp:-D__i960RP}\
 			%{msa:-D__i960SA}%{msb:-D__i960SB}\
 			%{mmc:-D__i960MC}\
 			%{mca:-D__i960CA}%{mcc:-D__i960CC}\
@@ -58,7 +60,7 @@ Boston, MA 02111-1307, USA.  */
    If the user gives an explicit -gstabs or -gcoff option, then do not
    try to add an implicit one, as this will fail.  */
 #define CC1_SPEC \
-	"%{!mka:%{!mkb:%{!msa:%{!msb:%{!mmc:%{!mca:%{!mcc:%{!mcf:-mkb}}}}}}}}\
+	"%{!mka:%{!mkb:%{!msa:%{!msb:%{!mmc:%{!mca:%{!mcc:%{!mcf:%{!mja:%{!mjd:%{!mjf:%{!mrp:-mka}}}}}}}}}}}}\
 	 %{!gs*:%{!gc*:%{mbout:%{g*:-gstabs}}\
 		       %{mcoff:%{g*:-gcoff}}\
 		       %{!mbout:%{!mcoff:%{g*:-gstabs}}}}}"
@@ -69,7 +71,8 @@ Boston, MA 02111-1307, USA.  */
 #define ASM_SPEC \
 	"%{mka:-AKA}%{mkb:-AKB}%{msa:-ASA}%{msb:-ASB}\
 	%{mmc:-AMC}%{mca:-ACA}%{mcc:-ACC}%{mcf:-ACF}\
-	%{!mka:%{!mkb:%{!msa:%{!msb:%{!mmc:%{!mca:%{!mcc:%{!mcf:-AKB}}}}}}}}\
+        %{mja:-AJX}%{mjd:-AJX}%{mjf:-AJX}%{mrp:-AJX}\
+	%{!mka:%{!mkb:%{!msa:%{!msb:%{!mmc:%{!mca:%{!mcc:%{!mcf:%{!mja:%{!mjd:%{!mjf:%{!mrp:-AKB}}}}}}}}}}}}\
 	%{mlink-relax:-linkrelax}"
 
 /* Specs for the linker, to handle processor variations.
@@ -78,7 +81,7 @@ Boston, MA 02111-1307, USA.  */
 #define LINK_SPEC \
 	"%{mka:-AKA}%{mkb:-AKB}%{msa:-ASA}%{msb:-ASB}\
 	%{mmc:-AMC}%{mca:-ACA}%{mcc:-ACC}%{mcf:-ACF}\
-	%{!mka:%{!mkb:%{!msa:%{!msb:%{!mmc:%{!mca:%{!mcc:%{!mcf:-AKB}}}}}}}}\
+        %{mja:-AJX}%{mjd:-AJX}%{mjf:-AJX}%{mrp:-AJX}\
 	%{mbout:-Fbout}%{mcoff:-Fcoff}\
 	%{mlink-relax:-relax}"
 
@@ -108,18 +111,18 @@ Boston, MA 02111-1307, USA.  */
 
 /* Generate SDB style debugging information.  */
 #define SDB_DEBUGGING_INFO
+#define EXTENDED_SDB_BASIC_TYPES
 
 /* Generate DBX_DEBUGGING_INFO by default.  */
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
-/* Redefine this to print in hex and adjust values like GNU960.  The extra
-   bit is used to handle the type long double.  Gcc does not support long
-   double in sdb output, but we do support the non-standard format.  */
+/* Redefine this to print in hex.  No value adjustment is necessary
+   anymore.  */
 #define PUT_SDB_TYPE(A) \
-  fprintf (asm_out_file, "\t.type\t0x%x;", (A & 0xf) + 2 * (A & ~0xf))
+  fprintf (asm_out_file, "\t.type\t0x%x;", A)
 
 /* Handle pragmas for compatibility with Intel's compilers.  */
-#define HANDLE_PRAGMA(FILE) process_pragma (FILE)
+#define HANDLE_PRAGMA(FILE, NODE) process_pragma (FILE, NODE)
 
 /* Run-time compilation parameters selecting different hardware subsets.  */
 
@@ -133,7 +136,8 @@ Boston, MA 02111-1307, USA.  */
 #define	TARGET_PROTECTED	(target_flags & TARGET_FLAG_PROTECTED)
 
 /* The following three are mainly used to provide a little sanity checking
-   against the -mARCH flags given.  */
+   against the -mARCH flags given. The Jx series, for the purposes of
+   gcc, is a Kx with a data cache. */
 
 /* Nonzero if we should generate code for the KA and similar processors.
    No FPU, no microcode instructions.  */
@@ -226,6 +230,11 @@ extern int target_flags;
 			TARGET_FLAG_COMPLEX_ADDR)},\
 /*  {"kc", (TARGET_FLAG_NUMERICS|TARGET_FLAG_PROTECTED|\
 			TARGET_FLAG_MC|TARGET_FLAG_COMPLEX_ADDR)},*/ \
+    {"ja", (TARGET_FLAG_K_SERIES|TARGET_FLAG_COMPLEX_ADDR)},\
+    {"jd", (TARGET_FLAG_K_SERIES|TARGET_FLAG_COMPLEX_ADDR)},\
+    {"jf", (TARGET_FLAG_NUMERICS|TARGET_FLAG_K_SERIES| \
+			TARGET_FLAG_COMPLEX_ADDR)},\
+    {"rp", (TARGET_FLAG_K_SERIES|TARGET_FLAG_COMPLEX_ADDR)},\
     {"mc", (TARGET_FLAG_NUMERICS|TARGET_FLAG_PROTECTED|\
 			TARGET_FLAG_MC|TARGET_FLAG_COMPLEX_ADDR)},\
     {"ca", (TARGET_FLAG_C_SERIES|TARGET_FLAG_BRANCH_PREDICT|\
@@ -302,7 +311,7 @@ extern int target_flags;
 }
 
 /* Don't enable anything by default.  The user is expected to supply a -mARCH
-   option.  If none is given, then -mkb is added by CC1_SPEC.  */
+   option.  If none is given, then -mka is added by CC1_SPEC.  */
 #define TARGET_DEFAULT 0
 
 /* Target machine storage layout.  */
@@ -402,13 +411,14 @@ extern int target_flags;
 #define ROUND_TYPE_ALIGN(TYPE, COMPUTED, SPECIFIED)		\
   ((TREE_CODE (TYPE) == REAL_TYPE && TYPE_MODE (TYPE) == XFmode)	   \
    ? 128  /* Put 80 bit floating point elements on 128 bit boundaries.  */ \
-   : ((!TARGET_OLD_ALIGN && TREE_CODE (TYPE) == RECORD_TYPE)		   \
+   : ((!TARGET_OLD_ALIGN && !TYPE_PACKED (TYPE)				   \
+       && TREE_CODE (TYPE) == RECORD_TYPE)				   \
       ? i960_round_align (MAX ((COMPUTED), (SPECIFIED)), TYPE_SIZE (TYPE)) \
       : MAX ((COMPUTED), (SPECIFIED))))
 
 #define ROUND_TYPE_SIZE(TYPE, COMPUTED, SPECIFIED)		\
   ((TREE_CODE (TYPE) == REAL_TYPE && TYPE_MODE (TYPE) == XFmode)	\
-   ? build_int_2 (128, 0) : (COMPUTED))
+   ? build_int_2 (128, 0) : round_up (COMPUTED, SPECIFIED))
 
 /* Standard register usage.  */
 
@@ -651,8 +661,9 @@ enum reg_class { NO_REGS, GLOBAL_REGS, LOCAL_REGS, LOCAL_OR_GLOBAL_REGS,
 #define CONST_OK_FOR_LETTER_P(VALUE, C)  				\
   ((C) == 'I' ? (((unsigned) (VALUE)) <= 31)				\
    : (C) == 'J' ? ((VALUE) == 0)					\
-      : (C) == 'K' ? ((VALUE) > -32 && (VALUE) <= 0)			\
-	: 0)
+   : (C) == 'K' ? ((VALUE) >= -31 && (VALUE) <= 0)			\
+   : (C) == 'M' ? ((VALUE) >= -32 && (VALUE) <= 0)			\
+   : 0)
 
 /* Similar, but for floating constants, and defining letters G and H.
    Here VALUE is the CONST_DOUBLE rtx itself.
@@ -802,7 +813,7 @@ struct cum_args { int ca_nregparms; int ca_nstackparms; };
 
    On 80960, the offset always starts at 0; the first parm reg is g0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
   ((CUM).ca_nregparms = 0, (CUM).ca_nstackparms = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -1104,7 +1115,7 @@ extern struct rtx_def *legitimize_address ();
 
 /* Define this to be nonzero if shift instructions ignore all but the low-order
    few bits. */
-#define SHIFT_COUNT_TRUNCATED 1
+#define SHIFT_COUNT_TRUNCATED 0
 
 /* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
    is done just by pretending it is already truncated.  */
@@ -1261,10 +1272,9 @@ extern struct rtx_def *gen_compare_reg ();
   assemble_name (FILE, NAME);			\
   fputs ("\n", FILE); }
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1372,10 +1382,20 @@ extern struct rtx_def *gen_compare_reg ();
 ( fputs (".bss\t", (FILE)),			\
   assemble_name ((FILE), (NAME)),		\
   fprintf ((FILE), ",%d,%d\n", (SIZE),		\
-	   ((ALIGN) <= 8 ? 0			\
-	    : ((ALIGN) <= 16 ? 1		\
-	       : ((ALIGN) <= 32 ? 2		\
-		  : ((ALIGN <= 64 ? 3 : 4)))))))
+	   (floor_log2 ((ALIGN) / BITS_PER_UNIT))))
+
+/* A C statement (sans semicolon) to output to the stdio stream
+   FILE the assembler definition of uninitialized global DECL named
+   NAME whose size is SIZE bytes and alignment is ALIGN bytes.
+   Try to use asm_output_aligned_bss to implement this macro.  */
+
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN)	\
+  do {								\
+    fputs (".globl ", (FILE));					\
+    assemble_name ((FILE), (NAME));				\
+    fputs ("\n", (FILE));					\
+    ASM_OUTPUT_ALIGNED_LOCAL (FILE, NAME, SIZE, ALIGN);		\
+  } while (0)
 
 /* Output text for an #ident directive.  */
 #define	ASM_OUTPUT_IDENT(FILE, STR)  fprintf(FILE, "\t# %s\n", STR);
@@ -1502,6 +1522,7 @@ extern enum insn_types i960_last_insn_type;
   {"fpmove_src_operand", {CONST_INT, CONST_DOUBLE, CONST, SYMBOL_REF,	\
 			  LABEL_REF, SUBREG, REG, MEM}},		\
   {"arith_operand", {SUBREG, REG, CONST_INT}},				\
+  {"logic_operand", {SUBREG, REG, CONST_INT}},				\
   {"fp_arith_operand", {SUBREG, REG, CONST_DOUBLE}},			\
   {"signed_arith_operand", {SUBREG, REG, CONST_INT}},			\
   {"literal", {CONST_INT}},						\
@@ -1521,7 +1542,29 @@ extern enum insn_types i960_last_insn_type;
 extern char *i960_output_ldconst ();
 extern char *i960_output_call_insn ();
 extern char *i960_output_ret_insn ();
+extern char *i960_output_move_double ();
+extern char *i960_output_move_quad ();
 
 /* Defined in reload.c, and used in insn-recog.c.  */
 
 extern int rtx_equal_function_value_matters;
+
+/* Output code to add DELTA to the first argument, and then jump to FUNCTION.
+   Used for C++ multiple inheritance.  */
+#define ASM_OUTPUT_MI_THUNK(FILE, THUNK_FNDECL, DELTA, FUNCTION)	\
+do {									\
+  int d = (DELTA);							\
+  if (d < 0 && d > -32)							\
+    fprintf (FILE, "\tsubo %d,g0,g0\n", -d);				\
+  else if (d > 0 && d < 32)						\
+    fprintf (FILE, "\taddo %d,g0,g0\n", d);				\
+  else									\
+    {									\
+      fprintf (FILE, "\tldconst %d,r5\n", d);				\
+      fprintf (FILE, "\taddo r5,g0,g0\n");				\
+    }									\
+  fprintf (FILE, "\tbx ");						\
+  assemble_name								\
+    (FILE, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (FUNCTION)));	\
+  fprintf (FILE, "\n");							\
+} while (0);

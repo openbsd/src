@@ -1,5 +1,5 @@
 /* scan-decls.c - Extracts declarations from cpp output.
-   Copyright (C) 1993, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 1997 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -78,19 +78,21 @@ int
 scan_decls (pfile, argc, argv)
      cpp_reader *pfile;
      int argc;
-     char**argv;
+     char **argv;
 {
   int saw_extern, saw_inline;
+  int start_written;
   int old_written;
   /* If declarator_start is non-zero, it marks the start of the current
      declarator.  If it is zero, we are either still parsing the
-     decl-specs, or prev_id_start marks the start of the declarator. */
+     decl-specs, or prev_id_start marks the start of the declarator.  */
   int declarator_start;
   int prev_id_start, prev_id_end;
   enum cpp_token token;
 
  new_statement:
   CPP_SET_WRITTEN (pfile, 0);
+  start_written = 0;
   token = cpp_get_token (pfile);
 
  handle_statement:
@@ -122,13 +124,10 @@ scan_decls (pfile, argc, argv)
   declarator_start = 0;
   for (;;)
     {
-      int start_written = CPP_WRITTEN (pfile);
-      token = cpp_get_token (pfile);
-    handle_token:
       switch (token)
 	{
 	case CPP_LPAREN:
-	  /* Looks like this is the start of a formal parameter list. */
+	  /* Looks like this is the start of a formal parameter list.  */
 	  if (prev_id_start)
 	    {
 	      int nesting = 1;
@@ -187,7 +186,7 @@ scan_decls (pfile, argc, argv)
 				 pfile->token_buffer,
 				 prev_id_start);
 	    }
-	  /* ... fall through ... */
+	  /* ... fall through ...  */
 	maybe_handle_comma:
 	  if (token != CPP_COMMA)
 	    goto new_statement;
@@ -225,10 +224,10 @@ scan_decls (pfile, argc, argv)
 		    }
 		}
 	      else
-		goto handle_token;
+		continue;
 	      break;
 	    }
-	  /* This may be the name of a variable or function. */
+	  /* This may be the name of a variable or function.  */
 	  prev_id_start = start_written;
 	  prev_id_end = CPP_WRITTEN (pfile);
 	  break;
@@ -240,7 +239,7 @@ scan_decls (pfile, argc, argv)
 	  goto new_statement;  /* handle_statement? */
 	  
 	case CPP_HSPACE:  case CPP_VSPACE:  case CPP_COMMENT:  case CPP_POP:
-	  /* Skip initial white space. */
+	  /* Skip initial white space.  */
 	  if (start_written == 0)
 	    CPP_SET_WRITTEN (pfile, 0);
 	  break;
@@ -248,5 +247,8 @@ scan_decls (pfile, argc, argv)
 	 default:
 	  prev_id_start = 0;
 	}
+
+      start_written = CPP_WRITTEN (pfile);
+      token = cpp_get_token (pfile);
     }
 }

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
-   Contributed by O.M.Kellogg, DASA (kellogg@space.otn.dasa.de)
+   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Contributed by O.M.Kellogg, DASA (oliver.kellogg@space.otn.dasa.de)
 
 This file is part of GNU CC.
 
@@ -66,7 +66,11 @@ extern struct jumplabel_array jmplbl[];
 extern int datalbl_ndx, jmplbl_ndx, label_pending, program_counter;
 extern enum section current_section;
 extern char *sectname[4];
-extern char *strdup(), *float_label();
+extern char *xstrdup(), *float_label();
+extern struct rtx_def *function_arg ();
+extern char *movcnt_regno_adjust ();
+extern char *mod_regno_adjust ();
+extern char *branch_or_jump ();
 #endif
 /*--------------------------------------------------------------------*/
 
@@ -206,8 +210,9 @@ extern char *strdup(), *float_label();
    registers listed in CALL_USED_REGISTERS, keeping the others
    available for storage of persistent values.  */
 
-#define REG_ALLOC_ORDER \
+/* #define REG_ALLOC_ORDER \
    { 2, 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 }
+ */
 
 /* Return number of consecutive hard regs needed starting at reg REGNO
    to hold something of mode MODE.
@@ -242,7 +247,7 @@ extern char *strdup(), *float_label();
    Zero means the frame pointer need not be set up (and parms
    may be accessed via the stack pointer) in functions that seem suitable.
    This is computed in `reload', in reload1.c. */
-#define FRAME_POINTER_REQUIRED 1
+#define FRAME_POINTER_REQUIRED 0
 
 /* Base register for access to arguments of the function.  */
 #define ARG_POINTER_REGNUM 14
@@ -255,8 +260,18 @@ extern char *strdup(), *float_label();
 /* Register in which static-chain is passed to a function. */
 #define STATIC_CHAIN_REGNUM 13
 
+/* Place in which caller passes the structure value address.
+   0 means push the value on the stack like an argument. 
+   #define STRUCT_VALUE 0
+*/
+
 /* Register in which address to store a structure value
-   is passed to a function. */
+   arrives in the function.  
+   #define STRUCT_VALUE_INCOMING 0
+*/
+
+/* Register in which address to store a structure value
+   is passed to a function.  */
 #define STRUCT_VALUE_REGNUM 12
 
 /* Define this to be 1 if all structure return values must be in memory. */
@@ -362,7 +377,9 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 
 /* Similar, but for floating constants, and defining letter 'G'.
    Here VALUE is the CONST_DOUBLE rtx itself.  */
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)  0
+#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)  \
+  ((C) == 'G' ? ((VALUE) == CONST0_RTX (HFmode)         \
+                 || (VALUE) == CONST0_RTX (TQFmode)) : 0)
 
 /* Optional extra constraints for this machine.
 
@@ -377,11 +394,9 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 /* Given an rtx X being reloaded into a reg required to be
    in class CLASS, return the class of reg to actually use.
    In general this is just CLASS; but on some machines
-   in some cases it is preferable to use a more restrictive class.
-   For the 1750A, we force an immediate CONST_DOUBLE value to memory. */
+   in some cases it is preferable to use a more restrictive class.  */
 
-#define PREFERRED_RELOAD_CLASS(X,CLASS)  \
-		(GET_CODE(X) == CONST_DOUBLE ? NO_REGS : CLASS)
+#define PREFERRED_RELOAD_CLASS(X,CLASS)  CLASS
 
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.
@@ -504,7 +519,7 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 
    For 1750A, the offset starts at 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)   ((CUM) = 0)
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)   ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
    of mode MODE and data type TYPE.
@@ -529,15 +544,7 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
    NAMED is nonzero if this argument is a named parameter
     (otherwise it is an extra parameter matching an ellipsis).  */
 
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
-	(rtx) function_arg(CUM,MODE,TYPE,NAMED)
-/*
- (! MUST_PASS_IN_STACK(MODE,TYPE) &&				\
-  14 >= (CUM) +							\
-  ((MODE)==BLKmode ? int_size_in_bytes(TYPE) : GET_MODE_SIZE (MODE))  \
- ? gen_rtx (REG, MODE, CUM)					\
- : 0)
-*/
+#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) function_arg (CUM,MODE,TYPE,NAMED)
 
 /* Define the following macro if function calls on the target machine
    do not preserve any registers; in other words, if `CALL_USED_REGISTERS'
@@ -558,23 +565,38 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 
 
 #define FUNCTION_PROLOGUE(FILE, SIZE) {   \
-  register int regno, none_used=1;				\
-  extern char call_used_regs[];					\
-  fprintf(FILE, "; regs used in this function: ");		\
-  for (regno = 0; regno < 15; regno++)				\
-    if (regs_ever_live[regno]) {				\
-	fprintf(FILE," %s",reg_names[regno]);			\
-	none_used = 0;						\
+  if (flag_verbose_asm)						\
+    {								\
+      int regno, regs_used = 0;					\
+      fprintf (FILE, "\t; registers used: ");			\
+      for (regno = 0; regno < 14; regno++)			\
+	if (regs_ever_live[regno])				\
+	  {							\
+	    fprintf (FILE, " %s", reg_names[regno]);		\
+	    regs_used++;					\
+	  }							\
+      if (regs_used == 0)					\
+	fprintf (FILE, "(none)");			 	\
     }								\
-  if (none_used)						\
-    fprintf(FILE," (none)");				 	\
-  fprintf(FILE,"\n");					 	\
   if (SIZE > 0)							\
-    fprintf(FILE,"\t%s\tr15,%d  ; reserve local-variable space\n",\
-			 (SIZE <= 16 ? "sisp" : "sim"),SIZE);	\
-  fprintf(FILE,"\tpshm\tr14,r14 ; push old frame\n");		\
-  fprintf(FILE,"\tlr\tr14,r15 ; set new frame\n");		\
-  program_counter = 0; jmplbl_ndx = -1;				\
+    {								\
+      fprintf (FILE, "\n\t%s\tr15,%d",				\
+	       (SIZE <= 16 ? "sisp" : "sim"), SIZE);		\
+      if (flag_verbose_asm)					\
+	fprintf (FILE, "  ; reserve local-variable space");	\
+    }								\
+  if (frame_pointer_needed)					\
+    {								\
+      fprintf(FILE, "\n\tpshm\tr14,r14");			\
+      if (flag_verbose_asm)					\
+	fprintf (FILE, "  ; push old frame");			\
+      fprintf (FILE, "\n\tlr\tr14,r15");			\
+      if (flag_verbose_asm)					\
+	fprintf (FILE, "  ; set new frame");			\
+    }								\
+  fprintf (FILE, "\n");					 	\
+  program_counter = 0;						\
+  jmplbl_ndx = -1;						\
 }
 
 /************* 1750: PROFILER HANDLING NOT YET DONE !!!!!!! *************/
@@ -599,7 +621,7 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
    functions that have frame pointers.
    No definition is equivalent to always zero.  */
 
-#define EXIT_IGNORE_STACK 1
+#define EXIT_IGNORE_STACK 0
 
 /* This macro generates the assembly code for function exit,
    on machines that need it.  If FUNCTION_EPILOGUE is not defined
@@ -612,39 +634,51 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
    before returning. */
 
 #define FUNCTION_EPILOGUE(FILE, SIZE) {			\
-  fprintf(FILE,"\tlr\tr15,r14 ; set stack ptr to frame ptr\n");	\
-  fprintf(FILE,"\tpopm\tr14,r14 ; restore previous frame ptr\n");	\
+  if (frame_pointer_needed)					\
+    {								\
+      fprintf (FILE, "\tlr\tr15,r14");				\
+      if (flag_verbose_asm)					\
+        fprintf (FILE, "  ; set stack ptr to frame ptr");	\
+      fprintf (FILE, "\n\tpopm\tr14,r14");			\
+      if (flag_verbose_asm)					\
+        fprintf (FILE, "  ; restore previous frame ptr");	\
+      fprintf (FILE, "\n");					\
+    }								\
   if (SIZE > 0)							\
-    fprintf(FILE,"\t%s\tr15,%d ; free up local-var space\n",	\
-			 (SIZE <= 16 ? "aisp" : "aim"),SIZE);	\
-  fprintf(FILE,"\turs\tr15\n"); }
+    {								\
+      fprintf (FILE, "\t%s\tr15,%d",				\
+	       (SIZE <= 16 ? "aisp" : "aim"), SIZE);		\
+      if (flag_verbose_asm)					\
+	fprintf (FILE, "  ; free up local-var space");		\
+      fprintf (FILE, "\n");					\
+    }								\
+  fprintf (FILE, "\turs\tr15\n\n");				\
+}
 
 /* If the memory address ADDR is relative to the frame pointer,
    correct it to be relative to the stack pointer instead.
    This is for when we don't use a frame pointer.
-   ADDR should be a variable name. */
+   ADDR should be a variable name.
 
-#define FIX_FRAME_POINTER_ADDRESS(ADDR,DEPTH)  \
-   fprintf(stderr,"FIX_FRAME_POINTER_ADDRESS called, DEPTH=%d\n"), \
-           DEPTH), abort()
+   #define FIX_FRAME_POINTER_ADDRESS(ADDR,DEPTH)  
+*/
 
 /* Store in the variable DEPTH the initial difference between the
    frame pointer reg contents and the stack pointer reg contents,
    as of the start of the function body.  This depends on the layout
    of the fixed parts of the stack frame and on how registers are saved.
-*/
 #define INITIAL_FRAME_POINTER_OFFSET(DEPTH) DEPTH = 0
+*/
 
-/* 1750: not needed 'cause we have INITIAL_FRAME_POINTER_OFFSET.
-   #define ELIMINABLE_REGS { \
+#define ELIMINABLE_REGS { \
 	{ ARG_POINTER_REGNUM, STACK_POINTER_REGNUM },  \
 	{ ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM },  \
 	{ FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM } }
 
-   #define CAN_ELIMINATE(FROM, TO)   1
+#define CAN_ELIMINATE(FROM, TO)   1
 
-   #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET) { OFFSET = 0; }
-*/
+#define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET)   \
+	OFFSET = (TO == STACK_POINTER_REGNUM) ? -1 : 0
 
 
 /* Output assembler code for a block containing the constant parts
@@ -732,9 +766,9 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 #ifdef REG_OK_STRICT
 
 /* Nonzero if X is a hard reg that can be used as an index.  */
-#define REG_OK_FOR_INDEX_P(X) (REGNO (X) >= 12 && REGNO (X) <= 15)
+#define REG_OK_FOR_INDEX_P(X) REGNO_OK_FOR_INDEX_P(REGNO(X))
 /* Nonzero if X is a hard reg that can be used as a base reg.  */
-#define REG_OK_FOR_BASE_P(X)  (REGNO (X) > 0 && REGNO (X) <= 15)
+#define REG_OK_FOR_BASE_P(X)  REGNO_OK_FOR_BASE_P(REGNO(X))
 
 #else
 
@@ -817,8 +851,11 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 
 /* Max number of bytes we can move from memory to memory
    in one reasonably fast instruction.  */
-/* (was: "1750: not counting the MOV instruction") */
-#define MOVE_MAX 16
+#define MOVE_MAX 65536
+
+/* MOVE_RATIO is the number of move instructions that is better than a
+   block move.  */
+#define MOVE_RATIO 4
 
 /* Define this if zero-extension is slow (more than one real instruction).  */
 /* #define SLOW_ZERO_EXTEND */
@@ -857,23 +894,22 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
    whose rtx-code is CODE.  The body of this macro is a portion
    of a switch statement.  If the code is computed here,
    return it with a return statement.  Otherwise, break from the switch.  */
-/* 1750 note: haven't paid attention to this yet. */
 
-#define CONST_COSTS(RTX,CODE,OUTER_CODE) \
+#define CONST_COSTS(RTX,CODE,OUTER_CODE)  \
   case CONST_INT:						\
     return (INTVAL(RTX) >= -16 && INTVAL(RTX) <= 16) ? 1 : 3;	\
   case CONST:							\
   case LABEL_REF:						\
   case SYMBOL_REF:						\
-    return 5;							\
+    return 3;							\
   case CONST_DOUBLE:						\
-    return 7;
+    return 4;
 
-#define ADDRESS_COST(ADDRESS)  (memop_valid(ADDRESS) ?  3 : 1000)
+#define ADDRESS_COST(ADDRESS)  (memop_valid (ADDRESS) ?  3 : 10)
 
 #define REGISTER_MOVE_COST(FROM,TO)	2
 
-#define MEMORY_MOVE_COST(M)		5
+#define MEMORY_MOVE_COST(M)		4
 
 /* Tell final.c how to eliminate redundant test instructions.  */
 
@@ -949,12 +985,12 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 /* Output to assembler file text saying following lines
    may contain character constants, extra white space, comments, etc.  */
 
-#define ASM_APP_ON "\n\tif 0\n; by ASM_APP_ON\n"
+#define ASM_APP_ON "; ASM_APP_ON\n"
 
 /* Output to assembler file text saying following lines
    no longer contain unusual constructs.  */
 
-#define ASM_APP_OFF "\n\tendif\n"
+#define ASM_APP_OFF "; ASM_APP_OFF\n"
 
 
 #define EXTRA_SECTIONS  in_readonly_data
@@ -1054,7 +1090,7 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 	   check_section(Konst);				\
 	   fprintf(FILE,"K%s\n",NAME);				\
 	   fflush(FILE);					\
-	   datalbl[++datalbl_ndx].name = (char *)strdup (NAME);	\
+	   datalbl[++datalbl_ndx].name = (char *)xstrdup (NAME);\
 	   datalbl[datalbl_ndx].size = 0;			\
 	   label_pending = 1;					\
 	}							\
@@ -1068,11 +1104,9 @@ enum reg_class { NO_REGS, R2, R0_1, INDEX_REGS, BASE_REGS, ALL_REGS, LIM_REG_CLA
 	   fprintf (FILE, "\tglobal  %s\t; export\n", NAME);	\
   } while (0)
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-	  fprintf (FILE, "%s", NAME)
+#define USER_LABEL_PREFIX ""
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */

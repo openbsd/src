@@ -38,6 +38,16 @@
 #undef NEEDS_UNTYPED_CALL
 #define NEEDS_UNTYPED_CALL 1
 
-/* crt0.o should be specified in the linker script.  */
-#undef STARTFILE_SPEC
+#undef CPP_PREDEFINES
+#define CPP_PREDEFINES "-Dmc68000 -D__embedded__ -Asystem(embedded) \
+  -Amachine(mc68000)"
+
+/* Override the default LIB_SPEC from gcc.c.  We don't currently support
+   profiling, or libg.a.  */
+
+#define LIB_SPEC "-lc"
+
+/* Make this be null, since we want the crt0.o to come from the linker
+   script */
+
 #define STARTFILE_SPEC ""

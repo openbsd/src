@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -17,13 +17,6 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
-
-
-#ifndef __STDC__
-#ifndef const
-#define const
-#endif
-#endif
 
 /* The default branch cost is 1.  */
 #ifndef BRANCH_COST
@@ -52,9 +45,27 @@ Boston, MA 02111-1307, USA.  */
    EXPAND_SUM means it is ok to return a PLUS rtx or MULT rtx.
    EXPAND_INITIALIZER is similar but also record any labels on forced_labels.
    EXPAND_CONST_ADDRESS means it is ok to return a MEM whose address
-    is a constant that is not a legitimate address.  */
+    is a constant that is not a legitimate address.
+   EXPAND_MEMORY_USE_* are explained below.  */
 enum expand_modifier {EXPAND_NORMAL, EXPAND_SUM,
-		      EXPAND_CONST_ADDRESS, EXPAND_INITIALIZER};
+		      EXPAND_CONST_ADDRESS, EXPAND_INITIALIZER,
+		      EXPAND_MEMORY_USE_WO, EXPAND_MEMORY_USE_RW,
+		      EXPAND_MEMORY_USE_BAD, EXPAND_MEMORY_USE_DONT};
+
+/* Argument for chkr_* functions.
+   MEMORY_USE_RO: the pointer reads memory.
+   MEMORY_USE_WO: the pointer writes to memory.
+   MEMORY_USE_RW: the pointer modifies memory (ie it reads and writes). An
+                  example is (*ptr)++
+   MEMORY_USE_BAD: use this if you don't know the behavior of the pointer, or
+                   if you know there are no pointers.  Using an INDIRECT_REF
+                   with MEMORY_USE_BAD will abort.
+   MEMORY_USE_TW: just test for writing, without update.  Special.
+   MEMORY_USE_DONT: the memory is neither read nor written.  This is used by
+   		   '->' and '.'.  */
+enum memory_use_mode {MEMORY_USE_BAD = 0, MEMORY_USE_RO = 1,
+		      MEMORY_USE_WO = 2, MEMORY_USE_RW = 3,
+		      MEMORY_USE_TW = 6, MEMORY_USE_DONT = 99};
 
 /* List of labels that must never be deleted.  */
 extern rtx forced_labels;
@@ -115,12 +126,6 @@ extern tree nonlocal_labels;
    These are the arguments to function calls that have already returned.  */
 extern int pending_stack_adjust;
 
-/* A list of all cleanups which belong to the arguments of
-   function calls being expanded by expand_call.  */
-#ifdef TREE_CODE   /* Don't lose if tree.h not included.  */
-extern tree cleanups_this_call;
-#endif
-
 /* When temporaries are created by TARGET_EXPRs, they are created at
    this level of temp_slot_level, so that they can remain allocated
    until no longer needed.  CLEANUP_POINT_EXPRs define the lifetime
@@ -163,7 +168,7 @@ struct args_size
 ((SIZE).var == 0 ? GEN_INT ((SIZE).constant)	\
  : expand_expr (size_binop (PLUS_EXPR, (SIZE).var,			\
 			    size_int ((SIZE).constant)),		\
-		NULL_RTX, VOIDmode, 0))
+		NULL_RTX, VOIDmode, EXPAND_MEMORY_USE_BAD))
 
 /* Convert the implicit sum in a `struct args_size' into a tree.  */
 #define ARGS_SIZE_TREE(SIZE)						\
@@ -227,6 +232,46 @@ enum direction {none, upward, downward};  /* Value has this type.  */
 
 #ifndef RETURN_IN_MEMORY
 #define RETURN_IN_MEMORY(TYPE) (TYPE_MODE (TYPE) == BLKmode)
+#endif
+
+/* Provide default values for the macros controlling stack checking.  */
+
+#ifndef STACK_CHECK_BUILTIN
+#define STACK_CHECK_BUILTIN 0
+#endif
+
+/* The default interval is one page.  */
+#ifndef STACK_CHECK_PROBE_INTERVAL
+#define STACK_CHECK_PROBE_INTERVAL 4096
+#endif
+
+/* The default is to do a store into the stack.  */
+#ifndef STACK_CHECK_PROBE_LOAD
+#define STACK_CHECK_PROBE_LOAD 0
+#endif
+
+/* This value is arbitrary, but should be sufficient for most machines.  */
+#ifndef STACK_CHECK_PROTECT
+#define STACK_CHECK_PROTECT (75 * UNITS_PER_WORD)
+#endif
+
+/* Make the maximum frame size be the largest we can and still only need
+   one probe per function.  */
+#ifndef STACK_CHECK_MAX_FRAME_SIZE
+#define STACK_CHECK_MAX_FRAME_SIZE \
+  (STACK_CHECK_PROBE_INTERVAL - UNITS_PER_WORD)
+#endif
+
+/* This is arbitrary, but should be large enough everywhere.  */
+#ifndef STACK_CHECK_FIXED_FRAME_SIZE
+#define STACK_CHECK_FIXED_FRAME_SIZE (4 * UNITS_PER_WORD)
+#endif
+
+/* Provide a reasonable default for the maximum size of an object to
+   allocate in the fixed frame.  We may need to be able to make this
+   controllable by the user at some point.  */
+#ifndef STACK_CHECK_MAX_VAR_SIZE
+#define STACK_CHECK_MAX_VAR_SIZE (STACK_CHECK_MAX_FRAME_SIZE / 100)
 #endif
 
 /* Optabs are tables saying how to generate insn bodies
@@ -365,6 +410,14 @@ extern rtx bcmp_libfunc;
 extern rtx memset_libfunc;
 extern rtx bzero_libfunc;
 
+extern rtx throw_libfunc;
+extern rtx sjthrow_libfunc;
+extern rtx sjpopnthrow_libfunc;
+extern rtx terminate_libfunc;
+extern rtx setjmp_libfunc;
+extern rtx longjmp_libfunc;
+extern rtx get_dynamic_handler_chain_libfunc;
+
 extern rtx eqhf2_libfunc;
 extern rtx nehf2_libfunc;
 extern rtx gthf2_libfunc;
@@ -447,6 +500,13 @@ extern rtx fixunsxfti_libfunc;
 extern rtx fixunstfsi_libfunc;
 extern rtx fixunstfdi_libfunc;
 extern rtx fixunstfti_libfunc;
+
+/* For check-memory-usage.  */
+extern rtx chkr_check_addr_libfunc;
+extern rtx chkr_set_right_libfunc;
+extern rtx chkr_copy_bitmap_libfunc;
+extern rtx chkr_check_exec_libfunc;
+extern rtx chkr_check_str_libfunc;
 
 typedef rtx (*rtxfun) ();
 
@@ -470,6 +530,9 @@ extern enum insn_code movcc_gen_code[NUM_MACHINE_MODES];
 
 /* This array records the insn_code of insns to perform block moves.  */
 extern enum insn_code movstr_optab[NUM_MACHINE_MODES];
+
+/* This array records the insn_code of insns to perform block clears.  */
+extern enum insn_code clrstr_optab[NUM_MACHINE_MODES];
 
 /* Define functions given in optabs.c.  */
 
@@ -582,6 +645,10 @@ extern rtx expand_and PROTO((rtx, rtx, rtx));
 extern rtx emit_store_flag PROTO((rtx, enum rtx_code, rtx, rtx,
 				  enum machine_mode, int, int));
 
+/* Like emit_store_flag, but always succeeds.  */
+extern rtx emit_store_flag_force PROTO((rtx, enum rtx_code, rtx, rtx,
+					enum machine_mode, int, int));
+
 /* Functions from loop.c:  */
 
 /* Given a JUMP_INSN, return a description of the test being made.  */
@@ -614,7 +681,7 @@ extern rtx convert_to_mode PROTO((enum machine_mode, rtx, int));
 extern rtx convert_modes PROTO((enum machine_mode, enum machine_mode, rtx, int));
 
 /* Emit code to move a block Y to a block X.  */
-extern void emit_block_move PROTO((rtx, rtx, rtx, int));
+extern rtx emit_block_move PROTO((rtx, rtx, rtx, int));
 
 /* Copy all or part of a value X into registers starting at REGNO.
    The number of registers to be filled is NREGS.  */
@@ -624,15 +691,25 @@ extern void move_block_to_reg PROTO((int, rtx, int, enum machine_mode));
    The number of registers to be filled is NREGS.  */
 extern void move_block_from_reg PROTO((int, rtx, int, int));
 
+/* Load a BLKmode value into non-consecutive registers represented by a
+   PARALLEL.  */
+extern void emit_group_load PROTO((rtx, rtx));
+/* Store a BLKmode value from non-consecutive registers represented by a
+   PARALLEL.  */
+extern void emit_group_store PROTO((rtx, rtx));
+
 /* Mark REG as holding a parameter for the next CALL_INSN.  */
-extern void use_reg PROTO((rtx*, rtx));
+extern void use_reg PROTO((rtx *, rtx));
 /* Mark NREGS consecutive regs, starting at REGNO, as holding parameters
    for the next CALL_INSN.  */
-extern void use_regs PROTO((rtx*, int, int));
+extern void use_regs PROTO((rtx *, int, int));
+/* Mark a PARALLEL as holding a parameter for the next CALL_INSN.  */
+extern void use_group_regs PROTO((rtx *, rtx));
 
 /* Write zeros through the storage of OBJECT.
-   If OBJECT has BLKmode, SIZE is its length in bytes.  */
-extern void clear_storage PROTO((rtx, rtx));
+   If OBJECT has BLKmode, SIZE is its length in bytes and ALIGN is its
+   alignment.  */
+extern rtx clear_storage PROTO((rtx, rtx, int));
 
 /* Emit insns to set X from Y.  */
 extern rtx emit_move_insn PROTO((rtx, rtx));
@@ -673,6 +750,8 @@ extern rtx store_expr PROTO((tree, rtx, int));
    Useful after calling expand_expr with 1 as sum_ok.  */
 extern rtx force_operand PROTO((rtx, rtx));
 
+extern rtx expand_builtin_setjmp PROTO((rtx, rtx));
+
 #ifdef TREE_CODE
 /* Generate code for computing expression EXP.
    An rtx for the computed value is returned.  The value is never null.
@@ -693,9 +772,6 @@ extern void clear_pending_stack_adjust PROTO((void));
 extern void do_pending_stack_adjust PROTO((void));
 
 #ifdef TREE_CODE
-/* Expand all cleanups up to OLD_CLEANUPS.  */
-extern void expand_cleanups_to PROTO((tree));
-
 /* Generate code to evaluate EXP and jump to LABEL if the value is zero.  */
 extern void jumpifnot PROTO((tree, rtx));
 
@@ -828,8 +904,12 @@ extern void emit_stack_restore PROTO((enum save_level, rtx, rtx));
    says how many bytes.  */
 extern rtx allocate_dynamic_stack_space PROTO((rtx, rtx, int));
 
-/* Emit code to copy function value to a new temp reg and return that reg.  */
-extern rtx function_value ();
+/* Probe a range of stack addresses from FIRST to FIRST+SIZE, inclusive. 
+   FIRST is a constant and size is a Pmode RTX.  These are offsets from the
+   current stack pointer.  STACK_GROWS_DOWNWARD says whether to add or
+   subtract from the stack.  If SIZE is constant, this is done
+   with a fixed number of probes.  Otherwise, we must make a loop.  */
+extern void probe_stack_range PROTO((HOST_WIDE_INT, rtx));
 
 /* Return an rtx that refers to the value returned by a library call
    in its original home.  This becomes invalid if any more code is emitted.  */
@@ -839,12 +919,11 @@ extern rtx hard_libcall_value PROTO((enum machine_mode));
    of STACK_BOUNDARY / BITS_PER_UNIT.  */
 extern rtx round_push PROTO((rtx));
 
-extern void emit_block_move PROTO((rtx, rtx, rtx, int));
-
 extern rtx store_bit_field PROTO((rtx, int, int, enum machine_mode, rtx, int, int));
 extern rtx extract_bit_field PROTO((rtx, int, int, int, rtx, enum machine_mode, enum machine_mode, int, int));
 extern rtx expand_mult PROTO((enum machine_mode, rtx, rtx, rtx, int));
 extern rtx expand_mult_add PROTO((rtx, rtx, rtx, rtx,enum machine_mode, int));
+extern rtx expand_mult_highpart_adjust PROTO((enum machine_mode, rtx, rtx, rtx, rtx, int));
 
 extern rtx assemble_static_space PROTO((int));
 
@@ -852,3 +931,13 @@ extern rtx assemble_static_space PROTO((int));
    It is up to the language front end to install a hook
    if it has any such codes that expand_expr needs to know about.  */
 extern rtx (*lang_expand_expr) ();
+
+#ifdef TREE_CODE
+/* Build bytecode call descriptor for function SUBR. */
+extern rtx bc_build_calldesc PROTO((tree));
+
+/* Emit a type code to be used by the runtime support in handling
+   parameter passing.   The type code consists of the machine mode
+   plus the minimal alignment shifted left 8 bits.  */
+extern tree bc_runtime_type_code PROTO((tree));
+#endif

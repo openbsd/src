@@ -1,5 +1,5 @@
 /* Generate code from machine description to emit insns as rtl.
-   Copyright (C) 1987, 1988, 1991, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 91, 94, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -272,7 +272,7 @@ gen_insn (insn)
 
   /* See if the pattern for this insn ends with a group of CLOBBERs of (hard)
      registers or MATCH_SCRATCHes.  If so, store away the information for
-     later. */
+     later.  */
 
   if (XVEC (insn, 1))
     {
@@ -506,6 +506,7 @@ gen_expand (expand)
 }
 
 /* Like gen_expand, but generates a SEQUENCE.  */
+
 static void
 gen_split (split)
      rtx split;
@@ -742,9 +743,11 @@ main (argc, argv)
 from the machine description file `md'.  */\n\n");
 
   printf ("#include \"config.h\"\n");
+  printf ("#include <stdio.h>\n");
   printf ("#include \"rtl.h\"\n");
   printf ("#include \"expr.h\"\n");
   printf ("#include \"real.h\"\n");
+  printf ("#include \"flags.h\"\n");
   printf ("#include \"output.h\"\n");
   printf ("#include \"insn-config.h\"\n\n");
   printf ("#include \"insn-flags.h\"\n\n");

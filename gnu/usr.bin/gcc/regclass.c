@@ -1,5 +1,5 @@
 /* Compute register class preferences for pseudo-registers.
-   Copyright (C) 1987, 88, 91, 92, 93, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 91-96, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.  */
    and a function init_reg_sets to initialize the tables.  */
 
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "hard-reg-set.h"
 #include "flags.h"
@@ -80,6 +81,9 @@ char call_used_regs[FIRST_PSEUDO_REGISTER];
 /* Same info as a HARD_REG_SET.  */
 
 HARD_REG_SET call_used_reg_set;
+
+/* HARD_REG_SET of registers we want to avoid caller saving.  */
+HARD_REG_SET losing_caller_save_reg_set;
 
 /* Data for initializing the above.  */
 
@@ -159,15 +163,6 @@ char *reg_names[] = REGISTER_NAMES;
    register.  */
 
 enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
-
-/* Indexed by n, gives number of times (REG n) is set or clobbered.
-   This information remains valid for the rest of the compilation
-   of the current function; it is used to control register allocation.
-
-   This information applies to both hard registers and pseudo registers,
-   unlike much of the information above.  */
-
-short *reg_n_sets;
 
 /* Maximum cost of moving from a register in one class to a register in
    another class.  Based on REGISTER_MOVE_COST.  */
@@ -352,6 +347,9 @@ init_reg_sets ()
 
 	may_move_cost[i][j] = cost;
       }
+
+  /* Do any additional initialization regsets may need */
+  INIT_ONCE_REG_SET ();
 }
 
 /* After switches have been processed, which perhaps alter
@@ -390,6 +388,8 @@ init_reg_sets_1 ()
 	SET_HARD_REG_BIT (call_used_reg_set, i);
       if (call_fixed_regs[i])
 	SET_HARD_REG_BIT (call_fixed_reg_set, i);
+      if (CLASS_LIKELY_SPILLED_P (REGNO_REG_CLASS (i)))
+	SET_HARD_REG_BIT (losing_caller_save_reg_set, i);
     }
 }
 
@@ -674,6 +674,10 @@ regclass (f, nregs)
 		     being used in such addresses.  */
 
 		  if ((0
+#ifdef SECONDARY_RELOAD_CLASS
+		       || (SECONDARY_RELOAD_CLASS (BASE_REG_CLASS, m, r)
+			   != NO_REGS)
+#else
 #ifdef SECONDARY_INPUT_RELOAD_CLASS
 		       || (SECONDARY_INPUT_RELOAD_CLASS (BASE_REG_CLASS, m, r)
 			   != NO_REGS)
@@ -681,6 +685,7 @@ regclass (f, nregs)
 #ifdef SECONDARY_OUTPUT_RELOAD_CLASS
 		       || (SECONDARY_OUTPUT_RELOAD_CLASS (BASE_REG_CLASS, m, r)
 			   != NO_REGS)
+#endif
 #endif
 		       )
 		      && ! auto_inc_dec_reg_p (r, m))
@@ -824,8 +829,8 @@ regclass (f, nregs)
 			      basic_block_head[b] = newinsn;
 			}
 
-		      /* This makes one more setting of new insns's dest. */
-		      reg_n_sets[REGNO (recog_operand[0])]++;
+		      /* This makes one more setting of new insns's dest.  */
+		      REG_N_SETS (REGNO (recog_operand[0]))++;
 
 		      *recog_operand_loc[1] = recog_operand[0];
 		      for (i = insn_n_dups[insn_code_number] - 1; i >= 0; i--)
@@ -968,7 +973,7 @@ regclass (f, nregs)
 	  
 	  /* If we don't add any classes, nothing to try.  */
 	  if (alt == best)
-	    alt = (int) NO_REGS;
+	    alt = NO_REGS;
 
 	  /* We cast to (int) because (char) hits bugs in some compilers.  */
 	  prefclass[i] = (int) best;
@@ -1536,37 +1541,51 @@ record_address_regs (x, class, scale)
 	else if (code1 == SYMBOL_REF || code1 == CONST || code1 == LABEL_REF)
 	  record_address_regs (arg0, INDEX_REG_CLASS, scale);
 
-	/* If this the sum of two registers where the first is known to be a 
-	   pointer, it must be a base register with the second an index.  */
+	/* If both operands are registers but one is already a hard register
+	   of index or base class, give the other the class that the hard
+	   register is not.  */
 
 	else if (code0 == REG && code1 == REG
-		 && REGNO_POINTER_FLAG (REGNO (arg0)))
+		 && REGNO (arg0) < FIRST_PSEUDO_REGISTER
+		 && (REG_OK_FOR_BASE_P (arg0) || REG_OK_FOR_INDEX_P (arg0)))
+	  record_address_regs (arg1,
+			       REG_OK_FOR_BASE_P (arg0)
+			       ? INDEX_REG_CLASS : BASE_REG_CLASS,
+			       scale);
+	else if (code0 == REG && code1 == REG
+		 && REGNO (arg1) < FIRST_PSEUDO_REGISTER
+		 && (REG_OK_FOR_BASE_P (arg1) || REG_OK_FOR_INDEX_P (arg1)))
+	  record_address_regs (arg0,
+			       REG_OK_FOR_BASE_P (arg1)
+			       ? INDEX_REG_CLASS : BASE_REG_CLASS,
+			       scale);
+
+	/* If one operand is known to be a pointer, it must be the base
+	   with the other operand the index.  Likewise if the other operand
+	   is a MULT.  */
+
+	else if ((code0 == REG && REGNO_POINTER_FLAG (REGNO (arg0)))
+		 || code1 == MULT)
 	  {
 	    record_address_regs (arg0, BASE_REG_CLASS, scale);
 	    record_address_regs (arg1, INDEX_REG_CLASS, scale);
 	  }
+	else if ((code1 == REG && REGNO_POINTER_FLAG (REGNO (arg1)))
+		 || code0 == MULT)
+	  {
+	    record_address_regs (arg0, INDEX_REG_CLASS, scale);
+	    record_address_regs (arg1, BASE_REG_CLASS, scale);
+	  }
 
-	/* If this is the sum of two registers and neither is known to
-	   be a pointer, count equal chances that each might be a base
+	/* Otherwise, count equal chances that each might be a base
 	   or index register.  This case should be rare.  */
 
-	else if (code0 == REG && code1 == REG
-		 && ! REGNO_POINTER_FLAG (REGNO (arg0))
-		 && ! REGNO_POINTER_FLAG (REGNO (arg1)))
+	else
 	  {
 	    record_address_regs (arg0, BASE_REG_CLASS, scale / 2);
 	    record_address_regs (arg0, INDEX_REG_CLASS, scale / 2);
 	    record_address_regs (arg1, BASE_REG_CLASS, scale / 2);
 	    record_address_regs (arg1, INDEX_REG_CLASS, scale / 2);
-	  }
-
-	/* In all other cases, the first operand is an index and the
-	   second is the base.  */
-
-	else
-	  {
-	    record_address_regs (arg0, INDEX_REG_CLASS, scale);
-	    record_address_regs (arg1, BASE_REG_CLASS, scale);
 	  }
       }
       break;
@@ -1648,6 +1667,93 @@ auto_inc_dec_reg_p (reg, mode)
 
 #endif /* REGISTER_CONSTRAINTS */
 
+/* Allocate enough space to hold NUM_REGS registers for the tables used for
+   reg_scan and flow_analysis that are indexed by the register number.  If
+   NEW_P is non zero, initialize all of the registers, otherwise only
+   initialize the new registers allocated.  The same table is kept from
+   function to function, only reallocating it when we need more room.  If
+   RENUMBER_P is non zero, allocate the reg_renumber array also.  */
+
+void
+allocate_reg_info (num_regs, new_p, renumber_p)
+     int num_regs;
+     int new_p;
+     int renumber_p;
+{
+  static int regno_allocated = 0;
+  static int regno_max = 0;
+  static short *renumber = (short *)0;
+  int i;
+  int size_info;
+  int size_renumber;
+  int min = (new_p) ? 0 : regno_max;
+
+  /* If this message come up, and you want to fix it, then all of the tables
+     like reg_renumber, etc. that use short will have to be found and lengthed
+     to int or HOST_WIDE_INT.  */
+
+  /* Free up all storage allocated */
+  if (num_regs < 0)
+    {
+      if (reg_n_info)
+	{
+	  free ((char *)reg_n_info);
+	  free ((char *)renumber);
+	  reg_n_info = (reg_info *)0;
+	  renumber = (short *)0;
+	}
+      regno_allocated = 0;
+      regno_max = 0;
+      return;
+    }
+
+  if (num_regs > regno_allocated)
+    {
+      regno_allocated = num_regs + (num_regs / 20);	/* add some slop space */
+      size_info = regno_allocated * sizeof (reg_info);
+      size_renumber = regno_allocated * sizeof (short);
+
+      if (!reg_n_info)
+	{
+	  reg_n_info = (reg_info *) xmalloc (size_info);
+	  renumber = (short *) xmalloc (size_renumber);
+	}
+
+      else if (new_p)		/* if we're zapping everything, no need to realloc */
+	{
+	  free ((char *)reg_n_info);
+	  free ((char *)renumber);
+	  reg_n_info = (reg_info *) xmalloc (size_info);
+	  renumber = (short *) xmalloc (size_renumber);
+	}
+
+      else
+	{
+	  reg_n_info = (reg_info *) xrealloc ((char *)reg_n_info, size_info);
+	  renumber = (short *) xrealloc ((char *)renumber, size_renumber);
+	}
+    }
+
+  if (min < num_regs)
+    {
+      bzero ((char *) &reg_n_info[min], (num_regs - min) * sizeof (reg_info));
+      for (i = min; i < num_regs; i++)
+	{
+	  REG_BASIC_BLOCK (i) = REG_BLOCK_UNKNOWN;
+	  renumber[i] = -1;
+	}
+    }
+
+  if (renumber_p)
+    reg_renumber = renumber;
+
+  /* Tell the regset code about the new number of registers */
+  MAX_REGNO_REG_SET (num_regs, new_p, renumber_p);
+
+  regno_max = num_regs;
+}
+
+
 /* This is the `regscan' pass of the compiler, run just before cse
    and again just before loop.
 
@@ -1656,27 +1762,6 @@ auto_inc_dec_reg_p (reg, mode)
    and counts the number of sets in the vector reg_n_sets.
 
    REPEAT is nonzero the second time this is called.  */
-
-/* Indexed by pseudo register number, gives uid of first insn using the reg
-   (as of the time reg_scan is called).  */
-
-int *regno_first_uid;
-
-/* Indexed by pseudo register number, gives uid of last insn using the reg
-   (as of the time reg_scan is called).  */
-
-int *regno_last_uid;
-
-/* Indexed by pseudo register number, gives uid of last insn using the reg
-   or mentioning it in a note (as of the time reg_scan is called).  */
-
-int *regno_last_note_uid;
-
-/* Record the number of registers we used when we allocated the above two
-   tables.  If we are called again with more than this, we must re-allocate
-   the tables.  */
-
-static int highest_regno_in_uid_map;
 
 /* Maximum number of parallel sets and clobbers in any insn in this fn.
    Always at least 3, since the combiner could put that many together
@@ -1692,26 +1777,7 @@ reg_scan (f, nregs, repeat)
 {
   register rtx insn;
 
-  if (!repeat || nregs > highest_regno_in_uid_map)
-    {
-      /* Leave some spare space in case more regs are allocated.  */
-      highest_regno_in_uid_map = nregs + nregs / 20;
-      regno_first_uid
-	= (int *) oballoc (highest_regno_in_uid_map * sizeof (int));
-      regno_last_uid
-	= (int *) oballoc (highest_regno_in_uid_map * sizeof (int));
-      regno_last_note_uid
-	= (int *) oballoc (highest_regno_in_uid_map * sizeof (int));
-      reg_n_sets
-	= (short *) oballoc (highest_regno_in_uid_map * sizeof (short));
-    }
-
-  bzero ((char *) regno_first_uid, highest_regno_in_uid_map * sizeof (int));
-  bzero ((char *) regno_last_uid, highest_regno_in_uid_map * sizeof (int));
-  bzero ((char *) regno_last_note_uid,
-	 highest_regno_in_uid_map * sizeof (int));
-  bzero ((char *) reg_n_sets, highest_regno_in_uid_map * sizeof (short));
-
+  allocate_reg_info (nregs, TRUE, FALSE);
   max_parallel = 3;
 
   for (insn = f; insn; insn = NEXT_INSN (insn))
@@ -1759,11 +1825,11 @@ reg_scan_mark_refs (x, insn, note_flag)
       {
 	register int regno = REGNO (x);
 
-	regno_last_note_uid[regno] = INSN_UID (insn);
+	REGNO_LAST_NOTE_UID (regno) = INSN_UID (insn);
 	if (!note_flag)
-	  regno_last_uid[regno] = INSN_UID (insn);
-	if (regno_first_uid[regno] == 0)
-	  regno_first_uid[regno] = INSN_UID (insn);
+	  REGNO_LAST_UID (regno) = INSN_UID (insn);
+	if (REGNO_FIRST_UID (regno) == 0)
+	  REGNO_FIRST_UID (regno) = INSN_UID (insn);
       }
       break;
 
@@ -1788,7 +1854,7 @@ reg_scan_mark_refs (x, insn, note_flag)
 	;
 
       if (GET_CODE (dest) == REG)
-	reg_n_sets[REGNO (dest)]++;
+	REG_N_SETS (REGNO (dest))++;
 
       /* If this is setting a pseudo from another pseudo or the sum of a
 	 pseudo and a constant integer and the other pseudo is known to be
@@ -1831,7 +1897,7 @@ reg_scan_mark_refs (x, insn, note_flag)
 		      || GET_CODE (XEXP (note, 0)) == LABEL_REF))))
 	REGNO_POINTER_FLAG (REGNO (SET_DEST (x))) = 1;
 
-      /* ... fall through ... */
+      /* ... fall through ...  */
 
     default:
       {
@@ -1898,3 +1964,17 @@ reg_classes_intersect_p (c1, c2)
   return 0;
 }
 
+/* Release any memory allocated by register sets.  */
+
+void
+regset_release_memory ()
+{
+  if (basic_block_live_at_start)
+    {
+      free_regset_vector (basic_block_live_at_start, n_basic_blocks);
+      basic_block_live_at_start = 0;
+    }
+
+  FREE_REG_SET (regs_live_at_setjmp);
+  bitmap_release_memory ();
+}

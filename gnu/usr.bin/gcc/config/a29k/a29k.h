@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for AMD Am29000 CPU.
-   Copyright (C) 1988, 90-94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1988, 90-96, 1997 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@nyu.edu)
 
 This file is part of GNU CC.
@@ -780,7 +780,7 @@ extern struct rtx_def *a29k_get_reloaded_address ();
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)  (CUM) = 0
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)  (CUM) = 0
 
 /* Same, but called for incoming args.
 
@@ -928,12 +928,15 @@ extern int a29k_compare_fp_p;
 
    For the 29k, we need the prolog to contain one or two words prior to
    the declaration of the function name.  So just store away the name and
-   write it as part of the prolog.  */
+   write it as part of the prolog.  This also computes the register names,
+   which can't be done until after register allocation, but must be done
+   before final_start_function is called.  */
 
 extern char *a29k_function_name;
 
 #define ASM_DECLARE_FUNCTION_NAME(FILE,NAME,DECL)	\
-  a29k_function_name = NAME;
+  a29k_function_name = NAME; \
+  a29k_compute_reg_names ();
 
 /* This macro generates the assembly code for function entry.
    FILE is a stdio stream to output the code to.
@@ -984,13 +987,18 @@ extern char *a29k_function_name;
 
    On the 29k, we must be able to place it in a delay slot, it must
    not use sp if the frame pointer cannot be eliminated, and it cannot
-   use local regs if we need to push the register stack.  */
+   use local regs if we need to push the register stack.
+   If this is a SET with a memory as source, it might load from
+   a stack slot, unless the address is constant.  */
 
 #define ELIGIBLE_FOR_EPILOGUE_DELAY(INSN,N)				\
   (get_attr_in_delay_slot (INSN) == IN_DELAY_SLOT_YES			\
    && ! (frame_pointer_needed						\
 	 && reg_mentioned_p (stack_pointer_rtx, PATTERN (INSN)))	\
-   && ! (needs_regstack_p () && uses_local_reg_p (PATTERN (INSN))))
+   && ! (needs_regstack_p () && uses_local_reg_p (PATTERN (INSN)))	\
+   && (GET_CODE (PATTERN (INSN)) != SET					\
+       || GET_CODE (SET_SRC (PATTERN (INSN))) != MEM			\
+       || ! rtx_varies_p (XEXP (SET_SRC (PATTERN (INSN)), 0))))
 
 /* Output assembler code for a block containing the constant parts
    of a trampoline, leaving space for the variable parts.
@@ -1272,9 +1280,10 @@ extern char *a29k_function_name;
 #define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) 1
 
 /* We assume that the store-condition-codes instructions store 0 for false
-   and some other value for true.  This is the value stored for true.  */
+   and some other value for true.  This is the value stored for true, which
+   is just the sign bit.  */
 
-#define STORE_FLAG_VALUE 0x80000000
+#define STORE_FLAG_VALUE (-2147483647 - 1)
 
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
@@ -1446,7 +1455,7 @@ extern int a29k_debug_reg_map[];
 /* This how to write an assembler directive to FILE to switch to
    section NAME for DECL.  */
 
-#define ASM_OUTPUT_SECTION_NAME(FILE, DECL, NAME) \
+#define ASM_OUTPUT_SECTION_NAME(FILE, DECL, NAME, RELOC) \
   fprintf (FILE, "\t.sect %s, bss\n\t.use %s\n", NAME, NAME)
 
 /* This is how to output the definition of a user-level label named NAME,
@@ -1461,11 +1470,10 @@ extern int a29k_debug_reg_map[];
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs ("\t.global ", FILE); assemble_name (FILE, NAME); fputs ("\n", FILE);} while (0)
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#undef USER_LABEL_PREFIX
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1544,10 +1552,9 @@ extern int a29k_debug_reg_map[];
   fprintf (FILE, "\t.word L%d\n", VALUE)
 
 /* This is how to output an element of a case-vector that is relative.
-   (29k does not use such vectors,
-   but we must define this macro anyway.)  */
+   Don't define this if it is not supported. */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  abort ()
+/* #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) */
 
 /* This is how to output an assembler line
    that says to advance the location counter

@@ -1,5 +1,5 @@
 /* Code to maintain a C++ template repository.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1997 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com)
 
 This file is part of GNU CC.
@@ -25,21 +25,41 @@ Boston, MA 02111-1307, USA.  */
    The results of the automatic process should be easily reproducible with
    explicit code.  */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "tree.h"
 #include "cp-tree.h"
 #include "input.h"
 #include "obstack.h"
 
-extern char * rindex ();
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#else
 extern char * getenv ();
-extern char * getpwd ();
+#endif
+
+#ifdef NEED_DECLARATION_RINDEX
+extern char *rindex ();
+#endif rindex
+extern char *getpwd PROTO((void));
+
+static tree repo_get_id PROTO((tree));
+static char *save_string PROTO((char *, int));
+static char *extract_string PROTO((char **));
+static char *get_base_filename PROTO((char *));
+static void open_repo_file PROTO((char *));
+static char *afgets PROTO((FILE *));
+static void reopen_repo_file_for_write PROTO((void));
 
 static tree pending_repo;
 static tree original_repo;
 static char *repo_name;
 static FILE *repo_file;
+
+static char *old_args, *old_dir, *old_main;
 
 extern int flag_use_repository;
 extern int errorcount, sorrycount;
@@ -49,6 +69,7 @@ extern struct obstack permanent_obstack;
 #define IDENTIFIER_REPO_USED(NODE)   (TREE_LANG_FLAG_3 (NODE))
 #define IDENTIFIER_REPO_CHOSEN(NODE) (TREE_LANG_FLAG_4 (NODE))
 
+#if 0
 /* Record the flags used to compile this translation unit.  */
 
 void
@@ -82,8 +103,9 @@ void
 repo_class_defined (t)
      tree t;
 {}
+#endif
 
-tree
+static tree
 repo_get_id (t)
      tree t;
 {
@@ -97,7 +119,7 @@ repo_get_id (t)
 }
 
 /* Note that a template has been used.  If we can see the definition, offer
-   to emit it. */
+   to emit it.  */
 
 void
 repo_template_used (t)
@@ -120,7 +142,7 @@ repo_template_used (t)
   else if (TREE_CODE_CLASS (TREE_CODE (t)) == 'd')
     {
       if (IDENTIFIER_REPO_CHOSEN (id))
-	mark_function_instantiated (t, 0);
+	mark_decl_instantiated (t, 0);
     }
   else
     my_friendly_abort (1);
@@ -132,9 +154,10 @@ repo_template_used (t)
     }
 }
 
+#if 0
 /* Note that the vtable for a class has been used, and offer to emit it.  */
 
-void
+static void
 repo_vtable_used (t)
      tree t;
 {
@@ -172,6 +195,7 @@ repo_tinfo_used (ti)
      tree ti;
 {
 }
+#endif
 
 void
 repo_template_instantiated (t, extern_p)
@@ -194,35 +218,55 @@ save_string (s, len)
   return obstack_copy0 (&temporary_obstack, s, len);
 }
 
+/* Parse a reasonable subset of shell quoting syntax.  */
+
+static char *
+extract_string (pp)
+     char **pp;
+{
+  char *p = *pp;
+  int backquote = 0;
+  int inside = 0;
+
+  for (;;)
+    {
+      char c = *p;
+      if (c == '\0')
+	break;
+      ++p;
+      if (backquote)
+	obstack_1grow (&temporary_obstack, c);
+      else if (! inside && c == ' ')
+	break;
+      else if (! inside && c == '\\')
+	backquote = 1;
+      else if (c == '\'')
+	inside = !inside;
+      else
+	obstack_1grow (&temporary_obstack, c);
+    }
+
+  obstack_1grow (&temporary_obstack, '\0');
+  *pp = p;
+  return obstack_finish (&temporary_obstack);
+}
+
 static char *
 get_base_filename (filename)
      char *filename;
 {
   char *p = getenv ("COLLECT_GCC_OPTIONS");
-  char *output = 0;
+  char *output = NULL;
   int compiling = 0;
 
-  if (p)
-    while (*p)
-      {
-	char *q = p;
-	while (*q && *q != ' ') q++;
-	if (*p == '-' && p[1] == 'o')
-	  {
-	    p += 2;
-	    if (p == q)
-	      {
-		p++; q++;
-		if (*q)
-		  while (*q && *q != ' ') q++;
-	      }
+  while (p && *p)
+    {
+      char *q = extract_string (&p);
 
-	    output = save_string (p, q - p);
-	  }
-	else if (*p == '-' && p[1] == 'c')
-	  compiling = 1;
-	if (*q) q++;
-	p = q;
+      if (strcmp (q, "-o") == 0)
+	output = extract_string (&p);
+      else if (strcmp (q, "-c") == 0)
+	compiling = 1;
       }
 
   if (compiling && output)
@@ -246,7 +290,7 @@ static void
 open_repo_file (filename)
      char *filename;
 {
-  register char *p, *q;
+  register char *p;
   char *s = get_base_filename (filename);
 
   if (s == NULL)
@@ -297,8 +341,16 @@ init_repo (filename)
       switch (buf[0])
 	{
 	case 'A':
+	  old_args = obstack_copy0 (&permanent_obstack, buf + 2,
+				    strlen (buf + 2));
+	  break;
 	case 'D':
+	  old_dir = obstack_copy0 (&permanent_obstack, buf + 2,
+				   strlen (buf + 2));
+	  break;
 	case 'M':
+	  old_main = obstack_copy0 (&permanent_obstack, buf + 2,
+				    strlen (buf + 2));
 	  break;
 	case 'C':
 	case 'O':
@@ -346,6 +398,7 @@ finish_repo ()
   tree t;
   char *p;
   int repo_changed = 0;
+  char *dir, *args;
 
   if (! flag_use_repository)
     return;
@@ -378,6 +431,16 @@ finish_repo ()
 	  }
       }
 
+  dir = getpwd ();
+  args = getenv ("COLLECT_GCC_OPTIONS");
+
+  if (! repo_changed && pending_repo)
+    if (strcmp (old_main, main_input_filename) != 0
+	|| strcmp (old_dir, dir) != 0
+	|| (args == NULL) != (old_args == NULL)
+	|| (args && strcmp (old_args, args) != 0))
+      repo_changed = 1;
+
   if (! repo_changed || errorcount || sorrycount)
     goto out;
 
@@ -387,13 +450,9 @@ finish_repo ()
     goto out;
 
   fprintf (repo_file, "M %s\n", main_input_filename);
-
-  p = getpwd ();
-  fprintf (repo_file, "D %s\n", p);
-
-  p = getenv ("COLLECT_GCC_OPTIONS");
-  if (p != 0)
-    fprintf (repo_file, "A %s\n", p);
+  fprintf (repo_file, "D %s\n", dir);
+  if (args)
+    fprintf (repo_file, "A %s\n", args);
 
   for (t = pending_repo; t; t = TREE_CHAIN (t))
     {

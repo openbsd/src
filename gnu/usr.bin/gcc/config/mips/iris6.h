@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Iris version 6.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,17 +18,91 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-/* Irix 6 uses DWARF.  */
-#define DWARF_DEBUGGING_INFO
-#define PREFERRED_DEBUGGING_TYPE DWARF_DEBUG
+/* Default to -mabi=n32 and -mips3.  */
+#define MIPS_ISA_DEFAULT 3
+#define MIPS_ABI_DEFAULT ABI_N32
+#define MULTILIB_DEFAULTS { "mabi=n32" }
 
-/* Default to -mips4.  */
+#ifndef TARGET_DEFAULT
 #define TARGET_DEFAULT MASK_ABICALLS|MASK_FLOAT64|MASK_64BIT
-#define MIPS_ISA_DEFAULT 4
-#define MULTILIB_DEFAULTS { "EB", "mips4" }
+#endif
 
-#include "mips/iris5gas.h"
+#include "mips/iris5.h"
 #include "mips/abi64.h"
+
+/* For Irix 6, -mabi=64 implies TARGET_LONG64.  */
+/* This is handled in override_options.  */
+
+#undef SUBTARGET_CC1_SPEC
+#define SUBTARGET_CC1_SPEC "%{static: -mno-abicalls}"
+
+/* We must pass -D_LONGLONG always, even when -ansi is used, because irix6
+   system header files require it.  This is OK, because gcc never warns
+   when long long is used in system header files.  Alternatively, we can
+   add support for the SGI builtin type __long_long.  */
+#undef CPP_PREDEFINES
+#define CPP_PREDEFINES \
+ "-Dunix -Dmips -Dsgi -Dhost_mips -DMIPSEB -D_MIPSEB -DSYSTYPE_SVR4 \
+  -D_LONGLONG -D_SVR4_SOURCE -D_MODERN_C -D__DSO__ \
+  -Asystem(unix) -Asystem(svr4) -Acpu(mips) -Amachine(sgi)"
+
+#undef SUBTARGET_CPP_SIZE_SPEC
+#define SUBTARGET_CPP_SIZE_SPEC "\
+%{mabi=32: -D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int} \
+%{mabi=n32: -D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int} \
+%{mabi=64: -D__SIZE_TYPE__=long\\ unsigned\\ int -D__PTRDIFF_TYPE__=long\\ int} \
+%{!mabi*: -D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int}"
+
+/* We must make -mips3 do what -mlong64 used to do.  */
+/* ??? If no mipsX option given, but a mabi=X option is, then should set
+   _MIPS_ISA based on the mabi=X option.  */
+/* ??? If no mabi=X option give, but a mipsX option is, then should set
+   _MIPS_SIM based on the mipsX option.  */
+/* ??? Same for _MIPS_SZINT.  */
+/* ??? Same for _MIPS_SZPTR.  */
+/* ??? Same for __SIZE_TYPE and __PTRDIFF_TYPE.  */
+#undef SUBTARGET_CPP_SPEC
+#define SUBTARGET_CPP_SPEC "\
+%{!ansi:-D__EXTENSIONS__ -D_SGI_SOURCE} \
+%{mfp32: -D_MIPS_FPSET=16}%{!mfp32: -D_MIPS_FPSET=32} \
+%{mips1: -D_MIPS_ISA=_MIPS_ISA_MIPS1} \
+%{mips2: -D_MIPS_ISA=_MIPS_ISA_MIPS2} \
+%{mips3: -D_MIPS_ISA=_MIPS_ISA_MIPS3} \
+%{mips4: -D_MIPS_ISA=_MIPS_ISA_MIPS4} \
+%{!mips*: -D_MIPS_ISA=_MIPS_ISA_MIPS3} \
+%{mabi=32: -D_MIPS_SIM=_MIPS_SIM_ABI32}	\
+%{mabi=n32: -D_ABIN32=2 -D_MIPS_SIM=_ABIN32} \
+%{mabi=64: -D_ABI64=3 -D_MIPS_SIM=_ABI64} \
+%{!mabi*: -D_ABIN32=2 -D_MIPS_SIM=_ABIN32} \
+%{!mint64: -D_MIPS_SZINT=32}%{mint64: -D_MIPS_SZINT=64} \
+%{mabi=32: -D_MIPS_SZLONG=32} \
+%{mabi=n32: -D_MIPS_SZLONG=32} \
+%{mabi=64: -D_MIPS_SZLONG=64} \
+%{!mabi*: -D_MIPS_SZLONG=32} \
+%{mabi=32: -D_MIPS_SZPTR=32} \
+%{mabi=n32: -D_MIPS_SZPTR=32} \
+%{mabi=64: -D_MIPS_SZPTR=64} \
+%{!mabi*: -D_MIPS_SZPTR=32} \
+%{!mips1:%{!mips2: -D_COMPILER_VERSION=601}}		\
+%{!mips*: -U__mips -D__mips=3} \
+%{mabi=32: -U__mips64} \
+%{mabi=n32: -D__mips64} \
+%{mabi=64: -D__mips64} \
+%{!mabi*: -D__mips64}"
+
+/* Irix 6 uses DWARF-2.  */
+#define DWARF2_DEBUGGING_INFO
+#define MIPS_DEBUGGING_INFO
+#undef PREFERRED_DEBUGGING_TYPE
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
+
+/* The size in bytes of a DWARF field indicating an offset or length
+   relative to a debug info section, specified to be 4 bytes in the DWARF-2
+   specification.  The SGI/MIPS ABI defines it to be the same as PTR_SIZE.  */
+#define DWARF_OFFSET_SIZE PTR_SIZE
+
+#undef MACHINE_TYPE
+#define MACHINE_TYPE "SGI running IRIX 6.x"
 
 /* The Irix 6.0.1 assembler doesn't like labels in the text section, so
    just avoid emitting them.  */
@@ -36,17 +110,45 @@ Boston, MA 02111-1307, USA.  */
 #define ASM_IDENTIFY_LANGUAGE
 
 /* Irix 5 stuff that we don't need for Irix 6.  */
+/* ??? We do need this for the -mabi=32 switch though.  */
 #undef ASM_OUTPUT_UNDEF_FUNCTION
 #undef ASM_OUTPUT_EXTERNAL_LIBCALL
 #undef ASM_DECLARE_FUNCTION_SIZE
 
 /* Stuff we need for Irix 6 that isn't in Irix 5.  */
 
+/* The SGI assembler doesn't like labels before the .ent, so we must output
+   the .ent and function name here, which is the normal place for it.  */
+
+#undef ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(STREAM, NAME, DECL)			\
+  do {									\
+    fputs ("\t.ent\t", STREAM);						\
+    assemble_name (STREAM, NAME);					\
+    fputs ("\n", STREAM);						\
+    assemble_name (STREAM, NAME);					\
+    fputs (":\n", STREAM);						\
+  } while (0)
+
+/* Likewise, the SGI assembler doesn't like labels after the .end, so we
+   must output the .end here.  */
+#define ASM_DECLARE_FUNCTION_SIZE(STREAM, NAME, DECL)			\
+  do {									\
+    fputs ("\t.end\t", STREAM);						\
+    assemble_name (STREAM, NAME);					\
+    fputs ("\n", STREAM);						\
+  } while (0)
+
+/* Tell function_prologue in mips.c that we have already output the .ent/.end
+   pseudo-ops.  */
+#define FUNCTION_NAME_ALREADY_DECLARED
+
 #undef SET_ASM_OP	/* Has no equivalent.  See ASM_OUTPUT_DEF below.  */
 
-/* This is how to equate one symbol to another symbol.  The syntax used is
-   `SYM1=SYM2'.  Note that this is different from the way equates are done
-   with most svr4 assemblers, where the syntax is `.set SYM1,SYM2'.  */
+#if 0
+/* This is *NOT* how to equate one symbol to another symbol.  The assembler
+   '=' syntax just equates a name to a constant expression.
+   See ASM_OUTPUT_WEAK_ALIAS.  */
 
 #define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)				\
  do {	fprintf ((FILE), "\t");						\
@@ -55,73 +157,100 @@ Boston, MA 02111-1307, USA.  */
 	assemble_name (FILE, LABEL2);					\
 	fprintf (FILE, "\n");						\
   } while (0)
+#endif
+
+/* Define the strings used for the special svr4 .type and .size directives.  */
+
+#define TYPE_ASM_OP	".type"
+#define SIZE_ASM_OP	".size"
+
+/* This is how we tell the assembler that a symbol is weak.  */
+
+#define ASM_OUTPUT_WEAK_ALIAS(FILE,NAME,VALUE)	\
+ do {						\
+  fputs ("\t.weakext\t", FILE);			\
+  assemble_name (FILE, NAME);			\
+  if (VALUE)					\
+    {						\
+      fputc (' ', FILE);			\
+      assemble_name (FILE, VALUE);		\
+    }						\
+  fputc ('\n', FILE);				\
+ } while (0)
+
+#define ASM_WEAKEN_LABEL(FILE,NAME) ASM_OUTPUT_WEAK_ALIAS(FILE,NAME,0)
 
 #define POPSECTION_ASM_OP	".popsection"
 
-#define DEBUG_SECTION		".debug,1,0,0,1"
-#define LINE_SECTION		".line,1,0,0,1"
-#define SFNAMES_SECTION		".debug_sfnames,1,0,0,1"
-#define SRCINFO_SECTION		".debug_srcinfo,1,0,0,1"
-#define MACINFO_SECTION		".debug_macinfo,1,0,0,1"
-#define PUBNAMES_SECTION	".debug_pubnames,1,0,0,1"
-#define ARANGES_SECTION		".debug_aranges,1,0,0,1"
+#define DEBUG_INFO_SECTION	".debug_info,0x7000001e,0,0,1"
+#define DEBUG_LINE_SECTION	".debug_line,0x7000001e,0,0,1"
+#define SFNAMES_SECTION		".debug_sfnames,0x7000001e,0,0,1"
+#define SRCINFO_SECTION		".debug_srcinfo,0x7000001e,0,0,1"
+#define MACINFO_SECTION		".debug_macinfo,0x7000001e,0,0,1"
+#define PUBNAMES_SECTION	".debug_pubnames,0x7000001e,0,0,1"
+#define ARANGES_SECTION		".debug_aranges,0x7000001e,0,0,1"
+#define FRAME_SECTION		".debug_frame,0x7000001e,0x08000000,0,1"
+#define ABBREV_SECTION		".debug_abbrev,0x7000001e,0,0,1"
 
-#undef ASM_SPEC
-#if ((TARGET_CPU_DEFAULT | TARGET_DEFAULT) & MASK_GAS) != 0
-/* GAS */
-#define ASM_SPEC "\
-%{mmips-as: \
-	%{!.s:-nocpp} %{.s: %{cpp} %{nocpp}} \
-	%{pipe: %e-pipe is not supported.} \
-	%{K}} \
-%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} %{mips4} %{v} \
-%{noasmopt:-O0} \
-%{!noasmopt:%{O:-O2} %{O1:-O2} %{O2:-O2} %{O3:-O3}} \
-%{g} %{g0} %{g1} %{g2} %{g3} \
-%{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} \
-%{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
-%{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
-%{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} \
-%{membedded-pic}"
+/* ??? If no mabi=X option give, but a mipsX option is, then should depend
+   on the mipsX option.  */
+#undef SUBTARGET_ASM_SPEC
+#define SUBTARGET_ASM_SPEC "%{!mabi*:-n32}"
 
-#else
-/* not GAS */
 /* Must pass -g0 to the assembler, otherwise it may overwrite our
    debug info with its own debug info. */
 /* Must pass -show instead of -v.  */
 /* Must pass -G 0 to the assembler, otherwise we may get warnings about
    GOT overflow.  */
-#define ASM_SPEC "\
-%{!mgas: \
-	%{!.s:-nocpp} %{.s: %{cpp} %{nocpp}} \
-	%{pipe: %e-pipe is not supported.} \
-	%{K}} \
-%{G*} %{EB} %{EL} %{v:-show} \
-%{mips1} %{mips2} %{mips3} %{mips4} \
-%{!mips1: %{!mips2: %{!mips3: %{!mips4: -mips4}}}} \
-%{noasmopt:-O0} %{!noasmopt:%{O:-O2} %{O1:-O2} %{O2:-O2} %{O3:-O3}} \
--g0 -G 0 %{membedded-pic}"
+/* ??? We pass -w to disable all assembler warnings.  The `label should be
+   inside .ent/.end block' warning that we get for DWARF II debug info labels
+   is particularly annoying.  */
+#undef SUBTARGET_MIPS_AS_ASM_SPEC
+#define SUBTARGET_MIPS_AS_ASM_SPEC "%{v:-show} -G 0 -w"
 
-#endif
+#undef SUBTARGET_ASM_DEBUGGING_SPEC
+#define SUBTARGET_ASM_DEBUGGING_SPEC "-g0"
 
 /* Stuff for constructors.  Start here.  */
 
 /* The assembler now accepts .section pseudo-ops, but it does not allow
-   one to change the section in the middle of a function.  crtstuff relies
-   on this hack, and thus crtstuff won't work here.  So, we do init and
-   fini sections exactly the same way as they are done for Irix 5, and
-   we ifdef out the ASM_OUTPUT_{CON,DE}STRUCTOR macros below.  */
+   one to change the section in the middle of a function, so we can't use
+   the INIT_SECTION_ASM_OP code in crtstuff.  But we can build up the ctor
+   and dtor lists this way, so we use -init and -fini to invoke the
+   do_global_* functions instead of running collect2.  */
 
+#define BSS_SECTION_ASM_OP	".section\t.bss"
 #define CONST_SECTION_ASM_OP_32	"\t.rdata"
 #define CONST_SECTION_ASM_OP_64	".section\t.rodata"
-#define CTORS_SECTION_ASM_OP	".section\t.ctors,1,2,0,4"
-#define DTORS_SECTION_ASM_OP	".section\t.dtors,1,2,0,4"
 
-/* This is the pseudo-op used to generate a 32-bit word of data with a
-   specific value in some section.  This is the same for all known svr4
-   assemblers.  */
+/* The IRIX 6 assembler .section directive takes four additional args:
+   section type, flags, entry size, and alignment.  The alignment of the
+   .ctors and .dtors sections needs to be the same as the size of a pointer
+   so that the linker doesn't add padding between elements.  */
+#if defined (CRT_BEGIN) || defined (CRT_END)
 
-#define INT_ASM_OP		".word"
+/* If we are included from crtstuff.c, these need to be plain strings.
+   _MIPS_SZPTR is defined in SUBTARGET_CPP_SPEC above.  */
+#if _MIPS_SZPTR == 64
+#define CTORS_SECTION_ASM_OP ".section\t.ctors,1,2,0,8"
+#define DTORS_SECTION_ASM_OP ".section\t.dtors,1,2,0,8"
+#else /* _MIPS_SZPTR != 64 */
+#define CTORS_SECTION_ASM_OP ".section\t.ctors,1,2,0,4"
+#define DTORS_SECTION_ASM_OP ".section\t.dtors,1,2,0,4"
+#endif /* _MIPS_SZPTR == 64 */
+
+#else /* ! (defined (CRT_BEGIN) || defined (CRT_END)) */
+
+/* If we are included from varasm.c, these need to depend on -mabi.  */
+#define CTORS_SECTION_ASM_OP \
+  (TARGET_LONG64 ? ".section\t.ctors,1,2,0,8" : ".section\t.ctors,1,2,0,4")
+#define DTORS_SECTION_ASM_OP \
+  (TARGET_LONG64 ? ".section\t.dtors,1,2,0,8" : ".section\t.dtors,1,2,0,4")
+#endif /* defined (CRT_BEGIN) || defined (CRT_END) */
+
+/* dwarf2out will handle padding this data properly.  We definitely don't
+   want it 8-byte aligned on n32.  */
+#define EH_FRAME_SECTION_ASM_OP ".section\t.eh_frame,1,2,0,1"
 
 /* A default list of other sections which we might be "in" at any given
    time.  For targets that use additional sections (e.g. .tdesc) you
@@ -129,7 +258,7 @@ Boston, MA 02111-1307, USA.  */
    includes this file.  */
 
 #undef EXTRA_SECTIONS
-#define EXTRA_SECTIONS in_sdata, in_rdata, in_const, in_ctors, in_dtors, in_bss
+#define EXTRA_SECTIONS in_sdata, in_rdata, in_const, in_ctors, in_dtors
 
 /* A default list of extra section function definitions.  For targets
    that use additional sections (e.g. .tdesc) you should override this
@@ -154,7 +283,7 @@ rdata_section ()							\
 {									\
   if (in_section != in_rdata)						\
     {									\
-      if (mips_isa >= 3)						\
+      if (mips_abi != ABI_32)						\
 	fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP_64);	\
       else								\
 	fprintf (asm_out_file, "%s\n", CONST_SECTION_ASM_OP_32);	\
@@ -186,14 +315,13 @@ dtors_section ()							\
     }									\
 }
 
-#if 0
-
 /* A C statement (sans semicolon) to output an element in the table of
    global constructors.  */
 #define ASM_OUTPUT_CONSTRUCTOR(FILE,NAME)				\
   do {									\
     ctors_section ();							\
-    fprintf (FILE, "\t%s\t ", INT_ASM_OP);				\
+    fprintf (FILE, "\t%s\t ",						\
+	     TARGET_LONG64 ? ".dword" : ".word");			\
     assemble_name (FILE, NAME);						\
     fprintf (FILE, "\n");						\
   } while (0)
@@ -203,12 +331,26 @@ dtors_section ()							\
 #define ASM_OUTPUT_DESTRUCTOR(FILE,NAME)       				\
   do {									\
     dtors_section ();                   				\
-    fprintf (FILE, "\t%s\t ", INT_ASM_OP);				\
+    fprintf (FILE, "\t%s\t ",						\
+	     TARGET_LONG64 ? ".dword" : ".word");			\
     assemble_name (FILE, NAME);              				\
     fprintf (FILE, "\n");						\
   } while (0)
 
-#endif
+/* A C statement to output something to the assembler file to switch to section
+   NAME for object DECL which is either a FUNCTION_DECL, a VAR_DECL or
+   NULL_TREE.  */
+
+#define ASM_OUTPUT_SECTION_NAME(F, DECL, NAME, RELOC)			\
+do {									\
+  extern FILE *asm_out_text_file;					\
+  if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL)			\
+    fprintf (asm_out_text_file, "\t.section %s,1,6,4,4\n", (NAME));	\
+  else if ((DECL) && DECL_READONLY_SECTION (DECL, RELOC))		\
+    fprintf (F, "\t.section %s,1,2,0,8\n", (NAME));			\
+  else									\
+    fprintf (F, "\t.section %s,1,3,0,8\n", (NAME));			\
+} while (0)
 
 /* Stuff for constructors.  End here.  */
 
@@ -229,62 +371,175 @@ while (0)
 
 /* ??? SGI assembler gives warning whenever .lcomm is used.  */
 #undef ASM_OUTPUT_LOCAL
-#define ASM_OUTPUT_ALIGNED_LOCAL(STREAM, NAME, SIZE, ALIGN)	\
-do								\
-  {								\
-    if (mips_isa >= 3)						\
-      {								\
-	fputs ("\t.section\t.bss\n", STREAM);			\
-	ASM_DECLARE_OBJECT_NAME (STREAM, NAME, 0);		\
-	ASM_OUTPUT_ALIGN (STREAM, floor_log2 (ALIGN / BITS_PER_UNIT));	\
-	ASM_OUTPUT_SKIP (STREAM, SIZE);				\
-	fprintf (STREAM, "\t%s\n", POPSECTION_ASM_OP);		\
-      }								\
-    else							\
+#define ASM_OUTPUT_ALIGNED_LOCAL(STREAM, NAME, SIZE, ALIGN)		   \
+do									   \
+  {									   \
+    if (mips_abi != ABI_32)						   \
+      {									   \
+	fprintf (STREAM, "%s\n", BSS_SECTION_ASM_OP);			   \
+	mips_declare_object (STREAM, NAME, "", ":\n", 0);		   \
+	ASM_OUTPUT_ALIGN (STREAM, floor_log2 (ALIGN / BITS_PER_UNIT));	   \
+	ASM_OUTPUT_SKIP (STREAM, SIZE);					   \
+	fprintf (STREAM, "\t%s\n", POPSECTION_ASM_OP);			   \
+      }									   \
+    else								   \
       mips_declare_object (STREAM, NAME, "\n\t.lcomm\t", ",%u\n", (SIZE)); \
-  }								\
+  }									   \
 while (0)
 
-#undef ASM_OUTPUT_INTERNAL_LABEL
-#define ASM_OUTPUT_INTERNAL_LABEL(STREAM,PREFIX,NUM)			\
-  fprintf (STREAM, ".%s%d:\n", PREFIX, NUM)
+/* A C statement (sans semicolon) to output to the stdio stream
+   FILE the assembler definition of uninitialized global DECL named
+   NAME whose size is SIZE bytes and alignment is ALIGN bytes.
+   Try to use asm_output_aligned_bss to implement this macro.  */
 
-/* This is how to store into the string LABEL
-   the symbol_ref name of an internal numbered label where
-   PREFIX is the class of label and NUM is the number within the class.
-   This is suitable for output with `assemble_name'.  */
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
+  asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
 
-#undef ASM_GENERATE_INTERNAL_LABEL
-#define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)			\
-  sprintf (LABEL, "*.%s%d", PREFIX, NUM)
+/* Write the extra assembler code needed to declare an object properly.  */
 
-#undef STARTFILE_SPEC
+#undef ASM_DECLARE_OBJECT_NAME
+#define ASM_DECLARE_OBJECT_NAME(STREAM, NAME, DECL)			\
+do									\
+ {									\
+   size_directive_output = 0;						\
+   if (!flag_inhibit_size_directive && DECL_SIZE (DECL))	\
+     {									\
+       size_directive_output = 1;					\
+       fprintf (STREAM, "\t%s\t ", SIZE_ASM_OP);			\
+       assemble_name (STREAM, NAME);					\
+       fprintf (STREAM, ",%d\n", int_size_in_bytes (TREE_TYPE (DECL)));	\
+     }									\
+   mips_declare_object (STREAM, NAME, "", ":\n", 0);			\
+ }									\
+while (0)
+
+/* Output the size directive for a decl in rest_of_decl_compilation
+   in the case where we did not do so before the initializer.
+   Once we find the error_mark_node, we know that the value of
+   size_directive_output was set
+   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
+
+#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	 \
+do {									 \
+     char *name = XSTR (XEXP (DECL_RTL (DECL), 0), 0);			 \
+     if (!flag_inhibit_size_directive && DECL_SIZE (DECL)		 \
+         && ! AT_END && TOP_LEVEL					 \
+	 && DECL_INITIAL (DECL) == error_mark_node			 \
+	 && !size_directive_output)					 \
+       {								 \
+	 size_directive_output = 1;					 \
+	 fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);			 \
+	 assemble_name (FILE, name);					 \
+	 fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL))); \
+       }								 \
+   } while (0)
+
+#undef LOCAL_LABEL_PREFIX
+#define LOCAL_LABEL_PREFIX (mips_abi == ABI_32 ? "$" : ".")
+
 /* Profiling is supported via libprof1.a not -lc_p as in Irix 3.  */
+/* ??? If no mabi=X option give, but a mipsX option is, then should depend
+   on the mipsX option.  */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC \
-  "%{mips1:%{pg:gcrt1.o%s}%{!pg:%{p:mcrt1.o%s libprof1.a%s}%{!p:crt1.o%s}}} \
-   %{mips2:%{pg:gcrt1.o%s}%{!pg:%{p:mcrt1.o%s libprof1.a%s}%{!p:crt1.o%s}}} \
-   %{!mips1:%{!mips2:%{pg:/usr/lib64/gcrt1.o}%{!pg:%{p:/usr/lib64/mcrt1.o /usr/lib64/libprof1.a}%{!p:/usr/lib64/crt1.o}}}}"
+  "%{!static:%{!shared: \
+     %{mabi=32:%{pg:gcrt1.o%s} \
+       %{!pg:%{p:mcrt1.o%s libprof1.a%s}%{!p:crt1.o%s}}} \
+     %{mabi=n32: \
+       %{mips4:%{pg:/usr/lib32/mips4/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips4/mcrt1.o%s /usr/lib32/mips4/libprof1.a%s} \
+           %{!p:/usr/lib32/mips4/crt1.o%s}}} \
+       %{!mips4:%{pg:/usr/lib32/mips3/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips3/mcrt1.o%s /usr/lib32/mips3/libprof1.a%s} \
+           %{!p:/usr/lib32/mips3/crt1.o%s}}}} \
+     %{mabi=64: \
+       %{mips4:%{pg:/usr/lib64/mips4/gcrt1.o} \
+         %{!pg:%{p:/usr/lib64/mips4/mcrt1.o /usr/lib64/mips4/libprof1.a} \
+           %{!p:/usr/lib64/mips4/crt1.o}}} \
+       %{!mips4:%{pg:/usr/lib64/mips3/gcrt1.o} \
+         %{!pg:%{p:/usr/lib64/mips3/mcrt1.o /usr/lib64/mips3/libprof1.a} \
+           %{!p:/usr/lib64/mips3/crt1.o}}}} \
+     %{!mabi*: \
+       %{mips4:%{pg:/usr/lib32/mips4/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips4/mcrt1.o%s /usr/lib32/mips4/libprof1.a%s} \
+           %{!p:/usr/lib32/mips4/crt1.o%s}}} \
+       %{!mips4:%{pg:/usr/lib32/mips3/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips3/mcrt1.o%s /usr/lib32/mips3/libprof1.a%s} \
+           %{!p:/usr/lib32/mips3/crt1.o%s}}}}}} \
+   %{static: \
+     %{mabi=32:%{pg:/usr/lib/nonshared/gcrt1.o%s} \
+       %{!pg:%{p:/usr/lib/nonshared/mcrt1.o%s /usr/lib/nonshared/libprof1.a%s} \
+         %{!p:/usr/lib/nonshared/crt1.o%s}}} \
+     %{mabi=n32: \
+       %{mips4:%{pg:/usr/lib32/mips4/nonshared/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips4/nonshared/mcrt1.o%s \
+             /usr/lib32/mips4/nonshared/libprof1.a%s} \
+           %{!p:/usr/lib32/mips4/nonshared/crt1.o%s}}} \
+       %{!mips4:%{pg:/usr/lib32/mips3/nonshared/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips3/nonshared/mcrt1.o%s \
+             /usr/lib32/mips3/nonshared/libprof1.a%s} \
+           %{!p:/usr/lib32/mips3/nonshared/crt1.o%s}}}} \
+     %{mabi=64: \
+       %{mips4:%{pg:/usr/lib64/mips4/nonshared/gcrt1.o} \
+         %{!pg:%{p:/usr/lib64/mips4/nonshared/mcrt1.o \
+             /usr/lib64/mips4/nonshared/libprof1.a} \
+           %{!p:/usr/lib64/mips4/nonshared/crt1.o}}} \
+       %{!mips4:%{pg:/usr/lib64/mips3/nonshared/gcrt1.o} \
+         %{!pg:%{p:/usr/lib64/mips3/nonshared/mcrt1.o \
+             /usr/lib64/mips3/nonshared/libprof1.a} \
+           %{!p:/usr/lib64/mips3/nonshared/crt1.o}}}} \
+     %{!mabi*: \
+       %{mips4:%{pg:/usr/lib32/mips4/nonshared/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips4/nonshared/mcrt1.o%s \
+             /usr/lib32/mips4/nonshared/libprof1.a%s} \
+           %{!p:/usr/lib32/mips4/nonshared/crt1.o%s}}} \
+       %{!mips4:%{pg:/usr/lib32/mips3/nonshared/gcrt1.o%s} \
+         %{!pg:%{p:/usr/lib32/mips3/nonshared/mcrt1.o%s \
+           /usr/lib32/mips3/nonshared/libprof1.a%s} \
+         %{!pg:%{p:/usr/lib32/mips3/nonshared/mcrt1.o%s \
+             /usr/lib32/mips3/nonshared/libprof1.a%s} \
+           %{!p:/usr/lib32/mips3/nonshared/crt1.o%s}}}}}} \
+   crtbegin.o%s"
 
 #undef LIB_SPEC
-#define LIB_SPEC "%{p:libprof1.a%s}%{pg:libprof1.a%s} -lc"
+#define LIB_SPEC \
+  "%{mabi=n32: %{mips4:-L/usr/lib32/mips4} %{!mips4:-L/usr/lib32/mips3} \
+     -L/usr/lib32} \
+   %{mabi=64: %{mips4:-L/usr/lib64/mips4} %{!mips4:-L/usr/lib64/mips3} \
+     -L/usr/lib64} \
+   %{!mabi*: %{mips4:-L/usr/lib32/mips4} %{!mips4:-L/usr/lib32/mips3} \
+     -L/usr/lib32} \
+   %{!shared: \
+     -dont_warn_unused %{p:libprof1.a%s}%{pg:libprof1.a%s} -lc -warn_unused}"
 
+/* Avoid getting two warnings for libgcc.a everytime we link.  */
+#undef LIBGCC_SPEC
+#define LIBGCC_SPEC "-dont_warn_unused -lgcc -warn_unused"
+
+/* ??? If no mabi=X option give, but a mipsX option is, then should depend
+   on the mipsX option.  */
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC \
-  "%{mips1:crtn.o%s}%{mips2:crtn.o%s}%{!mips1:%{!mips2:/usr/lib64/crtn.o}}"
+  "crtend.o%s \
+   %{!shared: \
+     %{mabi=32:crtn.o%s}\
+     %{mabi=n32:%{mips4:/usr/lib32/mips4/crtn.o%s}\
+       %{!mips4:/usr/lib32/mips3/crtn.o%s}}\
+     %{mabi=64:%{mips4:/usr/lib64/mips4/crtn.o%s}\
+       %{!mips4:/usr/lib64/mips3/crtn.o%s}}\
+     %{!mabi*:%{mips4:/usr/lib32/mips4/crtn.o%s}\
+       %{!mips4:/usr/lib32/mips3/crtn.o%s}}}"
 
+/* ??? If no mabi=X option give, but a mipsX option is, then should depend
+   on the mipsX option.  */
 #undef LINK_SPEC
 #define LINK_SPEC "\
 %{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} %{mips4} \
 %{bestGnum} %{shared} %{non_shared} \
-%{call_shared} %{no_archive} %{exact_version} \
-%{!shared: %{!non_shared: %{!call_shared: -call_shared -no_unresolved}}} \
--_SYSTYPE_SVR4"
-
-/* ??? Debugging does not work.  We get many assembler core dumps,
-   and even some linker core dumps.  */
-#undef DBX_DEBUGGING_INFO
-#undef SDB_DEBUGGING_INFO
-#undef MIPS_DEBUGGING_INFO
-#undef DWARF_DEBUGGING_INFO
-#undef PREFERRED_DEBUGGING_TYPE
+%{call_shared} %{no_archive} %{exact_version} %{w} \
+%{static: -non_shared} \
+%{!static: \
+  %{!shared: %{!non_shared: %{!call_shared: -call_shared -no_unresolved}}}} \
+%{rpath} -init __do_global_ctors -fini __do_global_dtors \
+%{shared:-hidden_symbol __do_global_ctors,__do_global_dtors,__EH_FRAME_BEGIN__} \
+-_SYSTYPE_SVR4 %{mabi=32: -32}%{mabi=n32: -n32}%{mabi=64: -64} %{!mabi*: -n32}"

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  AT&T DSP1600.
-   Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
    Contributed by Michael Collison (collison@world.std.com).
 
 This file is part of GNU CC.
@@ -142,10 +142,10 @@ extern char *output_block_move();
 #define STANDARD_EXEC_PREFIX  "/d1600/bin"
 
 /* Command line options to the AT&T assembler */
-#define ASM_SPEC  "%{V} %{v:%{!V:-V}} %{g*:-g}"
+#define ASM_SPEC  "%{v:-V} %{g*:-g}"
 
 /* Command line options for the AT&T linker */
-#define LINK_SPEC "%{V} %{v:%{!V:-V}} %{minit:-i}  \
+#define LINK_SPEC "%{v:-V} %{minit:-i}  \
 %{!ifile*:%{mmap1:-ifile m1_deflt.if%s}         \
           %{mmap2:-ifile m2_deflt.if%s}         \
           %{mmap3:-ifile m3_deflt.if%s}         \
@@ -440,7 +440,7 @@ extern int target_flags;
 /* 1 for registers that have pervasive standard uses
    and are not available for the register allocator.
 
-   The registers are layed out as follows:
+   The registers are laid out as follows:
 
    {a0,a0l,a1,a1l,x,y,yl,p,pl} - Data Arithmetic Unit
    {r0,r1,r2,r3,j,k,ybase} - Y Space Address Arithmetic Unit
@@ -946,7 +946,7 @@ enum reg_class
    rtl to be used as spill registers but prevents the compiler from
    extending the lifetime of these registers. */
 
-#define SMALL_REGISTER_CLASSES
+#define SMALL_REGISTER_CLASSES 1
 
 /* Macros to check register numbers against specific register classes.  */
 
@@ -1192,7 +1192,7 @@ extern struct dsp16xx_frame_info current_frame_info;
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0. */
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)  ((CUM) = 0)
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)  ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
    of mode MODE and data type TYPE.
@@ -1609,9 +1609,9 @@ extern struct dsp16xx_frame_info current_frame_info;
    specify it. */
 #define DEFAULT_CHIP_NAME "1610"
 
-/* A list of names for sections other than the standard two, which are
-   'in_text' and 'in_data'. */
-#define EXTRA_SECTIONS in_bss, in_const
+/* A list of names for sections other than the standard ones, which are
+   'in_text' and 'in_data' (and .bss if BSS_SECTION_ASM_OP is defined). */
+#define EXTRA_SECTIONS in_const
 
 #define EXTRA_SECTION_FUNCTIONS  \
 void                                                               \
@@ -1622,16 +1622,7 @@ const_section ()                                                   \
         fprintf (asm_out_file, "%s\n", READONLY_SECTION_ASM_OP);   \
 	in_section = in_const;                                     \
     }                                                              \
-}                                                                  \
-void								   \
-bss_section ()							   \
-{								   \
-    if (in_section != in_bss) {					   \
-	fprintf (asm_out_file, "%s\n", BSS_SECTION_ASM_OP);	   \
-	in_section = in_bss;					   \
-    }								   \
 }
-
 
 /* THE OVERALL FRAMEWORK OF AN ASSEMBLER FILE */
 
@@ -1661,7 +1652,7 @@ bss_section ()							   \
 /* This is how to output an assembler line defining a `float' constant.  */
 #define ASM_OUTPUT_FLOAT(FILE,VALUE)  asm_output_float (FILE, VALUE)
 
-/* This is how to output and assembler line defininf a 'float' constant of
+/* This is how to output an assembler line defining a 'float' constant of
    size HFmode. */
 #define ASM_OUTPUT_SHORT_FLOAT(FILE,VALUE)  asm_output_float (FILE, VALUE)
 
@@ -1678,7 +1669,9 @@ bss_section ()							   \
 #define ASM_OUTPUT_INT(FILE, EXP)    asm_output_long(FILE,INTVAL(EXP))
 
 /* This is how to output an assembler line for a numeric constant byte.  */
-#define ASM_OUTPUT_BYTE(FILE,VALUE)    ASM_OUTPUT_CHAR(FILE,VALUE)
+#define ASM_OUTPUT_BYTE(FILE,VALUE) \
+  fprintf ((FILE), "\tint %ld\n", (long)(VALUE))
+
 
 /* This is how we output a 'c' character string. For the 16xx
    assembler we have to do it one letter at a time */
@@ -1805,10 +1798,10 @@ bss_section ()							   \
 	assemble_name (FILE, XSTR (FUN, 0));	\
 	fprintf (FILE, "\n");			\
 }
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.  */
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+
+/* The prefix to add to user-visible assembler symbols. */
+
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */

@@ -1,5 +1,5 @@
 /* Handle #pragma, system V.4 style.  Supports #pragma weak and #pragma pack.
-   Copyright (C) 1992 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,9 +18,10 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "tree.h"
+#include "except.h"
 #include "function.h"
 #include "defaults.h"
 #include "c-pragma.h"
@@ -29,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* When structure field packing is in effect, this variable is the
    number of bits to use as the maximum alignment.  When packing is not
-   in effect, this is zero. */
+   in effect, this is zero.  */
 
 extern int maximum_field_alignment;
 
@@ -64,7 +65,7 @@ handle_pragma_token (string, token)
 	  if (HANDLE_PRAGMA_WEAK)
 	    handle_pragma_weak (state, name, value);
 
-#endif /* HANDLE_PRAMA_WEAK */
+#endif /* HANDLE_PRAGMA_WEAK */
 	}
 
       type = state = ps_start;

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for SPARClite w/o FPU.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1996 Free Software Foundation, Inc.
    Contributed by Jim Wilson (wilson@cygnus.com).
 
 This file is part of GNU CC.
@@ -27,10 +27,10 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (sparclite)");
 
-/* Enable sparclite and epilogue options.  Do not enable the fpu.  */
+/* Enable app-regs and epilogue options.  Do not enable the fpu.  */
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (1024+130)
+#define TARGET_DEFAULT (MASK_APP_REGS + MASK_EPILOGUE)
 
 /* US Software GOFAST library support.  */
 #include "gofast.h"

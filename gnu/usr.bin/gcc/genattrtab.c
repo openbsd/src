@@ -1,5 +1,5 @@
 /* Generate code from machine description to compute values of attributes.
-   Copyright (C) 1991, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GNU CC.
@@ -102,15 +102,23 @@ Boston, MA 02111-1307, USA.  */
 #else
 #include <varargs.h>
 #endif
+#include <stdio.h>
 #include "rtl.h"
 #include "insn-config.h"	/* For REGISTER_CONSTRAINTS */
-#include <stdio.h>
 
-#ifndef VMS
-#ifndef USG
-#include <sys/time.h>
-#include <sys/resource.h>
+#ifdef TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+# include <sys/time.h>
+# else
+#  include <time.h>
 #endif
+#endif
+
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
 #endif
 
 /* We must include obstack.h after <sys/time.h>, to avoid lossage with
@@ -146,12 +154,12 @@ void fancy_abort ();
 
 struct insn_def
 {
-  int insn_code;		/* Instruction number. */
-  int insn_index;		/* Expression numer in file, for errors. */
-  struct insn_def *next;	/* Next insn in chain. */
-  rtx def;			/* The DEFINE_... */
+  int insn_code;		/* Instruction number.  */
+  int insn_index;		/* Expression numer in file, for errors.  */
+  struct insn_def *next;	/* Next insn in chain.  */
+  rtx def;			/* The DEFINE_...  */
   int num_alternatives;		/* Number of alternatives.  */
-  int vec_idx;			/* Index of attribute vector in `def'. */
+  int vec_idx;			/* Index of attribute vector in `def'.  */
 };
 
 /* Once everything has been read in, we store in each attribute value a list
@@ -182,15 +190,15 @@ struct attr_value
 
 struct attr_desc
 {
-  char *name;			/* Name of attribute. */
-  struct attr_desc *next;	/* Next attribute. */
-  int is_numeric;		/* Values of this attribute are numeric. */
+  char *name;			/* Name of attribute.  */
+  struct attr_desc *next;	/* Next attribute.  */
+  int is_numeric;		/* Values of this attribute are numeric.  */
   int negative_ok;		/* Allow negative numeric values.  */
   int unsigned_p;		/* Make the output function unsigned int.  */
   int is_const;			/* Attribute value constant for each run.  */
-  int is_special;		/* Don't call `write_attr_set'. */
-  struct attr_value *first_value; /* First value of this attribute. */
-  struct attr_value *default_val; /* Default value for this attribute. */
+  int is_special;		/* Don't call `write_attr_set'.  */
+  struct attr_value *first_value; /* First value of this attribute.  */
+  struct attr_value *default_val; /* Default value for this attribute.  */
 };
 
 #define NULL_ATTR (struct attr_desc *) NULL
@@ -208,7 +216,7 @@ struct range
 struct delay_desc
 {
   rtx def;			/* DEFINE_DELAY expression.  */
-  struct delay_desc *next;	/* Next DEFINE_DELAY. */
+  struct delay_desc *next;	/* Next DEFINE_DELAY.  */
   int num;			/* Number of DEFINE_DELAY, starting at 1.  */
 };
 
@@ -236,7 +244,7 @@ struct function_unit
   int multiplicity;		/* Number of units of this type.  */
   int simultaneity;		/* Maximum number of simultaneous insns
 				   on this function unit or 0 if unlimited.  */
-  rtx condexp;			/* Expression TRUE for insn needing unit. */
+  rtx condexp;			/* Expression TRUE for insn needing unit.  */
   int num_opclasses;		/* Number of different operation types.  */
   struct function_unit_op *ops;	/* Pointer to first operation type.  */
   int needs_conflict_function;	/* Nonzero if a conflict function required.  */
@@ -299,7 +307,7 @@ struct dimension
   int num_values;		/* Length of the values list.  */
 };
 
-/* Other variables. */
+/* Other variables.  */
 
 static int insn_code_number;
 static int insn_index_number;
@@ -393,7 +401,9 @@ static rtx zero_fn		PROTO((rtx));
 static rtx one_fn		PROTO((rtx));
 static rtx max_fn		PROTO((rtx));
 static rtx simplify_cond	PROTO((rtx, int, int));
+#if 0
 static rtx simplify_by_alternatives PROTO((rtx, int, int));
+#endif
 static rtx simplify_by_exploding PROTO((rtx));
 static int find_and_mark_used_attributes PROTO((rtx, rtx *, int *));
 static void unmark_used_attributes PROTO((rtx, struct dimension *, int));
@@ -482,6 +492,8 @@ struct attr_hash *attr_hash_table[RTL_HASH_SIZE];
 /* Here is how primitive or already-shared RTL's hash
    codes are made.  */
 #define RTL_HASH(RTL) ((HOST_WIDE_INT) (RTL) & 0777777)
+
+rtx pc_rtx;
 
 /* Add an entry to the hash table for RTL with hash code HASHCODE.  */
 
@@ -741,7 +753,7 @@ attr_printf VPROTO((register int len, char *fmt, ...))
 
 #ifndef __STDC__
   len = va_arg (p, int);
-  fmt = va_arg (p, char*);
+  fmt = va_arg (p, char *);
 #endif
 
   /* Print the string into a temporary location.  */
@@ -862,6 +874,9 @@ attr_copy_rtx (orig)
     case PC:
     case CC0:
       return orig;
+
+    default:
+      break;
     }
 
   copy = rtx_alloc (code);
@@ -1152,7 +1167,7 @@ check_attr_value (exp, attr)
 	/* A constant SYMBOL_REF is valid as a constant attribute test and
 	   is expanded later by make_canonical into a COND.  */
 	return attr_rtx (SYMBOL_REF, XSTR (exp, 0));
-      /* Otherwise, fall through... */
+      /* Otherwise, fall through...  */
 
     default:
       fatal ("Invalid operation `%s' for attribute value",
@@ -1239,7 +1254,7 @@ convert_set_attr (exp, num_alt, insn_code, insn_index)
 
 /* Scan all definitions, checking for validity.  Also, convert any SET_ATTR
    and SET_ATTR_ALTERNATIVE expressions to the corresponding SET
-   expressions. */
+   expressions.  */
 
 static void
 check_defs ()
@@ -1382,7 +1397,7 @@ make_canonical (attr, exp)
       RTX_UNCHANGING_P (exp) = 1;
       exp = check_attr_value (exp, attr);
       /* Goto COND case since this is now a COND.  Note that while the
-         new expression is rescanned, all symbol_ref notes are mared as
+         new expression is rescanned, all symbol_ref notes are marked as
 	 unchanging.  */
       goto cond;
 
@@ -1403,7 +1418,7 @@ make_canonical (attr, exp)
 	int allsame = 1;
 	rtx defval;
 
-	/* First, check for degenerate COND. */
+	/* First, check for degenerate COND.  */
 	if (XVECLEN (exp, 0) == 0)
 	  return make_canonical (attr, XEXP (exp, 1));
 	defval = XEXP (exp, 1) = make_canonical (attr, XEXP (exp, 1));
@@ -1418,8 +1433,11 @@ make_canonical (attr, exp)
 	  }
 	if (allsame)
 	  return defval;
-	break;
       }
+      break;
+
+    default:
+      break;
     }
 
   return exp;
@@ -2175,6 +2193,9 @@ encode_units_mask (x)
     case CC0:
     case EQ_ATTR:
       return x;
+      
+    default:
+      break;
     }
 
   /* Compare the elements.  If any pair of corresponding elements
@@ -2418,16 +2439,15 @@ simplify_cond (exp, insn_code, insn_index)
      then build a new expression if they don't match EXP.  */
   rtx defval = XEXP (exp, 1);
   rtx new_defval = XEXP (exp, 1);
-
   int len = XVECLEN (exp, 0);
-  rtx *tests = (rtx *) alloca (len * sizeof (rtx));
+  rtunion *tests = (rtunion *) alloca (len * sizeof (rtunion));
   int allsame = 1;
   char *first_spacer;
 
   /* This lets us free all storage allocated below, if appropriate.  */
   first_spacer = (char *) obstack_finish (rtl_obstack);
 
-  bcopy ((char *) &XVECEXP (exp, 0, 0), (char *) tests, len * sizeof (rtx));
+  bcopy ((char *) XVEC (exp, 0)->elem, (char *) tests, len * sizeof (rtunion));
 
   /* See if default value needs simplification.  */
   if (GET_CODE (defval) == COND)
@@ -2440,10 +2460,10 @@ simplify_cond (exp, insn_code, insn_index)
       rtx newtest, newval;
 
       /* Simplify this test.  */
-      newtest = SIMPLIFY_TEST_EXP (tests[i], insn_code, insn_index);
-      tests[i] = newtest;
+      newtest = SIMPLIFY_TEST_EXP (tests[i].rtx, insn_code, insn_index);
+      tests[i].rtx = newtest;
 
-      newval = tests[i + 1];
+      newval = tests[i + 1].rtx;
       /* See if this value may need simplification.  */
       if (GET_CODE (newval) == COND)
 	newval = simplify_cond (newval, insn_code, insn_index);
@@ -2454,7 +2474,7 @@ simplify_cond (exp, insn_code, insn_index)
 	  /* If test is true, make this value the default
 	     and discard this + any following tests.  */
 	  len = i;
-	  defval = tests[i + 1];
+	  defval = tests[i + 1].rtx;
 	  new_defval = newval;
 	}
 
@@ -2462,33 +2482,33 @@ simplify_cond (exp, insn_code, insn_index)
 	{
 	  /* If test is false, discard it and its value.  */
 	  for (j = i; j < len - 2; j++)
-	    tests[j] = tests[j + 2];
+	    tests[j].rtx = tests[j + 2].rtx;
 	  len -= 2;
 	}
 
-      else if (i > 0 && attr_equal_p (newval, tests[i - 1]))
+      else if (i > 0 && attr_equal_p (newval, tests[i - 1].rtx))
 	{
 	  /* If this value and the value for the prev test are the same,
 	     merge the tests.  */
 
-	  tests[i - 2]
-	    = insert_right_side (IOR, tests[i - 2], newtest,
+	  tests[i - 2].rtx
+	    = insert_right_side (IOR, tests[i - 2].rtx, newtest,
 				 insn_code, insn_index);
 
 	  /* Delete this test/value.  */
 	  for (j = i; j < len - 2; j++)
-	    tests[j] = tests[j + 2];
+	    tests[j].rtx = tests[j + 2].rtx;
 	  len -= 2;
 	}
 
       else
-	tests[i + 1] = newval;
+	tests[i + 1].rtx = newval;
     }
 
   /* If the last test in a COND has the same value
      as the default value, that test isn't needed.  */
 
-  while (len > 0 && attr_equal_p (tests[len - 1], new_defval))
+  while (len > 0 && attr_equal_p (tests[len - 1].rtx, new_defval))
     len -= 2;
 
   /* See if we changed anything.  */
@@ -2496,7 +2516,7 @@ simplify_cond (exp, insn_code, insn_index)
     allsame = 0;
   else
     for (i = 0; i < len; i++)
-      if (! attr_equal_p (tests[i], XVECEXP (exp, 0, i)))
+      if (! attr_equal_p (tests[i].rtx, XVECEXP (exp, 0, i)))
 	{
 	  allsame = 0;
 	  break;
@@ -2519,8 +2539,8 @@ simplify_cond (exp, insn_code, insn_index)
       rtx newexp = rtx_alloc (COND);
 
       XVEC (newexp, 0) = rtvec_alloc (len);
-      bcopy ((char *) tests, (char *) &XVECEXP (newexp, 0, 0),
-	     len * sizeof (rtx));
+      bcopy ((char *) tests, (char *) XVEC (newexp, 0)->elem,
+	     len * sizeof (rtunion));
       XEXP (newexp, 1) = new_defval;
       return newexp;
     }
@@ -2728,7 +2748,7 @@ evaluate_eq_attr (exp, value, insn_code, insn_index)
 	 For each possible COND value, call ourselves recursively.
 
 	 The extra TRUE and FALSE expressions will be eliminated by another
-	 call to the simplification routine. */
+	 call to the simplification routine.  */
 
       orexp = false_rtx;
       andexp = true_rtx;
@@ -3089,7 +3109,7 @@ simplify_test_exp (exp, insn_code, insn_index)
 	    fatal ("Invalid alternative specified for pattern number %d",
 		   insn_index);
 
-	  /* If all alternatives are excluded, this is false. */
+	  /* If all alternatives are excluded, this is false.  */
 	  i ^= insn_alternatives[insn_code];
 	  if (i == 0)
 	    return false_rtx;
@@ -3182,7 +3202,7 @@ simplify_test_exp (exp, insn_code, insn_index)
 	    fatal ("Invalid alternative specified for pattern number %d",
 		   insn_index);
 
-	  /* If all alternatives are included, this is true. */
+	  /* If all alternatives are included, this is true.  */
 	  i ^= insn_alternatives[insn_code];
 	  if (i == 0)
 	    return true_rtx;
@@ -3269,6 +3289,10 @@ simplify_test_exp (exp, insn_code, insn_index)
 	  for (ie = av->first_insn; ie; ie = ie->next)
 	    if (ie->insn_code == insn_code)
 	      return evaluate_eq_attr (exp, av->value, insn_code, insn_index);
+      break;
+      
+    default:
+      break;
     }
 
   /* We have already simplified this expression.  Simplifying it again
@@ -3621,9 +3645,10 @@ find_and_mark_used_attributes (exp, terms, nterms)
       if (! find_and_mark_used_attributes (XEXP (exp, 1), terms, nterms))
 	return 0;
       return 1;
-    }
 
-  return 0;
+    default:
+      return 0;
+    }
 }
 
 /* Clear the MEM_VOLATILE_P flag in all EQ_ATTR expressions on LIST and
@@ -3859,8 +3884,10 @@ simplify_with_current_value_aux (exp)
 			 have been selected.  */
 	}
       return simplify_with_current_value_aux (XEXP (exp, 1));
+
+    default:
+      abort ();
     }
-  abort ();
 }
 
 /* Clear the MEM_IN_STRUCT_P flag in EXP and its subexpressions.  */
@@ -3893,6 +3920,9 @@ clear_struct_flag (x)
     case EQ_ATTR:
     case ATTR_FLAG:
       return;
+      
+    default:
+      break;
     }
 
   /* Compare the elements.  If any pair of corresponding elements
@@ -3945,6 +3975,9 @@ count_sub_rtxs (x, max)
     case EQ_ATTR:
     case ATTR_FLAG:
       return 1;
+      
+    default:
+      break;
     }
 
   /* Compare the elements.  If any pair of corresponding elements
@@ -4019,7 +4052,7 @@ gen_attr (exp)
   if (! strcmp (attr->name, "length") && ! attr->is_numeric)
     fatal ("`length' attribute must take numeric values");
 
-  /* Set up the default value. */
+  /* Set up the default value.  */
   XEXP (exp, 2) = check_attr_value (XEXP (exp, 2), attr);
   attr->default_val = get_attr_value (XEXP (exp, 2), attr, -2);
 }
@@ -4169,6 +4202,9 @@ gen_insn (exp)
       id->vec_idx = 0;
       got_define_asm_attributes = 1;
       break;
+      
+    default:
+      abort ();
     }
 }
 
@@ -4381,6 +4417,8 @@ write_test_expr (exp, in_comparison)
 	case ASHIFTRT:
 	  printf (" >> ");
 	  break;
+	default:
+	  abort ();
         }
 
       write_test_expr (XEXP (exp, 1), in_comparison || comparison_operator);
@@ -4413,6 +4451,8 @@ write_test_expr (exp, in_comparison)
 	case NEG:
 	  printf ("-");
 	  break;
+	default:
+	  abort ();
 	}
 
       write_test_expr (XEXP (exp, 0), in_comparison);
@@ -4472,7 +4512,7 @@ write_test_expr (exp, in_comparison)
 		XSTR (exp, 1), XINT (exp, 0), GET_MODE_NAME (GET_MODE (exp)));
       break;
 
-    /* Constant integer. */
+    /* Constant integer.  */
     case CONST_INT:
 #if HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_INT
       printf ("%d", XWINT (exp, 0));
@@ -4481,14 +4521,15 @@ write_test_expr (exp, in_comparison)
 #endif
       break;
 
-    /* A random C expression. */
+    /* A random C expression.  */
     case SYMBOL_REF:
       printf ("%s", XSTR (exp, 0));
       break;
 
     /* The address of the branch target.  */
     case MATCH_DUP:
-      printf ("insn_addresses[INSN_UID (operands[%d])]", XINT (exp, 0));
+      printf ("insn_addresses[INSN_UID (GET_CODE (operands[%d]) == LABEL_REF ? XEXP (operands[%d], 0) : operands[%d])]",
+	      XINT (exp, 0), XINT (exp, 0), XINT (exp, 0));
       break;
 
     /* The address of the current insn.  It would be more consistent with
@@ -4603,6 +4644,9 @@ walk_attr_value (exp)
 
     case ATTR_FLAG:
       return;
+
+    default:
+      break;
     }
 
   for (i = 0, fmt = GET_RTX_FORMAT (code); i < GET_RTX_LENGTH (code); i++)
@@ -4630,7 +4674,7 @@ write_attr_get (attr)
   struct attr_value *av, *common_av;
 
   /* Find the most used attribute value.  Handle that as the `default' of the
-     switch we will generate. */
+     switch we will generate.  */
   common_av = find_most_used (attr);
 
   /* Write out start of function, then all values with explicit `case' lines,
@@ -5457,6 +5501,9 @@ copy_rtx_unchanging (orig)
     case SYMBOL_REF:
     case CODE_LABEL:
       return orig;
+      
+    default:
+      break;
     }
 
   copy = rtx_alloc (code);
@@ -5472,6 +5519,7 @@ copy_rtx_unchanging (orig)
 static void
 fatal (s, a1, a2)
      char *s;
+     char *a1, *a2;
 {
   fprintf (stderr, "genattrtab: ");
   fprintf (stderr, s, a1, a2);
@@ -5540,17 +5588,17 @@ main (argc, argv)
   rtx tem;
   int i;
 
-#ifdef RLIMIT_STACK
+#if defined (RLIMIT_STACK) && defined (HAVE_GETRLIMIT) && defined (HAVE_SETRLIMIT)
   /* Get rid of any avoidable limit on stack size.  */
   {
     struct rlimit rlim;
 
-    /* Set the stack limit huge so that alloca does not fail. */
+    /* Set the stack limit huge so that alloca does not fail.  */
     getrlimit (RLIMIT_STACK, &rlim);
     rlim.rlim_cur = rlim.rlim_max;
     setrlimit (RLIMIT_STACK, &rlim);
   }
-#endif /* RLIMIT_STACK defined */
+#endif
 
   obstack_init (rtl_obstack);
   obstack_init (hash_obstack);
@@ -5567,6 +5615,11 @@ main (argc, argv)
     }
 
   init_rtl ();
+
+  /* We don't use this, but it is referenced in rtlanal.c. 
+     Set it up correctly just in case someone tries to use it someday.  */
+  pc_rtx = rtx_alloc (PC);
+  PUT_MODE (pc_rtx, VOIDmode);
 
   /* Set up true and false rtx's */
   true_rtx = rtx_alloc (CONST_INT);
@@ -5638,6 +5691,7 @@ from the machine description file `md'.  */\n\n");
     expand_units ();
 
   printf ("#include \"config.h\"\n");
+  printf ("#include <stdio.h>\n");
   printf ("#include \"rtl.h\"\n");
   printf ("#include \"insn-config.h\"\n");
   printf ("#include \"recog.h\"\n");
@@ -5675,7 +5729,7 @@ from the machine description file `md'.  */\n\n");
   /* Construct extra attributes for `length'.  */
   make_length_attrs ();
 
-  /* Perform any possible optimizations to speed up compilation. */
+  /* Perform any possible optimizations to speed up compilation.  */
   optimize_attrs ();
 
   /* Now write out all the `gen_attr_...' routines.  Do these before the

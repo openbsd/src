@@ -1,5 +1,5 @@
 /* Generate code from machine description to recognize rtl as insns.
-   Copyright (C) 1987, 88, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -120,7 +120,7 @@ static int next_number;
 static int next_insn_code;
 
 /* Similar, but counts all expressions in the MD file; used for
-   error messages. */
+   error messages.  */
 
 static int next_index;
 
@@ -498,7 +498,7 @@ add_to_sequence (pattern, last, position)
       if (GET_CODE (XEXP (pattern, 0)) == CC0)
 	break;
 
-      /* ... fall through ... */
+      /* ... fall through ...  */
       
     case COMPARE:
       /* Enforce the mode on the first operand to avoid ambiguous insns.  */
@@ -508,6 +508,9 @@ add_to_sequence (pattern, last, position)
       newpos[depth] = '1';
       new = add_to_sequence (XEXP (pattern, 1), &new->success, newpos);
       return new;
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -572,7 +575,7 @@ not_both_true (d1, d2, toplevel)
   struct decision *p1, *p2;
 
   /* If they are both to test modes and the modes are different, they aren't
-     both true.  Similarly for codes, integer elements, and vector lengths. */
+     both true.  Similarly for codes, integer elements, and vector lengths.  */
 
   if ((d1->enforce_mode && d2->enforce_mode
        && d1->mode != VOIDmode && d2->mode != VOIDmode && d1->mode != d2->mode)
@@ -1139,7 +1142,7 @@ write_tree_1 (tree, prevpos, afterward, type)
 	     seen any of the codes that are valid for the predicate, we
 	     can write a series of "case" statement, one for each possible
 	     code.  Since we are already in a switch, these redundant tests
-	     are very cheap and will reduce the number of predicate called. */
+	     are very cheap and will reduce the number of predicate called.  */
 
 	  if (p->pred >= 0)
 	    {
@@ -1286,6 +1289,8 @@ write_tree_1 (tree, prevpos, afterward, type)
 	  printf ("%sswitch (GET_MODE (x%d))\n", indents[indent], depth);
 	  printf ("%s{\n", indents[indent + 2]);
 	  indent += 4;
+	  printf ("%sdefault:\n%sbreak;\n", indents[indent - 2],
+		  indents[indent]);
 	  printf ("%scase %smode:\n", indents[indent - 2],
 		  GET_MODE_NAME (mode));
 	  modemap[(int) mode] = 1;
@@ -1301,6 +1306,8 @@ write_tree_1 (tree, prevpos, afterward, type)
 	  printf ("%sswitch (GET_CODE (x%d))\n", indents[indent], depth);
 	  printf ("%s{\n", indents[indent + 2]);
 	  indent += 4;
+	  printf ("%sdefault:\n%sbreak;\n", indents[indent - 2],
+		  indents[indent]);
 	  printf ("%scase ", indents[indent - 2]);
 	  print_code (p->code);
 	  printf (":\n");
@@ -1309,7 +1316,7 @@ write_tree_1 (tree, prevpos, afterward, type)
 	}
 
       /* Now that most mode and code tests have been done, we can write out
-	 a label for an inner node, if we haven't already. */
+	 a label for an inner node, if we haven't already.  */
       if (p->label_needed)
 	printf ("%sL%d:\n", indents[indent - 2], p->number);
 
@@ -1736,6 +1743,7 @@ main (argc, argv)
 from the machine description file `md'.  */\n\n");
 
   printf ("#include \"config.h\"\n");
+  printf ("#include <stdio.h>\n");
   printf ("#include \"rtl.h\"\n");
   printf ("#include \"insn-config.h\"\n");
   printf ("#include \"recog.h\"\n");

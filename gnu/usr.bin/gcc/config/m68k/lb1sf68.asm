@@ -1,7 +1,9 @@
-/* libgcc1 routines for 68000 w/o floating-point hardware. */
-/* Copyright (C) 1994 Free Software Foundation, Inc.
+/* libgcc1 routines for 68000 w/o floating-point hardware.
+   Copyright (C) 1994, 1996, 1997 Free Software Foundation, Inc.
 
-This file is free software; you can redistribute it and/or modify it
+This file is part of GNU CC.
+
+GNU CC is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
 Free Software Foundation; either version 2, or (at your option) any
 later version.
@@ -212,7 +214,11 @@ TRUNCDFSF    = 7
 | void __clear_sticky_bits(void);
 SYM (__clear_sticky_bit):		
 	lea	SYM (_fpCCR),a0
+#ifndef __mcf5200__
 	movew	IMM (0),a0@(STICK)
+#else
+	clr.w	a0@(STICK)
+#endif
 	rts
 
 |=============================================================================
@@ -242,12 +248,22 @@ FPTRAP = 15
 $_exception_handler:
 	lea	SYM (_fpCCR),a0
 	movew	d7,a0@(EBITS)	| set __exception_bits
+#ifndef __mcf5200__
 	orw	d7,a0@(STICK)	| and __sticky_bits
+#else
+	movew	a0@(STICK),d4
+	orl	d7,d4
+	movew	d4,a0@(STICK)
+#endif
 	movew	d6,a0@(FORMT)	| and __format
 	movew	d5,a0@(LASTO)	| and __last_operation
 
 | Now put the operands in place:
+#ifndef __mcf5200__
 	cmpw	IMM (SINGLE_FLOAT),d6
+#else
+	cmpl	IMM (SINGLE_FLOAT),d6
+#endif
 	beq	1f
 	movel	a6@(8),a0@(OPER1)
 	movel	a6@(12),a0@(OPER1+4)
@@ -258,11 +274,23 @@ $_exception_handler:
 	movel	a6@(12),a0@(OPER2)
 2:
 | And check whether the exception is trap-enabled:
+#ifndef __mcf5200__
 	andw	a0@(TRAPE),d7	| is exception trap-enabled?
+#else
+	clrl	d6
+	movew	a0@(TRAPE),d6
+	andl	d6,d7
+#endif
 	beq	1f		| no, exit
 	pea	SYM (_fpCCR)	| yes, push address of _fpCCR
 	trap	IMM (FPTRAP)	| and trap
+#ifndef __mcf5200__
 1:	moveml	sp@+,d2-d7	| restore data registers
+#else
+1:	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| and return
 	rts
 #endif /* L_floatex */
@@ -276,7 +304,11 @@ SYM (__mulsi3):
 	muluw	sp@(10), d0	/* x0*y1 */
 	movew	sp@(6), d1	/* x1 -> d1 */
 	muluw	sp@(8), d1	/* x1*y0 */
+#ifndef __mcf5200__
 	addw	d1, d0
+#else
+	addl	d1, d0
+#endif
 	swap	d0
 	clrw	d0
 	movew	sp@(6), d1	/* x1 -> d1 */
@@ -291,6 +323,7 @@ SYM (__mulsi3):
 	.proc
 	.globl	SYM (__udivsi3)
 SYM (__udivsi3):
+#ifndef __mcf5200__
 	movel	d2, sp@-
 	movel	sp@(12), d1	/* d1 = divisor */
 	movel	sp@(8), d0	/* d0 = dividend */
@@ -324,7 +357,7 @@ L4:	lsrl	IMM (1), d1	/* shift divisor */
 	swap	d2
 	mulu	d0, d2		/* high part, at most 17 bits */
 	swap	d2		/* align high part with low part */
-	btst	IMM (0), d2	/* high part 17 bits? */
+	tstw	d2		/* high part 17 bits? */
 	jne	L5		/* if 17 bits, quotient was too large */
 	addl	d2, d1		/* add parts */
 	jcs	L5		/* if sum is 33 bits, quotient was too large */
@@ -334,6 +367,31 @@ L5:	subql	IMM (1), d0	/* adjust quotient */
 
 L6:	movel	sp@+, d2
 	rts
+
+#else /* __mcf5200__ */
+
+/* Coldfire implementation of non-restoring division algorithm from
+   Hennessy & Patterson, Appendix A. */
+	link	a6,IMM (-12)
+	moveml	d2-d4,sp@
+	movel	a6@(8),d0
+	movel	a6@(12),d1
+	clrl	d2		| clear p
+	moveq	IMM (31),d4
+L1:	addl	d0,d0		| shift reg pair (p,a) one bit left
+	addxl	d2,d2
+	movl	d2,d3		| subtract b from p, store in tmp.
+	subl	d1,d3
+	jmi	L2		| if the result is not is negative, set the
+	bset	IMM (0),d0	| low order bit of a to 1 and store tmp in p.
+	movl	d3,d2
+L2:	subql	IMM (1),d4
+	jcc	L1
+	moveml	sp@,d2-d4	| restore data registers
+	unlk	a6		| and return
+	rts
+#endif /* __mcf5200__ */
+
 #endif /* L_udivsi3 */
 
 #ifdef  L_divsi3
@@ -343,15 +401,23 @@ L6:	movel	sp@+, d2
 SYM (__divsi3):
 	movel	d2, sp@-
 
-	moveb	IMM (1), d2	/* sign of result stored in d2 (=1 or =-1) */
+	moveq	IMM (1), d2	/* sign of result stored in d2 (=1 or =-1) */
 	movel	sp@(12), d1	/* d1 = divisor */
 	jpl	L1
 	negl	d1
+#ifndef __mcf5200__
 	negb	d2		/* change sign because divisor <0  */
+#else
+	negl	d2		/* change sign because divisor <0  */
+#endif
 L1:	movel	sp@(8), d0	/* d0 = dividend */
 	jpl	L2
 	negl	d0
+#ifndef __mcf5200__
 	negb	d2
+#else
+	negl	d2
+#endif
 
 L2:	movel	d1, sp@-
 	movel	d0, sp@-
@@ -378,10 +444,14 @@ SYM (__umodsi3):
 	jbsr	SYM (__udivsi3)
 	addql	IMM (8), sp
 	movel	sp@(8), d1	/* d1 = divisor */
+#ifndef __mcf5200__
 	movel	d1, sp@-
 	movel	d0, sp@-
 	jbsr	SYM (__mulsi3)	/* d0 = (a/b)*b */
 	addql	IMM (8), sp
+#else
+	mulsl	d1,d0
+#endif
 	movel	sp@(4), d1	/* d1 = dividend */
 	subl	d0, d1		/* d1 = a - (a/b)*b */
 	movel	d1, d0
@@ -400,10 +470,14 @@ SYM (__modsi3):
 	jbsr	SYM (__divsi3)
 	addql	IMM (8), sp
 	movel	sp@(8), d1	/* d1 = divisor */
+#ifndef __mcf5200__
 	movel	d1, sp@-
 	movel	d0, sp@-
 	jbsr	SYM (__mulsi3)	/* d0 = (a/b)*b */
 	addql	IMM (8), sp
+#else
+	mulsl	d1,d0
+#endif
 	movel	sp@(4), d1	/* d1 = dividend */
 	subl	d0, d1		/* d1 = a - (a/b)*b */
 	movel	d1, d0
@@ -464,9 +538,8 @@ ROUND_TO_MINUS    = 3 | round result towards minus infinity
 Ld$den:
 | Return and signal a denormalized number
 	orl	d7,d0
-	movew	IMM (UNDERFLOW),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (DOUBLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+UNDERFLOW),d7
+	moveq	IMM (DOUBLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Ld$infty:
@@ -475,27 +548,24 @@ Ld$overflow:
 	movel	IMM (0x7ff00000),d0
 	movel	IMM (0),d1
 	orl	d7,d0
-	movew	IMM (OVERFLOW),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (DOUBLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+OVERFLOW),d7
+	moveq	IMM (DOUBLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Ld$underflow:
 | Return 0 and set the exception flags 
 	movel	IMM (0),d0
 	movel	d0,d1
-	movew	IMM (UNDERFLOW),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (DOUBLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+UNDERFLOW),d7
+	moveq	IMM (DOUBLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Ld$inop:
 | Return a quiet NaN and set the exception flags
 	movel	IMM (QUIET_NaN),d0
 	movel	d0,d1
-	movew	IMM (INVALID_OPERATION),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (DOUBLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+INVALID_OPERATION),d7
+	moveq	IMM (DOUBLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Ld$div$0:
@@ -503,9 +573,8 @@ Ld$div$0:
 	movel	IMM (0x7ff00000),d0
 	movel	IMM (0),d1
 	orl	d7,d0
-	movew	IMM (DIVIDE_BY_ZERO),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (DOUBLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+DIVIDE_BY_ZERO),d7
+	moveq	IMM (DOUBLE_FLOAT),d6
 	jmp	$_exception_handler
 
 |=============================================================================
@@ -542,8 +611,13 @@ SYM (__subdf3):
 
 | double __adddf3(double, double);
 SYM (__adddf3):
+#ifndef __mcf5200__
 	link	a6,IMM (0)	| everything will be done in registers
 	moveml	d2-d7,sp@-	| save all data registers and a2 (but d0-d1)
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movel	a6@(8),d0	| get first operand
 	movel	a6@(12),d1	| 
 	movel	a6@(16),d2	| get second operand
@@ -561,10 +635,15 @@ SYM (__adddf3):
 
 	andl	IMM (0x80000000),d7 | isolate a's sign bit '
         swap	d6		| and also b's sign bit '
+#ifndef __mcf5200__
 	andw	IMM (0x8000),d6	|
 	orw	d6,d7		| and combine them into d7, so that a's sign '
 				| bit is in the high word and b's is in the '
 				| low word, so d6 is free to be used
+#else
+	andl	IMM (0x8000),d6
+	orl	d6,d7
+#endif
 	movel	d7,a0		| now save d7 into a0, so d7 is free to
                 		| be used also
 
@@ -583,7 +662,11 @@ SYM (__adddf3):
 	orl	d7,d0		| and put hidden bit back
 Ladddf$1:
 	swap	d4		| shift right exponent so that it starts
+#ifndef __mcf5200__
 	lsrw	IMM (5),d4	| in bit 0 and not bit 20
+#else
+	lsrl	IMM (5),d4	| in bit 0 and not bit 20
+#endif
 | Now we have a's exponent in d4 and fraction in d0-d1 '
 	movel	d2,d5		| save b to get exponent
 	andl	d6,d5		| get exponent in d5
@@ -595,7 +678,11 @@ Ladddf$1:
 	orl	d7,d2		| and put hidden bit back
 Ladddf$2:
 	swap	d5		| shift right exponent so that it starts
+#ifndef __mcf5200__
 	lsrw	IMM (5),d5	| in bit 0 and not bit 20
+#else
+	lsrl	IMM (5),d5	| in bit 0 and not bit 20
+#endif
 
 | Now we have b's exponent in d5 and fraction in d2-d3. '
 
@@ -606,7 +693,13 @@ Ladddf$2:
 | and d4-d5-d6-d7 for the second. To do this we store (temporarily) the
 | exponents in a2-a3.
 
+#ifndef __mcf5200__
 	moveml	a2-a3,sp@-	| save the address registers
+#else
+	movel	a2,sp@-	
+	movel	a3,sp@-	
+	movel	a4,sp@-	
+#endif
 
 	movel	d4,a2		| save the exponents
 	movel	d5,a3		| 
@@ -620,32 +713,88 @@ Ladddf$2:
 
 | Here we shift the numbers until the exponents are the same, and put 
 | the largest exponent in a2.
+#ifndef __mcf5200__
 	exg	d4,a2		| get exponents back
 	exg	d5,a3		|
 	cmpw	d4,d5		| compare the exponents
+#else
+	movel	d4,a4		| get exponents back
+	movel	a2,d4
+	movel	a4,a2
+	movel	d5,a4
+	movel	a3,d5
+	movel	a4,a3
+	cmpl	d4,d5		| compare the exponents
+#endif
 	beq	Ladddf$3	| if equal don't shift '
 	bhi	9f		| branch if second exponent is higher
 
 | Here we have a's exponent larger than b's, so we have to shift b. We do 
 | this by using as counter d2:
 1:	movew	d4,d2		| move largest exponent to d2
+#ifndef __mcf5200__
 	subw	d5,d2		| and subtract second exponent
 	exg	d4,a2		| get back the longs we saved
 	exg	d5,a3		|
+#else
+	subl	d5,d2		| and subtract second exponent
+	movel	d4,a4		| get back the longs we saved
+	movel	a2,d4
+	movel	a4,a2
+	movel	d5,a4
+	movel	a3,d5
+	movel	a4,a3
+#endif
 | if difference is too large we don't shift (actually, we can just exit) '
+#ifndef __mcf5200__
 	cmpw	IMM (DBL_MANT_DIG+2),d2
+#else
+	cmpl	IMM (DBL_MANT_DIG+2),d2
+#endif
 	bge	Ladddf$b$small
+#ifndef __mcf5200__
 	cmpw	IMM (32),d2	| if difference >= 32, shift by longs
+#else
+	cmpl	IMM (32),d2	| if difference >= 32, shift by longs
+#endif
 	bge	5f
-2:	cmpw	IMM (16),d2	| if difference >= 16, shift by words	
+2:
+#ifndef __mcf5200__
+	cmpw	IMM (16),d2	| if difference >= 16, shift by words	
+#else
+	cmpl	IMM (16),d2	| if difference >= 16, shift by words	
+#endif
 	bge	6f
 	bra	3f		| enter dbra loop
 
-4:	lsrl	IMM (1),d4
+4:
+#ifndef __mcf5200__
+	lsrl	IMM (1),d4
 	roxrl	IMM (1),d5
 	roxrl	IMM (1),d6
 	roxrl	IMM (1),d7
-3:	dbra	d2,4b
+#else
+	lsrl	IMM (1),d7
+	btst	IMM (0),d6
+	beq	10f
+	bset	IMM (31),d7
+10:	lsrl	IMM (1),d6
+	btst	IMM (0),d5
+	beq	11f
+	bset	IMM (31),d6
+11:	lsrl	IMM (1),d5
+	btst	IMM (0),d4
+	beq	12f
+	bset	IMM (31),d5
+12:	lsrl	IMM (1),d4
+#endif
+3:
+#ifndef __mcf5200__
+	dbra	d2,4b
+#else
+	subql	IMM (1),d2
+	bpl	4b	
+#endif
 	movel	IMM (0),d2
 	movel	d2,d3	
 	bra	Ladddf$4
@@ -654,7 +803,11 @@ Ladddf$2:
 	movel	d5,d6
 	movel	d4,d5
 	movel	IMM (0),d4
+#ifndef __mcf5200__
 	subw	IMM (32),d2
+#else
+	subl	IMM (32),d2
+#endif
 	bra	2b
 6:
 	movew	d6,d7
@@ -665,28 +818,82 @@ Ladddf$2:
 	swap	d5
 	movew	IMM (0),d4
 	swap	d4
+#ifndef __mcf5200__
 	subw	IMM (16),d2
+#else
+	subl	IMM (16),d2
+#endif
 	bra	3b
 	
-9:	exg	d4,d5
+9:
+#ifndef __mcf5200__
+	exg	d4,d5
 	movew	d4,d6
 	subw	d5,d6		| keep d5 (largest exponent) in d4
 	exg	d4,a2
 	exg	d5,a3
+#else
+	movel	d5,d6
+	movel	d4,d5
+	movel	d6,d4
+	subl	d5,d6
+	movel	d4,a4
+	movel	a2,d4
+	movel	a4,a2
+	movel	d5,a4
+	movel	a3,d5
+	movel	a4,a3
+#endif
 | if difference is too large we don't shift (actually, we can just exit) '
+#ifndef __mcf5200__
 	cmpw	IMM (DBL_MANT_DIG+2),d6
+#else
+	cmpl	IMM (DBL_MANT_DIG+2),d6
+#endif
 	bge	Ladddf$a$small
+#ifndef __mcf5200__
 	cmpw	IMM (32),d6	| if difference >= 32, shift by longs
+#else
+	cmpl	IMM (32),d6	| if difference >= 32, shift by longs
+#endif
 	bge	5f
-2:	cmpw	IMM (16),d6	| if difference >= 16, shift by words	
+2:
+#ifndef __mcf5200__
+	cmpw	IMM (16),d6	| if difference >= 16, shift by words	
+#else
+	cmpl	IMM (16),d6	| if difference >= 16, shift by words	
+#endif
 	bge	6f
 	bra	3f		| enter dbra loop
 
-4:	lsrl	IMM (1),d0
+4:
+#ifndef __mcf5200__
+	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	roxrl	IMM (1),d2
 	roxrl	IMM (1),d3
-3:	dbra	d6,4b
+#else
+	lsrl	IMM (1),d3
+	btst	IMM (0),d2
+	beq	10f
+	bset	IMM (31),d3
+10:	lsrl	IMM (1),d2
+	btst	IMM (0),d1
+	beq	11f
+	bset	IMM (31),d2
+11:	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	12f
+	bset	IMM (31),d1
+12:	lsrl	IMM (1),d0
+#endif
+3:
+#ifndef __mcf5200__
+	dbra	d6,4b
+#else
+	subql	IMM (1),d6
+	bpl	4b
+#endif
 	movel	IMM (0),d7
 	movel	d7,d6
 	bra	Ladddf$4
@@ -695,7 +902,11 @@ Ladddf$2:
 	movel	d1,d2
 	movel	d0,d1
 	movel	IMM (0),d0
+#ifndef __mcf5200__
 	subw	IMM (32),d6
+#else
+	subl	IMM (32),d6
+#endif
 	bra	2b
 6:
 	movew	d2,d3
@@ -706,18 +917,40 @@ Ladddf$2:
 	swap	d1
 	movew	IMM (0),d0
 	swap	d0
+#ifndef __mcf5200__
 	subw	IMM (16),d6
+#else
+	subl	IMM (16),d6
+#endif
 	bra	3b
 Ladddf$3:
+#ifndef __mcf5200__
 	exg	d4,a2	
 	exg	d5,a3
+#else
+	movel	d4,a4
+	movel	a2,d4
+	movel	a4,a2
+	movel	d5,a4
+	movel	a3,d5
+	movel	a4,a3
+#endif
 Ladddf$4:	
 | Now we have the numbers in d0--d3 and d4--d7, the exponent in a2, and
 | the signs in a4.
 
 | Here we have to decide whether to add or subtract the numbers:
+#ifndef __mcf5200__
 	exg	d7,a0		| get the signs 
 	exg	d6,a3		| a3 is free to be used
+#else
+	movel	d7,a4
+	movel	a0,d7
+	movel	a4,a0
+	movel	d6,a4
+	movel	a3,d6
+	movel	a4,a3
+#endif
 	movel	d7,d6		|
 	movew	IMM (0),d7	| get a's sign in d7 '
 	swap	d6              |
@@ -725,8 +958,17 @@ Ladddf$4:
 	eorl	d7,d6		| compare the signs
 	bmi	Lsubdf$0	| if the signs are different we have 
 				| to subtract
+#ifndef __mcf5200__
 	exg	d7,a0		| else we add the numbers
 	exg	d6,a3		|
+#else
+	movel	d7,a4
+	movel	a0,d7
+	movel	a4,a0
+	movel	d6,a4
+	movel	a3,d6
+	movel	a4,a3
+#endif
 	addl	d7,d3		|
 	addxl	d6,d2		|
 	addxl	d5,d1		| 
@@ -736,7 +978,13 @@ Ladddf$4:
 	movel	a0,d7		| 
 	andl	IMM (0x80000000),d7 | d7 now has the sign
 
+#ifndef __mcf5200__
 	moveml	sp@+,a2-a3	
+#else
+	movel	sp@+,a4	
+	movel	sp@+,a3	
+	movel	sp@+,a2	
+#endif
 
 | Before rounding normalize so bit #DBL_MANT_DIG is set (we will consider
 | the case of denormalized numbers in the rounding routine itself).
@@ -744,28 +992,64 @@ Ladddf$4:
 | one more bit we check this:
 	btst	IMM (DBL_MANT_DIG+1),d0	
 	beq	1f
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	roxrl	IMM (1),d2
 	roxrl	IMM (1),d3
 	addw	IMM (1),d4
+#else
+	lsrl	IMM (1),d3
+	btst	IMM (0),d2
+	beq	10f
+	bset	IMM (31),d3
+10:	lsrl	IMM (1),d2
+	btst	IMM (0),d1
+	beq	11f
+	bset	IMM (31),d2
+11:	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	12f
+	bset	IMM (31),d1
+12:	lsrl	IMM (1),d0
+	addl	IMM (1),d4
+#endif
 1:
 	lea	Ladddf$5,a0	| to return from rounding routine
 	lea	SYM (_fpCCR),a1	| check the rounding mode
+#ifdef __mcf5200__
+	clrl	d6
+#endif
 	movew	a1@(6),d6	| rounding mode in d6
 	beq	Lround$to$nearest
+#ifndef __mcf5200__
 	cmpw	IMM (ROUND_TO_PLUS),d6
+#else
+	cmpl	IMM (ROUND_TO_PLUS),d6
+#endif
 	bhi	Lround$to$minus
 	blt	Lround$to$zero
 	bra	Lround$to$plus
 Ladddf$5:
 | Put back the exponent and check for overflow
+#ifndef __mcf5200__
 	cmpw	IMM (0x7ff),d4	| is the exponent big?
+#else
+	cmpl	IMM (0x7ff),d4	| is the exponent big?
+#endif
 	bge	1f
 	bclr	IMM (DBL_MANT_DIG-1),d0
+#ifndef __mcf5200__
 	lslw	IMM (4),d4	| put exponent back into position
+#else
+	lsll	IMM (4),d4	| put exponent back into position
+#endif
 	swap	d0		| 
+#ifndef __mcf5200__
 	orw	d4,d0		|
+#else
+	orl	d4,d0		|
+#endif
 	swap	d0		|
 	bra	Ladddf$ret
 1:
@@ -774,17 +1058,26 @@ Ladddf$5:
 
 Lsubdf$0:
 | Here we do the subtraction.
+#ifndef __mcf5200__
 	exg	d7,a0		| put sign back in a0
 	exg	d6,a3		|
+#else
+	movel	d7,a4
+	movel	a0,d7
+	movel	a4,a0
+	movel	d6,a4
+	movel	a3,d6
+	movel	a4,a3
+#endif
 	subl	d7,d3		|
 	subxl	d6,d2		|
 	subxl	d5,d1		|
 	subxl	d4,d0		|
 	beq	Ladddf$ret$1	| if zero just exit
 	bpl	1f		| if positive skip the following
-	exg	d7,a0		|
+	movel	a0,d7		|
 	bchg	IMM (31),d7	| change sign bit in d7
-	exg	d7,a0		|
+	movel	d7,a0		|
 	negl	d3		|
 	negxl	d2		|
 	negxl	d1              | and negate result
@@ -793,7 +1086,13 @@ Lsubdf$0:
 	movel	a2,d4		| return exponent to d4
 	movel	a0,d7
 	andl	IMM (0x80000000),d7 | isolate sign bit
+#ifndef __mcf5200__
 	moveml	sp@+,a2-a3	|
+#else
+	movel	sp@+,a4
+	movel	sp@+,a3
+	movel	sp@+,a2
+#endif
 
 | Before rounding normalize so bit #DBL_MANT_DIG is set (we will consider
 | the case of denormalized numbers in the rounding routine itself).
@@ -801,26 +1100,58 @@ Lsubdf$0:
 | one more bit we check this:
 	btst	IMM (DBL_MANT_DIG+1),d0	
 	beq	1f
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	roxrl	IMM (1),d2
 	roxrl	IMM (1),d3
 	addw	IMM (1),d4
+#else
+	lsrl	IMM (1),d3
+	btst	IMM (0),d2
+	beq	10f
+	bset	IMM (31),d3
+10:	lsrl	IMM (1),d2
+	btst	IMM (0),d1
+	beq	11f
+	bset	IMM (31),d2
+11:	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	12f
+	bset	IMM (31),d1
+12:	lsrl	IMM (1),d0
+	addl	IMM (1),d4
+#endif
 1:
 	lea	Lsubdf$1,a0	| to return from rounding routine
 	lea	SYM (_fpCCR),a1	| check the rounding mode
+#ifdef __mcf5200__
+	clrl	d6
+#endif
 	movew	a1@(6),d6	| rounding mode in d6
 	beq	Lround$to$nearest
+#ifndef __mcf5200__
 	cmpw	IMM (ROUND_TO_PLUS),d6
+#else
+	cmpl	IMM (ROUND_TO_PLUS),d6
+#endif
 	bhi	Lround$to$minus
 	blt	Lround$to$zero
 	bra	Lround$to$plus
 Lsubdf$1:
 | Put back the exponent and sign (we don't have overflow). '
 	bclr	IMM (DBL_MANT_DIG-1),d0	
+#ifndef __mcf5200__
 	lslw	IMM (4),d4	| put exponent back into position
+#else
+	lsll	IMM (4),d4	| put exponent back into position
+#endif
 	swap	d0		| 
+#ifndef __mcf5200__
 	orw	d4,d0		|
+#else
+	orl	d4,d0		|
+#endif
 	swap	d0		|
 	bra	Ladddf$ret
 
@@ -828,22 +1159,46 @@ Lsubdf$1:
 | DBL_MANT_DIG+1) we return the other (and now we don't have to '
 | check for finiteness or zero).
 Ladddf$a$small:
+#ifndef __mcf5200__
 	moveml	sp@+,a2-a3	
+#else
+	movel	sp@+,a4
+	movel	sp@+,a3
+	movel	sp@+,a2
+#endif
 	movel	a6@(16),d0
 	movel	a6@(20),d1
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| restore data registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| and return
 	rts
 
 Ladddf$b$small:
+#ifndef __mcf5200__
 	moveml	sp@+,a2-a3	
+#else
+	movel	sp@+,a4	
+	movel	sp@+,a3	
+	movel	sp@+,a2	
+#endif
 	movel	a6@(8),d0
 	movel	a6@(12),d1
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| restore data registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| and return
 	rts
 
@@ -883,21 +1238,41 @@ Ladddf$a:
 	bra	Ld$infty		|
 	
 Ladddf$ret$1:
+#ifndef __mcf5200__
 	moveml	sp@+,a2-a3	| restore regs and exit
+#else
+	movel	sp@+,a4
+	movel	sp@+,a3
+	movel	sp@+,a2
+#endif
 
 Ladddf$ret:
 | Normal exit.
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
 	orl	d7,d0		| put sign bit back
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 
 Ladddf$ret$den:
 | Return a denormalized number.
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0	| shift right once more
 	roxrl	IMM (1),d1	|
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+#endif
 	bra	Ladddf$ret
 
 Ladddf$nf:
@@ -954,8 +1329,13 @@ Ladddf$nf:
 
 | double __muldf3(double, double);
 SYM (__muldf3):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@-
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movel	a6@(8),d0		| get a into d0-d1
 	movel	a6@(12),d1		| 
 	movel	a6@(16),d2		| and b into d2-d3
@@ -990,17 +1370,30 @@ SYM (__muldf3):
 	andl	d6,d0			| isolate fraction
 	orl	IMM (0x00100000),d0	| and put hidden bit back
 	swap	d4			| I like exponents in the first byte
+#ifndef __mcf5200__
 	lsrw	IMM (4),d4		| 
+#else
+	lsrl	IMM (4),d4		| 
+#endif
 Lmuldf$1:			
 	andl	d7,d5			|
 	beq	Lmuldf$b$den		|
 	andl	d6,d2			|
 	orl	IMM (0x00100000),d2	| and put hidden bit back
 	swap	d5			|
+#ifndef __mcf5200__
 	lsrw	IMM (4),d5		|
+#else
+	lsrl	IMM (4),d5		|
+#endif
 Lmuldf$2:				|
+#ifndef __mcf5200__
 	addw	d5,d4			| add exponents
 	subw	IMM (D_BIAS+1),d4	| and subtract bias (plus one)
+#else
+	addl	d5,d4			| add exponents
+	subl	IMM (D_BIAS+1),d4	| and subtract bias (plus one)
+#endif
 
 | We are now ready to do the multiplication. The situation is as follows:
 | both a and b have bit 52 ( bit 20 of d0 and d2) set (even if they were 
@@ -1012,11 +1405,18 @@ Lmuldf$2:				|
 | enough to keep everything in them. So we use the address registers to keep
 | some intermediate data.
 
+#ifndef __mcf5200__
 	moveml	a2-a3,sp@-	| save a2 and a3 for temporary use
+#else
+	movel	a2,sp@-
+	movel	a3,sp@-
+	movel	a4,sp@-
+#endif
 	movel	IMM (0),a2	| a2 is a null register
 	movel	d4,a3		| and a3 will preserve the exponent
 
 | First, shift d2-d3 so bit 20 becomes bit 31:
+#ifndef __mcf5200__
 	rorl	IMM (5),d2	| rotate d2 5 places right
 	swap	d2		| and swap it
 	rorl	IMM (5),d3	| do the same thing with d3
@@ -1025,6 +1425,16 @@ Lmuldf$2:				|
 	andw	IMM (0x07ff),d6	|
 	orw	d6,d2		| and put them into d2
 	andw	IMM (0xf800),d3	| clear those bits in d3
+#else
+	moveq	IMM (11),d7	| left shift d2 11 bits
+	lsll	d7,d2
+	movel	d3,d6		| get a copy of d3
+	lsll	d7,d3		| left shift d3 11 bits
+	andl	IMM (0xffe00000),d6 | get the top 11 bits of d3
+	moveq	IMM (21),d7	| right shift them 21 bits
+	lsrl	d7,d6
+	orl	d6,d2		| stick them at the end of d2
+#endif
 
 	movel	d2,d6		| move b into d6-d7
 	movel	d3,d7           | move a into d4-d5
@@ -1037,9 +1447,22 @@ Lmuldf$2:				|
 
 | We use a1 as counter:	
 	movel	IMM (DBL_MANT_DIG-1),a1		
+#ifndef __mcf5200__
 	exg	d7,a1
+#else
+	movel	d7,a4
+	movel	a1,d7
+	movel	a4,a1
+#endif
 
-1:	exg	d7,a1		| put counter back in a1
+1:
+#ifndef __mcf5200__
+	exg	d7,a1		| put counter back in a1
+#else
+	movel	d7,a4
+	movel	a1,d7
+	movel	a4,a1
+#endif
 	addl	d3,d3		| shift sum once left
 	addxl	d2,d2           |
 	addxl	d1,d1           |
@@ -1047,17 +1470,44 @@ Lmuldf$2:				|
 	addl	d7,d7		|
 	addxl	d6,d6		|
 	bcc	2f		| if bit clear skip the following
+#ifndef __mcf5200__
 	exg	d7,a2		|
+#else
+	movel	d7,a4
+	movel	a2,d7
+	movel	a4,a2
+#endif
 	addl	d5,d3		| else add a to the sum
 	addxl	d4,d2		|
 	addxl	d7,d1		|
 	addxl	d7,d0		|
+#ifndef __mcf5200__
 	exg	d7,a2		| 
-2:	exg	d7,a1		| put counter in d7
+#else
+	movel	d7,a4
+	movel	a2,d7
+	movel	a4,a2
+#endif
+2:
+#ifndef __mcf5200__
+	exg	d7,a1		| put counter in d7
 	dbf	d7,1b		| decrement and branch
+#else
+	movel	d7,a4
+	movel	a1,d7
+	movel	a4,a1
+	subql	IMM (1),d7
+	bpl	1b
+#endif
 
 	movel	a3,d4		| restore exponent
+#ifndef __mcf5200__
 	moveml	sp@+,a2-a3
+#else
+	movel	sp@+,a4
+	movel	sp@+,a3
+	movel	sp@+,a2
+#endif
 
 | Now we have the product in d0-d1-d2-d3, with bit 8 of d0 set. The 
 | first thing to do now is to normalize it so bit 8 becomes bit 
@@ -1070,6 +1520,7 @@ Lmuldf$2:				|
 	swap	d3
 	movew	d3,d2
 	movew	IMM (0),d3
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	roxrl	IMM (1),d2
@@ -1082,6 +1533,22 @@ Lmuldf$2:				|
 	roxrl	IMM (1),d1
 	roxrl	IMM (1),d2
 	roxrl	IMM (1),d3
+#else
+	moveq	IMM (29),d6
+	lsrl	IMM (3),d3
+	movel	d2,d7
+	lsll	d6,d7
+	orl	d7,d3
+	lsrl	IMM (3),d2
+	movel	d1,d7
+	lsll	d6,d7
+	orl	d7,d2
+	lsrl	IMM (3),d1
+	movel	d0,d7
+	lsll	d6,d7
+	orl	d7,d1
+	lsrl	IMM (3),d0
+#endif
 	
 | Now round, check for over- and underflow, and exit.
 	movel	a0,d7		| get sign bit back into d7
@@ -1089,9 +1556,18 @@ Lmuldf$2:				|
 
 	btst	IMM (DBL_MANT_DIG+1-32),d0
 	beq	Lround$exit
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	addw	IMM (1),d4
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+	addl	IMM (1),d4
+#endif
 	bra	Lround$exit
 
 Lmuldf$inop:
@@ -1116,8 +1592,17 @@ Lmuldf$a$nf:
 | NaN, in which case we return NaN.
 Lmuldf$b$0:
 	movew	IMM (MULTIPLY),d5
+#ifndef __mcf5200__
 	exg	d2,d0		| put b (==0) into d0-d1
 	exg	d3,d1		| and a (with sign bit cleared) into d2-d3
+#else
+	movel	d2,d7
+	movel	d0,d2
+	movel	d7,d0
+	movel	d3,d7
+	movel	d1,d3
+	movel	d7,d1
+#endif
 	bra	1f
 Lmuldf$a$0:
 	movel	a6@(16),d2	| put b into d2-d3 again
@@ -1127,7 +1612,13 @@ Lmuldf$a$0:
 	bge	Ld$inop		| in case NaN or +/-INFINITY return NaN
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 
@@ -1140,7 +1631,11 @@ Lmuldf$a$den:
 	andl	d6,d0
 1:	addl	d1,d1           | shift a left until bit 20 is set
 	addxl	d0,d0		|
+#ifndef __mcf5200__
 	subw	IMM (1),d4	| and adjust exponent
+#else
+	subl	IMM (1),d4	| and adjust exponent
+#endif
 	btst	IMM (20),d0	|
 	bne	Lmuldf$1        |
 	bra	1b
@@ -1150,7 +1645,11 @@ Lmuldf$b$den:
 	andl	d6,d2
 1:	addl	d3,d3		| shift b left until bit 20 is set
 	addxl	d2,d2		|
+#ifndef __mcf5200__
 	subw	IMM (1),d5	| and adjust exponent
+#else
+	subql	IMM (1),d5	| and adjust exponent
+#endif
 	btst	IMM (20),d2	|
 	bne	Lmuldf$2	|
 	bra	1b
@@ -1162,8 +1661,13 @@ Lmuldf$b$den:
 
 | double __divdf3(double, double);
 SYM (__divdf3):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@-
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movel	a6@(8),d0	| get a into d0-d1
 	movel	a6@(12),d1	| 
 	movel	a6@(16),d2	| and b into d2-d3
@@ -1202,17 +1706,30 @@ SYM (__divdf3):
 	andl	d6,d0		| and isolate fraction
 	orl	IMM (0x00100000),d0 | and put hidden bit back
 	swap	d4		| I like exponents in the first byte
+#ifndef __mcf5200__
 	lsrw	IMM (4),d4	| 
+#else
+	lsrl	IMM (4),d4	| 
+#endif
 Ldivdf$1:			| 
 	andl	d7,d5		|
 	beq	Ldivdf$b$den	|
 	andl	d6,d2		|
 	orl	IMM (0x00100000),d2
 	swap	d5		|
+#ifndef __mcf5200__
 	lsrw	IMM (4),d5	|
+#else
+	lsrl	IMM (4),d5	|
+#endif
 Ldivdf$2:			|
+#ifndef __mcf5200__
 	subw	d5,d4		| subtract exponents
 	addw	IMM (D_BIAS),d4	| and add bias
+#else
+	subl	d5,d4		| subtract exponents
+	addl	IMM (D_BIAS),d4	| and add bias
+#endif
 
 | We are now ready to do the division. We have prepared things in such a way
 | that the ratio of the fractions will be less than 2 but greater than 1/2.
@@ -1243,7 +1760,12 @@ Ldivdf$2:			|
 	bset	d5,d6		| set the corresponding bit in d6
 3:	addl	d1,d1		| shift a by 1
 	addxl	d0,d0		|
+#ifndef __mcf5200__
 	dbra	d5,1b		| and branch back
+#else
+	subql	IMM (1), d5
+	bpl	1b
+#endif
 	bra	5f			
 4:	cmpl	d1,d3		| here d0==d2, so check d1 and d3
 	bhi	3b		| if d1 > d2 skip the subtraction
@@ -1260,7 +1782,12 @@ Ldivdf$2:			|
 	bset	d5,d7		| set the corresponding bit in d7
 3:	addl	d1,d1		| shift a by 1
 	addxl	d0,d0		|
+#ifndef __mcf5200__
 	dbra	d5,1b		| and branch back
+#else
+	subql	IMM (1), d5
+	bpl	1b
+#endif
 	bra	5f			
 4:	cmpl	d1,d3		| here d0==d2, so check d1 and d3
 	bhi	3b		| if d1 > d2 skip the subtraction
@@ -1273,7 +1800,12 @@ Ldivdf$2:			|
 	beq	3f		| if d0==d2 check d1 and d3
 2:	addl	d1,d1		| shift a by 1
 	addxl	d0,d0		|
+#ifndef __mcf5200__
 	dbra	d5,1b		| and branch back
+#else
+	subql	IMM (1), d5
+	bpl	1b
+#endif
 	movel	IMM (0),d2	| here no sticky bit was found
 	movel	d2,d3
 	bra	5f			
@@ -1284,13 +1816,23 @@ Ldivdf$2:			|
 | to it; if you don't do this the algorithm loses in some cases). '
 	movel	IMM (0),d2
 	movel	d2,d3
+#ifndef __mcf5200__
 	subw	IMM (DBL_MANT_DIG),d5
 	addw	IMM (63),d5
 	cmpw	IMM (31),d5
+#else
+	subl	IMM (DBL_MANT_DIG),d5
+	addl	IMM (63),d5
+	cmpl	IMM (31),d5
+#endif
 	bhi	2f
 1:	bset	d5,d3
 	bra	5f
+#ifndef __mcf5200__
 	subw	IMM (32),d5
+#else
+	subl	IMM (32),d5
+#endif
 2:	bset	d5,d2
 5:
 | Finally we are finished! Move the longs in the address registers to
@@ -1305,11 +1847,28 @@ Ldivdf$2:			|
 | not set:
 	btst	IMM (DBL_MANT_DIG-32+1),d0
 	beq	1f
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	roxrl	IMM (1),d2
 	roxrl	IMM (1),d3
 	addw	IMM (1),d4
+#else
+	lsrl	IMM (1),d3
+	btst	IMM (0),d2
+	beq	10f
+	bset	IMM (31),d3
+10:	lsrl	IMM (1),d2
+	btst	IMM (0),d1
+	beq	11f
+	bset	IMM (31),d2
+11:	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	12f
+	bset	IMM (31),d1
+12:	lsrl	IMM (1),d0
+	addl	IMM (1),d4
+#endif
 1:
 | Now round, check for over- and underflow, and exit.
 	movel	a0,d7		| restore sign bit to d7
@@ -1338,7 +1897,13 @@ Ldivdf$a$0:
 	movel	d0,d1		| 
 	lea	SYM (_fpCCR),a0	| clear exception flags
 	movew	IMM (0),a0@	|
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| 
+#else
+	moveml	sp@,d2-d7	| 
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| 
 	rts			| 	
 
@@ -1380,7 +1945,11 @@ Ldivdf$a$den:
 	andl	d6,d0
 1:	addl	d1,d1		| shift a left until bit 20 is set
 	addxl	d0,d0
+#ifndef __mcf5200__
 	subw	IMM (1),d4	| and adjust exponent
+#else
+	subl	IMM (1),d4	| and adjust exponent
+#endif
 	btst	IMM (DBL_MANT_DIG-32-1),d0
 	bne	Ldivdf$1
 	bra	1b
@@ -1390,7 +1959,11 @@ Ldivdf$b$den:
 	andl	d6,d2
 1:	addl	d3,d3		| shift b left until bit 20 is set
 	addxl	d2,d2
+#ifndef __mcf5200__
 	subw	IMM (1),d5	| and adjust exponent
+#else
+	subql	IMM (1),d5	| and adjust exponent
+#endif
 	btst	IMM (DBL_MANT_DIG-32-1),d2
 	bne	Ldivdf$2
 	bra	1b
@@ -1401,7 +1974,11 @@ Lround$exit:
 | so that 2^21 <= d0 < 2^22, and the exponent is in the lower byte of d4.
 
 | First check for underlow in the exponent:
+#ifndef __mcf5200__
 	cmpw	IMM (-DBL_MANT_DIG-1),d4		
+#else
+	cmpl	IMM (-DBL_MANT_DIG-1),d4		
+#endif
 	blt	Ld$underflow	
 | It could happen that the exponent is less than 1, in which case the 
 | number is denormalized. In this case we shift right and adjust the 
@@ -1410,9 +1987,15 @@ Lround$exit:
 	movel	d7,a0		|
 	movel	IMM (0),d6	| use d6-d7 to collect bits flushed right
 	movel	d6,d7		| use d6-d7 to collect bits flushed right
+#ifndef __mcf5200__
 	cmpw	IMM (1),d4	| if the exponent is less than 1 we 
+#else
+	cmpl	IMM (1),d4	| if the exponent is less than 1 we 
+#endif
 	bge	2f		| have to shift right (denormalize)
-1:	addw	IMM (1),d4	| adjust the exponent
+1:
+#ifndef __mcf5200__
+	addw	IMM (1),d4	| adjust the exponent
 	lsrl	IMM (1),d0	| shift right once 
 	roxrl	IMM (1),d1	|
 	roxrl	IMM (1),d2	|
@@ -1420,6 +2003,31 @@ Lround$exit:
 	roxrl	IMM (1),d6	| 
 	roxrl	IMM (1),d7	|
 	cmpw	IMM (1),d4	| is the exponent 1 already?
+#else
+	addl	IMM (1),d4	| adjust the exponent
+	lsrl	IMM (1),d7
+	btst	IMM (0),d6
+	beq	13f
+	bset	IMM (31),d7
+13:	lsrl	IMM (1),d6
+	btst	IMM (0),d3
+	beq	14f
+	bset	IMM (31),d6
+14:	lsrl	IMM (1),d3
+	btst	IMM (0),d2
+	beq	10f
+	bset	IMM (31),d3
+10:	lsrl	IMM (1),d2
+	btst	IMM (0),d1
+	beq	11f
+	bset	IMM (31),d2
+11:	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	12f
+	bset	IMM (31),d1
+12:	lsrl	IMM (1),d0
+	cmpl	IMM (1),d4	| is the exponent 1 already?
+#endif
 	beq	2f		| if not loop back
 	bra	1b              |
 	bra	Ld$underflow	| safety check, shouldn't execute '
@@ -1429,9 +2037,16 @@ Lround$exit:
 | Now call the rounding routine (which takes care of denormalized numbers):
 	lea	Lround$0,a0	| to return from rounding routine
 	lea	SYM (_fpCCR),a1	| check the rounding mode
+#ifdef __mcf5200__
+	clrl	d6
+#endif
 	movew	a1@(6),d6	| rounding mode in d6
 	beq	Lround$to$nearest
+#ifndef __mcf5200__
 	cmpw	IMM (ROUND_TO_PLUS),d6
+#else
+	cmpl	IMM (ROUND_TO_PLUS),d6
+#endif
 	bhi	Lround$to$minus
 	blt	Lround$to$zero
 	bra	Lround$to$plus
@@ -1443,23 +2058,41 @@ Lround$0:
 | check again for underflow!). We have to check for overflow or for a 
 | denormalized number (which also signals underflow).
 | Check for overflow (i.e., exponent >= 0x7ff).
+#ifndef __mcf5200__
 	cmpw	IMM (0x07ff),d4
+#else
+	cmpl	IMM (0x07ff),d4
+#endif
 	bge	Ld$overflow
 | Now check for a denormalized number (exponent==0):
 	movew	d4,d4
 	beq	Ld$den
 1:
 | Put back the exponents and sign and return.
+#ifndef __mcf5200__
 	lslw	IMM (4),d4	| exponent back to fourth byte
+#else
+	lsll	IMM (4),d4	| exponent back to fourth byte
+#endif
 	bclr	IMM (DBL_MANT_DIG-32-1),d0
 	swap	d0		| and put back exponent
+#ifndef __mcf5200__
 	orw	d4,d0		| 
+#else
+	orl	d4,d0		| 
+#endif
 	swap	d0		|
 	orl	d7,d0		| and sign also
 
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 
@@ -1469,8 +2102,13 @@ Lround$0:
 
 | double __negdf2(double, double);
 SYM (__negdf2):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@-
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movew	IMM (NEGATE),d5
 	movel	a6@(8),d0	| get number to negate in d0-d1
 	movel	a6@(12),d1	|
@@ -1490,7 +2128,13 @@ SYM (__negdf2):
 	bra	Ld$infty		
 1:	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 2:	bclr	IMM (31),d0
@@ -1506,8 +2150,13 @@ EQUAL   =  0
 
 | int __cmpdf2(double, double);
 SYM (__cmpdf2):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@- 	| save registers
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movew	IMM (COMPARE),d5
 	movel	a6@(8),d0	| get first operand
 	movel	a6@(12),d1	|
@@ -1545,8 +2194,17 @@ Lcmpdf$1:
 	tstl	d6
 	bpl	1f
 | If both are negative exchange them
+#ifndef __mcf5200__
 	exg	d0,d2
 	exg	d1,d3
+#else
+	movel	d0,d7
+	movel	d2,d0
+	movel	d7,d2
+	movel	d1,d7
+	movel	d3,d1
+	movel	d7,d3
+#endif
 1:
 | Now that they are positive we just compare them as longs (does this also
 | work for denormalized numbers?).
@@ -1559,17 +2217,35 @@ Lcmpdf$1:
 	bne	Lcmpdf$a$gt$b	| |b| < |a|
 | If we got here a == b.
 	movel	IMM (EQUAL),d0
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7 	| put back the registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 Lcmpdf$a$gt$b:
 	movel	IMM (GREATER),d0
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7 	| put back the registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 Lcmpdf$b$gt$a:
 	movel	IMM (LESS),d0
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7 	| put back the registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 
@@ -1611,13 +2287,22 @@ Lround$to$nearest:
 | Normalize shifting left until bit #DBL_MANT_DIG-32 is set or the exponent 
 | is one (remember that a denormalized number corresponds to an 
 | exponent of -D_BIAS+1).
+#ifndef __mcf5200__
 	cmpw	IMM (1),d4	| remember that the exponent is at least one
+#else
+	cmpl	IMM (1),d4	| remember that the exponent is at least one
+#endif
  	beq	2f		| an exponent of one means denormalized
 	addl	d3,d3		| else shift and adjust the exponent
 	addxl	d2,d2		|
 	addxl	d1,d1		|
 	addxl	d0,d0		|
+#ifndef __mcf5200__
 	dbra	d4,1b		|
+#else
+	subql	IMM (1), d4
+	bpl	1b
+#endif
 2:
 | Now round: we do it as follows: after the shifting we can write the
 | fraction part as f + delta, where 1 < f < 2^25, and 0 <= delta <= 2.
@@ -1639,16 +2324,34 @@ Lround$to$nearest:
 	addl	d3,d1		|
 	addxl	d2,d0
 | Shift right once (because we used bit #DBL_MANT_DIG-32!).
-2:	lsrl	IMM (1),d0
+2:
+#ifndef __mcf5200__
+	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1		
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+#endif
 
 | Now check again bit #DBL_MANT_DIG-32 (rounding could have produced a
 | 'fraction overflow' ...).
 	btst	IMM (DBL_MANT_DIG-32),d0	
 	beq	1f
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	addw	IMM (1),d4
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+	addl	IMM (1),d4
+#endif
 1:
 | If bit #DBL_MANT_DIG-32-1 is clear we have a denormalized number, so we 
 | have to put the exponent to zero and return a denormalized number.
@@ -1719,9 +2422,8 @@ ROUND_TO_MINUS    = 3 | round result towards minus infinity
 Lf$den:
 | Return and signal a denormalized number
 	orl	d7,d0
-	movew	IMM (UNDERFLOW),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (SINGLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+UNDERFLOW),d7
+	moveq	IMM (SINGLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Lf$infty:
@@ -1729,34 +2431,30 @@ Lf$overflow:
 | Return a properly signed INFINITY and set the exception flags 
 	movel	IMM (INFINITY),d0
 	orl	d7,d0
-	movew	IMM (OVERFLOW),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (SINGLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+OVERFLOW),d7
+	moveq	IMM (SINGLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Lf$underflow:
 | Return 0 and set the exception flags 
 	movel	IMM (0),d0
-	movew	IMM (UNDERFLOW),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (SINGLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+UNDERFLOW),d7
+	moveq	IMM (SINGLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Lf$inop:
 | Return a quiet NaN and set the exception flags
 	movel	IMM (QUIET_NaN),d0
-	movew	IMM (INVALID_OPERATION),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (SINGLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+INVALID_OPERATION),d7
+	moveq	IMM (SINGLE_FLOAT),d6
 	jmp	$_exception_handler
 
 Lf$div$0:
 | Return a properly signed INFINITY and set the exception flags
 	movel	IMM (INFINITY),d0
 	orl	d7,d0
-	movew	IMM (DIVIDE_BY_ZERO),d7
-	orw	IMM (INEXACT_RESULT),d7
-	movew	IMM (SINGLE_FLOAT),d6
+	movew	IMM (INEXACT_RESULT+DIVIDE_BY_ZERO),d7
+	moveq	IMM (SINGLE_FLOAT),d6
 	jmp	$_exception_handler
 
 |=============================================================================
@@ -1793,8 +2491,13 @@ SYM (__subsf3):
 
 | float __addsf3(float, float);
 SYM (__addsf3):
+#ifndef __mcf5200__
 	link	a6,IMM (0)	| everything will be done in registers
 	moveml	d2-d7,sp@-	| save all data registers but d0-d1
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movel	a6@(8),d0	| get first operand
 	movel	a6@(12),d1	| get second operand
 	movel	d0,d6		| get d0's sign bit '
@@ -1848,54 +2551,126 @@ Laddsf$2:
 | same, and put the largest exponent in d6. Note that we are using two
 | registers for each number (see the discussion by D. Knuth in "Seminumerical 
 | Algorithms").
+#ifndef __mcf5200__
 	cmpw	d6,d7		| compare exponents
+#else
+	cmpl	d6,d7		| compare exponents
+#endif
 	beq	Laddsf$3	| if equal don't shift '
 	bhi	5f		| branch if second exponent largest
 1:
 	subl	d6,d7		| keep the largest exponent
 	negl	d7
+#ifndef __mcf5200__
 	lsrw	IMM (8),d7	| put difference in lower byte
+#else
+	lsrl	IMM (8),d7	| put difference in lower byte
+#endif
 | if difference is too large we don't shift (actually, we can just exit) '
+#ifndef __mcf5200__
 	cmpw	IMM (FLT_MANT_DIG+2),d7		
+#else
+	cmpl	IMM (FLT_MANT_DIG+2),d7		
+#endif
 	bge	Laddsf$b$small
+#ifndef __mcf5200__
 	cmpw	IMM (16),d7	| if difference >= 16 swap
+#else
+	cmpl	IMM (16),d7	| if difference >= 16 swap
+#endif
 	bge	4f
 2:
+#ifndef __mcf5200__
 	subw	IMM (1),d7
-3:	lsrl	IMM (1),d2	| shift right second operand
+#else
+	subql	IMM (1), d7
+#endif
+3:
+#ifndef __mcf5200__
+	lsrl	IMM (1),d2	| shift right second operand
 	roxrl	IMM (1),d3
 	dbra	d7,3b
+#else
+	lsrl	IMM (1),d3
+	btst	IMM (0),d2
+	beq	10f
+	bset	IMM (31),d3
+10:	lsrl	IMM (1),d2
+	subql	IMM (1), d7
+	bpl	3b
+#endif
 	bra	Laddsf$3
 4:
 	movew	d2,d3
 	swap	d3
 	movew	d3,d2
 	swap	d2
+#ifndef __mcf5200__
 	subw	IMM (16),d7
+#else
+	subl	IMM (16),d7
+#endif
 	bne	2b		| if still more bits, go back to normal case
 	bra	Laddsf$3
 5:
+#ifndef __mcf5200__
 	exg	d6,d7		| exchange the exponents
+#else
+	eorl	d6,d7
+	eorl	d7,d6
+	eorl	d6,d7
+#endif
 	subl	d6,d7		| keep the largest exponent
 	negl	d7		|
+#ifndef __mcf5200__
 	lsrw	IMM (8),d7	| put difference in lower byte
+#else
+	lsrl	IMM (8),d7	| put difference in lower byte
+#endif
 | if difference is too large we don't shift (and exit!) '
+#ifndef __mcf5200__
 	cmpw	IMM (FLT_MANT_DIG+2),d7		
+#else
+	cmpl	IMM (FLT_MANT_DIG+2),d7		
+#endif
 	bge	Laddsf$a$small
+#ifndef __mcf5200__
 	cmpw	IMM (16),d7	| if difference >= 16 swap
+#else
+	cmpl	IMM (16),d7	| if difference >= 16 swap
+#endif
 	bge	8f
 6:
+#ifndef __mcf5200__
 	subw	IMM (1),d7
-7:	lsrl	IMM (1),d0	| shift right first operand
+#else
+	subl	IMM (1),d7
+#endif
+7:
+#ifndef __mcf5200__
+	lsrl	IMM (1),d0	| shift right first operand
 	roxrl	IMM (1),d1
 	dbra	d7,7b
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+	subql	IMM (1),d7
+	bpl	7b
+#endif
 	bra	Laddsf$3
 8:
 	movew	d0,d1
 	swap	d1
 	movew	d1,d0
 	swap	d0
+#ifndef __mcf5200__
 	subw	IMM (16),d7
+#else
+	subl	IMM (16),d7
+#endif
 	bne	6b		| if still more bits, go back to normal case
 				| otherwise we fall through
 
@@ -1904,15 +2679,30 @@ Laddsf$2:
 
 Laddsf$3:
 | Here we have to decide whether to add or subtract the numbers
+#ifndef __mcf5200__
 	exg	d6,a0		| get signs back
 	exg	d7,a1		| and save the exponents
+#else
+	movel	d6,d4
+	movel	a0,d6
+	movel	d4,d6
+	movel	d7,d4
+	movel	a1,d4
+	movel	d4,a1
+#endif
 	eorl	d6,d7		| combine sign bits
 	bmi	Lsubsf$0	| if negative a and b have opposite 
 				| sign so we actually subtract the
 				| numbers
 
 | Here we have both positive or both negative
+#ifndef __mcf5200__
 	exg	d6,a0		| now we have the exponent in d6
+#else
+	movel	d6,d4
+	movel	a0,d6
+	movel	d4,a0
+#endif
 	movel	a0,d7		| and sign in d7
 	andl	IMM (0x80000000),d7
 | Here we do the addition.
@@ -1923,7 +2713,11 @@ Laddsf$3:
 | Put the exponent, in the first byte, in d2, to use the "standard" rounding
 | routines:
 	movel	d6,d2
+#ifndef __mcf5200__
 	lsrw	IMM (8),d2
+#else
+	lsrl	IMM (8),d2
+#endif
 
 | Before rounding normalize so bit #FLT_MANT_DIG is set (we will consider
 | the case of denormalized numbers in the rounding routine itself).
@@ -1931,24 +2725,47 @@ Laddsf$3:
 | one more bit we check this:
 	btst	IMM (FLT_MANT_DIG+1),d0	
 	beq	1f
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+#endif
 	addl	IMM (1),d2
 1:
 	lea	Laddsf$4,a0	| to return from rounding routine
 	lea	SYM (_fpCCR),a1	| check the rounding mode
+#ifdef __mcf5200__
+	clrl	d6
+#endif
 	movew	a1@(6),d6	| rounding mode in d6
 	beq	Lround$to$nearest
+#ifndef __mcf5200__
 	cmpw	IMM (ROUND_TO_PLUS),d6
+#else
+	cmpl	IMM (ROUND_TO_PLUS),d6
+#endif
 	bhi	Lround$to$minus
 	blt	Lround$to$zero
 	bra	Lround$to$plus
 Laddsf$4:
 | Put back the exponent, but check for overflow.
+#ifndef __mcf5200__
 	cmpw	IMM (0xff),d2
+#else
+	cmpl	IMM (0xff),d2
+#endif
 	bhi	1f
 	bclr	IMM (FLT_MANT_DIG-1),d0
+#ifndef __mcf5200__
 	lslw	IMM (7),d2
+#else
+	lsll	IMM (7),d2
+#endif
 	swap	d2
 	orl	d2,d0
 	bra	Laddsf$ret
@@ -1970,8 +2787,15 @@ Lsubsf$0:
 	negl	d1
 	negxl	d0
 1:
+#ifndef __mcf5200__
 	exg	d2,a0		| now we have the exponent in d2
 	lsrw	IMM (8),d2	| put it in the first byte
+#else
+	movel	d2,d4
+	movel	a0,d2
+	movel	d4,a0
+	lsrl	IMM (8),d2	| put it in the first byte
+#endif
 
 | Now d0-d1 is positive and the sign bit is in d7.
 
@@ -1980,16 +2804,27 @@ Lsubsf$0:
 | the rounding routines themselves.
 	lea	Lsubsf$1,a0	| to return from rounding routine
 	lea	SYM (_fpCCR),a1	| check the rounding mode
+#ifdef __mcf5200__
+	clrl	d6
+#endif
 	movew	a1@(6),d6	| rounding mode in d6
 	beq	Lround$to$nearest
+#ifndef __mcf5200__
 	cmpw	IMM (ROUND_TO_PLUS),d6
+#else
+	cmpl	IMM (ROUND_TO_PLUS),d6
+#endif
 	bhi	Lround$to$minus
 	blt	Lround$to$zero
 	bra	Lround$to$plus
 Lsubsf$1:
 | Put back the exponent (we can't have overflow!). '
 	bclr	IMM (FLT_MANT_DIG-1),d0
+#ifndef __mcf5200__
 	lslw	IMM (7),d2
+#else
+	lsll	IMM (7),d2
+#endif
 	swap	d2
 	orl	d2,d0
 	bra	Laddsf$ret
@@ -2001,7 +2836,13 @@ Laddsf$a$small:
 	movel	a6@(12),d0
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| restore data registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| and return
 	rts
 
@@ -2009,7 +2850,13 @@ Laddsf$b$small:
 	movel	a6@(8),d0
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| restore data registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| and return
 	rts
 
@@ -2061,7 +2908,13 @@ Laddsf$ret:
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
 	orl	d7,d0		| put sign bit
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| restore data registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| and return
 	rts
 
@@ -2122,8 +2975,13 @@ Laddsf$nf:
 
 | float __mulsf3(float, float);
 SYM (__mulsf3):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@-
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movel	a6@(8),d0	| get a into d0
 	movel	a6@(12),d1	| and b into d1
 	movel	d0,d7		| d7 will hold the sign of the product
@@ -2152,17 +3010,30 @@ SYM (__mulsf3):
 	andl	d5,d0		| and isolate fraction
 	orl	d4,d0		| and put hidden bit back
 	swap	d2		| I like exponents in the first byte
+#ifndef __mcf5200__
 	lsrw	IMM (7),d2	| 
+#else
+	lsrl	IMM (7),d2	| 
+#endif
 Lmulsf$1:			| number
 	andl	d6,d3		|
 	beq	Lmulsf$b$den	|
 	andl	d5,d1		|
 	orl	d4,d1		|
 	swap	d3		|
+#ifndef __mcf5200__
 	lsrw	IMM (7),d3	|
+#else
+	lsrl	IMM (7),d3	|
+#endif
 Lmulsf$2:			|
+#ifndef __mcf5200__
 	addw	d3,d2		| add exponents
 	subw	IMM (F_BIAS+1),d2 | and subtract bias (plus one)
+#else
+	addl	d3,d2		| add exponents
+	subl	IMM (F_BIAS+1),d2 | and subtract bias (plus one)
+#endif
 
 | We are now ready to do the multiplication. The situation is as follows:
 | both a and b have bit FLT_MANT_DIG-1 set (even if they were 
@@ -2188,28 +3059,58 @@ Lmulsf$2:			|
 	bcc	2f		| if not set skip sum
 	addl	d5,d1		| add a
 	addxl	d4,d0
-2:	dbf	d3,1b		| loop back
+2:
+#ifndef __mcf5200__
+	dbf	d3,1b		| loop back
+#else
+	subql	IMM (1),d3
+	bpl	1b
+#endif
 
 | Now we have the product in d0-d1, with bit (FLT_MANT_DIG - 1) + FLT_MANT_DIG
 | (mod 32) of d0 set. The first thing to do now is to normalize it so bit 
 | FLT_MANT_DIG is set (to do the rounding).
+#ifndef __mcf5200__
 	rorl	IMM (6),d1
 	swap	d1
 	movew	d1,d3
 	andw	IMM (0x03ff),d3
 	andw	IMM (0xfd00),d1
+#else
+	movel	d1,d3
+	lsll	IMM (8),d1
+	addl	d1,d1
+	addl	d1,d1
+	moveq	IMM (22),d5
+	lsrl	d5,d3
+	orl	d3,d1
+	andl	IMM (0xfffffd00),d1
+#endif
 	lsll	IMM (8),d0
 	addl	d0,d0
 	addl	d0,d0
+#ifndef __mcf5200__
 	orw	d3,d0
+#else
+	orl	d3,d0
+#endif
 
 	movew	IMM (MULTIPLY),d5
 	
 	btst	IMM (FLT_MANT_DIG+1),d0
 	beq	Lround$exit
+#ifndef __mcf5200__
 	lsrl	IMM (1),d0
 	roxrl	IMM (1),d1
 	addw	IMM (1),d2
+#else
+	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+	addql	IMM (1),d2
+#endif
 	bra	Lround$exit
 
 Lmulsf$inop:
@@ -2242,7 +3143,13 @@ Lmulsf$a$0:
 	bge	Lf$inop		| if b is +/-INFINITY or NaN return NaN
 	lea	SYM (_fpCCR),a0	| else return zero
 	movew	IMM (0),a0@	| 
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7	| 
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6		| 
 	rts			| 
 
@@ -2254,7 +3161,11 @@ Lmulsf$a$den:
 	movel	IMM (1),d2
 	andl	d5,d0
 1:	addl	d0,d0		| shift a left (until bit 23 is set)
+#ifndef __mcf5200__
 	subw	IMM (1),d2	| and adjust exponent
+#else
+	subql	IMM (1),d2	| and adjust exponent
+#endif
 	btst	IMM (FLT_MANT_DIG-1),d0
 	bne	Lmulsf$1	|
 	bra	1b		| else loop back
@@ -2263,7 +3174,11 @@ Lmulsf$b$den:
 	movel	IMM (1),d3
 	andl	d5,d1
 1:	addl	d1,d1		| shift b left until bit 23 is set
+#ifndef __mcf5200__
 	subw	IMM (1),d3	| and adjust exponent
+#else
+	subl	IMM (1),d3	| and adjust exponent
+#endif
 	btst	IMM (FLT_MANT_DIG-1),d1
 	bne	Lmulsf$2	|
 	bra	1b		| else loop back
@@ -2274,8 +3189,13 @@ Lmulsf$b$den:
 
 | float __divsf3(float, float);
 SYM (__divsf3):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@-
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movel	a6@(8),d0		| get a into d0
 	movel	a6@(12),d1		| and b into d1
 	movel	d0,d7			| d7 will hold the sign of the result
@@ -2306,17 +3226,30 @@ SYM (__divsf3):
 	andl	d5,d0		| and isolate fraction
 	orl	d4,d0		| and put hidden bit back
 	swap	d2		| I like exponents in the first byte
+#ifndef __mcf5200__
 	lsrw	IMM (7),d2	| 
+#else
+	lsrl	IMM (7),d2	| 
+#endif
 Ldivsf$1:			| 
 	andl	d6,d3		|
 	beq	Ldivsf$b$den	|
 	andl	d5,d1		|
 	orl	d4,d1		|
 	swap	d3		|
+#ifndef __mcf5200__
 	lsrw	IMM (7),d3	|
+#else
+	lsrl	IMM (7),d3	|
+#endif
 Ldivsf$2:			|
+#ifndef __mcf5200__
 	subw	d3,d2		| subtract exponents
  	addw	IMM (F_BIAS),d2	| and add bias
+#else
+	subl	d3,d2		| subtract exponents
+ 	addl	IMM (F_BIAS),d2	| and add bias
+#endif
  
 | We are now ready to do the division. We have prepared things in such a way
 | that the ratio of the fractions will be less than 2 but greater than 1/2.
@@ -2337,19 +3270,34 @@ Ldivsf$2:			|
 	subl	d1,d0		| if a >= b  a <-- a-b
 	beq	3f		| if a is zero, exit
 2:	addl	d0,d0		| multiply a by 2
+#ifndef __mcf5200__
 	dbra	d3,1b
+#else
+	subql	IMM (1),d3
+	bpl	1b
+#endif
 
 | Now we keep going to set the sticky bit ...
 	movew	IMM (FLT_MANT_DIG),d3
 1:	cmpl	d0,d1
 	ble	2f
 	addl	d0,d0
+#ifndef __mcf5200__
 	dbra	d3,1b
+#else
+	subql	IMM(1),d3
+	bpl	1b
+#endif
 	movel	IMM (0),d1
 	bra	3f
 2:	movel	IMM (0),d1
+#ifndef __mcf5200__
 	subw	IMM (FLT_MANT_DIG),d3
 	addw	IMM (31),d3
+#else
+	subl	IMM (FLT_MANT_DIG),d3
+	addl	IMM (31),d3
+#endif
 	bset	d3,d1
 3:
 	movel	d6,d0		| put the ratio in d0-d1
@@ -2361,7 +3309,11 @@ Ldivsf$2:			|
 	btst	IMM (FLT_MANT_DIG+1),d0		
 	beq	1f              | if it is not set, then bit 24 is set
 	lsrl	IMM (1),d0	|
+#ifndef __mcf5200__
 	addw	IMM (1),d2	|
+#else
+	addl	IMM (1),d2	|
+#endif
 1:
 | Now round, check for over- and underflow, and exit.
 	movew	IMM (DIVIDE),d5
@@ -2391,7 +3343,13 @@ Ldivsf$a$0:
 	movel	IMM (0),d0		| else return zero
 	lea	SYM (_fpCCR),a0		|
 	movew	IMM (0),a0@		|
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7		| 
+#else
+	moveml	sp@,d2-d7		| 
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6			| 
 	rts				| 
 	
@@ -2417,7 +3375,11 @@ Ldivsf$a$den:
 	movel	IMM (1),d2
 	andl	d5,d0
 1:	addl	d0,d0		| shift a left until bit FLT_MANT_DIG-1 is set
+#ifndef __mcf5200__
 	subw	IMM (1),d2	| and adjust exponent
+#else
+	subl	IMM (1),d2	| and adjust exponent
+#endif
 	btst	IMM (FLT_MANT_DIG-1),d0
 	bne	Ldivsf$1
 	bra	1b
@@ -2426,7 +3388,11 @@ Ldivsf$b$den:
 	movel	IMM (1),d3
 	andl	d5,d1
 1:	addl	d1,d1		| shift b left until bit FLT_MANT_DIG is set
+#ifndef __mcf5200__
 	subw	IMM (1),d3	| and adjust exponent
+#else
+	subl	IMM (1),d3	| and adjust exponent
+#endif
 	btst	IMM (FLT_MANT_DIG-1),d1
 	bne	Ldivsf$2
 	bra	1b
@@ -2435,20 +3401,43 @@ Lround$exit:
 | This is a common exit point for __mulsf3 and __divsf3. 
 
 | First check for underlow in the exponent:
+#ifndef __mcf5200__
 	cmpw	IMM (-FLT_MANT_DIG-1),d2		
+#else
+	cmpl	IMM (-FLT_MANT_DIG-1),d2		
+#endif
 	blt	Lf$underflow	
 | It could happen that the exponent is less than 1, in which case the 
 | number is denormalized. In this case we shift right and adjust the 
 | exponent until it becomes 1 or the fraction is zero (in the latter case 
 | we signal underflow and return zero).
 	movel	IMM (0),d6	| d6 is used temporarily
+#ifndef __mcf5200__
 	cmpw	IMM (1),d2	| if the exponent is less than 1 we 
+#else
+	cmpl	IMM (1),d2	| if the exponent is less than 1 we 
+#endif
 	bge	2f		| have to shift right (denormalize)
-1:	addw	IMM (1),d2	| adjust the exponent
+1:
+#ifndef __mcf5200__
+	addw	IMM (1),d2	| adjust the exponent
 	lsrl	IMM (1),d0	| shift right once 
 	roxrl	IMM (1),d1	|
 	roxrl	IMM (1),d6	| d6 collect bits we would lose otherwise
 	cmpw	IMM (1),d2	| is the exponent 1 already?
+#else
+	addql	IMM (1),d2	| adjust the exponent
+	lsrl	IMM (1),d6
+	btst	IMM (0),d1
+	beq	11f
+	bset	IMM (31),d6
+11:	lsrl	IMM (1),d1
+	btst	IMM (0),d0
+	beq	10f
+	bset	IMM (31),d1
+10:	lsrl	IMM (1),d0
+	cmpl	IMM (1),d2	| is the exponent 1 already?
+#endif
 	beq	2f		| if not loop back
 	bra	1b              |
 	bra	Lf$underflow	| safety check, shouldn't execute '
@@ -2457,9 +3446,16 @@ Lround$exit:
 | Now call the rounding routine (which takes care of denormalized numbers):
 	lea	Lround$0,a0	| to return from rounding routine
 	lea	SYM (_fpCCR),a1	| check the rounding mode
+#ifdef __mcf5200__
+	clrl	d6
+#endif
 	movew	a1@(6),d6	| rounding mode in d6
 	beq	Lround$to$nearest
+#ifndef __mcf5200__
 	cmpw	IMM (ROUND_TO_PLUS),d6
+#else
+	cmpl	IMM (ROUND_TO_PLUS),d6
+#endif
 	bhi	Lround$to$minus
 	blt	Lround$to$zero
 	bra	Lround$to$plus
@@ -2471,23 +3467,41 @@ Lround$0:
 | check again for underflow!). We have to check for overflow or for a 
 | denormalized number (which also signals underflow).
 | Check for overflow (i.e., exponent >= 255).
+#ifndef __mcf5200__
 	cmpw	IMM (0x00ff),d2
+#else
+	cmpl	IMM (0x00ff),d2
+#endif
 	bge	Lf$overflow
 | Now check for a denormalized number (exponent==0).
 	movew	d2,d2
 	beq	Lf$den
 1:
 | Put back the exponents and sign and return.
+#ifndef __mcf5200__
 	lslw	IMM (7),d2	| exponent back to fourth byte
+#else
+	lsll	IMM (7),d2	| exponent back to fourth byte
+#endif
 	bclr	IMM (FLT_MANT_DIG-1),d0
 	swap	d0		| and put back exponent
+#ifndef __mcf5200__
 	orw	d2,d0		| 
+#else
+	orl	d2,d0
+#endif
 	swap	d0		|
 	orl	d7,d0		| and sign also
 
 	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 
@@ -2500,8 +3514,13 @@ Lround$0:
 
 | float __negsf2(float);
 SYM (__negsf2):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@-
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movew	IMM (NEGATE),d5
 	movel	a6@(8),d0	| get number to negate in d0
 	bchg	IMM (31),d0	| negate
@@ -2517,7 +3536,13 @@ SYM (__negsf2):
 	bra	Lf$infty		
 1:	lea	SYM (_fpCCR),a0
 	movew	IMM (0),a0@
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 2:	bclr	IMM (31),d0
@@ -2533,8 +3558,13 @@ EQUAL   =  0
 
 | int __cmpsf2(float, float);
 SYM (__cmpsf2):
+#ifndef __mcf5200__
 	link	a6,IMM (0)
 	moveml	d2-d7,sp@- 	| save registers
+#else
+	link	a6,IMM (-24)
+	moveml	d2-d7,sp@
+#endif
 	movew	IMM (COMPARE),d5
 	movel	a6@(8),d0	| get first operand
 	movel	a6@(12),d1	| get second operand
@@ -2565,7 +3595,13 @@ Lcmpsf$2:
 	tstl	d6
 	bpl	1f
 | If both are negative exchange them
+#ifndef __mcf5200__
 	exg	d0,d1
+#else
+	movel	d0,d7
+	movel	d1,d0
+	movel	d7,d1
+#endif
 1:
 | Now that they are positive we just compare them as longs (does this also
 | work for denormalized numbers?).
@@ -2574,17 +3610,33 @@ Lcmpsf$2:
 	bne	Lcmpsf$a$gt$b	| |b| < |a|
 | If we got here a == b.
 	movel	IMM (EQUAL),d0
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7 	| put back the registers
+#else
+	moveml	sp@,d2-d7
+#endif
 	unlk	a6
 	rts
 Lcmpsf$a$gt$b:
 	movel	IMM (GREATER),d0
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7 	| put back the registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 Lcmpsf$b$gt$a:
 	movel	IMM (LESS),d0
+#ifndef __mcf5200__
 	moveml	sp@+,d2-d7 	| put back the registers
+#else
+	moveml	sp@,d2-d7
+	| XXX if frame pointer is ever removed, stack pointer must
+	| be adjusted here.
+#endif
 	unlk	a6
 	rts
 
@@ -2616,11 +3668,20 @@ Lround$to$nearest:
 | Normalize shifting left until bit #FLT_MANT_DIG is set or the exponent 
 | is one (remember that a denormalized number corresponds to an 
 | exponent of -F_BIAS+1).
+#ifndef __mcf5200__
 	cmpw	IMM (1),d2	| remember that the exponent is at least one
+#else
+	cmpl	IMM (1),d2	| remember that the exponent is at least one
+#endif
  	beq	2f		| an exponent of one means denormalized
 	addl	d1,d1		| else shift and adjust the exponent
 	addxl	d0,d0		|
+#ifndef __mcf5200__
 	dbra	d2,1b		|
+#else
+	subql	IMM (1),d2
+	bpl	1b
+#endif
 2:
 | Now round: we do it as follows: after the shifting we can write the
 | fraction part as f + delta, where 1 < f < 2^25, and 0 <= delta <= 2.
@@ -2644,7 +3705,11 @@ Lround$to$nearest:
 	btst	IMM (FLT_MANT_DIG),d0	
 	beq	1f
 	lsrl	IMM (1),d0
+#ifndef __mcf5200__
 	addw	IMM (1),d2
+#else
+	addql	IMM (1),d2
+#endif
 1:
 | If bit #FLT_MANT_DIG-1 is clear we have a denormalized number, so we 
 | have to put the exponent to zero and return a denormalized number.
@@ -2668,162 +3733,92 @@ Lround$to$minus:
 | easier to write efficient versions of these routines someday.
 
 #ifdef  L_eqdf2
-LL0:
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	4
-	LS18	=	128
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__eqdf2)
 SYM (__eqdf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpdf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_eqdf2 */
 
 #ifdef  L_nedf2
-LL0:
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__nedf2)
 SYM (__nedf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpdf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_nedf2 */
 
 #ifdef  L_gtdf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__gtdf2)
 SYM (__gtdf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpdf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_gtdf2 */
 
 #ifdef  L_gedf2
-LL0:
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__gedf2)
 SYM (__gedf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpdf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_gedf2 */
 
 #ifdef  L_ltdf2
-LL0:
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__ltdf2)
 SYM (__ltdf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpdf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_ltdf2 */
 
 #ifdef  L_ledf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__ledf2)
 SYM (__ledf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(20),sp@-
 	movl	a6@(16),sp@-
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpdf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_ledf2 */
 
@@ -2833,144 +3828,77 @@ SYM (__ledf2):
 #ifdef  L_eqsf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	4
-	LS18	=	128
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__eqsf2)
 SYM (__eqsf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpsf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_eqsf2 */
 
 #ifdef  L_nesf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__nesf2)
 SYM (__nesf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpsf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_nesf2 */
 
 #ifdef  L_gtsf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__gtsf2)
 SYM (__gtsf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpsf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_gtsf2 */
 
 #ifdef  L_gesf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__gesf2)
 SYM (__gesf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpsf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_gesf2 */
 
 #ifdef  L_ltsf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__ltsf2)
 SYM (__ltsf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpsf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_ltsf2 */
 
 #ifdef  L_lesf2
 	.text
 	.proc
-|#PROC# 04
-	LF18	=	8
-	LS18	=	132
-	LFF18	=	0
-	LSS18	=	0
-	LV18	=	0
-	.text
 	.globl	SYM (__lesf2)
 SYM (__lesf2):
-|#PROLOGUE# 0
 	link	a6,IMM (0)
-|#PROLOGUE# 1
 	movl	a6@(12),sp@-
 	movl	a6@(8),sp@-
 	jbsr	SYM (__cmpsf2)
-|#PROLOGUE# 2
 	unlk	a6
-|#PROLOGUE# 3
 	rts
 #endif /* L_lesf2 */
-

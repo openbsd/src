@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.
    m68k series COFF object files and debugging, version.
-   Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -24,15 +24,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Generate sdb debugging information.  */
 
-#undef DBX_DEBUGGING_INFO
 #define SDB_DEBUGGING_INFO
 
 /* Output DBX (stabs) debugging information if using -gstabs.  */
 
-#define DBX_DEBUGGING_INFO
-
-#undef PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE SDB_DEBUG
+#include "dbxcoff.h"
 
 /* COFF symbols don't start with an underscore.  */
 
@@ -59,7 +55,13 @@ Boston, MA 02111-1307, USA.  */
 /* config/m68k.md has an explicit reference to the program counter,
    prefix this by the register prefix.  */
 
-#define ASM_RETURN_CASE_JUMP    return "jmp %%pc@(2,%0:w)"
+#define ASM_RETURN_CASE_JUMP 			\
+  do {						\
+    if (TARGET_5200)				\
+      return "ext%.l %0\n\tjmp %%pc@(2,%0:l)";	\
+    else					\
+      return "jmp %%pc@(2,%0:w)";		\
+  } while (0)
 
 /* Here are the new register names.  */
 
@@ -83,6 +85,28 @@ Boston, MA 02111-1307, USA.  */
 #undef ASM_FILE_START
 #define ASM_FILE_START(FILE) \
   output_file_directive ((FILE), main_input_filename)
+
+/* If defined, a C expression whose value is a string containing the
+   assembler operation to identify the following data as uninitialized global
+   data.  */
+
+#define BSS_SECTION_ASM_OP	".section\t.bss"
+
+/* A C statement (sans semicolon) to output to the stdio stream
+   FILE the assembler definition of uninitialized global DECL named
+   NAME whose size is SIZE bytes and alignment is ALIGN bytes.
+   Try to use asm_output_aligned_bss to implement this macro.  */
+
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
+  asm_output_aligned_bss ((FILE), (DECL), (NAME), (SIZE), (ALIGN))
+
+/* Support generic sections */
+
+#undef ASM_OUTPUT_SECTION_NAME
+#define ASM_OUTPUT_SECTION_NAME(FILE, DECL, NAME, RELOC) \
+  fprintf((FILE), ".section\t%s,\"%c\"\n", (NAME), \
+	  (DECL) && (TREE_CODE (DECL) == FUNCTION_DECL || \
+		     DECL_READONLY_SECTION (DECL, RELOC)) ? 'x' : 'd')
 
 /* Support the ctors and dtors sections for g++.  */
 
@@ -148,4 +172,5 @@ dtors_section ()							\
 
 /* Don't assume anything about startfiles.  */
 
+#undef STARTFILE_SPEC
 #define STARTFILE_SPEC ""

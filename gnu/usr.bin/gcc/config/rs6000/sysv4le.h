@@ -25,30 +25,22 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_LITTLE_ENDIAN)
 
-#undef CPP_SPEC
-#define CPP_SPEC "\
-%{posix: -D_POSIX_SOURCE} \
-%{mrelocatable: -D_RELOCATABLE} \
-%{mcall-sysv: -D_CALL_SYSV} %{mcall-aix: -D_CALL_AIX} %{!mcall-sysv: %{!mcall-aix: -D_CALL_SYSV}} \
-%{msoft-float: -D_SOFT_FLOAT} %{mcpu=403: -D_SOFT_FLOAT} \
-%{mbig: -D_BIG_ENDIAN -Amachine(bigendian)} \
-%{mbig-endian: -D_BIG_ENDIAN -Amachine(bigendian)} \
-%{!mbig: %{!mbig-endian: -D_LITTLE_ENDIAN -Amachine(littleendian)}} \
-%{!mcpu*: \
-  %{mpower: %{!mpower2: -D_ARCH_PWR}} \
-  %{mpower2: -D_ARCH_PWR2} \
-  %{mpowerpc*: -D_ARCH_PPC} \
-  %{mno-powerpc: %{!mpower: %{!mpower2: -D_ARCH_COM}}} \
-  %{!mno-powerpc: -D_ARCH_PPC}} \
-%{mcpu=common: -D_ARCH_COM} \
-%{mcpu=power: -D_ARCH_PWR} \
-%{mcpu=powerpc: -D_ARCH_PPC} \
-%{mcpu=rios: -D_ARCH_PWR} \
-%{mcpu=rios1: -D_ARCH_PWR} \
-%{mcpu=rios2: -D_ARCH_PWR2} \
-%{mcpu=rsc: -D_ARCH_PWR} \
-%{mcpu=rsc1: -D_ARCH_PWR} \
-%{mcpu=403: -D_ARCH_PPC} \
-%{mcpu=601: -D_ARCH_PPC -D_ARCH_PWR} \
-%{mcpu=603: -D_ARCH_PPC} \
-%{mcpu=604: -D_ARCH_PPC}"
+#undef	CPP_ENDIAN_DEFAULT_SPEC
+#define	CPP_ENDIAN_DEFAULT_SPEC "%(cpp_endian_little)"
+
+#undef	LINK_TARGET_SPEC
+#define	LINK_TARGET_SPEC "\
+%{mbig: -oformat elf32-powerpc } %{mbig-endian: -oformat elf32-powerpc } \
+%{!mlittle: %{!mlittle-endian: %{!mbig: %{!mbig-endian: %{mcall-linux: -oformat elf32-powerpc}}}}}"
+
+/* Define this macro as a C expression for the initializer of an
+   array of string to tell the driver program which options are
+   defaults for this target and thus do not need to be handled
+   specially when using `MULTILIB_OPTIONS'.
+
+   Do not define this macro if `MULTILIB_OPTIONS' is not defined in
+   the target makefile fragment or if none of the options listed in
+   `MULTILIB_OPTIONS' are set by default.  *Note Target Fragment::.  */
+
+#undef	MULTILIB_DEFAULTS
+#define	MULTILIB_DEFAULTS { "mlittle", "mcall-sysv" }

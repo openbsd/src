@@ -20,4 +20,11 @@ Boston, MA 02111-1307, USA.  */
 
 #define SUNOS4_SHARED_LIBRARIES 1
 
+/* Use N_BINCL stabs.  */
+
+#define DBX_USE_BINCL
+
 #include "sparc/sparc.h"
+
+/* The Sun as doesn't like unaligned data.  */
+#define DWARF2_UNWIND_INFO 0

@@ -1,5 +1,5 @@
 /* Language-dependent node constructors for parse phase of GNU compiler.
-   Copyright (C) 1987, 88, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GNU CC.
@@ -26,6 +26,30 @@ Boston, MA 02111-1307, USA.  */
 #include "cp-tree.h"
 #include "flags.h"
 #include "rtl.h"
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#ifdef NEED_DECLARATION_FREE
+extern void free	PROTO((void *));
+#endif
+
+extern void compiler_error ();
+
+static tree get_identifier_list PROTO((tree));
+static tree bot_manip PROTO((tree));
+static tree perm_manip PROTO((tree));
+static tree build_cplus_array_type_1 PROTO((tree, tree));
+static void list_hash_add PROTO((int, tree));
+static int list_hash PROTO((tree, tree, tree));
+static tree list_hash_lookup PROTO((int, int, int, int, tree, tree,
+				    tree));
 
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
@@ -43,17 +67,20 @@ real_lvalue_p (ref)
   if (TREE_CODE (TREE_TYPE (ref)) == REFERENCE_TYPE)
     return 1;
 
-  if (ref == current_class_decl && flag_this_is_variable <= 0)
+  if (ref == current_class_ptr && flag_this_is_variable <= 0)
     return 0;
 
   switch (TREE_CODE (ref))
     {
       /* preincrements and predecrements are valid lvals, provided
-	 what they refer to are valid lvals. */
+	 what they refer to are valid lvals.  */
     case PREINCREMENT_EXPR:
     case PREDECREMENT_EXPR:
     case COMPONENT_REF:
     case SAVE_EXPR:
+    case UNSAVE_EXPR:
+    case TRY_CATCH_EXPR:
+    case WITH_CLEANUP_EXPR:
       return real_lvalue_p (TREE_OPERAND (ref, 0));
 
     case STRING_CST:
@@ -73,9 +100,6 @@ real_lvalue_p (ref)
 	  && TREE_CODE (TREE_TYPE (ref)) != METHOD_TYPE)
 	return 1;
       break;
-
-    case WITH_CLEANUP_EXPR:
-      return real_lvalue_p (TREE_OPERAND (ref, 0));
 
       /* A currently unresolved scope ref.  */
     case SCOPE_REF:
@@ -106,6 +130,8 @@ real_lvalue_p (ref)
   return 0;
 }
 
+/* This differs from real_lvalue_p in that class rvalues are considered
+   lvalues.  */
 int
 lvalue_p (ref)
      tree ref;
@@ -116,17 +142,22 @@ lvalue_p (ref)
   if (TREE_CODE (TREE_TYPE (ref)) == REFERENCE_TYPE)
     return 1;
 
-  if (ref == current_class_decl && flag_this_is_variable <= 0)
+  if (ref == current_class_ptr && flag_this_is_variable <= 0)
     return 0;
 
   switch (TREE_CODE (ref))
     {
       /* preincrements and predecrements are valid lvals, provided
-	 what they refer to are valid lvals. */
+	 what they refer to are valid lvals.  */
     case PREINCREMENT_EXPR:
     case PREDECREMENT_EXPR:
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
     case COMPONENT_REF:
     case SAVE_EXPR:
+    case UNSAVE_EXPR:
+    case TRY_CATCH_EXPR:
+    case WITH_CLEANUP_EXPR:
       return lvalue_p (TREE_OPERAND (ref, 0));
 
     case STRING_CST:
@@ -146,9 +177,6 @@ lvalue_p (ref)
 	  && TREE_CODE (TREE_TYPE (ref)) != METHOD_TYPE)
 	return 1;
       break;
-
-    case WITH_CLEANUP_EXPR:
-      return lvalue_p (TREE_OPERAND (ref, 0));
 
     case TARGET_EXPR:
       return 1;
@@ -206,44 +234,27 @@ lvalue_or_else (ref, string)
 
    Build an encapsulation of the initialization to perform
    and return it so that it can be processed by language-independent
-   and language-specific expression expanders.
+   and language-specific expression expanders.  */
 
-   If WITH_CLEANUP_P is nonzero, we build a cleanup for this expression.
-   Otherwise, cleanups are not built here.  For example, when building
-   an initialization for a stack slot, since the called function handles
-   the cleanup, we would not want to do it here.  */
 tree
-build_cplus_new (type, init, with_cleanup_p)
+build_cplus_new (type, init)
      tree type;
      tree init;
-     int with_cleanup_p;
 {
   tree slot;
   tree rval;
+
+  if (TREE_CODE (init) != CALL_EXPR && TREE_CODE (init) != NEW_EXPR)
+    return init;
 
   slot = build (VAR_DECL, type);
   layout_decl (slot, 0);
   rval = build (NEW_EXPR, type,
 		TREE_OPERAND (init, 0), TREE_OPERAND (init, 1), slot);
   TREE_SIDE_EFFECTS (rval) = 1;
-  TREE_ADDRESSABLE (rval) = 1;
-  rval = build (TARGET_EXPR, type, slot, rval, 0);
+  rval = build (TARGET_EXPR, type, slot, rval, NULL_TREE, NULL_TREE);
   TREE_SIDE_EFFECTS (rval) = 1;
-  TREE_ADDRESSABLE (rval) = 1;
 
-#if 0
-  if (with_cleanup_p && TYPE_NEEDS_DESTRUCTOR (type))
-    {
-      TREE_OPERAND (rval, 2) = error_mark_node;
-      rval = build (WITH_CLEANUP_EXPR, type, rval, 0,
-		    build_delete (build_pointer_type (type),
-				  build_unary_op (ADDR_EXPR, slot, 0),
-				  integer_two_node,
-				  LOOKUP_NORMAL|LOOKUP_DESTRUCTOR, 0));
-      TREE_SIDE_EFFECTS (rval) = 1;
-      TREE_ADDRESSABLE (rval) = 1;
-    }
-#endif
   return rval;
 }
 
@@ -258,7 +269,7 @@ break_out_cleanups (exp)
 
   if (TREE_CODE (tmp) == CALL_EXPR
       && TYPE_NEEDS_DESTRUCTOR (TREE_TYPE (tmp)))
-    return build_cplus_new (TREE_TYPE (tmp), tmp, 1);
+    return build_cplus_new (TREE_TYPE (tmp), tmp);
 
   while (TREE_CODE (tmp) == NOP_EXPR
 	 || TREE_CODE (tmp) == CONVERT_EXPR
@@ -269,7 +280,7 @@ break_out_cleanups (exp)
 	{
 	  TREE_OPERAND (tmp, 0)
 	    = build_cplus_new (TREE_TYPE (TREE_OPERAND (tmp, 0)),
-			       TREE_OPERAND (tmp, 0), 1);
+			       TREE_OPERAND (tmp, 0));
 	  break;
 	}
       else
@@ -299,7 +310,7 @@ break_out_calls (exp)
   if (code == CALL_EXPR)
     return copy_node (exp);
 
-  /* Don't try and defeat a save_expr, as it should only be done once. */
+  /* Don't try and defeat a save_expr, as it should only be done once.  */
     if (code == SAVE_EXPR)
        return exp;
 
@@ -372,6 +383,7 @@ break_out_calls (exp)
 extern struct obstack *current_obstack;
 extern struct obstack permanent_obstack, class_obstack;
 extern struct obstack *saveable_obstack;
+extern struct obstack *expression_obstack;
 
 /* Here is how primitive or already-canonicalized types' hash
    codes are made.  MUST BE CONSISTENT WITH tree.c !!! */
@@ -380,6 +392,7 @@ extern struct obstack *saveable_obstack;
 /* Construct, lay out and return the type of methods belonging to class
    BASETYPE and whose arguments are described by ARGTYPES and whose values
    are described by RETTYPE.  If each type exists already, reuse it.  */
+
 tree
 build_cplus_method_type (basetype, rettype, argtypes)
      tree basetype, rettype, argtypes;
@@ -418,34 +431,8 @@ build_cplus_method_type (basetype, rettype, argtypes)
   return t;
 }
 
-tree
-build_cplus_staticfn_type (basetype, rettype, argtypes)
-     tree basetype, rettype, argtypes;
-{
-  register tree t;
-  int hashcode;
-
-  /* Make a node of the sort we want.  */
-  t = make_node (FUNCTION_TYPE);
-
-  TYPE_METHOD_BASETYPE (t) = TYPE_MAIN_VARIANT (basetype);
-  TREE_TYPE (t) = rettype;
-
-  TYPE_ARG_TYPES (t) = argtypes;
-
-  /* If we already have such a type, use the old one and free this one.
-     Note that it also frees up the above cons cell if found.  */
-  hashcode = TYPE_HASH (basetype) + TYPE_HASH (rettype) + type_hash_list (argtypes);
-  t = type_hash_canon (hashcode, t);
-
-  if (TYPE_SIZE (t) == 0)
-    layout_type (t);
-
-  return t;
-}
-
-tree
-build_cplus_array_type (elt_type, index_type)
+static tree
+build_cplus_array_type_1 (elt_type, index_type)
      tree elt_type;
      tree index_type;
 {
@@ -462,7 +449,14 @@ build_cplus_array_type (elt_type, index_type)
       saveable_obstack = &permanent_obstack;
     }
 
-  t = build_array_type (elt_type, index_type);
+  if (processing_template_decl)
+    {
+      t = make_node (ARRAY_TYPE);
+      TREE_TYPE (t) = elt_type;
+      TYPE_DOMAIN (t) = index_type;
+    }
+  else
+    t = build_array_type (elt_type, index_type);
 
   /* Push these needs up so that initialization takes place
      more easily.  */
@@ -470,6 +464,24 @@ build_cplus_array_type (elt_type, index_type)
   TYPE_NEEDS_DESTRUCTOR (t) = TYPE_NEEDS_DESTRUCTOR (TYPE_MAIN_VARIANT (elt_type));
   current_obstack = ambient_obstack;
   saveable_obstack = ambient_saveable_obstack;
+  return t;
+}
+
+tree
+build_cplus_array_type (elt_type, index_type)
+     tree elt_type;
+     tree index_type;
+{
+  tree t;
+  int constp = TYPE_READONLY (elt_type);
+  int volatilep = TYPE_VOLATILE (elt_type);
+  elt_type = TYPE_MAIN_VARIANT (elt_type);
+
+  t = build_cplus_array_type_1 (elt_type, index_type);
+
+  if (constp || volatilep)
+    t = cp_build_type_variant (t, constp, volatilep);
+
   return t;
 }
 
@@ -481,15 +493,18 @@ cp_build_type_variant (type, constp, volatilep)
      tree type;
      int constp, volatilep;
 {
+  if (type == error_mark_node)
+    return type;
+  
   if (TREE_CODE (type) == ARRAY_TYPE)
     {
       tree real_main_variant = TYPE_MAIN_VARIANT (type);
 
       push_obstacks (TYPE_OBSTACK (real_main_variant),
 		     TYPE_OBSTACK (real_main_variant));
-      type = build_cplus_array_type (cp_build_type_variant (TREE_TYPE (type),
-							    constp, volatilep),
-				     TYPE_DOMAIN (type));
+      type = build_cplus_array_type_1 (cp_build_type_variant
+				       (TREE_TYPE (type), constp, volatilep),
+				       TYPE_DOMAIN (type));
 
       /* TYPE must be on same obstack as REAL_MAIN_VARIANT.  If not,
 	 make a copy.  (TYPE might have come from the hash table and
@@ -503,6 +518,7 @@ cp_build_type_variant (type, constp, volatilep)
 
       TYPE_MAIN_VARIANT (type) = real_main_variant;
       pop_obstacks ();
+      return type;
     }
   return build_type_variant (type, constp, volatilep);
 }
@@ -513,6 +529,7 @@ cp_build_type_variant (type, constp, volatilep)
 
    Note that we don't have to worry about having two paths to the
    same base type, since this type owns its association list.  */
+
 void
 propagate_binfo_offsets (binfo, offset)
      tree binfo;
@@ -594,6 +611,7 @@ propagate_binfo_offsets (binfo, offset)
 
    Returns the maximum number of virtual functions any of the virtual
    baseclasses provide.  */
+
 int
 layout_vbasetypes (rec, max)
      tree rec;
@@ -618,7 +636,6 @@ layout_vbasetypes (rec, max)
   register unsigned const_size = 0;
   register tree var_size = 0;
   int nonvirtual_const_size;
-  tree nonvirtual_var_size;
 
   CLASSTYPE_VBASECLASSES (rec) = vbase_types;
 
@@ -628,7 +645,6 @@ layout_vbasetypes (rec, max)
     var_size = TYPE_SIZE (rec);
 
   nonvirtual_const_size = const_size;
-  nonvirtual_var_size = var_size;
 
   while (vbase_types)
     {
@@ -736,6 +752,7 @@ layout_vbasetypes (rec, max)
    creates a list of base_binfos in TYPE_BINFO (REC) from BINFOS.
 
    Returns list of virtual base classes in a FIELD_DECL chain.  */
+
 tree
 layout_basetypes (rec, binfos)
      tree rec, binfos;
@@ -753,7 +770,7 @@ layout_basetypes (rec, binfos)
   /* Record size so far is CONST_SIZE + VAR_SIZE bits, where CONST_SIZE is
      an integer and VAR_SIZE is a tree expression.  If VAR_SIZE is null,
      the size is just CONST_SIZE.  Naturally we try to avoid using
-     VAR_SIZE.  And so far, we've been successful. */
+     VAR_SIZE.  And so far, we've been successful.  */
 #if 0
   register tree var_size = 0;
 #endif
@@ -788,7 +805,7 @@ layout_basetypes (rec, binfos)
 	     class A;
 	     class B: private A { virtual void F(); };
 
-	     does not dump core when compiled. */
+	     does not dump core when compiled.  */
 	  my_friendly_abort (121);
 #endif
 	  continue;
@@ -820,13 +837,14 @@ layout_basetypes (rec, binfos)
 		goto got_it;
 	    }
 	  sprintf (name, VBASE_NAME_FORMAT, TYPE_NAME_STRING (basetype));
-	  decl = build_lang_decl (FIELD_DECL, get_identifier (name),
-				  build_pointer_type (basetype));
+	  decl = build_lang_field_decl (FIELD_DECL, get_identifier (name),
+					build_pointer_type (basetype));
 	  /* If you change any of the below, take a look at all the
 	     other VFIELD_BASEs and VTABLE_BASEs in the code, and change
-	     them too. */
+	     them too.  */
 	  DECL_ASSEMBLER_NAME (decl) = get_identifier (VTABLE_BASE);
 	  DECL_VIRTUAL_P (decl) = 1;
+	  DECL_ARTIFICIAL (decl) = 1;
 	  DECL_FIELD_CONTEXT (decl) = rec;
 	  DECL_CLASS_CONTEXT (decl) = rec;
 	  DECL_FCONTEXT (decl) = basetype;
@@ -837,19 +855,17 @@ layout_basetypes (rec, binfos)
 	  BINFO_VPTR_FIELD (base_binfo) = decl;
 	  vbase_decls = decl;
 
-	  if (warn_nonvdtor && TYPE_HAS_DESTRUCTOR (basetype)
-	      && DECL_VINDEX (TREE_VEC_ELT (CLASSTYPE_METHOD_VEC (basetype), 0)) == NULL_TREE)
-	    {
-	      warning_with_decl (TREE_VEC_ELT (CLASSTYPE_METHOD_VEC (basetype), 0),
-				 "destructor `%s' non-virtual");
-	      warning ("in inheritance relationship `%s: virtual %s'",
-		       TYPE_NAME_STRING (rec),
-		       TYPE_NAME_STRING (basetype));
-	    }
 	got_it:
 	  /* The space this decl occupies has already been accounted for.  */
 	  continue;
 	}
+
+      /* Effective C++ rule 14.  We only need to check TYPE_VIRTUAL_P
+	 here because the case of virtual functions but non-virtual
+	 dtor is handled in finish_struct_1.  */
+      if (warn_ecpp && ! TYPE_VIRTUAL_P (basetype)
+	  && TYPE_HAS_DESTRUCTOR (basetype))
+	cp_warning ("base class `%#T' has a non-virtual destructor", basetype);
 
       if (const_size == 0)
 	offset = integer_zero_node;
@@ -859,22 +875,6 @@ layout_basetypes (rec, binfos)
 	  const_size = CEIL (const_size, TYPE_ALIGN (basetype))
 	    * TYPE_ALIGN (basetype);
 	  offset = size_int ((const_size + BITS_PER_UNIT - 1) / BITS_PER_UNIT);
-
-#if 0
-	  /* bpk: Disabled this check until someone is willing to
-	     claim it as theirs and explain exactly what circumstances
-	     warrant the warning.  */ 
-	  if (warn_nonvdtor && TYPE_HAS_DESTRUCTOR (basetype)
-	      && DECL_VINDEX (TREE_VEC_ELT (CLASSTYPE_METHOD_VEC (basetype), 0)) == NULL_TREE)
-	    {
-	      warning_with_decl (TREE_VEC_ELT (CLASSTYPE_METHOD_VEC (basetype), 0),
-				 "destructor `%s' non-virtual");
-	      warning ("in inheritance relationship `%s:%s %s'",
-		       TYPE_NAME_STRING (rec),
-		       TREE_VIA_VIRTUAL (base_binfo) ? " virtual" : "",
-		       TYPE_NAME_STRING (basetype));
-	    }
-#endif
 	}
       BINFO_OFFSET (base_binfo) = offset;
       if (CLASSTYPE_VSIZE (basetype))
@@ -932,27 +932,27 @@ struct list_hash
    and the hash code is computed differently for each of these.  */
 
 #define TYPE_HASH_SIZE 59
-struct list_hash *list_hash_table[TYPE_HASH_SIZE];
+static struct list_hash *list_hash_table[TYPE_HASH_SIZE];
 
 /* Compute a hash code for a list (chain of TREE_LIST nodes
    with goodies in the TREE_PURPOSE, TREE_VALUE, and bits of the
    TREE_COMMON slots), by adding the hash codes of the individual entries.  */
 
-int
-list_hash (list)
-     tree list;
+static int
+list_hash (purpose, value, chain)
+     tree purpose, value, chain;
 {
   register int hashcode = 0;
 
-  if (TREE_CHAIN (list))
-    hashcode += TYPE_HASH (TREE_CHAIN (list));
+  if (chain)
+    hashcode += TYPE_HASH (chain);
 
-  if (TREE_VALUE (list))
-    hashcode += TYPE_HASH (TREE_VALUE (list));
+  if (value)
+    hashcode += TYPE_HASH (value);
   else
     hashcode += 1007;
-  if (TREE_PURPOSE (list))
-    hashcode += TYPE_HASH (TREE_PURPOSE (list));
+  if (purpose)
+    hashcode += TYPE_HASH (purpose);
   else
     hashcode += 1009;
   return hashcode;
@@ -961,31 +961,30 @@ list_hash (list)
 /* Look in the type hash table for a type isomorphic to TYPE.
    If one is found, return it.  Otherwise return 0.  */
 
-tree
-list_hash_lookup (hashcode, list)
-     int hashcode;
-     tree list;
+static tree
+list_hash_lookup (hashcode, via_public, via_protected, via_virtual,
+		  purpose, value, chain)
+     int hashcode, via_public, via_virtual, via_protected;
+     tree purpose, value, chain;
 {
   register struct list_hash *h;
+
   for (h = list_hash_table[hashcode % TYPE_HASH_SIZE]; h; h = h->next)
     if (h->hashcode == hashcode
-	&& TREE_VIA_VIRTUAL (h->list) == TREE_VIA_VIRTUAL (list)
-	&& TREE_VIA_PUBLIC (h->list) == TREE_VIA_PUBLIC (list)
-	&& TREE_VIA_PROTECTED (h->list) == TREE_VIA_PROTECTED (list)
-	&& TREE_PURPOSE (h->list) == TREE_PURPOSE (list)
-	&& TREE_VALUE (h->list) == TREE_VALUE (list)
-	&& TREE_CHAIN (h->list) == TREE_CHAIN (list))
-      {
-	my_friendly_assert (TREE_TYPE (h->list) == TREE_TYPE (list), 299);
-	return h->list;
-      }
+	&& TREE_VIA_VIRTUAL (h->list) == via_virtual
+	&& TREE_VIA_PUBLIC (h->list) == via_public
+	&& TREE_VIA_PROTECTED (h->list) == via_protected
+	&& TREE_PURPOSE (h->list) == purpose
+	&& TREE_VALUE (h->list) == value
+	&& TREE_CHAIN (h->list) == chain)
+      return h->list;
   return 0;
 }
 
 /* Add an entry to the list-hash-table
    for a list TYPE whose hash code is HASHCODE.  */
 
-void
+static void
 list_hash_add (hashcode, list)
      int hashcode;
      tree list;
@@ -1011,30 +1010,8 @@ list_hash_add (hashcode, list)
    This function frees the list you pass in if it is a duplicate.  */
 
 /* Set to 1 to debug without canonicalization.  Never set by program.  */
+
 static int debug_no_list_hash = 0;
-
-tree
-list_hash_canon (hashcode, list)
-     int hashcode;
-     tree list;
-{
-  tree t1;
-
-  if (debug_no_list_hash)
-    return list;
-
-  t1 = list_hash_lookup (hashcode, list);
-  if (t1 != 0)
-    {
-      obstack_free (&class_obstack, list);
-      return t1;
-    }
-
-  /* If this is a new list, record it for later reuse.  */
-  list_hash_add (hashcode, list);
-
-  return list;
-}
 
 tree
 hash_tree_cons (via_public, via_virtual, via_protected, purpose, value, chain)
@@ -1045,35 +1022,41 @@ hash_tree_cons (via_public, via_virtual, via_protected, purpose, value, chain)
   tree t;
   int hashcode;
 
+  if (! debug_no_list_hash)
+    {
+      hashcode = list_hash (purpose, value, chain);
+      t = list_hash_lookup (hashcode, via_public, via_protected, via_virtual,
+			    purpose, value, chain);
+      if (t)
+	return t;
+    }
+
   current_obstack = &class_obstack;
+
   t = tree_cons (purpose, value, chain);
   TREE_VIA_PUBLIC (t) = via_public;
   TREE_VIA_PROTECTED (t) = via_protected;
   TREE_VIA_VIRTUAL (t) = via_virtual;
-  hashcode = list_hash (t);
-  t = list_hash_canon (hashcode, t);
+
+  /* If this is a new list, record it for later reuse.  */
+  if (! debug_no_list_hash)
+    list_hash_add (hashcode, t);
+
   current_obstack = ambient_obstack;
   return t;
 }
 
 /* Constructor for hashed lists.  */
+
 tree
 hash_tree_chain (value, chain)
      tree value, chain;
 {
-  struct obstack *ambient_obstack = current_obstack;
-  tree t;
-  int hashcode;
-
-  current_obstack = &class_obstack;
-  t = tree_cons (NULL_TREE, value, chain);
-  hashcode = list_hash (t);
-  t = list_hash_canon (hashcode, t);
-  current_obstack = ambient_obstack;
-  return t;
+  return hash_tree_cons (0, 0, 0, NULL_TREE, value, chain);
 }
 
 /* Similar, but used for concatenating two lists.  */
+
 tree
 hash_chainon (list1, list2)
      tree list1, list2;
@@ -1111,17 +1094,9 @@ get_identifier_list (value)
 	list = tree_cons (NULL_TREE, value, NULL_TREE);
       else
 	{
-	  register tree id;
-	  /* This will return the correct thing for regular types,
-	     nested types, and templates.  Yay! */
-	  if (TYPE_NESTED_NAME (type))
-	    id = TYPE_NESTED_NAME (type);
-	  else
-	    id = TYPE_IDENTIFIER (type);
-
-	  if (CLASSTYPE_ID_AS_LIST (type) == NULL_TREE)
+	  if (! CLASSTYPE_ID_AS_LIST (type))
 	    CLASSTYPE_ID_AS_LIST (type)
-	      = perm_tree_cons (NULL_TREE, id, NULL_TREE);
+	      = perm_tree_cons (NULL_TREE, TYPE_IDENTIFIER (type), NULL_TREE);
 	  list = CLASSTYPE_ID_AS_LIST (type);
 	}
     }
@@ -1137,7 +1112,8 @@ get_decl_list (value)
   if (TREE_CODE (value) == IDENTIFIER_NODE)
     list = get_identifier_list (value);
   else if (TREE_CODE (value) == RECORD_TYPE
-	   && TYPE_LANG_SPECIFIC (value))
+	   && TYPE_LANG_SPECIFIC (value)
+	   && value == TYPE_MAIN_VARIANT (value))
     list = CLASSTYPE_AS_LIST (value);
 
   if (list != NULL_TREE)
@@ -1147,59 +1123,6 @@ get_decl_list (value)
     }
 
   return build_decl_list (NULL_TREE, value);
-}
-
-/* Look in the type hash table for a type isomorphic to
-   `build_tree_list (NULL_TREE, VALUE)'.
-   If one is found, return it.  Otherwise return 0.  */
-
-tree
-list_hash_lookup_or_cons (value)
-     tree value;
-{
-  register int hashcode = TYPE_HASH (value);
-  register struct list_hash *h;
-  struct obstack *ambient_obstack;
-  tree list = NULL_TREE;
-
-  if (TREE_CODE (value) == IDENTIFIER_NODE)
-    list = get_identifier_list (value);
-  else if (TREE_CODE (value) == TYPE_DECL
-	   && TREE_CODE (TREE_TYPE (value)) == RECORD_TYPE
-	   && TYPE_LANG_SPECIFIC (TREE_TYPE (value)))
-    list = CLASSTYPE_ID_AS_LIST (TREE_TYPE (value));
-  else if (TREE_CODE (value) == RECORD_TYPE
-	   && TYPE_LANG_SPECIFIC (value))
-    list = CLASSTYPE_AS_LIST (value);
-
-  if (list != NULL_TREE)
-    {
-      my_friendly_assert (TREE_CHAIN (list) == NULL_TREE, 302);
-      return list;
-    }
-
-  if (debug_no_list_hash)
-    return hash_tree_chain (value, NULL_TREE);
-
-  for (h = list_hash_table[hashcode % TYPE_HASH_SIZE]; h; h = h->next)
-    if (h->hashcode == hashcode
-	&& TREE_VIA_VIRTUAL (h->list) == 0
-	&& TREE_VIA_PUBLIC (h->list) == 0
-	&& TREE_VIA_PROTECTED (h->list) == 0
-	&& TREE_PURPOSE (h->list) == 0
-	&& TREE_VALUE (h->list) == value)
-      {
-	my_friendly_assert (TREE_TYPE (h->list) == 0, 303);
-	my_friendly_assert (TREE_CHAIN (h->list) == 0, 304);
-	return h->list;
-      }
-
-  ambient_obstack = current_obstack;
-  current_obstack = &class_obstack;
-  list = build_tree_list (NULL_TREE, value);
-  list_hash_add (hashcode, list);
-  current_obstack = ambient_obstack;
-  return list;
 }
 
 /* Build an association between TYPE and some parameters:
@@ -1282,38 +1205,6 @@ reverse_path (path)
   return prev;
 }
 
-tree
-virtual_member (elem, list)
-     tree elem;
-     tree list;
-{
-  tree t;
-  tree rval, nval;
-
-  for (t = list; t; t = TREE_CHAIN (t))
-    if (elem == BINFO_TYPE (t))
-      return t;
-  rval = 0;
-  for (t = list; t; t = TREE_CHAIN (t))
-    {
-      tree binfos = BINFO_BASETYPES (t);
-      int i;
-
-      if (binfos != NULL_TREE)
-	for (i = TREE_VEC_LENGTH (binfos)-1; i >= 0; i--)
-	  {
-	    nval = binfo_value (elem, BINFO_TYPE (TREE_VEC_ELT (binfos, i)));
-	    if (nval)
-	      {
-		if (rval && BINFO_OFFSET (nval) != BINFO_OFFSET (rval))
-		  my_friendly_abort (104);
-		rval = nval;
-	      }
-	  }
-    }
-  return rval;
-}
-
 void
 debug_binfo (elem)
      tree elem;
@@ -1378,25 +1269,14 @@ count_functions (t)
   return 0;
 }
 
-/* Like value_member, but for DECL_CHAINs.  */
-tree
-decl_value_member (elem, list)
-     tree elem, list;
-{
-  while (list)
-    {
-      if (elem == list)
-	return list;
-      list = DECL_CHAIN (list);
-    }
-  return NULL_TREE;
-}
-
 int
 is_overloaded_fn (x)
      tree x;
 {
   if (TREE_CODE (x) == FUNCTION_DECL)
+    return 1;
+
+  if (TREE_CODE (x) == TEMPLATE_ID_EXPR)
     return 1;
 
   if (TREE_CODE (x) == TREE_LIST
@@ -1411,9 +1291,12 @@ int
 really_overloaded_fn (x)
      tree x;
 {     
+  if (TREE_CODE (x) == TEMPLATE_ID_EXPR)
+    return 1;
+
   if (TREE_CODE (x) == TREE_LIST
       && (TREE_CODE (TREE_VALUE (x)) == FUNCTION_DECL
-	  || TREE_CODE (TREE_VALUE (x)) == TEMPLATE_DECL))
+	  || DECL_FUNCTION_TEMPLATE_P (TREE_VALUE (x))))
     return 1;
 
   return 0;
@@ -1423,57 +1306,13 @@ tree
 get_first_fn (from)
      tree from;
 {
-  if (TREE_CODE (from) == FUNCTION_DECL)
+  if (TREE_CODE (from) == FUNCTION_DECL 
+      || DECL_FUNCTION_TEMPLATE_P (from))
     return from;
 
   my_friendly_assert (TREE_CODE (from) == TREE_LIST, 9);
   
   return TREE_VALUE (from);
-}
-
-tree
-fnaddr_from_vtable_entry (entry)
-     tree entry;
-{
-  if (flag_vtable_thunks)
-    {
-      tree func = entry;
-      if (TREE_CODE (func) == ADDR_EXPR)
-	func = TREE_OPERAND (func, 0);
-      if (TREE_CODE (func) == THUNK_DECL)
-	return DECL_INITIAL (func);
-      else
-	return entry;
-    }
-  else
-    return TREE_VALUE (TREE_CHAIN (TREE_CHAIN (CONSTRUCTOR_ELTS (entry))));
-}
-
-void
-set_fnaddr_from_vtable_entry (entry, value)
-     tree entry, value;
-{
-  if (flag_vtable_thunks)
-    abort ();
-  else
-  TREE_VALUE (TREE_CHAIN (TREE_CHAIN (CONSTRUCTOR_ELTS (entry)))) = value;
-}
-
-tree
-function_arg_chain (t)
-     tree t;
-{
-  return TREE_CHAIN (TYPE_ARG_TYPES (TREE_TYPE (t)));
-}
-
-int
-promotes_to_aggr_type (t, code)
-     tree t;
-     enum tree_code code;
-{
-  if (TREE_CODE (t) == code)
-    t = TREE_TYPE (t);
-  return IS_AGGR_TYPE (t);
 }
 
 int
@@ -1484,30 +1323,13 @@ is_aggr_type_2 (t1, t2)
     return 0;
   return IS_AGGR_TYPE (t1) && IS_AGGR_TYPE (t2);
 }
-
-/* Give message using types TYPE1 and TYPE2 as arguments.
-   PFN is the function which will print the message;
-   S is the format string for PFN to use.  */
-void
-message_2_types (pfn, s, type1, type2)
-     void (*pfn) ();
-     char *s;
-     tree type1, type2;
-{
-  tree name1 = TYPE_NAME (type1);
-  tree name2 = TYPE_NAME (type2);
-  if (TREE_CODE (name1) == TYPE_DECL)
-    name1 = DECL_NAME (name1);
-  if (TREE_CODE (name2) == TYPE_DECL)
-    name2 = DECL_NAME (name2);
-  (*pfn) (s, IDENTIFIER_POINTER (name1), IDENTIFIER_POINTER (name2));
-}
 
 #define PRINT_RING_SIZE 4
 
 char *
-lang_printable_name (decl)
+lang_printable_name (decl, v)
      tree decl;
+     int v;
 {
   static tree decl_ring[PRINT_RING_SIZE];
   static char *print_ring[PRINT_RING_SIZE];
@@ -1515,9 +1337,10 @@ lang_printable_name (decl)
   int i;
 
   /* Only cache functions.  */
-  if (TREE_CODE (decl) != FUNCTION_DECL
+  if (v < 2
+      || TREE_CODE (decl) != FUNCTION_DECL
       || DECL_LANG_SPECIFIC (decl) == 0)
-    return decl_as_string (decl, 1);
+    return lang_decl_name (decl, v);
 
   /* See if this print name is lying around.  */
   for (i = 0; i < PRINT_RING_SIZE; i++)
@@ -1541,50 +1364,30 @@ lang_printable_name (decl)
   if (print_ring[ring_counter])
     free (print_ring[ring_counter]);
 
-  {
-    int print_ret_type_p
-      = (!DECL_CONSTRUCTOR_P (decl)
-	 && !DESTRUCTOR_NAME_P (DECL_ASSEMBLER_NAME (decl)));
-
-    char *name = (char *)decl_as_string (decl, print_ret_type_p);
-    print_ring[ring_counter] = (char *)malloc (strlen (name) + 1);
-    strcpy (print_ring[ring_counter], name);
-    decl_ring[ring_counter] = decl;
-  }
+  print_ring[ring_counter] = xstrdup (lang_decl_name (decl, v));
+  decl_ring[ring_counter] = decl;
   return print_ring[ring_counter];
 }
 
-/* Comparison function for sorting identifiers in RAISES lists.
-   Note that because IDENTIFIER_NODEs are unique, we can sort
-   them by address, saving an indirection.  */
-static int
-id_cmp (p1, p2)
-     tree *p1, *p2;
-{
-  return (HOST_WIDE_INT)TREE_VALUE (*p1) - (HOST_WIDE_INT)TREE_VALUE (*p2);
-}
-
 /* Build the FUNCTION_TYPE or METHOD_TYPE which may throw exceptions
    listed in RAISES.  */
+
 tree
 build_exception_variant (type, raises)
      tree type;
      tree raises;
 {
-  int i;
   tree v = TYPE_MAIN_VARIANT (type);
-  tree t, t2, cname;
-  tree *a = (tree *)alloca ((list_length (raises)+1) * sizeof (tree));
   int constp = TYPE_READONLY (type);
   int volatilep = TYPE_VOLATILE (type);
 
-  for (v = TYPE_NEXT_VARIANT (v); v; v = TYPE_NEXT_VARIANT (v))
+  for (; v; v = TYPE_NEXT_VARIANT (v))
     {
       if (TYPE_READONLY (v) != constp
 	  || TYPE_VOLATILE (v) != volatilep)
 	continue;
 
-      /* @@ This should do set equality, not exact match. */
+      /* @@ This should do set equality, not exact match.  */
       if (simple_cst_list_equal (TYPE_RAISES_EXCEPTIONS (v), raises))
 	/* List of exceptions raised matches previously found list.
 
@@ -1594,9 +1397,8 @@ build_exception_variant (type, raises)
     }
 
   /* Need to build a new variant.  */
-  v = copy_node (type);
-  TYPE_NEXT_VARIANT (v) = TYPE_NEXT_VARIANT (type);
-  TYPE_NEXT_VARIANT (type) = v;
+  v = build_type_copy (type);
+
   if (raises && ! TREE_PERMANENT (raises))
     {
       push_obstacks_nochange ();
@@ -1604,6 +1406,7 @@ build_exception_variant (type, raises)
       raises = copy_list (raises);
       pop_obstacks ();
     }
+
   TYPE_RAISES_EXCEPTIONS (v) = raises;
   return v;
 }
@@ -1616,9 +1419,8 @@ build_exception_variant (type, raises)
 tree
 mapcar (t, func)
      tree t;
-     tree (*func)();
+     tree (*func) PROTO((tree));
 {
-  enum tree_code code;
   tree tmp;
 
   if (t == NULL_TREE)
@@ -1627,7 +1429,7 @@ mapcar (t, func)
   if (tmp = func (t), tmp != NULL_TREE)
     return tmp;
 
-  switch (code = TREE_CODE (t))
+  switch (TREE_CODE (t))
     {
     case ERROR_MARK:
       return error_mark_node;
@@ -1720,10 +1522,26 @@ mapcar (t, func)
     case PREINCREMENT_EXPR:
     case POSTDECREMENT_EXPR:
     case POSTINCREMENT_EXPR:
-    case CALL_EXPR:
+    case ARRAY_REF:
+    case SCOPE_REF:
       t = copy_node (t);
       TREE_OPERAND (t, 0) = mapcar (TREE_OPERAND (t, 0), func);
       TREE_OPERAND (t, 1) = mapcar (TREE_OPERAND (t, 1), func);
+      return t;
+
+    case CALL_EXPR:
+      t = copy_node (t);
+      TREE_TYPE (t) = mapcar (TREE_TYPE (t), func);
+      TREE_OPERAND (t, 0) = mapcar (TREE_OPERAND (t, 0), func);
+      TREE_OPERAND (t, 1) = mapcar (TREE_OPERAND (t, 1), func);
+
+      /* tree.def says that operand two is RTL, but
+	 build_call_declarator puts trees in there.  */
+      if (TREE_OPERAND (t, 2)
+	  && TREE_CODE (TREE_OPERAND (t, 2)) == TREE_LIST)
+	TREE_OPERAND (t, 2) = mapcar (TREE_OPERAND (t, 2), func);
+      else
+	TREE_OPERAND (t, 2) = NULL_TREE;
       return t;
 
     case CONVERT_EXPR:
@@ -1739,27 +1557,43 @@ mapcar (t, func)
       return t;
 
     case POINTER_TYPE:
-      return build_pointer_type (mapcar (TREE_TYPE (t), func));
+      tmp = build_pointer_type (mapcar (TREE_TYPE (t), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
     case REFERENCE_TYPE:
-      return build_reference_type (mapcar (TREE_TYPE (t), func));
+      tmp = build_reference_type (mapcar (TREE_TYPE (t), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
     case FUNCTION_TYPE:
-      return build_function_type (mapcar (TREE_TYPE (t), func),
-				  mapcar (TYPE_ARG_TYPES (t), func));
+      tmp = build_function_type (mapcar (TREE_TYPE (t), func),
+				 mapcar (TYPE_ARG_TYPES (t), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
     case ARRAY_TYPE:
-      return build_array_type (mapcar (TREE_TYPE (t), func),
-			       mapcar (TYPE_DOMAIN (t), func));
+      tmp = build_cplus_array_type (mapcar (TREE_TYPE (t), func),
+				    mapcar (TYPE_DOMAIN (t), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
     case INTEGER_TYPE:
-      return build_index_type (mapcar (TYPE_MAX_VALUE (t), func));
-
+      tmp = build_index_type (mapcar (TYPE_MAX_VALUE (t), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
     case OFFSET_TYPE:
-      return build_offset_type (mapcar (TYPE_OFFSET_BASETYPE (t), func),
-				mapcar (TREE_TYPE (t), func));
+      tmp = build_offset_type (mapcar (TYPE_OFFSET_BASETYPE (t), func),
+			       mapcar (TREE_TYPE (t), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
     case METHOD_TYPE:
-      return build_method_type
-	(mapcar (TYPE_METHOD_BASETYPE (t), func),
-	 build_function_type
-	 (mapcar (TREE_TYPE (t), func),
-	  mapcar (TREE_CHAIN (TYPE_ARG_TYPES (t)), func)));
+      tmp = build_cplus_method_type
+	(mapcar (TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (t))), func),
+	 mapcar (TREE_TYPE (t), func),
+	 mapcar (TREE_CHAIN (TYPE_ARG_TYPES (t)), func));
+      return cp_build_type_variant (tmp, TYPE_READONLY (t), TYPE_VOLATILE (t));
+
+    case COMPLEX_CST:
+      t = copy_node (t);
+      TREE_REALPART (t) = mapcar (TREE_REALPART (t), func);
+      TREE_IMAGPART (t) = mapcar (TREE_REALPART (t), func);
+      return t;
+
+    case CONSTRUCTOR:
+      t = copy_node (t);
+      CONSTRUCTOR_ELTS (t) = mapcar (CONSTRUCTOR_ELTS (t), func);
+      return t;
 
     case RECORD_TYPE:
       if (TYPE_PTRMEMFUNC_P (t))
@@ -1768,7 +1602,7 @@ mapcar (t, func)
       /* else fall through */
       
       /*  This list is incomplete, but should suffice for now.
-	  It is very important that `sorry' does not call
+	  It is very important that `sorry' not call
 	  `report_error_function'.  That could cause an infinite loop.  */
     default:
       sorry ("initializer contains unrecognized tree code");
@@ -1786,50 +1620,63 @@ perm_manip (t)
 {
   if (TREE_PERMANENT (t))
     return t;
+  /* Support `void f () { extern int i; A<&i> a; }' */
+  if ((TREE_CODE (t) == VAR_DECL || TREE_CODE (t) == FUNCTION_DECL)
+      && TREE_PUBLIC (t))
+    return copy_node (t);
   return NULL_TREE;
 }
 
 /* Assuming T is a node built bottom-up, make it all exist on
    permanent obstack, if it is not permanent already.  */
+
 tree
 copy_to_permanent (t)
      tree t;
 {
   register struct obstack *ambient_obstack = current_obstack;
   register struct obstack *ambient_saveable_obstack = saveable_obstack;
-  int resume;
+  register struct obstack *ambient_expression_obstack = expression_obstack;
 
   if (t == NULL_TREE || TREE_PERMANENT (t))
     return t;
 
   saveable_obstack = &permanent_obstack;
   current_obstack = saveable_obstack;
-  resume = suspend_momentary ();
+  expression_obstack = saveable_obstack;
 
   t = mapcar (t, perm_manip);
 
-  resume_momentary (resume);
   current_obstack = ambient_obstack;
   saveable_obstack = ambient_saveable_obstack;
+  expression_obstack = ambient_expression_obstack;
 
   return t;
 }
 
+#ifdef GATHER_STATISTICS
+extern int depth_reached;
+#endif
+
 void
 print_lang_statistics ()
 {
-  extern struct obstack maybepermanent_obstack;
+  extern struct obstack decl_obstack;
   print_obstack_statistics ("class_obstack", &class_obstack);
-  print_obstack_statistics ("permanent_obstack", &permanent_obstack);
-  print_obstack_statistics ("maybepermanent_obstack", &maybepermanent_obstack);
+  print_obstack_statistics ("decl_obstack", &decl_obstack);
   print_search_statistics ();
   print_class_statistics ();
+#ifdef GATHER_STATISTICS
+  fprintf (stderr, "maximum template instantiation depth reached: %d\n",
+	   depth_reached);
+#endif
 }
 
 /* This is used by the `assert' macro.  It is provided in libgcc.a,
    which `cc' doesn't know how to link.  Note that the C++ front-end
    no longer actually uses the `assert' macro (instead, it calls
    my_friendly_assert).  But all of the back-end files still need this.  */
+
 void
 __eprintf (string, expression, line, filename)
 #ifdef __STDC__
@@ -1849,8 +1696,9 @@ __eprintf (string, expression, line, filename)
   abort ();
 }
 
-/* Return, as an INTEGER_CST node, the number of elements for
-   TYPE (which is an ARRAY_TYPE).  This counts only elements of the top array. */
+/* Return, as an INTEGER_CST node, the number of elements for TYPE
+   (which is an ARRAY_TYPE).  This counts only elements of the top
+   array.  */
 
 tree
 array_type_nelts_top (type)
@@ -1861,9 +1709,9 @@ array_type_nelts_top (type)
 		      integer_one_node));
 }
 
-/* Return, as an INTEGER_CST node, the number of elements for
-   TYPE (which is an ARRAY_TYPE).  This one is a recursive count of all
-   ARRAY_TYPEs that are clumped together. */
+/* Return, as an INTEGER_CST node, the number of elements for TYPE
+   (which is an ARRAY_TYPE).  This one is a recursive count of all
+   ARRAY_TYPEs that are clumped together.  */
 
 tree
 array_type_nelts_total (type)
@@ -1888,12 +1736,26 @@ bot_manip (t)
   if (TREE_CODE (t) != TREE_LIST && ! TREE_SIDE_EFFECTS (t))
     return t;
   else if (TREE_CODE (t) == TARGET_EXPR)
-    return build_cplus_new (TREE_TYPE (t),
-			    break_out_target_exprs (TREE_OPERAND (t, 1)), 0);
+    {
+      if (TREE_CODE (TREE_OPERAND (t, 1)) == NEW_EXPR)
+	{
+	  mark_used (TREE_OPERAND (TREE_OPERAND (TREE_OPERAND (t, 1), 0), 0));
+	  return build_cplus_new
+	    (TREE_TYPE (t), break_out_target_exprs (TREE_OPERAND (t, 1)));
+	}
+      t = copy_node (t);
+      TREE_OPERAND (t, 0) = build (VAR_DECL, TREE_TYPE (t));
+      layout_decl (TREE_OPERAND (t, 0), 0);
+      return t;
+    }
+  else if (TREE_CODE (t) == CALL_EXPR)
+    mark_used (TREE_OPERAND (TREE_OPERAND (t, 0), 0));
+
   return NULL_TREE;
 }
   
 /* Actually, we'll just clean out the target exprs for the moment.  */
+
 tree
 break_out_target_exprs (t)
      tree t;
@@ -1901,95 +1763,356 @@ break_out_target_exprs (t)
   return mapcar (t, bot_manip);
 }
 
-tree
-unsave_expr (expr)
-     tree expr;
-{
-  tree t;
+/* Obstack used for allocating nodes in template function and variable
+   definitions.  */
 
-  t = build1 (UNSAVE_EXPR, TREE_TYPE (expr), expr);
-  TREE_SIDE_EFFECTS (t) = TREE_SIDE_EFFECTS (expr);
+/* Similar to `build_nt', except we build
+   on the permanent_obstack, regardless.  */
+
+tree
+build_min_nt VPROTO((enum tree_code code, ...))
+{
+#ifndef __STDC__
+  enum tree_code code;
+#endif
+  register struct obstack *ambient_obstack = expression_obstack;
+  va_list p;
+  register tree t;
+  register int length;
+  register int i;
+
+  VA_START (p, code);
+
+#ifndef __STDC__
+  code = va_arg (p, enum tree_code);
+#endif
+
+  expression_obstack = &permanent_obstack;
+
+  t = make_node (code);
+  length = tree_code_length[(int) code];
+  TREE_COMPLEXITY (t) = lineno;
+
+  for (i = 0; i < length; i++)
+    {
+      tree x = va_arg (p, tree);
+      TREE_OPERAND (t, i) = copy_to_permanent (x);
+    }
+
+  va_end (p);
+  expression_obstack = ambient_obstack;
   return t;
 }
 
-/* Modify a tree in place so that all the evaluate only once things
-   are cleared out.  Return the EXPR given.  */
+/* Similar to `build', except we build
+   on the permanent_obstack, regardless.  */
+
 tree
-unsave_expr_now (expr)
-     tree expr;
+build_min VPROTO((enum tree_code code, tree tt, ...))
 {
+#ifndef __STDC__
   enum tree_code code;
+  tree tt;
+#endif
+  register struct obstack *ambient_obstack = expression_obstack;
+  va_list p;
+  register tree t;
+  register int length;
   register int i;
 
-  if (expr == NULL_TREE)
-    return expr;
+  VA_START (p, tt);
 
-  code = TREE_CODE (expr);
-  switch (code)
+#ifndef __STDC__
+  code = va_arg (p, enum tree_code);
+  tt = va_arg (p, tree);
+#endif
+
+  expression_obstack = &permanent_obstack;
+
+  t = make_node (code);
+  length = tree_code_length[(int) code];
+  TREE_TYPE (t) = tt;
+  TREE_COMPLEXITY (t) = lineno;
+
+  for (i = 0; i < length; i++)
     {
-    case SAVE_EXPR:
-      SAVE_EXPR_RTL (expr) = NULL_RTX;
-      break;
-
-    case TARGET_EXPR:
-      sorry ("TARGET_EXPR reused inside UNSAVE_EXPR");
-      break;
-      
-    case RTL_EXPR:
-      warning ("RTL_EXPR reused inside UNSAVE_EXPR");
-      RTL_EXPR_SEQUENCE (expr) = NULL_RTX;
-      break;
-
-    case CALL_EXPR:
-      CALL_EXPR_RTL (expr) = NULL_RTX;
-      if (TREE_OPERAND (expr, 1)
-	  && TREE_CODE (TREE_OPERAND (expr, 1)) == TREE_LIST)
-	{
-	  tree exp = TREE_OPERAND (expr, 1);
-	  while (exp)
-	    {
-	      unsave_expr_now (TREE_VALUE (exp));
-	      exp = TREE_CHAIN (exp);
-	    }
-	}
-      break;
-      
-    case WITH_CLEANUP_EXPR:
-      warning ("WITH_CLEANUP_EXPR reused inside UNSAVE_EXPR");
-      RTL_EXPR_RTL (expr) = NULL_RTX;
-      break;
+      tree x = va_arg (p, tree);
+      TREE_OPERAND (t, i) = copy_to_permanent (x);
     }
 
-  switch (TREE_CODE_CLASS (code))
-    {
-    case 'c':  /* a constant */
-    case 't':  /* a type node */
-    case 'x':  /* something random, like an identifier or an ERROR_MARK.  */
-    case 'd':  /* A decl node */
-    case 'b':  /* A block node */
-      return expr;
-
-    case 'e':  /* an expression */
-    case 'r':  /* a reference */
-    case 's':  /* an expression with side effects */
-    case '<':  /* a comparison expression */
-    case '2':  /* a binary arithmetic expression */
-    case '1':  /* a unary arithmetic expression */
-      for (i = tree_code_length[(int) code] - 1; i >= 0; i--)
-	unsave_expr_now (TREE_OPERAND (expr, i));
-      return expr;
-
-    default:
-      my_friendly_abort (999);
-    }
+  va_end (p);
+  expression_obstack = ambient_obstack;
+  return t;
 }
 
-/* Since cleanup may have SAVE_EXPRs in it, we protect it with an
-   UNSAVE_EXPR as the backend cannot yet handle SAVE_EXPRs in cleanups
-   by itself.  */
-int
-cp_expand_decl_cleanup (decl, cleanup)
-     tree decl, cleanup;
+/* Same as `tree_cons' but make a permanent object.  */
+
+tree
+min_tree_cons (purpose, value, chain)
+     tree purpose, value, chain;
 {
-  return expand_decl_cleanup (decl, unsave_expr (cleanup));
+  register tree node;
+  register struct obstack *ambient_obstack = current_obstack;
+  current_obstack = &permanent_obstack;
+
+  node = tree_cons (copy_to_permanent (purpose),
+		    copy_to_permanent (value), chain);
+  current_obstack = ambient_obstack;
+  return node;
+}
+
+tree
+get_type_decl (t)
+     tree t;
+{
+  if (TREE_CODE (t) == IDENTIFIER_NODE)
+    return identifier_typedecl_value (t);
+  if (TREE_CODE (t) == TYPE_DECL)
+    return t;
+  if (TREE_CODE_CLASS (TREE_CODE (t)) == 't')
+    return TYPE_STUB_DECL (t);
+  
+  my_friendly_abort (42);
+}
+
+int
+can_free (obstack, t)
+     struct obstack *obstack;
+     tree t;
+{
+  int size;
+
+  if (TREE_CODE (t) == TREE_VEC)
+    size = (TREE_VEC_LENGTH (t)-1) * sizeof (tree) + sizeof (struct tree_vec);
+  else
+    my_friendly_abort (42);
+
+#define ROUND(x) ((x + obstack_alignment_mask (obstack)) \
+		  & ~ obstack_alignment_mask (obstack))
+  if ((char *)t + ROUND (size) == obstack_next_free (obstack))
+    return 1;
+#undef ROUND
+
+  return 0;
+}
+
+/* Return first vector element whose BINFO_TYPE is ELEM.
+   Return 0 if ELEM is not in VEC.  VEC may be NULL_TREE.  */
+
+tree
+vec_binfo_member (elem, vec)
+     tree elem, vec;
+{
+  int i;
+
+  if (vec)
+    for (i = 0; i < TREE_VEC_LENGTH (vec); ++i)
+      if (comptypes (elem, BINFO_TYPE (TREE_VEC_ELT (vec, i)), 1))
+	return TREE_VEC_ELT (vec, i);
+
+  return NULL_TREE;
+}
+
+/* Kludge around the fact that DECL_CONTEXT for virtual functions returns
+   the wrong thing for decl_function_context.  Hopefully the uses in the
+   backend won't matter, since we don't need a static chain for local class
+   methods.  FIXME!  */
+
+tree
+hack_decl_function_context (decl)
+     tree decl;
+{
+  if (TREE_CODE (decl) == FUNCTION_DECL && DECL_FUNCTION_MEMBER_P (decl))
+    return decl_function_context (TYPE_MAIN_DECL (DECL_CLASS_CONTEXT (decl)));
+  return decl_function_context (decl);
+}
+
+/* Return truthvalue of whether T1 is the same tree structure as T2.
+   Return 1 if they are the same.
+   Return 0 if they are understandably different.
+   Return -1 if either contains tree structure not understood by
+   this function.  */
+
+int
+cp_tree_equal (t1, t2)
+     tree t1, t2;
+{
+  register enum tree_code code1, code2;
+  int cmp;
+
+  if (t1 == t2)
+    return 1;
+  if (t1 == 0 || t2 == 0)
+    return 0;
+
+  code1 = TREE_CODE (t1);
+  code2 = TREE_CODE (t2);
+
+  if (code1 == NOP_EXPR || code1 == CONVERT_EXPR || code1 == NON_LVALUE_EXPR)
+    if (code2 == NOP_EXPR || code2 == CONVERT_EXPR || code2 == NON_LVALUE_EXPR)
+      return cp_tree_equal (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0));
+    else
+      return cp_tree_equal (TREE_OPERAND (t1, 0), t2);
+  else if (code2 == NOP_EXPR || code2 == CONVERT_EXPR
+	   || code2 == NON_LVALUE_EXPR)
+    return cp_tree_equal (t1, TREE_OPERAND (t2, 0));
+
+  if (code1 != code2)
+    return 0;
+
+  switch (code1)
+    {
+    case INTEGER_CST:
+      return TREE_INT_CST_LOW (t1) == TREE_INT_CST_LOW (t2)
+	&& TREE_INT_CST_HIGH (t1) == TREE_INT_CST_HIGH (t2);
+
+    case REAL_CST:
+      return REAL_VALUES_EQUAL (TREE_REAL_CST (t1), TREE_REAL_CST (t2));
+
+    case STRING_CST:
+      return TREE_STRING_LENGTH (t1) == TREE_STRING_LENGTH (t2)
+	&& !bcmp (TREE_STRING_POINTER (t1), TREE_STRING_POINTER (t2),
+		  TREE_STRING_LENGTH (t1));
+
+    case CONSTRUCTOR:
+      abort ();
+
+    case SAVE_EXPR:
+      return cp_tree_equal (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0));
+
+    case CALL_EXPR:
+      cmp = cp_tree_equal (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0));
+      if (cmp <= 0)
+	return cmp;
+      return simple_cst_list_equal (TREE_OPERAND (t1, 1), TREE_OPERAND (t2, 1));
+
+    case TARGET_EXPR:
+      /* Special case: if either target is an unallocated VAR_DECL,
+	 it means that it's going to be unified with whatever the
+	 TARGET_EXPR is really supposed to initialize, so treat it
+	 as being equivalent to anything.  */
+      if ((TREE_CODE (TREE_OPERAND (t1, 0)) == VAR_DECL
+	   && DECL_NAME (TREE_OPERAND (t1, 0)) == NULL_TREE
+	   && DECL_RTL (TREE_OPERAND (t1, 0)) == 0)
+	  || (TREE_CODE (TREE_OPERAND (t2, 0)) == VAR_DECL
+	      && DECL_NAME (TREE_OPERAND (t2, 0)) == NULL_TREE
+	      && DECL_RTL (TREE_OPERAND (t2, 0)) == 0))
+	cmp = 1;
+      else
+	cmp = cp_tree_equal (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0));
+      if (cmp <= 0)
+	return cmp;
+      return cp_tree_equal (TREE_OPERAND (t1, 1), TREE_OPERAND (t2, 1));
+
+    case WITH_CLEANUP_EXPR:
+      cmp = cp_tree_equal (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0));
+      if (cmp <= 0)
+	return cmp;
+      return cp_tree_equal (TREE_OPERAND (t1, 2), TREE_OPERAND (t1, 2));
+
+    case COMPONENT_REF:
+      if (TREE_OPERAND (t1, 1) == TREE_OPERAND (t2, 1))
+	return cp_tree_equal (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0));
+      return 0;
+
+    case VAR_DECL:
+    case PARM_DECL:
+    case CONST_DECL:
+    case FUNCTION_DECL:
+      return 0;
+
+    case TEMPLATE_CONST_PARM:
+      return TEMPLATE_CONST_IDX (t1) == TEMPLATE_CONST_IDX (t2)
+	&& TEMPLATE_CONST_LEVEL (t1) == TEMPLATE_CONST_LEVEL (t2);
+
+    case SIZEOF_EXPR:
+      if (TREE_CODE (TREE_OPERAND (t1, 0)) != TREE_CODE (TREE_OPERAND (t2, 0)))
+	return 0;
+      if (TREE_CODE_CLASS (TREE_CODE (TREE_OPERAND (t1, 0))) == 't')
+	return comptypes (TREE_OPERAND (t1, 0), TREE_OPERAND (t2, 0), 1);
+      break;
+    }
+
+  switch (TREE_CODE_CLASS (code1))
+    {
+      int i;
+    case '1':
+    case '2':
+    case '<':
+    case 'e':
+    case 'r':
+    case 's':
+      cmp = 1;
+      for (i=0; i<tree_code_length[(int) code1]; ++i)
+	{
+	  cmp = cp_tree_equal (TREE_OPERAND (t1, i), TREE_OPERAND (t2, i));
+	  if (cmp <= 0)
+	    return cmp;
+	}
+      return cmp;
+    }
+
+  return -1;
+}
+
+/* Similar to make_tree_vec, but build on a temporary obstack.  */
+
+tree
+make_temp_vec (len)
+     int len;
+{
+  register tree node;
+  register struct obstack *ambient_obstack = current_obstack;
+  current_obstack = expression_obstack;
+  node = make_tree_vec (len);
+  current_obstack = ambient_obstack;
+  return node;
+}
+
+void
+push_expression_obstack ()
+{
+  push_obstacks_nochange ();
+  current_obstack = expression_obstack;
+}
+
+/* The type of ARG when used as an lvalue.  */
+
+tree
+lvalue_type (arg)
+     tree arg;
+{
+  return cp_build_type_variant
+    (TREE_TYPE (arg), TREE_READONLY (arg), TREE_THIS_VOLATILE (arg));
+}
+
+/* The type of ARG for printing error messages; denote lvalues with
+   reference types.  */
+
+tree
+error_type (arg)
+     tree arg;
+{
+  tree type = TREE_TYPE (arg);
+  if (TREE_CODE (type) == ARRAY_TYPE)
+    ;
+  else if (real_lvalue_p (arg))
+    type = build_reference_type (lvalue_type (arg));
+  else if (IS_AGGR_TYPE (type))
+    type = lvalue_type (arg);
+
+  return type;
+}
+
+/* Does FUNCTION use a variable-length argument list?  */
+
+int
+varargs_function_p (function)
+     tree function;
+{
+  tree parm = TYPE_ARG_TYPES (TREE_TYPE (function));
+  for (; parm; parm = TREE_CHAIN (parm))
+    if (TREE_VALUE (parm) == void_type_node)
+      return 0;
+  return 1;
 }

@@ -28,16 +28,16 @@ Boston, MA 02111-1307, USA.  */
 #include "input.h"
 #include "tree.h"
 #include "lex.h"
-#include "parse.h"
 #include "cp-tree.h"
+#include "parse.h"
 #include "flags.h"
 #include "obstack.h"
 
 /* This takes a token stream that hasn't decided much about types and
    tries to figure out as much as it can, with excessive lookahead and
-   backtracking. */
+   backtracking.  */
 
-/* fifo of tokens recognized and available to parser. */
+/* fifo of tokens recognized and available to parser.  */
 struct token  {
   /* The values for YYCHAR will fit in a short.  */
   short		yychar;
@@ -45,7 +45,9 @@ struct token  {
   YYSTYPE	yylval;
 };
 
-static int do_aggr ();
+static int do_aggr PROTO((void));
+static int probe_obstack PROTO((struct obstack *, tree, unsigned int));
+static void scan_tokens PROTO((int));
 
 /* From lex.c: */
 /* the declaration found for the last IDENTIFIER token read in.
@@ -68,49 +70,54 @@ static int debug_yychar ();
 #endif
 
 /* Initialize token_obstack. Called once, from init_lex.  */
+
 void
 init_spew ()
 {
-  gcc_obstack_init(&token_obstack);
+  gcc_obstack_init (&token_obstack);
 }
 
 #ifdef SPEW_DEBUG
 /* Use functions for debugging...  */
 
-/* Return the number of tokens available on the fifo. */
+/* Return the number of tokens available on the fifo.  */
+
 static int
 num_tokens ()
 {
-  return (obstack_object_size(&token_obstack)/sizeof(struct token))
+  return (obstack_object_size (&token_obstack) / sizeof (struct token))
     - first_token;
 }
 
-/* Fetch the token N down the line from the head of the fifo. */
+/* Fetch the token N down the line from the head of the fifo.  */
+
 static struct token*
 nth_token (n)
      int n;
 {
   /* could just have this do slurp_ implicitly, but this way is easier
-   * to debug... */
-  my_friendly_assert (n < num_tokens(), 298);
-  return ((struct token*)obstack_base(&token_obstack))+n+first_token;
+     to debug...  */
+  my_friendly_assert (n < num_tokens (), 298);
+  return ((struct token*)obstack_base (&token_obstack)) + n + first_token;
 }
 
-/* Add a token to the token fifo. */
+/* Add a token to the token fifo.  */
+
 static void
 add_token (t)
      struct token* t;
 {
-  obstack_grow(&token_obstack,t,sizeof (struct token));
+  obstack_grow (&token_obstack, t, sizeof (struct token));
 }
 
 /* Consume the next token out of the fifo.  */
+
 static void
-consume_token()
+consume_token ()
 {
-  if (num_tokens() == 1)
+  if (num_tokens () == 1)
     {
-      obstack_free(&token_obstack, obstack_base (&token_obstack));
+      obstack_free (&token_obstack, obstack_base (&token_obstack));
       first_token = 0;
     }
   else
@@ -121,15 +128,15 @@ consume_token()
 /* ...otherwise use macros.  */
 
 #define num_tokens() \
-  ((obstack_object_size(&token_obstack)/sizeof(struct token)) - first_token)
+  ((obstack_object_size (&token_obstack) / sizeof (struct token)) - first_token)
 
 #define nth_token(N) \
-  (((struct token*)obstack_base(&token_obstack))+(N)+first_token)
+  (((struct token*)obstack_base (&token_obstack))+(N)+first_token)
 
-#define add_token(T) obstack_grow(&token_obstack, (T), sizeof (struct token))
+#define add_token(T) obstack_grow (&token_obstack, (T), sizeof (struct token))
 
 #define consume_token() \
-  (num_tokens() == 1							\
+  (num_tokens () == 1							\
    ? (obstack_free (&token_obstack, obstack_base (&token_obstack)),	\
       (first_token = 0))						\
    : first_token++)
@@ -158,11 +165,11 @@ scan_tokens (n)
 	goto pad_tokens;
     }
 
-  while (num_tokens() <= n)
+  while (num_tokens () <= n)
     {
-      obstack_blank(&token_obstack,sizeof (struct token));
+      obstack_blank (&token_obstack, sizeof (struct token));
       tmp = ((struct token *)obstack_next_free (&token_obstack))-1;
-      tmp->yychar = real_yylex();
+      tmp->yychar = real_yylex ();
       tmp->end_of_file = end_of_file;
       tmp->yylval = yylval;
       end_of_file = 0;
@@ -173,7 +180,7 @@ scan_tokens (n)
 	pad_tokens:
 	  while (num_tokens () <= n)
 	    {
-	      obstack_blank(&token_obstack,sizeof (struct token));
+	      obstack_blank (&token_obstack, sizeof (struct token));
 	      tmp = ((struct token *)obstack_next_free (&token_obstack))-1;
 	      tmp->yychar = EMPTY;
 	      tmp->end_of_file = 0;
@@ -182,35 +189,7 @@ scan_tokens (n)
     }
 }
 
-/* Create room for N tokens at the front of the fifo.  This is used
-   to insert new tokens into the stream ahead of the current token.  */
-
-static void
-shift_tokens (n)
-     int n;
-{
-  if (first_token >= n)
-    first_token -= n;
-  else
-    {
-      int old_token_count = num_tokens ();
-      char *tmp;
-
-      obstack_blank (&token_obstack, (n-first_token) * sizeof (struct token));
-      if (old_token_count)
-	{
-	  tmp = (char *)alloca ((num_tokens () + (n-first_token))
-				* sizeof (struct token));
-	  /* This move does not rely on the system being able to handle
-	     overlapping moves.  */
-	  bcopy ((char *) nth_token (0), tmp,
-		 old_token_count * sizeof (struct token));
-	  bcopy (tmp, (char *) nth_token (n),
-		 old_token_count * sizeof (struct token));
-	}
-      first_token = 0;
-    }
-}
+/* Like _obstack_allocated_p, but stop after checking NLEVELS chunks.  */
 
 static int
 probe_obstack (h, obj, nlevels)
@@ -224,7 +203,7 @@ probe_obstack (h, obj, nlevels)
   lp = (h)->chunk;
   /* We use >= rather than > since the object cannot be exactly at
      the beginning of the chunk but might be an empty object exactly
-     at the end of an adjacent chunk. */
+     at the end of an adjacent chunk.  */
   for (; nlevels != 0 && lp != 0 && ((tree)lp >= obj || (tree)lp->limit < obj);
        nlevels -= 1)
     {
@@ -237,23 +216,24 @@ probe_obstack (h, obj, nlevels)
 /* from lex.c: */
 /* Value is 1 (or 2) if we should try to make the next identifier look like
    a typename (when it may be a local variable or a class variable).
-   Value is 0 if we treat this name in a default fashion. */
+   Value is 0 if we treat this name in a default fashion.  */
 extern int looking_for_typename;
 int looking_for_template;
+extern int do_snarf_defarg;
 
 extern struct obstack *current_obstack, *saveable_obstack;
 tree got_scope;
 tree got_object;
 
 int
-peekyylex()
+peekyylex ()
 {
   scan_tokens (0);
   return nth_token (0)->yychar;
 }
 
 int
-yylex()
+yylex ()
 {
   struct token tmp_token;
   tree trrr;
@@ -263,14 +243,24 @@ yylex()
   if (spew_debug)
   {
     yylex_ctr ++;
-    fprintf(stderr, "\t\t## %d ##",yylex_ctr);
+    fprintf (stderr, "\t\t## %d ##", yylex_ctr);
   }
 #endif
 
-  /* if we've got tokens, send them */
-  if (num_tokens())
+  if (do_snarf_defarg)
     {
-      tmp_token= *nth_token(0);
+      my_friendly_assert (num_tokens () == 0, 2837);
+      tmp_token.yychar = DEFARG;
+      tmp_token.yylval.ttype = snarf_defarg ();
+      tmp_token.end_of_file = 0;
+      do_snarf_defarg = 0;
+      add_token (&tmp_token);
+    }
+
+  /* if we've got tokens, send them */
+  else if (num_tokens ())
+    {
+      tmp_token= *nth_token (0);
 
       /* TMP_TOKEN.YYLVAL.TTYPE may have been allocated on the wrong obstack.
 	 If we don't find it in CURRENT_OBSTACK's current or immediately
@@ -288,13 +278,13 @@ yylex()
       tmp_token.yychar = real_yylex ();
       tmp_token.yylval = yylval;
       tmp_token.end_of_file = end_of_file;
-      add_token(&tmp_token);
+      add_token (&tmp_token);
     }
 
   /* many tokens just need to be returned. At first glance, all we
-   * have to do is send them back up, but some of them are needed to
-   * figure out local context. */
-  switch(tmp_token.yychar)
+     have to do is send them back up, but some of them are needed to
+     figure out local context.  */
+  switch (tmp_token.yychar)
     {
     case EMPTY:
       /* This is a lexical no-op.  */
@@ -321,14 +311,14 @@ yylex()
 	  switch (tmp_token.yychar)
 	    {
 	    case TYPENAME:
+	    case SELFNAME:
 	      lastiddecl = identifier_typedecl_value (tmp_token.yylval.ttype);
 	      if (lastiddecl != trrr)
-		{
-		  lastiddecl = trrr;
-		  if (got_scope || got_object)
-		    tmp_token.yylval.ttype = DECL_NESTED_TYPENAME (trrr);
-		}
+		lastiddecl = trrr;
+	      if (got_scope)
+		tmp_token.yylval.ttype = trrr;
 	      break;
+	    case PFUNCNAME:
 	    case IDENTIFIER:
 	      lastiddecl = trrr;
 	      break;
@@ -337,7 +327,7 @@ yylex()
 	      break;
 	    case NSNAME:
 	      lastiddecl = trrr;
-	      if (got_scope || got_object)
+	      if (got_scope)
 		tmp_token.yylval.ttype = trrr;
 	      break;
 	    default:
@@ -347,7 +337,7 @@ yylex()
       else
 	lastiddecl = trrr;
       got_scope = NULL_TREE;
-      /* and fall through to... */
+      /* and fall through to...  */
     case IDENTIFIER_DEFN:
     case TYPENAME:
     case TYPENAME_DEFN:
@@ -360,42 +350,49 @@ yylex()
       break;
 
     case SCSPEC:
-      /* do_aggr needs to check if the previous token was RID_FRIEND,
-	 so just increment first_token instead of calling consume_token. */
-      first_token++;
+    case NEW:
+      /* do_aggr needs to check if the previous token was RID_NEW,
+	 so just increment first_token instead of calling consume_token.  */
+      ++first_token;
       break;
+
     case TYPESPEC:
       consume_token ();
       break;
 
     case AGGR:
-      *nth_token(0) = tmp_token;
+      *nth_token (0) = tmp_token;
       do_aggr ();
-      /* fall through to output... */
+      /* fall through to output...  */
     case ENUM:
       /* Set this again, in case we are rescanning.  */
       looking_for_typename = 1;
-      /* fall through... */
+      /* fall through...  */
     default:
-      consume_token();
+      consume_token ();
     }
 
+  got_object = NULL_TREE;
   yylval = tmp_token.yylval;
   yychar = tmp_token.yychar;
   end_of_file = tmp_token.end_of_file;
 #ifdef SPEW_DEBUG    
   if (spew_debug)
-    debug_yychar(yychar);
+    debug_yychar (yychar);
 #endif
+
+  if (yychar == PFUNCNAME)
+    yylval.ttype = do_identifier (yylval.ttype, 1);
+
   return yychar;
 }
 
 /* token[0] == AGGR (struct/union/enum)
- * Thus, token[1] is either a TYPENAME or a TYPENAME_DEFN.
- * If token[2] == '{' or ':' then it's TYPENAME_DEFN.
- * It's also a definition if it's a forward declaration (as in 'struct Foo;')
- * which we can tell lf token[2] == ';' *and* token[-1] != FRIEND.
- */
+   Thus, token[1] is either a TYPENAME or a TYPENAME_DEFN.
+   If token[2] == '{' or ':' then it's TYPENAME_DEFN.
+   It's also a definition if it's a forward declaration (as in 'struct Foo;')
+   which we can tell if token[2] == ';' *and* token[-1] != FRIEND or NEW.  */
+
 static int
 do_aggr ()
 {
@@ -408,10 +405,16 @@ do_aggr ()
   yc2 = nth_token (2)->yychar;
   if (yc2 == ';')
     {
-      /* It's a forward declaration iff we were not preceded by 'friend'. */
-      if (first_token > 0 && nth_token (-1)->yychar == SCSPEC
-	  && nth_token (-1)->yylval.ttype == ridpointers[(int) RID_FRIEND])
-	return 0;
+      /* It's a forward declaration iff we were not preceded by
+         'friend' or `new'.  */
+      if (first_token > 0)
+	{
+	  if (nth_token (-1)->yychar == SCSPEC
+	      && nth_token (-1)->yylval.ttype == ridpointers[(int) RID_FRIEND])
+	    return 0;
+	  if (nth_token (-1)->yychar == NEW)
+	    return 0;
+	}
     }
   else if (yc2 != '{' && yc2 != ':')
     return 0;
@@ -434,7 +437,8 @@ do_aggr ()
 }  
   
 #ifdef SPEW_DEBUG    
-/* debug_yychar takes a yychar (token number) value and prints its name. */
+/* debug_yychar takes a yychar (token number) value and prints its name.  */
+
 static int
 debug_yychar (yy)
      int yy;
@@ -444,7 +448,7 @@ debug_yychar (yy)
   
   int i;
   
-  if(yy<256) {
+  if (yy<256) {
     fprintf (stderr, "<%d: %c >\n", yy, yy);
     return 0;
   }

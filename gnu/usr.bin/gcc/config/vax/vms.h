@@ -1,5 +1,5 @@
 /* Output variables, constants and external declarations, for GNU compiler.
-   Copyright (C) 1988, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -31,11 +31,10 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LIB_SPEC
 #undef CPP_PREDEFINES
-#undef TARGET_VERSION
+#undef TARGET_NAME
 #undef TARGET_DEFAULT
 #undef CALL_USED_REGISTERS
 #undef MAYBE_VMS_FUNCTION_PROLOGUE
-#undef FUNCTION_PROLOGUE
 #undef STARTING_FRAME_OFFSET
 
 /* Predefine this in CPP because VMS limits the size of command options
@@ -46,9 +45,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* These match the definitions used in VAXCRTL, the VMS C run-time library */
 
-#define SIZE_TYPE "unsigned int"
-#define PTRDIFF_TYPE "int"
+#define SIZE_TYPE	"unsigned int"
+#define PTRDIFF_TYPE	"int"
 #define WCHAR_TYPE	"unsigned int"
+#define WCHAR_TYPE_SIZE	32	/* in bits */
 
 /* Use memcpy for structure copying, and so forth.  */
 #define TARGET_MEM_FUNCTIONS
@@ -58,11 +58,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define DEFAULT_GDB_EXTENSIONS 0
 
-/* By default, allow $ to be part of an identifier.  */
-#define DOLLARS_IN_IDENTIFIERS 2
-
 #define TARGET_DEFAULT 1
-#define TARGET_VERSION fprintf (stderr, " (vax vms)");
+#define TARGET_NAME "vax/vms"
 
 /* The structure return address arrives as an "argument" on VMS.  */
 #undef STRUCT_VALUE_REGNUM
@@ -71,25 +68,14 @@ Boston, MA 02111-1307, USA.  */
 
 #define CALL_USED_REGISTERS {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1}
 
-/* We redefine this because there is a hidden variable on the stack
-   that VAXC$ESTABLISH uses.  We just need to add four bytes to whatever
-   gcc thinks that we need.  Similarly, we need to move all local variables
-   down 4 bytes in the stack.  */
+/* The run-time library routine VAXC$ESTABLISH (necessary when mixing
+   VMS exception handling and setjmp/longjmp in the same program) requires
+   that a hidden automatic variable at the top of the stack be reserved
+   for its use.  We accomplish this by simply adding 4 bytes to the local
+   stack for all functions, and making sure that normal local variables
+   are 4 bytes lower on the stack then they would otherwise have been.  */
 
 #define STARTING_FRAME_OFFSET -4
-
-#define FUNCTION_PROLOGUE(FILE, SIZE)     \
-{ register int regno;						\
-  register int mask = 0;					\
-  register int newsize = SIZE + 4;				\
-  extern char call_used_regs[];					\
-  for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)	\
-    if (regs_ever_live[regno] && !call_used_regs[regno])	\
-       mask |= 1 << regno;					\
-  fprintf (FILE, "\t.word 0x%x\n", mask);			\
-  MAYBE_VMS_FUNCTION_PROLOGUE(FILE)				\
-  if (newsize >= 64) fprintf (FILE, "\tmovab %d(sp),sp\n", -newsize);\
-  else fprintf (FILE, "\tsubl2 $%d,sp\n", newsize); }
 
 #define __MAIN_NAME " main("
 /*
@@ -184,11 +170,7 @@ Boston, MA 02111-1307, USA.  */
    is explicitly defined, then ASM_FINISH_DECLARE_OBJECT will be used.  */
 
 #define ASM_DECLARE_OBJECT_NAME(ASM_OUT_FILE,NAME,DECL)		\
-{ if (output_bytecode)						\
-    BC_OUTPUT_LABEL ((ASM_OUT_FILE), (NAME));				\
-  else								\
-    ASM_OUTPUT_LABEL ((ASM_OUT_FILE), (NAME));			\
-}
+  ASM_OUTPUT_LABEL ((ASM_OUT_FILE), (NAME))
 
 /* We don't need to do anything special to finish the current object, but it
    should now be safe to output any deferred external global declarations.  */
@@ -375,3 +357,13 @@ do {									\
 } while (0)
 
 #endif /* L__main */
+
+/* Specify the list of include file directories.  */
+#define INCLUDE_DEFAULTS \
+{									\
+  { "GNU_GXX_INCLUDE:", "G++", 1, 1 },					\
+  { "GNU_CC_INCLUDE:", "GCC", 0, 0 },	/* GNU includes */		\
+  { "SYS$SYSROOT:[SYSLIB.]", 0, 0, 0 }, /* VAX-11 "C" includes */	\
+  { ".", 0, 0, 1 },		/* Make normal VMS filespecs work.  */	\
+  { 0, 0, 0, 0 }							\
+}

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.  Elxsi version.
-   Copyright (C) 1987, 1988, 1992, 1995 Free Software Foundation, Inc.
-   This port, done by Mike Stump <mrs@cygnus.com> in 1988, is the first
+   Copyright (C) 1987, 1988, 1992, 1995, 1996 Free Software Foundation, Inc.
+   This port, contributed by Mike Stump <mrs@cygnus.com> in 1988, is the first
    64 bit port of GNU CC.
    Based upon the VAX port.
 
@@ -360,7 +360,7 @@ enum reg_class { NO_REGS, GENERAL_REGS, ALL_REGS, LIM_REG_CLASSES };
 
    On the vax, the offset starts at 0.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,x)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,x,INDIRECT)	\
  ((CUM) = 0)
 
 /* Update the data in CUM to advance over an argument
@@ -689,27 +689,6 @@ enum reg_class { NO_REGS, GENERAL_REGS, ALL_REGS, LIM_REG_CLASSES };
 
 /* #define UDIVSI3_LIBCALL "*udiv" */
 /* #define UMODSI3_LIBCALL "*urem" */
-
-/* Check a `double' value for validity for a particular machine mode.  */
-
-/* Note that it is very hard to accidentally create a number that fits in a
-   double but not in a float, since their ranges are almost the same.  */
-#define CHECK_FLOAT_VALUE(mode, d) \
-  if ((mode) == SFmode) \
-    { \
-      if ((d) > 1.7014117331926443e+38) \
-	{ error ("magnitude of constant too large for `float'"); \
-	  (d) = 1.7014117331926443e+38; } \
-      else if ((d) < -1.7014117331926443e+38) \
-	{ error ("magnitude of constant too large for `float'"); \
-	  (d) = -1.7014117331926443e+38; } \
-      else if (((d) > 0) && ((d) < 2.9387358770557188e-39)) \
-	{ warning ("`float' constant truncated to zero"); \
-	  (d) = 0.0; } \
-      else if (((d) < 0) && ((d) > -2.9387358770557188e-39)) \
-	{ warning ("`float' constant truncated to zero"); \
-	  (d) = 0.0; } \
-    }
 
 /* Tell final.c how to eliminate redundant test instructions.  */
 
@@ -797,10 +776,9 @@ enum reg_class { NO_REGS, GENERAL_REGS, ALL_REGS, LIM_REG_CLASSES };
 #define ASM_GLOBALIZE_LABEL(FILE,NAME)	\
   do { fputs ("\t.extdef\t", FILE); assemble_name (FILE, NAME); fputs ("\n", FILE);} while (0)
 
-/* This is how to output a reference to a user-level label named NAME.  */
+/* The prefix to add to user-visible assembler symbols. */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "%s", NAME)
+#define USER_LABEL_PREFIX ""
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */

@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Convex.
-   Copyright (C) 1988, 1993, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1993, 1994, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -19,6 +19,7 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
+#include <stdio.h>
 #include "tree.h"
 #include "rtl.h"
 #include "regs.h"
@@ -30,9 +31,6 @@ Boston, MA 02111-1307, USA.  */
 #include "insn-attr.h"
 #include "output.h"
 #include "expr.h"
-
-#undef NULL
-#include <stdio.h>
 
 /* Tables used in convex.h */
 
@@ -403,7 +401,9 @@ expand_movstr_call (operands)
 		     VOIDmode, 3,
 		     XEXP (operands[0], 0), Pmode,
 		     XEXP (operands[1], 0), Pmode,
-		     operands[2], SImode);
+		     convert_to_mode (TYPE_MODE (sizetype), operands[2],
+				      TREE_UNSIGNED (sizetype)),
+		     TYPE_MODE (sizetype));
 }
 
 #if _IEEE_FLOAT_

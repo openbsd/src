@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler, for Intel 860.
-   Copyright (C) 1989, 1991, 1993, 1995 Free Software Foundation, Inc.
-   Hacked substantially by Ron Guilmette (rfg@segfault.us.com) to cater to
+   Copyright (C) 1989, 91, 93, 95, 96, 1997 Free Software Foundation, Inc.
+   Hacked substantially by Ron Guilmette (rfg@monkeys.com) to cater to
    the whims of the System V Release 4 assembler.
 
 This file is part of GNU CC.
@@ -472,7 +472,7 @@ struct cumulative_args { int ints, floats; };
    when the function gets a structure-value-address as an
    invisible first argument.  */
 
-#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME)	\
+#define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT)	\
  ((CUM).ints = ((FNTYPE) != 0 && aggregate_value_p (TREE_TYPE ((FNTYPE))) \
 		? 4 : 0),			\
   (CUM).floats = 0)
@@ -1046,15 +1046,13 @@ struct cumulative_args { int ints, floats; };
 	fputs ("\n", FILE);						\
   } while (0)
 
-/* This is how to output a reference to a user-level label named NAME.
-   `assemble_name' uses this.
+/* The prefix to add to user-visible assembler symbols.
 
    This definition is overridden in i860v4.h because under System V
    Release 4, user-level symbols are *not* prefixed with underscores in
    the generated assembly code.  */
 
-#define ASM_OUTPUT_LABELREF(FILE,NAME)	\
-  fprintf (FILE, "_%s", NAME)
+#define USER_LABEL_PREFIX "_"
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -1371,7 +1369,7 @@ extern unsigned long sfmode_constant_to_ulong ();
    stack (where the i860 calling conventions require structs &
    unions to be passed).  */
 
-#define FLOAT_TYPE_VALUE	float
+#define FLOAT_VALUE_TYPE	float
 #define INTIFY(FLOATVAL)	(FLOATVAL)
 #define FLOATIFY(INTVAL)	(INTVAL)
 #define FLOAT_ARG_TYPE		float
