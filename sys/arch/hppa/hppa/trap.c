@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2002/05/20 07:59:11 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2002/07/21 11:47:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -147,7 +147,7 @@ trap(type, frame)
 	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
-		vftype = VM_PROT_READ;	/* XXX VM_PROT_EXECUTE ??? */
+		vftype = VM_PROT_EXECUTE;
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
