@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.9 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: cons.h,v 1.10 2002/03/14 04:01:23 millert Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -44,12 +44,18 @@
  */
 
 struct consdev {
-	void	(*cn_probe)	/* probe hardware and fill in consdev info */(struct consdev *);
-	void	(*cn_init)	/* turn on as console */(struct consdev *);
-	int	(*cn_getc)	/* kernel getchar interface */(dev_t);
-	void	(*cn_putc)	/* kernel putchar interface */(dev_t, int);
-	void	(*cn_pollc)	/* turn on and off polling */(dev_t, int);
-	void	(*cn_bell)	/* ring bell */(dev_t, u_int, u_int, u_int);
+	void	(*cn_probe)(struct consdev *);
+				/* probe hardware and fill in consdev info */
+	void	(*cn_init)(struct consdev *);
+				/* turn on as console */
+	int	(*cn_getc)(dev_t);
+				/* kernel getchar interface */
+	void	(*cn_putc)(dev_t, int);
+				/* kernel putchar interface */
+	void	(*cn_pollc)(dev_t, int);
+				/* turn on and off polling */
+	void	(*cn_bell)(dev_t, u_int, u_int, u_int);
+				/* ring bell */
 	dev_t	cn_dev;		/* major/minor of device */
 	int	cn_pri;		/* pecking order; the higher the better */
 };
