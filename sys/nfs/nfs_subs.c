@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.51 2005/01/24 00:14:40 marius Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.52 2005/02/01 15:00:04 pvalchev Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1303,8 +1303,7 @@ nfs_getattrcache(vp, vaper)
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr *vap;
 
-	if (np->n_attrstamp == 0 ||
-	    (time_second - np->n_attrstamp) >= nfs_attrtimeo(np)) {
+	if ((time_second - np->n_attrstamp) >= nfs_attrtimeo(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}

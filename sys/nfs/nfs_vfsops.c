@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.54 2005/01/24 00:14:40 marius Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.55 2005/02/01 15:00:04 pvalchev Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -259,6 +259,15 @@ nfs_mountroot()
 	int error;
 
 	procp = curproc; /* XXX */
+
+	/*
+	 * XXX time must be non-zero when we init the interface or else
+	 * the arp code will wedge.  [Fixed now in if_ether.c]
+	 * However, the NFS attribute cache gives false "hits" when
+	 * time_second < NFS_ATTRTIMEO(np) so keep this in for now.
+	 */
+	if (time_second < NFS_MAXATTRTIMO)
+		time_second = NFS_MAXATTRTIMO;
 
 	/*
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
