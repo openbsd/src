@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.14 2003/12/10 07:46:33 itojun Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.15 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -83,25 +83,25 @@ int fc_lmdistance[LMMAX];	/* counters for how far off the last
 				 * cluster mapped entry was. */
 int fc_largedistance;		/* off by more than LMMAX		 */
 
-static void fatblock(struct msdosfsmount *, u_long, u_long *, u_long *,
-			  u_long *);
-void updatefats(struct msdosfsmount *, struct buf *, u_long);
-static __inline void usemap_free(struct msdosfsmount *, u_long);
-static __inline void usemap_alloc(struct msdosfsmount *, u_long);
-static int fatchain(struct msdosfsmount *, u_long, u_long, u_long);
-int chainlength(struct msdosfsmount *, u_long, u_long);
-int chainalloc(struct msdosfsmount *, u_long, u_long, u_long, u_long *,
-		    u_long *);
+static void fatblock(struct msdosfsmount *, uint32_t, uint32_t *, uint32_t *,
+			  uint32_t *);
+void updatefats(struct msdosfsmount *, struct buf *, uint32_t);
+static __inline void usemap_free(struct msdosfsmount *, uint32_t);
+static __inline void usemap_alloc(struct msdosfsmount *, uint32_t);
+static int fatchain(struct msdosfsmount *, uint32_t, uint32_t, uint32_t);
+int chainlength(struct msdosfsmount *, uint32_t, uint32_t);
+int chainalloc(struct msdosfsmount *, uint32_t, uint32_t, uint32_t, uint32_t *,
+		    uint32_t *);
 
 static void
 fatblock(pmp, ofs, bnp, sizep, bop)
 	struct msdosfsmount *pmp;
-	u_long ofs;
-	u_long *bnp;
-	u_long *sizep;
-	u_long *bop;
+	uint32_t ofs;
+	uint32_t *bnp;
+	uint32_t *sizep;
+	uint32_t *bop;
 {
-	u_long bn, size;
+	uint32_t bn, size;
 
 	bn = ofs / pmp->pm_fatblocksize * pmp->pm_fatblocksec;
 	size = min(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn)
@@ -137,22 +137,22 @@ fatblock(pmp, ofs, bnp, sizep, bop)
 int
 pcbmap(dep, findcn, bnp, cnp, sp)
 	struct denode *dep;
-	u_long findcn;		/* file relative cluster to get		 */
+	uint32_t findcn;		/* file relative cluster to get		 */
 	daddr_t *bnp;		/* returned filesys relative blk number	 */
-	u_long *cnp;		/* returned cluster number		 */
+	uint32_t *cnp;		/* returned cluster number		 */
 	int *sp;		/* returned block size			 */
 {
 	int error;
-	u_long i;
-	u_long cn;
-	u_long prevcn = 0; /* XXX: prevcn could be used uninitialized */
-	u_long byteoffset;
-	u_long bn;
-	u_long bo;
+	uint32_t i;
+	uint32_t cn;
+	uint32_t prevcn = 0; /* XXX: prevcn could be used uninitialized */
+	uint32_t byteoffset;
+	uint32_t bn;
+	uint32_t bo;
 	struct buf *bp = NULL;
-	u_long bp_bn = -1;
+	uint32_t bp_bn = -1;
 	struct msdosfsmount *pmp = dep->de_pmp;
-	u_long bsize;
+	uint32_t bsize;
 
 	fc_bmapcalls++;
 
@@ -175,6 +175,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 			if (de_cn2off(pmp, findcn) >= dep->de_FileSize) {
 				if (cnp)
 					*cnp = de_bn2cn(pmp, pmp->pm_rootdirsize);
+				printf("E2BIG 1\n");
 				return (E2BIG);
 			}
 			if (bnp)
@@ -188,6 +189,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		} else {		/* just an empty file */
 			if (cnp)
 				*cnp = 0;
+			printf("E2BIG 2\n");
 			return (E2BIG);
 		}
 	}
@@ -273,6 +275,7 @@ hiteof:;
 		brelse(bp);
 	/* update last file cluster entry in the fat cache */
 	fc_setcache(dep, FC_LASTFC, i - 1, prevcn);
+	printf("E2BIG 3\n");
 	return (E2BIG);
 }
 
@@ -283,12 +286,12 @@ hiteof:;
 void
 fc_lookup(dep, findcn, frcnp, fsrcnp)
 	struct denode *dep;
-	u_long findcn;
-	u_long *frcnp;
-	u_long *fsrcnp;
+	uint32_t findcn;
+	uint32_t *frcnp;
+	uint32_t *fsrcnp;
 {
 	int i;
-	u_long cn;
+	uint32_t cn;
 	struct fatcache *closest = 0;
 
 	for (i = 0; i < FC_SIZE; i++) {
@@ -336,7 +339,7 @@ void
 updatefats(pmp, bp, fatbn)
 	struct msdosfsmount *pmp;
 	struct buf *bp;
-	u_long fatbn;
+	uint32_t fatbn;
 {
 	int i;
 	struct buf *bpn;
@@ -349,7 +352,7 @@ updatefats(pmp, bp, fatbn)
 	 * If we have an FSInfo block, update it.
 	 */
 	if (pmp->pm_fsinfo) {
-		u_long cn = pmp->pm_nxtfree;
+		uint32_t cn = pmp->pm_nxtfree;
 
 		if (pmp->pm_freeclustercount
 		    && (pmp->pm_inusemap[cn / N_INUSEBITS]
@@ -440,7 +443,7 @@ updatefats(pmp, bp, fatbn)
 static __inline void
 usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
-	u_long cn;
+	uint32_t cn;
 {
 
 	pmp->pm_inusemap[cn / N_INUSEBITS] |= 1 << (cn % N_INUSEBITS);
@@ -450,7 +453,7 @@ usemap_alloc(pmp, cn)
 static __inline void
 usemap_free(pmp, cn)
 	struct msdosfsmount *pmp;
-	u_long cn;
+	uint32_t cn;
 {
 
 	pmp->pm_freeclustercount++;
@@ -460,11 +463,11 @@ usemap_free(pmp, cn)
 int
 clusterfree(pmp, cluster, oldcnp)
 	struct msdosfsmount *pmp;
-	u_long cluster;
-	u_long *oldcnp;
+	uint32_t cluster;
+	uint32_t *oldcnp;
 {
 	int error;
-	u_long oldcn;
+	uint32_t oldcn;
 
 	usemap_free(pmp, cluster);
 	error = fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn, MSDOSFSFREE);
@@ -505,13 +508,13 @@ int
 fatentry(function, pmp, cn, oldcontents, newcontents)
 	int function;
 	struct msdosfsmount *pmp;
-	u_long cn;
-	u_long *oldcontents;
-	u_long newcontents;
+	uint32_t cn;
+	uint32_t *oldcontents;
+	uint32_t newcontents;
 {
 	int error;
-	u_long readcn;
-	u_long bn, bo, bsize, byteoffset;
+	uint32_t readcn;
+	uint32_t bn, bo, bsize, byteoffset;
 	struct buf *bp;
 
 #ifdef MSDOSFS_DEBUG
@@ -611,12 +614,12 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 static int
 fatchain(pmp, start, count, fillwith)
 	struct msdosfsmount *pmp;
-	u_long start;
-	u_long count;
-	u_long fillwith;
+	uint32_t start;
+	uint32_t count;
+	uint32_t fillwith;
 {
 	int error;
-	u_long bn, bo, bsize, byteoffset, readcn, newc;
+	uint32_t bn, bo, bsize, byteoffset, readcn, newc;
 	struct buf *bp;
 	
 #ifdef MSDOSFS_DEBUG
@@ -686,12 +689,12 @@ fatchain(pmp, start, count, fillwith)
 int
 chainlength(pmp, start, count)
 	struct msdosfsmount *pmp;
-	u_long start;
-	u_long count;
+	uint32_t start;
+	uint32_t count;
 {
-	u_long idx, max_idx;
+	uint32_t idx, max_idx;
 	u_int map;
-	u_long len;
+	uint32_t len;
 	
 	max_idx = pmp->pm_maxcluster / N_INUSEBITS;
 	idx = start / N_INUSEBITS;
@@ -731,14 +734,14 @@ chainlength(pmp, start, count)
 int
 chainalloc(pmp, start, count, fillwith, retcluster, got)
 	struct msdosfsmount *pmp;
-	u_long start;
-	u_long count;
-	u_long fillwith;
-	u_long *retcluster;
-	u_long *got;
+	uint32_t start;
+	uint32_t count;
+	uint32_t fillwith;
+	uint32_t *retcluster;
+	uint32_t *got;
 {
 	int error;
-	u_long cl, n;
+	uint32_t cl, n;
 
 	for (cl = start, n = count; n-- > 0;)
 		usemap_alloc(pmp, cl++);
@@ -769,15 +772,15 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
 int
 clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	struct msdosfsmount *pmp;
-	u_long start;
-	u_long count;
-	u_long fillwith;
-	u_long *retcluster;
-	u_long *got;
+	uint32_t start;
+	uint32_t count;
+	uint32_t fillwith;
+	uint32_t *retcluster;
+	uint32_t *got;
 {
-	u_long idx;
-	u_long len, newst, foundl, cn, l;
-	u_long foundcn = 0; /* XXX: foundcn could be used uninitialized */
+	uint32_t idx;
+	uint32_t len, newst, foundl, cn, l;
+	uint32_t foundcn = 0; /* XXX: foundcn could be used uninitialized */
 	u_int map;
 	
 #ifdef MSDOSFS_DEBUG
@@ -860,12 +863,12 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 int
 freeclusterchain(pmp, cluster)
 	struct msdosfsmount *pmp;
-	u_long cluster;
+	uint32_t cluster;
 {
 	int error;
 	struct buf *bp = NULL;
-	u_long bn, bo, bsize, byteoffset;
-	u_long readcn, lbn = -1;
+	uint32_t bn, bo, bsize, byteoffset;
+	uint32_t readcn, lbn = -1;
 
 	while (cluster >= CLUST_FIRST && cluster <= pmp->pm_maxcluster) {
 		byteoffset = FATOFS(pmp, cluster);
@@ -923,9 +926,9 @@ fillinusemap(pmp)
 	struct msdosfsmount *pmp;
 {
 	struct buf *bp = NULL;
-	u_long cn, readcn;
+	uint32_t cn, readcn;
 	int error;
-	u_long bn, bo, bsize, byteoffset;
+	uint32_t bn, bo, bsize, byteoffset;
 
 	/*
 	 * Mark all clusters in use, we mark the free ones in the fat scan
@@ -987,14 +990,14 @@ fillinusemap(pmp)
 int
 extendfile(dep, count, bpp, ncp, flags)
 	struct denode *dep;
-	u_long count;
+	uint32_t count;
 	struct buf **bpp;
-	u_long *ncp;
+	uint32_t *ncp;
 	int flags;
 {
 	int error;
-	u_long frcn;
-	u_long cn, got;
+	uint32_t frcn;
+	uint32_t cn, got;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 	

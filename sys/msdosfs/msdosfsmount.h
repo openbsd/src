@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.14 2003/04/18 22:12:25 tedu Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.15 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -59,25 +59,25 @@ struct msdosfsmount {
 	mode_t pm_mask;		/* mask to and with file protection bits */
 	struct vnode *pm_devvp;	/* vnode for block device mntd */
 	struct bpb50 pm_bpb;	/* BIOS parameter blk for this fs */
-	u_long pm_FATsecs;	/* actual number of fat sectors */
-	u_long pm_fatblk;	/* block # of first FAT */
-	u_long pm_rootdirblk;	/* block # (cluster # for FAT32) of root directory number */
-	u_long pm_rootdirsize;	/* size in blocks (not clusters) */
-	u_long pm_firstcluster;	/* block number of first cluster */
-	u_long pm_nmbrofclusters;	/* # of clusters in filesystem */
-	u_long pm_maxcluster;	/* maximum cluster number */
-	u_long pm_freeclustercount;	/* number of free clusters */
-	u_long pm_cnshift;	/* shift file offset right this amount to get a cluster number */
-	u_long pm_crbomask;	/* and a file offset with this mask to get cluster rel offset */
-	u_long pm_bnshift;	/* shift file offset right this amount to get a block number */
-	u_long pm_bpcluster;	/* bytes per cluster */
-	u_long pm_fmod;		/* ~0 if fs is modified, this can rollover to 0	*/
-	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
-	u_long pm_fatblocksec;	/* size of fat blocks in sectors */
-	u_long pm_fatsize;	/* size of fat in bytes */
-	u_long pm_fatmask;	/* mask to use for fat numbers */
-	u_long pm_fsinfo;	/* fsinfo block number */
-	u_long pm_nxtfree;	/* next free cluster in fsinfo block */
+	uint32_t pm_FATsecs;	/* actual number of fat sectors */
+	uint32_t pm_fatblk;	/* block # of first FAT */
+	uint32_t pm_rootdirblk;	/* block # (cluster # for FAT32) of root directory number */
+	uint32_t pm_rootdirsize;	/* size in blocks (not clusters) */
+	uint32_t pm_firstcluster;	/* block number of first cluster */
+	uint32_t pm_nmbrofclusters;	/* # of clusters in filesystem */
+	uint32_t pm_maxcluster;	/* maximum cluster number */
+	uint32_t pm_freeclustercount;	/* number of free clusters */
+	uint32_t pm_cnshift;	/* shift file offset right this amount to get a cluster number */
+	uint32_t pm_crbomask;	/* and a file offset with this mask to get cluster rel offset */
+	uint32_t pm_bnshift;	/* shift file offset right this amount to get a block number */
+	uint32_t pm_bpcluster;	/* bytes per cluster */
+	uint32_t pm_fmod;		/* ~0 if fs is modified, this can rollover to 0	*/
+	uint32_t pm_fatblocksize;	/* size of fat blocks in bytes */
+	uint32_t pm_fatblocksec;	/* size of fat blocks in sectors */
+	uint32_t pm_fatsize;	/* size of fat in bytes */
+	uint32_t pm_fatmask;	/* mask to use for fat numbers */
+	uint32_t pm_fsinfo;	/* fsinfo block number */
+	uint32_t pm_nxtfree;	/* next free cluster in fsinfo block */
 	u_int pm_fatmult;	/* these 2 values are used in fat */
 	u_int pm_fatdiv;	/*	offset computation */
 	u_int pm_curfat;	/* current fat for FAT32 (0 otherwise) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.11 2004/03/31 18:48:15 millert Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.12 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -84,8 +84,8 @@ const u_short leapyear[] = {
  * Variables used to remember parts of the last time conversion.  Maybe we
  * can avoid a full conversion.
  */
-u_long lasttime;
-u_long lastday;
+uint32_t lasttime;
+uint32_t lastday;
 u_short lastddate;
 u_short lastdtime;
 
@@ -100,11 +100,11 @@ unix2dostime(tsp, ddp, dtp, dhp)
 	u_int16_t *dtp;
 	u_int8_t *dhp;
 {
-	u_long t;
-	u_long days;
-	u_long inc;
-	u_long year;
-	u_long month;
+	uint32_t t;
+	uint32_t days;
+	uint32_t inc;
+	uint32_t year;
+	uint32_t month;
 	const u_short *months;
 
 	/*
@@ -168,7 +168,7 @@ unix2dostime(tsp, ddp, dtp, dhp)
 #define	SECONDSTO1980	(((8 * 365) + (2 * 366)) * (24 * 60 * 60))
 
 u_short lastdosdate;
-u_long lastseconds;
+uint32_t lastseconds;
 
 /*
  * Convert from dos' idea of time to unix'. This will probably only be
@@ -182,10 +182,10 @@ dos2unixtime(dd, dt, dh, tsp)
 	u_int dh;
 	struct timespec *tsp;
 {
-	u_long seconds;
-	u_long m, month;
-	u_long y, year;
-	u_long days;
+	uint32_t seconds;
+	uint32_t m, month;
+	uint32_t y, year;
+	uint32_t days;
 	const u_short *months;
 
 	if (dd == 0) {

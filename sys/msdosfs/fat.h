@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.h,v 1.5 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: fat.h,v 1.6 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: fat.h,v 1.11 1997/10/17 11:23:49 ws Exp $	*/
 
 /*-
@@ -97,13 +97,13 @@
  */
 #define	DE_CLEAR	1	/* Zero out the blocks allocated */
 
-int pcbmap(struct denode *, u_long, daddr_t *, u_long *, int *);
-int clusterfree(struct msdosfsmount *, u_long, u_long *);
-int clusteralloc(struct msdosfsmount *, u_long, u_long, u_long, u_long *, u_long *);
-int extendfile(struct denode *, u_long, struct buf **, u_long *, int);
-int fatentry(int, struct msdosfsmount *, u_long, u_long *, u_long);
+int pcbmap(struct denode *, uint32_t, daddr_t *, uint32_t *, int *);
+int clusterfree(struct msdosfsmount *, uint32_t, uint32_t *);
+int clusteralloc(struct msdosfsmount *, uint32_t, uint32_t, uint32_t, uint32_t *, uint32_t *);
+int extendfile(struct denode *, uint32_t, struct buf **, uint32_t *, int);
+int fatentry(int, struct msdosfsmount *, uint32_t, uint32_t *, uint32_t);
 void fc_purge(struct denode *, u_int);
-void fc_lookup(struct denode *, u_long, u_long *, u_long *);
+void fc_lookup(struct denode *, uint32_t, uint32_t *, uint32_t *);
 int fillinusemap(struct msdosfsmount *);
-int freeclusterchain(struct msdosfsmount *, u_long);
+int freeclusterchain(struct msdosfsmount *, uint32_t);
 #endif	/* _KERNEL */

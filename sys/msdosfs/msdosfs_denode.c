@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.24 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.25 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ u_long dehash;			/* size of hash table - 1 */
 #define	DEHASH(dev, dcl, doff)	(((dev) + (dcl) + (doff) / sizeof(struct direntry)) \
 				 & dehash)
 
-static struct denode *msdosfs_hashget(dev_t, u_long, u_long);
+static struct denode *msdosfs_hashget(dev_t, uint32_t, uint32_t);
 static int msdosfs_hashins(struct denode *);
 static void msdosfs_hashrem(struct denode *);
 
@@ -88,8 +88,8 @@ msdosfs_init(vfsp)
 static struct denode *
 msdosfs_hashget(dev, dirclust, diroff)
 	dev_t dev;
-	u_long dirclust;
-	u_long diroff;
+	uint32_t dirclust;
+	uint32_t diroff;
 {
 	struct denode *dep;
 	struct proc *p = curproc; /* XXX */
@@ -173,8 +173,8 @@ msdosfs_hashrem(dep)
 int
 deget(pmp, dirclust, diroffset, depp)
 	struct msdosfsmount *pmp;	/* so we know the maj/min number */
-	u_long dirclust;		/* cluster this dir entry came from */
-	u_long diroffset;		/* index of entry within the cluster */
+	uint32_t dirclust;		/* cluster this dir entry came from */
+	uint32_t diroffset;		/* index of entry within the cluster */
 	struct denode **depp;		/* returns the addr of the gotten denode */
 {
 	int error;
@@ -317,7 +317,7 @@ retry:
 		 * to find out the length of the directory and plug it into
 		 * the denode structure.
 		 */
-		u_long size;
+		uint32_t size;
 
 		nvp->v_type = VDIR;
 		if (ldep->de_StartCluster != MSDOSFSROOT) {
@@ -374,7 +374,7 @@ deupdat(dep, waitfor)
 int
 detrunc(dep, length, flags, cred, p)
 	struct denode *dep;
-	u_long length;
+	uint32_t length;
 	int flags;
 	struct ucred *cred;
 	struct proc *p;
@@ -382,8 +382,8 @@ detrunc(dep, length, flags, cred, p)
 	int error;
 	int allerror;
 	int vflags;
-	u_long eofentry;
-	u_long chaintofree;
+	uint32_t eofentry;
+	uint32_t chaintofree;
 	daddr_t bn;
 	int boff;
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;
@@ -520,11 +520,11 @@ detrunc(dep, length, flags, cred, p)
 int
 deextend(dep, length, cred)
 	struct denode *dep;
-	u_long length;
+	uint32_t length;
 	struct ucred *cred;
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
-	u_long count;
+	uint32_t count;
 	int error;
 	
 	/*
@@ -661,7 +661,7 @@ msdosfs_inactive(v)
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
+		error = detrunc(dep, (uint32_t)0, 0, NOCRED, NULL);
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	deupdat(dep, 0);

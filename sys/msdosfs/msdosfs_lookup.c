@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.12 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.13 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -97,12 +97,12 @@ msdosfs_lookup(v)
 	int slotcount;
 	int slotoffset = 0;
 	int frcn;
-	u_long cluster;
+	uint32_t cluster;
 	int blkoff;
 	int diroff;
 	int blsize;
 	int isadir;		/* ~0 if found direntry is a directory	 */
-	u_long scn;		/* starting cluster number		 */
+	uint32_t scn;		/* starting cluster number		 */
 	struct vnode *pdp;
 	struct denode *dp;
 	struct denode *tdp;
@@ -572,7 +572,7 @@ createde(dep, ddep, depp, cnp)
 	struct componentname *cnp;
 {
 	int error;
-	u_long dirclust, diroffset;
+	uint32_t dirclust, diroffset;
 	struct direntry *ndep;
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
@@ -697,7 +697,7 @@ dosdirempty(dep)
 {
 	int blsize;
 	int error;
-	u_long cn;
+	uint32_t cn;
 	daddr_t bn;
 	struct buf *bp;
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -860,14 +860,14 @@ out:;
 int
 readep(pmp, dirclust, diroffset, bpp, epp)
 	struct msdosfsmount *pmp;
-	u_long dirclust, diroffset;
+	uint32_t dirclust, diroffset;
 	struct buf **bpp;
 	struct direntry **epp;
 {
 	int error;
 	daddr_t bn;
 	int blsize;
-	u_long boff;
+	uint32_t boff;
 
 	boff = diroffset & ~pmp->pm_crbomask;
 	blsize = pmp->pm_bpcluster;
@@ -920,7 +920,7 @@ removede(pdep, dep)
 	daddr_t bn;
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
-	u_long offset = pdep->de_fndoffset;
+	uint32_t offset = pdep->de_fndoffset;
 	
 #ifdef MSDOSFS_DEBUG
 	printf("removede(): filename %s, dep %08x, offset %08x\n",
@@ -986,7 +986,7 @@ uniqdosname(dep, cnp, cp)
 	struct direntry *dentp;
 	int gen;
 	int blsize;
-	u_long cn;
+	uint32_t cn;
 	daddr_t bn;
 	struct buf *bp;
 	int error;
@@ -1049,7 +1049,7 @@ findwin95(dep)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
 	int blsize;
-	u_long cn;
+	uint32_t cn;
 	daddr_t bn;
 	struct buf *bp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.32 2003/08/14 07:46:40 mickey Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.33 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	u_int8_t SecPerClust;
 	int	ronly, error;
 	int	bsize = 0, dtype = 0, tmp;
-	u_long dirsperblk;
+	uint32_t dirsperblk;
 
 	/*
 	 * Disallow multiple mounts of the same device.

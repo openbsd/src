@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.15 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: denode.h,v 1.16 2004/05/12 21:04:15 tedu Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -103,8 +103,8 @@
  * structure (fc_frcn).
  */
 struct fatcache {
-	u_long fc_frcn;		/* file relative cluster number */
-	u_long fc_fsrcn;	/* filesystem relative cluster number */
+	uint32_t fc_frcn;		/* file relative cluster number */
+	uint32_t fc_fsrcn;	/* filesystem relative cluster number */
 };
 
 /*
@@ -139,12 +139,12 @@ struct denode {
 	struct denode **de_prev; /* Hash chain back */
 	struct vnode *de_vnode;	/* addr of vnode we are part of */
 	struct vnode *de_devvp;	/* vnode of blk dev we live on */
-	u_long de_flag;		/* flag bits */
+	uint32_t de_flag;		/* flag bits */
 	dev_t de_dev;		/* device where direntry lives */
 	daddr_t de_lastr;
-	u_long de_dirclust;	/* cluster of the directory file containing this entry */
-	u_long de_diroffset;	/* offset of this entry in the directory cluster */
-	u_long de_fndoffset;	/* offset of found dir entry */
+	uint32_t de_dirclust;	/* cluster of the directory file containing this entry */
+	uint32_t de_diroffset;	/* offset of this entry in the directory cluster */
+	uint32_t de_fndoffset;	/* offset of found dir entry */
 	int de_fndcnt;		/* number of slots before de_fndoffset */
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
@@ -158,8 +158,8 @@ struct denode {
 	u_short de_ADate;	/* access date */
 	u_short de_MTime;	/* modification time */
 	u_short de_MDate;	/* modification date */
-	u_long de_StartCluster; /* starting cluster of file */
-	u_long de_FileSize;	/* size of file in bytes */
+	uint32_t de_StartCluster; /* starting cluster of file */
+	uint32_t de_FileSize;	/* size of file in bytes */
 	struct fatcache de_fc[FC_SIZE];	/* fat cache */
 };
 
@@ -245,10 +245,10 @@ struct defid {
 	u_short defid_len;	/* length of structure */
 	u_short defid_pad;	/* force long alignment */
 
-	u_long defid_dirclust;	/* cluster this dir entry came from */
-	u_long defid_dirofs;	/* offset of entry within the cluster */
+	uint32_t defid_dirclust;	/* cluster this dir entry came from */
+	uint32_t defid_dirofs;	/* offset of entry within the cluster */
 #if 0
-	u_long	defid_gen;	/* generation number */
+	uint32_t	defid_gen;	/* generation number */
 #endif
 };
 
@@ -298,14 +298,14 @@ int	msdosfs_pathconf(void *);
  * Internal service routine prototypes.
  */
 int createde(struct denode *, struct denode *, struct denode **, struct componentname *);
-int deextend(struct denode *, u_long, struct ucred *);
-int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
-int detrunc(struct denode *, u_long, int, struct ucred *, struct proc *);
+int deextend(struct denode *, uint32_t, struct ucred *);
+int deget(struct msdosfsmount *, uint32_t, uint32_t, struct denode **);
+int detrunc(struct denode *, uint32_t, int, struct ucred *, struct proc *);
 int deupdat(struct denode *, int);
 int doscheckpath(struct denode *, struct denode *);
 int dosdirempty(struct denode *);
 int readde(struct denode *, struct buf **, struct direntry **);
-int readep(struct msdosfsmount *, u_long, u_long, struct buf **, struct direntry **);
+int readep(struct msdosfsmount *, uint32_t, uint32_t, struct buf **, struct direntry **);
 void reinsert(struct denode *);
 int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
