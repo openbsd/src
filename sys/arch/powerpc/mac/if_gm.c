@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_gm.c,v 1.2 2000/03/31 05:30:52 rahnds Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -84,6 +85,8 @@ struct gmac_softc {
 	char sc_laddr[6];
 #endif
 	vaddr_t sc_reg;
+	bus_space_handle_t gm_bush;
+	bus_space_tag_t    gm_bust;
 	struct gmac_dma *sc_txlist;
 	struct gmac_dma *sc_rxlist;
 	int sc_txnext;
@@ -142,9 +145,11 @@ gmac_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC)
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC))
+	{
 		return 1;
+	}
 
 	return 0;
 }
@@ -156,10 +161,16 @@ gmac_attach(parent, self, aux)
 {
 	struct gmac_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t	pc = pa->pa_pc;
 	struct ifnet *ifp = &sc->sc_if;
 	struct mii_data *mii = &sc->sc_mii;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	char intrstrbuf[20];
+	bus_addr_t	iobase;
+	bus_size_t	iosize;
+	bus_addr_t	membase;
+	bus_size_t	memsize;
 #if 0
 	int node;
 #endif
@@ -180,14 +191,52 @@ gmac_attach(parent, self, aux)
 	OF_getprop(node, "assigned-addresses", reg, sizeof reg);
 	#endif
 
-#ifdef __OpenBSD__
-	bcopy(laddr, sc->arpcom.ac_enaddr, 6);
-#else /* !__OpenBSD */
-	bcopy(laddr, sc->sc_laddr, sizeof laddr);
-#endif /* !__OpenBSD */
-	sc->sc_reg = reg[2];
-
 #ifdef __NetBSD__
+	bcopy(laddr, sc->sc_laddr, sizeof laddr);
+	sc->sc_reg = reg[2];
+#endif /* !__OpenBSD */
+#ifdef __OpenBSD__
+	/* proper pci configuration */
+	{
+		u_int32_t	command;
+		command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		printf("status %x\n", command);
+		command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+			PCI_COMMAND_MASTER_ENABLE;
+		printf("status %x\n", command);
+		pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+
+#ifdef USE_IO
+		if (pci_io_find(pc, pa->pa_tag, 0x10, &iobase, &iosize, NULL)) {
+			printf(": can't find I/O space\n");
+			return;
+		}
+		if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->gm_bush))
+		{
+			printf(": can't map I/O space\n");
+			return;
+		}
+		sc->gm_bust = pa->pa_iot;
+#else /* !USE_IO */
+		if (pci_mem_find(pc, pa->pa_tag, 0x10, &membase, &memsize,
+			NULL))
+		{
+			printf(": can't find MEM space\n");
+			return;
+		}
+		if (bus_space_map(pa->pa_memt, membase, memsize, 0,
+			&sc->gm_bush))
+		{
+			printf(": can't map MEM space\n");
+			return;
+		}
+		sc->gm_bust = pa->pa_memt;
+#endif /* !USE_IO */
+
+	}
+#endif
+
+#if 0
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": unable to map interrupt\n");
@@ -195,16 +244,24 @@ gmac_attach(parent, self, aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
-	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, gmac_intr, sc) == NULL) {
+	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, gmac_intr, sc, "gmac") == NULL) {
 		printf(": unable to establish interrupt");
 		if (intrstr)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
+#endif 
+#if 1
+	sprintf(intrstrbuf, "irq %d\n", pa->pa_intrline);
+	intrstr = intrstrbuf;
+	/*
 	if (pci_intr_establish(pa->pa_pc, pa->pa_intrline, IPL_NET,
+	* Someone explain how to get the interrupt line correctly from the
+	* pci info? pa_intrline returns 60, not 1 like the hardware expects
+	* on uni-north G4 system.
+	*/
+	if (pci_intr_establish(pa->pa_pc, 0x1, IPL_NET,
 		gmac_intr, sc, "gmac") == NULL)
 	{
 		printf(": unable to establish interrupt");
@@ -213,7 +270,7 @@ gmac_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-#endif /* __OpenBSD__ */
+#endif 
 
 	/* Setup packet buffers and dma descriptors. */
 	p = malloc((NRXBUF + NTXBUF) * 2048 + 3 * 0x800, M_DEVBUF, M_NOWAIT);
@@ -261,6 +318,7 @@ gmac_attach(parent, self, aux)
 		reg = gmac_read_reg(sc, GMAC_MACADDRESS2);
 		laddr[1] = reg & 0xff;
 		laddr[0] = (reg >> 8) & 0xff;
+		bcopy(laddr, sc->arpcom.ac_enaddr, 6);
 	}
 #endif /* __OpenBSD__ */
 
@@ -288,6 +346,9 @@ gmac_attach(parent, self, aux)
 #ifdef __NetBSD__
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 #endif /* __NetBSD__ */
+#ifdef __OpenBSD__
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+#endif  /* __OpenBSD__ */
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -313,7 +374,7 @@ gmac_read_reg(sc, reg)
 	struct gmac_softc *sc;
 	int reg;
 {
-	return in32rb(sc->sc_reg + reg);
+	return bus_space_read_4(sc->gm_bust, sc->gm_bush, reg);
 }
 
 void
@@ -322,7 +383,7 @@ gmac_write_reg(sc, reg, val)
 	int reg;
 	u_int val;
 {
-	out32rb(sc->sc_reg + reg, val);
+	bus_space_write_4(sc->gm_bust, sc->gm_bush, reg, val);
 }
 
 void
@@ -389,8 +450,9 @@ gmac_intr(v)
 	u_int status;
 
 	status = gmac_read_reg(sc, GMAC_STATUS) & 0xff;
-	if (status == 0)
+	if (status == 0) {
 		return 0;
+	}
 
 	if (status & GMAC_INT_RXDONE)
 		gmac_rint(sc);
@@ -1001,4 +1063,22 @@ gmac_mii_tick(v)
 	splx(s);
 
 	timeout(gmac_mii_tick, sc, hz);
+}
+void
+gmac_enable_hack()
+{
+	u_int32_t *paddr;
+	u_int32_t value;
+
+#if 1
+	paddr = mapiodev(0xf8000020, 0x30);
+
+	value = *paddr;
+	value |= 0x2;
+	*paddr = value;
+
+	unmapiodev(paddr,0x30);
+#endif
+
+	printf("gmac enabled\n");
 }
