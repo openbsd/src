@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.78 2001/12/08 18:07:57 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.79 2001/12/10 05:46:57 jasoni Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -57,6 +57,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
 
@@ -1963,24 +1964,34 @@ bridge_filter(sc, dir, ifp, eh, m)
 
 	/* Copy minimal header, and drop invalids */
 	if (m->m_len < sizeof(struct ip) &&
-	    (m = m_pullup(m, sizeof(struct ip))) == NULL)
+	    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
+		ipstat.ips_toosmall++;
 		return (NULL);
+	}
 	ip = mtod(m, struct ip *);
 
-	if (ip->ip_v != IPVERSION)
+	if (ip->ip_v != IPVERSION) {
+		ipstat.ips_badvers++;
 		goto dropit;
+	}
 
 	hlen = ip->ip_hl << 2;	/* get whole header length */
-	if (hlen < sizeof(struct ip))
+	if (hlen < sizeof(struct ip)) {
+		ipstat.ips_badhlen++;
 		goto dropit;
+	}
 	if (hlen > m->m_len) {
-		if ((m = m_pullup(m, hlen)) == NULL)
+		if ((m = m_pullup(m, hlen)) == NULL) {
+			ipstat.ips_badhlen++;
 			return (NULL);
+		}
 		ip = mtod(m, struct ip *);
 	}
 
-	if ((ip->ip_sum = in_cksum(m, hlen)) != 0)
+	if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
+		ipstat.ips_badsum++;
 		goto dropit;
+	}
 
 	NTOHS(ip->ip_len);
 	if (ip->ip_len < hlen)
