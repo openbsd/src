@@ -103,10 +103,10 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_long pc;
+	void (*pc)(struct proc *);
 {
 
-	p->p_addr->u_pcb.pcb_regs[6] = pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (u_long)pc;	/* A2 */
 }
 
 /*
@@ -200,9 +200,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t pa;
 
