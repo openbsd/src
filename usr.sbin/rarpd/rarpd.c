@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.41 2003/07/21 19:44:33 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.42 2004/05/05 01:16:39 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.41 2003/07/21 19:44:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.42 2004/05/05 01:16:39 deraadt Exp $";
 #endif
 
 
@@ -286,6 +286,22 @@ bpf_open(void)
 	}
 	return fd;
 }
+
+static struct bpf_insn insns[] = {
+	BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
+	BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ETHERTYPE_REVARP, 0, 3),
+	BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 20),
+	BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ARPOP_REVREQUEST, 0, 1),
+	BPF_STMT(BPF_RET | BPF_K, sizeof(struct ether_arp) +
+	    sizeof(struct ether_header)),
+	BPF_STMT(BPF_RET | BPF_K, 0),
+};
+
+static struct bpf_program filter = {
+	sizeof insns / sizeof(insns[0]),
+	insns
+};
+
 /*
  * Open a BPF file and attach it to the interface named 'device'.
  * Set immediate mode, and set a filter that accepts only RARP requests.
@@ -293,24 +309,9 @@ bpf_open(void)
 int
 rarp_open(char *device)
 {
-	int     fd;
+	int     fd, immediate;
 	struct ifreq ifr;
 	u_int   dlt;
-	int     immediate;
-
-	static struct bpf_insn insns[] = {
-		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
-		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ETHERTYPE_REVARP, 0, 3),
-		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 20),
-		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ARPOP_REVREQUEST, 0, 1),
-		BPF_STMT(BPF_RET | BPF_K, sizeof(struct ether_arp) +
-		    sizeof(struct ether_header)),
-		BPF_STMT(BPF_RET | BPF_K, 0),
-	};
-	static struct bpf_program filter = {
-		sizeof insns / sizeof(insns[0]),
-		insns
-	};
 
 	fd = bpf_open();
 
