@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.135 2003/01/18 22:23:00 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.136 2003/01/19 13:48:06 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -165,7 +165,7 @@ static char *clearopt_list[] = {
 };
 
 static char *showopt_list[] = {
-	"nat", "queue", "rules", "anchors", "state", "info", "labels",
+	"nat", "queue", "rules", "Anchors", "state", "info", "labels",
 	"timeouts", "memory", "Tables", "all", NULL
 };
 

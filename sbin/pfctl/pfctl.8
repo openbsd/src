@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.65 2003/01/10 16:09:19 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.66 2003/01/19 13:48:06 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -187,7 +187,7 @@ will skip evaluation of rules where possible.
 Packets passed statefully are counted in the rule that created the state
 (even though the rule isn't evaluated more than once for the entire
 connection).
-.It Fl s Ar anchor
+.It Fl s Ar Anchors
 Show the currently loaded anchors.
 If
 .Fl a
