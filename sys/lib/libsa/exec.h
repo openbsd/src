@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.2 1998/07/14 17:21:44 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 2000/01/06 02:59:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -45,7 +45,7 @@
 #include <sys/exec_elf.h>
 #endif
 #ifdef	EXEC_SOM
-#include <sys/exec_som.h>
+#include <machine/som.h>
 #endif
 
 union x_header {
