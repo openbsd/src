@@ -1,0 +1,12 @@
+#	@(#)ReliantUNIX	8.1	(Berkeley)	1/22/1999
+define(`confCC', `/usr/bin/cc')
+define(`confENVDEF', `-D__svr4__ ')
+define(`confLIBS', `-lsocket -lnsl -lelf')
+define(`confMBINDIR', `/usr/ucblib')
+define(`confSBINDIR', `/usr/ucbetc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/ucblib')
+define(`confSBINGRP', `mail')
+define(`confSTDIR', `/usr/ucblib')
+define(`confHFDIR', `/usr/ucblib')
+define(`confINSTALL', `/usr/ucb/install')

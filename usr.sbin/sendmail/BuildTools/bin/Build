@@ -10,7 +10,7 @@
 # the sendmail distribution.
 #
 #
-#       @(#)Build	8.93 (Berkeley) 6/24/1998
+#       @(#)Build	8.94 (Berkeley) 1/23/1999
 #
 
 #
@@ -190,6 +190,10 @@ in
 
   NILE*)	arch=NILE
 		os=`uname -v`;;
+
+  CRAYT3E|CRAYTS)
+		os=$arch;;
+
 esac
 
 # tweak operating system type and release

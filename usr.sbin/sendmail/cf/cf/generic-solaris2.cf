@@ -15,8 +15,8 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@knecht.Sendmail.ORG on Tue Dec 29 09:59:26 PST 1998
-##### in /home/knecht/a/eric/src/sendmail/cf/cf
+##### built by gshapiro@knecht.sendmail.org on Thu Feb 4 16:39:23 PST 1999
+##### in /home/eric/src/sendmail/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
@@ -39,7 +39,7 @@
 
 
 
-#####  @(#)proto.m4	8.237 (Berkeley) 12/17/1998  #####
+#####  @(#)proto.m4	8.243 (Berkeley) 2/2/1999  #####
 
 
 # level 8 config file format
@@ -116,7 +116,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.9.2
+DZ8.9.3
 
 
 ###############
@@ -377,6 +377,7 @@ O OperatorChars=.:%@!^/[]+
 
 # shall we get local names from our installed interfaces?
 #O DontProbeInterfaces
+
 
 
 
@@ -657,7 +658,9 @@ R< > $+			$: < > < $1 $&h >		nope, restore +detail
 R< > < $+ + $* > $*	   < > < $1 > + $2 $3		find the user part
 R< > < $+ > + $*	$#local $@ $2 $: @ $1		strip the extra +
 R< > < $+ >		$@ $1				no +detail
-R$+			$: $1 $&h			add +detail back in
+R$+			$: $1 <> $&h			add +detail back in
+R$+ <> + $*		$: $1 + $2			check whether +detail
+R$+ <> $*		$: $1				else discard
 R< local : $* > $*	$: $>95 < local : $1 > $2	no host extension
 R< error : $* > $*	$: $>95 < error : $1 > $2	no host extension
 R< $- : $+ > $+		$: $>95 < $1 : $2 > $3 < @ $2 >
@@ -682,6 +685,10 @@ R< $+ > $*			$#relay $@ $1 $: $2	use unqualified mailer
 ###################################################################
 
 SCanonLocal
+# strip local host from routed addresses
+R< $* > < @ $+ > : $+		$@ $>97 $3
+R< $* > $+ $=O $+ < @ $+ >	$@ $>97 $2 $3 $4
+
 # strip trailing dot from any host name that may appear
 R< $* > $* < @ $* . >		$: < $1 > $2 < @ $3 >
 
