@@ -49,7 +49,7 @@ Bootable installation/upgrade floppy:
 The OpenBSD/i386 binary distribution sets contain the binaries which
 comprise the OpenBSD 2.2 release for the i386.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "i386/bins" subdirectory of the OpenBSD 2.2
+subdirectories of the "i386" subdirectory of the OpenBSD 2.2
 distribution tree, and are as follows:
 
 	base22	The OpenBSD/i386 2.2 base binary distribution.  You
