@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.5 1998/06/25 19:01:51 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.6 1998/10/29 04:09:20 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -2014,7 +2014,9 @@ x_prev_histword(c)
   char *cp;
 
   cp = *histptr;
-  if (x_arg_defaulted) {
+  if (!cp)
+    x_e_putc(BEL);
+  else if (x_arg_defaulted) {
     rcp = &cp[strlen(cp) - 1];
     /*
      * ignore white-space after the last word

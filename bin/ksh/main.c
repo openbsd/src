@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1998/06/25 19:02:10 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1998/10/29 04:09:21 millert Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -596,6 +596,8 @@ shell(s, toplevel)
 		t = compile(s);
 		if (t != NULL && t->type == TEOF) {
 			if (wastty && Flag(FIGNOREEOF) && --attempts > 0) {
+				shellf("pgrp=%d, ttypgrp=%d\n",
+					getpgrp(), tcgetpgrp(0));
 				shellf("Use `exit' to leave ksh\n");
 				s->type = SSTDIN;
 			} else if (wastty && !really_exit

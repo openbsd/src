@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.12 1998/06/27 15:23:29 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.13 1998/10/29 04:09:20 millert Exp $	*/
 
 /*
  * execute command tree
@@ -1083,7 +1083,7 @@ flushcom(all)
 				tp->flag &= ~(ALLOC|ISSET);
 				afree(tp->val.s, APERM);
 			}
-			tp->flag = ~ISSET;
+			tp->flag &= ~ISSET;
 		}
 }
 
@@ -1103,9 +1103,10 @@ search_access(path, mode, errnop)
 	ret = eaccess(path, mode);
 	if (ret < 0)
 		err = errno; /* File exists, but we can't access it */
-	else if (mode == X_OK && (!S_ISREG(statb.st_mode)
-		/* This 'cause access() says root can execute everything */
-		   || !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))))
+	else if (mode == X_OK
+		 && (!S_ISREG(statb.st_mode)
+		     /* This 'cause access() says root can execute everything */
+		     || !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))))
 	{
 		ret = -1;
 		err = S_ISDIR(statb.st_mode) ? EISDIR : EACCES;

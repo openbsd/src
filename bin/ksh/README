@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.6 1998/06/25 19:01:42 millert Exp $
+$OpenBSD: README,v 1.7 1998/10/29 04:09:19 millert Exp $
 
 Last updated October '97 for pdksh-5.2.13.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
@@ -169,9 +169,12 @@ Newer versions of pdksh may be available from
 	ftp://ftp.cs.mun.ca:/pub/pdksh/
 you may want to check for one if you run into any problems, as the problem may
 already be fixed (you can get new release notifications automatically - see
-above).
+above).  The file pdksh-unstable-XXX.tar.gz has the very latest version which
+may not compile (it is generated automatically when changes are detected
+in the main source repository) - it is for those who want to follow
+changes as they are made.
 
-You can send bug reports, fixes, and enchancements to pdksh@cs.mun.ca (please
+You can send bug reports, fixes, and enhancements to pdksh@cs.mun.ca (please
 don't assume I will see bug reports that are posted to some newsgroup or
 mailing list - I probably won't).
 If you are reporting a bug (with or without a fix), please include

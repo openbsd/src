@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 1998/06/25 19:02:11 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 1998/10/29 04:09:21 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -130,7 +130,7 @@ const struct option options[] = {
 	{ "braceexpand",  0,		OF_ANY }, /* non-standard */
 #endif
 	{ "bgnice",	  0,		OF_ANY },
-	{ null,	 	'c',	    OF_CMDLINE },
+	{ (char *) 0, 	'c',	    OF_CMDLINE },
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
 #endif
@@ -146,7 +146,7 @@ const struct option options[] = {
 #ifdef JOBS
 	{ "monitor",	'm',		OF_ANY },
 #else /* JOBS */
-	{ null,		'm',		     0 }, /* so FMONITOR not ifdef'd */
+	{ (char *) 0,	'm',		     0 }, /* so FMONITOR not ifdef'd */
 #endif /* JOBS */
 	{ "noclobber",	'C',		OF_ANY },
 	{ "noexec",	'n',		OF_ANY },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.7 1998/06/25 19:02:02 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.8 1998/10/29 04:09:20 millert Exp $	*/
 
 /*
  * Process and job control
@@ -125,6 +125,7 @@ struct proc {
 #define JF_ZOMBIE	0x100	/* known, unwaited process */
 #define JF_REMOVE	0x200	/* flaged for removal (j_jobs()/j_noityf()) */
 #define JF_USETTYMODE	0x400	/* tty mode saved if process exits normally */
+#define JF_SAVEDTTYPGRP	0x800	/* j->saved_ttypgrp is valid */
 
 typedef struct job Job;
 struct job {
@@ -145,6 +146,7 @@ struct job {
 #endif /* KSH */
 #ifdef TTY_PGRP
 	TTY_state ttystate;	/* saved tty state for stopped jobs */
+	pid_t	saved_ttypgrp;	/* saved tty process group for stopped jobs */
 #endif /* TTY_PGRP */
 };
 
@@ -895,13 +897,14 @@ j_resume(cp, bg)
 			if (ttypgrp_ok && (j->flags & JF_SAVEDTTY)) {
 				set_tty(tty_fd, &j->ttystate, TF_NONE);
 			}
-			if (ttypgrp_ok && tcsetpgrp(tty_fd, j->pgrp) < 0) {
+			/* See comment in j_waitj regarding saved_ttypgrp. */
+			if (ttypgrp_ok && tcsetpgrp(tty_fd, (j->flags & JF_SAVEDTTYPGRP) ? j->saved_ttypgrp : j->pgrp) < 0) {
 				if (j->flags & JF_SAVEDTTY)
 					set_tty(tty_fd, &tty_state, TF_NONE);
 				sigprocmask(SIG_SETMASK, &omask,
 					(sigset_t *) 0);
 				bi_errorf("1st tcsetpgrp(%d, %d) failed: %s",
-					tty_fd, (int) j->pgrp, strerror(errno));
+					tty_fd, (int) ((j->flags & JF_SAVEDTTYPGRP) ? j->saved_ttypgrp : j->pgrp), strerror(errno));
 				return 1;
 			}
 		}
@@ -936,7 +939,7 @@ j_resume(cp, bg)
 	if (!bg) {
 # ifdef TTY_PGRP
 		if (ttypgrp_ok) {
-			j->flags &= ~JF_SAVEDTTY;
+			j->flags &= ~(JF_SAVEDTTY | JF_SAVEDTTYPGRP);
 		}
 # endif /* TTY_PGRP */
 		rv = j_waitj(j, JW_NONE, "jw:resume");
@@ -1198,6 +1201,20 @@ j_waitj(j, flags, where)
 		j->flags &= ~JF_FG;
 #ifdef TTY_PGRP
 		if (Flag(FMONITOR) && ttypgrp_ok && j->pgrp) {
+			/*
+			 * Save the tty's current pgrp so it can be restored
+			 * when the job is foregrounded.  This is to
+			 * deal with things like the GNU su which does
+			 * a fork/exec instead of an exec (the fork means
+			 * the execed shell gets a different pid from its
+			 * pgrp, so naturally it sets its pgrp and gets hosed
+			 * when it gets forgrounded by the parent shell, which
+			 * has restored the tty's pgrp to that of the su
+			 * process).
+			 */
+			if (j->state == PSTOPPED
+			    && (j->saved_ttypgrp = tcgetpgrp(tty_fd)) >= 0)
+				j->flags |= JF_SAVEDTTYPGRP;
 			if (tcsetpgrp(tty_fd, our_pgrp) < 0) {
 				warningf(TRUE,
 				"j_waitj: tcsetpgrp(%d, %d) failed: %s",

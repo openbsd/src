@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.7 1998/06/25 19:01:46 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.8 1998/10/29 04:09:20 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -424,6 +424,13 @@ c_eval(wp)
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
+	/* XXX what is this?
+	{
+	    int i;
+	    for (i = builtin_opt.optind; wp[i]; i++)
+		shellf("eval[%s]\n", wp[i]);
+	}
+	*/
 	s = pushs(SWORDS, ATEMP);
 	s->u.strv = wp + builtin_opt.optind;
 	return shell(s, FALSE);

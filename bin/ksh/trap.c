@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1997/09/01 18:30:13 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1998/10/29 04:09:21 millert Exp $	*/
 
 /*
  * signal handling
@@ -32,7 +32,7 @@ inittraps()
 
 	/* Use system description, if available, for unknown signals... */
 	for (i = 0; i < NSIG; i++)
-		if (!sigtraps[i].name && sys_siglist[i][0])
+		if (!sigtraps[i].name && sys_siglist[i] && sys_siglist[i][0])
 			sigtraps[i].mess = sys_siglist[i];
 #endif	/* HAVE_SYS_SIGLIST */
 

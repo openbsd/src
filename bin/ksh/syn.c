@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.10 1998/10/09 16:21:36 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.11 1998/10/29 04:09:21 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -565,10 +565,19 @@ function_body(name, ksh_func)
 	old_func_parse = e->flags & EF_FUNC_PARSE;
 	e->flags |= EF_FUNC_PARSE;
 	if ((t->left = get_command(CONTIN)) == (struct op *) 0) {
-		/* create empty command so foo(): will work */
+		/*
+		 * Probably something like foo() followed by eof or ;.
+		 * This is accepted by sh and ksh88.
+		 * To make "typset -f foo" work reliably (so its output can
+		 * be used as input), we pretend there is a colon here.
+		 */
 		t->left = newtp(TCOM);
-		t->left->args = (char **) alloc(sizeof(char *), ATEMP);
-		t->left->args[0] = (char *) 0;
+		t->left->args = (char **) alloc(sizeof(char *) * 2, ATEMP);
+		t->left->args[0] = alloc(sizeof(char) * 3, ATEMP);
+		t->left->args[0][0] = CHAR;
+		t->left->args[0][1] = ':';
+		t->left->args[0][2] = EOS;
+		t->left->args[1] = (char *) 0;
 		t->left->vars = (char **) alloc(sizeof(char *), ATEMP);
 		t->left->vars[0] = (char *) 0;
 	}

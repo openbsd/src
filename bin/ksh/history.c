@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.8 1998/06/25 19:01:58 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.9 1998/10/29 04:09:20 millert Exp $	*/
 
 /*
  * command history
@@ -633,9 +633,9 @@ histsave(lno, cmd, dowrite)
  * commands
  */
 void
-histappend(cmd, nl_seperate)
+histappend(cmd, nl_separate)
 	const char *cmd;
-	int	nl_seperate;
+	int	nl_separate;
 {
 	int	hlen, clen;
 	char	*p;
@@ -646,7 +646,7 @@ histappend(cmd, nl_seperate)
 		clen--;
 	p = *histptr = (char *) aresize(*histptr, hlen + clen + 2, APERM);
 	p += hlen;
-	if (nl_seperate)
+	if (nl_separate)
 		*p++ = '\n';
 	memcpy(p, cmd, clen);
 	p[clen] = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.4 1998/06/25 19:02:15 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.5 1998/10/29 04:09:21 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -90,7 +90,7 @@ int 	c_fc	 	ARGS((register char **wp));
 void	sethistsize	ARGS((int n));
 void	sethistfile	ARGS((const char *name));
 # ifdef EASY_HISTORY
-void 	histappend	ARGS((const char *cmd, int nl_seperate));
+void 	histappend	ARGS((const char *cmd, int nl_separate));
 # endif
 char **	histpos	 	ARGS((void));
 int 	histN	 	ARGS((void));

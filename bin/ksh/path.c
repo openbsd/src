@@ -1,10 +1,10 @@
-/*	$OpenBSD: path.c,v 1.4 1998/06/25 19:02:14 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.5 1998/10/29 04:09:21 millert Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
 
 /*
- *	Contains a routine to search a : seperated list of
+ *	Contains a routine to search a : separated list of
  *	paths (a la CDPATH) and make appropiate file names.
  *	Also contains a routine to simplify .'s and ..'s out of
  *	a path name.
@@ -14,6 +14,24 @@
 
 /*
  * $Log: path.c,v $
+ * Revision 1.5  1998/10/29 04:09:21  millert
+ * Bug fixes from pdksh-unstable-5.2.13.4, including "official" versions of
+ * some that we had already fixed locally.
+ * o typeset -f FUNC doesn't print follows command (and expression) substitutions.
+ * o when re-allocating memory, too much may be copied from old memory.
+ * o set -o printed some options sans names.
+ * o emacs mode: <esc>. in very fist command causes core dump.
+ * o pdksh dumps core after a cd command.
+ * o typeset -i reports on array elements that have no value
+ * (at&t ksh reports on array base name - no index).
+ * o ulimit -ctn unlimittttted kills shell (resource exceeded).
+ * o ". /dev/null" says access denied.
+ * o flag field in aliases incorrectly changed (all flags set instead of
+ * clearing ISSET) in exec.c(flushcom).
+ * o ${#array[*]} prints largest index instead of number of (set) elements
+ * in an array (ksh88 does the former).
+ * o sys_siglist[] doesn't always have NSIG non-null entries...
+ *
  * Revision 1.4  1998/06/25 19:02:14  millert
  * pdksh-5.2.13 + local changes
  *
@@ -72,7 +90,7 @@ int
 make_path(cwd, file, cdpathp, xsp, phys_pathp)
 	const char *cwd;
 	const char *file;
-	char	**cdpathp;	/* & of : seperated list */
+	char	**cdpathp;	/* & of : separated list */
 	XString	*xsp;
 	int	*phys_pathp;
 {

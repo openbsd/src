@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.3 1997/06/19 13:58:46 kstailey Exp $	*/
+/*	$OpenBSD: shf.c,v 1.4 1998/10/29 04:09:21 millert Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -1098,11 +1098,11 @@ shf_vfprintf(shf, fmt, args)
 					precision = 0;
 			}
 			if (tmp)
-				*--s = '-';
+				*s++ = '-';
 			else if (flags & FL_PLUS)
-				*--s = '+';
+				*s++ = '+';
 			else if (flags & FL_BLANK)
-				*--s = ' ';
+				*s++ = ' ';
 
 			if (style == 'e')
 				*s++ = *p++;

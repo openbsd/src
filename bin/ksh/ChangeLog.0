@@ -1,4 +1,4 @@
-$OpenBSD: ChangeLog.0,v 1.2 1998/06/25 19:01:32 millert Exp $
+$OpenBSD: ChangeLog.0,v 1.3 1998/10/29 04:09:19 millert Exp $
 
 Thu Jun 15 11:02:06 NDT 1995 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -1586,7 +1586,7 @@ Fri Sep 16 11:32:01 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	  routines.
 	* jobs.c: use ifdef JOB_SIGS instead of ifdef JOBS when setting
 	  signal masks and routines or using waitpid; define TTY_PGRP and
-	  NEED_PGRP_SYNC seperately from JOBS.
+	  NEED_PGRP_SYNC separately from JOBS.
 	* jobs.c(j_kill): only send SIGCONT if job is stopped.
 	* jobs.c(j_jobs): remove exited/signaled jobs even if !FMONITOR,
 	  un-ifdef JOBS same.
@@ -2312,7 +2312,7 @@ Tue Aug 16 10:17:47 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	* main.c(shell): changed s->echo to set/clr of SF_ECHO in s->flags.
 
 	* table.h: added aliases and keywords tables; deleted lexicals table
-	  (POSIX says they are seperate).
+	  (POSIX says they are separate).
 	* syn.c(keywords,initkeywords): changed name of keywords() function
 	  to initkeywords(); changed all calls; add to keywords table instead
 	  of lexicals table.
@@ -2938,7 +2938,7 @@ Sun Jul  3 11:09:01 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* configure.in, aclocal.m4(KSH_TERMIOS_H, KSH_TERM_CHECK): replaced
 	  KSH_TERMIOS_H with KSH_TERM_CHECK; removed calls to
-	  tcgetpgrp/tcsetpgrp - there is a seperate test for this.
+	  tcgetpgrp/tcsetpgrp - there is a separate test for this.
 
 	* main.c(main), sh.h: move getcwd() declaration to sh.h.
 

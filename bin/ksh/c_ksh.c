@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.8 1998/06/25 19:01:44 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.9 1998/10/29 04:09:19 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -601,7 +601,7 @@ c_typeset(wp)
 	 * to get a number that is used with -L, -R, -Z or -i (eg, -1R2
 	 * sets right justify in a field of 12).  This allows options
 	 * to be grouped in an order (eg, -Lu12), but disallows -i8 -L3 and
-	 * does not allow the number to be specified as a seperate argument
+	 * does not allow the number to be specified as a separate argument
 	 * Here, the number must follow the RLZi option, but is optional
 	 * (see the # kludge in ksh_getopt()).
 	 */
@@ -765,15 +765,37 @@ c_typeset(wp)
 	    }
 	} else {
 	    for (l = e->loc; l; l = l->next) {
-		for (p = tsort(&l->vars); (vp = *p++); )
+		for (p = tsort(&l->vars); (vp = *p++); ) {
+		    struct tbl *tvp;
+		    int any_set = 0;
+		    /*
+		     * See if the parameter is set (for arrays, if any
+		     * element is set).
+		     */
+		    for (tvp = vp; tvp; tvp = tvp->u.array)
+			if (tvp->flag & ISSET) {
+			    any_set = 1;
+			    break;
+			}
+		    /*
+		     * Check attributes - note that all array elements
+		     * have (should have?) the same attributes, so checking
+		     * the first is sufficient.
+		     *
+		     * Report an unset param only if the user has
+		     * explicitly given it some attribute (like export);
+		     * otherwise, after "echo $FOO", we would report FOO...
+		     */
+		    if (!any_set && !(vp->flag & USERATTRIB))
+			continue;
+		    if (flag && (vp->flag & flag) == 0)
+			continue;
 		    for (; vp; vp = vp->u.array) {
-			/* Report an unset param only if the user has
-			 * explicitly given it some attribute (like export);
-			 * otherwise, after "echo $FOO", we would report FOO...
+			/* Ignore array elements that aren't set unless there
+			 * are no set elements, in which case the first is
+			 * reported on
 			 */
-			if (!(vp->flag & ISSET) && !(vp->flag & USERATTRIB))
-			    continue;
-			if (flag && (vp->flag & flag) == 0)
+			if ((vp->flag&ARRAY) && any_set && !(vp->flag & ISSET))
 			    continue;
 			/* no arguments */
 			if (thing == 0 && flag == 0) {
@@ -802,15 +824,14 @@ c_typeset(wp)
 				shprintf("-u ");
 			    if ((vp->flag&INT_U)) 
 				shprintf("-U ");
+			    shprintf("%s\n", vp->name);
 			    if (vp->flag&ARRAY)
-				shprintf("%s[%d]\n", vp->name, vp->index);
-			    else
-				shprintf("%s\n", vp->name);
+				break;
 			} else {
 			    if (pflag)
 				shprintf("%s ",
 				    (flag & EXPORT) ?  "export" : "readonly");
-			    if (vp->flag&ARRAY)
+			    if ((vp->flag&ARRAY) && any_set)
 				shprintf("%s[%d]", vp->name, vp->index);
 			    else
 				shprintf("%s", vp->name);
@@ -827,7 +848,13 @@ c_typeset(wp)
 			    }
 			    shprintf(newline);
 			}
+			/* Only report first `element' of an array with
+			 * no set elements.
+			 */
+			if (!any_set)
+			    break;
 		    }
+		}
 	    }
 	}
 	return 0;

@@ -1,3 +1,17 @@
+Version 5.2.14pre
+
+* bug fixes
+    * typeset -f: now pretty-prints $(..) and $((..)) correctly.
+    * fixed bug in memory allocation which can lead to core dumps.
+    * set -o: no longer prints options that have no names.
+    * emacs: <esc>. in very fist command no longer dumps core.
+    * .: can now dot non-regular files (eg, /dev/null).
+    * parsing: bar(); no longer dumps core when function bar is run.
+    * variable substitution: ${#array[*]} now prints number of set elements
+      in the array (used to print largest index, not what ksh88 did).
+    * job control: resuming suspended gnu su no longer hoses su'd shell.
+
+
 Version 5.2.13
 
 * bug fixes
@@ -24,7 +38,7 @@ Version 5.2.13
     * editing: completion after "cmd " now completes files (was command).
 
 
-$OpenBSD: NEWS,v 1.6 1998/06/25 19:01:35 millert Exp $
+$OpenBSD: NEWS,v 1.7 1998/10/29 04:09:19 millert Exp $
 
 Version 5.2.12
 

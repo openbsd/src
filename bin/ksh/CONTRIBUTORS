@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.4 1998/06/25 19:01:29 millert Exp $
+$OpenBSD: CONTRIBUTORS,v 1.5 1998/10/29 04:09:19 millert Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -109,3 +109,10 @@ Other contributors:
       keep exec'd file descriptors open.
     * George White <gwhite@bodnext.bio.dfo.ca>: fix here-doc problem under OS/2
       (memory allocated incorrectly).
+    * David E. Wexelblat <dwex@DataFocus.com>: fix to avoid memory overrun
+      in aresize(); fix to not print un-named options.
+    * Clifford Wolf (<clifford@clifford.at>): fix memory overrun in aresize();
+      fixed sys_siglist[] problem.
+    * Theo de Raadt (<deraadt@cvs.openbsd.org>): allow ". /dev/null".
+    * Eric Youngdale (<ericy@datafocus.com>): flag field incorrectly changed
+      in exec.c(flushcom).

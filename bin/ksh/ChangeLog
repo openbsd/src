@@ -1,3 +1,70 @@
+Fri Oct 23 19:59:25 NDT 1998 Michael Rendell (michael@lenny.cs.mun.ca)
+
+	* jobs.c(JF_SAVEDTTYPGRP,j_resume,j_waitj): added save_ttypgrp
+	  stuff to deal with new gnu su which doesn't exec, but forks
+	  then execs.
+
+Thu Sep 24 16:23:48 NDT 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* trap.c(inittrap): Don't assume sys_siglist[] has NSIG non-null
+	  entries (fix from clifford@clifford.at).
+
+Thu Aug  6 14:46:45 NDT 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* eval.c(varsub): ${#array[*]} now prints N elements, not
+	  max index.
+
+Sun Jul 19 11:50:21 NDT 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* syn.c(function_body): fixed bug in handling of empty function
+	  body; if empty, pretend there is a : command.
+
+Mon Jun 29 10:13:02 NDT 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* exec.c(search_access): allow non-regular files to be .'ed
+	  (fix from Theo de Raadt).
+
+Thu Jun 25 17:01:36 NDT 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_ulimit.c(c_ulimit): added KSH_RLIM_INFINITY and defined
+	  if system doesn't define RLIM_INFINITY; use when setting limits.
+	  When setting, if expression evaluates to 0 and string was not
+	  a number, generate an error (based on fix from Todd C. Miller).
+
+Wed Mar 11 16:35:37 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* exec.c(flushcom): clear ISSET bit, don't set all the other bits
+	  (fix from Eric Youngdale).
+
+Tue Dec 16 11:07:21 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* shf.c(shf_vfprintf): %e/%f/%g conversion now prints negative
+	  numbers correctly (fix from Larry Bouzane).
+
+Thu Nov 20 15:16:15 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* emacs.c(x_prev_histword): check if histptr is 0.
+
+Sat Nov  8 11:46:32 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* misc.c(options[]): changed null entries to (char *) 0
+	  (based on fix from David E. Wexelblat).
+
+Fri Nov  7 14:45:24 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* alloc.c(aresize): avoid memory overrun when copying old memory
+	  to new memory.
+	  (fix from David E. Wexelblat).
+
+Tue Oct 28 11:26:22 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* tests/th: file-setup code: convert chmod argument to octal.
+
+Tue Oct 28 11:00:45 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* tree.c(tputS): incr wp after COMSUB and EXPRSUB while loop
+	  to get past null.
+
 Mon Oct 27 12:38:05 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* made pdksh-5.2.13 distribution
@@ -176,7 +243,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.6 1998/06/25 19:01:31 millert Exp $
+$OpenBSD: ChangeLog,v 1.7 1998/10/29 04:09:19 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -1037,7 +1104,7 @@ Mon Jan  8 11:42:46 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 Fri Jan  5 12:15:58 NST 1996 Michael Rendell (michael@garfield.cs.mun.ca)
 
-	* c_ksh.c(c_typeset): seperate loop for printing functions
+	* c_ksh.c(c_typeset): separate loop for printing functions
 	  (do not traverse array link).
 	* c_ksh.c(c_typeset): list functions: do not ignore unset functions.
 	* exec.c(findfunc): set val.t to 0 when creating new entry.

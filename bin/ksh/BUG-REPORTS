@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.6 1998/06/25 19:01:27 millert Exp $
+$OpenBSD: BUG-REPORTS,v 1.7 1998/10/29 04:09:18 millert Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -7,7 +7,7 @@ problems believed to be fixed marked by x.
 * pdksh 5.0.3, MIPS RISC/os 5.0 (bsd universe) (noted by Michael Rendell):
   for interactive, job controlled shells, the kernel's tty state gets twisted
   in such a way that all output is lost (eg, if ttyXX is wedged then
-  "echo hi > /dev/ttyXX" from a seperate login appears to succeed but produces
+  "echo hi > /dev/ttyXX" from a separate login appears to succeed but produces
   no output on ttyXX).
   Work around is to run a program and hit ^C.
 
@@ -87,6 +87,9 @@ problems believed to be fixed marked by x.
   [see Mail.XXX]
 
 * pdksh 5.2.12, - : MAILCHECK isn't preserved from the envirnment on startup.
+
+* pdksh 5.2.13, (reported by Dmitri Kulginov): "trap exit 1" does not set a
+  trap for HUP (exit is mistaken as a signal name, not a command).
 
 --------------------- put fixed problems below this line ---------------------
 
@@ -1223,3 +1226,70 @@ x pdksh 5.2.12, - (reported by Mike Kelly <tfsmiles@ecst.csuchico.edu>):
   doting a directory (or a empty path) is allowed.
   [see Mail.XXX]
   [fixed in 5.2.13: exec.c(search_access): don't do non-regular files for R_OK]
+
+x pdksh 5.2.13, - (reported by Mike Kelly <tfsmiles@ecst.csuchico.edu>):
+  typeset -f FUNC doesn't print follows command (and expression) substitutions.
+  [see Mail.XXX]
+  [fixed in 5.2.14: tree.c(tputS): add wp++]
+
+x pdksh 5.2.13, - (reported by Thomas Gellekum):
+  make check fails on freebsd with "chmod 644 abcx failed - Inappropriate ...".
+  [see Mail.XXX]
+  [fixed in 5.2.14: make test/th convert permissions to octal]
+
+x pdksh 5.2.13, - (reported with fix by David E. Wexelblat):
+  when re-allocating memory, too much may be copied from old memory.
+  [see Mail.XXX]
+  [fixed in 5.2.14: use min old old size and new size]
+
+x pdksh 5.2.13, - (reported with fix by David E. Wexelblat):
+  set -o printed some options sans names.
+  [see Mail.XXX]
+  [fixed in 5.2.14: use 0 instead of null in options[] table]
+
+x pdksh 5.2.13, - (reported by Gabor Zahemszky):
+  emacs mode: <esc>. in very fist command causes core dump.
+  [see Mail.XXX]
+  [fixed in 5.2.14: ring bell if no history in emacs.c(x_prev_histword)]
+
+x pdksh 5.2.13, - (reported by Keith S McCabe): pdksh dumps core
+  after a cd command.
+  [see Mail.XXX]
+  [fixed in 5.2.14: exec.c(flushcom) was setting bits in table entry, instead
+   of clearing a single bit]
+
+x pdksh 5.2.12, - (reported by Jaime A. Urquidi): typeset -i reports
+  on array elements that have no value (at&t ksh reports on array
+  base name - no index).
+  [see Mail.XXX]
+  [fixed in 5.2.14: hack to c_ksh.c(c_typeset) to generate the ksh88 style
+   output]
+
+x pdksh 5.2.13, - (reported with fix by Todd C. Miller):
+  ulimit -ctn unlimittttted kills shell (resource exceeded).
+  [see Mail.XXX]
+  [fixed in 5.2.14: hacked c_ulimit to generate error val is 0 and expr doesn't
+   start with a digit]
+
+x pdksh 5.2.13, - (reported with fix by Theo de Raadt):
+  ". /dev/null" says access denied.
+  [see Mail.XXX]
+  [fixed in 5.2.14: exec.c(search_access): allow non-regular file if reading]
+
+x pdksh 5.2.13, - (reported with fix by Eric Youngdale): flag field in aliases
+  incorrectly changed (all flags set instead of clearing ISSET) in
+  exec.c(flushcom).
+  [see Mail.XXX]
+  [fixed in 5.2.14: exec.c(flushcom): change = ~ISSET to &= ~ISSET]
+
+x pdksh 5.2.13, - (reported by Andre Delafontaine): ${#array[*]} prints
+  largest index instead of number of (set) elements in an array (ksh88 does
+  the former).
+  [see Mail.XXX]
+  [fixed in 5.2.14: eval.c(varsub): count number of elements]
+
+x pdksh 5.2.13, - (reported by Clifford Wolf): sys_siglist[] doesn't
+  always have NSIG non-null entries...
+  [see Mail.XXX]
+  [fixed in 5.2.14: trap.c(inittrap): check for null sys_siglist entries.]
+
