@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.18 1998/11/02 05:50:59 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.19 1999/01/07 03:14:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -380,63 +380,15 @@ beqint(sc, why)
 	if (why & BE_CR_STAT_RXIRQ)
 		r |= 1;
 
-	if (why & BE_CR_STAT_BERROR) {
+	if (why & BE_CR_STAT_ERRORS) {
 		r |= 1;
 		rst = 1;
-		printf("%s: bigmac error\n", sc->sc_dev.dv_xname);
 	}
 
-	if (why & BE_CR_STAT_TXDERR) {
-		r |= 1;
-		rst = 1;
-		printf("%s: bogus tx descriptor\n", sc->sc_dev.dv_xname);
-	}
-
-	if (why & (BE_CR_STAT_TXLERR | BE_CR_STAT_TXPERR | BE_CR_STAT_TXSERR)) {
-		r |= 1;
-		rst = 1;
-		printf("%s: tx dma error ( ", sc->sc_dev.dv_xname);
-		if (why & BE_CR_STAT_TXLERR)
-			printf("Late ");
-		if (why & BE_CR_STAT_TXPERR)
-			printf("Parity ");
-		if (why & BE_CR_STAT_TXSERR)
-			printf("Generic ");
-		printf(")\n");
-	}
-
-	if (why & BE_CR_STAT_RXDROP) {
-		r |= 1;
-		rst = 1;
-		printf("%s: out of rx descriptors\n", sc->sc_dev.dv_xname);
-	}
-
-	if (why & BE_CR_STAT_RXSMALL) {
-		r |= 1;
-		rst = 1;
-		printf("%s: rx descriptor too small\n", sc->sc_dev.dv_xname);
-	}
-
-	if (why & (BE_CR_STAT_RXLERR | BE_CR_STAT_RXPERR | BE_CR_STAT_RXSERR)) {
-		r |= 1;
-		rst = 1;
-		printf("%s: rx dma error ( ", sc->sc_dev.dv_xname);
-		if (why & BE_CR_STAT_RXLERR)
-			printf("Late ");
-		if (why & BE_CR_STAT_RXPERR)
-			printf("Parity ");
-		if (why & BE_CR_STAT_RXSERR)
-			printf("Generic ");
-		printf(")\n");
-	}
-
-	if (!r) {
-		rst = 1;
-		printf("%s: unexpected error interrupt %08x\n",
-			sc->sc_dev.dv_xname, why);
-	}
-
-	if (rst) {
+	if (rst || r == 0) {
+		printf("%s:%s qstat=%b\n", sc->sc_dev.dv_xname,
+		    (r) ? "" : " unexpected",
+		    why, BE_CR_STAT_BITS);
 		printf("%s: resetting\n", sc->sc_dev.dv_xname);
 		bereset(sc);
 	}
@@ -452,34 +404,18 @@ beeint(sc, why)
 	struct besoftc *sc;
 	u_int32_t why;
 {
-	int r = 0, rst = 0;
+	int r = 0;
 
-	if (why & BE_BR_STAT_RFIFOVF) {
+	if (why & (BE_BR_STAT_RFIFOVF | BE_BR_STAT_TFIFO_UND |
+		   BE_BR_STAT_MAXPKTERR)) {
 		r |= 1;
-		rst = 1;
-		printf("%s: receive fifo overrun\n", sc->sc_dev.dv_xname);
-	}
-	if (why & BE_BR_STAT_TFIFO_UND) {
-		r |= 1;
-		rst = 1;
-		printf("%s: transmit fifo underrun\n", sc->sc_dev.dv_xname);
-	}
-	if (why & BE_BR_STAT_MAXPKTERR) {
-		r |= 1;
-		rst = 1;
-		printf("%s: max packet size error\n", sc->sc_dev.dv_xname);
 	}
 
-	if (!r) {
-		rst = 1;
-		printf("%s: unexpected error interrupt %08x\n",
-			sc->sc_dev.dv_xname, why);
-	}
+	printf("%s:%s stat=%b\n", sc->sc_dev.dv_xname,
+	    (r) ? "" : " unexpected", why, BE_BR_STAT_BITS);
 
-	if (rst) {
-		printf("%s: resetting\n", sc->sc_dev.dv_xname);
-		bereset(sc);
-	}
+	printf("%s: resetting\n", sc->sc_dev.dv_xname);
+	bereset(sc);
 
 	return r;
 }

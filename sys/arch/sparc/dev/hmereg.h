@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.6 1998/09/10 17:34:32 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.7 1999/01/07 03:14:43 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -109,6 +109,12 @@ struct hme_gr {
 	 GR_STAT_RFIFOVF   | GR_STAT_LCNTEXP | GR_STAT_CCNTEXP   | \
 	 GR_STAT_ACNTEXP)
 
+#define	GR_STAT_BITS	\
+	"\20\1RX\2RCNT\3ACNT\4CCNT\5LCNT\6RFIFO\7CVCNT\10STST" \
+	"\11TX\12TFIFO\13MAXPKT\14NCNT\15ECNT\16LCCNT\17FCNT" \
+	"\20DTIME\21RXHOST\22NORXD\23RXE\24EXLATE\25RXP\26RXT\27EOP" \
+	"\30MIF\31TXHOST\32TXALL\33TXE\34TXL\35TXP\36TXT\37SLV" \
+	"\40SLVP"
 
 /* hme_gr.stat (interrupt status register) */
 #define GR_IMASK_GOTFRAME	0x00000001 /* frame received */

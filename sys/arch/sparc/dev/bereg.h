@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.7 1998/09/15 22:36:21 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.8 1999/01/07 03:14:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -104,6 +104,8 @@ struct be_bregs {
 #define BE_BR_STAT_FCNTEXP	0x00004000	/* first-collision cntr exp */
 #define BE_BR_STAT_DTIMEXP	0x00008000	/* defer-timer expired */
 
+#define BE_BR_STAT_BITS		"\20\1RX\2RCNT\3ACNT\4CCNT\5LCNT\6RFIFO\7CVCNT\11TX\12TFIFO\13TMAXPKT\14NCNT\15ECNT\16LCCNT\17ECNT\20DTIME"
+
 /* be_bregs.imask: interrupt mask. */
 #define BE_BR_IMASK_GOTFRAME	0x00000001	/* received a frame */
 #define BE_BR_IMASK_RCNTEXP	0x00000002	/* rx frame cntr expired */
@@ -177,6 +179,20 @@ struct be_cregs {
 #define BE_CR_STAT_RXLERR	0x00000004	/* rx late error */
 #define BE_CR_STAT_RXPERR	0x00000002	/* rx parity error */
 #define BE_CR_STAT_RXSERR	0x00000001	/* rx sbus error ack */
+
+/*
+ * All bits except rxirq/txirq
+ */
+#define	BE_CR_STAT_ERRORS	\
+			(BE_CR_STAT_BERROR |				\
+			 BE_CR_STAT_TXDERR | BE_CR_STAT_TXLERR |	\
+			 BE_CR_STAT_TXPERR | BE_CR_STAT_TXSERR |	\
+			 BE_CR_STAT_RXDROP | BE_CR_STAT_RXSMALL |	\
+			 BE_CR_STAT_RXLERR | BE_CR_STAT_RXPERR |	\
+			 BE_CR_STAT_RXSERR)
+
+#define	BE_CR_STAT_BITS		\
+    "\20\1RXS\2RXP\3RXL\4RXSMALL\5RXDROP\6RX\21TXS\22TXP\23TXL\24TXD\26TX\40BE"
 
 /* be_cregs.qmask: qec error interrupt mask. */
 #define BE_CR_QMASK_TXDERR	0x00080000	/* tx descriptor is bad */

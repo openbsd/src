@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.14 1998/12/14 17:37:24 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.15 1999/01/07 03:14:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -772,68 +772,9 @@ hme_eint(sc, why)
 	struct hme_softc *sc;
 	u_int32_t why;
 {
-	if (why &  GR_STAT_RFIFOVF) {	/* probably dma error */
-		printf("%s: receive fifo overflow\n", sc->sc_dev.dv_xname);
-		hmereset(sc);
-	}
-
-	if (why & GR_STAT_STSTERR) {
-		printf("%s: SQE test failed: resetting\n", sc->sc_dev.dv_xname);
-		hmereset(sc);
-	}
-
-	if (why & GR_STAT_TFIFO_UND) {	/* probably dma error */
-		printf("%s: tx fifo underrun\n", sc->sc_dev.dv_xname);
-		hmereset(sc);
-	}
-
-	if (why & GR_STAT_MAXPKTERR) {	/* driver bug */
-		printf("%s: tx max packet size error\n", sc->sc_dev.dv_xname);
-		hmereset(sc);
-	}
-
-	if (why & GR_STAT_NORXD) {	/* driver bug */
-		printf("%s: out of receive descriptors\n", sc->sc_dev.dv_xname);
-		hmereset(sc);
-	}
-
-	if (why & GR_STAT_EOPERR) {
-		printf("%s: eop not set in tx descriptor\n",
-		    sc->sc_dev.dv_xname);
-		hmereset(sc);
-	}
-
-	if (why & (GR_STAT_RXERR | GR_STAT_RXPERR | GR_STAT_RXTERR)) {
-		printf("%s: rx dma error < ", sc->sc_dev.dv_xname);
-		if (why & GR_STAT_RXERR)
-			printf("Generic ");
-		if (why & GR_STAT_RXPERR);
-			printf("Parity ");
-		if (why & GR_STAT_RXTERR)
-			printf("RxTag ");
-		printf(" >\n");
-		hmereset(sc);
-	}
-
-	if (why &
-	    (GR_STAT_TXEACK|GR_STAT_TXLERR|GR_STAT_TXPERR|GR_STAT_TXTERR)) {
-		printf("%s: rx dma error < ", sc->sc_dev.dv_xname);
-		if (why & GR_STAT_TXEACK)
-			printf("Generic ");
-		if (why & GR_STAT_TXLERR);
-			printf("Late ");
-		if (why & GR_STAT_TXPERR)
-			printf("Parity ");
-		if (why & GR_STAT_TXTERR);
-			printf("TxTag ");
-		printf(" >\n");
-		hmereset(sc);
-	}
-
-	if (why & (GR_STAT_SLVERR | GR_STAT_SLVPERR)) {
-		printf("%s: sbus %s error accessing registers\n",
-			sc->sc_dev.dv_xname,
-			(why & GR_STAT_SLVPERR) ? "parity" : "generic");
+	if (why & GR_STAT_ALL_ERRORS) {
+		printf("%s: stat=%b, resetting.\n", sc->sc_dev.dv_xname,
+		    why, GR_STAT_BITS);
 		hmereset(sc);
 	}
 
