@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.10 1997/07/12 23:22:01 weingart Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.11 1997/07/13 22:27:04 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -432,11 +432,14 @@ isapnpquery(sc, dev_id, ipa)
 	struct isa_attach_args *tmp;
 	int c, i, j, fail, success = 0;
 
+/* XXX - Wait for character */
+#if 0
 	{
 		char resp[10];
 		printf("isapnpquery? ");
 		getsn(resp, sizeof resp);
 	}
+#endif
 	for (card = sc->q_card.tqh_first; card; card = card->card_link.tqe_next) {
 		for (dev = card->q_dev.tqh_first; dev; dev = dev->dev_link.tqe_next) {
 			if (dev_id != dev->id && dev_id != dev->comp_id)
