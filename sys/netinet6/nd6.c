@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.19 2000/10/15 15:55:03 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.20 2001/01/19 06:37:38 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.75 2000/10/15 15:23:11 itojun Exp $	*/
 
 /*
@@ -1013,10 +1013,10 @@ nd6_resolve(ifp, rt, m, dst, desten)
 #endif /* OLDIP6OUTPUT */
 
 void
-nd6_rtrequest(req, rt, sa)
+nd6_rtrequest(req, rt, info)
 	int	req;
 	struct rtentry *rt;
-	struct sockaddr *sa; /* xxx unused */
+	struct rt_addrinfo *info; /* xxx unused */
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
@@ -1235,10 +1235,10 @@ nd6_rtrequest(req, rt, sa)
 }
 
 void
-nd6_p2p_rtrequest(req, rt, sa)
+nd6_p2p_rtrequest(req, rt, info)
 	int	req;
 	struct rtentry *rt;
-	struct sockaddr *sa; /* xxx unused */
+	struct rt_addrinfo *info; /* xxx unused */
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};

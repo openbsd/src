@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_var.h,v 1.2 1996/03/04 10:35:43 mickey Exp $	*/
+/*	$OpenBSD: iso_var.h,v 1.3 2001/01/19 06:37:38 itojun Exp $	*/
 /*	$NetBSD: iso_var.h,v 1.8 1996/02/13 22:10:32 christos Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ int m_datalen __P((struct mbuf *));
 int m_compress __P((struct mbuf *, struct mbuf **));
 
 /* iso_snpac.c */
-void llc_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void llc_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 void iso_setmcasts __P((struct ifnet *, int));
 int iso_snparesolve __P((struct ifnet *, struct sockaddr_iso *,
 			 caddr_t, int *));

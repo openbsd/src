@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.8 2000/07/06 10:11:26 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.9 2001/01/19 06:37:38 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
 
 /*
@@ -282,13 +282,8 @@ void nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
 void nd6_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 void nd6_p2p_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-#else
-void nd6_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-void nd6_p2p_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-#endif
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));

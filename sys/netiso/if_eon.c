@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.7 1999/12/08 06:50:24 itojun Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.8 2001/01/19 06:37:38 itojun Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -273,14 +273,15 @@ eoniphdr(hdr, loc, ro, class, zero)
  * RETURNS:			nothing
  */
 void
-eonrtrequest(cmd, rt, gate)
+eonrtrequest(cmd, rt, info)
 	int cmd;
 	register struct rtentry *rt;
-	register struct sockaddr *gate;
+	register struct rt_addrinfo *info;
 {
 	unsigned long   zerodst = 0;
 	caddr_t         ipaddrloc = (caddr_t) & zerodst;
 	register struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
+	struct sockaddr *gate;
 
 	/*
 	 * Common Housekeeping
@@ -308,7 +309,7 @@ eonrtrequest(cmd, rt, gate)
 		el->el_rt = rt;
 		break;
 	}
-	if (gate || (gate = rt->rt_gateway))
+	if (info || (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.22 2000/12/11 07:52:06 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.23 2001/01/19 06:37:36 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -243,6 +243,17 @@ rtalloc1(dst, report)
 				msgtype = RTM_RESOLVE;
 				goto miss;
 			}
+			/* Inform listeners of the new route */
+			bzero(&info, sizeof(info));
+			info.rti_info[RTAX_DST] = rt_key(rt);
+			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+			if (rt->rt_ifp != NULL) {
+				info.rti_info[RTAX_IFP] = 
+				    rt->rt_ifp->if_addrlist.tqh_first->ifa_addr;
+				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+			}
+			rt_missmsg(RTM_ADD, &info, rt->rt_flags, 0);
 		} else
 			rt->rt_refcnt++;
 	} else {
@@ -315,7 +326,7 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	int flags;
 	struct rtentry **rtp;
 {
-	register struct rtentry *rt;
+	struct rtentry *rt;
 	int error = 0;
 	u_int32_t *stat = NULL;
 	struct rt_addrinfo info;
@@ -360,10 +371,18 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 			 * Create new route, rather than smashing route to net.
 			 */
 		create:
+			if (rt)
+				rtfree(rt);
 			flags |=  RTF_GATEWAY | RTF_DYNAMIC;
-			error = rtrequest((int)RTM_ADD, dst, gateway,
-				    netmask, flags,
-				    (struct rtentry **)0);
+			info.rti_info[RTAX_DST] = dst;
+			info.rti_info[RTAX_GATEWAY] = gateway;
+			info.rti_info[RTAX_NETMASK] = netmask;
+			info.rti_ifa = ifa;
+			info.rti_flags = flags;
+			rt = NULL;
+			error = rtrequest1(RTM_ADD, &info, &rt);
+			if (rt != NULL)
+				flags = rt->rt_flags;
 			stat = &rtstat.rts_dynamic;
 		} else {
 			/*
@@ -479,6 +498,70 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	struct sockaddr *dst, *gateway, *netmask;
 	struct rtentry **ret_nrt;
 {
+	struct rt_addrinfo info;
+
+	bzero(&info, sizeof(info));
+	info.rti_flags = flags;
+	info.rti_info[RTAX_DST] = dst;
+	info.rti_info[RTAX_GATEWAY] = gateway;
+	info.rti_info[RTAX_NETMASK] = netmask;
+	return rtrequest1(req, &info, ret_nrt);
+}
+
+/*
+ * These (questionable) definitions of apparent local variables apply
+ * to the next function.  XXXXXX!!!
+ */
+#define dst	info->rti_info[RTAX_DST]
+#define gateway	info->rti_info[RTAX_GATEWAY]
+#define netmask	info->rti_info[RTAX_NETMASK]
+#define ifaaddr	info->rti_info[RTAX_IFA]
+#define ifpaddr	info->rti_info[RTAX_IFP]
+#define flags	info->rti_flags
+
+int
+rt_getifa(info)
+	struct rt_addrinfo *info;
+{
+	struct ifaddr *ifa;
+	int error = 0;
+
+	/*
+	 * ifp may be specified by sockaddr_dl when protocol address
+	 * is ambiguous
+	 */
+	if (info->rti_ifp == NULL && ifpaddr != NULL
+	    && ifpaddr->sa_family == AF_LINK &&
+	    (ifa = ifa_ifwithnet((struct sockaddr *)ifpaddr)) != NULL)
+		info->rti_ifp = ifa->ifa_ifp;
+	if (info->rti_ifa == NULL && ifaaddr != NULL)
+		info->rti_ifa = ifa_ifwithaddr(ifaaddr);
+	if (info->rti_ifa == NULL) {
+		struct sockaddr *sa;
+
+		sa = ifaaddr != NULL ? ifaaddr :
+		    (gateway != NULL ? gateway : dst);
+		if (sa != NULL && info->rti_ifp != NULL)
+			info->rti_ifa = ifaof_ifpforaddr(sa, info->rti_ifp);
+		else if (dst != NULL && gateway != NULL)
+			info->rti_ifa = ifa_ifwithroute(flags, dst, gateway);
+		else if (sa != NULL)
+			info->rti_ifa = ifa_ifwithroute(flags, sa, sa);
+	}
+	if ((ifa = info->rti_ifa) != NULL) {
+		if (info->rti_ifp == NULL)
+			info->rti_ifp = ifa->ifa_ifp;
+	} else
+		error = ENETUNREACH;
+	return (error);
+}
+
+int
+rtrequest1(req, info, ret_nrt)
+	int req;
+	struct rt_addrinfo *info;
+	struct rtentry **ret_nrt;
+{
 	int s = splsoftnet(); int error = 0;
 	register struct rtentry *rt;
 	register struct radix_node *rn;
@@ -504,7 +587,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		}
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa) && ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(RTM_DELETE, rt, SA(NULL));
+			ifa->ifa_rtrequest(RTM_DELETE, rt, info);
 		rttrash++;
 		if (ret_nrt)
 			*ret_nrt = rt;
@@ -525,8 +608,9 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		goto makeroute;
 
 	case RTM_ADD:
-		if ((ifa = ifa_ifwithroute(flags, dst, gateway)) == NULL)
-			senderr(ENETUNREACH);
+		if (info->rti_ifa == 0 && (error = rt_getifa(info)))
+			senderr(error);
+		ifa = info->rti_ifa;
 	makeroute:
 		R_Malloc(rt, struct rtentry *, sizeof(*rt));
 		if (rt == NULL)
@@ -567,7 +651,7 @@ if (!rt->rt_rmx.rmx_mtu && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
 			rt->rt_parent = *ret_nrt;	 /* Back ptr. to parent. */
 		}
 		if (ifa->ifa_rtrequest)
-			ifa->ifa_rtrequest(req, rt, SA(ret_nrt ? *ret_nrt : NULL));
+			ifa->ifa_rtrequest(req, rt, info);
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
@@ -578,6 +662,13 @@ bad:
 	splx(s);
 	return (error);
 }
+
+#undef dst
+#undef gateway
+#undef netmask
+#undef ifaaddr
+#undef ifpaddr
+#undef flags
 
 int
 rt_setgate(rt0, dst, gate)
@@ -650,6 +741,7 @@ rtinit(ifa, cmd, flags)
 	struct mbuf *m = NULL;
 	struct rtentry *nrt = NULL;
 	int error;
+	struct rt_addrinfo info;
 
 	dst = flags & RTF_HOST ? ifa->ifa_dstaddr : ifa->ifa_addr;
 	if (cmd == RTM_DELETE) {
@@ -671,10 +763,19 @@ rtinit(ifa, cmd, flags)
 			}
 		}
 	}
-	error = rtrequest(cmd, dst, ifa->ifa_addr, ifa->ifa_netmask,
-			flags | ifa->ifa_flags, &nrt);
-	if (m != NULL)
-		(void) m_free(m);
+	bzero(&info, sizeof(info));
+	info.rti_ifa = ifa;
+	info.rti_flags = flags | ifa->ifa_flags;
+	info.rti_info[RTAX_DST] = dst;
+	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
+	/*
+	 * XXX here, it seems that we are assuming that ifa_netmask is NULL
+	 * for RTF_HOST.  bsdi4 passes NULL explicitly (via intermediate
+	 * variable) when RTF_HOST is 1.  still not sure if i can safely
+	 * change it to meet bsdi4 behavior.
+	 */
+	info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
+	error = rtrequest1(cmd, &info, &nrt);
 	if (cmd == RTM_DELETE && error == 0 && (rt = nrt) != NULL) {
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 		if (rt->rt_refcnt <= 0) {
@@ -694,15 +795,14 @@ rtinit(ifa, cmd, flags)
 			printf("rtinit: wrong ifa (%p) was (%p)\n",
 			       ifa, rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
-				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt,
-				    SA(NULL));
+				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, NULL);
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
 			rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;	/*XXX*/
 			ifa->ifa_refcnt++;
 			if (ifa->ifa_rtrequest)
-				ifa->ifa_rtrequest(RTM_ADD, rt, SA(NULL));
+				ifa->ifa_rtrequest(RTM_ADD, rt, NULL);
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x25.h,v 1.2 1996/03/04 07:36:49 niklas Exp $	*/
+/*	$OpenBSD: x25.h,v 1.3 2001/01/19 06:37:37 itojun Exp $	*/
 /*	$NetBSD: x25.h,v 1.7 1996/02/13 22:05:51 christos Exp $	*/
 
 /*
@@ -166,6 +166,7 @@ struct sockaddr_in;
 struct x25_ifaddr;
 struct ifnet;
 struct rtentry;
+struct rt_addrinfo;
 
 void x25_lxfree __P((struct llinfo_x25 *));
 int x25_ifinput __P((struct mbuf *, void *));
@@ -173,7 +174,7 @@ int x25_connect_callback __P((struct mbuf *, void *));
 int x25_dgram_incoming __P((struct mbuf *, void *));
 int x25_ifoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *, struct rtentry *));
 void x25_iftimeout __P((struct ifnet *));
-void x25_rtrequest __P((int , struct rtentry *, struct sockaddr *));
+void x25_rtrequest __P((int , struct rtentry *, struct rt_addrinfo *));
 void x25_rtinvert __P((int , struct sockaddr *, struct rtentry *));
 void x25_ddnip_to_ccitt __P((struct sockaddr *, struct rtentry *));
 void x25_dg_rtinit __P((struct sockaddr_x25 *, struct x25_ifaddr *, int ));

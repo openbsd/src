@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_extern.h,v 1.2 1996/04/19 16:10:07 niklas Exp $	*/
+/*	$OpenBSD: pk_extern.h,v 1.3 2001/01/19 06:37:37 itojun Exp $	*/
 /*	$NetBSD: pk_extern.h,v 1.1 1996/02/13 22:05:17 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@ struct x25_packet;
 struct llc_linkcb;
 struct bcdinfo;
 struct sockaddr_dl;
+struct rt_addrinfo;
 
 /* pk_acct.c */
 int pk_accton __P((char *));
@@ -64,7 +65,7 @@ void pk_call_accepted __P((struct pklcd *, struct mbuf *));
 void pk_parse_facilities __P((octet *, struct sockaddr_x25 *));
 
 /* pk_llcsubr.c */
-void cons_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void cons_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 struct rtentry *npaidb_enter __P((struct sockaddr_dl *, struct sockaddr *,
 				  struct rtentry *, struct llc_linkcb *));
 struct rtentry *npaidb_enrich __P((short, caddr_t, struct sockaddr_dl *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_llcsubr.c,v 1.3 1996/04/19 16:10:09 niklas Exp $	*/
+/*	$OpenBSD: pk_llcsubr.c,v 1.4 2001/01/19 06:37:37 itojun Exp $	*/
 /*	$NetBSD: pk_llcsubr.c,v 1.4 1996/02/13 22:05:26 christos Exp $	*/
 
 /* 
@@ -127,27 +127,27 @@
 #define SA(s) ((struct sockaddr *)s)
 
 static int cons_rtrequest_internal __P((int, struct rtentry *,
-    struct sockaddr *));
+    struct rt_addrinfo *));
 
 /* 
  * ifa_rtrequest currently does not check the error from the rtrequest call
  * so we use a void version of the cons_rtrequest routine.
  */
 void
-cons_rtrequest(cmd, rt, dst)
+cons_rtrequest(cmd, rt, info)
         int             cmd;
         struct rtentry *rt;
-        struct sockaddr *dst;
+        struct rt_addrinfo *info;
 {
-        cons_rtrequest_internal(cmd, rt, dst);
+        cons_rtrequest_internal(cmd, rt, info);
 }
 
 
 static int
-cons_rtrequest_internal(cmd, rt, dst)
+cons_rtrequest_internal(cmd, rt, info)
 	int             cmd;
 	struct rtentry *rt;
-	struct sockaddr *dst;
+	struct rt_addrinfo *info;
 {
 	register struct pkcb *pkp;
 	register char   one_to_one;

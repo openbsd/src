@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.14 2000/06/18 06:24:45 itojun Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.15 2001/01/19 06:37:36 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -281,10 +281,10 @@ looutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 void
-lortrequest(cmd, rt, sa)
+lortrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 
 	if (rt)

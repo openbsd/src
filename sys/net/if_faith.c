@@ -80,7 +80,7 @@
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
 int faithoutput __P((struct ifnet *, register struct mbuf *, struct sockaddr *,
 	register struct rtentry *));
-static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
+static void faithrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
 void faithattach __P((int));
 
@@ -200,10 +200,10 @@ faithoutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 static void
-faithrtrequest(cmd, rt, sa)
+faithrtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	if (rt) {
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */
