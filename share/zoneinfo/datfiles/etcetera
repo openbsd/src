@@ -1,4 +1,4 @@
-# @(#)etcetera	7.9
+# @(#)etcetera	7.10
 
 # These entries are mostly present for historical reasons, so that
 # people in areas not otherwise covered by the tz files could "zic -l"
@@ -9,6 +9,12 @@
 Zone	Etc/GMT		0	-	GMT
 Zone	Etc/UTC		0	-	UTC
 Zone	Etc/UCT		0	-	UCT
+
+# The following link uses older naming conventions,
+# but it belongs here, not in the file `backward',
+# as functions like gmtime load the "GMT" file to handle leap seconds properly.
+# We want this to work even on installations that omit the other older names.
+Link	Etc/GMT				GMT
 
 Link	Etc/UTC				Etc/Universal
 Link	Etc/UTC				Etc/Zulu

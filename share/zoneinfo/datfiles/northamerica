@@ -1,4 +1,4 @@
-# @(#)northamerica	7.39
+# @(#)northamerica	7.41
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
@@ -262,11 +262,6 @@ Zone Pacific/Honolulu	-10:31:26 -	LMT	1900 Jan  1 12:00
 			-10:30	US	H%sT	1947 Jun  8 2:00
 			-10:00	-	HST
 
-Zone Pacific/Midway	-11:49:28 -	LMT	1901
-			-11:00	-	NST	1967 Apr	# N=Nome
-			-11:00	-	BST	1983 Nov 30	# B=Bering
-			-11:00	-	SST			# S=Samoa
-
 # Now we turn to US areas that have diverged from the consensus since 1970.
 
 # Arizona mostly uses MST.
@@ -464,8 +459,8 @@ Link	Pacific/Honolulu	HST
 
 # From Paul Eggert <eggert@twinsun.com> (1996-11-22):
 # A good source for time zone historical data outside the US is
-# Thomas G. Shanks, The International Atlas (3rd edition),
-# San Diego: ACS Publications, Inc. (1991).
+# Thomas G. Shanks, The International Atlas (4th edition),
+# San Diego: ACS Publications, Inc. (1995).
 #
 # Gwillim Law <LAW@encmail.encompass.com> writes that a good source
 # for recent time zone data is the International Air Transport
@@ -1007,6 +1002,12 @@ Rule	BajaN	1950	1966	-	Apr	lastSun	2:00	1:00	D
 Rule	BajaN	1950	1961	-	Sep	lastSun	2:00	0	S
 Rule	BajaN	1961	1966	-	Oct	lastSun	2:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+# Quintana Roo
+Zone America/Cancun	-5:47:04 -	LMT	1922 Jan  1  1:12:42
+			-6:00	-	CST	1996
+			-6:00	Mexico	C%sT	1997 Oct lastSun 2:00
+			-5:00	Mexico	E%sT
+# Central Mexico
 Zone America/Mexico_City -6:36:36 -	LMT	1922 Jan  1  0:23:24
 			-7:00	-	MST	1927 Jun 10 23:00
 			-6:00	-	CST	1930 Nov 15
@@ -1014,6 +1015,18 @@ Zone America/Mexico_City -6:36:36 -	LMT	1922 Jan  1  0:23:24
 			-6:00	-	CST	1931 Oct
 			-7:00	-	MST	1932 Mar 30 23:00
 			-6:00	Mexico	C%sT
+# Chihuahua
+Zone America/Chihuahua	-7:04:20 -	LMT	1921 Dec 31 23:55:44
+			-7:00	-	MST	1927 Jun 10 23:00
+			-6:00	-	CST	1930 Nov 15
+			-7:00	-	MST	1931 May  1 23:00
+			-6:00	-	CST	1931 Oct
+			-7:00	-	MST	1932 Mar 30 23:00
+			-6:00	-	CST	1996
+			-6:00	Mexico	C%sT	1998
+			-6:00	-	CST	1998 Apr Sun>=1 3:00
+			-7:00	Mexico	M%sT
+# S Baja California, Nayarit, Sinaloa, Sonora
 Zone America/Mazatlan	-7:05:40 -	LMT	1921 Dec 31 23:54:20
 			-7:00	-	MST	1927 Jun 10 23:00
 			-6:00	-	CST	1930 Nov 15
@@ -1024,6 +1037,7 @@ Zone America/Mazatlan	-7:05:40 -	LMT	1921 Dec 31 23:54:20
 			-7:00	-	MST	1949 Jan 14
 			-8:00	-	PST	1970
 			-7:00	Mexico	M%sT
+# N Baja California
 Zone America/Tijuana	-7:48:04 -	LMT	1922 Jan  1  0:11:56
 			-8:00	-	PST	1927 Jun 10 23:00
 			-7:00	-	MST	1930 Nov 16
@@ -1032,6 +1046,7 @@ Zone America/Tijuana	-7:48:04 -	LMT	1922 Jan  1  0:11:56
 			-8:00	BajaN	P%sT	1967 Apr lastSun 2:00
 			-8:00	US	P%sT	1996
 			-8:00	Mexico	P%sT
+# Baja California
 Zone America/Ensenada	-7:46:28 -	LMT	1922 Jan  1  0:13:32
 			-8:00	-	PST	1927 Jun 10 23:00
 			-7:00	-	MST	1930 Nov 16
@@ -1074,7 +1089,7 @@ Rule	Barb	1979	only	-	Sep	30	2:00	0	S
 Rule	Barb	1980	only	-	Sep	25	2:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Barbados	-3:58:28 -	LMT	1924		# Bridgetown
-			-3:58	-	BMT	1932	  # Bridgetown Mean Time
+			-3:58:28 -	BMT	1932	  # Bridgetown Mean Time
 			-4:00	Barb	A%sT
 
 # Belize
@@ -1099,11 +1114,8 @@ Zone Atlantic/Bermuda	-4:19:04 -	LMT	1930 Jan  1 2:00    # Hamilton
 # Cayman Is
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Cayman	-5:25:32 -	LMT	1890		# Georgetown
-			-5:07	-	KMT	1912 Feb    # Kingston Mean Time
+			-5:07:12 -	KMT	1912 Feb    # Kingston Mean Time
 			-5:00	-	EST
-
-# Clipperton
-# uninhabited
 
 # Costa Rica
 # Shanks gives some very odd dates for 1991, and stops there.
@@ -1158,10 +1170,13 @@ Rule	Cuba	1978	1990	-	Oct	Sun>=8	0:00	0	S
 Rule	Cuba	1979	1980	-	Mar	Sun>=15	0:00	1:00	D
 Rule	Cuba	1981	1985	-	May	Sun>=5	0:00	1:00	D
 Rule	Cuba	1986	1989	-	Mar	Sun>=14	0:00	1:00	D
-Rule	Cuba	1990	max	-	Apr	Sun>=1	0:00	1:00	D
+Rule	Cuba	1990	1997	-	Apr	Sun>=1	0:00	1:00	D
 Rule	Cuba	1991	1995	-	Oct	Sun>=8	0:00s	0	S
-Rule	Cuba	1996	only	-	Oct	Sun>=1	0:00s	0	S
-Rule	Cuba	1997	max	-	Oct	Sun>=8	0:00s	0	S
+Rule	Cuba	1996	only	-	Oct	 6	0:00s	0	S
+Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
+Rule	Cuba	1998	only	-	Mar	29	0:00	1:00	D
+Rule	Cuba	1998	max	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	1999	max	-	Apr	Sun>=1	0:00s	1:00	D
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
@@ -1224,8 +1239,8 @@ Rule	Haiti	1983	only	-	May	8	0:00	1:00	D
 Rule	Haiti	1984	1987	-	Apr	lastSun	0:00	1:00	D
 Rule	Haiti	1983	1987	-	Oct	lastSun	0:00	0	S
 # Shanks says AT is 2:00, but IATA SSIM (1991/1996) says 1:00s.  Go with IATA.
-Rule	Haiti	1988	max	-	Apr	Sun>=1	1:00s	1:00	D
-Rule	Haiti	1988	max	-	Oct	lastSun	1:00s	0	S
+Rule	Haiti	1988	1997	-	Apr	Sun>=1	1:00s	1:00	D
+Rule	Haiti	1988	1997	-	Oct	lastSun	1:00s	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Port-au-Prince -4:49:20 -	LMT	1890
 			-4:49	-	PPMT	1917 Jan 24 12:00 # P-a-P MT
@@ -1248,7 +1263,7 @@ Zone America/Tegucigalpa -5:48:52 -	LMT	1921 Apr
 # From Shanks (1991):
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Jamaica	-5:07:12 -	LMT	1890		# Kingston
-			-5:07	-	KMT	1912 Feb    # Kingston Mean Time
+			-5:07:12 -	KMT	1912 Feb    # Kingston Mean Time
 			-5:00	-	EST	1974 Jan 6 2:00
 			-5:00	US	E%sT	1984
 			-5:00	-	EST
@@ -1318,12 +1333,12 @@ Zone America/Miquelon	-3:44:40 -	LMT	1911 May 15	# St Pierre
 # St Vincent and the Grenadines
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/St_Vincent	-4:04:56 -	LMT	1890		# Kingstown
-			-4:05	-	KMT	1912	   # Kingstown Mean Time
+			-4:04:56 -	KMT	1912	   # Kingstown Mean Time
 			-4:00	-	AST
 
 # Turks and Caicos
-# From Paul Eggert (1996-11-22):
-# Shanks says they use US DST rules, but IATA SSIM (1991/1996)
+# From Paul Eggert (1998-08-06):
+# Shanks says they use US DST rules, but IATA SSIM (1991/1998)
 # says they switch at midnight.  Go with IATA SSIM.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	TC	1979	1986	-	Apr	lastSun	0:00	1:00	D
@@ -1331,7 +1346,7 @@ Rule	TC	1979	max	-	Oct	lastSun	0:00	0	S
 Rule	TC	1987	max	-	Apr	Sun>=1	0:00	1:00	D
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Grand_Turk	-4:44:32 -	LMT	1890
-			-5:07	-	KMT	1912 Feb    # Kingston Mean Time
+			-5:07:12 -	KMT	1912 Feb    # Kingston Mean Time
 			-5:00	TC	E%sT
 
 # British Virgin Is
