@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.10 2001/05/27 12:16:01 angelos Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.11 2001/09/23 10:22:13 mickey Exp $	*/
 
 /*-
  *
@@ -34,7 +34,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  *	@(#)ipx_ip.c
  *
  * from FreeBSD Id: ipx_ip.c,v 1.7 1996/03/11 15:13:50 davidg Exp
@@ -266,7 +266,7 @@ ipxipoutput(ifp, m, dst, rt)
 	if (len & 1)
 		len++;		/* Preserve Garbage Byte */
 	/* following clause not necessary on vax */
-	if (3 & (int)m->m_data) {
+	if (3 & (long)m->m_data) {
 		/* force longword alignment of ip hdr */
 		struct mbuf *m0 = m_gethdr(MT_HEADER, M_DONTWAIT);
 		if (m0 == NULL) {
@@ -389,7 +389,7 @@ ipxip_route(m)
 
 	satoipx_addr(ifr_ipxip.ifr_addr).ipx_host =
 	    ipx_ifaddr.tqh_first->ia_addr.sipx_addr.ipx_host;
-		
+
 	return (ipx_control((struct socket *)0, (int)SIOCSIFADDR,
 			(caddr_t)&ifr_ipxip, (struct ifnet *)ifn));
 }

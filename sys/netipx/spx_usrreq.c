@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.16 2001/06/27 03:49:54 angelos Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.17 2001/09/23 10:22:13 mickey Exp $	*/
 
 /*-
  *
@@ -1276,7 +1276,7 @@ spx_usrreq(so, req, m, nam, controlp)
 	register struct sockbuf *sb;
 
 	if (req == PRU_CONTROL)
-                return (ipx_control(so, (int)m, (caddr_t)nam,
+                return (ipx_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)controlp));
 	if (ipxp == NULL) {
 		if (req != PRU_ATTACH) {
@@ -1481,8 +1481,8 @@ spx_usrreq(so, req, m, nam, controlp)
 		break;
 
 	case PRU_SLOWTIMO:
-		cb = spx_timers(cb, (int)nam);
-		req |= ((int)nam) << 8;
+		cb = spx_timers(cb, (long)nam);
+		req |= ((long)nam) << 8;
 		break;
 
 	case PRU_FASTTIMO:
@@ -1683,8 +1683,8 @@ spx_slowtimo()
 		for (i = 0; i < SPXT_NTIMERS; i++) {
 			if (cb->s_timer[i] && --cb->s_timer[i] == 0) {
 				(void) spx_usrreq(cb->s_ipxpcb->ipxp_socket,
-				    PRU_SLOWTIMO, (struct mbuf *)0,
-				    (struct mbuf *)i, (struct mbuf *)0);
+				    PRU_SLOWTIMO, NULL,
+				    (struct mbuf *)(long)i, NULL);
 				if (ipxnxt->ipxp_queue.cqe_prev != ipx)
 					goto tpgone;
 			}

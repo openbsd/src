@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.8 2000/01/17 00:34:00 fgsch Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.9 2001/09/23 10:22:13 mickey Exp $	*/
 
 /*-
  *
@@ -401,7 +401,7 @@ ipx_usrreq(so, req, m, nam, control)
 	int error = 0;
 
 	if (req == PRU_CONTROL)
-                return (ipx_control(so, (int)m, (caddr_t)nam,
+                return (ipx_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 	if (control && control->m_len) {
 		error = EINVAL;

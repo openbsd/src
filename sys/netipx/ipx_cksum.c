@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_cksum.c,v 1.3 2001/09/20 17:02:32 mpech Exp $	*/
+/*	$OpenBSD: ipx_cksum.c,v 1.4 2001/09/23 10:22:13 mickey Exp $	*/
 
 /*-
  *
@@ -105,7 +105,7 @@ ipx_cksum(m, len)
 		 * into the high (by normal carry-chaining)
 		 * so long as we fold back before 16 carries have occurred.
 		 */
-		if (1 & (int) w)
+		if (1 & (long) w)
 			goto uuuuglyy;
 #ifndef TINY
 /* -DTINY reduces the size from 1250 to 550, but slows it down by 22% */
