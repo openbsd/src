@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.10 2000/02/01 17:03:06 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -216,9 +216,9 @@ xe_pcmcia_match(parent, match, aux)
 	switch (pa->manufacturer) {
 	case PCMCIA_VENDOR_COMPAQ:
 	case PCMCIA_VENDOR_COMPAQ2:
-	case PCMCIA_VENDOR_INTEL:
 		return (0);
 
+	case PCMCIA_VENDOR_INTEL:
 	case PCMCIA_VENDOR_XIRCOM:
 		/* XXX Per-productid checking here. */
 		return (1);
