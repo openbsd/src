@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.40 1998/04/26 21:03:14 provos Exp $
+#	$OpenBSD: files.i386,v 1.41 1998/04/26 21:41:48 provos Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -232,7 +232,7 @@ include "../../../compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
+include "../../../compat/ossaudio/files.ossaudio"
 
 device bios {}
 attach bios at mainbus
