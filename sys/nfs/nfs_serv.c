@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.16 1998/08/19 22:26:52 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.17 1999/02/01 17:44:17 millert Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -1339,8 +1339,8 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			va.va_type == VFIFO) {
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
-			error = suser(cred, (u_short *)0);
-			if (error) {
+			if (va.va_type != VFIFO &&
+			    (error = suser(cred, (u_short *)0))) {
 				vrele(nd.ni_startdir);
 				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1534,8 +1534,8 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		if (!error)
 			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 	} else {
-		error = suser(cred, (u_short *)0);
-		if (error) {
+		if (va.va_type != VFIFO &&
+		    (error = suser(cred, (u_short *)0))) {
 			vrele(nd.ni_startdir);
 			free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
