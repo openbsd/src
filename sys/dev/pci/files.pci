@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.30 1998/11/17 06:11:06 downsj Exp $
+#	$OpenBSD: files.pci,v 1.31 1998/11/18 20:14:06 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -99,7 +99,7 @@ attach	fxp at pci
 file	dev/pci/if_fxp.c		fxp
 
 # RealTek 8129/8139
-device	rl: ether, ifnet, ifmedia
+device	rl: ether, ifnet, mii, ifmedia
 attach	rl at pci
 file	dev/pci/if_rl.c			rl
 
