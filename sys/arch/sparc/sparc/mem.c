@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 1999/09/03 18:01:59 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.8 1999/11/16 10:03:16 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
 
 /*
@@ -135,10 +135,12 @@ mmrw(dev, uio, flags)
 		/* minor device 0 is physical memory */
 		case 0:
 			pa = uio->uio_offset;
+#if 0
 			if (!pmap_pa_exists(pa)) {
 				error = EFAULT;
 				goto unlock;
 			}
+#endif
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(pa), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE, 0);
@@ -195,8 +197,8 @@ mmrw(dev, uio, flags)
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return 0;
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
@@ -218,7 +220,9 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+#if 0
 unlock:
+#endif
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
