@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.21 2001/10/07 11:56:57 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.22 2001/10/09 13:49:18 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -141,7 +141,7 @@ the connection.
 The logged packets are sent to the
 .Em pflog0
 interface.
-This interfece is monitored by
+This interface is monitored by the
 .Xr pflogd 8
 logging daemon which dumps the logged packets to the file
 .Em /var/log/pflog
@@ -164,7 +164,8 @@ A packet always comes in on or goes out through one interface.
 Most parameters are optional.
 If a parameter is specified, the rule only applies to packets with
 matching attributes.
-Certain parameters can be expressed as lists, in which case pfctl
+Certain parameters can be expressed as lists, in which case
+.Em pfctl
 generates all needed rule combinations.
 .Ss in or out
 The rule applies to incoming or outgoing packets.
@@ -250,7 +251,7 @@ If the first set is not specified, it defaults to none.
 All of SYN, FIN, RST and ACK must be unset.
 .El
 .Ss icmp-type <type> code <code> and ipv6-icmp-type <type> code <code>
-The rule only applies to ICMP or ICMPV6 packets with the specified type
+The rule only applies to ICMP or ICMPv6 packets with the specified type
 and code.
 This parameter is only valid for rules that cover protocols icmp or
 ipv6-icmp.
@@ -267,6 +268,7 @@ supports macro definition and expansion like:
 .Pp
 Macro names must start with a letter and may contain letters, digits
 and underscores.
+Macros are not expanded recursively.
 .Sh STATEFUL INSPECTION
 .Em pf
 is a stateful packet filter, which means it can track the state of
@@ -318,7 +320,9 @@ One can also be less restrictive, and allow state creation from
 intermediate 
 .Pq non-SYN
 packets.
-This will cause pf to synchronize to existing connections, for instance
+This will cause
+.Em pf
+to synchronize to existing connections, for instance
 if one flushes the state table.
 .Pp
 For UDP, which is stateless by nature, keep state will create state
@@ -348,10 +352,10 @@ Note: nat/rdr rules
 see
 .Xr nat.conf 5
 .Pc
-implicitely create state for connections.
+implicitly create state for connections.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
-initial sequence numbers (ISN) are chosen.
+initial sequence numbers (ISNs) are chosen.
 Some popular stack implementations choose
 .Cm very
 poor ISNs thus are normally susceptible to ISN prediction exploits.
@@ -374,7 +378,7 @@ For instance:
 Caveat:  If
 .Em pf
 picks up an already established connection (the firewall was rebooted, the
-state table was flushed...) it will not randomize the sequence number and it
+state table was flushed, ...) it will not randomize the sequence number and it
 will fall back to operating as if "keep state" was specified for that
 connection.
 .Pp
@@ -383,12 +387,12 @@ currently established modulated connections can not be continued or picked
 up again by the firewall.
 The sequence numbers will be out of sync without the modulator.
 .Sh NORMALIZATION
-Packet normalization is envoked via the
+Packet normalization is invoked via the
 .Pa scrub
 directive.
 Normalization is used to sanitize packet content in such
 a way that there are no ambiguities in packet interpretation on
-the receiver side.
+the receiving side.
 .Pp
 The normalizer does full IP fragment reassembly to prevent attacks
 that confuse intrusion detection systems by sending overlapping

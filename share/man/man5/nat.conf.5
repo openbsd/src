@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.16 2001/10/07 11:56:57 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.17 2001/10/09 13:49:18 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -62,24 +62,24 @@ to another host and optionally a different port.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
 .Bd -literal
-rule      = nat_rule | binat_rule | rdr_rule
+rule      = nat_rule | binat_rule | rdr_rule .
 
 nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] "from" ipspec
-            "to" ipspec "->" address
+            "to" ipspec "->" address .
 
 binat_rule = "binat" "on" ifname [ protospec ] "from" address
-             "to" ipspec "->" address
+             "to" ipspec "->" address .
 
 rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
-            "to" ipspec portspec "->" address portspec
+            "to" ipspec portspec "->" address portspec .
 
-protospec = "proto" ( number | "tcp" | "udp" | "icmp" )
+protospec = "proto" ( number | "tcp" | "udp" | "icmp" ) .
 
-ipspec    = "any" | host
+ipspec    = "any" | host .
 
-host      = [ "!" ] address [ "/" mask-bits ]
+host      = [ "!" ] address [ "/" mask-bits ] .
 
-portspec  = "port" ( number | name )
+portspec  = "port" ( number | name ) .
 .Ed
 .Pp
 Rules are processed in the order read, one rule per line.
