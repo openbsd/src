@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tl.4,v 1.15 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: tl.4,v 1.16 2005/02/20 01:48:05 brad Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: tl.4,v 1.15 2004/09/30 19:59:25 mickey Exp $
+.\"	$Id: tl.4,v 1.16 2005/02/20 01:48:05 brad Exp $
 .\"
 .Dd May 1, 1998
 .Dt TL 4
@@ -40,6 +40,8 @@
 .Nd Texas Instruments ThunderLAN Ethernet driver
 .Sh SYNOPSIS
 .Cd "tl* at pci?"
+.Cd "nsphy* at mii?"
+.Cd "tlphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -116,7 +118,9 @@ allocating a pad buffer or collapsing an mbuf chain into a cluster.
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr nsphy 4 ,
 .Xr pci 4 ,
+.Xr tlphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
