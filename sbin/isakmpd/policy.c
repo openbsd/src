@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.61 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.62 2003/05/18 19:37:47 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1829,7 +1829,7 @@ policy_init (void)
     }
 
   /* We're done with this.  */
-  monitor_close (fd);
+  close (fd);
 
   /* Parse buffer, break up into individual policies.  */
   asserts = kn_read_asserts (ptr, sz, &i);

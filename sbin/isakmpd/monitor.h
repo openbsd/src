@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.h,v 1.2 2003/05/17 17:39:26 ho Exp $	*/
+/*	$OpenBSD: monitor.h,v 1.3 2003/05/18 19:37:46 ho Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -38,8 +38,13 @@ enum monitor_reqtypes
   MONITOR_SETSOCKOPT,
   MONITOR_BIND,
   MONITOR_MKFIFO,
-  MONITOR_CLOSE,
   MONITOR_SHUTDOWN,
+#if defined (USE_X509)
+  MONITOR_RSA_UPLOADKEY,
+  MONITOR_RSA_GETKEY,
+  MONITOR_RSA_ENCRYPT,
+  MONITOR_RSA_FREEKEY,
+#endif
 };
 
 pid_t	monitor_init (void);
@@ -56,9 +61,17 @@ int	monitor_socket (int, int, int);
 int	monitor_setsockopt (int, int, int, const void *, socklen_t);
 int	monitor_bind (int, const struct sockaddr *, socklen_t);
 int	monitor_mkfifo (const char *, mode_t);
-int	monitor_close (int);
-int	monitor_fclose (FILE *);
-#else
+
+#if defined (USE_X509)
+char	*monitor_RSA_upload_key (char *);
+char	*monitor_RSA_get_private_key (char *, char *);
+int	monitor_RSA_private_encrypt (int, unsigned char *, unsigned char **,
+				     void *, int);
+void	monitor_RSA_free (void *);
+#endif
+
+#else /* !USE_PRIVSEP */
+
 #define monitor_fopen fopen
 #define monitor_open open
 #define monitor_stat stat
@@ -66,6 +79,9 @@ int	monitor_fclose (FILE *);
 #define monitor_setsockopt setsockopt
 #define monitor_bind bind
 #define monitor_mkfifo mkfifo
-#define monitor_close close
-#define monitor_fclose fclose
+
+#if defined (USE_X509)
+#define monitor_RSA_free RSA_free
 #endif
+
+#endif /* USE_PRIVSEP */

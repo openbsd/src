@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.31 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.32 2003/05/18 19:37:46 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	  if (fileno (log_output) != -1
 	      && fileno (stdout) == fileno (log_output))
 	    fclose (stdout);
-	  fclose (log_output); /* XXX monitor_fclose ? */
+	  fclose (log_output);
 
 	  /* Fallback to syslog.  */
 	  log_to (0);
@@ -437,7 +437,7 @@ log_packet_stop (void)
   /* Stop capture.  */
   if (packet_log)
     {
-      monitor_fclose (packet_log);
+      fclose (packet_log);
       log_print ("log_packet_stop: stopped capture");
     }
   packet_log = 0;

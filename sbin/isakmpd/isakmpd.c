@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.51 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.52 2003/05/18 19:37:46 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ report (void)
   log_to (rfp);
   ui_report ("r");
   log_to (old);
-  monitor_fclose (rfp);
+  fclose (rfp);
 
   sigusr1ed = 0;
 }
@@ -348,7 +348,7 @@ write_pid_file (void)
     {
       /* XXX Error checking!  */
       fprintf (fp, "%ld\n", (long) getpid ());
-      monitor_fclose (fp);
+      fclose (fp);
     }
   else
     log_fatal ("main: fopen (\"%s\", \"w\") failed", pid_file);

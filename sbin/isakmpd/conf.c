@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.52 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.53 2003/05/18 19:37:46 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -611,7 +611,7 @@ conf_reinit (void)
 		       fd, new_conf_addr, (unsigned long)sz);
 	    goto fail;
 	}
-      monitor_close (fd);
+      close (fd);
 
       trans = conf_begin ();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.73 2003/05/15 03:20:28 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.74 2003/05/18 19:37:46 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -151,10 +151,6 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
   BIO *keyh;
   RSA *rsakey;
   size_t fsize;
-#if defined (USE_PRIVSEP)
-  int fd;
-  char *fdata;
-#endif
 #endif
 #endif
 
@@ -296,51 +292,6 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
       if (check_file_secrecy (keyfile, &fsize))
 	return 0;
 
-#if defined (USE_PRIVSEP)
-      /* XXX Try to find a better solution.  */
-      keyh = BIO_new (BIO_s_mem ());
-      if (keyh == NULL)
-	{
-	  log_print ("ike_auth_get_key: "
-		     "BIO_new (BIO_s_mem ()) failed");
-	  return 0;
-	}
-      fd = monitor_open (keyfile, O_RDONLY, 0);
-      if (fd < 0)
-	{
-	  log_print ("ike_auth_get_key: open(\"%s\") failed", keyfile);
-	  BIO_free (keyh);
-	  return 0;
-	}
-      fdata = (char *)malloc (fsize);
-      if (!fdata)
-	{
-	  log_error ("ike_auth_get_get: malloc (%d) failed", fsize);
-	  monitor_close (fd);
-	  BIO_free (keyh);
-	  return 0;
-	}
-      if (read (fd, fdata, fsize) != fsize)
-	{
-	  log_error ("ike_auth_get_key: short read");
-	  monitor_close (fd);
-	  BIO_free (keyh);
-	  memset (fdata, 0, fsize);
-	  free (fdata);
-	  return 0;
-	}
-      monitor_close (fd);
-      if (BIO_write (keyh, fdata, fsize) == -1)
-	{
-	  log_print ("ike_auth_get_key: BIO_read () failed");
-	  BIO_free (keyh);
-	  memset (fdata, 0, fsize);
-	  free (fdata);
-	  return 0;
-	}
-      memset (fdata, 0, fsize);
-      free (fdata);
-#else
       keyh = BIO_new (BIO_s_file ());
       if (keyh == NULL)
 	{
@@ -356,7 +307,6 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  BIO_free (keyh);
 	  return 0;
 	}
-#endif /* USE_PRIVSEP */
 
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
       rsakey = PEM_read_bio_RSAPrivateKey (keyh, NULL, NULL, NULL);
@@ -964,7 +914,6 @@ rsa_sig_encode_hash (struct message *msg)
   u_int8_t *id;
   size_t id_len;
   int idtype;
-  int sent_keytype;
   void *sent_key;
 
   id = initiator ? exchange->id_i : exchange->id_r;
@@ -1075,38 +1024,6 @@ rsa_sig_encode_hash (struct message *msg)
 
  skipcert:
 
-  switch (id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ])
-    {
-    case IPSEC_ID_IPV4_ADDR:
-    case IPSEC_ID_IPV6_ADDR:
-      util_ntoa ((char **)&buf2,
-		 id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ] == IPSEC_ID_IPV4_ADDR
-		 ? AF_INET : AF_INET6,
-		 id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
-      if (!buf2)
-	return 0;
-      break;
-
-    case IPSEC_ID_FQDN:
-    case IPSEC_ID_USER_FQDN:
-      buf2 = calloc (id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
-		     sizeof (char));
-      if (!buf2)
-        {
-	  log_print ("rsa_sig_encode_hash: malloc (%lu) failed",
-		     (unsigned long)id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1);
-	  return 0;
-	}
-      memcpy (buf2, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
-	      id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
-      break;
-
-      /* XXX Support more ID types?  */
-    default:
-      buf2 = 0;
-      break;
-    }
-
   /* Again, we may have these from the kernel */
   buf = (u_int8_t *)conf_get_str (exchange->name, "PKAuthentication");
   if (buf)
@@ -1119,7 +1036,6 @@ rsa_sig_encode_hash (struct message *msg)
 	  return 0;
 	}
 
-      sent_keytype = ISAKMP_KEY_RSA;
       sent_key = key_internalize (ISAKMP_KEY_RSA, ISAKMP_KEYTYPE_PRIVATE, data,
 				  datalen);
       if (!sent_key)
@@ -1128,11 +1044,54 @@ rsa_sig_encode_hash (struct message *msg)
 		     "SA acquisition subsystem");
 	  return 0;
 	}
+#if defined (USE_PRIVSEP)
+      {
+	/* With USE_PRIVSEP, the sent_key should be a key number. */
+	void *key = sent_key;
+	sent_key = monitor_RSA_upload_key (key);
+      }
+#endif
     }
   else /* Try through the regular means.  */
     {
+      switch (id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ])
+	{
+	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV6_ADDR:
+	  util_ntoa ((char **)&buf2,
+		     id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ] == IPSEC_ID_IPV4_ADDR
+		     ? AF_INET : AF_INET6,
+		     id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
+	  if (!buf2)
+	    return 0;
+	  break;
+
+	case IPSEC_ID_FQDN:
+	case IPSEC_ID_USER_FQDN:
+	  buf2 = calloc (id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1,
+			 sizeof (char));
+	  if (!buf2)
+	    {
+	      log_print ("rsa_sig_encode_hash: malloc (%lu) failed",
+			 (unsigned long)id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1);
+	      return 0;
+	    }
+	  memcpy (buf2, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		  id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
+	  break;
+
+	  /* XXX Support more ID types?  */
+	default:
+	  buf2 = 0;
+	  return 0;
+	}
+
+#if defined (USE_PRIVSEP)
+      sent_key = monitor_RSA_get_private_key (exchange->name, (char *)buf2);
+#else
       sent_key = ike_auth_get_key (IKE_AUTH_RSA_SIG, exchange->name,
 				   (char *)buf2, 0);
+#endif
       free (buf2);
 
       /* Did we find a key?  */
@@ -1141,16 +1100,16 @@ rsa_sig_encode_hash (struct message *msg)
 	  log_print ("rsa_sig_encode_hash: could not get private key");
 	  return -1;
 	}
-
-      sent_keytype = ISAKMP_KEY_RSA;
     }
 
+#if !defined (USE_PRIVSEP)
   /* Enable RSA blinding.  */
   if (RSA_blinding_on (sent_key, NULL) != 1)
     {
       log_error ("rsa_sig_encode_hash: RSA_blinding_on () failed.");
       return -1;
     }
+#endif
 
   /* XXX hashsize is not necessarily prf->blocksize.  */
   buf = malloc (hashsize);
@@ -1170,6 +1129,7 @@ rsa_sig_encode_hash (struct message *msg)
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf, hashsize));
 
+#if !defined (USE_PRIVSEP)
   data = malloc (RSA_size (sent_key));
   if (!data)
     {
@@ -1180,10 +1140,17 @@ rsa_sig_encode_hash (struct message *msg)
 
   datalen = RSA_private_encrypt (hashsize, buf, data, sent_key,
 				 RSA_PKCS1_PADDING);
+#else
+  datalen = monitor_RSA_private_encrypt (hashsize, buf, &data, sent_key,
+					 RSA_PKCS1_PADDING);
+#endif /* USE_PRIVSEP */
   if (datalen == -1)
     {
       log_print ("rsa_sig_encode_hash: RSA_private_encrypt () failed");
+      if (data)
+	free (data);
       free (buf);
+      monitor_RSA_free (sent_key);
       return -1;
     }
 
