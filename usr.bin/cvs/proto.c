@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.20 2004/08/05 13:24:37 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.21 2004/08/12 18:35:18 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -279,11 +279,13 @@ cvs_connect(struct cvsroot *root)
 		return (-1);
 	}
 
+#if 0
 	root->cr_srverr = fdopen(errfd[0], "r");
 	if (root->cr_srverr == NULL) {
 		cvs_log(LP_ERR, "failed to create pipe stream");
 		return (-1);
 	}
+#endif
 
 	/* make the streams line-buffered */
 	(void)setvbuf(root->cr_srvin, NULL, _IOLBF, 0);
