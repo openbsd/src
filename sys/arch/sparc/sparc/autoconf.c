@@ -1437,6 +1437,10 @@ getdisk(str, len, defpart, devp)
 				printf(" %s", dv->dv_xname);
 #endif
 		}
+#if NFD > 0
+		if (devpart == 0)
+			printf(" fdeject");
+#endif /* NFD */
 		printf("\n");
 	}
 	return (dv);
@@ -1516,9 +1520,8 @@ setroot()
 		for (;;) {
 			printf("root device ");
 			if (bootdv != NULL)
-				printf("(default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK?'a':' ');
+				printf("(default %s%s)", bootdv->dv_xname,
+				    bootdv->dv_class == DV_DISK?"a":"");
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 #if NFD > 0
@@ -1565,9 +1568,8 @@ setroot()
 		for (;;) {
 			printf("swap device ");
 			if (bootdv != NULL)
-				printf("(default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK?'b':' ');
+				printf("(default %s%s)", bootdv->dv_xname,
+				    bootdv->dv_class == DV_DISK?"b":"");
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
