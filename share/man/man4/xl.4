@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.14 1999/08/04 17:18:45 deraadt Exp $
+.\"	$OpenBSD: xl.4,v 1.15 2000/04/14 20:15:17 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -37,9 +37,10 @@
 .Os
 .Sh NAME
 .Nm xl
-.Nd "3Com EtherLink XL and Fast EtherLink XL Ethernet (3C9xx)"
+.Nd "3Com EtherLink XL and Fast EtherLink XL Ethernet"
 .Sh SYNOPSIS
 .Cd "xl* at pci? dev ? function ?"
+.Cd "xl* at cardbus? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm xl
@@ -48,10 +49,12 @@ of Ethernet cards, and embedded controllers based on the 3Com
 .Dq boomerang
 and
 .Dq cyclone
-bus master EtherLink XL chips. This includes, among
-others, the following models:
+bus master EtherLink XL chips.
+This includes, among others, the following models:
 .Pp
 .Bl -tag -width 3CXXXX -offset indent -compact
+.It 3C575
+10/100 LAN CardBus PC Card
 .It 3C900
 EtherLink XL PCI
 .It 3C900B
@@ -70,8 +73,8 @@ OfficeConnect Fast Ethernet NIC
 .Pp
 It also supports embedded 3C905-TX and 3C905B-TX Ethernet hardware found
 in certain Dell OptiPlex and Dell Precision desktop machines, as well as
-some Dell Latitude laptop docking stations. Other models of 3Com network
-cards are supported by the
+some Dell Latitude laptop docking stations.
+Other models of 3Com network cards are supported by the
 .Xr ec 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
@@ -86,7 +89,7 @@ and thin Ethernet coaxial (RG58 A/U or C/U, 50 ohm +/- 4) for BNC (10base2).
 Some 3Com NICs also support MII connectors (switchable 10/100Mbps UTP).
 The 3C905B-FX and other similar cards are capable of 100Mbps over fiber.
 .Pp
-The 3c985 series of gigabit cards are supported by the
+The 3C985 series of Gigabit cards are supported by the
 .Xr ti 4
 driver.
 .Pp
@@ -96,11 +99,12 @@ are supported:
 .Pp
 .Bl -tag -width xxx -offset indent
 .It Cm media No autoselect
-Enable autoselection of media type and options. Note that this media type is
-only available with the 3C905 and 3C905B adapters with external PHYs or
-built-in autonegotiation logic. For 3C900 and 3C900B adapters, the driver
-will choose the mode specified in the EEPROM. You can change this by adding
-media options to the appropriate
+Enable autoselection of media type and options.
+Note that this media type is only available with
+adapters that have external PHYs or built-in autonegotiation logic.
+For 3C900 and 3C900B adapters, the driver
+will choose the mode specified in the EEPROM.
+You can change this by adding media options to the appropriate
 .Pa /etc/hostname.xlX
 file.
 .It Cm media No 100baseFX Cm mediaopt No full-duplex
@@ -144,40 +148,47 @@ The driver fauled to allocate an mbuf for the transmitter ring when
 allocating a pad buffer or collapsing an mbuf chain into a cluster.
 .It "xl%d: command never completed!"
 Some commands issued to the 3C90x ASIC take time to complete: the
-driver is supposed to wait until the ``command in progress'' bit in
-the status register clears before continuing. In rare instances, this
-bit may not clear. To avoid getting caught in an infinite wait loop,
+driver is supposed to wait until the
+.Dq command in progress
+bit in the status register clears before continuing.
+In rare instances, this bit may not clear.
+To avoid getting caught in an infinite wait loop,
 the driver only polls the bit a finite number of times before
-giving up, at which point it issues this message. This message may
-be printed during driver initialization on slower machines. If you
-see this message but the driver continues to function normally, the
+giving up, at which point it issues this message.
+This message may be printed during driver initialization on slower machines.
+If you see this message but the driver continues to function normally, the
 message can probably be ignored.
 .It "xl%d: chip is in D3 power state -- setting to D0"
-This message applies only to 3C905B adapters, which support power
-management. Some operating systems place the 3C905B in low power
+This message applies only to 3C905B adapters, which support power management.
+Some operating systems place the 3C905B in low power
 mode when shutting down, and some PCI BIOSs fail to bring the chip
-out of this state before configuring it. The 3C905B loses all of
-its PCI configuration in the D3 state, so if the BIOS does not set
-it back to full power mode in time, it won't be able to configure it
-correctly. The driver tries to detect this condition and bring
+out of this state before configuring it.
+The 3C905B loses all of its PCI configuration in the D3 state, so if the
+BIOS does not set it back to full power mode in time,
+it won't be able to configure it correctly.
+The driver tries to detect this condition and bring
 the adapter back to the D0 (full power) state, but this may not be
-enough to return the driver to a fully operational condition. If
-you see this message at boot time and the driver fails to attach
+enough to return the driver to a fully operational condition.
+If you see this message at boot time and the driver fails to attach
 the device as a network interface, you will have to perform second
 warm boot to have the device properly configured.
 .Pp
 Note that this condition only occurs when warm booting from another
-operating system. If you power down your system prior to booting
+operating system.
+If you power down your system prior to booting
 .Ox ,
 the card should be configured correctly.
 .It "xl%d: WARNING: no media options bits set in the media options register!"
 This warning may appear when using the driver on some Dell Latitude
-docking stations with built-in 3C905-TX adapters. For whatever the
-reason, the ``MII available'' bit in the media options register on
+docking stations with built-in 3C905-TX adapters.
+For whatever the reason, the
+.Dq MII available
+bit in the media options register on
 this particular equipment is not set, even though it should be (the
-3C905-TX always uses an external PHY transceiver). The driver will
-attempt to guess the proper media type based on the PCI device ID
-word. The driver makes a lot of noise about this condition because
+3C905-TX always uses an external PHY transceiver).
+The driver will
+attempt to guess the proper media type based on the PCI device ID word.
+The driver makes a lot of noise about this condition because
 the author considers it a manufacturing defect.
 .El
 .Sh SEE ALSO
@@ -193,8 +204,7 @@ the author considers it a manufacturing defect.
 The
 .Nm
 device driver first appeared in
-.Fx 3.0 ,
-and
+.Fx 3.0 .
 .Ox
 support was added in
 .Ox 2.4 .
