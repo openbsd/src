@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.271 2004/02/01 19:22:30 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.272 2004/02/01 19:23:54 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1237,6 +1237,9 @@ viac3_crypto_setup(void)
 
 	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
 	    viac3_crypto_freesession, viac3_crypto_process);
+#ifdef notdef
+	i386_has_xcrypt = 1;
+#endif
 }
 
 int
