@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.11 2000/11/16 01:25:45 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.12 2001/02/09 02:23:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -103,6 +103,10 @@ struct dc_type dc_devs[] = {
 int dc_pci_probe	__P((struct device *, void *, void *));
 void dc_pci_attach	__P((struct device *, struct device *, void *));
 void dc_pci_acpi	__P((struct device *, void *));
+
+extern void dc_read_eeprom	__P((struct dc_softc *, caddr_t, int, int,
+				     int));
+extern void dc_parse_21143_srom	__P((struct dc_softc *));
 
 /*
  * Probe for a 21143 or clone chip. Check the PCI vendor and device
@@ -263,6 +267,8 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_21143;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
+			/* Save EEPROM contents so we can parse them later. */
+			dc_read_eeprom(sc, (caddr_t)&sc->dc_srom, 0, 512, 0);
 		}
 		break;
 	case PCI_VENDOR_DAVICOM:
@@ -424,38 +430,41 @@ void dc_pci_attach(parent, self, aux)
 	 * The tricky ones are the Macronix/PNIC II and the
 	 * Intel 21143.
 	 */
-	if (DC_IS_INTEL(sc)) {
-		u_int32_t		media, cwuc;
-		cwuc = pci_conf_read(pc, pa->pa_tag, DC_PCI_CWUC);
-		cwuc |= DC_CWUC_FORCE_WUL;
-		pci_conf_write(pc, pa->pa_tag, DC_PCI_CWUC, cwuc);
-		DELAY(10000);
-		media = pci_conf_read(pc, pa->pa_tag, DC_PCI_CWUC);
-		cwuc &= ~DC_CWUC_FORCE_WUL;
-		pci_conf_write(pc, pa->pa_tag, DC_PCI_CWUC, cwuc);
-		DELAY(10000);
-		if (media & DC_CWUC_MII_ABILITY)
-			sc->dc_pmode = DC_PMODE_MII;
-		if (media & DC_CWUC_SYM_ABILITY) {
-			sc->dc_pmode = DC_PMODE_SYM;
-			sc->dc_flags |= DC_21143_NWAY;
-		}
-		/*
-		 * If none of the bits are set, then this NIC
-		 * isn't meant to support 'wake up LAN' mode.
-		 * This is usually only the case on multiport
-		 * cards, and these cards almost always have
-		 * MII transceivers.
-		 */
-		if (media == 0)
-			sc->dc_pmode = DC_PMODE_MII;
-	} else if (DC_IS_MACRONIX(sc) || DC_IS_PNICII(sc)) {
+	if (DC_IS_INTEL(sc))
+		dc_parse_21143_srom(sc);
+	else if (DC_IS_MACRONIX(sc) || DC_IS_PNICII(sc)) {
 		if (sc->dc_type == DC_TYPE_98713)
 			sc->dc_pmode = DC_PMODE_MII;
 		else
 			sc->dc_pmode = DC_PMODE_SYM;
 	} else if (!sc->dc_pmode)
 		sc->dc_pmode = DC_PMODE_MII;
+
+#ifdef SRM_MEDIA
+	sc->dc_srm_media = 0;
+
+	/* Remember the SRM console media setting */
+	if (DC_IS_INTEL(sc)) {
+		command = pci_read_config(dev, DC_PCI_CFDD, 4);
+		command &= ~(DC_CFDD_SNOOZE_MODE|DC_CFDD_SLEEP_MODE);
+		switch ((command >> 8) & 0xff) {
+		case 3: 
+			sc->dc_srm_media = IFM_10_T;
+			break;
+		case 4: 
+			sc->dc_srm_media = IFM_10_T | IFM_FDX;
+			break;
+		case 5: 
+			sc->dc_srm_media = IFM_100_TX;
+			break;
+		case 6: 
+			sc->dc_srm_media = IFM_100_TX | IFM_FDX;
+			break;
+		}
+		if (sc->dc_srm_media)
+			sc->dc_srm_media |= IFM_ACTIVE | IFM_ETHER;
+	}
+#endif
 
 	dc_attach_common(sc);
 

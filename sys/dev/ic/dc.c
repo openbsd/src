@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.20 2000/11/16 06:08:31 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.21 2001/02/09 02:23:34 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -76,27 +76,6 @@
  * combination with the internal NWAY support to create a 10/100
  * autosensing configuration.
  *
- * Knowing which media is available on a given card is tough: you're
- * supposed to go slogging through the EEPROM looking for media
- * description structures. Unfortunately, some card vendors that use
- * the 21143 don't obey the DEC SROM spec correctly, which means that
- * what you find in the EEPROM may not agree with reality. Fortunately,
- * the 21143 provides us a way to get around this issue: lurking in
- * PCI configuration space is the Configuration Wake-Up Command Register.
- * This register is loaded with a value from the EEPROM when wake on LAN
- * mode is enabled; this value tells us quite clearly what kind of media
- * is attached to the NIC. The main purpose of this register is to tell
- * the NIC what media to scan when in wake on LAN mode, however by
- * forcibly enabling wake on LAN mode, we can use to learn what kind of
- * media a given NIC has available and adapt ourselves accordingly.
- *
- * Of course, if the media description blocks in the EEPROM are bogus.
- * what are the odds that the CWUC aren't bogus as well, right? Well,
- * the CWUC value is more likely to be correct since wake on LAN mode
- * won't work correctly without it, and wake on LAN is a big selling
- * point these days. It's also harder to screw up a single byte than
- * a whole media descriptor block.
- *
  * Note that not all tulip workalikes are handled in this driver: we only
  * deal with those which are relatively well behaved. The Winbond is
  * handled separately due to its different register offsets and the
@@ -154,6 +133,9 @@
 #include <dev/pci/pcidevs.h>
 
 #define DC_USEIOSPACE
+#ifdef __alpha__
+#define SRM_MEDIA
+#endif
 
 #include <dev/ic/dcreg.h>
 
@@ -208,6 +190,15 @@ void dc_setfilt		__P((struct dc_softc *));
 void dc_reset		__P((struct dc_softc *));
 int dc_list_rx_init	__P((struct dc_softc *));
 int dc_list_tx_init	__P((struct dc_softc *));
+
+void dc_parse_21143_srom	__P((struct dc_softc *));
+void dc_decode_leaf_sia		__P((struct dc_softc *,
+				     struct dc_eblock_sia *));
+void dc_decode_leaf_mii		__P((struct dc_softc *,
+				     struct dc_eblock_mii *));
+void dc_decode_leaf_sym		__P((struct dc_softc *,
+				     struct dc_eblock_sym *));
+void dc_apply_fixup		__P((struct dc_softc *, int));
 
 #define DC_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | (x))
@@ -671,7 +662,7 @@ int dc_miibus_readreg(self, phy, reg)
 	if (DC_IS_ADMTEK(sc) && phy != DC_ADMTEK_PHYADDR)
 		return(0);
 
-	if (sc->dc_pmode == DC_PMODE_SYM) {
+	if (sc->dc_pmode != DC_PMODE_MII) {
 		if (phy == (MII_NPHY - 1)) {
 			switch(reg) {
 			case MII_BMSR:
@@ -838,6 +829,7 @@ void dc_miibus_statchg(self)
 
 	if (DC_IS_ADMTEK(sc))
 		return;
+
 	mii = &sc->sc_mii;
 	ifm = &mii->mii_media;
 	if (DC_IS_DAVICOM(sc) && IFM_SUBTYPE(ifm->ifm_media) == IFM_HPNA_1) {
@@ -1182,7 +1174,7 @@ void dc_setfilt_xircom(sc)
 	/* Set our MAC address */
 	sp[0] = ((u_int16_t *)sc->arpcom.ac_enaddr)[0];
 	sp[1] = ((u_int16_t *)sc->arpcom.ac_enaddr)[1];
-	sp[2] = ((u_int16_t *)sc->arpcom.ac_enaddr)[2];      
+	sp[2] = ((u_int16_t *)sc->arpcom.ac_enaddr)[2];
 
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_TX_ON);
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_RX_ON);
@@ -1284,6 +1276,10 @@ void dc_setcfg(sc, media)
 			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
 			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_SCRAMBLER);
+			if (DC_IS_INTEL(sc))
+				dc_apply_fixup(sc,
+				    (media & IFM_GMASK) == IFM_FDX ?
+				    IFM_100_TX|IFM_FDX : IFM_100_TX);
 		}
 	}
 
@@ -1318,6 +1314,21 @@ void dc_setcfg(sc, media)
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_SCRAMBLER);
+			if (DC_IS_INTEL(sc)) {
+				DC_CLRBIT(sc, DC_SIARESET, DC_SIA_RESET);
+				DC_CLRBIT(sc, DC_10BTCTRL, 0xFFFF);
+				if ((media & IFM_GMASK) == IFM_FDX)
+					DC_SETBIT(sc, DC_10BTCTRL, 0x7F3D);
+				else
+					DC_SETBIT(sc, DC_10BTCTRL, 0x7F3F);
+				DC_SETBIT(sc, DC_SIARESET, DC_SIA_RESET);
+				DC_CLRBIT(sc, DC_10BTCTRL,
+				    DC_TCTL_AUTONEGENBL);
+				dc_apply_fixup(sc,
+				    (media & IFM_GMASK) == IFM_FDX ?
+				    IFM_10_T|IFM_FDX : IFM_10_T);
+				DELAY(20000);
+			}
 		}
 	}
 
@@ -1387,8 +1398,160 @@ void dc_reset(sc)
 	 * into a state where it will never come out of reset
 	 * until we reset the whole chip again.
 	 */
-	 if (DC_IS_INTEL(sc))
+	if (DC_IS_INTEL(sc)) {
 		DC_SETBIT(sc, DC_SIARESET, DC_SIA_RESET);
+		CSR_WRITE_4(sc, DC_10BTCTRL, 0);
+		CSR_WRITE_4(sc, DC_WATCHDOG, 0);
+	}
+
+	return;
+}
+
+void dc_apply_fixup(sc, media)
+	struct dc_softc		*sc;
+	int			media;
+{
+	struct dc_mediainfo	*m;
+	u_int8_t		*p;
+	int			i;
+	u_int8_t		reg;
+
+	m = sc->dc_mi;
+
+	while (m != NULL) {
+		if (m->dc_media == media)
+			break;
+		m = m->dc_next;
+	}
+
+	if (m == NULL)
+		return;
+
+	for (i = 0, p = m->dc_reset_ptr; i < m->dc_reset_len; i++, p += 2) {
+		reg = (p[0] | (p[1] << 8)) << 16;
+		CSR_WRITE_4(sc, DC_WATCHDOG, reg);
+	}
+
+	for (i = 0, p = m->dc_gp_ptr; i < m->dc_gp_len; i++, p += 2) {
+		reg = (p[0] | (p[1] << 8)) << 16;
+		CSR_WRITE_4(sc, DC_WATCHDOG, reg);
+	}
+
+	return;
+}
+
+void dc_decode_leaf_sia(sc, l)
+	struct dc_softc		*sc;
+	struct dc_eblock_sia	*l;
+{
+	struct dc_mediainfo	*m;
+
+	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	if (l->dc_sia_code == DC_SIA_CODE_10BT)
+		m->dc_media = IFM_10_T;
+
+	if (l->dc_sia_code == DC_SIA_CODE_10BT_FDX)
+		m->dc_media = IFM_10_T|IFM_FDX;
+
+	if (l->dc_sia_code == DC_SIA_CODE_10B2)
+		m->dc_media = IFM_10_2;
+
+	if (l->dc_sia_code == DC_SIA_CODE_10B5)
+		m->dc_media = IFM_10_5;
+
+	m->dc_gp_len = 2;
+	m->dc_gp_ptr = (u_int8_t *)&l->dc_sia_gpio_ctl;
+
+	m->dc_next = sc->dc_mi;
+	sc->dc_mi = m;
+
+	sc->dc_pmode = DC_PMODE_SIA;
+
+	return;
+}
+
+void dc_decode_leaf_sym(sc, l)
+	struct dc_softc		*sc;
+	struct dc_eblock_sym	*l;
+{
+	struct dc_mediainfo	*m;
+
+	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	if (l->dc_sym_code == DC_SYM_CODE_100BT)
+		m->dc_media = IFM_100_TX;
+
+	if (l->dc_sym_code == DC_SYM_CODE_100BT_FDX)
+		m->dc_media = IFM_100_TX|IFM_FDX;
+
+	m->dc_gp_len = 2;
+	m->dc_gp_ptr = (u_int8_t *)&l->dc_sym_gpio_ctl;
+
+	m->dc_next = sc->dc_mi;
+	sc->dc_mi = m;
+
+	sc->dc_pmode = DC_PMODE_SYM;
+
+	return;
+}
+
+void dc_decode_leaf_mii(sc, l)
+	struct dc_softc		*sc;
+	struct dc_eblock_mii	*l;
+{
+	u_int8_t		*p;
+	struct dc_mediainfo	*m;
+
+	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	/* We abuse IFM_AUTO to represent MII. */
+	m->dc_media = IFM_AUTO;
+	m->dc_gp_len = l->dc_gpr_len;
+
+	p = (u_int8_t *)l;
+	p += sizeof(struct dc_eblock_mii);
+	m->dc_gp_ptr = p;
+	p += 2 * l->dc_gpr_len;
+	m->dc_reset_len = *p;
+	p++;
+	m->dc_reset_ptr = p;
+
+	m->dc_next = sc->dc_mi;
+	sc->dc_mi = m;
+
+	return;
+}
+
+void dc_parse_21143_srom(sc)
+	struct dc_softc		*sc;
+{
+	struct dc_leaf_hdr	*lhdr;
+	struct dc_eblock_hdr	*hdr;
+	int			i, loff;
+	char			*ptr;
+
+	loff = sc->dc_srom[27];
+	lhdr = (struct dc_leaf_hdr *)&(sc->dc_srom[loff]);
+
+	ptr = (char *)lhdr;
+	ptr += sizeof(struct dc_leaf_hdr) - 1;
+	for (i = 0; i < lhdr->dc_mcnt; i++) {
+		hdr = (struct dc_eblock_hdr *)ptr;
+		switch(hdr->dc_type) {
+		case DC_EBLOCK_MII:
+			dc_decode_leaf_mii(sc, (struct dc_eblock_mii *)hdr);
+			break;
+		case DC_EBLOCK_SIA:
+			dc_decode_leaf_sia(sc, (struct dc_eblock_sia *)hdr);
+			break;
+		case DC_EBLOCK_SYM:
+			dc_decode_leaf_sym(sc, (struct dc_eblock_sym *)hdr);
+			break;
+		default:
+			/* Don't care. Yet. */
+			break;
+		}
+		ptr += (hdr->dc_len & 0x7F);
+		ptr++;
+	}
 
 	return;
 }
@@ -1401,7 +1564,7 @@ void dc_attach_common(sc)
 	struct dc_softc *sc;
 {
 	struct ifnet		*ifp;
-	int			error = 0, mac_offset;
+	int			error = 0, mac_offset, tmp;
 
 	if (!DC_IS_XIRCOM(sc))
 		dc_eeprom_width(sc);
@@ -1468,6 +1631,18 @@ void dc_attach_common(sc)
 	ifp->if_snd.ifq_maxlen = DC_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
+	/* Do MII setup. If this is a 21143, check for a PHY on the
+	 * MII bus after applying any necessary fixups to twiddle the
+	 * GPIO bits. If we don't end up finding a PHY, restore the
+	 * old selection (SIA only or SIA/SYM) and attach the dcphy
+	 * driver instead.
+	 */
+	if (DC_IS_INTEL(sc)) {
+		dc_apply_fixup(sc, IFM_AUTO);
+		tmp = sc->dc_pmode;
+		sc->dc_pmode = DC_PMODE_MII;
+	}
+
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = dc_miibus_readreg;
 	sc->sc_mii.mii_writereg = dc_miibus_writereg;
@@ -1488,7 +1663,9 @@ void dc_attach_common(sc)
 
 	if (DC_IS_INTEL(sc)) {
 		if (error) {
-			sc->dc_pmode = DC_PMODE_SYM;
+			sc->dc_pmode = tmp;
+			if (sc->dc_pmode != DC_PMODE_SIA)
+				sc->dc_pmode = DC_PMODE_SYM;
 			sc->dc_flags |= DC_21143_NWAY;
 			mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
@@ -2331,6 +2508,10 @@ void dc_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head);
 #endif
+		if (sc->dc_flags & DC_TX_ONE) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 	}
 
 	/* Transmit */
@@ -2507,6 +2688,15 @@ void dc_init(xsc)
 			timeout_add(&sc->dc_tick_tmo, hz);
 	}
 
+#ifdef SRM_MEDIA
+	if(sc->dc_srm_media) {
+		struct ifreq ifr;
+
+		ifr.ifr_media = sc->dc_srm_media;
+		ifmedia_ioctl(ifp, &ifr, &mii->mii_media, SIOCSIFMEDIA);
+		sc->dc_srm_media = 0;
+#endif
+
 	return;
 }
 
@@ -2634,6 +2824,10 @@ int dc_ioctl(ifp, command, data)
 	case SIOCSIFMEDIA:
 		mii = &sc->sc_mii;
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
+#ifdef SRM_MEDIA
+		if (sc->dc_srm_media)
+			sc->dc_srm_media = 0;
+#endif
 		break;
 	default:
 		error = EINVAL;

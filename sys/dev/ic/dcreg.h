@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.9 2000/10/26 20:50:43 aaron Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.10 2001/02/09 02:23:35 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -101,6 +101,7 @@
 /* MII/symbol mode port types */
 #define DC_PMODE_MII		0x1
 #define DC_PMODE_SYM		0x2
+#define DC_PMODE_SIA		0x3
 
 /*
  * Bus control bits.
@@ -354,21 +355,21 @@
 /*
  * SIA and General Purpose Port register (X3201)
  */
-#define DC_SIAGP_RXMATCH       0x40000000
-#define DC_SIAGP_INT1          0x20000000
-#define DC_SIAGP_INT0          0x10000000
-#define DC_SIAGP_WRITE_EN      0x08000000
-#define DC_SIAGP_RXMATCH_EN    0x04000000
-#define DC_SIAGP_INT1_EN       0x02000000
-#define DC_SIAGP_INT0_EN       0x01000000
-#define DC_SIAGP_LED3          0x00800000
-#define DC_SIAGP_LED2          0x00400000
-#define DC_SIAGP_LED1          0x00200000
-#define DC_SIAGP_LED0          0x00100000
-#define DC_SIAGP_MD_GP3_OUTPUT 0x00080000
-#define DC_SIAGP_MD_GP2_OUTPUT 0x00040000
-#define DC_SIAGP_MD_GP1_OUTPUT 0x00020000
-#define DC_SIAGP_MD_GP0_OUTPUT 0x00010000   
+#define DC_SIAGP_RXMATCH	0x40000000
+#define DC_SIAGP_INT1		0x20000000
+#define DC_SIAGP_INT0		0x10000000
+#define DC_SIAGP_WRITE_EN	0x08000000
+#define DC_SIAGP_RXMATCH_EN	0x04000000
+#define DC_SIAGP_INT1_EN	0x02000000
+#define DC_SIAGP_INT0_EN	0x01000000
+#define DC_SIAGP_LED3		0x00800000
+#define DC_SIAGP_LED2		0x00400000
+#define DC_SIAGP_LED1		0x00200000
+#define DC_SIAGP_LED0		0x00100000
+#define DC_SIAGP_MD_GP3_OUTPUT	0x00080000
+#define DC_SIAGP_MD_GP2_OUTPUT	0x00040000
+#define DC_SIAGP_MD_GP1_OUTPUT	0x00020000
+#define DC_SIAGP_MD_GP0_OUTPUT	0x00010000
 
 /*
  * Size of a setup frame.
@@ -468,6 +469,15 @@ struct dc_chain_data {
 	int			dc_rx_prod;
 };
 
+struct dc_mediainfo {
+	int			dc_media;
+	u_int8_t		*dc_gp_ptr;
+	u_int8_t		dc_gp_len;
+	u_int8_t		*dc_reset_ptr;
+	u_int8_t		dc_reset_len;
+	struct dc_mediainfo	*dc_next;
+};
+
 struct dc_type {
 	u_int16_t		dc_vid;
 	u_int16_t		dc_did;
@@ -520,8 +530,8 @@ struct dc_mii_frame {
 /*
  * ASIX specific registers.
  */
-#define DC_AX_FILTIDX		0x68    /* RX filter index */
-#define DC_AX_FILTDATA		0x70    /* RX filter data */
+#define DC_AX_FILTIDX		0x68	/* RX filter index */
+#define DC_AX_FILTDATA		0x70	/* RX filter data */
 
 /*
  * Special ASIX-specific bits in the ASIX NETCFG register (CSR6).
@@ -681,12 +691,17 @@ struct dc_softc {
 	int			dc_if_media;
 	u_int32_t		dc_flags;
 	u_int32_t		dc_txthresh;
+	u_int8_t		dc_srom[1024];
+	struct dc_mediainfo	*dc_mi;
 	struct dc_list_data	*dc_ldata;
 	caddr_t			dc_ldata_ptr;
 	struct dc_chain_data	dc_cdata;
 	u_int32_t		dc_csid;
 	u_int			dc_revision;
 	struct timeout		dc_tick_tmo;
+#ifdef SRM_MEDIA
+	int			dc_srm_media;
+#endif
 };
 
 #define DC_TX_POLL		0x00000001
@@ -704,6 +719,7 @@ struct dc_softc {
 #define DC_128BIT_HASH		0x00001000
 #define DC_64BIT_HASH		0x00002000
 #define DC_TULIP_LEDS		0x00004000
+#define DC_TX_ONE		0x00008000
 
 /*
  * register space access macros
@@ -865,6 +881,110 @@ struct dc_softc {
 #define DC_CWUC_MII_ABILITY	0x00000040
 #define DC_CWUC_SYM_ABILITY	0x00000080
 #define DC_CWUC_LOCK		0x00000100
+
+/*
+ * SROM nonsense.
+ */
+
+#define DC_IB_CTLRCNT		0x13
+#define DC_IB_LEAF0_CNUM	0x1A
+#define DC_IB_LEAF0_OFFSET	0x1B
+
+struct dc_info_leaf {
+	u_int16_t		dc_conntype;
+	u_int8_t		dc_blkcnt;
+	u_int8_t		dc_rsvd;
+	u_int16_t		dc_infoblk;
+};
+
+#define DC_CTYPE_10BT			0x0000
+#define DC_CTYPE_10BT_NWAY		0x0100
+#define DC_CTYPE_10BT_FDX		0x0204
+#define DC_CTYPE_10B2			0x0001
+#define DC_CTYPE_10B5			0x0002
+#define DC_CTYPE_100BT			0x0003
+#define DC_CTYPE_100BT_FDX		0x0205
+#define DC_CTYPE_100T4			0x0006
+#define DC_CTYPE_100FX			0x0007
+#define DC_CTYPE_100FX_FDX		0x0208
+#define DC_CTYPE_MII_10BT		0x0009
+#define DC_CTYPE_MII_10BT_FDX		0x020A
+#define DC_CTYPE_MII_100BT		0x000D
+#define DC_CTYPE_MII_100BT_FDX		0x020E
+#define DC_CTYPE_MII_100T4		0x000F
+#define DC_CTYPE_MII_100FX		0x0010
+#define DC_CTYPE_MII_100FX_FDX		0x0211
+#define DC_CTYPE_DYN_PUP_AUTOSENSE	0x0800
+#define DC_CTYPE_PUP_AUTOSENSE		0x8800
+#define DC_CTYPE_NOMEDIA		0xFFFF
+
+#define DC_EBLOCK_SIA			0x0002
+#define DC_EBLOCK_MII			0x0003
+#define DC_EBLOCK_SYM			0x0004
+#define DC_EBLOCK_RESET			0x0005
+#define DC_EBLOCK_PHY_SHUTDOWN		0x0006
+
+struct dc_leaf_hdr {
+	u_int16_t		dc_mtype;
+	u_int8_t		dc_mcnt;
+	u_int8_t		dc_rsvd;
+};
+
+struct dc_eblock_hdr {
+	u_int8_t		dc_len;
+	u_int8_t		dc_type;
+};
+
+struct dc_eblock_sia {
+	struct dc_eblock_hdr	dc_sia_hdr;
+	u_int8_t		dc_sia_code;
+	u_int8_t		dc_sia_mediaspec[6]; /* CSR13, CSR14, CSR15 */
+	u_int8_t		dc_sia_gpio_ctl[2];
+	u_int8_t		dc_sia_gpio_dat[2];
+};
+
+#define DC_SIA_CODE_10BT	0x00
+#define DC_SIA_CODE_10B2	0x01
+#define DC_SIA_CODE_10B5	0x02
+#define DC_SIA_CODE_10BT_FDX	0x04
+#define DC_SIA_CODE_EXT		0x40
+
+/*
+ * Note that the first word in the gpr and reset
+ * sequences is always a control word.
+ */
+struct dc_eblock_mii {
+	struct dc_eblock_hdr    dc_mii_hdr;
+	u_int8_t		dc_mii_phynum;
+	u_int8_t		dc_gpr_len;
+/*	u_int16_t		dc_gpr_dat[n]; */
+/*	u_int8_t		dc_reset_len; */
+/*	u_int16_t		dc_reset_dat[n]; */
+/* There are other fields after these, but we don't
+ * care about them since they can be determined by looking
+ * at the PHY.
+ */
+};
+
+struct dc_eblock_sym {
+	struct dc_eblock_hdr	dc_sym_hdr;
+	u_int8_t		dc_sym_code;
+	u_int8_t		dc_sym_gpio_ctl[2];
+	u_int8_t		dc_sym_gpio_dat[2];
+	u_int8_t		dc_sym_cmd[2];
+};
+
+#define DC_SYM_CODE_100BT	0x03
+#define DC_SYM_CODE_100BT_FDX	0x05
+#define DC_SYM_CODE_100T4	0x06
+#define DC_SYM_CODE_100FX	0x07
+#define DC_SYM_CODE_100FX_FDX	0x08
+
+struct dc_eblock_reset {
+	struct dc_eblock_hdr	dc_reset_hdr;
+	u_int8_t		dc_reset_len;
+/*	u_int16_t		dc_reset_dat[n]; */
+};
 
 #ifdef __alpha__
 #undef vtophys
