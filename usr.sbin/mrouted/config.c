@@ -9,8 +9,9 @@
  * Leland Stanford Junior University.
  */
 
-
 #include "defs.h"
+#include <net/if.h>
+#include <ifaddrs.h>
 
 
 /*
@@ -18,77 +19,47 @@
  * and install them in the uvifs array.
  */
 void
-config_vifs_from_kernel()
+config_vifs_from_kernel(void)
 {
-    struct ifreq ifbuf[32];
-    struct ifreq *ifrp, *ifend;
-    struct ifconf ifc;
-    register struct uvif *v;
-    register vifi_t vifi;
-    int n;
+    struct ifaddrs *ifa, *ifap;
+    struct uvif *v;
+    vifi_t vifi;
     u_int32_t addr, mask, subnet;
     short flags;
 
-    ifc.ifc_buf = (char *)ifbuf;
-    ifc.ifc_len = sizeof(ifbuf);
-    if (ioctl(udp_socket, SIOCGIFCONF, (char *)&ifc) < 0)
-	log(LOG_ERR, errno, "ioctl SIOCGIFCONF");
+    if (getifaddrs(&ifap) < 0)
+	log(LOG_ERR, errno, "getifaddrs");
 
-    ifrp = (struct ifreq *)ifbuf;
-    ifend = (struct ifreq *)((char *)ifbuf + ifc.ifc_len);
-    /*
-     * Loop through all of the interfaces.
-     */
-    for (; ifrp < ifend; ifrp = (struct ifreq *)((char *)ifrp + n)) {
-	struct ifreq ifr;
-#if BSD >= 199006
-	n = ifrp->ifr_addr.sa_len + sizeof(ifrp->ifr_name);
-	if (n < sizeof(*ifrp))
-	    n = sizeof(*ifrp);
-#else
-	n = sizeof(*ifrp);
-#endif
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 	/*
 	 * Ignore any interface for an address family other than IP.
 	 */
-	if (ifrp->ifr_addr.sa_family != AF_INET)
+	if (ifa->ifa_addr->sa_family != AF_INET)
 	    continue;
 
-	addr = ((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr;
-
-	/*
-	 * Need a template to preserve address info that is
-	 * used below to locate the next entry.  (Otherwise,
-	 * SIOCGIFFLAGS stomps over it because the requests
-	 * are returned in a union.)
-	 */
-	bcopy(ifrp->ifr_name, ifr.ifr_name, sizeof(ifr.ifr_name));
+	addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 
 	/*
 	 * Ignore loopback interfaces and interfaces that do not support
 	 * multicast.
 	 */
-	if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ifr) < 0)
-	    log(LOG_ERR, errno, "ioctl SIOCGIFFLAGS for %s", ifr.ifr_name);
-	flags = ifr.ifr_flags;
-	if ((flags & (IFF_LOOPBACK|IFF_MULTICAST)) != IFF_MULTICAST) continue;
+	flags = ifa->ifa_flags;
+	if ((flags & (IFF_LOOPBACK|IFF_MULTICAST)) != IFF_MULTICAST)
+	    continue;
 
 	/*
 	 * Ignore any interface whose address and mask do not define a
 	 * valid subnet number, or whose address is of the form {subnet,0}
 	 * or {subnet,-1}.
 	 */
-	((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr = addr;
-	if (ioctl(udp_socket, SIOCGIFNETMASK, (char *)&ifr) < 0)
-	    log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", ifr.ifr_name);
-	mask = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
+	mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
 	subnet = addr & mask;
 	if (!inet_valid_subnet(subnet, mask) ||
 	    addr == subnet ||
 	    addr == (subnet | ~mask)) {
 	    log(LOG_WARNING, 0,
 		"ignoring %s, has invalid address (%s) and/or mask (%s)",
-		ifr.ifr_name, inet_fmt(addr, s1), inet_fmt(mask, s2));
+		ifa->ifa_name, inet_fmt(addr, s1), inet_fmt(mask, s2));
 	    continue;
 	}
 
@@ -100,17 +71,18 @@ config_vifs_from_kernel()
 	    if ((addr & v->uv_subnetmask) == v->uv_subnet ||
 		(v->uv_subnet & mask) == subnet) {
 		log(LOG_WARNING, 0, "ignoring %s, same subnet as %s",
-					ifr.ifr_name, v->uv_name);
+		    ifa->ifa_name, v->uv_name);
 		break;
 	    }
 	}
-	if (vifi != numvifs) continue;
+	if (vifi != numvifs)
+	    continue;
 
 	/*
 	 * If there is room in the uvifs array, install this interface.
 	 */
 	if (numvifs == MAXVIFS) {
-	    log(LOG_WARNING, 0, "too many vifs, ignoring %s", ifr.ifr_name);
+	    log(LOG_WARNING, 0, "too many vifs, ignoring %s", ifa->ifa_name);
 	    continue;
 	}
 	v  = &uvifs[numvifs];
@@ -123,7 +95,7 @@ config_vifs_from_kernel()
 	v->uv_subnet      = subnet;
 	v->uv_subnetmask  = mask;
 	v->uv_subnetbcast = subnet | ~mask;
-	strncpy(v->uv_name, ifr.ifr_name, IFNAMSIZ);
+	strlcpy(v->uv_name, ifa->ifa_name, sizeof(v->uv_name));
 	v->uv_groups      = NULL;
 	v->uv_neighbors   = NULL;
 	v->uv_acl         = NULL;
@@ -144,4 +116,6 @@ config_vifs_from_kernel()
 	    vifs_down = TRUE;
 	}
     }
+
+    freeifaddrs(ifap);
 }
