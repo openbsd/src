@@ -59,7 +59,7 @@ options		KERNFS		# /kern
 #options	PORTAL		# ?
 #options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
-#options	UNION		# union file system
+options	UNION		# union file system
 
 options		GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
