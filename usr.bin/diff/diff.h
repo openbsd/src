@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.2 2003/06/25 01:23:38 deraadt Exp $	*/
+/*	$OpenBSD: diff.h,v 1.3 2003/06/25 03:02:33 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -113,9 +113,15 @@ char	**diffargv;		/* option list to pass to recursive diffs */
 char	*file1, *file2, *efile1, *efile2;
 struct	stat stb1, stb2;
 
-char	*malloc(), *talloc(), *ralloc();
-char	*savestr(), *splice(), *splicen();
-char	*mktemp(), *copytemp(), *rindex();
-int	done();
+void	*talloc(size_t);
+void	*ralloc(void *, size_t);
+char	*splice(char *, char *);
+char	*copytemp(void);
+void	catchsig(int);
+void	done(void);
+void	diffdir(char **);
+void	diffreg(void);
+int	max(int, int);
+int	min(int, int);
 
 extern	char diffh[], diff[], pr[];

@@ -1,3 +1,4 @@
+/* $OpenBSD: pathnames.h,v 1.2 2003/06/25 03:02:33 tedu Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.2 2003/06/25 01:23:38 deraadt Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.3 2003/06/25 03:02:33 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -34,9 +34,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-static	char *sccsid = "@(#)diffdir.c	4.12 (Berkeley) 4/30/89";
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "diff.h"
+
+#if 0
+static const char sccsid[] = "@(#)diffdir.c	4.12 (Berkeley) 4/30/89";
+#endif
+
 /*
  * diff - directory comparison
  */
@@ -48,24 +59,35 @@ static	char *sccsid = "@(#)diffdir.c	4.12 (Berkeley) 4/30/89";
 #define	DIRECT	8		/* Directory */
 
 struct dir {
-	u_long	d_ino;
-	short	d_reclen;
-	short	d_namlen;
-	char	*d_entry;
+	u_long d_ino;
+	short d_reclen;
+	short d_namlen;
+	char *d_entry;
 };
 
-struct	dir *setupdir();
-int	header;
-static int	dirstatus;		/* exit status from diffdir */
-extern int	status;
-char	title[2*BUFSIZ], *etitle;
+int header;
+static int dirstatus;		/* exit status from diffdir */
+extern int status;
+char title[2 * BUFSIZ];
+char *etitle;
+char *prargs[] = {"pr", "-h", 0, "-f", 0, 0};
 
-diffdir(argv)
-	char **argv;
+
+static struct dir *setupdir(char *);
+static int ascii(int);
+static void compare(struct dir *);
+static void calldiff(char *);
+static void setfile(char **fpp, char **epp, char *file);
+static int useless(char *);
+static void only(struct dir * dp, int which);
+static void scanpr(struct dir *, int, char *, char *, char *, char *, char *);
+
+void
+diffdir(char **argv)
 {
-	register struct dir *d1, *d2;
+	struct dir *d1, *d2;
 	struct dir *dir1, *dir2;
-	register int i;
+	int i;
 	int cmp;
 
 	if (opt == D_IFDEF) {
@@ -75,23 +97,22 @@ diffdir(argv)
 	if (opt == D_EDIT && (sflag || lflag))
 		fprintf(stderr,
 		    "diff: warning: shouldn't give -s or -l with -e\n");
-	title[0] = 0;
-	strcpy(title, "diff ");
-	for (i = 1; diffargv[i+2]; i++) {
+	strlcpy(title, "diff ", sizeof title);
+	for (i = 1; diffargv[i + 2]; i++) {
 		if (!strcmp(diffargv[i], "-"))
 			continue;	/* was -S, dont look silly */
-		strcat(title, diffargv[i]);
-		strcat(title, " ");
+		strlcat(title, diffargv[i], sizeof title);
+		strlcat(title, " ", sizeof title);
 	}
-	for (etitle = title; *etitle; etitle++)
-		;
+	for (etitle = title; *etitle; etitle++);
 	setfile(&file1, &efile1, file1);
 	setfile(&file2, &efile2, file2);
 	argv[0] = file1;
 	argv[1] = file2;
 	dir1 = setupdir(file1);
 	dir2 = setupdir(file2);
-	d1 = dir1; d2 = dir2;
+	d1 = dir1;
+	d2 = dir2;
 	while (d1->d_entry != 0 || d2->d_entry != 0) {
 		if (d1->d_entry && useless(d1->d_entry)) {
 			d1++;
@@ -140,7 +161,7 @@ diffdir(argv)
 	if (rflag) {
 		if (header && lflag)
 			printf("\f");
-		for (d1 = dir1; d1->d_entry; d1++)  {
+		for (d1 = dir1; d1->d_entry; d1++) {
 			if ((d1->d_flags & DIRECT) == 0)
 				continue;
 			strcpy(efile1, d1->d_entry);
@@ -151,17 +172,12 @@ diffdir(argv)
 	status = dirstatus;
 }
 
-setfile(fpp, epp, file)
-	char **fpp, **epp;
-	char *file;
+void
+setfile(char **fpp, char **epp, char *file)
 {
-	register char *cp;
+	char *cp;
 
-	*fpp = malloc(BUFSIZ);
-	if (*fpp == 0) {
-		fprintf(stderr, "diff: ran out of memory\n");
-		exit(1);
-	}
+	*fpp = talloc(BUFSIZ);
 	strcpy(*fpp, file);
 	for (cp = *fpp; *cp; cp++)
 		continue;
@@ -169,10 +185,9 @@ setfile(fpp, epp, file)
 	*epp = cp;
 }
 
-scanpr(dp, test, title, file1, efile1, file2, efile2)
-	register struct dir *dp;
-	int test;
-	char *title, *file1, *efile1, *file2, *efile2;
+static void
+scanpr(struct dir * dp, int test, char *title, char *file1, char *efile1,
+    char *file2, char *efile2)
 {
 	int titled = 0;
 
@@ -194,26 +209,23 @@ scanpr(dp, test, title, file1, efile1, file2, efile2)
 	}
 }
 
-only(dp, which)
-	struct dir *dp;
-	int which;
+void
+only(struct dir * dp, int which)
 {
 	char *file = which == 1 ? file1 : file2;
 	char *efile = which == 1 ? efile1 : efile2;
 
-	printf("Only in %.*s: %s\n", efile - file - 1, file, dp->d_entry);
-	
+	printf("Only in %.*s: %s\n", (int)(efile - file - 1), file, dp->d_entry);
 }
 
-int	entcmp();
+int entcmp();
 
 struct dir *
-setupdir(cp)
-	char *cp;
+setupdir(char *cp)
 {
-	register struct dir *dp, *ep;
-	register struct direct *rp;
-	register int nitems, n;
+	struct dir *dp, *ep;
+	struct direct *rp;
+	int nitems;
 	DIR *dirp;
 
 	dirp = opendir(cp);
@@ -223,51 +235,42 @@ setupdir(cp)
 		done();
 	}
 	nitems = 0;
-	dp = (struct dir *)malloc(sizeof (struct dir));
-	if (dp == 0) {
-		fprintf(stderr, "diff: ran out of memory\n");
-		done();
-	}
-	while (rp = readdir(dirp)) {
+	dp = talloc(sizeof(struct dir));
+	while ((rp = readdir(dirp))) {
 		ep = &dp[nitems++];
 		ep->d_reclen = rp->d_reclen;
 		ep->d_namlen = rp->d_namlen;
 		ep->d_entry = 0;
 		ep->d_flags = 0;
 		if (ep->d_namlen > 0) {
-			ep->d_entry = malloc(ep->d_namlen + 1);
-			if (ep->d_entry == 0) {
-				fprintf(stderr, "diff: out of memory\n");
-				done();
-			}
+			ep->d_entry = talloc(ep->d_namlen + 1);
 			strcpy(ep->d_entry, rp->d_name);
 		}
-		dp = (struct dir *)realloc((char *)dp,
-			(nitems + 1) * sizeof (struct dir));
+		dp = realloc((char *) dp,
+		    (nitems + 1) * sizeof(struct dir));
 		if (dp == 0) {
 			fprintf(stderr, "diff: ran out of memory\n");
 			done();
 		}
 	}
-	dp[nitems].d_entry = 0;		/* delimiter */
+	dp[nitems].d_entry = 0;	/* delimiter */
 	closedir(dirp);
-	qsort(dp, nitems, sizeof (struct dir), entcmp);
+	qsort(dp, nitems, sizeof(struct dir), entcmp);
 	return (dp);
 }
 
-entcmp(d1, d2)
-	struct dir *d1, *d2;
+int
+entcmp(struct dir * d1, struct dir * d2)
 {
 	return (strcmp(d1->d_entry, d2->d_entry));
 }
 
-compare(dp)
-	register struct dir *dp;
+static void
+compare(struct dir * dp)
 {
-	register int i, j;
+	int i, j;
 	int f1, f2, fmt1, fmt2;
 	struct stat stb1, stb2;
-	int flag = 0;
 	char buf1[BUFSIZ], buf2[BUFSIZ];
 
 	strcpy(efile1, dp->d_entry);
@@ -283,7 +286,8 @@ compare(dp)
 		close(f1);
 		return;
 	}
-	fstat(f1, &stb1); fstat(f2, &stb2);
+	fstat(f1, &stb1);
+	fstat(f2, &stb2);
 	fmt1 = stb1.st_mode & S_IFMT;
 	fmt2 = stb2.st_mode & S_IFMT;
 	if (fmt1 != S_IFREG || fmt2 != S_IFREG) {
@@ -332,7 +336,8 @@ notsame:
 			    file1, file2);
 		goto closem;
 	}
-	close(f1); close(f2);
+	close(f1);
+	close(f2);
 	anychange = 1;
 	if (lflag)
 		calldiff(title);
@@ -349,20 +354,19 @@ notsame:
 	}
 	return;
 closem:
-	close(f1); close(f2);
+	close(f1);
+	close(f2);
 }
 
-char	*prargs[] = { "pr", "-h", 0, "-f", 0, 0 };
-
-calldiff(wantpr)
-	char *wantpr;
+static void
+calldiff(char *wantpr)
 {
 	int pid, lstatus, lstatus2, pv[2];
 
 	prargs[2] = wantpr;
 	fflush(stdout);
 	if (wantpr) {
-		(void)sprintf(etitle, "%s %s", file1, file2);
+		sprintf(etitle, "%s %s", file1, file2);
 		pipe(pv);
 		pid = fork();
 		if (pid == -1) {
@@ -374,7 +378,7 @@ calldiff(wantpr)
 			dup(pv[0]);
 			close(pv[0]);
 			close(pv[1]);
-			execv(pr+4, prargs);
+			execv(pr + 4, prargs);
 			execv(pr, prargs);
 			perror(pr);
 			done();
@@ -392,7 +396,7 @@ calldiff(wantpr)
 			close(pv[0]);
 			close(pv[1]);
 		}
-		execv(diff+4, diffargv);
+		execv(diff + 4, diffargv);
 		execv(diff, diffargv);
 		perror(diff);
 		done();
@@ -405,30 +409,22 @@ calldiff(wantpr)
 		continue;
 	while (wait(&lstatus2) != -1)
 		continue;
-/*
-	if ((lstatus >> 8) >= 2)
-		done();
-*/
+	/*
+		if ((lstatus >> 8) >= 2)
+			done();
+	*/
 	dirstatus |= lstatus >> 8;
 }
 
-#include <a.out.h>
-
-ascii(f)
-	int f;
+int
+ascii(int f)
 {
 	char buf[BUFSIZ];
-	register int cnt;
-	register char *cp;
+	int cnt;
+	char *cp;
 
-	lseek(f, (long)0, 0);
+	lseek(f, 0, 0);
 	cnt = read(f, buf, BUFSIZ);
-	if (cnt >= sizeof (struct exec)) {
-		struct exec hdr;
-		hdr = *(struct exec *)buf;
-		if (!N_BADMAG(hdr))
-			return (0);
-	}
 	cp = buf;
 	while (--cnt >= 0)
 		if (*cp++ & 0200)
@@ -439,10 +435,9 @@ ascii(f)
 /*
  * THIS IS CRUDE.
  */
-useless(cp)
-register char *cp;
+int
+useless(char *cp)
 {
-
 	if (cp[0] == '.') {
 		if (cp[1] == '\0')
 			return (1);	/* directory "." */

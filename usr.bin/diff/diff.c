@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.2 2003/06/25 01:23:38 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.3 2003/06/25 03:02:33 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -34,122 +34,129 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-static	char sccsid[] = "@(#)diff.c 4.7 5/11/89";
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "diff.h"
 #include "pathnames.h"
+
+#if 0
+static char const sccsid[] = "@(#)diff.c 4.7 5/11/89";
+#endif
 
 /*
  * diff - driver and subroutines
  */
 
-char	diff[] = _PATH_DIFF;
-char	diffh[] = _PATH_DIFFH;
-char	pr[] = _PATH_PR;
+char diff[] = _PATH_DIFF;
+char diffh[] = _PATH_DIFFH;
+char pr[] = _PATH_PR;
 
-main(argc, argv)
-	int argc;
-	char **argv;
+static void noroom(void);
+
+int
+main(int argc, char **argv)
 {
-	register char *argp;
+	char *argp;
 
-	ifdef1 = "FILE1"; ifdef2 = "FILE2";
+	ifdef1 = "FILE1";
+	ifdef2 = "FILE2";
 	status = 2;
 	diffargv = argv;
 	argc--, argv++;
 	while (argc > 2 && argv[0][0] == '-') {
 		argp = &argv[0][1];
 		argv++, argc--;
-		while (*argp) switch(*argp++) {
-
+		while (*argp)
+			switch (*argp++) {
 #ifdef notdef
-		case 'I':
-			opt = D_IFDEF;
-			wantelses = 0;
-			continue;
-		case 'E':
-			opt = D_IFDEF;
-			wantelses = 1;
-			continue;
-		case '1':
-			opt = D_IFDEF;
-			ifdef1 = argp;
-			*--argp = 0;
-			continue;
+			case 'I':
+				opt = D_IFDEF;
+				wantelses = 0;
+				continue;
+			case 'E':
+				opt = D_IFDEF;
+				wantelses = 1;
+				continue;
+			case '1':
+				opt = D_IFDEF;
+				ifdef1 = argp;
+				*--argp = 0;
+				continue;
 #endif
-		case 'D':
-			/* -Dfoo = -E -1 -2foo */
-			wantelses = 1;
-			ifdef1 = "";
-			/* fall through */
+			case 'D':
+				/* -Dfoo = -E -1 -2foo */
+				wantelses = 1;
+				ifdef1 = "";
+				/* fall through */
 #ifdef notdef
-		case '2':
+			case '2':
 #endif
-			opt = D_IFDEF;
-			ifdef2 = argp;
-			*--argp = 0;
-			continue;
-		case 'e':
-			opt = D_EDIT;
-			continue;
-		case 'f':
-			opt = D_REVERSE;
-			continue;
-		case 'n':
-			opt = D_NREVERSE;
-			continue;
-		case 'b':
-			bflag = 1;
-			continue;
-		case 'w':
-			wflag = 1;
-			continue;
-		case 'i':
-			iflag = 1;
-			continue;
-		case 't':
-			tflag = 1;
-			continue;
-		case 'c':
-			opt = D_CONTEXT;
-			if (isdigit(*argp)) {
-				context = atoi(argp);
-				while (isdigit(*argp))
-					argp++;
-				if (*argp) {
-					fprintf(stderr,
-					    "diff: -c: bad count\n");
+				opt = D_IFDEF;
+				ifdef2 = argp;
+				*--argp = 0;
+				continue;
+			case 'e':
+				opt = D_EDIT;
+				continue;
+			case 'f':
+				opt = D_REVERSE;
+				continue;
+			case 'n':
+				opt = D_NREVERSE;
+				continue;
+			case 'b':
+				bflag = 1;
+				continue;
+			case 'w':
+				wflag = 1;
+				continue;
+			case 'i':
+				iflag = 1;
+				continue;
+			case 't':
+				tflag = 1;
+				continue;
+			case 'c':
+				opt = D_CONTEXT;
+				if (isdigit(*argp)) {
+					context = atoi(argp);
+					while (isdigit(*argp))
+						argp++;
+					if (*argp) {
+						fprintf(stderr,
+						    "diff: -c: bad count\n");
+						done();
+					}
+					argp = "";
+				} else
+					context = 3;
+				continue;
+			case 'h':
+				hflag++;
+				continue;
+			case 'S':
+				if (*argp == 0) {
+					fprintf(stderr, "diff: use -Sstart\n");
 					done();
 				}
-				argp = "";
-			} else
-				context = 3;
-			continue;
-		case 'h':
-			hflag++;
-			continue;
-		case 'S':
-			if (*argp == 0) {
-				fprintf(stderr, "diff: use -Sstart\n");
+				start = argp;
+				*--argp = 0;	/* don't pass it on */
+				continue;
+			case 'r':
+				rflag++;
+				continue;
+			case 's':
+				sflag++;
+				continue;
+			case 'l':
+				lflag++;
+				continue;
+			default:
+				fprintf(stderr, "diff: -%s: unknown option\n",
+				    --argp);
 				done();
 			}
-			start = argp;
-			*--argp = 0;		/* don't pass it on */
-			continue;
-		case 'r':
-			rflag++;
-			continue;
-		case 's':
-			sflag++;
-			continue;
-		case 'l':
-			lflag++;
-			continue;
-		default:
-			fprintf(stderr, "diff: -%s: unknown option\n",
-			    --argp);
-			done();
-		}
 	}
 	if (argc != 2) {
 		fprintf(stderr, "diff: two filename arguments required\n");
@@ -182,66 +189,61 @@ main(argc, argv)
 	} else
 		diffreg();
 	done();
+	/* notreached */
+	return (0);
 }
 
-char *
-savestr(cp)
-	register char *cp;
-{
-	register char *dp = malloc(strlen(cp)+1);
-
-	if (dp == 0) {
-		fprintf(stderr, "diff: ran out of memory\n");
-		done();
-	}
-	strcpy(dp, cp);
-	return (dp);
-}
-
-min(a,b)
-	int a,b;
+int
+min(int a, int b)
 {
 
 	return (a < b ? a : b);
 }
 
-max(a,b)
-	int a,b;
+int
+max(int a, int b)
 {
 
 	return (a > b ? a : b);
 }
 
-done()
+void
+done(void)
 {
 	if (tempfile)
 		unlink(tempfile);
 	exit(status);
 }
 
-char *
-talloc(n)
+void
+catchsig(int sigraised)
 {
-	register char *p;
-
-	if ((p = malloc((unsigned)n)) != NULL)
-		return(p);
-	noroom();
+	/* print something? */
+	done();
 }
 
-char *
-ralloc(p,n)
-char *p;
+void *
+talloc(size_t n)
 {
-	register char *q;
-	char *realloc();
+	void *p;
 
-	if ((q = realloc(p, (unsigned)n)) == NULL)
+	if ((p = malloc(n)) == NULL)
 		noroom();
-	return(q);
+	return (p);
 }
 
-noroom()
+void *
+ralloc(void *p, size_t n)
+{
+	void *q;
+
+	if ((q = realloc(p, n)) == NULL)
+		noroom();
+	return (q);
+}
+
+static void
+noroom(void)
 {
 	fprintf(stderr, "diff: files too big, try -h\n");
 	done();
