@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.20 1997/08/04 21:53:34 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.21 1997/08/06 18:49:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -121,8 +121,6 @@ biosopen(struct open_file *f, ...)
 
 	bd = alloc(sizeof(*bd));
 	bzero(bd, sizeof(bd));
-	/* XXX for exec stuff */
-	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 	switch (maj) {
 	case 0:  /* wd */
@@ -153,6 +151,8 @@ biosopen(struct open_file *f, ...)
 
 	bd->edd_flags = EDDcheck((dev_t)bd->biosdev);
 	bootdev_geometry = bd->dinfo = biosdinfo((dev_t)bd->biosdev);
+	/* maj is fixed later w/ disklabel read */
+	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -228,6 +228,16 @@ biosopen(struct open_file *f, ...)
 		free(bd, 0);
 		return EUNLAB;
 	}
+
+	if (maj == 17) { /* figure out what it's exactly */
+		switch (bd->disklabel.d_type) {
+		case DTYPE_SCSI:  maj = 4;  break;
+		default:          maj = 0;  break;
+		}
+	}
+
+	/* and again w/ fixed maj */
+	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 	f->f_devdata = bd;
 
