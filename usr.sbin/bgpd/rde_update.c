@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.14 2004/03/11 17:12:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.15 2004/03/19 10:30:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -148,6 +148,10 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 		TAILQ_INIT(&a->prefix_h);
 		if (RB_INSERT(uptree_attr, &peer->up_attrs, a) != NULL) {
 			log_warnx("uptree_attr insert failed");
+			/* cleanup */
+			free(a->attr);
+			free(a);
+			free(p);
 			return (-1);
 		}
 		TAILQ_INSERT_TAIL(&peer->updates, a, attr_l);
@@ -169,6 +173,12 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 		/* 2.1 if not found -> add */
 		if (RB_INSERT(uptree_prefix, &peer->up_prefix, p) != NULL) {
 			log_warnx("uptree_prefix insert failed");
+			/*
+			 * cleanup. But do not free a because it is already
+			 * linked or NULL. up_dump_attrnlri() will remove and
+			 * free the empty attribute later.
+			 */
+			free(p);
 			return (-1);
 		}
 		peer->up_pcnt++;
@@ -282,7 +292,7 @@ up_generate_updates(struct rde_peer *peer,
 		p->prefix = old->prefix->prefix;
 		p->prefixlen = old->prefix->prefixlen;
 		if (up_add(peer, p, NULL) == -1)
-			log_warnx("queuing update failed.");
+			log_warnx("queuing withdraw failed.");
 	} else {
 		if (peer == new->aspath->peer) {
 			/* Do not send routes back to sender */
@@ -365,8 +375,12 @@ up_generate_updates(struct rde_peer *peer,
 			fatal("up_queue_update");
 
 		if (up_generate_attr(peer, a, &attrs,
-		    new->aspath->nexthop) == -1)
+		    new->aspath->nexthop) == -1) {
 			log_warnx("generation of bgp path attributes failed");
+			free(a);
+			free(p);
+			return;
+		}
 
 		/*
 		 * use aspath_hash as attr_hash, this may be unoptimal
