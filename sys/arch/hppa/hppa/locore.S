@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.101 2003/01/09 22:27:08 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.102 2003/01/14 12:09:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -943,7 +943,7 @@ LDILDO(dtlbna_t)
 LDILDO(tlbd_t)
 #endif
 
-#ifdef HP7100LC_CPU
+#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 LDILDO(itlb_l)
 LDILDO(itlbna_l)
 LDILDO(dtlb_l)
@@ -1318,7 +1318,7 @@ $dtlbna_t
 	nop
 #endif /*  defined(HP7000_CPU) || defined(HP7100_CPU) || defined(HP7200_CPU) */
 
-#ifdef HP7100LC_CPU
+#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 
 #define	IITLBAF(r)	.word	0x04000440 | ((r) << 16)
 #define	IITLBPF(r)	.word	0x04000400 | ((r) << 16)
@@ -1725,7 +1725,7 @@ LEAF_ENTRY(desidhash_t)
 EXIT(desidhash_t)
 #endif /* HP7200_CPU */
 
-#ifdef HP7100LC_CPU
+#if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 
 /*
  * int
