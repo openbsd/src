@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.63 2001/04/17 04:30:49 aaron Exp $	*/
+/*	$OpenBSD: com.c,v 1.64 2001/09/27 15:37:33 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -404,7 +404,6 @@ comattach(parent, self, aux)
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
-	u_int8_t lcr;
 
 	/*
 	 * XXX should be broken out into functions for isa attach and
@@ -466,13 +465,50 @@ comattach(parent, self, aux)
 	} else
 #endif
 		panic("comattach: impossible");
+#if NCOM_ISA || NCOM_ISAPNP || NCOM_COMMULTI
+        if (irq != IRQUNK) {
+#if NCOM_ISA || NCOM_ISAPNP
+	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
+		struct isa_attach_args *ia = aux;
+
+#ifdef KGDB     
+		if (iobase == com_kgdb_addr) {
+			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+				IST_EDGE, IPL_HIGH, kgdbintr, sc,
+				sc->sc_dev.dv_xname);
+		} else {
+			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+				IST_EDGE, IPL_TTY, comintr, sc,
+				sc->sc_dev.dv_xname);
+		}
+#else   
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+			IST_EDGE, IPL_TTY, comintr, sc,
+			sc->sc_dev.dv_xname);
+#endif /* KGDB */
+	} else
+#endif          
+		panic("comattach: IRQ but can't have one");
+	}       
+#endif          
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_iobase = iobase;
 	sc->sc_frequency = COM_FREQ;
 
-	if (iobase == comconsaddr) {
+	com_attach_subr(sc);
+}
+
+void
+com_attach_subr(sc)
+	struct com_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int8_t lcr;
+
+	if (sc->sc_iobase == comconsaddr) {
 		comconsattached = 1;
 
 		/*
@@ -623,32 +659,6 @@ comattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, com_ier, 0);
 	bus_space_write_1(iot, ioh, com_mcr, 0);
 
-#if NCOM_ISA || NCOM_ISAPNP || NCOM_COMMULTI
-	if (irq != IRQUNK) {
-#if NCOM_ISA || NCOM_ISAPNP
-		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
-			struct isa_attach_args *ia = aux;
-
-#ifdef KGDB
-			if (iobase == com_kgdb_addr) {
-				sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				    IST_EDGE, IPL_HIGH, kgdbintr, sc,
-				    sc->sc_dev.dv_xname);
-			} else {
-				sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-				    IST_EDGE, IPL_TTY, comintr, sc,
-				    sc->sc_dev.dv_xname);
-			}
-#else
-			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-			    IST_EDGE, IPL_TTY, comintr, sc,
-			    sc->sc_dev.dv_xname);
-#endif /* KGDB */
-		} else
-#endif
-			panic("comattach: IRQ but can't have one");
-	}
-#endif
 #ifdef KGDB
 	/*
 	 * Allow kgdb to "take over" this port.  If this is
@@ -1964,8 +1974,10 @@ comcnattach(iot, iobase, rate, frequency, cflag)
 		NODEV, CN_NORMAL
 	};
 
+#ifndef __sparc64__
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &comconsioh))
 		return ENOMEM;
+#endif
 
 	cominit(iot, comconsioh, rate);
 
