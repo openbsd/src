@@ -1,4 +1,4 @@
-/*	$OpenBSD: object.c,v 1.5 2001/08/12 19:52:56 pjanzen Exp $	*/
+/*	$OpenBSD: object.c,v 1.6 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: object.c,v 1.3 1995/04/22 10:27:50 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: object.c,v 1.5 2001/08/12 19:52:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: object.c,v 1.6 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,36 +84,36 @@ fighter rogue = {
 };
 
 struct id id_potions[POTIONS] = {
-{100, "blue \0                           ", "of increase strength ", 0},
-{250, "red \0                            ", "of restore strength ", 0},
-{100, "green \0                          ", "of healing ", 0},
-{200, "grey \0                           ", "of extra healing ", 0},
- {10, "brown \0                          ", "of poison ", 0},
-{300, "clear \0                          ", "of raise level ", 0},
- {10, "pink \0                           ", "of blindness ", 0},
- {25, "white \0                          ", "of hallucination ", 0},
-{100, "purple \0                         ", "of detect monster ", 0},
-{100, "black \0                          ", "of detect things ", 0},
- {10, "yellow \0                         ", "of confusion ", 0},
- {80, "plaid \0                          ", "of levitation ", 0},
-{150, "burgundy \0                       ", "of haste self ", 0},
-{145, "beige \0                          ", "of see invisible ", 0}
+{100, "blue ",     "of increase strength ", 0},
+{250, "red ",      "of restore strength ", 0},
+{100, "green ",    "of healing ", 0},
+{200, "grey ",     "of extra healing ", 0},
+ {10, "brown ",    "of poison ", 0},
+{300, "clear ",    "of raise level ", 0},
+ {10, "pink ",     "of blindness ", 0},
+ {25, "white ",    "of hallucination ", 0},
+{100, "purple ",   "of detect monster ", 0},
+{100, "black ",    "of detect things ", 0},
+ {10, "yellow ",   "of confusion ", 0},
+ {80, "plaid ",    "of levitation ", 0},
+{150, "burgundy ", "of haste self ", 0},
+{145, "beige ",    "of see invisible ", 0}
 };
 
 struct id id_scrolls[SCROLS] = {
-{505, "                                   ", "of protect armor ", 0},
-{200, "                                   ", "of hold monster ", 0},
-{235, "                                   ", "of enchant weapon ", 0},
-{235, "                                   ", "of enchant armor ", 0},
-{175, "                                   ", "of identify ", 0},
-{190, "                                   ", "of teleportation ", 0},
- {25, "                                   ", "of sleep ", 0},
-{610, "                                   ", "of scare monster ", 0},
-{210, "                                   ", "of remove curse ", 0},
- {80, "                                   ", "of create monster ",0},
- {25, "                                   ", "of aggravate monster ",0},
-{180, "                                   ", "of magic mapping ", 0},
- {90, "                                   ", "of confuse monster ", 0}
+{505, "", "of protect armor ", 0},
+{200, "", "of hold monster ", 0},
+{235, "", "of enchant weapon ", 0},
+{235, "", "of enchant armor ", 0},
+{175, "", "of identify ", 0},
+{190, "", "of teleportation ", 0},
+ {25, "", "of sleep ", 0},
+{610, "", "of scare monster ", 0},
+{210, "", "of remove curse ", 0},
+ {80, "", "of create monster ",0},
+ {25, "", "of aggravate monster ",0},
+{180, "", "of magic mapping ", 0},
+ {90, "", "of confuse monster ", 0}
 };
 
 struct id id_weapons[WEAPONS] = {
@@ -138,31 +138,31 @@ struct id id_armors[ARMORS] = {
 };
 
 struct id id_wands[WANDS] = {
-	 {25, "                                 ", "of teleport away ",0},
-	 {50, "                                 ", "of slow monster ", 0},
-	  {8, "                                 ", "of invisibility ",0},
-	 {55, "                                 ", "of polymorph ",0},
-	  {2, "                                 ", "of haste monster ",0},
-	 {20, "                                 ", "of magic missile ",0},
-	 {20, "                                 ", "of cancellation ",0},
-	  {0, "                                 ", "of do nothing ",0},
-	 {35, "                                 ", "of drain life ",0},
-	 {20, "                                 ", "of cold ",0},
-	 {20, "                                 ", "of fire ",0}
+	 {25, "", "of teleport away ",0},
+	 {50, "", "of slow monster ", 0},
+	  {8, "", "of invisibility ",0},
+	 {55, "", "of polymorph ",0},
+	  {2, "", "of haste monster ",0},
+	 {20, "", "of magic missile ",0},
+	 {20, "", "of cancellation ",0},
+	  {0, "", "of do nothing ",0},
+	 {35, "", "of drain life ",0},
+	 {20, "", "of cold ",0},
+	 {20, "", "of fire ",0}
 };
 
 struct id id_rings[RINGS] = {
-	 {250, "                                 ", "of stealth ",0},
-	 {100, "                                 ", "of teleportation ", 0},
-	 {255, "                                 ", "of regeneration ",0},
-	 {295, "                                 ", "of slow digestion ",0},
-	 {200, "                                 ", "of add strength ",0},
-	 {250, "                                 ", "of sustain strength ",0},
-	 {250, "                                 ", "of dexterity ",0},
-	  {25, "                                 ", "of adornment ",0},
-	 {300, "                                 ", "of see invisible ",0},
-	 {290, "                                 ", "of maintain armor ",0},
-	 {270, "                                 ", "of searching ",0},
+	 {250, "", "of stealth ",0},
+	 {100, "", "of teleportation ", 0},
+	 {255, "", "of regeneration ",0},
+	 {295, "", "of slow digestion ",0},
+	 {200, "", "of add strength ",0},
+	 {250, "", "of sustain strength ",0},
+	 {250, "", "of dexterity ",0},
+	  {25, "", "of adornment ",0},
+	 {300, "", "of see invisible ",0},
+	 {290, "", "of maintain armor ",0},
+	 {270, "", "of searching ",0},
 };
 
 void
@@ -261,7 +261,7 @@ object_at(pack, row, col)
 			obj = obj->next_object;
 		}
 		if (!obj) {
-			message("object_at(): inconsistent", 1);
+			messagef(1, "object_at(): inconsistent");
 		}
 	}
 	return(obj);
@@ -297,7 +297,7 @@ free_stuff(objlist)
 
 char *
 name_of(obj)
-	object *obj;
+	const object *obj;
 {
 	char *retstring;
 
@@ -624,7 +624,7 @@ put_stairs()
 
 int
 get_armor_class(obj)
-	object *obj;
+	const object *obj;
 {
 	if (obj) {
 		return(obj->class + obj->d_enchant);
@@ -641,7 +641,7 @@ alloc_object()
 		obj = free_list;
 		free_list = free_list->next_object;
 	} else if (!(obj = (object *) md_malloc(sizeof(object)))) {
-			message("cannot allocate object, saving game", 0);
+			messagef(0, "cannot allocate object, saving game");
 			save_into_file(error_file);
 	}
 	obj->quantity = 1;
@@ -742,13 +742,13 @@ c_object_for_wizard()
 
 	max = 0;
 	if (pack_count((object *) 0) >= MAX_PACK_COUNT) {
-		message("pack full", 0);
+		messagef(0, "pack full");
 		return;
 	}
-	message("type of object?", 0);
+	messagef(0, "type of object?");
 
 	while (r_index("!?:)]=/,\033", (ch = rgetchar()), 0) == -1) {
-		sound_bell();
+		beep();
 	}
 	check_message();
 
@@ -799,7 +799,7 @@ GIL:
 					gr_ring(obj, 0);
 				}
 			} else {
-				sound_bell();
+				beep();
 				goto GIL;
 			}
 		} else {
@@ -807,7 +807,7 @@ GIL:
 			return;
 		}
 	}
-	get_desc(obj, buf);
-	message(buf, 0);
+	get_desc(obj, buf, sizeof(buf));
+	messagef(0, "%s", buf);
 	(void) add_to_pack(obj, &rogue.pack, 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: throw.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $	*/
+/*	$OpenBSD: throw.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: throw.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: throw.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,9 +69,9 @@ throw()
 	object *monster;
 
 	while (!is_direction(dir = rgetchar(), &d)) {
-		sound_bell();
+		beep();
 		if (first_miss) {
-			message("direction? ", 0);
+			messagef(0, "direction? ");
 			first_miss = 0;
 		}
 	}
@@ -85,11 +85,11 @@ throw()
 	check_message();
 
 	if (!(weapon = get_letter_object(wch))) {
-		message("no such item.", 0);
+		messagef(0, "no such item.");
 		return;
 	}
 	if ((weapon->in_use_flags & BEING_USED) && weapon->is_cursed) {
-		message(curse_message, 0);
+		messagef(0, "%s", curse_message);
 		return;
 	}
 	row = rogue.row; col = rogue.col;
@@ -146,15 +146,15 @@ throw_at_monster(monster, weapon)
 	}
 	t = weapon->quantity;
 	weapon->quantity = 1;
-	sprintf(hit_message, "the %s", name_of(weapon));
+	snprintf(hit_message, HIT_MESSAGE_LEN, "the %s", name_of(weapon));
 	weapon->quantity = t;
 
 	if (!rand_percent(hit_chance)) {
-		(void) strcat(hit_message, "misses  ");
+		(void) strlcat(hit_message, "misses  ", HIT_MESSAGE_LEN);
 		return(0);
 	}
 	s_con_mon(monster);
-	(void) strcat(hit_message, "hit  ");
+	(void) strlcat(hit_message, "hit  ", HIT_MESSAGE_LEN);
 	(void) mon_damage(monster, damage);
 	return(1);
 }
@@ -211,7 +211,6 @@ flop_weapon(weapon, row, col)
 {
 	object *new_weapon, *monster;
 	short i = 0;
-	char msg[80];
 	boolean found = 0;
 	short mch, dch;
 	unsigned short mon;
@@ -257,10 +256,9 @@ flop_weapon(weapon, row, col)
 
 		t = weapon->quantity;
 		weapon->quantity = 1;
-		sprintf(msg, "the %svanishes as it hits the ground",
-		name_of(weapon));
+		messagef(0, "the %svanishes as it hits the ground",
+		    name_of(weapon));
 		weapon->quantity = t;
-		message(msg, 0);
 	}
 }
 

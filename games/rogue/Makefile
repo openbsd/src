@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2002/05/31 03:46:35 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.9 2002/07/18 07:13:56 pjanzen Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
-CFLAGS+=-DUNIX -fwritable-strings
+CFLAGS+=-fwritable-strings
 SRCS=	hit.c init.c inventory.c level.c machdep.c main.c \
 	message.c monster.c move.c object.c pack.c play.c random.c ring.c \
 	room.c save.c score.c spec_hit.c throw.c trap.c use.c zap.c

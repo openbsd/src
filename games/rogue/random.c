@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.3 1998/08/22 08:55:40 pjanzen Exp $	*/
+/*	$OpenBSD: random.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: random.c,v 1.3 1998/08/22 08:55:40 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: random.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 

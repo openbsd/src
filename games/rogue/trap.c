@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 1998/08/22 08:55:50 pjanzen Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1995/04/22 10:28:35 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: trap.c,v 1.3 1995/04/22 10:28:35 cgd Exp $";
+static const char rcsid[] = "$OpenBSD: trap.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ trap_player(row, col)
 	}
 	dungeon[row][col] &= (~HIDDEN);
 	if (rand_percent(rogue.exp + ring_exp)) {
-		message("the trap failed", 1);
+		messagef(1, "the trap failed");
 		return;
 	}
 	switch(t) {
@@ -112,7 +112,7 @@ trap_player(row, col)
 		new_level_message = trap_strings[(t*2)+1];
 		break;
 	case BEAR_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		bear_trap = get_rand(4, 7);
 		break;
 	case TELE_TRAP:
@@ -120,7 +120,7 @@ trap_player(row, col)
 		tele();
 		break;
 	case DART_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		rogue.hp_current -= get_damage("1d6", 1);
 		if (rogue.hp_current <= 0) {
 			rogue.hp_current = 0;
@@ -135,11 +135,11 @@ trap_player(row, col)
 		}
 		break;
 	case SLEEPING_GAS_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		take_a_nap();
 		break;
 	case RUST_TRAP:
-		message(trap_strings[(t*2)+1], 1);
+		messagef(1, "%s", trap_strings[(t*2)+1]);
 		rust((object *) 0);
 		break;
 	}
@@ -195,10 +195,10 @@ id_trap()
 {
 	short dir, row, col, d, t;
 
-	message("direction? ", 0);
+	messagef(0, "direction? ");
 
 	while (!is_direction(dir = rgetchar(), &d)) {
-		sound_bell();
+		beep();
 	}
 	check_message();
 
@@ -212,9 +212,9 @@ id_trap()
 
 	if ((dungeon[row][col] & TRAP) && (!(dungeon[row][col] & HIDDEN))) {
 		t = trap_at(row, col);
-		message(trap_strings[t*2], 0);
+		messagef(0, "%s", trap_strings[t*2]);
 	} else {
-		message("no trap there", 0);
+		messagef(0, "no trap there");
 	}
 }
 
@@ -273,7 +273,7 @@ search(n, is_auto)
 						shown++;
 						if (dungeon[row][col] & TRAP) {
 							t = trap_at(row, col);
-							message(trap_strings[t*2], 1);
+							messagef(1, "%s", trap_strings[t*2]);
 						}
 					}
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.7 2001/08/12 19:52:56 pjanzen Exp $	*/
+/*	$OpenBSD: message.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD";
+static const char rcsid[] = "$OpenBSD: message.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,17 +59,20 @@ static char rcsid[] = "$OpenBSD";
 
 #include <signal.h>
 #include <termios.h>
+#include <stdarg.h>
 #include "rogue.h"
 
-char msgs[NMESSAGES][DCOLS] = {{0}, {0}, {0}, {0}, {0}};
+char msgs[NMESSAGES][DCOLS] = {"", "", "", "", ""};
 short msg_col = 0, imsg = -1;
 boolean msg_cleared = 1, rmsg = 0;
-char hunger_str[8] = "";
-char *more = "-more-";
+char hunger_str[HUNGER_STR_LEN] = "";
+const char *more = "-more-";
 
-void
+static void message(const char *, boolean);
+
+static void
 message(msg, intrpt)
-	char *msg;
+	const char *msg;
 	boolean intrpt;
 {
 	cant_int = 1;
@@ -90,7 +93,7 @@ message(msg, intrpt)
 	}
 	if (!rmsg) {
 		imsg = (imsg + 1) % NMESSAGES;
-		(void) strcpy(msgs[imsg], msg);
+		strlcpy(msgs[imsg], msg, sizeof(msgs[imsg]));
 	}
 	mvaddstr(MIN_ROW-1, 0, msg);
 	addch(' ');
@@ -104,6 +107,19 @@ message(msg, intrpt)
 		did_int = 0;
 		onintr(0);
 	}
+}
+
+void
+messagef(boolean intrpt, const char *fmt, ...)
+{
+	va_list ap;
+	char buf[DCOLS];
+
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	message(buf, intrpt);
 }
 
 void
@@ -136,29 +152,31 @@ check_message()
 }
 
 int
-get_input_line(prompt, insert, buf, buf_size, if_cancelled, add_blank, do_echo)
-	char *prompt, *insert, *buf;
-	int buf_size;
-	char *if_cancelled;
+get_input_line(prompt, insert, buf, buflen, if_cancelled, add_blank, do_echo)
+	const char *prompt;
+	const char *insert;
+    	char *buf;
+	size_t buflen;
+	const char *if_cancelled;
 	boolean add_blank;
 	boolean do_echo;
 {
-	short ch;
-	short i = 0, n;
+	int ch;
+	int i = 0, n;
 
 	message(prompt, 0);
 	n = strlen(prompt);
 
 	if (insert[0]) {
 		mvaddstr(0, n + 1, insert);
-		(void) strcpy(buf, insert);
-		i = strlen(insert);
+		strlcpy(buf, insert, buflen);
+		i = strlen(buf);
 		move(0, (n + i + 1));
 		refresh();
 	}
 
 	while (((ch = rgetchar()) != '\r') && (ch != '\n') && (ch != CANCEL)) {
-		if ((ch >= ' ') && (ch <= '~') && (i < buf_size - 2)) {
+		if ((ch >= ' ') && (ch <= '~') && (i < (int)(buflen - 2))) {
 			if ((ch != ' ') || (i > 0)) {
 				buf[i++] = ch;
 				if (do_echo) {
@@ -166,7 +184,7 @@ get_input_line(prompt, insert, buf, buf_size, if_cancelled, add_blank, do_echo)
 				}
 			}
 		}
-		if ((ch == '\b') && (i > 0)) {
+		if (((ch == '\b') || (ch == erasechar())) && (i > 0)) {
 			if (do_echo) {
 				mvaddch(0, i + n, ' ');
 				move(MIN_ROW-1, i+n);
@@ -184,7 +202,7 @@ get_input_line(prompt, insert, buf, buf_size, if_cancelled, add_blank, do_echo)
 		}
 	}
 
-	buf[i] = 0;
+	buf[i] = '\0';
 
 	if ((ch == CANCEL) || (i == 0) || ((i == 1) && add_blank)) {
 		if (if_cancelled) {
@@ -207,13 +225,6 @@ rgetchar()
 		case '\022':
 			wrefresh(curscr);
 			break;
-#ifdef UNIX_BSD4_2
-		case '\032':
-			printf("%s", CL);
-			fflush(stdout);
-			tstp();
-			break;
-#endif
 		case '&':
 			save_screen();
 			break;
@@ -246,9 +257,7 @@ print_stats(stat_mask)
 			mvaddstr(row, 0, "Level: ");
 		}
 		/* max level taken care of in make_level() */
-		sprintf(buf, "%d", cur_level);
-		mvaddstr(row, 7, buf);
-		pad(buf, 2);
+		mvprintw(row, 7, "%-2d", cur_level);
 	}
 	if (stat_mask & STAT_GOLD) {
 		if (label) {
@@ -257,9 +266,7 @@ print_stats(stat_mask)
 		if (rogue.gold > MAX_GOLD) {
 			rogue.gold = MAX_GOLD;
 		}
-		sprintf(buf, "%ld", rogue.gold);
-		mvaddstr(row, 16, buf);
-		pad(buf, 6);
+		mvprintw(row, 16, "%-6ld", rogue.gold);
 	}
 	if (stat_mask & STAT_HP) {
 		if (label) {
@@ -269,9 +276,9 @@ print_stats(stat_mask)
 			rogue.hp_current -= (rogue.hp_max - MAX_HP);
 			rogue.hp_max = MAX_HP;
 		}
-		sprintf(buf, "%d(%d)", rogue.hp_current, rogue.hp_max);
-		mvaddstr(row, 27, buf);
-		pad(buf, 8);
+		snprintf(buf, sizeof(buf), "%d(%d)",
+		    rogue.hp_current, rogue.hp_max);
+		mvprintw(row, 27, "%-8s", buf);
 	}
 	if (stat_mask & STAT_STRENGTH) {
 		if (label) {
@@ -281,10 +288,9 @@ print_stats(stat_mask)
 			rogue.str_current -= (rogue.str_max - MAX_STRENGTH);
 			rogue.str_max = MAX_STRENGTH;
 		}
-		sprintf(buf, "%d(%d)", (rogue.str_current + add_strength),
-			rogue.str_max);
-		mvaddstr(row, 41, buf);
-		pad(buf, 6);
+		snprintf(buf, sizeof(buf), "%d(%d)",
+		    (rogue.str_current + add_strength), rogue.str_max);
+		mvprintw(row, 41, "%-6s", buf);
 	}
 	if (stat_mask & STAT_ARMOR) {
 		if (label) {
@@ -293,9 +299,7 @@ print_stats(stat_mask)
 		if (rogue.armor && (rogue.armor->d_enchant > MAX_ARMOR)) {
 			rogue.armor->d_enchant = MAX_ARMOR;
 		}
-		sprintf(buf, "%d", get_armor_class(rogue.armor));
-		mvaddstr(row, 53, buf);
-		pad(buf, 2);
+		mvprintw(row, 53, "%-2d", get_armor_class(rogue.armor));
 	}
 	if (stat_mask & STAT_EXP) {
 		if (label) {
@@ -307,9 +311,9 @@ print_stats(stat_mask)
 		if (rogue.exp > MAX_EXP_LEVEL) {
 			rogue.exp = MAX_EXP_LEVEL;
 		}
-		sprintf(buf, "%d/%ld", rogue.exp, rogue.exp_points);
-		mvaddstr(row, 61, buf);
-		pad(buf, 11);
+		snprintf(buf, sizeof(buf), "%d/%ld",
+		    rogue.exp, rogue.exp_points);
+		mvprintw(row, 61, "%-11s", buf);
 	}
 	if (stat_mask & STAT_HUNGER) {
 		mvaddstr(row, 73, hunger_str);
@@ -319,51 +323,27 @@ print_stats(stat_mask)
 }
 
 void
-pad(s, n)
-	char *s;
-	short n;
-{
-	short i;
-
-	for (i = strlen(s); i < n; i++) {
-		addch(' ');
-	}
-}
-
-void
 save_screen()
 {
 	FILE *fp;
 	short i, j;
 	char buf[DCOLS+2];
-	boolean found_non_blank;
 
 	if ((fp = fopen("rogue.screen", "w")) != NULL) {
 		for (i = 0; i < DROWS; i++) {
-			found_non_blank = 0;
-			for (j = (DCOLS - 1); j >= 0; j--) {
+			for (j = 0; j < DCOLS; j++) {
 				buf[j] = mvinch(i, j);
-				if (!found_non_blank) {
-					if ((buf[j] != ' ') || (j == 0)) {
-						buf[j + ((j == 0) ? 0 : 1)] = 0;
-						found_non_blank = 1;
-					}
-				}
 			}
+			for (j = DCOLS; j > 0 && buf[j - 1] == ' '; j--)
+				;
+			buf[j] = '\0';
 			fputs(buf, fp);
 			putc('\n', fp);
 		}
 		fclose(fp);
 	} else {
-		sound_bell();
+		beep();
 	}
-}
-
-void
-sound_bell()
-{
-	putchar(7);
-	fflush(stdout);
 }
 
 boolean

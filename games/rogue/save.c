@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.5 2001/08/12 23:07:40 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.6 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/04/22 10:28:21 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.5 2001/08/12 23:07:40 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: save.c,v 1.6 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,14 +66,14 @@ char *save_file = (char *) 0;
 void
 save_game()
 {
-	char fname[64];
+	char fname[256];
 
 	if (!get_input_line("file name?", save_file, fname, sizeof(fname),
 	    "game not saved", 0, 1)) {
 		return;
 	}
 	check_message();
-	message(fname, 0);
+	messagef(0, "%s", fname);
 	save_into_file(fname);
 }
 
@@ -94,14 +94,14 @@ save_into_file(sfile)
 				(void) strcat(name_buffer, sfile+1);
 				sfile = name_buffer;
 			} else {
-				message("homedir is too long", 0);
+				messagef(0, "homedir is too long");
 				return;
 			}
 		}
 	}
 	if (	((fp = fopen(sfile, "w")) == NULL) ||
 			((file_id = md_get_file_id(sfile)) == -1)) {
-		message("problem accessing the save file", 0);
+		messagef(0, "problem accessing the save file");
 		return;
 	}
 	md_ignore_signals();
@@ -159,10 +159,10 @@ restore(fname)
 	FILE *fp;
 	struct rogue_time saved_time, mod_time;
 	char buf[4];
-	char tbuf[40];
+	char tbuf[LOGIN_NAME_LEN];
 	int new_file_id, saved_file_id;
 
-	if (	((new_file_id = md_get_file_id(fname)) == -1) ||
+	if (((new_file_id = md_get_file_id(fname)) == -1) ||
 			((fp = fopen(fname, "r")) == NULL)) {
 		clean_up("cannot open file");
 	}
@@ -173,10 +173,10 @@ restore(fname)
 	r_read(fp, (char *) &detect_monster, sizeof(detect_monster));
 	r_read(fp, (char *) &cur_level, sizeof(cur_level));
 	r_read(fp, (char *) &max_level, sizeof(max_level));
-	read_string(hunger_str, fp);
+	read_string(hunger_str, HUNGER_STR_LEN, fp);
 
-	(void) strcpy(tbuf, login_name);
-	read_string(login_name, fp);
+	strlcpy(tbuf, login_name, sizeof(tbuf));
+	read_string(login_name, LOGIN_NAME_LEN, fp);
 	if (strcmp(tbuf, login_name)) {
 		clean_up("you're not the original player");
 	}
@@ -316,13 +316,14 @@ rw_id(id_table, fp, n, wr)
 		if (wr) {
 			r_write(fp, (char *) &(id_table[i].value), sizeof(short));
 			r_write(fp, (char *) &(id_table[i].id_status),
-				sizeof(unsigned short));
+			    sizeof(unsigned short));
 			write_string(id_table[i].title, fp);
 		} else {
 			r_read(fp, (char *) &(id_table[i].value), sizeof(short));
 			r_read(fp, (char *) &(id_table[i].id_status),
-				sizeof(unsigned short));
-			read_string(id_table[i].title, fp);
+			    sizeof(unsigned short));
+			read_string(id_table[i].title, sizeof(id_table[i].title),
+			    fp);
 		}
 	}
 }
@@ -341,15 +342,20 @@ write_string(s, fp)
 }
 
 void
-read_string(s, fp)
+read_string(s, maxlen, fp)
 	char *s;
+	size_t maxlen;
 	FILE *fp;
 {
 	short n;
 
 	r_read(fp, (char *) &n, sizeof(short));
+	if (n <= 0 || (size_t)(unsigned short)n > maxlen)
+		clean_up("saved game is corrupt");
 	r_read(fp, s, n);
 	xxxx(s, n);
+	/* ensure NUL termination */
+	s[n - 1] = '\0';
 }
 
 void
@@ -369,7 +375,7 @@ void
 r_read(fp, buf, n)
 	FILE *fp;
 	char *buf;
-	int n;
+	size_t n;
 {
 	if (fread(buf, sizeof(char), n, fp) != n) {
 		clean_up("read() failed, don't know why");
@@ -380,12 +386,12 @@ void
 r_write(fp, buf, n)
 	FILE *fp;
 	char *buf;
-	int n;
+	size_t n;
 {
 	if (!write_failed) {
 		if (fwrite(buf, sizeof(char), n, fp) != n) {
-			message("write() failed, don't know why", 0);
-			sound_bell();
+			messagef(0, "write() failed, don't know why");
+			beep();
 			write_failed = 1;
 		}
 	}

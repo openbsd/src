@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: init.c,v 1.7 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.6 2002/05/31 05:11:37 pjanzen Exp $"
 #include <err.h>
 #include "rogue.h"
 
-char login_name[MAX_OPT_LEN];
-char *nick_name = (char *) 0;
+char login_name[LOGIN_NAME_LEN];
+char *nick_name = NULL;
 char *rest_file = 0;
 boolean cant_int = 0;
 boolean did_int = 0;
@@ -87,10 +87,13 @@ init(argc, argv)
 	egid = getegid();
 	setegid(gid);
 	pn = md_gln();
-	if ((!pn) || (strlen(pn) >= MAX_OPT_LEN)) {
+	if ((!pn) || (strlen(pn) >= LOGIN_NAME_LEN))
 		clean_up("Hey!  Who are you?");
-	}
-	(void) strcpy(login_name, pn);
+	(void) strlcpy(login_name, pn, sizeof(login_name));
+	/* ':' is reserved.  If it's in a login_name, we're on a weird
+	 * system... */
+	while ((pn = strchr(login_name, ':')) != NULL)
+		*pn = ';';
 
 	do_args(argc, argv);
 	do_opts();
@@ -102,16 +105,16 @@ init(argc, argv)
 	}
 
 	initscr();
+	init_curses = 1;
 	if ((LINES < DROWS) || (COLS < DCOLS)) {
 		clean_up("must be played on 24 x 80 screen (or larger)");
 	}
 	start_window();
-	init_curses = 1;
 
 	md_heed_signals();
 
 	if (score_only) {
-		put_scores((object *) 0, 0);
+		put_scores((object *) NULL, 0);
 	}
 	seed = md_gseed();
 	(void) srrandom(seed);
@@ -232,7 +235,7 @@ onintr(dummy)
 		did_int = 1;
 	} else {
 		check_message();
-		message("interrupt", 1);
+		messagef(1, "interrupt");
 	}
 	md_heed_signals();
 }
@@ -278,9 +281,8 @@ do_opts()
 			while ((*eptr) == ' ') {
 				eptr++;
 			}
-			if (!(*eptr)) {
+			if (!(*eptr))
 				break;
-			}
 			if (!strncmp(eptr, "fruit=", 6)) {
 				eptr += 6;
 				env_get_value(&fruit, eptr, 1);
@@ -327,17 +329,14 @@ env_get_value(s, e, add_blank)
 	t = e;
 
 	while ((*e) && (*e != ',')) {
-		if (*e == ':') {
-			*e = ';';		/* ':' reserved for score file purposes */
-		}
 		e++;
-		if (++i >= MAX_OPT_LEN) {
+		if (++i >= MAX_OPT_LEN)
 			break;
-		}
 	}
+	/* room.c:edit_opts() depends on length MAX_OPT_LEN + 2 */
 	if (!(*s = md_malloc(MAX_OPT_LEN + 2)))
-		errx(1, "malloc failure");
-	(void) strncpy(*s, t, i);
+		clean_up("out of memory");
+	(void) strlcpy(*s, t, MAX_OPT_LEN + 2);
 	if (add_blank) {
 		(*s)[i++] = ' ';
 	}
@@ -349,8 +348,10 @@ init_str(str, dflt)
 	char **str, *dflt;
 {
 	if (!(*str)) {
-		if (!(*str = md_malloc(MAX_OPT_LEN + 2)))
-			errx(1, "malloc failure");
-		(void) strcpy(*str, dflt);
+		/* room.c:edit_opts() depends on length MAX_OPT_LEN + 2 */
+		*str = md_malloc(MAX_OPT_LEN + 2);
+		if (*str == NULL)
+			clean_up("out of memory");
+		(void) strlcpy(*str, dflt, MAX_OPT_LEN + 2);
 	}
 }

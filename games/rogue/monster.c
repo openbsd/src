@@ -1,4 +1,4 @@
-/*	$OpenBSD: monster.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $	*/
+/*	$OpenBSD: monster.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: monster.c,v 1.3 1995/04/22 10:27:45 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: monster.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: monster.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -722,7 +722,7 @@ create_monster()
 			wake_up(monster);
 		}
 	} else {
-		message("you hear a faint cry of anguish in the distance", 0);
+		messagef(0, "you hear a faint cry of anguish in the distance");
 	}
 }
 
@@ -862,7 +862,7 @@ aggravate()
 {
 	object *monster;
 
-	message("you hear a high pitched humming noise", 0);
+	messagef(0, "you hear a high pitched humming noise");
 
 	monster = level_monsters.next_monster;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2001/08/10 18:17:56 pjanzen Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $";
+static const char rcsid[] = "$OpenBSD: machdep.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,60 +57,14 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
  *
  */
 
-/* Included in this file are all system dependent routines.  Extensive use
- * of #ifdef's will be used to compile the appropriate code on each system:
- *
- *    UNIX:	   all UNIX systems.
- *    UNIX_BSD4_2: UNIX BSD 4.2 and later, UTEK, (4.1 BSD too?)
- *    UNIX_SYSV:   UNIX system V
- *    UNIX_V7:     UNIX version 7
- *
- * All UNIX code should be included between the single "#ifdef UNIX" at the
- * top of this file, and the "#endif" at the bottom.
- * 
- * To change a routine to include a new UNIX system, simply #ifdef the
- * existing routine, as in the following example:
- *
- *   To make a routine compatible with UNIX system 5, change the first
- *   function to the second:
- *
- *      md_function()
- *      {
- *	   code;
- *      }
- *
- *      md_function()
- *      {
- *      #ifdef UNIX_SYSV
- *	   sys5code;
- *      #else
- *	   code;
- *      #endif
- *      }
- *
- * Appropriate variations of this are of course acceptible.
- * The use of "#elseif" is discouraged because of non-portability.
- * If the correct #define doesn't exist, "UNIX_SYSV" in this case, make it up
- * and insert it in the list at the top of the file.  Alter the CFLAGS
- * in you Makefile appropriately.
- *
- */
-
-#ifdef UNIX
+/* Included in this file are all system dependent routines. */
 
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pwd.h>
-
-#ifdef UNIX_BSD4_2
-#include <sys/time.h>
-#endif
-
-#ifdef UNIX_SYSV
 #include <time.h>
-#endif
 
 #include <signal.h>
 #include <stdlib.h>
@@ -457,7 +411,7 @@ md_lock(l)
 		setegid(egid);
 		if ((fd = open(_PATH_SCOREFILE, O_RDONLY)) < 1) {
 			setegid(gid);
-			message("cannot lock score file", 0);
+			messagef(0, "cannot lock score file");
 			return;
 		}
 		setegid(gid);
@@ -473,27 +427,31 @@ md_lock(l)
 /* md_shell():
  *
  * This function spawns a shell for the user to use.  When this shell is
- * terminated, the game continues.  Since this program may often be run
- * setuid to gain access to privileged files, care is taken that the shell
- * is run with the user's REAL user id, and not the effective user id.
- * The effective user id is restored after the shell completes.
+ * terminated, the game continues.
+ *
+ * It is important that the game not give the shell the privileges the
+ * game uses to access the scores file. This version of the game runs
+ * with privileges low by default; only the saved gid (if setgid) or uid
+ * (if setuid) will be privileged, but that privilege is discarded by
+ * exec().
  */
 
 void
 md_shell(shell)
-	char *shell;
+	const char *shell;
 {
 	int w;
+	pid_t pid;
 
-	if (!fork()) {
-/*		int uid;	*** No longer needed ***
- *
- *		uid = getuid();
- *		setuid(uid);
- */
+	pid = fork();
+	switch(pid) {
+	case -1:
+		break;
+	case 0:
 		execl(shell, shell, (char *)NULL);
+		_exit(255);
+	default:
+		waitpid(pid, &w, 0);
+		break;
 	}
-	wait(&w);
 }
-
-#endif	/* UNIX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: play.c,v 1.3 1998/08/22 08:55:39 pjanzen Exp $	*/
+/*	$OpenBSD: play.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: play.c,v 1.3 1995/04/22 10:28:04 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: play.c,v 1.3 1998/08/22 08:55:39 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: play.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ play_level()
 	for (;;) {
 		interrupted = 0;
 		if (hit_message[0]) {
-			message(hit_message, 1);
+			messagef(1, "%s", hit_message);
 			hit_message[0] = 0;
 		}
 		if (trap_door) {
@@ -218,7 +218,7 @@ CH:
 			throw();
 			break;
 		case 'v':
-			message("rogue-clone: Version III. (Tim Stoehr was here), tektronix!zeus!tims", 0);
+			messagef(0, "rogue-clone: Version III. (Tim Stoehr was here), tektronix!zeus!tims");
 			break;
 		case 'Q':
 			quit(0);
@@ -250,28 +250,28 @@ CH:
 			if (wizard) {
 				inventory(&level_objects, ALL_OBJECTS);
 			} else {
-				message(unknown_command, 0);
+				messagef(0, "%s", unknown_command);
 			}
 			break;
 		case '\023':
 			if (wizard) {
 				draw_magic_map();
 			} else {
-				message(unknown_command, 0);
+				messagef(0, "%s", unknown_command);
 			}
 			break;
 		case '\024':
 			if (wizard) {
 				show_traps();
 			} else {
-				message(unknown_command, 0);
+				messagef(0, "%s", unknown_command);
 			}
 			break;
 		case '\017':
 			if (wizard) {
 				show_objects();
 			} else {
-				message(unknown_command, 0);
+				messagef(0, "%s", unknown_command);
 			}
 			break;
 		case '\001':
@@ -281,21 +281,21 @@ CH:
 			if (wizard) {
 				c_object_for_wizard();
 			} else {
-				message(unknown_command, 0);
+				messagef(0, "%s", unknown_command);
 			}
 			break;
 		case '\015':
 			if (wizard) {
 				show_monsters();
 			} else {
-				message(unknown_command, 0);
+				messagef(0, "%s", unknown_command);
 			}
 			break;
 		case 'S':
 			save_game();
 			break;
 		default:
-			message(unknown_command, 0);
+			messagef(0, "%s", unknown_command);
 			break;
 		}
 	}

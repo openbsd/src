@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.7 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.8 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -189,14 +189,16 @@
 #define WAND_MATERIALS 30
 #define GEMS 14
 
+#define NUM_SCORE_ENTRIES 10
+
 #define GOLD_PERCENT 46
 
 #define MAX_OPT_LEN 40
 
 struct id {
 	short value;
-	char *title;
-	char *real;
+	char title[MAX_TITLE_LENGTH];
+	const char *real;
 	unsigned short id_status;
 };
 
@@ -459,7 +461,7 @@ char	*md_getenv(char *);
 char	*md_gln(void);
 char	*md_malloc(int);
 char	*mon_name(object *);
-char	*name_of(object *);
+char	*name_of(const object *);
 object	*object_at(object *, short, short);
 object	*pick_up(short, short, short *);
 void	add_exp(int, boolean);
@@ -473,7 +475,7 @@ void	c_object_for_wizard(void);
 void	call_it(void);
 boolean	can_move(short, short, short, short);
 boolean	can_turn(short, short);
-void	center(short, char *);
+void	center(short, const char *);
 void	check_gold_seeker(object *);
 boolean	check_hunger(boolean);
 boolean	check_imitator(object *);
@@ -515,24 +517,24 @@ void	flop_weapon(object *, short, short);
 void	free_object(object *);
 void	free_stuff(object *);
 void	freeze(object *);
-int	get_armor_class(object *);
+int	get_armor_class(const object *);
 int	get_com_id(int *, short);
 int	get_damage(char *, boolean);
-void	get_desc(object *, char *);
+void	get_desc(const object *, char *, size_t);
 int	get_dir(short, short, short, short);
 void	get_dir_rc(short, short *, short *, short);
 char	get_dungeon_char(short, short);
 int	get_exp_level(long);
 void	get_food(object *, boolean);
 int	get_hit_chance(object *);
-int	get_input_line(char *, char *, char *, int, char *, boolean, boolean);
+int	get_input_line(const char *, const char *, char *, size_t, const char *, boolean, boolean);
 char	get_mask_char(unsigned short);
 int	get_number(char *);
 boolean	get_oth_room(short, short *, short *);
 int	get_rand(int, int);
 short	get_room_number(short, short);
 int	get_value(object *);
-int	get_w_damage(object *);
+int	get_w_damage(const object *);
 void	get_wand_and_ring_materials(void);
 int	get_weapon_damage(object *);
 char	gmc(object *);
@@ -564,7 +566,6 @@ void	idntfy(void);
 boolean	imitating(short, short);
 int	init(int, char **);
 void	init_str(char **, char *);
-void	insert_score(char [][], char [][], char *, short, short, object *, int);
 void	inv_armor_weapon(boolean);
 void	inv_rings(void);
 void	inventory(object *, unsigned short);
@@ -575,8 +576,7 @@ boolean	is_pack_letter(short *, unsigned short *);
 boolean	is_passable(short, short);
 boolean	is_vowel(short);
 void	kick_into_pack(void);
-void	killed_by(object *, short);
-long	lget_number(char *);
+void	killed_by(const object *, short);
 void	light_passage(short, short);
 void	light_up_room(int);
 boolean	m_confuse(object *);
@@ -597,10 +597,14 @@ void	md_heed_signals(void);
 void	md_ignore_signals(void);
 int	md_link_count(char *);
 void	md_lock(boolean);
-void	md_shell(char *);
+void	md_shell(const char *);
 void	md_sleep(int);
 void	md_slurp(void);
-void	message(char *, boolean);
+void	messagef(boolean, const char *, ...)
+#ifdef __GNUC__
+	  __attribute__((__format__(__printf__, 2, 3)))
+#endif
+		;
 void	mix_colors(void);
 void	mix_colors(void);
 void	mix_random_rooms(void);
@@ -616,10 +620,8 @@ void	multiple_move_rogue(short);
 void	mv_1_monster(object *, short, short);
 void	mv_aquatars(void);
 void	mv_mons(void);
-int	name_cmp(char *, char *);
 short	next_avail_ichar(void);
 boolean	next_to_something(short, short);
-void	nickize(char *, char *, char *);
 int	no_room_for_monster(int);
 int	one_move_rogue(short, short);
 void	onintr(int);
@@ -628,7 +630,6 @@ void	opt_go(int);
 void	opt_show(int);
 short	pack_count(object *);
 short	pack_letter(char *, unsigned short);
-void	pad(char *, short);
 void	party_monsters(int, int);
 short	party_objects(int);
 void	place_at(object *, short, short);
@@ -648,19 +649,19 @@ void	put_mons(void);
 void	put_objects(void);
 void	put_on_ring(void);
 void	put_player(short);
-void	put_scores(object *, short);
+void	put_scores(const object *, short);
 void	put_stairs(void);
 void	quaff(void);
 void	quit(boolean);
 int	r_index(char *, int, boolean);
-void	r_read(FILE *, char *, int);
-void	r_write(FILE *, char *, int);
+void	r_read(FILE *, char *, size_t);
+void	r_write(FILE *, char *, size_t);
 void	rand_around(short, short *, short *);
 int	rand_percent(int);
 void	rand_place(object *);
 void	read_pack(object *, FILE *, boolean);
 void	read_scroll(void);
-void	read_string(char *, FILE *);
+void	read_string(char *, size_t, FILE *);
 void	recursive_deadend(short, short *, short, short);
 boolean	reg_move(void);
 void	relight(void);
@@ -694,7 +695,6 @@ void	show_monsters(void);
 void	show_objects(void);
 void	show_traps(void);
 void	single_inv(short);
-void	sound_bell(void);
 void	special_hit(object *);
 void	srrandom(int);
 void	start_window(void);
@@ -741,7 +741,7 @@ void	xxxx(char *, short);
 void	zap_monster(object *, unsigned short);
 void	zapp(void);
 object *add_to_pack(object *, object *, int);
-struct id *get_id_table(object *);
+struct id *get_id_table(const object *);
 unsigned short gr_what_is(void);
 
 extern	boolean	ask_quit;
@@ -766,15 +766,18 @@ extern	boolean	see_invisible;
 extern	boolean	sustain_strength;
 extern	boolean	trap_door;
 extern	boolean	wizard;
-extern	char	hit_message[];
-extern	char	hunger_str[];
-extern	char	login_name[];
+#define HIT_MESSAGE_LEN 80
+extern	char	hit_message[HIT_MESSAGE_LEN];
+#define HUNGER_STR_LEN 8
+extern	char	hunger_str[HUNGER_STR_LEN];
+#define LOGIN_NAME_LEN 40
+extern	char	login_name[LOGIN_NAME_LEN];
 extern	char   *byebye_string;
 extern	char   *curse_message;
 extern	char   *error_file;
 extern	char   *fruit;
 extern	char   *m_names[];
-extern	char   *more;
+extern	const char   *more;
 extern	char   *new_level_message;
 extern	char   *nick_name;
 extern	char   *press_space;

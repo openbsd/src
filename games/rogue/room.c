@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $	*/
+/*	$OpenBSD: room.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/04/22 10:28:17 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: room.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: room.c,v 1.5 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,8 @@ boolean rooms_visited[MAXROOMS];
 
 #define NOPTS 7
 
-struct option {
-	char *prompt;
+const struct option {
+	const char *prompt;
 	boolean is_bool;
 	char **strval;
 	boolean *bval;
@@ -564,7 +564,7 @@ CH:
 			if (i > 0) {
 				opt_go(--i);
 			} else {
-				sound_bell();
+				beep();
 			}
 			break;
 		case 't':
@@ -579,18 +579,19 @@ CH:
 			}
 		default:
 			if (options[i].is_bool) {
-				sound_bell();
+				beep();
 				break;
 			}
 			j = 0;
-			if ((ch == '\010') || ((ch >= ' ') && (ch <= '~'))) {
+			if ((ch == '\b') || ((ch >= ' ') && (ch <= '~'))) {
 				opt_erase(i);
 				do {
 					if ((ch >= ' ') && (ch <= '~') && (j < MAX_OPT_LEN)) {
 						buf[j++] = ch;
 						buf[j] = '\0';
 						addch(ch);
-					} else if ((ch == '\010') && (j > 0)) {
+					} else if ((ch == '\b' || ch == erasechar()) &&
+					    (j > 0)) {
 						buf[--j] = '\0';
 						move(i, j + strlen(options[i].prompt));
 						addch(' ');
@@ -600,12 +601,16 @@ CH:
 					ch = rgetchar();
 				} while ((ch != '\012') && (ch != '\015') && (ch != '\033'));
 				if (j != 0) {
+					/* We rely on the option string being
+					 * allocated to hold MAX_OPT_LEN+2
+					 * bytes. This is arranged in init.c.
+					 */
 					(void) strcpy(*(options[i].strval), buf);
 				}
 				opt_show(i);
 				goto CH;
 			} else {
-				sound_bell();
+				beep();
 			}
 			break;
 		}
@@ -623,8 +628,8 @@ void
 opt_show(i)
 	int i;
 {
-	char *s;
-	struct option *opt = &options[i];
+	const char *s;
+	const struct option *opt = &options[i];
 
 	opt_erase(i);
 
@@ -640,7 +645,7 @@ void
 opt_erase(i)
 	int i;
 {
-	struct option *opt = &options[i];
+	const struct option *opt = &options[i];
 
 	mvaddstr(i, 0, opt->prompt);
 	clrtoeol();
@@ -656,7 +661,6 @@ opt_go(i)
 void
 do_shell()
 {
-#ifdef UNIX
 	char *sh;
 
 	md_ignore_signals();
@@ -671,5 +675,4 @@ do_shell()
 	start_window();
 	wrefresh(curscr);
 	md_heed_signals();
-#endif
 }

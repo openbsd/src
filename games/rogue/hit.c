@@ -1,4 +1,4 @@
-/*	$OpenBSD: hit.c,v 1.3 1998/08/22 08:55:26 pjanzen Exp $	*/
+/*	$OpenBSD: hit.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $	*/
 /*	$NetBSD: hit.c,v 1.3 1995/04/22 10:27:30 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: hit.c,v 1.3 1998/08/22 08:55:26 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hit.c,v 1.4 2002/07/18 07:13:57 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: hit.c,v 1.3 1998/08/22 08:55:26 pjanzen Exp $";
 #include "rogue.h"
 
 object *fight_monster = 0;
-char hit_message[80] = "";
+char hit_message[HIT_MESSAGE_LEN] = "";
 
 void
 mon_hit(monster)
@@ -90,16 +90,13 @@ mon_hit(monster)
 
 	if (!rand_percent(hit_chance)) {
 		if (!fight_monster) {
-			sprintf(hit_message + strlen(hit_message),
-			    "the %s misses", mn);
-			message(hit_message, 1);
+			messagef(1, "%sthe %s misses", hit_message, mn);
 			hit_message[0] = 0;
 		}
 		return;
 	}
 	if (!fight_monster) {
-		sprintf(hit_message + strlen(hit_message), "the %s hit", mn);
-		message(hit_message, 1);
+		messagef(1, "%sthe %s hit", hit_message, mn);
 		hit_message[0] = 0;
 	}
 	if (!(monster->m_flags & STATIONARY)) {
@@ -143,7 +140,8 @@ rogue_hit(monster, force_hit)
 		}
 		if (!rand_percent(hit_chance)) {
 			if (!fight_monster) {
-				(void) strcpy(hit_message, "you miss  ");
+				(void) strlcpy(hit_message, "you miss  ",
+				    sizeof(hit_message));
 			}
 			goto RET;
 		}
@@ -156,7 +154,8 @@ rogue_hit(monster, force_hit)
 		}
 		if (mon_damage(monster, damage)) {	/* still alive? */
 			if (!fight_monster) {
-				(void) strcpy(hit_message, "you hit  ");
+				(void) strlcpy(hit_message, "you hit  ",
+				    sizeof(hit_message));
 			}
 		}
 RET:	check_gold_seeker(monster);
@@ -189,10 +188,16 @@ get_damage(ds, r)
 	int i = 0, j, n, d, total = 0;
 
 	while (ds[i]) {
-		n = get_number(ds+i);
-		while (ds[i++] != 'd') ;
-		d = get_number(ds+i);
-		while ((ds[i] != '/') && ds[i]) i++;
+		n = get_number(ds + i);
+		while ((ds[i] != 'd') && ds[i])
+			i++;
+		if (ds[i] == 'd')
+			i++;
+		d = get_number(ds + i);
+		while ((ds[i] != '/') && ds[i])
+			i++;
+		if (ds[i] == '/')
+			i++;
 
 		for (j = 0; j < n; j++) {
 			if (r) {
@@ -201,29 +206,29 @@ get_damage(ds, r)
 				total += d;
 			}
 		}
-		if (ds[i] == '/') {
-			i++;
-		}
 	}
 	return(total);
 }
 
 int
 get_w_damage(obj)
-	object *obj;
+	const object *obj;
 {
-	char new_damage[12];
-	int to_hit, damage;
+	char new_damage[32];
+	int tmp_to_hit, tmp_damage;
 	int i = 0;
 
 	if ((!obj) || (obj->what_is != WEAPON)) {
 		return(-1);
 	}
-	to_hit = get_number(obj->damage) + obj->hit_enchant;
-	while (obj->damage[i++] != 'd') ;
-	damage = get_number(obj->damage + i) + obj->d_enchant;
+	tmp_to_hit = get_number(obj->damage) + obj->hit_enchant;
+	while ((obj->damage[i++] != 'd') && obj->damage[i])
+		i++;
+	if (obj->damage[i] == 'd')
+		i++;
+	tmp_damage = get_number(obj->damage + i) + obj->d_enchant;
 
-	sprintf(new_damage, "%dd%d", to_hit, damage);
+	snprintf(new_damage, sizeof(new_damage), "%dd%d", tmp_to_hit, tmp_damage);
 
 	return(get_damage(new_damage, 1));
 }
@@ -234,20 +239,6 @@ get_number(s)
 {
 	int i = 0;
 	int total = 0;
-
-	while ((s[i] >= '0') && (s[i] <= '9')) {
-		total = (10 * total) + (s[i] - '0');
-		i++;
-	}
-	return(total);
-}
-
-long
-lget_number(s)
-	char *s;
-{
-	short i = 0;
-	long total = 0;
 
 	while ((s[i] >= '0') && (s[i] <= '9')) {
 		total = (10 * total) + (s[i] - '0');
@@ -316,8 +307,7 @@ mon_damage(monster, damage)
 		fight_monster = 0;
 		cough_up(monster);
 		mn = mon_name(monster);
-		sprintf(hit_message+strlen(hit_message), "defeated the %s", mn);
-		message(hit_message, 1);
+		messagef(1, "%sdefeated the %s", hit_message, mn);
 		hit_message[0] = 0;
 		add_exp(monster->kill_exp, 1);
 		take_from_pack(monster, &level_monsters);
@@ -342,9 +332,9 @@ fight(to_the_death)
 	object *monster;
 
 	while (!is_direction(ch = rgetchar(), &d)) {
-		sound_bell();
+		beep();
 		if (first_miss) {
-			message("direction?", 0);
+			messagef(0, "direction?");
 			first_miss = 0;
 		}
 	}
@@ -358,7 +348,7 @@ fight(to_the_death)
 	c = mvinch(row, col);
 	if (((c < 'A') || (c > 'Z')) ||
 		(!can_move(rogue.row, rogue.col, row, col))) {
-		message("I see no monster there", 0);
+		messagef(0, "I see no monster there");
 		return;
 	}
 	if (!(fight_monster = object_at(&level_monsters, row, col))) {
@@ -468,7 +458,7 @@ s_con_mon(monster)
 	if (con_mon) {
 		monster->m_flags |= CONFUSED;
 		monster->moves_confused += get_rand(12, 22);
-		message("the monster appears confused", 0);
+		messagef(0, "the monster appears confused");
 		con_mon = 0;
 	}
 }
