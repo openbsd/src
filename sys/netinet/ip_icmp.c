@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.23 2000/09/20 17:02:39 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.24 2000/09/20 19:11:09 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -529,6 +529,7 @@ icmp_reflect(m)
 	struct in_addr t;
 	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
+        struct ifnet *ifp;
 
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
@@ -559,8 +560,15 @@ icmp_reflect(m)
 	 * The following happens if the packet was not addressed to us,
 	 * and was received on an interface with no IP address.
 	 */
-	if (ia == (struct in_ifaddr *)0)
-		ia = in_ifaddr.tqh_first;
+	if (ia == (struct in_ifaddr *)0) {
+		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
+                        struct in_addr addr = ia->ia_addr.sin_addr;
+                        INADDR_TO_IFP(addr, ifp);
+                        if ((ifp == NULL) || (ifp->if_flags & IFF_LOOPBACK))
+                                continue;
+                        break;
+                }
+        }
 	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
