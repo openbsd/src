@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.27 2004/12/22 16:04:11 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.28 2005/01/28 12:32:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,14 +128,15 @@ main(int argc, char *argv[])
 	if (!conf.settime) {
 		log_init(conf.debug);
 		if (!conf.debug)
-			daemon(1, 0);
+			if (daemon(1, 0))
+				fatal("daemon");
 	} else
 		timeout = 15 * 1000;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_chld) == -1)
 		fatal("socketpair");
 
-	/* fork children */
+	/* fork child process */
 	chld_pid = ntp_main(pipe_chld, &conf);
 
 	setproctitle("[priv]");
@@ -170,7 +171,8 @@ main(int argc, char *argv[])
 			timeout = INFTIM;
 			log_init(conf.debug);
 			if (!conf.debug)
-				daemon(1, 0);
+				if (daemon(1, 0))
+					fatal("daemon");
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE].revents & POLLOUT))
@@ -274,7 +276,8 @@ dispatch_imsg(struct ntpd_conf *conf)
 			/* daemonize now */
 			log_init(conf->debug);
 			if (!conf->debug)
-				daemon(1, 0);
+				if (daemon(1, 0))
+					fatal("daemon");
 			conf->settime = 0;
 			break;
 		case IMSG_HOST_DNS:
