@@ -1,4 +1,4 @@
-/*	$OpenBSD: flt_rounds.c,v 1.3 1996/11/13 21:20:11 niklas Exp $	*/
+/*	$OpenBSD: flt_rounds.c,v 1.4 1997/08/01 21:36:25 deraadt Exp $	*/
 /*	$NetBSD: flt_rounds.c,v 1.1 1995/04/29 05:09:53 cgd Exp $	*/
 
 /*
@@ -33,10 +33,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: flt_rounds.c,v 1.3 1996/11/13 21:20:11 niklas Exp $";
+static char *rcsid = "$OpenBSD: flt_rounds.c,v 1.4 1997/08/01 21:36:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <machine/float.h>
 
 static const int map[] = {
 	0,	/* round to zero */

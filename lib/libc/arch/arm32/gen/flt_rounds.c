@@ -30,10 +30,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: flt_rounds.c,v 1.2 1996/08/19 08:11:33 tholo Exp $";
+static char *rcsid = "$OpenBSD: flt_rounds.c,v 1.3 1997/08/01 21:36:27 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <machine/float.h>
 
 static const int map[] = {
 	1,	/* round to nearest */
