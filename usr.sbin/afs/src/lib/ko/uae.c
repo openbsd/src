@@ -35,7 +35,7 @@
  * Unified AFS errnos
  *
  * The idea is that we use up the et space 'uae' and 'uaf' (512
- * enteries) and use those for AFS errno's that the server can use
+ * entries) and use those for AFS errno's that the server can use
  * then the client supports the TellMeAboutYourself callbackmanager
  * interface.
  *
@@ -46,7 +46,7 @@
 
 #include "ko_locl.h"
 #ifdef RCSID
-RCSID("$arla: uae.c,v 1.4 2003/03/07 22:43:22 lha Exp $") ;
+RCSID("$arla: uae.c,v 1.5 2004/07/06 13:13:51 tol Exp $") ;
 #endif
 
 static int32_t 	*uae_array;
@@ -55,8 +55,10 @@ static int	 uae_len;
 static void
 uae_set(int32_t errno_error, int32_t uae_error)
 {
-    assert(UAE_ERROR_base - uae_error < uae_len);
-    uae_array[UAE_ERROR_base - uae_error] = errno_error;
+    int index = uae_error - UAE_ERROR_base;
+    assert(index >= 0);
+    assert(index < uae_len);
+    uae_array[index] = errno_error;
 }
 
 /*
