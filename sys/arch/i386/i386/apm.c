@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.60 2003/11/24 07:26:55 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.61 2004/03/11 17:20:33 millert Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -740,7 +740,8 @@ apmprobe(parent, match, aux)
 	   since pc* console and vga* probes much later
 	   we cannot check for video memory being mapped
 	   for apm stuff w/ bus_space_map() */
-	if ((ap->apm_code32_base < IOM_BEGIN &&
+	if (ap->apm_code_len == 0 ||
+	    (ap->apm_code32_base < IOM_BEGIN &&
 	     ap->apm_code32_base + ap->apm_code_len > IOM_BEGIN) ||
 	    (ap->apm_code16_base < IOM_BEGIN &&
 	     ap->apm_code16_base + ap->apm_code16_len > IOM_BEGIN) ||
