@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.9 1996/10/21 01:50:45 briggs Exp $	*/
+/*	$OpenBSD: via.c,v 1.10 1996/10/28 14:51:52 briggs Exp $	*/
 /*	$NetBSD: via.c,v 1.48 1996/06/21 06:12:45 scottr Exp $	*/
 
 /*-
@@ -44,11 +44,9 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
+#include <machine/macinfo.h>
 #include <machine/frame.h>
 #include <machine/viareg.h>
-
-#include "ncrscsi.h"
-#include "ncr96scsi.h"
 
 static void	via1_noint __P((void *));
 static void	via2_noint __P((void *));
@@ -442,6 +440,22 @@ mac68k_register_scsi_irq(irq_func, client_data)
  		via2itab[3] = via2_noint;
 		via2iarg[3] = (void *) 3;
 	}
+}
+
+void
+mac68k_register_scsi_b_irq(irq_func, client_data)
+	void	(*irq_func)(void *);
+	void	*client_data;
+{
+#if 0
+	if (irq_func) {
+ 		via2itab[3] = irq_func;
+		via2iarg[3] = client_data;
+	} else {
+ 		via2itab[3] = via2_noint;
+		via2iarg[3] = (void *) 3;
+	}
+#endif
 }
 
 void
