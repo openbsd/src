@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.11 2003/10/22 12:15:20 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.12 2003/10/22 14:58:32 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.11 2003/10/22 12:15:20 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.12 2003/10/22 14:58:32 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -1406,6 +1406,10 @@ skip_until_mark(void)
 		case '>':
 		case '=':
 			readch();
+			if (readch() == 'e')
+				readch();
+			else
+				unreadch();
 			break;
 		case '[':
 			free(read_string(&bmachine.readstack[bmachine.readsp]));
@@ -1416,6 +1420,10 @@ skip_until_mark(void)
 				case '>':
 				case '=':
 					readch();
+					if (readch() == 'e')
+						readch();
+					else
+						unreadch();
 					break;
 				default:
 					free(readline());
