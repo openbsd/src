@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.44 2003/02/18 03:54:40 drahn Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.45 2003/04/16 21:17:52 drahn Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -111,6 +111,12 @@ extern char *syscallnames[];
 #define ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 /*
+ * We limit the number of program headers to 32, this should
+ * be a reasonable limit for ELF, the most we have seen so far is 12
+ */
+#define ELF_MAX_VALID_PHDR 32
+
+/*
  * This is the basic elf emul. elf_probe_funcs may change to other emuls.
  */
 struct emul ELFNAMEEND(emul) = {
@@ -183,7 +189,7 @@ ELFNAME(check_header)(Elf_Ehdr *ehdr, int type)
 		return (ENOEXEC);
 
 	/* Don't allow an insane amount of sections. */
-	if (ehdr->e_phnum > 128)
+	if (ehdr->e_phnum > ELF_MAX_VALID_PHDR)
 		return (ENOEXEC);
 
 	return (0);
@@ -228,7 +234,7 @@ os_ok:
 		return (ENOEXEC);
 
 	/* Don't allow an insane amount of sections. */
-	if (ehdr->e_phnum > 128)
+	if (ehdr->e_phnum > ELF_MAX_VALID_PHDR)
 		return (ENOEXEC);
 
 	*os = ehdr->e_ident[OI_OS];
@@ -349,6 +355,13 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	struct vnode *vp;
 	u_int8_t os;			/* Just a dummy in this routine */
 	Elf_Phdr *base_ph = NULL;
+	struct interp_ld_sec {
+		Elf_Addr vaddr;
+		u_long memsz;
+	} loadmap[ELF_MAX_VALID_PHDR];
+	int nload, idx = 0;
+	Elf_Addr pos = *last;
+	int file_align;
 
 	bp = path;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
@@ -384,6 +397,75 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	if ((error = ELFNAME(read_from)(p, nd.ni_vp, eh.e_phoff, (caddr_t)ph,
 	    phsize)) != 0)
 		goto bad1;
+
+	for (i = 0; i < eh.e_phnum; i++) {
+		if (ph[i].p_type == PT_LOAD) {
+			loadmap[idx].vaddr = trunc_page(ph[i].p_vaddr);
+			loadmap[idx].memsz = round_page (ph[i].p_vaddr +
+			    ph[i].p_memsz - loadmap[idx].vaddr);
+			file_align = ph[i].p_align;
+			idx++;
+		}
+	}
+	nload = idx;
+
+	/*
+	 * If no position to load the interpreter was set by a probe
+	 * function, pick the same address that a non-fixed mmap(0, ..)
+	 * would (i.e. something safely out of the way).
+	 */
+	if (pos == ELFDEFNNAME(NO_ADDR)) {
+		pos = uvm_map_hint(p, VM_PROT_EXECUTE);
+	}
+
+	pos = ELF_ROUND(pos, file_align);
+	*last = epp->ep_interp_pos = pos;
+	for (i = 0; i < nload;/**/) {
+		vaddr_t	addr;
+		struct	uvm_object *uobj;
+		off_t	uoff;
+		size_t	size;
+
+#ifdef this_needs_fixing
+		if (i == 0) {
+			uobj = &vp->v_uvm.u_obj;
+			/* need to fix uoff */
+		} else {
+#endif
+			uobj = NULL;
+			uoff = 0;
+#ifdef this_needs_fixing
+		}
+#endif
+
+		addr = trunc_page(pos + loadmap[i].vaddr);
+		size =  round_page(addr + loadmap[i].memsz) - addr;
+
+		/* CRAP - map_findspace does not avoid daddr+MAXDSIZ */
+		if ((addr + size > (vaddr_t)p->p_vmspace->vm_daddr) &&
+		    (addr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ))
+			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
+			    MAXDSIZ);
+
+		if (uvm_map_findspace(&p->p_vmspace->vm_map, addr, size,
+		    &addr, uobj, uoff, 0, UVM_FLAG_FIXED) == NULL) {
+			if (uvm_map_findspace(&p->p_vmspace->vm_map, addr, size,
+			    &addr, uobj, uoff, 0, 0) == NULL) {
+				error = ENOMEM; /* XXX */
+				goto bad1;
+			}
+		} 
+		if (addr != pos + loadmap[i].vaddr) {
+			/* base changed. */
+			pos = addr - trunc_page(loadmap[i].vaddr);
+			pos = ELF_ROUND(pos,file_align);
+			epp->ep_interp_pos = *last = pos;
+			i = 0;
+			continue;
+		}
+
+		i++;
+	}
 
 	/*
 	 * Load all the necessary sections
@@ -625,16 +707,6 @@ native:
 			break;
 		}
 	}
-
-#if !defined(__mips__)
-	/*
-	 * If no position to load the interpreter was set by a probe
-	 * function, pick the same address that a non-fixed mmap(0, ..)
-	 * would (i.e. something safely out of the way).
-	 */
-	if (pos == ELFDEFNNAME(NO_ADDR))
-		pos = round_page(epp->ep_daddr + MAXDSIZ);
-#endif
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
