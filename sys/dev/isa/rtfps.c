@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.15 1996/12/03 07:48:24 niklas Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.16 1997/01/29 06:23:31 downsj Exp $       */
 /*	$NetBSD: rtfps.c,v 1.27 1996/10/21 22:41:18 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@ struct rtfps_softc {
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;
-	isa_chipset_tag_t sc_ic;
 	int sc_iobase;
 	int sc_irqport;
 	bus_space_handle_t sc_irqioh;
@@ -159,7 +158,6 @@ rtfpsattach(parent, self, aux)
 	int i;
 
 	sc->sc_iot = ia->ia_iot;
-	sc->sc_ic = ia->ia_ic;
 	sc->sc_iobase = ia->ia_iobase;
 
 	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == IOBASEUNK)
@@ -181,7 +179,6 @@ rtfpsattach(parent, self, aux)
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;
 		ca.ca_iot = sc->sc_iot;
-		ca.ca_ic = sc->sc_ic;
 		ca.ca_ioh = sc->sc_slaveioh[i];
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
