@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1 1995/04/17 12:23:34 ragge Exp $ */
+/*	$NetBSD: SYS.h,v 1.2 1995/12/12 15:21:31 ragge Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,6 +36,20 @@
 
 #include <sys/syscall.h>
 
+#ifndef __STDC__
+#ifdef PROF
+#define	ENTRY(x)	.globl _/**/x; .align 2; _/**/x/**/: .word 0; \
+			.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
+#else
+#define	ENTRY(x)	.globl _/**/x; .align 2; _/**/x/**/: .word 0
+#endif PROF
+#define	SYSCALL(x)	err: jmp cerror; ENTRY(x); chmk $ SYS_/**/x; jcs err
+#define	RSYSCALL(x)	SYSCALL(x); ret
+#define	PSEUDO(x,y)	ENTRY(x); chmk $ SYS_/**/y; ret
+#define	CALL(x,y)	calls $/**/x, _/**/y
+
+#else
+
 #ifdef PROF
 #define	ENTRY(x)	.globl _ ## x; .align 2; _ ## x ## : .word 0; \
 			.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
@@ -46,6 +60,7 @@
 #define	RSYSCALL(x)	SYSCALL(x); ret
 #define	PSEUDO(x,y)	ENTRY(x); chmk $ SYS_ ## y; ret
 #define	CALL(x,y)	calls $ ## x, _ ## y
+#endif
 
 #define	ASMSTR		.asciz
 
