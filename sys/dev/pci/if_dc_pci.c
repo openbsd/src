@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.49 2005/01/16 20:47:44 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.50 2005/03/26 15:49:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -216,7 +216,6 @@ void dc_pci_attach(parent, self, aux)
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
-	bus_addr_t		iobase;
 	bus_size_t		iosize;
 	u_int32_t		revision;
 	int			found = 0;
@@ -241,33 +240,17 @@ void dc_pci_attach(parent, self, aux)
 	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
 #ifdef DC_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
-		goto fail;
+	if (pci_mapreg_map(pa, DC_PCI_CFBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->dc_btag, &sc->dc_bhandle, NULL, &iosize, 0)) {
+		printf(": can't map i/o space\n");
+		return;
 	}
-	if (pci_io_find(pc, pa->pa_tag, DC_PCI_CFBIO, &iobase, &iosize)) {
-		printf(": can't find I/O space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->dc_bhandle)) {
-		printf(": can't map I/O space\n");
-		goto fail;
-	}
-	sc->dc_btag = pa->pa_iot;
 #else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
-	if (pci_mem_find(pc, pa->pa_tag, DC_PCI_CFBMA, &iobase, &iosize, NULL)){
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->dc_bhandle)) {
+	if (pci_mapreg_map(pa, DC_PCI_CFBMA, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->dc_btag, &sc->dc_bhandle, NULL, &iosize, 0)) {
 		printf(": can't map mem space\n");
-		goto fail;
+		return;
 	}
-	sc->dc_btag = pa->pa_memt;
 #endif
 
 	/* Allocate interrupt */
