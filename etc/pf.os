@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.16 2004/03/20 09:07:43 david Exp $
+# $OpenBSD: pf.os,v 1.17 2004/04/28 01:01:27 deraadt Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -151,7 +151,7 @@
 # frantzen@openbsd.org and bugs@openbsd.org with a tcpdump packet
 # capture of the relevant SYN packet(s)
 #
-# A test and submission page is available at 
+# A test and submission page is available at
 # http://lcamtuf.coredump.cx/p0f-help/
 #
 #

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.244 2004/04/27 22:51:28 markus Exp $
+#	$OpenBSD: rc,v 1.245 2004/04/28 01:01:27 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -323,7 +323,7 @@ if [ "X${afs}" = X"YES" -a -c /dev/xfs0 ]; then
 	echo -n 'mounting afs:'
 	mkdir -p -m 0755 /afs
 	mount -t xfs /dev/xfs0 /afs
-	/usr/libexec/afsd ${afsd_flags} 
+	/usr/libexec/afsd ${afsd_flags}
 	echo ' done.'
 fi
 
