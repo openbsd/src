@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2000/01/29 03:12:12 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2000/06/15 19:05:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -290,7 +290,8 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	BUS_DMA_WAITOK		0x00
 #define	BUS_DMA_NOWAIT		0x01
 #define	BUS_DMA_ALLOCNOW	0x02
-#define	BUS_DMAMEM_NOSYNC	0x04
+#define	BUS_DMA_COHERENT	0x04
+#define	BUS_DMAMEM_NOSYNC	0x10
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
