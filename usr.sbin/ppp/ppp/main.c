@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: main.c,v 1.18 2000/02/27 01:38:27 brian Exp $
+ * $OpenBSD: main.c,v 1.19 2000/04/02 01:36:22 brian Exp $
  *
  *	TODO:
  */
@@ -519,6 +519,7 @@ DoLoop(struct bundle *bundle)
     /* All our prompts and the diagnostic socket */
     descriptor_UpdateSet(&server.desc, &rfds, NULL, NULL, &nfds);
 
+    bundle_CleanDatalinks(bundle);
     if (bundle_IsDead(bundle))
       /* Don't select - we'll be here forever */
       break;

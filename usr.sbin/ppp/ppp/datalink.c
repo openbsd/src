@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.28 2000/02/27 01:38:25 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.29 2000/04/02 01:36:22 brian Exp $
  */
 
 #include <sys/param.h>
@@ -157,7 +157,8 @@ datalink_HangupDone(struct datalink *dl)
     dl->dial.incs = 0;
     dl->reconnect_tries = 0;
     bundle_LinkClosed(dl->bundle, dl);
-    if (!dl->bundle->CleaningUp)
+    if (!dl->bundle->CleaningUp &&
+        !(dl->physical->type & (PHYS_DIRECT|PHYS_BACKGROUND|PHYS_FOREGROUND)))
       datalink_StartDialTimer(dl, datalink_GetDialTimeout(dl));
   } else {
     datalink_NewState(dl, DATALINK_OPENING);
