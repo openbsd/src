@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.12 2002/06/11 06:16:36 jsyn Exp $	*/
+/*	$OpenBSD: compile.c,v 1.13 2002/07/09 21:31:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.12 2002/06/11 06:16:36 jsyn Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.13 2002/07/09 21:31:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -275,10 +275,7 @@ nonsel:		/* Now parse the command */
 		case RFILE:			/* r */
 			p++;
 			EATSPACE();
-			if (*p == '\0')
-				err(COMPILE, "filename expected");
-			else
-				cmd->t = duptoeol(p, "read command");
+			cmd->t = duptoeol(p, "read command");
 			break;
 		case BRANCH:			/* b t */
 			p++;
