@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.85 2001/10/14 14:39:03 art Exp $
+.\"	$OpenBSD: options.4,v 1.86 2001/11/04 01:27:58 pvalchev Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -997,12 +997,12 @@ status can still be obtained using
 and/or
 .Xr apmd 8 .
 .It Cd RFORK_FDSHARE
-This option enables sharing of filedescriptor tables between processes that
+This option enables sharing of file descriptor tables between processes that
 request it.
 It is needed for the
 .Xr rfork
-system call to work properly and for some programs run under Linux emulation.
-It's disabled by default for security reasons because it allows any malicious
+system call to work properly and for some programs to run under Linux emulation.
+It's disabled by default for security reasons, because it allows any malicious
 user to crash the system.
 .El
 .\" The following requests should be uncommented and used where appropriate.
