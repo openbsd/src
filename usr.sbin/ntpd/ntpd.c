@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.15 2004/09/15 00:08:06 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.16 2004/09/15 19:14:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,10 +40,10 @@ int	check_child(pid_t, const char *);
 int	dispatch_imsg(void);
 void	ntpd_adjtime(double);
 
-volatile sig_atomic_t	quit = 0;
-volatile sig_atomic_t	reconfig = 0;
-volatile sig_atomic_t	sigchld = 0;
-struct imsgbuf		ibuf;
+volatile sig_atomic_t	 quit = 0;
+volatile sig_atomic_t	 reconfig = 0;
+volatile sig_atomic_t	 sigchld = 0;
+struct imsgbuf		*ibuf;
 
 void
 sighdlr(int sig)
@@ -139,12 +139,14 @@ main(int argc, char *argv[])
 
 	close(pipe_chld[1]);
 
-	imsg_init(&ibuf, pipe_chld[0]);
+	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+		fatal(NULL);
+	imsg_init(ibuf, pipe_chld[0]);
 
 	while (quit == 0) {
-		pfd[PFD_PIPE].fd = ibuf.fd;
+		pfd[PFD_PIPE].fd = ibuf->fd;
 		pfd[PFD_PIPE].events = POLLIN;
-		if (ibuf.w.queued)
+		if (ibuf->w.queued)
 			pfd[PFD_PIPE].events |= POLLOUT;
 
 		if ((nfds = poll(pfd, 1, INFTIM)) == -1)
@@ -154,7 +156,7 @@ main(int argc, char *argv[])
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE].revents & POLLOUT))
-			if (msgbuf_write(&ibuf.w) < 0) {
+			if (msgbuf_write(&ibuf->w) < 0) {
 				log_warn("pipe write error (to child");
 				quit = 1;
 			}
@@ -184,6 +186,8 @@ main(int argc, char *argv[])
 			fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
+	msgbuf_clear(&ibuf->w);
+	free(ibuf);
 	log_info("Terminating");
 	return (0);
 }
@@ -218,7 +222,7 @@ dispatch_imsg(void)
 	struct ntp_addr		*h, *hn;
 	struct buf		*buf;
 
-	if ((n = imsg_read(&ibuf)) == -1)
+	if ((n = imsg_read(ibuf)) == -1)
 		return (-1);
 
 	if (n == 0) {	/* connection closed */
@@ -227,7 +231,7 @@ dispatch_imsg(void)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&ibuf, &imsg)) == -1)
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			return (-1);
 
 		if (n == 0)
@@ -245,7 +249,7 @@ dispatch_imsg(void)
 			if (imsg.hdr.len != strlen(name) + 1 + IMSG_HEADER_SIZE)
 				fatal("invalid IMSG_HOST_DNS received");
 			if ((cnt = host_dns(name, &hn)) > 0) {
-				buf = imsg_create(&ibuf, IMSG_HOST_DNS,
+				buf = imsg_create(ibuf, IMSG_HOST_DNS,
 				    imsg.hdr.peerid,
 				    cnt * sizeof(struct sockaddr_storage));
 				if (buf == NULL)
@@ -253,7 +257,7 @@ dispatch_imsg(void)
 				for (h = hn; h != NULL; h = h->next) {
 					imsg_add(buf, &h->ss, sizeof(h->ss));
 				}
-				imsg_close(&ibuf, buf);
+				imsg_close(ibuf, buf);
 			}
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.29 2004/09/15 00:08:06 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.30 2004/09/15 19:14:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,7 @@
 #define	PFD_MAX		1
 
 volatile sig_atomic_t	 ntp_quit = 0;
-struct imsgbuf		 ibuf_main;
+struct imsgbuf		*ibuf_main;
 struct ntpd_conf	*conf;
 u_int			 peer_cnt;
 
@@ -108,7 +108,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	signal(SIGHUP, SIG_IGN);
 
 	close(pipe_prnt[0]);
-	imsg_init(&ibuf_main, pipe_prnt[1]);
+	if ((ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
+		fatal(NULL);
+	imsg_init(ibuf_main, pipe_prnt[1]);
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		client_peer_init(p);
@@ -155,7 +157,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 		bzero(idx2peer, sizeof(void *) * idx2peer_elms);
 		nextaction = time(NULL) + 3600;
-		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
+		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 
 		i = 1;
@@ -195,7 +197,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 		}
 
-		if (ibuf_main.w.queued > 0)
+		if (ibuf_main->w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 
 		timeout = nextaction - time(NULL);
@@ -209,7 +211,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT))
-			if (msgbuf_write(&ibuf_main.w) < 0) {
+			if (msgbuf_write(&ibuf_main->w) < 0) {
 				log_warn("pipe write error (to parent)");
 				ntp_quit = 1;
 			}
@@ -236,8 +238,9 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 			}
 	}
 
-	msgbuf_write(&ibuf_main.w);
-	msgbuf_clear(&ibuf_main.w);
+	msgbuf_write(&ibuf_main->w);
+	msgbuf_clear(&ibuf_main->w);
+	free(ibuf_main);
 
 	log_info("ntp engine exiting");
 	_exit(0);
@@ -253,7 +256,7 @@ ntp_dispatch_imsg(void)
 	u_char			*p;
 	struct ntp_addr		*h;
 
-	if ((n = imsg_read(&ibuf_main)) == -1)
+	if ((n = imsg_read(ibuf_main)) == -1)
 		return (-1);
 
 	if (n == 0) {	/* connection closed */
@@ -262,7 +265,7 @@ ntp_dispatch_imsg(void)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&ibuf_main, &imsg)) == -1)
+		if ((n = imsg_get(ibuf_main, &imsg)) == -1)
 			return (-1);
 
 		if (n == 0)
@@ -351,7 +354,7 @@ ntp_adjtime(void)
 
 	if (offset_cnt > 0) {
 		offset_median /= offset_cnt;
-		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
+		imsg_compose(ibuf_main, IMSG_ADJTIME, 0,
 		    &offset_median, sizeof(offset_median));
 
 		conf->status.reftime = gettime();
@@ -368,5 +371,5 @@ ntp_host_dns(char *name, u_int32_t peerid)
 	u_int16_t	dlen;
 
 	dlen = strlen(name) + 1;
-	imsg_compose(&ibuf_main, IMSG_HOST_DNS, peerid, name, dlen);
+	imsg_compose(ibuf_main, IMSG_HOST_DNS, peerid, name, dlen);
 }
