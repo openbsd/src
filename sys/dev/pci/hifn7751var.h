@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.15 2000/04/13 22:38:09 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.16 2000/04/14 13:59:51 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -36,8 +36,8 @@
  *
  */
 
-#ifndef __HIFN_EXPORT_H__
-#define __HIFN_EXPORT_H__
+#ifndef __HIFN7751VAR_H__
+#define __HIFN7751VAR_H__
 
 /*
  *  Length values for cryptography
@@ -254,4 +254,4 @@ typedef struct hifn_command {
 
 #endif /* _KERNEL */
 
-#endif /* __HIFN_EXPORT_H__ */
+#endif /* __HIFN7751VAR_H__ */
