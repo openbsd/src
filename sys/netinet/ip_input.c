@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.52 2000/04/09 17:43:02 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.53 2000/05/06 01:47:05 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -852,7 +852,7 @@ ip_dooptions(m)
 	register struct ip_timestamp *ipt;
 	register struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
-	struct in_addr *sin, dst;
+	struct in_addr sin, dst;
 	n_time ntime;
 
 	dst = ip->ip_dst;
@@ -993,7 +993,7 @@ ip_dooptions(m)
 					goto bad;
 				break;
 			}
-			sin = (struct in_addr *)(cp + ipt->ipt_ptr - 1);
+			bcopy(cp + ipt->ipt_ptr - 1, &sin, sizeof sin);
 			switch (ipt->ipt_flg) {
 
 			case IPOPT_TS_TSONLY:
@@ -1009,7 +1009,7 @@ ip_dooptions(m)
 				if (ia == 0)
 					continue;
 				bcopy((caddr_t)&ia->ia_addr.sin_addr,
-				    (caddr_t)sin, sizeof(struct in_addr));
+				    (caddr_t)&sin, sizeof(struct in_addr));
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
 
@@ -1017,7 +1017,7 @@ ip_dooptions(m)
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
-				bcopy((caddr_t)sin, (caddr_t)&ipaddr.sin_addr,
+				bcopy((caddr_t)&sin, (caddr_t)&ipaddr.sin_addr,
 				    sizeof(struct in_addr));
 				if (ifa_ifwithaddr((SA)&ipaddr) == 0)
 					continue;
