@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.9 2001/07/22 20:47:19 krw Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.10 2001/07/31 09:02:18 wilfried Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -66,7 +66,7 @@ unary-op  = ( "=" | "!=" | "<" | "<=" | ">" | ">=" )
             ( port-name | port-number ) .
 binary-op = port-number ( "<>" | "><" ) port-number .
 
-flags     = "flags" flag-set [ "/" flag-set ] .
+flags     = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
 flag-set  = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
 
 icmp-type = "icmp-type" ( icmp-type-name | icmp-type-number )
@@ -187,7 +187,7 @@ show:
     pass in proto tcp from any to any port = 25
     pass in proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != 22
 .Ed
-.Ss flags <a>[/<b>]
+.Ss flags <a> | <a>/<b> | /<b>
 The rule only applies to TCP packets that have the flags <a> set
 out of set <b>.
 Flags not specified in <b> are ignored.
@@ -203,6 +203,9 @@ This is more restrictive than the previous example.
 If the second set is not specified, it defaults to FSRPAU.
 Hence, only packets with SYN set and all other flags unset match this 
 rule. This is more restrictive than the previous example.
+.It Em flags /SFRA
+If the first set is not specified, it defaults to none.
+All of SYN, FIN, RST and ACK must be unset.
 .El
 .Ss icmp-type <type> code <code>
 The rule only applies to ICMP packets with the specified type and code.
