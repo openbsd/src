@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpgame.c,v 1.3 1998/11/29 19:45:11 pjanzen Exp $	*/
+/*	$OpenBSD: dumpgame.c,v 1.4 1999/03/12 03:02:41 pjanzen Exp $	*/
 /*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.3 1998/11/29 19:45:11 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.4 1999/03/12 03:02:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.3 1998/11/29 19:45:11 pjanzen Ex
 #include "trek.h"
 
 /***  THIS CONSTANT MUST CHANGE AS THE DATA SPACES CHANGE ***/
-# define	VERSION		2
+# define	VERSION		3
 
 struct dump
 {

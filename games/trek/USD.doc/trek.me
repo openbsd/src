@@ -1,3 +1,4 @@
+.\"	$OpenBSD: trek.me,v 1.2 1999/03/12 03:03:04 pjanzen Exp $
 .\"	$NetBSD: trek.me,v 1.2 1995/04/22 10:59:49 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -148,20 +149,20 @@ To request the game, issue the command
 .ft
 .sp
 from the shell.
-If a filename is supplied,
-a log of the game is written onto that file.
-(Otherwise, no
-file is written.)
-If the
-``\fB\-a\fP'' flag is stated before the filename,
-the log of the game is appended to the file.
+.\"If a filename is supplied,
+.\"a log of the game is written onto that file.
+.\"(Otherwise, no
+.\"file is written.)
+.\"If the
+.\"``\fB\-a\fP'' flag is stated before the filename,
+.\"the log of the game is appended to the file.
 .pp
 The game will ask you what length game
 you would like.
 Valid responses are "short", "medium", and "long".
 You may also type "restart",
-which restarts a previously saved game.
-Ideally,
+which restarts a previously saved game, \*f./trek.dump\fR, if
+it exists.  Ideally,
 the length of the game does not affect the difficulty,
 but currently the shorter games tend to be harder than the longer ones.
 .pp
@@ -884,6 +885,14 @@ any Klingons
 (and stars,
 and starbases)
 left in your quadrant.
+.bl "Save the Game"
+Mnemonic: dump
+Shortest Abbreviation: dump
+.FF
+.pp
+Saves the current game in \*f./trek.dump\fR
+if possible.  Game play continues after
+the dump.
 .bl "Terminate the Game"
 Mnemonic: terminate
 Shortest Abbreviation: terminate
@@ -893,16 +902,8 @@ Full Command: terminate yes/no
 Cancels the current game.
 No score is computed.
 If you answer yes,
-a new game will be started,
-otherwise trek exits.
-.bl "Call the Shell"
-Mnemonic: shell
-Shortest Abbreviation: shell
-.FF
-.pp
-Temporarily escapes to the shell.
-When you exit the shell
-you will return to the game.
+a new game will be started;
+otherwise, trek exits.
 \".bp
 .ce
 \*fSCORING\fR
@@ -946,6 +947,7 @@ Command	Requires	Consumes
 \*fda\fRmages	-	-
 \*fdestruct\fR	computer	-
 \*fdo\fRck	-	-
+\*fdump\fR	-	-
 \*fhelp\fR	subspace radio	-
 \*fi\fRmpulse course distance	impulse engines,	time, energy
 	 computer, SINS
@@ -958,7 +960,6 @@ Command	Requires	Consumes
 \*fram\fR course distance	warp engines,	time, energy
 	  computer, SINS
 \*fr\fRest time	-	time
-\*fshell\fR	-	-
 \*fsh\fRields \*fu\fRp/\*fd\fRown	shields	energy
 \*fs\fRrscan [\*fy\fRes/\*fn\fRo]	S.R. sensors	-
 \*fst\fRatus	-	-

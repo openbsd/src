@@ -1,4 +1,4 @@
-/*	$OpenBSD: srscan.c,v 1.2 1998/08/19 07:42:08 pjanzen Exp $	*/
+/*	$OpenBSD: srscan.c,v 1.3 1999/03/12 03:02:44 pjanzen Exp $	*/
 /*	$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: srscan.c,v 1.2 1998/08/19 07:42:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: srscan.c,v 1.3 1999/03/12 03:02:44 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,11 +91,7 @@ srscan(f)
 		statinfo = Etc.statreport;
 	}
 	if (f > 0)
-	{
 		Etc.statreport = 1;
-		if (!Etc.fast)
-			return;
-	}
 	if (f >= 0)
 	{
 		printf("\nShort range sensor scan\n");

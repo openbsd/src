@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.2 1998/08/19 07:41:36 pjanzen Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.3 1999/03/12 03:02:41 pjanzen Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.2 1998/08/19 07:41:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.3 1999/03/12 03:02:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ getcodpar(s, tab)
 		if (flag)
 			printf("%s: ", s);
 		if (f)
-			cgetc(0);		/* throw out the newline */
+			getchar();		/* throw out the newline */
 		scanf("%*[ \t;]");
 		if ((c = scanf("%[^ \t;\n]", input)) < 0)
 			exit(1);
@@ -223,7 +223,7 @@ getstrpar(s, r, l, t)
 		if ((f = testnl()) && s)
 			printf("%s: ", s);
 		if (f)
-			cgetc(0);
+			getchar();
 		scanf("%*[\t ;]");
 		i = scanf(format, r);
 		if (i < 0)
@@ -243,7 +243,7 @@ testnl()
 {
 	register char		c;
 
-	while ((c = cgetc(0)) != '\n')
+	while ((c = getchar()) != '\n')
 		if ((c >= '0' && c <= '9') || c == '.' || c == '!' ||
 				(c >= 'A' && c <= 'Z') ||
 				(c >= 'a' && c <= 'z') || c == '-')
@@ -265,7 +265,7 @@ skiptonl(c)
 	char	c;
 {
 	while (c != '\n')
-		if (!(c = cgetc(0)))
+		if (!(c = getchar()))
 			return;
 	ungetc('\n', stdin);
 	return;
@@ -281,7 +281,7 @@ testterm()
 {
 	char		c;
 
-	if (!(c = cgetc(0)))
+	if (!(c = getchar()))
 		return (1);
 	if (c == '.')
 		return (0);
@@ -305,7 +305,7 @@ readdelim(d)
 {
 	register char	c;
 
-	while ((c = cgetc(0)))
+	while ((c = getchar()))
 	{
 		if (c == d)
 			return (1);

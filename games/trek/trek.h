@@ -1,4 +1,4 @@
-/*	$OpenBSD: trek.h,v 1.3 1998/08/19 07:42:12 pjanzen Exp $	*/
+/*	$OpenBSD: trek.h,v 1.4 1999/03/12 03:02:45 pjanzen Exp $	*/
 /*	$NetBSD: trek.h,v 1.3 1995/04/22 10:59:36 cgd Exp $	*/
 
 /*
@@ -337,7 +337,6 @@ struct
 	struct kling	klingon[MAXKLQUAD];	/* sorted Klingon list */
 	short		nkling;			/* number of Klingons in this sector */
 						/* < 0 means automatic override mode */
-	char		fast;			/* set if speed > 300 baud */
 	struct xy	starbase;	/* starbase in current quadrant */
 	char		snapshot[sizeof Quad + sizeof Event + sizeof Now];	/* snapshot for time warp */
 	char		statreport;		/* set to get a status report on a srscan */
@@ -374,8 +373,10 @@ struct
 /******************  COMPILE OPTIONS  ***********************/
 
 /* Trace info */
-#define	xTRACE		1
+/* #define	xTRACE		1 */
+#ifdef xTRACE
 int	Trace;
+#endif
 
 /* abandon.c */
 void abandon __P((int));
@@ -389,9 +390,6 @@ void autover __P((void));
 /* capture.c */
 void capture __P((int));
 struct kling *selectklingon __P((void));
-
-/* cgetc.c */
-char cgetc __P((int));
 
 /* check_out.c */
 int check_out __P((int));

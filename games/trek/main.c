@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1998/08/19 07:41:49 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1999/03/12 03:02:42 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/22 10:59:10 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/08/19 07:41:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1999/03/12 03:02:42 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,10 +57,6 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/08/19 07:41:49 pjanzen Exp $"
 #include <err.h>
 #include "trek.h"
 #include "getpar.h"
-
-# define	PRIO		00	/* default priority */
-
-int	Mother	= 51 + (51 << 8);
 
 /*
 **	 ####  #####	#    ####	   #####  ####	 #####	#   #
@@ -130,31 +126,8 @@ int	Mother	= 51 + (51 << 8);
 **  NOTES TO THE MAINTAINER:
 **
 **	There is a compilation option xTRACE which must be set for any
-**	trace information to be generated.  It is probably defined in
-**	the version that you get.  It can be removed, however, if you
-**	have trouble finding room in core.
-**
-**	Many things in trek are not as clear as they might be, but are
-**	done to reduce space.  I compile with the -f and -O flags.  I
-**	am constrained to running with non-seperated I/D space, since
-**	we don't have doubleing point hardware here; even if we did, I
-**	would like trek to be available to the large number of people
-**	who either have an 11/40 or do not have FP hardware.  I also
-**	found it desirable to make the code run reentrant, so this
-**	added even more space constraints.
-**
-**	I use the portable C library to do my I/O.  This is done be-
-**	cause I wanted the game easily transportable to other C
-**	implementations, and because I was too lazy to do the doubleing
-**	point input myself.  Little did I know.  The portable C library
-**	released by Bell Labs has more bugs than you would believe, so
-**	I ended up rewriting the whole blessed thing.  Trek excercises
-**	many of the bugs in it, as well as bugs in some of the section
-**	III UNIX routines.  We have fixed them here.  One main problem
-**	was a bug in alloc() that caused it to always ask for a large
-**	hunk of memory, which worked fine unless you were almost out,
-**	which I inevitably was.  If you want the code for all of this
-**	stuff, it is also available through me.
+**	trace information to be generated (the -t option must also be
+**	set on the command line).  It is no longer defined by default.
 **
 ***********************************************************************
 */
@@ -167,12 +140,8 @@ main(argc, argv)
 	char	**argv;
 {
 	time_t			curtime;
-	/* extern FILE		*f_log; */
-	register char		opencode;
-	int			prio;
 	register int		ac;
 	register char		**av;
-	struct	termios		argp;
 
 	/* revoke privs */
 	setegid(getgid());
@@ -183,59 +152,25 @@ main(argc, argv)
 	av++;
 	time(&curtime);
 	srandom((long)curtime);
-	opencode = 'w';
-	prio = PRIO;
 
-	if (tcgetattr(1, &argp) == 0)
-	{
-		if (cfgetispeed(&argp) < B1200)
-			Etc.fast++;
-	}
-
+#ifdef xTRACE
+	Trace = 0;
 	while (ac > 1 && av[0][0] == '-')
 	{
 		switch (av[0][1])
 		{
-		  case 'a':	/* append to log file */
-			opencode = 'a';
-			break;
-
-		  case 'f':	/* set fast mode */
-			Etc.fast++;
-			break;
-
-		  case 's':	/* set slow mode */
-			Etc.fast = 0;
-			break;
-
-#		ifdef xTRACE
 		  case 't':	/* trace */
-			if (getuid() != Mother)
-				goto badflag;
 			Trace++;
-			break;
-#		endif
-
-		  case 'p':	/* set priority */
-			if (getuid() != Mother)
-				goto badflag;
-			prio = atoi(av[0] + 2);
 			break;
 
 		  default:
-		  badflag:
 			printf("Invalid option: %s\n", av[0]);
 
 		}
 		ac--;
 		av++;
 	}
-	if (ac > 2)
-		errx(1, "arg count");
-		/*
-	if (ac > 1)
-		f_log = fopen(av[0], opencode);
-		*/
+#endif
 
 	printf("\n   * * *   S T A R   T R E K   * * *\n\nPress return to continue.\n");
 

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: trek.6,v 1.5 1999/03/12 03:02:44 pjanzen Exp $
 .\"	$NetBSD: trek.6,v 1.4 1995/04/22 10:59:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -41,21 +42,12 @@
 .Nd trekkie game
 .Sh SYNOPSIS
 .Nm trek
-.Oo
-.Op Fl a
-.Ar file
-.Oc
 .Sh DESCRIPTION
 .Nm
 is a game of space glory and war.  Below is a summary of commands.
 For complete documentation, see
 .Em Trek
 by Eric Allman.
-.Pp
-If a filename is given, a log of the game is written onto that file.
-If the
-.Fl a
-flag is given before the filename, that file is appended to, not truncated.
 .Pp
 The game will ask you what length game you would like.
 Valid responses are 
@@ -100,6 +92,9 @@ Eric Allman
 .It
 .Ic do Ns ck
 .It
+.Ic dump No (save game to 
+.Pa ./trek.dump )
+.It
 .Ic help
 .It
 .Ic i Ns mpulse course distance
@@ -121,8 +116,6 @@ amt1 course1 spread1 ...
 .Ic ram No course distance
 .It
 .Ic r Ns est time
-.It
-.Ic shell
 .It
 .Ic sh Ns ields 
 .Ic u Ns p/ Ns Ic d Ns own

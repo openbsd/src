@@ -1,4 +1,4 @@
-/*	$OpenBSD: phaser.c,v 1.2 1998/08/19 07:41:54 pjanzen Exp $	*/
+/*	$OpenBSD: phaser.c,v 1.3 1999/03/12 03:02:43 pjanzen Exp $	*/
 /*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: phaser.c,v 1.2 1998/08/19 07:41:54 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: phaser.c,v 1.3 1999/03/12 03:02:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,6 @@ static char rcsid[] = "$OpenBSD: phaser.c,v 1.2 1998/08/19 07:41:54 pjanzen Exp 
 **	fairly large spread.
 **
 **	Phasers spread slightly, even if you specify zero spread.
-**
-**	Uses trace flag 30
 */
 
 struct cvntab	Matab[] =

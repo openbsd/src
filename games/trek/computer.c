@@ -1,4 +1,4 @@
-/*	$OpenBSD: computer.c,v 1.2 1998/08/19 07:41:20 pjanzen Exp $	*/
+/*	$OpenBSD: computer.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $	*/
 /*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: computer.c,v 1.2 1998/08/19 07:41:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: computer.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,7 +299,7 @@ computer(v)
 		/* skip to next semicolon or newline.  Semicolon
 		 * means get new computer request; newline means
 		 * exit computer mode. */
-		while ((i = cgetc(0)) != ';')
+		while ((i = getchar()) != ';')
 		{
 			if (i == '\0')
 				exit(1);

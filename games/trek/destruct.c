@@ -1,4 +1,4 @@
-/*	$OpenBSD: destruct.c,v 1.2 1998/08/19 07:41:25 pjanzen Exp $	*/
+/*	$OpenBSD: destruct.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $	*/
 /*	$NetBSD: destruct.c,v 1.3 1995/04/22 10:58:44 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)destruct.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: destruct.c,v 1.2 1998/08/19 07:41:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: destruct.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,12 +59,12 @@ static char rcsid[] = "$OpenBSD: destruct.c,v 1.2 1998/08/19 07:41:25 pjanzen Ex
 **	possible to win the game by destructing if you take the last
 **	Klingon with you.
 **
-**	By the way, the \032 in the message is a ^Z, which is because
-**	the terminal in my office is an ADM-3, which uses that char-
-**	acter to clear the screen.  I also stick in a \014 (form feed)
-**	because that clears some other screens.
-**
-**	Uses trace flag 41
+**	There used to be a \032 in the message (^Z), which is because
+**	the terminal in Allman's office was an ADM-3, which uses that char-
+**	acter to clear the screen.  There was also a \014 (form feed)
+**	because that clears some other screens.  Now there is nothing.
+**	Presumably the most general screen clear today would be
+**	ESC [2J
 */
 
 void
@@ -110,7 +110,8 @@ destruct(v)
 		printf("%d\n", i);
 	}
 	sleep(2);
-	printf("\032\014***** %s destroyed *****\n", Ship.shipname);
+	/* printf("\032\014***** %s destroyed *****\n", Ship.shipname); */
+	printf("\n\n\n\n***** %s destroyed *****\n", Ship.shipname);
 	Game.killed = 1;
 	/* let's see what we can blow up!!!! */
 	zap = 20.0 * Ship.energy;

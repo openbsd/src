@@ -1,4 +1,4 @@
-/*	$OpenBSD: abandon.c,v 1.2 1998/08/19 07:41:09 pjanzen Exp $	*/
+/*	$OpenBSD: abandon.c,v 1.3 1999/03/12 03:02:38 pjanzen Exp $	*/
 /*	$NetBSD: abandon.c,v 1.3 1995/04/22 10:58:24 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)abandon.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: abandon.c,v 1.2 1998/08/19 07:41:09 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: abandon.c,v 1.3 1999/03/12 03:02:38 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,6 @@ static char rcsid[] = "$OpenBSD: abandon.c,v 1.2 1998/08/19 07:41:09 pjanzen Exp
 **	is at least one starbase, you are returned to the
 **	Federation in a prisoner of war exchange.  Of course, this
 **	can't happen unless you have taken some prisoners.
-**
-**	Uses trace flag 40
 */
 
 void

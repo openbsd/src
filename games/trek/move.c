@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.2 1998/08/19 07:41:50 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.3 1999/03/12 03:02:42 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.3 1995/04/22 10:59:12 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.2 1998/08/19 07:41:50 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.3 1999/03/12 03:02:42 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,6 @@ static char rcsid[] = "$OpenBSD: move.c,v 1.2 1998/08/19 07:41:50 pjanzen Exp $"
 **	By the way, they also try to follow you (heh heh).
 **
 **	Return value is the actual amount of time used.
-**
-**
-**	Uses trace flag 4.
 */
 
 double
