@@ -661,10 +661,10 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_dcreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_devar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_fxpreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_fxpvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/fxpreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/fxpvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_lmc_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_lmcioctl.ph

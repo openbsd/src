@@ -124,6 +124,7 @@
 ./usr/include/dev/ic/cs4231reg.h
 ./usr/include/dev/ic/cyreg.h
 ./usr/include/dev/ic/dc21040reg.h
+./usr/include/dev/ic/dcreg.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
 ./usr/include/dev/ic/dp857xreg.h
@@ -133,6 +134,8 @@
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/espreg.h
+./usr/include/dev/ic/fxpreg.h
+./usr/include/dev/ic/fxpvar.h
 ./usr/include/dev/ic/gdtreg.h
 ./usr/include/dev/ic/gdtvar.h
 ./usr/include/dev/ic/hayespreg.h
@@ -278,10 +281,7 @@
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
-./usr/include/dev/pci/if_dcreg.h
 ./usr/include/dev/pci/if_devar.h
-./usr/include/dev/pci/if_fxpreg.h
-./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
@@ -1547,8 +1547,12 @@
 ./usr/share/man/cat2/pathconf.0
 ./usr/share/man/cat2/pipe.0
 ./usr/share/man/cat2/poll.0
+./usr/share/man/cat2/pread.0
+./usr/share/man/cat2/preadv.0
 ./usr/share/man/cat2/profil.0
 ./usr/share/man/cat2/ptrace.0
+./usr/share/man/cat2/pwrite.0
+./usr/share/man/cat2/pwritev.0
 ./usr/share/man/cat2/quotactl.0
 ./usr/share/man/cat2/read.0
 ./usr/share/man/cat2/readlink.0
