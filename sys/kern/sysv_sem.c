@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.12 2002/12/17 23:32:31 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.13 2002/12/29 21:58:15 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 				suprev->un_next = suptr->un_next;
 			}
 			pool_put(&semu_pool, suptr);
+			semutot--;
 		} else if (i < suptr->un_cnt)
 			suptr->un_ent[i] =
 			    suptr->un_ent[suptr->un_cnt];
@@ -224,6 +225,7 @@ semundo_clear(int semid, int semnum)
 			else
 				suptr = suprev->un_next = suptr->un_next;
 			pool_put(&semu_pool, tmp);
+			semutot--;
 		} else {
 			suprev = suptr;
 			suptr = suptr->un_next;
@@ -485,6 +487,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 		semaptr_new->sem_otime = 0;
 		semaptr_new->sem_ctime = time.tv_sec;
 		sema[semid] = semaptr_new;
+		semtot += nsems;
 	} else {
 		DPRINTF(("didn't find it and wasn't asked to create it\n"));
 		return (ENOENT);
@@ -813,6 +816,7 @@ semexit(struct proc *p)
 	DPRINTF(("removing vector\n"));
 	*supptr = suptr->un_next;
 	pool_put(&semu_pool, suptr);
+	semutot--;
 }
 
 /*
