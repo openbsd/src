@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.41 2002/02/17 17:20:49 millert Exp $	*/
+/*	$OpenBSD: commands.c,v 1.42 2002/06/12 06:07:16 mpech Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2146,8 +2146,8 @@ status(argc, argv)
 	printf("SIGIO received %d time%s.\r\n",
 				sigiocount, (sigiocount == 1)? "":"s");
 	if (In3270) {
-	    printf("Process ID %d, process group %d.\r\n",
-					    getpid(), getpgrp());
+	    printf("Process ID %ld, process group %ld.\r\n",
+					    (long)getpid(), (long)getpgrp());
 	    printf("Terminal input:\r\n");
 	    filestuff(tin);
 	    printf("Terminal output:\r\n");

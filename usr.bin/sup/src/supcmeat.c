@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.16 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.17 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -284,8 +284,8 @@ int signon (t, nhosts, tout)
 	if (x != SCMOK)
 		goaway("Error reading signon reply from fileserver");
 	tloc = time(NULL);
-	vnotify("SUP Fileserver %d.%d (%s) %d on %s at %.8s\n", protver,
-	    pgmver, scmver, fspid, remotehost(), ctime(&tloc) + 11);
+	vnotify("SUP Fileserver %d.%d (%s) %ld on %s at %.8s\n", protver,
+	    pgmver, scmver, (long)fspid, remotehost(), ctime(&tloc) + 11);
 	free(scmver);
 	scmver = NULL;
 	if (protver < 4) {
@@ -1156,7 +1156,7 @@ copyfile(to, from)
 	char dpart[STRINGLENGTH], fpart[STRINGLENGTH];
 	char tname[STRINGLENGTH];
 	static int true = 1;
-	static int thispid = 0;		/* process id # */
+	static pid_t thispid = 0;	/* process id # */
 
 	if (from) {			/* reading file */
 		fromf = open(from, O_RDONLY, 0);
@@ -1175,15 +1175,16 @@ copyfile(to, from)
 	for (;;) {
 	/* try destination directory */
 		path(to, dpart, fpart, sizeof fpart);
-		(void) snprintf(tname, sizeof tname, "%s/#%d.sup",
-		    dpart, thispid);
+		(void) snprintf(tname, sizeof tname, "%s/#%ld.sup",
+		    dpart, (long)thispid);
 		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
 		if (tof >= 0)
 			break;
 	/* try sup directory */
 		if (thisC->Cprefix)
 			(void) chdir (thisC->Cbase);
-		(void) snprintf(tname, sizeof tname, "sup/#%d.sup", thispid);
+		(void) snprintf(tname, sizeof tname, "sup/#%ld.sup",
+		    (long)thispid);
 		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
 		if (tof >= 0) {
 			if (thisC->Cprefix)
@@ -1191,7 +1192,8 @@ copyfile(to, from)
 			break;
 		}
 	/* try base directory */
-		(void) snprintf(tname, sizeof tname, "#%d.sup", thispid);
+		(void) snprintf(tname, sizeof tname, "#%ld.sup",
+		    (long)thispid);
 		tof = open (tname,(O_WRONLY|O_CREAT|O_TRUNC),0600);
 		if (thisC->Cprefix)
 			(void) chdir(thisC->Cprefix);
@@ -1199,22 +1201,22 @@ copyfile(to, from)
 			break;
 #ifdef	VAR_TMP
 	/* try /var/tmp */
-		(void) snprintf(tname, sizeof tname, "/var/tmp/#%d.sup",
-		    thispid);
+		(void) snprintf(tname, sizeof tname, "/var/tmp/#%ld.sup",
+		    (long)thispid);
 		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
 		if (tof >= 0)
 			break;
 #else
 	/* try /usr/tmp */
-		(void) snprintf(tname, sizeof tname, "/usr/tmp/#%d.sup",
-			thispid);
+		(void) snprintf(tname, sizeof tname, "/usr/tmp/#%ld.sup",
+			(long)thispid);
 		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
 		if (tof >= 0)
 			break;
 #endif
 	/* try /tmp */
-		(void) snprintf(tname, sizeof tname, "/tmp/#%d.sup",
-		    thispid);
+		(void) snprintf(tname, sizeof tname, "/tmp/#%ld.sup",
+		    (long)thispid);
 		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);
 		if (tof >= 0)
 			break;

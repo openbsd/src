@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwchild.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: wwchild.c,v 1.6 2002/06/12 06:07:17 mpech Exp $	*/
 /*	$NetBSD: wwchild.c,v 1.3 1995/09/28 10:35:13 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwchild.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwchild.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: wwchild.c,v 1.6 2002/06/12 06:07:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ wwchild()
 	int olderrno;
 	struct ww **wp;
 	int w;
-	int pid;
+	pid_t pid;
 	char collected = 0;
 
 	olderrno = errno;

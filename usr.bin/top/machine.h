@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.h,v 1.4 2002/02/17 19:42:33 millert Exp $	*/
+/*	$OpenBSD: machine.h,v 1.5 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -25,7 +25,7 @@ struct statics
 
 struct system_info
 {
-    int    last_pid;
+    pid_t  last_pid;
     double load_avg[NUM_AVERAGES];
     int    p_total;
     int    p_active;     /* number of procs considered "active" */

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.46 2002/01/16 01:28:54 millert Exp $	*/
+/*	$OpenBSD: compat.c,v 1.47 2002/06/12 06:07:15 mpech Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -171,8 +171,8 @@ CompatRunCommand(cmdp, gnp)
     volatile bool errCheck;	/* Check errors */
     int 	  reason;	/* Reason for child's death */
     int 	  status;	/* Description of child's death */
-    int 	  cpid; 	/* Child actually found */
-    int		  stat; 	/* Status of fork */
+    pid_t 	  cpid; 	/* Child actually found */
+    pid_t	  stat; 	/* Status of fork */
     LstNode	  cmdNode;	/* Node where current command is located */
     char	  ** volatile av; /* Argument vector for thing to exec */
     int 	  argc; 	/* Number of arguments in av or 0 if not

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwspawn.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: wwspawn.c,v 1.7 2002/06/12 06:07:17 mpech Exp $	*/
 /*	$NetBSD: wwspawn.c,v 1.4 1995/12/21 08:39:57 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwspawn.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwspawn.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: wwspawn.c,v 1.7 2002/06/12 06:07:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,8 @@ struct ww *wp;
 char *file;
 char **argv;
 {
-	int pid;
-	int ret;
+	pid_t pid;
+	pid_t ret;
 	char erred = 0;
 	sigset_t sigset, osigset;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.43 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.44 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.43 2002/02/16 21:27:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.44 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -354,7 +354,7 @@ send_signal(pidfile, signal)
 	if (err)
 		warnx("%s pid file: %s", err, pidfile);
 	else if (noaction)
-		(void)printf("kill -%s %u\n", sys_signame[signal], pid);
+		(void)printf("kill -%s %ld\n", sys_signame[signal], (long)pid);
 	else if (kill(pid, signal))
 		warnx("warning - could not send SIG%s to daemon",
 		    sys_signame[signal]);
@@ -715,8 +715,8 @@ log_trim(log)
 
 	if ((f = fopen(log, "a")) == NULL)
 		return(-1);
-	(void)fprintf(f, "%s %s newsyslog[%u]: logfile turned over\n",
-	    daytime, hostname, getpid());
+	(void)fprintf(f, "%s %s newsyslog[%ld]: logfile turned over\n",
+	    daytime, hostname, (long)getpid());
 	if (fclose(f) == EOF)
 		err(1, "log_trim: fclose");
 	return(0);

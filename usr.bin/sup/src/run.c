@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.12 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.13 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -166,8 +166,8 @@ dorun(name, argv, usepath)
 	char *name,**argv;
 	int usepath;
 {
-	int wpid;
-	int pid;
+	pid_t wpid;
+	pid_t pid;
 	struct sigaction ignoresig, intsig, quitsig;
 	int status;
 

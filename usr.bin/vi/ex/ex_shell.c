@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shell.c,v 1.8 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_shell.c,v 1.9 2002/06/12 06:07:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -133,7 +133,7 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
 		_exit(127);
 		/* NOTREACHED */
 	default:			/* Parent. */
-		return (proc_wait(sp, (long)pid, cmd, 0, 0));
+		return (proc_wait(sp, pid, cmd, 0, 0));
 	}
 	/* NOTREACHED */
 }
@@ -148,12 +148,12 @@ ex_exec_proc(sp, cmdp, cmd, msg, need_newline)
  * rules get you.  I'm using a long based on the belief that nobody is
  * going to make it unsigned and it's unlikely to be a quad.
  *
- * PUBLIC: int proc_wait(SCR *, long, const char *, int, int);
+ * PUBLIC: int proc_wait(SCR *, pid_t, const char *, int, int);
  */
 int
 proc_wait(sp, pid, cmd, silent, okpipe)
 	SCR *sp;
-	long pid;
+	pid_t pid;
 	const char *cmd;
 	int silent, okpipe;
 {
@@ -164,7 +164,7 @@ proc_wait(sp, pid, cmd, silent, okpipe)
 	/* Wait for the utility, ignoring interruptions. */
 	for (;;) {
 		errno = 0;
-		if (waitpid((pid_t)pid, &pstat, 0) != -1)
+		if (waitpid(pid, &pstat, 0) != -1)
 			break;
 		if (errno != EINTR) {
 			msgq(sp, M_SYSERR, "waitpid");

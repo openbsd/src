@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.10 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.10 2001/11/19 19:02:15 mpech Exp $";
+"$OpenBSD: docmd.c,v 1.11 2002/06/12 06:07:16 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
@@ -870,7 +870,7 @@ static void docmdhost(cmd, filev)
 	 * new child process.
 	 */
 	if (do_fork && !amchild) {
-		int pid;
+		pid_t pid;
 
 		/*
 		 * If we're at maxchildren, wait for number of active

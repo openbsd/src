@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.28 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.29 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -318,7 +318,7 @@ typedef struct hashstruct HASH;
  *********************************************/
 
 char program[] = "supfilesrv";		/* program name for SCM messages */
-int progpid = -1;			/* and process id */
+pid_t progpid = -1;			/* and process id */
 
 jmp_buf sjbuf;				/* jump location for network errors */
 TREELIST *listTL;			/* list of trees to upgrade */
@@ -398,7 +398,8 @@ main (argc,argv)
 int argc;
 char **argv;
 {
-	int x,pid;
+	int x;
+	pid_t pid;
 	sigset_t nset, oset;
 	struct sigaction chld,ign;
 	time_t tloc;
@@ -651,8 +652,8 @@ init(argc, argv)
 	x = msgsignonack();
 	if (x != SCMOK)
 		quit(1, "Error reading signon reply from fileserver\n");
-	printf("SUP Fileserver %d.%d (%s) %d on %s\n", protver, pgmver,
-	    scmver, fspid, remotehost());
+	printf("SUP Fileserver %d.%d (%s) %ld on %s\n", protver, pgmver,
+	    scmver, (long)fspid, remotehost());
 	free(scmver);
 	scmver = NULL;
 	if (protver < 7)

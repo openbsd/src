@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.50 2002/03/19 00:08:31 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.51 2002/06/12 06:07:16 mpech Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -173,7 +173,7 @@
  */
 #define JOB_BUFSIZE	1024
 typedef struct Job_ {
-    int 	pid;	    /* The child's process ID */
+    pid_t 	pid;	    /* The child's process ID */
     GNode	*node;	    /* The target the child is making */
     LstNode	tailCmds;   /* The node of the first command to be
 			     * saved when the job has been run */
@@ -469,8 +469,8 @@ JobCondPassSig(jobp, signop)
     int signo = *(int *)signop;
     if (DEBUG(JOB)) {
 	(void)fprintf(stdout,
-		       "JobCondPassSig passing signal %d to child %d.\n",
-		       signo, job->pid);
+		       "JobCondPassSig passing signal %d to child %ld.\n",
+		       signo, (long)job->pid);
 	(void)fflush(stdout);
     }
     KILL(job->pid, signo);
@@ -569,7 +569,7 @@ JobCmpPid(job, pid)
     void *job;	/* job to examine */
     void *pid;	/* process id desired */
 {
-    return *(int *)pid - ((Job *)job)->pid;
+    return *(pid_t *)pid - ((Job *)job)->pid;
 }
 
 /*-
@@ -880,7 +880,7 @@ JobFinish(job, status)
 
 	if (WIFEXITED(*status)) {
 	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Process %d exited.\n", job->pid);
+		(void)fprintf(stdout, "Process %ld exited.\n", (long)job->pid);
 		(void)fflush(stdout);
 	    }
 	    if (WEXITSTATUS(*status) != 0) {
@@ -904,7 +904,7 @@ JobFinish(job, status)
 	    }
 	} else if (WIFSTOPPED(*status)) {
 	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Process %d stopped.\n", job->pid);
+		(void)fprintf(stdout, "Process %ld stopped.\n", (long)job->pid);
 		(void)fflush(stdout);
 	    }
 	    if (usePipes && job->node != lastNode) {
@@ -933,8 +933,8 @@ JobFinish(job, status)
 	    if (!(job->flags & JOB_CONTINUING)) {
 		if (DEBUG(JOB)) {
 		    (void)fprintf(stdout,
-				   "Warning: process %d was not continuing.\n",
-				   job->pid);
+				   "Warning: process %ld was not continuing.\n",
+				   (long)job->pid);
 		    (void)fflush(stdout);
 		}
 #ifdef notdef
@@ -952,8 +952,8 @@ JobFinish(job, status)
 	    nJobs += 1;
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout,
-			       "Process %d is continuing locally.\n",
-			       job->pid);
+			       "Process %ld is continuing locally.\n",
+			       (long)job->pid);
 		(void)fflush(stdout);
 	    }
 	    nLocal += 1;
@@ -1193,7 +1193,7 @@ JobExec(job, argv)
     Job 	  *job; 	/* Job to execute */
     char	  **argv;
 {
-    int 	  cpid; 	/* ID of new child */
+    pid_t 	  cpid; 	/* ID of new child */
 
     if (DEBUG(JOB)) {
 	int	  i;
@@ -2045,7 +2045,7 @@ void
 Job_CatchChildren(block)
     bool	  block;	/* true if should block on the wait. */
 {
-    int 	  pid;		/* pid of dead child */
+    pid_t 	  pid;		/* pid of dead child */
     Job 	  *job; 	/* job descriptor for dead child */
     LstNode	  jnode;	/* list element for finding job */
     int 	  status;	/* Exit/termination status */
@@ -2061,7 +2061,7 @@ Job_CatchChildren(block)
 			  (block?0:WNOHANG)|WUNTRACED)) > 0)
     {
 	if (DEBUG(JOB)) {
-	    (void)fprintf(stdout, "Process %d exited or stopped.\n", pid);
+	    (void)fprintf(stdout, "Process %ld exited or stopped.\n", (long)pid);
 	    (void)fflush(stdout);
 	}
 
@@ -2072,13 +2072,13 @@ Job_CatchChildren(block)
 	    if (WIFSIGNALED(status) && (WTERMSIG(status) == SIGCONT)) {
 		jnode = Lst_Find(&stoppedJobs, JobCmpPid, &pid);
 		if (jnode == NULL) {
-		    Error("Resumed child (%d) not in table", pid);
+		    Error("Resumed child (%ld) not in table", (long)pid);
 		    continue;
 		}
 		job = (Job *)Lst_Datum(jnode);
 		Lst_Remove(&stoppedJobs, jnode);
 	    } else {
-		Error("Child (%d) not in table?", pid);
+		Error("Child (%ld) not in table?", (long)pid);
 		continue;
 	    }
 	} else {
@@ -2570,8 +2570,8 @@ JobInterrupt(runINTERRUPT, signo)
 	if (job->pid) {
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout,
-			       "JobInterrupt passing signal to child %d.\n",
-			       job->pid);
+			       "JobInterrupt passing signal to child %ld.\n",
+			       (long)job->pid);
 		(void)fflush(stdout);
 	    }
 	    KILL(job->pid, signo);
@@ -2702,7 +2702,7 @@ Job_AbortAll()
     /*
      * Catch as many children as want to report in at first, then give up
      */
-    while (waitpid((pid_t) -1, &foo, WNOHANG) > 0)
+    while (waitpid(-1, &foo, WNOHANG) > 0)
 	continue;
     (void)eunlink(tfile);
 }

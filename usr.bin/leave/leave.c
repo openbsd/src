@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.7 2002/02/16 21:27:47 millert Exp $	*/
+/*	$OpenBSD: leave.c,v 1.8 2002/06/12 06:07:15 mpech Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: leave.c,v 1.7 2002/02/16 21:27:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: leave.c,v 1.8 2002/06/12 06:07:15 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,13 +134,13 @@ doalarm(secs)
 {
 	int bother;
 	time_t daytime;
-	int pid;
+	pid_t pid;
 
 	if ((pid = fork())) {
 		(void)time(&daytime);
 		daytime += secs;
-		printf("Alarm set for %.16s. (pid %d)\n",
-		    ctime(&daytime), pid);
+		printf("Alarm set for %.16s. (pid %ld)\n",
+		    ctime(&daytime), (long)pid);
 		exit(0);
 	}
 	sleep((u_int)2);		/* let parent print set message */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.10 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: msg.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -611,7 +611,7 @@ msgq_status(sp, lno, flags)
 		p += strlen(p);
 	}
 #ifdef DEBUG
-	(void)sprintf(p, " (pid %lu)", (u_long)getpid());
+	(void)sprintf(p, " (pid %ld)", (long)getpid());
 	p += strlen(p);
 #endif
 	*p++ = '\n';

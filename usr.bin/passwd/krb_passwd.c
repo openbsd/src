@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_passwd.c,v 1.14 2002/05/10 06:52:03 hugh Exp $	*/
+/*	$OpenBSD: krb_passwd.c,v 1.15 2002/06/12 06:07:16 mpech Exp $	*/
 /* $KTH: kpasswd.c,v 1.25 1997/05/02 14:28:51 assar Exp $ */
 
 /*
@@ -160,7 +160,7 @@ krb_passwd(int argc, char **argv)
     }
 
     snprintf(tktstring, sizeof(tktstring),
-	     "%s_cpw_%u", TKT_ROOT, (unsigned)getpid());
+	     "%s_cpw_%ld", TKT_ROOT, (long)getpid());
     krb_set_tkt_string(tktstring);
     
     if (get_pw_new_pwd(pword, sizeof(pword), &principal,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.18 2002/06/09 21:11:22 hin Exp $	*/
+/*	$OpenBSD: server.c,v 1.19 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.18 2002/06/09 21:11:22 hin Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.19 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -1081,9 +1081,10 @@ fchog(fd, file, owner, group, mode)
 	int mode;
 {
 	int i;
-	int uid, gid;
+	uid_t uid;
+	gid_t gid;
 	extern char user[];
-	extern int userid;
+	extern uid_t userid;
 
 	uid = userid;
 	if (userid == 0) {
@@ -1368,10 +1369,12 @@ static void
 dospecial(cmd)
 	char *cmd;
 {
-	int fd[2], status, pid, i;
+	int fd[2], status;
 	char *cp, *s;
 	char sbuf[BUFSIZ];
-	extern int userid, groupid;
+	pid_t pid, i;
+	extern uid_t userid;
+	extern gid_t groupid;
 
 	if (pipe(fd) < 0) {
 		error("%s\n", strerror(errno));

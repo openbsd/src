@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.13 2002/06/09 01:28:06 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.14 2002/06/12 06:07:16 mpech Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -793,8 +793,10 @@ write_rpc_svc_fg(infile, sp)
 	fprintf(fout, "%sint size;\n", sp);
 	if (tirpcflag)
 	        fprintf(fout, "%sstruct rlimit rl;\n", sp);
-	if (inetdflag)
-		fprintf(fout, "%sint pid, i;\n\n", sp);
+	if (inetdflag) {
+		fprintf(fout, "%sint i;\n\n", sp);
+		fprintf(fout, "%spid_t pid;\n\n", sp);
+	}
 	fprintf(fout, "%spid = fork();\n", sp);
 	fprintf(fout, "%sif (pid < 0) {\n", sp);
 	fprintf(fout, "%s\tperror(\"cannot fork\");\n", sp);

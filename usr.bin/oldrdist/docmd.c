@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.16 2002/02/17 19:42:31 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.17 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.16 2002/02/17 19:42:31 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.17 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -220,7 +220,7 @@ makeconn(rhost)
 	int n;
 	extern char user[];
 #if	defined(DIRECT_RCMD)
-	extern int userid;
+	extern uid_t userid;
 #endif
 
 	if (debug)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.27 2002/06/09 05:50:33 hin Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.28 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.27 2002/06/09 05:50:33 hin Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.28 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,9 +100,10 @@ main(argc, argv)
 	struct passwd *pw;
 	struct servent *sp;
 	sigset_t mask, omask;
-	int argoff, asrsh, ch, dflag, nflag, one, pid = 0, rem, uid;
+	int argoff, asrsh, ch, dflag, nflag, one, rem, uid;
 	char *p;
 	char *args, *host, *user, *copyargs();
+	pid_t pid = 0;
 	void sendsig();
 
 	argoff = asrsh = dflag = nflag = 0;
@@ -332,8 +333,9 @@ try_connect:
 
 void
 talk(nflag, omask, pid, rem)
-	int nflag, pid;
+	int nflag;
 	sigset_t *omask;
+	pid_t pid;
 	int rem;
 {
 	int cc, wc;

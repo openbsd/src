@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.8 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.9 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -953,7 +953,7 @@ cscope_display(sp)
 	for (i = 1,
 	    csc = exp->cscq.lh_first; csc != NULL; ++i, csc = csc->q.le_next)
 		ex_printf(sp,
-		    "%2d %s (process %lu)\n", i, csc->dname, (u_long)csc->pid);
+		    "%2d %s (process %ld)\n", i, csc->dname, (long)csc->pid);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.9 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.10 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -50,7 +50,7 @@
 FILE *debug;
 #endif
 
-static int lmpid = 0;
+static pid_t lmpid = 0;
 static int last_hi = 0;		/* used in u_process and u_endscreen */
 static int lastline = 0;
 static int display_width = MAX_COLS;
@@ -175,7 +175,7 @@ struct statics *statics;
 
 void i_loadave(mpid, avenrun)
 
-int mpid;
+pid_t mpid;
 double *avenrun;
 
 {
@@ -187,7 +187,7 @@ double *avenrun;
     /* mpid == -1 implies this system doesn't have an _mpid */
     if (mpid != -1)
     {
-	printf("last pid: %5d;  ", mpid);
+	printf("last pid: %5ld;  ", (long)mpid);
     }
 
     printf("load averages");
@@ -203,7 +203,7 @@ double *avenrun;
 
 void u_loadave(mpid, avenrun)
 
-int mpid;
+pid_t mpid;
 double *avenrun;
 
 {
@@ -215,7 +215,7 @@ double *avenrun;
 	if (mpid != lmpid)
 	{
 	    Move_to(x_lastpid, y_lastpid);
-	    printf("%5d", mpid);
+	    printf("%5ld", (long)mpid);
 	    lmpid = mpid;
 	}
 

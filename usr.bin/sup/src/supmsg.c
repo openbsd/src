@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.10 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -67,7 +67,7 @@
 extern int	pgmver;			/* program version of partner */
 extern int	pgmversion;		/* my program version */
 extern char	*scmver;		/* scm version of partner */
-extern int	fspid;			/* process id of fileserver */
+extern pid_t	fspid;			/* process id of fileserver */
 
 static int refuseone(TREE *, void *);
 static int listone(TREE *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.38 2002/05/19 22:01:15 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.39 2002/06/12 06:07:15 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.38 2002/05/19 22:01:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.39 2002/06/12 06:07:15 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -287,7 +287,7 @@ char	*Uname, *Comm;
 pid_t	Pid;
 
 #define PREFIX(i) do { \
-	printf("%-8.8s %-10s %5d", Uname, Comm, Pid); \
+	printf("%-8.8s %-10s %5ld", Uname, Comm, (long)Pid); \
 	switch(i) { \
 	case TEXT: \
 		printf(" text"); \
@@ -329,12 +329,14 @@ dofiles(kp)
 	if (p->p_fd == NULL)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
-		dprintf("can't read filedesc at %p for pid %d", p->p_fd, Pid);
+		dprintf("can't read filedesc at %p for pid %ld",
+		    p->p_fd, (long)Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf("filedesc corrupted at %p for pid %d", p->p_fd, Pid);
+		dprintf("filedesc corrupted at %p for pid %ld",
+		    p->p_fd, (long)Pid);
 		return;
 	}
 	/*
@@ -359,8 +361,8 @@ dofiles(kp)
 	if (filed.fd_nfiles > NDFILE) {
 		if (!KVM_READ(filed.fd_ofiles, ofiles,
 		    (filed.fd_lastfile+1) * FPSIZE)) {
-			dprintf("can't read file structures at %p for pid %d",
-			    filed.fd_ofiles, Pid);
+			dprintf("can't read file structures at %p for pid %ld",
+			    filed.fd_ofiles, (long)Pid);
 			return;
 		}
 	} else
@@ -369,8 +371,8 @@ dofiles(kp)
 		if (ofiles[i] == NULL)
 			continue;
 		if (!KVM_READ(ofiles[i], &file, sizeof (struct file))) {
-			dprintf("can't read file %d at %p for pid %d",
-				i, ofiles[i], Pid);
+			dprintf("can't read file %d at %p for pid %ld",
+				i, ofiles[i], (long)Pid);
 			continue;
 		}
 		if (file.f_type == DTYPE_VNODE)
@@ -392,8 +394,8 @@ dofiles(kp)
 			if (checkfile == 0)
 				systracetrans((struct fsystrace *)file.f_data, i);
 		} else {
-			dprintf("unknown file type %d for file %d of pid %d",
-				file.f_type, i, Pid);
+			dprintf("unknown file type %d for file %d of pid %ld",
+				file.f_type, i, (long)Pid);
 		}
 	}
 }
@@ -412,7 +414,7 @@ vtrans(vp, i, flag, offset)
 
 	filename = badtype = NULL;
 	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {
-		dprintf("can't read vnode at %p for pid %d", vp, Pid);
+		dprintf("can't read vnode at %p for pid %ld", vp, (long)Pid);
 		return;
 	}
 	if (vn.v_type == VNON || vn.v_tag == VT_NON)
@@ -527,7 +529,8 @@ ufs_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
+		dprintf("can't read inode at %p for pid %ld",
+		    VTOI(vp), (long)Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
@@ -547,7 +550,8 @@ ext2fs_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
+		dprintf("can't read inode at %p for pid %ld",
+		    VTOI(vp), (long)Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
@@ -568,7 +572,8 @@ msdos_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
+		dprintf("can't read inode at %p for pid %ld",
+		    VTOI(vp), (long)Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
@@ -590,7 +595,8 @@ nfs_filestat(vp, fsp)
 	mode_t mode;
 
 	if (!KVM_READ(VTONFS(vp), &nfsnode, sizeof (nfsnode))) {
-		dprintf("can't read nfsnode at %p for pid %d", VTONFS(vp), Pid);
+		dprintf("can't read nfsnode at %p for pid %ld",
+		    VTONFS(vp), (long)Pid);
 		return 0;
 	}
 	fsp->fsid = nfsnode.n_vattr.va_fsid;
@@ -636,7 +642,8 @@ xfs_filestat(vp, fsp)
 	struct xfs_node xfs_node;
 
 	if (!KVM_READ(VNODE_TO_XNODE(vp), &xfs_node, sizeof (xfs_node))) {
-		dprintf("can't read xfs_node at %p for pid %d", VTOI(vp), Pid);
+		dprintf("can't read xfs_node at %p for pid %ld",
+		    VTOI(vp), (long)Pid);
 		return 0;
 	}
 	fsp->fsid = xfs_node.attr.va_fsid;
@@ -661,7 +668,8 @@ null_filestat(vp, fsp)
 	memset(&fst, 0, sizeof fst);
 
 	if (!KVM_READ(VTONULL(vp), &node, sizeof (node))) {
-		dprintf("can't read node at %p for pid %d", VTONULL(vp), Pid);
+		dprintf("can't read node at %p for pid %ld",
+		    VTONULL(vp), (long)Pid);
 		return 0;
 	}
 
@@ -670,8 +678,8 @@ null_filestat(vp, fsp)
 	 */
 	if (node.null_lowervp) {
 		if (!KVM_READ(node.null_lowervp, &vn, sizeof (vn))) {
-			dprintf("can't read vnode at %p for pid %d",
-			    node.null_lowervp, Pid);
+			dprintf("can't read vnode at %p for pid %ld",
+			    node.null_lowervp, (long)Pid);
 			return 0;
 		}
 

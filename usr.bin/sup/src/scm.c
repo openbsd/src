@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.15 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: scm.c,v 1.16 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -203,7 +203,7 @@ extern int silent;
  *********************************************/
 
 extern char program[];			/* name of program we are running */
-extern int progpid;			/* process id to display */
+extern pid_t progpid;			/* process id to display */
 
 int netfile = -1;			/* network file descriptor */
 
@@ -292,7 +292,7 @@ lock_host_file(lockdir)
 		close(fd);
 		return(-1);
 	}
-	(void)fprintf(f, "%d\n", (int) getpid());
+	(void)fprintf(f, "%ld\n", (long) getpid());
 	fflush(f);
 	free(lpath);
 	return(fd);
@@ -630,7 +630,7 @@ int scmerr(int error,char *fmt,...)
 	va_start(ap,fmt);
 	(void) fflush(stdout);
 	if (progpid > 0)
-		fprintf(stderr, "%s %d: ", program, progpid);
+		fprintf(stderr, "%s %ld: ", program, (long)progpid);
 	else
 		fprintf(stderr,"%s: ", program);
 

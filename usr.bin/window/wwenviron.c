@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwenviron.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: wwenviron.c,v 1.7 2002/06/12 06:07:17 mpech Exp $	*/
 /*	$NetBSD: wwenviron.c,v 1.4 1995/12/21 08:39:50 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.7 2002/06/12 06:07:17 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ struct ww *wp;
 {
 	int i;
 #ifndef TIOCSCTTY
-	int pgrp = getpid();
+	pid_t pgrp = getpid();
 #endif
 	char buf[1024];
 	sigset_t sigset;

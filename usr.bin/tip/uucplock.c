@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.9 2002/06/12 06:07:16 mpech Exp $	*/
 /*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.8 2002/05/29 09:23:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.9 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,8 +98,8 @@ uu_lock(ttyname)
 		 * The process that locked the file isn't running, so
 		 * we'll lock it ourselves
 		 */
-		fprintf(stderr, "Stale lock on %s PID=%d... overriding.\n",
-			ttyname, pid);
+		fprintf(stderr, "Stale lock on %s PID=%ld... overriding.\n",
+			ttyname, (long)pid);
 		if (lseek(fd, (off_t)0, SEEK_SET) < 0) {
 			perror(tbuf);
 			(void)close(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.14 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.15 2002/06/12 06:07:16 mpech Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.14 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.15 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -201,9 +201,10 @@ transfer(buf, fd, eofchars)
 void
 pipefile()
 {
-	int cpid, pdes[2];
+	int pdes[2];
 	char buf[256];
 	int status, p;
+	pid_t cpid;
 
 	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
@@ -473,7 +474,8 @@ void
 pipeout(c)
 {
 	char buf[256];
-	int cpid, status, p;
+	int status, p;
+	pid_t cpid;
 	time_t start = time(NULL);
 
 	putchar(c);
@@ -525,7 +527,8 @@ void
 consh(c)
 {
 	char buf[256];
-	int cpid, status, p;
+	int status, p;
+	pid_t cpid;
 	time_t start = time(NULL);
 
 	putchar(c);
@@ -574,8 +577,9 @@ consh(c)
 void
 shell()
 {
-	int shpid, status;
+	int status;
 	char *cp;
+	pid_t shpid;
 
 	printf("[sh]\r\n");
 	signal(SIGINT, SIG_IGN);
@@ -875,9 +879,10 @@ expand(name)
 {
 	static char xname[BUFSIZ];
 	char cmdbuf[BUFSIZ];
-	int pid, l;
+	int l;
 	char *cp, *Shell;
 	int s, pivec[2];
+	pid_t pid;
 
 	if (!anyof(name, "~{[*?$`'\"\\"))
 		return(name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.10 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -742,7 +742,7 @@ alloc_err:	rval = SEXP_ERR;
 	 * This won't catch "echo foo_$5", but that's not a common error and
 	 * historic vi didn't catch it either.
 	 */
-	if (proc_wait(sp, (long)pid, sh, 1, 0))
+	if (proc_wait(sp, pid, sh, 1, 0))
 		rval = SEXP_EXPANSION_ERR;
 
 	for (p = bp; len; ++p, --len)

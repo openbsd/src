@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.10 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: system.c,v 1.11 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.10 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.11 2002/06/12 06:07:16 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ static char rcsid[] = "$OpenBSD: system.c,v 1.10 2001/11/19 19:02:17 mpech Exp $
 
 #endif
 
-static int shell_pid = 0;
+static pid_t shell_pid = 0;
 static char key[50];			/* Actual key */
 static char *keyname;			/* Name of file with key in it */
 
@@ -593,7 +593,7 @@ child_died(code)
 {
     int save_errno = errno;
     union wait status;
-    int pid;
+    pid_t pid;
 
     while ((pid = wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
 	if (pid == shell_pid) {

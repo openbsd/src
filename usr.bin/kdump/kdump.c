@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.15 2002/03/12 10:40:33 art Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.16 2002/06/12 06:07:15 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.15 2002/03/12 10:40:33 art Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.16 2002/06/12 06:07:15 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -303,7 +303,8 @@ dumpheader(kth)
 		type = unknown;
 	}
 
-	(void)printf("%6d %-8.*s ", kth->ktr_pid, MAXCOMLEN, kth->ktr_comm);
+	(void)printf("%6ld %-8.*s ", (long)kth->ktr_pid, MAXCOMLEN,
+	    kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
 			timersub(&kth->ktr_time, &prevtime, &temp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.16 2001/09/28 01:44:37 millert Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.17 2002/06/12 06:07:15 mpech Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
@@ -338,7 +338,7 @@ show_msginfo(time_t stime, time_t rtime, time_t ctime, int ipcid, key_t key,
 		printf(" %6lu", qbytes);
 
 	if (option & PID)
-		printf(" %5d %5d", lspid, lrpid);
+		printf(" %5ld %5ld", (long)lspid, (long)lrpid);
 
 	if (option & TIME)
 		printf(" %s %s %s", stime_buf, rtime_buf, ctime_buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.14 2002/05/27 03:14:22 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.15 2002/06/12 06:07:16 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.14 2002/05/27 03:14:22 deraadt Exp $";
+"$OpenBSD: common.c,v 1.15 2002/06/12 06:07:16 mpech Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -238,8 +238,8 @@ extern void lostconn()
  */
 extern void coredump()
 {
-	error("Segmentation violation - dumping core [PID = %d, %s]",
-	      getpid(), 
+	error("Segmentation violation - dumping core [PID = %ld, %s]",
+	      (long)getpid(), 
 	      (isserver) ? "isserver" : ((amchild) ? "amchild" : "parent"));
 	abort();
 	/*NOTREACHED*/
@@ -820,11 +820,12 @@ extern char *getversion()
 void runcommand(cmd)
 	char *cmd;
 {
-	int fd[2], pid, i;
+	int fd[2];
 	int status;
 	char *cp, *s;
 	char sbuf[BUFSIZ], buf[BUFSIZ];
-
+	pid_t pid, i;
+	
 	if (pipe(fd) < 0) {
 		error("pipe of %s failed: %s", cmd, SYSERR);
 		return;

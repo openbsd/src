@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.6 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.7 2002/06/12 06:07:17 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -260,7 +260,7 @@ err:		if (input[0] != -1)
 
 		/* Wait for the parent-writer. */
 		if (proc_wait(sp,
-		    (long)parent_writer_pid, "parent-writer", 0, 1))
+		    parent_writer_pid, "parent-writer", 0, 1))
 			rval = 1;
 
 		/* Delete any lines written to the utility. */
@@ -287,7 +287,7 @@ err:		if (input[0] != -1)
 	 * Ignore errors on vi file reads, to make reads prettier.  It's
 	 * completely inconsistent, and historic practice.
 	 */
-uwait:	return (proc_wait(sp, (long)utility_pid, cmd,
+uwait:	return (proc_wait(sp, utility_pid, cmd,
 	    ftype == FILTER_READ && F_ISSET(sp, SC_VI) ? 1 : 0, 0) || rval);
 }
 

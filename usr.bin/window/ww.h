@@ -1,4 +1,4 @@
-/*	$OpenBSD: ww.h,v 1.7 2000/04/14 18:43:34 millert Exp $	*/
+/*	$OpenBSD: ww.h,v 1.8 2002/06/12 06:07:17 mpech Exp $	*/
 /*	$NetBSD: ww.h,v 1.9 1996/10/12 23:46:23 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ struct ww {
 #define	WWP_STOPPED	0x0200	/* output stopped */
 	int ww_pty;		/* file descriptor of pty or socket pair */
 	int ww_socket;		/* other end of socket pair */
-	int ww_pid;		/* pid of process, if WWS_HASPROC true */
+	pid_t ww_pid;		/* pid of process, if WWS_HASPROC true */
 	char ww_ttyname[11];	/* "/dev/ttyp?" */
 	char *ww_ob;		/* output buffer */
 	char *ww_obe;		/* end of ww_ob */

@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.7 2001/11/19 19:02:14 mpech Exp $
+ * $OpenBSD: learn.c,v 1.8 2002/06/12 06:07:15 mpech Exp $
  */
 
 /****************************************************************
@@ -691,7 +691,8 @@ char *s;
 
 int system(const char *s)
 {
-	int status, pid, w;
+	int status;
+	pid_t pid, w;
 	void (*istat)(int), (*qstat)(int);
 
 	istat = signal(SIGINT, SIG_IGN);	/* XXX should use sigaction() */
@@ -1025,7 +1026,8 @@ int n;
 {
 	/* this routine does not use 'system' because it wants
 	 interrupts turned off */
-	int retval, pid, pidw;
+	int retval;
+	pid_t pid;
 
 	signal(SIGINT, SIG_IGN);
 	chdir("..");
@@ -1039,6 +1041,6 @@ int n;
 	printf("Bye.\n"); /* not only does this reassure user but 
 			it stalls for time while deleting directory */
 	fflush(stdout);
-	/* printf("Wantd %d got %d val %d\n",pid, pidw, retval); */
+	/* printf("Wantd %ld got %ld val %d\n", (long)pid, (long)pidw, retval); */
 	exit(n);
 }
