@@ -44,6 +44,7 @@
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
 .Nm traceroute
+.Op Fl c
 .Op Fl d
 .Op Fl D
 .Op Fl g Ar gateway_addr
@@ -106,8 +107,10 @@ Change the protocol being used from
 .Tn UDP
 to a numeric protocol or a name as specified in
 .Pa /etc/protocols .
-This will not work reliably for most protocols, and is only intended
-for testing certain things, like sipp-esp and sipp-ah.
+This will not work reliably for most protocols. If set to 1 (ICMP), then
+ICMP Echo Request messages will be used (same as
+.Xr ping 8
+).
 .It Fl p Ar port
 Set the base
 .Tn UDP
@@ -127,6 +130,12 @@ message will
 be returned to terminate the route tracing).  If something is
 listening on a port in the default range, this option can be used
 to pick an unused port range.
+.It Fl c
+Do not increment the destination port number in successive UDP
+packets. Rather, all UDP packets will have the same destination port,
+as set via the
+.Fl p
+flag (or 33434 if none is specified).
 .It Fl q Ar nqueries
 Set the number of probes per ``ttl'' to
 .Ar nqueries
