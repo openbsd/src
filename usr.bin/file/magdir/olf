@@ -27,8 +27,8 @@
 >7	byte		10		Irix
 >7	byte		11		SCO
 >7	byte		12		Dell
->8	byte		0		unstripped
->8	byte		1		stripped
+>8	byte		0		statically linked
+>9	byte		0		unstripped
 >5	byte		0		invalid byte order
 >5	byte		1		LSB
 >>16	leshort		0		no file type,
