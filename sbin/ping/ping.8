@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.5 1996/07/23 10:31:27 deraadt Exp $
+.\"	$OpenBSD: ping.8,v 1.6 1996/07/23 10:36:40 deraadt Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -101,6 +101,7 @@ Only the super-user may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
+Only root can do a flood ping.
 .It Fl I Ar ifaddr
 Specify the interface to transmit from on machines with multiple
 interfaces. For unicast and multicast pings.

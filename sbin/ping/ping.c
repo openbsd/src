@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.7 1996/07/23 10:31:28 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.8 1996/07/23 10:36:41 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.7 1996/07/23 10:31:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.8 1996/07/23 10:36:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,8 +243,8 @@ main(argc, argv)
 			loop = 0;
 			break;
 		case 'l':
-			if (getuid() != 0)
-				errx(1, "must be root to specify preload");
+			if (getuid())
+				errx(1, "%s", strerror(EPERM));
 			preload = strtol(optarg, NULL, 0);
 			if (preload < 0)
 				errx(1, "bad preload value: %s", optarg);
