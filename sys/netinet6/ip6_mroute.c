@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.33 2003/05/14 14:24:44 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.34 2003/05/14 17:05:34 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1458,9 +1458,9 @@ ip6_mdq(m, ifp, rt)
 
 static void
 phyint_send(ip6, mifp, m)
-    struct ip6_hdr *ip6;
-    struct mif6 *mifp;
-    struct mbuf *m;
+	struct ip6_hdr *ip6;
+	struct mif6 *mifp;
+	struct mbuf *m;
 {
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
