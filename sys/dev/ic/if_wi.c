@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.104 2004/03/02 21:55:07 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.105 2004/03/02 21:59:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.104 2004/03/02 21:55:07 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.105 2004/03/02 21:59:29 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -212,6 +212,7 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 	int			error;
 
 	sc->sc_funcs = funcs;
+	sc->wi_cmd_count = 500;
 
 	wi_reset(sc);
 
@@ -289,6 +290,9 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 		break;
 	case WI_INTERSIL:
 		sc->wi_flags |= WI_FLAGS_HAS_ROAMING;
+		/* older prism firmware is slow so crank the count */
+		if (sc->sc_sta_firmware_ver < 10000)
+			sc->wi_cmd_count = 5000;
 		if (sc->sc_sta_firmware_ver >= 800) {
 #ifndef SMALL_KERNEL
 			if (sc->sc_sta_firmware_ver != 10402)
@@ -928,10 +932,15 @@ wi_cmd_io(sc, cmd, val0, val1, val2)
 	int			i, s = 0;
 
 	/* Wait for the busy bit to clear. */
-	for (i = 0; i < WI_TIMEOUT; i++) {
+	for (i = sc->wi_cmd_count; i--; DELAY(1000)) {
 		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
 			break;
-		DELAY(10);
+	}
+	if (i < 0) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf(WI_PRT_FMT ": wi_cmd_io: busy bit won't clear\n",
+			    WI_PRT_ARG(sc));
+		return(ETIMEDOUT);
 	}
 
 	CSR_WRITE_2(sc, WI_PARAM0, val0);
@@ -939,7 +948,7 @@ wi_cmd_io(sc, cmd, val0, val1, val2)
 	CSR_WRITE_2(sc, WI_PARAM2, val2);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
-	for (i = WI_TIMEOUT; i--; DELAY(10)) {
+	for (i = WI_TIMEOUT; i--; DELAY(WI_DELAY)) {
 		/*
 		 * Wait for 'command complete' bit to be
 		 * set in the event status register.
@@ -949,18 +958,19 @@ wi_cmd_io(sc, cmd, val0, val1, val2)
 			/* Ack the event and read result code. */
 			s = CSR_READ_2(sc, WI_STATUS);
 			CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_CMD);
-#ifdef foo
-			if ((s & WI_CMD_CODE_MASK) != (cmd & WI_CMD_CODE_MASK))
-				return(EIO);
-#endif
 			if (s & WI_STAT_CMD_RESULT)
 				return(EIO);
 			break;
 		}
 	}
 
-	if (i < 0)
+	if (i < 0) {
+		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+			printf(WI_PRT_FMT
+			    ": timeout in wi_cmd 0x%04x; event status 0x%04x\n",
+			    WI_PRT_ARG(sc), cmd, s);
 		return(ETIMEDOUT);
+	}
 
 	return(0);
 }
@@ -969,17 +979,26 @@ STATIC void
 wi_reset(sc)
 	struct wi_softc		*sc;
 {
+	int error, tries = 3;
+
 	DPRINTF(WID_RESET, ("wi_reset: sc %p\n", sc));
 
 	/* Symbol firmware cannot be initialized more than once. */
-	if (sc->sc_firmware_type == WI_SYMBOL &&
-	    (sc->wi_flags & WI_FLAGS_INITIALIZED))
-		return;
+	if (sc->sc_firmware_type == WI_SYMBOL) {
+		if (sc->wi_flags & WI_FLAGS_INITIALIZED)
+			return;
+		tries = 1;
+	}
 
-	if (wi_cmd(sc, WI_CMD_INI, 0, 0, 0))
+	for (; tries--; DELAY(WI_DELAY * 1000)) {
+		if ((error = wi_cmd(sc, WI_CMD_INI, 0, 0, 0)) == 0)
+			break;
+	}
+	if (tries < 0) {
 		printf(WI_PRT_FMT ": init failed\n", WI_PRT_ARG(sc));
-	else
-		sc->wi_flags |= WI_FLAGS_INITIALIZED;
+		return;
+	}
+	sc->wi_flags |= WI_FLAGS_INITIALIZED;
 
 	wi_intr_enable(sc, 0);
 	wi_intr_ack(sc, 0xffff);
@@ -1269,7 +1288,7 @@ wi_seek(sc, id, off, chan)
 	CSR_WRITE_2(sc, selreg, id);
 	CSR_WRITE_2(sc, offreg, off);
 
-	for (i = WI_TIMEOUT; i--; DELAY(10))
+	for (i = WI_TIMEOUT; i--; DELAY(1))
 		if (!(CSR_READ_2(sc, offreg) & (WI_OFF_BUSY|WI_OFF_ERR)))
 			break;
 
@@ -1361,7 +1380,7 @@ wi_alloc_nicmem_io(sc, len, id)
 		return(ENOMEM);
 	}
 
-	for (i = WI_TIMEOUT; i--; DELAY(10)) {
+	for (i = WI_TIMEOUT; i--; DELAY(1)) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_ALLOC)
 			break;
 	}

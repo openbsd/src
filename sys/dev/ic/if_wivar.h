@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.22 2003/10/26 15:34:15 drahn Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.23 2004/03/02 21:59:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -51,6 +51,7 @@ struct wi_softc	{
 	int			wi_tx_mgmt_id;
 	int			wi_flags;
 	int			wi_if_flags;
+	int			wi_cmd_count;
 	u_int16_t		wi_procframe;
 	u_int16_t		wi_ptype;
 	u_int16_t		wi_portnum;
