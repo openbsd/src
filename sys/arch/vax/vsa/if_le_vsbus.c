@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vsbus.c,v 1.2 2000/10/11 06:19:19 bjc Exp $	*/
+/*	$OpenBSD: if_le_vsbus.c,v 1.3 2001/02/11 06:34:38 hugh Exp $	*/
 /*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
 
 /*-
@@ -96,9 +96,9 @@
 
 #include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/bus.h>
 #include <machine/scb.h>
 #include <machine/rpb.h>
+#include <machine/bus.h>
 #include <machine/vsbus.h>
 
 #include <dev/ic/am7990reg.h>
@@ -157,7 +157,7 @@ le_vsbus_match(parent, cf, aux)
 	int rv = 0;
 	int error;
 
-	if (vax_boardtype == VAX_BTYP_49)
+	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_1303)
 		return 0;
 
 	error = bus_dmamap_create(va->va_dmat, sizeof(initblock), 1,
@@ -210,7 +210,6 @@ le_vsbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct vsbus_attach_args *va = aux;
-	struct vsbus_softc *vsc = (struct vsbus_softc *)parent;
 	struct le_softc *sc = (void *)self;
 	bus_dma_segment_t seg;
 	int *lance_addr;
@@ -289,6 +288,5 @@ le_vsbus_attach(parent, self, aux)
 	/* Prettier printout */
 	printf("\n%s", self->dv_xname);
 
-	vsc->sc_mask |= 1 << (va->va_maskno-1);
 	am7990_config(&sc->sc_am7990);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2001/02/11 06:34:37 hugh Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/10/23 14:56:05 ragge Exp $	*/
 
 /*
@@ -141,6 +141,12 @@ mainbus_attach(parent, self, hej)
 	 * Maybe should have this as master instead of mainbus.
 	 */
 	config_found(self, NULL, mainbus_print);
+
+#if VAX53
+	/* Kludge: To have two master buses */
+	if (vax_boardtype == VAX_BTYP_1303)
+		config_found(self, (void *)1, mainbus_print);
+#endif
 
 	if (dep_call->cpu_subconf)
 		(*dep_call->cpu_subconf)(self);

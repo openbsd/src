@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2001/01/28 01:19:58 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.20 2001/02/11 06:34:36 hugh Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -19,7 +19,7 @@ option 		VAX43		# VS 3100/76
 option 		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
 option 		VAX49		# VS 4000/90
-option		VAX53		# VAX 4000/10{0,5,6}
+option		VAX53		# VAX 4000 10X, MicroVAX 3100m9X
 
 option		UVM			# VAX uses UVM; REQUIRED
 
@@ -64,12 +64,12 @@ ibus0		at mainbus0		# All Microvax
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
 ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
-dz0		at vsbus0 csr 0x25000000 # VS4000/90 serial line
+dz0		at vsbus0 csr 0x25000000 # VS4000/90 4000/10X MV3100/9X serial
 #hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
-asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
+asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
 #smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
@@ -79,9 +79,8 @@ asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
 # Ibus, the internal bus on most Microvaxen
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
+le0		at ibus0		# LANCE ethernet (MV3400)
 #shac0		at ibus0 		# DSSI controller
-le0		at ibus0		# LANCE ethernet
-dz0		at ibus0		# DZ serial controller
 
 # Devices connected at VAXBI
 #cpu*		at bi? node?		# KA820/KA825 cpu

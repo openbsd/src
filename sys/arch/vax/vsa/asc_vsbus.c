@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.2 2001/02/06 04:27:45 hugh Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.3 2001/02/11 06:34:37 hugh Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.20 2000/07/26 21:50:48 matt Exp $	*/
 
 /*-
@@ -169,11 +169,10 @@ asc_vsbus_match( struct device *parent, void *conf, void *aux)
 	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
 		if (cf->cf_loc[0] != 0x200c0080)
 			return 0;
-#if 1
-	} else if (vax_boardtype == VAX_BTYP_49) {
+	} else if (vax_boardtype == VAX_BTYP_49 ||
+	    vax_boardtype == VAX_BTYP_1303) {
 		if (cf->cf_loc[0] != 0x26000080)
 			return 0;
-#endif
 	} else {
 		return 0;
 	}
@@ -208,7 +207,6 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
 	struct asc_vsbus_softc *asc = (void *)self;
-	struct vsbus_softc *vsc = (struct vsbus_softc *) parent;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 	int error;
 
@@ -257,6 +255,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 		 * them from there and knowing the internals of the 
 		 * bus_space implementation, we cast to bus_space_handles.
 		 */
+		struct vsbus_softc *vsc = (struct vsbus_softc *) parent;
 		asc->sc_adrh = (bus_space_handle_t) (vsc->sc_vsregs + ASC_REG_KA49_ADR);
 		asc->sc_dirh = (bus_space_handle_t) (vsc->sc_vsregs + ASC_REG_KA49_DIR);
 #if 0
@@ -321,7 +320,6 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
-	vsc->sc_mask |= 1 << (va->va_maskno-1);
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &asc_vsbus_ops, &asc_vsbus_dev);
 }
@@ -504,4 +502,3 @@ asc_vsbus_dma_isactive(struct ncr53c9x_softc *sc)
 
 	return (asc->sc_flags & ASC_DMAACTIVE) != 0;
 }
-

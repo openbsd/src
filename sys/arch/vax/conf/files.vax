@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.18 2001/01/28 01:19:58 hugh Exp $
+#	$OpenBSD: files.vax,v 1.19 2001/02/11 06:34:36 hugh Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -111,8 +111,7 @@ attach	ts at uba
 file	arch/vax/uba/ts.c		ts needs-flag
 
 attach	dz at vsbus with dz_vsbus
-attach dz at ibus with dz_ibus
-file	arch/vax/vsa/dz_ibus.c		dz_vsbus | dz_ibus
+file	arch/vax/vsa/dz_ibus.c		dz_vsbus
 
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }

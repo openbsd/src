@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2000/04/27 01:10:11 bjc Exp $	 */
+/*	$OpenBSD: clock.c,v 1.11 2001/02/11 06:34:37 hugh Exp $	 */
 /*	$NetBSD: clock.c,v 1.28 1999/05/01 16:13:43 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -202,7 +202,8 @@ numtoyear(num)
 	return y;
 }
 
-#if VAX750 || VAX780 || VAX8600 || VAX650
+#if VAX750 || VAX780 || VAX8600 || VAX650 || \
+    VAX660 || VAX670 || VAX680 || VAX53
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument

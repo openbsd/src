@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.7 2000/10/11 06:19:19 bjc Exp $ */
+/* $OpenBSD: ncr.c,v 1.8 2001/02/11 06:34:38 hugh Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ si_match(parent, cf, aux)
 	volatile char *si_csr = (char *) va->va_addr;
 
 	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_46
-	    || vax_boardtype == VAX_BTYP_48)
+	    || vax_boardtype == VAX_BTYP_48 || vax_boardtype == VAX_BTYP_1303)
 		return 0;
 	/* This is the way Linux autoprobes the interrupt MK-990321 */
 	si_csr[12] = 0;
@@ -177,14 +177,12 @@ si_attach(parent, self, aux)
 	void		*aux;
 {
 	struct vsbus_attach_args *va = aux;
-	struct vsbus_softc *vsc = (struct vsbus_softc *)parent;
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	int tweak, target;
 
 	/* enable interrupts on vsbus too */
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
-	vsc->sc_mask |= 1 << (va->va_maskno-1);	
 
 	/*
 	 * DMA area mapin.

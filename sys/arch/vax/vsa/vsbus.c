@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.5 2000/10/11 06:19:19 bjc Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.6 2001/02/11 06:34:38 hugh Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -51,7 +51,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#define	_VAX_BUS_DMA_PRIVATE
+#define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/sid.h>
@@ -67,15 +67,15 @@
 
 #include <machine/vsbus.h>
 
-int		vsbus_match		__P((struct device *, struct cfdata *, void *));
+int	vsbus_match	__P((struct device *, struct cfdata *, void *));
 void	vsbus_attach	__P((struct device *, struct device *, void *));
-int		vsbus_print		__P((void *, const char *));
-int		vsbus_search	__P((struct device *, void *, void *));
+int	vsbus_print	__P((void *, const char *));
+int	vsbus_search	__P((struct device *, void *, void *));
 
 void	ka410_attach	__P((struct device *, struct device *, void *));
 void	ka43_attach	__P((struct device *, struct device *, void *));
 
-struct vax_bus_dma_tag vsbus_bus_dma_tag = {
+static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
 	0,
 	0,
@@ -131,9 +131,14 @@ vsbus_print(aux, name)
 int
 vsbus_match(parent, cf, aux)
 	struct	device	*parent;
-	struct 	cfdata	*cf;
+	struct	cfdata	*cf;
 	void	*aux;
 {
+#if VAX53
+	/* Kludge: VAX53 is... special */
+	if (vax_boardtype == VAX_BTYP_1303 && (int)aux == 1)
+		return 1; /* Hack */
+#endif
 	if (vax_bustype == VAX_VSBUS)
 		return 1;
 	return 0;
@@ -146,14 +151,14 @@ vsbus_attach(parent, self, aux)
 {
 	struct	vsbus_softc *sc = (void *)self;
 	int dbase, dsize;
-	int		discard;
 
 	printf("\n");
 
 	sc->sc_dmatag = vsbus_bus_dma_tag;
 
 	switch (vax_boardtype) {
-#if VAX49
+#if VAX49 || VAX53
+	case VAX_BTYP_1303:
 	case VAX_BTYP_49:
 		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
 		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
@@ -164,16 +169,15 @@ vsbus_attach(parent, self, aux)
 #endif
 
 #if VAX46 || VAX48
-    case VAX_BTYP_48:
-    case VAX_BTYP_46:
-        sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
-        sc->sc_intreq = (char *)sc->sc_vsregs + 15;
-        sc->sc_intclr = (char *)sc->sc_vsregs + 15;
-        sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
-        vsbus_dma_init(sc, 32768);
+	case VAX_BTYP_48:
+	case VAX_BTYP_46:
+		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
+		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
+		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
+		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
+		vsbus_dma_init(sc, 32768);
 #endif
 
-		
 	default:
 		sc->sc_vsregs = vax_map_physmem(VS_REGS, 1);
 		sc->sc_intreq = (char *)sc->sc_vsregs + 15;
@@ -203,28 +207,28 @@ vsbus_attach(parent, self, aux)
 	*sc->sc_intmsk = 0;
 	*sc->sc_intclr = 0xff;
 	DELAY(1000000); /* Wait a second */
-	sc->sc_mask = discard = *sc->sc_intreq;
-	printf("%s: interrupt mask %x\n", self->dv_xname, discard);
-
+	sc->sc_mask = *sc->sc_intreq;
+	printf("%s: interrupt mask %x\n", self->dv_xname, sc->sc_mask);
 	/*
 	 * now check for all possible devices on this "bus"
 	 */
 	config_search(vsbus_search, self, NULL);
 
-	*sc->sc_intmsk = sc->sc_mask ^ discard;
+	/* Autoconfig finished, enable interrupts */
+	*sc->sc_intmsk = ~sc->sc_mask;
 }
 
 int
 vsbus_search(parent, cfd, aux)
-	struct device	*parent;
-	void 	*cfd;
-	void 	*aux;
+	struct device *parent;
+	void *cfd;
+	void *aux;
 {
-	struct	vsbus_softc 		*sc = (void *)parent;
-	struct	vsbus_attach_args 	va;
-	struct 	cfdata	*cf = cfd;
-	int 	i, vec, br;
-	u_char	c;
+	struct	vsbus_softc *sc = (void *)parent;
+	struct	vsbus_attach_args va;
+	struct	cfdata *cf = cfd;
+	int i, vec, br;
+	u_char c;
 
 	va.va_paddr = cf->cf_loc[0];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
@@ -235,10 +239,10 @@ vsbus_search(parent, cfd, aux)
 	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
-	va.va_ivec = vsbus_intr;
 	i = (*cf->cf_attach->ca_match) (parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
 	c = *sc->sc_intreq & ~sc->sc_mask;
+
 	if (i == 0)
 		goto forgetit;
 	if (i > 10)
@@ -246,86 +250,32 @@ vsbus_search(parent, cfd, aux)
 	else if (c == 0)
 		goto forgetit;
 
-	va.va_maskno = ffs((u_int)c);
-
 	*sc->sc_intmsk = c;
 	DELAY(1000);
 	*sc->sc_intmsk = 0;
-
+	va.va_maskno = ffs((u_int)c);
 	i = scb_vecref(&vec, &br);
 	if (i == 0)
 		goto fail;
 	if (vec == 0)
 		goto fail;
-	
-	scb_vecalloc(vec, va.va_ivec, va.va_vecarg, SCB_ISTACK);
+
 	va.va_br = br;
 	va.va_cvec = vec;
-	va.confargs = aux;		
 	va.va_dmaaddr = sc->sc_dmaaddr;
 	va.va_dmasize = sc->sc_dmasize;
-
+	*sc->sc_intmsk = c; /* Allow interrupts during attach */
 	config_attach(parent, cf, &va, vsbus_print);
-	return 1;
+	*sc->sc_intmsk = 0;
+	return 0;
 
 fail:
-	printf("%s%d at %s csr %x %s\n",
+	printf("%s%d at %s csr 0x%x %s\n",
 	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 forgetit:
 	return 0;
 }
-
-#if 0
-static volatile struct dma_lock {
-    int dl_locked;
-    int dl_wanted;
-    void    *dl_owner;
-    int dl_count;
-} dmalock = { 0, 0, NULL, 0 };
-
-int
-vsbus_lockDMA(ca)
-    struct confargs *ca;
-{
-    while (dmalock.dl_locked) {
-        dmalock.dl_wanted++;
-        sleep((caddr_t)&dmalock, PRIBIO);   /* PLOCK or PRIBIO ? */
-        dmalock.dl_wanted--;
-    }
-    dmalock.dl_locked++;
-    dmalock.dl_owner = ca;
-
-    /*
-     * no checks yet, no timeouts, nothing...
-     */
-
-#ifdef DEBUG
-    if ((++dmalock.dl_count % 1000) == 0)
-        printf("%d locks, owner: %s\n", dmalock.dl_count, ca->ca_name);
-#endif
-    return (0);
-}
-
-int
-vsbus_unlockDMA(ca)
-    struct confargs *ca;
-{
-    if (dmalock.dl_locked != 1 || dmalock.dl_owner != ca) {
-        printf("locking-problem: %d, %s\n", dmalock.dl_locked,
-               (dmalock.dl_owner ? dmalock.dl_owner : "null"));
-        dmalock.dl_locked = 0;
-        return (-1);
-    }
-    dmalock.dl_owner = NULL;
-    dmalock.dl_locked = 0;
-    if (dmalock.dl_wanted) {
-        wakeup((caddr_t)&dmalock);
-    }
-    return (0);
-}
-#endif
-
 
 /*
  * Sets a new interrupt mask. Returns the old one.
@@ -335,8 +285,12 @@ unsigned char
 vsbus_setmask(mask)
 	unsigned char mask;
 {
-	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	struct vsbus_softc *sc;
 	unsigned char ch;
+
+	if (vsbus_cd.cd_ndevs == 0)
+		return 0;
+	sc = vsbus_cd.cd_devs[0];
 
 	ch = *sc->sc_intmsk;
 	*sc->sc_intmsk = mask;
@@ -350,7 +304,11 @@ void
 vsbus_clrintr(mask)
 	unsigned char mask;
 {
-	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	struct vsbus_softc *sc;
+
+	if (vsbus_cd.cd_ndevs == 0)
+		return;
+	sc = vsbus_cd.cd_devs[0];
 
 	*sc->sc_intclr = mask;
 }
@@ -360,18 +318,15 @@ vsbus_clrintr(mask)
  * Use the physical memory directly.
  */
 void
-vsbus_copytoproc(p, from, to, len)
-	struct proc *p;
-	caddr_t from, to;
-	int len;
+vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 {
 	struct pte *pte;
 	paddr_t pa;
 
-    if ((long)to & KERNBASE) { /* In kernel space */
-        bcopy(from, to, len);
-        return;
-    }
+	if ((vaddr_t)to & KERNBASE) { /* In kernel space */
+		bcopy(from, to, len);
+		return;
+	}
 	pte = uvtopte(TRUNC_PAGE(to), (&p->p_addr->u_pcb));
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = ROUND_PAGE(to) - (vaddr_t)to;
@@ -394,18 +349,15 @@ vsbus_copytoproc(p, from, to, len)
 }
 
 void
-vsbus_copyfromproc(p, from, to, len)
-	struct proc *p;
-	caddr_t from, to;
-	int len;
+vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 {
 	struct pte *pte;
 	paddr_t pa;
 
-    if ((long)from & KERNBASE) { /* In kernel space */
-        bcopy(from, to, len);
-        return;
-    }
+	if ((vaddr_t)from & KERNBASE) { /* In kernel space */
+		bcopy(from, to, len);
+		return;
+	}
 	pte = uvtopte(TRUNC_PAGE(from), (&p->p_addr->u_pcb));
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = ROUND_PAGE(from) - (vaddr_t)from;
@@ -436,6 +388,7 @@ static int vsbus_active = 0;
 void
 vsbus_dma_start(struct vsbus_dma *vd)
 {
+ 
 	SIMPLEQ_INSERT_TAIL(&vsbus_dma, vd, vd_q);
 
 	if (vsbus_active == 0)

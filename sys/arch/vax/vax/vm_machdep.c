@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2000/10/09 23:11:57 bjc Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/02/11 06:34:37 hugh Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -328,14 +328,15 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49
+#if VAX46 || VAX48 || VAX49 || VAX53
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
 
 	if (vax_boardtype != VAX_BTYP_46
 	    && vax_boardtype != VAX_BTYP_48
-	    && vax_boardtype != VAX_BTYP_49)
+	    && vax_boardtype != VAX_BTYP_49
+	    && vax_boardtype != VAX_BTYP_1303)
 		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -366,12 +367,13 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-#if VAX46 || VAX48 || VAX49
+#if VAX46 || VAX48 || VAX49 || VAX53
 	vaddr_t addr, off;
 
 	if (vax_boardtype != VAX_BTYP_46
 	    && vax_boardtype != VAX_BTYP_48
-	    && vax_boardtype != VAX_BTYP_49)
+	    && vax_boardtype != VAX_BTYP_49
+	    && vax_boardtype != VAX_BTYP_1303)
 		return;
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
