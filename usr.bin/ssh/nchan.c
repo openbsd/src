@@ -1,11 +1,12 @@
 #include "includes.h"
+RCSID("$Id: nchan.c,v 1.2 1999/10/16 22:29:01 markus Exp $");
+
 #include "ssh.h"
 
 #include "buffer.h"
 #include "channels.h"
 #include "packet.h"
 #include "nchan.h"
-
 
 void
 dump_chan(Channel *c){
@@ -41,7 +42,8 @@ chan_rcvd_oclose(Channel *c){
 void
 chan_send_ieof(Channel *c){
 	if(c->flags & CHAN_IEOF_SENT){
-		debug("send_chan_ieof twice %d", c->self);
+		/* this is ok: it takes some time before we get OCLOSE */
+		/* debug("send_chan_ieof twice %d", c->self); */
 		return;
 	}
 	debug("send_CHAN_IEOF %d", c->self);
@@ -76,12 +78,13 @@ chan_shutdown_write(Channel *c){
 	c->flags |= CHAN_SHUT_WR;
 	/* clear output buffer, since there is noone going to read the data
 	   we just closed the output-socket */
-	// buffer_consume(&c->output, buffer_len(&c->output));
+	/* buffer_consume(&c->output, buffer_len(&c->output)); */
 }
 void
 chan_shutdown_read(Channel *c){
 	if(c->flags & CHAN_SHUT_RD){
-		debug("chan_shutdown_read twice %d",c->self);
+		/* chan_shutdown_read is called for read-errors and OCLOSE */
+		/* debug("chan_shutdown_read twice %d",c->self); */
 		return;
 	}
 	debug("chan_shutdown_read %d", c->self);

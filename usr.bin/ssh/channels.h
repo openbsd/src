@@ -1,3 +1,5 @@
+/* RCSID("$Id: channels.h,v 1.2 1999/10/16 22:29:00 markus Exp $"); */
+
 #ifndef CHANNELS_H
 #define CHANNELS_H
 
