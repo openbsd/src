@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.3 2001/03/15 17:52:20 deraadt Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.4 2002/02/17 19:24:38 deraadt Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -44,9 +44,9 @@ struct puc_device_description {
 	pcireg_t		rval[4];
 	pcireg_t		rmask[4];
 	struct {
-		u_short	type;
+		u_char	type;
 		u_char	bar;
-		u_char	offset;
+		u_short	offset;
 		int	flags;
 	}			ports[PUC_MAX_PORTS];
 };
