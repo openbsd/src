@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.81 2004/01/28 01:56:26 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.82 2004/01/30 15:44:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1041,7 +1041,7 @@ fetchifs(int ifindex)
 	size_t			 len;
 	int			 mib[6];
 	char			*buf, *next, *lim;
-	struct if_msghdr	*ifm;
+	struct if_msghdr	 ifm;
 	struct kif_node		*kif;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_dl	*sdl;
@@ -1067,12 +1067,12 @@ fetchifs(int ifindex)
 	}
 
 	lim = buf + len;
-	for (next = buf; next < lim; next += ifm->ifm_msglen) {
-		ifm = (struct if_msghdr *)next;
-		sa = (struct sockaddr *)(ifm + 1);
-		get_rtaddrs(ifm->ifm_addrs, sa, rti_info);
+	for (next = buf; next < lim; next += ifm.ifm_msglen) {
+		memcpy(&ifm, next, sizeof(ifm));
+		sa = (struct sockaddr *)(next + sizeof(ifm));
+		get_rtaddrs(ifm.ifm_addrs, sa, rti_info);
 
-		if (ifm->ifm_type != RTM_IFINFO)
+		if (ifm.ifm_type != RTM_IFINFO)
 			continue;
 
 		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
@@ -1080,13 +1080,13 @@ fetchifs(int ifindex)
 			return (-1);
 		}
 
-		kif->k.ifindex = ifm->ifm_index;
-		kif->k.flags = ifm->ifm_flags;
-		kif->k.link_state = ifm->ifm_data.ifi_link_state;
-		kif->k.media_type = ifm->ifm_data.ifi_type;
-		kif->k.baudrate = ifm->ifm_data.ifi_baudrate;
+		kif->k.ifindex = ifm.ifm_index;
+		kif->k.flags = ifm.ifm_flags;
+		kif->k.link_state = ifm.ifm_data.ifi_link_state;
+		kif->k.media_type = ifm.ifm_data.ifi_type;
+		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
 		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
-		    (ifm->ifm_data.ifi_link_state != LINK_STATE_DOWN);
+		    (ifm.ifm_data.ifi_link_state != LINK_STATE_DOWN);
 
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
@@ -1108,7 +1108,7 @@ dispatch_rtmsg(void)
 	ssize_t			 n;
 	char			*next, *lim;
 	struct rt_msghdr	*rtm;
-	struct if_msghdr	*ifm;
+	struct if_msghdr	 ifm;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_in	*sa_in;
 	struct kroute_node	*kr;
@@ -1236,9 +1236,9 @@ dispatch_rtmsg(void)
 				return (-1);
 			break;
 		case RTM_IFINFO:
-			ifm = (struct if_msghdr *)next;
-			if_change(ifm->ifm_index, ifm->ifm_flags,
-			    &ifm->ifm_data);
+			memcpy(&ifm, next, sizeof(ifm));
+			if_change(ifm.ifm_index, ifm.ifm_flags,
+			    &ifm.ifm_data);
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
