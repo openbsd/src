@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.securelevel,v 1.3 1997/05/04 20:46:06 millert Exp $
+#	$OpenBSD: rc.securelevel,v 1.4 1997/08/06 19:32:35 kstailey Exp $
 #
 # site-specific startup actions, daemons, and other things which
 # can be done BEFORE your system goes into securemode.  For actions
@@ -7,7 +7,7 @@
 
 # This is the desired security level
 # XXX
-# XXX it is not really acceptable to put this value in a special
+# XXX it is not really acceptable to put this value in a configuration
 # XXX file, because locking it down requires immutability on about
 # XXX 5 files instead of 2 (the kernel and init)
 # XXX
