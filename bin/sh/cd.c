@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.8 1996/10/20 00:54:44 millert Exp $	*/
+/*	$OpenBSD: cd.c,v 1.9 1996/11/03 23:16:09 bitblt Exp $	*/
 /*	$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $	*/
 
 /*-
@@ -41,16 +41,18 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: cd.c,v 1.8 1996/10/20 00:54:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: cd.c,v 1.9 1996/11/03 23:16:09 bitblt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+
 
 /*
  * The cd and pwd commands.
@@ -238,7 +240,7 @@ pwdcmd(argc, argv)
 
 
 
-#define MAXPWD 256
+#define MAXPWD MAXPATHLEN
 
 /*
  * Find out what the current directory is. If we already know the current
