@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.3 1997/04/15 23:10:58 dima Exp $
+#	$OpenBSD: changelist,v 1.4 1997/04/15 23:49:01 niklas Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -29,6 +29,7 @@
 /etc/protocols
 /etc/rc
 /etc/rc.local
+/etc/rc.securelevel
 /etc/remote
 /etc/security
 /etc/sendmail.cf
