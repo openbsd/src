@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.9 2003/04/14 06:51:49 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.10 2003/06/04 17:59:01 espie Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\"
@@ -64,6 +64,15 @@ as this option causes issues on some legacy code.
 .Fl fstrict-aliasing
 is very unsafe with code that plays tricks with casts, bypassing the 
 already weak type system of C.
+.It
+The option
+.Fl fno-builtin-<function>
+was backported from 
+.Nm gcc
+version 3,
+yielding greater control over what functions
+.Nm gcc
+inlines.
 .It
 .Nm gcc
 recognizes the extra format attribute syslog, to better match
