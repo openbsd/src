@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.55 1997/12/17 08:54:42 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.56 1997/12/19 02:58:40 don Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -155,6 +155,7 @@ ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
+ex0     at isa? port 0x320 irq 5                # Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
