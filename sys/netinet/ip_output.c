@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.102 2001/06/12 10:59:53 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.103 2001/06/14 18:00:02 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -400,10 +400,12 @@ ip_output(m0, va_alist)
 			ip->ip_src = ia->ia_addr.sin_addr;
 	}
 
-	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
+	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) {
 		struct in_multi *inm;
 
-		m->m_flags |= M_MCAST;
+		m->m_flags |= (ip->ip_dst.s_addr == INADDR_BROADCAST) ?
+			M_BCAST : M_MCAST;
 
 		/*
 		 * IP destination address is multicast.  Make sure "dst"
@@ -427,7 +429,10 @@ ip_output(m0, va_alist)
 		 * but only if the packet actually is going out on that
 		 * interface (i.e., no IPsec is applied).
 		 */
-		if (((ifp->if_flags & IFF_MULTICAST) == 0) && (sproto == 0)) {
+		if ((((m->m_flags & M_MCAST) &&
+		      (ifp->if_flags & IFF_MULTICAST) == 0) ||
+		     ((m->m_flags & M_BCAST) && 
+		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (sproto == 0))  {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;
