@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.114 2003/01/04 22:11:47 miod Exp $
+.\"	$OpenBSD: options.4,v 1.115 2003/02/17 10:10:36 henning Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -859,40 +859,23 @@ While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
 .It Cd option ALTQ
 Enables ALTQ (Alternate Queuing).
-For simple rate-limiting, use
+See
 .Xr pfctl 8
-to set up the interface transmission rate.
-To use queuing disciplines, their options should also be defined.
-.Em ALTQ_CBQ
 and
-.Em ALTQ_RED
+.Xr pf.conf 5
+to set up the interface transmission rate and queueing disciplines.
+.Em ALTQ_CBQ ,
+.Em ALTQ_RED ,
+.Em ALTQ_PRIO
+and
+.Em ALTQ_HFSC 
 are enabled by default with option
 .Em ALTQ
 in
 .Ox .
-Queuing disciplines are also managed by
-.Xr pfctl 8 .
 See
 .Xr altq 9
 for details on ALTQ.
-.It Cd option ALTQ_HFSC
-Enables ALTQ's HFSC (Hierarchical Fair Service Curve) module.
-HFSC supports both link-sharing and guaranteed real-time services.
-H-FSC employs a service curve based QoS model, and its unique feature
-is an ability to decouple delay and bandwidth allocation.
-.It Cd option ALTQ_PRIQ
-Enables ALTQ's PRIQ (Priority Queuing) module.
-PRIQ implements a simple priority-based queuing.
-A higher priority class is always served first.
-.It Cd option ALTQ_WFQ
-Enables ALTQ's WFQ (Weighted Fair Queuing) module.
-WFQ implements a weighted-round robin scheduler for a set of queues.
-A weight can be assigned to each queue to give a different proportion
-of the link capacity.
-A hash function is used to map a flow to one of a set of queues.
-.It Cd option ALTQ_FIFOQ
-Enables ALTQ's FIFO queue module.
-FIFOQ is a simple drop-tail FIFO queue.
 .It Cd option ALTQ_RIO
 Enables ALTQ's RIO (RED with In/Oout) module.
 The original RIO has 2 sets of RED parameters; one for in-profile
@@ -903,19 +886,6 @@ Inside the network, IN packets receive preferential treatment by
 the RIO dropper.
 ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
 PHB of DiffServ (RFC2597).
-.It Cd option ALTQ_BLUE
-Enables ALTQ's Blue module.
-Blue is another active buffer management mechanism.
-.It Cd option ALTQ_FLOWVALVE
-Enables ALTQ's Flowvalve module.
-Flowvalve is a simple implementation of a RED penalty box that identifies
-and punishes misbehaving flows.
-.It Cd option ALTQ_CDNR
-Enables ALTQ's CDNR (diffserfv traffic conditioner) module.
-Traffic conditioners are components to meter, mark, or drop incoming
-packets according to some rules.
-As opposed to queuing disciplines, traffic conditioners handle incoming
-packets at an input interface.
 .It Cd option ALTQ_NOPCC
 Disables use of processor cycle counter (e.g., Pentium TSC on i386 and
 PCC on alpha) to measure time in ALTQ.
