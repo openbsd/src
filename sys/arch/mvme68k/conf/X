@@ -1,4 +1,4 @@
-#	$OpenBSD: X,v 1.1 1996/12/24 20:31:47 deraadt Exp $
+#	$OpenBSD: X,v 1.2 1997/02/11 02:55:10 deraadt Exp $
 
 machine		mvme68k m68k
 
@@ -107,4 +107,4 @@ sd*	at scsibus? target ? lun ?
 #st*	at scsibus? target ? lun ?
 #cd*	at scsibus? target ? lun ?
 
-wl0	at vmes0 addr 0xffabf000 ipl 4 vec 0x70
+wl0	at vmes0 addr 0xffabf000 ipl 3 vec 0x70
