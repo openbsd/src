@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_olf.h,v 1.6 1997/03/27 08:40:36 niklas Exp $	*/
+/*	$OpenBSD: exec_olf.h,v 1.7 1997/05/05 23:25:17 etheisen Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -84,15 +84,14 @@
 #define OOS_FREEBSD	3		/* FreeBSD */
 #define OOS_44BSD	4		/* 4.4BSD */
 #define OOS_LINUX	5		/* Linux */
-#define OOS_MACH	6		/* Mach */
-#define OOS_SVR4	7		/* AT&T System V Release 4 */
-#define OOS_ESIX	8		/* esix UNIX */
-#define OOS_SOLARIS	9		/* SunSoft Solaris */
-#define OOS_IRIX	10		/* SGI IRIX */
-#define OOS_SCO		11		/* SCO UNIX */
-#define OOS_DELL	13		/* DELL SVR4 */
-#define OOS_NCR		14		/* NCR SVR4 */
-#define OOS_NUM		15		/* Number of systems */
+#define OOS_SVR4	6		/* AT&T System V Release 4 */
+#define OOS_ESIX	7		/* esix UNIX */
+#define OOS_SOLARIS	8		/* SunSoft Solaris */
+#define OOS_IRIX	9		/* SGI IRIX */
+#define OOS_SCO		10		/* SCO UNIX */
+#define OOS_DELL	11		/* DELL SVR4 */
+#define OOS_NCR		12		/* NCR SVR4 */
+#define OOS_NUM		13		/* Number of systems */
 /*
  * Lowercase and numbers ONLY.
  * No whitespace or punc.
@@ -103,18 +102,18 @@
 #define OOSN_FREEBSD	"freebsd"	/* FreeBSD */
 #define OOSN_44BSD	"44bsd"		/* 4.4BSD */
 #define OOSN_LINUX	"linux"		/* Linux */
-#define OOSN_MACH	"mach"		/* Mach */
 #define OOSN_SVR4	"svr4"		/* AT&T System V Release 4 */
 #define OOSN_ESIX	"esix"		/* esix UNIX */
 #define OOSN_SOLARIS	"solaris"	/* SunSoft Solaris */
 #define OOSN_IRIX	"irix"		/* SGI IRIX */
 #define OOSN_SCO	"sco"		/* SCO UNIX */
 #define OOSN_DELL	"dell"		/* DELL SVR4 */
+#define OOSN_NCR	"ncr"		/* NCR SVR4 */
 #define ONAMEV 		{ OOSN_NULL, OOSN_OPENBSD, OOSN_NETBSD, \
 		 	  OOSN_FREEBSD, OOSN_44BSD, OOSN_LINUX, \
-		 	  OOSN_MACH, OOSN_SVR4, OOSN_ESIX, \
-		 	  OOSN_SOLARIS, OOSN_IRIX, OOSN_SCO, \
-		 	  OOSN_DELL, \
+		 	  OOSN_SVR4, OOSN_ESIX, OOSN_SOLARIS, \
+			  OOSN_IRIX, OOSN_SCO,  OOSN_DELL, \
+			  OOSN_NCR, \
 		 	0 }
 
 /* e_ident[] dynamic */
