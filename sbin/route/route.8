@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.40 2004/08/03 13:39:52 henning Exp $
+.\"	$OpenBSD: route.8,v 1.41 2004/08/10 20:02:04 jaredy Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -38,7 +38,7 @@
 .Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm route
-.Op Fl dnqSv
+.Op Fl dnqtv
 .Ar command
 .Oo
 .Op Ar modifiers
@@ -46,11 +46,20 @@
 .Oc
 .Sh DESCRIPTION
 .Nm
-is a utility used to manually manipulate the network routing tables.
-It normally is not needed, as a
+is a utility used to manually view and manipulate the network routing tables.
+Except for setting up the default route, it normally is not needed to
+manipulate routes, as a
 system routing table management daemon, such as
-.Xr routed 8 ,
+.Xr routed 8
+or
+.Xr bgpd 8 ,
 should tend to this task.
+.Pp
+.Nm
+can be used to modify nearly any aspect of the routing policy,
+except packet forwarding, which can be manipulated through the
+.Xr sysctl 8
+command.
 .Pp
 The
 .Nm
@@ -59,6 +68,8 @@ but a rich command language enables the user to specify
 any arbitrary request that could be delivered via the
 programmatic interface discussed in
 .Xr route 4 .
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Run in debug-only mode, i.e., don't actually modify the routing table.
@@ -71,10 +82,10 @@ may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations.)
 .It Fl q
 Suppress all output.
-.It Fl S
-Make the
-.Cm show
-command display the source selector part of the routes.
+.It Fl t
+Write routing messages to a fake device
+.Pa ( /dev/null )
+instead of a real routing socket to test route manipulation.
 .It Fl v
 (verbose) Print additional details.
 .El
@@ -86,35 +97,37 @@ utility provides several commands:
 .Bl -tag -width Fl -compact
 .It Cm add
 Add a route.
-.It Cm flush
-Remove all routes.
-.It Cm delete
-Delete a specific route.
 .It Cm change
 Change aspects of a route (such as its gateway).
+.It Cm delete
+Delete a specific route.
+.It Cm flush
+Remove all routes.
 .It Cm get
 Lookup and display the route for a destination.
-.It Cm show
-Print out the route table similar to "netstat -r" (see
-.Xr netstat 1 ) .
 .It Cm monitor
 Continuously report any changes to the routing information base,
 routing lookup misses, or suspected network partitionings.
+.It Cm show
+Print out the route table similar to "netstat -r" (see
+.Xr netstat 1 ) .
 .El
 .Pp
 The
-.Cm monitor
-command has the syntax
+.Cm get
+command has the syntax:
 .Bd -filled -offset indent
-.Nm route Op Fl n
-.Cm monitor
+.Nm route Op Fl nv
+.Cm get
+.Op Ar modifiers
+.Ar address
 .Ed
 .Pp
 The
 .Cm flush
-command has the syntax
+command has the syntax:
 .Bd -filled -offset indent
-.Nm route Op Fl n
+.Nm route Op Fl dnqtv
 .Cm flush
 .Op Ar family
 .Ed
@@ -126,29 +139,46 @@ command is specified,
 will
 .Dq flush
 the routing tables of all gateway entries.
-When the address family is specified by any of the
-.Fl ipx ,
-.Fl link ,
-.Fl x25 ,
-.Fl inet ,
-or
-.Fl inet6
-modifiers, only routes having destinations with addresses in the
+When the address family is specified by any one of the
+.Ar family
+modifiers (listed below), only routes having destinations with addresses
+in the
 delineated family will be deleted.
 .Pp
-The other commands have the following syntax:
+The
+.Cm monitor
+command has the syntax:
 .Bd -filled -offset indent
-.Nm route Op Fl n
-.Ar command
-.Op Fl net No \&| Fl host
-.Ar destination gateway
+.Nm route Op Fl \&dn
+.Cm monitor
 .Ed
 .Pp
-where
+The
+.Cm show
+command has the syntax:
+.Bd -filled -offset indent
+.Nm route Op Fl n
+.Cm show
+.Op Ar family
+.Ed
+.Pp
+The other commands have the syntax:
+.Bd -filled -offset indent
+.Nm route Op Fl dnqtv
+.Ar command
+.Op Ar modifiers
+.Ar destination gateway Op Ar netmask
+.Ed
+.Pp
 .Ar destination
-is the destination host or network and
+is the destination host or network,
 .Ar gateway
-is the next-hop intermediary via which packets should be routed.
+is the next-hop intermediary via which packets should be routed,
+and
+.Ar netmask
+behaves the same as the argument to the
+.Fl netmask
+modifier and is described below.
 Routes to a particular host may be distinguished from those to
 a network by interpreting the Internet address specified as the
 .Ar destination
@@ -162,6 +192,7 @@ Otherwise, type is chosen based on the following rules:
 .Pp
 The route is assumed to be to a network if any of the following apply to
 .Ar destination :
+.Pp
 .Bl -bullet -compact
 .It
 it is the word "default", equivalent to 0/0
@@ -169,8 +200,10 @@ it is the word "default", equivalent to 0/0
 it is an IPv4 address with less than 3 dots
 .It
 it is an IPv4 address with a
-.Dq /XX
-suffix (where XX is the number of bits in the network portion of the address
+.Dq / Ns Em XX
+suffix (where
+.Em XX
+is the number of bits in the network portion of the address
 and is less than 32)
 .It
 it is the symbolic name of a network.
@@ -178,7 +211,7 @@ it is the symbolic name of a network.
 .Pp
 If
 .Ar destination
-is a valid IP address or host name it is presumed to be a route to a host.
+is a valid IP address or host name, it is presumed to be a route to a host.
 .Pp
 If none of the above apply,
 .Nm
@@ -200,7 +233,7 @@ since it is a complete IP address with 3 dots.
 In this case the number of bits in the network portion of the address must
 be explicitly listed, for example
 .Li 192.168.2.0/24 ,
-.Li 192.168.2/24
+.Li 192.168.2/24 ,
 or alternately
 .Li 192.168.2 .
 .Pp
@@ -212,6 +245,32 @@ modifier should be specified;
 the gateway given is the address of this host on the common network,
 indicating the interface to be used for transmission.
 .Pp
+To allow addresses to be interpreted as belonging to a particular address
+family (as well as for use in the
+.Ar family
+arguments to some commands), the following modifiers may be used:
+.Pp
+.Bl -tag -width -inet6 -compact
+.It Fl inet
+Internet Protocol version 4 (IPv4) addresses
+(see
+.Xr ip 4 )
+.It Fl inet6
+Internet Protocol version 6 (IPv6) addresses
+(see
+.Xr ip6 4 )
+.It Fl ipx
+Novell's Internet Packet Exchange (IPX) addresses
+.It Fl link
+Hardware (link-level) addresses
+.It Fl sa
+Actual
+.Vt sockaddr
+data, in hexadecimal format
+.It Fl x25
+CCITT X.25 addresses
+.El
+.Pp
 The optional modifier
 .Fl link
 specifies that all subsequent addresses are specified as link-level addresses,
@@ -222,7 +281,7 @@ The optional
 .Fl netmask
 qualifier is intended to manually add subnet routes with
 netmasks different from that of the implied network interface
-(as would otherwise be communicated using the OSPF or ISIS routing protocols).
+(as would otherwise be communicated using a routing protocol).
 One specifies an additional ensuing address parameter
 (to be interpreted as a network mask).
 The implicit network mask generated in the
@@ -234,7 +293,7 @@ parameter.
 .Fl prefixlen
 is also available for a similar purpose, for IPv6/v4.
 .Pp
-The
+The optional
 .Fl mpath
 modifier needs to be specified with the
 .Cm add
@@ -245,31 +304,38 @@ Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
 These flags may be set (or sometimes cleared)
 by indicating the following corresponding modifiers:
-.Bd -literal
--cloning   RTF_CLONING    - generates a new route on use
--xresolve  RTF_XRESOLVE   - emit mesg on use (for external lookup)
--iface    ~RTF_GATEWAY    - destination is directly reachable
--static    RTF_STATIC     - manually added route
--nostatic ~RTF_STATIC     - pretend route added by kernel or daemon
--reject    RTF_REJECT     - emit an ICMP unreachable when matched
--blackhole RTF_BLACKHOLE  - silently discard pkts (during updates)
--proto1    RTF_PROTO1     - set protocol specific routing flag #1
--proto2    RTF_PROTO2     - set protocol specific routing flag #2
--llinfo    RTF_LLINFO     - validly translates proto addr to link addr
-.Ed
+.Bl -column blackhole RTF_BLACKHOLE
+.It Fl blackhole Ta Dv RTF_BLACKHOLE Ta "silently discard pkts (during updates)"
+.It Fl cloning   Ta Dv RTF_CLONING   Ta "generates a new route on use"
+.It Fl iface     Ta Dv ~RTF_GATEWAY  Ta "destination is directly reachable"
+.It Fl llinfo    Ta Dv RTF_LLINFO    Ta "validly translates proto addr to link addr"
+.It Fl mpath     Ta Dv RTF_MPATH     Ta "multiple gateways for a destination exist"
+.It Fl nostatic  Ta Dv ~RTF_STATIC   Ta "pretend route added by kernel or daemon"
+.It Fl proto1    Ta Dv RTF_PROTO1    Ta "set protocol specific routing flag #1"
+.It Fl proto2    Ta Dv RTF_PROTO2    Ta "set protocol specific routing flag #2"
+.It Fl reject    Ta Dv RTF_REJECT    Ta "emit an ICMP unreachable when matched"
+.It Fl static    Ta Dv RTF_STATIC    Ta "manually added route"
+.It Fl xresolve  Ta Dv RTF_XRESOLVE  Ta "emit mesg on use (for external lookup)"
+.El
 .Pp
 The optional modifiers
-.Fl rtt ,
-.Fl rttvar ,
-.Fl sendpipe ,
-.Fl recvpipe ,
-.Fl mtu ,
-.Fl hopcount ,
-.Fl expire ,
+.Fl mtu
 and
-.Fl ssthresh
+.Fl expire
 provide initial values to quantities maintained in the routing entry
-by transport level protocols, such as TCP or TP4.
+by transport level protocols, such as TCP (see
+.Xr tcp 4 ) .
+They have the following meanings:
+.Pp
+.Bl -tag -width "-ssthresh n" -compact
+.It Fl expire Ar n
+Lifetime for route (e.g., if generated by a redirect).
+.It Fl mtu Ar n
+Maximum transmission unit
+.Tn ( MTU )
+size for this path.
+.El
+.Pp
 These may be individually locked by preceding each such modifier to
 be locked by
 the
@@ -290,6 +356,23 @@ or
 .Fl ifa
 modifiers may be used to determine the interface or interface address.
 .Pp
+The optional
+.Fl genmask
+modifier specifies that a cloning mask is present.
+This specifies the mask applied when determining if a child route should
+be created.
+It is only applicable to network routes with the
+.Dv RTF_CLONING
+flag set.
+.Pp
+The optional
+.Fl label
+modifier specifies on route addition or modification that the route
+should have the given
+.Em label
+associated with it.
+Route labels can be used to attach arbitrary information to a route.
+.Pp
 All symbolic names specified for a
 .Ar destination
 or
@@ -301,7 +384,9 @@ If this lookup fails,
 is then used to interpret the name as a valid host name.
 .Pp
 .Nm
-uses a routing socket and the new message types
+uses a routing socket (see
+.Xr route 4 )
+and the message types
 .Dv RTM_ADD ,
 .Dv RTM_DELETE ,
 .Dv RTM_GET ,
@@ -310,9 +395,13 @@ and
 As such, only the superuser may modify
 the routing tables.
 .Sh FILES
-.Bl -tag -width "/etc/mygate" -compact
+.Bl -tag -width "/etc/networks" -compact
+.It Pa /etc/hosts
+host name database
 .It Pa /etc/mygate
-Default gateway address.
+default gateway address
+.It Pa /etc/networks
+network name database
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -347,19 +436,40 @@ low on resources and was unable to allocate memory
 to create the new entry.
 .El
 .Sh SEE ALSO
+.Xr netstat 1 ,
+.Xr gethostbyname 3 ,
+.Xr getnetbyname 3 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
+.Xr tcp 4 ,
+.Xr hosts 5 ,
 .Xr mygate 5 ,
-.Xr routed 8
+.Xr networks 5 ,
+.Xr bgpd 8 ,
+.Xr routed 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
 IPv6 support was added by WIDE/KAME project.
+.Pp
+The
+.Fl recvpipe ,
+.Fl hopcount ,
+.Fl sendpipe ,
+.Fl ssthres ,
+.Fl rtt ,
+and
+.Fl rttvar
+modifiers used to be used to initialize various quantities in routing
+table entries.
+The routing system no longer uses these values and the modifiers
+exist now only for compatibility with other operating systems.
 .Sh BUGS
 The first paragraph may have slightly exaggerated
-.Xr routed Ns 's
+.Xr routed 8 Ns 's
 abilities.
 .Pp
 Some uses of the
