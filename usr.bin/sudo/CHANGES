@@ -1312,7 +1312,7 @@ Sudo 1.6.3p2 released.
 
 Sudo 1.6.3p3 released.
 
-412) Fixed a case where a string was used after it has been freed.
+412) Fixed a case where a string was used after it had been freed.
 
 Sudo 1.6.3p4 released.
 
@@ -1321,3 +1321,49 @@ Sudo 1.6.3p4 released.
 414) Do not write NUL when writing passwd prompt; hag@linnaean.org.
 
 Sudo 1.6.3p5 released.
+
+415) Visudo now checks for the existence of an editor and gives a sensible
+     error if it does not exist.
+
+416) The path to the editor for visudo is now a colon-separated list of
+     allowable editors.  If the user has $EDITOR set and it matches
+     one of the allowed editors that editor will be used.  If not,
+     the first editor that actually exists is used.
+
+417) Visudo now does its own fork/exec instead of calling system(3).
+
+418) Call clean_env very early in main() for paranoia's sake.  Idea from
+     Marc Esipovich.
+
+419) Allow special characters (including '#') to be embedded in pathnames
+     if quoted by a '\\'.  The quoted chars will be dealt with by fnmatch().
+     Unfortunately, 'sudo -l' still prints the '\\'.
+
+420) Added always_set_home option.
+
+421) Strip NLSPATH and PATH_LOCALE out from the environment to prevent
+     reading of protected files by a less priviledged user.
+
+422) Add support for BSD authentication and associated -a flag.
+
+423) Added check for _innetgr(3) since NCR systems have this instead
+     of innetgr(3).
+
+424) Added stay_setuid option for systems that have libraries that perform
+     extra paranoia checks in system libraries for setuid programs.
+
+425) Environment munging is now done by hand.  We build up a new environment
+     and assign it to "environ".  This means we don't rely on getenv(3),
+     putenv(3), or setenv(3).
+
+426) Added env_reset and env_keep options.  This allows the sysadmin to
+     force commands to run with a clean environment.  Any variable in
+     the env_keep list will not get cleared when the environment is reset
+     *or* purged of dangerous vars (e.g. LD_*).
+
+427) Added a class of environment variables that are only cleared if they
+     contain '/' or '%' characters.
+
+428) Fix word splitting bug that caused a segv for very long command line args.
+
+429) Fix negation of path-type Defaults entries in a boolean context.

@@ -408,7 +408,7 @@ set_default(var, val, op)
 		    return(FALSE);
 		}
 	    }
-	    if ((cur->type & T_PATH) && *val != '/') {
+	    if ((cur->type & T_PATH) && val && *val != '/') {
 		(void) fprintf(stderr,
 		    "%s: values for `%s' must start with a '/'\n", Argv[0],
 		    var);
