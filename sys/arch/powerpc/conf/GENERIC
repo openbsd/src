@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2001/02/18 01:11:15 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.28 2001/03/29 19:47:10 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -17,6 +17,7 @@ option		PPC_MPC106_BUG
 option		PCIVERBOSE
 option		USBVERBOSE
 option		WSEMUL_NO_DUMB
+option 		FFS_SOFTUPDATES
 
 include "../../../conf/GENERIC"
 
@@ -77,11 +78,19 @@ bm*	at obio?			# bmac ethernet
 #mesh*	at obio? flags 0xffff		# MESH SCSI
 #nvram*	at obio?			# nvram
 adb*	at obio?			# Apple Desktop Bus
+gpio*	at obio?			# GPIO, PMU interrupt router.
+gpio*	at gpio?			# GPIO, PMU interrupt router.
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
+wskbd*		at akbd? console ?
 ams*	at adb?				# ADB mouse
+wsmouse* at ams?			
+abtn*	at adb?				# ADB button?
 #zsc*	at obio?
 #zstty*	at zsc? channel ?
+
+#awacs*  at obio?                        # Apple audio device
+#audio* at awacs?
 
 
 #### SCSI attachment points
