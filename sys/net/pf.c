@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.392 2003/09/26 21:44:08 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.393 2003/10/02 05:47:30 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4481,7 +4481,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 
 	m1 = m0;
 	error = ip_fragment(m0, ifp, ifp->if_mtu);
-	if (error == EMSGSIZE)
+	if (error)
 		goto bad;
 
 	for (m0 = m1; m0; m0 = m1) {

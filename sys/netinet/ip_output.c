@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.156 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.157 2003/10/02 05:47:29 itojun Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -717,7 +717,7 @@ sendit:
 	}
 
 	error = ip_fragment(m, ifp, mtu);
-	if (error == EMSGSIZE)
+	if (error)
 		goto bad;
 
 	for (; m; m = m0) {
@@ -798,8 +798,9 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			mhip->ip_hl = mhlen >> 2;
 		}
 		m->m_len = mhlen;
-		mhip->ip_off = ((off - hlen) >> 3) + (ip->ip_off & ~IP_MF);
-		if (ip->ip_off & IP_MF)
+		mhip->ip_off = ((off - hlen) >> 3) +
+		    (ntohs(ip->ip_off) & ~IP_MF);
+		if (ip->ip_off & htons(IP_MF))
 			mhip->ip_off |= IP_MF;
 		if (off + len >= ntohs(ip->ip_len))
 			len = ntohs(ip->ip_len) - off;
