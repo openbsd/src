@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.3 1999/07/23 12:39:11 deraadt Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.4 1999/09/07 10:05:15 niklas Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.8.6.1 1999/04/23 15:40:56 perry Exp $	*/
 
 /*-
@@ -94,9 +94,10 @@ int	icsphymatch __P((struct device *, struct cfdata *, void *));
 int	icsphymatch __P((struct device *, void *, void *));
 #endif
 void	icsphyattach __P((struct device *, struct device *, void *));
+int	icsphydetach __P((struct device *, int));
 
 struct cfattach icsphy_ca = {
-	sizeof(struct mii_softc), icsphymatch, icsphyattach
+	sizeof(struct mii_softc), icsphymatch, icsphyattach, icsphydetach
 };
 
 #ifdef __OpenBSD__
@@ -160,6 +161,14 @@ icsphyattach(parent, self, aux)
 		mii_add_media(mii, sc->mii_capabilities,
 		    sc->mii_inst);
 #undef ADD
+}
+
+int
+icsphydetach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	return (0);
 }
 
 int
