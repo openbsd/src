@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.2 2003/10/22 19:21:57 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.3 2003/10/22 19:35:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -82,10 +82,16 @@ priv_init(void)
 		err(1, "fork() failed");
 
 	if (!child_pid) {
+		gid_t gidset[1];
+
 		/* Child - drop privileges and return */
 		if (chroot(pw->pw_dir) != 0)
 			err(1, "unable to chroot");
 		chdir("/");
+
+		gidset[0] = pw->pw_gid;
+		if (setgroups(1, gidset) == -1)
+			err(1, "setgroups() failed");
 		if (setegid(pw->pw_gid) == -1)
 			err(1, "setegid() failed");
 		if (setgid(pw->pw_gid) == -1)
