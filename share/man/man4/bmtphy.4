@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bmtphy.4,v 1.4 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: bmtphy.4,v 1.5 2005/02/05 04:39:54 brad Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -36,7 +36,11 @@
 The
 .Nm
 driver supports the Broadcom Mini-Theta BCM5201 and BCM5202 10/100
-Ethernet PHYs, as well as the BCM5221 100baseTX Ethernet PHY.
+Ethernet PHYs and their derivatives such as BCM5214, BCM5221, BCM5222,
+and BCM4401.
+It also supports the internal PHY on the 3Com 3C905C-TX 10/100 Ethernet
+interface, and the internal PHY on some 3Com 3C905B-TX 10/100 Ethernet
+interfaces.
 These PHYs are found on a variety of high-performance Ethernet interfaces.
 .Sh SEE ALSO
 .Xr exphy 4 ,
