@@ -1,5 +1,5 @@
-/*	$OpenBSD: cache.c,v 1.8 1999/07/05 16:09:05 art Exp $	*/
-/*	$NetBSD: cache.c,v 1.33 1997/07/29 09:41:56 fair Exp $ */
+/*	$OpenBSD: cache.c,v 1.9 1999/07/20 11:07:09 art Exp $	*/
+/*	$NetBSD: cache.c,v 1.34 1997/09/26 22:17:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -129,8 +129,6 @@ ms1_cache_enable()
 
 	/* Turn on caches */
 	sta(SRMMU_PCR, ASI_SRMMU, pcr | MS1_PCR_DCE | MS1_PCR_ICE);
-
-	cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
 
