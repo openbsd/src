@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.h,v 1.4 1999/08/30 23:38:11 d Exp $	*/
+/*	$OpenBSD: server.h,v 1.5 1999/12/12 15:16:20 d Exp $	*/
 /*	$NetBSD: hunt.h,v 1.5 1998/09/13 15:27:28 hubertf Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ struct regen_def {
 
 struct spawn {
 	int		fd;
-	int		state;
+	int		reading_msg;
 	struct sockaddr source;
 	socklen_t	sourcelen;
 	u_int32_t	uid;
@@ -178,6 +178,10 @@ struct spawn {
 	int		msglen;
 	struct spawn *	next;
 	struct spawn **	prevnext;
+	int		inlen;
+	char		inbuf[ sizeof (u_int32_t) + NAMELEN +
+			       sizeof (u_int8_t) + sizeof (u_int32_t) +
+			       NAMELEN + sizeof (u_int32_t) ];
 };
 
 extern struct spawn *	Spawn;
