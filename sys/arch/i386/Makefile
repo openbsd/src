@@ -8,7 +8,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	boot
+SUBDIR=	boot boot.dos isa/pcvt/Util
 
 TI386=	../i386/tags
 SI386=	../i386/eisa/*.[ch] ../i386/i386/*.[ch] ../i386/include/*.h \
@@ -30,6 +30,6 @@ links:
 	-for i in ${DI386}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-obj: _SUBDIRUSE
+obj:	_SUBDIRUSE
 
 .include <bsd.prog.mk>
