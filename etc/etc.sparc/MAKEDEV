@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.55 1999/01/04 03:47:35 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.56 1999/02/01 00:35:53 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -81,6 +81,7 @@
 #	tun*	network tunnel driver
 #	*random	inkernal random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
+#	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp*	bpp
 #	xfs*	XFS filesystem devices
 #	ipl	IP filter log
@@ -601,6 +602,26 @@ pty*)
 		umask 77
 		;;
 	esac
+	;;
+
+spif*)
+	case $unit in
+	0)	nam=j;;
+	1)	nam=k;;
+	2)	nam=l;;
+	*)	echo "bad unit for $i: $unit"; exit 127;;
+	esac
+	rm -f bpps${unit}? tty${nam}?
+	offset=`expr $unit \* 64`
+	n=0
+	while [ $n -lt 8 ]
+	do
+		name=$nam`hex $n`
+		mknod tty$name c 102 `add $offset $n`
+		chown uucp.wheel tty$name
+		n=`add $n 1`
+	done
+	mknod bpps${unit}0 c 103 `add $offset 0`
 	;;
 
 magma*)
