@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.144 2004/01/14 13:38:21 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.145 2004/01/15 09:46:21 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3787,8 +3787,9 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 	tcpstat.tcps_accepts++;
 
-	tcp_mss(tp, sc->sc_peermaxseg);
-
+	tcp_mss(tp, sc->sc_peermaxseg);	 /* sets t_maxseg */
+	if (sc->sc_peermaxseg)
+		tcp_mss_update(tp);
 #if 0
 	/*
 	 * XXX
@@ -3950,7 +3951,6 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 #else
 	if (optp) {
 #endif
-		tb.t_inpcb = tp->t_inpcb; /* XXX */
 		tb.pf = tp->pf;
 #ifdef TCP_SACK
 		tb.sack_disable = tcp_do_sack ? 0 : 1;
@@ -3960,16 +3960,8 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 		if (tp->t_flags & TF_SIGNATURE)
 			tb.t_flags |= TF_SIGNATURE;
 #endif
-
 		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi))
 			return (0);
-
-		if (optp) {
-			/* Update t_maxopd and t_maxseg after all options are processed */
-			(void) tcp_mss(tp, oi->maxseg);	/* sets t_maxseg */
-			if (oi->maxseg)
-				tcp_mss_update(tp);
-		}
 	} else
 		tb.t_flags = 0;
 
