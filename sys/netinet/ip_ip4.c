@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.46 2000/01/13 05:03:45 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.47 2000/01/13 06:02:31 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -100,9 +100,9 @@ struct ip4stat ip4stat;
  * Really only a wrapper for ip4_input(), for use with IPv6.
  */
 int
-ip4_input6(struct mbuf *m, int *offp, int proto)
+ip4_input6(struct mbuf **m, int *offp, int proto)
 {
-    ip4_input(m, *offp);
+    ip4_input(*m, *offp);
     return IPPROTO_DONE;
 }
 #endif /* INET6 */
