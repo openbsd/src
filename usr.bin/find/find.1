@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.39 2003/06/12 04:30:07 millert Exp $
+.\"	$OpenBSD: find.1,v 1.40 2003/09/02 18:50:06 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -284,7 +284,7 @@ Special shell pattern matching characters
 .Ql \&] ,
 .Ql * ,
 and
-.Ql ? )
+.Ql \&? )
 may be used as part of
 .Ar pattern .
 These characters may be matched explicitly by escaping them with a
@@ -320,7 +320,7 @@ Special shell pattern matching characters
 .Ql \&] ,
 .Ql * ,
 and
-.Ql ? )
+.Ql \&? )
 may be used as part of
 .Ar pattern .
 These characters may be matched explicitly by escaping them with a
@@ -613,10 +613,10 @@ In particular, the characters
 .Ql * ,
 .Ql [ ,
 .Ql \&] ,
-.Ql ? ,
+.Ql \&? ,
 .Ql ( ,
 .Ql \&) ,
-.Ql ! ,
+.Ql \&! ,
 .Ql \e ,
 and
 .Ql \&;
@@ -628,7 +628,7 @@ names and the
 it is difficult to specify files named
 .Dq -xdev
 or
-.Dq ! .
+.Dq \&! .
 These problems are handled by the
 .Fl f
 option and the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.54 2003/07/14 12:29:22 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.55 2003/09/02 18:50:06 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -304,13 +304,13 @@ operator is a BSD extension.
 .Pp
 As an extension, targets and sources may contain the shell wildcard
 expressions
-.Ql ? ,
+.Ql \&? ,
 .Ql * ,
 .Ql []
 and
 .Ql {} .
 The expressions
-.Ql ? ,
+.Ql \&? ,
 .Ql *
 and
 .Ql []
@@ -669,7 +669,7 @@ Replaces each word in the variable with its upper case equivalent.
 Select only those words that match the rest of the modifier.
 The standard shell wildcard characters
 .Pf ( Ql * ,
-.Ql ? ,
+.Ql \&? ,
 and
 .Ql [] )
 may

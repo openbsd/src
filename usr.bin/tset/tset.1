@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.13 2003/06/10 09:12:12 jmc Exp $
+.\"	$OpenBSD: tset.1,v 1.14 2003/09/02 18:50:07 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ If the terminal type was not specified on the command line, the
 .Fl m
 option mappings are then applied (see below for more information).
 Then, if the terminal type begins with a question mark
-.Pq Ql ? ,
+.Pq Ql \&? ,
 the user is prompted for confirmation of the terminal type.
 An empty response confirms the type, or another type can be entered to
 specify a new type.
@@ -270,7 +270,7 @@ The operator may be any combination of:
 .Ql < ,
 .Ql @ ,
 and
-.Ql ! ;
+.Ql \&! ;
 .Ql >
 means greater than,
 .Ql <
@@ -278,7 +278,7 @@ means less than,
 .Ql @
 means equal to,
 and
-.Ql !
+.Ql \&!
 inverts the sense of the test.
 The baud rate is specified as a number and is compared with the speed
 of the standard error output (which should be the control terminal).
@@ -330,7 +330,7 @@ option argument be placed within single quote characters, and that
 users insert a backslash character
 .Pq Ql \e
 before any exclamation marks
-.Pq Ql ! .
+.Pq Ql \&! .
 .Sh ENVIRONMENT
 The
 .Nm tset

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.13 2003/06/30 23:59:00 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.14 2003/09/02 18:50:06 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -195,7 +195,7 @@ and are built using the operators
 .Ic + \- * / % ^
 (exponentiation), and concatenation (indicated by whitespace).
 The operators
-.Ic ! ++ \-\- += \-= *= /= %= ^= > >= < <= == != ?:
+.Ic \&! ++ \-\- += \-= *= /= %= ^= > >= < <= == != ?:
 are also available in expressions.
 Variables may be scalars, array elements
 (denoted
@@ -385,7 +385,7 @@ returns 1 for a successful input,
 .Pp
 Patterns are arbitrary Boolean combinations
 (with
-.Ic "! || &&" )
+.Ic "\&! || &&" )
 of regular expressions and
 relational expressions.
 Regular expressions are as in

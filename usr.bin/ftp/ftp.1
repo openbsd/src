@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.40 2003/07/15 10:53:02 jmc Exp $
+.\" 	$OpenBSD: ftp.1,v 1.41 2003/09/02 18:50:06 jmc Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -828,7 +828,7 @@ command should be an
 .Ic open ,
 to establish the secondary control connection.
 Enter the command
-.Ic proxy ?
+.Ic proxy ?\&
 to see other ftp commands executable on the
 secondary connection.
 The following commands behave differently when prefaced by
@@ -1088,7 +1088,7 @@ if verbose is on, when a file transfer completes, statistics
 regarding the efficiency of the transfer are reported.
 By default,
 verbose is on.
-.It Ic ? Op Ar command
+.It Ic \&? Op Ar command
 A synonym for
 .Ic help .
 .El

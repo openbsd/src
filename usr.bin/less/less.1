@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.5 2003/08/18 17:19:38 millert Exp $
+.\"	$OpenBSD: less.1,v 1.6 2003/09/02 18:50:06 jmc Exp $
 .\"
 .\" Copyright (C) 2002  Mark Nudelman
 .\"
@@ -31,7 +31,7 @@
 .Nd view files on a crt
 .Sh SYNOPSIS
 .Nm less No | Nm more
-.Fl ?
+.Fl \&?
 .Nm less No | Nm more
 .Fl -help
 .Nm less No | Nm more
@@ -231,7 +231,7 @@ The search starts at the second line displayed
 Certain characters are special if entered at the beginning of the pattern;
 they modify the type of search rather than become part of the pattern:
 .Bl -tag -width Ds
-.It Ic ^N | !
+.It Ic ^N | \&!
 Search for lines which do NOT match the pattern.
 .It Ic ^E | *
 Search multiple files.
@@ -256,7 +256,7 @@ The search starts at the line immediately before the top line displayed.
 .Pp
 Certain characters are special, as in the / command:
 .Bl -tag -width Ds
-.It Ic ^N | !
+.It Ic ^N | \&!
 Search for lines which do NOT match the pattern.
 .It Ic ^E | *
 Search multiple files.
@@ -436,7 +436,7 @@ is defined.
 See also the discussion of LESSEDIT under the section on
 .Sx PROMPTS
 below.
-.It Ic ! Ar shell-command
+.It Ic \&! Ar shell-command
 Invokes a shell to run the shell-command given.
 A percent sign (%) in the command is replaced by the name of the current file.
 A pound sign (#) is replaced by the name of the previously examined file.
@@ -515,7 +515,7 @@ with dollar sign between them:
 .Pp
 .Dl LESS="-Ps--More--$-C -e"
 .Bl -tag -width XXXX
-.It Fl ? | -help
+.It Fl \&? | -help
 This option displays a summary of the commands accepted by
 .Nm
 (the same as the h command).
@@ -1537,7 +1537,7 @@ is set to 1,
 runs in a "secure" mode.
 This means these features are disabled:
 .Bl -tag -width Ds
-.It !
+.It \&!
 The shell command.
 .It |
 The pipe command.
