@@ -1,0 +1,349 @@
+#	$OpenBSD: GENERIC,v 1.1 2004/02/01 05:12:54 drahn Exp $
+# $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine	cats	arm
+
+include "../../../conf/GENERIC"
+
+options	ARM32
+options FOOTBRIDGE_INTR
+
+# estimated number of users
+
+maxusers	32
+
+# Standard system options
+
+#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+#options 	INSECURE	# disable kernel securelevel
+
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+# CPU options
+
+# For StrongARM systems
+options 	CPU_SA110	# Support the SA110 core
+
+# FPA options
+
+#options 	ARMFPE		# ARM Ltd FPE
+
+
+
+
+# Compatibility options
+
+option WSDISPLAY_COMPAT_USL		# VT handling
+option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+option WSDISPLAY_DEFAULTSCREENS=6	# can get raw scancodes
+option WSDISPLAY_COMPAT_PCVT		# can get raw scancodes
+
+
+config		bsd	swap generic
+
+# The main bus device
+mainbus0 at root
+
+# The boot cpu
+cpu0 at mainbus?
+
+# Core logic
+footbridge0	at mainbus?
+
+# footbridge uart
+fcom0	at footbridge?
+
+# system clock via footbridge
+#clock*	at footbridge?
+
+# time-of-day device via footbridge or RTC
+todclock0	at todservice?
+
+# PCI bus support
+# PCI bus via footbridge
+pci0	at footbridge?			# PCI bus
+
+pci*	at ppb? bus ?
+
+option          PCIVERBOSE
+option          USBVERBOSE
+
+# PCI bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+#puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+
+# PCI serial interfaces
+#com*	at puc? port ?			# 16x50s on "universal" comm boards
+#cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+
+# PCI parallel printer interfaces
+#lpt*	at puc? port ?			# || ports on "universal" comm boards
+
+# PCI SCSI Controllers and Buses
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
+scsibus* at adv?
+#adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
+#scsibus* at adw?
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
+scsibus* at ahc?
+#bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#scsibus* at bha?
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+scsibus* at iha?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+scsibus* at pcscp?
+siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+scsibus* at siop?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI auto-changers
+#uk*	at scsibus? target ? lun ?	# SCSI unknown device
+#ss*	at scsibus? target ? lun ?	# SCSI scanner
+
+# PCI IDE Controllers and Devices
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide* at pci? dev ? function ? flags 0x0000
+
+# IDE drives
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*	at pciide? channel ? drive ? flags 0x0000	# the drives themselves
+
+# ATAPI bus support
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
+
+# PCI network interfaces
+#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
+#ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ne*	at pci? dev ? function ?	# NE2000 compat ethernet
+#ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+dc*	at pci? dev ? function ?	# DECchip 21x4x and clones
+de*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+#lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+
+# MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+#icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+#iophy*	at mii? phy ?			# Intel 82553 PHYs
+#lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+#nsphyter* at mii? phy ?		# NS83843 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+#tlphy*	at mii? phy ?			# ThunderLAN PHYs
+#tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# USB Controller and Devices
+
+# PCI USB controllers
+ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse*	at ums?
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ?
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
+ucom*	at umodem?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+atapiscsi* at umass?
+scsibus* at umass?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?
+audio*	at uaudio?
+
+# USB MIDI
+umidi*	at uhub? port ? configuration ?
+midi*	at umidi?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Prolofic PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# Serial adapters
+# FTDI FT8U100AX serial adapter
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
+
+# USB scanners
+uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+scsibus* at usscanner?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
+
+# USB Generic driver
+ugen* at uhub? port ?
+
+# Audio Devices
+
+# PCI audio devices
+#eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#sv*	at pci? dev ? function ?	# S3 SonicVibes
+
+# Audio support
+#audio*	at eap?
+#audio*	at sv?
+
+vga*		at pci?
+wsdisplay*	at vga? console ?
+
+# ISA bus bridging
+
+pcib*	at pci? dev ? function ?	# PCI-ISA bridge
+isa*	at pcib?			# ISA bus
+
+# ISA Plug-and-Play bus support
+#isapnp0	at isa?
+
+# wscons
+pckbc0	at isa?			# pc keyboard controller
+pckbd*	at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+wskbd*		at pckbd? console ?
+wsmouse*	at pms?
+
+pcppi0	at isa?
+sysbeep0	at pcppi?
+
+# ISA Plug-and-Play serial interfaces
+#com*	at isapnp?			# Modems and serial boards
+
+# ISA Plug-and-Play network interfaces
+#ep*	at isapnp?			# 3Com 3c509 Ethernet
+
+# ISA serial interfaces
+com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+#com2	at isa? port 0x3e8 irq 9
+#com3	at isa? port 0x2e8 irq 10
+
+# ISA parallel printer interfaces
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+lpt1	at isa? port 0x278 irq 5
+#lpt2	at isa? port 0x3bc
+
+# ISA floppy
+#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc1	at isa? port 0x370 irq ? drq ?
+#fd*	at fdc? drive ?			# the drives themselves
+
+# ISA network interface
+#ne0	at isa? port 0x280 irq 9
+#ne1	at isa? port 0x300 irq 10
+#ep*	at isa? port ? irq ?
+
+# The spkr driver provides a simple tone interface to the built in speaker.
+spkr0	at pcppi?			# PC speaker
+
+ds1687rtc0	at isa? port 0x72		# Dallas RTC
+
+# ISA Plug-and-Play audio devices
+#ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
+#sb*	at isapnp?			# SoundBlaster-compatible audio
+#wss*	at isapnp?			# Windows Sound System
+
+# MPU 401 UARTs
+#mpu*	at sb?
+
+# MIDI support
+midi*	at pcppi?		# MIDI interface to the PC speaker
+#midi*	at mpu?			# MPU 401
+
+# Joysticks
+
+# ISA Plug-and-Play joysticks
+#joy*	at isapnp?			# Game ports (usually on audio cards)
+
+# ISA joysticks. Probe is a little strange; add only if you have one.
+#joy0	at isa? port 0x201
+
+# Pseudo-Devices
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
+pseudo-device	crypto		1
