@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.13 1998/06/02 09:54:20 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.14 1998/06/02 18:45:33 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -338,7 +338,7 @@ sb	PNPB003	#Sound Blaster 16-compatible sound device
 #	PNPB019	#MediaVision Pro Audio Spectrum Basic
 		#(no Trantor SCSI, Thunder chip Disabled)
 #	PNPB020	#Yamaha OPL3-compatible FM synthesizer device
-#	PNPB02F	#Joystick/Game port
+joy	PNPB02F	#Joystick/Game port
 
 #***** Modems - PNPCxxx-Dxxx****************************
 com	PNPC000	#Compaq 14400 Modem (TBD)
