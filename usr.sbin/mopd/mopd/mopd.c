@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.11 2004/04/15 21:42:53 henning Exp $ */
+/*	$OpenBSD: mopd.c,v 1.12 2004/05/12 10:43:44 henning Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: mopd.c,v 1.11 2004/04/15 21:42:53 henning Exp $";
+    "$OpenBSD: mopd.c,v 1.12 2004/05/12 10:43:44 henning Exp $";
 #endif
 
 /*
@@ -118,6 +118,7 @@ main(int argc, char *argv[])
 
 	/* All error reporting is done through syslogs. */
 	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
+	tzset();
 
 	if ((pw = getpwnam("_mopd")) == NULL)
 		err(1, "getpwnam");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.19 2004/05/04 21:23:10 deraadt Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.20 2004/05/12 10:41:08 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -141,6 +141,8 @@ main(int argc, char *argv[])
 		sp->to.sin_family = AF_INET;
 		sp->to.sin_len = sizeof sp->to;
 	}
+
+	tzset();
 
 	time(&cur_time);
 	discover_interfaces(interfaces);
