@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 1996/06/11 10:07:13 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.8 1996/12/24 20:29:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1134,6 +1134,7 @@ hardintr(pc, evec, frame)
 	int vec = (evec & 0xfff) >> 2;	/* XXX should be m68k macro? */
 	extern u_long intrcnt[];	/* XXX from locore */
 	struct intrhand *ih;
+	int count = 0;
 	int r;
 
 	cnt.v_intr++;
@@ -1141,9 +1142,10 @@ hardintr(pc, evec, frame)
 	for (ih = intrs[vec]; ih; ih = ih->ih_next) {
 		r = (*ih->ih_fn)(ih->ih_wantframe ? frame : ih->ih_arg);
 		if (r > 0)
-			return;
+			count++;
 	}
-	return (straytrap(pc, evec));
+	if (count == 0)
+		return (straytrap(pc, evec));
 }
 #endif /* !INTR_ASM */
 
