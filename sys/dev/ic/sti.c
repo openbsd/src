@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.36 2004/09/14 22:27:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -260,6 +260,17 @@ sti_attach_common(sc)
 
 	cc = &sc->sc_cfg;
 	bzero(cc, sizeof (*cc));
+	cc->ext_cfg = &sc->sc_ecfg;
+	bzero(&cc->ext_cfg, sizeof(*cc->ext_cfg));
+	if (dd->dd_stimemreq) {
+		sc->sc_ecfg.addr = malloc(dd->dd_stimemreq, M_DEVBUF, M_NOWAIT);
+		if (!sc->sc_ecfg.addr) {
+			printf("cannot allocate %d bytes for STI\n",
+			    dd->dd_stimemreq);
+			uvm_km_free(kernel_map, sc->sc_code, round_page(size));
+			return;
+		}
+	}
 	{
 		int i = dd->dd_reglst;
 		u_int32_t *p;
