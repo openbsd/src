@@ -127,6 +127,7 @@
 ./var/games/tetris.scores
 ./var/log/authlog
 ./var/log/daemon
+./var/log/failedlogin
 ./var/log/ftpd
 ./var/log/lastlog
 ./var/log/lpd-errs
