@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.10 2002/04/29 01:34:58 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.11 2002/04/29 22:07:56 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ struct wsscreen_descr vgafb_stdscreen = {
 	0, 0,   /* will be filled in -- XXX shouldn't, it's global */
 	0,
 	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE|WSSCREEN_WSCOLORS
 };
 const struct wsscreen_descr *vgafb_scrlist[] = {
@@ -292,18 +293,11 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	{ 
 	  int i;
 	  for (i = 0; i < 256; i++) {
-	     vgafb_setcolor(vc, i, 255,255,255);
+	     const u_char *color;
+	     color = &rasops_cmap[i*3];
+	     vgafb_setcolor(vc, i, color[0], color[1], color[2]);
 	  }
 	}
-	vgafb_setcolor(vc, WSCOL_BLACK, 0, 0, 0);
-	vgafb_setcolor(vc, 255, 255, 255, 255);
-	vgafb_setcolor(vc, WSCOL_RED, 255, 0, 0);
-	vgafb_setcolor(vc, WSCOL_GREEN, 0, 255, 0);
-	vgafb_setcolor(vc, WSCOL_BROWN, 154, 85, 46);
-	vgafb_setcolor(vc, WSCOL_BLUE, 0, 0, 255);
-	vgafb_setcolor(vc, WSCOL_MAGENTA, 255, 0, 255);
-	vgafb_setcolor(vc, WSCOL_CYAN, 0, 255, 255);
-	vgafb_setcolor(vc, WSCOL_WHITE, 255, 255, 255);
 }
 
 void
