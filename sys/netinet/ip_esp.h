@@ -86,9 +86,9 @@ struct espdes_xdata
         int32_t     edx_ivlen;              /* 4 or 8 */
         union
         {
-                u_int8_t  Iv[8];          /* that's enough space */
-                u_int32_t Ivl;      /* XXX make sure this is 4 bytes */
-                u_int64_t Ivq; /* XXX make sure this is 8 bytes! */
+                u_int8_t  Iv[8];        /* that's enough space */
+                u_int32_t Ivl;      	/* make sure this is 4 bytes */
+                u_int64_t Ivq; 		/* make sure this is 8 bytes! */
         }Iu;
 #define edx_iv  Iu.Iv
 #define edx_ivl Iu.Ivl
@@ -127,16 +127,16 @@ struct espdesmd5_xencap
 
 struct espdesmd5_xdata
 {
-        int32_t     edx_ivlen;              /* 0 or 8 */
+        int32_t     edx_ivlen;          /* 0 or 8 */
 	u_int32_t   edx_rpl;		/* Replay counter */
 	u_int32_t   edx_wnd;		/* Replay window */
 	u_int32_t   edx_bitmap;
 	u_int32_t   edx_initial;	/* initial replay value */
         union
         {
-                u_int8_t  Iv[8];          /* that's enough space */
-                u_int32_t Ivl;      /* XXX make sure this is 4 bytes */
-                u_int64_t Ivq; /* XXX make sure this is 8 bytes! */
+                u_int8_t  Iv[8];        /* that's enough space */
+                u_int32_t Ivl;      	/* make sure this is 4 bytes */
+                u_int64_t Ivq; 		/* make sure this is 8 bytes! */
         }Iu;
         union
         {
@@ -149,16 +149,16 @@ struct espdesmd5_xdata
 
 struct esp3desmd5_xdata
 {
-        int32_t     edx_ivlen;              /* 0 or 4 or 8 */
+        int32_t     edx_ivlen;          /* 0 or 4 or 8 */
 	u_int32_t   edx_rpl;		/* Replay counter */
 	u_int32_t   edx_wnd;		/* Replay window */
 	u_int32_t   edx_bitmap;
 	u_int32_t   edx_initial;
         union
         {
-                u_int8_t  Iv[8];          /* that's enough space */
-                u_int32_t Ivl;      /* XXX make sure this is 4 bytes */
-                u_int64_t Ivq; /* XXX make sure this is 8 bytes! */
+                u_int8_t  Iv[8];        /* that's enough space */
+                u_int32_t Ivl;      	/* make sure this is 4 bytes */
+                u_int64_t Ivq; 		/* make sure this is 8 bytes! */
         }Iu;
         union
         {
