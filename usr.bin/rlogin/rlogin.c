@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.19 1998/03/25 20:22:08 art Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.20 1998/06/03 16:20:33 deraadt Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.19 1998/03/25 20:22:08 art Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.20 1998/06/03 16:20:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,6 +397,7 @@ doit(omask)
 	 * Use sigaction() instead of signal() to avoid getting SIGCHLDs
 	 * for stopped children.
 	 */
+	memset(&sa, 0, sizeof sa);
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
 	sa.sa_handler = catch_child;

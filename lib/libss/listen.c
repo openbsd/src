@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.1 1996/11/15 09:25:29 downsj Exp $	*/
+/*	$OpenBSD: listen.c,v 1.2 1998/06/03 16:20:29 deraadt Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -38,7 +38,7 @@
 
 #ifndef	lint
 static char const rcs_id[] =
-    "$Id: listen.c,v 1.1 1996/11/15 09:25:29 downsj Exp $";
+    "$Id: listen.c,v 1.2 1998/06/03 16:20:29 deraadt Exp $";
 #endif
 
 #ifndef NPOSIX
@@ -114,6 +114,7 @@ ss_listen (sci_idx)
     memcpy(old_jmpb, listen_jmpb, sizeof(jmp_buf));
 
 #ifndef NPOSIX    
+    memset(&nsig, 0, sizeof nsig);
     nsig.sa_handler = listen_int_handler;
     sigemptyset(&nsig.sa_mask);
     nsig.sa_flags = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.7 1997/09/16 11:01:19 deraadt Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.8 1998/06/03 16:20:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -370,6 +370,7 @@ char **argv;
 			prtime ();
 	} else {
 		/* ignore network pipe signals */
+		memset(&ign, 0, sizeof ign);
 		ign.sa_handler = SIG_IGN;
 		ign.sa_flags = 0;
 		sigemptyset(&ign.sa_mask);

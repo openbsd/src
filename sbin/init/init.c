@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.14 1998/05/04 06:37:02 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.15 1998/06/03 16:20:24 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.14 1998/05/04 06:37:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.15 1998/06/03 16:20:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,6 +237,7 @@ main(argc, argv)
 	delset(&mask, SIGABRT, SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGSYS,
 		SIGXCPU, SIGXFSZ, SIGHUP, SIGTERM, SIGTSTP, SIGALRM, 0);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
+	memset(&sa, 0, sizeof sa);
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_IGN;
@@ -285,6 +286,7 @@ handle(va_alist)
 	va_start(ap, handler);
 #endif
 
+	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = handler;
 	sigfillset(&mask_everything);
 
@@ -720,6 +722,7 @@ runcom()
 	struct sigaction sa;
 
 	if ((pid = fork()) == 0) {
+		memset(&sa, 0, sizeof sa);
 		sigemptyset(&sa.sa_mask);
 		sa.sa_flags = 0;
 		sa.sa_handler = SIG_IGN;

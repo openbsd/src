@@ -222,6 +222,7 @@ RETSIGTYPE	(*fn)();
 		if (SIG_handlers[sig] == (struct SIG_hlist *) NULL)
 		{
 #ifdef POSIX_SIGNALS
+			memset(&act, 0, sizeof act);
 			act.sa_handler = SIG_handle;
 			(void) sigemptyset(&act.sa_mask);
 			act.sa_flags = 0;

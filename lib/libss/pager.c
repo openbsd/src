@@ -1,4 +1,4 @@
-/*	$OpenBSD: pager.c,v 1.1 1996/11/15 09:25:30 downsj Exp $	*/
+/*	$OpenBSD: pager.c,v 1.2 1998/06/03 16:20:30 deraadt Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -93,6 +93,7 @@ ss_page_stdin()
 	for (i = 3; i < 32; i++)
 		(void) close(i);
 #ifndef NPOSIX
+	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = SIG_DFL;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: list_rqs.c,v 1.1 1996/11/15 09:25:29 downsj Exp $	*/
+/*	$OpenBSD: list_rqs.c,v 1.2 1998/06/03 16:20:27 deraadt Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -66,6 +66,7 @@ ss_list_requests(argc, argv, sci_idx, info_ptr)
     sigaddset(&nmask, SIGINT);
     sigprocmask(SIG_BLOCK, &nmask, &omask);
     
+    memset(&nsig, 0, sizeof nsig);
     nsig.sa_handler = SIG_IGN;
     sigemptyset(&nsig.sa_mask);
     nsig.sa_flags = 0;

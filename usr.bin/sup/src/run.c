@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.4 1997/04/01 07:35:16 todd Exp $	*/
+/*	$OpenBSD: run.c,v 1.5 1998/06/03 16:20:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -187,6 +187,7 @@ int usepath;
 		_exit (0377);
 	}
 
+	memset(&ignoresig, 0, sizeof ignoresig);
 	ignoresig.sa_handler = SIG_IGN;	/* ignore INT and QUIT signals */
 	sigemptyset(&ignoresig.sa_mask);
 	ignoresig.sa_flags = 0;
