@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2002/07/15 22:10:13 millert Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.10 2002/06/09 05:47:27 todd Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.11 2002/07/15 22:10:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,6 @@ free_items(items)
 	sigaddset(&sigset, SIGINT);\
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);\
 	free_items(items);\
-	items = NULL;\
 	sigprocmask(SIG_SETMASK, &osigset, NULL);\
 }
 
@@ -442,18 +441,14 @@ tsearch(word, command, max_word_length)
     COMMAND command;
     int     max_word_length;
 {
-    static Char **items = NULL;
     register DIR *dir_fd;
     register int numitems = 0, ignoring = TRUE, nignored = 0;
     register int name_length, looking_for_lognames;
     Char    tilded_dir[MAXPATHLEN], dir[MAXPATHLEN];
     Char    name[MAXNAMLEN + 1], extended_name[MAXNAMLEN + 1];
     Char   *entry;
-
-#define MAXITEMS 1024
-
-    if (items != NULL)
-	FREE_ITEMS(items);
+    Char   **items = NULL;
+    size_t  maxitems = 0;
 
     looking_for_lognames = (*word == '~') && (Strchr(word, '/') == NULL);
     if (looking_for_lognames) {
@@ -480,14 +475,14 @@ again:				/* search for matches */
 	    !looking_for_lognames)
 	    continue;
 	if (command == LIST) {
-	    if (numitems >= MAXITEMS) {
-		(void) fprintf(csherr, "\nYikes!! Too many %s!!\n",
-			       looking_for_lognames ?
-			       "names in password file" : "files");
-		break;
+	    if (numitems >= maxitems) {
+		maxitems += 1024;
+		if (items == NULL)
+			items = (Char **) xmalloc(sizeof(items[0]) * maxitems);
+		else
+			items = (Char **) xrealloc((ptr_t) items,
+			    sizeof(items[0]) * maxitems);
 	    }
-	    if (items == NULL)
-		items = (Char **) xcalloc(sizeof(items[0]), MAXITEMS);
 	    items[numitems] = (Char *) xmalloc((size_t) (Strlen(entry) + 1) *
 					       sizeof(Char));
 	    copyn(items[numitems], entry, MAXNAMLEN);
