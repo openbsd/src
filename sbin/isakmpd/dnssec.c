@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.2 2001/01/27 12:03:32 niklas Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.3 2001/01/27 15:39:54 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -26,34 +26,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <string.h>
-
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+
+#include <openssl/rsa.h>
 #include <dns/keyvalues.h>
 #include <lwres/lwres.h>
 #include <lwres/netdb.h>
 
-#include <openssl/rsa.h>
-
 #include "sysdep.h"
 
+#include "dnssec.h"
 #include "exchange.h"
+#include "ipsec_num.h"
+#include "libcrypto.h"
 #include "log.h"
 #include "message.h"
 #include "transport.h"
 
-#include "ipsec_num.h"
-#include "dnssec.h"
-
 /* adapted from <dns/rdatastruct.h> / RFC 2535  */
 struct dns_rdata_key {
-  u_int16_t      flags;
-  u_int8_t       protocol;
-  u_int8_t       algorithm;
-  u_int16_t      datalen;
+  u_int16_t flags;
+  u_int8_t protocol;
+  u_int8_t algorithm;
+  u_int16_t datalen;
   unsigned char *data;
 };
 
@@ -76,18 +75,18 @@ dns_get_key (int type, struct message *msg, int *keylen)
 
     case IKE_AUTH_RSA_ENC:
     case IKE_AUTH_RSA_ENC_REV:
-      /* XXX Not yes. */
+      /* XXX Not yet. */
       /* algorithm = DNS_KEYALG_RSA; */
-      return NULL;
+      return 0;
 
     case IKE_AUTH_DSS:
       /* XXX Not yet. */
       /* algorithm = DNS_KEYALG_DSS; */
-      return NULL;
+      return 0;
 
     case IKE_AUTH_PRE_SHARED: 
     default:
-      return NULL;
+      return 0;
     }
 
   /* Get peer IP address */
@@ -102,7 +101,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 		"dns_get_key: lwres_gethostbyaddr (%s) failed: %s", 
 		inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
 		lwres_hstrerror (lwres_h_errno)));
-      return NULL;
+      return 0;
     }
 
   /* Try host official name */
@@ -119,7 +118,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 		    hostent->h_aliases[i]));
 	  ret = lwres_getrrsetbyname (hostent->h_aliases[i], C_IN, T_KEY, 0,
 				      &rr);
-	  i ++;
+	  i++;
 	}
     }
 
@@ -127,7 +126,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
     {
       LOG_DBG ((LOG_MISC, 30, "dns_get_key: no DNS responses (error %d)", 
 		ret));
-      return NULL;
+      return 0;
     }
   
   LOG_DBG ((LOG_MISC, 80, 
@@ -140,7 +139,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
     {
       LOG_DBG ((LOG_MISC, 10, "dns_get_key: got unvalidated response"));
       lwres_freerrset (rr);
-      return NULL;
+      return 0;
     }
   
   /* Sanity. */
@@ -148,16 +147,16 @@ dns_get_key (int type, struct message *msg, int *keylen)
     {
       LOG_DBG ((LOG_MISC, 30, "dns_get_key: no KEY RRs recieved"));
       lwres_freerrset (rr);
-      return NULL;
+      return 0;
     } 
 
-  memset (&key_rr, 0, sizeof (key_rr));
+  memset (&key_rr, 0, sizeof key_rr);
 
   /* 
    * Find a key with the wanted algorithm, if any.
    * XXX If there are several keys present, we currently only find the first.
    */
-  for (i = 0; i < rr->rri_nrdatas && key_rr.datalen == 0; i ++)
+  for (i = 0; i < rr->rri_nrdatas && key_rr.datalen == 0; i++)
     {
       key_rr.flags     = ntohs ((u_int16_t) *rr->rri_rdatas[i].rdi_data);
       key_rr.protocol  = *(rr->rri_rdatas[i].rdi_data + 2);
@@ -175,7 +174,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	  continue;
 	}
 
-      key_rr.datalen   = rr->rri_rdatas[i].rdi_length - 4;
+      key_rr.datalen = rr->rri_rdatas[i].rdi_length - 4;
       if (key_rr.datalen <= 0)
 	{
 	  LOG_DBG ((LOG_MISC, 50, "dns_get_key: ignored bad key"));
@@ -189,7 +188,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	{
 	  log_error ("dns_get_key: malloc (%d) failed", key_rr.datalen);
 	  lwres_freerrset (rr);
-	  return NULL;
+	  return 0;
 	}
       memcpy (key_rr.data, rr->rri_rdatas[i].rdi_data + 4, key_rr.datalen);
       *keylen = key_rr.datalen;
@@ -200,7 +199,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
   if (key_rr.datalen)
     return key_rr.data;
   else
-    return NULL;
+    return 0;
 }
 
 int
@@ -216,8 +215,8 @@ dns_RSA_dns_to_x509 (u_int8_t *key, int keylen, RSA **rsa_key)
       return -1;
     }
 
-  rsa = RSA_new ();
-  if (!rsa)
+  rsa = LC (RSA_new, ());
+  if (rsa == NULL)
     {
       log_error ("dns_RSA_dns_to_x509: failed to allocate new RSA struct");
       return -1;
@@ -231,7 +230,7 @@ dns_RSA_dns_to_x509 (u_int8_t *key, int keylen, RSA **rsa_key)
       if (keylen < 3)
 	{
 	  log_print ("dns_RSA_dns_to_x509: invalid public key");
-	  RSA_free (rsa);
+	  LC (RSA_free, (rsa));
 	  return -1;
 	}
       e_len  = *(key + key_offset++) << 8;
@@ -241,21 +240,21 @@ dns_RSA_dns_to_x509 (u_int8_t *key, int keylen, RSA **rsa_key)
   if (e_len > (keylen - key_offset))
     {
       log_print ("dns_RSA_dns_to_x509: invalid public key");
-      RSA_free (rsa);
+      LC (RSA_free, (rsa));
       return -1;
     }
 
-  rsa->e = BN_bin2bn (key + key_offset, e_len, NULL);
+  rsa->e = LC (BN_bin2bn, (key + key_offset, e_len, NULL));
   key_offset += e_len;
 
   /* XXX if (keylen <= key_offset) -> "invalid public key" ? */
 
-  rsa->n = BN_bin2bn (key + key_offset, keylen - key_offset, NULL);
+  rsa->n = LC (BN_bin2bn, (key + key_offset, keylen - key_offset, NULL));
 
   *rsa_key = rsa;
 
   LOG_DBG ((LOG_MISC, 30, "dns_RSA_dns_to_x509: got %d bits RSA key",
-	    BN_num_bits (rsa->n)));
+	    LC (BN_num_bits, (rsa->n))));
 
   return 0;
 }

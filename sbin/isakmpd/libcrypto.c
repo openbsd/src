@@ -1,4 +1,4 @@
-/*	$OpenBSD: libcrypto.c,v 1.10 2001/01/27 12:03:33 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.11 2001/01/27 15:39:55 ho Exp $	*/
 /*	$EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -59,10 +59,13 @@ BIO *(*lc_BIO_new) (BIO_METHOD *type);
 int (*lc_BIO_write) (BIO *, char *, int);
 BIO_METHOD *(*lc_BIO_s_file) (void);
 BIO_METHOD *(*lc_BIO_s_mem) (void);
+BIGNUM *(*lc_BN_bin2bn) (const unsigned char *, int, BIGNUM *);
+int (*lc_BN_num_bits) (const BIGNUM *);
 int (*lc_BN_print_fp) (FILE *, BIGNUM *);
 char *(*lc_PEM_ASN1_read_bio) (char *(*) (), char *, BIO *, char **,
 			       int (*) ());
 void (*lc_RSA_free) (RSA *);
+RSA *(*lc_RSA_new) (void);
 RSA *(*lc_RSA_generate_key) (int, unsigned long, void (*) (int, int, char *),
 			     char *);
 int (*lc_RSA_private_encrypt) (int, unsigned char *, unsigned char *, RSA *,
