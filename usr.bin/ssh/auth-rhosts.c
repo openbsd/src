@@ -14,14 +14,15 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.18 2001/01/19 15:55:10 markus Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.19 2001/01/21 19:05:42 markus Exp $");
 
 #include "packet.h"
-#include "ssh.h"
 #include "xmalloc.h"
 #include "uidswap.h"
-#include "servconf.h"
 #include "pathnames.h"
+#include "log.h"
+#include "servconf.h"
+#include "canohost.h"
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or

@@ -14,23 +14,23 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rsa.c,v 1.37 2001/01/20 17:34:25 markus Exp $");
-
-#include "rsa.h"
-#include "packet.h"
-#include "xmalloc.h"
-#include "ssh.h"
-#include "ssh1.h"
-#include "mpaux.h"
-#include "uidswap.h"
-#include "match.h"
-#include "servconf.h"
-#include "auth-options.h"
-#include "pathnames.h"
+RCSID("$OpenBSD: auth-rsa.c,v 1.38 2001/01/21 19:05:42 markus Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
 
+#include "rsa.h"
+#include "packet.h"
+#include "xmalloc.h"
+#include "ssh1.h"
+#include "mpaux.h"
+#include "uidswap.h"
+#include "match.h"
+#include "auth-options.h"
+#include "pathnames.h"
+#include "log.h"
+#include "servconf.h"
+#include "auth.h"
 
 /* import */
 extern ServerOptions options;

@@ -1,8 +1,9 @@
 #include "includes.h"
-RCSID("$OpenBSD: cli.c,v 1.5 2001/01/08 08:50:29 markus Exp $");
+RCSID("$OpenBSD: cli.c,v 1.6 2001/01/21 19:05:47 markus Exp $");
 
 #include "xmalloc.h"
-#include "ssh.h"
+#include "log.h"
+
 #include <vis.h>
 
 static int cli_input = -1;

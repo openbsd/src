@@ -75,11 +75,12 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.50 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.51 2001/01/21 19:05:55 markus Exp $");
 
-#include "ssh.h"
 #include "xmalloc.h"
+#include "atomicio.h"
 #include "pathnames.h"
+#include "log.h"
 
 /* For progressmeter() -- number of seconds before xfer considered "stalled" */
 #define STALLTIME	5

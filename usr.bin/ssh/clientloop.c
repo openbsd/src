@@ -59,28 +59,25 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.44 2001/01/19 15:55:10 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.45 2001/01/21 19:05:47 markus Exp $");
 
-#include "xmalloc.h"
 #include "ssh.h"
-#include "packet.h"
-#include "buffer.h"
-#include "readconf.h"
-
 #include "ssh1.h"
 #include "ssh2.h"
+#include "xmalloc.h"
+#include "packet.h"
+#include "buffer.h"
 #include "compat.h"
 #include "channels.h"
 #include "dispatch.h"
-
 #include "buffer.h"
 #include "bufaux.h"
-
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include "key.h"
-#include "authfd.h"
+#include "log.h"
+#include "readconf.h"
 #include "clientloop.h"
+#include "authfd.h"
+#include "atomicio.h"
 
 /* import options */
 extern Options options;

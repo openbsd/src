@@ -23,18 +23,16 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: nchan.c,v 1.21 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: nchan.c,v 1.22 2001/01/21 19:05:52 markus Exp $");
 
-#include "ssh.h"
-
+#include "ssh1.h"
+#include "ssh2.h"
 #include "buffer.h"
 #include "packet.h"
 #include "channels.h"
 #include "nchan.h"
-
-#include "ssh1.h"
-#include "ssh2.h"
 #include "compat.h"
+#include "log.h"
 
 /* functions manipulating channel states */
 /*

@@ -35,19 +35,19 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.26 2001/01/20 21:33:42 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.27 2001/01/21 19:05:56 markus Exp $");
 
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 
-#include "rsa.h"
 #include "ssh.h"
+#include "rsa.h"
+#include "log.h"
 #include "xmalloc.h"
 #include "key.h"
 #include "authfd.h"
 #include "authfile.h"
 #include "pathnames.h"
+#include "readpass.h"
 
 void
 delete_file(AuthenticationConnection *ac, const char *filename)

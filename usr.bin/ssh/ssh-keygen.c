@@ -12,23 +12,20 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.40 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.41 2001/01/21 19:05:57 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 
-#include "ssh.h"
 #include "xmalloc.h"
 #include "key.h"
-#include "rsa.h"
 #include "authfile.h"
 #include "uuencode.h"
-
 #include "buffer.h"
 #include "bufaux.h"
 #include "pathnames.h"
+#include "log.h"
+#include "readpass.h"
 
 /* Number of bits in the RSA/DSA key.  This value can be changed on the command line. */
 int bits = 1024;

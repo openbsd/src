@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.46 2001/01/11 21:37:30 markus Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.47 2001/01/21 19:05:56 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,10 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.46 2001/01/11 21:37:30 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.47 2001/01/21 19:05:56 markus Exp $");
+
+#include <openssl/evp.h>
+#include <openssl/md5.h>
 
 #include "ssh.h"
 #include "rsa.h"
@@ -47,16 +50,12 @@ RCSID("$OpenBSD: ssh-agent.c,v 1.46 2001/01/11 21:37:30 markus Exp $");
 #include "packet.h"
 #include "getput.h"
 #include "mpaux.h"
-#include "includes.h"
-
-#include <openssl/evp.h>
-#include <openssl/md5.h>
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include "key.h"
 #include "authfd.h"
+#include "cipher.h"
 #include "kex.h"
 #include "compat.h"
+#include "log.h"
 
 typedef struct {
 	int fd;

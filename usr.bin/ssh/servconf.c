@@ -10,16 +10,30 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.61 2001/01/20 23:00:56 djm Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.62 2001/01/21 19:05:55 markus Exp $");
+
+#ifdef KRB4
+#include <krb.h>
+#endif
+#ifdef AFS
+#include <kafs.h>
+#endif
 
 #include "ssh.h"
+#include "log.h"
 #include "servconf.h"
 #include "xmalloc.h"
 #include "compat.h"
 #include "pathnames.h"
+#include "tildexpand.h"
+#include "misc.h"
+#include "cipher.h"
 
 /* add listen address */
 void add_listen_addr(ServerOptions *options, char *addr);
+
+/* AF_UNSPEC or AF_INET or AF_INET6 */
+extern int IPv4or6;
 
 /* Initializes the server options to their default values. */
 
@@ -282,7 +296,6 @@ parse_token(const char *cp, const char *filename,
 void
 add_listen_addr(ServerOptions *options, char *addr)
 {
-	extern int IPv4or6;
 	struct addrinfo hints, *ai, *aitop;
 	char strport[NI_MAXSERV];
 	int gaierr;

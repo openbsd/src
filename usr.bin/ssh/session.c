@@ -33,26 +33,29 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.50 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.51 2001/01/21 19:05:56 markus Exp $");
 
-#include "xmalloc.h"
 #include "ssh.h"
+#include "ssh1.h"
+#include "ssh2.h"
+#include "xmalloc.h"
 #include "pty.h"
 #include "packet.h"
 #include "buffer.h"
 #include "mpaux.h"
-#include "servconf.h"
 #include "uidswap.h"
 #include "compat.h"
 #include "channels.h"
 #include "nchan.h"
-
 #include "bufaux.h"
-#include "ssh1.h"
-#include "ssh2.h"
 #include "auth.h"
 #include "auth-options.h"
 #include "pathnames.h"
+#include "log.h"
+#include "servconf.h"
+#include "login.h"
+#include "serverloop.h"
+#include "canohost.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>

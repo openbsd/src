@@ -23,28 +23,28 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.31 2001/01/20 17:34:25 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.32 2001/01/21 19:05:44 markus Exp $");
 
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 
+#include "ssh2.h"
 #include "xmalloc.h"
 #include "rsa.h"
-#include "ssh.h"
 #include "pty.h"
 #include "packet.h"
 #include "buffer.h"
+#include "log.h"
 #include "servconf.h"
 #include "compat.h"
 #include "channels.h"
 #include "bufaux.h"
-#include "ssh2.h"
 #include "auth.h"
 #include "session.h"
 #include "dispatch.h"
 #include "auth.h"
 #include "key.h"
+#include "cipher.h"
+#include "kex.h"
 #include "kex.h"
 #include "pathnames.h"
 

@@ -23,25 +23,23 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.36 2001/01/20 18:20:29 stevesk Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.37 2001/01/21 19:06:00 markus Exp $");
 
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 #include <openssl/hmac.h>
 
 #include "ssh.h"
+#include "ssh2.h"
 #include "xmalloc.h"
 #include "rsa.h"
 #include "buffer.h"
 #include "packet.h"
 #include "uidswap.h"
 #include "compat.h"
-#include "readconf.h"
 #include "bufaux.h"
-#include "ssh2.h"
+#include "cipher.h"
 #include "kex.h"
 #include "myproposal.h"
 #include "key.h"
@@ -50,6 +48,9 @@ RCSID("$OpenBSD: sshconnect2.c,v 1.36 2001/01/20 18:20:29 stevesk Exp $");
 #include "cli.h"
 #include "dispatch.h"
 #include "authfd.h"
+#include "log.h"
+#include "readconf.h"
+#include "readpass.h"
 
 void ssh_dh1_client(Kex *, char *, struct sockaddr *, Buffer *, Buffer *);
 void ssh_dhgex_client(Kex *, char *, struct sockaddr *, Buffer *, Buffer *);

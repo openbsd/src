@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: dh.c,v 1.5 2001/01/19 15:55:11 markus Exp $");
+RCSID("$OpenBSD: dh.c,v 1.6 2001/01/21 19:05:49 markus Exp $");
 
 #include "xmalloc.h"
 
@@ -31,11 +31,13 @@ RCSID("$OpenBSD: dh.c,v 1.5 2001/01/19 15:55:11 markus Exp $");
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 
-#include "ssh.h"
 #include "buffer.h"
+#include "cipher.h"
 #include "kex.h"
 #include "dh.h"
 #include "pathnames.h"
+#include "log.h"
+#include "misc.h"
 
 int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)

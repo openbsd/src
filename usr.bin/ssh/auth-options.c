@@ -10,12 +10,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.10 2001/01/20 15:55:20 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.11 2001/01/21 19:05:41 markus Exp $");
 
-#include "ssh.h"
 #include "packet.h"
 #include "xmalloc.h"
 #include "match.h"
+#include "log.h"
+#include "canohost.h"
+#include "auth-options.h"
 
 /* Flags set authorized_keys flags */
 int no_port_forwarding_flag = 0;
