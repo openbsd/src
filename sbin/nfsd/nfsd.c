@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.12 2001/01/19 17:57:40 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.13 2001/06/04 14:59:48 mickey Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ main(argc, argv, envp)
 		    (!pmap_set(RPCPROG_NFS, 2, IPPROTO_TCP, NFS_PORT) ||
 		     !pmap_set(RPCPROG_NFS, 3, IPPROTO_TCP, NFS_PORT)))
 			err(1, "can't register with portmap for TCP.");
-		exit(0);
+		return (0);
 	}
 	openlog("nfsd:", LOG_PID, LOG_DAEMON);
 
@@ -246,7 +246,7 @@ main(argc, argv, envp)
 		switch (fork()) {
 		case -1:
 			syslog(LOG_ERR, "fork: %m");
-			exit (1);
+			return (1);
 		case 0:
 			break;
 		default:
@@ -268,7 +268,7 @@ main(argc, argv, envp)
 		while (nfssvc(nfssvc_flag, &nsd) < 0) {
 			if (errno != ENEEDAUTH) {
 				syslog(LOG_ERR, "nfssvc: %m");
-				exit(1);
+				return (1);
 			}
 			nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
 #ifdef NFSKERB
@@ -342,14 +342,14 @@ main(argc, argv, envp)
 			}
 #endif /* NFSKERB */
 		}
-		exit(0);
+		return (0);
 	}
 
 	/* If we are serving udp, set up the socket. */
 	if (udpflag) {
 		if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 			syslog(LOG_ERR, "can't create udp socket");
-			exit(1);
+			return (1);
 		}
 		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
@@ -359,19 +359,19 @@ main(argc, argv, envp)
 		if (bind(sock,
 		    (struct sockaddr *)&inetaddr, sizeof(inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind udp addr");
-			exit(1);
+			return (1);
 		}
 		if (!pmap_set(RPCPROG_NFS, 2, IPPROTO_UDP, NFS_PORT) ||
 		    !pmap_set(RPCPROG_NFS, 3, IPPROTO_UDP, NFS_PORT)) {
 			syslog(LOG_ERR, "can't register with udp portmap");
-			exit(1);
+			return (1);
 		}
 		nfsdargs.sock = sock;
 		nfsdargs.name = NULL;
 		nfsdargs.namelen = 0;
 		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
 			syslog(LOG_ERR, "can't Add UDP socket");
-			exit(1);
+			return (1);
 		}
 		(void)close(sock);
 	}
@@ -381,7 +381,7 @@ main(argc, argv, envp)
 	if (cltpflag) {
 		if ((sock = socket(AF_ISO, SOCK_DGRAM, 0)) < 0) {
 			syslog(LOG_ERR, "can't create cltp socket");
-			exit(1);
+			return (1);
 		}
 		memset(&isoaddr, 0, sizeof(isoaddr));
 		isoaddr.siso_family = AF_ISO;
@@ -393,7 +393,7 @@ main(argc, argv, envp)
 		if (bind(sock,
 		    (struct sockaddr *)&isoaddr, sizeof(isoaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind cltp addr");
-			exit(1);
+			return (1);
 		}
 #ifdef notyet
 		/*
@@ -403,7 +403,7 @@ main(argc, argv, envp)
 		 */
 		if (!pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_UDP, NFS_PORT)) {
 			syslog(LOG_ERR, "can't register with udp portmap");
-			exit(1);
+			return (1);
 		}
 #endif /* notyet */
 		nfsdargs.sock = sock;
@@ -411,7 +411,7 @@ main(argc, argv, envp)
 		nfsdargs.namelen = 0;
 		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
 			syslog(LOG_ERR, "can't add UDP socket");
-			exit(1);
+			return (1);
 		}
 		close(sock);
 	}
@@ -424,7 +424,7 @@ main(argc, argv, envp)
 	if (tcpflag) {
 		if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 			syslog(LOG_ERR, "can't create tcp socket");
-			exit(1);
+			return (1);
 		}
 		if (setsockopt(tcpsock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
@@ -437,16 +437,16 @@ main(argc, argv, envp)
 		if (bind(tcpsock,
 		    (struct sockaddr *)&inetaddr, sizeof (inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tcp addr");
-			exit(1);
+			return (1);
 		}
 		if (listen(tcpsock, 5) < 0) {
 			syslog(LOG_ERR, "listen failed");
-			exit(1);
+			return (1);
 		}
 		if (!pmap_set(RPCPROG_NFS, 2, IPPROTO_TCP, NFS_PORT) ||
 		    !pmap_set(RPCPROG_NFS, 3, IPPROTO_TCP, NFS_PORT)) {
 			syslog(LOG_ERR, "can't register tcp with portmap");
-			exit(1);
+			return (1);
 		}
 		FD_SET(tcpsock, &sockbits);
 		maxsock = tcpsock;
@@ -458,7 +458,7 @@ main(argc, argv, envp)
 	if (tp4flag) {
 		if ((tp4sock = socket(AF_ISO, SOCK_SEQPACKET, 0)) < 0) {
 			syslog(LOG_ERR, "can't create tp4 socket");
-			exit(1);
+			return (1);
 		}
 		if (setsockopt(tp4sock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
@@ -473,11 +473,11 @@ main(argc, argv, envp)
 		if (bind(tp4sock,
 		    (struct sockaddr *)&isoaddr, sizeof(isoaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tp4 addr");
-			exit(1);
+			return (1);
 		}
 		if (listen(tp4sock, 5) < 0) {
 			syslog(LOG_ERR, "listen failed");
-			exit(1);
+			return (1);
 		}
 		/*
 		 * XXX
@@ -486,7 +486,7 @@ main(argc, argv, envp)
 		 */
 		if (!pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_TCP, NFS_PORT)) {
 			syslog(LOG_ERR, "can't register tcp with portmap");
-			exit(1);
+			return (1);
 		}
 		FD_SET(tp4sock, &sockbits);
 		maxsock = tp4sock;
@@ -497,7 +497,7 @@ main(argc, argv, envp)
 	if (tpipflag) {
 		if ((tpipsock = socket(AF_INET, SOCK_SEQPACKET, 0)) < 0) {
 			syslog(LOG_ERR, "can't create tpip socket");
-			exit(1);
+			return (1);
 		}
 		if (setsockopt(tpipsock,
 		    SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
@@ -510,11 +510,11 @@ main(argc, argv, envp)
 		if (bind(tpipsock,
 		    (struct sockaddr *)&inetaddr, sizeof (inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tcp addr");
-			exit(1);
+			return (1);
 		}
 		if (listen(tpipsock, 5) < 0) {
 			syslog(LOG_ERR, "listen failed");
-			exit(1);
+			return (1);
 		}
 		/*
 		 * XXX
@@ -523,7 +523,7 @@ main(argc, argv, envp)
 		 */
 		if (!pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_TCP, NFS_PORT)) {
 			syslog(LOG_ERR, "can't register tcp with portmap");
-			exit(1);
+			return (1);
 		}
 		FD_SET(tpipsock, &sockbits);
 		maxsock = tpipsock;
@@ -532,7 +532,7 @@ main(argc, argv, envp)
 #endif /* notyet */
 
 	if (connect_type_cnt == 0)
-		exit(0);
+		return (0);
 
 	setproctitle("master");
 
@@ -546,7 +546,7 @@ main(argc, argv, envp)
 			if (select(maxsock + 1,
 			    &ready, NULL, NULL, NULL) < 1) {
 				syslog(LOG_ERR, "select failed: %m");
-				exit(1);
+				return (1);
 			}
 		}
 		if (tcpflag && FD_ISSET(tcpsock, &ready)) {
@@ -554,7 +554,7 @@ main(argc, argv, envp)
 			if ((msgsock = accept(tcpsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
 				syslog(LOG_ERR, "accept failed: %m");
-				exit(1);
+				return (1);
 			}
 			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
 			if (setsockopt(msgsock, SOL_SOCKET,
@@ -573,7 +573,7 @@ main(argc, argv, envp)
 			if ((msgsock = accept(tp4sock,
 			    (struct sockaddr *)&isopeer, &len)) < 0) {
 				syslog(LOG_ERR, "accept failed: %m");
-				exit(1);
+				return (1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
 			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)
@@ -590,7 +590,7 @@ main(argc, argv, envp)
 			if ((msgsock = accept(tpipsock,
 			    (struct sockaddr *)&inetpeer, &len)) < 0) {
 				syslog(LOG_ERR, "Accept failed: %m");
-				exit(1);
+				return (1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET,
 			    SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0)

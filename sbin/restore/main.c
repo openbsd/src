@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/07/05 20:51:23 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2001/06/04 14:59:49 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -285,8 +285,7 @@ main(argc, argv)
 			checkrestore();
 		break;
 	}
-	exit(0);
-	/* NOTREACHED */
+	return (0);
 }
 
 static void

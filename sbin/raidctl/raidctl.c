@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.5 2000/01/11 18:03:45 peter Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.6 2001/06/04 14:59:49 mickey Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.11 2000/01/09 03:06:35 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ main(argc,argv)
 	if ((fd = open( dev_name, O_RDWR, 0640)) < 0) {
 		fprintf(stderr, "%s: unable to open device file: %s\n",
 			__progname, dev_name);
-		exit(1);
+		return (1);
 	}
 	
 
@@ -317,7 +317,7 @@ main(argc,argv)
 	}
 
 	close(fd);
-	exit(0);
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.5 2001/06/02 03:04:44 miod Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.6 2001/06/04 14:59:50 mickey Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ static	void del_swap __P((char *));
 	int  main __P((int, char *[]));
 static	void do_fstab __P((void));
 static	void usage __P((void));
-static	void swapon_command __P((int, char **));
+static	int  swapon_command __P((int, char **));
 #if 0
 static	void swapoff_command __P((int, char **));
 #endif
@@ -125,10 +125,8 @@ main(argc, argv)
 {
 	int	c;
 
-	if (strcmp(__progname, "swapon") == 0) {
-		swapon_command(argc, argv);
-		/* NOTREACHED */
-	}
+	if (strcmp(__progname, "swapon") == 0)
+		return swapon_command(argc, argv);
 
 #if 0
 	if (strcmp(__progname, "swapoff") == 0) {
@@ -247,13 +245,13 @@ main(argc, argv)
 		break;
 	}
 
-	exit(0);
+	return (0);
 }
 
 /*
  * swapon_command: emulate the old swapon(8) program.
  */
-void
+int
 swapon_command(argc, argv)
 	int argc;
 	char **argv;
@@ -287,7 +285,7 @@ swapon_command(argc, argv)
 				usage();
 		}
 		do_fstab();
-		exit(0);
+		return (0);
 	} else if (argc == 0 || tflag != NULL)
 		goto swapon_usage;
 
@@ -296,13 +294,13 @@ swapon_command(argc, argv)
 		argc--;
 		argv++;
 	}
-	exit(0);
-	/* NOTREACHED */
+	return (0);
 
  swapon_usage:
-	fprintf(stderr, "usage: %s -a [-t blk|noblk]\n", __progname);
-	fprintf(stderr, "       %s <path> ...\n", __progname);
-	exit(1);
+	fprintf(stderr, "usage: %s -a [-t blk|noblk]\n"
+			"       %s <path> ...\n",
+	    __progname, __progname);
+	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.4 1997/10/12 20:07:46 deraadt Exp $	*/
+/*	$OpenBSD: clri.c,v 1.5 2001/06/04 14:59:47 mickey Exp $	*/
 /*	$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)clri.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: clri.c,v 1.4 1997/10/12 20:07:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: clri.c,v 1.5 2001/06/04 14:59:47 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ main(argc, argv)
 	char *fs, sblock[SBSIZE];
 
 	if (argc < 3) {
-		(void)fprintf(stderr, "usage: clri filesystem inode ...\n");
-		exit(1);
+		fprintf(stderr, "usage: clri filesystem inode ...\n");
+		return (1);
 	}
 
 	fs = *++argv;
@@ -143,6 +143,6 @@ main(argc, argv)
 				errx(1, "%s: can't update superblock", fs);
 		}
 	}
-	(void)close(fd);
-	exit(0);
+
+	return close(fd);
 }

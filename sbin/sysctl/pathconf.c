@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathconf.c,v 1.4 2001/01/28 22:45:20 niklas Exp $	*/
+/*	$OpenBSD: pathconf.c,v 1.5 2001/06/04 14:59:50 mickey Exp $	*/
 /*	$NetBSD: pathconf.c,v 1.2 1995/09/30 07:12:47 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: pathconf.c,v 1.4 2001/01/28 22:45:20 niklas Exp $";
+static char rcsid[] = "$OpenBSD: pathconf.c,v 1.5 2001/06/04 14:59:50 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,13 +120,13 @@ main(argc, argv)
 	argc--;
 	if (Aflag || aflag) {
 		listall(path, &pclist);
-		exit(0);
+		return (0);
 	}
 	if (argc == 0)
 		usage();
 	while (argc-- > 0)
 		parse(path, *argv, 1);
-	exit(0);
+	return (0);
 }
 
 /*

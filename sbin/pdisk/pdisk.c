@@ -205,7 +205,7 @@ main(int argc, char **argv)
 
     SIOUXSettings.autocloseonquit = 1;
     //printf("Processing stopped: Choose 'Quit' from the file menu to quit.\n\n");
-    exit(0);
+    return (0);
 #endif
 }
 

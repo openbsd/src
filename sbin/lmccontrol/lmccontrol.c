@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.2 2000/10/13 19:27:11 chris Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.3 2001/06/04 14:59:48 mickey Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -168,9 +168,9 @@ main(int argc, char **argv)
 			if (ioctl(fd, SPPPIOCCISCO, &ifr) < 0) {
 				fprintf(stderr, "ioctl %s SPPPIOCCISCO: %s\n",
 					ifr.ifr_name, strerror(errno));
-				exit(1);
+				return (1);
 			}
-			exit(0);
+			return (0);
 #else
 			fprintf (stderr, "This option is not yet supported\n");
 #endif
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 			fd = socket(AF_INET, SOCK_DGRAM, 0);
 			if (fd < 0) {
 				fprintf(stderr, "socket: %s\n", strerror(errno));
-				exit(1);
+				return (1);
 			}
 
 			strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
@@ -188,9 +188,9 @@ main(int argc, char **argv)
 			if (ioctl(fd, SPPPIOCPPP, &ifr) < 0) {
 				fprintf(stderr, "ioctl %s SPPPIOCPPP: %s\n",
 					ifr.ifr_name, strerror(errno));
-				exit(1);
+				return (1);
 			}
-			exit(0);
+			return (0);
 #else
 			fprintf(stderr, "This option is not yet supported\n");
 #endif
@@ -198,14 +198,14 @@ main(int argc, char **argv)
 		case 'h':
 		case '?':
 			usage(argv[0]);
-			exit(0);
+			return (0);
 		}
 	}
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		fprintf(stderr, "socket: %s\n", strerror(errno));
-		exit(1);
+		return (1);
 	}
 
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
@@ -217,7 +217,7 @@ main(int argc, char **argv)
 	if (ioctl(fd, LMCIOCGINFO, &ifr) < 0) {
 		fprintf(stderr, "ioctl %s LMCIOCGINFO: %s\n",
 			ifr.ifr_name, strerror(errno));
-		exit(1);
+		return (1);
 	}
 
 	/*
@@ -225,7 +225,7 @@ main(int argc, char **argv)
 	 */
 	if (just_print) {
 		dumpdata(ifname, &ctl);
-		exit(0);
+		return (0);
 	}
 
 	if (flag_c)
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 		lmc_av9110_freq(wanted.clock_rate, &wanted.cardspec.ssi);
 		if (wanted.cardspec.ssi.f == 0) {
 			printf("Unable to calculate requested rate.\n");
-			exit(1);
+			return (1);
 		}
 		if (wanted.cardspec.ssi.exact == 0)
 			printf("Unable to calculate exact frequency,"
@@ -284,10 +284,10 @@ main(int argc, char **argv)
 	if (ioctl(fd, LMCIOCSINFO, &ifr) < 0) {
 		fprintf(stderr, "ioctl %s LMCIOCSINFO: %s\n",
 			ifr.ifr_name, strerror(errno));
-		exit(1);
+		return (1);
 	}
 
-	exit(0);
+	return (0);
 }
 
 char *clock_sources[] = {

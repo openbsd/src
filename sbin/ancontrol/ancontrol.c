@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.16 2001/05/02 22:31:09 ericj Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.17 2001/06/04 14:59:46 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -1476,5 +1476,6 @@ main(argc, argv)
 	/* Close our socket */
 	if (s)
 		close(s);
-	exit(0);
+
+	return (0);
 }

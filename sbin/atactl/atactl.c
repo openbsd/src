@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.6 2001/03/23 02:16:42 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.7 2001/06/04 14:59:47 mickey Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -242,7 +242,8 @@ main(argc, argv)
 		errx(1, "unknown command: %s\n", cmdname);
 
 	(*commands[i].cmd_func)(argc, argv);
-	exit(0);
+
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.14 2000/09/30 16:06:33 aaron Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.15 2001/06/04 14:59:47 mickey Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -178,25 +178,20 @@ main(argc, argv)
 	case CCD_UNCONFIG:
 		setegid(getgid());
 		setgid(getgid());
-
-		exit(do_single(argc, argv, action));
-		/* NOTREACHED */
+		return (do_single(argc, argv, action));
 
 	case CCD_CONFIGALL:
 	case CCD_UNCONFIGALL:
-
 		setegid(getgid());
 		setgid(getgid());
-
-		exit(do_all(action));
-		/* NOTREACHED */
+		return (do_all(action));
 
 	case CCD_DUMP:
-		exit(dump_ccd(argc, argv));
-		/* NOTREACHED */
+		return (dump_ccd(argc, argv));
 	}
 	/* NOTREACHED */
-	exit(0);
+
+	return (0);
 }
 
 static int

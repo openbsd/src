@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumplfs.c,v 1.4 1996/06/23 14:30:18 deraadt Exp $	*/
+/*	$OpenBSD: dumplfs.c,v 1.5 2001/06/04 14:59:48 mickey Exp $	*/
 /*	$NetBSD: dumplfs.c,v 1.7 1995/12/14 22:36:34 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dumplfs.c,v 1.4 1996/06/23 14:30:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumplfs.c,v 1.5 2001/06/04 14:59:48 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ main(argc, argv)
 			    segnum, seg_addr, lfs_master, do_allsb);
 
 	(void)close(fd);
-	exit(0);
+	return (0);
 }
 
 /*
