@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.48 2001/06/27 05:50:06 kjc Exp $	*/
+/*	$OpenBSD: if.c,v 1.49 2001/06/29 22:46:05 fgsch Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -135,12 +135,7 @@ extern void nd6_setmtu __P((struct ifnet *));
 void
 ifinit()
 {
-	struct ifnet *ifp;
 	static struct timeout if_slowtim;
-
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
-		if (ifp->if_snd.ifq_maxlen == 0)
-			ifp->if_snd.ifq_maxlen = ifqmaxlen;
 
 	timeout_set(&if_slowtim, if_slowtimo, &if_slowtim);
 
@@ -202,6 +197,9 @@ if_attachsetup(ifp)
 	}
 
 	ifindex2ifnet[if_index] = ifp;
+
+	if (ifp->if_snd.ifq_maxlen == 0)
+		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 
 	/*
 	 * create a Link Level name for this device
