@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.19 1998/05/18 21:10:59 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.20 1998/11/25 11:47:17 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -100,7 +100,7 @@ struct tdb				/* tunnel descriptor block */
 					 * used when tunneling */
     struct in_addr  tdb_osrc;
     struct in_addr  tdb_odst;		/* Source and destination addresses
-					 * of outter IP header if we're doing
+					 * of outer IP header if we're doing
 					 * tunneling */
     caddr_t	    tdb_xdata;	        /* transformation data (opaque) */
     struct flow	   *tdb_flow; 		/* Which flows use this SA */
