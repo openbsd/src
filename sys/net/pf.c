@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.271 2002/12/17 12:30:13 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.272 2002/12/18 14:41:37 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1585,7 +1585,7 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];
-		else if (r->proto && r->proto != IPPROTO_TCP)
+		else if (r->proto && r->proto != proto)
 			r = r->skip[PF_SKIP_PROTO];
 		else if (!PF_AZERO(&src->addr.mask, af) &&
 		    !PF_MATCHA(src->not,
