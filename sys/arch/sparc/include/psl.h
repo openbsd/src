@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.16 2002/11/11 05:04:44 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.17 2002/12/11 06:56:21 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -195,6 +195,7 @@ static __inline int name() \
 	__asm __volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
 	__asm __volatile("nop; nop; nop"); \
+	__asm __volatile("":::"memory");	/* protect from reordering */ \
 	return (oldipl); \
 }
 /* A non-priority-decreasing version of SPL */
@@ -211,6 +212,7 @@ static __inline int name() \
 	__asm __volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
 	__asm __volatile("nop; nop; nop"); \
+	__asm __volatile("":::"memory");	/* protect from reordering */ \
 	return (oldipl); \
 }
 
@@ -240,6 +242,7 @@ static __inline int splhigh()
 	__asm __volatile("wr %0,0,%%psr" : : "r" (psr | PSR_PIL));
 	__asm __volatile("and %1,%2,%0; nop; nop" : "=r" (oldipl) : \
 	    "r" (psr), "n" (PSR_PIL));
+	__asm __volatile("":::"memory");	/* protect from reordering */
 	return (oldipl);
 }
 
@@ -249,6 +252,7 @@ static __inline void splx(newipl)
 {
 	int psr;
 
+	__asm __volatile("":::"memory");	/* protect from reordering */
 	__asm __volatile("rd %%psr,%0" : "=r" (psr));
 	__asm __volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr & ~PSR_PIL), "rn" (newipl));
