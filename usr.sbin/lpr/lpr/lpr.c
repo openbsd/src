@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.6 1996/07/04 05:41:57 tholo Exp $ */
+/*	$OpenBSD: lpr.c,v 1.7 1996/07/04 06:06:51 tholo Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -363,7 +363,6 @@ main(argc, argv)
 		}
 		if (sflag)
 			printf("%s: %s: not linked, copying instead\n", name, arg);
-		seteuid(euid);
 		if ((i = open(arg, O_RDONLY)) < 0) {
 			seteuid(uid);
 			printf("%s: cannot open %s\n", name, arg);
@@ -373,7 +372,6 @@ main(argc, argv)
 		(void) close(i);
 		if (f && unlink(arg) < 0)
 			printf("%s: %s: not removed\n", name, arg);
-		seteuid(uid);
 	}
 
 	if (nact) {
@@ -466,9 +464,7 @@ linked(file)
 	register int ret;
 
 	if (*file != '/') {
-		seteuid(euid);
 		if (getcwd(buf, BUFSIZ) == NULL) {
-			seteuid(uid);
 			return(NULL);
 		}
 		while (file[0] == '.') {
@@ -596,7 +592,6 @@ test(file)
 	register int fd;
 	register char *cp;
 
-	seteuid(euid);
 	if (access(file, 4) < 0) {
 		printf("%s: cannot access %s\n", name, file);
 		goto bad;
@@ -644,7 +639,6 @@ test(file)
 	}
 	return(0);
 bad:
-	seteuid(uid);
 	return(-1);
 }
 
