@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.41 2003/04/03 18:55:33 jmc Exp $
+#	$OpenBSD: adduser.perl,v 1.42 2003/05/13 01:23:10 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.41 2003/04/03 18:55:33 jmc Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.42 2003/05/13 01:23:10 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -365,7 +365,7 @@ sub new_users_name {
     local($name);
 
     while(1) {
-	$name = &confirm_list("Enter username", 1, "a-z0-9_-", "");
+	$name = &confirm_list("Enter username", 1, "", "");
 	if (length($name) > 31) {
 	    warn "Username is longer than 31 characters\a\n";
 	    next;
@@ -378,9 +378,9 @@ sub new_users_name {
 sub new_users_name_valid {
     local($name) = @_;
 
-    if ($name !~ /^[a-z0-9_][a-z0-9_\-]*$/ || $name eq "a-z0-9_-") {
+    if ($name !~ /^[a-zA-Z0-9_\.][a-zA-Z0-9_\.\-]*\$?$/ || $name eq "") {
 	warn "Illegal username. " .
-	    "Please use only lowercase characters or digits\a\n";
+	    "Please see the restrictions section of the man page.\a\n";
 	return 0;
     } elsif ($username{$name}) {
 	warn "Username ``$name'' already exists!\a\n"; return 0;
