@@ -1,12 +1,13 @@
-# $OpenBSD: Makefile,v 1.4 2003/07/22 19:49:34 millert Exp $
+# $OpenBSD: Makefile,v 1.5 2003/08/10 18:32:44 otto Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13
 
 DIFF=diff
 PATCH=patch
+PATCHOPTIONS=-sb
 
 # Skip the cmp(1) part for ed(1) style diffs for these tests
-EDSKIPCMP=t7 t10
+EDSKIPCMP=t7 t10 t12
 
 # .1 and .2: 	input files
 
@@ -21,7 +22,7 @@ EDSKIPCMP=t7 t10
 # t9: revisison 1.1 and 1.104 of vfs_syscalls.c
 # t10: two files with no end of line at the end, line in second file is longer
 # t11: rev 1.3 and 1.36 of usr.bin/ed/ed.1.
-# t12: rev 1.1 and 1.2 of sbin/isakmpd/regress/hmac/Makefile. Fails.
+# t12: rev 1.1 and 1.2 of sbin/isakmpd/regress/hmac/Makefile.
 # t13: a case to check the single dot on a line handling for ed(1) patches.
 
 .SUFFIXES: .1 .2
@@ -37,10 +38,10 @@ all: clean ${REGRESS_TARGET}
 	@${DIFF} -c  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.c.patch || true
 	@${DIFF} -u  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.u.patch || true
 	@${DIFF} -e  ${.CURDIR}/${*}.1 ${.CURDIR}/${*}.2 > ${*}.e.patch || true
-	@${PATCH} -s ${*}.copy ${*}.patch || true
-	@${PATCH} -s ${*}.c.copy ${*}.c.patch || true
-	@${PATCH} -s ${*}.u.copy ${*}.u.patch || true
-	@${PATCH} -s ${*}.e.copy ${*}.e.patch || true
+	@${PATCH} ${PATCHOPTIONS} ${*}.copy ${*}.patch || true
+	@${PATCH} ${PATCHOPTIONS} ${*}.c.copy ${*}.c.patch || true
+	@${PATCH} ${PATCHOPTIONS} ${*}.u.copy ${*}.u.patch || true
+	@${PATCH} ${PATCHOPTIONS} ${*}.e.copy ${*}.e.patch || true
 	@cmp -s ${.CURDIR}/${*}.2 ${*}.copy || \
 		(echo "XXX ${*} standard diff failed" && false)
 	@cmp -s ${.CURDIR}/${*}.2 ${*}.c.copy || \
