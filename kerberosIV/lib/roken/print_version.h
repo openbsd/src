@@ -1,1 +1,1 @@
-#define VERSIONLIST { "krb4-1.0", }
+#define VERSIONLIST { "krb4-1.0.2" }
