@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vsbus.4,v 1.4 2003/03/06 22:57:29 jason Exp $
+.\"	$OpenBSD: uba.4,v 1.1 2003/03/06 22:57:29 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -30,38 +30,33 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 6, 2003
-.Dt VSBUS 4 VAX
+.Dt UBA 4 vax
 .Os
 .Sh NAME
-.Nm vsbus
-.Nd VAXstation bus
+.Nm uba
+.Nd Unibus/Qbus controller
 .Sh SYNOPSIS
-.Cd "vsbus0 at mainbus0"
+.Cd "uba0 at ibus0"
 .Sh DESCRIPTION
 The
 .Nm vsbus
-driver supports the internal I/O bus found on VAXstation systems.
+driver supports Unibus and Qbus controllers found
+on MicroVAX systems.
 .Sh SUPPORTED DEVICES
 The following devices are supported on
-.Nm vsbus .
-.Bl -tag -width asc(4) -compact -offset indent
-.It Xr asc 4
-NCR 53c94 SCSI controller.
+.Nm uba .
+.Bl -tag -width mtc(4) -compact -offset indent
+.It Xr dhu 4
+DHU-11 terminal multiplexor.
 .It Xr dz 4
 DZ-11 terminal multiplexer.
-.It Xr le 4
-LANCE ethernet interface.
-.It Xr ncr 4
-NCR 5380 SCSI controller.
-.It Xr smg 4
-Small monochrome graphics adapter.
-.It Xr ze 4
-SGEC ethernet interface.
+.It Xr mtc 4
+MSCP tape controller.
+.It Xr uda 4
+UDA50 disk controller interface.
 .Sh SEE ALSO
-.Xr asc 4 ,
+.Xr dhu 4 ,
 .Xr dz 4 ,
 .Xr intro 4 ,
-.Xr le 4 ,
-.Xr ncr 4 ,
-.Xr smg 4 ,
-.Xr ze 4
+.Xr mtc 4 ,
+.Xr uda 4

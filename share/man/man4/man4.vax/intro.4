@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.16 2003/03/06 22:27:02 jason Exp $
+.\"	$OpenBSD: intro.4,v 1.17 2003/03/06 22:57:29 jason Exp $
 .\"	$NetBSD: intro.4,v 1.3 1996/03/03 17:13:44 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -106,6 +106,8 @@ Not all supported devices are listed.
 .Bl -tag -width mscpbus(4) -compact -offset indent
 .It Xr asc 4
 NCR 53c94 SCSI controller.
+.It Xr dhu 4
+DHU-11 terminal multiplexor.
 .It Xr dz 4
 DZ-11 terminal multiplexer.
 .It Xr ibus 4
@@ -120,6 +122,8 @@ Serial mouse interface.
 Mass Storage Control Protocol interface.
 .It Xr mt 4
 MSCP tape drive interface.
+.It Xr mtc 4
+MSCP tape controller.
 .It Xr ncr 4
 NCR 5380 SCSI controller.
 .It Xr ra 4
