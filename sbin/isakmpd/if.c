@@ -1,5 +1,5 @@
-/*	$OpenBSD: if.c,v 1.6 1999/04/05 20:59:49 niklas Exp $	*/
-/*	$EOM: if.c,v 1.11 1999/04/05 18:26:30 niklas Exp $	*/
+/*	$OpenBSD: if.c,v 1.7 1999/10/01 14:08:26 niklas Exp $	*/
+/*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -66,7 +66,10 @@ siocgifconf (struct ifconf *ifcp)
   /* Get a socket to ask for the network interface configurations.  */
   s = socket (AF_INET, SOCK_DGRAM, 0);
   if (s == -1)
-    return -1;
+    {
+      log_error ("siocgifconf: socket (AF_INET, SOCK_DGRAM, 0) failed");
+      return -1;
+    }
 
   len = sizeof (struct ifreq) * INITIAL_IFREQ_COUNT;
   buf = 0;
@@ -85,7 +88,10 @@ siocgifconf (struct ifconf *ifcp)
 	}
       ifcp->ifc_buf = buf = new_buf;
       if (ioctl (s, SIOCGIFCONF, ifcp) == -1)
-	goto err;
+	{
+	  log_error ("siocgifconf: ioctl (%s, SIOCGIFCONF, ...) failed", s);
+	  goto err;
+	}
 
       /*
        * If there is place for another ifreq we can be sure that the buffer
