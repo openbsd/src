@@ -1,3 +1,4 @@
+/*	$OpenBSD: reloc.h,v 1.2 2001/03/29 18:52:19 drahn Exp $	*/
 /*	$NetBSD: reloc.h,v 1.1 1996/09/30 16:34:33 ws Exp $	*/
 
 /*-

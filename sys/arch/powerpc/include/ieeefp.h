@@ -1,3 +1,4 @@
+/*	$OpenBSD: ieeefp.h,v 1.3 2001/03/29 18:52:19 drahn Exp $	*/
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
