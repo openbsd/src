@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2002/02/21 23:17:53 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2002/04/29 15:52:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -69,19 +69,12 @@ _dl_dcbf(Elf32_Addr *addr)
 }
 
 static inline void
-RELOC_RELA(Elf32_Rela *r,
-	const Elf32_Sym *s, Elf32_Addr *p, int v)
+RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
 {
-	if(ELF32_R_TYPE((r)->r_info) == RELOC_RELATIVE) {
-		if((ELF32_ST_BIND((s)->st_info) == STB_LOCAL) &&
-		   ((ELF32_ST_TYPE((s)->st_info) == STT_SECTION) ||
-		   (ELF32_ST_TYPE((s)->st_info) == STT_NOTYPE)) ) {
-			*(p) = (v) + (r)->r_addend;
-		} else {
-			*(p) = (v) + (s)->st_value + (r)->r_addend;
-		}
-	} else if(ELF32_R_TYPE((r)->r_info) == RELOC_JMP_SLOT) {
-		Elf32_Addr val = (v) + (s)->st_value + (r)->r_addend -
+	if(ELF32_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+		*p = v + r->r_addend;
+	} else if(ELF32_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+		Elf32_Addr val = v + s->st_value + r->r_addend -
 			(Elf32_Addr)(p); 			
 		if (((val & 0xfe000000) != 0) &&	
 			((val & 0xfe000000) != 0xfe000000))
@@ -91,12 +84,14 @@ RELOC_RELA(Elf32_Rela *r,
 		} 				
 		val &= ~0xfc000000;	
 		val |=  0x48000000;
-		*(p) = val;	
+		*p = val;	
 		_dl_dcbf(p);
 	} else if(ELF32_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
-		*(p) = (v) + (s)->st_value + (r)->r_addend;
+		*p = v + s->st_value + r->r_addend;
 	} else {					
-		/* error */
+		/* XXX - printf might not work here, but we give it a shot. */
+		_dl_printf("Unknown bootstrap relocation.\n");
+		_dl_exit(6);
 	}
 }
 
