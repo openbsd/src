@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.6 2003/06/25 17:49:22 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.7 2003/06/25 21:43:49 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -42,7 +42,6 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/dir.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -116,8 +115,8 @@ char	**diffargv;		/* option list to pass to recursive diffs */
 char	*file1, *file2, *efile1, *efile2;
 struct	stat stb1, stb2;
 
-void	*talloc(size_t);
-void	*ralloc(void *, size_t);
+void	*emalloc(size_t);
+void	*erealloc(void *, size_t);
 char	*splice(char *, char *);
 char	*copytemp(void);
 void	diffdir(char **);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.7 2003/06/25 19:56:57 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.8 2003/06/25 21:43:49 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -142,10 +142,9 @@ main(int argc, char **argv)
 		stb2.st_mode = S_IFREG;
 	else if (stat(file2, &stb2) < 0)
 		err(1, "%s", file2);
-	if ((stb1.st_mode & S_IFMT) == S_IFDIR &&
-	    (stb2.st_mode & S_IFMT) == S_IFDIR) {
+	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode))
 		diffdir(argv);
-	} else
+	else
 		diffreg();
 	done(0);
 }
@@ -175,7 +174,7 @@ done(int sig)
 }
 
 void *
-talloc(size_t n)
+emalloc(size_t n)
 {
 	void *p;
 
@@ -185,7 +184,7 @@ talloc(size_t n)
 }
 
 void *
-ralloc(void *p, size_t n)
+erealloc(void *p, size_t n)
 {
 	void *q;
 

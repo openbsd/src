@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.11 2003/06/25 17:49:22 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.12 2003/06/25 21:43:49 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -37,11 +37,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "diff.h"
 
@@ -163,8 +165,10 @@ diffdir(char **argv)
 		for (d1 = dir1; d1->d_entry; d1++) {
 			if ((d1->d_flags & DIRECT) == 0)
 				continue;
-			strcpy(efile1, d1->d_entry);
-			strcpy(efile2, d1->d_entry);
+			strlcpy(efile1, d1->d_entry,
+			    file1 + MAXPATHLEN - efile1);
+			strlcpy(efile2, d1->d_entry,
+			    file2 + MAXPATHLEN - efile2);
 			calldiff(0);
 		}
 	}
@@ -175,12 +179,21 @@ void
 setfile(char **fpp, char **epp, char *file)
 {
 	char *cp;
+	size_t len;
 
-	*fpp = talloc(BUFSIZ);
-	strcpy(*fpp, file);
-	for (cp = *fpp; *cp; cp++)
-		continue;
-	*cp++ = '/';
+	if (*file == '\0')
+		file = ".";
+	*fpp = emalloc(MAXPATHLEN);
+	len = strlcpy(*fpp, file, MAXPATHLEN);
+	if (len >= MAXPATHLEN - 1)
+		errx(1, "%s: %s", file, strerror(ENAMETOOLONG));
+	cp = *fpp + len - 1;
+	if (*cp == '/')
+		++cp;
+	else {
+		*++cp = '/';
+		*++cp = '\0';
+	}
 	*epp = cp;
 }
 
@@ -221,7 +234,7 @@ struct dir *
 setupdir(char *cp)
 {
 	struct dir *dp, *ep;
-	struct direct *rp;
+	struct dirent *rp;
 	int nitems;
 	DIR *dirp;
 
@@ -231,7 +244,7 @@ setupdir(char *cp)
 		done(0);
 	}
 	nitems = 0;
-	dp = talloc(sizeof(struct dir));
+	dp = emalloc(sizeof(struct dir));
 	while ((rp = readdir(dirp))) {
 		ep = &dp[nitems++];
 		ep->d_reclen = rp->d_reclen;
@@ -239,10 +252,10 @@ setupdir(char *cp)
 		ep->d_entry = 0;
 		ep->d_flags = 0;
 		if (ep->d_namlen > 0) {
-			ep->d_entry = talloc(ep->d_namlen + 1);
-			strcpy(ep->d_entry, rp->d_name);
+			ep->d_entry = emalloc(ep->d_namlen + 1);
+			strlcpy(ep->d_entry, rp->d_name, ep->d_namlen + 1);
 		}
-		dp = ralloc(dp, (nitems + 1) * sizeof(struct dir));
+		dp = erealloc(dp, (nitems + 1) * sizeof(struct dir));
 	}
 	dp[nitems].d_entry = 0;	/* delimiter */
 	closedir(dirp);
@@ -267,8 +280,8 @@ compare(struct dir *dp)
 	int i, j, f1, f2, fmt1, fmt2;
 	struct stat stb1, stb2;
 
-	strcpy(efile1, dp->d_entry);
-	strcpy(efile2, dp->d_entry);
+	strlcpy(efile1, dp->d_entry, file1 + MAXPATHLEN - efile1);
+	strlcpy(efile2, dp->d_entry, file2 + MAXPATHLEN - efile2);
 	f1 = open(file1, 0);
 	if (f1 < 0) {
 		perror(file1);

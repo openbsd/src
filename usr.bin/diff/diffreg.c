@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.15 2003/06/25 17:49:22 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.16 2003/06/25 21:43:49 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -311,25 +311,25 @@ notsame:
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	member = ralloc(member, (slen[1] + 2) * sizeof(int));
+	member = erealloc(member, (slen[1] + 2) * sizeof(int));
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	class = ralloc(class, (slen[0] + 2) * sizeof(int));
+	class = erealloc(class, (slen[0] + 2) * sizeof(int));
 
-	klist = talloc((slen[0] + 2) * sizeof(int));
-	clist = talloc(sizeof(cand));
+	klist = emalloc((slen[0] + 2) * sizeof(int));
+	clist = emalloc(sizeof(cand));
 	i = stone(class, slen[0], member, klist);
 	free(member);
 	free(class);
 
-	J = talloc((len[0] + 2) * sizeof(int));
+	J = emalloc((len[0] + 2) * sizeof(int));
 	unravel(klist[i]);
 	free(clist);
 	free(klist);
 
-	ixold = talloc((len[0] + 2) * sizeof(long));
-	ixnew = talloc((len[1] + 2) * sizeof(long));
+	ixold = emalloc((len[0] + 2) * sizeof(long));
+	ixnew = emalloc((len[1] + 2) * sizeof(long));
 	check();
 	output();
 	status = anychange;
@@ -368,19 +368,22 @@ copytemp(void)
 char *
 splice(char *dir, char *file)
 {
-	char *tail, buf[BUFSIZ];
+	char *tail, *buf;
+	size_t len;
 
 	if (!strcmp(file, "-")) {
 		warnx("can't specify - with other arg directory");
 		done(0);
 	}
 	tail = strrchr(file, '/');
-	if (tail == 0)
+	if (tail == NULL)
 		tail = file;
 	else
 		tail++;
-	snprintf(buf, sizeof buf, "%s/%s", dir, tail);
-	return (strdup(buf));
+	len = strlen(dir) + strlen(tail) + 1;
+	buf = emalloc(len);
+	snprintf(buf, len, "%s/%s", dir, tail);
+	return (buf);
 }
 
 static void
@@ -390,9 +393,9 @@ prepare(int i, FILE *fd)
 	int j, h;
 
 	fseek(fd, 0L, SEEK_SET);
-	p = talloc(3 * sizeof(struct line));
+	p = emalloc(3 * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
-		p = ralloc(p, (++j + 3) * sizeof(struct line));
+		p = erealloc(p, (++j + 3) * sizeof(struct line));
 		p[j].value = h;
 	}
 	len[i] = j;
@@ -491,7 +494,7 @@ newcand(int x, int y, int pred)
 {
 	struct cand *q;
 
-	clist = ralloc(clist, ++clen * sizeof(cand));
+	clist = erealloc(clist, ++clen * sizeof(cand));
 	q = clist + clen - 1;
 	q->x = x;
 	q->y = y;
@@ -537,11 +540,11 @@ unravel(int p)
 }
 
 /*
- * check does double duty: 1.  ferret out any fortuitous correspondences due
- * to confounding by hashing (which result in "jackpot") 2.  collect random
- * access indexes to the two files
+ * Check does double duty:
+ *  1.	ferret out any fortuitous correspondences due
+ *	to confounding by hashing (which result in "jackpot")
+ *  2.  collect random access indexes to the two files
  */
-
 static void
 check(void)
 {
@@ -678,7 +681,7 @@ unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
-	a = talloc((l + 1) * sizeof(int));
+	a = emalloc((l + 1) * sizeof(int));
 	for (i = 1; i <= l; i++)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
@@ -788,7 +791,7 @@ change(int a, int b, int c, int d)
 			stat(file2, &stbuf);
 			printf("%s", ctime(&stbuf.st_mtime));
 
-			context_vec_start = talloc(MAX_CONTEXT *
+			context_vec_start = emalloc(MAX_CONTEXT *
 			    sizeof(struct context_vec));
 			context_vec_end = context_vec_start + MAX_CONTEXT;
 			context_vec_ptr = context_vec_start - 1;
@@ -1014,7 +1017,6 @@ asciifile(FILE *f)
 			return (0);
 	return (1);
 }
-
 
 /* dump accumulated "context" diff changes */
 static void
