@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.145 2001/01/25 05:15:24 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.146 2001/01/25 18:49:33 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -686,7 +686,7 @@ extern	char version[];
  * Note: these are just the ones that may not have a cpuid instruction.
  * We deal with the rest in a different way.
  */
-struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
+const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
 		NULL},				/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
@@ -717,7 +717,7 @@ const char *modifiers[] = {
 	""
 };
 
-struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
+const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	{
 		"GenuineIntel",
 		CPUVENDOR_INTEL,
@@ -990,7 +990,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	}
 };
 
-struct cpu_cpuid_feature i386_cpuid_features[] = {
+const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_FPU,	"FPU" },
 	{ CPUID_VME,	"V86" },
 	{ CPUID_DE,	"DE" },
@@ -1176,7 +1176,7 @@ identifycpu()
 	const char *cpu_device = "cpu0";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif, cachesize;
-	struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_nameclass *cpup = NULL;
 	void (*cpu_setup) __P((const char *, int, int));
 
 	if (cpuid_level == -1) {
