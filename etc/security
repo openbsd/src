@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.32 1999/06/19 17:14:31 espie Exp $
+#	$OpenBSD: security,v 1.33 1999/11/22 15:48:07 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -529,8 +529,8 @@ fi
 >$TMP1
 DISKLIST="ccd dk fd hd hk hp jb kra ra rb rd rl rx rz sd up vnd wd xd"
 for i in $DISKLIST; do
-	egrep "^b.*/${i}[0-9][0-9]*[a-p]$"  $LIST >> $TMP1
-	egrep "^c.*/r${i}[0-9][0-9]*[a-p]$"  $LIST >> $TMP1
+	egrep "^b.*/${i}[0-9][0-9]*[B-H]?[a-p]$"  $LIST >> $TMP1
+	egrep "^c.*/r${i}[0-9][0-9]*[B-H]?[a-p]$"  $LIST >> $TMP1
 done
 
 awk '$3 != "root" || $4 != "operator" || $1 !~ /.rw-r-----/ \
