@@ -236,14 +236,10 @@
 128.2.62.3			#edison.me.cmu.edu
 >haycorn.psy.cmu.edu      #CMU Psy Test cell
 128.2.248.86                    #haycorn.psy.cmu.edu
->cs.cornell.edu                 #Cornell University Computer Science
-128.84.254.70                 #kali.cs.cornell.edu
->graphics.cornell.edu      # Cornell University Program of Computer Graphics
-132.236.95.45                   #potato.graphics.cornell.edu
->msc.cornell.edu           # Cornell University Materials Science Center
-128.84.231.196			#ransom.msc.cornell.edu
-128.84.241.33			#ept.msc.cornell.edu
-128.84.249.240			#locutus.msc.cornell.edu
+>msc.cornell.edu        #Cornell University Materials Science Center
+128.84.231.242                  #miranda.ccmr.cornell.edu
+128.84.241.35                   #co.ccmr.cornell.edu
+128.84.249.78                   #dax.ccmr.cornell.edu
 >kiewit.dartmouth.edu      # Dartmouth College, Kiewit
 129.170.16.42			#northservc.dartmouth.edu
 >northstar.dartmouth.edu    #Dartmouth College, Project Northstar
@@ -257,9 +253,9 @@
 >afs1.scri.fsu.edu         # Supercomputer Computations Research Instit
 144.174.128.60			#afs1.scri.fsu.edu
 >iastate.edu               # Iowa State University
-129.186.156.156			#afsdb-1.iastate.edu
-129.186.157.157			#afsdb-2.iastate.edu
-129.186.158.158			#afsdb-3.iastate.edu
+129.186.1.243                   #afsdb-1.iastate.edu
+129.186.6.243                   #afsdb-2.iastate.edu
+129.186.142.243                 #afsdb-3.iastate.edu
 >isi.edu                   # University of Southern California/ISI
 128.9.208.78			#afs.isi.edu
 >cc.lehigh.edu          #lehigh
@@ -273,8 +269,8 @@
 >threede.mit.edu          #MIT/private 3DES AFS testing cell
 18.177.0.130                    #twode.mit.edu.
 >athena.mit.edu           #MIT/Athena cell
-18.70.0.6                       #prill.mit.edu.
-18.145.0.25                     #agamemnon.mit.edu.
+18.158.0.37			#prill.mit.edu.
+18.145.0.25			#agamemnon.mit.edu.
 18.7.1.66			#paris.mit.edu
 >dev.mit.edu              #MIT/IS Development cell
 18.7.1.70                      #wham.mit.edu.
@@ -487,8 +483,10 @@
 144.92.240.99                     #afs3.cae.wisc.edu
 >dapnia.saclay.cea.fr	  #Axlan-CEA
 132.166.32.7			#dphrsg.saclay.cea.fr
->in2p3.fr                  # IN2P3 production cell
-134.158.232.1			#ccpnds00.in2p3.fr
+>in2p3.fr               #IN2P3 production cell
+134.158.232.11                  #ccafsdb1.in2p3.fr
+134.158.232.12                  #ccafsdb2.in2p3.fr
+134.158.232.13                  #ccafsdb3.in2p3.fr
 >mcc.ac.gb              #University of Manchester
 130.88.203.11                   #cfs1.mcc.ac.uk
 130.88.203.12                   #cfs2.mcc.ac.uk
@@ -623,8 +621,6 @@
 192.88.210.123                  #fs3.cert.org
 >ciesin.org                # CIESIN
 160.39.8.90			#afsdb0.ciesin.org
->dementia.org			# dementia
-128.2.35.149			# alycia.dementia.org
 >research.ec.org           # Esprit Research Network of Excellence
 128.240.150.111			#albion.ncl.ac.uk
 130.89.181.106			#cabernet.pegasus.esprit.ec.org
@@ -685,10 +681,6 @@
 130.237.232.29			#crab.pdc.kth.se
 130.237.232.112			#anna.pdc.kth.se
 130.237.232.114			#hokkigai.pdc.kth.se
->blubb.pdc.kth.se		# blubb
-193.10.159.47			#blubb.pdc.kth.se
->mr-afs.pdc.kth.se	   # PDC, MR-AFS
-130.237.232.70			#frog.pdc.kth.se
 >stacken.kth.se            # Stacken Computer Club, KTH, Sweden
 130.237.234.3     		#milko.stacken.kth.se
 130.237.234.43    		#hot.stacken.kth.se
@@ -697,13 +689,16 @@
 130.237.77.7      		#gandalf.telge.kth.se
 >admin.kth.se		# Royal Institute of Technology, Admin
 130.237.32.19			#malvolio.admin.kth.se
+>hpc2n.umu.se		# High Performance Computer Center North
 >bcc.ac.uk                 # Bloomsbury Computing Consortium
 128.40.101.3			#rs6-svr-3.cls-1.bcc.ac.uk
 >athena.ox.ac.uk          #Oxford cell
 129.67.42.91                    #neon.athena.ox.ac.uk
 129.67.42.90                    #krypton.athena.ox.ac.uk
 >rl.ac.uk                  #Rutherford Appleton Lab, England
-130.246.12.31                   #tinkerbel.cc.rl.ac.uk
+130.246.15.135			#tinkerbel.cc.rl.ac.uk
+130.246.12.45			#isabel.cc.rl.ac.uk
+130.246.183.164			#wallace.cc.rl.ac.uk
 >ibm.uk                    # IBM UK, AIX Systems Support Centre
 160.100.240.2			#affinity.aixssc.uk.ibm.com
 >ualberta.ca               # University of Alberta
@@ -723,7 +718,11 @@
 130.225.51.74			#afsdb2.kom.auc.dk
 >zepa.net                  #Kolya/zepa.net cell
 >extundo.com		# Simon Josefsson's cell
+>dementia.org		#Dementia Unlimited
+>grand.central.org      #GCO Public CellServDB 15 Feb 2002
 >openafs.org		#OpenAFS project
 128.2.121.218                   #virtue.openafs.org
 >dynarc.se		# Dynarc
 62.65.1.17			#adder.dynarc.se
+>su.se			# Stockholm University
+>lns.mit.edu                    #MIT/LNS Cell
