@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.h,v 1.5 2000/03/21 23:31:27 mickey Exp $	*/
+/*	$OpenBSD: if_ppp.h,v 1.6 2001/06/09 06:16:38 angelos Exp $	*/
 /*	$NetBSD: if_ppp.h,v 1.11 1996/03/15 02:28:05 paulus Exp $	*/
 
 /*
@@ -20,8 +20,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef _IF_PPP_H_
-#define _IF_PPP_H_
+#ifndef _NET_IF_PPP_H_
+#define _NET_IF_PPP_H_
 
 /*
  * Packet sizes
@@ -132,4 +132,4 @@ int pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		   struct rtentry *));
 void pppintr __P((void));
 #endif
-#endif /* _IF_PPP_H_ */
+#endif /* _NET_IF_PPP_H_ */

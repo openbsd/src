@@ -9,8 +9,8 @@ You should have received a copy of the license with this software. If you
 didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 */
-#ifndef _NET_PFKEY_V2_H
-#define _NET_PFKEY_V2_H 1
+#ifndef _NET_PFKEY_V2_H_
+#define _NET_PFKEY_V2_H_
 
 #define PF_KEY_V2			2
 #define PFKEYV2_REVISION		199806L
@@ -392,4 +392,4 @@ void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
 void import_credentials(struct tdb *, struct sadb_x_cred *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 #endif /* _KERNEL */
-#endif /* _NET_PFKEY_V2_H */
+#endif /* _NET_PFKEY_V2_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.h,v 1.9 1998/05/10 18:53:05 deraadt Exp $       */
+/*      $OpenBSD: if_atm.h,v 1.10 2001/06/09 06:16:37 angelos Exp $       */
 
 /*
  *
@@ -35,18 +35,10 @@
 /*
  * net/if_atm.h
  */
+#ifndef _NET_IF_ATM_H_
+#define _NET_IF_ATM_H_
 
-#if (defined(__FreeBSD__) || defined(__bsdi__)) && defined(KERNEL)
-#ifndef _KERNEL
-#define _KERNEL
-#endif
-#endif /* freebsd doesn't define _KERNEL */
-
-#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)
 #define RTALLOC1(A,B)		rtalloc1((A),(B))
-#elif defined(__FreeBSD__)
-#define RTALLOC1(A,B)		rtalloc1((A),(B),0UL)
-#endif
 
 /*
  * pseudo header for packet transmission
@@ -108,4 +100,5 @@ void	atm_input __P((struct ifnet *, struct atm_pseudohdr *,
 		struct mbuf *, void *));
 int	atm_output __P((struct ifnet *, struct mbuf *, struct sockaddr *, 
 		struct rtentry *));
-#endif
+#endif /* _KERNEL */
+#endif /* _NET_IF_ATM_H_ */

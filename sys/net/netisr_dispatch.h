@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.2 2000/11/08 11:33:10 art Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.3 2001/06/09 06:16:38 angelos Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -15,6 +15,9 @@
  *	...do cleanup stuff.
  * }
  */
+
+#ifndef _NET_NETISR_DISPATCH_H_
+#define _NET_NETISR_DISPATCH_H_
 
 #ifndef _NET_NETISR_H_
 #error <net/netisr.h> must be included before <net/netisr_dispatch.h>
@@ -64,3 +67,4 @@
 #if NBRIDGE > 0
         DONETISR(NETISR_BRIDGE,bridgeintr);
 #endif
+#endif /* _NET_NETISR_DISPATCH_H_ */

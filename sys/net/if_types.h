@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.8 2001/03/26 19:00:58 jason Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.9 2001/06/09 06:16:38 angelos Exp $	*/
 /*	$NetBSD: if_types.h,v 1.7 1995/02/27 09:10:24 glass Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)if_types.h	8.2 (Berkeley) 4/20/94
  */
+
+#ifndef _NET_IF_TYPES_H_
+#define _NET_IF_TYPES_H_
 
 /*
  * Interface types for benefit of parsing media address headers.
@@ -104,3 +107,5 @@
 #define	IFT_DUMMY	0xf1
 #define IFT_PVC		0xf2
 #define IFT_FAITH	0xf3
+
+#endif /* _NET_IF_TYPES_H_ */

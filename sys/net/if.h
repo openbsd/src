@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.25 2001/05/28 10:29:21 angelos Exp $	*/
+/*	$OpenBSD: if.h,v 1.26 2001/06/09 06:16:37 angelos Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)if.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_IF_H_
+#define _NET_IF_H_
 
 #include <sys/queue.h>
 
@@ -455,3 +458,4 @@ int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
 void	lortrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 #endif /* _KERNEL */
+#endif /* _NET_IF_H_ */

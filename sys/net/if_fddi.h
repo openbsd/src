@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddi.h,v 1.2 1997/02/24 13:33:59 niklas Exp $	*/
+/*	$OpenBSD: if_fddi.h,v 1.3 2001/06/09 06:16:37 angelos Exp $	*/
 /*	$NetBSD: if_fddi.h,v 1.2 1995/08/19 04:35:28 cgd Exp $	*/
 
 /*
@@ -80,7 +80,5 @@ void    fddi_ifattach __P((struct ifnet *));
 void    fddi_input __P((struct ifnet *, struct fddi_header *, struct mbuf *));
 int     fddi_output __P((struct ifnet *,
            struct mbuf *, struct sockaddr *, struct rtentry *)); 
-
-#endif
-
-#endif
+#endif /* _KERNEL */
+#endif /* _NET_IF_FDDI_H_ */

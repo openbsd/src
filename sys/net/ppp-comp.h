@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp-comp.h,v 1.4 1998/05/08 05:02:01 millert Exp $	*/
+/*	$OpenBSD: ppp-comp.h,v 1.5 2001/06/09 06:16:39 angelos Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -29,8 +29,8 @@
  * Id: ppp-comp.h,v 1.11 1998/03/25 03:33:34 paulus Exp $
  */
 
-#ifndef _NET_PPP_COMP_H
-#define _NET_PPP_COMP_H
+#ifndef _NET_PPP_COMP_H_
+#define _NET_PPP_COMP_H_
 
 /*
  * The following symbols control whether we include code for
@@ -164,4 +164,4 @@ struct compressor {
 #define CI_PREDICTOR_2		2	/* config option for Predictor-2 */
 #define CILEN_PREDICTOR_2	2	/* length of its config option */
 
-#endif /* _NET_PPP_COMP_H */
+#endif /* _NET_PPP_COMP_H_ */

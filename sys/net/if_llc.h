@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_llc.h,v 1.5 2000/11/05 22:58:23 jason Exp $	*/
+/*	$OpenBSD: if_llc.h,v 1.6 2001/06/09 06:16:38 angelos Exp $	*/
 /*	$NetBSD: if_llc.h,v 1.6 1995/03/08 02:56:57 cgd Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)if_llc.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_IF_LLC_H_
+#define _NET_IF_LLC_H_
 
 /*
  * IEEE 802.2 Link Level Control headers, for use in conjunction with
@@ -143,3 +146,4 @@ struct llc {
 #define	LLC_X25_LSAP	0x7e
 #define	LLC_SNAP_LSAP	0xaa
 #define	LLC_ISO_LSAP	0xfe
+#endif /* _NET_IF_LLC_H_ */

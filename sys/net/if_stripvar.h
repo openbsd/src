@@ -1,6 +1,8 @@
-/*	$OpenBSD: if_stripvar.h,v 1.5 2000/06/26 22:51:01 art Exp $	*/
+/*	$OpenBSD: if_stripvar.h,v 1.6 2001/06/09 06:16:38 angelos Exp $	*/
 /*	$NetBSD: if_stripvar.h,v 1.2.4.1 1996/08/05 20:37:51 jtc Exp $	*/
 
+#ifndef _NET_IF_STRIPVAR_H_
+#define _NET_IF_STRIPVAR_H_
 /*
  * Definitions for SLIP interface data structures
  * 
@@ -61,3 +63,4 @@ int	stripoutput __P((struct ifnet *,
 void	stripstart __P((struct tty *));
 int	striptioctl __P((struct tty *, u_long, caddr_t, int));
 #endif /* _KERNEL */
+#endif /* _NET_IF_STRIPVAR_H_ */

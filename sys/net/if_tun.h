@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.h,v 1.9 2001/03/05 04:00:37 angelos Exp $	*/
+/*	$OpenBSD: if_tun.h,v 1.10 2001/06/09 06:16:38 angelos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -56,4 +56,4 @@ struct tuninfo {
 
 /* ioctl for changing the broadcast/point-to-point status */
 #define TUNSIFMODE      _IOW('t', 93, int)
-#endif /* !_NET_IF_TUN_H_ */
+#endif /* _NET_IF_TUN_H_ */

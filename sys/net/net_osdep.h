@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_osdep.h,v 1.6 2001/02/16 08:48:03 itojun Exp $	*/
+/*	$OpenBSD: net_osdep.h,v 1.7 2001/06/09 06:16:38 angelos Exp $	*/
 /*	$KAME: net_osdep.h,v 1.40 2001/02/14 17:07:50 itojun Exp $	*/
 
 /*
@@ -207,34 +207,12 @@
  *		ifa_refcnt goes negative.
  */
 
-#ifndef __NET_NET_OSDEP_H_DEFINED_
-#define __NET_NET_OSDEP_H_DEFINED_
+#ifndef _NET_NET_OSDEP_H_DEFINED_
+#define _NET_NET_OSDEP_H_DEFINED_
 #ifdef _KERNEL
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define if_name(ifp)	((ifp)->if_xname)
-#else
-struct ifnet;
-extern char *if_name __P((struct ifnet *));
-#endif
-
-#ifdef __FreeBSD__
-#define HAVE_OLD_BPF
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#define ifa_list	ifa_link
-#define if_addrlist	if_addrhead
-#define if_list		if_link
-#endif
-
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104000000
-#define ovbcopy		bcopy
-#endif
-
-#if defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
 #define HAVE_NRL_INPCB
-#endif
 
-#endif /*_KERNEL*/
-#endif /*__NET_NET_OSDEP_H_DEFINED_ */
+#endif /* _KERNEL */
+#endif /*_NET_NET_OSDEP_H_DEFINED_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.2 1996/03/03 21:07:17 niklas Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.3 2001/06/09 06:16:39 angelos Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  *	@(#)raw_cb.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NET_RAW_CB_H_
+#define _NET_RAW_CB_H_
+
 /*
  * Raw protocol interface control block.  Used
  * to tie a socket to the generic raw interface.
@@ -69,3 +72,4 @@ int	 raw_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 
 #endif /* _KERNEL */
+#endif /* _NET_RAW_CB_H_ */

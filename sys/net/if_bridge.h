@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.14 2001/03/22 03:48:29 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.15 2001/06/09 06:16:37 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -30,6 +30,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NET_IF_BRIDGE_H_
+#define _NET_IF_BRIDGE_H_
 
 /*
  * Bridge control request: add/delete member interfaces.
@@ -265,3 +268,4 @@ struct mbuf *bstp_input __P((struct bridge_softc *, struct ifnet *,
 void	bstp_initialization __P((struct bridge_softc *));
 int	bstp_ioctl __P((struct ifnet *, u_long, caddr_t));
 #endif /* _KERNEL */
+#endif /* _NET_IF_BRIDGE_H_ */

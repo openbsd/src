@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.14 2001/05/28 19:51:06 dugsong Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.15 2001/06/09 06:16:37 angelos Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
 void	 bpfdetach __P((struct ifnet *));
 void	 bpfilterattach __P((int));
 u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
-#endif
+#endif /* _KERNEL */
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

@@ -23,12 +23,10 @@
  * From: Id: if_sppp.h,v 1.7 1998/12/01 20:20:19 hm Exp
  */
 
-#ifndef _NET_IF_HDLC_H_
-#define _NET_IF_HDLC_H_ 1
+#ifndef _NET_IF_SPPP_H_
+#define _NET_IF_SPPP_H_
 
-#ifdef __OpenBSD__
 #include <sys/timeout.h>
-#endif
 
 #define IDX_LCP 0		/* idx into state table */
 
@@ -101,13 +99,8 @@ struct sppp {
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
 	int	rst_counter[IDX_COUNT];	/* restart counter */
 	int	fail_counter[IDX_COUNT]; /* negotiation failure counter */
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
-	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
-#elif defined(__OpenBSD__)
 	struct timeout ch[IDX_COUNT];
 	struct timeout pap_my_to_ch;
-#endif
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
 	struct sauth myauth;		/* auth params, i'm peer */
@@ -171,23 +164,18 @@ struct spppreq {
 	struct sppp defs;
 };
 
-#if defined(KERNEL) || defined(_KERNEL)
+#if defined(_KERNEL)
 void sppp_attach (struct ifnet *ifp);
 void sppp_detach (struct ifnet *ifp);
 void sppp_input (struct ifnet *ifp, struct mbuf *m);
-#if defined(__OpenBSD__)
+
 /* Workaround */
 void spppattach (struct ifnet *ifp);
-#endif
-#if (defined(__FreeBSD_version) && __FreeBSD_version >= 300003)
-int sppp_ioctl(struct ifnet *ifp, int cmd, void *data);
-#else
 int sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-#endif
+
 struct mbuf *sppp_dequeue (struct ifnet *ifp);
 struct mbuf *sppp_pick(struct ifnet *ifp);
 int sppp_isempty (struct ifnet *ifp);
 void sppp_flush (struct ifnet *ifp);
 #endif
-
-#endif /* _NET_IF_HDLC_H_ */
+#endif /* _NET_IF_SPPP_H_ */

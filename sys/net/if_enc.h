@@ -31,8 +31,8 @@
  * PURPOSE.
  */
 
-#ifndef _IF_ENC_H_
-#define _IF_ENC_H_
+#ifndef _NET_IF_ENC_H_
+#define _NET_IF_ENC_H_
 
 #define ENCMTU		(1024+512)
 #define ENC_HDRLEN	12
@@ -48,4 +48,4 @@ struct enchdr {
 };
 
 extern struct enc_softc encif[];
-#endif
+#endif /* _NET_IF_ENC_H_ */
