@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.7 2002/02/03 01:46:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -85,6 +85,8 @@ static int ie_gsc_media[] = {
 };
 #define	IE_NMEDIA	(sizeof(ie_gsc_media) / sizeof(ie_gsc_media[0]))
 
+static char mem[IE_SIZE+16];
+
 void ie_gsc_reset __P((struct ie_softc *sc, int what));
 void ie_gsc_attend __P((struct ie_softc *sc));
 void ie_gsc_run __P((struct ie_softc *sc));
@@ -152,6 +154,7 @@ ie_gsc_attend(sc)
 {
 	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 
+	fdcache(0, (vaddr_t)&mem, sizeof(mem));
 	r->ie_attn = 0;
 }
 
@@ -290,7 +293,6 @@ ie_gsc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	static char mem[IE_SIZE+16];
 	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 	register struct ie_softc *sc = (struct ie_softc *)self;
 	register struct gsc_attach_args *ga = aux;
@@ -307,6 +309,7 @@ ie_gsc_attach(parent, self, aux)
 		sc->sc_flags |= IEGSC_GECKO;
 
 	sc->sc_msize = IE_SIZE;
+	/* XXX memory must be under 16M until the mi part is fixed */
 #if 0
 	if (bus_dmamem_alloc(ga->ga_dmatag, sc->sc_msize, NBPG, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
@@ -333,6 +336,7 @@ ie_gsc_attach(parent, self, aux)
 
 	sc->iot = sc->bt = ga->ga_iot;
 	sc->ioh = ga->ga_hpa;
+	sc->do_xmitnopchain = 0;
 	sc->hwreset = ie_gsc_reset;
 	sc->chan_attn = ie_gsc_attend;
 	sc->port = ie_gsc_port;
@@ -374,7 +378,7 @@ ie_gsc_attach(parent, self, aux)
 	sc->iscp = 0;
 	sc->scp = sc->iscp + IE_ISCP_SZ;
 	sc->scb = sc->scp + IE_SCP_SZ;
-	sc->buf_area = sc->scb + IE_SCB_SZ;
+	sc->buf_area = sc->scb + 256;
 	sc->buf_area_sz = sc->sc_msize - sc->buf_area;
 	sc->sc_type = sc->sc_flags & IEGSC_GECKO? "LASI/i82596CA" : "i82596DX";
 	sc->sc_vers = ga->ga_type.iodc_model * 10 + ga->ga_type.iodc_sv_rev;
