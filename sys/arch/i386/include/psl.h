@@ -76,4 +76,23 @@
 #include <machine/intr.h>
 #endif
 
+#ifndef _LOCORE
+
+/*
+ * Interrupt handler chains.  isa_intr_establish() inserts a handler into
+ * the list.  The handler is called with its (single) argument.
+ */
+
+struct intrhand {
+	int	(*ih_fun) __P((void *));
+	void	*ih_arg;
+	u_long	ih_count;
+	struct	intrhand *ih_next;
+	int	ih_level;
+	int	ih_irq;
+	char	*ih_what;
+};
+
+#endif /* _LOCORE */
+ 
 #endif /* !_I386_PSL_H_ */

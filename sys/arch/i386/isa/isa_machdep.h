@@ -106,22 +106,6 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
 
 
 /*
- * Interrupt handler chains.  isa_intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-
-struct intrhand {
-	int	(*ih_fun) __P((void *));
-	void	*ih_arg;
-	u_long	ih_count;
-	struct	intrhand *ih_next;
-	int	ih_level;
-	int	ih_irq;
-	char	*ih_what;
-};
-
- 
-/*
  * ISA DMA bounce buffers.
  * XXX should be made partially machine- and bus-mapping-independent.
  *
