@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.9 2004/06/21 16:33:45 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.10 2004/07/13 00:35:39 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -163,6 +163,12 @@ sub write
 	if (defined $self->{size}) {
 		print $fh "\@size ", $self->{size}, "\n";
 	}
+	if (defined $self->{symlink}) {
+		print $fh "\@symlink ", $self->{symlink}, "\n";
+	}
+	if (defined $self->{link}) {
+		print $fh "\@link ", $self->{link}, "\n";
+	}
 }
 
 sub destate
@@ -216,6 +222,21 @@ sub add_size
 	$self->{size} = $sz;
 }
 
+# XXX symlink/hardlinks are properties of File,
+# because we want to use inheritance for other stuff.
+
+sub make_symlink
+{
+	my ($self, $linkname) = @_;
+	$self->{symlink} = $linkname;
+}
+
+sub make_hardlink
+{
+	my ($self, $linkname) = @_;
+	$self->{link} = $linkname;
+}
+
 sub IsFile() { 1 }
 
 package OpenBSD::PackingElement::Ignore;
@@ -264,6 +285,30 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	$plist->{state}->{lastfile}->add_md5($');
+	return undef;
+}
+
+package OpenBSD::PackingElement::symlink;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword('symlink');
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+
+	$plist->{state}->{lastfile}->make_symlink($');
+	return undef;
+}
+
+package OpenBSD::PackingElement::hardlink;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword('link');
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+
+	$plist->{state}->{lastfile}->make_hardlink($');
 	return undef;
 }
 
