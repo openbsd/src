@@ -482,6 +482,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/tgavar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pcmcia/gprio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/radio_if.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/radiovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/rasops
