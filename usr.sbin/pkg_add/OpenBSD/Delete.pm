@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.8 2004/11/11 11:51:53 espie Exp $
+# $OpenBSD: Delete.pm,v 1.9 2004/11/11 22:40:38 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -139,6 +139,7 @@ sub delete_plist
 		$removed->{$name} = 1;
 	}
 	remove_packing_info($dir) unless $state->{not};
+	$plist->forget();
 }
 
 package OpenBSD::PackingElement;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.25 2004/11/11 20:59:05 espie Exp $
+# $OpenBSD: Update.pm,v 1.26 2004/11/11 22:40:38 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -77,7 +77,8 @@ sub extract
 	if ($state->{not}) {
 		print "extracting tempfile under ", dirname($file->{destdir}.$file->{name}), "\n";
 	} else {
-		my ($fh, $tempname) = tempfile(DIR => dirname($file->{destdir}.$file->{name}));
+		my ($fh, $tempname) = tempfile('pkg.XXXXXXXXXX', 
+		    DIR => dirname($file->{destdir}.$file->{name}));
 
 		print "extracting $tempname\n" if $state->{very_verbose};
 		$file->{name} = $tempname;
