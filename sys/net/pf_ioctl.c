@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.105 2004/02/13 19:32:49 mpf Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.106 2004/02/19 07:41:45 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -96,7 +96,15 @@ extern struct timeout	 pf_expire_to;
 struct pf_rule		 pf_default_rule;
 
 #define	TAGID_MAX	 50000
-TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags);
+TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
+    				pf_qids = TAILQ_HEAD_INITIALIZER(pf_qids);
+
+#if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
+#error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
+#endif
+static u_int16_t	 tagname2tag(struct pf_tags *, char *);
+static void		 tag2tagname(struct pf_tags *,  u_int16_t, char *);
+static void		 tag_unref(struct pf_tags *, u_int16_t);
 
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
@@ -433,6 +441,11 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		return;
 	pf_tag_unref(rule->tag);
 	pf_tag_unref(rule->match_tag);
+#ifdef ALTQ
+	if (rule->pqid != rule->qid)
+		pf_qid_unref(rule->pqid);
+	pf_qid_unref(rule->qid);
+#endif
 	pfi_dynaddr_remove(&rule->src.addr);
 	pfi_dynaddr_remove(&rule->dst.addr);
 	if (rulequeue == NULL) {
@@ -444,13 +457,13 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	pool_put(&pf_rule_pl, rule);
 }
 
-u_int16_t
-pf_tagname2tag(char *tagname)
+static	u_int16_t
+tagname2tag(struct pf_tags *head, char *tagname)
 {
 	struct pf_tagname	*tag, *p = NULL;
 	u_int16_t		 new_tagid = 1;
 
-	TAILQ_FOREACH(tag, &pf_tags, entries)
+	TAILQ_FOREACH(tag, head, entries)
 		if (strcmp(tagname, tag->name) == 0) {
 			tag->ref++;
 			return (tag->tag);
@@ -463,8 +476,8 @@ pf_tagname2tag(char *tagname)
 	 */
 
 	/* new entry */
-	if (!TAILQ_EMPTY(&pf_tags))
-		for (p = TAILQ_FIRST(&pf_tags); p != NULL &&
+	if (!TAILQ_EMPTY(head))
+		for (p = TAILQ_FIRST(head); p != NULL &&
 		    p->tag == new_tagid; p = TAILQ_NEXT(p, entries))
 			new_tagid = p->tag + 1;
 
@@ -484,36 +497,36 @@ pf_tagname2tag(char *tagname)
 	if (p != NULL)	/* insert new entry before p */
 		TAILQ_INSERT_BEFORE(p, tag, entries);
 	else	/* either list empty or no free slot in between */
-		TAILQ_INSERT_TAIL(&pf_tags, tag, entries);
+		TAILQ_INSERT_TAIL(head, tag, entries);
 
 	return (tag->tag);
 }
 
-void
-pf_tag2tagname(u_int16_t tagid, char *p)
+static	void
+tag2tagname(struct pf_tags *head,  u_int16_t tagid, char *p)
 {
 	struct pf_tagname	*tag;
 
-	TAILQ_FOREACH(tag, &pf_tags, entries)
+	TAILQ_FOREACH(tag, head, entries)
 		if (tag->tag == tagid) {
 			strlcpy(p, tag->name, PF_TAG_NAME_SIZE);
 			return;
 		}
 }
 
-void
-pf_tag_unref(u_int16_t tag)
+static	void
+tag_unref(struct pf_tags *head, u_int16_t tag)
 {
 	struct pf_tagname	*p, *next;
 
 	if (tag == 0)
 		return;
 
-	for (p = TAILQ_FIRST(&pf_tags); p != NULL; p = next) {
+	for (p = TAILQ_FIRST(head); p != NULL; p = next) {
 		next = TAILQ_NEXT(p, entries);
 		if (tag == p->tag) {
 			if (--p->ref == 0) {
-				TAILQ_REMOVE(&pf_tags, p, entries);
+				TAILQ_REMOVE(head, p, entries);
 				free(p, M_TEMP);
 			}
 			break;
@@ -521,7 +534,43 @@ pf_tag_unref(u_int16_t tag)
 	}
 }
 
+u_int16_t
+pf_tagname2tag(char *tagname)
+{
+	return (tagname2tag(&pf_tags, tagname));
+}
+
+void
+pf_tag2tagname(u_int16_t tagid, char *p)
+{
+	return (tag2tagname(&pf_tags, tagid, p));
+}
+
+void
+pf_tag_unref(u_int16_t tag)
+{
+	return (tag_unref(&pf_tags, tag));
+}
+
 #ifdef ALTQ
+u_int32_t
+pf_qname2qid(char *qname)
+{
+	return ((u_int32_t)tagname2tag(&pf_qids, qname));
+}
+
+void
+pf_qid2qname(u_int32_t qid, char *p)
+{
+	return (tag2tagname(&pf_qids, (u_int16_t)qid, p));
+}
+
+void
+pf_qid_unref(u_int32_t qid)
+{
+	return (tag_unref(&pf_qids, (u_int16_t)qid));
+}
+
 int
 pf_begin_altq(u_int32_t *ticket)
 {
@@ -534,7 +583,8 @@ pf_begin_altq(u_int32_t *ticket)
 		if (altq->qname[0] == 0) {
 			/* detach and destroy the discipline */
 			error = altq_remove(altq);
-		}
+		} else
+			pf_qid_unref(altq->qid);
 		pool_put(&pf_altq_pl, altq);
 	}
 	if (error)
@@ -558,7 +608,8 @@ pf_rollback_altq(u_int32_t ticket)
 		if (altq->qname[0] == 0) {
 			/* detach and destroy the discipline */
 			error = altq_remove(altq);
-		}
+		} else
+			pf_qid_unref(altq->qid);
 		pool_put(&pf_altq_pl, altq);
 	}
 	altqs_inactive_open = 0;
@@ -570,8 +621,6 @@ pf_commit_altq(u_int32_t ticket)
 {
 	struct pf_altqqueue	*old_altqs;
 	struct pf_altq		*altq;
-	struct pf_anchor	*anchor;
-	struct pf_ruleset	*ruleset;
 	int			 s, err, error = 0;
 
 	if (!altqs_inactive_open || ticket != ticket_altqs_inactive)
@@ -607,21 +656,12 @@ pf_commit_altq(u_int32_t ticket)
 			err = altq_remove(altq);
 			if (err != 0 && error == 0)
 				error = err;
-		}
+		} else
+			pf_qid_unref(altq->qid);
 		pool_put(&pf_altq_pl, altq);
 	}
 	splx(s);
 
-	/* update queue IDs */
-	pf_rule_set_qid(
-	    pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
-	TAILQ_FOREACH(anchor, &pf_anchors, entries) {
-		TAILQ_FOREACH(ruleset, &anchor->rulesets, entries) {
-			pf_rule_set_qid(
-			    ruleset->rules[PF_RULESET_FILTER].active.ptr
-			    );
-		}
-	}
 	altqs_inactive_open = 0;
 	return (error);
 }
@@ -677,12 +717,6 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
 	if (rs == NULL || !rs->rules[rs_num].inactive.open ||
 	    ticket != rs->rules[rs_num].inactive.ticket)
 		return (EBUSY);
-
-#ifdef ALTQ
-	/* set queue IDs */
-	if (rs_num == PF_RULESET_FILTER)
-		pf_rule_set_qid(rs->rules[rs_num].inactive.ptr);
-#endif
 
 	/* Swap rules, keep the old. */
 	s = splsoftnet();
@@ -914,6 +948,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		}
 
+#ifdef ALTQ
+		/* set queue IDs */
+		if (rule->qname[0] != 0) {
+			if ((rule->qid = pf_qname2qid(rule->qname)) == 0)
+				error = EBUSY;
+			else if (rule->pqname[0] != 0) {
+				if ((rule->pqid =
+				    pf_qname2qid(rule->pqname)) == 0)
+					error = EBUSY;
+			} else
+				rule->pqid = rule->qid;
+		}
+#endif
 		if (rule->tagname[0])
 			if ((rule->tag = pf_tagname2tag(rule->tagname)) == 0)
 				error = EBUSY;
@@ -1116,11 +1163,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 #ifdef ALTQ
 			/* set queue IDs */
 			if (newrule->qname[0] != 0) {
-				newrule->qid = pf_qname_to_qid(newrule->qname);
-				if (newrule->pqname[0] != 0)
-					newrule->pqid =
-					    pf_qname_to_qid(newrule->pqname);
-				else
+				if ((newrule->qid =
+				    pf_qname2qid(newrule->qname)) == 0)
+					error = EBUSY;
+				else if (newrule->pqname[0] != 0) {
+					if ((newrule->pqid =
+					    pf_qname2qid(newrule->pqname))  == 0)
+						error = EBUSY;
+				} else
 					newrule->pqid = newrule->qid;
 			}
 #endif
@@ -1654,6 +1704,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		 * copy the necessary fields
 		 */
 		if (altq->qname[0] != 0) {
+			if ((altq->qid = pf_qname2qid(altq->qname)) == 0) {
+				error = EBUSY;
+				pool_put(&pf_altq_pl, altq);
+				break;
+			}
 			TAILQ_FOREACH(a, pf_altqs_inactive, entries) {
 				if (strncmp(a->ifname, altq->ifname,
 				    IFNAMSIZ) == 0 && a->qname[0] == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.183 2004/02/10 22:42:57 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.184 2004/02/19 07:41:45 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1299,8 +1299,6 @@ extern int			 pf_tbladdr_setup(struct pf_ruleset *,
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
-extern void			 pf_rule_set_qid(struct pf_rulequeue *);
-extern u_int32_t		 pf_qname_to_qid(char *);
 extern void			 pf_update_anchor_rules(void);
 extern struct pool		 pf_src_tree_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
@@ -1431,6 +1429,9 @@ u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);
 void		pf_tag_unref(u_int16_t);
 int		pf_tag_packet(struct mbuf *, struct pf_tag *, int);
+u_int32_t	pf_qname2qid(char *);
+void		pf_qid2qname(u_int32_t, char *);
+void		pf_qid_unref(u_int32_t);
 
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;
