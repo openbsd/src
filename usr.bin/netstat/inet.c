@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.33 1999/04/11 19:41:40 niklas Exp $	*/
+/*	$OpenBSD: inet.c,v 1.34 1999/10/29 03:26:40 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.33 1999/04/11 19:41:40 niklas Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.34 1999/10/29 03:26:40 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.33 1999/04/11 19:41:40 niklas Exp $";
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ip4.h>
+#include <netinet/ip_ether.h>
 
 #include <arpa/inet.h>
 #include <limits.h>
@@ -638,6 +639,38 @@ ah_stats(off, name)
 	p(ahs_ibytes, "\t%qu input byte%s\n");
 	p(ahs_obytes, "\t%qu output byte%s\n");
 
+#undef p
+}
+
+/*
+ * Dump etherip statistics structure.
+ */
+void
+etherip_stats(off, name)
+	u_long off;
+	char *name;
+{
+        struct etheripstat etheripstat;
+
+	
+        if (off == 0)
+                return;
+        kread(off, (char *)&etheripstat, sizeof (etheripstat));
+        printf("%s:\n", name);
+
+#define p(f, m) if (etheripstat.f || sflag <= 1) \
+    printf(m, etheripstat.f, plural(etheripstat.f))
+
+
+        p(etherip_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(etherip_qfull, "\t%u packet%s were dropped due to full output queue\n");
+	p(etherip_noifdrops, "\t%u packet%s were dropped because of no interface/bridge information\n");
+        p(etherip_pdrops, "\t%u packet%s dropped due to policy\n");
+        p(etherip_adrops, "\t%u packet%s dropped for other reasons\n");
+	p(etherip_ipackets, "\t%u input ethernet-in-IP packets\n");
+	p(etherip_opackets, "\t%u output ethernet-in-IP packets\n");
+	p(etherip_ibytes, "\t%qu input byte%s\n");
+	p(etherip_obytes, "\t%qu output byte%s\n");
 #undef p
 }
 
