@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.56 2004/08/04 19:42:30 mickey Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.57 2004/09/16 13:57:49 markus Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -215,7 +215,6 @@ fxp_scb_wait(sc)
 		printf("%s: warning: SCB timed out\n", sc->sc_dev.dv_xname);
 }
 
-
 void
 fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int length)
 {
@@ -238,7 +237,6 @@ fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int length)
 		DELAY(1);
 	}
 }
-
 
 void
 fxp_eeprom_putword(struct fxp_softc *sc, int offset, u_int16_t data)
@@ -292,8 +290,6 @@ fxp_write_eeprom(struct fxp_softc *sc, u_short *data, int offset, int words)
 	for (i = 0; i < words; i++)
 		fxp_eeprom_putword(sc, offset + i, data[i]);
 }
-
-
 
 /*************************************************************
  * Operating system-specific autoconfiguration glue
@@ -666,10 +662,6 @@ fxp_autosize_eeprom(sc)
 	DELAY(4);
 	sc->eeprom_size = x;
 }
-
-
-
-
 
 /*
  * Read from the serial EEPROM. Basically, you manually shift in
