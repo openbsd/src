@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_txp.c,v 1.30 2001/05/16 02:01:16 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.31 2001/05/16 02:47:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
- *	Jason L. Wright <jason@thought.net> and
+ *	Jason L. Wright <jason@thought.net>, Theo de Raadt, and
  *	Aaron Campbell <aaron@monkey.org>.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Jason L. Wright and
- *	Aaron Campbell.
+ *	This product includes software developed by Jason L. Wright,
+ *	Theo de Raadt and Aaron Campbell.
  * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -382,7 +382,7 @@ txp_download_fw(sc)
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
 	fileheader = (struct txp_fw_file_header *)tc990image;
-	if (strncmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
+	if (bcmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
 		printf(": fw invalid magic\n");
 		return (-1);
 	}
