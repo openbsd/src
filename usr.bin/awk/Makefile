@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/08/25 16:17:08 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/12/14 16:00:37 jmc Exp $
 
 PROG=	awk
 LINKS=	${BINDIR}/awk ${BINDIR}/nawk
@@ -8,6 +8,11 @@ DPADD=	${LIBM}
 CLEANFILES+=proctab.c maketab ytab.c ytab.h
 CFLAGS+=-I. -I${.CURDIR}
 MLINKS=	awk.1 nawk.1
+
+# This just gets installed verbatim
+.if make(install)
+SUBDIR+= USD.doc
+.endif
 
 ytab.c ytab.h: awkgram.y
 	${YACC} -d ${.CURDIR}/awkgram.y

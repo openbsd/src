@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk,v 1.1 2003/06/26 16:20:04 mickey Exp $
+.\"	$OpenBSD: awk,v 1.2 2003/12/14 16:00:37 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -38,11 +38,11 @@
 .OH 'Awk \(em A Pattern Scanning and Processing Language''USD:16-%'
 .\" .fp 3 G  no G on APS (use gb) or Dandelion Printer (use CW)
 .\" the .T is only a ditroff feature...
-.if '\*.T'dp' .fp 3 El
-.if '\*.T'aps' .fp 3 gB
-....TM "78-1271-12, 78-1273-6" 39199 39199-11
+.\" .if '\*.T'dp' .fp 3 El
+.\" .if '\*.T'aps' .fp 3 gB
+.\" ....TM "78-1271-12, 78-1273-6" 39199 39199-11
 .ND "September 1, 1978"
-....TR 68
+.\" ....TR 68
 .\".RP
 .	\" macros here
 .tr _\(em
@@ -103,7 +103,7 @@ Brian W. Kernighan
 .AU "MH 2C-514" 7214
 Peter J. Weinberger
 .AI
-.MH
+.\" .MH
 .AB
 .IT Awk
 is a programming language whose
@@ -155,15 +155,15 @@ and multiple output streams.
 This report contains a user's guide, a discussion of the design and implementation of
 .IT awk ,
 and some timing statistics.
-....It supersedes TM-77-1271-5, dated September 8, 1977.
+It supersedes TM-77-1271-5, dated September 8, 1977.
 .AE
-.CS 6 1 7 0 1 4
+.\" .CS 6 1 7 0 1 4
 .if n .ls 2
 .nr PS 9
 .nr VS 11
 .NH
 Introduction
-.if t .2C
+.\" .if t .2C
 .PP
 .IT Awk
 is a programming language designed to make
@@ -182,10 +182,11 @@ this action will be performed on each line that matches the pattern.
 Readers familiar with the
 .UX
 program
-.IT grep\|
-.[
-unix program manual
-.]
+.IT grep
+.\" .[
+.\" unix program manual
+.\" .]
+(see the manual page for grep(1))
 will recognize
 the approach, although in
 .IT awk
@@ -234,6 +235,8 @@ and executed by the command
 .P1
 awk  -f pfile  [files]
 .P2
+.LP
+See the manual page for awk(1) for details of other options.
 .NH 2
 Program Structure
 .PP
@@ -394,9 +397,8 @@ for example,
 print $1 >$2
 .P2
 uses the contents of field 2 as a file name.
-.PP
 Naturally there is a limit on the number of output files;
-currently it is 10.
+currently it is 40.
 .PP
 Similarly, output can be piped into another process
 (on
@@ -450,9 +452,10 @@ as in this example.
 The version of
 .UL printf
 is identical to that used with C.
-.[
-C programm language prentice hall 1978
-.]
+.\" .[
+.\" C programm language prentice hall 1978
+.\" .]
+See the manual page for printf(3) for further information.
 .NH 1
 Patterns
 .PP
@@ -526,12 +529,12 @@ forms found in
 the
 .UC UNIX
 text editor
-.IT ed\|
-.[
-unix program manual
-.]
+.IT ed(1)
+.\" .[
+.\" unix program manual
+.\" .]
 and
-.IT grep
+.IT grep(1)
 (without back-referencing).
 In addition,
 .IT awk
@@ -542,7 +545,7 @@ for ``one or more'', and
 .UL ?
 for ``zero or one'',
 all as in
-.IT lex .
+.IT lex(1) .
 Character classes
 may be abbreviated:
 .UL [a\-zA\-Z0\-9]
@@ -562,13 +565,13 @@ Regular expressions
 (with the extensions listed above)
 must be enclosed in slashes,
 just as in
-.IT ed
+.IT ed(1)
 and
-.IT sed .
+.IT sed(1) .
 Within a regular expression,
 blanks and the regular expression
 metacharacters are significant.
-To turn of the magic meaning
+To turn off the magic meaning
 of one of the regular expression characters,
 precede it with a backslash.
 An example is the pattern
@@ -736,6 +739,9 @@ provides the arithmetic functions
 .UL sqrt ,
 .UL log ,
 .UL exp ,
+.UL sin ,
+.UL cos ,
+.UL atan2 ,
 and
 .UL int ,
 for
@@ -744,6 +750,9 @@ base
 .IT e
 logarithm,
 exponential,
+sine,
+cosine,
+tangent,
 and integer part of their respective arguments.
 .PP
 The name of one of these built-in functions,
@@ -801,6 +810,8 @@ the values of
 .UL $1
 and
 .UL $2 .
+.LP
+See the awk(1) manual page for details of other functions available.
 .NH 2
 Variables, Expressions, and Assignments
 .PP
@@ -847,6 +858,8 @@ The arithmetic operators are
 .UL \- ,
 .UL \(** ,
 .UL / ,
+.UL ^
+(exponentiation),
 and
 .UL %
 (mod).
@@ -861,6 +874,7 @@ and so are the assignment operators
 .UL \-= ,
 .UL *= ,
 .UL /= ,
+.UL ^= ,
 and
 .UL %= .
 These operators may all be used in expressions.
@@ -1133,10 +1147,10 @@ provides more general patterns, i.e., regular expressions
 in full generality;
 .IT fgrep
 searches for a set of keywords with a particularly fast algorithm.
-.IT Sed\|
-.[
-unix programm manual
-.]
+.IT Sed(1)
+.\" .[
+.\" unix programm manual
+.\" .]
 provides most of the editing facilities of
 the editor
 .IT ed  ,
@@ -1146,10 +1160,11 @@ numeric capabilities,
 logical relations,
 or variables.
 .PP
-.IT Lex\|
-.[
-lesk lexical analyzer cstr
-.]
+.IT Lex
+.\" .[
+.\" lesk lexical analyzer cstr
+.\" .]
+(see the lex(1) manual page for further details)
 provides general regular expression recognition capabilities,
 and, by serving as a C program generator,
 is essentially open-ended in its capabilities.
@@ -1234,12 +1249,12 @@ on the
 .UC UNIX
 operating system.
 The grammar is specified with
-.IT yacc ;
-.[
-yacc johnson cstr
-.]
+.IT yacc(1) ;
+.\" .[
+.\" yacc johnson cstr
+.\" .]
 the lexical analysis is done by
-.IT lex ;
+.IT lex(1) ;
 the regular expression recognizers are
 deterministic finite automata
 constructed directly from the expressions.
@@ -1333,10 +1348,10 @@ Some of the test programs are shown in
 .IT sed
 and
 .IT lex .
-.[
-$LIST$
-.]
-.1C
+.\" .[
+.\" $LIST$
+.\" .]
+.DS C
 .TS
 center;
 c c c c c c c c c
@@ -1354,11 +1369,12 @@ _
 \fIawk\fR	15.0	25.6	29.9	33.3	38.9	46.4	71.4	31.1
 _
 .TE
+.DE
 .sp
 .ce
 \fBTable I.\fR  Execution Times of Programs. (Times are in sec.)
 .sp 2
-.2C
+.\" .2C
 .PP
 The programs for some of these jobs are shown below.
 The
