@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.23 2003/11/29 17:28:40 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.24 2003/12/15 00:00:12 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -51,13 +51,13 @@ int undo_disable_flag;
 /*
  * Local functions
  */
-static int find_absolute_dot(LINE *, int);
-static int find_line_offset(int, LINE **, int *);
+static int find_dot(LINE *, int);
+static int find_lo(int, LINE **, int *);
 static struct undo_rec *new_undo_record(void);
 static int drop_oldest_undo_record(void);
 
 /*
- * find_{absolute_dot,line_offset}()
+ * find_dot, find_lo()
  *
  * Find an absolute dot in the buffer from a line/offset pair, and vice-versa.
  *
@@ -66,7 +66,7 @@ static int drop_oldest_undo_record(void);
  */
 
 static int
-find_absolute_dot(LINE *lp, int off)
+find_dot(LINE *lp, int off)
 {
 	int count = 0;
 	LINE *p;
@@ -87,7 +87,7 @@ find_absolute_dot(LINE *lp, int off)
 }
 
 static int
-find_line_offset(int pos, LINE **olp, int *offset)
+find_lo(int pos, LINE **olp, int *offset)
 {
 	LINE *p;
 
@@ -216,7 +216,7 @@ undo_add_insert(LINE *lp, int offset, int size)
 	reg.r_offset = offset;
 	reg.r_size = size;
 
-	pos = find_absolute_dot(lp, offset);
+	pos = find_dot(lp, offset);
 
 	/*
 	 * We try to reuse the last undo record to `compress' things.
@@ -263,7 +263,7 @@ undo_add_delete(LINE *lp, int offset, int size)
 	reg.r_offset = offset;
 	reg.r_size = size;
 
-	pos = find_absolute_dot(lp, offset);
+	pos = find_dot(lp, offset);
 
 	if (offset == llength(lp))	/* if it's a newline... */
 		undo_add_boundary();
@@ -413,7 +413,7 @@ undo(int f, int n)
 	LINE *lp;
 	int offset, save, dot;
 
-	dot = find_absolute_dot(curwp->w_dotp, curwp->w_doto);
+	dot = find_dot(curwp->w_dotp, curwp->w_doto);
 
 	ptr = curwp->w_undoptr;
 
@@ -458,11 +458,11 @@ undo(int f, int n)
 			 * Move to where this has to apply
 			 *
 			 * Boundaries are put as position 0 (to save
-			 * lookup time in find_absolute_dot) so we must
+			 * lookup time in find_dot) so we must
 			 * not move there...
 			 */
 			if (ptr->type != BOUNDARY) {
-				if (find_line_offset(ptr->pos, &lp,
+				if (find_lo(ptr->pos, &lp,
 				    &offset) == FALSE) {
 					ewprintf("Internal error in Undo!");
 					rval = FALSE;
@@ -505,7 +505,7 @@ undo(int f, int n)
 	 */
 	curwp->w_undoptr = ptr;
 
-	curwp->w_undopos = find_absolute_dot(curwp->w_dotp, curwp->w_doto);
+	curwp->w_undopos = find_dot(curwp->w_dotp, curwp->w_doto);
 
 	return (rval);
 }
