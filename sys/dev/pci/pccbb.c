@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.32 2003/06/25 21:53:45 mickey Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.33 2003/12/23 20:52:23 mickey Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -1024,8 +1024,10 @@ pccbbintr_function(sc)
 			s = splclock();
 		} else if (pil->pil_level == IPL_AUDIO) {
 			s = splaudio();
+#ifdef IPL_IMP
 		} else if (pil->pil_level == IPL_IMP) {
 			s = splimp();
+#endif
 		} else if (pil->pil_level == IPL_TTY) {
 			s = spltty();
 #if 0
