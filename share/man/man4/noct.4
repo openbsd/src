@@ -1,4 +1,4 @@
-.\"	$OpenBSD: noct.4,v 1.1 2002/06/03 02:58:42 jason Exp $
+.\"	$OpenBSD: noct.4,v 1.2 2002/07/16 04:06:20 jason Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -51,7 +51,10 @@ The random number generator provides random bits to the
 .Xr random 4
 subsystem.
 .Pp
-Currently, the public key and packet processors are not supported.
+Currently, the he packet processor registers with the
+.Xr crypto 9
+subsystem only to support MD5 and SHA1.
+The public key engine is not yet supported.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr ipsec 4 ,
