@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.16 2002/04/28 15:17:09 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.17 2003/01/04 01:12:08 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,8 +136,9 @@ mmrw(dev, uio, flags)
 				goto unlock;
 			}
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, PMAP_WIRED);
+			    trunc_page(v),
+			    uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
+			    (uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE) | PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));

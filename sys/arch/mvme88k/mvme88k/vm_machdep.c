@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.48 2002/03/14 01:26:40 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.49 2003/01/04 01:12:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -257,7 +257,8 @@ vmapbuf(bp, len)
 		if (pmap_extract(pmap, (vm_offset_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, pa,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE,
+			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -332,7 +333,8 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 
 	while (len>0) {
 		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
-			   VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), PMAP_WIRED);
+			   VM_PROT_WRITE | VM_PROT_READ |(CACHE_INH << 16),
+			   VM_PROT_WRITE | VM_PROT_READ | PMAP_WIRED);
 		len -= PAGE_SIZE;
 		tva += PAGE_SIZE;
 		ppa += PAGE_SIZE;
