@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2003/03/06 09:56:25 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2003/03/06 14:22:13 cedric Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -291,6 +291,8 @@ text2sockaddr (char *address, char *port, struct sockaddr **sa)
       free (*sa);
       return -1;
     }
+  if (!port)
+    return 0;
   sp = getservbyname (port, "udp");
   if (!sp)
     {
