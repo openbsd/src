@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.5 2001/11/28 15:02:58 art Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.6 2003/01/16 04:15:17 art Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /* 
@@ -48,12 +48,9 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*src;
+	char	*src;
 
 	src = (char *)addr;
 	while (size-- > 0)
@@ -64,22 +61,19 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-	register char	*dst;
+	char	*dst;
 
-	register pt_entry_t *ptep0 = 0;
+	pt_entry_t *ptep0 = 0;
 	pt_entry_t	oldmap0 = { 0 };
-	vm_offset_t	addr1;
-	register pt_entry_t *ptep1 = 0;
+	vaddr_t	addr1;
+	pt_entry_t *ptep1 = 0;
 	pt_entry_t	oldmap1 = { 0 };
 	extern char	etext;
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr < (vm_offset_t)&etext) {
+	    addr < (vaddr_t)&etext) {
 		ptep0 = PTE_BASE + i386_btop(addr);
 		oldmap0 = *ptep0;
 		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;

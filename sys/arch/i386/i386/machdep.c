@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.218 2003/01/15 01:43:44 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.219 2003/01/16 04:15:17 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -216,8 +216,8 @@ extern int	boothowto;
 int	physmem;
 
 struct dumpmem {
-	vm_offset_t	start;
-	vm_size_t	end;
+	paddr_t	start;
+	paddr_t	end;
 } dumpmem[VM_PHYSSEG_MAX];
 u_int ndumpmem;
 
@@ -234,7 +234,7 @@ int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
 bootarg_t *bootargp;
-vm_offset_t avail_end;
+paddr_t avail_end;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -260,11 +260,11 @@ struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
 caddr_t	allocsys(caddr_t);
-void	setup_buffers(vm_offset_t *);
+void	setup_buffers(vaddr_t *);
 void	dumpsys(void);
 int	cpu_dump(void);
 void	identifycpu(void);
-void	init386(vm_offset_t);
+void	init386(paddr_t);
 void	consinit(void);
 
 int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
@@ -504,10 +504,10 @@ allocsys(v)
 
 void
 setup_buffers(maxaddr)
-	vm_offset_t *maxaddr;
+	vaddr_t *maxaddr;
 {
-	vm_size_t size;
-	vm_offset_t addr;
+	vsize_t size;
+	vaddr_t addr;
 	int base, residual, left, chunk, i;
 	struct pglist pgs, saved_pgs;
 	struct vm_page *pg;
@@ -591,7 +591,7 @@ setup_buffers(maxaddr)
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		addr = (vm_offset_t)buffers + i * MAXBSIZE;
+		addr = (vaddr_t)buffers + i * MAXBSIZE;
 		for (size = PAGE_SIZE * (i < residual ? base + 1 : base);
 		    size > 0; size -= PAGE_SIZE, addr += PAGE_SIZE) {
 			pmap_kenter_pa(addr, VM_PAGE_TO_PHYS(pg),
@@ -1781,15 +1781,14 @@ cpu_dump()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-static vm_offset_t dumpspace;
+static vaddr_t dumpspace;
 
-vm_offset_t
-reserve_dumppages(p)
-	vm_offset_t p;
+vaddr_t
+reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
-	return (p + NBPG);
+	return (p + PAGE_SIZE);
 }
 
 void
@@ -2021,10 +2020,10 @@ extern int IDTVEC(f00f_redirect);
 int cpu_f00f_bug = 0;
 
 void
-fix_f00f()
+fix_f00f(void)
 {
 	struct region_descriptor region;
-	vm_offset_t va;
+	vaddr_t va;
 	pt_entry_t *pte;
 	void *p;
 
@@ -2054,8 +2053,7 @@ fix_f00f()
 #endif
 
 void
-init386(first_avail)
-	vm_offset_t first_avail;
+init386(paddr_t first_avail)
 {
 	int i;
 	struct region_descriptor region;
@@ -2141,7 +2139,7 @@ init386(first_avail)
 			/* XXX here, until we can use bios for printfs */
 
 	/* call pmap initialization to make new kernel address space */
-	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
 	/* Boot arguments are in a single page specified by /boot */
 	if (bootapiver & BAPIV_VECTOR) {
@@ -2698,7 +2696,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
-	vm_offset_t va;
+	vaddr_t va;
 	pt_entry_t *pte;
 
 	pa = i386_trunc_page(bpa);
@@ -3140,7 +3138,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 
@@ -3184,7 +3182,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*
@@ -3262,7 +3260,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		pmap_extract(pmap, (vm_offset_t)vaddr, (paddr_t *)&curaddr);
+		pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -3333,10 +3331,10 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	int nsegs;
 	int *rsegs;
 	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+	paddr_t low;
+	paddr_t high;
 {
-	vm_offset_t curaddr, lastaddr;
+	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;

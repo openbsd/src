@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_machdep.c,v 1.13 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: freebsd_machdep.c,v 1.14 2003/01/16 04:15:17 art Exp $	*/
 /*	$NetBSD: freebsd_machdep.c,v 1.10 1996/05/03 19:42:05 christos Exp $	*/
 
 /*-
@@ -358,12 +358,10 @@ freebsd_to_netbsd_ptrace_regs(fregs, nregs, nfpregs)
 #define	FREEBSD_REGS_OFFSET 0x2000
 
 int
-freebsd_ptrace_getregs(fregs, addr, datap)
-	struct freebsd_ptrace_reg *fregs;
-	caddr_t addr;
-	register_t *datap;
+freebsd_ptrace_getregs(struct freebsd_ptrace_reg *fregs, caddr_t addr,
+    register_t *datap)
 {
-	vm_offset_t offset = (vm_offset_t)addr;
+	vaddr_t offset = (vaddr_t)addr;
 
 	if (offset == FREEBSD_U_AR0_OFFSET) {
 		*datap = FREEBSD_REGS_OFFSET + FREEBSD_USRSTACK;
@@ -372,7 +370,7 @@ freebsd_ptrace_getregs(fregs, addr, datap)
 		   offset <= FREEBSD_REGS_OFFSET + 
 		      sizeof(fregs->freebsd_ptrace_regs)-sizeof(register_t)) {
 		*datap = *(register_t *)&((caddr_t)&fregs->freebsd_ptrace_regs)
-			[(vm_offset_t) addr - FREEBSD_REGS_OFFSET];
+			[(vaddr_t) addr - FREEBSD_REGS_OFFSET];
 		return 0;
 	} else if (offset >= FREEBSD_U_SAVEFP_OFFSET &&
 		   offset <= FREEBSD_U_SAVEFP_OFFSET + 
@@ -393,7 +391,7 @@ freebsd_ptrace_setregs(fregs, addr, data)
 	caddr_t addr;
 	int data;
 {
-	vm_offset_t offset = (vm_offset_t)addr;
+	vaddr_t offset = (vaddr_t)addr;
 
 	if (offset >= FREEBSD_REGS_OFFSET &&
 	    offset <= FREEBSD_REGS_OFFSET +

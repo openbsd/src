@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2003/01/09 22:27:09 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2003/01/16 04:15:17 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -413,16 +413,15 @@ trap(frame)
 		/* FALLTHROUGH */
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
-		vm_offset_t va, fa;
+		vaddr_t va, fa;
 		struct vmspace *vm = p->p_vmspace;
 		struct vm_map *map;
 		int rv;
-		extern struct vm_map *kernel_map;
 		unsigned nss;
 
 		if (vm == NULL)
 			goto we_re_toast;
-		fa = (vm_offset_t)rcr2();
+		fa = (vaddr_t)rcr2();
 		va = trunc_page(fa);
 		/*
 		 * It is only a kernel address space fault iff:
@@ -542,15 +541,14 @@ out:
  * Compensate for 386 brain damage (missing URKR)
  */
 int
-trapwrite(addr)
-	unsigned addr;
+trapwrite(unsigned int addr)
 {
-	vm_offset_t va;
+	vaddr_t va;
 	unsigned nss;
 	struct proc *p;
 	struct vmspace *vm;
 
-	va = trunc_page((vm_offset_t)addr);
+	va = trunc_page((vaddr_t)addr);
 	if (va >= VM_MAXUSER_ADDRESS)
 		return 1;
 
