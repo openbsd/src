@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.34 2002/10/17 05:49:40 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.35 2002/11/12 17:04:07 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -698,7 +698,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		argname = intercept_filename(fd, pid, addr, 0);
+		argname = intercept_filename(fd, pid, addr, ICLINK_ALL);
 		if (argname == NULL)
 			err(1, "%s:%d: intercept_filename",
 			    __func__, __LINE__);
