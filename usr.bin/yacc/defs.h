@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.7 2001/07/16 06:29:44 pvalchev Exp $	*/
+/*	$OpenBSD: defs.h,v 1.8 2001/12/10 00:22:00 deraadt Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ extern void no_space __P((void));
 extern void open_error(char *);
 extern void unexpected_EOF __P((void));
 extern void print_pos __P((char *, char *));
-extern __dead void syntax_error __P((int, char *, char *));
+extern void syntax_error __P((int, char *, char *));
 extern void unterminated_comment __P((int, char *, char *));
 extern void unterminated_string __P((int, char *, char *));
 extern void unterminated_text __P((int, char *, char *));
