@@ -233,7 +233,7 @@ systracef_ioctl(fp, cmd, data, p)
 	struct filedesc *fdp;
 	struct str_process *strp;
 	pid_t pid = 0;
-	
+
 	switch (cmd) {
 	case FIONBIO:
 	case FIOASYNC:
@@ -276,7 +276,7 @@ systracef_ioctl(fp, cmd, data, p)
 
 	if (ret)
 		return (ret);
-	
+
 	systrace_lock();
 	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, curproc);
 	systrace_unlock();
@@ -788,7 +788,7 @@ int
 systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 {
 	int error = 0;
-	
+
 	DPRINTF(("%s: %d: policy %d\n", __func__,
 		    ans->stra_pid, ans->stra_policy));
 
@@ -861,7 +861,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 			systrace_closepolicy(fst, strp->policy);
 		strp->policy = strpol;
 		strpol->refcount++;
-		
+
 		/* Record emulation for this policy */
 		if (strpol->emul == NULL)
 			strpol->emul = strp->proc->p_emul;
@@ -940,7 +940,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	struct uio uio;
 	struct iovec iov;
 	int error = 0;
-	
+
 	DPRINTF(("%s: %d: %p(%d)\n", __func__,
 		    io->strio_pid, io->strio_offs, io->strio_len));
 
@@ -1020,7 +1020,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	(4) it's not owned by you, or the last exec
 	 *	    gave us setuid/setgid privs (unless
 	 *	    you're root), or...
-	 * 
+	 *
 	 *      [Note: once P_SUGID gets set in execve(), it stays
 	 *	set until the process does another execve(). Hence
 	 *	this prevents a setuid process which revokes it's
@@ -1156,7 +1156,7 @@ systrace_findpid(struct fsystrace *fst, pid_t pid)
 	TAILQ_FOREACH(strp, &fst->processes, next)
 	    if (strp->pid == pid)
 		    break;
-	
+
 	if (strp == NULL)
 		return (NULL);
 
@@ -1171,7 +1171,7 @@ systrace_detach(struct str_process *strp)
 	struct proc *proc;
 	struct fsystrace *fst = NULL;
 	int error = 0;
-	
+
 	DPRINTF(("%s: Trying to detach from %d\n", __func__, strp->pid));
 
 	if ((proc = systrace_find(strp)) != NULL) {
@@ -1184,7 +1184,7 @@ systrace_detach(struct str_process *strp)
 		CLR(strp->flags, STR_PROC_WAITANSWER);
 		wakeup(strp);
 	}
-	
+
 	fst = strp->parent;
 	systrace_wakeup(fst);
 
@@ -1376,7 +1376,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 
 	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
 		    nstrp, strp->pid, npid));
-	
+
 	msg = &nstrp->msg;
 	msg_child = &msg->msg_data.msg_child;
 
