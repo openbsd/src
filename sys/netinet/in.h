@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.51 2001/06/24 23:41:47 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.52 2001/06/25 00:11:57 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -494,6 +494,13 @@ struct ip_mreq {
 
 #include <sys/cdefs.h>
 
+__BEGIN_DECLS
+int	   bindresvport __P((int, struct sockaddr_in *));
+struct sockaddr;
+int	   bindresvport_sa __P((int, struct sockaddr *));
+__END_DECLS
+
+#else
 /*
  * in_cksum_phdr:
  *
@@ -541,13 +548,6 @@ in_cksum_addword(u_int16_t a, u_int16_t b)
 	return (sum);
 }
 
-__BEGIN_DECLS
-int	   bindresvport __P((int, struct sockaddr_in *));
-struct sockaddr;
-int	   bindresvport_sa __P((int, struct sockaddr *));
-__END_DECLS
-
-#else
 int	   in_broadcast __P((struct in_addr, struct ifnet *));
 int	   in_canforward __P((struct in_addr));
 int	   in_cksum __P((struct mbuf *, int));

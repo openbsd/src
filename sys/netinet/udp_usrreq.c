@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.72 2001/06/24 23:01:59 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.73 2001/06/25 00:11:58 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -973,8 +973,9 @@ udp_output(m, va_alist)
 			    ifp->if_bridge == NULL) {
 				m->m_pkthdr.csum |= M_UDPV4_CSUM_OUT;
 				udpstat.udps_outhwcsum++;
-				ui->ui_sum = in_cksum(m,
-				    sizeof(struct udpiphdr));
+				ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
+				    ui->ui_dst.s_addr, htons((u_int16_t)len +
+					sizeof (struct udphdr) + IPPROTO_UDP));
 				goto skipudpcsum;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.41 2001/06/23 07:14:32 angelos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.42 2001/06/25 00:11:58 angelos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -960,9 +960,15 @@ send:
 			ifp = ro->ro_rt->rt_ifp;
 			if ((ifp->if_capabilities & IFCAP_CSUM_TCPv4) &&
 			    ifp->if_bridge == NULL) {
+				struct ipovly *ipov;
+
+				ipov = mtod(m, struct ipovly *);
 				m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
 				tcpstat.tcps_outhwcsum++;
-				th->th_sum = in_cksum(m, (int)hdrlen);
+				th->th_sum = in_cksum_phdr(ipov->ih_src.s_addr,
+				    ipov->ih_dst.s_addr,
+				    htons(sizeof(struct tcphdr) + len +
+					optlen + IPPROTO_TCP));
 				break;
 			}
 		}
