@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.10 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.11 2005/04/06 20:21:08 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -70,6 +70,8 @@
 #define MIN_MD_ID		0
 #define MAX_MD_ID		255
 
+#define MAX_SIMPLE_AUTH_LEN	8
+
 /* OSPF compatibility flags */
 #define OSPF_OPTION_E		0x02
 #define OSPF_OPTION_MC		0x04
@@ -122,7 +124,7 @@ struct ospf_hdr {
 	u_int16_t		chksum;
 	u_int16_t		auth_type;
 	union {
-		char		simple[8];
+		char		simple[MAX_SIMPLE_AUTH_LEN];
 		struct crypt	crypt;
 	} auth_key;
 };

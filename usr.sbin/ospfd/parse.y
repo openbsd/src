@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2005/04/06 20:21:08 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -254,8 +254,15 @@ conf_main	: METRIC number {
 authmd		: AUTHMD number STRING {
 			if (iface != NULL) {
 				if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
-					yyerror("keyid out of range "
+					yyerror("auth-keyid out of range "
 					    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
+					free($3);
+					YYERROR;
+				}
+				if (strlen($3) > MD5_DIGEST_LENGTH) {
+					yyerror("auth-md length out of range "
+					    "(max length %d)",
+					    MD5_DIGEST_LENGTH);
 					free($3);
 					YYERROR;
 				}
@@ -267,7 +274,7 @@ authmd		: AUTHMD number STRING {
 authmdkeyid	: AUTHMDKEYID number {
 			if (iface != NULL) {
 				if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
-					yyerror("keyid out of range "
+					yyerror("auth-keyid out of range "
 					    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
 					YYERROR;
 				}
@@ -296,8 +303,13 @@ authtype	: AUTHTYPE STRING {
 
 authkey		: AUTHKEY STRING {
 			if (iface != NULL) {
+				if (strlen($2) > MAX_SIMPLE_AUTH_LEN) {
+					yyerror("auth-key size out of range "
+					    "(max %d)", MAX_SIMPLE_AUTH_LEN);
+					free($2);
+					YYERROR;
+				}
 				iface->auth_key = $2;
-				/* XXX truncate and warn! */
 			}
 		}
 		;
