@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.13 2003/07/06 22:03:58 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.14 2003/07/23 23:10:23 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -50,10 +50,11 @@
 #include <errno.h>
 #include <sys/scsiio.h>
 #include <sys/file.h>
-#include <scsi.h>
 #include <ctype.h>
 #include <signal.h>
 #include <err.h>
+
+#include "libscsi.h"
 
 int	fd;
 int	debuglevel;

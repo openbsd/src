@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.5 2002/08/23 23:47:32 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.1 2003/07/23 23:10:23 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -1070,7 +1070,8 @@ static void sense_7x_dump(FILE *f, scsireq_t *scsireq)
 
 /* scsi_sense_dump: Dump the sense portion of the scsireq structure.
  */
-void scsi_sense_dump(FILE *f, scsireq_t *scsireq)
+static void
+scsi_sense_dump(FILE *f, scsireq_t *scsireq)
 {
 	u_char *s = (u_char *)scsireq->sense;
 	int code = (*s) & 0x7f;
@@ -1099,7 +1100,8 @@ void scsi_sense_dump(FILE *f, scsireq_t *scsireq)
 	scsi_dump(f, "sense", s, scsireq->senselen, scsireq->senselen_used, 0);
 }
 
-void scsi_retsts_dump(FILE *f, scsireq_t *scsireq)
+static void
+scsi_retsts_dump(FILE *f, scsireq_t *scsireq)
 {
 	if (scsireq->retsts == 0)
 		return;
