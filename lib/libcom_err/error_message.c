@@ -1,4 +1,4 @@
-/*	$OpenBSD: error_message.c,v 1.3 1996/12/14 06:55:56 tholo Exp $	*/
+/*	$OpenBSD: error_message.c,v 1.4 2003/04/03 12:07:24 hin Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: error_message.c,v 1.3 1996/12/14 06:55:56 tholo Exp $";
+    "$OpenBSD: error_message.c,v 1.4 2003/04/03 12:07:24 hin Exp $";
 static const char copyright[] =
     "Copyright 1986, 1987, 1988 by the Student Information Processing Board\nand the department of Information Systems\nof the Massachusetts Institute of Technology";
 #endif
@@ -68,7 +68,7 @@ error_message (code)
 	}
     }
 oops:
-    strcpy (buffer, "Unknown code ");
+    strlcpy (buffer, "Unknown code ", sizeof(buffer));
     if (table_num) {
 	strcat (buffer, error_table_name (table_num));
 	strcat (buffer, " ");
