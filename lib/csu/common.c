@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.9 2002/06/05 22:09:53 espie Exp $	*/
+/*	$OpenBSD: common.c,v 1.10 2002/07/11 14:05:42 art Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -109,9 +109,13 @@ __load_rtld(dp)
 #define N_BSSADDR(x)	((x).a_text + (x).a_data)
 #endif
 
-	/* Map in data segment of ld.so writable */
+	/*
+	 * Map in data segment of ld.so writable
+	 * The segment must be PROT_EXEC too because the
+	 * GOT is located there.
+	 */
 	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
-			PROT_READ|PROT_WRITE,
+			PROT_READ|PROT_WRITE|PROT_EXEC,
 			MAP_FIXED|MAP_PRIVATE,
 			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
 		_FATAL("Cannot map ld.so\n");
