@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.6 1999/02/26 03:42:30 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.69 1999/02/25 11:39:04 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.7 1999/03/31 00:50:21 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.70 1999/03/30 21:40:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -525,7 +525,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   struct sa *sa;
-  struct proto *proto;
+  struct proto *proto, *next_proto;
   struct payload *sa_p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SA]);
   struct payload *xf, *idp;
   struct payload *hashp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
@@ -576,10 +576,12 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
     }
 
   /* Now remove offers that we don't need anymore.  */
-  for (proto = TAILQ_FIRST (&sa->protos); proto;
-       proto = TAILQ_NEXT (proto, link))
-    if (!proto->chosen)
-      proto_free (proto);
+  for (proto = TAILQ_FIRST (&sa->protos); proto; proto = next_proto)
+    {
+      next_proto = TAILQ_NEXT (proto, link);
+      if (!proto->chosen)
+	proto_free (proto);
+    }
 
   /* Mark the SA as handled.  */
   sa_p->flags |= PL_MARK;
