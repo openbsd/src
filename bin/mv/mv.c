@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.29 2003/07/29 00:24:15 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.30 2004/12/13 20:22:52 otto Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.29 2003/07/29 00:24:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.30 2004/12/13 20:22:52 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -367,11 +367,11 @@ copy(char *from, char *to)
 		return (1);
 	}
 	if (!WIFEXITED(status)) {
-		warn("%s: did not terminate normally", _PATH_CP);
+		warnx("%s: did not terminate normally", _PATH_CP);
 		return (1);
 	}
 	if (WEXITSTATUS(status)) {
-		warn("%s: terminated with %d (non-zero) status",
+		warnx("%s: terminated with %d (non-zero) status",
 		    _PATH_CP, WEXITSTATUS(status));
 		return (1);
 	}
@@ -385,11 +385,11 @@ copy(char *from, char *to)
 		return (1);
 	}
 	if (!WIFEXITED(status)) {
-		warn("%s: did not terminate normally", _PATH_RM);
+		warnx("%s: did not terminate normally", _PATH_RM);
 		return (1);
 	}
 	if (WEXITSTATUS(status)) {
-		warn("%s: terminated with %d (non-zero) status",
+		warnx("%s: terminated with %d (non-zero) status",
 		    _PATH_RM, WEXITSTATUS(status));
 		return (1);
 	}
