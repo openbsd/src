@@ -1,5 +1,4 @@
-#define DEBUG
-/*	$OpenBSD: cvs.c,v 1.4 2004/07/26 15:56:42 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.5 2004/07/29 17:48:19 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
