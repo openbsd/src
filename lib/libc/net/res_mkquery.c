@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.8 1997/04/13 22:37:21 provos Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.9 2001/06/11 10:06:00 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.8 1997/04/13 22:37:21 provos Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.9 2001/06/11 10:06:00 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -192,4 +192,41 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		return (-1);
 	}
 	return (cp - buf);
+}
+
+/* attach OPT pseudo-RR, as documented in RFC2671 (EDNS0). */
+int
+res_opt(n0, buf, buflen, anslen)
+	int n0;
+	u_char *buf;		/* buffer to put query */
+	int buflen;		/* size of buffer */
+	int anslen;		/* answer buffer length */
+{
+	register HEADER *hp;
+	register u_char *cp;
+
+	hp = (HEADER *) buf;
+	cp = buf + n0;
+	buflen -= n0;
+
+	if (buflen < 1 + RRFIXEDSZ)
+		return -1;
+
+	*cp++ = 0;	/* "." */
+	buflen--;
+
+	__putshort(T_OPT, cp);	/* TYPE */
+	cp += INT16SZ;
+	__putshort(anslen & 0xffff, cp);	/* CLASS = UDP payload size */
+	cp += INT16SZ;
+	*cp++ = NOERROR;	/* extended RCODE */
+	*cp++ = 0;		/* EDNS version */
+	__putshort(0, cp);	/* MBZ */
+	cp += INT16SZ;
+	__putshort(0, cp);	/* RDLEN */
+	cp += INT16SZ;
+	hp->arcount = htons(ntohs(hp->arcount) + 1);
+	buflen -= RRFIXEDSZ;
+
+	return cp - buf;
 }

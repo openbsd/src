@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.14 2000/10/26 00:37:05 aaron Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.15 2001/06/11 10:06:04 itojun Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -162,6 +162,22 @@ where option is one of the following:
 .Bl -tag -width ndots:n
 .It Sy debug
 Sets RES_DEBUG in _res.options.
+.It Sy edns0
+attach OPT pseudo-RR for ENDS0 extension specified in RFC2671,
+to inform DNS server of our receive buffer size.
+The option will allow DNS servers to take advantage of non-default receive
+buffer size, and to send larger replies.
+DNS query packets with EDNS0 extension is not compatible with
+non-EDNS0 DNS servers.
+The option must be used only when all the DNS servers listed in
+.Sy nameserver
+lines are able to handle EDNS0 extension.
+.It Sy inet6
+enable support for IPv6-only applications, by setting RES_USE_INET6 in
+_res.options (see
+.Xr resolver 3 ).
+The option is meaningful with certain kernel configuration only and
+use of this options is discourated.
 .It Sy inet6
 Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see

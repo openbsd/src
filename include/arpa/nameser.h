@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.3 1997/03/13 19:11:54 downsj Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.4 2001/06/11 10:06:03 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -183,6 +183,7 @@
 #define T_SRV		33		/* Server selection */
 #define T_ATMA		34		/* ATM Address */
 #define T_NAPTR		35		/* Naming Authority PoinTeR */
+#define T_OPT		41		/* OPT pseudo-RR, RFC2761 */
 	/* non standard */
 #define T_UINFO		100		/* user (finger) information */
 #define T_UID		101		/* user ID */

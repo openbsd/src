@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.20 2000/11/10 15:33:04 provos Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.21 2001/06/11 10:06:00 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.20 2000/11/10 15:33:04 provos Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.21 2001/06/11 10:06:00 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -608,6 +608,8 @@ res_setoptions(options, source)
 #endif
 		} else if (!strncmp(cp, "inet6", sizeof("inet6") - 1)) {
 			_res.options |= RES_USE_INET6;
+		} else if (!strncmp(cp, "edns0", sizeof("edns0") - 1)) {
+			_res.options |= RES_USE_EDNS0;
 		} else {
 			/* XXX - print a warning here? */
 		}
