@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.4 1996/12/14 17:23:53 deraadt Exp $
+.\"	$OpenBSD: route.8,v 1.5 1997/04/10 10:09:01 deraadt Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -174,6 +174,10 @@ and
 .Fl net Li 128.32.130
 is interpreted as
 .Li 128.32.130.0 .
+A more detailed syntax is also available, for example
+.Li net 192.168.64.0/20
+is interpreted to specify that the high 20 bits of the address
+192.168.64.0 are the requested network.
 .Pp
 If the destination is directly reachable
 via an interface requiring

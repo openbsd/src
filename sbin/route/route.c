@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.17 1997/01/15 23:41:40 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.18 1997/04/10 10:09:02 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.17 1997/01/15 23:41:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.18 1997/04/10 10:09:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -325,9 +325,9 @@ any_ntoa(sa)
 
 	*out++ = 'Q';
 	do {
-	        *out++ = hexlist[(*in >> 4) & 15];
-	        *out++ = hexlist[(*in++)    & 15];
-	        *out++ = '.';
+		*out++ = hexlist[(*in >> 4) & 15];
+		*out++ = hexlist[(*in++)    & 15];
+		*out++ = '.';
 	} while (--len > 0 && (out + 3) < &obuf[sizeof obuf-1]);
 	out[-1] = '\0';
 	return (obuf);
@@ -733,9 +733,10 @@ newroute(argc, argv)
 }
 
 void
-inet_makenetandmask(net, sin)
+inet_makenetandmask(net, sin, bits)
 	u_int32_t net;
 	register struct sockaddr_in *sin;
+	int bits;
 {
 	u_int32_t addr, mask = 0;
 	register char *cp;
@@ -743,7 +744,10 @@ inet_makenetandmask(net, sin)
 	rtm_addrs |= RTA_NETMASK;
 	if (net == 0)
 		mask = addr = 0;
-	else if (net < 128) {
+	else if (bits) {
+		addr = net;
+		mask = 0xffffffff << (32 - bits);
+	} else if (net < 128) {
 		addr = net << IN_CLASSA_NSHIFT;
 		mask = IN_CLASSA_NET;
 	} else if (net < 65536) {
@@ -792,6 +796,7 @@ getaddr(which, s, hpp)
 	struct hostent *hp;
 	struct netent *np;
 	u_long val;
+	char *q, qs;
 
 	if (af == 0) {
 		af = AF_INET;
@@ -898,6 +903,19 @@ getaddr(which, s, hpp)
 	if (hpp == NULL)
 		hpp = &hp;
 	*hpp = NULL;
+
+	q = strchr(s,'/');
+	if (q && which == RTA_DST) {
+		qs = *q;
+		*q = '\0';
+		val = inet_addr(s);
+		if (val != INADDR_NONE) {
+			inet_makenetandmask(htonl(val), &su->sin,
+			    strtoul(q+1, 0, 0));
+			return (0);
+		}
+		*q =qs;
+	}
 	if (((val = inet_addr(s)) != INADDR_NONE) &&
 	    (which != RTA_DST || forcenet == 0)) {
 		su->sin.sin_addr.s_addr = val;
@@ -913,7 +931,7 @@ getaddr(which, s, hpp)
 	    (val = np->n_net) != 0)) {
 netdone:
 		if (which == RTA_DST)
-			inet_makenetandmask(val, &su->sin);
+			inet_makenetandmask(val, &su->sin, 0);
 		return (0);
 	}
 	hp = gethostbyname(s);
