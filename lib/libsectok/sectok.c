@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.2 2001/06/27 22:33:36 rees Exp $ */
+/* $Id: sectok.c,v 1.3 2001/06/28 21:37:28 rees Exp $ */
 
 /*
 copyright 2000
@@ -58,29 +58,14 @@ sectok_fmt_fid(char *fname, int f0, int f1)
 }
 
 int
-sectok_selectfile(int fd, int cla, unsigned char *fid, int verbose)
+sectok_selectfile(int fd, int cla, unsigned char *fid, int *r1p, int *r2p)
 {
-    int n, r1, r2, code;
+    int n, r1, r2;
     unsigned char obuf[256];
-    char fname[6];
 
     n = scrw(fd, cla, 0xa4, 0, 0, 2, fid, sizeof obuf, obuf, &r1, &r2);
-    if (n < 0) {
-	printf("selectfile: scwrite failed\n");
-	return -2;
-    }
-    if (r1 == 0x90 || r1 == 0x61)
-	code = 0;
-    else if (r1 == 0x6a && r2 == 0x82)
-	/* file not found */
-	code = -1;
-    else
-	code = -2;
-    if (verbose && n > 0)
-	dump_reply(obuf, n, 0, 0);
-    if (verbose || code == -2) {
-	sectok_fmt_fid(fname, fid[0], fid[1]);
-	printf("%s: %s\n", fname, get_r1r2s(r1, r2));
-    }
-    return code;
+    if (n < 0 || (r1 != 0x90 && r1 != 0x61))
+	return -1;
+
+    return 0;
 }
