@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.5 1998/09/22 18:58:05 deraadt Exp $
+.\"	$OpenBSD: fxp.4,v 1.6 1998/09/22 21:53:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -44,14 +44,14 @@ driver supports the following media types:
 .Pp
 .Bl -tag -width xxxxxxxx
 .It media autoselect
-Enable autoselection of the media type and options
-.It media 10baseT [mediaopt half-duplex]
+Enable autoselection of the media type and options (default)
+.It media 10baseT Op mediaopt half-duplex
 Set 10Mbps operation, half-duplex
-.It media 10baseT [mediaopt full-duplex]
+.It media 10baseT Op mediaopt full-duplex
 Set 10Mbps operation, full-duplex
-.It media 100baseTX [mediaopt half-duplex]
+.It media 100baseTX Op mediaopt half-duplex
 Set 100Mbps operation, half duplex
-.It media 100baseTX [mediaopt full-duplex]
+.It media 100baseTX Op mediaopt full-duplex
 Set 100Mbps operation, full duplex
 .El
 .Pp
