@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.8 2003/06/10 22:20:51 deraadt Exp $	*/
+/*	$OpenBSD: fields.c,v 1.9 2003/09/25 02:06:40 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.8 2003/06/10 22:20:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.9 2003/09/25 02:06:40 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,8 @@ static char rcsid[] = "$OpenBSD: fields.c,v 1.8 2003/06/10 22:20:51 deraadt Exp 
 
 #define NEXTCOL(pos) {						\
 	if (!SEP_FLAG)						\
-		while (BLANK & l_d_mask[*(++pos)]);		\
-	while (!((FLD_D | REC_D_F) & l_d_mask[*++pos]));	\
+		while (pos < lineend && BLANK & l_d_mask[*(++pos)]);		\
+	while (pos < lineend && !((FLD_D | REC_D_F) & l_d_mask[*++pos]));	\
 }
 		
 extern u_char *enterfield(u_char *, u_char *, struct field *, int);
