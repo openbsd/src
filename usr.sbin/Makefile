@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.5 1995/11/01 16:55:29 deraadt Exp $
+#	$Id: Makefile,v 1.6 1995/12/17 13:40:26 deraadt Exp $
 
 # not yet done: catman
 
@@ -27,11 +27,11 @@ SUBDIR+=grfconfig iteconfig videomode
 .elif ${MACHINE} == "atari"
 SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
-SUBDIR+=config.old grfinfo hilinfo
+SUBDIR+=grfinfo hilinfo
 .elif ${MACHINE} == "i386"
 SUBDIR+=bad144 
 .elif ${MACHINE} == "pmax"
-SUBDIR+=config.old
+SUBDIR+=
 .elif ${MACHINE} == "sun3"
 SUBDIR+=dbsym eeprom screenblank
 .elif ${MACHINE} == "sparc"
