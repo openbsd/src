@@ -1197,6 +1197,7 @@
 ./usr/share/man/cat4/sparc/cgsix.0
 ./usr/share/man/cat4/sparc/cgthree.0
 ./usr/share/man/cat4/sparc/cgtwo.0
+./usr/share/man/cat4/sparc/daadio.0
 ./usr/share/man/cat4/sparc/esp.0
 ./usr/share/man/cat4/sparc/fd.0
 ./usr/share/man/cat4/sparc/fdc.0
@@ -1308,6 +1309,7 @@
 ./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udp.0
+./usr/share/man/cat4/udsbr.0
 ./usr/share/man/cat4/uftdi.0
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uhci.0
