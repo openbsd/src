@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2003/08/13 23:36:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.23 2003/12/30 18:53:09 millert Exp $
 
 PROG=	sendmail
 
@@ -31,6 +31,9 @@ ENVDEF+= -DFAST_PID_RECYCLE
 
 # We want sendmail to call setlogin() when running commands as a non-root user
 ENVDEF+= -D_FFR_USE_SETLOGIN
+
+# Deal with SSL errors by recognizing them as EOF.
+ENVDEF+= -D_FFR_DEAL_WITH_ERROR_SSL
 
 SRCS=	main.c alias.c arpadate.c bf.c collect.c conf.c control.c convtime.c \
 	daemon.c deliver.c domain.c envelope.c err.c headers.c macro.c map.c \
