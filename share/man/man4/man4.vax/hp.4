@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hp.4,v 1.5 2001/03/06 19:56:51 brad Exp $
+.\"	$OpenBSD: hp.4,v 1.6 2001/06/20 16:49:43 millert Exp $
 .\"	$NetBSD: hp.4,v 1.4 1996/03/05 15:28:50 ragge Exp $
 .\"
 .\" Copyright (c) 1980,1988, 1991 Regents of the University of California.
@@ -56,7 +56,7 @@ It is typical of a block-device disk driver; block
 .Tn I/O
 is
 described in
-.Xr physio 4 .
+.Xr physio 9 .
 .Pp
 The script
 .Xr MAKEDEV 8
@@ -146,12 +146,12 @@ or heads are indicated.
 .Pp
 .El
 .Sh SEE ALSO
-.Xr physio 4 ,
 .Xr up 4 ,
 .Xr disklabel 5 ,
 .Xr MAKEDEV 8 ,
 .Xr disklabel 8 ,
-.Xr mknod 8
+.Xr mknod 8 ,
+.Xr physio 9
 .Sh HISTORY
 The
 .Nm
