@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.12 2000/04/15 02:15:30 aaron Exp $
+.\"	$OpenBSD: telnetd.8,v 1.13 2000/06/29 05:29:25 aaron Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -579,3 +579,10 @@ never sends
 .Tn TELNET
 .Tn IAC GA
 (go ahead) commands.
+.Pp
+.Tn WONT CRYPT .
+.Nm
+talks over insecure, unencrypted communications channels.
+Please use
+.Nm sshd
+instead.
