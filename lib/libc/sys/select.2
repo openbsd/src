@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.25 2004/01/23 23:08:46 jmc Exp $
+.\"	$OpenBSD: select.2,v 1.26 2004/02/08 19:20:23 otto Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -179,7 +179,7 @@ The default bit size of
 .Ft fd_set
 is based on the symbol
 .Dv FD_SETSIZE
-(currently 256),
+(currently 1024),
 but that is somewhat smaller than the current kernel limit
 to the number of open files.
 However, in order to accommodate programs which might potentially
