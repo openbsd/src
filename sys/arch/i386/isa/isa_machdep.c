@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.21 1997/09/22 21:03:55 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.22 1997/09/24 22:28:16 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
@@ -63,12 +63,14 @@
 typedef (*vector) __P((void));
 extern vector IDTVEC(intr)[], IDTVEC(fast)[];
 extern struct gate_descriptor idt[];
-
-extern vm_map_t kernel_map;
-
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
+
+vm_offset_t bounce_alloc __P((vm_size_t, vm_offset_t, int));
+caddr_t bounce_vaddr __P((vm_offset_t));
+void bounce_free __P((vm_offset_t, vm_size_t));
+void isadma_copyfrombuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 
 /*
  * Fill in default interrupt table (in case of spuruious interrupt
@@ -357,90 +359,43 @@ static int bit_ptr = -1;	/* last segment visited */
 static int chunk_size = 0;	/* size (bytes) of one low mem segment */
 static int chunk_num = 0;	/* actual number of low mem segments */
 #ifdef DIAGNOSTIC
-int isadma_alloc_cur = 0;
-int isadma_alloc_max = 0;
+int bounce_alloc_cur = 0;
+int bounce_alloc_max = 0;
 #endif
 
-vm_offset_t isadma_mem;		/* base address (virtual) of low mem arena */
-int isadma_pages;		/* number of pages of low mem arena */
-
-/*
- * called from cpu_startup to setup the bounce buffer.
- */
-void
-isadma_init()
-{
-	struct pglist pglist;
-	vm_size_t sz;
-	vm_page_t pg;
-	vm_offset_t off;
-
-	TAILQ_INIT(&pglist);
-
-	/*
-	 * Get some continuous physical memory situated below 16MB as that is
-	 * the ISA DMA limit.
-	 */
-	isadma_pages =
-	    ctob(physmem) >= 0x1000000 ? DMA_BOUNCE : DMA_BOUNCE_LOW;
-	sz = isadma_pages << PGSHIFT;
-	if (vm_page_alloc_memory(sz, 0, 0x1000000, 0, 0, &pglist, 1, 0))
-		panic("isadma_init: no physical memory for bounce buffer");
-
-	/*
-	 * Find some space in the kernel virtual memory for our bounce buffer.
-	 */
-	isadma_mem = vm_map_min(kernel_map);
-	if (vm_map_find(kernel_map, NULL, 0, &isadma_mem, sz, TRUE))
-		panic("isadma_init: no virtual memory for bounce buffer");
-
-	/*
-	 * Now map the physical bounce buffer into the virtual addresspace.
-	 */
-	for (pg = pglist.tqh_first, off = isadma_mem; pg != NULL;
-	    pg = pg->pageq.tqe_next, off += PAGE_SIZE)
-		pmap_enter(pmap_kernel(), off, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_DEFAULT, TRUE);
-
-	/*
-	 * Finally, wire it down so it never will be paged out.
-	 * XXX Is this really needed?  we have already told pmap_enter.
-	 */
-	vm_map_pageable(kernel_map, isadma_mem, isadma_mem + sz, FALSE);
-
-#if 0
-	printf("ISA DMA bounce buffer: pa 0x%08x va 0x%08x sz 0x%08x",
-	    VM_PAGE_TO_PHYS(pglist.tqh_first), isadma_mem, sz);
-#endif
-}
+vm_offset_t isaphysmem;		/* base address of low mem arena */
+int isaphysmempgs;		/* number of pages of low mem arena */
 
 /*
  * if addr is the physical address of an allocated bounce buffer return the
  * corresponding virtual address, 0 otherwise
  */
+
+
 caddr_t
-isadma_vaddr(addr)
+bounce_vaddr(addr)
 	vm_offset_t addr;
 {
 	int i;
 
-	if (addr < vtophys(isadma_mem) ||
-	    addr >= vtophys(isadma_mem + chunk_num * chunk_size) ||
-	    ((i = (int)(addr-vtophys(isadma_mem))) % chunk_size) != 0 ||
+	if (addr < vtophys(isaphysmem) ||
+	    addr >= vtophys(isaphysmem + chunk_num*chunk_size) ||
+	    ((i = (int)(addr-vtophys(isaphysmem))) % chunk_size) != 0 ||
 	    bit(i/chunk_size))
-		return (0);
+		return(0);
 
-	return ((caddr_t)(isadma_mem + (addr - vtophys(isadma_mem))));
+	return((caddr_t) (isaphysmem + (addr - vtophys(isaphysmem))));
 }
 
 /*
- * Allocate a low mem segment of size nbytes. Alignment constraint is:
+ * alloc a low mem segment of size nbytes. Alignment constraint is:
  *   (addr & pmask) == ((addr+size-1) & pmask)
- * If waitok, call may wait for memory to become available.
- * Returns 0 on failure.
+ * if waitok, call may wait for memory to become available.
+ * returns 0 on failure
  */
+
 vm_offset_t
-isadma_alloc(nbytes, pmask, waitok)
+bounce_alloc(nbytes, pmask, waitok)
 	vm_size_t nbytes;
 	vm_offset_t pmask;
 	int waitok;
@@ -453,25 +408,25 @@ isadma_alloc(nbytes, pmask, waitok)
 	opri = splbio();
 
 	if (bit_ptr < 0) {	/* initialize low mem arena */
-		if ((chunk_size = isadma_pages * NBPG / MAX_CHUNK) & 1)
+		if ((chunk_size = isaphysmempgs*NBPG/MAX_CHUNK) & 1)
 			chunk_size--;
-		chunk_num =  (isadma_pages * NBPG) / chunk_size;
+		chunk_num =  (isaphysmempgs*NBPG) / chunk_size;
 		for(i = 0; i < chunk_num; i++)
 			set(i);
 		bit_ptr = 0;
 	}
 
-	nunits = (nbytes + chunk_size - 1) / chunk_size;
+	nunits = (nbytes+chunk_size-1)/chunk_size;
 
 	/*
 	 * set a=start, b=start with address constraints, c=end
 	 * check if this request may ever succeed.
 	 */
 
-	a = isadma_mem;
-	b = (isadma_mem + ~pmask) & pmask;
-	c = isadma_mem + chunk_num * chunk_size;
-	n = nunits * chunk_size;
+	a = isaphysmem;
+	b = (isaphysmem + ~pmask) & pmask;
+	c = isaphysmem + chunk_num*chunk_size;
+	n = nunits*chunk_size;
 	if (a + n >= c || (pmask != 0 && a + n >= b && b + n >= c)) {
 		splx(opri);
 		return(0);
@@ -481,19 +436,16 @@ isadma_alloc(nbytes, pmask, waitok)
 		i = bit_ptr;
 		l = -1;
 		do{
-			if (bit(i) && l >= 0 && (i - l + 1) >= nunits) {
-				r = vtophys(isadma_mem +
-				    (i - nunits + 1) * chunk_size);
+			if (bit(i) && l >= 0 && (i - l + 1) >= nunits){
+				r = vtophys(isaphysmem + (i - nunits + 1)*chunk_size);
 				if (((r ^ (r + nbytes - 1)) & pmask) == 0) {
 					for (l = i - nunits + 1; l <= i; l++)
 						clr(l);
 					bit_ptr = i;
 #ifdef DIAGNOSTIC
-					isadma_alloc_cur +=
-					    nunits * chunk_size;
-					isadma_alloc_max =
-					    max(isadma_alloc_max,
-					    isadma_alloc_cur);
+					bounce_alloc_cur += nunits*chunk_size;
+					bounce_alloc_max = max(bounce_alloc_max,
+							       bounce_alloc_cur);
 #endif
 					splx(opri);
 					return(r);
@@ -506,10 +458,10 @@ isadma_alloc(nbytes, pmask, waitok)
 				i = 0;
 				l = -1;
 			}
-		} while (i != bit_ptr);
+		} while(i != bit_ptr);
 
 		if (waitok)
-			tsleep((caddr_t)&bit_ptr, PRIBIO, "physmem", 0);
+			tsleep((caddr_t) &bit_ptr, PRIBIO, "physmem", 0);
 		else {
 			splx(opri);
 			return(0);
@@ -522,7 +474,7 @@ isadma_alloc(nbytes, pmask, waitok)
  */
 
 void
-isadma_free(addr, nbytes)
+bounce_free(addr, nbytes)
 	vm_offset_t addr;
 	vm_size_t nbytes;
 {
@@ -531,37 +483,37 @@ isadma_free(addr, nbytes)
 
 	opri = splbio();
 
-	if ((vaddr = (vm_offset_t)isadma_vaddr(addr)) == 0)
-		panic("isadma_free: bad address");
+	if ((vaddr = (vm_offset_t) bounce_vaddr(addr)) == 0)
+		panic("bounce_free: bad address");
 
-	i = (int)(vaddr - isadma_mem) / chunk_size;
-	j = i + (nbytes + chunk_size - 1) / chunk_size;
+	i = (int) (vaddr - isaphysmem)/chunk_size;
+	j = i + (nbytes + chunk_size - 1)/chunk_size;
 
 #ifdef DIAGNOSTIC
-	isadma_alloc_cur -= (j - i) * chunk_size;
+	bounce_alloc_cur -= (j - i)*chunk_size;
 #endif
 
 	while (i < j) {
 		if (bit(i))
-			panic("isadma_free: already free");
+			panic("bounce_free: already free");
 		set(i);
 		i++;
 	}
 
-	wakeup((caddr_t)&bit_ptr);
+	wakeup((caddr_t) &bit_ptr);
 	splx(opri);
 }
 
 /*
  * setup (addr, nbytes) for an ISA dma transfer.
- * flags & ISADMA_MAP_WAITOK	may wait
- * flags & ISADMA_MAP_BOUNCE	may use a bounce buffer if necessary
- * flags & ISADMA_MAP_CONTIG	result must be physically contiguous
- * flags & ISADMA_MAP_8BIT	must not cross 64k boundary
- * flags & ISADMA_MAP_16BIT	must not cross 128k boundary
+ * flags&ISADMA_MAP_WAITOK	may wait
+ * flags&ISADMA_MAP_BOUNCE	may use a bounce buffer if necessary
+ * flags&ISADMA_MAP_CONTIG	result must be physically contiguous
+ * flags&ISADMA_MAP_8BIT	must not cross 64k boundary
+ * flags&ISADMA_MAP_16BIT	must not cross 128k boundary
  *
  * returns the number of used phys entries, 0 on failure.
- * if flags & ISADMA_MAP_CONTIG result is 1 on sucess!
+ * if flags&ISADMA_MAP_CONTIG result is 1 on sucess!
  */
 
 int
@@ -611,14 +563,14 @@ isadma_map(addr, nbytes, phys, flags)
 			if ((flags & ISADMA_MAP_BOUNCE) == 0)
 				phys[seg].addr = 0;
 			else
-				phys[seg].addr = isadma_alloc(phys[seg].length,
-				    pmask, waitok);
+				phys[seg].addr = bounce_alloc(phys[seg].length,
+							      pmask, waitok);
 			if (phys[seg].addr == 0) {
 				for (i = 0; i < seg; i++)
-					if (isadma_vaddr(phys[i].addr))
-						isadma_free(phys[i].addr,
-						    phys[i].length);
-				return (0);
+					if (bounce_vaddr(phys[i].addr))
+						bounce_free(phys[i].addr,
+							    phys[i].length);
+				return 0;
 			}
 		}
 
@@ -627,11 +579,11 @@ isadma_map(addr, nbytes, phys, flags)
 
 	/* check all constraints */
 	if (datalen ||
-	    ((phys[0].addr ^ (phys[0].addr + phys[0].length - 1)) & pmask) !=
-	    0 || ((phys[0].addr & 1) && (flags & ISADMA_MAP_16BIT))) {
+	    ((phys[0].addr ^ (phys[0].addr + phys[0].length - 1)) & pmask) != 0 ||
+	    ((phys[0].addr & 1) && (flags & ISADMA_MAP_16BIT))) {
 		if ((flags & ISADMA_MAP_BOUNCE) == 0)
 			return 0;
-		if ((phys[0].addr = isadma_alloc(nbytes, pmask, waitok)) == 0)
+		if ((phys[0].addr = bounce_alloc(nbytes, pmask, waitok)) == 0)
 			return 0;
 		phys[0].length = nbytes;
 	}
@@ -653,8 +605,8 @@ isadma_unmap(addr, nbytes, nphys, phys)
 	int i;
 
 	for (i = 0; i < nphys; i++)
-		if (isadma_vaddr(phys[i].addr))
-			isadma_free(phys[i].addr, phys[i].length);
+		if (bounce_vaddr(phys[i].addr))
+			bounce_free(phys[i].addr, phys[i].length);
 }
 
 /*
@@ -672,7 +624,7 @@ isadma_copyfrombuf(addr, nbytes, nphys, phys)
 	caddr_t vaddr;
 
 	for (i = 0; i < nphys; i++) {
-		vaddr = isadma_vaddr(phys[i].addr);
+		vaddr = bounce_vaddr(phys[i].addr);
 		if (vaddr)
 			bcopy(vaddr, addr, phys[i].length);
 		addr += phys[i].length;
@@ -694,7 +646,7 @@ isadma_copytobuf(addr, nbytes, nphys, phys)
 	caddr_t vaddr;
 
 	for (i = 0; i < nphys; i++) {
-		vaddr = isadma_vaddr(phys[i].addr);
+		vaddr = bounce_vaddr(phys[i].addr);
 		if (vaddr)
 			bcopy(addr, vaddr, phys[i].length);
 		addr += phys[i].length;

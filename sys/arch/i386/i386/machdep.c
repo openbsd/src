@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 1997/09/22 21:03:53 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 1997/09/24 22:28:15 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -119,7 +119,6 @@
 #endif
 
 #include "isa.h"
-#include "isadma.h"
 #include "npx.h"
 #if NNPX > 0
 extern struct proc *npxproc;
@@ -203,7 +202,7 @@ cpu_startup()
 	struct pcb *pcb;
 	int x;
 
-	/* 
+	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
@@ -220,14 +219,6 @@ cpu_startup()
 	printf("BIOS mem  = %ld conventional, %ld extended\n",
 		1024 * cnvmem, 1024 * extmem);
 	printf("real mem  = %d\n", ctob(physmem));
-
-#if NISA > 0 && NISADMA > 0
-	/*
-	 * We need the bounce buffer allocated early so we have a good chance
-	 * of getting a chunk of continuous low memory.
-	 */
-	isadma_init();
-#endif
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -293,8 +284,8 @@ cpu_startup()
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES, M_MBUF,
-	    M_NOWAIT);
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
+				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
