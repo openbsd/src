@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.340 2003/05/06 21:21:23 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.341 2003/05/10 22:33:33 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -945,23 +945,26 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
     u_int16_t *ic, u_int16_t *hc, u_int8_t u, sa_family_t af)
 {
 	struct pf_addr	oia, ooa;
-	u_int32_t	opc;
-	u_int16_t	oip = *ip;
 
 	PF_ACPY(&oia, ia, af);
 	PF_ACPY(&ooa, oa, af);
 
-	if (pc != NULL)
-		opc = *pc;
 	/* Change inner protocol port, fix inner protocol checksum. */
-	*ip = np;
-	if (pc != NULL)
-		*pc = pf_cksum_fixup(*pc, oip, *ip, u);
-	*ic = pf_cksum_fixup(*ic, oip, *ip, 0);
-	if (pc != NULL)
-		*ic = pf_cksum_fixup(*ic, opc, *pc, 0);
+	if (ip != NULL) {
+		u_int16_t	oip = *ip;
+		u_int32_t	opc;
+
+		if (pc != NULL)
+			opc = *pc;
+		*ip = np;
+		if (pc != NULL)
+			*pc = pf_cksum_fixup(*pc, oip, *ip, u);
+		*ic = pf_cksum_fixup(*ic, oip, *ip, 0);
+		if (pc != NULL)
+			*ic = pf_cksum_fixup(*ic, opc, *pc, 0);
+	}
+	/* Change inner ip address, fix inner ip and icmp checksums. */
 	PF_ACPY(ia, na, af);
-	/* Change inner ip address, fix inner ipv4 and icmp checksums. */
 	switch (af) {
 #ifdef INET
 	case AF_INET: {
