@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.41 2004/08/11 09:28:26 espie Exp $
+# $OpenBSD: pkg_delete,v 1.42 2004/09/14 22:58:30 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,7 @@ use OpenBSD::RequiredBy;
 use OpenBSD::Logger;
 use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
+use OpenBSD::Error;
 
 our %forced = ();
 
@@ -34,8 +35,7 @@ sub ensure_ldconfig
 {
 	my $verbose = shift;
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
-	print "running ldconfig -R\n" if $verbose;
-	system(@OpenBSD::PackingElement::Lib::ldconfig, "-R");
+	VSystem($verbose, @OpenBSD::PackingElement::Lib::ldconfig, "-R");
 	undef $OpenBSD::PackingElement::Lib::todo;
 }
 
@@ -144,6 +144,8 @@ sub delete
 }
 
 package OpenBSD::PackingElement::Unexec;
+use OpenBSD::Error;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -153,7 +155,7 @@ sub delete
 		print "unexec: $cmd\n";
 	}
 	return if $state->{not};
-	system('/bin/sh', '-c', $cmd);
+	System('/bin/sh', '-c', $cmd);
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -259,12 +261,15 @@ sub delete
 
 package OpenBSD::PackingElement::InfoFile;
 use File::Basename;
+use OpenBSD::Error;
+
 sub delete
 {
 	my ($self, $state) = @_;
 	unless ($state->{not}) {
 	    my $fullname = $state->{destdir}.$self->fullname();
-	    system("install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
+	    VSystem($state->{verbose}, 
+	    "install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
 	}
 	$self->SUPER::delete($state);
 }
@@ -314,7 +319,17 @@ sub cleanup
 	unlink("$fullname/fonts.cache-1");
 }
 
+package OpenBSD::PackingElement::Infodir;
+sub cleanup
+{
+	my ($self, $state) = @_;
+	my $fullname = $state->{destdir}.$self->fullname();
+	unlink("$fullname/dir");
+}
+
 package OpenBSD::PackingElement::ExtraUnexec;
+use OpenBSD::Error;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -326,7 +341,7 @@ sub delete
 		print "unexec: $cmd\n";
 	}
 	return if $state->{not};
-	system($cmd);
+	System($cmd);
 }
 
 package OpenBSD::PackingElement::Lib;
@@ -340,6 +355,8 @@ sub delete
 
 package OpenBSD::PackingElement::FREQUIRE;
 use OpenBSD::PackageInfo;
+use OpenBSD::Error;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -353,13 +370,15 @@ sub delete
 	print "Require script: $dir",REQUIRE," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
 	unless ($opt_n) {
 		chmod 0755, $dir.REQUIRE;
-		system($dir.REQUIRE, $pkgname, "DEINSTALL") == 0 or 
+		System($dir.REQUIRE, $pkgname, "DEINSTALL") == 0 or 
 		    die "Require script borked";
 	}
 }
 
 package OpenBSD::PackingElement::FDEINSTALL;
 use OpenBSD::PackageInfo;
+use OpenBSD::Error;
+
 sub delete
 {
 	my ($self, $state) = @_;
@@ -372,7 +391,7 @@ sub delete
 	print "Deinstall script: $dir",DEINSTALL ," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
 	unless ($opt_n) {
 		chmod 0755, $dir.DEINSTALL;
-		system($dir.DEINSTALL, $pkgname, "DEINSTALL") == 0 or 
+		System($dir.DEINSTALL, $pkgname, "DEINSTALL") == 0 or 
 		    die "deinstall script borked";
 	}
 }
