@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.48 2001/12/08 02:24:07 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.49 2001/12/18 11:17:26 hugh Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -277,6 +277,10 @@ cpu_startup()
 	 */
 
 	bufinit();
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 
 	/*
 	 * Configure the system.
@@ -352,10 +356,6 @@ consinit()
 #ifdef DEBUG
 	if (sizeof(struct user) > REDZONEADDR)
 		panic("struct user inside red zone");
-#endif
-#ifdef donotworkbyunknownreason
-	if (boothowto & RB_KDB)
-		Debugger();
 #endif
 #endif
 }
