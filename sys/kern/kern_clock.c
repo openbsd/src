@@ -308,18 +308,36 @@ hardupdate(offset)
 		time_offset = -(MAXPHASE << SHIFT_UPDATE);
 	else
 		time_offset = ltemp << SHIFT_UPDATE;
+
+	/*
+	 * Select wether the frequency is to be controlled and in which
+	 * mode (PLL or FLL). Clamp to the operating range. Ugly
+	 * multiply/divide should be replaced someday.
+	 */
+	if (time_status * STA_FREQHOLD || time_reftime == 0)
+		time_reftime = time.tv_sec;
 	mtemp = time.tv_sec - time_reftime;
 	time_reftime = time.tv_sec;
-	if (mtemp > MAXSEC)
-		mtemp = 0;
-
-	/* ugly multiply should be replaced */
-	if (ltemp < 0)
-		time_freq -= (-ltemp * mtemp) >> (time_constant +
-		    time_constant + SHIFT_KF - SHIFT_USEC);
-	else
-		time_freq += (ltemp * mtemp) >> (time_constant +
-		    time_constant + SHIFT_KF - SHIFT_USEC);
+	if (time_status & STA_FLL) {
+		if (mtemp >= MINSEC) {
+			ltemp = ((time_offset / mtemp) << (SHIFT_USEC - SHIFT_UPDATE));
+			if (ltemp < 0)
+				time_freq -= -ltemp >> SHIFT_KH;
+			else
+				time_freq += ltemp >> SHIFT_KH;
+		}
+	}
+	else {
+		if (mtemp < MAXSEC) {
+			ltemp *= mtemp;
+			if (ltemp < 0)
+				time_freq -= -ltemp >> (time_constant +
+					time_constant + SHIFT_KF - SHIFT_USEC);
+			else
+				time_freq += ltemp >> (time_constant +
+					time_constant + SHIFT_KF - SHIFT_USEC);
+		}
+	}
 	if (time_freq > time_tolerance)
 		time_freq = time_tolerance;
 	else if (time_freq < -time_tolerance)
@@ -458,12 +476,20 @@ hardclock(frame)
 		newtime.tv_sec++;
 		time_maxerror += time_tolerance >> SHIFT_USEC;
 		if (time_offset < 0) {
-			ltemp = -time_offset >> (SHIFT_KG + time_constant);
+			ltemp = -time_offset;
+			if (!(time_status & STA_FLL))
+				ltemp >>= SHIFT_KG + time_constant;
+			if (ltemp > (MAXPHASE / MINSEC) << SHIFT_UPDATE)
+				ltemp = (MAXPHASE / MINSEC) << SHIFT_UPDATE;
 			time_offset += ltemp;
 			time_adj = -ltemp << (SHIFT_SCALE - SHIFT_HZ - SHIFT_UPDATE);
 		}
 		else {
-			ltemp = time_offset >> (SHIFT_KG + time_constant);
+			ltemp = time_offset;
+			if (!(time_status & STA_FLL))
+				ltemp >>= SHIFT_KG + time_constant;
+			if (ltemp > (MAXPHASE / MINSEC) << SHIFT_UPDATE)
+				ltemp = (MAXPHASE / MINSEC) << SHIFT_UPDATE;
 			time_offset -= ltemp;
 			time_adj = ltemp << (SHIFT_SCALE - SHIFT_HZ - SHIFT_UPDATE);
 		}
@@ -488,6 +514,7 @@ hardclock(frame)
 		else
 			time_adj += ltemp >> (SHIFT_USEC + SHIFT_HZ - SHIFT_SCALE);
 
+#if SHIFT_HZ == 7
 		/*
 		 * When the CPU clock oscillator frequency is not a
 		 * power of two in Hz, the SHIFT_HZ is only an
@@ -500,6 +527,8 @@ hardclock(frame)
 			else
 				time_adj += time_adj >> 2;
 		}
+#endif /* SHIFT_HZ */
+
 		/*
 		 * Leap second processing.  If in leap-insert state at
 		 * the end of the day, the system clock is set back one
