@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.21 2004/01/13 17:32:32 mickey Exp $	*/
+/*	$OpenBSD: nm.c,v 1.22 2004/01/14 02:52:04 millert Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.21 2004/01/13 17:32:32 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.22 2004/01/14 02:52:04 millert Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -344,6 +344,27 @@ mmbr_name(struct ar_hdr *arh, char **name, int baselen, int *namelen, FILE *fp)
 	return (0);
 }
 
+#define	MMAP(ptr, len, prot, flags, fd, off)	do {		\
+	didmmap = (ptr = mmap(NULL, len, prot, flags, fd, off)) != MAP_FAILED; \
+	if (!didmmap) {							\
+		if ((ptr = malloc(len)) == NULL) {			\
+			ptr = MAP_FAILED;				\
+			warn("malloc");					\
+		} else if (pread(fd, ptr, len, off) != len) {		\
+			free(ptr);					\
+			ptr = MAP_FAILED;				\
+			warn("pread");					\
+		}							\
+	}								\
+} while (0)
+
+#define MUNMAP(addr, len)	do {					\
+	if (didmmap)							\
+		munmap(addr, len);					\
+	else								\
+		free(addr);						\
+} while (0)
+
 /*
  * show_symtab()
  *	show archive ranlib index (fs5)
@@ -355,19 +376,16 @@ show_symtab(off_t off, u_long len, const char *name, FILE *fp)
 	int *symtab, *ps;
 	char *strtab, *p;
 	int num, rval = 0;
-	int namelen;
+	int namelen, didmmap;
 
-	if ((symtab = mmap(NULL, len, PROT_READ,
-	    MAP_PRIVATE|MAP_FILE, fileno(fp), off)) == MAP_FAILED) {
-		warn("%s: mmap", name);
+	MMAP(symtab, len, PROT_READ, MAP_PRIVATE|MAP_FILE, fileno(fp), off);
+	if (symtab == MAP_FAILED)
 		return (1);
-	}
 
 	namelen = sizeof(ar_head.ar_name);
 	if ((p = malloc(sizeof(ar_head.ar_name))) == NULL) {
 		warn("%s: malloc", name);
-		munmap(symtab, len);
-		return (1);
+		MUNMAP(symtab, len);
 	}
 
 	printf("\nArchive index:\n");
@@ -397,7 +415,7 @@ show_symtab(off_t off, u_long len, const char *name, FILE *fp)
 	}
 
 	free(p);
-	munmap(symtab, len);
+	MUNMAP(symtab, len);
 	return (rval);
 }
 
@@ -413,24 +431,18 @@ show_symdef(off_t off, u_long len, const char *name, FILE *fp)
 	void *symdef;
 	char *strtab, *p;
 	u_long size;
-	int namelen, rval = 0;
+	int namelen, didmmap, rval = 0;
 
-	if ((symdef = mmap(NULL, len, PROT_READ,
-	    MAP_PRIVATE|MAP_FILE, fileno(fp), off)) == MAP_FAILED) {
-		warn("%s: mmap", name);
+	MMAP(symdef, len, PROT_READ, MAP_PRIVATE|MAP_FILE, fileno(fp), off);
+	if (symdef == MAP_FAILED)
 		return (1);
-	}
-
-	if (madvise(symdef, len, MADV_SEQUENTIAL)) {
-		warn("%s: madvise", name);
-		munmap(symdef, len);
-		return (1);
-	}
+	if (didmmap)
+		(void)madvise(symdef, len, MADV_SEQUENTIAL);
 
 	namelen = sizeof(ar_head.ar_name);
 	if ((p = malloc(sizeof(ar_head.ar_name))) == NULL) {
 		warn("%s: malloc", name);
-		munmap(symdef, len);
+		MUNMAP(symdef, len);
 		return (1);
 	}
 
@@ -464,7 +476,7 @@ show_symdef(off_t off, u_long len, const char *name, FILE *fp)
 	}
 
 	free(p);
-	munmap(symdef, len);
+	MUNMAP(symdef, len);
 	return (rval);
 }
 
@@ -621,7 +633,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 	struct nlist *np;
 	Elf_Shdr *shdr;
 	off_t staboff;
-	int i, aout;
+	int i, aout, didmmap;
 
 	aout = 0;
 	if (IS_ELF(head->elf) &&
@@ -731,10 +743,9 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 			free(names);
 			return(1);
 		}
-		stabsize = fix_long_order(stabsize, N_GETMID(head->aout));
-		if ((stab = mmap(NULL, stabsize, PROT_READ,
-		    MAP_PRIVATE|MAP_FILE, fileno(fp), staboff)) == MAP_FAILED) {
-			warn("%s: mmap", name);
+		MMAP(stab, stabsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
+		    fileno(fp), staboff);
+		if (stab == MAP_FAILED) {
 			free(snames);
 			free(names);
 			return (1);
@@ -775,7 +786,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		warn("%s: madvise", name);
 		free(snames);
 		free(names);
-		munmap(stab, stabsize);
+		MUNMAP(stab, stabsize);
 		return (1);
 	}
 
@@ -829,7 +840,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 
 	free(snames);
 	free(names);
-	munmap(stab, stabsize);
+	MUNMAP(stab, stabsize);
 	return(0);
 }
 
@@ -840,7 +851,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 	struct nlist *np;
 	Elf_Sym sbuf;
 	char *shstr;
-	int i;
+	int i, didmmap = 0;
 
 	shstrsize = shdr[eh->e_shstrndx].sh_size;
 	if ((shstr = malloc(shstrsize)) == NULL) {
@@ -871,10 +882,9 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 				return (1);
 			}
 
-			if ((stab = mmap(NULL, stabsize, PROT_READ,
-			    MAP_PRIVATE|MAP_FILE, fileno(fp),
-			    foff + shdr[i].sh_offset)) == MAP_FAILED) {
-				warn("%s: mmap", name);
+			MMAP(stab, stabsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
+			    fileno(fp), foff + shdr[i].sh_offset);
+			if (stab == MAP_FAILED) {
 				free(shstr);
 				return (1);
 			}
@@ -886,7 +896,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 			if (fseeko(fp, foff + shdr[i].sh_offset, SEEK_SET)) {
 				warn("%s: fseeko", name);
 				if (stab)
-					munmap(stab, stabsize);
+					MUNMAP(stab, stabsize);
 				free(shstr);
 				return (1);
 			}
@@ -895,7 +905,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 			if ((names = calloc(nrawnames, sizeof(*np))) == NULL) {
 				warn("%s: malloc names", name);
 				if (stab)
-					munmap(stab, stabsize);
+					MUNMAP(stab, stabsize);
 				free(names);
 				free(shstr);
 				return (1);
@@ -903,7 +913,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 			if ((snames = malloc(nrawnames * sizeof(np))) == NULL) {
 				warn("%s: malloc snames", name);
 				if (stab)
-					munmap(stab, stabsize);
+					MUNMAP(stab, stabsize);
 				free(shstr);
 				free(names);
 				free(snames);
@@ -915,7 +925,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 				    fp) != sizeof(sbuf)) {
 					warn("%s: read symbol", name);
 					if (stab)
-						munmap(stab, stabsize);
+						MUNMAP(stab, stabsize);
 					free(shstr);
 					free(names);
 					free(snames);
