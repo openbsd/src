@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.131 2000/03/05 16:55:22 millert Exp $
+#	$OpenBSD: rc,v 1.132 2000/04/06 18:26:04 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -445,10 +445,10 @@ if [ X${lpd} = X"YES" ]; then
 fi
 
 # $sendmail_flags is imported from /etc/rc.conf;
-# If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
+# If $sendmail_flags == NO or /etc/mail/sendmail.cf doesn't exist, then
 # sendmail isn't run.  We call sendmail with a full path so that
 # SIGHUP works.
-if [ "X${sendmail_flags}" != X"NO" -a -s /etc/sendmail.cf ]; then
+if [ "X${sendmail_flags}" != X"NO" -a -s /etc/mail/sendmail.cf ]; then
 	echo -n ' sendmail';		/usr/sbin/sendmail ${sendmail_flags}
 fi
 

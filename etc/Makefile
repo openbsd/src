@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.106 2000/01/11 13:50:03 peter Exp $
+#	$OpenBSD: Makefile,v 1.107 2000/04/06 18:26:04 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -12,7 +12,7 @@ NOOBJ=	oobj
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1=	aliases bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
+BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	daily dhcpd.conf dhcpd.interfaces dm.conf exports ftpusers \
 	ftpchroot gettytab group hosts hosts.lpd ifaliases inetd.conf \
 	ipf.rules ksh.kshrc locate.rc man.conf monthly motd mrouted.conf \
@@ -206,7 +206,10 @@ distribution-etc-root-var: distrib-dirs
 	(cd ../lib/libssl; ${MAKE} -f Makefile.bsd-wrapper distribution)
 	(cd ../gnu/usr.bin/lynx; ${MAKE} -f Makefile.bsd-wrapper distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
-	/usr/libexec/sendmail/sendmail -C${DESTDIR}/etc/sendmail.cf -bi -O AliasFile=${DESTDIR}/etc/aliases
+	${INSTALL} -c -o root -g ${BINGRP} -m 644 aliases \
+	    ${DESTDIR}/etc/mail/aliases
+	/usr/libexec/sendmail/sendmail -C${DESTDIR}/etc/mail/sendmail.cf \
+	    -bi -O AliasFile=${DESTDIR}/etc/mail/aliases
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
 		${DESTDIR}/var/mail/root
 
