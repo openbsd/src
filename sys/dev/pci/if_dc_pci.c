@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.8 2000/10/27 18:13:44 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.9 2000/10/27 18:20:02 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -271,6 +271,12 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_COALESCE|DC_TX_INTR_ALWAYS;
 			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_TX_STORENFWD;
 			sc->dc_pmode = DC_PMODE_MII;
+
+			/* Increase the latency timer value. */
+			command = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFLT);
+			command &= 0xFFFF00FF;
+			command |= 0x00008000;
+			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFLT, command);
 		}
 		break;
 	case PCI_VENDOR_ADMTEK:
