@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.173 2004/12/30 16:43:30 krw Exp $
+dnl	$OpenBSD: hardware,v 1.174 2005/01/15 15:23:40 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -80,7 +80,7 @@ Supported hardware {:-include-:}:
 		ITE IT8212F (RAID mode is not supported)
 		National Semiconductor PC87415
 		National Semiconductor SCx200 (found on SC1100 SoC)
-		NVIDIA nForce/nForce2/nForce3/nForce3-250
+		NVIDIA nForce/nForce2/nForce2-400/nForce3/nForce3-250
 		    (SATA controllers are not supported)
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
 		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276,
