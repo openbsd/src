@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.20 1998/07/13 02:11:47 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.21 1999/01/03 10:06:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -471,8 +471,8 @@ readprivs(quplist, infd)
 			return(0);
 		}
 		dqblk.dqb_curblocks = btodb(dqblk.dqb_curblocks * 1024);
-		dqblk.dqb_bsoftlimit = btodb(dqblk.dqb_bsoftlimit * 1024);
-		dqblk.dqb_bhardlimit = btodb(dqblk.dqb_bhardlimit * 1024);
+		dqblk.dqb_bsoftlimit = btodb((off_t)dqblk.dqb_bsoftlimit * 1024);
+		dqblk.dqb_bhardlimit = btodb((off_t)dqblk.dqb_bhardlimit * 1024);
 		if ((cp = strtok(line2, "\n")) == NULL) {
 			warnx("%s: %s: bad format", fsp, line2);
 			return(0);
