@@ -21,6 +21,7 @@
  *		commit		Checks files into the repository
  *		diff		Runs diffs between revisions
  *		log		Prints "rlog" information for files
+ *		login		Record user, host, repos, password
  *		add		Adds an entry to the repository
  *		remove		Removes an entry from the repository
  *		status		Status info on the revisions
@@ -33,7 +34,6 @@
  */
 
 #include "cvs.h"
-#include "patchlevel.h"
 
 #if HAVE_KERBEROS
 #include <sys/socket.h>
@@ -50,7 +50,12 @@ USE(rcsid);
 #endif
 
 char *program_name;
-char *command_name = "";
+char *program_path;
+/*
+ * Initialize comamnd_name to "cvs" so that the first call to
+ * read_cvsrc tries to find global cvs options.
+ */
+char *command_name = "cvs";
 
 /*
  * Since some systems don't define this...
@@ -61,6 +66,9 @@ char *command_name = "";
 
 char hostname[MAXHOSTNAMELEN];
 
+#ifdef AUTH_CLIENT_SUPPORT
+int use_authenticating_server = FALSE;
+#endif /* AUTH_CLIENT_SUPPORT */
 int use_editor = TRUE;
 int use_cvsrc = TRUE;
 int cvswrite = !CVSREAD_DFLT;
@@ -70,6 +78,7 @@ int trace = FALSE;
 int noexec = FALSE;
 int readonlyfs = FALSE;
 int logoff = FALSE;
+mode_t cvsumask = UMASK_DFLT;
 
 char *CurDir;
 
@@ -94,6 +103,9 @@ int diff PROTO((int argc, char **argv));
 int history PROTO((int argc, char **argv));
 int import PROTO((int argc, char **argv));
 int cvslog PROTO((int argc, char **argv));
+#ifdef AUTH_CLIENT_SUPPORT
+int login PROTO((int argc, char **argv));
+#endif /* AUTH_CLIENT_SUPPORT */
 int patch PROTO((int argc, char **argv));
 int release PROTO((int argc, char **argv));
 int cvsremove PROTO((int argc, char **argv));
@@ -121,24 +133,29 @@ const struct cmd
 #endif
 
     CMD_ENTRY("add",      "ad",    "new",     add,       client_add),
-#ifndef CVS_NOADMIN
     CMD_ENTRY("admin",    "adm",   "rcs",     admin,     client_admin),
-#endif
     CMD_ENTRY("checkout", "co",    "get",     checkout,  client_checkout),
     CMD_ENTRY("commit",   "ci",    "com",     commit,    client_commit),
     CMD_ENTRY("diff",     "di",    "dif",     diff,      client_diff),
+    CMD_ENTRY("edit",     "edit",  "edit",    edit,      client_edit),
+    CMD_ENTRY("editors",  "editors","editors",editors,   client_editors),
     CMD_ENTRY("export",   "exp",   "ex",      checkout,  client_export),
     CMD_ENTRY("history",  "hi",    "his",     history,   client_history),
     CMD_ENTRY("import",   "im",    "imp",     import,    client_import),
     CMD_ENTRY("log",      "lo",    "rlog",    cvslog,    client_log),
+#ifdef AUTH_CLIENT_SUPPORT
+    CMD_ENTRY("login",    "logon", "lgn",     login,     login),
+#endif /* AUTH_CLIENT_SUPPORT */
     CMD_ENTRY("rdiff",    "patch", "pa",      patch,     client_rdiff),
     CMD_ENTRY("release",  "re",    "rel",     release,   client_release),
     CMD_ENTRY("remove",   "rm",    "delete",  cvsremove, client_remove),
     CMD_ENTRY("status",   "st",    "stat",    status,    client_status),
     CMD_ENTRY("rtag",     "rt",    "rfreeze", rtag,      client_rtag),
     CMD_ENTRY("tag",      "ta",    "freeze",  tag,       client_tag),
+    CMD_ENTRY("unedit",   "unedit","unedit",  unedit,    client_unedit),
     CMD_ENTRY("update",   "up",    "upd",     update,    client_update),
-
+    CMD_ENTRY("watch",    "watch", "watch",   watch,     client_watch),
+    CMD_ENTRY("watchers", "watchers","watchers",watchers,client_watchers),
 #ifdef SERVER_SUPPORT
     /*
      * The client_func is also server because we might have picked up a
@@ -173,23 +190,38 @@ static const char *const usg[] =
     "        -z #         Use 'gzip -#' for net traffic if possible.\n",
 #endif
     "\n",
-    "    and where 'command' is:\n",
+    "    and where 'command' is: add, admin, etc. (use the --help-commands\n",
+    "    option for a list of commands)\n",
+    NULL,
+};
+
+static const char *const cmd_usage[] =
+{
+    "CVS commands are:\n",
     "        add          Adds a new file/directory to the repository\n",
     "        admin        Administration front end for rcs\n",
     "        checkout     Checkout sources for editing\n",
     "        commit       Checks files into the repository\n",
     "        diff         Runs diffs between revisions\n",
+    "        edit         Get ready to edit a watched file\n",
+    "        editors      See who is editing a watched file\n",
     "        history      Shows status of files and users\n",
     "        import       Import sources into CVS, using vendor branches\n",
     "        export       Export sources from CVS, similar to checkout\n",
     "        log          Prints out 'rlog' information for files\n",
+#ifdef AUTH_CLIENT_SUPPORT
+    "        login        Prompt for password for authenticating server.\n",
+#endif /* AUTH_CLIENT_SUPPORT */
     "        rdiff        'patch' format diffs between releases\n",
     "        release      Indicate that a Module is no longer in use\n",
     "        remove       Removes an entry from the repository\n",
     "        status       Status info on the revisions\n",
     "        tag          Add a symbolic tag to checked out version of RCS file\n",
+    "        unedit       Undo an edit command\n",
     "        rtag         Add a symbolic tag to the RCS file\n",
     "        update       Brings work tree in sync with repository\n",
+    "        watch        Set watches\n",
+    "        watchers     See who is watching a file\n",
     NULL,
 };
 
@@ -200,7 +232,7 @@ main_cleanup ()
 }
 
 static void
-error_cleanup ()
+error_cleanup PROTO((void))
 {
     Lock_Cleanup();
 #ifdef SERVER_SUPPORT
@@ -209,8 +241,6 @@ error_cleanup ()
 #endif
 }
 
-#define KF_GETOPT_LONG 1
-
 int
 main (argc, argv)
     int argc;
@@ -218,16 +248,18 @@ main (argc, argv)
 {
     extern char *version_string;
     extern char *config_string;
-    char *cp;
+    char *cp, *end;
     const struct cmd *cm;
     int c, err = 0;
-    static int help = FALSE, version_flag = FALSE;
+    static int help = FALSE;
+    static int version_flag = FALSE;
+    static int help_commands = FALSE;
     int rcsbin_update_env, cvs_update_env = 0;
-    char tmp[PATH_MAX];
     static struct option long_options[] =
       {
         {"help", 0, &help, TRUE},
         {"version", 0, &version_flag, TRUE},
+	{"help-commands", 0, &help_commands, TRUE},
         {0, 0, 0, 0}
       };
     /* `getopt_long' stores the option index here, but right now we
@@ -236,9 +268,15 @@ main (argc, argv)
 
     error_set_cleanup (error_cleanup);
 
+/* The socket subsystems on NT and OS2 must be initialized before use */
+#ifdef INITIALIZE_SOCKET_SUBSYSTEM
+        INITIALIZE_SOCKET_SUBSYSTEM();
+#endif /* INITIALIZE_SOCKET_SUBSYSTEM */
+
     /*
      * Just save the last component of the path for error messages
      */
+    program_path = xstrdup (argv[0]);
     program_name = last_component (argv[0]);
 
     CurDir = xmalloc (PATH_MAX);
@@ -273,6 +311,19 @@ main (argc, argv)
 	cvswrite = FALSE;
     if (getenv (CVSREADONLYFS_ENV))
 	readonlyfs = TRUE;
+    if ((cp = getenv (CVSUMASK_ENV)) != NULL)
+    {
+	/* FIXME: Should be accepting symbolic as well as numeric mask.  */
+	cvsumask = strtol (cp, &end, 8) & 0777;
+	if (*end != '\0')
+	    error (1, errno, "invalid umask value in %s (%s)",
+		CVSUMASK_ENV, cp);
+    }
+
+    /*
+     * Scan cvsrc file for global options.
+     */
+    read_cvsrc(&argc, &argv);
 
     /* This has the effect of setting getopt's ordering to REQUIRE_ORDER,
        which is what we need to distinguish between global options and
@@ -341,16 +392,14 @@ main (argc, argv)
 #endif
 	    case '?':
 	    default:
-		usage (usg);
+                usage (usg);
 	}
     }
 
     if (version_flag == TRUE)
-      {
+    {
         (void) fputs (version_string, stdout);
         (void) fputs (config_string, stdout);
-        (void) sprintf (tmp, "Patch Level: %d\n", PATCHLEVEL);
-        (void) fputs (tmp, stdout);
         (void) fputs ("\n", stdout);
         (void) fputs ("Copyright (c) 1993-1994 Brian Berliner\n", stdout);
         (void) fputs ("Copyright (c) 1993-1994 david d `zoo' zuhn\n", stdout);
@@ -360,7 +409,9 @@ main (argc, argv)
         (void) fputs ("CVS may be copied only under the terms of the GNU General Public License,\n", stdout);
         (void) fputs ("a copy of which can be found with the CVS distribution kit.\n", stdout);
         exit (0);
-      }
+    }
+    else if (help_commands)
+	usage (cmd_usage);
 
     argc -= optind;
     argv += optind;
@@ -452,6 +503,21 @@ error 0 %s: no such user\n", user);
     }
 #endif /* HAVE_KERBEROS */
 
+
+#if defined(AUTH_SERVER_SUPPORT) && defined(SERVER_SUPPORT)
+    if (strcmp (argv[0], "pserver") == 0)
+    {
+      /* Gets username and password from client, authenticates, then
+         switches to run as that user and sends an ACK back to the
+         client. */
+      authenticate_connection ();
+      
+      /* Pretend we were invoked as a plain server.  */
+      argv[0] = "server";
+    }
+#endif /* AUTH_SERVER_SUPPORT && SERVER_SUPPORT */
+
+
 #ifdef CVSADM_ROOT
     /*
      * See if we are able to find a 'better' value for CVSroot in the
@@ -474,9 +540,9 @@ error 0 %s: no such user\n", user);
         }
 #ifdef CLIENT_SUPPORT
         else if (!getenv ("CVS_IGNORE_REMOTE_ROOT"))
-#else
+#else /* ! CLIENT_SUPPORT */
         else
-#endif
+#endif /* CLIENT_SUPPORT */
         {
             /*
 	     * Now for the hard part, compare the two directories. If they
@@ -495,6 +561,20 @@ error 0 %s: no such user\n", user);
         }
     }
 #endif /* CVSADM_ROOT */
+
+    /* CVSroot may need fixing up, if an access-method was specified,
+     * but not a user.  Later code assumes that if CVSroot contains an
+     * access-method, then it also has a user.  We print a warning and
+     * die if we can't guarantee that.
+     */
+    if (CVSroot
+        && *CVSroot
+        && (CVSroot[0] == ':')
+        && (strchr (CVSroot, '@') == NULL))
+      {
+        error (1, 0,
+               "must also give a username if specifying access method");
+      }
 
     /*
      * Specifying just the '-H' flag to the sub-command causes a Usage
@@ -521,7 +601,7 @@ error 0 %s: no such user\n", user);
 		error (1, 0, "You don't have a %s environment variable",
 		       CVSROOT_ENV);
 	    (void) sprintf (path, "%s/%s", CVSroot, CVSROOTADM);
-	    if (access (path, R_OK | X_OK))
+	    if (!isaccessible (path, R_OK | X_OK))
 	    {
 		save_errno = errno;
 #ifdef CLIENT_SUPPORT
@@ -537,7 +617,7 @@ error 0 %s: no such user\n", user);
 	    }
 	    (void) strcat (path, "/");
 	    (void) strcat (path, CVSROOTADM_HISTORY);
-	    if (readonlyfs == 0 && isfile (path) && access (path, R_OK | W_OK))
+	    if (readonlyfs == 0 && isfile (path) && !isaccessible (path, R_OK | W_OK))
 	    {
 		save_errno = errno;
 		error (0, 0,

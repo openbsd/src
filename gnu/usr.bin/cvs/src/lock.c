@@ -17,8 +17,6 @@ static const char rcsid[] = "$CVSid: @(#)lock.c 1.50 94/09/30 $";
 USE(rcsid);
 #endif
 
-extern char *ctime ();
-
 static int readers_exist PROTO((char *repository));
 static int set_lock PROTO((char *repository, int will_wait));
 static void clear_lock PROTO((void));
@@ -28,6 +26,7 @@ static int unlock_proc PROTO((Node * p, void *closure));
 static int write_lock PROTO((char *repository));
 static void unlock PROTO((char *repository));
 static void lock_wait PROTO((char *repository));
+static int Check_Owner PROTO((char *lockdir));
 
 static char lockers_name[20];
 static char *repository;
@@ -80,19 +79,18 @@ unlock (repository)
     char *repository;
 {
     char tmp[PATH_MAX];
-    struct stat sb;
 
     if (readlock[0] != '\0')
     {
 	(void) sprintf (tmp, "%s/%s", repository, readlock);
-	if (unlink (tmp) < 0 && errno != ENOENT)
+	if (unlink (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
     }
 
     if (writelock[0] != '\0')
     {
 	(void) sprintf (tmp, "%s/%s", repository, writelock);
-	if (unlink (tmp) < 0 && errno != ENOENT)
+	if (unlink (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
     }
 
@@ -103,14 +101,51 @@ unlock (repository)
      */
     if (writelock[0] != '\0' || (readlock[0] != '\0' && cleanup_lckdir)) 
     {
-	(void) sprintf (tmp, "%s/%s", repository, CVSLCK);
-	if (stat (tmp, &sb) != -1 && sb.st_uid == geteuid ())
-	{
+	    (void) sprintf (tmp, "%s/%s", repository, CVSLCK);
+    	    if (Check_Owner(tmp))
+	    {
+#ifdef AFSCVS
+		char rmuidlock[PATH_MAX];
+		sprintf(rmuidlock, "rm -f %s/uidlock%d", tmp, geteuid() );
+		system(rmuidlock);
+#endif
 	    (void) rmdir (tmp);
-	}
+	    }
     }
     cleanup_lckdir = 0;
 }
+
+/*
+ * Check the owner of a lock.  Returns 1 if we own it, 0 otherwise.
+ */
+static int
+Check_Owner(lockdir)
+     char *lockdir;
+{
+  struct stat sb;
+
+#ifdef AFSCVS
+  /* In the Andrew File System (AFS), user ids from stat don't match
+     those from geteuid().  The AFSCVS code can deal with either AFS or
+     non-AFS repositories; the non-AFSCVS code is faster.  */
+  char uidlock[PATH_MAX];
+
+  /* Check if the uidlock is in the lock directory */
+  sprintf(uidlock, "%s/uidlock%d", lockdir, geteuid() );
+  if( stat(uidlock, &sb) != -1)
+    return 1;   /* The file exists, therefore we own the lock */
+  else
+    return 0; 	/* The file didn't exist or some other error.
+		 * Assume that we don't own it.
+		 */
+#else
+  if (stat (lockdir, &sb) != -1 && sb.st_uid == geteuid ())
+    return 1;
+  else
+    return 0;
+#endif
+}  /* end Check_Owner() */
+
 
 /*
  * Create a lock file for readers
@@ -159,7 +194,7 @@ Reader_Lock (xrepository)
 	error (0, errno, "cannot create read lock in repository `%s'",
 	       xrepository);
 	readlock[0] = '\0';
-	if (unlink (tmp) < 0 && errno != ENOENT)
+	if (unlink (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
 	return (1);
     }
@@ -296,7 +331,7 @@ write_lock (repository)
     {
 	error (0, errno, "cannot create write lock in repository `%s'",
 	       repository);
-	if (unlink (tmp) < 0 && errno != ENOENT)
+	if (unlink (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
 	return (L_ERROR);
     }
@@ -327,7 +362,7 @@ write_lock (repository)
 	{
 	    int xerrno = errno;
 
-	    if (unlink (tmp) < 0 && errno != ENOENT)
+	    if (unlink (tmp) < 0 && ! existence_error (errno))
 		error (0, errno, "failed to remove lock %s", tmp);
 
 	    /* free the lock dir if we created it */
@@ -356,7 +391,7 @@ static int
 readers_exist (repository)
     char *repository;
 {
-    char line[MAXLINELEN];
+    char *line;
     DIR *dirp;
     struct dirent *dp;
     struct stat sb;
@@ -379,6 +414,7 @@ again:
 	    (void) time (&now);
 #endif
 
+	    line = xmalloc (strlen (repository) + strlen (dp->d_name) + 5);
 	    (void) sprintf (line, "%s/%s", repository, dp->d_name);
 	    if (stat (line, &sb) != -1)
 	    {
@@ -391,11 +427,13 @@ again:
 		if (now >= (sb.st_ctime + CVSLCKAGE) && unlink (line) != -1)
 		{
 		    (void) closedir (dirp);
+		    free (line);
 		    goto again;
 		}
 #endif
 		set_lockers_name (&sb);
 	    }
+	    free (line);
 
 	    ret = 1;
 	    break;
@@ -439,6 +477,7 @@ set_lock (repository, will_wait)
     int will_wait;
 {
     struct stat sb;
+    mode_t omask;
 #ifdef CVS_FUDGELOCKS
     time_t now;
 #endif
@@ -453,14 +492,39 @@ set_lock (repository, will_wait)
     cleanup_lckdir = 0;
     for (;;)
     {
+	int status = -1;
+	omask = umask (cvsumask);
 	SIG_beginCrSect ();
 	if (CVS_MKDIR (masterlock, 0777) == 0)
 	{
+#ifdef AFSCVS
+	    char uidlock[PATH_MAX];
+	    FILE *fp;
+
+	    sprintf(uidlock, "%s/uidlock%d", masterlock, geteuid() );
+	    if ((fp = fopen(uidlock, "w+")) == NULL)
+	    {
+		/* We failed to create the uidlock,
+		   so rm masterlock and leave */
+		rmdir(masterlock);
+		SIG_endCrSect ();
+		status = L_ERROR;
+		goto out;
+	    }
+
+	    /* We successfully created the uid lock, so close the file */
+	    fclose(fp);
+#endif
 	    cleanup_lckdir = 1;
 	    SIG_endCrSect ();
-	    return (L_OK);
+	    status = L_OK;
+	    goto out;
 	}
 	SIG_endCrSect ();
+      out:
+	(void) umask (omask);
+	if (status != -1)
+	    return status;
 
 	if (errno != EEXIST)
 	{
@@ -476,7 +540,7 @@ set_lock (repository, will_wait)
 	 */
 	if (stat (masterlock, &sb) < 0)
 	{
-	    if (errno == ENOENT)
+	    if (existence_error (errno))
 		continue;
 
 	    error (0, errno, "couldn't stat lock directory `%s'", masterlock);
@@ -492,6 +556,12 @@ set_lock (repository, will_wait)
 	(void) time (&now);
 	if (now >= (sb.st_ctime + CVSLCKAGE))
 	{
+#ifdef AFSCVS
+	  /* Remove the uidlock first */
+	  char rmuidlock[PATH_MAX];
+	  sprintf(rmuidlock, "rm -f %s/uidlock%d", masterlock, geteuid() );
+	  system(rmuidlock);
+#endif
 	    if (rmdir (masterlock) >= 0)
 		continue;
 	}
@@ -514,6 +584,12 @@ set_lock (repository, will_wait)
 static void
 clear_lock()
 {
+#ifdef AFSCVS
+  /* Remove the uidlock first */
+  char rmuidlock[PATH_MAX];
+  sprintf(rmuidlock, "rm -f %s/uidlock%d", masterlock, geteuid() );
+  system(rmuidlock);
+#endif
     if (rmdir (masterlock) < 0)
 	error (0, errno, "failed to remove lock dir `%s'", masterlock);
     cleanup_lckdir = 0;
@@ -532,4 +608,71 @@ lock_wait (repos)
     error (0, 0, "[%8.8s] waiting for %s's lock in %s", ctime (&now) + 11,
 	   lockers_name, repos);
     (void) sleep (CVSLCKSLEEP);
+}
+
+static int lock_filesdoneproc PROTO ((int err, char *repository,
+				      char *update_dir));
+static int fsortcmp PROTO((const Node * p, const Node * q));
+
+static List *lock_tree_list;
+
+/*
+ * Create a list of repositories to lock
+ */
+/* ARGSUSED */
+static int
+lock_filesdoneproc (err, repository, update_dir)
+    int err;
+    char *repository;
+    char *update_dir;
+{
+    Node *p;
+
+    p = getnode ();
+    p->type = LOCK;
+    p->key = xstrdup (repository);
+    /* FIXME-KRP: this error condition should not simply be passed by. */
+    if (p->key == NULL || addnode (lock_tree_list, p) != 0)
+	freenode (p);
+    return (err);
+}
+
+/*
+ * compare two lock list nodes (for sort)
+ */
+static int
+fsortcmp (p, q)
+    const Node *p;
+    const Node *q;
+{
+    return (strcmp (p->key, q->key));
+}
+
+void
+lock_tree_for_write (argc, argv, local, aflag)
+    int argc;
+    char **argv;
+    int local;
+    int aflag;
+{
+    int err;
+    /*
+     * Run the recursion processor to find all the dirs to lock and lock all
+     * the dirs
+     */
+    lock_tree_list = getlist ();
+    err = start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
+			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, argc,
+			   argv, local, W_LOCAL, aflag, 0, (char *) NULL, 0,
+			   0);
+    sortlist (lock_tree_list, fsortcmp);
+    if (Writer_Lock (lock_tree_list) != 0)
+	error (1, 0, "lock failed - giving up");
+}
+
+void
+lock_tree_cleanup ()
+{
+    Lock_Cleanup ();
+    dellist (&lock_tree_list);
 }

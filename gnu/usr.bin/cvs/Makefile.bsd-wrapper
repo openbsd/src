@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.7 1996/01/01 23:51:27 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.8 1996/01/30 01:09:32 tholo Exp $
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8 man/mkmodules.1
 
@@ -8,10 +8,10 @@ all:	config.status
 .FORCE:	.IGNORE
 
 config: .FORCE
-	sh ${.CURDIR}/configure --prefix=/usr
+	sh ${.CURDIR}/configure --prefix=/usr --with-krb4=/usr
 
 config.status:
-	sh ${.CURDIR}/configure --prefix=/usr
+	sh ${.CURDIR}/configure --prefix=/usr --with-krb4=/usr
 
 install: maninstall
 	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \

@@ -93,6 +93,7 @@ DISTFILES = \
 	BUGS MINOR-BUGS FAQ \
 	ChangeLog NEWS ChangeLog.zoo \
 	configure configure.in stamp-h.in config.h.in Makefile.in acconfig.h \
+	config.sub config.guess \
 	cvs-format.el mkinstalldirs install-sh cvsinit.sh \
 	cvsnt.mak \
 	.cvsignore
@@ -101,7 +102,7 @@ PROGS = cvsinit
 
 # Subdirectories to run make in for the primary targets.
 INSTALL_MAN=man
-SUBDIRS = lib src ${INSTALL_MAN} doc contrib examples windows-NT
+SUBDIRS = lib src ${INSTALL_MAN} doc contrib examples windows-NT os2 macintosh
 # Only make TAGS/tags files in these directories, in this order
 TSUBDIRS= src lib
 
@@ -199,14 +200,17 @@ saber:
 
 .PHONY: check
 check:
+	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
 	cd src ; $(MAKE) $(FLAGS_TO_PASS) check
 
 .PHONY: remotecheck
 remotecheck:
+	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
 	cd src ; $(MAKE) $(FLAGS_TO_PASS) remotecheck
 
 .PHONY: installcheck
 installcheck:
+	cd lib ; $(MAKE) $(FLAGS_TO_PASS)
 	cd src ; $(MAKE) $(FLAGS_TO_PASS) installcheck
 
 .PHONY: lint
@@ -216,6 +220,7 @@ lint:
 .PHONY: dist
 GZIP=gzip --best
 GZIP_EXT=.gz
+TAR_VERBOSE=
 dist:
 	echo > .fname \
 	  cvs-`sed < $(srcdir)/src/version.c \
@@ -230,7 +235,7 @@ dist:
 	    ${MAKE} dist-dir DISTDIR="$${DISTDIR}" \
 	  ); \
 	done
-	tar chvf - `cat .fname` | ${GZIP} > "`cat .fname`.tar${GZIP_EXT}"
+	tar chf${TAR_VERBOSE} - `cat .fname` | ${GZIP} > "`cat .fname`.tar${GZIP_EXT}"
 	rm -rf `cat .fname` .fname
 
 .PHONY: dist-dir

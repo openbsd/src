@@ -21,7 +21,11 @@
 #ifdef _AIX
  #pragma alloca
 #else /* not _AIX */
+#ifdef ALLOCA_IN_STDLIB
+ /* then we need do nothing */
+#else
 char *alloca ();
+#endif /* not ALLOCA_IN_STDLIB */
 #endif /* not _AIX */
 #endif /* not HAVE_ALLOCA_H */
 #endif /* not __GNUC__ */
@@ -52,6 +56,11 @@ char *alloca ();
 
 #include <stdio.h>
 
+/* Under OS/2, <stdio.h> doesn't define popen()/pclose(). */
+#ifdef USE_OWN_POPEN
+#include "popen.h"
+#endif
+
 #ifdef STDC_HEADERS
 #include <stdlib.h>
 #else
@@ -75,7 +84,7 @@ extern char *getenv();
 char *strerror ();
 #endif
 
-#include <fnmatch.h>		/* This is supposed to be available on Posix systems */
+#include <fnmatch.h> /* This is supposed to be available on Posix systems */
 
 #include <ctype.h>
 #include <pwd.h>
@@ -150,6 +159,21 @@ extern int errno;
 #define	CVSADM_CIPROG	"CVS/Checkin.prog"
 #define	CVSADM_UPROG	"CVS/Update.prog"
 #define	CVSADM_TAG	"CVS/Tag"
+#define CVSADM_NOTIFY	"CVS/Notify"
+#define CVSADM_NOTIFYTMP "CVS/Notify.tmp"
+/* A directory in which we store base versions of files we currently are
+   editing with "cvs edit".  */
+#define CVSADM_BASE     "CVS/Base"
+
+/* This is the special directory which we use to store various extra
+   per-directory information in the repository.  It must be the same as
+   CVSADM to avoid creating a new reserved directory name which users cannot
+   use, but is a separate #define because if anyone changes it (which I don't
+   recommend), one needs to deal with old, unconverted, repositories.
+   
+   See fileattr.h for details about file attributes, the only thing stored
+   in CVSREP currently.  */
+#define CVSREP "CVS"
 
 /*
  * Definitions for the CVSROOT Administrative directory and the files it
@@ -165,9 +189,13 @@ extern int errno;
 #define CVSROOTADM_TAGINFO      "taginfo"
 #define	CVSROOTADM_EDITINFO	"editinfo"
 #define	CVSROOTADM_HISTORY	"history"
+#define CVSROOTADM_VALTAGS	"val-tags"
 #define	CVSROOTADM_IGNORE	"cvsignore"
 #define	CVSROOTADM_CHECKOUTLIST "checkoutlist"
-#define CVSROOTADM_WRAPPER      "cvswrappers"
+#define CVSROOTADM_WRAPPER	"cvswrappers"
+#define CVSROOTADM_NOTIFY	"notify"
+#define CVSROOTADM_USERS	"users"
+
 #define CVSNULLREPOS		"Emptydir"	/* an empty directory */
 
 /* support for the modules file (CVSROOTADM_MODULES) */
@@ -188,7 +216,6 @@ extern int errno;
 #define	CVSRFL		"#cvs.rfl"
 #define	CVSWFL		"#cvs.wfl"
 #define CVSRFLPAT	"#cvs.rfl.*"	/* wildcard expr to match read locks */
-#define	CVSEXT_OPT	",p"
 #define	CVSEXT_LOG	",t"
 #define	CVSPREFIX	",,"
 #define CVSDOTIGNORE	".cvsignore"
@@ -235,6 +262,9 @@ extern int errno;
 #define	IGNORE_ENV	"CVSIGNORE"	/* More files to ignore */
 #define WRAPPER_ENV     "CVSWRAPPERS"   /* name of the wrapper file */
 
+#define	CVSUMASK_ENV	"CVSUMASK"	/* Effective umask for repository */
+/* #define	CVSUMASK_DFLT		   Set by config.h */
+
 /*
  * If the beginning of the Repository matches the following string, strip it
  * so that the output to the logfile does not contain a full pathname.
@@ -257,6 +287,7 @@ extern int errno;
 /* structure of a entry record */
 struct entnode
 {
+    char *user;
     char *version;
     char *timestamp;
     char *options;
@@ -304,23 +335,52 @@ typedef enum classify_type Ctype;
  */
 struct vers_ts
 {
-    char *vn_user;			/* rcs version user file derives from
-					 * it can have the following special
-					 * values:
-					 *    empty = no user file
-					 *    0 = user file is new
-					 *    -vers = user file to be removed */
-    char *vn_rcs;			/* the version for the rcs file
-					 * (tag version?) 	 */
-    char *ts_user;			/* the timestamp for the user file */
-    char *ts_rcs;			/* the user timestamp from entries */
-    char *options;			/* opts from Entries file
-					 * (keyword expansion)	 */
-    char *ts_conflict;			/* Holds time_stamp of conflict */
-    char *tag;				/* tag stored in the Entries file */
-    char *date;				/* date stored in the Entries file */
-    Entnode *entdata;			/* pointer to entries file node  */
-    RCSNode *srcfile;			/* pointer to parsed src file info */
+    /* rcs version user file derives from, from CVS/Entries.
+     * it can have the following special values:
+     *    empty = no user file
+     *    0 = user file is new
+     *    -vers = user file to be removed.  */
+    char *vn_user;
+
+    /* Numeric revision number corresponding to ->vn_tag (->vn_tag
+       will often be symbolic).  */
+    char *vn_rcs;
+    /* If ->tag corresponds to a tag which really exists in this file,
+       this is just a copy of ->tag.  If not, this is either NULL or
+       the head revision.  (Or something like that, see RCS_getversion
+       and friends).  */
+    char *vn_tag;
+
+    /* This is the timestamp from stating the file in the working directory.
+       It is NULL if there is no file in the working directory.  */
+    char *ts_user;
+    /* Timestamp from CVS/Entries.  For the server, ts_user and ts_rcs
+       are computed in a slightly different way, but the fact remains that
+       if they are equal the file in the working directory is unmodified
+       and if they differ it is modified.  */
+    char *ts_rcs;
+
+    /* Options from CVS/Entries (keyword expansion).  */
+    char *options;
+
+    /* If non-NULL, there was a conflict (or merely a merge?  See merge_file)
+       and the time stamp in this field is the time stamp of the working
+       directory file which was created with the conflict markers in it.
+       This is from CVS/Entries.  */
+    char *ts_conflict;
+
+    /* Tag specified on the command line, or if none, tag stored in
+       CVS/Entries.  */
+    char *tag;
+    /* Date specified on the command line, or if none, date stored in
+       CVS/Entries.  */
+    char *date;
+
+    /* Pointer to entries file node  */
+    Entnode *entdata;
+
+    /* Pointer to parsed src file info */
+    RCSNode *srcfile;
 };
 typedef struct vers_ts Vers_TS;
 
@@ -351,7 +411,7 @@ enum direnter_type
 };
 typedef enum direnter_type Dtype;
 
-extern char *program_name, *command_name;
+extern char *program_name, *program_path, *command_name;
 extern char *Rcsbin, *Editor, *CVSroot;
 #ifdef CVSADM_ROOT
 extern char *CVSADM_Root;
@@ -361,6 +421,7 @@ extern char *CurDir;
 extern int really_quiet, quiet;
 extern int use_editor;
 extern int cvswrite;
+extern mode_t cvsumask;
 
 extern int trace;		/* Show all commands */
 extern int noexec;		/* Don't modify disk anywhere */
@@ -398,11 +459,14 @@ char *time_stamp PROTO((char *file));
 char *xmalloc PROTO((size_t bytes));
 char *xrealloc PROTO((char *ptr, size_t bytes));
 char *xstrdup PROTO((const char *str));
+void strip_trailing_newlines PROTO((char *str));
 int No_Difference PROTO((char *file, Vers_TS * vers, List * entries,
 			 char *repository, char *update_dir));
-int Parse_Info PROTO((char *infofile, char *repository, int PROTO((*callproc)) PROTO(()), int all));
+typedef	int (*CALLPROC)	PROTO((char *repository, char *value));
+int Parse_Info PROTO((char *infofile, char *repository, CALLPROC callproc, int all));
 int Reader_Lock PROTO((char *xrepository));
-int SIG_register PROTO((int sig, RETSIGTYPE PROTO((*fn)) PROTO(())));
+typedef	RETSIGTYPE (*SIGCLEANUPPROC)	PROTO(());
+int SIG_register PROTO((int sig, SIGCLEANUPPROC sigcleanup));
 int Writer_Lock PROTO((List * list));
 int ign_name PROTO((char *name));
 int isdir PROTO((const char *file));
@@ -410,20 +474,32 @@ int isfile PROTO((const char *file));
 int islink PROTO((const char *file));
 int isreadable PROTO((const char *file));
 int iswritable PROTO((const char *file));
+int isaccessible PROTO((const char *file, const int mode));
 int isabsolute PROTO((const char *filename));
 char *last_component PROTO((char *path));
 
-int joining PROTO((void));
 int numdots PROTO((const char *s));
 int unlink_file PROTO((const char *f));
+int link_file PROTO ((const char *from, const char *to));
 int unlink_file_dir PROTO((const char *f));
 int update PROTO((int argc, char *argv[]));
 int xcmp PROTO((const char *file1, const char *file2));
 int yesno PROTO((void));
+void *valloc PROTO((size_t bytes));
 time_t get_date PROTO((char *date, struct timeb *now));
 void Create_Admin PROTO((char *dir, char *update_dir,
 			 char *repository, char *tag, char *date));
+
 void Lock_Cleanup PROTO((void));
+
+/* Writelock an entire subtree, well the part specified by ARGC, ARGV, LOCAL,
+   and AFLAG, anyway.  */
+void lock_tree_for_write PROTO ((int argc, char **argv, int local, int aflag));
+
+/* Remove locks set by lock_tree_for_write.  Currently removes readlocks
+   too.  */
+void lock_tree_cleanup PROTO ((void));
+
 void ParseTag PROTO((char **tagp, char **datep));
 void Scratch_Entry PROTO((List * list, char *fname));
 void WriteTag PROTO((char *dir, char *tag, char *date));
@@ -435,11 +511,18 @@ void (*error_set_cleanup PROTO((void (*) (void)))) PROTO ((void));
 void fperror PROTO((FILE * fp, int status, int errnum, char *message,...));
 void free_names PROTO((int *pargc, char *argv[]));
 void freevers_ts PROTO((Vers_TS ** versp));
+
 void ign_add PROTO((char *ign, int hold));
 void ign_add_file PROTO((char *file, int hold));
 void ign_setup PROTO((void));
 void ign_dir_add PROTO((char *name));
 int ignore_directory PROTO((char *name));
+typedef void (*Ignore_proc) PROTO ((char *, char *));
+extern void ignore_files PROTO ((List *, char *, Ignore_proc));
+extern int ign_inhibit_server;
+
+#include "update.h"
+
 void line2argv PROTO((int *pargc, char *argv[], char *line));
 void make_directories PROTO((const char *name));
 void make_directory PROTO((const char *name));
@@ -468,21 +551,27 @@ Vers_TS *Version_TS PROTO((char *repository, char *options, char *tag,
 		     int set_time, List * entries, List * xfiles));
 void do_editor PROTO((char *dir, char **messagep,
 		      char *repository, List * changes));
+
+typedef	int (*CALLBACKPROC)	PROTO((int *pargc, char *argv[], char *where,
+	char *mwhere, char *mfile, int horten, int local_specified,
+	char *omodule, char *msg));
+typedef	int (*FILEPROC)		PROTO((char *file, char *update_dir, char *repository,
+	List *	entries, List *	srcfiles));
+typedef	int (*FILESDONEPROC)	PROTO((int err, char *repository, char *update_dir));
+typedef	Dtype (*DIRENTPROC)	PROTO((char *dir, char *repos, char *update_dir));
+typedef	int (*DIRLEAVEPROC)	PROTO((char *dir, int err, char *update_dir));
+
 int do_module PROTO((DBM * db, char *mname, enum mtype m_type, char *msg,
-	       int PROTO((*callback_proc)) (), char *where, int shorten,
-	       int local_specified, int run_module_prog, char *extra_arg));
-int do_recursion PROTO((int PROTO((*xfileproc)) (), int PROTO((*xfilesdoneproc)) (),
-		  Dtype PROTO((*xdirentproc)) (), int PROTO((*xdirleaveproc)) (),
+		CALLBACKPROC callback_proc, char *where, int shorten,
+		int local_specified, int run_module_prog, char *extra_arg));
+int do_recursion PROTO((FILEPROC xfileproc, FILESDONEPROC xfilesdoneproc,
+		  DIRENTPROC xdirentproc, DIRLEAVEPROC xdirleaveproc,
 		  Dtype xflags, int xwhich, int xaflag, int xreadlock,
 		  int xdosrcs));
-int do_update PROTO((int argc, char *argv[], char *xoptions, char *xtag,
-	       char *xdate, int xforce, int local, int xbuild,
-	       int xaflag, int xprune, int xpipeout, int which,
-	       char *xjoin_rev1, char *xjoin_rev2, char *preload_update_dir));
 void history_write PROTO((int type, char *update_dir, char *revs, char *name,
 		    char *repository));
-int start_recursion PROTO((int PROTO((*fileproc)) (), int PROTO((*filesdoneproc)) (),
-		     Dtype PROTO((*direntproc)) (), int PROTO((*dirleaveproc)) (),
+int start_recursion PROTO((FILEPROC fileproc, FILESDONEPROC filesdoneproc,
+		     DIRENTPROC direntproc, DIRLEAVEPROC dirleaveproc,
 		     int argc, char *argv[], int local, int which,
 		     int aflag, int readlock, char *update_preload,
 		     int dosrcs, int wd_is_repos));
@@ -519,7 +608,7 @@ void close_on_exec PROTO((int));
 int filter_stream_through_program PROTO((int, int, char **, pid_t *));
 
 pid_t waitpid PROTO((pid_t, int *, int));
-
+
 /* Wrappers.  */
 
 typedef enum { WRAP_MERGE, WRAP_COPY } WrapMergeMethod;
@@ -530,5 +619,20 @@ int   wrap_name_has PROTO((const char *name,WrapMergeHas has));
 char *wrap_tocvs_process_file PROTO((const char *fileName));
 int   wrap_merge_is_copy PROTO((const char *fileName));
 char *wrap_fromcvs_process_file PROTO((const char *fileName));
+/* Pathname expansion */
+char *expand_path PROTO((char *name));
 void wrap_add_file PROTO((const char *file,int temp));
 void wrap_add PROTO((char *line,int temp));
+
+int watch PROTO ((int argc, char **argv));
+int edit PROTO ((int argc, char **argv));
+int unedit PROTO ((int argc, char **argv));
+int editors PROTO ((int argc, char **argv));
+int watchers PROTO ((int argc, char **argv));
+
+#if defined(AUTH_CLIENT_SUPPORT) || defined(AUTH_SERVER_SUPPORT)
+char *scramble PROTO ((char *str));
+char *descramble PROTO ((char *str));
+#endif /* AUTH_CLIENT_SUPPORT || AUTH_SERVER_SUPPORT */
+
+extern void tag_check_valid PROTO ((char *, int, char **, int, int, char *));
