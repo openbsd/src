@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.20 2001/01/25 05:40:28 art Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.21 2001/02/03 03:03:07 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.20 2001/01/25 05:40:28 art Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.21 2001/02/03 03:03:07 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -306,6 +306,7 @@ __elf_knlist(fd, db)
 	DBT data, key;
 	NLIST nbuf;
 	FILE *fp;
+	int usemalloc = 0;
 
 	if ((fp = fdopen(fd, "r")) < 0)
 		err(1, "%s", kfile);
@@ -370,12 +371,28 @@ __elf_knlist(fd, db)
 	 * an easy way to randomly access all the strings, without
 	 * making the memory allocation permanent as with malloc/free
 	 * (i.e., munmap will return it to the system).
+	 *
+	 * XXX - we really want to check if this is a regular file.
+	 *	 then we probably want a MAP_PRIVATE here.
 	 */
 	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
-	    MAP_PRIVATE|MAP_FILE, fileno(fp), symstroff);
-	if (strtab == (char *)-1) {
-		fmterr = "corrupt file";
-		return (-1);
+	    MAP_SHARED|MAP_FILE, fileno(fp), symstroff);
+	if (strtab == MAP_FAILED) {
+		usemalloc = 1;
+		if ((strtab = malloc(symstrsize)) == NULL) {
+			fmterr = "out of memory";
+			return (-1);
+		}
+		if (fseek(fp, symstroff, SEEK_SET) == -1) {
+			free(strtab);
+			fmterr = "corrupt file";
+			return (-1);
+		}
+		if (fread(strtab, symstrsize, 1, fp) != 1) {
+			free(strtab);
+			fmterr = "corrupt file";
+			return (-1);
+		}
 	}
 
 	if (fseek(fp, symoff, SEEK_SET) == -1) {
@@ -468,7 +485,10 @@ __elf_knlist(fd, db)
 			}
 		}
 	}
-	munmap(strtab, symstrsize);
+	if (usemalloc)
+		free(strtab);
+	else
+		munmap(strtab, symstrsize);
 	(void)fclose(fp);
 	return (0);
 }
