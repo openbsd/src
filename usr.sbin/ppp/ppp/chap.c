@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.28 2001/07/31 12:11:28 brian Exp $
+ * $OpenBSD: chap.c,v 1.29 2001/07/31 21:37:15 brian Exp $
  */
 
 #include <sys/param.h>
@@ -549,7 +549,7 @@ chap_Success(struct authinfo *authp)
 #endif
     msg = "Welcome!!";
 
-  ChapOutput(authp->physical, CHAP_SUCCESS, authp->id, msg, strlen(msg) + 1,
+  ChapOutput(authp->physical, CHAP_SUCCESS, authp->id, msg, strlen(msg),
              NULL);
 
   authp->physical->link.lcp.auth_ineed = 0;
