@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.6 1997/09/09 14:58:21 millert Exp $	*/
+/*	$OpenBSD: machine.c,v 1.7 1997/09/09 15:23:13 millert Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -25,7 +25,6 @@
 #include <sys/signal.h>
 #include <sys/param.h>
 
-#define LASTPID
 #define DOSWAP
 
 #include <stdio.h>
@@ -91,10 +90,6 @@ struct handle
 #define	VM_DMMAX	7
 #define	VM_NISWAP	8
 #define	VM_NISWDEV	9
-
-#define	X_LASTPID	10
-#elif defined(LASTPID)
-#define	X_LASTPID	2
 #endif
 
 static struct nlist nlst[] = {
@@ -109,9 +104,6 @@ static struct nlist nlst[] = {
     { "_dmmax" },		/* 7 */
     { "_niswap" },		/* 8 */
     { "_niswdev" },		/* 9 */
-#endif
-#ifdef LASTPID
-    { "_lastpid" },		/* 2 / 10 */
 #endif
     { 0 }
 };
@@ -148,10 +140,6 @@ static          int hz;
 /* these are offsets obtained via nlist and used in the get_ functions */
 
 static unsigned long cp_time_offset;
-#ifdef LASTPID
-static unsigned long lastpid_offset;
-static pid_t lastpid;
-#endif
 
 /* these are for calculating cpu state percentages */
 static int cp_time[CPUSTATES];
@@ -231,9 +219,6 @@ struct statics *statics;
 
     /* stash away certain offsets for later use */
     cp_time_offset = nlst[X_CP_TIME].n_value;
-#ifdef LASTPID
-    lastpid_offset = nlst[X_LASTPID].n_value;
-#endif
 
     pbase = NULL;
     pref = NULL;
@@ -288,10 +273,6 @@ struct system_info *si;
     /* get the cp_time array */
     (void) getkval(cp_time_offset, (int *)cp_time, sizeof(cp_time),
 		   "_cp_time");
-#ifdef LASTPID
-    (void) getkval(lastpid_offset, (int *)&lastpid, sizeof(lastpid),
-		   "!");
-#endif
 
     /* convert load averages to doubles */
     {
@@ -343,12 +324,7 @@ struct system_info *si;
     /* set arrays and strings */
     si->cpustates = cpu_states;
     si->memory = memory_stats;
-#ifdef LASTPID
-    if (lastpid > 0)
-	si->last_pid = lastpid;
-    else
-#endif
-	si->last_pid = -1;
+    si->last_pid = -1;
 }
 
 static struct handle handle;
