@@ -1,4 +1,4 @@
-/*	$OpenBSD: libcrypto.h,v 1.9 2001/01/27 15:39:55 ho Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.10 2001/07/05 07:45:52 angelos Exp $	*/
 /*	$EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -135,6 +135,7 @@ extern int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 extern int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 extern int (*lc_i2d_X509) (X509 *, unsigned char **);
 extern int (*lc_i2d_X509_NAME) (X509_NAME *, unsigned char **);
+extern X509_NAME * (*lc_d2i_X509_NAME) (X509_NAME **, unsigned char **, int);
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
 extern void (*lc_sk_X509_free) (STACK_OF (X509) *);
 extern STACK_OF (X509) *(*lc_sk_X509_new_null) (void);
