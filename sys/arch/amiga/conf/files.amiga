@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.19 1997/01/16 09:23:39 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.20 1997/03/26 18:25:37 niklas Exp $
 #	$NetBSD: files.amiga,v 1.51 1996/12/16 16:17:31 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -322,7 +322,6 @@ file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
-file	arch/m68k/m68k/copy.s
 
 major	{wd = 0}
 major	{fd = 2}
