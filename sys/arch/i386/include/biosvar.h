@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.23 1997/10/24 22:15:07 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.24 1997/10/25 07:02:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,6 +36,8 @@
 #define _I386_BIOSVAR_H_
 
 #define	BOOT_APIVER	0x00000002
+#define	BOOTARG_LEN	(NBPG*1)
+#define	BOOTARG_OFF	(NBPG)
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
