@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.36 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.37 2003/07/15 13:20:31 couderc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -294,6 +294,8 @@ int ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
 				  char *);
 void ac97_restore_shadow(struct ac97_codec_if *self);
 
+static void ac97_ad198x_init(struct ac97_softc *);
+
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
 	ac97_mixer_set_port,
@@ -308,6 +310,7 @@ const struct ac97_codecid {
 	u_int8_t rev;
 	u_int8_t shift;	/* no use yet */
 	char * const name;
+	void (*init)(struct ac97_softc *);
 }  ac97_ad[] = {
 	{ 0x03, 0xff, 0, 0,	"AD1819" },
 	{ 0x40, 0xff, 0, 0,	"AD1881" },
@@ -316,6 +319,7 @@ const struct ac97_codecid {
 	{ 0x61, 0xff, 0, 0,	"AD1886" },
 	{ 0x70, 0xff, 0, 0,	"AD1981" },
 	{ 0x72, 0xff, 0, 0,	"AD1981A" },
+	{ 0x75, 0xff, 0, 0,	"AD1985",	ac97_ad198x_init },
 }, ac97_ak[] = {
 	{ 0x00,	0xfe, 1, 0,	"AK4540" },
 	{ 0x01,	0xfe, 1, 0,	"AK4540" },
@@ -643,6 +647,9 @@ ac97_attach(host_if)
 	u_int32_t id;
 	mixer_ctrl_t ctl;
 	int error, i;
+	void (*initfunc)(struct ac97_softc *);
+
+	initfunc = NULL;
 
 	if (!(as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_NOWAIT)))
 		return (ENOMEM);
@@ -688,9 +695,10 @@ ac97_attach(host_if)
 					if (codec->id == (id & codec->mask))
 						break;
 				}
-				if (codec >= vendor->codecs && codec->mask)
+				if (codec >= vendor->codecs && codec->mask) {
 					printf(" %s", codec->name);
-				else
+					initfunc = codec->init;
+				} else
 					printf(" <%02x>", id & 0xff);
 				if (codec >= vendor->codecs && codec->rev)
 					printf(" rev %d",
@@ -750,6 +758,10 @@ ac97_attach(host_if)
 	ctl.dev = ac97_get_portnum_by_name(&as->codec_if, AudioCrecord,
 	    AudioNsource, NULL);
 	ac97_mixer_set_port(&as->codec_if, &ctl);
+
+	/* use initfunc for specific device */
+	if (initfunc != NULL)
+		initfunc(as);
 
 	return (0);
 }
@@ -1018,4 +1030,18 @@ ac97_set_rate(codec_if, p, mode)
 		return (EIO);
 
 	return (0);
+}
+
+/*
+ * Codec-dependent initialization
+ */
+  	 
+static void
+ac97_ad198x_init(struct ac97_softc *as)
+{
+        unsigned short misc;
+
+        ac97_read(as, AC97_AD_REG_MISC, &misc);
+        ac97_write(as, AC97_AD_REG_MISC,
+	    misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
 }

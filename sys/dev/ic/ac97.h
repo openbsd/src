@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.14 2002/07/28 06:27:07 fgsch Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.15 2003/07/15 13:20:31 couderc Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -153,3 +153,14 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define	AC97_REG_VENDOR_ID2		0x7e
 #define	AC97_VENDOR_ID_MASK		0xffffff00
 
+/* Analog Devices codec specific data */
+#define AC97_AD_REG_MISC        0x76
+#define AC97_AD_MISC_MBG        0x0001  /* 0 */
+#define AC97_AD_MISC_VREFD      0x0002  /* 1 */
+#define AC97_AD_MISC_VREFH      0x0004  /* 2 */
+#define AC97_AD_MISC_MADST      0x0008  /* 3 */
+#define AC97_AD_MISC_MADPD      0x0020  /* 5 */
+#define AC97_AD_MISC_FMXE       0x0100  /* 8 */
+#define AC97_AD_MISC_DAM        0x0400  /*10 */
+#define AC97_AD_MISC_MSPLT      0x1000  /*12 */
+#define AC97_AD_MISC_DACZ       0x4000  /*14 */
