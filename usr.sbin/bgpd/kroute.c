@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.120 2005/03/29 11:20:01 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.121 2005/03/30 11:13:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,7 +95,8 @@ void			 kif_clear(void);
 int			 kif_kr_insert(struct kroute_node *);
 int			 kif_kr_remove(struct kroute_node *);
 
-int			 kroute_validate(struct kroute *kr);
+int			 kif_validate(struct kif *);
+int			 kroute_validate(struct kroute *);
 void			 knexthop_validate(struct knexthop_node *);
 struct kroute_node	*kroute_match(in_addr_t);
 void			 kroute_attach_nexthop(struct knexthop_node *,
@@ -703,6 +704,11 @@ kif_kr_insert(struct kroute_node *kr)
 		return (0);
 	}
 
+	if (kif->k.nh_reachable)
+		kr->r.flags &= ~F_DOWN;
+	else
+		kr->r.flags |= F_DOWN;
+
 	if ((kkr = calloc(1, sizeof(struct kif_kr))) == NULL) {
 		log_warn("kif_kr_insert");
 		return (-1);
@@ -749,12 +755,27 @@ kif_kr_remove(struct kroute_node *kr)
  */
 
 int
+kif_validate(struct kif *kif)
+{
+	if (!(kif->flags & IFF_UP))
+		return (0);
+
+	/*
+	 * we treat link_state == LINK_STATE_UNKNOWN as valid,
+	 * not all interfaces have a concept of "link state" and/or
+	 * do not report up
+	 */
+
+	if (kif->link_state == LINK_STATE_DOWN)
+		return (0);
+
+	return (1);
+}
+
+int
 kroute_validate(struct kroute *kr)
 {
 	struct kif_node		*kif;
-
-	if (kr->flags & F_DOWN)
-		return (0);
 
 	if ((kif = kif_find(kr->ifindex)) == NULL) {
 		log_warnx("interface with index %d not found, "
@@ -764,10 +785,7 @@ kroute_validate(struct kroute *kr)
 		return (1);
 	}
 
-	if (!(kif->k.flags & IFF_UP))
-		return (0);
-
-	return (kif->k.link_state != LINK_STATE_DOWN);
+	return (kif->k.nh_reachable);
 }
 
 void
@@ -1008,18 +1026,12 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	send_imsg_session(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
 
-	if ((reachable = (flags & IFF_UP) &&
-	    (ifd->ifi_link_state != LINK_STATE_DOWN)) == kif->k.nh_reachable)
+	if ((reachable = kif_validate(&kif->k)) == kif->k.nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->k.nh_reachable = reachable;
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
-		/*
-		 * we treat link_state == LINK_STATE_UNKNOWN as valid
-		 * not all interfaces have a concept of "link state" and/or
-		 * do not report up
-		 */
 		if (reachable)
 			kkr->kr->r.flags &= ~F_DOWN;
 		else
@@ -1291,8 +1303,7 @@ fetchifs(int ifindex)
 		kif->k.link_state = ifm.ifm_data.ifi_link_state;
 		kif->k.media_type = ifm.ifm_data.ifi_type;
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
-		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
-		    (ifm.ifm_data.ifi_link_state != LINK_STATE_DOWN);
+		kif->k.nh_reachable = kif_validate(&kif->k);
 
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
