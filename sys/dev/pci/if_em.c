@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.15 2003/12/04 23:30:15 henning Exp $ */
+/* $OpenBSD: if_em.c,v 1.16 2003/12/09 23:41:35 henning Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -126,7 +126,14 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_SERDES },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI_MOBILE },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER }
 };
 
 /*********************************************************************
