@@ -22,7 +22,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md4c.c,v 1.3 1996/09/29 14:55:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: md4c.c,v 1.4 1996/10/02 03:50:25 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -48,10 +48,16 @@ typedef unsigned char *POINTER;
 #define S34 15
 
 static void MD4Transform __P ((u_int32_t [4], const unsigned char [64]));
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define Encode memcpy
+#define Decode memcpy                       
+#else /* BIG_ENDIAN */
 static void Encode __P
   ((unsigned char *, u_int32_t *, unsigned int));
 static void Decode __P
   ((u_int32_t *, const unsigned char *, unsigned int));
+#endif /* LITTLE_ENDIAN */
 
 static unsigned char PADDING[64] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -83,6 +89,41 @@ static unsigned char PADDING[64] = {
     (a) += H ((b), (c), (d)) + (x) + (u_int32_t)0x6ed9eba1; \
     (a) = ROTATE_LEFT ((a), (s)); \
   }
+
+#if BYTE_ORDER != LITTLE_ENDIAN
+/* Encodes input (u_int32_t) into output (unsigned char). Assumes len is
+     a multiple of 4.
+ */
+static void Encode (output, input, len)
+unsigned char *output;
+u_int32_t *input;
+unsigned int len;
+{
+  unsigned int i, j;
+
+  for (i = 0, j = 0; j < len; i++, j += 4) {
+    output[j] = (unsigned char)(input[i] & 0xff);
+    output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
+    output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
+    output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
+  }
+}
+
+/* Decodes input (unsigned char) into output (u_int32_t). Assumes len is
+     a multiple of 4.
+ */
+static void Decode (output, input, len)
+u_int32_t *output;
+const unsigned char *input;
+unsigned int len;
+{
+  unsigned int i, j;
+
+  for (i = 0, j = 0; j < len; i++, j += 4)
+    output[i] = ((u_int32_t)input[j]) | (((u_int32_t)input[j+1]) << 8) |
+      (((u_int32_t)input[j+2]) << 16) | (((u_int32_t)input[j+3]) << 24);
+}
+#endif /* !LITTLE_ENDIAN */
 
 /* MD4 initialization. Begins an MD4 operation, writing a new context.
  */
@@ -241,38 +282,4 @@ const unsigned char block[64];
   /* Zeroize sensitive information.
    */
   memset ((POINTER)x, 0, sizeof (x));
-}
-
-/* Encodes input (u_int32_t) into output (unsigned char). Assumes len is
-     a multiple of 4.
- */
-static void Encode (output, input, len)
-unsigned char *output;
-u_int32_t *input;
-unsigned int len;
-{
-  unsigned int i, j;
-
-  for (i = 0, j = 0; j < len; i++, j += 4) {
-    output[j] = (unsigned char)(input[i] & 0xff);
-    output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
-    output[j+2] = (unsigned char)((input[i] >> 16) & 0xff);
-    output[j+3] = (unsigned char)((input[i] >> 24) & 0xff);
-  }
-}
-
-/* Decodes input (unsigned char) into output (u_int32_t). Assumes len is
-     a multiple of 4.
- */
-static void Decode (output, input, len)
-
-u_int32_t *output;
-const unsigned char *input;
-unsigned int len;
-{
-  unsigned int i, j;
-
-  for (i = 0, j = 0; j < len; i++, j += 4)
-    output[i] = ((u_int32_t)input[j]) | (((u_int32_t)input[j+1]) << 8) |
-      (((u_int32_t)input[j+2]) << 16) | (((u_int32_t)input[j+3]) << 24);
 }
