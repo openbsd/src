@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.43 2003/12/31 11:18:25 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.44 2003/12/31 14:03:01 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -676,10 +676,9 @@ After the ioctl call
 will be set to the length of the buffer actually used.
 .It Dv DIOCCLRSRCNODES Fa "struct pfioc_table"
 Clear the tree of source tracking nodes.
-
-
 .It Dv DIOCIGETIFACES Fa "struct pfioc_iface"
-Gets the list of interfaces and interface drivers known to PF.
+Gets the list of interfaces and interface drivers known to
+.Nm .
 All the IOCTLs that manipulate interfaces
 use the same structure described below:
 .Bd -literal
@@ -697,18 +696,28 @@ struct pfioc_iface {
 #define PFI_FLAG_ALLMASK   0x0003
 .Ed
 .Pp
-If not empty, pfiio_name can be used to restrict the search to a specific
-interface or driver.
-pfiio_buffer[pfiio_size] is the user-supplied buffer for returning the data.
-On entry, pfiio_size represents the number of pfi_if entries that can fit
-into the buffer.
+If not empty,
+.Va pfiio_name
+can be used to restrict the search to a specific interface or driver.
+.Va pfiio_buffer[pfiio_size]
+is the user-supplied buffer for returning the data.
+On entry,
+.Va pfiio_size
+represents the number of
+.Va pfi_if
+entries that can fit into the buffer.
 The kernel will replace this value by the real number of entries it wants
 to return.
-pfiio_esize should be set to sizeof(struct pfi_if).
-pfiio_flags should be set to PFI_FLAG_GROUP, PFI_FLAG_INSTANCE or both to tell
-the kernel to return group of interfaces (drivers, like "fxp"), real interface
-instances (like "fxp1") or both. The data is returned in the pfi_if structure
-described below:
+.Va pfiio_esize
+should be set to sizeof(struct pfi_if).
+.Va pfiio_flags
+should be set to
+.Dv PFI_FLAG_GROUP , PFI_FLAG_INSTANCE ,
+or both to tell the kernel to return a group of interfaces
+(drivers, like "fxp"), real interface instances (like "fxp1") or both.
+The data is returned in the
+.Va pfi_if
+structure described below:
 .Bd -literal
 struct pfi_if {
         char                             pfif_name[IFNAMSIZ];
@@ -731,10 +740,14 @@ struct pfi_if {
 .Ed
 .It Dv DIOCICLRISTATS Fa "struct pfioc_iface"
 Clear the statistics counters of one or more interfaces.
-pfiio_name and pfrio_flags can be used to select which interfaces need to
-be cleared. The filtering process is the same than for
+.Va pfiio_name
+and
+.Va pfrio_flags
+can be used to select which interfaces need to be cleared.
+The filtering process is the same as for
 .Dv DIOCIGETIFACES .
-pfiio_nzero will be set by the kernel to the number of interfaces and drivers
+.Va pfiio_nzero
+will be set by the kernel to the number of interfaces and drivers
 that have been cleared.
 .El
 .Sh EXAMPLES
