@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.20 2003/07/10 17:02:48 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.21 2003/07/14 23:22:35 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -231,6 +231,8 @@ int
 main(int argc, char *argv[])
 {
 	int c, lastc, prevoptind, i;
+	long l;
+	char *ep;
 
 	switch (__progname[0]) {
 	case 'e':
@@ -267,22 +269,34 @@ main(int argc, char *argv[])
 		switch (c) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			if (optind == prevoptind && isdigit(lastc))
+			if (optind == prevoptind && isdigit(lastc)) {
+				if (Aflag > INT_MAX / 10)
+					errx(2, "context out of range");
 				Aflag = Bflag = (Aflag * 10) + (c - '0');
-			else
+			} else
 				Aflag = Bflag = c - '0';
 			break;
 		case 'A':
-			Aflag = strtol(optarg, NULL, 10);
-			break;
 		case 'B':
-			Bflag = strtol(optarg, NULL, 10);
+			l = strtol(optarg, &ep, 10);
+			if (ep == optarg || *ep != '\0' ||
+			    l <= 0 || l >= INT_MAX)
+				errx(2, "context out of range");
+			if (c == 'A')
+				Aflag = (int)l;
+			else
+				Bflag = (int)l;
 			break;
 		case 'C':
 			if (optarg == NULL)
 				Aflag = Bflag = 2;
-			else
-				Aflag = Bflag = strtol(optarg, NULL, 10);
+			else {
+				l = strtol(optarg, &ep, 10);
+				if (ep == optarg || *ep != '\0' ||
+				    l <= 0 || l >= INT_MAX)
+					errx(2, "context out of range");
+				Aflag = Bflag = (int)l;
+			}
 			break;
 		case 'E':
 			Fflag = Gflag = 0;
