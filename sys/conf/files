@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.302 2004/05/30 08:11:26 grange Exp $
+#	$OpenBSD: files,v 1.303 2004/06/03 18:07:59 grange Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -17,6 +17,7 @@ define	midibus { }
 define	midisyn
 define	radiobus {}
 define	i2cbus {}
+define	gpiobus {}
 
 # audio device attributes
 define	mulaw

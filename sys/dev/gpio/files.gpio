@@ -1,0 +1,7 @@
+# $OpenBSD: files.gpio,v 1.1 2004/06/03 18:08:00 grange Exp $
+
+define	gpio { pin, mask }
+
+device	gpio: gpio
+attach	gpio at gpiobus
+file	dev/gpio/gpio.c				gpio	needs-flag
