@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl2_pcmcia.c,v 1.4 1999/07/14 07:22:14 d Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.1 1999/07/30 13:43:37 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -21,16 +21,16 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/ic/rl2.h>
-#include <dev/ic/rl2var.h>
-#include <dev/ic/rl2reg.h>
+#include <dev/ic/rln.h>
+#include <dev/ic/rlnvar.h>
+#include <dev/ic/rlnreg.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-struct rl2_pcmcia_softc {
-	struct rl2_softc sc_rl2;		/* real "rl2" softc */
+struct rln_pcmcia_softc {
+	struct rln_softc sc_rln;		/* real "rln" softc */
 
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
 	int sc_io_window;			/* i/o window for the card */
@@ -38,31 +38,31 @@ struct rl2_pcmcia_softc {
 	void *sc_ih;				/* our interrupt handle */
 };
 
-static int  rl2_pcmcia_match __P((struct device *, void *, void *));
-static struct rl2_pcmcia_product * rl2_pcmcia_product_lookup __P((
+static int  rln_pcmcia_match __P((struct device *, void *, void *));
+static struct rln_pcmcia_product * rln_pcmcia_product_lookup __P((
 		struct pcmcia_attach_args *));
-static void rl2_pcmcia_attach __P((struct device *, struct device *, void *));
-static int rl2intr_pcmcia __P((void *arg));
+static void rln_pcmcia_attach __P((struct device *, struct device *, void *));
+static int rlnintr_pcmcia __P((void *arg));
 
 #ifdef notyet
-static int  rl2_pcmcia_enable __P((struct rl2_softc *));
-static void rl2_pcmcia_disable __P((struct rl2_softc *));
+static int  rln_pcmcia_enable __P((struct rln_softc *));
+static void rln_pcmcia_disable __P((struct rln_softc *));
 #endif
 
 struct cfattach rln_pcmcia_ca = {
-	sizeof(struct rl2_pcmcia_softc), rl2_pcmcia_match, rl2_pcmcia_attach
+	sizeof(struct rln_pcmcia_softc), rln_pcmcia_match, rln_pcmcia_attach
 };
 
 #define PCMCIA_CIS_RANGELAN2_7200 { "PROXIM", "LAN CARD",    "RANGELAN2", NULL }
 #define PCMCIA_CIS_RANGELAN2_7400 { "PROXIM", "LAN PC CARD", "RANGELAN2", NULL }
 #define PCMCIA_CIS_SYMPHONY       { "PROXIM", "LAN PC CARD", "SYMPHONY", NULL }
 
-static struct rl2_pcmcia_product {
+static struct rln_pcmcia_product {
 	u_int32_t	manufacturer;
 	u_int32_t	product;
 	const char	*name;
 	u_int8_t	flags;
-} rl2_pcmcia_products[] = {
+} rln_pcmcia_products[] = {
 	{ 0x0126,				/* Digital */
 	  0x1058,				/* RoamAbout 2400 FH */
 	  "Digital RoamAbout 2400 FH",
@@ -78,13 +78,13 @@ static struct rl2_pcmcia_product {
 };
 
 /* Match the product and manufacturer codes with known card types */
-static struct rl2_pcmcia_product *
-rl2_pcmcia_product_lookup(pa)
+static struct rln_pcmcia_product *
+rln_pcmcia_product_lookup(pa)
 	struct pcmcia_attach_args *pa;
 {
-	struct rl2_pcmcia_product *rpp;
+	struct rln_pcmcia_product *rpp;
 
-	for (rpp = rl2_pcmcia_products; rpp->manufacturer && rpp->product;
+	for (rpp = rln_pcmcia_products; rpp->manufacturer && rpp->product;
 	    rpp++)
 		if (pa->manufacturer == rpp->manufacturer &&
 		    pa->product == rpp->product)
@@ -94,7 +94,7 @@ rl2_pcmcia_product_lookup(pa)
 
 /* Match card CIS info string with RangeLAN2 cards */
 static int
-rl2_pcmcia_match(parent, match, aux)
+rln_pcmcia_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -119,17 +119,17 @@ rl2_pcmcia_match(parent, match, aux)
 
 /* Attach and configure */
 static void
-rl2_pcmcia_attach(parent, self, aux)
+rln_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct rl2_pcmcia_softc *psc = (void *) self;
-	struct rl2_softc *sc = &psc->sc_rl2;
+	struct rln_pcmcia_softc *psc = (void *) self;
+	struct rln_softc *sc = &psc->sc_rln;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct rl2_pcmcia_product *rpp;
+	struct rln_pcmcia_product *rpp;
 
-#ifdef RL2DEBUG
+#ifdef RLNDEBUG
 	/* Allowed i/o base addresses from the RoamAbout owner's manual */
 	int i;
 	static bus_addr_t iobases[] = {
@@ -159,7 +159,7 @@ rl2_pcmcia_attach(parent, self, aux)
 	if (cfe->num_iospace != 1)
 		printf(": unexpected number of i/o spaces (%d)\n",
 		    cfe->num_iospace);
-	else if (cfe->iospace[0].length != RL2_NPORTS)
+	else if (cfe->iospace[0].length != RLN_NPORTS)
 		printf(": unexpected size of i/o space (0x%x)\n",
 		    cfe->iospace[0].length);
 	if (sc->sc_width == 0)
@@ -169,16 +169,16 @@ rl2_pcmcia_attach(parent, self, aux)
 	pcmcia_function_init(psc->sc_pf, cfe);
 
 	/* Allocate i/o space */
-#ifdef RL2DEBUG
+#ifdef RLNDEBUG
 	/* Try only those ports from the manual */
 	for (i=0; iobases[i] != 0; i++)
-		if (pcmcia_io_alloc(psc->sc_pf, iobases[i], RL2_NPORTS,
-		    RL2_NPORTS, &psc->sc_pcioh) == 0)
+		if (pcmcia_io_alloc(psc->sc_pf, iobases[i], RLN_NPORTS,
+		    RLN_NPORTS, &psc->sc_pcioh) == 0)
 			break;
 	if (iobases[i] == 0) {
 #else
-	if (pcmcia_io_alloc(psc->sc_pf, 0, RL2_NPORTS,
-	    RL2_NPORTS, &psc->sc_pcioh)) {
+	if (pcmcia_io_alloc(psc->sc_pf, 0, RLN_NPORTS,
+	    RLN_NPORTS, &psc->sc_pcioh)) {
 #endif
 		printf(": can't alloc i/o space\n");
 		return;
@@ -190,7 +190,7 @@ rl2_pcmcia_attach(parent, self, aux)
 	/* Map i/o space */
 	if (pcmcia_io_map(psc->sc_pf, ((sc->sc_width == 8) ? PCMCIA_WIDTH_IO8 :
 	    (sc->sc_width == 16) ? PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO),
-	    0, RL2_NPORTS, &psc->sc_pcioh, &psc->sc_io_window)) {
+	    0, RLN_NPORTS, &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -202,20 +202,20 @@ rl2_pcmcia_attach(parent, self, aux)
 	}
 
 #ifdef notyet
-	sc->enable = rl2_pcmcia_enable;
-	sc->disable = rl2_pcmcia_disable;
+	sc->enable = rln_pcmcia_enable;
+	sc->disable = rln_pcmcia_disable;
 #endif
 
-	rpp = rl2_pcmcia_product_lookup(pa);
+	rpp = rln_pcmcia_product_lookup(pa);
 
 	/* Check if the device has a separate antenna module */
 	sc->sc_cardtype = 0;
 	switch (psc->sc_pf->ccr_base) {
 	case 0x0100:
-		sc->sc_cardtype |= RL2_CTYPE_ONE_PIECE;
+		sc->sc_cardtype |= RLN_CTYPE_ONE_PIECE;
 		break;
 	case 0x0800:
-		sc->sc_cardtype &= ~RL2_CTYPE_ONE_PIECE;
+		sc->sc_cardtype &= ~RLN_CTYPE_ONE_PIECE;
 		break;
 #ifdef DIAGNOSTIC
 	default:
@@ -234,7 +234,7 @@ rl2_pcmcia_attach(parent, self, aux)
 	 */
 	printf("\n");
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
-		rl2intr_pcmcia, sc);
+		rlnintr_pcmcia, sc);
 	if (sc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -244,17 +244,17 @@ rl2_pcmcia_attach(parent, self, aux)
 	if (rpp->manufacturer == 0)
 		printf(" manf %04x prod %04x", pa->manufacturer, pa->product);
 #endif
-	rl2config(sc);
+	rlnconfig(sc);
 	printf("\n");
 }
 
 /* Interrupt handler */
 static int
-rl2intr_pcmcia(arg)
+rlnintr_pcmcia(arg)
 	void *arg;
 {
-	struct rl2_softc *sc = (struct rl2_softc *)arg;
-	struct rl2_pcmcia_softc *psc = (struct rl2_pcmcia_softc *)sc;
+	struct rln_softc *sc = (struct rln_softc *)arg;
+	struct rln_pcmcia_softc *psc = (struct rln_pcmcia_softc *)sc;
 	int opt;
 	int ret;
 
@@ -263,22 +263,22 @@ rl2intr_pcmcia(arg)
 	pcmcia_ccr_write(psc->sc_pf, PCMCIA_CCR_OPTION, opt);
 
 	/* Call actual interrupt handler */
-	ret = rl2intr(arg);
+	ret = rlnintr(arg);
 
 	return (ret);
 }
 
 #ifdef notyet
 static int
-rl2_pcmcia_enable(sc)
-	struct rl2_softc *sc;
+rln_pcmcia_enable(sc)
+	struct rln_softc *sc;
 {
-	struct rl2_pcmcia_softc *psc = (struct rl2_pcmcia_softc *) sc;
+	struct rln_pcmcia_softc *psc = (struct rln_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 
 	/* Establish the interrupt */
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
-		rl2intr_pcmcia, sc);
+		rlnintr_pcmcia, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -289,10 +289,10 @@ rl2_pcmcia_enable(sc)
 }
 
 static void
-rl2_pcmcia_disable(sc)
-	struct rl2_softc *sc;
+rln_pcmcia_disable(sc)
+	struct rln_softc *sc;
 {
-	struct rl2_pcmcia_softc *psc = (struct rl2_pcmcia_softc *) sc;
+	struct rln_pcmcia_softc *psc = (struct rln_pcmcia_softc *) sc;
 
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.22 1999/07/25 20:04:44 deraadt Exp $
+#	$OpenBSD: files.pcmcia,v 1.23 1999/07/30 13:43:37 d Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -52,7 +52,7 @@ file dev/pcmcia/if_xe.c				xe_pcmcia
 
 # Proxim RangeLAN2 PC-Card
 attach rln at pcmcia with rln_pcmcia
-file dev/pcmcia/if_rl2_pcmcia.c			rln_pcmcia
+file dev/pcmcia/if_rln_pcmcia.c			rln_pcmcia
 
 # PCMCIA multi-port serial cards
 #device	pcmcom {[slave = -1]}
