@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.20 2004/07/15 16:13:10 millert Exp $	*/
+/*	$OpenBSD: atw.c,v 1.21 2004/07/15 16:21:13 millert Exp $	*/
 /*	$NetBSD: atw.c,v 1.65 2004/07/15 07:31:05 dyoung Exp $	*/
 
 /*-
@@ -1754,8 +1754,6 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
 		if (ATW_ISSET(sc, ATW_BBPCTL, ATW_BBPCTL_WR) == 0)
 			break;
 	}
-
-	ATW_CLR(sc, ATW_BBPCTL, ATW_BBPCTL_WR);
 
 	if (i < 0) {
 		printf("%s: BBPCTL still busy\n", sc->sc_dev.dv_xname);
