@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.16 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: rm.1,v 1.17 2002/01/24 19:21:39 mickey Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -121,6 +121,11 @@ It is an error to attempt to remove the files
 .Dq \&.
 or
 .Dq .. .
+It is forbidden to remove the file
+.Dq ..
+merely to avoid the antisocial consequences of inadvertently
+doing something like
+.Dq Cm rm -r .* .
 .Pp
 The
 .Nm
@@ -162,6 +167,11 @@ Also, historical
 .Bx
 implementations prompted on the standard output,
 not the standard error output.
+.Pp
+The interactive mode used to be a
+.Nm dsw
+command, a carryover from the ancient past with an
+amusing etymology.
 .Sh STANDARDS
 The
 .Nm
