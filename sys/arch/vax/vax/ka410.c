@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.c,v 1.4 1997/09/12 09:30:55 maja Exp $ */
+/*	$OpenBSD: ka410.c,v 1.5 1997/09/20 14:04:31 maja Exp $ */
 /*	$NetBSD: ka410.c,v 1.7 1997/07/26 10:12:45 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -119,7 +119,7 @@ ka410_conf(parent, self, aux)
 
 	case VAX_TYP_CVAX:
 		/* if (((vax_siedata >> 8) & 0xff) == 2) */
-		strcpy(cpu_model,"MicroVAX 3100 (KA41)");
+		strcpy(cpu_model,"VAXstation 3100 model 10-48");
 		/* ka41_cache_enable(); */
 	}
 
