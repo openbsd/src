@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_ioctl.c,v 1.7 1997/12/18 22:13:27 deraadt Exp $	*/
+/*	$OpenBSD: sunos_ioctl.c,v 1.8 1998/04/26 21:40:41 niklas Exp $	*/
 /*	$NetBSD: sunos_ioctl.c,v 1.23 1996/03/14 19:33:46 christos Exp $	*/
 
 /*
@@ -724,7 +724,7 @@ sunos_sys_ioctl(p, v, retval)
 		sunos_aui.record.waiting = 0;
 		sunos_aui.play.eof = 0;
 		sunos_aui.record.eof = 0;
-		sunos_aui.monitor_gain = aui.__spare; /* XXX */
+		sunos_aui.monitor_gain = 0; /* aui.__spare; XXX */
 		/*XXXsunos_aui.output_muted = 0;*/
 		/*XXX*/sunos_aui.reserved[0] = 0;
 		/*XXX*/sunos_aui.reserved[1] = 0;
@@ -747,7 +747,7 @@ sunos_sys_ioctl(p, v, retval)
 
 		aui.play = *(struct audio_prinfo *)&sunos_aui.play;
 		aui.record = *(struct audio_prinfo *)&sunos_aui.record;
-		aui.__spare = sunos_aui.monitor_gain;
+		/* aui.__spare = sunos_aui.monitor_gain; */
 		aui.blocksize = ~0;
 		aui.hiwat = ~0;
 		aui.lowat = ~0;
