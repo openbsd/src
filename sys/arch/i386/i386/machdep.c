@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 1997/12/17 10:27:32 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 1998/01/04 11:34:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -625,7 +625,7 @@ cyrix6x86_cpu_setup(cpu_device)
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 
-	printf("%s: Cyrix workaround performed\n", cpu_device);
+	printf("%s: xchg bug workaround performed\n", cpu_device);
 #endif
 }
 
