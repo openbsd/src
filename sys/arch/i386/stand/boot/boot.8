@@ -1,0 +1,205 @@
+.\"	$OpenBSD: boot.8,v 1.2 1997/09/05 18:08:05 mickey Exp $
+.\"
+.\" Copyright (c) 1997 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Michael Shalayeff.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 1, 1997
+.Dt BOOT 8 i386
+.Os
+.Sh NAME
+.Nm boot
+.Nd
+secondary system bootstrap program
+.Sh DESCRIPTION
+The main purpose of this program is to load system kernel dealing with
+all the bugs and bottlenecks of the PC hardware and it's way of design.
+.Pp
+As described in the
+.Xr boot_i386 8
+this program is loaded by the
+.Xr biosboot 8
+primary bootstrap loader and will give you convinient way to load kernel.
+.Pp
+Basic operations include:
+.Bl -bullet -compact
+.It
+Detecting and switching between multiple consoles.
+.It
+Loading kernel from any device supported by your system BIOS.
+.It
+Loading kernels compressed by
+.Xr gzip 1
+program or
+.Xr zlib
+routines.
+.It
+Passing system parameters queried from BIOS to the kernel.
+.It
+Providing interactive command line.
+.El
+.Pp
+The sequence of it's operation consists of initialization
+followed by interactive command line. While in the command
+line you have a timeout of 5 seconds (initially, then increasing
+by one second on every consequent kernel loading failure)
+to type any commands if needed. Upon timeout expiration
+kernel will be loaded according to the current variables
+settings (See
+.Nm set
+command for details).
+The sequence of
+.Nm
+operations is like follows:
+.Bl -enum
+.It
+Setup protected mode involving IDT setup for processor exceptions to
+be caught and reported and simple real-mode BIOS interface provided.
+.It
+Probe for console devices, which involves PC internal VGA+keyboard
+console and serial console over any of four serial ports. Correspondent
+messages reports about found devices to the default console device,
+which is pc0, if present.
+.It
+Probe for memory. Conventional memory probed by quering the BIOS.
+Extended memory probed by running through the memory probing
+for present pages, which elliminates BIOS restriction for 64M of memory.
+found memory is reported as well to the default console device.
+.It
+Probe for APM support in BIOS. Message printed if support is present.
+.It
+Open, and if successfull, process
+.Pa /etc/boot.conf
+file on the same filesystem
+.Nm
+was loaded from. This file may contain any commands
+.Nm
+accepts at the interactive prompt.
+Ussually they are commands that changes boot parameters according to your
+environment, although default values are usable in most cases.
+.It
+Header line
+.Pp
+.Dl OpenBSD BOOT [x.xx]
+.Pp
+is displayed to the active console, where
+.Ar x.xx
+is a version number of the
+.Nm
+program, followed by the
+.Pp
+.Dl boot>
+.Pp
+prompt, which means you are in the interactive mode and may enter
+commands. If you won't,
+.Nm
+will proceed loading kernel w/ default parameters.
+.El
+.Sh COMMANDS
+The following commands are accepted at the
+.Nm
+prompt:
+.Bl -tag -width machine_diskinfo_boot_
+.It boot Op Ar image Op Fl abcds
+Boots kernel image specified by the
+.Ar image
+with options if any. Image specification consists of a pair
+.Nm device : Nm filename ,
+either of each maybe omitted (':' is not needed if both)
+in wich case values from
+.Nm
+variables will be used.
+.It echo
+Prints it's arguments.
+.It help
+Prints a list of available commands and machine dependant
+commands, if any.
+.It machine Op Ar subcommand
+Issues machine-dependant commands. These are defined for i386 architecture:
+.Bl -tag -width diskinfo_
+.It diskinfo
+Prints list of hard disks installed on your system including:
+BIOS device number, BIOS translated geometry.
+.El
+.It ls Op Ar directory
+Prints contents of the specified
+.Ar directory
+in long format including: file type and attributes, owner, group,
+size, and ilename.
+.It regs
+Prints contents of processor registers, if defined for this architecture.
+.It reboot
+Reboots machine by initiating a warm boot procedure.
+.It set Op varname Op value
+If invoked without arguments will print list of variables with values.
+If
+.Ar varname
+and
+.Ar value
+present will set variable with that name to the given value.
+Variables include:
+.Bl -tag -compact -width boothow
+.It addr
+Address at wich to load the kernel.
+.It howto
+Options to pass to the loaded kernel.
+.It debug
+Debug flag if compiled w/ DEBUG defined.
+.It device
+Boot device name (ie fd0a, sd0a).
+.It tty
+Active console device name.
+.It image
+File name containing the kernel image.
+.El
+.It time
+Displays system time and date.
+.El
+.Sh FILES
+.Bl -tag -width /usr/mdec/biosbootxx -compact
+.It Pa /usr/mdec/biosboot
+primary bootstrap
+.It Pa /boot
+system bootstrap
+.It Pa /etc/boot.conf
+system bootstrap's startup file
+.It Pa /bsd
+system code
+.El
+.Sh SEE ALSO
+.Xr boot_i386 8 ,
+.Xr fdisk 8 ,
+.Xr installboot 8 ,
+.Xr boot 8 ,
+.Xr gzip 1 ,
+.%B http://quest.jpl.nasa.gov/zlib/ .
+.Sh BUGS
+Well, nobody is perfect.
+.Sh HISTORY
+This program was written by Michael Shalayeff for
+.Ox 2.1 .
