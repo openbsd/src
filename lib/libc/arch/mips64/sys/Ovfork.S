@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 /*
@@ -44,16 +44,25 @@
  * v0 == pid of child in parent, v0 == pid of parent in child.
  */
 
-SYSLEAF(vfork)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+SYSLEAF(vfork, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, vfork)
 	.set	reorder
 	li	v0, SYS_vfork		# system call number for vfork
 	syscall
 	beq	a3, zero, 1f		# jump if no errors
 	la	t9, cerror
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 1:
 	beq	v1, zero, 2f		# parent process ?
 	move	v0, zero		# return zero in child
 2:
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 SYSEND(vfork)

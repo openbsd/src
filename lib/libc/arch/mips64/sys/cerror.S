@@ -34,14 +34,21 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: cerror.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: cerror.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
 	.globl	_C_LABEL(errno)
-LEAF(cerror)
+LEAF(cerror, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, cerror)
 	.set	noreorder
 	sw	v0, _C_LABEL(errno)
 	li	v0, -1
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 	li	v1, -1
 END(cerror)

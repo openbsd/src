@@ -34,12 +34,12 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: bcmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: bcmp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /* bcmp(s1, s2, n) */
 
-LEAF(bcmp)
+LEAF(bcmp, 0)
 	.set	noreorder
 	blt	a2, 16, small		# is it worth any trouble?
 	xor	v0, a0, a1		# compare low two bits of addresses

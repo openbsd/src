@@ -34,12 +34,12 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: ffs.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: ffs.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /* bit = ffs(value) */
 
-LEAF(ffs)
+LEAF(ffs, 0)
 	.set	reorder
 	move	v0, zero
 	beq	a0, zero, done

@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	minbrk
@@ -44,34 +44,51 @@
 minbrk:	PTR_VAL	_C_LABEL(end)
 	.text
 
-LEAF(brk)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+LEAF(brk, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, brk)
 	.set	reorder
 	PTR_L	v0, minbrk
-	bltu	a0, v0, 1f
-	LA	t9, _brk
-	jr	t9
-1:
+	bgtu	a0, v0, 1f
+	
 	move	a0, v0		# dont allow break < minbrk
+1:
 	li	v0, SYS_break
 	syscall
 	bne	a3, zero, 2f
 	PTR_S	a0, curbrk
 	move	v0, zero
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 2:
 	LA	t9, _C_LABEL(cerror)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 END(brk)
 
-LEAF(_brk)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+LEAF(_brk, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, brk)
 	.set	reorder
 	li	v0, SYS_break
 	syscall
 	bne	a3, zero, 1f
 	PTR_S	a0, curbrk
 	move	v0, zero
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 1:
 	LA	t9, _C_LABEL(cerror)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 END(_brk)

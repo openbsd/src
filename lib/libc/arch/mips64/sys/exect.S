@@ -34,16 +34,25 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: exect.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
-SYSLEAF(exect)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+SYSLEAF(exect, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, exect)
 	.set	reorder
 	li	v0, SYS_execve
 	syscall
 	bne	a3, zero, 1f
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 1:
 	LA	t9, _C_LABEL(cerror)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 SYSEND(exect)

@@ -1,4 +1,4 @@
-/*      $OpenBSD: setjmp.S,v 1.2 2004/09/07 13:48:26 pefo Exp $ */
+/*      $OpenBSD: setjmp.S,v 1.3 2004/09/09 16:14:02 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.2 2004/09/07 13:48:26 pefo Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -45,34 +45,34 @@
  *
  */
 
-#define SETJMP_FRAMESZ	(FRAMESZ(CF_SZ) + 6 * REGSZ)
+FRAMESZ= MKFSIZ(2,6)
+A0OFF= FRAMESZ-3*REGSZ
+GPOFF= FRAMESZ-2*REGSZ
+RAOFF= FRAMESZ-1*REGSZ
 
-NON_LEAF(setjmp, SETJMP_FRAMESZ, ra)
-	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-	PTR_SUB	sp, sp, SETJMP_FRAMESZ		# allocate stack frame
-#ifdef ABICALLS
-	.cprestore 16
-#endif
+NON_LEAF(setjmp, FRAMESZ, ra)
+	.mask	0x80000000, RAOFF
+	PTR_SUBU sp, FRAMESZ			# allocate stack frame
+	SETUP_GP64(GPOFF, setjmp)
 	.set	reorder
-	REG_S	ra, CF_RA_OFFS(sp)		# save state
-	REG_S	a0, SETJMP_FRAMESZ-REGSZ(sp)
+	REG_S	ra, RAOFF(sp)			# save state
+	REG_S	a0, A0OFF(sp)
 
 	move	a0, zero			# get current signal mask
 	jal	sigblock
 
-	REG_L	v1, SETJMP_FRAMESZ-REGSZ(sp)	# v1 = jmpbuf
+	REG_L	v1, A0OFF(sp)			# v1 = jmpbuf
 	REG_S	v0, SC_MASK(v1)			# save sc_mask = sigblock(0)
 
 	move	a0, zero
-	PTR_ADD	a1, sp, FRAMESZ(CF_SZ)		# pointer to struct sigaltstack
+	PTR_ADD	a1, sp, 0			# pointer to struct sigaltstack
 	jal	_thread_sys_sigaltstack
 
-	REG_L	a0, SETJMP_FRAMESZ-REGSZ(sp)		# restore jmpbuf
-	lw	v1, FRAMESZ(CF_SZ)+REGSZ+4(sp)	# get old ss_onstack
+	REG_L	a0, A0OFF(sp)			# restore jmpbuf
+	lw	v1, REGSZ+4(sp)			# get old ss_onstack
 	and	v1, v1, 1			# extract onstack flag
 	REG_S	v1, SC_ONSTACK(a0)		# save it in sc_onstack
-	REG_L	ra, CF_RA_OFFS(sp)
-	PTR_ADD	sp, sp, SETJMP_FRAMESZ
+	REG_L	ra, RAOFF(sp)
 	blt	v0, zero, botch			# check for sigstack() error
 	REG_S	ra, SC_PC(a0)			# sc_pc = return address
 #if defined(__mips64)
@@ -91,7 +91,8 @@ NON_LEAF(setjmp, SETJMP_FRAMESZ, ra)
 	REG_S	s7, SC_REGS+S7*REGSZ(a0)
 	REG_S	s8, SC_REGS+S8*REGSZ(a0)
 	REG_S	gp, SC_REGS+GP*REGSZ(a0)
-	REG_S	sp, SC_REGS+SP*REGSZ(a0)
+	PTR_ADDU v0, sp, FRAMESZ
+	REG_S	v0, SC_REGS+SP*REGSZ(a0)
 	li	v0, 1				# be nice if we could tell
 	REG_S	v0, SC_FPUSED(a0)		# sc_fpused = 1
 	cfc1	v0, $31
@@ -124,19 +125,31 @@ NON_LEAF(setjmp, SETJMP_FRAMESZ, ra)
 #endif
 	REG_S	v0, SC_FPREGS+((FSR-F0)*REGSZ)(a0)
 	move	v0, zero
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
+
+botch:
+	jal	longjmperror
+	jal	abort
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 END(setjmp)
 
-LEAF(longjmp)
-#ifdef ABICALLS
-	PTR_SUB	sp, sp, CF_ARGSZ * 2
-	.cprestore 16
-#endif
+
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+LEAF(longjmp, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, longjmp)
 	.set	reorder
 	REG_S	a1, SC_REGS+V0*REGSZ(a0)
 	li	v0, SYS_sigreturn
 	syscall
-botch:
+
 	jal	longjmperror
 	jal	abort
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 END(longjmp)

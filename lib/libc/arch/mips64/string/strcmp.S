@@ -34,13 +34,13 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strcmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: strcmp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
  */
-LEAF(strcmp)
+LEAF(strcmp, 0)
 	.set	reorder
 1:
 	lbu	t0, 0(a0)		# get two bytes and compare them

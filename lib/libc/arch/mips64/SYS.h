@@ -29,48 +29,58 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.2 2004/09/07 13:48:26 pefo Exp $ 
+ *      $OpenBSD: SYS.h,v 1.3 2004/09/09 16:14:02 pefo Exp $ 
  */
 
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
 #ifdef __STDC__
-# define __ENTRY(p,x)	ENTRY(p ## x)
+# define __ENTRY(p,x)		ENTRY(p ## x)
 
-# define __DO_SYSCALL(x)	\
-			li	v0,SYS_ ## x;	\
-			syscall
+# define __DO_SYSCALL(x)				\
+				li	v0,SYS_ ## x;	\
+				syscall
 
-# define __LEAF2(p,x)	LEAF(p ## x) \
-			.weak x; x = p ## x;
-# define __END2(p,x)	END(p ## x)
-# define __CLABEL2(p,x)	_C_LABEL(p ## x)
+# define __LEAF2(p,x,sz)	LEAF(p ## x, sz) \
+				.weak x; x = p ## x;
+
+# define __END2(p,x)		END(p ## x)
+
+# define __CLABEL2(p,x)		_C_LABEL(p ## x)
 #else
-# define __ENTRY(p,x)	ENTRY(p/**/x)
+# define __ENTRY(p,x)		ENTRY(p/**/x)
 
-# define __DO_SYSCALL(x)	\
-			li	v0,SYS_/**/x;	\
-			syscall
+# define __DO_SYSCALL(x)				\
+				li	v0,SYS_/**/x;	\
+				syscall
 
-# define __LEAF2(p,x)	LEAF(p/**/x) \
-			.weak x; x = p/**/x;
-# define __END2(p,x)	END(p/**/x)
-# define __CLABEL2(p,x)	_C_LABEL(p/**/x)
+# define __LEAF2(p,x,sz)	LEAF(p/**/x, sz) \
+				.weak x; x = p/**/x;
+
+# define __END2(p,x)		END(p/**/x)
+
+# define __CLABEL2(p,x)		_C_LABEL(p/**/x)
 #endif
 
 #define __PSEUDO_NOERROR(p,x,y)				\
-		__LEAF2(p,x);				\
+		__LEAF2(p,x, 0);			\
 			__DO_SYSCALL(y);		\
 			j	ra;			\
 		__END2(p,x)
 
 #define __PSEUDO(p,x,y)   				\
-		__LEAF2(p,x);				\
+		__LEAF2(p,x,32);			\
+			PTR_SUBU sp,32;			\
+			SETUP_GP64(16,__CLABEL2(p,x));	\
 			__DO_SYSCALL(y);		\
 			bne	a3,zero,err;		\
+			RESTORE_GP64;			\
+			PTR_ADDU sp,32;			\
 			j	ra;			\
 		err:	LA	t9,_C_LABEL(cerror);	\
+			RESTORE_GP64;			\
+			PTR_ADDU sp,32;			\
 			jr	t9;			\
 		__END2(p,x)
 
@@ -79,6 +89,6 @@
 #define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 #define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 
-#define	SYSLEAF(x)		__LEAF2(_thread_sys_,x)
+#define	SYSLEAF(x, sz)		__LEAF2(_thread_sys_,x, sz)
 #define	SYSEND(x)		__END2(_thread_sys_,x)
 

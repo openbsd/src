@@ -36,30 +36,46 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.2 2004/09/07 13:48:26 pefo Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
  * trampolines for sigsetjmp and  siglongjmp save and restore mask.
  *
  */
-LEAF(sigsetjmp)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+LEAF(sigsetjmp, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, sigsetjmp)
 	.set	reorder
 	REG_S	a1, (_JBLEN*REGSZ)(a0)		# save "savemask"
 	bne	a1, 0x0, 1f			# do saving of signal mask?
 	LA	t9, _setjmp
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr t9
 
 1:	LA	t9, setjmp
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr t9
 END(sigsetjmp)
 
-LEAF(siglongjmp)
+LEAF(siglongjmp, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, siglongjmp)
 	.set	reorder
 	REG_L	t0, (_JBLEN*REGSZ)(a0)		# get "savemask"
 	bne	t0, 0x0, 1f			# restore signal mask?
 	LA	t9, _longjmp
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
-1:	LA	t9, longjmp
+1:
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
+	LA	t9, longjmp
 	jr	t9
 END(siglongjmp)

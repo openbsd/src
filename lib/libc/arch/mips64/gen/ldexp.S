@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: ldexp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: ldexp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 #define DEXP_INF	0x7ff
@@ -56,7 +56,7 @@
  *
  * Return x * (2**N), for integer values N.
  */
-LEAF(ldexp)
+LEAF(ldexp, 0)
 	.set	reorder
 	mfc1	v1, $f13		# get MSW of x
 	mfc1	t3, $f12		# get LSW of x

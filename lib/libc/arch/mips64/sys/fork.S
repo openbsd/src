@@ -34,10 +34,15 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: fork.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
+	.asciz "$OpenBSD: fork.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
-SYSLEAF(fork)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+SYSLEAF(fork, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, fork)
 	.set	reorder
 	li	v0, SYS_fork	# pid = fork()
 	syscall
@@ -45,8 +50,12 @@ SYSLEAF(fork)
 	beq	v1, zero, 1f	# v1 == 0 in parent, 1 in child
 	move	v0, zero
 1:
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 2:
 	LA	t9, _C_LABEL(cerror)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 SYSEND(fork)

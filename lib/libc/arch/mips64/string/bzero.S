@@ -34,12 +34,12 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: bzero.S,v 1.2 2004/08/15 13:53:43 pefo Exp $"
+	.asciz "$OpenBSD: bzero.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /* bzero(s1, n) */
 
-LEAF(bzero)
+LEAF(bzero, 0)
 	.set	noreorder
 	blt	a1, 12, smallclr	# small amount to clear?
 	subu	a3, zero, a0		# compute # bytes to word align address

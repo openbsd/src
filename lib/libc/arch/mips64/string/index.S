@@ -34,15 +34,15 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: index.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: index.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
-LEAF(index)
+LEAF(index, 0)
 	.set	reorder
 	lbu	a2, 0(a0)		# get a byte
 	addu	a0, a0, 1
 	beq	a2, a1, fnd
-	bne	a2, zero, _C_LABEL(index)
+	bne	a2, zero, index
 notfnd:
 	move	v0, zero
 	j	ra

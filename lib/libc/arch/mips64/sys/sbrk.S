@@ -34,7 +34,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	curbrk
@@ -43,7 +43,12 @@
 curbrk:	PTR_VAL	_C_LABEL(end)
 	.text
 
-LEAF(sbrk)
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+LEAF(sbrk, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, sbrk)
 	.set	reorder
 	PTR_L	v1, curbrk
 	li	v0, SYS_break
@@ -53,8 +58,12 @@ LEAF(sbrk)
 	bne	a3, zero, 1f
 	move	v0, v1		# return old val of curbrk from above
 	PTR_S	a0, curbrk	# save current val of curbrk from above
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 1:
 	LA	t9, _C_LABEL(cerror)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 END(sbrk)

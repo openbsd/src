@@ -34,10 +34,15 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.2 2004/09/07 13:48:27 pefo Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
 #endif /* SYSLIBC_SCCS */
 
-SYSLEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+SYSLEAF(sigprocmask, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, sigprocmask)
 	.set	reorder
 	bne	a1, zero, gotptr	# if new sigset pointer not null
 	li	a0, 1			# how = SIG_BLOCK
@@ -52,8 +57,12 @@ doit:
 	sw	v0, 0(a2)		# store old mask
 out:
 	move	v0, zero
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 err:
 	LA	t9, _C_LABEL(cerror)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	jr	t9
 SYSEND(sigprocmask)

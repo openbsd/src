@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $ */
+/*	$OpenBSD: _setjmp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $ */
 
 /*
  * Copyright (c) 2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -35,16 +35,23 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.1 2004/08/11 17:30:59 pefo Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
  * _setjmp, _longjmp (not restoring signal state)
  *
  * XXX FPSET should probably be taken from SR setting. hmmm...
+ *  GPOFF and FRAMESIZE must be the same for both _setjmp and _longjmp!
  *
  */
-LEAF(_setjmp)
+
+FRAMESZ= MKFSIZ(1,1)
+GPOFF= FRAMESZ-2*REGSZ
+
+LEAF(_setjmp, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, _setjmp)
 	.set	noreorder
 #if defined(__mips64)
 	dli	v0, 0xACEDBADE			# sigcontext magic number
@@ -62,7 +69,8 @@ LEAF(_setjmp)
 	REG_S	s7, SC_REGS+S7*REGSZ(a0)
 	REG_S	s8, SC_REGS+S8*REGSZ(a0)
 	REG_S	gp, SC_REGS+GP*REGSZ(a0)
-	REG_S	sp, SC_REGS+SP*REGSZ(a0)
+	PTR_ADDU v0, sp, FRAMESZ
+	REG_S	v0, SC_REGS+SP*REGSZ(a0)
 	REG_S	ra, SC_PC(a0)
 	cfc1	v0, $31
 #if _MIPS_FPSET == 32
@@ -93,15 +101,15 @@ LEAF(_setjmp)
 	swc1	$f31, SC_FPREGS+((F31-F0)*REGSZ)(a0)
 #endif
 	REG_S	v0, SC_FPREGS+((FSR-F0)*REGSZ)(a0)
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 	move	v0, zero
 END(_setjmp)
 
-LEAF(_longjmp)
-#ifdef ABICALLS 
-	subu	sp, sp, 32
-	.cprestore 16
-#endif  
+LEAF(_longjmp, FRAMESZ)
+	PTR_SUBU sp, FRAMESZ
+	SETUP_GP64(GPOFF, _longjmp)
 	.set    noreorder
 	REG_L	v0, SC_REGS+ZERO*REGSZ(a0)
 	bne	v0, 0xACEDBADE, botch		# jump if error
@@ -146,6 +154,8 @@ LEAF(_longjmp)
 	lwc1	$f30, SC_FPREGS+((F30-F0)*REGSZ)(a0)
 	lwc1	$f31, SC_FPREGS+((F31-F0)*REGSZ)(a0)
 #endif
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 	j	ra
 	move	v0, a1
 
@@ -154,5 +164,7 @@ botch:
 	nop
 	jal	abort
 	nop
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ
 END(_longjmp)
 
