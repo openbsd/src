@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.113 2004/09/15 21:27:01 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.114 2004/10/11 10:13:49 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.113 2004/09/15 21:27:01 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.114 2004/10/11 10:13:49 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -2672,9 +2672,9 @@ static const char *carp_states[] = { CARP_STATES };
 void
 getifgroups(void)
 {
-	int len;
-	struct ifgroupreq ifgr;
-	struct ifgroup *ifg;
+	int			 len;
+	struct ifgroupreq	 ifgr;
+	struct ifg_req		*ifg;
 
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, name, IFNAMSIZ);
@@ -2686,25 +2686,25 @@ getifgroups(void)
 			err(1, "SIOCGIFGROUP");
 
 	len = ifgr.ifgr_len;
-	ifgr.ifgr_groups = (struct ifgroup *)calloc(len / sizeof(struct ifgroup),
-	    sizeof(struct ifgroup));
+	ifgr.ifgr_groups = (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
+	    sizeof(struct ifg_req));
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
 
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCGIFGROUP");
 
-	if (len -= sizeof(struct ifgroup)) {
-		len += sizeof(struct ifgroup);
+	if (len -= sizeof(struct ifg_req)) {
+		len += sizeof(struct ifg_req);
 		printf("\tgroups: ");
 		ifg = ifgr.ifgr_groups;
 		if (ifg) {
-			len -= sizeof(struct ifgroup);
+			len -= sizeof(struct ifg_req);
 			ifg++;
 		}
-		for (; ifg && len >= sizeof(struct ifgroup); ifg++) {
-			len -= sizeof(struct ifgroup);
-			printf("%s ", ifg->ifg_group);
+		for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
+			len -= sizeof(struct ifg_req);
+			printf("%s ", ifg->ifgrq_group);
 		}
 		printf("\n");
 	}

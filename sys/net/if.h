@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.56 2004/06/26 17:36:33 markus Exp $	*/
+/*	$OpenBSD: if.h,v 1.57 2004/10/11 10:13:49 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
-	TAILQ_HEAD(, ifgroup) if_groups; /* linked list of groups per if */
+	TAILQ_HEAD(, ifg_list) if_groups; /* linked list of groups per if */
 	struct hook_desc_head *if_addrhooks; /* address change callbacks */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
@@ -398,11 +398,23 @@ struct if_announcemsghdr {
 #define IFAN_DEPARTURE	1	/* interface departure */
 
 /*
- * The groups on an interface
+ * interface groups
  */
-struct ifgroup {
-	char ifg_group[IFNAMSIZ];
-	TAILQ_ENTRY(ifgroup) ifg_next;
+TAILQ_HEAD(ifg_head, ifg_group)	ifg_head;
+
+struct ifg_group {
+	char			 ifg_group[IFNAMSIZ];
+	u_int			 ifg_refcnt;
+	TAILQ_ENTRY(ifg_group)	 ifg_next;
+};
+
+struct ifg_list {
+	struct ifg_group	*ifgl_group;
+	TAILQ_ENTRY(ifg_list)	 ifgl_next;
+};
+
+struct ifg_req {
+	char			 ifgrq_group[IFNAMSIZ];
 };
 
 /*
@@ -413,10 +425,25 @@ struct ifgroupreq {
 	u_int	ifgr_len;
 	union {
 		char	ifgru_group[IFNAMSIZ];
-		struct	ifgroup *ifgru_groups;
+		struct	ifg_req *ifgru_groups;
 	} ifgr_ifgru;
 #define ifgr_group	ifgr_ifgru.ifgru_group
 #define ifgr_groups	ifgr_ifgru.ifgru_groups
+};
+
+/* XXX henning removes this 20050115, compat shitz */
+struct oifgroup {
+	char ifg_group[IFNAMSIZ];
+	TAILQ_ENTRY(oifgroup) ifg_next;
+};
+
+struct oifgroupreq {
+	char	ifgr_name[IFNAMSIZ];
+	u_int	ifgr_len;
+	union {
+		char	ifgru_group[IFNAMSIZ];
+		struct	oifgroup *ifgru_groups;
+	} ifgr_ifgru;
 };
 
 /*
@@ -642,8 +669,8 @@ int	ifconf(u_long, caddr_t);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
 int	ifpromisc(struct ifnet *, int);
-int	if_addgroup(struct ifgroupreq *, struct ifnet *);
-int	if_delgroup(struct ifgroupreq *, struct ifnet *);
+int	if_addgroup(struct ifnet *, char *);
+int	if_delgroup(struct ifnet *, char *);
 int	if_getgroup(caddr_t, struct ifnet *);
 struct	ifnet *ifunit(const char *);
 
