@@ -394,6 +394,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/pte.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ptrace.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/reloc.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/rpb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/setjmp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/sfbreg.ph
@@ -954,6 +955,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/disktab.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/elf_abi.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/errno.ph
@@ -1108,6 +1110,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/limits.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/machine

@@ -45,6 +45,7 @@
 ./usr/include/alpha/pte.h
 ./usr/include/alpha/ptrace.h
 ./usr/include/alpha/reg.h
+./usr/include/alpha/reloc.h
 ./usr/include/alpha/rpb.h
 ./usr/include/alpha/setjmp.h
 ./usr/include/alpha/sfbreg.h
@@ -59,7 +60,9 @@
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
+./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
+./usr/include/link.h
 ./usr/include/readline/chardefs.h
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h
