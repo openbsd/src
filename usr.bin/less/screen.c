@@ -318,7 +318,7 @@ raw_mode(on)
 		 */
 		s = save_term;
 	}
-	tcsetattr(2, TCSADRAIN, &s);
+	tcsetattr(2, TCSANOW, &s);
     }
 #else
 #ifdef TCGETA
