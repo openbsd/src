@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.4 1995/10/10 04:54:18 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.5 1996/01/04 22:21:55 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -98,7 +98,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct freebsd_sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct freebsd_sigframe *)(psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - sizeof(struct freebsd_sigframe));
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {

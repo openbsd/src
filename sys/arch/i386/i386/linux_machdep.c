@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.23 1995/10/10 04:54:25 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.24 1996/01/04 22:21:57 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -113,7 +113,7 @@ linux_sendsig(catcher, sig, mask, code)
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct linux_sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct linux_sigframe *)(psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - sizeof(struct linux_sigframe));
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {

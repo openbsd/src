@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19 1995/08/13 22:51:24 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.20 1996/01/04 22:23:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -149,7 +149,7 @@ typedef	void (*sig_t) __P((int));	/* type of signal function */
  * Structure used in sigaltstack call.
  */
 struct	sigaltstack {
-	char	*ss_base;		/* signal stack base */
+	char	*ss_sp;			/* signal stack base */
 	int	ss_size;		/* signal stack length */
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };

@@ -1,4 +1,4 @@
-/*	$Id: machdep.c,v 1.5 1995/11/29 17:02:49 deraadt Exp $ */
+/*	$Id: machdep.c,v 1.6 1996/01/05 16:18:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -697,7 +697,7 @@ sendsig(catcher, sig, mask, code)
 	fsize = sizeof(struct sigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.50 1995/10/07 06:28:25 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.51 1996/01/04 22:23:14 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -247,7 +247,7 @@ execsigs(p)
 	 */
 	ps->ps_sigstk.ss_flags = SS_DISABLE;
 	ps->ps_sigstk.ss_size = 0;
-	ps->ps_sigstk.ss_base = 0;
+	ps->ps_sigstk.ss_sp = 0;
 	ps->ps_flags = 0;
 }
 

@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.4 1995/10/28 23:09:55 deraadt Exp $
+ *      $Id: machdep.c,v 1.5 1996/01/05 16:18:09 deraadt Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -721,7 +721,7 @@ sendsig(catcher, sig, mask, code)
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
 	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else

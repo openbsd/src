@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.21 1995/12/13 18:45:54 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.22 1996/01/04 22:22:58 jtc Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -425,7 +425,7 @@ sendsig(catcher, sig, mask, code)
 	/* First check what stack to work on */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		cursp = (u_int *) (psp->ps_sigstk.ss_base +
+		cursp = (u_int *) (psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else

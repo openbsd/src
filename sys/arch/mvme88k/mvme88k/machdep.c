@@ -577,7 +577,7 @@ sendsig(catcher, sig, mask, code)
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
 	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else

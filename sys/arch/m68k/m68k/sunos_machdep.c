@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.7 1995/10/10 21:18:01 gwr Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.8 1996/01/04 22:22:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,7 +86,6 @@ struct sunos_sigframe {
 	struct sunos_sigcontext sf_sc;	/* I don't know if that's what 
 					   comes here */
 };
-
 /*
  * much simpler sendsig() for SunOS processes, as SunOS does the whole
  * context-saving in usermode. For now, no hardware information (ie.
@@ -135,7 +134,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	fsize = sizeof(struct sunos_sigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sunos_sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct sunos_sigframe *)(psp->ps_sigstk.ss_sp +
 		    psp->ps_sigstk.ss_size - sizeof(struct sunos_sigframe));
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else

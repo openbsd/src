@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.19 1995/10/07 06:27:46 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.20 1996/01/04 22:23:06 jtc Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -224,7 +224,7 @@ svr4_to_bsd_sigaltstack(sss, bss)
 	struct sigaltstack *bss;
 {
 
-	bss->ss_base = sss->ss_sp;
+	bss->ss_sp = sss->ss_sp;
 	bss->ss_size = sss->ss_size;
 	bss->ss_flags = 0;
 
@@ -240,7 +240,7 @@ bsd_to_svr4_sigaltstack(bss, sss)
 	struct svr4_sigaltstack *sss;
 {
 
-	sss->ss_sp = bss->ss_base;
+	sss->ss_sp = bss->ss_sp;
 	sss->ss_size = bss->ss_size;
 	sss->ss_flags = 0;
 

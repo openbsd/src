@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1995/12/28 06:45:00 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1996/01/04 22:22:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -913,7 +913,7 @@ sendsig(catcher, sig, mask, code)
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
 	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
