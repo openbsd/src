@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.12 2001/05/15 01:43:16 millert Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.13 2001/06/27 04:39:06 art Exp $	*/
 /*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
@@ -143,23 +143,14 @@ sunos_sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
-#if defined(UVM)
 	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)uvm_grow(p, (unsigned)fp);
-#else
-	if ((vaddr_t)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-		(void)grow(p, (unsigned)fp);
-#endif
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sunos_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-#if defined(UVM)
 	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#else
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#endif
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sunos_sendsig(%d): useracc failed on sig %d\n",
@@ -253,15 +244,9 @@ sunos_sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-#if defined(UVM)
 	if (uvm_useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)))
 		return (EINVAL);
-#else
-	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)))
-		return (EINVAL);
-#endif
 	scp = &tsigc;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
 		return (EINVAL);

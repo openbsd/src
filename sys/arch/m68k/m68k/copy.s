@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.s,v 1.10 2001/03/28 22:38:13 art Exp $	*/
+/*	$OpenBSD: copy.s,v 1.11 2001/06/27 04:39:05 art Exp $	*/
 /*	$NetBSD: copy.s,v 1.30 1998/03/04 06:39:14 thorpej Exp $	*/
 
 /*-
@@ -315,7 +315,6 @@ Lcosfault:
 	moveq	#EFAULT,d0
 	bra	Lcosdone
 
-#if defined(UVM)
 /*
  * kcopy(const void *src, void *dst, size_t len);
  *
@@ -346,7 +345,6 @@ Lkcfault:
 	addl    #16,sp			| pop args and return address
 	moveq   #EFAULT,d0		| indicate a fault
 	bra     Lkcdone
-#endif /* UVM */
 
 /*
  * fuword(caddr_t uaddr);

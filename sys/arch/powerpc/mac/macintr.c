@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.11 2001/06/26 18:19:43 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.12 2001/06/27 04:37:18 art Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,11 +46,9 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#ifdef UVM
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -536,10 +534,7 @@ printf("calling handler %x\n", ih->ih_fun);
 			ih = ih->ih_next;
 		}
 
-#ifdef UVM
 		uvmexp.intrs++;
-#else
-#endif
 		evirq[hwirq[irq]].ev_count++;
 	}
 	int_state &= ~r_imen;

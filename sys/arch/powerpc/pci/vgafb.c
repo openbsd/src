@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.12 2001/06/25 23:30:00 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.13 2001/06/27 04:37:20 art Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -565,12 +565,10 @@ vgafb_putcmap(vc, cm)
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
-#ifdef UVM
 	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
 	    !uvm_useracc(cm->green, cm->count, B_READ) ||
 	    !uvm_useracc(cm->blue, cm->count, B_READ))
 		return EFAULT;
-#endif
 	copyin(cm->red,   &(vc->vc_cmap_red[index]),   count);
 	copyin(cm->green, &(vc->vc_cmap_green[index]), count);
 	copyin(cm->blue,  &(vc->vc_cmap_blue[index]),  count);

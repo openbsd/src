@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2001/06/24 23:29:36 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2001/06/27 04:37:21 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -42,9 +42,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#ifdef UVM
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
@@ -68,10 +66,6 @@ static int npgs;
 static u_int nextavail;
 
 static struct mem_region *mem, *avail;
-
-#ifndef UVM
-	extern vm_offset_t pager_sva, pager_eva;
-#endif
 
 #if 0
 void
@@ -171,13 +165,8 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, paddr_t pa)
 		if (pm == pmap_kernel()) {
 			printf(" irk kernel allocating map?");
 		} else {
-#ifdef UVM
 			if (!(mem1 = (pmapv_t *)uvm_km_zalloc(kernel_map, NBPG)))
 				panic("pmap_vp_enter: uvm_km_zalloc() failed");
-#else
-			if (!(mem1 = (pmapv_t *)kmem_alloc(kernel_map, NBPG)))
-				panic("pmap_vp_enter: kmem_alloc() failed");
-#endif
 		}
 		pm->vps[idx] = mem1;
 #ifdef DEBUG
@@ -220,11 +209,7 @@ pmap_vp_destroy(pm)
 			}
 		}
 #endif
-#ifdef UVM
 		uvm_km_free(kernel_map, (vaddr_t)vp1, NBPG);
-#else
-		kmem_free(kernel_map, (vm_offset_t)vp1, NBPG);
-#endif
 		pm->vps[sr] = 0;
 	}
 }
@@ -654,14 +639,9 @@ avail_end = npgs * NBPG;
 	
 #ifdef MACHINE_NEW_NONCONTIG	
 	for (mp = avail; mp->size; mp++) {
-#ifdef UVM
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size),
 			VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(atop(mp->start), atop(mp->start + mp->size),
-			atop(mp->start), atop(mp->start + mp->size));
-#endif
 	}
 #endif
 
@@ -730,11 +710,7 @@ pmap_init()
 	
 	sz = (vm_size_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
-#ifdef UVM
 	addr = uvm_km_zalloc(kernel_map, sz);
-#else
-	addr = kmem_alloc(kernel_map, sz);
-#endif
 	s = splimp();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
@@ -1636,15 +1612,9 @@ pmap_page_protect(pa, prot)
 	while (pv->pv_idx != -1) {
 		va = pv->pv_va;
 		pm = pv->pv_pmap;
-#ifdef UVM
 		if ((va >=uvm.pager_sva) && (va < uvm.pager_eva)) {
 				continue;
 		}
-#else
-		if (va >= pager_sva && va < pager_eva) {
-				continue;
-		}
-#endif
 		pmap_remove(pm, va, va + NBPG);
 	}
 	splx(s);

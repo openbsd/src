@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2001/06/26 18:19:43 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2001/06/27 04:37:21 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -113,12 +113,9 @@ int bufpages = 0;
 
 struct bat battable[16];
 
-#ifdef UVM
-/* ??? */
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
-#endif
 
 int astpending;
 int ppc_malloc_ok = 0;
@@ -312,13 +309,8 @@ where = 3;
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 
-#ifdef UVM
 	uvmexp.pagesize = 4096;
 	uvm_setpagesize();
-
-#else
-	vm_set_page_size();
-#endif
 
 	/*
 	 * Initialize pmap module.
@@ -496,13 +488,8 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (int)allocsys((caddr_t)0);
-#ifdef UVM
 	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-#else
-	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-#endif
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
@@ -511,7 +498,6 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	sz = MAXBSIZE * nbuf;
-#ifdef UVM
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(sz),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
@@ -520,13 +506,6 @@ cpu_startup()
 	/*
 	addr = (vaddr_t)buffers;
 	*/
-#else
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
-	buffers = (char *)minaddr;
-	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vm_offset_t)0,
-	   &minaddr, sz, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
-#endif
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	if (base >= MAXBSIZE) {
@@ -541,7 +520,6 @@ cpu_startup()
 		
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
-#ifdef UVM
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
@@ -552,55 +530,31 @@ cpu_startup()
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
-#else
-		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize,
-		    FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-#endif
 	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#ifdef UVM
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
 	    TRUE, FALSE, NULL);
-#else
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
-	    TRUE);
-#endif
 
 	/*
 	 * Allocate a submap for physio
 	 */
-#ifdef UVM
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
-#else
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
-	    TRUE);
-#endif
 	ppc_malloc_ok = 1;
 	
-#ifdef UVM
 	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
-#else
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-	    VM_MBUF_SIZE, FALSE);
-#endif
 	
 	/*
 	 * Initialize timeouts.
 	 */
 	timeout_init();
 	
-#ifdef UVM
 	printf("avail mem = %d\n", ptoa(uvmexp.free));
-#else
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
-#endif
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 	
@@ -668,9 +622,6 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;
 	}
-#if !defined(UVM)
-	valloc(swbuf, struct buf, nswbuf);
-#endif
 	valloc(buf, struct buf, nbuf);
 	
 	return v;
@@ -1187,11 +1138,7 @@ bus_space_unmap(t, bsh, size)
 	off = bsh - sva;
 	len = size+off;
 
-#ifdef UVM
 	uvm_km_free_wakeup(phys_map, sva, len);
-#else
-	kmem_free_wakeup(phys_map, sva, len);
-#endif
 #if 0
 	pmap_extract(pmap_kernel(), sva, &bpa);
 	if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
@@ -1236,11 +1183,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
 	} else {
-#ifdef UVM
 		vaddr = uvm_km_valloc_wait(phys_map, len);
-#else
-		vaddr = kmem_alloc_wait(phys_map, len);
-#endif
 	}
 	*bshp = vaddr + off;
 #ifdef DEBUG_BUS_MEM_ADD_MAPPING
@@ -1301,11 +1244,7 @@ mapiodev(pa, len)
 			return (void *)pa;
 		}
 	}
-#ifdef UVM
 	va = vaddr = uvm_km_valloc(phys_map, size);
-#else
-	va = vaddr = kmem_alloc(phys_map, size);
-#endif
 
 	if (va == 0) 
 		return NULL;
@@ -1334,11 +1273,7 @@ unmapiodev(kva, p_size)
 
 	vaddr = trunc_page((vaddr_t)kva);
 
-#ifdef UVM
 	uvm_km_free_wakeup(phys_map, vaddr, size);
-#else
-	kmem_free_wakeup(phys_map, vaddr, size);
-#endif
 
 	for (; size > 0; size -= NBPG) {
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.13 2001/06/26 18:19:43 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.14 2001/06/27 04:37:19 art Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -46,11 +46,9 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#ifdef UVM
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -641,10 +639,7 @@ ext_intr_openpic()
 				ih = ih->ih_next;
 			}
 
-#ifdef UVM
 			uvmexp.intrs++;
-#else
-#endif
 			evirq[realirq].ev_count++;
 		}
 
