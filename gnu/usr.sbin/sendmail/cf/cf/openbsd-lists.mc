@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.8 2001/12/04 02:23:56 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.9 2002/01/05 23:35:50 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -33,8 +33,8 @@ dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)
 dnl
-dnl Need to add domo and mailman as "trusted users" to rewrite From lines
-define(`confTRUSTED_USERS', `domo mailman')dnl
+dnl Need to add domo and mj2 as "trusted users" to rewrite From lines
+define(`confTRUSTED_USERS', `domo mj2')dnl
 dnl
 dnl Wait a day before sending mail about deferred messages
 define(`confTO_QUEUEWARN', `1d')dnl
@@ -70,10 +70,13 @@ dnl List the mailers we support
 FEATURE(`no_default_msa')dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
+dnl
+dnl Take note of the 'C' flag (nocanonify) for the MSA connections.
+dnl We use this to speed up mail injections via majordomo.
 DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Name=MTA')dnl
 DAEMON_OPTIONS(`Family=inet6, address=::, Name=MTA6, M=O')dnl
-DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Port=587, Name=MSA, M=E')dnl
-DAEMON_OPTIONS(`Family=inet6, address=::, Port=587, Name=MSA6, M=O, M=E')dnl
+DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Port=587, Name=MSA, M=EC')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::, Port=587, Name=MSA6, M=O, M=EC')dnl
 CLIENT_OPTIONS(`Family=inet6, Address=::')dnl
 CLIENT_OPTIONS(`Family=inet, Address=0.0.0.0')dnl
 dnl
