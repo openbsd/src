@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.31 2000/01/27 08:04:02 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.32 2000/02/08 12:50:25 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -50,10 +50,6 @@
 #include <netccitt/x25.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-
-#ifdef INET6
-#include <netinet6/in6.h>
-#endif /* INET6 */
 
 #include <errno.h>
 #include <unistd.h>
