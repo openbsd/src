@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanio.h,v 1.4 1996/12/11 16:34:13 kstailey Exp $	*/
+/*	$OpenBSD: scanio.h,v 1.5 1997/03/11 03:53:55 kstailey Exp $	*/
 /*	$NetBSD: scanio.h,v 1.1 1996/02/18 20:33:18 mycroft Exp $	*/
 
 /*
@@ -108,5 +108,6 @@ struct scan_io {
 #define MUSTEK_06000CX	10	/* Mustek MFS06000CX */
 #define MUSTEK_12000CX	11	/* Mustek MFS12000CX */
 #define EPSON_ES300C	12	/* epson es300c */
+#define GENERIC_SCSI2	13	/* good luck 8c{)] */
 
 #endif /* _SYS_SCANIO_H */
