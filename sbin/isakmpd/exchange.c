@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.30 2000/06/08 20:49:54 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.123 2000/05/19 06:31:45 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.31 2000/08/03 07:25:24 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.129 2000/07/20 15:29:17 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -59,6 +59,7 @@
 #include "message.h"
 #include "timer.h"
 #include "transport.h"
+#include "ipsec.h"
 #include "sa.h"
 #include "util.h"
 #ifdef USE_X509
@@ -1321,31 +1322,11 @@ exchange_finalize (struct message *msg)
       msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
 
-      msg->isakmp_sa->id_i = malloc (exchange->id_i_len);
-      if (!msg->isakmp_sa->id_i)
-	{
-	  log_error ("exchange_finalize: malloc (%d) failed",
-		     exchange->id_i_len);
-	  /* XXX How to cleanup?  */
-	  return;
-	}
-      msg->isakmp_sa->id_r = malloc (exchange->id_r_len);
-      if (!msg->isakmp_sa->id_r)
-	{
-	  log_error ("exchange_finalize: malloc (%d) failed",
-		     exchange->id_r_len);
-	  /* XXX How to cleanup?  */
-	  return;
-	}
-
-      memcpy (msg->isakmp_sa->id_i, exchange->id_i, exchange->id_i_len);
-      memcpy (msg->isakmp_sa->id_r, exchange->id_r, exchange->id_r_len);
-
       switch (exchange->recv_certtype)
         {
         case ISAKMP_CERTENC_NONE:
 	case ISAKMP_CERTENC_KEYNOTE: /* No need for special handling */
-	    msg->isakmp_sa->recv_cert = strdup (exchange->recv_cert);
+	    msg->isakmp_sa->recv_cert = malloc (exchange->recv_certlen);
 	    if (!msg->isakmp_sa->recv_cert)
 	      {
 		log_error ("exchange_finalize: strdup (\"%s\") failed",
@@ -1353,6 +1334,8 @@ exchange_finalize (struct message *msg)
 		/* XXX How to cleanup?  */
 		return;
 	      }
+	    memcpy (msg->isakmp_sa->recv_cert, exchange->recv_cert,
+		    msg->isakmp_sa->recv_certlen);
 	    break;
 
 	case ISAKMP_CERTENC_X509_SIG:
@@ -1380,12 +1363,43 @@ exchange_finalize (struct message *msg)
 	case ISAKMP_CERTENC_SPKI:
 	case ISAKMP_CERTENC_X509_ATTR:
 	}
+
+      LOG_DBG ((LOG_EXCHANGE, 10,
+		"exchange_finalize: phase 1 done: %s, %s",
+		exchange->doi == NULL ? "<no doi>" :
+		exchange->doi->decode_ids ("initiator id %s, responder id %s",
+					   exchange->id_i, exchange->id_i_len,
+					   exchange->id_r, exchange->id_r_len,
+					   0),
+		msg->isakmp_sa == NULL || msg->isakmp_sa->transport == NULL
+		? "<no transport>"
+		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa->transport)));
     }
 
   exchange->doi->finalize_exchange (msg);
   if (exchange->finalize)
     exchange->finalize (exchange, exchange->finalize_arg, 0);
   exchange->finalize = 0;
+
+  /* copy the ID from phase 1 to exchange or phase 2 SA */
+  if (msg->isakmp_sa) 
+    {
+      if (exchange->id_i && exchange->id_r) 
+	{
+	  ipsec_clone_id (&msg->isakmp_sa->id_i, &msg->isakmp_sa->id_i_len,
+			  exchange->id_i, exchange->id_i_len);
+	  ipsec_clone_id (&msg->isakmp_sa->id_r, &msg->isakmp_sa->id_r_len,
+			  exchange->id_r, exchange->id_r_len);
+	}
+      else if (msg->isakmp_sa->id_i && msg->isakmp_sa->id_r)
+	{
+	  ipsec_clone_id (&exchange->id_i, &exchange->id_i_len,
+			  msg->isakmp_sa->id_i, msg->isakmp_sa->id_i_len);
+	  ipsec_clone_id (&exchange->id_r, &exchange->id_r_len,
+			  msg->isakmp_sa->id_r, msg->isakmp_sa->id_r_len);
+	}
+    }
+
 
   /*
    * There is no reason to keep the SAs connected to us anymore, in fact
@@ -1394,7 +1408,16 @@ exchange_finalize (struct message *msg)
    * references to freed SAs can occur.
    */
   while (TAILQ_FIRST (&exchange->sa_list))
-    TAILQ_REMOVE (&exchange->sa_list, TAILQ_FIRST (&exchange->sa_list), next);
+    {
+      struct sa *sa = TAILQ_FIRST (&exchange->sa_list);
+
+      ipsec_clone_id (&sa->id_i, &sa->id_i_len, exchange->id_i,
+		      exchange->id_i_len);
+      ipsec_clone_id (&sa->id_r, &sa->id_r_len, exchange->id_r,
+		      exchange->id_r_len);
+
+      TAILQ_REMOVE (&exchange->sa_list, sa, next);
+    }
 
   /* If we have nothing to retransmit we can safely remove ourselves.  */
   if (!exchange->last_sent)
@@ -1608,9 +1631,8 @@ exchange_establish (char *name,
       trpt = conf_get_str (name, "Transport");
       if (!trpt)
 	{
-	  log_print ("exchange_establish: No transport given for peer \"%s\"",
-		     name);
-	  return;
+	  /* Phase 1 transport defaults to "udp". */
+	  trpt = ISAKMP_DEFAULT_TRANSPORT;
 	}
 
       transport = transport_create (trpt, name);
