@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2001/12/06 04:22:56 ericj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2001/12/06 04:23:51 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -91,13 +91,13 @@ cpu_configure()
 	parse_prom_bootdev();
 	softintr_init();
 
-        /*
-         * Disable interrupts during autoconfiguration.  splhigh() won't
-         * work, because it simply _raises_ the IPL, so if machine checks
-         * are disabled, they'll stay disabled.  Machine checks are needed
-         * during autoconfig.
-         */
-        (void)alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
+	/*
+	 * Disable interrupts during autoconfiguration.  splhigh() won't
+	 * work, because it simply _raises_ the IPL, so if machine checks
+	 * are disabled, they'll stay disabled.  Machine checks are needed
+	 * during autoconfig.
+	 */
+	(void)alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
@@ -277,7 +277,7 @@ setroot()
 {
 	struct swdevt *swp;
 	struct device *dv;
-        int len, majdev, unit, part;
+	int len, majdev, unit, part;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128], *rootdevname;
 	dev_t temp;
@@ -420,7 +420,7 @@ gotswap:
 		}
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-        } else {
+	} else {
 		/*
 		 * `root DEV swap DEV': honor rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
