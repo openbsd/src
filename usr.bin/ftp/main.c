@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 1997/12/17 16:03:05 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 1998/02/17 23:22:56 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.37 1997/12/17 16:03:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.38 1998/02/17 23:22:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ main(argc, argv)
 	long port;
 	struct passwd *pw = NULL;
 	char *cp, *ep, homedir[MAXPATHLEN];
+	char *outfile = NULL;
 	int dumb_terminal = 0;
-	int outfd = -1;
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -170,12 +170,7 @@ main(argc, argv)
 	if (isatty(fileno(ttyout)) && !dumb_terminal && foregroundproc())
 		progress = 1;		/* progress bar on if tty is usable */
 
-	if (!isatty(fileno(ttyout))) {
-		outfd = fileno(stdout);
-		ttyout = stderr;
-	}
-
-	while ((ch = getopt(argc, argv, "AadeginpPr:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadegino:pPr:tvV")) != -1) {
 		switch (ch) {
 		case 'A':
 			activefallback = 0;
@@ -207,6 +202,12 @@ main(argc, argv)
 
 		case 'n':
 			autologin = 0;
+			break;
+
+		case 'o':
+			outfile = optarg;
+			if (strcmp(outfile, "-") == 0)
+				ttyout = stderr;
 			break;
 
 		case 'p':
@@ -277,7 +278,7 @@ main(argc, argv)
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
 			anonftp = 1;	/* Handle "automatic" transfers. */
-			rval = auto_fetch(argc, argv, outfd);
+			rval = auto_fetch(argc, argv, outfile);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {

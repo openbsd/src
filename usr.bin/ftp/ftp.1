@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.16 1997/12/17 16:03:01 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.17 1998/02/17 23:22:55 millert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -51,6 +51,7 @@ file transfer program
 .Op Fl g
 .Op Fl i
 .Op Fl n
+.Op Fl o Ar output
 .Op Fl p
 .Op Fl P Ar port
 .Op Fl r Ar seconds
@@ -119,6 +120,15 @@ If no entry exists,
 will prompt for the remote machine login name (default is the user
 identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
+.It Fl o Ar output
+When fetching a single file or url, save the contents in
+.Ar output .
+To make the contents go to
+.Ar stdout ,
+use
+.Qq -
+for
+.Ar output .
 .It Fl p
 Enable passive mode operation for use behind connection filtering firewalls.
 This option has been deprecated as

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.16 1997/09/11 01:55:15 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.17 1998/02/17 23:22:54 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.16 1997/09/11 01:55:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.17 1998/02/17 23:22:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.16 1997/09/11 01:55:15 millert Exp 
 
 #include <ctype.h>
 #include <err.h>
+#include <libgen.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -66,7 +67,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.16 1997/09/11 01:55:15 millert Exp 
 
 #include "ftp_var.h"
 
-static int	url_get __P((const char *, const char *, int));
+static int	url_get __P((const char *, const char *, const char *));
 void		aborthttp __P((int));
 
 
@@ -86,10 +87,10 @@ jmp_buf	httpabort;
  * Returns -1 on failure, 0 on success
  */
 static int
-url_get(origline, proxyenv, fd)
+url_get(origline, proxyenv, outfile)
 	const char *origline;
 	const char *proxyenv;
-	int fd;
+	const char *outfile;
 {
 	struct sockaddr_in sin;
 	int i, out, isftpurl;
@@ -138,11 +139,11 @@ url_get(origline, proxyenv, fd)
 		goto cleanup_url_get;
 	}
 
-	savefile = strrchr(path, '/');			/* find savefile */
-	if (savefile != NULL)
-		savefile++;
+	if (outfile)
+		savefile = outfile;
 	else
-		savefile = path;
+		savefile = basename(path);
+
 	if (EMPTYSTRING(savefile)) {
 		if (isftpurl)
 			goto noftpautologin;
@@ -302,15 +303,15 @@ url_get(origline, proxyenv, fd)
 	} else
 		filesize = -1;
 
-	/* Open the output file. */
-	if (fd == -1) {
+	/* Open the output file.  */
+	if (strcmp(savefile, "-") != 0) {
 		out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 		if (out < 0) {
 			warn("Can't open %s", savefile);
 			goto cleanup_url_get;
 		}
 	} else
-		out = fd;
+		out = fileno(stdout);
 
 	/* Trap signals */
 	oldintr = NULL;
@@ -361,7 +362,7 @@ url_get(origline, proxyenv, fd)
 	(void)signal(SIGINT, oldintr);
 
 	close(s);
-	if (fd != -1)
+	if (out != fileno(stdout))
 		close(out);
 	if (proxy)
 		free(proxy);
@@ -414,10 +415,10 @@ aborthttp(notused)
  * Otherwise, 0 is returned if all files retrieved successfully.
  */
 int
-auto_fetch(argc, argv, fd)
+auto_fetch(argc, argv, outfile)
 	int argc;
 	char *argv[];
-	int fd;
+	char *outfile;
 {
 	static char lasthost[MAXHOSTNAMELEN];
 	char *xargv[5];
@@ -461,7 +462,7 @@ auto_fetch(argc, argv, fd)
 		 * Try HTTP URL-style arguments first.
 		 */
 		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
-			if (url_get(line, httpproxy, fd) == -1)
+			if (url_get(line, httpproxy, outfile) == -1)
 				rval = argpos + 1;
 			continue;
 		}
@@ -474,7 +475,7 @@ auto_fetch(argc, argv, fd)
 		host = line;
 		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
 			if (ftpproxy) {
-				if (url_get(line, ftpproxy, fd) == -1)
+				if (url_get(line, ftpproxy, outfile) == -1)
 					rval = argpos + 1;
 				continue;
 			}
@@ -638,11 +639,11 @@ parsed_url:
 			mget(xargc, xargv);
 			interactive = ointeractive;
 		} else {
-			if (fd != -1) {
-				xargv[2] = "-";
+			if (outfile != NULL) {
+				xargv[2] = outfile;
+				xargv[3] = NULL;
 				xargc++;
 			}
-			xargv[3] = NULL;
 			get(xargc, xargv);
 		}
 
