@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.8 1997/11/22 13:07:37 kstailey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.9 1997/11/22 14:19:23 kstailey Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.8 1997/11/22 13:07:37 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.9 1997/11/22 14:19:23 kstailey Exp $";
 #endif /* not lint */
 
 /*
@@ -190,7 +190,7 @@ static struct nlist namelist[] = {
 #define PROCSCOL	 0
 #define GENSTATROW	 7	/* uses 2 rows and 30 cols */
 #define GENSTATCOL	20
-#define VMSTATROW	 6	/* uses 17 rows and 12 cols */
+#define VMSTATROW	 7	/* uses 17 rows and 12 cols */
 #define VMSTATCOL	48
 #define GRAPHROW	10	/* uses 3 rows and 51 cols */
 #define GRAPHCOL	 0
