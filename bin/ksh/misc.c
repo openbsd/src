@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.16 2003/04/16 23:11:52 tdeval Exp $	*/
+/*	$OpenBSD: misc.c,v 1.17 2003/08/05 20:52:27 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -90,8 +90,6 @@ str_save(s, ap)
 		return NULL;
 	len = strlen(s)+1;
 	p = alloc(len, ap);
-	if (!p)
-		return NULL;
 	strlcpy(p, s, len+1);
 	return (p);
 }

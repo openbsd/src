@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.15 2003/06/26 00:09:45 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.16 2003/08/05 20:52:27 millert Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -385,8 +385,7 @@ setstr(vq, s, error_ok)
 			export(vq, s);
 		else {
 			vq->val.s = str_save(s, vq->areap);
-			if (vq->val.s)		/* <sjg> don't lie */
-				vq->flag |= ALLOC;
+			vq->flag |= ALLOC;
 		}
 	} else			/* integer dest */
 		if (!v_evaluate(vq, s, error_ok))

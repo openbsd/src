@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.5 2002/03/01 13:06:18 espie Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.6 2003/08/05 20:52:27 millert Exp $	*/
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -63,8 +63,8 @@ alloc(size_t size, Area *ap)
 	struct link *l;
 
 	l = malloc(size + sizeof(struct link));
-	if (!l)
-		return NULL;
+	if (l == NULL)
+		internal_errorf(1, "unable to allocate memory");
 	l->next = ap->freelist;
 	l->prev = NULL;
 	if (ap->freelist)
@@ -87,14 +87,15 @@ aresize(void *ptr, size_t size, Area *ap)
 	lnext = l->next;
 
 	l2 = realloc(l, size+sizeof(struct link));
-	if (l2) {
-		if (lprev)
-		    lprev->next = l2;
-	    	else
-		    ap->freelist = l2;
-		if (lnext)
-		    lnext->prev = l2;
-		}
+	if (l2 == NULL)
+		internal_errorf(1, "unable to allocate memory");
+	if (lprev)
+	    lprev->next = l2;
+	else
+	    ap->freelist = l2;
+	if (lnext)
+	    lnext->prev = l2;
+
 	return L2P(l2);
 }
 
