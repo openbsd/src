@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.8 1996/04/21 22:22:48 deraadt Exp $	*/
+/*	$OpenBSD: ast.c,v 1.9 1996/04/27 21:08:46 niklas Exp $	*/
 /*	$NetBSD: ast.c,v 1.26 1996/04/15 18:55:23 cgd Exp $	*/
 
 /*
@@ -153,14 +153,14 @@ astattach(parent, self, aux)
 	sc->sc_iobase = ia->ia_iobase;
 
 	for (i = 0; i < NSLAVES; i++)
-		if (bus_io_map(bc, sc->sc_iobase + i * COM_NPORTS, COM_NPORTS,
-		    &sc->sc_slaveioh[i]))
+		if (bus_io_map(sc->sc_bc, sc->sc_iobase + i * COM_NPORTS,
+		    COM_NPORTS, &sc->sc_slaveioh[i]))
 			panic("astattach: couldn't map slave %d", i);
 
 	/*
 	 * Enable the master interrupt.
 	 */
-	bus_io_write_1(bc, sc->sc_slaveioh[3], 7, 0x80);
+	bus_io_write_1(sc->sc_bc, sc->sc_slaveioh[3], 7, 0x80);
 
 	printf("\n");
 
