@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.29 2001/02/28 18:30:24 todd Exp $
+#	$OpenBSD: DISKLESS,v 1.30 2001/04/09 20:40:50 deraadt Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -52,8 +52,6 @@ option		SYSVSEM		# System V-like semaphores
 option		SYSVSHM		# System V-like memory sharing
 
 option		UVM_SWAP_ENCRYPT# support encryption of pages going to swap
-
-option		FFS_SOFTUPDATES	# Soft updates
 
 option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,

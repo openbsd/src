@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.70 2001/04/09 10:29:59 art Exp $
+#	$OpenBSD: GENERIC,v 1.71 2001/04/09 20:40:49 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -38,6 +38,7 @@ option		COMPAT_43	# and 4.3BSD
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
+option		FFS_SOFTUPDATES	# Soft updates
 option		QUOTA		# UFS quotas
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system

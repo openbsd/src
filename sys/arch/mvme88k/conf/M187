@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.8 2001/03/08 03:37:18 itojun Exp $
+#	$OpenBSD: M187,v 1.9 2001/04/09 20:40:51 deraadt Exp $
 
 machine mvme88k
 
@@ -7,7 +7,6 @@ include "../../../conf/GENERIC"
 option		"M88000"	# support for 88K
 option		MVME187		# support for 187
 option		UVM		# use the UVM virtual memory system
-option		FFS_SOFTUPDATES	# Soft Updates
 option		"NCPUS=1"	# Number of cpus supported (max 4)
 option		BUGMAP		# use Bug Rom VME Mappings
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.250 2001/03/29 14:20:45 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.251 2001/04/09 20:40:51 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -25,8 +25,6 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
 #option		DUMMY_NOPS	# speed hack; recommended
-
-option		FFS_SOFTUPDATES	# Soft updates
 
 option		COMPAT_SVR4	# binary compatibility with SVR4
 option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
