@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.8 2001/08/18 22:14:39 brian Exp $
+ *	$Id: pppctl.c,v 1.9 2002/07/02 16:09:05 brian Exp $
  */
 
 #include <sys/types.h>
@@ -220,7 +220,7 @@ main(int argc, char **argv)
                             (start[1] ? start + 1 : argv[++arg]);
                         start = DoneWord;
                         break;
-    
+
                     case 'v':
                         verbose = REC_VERBOSE;
                         break;
@@ -238,7 +238,7 @@ main(int argc, char **argv)
                         }
                         start = DoneWord;
                         break;
-    
+
                     default:
                         usage();
                 }
@@ -472,6 +472,6 @@ main(int argc, char **argv)
     }
 
     close(fd);
-    
+
     return 0;
 }
