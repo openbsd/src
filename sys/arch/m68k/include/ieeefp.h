@@ -1,3 +1,4 @@
+/*	$OpenBSD: ieeefp.h,v 1.2 1996/05/29 18:38:32 niklas Exp $	*/
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
