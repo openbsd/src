@@ -52,15 +52,41 @@ struct dev_crypto_state {
 
 static u_int32_t cryptodev_asymfeat = 0;
 
+static int get_asym_dev_crypto(void);
+static int open_dev_crypto(void);
+static int get_dev_crypto(void);
+static int cryptodev_max_iv(int cipher);
+static int cryptodev_key_length_valid(int cipher, int len);
+static int cipher_nid_to_cryptodev(int nid);
+static int get_cryptodev_ciphers(const int **cnids);
+static int get_cryptodev_digests(const int **cnids);
+static int cryptodev_usable_ciphers(const int **nids);
+static int cryptodev_usable_digests(const int **nids);
+static int cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, unsigned int inl);
+static int cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc);
+static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx);
+static int cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+    const int **nids, int nid);
+static int cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
+    const int **nids, int nid);
 static int bn2crparam(const BIGNUM *a, struct crparam *crp);
 static int crparam2bn(struct crparam *crp, BIGNUM *a);
 static void zapparams(struct crypt_kop *kop);
+static int cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r,
+    int slen, BIGNUM *s);
 
-static int cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 static int cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a,
     const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+static int cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I,
+    RSA *rsa);
+static int cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa);
 static int cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a,
     const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+static int cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
+    BIGNUM *u1, BIGNUM *pub_key, BIGNUM *u2, BIGNUM *p,
+    BN_CTX *ctx, BN_MONT_CTX *mont);
 static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst,
     int dlen, DSA *dsa);
 static int cryptodev_dsa_verify(const unsigned char *dgst, int dgst_len,
@@ -70,6 +96,9 @@ static int cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
     BN_MONT_CTX *m_ctx);
 static int cryptodev_dh_compute_key(unsigned char *key,
     const BIGNUM *pub_key, DH *dh);
+static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
+    void (*f)());
+void ENGINE_load_cryptodev(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
 	{ENGINE_CMD_BASE,
@@ -112,7 +141,7 @@ static struct {
  * Return a fd if /dev/crypto seems usable, 0 otherwise.
  */
 static int
-open_dev_crypto()
+open_dev_crypto(void)
 {
 	static int fd = -1;
 
@@ -130,7 +159,7 @@ open_dev_crypto()
 }
 
 static int
-get_dev_crypto()
+get_dev_crypto(void)
 {
 	int fd, retfd;
 
@@ -149,7 +178,7 @@ get_dev_crypto()
 
 /* Caching version for asym operations */
 static int
-get_asym_dev_crypto()
+get_asym_dev_crypto(void)
 {
 	static int fd = -1;
 
@@ -298,13 +327,13 @@ get_cryptodev_digests(const int **cnids)
  * want most of the decisions made about what we actually want
  * to use from /dev/crypto.
  */
-int
+static int
 cryptodev_usable_ciphers(const int **nids)
 {
 	return (get_cryptodev_ciphers(nids));
 }
 
-int
+static int
 cryptodev_usable_digests(const int **nids)
 {
 	/*
@@ -323,7 +352,7 @@ cryptodev_usable_digests(const int **nids)
 	return (0);
 }
 
-int
+static int
 cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, unsigned int inl)
 {
@@ -379,7 +408,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return (1);
 }
 
-int
+static int
 cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
@@ -420,7 +449,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
  * free anything we allocated earlier when initting a
  * session, and close the session.
  */
-int
+static int
 cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 {
 	int ret = 0;
@@ -545,7 +574,7 @@ const EVP_CIPHER cryptodev_aes_cbc = {
  * a particular NID in the ENGINE. this says what we'll do at the
  * top level - note, that list is restricted by what we answer with
  */
-int
+static int
 cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     const int **nids, int nid)
 {
@@ -578,7 +607,7 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 	return (*cipher != NULL);
 }
 
-int
+static int
 cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
     const int **nids, int nid)
 {
@@ -595,7 +624,6 @@ cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
 	}
 	return (*digest != NULL);
 }
-
 
 /*
  * Convert a BIGNUM to the representation that /dev/crypto needs.
@@ -671,7 +699,7 @@ zapparams(struct crypt_kop *kop)
 }
 
 static int
-cryptodev_sym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
+cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 {
 	int fd, ret = -1;
 
@@ -727,7 +755,7 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		goto err;
 	kop.crk_iparams = 3;
 
-	if (cryptodev_sym(&kop, BN_num_bytes(m), r, 0, NULL) == -1) {
+	if (cryptodev_asym(&kop, BN_num_bytes(m), r, 0, NULL) == -1) {
 		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
 		ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
 	}
@@ -776,7 +804,7 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 		goto err;
 	kop.crk_iparams = 6;
 
-	if (cryptodev_sym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL) == -1) {
+	if (cryptodev_asym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL) == -1) {
 		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
 		ret = (*meth->rsa_mod_exp)(r0, I, rsa);
 	}
@@ -871,7 +899,7 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	kop.crk_iparams = 5;
 
-	if (cryptodev_sym(&kop, BN_num_bytes(dsa->q), r,
+	if (cryptodev_asym(&kop, BN_num_bytes(dsa->q), r,
 	    BN_num_bytes(dsa->q), s) == 0) {
 		dsaret = DSA_SIG_new();
 		dsaret->r = r;
@@ -915,7 +943,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 		goto err;
 	kop.crk_iparams = 7;
 
-	if (cryptodev_sym(&kop, 0, NULL, 0, NULL) == 0) {
+	if (cryptodev_asym(&kop, 0, NULL, 0, NULL) == 0) {
 		dsaret = kop.crk_status;
 	} else {
 		const DSA_METHOD *meth = DSA_OpenSSL();
@@ -927,7 +955,6 @@ err:
 	zapparams(&kop);
 	return (dsaret);
 }
-
 
 static DSA_METHOD cryptodev_dsa = {
 	"cryptodev DSA method",
@@ -957,8 +984,11 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	int dhret = 1;
 	int fd, keylen;
 
-	if ((fd = get_asym_dev_crypto()) < 0)
-		return (-1);
+	if ((fd = get_asym_dev_crypto()) < 0) {
+		const DH_METHOD *meth = DH_OpenSSL();
+
+		return ((meth->compute_key)(key, pub_key, dh));
+	}
 
 	keylen = BN_num_bits(dh->p);
 
@@ -1076,11 +1106,11 @@ ENGINE_load_cryptodev(void)
 		memcpy(&cryptodev_dsa, meth, sizeof(DSA_METHOD));
 		if (cryptodev_asymfeat & CRF_DSA_SIGN)
 			cryptodev_dsa.dsa_do_sign = cryptodev_dsa_do_sign;
-	        if (cryptodev_asymfeat & CRF_MOD_EXP) {
+		if (cryptodev_asymfeat & CRF_MOD_EXP) {
 			cryptodev_dsa.bn_mod_exp = cryptodev_dsa_bn_mod_exp;
 			cryptodev_dsa.dsa_mod_exp = cryptodev_dsa_dsa_mod_exp;
 		}
-	        if (cryptodev_asymfeat & CRF_DSA_VERIFY)
+		if (cryptodev_asymfeat & CRF_DSA_VERIFY)
 			cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;
 	}
 
