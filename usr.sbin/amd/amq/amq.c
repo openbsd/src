@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.9 2002/09/10 05:34:39 deraadt Exp $
+ *	$Id: amq.c,v 1.10 2002/09/10 05:39:26 deraadt Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.9 2002/09/10 05:34:39 deraadt Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.10 2002/09/10 05:39:26 deraadt Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -540,15 +540,21 @@ show_usage:
 		if (mlp) {
 			enum show_opt e = Calc;
 			int mwid = 0, dwid = 0, pwid = 0;
+
 			while (e != ShowDone) {
 				int i;
+
 				for (i = 0; i < mlp->amq_mount_tree_list_len; i++) {
 					show_mt(mlp->amq_mount_tree_list_val[i],
-						 e, &mwid, &dwid, &pwid);
+					    e, &mwid, &dwid, &pwid);
 				}
-				mwid++; dwid++, pwid++;
-				if (e == Calc) e = Short;
-				else if (e == Short) e = ShowDone;
+				mwid++;
+				dwid++;
+				pwid++;
+				if (e == Calc)
+					e = Short;
+				else if (e == Short)
+					e = ShowDone;
 			}
 		} else {
 			fprintf(stderr, "%s: ", __progname);
