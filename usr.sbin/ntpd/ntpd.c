@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.14 2004/08/12 16:33:59 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.15 2004/09/15 00:08:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@ int	check_child(pid_t, const char *);
 int	dispatch_imsg(void);
 void	ntpd_adjtime(double);
 
-int			rfd = -1;
 volatile sig_atomic_t	quit = 0;
 volatile sig_atomic_t	reconfig = 0;
 volatile sig_atomic_t	sigchld = 0;

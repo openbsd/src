@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.28 2004/09/15 00:07:20 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.29 2004/09/15 00:08:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,6 @@
 
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		 ibuf_main;
-struct l_fixedpt	 ref_ts;
 struct ntpd_conf	*conf;
 u_int			 peer_cnt;
 
