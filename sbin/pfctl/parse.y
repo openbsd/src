@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.362 2003/04/13 22:45:28 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.363 2003/04/13 23:34:31 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -202,6 +202,8 @@ struct table_opts {
 	int			init_addr;
 } table_opts;
 
+struct node_hfsc_opts	hfsc_opts;
+
 int	yyerror(const char *, ...);
 int	disallow_table(struct node_host *, const char *);
 int	rule_consistent(struct pf_rule *);
@@ -344,7 +346,7 @@ typedef struct {
 %token	REQUIREORDER
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
-%token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE
+%token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
@@ -381,7 +383,7 @@ typedef struct {
 %type	<v.queue_options>	scheduler
 %type	<v.number>		cbqflags_list cbqflags_item
 %type	<v.number>		priqflags_list priqflags_item
-%type	<v.hfsc_opts>		hfscopts_list hfscopts_item
+%type	<v.hfsc_opts>		hfscopts_list hfscopts_item hfsc_opts
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
@@ -986,10 +988,9 @@ scheduler	: CBQ				{
 			bzero(&$$.data.hfsc_opts,
 			    sizeof(struct node_hfsc_opts));
 		}
-		| HFSC '(' hfscopts_list ')'	{
+		| HFSC '(' hfsc_opts ')'	{
 			$$.qtype = ALTQT_HFSC;
-			memcpy(&$$.data.hfsc_opts, &$3,
-			    sizeof(struct node_hfsc_opts));
+			$$.data.hfsc_opts = $3;
 		}
 		;
 
@@ -1035,23 +1036,66 @@ priqflags_item	: STRING	{
 		}
 		;
 
-hfscopts_list	: hfscopts_item				{
-			$$.flags |= $1.flags;
-		}
-		| hfscopts_list comma hfscopts_item	{
-			$$.flags |= $3.flags;
+hfsc_opts	:	{
+				bzero(&hfsc_opts,
+				    sizeof(struct node_hfsc_opts));
+			}
+		  hfscopts_list				{
+			$$ = hfsc_opts;
 		}
 		;
 
-hfscopts_item	: STRING	{
+hfscopts_list	: hfscopts_item	
+		| hfscopts_list comma hfscopts_item
+		;
+
+hfscopts_item	: LINKSHARE bandwidth				{
+			if (hfsc_opts.linkshare.used) {
+				yyerror("linkshare already specified");
+				YYERROR;
+			}
+			hfsc_opts.linkshare.m2 = $2;
+			hfsc_opts.linkshare.used = 1;
+		}
+		| LINKSHARE '(' bandwidth number bandwidth ')'	{
+			if (hfsc_opts.linkshare.used) {
+				yyerror("linkshare already specified");
+				YYERROR;
+			}
+			hfsc_opts.linkshare.m1 = $3;
+			hfsc_opts.linkshare.d = $4;
+		 	hfsc_opts.linkshare.m2 = $5;
+			hfsc_opts.linkshare.used = 1;
+		}
+		| REALTIME bandwidth				{
+			hfsc_opts.realtime.m2 = $2;
+			hfsc_opts.realtime.used = 1;
+		}
+		| REALTIME '(' bandwidth number bandwidth ')'	{
+			hfsc_opts.realtime.m1 = $3;
+			hfsc_opts.realtime.d = $4;
+			hfsc_opts.realtime.m2 = $5;
+			hfsc_opts.realtime.used = 1;
+		}
+		| UPPERLIMIT bandwidth				{
+			hfsc_opts.upperlimit.m2 = $2;
+			hfsc_opts.upperlimit.used = 1;
+		}
+		| UPPERLIMIT '(' bandwidth number bandwidth ')'	{
+			hfsc_opts.upperlimit.m1 = $3;
+			hfsc_opts.upperlimit.d = $4;
+			hfsc_opts.upperlimit.m2 = $5;
+			hfsc_opts.upperlimit.used = 1;
+		}
+		| STRING	{
 			if (!strcmp($1, "default"))
-				$$.flags = HFCF_DEFAULTCLASS;
+				hfsc_opts.flags |= HFCF_DEFAULTCLASS;
 			else if (!strcmp($1, "red"))
-				$$.flags = HFCF_RED;
+				hfsc_opts.flags |= HFCF_RED;
 			else if (!strcmp($1, "ecn"))
-				$$.flags = HFCF_RED|HFCF_ECN;
+				hfsc_opts.flags |= HFCF_RED|HFCF_ECN;
 			else if (!strcmp($1, "rio"))
-				$$.flags = HFCF_RIO;
+				hfsc_opts.flags |= HFCF_RIO;
 			else {
 				yyerror("unknown hfsc flag \"%s\"", $1);
 				YYERROR;
@@ -3502,6 +3546,7 @@ lookup(char *s)
 		{ "keep",		KEEP},
 		{ "label",		LABEL},
 		{ "limit",		LIMIT},
+		{ "linkshare",		LINKSHARE},
 		{ "log",		LOG},
 		{ "log-all",		LOGALL},
 		{ "loginterface",	LOGINTERFACE},
@@ -3529,6 +3574,7 @@ lookup(char *s)
 		{ "random-id",		RANDOMID},
 		{ "rdr",		RDR},
 		{ "rdr-anchor",		RDRANCHOR},
+		{ "realtime",		REALTIME},
 		{ "reassemble",		FRAGNORM},
 		{ "reply-to",		REPLYTO},
 		{ "require-order",	REQUIREORDER},
@@ -3549,6 +3595,7 @@ lookup(char *s)
 		{ "to",			TO},
 		{ "tos",		TOS},
 		{ "ttl",		TTL},
+		{ "upperlimit",		UPPERLIMIT},
 		{ "user",		USER},
 	};
 	const struct keywords	*p;
