@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.514 2002/06/02 10:07:54 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.515 2002/06/03 16:13:21 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -571,7 +571,7 @@
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic */
-#define	PCI_VENDOR_GUILLEMOT	0x5046		/* Guillemot */
+#define	PCI_VENDOR_GEMTEK	0x5046		/* Gemtek */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
@@ -1200,7 +1200,7 @@
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P02 */
 
 /* Guillemot products */
-#define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
+#define	PCI_PRODUCT_GEMTEK_PR103	0x1001		/* PR103 */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */

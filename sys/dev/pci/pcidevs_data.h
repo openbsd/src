@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.514 2002/06/02 10:07:54 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.515 2002/06/03 16:13:21 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1875,8 +1875,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GL24110P02",
 	},
 	{
-	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
-	    "MAXIRADIO",
+	    PCI_VENDOR_GEMTEK, PCI_PRODUCT_GEMTEK_PR103,
+	    "PR103",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A,
@@ -7375,8 +7375,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Buslogic",
 	},
 	{
-	    PCI_VENDOR_GUILLEMOT,
-	    "Guillemot",
+	    PCI_VENDOR_GEMTEK,
+	    "Gemtek",
 	},
 	{
 	    PCI_VENDOR_S3,
