@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.30 1998/05/22 21:37:04 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.31 1998/05/28 20:25:51 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -523,7 +523,7 @@ tulip_media_link_monitor(
 
     if (mi == NULL) {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-	panic("tulip_media_link_monitor: %s: botch at line %d\n",
+	printf("tulip_media_link_monitor: %s: botch at line %d\n",
 	      tulip_mediums[sc->tulip_media],__LINE__);
 #endif
 	return TULIP_LINK_UNKNOWN;
@@ -808,7 +808,7 @@ tulip_media_poll(
 	    }
 	    default: {
 #if defined(DIAGNOSTIC) || defined(TULIP_DEBUG)
-		panic("tulip_media_poll: botch at line %d\n", __LINE__);
+		printf("tulip_media_poll: botch at line %d\n", __LINE__);
 #endif
 		break;
 	    }
@@ -1462,7 +1462,7 @@ tulip_mii_autonegotiate(
 	}
 	default: {
 #if defined(DIAGNOSTIC)
-	    panic("tulip_media_poll: botch at line %d\n", __LINE__);
+	    printf("tulip_media_poll: botch at line %d\n", __LINE__);
 #endif
 	    break;
 	}
