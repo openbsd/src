@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.4 2002/06/04 20:13:19 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.5 2002/06/04 23:05:26 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -85,6 +85,8 @@ SPLAY_GENERATE(policytree, policy, node, policycompare);
 SPLAY_PROTOTYPE(polnrtree, policy, nrnode, polnrcompare);
 SPLAY_GENERATE(polnrtree, policy, nrnode, polnrcompare);
 
+extern int userpolicy;
+
 char policydir[MAXPATHLEN];
 
 void
@@ -117,7 +119,8 @@ systrace_initpolicy(char *file)
 	SPLAY_INIT(&policyroot);
 	SPLAY_INIT(&polnrroot);
 
-	systrace_setupdir();
+	if (userpolicy)
+		systrace_setupdir();
 
 	if (file != NULL)
 		return (systrace_readpolicy(file));
@@ -261,7 +264,6 @@ int
 systrace_addpolicy(char *name)
 {
 	char *file = NULL;
-	extern int userpolicy;
 
 	if (userpolicy) {
 		file = systrace_policyfilename(policydir, name);
