@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.5 2000/02/01 18:01:41 chris Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.6 2001/02/22 02:01:53 chris Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -256,19 +256,19 @@ lmc_pci_attach(struct device * const parent,
 
 	switch (PCI_CHIPID(ssid)) {
 	case PCI_PRODUCT_LMC_HSSI:
-		printf(": Lan Media Corporation HSSI\n");
+		printf(": HSSI\n");
 		sc->lmc_media = &lmc_hssi_media;
 		break;
 	case PCI_PRODUCT_LMC_DS3:
-		printf(": Lan Media Corporation DS3\n");
+		printf(": DS3\n");
 		sc->lmc_media = &lmc_ds3_media;
 		break;
 	case PCI_PRODUCT_LMC_SSI:
-		printf(": Lan Media Corporation SSI\n");
+		printf(": SSI\n");
 		sc->lmc_media = &lmc_ssi_media;
 		break;
 	case PCI_PRODUCT_LMC_DS1:
-		printf(": Lan Media Corporation T1\n");
+		printf(": T1\n");
 		sc->lmc_media = &lmc_t1_media;
 		break;
 	}
