@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.370 2003/06/28 00:27:10 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.371 2003/06/29 12:25:03 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -99,7 +99,6 @@ struct pf_palist	 pf_pabuf;
 struct pf_altqqueue	*pf_altqs_active;
 struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;
-struct pf_tagnames	 pf_tagnames;
 struct ifnet		*status_ifp;
 
 u_int32_t		 ticket_altqs_active;
