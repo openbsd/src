@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.22 1996/01/07 22:01:50 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.25 1996/01/28 19:48:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -360,7 +360,7 @@ fdattach(pdp, dp, auxp)
 	/*
 	 * enable disk related interrupts
 	 */
-	custom.dmacon = DMAF_SETCLR | DMAF_DISK;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | DMAF_DISK;
 	/* XXX why softint */
 	custom.intena = INTF_SETCLR |INTF_SOFTINT | INTF_DSKBLK;
 	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_FLG;
@@ -1116,6 +1116,12 @@ fdstart(sc)
 	}
 
 	/*
+	 * Mark us as busy now, in case fddone() gets called in one
+	 * of the cases below.
+	 */
+	disk_busy(&sc->dkdev);
+
+	/*
 	 * make sure same disk is loaded
 	 */
 	fdselunit(sc);
@@ -1169,9 +1175,6 @@ fdstart(sc)
 	 * figure trk given blkno
 	 */
 	trk = bp->b_blkno / sc->nsectors;
-
-	/* Instrumentation. */
-	disk_busy(&sc->dkdev);
 
 	/*
 	 * check to see if same as currently cached track
