@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.34 2000/04/21 17:32:24 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.35 2000/04/22 01:53:41 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -59,8 +59,11 @@
 #include <string.h>
 #include <paths.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
+
+#define KEYSIZE_LIMIT	1024
 
 #define ESP_OLD		0x01
 #define ESP_NEW		0x02
@@ -192,7 +195,9 @@ usage()
 	    "\t  -proxy <ip>\t\t\tproxy address to be used\n"
 	    "\t  -spi <val>\t\t\tSPI to be used\n"
 	    "\t  -key <val>\t\t\tkey material to be used\n"
+	    "\t  -keyfile <file>\t\tfile to read key material from\n"
 	    "\t  -authkey <val>\t\tkey material for auth in new esp\n"
+	    "\t  -authkeyfile <file>\t\tfile to read key material from\n"
 	    "\t  -proto <val>\t\t\tsecurity protocol\n"
 	    "\t  -chain\t\t\tSPI chain delete\n"
 	    "\t  -transport <val>\t\tprotocol number for flow\n"
@@ -466,6 +471,112 @@ main(int argc, char **argv)
 	    continue;
 	}
 
+	if (!strcmp(argv[i] + 1, "keyfile") && keyp == NULL &&
+	    (i + 1 < argc))
+	{
+	    struct stat sb;
+	    unsigned char *pptr;
+	    int fd;
+
+	    if (stat(argv[++i], &sb) < 0)
+	    {
+		perror("stat()");
+		exit(1);
+	    }
+
+	    if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
+	    {
+		fprintf(stderr,	"%s: file %s is too %s (must be between 1 and %d bytes).\nb", argv[0], argv[i], sb.st_size ? "large" : "small", KEYSIZE_LIMIT);
+		exit(1);
+	    }
+
+	    pptr = malloc(sb.st_size);
+	    if (pptr == NULL)
+	    {
+		perror("malloc()");
+		exit(1);
+	    }
+
+	    fd = open(argv[i++], O_RDONLY);
+	    if (fd < 0)
+	    {
+		perror("open()");
+		exit(1);
+	    }
+
+	    if (read(fd, pptr, sb.st_size) < sb.st_size)
+	    {
+		perror("read()");
+		exit(1);
+	    }
+
+	    close(fd);
+
+	    if (mode & (AH_NEW | AH_OLD))
+	    {
+		authp = pptr;
+		alen = sb.st_size / 2;
+	    }
+	    else
+	    {
+		keyp = pptr;
+		klen = sb.st_size / 2;
+	    }
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "authkeyfile") && authp == NULL &&
+	    (i + 1 < argc))
+	{
+	    struct stat sb;
+	    unsigned char *pptr;
+	    int fd;
+
+	    if (!(mode & ESP_NEW))
+	    {
+		fprintf(stderr,	"%s: invalid option %s for selected mode\n",
+			argv[0], argv[i]);
+		exit(1);
+	    }
+
+	    if (stat(argv[++i], &sb) < 0)
+	    {
+		perror("stat()");
+		exit(1);
+	    }
+
+	    if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
+	    {
+		fprintf(stderr,	"%s: file %s is too %s (must be between 1 and %d bytes).\n", argv[0], argv[i], sb.st_size ? "large" : "small", KEYSIZE_LIMIT);
+		exit(1);
+	    }
+
+	    authp = malloc(sb.st_size);
+	    if (authp == NULL)
+	    {
+		perror("malloc()");
+		exit(1);
+	    }
+
+	    fd = open(argv[i++], O_RDONLY);
+	    if (fd < 0)
+	    {
+		perror("open()");
+		exit(1);
+	    }
+
+	    if (read(fd, authp, sb.st_size) < sb.st_size)
+	    {
+		perror("read()");
+		exit(1);
+	    }
+
+	    close(fd);
+
+	    alen = sb.st_size / 2;
+	    continue;
+	}
+	
 	if (!strcmp(argv[i] + 1, "authkey") && authp == NULL &&
 	    (i + 1 < argc))
 	{
