@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2003/06/26 21:59:11 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2003/10/17 21:04:59 mcbride Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.38 2003/06/26 21:59:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.39 2003/10/17 21:04:59 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,8 @@ struct nlist nl[] = {
 	{ "_ipcompstat" },
 #define N_RIP6STAT	54
 	{ "_rip6stat" },
+#define N_CARPSTAT	55
+	{ "_carpstats" },
 	{ ""},
 };
 
@@ -206,6 +208,8 @@ struct protox {
 	  etherip_stats,"etherip" },
 	{ -1,		N_IPCOMPSTAT,	1,	0,
 	  ipcomp_stats,	"ipcomp" },
+ 	{ -1,		N_CARPSTAT,	1,	0,
+ 	  carp_stats,	"carp" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };

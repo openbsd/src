@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.80 2003/09/24 21:12:12 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.81 2003/10/17 21:04:57 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.80 2003/09/24 21:12:12 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.81 2003/10/17 21:04:57 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,8 @@ static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.80 2003/09/24 21:12:12 der
 #include <net/if_ieee80211.h>
 
 #include <netatalk/at.h>
+
+#include <netinet/ip_carp.h>
 
 #define	NSIP
 #include <netns/ns.h>
@@ -196,6 +198,11 @@ void	setvlantag(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
 void	vlan_status(void);
+void	carp_status(void);
+void	setcarp_advbase(const char *,int);
+void	setcarp_advskew(const char *, int);
+void	setcarp_passwd(const char *, int);
+void	setcarp_vhid(const char *, int);
 void	fixnsel(struct sockaddr_iso *);
 int	main(int, char *[]);
 int	prefix(void *val, int);
@@ -279,6 +286,10 @@ const struct	cmd {
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
+	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
+	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
+	{ "pass",	NEXTARG,	0,		setcarp_passwd },
+	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
 #endif	/* INET_ONLY */
 	/* giftunnel is for backward compat */
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
@@ -595,6 +606,8 @@ printif(struct ifreq *ifrm, int ifaliases)
 
 	namep = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+//printf("printif: %s\n", ifa->ifa_name);
+
 		if (ifrm && strncmp(ifrm->ifr_name, ifa->ifa_name,
 		    sizeof(ifrm->ifr_name)))
 			continue;
@@ -1625,7 +1638,8 @@ status(int link, struct sockaddr_dl *sdl)
 		    (struct ether_addr *)LLADDR(sdl)));
 
 #ifndef	INET_ONLY
-	vlan_status();
+	/* vlan_status(); */
+	carp_status();
 #endif
 	ieee80211_status();
 
@@ -2583,6 +2597,124 @@ unsetvlandev(const char *val, int d)
 	return;
 }
 
+
+static const char *carp_states[] = { CARP_STATES };
+
+void
+carp_status()
+{
+	const char *state;
+	struct carpreq carpr;
+
+	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		return;
+
+	if (carpr.carpr_vhid > 0) {
+		if (carpr.carpr_state > CARP_MAXSTATE)
+			state = "<UNKNOWN>";
+		else
+			state = carp_states[carpr.carpr_state];
+
+		printf("\tcarp: %s vhid %d advbase %d advskew %d\n",
+		    state, carpr.carpr_vhid, carpr.carpr_advbase,
+		    carpr.carpr_advskew);
+	}
+
+        return;
+
+}
+
+void
+setcarp_passwd(const char *val, int d)
+{
+	struct carpreq carpr;
+
+	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	/* XXX Should hash the password into the key here, perhaps? */
+	strlcpy(carpr.carpr_key, val, CARP_KEY_LEN);
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+
+	return;
+}
+
+void
+setcarp_vhid(const char *val, int d)
+{
+	int vhid;
+	struct carpreq carpr;
+
+	vhid = atoi(val);
+
+	if (vhid <= 0)
+		errx(1, "vhid must be greater than 0");
+
+	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	carpr.carpr_vhid = vhid;
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+
+	return;
+}
+
+void
+setcarp_advskew(const char *val, int d)
+{
+	int advskew;
+	struct carpreq carpr;
+
+	advskew = atoi(val);
+
+	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	carpr.carpr_advskew = advskew;
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+
+	return;
+}
+
+void
+setcarp_advbase(const char *val, int d)
+{
+	int advbase;
+	struct carpreq carpr;
+
+	advbase = atoi(val);
+
+	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	carpr.carpr_advbase = advbase;
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+
+	return;
+}
 #endif /* INET_ONLY */
 
 #ifdef INET6

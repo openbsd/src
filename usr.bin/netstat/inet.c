@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.68 2003/09/04 20:05:19 tedu Exp $	*/
+/*	$OpenBSD: inet.c,v 1.69 2003/10/17 21:04:59 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.68 2003/09/04 20:05:19 tedu Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.69 2003/10/17 21:04:59 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.68 2003/09/04 20:05:19 tedu Exp $";
 #include <netinet/ip_ipip.h>
 #include <netinet/ip_ipcomp.h>
 #include <netinet/ip_ether.h>
+#include <netinet/ip_carp.h>
 
 #include <arpa/inet.h>
 #include <limits.h>
@@ -832,6 +833,39 @@ ipip_stats(u_long off, char *name)
 	p(ipips_obytes, "\t%qu output byte%s\n");
 	p(ipips_family, "\t%u protocol family mismatche%s\n");
 	p(ipips_unspec, "\t%u attempt%s to use tunnel with unspecified endpoint(s)\n");
+#undef p
+}
+
+/* 
+ * Dump CARP statistics structure.
+ */
+void
+carp_stats(u_long off, char *name)
+{
+	struct carpstats carpstat;
+
+	if (off == 0)
+		return;
+	kread(off, (char *)&carpstat, sizeof(carpstat));
+	printf("%s:\n", name);
+
+#define p(f, m) if (carpstat.f || sflag <= 1) \
+	printf(m, carpstat.f, plural(carpstat.f))
+#define p2(f, m) if (carpstat.f || sflag <= 1) \
+	printf(m, carpstat.f)
+
+	p(carps_ipackets, "\t%u packet%s received\n");
+	p(carps_hdrops, "\t\t%u packet%s shorter than header\n");
+	p(carps_badsum, "\t\t%u discarded for bad checksum%s\n");
+	p(carps_badver,	"\t\t%u discarded packet%s with a bad version\n");
+	p2(carps_badlen, "\t\t%u discarded because packet too short\n");
+	p2(carps_badauth, "\t\t%u discarded for bad authentication\n");
+	p2(carps_badvhid, "\t\t%u discarded for bad vhid\n");
+	p2(carps_badaddrs, "\t\t%u discarded because of a bad address list\n");
+	p(carps_opackets, "\t%u packet%s sent\n");
+#if notyet
+	p(carps_ostates, "\t\t%s state update%s sent\n");
+#endif
 #undef p
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.33 2003/08/18 11:01:41 dhartmei Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.34 2003/10/17 21:04:58 mcbride Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -137,6 +137,11 @@
 
 #if defined(CCITT)
 extern struct ifqueue pkintrq;
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #define senderr(e) { error = (e); goto bad;}
@@ -426,6 +431,15 @@ fddi_output(ifp, m0, dst, rt0)
 #if NBPFILTER > 0
   queue_it:
 #endif
+#if NCARP > 0
+	if (ifp->if_carp) { 
+		int error;
+		error = carp_output(ifp, m, NULL, NULL);
+		if (error)
+			return (error);
+	}
+#endif
+
 	if (hdrcmplt)
 		bcopy((caddr_t)esrc, (caddr_t)fh->fddi_shost,
 		    sizeof(fh->fddi_shost));

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 2003/05/14 14:24:43 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.96 2003/10/17 21:04:58 mcbride Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -89,6 +89,7 @@ pseudo-device	bridge	2	# network bridging support
 pseudo-device	vlan 	2	# IEEE 802.1Q VLAN 
 pseudo-device	gre	1	# GRE encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
+pseudo-device	carp	4	# CARP protocol support
 
 pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline

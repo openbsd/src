@@ -1,0 +1,116 @@
+.\"	$OpenBSD: carp.4,v 1.1 2003/10/17 21:04:58 mcbride Exp $
+.\"
+.\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd October 16, 2003
+.Dt CARP
+.Os
+.Sh NAME
+.Nm carp
+.Nd Common Address Redundancy Protocol
+.Sh SYNOPSIS
+.Cd "pseudo-device carp" Op Ar count
+.Sh DESCRIPTION
+The
+.Nm
+interface is a pseudo-device which implements and controls the 
+CARP protocol.
+.Pp
+To use
+.Nm carp ,
+the administrator needs to configure at minimum a a common virtual host id and
+virtual host IP address on each machine which is to take part in the virtual
+group. Additinal parameters can also be set on a per-interface basis:
+.Ar advbase
+and
+.Ar advskew ,
+which are used to control how frequently the host sends advertisments when it
+is the master for a virtual host, and
+.Ar pass
+which is used to authenticate carp advertisements.
+These configurations can be done by using
+.Xr ifconfig 8 ,
+or through the
+.Dv SIOCSVH
+ioctl.
+.Pp
+Additionally, there are a number of global parameters which can be set using
+.Xr sysctl 8 .
+.Sh EXAMPLES
+.Pp
+In order to set up an ARP balanced virtual host, it is necessary to configure
+one virtual host for each physical host which you would like to have actively
+responding to arp requests and thus handling the traffic.
+In the following example, we will configure 2 hosts to provide balancing and
+failover for the IP address 192.168.1.10.
+.Pp
+First, we configure the
+.Nm
+interfaces on Host A.
+The
+.Ar advskew
+of 100 on the second virtual host means that it's advertisements will be sent
+out slightly less frequently.
+.Bd -literal -offset indent
+# ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat 192.168.1.10
+.Ed
+.Pp
+Now we configure Host B.
+The configuration is identical, except we skew virtual host 1 instead.
+.Bd -literal -offset indent
+# ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat 192.168.1.10
+# ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.1.10
+.Ed
+.Pp
+Finally, the ARP balancing feature must be enabled on both hosts:
+.Bd -literal -offset indent
+# sysctl -w net.inet.carp.arpbalance=1
+.Ed
+.Pp
+When the hosts recieve an ARP request for 192.168.1.10, they both select
+one of the virtual hosts based on the source IP address in the request.
+The host which is master of that virtual host will reply to the request, the
+other will ignore it.
+.Pp
+Because the host which advertises most often will tend to be the master, the
+result of this is that Host A will tend to be the master for the virtual host
+with id 1, while Host B will tend to be the master for the virtual host with id
+2, and therefore arp requests and subsequent IP traffic are balanced across the
+two hosts. If one of the hosts fails, the other will take over the virtual MAC
+address, and begin answering ARP requests on it's behalf.
+.Pp
+Note: ARP balancing only works on the local network segment. Connections from
+which cross a router to arrive on the local netowrk segment will all appear
+to come from that router and be balanced to the same host.
+.Sh SEE ALSO
+.Xr inet 4 ,
+.Xr ifconfig 8 ,
+.Xr sysctl 8 ,
+.Xr sysctl 3
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Ox 3.5 .

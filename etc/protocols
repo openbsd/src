@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.17 2003/01/16 19:49:52 rohee Exp $
+#	$OpenBSD: protocols,v 1.18 2003/10/17 21:04:57 mcbride Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/assignments/protocol-numbers
@@ -118,7 +118,7 @@ ipcomp	108	IPComp		# IP Payload Compression Protocol
 snp	109	SNP		# Sitara Networks Protocol
 compaq-peer	110	Compaq-Peer	# Compaq Peer Protocol
 ipx-in-ip	111	IPX-in-IP	# IPX in IP
-vrrp	112	VRRP		# Virtual Router Redundancy Protocol
+carp	112	CARP	vrrp	# Common Address Redundancy Protocol
 pgm	113	PGM		# PGM Reliable Transport Protocol
 #	114			# any 0-hop protocol
 l2tp	115	L2TP		# Layer Two Tunneling Protocol

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.72 2003/08/12 05:09:17 mickey Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.73 2003/10/17 21:04:59 mcbride Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -597,6 +597,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
 #define	PACKET_TAG_PF_QID			14 /* PF queue id */
 #define PACKET_TAG_PF_TAG			15 /* PF tags */
+#define PACKET_TAG_CARP				16 /* CARP info */
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */

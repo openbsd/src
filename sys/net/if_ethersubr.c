@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.70 2003/08/18 11:01:41 dhartmei Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.71 2003/10/17 21:04:58 mcbride Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -116,6 +116,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif /* NVLAN > 0 */
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #ifdef INET6
 #ifndef INET
@@ -555,6 +560,15 @@ ether_output(ifp, m0, dst, rt0)
 	}
 #endif
 
+#if NCARP > 0
+	if (ifp->if_carp) {
+		int error;
+		error = carp_output(ifp, m, dst, NULL);
+		if (error)
+			return (error);
+	}
+#endif
+
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
 	s = splimp();
@@ -679,6 +693,12 @@ ether_input(ifp, eh, m)
 		return;
        }
 #endif /* NVLAN > 0 */
+
+#if NCARP > 0
+	if (ifp->if_carp &&
+	    carp_forus(ifp->if_carp, eh->ether_dhost))
+		goto decapsulate;
+#endif /* NCARP > 0 */
 
 	ac = (struct arpcom *)ifp;
 

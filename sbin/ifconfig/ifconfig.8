@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.67 2003/07/10 19:56:49 avsm Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.68 2003/10/17 21:04:57 mcbride Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -327,6 +327,37 @@ If the driver is a vlan pseudo device, disassociate the physical interface
 from it.
 This breaks the link between the vlan interface and its parent,
 clears its vlan tag, flags and its link address and shuts the interface down.
+.It Cm vhid Ar n
+If the driver is a carp pseudo device, set the virtual host id to
+.Ar n .
+Acceptable values are 1 to 255.
+.It Cm advintv Ar n
+If the driver is a carp pseudo device, set the base advertisement interval to
+.Ar n
+seconds.
+This is an 8-bit number; the default value is 1 second.
+.It Cm advskew Ar n
+If the driver is a carp pseudo device, skew the advertisement inteval by
+.Ar n .
+This is an 8-bit number; the default value is 0.
+.Pp
+Taken togther the 
+.Cm advbase
+and
+.Cm advskew
+indicate how frequently, in seconds, the host will advertise the fact that it
+considers itself master of the virtual host.
+The formula is 
+.Cm advbase 
+\+
+.Cm ( advskew
+/ 255 ).
+If the master does not advertise within three times this interval, this host
+will begin advertising as master.
+.It Cm pass Ar passphrase
+If the driver is a carp pseudo device, set the athentication key to 
+.Ar passphrase .
+There is no passphrase by default.
 .It Cm metric Ar n
 Set the routing metric of the interface to
 .Ar n ,
@@ -564,6 +595,9 @@ Configure the xl0 interface to use 100baseTX, full duplex.
 .It Cm # ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
 Configure the vlan0 interface for IP address 192.168.254.1, vlan tag 4,
 and vlan parent device fxp0.
+.Pp
+.It Cm # ifconfig carp0 vhid 1 192.168.10.1
+Configure the carp0 interface for IP address 192.168.10.1, virtual host id 1.
 .El
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exist, the

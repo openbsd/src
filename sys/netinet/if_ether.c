@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.49 2003/09/24 21:11:34 itojun Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.50 2003/10/17 21:04:58 mcbride Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
  */
 
 #ifdef INET
+#include "carp.h"
 
 #include "bridge.h"
 
@@ -59,6 +60,9 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #define SIN(s) ((struct sockaddr_in *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
@@ -89,9 +93,9 @@ int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
 
 /* revarp state */
-static struct in_addr myip, srv_ip;
-static int myip_initialized = 0;
-static int revarp_in_progress = 0;
+struct in_addr myip, srv_ip;
+int myip_initialized = 0;
+int revarp_in_progress = 0;
 struct ifnet *myip_ifp = NULL;
 
 #ifdef DDB
@@ -515,6 +519,7 @@ in_arpinput(m)
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
+	u_int8_t *enaddr = NULL;
 	int op;
 
 	ea = mtod(m, struct ether_arp *);
@@ -550,6 +555,16 @@ in_arpinput(m)
 		    m->m_pkthdr.rcvif->if_bridge == ia->ia_ifp->if_bridge)
 			bridge_ia = ia;
 #endif
+
+#if NCARP > 0
+		if (ac->ac_if.if_carp) {
+			if (carp_iamatch(ac->ac_if.if_carp, ia,
+			    &isaddr, &enaddr)) 
+				break;
+			else
+				goto out;
+		}
+#endif
 	}
 
 #if NBRIDGE > 0
@@ -582,10 +597,11 @@ in_arpinput(m)
 	if (ia == NULL)
 		goto out;
 
+	if (!enaddr)
+		enaddr = ac->ac_enaddr;
 	myaddr = ia->ia_addr.sin_addr;
 
-	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)ac->ac_enaddr,
-	    sizeof (ea->arp_sha)))
+	if (!bcmp((caddr_t)ea->arp_sha, enaddr, sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
 	if (ETHER_IS_MULTICAST (&ea->arp_sha[0])) {
 		if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
@@ -609,7 +625,7 @@ in_arpinput(m)
 	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen) {
-		    if (bcmp((caddr_t)ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
+		    if (bcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
 		  	if (rt->rt_flags & RTF_PERMANENT_ARP) {
 				log(LOG_WARNING,
 				   "arp: attempt to overwrite permanent "
@@ -645,7 +661,7 @@ in_arpinput(m)
 			ac->ac_if.if_xname);
 		    goto out;
 		}
-		bcopy((caddr_t)ea->arp_sha, LLADDR(sdl),
+		bcopy(ea->arp_sha, LLADDR(sdl),
 		    sdl->sdl_alen = sizeof(ea->arp_sha));
 		if (rt->rt_expire)
 			rt->rt_expire = time.tv_sec + arpt_keep;
@@ -665,30 +681,25 @@ reply:
 	}
 	if (itaddr.s_addr == myaddr.s_addr) {
 		/* I am the target */
-		bcopy((caddr_t)ea->arp_sha, (caddr_t)ea->arp_tha,
-		    sizeof(ea->arp_sha));
-		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)ea->arp_sha,
-		    sizeof(ea->arp_sha));
+		bcopy(ea->arp_sha, ea->arp_tha, sizeof(ea->arp_sha));
+		bcopy(enaddr, ea->arp_sha, sizeof(ea->arp_sha));
 	} else {
 		la = arplookup(itaddr.s_addr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
-		bcopy((caddr_t)ea->arp_sha, (caddr_t)ea->arp_tha,
-		    sizeof(ea->arp_sha));
+		bcopy(ea->arp_sha, ea->arp_tha, sizeof(ea->arp_sha));
 		sdl = SDL(rt->rt_gateway);
-		bcopy(LLADDR(sdl), (caddr_t)ea->arp_sha, sizeof(ea->arp_sha));
+		bcopy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
 	}
 
-	bcopy((caddr_t)ea->arp_spa, (caddr_t)ea->arp_tpa, sizeof(ea->arp_spa));
-	bcopy((caddr_t)&itaddr, (caddr_t)ea->arp_spa, sizeof(ea->arp_spa));
+	bcopy(ea->arp_spa, ea->arp_tpa, sizeof(ea->arp_spa));
+	bcopy(&itaddr, ea->arp_spa, sizeof(ea->arp_spa));
 	ea->arp_op = htons(ARPOP_REPLY);
 	ea->arp_pro = htons(ETHERTYPE_IP); /* let's be sure! */
 	eh = (struct ether_header *)sa.sa_data;
-	bcopy((caddr_t)ea->arp_tha, (caddr_t)eh->ether_dhost,
-	    sizeof(eh->ether_dhost));
-	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
-	    sizeof(eh->ether_shost));
+	bcopy(ea->arp_tha, eh->ether_dhost, sizeof(eh->ether_dhost));
+	bcopy(enaddr, eh->ether_shost, sizeof(eh->ether_shost));
 	eh->ether_type = htons(ETHERTYPE_ARP);
 	sa.sa_family = AF_UNSPEC;
 	sa.sa_len = sizeof(sa);

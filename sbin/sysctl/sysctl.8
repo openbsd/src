@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.108 2003/10/17 09:46:48 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.109 2003/10/17 21:04:57 mcbride Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -244,6 +244,10 @@ privilege can change the value.
 .It net.inet.mobileip.allow	integer	yes
 .It net.inet.etherip.allow	integer	yes
 .It net.inet.ipcomp.enable	integer	yes
+.It net.inet.carp.allow	integer	yes
+.It net.inet.carp.preempt	integer	yes
+.It net.inet.carp.log	integer	yes
+.It net.inet.carp.arpbalance	integer	yes
 .It net.inet6.ip6.forwarding	integer	yes
 .It net.inet6.ip6.redirect	integer	yes
 .It net.inet6.ip6.hlim	integer	yes

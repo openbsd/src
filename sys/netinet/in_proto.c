@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.36 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.37 2003/10/17 21:04:58 mcbride Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -176,6 +176,11 @@
 #include <net/if_gre.h>
 #endif
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
+
 extern	struct domain inetdomain;
 
 struct protosw inetsw[] = {
@@ -299,6 +304,13 @@ struct protosw inetsw[] = {
   0,            0,              0,              0,		ipmobile_sysctl
 },
 #endif /* NGRE > 0 */
+#if NCARP > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
+  carp_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,		0,		0,		0,		carp_sysctl
+},
+#endif /* NCARP > 0 */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,

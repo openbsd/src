@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.57 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: in.h,v 1.58 2003/10/17 21:04:58 mcbride Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 #define IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
+#define	IPPROTO_CARP		112		/* CARP */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 
 #define	IPPROTO_MAX		256
@@ -198,6 +199,7 @@ struct in_addr {
 #define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
 #define	INADDR_ALLROUTERS_GROUP __IPADDR(0xe0000002)	/* 224.0.0.2 */
+#define	INADDR_CARP_GROUP	__IPADDR(0xe0000012)	/* 224.0.0.18 */
 #define INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
@@ -312,7 +314,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_IPCOMP + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_CARP + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -424,6 +426,10 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "ipcomp", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "carp", CTLTYPE_NODE }, \
 }
 
 /*

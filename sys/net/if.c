@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.71 2003/10/01 05:06:06 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.72 2003/10/17 21:04:58 mcbride Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 
 #include "bpfilter.h"
 #include "bridge.h"
+#include "carp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +104,10 @@
 
 #if NBRIDGE > 0
 #include <net/if_bridge.h>
+#endif
+
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 void	if_attachsetup(struct ifnet *);
@@ -398,6 +403,12 @@ if_detach(ifp)
 	/* Remove the interface from any bridge it is part of.  */
 	if (ifp->if_bridge)
 		bridge_ifdetach(ifp);
+#endif
+
+#if NCARP > 0
+	/* Remove the interface from any carp group it is a part of.  */
+	if (ifp->if_carp)
+		carp_ifdetach(ifp);
 #endif
 
 #if NBPFILTER > 0
