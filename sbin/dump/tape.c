@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.7 1998/04/26 18:11:04 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.8 1999/02/20 21:46:06 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.7 1998/04/26 18:11:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.8 1999/02/20 21:46:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -481,7 +481,7 @@ rollforward()
 			q += q->count;
 		}
 		if (prev == NULL)
-			quit("rollforward: protocol botch");
+			quit("rollforward: protocol botch\n");
 		if (prev->dblk != 0)
 			prev->count -= 1;
 		else

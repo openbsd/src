@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 1998/11/24 01:25:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 1999/02/20 21:46:05 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -409,10 +409,10 @@ main(argc, argv)
 	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
-		quit("dev_bsize (%d) is not a power of 2", dev_bsize);
+		quit("dev_bsize (%d) is not a power of 2\n", dev_bsize);
 	tp_bshift = ffs(TP_BSIZE) - 1;
 	if (TP_BSIZE != (1 << tp_bshift))
-		quit("TP_BSIZE (%d) is not a power of 2", TP_BSIZE);
+		quit("TP_BSIZE (%d) is not a power of 2\n", TP_BSIZE);
 #ifdef FS_44INODEFMT
 	if (sblock->fs_inodefmt >= FS_44INODEFMT)
 		spcl.c_flags |= DR_NEWINODEFMT;
