@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.88 2004/02/26 05:52:16 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.89 2004/02/27 19:07:16 hshoexer Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -85,7 +85,7 @@ and transforms.
 .Pp
 For Main Mode:
 .Bd -filled -compact
-.Ar {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5}][-{DSS,RSA_SIG}]
+.Ar {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14}][-{DSS,RSA_SIG}]
 .Ed
 .Pp
 For Quick Mode:
@@ -97,7 +97,7 @@ For Quick Mode:
     {proto}  is either ESP or AH
     {cipher} is either DES, 3DES, CAST, BLF or AES
     {hash}   is either MD5, SHA, RIPEMD, SHA2-{256,384,512}
-    {group}  is either GRP1, GRP2 or GRP5
+    {group}  is either GRP1, GRP2, GRP5 or GRP14
 .Ed
 .Pp
 For example, 3DES-SHA means: 3DES encryption, SHA hash, and authorization by
@@ -105,7 +105,7 @@ pre-shared keys.
 Similarly, QM-ESP-3DES-SHA-PFS-SUITE means: ESP protocol, 3DES encryption,
 SHA hash, and use Perfect Forward Secrecy.
 .Pp
-Unless explicitly stated with -GRP1, 2 or 5, transforms and PFS suites
+Unless explicitly stated with -GRP1, 2, 5 or 14 transforms and PFS suites
 use DH group 2.
 There are currently no predefined ESP+AH Quick Mode suites.
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.60 2004/01/06 00:22:48 hshoexer Exp $	*/
+/*	$OpenBSD: conf.c,v 1.61 2004/02/27 19:07:16 hshoexer Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -322,14 +322,14 @@ conf_parse (int trans, char *buf, size_t sz)
  *
  * Resulting section names can be:
  *  For main mode:
- *     {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5}][-{DSS,RSA_SIG}]
+ *     {DES,BLF,3DES,CAST,AES}-{MD5,SHA}[-GRP{1,2,5,14}][-{DSS,RSA_SIG}]
  *  For quick mode:
  *     QM-{proto}[-TRP]-{cipher}[-{hash}][-PFS[-{group}]]-SUITE
  *     where
  *       {proto}  = ESP, AH
  *       {cipher} = DES, 3DES, CAST, BLF, AES
  *       {hash}   = MD5, SHA, RIPEMD, SHA2-{-256,384,512}
- *       {group}  = GRP1, GRP2, GRP5
+ *       {group}  = GRP1, GRP2, GRP5, GRP14
  *
  * DH group defaults to MODP_1024.
  *
@@ -392,7 +392,7 @@ conf_load_defaults (int tr)
   char *mm_hash[]   = { "MD5", "SHA", 0 };
   char *mm_enc[]    = { "DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
 			"CAST_CBC", "AES_CBC", 0 };
-  char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", 0 };
+  char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", "MODP_2048", 0 };
   char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", 0 };
   char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
 			"HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512",
@@ -401,7 +401,7 @@ conf_load_defaults (int tr)
   /* Abbreviations to make section names a bit shorter.  */
   char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", 0 };
   char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", "AES", 0 };
-  char *dh_group_p[]= { "-GRP1", "-GRP2", "-GRP5", "", 0 };
+  char *dh_group_p[]= { "-GRP1", "-GRP2", "-GRP5", "-GRP14", "", 0 };
   char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", 0 };
   char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD",
                         "-SHA2-256", "-SHA2-384", "-SHA2-512",
