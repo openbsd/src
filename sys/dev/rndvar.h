@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.4 1996/09/06 08:36:14 mickey Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.5 1997/01/05 11:08:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -50,8 +50,8 @@
 
 extern void add_mouse_randomness __P((u_int32_t));
 extern void add_net_randomness __P((int));
-extern void add_blkdev_randomness __P((dev_t));
-extern void add_tty_randomness __P((dev_t, int));
+extern void add_disk_randomness __P((u_int32_t));
+extern void add_tty_randomness __P((int));
 
 extern void get_random_bytes __P((void *, size_t));
 extern u_int32_t arc4random __P((void));

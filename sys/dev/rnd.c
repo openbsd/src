@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.13 1997/01/01 16:16:13 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.14 1997/01/05 11:08:58 niklas Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -129,24 +129,19 @@
  * 
  * 	void add_mouse_randomness(u_int32_t mouse_data);
  * 	void add_net_randomness(int isr);
- *	void add_tty_randomness(dev_t dev, int c);
- * 	void add_blkdev_randomness(int irq);
- * 
- * add_keyboard_randomness() uses the inter-keypress timing, as well as the
- * scancode as random inputs into the "entropy pool".
+ *	void add_tty_randomness(int c);
+ * 	void add_disk_randomness(u_int32_t n);
  * 
  * add_mouse_randomness() uses the mouse interrupt timing, as well as
  * the reported position of the mouse from the hardware.
  *
- * add_interrupt_randomness() uses the inter-interrupt timing as random
- * inputs to the entropy pool.  Note that not all interrupts are good
- * sources of randomness!  For example, the timer interrupts is not a
- * good choice, because the periodicity of the interrupts is to
- * regular, and hence predictable to an attacker.  Disk interrupts are
- * a better measure, since the timing of the disk interrupts are more
- * unpredictable.
+ * add_net_randomness() times the finishing time of net input.
  * 
- * add_blkdev_randomness() times the finishing time of block requests.
+ * add_tty_randomness() uses the inter-keypress timing, as well as the
+ * character as random inputs into the "entropy pool".
+ * 
+ * add_disk_randomness() times the finishing time of disk requests as well
+ * as feeding both xfer size & time into the entropy pool.
  * 
  * All of these routines try to estimate how many bits of randomness a
  * particular randomness source.  They do this by keeping track of the
@@ -236,6 +231,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -311,7 +307,7 @@ struct arc4_stream {
 
 /* tags for different random sources */
 #define	ENT_NET		0x100
-#define	ENT_BLKDEV	0x200
+#define	ENT_DISK	0x200
 #define ENT_TTY		0x300
 
 static struct random_bucket random_state;
@@ -319,21 +315,22 @@ struct arc4_stream arc4random_state;
 static u_int32_t random_pool[POOLWORDS];
 static struct timer_rand_state mouse_timer_state;
 static struct timer_rand_state extract_timer_state;
-static struct timer_rand_state net_timer_state[32];	/* XXX */
-static struct timer_rand_state *blkdev_timer_state;
-static struct timer_rand_state *tty_timer_state;
-static int	rnd_sleep = 0;
+static struct timer_rand_state disk_timer_state;
+static struct timer_rand_state net_timer_state;
+static struct timer_rand_state tty_timer_state;
+static int rnd_sleep = 0;
 
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-static inline void add_entropy_word
-	__P((struct random_bucket *r, const u_int32_t input));
-static void add_timer_randomness __P((struct random_bucket *r,
-	struct timer_rand_state *state, u_int num));
-static inline int extract_entropy
-	__P((struct random_bucket *r, char *buf, int nbytes));
+static __inline void add_entropy_word __P((struct random_bucket *,
+	    const u_int32_t));
+void	add_timer_randomness __P((struct random_bucket *,
+	    struct timer_rand_state *, u_int));
+static __inline int extract_entropy __P((struct random_bucket *, char *, int));
+void	arc4_init __P((struct arc4_stream *, u_char *, int));
+static __inline u_char arc4_getbyte __P((struct arc4_stream *));
 
 /* Arcfour random stream generator.  This code is derived from section
  * 17.1 of Applied Cryptography, second edition, which describes a
@@ -353,7 +350,7 @@ static inline int extract_entropy
  * RC4 is a registered trademark of RSA Laboratories.
  */
 
-static void
+void
 arc4_init (struct arc4_stream *as, u_char *data, int len)
 {
 	int n;
@@ -369,7 +366,7 @@ arc4_init (struct arc4_stream *as, u_char *data, int len)
 	}
 }
 
-static inline u_char
+static __inline u_char
 arc4_getbyte (struct arc4_stream *as)
 {
 	u_char si, sj;
@@ -401,12 +398,6 @@ randomattach(void)
 	random_state.add_ptr = 0;
 	random_state.entropy_count = 0;
 	random_state.pool = random_pool;
-	blkdev_timer_state = malloc(nblkdev*sizeof(*blkdev_timer_state),
-	    M_DEVBUF, M_WAITOK);
-	bzero(blkdev_timer_state, nblkdev*sizeof(*blkdev_timer_state));
-	tty_timer_state = malloc(nchrdev*sizeof(*tty_timer_state),
-	    M_DEVBUF, M_WAITOK);
-	bzero(tty_timer_state, nchrdev*sizeof(*tty_timer_state));
 	extract_timer_state.dont_count_entropy = 1;
 
 	for (i = 0; i < 256; i++)
@@ -449,7 +440,7 @@ randomclose(dev, flag, mode, p)
  * scancodes, for example), the upper bits of the entropy pool don't
  * get affected. --- TYT, 10/11/95
  */
-static inline void
+static __inline void
 add_entropy_word(r, input)
 	struct random_bucket	*r;
 	const u_int32_t		input;
@@ -492,7 +483,7 @@ add_entropy_word(r, input)
  * are used for a high-resolution timer.
  *
  */
-static void
+void
 add_timer_randomness(r, state, num)
 	struct random_bucket	*r;
 	struct timer_rand_state	*state;
@@ -501,15 +492,12 @@ add_timer_randomness(r, state, num)
 	int	delta, delta2;
 	u_int	nbits;
 	u_long	time;
+	struct timeval	tv;
 
-	{
-		struct timeval	tv;
-		microtime(&tv);
-		
-		time = tv.tv_usec ^ tv.tv_sec;
-	}
+	microtime(&tv);
+	time = tv.tv_usec ^ tv.tv_sec;
 
-	add_entropy_word(r, (u_int32_t) num);
+	add_entropy_word(r, (u_int32_t)num);
 	add_entropy_word(r, time);
 
 	/*
@@ -559,55 +547,38 @@ void
 add_net_randomness(isr)
 	int	isr;
 {
-	if (isr >= sizeof(net_timer_state)/sizeof(*net_timer_state))
-		return;
-
-	add_timer_randomness(&random_state, &net_timer_state[isr],
-	    ENT_NET + isr);
+	add_timer_randomness(&random_state, &net_timer_state, ENT_NET + isr);
 }
 
 void
-add_blkdev_randomness(dev)
-	dev_t	dev;
+add_disk_randomness(n)
+	u_int32_t n;
 {
-	/*
-	 * Happens before randomattach() has been run and then later
-	 * when NODEV buffers get fed to biodone().  XXX Howcome?
-	 * XXX don't count on mfs (major==255)
-	 */
-	if (dev == NODEV || major(dev) == 255 || blkdev_timer_state == NULL)
+	u_int8_t c;
+
+	/* Has randomattach run yet?  */
+	if (random_state.pool == NULL)
 		return;
 
-#ifdef DIAGNOSTIC
-	if (major(dev) >= nblkdev)
-		panic("add_blkdev_randomness(dev = 0x%x): bad device", dev);
-#endif
-
-	add_timer_randomness(&random_state, &blkdev_timer_state[major(dev)],
-	    ENT_BLKDEV + major(dev));
+	c = n & 0xff;
+	n >>= 8;
+	c ^= n & 0xff;
+	n >>= 8;
+	c ^= n & 0xff;
+	n >>= 8;
+	c ^= n & 0xff;
+	add_timer_randomness(&random_state, &disk_timer_state, ENT_DISK + c);
 }
 
 void
-add_tty_randomness(dev, c)
-	dev_t	dev;
+add_tty_randomness(c)
 	int	c;
 {
-	/*
-	 * XXX does this routine ever get called before randomattach?
-	 * Well, this is a safety belt against that condition.  Should
-	 * we check for NODEV too, like in the block device case?
-	 */
-	if (tty_timer_state == NULL)
+	/* Has randomattach run yet?  */
+	if (random_state.pool == NULL)
 		return;
 
-#ifdef DIAGNOSTIC
-	if (major(dev) >= nchrdev)
-		panic("add_tty_randomness(dev = 0x%x, c = %d): bad device",
-		    dev, c);
-#endif
-
-	add_timer_randomness(&random_state, &tty_timer_state[major(dev)],
-	    ENT_TTY + c);
+	add_timer_randomness(&random_state, &tty_timer_state, ENT_TTY + c);
 }
 
 #if POOLWORDS % 16
@@ -619,7 +590,7 @@ add_tty_randomness(dev, c)
  * bits of entropy are left in the pool, but it does not restrict the
  * number of bytes that are actually obtained.
  */
-static inline int
+static __inline int
 extract_entropy(r, buf, nbytes)
 	struct random_bucket *r;
 	char	*buf;
@@ -793,7 +764,7 @@ randomselect(dev, rw, p)
 	return 0;
 }
 
-static inline void
+static __inline void
 arc4_stir (struct arc4_stream *as)
 {
 	int rsec = random_state.entropy_count >> 3;

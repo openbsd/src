@@ -56,6 +56,8 @@
 #include <sys/dkio.h>
 #include <sys/dkstat.h>		/* XXX */
 
+#include <dev/rndvar.h>
+
 /*
  * A global list of all disks attached to the system.  May grow or
  * shrink over time.
@@ -390,6 +392,8 @@ disk_unbusy(diskp, bcount)
 		diskp->dk_xfer++;
 	}
 	diskp->dk_seek++;
+
+	add_disk_randomness(bcount ^ diff_time.tv_usec);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.24 1996/12/19 07:54:06 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.25 1997/01/05 11:09:02 niklas Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ ttyinput(c, tp)
 	register u_char *cc;
 	int i, error;
 
-	add_tty_randomness(tp->t_dev, c);
+	add_tty_randomness(tp->t_dev << 8 | c);
 	/*
 	 * If receiver is not enable, drop it.
 	 */

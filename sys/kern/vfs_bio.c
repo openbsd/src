@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.12 1996/10/19 13:26:02 mickey Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.13 1997/01/05 11:09:01 niklas Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <dev/rndvar.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -959,8 +958,6 @@ biodone(bp)
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
-
-	add_blkdev_randomness(bp->b_dev);	/* grow universe entropy */
 
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);
