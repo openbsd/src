@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.5 2000/05/18 03:46:14 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.6 2000/06/29 03:15:36 aaron Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
 
 /*
@@ -728,9 +728,6 @@ ray_detach(self, flags)
 
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	powerhook_disestablish(sc->sc_pwrhook);
