@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.8 2000/05/19 16:36:03 mickey Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.9 2000/05/19 16:54:52 mickey Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ struct nfsstats {
 #define FS_NFS_NAMES { \
 			{ 0, 0 }, \
 			{ "nfsstats", CTLTYPE_STRUCT }, \
-			{ "niothreads", CTLTYPE_INT } \
+			{ "iothreads", CTLTYPE_INT } \
 }
 
 /*
