@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.43 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.44 1999/07/24 13:16:01 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -458,6 +458,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 250",		 ""},	  SDEV_NOMODESENSE},
+	{{T_DIRECT, T_REMOV,
+	 "IOMEGA", "LS-120 VER5   00",	 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
 	/* Letting the motor run kills floppy drives and disks quit fast. */
