@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.20 2001/05/30 10:59:03 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.21 2001/05/30 12:22:15 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -892,7 +892,7 @@ ipsp_clear_acquire(struct tdb *tdb)
 			    ipa->ipa_packet->m_flags &= ~(M_MCAST | M_BCAST);
 
 			    ipsp_process_packet(ipa->ipa_packet, tdb,
-						AF_INET, 0, NULL);
+						AF_INET, 0);
 			    ipa->ipa_packet = NULL;
 			    break;
 
@@ -922,7 +922,7 @@ ipsp_clear_acquire(struct tdb *tdb)
 			case IPSP_DIRECTION_OUT:
 			    ipa->ipa_packet->m_flags &= ~(M_BCAST | M_MCAST);
 			    ipsp_process_packet(ipa->ipa_packet, tdb,
-						AF_INET6, 0, NULL);
+						AF_INET6, 0);
 			    ipa->ipa_packet = NULL;
 			    break;
 

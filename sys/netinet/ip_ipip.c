@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.14 2001/05/11 17:20:11 aaron Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.15 2001/05/30 12:22:57 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -386,7 +386,7 @@ ipip_input(struct mbuf *m, int iphlen)
 
 int
 ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
-	    int protoff, struct tdb *tdb2)
+	    int protoff)
 {
     u_int8_t tp, otos;
 
