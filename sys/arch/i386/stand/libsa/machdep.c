@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 1997/09/29 03:48:03 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 1997/10/06 17:36:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -149,12 +149,12 @@ machdep()
 #ifdef BOOT_APM
 	if ((BIOS_vars.bios_apm_detail = apm_check())) {
 
-		printf("apm: ");
+		printf("apm0");
 		apm_disconnect();
 		if (apm_connect() != 0)
-			printf("connect error\n");
+			printf(": connect error\n");
 #ifdef DEBUG
-		printf("%x text=%x/%x[%x] data=%x[%x] @ %x",
+		printf(": %x text=%x/%x[%x] data=%x[%x] @ %x",
 		       BIOS_vars.bios_apm_detail,
 		       BIOS_vars.bios_apm_code32_base,
 		       BIOS_vars.bios_apm_code16_base,
@@ -163,7 +163,7 @@ machdep()
 		       BIOS_vars.bios_apm_data_len,
 		       BIOS_vars.bios_apm_entry);
 #else
-		printf("present");
+		printf(" detected");
 #endif
 		putchar('\n');
 	}
