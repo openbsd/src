@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.58 1999/11/14 22:25:02 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.59 1999/11/29 20:17:09 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1022,6 +1022,9 @@ store(name, mode, unique)
 	struct stat st;
 	int fd;
 
+	if (restart_point && type != TYPE_A)
+		mode = "r+";
+
 	if (unique && stat(name, &st) == 0) {
 		char *nam;
 
@@ -1031,8 +1034,6 @@ store(name, mode, unique)
 			return;
 		}
 		name = nam;
-		if (restart_point)
-			mode = "r+";
 		fout = fdopen(fd, mode);
 	} else
 		fout = fopen(name, mode);
