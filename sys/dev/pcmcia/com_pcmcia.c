@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.23 1999/10/26 12:26:59 downsj Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.24 1999/10/27 17:41:47 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -250,8 +250,8 @@ com_pcmcia_attach(parent, self, aux)
 retry:
 	/* find a cfe we can use */
 
-	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	     cfe = cfe->cfe_list.sqe_next) {
+	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe;
+	     cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
 #if 0
 		/*
 		 * Some modem cards (e.g. Xircom CM33) also have
