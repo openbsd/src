@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ct.4	5.2 (Berkeley) 3/27/91
-.\"	$Id: ct.4,v 1.1.1.1 1995/10/18 08:44:27 deraadt Exp $
+.\"	$Id: ct.4,v 1.2 1998/04/25 04:43:55 millert Exp $
 .\"
 .Dd March 27, 1991
 .Dt CT 4 hp300
@@ -46,8 +46,8 @@ cartridge tape interface
 .Sh SYNOPSIS
 .Cd "tape ct0 at hpib? slave ?"
 .Sh DESCRIPTION
-The cartridge tape interface as found in the 7946 and 9144 products
-provides a standard tape drive interface as described in
+The cartridge tape interface as found in the 7912, 7914, 7946, 9144, 9145,
+and 88140 products provides a standard tape drive interface as described in
 .Xr mtio 4
 with the following exceptions:
 .Bl -enum
@@ -108,3 +108,4 @@ driver
 .Ud
 .Sh BUGS
 Read and writes of less than 1024 bytes will not behave as expected.
+The 9145 device is currently treated as a 9144.
