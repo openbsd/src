@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.2 1996/04/01 06:39:17 scottr Exp $	*/
+/*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -41,6 +41,7 @@
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <machine/joystick.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
@@ -65,7 +66,7 @@
 #define TICKS2USEC(u) 	(((u) * 3433) >> 12)
 
 
-#define JOYPART(d) minor(d) & 1
+#define JOYPART(d) (minor(d) & 1)
 #define JOYUNIT(d) minor(d) >> 1 & 3
 
 #ifndef JOY_TIMEOUT
@@ -102,9 +103,9 @@ joyprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
+#ifdef WANT_JOYSTICK_CONNECTED
 	int iobase = ia->ia_iobase;
 
-#ifdef WANT_JOYSTICK_CONNECTED
 	outb(iobase, 0xff);
 	DELAY(10000);		/* 10 ms delay */
 	return (inb(iobase) & 0x0f) != 0x0f;
@@ -122,7 +123,6 @@ joyattach(parent, self, aux)
 {
 	struct joy_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
-	int unit = sc->sc_dev.dv_unit;
 	int iobase = ia->ia_iobase;
 
 	sc->port = iobase;

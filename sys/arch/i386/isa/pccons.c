@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccons.c,v 1.13 1996/05/09 14:19:47 deraadt Exp $	*/
-/*	$NetBSD: pccons.c,v 1.97 1996/05/03 19:15:00 christos Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.14 1996/05/10 12:46:20 deraadt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.98 1996/05/05 19:48:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -985,7 +985,7 @@ sput(cp, n)
 		else
 			vs.so_at = FG_YELLOW | BG_BLACK;
 
-		fillw((vs.at << 8) | ' ', (caddr_t) crtat, vs.nchr - cursorat);
+		fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 	}
 
 	while (n--) {
@@ -1072,7 +1072,7 @@ sput(cp, n)
 					vs.state = VSS_EBRACE;
 				} else if (c == 'c') { /* Clear screen & home */
 					fillw((vs.at << 8) | ' ',
-					    (caddr_t) Crtat, vs.nchr);
+					    Crtat, vs.nchr);
 					crtat = Crtat;
 					vs.col = 0;
 					vs.state = 0;
@@ -1163,20 +1163,18 @@ sput(cp, n)
 					case 0:
 						/* ... to end of display */
 						fillw((vs.at << 8) | ' ', 
-						    (caddr_t) crtat,
+						    crtat,
 						    Crtat + vs.nchr - crtat);
 						break;
 					case 1:
 						/* ... to next location */
 						fillw((vs.at << 8) | ' ',
-						    (caddr_t) Crtat,
-						    crtat - Crtat + 1);
+						    Crtat, crtat - Crtat + 1);
 						break;
 					case 2:
 						/* ... whole display */
 						fillw((vs.at << 8) | ' ',
-						    (caddr_t) Crtat,
-						    vs.nchr);
+						    Crtat, vs.nchr);
 						break;
 					}
 					vs.state = 0;
@@ -1186,20 +1184,17 @@ sput(cp, n)
 					case 0:
 						/* ... current to EOL */
 						fillw((vs.at << 8) | ' ',
-						    (caddr_t) crtat,
-						    vs.ncol - vs.col);
+						    crtat, vs.ncol - vs.col);
 						break;
 					case 1:
 						/* ... beginning to next */
 						fillw((vs.at << 8) | ' ',
-						    (caddr_t) (crtat - vs.col),
-						    vs.col + 1);
+						    crtat - vs.col, vs.col + 1);
 						break;
 					case 2:
 						/* ... entire line */
 						fillw((vs.at << 8) | ' ',
-						    (caddr_t) (crtat - vs.col),
-						    vs.ncol);
+						    crtat - vs.col, vs.ncol);
 						break;
 					}
 					vs.state = 0;
@@ -1237,7 +1232,7 @@ sput(cp, n)
 						    crtAt, vs.ncol * (nrow -
 						    cx) * CHR);
 					fillw((vs.at << 8) | ' ',
-					    (caddr_t) (crtAt + vs.ncol * (nrow - cx)),
+					    crtAt + vs.ncol * (nrow - cx),
 					    vs.ncol * cx);
 					vs.state = 0;
 					break;
@@ -1253,7 +1248,7 @@ sput(cp, n)
 						    Crtat, vs.ncol * (vs.nrow -
 						    cx) * CHR);
 					fillw((vs.at << 8) | ' ',
-					    (caddr_t) (Crtat + vs.ncol * (vs.nrow - cx)),
+					    Crtat + vs.ncol * (vs.nrow - cx),
 					    vs.ncol * cx);
 #if 0
 					crtat -= vs.ncol * cx; /* XXX */
@@ -1276,8 +1271,7 @@ sput(cp, n)
 						    vs.ncol * (nrow - cx) *
 						    CHR);
 					fillw((vs.at << 8) | ' ', 
-					    (caddr_t) crtAt,
-					    vs.ncol * cx);
+					    crtAt, vs.ncol * cx);
 					vs.state = 0;
 					break;
 				}
@@ -1293,8 +1287,7 @@ sput(cp, n)
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
 					fillw((vs.at << 8) | ' ', 
-					    (caddr_t) Crtat,
-					    vs.ncol * cx);
+					    Crtat, vs.ncol * cx);
 #if 0
 					crtat += vs.ncol * cx; /* XXX */
 #endif
@@ -1360,14 +1353,14 @@ sput(cp, n)
 				if (!kernel) {
 					int s = spltty();
 					if (lock_state & KB_SCROLL)
-						tsleep((caddr_t)&lock_state,
+						tsleep(&lock_state,
 						    PUSER, "pcputc", 0);
 					splx(s);
 				}
 				bcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
-				    (caddr_t) (Crtat + vs.nchr - vs.ncol),
+				    Crtat + vs.nchr - vs.ncol,
 				    vs.ncol);
 				crtat -= vs.ncol;
 			}
@@ -1578,7 +1571,7 @@ top:
 			shift_state |= KB_SCROLL;
 			lock_state ^= KB_SCROLL;
 			if ((lock_state & KB_SCROLL) == 0)
-				wakeup((caddr_t)&lock_state);
+				wakeup(&lock_state);
 			async_update();
 			break;
 		}
@@ -1663,7 +1656,7 @@ top:
 			shift_state |= KB_SCROLL;
 			lock_state ^= KB_SCROLL;
 			if ((lock_state & KB_SCROLL) == 0)
-				wakeup((caddr_t)&lock_state);
+				wakeup(&lock_state);
 			async_update();
 			break;
 		/*

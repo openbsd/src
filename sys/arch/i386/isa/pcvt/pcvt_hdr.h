@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.9 1996/05/07 12:26:29 mickey Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.10 1996/05/10 12:46:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1194,7 +1194,7 @@ extern u_char		*saved_charsets[NVGAFONTS];
 extern void bcopyb(void *from, void *to, u_int length);
 #endif
 
-#if (!PCVT_FREEBSD || (PCVT_FREEBSD < 200)) && (PCVT_NETBSD < 110)
+#if (PCVT_FREEBSD > 0 && PCVT_FREEBSD < 200) || (PCVT_NETBSD > 0 && PCVT_NETBSD <= 110)
 extern void fillw(U_short value, void *addr, u_int length);
 #endif
 
