@@ -1,4 +1,4 @@
-/*	$OpenBSD: divrem.m4,v 1.3 2000/02/22 19:27:19 deraadt Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.4 2000/03/03 11:17:03 art Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #ifdef notdef
 	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$OpenBSD: divrem.m4,v 1.3 2000/02/22 19:27:19 deraadt Exp $"
+	.asciz "$OpenBSD: divrem.m4,v 1.4 2000/03/03 11:17:03 art Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -57,7 +57,7 @@
  *
  * m4 parameters:
  *  NAME	name of function to generate
- *  NAME	secondary name of function to generate
+ *  NAME2	secondary name of function to generate
  *  OP		OP=div => %o0 / %o1; OP=rem => %o0 % %o1
  *  S		S=true => signed; S=false => unsigned
  *
