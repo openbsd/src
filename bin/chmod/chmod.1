@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.21 2000/11/10 12:54:47 aaron Exp $
+.\"	$OpenBSD: chmod.1,v 1.22 2001/02/15 19:18:13 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -346,8 +346,8 @@ retain any execute permissions that are currently set.
 Make a directory or file searchable/executable by everyone if it is
 already searchable/executable by anyone.
 .Pp
-.Cm chmod 755 file
-.Cm chmod u=rwx,go=rx file
+.Cm chmod 755 file ,
+.Cm chmod u=rwx,go=rx file ,
 .Cm chmod u=rwx,go=u-w file
 .Pp
 Any of these commands will make a file readable/executable by everyone and
