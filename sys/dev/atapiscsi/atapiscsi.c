@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.40 2001/04/17 18:06:36 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.41 2001/04/17 18:26:22 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -790,9 +790,9 @@ wdc_atapi_real_start(chp, xfer, timeout, ret)
 
 	/* Turn off DMA flag on REQUEST SENSE */
 
-	if (!(xfer->c_flags & C_POLL) && 
+	if (!(xfer->c_flags & (C_POLL | C_SENSE)) && 
 	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (xfer->c_bcount > 100 || (xfer->c_flags & C_SENSE)))
+	    (xfer->c_bcount > 100))
 		xfer->c_flags |= C_DMA;
 	else
 		xfer->c_flags &= ~C_DMA;
