@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.21 1999/05/14 20:10:11 niklas Exp $	*/
-/*	$EOM: message.c,v 1.134 1999/05/14 20:09:49 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.22 1999/08/26 22:27:51 niklas Exp $	*/
+/*	$EOM: message.c,v 1.135 1999/08/18 00:44:56 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1551,7 +1551,8 @@ step_transform (struct payload *tp, struct payload **propp,
  */
 int
 message_negotiate_sa (struct message *msg,
-		      int (*validate) (struct exchange *, struct sa *))
+		      int (*validate) (struct exchange *, struct sa *,
+				       struct sa *))
 {
   struct payload *tp, *propp, *sap, *next_tp = 0, *next_propp, *next_sap;
   struct payload *saved_tp = 0, *saved_propp = 0, *saved_sap = 0;
@@ -1657,7 +1658,7 @@ message_negotiate_sa (struct message *msg,
 	   */
 	  if (suite_ok_so_far)
 	    {
-	      if (!validate || validate (exchange, sa))
+	      if (!validate || validate (exchange, sa, msg->isakmp_sa))
 		{
 		  log_debug (LOG_MESSAGE, 30,
 			     "message_negotiate_sa: proposal %d succeeded",

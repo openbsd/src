@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.6 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.7 1999/07/17 20:44:10 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.7 1999/08/26 22:27:51 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.8 1999/08/18 00:44:55 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -63,7 +63,8 @@
 #include "util.h"
 
 static int attribute_unacceptable (u_int16_t, u_int8_t *, u_int16_t, void *);
-static int ike_phase_1_validate_prop (struct exchange *, struct sa *);
+static int ike_phase_1_validate_prop (struct exchange *, struct sa *,
+				      struct sa *);
 
 /* Offer a set of transforms to the responder in the MSG message.  */
 int
@@ -978,7 +979,8 @@ struct validation_state {
 
 /* Validate a proposal inside SA according to EXCHANGE's policy.  */
 static int
-ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa)
+ike_phase_1_validate_prop (struct exchange *exchange, struct sa *sa,
+			   struct sa *isakmp_sa)
 {
   struct conf_list *conf, *tags;
   struct conf_list_node *xf, *tag;

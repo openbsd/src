@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.13 1999/06/02 06:31:22 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.52 1999/05/29 15:11:07 ho Exp $	*/
+/*	$OpenBSD: sa.h,v 1.14 1999/08/26 22:27:51 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.53 1999/08/18 00:44:57 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -133,6 +133,19 @@ struct sa {
   int key_length;
   struct keystate *keystate;
 
+  /* IDs from Phase 1 */
+  u_int8_t *id_i;
+  size_t id_i_len;
+  u_int8_t *id_r;
+  size_t id_r_len;
+
+  /* Set if we were the initiator of the SA/exchange in Phase 1 */
+  int initiator;
+
+  /* Certs or other information from Phase 1 */  
+  int recv_certtype, recv_certlen;
+  void *recv_cert;
+    
   /* DOI-specific opaque data.  */
   void *data;
 

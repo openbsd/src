@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.22 1999/07/07 22:10:11 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.96 1999/06/06 17:12:40 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.23 1999/08/26 22:27:51 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.97 1999/08/18 00:44:57 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -50,6 +50,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+#include "cert.h"
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -456,7 +457,8 @@ void
 sa_release (struct sa *sa)
 {
   struct proto *proto;
-
+  struct cert_handler *handler;
+  
   log_debug (LOG_SA, 80, "sa_release: SA %p had %d references",
 	     sa, sa->refcnt);
 
@@ -472,6 +474,18 @@ sa_release (struct sa *sa)
       if (sa->doi && sa->doi->free_sa_data)
 	sa->doi->free_sa_data (sa->data);
       free (sa->data);
+    }
+  if (sa->id_i)
+    free (sa->id_i);
+  if (sa->id_r)
+    free (sa->id_r);
+  if (sa->recv_cert)
+    {
+	handler = cert_get (sa->recv_certtype);
+	if (handler)
+	  handler->cert_free (sa->recv_cert);
+	else if (sa->recv_certtype == ISAKMP_CERTENC_NONE)
+	  free (sa->recv_cert);
     }
   if (sa->name)
     free (sa->name);
