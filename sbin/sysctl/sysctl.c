@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.82 2002/06/09 08:13:09 todd Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.83 2002/07/03 22:32:34 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.82 2002/06/09 08:13:09 todd Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.83 2002/07/03 22:32:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -205,9 +205,7 @@ int sysctl_chipset(char *, char **, int *, int, int *);
 void vfsinit(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, lvl1;
 
@@ -255,9 +253,7 @@ main(argc, argv)
  * List all variables known to the system.
  */
 void
-listall(prefix, lp)
-	char *prefix;
-	struct list *lp;
+listall(char *prefix, struct list *lp)
 {
 	char *cp, name[BUFSIZ];
 	int lvl2, len;
@@ -284,9 +280,7 @@ listall(prefix, lp)
  * Set a new value if requested.
  */
 void
-parse(string, flags)
-	char *string;
-	int flags;
+parse(char *string, int flags)
 {
 	int indx, type, state, intval, len;
 	size_t size, newsize = 0;
@@ -676,9 +670,15 @@ parse(string, flags)
 
 		if (!nflag)
 			(void)printf("%s = ", string);
-		(void)printf("(inuse = %ld, calls = %ld, memuse = %ldK, limblocks = %d, mapblocks = %d, maxused = %ldK, limit = %ldK, spare = %ld, sizes = (", km->ks_inuse, km->ks_calls, (km->ks_memuse + 1023) / 1024, km->ks_limblocks, km->ks_mapblocks, (km->ks_maxused + 1023) / 1024, (km->ks_limit + 1023) / 1024, km->ks_spare);
+		(void)printf("(inuse = %ld, calls = %ld, memuse = %ldK, "
+		    "limblocks = %d, mapblocks = %d, maxused = %ldK, "
+		    "limit = %ldK, spare = %ld, sizes = (",
+		    km->ks_inuse, km->ks_calls,
+		    (km->ks_memuse + 1023) / 1024, km->ks_limblocks,
+		    km->ks_mapblocks, (km->ks_maxused + 1023) / 1024,
+		    (km->ks_limit + 1023) / 1024, km->ks_spare);
 		for (j = 1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
-		 	if ((km->ks_size & j ) == 0)
+			if ((km->ks_size & j ) == 0)
 				continue;
 			if (first)
 				(void)printf("%d", j);
@@ -790,11 +790,14 @@ parse(string, flags)
 		    (unsigned long long)rndstats->rnd_deqs,
 		    (unsigned long long)rndstats->rnd_drops,
 		    (unsigned long long)rndstats->rnd_drople);
-		for (i = 0; i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]); i++)
+		for (i = 0; i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]);
+		    i++)
 			(void)printf(" %llu", (unsigned long long)rndstats->rnd_ed[i]);
-		for (i = 0; i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]); i++)
+		for (i = 0; i < sizeof(rndstats->rnd_sc)/sizeof(rndstats->rnd_sc[0]);
+		    i++)
 			(void)printf(" %llu", (unsigned long long)rndstats->rnd_sc[i]);
-		for (i = 0; i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]); i++)
+		for (i = 0; i < sizeof(rndstats->rnd_sb)/sizeof(rndstats->rnd_sb[0]);
+		    i++)
 			(void)printf(" %llu", (unsigned long long)rndstats->rnd_sb[i]);
 		printf("\n");
 		return;
@@ -892,14 +895,8 @@ parse(string, flags)
 }
 
 void
-parse_baddynamic(mib, len, string, newvalp, newsizep, flags, nflag)
-	int mib[];
-	size_t len;
-	char *string;
-	void **newvalp;
-	size_t *newsizep;
-	int flags;
-	int nflag;
+parse_baddynamic(int mib[], size_t len, char *string, void **newvalp,
+    size_t *newsizep, int flags, int nflag)
 {
 	static u_int32_t newbaddynamic[DP_MAPSIZE];
 	in_port_t port;
@@ -949,7 +946,7 @@ parse_baddynamic(mib, len, string, newvalp, newsizep, flags, nflag)
  * Initialize the set of debugging names
  */
 void
-debuginit()
+debuginit(void)
 {
 	int mib[3], loc, i;
 	size_t size;
@@ -981,7 +978,7 @@ int *vfs_typenums;
  * Initialize the set of filesystem names
  */
 void
-vfsinit()
+vfsinit(void)
 {
 	int mib[4], maxtypenum, cnt, loc, size;
 	struct vfsconf vfc;
@@ -1049,12 +1046,7 @@ vfsinit()
 }
 
 int
-sysctl_vfsgen(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 	size_t size;
@@ -1090,12 +1082,7 @@ sysctl_vfsgen(string, bufpp, mib, flags, typep)
 }
 
 int
-sysctl_vfs(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_vfs(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp = &vfsvars[mib[1]];
 	int indx;
@@ -1125,12 +1112,7 @@ struct list fslist = { posixname, FS_POSIX_MAXID };
  * handle file system requests
  */
 int
-sysctl_fs(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_fs(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
@@ -1153,12 +1135,7 @@ struct list bioslist = { biosname, BIOS_MAXID };
  * handle BIOS requests
  */
 int
-sysctl_bios(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_bios(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	char *name;
 	int indx;
@@ -1203,12 +1180,7 @@ struct list swpenclist = { swpencname, SWPENC_MAXID };
  * handle swap encrypt requests
  */
 int
-sysctl_swpenc(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_swpenc(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
@@ -1357,12 +1329,7 @@ struct list ttylist = { ttyname, KERN_TTY_MAXID };
  * handle vfs namei cache statistics
  */
 int
-sysctl_nchstats(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_nchstats(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	static struct nchstats nch;
 	int indx;
@@ -1422,12 +1389,7 @@ sysctl_nchstats(string, bufpp, mib, flags, typep)
  * handle tty statistics
  */
 int
-sysctl_tty(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_tty(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
@@ -1446,12 +1408,7 @@ sysctl_tty(string, bufpp, mib, flags, typep)
  * handle fork statistics
  */
 int
-sysctl_forkstat(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_forkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	static struct forkstat fks;
 	static int keepvalue = 0;
@@ -1510,12 +1467,7 @@ sysctl_forkstat(string, bufpp, mib, flags, typep)
  * handle malloc statistics
  */
 int
-sysctl_malloc(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx, stor, i;
 	char *name, bufp[BUFSIZ], *buf, *ptr;
@@ -1626,12 +1578,7 @@ struct ctlname chipsetname[] = CTL_CHIPSET_NAMES;
 struct list chipsetlist = { chipsetname, CPU_CHIPSET_MAXID };
 
 int
-sysctl_chipset(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_chipset(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx, bwx;
 	static void *q;
@@ -1682,12 +1629,7 @@ sysctl_chipset(string, bufpp, mib, flags, typep)
  * handle internet requests
  */
 int
-sysctl_inet(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp;
 	int indx;
@@ -1767,12 +1709,7 @@ struct list inet6vars[] = {
  * handle internet6 requests
  */
 int
-sysctl_inet6(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp;
 	int indx;
@@ -1821,12 +1758,7 @@ struct list ipxvars[] = {
  * Handle internet requests
  */
 int
-sysctl_ipx(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_ipx(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	struct list *lp;
 	int indx;
@@ -1861,11 +1793,7 @@ sysctl_ipx(string, bufpp, mib, flags, typep)
  * Scan a list of names searching for a particular name.
  */
 int
-findname(string, level, bufp, namelist)
-	char *string;
-	char *level;
-	char **bufp;
-	struct list *namelist;
+findname(char *string, char *level, char **bufp, struct list *namelist)
 {
 	char *name;
 	int i;
@@ -1886,7 +1814,7 @@ findname(string, level, bufp, namelist)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n\t%s\n\t%s\n",

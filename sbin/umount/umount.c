@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.13 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: umount.c,v 1.14 2002/07/03 22:32:34 deraadt Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.13 2002/02/16 21:27:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: umount.c,v 1.14 2002/07/03 22:32:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,9 +84,7 @@ void	 usage(void);
 int	 xdr_dir(XDR *, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int all, ch, errs;
 
@@ -141,7 +139,7 @@ main(argc, argv)
 }
 
 int
-umountall()
+umountall(void)
 {
 	struct statfs *fs;
 	int n;
@@ -165,8 +163,7 @@ umountall()
 }
 
 int
-umountfs(oname)
-	char *oname;
+umountfs(char *oname)
 {
 	enum clnt_stat clnt_stat;
 	struct hostent *hp;
@@ -276,10 +273,7 @@ umountfs(oname)
 }
 
 char *
-getmntname(name, what, type)
-	char *name;
-	mntwhat what;
-	char *type;
+getmntname(char *name, mntwhat what, char *type)
 {
 	struct statfs *mntbuf;
 	int i, mntsize;
@@ -308,8 +302,7 @@ getmntname(name, what, type)
 static enum { IN_LIST, NOT_IN_LIST } which;
 
 int
-selected(type)
-	const char *type;
+selected(const char *type)
 {
 	char **av;
 
@@ -323,8 +316,7 @@ selected(type)
 }
 
 void
-maketypelist(fslist)
-	char *fslist;
+maketypelist(char *fslist)
 {
 	int i;
 	char *nextcp, **av;
@@ -360,8 +352,7 @@ maketypelist(fslist)
 }
 
 int
-namematch(hp)
-	struct hostent *hp;
+namematch(struct hostent *hp)
 {
 	char *cp, **np;
 
@@ -392,15 +383,13 @@ namematch(hp)
  * xdr routines for mount rpc's
  */
 int
-xdr_dir(xdrsp, dirp)
-	XDR *xdrsp;
-	char *dirp;
+xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s\n       %s\n",

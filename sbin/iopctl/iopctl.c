@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopctl.c,v 1.2 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.3 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ char	buf[32768];
 struct	i2o_status status;
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	int ch, i;
 	const char *dv;

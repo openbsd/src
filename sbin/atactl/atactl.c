@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.17 2002/06/15 10:59:06 gluk Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.18 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -314,9 +314,7 @@ struct valinfo ibm_attr_names[] = {
 	(b4 << 24 | b3 << 16 | b2 << 8 | b1)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct command	*cmdp;
 	char dvname_store[MAXPATHLEN];
@@ -368,7 +366,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s device command [arg [...]]\n",
@@ -380,8 +378,7 @@ usage()
  * Wrapper that calls ATAIOCCOMMAND and checks for errors
  */
 void
-ata_command(req)
-	struct atareq *req;
+ata_command(struct atareq *req)
 {
 	int error;
 
@@ -419,10 +416,7 @@ ata_command(req)
  * Print out strings associated with particular bitmasks
  */
 void
-print_bitinfo(f, bits, binfo)
-	const char *f;
-	u_int bits;
-	struct bitinfo *binfo;
+print_bitinfo(const char *f, u_int bits, struct bitinfo *binfo)
 {
 
 	for (; binfo->bitmask != NULL; binfo++)
@@ -436,9 +430,7 @@ print_bitinfo(f, bits, binfo)
  *    if no value found -1 is returned.
  */
 int
-strtoval(str, vinfo)
-	const char *str;
-	struct valinfo *vinfo;
+strtoval(const char *str, struct valinfo *vinfo)
 {
 	for (; vinfo->string != NULL; vinfo++)
 		if (strcmp(str, vinfo->string) == 0)
@@ -452,9 +444,7 @@ strtoval(str, vinfo)
  *    if no string found NULL is returned.
  */
 const char *
-valtostr(val, vinfo)
-	int val;
-	struct valinfo *vinfo;
+valtostr(int val, struct valinfo *vinfo)
 {
 	for (; vinfo->string != NULL; vinfo++)
 		if (val == vinfo->value)
@@ -466,9 +456,7 @@ valtostr(val, vinfo)
  * DEVICE COMMANDS
  */
 void
-device_dump(argc, argv)
-	int argc;
-	char *argv[];
+device_dump(int argc, char *argv[])
 {
 	unsigned char buf[131072];
 	int error;
@@ -491,9 +479,7 @@ device_dump(argc, argv)
  *	Display the identity of the device
  */
 void
-device_identify(argc, argv)
-	int argc;
-	char *argv[];
+device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
 	struct atareq req;
@@ -608,9 +594,7 @@ usage:
  * issue the IDLE IMMEDIATE command to the drive
  */
 void
-device_idle(argc, argv)
-	int argc;
-	char *argv[];
+device_idle(int argc, char *argv[])
 {
 	struct atareq req;
 
@@ -640,9 +624,7 @@ usage:
  * SMART ENABLE OPERATIONS command
  */
 void
-device_smart_enable(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_enable(int argc, char *argv[])
 {
 	struct atareq req;
 
@@ -668,9 +650,7 @@ usage:
  * SMART DISABLE OPERATIONS command
  */
 void
-device_smart_disable(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_disable(int argc, char *argv[])
 {
 	struct atareq req;
 
@@ -696,9 +676,7 @@ usage:
  * SMART STATUS command
  */
 void
-device_smart_status(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_status(int argc, char *argv[])
 {
 	struct atareq req;
 
@@ -734,9 +712,7 @@ usage:
  * SMART ENABLE/DISABLE ATTRIBUTE AUTOSAVE command
  */
 void
-device_smart_autosave(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_autosave(int argc, char *argv[])
 {
 	struct atareq req;
 	int val;
@@ -767,9 +743,7 @@ usage:
  * SMART EXECUTE OFF-LINE IMMEDIATE command
  */
 void
-device_smart_offline(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_offline(int argc, char *argv[])
 {
 	struct atareq req;
 	int val;
@@ -800,9 +774,7 @@ usage:
  * SMART READ DATA command
  */
 void
-device_smart_read(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_read(int argc, char *argv[])
 {
 	struct atareq req;
 	struct smart_read data;
@@ -862,9 +834,7 @@ usage:
  * SMART READ LOG command
  */
 void
-device_smart_readlog(argc, argv)
-	int argc;
-	char *argv[];
+device_smart_readlog(int argc, char *argv[])
 {
 	struct atareq req;
 	int val;
@@ -1042,8 +1012,7 @@ usage:
 	    data->cmd[4].reg)
 
 void
-smart_print_errdata(data)
-	struct smart_log_errdata *data;
+smart_print_errdata(struct smart_log_errdata *data)
 {
 	printf("    error register: 0x%x\n", data->err.reg_err);
 	printf("    sector count register: 0x%x\n", data->err.reg_seccnt);
@@ -1096,9 +1065,7 @@ smart_cksum(data, len)
  * Read device attributes
  */
 void
-device_attr(argc, argv)
-	int argc;
-	char *argv[];
+device_attr(int argc, char *argv[])
 {
 	struct atareq req;
 	struct smart_read attr_val;
@@ -1173,9 +1140,7 @@ device_attr(argc, argv)
  * Set the automatic acoustic management on the disk.
  */
 void
-device_acoustic(argc, argv)
-	int argc;
-	char *argv[];
+device_acoustic(int argc, char *argv[])
 {
 	unsigned long acoustic;
 	struct atareq req;
@@ -1222,9 +1187,7 @@ usage:
  * to keep a uniform interface to the user.
  */
 void
-device_apm(argc, argv)
-	int argc;
-	char *argv[];
+device_apm(int argc, char *argv[])
 {
 	unsigned long power;
 	struct atareq req;
@@ -1271,9 +1234,7 @@ usage:
  * Management) on the disk.
  */
 void
-device_feature(argc, argv)
-	int argc;
-	char *argv[];
+device_feature(int argc, char *argv[])
 {
 	struct atareq req;
 
@@ -1322,9 +1283,7 @@ usage:
  * standby mode, depending on how we were invoked.
  */
 void
-device_setidle(argc, argv)
-	int argc;
-	char *argv[];
+device_setidle(int argc, char *argv[])
 {
 	unsigned long idle;
 	struct atareq req;
@@ -1380,9 +1339,7 @@ usage:
  * Query the device for the current power mode
  */
 void
-device_checkpower(argc, argv)
-	int argc;
-	char *argv[];
+device_checkpower(int argc, char *argv[])
 {
 	struct atareq req;
 

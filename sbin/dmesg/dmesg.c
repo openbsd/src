@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.15 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.16 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.15 2002/02/16 21:27:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.16 2002/07/03 22:32:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,7 @@ void usage(void);
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, newl, skip, i;
 	char *p;
@@ -198,7 +196,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
 	exit(1);

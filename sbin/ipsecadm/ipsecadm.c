@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.63 2001/12/01 19:05:01 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.64 2002/07/03 22:32:33 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -260,7 +260,7 @@ gotit:
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
 	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, ipcomp,\n"
@@ -305,7 +305,7 @@ usage()
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	int auth = 0, enc = 0, klen = 0, alen = 0, mode = ESP_NEW, i = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH, sproto2 = SADB_SATYPE_AH;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.10 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.11 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -89,9 +89,7 @@ static void *isok(struct fstab *);
 
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct fstab *fs;
 	int i, rval = 0;
@@ -197,8 +195,7 @@ main(argc, argv)
 
 
 static void *
-isok(fs)
-	struct fstab *fs;
+isok(struct fstab *fs)
 {
 	if (fs->fs_passno == 0)
 		return NULL;
@@ -214,10 +211,8 @@ isok(fs)
 
 
 static int
-checkfs(vfstype, spec, mntpt, auxarg, pidp)
-	const char *vfstype, *spec, *mntpt;
-	void *auxarg;
-	pid_t *pidp;
+checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
+    pid_t *pidp)
 {
 	/* List of directories containing fsck_xxx subcommands. */
 	static const char *edirs[] = {
@@ -328,8 +323,7 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 
 
 static int
-selected(type)
-	const char *type;
+selected(const char *type)
 {
 	struct entry *e;
 
@@ -343,8 +337,7 @@ selected(type)
 
 
 static const char *
-getoptions(type)
-	const char *type;
+getoptions(const char *type)
 {
 	struct entry *e;
 
@@ -356,8 +349,7 @@ getoptions(type)
 
 
 static void
-addoption(optstr)
-	char *optstr;
+addoption(char *optstr)
 {
 	char *newoptions;
 	struct entry *e;
@@ -377,10 +369,7 @@ addoption(optstr)
 
 
 static void
-addentry(list, type, opts)
-	struct fstypelist *list;
-	const char *type;
-	const char *opts;
+addentry(struct fstypelist *list, const char *type, const char *opts)
 {
 	struct entry *e;
 
@@ -392,8 +381,7 @@ addentry(list, type, opts)
 
 
 static void
-maketypelist(fslist)
-	char *fslist;
+maketypelist(char *fslist)
 {
 	char *ptr;
 
@@ -414,10 +402,7 @@ maketypelist(fslist)
 
 
 static char *
-catopt(s0, s1, fr)
-	char *s0;
-	const char *s1;
-	int fr;
+catopt(char *s0, const char *s1, int fr)
 {
 	size_t i;
 	char *cp;
@@ -437,11 +422,7 @@ catopt(s0, s1, fr)
 
 
 static void
-mangle(opts, argcp, argvp, maxargcp)
-	char *opts;
-	int *argcp;
-	const char ***argvp;
-	int *maxargcp;
+mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 {
 	char *p, *s;
 	int argc = *argcp, maxargc = *maxargcp;
@@ -479,7 +460,7 @@ mangle(opts, argcp, argvp, maxargcp)
 
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 	static const char common[] =

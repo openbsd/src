@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.18 2002/06/11 15:45:44 hin Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.19 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -118,9 +118,7 @@ void	usage(void);
  * followed by "n" which is the number of nfsds' to fork off
  */
 int
-main(argc, argv, envp)
-	int argc;
-	char *argv[], *envp[];
+main(int argc, char *argv[])
 {
 	struct nfsd_args nfsdargs;
 	struct sockaddr_in inetaddr, inetpeer;
@@ -505,23 +503,24 @@ main(argc, argv, envp)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: nfsd %s\n", USAGE);
 	exit(1);
 }
 
 void
-nonfs(signo)
-	int signo;
+nonfs(int signo)
 {
-	/* XXX signal race */
-	syslog(LOG_ERR, "missing system call: NFS not available.");
+	int save_errno = errno;
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+	syslog_r(LOG_ERR, &sdata, "missing system call: NFS not available.");
+	errno = save_errno;
 }
 
 void
-reapchild(signo)
-	int signo;
+reapchild(int signo)
 {
 	int save_errno = errno;
 

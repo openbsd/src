@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.23 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.24 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.23 2002/02/16 21:27:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.24 2002/07/03 22:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,9 +72,7 @@ extern char *__progname;
 #define _PATH_RC	"/etc/rc"
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int i;
 	struct passwd *pw;
@@ -250,7 +248,7 @@ restart:
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-dlnpq]\n", __progname);
 	exit(1);

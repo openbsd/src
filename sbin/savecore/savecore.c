@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.30 2002/05/22 20:09:36 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.31 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.30 2002/05/22 20:09:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.31 2002/07/03 22:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,12 +138,10 @@ int	 Open(char *, int rw);
 char	*rawname(char *s);
 void	 save_core(void);
 void	 usage(void);
-void	 Write(int, void *, int);
+void	 Write(int, void *, size_t);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct rlimit rl;
 	int ch;
@@ -220,7 +218,7 @@ main(argc, argv)
 char	*dump_sys;
 
 void
-kmem_setup()
+kmem_setup(void)
 {
 	kvm_t	*kd_kern;
 	char	errbuf[_POSIX2_LINE_MAX];
@@ -305,7 +303,7 @@ kmem_setup()
 }
 
 void
-check_kmem()
+check_kmem(void)
 {
 	char	*cp;
 	int	panicloc;
@@ -355,7 +353,7 @@ check_kmem()
 }
 
 int
-dump_exists()
+dump_exists(void)
 {
 	int newdumpmag;
 
@@ -381,7 +379,7 @@ dump_exists()
 }
 
 void
-clear_dump()
+clear_dump(void)
 {
 	if (kvm_dump_inval(kd_dump) == -1)
 		syslog(LOG_ERR, "%s: kvm_clear_dump: %s", ddname,
@@ -392,7 +390,7 @@ clear_dump()
 char buf[1024 * 1024];
 
 void
-save_core()
+save_core(void)
 {
 	FILE *fp;
 	int bounds, ifd, nr, nw, ofd = -1;
@@ -525,9 +523,7 @@ err2:			syslog(LOG_WARNING,
 }
 
 char *
-find_dev(dev, type)
-	dev_t dev;
-	int type;
+find_dev(dev_t dev, int type)
 {
 	DIR *dfd;
 	struct dirent *dir;
@@ -563,8 +559,7 @@ find_dev(dev, type)
 }
 
 char *
-rawname(s)
-	char *s;
+rawname(char *s)
 {
 	char *sl, name[MAXPATHLEN];
 
@@ -582,7 +577,7 @@ rawname(s)
 }
 
 int
-get_crashtime()
+get_crashtime(void)
 {
 	time_t dumptime;			/* Time the dump was taken. */
 
@@ -602,7 +597,7 @@ get_crashtime()
 }
 
 int
-check_space()
+check_space(void)
 {
 	FILE *fp;
 	char *tkernel;
@@ -647,9 +642,7 @@ check_space()
 }
 
 int
-Open(name, rw)
-	char *name;
-	int rw;
+Open(char *name, int rw)
 {
 	int fd;
 
@@ -661,9 +654,7 @@ Open(name, rw)
 }
 
 void
-Lseek(fd, off, flag)
-	int fd, flag;
-	off_t off;
+Lseek(int fd, off_t off, int flag)
 {
 	off_t ret;
 
@@ -675,9 +666,7 @@ Lseek(fd, off, flag)
 }
 
 int
-Create(file, mode)
-	char *file;
-	int mode;
+Create(char *file, int mode)
 {
 	int fd;
 
@@ -690,9 +679,7 @@ Create(file, mode)
 }
 
 void
-Write(fd, bp, size)
-	int fd, size;
-	void *bp;
+Write(int fd, void *bp, size_t size)
 {
 	int n;
 
@@ -703,7 +690,7 @@ Write(fd, bp, size)
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 	fprintf(stderr, "usage: %s [-cfvz] [-N system] directory\n",

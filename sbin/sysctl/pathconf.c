@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathconf.c,v 1.5 2001/06/04 14:59:50 mickey Exp $	*/
+/*	$OpenBSD: pathconf.c,v 1.6 2002/07/03 22:32:34 deraadt Exp $	*/
 /*	$NetBSD: pathconf.c,v 1.2 1995/09/30 07:12:47 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: pathconf.c,v 1.5 2001/06/04 14:59:50 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pathconf.c,v 1.6 2002/07/03 22:32:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,9 +83,7 @@ struct list pclist = { pcnames, PC_MAXID };
 int	Aflag, aflag, nflag, wflag, stdinflag;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *path;
 	int ch;
@@ -132,9 +130,7 @@ main(argc, argv)
 /*
  * List all variables known to the system.
  */
-listall(path, lp)
-	char *path;
-	struct list *lp;
+listall(char *path, struct list *lp)
 {
 	int lvl2;
 
@@ -151,10 +147,7 @@ listall(path, lp)
  * Parse a name into an index.
  * Lookup and print out the attribute if it exists.
  */
-parse(pathname, string, flags)
-	char *pathname;
-	char *string;
-	int flags;
+parse(char *pathname, char *string, int flags)
 {
 	int indx, value;
 	char *bufp, buf[BUFSIZ];
@@ -199,11 +192,7 @@ parse(pathname, string, flags)
 /*
  * Scan a list of names searching for a particular name.
  */
-findname(string, level, bufp, namelist)
-	char *string;
-	char *level;
-	char **bufp;
-	struct list *namelist;
+findname(char *string, char *level, char **bufp, struct list *namelist)
 {
 	char *name;
 	int i;
@@ -224,7 +213,7 @@ findname(string, level, bufp, namelist)
 	return (i);
 }
 
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n\t%s\n",

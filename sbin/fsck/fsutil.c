@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.6 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.7 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -59,22 +59,20 @@ extern char *__progname;
 static void vmsg(int, const char *, va_list);
 
 void
-setcdevname(cd, pr)
-	const char *cd;
-	int pr;
+setcdevname(const char *cd, int pr)
 {
 	dev = cd;
 	preen = pr;
 }
 
 const char *
-cdevname()
+cdevname(void)
 {
 	return dev;
 }
 
 int
-hotroot()
+hotroot(void)
 {
 	return hot;
 }
@@ -92,10 +90,7 @@ errexit(const char *fmt, ...)
 }
 
 static void
-vmsg(fatal, fmt, ap)
-	int fatal;
-	const char *fmt;
-	va_list ap;
+vmsg(int fatal, const char *fmt, va_list ap)
 {
 	if (!fatal && preen)
 		(void) printf("%s: ", dev);
@@ -134,8 +129,7 @@ pwarn(const char *fmt, ...)
 }
 
 void
-perror(s)
-	const char *s;
+perror(const char *s)
 {
 	pfatal("%s (%s)", s, strerror(errno));
 }
@@ -152,8 +146,7 @@ panic(const char *fmt, ...)
 }
 
 char *
-unrawname(name)
-	char *name;
+unrawname(char *name)
 {
 	char *dp;
 	struct stat stb;
@@ -171,8 +164,7 @@ unrawname(name)
 }
 
 char *
-rawname(name)
-	char *name;
+rawname(char *name)
 {
 	static char rawbuf[32];
 	char *dp;
@@ -188,8 +180,7 @@ rawname(name)
 }
 
 char *
-blockcheck(origname)
-	char *origname;
+blockcheck(char *origname)
 {
 	struct stat stslash, stblock, stchar;
 	char *newname, *raw;
@@ -242,8 +233,7 @@ retry:
 
 
 void *
-emalloc(s)
-	size_t s;
+emalloc(size_t s)
 {
 	void *p;
 
@@ -257,9 +247,7 @@ emalloc(s)
 
 
 void *
-erealloc(p, s)
-	void *p;
-	size_t s;
+erealloc(void *p, size_t s)
 {
 	if (s == 0)
 		err(1, "realloc failed");
@@ -271,8 +259,7 @@ erealloc(p, s)
 
 
 char *
-estrdup(s)
-	const char *s;
+estrdup(const char *s)
 {
 	char *p = strdup(s);
 	if (p == NULL)

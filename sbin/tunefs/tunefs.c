@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.20 2002/06/09 08:13:09 todd Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.21 2002/07/03 22:32:34 deraadt Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
 static const char rcsid[] =
-	"$OpenBSD: tunefs.c,v 1.20 2002/06/09 08:13:09 todd Exp $";
+	"$OpenBSD: tunefs.c,v 1.21 2002/07/03 22:32:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,9 +87,7 @@ void printfs(void);
 extern char *__progname;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *cp, *special, *name;
 	struct stat st;
@@ -279,7 +277,7 @@ again:
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 		"Usage: %s tuneup-options special-device\n"
@@ -298,10 +296,7 @@ usage()
 }
 
 void
-getsb(fs, file, flags)
-	struct fs *fs;
-	char *file;
-	int flags;
+getsb(struct fs *fs, char *file, int flags)
 {
 
 	if (fi >= 0)
@@ -317,7 +312,7 @@ getsb(fs, file, flags)
 }
 
 void
-printfs()
+printfs(void)
 {
 	warnx("maximum contiguous block count: (-a)               %d",
 	      sblock.fs_maxcontig);
@@ -342,10 +337,7 @@ printfs()
 }
 
 void
-bwrite(blk, buf, size)
-	daddr_t blk;
-	char *buf;
-	int size;
+bwrite(daddr_t blk, char *buf, int size)
 {
 
 	if (lseek(fi, (off_t)blk * dev_bsize, SEEK_SET) < 0)
@@ -355,10 +347,7 @@ bwrite(blk, buf, size)
 }
 
 int
-bread(bno, buf, cnt)
-	daddr_t bno;
-	char *buf;
-	int cnt;
+bread(daddr_t bno, char *buf, int cnt)
 {
 	int i;
 

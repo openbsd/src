@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.13 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.14 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.13 2002/05/26 09:24:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.14 2002/07/03 22:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,17 +82,13 @@ static pid_t pid;			/* Our pid */
 static FILE *pidfile;
 
 void	usage(void);
-
 int ttydisc(char *);
-
 void handler(int);
 
 volatile sig_atomic_t dying;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int fd;
 	char *dev;
@@ -193,16 +189,13 @@ main(argc, argv)
 }
 
 void
-handler(useless)
-int useless;
+handler(int useless)
 {
 	dying = 1;
 }
 
-
 int
-ttydisc(name)
-	char *name;
+ttydisc(char *name)
 {
 	if (strcmp(name, "slip") == 0)
 		return(SLIPDISC);
@@ -215,7 +208,7 @@ ttydisc(name)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_sparc.c,v 1.6 2002/06/09 08:13:07 todd Exp $ */
+/*	$OpenBSD: kbd_sparc.c,v 1.7 2002/07/03 22:32:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -150,7 +150,7 @@ struct {
 extern char *__progname;
 
 char *
-kbd_find_default()
+kbd_find_default(void)
 {
 	int i, j, fd, r, ok;
 	int t = KB_SUN4;
@@ -184,7 +184,7 @@ kbd_find_default()
 }
 
 void
-kbd_list()
+kbd_list(void)
 {
 	int i, j;
 	char *defmap;
@@ -203,9 +203,7 @@ kbd_list()
 }
 
 void
-kbd_set(name, verbose)
-	char *name;
-	int verbose;
+kbd_set(char *name, int verbose)
 {
 	int i, j, fd, r;
 	keymap_t *map = NULL;

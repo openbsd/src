@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.8 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.9 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.8 2002/06/09 08:13:05 todd Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.9 2002/07/03 22:32:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,9 +93,7 @@ void	rdfs(daddr_t, int, char *);
 int	chkuse(daddr_t, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	daddr_t number;
 	struct stat stbuf, devstat;
@@ -166,9 +164,7 @@ main(argc, argv)
 }
 
 int
-chkuse(blkno, cnt)
-	daddr_t blkno;
-	int cnt;
+chkuse(daddr_t blkno, int cnt)
 {
 	int cg;
 	daddr_t fsbn, bn;
@@ -209,10 +205,7 @@ chkuse(blkno, cnt)
  * read a block from the file system
  */
 void
-rdfs(bno, size, bf)
-	daddr_t bno;
-	int size;
-	char *bf;
+rdfs(daddr_t bno, int size, char *bf)
 {
 	int n;
 

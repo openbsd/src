@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.7 2001/07/07 18:26:21 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.8 2002/07/03 22:32:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -50,10 +50,7 @@
 #define FLAG_LABELS		4
 
 int
-ufsscan(fd, beg, end, flags)
-	int fd;
-	daddr_t beg, end;
-	int flags;
+ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 {
 	static char lastmount[MAXMNTLEN];
 	static u_int8_t buf[SBSIZE * SBCOUNT];
@@ -64,14 +61,14 @@ ufsscan(fd, beg, end, flags)
 	lastblk = -1;
 	memset(lastmount, 0, MAXMNTLEN);
 
-	for(blk = beg; blk <= ((end<0)?blk:end); blk += (SBCOUNT*SBSIZE/512)){
+	for (blk = beg; blk <= ((end<0)?blk:end); blk += (SBCOUNT*SBSIZE/512)){
 		memset(buf, 0, SBSIZE * SBCOUNT);
 		if (lseek(fd, (off_t)blk * 512, SEEK_SET) < 0)
 		    err(1, "lseek");
 		if (read(fd, buf, SBSIZE * SBCOUNT) < 0)
 			err(1, "read");
 
-		for(n = 0; n < (SBSIZE * SBCOUNT); n += 512){
+		for (n = 0; n < (SBSIZE * SBCOUNT); n += 512){
 			sb = (struct fs*)(&buf[n]);
 			if (sb->fs_magic == FS_MAGIC) {
 				if (flags & FLAG_VERBOSE)
@@ -82,19 +79,23 @@ ufsscan(fd, beg, end, flags)
 				if (((blk+(n/512)) - lastblk) == (SBSIZE/512)) {
 					if (flags & FLAG_LABELS ) {
 						printf("X: %d %d 4.2BSD %d %d %d # %s\n",
-						    (daddr_t)((off_t)sb->fs_size * sb->fs_fsize / 512),
+						    (daddr_t)((off_t)sb->fs_size *
+						    sb->fs_fsize / 512),
 						    blk+(n/512)-(2*SBSIZE/512),
 						    sb->fs_fsize, sb->fs_bsize,
 						    sb->fs_cpg, lastmount);
 					} else {
-						printf("ffs at %d size %lld mount %s time %s",
+						printf("ffs at %d size %lld "
+						    "mount %s time %s",
 						    blk+(n/512)-(2*SBSIZE/512),
-						    (long long)(off_t)sb->fs_size * sb->fs_fsize,
+						    (long long)(off_t)sb->fs_size *
+						    sb->fs_fsize,
 						    lastmount, ctime(&sb->fs_time));
 					}
 
 					if (flags & FLAG_SMART) {
-						off_t size = (off_t)sb->fs_size * sb->fs_fsize;
+						off_t size = (off_t)sb->fs_size *
+						    sb->fs_fsize;
 
 						if ((n + size) < (SBSIZE * SBCOUNT))
 							n += size;
@@ -117,19 +118,18 @@ ufsscan(fd, beg, end, flags)
 
 
 void
-usage(code)
-	int code;
+usage(int code)
 {
 	extern char *__progname;
-	(void)fprintf(stderr, "usage: %s [-lsv] [-b begin] [-e end] device\n", __progname);
+
+	fprintf(stderr, "usage: %s [-lsv] [-b begin] [-e end] device\n",
+	    __progname);
 	exit(code);
 }
 
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, fd, flags = 0;
 	daddr_t beg = 0, end = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.8 2002/05/29 20:45:58 maja Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.9 2002/07/03 22:32:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -94,9 +94,7 @@ int rebuild = 0;
 
 #ifndef NOKVM
 void
-kbd_show_enc(kd, idx)
-	kvm_t *kd;
-	int idx;
+kbd_show_enc(kvm_t *kd, int idx)
 {
 	struct wscons_keydesc r;
 	unsigned long p;
@@ -145,7 +143,7 @@ kbd_show_enc(kd, idx)
 #endif
 
 void
-kbd_list()
+kbd_list(void)
 {
 	int	fd, i, kbtype, ret;
 	kvm_t	*kd;
@@ -220,9 +218,7 @@ kbd_list()
 }
 
 void
-kbd_set(name, verbose)
-	char *name;
-	int verbose;
+kbd_set(char *name, int verbose)
 {
 	char	buf[_POSIX2_LINE_MAX];
 	char	*c,*b;

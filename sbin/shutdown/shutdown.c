@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.25 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.26 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.25 2002/05/26 09:24:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.26 2002/07/03 22:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,9 +118,7 @@ void timewarn(int);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *p, *endp;
 	struct passwd *pw;
@@ -247,7 +245,7 @@ main(argc, argv)
 }
 
 void
-loop()
+loop(void)
 {
 	struct interval *tp;
 	u_int sltime;
@@ -296,8 +294,7 @@ static char *restricted_environ[] = {
 };
 
 void
-timewarn(timeleft)
-	int timeleft;
+timewarn(int timeleft)
 {
 	static int first;
 	static char hostname[MAXHOSTNAMELEN];
@@ -348,14 +345,13 @@ timewarn(timeleft)
 }
 
 void
-timeout(signo)
-	int signo;
+timeout(int signo)
 {
 	longjmp(alarmbuf, 1);		/* XXX signal/longjmp resource leaks */
 }
 
 void
-die_you_gravy_sucking_pig_dog()
+die_you_gravy_sucking_pig_dog(void)
 {
 
 	syslog(LOG_NOTICE, "%s by %s: %s",
@@ -438,8 +434,7 @@ die_you_gravy_sucking_pig_dog()
 #define	ATOI2(p)	(p[0] - '0') * 10 + (p[1] - '0'); p += 2;
 
 void
-getoffset(timearg)
-	char *timearg;
+getoffset(char *timearg)
 {
 	struct tm *lt;
 	char *p;
@@ -522,7 +517,7 @@ getoffset(timearg)
 
 #define	FSMSG	"fastboot file for fsck\n"
 void
-doitfast()
+doitfast(void)
 {
 	int fastfd;
 
@@ -535,7 +530,7 @@ doitfast()
 
 #define	NOMSG	"\n\nNO LOGINS: System going down at "
 void
-nolog()
+nolog(void)
 {
 	int logfd;
 	char *ct;
@@ -557,8 +552,7 @@ nolog()
 }
 
 void
-finish(signo)
-	int signo;
+finish(int signo)
 {
 	if (!killflg)
 		(void)unlink(_PATH_NOLOGIN);
@@ -569,13 +563,13 @@ finish(signo)
 }
 
 void
-badtime()
+badtime(void)
 {
 	errx(1, "bad time format.");
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: shutdown [-dfhknpr] shutdowntime [ message ]\n");
 	exit(1);

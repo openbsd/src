@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.3 2000/02/26 04:06:23 hugh Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.4 2002/07/03 22:32:34 deraadt Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -50,12 +50,7 @@
 #include "swapctl.h"
 
 void
-list_swap(pri, kflag, pflag, tflag, dolong)
-	int	pri;
-	int	kflag;
-	int	pflag;
-	int	tflag;
-	int	dolong;
+list_swap(int pri, int kflag, int pflag, int tflag, int dolong)
 {
 	struct	swapent *sep, *fsep;
 	long	blocksize;

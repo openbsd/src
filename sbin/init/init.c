@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.27 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: init.c,v 1.28 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.27 2002/06/09 08:13:06 todd Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.28 2002/07/03 22:32:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,9 +183,7 @@ DB *session_db;
  * The mother of all processes.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int c;
 	struct sigaction sa;
@@ -361,12 +359,12 @@ warning(char *message, ...)
 void
 emergency(char *message, ...)
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	va_list ap;
 
 	va_start(ap, message);
-	vsyslog(LOG_EMERG, message, ap);
+	vsyslog_r(LOG_EMERG, &sdata, message, ap);
 	va_end(ap);
-	closelog();
 }
 
 /*
@@ -376,8 +374,7 @@ emergency(char *message, ...)
  * We tolerate up to 25 of these, then throw in the towel.
  */
 void
-badsys(sig)
-	int sig;
+badsys(int sig)
 {
 	static int badcount = 0;
 
@@ -390,8 +387,7 @@ badsys(sig)
  * Catch an unexpected signal.
  */
 void
-disaster(sig)
-	int sig;
+disaster(int sig)
 {
 	emergency("fatal signal: %s", strsignal(sig));
 
@@ -403,7 +399,7 @@ disaster(sig)
  * Get the security level of the kernel.
  */
 int
-getsecuritylevel()
+getsecuritylevel(void)
 {
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
@@ -427,8 +423,7 @@ getsecuritylevel()
  * Set the security level of the kernel.
  */
 void
-setsecuritylevel(newlevel)
-	int newlevel;
+setsecuritylevel(int newlevel)
 {
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
@@ -457,8 +452,7 @@ setsecuritylevel(newlevel)
  * The initial state is passed as an argument.
  */
 void
-transition(s)
-	state_t s;
+transition(state_t s)
 {
 	for (;;)
 		s = (state_t) (*s)();
@@ -469,8 +463,7 @@ transition(s)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-clear_session_logs(sp)
-	session_t *sp;
+clear_session_logs(session_t *sp)
 {
 	char *line = sp->se_device + sizeof(_PATH_DEV) - 1;
 
@@ -483,13 +476,12 @@ clear_session_logs(sp)
  * Only called by children of init after forking.
  */
 void
-setctty(name)
-	char *name;
+setctty(char *name)
 {
 	int fd;
 
 	(void) revoke(name);
-	sleep (2);			/* leave DTR low */
+	sleep(2);			/* leave DTR low */
 	if ((fd = open(name, O_RDWR)) == -1) {
 		stall("can't open %s: %m", name);
 		_exit(1);
@@ -504,7 +496,7 @@ setctty(name)
  * Bring the system up single user.
  */
 state_func_t
-single_user()
+single_user(void)
 {
 	pid_t pid, wpid;
 	int status;
@@ -673,7 +665,7 @@ single_user()
  * Run the system startup script.
  */
 state_func_t
-runcom()
+runcom(void)
 {
 	pid_t pid, wpid;
 	int status;
@@ -765,7 +757,7 @@ runcom()
  * NB: We could pass in the size here; is it necessary?
  */
 int
-start_session_db()
+start_session_db(void)
 {
 	if (session_db && (*session_db->close)(session_db))
 		emergency("session database close: %s", strerror(errno));
@@ -774,15 +766,13 @@ start_session_db()
 		return (1);
 	}
 	return (0);
-		
 }
 
 /*
  * Add a new login session.
  */
 void
-add_session(sp)
-	session_t *sp;
+add_session(session_t *sp)
 {
 	DBT key;
 	DBT data;
@@ -800,8 +790,7 @@ add_session(sp)
  * Delete an old login session.
  */
 void
-del_session(sp)
-	session_t *sp;
+del_session(session_t *sp)
 {
 	DBT key;
 
@@ -834,8 +823,7 @@ find_session(pid_t pid)
  * Construct an argument vector from a command line.
  */
 char **
-construct_argv(command)
-	char *command;
+construct_argv(char *command)
 {
 	int argc = 0;
 	char **argv = (char **) malloc(((strlen(command) + 1) / 2 + 1)
@@ -853,8 +841,7 @@ construct_argv(command)
  * Deallocate a session descriptor.
  */
 void
-free_session(sp)
-	session_t *sp;
+free_session(session_t *sp)
 {
 	free(sp->se_device);
 	if (sp->se_getty) {
@@ -872,10 +859,7 @@ free_session(sp)
  * Allocate a new session descriptor.
  */
 session_t *
-new_session(sprev, session_index, typ)
-	session_t *sprev;
-	int session_index;
-	struct ttyent *typ;
+new_session(session_t *sprev, int session_index, struct ttyent *typ)
 {
 	session_t *sp;
 
@@ -914,9 +898,7 @@ new_session(sprev, session_index, typ)
  * Calculate getty and if useful window argv vectors.
  */
 int
-setupargv(sp, typ)
-	session_t *sp;
-	struct ttyent *typ;
+setupargv(session_t *sp, struct ttyent *typ)
 {
 
 	if (sp->se_getty) {
@@ -952,7 +934,7 @@ setupargv(sp, typ)
  * Walk the list of ttys and create sessions for each active line.
  */
 state_func_t
-read_ttys()
+read_ttys(void)
 {
 	int session_index = 0;
 	session_t *sp, *snext;
@@ -989,8 +971,7 @@ read_ttys()
  * Start a window system running.
  */
 void
-start_window_system(sp)
-	session_t *sp;
+start_window_system(session_t *sp)
 {
 	pid_t pid;
 	sigset_t mask;
@@ -1026,8 +1007,7 @@ start_window_system(sp)
  * that do not exist.
  */
 pid_t
-start_getty(sp)
-	session_t *sp;
+start_getty(session_t *sp)
 {
 	pid_t pid;
 	sigset_t mask;
@@ -1153,8 +1133,7 @@ collect_child(pid_t pid)
  * Catch a signal and request a state transition.
  */
 void
-transition_handler(sig)
-	int sig;
+transition_handler(int sig)
 {
 
 	switch (sig) {
@@ -1180,7 +1159,7 @@ transition_handler(sig)
  * Take the system multiuser.
  */
 state_func_t
-multi_user()
+multi_user(void)
 {
 	pid_t pid;
 	session_t *sp;
@@ -1220,7 +1199,7 @@ multi_user()
  * This is an n-squared algorithm.  We hope it isn't run often...
  */
 state_func_t
-clean_ttys()
+clean_ttys(void)
 {
 	session_t *sp, *sprev;
 	struct ttyent *typ;
@@ -1280,7 +1259,7 @@ clean_ttys()
  * Block further logins.
  */
 state_func_t
-catatonia()
+catatonia(void)
 {
 	session_t *sp;
 
@@ -1294,8 +1273,7 @@ catatonia()
  * Note SIGALRM.
  */
 void
-alrm_handler(sig)
-	int sig;
+alrm_handler(int sig)
 {
 	clang = 1;
 }
@@ -1304,7 +1282,7 @@ alrm_handler(sig)
  * Bring the system down to single user nicely, after run the shutdown script.
  */
 state_func_t
-nice_death()
+nice_death(void)
 {
 	session_t *sp;
 	int i;
@@ -1382,7 +1360,7 @@ die:
  * Bring the system down to single user.
  */
 state_func_t
-death()
+death(void)
 {
 	session_t *sp;
 	int i;
@@ -1417,8 +1395,7 @@ death()
 
 #ifdef LOGIN_CAP
 void
-setprocresources(class)
-	char *class;
+setprocresources(char *class)
 {
 	login_cap_t *lc;
 

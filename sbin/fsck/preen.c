@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.11 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: preen.c,v 1.12 2002/07/03 22:32:32 deraadt Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -85,11 +85,8 @@ static int startdisk(struct diskentry *,
 static void printpart(void);
 
 int
-checkfstab(flags, maxrun, docheck, checkit)
-	int flags, maxrun;
-	void *(*docheck)(struct fstab *);
-	int (*checkit)(const char *, const char *, const char *, void *,
-	    pid_t *);
+checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
+    int (*checkit)(const char *, const char *, const char *, void *, pid_t *))
 {
 	struct fstab *fs;
 	struct diskentry *d, *nextdisk;
@@ -249,8 +246,7 @@ checkfstab(flags, maxrun, docheck, checkit)
 
 
 static struct diskentry *
-finddisk(name)
-	const char *name;
+finddisk(const char *name)
 {
 	const char *p;
 	size_t len = 0;
@@ -283,7 +279,7 @@ finddisk(name)
 
 
 static void
-printpart()
+printpart(void)
 {
 	struct diskentry *d;
 	struct partentry *p;
@@ -299,9 +295,7 @@ printpart()
 
 
 static void
-addpart(type, devname, mntpt, auxarg)
-	const char *type, *devname, *mntpt;
-	void *auxarg;
+addpart(const char *type, const char *devname, const char *mntpt, void *auxarg)
 {
 	struct diskentry *d = finddisk(devname);
 	struct partentry *p;
@@ -323,10 +317,8 @@ addpart(type, devname, mntpt, auxarg)
 
 
 static int
-startdisk(d, checkit)
-	struct diskentry *d;
-	int (*checkit)(const char *, const char *, const char *, void *,
-	    pid_t *);
+startdisk(struct diskentry *d,
+    int (*checkit)(const char *, const char *, const char *, void *, pid_t *))
 {
 	struct partentry *p = d->d_part.tqh_first;
 	int rv;

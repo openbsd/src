@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.18 2002/07/01 21:43:21 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.19 2002/07/03 22:32:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -102,7 +102,7 @@ char *stpstates[] = {
 };
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: brconfig -a\n");
 	fprintf(stderr,
@@ -110,9 +110,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int error = 0, sock;
 	char *brdg;
@@ -427,10 +425,7 @@ main(argc, argv)
 }
 
 int
-bridge_ifsetflag(s, brdg, ifsname, flag)
-	int s;
-	char *brdg, *ifsname;
-	u_int32_t flag;
+bridge_ifsetflag(int s, char *brdg, char *ifsname, u_int32_t flag)
 {
 	struct ifbreq req;
 
@@ -451,10 +446,7 @@ bridge_ifsetflag(s, brdg, ifsname, flag)
 }
 
 int
-bridge_ifclrflag(s, brdg, ifsname, flag)
-	int s;
-	char *brdg, *ifsname;
-	u_int32_t flag;
+bridge_ifclrflag(int s, char *brdg, char *ifsname, u_int32_t flag)
 {
 	struct ifbreq req;
 
@@ -476,8 +468,7 @@ bridge_ifclrflag(s, brdg, ifsname, flag)
 }
 
 int
-bridge_show_all(s)
-	int s;
+bridge_show_all(int s)
 {
 	char *inbuf = NULL;
 	struct ifconf ifc;
@@ -513,10 +504,7 @@ bridge_show_all(s)
 }
 
 int
-bridge_setflag(s, brdg, f)
-	int s;
-	char *brdg;
-	short f;
+bridge_setflag(int s, char *brdg, short f)
 {
 	struct ifreq ifr;
 
@@ -542,10 +530,7 @@ bridge_setflag(s, brdg, f)
 }
 
 int
-bridge_clrflag(s, brdg, f)
-	int s;
-	char *brdg;
-	short f;
+bridge_clrflag(int s, char *brdg, short f)
 {
 	struct ifreq ifr;
 
@@ -571,9 +556,7 @@ bridge_clrflag(s, brdg, f)
 }
 
 int
-bridge_flushall(s, brdg)
-	int s;
-	char *brdg;
+bridge_flushall(int s, char *brdg)
 {
 	struct ifbreq req;
 
@@ -587,9 +570,7 @@ bridge_flushall(s, brdg)
 }
 
 int
-bridge_flush(s, brdg)
-	int s;
-	char *brdg;
+bridge_flush(int s, char *brdg)
 {
 	struct ifbreq req;
 
@@ -603,9 +584,7 @@ bridge_flush(s, brdg)
 }
 
 int
-bridge_cfg(s, brdg, delim)
-	int s;
-	char *brdg, *delim;
+bridge_cfg(int s, char *brdg, char *delim)
 {
 	struct ifbrparam ifbp;
 	u_int16_t pri;
@@ -643,9 +622,7 @@ bridge_cfg(s, brdg, delim)
 }
 
 int
-bridge_list(s, brdg, delim)
-	int s;
-	char *brdg, *delim;
+bridge_list(int s, char *brdg, char *delim)
 {
 	struct ifbreq *reqp;
 	struct ifbifconf bifc;
@@ -685,9 +662,7 @@ bridge_list(s, brdg, delim)
 }
 
 int
-bridge_add(s, brdg, ifn)
-	int s;
-	char *brdg, *ifn;
+bridge_add(int s, char *brdg, char *ifn)
 {
 	struct ifbreq req;
 
@@ -703,9 +678,7 @@ bridge_add(s, brdg, ifn)
 }
 
 int
-bridge_delete(s, brdg, ifn)
-	int s;
-	char *brdg, *ifn;
+bridge_delete(int s, char *brdg, char *ifn)
 {
 	struct ifbreq req;
 
@@ -721,9 +694,7 @@ bridge_delete(s, brdg, ifn)
 }
 
 int
-bridge_addspan(s, brdg, ifn)
-	int s;
-	char *brdg, *ifn;
+bridge_addspan(int s, char *brdg, char *ifn)
 {
 	struct ifbreq req;
 
@@ -739,9 +710,7 @@ bridge_addspan(s, brdg, ifn)
 }
 
 int
-bridge_delspan(s, brdg, ifn)
-	int s;
-	char *brdg, *ifn;
+bridge_delspan(int s, char *brdg, char *ifn)
 {
 	struct ifbreq req;
 
@@ -757,9 +726,7 @@ bridge_delspan(s, brdg, ifn)
 }
 
 int
-bridge_timeout(s, brdg, arg)
-	int s;
-	char *brdg, *arg;
+bridge_timeout(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
 	u_int32_t newtime;
@@ -783,9 +750,7 @@ bridge_timeout(s, brdg, arg)
 }
 
 int
-bridge_maxage(s, brdg, arg)
-	int s;
-	char *brdg, *arg;
+bridge_maxage(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
 	u_int32_t v;
@@ -810,9 +775,7 @@ bridge_maxage(s, brdg, arg)
 }
 
 int
-bridge_priority(s, brdg, arg)
-	int s;
-	char *brdg, *arg;
+bridge_priority(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
 	u_int32_t v;
@@ -836,9 +799,7 @@ bridge_priority(s, brdg, arg)
 }
 
 int
-bridge_fwddelay(s, brdg, arg)
-	int s;
-	char *brdg, *arg;
+bridge_fwddelay(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
 	u_int32_t v;
@@ -863,9 +824,7 @@ bridge_fwddelay(s, brdg, arg)
 }
 
 int
-bridge_hellotime(s, brdg, arg)
-	int s;
-	char *brdg, *arg;
+bridge_hellotime(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
 	u_int32_t v;
@@ -890,9 +849,7 @@ bridge_hellotime(s, brdg, arg)
 }
 
 int
-bridge_maxaddr(s, brdg, arg)
-	int s;
-	char *brdg, *arg;
+bridge_maxaddr(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
 	u_int32_t newsize;
@@ -916,9 +873,7 @@ bridge_maxaddr(s, brdg, arg)
 }
 
 int
-bridge_deladdr(s, brdg, addr)
-	int s;
-	char *brdg, *addr;
+bridge_deladdr(int s, char *brdg, char *addr)
 {
 	struct ifbareq ifba;
 	struct ether_addr *ea;
@@ -940,9 +895,7 @@ bridge_deladdr(s, brdg, addr)
 }
 
 int
-bridge_ifprio(s, brdg, ifname, val)
-	int s;
-	char *brdg, *ifname, *val;
+bridge_ifprio(int s, char *brdg, char *ifname, char *val)
 {
 	struct ifbreq breq;
 	u_int32_t v;
@@ -968,9 +921,7 @@ bridge_ifprio(s, brdg, ifname, val)
 }
 
 int
-bridge_addaddr(s, brdg, ifname, addr)
-	int s;
-	char *brdg, *ifname, *addr;
+bridge_addaddr(int s, char *brdg, char *ifname, char *addr)
 {
 	struct ifbareq ifba;
 	struct ether_addr *ea;
@@ -995,9 +946,7 @@ bridge_addaddr(s, brdg, ifname, addr)
 }
 
 int
-bridge_addrs(s, brdg, delim)
-	int s;
-	char *brdg, *delim;
+bridge_addrs(int s, char *brdg, char *delim)
 {
 	struct ifbaconf ifbac;
 	struct ifbareq *ifba;
@@ -1036,9 +985,7 @@ bridge_addrs(s, brdg, delim)
  * Check to make sure 'brdg' is really a bridge interface.
  */
 int
-is_bridge(s, brdg)
-	int s;
-	char *brdg;
+is_bridge(int s, char *brdg)
 {
 	struct ifreq ifr;
 	struct ifbaconf ifbac;
@@ -1059,9 +1006,7 @@ is_bridge(s, brdg)
 }
 
 int
-bridge_status(s, brdg)
-	int s;
-	char *brdg;
+bridge_status(int s, char *brdg)
 {
 	struct ifreq ifr;
 	struct ifbrparam bp1, bp2;
@@ -1109,9 +1054,7 @@ bridge_status(s, brdg)
 }
 
 int
-bridge_flushrule(s, brdg, ifname)
-	int s;
-	char *brdg, *ifname;
+bridge_flushrule(int s, char *brdg, char *ifname)
 {
 	struct ifbrlreq req;
 
@@ -1125,10 +1068,7 @@ bridge_flushrule(s, brdg, ifname)
 }
 
 int
-bridge_rules(s, brdg, ifname, delim)
-	int s;
-	char *brdg, *ifname;
-	char *delim;
+bridge_rules(int s, char *brdg, char *ifname, char *delim)
 {
 	char *inbuf = NULL;
 	struct ifbrlconf ifc;
@@ -1157,9 +1097,7 @@ bridge_rules(s, brdg, ifname, delim)
 }
 
 void
-bridge_showrule(r, delim)
-	struct ifbrlreq *r;
-	char *delim;
+bridge_showrule(struct ifbrlreq *r, char *delim)
 {
 	if (delim)
 		printf("%s    ", delim);
@@ -1287,9 +1225,7 @@ bad_rule:
 #define MAXRULEWORDS 8
 
 int
-bridge_rulefile(s, brdg, fname)
-	int s;
-	char *brdg, *fname;
+bridge_rulefile(int s, char *brdg, char *fname)
 {
 	FILE *f;
 	char *str, *argv[MAXRULEWORDS], buf[1024], xbuf[1024];
@@ -1334,9 +1270,7 @@ bridge_rulefile(s, brdg, fname)
 }
 
 void
-bridge_badrule(argc, argv, ln)
-	int argc, ln;
-	char **argv;
+bridge_badrule(int argc, char *argv[], int ln)
 {
 	int i;
 
@@ -1354,10 +1288,7 @@ bridge_badrule(argc, argv, ln)
  * (borrowed from ifconfig.c)
  */
 void
-printb(s, v, bits)
-	char *s;
-	char *bits;
-	unsigned short v;
+printb(char *s, unsigned short v, char *bits)
 {
 	int i, any = 0;
 	char c;

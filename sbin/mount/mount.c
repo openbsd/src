@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.27 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: mount.c,v 1.28 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.27 2002/06/09 08:13:07 todd Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.28 2002/07/03 22:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,9 +116,7 @@ static struct opt {
 };
 
 int
-main(argc, argv)
-	int argc;
-	char * const argv[];
+main(int argc, char * const argv[])
 {
 	const char *mntonname, *vfstype;
 	struct fstab *fs;
@@ -277,8 +275,7 @@ main(argc, argv)
 }
 
 int
-hasopt(mntopts, option)
-	const char *mntopts, *option;
+hasopt(const char *mntopts, const char *option)
 {
 	int negative, found;
 	char *opt, *optbuf;
@@ -302,9 +299,8 @@ hasopt(mntopts, option)
 }
 
 int
-mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
-	const char *vfstype, *spec, *name, *options, *mntopts;
-	int flags, skipmounted;
+mountfs(const char *vfstype, const char *spec, const char *name, int flags,
+    const char *options, const char *mntopts, int skipmounted)
 {
 	/* List of directories containing mount_xxx subcommands. */
 	static const char *edirs[] = {
@@ -437,8 +433,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 }
 
 void
-prmount(sf)
-	struct statfs *sf;
+prmount(struct statfs *sf)
 {
 	int flags;
 	struct opt *o;
@@ -564,8 +559,7 @@ prmount(sf)
 }
 
 struct statfs *
-getmntpt(name)
-	const char *name;
+getmntpt(const char *name)
 {
 	struct statfs *mntbuf;
 	int i, mntsize;
@@ -581,8 +575,7 @@ getmntpt(name)
 static enum { IN_LIST, NOT_IN_LIST } which;
 
 int
-selected(type)
-	const char *type;
+selected(const char *type)
 {
 	char **av;
 
@@ -596,8 +589,7 @@ selected(type)
 }
 
 void
-maketypelist(fslist)
-	char *fslist;
+maketypelist(char *fslist)
 {
 	int i;
 	char *nextcp, **av;
@@ -633,9 +625,7 @@ maketypelist(fslist)
 }
 
 char *
-catopt(s0, s1)
-	char *s0;
-	const char *s1;
+catopt(char *s0, const char *s1)
 {
 	size_t i;
 	char *cp;
@@ -654,10 +644,7 @@ catopt(s0, s1)
 }
 
 void
-mangle(options, argcp, argv)
-	char *options;
-	int *argcp;
-	const char **argv;
+mangle(char *options, int *argcp, const char **argv)
 {
 	char *p, *s;
 	int argc;
@@ -682,21 +669,20 @@ mangle(options, argcp, argv)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
-		"usage: mount %s %s\n       mount %s\n       mount %s\n",
-		"[-dfruvw] [-o options] [-t ffs | external_type]",
-			"special node",
-		"[-adfruvw] [-t ffs | external_type]",
-		"[-dfruvw] special | node");
+	    "usage: mount %s %s\n       mount %s\n       mount %s\n",
+	    "[-dfruvw] [-o options] [-t ffs | external_type]",
+	    "special node",
+	    "[-adfruvw] [-t ffs | external_type]",
+	    "[-dfruvw] special | node");
 	exit(1);
 }
 
 int
-disklabelcheck(fs)
-	struct fstab *fs;
+disklabelcheck(struct fstab *fs)
 {
 	char *labelfs;
 

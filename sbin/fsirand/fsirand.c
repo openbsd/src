@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.15 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.16 2002/07/03 22:32:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.15 2002/06/09 08:13:06 todd Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.16 2002/07/03 22:32:32 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,9 +58,7 @@ extern char *__progname;
 int printonly = 0, force = 0, ignorelabel = 0;
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int n, ex = 0;
 	struct rlimit rl;
@@ -103,8 +101,7 @@ main(argc, argv)
 }
 
 int
-fsirand(device)
-	char *device;
+fsirand(char *device)
 {
 	static struct dinode *inodebuf;
 	static size_t oldibufsize;
@@ -119,7 +116,7 @@ fsirand(device)
 	struct disklabel label;
 
 	if ((devfd = opendev(device, printonly ? O_RDONLY : O_RDWR,
-	     OPENDEV_PART, &devpath)) < 0) {
+	    OPENDEV_PART, &devpath)) < 0) {
 		warn("Can't open %s", devpath);
 		return (1);
 	}
@@ -203,7 +200,7 @@ fsirand(device)
 			(void)printf("%s was randomized on %s", devpath,
 			    ctime((const time_t *)&(sblock->fs_id[0])));
 		(void)printf("fsid: %x %x\n", sblock->fs_id[0],
-			    sblock->fs_id[1]);
+		    sblock->fs_id[1]);
 	}
 
 	/* Randomize fs_id unless old 4.2BSD filesystem */
@@ -229,10 +226,12 @@ fsirand(device)
 		/* Update superblock if appropriate */
 		if ((sblock->fs_inodefmt >= FS_44INODEFMT) && !printonly) {
 			dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-			if (lseek(devfd, (off_t)dblk * (off_t)bsize, SEEK_SET) < 0) {
+			if (lseek(devfd, (off_t)dblk * (off_t)bsize,
+			    SEEK_SET) < 0) {
 				warn("Can't seek to %qd", (off_t)dblk * bsize);
 				return (1);
-			} else if ((n = write(devfd, (void *)sblock, SBSIZE)) != SBSIZE) {
+			} else if ((n = write(devfd, (void *)sblock, SBSIZE)) !=
+			    SBSIZE) {
 				warn("Can't read backup superblock %d on %s: %s",
 				    cg + 1, devpath, (n < SBSIZE) ? "short write"
 				    : strerror(errno));
@@ -247,7 +246,7 @@ fsirand(device)
 			return (1);
 		} else if ((n = read(devfd, inodebuf, ibufsize)) != ibufsize) {
 			warnx("Can't read inodes: %s",
-			     (n < ibufsize) ? "short read" : strerror(errno));
+			    (n < ibufsize) ? "short read" : strerror(errno));
 			return (1);
 		}
 
@@ -255,7 +254,7 @@ fsirand(device)
 			if (inumber >= ROOTINO) {
 				if (printonly)
 					(void)printf("ino %d gen %x\n", inumber,
-						     inodebuf[n].di_gen);
+					    inodebuf[n].di_gen);
 				else
 					inodebuf[n].di_gen = arc4random();
 			}
@@ -270,8 +269,8 @@ fsirand(device)
 			} else if ((n = write(devfd, inodebuf, ibufsize)) !=
 				 ibufsize) {
 				warnx("Can't write inodes: %s",
-				     (n != ibufsize) ? "short write" :
-				     strerror(errno));
+				    (n != ibufsize) ? "short write" :
+				    strerror(errno));
 				return (1);
 			}
 		}
@@ -282,10 +281,9 @@ fsirand(device)
 }
 
 void
-usage(ex)
-	int ex;
+usage(int ex)
 {
 	(void)fprintf(stderr, "Usage: %s [ -b ] [ -f ] [ -p ] special [special ...]\n",
-		      __progname);
+	    __progname);
 	exit(ex);
 }

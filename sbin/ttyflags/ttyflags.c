@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.9 2002/05/29 19:23:34 deraadt Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.10 2002/07/03 22:32:34 deraadt Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.9 2002/05/29 19:23:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.10 2002/07/03 22:32:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,9 +70,7 @@ int nflag, vflag;
  * the flags of the ttys specified on the command line.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int aflag, ch, rval, pflag = 0;
 
@@ -119,8 +117,7 @@ main(argc, argv)
  * Change all /etc/ttys entries' flags.
  */
 int
-all(print)
-	int print;
+all(int print)
 {
 	struct ttyent *tep;
 	int rval;
@@ -136,9 +133,7 @@ all(print)
  * Change the specified ttys' flags.
  */
 int
-ttys(ttylist, print)
-	char **ttylist;
-	int print;
+ttys(char **ttylist, int print)
 {
 	struct ttyent *tep;
 	int rval;
@@ -165,9 +160,7 @@ ttys(ttylist, print)
  * open the device, and change the flags.
  */
 int
-ttyflags(tep, print)
-	struct ttyent *tep;
-	int print;
+ttyflags(struct ttyent *tep, int print)
 {
 	int fd, flags = 0, rval = 0, st, sep = 0;
 	char path[PATH_MAX];
@@ -264,7 +257,7 @@ ttyflags(tep, print)
  * Print usage information when a bogus set of arguments is given.
  */
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: ttyflags [-v] [-p] [-a | tty ... ]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.9 2002/05/15 23:30:08 art Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.10 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -116,9 +116,7 @@ static	int  swapon_command(int, char **);
 extern	char *__progname;	/* from crt0.o */
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	c;
 
@@ -242,9 +240,7 @@ main(argc, argv)
  * swapon_command: emulate the old swapon(8) program.
  */
 int
-swapon_command(argc, argv)
-	int argc;
-	char **argv;
+swapon_command(int argc, char **argv)
 {
 	int ch, fiztab = 0;
 
@@ -297,8 +293,7 @@ swapon_command(argc, argv)
  * change_priority:  change the priority of a swap device.
  */
 void
-change_priority(path)
-	char	*path;
+change_priority(char *path)
 {
 
 	if (swapctl(SWAP_CTL, path, pri) < 0)
@@ -309,8 +304,7 @@ change_priority(path)
  * add_swap:  add the pathname to the list of swap devices.
  */
 void
-add_swap(path)
-	char *path;
+add_swap(char *path)
 {
 
 	if (swapctl(SWAP_ON, path, pri) < 0)
@@ -322,8 +316,7 @@ add_swap(path)
  * del_swap:  remove the pathname from the list of swap devices.
  */
 void
-del_swap(path)
-	char *path;
+del_swap(char *path)
 {
 
 	if (swapctl(SWAP_OFF, path, pri) < 0)
@@ -331,7 +324,7 @@ del_swap(path)
 }
 
 void
-do_fstab()
+do_fstab(void)
 {
 	struct	fstab *fp;
 	char	*s;
@@ -441,7 +434,7 @@ do_fstab()
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",

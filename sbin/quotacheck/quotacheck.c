@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.13 2002/02/17 19:42:29 millert Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.14 2002/07/03 22:32:33 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.13 2002/02/17 19:42:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.14 2002/07/03 22:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,9 +130,7 @@ int	 update(const char *, const char *, int);
 void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct fstab *fs;
 	struct passwd *pw;
@@ -212,7 +210,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n",
 		"quotacheck -a [-dguv] [-l <maxparallel>]",
@@ -221,8 +219,7 @@ usage()
 }
 
 void *
-needchk(fs)
-	struct fstab *fs;
+needchk(struct fstab *fs)
 {
 	struct quotaname *qnp;
 	char *qfnp;
@@ -258,10 +255,8 @@ needchk(fs)
  * Scan the specified filesystem to check quota(s) present on it.
  */
 int
-chkquota(vfstype, fsname, mntpt, auxarg, pidp)
-	const char *vfstype, *fsname, *mntpt;
-	void *auxarg;
-	pid_t *pidp;
+chkquota(const char *vfstype, const char *fsname, const char *mntpt,
+    void *auxarg, pid_t *pidp)
 {
 	struct quotaname *qnp = auxarg;
 	struct fileusage *fup;
@@ -356,9 +351,7 @@ chkquota(vfstype, fsname, mntpt, auxarg, pidp)
  * Update a specified quota file.
  */
 int
-update(fsname, quotafile, type)
-	const char *fsname, *quotafile;
-	int type;
+update(const char *fsname, const char *quotafile, int type)
 {
 	struct fileusage *fup;
 	FILE *qfi, *qfo;
@@ -455,9 +448,7 @@ update(fsname, quotafile, type)
  * Check to see if target appears in list of size cnt.
  */
 int
-oneof(target, list, cnt)
-	char *target, *list[];
-	int cnt;
+oneof(char *target, char *list[], int cnt)
 {
 	int i;
 
@@ -471,7 +462,7 @@ oneof(target, list, cnt)
  * Determine the group identifier for quota files.
  */
 int
-getquotagid()
+getquotagid(void)
 {
 	struct group *gr;
 
@@ -484,10 +475,7 @@ getquotagid()
  * Check to see if a particular quota is to be enabled.
  */
 int
-hasquota(fs, type, qfnamep)
-	struct fstab *fs;
-	int type;
-	char **qfnamep;
+hasquota(struct fstab *fs, int type, char **qfnamep)
 {
 	char *opt;
 	char *cp;
@@ -528,9 +516,7 @@ hasquota(fs, type, qfnamep)
  * Lookup an id of a specific type.
  */
 struct fileusage *
-lookup(id, type)
-	u_long id;
-	int type;
+lookup(u_long id, int type)
 {
 	struct fileusage *fup;
 
@@ -544,10 +530,7 @@ lookup(id, type)
  * Add a new file usage id if it does not already exist.
  */
 struct fileusage *
-addid(id, type, name)
-	u_long id;
-	int type;
-	char *name;
+addid(u_long id, int type, char *name)
 {
 	struct fileusage *fup, **fhp;
 	int len;
@@ -583,8 +566,7 @@ struct dinode *inodebuf;
 #define	INOBUFSIZE	56*1024	/* size of buffer to read inodes */
 
 struct dinode *
-getnextinode(inumber)
-	ino_t inumber;
+getnextinode(ino_t inumber)
 {
 	long size;
 	daddr_t dblk;
@@ -612,7 +594,7 @@ getnextinode(inumber)
  * Prepare to scan a set of inodes.
  */
 void
-resetinodebuf()
+resetinodebuf(void)
 {
 
 	nextino = 0;
@@ -640,7 +622,7 @@ resetinodebuf()
  * Free up data structures used to scan inodes.
  */
 void
-freeinodebuf()
+freeinodebuf(void)
 {
 
 	if (inodebuf != NULL)
@@ -652,10 +634,7 @@ freeinodebuf()
  * Read specified disk blocks.
  */
 void
-bread(bno, buf, cnt)
-	daddr_t bno;
-	char *buf;
-	long cnt;
+bread(daddr_t bno, char *buf, long cnt)
 {
 
 	if (lseek(fi, (off_t)bno * dev_bsize, SEEK_SET) < 0 ||
