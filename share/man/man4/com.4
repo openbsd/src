@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.8 2002/09/26 07:55:39 miod Exp $
+.\"	$OpenBSD: com.4,v 1.9 2002/11/27 13:06:45 mickey Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -69,8 +69,9 @@
 .Cd "com* at ebus?"
 .Pp
 .Cd "# hppa"
-.Cd "com0 at gsc? offset ? irq 5"
-.Cd "com1 at gsc? offset ? irq 6"
+.Cd "com0 at gsc? offset 0x5000 irq 5"
+.Cd "com0 at gsc? offset 0x23000 irq 5"
+.Cd "com1 at gsc? offset 0x22000 irq 6"
 .Cd "com2 at gsc? offset ? irq 13"
 .Sh DESCRIPTION
 The
