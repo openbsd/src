@@ -40,7 +40,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_tx.c,v 1.6 1997/02/11 22:23:55 kstailey Exp $";
+static  char    rcsid[] = "$DRId: ipft_tx.c,v 2.0.1.3 1997/02/20 09:47:47 darrenr Exp $"
 #endif
 
 extern	int	opts;
@@ -211,6 +211,8 @@ int	*out;
 	char	*cps[20], **cpp, c, ipopts[68];
 	int	i, r;
 
+	if (*ifn)
+		free(*ifn);
 	bzero((char *)ip, MAX(sizeof(*tcp), sizeof(*ic)) + sizeof(*ip));
 	bzero((char *)tcp, sizeof(*tcp));
 	bzero((char *)ic, sizeof(*ic));
@@ -236,7 +238,7 @@ int	*out;
 		cpp++;
 		if (!*cpp)
 			return 1;
-		*ifn = *cpp++;
+		*ifn = strdup(*cpp++);
 	}
 
 	c = **cpp;
