@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2001/03/29 19:47:10 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.29 2001/03/29 20:41:34 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -89,8 +89,8 @@ abtn*	at adb?				# ADB button?
 #zsc*	at obio?
 #zstty*	at zsc? channel ?
 
-#awacs*  at obio?                        # Apple audio device
-#audio* at awacs?
+awacs*  at obio? disable                       # Apple audio device
+audio* at awacs?
 
 
 #### SCSI attachment points
