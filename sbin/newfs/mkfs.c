@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.41 2004/06/26 18:21:35 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.42 2004/07/06 07:31:59 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.41 2004/06/26 18:21:35 otto Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.42 2004/07/06 07:31:59 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo,
 #endif
 	if (mfs) {
 		membase = mmap(NULL, fssize * sectorsize, PROT_READ|PROT_WRITE,
-		    MAP_ANON|MAP_PRIVATE, -1, 0);
+		    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		if (membase == MAP_FAILED)
 			err(12, "mmap");
 		madvise(membase, fssize * sectorsize, MADV_RANDOM);
@@ -1033,10 +1033,8 @@ iput(struct ufs1_dinode *ip, ino_t ino)
 {
 	struct ufs1_dinode buf[MAXINOPB];
 	daddr_t d;
-	int c;
 
 	ip->di_gen = (u_int32_t)arc4random();
-	c = ino_to_cg(&sblock, ino);
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);
 	if (acg.cg_magic != CG_MAGIC) {
