@@ -1,5 +1,5 @@
 #!./perl
-#	$OpenBSD: installperl,v 1.2 1996/08/26 05:31:51 downsj Exp $
+#	$OpenBSD: installperl,v 1.3 1996/08/26 14:06:20 downsj Exp $
 #
 # This is hacked up, in order to support DESTDIR.
 #
@@ -29,7 +29,7 @@ umask 022;
 
 # pod documentation now handled by separate installman script.
 # These two are archaic leftovers.
-@manpages = qw(x2p/a2p.man x2p/s2p.man);
+#@manpages = qw(x2p/a2p.man x2p/s2p.man);
 
 @pods = (<pod/*.pod>);
 
@@ -148,27 +148,27 @@ foreach $file (@pods) {
 
 # Install old man pages.
 
-if ($installman1dir ne '') {
-    mkpath($installman1dir, 1, 0777);
-
-    if (! &samepath($installman1dir, '.')) {
-	for (@manpages) {
-	    ($new = $_) =~ s/man$/$man1ext/;
-	    $new =~ s#.*/##;
-	    print STDERR "  Installing $installman1dir/$new\n";
-	    next if $nonono;
-	    open(MI,$_) || warn "Can't open $_: $!\n";
-	    open(MO,">$installman1dir/$new") || 
-		    warn "Can't install $installman1dir/$new: $!\n";
-	    print MO ".ds RP Release $release Patchlevel $patchlevel\n";
-	    while (<MI>) {
-		print MO;
-	    }
-	    close MI;
-	    close MO;
-	}
-    }
-}
+#if ($installman1dir ne '') {
+#    mkpath($installman1dir, 1, 0777);
+#
+#    if (! &samepath($installman1dir, '.')) {
+#	for (@manpages) {
+#	    ($new = $_) =~ s/man$/$man1ext/;
+#	    $new =~ s#.*/##;
+#	    print STDERR "  Installing $installman1dir/$new\n";
+#	    next if $nonono;
+#	    open(MI,$_) || warn "Can't open $_: $!\n";
+#	    open(MO,">$installman1dir/$new") || 
+#		    warn "Can't install $installman1dir/$new: $!\n";
+#	    print MO ".ds RP Release $release Patchlevel $patchlevel\n";
+#	    while (<MI>) {
+#		print MO;
+#	    }
+#	    close MI;
+#	    close MO;
+#	}
+#    }
+#}
 
 # Install library files.
 
