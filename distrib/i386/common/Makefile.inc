@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2004/01/26 23:21:49 tom Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2004/01/28 21:46:38 tom Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -22,7 +22,6 @@ PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 BOOT=		${DESTDIR}/usr/mdec/boot
 FLOPPYSIZE?=	144
-FLOPPYSECS?=	18
 FLOPPYTYPE?=	floppy3
 
 all:	${FS}
