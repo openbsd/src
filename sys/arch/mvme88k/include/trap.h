@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.17 2002/03/14 03:15:57 millert Exp $ */
+/*	$OpenBSD: trap.h,v 1.18 2003/09/09 06:39:02 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -51,11 +51,9 @@
 #define T_FPEPFLT	11	/* floating point precise exception */
 #define T_FPEIFLT	12	/* floating point imprecise exception */
 #define T_ASTFLT	13	/* software trap */
-#if	DDB
 #define	T_KDB_ENTRY	14	/* force entry to kernel debugger */
 #define T_KDB_BREAK	15	/* break point hit */
 #define T_KDB_TRACE	16	/* trace */
-#endif /* DDB */
 #define T_UNKNOWNFLT	17	/* unknown exception */
 #define T_SIGTRAP	18	/* generate SIGTRAP */
 #define T_SIGSYS	19	/* generate SIGSYS */
@@ -63,9 +61,7 @@
 #define T_USERBPT	21	/* user set breakpoint (for debugger) */
 #define T_SYSCALL	22	/* Syscall */
 #define T_NON_MASK	23	/* MVME197 Non-Maskable Interrupt */
-#if	DDB
 #define	T_KDB_WATCH	24	/* watchpoint hit */
-#endif /* DDB */
 #define T_197_READ	25	/* MVME197 Data Read Miss (Software Table Searches) */
 #define T_197_WRITE	26	/* MVME197 Data Write Miss (Software Table Searches) */
 #define T_197_INST	27	/* MVME197 Inst ATC Miss (Software Table Searches) */
