@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.10 2002/06/29 00:20:11 millert Exp $
+.\"	$OpenBSD: strtol.3,v 1.11 2002/11/21 20:54:09 millert Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOL 3
@@ -231,13 +231,21 @@ The given string was out of range; the value converted has been clamped.
 .Xr atof 3 ,
 .Xr atoi 3 ,
 .Xr atol 3 ,
+.Xr atoll 3 ,
 .Xr sscanf 3 ,
 .Xr strtod 3 ,
 .Xr strtoul 3
 .Sh STANDARDS
 The
 .Fn strtol
-function conforms to
-.St -ansiC .
+and
+.Fn strtoll
+functions conform to
+.St -ansiC-99 .
+The
+.Fn strtoq
+function is a
+.Bx
+extension and is provided for backwards compatibility with legacy programs.
 .Sh BUGS
 Ignores the current locale.

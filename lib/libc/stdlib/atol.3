@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atol.3,v 1.4 2000/04/20 13:50:01 aaron Exp $
+.\"	$OpenBSD: atol.3,v 1.5 2002/11/21 20:54:09 millert Exp $
 .\"
 .Dd June 29, 1991
 .Dt ATOL 3
@@ -63,6 +63,7 @@ strtol(nptr, (char **)NULL, 10);
 .Sh SEE ALSO
 .Xr atof 3 ,
 .Xr atoi 3 ,
+.Xr atoll 3 ,
 .Xr strtod 3 ,
 .Xr strtol 3 ,
 .Xr strtoul 3
@@ -70,4 +71,4 @@ strtol(nptr, (char **)NULL, 10);
 The
 .Fn atol
 function conforms to
-.St -ansiC .
+.St -ansiC-99 .
