@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 1998/07/14 19:04:08 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 1998/07/28 23:27:58 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -111,6 +111,7 @@ main(argc, argv)
 	register char *map;
 	register int ch;
 	struct tm then;
+	struct statfs fsbuf;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow;
@@ -228,7 +229,6 @@ main(argc, argv)
 	toplevel = NULL;
 	for (i = 0; i < argc; i++) {
 		struct stat sb;
-		struct statfs fsbuf;
 
 		if (lstat(argv[i], &sb) == -1) {
 			msg("Cannot lstat %s: %s\n", argv[i], strerror(errno));
@@ -360,6 +360,14 @@ main(argc, argv)
 			    sizeof(spcl.c_filesys) - 1);
 			spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
 		}
+	} else if (!statfs(disk, &fsbuf) && !strcmp(fsbuf.f_mntonname, disk)) {
+		disk = rawname(fsbuf.f_mntfromname);
+		(void)strncpy(spcl.c_dev, fsbuf.f_mntfromname,
+		    sizeof(spcl.c_dev) - 1);
+		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
+		(void)strncpy(spcl.c_filesys, fsbuf.f_mntonname,
+		    sizeof(spcl.c_filesys) - 1);
+		spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
 	} else {
 		(void)strncpy(spcl.c_dev, disk, sizeof(spcl.c_dev) - 1);
 		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
