@@ -1,3 +1,0 @@
-In short: stick the the bootblocks into a partition with
-something like:
-	cat sdboot bootsd > /dev/rsd0c
