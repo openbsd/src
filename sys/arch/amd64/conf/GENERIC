@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2004/02/28 23:58:15 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.9 2004/03/05 21:52:20 avsm Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -433,7 +433,7 @@ auvia*	at pci? dev ? function ?		# VIA VT82C686A
 #audio*	at autri?
 audio*	at auvia?
 #audio*	at fms?
-#audio*	at uaudio?
+audio*	at uaudio?
 #audio*	at maestro?
 #audio*	at esa?
 #audio*	at yds?
