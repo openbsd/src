@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.43 2004/05/08 20:17:49 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.44 2004/09/15 22:33:15 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.43 2004/05/08 20:17:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.44 2004/09/15 22:33:15 deraadt Exp $";
 #endif
 
 
@@ -99,7 +99,7 @@ void   rarp_process(struct if_info *, u_char *);
 void   rarp_reply(struct if_info *, struct if_addr *,
 	    struct ether_header *, u_int32_t, struct hostent *);
 void   update_arptab(u_char *, u_int32_t);
-void   err(int, const char *,...);
+void   error(int, const char *,...);
 void   debug(const char *,...);
 u_int32_t ipaddrtonetmask(u_int32_t);
 int    rarp_bootable(u_int32_t);
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 			exit(0);
 		else
 			if (pid == -1) {
-				err(FATAL, "cannot fork");
+				error(FATAL, "cannot fork");
 				/* NOTREACHED */
 			}
 
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 		f = open(_PATH_TTY, O_RDWR);
 		if (f >= 0) {
 			if (ioctl(f, TIOCNOTTY, 0) < 0) {
-				err(FATAL, "TIOCNOTTY: %s", strerror(errno));
+				error(FATAL, "TIOCNOTTY: %s", strerror(errno));
 				/* NOTREACHED */
 			}
 			(void) close(f);
@@ -213,7 +213,7 @@ init_one(char *ifname)
 
 	p = (struct if_info *)malloc(sizeof(*p));
 	if (p == 0) {
-		err(FATAL, "malloc: %s", strerror(errno));
+		error(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 
@@ -237,7 +237,7 @@ init_all(void)
 	struct sockaddr_dl *sdl;
 
 	if (getifaddrs(&ifap) != 0) {
-		err(FATAL, "getifaddrs: %s", strerror(errno));
+		error(FATAL, "getifaddrs: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 
@@ -276,7 +276,7 @@ bpf_open(void)
 	} while (fd < 0 && errno == EBUSY);
 
 	if (fd < 0) {
-		err(FATAL, "%s: %s", device, strerror(errno));
+		error(FATAL, "%s: %s", device, strerror(errno));
 		/* NOTREACHED */
 	}
 	return fd;
@@ -313,7 +313,7 @@ rarp_open(char *device)
 	/* Set immediate mode so packets are processed as they arrive. */
 	immediate = 1;
 	if (ioctl(fd, BIOCIMMEDIATE, &immediate) < 0) {
-		err(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
+		error(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 
@@ -323,7 +323,7 @@ rarp_open(char *device)
 			close(fd);
 			return -1;
 		}
-		err(FATAL, "BIOCSETIF: %s", strerror(errno));
+		error(FATAL, "BIOCSETIF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 
@@ -332,7 +332,7 @@ rarp_open(char *device)
 	 * won't work with anything else.
 	 */
 	if (ioctl(fd, BIOCGDLT, (caddr_t) &dlt) < 0) {
-		err(FATAL, "BIOCGDLT: %s", strerror(errno));
+		error(FATAL, "BIOCGDLT: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 	if (dlt != DLT_EN10MB) {
@@ -340,12 +340,12 @@ rarp_open(char *device)
 			close(fd);
 			return -1;
 		}
-		err(FATAL, "%s is not an ethernet", device);
+		error(FATAL, "%s is not an ethernet", device);
 		/* NOTREACHED */
 	}
 	/* Set filter program. */
 	if (ioctl(fd, BIOCSETF, (caddr_t)&filter) < 0) {
-		err(FATAL, "BIOCSETF: %s", strerror(errno));
+		error(FATAL, "BIOCSETF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 	return fd;
@@ -363,7 +363,7 @@ rarp_check(u_char *p, int len)
 	(void) debug("got a packet");
 
 	if (len < sizeof(*ep) + sizeof(*ap)) {
-		err(NONFATAL, "truncated request");
+		error(NONFATAL, "truncated request");
 		return 0;
 	}
 	/* XXX This test might be better off broken out... */
@@ -372,15 +372,15 @@ rarp_check(u_char *p, int len)
 	    ntohs (ap->arp_op) != ARPOP_REVREQUEST ||
 	    ntohs (ap->arp_pro) != ETHERTYPE_IP ||
 	    ap->arp_hln != 6 || ap->arp_pln != 4) {
-		err(NONFATAL, "request fails sanity check");
+		error(NONFATAL, "request fails sanity check");
 		return 0;
 	}
 	if (memcmp((char *) &ep->ether_shost, (char *) &ap->arp_sha, 6) != 0) {
-		err(NONFATAL, "ether/arp sender address mismatch");
+		error(NONFATAL, "ether/arp sender address mismatch");
 		return 0;
 	}
 	if (memcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
-		err(NONFATAL, "ether/arp target address mismatch");
+		error(NONFATAL, "ether/arp target address mismatch");
 		return 0;
 	}
 	return 1;
@@ -399,16 +399,16 @@ rarp_loop(void)
 	struct if_info *ii;
 
 	if (iflist == 0) {
-		err(FATAL, "no interfaces");
+		error(FATAL, "no interfaces");
 		/* NOTREACHED */
 	}
 	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t)&bufsize) < 0) {
-		err(FATAL, "BIOCGBLEN: %s", strerror(errno));
+		error(FATAL, "BIOCGBLEN: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 	buf = (u_char *) malloc((unsigned) bufsize);
 	if (buf == 0) {
-		err(FATAL, "malloc: %s", strerror(errno));
+		error(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 	/*
@@ -421,9 +421,9 @@ rarp_loop(void)
 
 	fdsn = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
 	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
+		error(FATAL, "malloc");
 	if ((lfdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
+		error(FATAL, "malloc");
 
 	memset(fdsp, 0, fdsn);
 	for (ii = iflist; ii; ii = ii->ii_next)
@@ -433,7 +433,7 @@ rarp_loop(void)
 		memcpy(lfdsp, fdsp, fdsn);
 		if (select(maxfd + 1, lfdsp, (fd_set *) 0,
 			(fd_set *) 0, (struct timeval *) 0) < 0) {
-			err(FATAL, "select: %s", strerror(errno));
+			error(FATAL, "select: %s", strerror(errno));
 			/* NOTREACHED */
 		}
 		for (ii = iflist; ii; ii = ii->ii_next) {
@@ -454,7 +454,7 @@ rarp_loop(void)
 					(void) lseek(fd, (off_t)0, 0);
 					goto again;
 				}
-				err(FATAL, "read: %s", strerror(errno));
+				error(FATAL, "read: %s", strerror(errno));
 				/* NOTREACHED */
 			}
 			/* Loop through the packet(s) */
@@ -497,12 +497,12 @@ rarp_bootable(u_int32_t addr)
 		rewinddir(d);
 	else {
 		if (chdir(TFTP_DIR) == -1) {
-			err(FATAL, "chdir: %s", strerror(errno));
+			error(FATAL, "chdir: %s", strerror(errno));
 			/* NOTREACHED */
 		}
 		d = opendir(".");
 		if (d == 0) {
-			err(FATAL, "opendir: %s", strerror(errno));
+			error(FATAL, "opendir: %s", strerror(errno));
 			/* NOTREACHED */
 		}
 		dd = d;
@@ -558,7 +558,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 
 	/* Choose correct address from list. */
 	if (hp->h_addrtype != AF_INET) {
-		err(FATAL, "cannot handle non IP addresses");
+		error(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
 	for (target_ipaddr = 0, ia = ii->ii_addrs; ia; ia = ia->ia_next) {
@@ -571,7 +571,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 	if (target_ipaddr == 0) {
 		for (ia = ii->ii_addrs; ia; ia = ia->ia_next) {
 			in.s_addr = ia->ia_ipaddr & ia->ia_netmask;
-			err(NONFATAL, "cannot find %s on net %s",
+			error(NONFATAL, "cannot find %s on net %s",
 			    ename, inet_ntoa(in));
 		}
 		return;
@@ -596,7 +596,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 	int found = 0;
 
 	if (getifaddrs(&ifap) != 0) {
-		err(FATAL, "getifaddrs: %s", strerror(errno));
+		error(FATAL, "getifaddrs: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 
@@ -616,7 +616,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 		} else if (sdl->sdl_family == AF_INET) {
 			ia = malloc (sizeof (struct if_addr));
 			if (ia == NULL)
-				err(FATAL, "lookup_addrs: malloc: %s",
+				error(FATAL, "lookup_addrs: malloc: %s",
 				    strerror(errno));
 			ia->ia_next = NULL;
 			ia->ia_ipaddr =
@@ -642,7 +642,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 	}
 	freeifaddrs(ifap);
 	if (!found)
-		err(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
+		error(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
 }
 
 int arptab_set(u_char *eaddr, u_int32_t host);
@@ -676,10 +676,10 @@ update_arptab(u_char *ep, u_int32_t ipaddr)
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0) {
-		err(NONFATAL, "socket: %s", strerror(errno));
+		error(NONFATAL, "socket: %s", strerror(errno));
 	} else {
 		if (ioctl(s, SIOCSARP, (caddr_t)&request) < 0)
-		    err(NONFATAL, "SIOCSARP: %s", strerror(errno));
+		    error(NONFATAL, "SIOCSARP: %s", strerror(errno));
 		(void) close(s);
 	}
 #else
@@ -754,7 +754,7 @@ rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
 	len = sizeof(*ep) + sizeof(*ap);
 	n = write(ii->ii_fd, (char *) ep, len);
 	if (n != len)
-		err(NONFATAL, "write: only %d of %d bytes written", n, len);
+		error(NONFATAL, "write: only %d of %d bytes written", n, len);
 }
 /*
  * Get the netmask of an IP address.  This routine is used if
@@ -769,12 +769,12 @@ ipaddrtonetmask(u_int32_t addr)
 		return IN_CLASSB_NET;
 	if (IN_CLASSC(addr))
 		return IN_CLASSC_NET;
-	err(FATAL, "unknown IP address class: %08X", addr);
+	error(FATAL, "unknown IP address class: %08X", addr);
 	/* NOTREACHED */
 }
 
 void
-err(int fatal, const char *fmt,...)
+error(int fatal, const char *fmt,...)
 {
 	va_list ap;
 
