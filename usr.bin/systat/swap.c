@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.7 1997/01/31 10:09:36 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.8 1997/04/01 18:11:58 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.7 1997/01/31 10:09:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.8 1997/04/01 18:11:58 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -247,6 +247,7 @@ showswap()
 		xfree = perdev[i];
 		used = xsize - xfree;
 		mvwprintw(wnd, i + 1, col, "%9d  ", used / div);
+		wclrtoeol(wnd);
 		for (j = (100 * used / xsize + 1) / 2; j > 0; j--)
 			waddch(wnd, 'X');
 		npfree++;
