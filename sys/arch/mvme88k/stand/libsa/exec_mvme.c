@@ -1,35 +1,5 @@
-/*	$Id: exec_sun.c,v 1.1.1.1 1997/03/03 19:30:36 rahnds Exp $ */
 
 /*-
- * Copyright (c) 1995 Theo de Raadt
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Theo de Raadt
- * 4. The name of the Author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -66,35 +36,46 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <machine/prom.h>
 #include <a.out.h>
 
 #include "stand.h"
+#include "libsa.h"
 
-extern int debug;
+struct kernel {
+	void	*entry;
+	void	*symtab;
+	void	*esym;
+	int	bflags;
+	int	bdev;
+	char	*kname;
+	void	*smini;
+	void	*emini;
+	u_int	end_loaded;
+} kernel;
 
-extern u_int bootdev;
-
+#define RB_NOSYM 0x400
 /*ARGSUSED*/
-exec_sun(file, loadaddr, howto)
+void
+exec_mvme(file, flag)
 	char	*file;
-	char	*loadaddr;
-	int	howto;
+	int	flag;
 {
+	char *loadaddr;
 	register int io;
 	struct exec x;
 	int cc, magic;
 	void (*entry)();
 	register char *cp;
 	register int *ip;
-	int textlen;
 
 #ifdef	DEBUG
-	printf("exec_sun: file=%s loadaddr=0x%x\n", file, loadaddr);
+	printf("exec_mvme: file=%s flag=0x%x\n", file, flag);
 #endif
 
 	io = open(file, 0);
 	if (io < 0)
-		return(-1);
+		return;
 
 	/*
 	 * Read in the exec header, and validate it.
@@ -106,13 +87,23 @@ exec_sun(file, loadaddr, howto)
 		goto closeout;
 	}
 
+	/*
+	 * note: on the mvme ports, the kernel is linked in such a way that 
+	 * its entry point is the first item in .text, and thus a_entry can 
+	 * be used to determine both the load address and the entry point.
+	 * (also note that we make use of the fact that the kernel will live
+	 *  in a VA == PA range of memory ... otherwise we would take 
+	 *  loadaddr as a parameter and let the kernel relocate itself!)
+	 *
+	 * note that ZMAGIC files included the a.out header in the text area
+	 * so we must mask that off (has no effect on the other formats
+	 */
+	loadaddr = (void *)(x.a_entry & ~sizeof(x));
+
 	cp = loadaddr;
-	textlen = x.a_text;
 	magic = N_GETMAGIC(x);
-	if (magic == ZMAGIC) {
+	if (magic == ZMAGIC)
 		cp += sizeof(x);
-		textlen -= sizeof(x);
-	}
 	entry = (void (*)())cp;
 
 	/*
@@ -125,10 +116,13 @@ exec_sun(file, loadaddr, howto)
 	/*
 	 * Read in the text segment.
 	 */
-	printf("%x", x.a_text);
-	if (read(io, cp, textlen) != textlen)
+	printf("%d", x.a_text);
+	cc = x.a_text;
+	if (magic == ZMAGIC) 
+		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
+	if (read(io, cp, cc) != cc)
 		goto shread;
-	cp += textlen;
+	cp += cc;
 
 	/*
 	 * NMAGIC may have a gap between text and data.
@@ -142,24 +136,24 @@ exec_sun(file, loadaddr, howto)
 	/*
 	 * Read in the data segment.
 	 */
-	printf("+%x", x.a_data);
+	printf("+%d", x.a_data);
 	if (read(io, cp, x.a_data) != x.a_data)
 		goto shread;
 	cp += x.a_data;
 
 	/*
 	 * Zero out the BSS section.
-	 * (Kernel does not do it itself)
+	 * (Kernel doesn't care, but do it anyway.)
 	 */
-	printf("+%x", x.a_bss);
+	printf("+%d", x.a_bss);
 	cc = x.a_bss;
 	while ((int)cp & 3) {
 		*cp++ = 0;
 		--cc;
 	}
-	ip = (int *)cp;
+	ip = (int*)cp;
 	cp += cc;
-	while ((char *)ip < cp)
+	while ((char*)ip < cp)
 		*ip++ = 0;
 
 	/*
@@ -167,23 +161,23 @@ exec_sun(file, loadaddr, howto)
 	 * (Always set the symtab size word.)
 	 */
 	*ip++ = x.a_syms;
-	cp = (char *)ip;
+	cp = (char*) ip;
 
-	if (x.a_syms > 0) {
+	if (x.a_syms > 0 && (flag & RB_NOSYM) == 0) {
 
 		/* Symbol table and string table length word. */
 		cc = x.a_syms;
-		printf("+[%x", cc);
+		printf("+[%d", cc);
 		cc += sizeof(int);	/* strtab length too */
 		if (read(io, cp, cc) != cc)
 			goto shread;
 		cp += x.a_syms;
-		ip = (int *)cp;  	/* points to strtab length */
+		ip = (int*)cp;  	/* points to strtab length */
 		cp += sizeof(int);
 
 		/* String table.  Length word includes itself. */
 		cc = *ip;
-		printf("+%x]", cc);
+		printf("+%d]", cc);
 		cc -= sizeof(int);
 		if (cc <= 0)
 			goto shread;
@@ -191,22 +185,19 @@ exec_sun(file, loadaddr, howto)
 			goto shread;
 		cp += cc;
 	}
-	printf("=%x\n", cp - loadaddr);
+	printf("=0x%x\n", cp - loadaddr);
 	close(io);
 
-	if (debug) {
-		printf("Debug mode - enter c to continue\n");
-		asm("	trap #0");
-	}
-
-	printf("Starting program at 0x%x\n", (int)entry);
-	(*entry)(howto, bootdev, cp, 0, 0);
-	panic("exec returned");
+	printf("Start @ 0x%x ...\n", (int)entry);
+/*	(addr)(flag, 0, kernel.esym, kernel.smini, kernel.emini);*/
+	(*entry)(flag, 	bugargs.ctrl_addr, cp, kernel.smini, kernel.emini);
+	printf("exec: kernel returned!\n");
+	return;
 
 shread:
 	printf("exec: short read\n");
 	errno = EIO;
 closeout:
 	close(io);
-	return(-1);
+	return;
 }

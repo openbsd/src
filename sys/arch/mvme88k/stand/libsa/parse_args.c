@@ -1,10 +1,8 @@
-/*	$Id: promcons.c,v 1.1.1.1 1997/03/03 19:30:36 rahnds Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.1 1998/08/22 08:08:21 smurph Exp $ */
 
-/*
- * Copyright (c) 1996 Nivas Madhur
+/*-
  * Copyright (c) 1995 Theo de Raadt
- * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,8 +13,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Theo de Raadt
- * 4. The name of the Author may not be used to endorse or promote products
+ *	This product includes software developed under OpenBSD by
+ *	Theo de Raadt for Willowglen Singapore.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
@@ -30,42 +29,71 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
 
-#include <stdarg.h>
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/reboot.h>
+#include <machine/prom.h>
+#include <a.out.h>
+
+#include "stand.h"
+#include "libsa.h"
+
+#define KERNEL_NAME "bsd"
+#define RB_NOSYM 0x400
+
+struct flags {
+	char c;
+	short bit;
+} bf[] = {
+	{ 'a', RB_ASKNAME },
+	{ 'b', RB_HALT },
+	{ 'c', RB_CONFIG },
+	{ 'y', RB_NOSYM },
+	{ 'd', RB_KDB },
+	{ 'm', RB_MINIROOT },
+	{ 'r', RB_DFLTROOT },
+	{ 's', RB_SINGLE },
+};
 
 int
-getchar()
+parse_args(filep, flagp)
+
+char **filep;
+int *flagp;
+
 {
+	char *name = KERNEL_NAME, *ptr;
+	int i, howto = 0;
 	char c;
 
-	__asm volatile("or r9, r0, 0\n
-			tb0 0, r0, 496\n
-			st.b r2, %0" : "=m" (c));
-	return (c);
+	if (bugargs.arg_start != bugargs.arg_end) {
+		ptr = bugargs.arg_start;
+		while (c = *ptr) {
+			while (c == ' ')
+				c = *++ptr;
+			if (c == '\0')
+				return (0);
+			if (c != '-') {
+				name = ptr;
+				while ((c = *++ptr) && c != ' ')
+					;
+				if (c)
+					*ptr++ = 0;
+				continue;
+			}
+			while ((c = *++ptr) && c != ' ') {
+				if (c == 'q')
+					return (1);
+				for (i = 0; i < sizeof(bf)/sizeof(bf[0]); i++)
+					if (bf[i].c == c) {
+						howto |= bf[i].bit;
+					}
+			}
+		}
+	}
+	*flagp = howto;
+	*filep = name;
+	return (0);
 }
-
-peekchar()
-{
-	int have = 0;
-
-	__asm volatile("or r9, r0, 1\n
-			tb0 0, r0, 496\n
-			bb1 2, r2, 1f\n
-			or  r2,r0, 1\n
-			st  r2, %0\n1:" : "=m" (have) :);
-	return (have);
-}
-
-void
-putchar(c)
-	int c;
-{
-	if (c == '\n')
-		putchar('\r');
-	__asm volatile("or r9, r0, 0x20\n
-			or r2, r0, %0\n
-			tb0 0, r0, 496\n" : : "r" (c));
-}
-

@@ -1,8 +1,9 @@
-#include <sys/types.h>
 
-#include "clockreg.h"
-#include "config.h"
-#include "clock.h"
+#include <sys/types.h>
+#include <machine/prom.h>
+
+#include "stand.h"
+#include "libsa.h"
 
 /*
  * BCD to decimal and decimal to BCD.
@@ -13,6 +14,8 @@
 #define SECDAY          (24 * 60 * 60)
 #define SECYR           (SECDAY * 365)
 #define LEAPYEAR(y)     (((y) & 3) == 0)
+#define YEAR0		68
+
 
 /*
  * This code is defunct after 2068.
@@ -52,28 +55,9 @@ chiptotime(sec, min, hour, day, mon, year)
 time_t
 getsecs()
 {
-	extern int cputyp;
-	register struct clockreg *cl;
-	int     sec, min, hour, day, mon, year;
+	struct mvmeprom_time m;
 
-	if (cputyp == CPU_147)
-		cl = (struct clockreg *) CLOCK_ADDR_147;
-	else
-		cl = (struct clockreg *) CLOCK_ADDR_16x;
-
-	cl->cl_csr |= CLK_READ; /* enable read (stop time) */
-	sec = cl->cl_sec;
-	min = cl->cl_min;
-	hour = cl->cl_hour;
-	day = cl->cl_mday;
-	mon = cl->cl_month;
-	year = cl->cl_year;
-	cl->cl_csr &= ~CLK_READ;/* time wears on */
-	return (chiptotime(sec, min, hour, day, mon, year));
-}
-
-int
-getticks()
-{
-	return getsecs() * 100;
+	mvmeprom_rtc_rd(&m);
+	return (chiptotime(m.sec_BCD, m.min_BCD, m.hour_BCD, m.day_BCD, 
+			m.month_BCD, m.year_BCD));
 }
