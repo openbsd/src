@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2003/11/09 23:00:04 millert Exp $	*/
 /*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: config.c,v 1.4 2003/06/03 02:56:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.5 2003/11/09 23:00:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,12 +88,14 @@ config(char *fname)
 		p[len - 1] = '\0';		/* Terminate the line. */
 
 						/* Skip leading space. */
-		for (; *p != '\0' && isspace(*p); ++p);
+		while (*p != '\0' && isspace(*p))
+			p++;
 						/* Skip empty/comment lines. */
 		if (*p == '\0' || *p == '#')
 			continue;
 						/* Find first token. */
-		for (t = p; *t && !isspace(*t); ++t);
+		for (t = p; *t && !isspace(*t); ++t)
+			continue;
 		if (*t == '\0')			/* Need more than one token.*/
 			continue;
 		*t = '\0';
