@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2002/06/04 19:20:54 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -66,6 +66,8 @@ strrpl(char *str, size_t size, char *match, char *value)
 
 	return (p);
 }
+
+/* simplify_path is from pdksh and apparently in the public domain */
 
 /* ISABSPATH() means path is fully and completely specified,
  * ISROOTEDPATH() means a .. as the first component is a no-op,
