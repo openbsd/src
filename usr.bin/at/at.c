@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.27 2002/05/13 16:12:07 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.28 2002/05/13 18:43:53 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -71,12 +71,13 @@
 
 /* File scope variables */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.27 2002/05/13 16:12:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.28 2002/05/13 18:43:53 millert Exp $";
 #endif
 
 char *no_export[] =
 {
-	"TERM", "TERMCAP", "DISPLAY", "_"
+	"TERM", "TERMCAP", "DISPLAY", "_", "SHELLOPTS", "BASH_VERSINFO",
+	"EUID", "GROUPS", "PPID", "UID", "SSH_AUTH_SOCK", "SSH_AGENT_PID",
 };
 static int send_mail = 0;
 
@@ -175,9 +176,11 @@ writefile(time_t runtimer, char queue)
 	 * writing a job.
 	 */
 	int jobno;
-	char *ap, *ppos, *mailname;
+	char *ap, *ppos, *mailname, *shell;
+	char timestr[TIMESIZE];
 	struct passwd *pass_entry;
 	struct stat statbuf;
+	struct tm runtime;
 	int fdes, lockdes, fd2;
 	FILE *fp, *fpin;
 	struct sigaction act;
@@ -290,6 +293,19 @@ writefile(time_t runtimer, char queue)
 			mailname = pass_entry->pw_name;
 	}
 
+	/*
+	 * Get the shell to run the job under.  First check $SHELL, falling
+	 * back to the user's shell in the password database or, failing
+	 * that, /bin/sh.
+	 */
+	if ((shell = getenv("SHELL")) == NULL || *shell == '\0') {
+		pass_entry = getpwuid(real_uid);
+		if (pass_entry != NULL && *pass_entry->pw_shell != '\0')
+			shell = pass_entry->pw_shell;
+		else
+			shell = _PATH_BSHELL;
+	}
+
 	if (atinput != NULL) {
 		fpin = freopen(atinput, "r", stdin);
 		if (fpin == NULL)
@@ -379,11 +395,14 @@ writefile(time_t runtimer, char queue)
 	if ((ch = getchar()) == EOF)
 		panic("Input error");
 
+	/* We want the job to run under the user's shell. */
+	fprintf(fp, "%s << '_END_OF_AT_JOB'\n", shell);
+
 	do {
 		(void)fputc(ch, fp);
 	} while ((ch = getchar()) != EOF);
 
-	(void)fprintf(fp, "\n");
+	(void)fprintf(fp, "\n_END_OF_AT_JOB\n");
 	if (ferror(fp))
 		panic("Output error");
 
@@ -399,7 +418,11 @@ writefile(time_t runtimer, char queue)
 		perr("Cannot give away file");
 
 	(void)close(fd2);
-	(void)fprintf(stderr, "Job %d will be executed using /bin/sh\n", jobno);
+
+	runtime = *localtime(&runtimer);
+	strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
+	(void)fprintf(stderr, "commands will be executed using %s\n", shell);
+	(void)fprintf(stderr, "job %d at %s\n", jobno, timestr);
 }
 
 static void
@@ -468,10 +491,9 @@ list_jobs(void)
 	PRIV_END;
 }
 
-static void
+static int
 process_jobs(int argc, char **argv, int what)
 {
-	/* Delete every argument (job - ID) given */
 	int i;
 	struct stat buf;
 	DIR *spool;
@@ -479,6 +501,7 @@ process_jobs(int argc, char **argv, int what)
 	unsigned long ctm;
 	char queue;
 	int jobno;
+	int error;
 
 	PRIV_START;
 
@@ -491,7 +514,7 @@ process_jobs(int argc, char **argv, int what)
 	PRIV_END;
 
 	/* Loop over every file in the directory */
-	while((dirent = readdir(spool)) != NULL) {
+	while ((dirent = readdir(spool)) != NULL) {
 
 		PRIV_START;
 		if (stat(dirent->d_name, &buf) != 0)
@@ -502,10 +525,11 @@ process_jobs(int argc, char **argv, int what)
 			continue;
 
 		for (i = optind; i < argc; i++) {
-			if (atoi(argv[i]) == jobno) {
+			if (argv[i] != NULL && atoi(argv[i]) == jobno) {
+				/* Treat wrong owner like unknown job. */
 				if ((buf.st_uid != real_uid) && !(real_uid == 0))
-					errx(EXIT_FAILURE,
-					     "%s: Not owner\n", argv[i]);
+					continue;
+				argv[i] = NULL;
 				switch (what) {
 				case ATRM:
 					PRIV_START;
@@ -545,7 +569,14 @@ process_jobs(int argc, char **argv, int what)
 			}
 		}
 	}
-}				/* delete_jobs */
+	for (error = 0, i = optind; i < argc; i++) {
+		if (argv[i] != NULL) {
+			warnx("%s: no such job number", argv[i]);
+			error++;
+		}
+	}
+	return(error);
+}
 
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
@@ -730,7 +761,7 @@ main(int argc, char **argv)
 	case CAT:
 		if (optind == argc)
 			usage();
-		process_jobs(argc, argv, program);
+		exit(process_jobs(argc, argv, program));
 		break;
 
 	case AT:
