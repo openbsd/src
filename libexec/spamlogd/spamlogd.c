@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.3 2004/02/27 18:25:49 beck Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.4 2004/03/01 17:03:10 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -52,20 +52,6 @@ char **whitelist;
 int inbound; /* do we only whitelist inbound smtp? */
 int pfdev;
 
-/* borrowed from dhartmei.. */
-static int
-address_valid_v4(const char *a)
-{
-	if (!*a)
-		return (0);
-	while (*a)
-		if ((*a >= '0' && *a <= '9') || *a == '.')
-			a++;
-		else
-			return (0);
-	return (1);
-}
-
 int
 dbupdate(char *dbname, char *ip)
 {
@@ -75,13 +61,14 @@ dbupdate(char *dbname, char *ip)
 	struct gdata 	gd;
 	time_t 		now;
 	int 		r;
+	struct in_addr	ia;
 
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
 	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL)
 		return(-1);
-	if (!address_valid_v4(ip)) {
+	if (inet_pton(AF_INET, ip, &ia) != 1) {
 		syslog_r(LOG_NOTICE, &sdata, "invalid ip address %s", ip);
 		goto bad;
 	}
@@ -276,10 +263,8 @@ main(int argc, char **argv)
 		if (cp != NULL)
 			dbupdate(PATH_SPAMD_DB, cp);
 
-		if (lbuf != NULL) {
-			free(lbuf);
-			lbuf = NULL;
-		}
+		free(lbuf);
+		lbuf = NULL;
 	}
 	exit(0);
 }

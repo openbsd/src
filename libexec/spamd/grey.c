@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.6 2004/02/28 00:03:59 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.7 2004/03/01 17:03:10 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -48,36 +48,6 @@ extern int debug;
 size_t whitecount, whitealloc;
 char **whitelist;
 int pfdev;
-
-/* borrowed from dhartmei.. */
-int
-address_valid_v4(const char *a)
-{
-	if (!*a)
-		return (0);
-	while (*a)
-		if ((*a >= '0' && *a <= '9') || *a == '.')
-			a++;
-		else
-			return (0);
-	return (1);
-}
-
-int
-address_valid_v6(const char *a)
-{
-	if (!*a)
-		return (0);
-	while (*a)
-		if ((*a >= '0' && *a <= '9') ||
-		    (*a >= 'a' && *a <= 'f') ||
-		    (*a >= 'A' && *a <= 'F') ||
-		    *a == ':')
-			a++;
-		else
-			return (0);
-	return (1);
-}
 
 static char *pargv[11]= {
 	"pfctl", "-p", "/dev/pf", "-q", "-t",
@@ -150,26 +120,25 @@ configure_pf(char **addrs, int count)
 int
 addwhiteaddr(char *addr)
 {
-	struct in_addr ia;
+	struct in_addr	ia;
+	struct in6_addr	ia6;
 
-	if (address_valid_v4(addr)) {
-		if (inet_aton(addr, &ia) == 1) {
-			if (whitecount == whitealloc) {
-				char **tmp;
+	if (inet_pton(AF_INET, addr, &ia) == 1) {
+		if (whitecount == whitealloc) {
+			char **tmp;
 
-				tmp = realloc(whitelist,
-				    (whitealloc + 1024) * sizeof(char **));
-				if (tmp == NULL)
-					return(-1);
-				whitelist = tmp;
-				whitealloc += 1024;
-			}
-			whitelist[whitecount] = strdup(addr);
-			if (whitelist[whitecount] == NULL)
+			tmp = realloc(whitelist,
+			    (whitealloc + 1024) * sizeof(char *));
+			if (tmp == NULL)
 				return(-1);
-			whitecount++;
+			whitelist = tmp;
+			whitealloc += 1024;
 		}
-	} else if (address_valid_v6(addr)) {
+		whitelist[whitecount] = strdup(addr);
+		if (whitelist[whitecount] == NULL)
+			return(-1);
+		whitecount++;
+	} else if (inet_pton(AF_INET6, addr, &ia6) == 1) {
 		/* XXX deal with v6 later */
 		return(-1);
 	} else
@@ -359,6 +328,7 @@ greyreader(void)
 	char ip[32], from[MAX_MAIL], to[MAX_MAIL], *buf;
 	size_t len;
 	int state;
+	struct in_addr ia;
 
 	state = 0;
 	if (grey == NULL)
@@ -377,7 +347,7 @@ greyreader(void)
 			if (strncmp(buf, "IP:", 3) != 0)
 				break;
 			strlcpy(ip, buf+3, sizeof(ip));
-			if (address_valid_v4(ip))
+			if (inet_pton(AF_INET, ip, &ia) == 1)
 				state = 1;
 			else
 				state = 0;
