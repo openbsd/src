@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.13 2005/03/12 10:32:40 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.14 2005/03/15 09:28:34 jmc Exp $
 .\"
 .\" Copyright (c) 2005
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -207,90 +207,96 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh HARDWARE
-The following adapters should work:
+The following PCI adapters should work:
+.Bd -filled
+A-Link WL54H.
+Amigo AWI-926W.
+AMIT WL531P.
+AOpen AOI-831.
+ASUS WL-130g.
+Atlantis Land A02-PCI-W54.
+Belkin F5D7000 v3.
+Canyon CN-WF511.
+CNet CWP-854.
+Compex WLP54G.
+Conceptronic C54Ri.
+Digitus DN-7006G-RA.
+E-Tech WGPI02.
+Edimax EW-7128g.
+Eminent EM3037.
+Encore ENLWI-G-RLAM.
+Fiberline WL-400P.
+Gigabyte GN-WPKG.
+Hawking HWP54GR.
+iNexQ CR054g-009 (R03).
+JAHT WN-4054PCI.
+LevelOne WNC-0301 v2.
+Linksys WMP54G v4.
+Micronet SP906GK.
+Minitar MN54GPC-R.
+MSI PC54G2.
+OvisLink EVO-W54PCI.
+PheeNet HWL-PCIG/RA.
+Pro-Nets PC80211G.
+Repotec RP-WP0854.
+SATech SN-54P.
+Sitecom WL-115.
+Surecom EP-9321-g.
+Surecom EP-9321-g1.
+Sweex LC700030.
+TekComm NE-9321-g.
+Unex CR054g-R02.
+Zinwell ZWX-G361.
+Zonet ZEW1600.
+.Ed
 .Pp
-.Bl -column "Card                        " "Bus" -compact -offset 6n
-.It Em "Card	Bus"
-.It Li "A-Link WL54H" Ta PCI
-.It Li "A-Link WL54PC" Ta CardBus
-.It Li "Amigo AWI-914W" Ta CardBus
-.It Li "Amigo AWI-922W" Ta Mini PCI
-.It Li "Amigo AWI-926W" Ta PCI
-.It Li "AMIT WL531C" Ta CardBus
-.It Li "AMIT WL531P" Ta PCI
-.It Li "AOpen AOI-831" Ta PCI
-.It Li "ASUS WL-107G" Ta CardBus
-.It Li "ASUS WL-130g" Ta PCI
-.It Li "Atlantis Land A02-PCI-W54" Ta PCI
-.It Li "Atlantis Land A02-PCM-W54" Ta CardBus
-.It Li "Belkin F5D7000 v3" Ta PCI
-.It Li "Belkin F5D7010 v2" Ta CardBus
-.It Li "Billionton MIWLGRL" Ta Mini PCI
-.It Li "Canyon CN-WF511" Ta PCI
-.It Li "Canyon CN-WF513" Ta CardBus
-.It Li "CC&C WL-2102" Ta CardBus
-.It Li "CNet CWC-854" Ta CardBus
-.It Li "CNet CWP-854" Ta PCI
-.It Li "Compex WL54G" Ta CardBus
-.It Li "Compex WLP54G" Ta PCI
-.It Li "Conceptronic C54RC" Ta CardBus
-.It Li "Conceptronic C54Ri" Ta PCI
-.It Li "Digitus DN-7001G-RA" Ta CardBus
-.It Li "Digitus DN-7006G-RA" Ta PCI
-.It Li "E-Tech WGPC02" Ta CardBus
-.It Li "E-Tech WGPI02" Ta PCI
-.It Li "Edimax EW-7108PCg" Ta CardBus
-.It Li "Edimax EW-7128g" Ta PCI
-.It Li "Eminent EM3036" Ta CardBus
-.It Li "Eminent EM3037" Ta PCI
-.It Li "Encore ENLWI-G-RLAM" Ta PCI
-.It Li "Encore ENPWI-G-RLAM" Ta CardBus
-.It Li "Fiberline WL-400P" Ta PCI
-.It Li "Fibreline WL-400X" Ta CardBus
-.It Li "Gigabyte GN-WIKG" Ta Mini PCI
-.It Li "Gigabyte GN-WMKG" Ta CardBus
-.It Li "Gigabyte GN-WPKG" Ta PCI
-.It Li "Hawking HWC54GR" Ta CardBus
-.It Li "Hawking HWP54GR" Ta PCI
-.It Li "iNexQ CR054g-009 (R03)" Ta PCI
-.It Li "JAHT WN-4054P" Ta CardBus
-.It Li "JAHT WN-4054PCI" Ta PCI
-.It Li "LevelOne WNC-0301 v2" Ta PCI
-.It Li "LevelOne WPC-0301 v2" Ta CardBus
-.It Li "Linksys WMP54G v4" Ta PCI
-.It Li "Micronet SP906GK" Ta PCI
-.It Li "Micronet SP908GK V3" Ta CardBus
-.It Li "Minitar MN54GCB-R" Ta CardBus
-.It Li "Minitar MN54GPC-R" Ta PCI
-.It Li "MSI CB54G2" Ta CardBus
-.It Li "MSI MP54G2" Ta Mini PCI
-.It Li "MSI PC54G2" Ta PCI
-.It Li "OvisLink EVO-W54PCI" Ta PCI
-.It Li "PheeNet HWL-PCIG/RA" Ta PCI
-.It Li "Pro-Nets CB80211G" Ta CardBus
-.It Li "Pro-Nets PC80211G" Ta PCI
-.It Li "Repotec RP-WB7108" Ta CardBus
-.It Li "Repotec RP-WP0854" Ta PCI
-.It Li "SATech SN-54C" Ta CardBus
-.It Li "SATech SN-54P" Ta PCI
-.It Li "Sitecom WL-112" Ta CardBus
-.It Li "Sitecom WL-115" Ta PCI
-.It Li "SparkLAN WL-685R" Ta CardBus
-.It Li "Surecom EP-9321-g" Ta PCI
-.It Li "Surecom EP-9321-g1" Ta PCI
-.It Li "Surecom EP-9428-g" Ta CardBus
-.It Li "Sweex LC500050" Ta CardBus
-.It Li "Sweex LC700030" Ta PCI
-.It Li "TekComm NE-9321-g" Ta PCI
-.It Li "TekComm NE-9428-g" Ta CardBus
-.It Li "Unex CR054g-R02" Ta PCI
-.It Li "Unex MR054g-R02" Ta CardBus
-.It Li "Zinwell ZWX-G160" Ta CardBus
-.It Li "Zinwell ZWX-G360" Ta Mini PCI
-.It Li "Zinwell ZWX-G361" Ta PCI
-.It Li "Zonet ZEW1500" Ta CardBus
-.It Li "Zonet ZEW1600" Ta PCI
-.El
+The following CardBus adapters should work:
+.Bd -filled
+A-Link WL54PC.
+Amigo AWI-914W.
+AMIT WL531C.
+ASUS WL-107G.
+Atlantis Land A02-PCM-W54.
+Belkin F5D7010 v2.
+Canyon CN-WF513.
+CC&C WL-2102.
+CNet CWC-854.
+Compex WL54G.
+Conceptronic C54RC.
+Digitus DN-7001G-RA.
+E-Tech WGPC02.
+Edimax EW-7108PCg.
+Eminent EM3036.
+Encore ENPWI-G-RLAM.
+Fibreline WL-400X.
+Gigabyte GN-WMKG.
+Hawking HWC54GR.
+JAHT WN-4054P.
+LevelOne WPC-0301 v2.
+Micronet SP908GK V3.
+Minitar MN54GCB-R.
+MSI CB54G2.
+Pro-Nets CB80211G.
+Repotec RP-WB7108.
+SATech SN-54C.
+Sitecom WL-112.
+SparkLAN WL-685R.
+Surecom EP-9428-g.
+Sweex LC500050.
+TekComm NE-9428-g.
+Unex MR054g-R02.
+Zinwell ZWX-G160.
+Zonet ZEW1500.
+.Ed
+.Pp
+The following Mini PCI adapters should work:
+.Bd -filled
+Amigo AWI-922W.
+Billionton MIWLGRL.
+Gigabyte GN-WIKG.
+MSI MP54G2.
+Zinwell ZWX-G360.
+.Ed
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
