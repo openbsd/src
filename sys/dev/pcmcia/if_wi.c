@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.29 2001/04/08 15:45:50 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.30 2001/04/08 21:44:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.29 2001/04/08 15:45:50 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.30 2001/04/08 21:44:36 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -272,11 +272,11 @@ static const struct wi_pcmcia_product {
 	  "NTT-ME 11Mbps Wireless LAN PC Card",
 	  1 },
 
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NTT_ME_WLAN,
+	{ PCMCIA_VENDOR_ADDTRON,
+	  PCMCIA_PRODUCT_ADDTRON_AWP100,
+	  PCMCIA_CIS_ADDTRON_AWP100,
 	  "Addtron AWP-100",
-	  0 },
+	  1 },
 
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
