@@ -639,7 +639,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic79xx.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic79xx_inline.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic79xx_openbsd.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx_cam.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx_inline.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/aic7xxx_openbsd.ph
@@ -2113,3 +2112,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/zlib.ph
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/rgephyreg.ph

@@ -28,6 +28,7 @@
 ./etc/hosts
 ./etc/hosts.equiv
 ./etc/hosts.lpd
+./etc/hotplug
 ./etc/inetd.conf
 ./etc/kerberosV
 ./etc/kerberosV/README

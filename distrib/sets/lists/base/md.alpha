@@ -32,9 +32,9 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.5/2.95.3/cpp0
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.5/2.95.3/include
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.5/2.95.3/specs
-./usr/lib/libasn1.so.13.0
-./usr/lib/libc.so.31.0
-./usr/lib/libcom_err.so.13.0
+./usr/lib/libasn1.so.13.1
+./usr/lib/libc.so.32.0
+./usr/lib/libcom_err.so.13.1
 ./usr/lib/libcrypto.so.10.4
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
@@ -44,8 +44,8 @@
 ./usr/lib/libg2c.so.7.0
 ./usr/lib/libgssapi.so.2.1
 ./usr/lib/libiberty.so.7.0
-./usr/lib/libkafs.so.13.0
-./usr/lib/libkrb5.so.13.0
+./usr/lib/libkafs.so.13.1
+./usr/lib/libkrb5.so.13.1
 ./usr/lib/libkvm.so.7.1
 ./usr/lib/libm.so.1.0
 ./usr/lib/libmenu.so.2.0
@@ -57,7 +57,7 @@
 ./usr/lib/libpanel.so.2.0
 ./usr/lib/libpcap.so.2.1
 ./usr/lib/libperl.so.8.2
-./usr/lib/libpthread.so.3.0
+./usr/lib/libpthread.so.4.0
 ./usr/lib/libreadline.so.2.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
@@ -768,7 +768,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic79xx.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic79xx_inline.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic79xx_openbsd.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic7xxx.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic7xxx_cam.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic7xxx_inline.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/aic7xxx_openbsd.ph
@@ -2167,3 +2166,4 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/rgephyreg.ph

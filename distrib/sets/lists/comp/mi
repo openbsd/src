@@ -160,7 +160,6 @@
 ./usr/include/dev/ic/aic79xx.h
 ./usr/include/dev/ic/aic79xx_inline.h
 ./usr/include/dev/ic/aic79xx_openbsd.h
-./usr/include/dev/ic/aic7xxx.h
 ./usr/include/dev/ic/aic7xxx_cam.h
 ./usr/include/dev/ic/aic7xxx_inline.h
 ./usr/include/dev/ic/aic7xxx_openbsd.h
@@ -410,6 +409,7 @@
 ./usr/include/dev/mii/nsphyreg.h
 ./usr/include/dev/mii/nsphyterreg.h
 ./usr/include/dev/mii/qsphyreg.h
+./usr/include/dev/mii/rgephyreg.h
 ./usr/include/dev/mii/sqphyreg.h
 ./usr/include/dev/mii/tlphyreg.h
 ./usr/include/dev/mii/tlphyvar.h
