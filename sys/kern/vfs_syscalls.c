@@ -184,6 +184,12 @@ sys_mount(p, v, retval)
 		return (error);
 #endif
 	}
+#ifdef	COMPAT_10
+	/* Accept "ufs" as a synonym for "ffs" */
+	if (!strncmp(fstypename, "ufs", MFSNAMELEN)) {
+		strncpy( fstypename, "ffs", MFSNAMELEN);
+	}
+#endif
 	for (fsindex = 0; fsindex < nvfssw; fsindex++)
 		if (vfssw[fsindex] != NULL &&
 		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
