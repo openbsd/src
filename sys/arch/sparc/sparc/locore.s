@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.48 2002/04/28 03:51:19 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.49 2002/04/28 21:48:08 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2364,13 +2364,13 @@ softintr_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4], %o1
-	ld	[%l4 + 4], %o0
+1:	ld	[%l4 + IH_FUN], %o1
+	ld	[%l4 + IH_ARG], %o0
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	(void)(*ih->ih_fun)(...)
-	 ld	[%l4 + 8], %l4		!	and ih = ih->ih_next
+	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	tst	%l4			! while ih != NULL
 	bnz	1b
 	 nop
@@ -2433,13 +2433,13 @@ _sparc_interrupt_common:
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	ld	[%l4], %o1
-	ld	[%l4 + 4], %o0
+1:	ld	[%l4 + IH_FUN], %o1
+	ld	[%l4 + IH_ARG], %o0
 	tst	%o0
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
-	 ld	[%l4 + 8], %l4		!	and ih = ih->ih_next
+	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 	cmp	%o0, 1
 	bge	4f			!	if (handled >= 1) break
 	 or	%o0, %l5, %l5		! 	and %l5 |= handled

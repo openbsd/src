@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.10 2002/02/20 22:28:23 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.11 2002/04/28 21:48:08 art Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -160,6 +160,12 @@ member	pcb_wcookie
 
 # interrupt enable register PTE
 define	IE_REG_PTE_PG	(PG_V | PG_W | PG_S | PG_NC | PG_OBIO)
+
+# intrhand fields.
+struct	intrhand
+member	ih_fun
+member	ih_arg
+member	ih_next
 
 ifdef notyet
 # ZSCC interrupt fields
