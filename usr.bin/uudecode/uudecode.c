@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.12 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.13 2003/12/09 01:31:42 mickey Exp $	*/
 /*	$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uudecode.c,v 1.12 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: uudecode.c,v 1.13 2003/12/09 01:31:42 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: uudecode.c,v 1.12 2003/07/10 00:06:51 david Exp
 
 #include <pwd.h>
 #include <unistd.h>
+#include <err.h>
 
 static int decode(int);
 static void usage(void);
@@ -90,8 +91,7 @@ main(int argc, char *argv[])
 		rval = 0;
 		do {
 			if (!freopen(filename = *argv, "r", stdin)) {
-				(void)fprintf(stderr, "uudecode: %s: %s\n",
-				    *argv, strerror(errno));
+				warn("%s", *argv);
 				rval = 1;
 				continue;
 			}
@@ -116,8 +116,7 @@ decode(int tostdout)
 	/* search for header line */
 	do {
 		if (!fgets(buf, sizeof(buf), stdin)) {
-			(void)fprintf(stderr,
-			    "uudecode: %s: no \"begin\" line\n", filename);
+			warnx("%s: no \"begin\" line", filename);
 			return(1);
 		}
 	} while (strncmp(buf, "begin ", 6));
@@ -126,21 +125,18 @@ decode(int tostdout)
 	/* handle ~user/file format */
 	if (buf[0] == '~') {
 		if (!(p = strchr(buf, '/'))) {
-			(void)fprintf(stderr, "uudecode: %s: illegal ~user.\n",
-			    filename);
+			warnx("%s: illegal ~user", filename);
 			return(1);
 		}
 		*p++ = NULL;
 		if (!(pw = getpwnam(buf + 1))) {
-			(void)fprintf(stderr, "uudecode: %s: no user %s.\n",
-			    filename, buf);
+			warnx("%s: no user %s", filename, buf);
 			return(1);
 		}
 		n = strlen(pw->pw_dir);
 		n1 = strlen(p);
 		if (n + n1 + 2 > MAXPATHLEN) {
-			(void)fprintf(stderr, "uudecode: %s: path too long.\n",
-			    filename);
+			warnx("%s: path too long", filename);
 			return(1);
 		}
 		bcopy(p, buf + n + 1, n1 + 1);
@@ -152,8 +148,7 @@ decode(int tostdout)
 		/* create output file, set mode */
 		if (!freopen(buf, "w", stdout) ||
 		    fchmod(fileno(stdout), mode&0666)) {
-			(void)fprintf(stderr, "uudecode: %s: %s: %s\n", buf,
-			    filename, strerror(errno));
+			warn("%s: %s", buf, filename);
 			return(1);
 		}
 	}
@@ -161,8 +156,7 @@ decode(int tostdout)
 	/* for each input line */
 	for (;;) {
 		if (!fgets(p = buf, sizeof(buf), stdin)) {
-			(void)fprintf(stderr, "uudecode: %s: short file.\n",
-			    filename);
+			warnx("%s: short file", filename);
 			return(1);
 		}
 #define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
@@ -197,8 +191,7 @@ decode(int tostdout)
 			}
 	}
 	if (!fgets(buf, sizeof(buf), stdin) || strcmp(buf, "end\n")) {
-		(void)fprintf(stderr, "uudecode: %s: no \"end\" line.\n",
-		    filename);
+		warnx("%s: no \"end\" line", filename);
 		return(1);
 	}
 	return(0);
