@@ -1,3 +1,4 @@
+.\" $OpenBSD: pthread_rwlock_init.3,v 1.3 1999/11/24 05:35:32 d Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -22,8 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: pthread_rwlock_init.3,v 1.2 1999/04/21 20:36:40 alex Exp $
-.\"	$OpenBSD: pthread_rwlock_init.3,v 1.2 1999/04/21 20:36:40 alex Exp $
+.\" $FreeBSD: pthread_rwlock_init.3,v 1.2 1999/08/28 00:03:09 peter Exp $
 .\"
 .Dd August 4, 1998
 .Dt PTHREAD_RWLOCK_INIT 3
@@ -95,6 +95,8 @@ is invalid.
 The
 .Fn pthread_rwlock_init
 function first appeared in
+.Fx 3.0 
+and
 .Ox 2.5 .
 .Sh BUGS
 The PTHREAD_PROCESS_SHARED attribute is not supported.

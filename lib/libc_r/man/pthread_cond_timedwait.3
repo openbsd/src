@@ -1,3 +1,4 @@
+.\" $OpenBSD: pthread_cond_timedwait.3,v 1.5 1999/11/24 05:35:31 d Exp $
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
 .\"
@@ -24,6 +25,8 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD: pthread_cond_timedwait.3,v 1.6 1999/08/28 00:03:04 peter Exp $
 .\"
 .Dd July 28, 1998
 .Dt PTHREAD_COND_TIMEDWAIT 3
@@ -63,9 +66,10 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The value specified by
-.Fa cond
-or the value specified by
-.Fa attr
+.Fa cond ,
+.Fa mutex
+or
+.Fa abstime
 is invalid.
 .It Bq Er ETIMEDOUT
 The system time has reached or exceeded the time specified in

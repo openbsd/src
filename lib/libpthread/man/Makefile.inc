@@ -1,5 +1,5 @@
-# $Id: Makefile.inc,v 1.6 1999/06/15 00:07:40 d Exp $
-# $OpenBSD: Makefile.inc,v 1.6 1999/06/15 00:07:40 d Exp $
+# $OpenBSD: Makefile.inc,v 1.7 1999/11/24 05:35:31 d Exp $
+# $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
 
