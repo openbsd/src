@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.63 2001/04/18 14:58:48 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.64 2001/04/23 20:53:11 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.57 2001/04/08 21:42:04 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.59 2001/04/23 20:52:35 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -511,6 +511,8 @@
 #define	PCMCIA_PRODUCT_INTERSIL_PRISM2	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_ADDTRON_AWP100	{ "Addtron", "AWP-100 Wireless PCMCIA", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_ADDTRON_AWP100	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_LINKSYS_WPC11	{ "OEM", "PRISM2 IEEE 802.11 PC-Card", "Version 01.02", NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_WPC11	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_NEC_CMZ_RT_WP	{ "NEC", "Wireless Card CMZ-RT-WP", "Version 01.01", NULL }
 #define	PCMCIA_PRODUCT_NEC_CMZ_RT_WP	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_NTT_ME_WLAN	{ "NTT-ME", "11Mbps Wireless LAN PC Card", NULL, NULL }
