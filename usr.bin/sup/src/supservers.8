@@ -1,4 +1,4 @@
-.\"	$OpenBSD: supservers.8,v 1.3 1997/04/01 07:35:50 todd Exp $
+.\"	$OpenBSD: supservers.8,v 1.4 1997/10/12 00:26:23 beck Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -49,7 +49,9 @@ supfilesrv
 -P
 ] [
 .I -C MaxChildren
-]
+] [
+.I -O lockdir
+] 
 .br
 supscan [
 .I 
@@ -130,6 +132,21 @@ will only respond to 3 requests simultaneously, forking a child
 process for each client. If it gets additional requests it will respond
 with the error FSSETUPBUSY. The -C MaxChildren switch can be used
 to increase (or decrease) this number.
+
+
+The -O lockdir switch is used to make 
+.I supfilesrv
+allow only one active connection at a time from any client ip address.
+This is accomplished by each serving process obtaining exclusive lock,
+and writing it's process ID into a file in "lockdir" where the filename
+is the dotted decimal ip address of the connecting host. Any
+connections from a client where a lock can not be obtained on such a file
+will be rejected, limiting any client host to one connection at a time
+to this sup server. This is useful for preventing problems where
+clients running
+.I sup
+on a regular basis manage to time requests so that a second request
+comes in before the first one completes.
 
 .SH "SUPSCAN"
 It is possible to pre-compile a list of the files in a collection
