@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.18 1999/01/08 04:29:04 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.19 2000/04/29 15:57:51 espie Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -336,6 +336,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		case ADT_NETBSDUSER:
 		case ADT_AMIGADOS:
 		case ADT_AMIX:
+		case ADT_EXT2:
 		case ADT_UNKNOWN:
 			pp = &lp->d_partitions[lp->d_npartitions];
 			break;
@@ -634,6 +635,10 @@ getadostype(dostype)
 		printf(" using: 0x%x instead\n", dostype);
 #endif
 		return (getadostype(dostype));
+	case DOST_EXT2:
+		adt.archtype = ADT_EXT2;
+		adt.fstype = FS_EXT2FS;
+		return(adt);
 	default:
 	unknown:
 #ifdef DIAGNOSTIC
