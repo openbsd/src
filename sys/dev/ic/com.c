@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.66 2001/09/27 22:29:51 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.67 2001/09/29 03:07:57 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -161,11 +161,7 @@ bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
 
-struct timeout compoll_to;
-
 int	commajor;
-int	comsopen = 0;
-int	comevents = 0;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -689,11 +685,15 @@ com_attach_subr(sc)
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
-	if (!timeout_initialized(&compoll_to))
-		timeout_set(&compoll_to, compoll, NULL);
-
 	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
 	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	sc->sc_si = softintr_establish(IPL_TTY, compoll, sc);
+	if (sc->sc_si == NULL)
+		panic("%s: can't establish soft interrupt.", sc->sc_dev.dv_xname);
+#else
+	timeout_set(&sc->sc_poll_tmo, compoll, sc);
+#endif
 
 	/*
 	 * If there are no enable/disable functions, assume the device
@@ -750,6 +750,11 @@ com_detach(self, flags)
 
 	timeout_del(&sc->sc_dtr_tmo);
 	timeout_del(&sc->sc_diag_tmo);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softintr_disestablish(sc->sc_si);
+#else
+	timeout_del(&sc->sc_poll_tmo);
+#endif
 
 	return (0);
 }
@@ -851,8 +856,9 @@ comopen(dev, flag, mode, p)
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
-		if (comsopen++ == 0)
-			timeout_add(&compoll_to, 1);
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+		timeout_add(&sc->sc_poll_tmo, 1);
+#endif
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -1043,8 +1049,9 @@ comclose(dev, flag, mode, p)
 		compwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
-	if (--comsopen == 0)
-		timeout_del(&compoll_to);
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+	timeout_del(&sc->sc_poll_tmo);
+#endif
 	sc->sc_cua = 0;
 	splx(s);
 	ttyclose(tp);
@@ -1525,8 +1532,7 @@ void
 compoll(arg)
 	void *arg;
 {
-	int unit;
-	struct com_softc *sc;
+	struct com_softc *sc = (struct com_softc *)arg;
 	struct tty *tp;
 	register u_char *ibufp;
 	u_char *ibufend;
@@ -1539,66 +1545,57 @@ compoll(arg)
 		TTY_FE, TTY_PE|TTY_FE
 	};
 
+	if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
+		goto out;
+
+	tp = sc->sc_tty;
+
 	s = spltty();
-	if (comevents == 0) {
+
+	ibufp = sc->sc_ibuf;
+	ibufend = sc->sc_ibufp;
+
+	if (ibufp == ibufend) {
 		splx(s);
 		goto out;
 	}
-	comevents = 0;
+
+	sc->sc_ibufp = sc->sc_ibuf = (ibufp == sc->sc_ibufs[0]) ?
+				     sc->sc_ibufs[1] : sc->sc_ibufs[0];
+	sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
+	sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
+
+	if (tp == 0 || !ISSET(tp->t_state, TS_ISOPEN)) {
+		splx(s);
+		goto out;
+	}
+
+	if (ISSET(tp->t_cflag, CRTSCTS) &&
+	    !ISSET(sc->sc_mcr, MCR_RTS)) {
+		/* XXX */
+		SET(sc->sc_mcr, MCR_RTS);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr,
+		    sc->sc_mcr);
+	}
+
 	splx(s);
 
-	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
-		sc = com_cd.cd_devs[unit];
-		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
-			continue;
-
-		tp = sc->sc_tty;
-
-		s = spltty();
-
-		ibufp = sc->sc_ibuf;
-		ibufend = sc->sc_ibufp;
-
-		if (ibufp == ibufend) {
-			splx(s);
-			continue;
+	while (ibufp < ibufend) {
+		c = *ibufp++;
+		if (ISSET(*ibufp, LSR_OE)) {
+			sc->sc_overflows++;
+			if (sc->sc_errors++ == 0)
+				timeout_add(&sc->sc_diag_tmo, 60 * hz);
 		}
-
-		sc->sc_ibufp = sc->sc_ibuf = (ibufp == sc->sc_ibufs[0]) ?
-					     sc->sc_ibufs[1] : sc->sc_ibufs[0];
-		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
-		sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
-
-		if (tp == 0 || !ISSET(tp->t_state, TS_ISOPEN)) {
-			splx(s);
-			continue;
-		}
-
-		if (ISSET(tp->t_cflag, CRTSCTS) &&
-		    !ISSET(sc->sc_mcr, MCR_RTS)) {
-			/* XXX */
-			SET(sc->sc_mcr, MCR_RTS);
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr,
-			    sc->sc_mcr);
-		}
-
-		splx(s);
-
-		while (ibufp < ibufend) {
-			c = *ibufp++;
-			if (ISSET(*ibufp, LSR_OE)) {
-				sc->sc_overflows++;
-				if (sc->sc_errors++ == 0)
-					timeout_add(&sc->sc_diag_tmo, 60 * hz);
-			}
-			/* This is ugly, but fast. */
-			c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
-			(*linesw[tp->t_line].l_rint)(c, tp);
-		}
+		/* This is ugly, but fast. */
+		c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
+		(*linesw[tp->t_line].l_rint)(c, tp);
 	}
 
 out:
-	timeout_add(&compoll_to, 1);
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+	timeout_add(&sc->sc_poll_tmo, 1);
+#endif
 }
 
 #ifdef KGDB
@@ -1700,7 +1697,9 @@ comintr(arg)
 		if (ISSET(lsr, LSR_RXRDY)) {
 			register u_char *p = sc->sc_ibufp;
 
-			comevents = 1;
+#ifdef __HAVE_GENERIC_SOFT_INTERUPTS
+			softintr_schedule(sc->sc_si);
+#endif
 			do {
 				data = bus_space_read_1(iot, ioh, com_data);
 				if (ISSET(lsr, LSR_BI)) {

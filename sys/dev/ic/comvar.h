@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.25 2001/09/27 15:39:33 art Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.26 2001/09/29 03:07:57 art Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -83,6 +83,11 @@ struct com_softc {
 	struct tty *sc_tty;
 	struct timeout sc_dtr_tmo;
 	struct timeout sc_diag_tmo;
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void *sc_si;
+#else
+	struct timeout sc_poll_tmo;
+#endif
 
 	int sc_overflows;
 	int sc_floods;
