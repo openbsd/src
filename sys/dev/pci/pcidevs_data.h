@@ -855,6 +855,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "751 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_ISA,
+	    0,
+	    "AMD",
+	    "755 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_IDE,
+	    0,
+	    "AMD",
+	    "755 IDE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_PMC,
+	    0,
+	    "AMD",
+	    "755 Power Management",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_755_USB,
+	    0,
+	    "AMD",
+	    "755 USB",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
 	    0,
 	    "AMD",
@@ -877,6 +901,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AMD",
 	    "756 USB Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_ISA,
+	    0,
+	    "AMD",
+	    "766 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_IDE,
+	    0,
+	    "AMD",
+	    "766 IDE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_USB,
+	    0,
+	    "AMD",
+	    "766 USB",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC,
+	    0,
+	    "AMD",
+	    "766 Power Management",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,

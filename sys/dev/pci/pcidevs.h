@@ -732,11 +732,19 @@
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 PCI-PCI */
+#define	PCI_PRODUCT_AMD_755_ISA	0x7400		/* 755 PCI-ISA */
+#define	PCI_PRODUCT_AMD_755_IDE	0x7401		/* 755 IDE */
+#define	PCI_PRODUCT_AMD_755_PMC	0x7403		/* 755 Power Management */
+#define	PCI_PRODUCT_AMD_755_USB	0x7404		/* 755 USB */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf */
 #define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* 756 PCI-ISA */
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* 756 IDE */
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740B		/* 756 Power Management */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* 756 USB Host */
+#define	PCI_PRODUCT_AMD_766_ISA	0x7410		/* 766 PCI-ISA */
+#define	PCI_PRODUCT_AMD_766_IDE	0x7411		/* 766 IDE */
+#define	PCI_PRODUCT_AMD_766_USB	0x7412		/* 766 USB */
+#define	PCI_PRODUCT_AMD_766_PMC	0x7413		/* 766 Power Management */
 
 /* AMI */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
