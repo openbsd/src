@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.343 2003/03/19 15:51:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.344 2003/03/27 15:49:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -250,14 +250,15 @@ int	 yylex(void);
 int	 atoul(char *, u_long *);
 int	 getservice(char *);
 
+TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
-	struct sym	*next;
-	int		 used;
-	int		 persist;
-	char		*nam;
-	char		*val;
+	TAILQ_ENTRY(sym)	 entries;
+	int			 used;
+	int			 persist;
+	char			*nam;
+	char			*val;
 };
-struct sym	*symhead = NULL;
+
 
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
@@ -3767,7 +3768,8 @@ parse_rules(FILE *input, struct pfctl *xpf)
 
 	/* Check which macros have not been used. */
 	if (pf->opts & PF_OPT_VERBOSE2)
-		for (sym = symhead; sym; sym = sym->next)
+		for (sym = TAILQ_FIRST(&symhead); sym;
+		    sym = TAILQ_NEXT(sym, entries))
 			if (!sym->used)
 				fprintf(stderr, "warning: macro '%s' not "
 				    "used\n", sym->nam);
@@ -3783,12 +3785,20 @@ symset(const char *nam, const char *val, int persist)
 {
 	struct sym	*sym;
 
-	for (sym = symhead; sym && strcmp(nam, sym->nam); sym = sym->next)
+	for (sym = TAILQ_FIRST(&symhead); sym && strcmp(nam, sym->nam);
+	    sym = TAILQ_NEXT(sym, entries))
 		;	/* nothing */
 
-	if (sym != NULL && sym->persist == 1)
-		return (0);
-
+	if (sym != NULL) {
+		if (sym->persist == 1)
+			return (0);
+		else {
+			free(sym->nam);
+			free(sym->val);
+			TAILQ_REMOVE(&symhead, sym, entries);
+			free(sym);
+		}
+	}
 	if ((sym = calloc(1, sizeof(*sym))) == NULL)
 		return (-1);
 
@@ -3803,10 +3813,9 @@ symset(const char *nam, const char *val, int persist)
 		free(sym);
 		return (-1);
 	}
-	sym->next = symhead;
 	sym->used = 0;
 	sym->persist = persist;
-	symhead = sym;
+	TAILQ_INSERT_TAIL(&symhead, sym, entries);
 	return (0);
 }
 
@@ -3835,7 +3844,7 @@ symget(const char *nam)
 {
 	struct sym	*sym;
 
-	for (sym = symhead; sym; sym = sym->next)
+	TAILQ_FOREACH(sym, &symhead, entries)
 		if (strcmp(nam, sym->nam) == 0) {
 			sym->used = 1;
 			return (sym->val);
