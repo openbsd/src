@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.7 1997/01/15 23:42:18 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.8 1997/02/13 17:28:39 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.7 1997/01/15 23:42:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.8 1997/02/13 17:28:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,13 +210,14 @@ main(argc, argv)
 		}
 	} else
 #endif	/* YP */
+	{
+		/* Copy the passwd file to the lock file, updating pw. */
+		pw_copy(pfd, tfd, pw);
 
-	/* Copy the passwd file to the lock file, updating pw. */
-	pw_copy(pfd, tfd, pw);
-
-	/* Now finish the passwd file update. */
-	if (pw_mkdb() < 0)
-		pw_error((char *)NULL, 0, 1);
+		/* Now finish the passwd file update. */
+		if (pw_mkdb() < 0)
+			pw_error((char *)NULL, 0, 1);
+	}
 
 	exit(0);
 }
