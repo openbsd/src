@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.9 1998/03/10 00:50:40 downsj Exp $	*/
+/*	$OpenBSD: last.c,v 1.10 1998/04/25 00:40:18 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.9 1998/03/10 00:50:40 downsj Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.10 1998/04/25 00:40:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -418,7 +418,8 @@ wtmp()
 				asctime(gmtime(&total))+11);
 	}
 	ct = ctime(&buf[0].ut_time);
-	printf("\nwtmp begins %10.10s %*.*s \n", ct, timesize, timesize, ct + 11);
+	printf("\nwtmp begins %10.10s %*.*s %4.4s\n", ct, timesize, timesize,
+	    ct + 11, ct + 20);
 }
 
 /*
