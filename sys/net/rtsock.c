@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.37 2004/05/04 22:50:18 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.38 2004/05/12 20:46:00 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -240,14 +240,6 @@ route_output(struct mbuf *m, ...)
 		senderr(EACCES);
 	switch (rtm->rtm_type) {
 
-	case RTM_DELETE:
-		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
-		if (error == 0) {
-			(rt = saved_nrt)->rt_refcnt++;
-			goto report;
-		}
-		break;
-
 	case RTM_ADD:
 		if (gate == 0)
 			senderr(EINVAL);
@@ -258,7 +250,14 @@ route_output(struct mbuf *m, ...)
 			saved_nrt->rt_refcnt--;
 			saved_nrt->rt_genmask = genmask;
 		}
-		/* FALLTHROUGH */
+		break;
+	case RTM_DELETE:
+		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
+		if (error == 0) {
+			(rt = saved_nrt)->rt_refcnt++;
+			goto report;
+		}
+		break;
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
@@ -288,21 +287,18 @@ route_output(struct mbuf *m, ...)
 		}
 #endif
 		rt->rt_refcnt++;
-		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
-			struct radix_node *rn;
-			extern struct radix_node_head *mask_rnhead;
 
-			if (Bcmp(dst, rt_key(rt), dst->sa_len) != 0)
+		/*
+		 * RTM_CHANGE/LOCK need a perfect match, rn_lookup()
+		 * returns a perfect match in case a netmask is specified.
+		 * For host routes only a longest prefix match is returned
+		 * so it is necessary to compare the existence of the netmaks.
+		 * If both have a netmask rn_lookup() did a perfect match and
+		 * if non of them have a netmask both are host routes which is
+		 * also a perfect match.
+		 */
+		if (rtm->rtm_type != RTM_GET && !rt_mask(rt) != !netmask) {
 				senderr(ESRCH);
-			if (netmask && (rn = rn_search(netmask,
-					    mask_rnhead->rnh_treetop)))
-				netmask = (struct sockaddr *)rn->rn_key;
-			for (rn = rt->rt_nodes; rn; rn = rn->rn_dupedkey)
-				if (netmask == (struct sockaddr *)rn->rn_mask)
-					break;
-			if (rn == 0)
-				senderr(ETOOMANYREFS);
-			rt = (struct rtentry *)rn;
 		}
 
 		switch (rtm->rtm_type) {
@@ -384,7 +380,6 @@ route_output(struct mbuf *m, ...)
 			/*
 			 * Fall into
 			 */
-		case RTM_ADD:
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
