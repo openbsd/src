@@ -259,6 +259,7 @@ bitrev(n)
 	return r;
 }
 
+int
 main()
 {
 	int i;

@@ -23,6 +23,7 @@
 int debug = 0;
 char *progname;
 
+int
 main(argc, argv)
 	char **argv;
 {
