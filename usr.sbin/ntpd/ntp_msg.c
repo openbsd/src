@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.1 2004/06/02 10:08:59 henning Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.2 2004/07/07 07:32:05 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,14 +139,4 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
 		fatal("sendto");
 
 	return (0);
-}
-
-void
-get_ts(struct l_fixedpt *t)
-{
-	struct timeval		 tv;
-
-	gettimeofday(&tv, NULL);
-	t->int_part = tv.tv_sec + JAN_1970;
-	t->fraction = ((float)tv.tv_usec)/1000000 * UINT_MAX;
 }

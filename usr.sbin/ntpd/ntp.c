@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.14 2004/07/07 03:57:28 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.15 2004/07/07 07:32:05 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,6 @@ struct l_fixedpt	 ref_ts;
 
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
-int	ntp_dispatch(int fd);
 void	ntp_adjtime(struct ntpd_conf *);
 int	get_peer_update(struct ntp_peer *, double *);
 
@@ -219,7 +218,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 		for (j = 1; nfds > 0 && j < idx_peers; j++)
 			if (pfd[j].revents & POLLIN) {
 				nfds--;
-				if (ntp_dispatch(pfd[j].fd) == -1)
+				if (server_dispatch(pfd[j].fd) == -1)
 					ntp_quit = 1;
 			}
 
@@ -266,26 +265,6 @@ ntp_dispatch_imsg(void)
 		}
 		imsg_free(&imsg);
 	}
-	return (0);
-}
-
-int
-ntp_dispatch(int fd)
-{
-	struct sockaddr_storage	 fsa;
-	socklen_t		 fsa_len;
-	char			 buf[NTP_MSGSIZE];
-	ssize_t			 size;
-	struct ntp_msg		 msg;
-
-	fsa_len = sizeof(fsa);
-	if ((size = recvfrom(fd, &buf, sizeof(buf), 0,
-	    (struct sockaddr *)&fsa, &fsa_len)) == -1)
-		fatal("recvfrom");
-
-	ntp_getmsg(buf, size, &msg);
-	ntp_reply(fd, (struct sockaddr *)&fsa, &msg, 0);
-
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.6 2004/07/07 07:05:35 henning Exp $ */
+/*	$OpenBSD: server.c,v 1.7 2004/07/07 07:32:05 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,37 +92,39 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 }
 
 int
-ntp_reply(int fd, struct sockaddr *sa, struct ntp_msg *query, int auth)
+server_dispatch(int fd)
 {
-	ssize_t			 len;
-	struct l_fixedpt	 t;
-	struct ntp_msg		 reply;
+	ssize_t			 size;
+	double			 rectime;
+	struct sockaddr_storage	 fsa;
+	socklen_t		 fsa_len;
+	struct ntp_msg		 query, reply;
+	char			 buf[NTP_MSGSIZE];
 
-	if (auth)
-		len = NTP_MSGSIZE;
-	else
-		len = NTP_MSGSIZE_NOAUTH;
+	fsa_len = sizeof(fsa);
+	if ((size = recvfrom(fd, &buf, sizeof(buf), 0,
+	    (struct sockaddr *)&fsa, &fsa_len)) == -1)
+		fatal("recvfrom");
+
+	rectime = gettime();
+
+	ntp_getmsg(buf, size, &query);
 
 	bzero(&reply, sizeof(reply));
-	reply.status = 0 | (query->status & VERSIONMASK);
-	if ((query->status & MODEMASK) == MODE_CLIENT)
+	reply.status = 0 | (query.status & VERSIONMASK);
+	if ((query.status & MODEMASK) == MODE_CLIENT)
 		reply.status |= MODE_SERVER;
 	else
 		reply.status |= MODE_SYM_PAS;
 
-	reply.stratum =	2;
-	reply.ppoll = query->ppoll;
+	reply.stratum =	2;			/* XXX */
+	reply.ppoll = query.ppoll;
 	reply.precision = 0;			/* XXX */
-	reply.refid = htonl(t.fraction);	/* XXX */
-	get_ts(&t);
-	reply.reftime.int_part = htonl(t.int_part);	/* XXX */
-	reply.reftime.fraction = htonl(t.fraction);	/* XXX */
-	reply.rectime.int_part = htonl(t.int_part);
-	reply.rectime.fraction = htonl(t.fraction);
-	reply.xmttime.int_part = htonl(t.int_part);
-	reply.xmttime.fraction = htonl(t.fraction);
-	reply.orgtime.int_part = query->xmttime.int_part;
-	reply.orgtime.fraction = query->xmttime.fraction;
+	reply.rectime = d_to_lfp(rectime);
+	reply.reftime = reply.rectime;		/* XXX */
+	reply.xmttime = d_to_lfp(gettime());
+	reply.orgtime = query.xmttime;
+	reply.refid = reply.xmttime.fraction;	/* XXX */
 
-	return (ntp_sendmsg(fd, sa, &reply, len, auth));
+	return (ntp_sendmsg(fd, (struct sockaddr *)&fsa, &reply, size, 0));
 }

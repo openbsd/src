@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.16 2004/07/07 05:47:57 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.17 2004/07/07 07:32:05 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -187,13 +187,13 @@ int		 check_file_secrecy(int, const char *);
 struct ntp_addr	*host(const char *, u_int8_t *);
 
 /* ntp_msg.c */
-void	get_ts(struct l_fixedpt *);
 int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);
 int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
 
 /* server.c */
 int	setup_listeners(struct servent *, struct ntpd_conf *, u_int *);
 int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
+int	server_dispatch(int fd);
 
 /* client.c */
 int	client_peer_init(struct ntp_peer *);
