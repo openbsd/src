@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.4 2003/06/25 03:25:29 tedu Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.5 2003/06/25 03:29:46 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -361,7 +361,8 @@ calldiff(char *wantpr)
 	prargs[2] = wantpr;
 	fflush(stdout);
 	if (wantpr) {
-		sprintf(etitle, "%s %s", file1, file2);
+		snprintf(etitle, title + sizeof title - etitle,
+		    "%s %s", file1, file2);
 		pipe(pv);
 		pid = fork();
 		if (pid == -1) {
