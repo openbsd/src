@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.6 1997/01/04 14:02:50 niklas Exp $
+#	$OpenBSD: ARCTIC,v 1.7 1997/03/26 21:53:29 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -44,8 +44,9 @@ option	 	UMAPFS		# uid/gid remapping filesystem
 
 # Networking options
 option 		INET		# Internet protocols
+option		IPSEC		# IP-sec
 #option 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options 	GATEWAY		# IP packet forwarding
+option	 	GATEWAY		# IP packet forwarding
 #option 	MULTICAST	# Multicast support
 #option 	MROUTING	# Multicast routing support
 #option 	ISO		# OSI networking
@@ -86,6 +87,8 @@ com0	at isa? port 0x3f8 irq 4
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 4
 com3	at isa? port 0x2e8 irq 3
+ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+com*	at ast? slave ?
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
@@ -99,6 +102,10 @@ ep0	at isa? port ? irq ?           # 3C509 ethernet cards
 ed0     at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
 ed1     at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
 ed2     at isa? port 0x300 iomem 0xcc000 irq 10 #
+
+tel0    at isa? iomem 0xe0000 irq 9	# Teles S0, NICCY 1000, Creatix 8bit
+tel1    at isa? port 0xe80 iomem 0xde000 irq 11	# Teles S0/16, NICCY 1016,
+tel2    at isa? port 0x180 irq 5	# Teles S0/16.3 card (no shared memory)
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -129,3 +136,4 @@ pseudo-device	tb		 1	# tablet line discipline
 pseudo-device	bpfilter	 8	# packet filter ports
 pseudo-device	loop		 1	# network loopback
 pseudo-device	vnd		 4	# paging to files
+pseudo-device	enc		 4	# IP encap
