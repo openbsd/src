@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509test.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
-/*	$EOM: x509test.c,v 1.4 1999/04/17 23:20:45 niklas Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.7 1999/07/07 22:14:31 niklas Exp $	*/
+/*	$EOM: x509test.c,v 1.5 1999/06/10 13:39:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -135,7 +135,7 @@ main (void)
   p[0] = 0x30; p[1] = 0x06; p[2] = 0x87; p[3] = 0x04;
   memset (p + 4, 0, 4);
 
-  printf ("Encoding Certificiate: ");
+  printf ("Encoding Certificate: ");
   if (!x509_encode_certificate(&cert, &asn, &asnlen))
     printf ("FAILED ");
   else
