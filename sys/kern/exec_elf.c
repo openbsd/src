@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.29 2000/01/01 21:11:18 mickey Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.30 2001/01/16 15:49:00 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -700,7 +700,7 @@ exec_elf_fixup(p, epp)
 	 * Push extra arguments on the stack needed by dynamically
 	 * linked binaries
 	 */
-	if(error == 0) {
+	if (error == 0) {
 		a = ai;
 
 		a->au_id = AUX_phdr;
