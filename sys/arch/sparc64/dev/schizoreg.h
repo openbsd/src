@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.3 2002/06/11 11:04:40 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.4 2002/07/18 16:45:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -30,6 +30,42 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+struct schizo_pbm_regs {
+	u_int64_t	unused1[64];
+	struct iommureg	iommu;
+	u_int64_t	iommu_ctxflush;
+	u_int64_t	unused2[5228];
+	u_int64_t	iommu_tag;
+	u_int64_t	unused3[15];
+	u_int64_t	iommu_data;
+	u_int64_t	unusedN[125759];
+};
+
+struct schizo_regs {
+	u_int64_t	_unused0[8];
+	u_int64_t	pcia_mem_match;
+	u_int64_t	pcia_mem_mask;
+	u_int64_t	pcia_io_match;
+	u_int64_t	pcia_io_mask;
+	u_int64_t	pcib_mem_match;
+	u_int64_t	pcib_mem_mask;
+	u_int64_t	pcib_io_match;
+	u_int64_t	pcib_io_mask;
+	u_int64_t	_unused1[8176];
+
+	u_int64_t	_unused2[3];
+	u_int64_t	safari_errlog;
+	u_int64_t	eccctrl;
+	u_int64_t	_unused3[1];
+	u_int64_t	ue_afsr;
+	u_int64_t	ue_afar;
+	u_int64_t	ce_afsr;
+	u_int64_t	ce_afar;
+
+	u_int64_t	_unused4[253942];
+	struct schizo_pbm_regs pbm_a;
+	struct schizo_pbm_regs pbm_b;
+};
 
 #define	SCZ_PCIA_MEM_MATCH		0x00040
 #define	SCZ_PCIA_MEM_MASK		0x00048
