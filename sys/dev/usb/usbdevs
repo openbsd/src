@@ -1,4 +1,4 @@
-	$OpenBSD: usbdevs,v 1.13 2000/03/26 18:43:37 aaron Exp $
+	$OpenBSD: usbdevs,v 1.14 2000/03/26 19:29:17 aaron Exp $
 /*	$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corp.
 vendor ALTEC		0x04d2	Altec Lansing
+vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
 vendor BROTHER		0x04f9	Brother Industries Corp.
 vendor DALLAS		0x04fa	Dallas Semiconductor
