@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.20 2001/06/29 16:19:15 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.21 2001/06/29 21:52:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -31,6 +31,13 @@
 #ifndef UBS_MAX_NQUEUE
 #define UBS_MAX_NQUEUE		60
 #endif
+
+#define	UBS_MAX_SCATTER		64	/* Maximum scatter/gather depth */
+#define	UBS_MAX_AGGR		5	/* Maximum aggregation count */
+
+#define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
+#define	UBSEC_SESSION(sid)	( (sid) & 0x0fffffff)
+#define	UBSEC_SID(crd, sesn)	(((crd) << 28) | ((sesn) & 0x0fffffff))
 
 struct ubsec_dma_alloc {
 	u_int32_t		dma_paddr;
@@ -90,19 +97,19 @@ struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
 	struct cryptop			*q_crp;
 	struct ubsec_mcr		*q_mcr;
-	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
-	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
+	struct ubsec_pktbuf		q_srcpkt[UBS_MAX_SCATTER-1];
+	struct ubsec_pktbuf		q_dstpkt[UBS_MAX_SCATTER-1];
 	struct ubsec_dma		*q_dma;
 
 	struct mbuf 		      	*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
 
-	long				q_src_packp[MAX_SCATTER];
-	int				q_src_packl[MAX_SCATTER];
+	long				q_src_packp[UBS_MAX_SCATTER];
+	int				q_src_packl[UBS_MAX_SCATTER];
 	int				q_src_npa, q_src_l;
 
-	long				q_dst_packp[MAX_SCATTER];
-	int				q_dst_packl[MAX_SCATTER];
+	long				q_dst_packp[UBS_MAX_SCATTER];
+	int				q_dst_packl[UBS_MAX_SCATTER];
 	int				q_dst_npa, q_dst_l;
 	u_int32_t			q_macbuf[5];
 	int				q_sesn;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.63 2001/06/29 16:19:15 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.64 2001/06/29 21:52:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -335,8 +335,8 @@ ubsec_feed(sc)
 	void *v, *mcr2;
 
 	npkts = sc->sc_nqueue;
-	if (npkts > 5)
-		npkts = 5;
+	if (npkts > UBS_MAX_AGGR)
+		npkts = UBS_MAX_AGGR;
 	if (npkts < 2)
 		goto feed1;
 	goto feed1;
@@ -795,10 +795,10 @@ ubsec_process(crp)
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF)
 		q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
-		    q->q_src_packl, MAX_SCATTER, &nicealign);
+		    q->q_src_packl, UBS_MAX_SCATTER, &nicealign);
 	else if (crp->crp_flags & CRYPTO_F_IOV)
 		q->q_src_l = iov2pages(q->q_src_io, &q->q_src_npa,
-		    q->q_src_packp, q->q_src_packl, MAX_SCATTER, &nicealign);
+		    q->q_src_packp, q->q_src_packl, UBS_MAX_SCATTER, &nicealign);
 	if (q->q_src_l == 0) {
 		err = ENOMEM;
 		goto errout;
@@ -933,10 +933,10 @@ ubsec_process(crp)
 
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
-			    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
+			    q->q_dst_packp, q->q_dst_packl, UBS_MAX_SCATTER, NULL);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			q->q_dst_l = iov2pages(q->q_dst_io, &q->q_dst_npa,
-			    q->q_dst_packp, q->q_dst_packl, MAX_SCATTER, NULL);
+			    q->q_dst_packp, q->q_dst_packl, UBS_MAX_SCATTER, NULL);
 
 #ifdef UBSEC_DEBUG
 		printf("dst skip: %d\n", dskip);
@@ -963,9 +963,6 @@ ubsec_process(crp)
 			else
 				pb = &q->q_dstpkt[j - 1];
 
-#ifdef UBSEC_DEBUG
-			printf("  pb v %08x p %08x\n", pb, vtophys(pb));
-#endif
 			pb->pb_addr = q->q_dst_packp[i];
 
 			if (dtheend) {

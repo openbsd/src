@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.13 2001/05/30 02:26:14 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.14 2001/06/29 21:52:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -70,11 +70,6 @@
 /* BS_ERR - DMA Error Address */
 #define	BS_ERR_ADDR		0xfffffffc	/* error address mask */
 #define	BS_ERR_READ		0x00000002	/* fault was on read */
-
-#define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
-#define	UBSEC_SESSION(sid)	( (sid) & 0x0fffffff)
-#define	UBSEC_SID(crd, sesn)	(((crd) << 28) | ((sesn) & 0x0fffffff))
-#define	MAX_SCATTER		64
 
 struct ubsec_pktctx {
 	u_int32_t	pc_deskey[6];		/* 3DES key */
