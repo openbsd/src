@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.22 2003/07/20 13:25:52 millert Exp $
+.\"	$OpenBSD: compress.1,v 1.23 2003/08/01 09:38:00 jmc Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -138,11 +138,14 @@ not removed, and the attributes of the input file are not retained.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl V
-Display the program version (RCS Ids of the source files) and exit.
+Display the program version
+.Pq RCS IDs of the source files
+and exit.
 .It Fl b Ar bits
 Specify the
 .Ar bits
-code limit (see below).
+code limit
+.Pq see below .
 .It Fl c
 Compressed or uncompressed output is written to the standard output.
 No files are modified (force
@@ -168,28 +171,30 @@ Print a short help message.
 .It Fl l
 List information for the specified compressed files.
 The following information is listed:
-.Bl -tag -width Ds -offset indent
+.Bl -tag -width "compression ratio"
 .It compressed size
-size of the compressed file
+Size of the compressed file.
 .It uncompressed size
-size of the file when uncompressed
+Size of the file when uncompressed.
 .It compression ratio
-ratio of the difference between the compressed and uncompressed
+Ratio of the difference between the compressed and uncompressed
 sizes to the uncompressed size.
 .It uncompressed name
-name the file will be saved as when uncompressing
+Name the file will be saved as when uncompressing.
 .El
 .Pp
 If the
 .Fl v
 option is specified, the following additional information is printed:
-.Bl -tag -width Ds -offset indent
+.Bl -tag -width "compression method"
 .It compression method
-name of the method used to compress the file
+Name of the method used to compress the file.
 .It crc
-32-bit crc of the uncompressed file
+32-bit CRC
+.Pq cyclic redundancy code
+of the uncompressed file.
 .It "time stamp"
-date and time corresponding to the last data modification time
+Date and time corresponding to the last data modification time
 (mtime) of the compressed file (if the
 .Fl n
 option is specified, the time stamp stored in the compressed file
@@ -256,9 +261,8 @@ limit specified by the
 .Fl b
 flag is reached.
 .Ar bits
-must be between 9 and 16 (the default is 16).
-.\" XXX - use .br here to work-around an apparent bug in mdoc
-.br
+must be between 9 and 16
+.Pq the default is 16 .
 .Pp
 After the
 .Ar bits
@@ -300,9 +304,9 @@ The amount of compression obtained depends on the size of the
 input, the number of
 .Ar bits
 per code, and the distribution of common substrings.
-Typically, text such as source code or English is reduced by 50\-60% using
+Typically, text such as source code or English is reduced by 50 \- 60% using
 .Nm
-and by 60\-70% using
+and by 60 \- 70% using
 .Nm gzip .
 Compression is generally much better than that achieved by Huffman
 coding (as used in the historical command pack), or adaptive Huffman
@@ -330,6 +334,7 @@ The file was compressed successfully.
 An error occurred.
 .It Li 2
 A warning occurred.
+.El
 .Sh SEE ALSO
 .Rs
 .%A Welch, Terry A.
@@ -341,12 +346,12 @@ A warning occurred.
 .Re
 .Pp
 .Bl -tag -width 12n -compact
-.It RFC1950
-ZLIB Compressed Data Format Specification
-.It RFC1951
-DEFLATE Compressed Data Format Specification
-.It RFC1952
-GZIP File Format Specification
+.It RFC 1950
+ZLIB Compressed Data Format Specification.
+.It RFC 1951
+DEFLATE Compressed Data Format Specification.
+.It RFC 1952
+GZIP File Format Specification.
 .El
 .Sh STANDARDS
 The
