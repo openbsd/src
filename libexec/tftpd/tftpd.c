@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.23 2002/06/02 01:27:16 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.24 2002/06/04 10:08:51 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.23 2002/06/02 01:27:16 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.24 2002/06/04 10:08:51 mpech Exp $";
 #endif /* not lint */
 
 /*
