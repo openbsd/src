@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_ioctl.c,v 1.7 1997/11/17 09:21:47 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_ioctl.c,v 1.8 1998/02/19 02:08:45 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_ioctl.c,v 1.12 1996/08/10 09:08:26 mycroft Exp $	*/
 
 /*
@@ -534,6 +534,7 @@ ibcs2_sys_ioctl(p, v, retval)
 
 			return (*ctl)(fp, FIONBIO, (caddr_t)&arg, p);
 		}
+	case IBCS2_FIONREAD:
 	case IBCS2_I_NREAD:     /* STREAMS */
 		SCARG(uap, cmd) = FIONREAD;
 		return sys_ioctl(p, uap, retval);
