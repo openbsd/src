@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.3 2001/03/11 07:52:28 aaron Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.4 2001/09/24 12:19:24 espie Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -67,7 +67,7 @@
 .Sh DESCRIPTION
 Those functions have been designed as a fast, extensible alternative to
 the usual hash table functions.
-These provide storing and retrieval of records indexed by keys,
+They provide storage and retrieval of records indexed by keys,
 where a key is a contiguous sequence of bytes at a fixed position in
 each record.
 Keys can either be null-terminated strings or fixed-size memory areas.
@@ -123,7 +123,7 @@ assumes the key is the interval between
 and
 .Fa end ,
 exclusive,
-though the actual elements stored in the ohash should contain
+though the actual elements stored in the table should only contain
 null-terminated keys.
 .Pp
 .Fn ohash_lookup_memory
@@ -157,7 +157,7 @@ must have a key corresponding to the
 call.
 .Pp
 .Fn ohash_remove
-removes element of ohash table at slot
+removes the element at slot
 .Fa i .
 It returns the removed element, for user code to dispose of, or
 .Dv NULL
@@ -182,7 +182,7 @@ will be returned.
 As a special case, they can safely be used to free elements in the table.
 .Pp
 .Fn ohash_entries
-returns the number of elements in the ohash table.
+returns the number of elements in the hash table.
 .Sh STORAGE HANDLING
 Only
 .Fn ohash_init ,
@@ -194,9 +194,9 @@ may call the user-supplied memory functions.
 It is the responsability of the user memory allocation code to verify
 that those calls did not fail.
 .Pp
-In case memory allocation fails,
+If memory allocation fails,
 .Fn ohash_init
-returns a useless ohash table.
+returns a useless hash table.
 .Fn ohash_insert
 and
 .Fn ohash_remove
@@ -210,10 +210,10 @@ and
 .Fn ohash_next
 to dump relevant information to disk before aborting.
 .Sh THREAD SAFETY
-The open ohashing functions are not thread-safe by design.
-In particular, it cannot be guaranteed that a
+The open hashing functions are not thread-safe by design.
+In particular, in a threaded envirnonment, there is no guarantee that a
 .Qq slot
-will not move in a threaded environment between a
+will not move between a
 .Fn ohash_lookup*
 and a
 .Fn ohash_find ,
