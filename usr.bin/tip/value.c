@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.5 1997/09/01 23:24:28 deraadt Exp $	*/
+/*	$OpenBSD: value.c,v 1.6 1999/02/04 17:59:38 deraadt Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: value.c,v 1.5 1997/09/01 23:24:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: value.c,v 1.6 1999/02/04 17:59:38 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -74,8 +74,7 @@ vinit()
 		(void)fprintf(stderr, "Home directory path too long: %s\n",
 			value(HOME));
 	} else {
-		strcpy(file, value(HOME));
-		strcat(file, "/.tiprc");
+		snprintf(file, sizeof file, "%s/.tiprc", value(HOME));
 		if ((f = fopen(file, "r")) != NULL) {
 			register char *tp;
 
