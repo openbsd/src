@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.19 2000/05/21 22:19:07 provos Exp $	*/
+/*	$OpenBSD: route.c,v 1.20 2000/12/09 03:06:55 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -795,8 +795,10 @@ rt_timer_queue_create(timeout)
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
 		return (NULL);		
+	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
+	rtq->rtq_count = 0;
 	TAILQ_INIT(&rtq->rtq_head);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 
@@ -811,7 +813,6 @@ rt_timer_queue_change(rtq, timeout)
 
 	rtq->rtq_timeout = timeout;
 }
-
 
 void
 rt_timer_queue_destroy(rtq, destroy)
@@ -830,6 +831,10 @@ rt_timer_queue_destroy(rtq, destroy)
 #else
 		free(r, M_RTABLE);
 #endif
+		if (rtq->rtq_count > 0)
+			rtq->rtq_count--;
+		else
+			printf("rt_timer_queue_destroy: rtq_count reached 0\n");
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
@@ -837,6 +842,14 @@ rt_timer_queue_destroy(rtq, destroy)
 	/*
 	 * Caller is responsible for freeing the rttimer_queue structure.
 	 */
+}
+
+unsigned long
+rt_timer_count(rtq)
+	struct rttimer_queue *rtq;
+{
+
+	return rtq->rtq_count;
 }
 
 void     
@@ -853,6 +866,10 @@ rt_timer_remove_all(rt)
 #else
 		free(r, M_RTABLE);
 #endif
+		if (r->rtt_queue->rtq_count > 0)
+			r->rtt_queue->rtq_count--;
+		else
+			printf("rt_timer_remove_all: rtq_count reached 0\n");
 	}
 }
 
@@ -884,6 +901,10 @@ rt_timer_add(rt, func, queue)
 #else
 			free(r, M_RTABLE);
 #endif
+			if (r->rtt_queue->rtq_count > 0)
+				r->rtt_queue->rtq_count--;
+			else
+				printf("rt_timer_add: rtq_count reached 0\n");
 			break;  /* only one per list, so we can quit... */
 		}
 	}
@@ -895,6 +916,7 @@ rt_timer_add(rt, func, queue)
 #endif
 	if (r == NULL)
 		return (ENOBUFS);
+	Bzero(r, sizeof(*r));
 
 	r->rtt_rt = rt;
 	r->rtt_time = current_time;
@@ -902,6 +924,7 @@ rt_timer_add(rt, func, queue)
 	r->rtt_queue = queue;
 	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
 	TAILQ_INSERT_TAIL(&queue->rtq_head, r, rtt_next);
+	r->rtt_queue->rtq_count++;
 	
 	return (0);
 }
@@ -934,6 +957,10 @@ rt_timer_timer(arg)
 #else
 			free(r, M_RTABLE);
 #endif
+			if (rtq->rtq_count > 0)
+				rtq->rtq_count--;
+			else
+				printf("rt_timer_timer: rtq_count reached 0\n");
 		}
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.8 2000/05/17 00:21:12 deraadt Exp $	*/
+/*	$OpenBSD: route.h,v 1.9 2000/12/09 03:06:55 itojun Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -259,6 +259,7 @@ struct rttimer {
 
 struct rttimer_queue {
 	long				rtq_timeout;
+	unsigned long			rtq_count;
 	TAILQ_HEAD(, rttimer)		rtq_head;
 	LIST_ENTRY(rttimer_queue)	rtq_link;
 };
@@ -304,6 +305,7 @@ struct rttimer_queue *
 void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
 void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
 void	 rt_timer_remove_all __P((struct rtentry *));
+unsigned long	rt_timer_count __P((struct rttimer_queue *));
 void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
