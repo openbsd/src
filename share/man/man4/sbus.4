@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.3 2002/02/19 07:02:50 deraadt Exp $
+.\"	$OpenBSD: sbus.4,v 1.4 2002/02/19 07:04:27 jason Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,15 @@ mechanical properties of the extension slots.
 includes machine-independent
 .Nm
 drivers, sorted by device type and driver name:
+.Ss Audio interfaces
+.Bl -tag -width xxxxxxxx -offset indent
+.It audioamd
+.Tn AMD
+7990 codecs
+.It audiocs
+.Tn "Crystal Semiconductor"
+CS4231A codecs
+.El
 .Ss SCSI interfaces
 .Bl -tag -width 10n -offset ind
 .It Xr esp 4
