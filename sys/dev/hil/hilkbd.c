@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.4 2003/02/15 23:42:48 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.5 2003/02/18 00:38:56 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -52,6 +52,8 @@ struct hilkbd_softc {
 	int		sc_code;
 	int		sc_numleds;
 	int		sc_ledstate;
+	int		sc_enabled;
+	int		sc_console;
 
 	struct device	*sc_wskbddev;
 };
@@ -138,11 +140,16 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Interpret the identification bytes, if any
 	 */
+	{
+		int i;
+		for (i = 0; i < ha->ha_infolen; i++)
+			printf(" %x", ha->ha_info[i]);
+	}
 	if (ha->ha_infolen > 2 && (ha->ha_info[1] & HIL_IOB) != 0) {
-		if (ha->ha_info[2] & HILIOB_PROMPT) {
-			sc->sc_numleds = (ha->ha_info[2] & HILIOB_PMASK) >> 4;
+		/* HILIOB_PROMPT is not always reported... */
+		sc->sc_numleds = (ha->ha_info[2] & HILIOB_PMASK) >> 4;
+		if (sc->sc_numleds != 0)
 			printf(", %d leds", sc->sc_numleds);
-		}
 	}
 
 	hil_callback_register((struct hil_softc *)parent, ha->ha_code,
@@ -156,7 +163,10 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = sc;
 
 	if (a.console) {
+		sc->sc_console = sc->sc_enabled = 1;
 		wskbd_cnattach(&hilkbd_consops, sc, &hilkbd_keymapdata);
+	} else {
+		sc->sc_console = sc->sc_enabled = 0;
 	}
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
@@ -165,6 +175,18 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 int
 hilkbd_enable(void *v, int on)
 {
+	struct hilkbd_softc *sc = v;
+
+	if (on) {
+		if (sc->sc_enabled)
+			return (EBUSY);
+	} else {
+		if (sc->sc_console)
+			return (EBUSY);
+	}
+
+	sc->sc_enabled = on;
+
 	return (0);
 }
 
@@ -277,6 +299,12 @@ hilkbd_callback(void *v, u_int buflen, u_int8_t *buf)
 	u_int type;
 	int key;
 	int i;
+
+	/*
+	 * Ignore packet if we don't need it
+	 */
+	if (sc->sc_enabled == 0)
+		return;
 
 	if (buflen > 1 && *buf == HIL_KBDDATA) {
 		for (i = 1, buf++; i < buflen; i++) {
