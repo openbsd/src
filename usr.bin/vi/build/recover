@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.7 2001/01/11 04:56:52 millert Exp $
+# $OpenBSD: recover,v 1.8 2001/11/05 22:43:49 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
@@ -78,6 +78,7 @@ foreach $file (readdir(RECDIR)) {
 		close(RECFILE);
 		next;
 	}
+	$owner = (stat(_))[4];
 	if (! -f _ || ! -s _) {
 		unlink($file) unless -d _;
 		close(RECFILE);
@@ -95,16 +96,31 @@ foreach $file (readdir(RECDIR)) {
 	# Delete any recovery files that have no (or more than one)
 	# corresponding backup file.
 	#
-	@backups = grep(/^X-vi-recover-path:/, @recfile);
-	unlink($file) unless $#backups == 0;
+	@backups = grep(m#^X-vi-recover-path:\s*\Q$recoverdir\E/+#, @recfile);
+	if (@backups != 1) {
+		unlink($file);
+		next;
+	}
 
 	#
-	# If recovery file is zero length, remove it.
+	# Make a copy of the backup file path.
+	# We must not modify @backups directly since it contains
+	# references to data in @recfile which we pipe to sendmail.
+	#
+	$backups[0] =~ m#^X-vi-recover-path:\s*\Q$recoverdir\E/+(.*)[\r\n]*$#;
+	$backup = $1;
+
+	#
+	# If backup file is not rooted in the recover dir, ignore it.
+	# If backup file owner doesn't match recovery file owner, ignore it.
+	# If backup file is zero length or not a regular file, remove it.
 	# Else send mail to the user.
 	#
-	$backups[0] =~ /^X-vi-recover-path:\s*(.*)[\r\n]*$/;
-	$backup = $1;
-	if (! -s $backup) {
+	if ($backup =~ m#/# || !stat($backup)) {
+		unlink($file);
+	} elsif ($owner != 0 && (stat(_))[4] != $owner) {
+		unlink($file);
+	} elsif (! -f _ || ! -s _) {
 		unlink($file, $backup);
 	} else {
 		open(SENDMAIL, "|$sendmail -t") ||
