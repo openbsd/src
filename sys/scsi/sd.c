@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.70 2004/05/28 23:50:15 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.71 2005/02/27 01:12:11 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -221,6 +221,10 @@ sdattach(parent, self, aux)
 	error = scsi_test_unit_ready(sd->sc_link, TEST_READY_RETRIES_DEFAULT,
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+
+	/* Start the pack spinning if necessary. */
+	if (error == EIO)
+		error = scsi_start(sc_link, SSS_START, 0);
 
 	/* Fill in name struct for spoofed label */
 	viscpy(sd->name.vendor, sa->sa_inqbuf->vendor, 8);
