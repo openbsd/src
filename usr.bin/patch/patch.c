@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.32 2003/07/30 16:45:44 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.33 2003/07/31 14:10:21 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.32 2003/07/30 16:45:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.33 2003/07/31 14:10:21 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,6 +68,7 @@ char		*TMPREJNAME;
 char		*TMPPATNAME;
 bool		toutkeep = FALSE;
 bool		trejkeep = FALSE;
+bool		warn_on_invalid_line;
 
 #ifdef DEBUGGING
 int		debug = 0;
@@ -210,6 +211,7 @@ main(int argc, char *argv[])
 		/* for each patch in patch file */
 
 		patch_seen = TRUE;
+		warn_on_invalid_line = TRUE;
 
 		if (outname == NULL)
 			outname = savestr(filearg[0]);
