@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispvar.h,v 1.20 2002/05/17 01:36:35 mjacob Exp $ */
+/*     $OpenBSD: ispvar.h,v 1.21 2002/08/17 17:40:26 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -287,10 +287,11 @@ typedef struct {
 	struct lportdb {
 		u_int32_t
 					port_type	: 8,
-							: 4,
-					fc4_type	: 4,
 					loopid		: 8,
+					fc4_type	: 4,
 					last_fabric_dev	: 1,
+							: 2,
+					relogin		: 1,
 					force_logout	: 1,
 					was_fabric_dev	: 1,
 					fabric_dev	: 1,
@@ -458,6 +459,9 @@ typedef struct ispsoftc {
 #define	ISP_CFG_LPORT_ONLY	0x0C	/* insist on {N/F}L-Port connection */
 #define	ISP_CFG_OWNWWPN		0x100	/* override NVRAM wwpn */
 #define	ISP_CFG_OWNWWNN		0x200	/* override NVRAM wwnn */
+#define	ISP_CFG_OWNFSZ		0x400	/* override NVRAM frame size */
+#define	ISP_CFG_OWNLOOPID	0x800	/* override NVRAM loopid */
+#define	ISP_CFG_OWNEXCTHROTTLE	0x1000	/* override NVRAM execution throttle */
 
 /*
  * Prior to calling isp_reset for the first time, the outer layer
@@ -503,6 +507,8 @@ typedef struct ispsoftc {
 #define	ISP_FW_MAJORX(xp)		(xp[0])
 #define	ISP_FW_MINORX(xp)		(xp[1])
 #define	ISP_FW_MICROX(xp)		(xp[2])
+#define	ISP_FW_NEWER_THAN(i, major, minor, micro)		\
+ (ISP_FW_REVX((i)->isp_fwrev) > ISP_FW_REV(major, minor, micro))
 
 /*
  * Bus (implementation) types
@@ -723,7 +729,9 @@ typedef enum {
 	ISPASYNC_TARGET_ACTION,		/* other target command action */
 	ISPASYNC_CONF_CHANGE,		/* Platform Configuration Change */
 	ISPASYNC_UNHANDLED_RESPONSE,	/* Unhandled Response Entry */
-	ISPASYNC_FW_CRASH		/* Firmware has crashed */
+	ISPASYNC_FW_CRASH,		/* Firmware has crashed */
+	ISPASYNC_FW_DUMPED,		/* Firmware crashdump taken */
+	ISPASYNC_FW_RESTARTED		/* Firmware has been restarted */
 } ispasync_t;
 int isp_async(struct ispsoftc *, ispasync_t, void *);
 
@@ -852,6 +860,8 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  *	DEFAULT_LOOPID(struct ispsoftc *)	Default FC Loop ID
  *	DEFAULT_NODEWWN(struct ispsoftc *)	Default Node WWN
  *	DEFAULT_PORTWWN(struct ispsoftc *)	Default Port WWN
+ *	DEFAULT_FRAMESIZE(struct ispsoftc *)	Default Frame Size
+ *	DEFAULT_EXEC_THROTTLE(struct ispsoftc *) Default Execution Throttle
  *		These establish reasonable defaults for each platform.
  * 		These must be available independent of card NVRAM and are
  *		to be used should NVRAM not be readable.
