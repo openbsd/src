@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.20 2000/12/10 02:50:07 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.21 2000/12/14 13:26:26 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -378,6 +378,10 @@ do
 	  unzip -q ${FULLDISTDIR}/$$archive -d ${WRKDIR};;
 	*.tar.bz2)
 	  bzip2 -dc ${FULLDISTDIR}/$$archive| tar xf -;;
+	*.shar.gz|*.shar.Z|*.sh.Z|*.sh.gz)
+	  gzcat ${FULLDISTDIR}/$$archive | /bin/sh;;
+	*.shar|*.sh)
+	  /bin/sh ${FULLDISTDIR}/$$archive;;
 	*.tar)
 	  tar xf ${FULLDISTDIR}/$$archive;;
 	*)
