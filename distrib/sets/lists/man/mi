@@ -596,6 +596,8 @@
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/getc_unlocked.0
 ./usr/share/man/cat3/getchar_unlocked.0
+./usr/share/man/cat3/isinff.0
+./usr/share/man/cat3/isnanf.0
 ./usr/share/man/cat3/keybound.0
 ./usr/share/man/cat3/keynote.0
 ./usr/share/man/cat3/mpool.0
@@ -877,6 +879,7 @@
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/ms.0
 ./usr/share/man/cat4/audio.0
+./usr/share/man/cat4/ax.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bridge.0
 ./usr/share/man/cat4/ccd.0
@@ -884,6 +887,7 @@
 ./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
+./usr/share/man/cat4/cnw.0
 ./usr/share/man/cat4/cua.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
@@ -1111,9 +1115,12 @@
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/tx.0
 ./usr/share/man/cat4/udp.0
+./usr/share/man/cat4/ugen.0
+./usr/share/man/cat4/uhid.0
 ./usr/share/man/cat4/uk.0
 ./usr/share/man/cat4/unix.0
 ./usr/share/man/cat4/urandom.0
+./usr/share/man/cat4/usb.0
 ./usr/share/man/cat4/vax/acc.0
 ./usr/share/man/cat4/vax/ad.0
 ./usr/share/man/cat4/vax/autoconf.0
@@ -1572,6 +1579,7 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/vpn.0
+./usr/share/man/cat8/wicontrol.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
@@ -1604,15 +1612,9 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
+./usr/share/man/cat9/style.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat4/ax.0
-./usr/share/man/cat4/ugen.0
-./usr/share/man/cat4/uhid.0
-./usr/share/man/cat4/usb.0
-./usr/share/man/cat8/wicontrol.0
-./usr/share/man/cat3/isinff.0
-./usr/share/man/cat3/isnanf.0
-./usr/share/man/cat4/cnw.0
-./usr/share/man/cat9/style.0
+./usr/share/man/cat5/bridgename.if.0
+./usr/share/man/cat5/hostname.if.0

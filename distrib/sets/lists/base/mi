@@ -45,6 +45,10 @@
 ./dev/fd
 ./etc
 ./etc/disklabels
+./etc/isakmpd
+./etc/isakmpd/ca
+./etc/isakmpd/certs
+./etc/isakmpd/private
 ./etc/kerberosIV
 ./etc/mtree
 ./etc/ppp
@@ -56,6 +60,7 @@
 ./root
 ./sbin
 ./sbin/badsect
+./sbin/brconfig
 ./sbin/ccdconfig
 ./sbin/clri
 ./sbin/dhclient
@@ -794,6 +799,8 @@
 ./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
 ./usr/libexec/safe_finger
+./usr/libexec/sendmail
+./usr/libexec/sendmail/sendmail
 ./usr/libexec/smtpd
 ./usr/libexec/smtpfwdd
 ./usr/libexec/tcpd
@@ -851,7 +858,7 @@
 ./usr/sbin/bootpef
 ./usr/sbin/bootpgw
 ./usr/sbin/bootptest
-./usr/sbin/brconfig
+./usr/sbin/certpatch
 ./usr/sbin/chat
 ./usr/sbin/chgrp
 ./usr/sbin/chown
@@ -892,6 +899,7 @@
 ./usr/sbin/lpd
 ./usr/sbin/lptest
 ./usr/sbin/mailstats
+./usr/sbin/mailwrapper
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
@@ -1793,10 +1801,12 @@
 ./usr/share/zoneinfo/America/Anchorage
 ./usr/share/zoneinfo/America/Anguilla
 ./usr/share/zoneinfo/America/Antigua
+./usr/share/zoneinfo/America/Araguaina
 ./usr/share/zoneinfo/America/Aruba
 ./usr/share/zoneinfo/America/Asuncion
 ./usr/share/zoneinfo/America/Atka
 ./usr/share/zoneinfo/America/Barbados
+./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
@@ -1873,6 +1883,7 @@
 ./usr/share/zoneinfo/America/Port-au-Prince
 ./usr/share/zoneinfo/America/Port_of_Spain
 ./usr/share/zoneinfo/America/Porto_Acre
+./usr/share/zoneinfo/America/Porto_Velho
 ./usr/share/zoneinfo/America/Puerto_Rico
 ./usr/share/zoneinfo/America/Rainy_River
 ./usr/share/zoneinfo/America/Rankin_Inlet
@@ -1908,6 +1919,7 @@
 ./usr/share/zoneinfo/Antarctica/McMurdo
 ./usr/share/zoneinfo/Antarctica/Palmer
 ./usr/share/zoneinfo/Antarctica/South_Pole
+./usr/share/zoneinfo/Antarctica/Syowa
 ./usr/share/zoneinfo/Arctic
 ./usr/share/zoneinfo/Arctic/Longyearbyen
 ./usr/share/zoneinfo/Asia
@@ -2615,15 +2627,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/share/zoneinfo/America/Araguaina
-./usr/share/zoneinfo/America/Belem
-./usr/share/zoneinfo/America/Porto_Velho
-./usr/share/zoneinfo/Antarctica/Syowa
-./usr/sbin/certpatch
-./etc/isakmpd
-./etc/isakmpd/ca
-./etc/isakmpd/certs
-./etc/isakmpd/private
-./usr/libexec/sendmail
-./usr/libexec/sendmail/sendmail
-./usr/sbin/mailwrapper

@@ -1106,7 +1106,6 @@
 ./usr/include/ufs/lfs/lfs.h
 ./usr/include/ufs/lfs/lfs_extern.h
 ./usr/include/ufs/mfs/mfs_extern.h
-./usr/include/ufs/mfs/mfsiom.h
 ./usr/include/ufs/mfs/mfsnode.h
 ./usr/include/ufs/ufs/dinode.h
 ./usr/include/ufs/ufs/dir.h
