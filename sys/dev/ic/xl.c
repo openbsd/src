@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.7 2000/09/16 21:42:16 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.8 2000/09/16 21:48:46 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -61,6 +61,7 @@
  * 3Com 3C575TX		10/100Mbps LAN CardBus PC Card
  * 3Com 3CCFE575BT	10/100Mbps LAN CardBus PC Card
  * 3Com 3CCFE575CT	10/100Mbps LAN CardBus PC Card
+ * 3Com 3C3FE575CT	10/100Mbps LAN CardBus Type III PC Card
  * 3Com 3CCFEM656	10/100Mbps LAN+56k Modem CardBus PC Card
  * 3Com 3CCFEM656B	10/100Mbps LAN+56k Modem CardBus PC Card
  * 3Com 3CCFEM656C	10/100Mbps LAN+56k Global Modem CardBus PC Card
