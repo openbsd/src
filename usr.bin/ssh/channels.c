@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.65 2000/08/19 18:48:10 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.66 2000/08/19 21:55:51 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -667,7 +667,7 @@ channel_handle_rfd(Channel *c, fd_set * readset, fd_set * writeset)
 			return -1;
 		}
 		if(c->input_filter != NULL) {
-			if (c->input_filter(&c->input, buf, len) == -1) {
+			if (c->input_filter(c, buf, len) == -1) {
 				debug("filter stops channel %d", c->self);
 				chan_read_failed(c);
 			}

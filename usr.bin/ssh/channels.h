@@ -1,4 +1,4 @@
-/* RCSID("$OpenBSD: channels.h,v 1.15 2000/08/19 18:48:11 markus Exp $"); */
+/* RCSID("$OpenBSD: channels.h,v 1.16 2000/08/19 21:55:51 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -21,10 +21,13 @@
  * Data structure for channel data.  This is iniailized in channel_allocate
  * and cleared in channel_free.
  */
-typedef void channel_callback_fn(int id, void *arg);
-typedef int channel_filter_fn(Buffer *b, char *buf, int len);
+struct Channel;
+typedef struct Channel Channel;
 
-typedef struct Channel {
+typedef void channel_callback_fn(int id, void *arg);
+typedef int channel_filter_fn(struct Channel *c, char *buf, int len);
+
+struct Channel {
 	int     type;		/* channel type/state */
 	int     self;		/* my own channel identifier */
 	int     remote_id;	/* channel identifier for remote peer */
@@ -65,7 +68,7 @@ typedef struct Channel {
 
 	/* filter */
 	channel_filter_fn	*input_filter;
-}       Channel;
+};
 
 #define CHAN_EXTENDED_IGNORE		0
 #define CHAN_EXTENDED_READ		1
