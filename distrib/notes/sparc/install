@@ -506,12 +506,27 @@ may be a better option.
 		an image has been compressed, so it will ask for that
 		information before starting the extraction.
 
+        To boot from CD-ROM:
+		The OpenBSD 2.1 distribution CD-ROM is capable of booting
+		sun4c architecture machines.  The CD-ROM boot method has 
+		been tested on SS2 machines, but may work on the other
+		sun4c machines.  The bootable CD-ROM is know *not* to
+		work on sun4, and sun4m systems at this time.
+		To boot from CD-ROM use a command similar to:
+
+			ok b sd(0,6,0) # OpenBOOT v1  
+			ok boot cdrom  # OpenBOOT v2
+               
+		If CD-ROM booting does not work with your machine, you
+		may proceed to use one of the several other boot methods
+		to install of upgrade your system. 
+
 	To install from CD-ROM:
 		When installing from a CD-ROM, you will be asked which
 		device holds the distribution sets.  This will typically
-		be either "cd0" or "acd0".  Next you will be asked which
-		partition on the CD-ROM the distribution is to be loaded
-		from.  This is normally partition "a".
+		be "cd0".  Next you will be asked which partition 
+                on the CD-ROM the distribution is to be loaded from.  
+                This is normally partition "a".
 
 		Next you will have to identify the file system type that
 		has been used to create the distribution on the CD-ROM,
