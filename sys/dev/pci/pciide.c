@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.165 2004/05/04 15:10:59 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.166 2004/05/06 17:28:18 peter Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3613,6 +3613,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_733, 0x00, 5, "733", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_735, 0x00, 5, "735", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_740, 0x00, 5, "740", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_741, 0x00, 6, "741", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_745, 0x00, 5, "745", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_746, 0x00, 6, "746", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_748, 0x00, 6, "748", SIS_TYPE_SOUTH},
