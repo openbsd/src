@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.10 1997/09/21 11:36:12 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/09/30 17:54:16 millert Exp $
 
 PROG=	disklabel
-SRCS=	disklabel.c dkcksum.c
+SRCS=	disklabel.c dkcksum.c editor.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	disklabel.5 disklabel.8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.38 1997/09/26 04:10:28 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.39 1997/09/30 17:54:15 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.38 1997/09/26 04:10:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.39 1997/09/30 17:54:15 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ char	boot1[MAXPATHLEN];
 #endif
 
 enum {
-	UNSPEC, EDIT, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
+	UNSPEC, EDIT, EDITOR, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
 } op = UNSPEC;
 
 int	rflag;
@@ -120,10 +120,12 @@ struct dos_partition *readmbr __P((int));
 void	makelabel __P((char *, char *, struct disklabel *));
 int	writelabel __P((int, char *, struct disklabel *));
 void	l_perror __P((char *));
+struct disklabel *newlabel __P((int));
 struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
-void	display_partition __P((FILE *, struct disklabel *, int));
+void	display_partition __P((FILE *, struct disklabel *, int, char));
+int	editor __P((struct disklabel *, int));
 int	edit __P((struct disklabel *, int));
 int	editit __P((void));
 char	*skip __P((char *));
@@ -133,6 +135,7 @@ int	checklabel __P((struct disklabel *));
 void	setbootflag __P((struct disklabel *));
 void	usage __P((void));
 u_short	dkcksum __P((struct disklabel *));
+char	get_yn __P((char *));
 
 int
 main(argc, argv)
@@ -143,7 +146,7 @@ main(argc, argv)
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BNRWb:ers:wnv")) != -1)
+	while ((ch = getopt(argc, argv, "BENRWb:ers:wnv")) != -1)
 		switch (ch) {
 #if NUMBOOT > 0
 		case 'B':
@@ -158,6 +161,11 @@ main(argc, argv)
 			break;
 #endif
 #endif
+		case 'E':
+			if (op != UNSPEC)
+				usage();
+			op = EDITOR;
+			break;
 		case 'N':
 			if (op != UNSPEC)
 				usage();
@@ -240,13 +248,22 @@ main(argc, argv)
 	case EDIT:
 		if (argc != 1)
 			usage();
-		lp = readlabel(f);
+		if ((lp = newlabel(f)) == NULL)
+			exit(1);
 		error = edit(lp, f);
+		break;
+	case EDITOR:
+		if (argc != 1)
+			usage();
+		if ((lp = newlabel(f)) == NULL)
+			exit(1);
+		error = editor(lp, f);
 		break;
 	case READ:
 		if (argc != 1)
 			usage();
-		lp = readlabel(f);
+		if ((lp = readlabel(f)) == NULL)
+			exit(1);
 		display(stdout, lp);
 		error = checklabel(lp);
 		break;
@@ -283,7 +300,8 @@ main(argc, argv)
 	{
 		struct disklabel tlab;
 
-		lp = readlabel(f);
+		if ((lp = newlabel(f)) == NULL)
+			exit(1);
 		tlab = *lp;
 		if (argc == 2)
 			makelabel(argv[1], NULL, &lab);
@@ -672,7 +690,8 @@ readlabel(f)
 				msg = "disk label corrupted";
 			}
 		}
-		errx(1, msg);
+		warnx(msg);
+		return(NULL);
 	} else {
 		lp = &lab;
 		if (ioctl(f, DIOCGDINFO, lp) < 0)
@@ -821,16 +840,45 @@ makebootarea(boot, dp, f)
  * Display a particular partion.
  */
 void
-display_partition(f, lp, i)
+display_partition(f, lp, i, unit)
 	FILE *f;
 	struct disklabel *lp;
 	int i;
+	char unit;
 {
 	struct partition *pp = &lp->d_partitions[i];
+	double p_size;
+
+	unit = tolower(unit);
+	switch (unit) {
+	case 'b':
+		p_size = (double)pp->p_size * lp->d_secsize;
+		break;
+
+	case 'c':
+		p_size = (double)pp->p_size / lp->d_secpercyl;
+		break;
+
+	case 'k':
+		p_size = (double)pp->p_size / (1024 / lp->d_secsize);
+		break;
+
+	case 'm':
+		p_size = (double)pp->p_size / (1048576 / lp->d_secsize);
+		break;
+
+	default:
+		p_size = -1;			/* no conversion */
+		break;
+	}
 
 	if (pp->p_size) {
-		fprintf(f, "  %c: %8d %8d  ", 'a' + i,
-		    pp->p_size, pp->p_offset);
+		if (p_size < 0)
+			fprintf(f, "  %c: %8u %8u  ", 'a' + i,
+			    pp->p_size, pp->p_offset);
+		else
+			fprintf(f, "  %c: %8.2f%c %8u  ", 'a' + i,
+			    p_size, unit, pp->p_offset);
 		if ((unsigned) pp->p_fstype < FSMAXTYPES)
 			fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
 		else
@@ -919,7 +967,7 @@ display(f, lp)
 	fprintf(f,
 	    "#        size   offset    fstype   [fsize bsize   cpg]\n");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(f, lp, i);
+		display_partition(f, lp, i, 0);
 	fflush(f);
 }
 
@@ -1487,6 +1535,43 @@ setbootflag(lp)
 }
 #endif
 
+/*
+ * Get existing label or create a new one if none exists.
+ */
+struct disklabel *
+newlabel(f)
+	int f;
+{
+	int orflag = rflag;
+	struct disklabel fictlabel, *lp = NULL;
+
+	rflag = 1;
+	if ((lp = readlabel(f)) == NULL) {
+		if (get_yn("No label found on disk, write a new one?") != 'y')
+			return(NULL);
+
+		/* Read fake label */
+		rflag = 0;
+		lp = readlabel(f);
+		fictlabel = *lp;
+		rflag = 1;
+		nwflag = 0;		/* set by readlabel() */
+
+		/* Make boot area and fill in values from fictious label */
+		lp = makebootarea(bootarea, &lab, f);
+		*lp = fictlabel;
+
+		/* Write fake label to disk */
+		if (checklabel(lp))
+			warnx("you must correct these errors in the editor.");
+		if (writelabel(f, bootarea, lp))
+			err(4, "unable to write new label");
+	}
+
+	rflag = orflag;
+	return(lp);
+}
+
 void
 usage()
 {
@@ -1506,6 +1591,9 @@ usage()
 	    blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r] -e disk%s           (edit)\n",
+	    blank);
+	fprintf(stderr,
+	    "  disklabel [-nv] [-r] -E disk%s           (simple editor)\n",
 	    blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",
