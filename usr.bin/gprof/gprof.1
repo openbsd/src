@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gprof.1,v 1.16 2001/05/01 17:58:02 aaron Exp $
+.\"	$OpenBSD: gprof.1,v 1.17 2003/03/11 08:11:08 jmc Exp $
 .\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -55,7 +55,7 @@ that are compiled with the
 .Fl pg
 option of
 .Xr cc 1 ,
-.Xr pc 1 ,
+.Xr pc ,
 and
 .Xr f77 1 .
 The
@@ -92,7 +92,7 @@ time and call counts of the cycle.
 .Pp
 Second, a flat profile is given,
 similar to that provided by
-.Xr prof 1 .
+.Xr prof .
 This listing gives the total execution times, the call counts,
 the time in milliseconds the call spent in the routine itself, and
 the time in milliseconds the call spent in the routine itself including
