@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.13 2003/10/03 16:44:51 miod Exp $	*/
+/*	$OpenBSD: magma.c,v 1.14 2005/03/08 21:56:23 martin Exp $	*/
 /*
  * magma.c
  *
@@ -338,7 +338,8 @@ magma_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
 	    magma_hard, sc, dev->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": failed to establish interrupt\n");
+		printf(": couldn't establish interrupt, pri %d\n",
+		    INTLEV(sa->sa_pri));
 		bus_space_unmap(sc->sc_bustag, sc->sc_iohandle,
 		    sa->sa_reg[0].sbr_size);
 		return;
