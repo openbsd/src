@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_output.c,v 1.26 2001/03/13 03:35:15 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.169 2001/03/13 03:10:12 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.27 2001/03/21 15:01:09 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.171 2001/03/21 07:30:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -809,7 +809,7 @@ skip_ipsec2:;
 		u_int32_t ifmtu = nd_ifinfo[ifp->if_index].linkmtu;
 
 		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
-		if (mtu > ifmtu) {
+		if (mtu > ifmtu || mtu == 0) {
 			/*
 			 * The MTU on the route is larger than the MTU on
 			 * the interface!  This shouldn't happen, unless the
@@ -817,6 +817,9 @@ skip_ipsec2:;
 			 * interface was brought up.  Change the MTU in the
 			 * route to match the interface MTU (as long as the
 			 * field isn't locked).
+			 *
+			 * if MTU on the route is 0, we need to fix the MTU.
+			 * this case happens with path MTU discovery timeouts.
 			 */
 			 mtu = ifmtu;
 			 if ((ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
