@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 1997/10/02 15:44:40 niklas Exp $ */
+/*	$OpenBSD: param.h,v 1.11 1997/10/02 22:55:43 niklas Exp $ */
 /*      $NetBSD: param.h,v 1.24 1997/08/05 13:28:51 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,36 +66,33 @@
  *
  */
 
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define ALIGNBYTES		(sizeof (int) - 1)
+#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof (t) - 1)) == 0)
 
-#define	PGSHIFT	 9                             /* LOG2(NBPG) */
-#define	NBPG     (1<<PGSHIFT)                  /* (1 << PGSHIFT) bytes/page */
-#define	PGOFSET	 (NBPG-1)	               /* byte offset into page */
-#define	NPTEPG	 (NBPG/(sizeof (struct pte)))
+#define	PGSHIFT	 9				/* log2(NBPG) */
+#define	NBPG     (1 << PGSHIFT)			/* (1 << PGSHIFT) bytes/page */
+#define	PGOFSET	 (NBPG - 1)			/* byte offset into page */
+#define	NPTEPG	 (NBPG / (sizeof (struct pte)))
 
-#define	KERNBASE     0x80000000	               /* start of kernel virtual */
-#define	BTOPKERNBASE ((u_long)KERNBASE >> PGSHIFT)
+#define	KERNBASE	0x80000000		/* start of kernel virtual */
+#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSHIFT   9		               /* log2(DEV_BSIZE) */
-#define	DEV_BSIZE    (1 << DEV_BSHIFT)
+#define	DEV_BSHIFT	9			/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 
 #define BLKDEV_IOSIZE 2048
-#define	MAXPHYS		(63 * 1024)	/* max raw I/O transfer size */
-#ifdef 0
-#define	MAXBSIZE	0x4000		/* max FS block size - XXX */
-#endif
+#define	MAXPHYS		(63 * 1024)		/* max raw I/O transfer size */
 
-#define	CLSIZELOG2    1
-#define	CLSIZE	      2
+#define	CLSIZELOG2	1
+#define	CLSIZE		2
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE	4		/* initial stack size/NBPG */
 #define	SINCR	4		/* increment of stack/NBPG */
 
 #define	UPAGES	16		/* pages of u-area */
-#define USPACE  (NBPG*UPAGES)
+#define USPACE  (NBPG * UPAGES)
 
 /*
  * Constants related to network buffer management.
@@ -128,7 +125,7 @@
  */ 
 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
 #endif
 
 /*
@@ -155,15 +152,15 @@
  * For now though just use DEV_BSIZE.
  */
 
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
+#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
-#define splx(reg)                                       \
-({                                                      \
-        register int val;                               \
-        asm __volatile ("mfpr $0x12,%0;mtpr %1,$0x12"	\
-                        : "&=g" (val)                   \
-                        : "g" (reg));                   \
-        val;                                            \
+#define splx(reg)					\
+({							\
+        int val;					\
+							\
+        asm __volatile ("mfpr $0x12,%0; mtpr %1,$0x12"	\
+                        : "&=g" (val) : "g" (reg));	\
+        val;						\
 })
 
 
@@ -185,7 +182,7 @@
 #define	spl6()		splx(0x16)
 #define	spl7()		splx(0x17)
 
-#define	ovbcopy(x,y,z)	bcopy(x,y,z)
+#define	ovbcopy(x,y,z)	bcopy(x, y, z)
 
 #if !defined(VAX410) && !defined(VAX43)
 #define vmapbuf(p,q)
