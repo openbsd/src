@@ -1,0 +1,261 @@
+#!/usr/bin/perl -w
+# 
+# scatman - find turds in mantrees
+# tchrist@perl.com
+
+use strict;
+
+my ($Manpath, $Debug);
+
+parse_opts();
+
+MANTREE:
+for my $tree (split /:/, $Manpath) {
+    debug("chdir($tree)");
+    chdir($tree) || die "cannot cd to main tree $tree: $!";
+
+    # XXX: doesn't handles openbsd recursive mandirs yet
+
+MANDIR:
+    #for my $mandir ( grep { -d } <{man,cat}*> ) {
+    my @mandirs = grep { -d } <{cat,man}*>;
+    while (@mandirs) { 
+	my $mandir = shift @mandirs;
+	my $was_catted = $mandir =~ /^cat/;
+        debug("chdir($tree/$mandir)");
+        chdir("$tree/$mandir") || die "cannot cd to subdir $tree/$mandir: $!";
+
+	my($dirext) = ($mandir =~ /^(?:cat|man)(.*)/);
+	my($ext, @pages);
+
+	local *MANDIR;
+	unless (opendir(MANDIR, ".")) {
+	    die "$0: can't opendir . while in $tree/$mandir: $!\n";
+	} 
+
+MANPAGE:
+	while (my $file = readdir(MANDIR)) {
+	    next MANPAGE if $file =~ /^\.\.?$/;
+	    my $path = "$tree/$mandir/$file";
+	    if (-l $file) {
+		my $target = readlink($file);
+		debug("readlink on $path -> $target");
+		unless (-f $target && -r $target) {
+		    print "$path: bad symlink ($target)\n";
+		}
+		next MANPAGE;
+	    } 
+	    if (-d $file) {
+		push @mandirs, "$mandir/$file";
+		next;
+	    } 
+	    unless (-f $file) {
+		print "$path: not a plain file\n";
+		next MANPAGE;
+	    } 
+
+	    unless ($file =~ /\./) {
+		print "$path: doesn't smell like a manpage to me\n";
+		next MANPAGE;
+	    } 
+
+	    unless ($file =~ /\.${dirext}\S*(\.(gz|Z))?$/
+		    # get a real man dang you!
+		    || ($was_catted && $file =~ /\.0/) 
+		   )
+	    {
+		print "$path: strange extension for this directory\n";
+	    } 
+
+	    my $openspec = ($file =~ /\.(gz|Z)$/) 
+		? "gzip -dc < $file |"
+		: "< $file";
+
+	    local *FH;
+	    debug("open $openspec");
+	    unless (open(FH, $openspec)) {
+		warn "can't open $openspec: $!\n";
+		next;
+	    } 
+
+	    my($saw_TH, $saw_DOT, $over_struck);
+	    local $_;
+MANLINE:    
+	    while (<FH>) {
+		$saw_DOT += /^['.]/;
+		$saw_TH += m{
+		    ^ [.']		# ' unlikely but possible
+		    \s*			# optional white space
+		    (?:
+			TH		# -man version
+		     |  Dt		# -mandoc version
+		    )
+		    \b
+		}x;
+		if (/^['.]\s*so\s+(\S+)/) {
+		    my $link = $1;
+		    my $sofile = $link =~ m#^/# 
+				    ? $link
+				    : "$tree/$link"; # not $mandir!
+		    debug("$path: so's to $sofile");
+		    unless (-f $sofile && -r $sofile) {
+			print "$path: bad solink: $link\n";
+		    } 
+		    close FH;
+		    next MANPAGE;
+		} 
+		if (!defined $over_struck) {
+		    $over_struck++ if /(.)[\b]\1/;
+		} 
+		close FH,last if $saw_DOT && $saw_TH;
+	    } 
+	    close FH;
+	    if ($saw_DOT) {
+		unless ($saw_TH) {
+		    print "$path: missing title macro\n";
+		} 
+	    } 
+	    else {
+		if ($over_struck) {
+		    my $wish = "$tree/cat$dirext/$file";
+		    print "$path: this catpage should be in $wish"
+			unless $path eq $wish;
+		} else { 
+		    print "$path: doesn't look like nroff, maybe ",
+			`file $path 2>&1` =~ /: (.*)/, "\n";
+		}
+	    } 
+
+	} 
+    }
+}
+
+sub debug {
+    print "[ @_ ]\n" if $Debug;
+} 
+
+sub usage {
+    print STDERR "@_\n" if @_;
+    die "Usage: $0 [ -h ] [ -d ] [ [ -M ] [ manpath ] ]\n";
+}
+
+sub run_help {
+    my $pager;
+    unless ($pager = $ENV{PAGER}) {
+	require Config;
+					     # lint happiness.  blech.
+	$pager = $Config::Config{'pager'} || $Config::Config{'pager'};  
+    } 
+
+    $pager = "/bin/cat" unless has_cmd($pager);
+
+    if (has_cmd("pod2man") &&  has_cmd("nroff") ) {
+	{ exec("pod2man $0 | nroff -man | $pager") } # lint happiness
+	warn "exec of pod2man | nroff | $pager failed: $!";
+    } 
+
+    if (has_cmd("pod2text")) { 
+	{ exec("pod2text $0 | $pager") } # lint happiness
+	warn "exec of pod2text | $pager failed: $!";
+    }
+
+    # sucks to be you!
+
+    if (eval q{ require Pod::Text; 1; }) {
+	open (STDOUT, "| $pager") || die "no pager $pager: $!";
+	# this forces a wait on child if needed
+	sub END { close(STDOUT) || die "cannot close STDOUT: $!" } 
+	Pod::Text::pod2text($0);
+	exit 0;
+    }
+
+    # it REALLY REALLY REALLY sucks to be you!
+    open 0 or die "$0: cannot open myself: $!";
+    $/ = '';
+    while (<0>) {
+	last if /__(END|DATA)__/;  # must be careful here
+    } 
+    print <0>;
+    exit;
+} 
+
+
+sub has_cmd {
+    my $cmd = shift;
+    for (split(/:/, $ENV{PATH})) {
+	my $path = "$_/$cmd";
+	return $path if -f $path && -x _;
+    } 
+    return;
+} 
+
+sub parse_opts {
+ARG: while (@ARGV && $ARGV[0] =~ s/^-(?=.)//) {
+OPT:    for (shift @ARGV) {  # getopts is for wimps
+            m/^$/       && do {                             	next ARG; };
+            m/^-$/      && do {                             	last ARG; };
+            s/^d//      && do { $Debug++;           	    	redo OPT; };
+            s/^M(.*)//  && do { $Manpath  = $1 || shift @ARGV;  next ARG; };
+
+            m/^(h|-help)?$/  # stupid fsf broken crappy excuse for real manpages
+		       	&& do { run_help();          		    exit; };
+
+            usage("unknown option: -$_");
+        }
+    }
+
+    if (@ARGV) {
+	usage("Manpath set, but arguments remaining") if $Manpath;
+	usage("Too many arguments") if @ARGV > 1;
+	$Manpath = $ARGV[0];
+    } 
+    else {
+	$Manpath = '/usr/share/man';
+    } 
+
+}
+
+__END__
+
+=head1 NAME
+
+scatman - find turds in mantrees
+
+=head1 SYNOPSIS
+
+B<scatman> S<[ B<-h> ]> S<[ B<-d> ]> S<[ [ B<-M> ] [ I<manpath> ] ]>
+
+=head1 DESCRIPTION
+
+The B<scatman> program locates things in man directories that
+shouldn't be there.  It looks for stray files, catpage installed
+where manpage belong, non-troff files, troff files without proper
+title macros, wrong symbolic links, wrong C<.so> links, manpages
+installed with odd extensions, and unreadable files.
+
+The B<-d> flag adds debugging.
+
+The B<-M> I<manpath> flag is there for compatibility with
+other manly programs.  
+
+The B<-h> flag prints this manpage and exit.  You cannot lose
+this manpage.  No more whingeing!
+
+=head1 SEE ALSO
+
+man(1), man(7), mandoc(7), cfman(8), noman(8)
+
+=head1 RESTRICTIONS
+
+This program has only been tested on the Redhat operating system.
+
+=head1 AUTHOR
+
+Tom Christiansen <tchrist@perl.com>
+
+=head1 HISTORY
+
+
+Version 1: 24 October 1999
+
+

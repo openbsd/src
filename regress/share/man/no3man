@@ -1,0 +1,40 @@
+#!/usr/bin/perl -w
+#
+# no3man - identify which library calls aren't mannable
+# tchrist@perl.com
+
+use strict;
+
+#my $MAN3DIR = '/usr/man/man3';
+my $MAN3DIR = '/usr/share/man/cat3';
+
+chdir($MAN3DIR) || die "can't chdir to $MAN3DIR: $!";
+
+opendir(DIR, ".") || die "can't opendir $MAN3DIR: $!";
+
+my %warned;
+
+$| = 1;
+
+while (my $manpage = readdir(DIR)) {
+    next if $manpage =~ /^\./;
+    #$manpage =~ s/\.3.*//;
+    $manpage =~ s/\.0.*//;
+    # print "$manpage\n";
+    my $kid = open(MANPIPE, "man 3 $manpage 2>&1 | col -b |")
+	|| die "can't run man 3 $manpage";
+    while(<MANPIPE>) {
+	if (my $recno = /^(SYNOPSIS|SYNTAX)/ ... /^[A-Z]/) {
+	    last if $recno =~ /e/i;
+	    while (/(\w+)\(/g) {
+		my $func = $1;
+		my $path = `man -w 3 $func 2>&1`;
+		print "$manpage(3): $path" if $?;
+	    } 
+	} 
+    } 
+    #die "$kid is me!" unless $kid;
+    #kill 'TERM', $kid;
+    close MANPIPE;
+} 
+
