@@ -1,7 +1,7 @@
 /*
  * Judaic
  *
- * $OpenBSD: calendar.judaic,v 1.2 1996/12/05 06:04:49 millert Exp $
+ * $OpenBSD: calendar.judaic,v 1.3 2003/01/06 05:51:06 mickey Exp $
  */
 
 #ifndef _calendar_judaic_
@@ -14,7 +14,6 @@
 04/11*	Pesach (sabbatical)
 04/16*	Pesach (sabbatical)
 04/17*	Pesach (Last Day of Passover; 8th day of Pesach; sabbatical)
-04/30*	Yom HaAtzmaut (Israel Independence Day)
 05/13*	Lag Ba`omer (Commemoration of the Great Rebellion)
 05/22*	Yom Yerushalayim (Reunification of Jerusalem)
 05/30*	Shavuos (Festival of Weeks; 50 days after Pesach; sabbatical)
