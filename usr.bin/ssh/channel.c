@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channel.c,v 1.1 2001/05/30 12:55:08 markus Exp $");
+RCSID("$OpenBSD: channel.c,v 1.2 2001/05/30 15:20:09 markus Exp $");
 
 #include "ssh2.h"
 #include "packet.h"
@@ -480,11 +480,11 @@ channel_open_message()
 }
 
 void
-channel_start_open(int id)
+channel_send_open(int id)
 {
 	Channel *c = channel_lookup(id);
 	if (c == NULL) {
-		log("channel_open: %d: bad id", id);
+		log("channel_send_open: %d: bad id", id);
 		return;
 	}
 	debug("send channel open %d", id);
@@ -493,14 +493,9 @@ channel_start_open(int id)
 	packet_put_int(c->self);
 	packet_put_int(c->local_window);
 	packet_put_int(c->local_maxpacket);
-}
-void
-channel_open(int id)
-{
-	/* XXX REMOVE ME */
-	channel_start_open(id);
 	packet_send();
 }
+
 void
 channel_request(int id, char *service, int wantconfirm)
 {
