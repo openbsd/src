@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.92 2002/11/24 13:34:15 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.93 2002/11/24 16:47:02 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -849,8 +849,8 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 						if (errno == EBUSY) {
 							warnx("Current pool "
 							    "size exceeds "
-							    "exceeds requested "
-							    " hard limit");
+							    "requested "
+							    "hard limit");
 							return (1);
 						} else
 							err(1, "DIOCSETLIMIT");
@@ -986,7 +986,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "Adeqf:F:hk:nNOrRs:Svx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "Adeqf:F:hk:nNOrRs:vx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
