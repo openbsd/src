@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.6 2001/03/11 05:02:29 aaron Exp $
+.\"	$OpenBSD: kqueue.2,v 1.7 2001/07/22 00:46:29 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -89,7 +89,7 @@ events to the user.
 is a pointer to an array of
 .Va kevent 
 structures, as defined in
-.Aq Pa event.h .
+.Aq Pa sys/event.h .
 All changes contained in the 
 .Fa changelist
 are applied before any pending events are read from the queue.
