@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.127 1999/03/09 03:54:00 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.128 1999/03/09 04:18:27 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1699,6 +1699,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lite-On",
 	    "PNIC-II",
+	},
+	{
+	    PCI_VENDOR_LUXSONOR, PCI_PRODUCT_LUXSONOR_LS242,
+	    0,
+	    "LuxSonor",
+	    "LS242 DVD Decoder",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -5820,6 +5826,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Rockwell Semiconductor Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LUXSONOR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "LuxSonor",
 	    NULL,
 	},
 	{
