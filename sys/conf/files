@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.134 1999/11/08 15:36:01 mickey Exp $
+#	$OpenBSD: files,v 1.135 1999/11/26 20:19:42 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -118,7 +118,7 @@ file	dev/ic/i82596.c		ie & (ie_pci | ie_eisa | ie_gsc)
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
-file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc) needs-flag
+file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc | com_puc) needs-flag
 
 # OPL2/OPL3 FM synth driver
 device	opl: midibus, midisyn
