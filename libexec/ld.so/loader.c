@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.19 2001/09/22 04:58:18 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.20 2001/09/24 21:35:09 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -246,7 +246,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	/*
 	 * Finally make something to help gdb when poking around in the code.
 	 */
-#if defined(__powerpc__) || defined(__alpha__)
+#if defined(__powerpc__) || defined(__alpha__) || defined(__sparc64__)
 	debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
 	debug_map->r_version = 1;
 	debug_map->r_map = (struct link_map *)_dl_objects;
@@ -302,26 +302,26 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 
 
 void
-_dl_boot_bind(const long sp, const long loff,  int argc, const char **argv,
-	const char **envp, Elf_Dyn *dynamicp, long *dl_data)
+_dl_boot_bind(const long sp, const long loff, Elf_Dyn *dynamicp, long *dl_data)
 {
 	AuxInfo		*auxstack;
 	long		*stack;
 	Elf_Dyn		*dynp;
 	int		n;
-
+	int argc;
+	char **argv;
+	char **envp;
+	
 	struct elf_object  dynld;	/* Resolver data for the loader */
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
 	 * data vector put after them.
 	 */
-#ifdef _mips_
 	stack = (long *)sp;
 	argc = *stack++;
-	argv = (const char **)stack;
+	argv = (char **)stack;
 	envp = &argv[argc + 1];
-#endif /* _mips_ */
 	stack = (long *)envp;
 	while(*stack++ != NULL) {};
 
@@ -347,7 +347,7 @@ _dl_boot_bind(const long sp, const long loff,  int argc, const char **argv,
 	 *  Cache the data for easier access.
 	 */
 
-#if defined(__powerpc__) || defined(__alpha__)
+#if defined(__powerpc__) || defined(__alpha__) || defined(__sparc64__)
 	dynp = dynamicp;
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);

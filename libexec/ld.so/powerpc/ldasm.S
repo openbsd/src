@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1.1.1 2000/06/13 03:40:35 rahnds Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2001/09/24 21:35:09 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -47,7 +47,7 @@
 
 ENTRY(_dl_start)		
 	mr	19, 1
-	stwu	1, (-16 -((AUX_entry+1)*4))(1)	# Some space.
+	stwu	1, (-16 -((AUX_entry+3)*4))(1)	# Some space.
 
 	mflr	27		/* save off old link register */
 	stw	27, 4(19)	/* save in normal location */
@@ -119,13 +119,10 @@ ENTRY(_dl_start)
 	mr	17, 4
 
 
-	mr	3, 19		# Get stack pointer (arg0 for _dl_boot).
+	subi	3, 21, 4	# Get stack pointer (arg0 for _dl_boot).
 	mr	4, 17		# loff
-	mr	5, 20		# argc
-	mr	6, 21		# argv
-	mr	7, 22		# envp
-	mr	8, 18		# dynamicp
-	addi	9, 1, 8		# dl_data
+	mr	5, 18		# dynamicp
+	addi	6, 1, 8		# dl_data
 
 	bl	_dl_boot_bind@local
 
