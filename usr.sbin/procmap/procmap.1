@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.1 2004/02/16 08:54:34 tedu Exp $
+.\"	$OpenBSD: procmap.1,v 1.2 2004/02/17 20:34:43 jmc Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,13 +65,21 @@ By default,
 displays information for its parent process, so that when run from a
 shell prompt, the shell's memory information is displayed.
 If other
-pids are given as arguments on the command line, information for those
+PIDs are given as arguments on the command line, information for those
 processes will be printed also.
-If the special pid of 0 is given,
+If the special PID of 0 is given,
 then information for the kernel's memory map is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width XXXnumberXX
+.It Fl a
+Display
+.Dq all
+information from the process's memory map.
+This output
+mode is an amalgam of the contents of the Solaris, Linux, and
+.Nx
+style output modes.
 .It Fl D Ar number
 Enable various debug facilities.
 The
@@ -90,25 +98,6 @@ dump each vm_map_entry in its entirety
 .It Cm 16
 dump the namei cache as it is traversed
 .El
-.It Fl M Ar core
-Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/kmem .
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /netbsd .
-.It Fl P
-Causes
-.Nm
-to print information about itself.
-.It Fl a
-Display
-.Dq all
-information from the process's memory map.
-This output
-mode is an amalgam of the contents of the Solaris, Linux, and
-.Nx
-style output modes.
 .It Fl d
 Dumps the vm_map and vm_map_entry structures in a style similar to
 that of
@@ -128,6 +117,10 @@ file system.
 When combined with the
 .Fl v
 option, identifiers for all entries are printed.
+.It Fl M Ar core
+Extract values associated with the name list from the specified core
+instead of the default
+.Pa /dev/kmem .
 .It Fl m
 Dumps information in the same format as the map pseudo-file of the
 .Pa /proc
@@ -136,6 +129,13 @@ When the
 .Fl v
 option is also given, device number, inode number, and filename
 or other identifying information is printed.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the
+running kernel.
+.It Fl P
+Causes
+.Nm
+to print information about itself.
 .It Fl p Ar pid
 Tells
 .Nm
@@ -168,7 +168,9 @@ or
 .Fl m ,
 more information is printed, possibly including device and inode
 numbers, file path names, or other identifying information.
-If specified more than once, a * will be printed in between two
+If specified more than once, a
+.Sq *
+will be printed in between two
 entries that are not adjacent, making the visual identification of
 spaces in the process's map easier to see.
 .El
@@ -183,15 +185,15 @@ If you do wish to see information about
 .Nm
 and another process as the same time, simply omit the
 .Fl p
-and place the extra pid at the end of the command line.
-.Sh EXIT STATUS
+and place the extra PID at the end of the command line.
+.Pp
 .Nm
-exits 0 on success, and \*[Gt]0 if an error occurred.
+exits 0 on success, and \*(Gt0 if an error occurred.
 .Sh EXAMPLES
-While the meaning most of the output is self evident, some pieces of
+While the meaning most of the output is self-evident, some pieces of
 it may appear to be a little inscrutable.
 .Pp
-Here a portion of the default output from procmap being run at an
+Here a portion of the default output from procmap being run at a
 .Xr sh 1
 prompt shows the starting address of the map entry, the size of the
 map entry, the current protection level of the map entry, and either
@@ -223,25 +225,25 @@ The value of the flags field (in hexadecimal) is taken from
 the include file
 .Aq Pa uvm/uvm_map.h :
 .Bl -column VM_MAP_WIREFUTURE VM_MAP_WIREFUTURE -offset indent
-.It Dv "VM_MAP_PAGEABLE"   Ta No "0x01   entries are pageable"
-.It Dv "VM_MAP_INTRSAFE"   Ta No "0x02   interrupt safe map"
-.It Dv "VM_MAP_WIREFUTURE" Ta No "0x04   future mappings are wired
-.It Dv "VM_MAP_BUSY"       Ta No "0x08   map is busy
-.It Dv "VM_MAP_WANTLOCK"   Ta No "0x10   want to write-lock
+.It Dv "VM_MAP_PAGEABLE"   Ta No "0x01   ro: entries are pageable"
+.It Dv "VM_MAP_INTRSAFE"   Ta No "0x02   ro: interrupt safe map"
+.It Dv "VM_MAP_WIREFUTURE" Ta No "0x04   rw: wire future mappings"
+.It Dv "VM_MAP_BUSY"       Ta No "0x08   rw: map is busy"
+.It Dv "VM_MAP_WANTLOCK"   Ta No "0x10   rw: want to write-lock"
 .El
 .Pp
 The
-.Dq Tn submap ,
-.Dq Tn cow ,
+.Dq submap ,
+.Dq cow ,
 and
-.Dq Tn nc
+.Dq nc
 fields are true or false, and indicate whether the map is a submap,
 whether it is marked for copy on write, and whether it needs a copy.
 The
-.Dq Tn prot
-\&(or protection) field, along with
-.Dq Tn max
-\&(maximum protection allowed) are made up of the following flags from
+.Dq prot
+(or protection) field, along with
+.Dq max
+(maximum protection allowed) are made up of the following flags from
 .Aq Pa uvm/uvm_extern.h :
 .\" this column width specifically chosen so that all the header file
 .\" excerpts appear to line up cleanly
@@ -252,9 +254,9 @@ The
 .El
 .Pp
 The
-.Dq Tn obj
+.Dq obj
 and
-.Dq Tn amap
+.Dq amap
 fields are pointers to, and offsets into, the underlying uvm_object or
 amap.
 The value for resident is always unknown because digging such
@@ -281,22 +283,22 @@ $ procmap -l
 .Ed
 .Pp
 Here the protection and maximum protection values are indicated with
-.Dq Tn r ,
-.Dq Tn w ,
+.Sq r ,
+.Sq w ,
 and
-.Dq Tn x
+.Sq x
 characters, indicating read permission, write permission, and execute
 permission, respectively.
 The
-.Dq Tn COW ,
-.Dq Tn NC ,
+.Dq COW ,
+.Dq NC ,
 and
-.Dq Tn NNC
+.Dq NNC
 values that follow indicate, again, that the map is marked for copy on
 write and either needs or does not need a copy.
 It is also possible
 to see the value
-.Dq Tn NCOW
+.Dq NCOW
 here, which indicates that an entry will not be copied.
 The three
 following numbers indicate the inheritance type of the map, the wired
@@ -304,10 +306,10 @@ count of the map, and any advice value assigned via
 .Xr madvise 2 .
 .Pp
 In the second form, the permissions indicated are followed by a
-.Dq Tn p
+.Sq p
 or
-.Dq Tn s
-character indicated whether the map entry is private or shared (copy
+.Sq s
+character indicating whether the map entry is private or shared (copy
 on write or not), and the numbers are the offset into the underlying
 object, the device and numbers of the object if it is a file, and the
 path to the file (if available).
@@ -315,7 +317,7 @@ path to the file (if available).
 As noted above (see section
 .Sx DESCRIPTION ) ,
 the
-.Dq Tn all
+.Dq all
 output format is an amalgam of the previous output formats.
 .Bd -literal -offset indent
 $ procmap -a
@@ -325,22 +327,22 @@ Start    End         Size  Offset   rwxpc  RWX  I/W/A ...
 .Ed
 .Pp
 In this format, the column labeled
-.Dq Tn rwxpc
+.Dq rwxpc
 contains the permissions for the mapping along with the shared/private
 flag, and a character indicating whether the mapping needs to be
 copied on write
-.Pq Dq \&+
+.Pq Sq +
 or has already been copied
-.Pq Dq \&-
+.Pq Sq -
 and is followed by a column that indicates the maximum permissions for
 the map entry.
 The column labeled
-.Dq Tn I/W/A
+.Dq I/W/A
 indicates the inheritance, wired, and advice values for the map entry,
 as previously described.
 .Sh SEE ALSO
 .Xr ls 1 ,
-.Xr stat 1 ,
+.\" .Xr stat 1 ,
 .Xr madvise 2 ,
 .Xr mmap 2 ,
 .Xr kvm 3 ,
@@ -350,7 +352,7 @@ as previously described.
 The
 .Nm
 utility appeared in
-.Nx 2.0
+.Nx
 as pmap.
 .Sh AUTHORS
 The
@@ -366,7 +368,7 @@ proper symbol information.
 Since processes can change state while
 .Nm
 is running, some of the information printed may be inaccurate.
-This is especially important to consider when examining the kernel's map
+This is especially important to consider when examining the kernel's map,
 since merely executing
 .Nm
 will cause some of the information to change.
@@ -379,8 +381,8 @@ found there in its entirety, as much information as was available
 will be printed.
 In most cases, simply running
 .Xr ls 1
-or
-.Xr stat 1
+.\" or
+.\" .Xr stat 1
 with the expected path to the file will cause the information to be
 reentered into the cache.
 .Pp
