@@ -59,5 +59,5 @@ regress
 -pa--	regress
 # kill
 1 table deleted.
-ktable: 12 allocated, 12 released, 0 leaked.
+ktable: 11 allocated, 11 released, 0 leaked.
 kentry: 25 allocated, 25 released, 0 leaked.
