@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.10 2001/02/04 21:25:34 jason Exp $	*/
+/*	$OpenBSD: client.c,v 1.11 2001/04/24 05:09:23 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -58,17 +58,13 @@
 
 #include "pppoe.h"
 
-#define	PPP_PROG	"/usr/sbin/ppp"
-
 #define	STATE_EXPECT_PADO	1
 #define	STATE_EXPECT_PADS	2
 #define	STATE_EXPECT_SESSION	3
 
-u_int32_t client_cookie = 0;
-u_int16_t client_sessionid = 0xffff;
-int pppfd = -1;
-int client_state = -1;
-u_int8_t etherremoteaddr[6], etherlocaladdr[6];
+u_int32_t client_cookie;
+u_int16_t client_sessionid;
+int pppfd, client_state;
 
 static int getpackets __P((int, char *, char *, struct ether_addr *,
     struct ether_addr *));
@@ -102,6 +98,7 @@ client_mode(bfd, sysname, srvname, myea)
 
 	pppfd = -1;
 	client_sessionid = 0xffff;
+	client_state = -1;
 
 	r = send_padi(bfd, myea, srvname);
 	if (r <= 0)
@@ -238,7 +235,6 @@ send_padr(bfd, srv, myea, rmea, eh, ph, tl)
 	int idx = 0, slen;
 
 	timer_set(5);
-	client_state = STATE_EXPECT_PADS;
 
 	iov[idx].iov_base = rmea;
 	iov[idx++].iov_len = ETHER_ADDR_LEN;
@@ -300,6 +296,7 @@ send_padr(bfd, srv, myea, rmea, eh, ph, tl)
 	ph->len = htons(ph->len);
 	tag_hton(tl);
 
+	client_state = STATE_EXPECT_PADS;
 	return (writev(bfd, iov, idx));
 }
 
@@ -336,8 +333,6 @@ getpackets(bfd, srv, sysname, myea, rmea)
 		bh = (struct bpf_hdr *)pkt;
 		len = bh->bh_caplen;
 		mpkt = pkt + bh->bh_hdrlen;
-
-		debug_packet(mpkt, len);
 
 		/* Pull out ethernet header */
 		if (len < sizeof(struct ether_header))
@@ -390,6 +385,8 @@ getpackets(bfd, srv, sysname, myea, rmea)
 			if (bcmp(rmea, &eh.ether_shost[0], ETHER_ADDR_LEN))
 				goto next;
 			if (pppfd < 0)
+				goto next;
+			if (client_sessionid != ph.sessionid)
 				goto next;
 			if ((r = bpf_to_ppp(pppfd, len, mpkt)) < 0)
 				return (-1);
@@ -444,8 +441,6 @@ recv_pado(bfd, srv, myea, rmea, eh, ph, len, pkt)
 	r = 0;
 	slen = (srv == NULL) ? 0 : strlen(srv);
 	while ((n = tag_lookup(&tl, PPPOE_TAG_SERVICE_NAME, r)) != NULL) {
-		if (slen == 0)
-			break;
 		if (slen == 0 || n->len == 0)
 			break;
 		if (n->len == slen && !strncmp(srv, n->val, slen))
