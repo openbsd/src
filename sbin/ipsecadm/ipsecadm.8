@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.29 2000/09/19 08:50:56 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.30 2000/09/20 21:28:23 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -181,6 +181,10 @@ Allowed modifiers are:
 .Fl in ,
 .Fl out ,
 .Fl deny ,
+.Fl srcid ,
+.Fl dstid ,
+.Fl srcid_type ,
+.Fl dstid_type ,
 .Fl use ,
 .Fl acquire ,
 .Fl require ,
@@ -464,6 +468,46 @@ By default the source port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
+.It Fl srcid
+For flow, used to specify what local identity key management
+should use when negotiating the SAs.
+If left unspecified, the source address of the flow is used
+(see the discussion on
+.Nm flow
+above, with regard to source address).
+.It Fl dstid
+For flow, used to specify what the remote identity key management
+should expect is.
+If left unspecified, the destination address of the flow is used
+(see the discussion on
+.Nm flow
+above, with regard to destination address).
+.It Fl srcid_type
+For flow, used to specify the type of identity given by
+.Fl srcid .
+Valid values are
+.Nm prefix ,
+.Nm fqdn ,
+and
+.Nm ufqdn .
+The
+.Nm prefix
+type implies an IPv4 or IPv6 address followed by a forward slash
+character and a decimal number indicating the number of important bits
+in the address (equivalent to a netmask, in IPv4 terms).
+Key management then has to pick a local identity that falls within the
+address space indicated.
+The
+.Nm fqdn
+and
+.Nm ufqdn
+types are DNS-style host names and mailbox-format user
+addresses, respectively, and are especially useful for mobile user
+scenarios.
+Note that no validity checking on the identities is done.
+.It Fl dstid_type
+See
+.Fl srcid_type .
 .It Fl delete
 Instead of creating a flow, an existing flow is deleted.
 .It Fl bypass

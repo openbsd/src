@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.40 2000/09/19 08:38:41 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.41 2000/09/20 21:28:23 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -213,6 +213,10 @@ usage()
             "\t  -in\t\t\t\tspecify incoming-packet policy\n"
             "\t  -out\t\t\t\tspecify outgoing-packet policy\n"
 	    "\t  -[ah|esp|ip4]\t\t\tflush a particular protocol\n"
+	    "\t  -srcid\t\t\tsource identity for flows\n"
+	    "\t  -dstid\t\t\tdestination identity for flows\n"
+	    "\t  -srcid_type\t\t\tsource identity type\n"
+	    "\t  -dstid_type\t\t\tdestination identity type\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
 }
@@ -230,6 +234,7 @@ main(int argc, char **argv)
     u_char odstbuf[256], osmaskbuf[256], odmaskbuf[256], proxybuf[256];
     int srcset = 0, dstset = 0, dst2set = 0;
     u_char *keyp = NULL, *authp = NULL;
+    u_char *srcid = NULL, *dstid = NULL;
     struct protoent *tp;
     struct servent *svp;
     char *transportproto = NULL;
@@ -243,11 +248,12 @@ main(int argc, char **argv)
     struct sadb_address sad6; /* osmask */
     struct sadb_address sad7; /* odmask */
     struct sadb_address sad8; /* dst2 */
+    struct sadb_ident sid1, sid2;
     struct sadb_key skey1;
     struct sadb_key skey2;
     struct sadb_protocol sprotocol;
     struct sadb_protocol sprotocol2;
-    struct iovec iov[20];
+    struct iovec iov[30];
     int cnt = 0;
     u_char realkey[8192], realakey[8192];
     int bypass = 0;
@@ -279,6 +285,8 @@ main(int argc, char **argv)
     bzero(iov, sizeof(iov));
     bzero(realkey, sizeof(realkey));
     bzero(realakey, sizeof(realakey));
+    bzero(&sid1, sizeof(sid1));
+    bzero(&sid2, sizeof(sid2));
 
     src = (union sockaddr_union *) srcbuf;
     dst = (union sockaddr_union *) dstbuf;
@@ -315,6 +323,12 @@ main(int argc, char **argv)
     sa2.sadb_sa_replay = 0;
     sa2.sadb_sa_state = SADB_SASTATE_MATURE;
 
+    sid1.sadb_ident_len = 1;
+    sid1.sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
+
+    sid2.sadb_ident_len = 1;
+    sid2.sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
+    
     sprotocol2.sadb_protocol_len = 1;
     sprotocol2.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
     sprotocol2.sadb_protocol_direction = IPSP_DIRECTION_OUT;
@@ -840,6 +854,96 @@ main(int argc, char **argv)
 	    continue;
 	}
 
+	if (!strcmp(argv[i] + 1, "srcid") && iscmd(mode, FLOW) &&
+	    (i + 1 < argc))
+	{
+	    if (srcid != NULL)
+	    {
+		fprintf(stderr, "%s: srcid specified multiple times\n",
+			argv[0]);
+		exit(1);
+	    }
+
+	    srcid = argv[i + 1];
+	    sid1.sadb_ident_len += ROUNDUP(strlen(srcid)) / sizeof(u_int64_t);
+	    i++;
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "dstid") && iscmd(mode, FLOW) &&
+	    (i + 1 < argc))
+	{
+	    if (dstid != NULL)
+	    {
+		fprintf(stderr, "%s: dstid specified multiple times\n",
+			argv[0]);
+		exit(1);
+	    }
+
+	    dstid = argv[i + 1];
+	    sid2.sadb_ident_len += ROUNDUP(strlen(dstid)) / sizeof(u_int64_t);
+	    i++;
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "srcid_type") && iscmd(mode, FLOW) &&
+	    (i + 1 < argc))
+	{
+	    if (sid1.sadb_ident_type != 0)
+	    {
+		fprintf(stderr, "%s: srcid_type specified multiple times\n",
+			argv[0]);
+		exit(1);
+	    }
+
+	    if (!strcmp(argv[i + 1], "prefix"))
+	      sid1.sadb_ident_type = SADB_IDENTTYPE_PREFIX;
+	    else
+	      if (!strcmp(argv[i + 1], "fqdn"))
+		sid1.sadb_ident_type = SADB_IDENTTYPE_FQDN;
+	      else
+		if (!strcmp(argv[i + 1], "ufqdn"))
+		  sid1.sadb_ident_type = SADB_IDENTTYPE_MBOX;
+		else
+		{
+		    fprintf(stderr, "%s: unknown identity type \"%s\"\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+
+	    i++;
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "dstid_type") && iscmd(mode, FLOW) &&
+	    (i + 1 < argc))
+	{
+	    if (sid2.sadb_ident_type != 0)
+	    {
+		fprintf(stderr, "%s: dstid_type specified multiple times\n",
+			argv[0]);
+		exit(1);
+	    }
+
+	    if (!strcmp(argv[i + 1], "prefix"))
+	      sid2.sadb_ident_type = SADB_IDENTTYPE_PREFIX;
+	    else
+	      if (!strcmp(argv[i + 1], "fqdn"))
+		sid2.sadb_ident_type = SADB_IDENTTYPE_FQDN;
+	      else
+		if (!strcmp(argv[i + 1], "ufqdn"))
+		  sid2.sadb_ident_type = SADB_IDENTTYPE_MBOX;
+		else
+		{
+		    fprintf(stderr, "%s: unknown identity type \"%s\"\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+
+	    i++;
+	    continue;
+	}
+
 	if (!strcmp(argv[i] + 1, "addr") && iscmd(mode, FLOW) &&
 	    (i + 4 < argc))
 	{
@@ -1274,6 +1378,32 @@ main(int argc, char **argv)
 	exit(1);
     }
 
+    if ((srcid != NULL) && (sid1.sadb_ident_type == 0))
+    {
+	fprintf(stderr, "%s: srcid_type not specified\n", argv[0]);
+	exit(1);
+    }
+
+    if ((dstid != NULL) && (sid2.sadb_ident_type == 0))
+    {
+	fprintf(stderr, "%s: dstid_type not specified\n", argv[0]);
+	exit(1);
+    }
+
+    if ((srcid == NULL) && (sid1.sadb_ident_type != 0))
+    {
+	fprintf(stderr, "%s: srcid_type specified, but no srcid given\n",
+		argv[0]);
+	exit(1);
+    }
+
+    if ((dstid == NULL) && (sid2.sadb_ident_type != 0))
+    {
+	fprintf(stderr, "%s: dstid_type specified, but no dstid given\n",
+		argv[0]);
+	exit(1);
+    }
+
     if (((mode & (ESP_NEW | ESP_OLD)) && enc && keyp == NULL) ||
         ((mode & (AH_NEW | AH_OLD)) && authp == NULL))
     {
@@ -1551,6 +1681,26 @@ main(int argc, char **argv)
                      }
 #endif /* INET6 */
                  }
+
+		 if (srcid)
+		 {
+		     iov[cnt].iov_base = &sid1;
+		     iov[cnt++].iov_len = sizeof(sid1);
+		     /* SRC identity */
+		     iov[cnt].iov_base = srcid;
+		     iov[cnt++].iov_len = ROUNDUP(strlen(srcid));
+		     smsg.sadb_msg_len += sid1.sadb_ident_len;
+		 }
+
+		 if (dstid)
+		 {
+		     iov[cnt].iov_base = &sid2;
+		     iov[cnt++].iov_len = sizeof(sid2);
+		     /* DST identity */
+		     iov[cnt].iov_base = dstid;
+		     iov[cnt++].iov_len = ROUNDUP(strlen(dstid));
+		     smsg.sadb_msg_len += sid2.sadb_ident_len;
+		 }
 
 		 iov[cnt].iov_base = &sad4;
 		 iov[cnt++].iov_len = sizeof(sad4);
