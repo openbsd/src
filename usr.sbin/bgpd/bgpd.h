@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.27 2003/12/25 23:22:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.28 2003/12/26 00:14:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -259,6 +259,9 @@ struct kroute_nexthop {
 };
 
 /* prototypes */
+/* bgpd.c */
+void		 send_nexthop_update(struct kroute_nexthop *);
+
 /* session.c */
 int		 session_main(struct bgpd_config *, int[2], int[2]);
 

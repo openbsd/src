@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.29 2003/12/25 17:07:24 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.30 2003/12/26 00:14:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -320,6 +320,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 	struct mrtdump_config	*m;
 	ssize_t			 len;
 	int			 n;
+	in_addr_t		 ina;
 
 	if (imsg_get(ibuf, &imsg) > 0) {
 		switch (imsg.hdr.type) {
@@ -355,6 +356,19 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 			if (kroute_delete(rfd, imsg.data))
 				fatal("kroute_delete error", errno);
 			break;
+		case IMSG_NEXTHOP_ADD:
+			if (idx != PFD_PIPE_ROUTE)
+				fatal("nexthop request not from RDE", 0);
+			memcpy(&ina, imsg.data, sizeof(ina));
+			kroute_nexthop_check(ina);
+			break;
+		case IMSG_NEXTHOP_REMOVE:
+			if (idx != PFD_PIPE_ROUTE)
+				fatal("nexthop request not from RDE", 0);
+			memcpy(&ina, imsg.data, sizeof(ina));
+			/* XXX */
+			/* kroute_nexthop_delete(ina); */
+			break;
 		default:
 			break;
 		}
@@ -363,3 +377,9 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 	return (0);
 }
 
+void
+send_nexthop_update(struct kroute_nexthop *msg)
+{
+	imsg_compose(&ibuf_rde, IMSG_NEXTHOP_UPDATE, 0,
+	    msg, sizeof(struct kroute_nexthop));
+}
