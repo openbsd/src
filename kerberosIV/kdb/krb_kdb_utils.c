@@ -1,24 +1,25 @@
-/*	$Id: krb_kdb_utils.c,v 1.1.1.1 1995/12/14 06:52:36 tholo Exp $	*/
+/* $KTH: krb_kdb_utils.c,v 1.23 1997/05/02 14:29:10 assar Exp $ */
 
-/*-
- * Copyright (C) 1989 by the Massachusetts Institute of Technology
- *
- * Export of this software from the United States of America is assumed
- * to require a specific license from the United States Government.
- * It is the responsibility of any person or organization contemplating
- * export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- */
+/* 
+  Copyright (C) 1989 by the Massachusetts Institute of Technology
+
+   Export of this software from the United States of America is assumed
+   to require a specific license from the United States Government.
+   It is the responsibility of any person or organization contemplating
+   export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of M.I.T. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+  */
 
 /*
  * Utility routines for Kerberos programs which directly access
@@ -32,56 +33,143 @@
 
 #include <kdc.h>
 
-long 
-kdb_get_master_key(prompt, master_key, master_key_sched)
-	int prompt;
-	des_cblock *master_key;
-	struct des_ks_struct *master_key_sched;
+/* always try /.k for backwards compatibility */
+static char *master_key_files[] = { MKEYFILE, "/.k", NULL };
+
+#define k_strerror(e) strerror(e)
+
+int
+kdb_new_get_master_key(des_cblock *key, des_key_schedule schedule)
 {
   int kfile;
+  int i;
+  char buf[1024];
 
-  if (prompt)  {
-#ifdef NOENCRYPTION
-      placebo_read_password(master_key,
-			    "\nEnter Kerberos master key: ", 0);
+  char **mkey;
+
+  for(mkey = master_key_files; *mkey; mkey++){
+      kfile = open(*mkey, O_RDONLY);
+      if(kfile < 0 && errno != ENOENT)
+	  fprintf(stderr, "Failed to open master key file \"%s\": %s\n", 
+		  *mkey,
+		  k_strerror(errno));
+      if(kfile >= 0)
+	  break;
+  }
+  if(*mkey){
+      int bytes;
+      bytes = read(kfile, (char*)key, sizeof(des_cblock));
+      close(kfile);
+      if(bytes == sizeof(des_cblock)){
+	  des_key_sched(key, schedule);
+	  return 0;
+      }
+      fprintf(stderr, "Could only read %d bytes from master key file %s\n", 
+	      bytes, *mkey);
+  }else{
+      fprintf(stderr, "No master key file found.\n");
+  }
+
+  
+  i=0;
+  while(i < 3){
+      if(des_read_pw_string(buf, sizeof(buf), "Enter master password: ", 0))
+	  break;
+
+      /* buffer now contains either an old format master key password or a
+       * new format base64 encoded master key
+       */
+      
+      /* try to verify as old password */
+      des_string_to_key(buf, key);
+      des_key_sched(key, schedule);
+      
+      if(kdb_verify_master_key(key, schedule, NULL) != -1){
+	  memset(buf, 0, sizeof(buf));
+	  return 0;
+      }
+      
+      /* failed test, so must be base64 encoded */
+      
+      if(base64_decode(buf, key) == 8){
+	  des_key_sched(key, schedule);
+	  if(kdb_verify_master_key(key, schedule, NULL) != -1){
+	      memset(buf, 0, sizeof(buf));
+	      return 0;
+	  }
+      }
+      
+      memset(buf, 0, sizeof(buf));
+      fprintf(stderr, "Failed to verify master key.\n");
+      i++;
+  }
+  
+  /* life sucks */
+  fprintf(stderr, "You loose.\n");
+  exit(1);
+}
+
+int kdb_new_get_new_master_key(des_cblock *key, des_key_schedule schedule, 
+			       int verify)
+{
+#ifndef RANDOM_MKEY
+  des_read_password(key, "\nEnter Kerberos master password: ", verify);
+  printf ("\n");
 #else
-      des_read_password(master_key,
-			     "\nEnter Kerberos master key: ", 0);
+  char buf[1024];
+  des_generate_random_block (key);
+  des_key_sched(key, schedule);
+  
+  des_read_pw_string(buf, sizeof(buf), "Enter master key seed: ", 0);
+  des_cbc_cksum((des_cblock*)buf, key, sizeof(buf), schedule, key);
+  memset(buf, 0, sizeof(buf));
 #endif
-      printf ("\n");
-  }
-  else {
-    kfile = open(MKEYFILE, O_RDONLY, 0600);
-    if (kfile < 0) {
-      /* oh, for com_err_ */
-      return (-1);
-    }
-    if (read(kfile, (char *) master_key, 8) != 8) {
-      return (-1);
-    }
-    close(kfile);
-  }
+  des_key_sched(key, schedule);
+  return 0;
+}
 
-#ifndef NOENCRYPTION
-  des_key_sched(master_key,master_key_sched);
+int kdb_get_master_key(int prompt, des_cblock *master_key, 
+		       des_key_schedule master_key_sched)
+{
+  int ask = (prompt == KDB_GET_TWICE);
+#ifndef RANDOM_MKEY
+  ask |= (prompt == KDB_GET_PROMPT);
 #endif
-  return (0);
+  
+  if(ask)
+    kdb_new_get_new_master_key(master_key, master_key_sched, 
+			       prompt == KDB_GET_TWICE);
+  else
+    kdb_new_get_master_key(master_key, master_key_sched);
+  return 0;
+}
+
+int kdb_kstash(des_cblock *master_key, char *file)
+{
+  int kfile;
+  kfile = open(file, O_TRUNC | O_RDWR | O_CREAT, 0600);
+  if (kfile < 0) {
+    return -1;
+  }
+  if (write(kfile, master_key, sizeof(des_cblock)) != sizeof(des_cblock)) {
+    close(kfile);
+    return -1;
+  }
+  close(kfile);
+  return 0;
 }
 
 /* The old algorithm used the key schedule as the initial vector which
    was byte order depedent ... */
 
 void
-kdb_encrypt_key (in, out, master_key, master_key_sched, e_d_flag)
-	des_cblock *in;
-	des_cblock *out;
-	des_cblock *master_key;
-	struct des_ks_struct *master_key_sched;
-	int e_d_flag;
+kdb_encrypt_key (des_cblock (*in), des_cblock (*out),
+		 des_cblock (*master_key),
+		 des_key_schedule master_key_sched, int e_d_flag)
 {
 
 #ifdef NOENCRYPTION
-  bcopy(in, out, sizeof(des_cblock));
+  memcpy(out, in, sizeof(des_cblock));
 #else
   des_pcbc_encrypt(in,out,(long)sizeof(des_cblock),master_key_sched,master_key,
  	e_d_flag);
@@ -94,10 +182,9 @@ kdb_encrypt_key (in, out, master_key, master_key_sched, e_d_flag)
 /* Returns master key version if successful, otherwise -1 */
 
 long 
-kdb_verify_master_key (master_key, master_key_sched, out)
-	des_cblock *master_key;
-	struct des_ks_struct *master_key_sched;
-	FILE *out;		/* setting this to non-null be do output */
+kdb_verify_master_key (des_cblock *master_key,
+		       des_key_schedule master_key_sched,
+		       FILE *out) /* NULL -> no output */
 {
   des_cblock key_from_db;
   Principal principal_data[1];
@@ -127,23 +214,25 @@ kdb_verify_master_key (master_key, master_key_sched, out)
    * now use the master key to decrypt the key in the db, had better
    * be the same! 
    */
-  bcopy(&principal_data[0].key_low, key_from_db, 4);
-  bcopy(&principal_data[0].key_high, ((long *) key_from_db) + 1, 4);
+  copy_to_key(&principal_data[0].key_low,
+	      &principal_data[0].key_high,
+	      key_from_db);
   kdb_encrypt_key (&key_from_db, &key_from_db, 
 		   master_key, master_key_sched, DES_DECRYPT);
 
   /* the decrypted database key had better equal the master key */
-  n = bcmp((char *) master_key, (char *) key_from_db,
-	   sizeof(master_key));
+  n = memcmp(master_key, key_from_db, sizeof(master_key));
   /* this used to zero the master key here! */
-  bzero(key_from_db, sizeof(key_from_db));
-  bzero(principal_data, sizeof (principal_data));
+  memset(key_from_db, 0, sizeof(key_from_db));
+  memset(principal_data, 0, sizeof (principal_data));
 
   if (n && (out != (FILE *) NULL)) {
     fprintf(out, "\n\07\07verify_master_key: Invalid master key; ");
     fprintf(out, "does not match database.\n");
-    return (-1);
   }
+  if(n)
+    return (-1);
+
   if (out != (FILE *) NULL) {
     fprintf(out, "\nMaster key entered.  BEWARE!\07\07\n");
     fflush(out);

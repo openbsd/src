@@ -1,24 +1,25 @@
-/*	$Id: krb_lib.c,v 1.3 1997/01/17 07:11:52 millert Exp $	*/
+/* $KTH: krb_lib.c,v 1.11 1997/05/07 01:36:08 assar Exp $ */
 
-/*-
- * Copyright (C) 1989 by the Massachusetts Institute of Technology
- *
- * Export of this software from the United States of America is assumed
- * to require a specific license from the United States Government.
- * It is the responsibility of any person or organization contemplating
- * export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- */
+/* 
+  Copyright (C) 1989 by the Massachusetts Institute of Technology
+
+   Export of this software from the United States of America is assumed
+   to require a specific license from the United States Government.
+   It is the responsibility of any person or organization contemplating
+   export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of M.I.T. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+  */
 
 #include "kdb_locl.h"
 
@@ -35,7 +36,7 @@ static int init = 0;
  */
 
 int
-kerb_init()
+kerb_init(void)
 {
 #ifdef DEBUG
     if (!init) {
@@ -62,10 +63,29 @@ kerb_init()
  */
 
 void
-kerb_fini()
+kerb_fini(void)
 {
     kerb_db_fini();
 }
+
+
+int
+kerb_delete_principal(char *name, char *inst)
+{
+    int ret;
+    
+    if (!init)
+	kerb_init();
+
+    ret = kerb_db_delete_principal(name, inst);
+#ifdef CACHE
+    if(ret == 0){
+	kerb_cache_delete_principal(name, inst);
+    }
+#endif
+    return ret;
+}
+
 
 /*
  * look up a principal in the cache or data base returns number of
@@ -73,12 +93,13 @@ kerb_fini()
  */
 
 int
-kerb_get_principal(name, inst, principal, max, more)
-	char *name;		/* could have wild card */
-	char *inst;		/* could have wild card */
-	Principal *principal;
-	unsigned int max;	/* max number of name structs to return */
-	int *more;		/* more tuples than room for */
+kerb_get_principal(char *name, char *inst, Principal *principal,
+		   unsigned int max, int *more)
+                 		/* could have wild card */
+                 		/* could have wild card */
+                         
+                     		/* max number of name structs to return */
+                 		/* more tuples than room for */
 
 {
     int     found = 0;
@@ -100,7 +121,7 @@ kerb_get_principal(name, inst, principal, max, more)
      */
 
     /* clear the principal area */
-    bzero((char *) principal, max * sizeof(Principal));
+    memset(principal, 0, max * sizeof(Principal));
 
 #ifdef CACHE
     /*
@@ -108,8 +129,8 @@ kerb_get_principal(name, inst, principal, max, more)
      * preceeded by a backslash. 
      */
     wild = 0;
-    if (strchr(name, '*') || strchr(name, '?') ||
-	strchr(inst, '*') || strchr(inst, '?'))
+    if (index(name, '*') || index(name, '?') ||
+	index(inst, '*') || index(inst, '?'))
 	wild = 1;
 
     if (!wild) {
@@ -132,9 +153,9 @@ kerb_get_principal(name, inst, principal, max, more)
 
 /* principals */
 int
-kerb_put_principal(principal, n)
-	Principal *principal;
-	unsigned int n;		/* number of principal structs to write */
+kerb_put_principal(Principal *principal, unsigned int n)
+                         
+                   		/* number of principal structs to write */
 {
     struct tm *tp;
 
@@ -143,10 +164,11 @@ kerb_put_principal(principal, n)
     /* and mod date string */
 
     tp = k_localtime(&principal->mod_date);
-    (void) snprintf(principal->mod_date_txt, sizeof(principal->mod_date_txt),
-		    "%4d-%2d-%2d",
-		    tp->tm_year > 1900 ? tp->tm_year : tp->tm_year + 1900,
-		    tp->tm_mon + 1, tp->tm_mday); /* January is 0, not 1 */
+    snprintf(principal->mod_date_txt,
+	     sizeof(principal->mod_date_txt),
+	     "%4d-%2d-%2d",
+	     tp->tm_year + 1900,
+	     tp->tm_mon + 1, tp->tm_mday); /* January is 0, not 1 */
 #ifdef DEBUG
     if (kerb_debug & 1) {
 	int i;
@@ -179,12 +201,12 @@ kerb_put_principal(principal, n)
 }
 
 int
-kerb_get_dba(name, inst, dba, max, more)
-	char *name;		/* could have wild card */
-	char *inst;		/* could have wild card */
-	Dba *dba;
-	unsigned int max;	/* max number of name structs to return */
-	int *more;		/* more tuples than room for */
+kerb_get_dba(char *name, char *inst, Dba *dba, unsigned int max, int *more)
+                 		/* could have wild card */
+                 		/* could have wild card */
+                
+                     		/* max number of name structs to return */
+                 		/* more tuples than room for */
 
 {
     int     found = 0;
@@ -205,7 +227,7 @@ kerb_get_dba(name, inst, dba, max, more)
      */
 
     /* clear the dba area */
-    bzero((char *) dba, max * sizeof(Dba));
+    memset(dba, 0, max * sizeof(Dba));
 
 #ifdef CACHE
     /*
@@ -214,8 +236,8 @@ kerb_get_dba(name, inst, dba, max, more)
      */
 
     wild = 0;
-    if (strchr(name, '*') || strchr(name, '?') ||
-	strchr(inst, '*') || strchr(inst, '?'))
+    if (index(name, '*') || index(name, '?') ||
+	index(inst, '*') || index(inst, '?'))
 	wild = 1;
 
     if (!wild) {

@@ -1,24 +1,25 @@
-/*	$Id: krb_cache.c,v 1.1.1.1 1995/12/14 06:52:36 tholo Exp $	*/
+/* $KTH: krb_cache.c,v 1.6 1997/05/02 10:27:53 joda Exp $ */
 
-/*-
- * Copyright (C) 1989 by the Massachusetts Institute of Technology
- *
- * Export of this software from the United States of America is assumed
- * to require a specific license from the United States Government.
- * It is the responsibility of any person or organization contemplating
- * export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- */
+/* 
+  Copyright (C) 1989 by the Massachusetts Institute of Technology
+
+   Export of this software from the United States of America is assumed
+   to require a specific license from the United States Government.
+   It is the responsibility of any person or organization contemplating
+   export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of M.I.T. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+  */
 
 /*
  * This is where a cache would be implemented, if it were necessary.
@@ -30,14 +31,14 @@
 extern int debug;
 extern long kerb_debug;
 #endif
-static  init = 0;
+static int init = 0;
 
 /*
  * initialization routine for cache 
  */
 
 int
-kerb_cache_init()
+kerb_cache_init(void)
 {
     init = 1;
     return (0);
@@ -48,11 +49,12 @@ kerb_cache_init()
  */
 
 int
-kerb_cache_get_principal(serv, inst, principal, max)
-	char *serv;		/* could have wild card */
-	char *inst;		/* could have wild card */
-	Principal *principal;
-	unsigned int max;	/* max number of name structs to return */
+kerb_cache_get_principal(char *serv, char *inst, Principal *principal, unsigned int max)
+                 		/* could have wild card */
+                 		/* could have wild card */
+                         
+                     		/* max number of name structs to return */
+
 {
     int     found = 0;
 
@@ -84,9 +86,9 @@ kerb_cache_get_principal(serv, inst, principal, max)
  */
 
 int
-kerb_cache_put_principal(principal, max)
-	Principal *principal;
-	unsigned int max;	/* max number of principal structs to
+kerb_cache_put_principal(Principal *principal, unsigned int max)
+                         
+                     		/* max number of principal structs to
 				 * insert */
 
 {
@@ -121,11 +123,12 @@ kerb_cache_put_principal(principal, max)
  */
 
 int
-kerb_cache_get_dba(serv, inst, dba, max)
-	char *serv;		/* could have wild card */
-	char *inst;		/* could have wild card */
-	Dba *dba;
-	unsigned int max;	/* max number of name structs to return */
+kerb_cache_get_dba(char *serv, char *inst, Dba *dba, unsigned int max)
+                 		/* could have wild card */
+                 		/* could have wild card */
+                
+                     		/* max number of name structs to return */
+
 {
     int     found = 0;
 
@@ -156,9 +159,9 @@ kerb_cache_get_dba(serv, inst, dba, max)
  */
 
 int
-kerb_cache_put_dba(dba, max)
-	Dba *dba;
-	unsigned int max;	/* max number of dba structs to insert */
+kerb_cache_put_dba(Dba *dba, unsigned int max)
+                
+                     		/* max number of dba structs to insert */
 
 {
     u_long  i;

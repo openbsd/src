@@ -1,5 +1,3 @@
-/* $KTH: kdb_locl.h,v 1.9 1997/05/02 14:29:08 assar Exp $ */
-
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -38,51 +36,22 @@
  * SUCH DAMAGE.
  */
 
-#ifndef __kdb_locl_h
-#define __kdb_locl_h
+/* $Id: xdbm.h,v 1.1 1997/12/01 08:22:39 art Exp $ */
 
-#include <kerberosIV/site.h>
+/* Generic *dbm include file */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef __XDBM_H__
+#define __XDBM_H__
 
-#include <unistd.h>
-#include <errno.h>
+#include <ndbm.h>
 
-#include <sys/types.h>
+/* Macros to convert ndbm names to dbm names.
+ * Note that dbm_nextkey() cannot be simply converted using a macro, since
+ * it is invoked giving the database, and nextkey() needs the previous key.
+ *
+ * Instead, all routines call "dbm_next" instead.
+ */
 
-#include <sys/time.h>
-#include <time.h>
+#define dbm_next(db,key) dbm_nextkey(db)
 
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <utime.h>
-#include <sys/file.h>
-
-#include <kerberosIV/krb.h>
-#include <kerberosIV/krb_db.h>
-
-/* --- */
-
-/* Globals! */
-
-/* Utils */
-
-int kerb_db_set_lockmode __P((int));
-void kerb_db_fini __P((void));
-int kerb_db_init __P((void));
-int kerb_db_get_principal __P((char *name, char *, Principal *, unsigned int, int *));
-int kerb_db_get_dba __P((char *, char *, Dba *, unsigned int, int *));
-
-void delta_stat __P((DB_stat *, DB_stat *, DB_stat *));
-
-int kerb_cache_init __P((void));
-int kerb_cache_get_principal __P((char *name, char *, Principal *, unsigned int));
-int kerb_cache_put_principal __P((Principal *, unsigned int));
-int kerb_cache_get_dba __P((char *, char *, Dba *, unsigned int));
-int kerb_cache_put_dba __P((Dba *, unsigned int));
-
-void krb_print_principal __P((Principal *));
-
-#endif /*  __kdb_locl_h */
+#endif /* __XDBM_H__ */
