@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.16 1998/08/01 06:21:53 angelos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.17 1998/08/01 22:07:33 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -207,19 +207,26 @@ is fixed to 8 and 24 respectivly. For other ciphers like
 .Nm cast
 or
 .Nm blf
-the key length can be variable.
+the key length can be variable. The
+.Nm key
+should be given in hexadecimal digits.
 .It authkey
 The secret key material used for authentication
 if additional authentication in new esp mode is required. For
 old or new ah the key material for authentication is passed with the
 .Nm key
-option.
+option. The
+.Nm key
+should be given in hexadecimal digits.
 .It iv
 The initialization vector used for encryption. In old esp mode you need
 to specify it as either four or eight byte long value. In new esp mode
 the transforms can either use an eight byte iv or will derive one
 when none is specified with
 .Xr ipsecadm 1 .
+The
+.Nm iv
+should be given in hexadecimal digits.
 .It proto
 The security protocol needed by
 .Nm delspi ,
