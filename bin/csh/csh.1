@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.38 2000/10/30 17:16:44 millert Exp $
+.\"	$OpenBSD: csh.1,v 1.39 2000/11/09 23:47:16 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -728,7 +728,7 @@ Quote the substituted words, preventing further substitutions.
 .It x
 Like
 .Ql q ,
-but break into words at blanks, tabs and newlines.
+but break into words at blanks, tabs, and newlines.
 .El
 .Pp
 Unless preceded by a
@@ -1095,7 +1095,7 @@ of the main shell.
 Command substitution is shown by a command enclosed in
 .Ql ` .
 The output from such a command is normally broken into separate words
-at blanks, tabs and newlines, with null words being discarded;
+at blanks, tabs, and newlines, with null words being discarded;
 this text then replaces the original string.
 Within "'s, only newlines force new words; blanks and tabs are preserved.
 .Pp
@@ -1165,7 +1165,7 @@ Standing alone, i.e.,
 it expands to the invokers home directory as reflected
 in the value of the variable
 .Ar home .
-When followed by a name consisting of letters, digits and
+When followed by a name consisting of letters, digits, and
 .Ql \-
 characters,
 the shell searches for a user with that name and substitutes their
@@ -1222,13 +1222,13 @@ with the following syntax:
 .It < name
 Open file
 .Ar name
-(which is first variable, command and filename expanded) as the standard
+(which is first variable, command, and filename expanded) as the standard
 input.
 .It << word
 Read the shell input up to a line that is identical to
 .Ar word .
 .Ar word
-is not subjected to variable, filename or command substitution,
+is not subjected to variable, command, or filename substitution,
 and each input line is compared to
 .Ar word
 before any substitutions are done on the input line.
