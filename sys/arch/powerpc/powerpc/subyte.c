@@ -1,4 +1,4 @@
-/*	$OpenBSD: subyte.c,v 1.3 2001/07/01 04:34:24 drahn Exp $	*/
+/*	$OpenBSD: subyte.c,v 1.4 2001/07/09 01:14:01 mickey Exp $	*/
 /*	$NetBSD: subyte.c,v 1.1 1996/09/30 16:34:54 ws Exp $	*/
 
 /*-
@@ -40,8 +40,8 @@
  */
 int
 subyte(addr,c)
-void *addr;
-unsigned char c;
+	void *addr;
+	unsigned char c;
 {
 	if (copyout(&c,addr,sizeof(c)))
 		return -1;
