@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.9 2003/06/03 02:56:16 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.10 2004/03/15 13:35:36 sturm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.9 2003/06/03 02:56:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.10 2004/03/15 13:35:36 sturm Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,13 +161,27 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 					mfct++;
 					/* reduce number of open files */
 					if (mfct == 16 ||(c == EOF && ntfiles)) {
-						tmpbuf = malloc(bufend -
-						    crec->data);
-						if (tmpbuf == NULL)
-							errx(2, "cannot "
-							    "allocate memory");
-						memmove(tmpbuf, crec->data,
-						    bufend - crec->data);
+						/*
+						 * Only copy extra incomplete
+						 * crec data if there is any.
+						 */
+						int nodata = (bufend
+						    >= (u_char *)crec
+						    && bufend <= crec->data);
+						size_t sz = 0;
+
+						if (!nodata) {
+							sz = bufend
+							    - crec->data;
+							tmpbuf = malloc(sz);
+							if (tmpbuf == NULL)
+								errx(2, "cannot"
+								    " allocate"
+								    " memory");
+							memmove(tmpbuf,
+							    crec->data, sz);
+						}
+
 						fstack[tfiles.top + ntfiles].fp
 						    = ftmp();
 						fmerge(0, mstart, mfct, geteasy,
@@ -175,9 +189,12 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 						  putrec, ftbl);
 						ntfiles++;
 						mfct = 0;
-						memmove(crec->data, tmpbuf,
-						    bufend - crec->data);
-						free(tmpbuf);
+
+						if (!nodata) {
+							memmove(crec->data,
+							    tmpbuf, sz);
+							free(tmpbuf);
+						}
 					}
 				} else {
 					fstack[tfiles.top + ntfiles].fp= ftmp();
