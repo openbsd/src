@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.25 2003/03/18 08:44:09 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.26 2003/03/20 01:29:17 david Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -283,8 +283,8 @@ removing the file
 .Pp
 Now consider a workgroup containing alice, bob, carol and dave.
 They have a
-wireless network which they would like to protect from unauthorized use. To
-accomplish this, they create the file
+wireless network which they would like to protect from unauthorized use.
+To accomplish this, they create the file
 .Pa /etc/authpf/authpf.allow
 which lists their login ids, one per line.
 At this point, even if eve could authenticate to
@@ -312,20 +312,20 @@ To make that happen,
 should have entries that look something like this:
 .Bd -literal
 shell-default:shell=/bin/csh
-.Pp
+
 default:\e
-            ...
-	    :shell=/usr/sbin/authpf
-.Pp
+	...
+	:shell=/usr/sbin/authpf
+
 daemon:\e
-	    ...
-	    :shell=/bin/csh:\e
-	    :tc=default:
-.Pp
+	...
+	:shell=/bin/csh:\e
+	:tc=default:
+
 staff:\e
-	    ...
-	    :shell=/bin/csh:\e
-	    :tc=default:
+	...
+	:shell=/bin/csh:\e
+	:tc=default:
 .Ed
 .Pp
 Using a default password file, all users will get
@@ -403,10 +403,10 @@ Example
 .Pa /etc/authpf/authpf.rules :
 .Bd -literal
 # no real restrictions here, basically turn the network jack off or on.
-.Pp
+
 external_if = \&"xl0\&"
 internal_if = \&"fxp0\&"
-.Pp
+
 pass in log quick on $internal_if proto tcp from $user_ip to any \e
       keep state
 pass in quick on $internal_if from $user_ip to any
@@ -419,11 +419,11 @@ we might need to be a bit more restrictive.
 .Bd -literal
 internal_if=\&"fxp1\&"
 ipsec_gw=\&"10.2.3.4\&"
-.Pp
+
 # rdr ftp for proxying by ftp-proxy(8)
 rdr on $internal_if proto tcp from $user_ip to any port 21 \e
       -> 127.0.0.1 port 8081
-.Pp
+
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
 pass in log quick on $internal_if proto tcp from $user_ip to any \e
