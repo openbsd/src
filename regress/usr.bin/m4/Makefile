@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2004/05/12 21:24:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.19 2004/11/07 10:25:59 espie Exp $
 
 FIBOMAX=25
 M4=m4
@@ -8,7 +8,7 @@ CLEANFILES+= ff_after_dnl.m4 strangequotes.m4 fibo.out
 
 REGRESS_TARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 test-fibo \
     test-patterns trip test-strangequotes test-redef test-quotes \
-    test-weird test-args test-esyscmd test-eval
+    test-weird test-args test-esyscmd test-eval test-gnupatterns
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -24,6 +24,9 @@ test-m4wrap2:
 
 test-patterns:
 	${M4} ${.CURDIR}/patterns.m4 | diff - ${.CURDIR}/patterns.out
+
+test-gnupatterns:
+	${M4} -g ${.CURDIR}/gnupatterns.m4 | diff - ${.CURDIR}/gnupatterns.out
 
 fibo.out:
 	perl ${.CURDIR}/fibo.pl ${FIBOMAX} >$@
