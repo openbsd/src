@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.11 2001/03/12 05:51:18 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.12 2001/03/14 15:17:31 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -571,6 +571,16 @@ void sis_reset(sc)
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
+
+	/*
+	 * If this is a NetSemi chip, make sure to clear
+	 * PME mode.
+	 */
+	if (sc->sis_type == SIS_TYPE_83815) {
+		CSR_WRITE_4(sc, NS_CLKRUN, NS_CLKRUN_PMESTS);
+		CSR_WRITE_4(sc, NS_CLKRUN, 0);
+	}
+
         return;
 }
 
