@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.16 2003/10/13 13:57:51 ho Exp $	*/
+/*	$OpenBSD: log.h,v 1.17 2004/01/16 10:51:57 hshoexer Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <stdio.h>
+
+extern int verbose_logging;
 
 /*
  * We cannot do the log strings dynamically sizeable as out of memory is one
@@ -90,6 +92,8 @@ extern void log_error (const char *, ...)
 extern void log_fatal (const char *, ...)
      __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void log_print (const char *, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void log_verbose (const char *, ...)
      __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void log_to (FILE *);
 extern void log_init (void);

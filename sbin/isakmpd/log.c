@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.37 2003/12/14 14:50:23 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.38 2004/01/16 10:51:57 hshoexer Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ static void _log_print (int, int, const char *, va_list, int, int);
 
 static FILE *log_output;
 
+int verbose_logging = 0;
 #if defined (USE_DEBUG)
 static int log_level[LOG_ENDCLASS];
 
@@ -299,6 +300,28 @@ void
 log_print (const char *fmt, ...)
 {
   va_list ap;
+
+  va_start (ap, fmt);
+  _log_print (0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
+  va_end (ap);
+}
+
+void
+log_verbose (const char *fmt, ...)
+{
+  va_list ap;
+#ifdef USE_DEBUG
+  int i;
+#endif /* USE_DEBUG */
+
+  if (verbose_logging == 0)
+    return;
+
+#ifdef USE_DEBUG
+  for (i = 0; i < LOG_ENDCLASS; i++)
+    if (log_level[i] > 0)
+      return;
+#endif
 
   va_start (ap, fmt);
   _log_print (0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);

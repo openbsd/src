@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.88 2003/11/06 16:12:07 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.89 2004/01/16 10:51:57 hshoexer Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1520,6 +1520,11 @@ exchange_finalize (struct message *msg)
 		? "<no transport>"
 		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa
 							       ->transport)));
+      log_verbose ("isakmpd: phase 1 done: %s",
+	           !msg->isakmp_sa || !msg->isakmp_sa->transport
+		   ? "<no transport>"
+		   : msg->isakmp_sa->transport->vtbl->decode_ids
+		   (msg->isakmp_sa ->transport));
     }
 
   exchange->doi->finalize_exchange (msg);

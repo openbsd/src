@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.70 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.71 2004/01/16 10:51:57 hshoexer Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -1429,6 +1429,12 @@ post_quick_mode (struct message *msg)
 	    }
 	}
     }
+
+  log_verbose ("isakmpd: quick mode done: %s",
+	           !msg->isakmp_sa || !msg->isakmp_sa->transport
+		   ? "<no transport>"
+		   : msg->isakmp_sa->transport->vtbl->decode_ids
+		   (msg->isakmp_sa ->transport));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.53 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.54 2004/01/16 10:51:57 hshoexer Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ usage (void)
 	   "usage: %s [-4] [-6] [-c config-file] [-d] [-D class=level]\n"
 	   "          [-f fifo] [-i pid-file] [-n] [-p listen-port]\n"
 	   "          [-P local-port] [-L] [-l packetlog-file] [-r seed]\n"
-	   "          [-R report-file]\n",
+	   "          [-R report-file] [-v]\n",
 	   sysdep_progname ());
   exit (1);
 }
@@ -129,7 +129,7 @@ parse_args (int argc, char *argv[])
   int do_packetlog = 0;
 #endif
 
-  while ((ch = getopt (argc, argv, "46c:dD:f:i:np:P:Ll:r:R:")) != -1) {
+  while ((ch = getopt (argc, argv, "46c:dD:f:i:np:P:Ll:r:R:v")) != -1) {
     switch (ch) {
     case '4':
       bind_family |= BIND_FAMILY_INET4;
@@ -204,6 +204,10 @@ parse_args (int argc, char *argv[])
 
     case 'R':
       report_file = optarg;
+      break;
+
+    case 'v':
+      verbose_logging = 1;
       break;
 
     case '?':
