@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.20 2003/12/23 20:10:45 brad Exp $
+.\" $OpenBSD: pthreads.3,v 1.21 2004/01/02 09:28:36 jmc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -39,6 +39,7 @@ If the environment variable
 is defined additional information is displayed.
 .Ss Thread states
 Threads can be in one of these states:
+.Pp
 .Bl -tag -offset indent -width Dv -compact
 .It cond_wait
 Executing
@@ -108,6 +109,7 @@ or similar.
 .El
 .Ss Thread flags
 The first three flags are one of:
+.Pp
 .Bl -tag -offset indent -width 3en -compact
 .It "p"
 Private, system thread (e.g., the garbage collector).
@@ -118,7 +120,9 @@ or is at a cancellation point (c).
 .It "t"
 Thread is being traced.
 .El
+.Pp
 The next 7 flags refer to thread attributes:
+.Pp
 .Bl -tag -offset indent -width 3en -compact
 .It "C"
 Thread is in the
@@ -143,6 +147,7 @@ Thread will save floating point context.
 .Ss Scheduling algorithm
 The scheduling algorithm used by the user-level thread library is
 roughly as follows:
+.Pp
 .Bl -enum -compact
 .It
 Threads each have a time slice credit which is debited
@@ -178,8 +183,94 @@ signal, you should make use of
 .Xr sigaltstack 2
 or
 .Xr sigprocmask 2 .
+.Ss Thread safety
+The following functions are not thread safe:
+.Bd -filled
+asctime(),
+basename(),
+catgets(),
+crypt(),
+ctime(),
+dbm_clearerr(),
+dbm_close(),
+dbm_delete(),
+dbm_error(),
+dbm_fetch(),
+dbm_firstkey(),
+dbm_nextkey(),
+dbm_open(),
+dbm_store(),
+dirname(),
+dlerror(),
+drand48(),
+ecvt(),
+encrypt(),
+endgrent(),
+endpwent(),
+fcvt(),
+ftw(),
+gcvt(),
+getc_unlocked(),
+getchar_unlocked(),
+getenv(),
+getgrent(),
+getgrgid(),
+getgrnam(),
+gethostbyaddr(),
+gethostbyname(),
+gethostent(),
+getlogin(),
+getnetbyaddr(),
+getnetbyname(),
+getnetent(),
+getopt(),
+getprotobyname(),
+getprotobynumber(),
+getprotoent(),
+getpwent(),
+getpwnam(),
+getpwuid(),
+getservbyname(),
+getservbyport(),
+getservent(),
+gmtime(),
+hcreate(),
+hdestroy(),
+hsearch(),
+inet_ntoa(),
+l64a(),
+lgamma(),
+lgammaf(),
+localeconv(),
+localtime(),
+lrand48(),
+mrand48(),
+nftw(),
+nl_langinfo(),
+putc_unlocked(),
+putchar_unlocked(),
+putenv(),
+rand(),
+readdir(),
+setenv(),
+setgrent(),
+setkey(),
+setpwent(),
+strerror(),
+strtok(),
+ttyname(),
+unsetenv(),
+.Ed
+.Pp
+The
+.Fn ctermid
+and
+.Fn tmpnam
+functions are not thread safe when passed a
+.Dv NULL
+argument.
 .Sh ENVIRONMENT
-.Bl -tag -width "PTHREAD_DEBUG"
+.Bl -tag -width "LIBPTHREAD_DEBUG"
 .It Ev PTHREAD_DEBUG
 Enables verbose
 .Dv SIGINFO
