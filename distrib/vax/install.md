@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2001/12/23 01:51:52 krw Exp $
+#	$OpenBSD: install.md,v 1.4 2002/02/14 20:53:12 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,7 +42,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kernel"
+MDSETS=kernel
 ARCH=ARCH
 
 md_set_term() {
@@ -57,19 +57,19 @@ md_get_msgbuf() {
 	# Only want to see one boot's worth of info
 	dmesg > /tmp/msgbuf
 	sed -n -f /dev/stdin /tmp/msgbuf <<- OOF
-                /^OpenBSD /h
-                /^OpenBSD /!H
-                \${
-                        g
-                        p
-                }
+		/^OpenBSD /h
+		/^OpenBSD /!H
+		\${
+			g
+			p
+		}
 	OOF
 }
 
 md_get_diskdevs() {
 	# return available disk devices
 	md_get_msgbuf | sed -n 	-e '/^sd[0-9] /{s/ .*//;p;}' \
-				-e '/^x[ra][0-9] /{s/ .*//;p;}' 
+	    -e '/^x[ra][0-9] /{s/ .*//;p;}'
 }
 
 md_get_cddevs() {
@@ -87,8 +87,9 @@ md_questions() {
 }
 
 md_installboot() {
-        echo "Installing boot block..."
-        /sbin/disklabel -B $1
+	echo "Installing boot block..."
+	cp /usr/mdec/boot /boot
+	/sbin/disklabel -B $1
 }
 
 md_native_fstype() {
@@ -157,28 +158,27 @@ __EOT
 
 	else
 		cat << __EOT
-Welcome to the OpenBSD/vax ${VERSION} upgrade program.
+Welcome to the OpenBSD/vax ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
-This program is designed to help you upgrade your OpenBSD system in a
-simple and rational way.
-
-As a reminder, installing the 'etc' binary set is NOT recommended.
-Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the 'etc' set into those files which
+This program is designed to help you upgrade your OpenBSD system in a simple
+and rational way.  As a reminder, installing the 'etc' binary set is NOT
+recommended.  Once the rest of your system has been upgraded, you should
+manually merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 __EOT
 	fi
 
 cat << __EOT
 
-As with anything which modifies your disk's contents, this program can
-cause SIGNIFICANT data loss, and you are advised to make sure your
-data is backed up before beginning the installation process.
+As with anything which modifies your disk's contents, this program can cause
+SIGNIFICANT data loss, and you are advised to make sure your data is backed
+up before beginning the installation process.
 
-Default answers are displayed in brackets after the questions.  You
-can hit Control-C at any time to quit, but if you do so at a prompt,
-you may have to hit return.  Also, quitting in the middle of
-installation may leave your system in an inconsistent state.
+Default answers are displayed in brackets after the questions.  You can hit
+Control-C at any time to quit, but if you do so at a prompt, you may have
+to hit return.  Also, quitting in the middle of installation may leave your
+system in an inconsistent state.  If you hit Control-C and restart the
+install, the install program will remember many of your old answers.
 
 __EOT
 } | more
@@ -187,8 +187,8 @@ __EOT
 md_not_going_to_install() {
 	cat << __EOT
 
-OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
-machine has halted, power-cycle the system to load new boot code.
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the machine
+has halted, power-cycle the system to load new boot code.
 
 __EOT
 }
@@ -202,9 +202,9 @@ md_congrats() {
 	fi
 	cat << __EOT
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!
-To boot the installed system, enter halt at the command prompt. Once the
-system has halted, reset the machine and boot from the disk.
+CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the
+installed system, enter halt at the command prompt. Once the system has
+halted, reset the machine and boot from the disk.
 
 __EOT
 }
