@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.32 2004/01/08 06:51:44 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.33 2004/02/10 14:47:22 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -762,6 +762,7 @@ again:;
 
 	if (repeat) {
 		printf("\n");
+		fflush(stdout);
 		sleep(repeat);
 		goto again;
 	}
