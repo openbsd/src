@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1997/05/02 10:01:54 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.13 1997/05/04 01:11:52 niklas Exp $
 
-MAN=		binutils/ar.1 binutils/nlmconv.1 binutils/nm.1 \
+MAN=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
 		binutils/size.1 binutils/strings.1 binutils/strip.1 \
 		gas/doc/as.1 gdb/gdb.1 gprof/gprof.1 ld/ld.1
