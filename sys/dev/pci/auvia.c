@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.15 2002/03/14 01:26:58 millert Exp $ */
+/*	$OpenBSD: auvia.c,v 1.16 2002/05/08 18:33:53 mickey Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -201,10 +201,15 @@ auvia_match(struct device *parent, void *match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_VIATECH)
 		return 0;
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT82C686A_AC97)
-		return 0;
 
-	return 1;
+	switch(PCI_PRODUCT(pa->pa_id)) { 
+	case PCI_PRODUCT_VIATECH_VT82C686A_AC97:
+		return 1;
+	case PCI_PRODUCT_VIATECH_VT8233_AC97:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 
