@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.49 2000/01/04 00:08:00 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.50 2000/01/05 08:32:42 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -29,6 +29,7 @@ RCSID("$Id: sshconnect.c,v 1.49 2000/01/04 00:08:00 markus Exp $");
 unsigned char session_id[16];
 
 extern Options options;
+extern char *__progname;
 
 /*
  * Connect to the given ssh server using a proxy command.
@@ -208,7 +209,8 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	hints.ai_socktype = SOCK_STREAM;
 	snprintf(strport, sizeof strport, "%d", port);
 	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0)
-		fatal("Bad host name: %.100s (%s)", host, gai_strerror(gaierr));
+		fatal("%s: %.100s: %s", __progname, host,
+		    gai_strerror(gaierr));
 
 	/*
 	 * Try to connect several times.  On some machines, the first time
