@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 1999/12/06 23:16:56 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 1999/12/09 18:20:06 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -60,6 +60,8 @@ void Compat_Run __P((Lst));
 int Cond_Eval __P((char *));
 void Cond_End __P((void));
 
+#include "error.h"
+
 /* for.c */
 int For_Eval __P((char *));
 void For_Run  __P((void));
@@ -73,14 +75,6 @@ void Punt __P((char *, ...));
 void DieHorribly __P((void));
 int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
-char *estrdup __P((const char *));
-void *emalloc __P((size_t));
-/* efree(x) works when x==NULL. STDC behavior, may need some different
- * definition for cross-builds on deficient systems */
-#define efree	free
-void *erealloc __P((void *, size_t));
-void enomem __P((void));
-int eunlink __P((const char *));
 
 /* make.c */
 int Make_TimeStamp __P((GNode *, GNode *));

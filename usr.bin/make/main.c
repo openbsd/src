@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 1999/12/09 18:20:06 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 1999/12/09 18:20:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1192,81 +1192,6 @@ Finish(errors)
 	int errors;	/* number of errors encountered in Make_Make */
 {
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
-}
-
-/*
- * emalloc --
- *	malloc, but die on error.
- */
-void *
-emalloc(len)
-	size_t len;
-{
-	void *p;
-
-	if ((p = malloc(len)) == NULL)
-		enomem();
-	return(p);
-}
-
-/*
- * estrdup --
- *	strdup, but die on error.
- */
-char *
-estrdup(str)
-	const char *str;
-{
-	char *p;
-
-	if ((p = strdup(str)) == NULL)
-		enomem();
-	return(p);
-}
-
-/*
- * erealloc --
- *	realloc, but die on error.
- */
-void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
-{
-	if ((ptr = realloc(ptr, size)) == NULL)
-		enomem();
-	return(ptr);
-}
-
-/*
- * enomem --
- *	die when out of memory.
- */
-void
-enomem()
-{
-	(void)fprintf(stderr, "make: %s.\n", strerror(errno));
-	exit(2);
-}
-
-/*
- * enunlink --
- *	Remove a file carefully, avoiding directories.
- */
-int
-eunlink(file)
-	const char *file;
-{
-	struct stat st;
-
-	if (lstat(file, &st) == -1)
-		return -1;
-
-	if (S_ISDIR(st.st_mode)) {
-		errno = EISDIR;
-		return -1;
-	}
-	return unlink(file);
 }
 
 /*
