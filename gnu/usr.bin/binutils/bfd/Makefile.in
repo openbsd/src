@@ -1079,10 +1079,10 @@ $(OPTIONAL_BACKENDS): $(BFD_H) $(BFD_H_DEPS) $(LOCAL_H_DEPS)
 # Install BFD include file, and others that it needs.
 install-data-local: $(BFD_H)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(includedir)
-	$(INSTALL_DATA) $(BFD_H) $(DESTDIR)$(includedir)/bfd.h
-	$(INSTALL_DATA) $(INCDIR)/ansidecl.h $(DESTDIR)$(includedir)/ansidecl.h
-	$(INSTALL_DATA) $(INCDIR)/bfdlink.h $(DESTDIR)$(includedir)/bfdlink.h
+#	$(mkinstalldirs) $(DESTDIR)$(includedir)
+#	$(INSTALL_DATA) $(BFD_H) $(DESTDIR)$(includedir)/bfd.h
+#	$(INSTALL_DATA) $(INCDIR)/ansidecl.h $(DESTDIR)$(includedir)/ansidecl.h
+#	$(INSTALL_DATA) $(INCDIR)/bfdlink.h $(DESTDIR)$(includedir)/bfdlink.h
 
 # Have to get rid of DEP1 here so that "$?" later includes all of $(CFILES).
 DEP: dep.sed $(CFILES) $(HFILES) bfd.h

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.46 2002/05/08 16:48:11 art Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.47 2002/05/08 19:39:24 espie Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa sparc64
 
@@ -86,6 +86,19 @@ install: maninstall
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+
+prereq: config.status
+	cd ${.OBJDIR}/bfd && ${MAKE} bfd.h
+	# we don't install ansidecl.h, we merge it into the file that
+	# needs it instead.
+	sed -e '/^#include "ansidecl.h"/r${.CURDIR}/include/ansidecl.h' -e '//d' \
+		bfd/bfd.h >bfd/mybfd.h
+
+includes:
+	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		${.CURDIR}/include/bfdlink.h ${DESTDIR}/usr/include
+	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		bfd/mybfd.h ${DESTDIR}/usr/include/bfd.h
 
 depend:
 	# Nothing here so far...
