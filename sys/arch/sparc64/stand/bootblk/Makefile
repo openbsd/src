@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2001/08/22 10:53:28 art Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/09/06 18:36:41 jason Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -19,6 +19,9 @@ OS!=uname -s
 .if (${OS} == "NetBSD")
 USE_GENASSYM?=	no
 SVR4=
+.elif (${OS} == "OpenBSD")
+USE_GENASSYM?=	no
+SVR4=-U__NetBSD__ -D__OpenBSD__
 .else
 USE_GENASSYM?=	yes
 SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
@@ -45,7 +48,7 @@ assym.fth.h: ${.CURDIR}/genassym.sh genfth.cf machine
 
 bootblk.text: bootblk.fth assym.fth.h
 	awk '/fload/ { print "#include \"" $$2 "\"" }; !/fload/' \
-	    ${.CURDIR}/bootblk.fth | /usr/bin/cpp -P >bootblk.text.tmp &&
+	    ${.CURDIR}/bootblk.fth | /usr/bin/cpp -traditional -P >bootblk.text.tmp && \
 	    mv -f bootblk.text.tmp bootblk.text
 
 bootblk: bootblk.fth assym.fth.h
