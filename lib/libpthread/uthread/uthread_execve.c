@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_execve.c,v 1.6 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_execve.c,v 1.7 2003/10/22 00:24:14 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -69,6 +69,10 @@ execve(const char *name, char *const * argv, char *const * envp)
 		/* Check if this file descriptor is in use: */
 		if (_thread_fd_table[i] != NULL &&
 			!(_thread_fd_table[i]->flags & O_NONBLOCK)) {
+			/* Skip if the close-on-exec flag is set */
+			flags = _thread_sys_fcntl(i, F_GETFD, NULL);
+			if ((flags & FD_CLOEXEC) != 0)
+				continue;	/* don't bother, no point */
 			/* Get the current flags: */
 			flags = _thread_sys_fcntl(i, F_GETFL, NULL);
 			/* Clear the nonblocking file descriptor flag: */
