@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.22 2003/09/29 09:08:17 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.23 2003/10/13 13:17:21 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -53,7 +53,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#define LEDEBUG 1
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 

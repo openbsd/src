@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.21 2003/10/05 20:27:47 miod Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.22 2003/10/13 13:17:23 miod Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -72,9 +72,6 @@
 #include <mvme88k/dev/if_vevar.h>
 #include <mvme88k/dev/pcctworeg.h>
 #include <mvme88k/dev/vme.h>
-
-#define LEDEBUG 1
-
 
 #ifdef LEDEBUG
 void ve_recv_print(struct vam7990_softc *, int);
