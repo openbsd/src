@@ -450,6 +450,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/ieeefp.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/joystick.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/amiga/kcore.ph

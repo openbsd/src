@@ -1674,6 +1674,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/idprom.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/ieeefp.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/kbd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/kbio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/kcore.ph

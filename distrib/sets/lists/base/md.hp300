@@ -1184,6 +1184,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/hpux_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/ieeefp.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/hp300/limits.ph

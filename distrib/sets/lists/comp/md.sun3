@@ -66,6 +66,7 @@
 ./usr/include/sun3/idprom.h
 ./usr/include/sun3/ieee.h
 ./usr/include/sun3/ieeefp.h
+./usr/include/sun3/internal_types.h
 ./usr/include/sun3/kbd.h
 ./usr/include/sun3/kbio.h
 ./usr/include/sun3/kcore.h

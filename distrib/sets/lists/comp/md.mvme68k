@@ -55,6 +55,7 @@
 ./usr/include/mvme68k/hpux_machdep.h
 ./usr/include/mvme68k/ieee.h
 ./usr/include/mvme68k/ieeefp.h
+./usr/include/mvme68k/internal_types.h
 ./usr/include/mvme68k/intr.h
 ./usr/include/mvme68k/kcore.h
 ./usr/include/mvme68k/limits.h

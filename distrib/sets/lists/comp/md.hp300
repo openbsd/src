@@ -19,6 +19,7 @@
 ./usr/include/hp300/hpux_machdep.h
 ./usr/include/hp300/ieee.h
 ./usr/include/hp300/ieeefp.h
+./usr/include/hp300/internal_types.h
 ./usr/include/hp300/intr.h
 ./usr/include/hp300/kcore.h
 ./usr/include/hp300/limits.h

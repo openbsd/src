@@ -30,6 +30,7 @@
 ./usr/include/macppc/frame.h
 ./usr/include/macppc/ieee.h
 ./usr/include/macppc/ieeefp.h
+./usr/include/macppc/internal_types.h
 ./usr/include/macppc/intr.h
 ./usr/include/macppc/ipkdb.h
 ./usr/include/macppc/kbio.h

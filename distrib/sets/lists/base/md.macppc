@@ -1255,6 +1255,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/frame.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ieeefp.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/intr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ipkdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/kbio.ph
