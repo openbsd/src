@@ -106,7 +106,7 @@ strayintr(fp)
 
 static struct intrhand level10 = { clockintr };
 static struct intrhand level14 = { statintr };
-
+union sir sir;
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
  * Three possible reasons:

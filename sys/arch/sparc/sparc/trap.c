@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 1999/08/17 16:09:21 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2000/01/27 20:14:11 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -205,6 +205,7 @@ void syscall __P((register_t, struct trapframe *, register_t));
 
 int ignore_bogus_traps = 0;
 
+int want_ast = 0;
 /*
  * Define the code needed before returning to user mode, for
  * trap, mem_access_fault, and syscall.
