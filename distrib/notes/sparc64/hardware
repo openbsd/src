@@ -1,48 +1,46 @@
-dnl	$OpenBSD: hardware,v 1.93 2005/03/25 06:48:13 brad Exp $
+dnl	$OpenBSD: hardware,v 1.94 2005/03/25 19:32:31 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
-	- SBUS-based workstations:
-		Ultra 1
-		Ultra 1E (Creator)
-		Ultra 2
-	- PCI-based workstations/servers:
-		Sun Blade 100/150
-		Sun Fire V100
-		Sun Fire V120
-		Enterprise 150
-		Enterprise 220R
-		Enterprise 250
-		Enterprise 420R
-		Enterprise 450
-		Enterprise 4500/5500
-		Netra T1 100/105
-		Netra T1 AC200/DC200
-		Netra T 1100
-		Netra T 1120/1125
-		Netra T 1400/1405
-		Netra X1
-		Ultra 5
-		Ultra 10
-		Ultra 30
-		Ultra 60
-		Ultra 80
+	Sun Blade 100/150
+	Sun Fire V100
+	Sun Fire V120
+	Enterprise 150
+	Enterprise 220R
+	Enterprise 250
+	Enterprise 420R
+	Enterprise 450
+	Enterprise 4500/5500
+	Netra T1 100/105
+	Netra T1 AC200/DC200
+	Netra T 1100
+	Netra T 1120/1125
+	Netra T 1400/1405
+	Netra X1
+	Ultra 1
+	Ultra 1E (Creator)
+	Ultra 2
+	Ultra 5
+	Ultra 10
+	Ultra 30
+	Ultra 60
+	Ultra 80
 dnl XXX uncomment machine entries as they become supported
-dnl		Enterprise 3000
-dnl		Sun Blade 1000
-dnl		Sun Blade 2000
-dnl		Netra 20
-dnl		Netra 20
-dnl		Netra 120
-dnl		Sun Fire V210
-dnl		Sun Fire V240
-dnl		Sun Fire 280R
-dnl		Sun Fire V480
-		SPARCengineUltra AX
-		SPARCengineUltra AXe
-		SPARCengineUltra AXi
-	- CompactPCI boards:
-		SPARCengine CP1500
-	- faithful clones of the above Sun systems, including:
-		Momentum Leopard-V
+dnl	Enterprise 3000
+dnl	Sun Blade 1000
+dnl	Sun Blade 2000
+dnl	Netra 20
+dnl	Netra 20
+dnl	Netra 120
+dnl	Netra 150
+dnl	Sun Fire V210
+dnl	Sun Fire V240
+dnl	Sun Fire 280R
+dnl	Sun Fire V480
+	SPARCengineUltra AX
+	SPARCengineUltra AXe
+	SPARCengineUltra AXi
+	SPARCengine CP1500
+as well on faithful clones of the above Sun systems, including:
+	Momentum Leopard-V
 
 If your machine is not listed above, it is very likely that OpenBSD/MACHINE
 does not work on it (yet).
