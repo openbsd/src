@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.16 2001/06/22 22:51:22 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.17 2001/06/25 04:35:31 art Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.16 2001/06/22 22:51:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.17 2001/06/25 04:35:31 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -331,7 +331,7 @@ copy(argv, type, fts_options)
 			 * Since the first level MUST be FTS_ROOTLEVEL, base
 			 * is always initialized.
 			 */
-			if (curr->fts_level == FTS_ROOTLEVEL)
+			if (curr->fts_level == FTS_ROOTLEVEL) {
 				if (type != DIR_TO_DNE) {
 					p = find_last_component(curr->fts_path);
 					base = p - curr->fts_path;
@@ -341,6 +341,7 @@ copy(argv, type, fts_options)
 						base += 1;
 				} else
 					base = curr->fts_pathlen;
+			}
 
 			p = &curr->fts_path[base];
 			nlen = curr->fts_pathlen - base;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.15 2001/05/11 14:01:50 art Exp $	*/
+/*	$OpenBSD: utils.c,v 1.16 2001/06/25 04:35:31 art Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.15 2001/05/11 14:01:50 art Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.16 2001/06/25 04:35:31 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ copy_file(entp, dne)
 	 */
 #define	RETAINBITS \
 	(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-	else if (fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid)
+	else if (fs->st_mode & (S_ISUID | S_ISGID) && fs->st_uid == myuid) {
 		if (fstat(to_fd, &to_stat)) {
 			warn("%s", to.p_path);
 			rval = 1;
@@ -178,6 +178,7 @@ copy_file(entp, dne)
 			warn("%s", to.p_path);
 			rval = 1;
 		}
+	}
 	(void)close(from_fd);
 	if (close(to_fd)) {
 		warn("%s", to.p_path);
