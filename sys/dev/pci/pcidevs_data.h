@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.185 1999/09/29 12:17:23 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.186 1999/09/30 03:34:39 pjanzen Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1255,12 +1255,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Y above 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_3,
-	    0,
-	    "Cyclades",
-	    "Cyclom-8YoP",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_1,
