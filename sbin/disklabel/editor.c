@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.92 2003/12/20 09:29:27 jmc Exp $	*/
+/*	$OpenBSD: editor.c,v 1.93 2003/12/29 19:51:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.92 2003/12/20 09:29:27 jmc Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.93 2003/12/29 19:51:34 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1035,7 +1035,7 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 	u_int32_t rval = oval;
 	size_t n;
 	int mult = 1;
-	double d;
+	double d, percent = 1.0;
 
 	/* We only care about the remainder */
 	offset = offset % lp->d_secpercyl;
@@ -1086,6 +1086,18 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 					mult = 1073741824 / lp->d_secsize;
 					buf[--n] = '\0';
 					break;
+				case '%':
+					buf[--n] = '\0';
+					percent = strtod(buf, NULL) / 100.0;
+					snprintf(buf, sizeof(buf), "%d",
+					    lp->d_secperunit);
+					break;
+				case '&':
+					buf[--n] = '\0';
+					percent = strtod(buf, NULL) / 100.0;
+					snprintf(buf, sizeof(buf), "%d",
+					    maxval);
+					break;
 				}
 			}
 
@@ -1105,10 +1117,10 @@ getuint(struct disklabel *lp, int partno, char *prompt, char *helpstring,
 			} else {
 				/* XXX - should check for overflow */
 				if (mult > 0)
-					rval = d * mult;
+					rval = d * mult * percent;
 				else
 					/* Negative mult means divide (fancy) */
-					rval = d / (-mult);
+					rval = d / (-mult) * percent;
 
 				/* Apply the operator */
 				if (operator == '+')
@@ -1877,6 +1889,7 @@ editor_help(char *arg)
 "Numeric parameters may use suffixes to indicate units:\n\t"
 "'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t"
 "'g' for gigabytes or no suffix for sectors (usually 512 bytes).\n\t"
+"'%' for percent of total disk size, '&' for percent of free space.\n\t"
 "Non-sector units will be rounded to the nearest cylinder.\n"
 "Entering '?' at most prompts will give you (simple) context sensitive help.");
 		break;

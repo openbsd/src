@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.55 2003/12/20 09:29:27 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.56 2003/12/29 19:51:34 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -168,6 +168,11 @@ Print partition sizes and offsets in
 .Ar unit
 instead of sectors.
 Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes) and g(igabytes).
+For operations other than displaying a partition the
+.Ql %
+(percent of total) and
+.Ql &
+(percent of free) units are also accepted.
 .It Fl R
 Restore a disk label that was formatted in a prior operation and
 saved in an
