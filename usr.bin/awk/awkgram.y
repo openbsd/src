@@ -41,7 +41,7 @@ Node	*arglist = 0;	/* list of args for current function */
 %union {
 	Node	*p;
 	Cell	*cp;
-	int	i;
+	long	i;
 	char	*s;
 }
 
