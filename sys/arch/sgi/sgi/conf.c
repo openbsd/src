@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2004/08/10 18:47:22 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 2004/08/11 15:13:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,9 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.2 2004/08/10 18:47:22 deraadt Exp $
  */
 
 #include <sys/param.h>

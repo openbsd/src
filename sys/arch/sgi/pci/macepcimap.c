@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcimap.c,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: macepcimap.c,v 1.2 2004/08/11 15:13:35 deraadt Exp $ */
 /*	$NetBSD: pci_mace.c,v 1.2 2004/01/19 10:28:28 sekiya Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ pciaddr_remap(pci_chipset_tag_t pc)
 
 		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
 		    (qd != NULL &&
-		     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+		    (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
 			nfuncs = 8;
 		else
 			nfuncs = 1;

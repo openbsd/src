@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.3 2004/08/11 15:13:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,26 +58,22 @@ com_localbus_probe(parent, match, aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iobase;
-	int rv;
 	struct cfdata *cf = match;
-        struct confargs *ca = aux;
+	struct confargs *ca = aux;
+	int iobase, rv = 0;
 
 	/*
 	 *  Check if this is our com. If low nibble is 0 match
 	 *  against system CLASS. Else a perfect match is checked.
 	 */
-        if ((ca->ca_sys & 0x000f) == 0) {
+	if ((ca->ca_sys & 0x000f) == 0) {
 		if (ca->ca_sys != (sys_config.system_type & 0xfff0))
 			return 0;
-	} else if (ca->ca_sys != sys_config.system_type) {
+	} else if (ca->ca_sys != sys_config.system_type)
 		return 0;
-	}
 
 	iobase = (bus_addr_t)sys_config.cons_ioaddr[cf->cf_unit];
-	if (iobase == 0) {
-		rv = 0;	/* Not present */
-	} else {
+	if (iobase) {
 		iot = sys_config.cons_iot;
 		/* if it's in use as console, it's there. */
 		if (!(iobase == comconsaddr && !comconsattached)) {

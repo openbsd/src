@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_md.c,v 1.4 2004/08/10 18:47:22 deraadt Exp $ */
+/*	$OpenBSD: clock_md.c,v 1.5 2004/08/11 15:13:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -73,7 +73,7 @@ md_clk_attach(parent, self, aux)
 		if (bus_space_map(sc->sc_clk_t, MACE_ISA_RTC_OFFS, 128*256, 0,
 		    &sc->sc_clk_h))
 			printf("UH!? Can't map clock device!\n");
-		printf(" TOD with DS1687,");
+		printf(": TOD with DS1687,");
 		break;
 
 	default:

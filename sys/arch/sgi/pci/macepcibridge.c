@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.2 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.3 2004/08/11 15:13:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -211,7 +211,7 @@ pcibrattach(struct device *parent, struct device *self, void *aux)
 	}
 	pcireg = bus_space_read_4(sc->sc_memt, sc->sc_memh, MACE_PCI_REVISION);
 
-	printf(" Mace revision %d, host system O2.\n", pcireg);
+	printf(": mace rev %d, host system O2\n", pcireg);
 
 	/* Register the PCI ERROR interrupt handler */
 	BUS_INTR_ESTABLISH(ca, NULL, 8, IST_LEVEL, IPL_HIGH,
