@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.6 1998/08/22 18:31:50 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.7 1998/08/23 22:08:51 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -161,9 +161,23 @@ mpcpcibrattach(parent, self, aux)
 	case PWRSTK:
 		lcp = sc->sc_pcibr = &mpc_config;
 
-		addbatmap(0x80000000, 0x80000000, BAT_I);
-		addbatmap(MPC106_P_PCI_MEM_SPACE,
-			MPC106_P_PCI_MEM_SPACE, BAT_I);
+		{
+			unsigned int addr;
+
+			/* need to map 0xf0000000 also but cannot
+			 * because kernel uses that address space
+			 */
+			for (addr =    0xc0000000;
+			     addr >=	  0x80000000;
+			     addr -=   0x10000000)
+			{
+				/* we map it 1-1, cache inibited,
+				 * REALLY wish this could be cacheable
+				 * that is the reason to not use the bat.
+				 */
+				addbatmap(addr, addr, BAT_I);
+			}
+		}
 
 		sc->sc_membus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
 		sc->sc_membus_space.bus_reverse = 1;
@@ -474,4 +488,15 @@ mpc_print_pci_stat()
 	printf("pci: status 0x%08x.\n", stat);
 	stat = mpc_cfg_read_2(MPC106_PCI_STAT);
 	printf("pci: status 0x%04x.\n", stat);
+}
+u_int32_t
+pci_iack()
+{
+	/* do pci IACK cycle */
+	/* this should be bus allocated. */
+	volatile u_int8_t *iack = (u_int8_t *)0xbffffff0;
+	u_int8_t val;
+
+	val = *iack;
+	return val;
 }

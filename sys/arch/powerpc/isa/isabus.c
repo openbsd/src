@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.3 1998/08/22 18:31:48 rahnds Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.4 1998/08/23 22:08:50 rahnds Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -109,6 +109,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 static int beeping;
 
+#define IO_ELCR1 0x04d0
+#define IO_ELCR2 0x04d1
+
 #define	IRQ_SLAVE	2
 
 struct isabr_softc {
@@ -207,7 +210,9 @@ isabrattach(parent, self, aux)
 	{
 		int i;
 		for (i = 0; i < ICU_LEN; i++) {
-			evcnt_attach(self,"intr",&evirq[i]);
+			evcnt_attach(self,"intr", &evirq[i]);
+			/* put one in so they always print XXX */
+			evirq[i].ev_count++;
 		}
 	}
 	config_found(self, &iba, isabrprint);
@@ -240,6 +245,26 @@ struct intrhand *intrhand[ICU_LEN];
 
 int fakeintr(void *a) {return 0;}
 
+void
+isa_setirqstat(int irq, int enabled, int type)
+{
+	u_int8_t elcr[2];
+	int icu, bit;
+
+	icu = irq / 8;
+	bit = irq % 8;
+	elcr[0] = isa_inb(IO_ELCR1);
+	elcr[1] = isa_inb(IO_ELCR2);
+
+	if (type == IST_LEVEL) {
+		elcr[icu] |= 1 << bit;
+	} else {
+		elcr[icu] &= ~(1 << bit);
+	}
+	isa_outb(IO_ELCR1, elcr[0]);
+	isa_outb(IO_ELCR2, elcr[1]);
+	return;
+}
 /*
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
@@ -308,6 +333,7 @@ intr_calculatemasks()
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU2 + 1, imen >> 8);
 	}
+printf("isa calcmasks imen %x\n", imen);
 }
 
 /*
@@ -349,9 +375,9 @@ static int inthnd_installed = 0;
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s",
+			panic("intr_establish: can't share %s with %s irq %d",
 			    isa_intr_typename(intrtype[irq]),
-			    isa_intr_typename(type));
+			    isa_intr_typename(type), irq);
 		break;
 	}
 
@@ -384,6 +410,8 @@ static int inthnd_installed = 0;
 	ih->ih_irq = irq;
 	ih->ih_what = ih_what;
 	*p = ih;
+
+	isa_setirqstat(irq, 1, type);
 
 	return (ih);
 }
@@ -467,18 +495,23 @@ isabr_iointr(mask, cf)
 	char vector;
 	int pcpl;
 
+
+	/* what about enabling external interrupt in here? */
 	pcpl = splhigh() ;	/* Turn off all */
-	isa_outb(IO_ICU1, 0x0f);	/* Poll */
-	vector = isa_inb(IO_ICU1);
-	if((isa_vector = vector & 7) == 2) { 
-		isa_outb(IO_ICU2, 0x0f);
-		vector = isa_inb(IO_ICU2);
-		isa_vector = (vector & 7) | 8;
+
+	vector = pci_iack();
+	evirq[0].ev_count++;
+
+	if((vector & 0xf ) == 2) { 
+		isa_vector = (vector >> 4) | 8;
+	} else {
+		isa_vector = vector & 0xf;
 	}
 
 	o_imen = imen;
 	r_imen = 1 << (isa_vector & (ICU_LEN - 1));
 	imen |= r_imen;
+#if 0   /* just use the pci_iack for the vector */
 #if 0	/* XXX I'm not sure which method to prefere... */
 	if(isa_vector & 0x08) {
 		isa_inb(IO_ICU2 + 1);
@@ -497,11 +530,13 @@ isabr_iointr(mask, cf)
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
 #endif
+#endif
 	if((pcpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
 	}
 	else {
 		ih = intrhand[isa_vector];
+		evirq[isa_vector].ev_count++;
 		if(ih == NULL)
 			printf("isa: spurious interrupt %d\n", isa_vector);
 
@@ -511,10 +546,22 @@ isabr_iointr(mask, cf)
 		}
 		imen = o_imen;
 	}
-	isa_inb(IO_ICU1 + 1);
-	isa_inb(IO_ICU2 + 1);
-	isa_outb(IO_ICU1 + 1, imen);
-	isa_outb(IO_ICU2 + 1, imen >> 8);
+
+	/* change level */
+	if (o_imen != imen) {
+		if (vector > 7) {
+			isa_outb(IO_ICU2 + 1, imen >> 8);
+		} else {
+			isa_outb(IO_ICU1 + 1, imen & 0xff);
+		}
+	}
+
+	/* now ack the interrupt */
+
+	if (vector > 7) {
+		isa_outb(IO_ICU2, 0x20 | isa_vector & 0x07);
+	}
+	isa_outb(IO_ICU1, 0x20 | (isa_vector > 7 ? 2 : isa_vector));
 
 	splx(pcpl);	/* Process pendings. */
 }
@@ -526,9 +573,25 @@ isabr_iointr(mask, cf)
 void
 isabr_initicu()
 {  
+	int i;
+	int elcr = 0;
+	for (i= 0; i < ICU_LEN; i++) {
+		switch (i) {
+		case 0:
+		case 1:
+		case 2:
+		case 8:
+		case 13:
+			intrtype[i] = IST_EDGE;
+			elcr |=  (1 << i);
+			break;
+		default:
+			intrtype[i] = IST_NONE;
+		}
+	}
 
-	isa_outb(0x04d0, 0);			/* Clear level int mask 0-7  */
-	isa_outb(0x04d1, 0);			/* Clear level int mask 8-15 */
+	isa_outb(IO_ELCR1, elcr);		/* always keep irq as edge */
+	isa_outb(IO_ELCR2, elcr >> 8);		/* Clear level int mask 8-15 */
 
 	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
