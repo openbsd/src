@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.34 2001/06/09 06:43:38 angelos Exp $	*/
-/*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.35 2001/06/22 14:12:36 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1744,6 +1744,21 @@ fail:
 		}
 		break;
 	}
+
+	/*
+	 * When the link-layer address of a router changes, select the
+	 * best router again.  In particular, when the neighbor entry is newly
+	 * created, it might affect the selection policy.
+	 * Question: can we restrict the first condition to the "is_newentry"
+	 * case?
+	 * XXX: when we hear an RA from a new router with the link-layer
+	 * address option, defrouter_select() is called twice, since
+	 * defrtrlist_update called the function as well.  However, I believe
+	 * we can compromise the overhead, since it only happens the first
+	 * time.
+	 */
+	if (do_update && ln->ln_router)
+		defrouter_select();
 
 	return rt;
 }
