@@ -4,6 +4,7 @@
 ./sbin/fdisk
 ./sbin/ldconfig
 ./sbin/wicontrol
+./sbin/wsconsctl
 ./usr/bin/c++filt
 ./usr/bin/ldd
 ./usr/bin/pctr
