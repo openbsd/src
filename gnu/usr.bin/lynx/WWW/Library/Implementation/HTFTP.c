@@ -38,11 +38,6 @@
 **			and code to parse dates and sizes on most hosts.
 **	27 Mar 93 (FM)	Added code for getting dates and sizes on VMS hosts.
 **
-** Options:
-**	LISTEN		We listen, the other guy connects for data.
-**			Otherwise, other way round, but problem finding our
-**			internet address!
-**
 ** Notes:
 **			Portions Copyright 1994 Trustees of Dartmouth College
 **			Code for recognizing different FTP servers and
@@ -50,15 +45,6 @@
 **			program with permission from Jim Matthews,
 **			Dartmouth Software Development Team.
 */
-
-/*
-** If LISTEN is not defined, PASV is used instead of PORT, and not
-** all FTP servers support PASV, so define it unless there is no
-** alternative for your system.
-*/
-#ifndef NOPORT
-#define LISTEN	 /* @@@@ Test LJM */
-#endif /* !NOPORT */
 
 /*
 BUGS:	@@@	Limit connection cache size!
@@ -109,6 +95,7 @@ BUGS:	@@@	Limit connection cache size!
 #endif /* !IPORT_FTP */
 
 #include <LYUtils.h>
+#include <LYGlobalDefs.h>
 #include <LYStrings.h>
 #include <LYLeaks.h>
 
@@ -188,14 +175,11 @@ PRIVATE int	interrupted_in_next_data_char = FALSE;
 PRIVATE unsigned short	port_number = FIRST_TCP_PORT;
 #endif /* POLL_PORTS */
 
-#ifdef LISTEN
 PRIVATE int	master_socket = -1;	/* Listening socket = invalid	*/
 PRIVATE char	port_command[255];	/* Command for setting the port */
 PRIVATE fd_set	open_sockets;		/* Mask of active channels */
 PRIVATE int	num_sockets;		/* Number of sockets to scan */
-#else
 PRIVATE unsigned short	passive_port;	/* Port server specified for data */
-#endif /* LISTEN */
 
 
 #define NEXT_CHAR HTGetCharacter()	/* Use function in HTFormat.c */
@@ -974,8 +958,6 @@ PRIVATE int get_connection ARGS2(
 }
 
 
-#ifdef LISTEN
-
 /*	Close Master (listening) socket
 **	-------------------------------
 **
@@ -1171,7 +1153,6 @@ PRIVATE int get_listen_socket NOARGS
     return master_socket;		/* Good */
 
 } /* get_listen_socket */
-#endif /* LISTEN */
 
 PRIVATE char * months[12] = {
     "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
@@ -2589,21 +2570,20 @@ PUBLIC int HTFTPLoad ARGS4(
 	if (status < 0)
 	    return status;
 
-#ifdef LISTEN
-	status = get_listen_socket();
-	if (status < 0) {
-	    NETCLOSE (control->socket);
-	    control->socket = -1;
-	    close_master_socket ();
-	    /* HT_INTERRUPTED would fall through, if we could interrupt
-	       somehow in the middle of it, which we currently can't. */
-	    return status;
-	}
+	if (!ftp_passive) {
+	    status = get_listen_socket();
+	    if (status < 0) {
+		NETCLOSE (control->socket);
+		control->socket = -1;
+		close_master_socket ();
+		/* HT_INTERRUPTED would fall through, if we could interrupt
+		   somehow in the middle of it, which we currently can't. */
+		return status;
+	    }
 
 #ifdef REPEAT_PORT
-/*	Inform the server of the port number we will listen on
-*/
-	{
+	    /* Inform the server of the port number we will listen on
+	    */
 	    status = response(port_command);
 	    if (status == HT_INTERRUPTED) {
 		CTRACE (tfp, "HTFTP: Interrupted in response (port_command)\n");
@@ -2619,16 +2599,12 @@ PUBLIC int HTFTPLoad ARGS4(
 		return -status;		/* bad reply */
 	    }
 	    CTRACE(tfp, "HTFTP: Port defined.\n");
-	}
 #endif /* REPEAT_PORT */
-#else	/* Use PASV */
-/*	Tell the server to be passive
-*/
-	{
+	} else {		/* Tell the server to be passive */
 	    char command[LINE_LENGTH+1];
 	    char *p;
 	    int reply, h0, h1, h2, h3, p0, p1;	/* Parts of reply */
-	    int status;
+
 	    data_soc = status;
 
 	    status = send_cmd_1("PASV");
@@ -2668,7 +2644,6 @@ PUBLIC int HTFTPLoad ARGS4(
 
 	    CTRACE(tfp, "FTP data connected, socket %d\n", data_soc);
 	}
-#endif /* use PASV */
 	status = 0;
 	break;	/* No more retries */
 
@@ -3158,10 +3133,8 @@ PUBLIC int HTFTPLoad ARGS4(
     }
 
 listen:
-#ifdef LISTEN
-/*	Wait for the connection
-*/
-    {
+    if (!ftp_passive) {
+	/* Wait for the connection */
 	struct sockaddr_in soc_address;
 	int	soc_addrlen=sizeof(soc_address);
 #ifdef SOCKS
@@ -3180,10 +3153,8 @@ listen:
 	}
 	CTRACE(tfp, "TCP: Accepted new socket %d\n", status);
 	data_soc = status;
-    }
-#else
-/* @@ */
-#endif /* LISTEN */
+    } /* !ftp_passive */
+
     if (isDirectory) {
 	status = read_directory (anchor, name, format_out, sink);
 	NETCLOSE(data_soc);

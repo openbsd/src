@@ -167,6 +167,7 @@ PUBLIC BOOLEAN LYUserSpecifiedURL = TRUE;/* always TRUE  the first time */
 PUBLIC BOOLEAN LYJumpFileURL = FALSE;	 /* always FALSE the first time */
 PUBLIC BOOLEAN jump_buffer = JUMPBUFFER; /* TRUE if offering default shortcut */
 PUBLIC BOOLEAN goto_buffer = GOTOBUFFER; /* TRUE if offering default goto URL */
+PUBLIC BOOLEAN ftp_passive = FTP_PASSIVE; /* TRUE if doing ftp in passive mode */
 PUBLIC BOOLEAN recent_sizechange = FALSE;/* the window size changed recently? */
 PUBLIC int user_mode = NOVICE_MODE;
 PUBLIC BOOLEAN dump_output_immediately = FALSE;

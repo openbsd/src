@@ -1018,6 +1018,7 @@ static Config_Type Config_Table [] =
 #if !defined(NO_OPTION_FORMS) && !defined(NO_OPTION_MENU)
      PARSE_SET("forms_options", CONF_BOOL, &LYUseFormsOptions),
 #endif
+     PARSE_SET("ftp_passive", CONF_BOOL, &ftp_passive),
      PARSE_ENV("ftp_proxy", CONF_ENV, 0 ),
      PARSE_STR("global_extension_map", CONF_STR, &global_extension_map),
      PARSE_STR("global_mailcap", CONF_STR, &global_type_map),
