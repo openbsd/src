@@ -1,8 +1,8 @@
-/*	$OpenBSD: connection.c,v 1.10 2000/10/07 06:58:16 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.26 2000/09/12 16:27:08 ho Exp $	*/
+/*	$OpenBSD: connection.c,v 1.11 2000/11/23 12:56:59 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Hakan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -207,10 +207,9 @@ compare_ids (u_int8_t *id1, u_int8_t *id2, size_t idlen)
   id1_type = GET_ISAKMP_ID_TYPE (id1);
   id2_type = GET_ISAKMP_ID_TYPE (id2);
   
-  return id1_type == id2_type ? 
-    memcmp (id1 + ISAKMP_ID_DATA_OFF, 
-	    id2 + ISAKMP_ID_DATA_OFF, 
-	    idlen - ISAKMP_ID_DATA_OFF) : -1;
+  return id1_type == id2_type
+    ? memcmp (id1 + ISAKMP_ID_DATA_OFF, id2 + ISAKMP_ID_DATA_OFF,
+	      idlen - ISAKMP_ID_DATA_OFF) : -1;
 }
 
 /* Find the connection named with matching IDs.  */
@@ -229,10 +228,10 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
        * If both IDs match what we have saved, return the name.  Don't bother
        * in which order they are.
        */
-      if ((compare_ids (id1, conn->local_id, conn->local_sz) == 0 &&
-	   compare_ids (id2, conn->remote_id, conn->remote_sz) == 0) ||
-	  (compare_ids (id1, conn->remote_id, conn->remote_sz) == 0 &&
-	   compare_ids (id2, conn->local_id, conn->local_sz) == 0))
+      if ((compare_ids (id1, conn->local_id, conn->local_sz) == 0
+	   && compare_ids (id2, conn->remote_id, conn->remote_sz) == 0)
+	  || (compare_ids (id1, conn->remote_id, conn->remote_sz) == 0
+	      && compare_ids (id2, conn->local_id, conn->local_sz) == 0))
 	{
 	  LOG_DBG ((LOG_MISC, 60,
 		    "connection_passive_lookup_by_ids: returned \"%s\"",
@@ -250,8 +249,8 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
       if (conn->remote_id != NULL)
 	continue;
       
-      if (compare_ids (id1, conn->local_id, conn->local_sz) == 0 ||
-	  compare_ids (id2, conn->local_id, conn->local_sz) == 0)
+      if (compare_ids (id1, conn->local_id, conn->local_sz) == 0
+	  || compare_ids (id2, conn->local_id, conn->local_sz) == 0)
 	{
 	  LOG_DBG ((LOG_MISC, 60,
 		    "connection passive_lookup_by_ids: returned \"%s\""
@@ -337,7 +336,7 @@ connection_record_passive (char *name)
   if (!local_id)
     {
       log_print ("connection_record_passive: "
-		 "\"Local-ID\" or \"Remote-ID\" is missing from section [%s]",
+		 "\"Local-ID\" is missing from section [%s]",
 		 name);
       return -1;
     }
