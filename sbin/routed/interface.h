@@ -1,3 +1,4 @@
+/*	$OpenBSD: interface.h,v 1.2 1996/06/23 14:32:28 deraadt Exp $	*/
 /*	$NetBSD: interface.h,v 1.8 1995/06/20 22:27:52 christos Exp $	*/
 
 /*

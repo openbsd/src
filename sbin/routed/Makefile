@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 1996/06/23 14:32:24 deraadt Exp $
 #	$NetBSD: Makefile,v 1.14 1995/06/20 22:25:51 christos Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/19/93
 
 # disable an undesirable feature
 #CFLAGS=-DTRACING

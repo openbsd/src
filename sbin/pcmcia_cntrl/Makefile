@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 1996/04/29 13:07:04 hvozda Exp $
+# $OpenBSD: Makefile,v 1.2 1996/06/23 14:31:59 deraadt Exp $
 
 SRCS	= pcmcia_cntrl.c
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: edlabel.c,v 1.3 1996/06/23 14:30:21 deraadt Exp $	*/
 /*	$NetBSD: edlabel.c,v 1.1.1.1 1995/10/08 22:39:09 gwr Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cmdtable.h,v 1.2 1996/06/23 14:29:56 deraadt Exp $	*/
 /*	$NetBSD: cmdtable.h,v 1.2 1995/03/18 12:28:13 cgd Exp $	*/
 
 /* 

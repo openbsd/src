@@ -1,3 +1,5 @@
+/*	$OpenBSD: bootcode.h,v 1.2 1996/06/23 14:31:48 deraadt Exp $	*/
+
 #ifndef BOOTCODE_H
 #define BOOTCODE_H 1
 

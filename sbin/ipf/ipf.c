@@ -1,3 +1,5 @@
+/*	$OpenBSD: ipf.c,v 1.4 1996/06/23 14:30:54 deraadt Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *

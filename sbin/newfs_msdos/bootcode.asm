@@ -1,3 +1,4 @@
+;;; $OpenBSD: bootcode.asm,v 1.2 1996/06/23 14:31:48 deraadt Exp $
 ;;; Hello emacs, this looks like -*- asm -*- code, doesn't it?
 ;;;
 ;;; This forms a simple dummy boot program for use with a tool to
@@ -11,7 +12,6 @@
 ;;; (This is written in as86 syntax.  as86 is part of Bruce Evans'
 ;;; bcc package.)
 ;;;
-;;; $Id: bootcode.asm,v 1.1 1996/06/10 06:37:12 deraadt Exp $
 ;;; 
 ;;; This code must be linked to address 0x7c00 in order to function
 ;;; correctly (the BIOS boot address).

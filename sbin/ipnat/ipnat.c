@@ -1,3 +1,5 @@
+/*	$OpenBSD: ipnat.c,v 1.2 1996/06/23 14:31:01 deraadt Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *

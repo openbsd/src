@@ -1,3 +1,4 @@
+/*	$OpenBSD: quotacheck.c,v 1.7 1996/06/23 14:32:05 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.7 1996/06/23 14:32:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: inode.c,v 1.6 1996/06/23 14:30:29 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.6 1996/06/23 14:30:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: bim.c,v 1.2 1996/06/23 14:29:56 deraadt Exp $	*/
 /*	$NetBSD: bim.c,v 1.4 1995/09/28 07:08:49 phil Exp $	*/
 
 /* 

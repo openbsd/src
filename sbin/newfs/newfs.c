@@ -1,3 +1,4 @@
+/*	$OpenBSD: newfs.c,v 1.3 1996/06/23 14:31:47 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.3 1996/06/23 14:31:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 1996/06/23 14:31:45 deraadt Exp $
 #	$NetBSD: Makefile,v 1.10 1996/05/16 07:13:01 thorpej Exp $
-#	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c

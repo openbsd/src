@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/23 14:31:19 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/12 03:46:47 cgd Exp $
 
 PROG=	mount_ffs

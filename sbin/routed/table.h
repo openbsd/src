@@ -1,3 +1,4 @@
+/*	$OpenBSD: table.h,v 1.2 1996/06/23 14:32:32 deraadt Exp $	*/
 /*	$NetBSD: table.h,v 1.7 1995/06/20 22:27:58 christos Exp $	*/
 
 /*

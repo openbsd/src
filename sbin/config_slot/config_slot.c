@@ -1,3 +1,5 @@
+/*	$OpenBSD: config_slot.c,v 1.2 1996/06/23 14:30:02 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
  *

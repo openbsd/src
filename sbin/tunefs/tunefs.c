@@ -1,3 +1,4 @@
+/*	$OpenBSD: tunefs.c,v 1.2 1996/06/23 14:32:50 deraadt Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.2 1996/06/23 14:32:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 

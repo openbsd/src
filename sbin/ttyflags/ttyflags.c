@@ -1,3 +1,4 @@
+/*	$OpenBSD: ttyflags.c,v 1.3 1996/06/23 14:32:48 deraadt Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $";
+static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.3 1996/06/23 14:32:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

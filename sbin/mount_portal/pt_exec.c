@@ -1,3 +1,4 @@
+/*	$OpenBSD: pt_exec.c,v 1.2 1996/06/23 14:31:35 deraadt Exp $	*/
 /*	$NetBSD: pt_exec.c,v 1.4 1995/04/23 10:33:25 cgd Exp $	*/
 
 /*

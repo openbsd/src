@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/23 14:30:09 deraadt Exp $
 #	$NetBSD: Makefile,v 1.16 1995/03/18 14:54:53 cgd Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
 #	itime.c			reads /etc/dumpdates

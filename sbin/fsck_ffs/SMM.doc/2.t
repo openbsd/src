@@ -1,3 +1,4 @@
+.\"	$OpenBSD: 2.t,v 1.2 1996/06/23 14:30:37 deraadt Exp $
 .\"	$NetBSD: 2.t,v 1.2 1995/03/18 14:56:08 cgd Exp $
 .\"
 .\" Copyright (c) 1982, 1993

@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: fastboot.sh,v 1.2 1996/06/23 14:30:23 deraadt Exp $
 #	$NetBSD: fastboot.sh,v 1.6 1995/04/23 10:33:03 cgd Exp $
 #
 # Copyright (c) 1985, 1993

@@ -1,3 +1,4 @@
+/*	$OpenBSD: startup.c,v 1.2 1996/06/23 14:32:31 deraadt Exp $	*/
 /*	$NetBSD: startup.c,v 1.14 1995/06/20 22:27:56 christos Exp $	*/
 
 /*
@@ -38,7 +39,7 @@
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/5/93";
 #else
 /*###40 [cc] warning: `rcsid' defined but not used%%%*/
-static char rcsid[] = "$NetBSD: startup.c,v 1.14 1995/06/20 22:27:56 christos Exp $";
+static char rcsid[] = "$OpenBSD: startup.c,v 1.2 1996/06/23 14:32:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 

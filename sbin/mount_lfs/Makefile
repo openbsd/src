@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/06/23 14:31:23 deraadt Exp $
 #	$NetBSD: Makefile,v 1.3 1995/03/18 14:57:29 cgd Exp $
-#	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	mount_lfs
 SRCS=	mount_lfs.c getmntopts.c

@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: fasthalt.sh,v 1.2 1996/06/23 14:30:24 deraadt Exp $
 #	$NetBSD: fasthalt.sh,v 1.6 1995/04/23 10:33:06 cgd Exp $
 #
 # Copyright (c) 1988, 1993

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mount_procfs.c,v 1.3 1996/06/23 14:31:38 deraadt Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -47,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.3 1996/06/23 14:31:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 

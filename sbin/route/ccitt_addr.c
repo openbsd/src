@@ -1,3 +1,4 @@
+/*	$OpenBSD: ccitt_addr.c,v 1.2 1996/06/23 14:32:21 deraadt Exp $	*/
 /*	$NetBSD: ccitt_addr.c,v 1.8 1995/04/23 10:33:41 cgd Exp $	*/
 
 /*
