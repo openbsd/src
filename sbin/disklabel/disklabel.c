@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.42 1997/10/13 15:02:15 pefo Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.43 1997/10/17 04:33:05 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.42 1997/10/13 15:02:15 pefo Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.43 1997/10/17 04:33:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -598,8 +598,7 @@ readmbr(f)
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
-			    "type %d (0x%02x) "
-			    "offset %d (0x%x) size %d (0x%x)\n", part,
+			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ, dp[part].dp_typ,
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
@@ -609,8 +608,7 @@ readmbr(f)
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_386BSD) {
 			fprintf(stderr, "# using MBR partition %d: "
-			    "type %d (0x%02x) "
-			    "offset %d (0x%x) size %d (0x%x)\n", part,
+			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ, dp[part].dp_typ, 
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
