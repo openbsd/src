@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.21 2001/07/16 22:06:18 fgsch Exp $
+#	$OpenBSD: inter.phone,v 1.22 2002/04/29 21:54:03 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -2263,91 +2263,37 @@
 420:6994:Havirov (MTO):Czech Republic
 420:6995:Orlova (MTO):Czech Republic
 420:800:toll-free:Czech Republic
-421:7:Bratislava:Slovak Republic
-421:703:Malacky:Slovak Republic
-421:704:Pezinok:Slovak Republic
-421:706:Sala:Slovak Republic
-421:707:Galanta:Slovak Republic
-421:708:Samorin:Slovak Republic
-421:709:Dunajska-Streda:Slovak Republic
-421:801:Holic:Slovak Republic
-421:802:Senica:Slovak Republic
-421:804:Hlohovec:Slovak Republic
-421:805:Trnava:Slovak Republic
-421:810:Sturovo:Slovak Republic
-421:811:Zeliezovce:Slovak Republic
-421:812:Sahy:Slovak Republic
-421:813:Levice:Slovak Republic
-421:814:Zlate Moravce:Slovak Republic
-421:815:Topolcany:Slovak Republic
-421:816:Surany:Slovak Republic
-421:817:Nove Zamky:Slovak Republic
-421:818:Hurbanovo:Slovak Republic
-421:819:Komarno:Slovak Republic
-421:821:Bytca:Slovak Republic
-421:822:Povazska Bystrica n. V.:Slovak Republic
-421:823:Rajec nad Rajciankou:Slovak Republic
-421:824:Cadca:Slovak Republic
-421:825:Puchov:Slovak Republic
-421:826:Kysucke Nove Mesto:Slovak Republic
-421:827:Dubnica nad Vahom:Slovak Republic
-421:831:Trencin:Slovak Republic
-421:832:Banovce nad Bebravou:Slovak Republic
-421:834:Nove Mesto nad Vahom:Slovak Republic
-421:838:Piestany:Slovak Republic
-421:841:Turcianske Teplice:Slovak Republic
-421:842:Martin:Slovak Republic
-421:844:Liptovsky Hradok:Slovak Republic
-421:845:Dolny Kubin:Slovak Republic
-421:846:Namestovo:Slovak Republic
-421:847:Tvrdosin (Trstena):Slovak Republic
-421:848:Ruzomberok:Slovak Republic
-421:849:Liptovsky Mikulas:Slovak Republic
-421:854:Velky Krtis:Slovak Republic
-421:855:Zvolen:Slovak Republic
-421:856:Krupina:Slovak Republic
-421:857:Ziar nad Hronom:Slovak Republic
-421:858:Zarnovica:Slovak Republic
-421:859:Banska Stiavnica:Slovak Republic
-421:862:Prievidza:Slovak Republic
-421:863:Lucenec:Slovak Republic
-421:864:Poltar:Slovak Republic
-421:865:Hnusta:Slovak Republic
-421:866:Rimavska Sobota:Slovak Republic
-421:867:Brezno:Slovak Republic
-421:868:Safarikovo:Slovak Republic
-421:87:Nitra:Slovak Republic
-421:88:Banska Bystrica:Slovak Republic
-421:89:Zilina:Slovak Republic
+421:2:Bratislava:Slovak Republic
+421:31:Dunajska-Streda:Slovak Republic
+421:32:Trencin:Slovak Republic
+421:33:Trnava:Slovak Republic
+421:34:Senica:Slovak Republic
+421:35:Nove Zamky:Slovak Republic
+421:36:Levice:Slovak Republic
+421:37:Nitra:Slovak Republic
+421:38:Topolcany:Slovak Republic
+421:41:Zilina:Slovak Republic
+421:42:Povazska Bystrica:Slovak Republic
+421:43:Martin:Slovak Republic
+421:44:Liptovsky Mikulas:Slovak Republic
+421:45:Zvolen:Slovak Republic
+421:46:Prievidza:Slovak Republic
+421:47:Lucenec:Slovak Republic
+421:48:Banska Bystrica:Slovak Republic
+421:51:Presov:Slovak Republic
+421:52:Poprad:Slovak Republic
+421:53:Spisska Nova Ves:Slovak Republic
+421:54:Bardejov:Slovak Republic
+421:55:Kosice:Slovak Republic
+421:56:Michalovce:Slovak Republic
+421:57:Humenne:Slovak Republic
+421:58:Roznava:Slovak Republic
 421:901:mobile - Eurotel NMT:Slovak Republic
 421:903:mobile - Eurotel GSM:Slovak Republic
+421:904:mobile - Eurotel GSM:Slovak Republic
 421:905:mobile - Globtel GSM:Slovak Republic
-421:91:Presov:Slovak Republic
-421:92:Poprad:Slovak Republic
-421:931:Vranov nad Toplou:Slovak Republic
-421:932:Snina:Slovak Republic
-421:933:Humenne:Slovak Republic
-421:934:Sabinov:Slovak Republic
-421:935:Bardejov:Slovak Republic
-421:936:Giraltovce:Slovak Republic
-421:937:Svidnik:Slovak Republic
-421:938:Stropkov:Slovak Republic
-421:939:Medzilaborce:Slovak Republic
-421:941:Revuca:Slovak Republic
-421:942:Roznava:Slovak Republic
-421:943:Moldava nad Bodvou:Slovak Republic
-421:944:Gelnica:Slovak Republic
-421:946:Michalovce:Slovak Republic
-421:947:Sobrance:Slovak Republic
-421:948:Trebisov:Slovak Republic
-421:949:Kral'ovsky Chlmec (Kral. Chlmec):Slovak Republic
-421:95:Kosice:Slovak Republic
-421:963:Stara Lubnova:Slovak Republic
-421:964:Spisska Stara Ves:Slovak Republic
-421:965:Spisska Nova Ves:Slovak Republic
-421:966:Levoca:Slovak Republic
-421:968:Kezmarok:Slovak Republic
-421:969:Stary Smokovec:Slovak Republic
+421:907:mobile - Globtel GSM:Slovak Republic
+421:908:mobile - Globtel GSM:Slovak Republic
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
 502:2:Guatemala City:Guatemala
