@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.29 2002/01/28 19:53:41 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.30 2002/04/25 20:27:43 ian Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -32,10 +32,29 @@
 .Nm ddb
 .Nd kernel debugger
 .Sh DESCRIPTION
-The kernel debugger has most of the features of the old kdb,
-but with a more rational
-.Pf ( Xr gdb 1 No Ns \&-like )
+The
+.Nm
+debugger provides a means for debugging the kernel,
+and analysing the kernel after a system crash ("panic"), with a
+.Xr gdb 1 No Ns \&-like
 syntax.
+.Pp
+.Nm
+is only available if the kernel was configured with the DDB option.
+.Nm
+will be invoked upon a kernel panic when the
+.Xr sysctl 8
+name
+.Va ddb.panic
+is set to 1.
+.Nm
+may be invoked from the console by the key sequence
+.Li Ctl-Alt-Esc
+when the
+.Xr sysctl 8
+name
+.Va ddb.console
+is set to 1.
 .Pp
 .Nm
 prompts for commands on the console with:
@@ -172,23 +191,6 @@ redraw line
 .\" .It Ic \&^c
 .\" abort command (even if paused)
 .\" .El
-.Pp
-.Nm
-is only available if the kernel was configured with the DDB option.
-.Nm
-will be invoked upon a kernel panic when the
-.Xr sysctl 8
-name
-.Va ddb.panic
-is set to 1.
-.Nm
-may be invoked from the console by the key sequence
-.Li Ctl-Alt-Esc
-when the
-.Xr sysctl 8
-name
-.Va ddb.console
-is set to 1.
 .Sh COMMANDS
 The following commands may be typed at the
 .Ql ddb>
