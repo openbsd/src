@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.16 1996/06/12 09:13:20 deraadt Exp $
+#	$OpenBSD: rc,v 1.17 1996/06/18 15:30:01 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -17,16 +17,13 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
 # Configure ccd devices.
-if [ -f /etc/ccd.conf ]
-then
+if [ -f /etc/ccd.conf ]; then
 	ccdconfig -C
 fi
 
-if [ -e /fastboot ]
-then
+if [ -e /fastboot ]; then
 	echo "Fast boot: skipping disk checks."
-elif [ $1x = autobootx ]
-then
+elif [ $1x = autobootx ]; then
 	echo "Automatic boot in progress: starting file system checks."
 	fsck -p
 	case $? in
@@ -173,8 +170,7 @@ dev_mkdb
 chmod 666 /dev/tty[pqrs]*
 
 # check the password temp/lock file
-if [ -f /etc/ptmp ]
-then
+if [ -f /etc/ptmp ]; then
 	logger -s -p auth.err \
 	'password file may be incorrect -- /etc/ptmp exists'
 fi
@@ -267,11 +263,33 @@ fi
 
 echo '.'
 
-. /etc/rc.local
-
 if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
 fi
+
+# patch /etc/motd
+if [ ! -f /etc/motd ]; then
+	install -c -o root -g wheel -m 664 /dev/null /etc/motd
+fi
+T=/tmp/_motd
+rm -f $T
+sysctl -n kern.version | sed 1q > $T
+echo "" >> $T
+sed '1,/^$/d' < /etc/motd >> $T
+cmp -s $T /etc/motd || cp $T /etc/motd
+rm -f $T
+
+if [ -f /sbin/ldconfig ]; then
+	echo 'creating runtime link editor directory cache.'
+	ldconfig /usr/X11R6/lib
+fi 
+
+# Kerberos runs ONLY on the Kerberos server machine
+if [ X${kerberos_server} = X"YES" ]; then
+	echo 'kerberos server';	kerberos >> /var/log/kerberos.log &
+fi
+
+. /etc/rc.local
 
 date
 exit 0

@@ -1,30 +1,16 @@
-#
+#	$OpenBSD: rc.local,v 1.4 1996/06/18 15:30:02 deraadt Exp $
+
 # site-specific startup actions, daemons
-#
-#	$OpenBSD: rc.local,v 1.3 1996/05/26 10:49:40 deraadt Exp $
-#
-
-if [ ! -f /etc/motd ]; then
-	install -c -o root -g wheel -m 664 /dev/null /etc/motd
-fi
-T=/tmp/_motd
-rm -f $T
-sysctl -n kern.version | sed 1q > $T
-echo "" >> $T
-sed '1,/^$/d' < /etc/motd >> $T
-cmp -s $T /etc/motd || cp $T /etc/motd
-rm -f $T
-
-if [ -f /sbin/ldconfig ]; then
-	echo 'creating runtime link editor directory cache.'
-	ldconfig /usr/X11R6/lib
-fi 
+# Add your local changes additions to this file
 
 echo -n 'starting local daemons:'
 
-# Kerberos runs ONLY on the Kerberos server machine
-if [ X${kerberos_server} = X"YES" ]; then
-	echo -n ' kerberos';	kerberos >> /var/log/kerberos.log &
-fi
+#if [ -f /usr/local/etc/httpd/http ]; then
+#	echo -n ' httpd';	/usr/local/etc/httpd/httpd
+#fi
+
+#if [ -f /usr/local/sbin/sshd ]; then
+#	echo -n ' sshd';	/usr/local/sbin/sshd
+#fi
 
 echo '.'
