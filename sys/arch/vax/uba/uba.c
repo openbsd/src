@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.12 2001/11/06 19:53:17 miod Exp $	   */
+/*	$OpenBSD: uba.c,v 1.13 2002/01/10 00:11:14 nordin Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -814,6 +814,8 @@ uba_attach(sc, iopagephys)
 	 */
 	sc->uh_map = (struct map *)malloc((u_long)
 	    (UAMSIZ * sizeof(struct map)), M_DEVBUF, M_NOWAIT);
+	if (sc->uh_map == NULL)
+		panic("uba_attach");
 	bzero((caddr_t)sc->uh_map, (unsigned)(UAMSIZ * sizeof (struct map)));
 	ubainitmaps(sc);
 
@@ -869,6 +871,8 @@ ubasearch(parent, cf, aux)
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);
+			if (sc->uh_reset == NULL)
+				panic("ubasearch");
 			sc->uh_resarg = (int *)sc->uh_reset + 128;
 		}
 #ifdef DIAGNOSTIC

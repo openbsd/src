@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.4 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: uba.c,v 1.5 2002/01/10 00:11:14 nordin Exp $	*/
 /*	$NetBSD: uba.c,v 1.52 2000/06/04 02:14:12 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -117,6 +117,8 @@ uba_reset_establish(void (*reset)(struct device *), struct device *dev)
 	struct uba_reset *ur;
 
 	ur = malloc(sizeof(struct uba_reset), M_DEVBUF, M_NOWAIT);
+	if (ur == NULL)
+		panic("uba_reset_establish");
 	ur->ur_dev = dev;
 	ur->ur_reset = reset;
 

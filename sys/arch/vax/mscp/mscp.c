@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp.c,v 1.6 2001/12/05 03:04:38 hugh Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.7 2002/01/10 00:11:14 nordin Exp $	*/
 /*	$NetBSD: mscp.c,v 1.16 2001/11/13 07:38:28 lukem Exp $	*/
 
 /*
@@ -186,6 +186,8 @@ loop:
 		int tmpno = ((mp->mscp_unit + 32) & 0xffe0) * sizeof(void *);
 		struct device **tmp = (struct device **)
 		    malloc(tmpno, M_DEVBUF, M_NOWAIT);
+		if (tmp == NULL)
+			panic("mscp_dorsp");
 		bzero(tmp, tmpno);
 		if (mi->mi_driveno) {
 			bcopy(mi->mi_dp, tmp, mi->mi_driveno);

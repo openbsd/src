@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.1 2001/05/16 22:15:17 hugh Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.2 2002/01/10 00:11:14 nordin Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -175,6 +175,8 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		dzi = malloc(sizeof(struct dzkbd_internal),
 				       M_DEVBUF, M_NOWAIT);
+		if (dzi == NULL)
+			panic("dzkbd_attach");
 		dzi->dzi_ks.attmt.sendchar = dzkbd_sendchar;
 		dzi->dzi_ks.attmt.cookie = ls;
 		dzi->dzi_ls = ls;
