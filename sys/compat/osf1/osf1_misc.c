@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_misc.c,v 1.2 1996/08/02 20:20:29 niklas Exp $	*/
+/*	$OpenBSD: osf1_misc.c,v 1.3 1996/08/23 11:46:51 niklas Exp $	*/
 /*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
 
 /*
@@ -558,11 +558,11 @@ osf1_sys_poll(p, v, retval)
 	} */ *uap = v;
 	struct sys_poll_args a;
 
-	SCARG(&a, fds) = fds;
-	SCARG(&a, nfds) = nfds;
-	SCARG(&a, timeout) = timeout;
+	SCARG(&a, fds) = SCARG(uap, fds);
+	SCARG(&a, nfds) = SCARG(uap, nfds);
+	SCARG(&a, timeout) = SCARG(uap, timeout);
 
-	return sys_poll(p, a, retval);
+	return sys_poll(p, &a, retval);
 }
 
 int
