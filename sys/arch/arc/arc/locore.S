@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 1996/09/14 15:58:15 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 1996/09/19 17:35:19 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.4 1996/09/14 15:58:15 pefo Exp $
+ *	$Id: locore.S,v 1.5 1996/09/19 17:35:19 pefo Exp $
  */
 
 /*
@@ -790,8 +790,7 @@ LEAF(suiword)
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sw	a1, 0(a0)		# store word
 	sw	zero, UADDR+U_PCB_ONFAULT
-	move	v0, zero
-	b	R4K_FlushICache		# NOTE: this should not clobber v0!
+	b	R4K_FlushICache		# FlushICache sets v0 = 0. (Ugly)
 	li	a1, 4			# size of word
 END(suiword)
 
@@ -2604,6 +2603,10 @@ END(R4K_ConfigCache)
  */
 LEAF(R4K_FlushCache)
 	.set	noreorder
+/*XXX 4600 Bug */
+	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
+/*XXX*/
 	lw	v0, CpuTwoWayCache
 	lw	t1, CpuPrimaryInstCacheSize
 	lw	t2, CpuPrimaryDataCacheSize
@@ -2667,6 +2670,9 @@ LEAF(R4K_FlushCache)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 
+/*XXX 4600 Bug */
+	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
+/*XXX*/
 	j	ra
 	nop
 END(R4K_FlushCache)
@@ -2692,6 +2698,10 @@ END(R4K_FlushCache)
  *----------------------------------------------------------------------------
  */
 LEAF(R4K_FlushICache)
+/*XXX 4600 Bug */
+	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
+/*XXX*/
 	lw	v0, CpuTwoWayCache
 	addu	a1, 127		# Align
 	srl	a1, a1, 7	# Number of unrolled loops
@@ -2719,8 +2729,11 @@ LEAF(R4K_FlushICache)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
+/*XXX 4600 Bug */
+	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
+/*XXX*/
 	j	ra
-	nop
+	move	v0, zero		# suiword depends on this!!
 END(R4K_FlushICache)
 
 /*----------------------------------------------------------------------------
@@ -2743,6 +2756,10 @@ END(R4K_FlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(R4K_FlushDCache)
+/*XXX 4600 Bug */
+	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
+/*XXX*/
 	lw	v0, CpuTwoWayCache
 	lw	a2, CpuPrimaryDataCacheSize
 	addiu	a2, -1
@@ -2778,6 +2795,9 @@ LEAF(R4K_FlushDCache)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
+/*XXX 4600 Bug */
+	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
+/*XXX*/
 	j	ra
 	nop
 END(R4K_FlushDCache)
