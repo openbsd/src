@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.14 2005/03/02 16:56:58 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.15 2005/03/24 14:35:18 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -74,19 +74,12 @@ struct cvs_entries;
 #define CVS_FST_LOST      7
 
 
-struct cvs_fname {
-	char  *cf_name;
-	u_int  cf_ref;
-	SLIST_ENTRY(cvs_fname) cf_list;
-};
-
-
 TAILQ_HEAD(cvs_flist, cvs_file);
 
 
 typedef struct cvs_file {
 	struct cvs_file  *cf_parent;  /* parent directory (NULL if none) */
-	struct cvs_fname *cf_name;
+	char             *cf_name;
 	mode_t            cf_mode;
 	time_t            cf_mtime;
 	u_int16_t         cf_cvstat;  /* cvs status of the file */
@@ -96,7 +89,8 @@ typedef struct cvs_file {
 	TAILQ_ENTRY(cvs_file)  cf_list;
 } CVSFILE;
 
-#define CVS_FILE_NAME(cf)   (cf->cf_name->cf_name)
+#define CVS_FILE_NAME(cf)   (cf->cf_name)
+
 
 
 #define CVS_DIRF_STATIC    0x01

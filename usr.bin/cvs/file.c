@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.56 2005/03/05 17:19:50 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.57 2005/03/24 14:35:18 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include "cvs.h"
 #include "log.h"
 #include "file.h"
+#include "strtab.h"
 
 
 #define CVS_IGN_STATIC    0x01     /* pattern is static, no need to glob */
@@ -97,16 +98,6 @@ static const char *cvs_ign_std[] = {
 
 
 /*
- * Filename hash table used to avoid duplication of name strings when working
- * on large source trees with common parts.
- */
-SLIST_HEAD(cvs_fhb, cvs_fname);
-
-static struct cvs_fhb cvs_fnht[CVS_FILE_NBUCKETS];
-
-
-
-/*
  * Entries in the CVS/Entries file with a revision of '0' have only been
  * added.  Compare against this revision to see if this is the case
  */
@@ -116,16 +107,13 @@ static RCSNUM *cvs_addedrev;
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 
-static int               cvs_file_getdir   (CVSFILE *, int);
-static void              cvs_file_freedir  (struct cvs_dir *);
-static int               cvs_file_sort     (struct cvs_flist *, u_int);
-static int               cvs_file_cmp      (const void *, const void *);
-static int               cvs_file_cmpname  (const char *, const char *);
-static u_int8_t          cvs_file_hashname (const char *);
-static struct cvs_fname* cvs_file_getname  (const char *);
-static void              cvs_file_freename (struct cvs_fname *);
-static CVSFILE*          cvs_file_alloc    (const char *, u_int);
-static CVSFILE*          cvs_file_lget     (const char *, int, CVSFILE *);
+static int       cvs_file_getdir   (CVSFILE *, int);
+static void      cvs_file_freedir  (struct cvs_dir *);
+static int       cvs_file_sort     (struct cvs_flist *, u_int);
+static int       cvs_file_cmp      (const void *, const void *);
+static int       cvs_file_cmpname  (const char *, const char *);
+static CVSFILE*  cvs_file_alloc    (const char *, u_int);
+static CVSFILE*  cvs_file_lget     (const char *, int, CVSFILE *);
 
 
 
@@ -141,10 +129,6 @@ cvs_file_init(void)
 	char path[MAXPATHLEN], buf[MAXNAMLEN];
 	FILE *ifp;
 	struct passwd *pwd;
-
-	/* initialize the filename hash table */
-	for (i = 0; i < CVS_FILE_NBUCKETS; i++)
-		SLIST_INIT(&(cvs_fnht[i]));
 
 	TAILQ_INIT(&cvs_ign_pats);
 
@@ -705,7 +689,7 @@ cvs_file_free(CVSFILE *cf)
 	if (cf->cf_ddat != NULL)
 		cvs_file_freedir(cf->cf_ddat);
 	if (cf->cf_name != NULL)
-		cvs_file_freename(cf->cf_name);
+		cvs_strfree(cf->cf_name);
 	free(cf);
 }
 
@@ -845,9 +829,9 @@ cvs_file_alloc(const char *path, u_int type)
 	}
 	memset(cfp, 0, sizeof(*cfp));
 
-	cfp->cf_name = cvs_file_getname(basename(path));
+	cfp->cf_name = cvs_strdup(basename(path));
 	if (cfp->cf_name == NULL) {
-		cvs_log(LP_ERR, "failed to get file name from table");
+		cvs_log(LP_ERR, "failed to copy file name");
 		return (NULL);
 	}
 	cfp->cf_type = type;
@@ -949,96 +933,4 @@ cvs_file_cmpname(const char *name1, const char *name2)
 {
 	return (cvs_nocase == 0) ? (strcmp(name1, name2)) :
 	    (strcasecmp(name1, name2));
-}
-
-
-/*
- * cvs_file_hashname()
- *
- * Generate an 8 bit hash value from the name of a file.
- * XXX Improve my distribution!
- */
-static u_int8_t
-cvs_file_hashname(const char *name)
-{
-	const char *np;
-	u_int8_t h;
-
-	h = 0xb5;
-	for (np = name; *np != '\0'; np++)
-		h ^= (*np << 3 ^ *np >> 1);
-
-	return (h);
-}
-
-
-/*
- * cvs_file_getname()
- *
- * Look for the file name <name> in the filename hash table.
- * If no entry is found for that name, a new one is created and inserted into
- * the table.  The name's reference count is increased.
- */
-static struct cvs_fname*
-cvs_file_getname(const char *name)
-{
-	u_int8_t h;
-	struct cvs_fname *fnp;
-
-	h = cvs_file_hashname(name);
-
-	SLIST_FOREACH(fnp, &(cvs_fnht[h]), cf_list)
-		if (strcmp(name, fnp->cf_name) == 0) {
-			fnp->cf_ref++;
-			break;
-		}
-
-	if (fnp == NULL) {
-		fnp = (struct cvs_fname *)malloc(sizeof(*fnp));
-		if (fnp == NULL) {
-			cvs_log(LP_ERRNO,
-			    "failed to allocate new file name entry");
-			return (NULL);
-		}
-
-		fnp->cf_name = strdup(name);
-		if (fnp->cf_name == NULL) {
-			cvs_log(LP_ERRNO, "failed to duplicate name");
-			free(fnp);
-			return (NULL);
-		}
-
-		fnp->cf_ref = 1;
-		SLIST_INSERT_HEAD(&(cvs_fnht[h]), fnp, cf_list);
-	}
-
-	return (fnp);
-}
-
-
-/*
- * cvs_file_freename()
- *
- * Free the reference to a file name previously obtained with
- * cvs_file_getname().
- */
-static void
-cvs_file_freename(struct cvs_fname *fn)
-{
-	u_int8_t h;
-
-	if (fn->cf_ref == 0) {
-		cvs_log(LP_WARN, "refcount for `%s' is already 0", fn->cf_name);
-		return;
-	}
-
-	fn->cf_ref--;
-	if (fn->cf_ref == 0) {
-		/* no more references, free the file */
-		h = cvs_file_hashname(fn->cf_name);
-
-		SLIST_REMOVE(&(cvs_fnht[h]), fn, cvs_fname, cf_list);
-		free(fn->cf_name);
-		free(fn);
-	}
 }
