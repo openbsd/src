@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.251 2000/04/24 22:21:17 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.252 2000/04/28 23:32:55 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2281,6 +2281,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "I. T. T.",
 	    "ITT3204 MPEG Decoder",
+	},
+	{
+	    PCI_VENDOR_IRE, PCI_PRODUCT_IRE_ADSP2141,
+	    0,
+	    "IRE",
+	    "ADSP 2141",
 	},
 	{
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
@@ -7320,6 +7326,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_HAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "HAL Computer Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_IRE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "IRE",
 	    NULL,
 	},
 	{
