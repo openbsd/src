@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.5 2001/07/06 21:08:00 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.6 2001/11/14 22:20:22 miod Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -243,9 +243,19 @@ main(int argc, char *argv[])
 					if (dopct)
 						printf("Battery remaining: %d percent\n",
 						    reply.batterystate.battery_life);
-					if (domin)
+					if (domin) {
+#ifdef __powerpc__
+						if (reply.batterystate.battery_state == APM_BATT_CHARGING)
+							printf("Remaining battery recharge time estimate: %d minutes\n",
+							    reply.batterystate.minutes_left);
+						else if (reply.batterystate.minutes_left == 0 &&
+						    reply.batterystate.battery_life > 10)
+							printf("Battery life estimate: not available\n");
+						else
+#endif
 						printf("Battery life estimate: %d minutes\n",
 						    reply.batterystate.minutes_left);
+					}
 					if (doac)
 						printf("A/C adapter state: %s\n",
 						    ac_state(reply.batterystate.ac_state));
