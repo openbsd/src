@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2002/12/19 21:08:43 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2003/01/07 19:39:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -403,20 +403,12 @@ trap(type, frame)
 
 		if (ret != 0) {
 			if (type & T_USER) {
-#if 0
-if (kdb_trap (type, va, frame))
-	return;
-#endif
 				sv.sival_int = va;
 				trapsignal(p, SIGSEGV, vftype,
 				    ret == EACCES? SEGV_ACCERR : SEGV_MAPERR,
 				    sv);
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
-#if 0
-if (kdb_trap (type, va, frame))
-	return;
-#endif
 					frame->tf_iioq_tail = 4 +
 					    (frame->tf_iioq_head =
 						p->p_addr->u_pcb.pcb_onfault);
@@ -424,14 +416,9 @@ if (kdb_trap (type, va, frame))
 					frame->tf_iir = 0;
 #endif
 				} else {
-#if 0
-if (kdb_trap (type, va, frame))
-	return;
-#else
 					panic("trap: "
 					    "uvm_fault(%p, %x, %d, %d): %d",
 					    map, va, 0, vftype, ret);
-#endif
 				}
 			}
 		}
