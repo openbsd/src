@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.9 2003/03/16 00:34:01 margarida Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.10 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -121,8 +121,8 @@ typedef struct __rpc_client {
 	struct clnt_ops {
 		/* call remote procedure */
 		enum clnt_stat	(*cl_call)(struct __rpc_client *,
-				    u_long, xdrproc_t, caddr_t, xdrproc_t,
-				    caddr_t, struct timeval);
+				    unsigned long, xdrproc_t, caddr_t, 
+				    xdrproc_t, caddr_t, struct timeval);
 		/* abort a call */
 		void		(*cl_abort)(struct __rpc_client *);
 		/* get specific error code */
@@ -134,8 +134,8 @@ typedef struct __rpc_client {
 		/* destroy this structure */
 		void		(*cl_destroy)(struct __rpc_client *);
 		/* the ioctl() of rpc */
-		bool_t          (*cl_control)(struct __rpc_client *, u_int,
-				    void *);
+		bool_t          (*cl_control)(struct __rpc_client *, 
+				    unsigned int, void *);
 	} *cl_ops;
 	caddr_t			cl_private;	/* private stuff */
 } CLIENT;
@@ -152,7 +152,7 @@ typedef struct __rpc_client {
  * enum clnt_stat
  * CLNT_CALL(rh, proc, xargs, argsp, xres, resp, timeout)
  * 	CLIENT *rh;
- *	u_long proc;
+ *	unsigned long proc;
  *	xdrproc_t xargs;
  *	caddr_t argsp;
  *	xdrproc_t xres;
@@ -197,7 +197,7 @@ typedef struct __rpc_client {
  * bool_t
  * CLNT_CONTROL(cl, request, info)
  *      CLIENT *cl;
- *      u_int request;
+ *      unsigned int request;
  *      char *info;
  */
 #define	CLNT_CONTROL(cl,rq,in) ((*(cl)->cl_ops->cl_control)(cl,rq,in))
@@ -230,16 +230,16 @@ typedef struct __rpc_client {
  * and network administration.
  */
 
-#define RPCTEST_PROGRAM		((u_long)1)
-#define RPCTEST_VERSION		((u_long)1)
-#define RPCTEST_NULL_PROC	((u_long)2)
-#define RPCTEST_NULL_BATCH_PROC	((u_long)3)
+#define RPCTEST_PROGRAM		((unsigned long)1)
+#define RPCTEST_VERSION		((unsigned long)1)
+#define RPCTEST_NULL_PROC	((unsigned long)2)
+#define RPCTEST_NULL_BATCH_PROC	((unsigned long)3)
 
 /*
  * By convention, procedure 0 takes null arguments and returns them
  */
 
-#define NULLPROC ((u_int)0)
+#define NULLPROC ((unsigned int)0)
 
 /*
  * Below are the client handle creation routines for the various
@@ -251,11 +251,11 @@ typedef struct __rpc_client {
  * Memory based rpc (for speed check and testing)
  * CLIENT *
  * clntraw_create(prog, vers)
- *	u_long prog;
- *	u_long vers;
+ *	unsigned long prog;
+ *	unsigned long vers;
  */
 __BEGIN_DECLS
-extern CLIENT *clntraw_create(u_long, u_long);
+extern CLIENT *clntraw_create(unsigned long, unsigned long);
 __END_DECLS
 
 
@@ -263,13 +263,13 @@ __END_DECLS
  * Generic client creation routine. Supported protocols are "udp" and "tcp"
  * CLIENT *
  * clnt_create(host, prog, vers, prot);
- *	char *host; 	-- hostname
- *	u_long prog;	-- program number
- *	u_long vers;	-- version number
- *	char *prot;	-- protocol
+ *	char *host; 		-- hostname
+ *	unsigned long prog;	-- program number
+ *	unsigned long vers;	-- version number
+ *	char *prot;		-- protocol
  */
 __BEGIN_DECLS
-extern CLIENT *clnt_create(char *, u_long, u_long, char *);
+extern CLIENT *clnt_create(char *, unsigned long, unsigned long, char *);
 __END_DECLS
 
 
@@ -278,15 +278,15 @@ __END_DECLS
  * CLIENT *
  * clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
  *	struct sockaddr_in *raddr;
- *	u_long prog;
- *	u_long version;
+ *	unsigned long prog;
+ *	unsigned long version;
  *	int *sockp;
- *	u_int sendsz;
- *	u_int recvsz;
+ *	unsigned int sendsz;
+ *	unsigned int recvsz;
  */
 __BEGIN_DECLS
-extern CLIENT *clnttcp_create(struct sockaddr_in *, u_long, u_long, int *,
-    u_int, u_int);
+extern CLIENT *clnttcp_create(struct sockaddr_in *, unsigned long, 
+    unsigned long, int *, unsigned int, unsigned int);
 __END_DECLS
 
 
@@ -295,8 +295,8 @@ __END_DECLS
  * CLIENT *
  * clntudp_create(raddr, program, version, wait, sockp)
  *	struct sockaddr_in *raddr;
- *	u_long program;
- *	u_long version;
+ *	unsigned long program;
+ *	unsigned long version;
  *	struct timeval wait;
  *	int *sockp;
  *
@@ -304,18 +304,18 @@ __END_DECLS
  * CLIENT *
  * clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
  *	struct sockaddr_in *raddr;
- *	u_long program;
- *	u_long version;
+ *	unsigned long program;
+ *	unsigned long version;
  *	struct timeval wait;
  *	int *sockp;
- *	u_int sendsz;
- *	u_int recvsz;
+ *	unsigned int sendsz;
+ *	unsigned int recvsz;
  */
 __BEGIN_DECLS
-extern CLIENT *clntudp_create(struct sockaddr_in *, u_long, u_long,
-    struct timeval, int *);
-extern CLIENT *clntudp_bufcreate(struct sockaddr_in *, u_long, u_long,
-    struct timeval, int *, u_int, u_int);
+extern CLIENT *clntudp_create(struct sockaddr_in *, unsigned long, 
+    unsigned long, struct timeval, int *);
+extern CLIENT *clntudp_bufcreate(struct sockaddr_in *, unsigned long, 
+    unsigned long, struct timeval, int *, unsigned int, unsigned int);
 __END_DECLS
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.8 2003/12/31 03:27:23 millert Exp $	*/
+/*	$OpenBSD: svc.h,v 1.9 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ enum xprt_stat {
  */
 typedef struct __rpc_svcxprt {
 	int		xp_sock;
-	u_short		xp_port;	 /* associated port number */
+	unsigned short	xp_port;	 /* associated port number */
 	struct xp_ops {
 		/* receive incomming requests */
 		bool_t	(*xp_recv)(struct __rpc_svcxprt *,
@@ -164,13 +164,13 @@ struct svc_req {
  *
  * svc_register(xprt, prog, vers, dispatch, protocol)
  *	SVCXPRT *xprt;
- *	u_long prog;
- *	u_long vers;
+ *	unsigned long prog;
+ *	unsigned long vers;
  *	void (*dispatch)();
  *	int protocol;    like TCP or UDP, zero means do not register 
  */
 __BEGIN_DECLS
-extern bool_t	svc_register(SVCXPRT *, u_long, u_long,
+extern bool_t	svc_register(SVCXPRT *, unsigned long, unsigned long,
 		    void (*)(struct svc_req *, SVCXPRT *), int);
 __END_DECLS
 
@@ -178,11 +178,11 @@ __END_DECLS
  * Service un-registration
  *
  * svc_unregister(prog, vers)
- *	u_long prog;
- *	u_long vers;
+ *	unsigned long prog;
+ *	unsigned long vers;
  */
 __BEGIN_DECLS
-extern void	svc_unregister(u_long, u_long);
+extern void	svc_unregister(unsigned long, unsigned long);
 __END_DECLS
 
 /*
@@ -240,7 +240,7 @@ extern bool_t	svc_sendreply(SVCXPRT *, xdrproc_t, char *);
 extern void	svcerr_decode(SVCXPRT *);
 extern void	svcerr_weakauth(SVCXPRT *);
 extern void	svcerr_noproc(SVCXPRT *);
-extern void	svcerr_progvers(SVCXPRT *, u_long, u_long);
+extern void	svcerr_progvers(SVCXPRT *, unsigned long, unsigned long);
 extern void	svcerr_auth(SVCXPRT *, enum auth_stat);
 extern void	svcerr_noprog(SVCXPRT *);
 extern void	svcerr_systemerr(SVCXPRT *);
@@ -304,7 +304,7 @@ __END_DECLS
  */
 __BEGIN_DECLS
 extern SVCXPRT *svcudp_create(int);
-extern SVCXPRT *svcudp_bufcreate(int, u_int, u_int);
+extern SVCXPRT *svcudp_bufcreate(int, unsigned int, unsigned int);
 __END_DECLS
 
 
@@ -312,14 +312,14 @@ __END_DECLS
  * Tcp based rpc.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svctcp_create(int, u_int, u_int);
+extern SVCXPRT *svctcp_create(int, unsigned int, unsigned int);
 __END_DECLS
 
 /*
  * Fd based rpc.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svcfd_create(int, u_int, u_int);
+extern SVCXPRT *svcfd_create(int, unsigned int, unsigned int);
 __END_DECLS
 
 #endif /* !_RPC_SVC_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.15 2003/10/07 22:17:27 avsm Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.16 2004/01/22 21:48:02 espie Exp $	*/
 
 /*
  * SHA-1 in C
@@ -12,25 +12,25 @@
 typedef struct {
     u_int32_t state[5];
     u_int32_t count[2];
-    u_char buffer[64];
+    unsigned char buffer[64];
 } SHA1_CTX;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void SHA1Transform(u_int32_t state[5], const u_char buffer[64])
+void SHA1Transform(u_int32_t [5], const unsigned char [64])
 		__attribute__((__bounded__(__minbytes__,1,5)))
 		__attribute__((__bounded__(__minbytes__,2,64)));
-void SHA1Init(SHA1_CTX *context);
-void SHA1Update(SHA1_CTX *context, const u_char *data, u_int len)
+void SHA1Init(SHA1_CTX *);
+void SHA1Update(SHA1_CTX *, const unsigned char *, unsigned int)
 		__attribute__((__bounded__(__string__,2,3)));
-void SHA1Final(u_char digest[20], SHA1_CTX *context)
+void SHA1Final(unsigned char [20], SHA1_CTX *)
 		__attribute__((__bounded__(__minbytes__,1,20)));
 char *SHA1End(SHA1_CTX *, char *)
 		__attribute__((__bounded__(__minbytes__,2,41)));
 char *SHA1File(char *, char *)
 		__attribute__((__bounded__(__minbytes__,2,41)));
-char *SHA1Data(const u_char *, size_t, char *)
+char *SHA1Data(const unsigned char *, size_t, char *)
 		__attribute__((__bounded__(__string__,1,2)))
 		__attribute__((__bounded__(__minbytes__,3,41)));
 __END_DECLS

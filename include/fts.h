@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.9 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: fts.h,v 1.10 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -96,18 +96,18 @@ typedef struct _ftsent {
 #define	FTS_SL		12		/* symbolic link */
 #define	FTS_SLNONE	13		/* symbolic link without target */
 #define	FTS_W		14		/* whiteout object */
-	u_short fts_info;		/* user flags for FTSENT structure */
+	unsigned short fts_info;	/* user flags for FTSENT structure */
 
 #define	FTS_DONTCHDIR	 0x01		/* don't chdir .. to the parent */
 #define	FTS_SYMFOLLOW	 0x02		/* followed a symlink to get here */
 #define	FTS_ISW		 0x04		/* this is a whiteout object */
-	u_short fts_flags;		/* private flags for FTSENT structure */
+	unsigned short fts_flags;	/* private flags for FTSENT structure */
 
 #define	FTS_AGAIN	 1		/* read node again */
 #define	FTS_FOLLOW	 2		/* follow symbolic link */
 #define	FTS_NOINSTR	 3		/* no instructions */
 #define	FTS_SKIP	 4		/* discard node */
-	u_short fts_instr;		/* fts_set() instructions */
+	unsigned short fts_instr;	/* fts_set() instructions */
 
 	struct stat *fts_statp;		/* stat(2) information */
 	char fts_name[1];		/* file name */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: link_aout.h,v 1.1 2002/06/07 03:00:01 art Exp $	*/
+/*	$OpenBSD: link_aout.h,v 1.2 2004/01/22 21:48:02 espie Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -47,7 +47,7 @@
  */
 struct nzlist {
 	struct nlist	nlist;
-	u_long		nz_size;
+	unsigned long	nz_size;
 #define nz_un		nlist.n_un
 #define nz_strx		nlist.n_un.n_strx
 #define nz_name		nlist.n_un.n_name

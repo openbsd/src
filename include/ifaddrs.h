@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifaddrs.h,v 1.3 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: ifaddrs.h,v 1.4 2004/01/22 21:48:02 espie Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -31,7 +31,7 @@
 struct ifaddrs {
 	struct ifaddrs  *ifa_next;
 	char		*ifa_name;
-	u_int		 ifa_flags;
+	unsigned int	 ifa_flags;
 	struct sockaddr	*ifa_addr;
 	struct sockaddr	*ifa_netmask;
 	struct sockaddr	*ifa_dstaddr;

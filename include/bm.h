@@ -1,4 +1,4 @@
-/*	$OpenBSD: bm.h,v 1.7 2003/08/01 17:38:33 avsm Exp $	*/
+/*	$OpenBSD: bm.h,v 1.8 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: bm.h,v 1.3 1994/10/26 00:55:46 cgd Exp $	*/
 
 /*-
@@ -39,21 +39,21 @@
 #define	_BM_H_
 
 typedef struct {
-	u_char	*pat;			/* pattern */
-	size_t	 patlen;		/* pattern length */
-	size_t	*delta;			/* skip delta */
-	int	 rarec;			/* rare character */
-	size_t	 rareoff;		/* rare offset */
-	size_t	 md2;			/* mini delta */
+	unsigned char	*pat;		/* pattern */
+	size_t	 	 patlen;	/* pattern length */
+	size_t		*delta;		/* skip delta */
+	int	 	rarec;		/* rare character */
+	size_t	 	rareoff;	/* rare offset */
+	size_t	 	md2;		/* mini delta */
 } bm_pat;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-bm_pat	*bm_comp(u_char const *, size_t, u_char const *);
-u_char	*bm_exec(bm_pat *, u_char *, size_t)
-		__attribute__ ((__bounded__(__string__,2,3)));
-void	 bm_free(bm_pat *);
+bm_pat		*bm_comp(unsigned char const *, size_t, unsigned char const *);
+unsigned char	*bm_exec(bm_pat *, unsigned char *, size_t)
+		    __attribute__ ((__bounded__(__string__,2,3)));
+void	 	 bm_free(bm_pat *);
 __END_DECLS
 
 #endif /* !_BM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: pmap_rmt.h,v 1.4 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: pmap_rmt.h,v 1.4 1994/10/26 00:57:01 cgd Exp $	*/
 
 /*
@@ -45,14 +45,14 @@
 #include <sys/cdefs.h>
 
 struct rmtcallargs {
-	u_long prog, vers, proc, arglen;
+	unsigned long prog, vers, proc, arglen;
 	caddr_t args_ptr;
 	xdrproc_t xdr_args;
 };
 
 struct rmtcallres {
-	u_long *port_ptr;
-	u_long resultslen;
+	unsigned long *port_ptr;
+	unsigned long resultslen;
 	caddr_t results_ptr;
 	xdrproc_t xdr_results;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_msg.h,v 1.3 2002/02/16 21:27:18 millert Exp $	*/
+/*	$OpenBSD: rpc_msg.h,v 1.4 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: rpc_msg.h,v 1.5 1995/04/29 05:28:00 cgd Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #ifndef _RPC_RPCMSG_H
 #define _RPC_RPCMSG_H
 
-#define RPC_MSG_VERSION		((u_long) 2)
-#define RPC_SERVICE_PORT	((u_short) 2048)
+#define RPC_MSG_VERSION		((unsigned long) 2)
+#define RPC_SERVICE_PORT	((unsigned short) 2048)
 
 /*
  * Bottom up definition of an rpc message.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.9 2004/01/17 21:01:31 jakob Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.10 2004/01/22 21:48:02 espie Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -361,8 +361,8 @@ typedef struct {
  */
 #define INDIR_MASK	0xc0
 
-extern	u_int16_t	_getshort(const u_char *);
-extern	u_int32_t	_getlong(const u_char *);
+extern	u_int16_t	_getshort(const unsigned char *);
+extern	u_int32_t	_getlong(const unsigned char *);
 
 /*
  * Inline versions of get/put short/long.  Pointer is advanced.
@@ -371,7 +371,7 @@ extern	u_int32_t	_getlong(const u_char *);
  * portable or it can be elegant but rarely both.
  */
 #define GETSHORT(s, cp) { \
-	register u_char *t_cp = (u_char *)(cp); \
+	unsigned char *t_cp = (unsigned char *)(cp); \
 	(s) = ((u_int16_t)t_cp[0] << 8) \
 	    | ((u_int16_t)t_cp[1]) \
 	    ; \
@@ -379,7 +379,7 @@ extern	u_int32_t	_getlong(const u_char *);
 }
 
 #define GETLONG(l, cp) { \
-	register u_char *t_cp = (u_char *)(cp); \
+	unsigned char *t_cp = (unsigned char *)(cp); \
 	(l) = ((u_int32_t)t_cp[0] << 24) \
 	    | ((u_int32_t)t_cp[1] << 16) \
 	    | ((u_int32_t)t_cp[2] << 8) \
@@ -389,16 +389,16 @@ extern	u_int32_t	_getlong(const u_char *);
 }
 
 #define PUTSHORT(s, cp) { \
-	register u_int16_t t_s = (u_int16_t)(s); \
-	register u_char *t_cp = (u_char *)(cp); \
+	u_int16_t t_s = (u_int16_t)(s); \
+	unsigned char *t_cp = (unsigned char *)(cp); \
 	*t_cp++ = t_s >> 8; \
 	*t_cp   = t_s; \
 	(cp) += INT16SZ; \
 }
 
 #define PUTLONG(l, cp) { \
-	register u_int32_t t_l = (u_int32_t)(l); \
-	register u_char *t_cp = (u_char *)(cp); \
+	u_int32_t t_l = (u_int32_t)(l); \
+	unsigned char *t_cp = (unsigned char *)(cp); \
 	*t_cp++ = t_l >> 24; \
 	*t_cp++ = t_l >> 16; \
 	*t_cp++ = t_l >> 8; \

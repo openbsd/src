@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.11 2003/10/07 22:17:27 avsm Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.12 2004/01/22 21:48:02 espie Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -27,27 +27,27 @@
 
 /* RMD160 context. */
 typedef struct RMD160Context {
-	u_int32_t state[5];	/* state */
-	u_int64_t count;	/* number of bits, modulo 2^64 */
-	u_char buffer[64];	/* input buffer */
+	u_int32_t state[5];		/* state */
+	u_int64_t count;		/* number of bits, modulo 2^64 */
+	unsigned char buffer[64];	/* input buffer */
 } RMD160_CTX;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	 RMD160Init(RMD160_CTX *);
-void	 RMD160Transform(u_int32_t [5], const u_char [64])
+void	 RMD160Transform(u_int32_t [5], const unsigned char [64])
 		__attribute__((__bounded__(__minbytes__,1,5)))
 		__attribute__((__bounded__(__minbytes__,2,64)));
-void	 RMD160Update(RMD160_CTX *, const u_char *, u_int32_t)
+void	 RMD160Update(RMD160_CTX *, const unsigned char *, u_int32_t)
 		__attribute__((__bounded__(__string__,2,3)));
-void	 RMD160Final(u_char [20], RMD160_CTX *)
+void	 RMD160Final(unsigned char [20], RMD160_CTX *)
 		__attribute__((__bounded__(__minbytes__,1,20)));
 char	*RMD160End(RMD160_CTX *, char *)
 		__attribute__((__bounded__(__minbytes__,2,41)));
 char	*RMD160File(char *, char *)
 		__attribute__((__bounded__(__minbytes__,2,41)));
-char	*RMD160Data(const u_char *, size_t, char *)
+char	*RMD160Data(const unsigned char *, size_t, char *)
 		__attribute__((__bounded__(__string__,1,2)))
 		__attribute__((__bounded__(__minbytes__,3,41)));
 __END_DECLS

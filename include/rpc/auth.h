@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.4 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: auth.h,v 1.5 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -88,9 +88,9 @@ __END_DECLS
  * Authentication info.  Opaque to client.
  */
 struct opaque_auth {
-	enum_t	oa_flavor;		/* flavor of auth */
-	caddr_t	oa_base;		/* address of more auth stuff */
-	u_int	oa_length;		/* not to exceed MAX_AUTH_BYTES */
+	enum_t		oa_flavor;	/* flavor of auth */
+	caddr_t		oa_base;	/* address of more auth stuff */
+	unsigned int	oa_length;	/* not to exceed MAX_AUTH_BYTES */
 };
 
 
@@ -172,7 +172,8 @@ struct sockaddr_in;
 extern AUTH *authunix_create(char *, int, int, int, int *);
 extern AUTH *authunix_create_default(void);
 extern AUTH *authnone_create(void);
-extern AUTH *authdes_create(char *, u_int, struct sockaddr_in *, des_block *);
+extern AUTH *authdes_create(char *, unsigned int, struct sockaddr_in *, 
+    des_block *);
 __END_DECLS
 
 #define AUTH_NONE	0		/* no authentication */

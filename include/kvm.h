@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.10 2004/01/07 02:16:32 millert Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.11 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -75,9 +75,9 @@ kvm_t	 *kvm_open
 (const char *, const char *, const char *, int, const char *);
 kvm_t	 *kvm_openfiles
 (const char *, const char *, const char *, int, char *);
-ssize_t	  kvm_read(kvm_t *, u_long, void *, size_t)
+ssize_t	  kvm_read(kvm_t *, unsigned long, void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
-ssize_t	  kvm_write(kvm_t *, u_long, const void *, size_t)
+ssize_t	  kvm_write(kvm_t *, unsigned long, const void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
 
 __END_DECLS

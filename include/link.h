@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.13 2002/09/07 20:35:03 deraadt Exp $	*/
+/*	$OpenBSD: link.h,v 1.14 2004/01/22 21:48:02 espie Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -49,12 +49,12 @@
  */
 
 struct sod {	/* Shared Object Descriptor */
-	long	sod_name;		/* name (relative to load address) */
-	u_int	sod_library  : 1,	/* Searched for by library rules */
-		sod_reserved : 31;
-	short	sod_major;		/* major version number */
-	short	sod_minor;		/* minor version number */
-	long	sod_next;		/* next sod */
+	long		sod_name;	/* name (relative to load address) */
+	unsigned int 	sod_library : 1,/* Searched for by library rules */
+			sod_reserved : 31;
+	short		sod_major;	/* major version number */
+	short		sod_minor;	/* minor version number */
+	long		sod_next;	/* next sod */
 };
 
 /*
@@ -69,7 +69,7 @@ struct so_map {		/* Shared Object Map */
 	struct so_map	*som_next;	/* Next map in chain */
 	struct sod	*som_sod;	/* Sod responsible for this map */
 	caddr_t		som_sodbase;	/* Base address of this sod */
-	u_int		som_write : 1;	/* Text is currently writable */
+	unsigned int	som_write : 1;	/* Text is currently writable */
 	struct _dynamic	*som_dynamic;	/* _dynamic structure */
 	caddr_t		som_spd;	/* Private data */
 };
