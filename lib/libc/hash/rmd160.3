@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.11 1999/08/11 03:06:06 deraadt Exp $
+.\"	$OpenBSD: rmd160.3,v 1.12 2000/04/18 03:01:29 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -59,8 +59,10 @@
 .Fn RMD160Data "u_char *data" "u_int len" "char *buf"
 .Sh DESCRIPTION
 The RMD160 functions implement the 160-bit RIPE message digest hash algorithm
-(RMD-160).  RMD-160 is used to generate a condensed representation
-of a message called a message digest.  The algorithm takes a
+(RMD-160).
+RMD-160 is used to generate a condensed representation
+of a message called a message digest.
+The algorithm takes a
 message less than 2^64 bits as input and produces a 160-bit digest
 suitable for use as a digital signature.
 .Pp
@@ -70,7 +72,8 @@ and
 .Xr md5 3
 functions and at least as secure as the
 .Xr sha1 3
-function.  All share a similar interface.
+function.
+All share a similar interface.
 .Pp
 The
 .Fn RMD160Init
@@ -144,8 +147,8 @@ and
 functions the
 .Ar buf
 parameter should either be a string of at least 41 characters in
-size or a NULL pointer.  In the latter case, space will be dynamically
-allocated via
+size or a NULL pointer.
+In the latter case, space will be dynamically allocated via
 .Xr malloc 3
 and should be freed using
 .Xr free 3

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.18 2000/03/06 21:46:56 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.19 2000/04/18 03:01:26 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,8 @@ is
 .Dv NULL ,
 the current entry is removed from the database.
 .Fn cgetset
-must precede the database traversal.  It must be called before
+must precede the database traversal.
+It must be called before
 .Fn cgetent .
 If a sequential access is being performed (see below), it must be called
 before the first sequential access call
@@ -160,18 +161,21 @@ with type
 .Fa type .
 A
 .Fa type
-is specified using any single character.  If a colon
+is specified using any single character.
+If a colon
 .Pq Sq \&:
 is used, an
 untyped capability will be searched for (see below for explanation of
-types).  A pointer to the value of
+types).
+A pointer to the value of
 .Fa cap
 in
 .Fa buf
 is returned on success or
 .Dv NULL
 if the requested capability couldn't be
-found.  The end of the capability value is signaled by a
+found.
+The end of the capability value is signaled by a
 .Sq \&:
 or
 .Tn ASCII
@@ -228,7 +232,8 @@ record returned by the previous
 .Fn cgetfirst
 or
 .Fn cgetnext
-call.  If there is no such previous call, the first record in the database is
+call.
+If there is no such previous call, the first record in the database is
 returned.
 Each record is returned in a
 .Xr malloc Ns \&'d
@@ -238,7 +243,7 @@ copy pointed to by
 expansion is done (see
 .Ic tc=
 comments below).
-Upon completion of the database 0 is returned,  1 is returned upon successful
+Upon completion of the database 0 is returned, 1 is returned upon successful
 return of record with possibly more remaining (we haven't reached the end of
 the database yet), 2 is returned if the record contains an unresolved
 .Ic tc
@@ -250,36 +255,43 @@ Upon completion of database (0 return) the database is closed.
 .Pp
 .Fn cgetclose
 closes the sequential access and frees any memory and file descriptors
-being used.  Note that it does not erase the buffer pushed by a call to
+being used.
+Note that it does not erase the buffer pushed by a call to
 .Fn cgetset .
 .Ss Capability database syntax
 Capability databases are normally
 .Tn ASCII
 and may be edited with standard
-text editors.  Blank lines and lines beginning with a
+text editors.
+Blank lines and lines beginning with a
 .Sq \&#
 are comments
-and ignored.  Lines ending with a
+and ignored.
+Lines ending with a
 .Sq \|\e
 indicate that the next line
 is a continuation of the current line; the
 .Sq \|\e
 and following newline
-are ignored.  Long lines are usually continued onto several physical
+are ignored.
+Long lines are usually continued onto several physical
 lines by ending each line except the last with a
 .Sq \|\e .
 .Pp
 Capability databases consist of a series of records, one per logical
-line.  Each record contains a variable number of
-colon-separated fields
-(capabilities).  Empty fields consisting entirely of whitespace
+line.
+Each record contains a variable number of colon-separated fields
+(capabilities).
+Empty fields consisting entirely of whitespace
 characters (spaces and tabs) are ignored.
 .Pp
 The first capability of each record specifies its names, separated by
 .Sq \&|
-characters.  These names are used to reference records in the database.
+characters.
+These names are used to reference records in the database.
 By convention, the last name is usually a comment and is not intended as
-a lookup tag.  For example, the
+a lookup tag.
+For example, the
 .Dq vt100
 record from the
 .Nm termcap
@@ -304,8 +316,8 @@ has value
 does not exist
 .El
 .Pp
-Names consist of one or more characters.  Names may contain any character
-except
+Names consist of one or more characters.
+Names may contain any character except
 .Sq \&: ,
 but it's usually best to restrict them to the printable
 characters and avoid use of graphics like
@@ -313,21 +325,22 @@ characters and avoid use of graphics like
 .Sq \&= ,
 .Sq \&% ,
 .Sq \&@ ,
-etc.  Types
-are single characters used to separate capability names from their
-associated typed values.  Types may be any character except a
+etc.
+Types are single characters used to separate capability names from their
+associated typed values.
+Types may be any character except a
 .Sq \&: .
 Typically, graphics like
 .Sq \&# ,
 .Sq \&= ,
 .Sq \&% ,
-etc. are used.  Values may be any
-number of characters and may contain any character except
+etc. are used.
+Values may be any number of characters and may contain any character except
 .Sq \&: .
 .Ss Capability database semantics
-Capability records describe a set of (name, value) bindings.  Names may
-have multiple values bound to them.  Different values for a name are
-distinguished by their
+Capability records describe a set of (name, value) bindings.
+Names may have multiple values bound to them.
+Different values for a name are distinguished by their
 .Fa types .
 .Fn cgetcap
 will return a pointer to a value of a name given the capability name and
@@ -338,8 +351,8 @@ The types
 and
 .Sq \&=
 are conventionally used to denote numeric and
-string typed values, but no restriction on those types is enforced.  The
-functions
+string typed values, but no restriction on those types is enforced.
+The functions
 .Fn cgetnum
 and
 .Fn cgetstr
@@ -365,7 +378,8 @@ capabilities may interpolate records which also contain
 .Ic tc
 capabilities and more than one
 .Ic tc
-capability may be used in a record.  A
+capability may be used in a record.
+A
 .Ic tc
 expansion scope (i.e., where the argument is searched for) contains the
 file in which the
@@ -373,7 +387,8 @@ file in which the
 is declared and all subsequent files in the file array.
 .Pp
 When a database is searched for a capability record, the first matching
-record in the search is returned.  When a record is scanned for a
+record in the search is returned.
+When a record is scanned for a
 capability, the first matching capability is returned; the capability
 .Ic :nameT@:
 will hide any following definition of a value of type
@@ -429,7 +444,8 @@ Otherwise, if the number starts with a
 it is interpreted as an octal number.
 Otherwise the number is interpreted as a decimal number.
 .Pp
-String capability values may contain any character.  Non-printable
+String capability values may contain any character.
+Non-printable
 .Dv ASCII
 codes, new lines, and colons may be conveniently represented by the use
 of escape sequences:
@@ -450,7 +466,8 @@ of escape sequences:
 A
 .Sq \|\e
 may be followed by up to three octal digits directly specifies
-the numeric code for a character.  The use of
+the numeric code for a character.
+The use of
 .Tn ASCII
 NULs, while easily
 encoded, causes all sorts of problems and must be used with care since
@@ -471,8 +488,8 @@ The capability foo has two values bound to it (bar of type
 and blah of
 type
 .Sq \&^ )
-and any other value bindings are hidden.  The capability abc
-also has two values bound but only a value of type
+and any other value bindings are hidden.
+The capability abc also has two values bound but only a value of type
 .Sq \&$
 is prevented from
 being defined in the capability record more.
@@ -495,8 +512,8 @@ who-cares@ prevents the definition of any who-cares definitions in old
 from being seen, glork#200 is inherited from old, and blah and anything
 defined by the record extensions is added to those definitions in old.
 Note that the position of the fript=bar and who-cares@ definitions before
-tc=old is important here.  If they were after, the definitions in old
-would take precedence.
+tc=old is important here.
+If they were after, the definitions in old would take precedence.
 .Sh DIAGNOSTICS
 .Fn cgetent ,
 .Fn cgetset ,

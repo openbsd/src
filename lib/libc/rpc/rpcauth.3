@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpcauth.3,v 1.6 1999/07/02 20:58:00 aaron Exp $
+.\"	$OpenBSD: rpcauth.3,v 1.7 2000/04/18 03:01:34 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -28,8 +28,8 @@ RPC functions described in
 .Fn auth_destroy
 is a macro that destroys the authentication information associated with
 .Fa auth .
-Destruction usually involves deallocation of private data
-structures. The use of
+Destruction usually involves deallocation of private data structures.
+The use of
 .Fa auth
 is undefined after calling
 .Fn auth_destroy .
@@ -38,8 +38,8 @@ is undefined after calling
 creates and returns an
 .Tn RPC
 authentication handle that passes nonusable authentication
-information with each remote procedure call. This is the
-default authentication used by
+information with each remote procedure call.
+This is the default authentication used by
 .Tn RPC .
 .Pp
 .Fn authunix_create

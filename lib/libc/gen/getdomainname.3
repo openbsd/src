@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdomainname.3,v 1.16 2000/04/15 11:46:02 aaron Exp $
+.\"	$OpenBSD: getdomainname.3,v 1.17 2000/04/18 03:01:26 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,8 @@ The parameter
 .Fa namelen
 specifies the size of the
 .Fa name
-array.  If insufficient space is provided, the returned name is truncated.
+array.
+If insufficient space is provided, the returned name is truncated.
 The returned name is always null terminated.
 .Pp
 .Fn setdomainname
@@ -66,8 +67,8 @@ which has length
 This call is restricted to the superuser and
 is normally used only when the system is bootstrapped.
 .Sh RETURN VALUES
-If the call succeeds a value of 0 is returned.  If the call
-fails, a value of \-1 is returned and an error code is
+If the call succeeds a value of 0 is returned.
+If the call fails, a value of \-1 is returned and an error code is
 placed in the global variable
 .Va errno .
 .Sh ERRORS
@@ -95,7 +96,8 @@ Domain names are limited to
 .Dv MAXHOSTNAMELEN
 (from
 .Ao Pa sys/param.h Ac )
-characters, currently 256.  This includes the terminating NUL character.
+characters, currently 256.
+This includes the terminating NUL character.
 .Pp
 If the buffer passed to
 .Fn getdomainname

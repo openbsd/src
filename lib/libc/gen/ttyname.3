@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttyname.3,v 1.10 2000/01/22 12:00:42 aaron Exp $
+.\"	$OpenBSD: ttyname.3,v 1.11 2000/04/18 03:01:28 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,8 @@
 .Fn ttyslot "void"
 .Sh DESCRIPTION
 These functions operate on the system file descriptors for terminal
-type devices. These descriptors are not related to the standard
+type devices.
+These descriptors are not related to the standard
 .Tn I/O
 .Dv FILE
 typedef, but refer to the special device files found in
@@ -93,7 +94,8 @@ in the character array referenced by
 The array is
 .Fa namesize
 characters long and should have space for the name and the terminating
-NUL character. The maximum length of the terminal name is
+NUL character.
+The maximum length of the terminal name is
 .Dv TTY_NAME_MAX .
 .Pp
 The
@@ -174,6 +176,7 @@ function appeared in the POSIX Threads Extension (1003.1c-1995).
 The
 .Fn ttyname
 function leaves its result in an internal static object and returns
-a pointer to that object. Subsequent calls to
+a pointer to that object.
+Subsequent calls to
 .Fn ttyname
 will modify the same object.

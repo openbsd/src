@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftok.3,v 1.9 1999/09/23 04:12:00 alex Exp $
+.\"	$OpenBSD: ftok.3,v 1.10 2000/04/18 03:01:26 aaron Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -52,8 +52,8 @@ of an existing file and a user-selectable
 The specified
 .Fa path
 must refer to an existing file that is accessible to the calling process
-or the call will fail.  Also, note that links to files will return the
-same key, given the same
+or the call will fail.
+Also, note that links to files will return the same key, given the same
 .Fa id .
 Only the 8 least significant bits of
 .Fa id

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.17 1999/10/06 14:55:29 espie Exp $
+.\"	$OpenBSD: sha1.3,v 1.18 2000/04/18 03:01:29 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -58,8 +58,10 @@
 .Fn SHA1Data "u_char *data" "u_int len" "char *buf"
 .Sh DESCRIPTION
 The SHA1 functions implement the NIST Secure Hash Algorithm (SHA-1),
-FIPS PUB 180-1.  SHA-1 is used to generate a condensed representation
-of a message called a message digest.  The algorithm takes a
+FIPS PUB 180-1.
+SHA-1 is used to generate a condensed representation
+of a message called a message digest.
+The algorithm takes a
 message less than 2^64 bits as input and produces a 160-bit digest
 suitable for use as a digital signature.
 .Pp
@@ -141,8 +143,8 @@ and
 functions the
 .Ar buf
 parameter should either be a string of at least 41 characters in
-size or a NULL pointer.  In the latter case, space will be dynamically
-allocated via
+size or a NULL pointer.
+In the latter case, space will be dynamically allocated via
 .Xr malloc 3
 and should be freed using
 .Xr free 3

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.8 1999/07/05 04:40:59 aaron Exp $
+.\"	$OpenBSD: inet.3,v 1.9 2000/04/18 03:01:32 aaron Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -85,12 +85,13 @@ The
 function converts a presentation format address (that is, printable form
 as held in a character string) to network format (usually a
 .Li struct in_addr
-or some other internal binary representation, in network byte order).  It
-returns 1 if the address was valid for the specified address family, or
+or some other internal binary representation, in network byte order).
+It returns 1 if the address was valid for the specified address family, or
 0 if the address wasn't parseable in the specified address family, or \-1
 if some system error occurred (in which case
 .Va errno
-will have been set).  This function is presently valid for
+will have been set).
+This function is presently valid for
 .Dv AF_INET
 and
 .Dv AF_INET6 .
@@ -113,7 +114,8 @@ The function
 converts an address from network format (usually a
 .Li struct in_addr
 or some other binary form, in network byte order) to presentation format
-(suitable for external display purposes).  It returns
+(suitable for external display purposes).
+It returns
 .Dv NULL
 if a system
 error occurs (in which case,
@@ -125,11 +127,13 @@ takes an Internet address and returns an
 .Tn ASCII
 string representing the address in
 .Ql \&.
-notation.  The routine
+notation.
+The routine
 .Fn inet_makeaddr
 takes an Internet network number and a local
 network address and constructs an Internet address
-from it.  The routines
+from it.
+The routines
 .Fn inet_netof
 and
 .Fn inet_lnaof
@@ -155,8 +159,8 @@ a
 .Pp
 When four parts are specified, each is interpreted
 as a byte of data and assigned, from left to right,
-to the four bytes of an Internet address.  Note
-that when an Internet address is viewed as a 32-bit
+to the four bytes of an Internet address.
+Note that when an Internet address is viewed as a 32-bit
 integer quantity on a system that uses little-endian
 byte order (such as the
 .Tn Intel 386, 486
@@ -214,16 +218,20 @@ every field (except for the case described in 2.).
 .It
 Due to the method of allocating certain styles of IPv6
 addresses, it will be common for addresses to contain long
-strings of zero bits.  In order to make writing addresses
+strings of zero bits.
+In order to make writing addresses
 .Pp
 containing zero bits easier a special syntax is available to
-compress the zeros.  The use of
+compress the zeros.
+The use of
 .Dq \&:\&:
 indicates multiple groups
-of 16 bits of zeros.  The
+of 16 bits of zeros.
+The
 .Dq \&:\&:
 can only appear once in an
-address.  The
+address.
+The
 .Dq \&:\&:
 can also be used to compress the leading and/or trailing zeros in an address.
 .Pp
@@ -248,7 +256,8 @@ dealing with a mixed environment of IPv4 and IPv6 nodes is
 x:x:x:x:x:x:d.d.d.d, where the 'x's are the hexadecimal values
 of the six high-order 16-bit pieces of the address, and the 'd's
 are the decimal values of the four low-order 8-bit pieces of the
-address (standard IPv4 representation).  Examples:
+address (standard IPv4 representation).
+Examples:
 .Bd -literal -offset indent
 0:0:0:0:0:0:13.1.68.3
 0:0:0:0:0:FFFF:129.144.52.38
@@ -281,10 +290,12 @@ The
 and
 .Nm inet_pton
 functions conforms to the IETF IPng BSD API and address formatting
-specifications.  Note that
+specifications.
+Note that
 .Nm inet_pton
-does not accept 1-, 2-, or 3-part  dotted addresses; all four parts
-must be specified.  This is a narrower input set than that accepted by
+does not accept 1-, 2-, or 3-part dotted addresses; all four parts
+must be specified.
+This is a narrower input set than that accepted by
 .Nm inet_aton .
 .Sh HISTORY
 The

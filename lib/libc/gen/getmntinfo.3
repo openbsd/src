@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getmntinfo.3,v 1.7 1999/08/25 12:26:51 millert Exp $
+.\"	$OpenBSD: getmntinfo.3,v 1.8 2000/04/18 03:01:26 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,8 +97,8 @@ function first appeared in
 The
 .Fn getmntinfo
 function writes the array of structures to an internal static object
-and returns
-a pointer to that object. Subsequent calls to
+and returns a pointer to that object.
+Subsequent calls to
 .Fn getmntinfo
 will modify the same object.
 .Pp

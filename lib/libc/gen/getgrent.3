@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrent.3,v 1.8 2000/03/23 22:14:03 d Exp $
+.\"	$OpenBSD: getgrent.3,v 1.9 2000/04/18 03:01:26 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,8 +94,8 @@ search the group database for the given group name pointed to by
 .Fa name
 or the group ID pointed to by
 .Fa gid ,
-respectively, returning the first one encountered.  Identical group
-names or group GIDs may result in undefined behavior.
+respectively, returning the first one encountered.
+Identical group names or group GIDs may result in undefined behavior.
 .Pp
 .Fn getgrent
 sequentially reads the group database and is intended for programs
@@ -104,12 +104,15 @@ that wish to step through the complete list of groups.
 All three routines will open the group file for reading, if necessary.
 .Pp
 .Fn setgroupent
-opens the file, or rewinds it if it is already open.  If
+opens the file, or rewinds it if it is already open.
+If
 .Fa stayopen
 is non-zero, file descriptors are left open, significantly speeding
-subsequent function calls.  This functionality is unnecessary for
+subsequent function calls.
+This functionality is unnecessary for
 .Fn getgrent
-as it doesn't close its file descriptors by default.  It should also
+as it doesn't close its file descriptors by default.
+It should also
 be noted that it is dangerous for long-running programs to use this
 functionality as the group file may be updated.
 .Pp
@@ -208,9 +211,8 @@ The functions
 and
 .Fn setgrent
 leave their results in an internal static object and return
-a pointer to that object. Subsequent calls to
-the same function
-will modify the same object.
+a pointer to that object.
+Subsequent calls to the same function will modify the same object.
 .Pp
 The functions
 .Fn getgrent ,

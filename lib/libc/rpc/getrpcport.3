@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrpcport.3,v 1.4 1997/07/21 19:59:40 deraadt Exp $
+.\"	$OpenBSD: getrpcport.3,v 1.5 2000/04/18 03:01:34 aaron Exp $
 .\"
 .Dd October 6, 1987
 .Dt GETRPCPORT 3
@@ -22,7 +22,8 @@ and using protocol
 .Fa proto .
 It returns 0 if it cannot contact the portmapper, or if
 .Fa prognum
-is not registered.  If
+is not registered.
+If
 .Fa prognum
 is registered but not with version
 .Fa versnum ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrpcent.3,v 1.5 1999/07/09 13:35:22 aaron Exp $
+.\"	$OpenBSD: getrpcent.3,v 1.6 2000/04/18 03:01:33 aaron Exp $
 .\"
 .Dd December 14, 1987
 .Dt GETRPCENT 3
@@ -54,7 +54,8 @@ The rpc program number for this service.
 reads the next line of the file, opening the file if necessary.
 .Pp
 .Fn setrpcent
-opens and rewinds the file.  If the
+opens and rewinds the file.
+If the
 .Fa stayopen
 flag is non-zero,
 the net data base will not be closed after each call to

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.20 2000/04/15 02:15:23 aaron Exp $
+.\"	$OpenBSD: rpc.3,v 1.21 2000/04/18 03:01:34 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -240,8 +240,8 @@ this routine.
 is like
 .Fn callrpc ,
 except the call message is broadcast to all locally
-connected broadcast nets. Each time it receives a
-response, this routine calls
+connected broadcast nets.
+Each time it receives a response, this routine calls
 .Fa eachresult ,
 whose form is:
 .Bd -literal -offset indent
@@ -267,8 +267,8 @@ status.
 .Pp
 .Sy Warning:
 broadcast sockets are limited in size to the
-maximum transfer unit of the data link. For Ethernet,
-this value is 1500 bytes.
+maximum transfer unit of the data link.
+For Ethernet, this value is 1500 bytes.
 .Pp
 .Fn clnt_call
 is a macro that calls the remote procedure
@@ -294,10 +294,11 @@ is the time allowed for results to come back.
 .Fn clnt_destroy
 is a macro that destroys the client's
 .Tn RPC
-handle. Destruction usually involves deallocation
-of private data structures, including
+handle.
+Destruction usually involves deallocation of private data structures, including
 .Fa clnt
-itself.  Use of
+itself.
+Use of
 .Fa clnt
 is undefined after calling
 .Fn clnt_destroy .
@@ -312,8 +313,8 @@ is a generic client creation routine.
 identifies the name of the remote host where the server
 is located.
 .Fa proto
-indicates which kind of transport protocol to use. The
-currently supported values for this field are \(lqudp\(rq
+indicates which kind of transport protocol to use.
+The currently supported values for this field are \(lqudp\(rq
 and \(lqtcp\(rq.
 Default timeouts are set, but can be modified using
 .Fn clnt_control .
@@ -321,7 +322,8 @@ Default timeouts are set, but can be modified using
 .Sy Warning:
 Using
 .Tn UDP
-has its shortcomings.  Since
+has its shortcomings.
+Since
 .Tn UDP-based
 .Tn RPC
 messages can only hold up to 8 Kbytes of encoded data,
@@ -334,7 +336,8 @@ about a client object.
 .Fa req
 indicates the type of operation, and
 .Fa info
-is a pointer to the information. For both
+is a pointer to the information.
+For both
 .Tn UDP
 and
 .Tn TCP ,
@@ -377,8 +380,8 @@ is a macro that frees any data allocated by the
 .Tn RPC/XDR
 system when it decoded the results of an
 .Tn RPC
-call.  The
-parameter
+call.
+The parameter
 .Fa out
 is the address of the results, and
 .Fa outproc
@@ -447,7 +450,8 @@ but instead of sending a message to the standard error
 indicating why an
 .Tn RPC
 call failed, return a pointer to a string which contains
-the message.  Unlike
+the message.
+Unlike
 .Fn clnt_perror ,
 it does not append a
 .Tn NEWLINE
@@ -503,7 +507,8 @@ This allows simulation of
 and acquisition of
 .Tn RPC
 overheads, such as round trip times, without any
-kernel interference. This routine returns
+kernel interference.
+This routine returns
 .Tn NULL
 if it fails.
 .Pp
@@ -516,15 +521,16 @@ version
 .Fa versnum ;
 the client uses
 .Tn TCP/IP
-as a transport. The remote program is located at Internet
-address
+as a transport.
+The remote program is located at Internet address
 .Fa *addr .
 If
 .Fa addr\->sin_port
 is zero, then it is set to the actual port that the remote
 program is listening on (the remote
 .Xr portmap 8
-service is consulted for this information). The parameter
+service is consulted for this information).
+The parameter
 .Fa sockp
 is a socket; if it is
 .Fa RPC_ANYSOCK ,
@@ -554,15 +560,16 @@ on
 .Fa versnum ;
 the client uses use
 .Tn UDP/IP
-as a transport. The remote program is located at Internet
-address
+as a transport.
+The remote program is located at Internet address
 .Fa addr .
 If
 .Fa addr\->sin_port
 is zero, then it is set to actual port that the remote
 program is listening on (the remote
 .Xr portmap 8
-service is consulted for this information). The parameter
+service is consulted for this information).
+The parameter
 .Fa sockp
 is a socket; if it is
 .Fa RPC_ANYSOCK ,
@@ -633,7 +640,8 @@ the
 .Tn RPC
 system failured to contact the remote
 .Xr portmap 8
-service.  In the latter case, the global variable
+service.
+In the latter case, the global variable
 .Fn rpc_createerr
 contains the
 .Tn RPC
@@ -655,8 +663,8 @@ The parameter
 .Fa *portp
 will be modified to the program's port number if the
 procedure
-succeeds. The definitions of other parameters are discussed
-in
+succeeds.
+The definitions of other parameters are discussed in
 .Fn callrpc
 and
 .Fn clnt_call .
@@ -674,7 +682,8 @@ and
 .Fa port
 on the machine's
 .Xr portmap 8
-service. The value of
+service.
+The value of
 .Fa protocol
 is most likely
 .B
@@ -694,15 +703,16 @@ and
 .Fa ports
 on the machine's
 .Xr portmap 8
-service. This routine returns one if it succeeds, zero
-otherwise.
+service.
+This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn registerrpc
 will register a procedure
 .Fa procname
 with the
 .Tn RPC
-service package.  If a request arrives for program
+service package.
+If a request arrives for program
 .Fa prognum ,
 version
 .Fa versnum ,
@@ -731,7 +741,8 @@ for restrictions.
 is a global variable whose value is set by any
 .Tn RPC
 client creation routine
-that does not succeed.  Use the routine
+that does not succeed.
+Use the routine
 .Fn clnt_pcreateerror
 to print the reason why.
 .Pp
@@ -743,7 +754,8 @@ service transport handle,
 Destruction usually involves deallocation
 of private data structures, including
 .Fa xprt
-itself.  Use of
+itself.
+Use of
 .Fa xprt
 is undefined after calling this routine.
 .Pp
@@ -798,8 +810,8 @@ descriptors.
 .Fa svc_fds
 is similar to
 .Fa svc_fedset ,
-but limited to 32 descriptors. This
-interface is obsoleted by
+but limited to 32 descriptors.
+This interface is obsoleted by
 .Fa svc_fdset .
 .Pp
 .Fn svc_freeargs
@@ -859,7 +871,8 @@ have been serviced.
 .Fn svc_getreq
 is similar to
 .Fa svc_getreqset ,
-but limited to 32 descriptors. This interface is obsoleted by
+but limited to 32 descriptors.
+This interface is obsoleted by
 .Fa svc_getreqset .
 .Pp
 .Fn svc_register
@@ -873,7 +886,8 @@ If
 .Fa protocol
 is zero, the service is not registered with the
 .Xr portmap 8
-service.  If
+service.
+If
 .Fa protocol
 is non-zero, then a mapping of the triple
 .Fa [ prognum , versnum , protocol]
@@ -899,12 +913,14 @@ The
 routine returns one if it succeeds, and zero otherwise.
 .Pp
 .Fn svc_run
-never returns. It waits for
+never returns.
+It waits for
 .Tn RPC
 requests to arrive, and calls the appropriate service
 procedure using
 .Fn svc_getreq
-when one arrives. This procedure is usually waiting for a
+when one arrives.
+This procedure is usually waiting for a
 .Xr select 2
 system call to return.
 .Pp
@@ -912,7 +928,8 @@ system call to return.
 is called by an
 .Tn RPC
 service's dispatch routine to send the results of a
-remote procedure call.  The parameter
+remote procedure call.
+The parameter
 .Fa xprt
 is the request's associated transport handle;
 .Fa outproc
@@ -936,7 +953,8 @@ a remote procedure call due to an authentication error.
 .Pp
 .Fn svcerr_decode
 is called by a service dispatch routine that cannot successfully
-decode its parameters. See also
+decode its parameters.
+See also
 .Fn svc_getargs .
 .Pp
 .Fn svcerr_noproc
@@ -946,13 +964,15 @@ the procedure number that the caller requests.
 .Fn svcerr_noprog
 is called when the desired program is not registered with the
 .Tn RPC
-package. Service implementors usually do not need this routine.
+package.
+Service implementors usually do not need this routine.
 .Pp
 .Fn svcerr_progvers
 is called when the desired version of a program is not registered
 with the
 .Tn RPC
-package. Service implementors usually do not need this routine.
+package.
+Service implementors usually do not need this routine.
 .Pp
 .Fn svcerr_systemerr
 is called by a service dispatch routine when it detects a system
@@ -964,15 +984,15 @@ it may call this routine.
 .Fn svcerr_weakauth
 is called by a service dispatch routine that refuses to perform
 a remote procedure call due to insufficient
-authentication parameters.  The routine calls
+authentication parameters.
+The routine calls
 .Fa "svcerr_auth(xprt, AUTH_TOOWEAK)" .
 .Pp
 .Fn svcraw_create
 is a routine which creates a toy
 .Tn RPC
-service transport, to which it returns a pointer.  The
-transport
-is really a buffer within the process's address space,
+service transport, to which it returns a pointer.
+The transport is really a buffer within the process's address space,
 so the corresponding
 .Tn RPC
 client should live in the same
@@ -1001,15 +1021,16 @@ which may be
 in which case a new socket is created.
 If the socket is not bound to a local
 .Tn TCP
-port, then this routine binds it to an arbitrary port.  Upon
-completion,
+port, then this routine binds it to an arbitrary port.
+Upon completion,
 .Fa xprt\->xp_sock
 is the transport's socket descriptor, and
 .Fa xprt\->xp_port
 is the transport's port number.
 This routine returns
 .Tn NULL
-if it fails. Since
+if it fails.
+Since
 .Tn TCP-based
 .Tn RPC
 uses buffered
@@ -1018,16 +1039,15 @@ users may specify the size of buffers; values of zero
 choose suitable defaults.
 .Pp
 .Fn svcfd_create
-will create a service on top of any open descriptor. Typically,
-this
-descriptor is a connected socket for a stream protocol such
+will create a service on top of any open descriptor.
+Typically, this descriptor is a connected socket for a stream protocol such
 as
 .Tn TCP .
 .Fa sendsize
 and
 .Fa recvsize
-indicate sizes for the send and receive buffers.  If they are
-zero, a reasonable default is chosen.
+indicate sizes for the send and receive buffers.
+If they are zero, a reasonable default is chosen.
 .Pp
 .Fn svcudp_bufcreate
 is a routine which creates a
@@ -1041,8 +1061,8 @@ which may be
 in which case a new socket is created.
 If the socket is not bound to a local
 .Tn UDP
-port, then this routine binds it to an arbitrary port. Upon
-completion,
+port, then this routine binds it to an arbitrary port.
+Upon completion,
 .Fa xprt\->xp_sock
 is the transport's socket descriptor, and
 .Fa xprt\->xp_port
@@ -1060,9 +1080,8 @@ messages.
 .Fn xdr_accepted_reply
 is used for encoding
 .Tn RPC
-reply messages. This routine is useful for users who
-wish to generate
-RPC-style
+reply messages.
+This routine is useful for users who wish to generate RPC-style
 messages without using the
 .Tn RPC
 package.
@@ -1070,7 +1089,8 @@ package.
 .Fn xdr_authunix_parms
 is used for describing
 .Tn UNIX
-credentials. This routine is useful for users
+credentials.
+This routine is useful for users
 who wish to generate these credentials without using the
 .Tn RPC
 authentication package.
@@ -1138,7 +1158,8 @@ style messages without using the
 package.
 .Pp
 .Fn xprt_register
-is used to register transport handles.  After
+is used to register transport handles.
+After
 .Tn RPC
 service transport handles are created,
 they should register themselves with the
@@ -1149,7 +1170,8 @@ This routine modifies the global variable
 Service implementors usually do not need this routine.
 .Pp
 .Fn xprt_unregister
-is used to unregister a transport handle.  Before an
+is used to unregister a transport handle.
+Before an
 .Tn RPC
 service transport handle is destroyed,
 it should unregister itself with the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.5 2000/03/04 22:19:31 aaron Exp $
+.\"	$OpenBSD: scanf.3,v 1.6 2000/04/18 03:01:35 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -145,7 +145,7 @@ Indicates that the conversion will be one of
 or
 .Cm n
 and the next pointer is a pointer to a
-.Em short  int
+.Em short int
 (rather than
 .Em int ) .
 .It Cm l
@@ -154,7 +154,7 @@ Indicates either that the conversion will be one of
 or
 .Cm n
 and the next pointer is a pointer to a
-.Em long  int
+.Em long int
 (rather than
 .Em int ) ,
 or that the conversion will be one of
@@ -368,8 +368,8 @@ conversion.
 The value
 .Dv EOF
 is returned if an input failure occurs before any conversion such as an
-end-of-file occurs. If an error or end-of-file occurs after conversion
-has begun,
+end-of-file occurs.
+If an error or end-of-file occurs after conversion has begun,
 the number of conversions which were successfully completed is returned.
 .Sh SEE ALSO
 .Xr getc 3 ,

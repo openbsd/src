@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.41 2000/04/12 21:48:01 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.42 2000/04/18 03:01:27 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -198,7 +198,7 @@ level is detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
 .Bl -column "Second level nameXXXXXX" integerXXX -offset indent
-.It Sy  Second level name	Type	Changeable
+.It Sy Second level name	Type	Changeable
 .It Dv HW_MACHINE No "	string	no"
 .It Dv HW_MODEL No "	string	no"
 .It Dv HW_NCPU No "	integer	no"
@@ -720,8 +720,8 @@ in seconds.)
 .It Li tcp.sack
 Returns 1 if RFC2018 Selective Acknowledgements are enabled.
 .It Li tcp.mssdflt
-The maximum segment size that is used as default for non local
-connections. The default value is 512.
+The maximum segment size that is used as default for non-local connections.
+The default value is 512.
 .It Li udp.checksum
 Returns 1 when
 .Tn UDP
@@ -1009,9 +1009,9 @@ Return the system wide virtual memory statistics.
 The returned data consists of a
 .Li struct vmtotal .
 .It Dv VM_SWAPENCRYPT
-Set to 1 to enable swap encryption for all processes.  A 0
-disables swap encryption.  Pages still on swap receive a
-grandfather clause.
+Set to 1 to enable swap encryption for all processes.
+A 0 disables swap encryption.
+Pages still on swap receive a grandfather clause.
 .El
 .Sh RETURN VALUES
 If the call to

@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: basename.3,v 1.11 1999/06/04 01:30:10 aaron Exp $
+.\" $OpenBSD: basename.3,v 1.12 2000/04/18 03:01:25 aaron Exp $
 .\"
 .Dd August 17, 1997
 .Dt BASENAME 3
@@ -44,13 +44,15 @@ returns the last component from the pathname pointed to by
 .Ar path ,
 deleting any trailing
 .Sq \&/
-characters.  If
+characters.
+If
 .Ar path
 consists entirely of
 .Sq \&/
 characters, a pointer to the string
 .Qq \&/
-is returned.  If
+is returned.
+If
 .Ar path
 is a null pointer or the empty string, a pointer to the string
 .Qq \&.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.7 1999/07/05 04:40:59 aaron Exp $
+.\"	$OpenBSD: byteorder.3,v 1.8 2000/04/18 03:01:30 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,8 @@
 .Fn swap16 "u_int16_t val16"
 .Sh DESCRIPTION
 These routines convert 16- and 32-bit quantities between different
-byte orderings.  The
+byte orderings.
+The
 .Dq swap
 functions reverse the byte ordering of
 the given quantity, the others converts either from/to the native
@@ -127,7 +128,8 @@ The swap functions are of the form: swap{size}.
 Names involving
 .Sq n
 convert quantities between network
-byte order and host byte order.  The last letter
+byte order and host byte order.
+The last letter
 .Pf ( Sq s
 or
 .Sq l )
@@ -136,7 +138,8 @@ for the traditional names for such quantities,
 .Li short
 and
 .Li long ,
-respectively.  Today, the C concept of
+respectively.
+Today, the C concept of
 .Li short
 and
 .Li long
@@ -176,5 +179,5 @@ functions appeared in
 .Bx 4.2 .
 .Sh BUGS
 On the vax, alpha, i386, and so far mips,
-bytes are handled backwards from most everyone else in
-the world.  This is not expected to be fixed in the near future.
+bytes are handled backwards from most everyone else in the world.
+This is not expected to be fixed in the near future.

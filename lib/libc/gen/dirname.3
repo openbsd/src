@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: dirname.3,v 1.8 1999/07/17 09:32:30 downsj Exp $
+.\" $OpenBSD: dirname.3,v 1.9 2000/04/18 03:01:25 aaron Exp $
 .\"
 .Dd August 17, 1997
 .Dt DIRNAME 3
@@ -47,7 +47,8 @@ it returns a pointer to the parent directory of the pathname pointed to by
 Any trailing
 .Sq \&/
 characters are not counted as part of the directory
-name.  If
+name.
+If
 .Ar path
 is a null pointer, the empty string, or contains no
 .Sq \&/

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.20 2000/01/27 04:42:48 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.21 2000/04/18 03:01:34 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,8 +98,8 @@ The
 .Fn mkstemps
 function acts the same as
 .Fn mkstemp ,
-except it permits a suffix to exist in the template.  The template
-should be of the form
+except it permits a suffix to exist in the template.
+The template should be of the form
 .Pa /tmp/tmpXXXXXXsuffix .
 .Fn mkstemps
 is told the length of the suffix string, i.e., strlen("suffix");

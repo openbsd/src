@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.12 1999/07/09 13:35:22 aaron Exp $
+.\"	$OpenBSD: xdr.3,v 1.13 2000/04/18 03:01:34 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -116,7 +116,8 @@ routines.
 .Pp
 .Fn xdr_array
 is a filter primitive that translates between variable-length arrays
-and their corresponding external representations. The parameter
+and their corresponding external representations.
+The parameter
 .Fa arrp
 is the address of the pointer to the array, while
 .Fa sizep
@@ -136,7 +137,8 @@ This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_bool
 is a filter primitive that translates between booleans (C integers)
-and their external representations. When encoding data, this
+and their external representations.
+When encoding data, this
 filter produces values of either one or zero.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
@@ -145,8 +147,8 @@ is a filter primitive that translates between counted byte
 strings and their external representations.
 The parameter
 .Fa sp
-is the address of the string pointer. The length of the
-string is located at address
+is the address of the string pointer.
+The length of the string is located at address
 .Fa sizep ;
 strings cannot be longer than
 .Fa maxsize .
@@ -156,9 +158,8 @@ This routine returns one if it succeeds, zero otherwise.
 is a filter primitive that translates between C characters
 and their external representations.
 This routine returns one if it succeeds, zero otherwise.
-Note: encoded characters are not packed, and occupy 4 bytes
-each. For arrays of characters, it is worthwhile to
-consider
+Note: encoded characters are not packed, and occupy 4 bytes each.
+For arrays of characters, it is worthwhile to consider
 .Fn xdr_bytes ,
 .Fn xdr_opaque ,
 or
@@ -170,7 +171,8 @@ is a macro that invokes the destroy routine associated with the
 stream
 .Fa xdrs .
 Destruction usually involves freeing private data structures
-associated with the stream.  Using
+associated with the stream.
+Using
 .Fa xdrs
 after invoking
 .Fn xdr_destroy
@@ -195,11 +197,13 @@ type and its external representations.
 This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_free
-is a generic freeing routine. The first argument is the
+is a generic freeing routine.
+The first argument is the
 .Tn XDR
-routine for the object being freed. The second argument
-is a pointer to the object itself.  Note: the pointer passed
-to this routine is
+routine for the object being freed.
+The second argument
+is a pointer to the object itself.
+Note: the pointer passed to this routine is
 .Fa not
 freed, but what it points to is freed (recursively).
 .Pp
@@ -259,7 +263,8 @@ a chunk of memory at location
 .Fa addr
 whose length is no more than
 .Fa size
-bytes long.  The
+bytes long.
+The
 .Fa op
 determines the direction of the
 .Tn XDR
@@ -288,7 +293,8 @@ execpt that it serializes
 .Dv NULL
 pointers, whereas
 .Fn xdr_reference
-does not.  Thus,
+does not.
+Thus,
 .Fn xdr_pointer
 can represent
 recursive data structures, such as binary trees or
@@ -302,17 +308,18 @@ stream object pointed to by
 The stream's data is written to a buffer of size
 .Fa sendsize ;
 a value of zero indicates the system should use a suitable
-default. The stream's data is read from a buffer of size
+default.
+The stream's data is read from a buffer of size
 .Fa recvsize ;
 it too can be set to a suitable default by passing a zero
 value.
 When a stream's output buffer is full,
 .Fn (*writeit)
-is called.  Similarly, when a stream's input buffer is empty,
+is called.
+Similarly, when a stream's input buffer is empty,
 .Fn (*readit)
-is called.  The behavior of these two routines is similar to
-the
-system calls
+is called.
+The behavior of these two routines is similar to the system calls
 .Fn read
 and
 .Fn write ,
@@ -337,7 +344,8 @@ streams created by
 The data in the output buffer is marked as a completed record,
 and the output buffer is optionally written out if
 .Fa sendnow
-is non-zero. This routine returns one if it succeeds, zero otherwise.
+is non-zero.
+This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdrrec_eof
 is a routine which can be invoked only on
@@ -374,7 +382,8 @@ between its C form and its external representation.
 This routine returns one if it succeeds, zero otherwise.
 Warning: this routine does not understand
 .Dv NULL
-pointers. Use
+pointers.
+Use
 .Fn xdr_pointer
 instead.
 .Pp
@@ -432,7 +441,8 @@ stream, but never
 .Pp
 .Fn xdr_string
 is a filter primitive that translates between C strings and their
-corresponding external representations.  Strings cannot be longer than
+corresponding external representations.
+Strings cannot be longer than
 .Fa maxsize .
 Note:
 .Fa sp
@@ -466,24 +476,27 @@ This routine returns one if it succeeds, zero otherwise.
 .Fn xdr_union
 is a filter primitive that translates between a discriminated C
 .Li union
-and its corresponding external representation. It first
-translates the discriminant of the union located at
+and its corresponding external representation.
+It first translates the discriminant of the union located at
 .Fa dscmp .
 This discriminant is always an
 .Li enum_t .
 Next the union located at
 .Fa unp
-is translated.  The parameter
+is translated.
+The parameter
 .Fa choices
 is a pointer to an array of
 .Li struct xdr_discrim
-structures. Each structure contains an ordered pair of
+structures.
+Each structure contains an ordered pair of
 .Ft [ value , proc ].
 If the union's discriminant is equal to the associated
 .Fa value ,
 then the
 .Fa proc
-is called to translate the union.  The end of the
+is called to translate the union.
+The end of the
 .Li struct xdr_discrim
 structure array is denoted by a routine of value
 .Dv NULL .
@@ -497,22 +510,25 @@ Returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_vector
 is a filter primitive that translates between fixed-length arrays
-and their corresponding external representations.  The parameter
+and their corresponding external representations.
+The parameter
 .Fa arrp
 is the address of the pointer to the array, while
 .Fa size
-is the element count of the array.  The parameter
+is the element count of the array.
+The parameter
 .Fa elsize
 is the size of each of the array's elements, and
 .Fa elproc
 is an
 .Tn XDR
 filter that translates between the array elements' C form, and their
-external representation.  This routine returns one if it succeeds, zero
-otherwise.
+external representation.
+This routine returns one if it succeeds, zero otherwise.
 .Pp
 .Fn xdr_void
-is a routine which always returns one. It may be passed to
+is a routine which always returns one.
+It may be passed to
 .Tn RPC
 routines that require a function parameter, but where nothing is to be done.
 .Pp

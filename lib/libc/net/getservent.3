@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.8 1999/07/05 04:40:59 aaron Exp $
+.\"	$OpenBSD: getservent.3,v 1.9 2000/04/18 03:01:32 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,8 @@ reads the next line of the file, opening the file if necessary.
 The
 .Fn setservent
 function
-opens and rewinds the file.  If the
+opens and rewinds the file.
+If the
 .Fa stayopen
 flag is non-zero,
 the net data base will not be closed after each call to
