@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.27 2003/03/09 21:12:06 pvalchev Exp $
+.\"	$OpenBSD: spamd.8,v 1.28 2003/03/11 04:39:52 david Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -62,13 +62,13 @@ into the background.
 The SMTP error to return to the spammer, i.e. 450, 451, 550.
 This defaults to 450.
 .It Fl c
-The maximum number of concurrent connections to allow.  The default
-is 200.
+The maximum number of concurrent connections to allow.
+The default is 200.
 .It Fl p
 Specify a different port number from the default port that
 .Nm
-should listen for redirected SMTP connections on. The default port is found
-by looking for the named service
+should listen for redirected SMTP connections on.
+The default port is found by looking for the named service
 .Em spamd
 using
 .Xr getservbyname 5 .
@@ -154,9 +154,10 @@ named service
 (see
 .Xr services 5 ).
 The configuration socket listens only on on the INADDR_LOOPBACK
-address. Configuration of spamd is done by connecting to the
-configuration socket, and sending blacklist information, one blacklist
-per line. Each blacklist consists of a name, a message to reject mail
+address.
+Configuration of spamd is done by connecting to the configuration
+socket, and sending blacklist information, one blacklist per line.
+Each blacklist consists of a name, a message to reject mail
 with, and addresses in CIDR format, all separated by semicolons (;):
 .Bd -literal
       tag;"rejection message";aaa.bbb.ccc.ddd/mm;aaa.bbb.ccc.ddd/mm
