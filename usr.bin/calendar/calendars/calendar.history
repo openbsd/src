@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.28 2003/12/09 02:39:58 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.29 2003/12/29 07:50:27 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -467,6 +467,7 @@
 12/27	Ether first used as anesthetic in childbirth, 1845
 12/28	Comet Kohoutek at perihelion, 1973
 12/29	Battle of Wounded knee, 1890
+12/29	Edison receives patent for Radio, 1891
 12/30	First Los Angeles freeway dedicated, 1940
 12/31	St. Sylvester in Switzerland
 12/31	Winterland closes its doors, 1978
