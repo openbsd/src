@@ -71,3 +71,4 @@ cdev_decl(joy);
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
 cdev_decl(bios);
+cdev_decl(apm);

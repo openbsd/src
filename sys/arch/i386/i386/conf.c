@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.34 1997/09/21 04:27:54 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.35 1997/09/24 22:18:13 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ cdev_decl(audio);
 cdev_decl(svr4_net);
 #include "joy.h"
 #include "apm.h"
-cdev_decl(apm);
 #include "pctr.h"
 cdev_decl(pctr);
 #include "bios.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.9 1997/09/22 14:55:13 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.10 1997/09/24 22:18:12 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -53,6 +52,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
@@ -103,8 +103,6 @@ struct cfattach apm_ca = {
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
 };
-
-cdev_decl(apm);	/* XXX should it be int <sys/conf.h> ? */
 
 struct apm_connect_info apminfo = { 0 };
 u_char apm_majver;
