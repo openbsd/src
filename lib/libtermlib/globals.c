@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.3 1996/09/16 02:41:53 tholo Exp $	*/
+/*	$OpenBSD: globals.c,v 1.4 1996/12/09 01:18:17 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,13 +31,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: globals.c,v 1.3 1996/09/16 02:41:53 tholo Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.4 1996/12/09 01:18:17 tholo Exp $";
 #endif
 
 #include "term.h"
 
 TERMINAL _ti_empty = {
-	-1, 9600, { 0 }, { 0 }, "dumb", { 0 }, { 80, 0, 24 }, { 0 }
+	-1, 9600, { 0 }, { 0 }, "dumb", "dumb", { 0 }, { 80, 0, 24 }, { 0 }
 	};
 
 TERMINAL *cur_term = &_ti_empty;
