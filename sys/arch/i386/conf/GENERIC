@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.78 1998/09/11 11:26:23 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.79 1998/09/21 06:00:16 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -177,6 +177,7 @@ ep*	at pcmcia? function ?			# PCMCIA based ep cards
 sm*	at pcmcia? function ?			# PCMCIA based sm cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3c900/3c905 Ethernet
+tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
