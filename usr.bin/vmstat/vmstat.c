@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.29 1996/05/10 23:19:32 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.29 1996/05/10 23:19:32 thorpej Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,13 +346,14 @@ choosedrives(argv)
 long
 getuptime()
 {
-	static time_t now, boottime;
+	static time_t now;
+	static struct timeval boottime;
 	time_t uptime;
 
-	if (boottime == 0)
+	if (boottime.tv_sec == 0)
 		kread(X_BOOTTIME, &boottime, sizeof(boottime));
 	(void)time(&now);
-	uptime = now - boottime;
+	uptime = now - boottime.tv_sec;
 	if (uptime <= 0 || uptime > 60*60*24*365*10) {
 		(void)fprintf(stderr,
 		    "vmstat: time makes no sense; namelist must be wrong.\n");
