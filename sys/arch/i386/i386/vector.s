@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.3 2004/06/20 16:30:51 aaron Exp $	*/
+/*	$OpenBSD: vector.s,v 1.4 2004/06/28 02:00:20 deraadt Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -124,7 +124,8 @@ Xresume_/**/name/**/num/**/:						;\
 	STRAY_INTEGRATE			/* maybe he claimed it */	;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	5f			/* no, skip it */		;\
-	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
+	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
+	adcl	$0,IH_COUNT+4(%ebx)					;\
 5:	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\

@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.2 2004/06/13 21:49:15 niklas Exp $ */	
+/* $OpenBSD: apicvec.s,v 1.3 2004/06/28 02:00:20 deraadt Exp $ */	
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */	
 
 /*-
@@ -199,8 +199,12 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	pushl	%eax							;\
 	call	*IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
+	orl	%eax,%eax		/* should it be counted? */	;\
+	jz	4f							;\
+	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
+	adcl	$0,IH_COUNT+4(%ebx)					;\
+4:									 \
 	UNLOCK_KERNEL							;\
-	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\

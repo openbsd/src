@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2004/06/28 01:41:52 aaron Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2004/06/28 02:00:20 deraadt Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -172,7 +172,7 @@ if NISA > 0
 struct	intrhand
 member	ih_fun
 member	ih_arg
-member	IH_COUNT		ih_count.ec_count32
+member	IH_COUNT		ih_count.ec_count
 member	ih_next
 endif
 
