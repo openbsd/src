@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.15 2005/01/07 20:41:13 otto Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.15 2005/01/07 20:41:13 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ struct	nlist psnl[] = {
 
 fixpt_t	ccpu;				/* kernel _ccpu variable */
 int	nlistread;			/* if nlist already read. */
-int	mempages;			/* number of pages of phys. memory */
+u_int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
 int	maxslp;
 
