@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.90 2003/04/17 03:48:56 drahn Exp $
+#	$OpenBSD: Makefile,v 1.91 2003/05/14 08:01:02 mho Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -39,10 +39,6 @@ SUBDIR+= gnu
 
 SUBDIR+= sys lkm
 
-.if (${KERBEROS:L} == "yes")
-SUBDIR+= kerberosIV
-.endif
-
 .if (${KERBEROS5:L} == "yes")
 SUBDIR+= kerberosV
 .endif
@@ -80,10 +76,6 @@ build:
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
 	cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && \
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
-.if (${KERBEROS:L} == "yes")
-	cd ${.CURDIR}/kerberosIV/lib && ${MAKE} depend && ${MAKE} && \
-	    NOMAN=1 exec ${SUDO} ${MAKE} install
-.endif
 .if (${KERBEROS5:L} == "yes")
 	cd ${.CURDIR}/kerberosV/lib && ${MAKE} depend && ${MAKE} && \
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
@@ -326,13 +318,6 @@ cross-lib:	${CROSSGCC}
 	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR="${NO_CROSS} libocurses/PSD.doc" \
 	        ${MAKE} depend all install)
-.if (${KERBEROS:L} == "yes")
-	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
-	export MACHINE MACHINE_ARCH; \
-	cd kerberosIV/lib; \
-	${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-	    ${MAKE} depend all install
-.endif
 .if (${KERBEROS5:L} == "yes")
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
 	export MACHINE MACHINE_ARCH; \
