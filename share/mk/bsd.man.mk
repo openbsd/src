@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.20 2000/11/10 02:55:40 deraadt Exp $
+#	$OpenBSD: bsd.man.mk,v 1.21 2001/07/19 23:16:17 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -116,21 +116,13 @@ maninstall:
 	done
 .endif
 .if defined(MLINKS) && !empty(MLINKS)
-.  for _subdir in ${MANSUBDIR}
-	@set ${MLINKS}; \
-	while test $$# -ge 2; do \
-		name=$$1; \
-		shift; \
-		dir=${DESTDIR}${MANDIR}$${name##*.}; \
-		l=$${dir}${_subdir}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
-		name=$$1; \
-		shift; \
-		dir=${DESTDIR}${MANDIR}$${name##*.}; \
-		t=$${dir}${_subdir}/$${name%.*}.0${MCOMPRESSSUFFIX}; \
-		echo $$t -\> $$l; \
-		rm -f $$t; \
-		ln $$l $$t; \
-	done
+.  for sub in ${MANSUBDIR}
+.     for lnk file in ${MLINKS}
+	@l=${DESTDIR}${MANDIR}${lnk:E}${sub}/${lnk:R}.0${MCOMPRESSSUFFIX}; \
+	t=${DESTDIR}${MANDIR}${file:E}${sub}/${file:R}.0${MCOMPRESSSUFFIX}; \
+	echo $$t -\> $$l; \
+	rm -f $$t; ln $$l $$t;
+.     endfor
 .  endfor
 .endif
 
