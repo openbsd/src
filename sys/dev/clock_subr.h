@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.h,v 1.1 1997/09/09 13:08:18 maja Exp $	*/
+/*	$OpenBSD: clock_subr.h,v 1.2 2001/08/19 05:34:05 art Exp $	*/
 /*	$NetBSD: clock_subr.h,v 1.2 1997/03/15 18:11:17 is Exp $	*/
 
 /*-
@@ -62,4 +62,39 @@ void clock_secs_to_ymdhms __P((time_t, struct clock_ymdhms *));
 /* Some handy constants. */
 #define SECDAY		86400L
 #define SECYR		(SECDAY * 365)
+
+/* Traditional POSIX base year */
+#define POSIX_BASE_YEAR 1970
+
+/*
+ * Interface to time-of-day clock devices.
+ *
+ * todr_gettime: convert time-of-day clock into a `struct timeval'
+ * todr_settime: set time-of-day clock from a `struct timeval'
+ * todr_getcal: get current TOD clock calibration value in ppm
+ * todr_setcal: set calibration value in ppm in TOD clock
+ *
+ * (this is probably not so useful:)
+ * todr_setwen: provide a machine-dependent TOD clock write-enable callback
+ *              function which takes one boolean argument:
+ *                      1 to enable writes; 0 to disable writes.
+ */
+struct todr_chip_handle {
+	void	*cookie;        /* Device specific data */
+	void	*bus_cookie;    /* Bus specific data */
+
+	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
+	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);
+	int	(*todr_getcal)(struct todr_chip_handle *, int *);
+	int	(*todr_setcal)(struct todr_chip_handle *, int);
+	int	(*todr_setwen)(struct todr_chip_handle *, int);
+};
+typedef struct todr_chip_handle *todr_chip_handle_t;
+
+#define todr_gettime(ct, t)	((*(ct)->todr_gettime)(ct, t))
+#define todr_settime(ct, t)	((*(ct)->todr_settime)(ct, t))
+#define todr_getcal(ct, vp)	((*(ct)->todr_gettime)(ct, vp))
+#define todr_setcal(ct, v) 	((*(ct)->todr_settime)(ct, v))
+#define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
+					((*(ct)->todr_setwen)(ct, v))
 
