@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkubglue.c,v 1.2 1997/01/12 07:43:36 downsj Exp $	*/
 /*	$NetBSD: mkubglue.c,v 1.3 1995/08/17 17:22:21 thorpej Exp $	*/
 
 /*-

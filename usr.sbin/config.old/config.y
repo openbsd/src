@@ -75,7 +75,8 @@
 %type	<file>	swap_device_spec
 
 %{
-/*	$NetBSD: config.y,v 1.18 1995/08/17 17:22:10 thorpej Exp $	*/
+/*	$OpenBSD: config.y,v 1.2 1997/01/12 07:43:32 downsj Exp $	*/
+/*	$NetBSD: config.y,v 1.19 1996/06/10 02:32:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -150,33 +151,9 @@ Spec:
 Config_spec:
 	MACHIN Save_id
 	    = {
-		if (!strcmp($2, "vax")) {
-			machine = MACHINE_VAX;
-			machinename = "vax";
-			machinearch = machinename;
-		} else if (!strcmp($2, "tahoe")) {
-			machine = MACHINE_TAHOE;
-			machinename = "tahoe";
-			machinearch = machinename;
-		} else if (!strcmp($2, "hp300")) {
+		if (!strcmp($2, "hp300")) {
 			machine = MACHINE_HP300;
 			machinename = "hp300";
-			machinearch = "m68k";
-		} else if (!strcmp($2, "i386")) {
-			machine = MACHINE_I386;
-			machinename = "i386";
-			machinearch = machinename;
-		} else if (!strcmp($2, "pc532")) {
-			machine = MACHINE_PC532;
-			machinename = "pc532";
-			machinearch = machinename;
-		} else if (!strcmp($2, "pmax")) {
-			machine = MACHINE_PMAX;
-			machinename = "pmax";
-			machinearch = machinename;
-		} else if (!strcmp($2, "amiga")) {
-			machine = MACHINE_AMIGA;
-			machinename = "amiga";
 			machinearch = "m68k";
 		} else
 			yyerror("Unknown machine type");
@@ -474,14 +451,6 @@ Dev_name:
 	Init_dev Dev NUMBER
 	      = {
 		cur.d_name = $2;
-		if (eq($2, "mba"))
-			seen_mba = 1;
-		else if (eq($2, "uba"))
-			seen_uba = 1;
-		else if (eq($2, "vba"))
-			seen_vba = 1;
-		else if (eq($2, "isa"))
-			seen_isa = 1;
 		cur.d_unit = $3;
 		};
 
@@ -871,27 +840,9 @@ check_nexus(dev, num)
 
 	switch (machine) {
 
-	case MACHINE_VAX:
-		if (!eq(dev->d_name, "uba") && !eq(dev->d_name, "mba") &&
-		    !eq(dev->d_name, "bi"))
-			yyerror("only uba's, mba's, and bi's should be connected to the nexus");
-		if (num != QUES)
-			yyerror("can't give specific nexus numbers");
-		break;
-
-	case MACHINE_TAHOE:
-		if (!eq(dev->d_name, "vba")) 
-			yyerror("only vba's should be connected to the nexus");
-		break;
-
 	case MACHINE_HP300:
 		if (num != QUES)
 			dev->d_addr = num;
-		break;
-
-	case MACHINE_I386:
-		if (!eq(dev->d_name, "isa"))
-			yyerror("only isa's should be connected to the nexus");
 		break;
 	}
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkheaders.c,v 1.2 1997/01/12 07:43:34 downsj Exp $	*/
 /*	$NetBSD: mkheaders.c,v 1.7 1995/08/17 17:22:15 thorpej Exp $	*/
 
 /*

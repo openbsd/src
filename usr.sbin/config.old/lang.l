@@ -1,5 +1,6 @@
 %{
-/*	$NetBSD: lang.l,v 1.12 1995/08/17 17:22:11 thorpej Exp $	*/
+/*	$OpenBSD: lang.l,v 1.2 1997/01/12 07:43:33 downsj Exp $	*/
+/*	$NetBSD: lang.l,v 1.13 1996/06/10 02:32:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -53,9 +54,6 @@ struct kt {
 	{ "and",	AND },
 	{ "args",	ARGS },
 	{ "at",		AT },
-#if MACHINE_I386
-	{ "bio",	BIO },
-#endif MACHINE_I386
 	{ "config",	CONFIG },
 	{ "controller",	CONTROLLER },
 	{ "cpu",	CPU },
@@ -63,45 +61,22 @@ struct kt {
 	{ "device",	DEVICE },
 	{ "disk",	DISK },
 	{ "drive",	DRIVE },
-#if MACHINE_I386
-	{ "drq",	DRQ },
-#endif MACHINE_I386
 	{ "dst",	DST },
 	{ "dumps",	DUMPS },
 	{ "flags",	FLAGS },
-#if MACHINE_I386
-	{ "high",	HIGH },
-#endif MACHINE_I386
 	{ "hz",		HZ },
 	{ "ident",	IDENT },
 	{ "interleave",	INTERLEAVE },
-#if MACHINE_I386
-	{ "iomem",	IOMEM },
-	{ "iosiz",	IOSIZ },
-	{ "irq",	IRQ },
-#endif MACHINE_I386
 	{ "machine",	MACHIN },
 	{ "major",	MAJOR },
 	{ "makeoptions", MAKEOPTIONS },
-#if MACHINE_AMIGA
-        { "manufacturer", MANUFACTURER },
-#endif
 	{ "master",	MASTER },
 	{ "maxusers",	MAXUSERS },
 	{ "minor",	MINOR },
-#if MACHINE_I386
-	{ "net",	NET },
-#endif MACHINE_I386
 	{ "nexus",	NEXUS },
 	{ "on",		ON },
 	{ "options",	OPTIONS },
-#if MACHINE_I386
-	{ "port",	PORT },
-#endif MACHINE_I386
 	{ "priority",	PRIORITY },
-#if MACHINE_AMIGA
-        { "product",    PRODUCT },
-#endif
 	{ "pseudo-device",PSEUDO_DEVICE },
 	{ "root",	ROOT },
 	{ "sequential",	SEQUENTIAL },
@@ -112,9 +87,6 @@ struct kt {
 	{ "slave",	SLAVE },
 	{ "swap",	SWAP },
 	{ "tape",	DEVICE },
-#if MACHINE_I386
-	{ "tty",	TTY },
-#endif MACHINE_I386
 	{ "timezone",	TIMEZONE },
 	{ "trace",	TRACE },
 	{ "vector",	VECTOR },

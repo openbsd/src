@@ -1,3 +1,4 @@
+/*	$OpenBSD: specfile.c,v 1.2 1997/01/12 07:43:37 downsj Exp $	*/
 /*	$NetBSD: specfile.c,v 1.10 1995/08/17 17:22:22 thorpej Exp $	*/
 
 #ifndef lint

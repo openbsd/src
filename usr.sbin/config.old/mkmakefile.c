@@ -1,4 +1,5 @@
-/*	$NetBSD: mkmakefile.c,v 1.28 1995/08/17 17:22:18 thorpej Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.2 1997/01/12 07:43:35 downsj Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.29 1996/06/10 02:32:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980,1990 Regents of the University of California.
@@ -35,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$NetBSD: mkmakefile.c,v 1.28 1995/08/17 17:22:18 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mkmakefile.c,v 1.29 1996/06/10 02:32:26 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -123,13 +124,7 @@ static	struct users {
 	int	u_min;
 	int	u_max;
 } users[] = {
-	{ 24, 8, 1024 },		/* MACHINE_VAX */
-	{ 4, 2, 128 },			/* MACHINE_TAHOE */
 	{ 8, 2, 64 },			/* MACHINE_HP300 */
-	{ 8, 2, 64 },			/* MACHINE_I386 */
-	{ 8, 2, 64 },			/* MACHINE_PC532 */
-	{ 8, 2, 64 },			/* MACHINE_PMAX */
-	{ 8, 2, 64 },			/* MACHINE_AMIGA */
 };
 #define	NUSERS	(sizeof (users) / sizeof (users[0]))
 
@@ -178,7 +173,7 @@ makefile()
 		printf("timezone not specified; gmt assumed\n");
 	if ((unsigned)machine > NUSERS) {
 		printf("maxusers config info isn't present, using vax\n");
-		up = &users[MACHINE_VAX-1];
+		up = &users[MACHINE_HP300-1];
 	} else
 		up = &users[machine-1];
 	if (maxusers == 0) {

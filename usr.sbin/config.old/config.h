@@ -1,4 +1,5 @@
-/*	$NetBSD: config.h,v 1.19 1995/08/17 17:22:08 thorpej Exp $	*/
+/*	$OpenBSD: config.h,v 1.2 1997/01/12 07:43:31 downsj Exp $	*/
+/*	$NetBSD: config.h,v 1.20 1996/06/10 02:32:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980 Regents of the University of California.
@@ -152,13 +153,7 @@ struct config {
 int	machine;
 char	*machinename;
 char	*machinearch;
-#define	MACHINE_VAX	1
-#define	MACHINE_TAHOE	2
-#define MACHINE_HP300	3
-#define	MACHINE_I386	4
-#define	MACHINE_PC532	5
-#define	MACHINE_PMAX	6
-#define	MACHINE_AMIGA	7
+#define MACHINE_HP300	1
 
 /*
  * For each machine, a set of CPU's may be specified as supported.
@@ -190,16 +185,6 @@ char	*path();
 char	*raisestr();
 
 int	do_trace;
-
-#if MACHINE_VAX
-int	seen_mba, seen_uba;
-#endif
-#if MACHINE_TAHOE
-int	seen_vba;
-#endif
-#if MACHINE_I386
-int	seen_isa;
-#endif
 
 struct	device *connect();
 struct	device *dtab;

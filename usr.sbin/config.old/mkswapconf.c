@@ -1,3 +1,4 @@
+/*	$OpenBSD: mkswapconf.c,v 1.2 1997/01/12 07:43:36 downsj Exp $	*/
 /*	$NetBSD: mkswapconf.c,v 1.11 1995/08/17 17:22:20 thorpej Exp $	*/
 
 /*

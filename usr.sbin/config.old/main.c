@@ -1,4 +1,5 @@
-/*	$NetBSD: main.c,v 1.13 1995/08/17 17:22:12 thorpej Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 1997/01/12 07:43:33 downsj Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1996/06/10 02:32:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980 Regents of the University of California.
@@ -41,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$NetBSD: main.c,v 1.13 1995/08/17 17:22:12 thorpej Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.14 1996/06/10 02:32:24 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -116,41 +117,13 @@ usage:		fputs("usage: config.old [-gkp] sysname\n", stderr);
 		exit(3);
 	switch (machine) {
 
-	case MACHINE_VAX:
-		vax_ioconf();		/* Print ioconf.c */
-		ubglue();		/* Create ubglue.s */
-		break;
-
-	case MACHINE_TAHOE:
-		tahoe_ioconf();
-		vbglue();
-		break;
-
 	case MACHINE_HP300:
 		hp300_ioconf();
 		hpglue();
 		break;
 
-	case MACHINE_I386:
-		i386_ioconf();		/* Print ioconf.c */
-		i386_vector();		/* Create vector.s */
-		break;
-
-	case MACHINE_PC532:
-		pc532_ioconf();		/* Print ioconf.c */
-		break;
-
-	case MACHINE_PMAX:
-		pmax_ioconf();
-		break;
-
-        case MACHINE_AMIGA:
-                amiga_ioconf();
-                amigaglue();
-                break;
-  
 	default:
-		printf("Specify machine type, e.g. ``machine vax''\n");
+		printf("Specify machine type, e.g. ``machine hp300''\n");
 		exit(1);
 	}
 	/*
