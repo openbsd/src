@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.84 2002/02/23 01:55:24 deraadt Exp $
+#	$OpenBSD: netstart,v 1.85 2002/05/16 20:48:25 todd Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -242,6 +242,7 @@ fi
 for hn in /etc/hostname.*; do
 	# Strip off /etc/hostname. prefix
 	if=${hn#/etc/hostname.}
+	test "$if" = "*" && continue
 
 	case $if in
 	"gif"*|"gre"*)
@@ -314,6 +315,7 @@ esac
 for hn in /etc/hostname.*; do
 	# Strip off /etc/hostname. prefix
 	if=${hn#/etc/hostname.}
+	test "$if" = "*" && continue
 
 	case $if in
 	"gif"*|"gre"*)
@@ -330,6 +332,7 @@ done
 for bn in /etc/bridgename.*; do
 	# Strip off /etc/bridgename. prefix
 	if=${bn#/etc/bridgename.}
+	test "$if" = "*" && continue
 
 	bridgestart $if
 done
