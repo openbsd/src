@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.26 2004/04/26 08:10:10 otto Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.27 2004/05/16 04:34:58 brad Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -169,6 +169,7 @@ struct bpf_hdr {
 #define DLT_PPP_BSDOS	16	/* BSD/OS Point-to-point Protocol */
 #define DLT_OLD_PFLOG	17	/* Packet filter logging, old (XXX remove?) */
 #define DLT_PFSYNC	18	/* Packet filter state syncing */
+#define DLT_PPP_ETHER	51	/* PPP over Ethernet; session only, w/o ether header */
 #define DLT_IEEE802_11	105	/* IEEE 802.11 wireless */
 #define DLT_PFLOG	117	/* Packet filter logging, by pcap people */
 
