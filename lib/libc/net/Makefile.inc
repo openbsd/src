@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.29 2000/02/23 06:55:58 itojun Exp $
+#	$OpenBSD: Makefile.inc,v 1.30 2000/02/23 15:39:53 itojun Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -47,6 +47,7 @@ MLINKS+=gethostbyname.3 endhostent.3 gethostbyname.3 gethostbyaddr.3 \
 	gethostbyname.3 sethostent.3 gethostbyname.3 gethostent.3 \
 	gethostbyname.3 herror.3 gethostbyname.3 gethostbyname2.3 \
 	gethostbyname.3 hstrerror.3
+MLINKS+=getifaddrs.3 freeifaddrs.3
 MLINKS+=getnetent.3 endnetent.3 getnetent.3 getnetbyaddr.3 \
 	getnetent.3 getnetbyname.3 getnetent.3 setnetent.3
 MLINKS+=getprotoent.3 endprotoent.3 getprotoent.3 getprotobyname.3 \
