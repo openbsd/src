@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.9 2001/05/11 17:20:11 aaron Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.10 2001/05/24 04:07:51 angelos Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ igmp_init()
 	rti_head = 0;
 }
 
+/* Return -1 for error. */
 static int
 rti_fill(inm)
 	struct in_multi *inm;
@@ -69,6 +70,8 @@ rti_fill(inm)
 
 	rti = (struct router_info *)malloc(sizeof(struct router_info),
 					   M_MRTABLE, M_NOWAIT);
+	if (rti == NULL)
+		return (-1);
 	rti->rti_ifp = inm->inm_ifp;
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
@@ -90,6 +93,8 @@ rti_find(ifp)
 
 	rti = (struct router_info *)malloc(sizeof(struct router_info),
 					   M_MRTABLE, M_NOWAIT);
+	if (rti == NULL)
+		return (NULL);
 	rti->rti_ifp = ifp;
 	rti->rti_type = IGMP_v2_ROUTER;
 	rti->rti_next = rti_head;
@@ -183,6 +188,10 @@ igmp_input(m, va_alist)
 
 		if (igmp->igmp_code == 0) {
 			rti = rti_find(ifp);
+			if (rti == NULL) {
+				m_freem(m);
+				return;
+			}
 			rti->rti_type = IGMP_v1_ROUTER;
 			rti->rti_age = 0;
 
@@ -393,13 +402,15 @@ void
 igmp_joingroup(inm)
 	struct in_multi *inm;
 {
-	int s = splsoftnet();
+	int i, s = splsoftnet();
 
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 	    (inm->inm_ifp->if_flags & IFF_LOOPBACK) == 0) {
-		igmp_sendpkt(inm, rti_fill(inm));
+		if ((i = rti_fill(inm)) == -1)
+			return;
+		igmp_sendpkt(inm, i);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(
 		    IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ);
