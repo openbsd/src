@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.88 2004/04/18 00:49:29 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.89 2004/05/07 18:13:31 miod Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -655,7 +655,7 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
 
-#if defined(mvme68k) || defined(mvme88k)
+#if defined(mvme68k)
 	if (lun == 0) {
 		/* XXX some drivers depend on this */
 		scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
