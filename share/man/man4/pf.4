@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.20 2002/12/02 15:28:35 henning Exp $
+.\"	$OpenBSD: pf.4,v 1.21 2002/12/15 18:46:15 margarida Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -40,13 +40,13 @@ A pseudo-device, /dev/pf, allows userland processes to control the
 behavior of the packet filter through an
 .Xr ioctl 2
 interface.
-There are commands to enable and disable the filter, load rule sets,
+There are commands to enable and disable the filter, load rulesets,
 add and remove individual rules or retrieve state table entries and
 statistics.
 The most commonly used functions are covered by
 .Xr pfctl 8 .
 .Pp
-Manipulations like loading a rule set that involve more than a single
+Manipulations like loading a ruleset that involve more than a single
 ioctl call require a so-called ticket, which prevents the occurrence of
 multiple concurrent manipulations.
 .Pp
@@ -67,7 +67,7 @@ Starts the packet filter.
 .It Dv DIOCSTOP
 Stops the packet filter.
 .It Dv DIOCBEGINRULES  Fa "u_int32_t"
-Clears the inactive filter rule set, returns ticket for subsequent
+Clears the inactive filter ruleset, returns ticket for subsequent
 DIOCADDRULE and DIOCCOMMITRULES calls.
 .It Dv DIOCADDRULE     Fa "struct pfioc_rule"
 .Bd -literal
@@ -80,14 +80,14 @@ struct pfioc_rule {
 .Pp
 Adds filter
 .Va rule
-at the end of the inactive filter rule set.
+at the end of the inactive filter ruleset.
 Requires
 .Va ticket
 obtained through preceding DIOCBEGINRULES call.
 .Va nr
 is ignored.
 .It Dv DIOCCOMMITRULES Fa "u_int32_t"
-Switch inactive to active filter rule set.
+Switch inactive to active filter ruleset.
 Requires
 .Va ticket .
 .It Dv DIOCGETRULES    Fa "struct pfioc_rule"
@@ -95,7 +95,7 @@ Returns
 .Va ticket
 for subsequent DIOCGETRULE calls and
 .Va nr
-of rules in the active filter rule set.
+of rules in the active filter ruleset.
 .It Dv DIOCGETRULE     Fa "struct pfioc_rule"
 Returns filter
 .Va rule
@@ -224,7 +224,7 @@ struct pfioc_states {
 };
 .Ed
 .It Dv DIOCCHANGERULE  Fa "struct pfioc_changerule"
-Adds or removes a filter rule in the active filter rule set.
+Adds or removes a filter rule in the active filter ruleset.
 .Bd -literal
 struct pfioc_changerule {
 	u_int32_t	 action;
@@ -237,7 +237,7 @@ enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
 	  PF_CHANGE_REMOVE=5 };
 .Ed
 .It Dv DIOCCHANGENAT   Fa "struct pfioc_changenat"
-Adds or removes a nat rule in the active nat rule set.
+Adds or removes a nat rule in the active nat ruleset.
 .Bd -literal
 struct pfioc_changenat {
 	u_int32_t	 action;
@@ -246,7 +246,7 @@ struct pfioc_changenat {
 };
 .Ed
 .It Dv DIOCCHANGEBINAT   Fa "struct pfioc_changebinat"
-Adds or removes a binat rule in the active binat rule set.
+Adds or removes a binat rule in the active binat ruleset.
 .Bd -literal
 struct pfioc_changebinat {
 	u_int32_t	action;
@@ -255,7 +255,7 @@ struct pfioc_changebinat {
 };
 .Ed
 .It Dv DIOCCHANGERDR   Fa "struct pfioc_changerdr"
-Adds or removes a rdr rule in the active rdr rule set.
+Adds or removes a rdr rule in the active rdr ruleset.
 .Bd -literal
 struct pfioc_changerdr {
 	u_int32_t	 action;
