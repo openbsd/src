@@ -999,19 +999,15 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
     strcpy(c->tempfile, conf->cache.root);
     strcat(c->tempfile, TMPFILESTR);
 #undef TMPFILESTR
-    p = mktemp(c->tempfile);
-    if (p == NULL)
-	return DECLINED;
-
-    Explain1("Create temporary file %s", c->tempfile);
-
-    i = open(c->tempfile, O_WRONLY | O_CREAT | O_EXCL | O_BINARY, 0622);
+    i = mkstemp(c->tempfile);
     if (i == -1) {
 	ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
 		     "proxy: error creating cache file %s",
 		     c->tempfile);
 	return DECLINED;
     }
+    (void) fchmod(i, 0622);
+
     ap_note_cleanups_for_fd(r->pool, i);
     c->fp = ap_bcreate(r->pool, B_WR);
     ap_bpushfd(c->fp, -1, i);
