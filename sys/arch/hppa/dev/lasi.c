@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.20 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.21 2004/09/15 01:10:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -137,11 +137,18 @@ lasiattach(parent, self, aux)
 {
 	struct lasi_softc *sc = (struct lasi_softc *)self;
 	struct confargs *ca = aux;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, ioh2;
 	int s, in;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa,
 	    IOMOD_HPASIZE, 0, &ioh)) {
+		printf(": can't map TRS space\n");
+		return;
+	}
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
+	    IOMOD_HPASIZE, 0, &ioh2)) {
+		bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
 		printf(": can't map IO space\n");
 		return;
 	}
