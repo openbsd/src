@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.37 2001/09/27 11:40:33 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.38 2001/09/27 22:38:28 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.37 2001/09/27 11:40:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.38 2001/09/27 22:38:28 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -574,7 +574,9 @@ dodefine(name, defn)
 	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0) {
 		n = builtin_type(defn+sizeof(BUILTIN_MARKER)-1);
 		if (n != -1) {
-			p->type = n;
+			p->type = n & TYPEMASK;
+			if ((n & NOARGS) == 0)
+				p->type |= NEEDARGS;
 			p->defn = null;
 			return;
 		}
