@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.6 1997/05/19 18:18:23 downsj Exp $
+.\"	$OpenBSD: fsck.8,v 1.7 1998/08/30 05:41:24 deraadt Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm fsck
-.Nd file system consistency check and interactive repair
+.Nd filesystem consistency check and interactive repair
 .Sh SYNOPSIS
 .Nm fsck
 .Op Fl dvplfyn
@@ -71,8 +71,10 @@ to assume no as the answer to all operator questions, except "CONTINUE?".
 Enter preen mode.
 .It Fl t Ar fstype
 Invoke fsck only in the comma separated list of filesystem types. If the
-list starts with no
-then invoke fsck the filesystem types that are not specified in the list.
+list starts with 
+.Dq no 
+then invoke fsck only in the filesystem types that are not specified in
+the list.
 .It Fl v
 Print the commands before executing them.
 .It Fl y
@@ -81,13 +83,13 @@ Causes
 to assume yes
 as the answer to all operator questions.
 .It Fl T Ar fstype:fsoptions
-List of comma separated file system specific options for the specified
-file system type, in the same format as
+List of comma separated filesystem specific options for the specified
+filesystem type, in the same format as
 .Xr mount 8
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
-file system table
+filesystem table
 .El
 .Sh SEE ALSO
 .Xr mount 8 ,
