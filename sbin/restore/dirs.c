@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.6 1996/07/09 02:11:13 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.7 1996/08/02 11:26:23 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.6 1996/07/09 02:11:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.7 1996/08/02 11:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ void
 skipdirs()
 {
 
-	while ((curfile.dip->di_mode & IFMT) == IFDIR) {
+	while (curfile.dip && (curfile.dip->di_mode & IFMT) == IFDIR) {
 		skipfile();
 	}
 }
