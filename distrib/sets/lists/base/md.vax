@@ -1374,6 +1374,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stat.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/stdarg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/syscallargs.ph
@@ -1402,6 +1403,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/vnode_if.ph

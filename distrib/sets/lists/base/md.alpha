@@ -2000,6 +2000,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/stat.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/stdarg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/syscallargs.ph
@@ -2028,6 +2029,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/vnode_if.ph

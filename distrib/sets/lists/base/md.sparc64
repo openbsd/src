@@ -1489,6 +1489,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/socketvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/stat.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/stdarg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/syscallargs.ph
@@ -1517,6 +1518,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/unpcb.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/user.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/utsname.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/vmmeter.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/vnode.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/vnode_if.ph
