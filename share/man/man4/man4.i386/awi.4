@@ -1,12 +1,12 @@
 .\"     $NetBSD: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
-.\"	$OpenBSD: awi.4,v 1.3 2000/04/03 19:34:20 deraadt Exp $
+.\"	$OpenBSD: awi.4,v 1.4 2000/04/03 21:19:37 aaron Exp $
 .\"
 .\"
-.\"	$Id: awi.4,v 1.3 2000/04/03 19:34:20 deraadt Exp $
+.\"	$Id: awi.4,v 1.4 2000/04/03 21:19:37 aaron Exp $
 .\"
 .Dd October 31, 1999
-.Dt AWI 4 
-.Os 
+.Dt AWI 4
+.Os
 .Sh NAME
 .Nm awi
 .Nd
@@ -17,7 +17,7 @@ Bay Networks BayStack 650 IEEE 802.11FH PCMCIA driver
 The
 .Nm
 driver provides support for BayStack 650 IEEE 802.11 Frequency Hopping
-PCCARD adapters. 
+PCCARD adapters.
 .Pp
 The BayStack 650 is based on an AMD 79c930 controller, which provides
 access to 32kb of memory shared between the controller and the host.
@@ -31,9 +31,9 @@ speed is fixed at 1Mbps.
 The driver currently only works in infrastructure mode, communicating
 with an Access Point which serves as a link-layer bridge between an
 ethernet and the wireless network.
-.Pp 
+.Pp
 This card seems to take between 5 and 20 seconds after it has been brought up
-to synchronize with an AP.  When using 
+to synchronize with an AP.  When using
 .Xr dhclient 8
 to automatically configure an address on this card, it may be
 advisable to delay the invocation of dhclient for about 10 seconds
@@ -85,7 +85,7 @@ Round trip times seem higher than what one might expect.
 .Sh SEE ALSO
 .Xr ray 4 ,
 .Xr arp 4 ,
-.Xr netintro 4 , 
+.Xr netintro 4 ,
 .Xr pcmcia 4 ,
 .Xr ifconfig 8 ,
 .Xr awiconfig 8

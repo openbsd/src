@@ -31,7 +31,7 @@ bpf \- Berkeley Packet Filter
 .B "pseudo-device bpfilter 16"
 .SH DESCRIPTION
 The Berkeley Packet Filter
-provides a raw interface to data link layers in a protocol 
+provides a raw interface to data link layers in a protocol
 independent fashion.
 All packets on the network, even those destined for other hosts,
 are accessible through this mechanism.
@@ -39,30 +39,30 @@ are accessible through this mechanism.
 The packet filter appears as a character special device,
 .I /dev/bpf0, /dev/bpf1,
 etc.
-After opening the device, the file descriptor must be bound to a 
+After opening the device, the file descriptor must be bound to a
 specific network interface with the BIOSETIF ioctl.
 A given interface can be shared be multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
-The total number of open 
+The total number of open
 files is limited to the value given in the kernel configuration; the
 example given in the SYNOPSIS above sets the limit to 16.
 .PP
-A separate device file is required for each minor device.  
-If a file is in use, the open will fail and 
+A separate device file is required for each minor device.
+If a file is in use, the open will fail and
 .I errno
 will be set to EBUSY.
 .PP
 Associated with each open instance of a
 .I bpf
 file is a user-settable packet filter.
-Whenever a packet is received by an interface, 
+Whenever a packet is received by an interface,
 all file descriptors listening on that interface apply their filter.
 Each descriptor that accepts the packet receives its own copy.
 .PP
 Reads from these files return the next group of packets
 that have matched the filter.
 To improve performance, the buffer passed to read must be
-the same size as the buffers used internally by 
+the same size as the buffers used internally by
 .I bpf.
 This size is returned by the BIOCGBLEN ioctl (see below), and under
 BSD, can be set with BIOCSBLEN.
@@ -78,13 +78,13 @@ Since packet data is in network byte order, applications should use the
 .I byteorder(3n)
 macros to extract multi-byte values.
 .PP
-A packet can be sent out on the network by writing to a 
+A packet can be sent out on the network by writing to a
 .I bpf
 file descriptor.  The writes are unbuffered, meaning only one
 packet can be processed per write.
 Currently, only writes to Ethernets and SLIP links are supported.
 .SH IOCTLS
-The 
+The
 .I ioctl
 command codes below are defined in <net/bpf.h>.  All commands require
 these includes:
@@ -100,7 +100,7 @@ these includes:
 .ft R
 Additionally, BIOCGETIF and BIOCSETIF require \fB<net/if.h>\fR.
 
-The (third) argument to the 
+The (third) argument to the
 .I ioctl
 should be a pointer to the type indicated.
 .TP 10
@@ -110,7 +110,7 @@ Returns the required buffer length for reads on
 files.
 .TP 10
 .B BIOCSBLEN (u_int)
-Sets the buffer length for reads on 
+Sets the buffer length for reads on
 .I bpf
 files.  The buffer must be set before the file is attached to an interface
 with BIOCSETIF.
@@ -128,10 +128,10 @@ Forces the interface into promiscuous mode.
 All packets, not just those destined for the local host, are processed.
 Since more than one file can be listening on a given interface,
 a listener that opened its interface non-promiscuously may receive
-packets promiscuously.  This problem can be remedied with an 
+packets promiscuously.  This problem can be remedied with an
 appropriate filter.
 .IP
-The interface remains in promiscuous mode until all files listening 
+The interface remains in promiscuous mode until all files listening
 promiscuously are closed.
 .TP 10
 .B BIOCFLUSH
@@ -140,7 +140,7 @@ and resets the statistics that are returned by BIOCGSTATS.
 .TP 10
 .B BIOCGETIF (struct ifreq)
 Returns the name of the hardware interface that the file is listening on.
-The name is returned in the ifr_name field of 
+The name is returned in the ifr_name field of
 .I ifr.
 All other fields are undefined.
 .TP 10
@@ -149,14 +149,14 @@ Sets the hardware interface associated with the file.  This
 command must be performed before any packets can be read.
 The device is indicated by name using the
 .I ifr_name
-field of the 
+field of the
 .I ifreq.
 Additionally, performs the actions of BIOCFLUSH.
 .TP 10
 .B BIOCSRTIMEOUT, BIOCGRTIMEOUT (struct timeval)
 Set or get the read timeout parameter.
-The 
-.I timeval 
+The
+.I timeval
 specifies the length of time to wait before timing
 out on a read request.
 This parameter is initialized to zero by
@@ -184,14 +184,14 @@ the number of packets received by the descriptor since opened or reset
 and
 .TP
 .I bs_drop
-the number of packets which were accepted by the filter but dropped by the 
+the number of packets which were accepted by the filter but dropped by the
 kernel because of buffer overflows
 (i.e., the application's reads aren't keeping up with the packet traffic).
 .RE
 .TP 10
 .B BIOCIMMEDIATE (u_int)
 Enable or disable ``immediate mode'', based on the truth value of the argument.
-When immediate mode is enabled, reads return immediately upon packet 
+When immediate mode is enabled, reads return immediately upon packet
 reception.  Otherwise, a read will block until either the kernel buffer
 becomes full or a timeout occurs.
 This is useful for programs like
@@ -200,7 +200,7 @@ which must respond to messages in real time.
 The default for a new file is off.
 .TP 10
 .B BIOCSETF (struct bpf_program)
-Sets the filter program used by the kernel to discard uninteresting 
+Sets the filter program used by the kernel to discard uninteresting
 packets.  An array of instructions and its length is passed in using
 the following structure:
 .ft B
@@ -239,9 +239,9 @@ struct bpf_version {
 .fi
 .ft R
 .IP
-The current version numbers are given by 
+The current version numbers are given by
 .B BPF_MAJOR_VERSION
-and 
+and
 .B BPF_MINOR_VERSION
 from <net/bpf.h>.
 An incompatible filter
@@ -286,7 +286,7 @@ The signal may be changed via BIOCSRSIG.
 Set or get the process or process group (if negative) that should receive SIGIO
 when packets are available.  The signal may be changed using BIOCSRSIG (see above).
 .SH BPF HEADER
-The following structure is prepended to each packet returned by 
+The following structure is prepended to each packet returned by
 .I read(2):
 .in 15
 .ft B
@@ -320,14 +320,14 @@ The length of the BPF header, which may not be equal to
 .I sizeof(struct bpf_hdr).
 .RE
 .PP
-The 
+The
 .I bh_hdrlen
 field exists to account for
 padding between the header and the link level protocol.
 The purpose here is to guarantee proper alignment of the packet
-data structures, which is required on alignment sensitive 
+data structures, which is required on alignment sensitive
 architectures and improves performance on many other architectures.
-The packet filter insures that the 
+The packet filter insures that the
 .I bpf_hdr
 and the \fInetwork layer\fR header will be word aligned.  Suitable precautions
 must be taken when accessing the link layer protocol fields on alignment
@@ -353,9 +353,9 @@ p = (char *)p + BPF_WORDALIGN(p->bh_hdrlen + p->bh_caplen)
 .RE
 .PP
 For the alignment mechanisms to work properly, the
-buffer passed to 
+buffer passed to
 .I read(2)
-must itself be word aligned.  
+must itself be word aligned.
 .I malloc(3)
 will always return an aligned buffer.
 .ft R
@@ -381,12 +381,12 @@ struct bpf_insn {
 .ft R
 .RE
 
-The \fIk\fP field is used in different ways by different instructions, 
+The \fIk\fP field is used in different ways by different instructions,
 and the \fIjt\fP and \fIjf\fP fields are used as offsets
 by the branch instructions.
 The opcodes are encoded in a semi-hierarchical fashion.
 There are eight classes of instructions: BPF_LD, BPF_LDX, BPF_ST, BPF_STX,
-BPF_ALU, BPF_JMP, BPF_RET, and BPF_MISC.  Various other mode and 
+BPF_ALU, BPF_JMP, BPF_RET, and BPF_MISC.  Various other mode and
 operator bits are or'd into the class to give the actual instructions.
 The classes and modes are defined in <net/bpf.h>.
 
@@ -404,8 +404,8 @@ instruction definition.  ``len'' refers to the length of the packet.
 .TP 10
 .B BPF_LD
 These instructions copy a value into the accumulator.  The type of the
-source operand is specified by an ``addressing mode'' and can be 
-a constant (\fBBPF_IMM\fP), packet data at a fixed offset (\fBBPF_ABS\fP), 
+source operand is specified by an ``addressing mode'' and can be
+a constant (\fBBPF_IMM\fP), packet data at a fixed offset (\fBBPF_ABS\fP),
 packet data at a variable offset (\fBBPF_IND\fP), the packet length
 (\fBBPF_LEN\fP),
 or a word in the scratch memory store (\fBBPF_MEM\fP).
@@ -489,7 +489,7 @@ M[k] <- X
 .B BPF_ALU
 The alu instructions perform operations between the accumulator and
 index register or constant, and store the result back in the accumulator.
-For binary operations, a source mode is required (\fBBPF_K\fP or 
+For binary operations, a source mode is required (\fBBPF_K\fP or
 \fBBPF_X\fP).
 .RS
 .TP 30
@@ -548,11 +548,11 @@ A <- -A
 .TP 10
 .B BPF_JMP
 The jump instructions alter flow of control.  Conditional jumps
-compare the accumulator against a constant (\fBBPF_K\fP) or 
+compare the accumulator against a constant (\fBBPF_K\fP) or
 the index register (\fBBPF_X\fP).  If the result is true (or non-zero),
 the true branch is taken, otherwise the false branch is taken.
 Jump offsets are encoded in 8 bits so the longest jump is 256 instructions.
-However, the jump always (\fBBPF_JA\fP) opcode uses the 32 bit \fIk\fP 
+However, the jump always (\fBBPF_JA\fP) opcode uses the 32 bit \fIk\fP
 field as the offset, allowing arbitrarily distant destinations.
 All conditionals use unsigned comparison conventions.
 .RS
@@ -614,12 +614,12 @@ X <- A
 A <- X
 .RE
 .PP
-The BPF interface provides the following macros to facilitate 
+The BPF interface provides the following macros to facilitate
 array initializers:
 .RS
 \fBBPF_STMT\fI(opcode, operand)\fR
 .br
-and 
+and
 .br
 \fBBPF_JUMP\fI(opcode, operand, true_offset, false_offset)\fR
 .RE
@@ -635,7 +635,7 @@ struct bpf_insn insns[] = {
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, ETHERTYPE_REVARP, 0, 3),
 	BPF_STMT(BPF_LD+BPF_H+BPF_ABS, 20),
 	BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, REVARP_REQUEST, 0, 1),
-	BPF_STMT(BPF_RET+BPF_K, sizeof(struct ether_arp) + 
+	BPF_STMT(BPF_RET+BPF_K, sizeof(struct ether_arp) +
 		 sizeof(struct ether_header)),
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
@@ -700,8 +700,8 @@ The read buffer must be of a fixed size (returned by the BIOCGBLEN ioctl).
 A file that does not request promiscuous mode may receive promiscuously
 received packets as a side effect of another file requesting this
 mode on the same hardware interface.  This could be fixed in the kernel
-with additional processing overhead.  However, we favor the model where 
-all files must assume that the interface is promiscuous, and if 
+with additional processing overhead.  However, we favor the model where
+all files must assume that the interface is promiscuous, and if
 so desired, must utilize a filter to reject foreign packets.
 .PP
 Data link protocols with variable length headers are not currently supported.
@@ -713,7 +713,7 @@ or lseek to 0 when read fails for this reason.
 .PP
 The Enet packet filter was created in 1980 by Mike Accetta and
 Rick Rashid at Carnegie-Mellon University.  Jeffrey Mogul, at
-Stanford, ported the code to BSD and continued its development from 
+Stanford, ported the code to BSD and continued its development from
 1983 on.  Since then, it has evolved into the Ultrix Packet Filter
 at DEC, a STREAMS NIT module under SunOS 4.1, and BPF.
 .SH AUTHORS

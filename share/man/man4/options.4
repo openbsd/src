@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.49 2000/03/06 21:46:57 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.50 2000/04/03 21:19:37 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -631,7 +631,7 @@ a swifter recovery. Both communication endpoints need to support
 The fallback behaviour is NewReno fast recovery phase, which allows
 one lost segment to be recovered per round trip time. When more than
 one segment has been dropped per window, the transmission can continue
-without waiting for a retranmission timeout. 
+without waiting for a retranmission timeout.
 .It Cd option TCP_FACK
 Turns on forward acknowledgements allowing a more precise estimate of
 outstanding data during the fast recovery phase by using

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ugen.4,v 1.3 2000/01/18 21:48:58 aaron Exp $
+.\"	$OpenBSD: ugen.4,v 1.4 2000/04/03 21:19:37 aaron Exp $
 .\"	$NetBSD: ugen.4,v 1.7 1999/07/30 01:32:05 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ The control transfer mode can only happen on the control endpoint,
 which is always endpoint 0.  Control requests
 are issued by
 .Xr ioctl 2
-calls.  
+calls.
 .\" .Pp
 .\" The isochronous transfer mode can be in or out depending on the
 .\" endpoint.  To perform I/O on an isochronous endpoint
@@ -125,7 +125,7 @@ is the sole open endpoint.
 .It Dv USB_GET_ALTINTERFACE (struct usb_alt_interface)
 Get the alternative setting number for the interface with the given
 index.
-The 
+The
 .Fa config_index
 is ignored in this call.
 .Bd -literal
@@ -138,7 +138,7 @@ struct usb_alt_interface {
 .It Dv USB_SET_ALTINTERFACE (struct usb_alt_interface)
 Set the alternative setting to the given number in the interface with the
 given index.
-The 
+The
 .Fa config_index
 is ignored in this call.
 .Pp
@@ -202,7 +202,7 @@ struct usb_full_desc {
 };
 .Ed
 .Pp
-The 
+The
 .Fa data
 field should point to a memory area of the size given in the
 .Fa size
@@ -229,7 +229,7 @@ Any data sent to/from the device is located at
 .Fa data .
 The size of the transferred data is determined from the
 .Fa request .
-The 
+The
 .Fa addr
 field is ignored in this call.
 .Bd -literal
@@ -248,7 +248,7 @@ Get an information summary for the device.  This call will not
 issue any USB transactions.
 .El
 .Pp
-Note that there are two different ways of addressing configurations, interfaces, 
+Note that there are two different ways of addressing configurations, interfaces,
 alternatives, and endpoints: by index or by number.
 The index is the ordinal number (starting from 0) of the descriptor
 as presented by the device.  The number is the respective number of
@@ -265,7 +265,7 @@ and for each of these iterating the
 .Fa endpoint_index
 from 0 to
 .Fa interface_desc->bNumEndpoints .
-The 
+The
 .Fa config_index
 should set to
 .Dv USB_CURRENT_CONFIG_INDEX

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ess.4,v 1.1 1999/08/05 21:53:08 niklas Exp $
+.\"	$OpenBSD: ess.4,v 1.2 2000/04/03 21:19:36 aaron Exp $
 .\"	$NetBSD: ess.4,v 1.6 1999/04/13 20:25:29 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the ESS 1788, 1888, 1887, and 888 AudioDrive 
+driver provides support for the ESS 1788, 1888, 1887, and 888 AudioDrive
 audio devices.
 .Pp
 The AudioDrive 1788 is a half-duplex device, while the 1888, 1887, and
@@ -65,11 +65,11 @@ used they must be different.
 .Pp
 The joystick interface (if enabled) is handled by the
 .Xr joy 4
-driver. 
+driver.
 .Sh BUGS
 The AudioDrive devices have a SoundBlaster compatibility mode, and may
-be detected by the SoundBlaster driver (see 
-.Xr sb 4 )  
+be detected by the SoundBlaster driver (see
+.Xr sb 4 )
 rather than the AudioDrive driver. The workaround is to remove the
 SoundBlaster driver from the kernel configuration.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.10 2000/03/06 21:46:57 aaron Exp $
+.\"	$OpenBSD: raid.4,v 1.11 2000/04/03 21:19:37 aaron Exp $
 .\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
@@ -109,13 +109,13 @@ reconstructed from the data and parity present on the other
 components.  This results in much slower data accesses, but
 does mean that a failure need not bring the system to a complete halt.
 .Pp
-The RAID driver supports and enforces the use of 
+The RAID driver supports and enforces the use of
 .Sq component labels .
 A
 .Sq component label
 contains important information about the component, including a
 user-specified serial number, the row and column of that component in the RAID
-set, and whether the data (and parity) on the component is 
+set, and whether the data (and parity) on the component is
 .Sq clean .
 If the driver determines that the labels are very inconsistent with
 respect to each other (e.g. two or more serial numbers do not match)
@@ -189,7 +189,7 @@ sd5     at scsibus0 target 5 lun ?      # SCSI disk drives
 sd6     at scsibus0 target 6 lun ?      # SCSI disk drives
 .Ed
 .Pp
-See 
+See
 .Xr sd 4
 for more information.  The rationale for fixing the device addresses
 is as follows: Consider a system with three SCSI drives at SCSI ID's

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.4 1999/12/11 10:23:41 csapuntz Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.5 2000/04/03 21:19:35 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -38,19 +38,19 @@
 .Cd "atapiscsi* at pciide? channel ?"
 .Cd "scsibus* at atapiscsi?"
 .Sh DESCRIPTION
-The 
+The
 .Nm
 driver supports ATAPI (also called IDE) devices such as CD-ROMs, ZIP
 drives, LS-120 floppy drives, and tape drives.  All ATAPI devices talk
-a subset of the SCSI protocol. 
+a subset of the SCSI protocol.
 .Pp
 The
 .Nm
 driver acts like a SCSI adapter.  Thus, the ATAPI devices connected to
-the system will appear as SCSI devices.  ATAPI CD-ROMs will appear 
+the system will appear as SCSI devices.  ATAPI CD-ROMs will appear
 as
 .Xr cd 4
-devices, ATAPI tape drives as 
+devices, ATAPI tape drives as
 .Xr st 4
 devices, and ATAPI floppies as
 .Xr sd 4
@@ -72,4 +72,4 @@ For now, we recommend you put the tape device on its own channel.
 .Xr wdc 4 ,
 .Xr cd 4 ,
 .Xr st 4 ,
-.Xr sd 4 
+.Xr sd 4

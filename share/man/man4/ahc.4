@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.8 2000/03/22 03:17:04 smurph Exp $
+.\"	$OpenBSD: ahc.4,v 1.9 2000/04/03 21:19:35 aaron Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -121,20 +121,20 @@ is attempted.
 Most modern motherboards perform the initialization correctly and work fine
 with this option enabled.
 .Pp
-Per target configuration performed in the 
+Per target configuration performed in the
 .Tn SCSI-Select
 menu, accessible at boot
-in 
+in
 .No non- Ns Tn EISA
 models,
-or through an 
+or through an
 .Tn EISA
-configuration utility for 
+configuration utility for
 .Tn EISA
 models,
-is honored by this driver with the stipulation that the 
+is honored by this driver with the stipulation that the
 .Tn BIOS
-must be enabled for 
+must be enabled for
 .Tn EISA
 adaptors.  This includes synchronous/asynchronous transfers,
 maximum synchronous negotiation rate,
@@ -161,13 +161,13 @@ aic7770     10    EISA/VL    10MHz     16Bit     4    1
 aic7850     10    PCI/32     10MHz      8Bit     3
 aic7860     10    PCI/32     20MHz      8Bit     3
 aic7870     10    PCI/32     10MHz     16Bit    16
-aic7880     10    PCI/32     20MHz     16Bit    16 
+aic7880     10    PCI/32     20MHz     16Bit    16
 aic7890     20    PCI/32     40MHz     16Bit    16        3 4 5 6 7
 aic7891     20    PCI/64     40MHz     16Bit    16        3 4 5 6 7
 aic7895     15    PCI/32     20MHz     16Bit    16      2 3 4 5
 aic7896     20    PCI/32     40MHz     16Bit    16      2 3 4 5 6 7
 aic7897     20    PCI/64     40MHz     16Bit    16      2 3 4 5 6 7
-.El 
+.El
 .Pp
 .Bl -enum -compact
 .It
@@ -229,7 +229,7 @@ Some Quantum drives (at least the Empire 2100 and 1080s) will not run on an
 Rev B in synchronous mode at 10MHz.  Controllers with this problem have a
 42 MHz clock crystal on them and run slightly above 10MHz.  This confuses
 the drive and hangs the bus.  Setting a maximum synchronous negotiation rate
-of 8MHz in the 
+of 8MHz in the
 .Tn SCSI-Select
 utility
 will allow normal operation.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.20 2000/02/11 04:22:27 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.21 2000/04/03 21:19:36 aaron Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -65,7 +65,7 @@ which can be used to reduce traffic on a set of segments and also to provide
 an IP firewall without changing the topology of the network.
 .Pp
 The algorithm works as follows by default, but can be modified via
-.Xr ioctl 2 
+.Xr ioctl 2
 or the utility
 .Xr brconfig 8 .
 When a frame comes in, the origin segment and the source address are
@@ -298,11 +298,11 @@ Retrieve the address cache expiration time (see above).
 .It Dv SIOCBRDGFLUSH
 .Pq Li "struct ifbreq"
 Flush addresses from the cache.
-.Ar ifbr_name 
+.Ar ifbr_name
 contains the name of the bridge device, and
 .Ar ifbr_ifsflags
 should be set to
-.Ar IFBF_FLUSHALL 
+.Ar IFBF_FLUSHALL
 to flush all addresses from the cache or
 .Ar IFBF_FLUSHDYN
 to flush only the dynamically learned addresses from the cache.
@@ -456,7 +456,7 @@ struct ifbrlconf {
 	char ifbrl_ifsname[IFNAMSIZ];/* member */
 	u_int32_t ifbrl_len;         /* buflen */
 	union {
-		caddr_t ifbrlu_buf; 
+		caddr_t ifbrlu_buf;
 		struct  ifbrlreq *ifbrlu_req;
 	} ifbrl_ifbrlu;
 #define ifbrl_buf ifbrl_ifbrlu.ifbrlu_buf
@@ -528,7 +528,7 @@ University of North Carolina at Greensboro.
 There is currently no loop detection.  Care must be taken to make sure
 that loops are not created when a bridge is brought up.
 .Pp
-Only 
+Only
 .Xr ipf 4
 input rules are checked with incoming packet; there is no easy way to
 handle output rules.

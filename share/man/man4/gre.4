@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.3 2000/01/08 02:30:02 angelos Exp $
+.\" $OpenBSD: gre.4,v 1.4 2000/04/03 21:19:36 aaron Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -19,19 +19,19 @@
 .\"    must display the following acknowledgement:
 .\"     This product includes software developed by the NetBSD
 .\"	Foundation, Inc. and its contributors.
-.\" 4. Neither the name of the The NetBSD Foundation nor the names of its 
-.\"    contributors may be used to endorse or promote products derived 
+.\" 4. Neither the name of the The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
@@ -66,7 +66,7 @@ the Mobile-IP (RFC 2004) encapsulation protocols.
 .Pp
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
-.It GRE encapsulation (IP protocol number 47). 
+.It GRE encapsulation (IP protocol number 47).
 Encapsulated datagrams are prepended by a outer datagram and a GRE header.
 The GRE header specifies the type of the encapsulated datagram
 and thus allows for tunneling other protocols than IP like
@@ -75,7 +75,7 @@ GRE mode is the default tunnel mode on Cisco routers.
 This is also the default mode of operation of the
 .Sy gre Ns Ar X
 interfaces.
-.It MOBILE encapsulation (IP protocol number 55). 
+.It MOBILE encapsulation (IP protocol number 55).
 Datagrams are encapsulated into IP, but with a much smaller
 encapsulation header.
 This protocol only supports IP in IP encapsulation, and is intended
@@ -93,18 +93,18 @@ line in the system config file.
 interfaces support the following
 .Xr ioctl 2 Ns s :
 .Bl -tag -width aaa
-.It GRESADDRS: 
+.It GRESADDRS:
 Set the IP address of the local tunnel end.
-.It GRESADDRD: 
+.It GRESADDRD:
 Set the IP address of the remote tunnel end.
-.It GREGADDRS: 
+.It GREGADDRS:
 Query the IP address that is set for the local tunnel end.
-.It GREGADDRD: 
+.It GREGADDRD:
 Query the IP address that is set for the remote tunnel end.
-.It GRESPROTO: 
+.It GRESPROTO:
 Set the operation mode to the specified IP protocol value.
 The protocol is passed to the interface in (struct ifreq)->ifr_flags.
-The operation mode can also be given as 
+The operation mode can also be given as
 .Bl -tag -width bbb
 .It link0
 IPPROTO_GRE
@@ -118,14 +118,14 @@ As the linkN flags are not mutually exclusive, modes must be set by applying
 positive and negative flags, e.g.,
 .Xr ifconfig 8
 link0 -link1 -link2
-.It GREGPROTO: 
+.It GREGPROTO:
 Query operation mode.
 .El
 .Pp
 Note that the IP addresses of the tunnel endpoints may be the same as the
-ones defined with 
+ones defined with
 .Xr ifconfig 8
-for the interface (as if IP is encapsulated), but need not be, as e.g. when 
+for the interface (as if IP is encapsulated), but need not be, as e.g. when
 encapsulating AppleTalk.
 .Pp
 .Sh EXAMPLE
@@ -160,7 +160,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    On Host D (OpenBSD):
 
    # route add default C
-   # ifconfig greN D A 
+   # ifconfig greN D A
 .Pp
 To reach Host A over the tunnel (from host D), there has to be an
 alias on Host A for the ethernet interface:
@@ -181,7 +181,7 @@ to actually mark the interface as up, the keyword ``up'' must be given
 last on its command line.
 .Pp
 The kernel must be set to forward datagrams by including option
-``GATEWAY'' in the kernel config file and issuing the appropriate 
+``GATEWAY'' in the kernel config file and issuing the appropriate
 option to
 .Xr sysctl 8 .
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wd.4,v 1.4 1999/07/21 23:57:55 aaron Exp $
+.\"	$OpenBSD: wd.4,v 1.5 2000/04/03 21:19:37 aaron Exp $
 .\"	$NetBSD: wd.4,v 1.4 1999/04/25 00:00:05 mjl Exp $
 .\"
 .\"
@@ -12,7 +12,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -25,10 +25,10 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd October 15, 1998
-.Dt WD 4 
+.Dt WD 4
 .Os
 .Sh NAME
-.Nm wd 
+.Nm wd
 .Nd WD100x compatible hard disk driver
 .Sh SYNOPSIS
 .Cd "wd* at wdc? channel ? drive ? flags 0x0000"
@@ -56,7 +56,7 @@ For DMA and UltraDMA, 0xf (1111) means
 .Dq disable .
 For example, a
 .Cm flags
-value of 0x0fac (1111 1010 1100) 
+value of 0x0fac (1111 1010 1100)
 means
 .Do
 use PIO mode 4, DMA mode 2, disable UltraDMA
