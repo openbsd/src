@@ -64,3 +64,5 @@ extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
+extern int tickdelta;
+extern long timedelta;
