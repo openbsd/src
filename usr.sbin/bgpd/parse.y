@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2004/02/06 20:37:53 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.53 2004/02/08 23:44:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,8 +67,6 @@ int		 add_mrtconfig(enum mrt_type, char *, time_t);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers *,
 		    struct filter_match *, struct filter_set *);
-void		 print_op(enum comp_ops);
-void		 print_rule(struct filter_rule *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -920,7 +918,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 	if (xconf->opts & BGPD_OPT_VERBOSE)
 		TAILQ_FOREACH(r, filter_l, entries)
-			print_rule(r);
+			print_rule(peer_l, r);
 
 	errors += merge_config(xconf, conf, peer_l);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
@@ -1149,117 +1147,4 @@ expand_rule(struct filter_rule *rule, struct filter_peers *peer,
 	TAILQ_INSERT_TAIL(filter_l, r, entries);
 
 	return (0);
-}
-
-void
-print_op(enum comp_ops op)
-{
-	switch (op) {
-	case OP_EQ:
-		printf("=");
-		break;
-	case OP_NE:
-		printf("!=");
-		break;
-	case OP_LE:
-		printf("<=");
-		break;
-	case OP_LT:
-		printf("<");
-		break;
-	case OP_GE:
-		printf(">=");
-		break;
-	case OP_GT:
-		printf(">");
-		break;
-	default:
-		printf("?");
-		break;
-	}
-}
-
-void
-print_rule(struct filter_rule *r)
-{
-	struct peer	*p;
-
-	if (r->action == ACTION_ALLOW)
-		printf("allow ");
-	else if (r->action == ACTION_DENY)
-		printf("deny ");
-	else
-		printf("match ");
-
-	if (r->quick)
-		printf("quick ");
-
-	if (r->dir == DIR_IN)
-		printf("from ");
-	else if (r->dir == DIR_OUT)
-		printf("to ");
-	else
-		printf("eeeeeeeps. ");
-
-	if (r->peer.peerid) {
-		for (p = peer_l; p != NULL && p->conf.id != r->peer.peerid;
-		    p = p->next)
-			;	/* nothing */
-		if (p == NULL)
-			printf("?");
-		else
-			printf("%s ", log_addr(&p->conf.remote_addr));
-	} else if (r->peer.groupid) {
-		for (p = peer_l; p != NULL &&
-		    p->conf.groupid != r->peer.groupid; p = p->next)
-			;	/* nothing */
-		if (p == NULL)
-			printf("group ? ");
-		else
-			printf("group %s ", p->conf.group);
-	} else
-		printf("any ");
-
-	if (r->match.prefix.addr.af)
-		printf("prefix %s/%u ", log_addr(&r->match.prefix.addr),
-		    r->match.prefix.len);
-
-	if (r->match.prefixlen.op) {
-		if (r->match.prefixlen.op == OP_RANGE)
-			printf("prefixlen %u - %u ", r->match.prefixlen.len_min,
-			    r->match.prefixlen.len_max);
-		else {
-			printf("prefixlen ");
-			print_op(r->match.prefixlen.op);
-			printf(" %u ", r->match.prefixlen.len_min);
-		}
-	}
-
-	if (r->match.as.type) {
-		if (r->match.as.type == AS_ALL)
-			printf("AS %u ", r->match.as.as);
-		else if (r->match.as.type == AS_SOURCE)
-			printf("source-AS %u ", r->match.as.as);
-		else if (r->match.as.type == AS_TRANSIT)
-			printf("transit-AS %u ", r->match.as.as);
-		else
-			printf("unfluffy-AS %u ", r->match.as.as);
-	}
-
-	if (r->set.flags) {
-		printf("set { ");
-		if (r->set.flags & SET_LOCALPREF)
-			printf("localpref %u ", r->set.localpref);
-		if (r->set.flags & SET_MED)
-			printf("med %u ", r->set.med);
-		if (r->set.flags & SET_NEXTHOP)
-			printf("nexthop %s ", inet_ntoa(r->set.nexthop));
-		if (r->set.flags & SET_PREPEND)
-			printf("prepend-self %u ", r->set.prepend);
-
-
-		printf("}");
-	}
-
-	printf("\n");
 }

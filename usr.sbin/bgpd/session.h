@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.26 2004/02/07 11:42:30 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.27 2004/02/08 23:44:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,3 +197,6 @@ void	control_close(int);
 int	pfkey_auth_establish(struct peer *p);
 int	pfkey_auth_remove(struct peer *p);
 int	pfkey_init(void);
+
+/* printconf.c */
+void		 print_rule(struct peer *, struct filter_rule *);
