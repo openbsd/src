@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.20 1999/03/03 01:03:51 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.21 1999/05/29 20:17:35 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.20 1999/03/03 01:03:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.21 1999/05/29 20:17:35 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -505,38 +505,37 @@ compare(from_fd, from_name, from_len, to_fd, to_name, to_len)
 	size_t to_len;
 {
 	caddr_t p1, p2;
-	register size_t length, remainder;
+	size_t length, remainder;
+	off_t from_off, to_off;
 	int dfound;
 
 	if (from_len != to_len)
 		return(1);
 
-	/* Rewind file descriptors. */
-	if (lseek(from_fd, (off_t)0, SEEK_SET) == (off_t)-1)
-		err(EX_OSERR, "lseek: %s", from_name);
-	if (lseek(to_fd, (off_t)0, SEEK_SET) == (off_t)-1)
-		err(EX_OSERR, "lseek: %s", to_name);
-
 	/*
 	 * Compare the two files being careful not to mmap
 	 * more than 8M at a time.
 	 */
+	from_off = to_off = (off_t)0;
 	remainder = from_len;
 	do {
 		length = MIN(remainder, 8 * 1048576);
 		remainder -= length;
 
-		if ((p1 = mmap(NULL, length, PROT_READ, 0, from_fd, (off_t)0))
-		     == (caddr_t)-1)
+		if ((p1 = mmap(NULL, length, PROT_READ, 0, from_fd, from_off))
+		     == MAP_FAILED)
 			err(EX_OSERR, "%s", from_name);
-		if ((p2 = mmap(NULL, length, PROT_READ, 0, to_fd, (off_t)0))
-		     == (caddr_t)-1)
+		if ((p2 = mmap(NULL, length, PROT_READ, 0, to_fd, to_off))
+		     == MAP_FAILED)
 			err(EX_OSERR, "%s", to_name);
 
 		dfound = memcmp(p1, p2, length);
 
 		(void) munmap(p1, length);
 		(void) munmap(p2, length);
+
+		from_off += length;
+		to_off += length;
 
 	} while (!dfound && remainder > 0);
 
