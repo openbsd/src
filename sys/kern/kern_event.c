@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.24 2004/06/24 19:35:24 tholo Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.25 2004/09/16 18:46:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -82,7 +82,7 @@ void	knote_drop(struct knote *kn, struct proc *p, struct filedesc *fdp);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
 #define knote_alloc() ((struct knote *)pool_get(&knote_pool, PR_WAITOK))
-#define knote_free(kn) (pool_put(&knote_pool, kn))
+#define knote_free(kn) pool_put(&knote_pool, (kn))
 
 void	filt_kqdetach(struct knote *kn);
 int	filt_kqueue(struct knote *kn, long hint);
