@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.171 2003/05/12 01:25:31 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.172 2003/05/17 02:46:22 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -752,7 +752,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 			warn("DIOCGETSTATES");
 			return (-1);
 		}
-		if (ps.ps_len + sizeof(struct pfioc_state) < len)
+		if (ps.ps_len + sizeof(struct pfioc_states) < len)
 			break;
 		if (len == 0 && ps.ps_len == 0)
 			return (0);
