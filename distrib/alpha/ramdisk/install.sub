@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.3 1997/05/09 18:50:31 millert Exp $
+#	$OpenBSD: install.sub,v 1.4 1997/05/10 06:15:09 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1098,7 +1098,7 @@ __get_timezone_1
 			if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
 				TZ="$_a"
 				echo "You have selected timezone \"$_a\"".
-				break 2
+				break
 			fi
 			echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
 			;;
