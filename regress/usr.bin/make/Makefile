@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.7 2001/05/14 13:19:24 espie Exp $
+# $OpenBSD: Makefile,v 1.8 2001/05/15 13:33:09 espie Exp $
 
 NOMAN=
 NOPROG=
 
-regress: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10
+regress: t1 t2 t3 t4 t5 t6 t8 t9 t10 t7
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out

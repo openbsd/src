@@ -1,5 +1,7 @@
 .undef A
 B=echo zoinx
+C:sh=echo yop
 a:
 	@echo ${A:sh}
 	@echo ${B:sh}
+	@echo $C
