@@ -1759,7 +1759,11 @@
 ./usr/share/man/cat8/alpha/wsmoused.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amd64
+./usr/share/man/cat8/amd64/biosboot.0
+./usr/share/man/cat8/amd64/boot.0
+./usr/share/man/cat8/amd64/boot.conf.0
 ./usr/share/man/cat8/amd64/fdisk.0
+./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
 ./usr/share/man/cat8/amd64/wsconscfg.0
 ./usr/share/man/cat8/amd64/wsconsctl.0
