@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.41 2003/02/18 19:01:50 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.42 2003/04/01 23:11:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -654,7 +654,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 	pa_next = 0;
 	seg = -1;
 	mapsize = size;
-	off = (bus_size_t)addr & (PAGE_SIZE - 1);
+	off = (bus_size_t)addr & PAGE_MASK;
 	addr = (void *) ((caddr_t)addr - off);
 	for(; size > 0; ) {
 
