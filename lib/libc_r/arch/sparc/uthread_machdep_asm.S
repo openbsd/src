@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.3 2001/12/18 03:44:40 marc Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.4 2001/12/18 06:23:08 fgsch Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -18,7 +18,10 @@
 #define SA(x)	(((x)+7)&(~0x7))
 #define MINFRAME ((16+1+6)*4)	
 
-/* void _thread_switch(int newstate[2], int savestate[2], int flags); */
+/*
+ * void _thread_switch(newstate, oldstate);
+ *	struct _machdep_state *newstate, *oldstate;
+ */
 ENTRY(_thread_machdep_switch)
 
 	/* new window */
