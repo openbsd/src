@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.11 1999/10/07 22:46:32 markus Exp $");
+RCSID("$Id: servconf.c,v 1.12 1999/10/11 21:07:37 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -57,6 +57,7 @@ void initialize_server_options(ServerOptions *options)
   options->skey_authentication = -1;
 #endif
   options->permit_empty_passwd = -1;
+  options->use_login = -1;
   options->num_allow_hosts = 0;
   options->num_deny_hosts = 0;
 }
@@ -132,6 +133,8 @@ void fill_default_server_options(ServerOptions *options)
 #endif
   if (options->permit_empty_passwd == -1)
     options->permit_empty_passwd = 1;
+  if (options->use_login == -1)
+    options->use_login = 0;
 }
 
 #define WHITESPACE " \t\r\n"
@@ -153,7 +156,8 @@ typedef enum
 #endif
   sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
   sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
-  sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail
+  sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
+  sUseLogin
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -198,6 +202,7 @@ static struct
   { "x11displayoffset", sX11DisplayOffset },
   { "strictmodes", sStrictModes },
   { "permitemptypasswords", sEmptyPasswd },
+  { "uselogin", sUseLogin },
   { "randomseed", sRandomSeedFile },
   { "keepalive", sKeepAlives },
   { NULL, 0 }
@@ -442,6 +447,10 @@ void read_server_config(ServerOptions *options, const char *filename)
 	case sEmptyPasswd:
 	  intptr = &options->permit_empty_passwd;
 	  goto parse_flag;
+
+        case sUseLogin:
+          intptr = &options->use_login;
+          goto parse_flag;
 
 	case sLogFacility:
 	  cp = strtok(NULL, WHITESPACE);

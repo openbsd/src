@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.9 1999/10/11 20:40:08 markus Exp $
+.\" $Id: sshd.8,v 1.10 1999/10/11 21:07:37 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -363,6 +363,11 @@ Gives the facility code that is used when logging messages from
 .Nm sshd .
 The possible values are: DAEMON, USER, AUTH, LOCAL0, LOCAL1, LOCAL2,
 LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.  The default is DAEMON.
+.It Cm UseLogin
+Specifies whether
+.Xr login 1
+is used. The default is
+.Dq no .
 .It Cm X11Forwarding
 Specifies whether X11 forwarding is permitted.  The default is
 .Dq yes .

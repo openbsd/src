@@ -41,8 +41,6 @@ PermitEmptyPasswords no
 #KerberosTgtPassing yes
 
 #CheckMail yes
-
-# XXX implement these
 #UseLogin no
 
 # AllowHosts *.our.com friend.other.com

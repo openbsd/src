@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.26 1999/10/11 20:00:36 markus Exp $");
+RCSID("$Id: sshd.c,v 1.27 1999/10/11 21:07:37 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1732,8 +1732,10 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
 
   /* Get the time when the user last logged in.  Buf will be set to contain
      the hostname the last login was from. */
-  last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
-					buf, sizeof(buf));
+  if(!options.use_login) {
+    last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
+					  buf, sizeof(buf));
+  }
 
   setproctitle("%s@%s", pw->pw_name, strrchr(ttyname, '/') + 1);
 
@@ -1790,8 +1792,10 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
       /* If the user has logged in before, display the time of last login. 
          However, don't display anything extra if a command has been 
 	 specified (so that ssh can be used to execute commands on a remote
-	 machine without users knowing they are going to another machine). */
-      if (command == NULL && last_login_time != 0 && !quiet_login)
+         machine without users knowing they are going to another machine). 
+         Login(1) will do this for us as well, so check if login(1) is used */
+      if (command == NULL && last_login_time != 0 && !quiet_login && 
+          !options.use_login)
 	{
 	  /* Convert the date to a string. */
 	  time_string = ctime(&last_login_time);
@@ -1806,9 +1810,10 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	}
 
       /* Print /etc/motd unless a command was specified or printing it was
-	 disabled in server options.  Note that some machines appear to
-	 print it in /etc/profile or similar. */
-      if (command == NULL && options.print_motd && !quiet_login)
+         disabled in server options or login(1) will be used.  Note that 
+         some machines appear to print it in /etc/profile or similar. */
+      if (command == NULL && options.print_motd && !quiet_login && 
+          !options.use_login)
 	{
 	  /* Print /etc/motd if it exists. */
 	  f = fopen("/etc/motd", "r");
@@ -1987,27 +1992,31 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   setlogin(pw->pw_name);
 
   /* Set uid, gid, and groups. */
-  if (getuid() == 0 || geteuid() == 0)
-    { 
-      if (setgid(pw->pw_gid) < 0)
-	{
-	  perror("setgid");
-	  exit(1);
-	}
-      /* Initialize the group list. */
-      if (initgroups(pw->pw_name, pw->pw_gid) < 0)
-	{
-	  perror("initgroups");
-	  exit(1);
-	}
-      endgrent();
-
-      /* Permanently switch to the desired uid. */
-      permanently_set_uid(pw->pw_uid);
-    }
-
-  if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
-    fatal("Failed to set uids to %d.", (int)pw->pw_uid);
+  /* Login(1) does this as well, and it needs uid 0 for the "-h" switch,
+     so we let login(1) to this for us. */
+  if(!options.use_login) {
+    if (getuid() == 0 || geteuid() == 0)
+      { 
+        if (setgid(pw->pw_gid) < 0)
+          {
+            perror("setgid");
+            exit(1);
+          }
+        /* Initialize the group list. */
+        if (initgroups(pw->pw_name, pw->pw_gid) < 0)
+          {
+            perror("initgroups");
+            exit(1);
+          }
+        endgrent();
+   
+        /* Permanently switch to the desired uid. */
+        permanently_set_uid(pw->pw_uid);
+      }
+   
+    if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
+      fatal("Failed to set uids to %d.", (int)pw->pw_uid);
+  }
 
   /* Get the shell from the password data.  An empty shell field is legal,
      and means /bin/sh. */
@@ -2031,22 +2040,24 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   env = xmalloc(envsize * sizeof(char *));
   env[0] = NULL;
 
-  /* Set basic environment. */
-  child_set_env(&env, &envsize, "USER", pw->pw_name);
-  child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
-  child_set_env(&env, &envsize, "HOME", pw->pw_dir);
-  child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
+  if(!options.use_login) {
+    /* Set basic environment. */
+    child_set_env(&env, &envsize, "USER", pw->pw_name);
+    child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
+    child_set_env(&env, &envsize, "HOME", pw->pw_dir);
+    child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
+   
+    snprintf(buf, sizeof buf, "%.200s/%.50s",
+      _PATH_MAILDIR, pw->pw_name);
+    child_set_env(&env, &envsize, "MAIL", buf);
+   
+    /* Normal systems set SHELL by default. */
+    child_set_env(&env, &envsize, "SHELL", shell);
+  }
 
   /* Let it inherit timezone if we have one. */
   if (getenv("TZ"))
     child_set_env(&env, &envsize, "TZ", getenv("TZ"));
-
-  snprintf(buf, sizeof buf, "%.200s/%.50s",
-    _PATH_MAILDIR, pw->pw_name);
-  child_set_env(&env, &envsize, "MAIL", buf);
-
-  /* Normal systems set SHELL by default. */
-  child_set_env(&env, &envsize, "SHELL", shell);
 
   /* Set custom environment options from RSA authentication. */
   while (custom_environment) 
@@ -2098,8 +2109,10 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 		    auth_get_socket_name());
 
   /* Read $HOME/.ssh/environment. */
-  snprintf(buf, sizeof buf, "%.200s/.ssh/environment", pw->pw_dir);
-  read_environment_file(&env, &envsize, buf);
+  if(!options.use_login) {
+    snprintf(buf, sizeof buf, "%.200s/.ssh/environment", pw->pw_dir);
+    read_environment_file(&env, &envsize, buf);
+  }
 
   /* If debugging, dump the environment to stderr. */
   if (debug_flag)
@@ -2147,99 +2160,113 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 
   /* Run $HOME/.ssh/rc, /etc/sshrc, or xauth (whichever is found first
      in this order). */
-  if (stat(SSH_USER_RC, &st) >= 0)
-    {
-      if (debug_flag)
-	fprintf(stderr, "Running /bin/sh %s\n", SSH_USER_RC);
-
-      f = popen("/bin/sh " SSH_USER_RC, "w");
-      if (f)
-	{
-	  if (auth_proto != NULL && auth_data != NULL)
-	    fprintf(f, "%s %s\n", auth_proto, auth_data);
-	  pclose(f);
-	}
-      else
-	fprintf(stderr, "Could not run %s\n", SSH_USER_RC);
-    }
-  else
-    if (stat(SSH_SYSTEM_RC, &st) >= 0)
+  if(!options.use_login) {
+    if (stat(SSH_USER_RC, &st) >= 0)
       {
-	if (debug_flag)
-	  fprintf(stderr, "Running /bin/sh %s\n", SSH_SYSTEM_RC);
-
-	f = popen("/bin/sh " SSH_SYSTEM_RC, "w");
-	if (f)
-	  {
-	    if (auth_proto != NULL && auth_data != NULL)
-	      fprintf(f, "%s %s\n", auth_proto, auth_data);
-	    pclose(f);
-	  }
-	else
-	  fprintf(stderr, "Could not run %s\n", SSH_SYSTEM_RC);
+        if (debug_flag)
+      	fprintf(stderr, "Running /bin/sh %s\n", SSH_USER_RC);
+ 
+        f = popen("/bin/sh " SSH_USER_RC, "w");
+        if (f)
+      	{
+      	  if (auth_proto != NULL && auth_data != NULL)
+      	    fprintf(f, "%s %s\n", auth_proto, auth_data);
+      	  pclose(f);
+      	}
+        else
+      	fprintf(stderr, "Could not run %s\n", SSH_USER_RC);
       }
-#ifdef XAUTH_PATH
     else
-      {
-	/* Add authority data to .Xauthority if appropriate. */
-	if (auth_proto != NULL && auth_data != NULL)
-	  {
-	    if (debug_flag)
-	      fprintf(stderr, "Running %.100s add %.100s %.100s %.100s\n",
-		      XAUTH_PATH, display, auth_proto, auth_data);
-	    
-	    f = popen(XAUTH_PATH " -q -", "w");
-	    if (f)
-	      {
-		fprintf(f, "add %s %s %s\n", display, auth_proto, auth_data);
-		fclose(f);
-	      }
-	    else
-	      fprintf(stderr, "Could not run %s -q -\n", XAUTH_PATH);
-	  }
-      }
+      if (stat(SSH_SYSTEM_RC, &st) >= 0)
+        {
+      	if (debug_flag)
+      	  fprintf(stderr, "Running /bin/sh %s\n", SSH_SYSTEM_RC);
+ 
+      	f = popen("/bin/sh " SSH_SYSTEM_RC, "w");
+      	if (f)
+      	  {
+      	    if (auth_proto != NULL && auth_data != NULL)
+      	      fprintf(f, "%s %s\n", auth_proto, auth_data);
+      	    pclose(f);
+      	  }
+      	else
+      	  fprintf(stderr, "Could not run %s\n", SSH_SYSTEM_RC);
+        }
+#ifdef XAUTH_PATH
+      else
+        {
+      	/* Add authority data to .Xauthority if appropriate. */
+      	if (auth_proto != NULL && auth_data != NULL)
+      	  {
+      	    if (debug_flag)
+      	      fprintf(stderr, "Running %.100s add %.100s %.100s %.100s\n",
+      		      XAUTH_PATH, display, auth_proto, auth_data);
+      	    
+      	    f = popen(XAUTH_PATH " -q -", "w");
+      	    if (f)
+      	      {
+      		fprintf(f, "add %s %s %s\n", display, auth_proto, auth_data);
+      		fclose(f);
+      	      }
+      	    else
+      	      fprintf(stderr, "Could not run %s -q -\n", XAUTH_PATH);
+      	  }
+        }
 #endif /* XAUTH_PATH */
 
-  /* Get the last component of the shell name. */
-  cp = strrchr(shell, '/');
-  if (cp)
-    cp++;
-  else
-    cp = shell;
+    /* Get the last component of the shell name. */
+    cp = strrchr(shell, '/');
+    if (cp)
+      cp++;
+    else
+      cp = shell;
+  }
 
   /* If we have no command, execute the shell.  In this case, the shell name
      to be passed in argv[0] is preceded by '-' to indicate that this is
      a login shell. */
   if (!command)
     {
-      char buf[256];
+      if(!options.use_login) {
+        char buf[256];
 
-      /* Check for mail if we have a tty and it was enabled in server options. */
-      if (ttyname && options.check_mail) {
-        char *mailbox;
-        struct stat mailstat;
-        mailbox = getenv("MAIL");
-        if(mailbox != NULL) {
-          if(stat(mailbox, &mailstat) != 0 || mailstat.st_size == 0) {
-            printf("No mail.\n");
-          } else if(mailstat.st_mtime < mailstat.st_atime) {
-            printf("You have mail.\n");
-          } else {
-            printf("You have new mail.\n");
+        /* Check for mail if we have a tty and it was enabled in server options. */
+        if (ttyname && options.check_mail) {
+          char *mailbox;
+          struct stat mailstat;
+          mailbox = getenv("MAIL");
+          if(mailbox != NULL) {
+            if(stat(mailbox, &mailstat) != 0 || mailstat.st_size == 0) {
+              printf("No mail.\n");
+            } else if(mailstat.st_mtime < mailstat.st_atime) {
+              printf("You have mail.\n");
+            } else {
+              printf("You have new mail.\n");
+            }
           }
         }
+        /* Start the shell.  Set initial character to '-'. */
+        buf[0] = '-';
+        strncpy(buf + 1, cp, sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = 0;
+        /* Execute the shell. */
+        argv[0] = buf;
+        argv[1] = NULL;
+        execve(shell, argv, env);
+        /* Executing the shell failed. */
+        perror(shell);
+        exit(1);
+
+      } else {
+        /* Launch login(1). */
+
+        execl("/usr/bin/login", "login", "-h", get_remote_ipaddr(), "-p", "-f", "--", pw->pw_name, NULL);
+
+        /* Login couldn't be executed, die. */
+
+        perror("login");
+        exit(1);
       }
-      /* Start the shell.  Set initial character to '-'. */
-      buf[0] = '-';
-      strncpy(buf + 1, cp, sizeof(buf) - 1);
-      buf[sizeof(buf) - 1] = 0;
-      /* Execute the shell. */
-      argv[0] = buf;
-      argv[1] = NULL;
-      execve(shell, argv, env);
-      /* Executing the shell failed. */
-      perror(shell);
-      exit(1);
     }
 
   /* Execute the command using the user's shell.  This uses the -c option
