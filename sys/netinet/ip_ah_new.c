@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.12 1997/11/15 00:07:07 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.13 1997/11/18 09:09:43 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -71,16 +71,16 @@ struct ah_hash ah_new_hash[] = {
      { ALG_AUTH_MD5, "HMAC-MD5-96", 
        AH_MD5_ALEN,
        sizeof(MD5_CTX),
-       (void (*)(void *))MD5Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t))MD5Update, 
-       (void (*)(u_int8_t *, void *))MD5Final 
+       (void (*)(void *)) MD5Init, 
+       (void (*)(void *, u_int8_t *, u_int16_t)) MD5Update, 
+       (void (*)(u_int8_t *, void *)) MD5Final 
      },
      { ALG_AUTH_SHA1, "HMAC-SHA1-96",
        AH_SHA1_ALEN,
        sizeof(SHA1_CTX),
-       (void (*)(void *))SHA1Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t))SHA1Update, 
-       (void (*)(u_int8_t *, void *))SHA1Final 
+       (void (*)(void *)) SHA1Init, 
+       (void (*)(void *, u_int8_t *, u_int16_t)) SHA1Update, 
+       (void (*)(u_int8_t *, void *)) SHA1Final 
      }
 };
 
@@ -138,7 +138,7 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     m_copydata(m, EMT_SETSPI_FLEN, AH_NEW_XENCAP_LEN, (caddr_t) &txd);
 
     /* Check whether the hash algorithm is supported */
-    for (i=sizeof(ah_new_hash)/sizeof(struct ah_hash)-1; i >= 0; i--) 
+    for (i = sizeof(ah_new_hash) / sizeof(struct ah_hash) - 1; i >= 0; i--) 
 	if (txd.amx_hash_algorithm == ah_new_hash[i].type)
 	      break;
     if (i < 0) 

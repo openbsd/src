@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.12 1997/11/18 00:12:15 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.13 1997/11/18 09:09:45 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -83,16 +83,16 @@ struct esp_hash esp_new_hash[] = {
      { ALG_AUTH_MD5, "HMAC-MD5-96", 
        AH_MD5_ALEN,
        sizeof(MD5_CTX),
-       (void (*)(void *))MD5Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t))MD5Update, 
-       (void (*)(u_int8_t *, void *))MD5Final 
+       (void (*) (void *)) MD5Init, 
+       (void (*) (void *, u_int8_t *, u_int16_t)) MD5Update, 
+       (void (*) (u_int8_t *, void *)) MD5Final 
      },
      { ALG_AUTH_SHA1, "HMAC-SHA1-96",
        AH_SHA1_ALEN,
        sizeof(SHA1_CTX),
-       (void (*)(void *))SHA1Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t))SHA1Update, 
-       (void (*)(u_int8_t *, void *))SHA1Final 
+       (void (*) (void *)) SHA1Init, 
+       (void (*) (void *, u_int8_t *, u_int16_t)) SHA1Update, 
+       (void (*) (u_int8_t *, void *)) SHA1Final 
      }
 };
 
@@ -141,9 +141,9 @@ static void
 des3_encrypt(void *pxd, u_int8_t *blk)
 {
      struct esp_new_xdata *xd = pxd;
-     des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[2]),
+     des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]),
 		      (caddr_t) (xd->edx_eks[1]),
-		      (caddr_t) (xd->edx_eks[0]), 1);
+		      (caddr_t) (xd->edx_eks[2]), 1);
 }
 
 static void
@@ -160,7 +160,7 @@ blf_encrypt(void *pxd, u_int8_t *blk)
 {
      struct esp_new_xdata *xd = pxd;
      Blowfish_encipher(&xd->edx_bks, (u_int32_t *)blk,
-		       (u_int32_t *)(blk+4));
+		       (u_int32_t *) (blk + 4));
 }
 
 static void
@@ -168,7 +168,7 @@ blf_decrypt(void *pxd, u_int8_t *blk)
 {
      struct esp_new_xdata *xd = pxd;
      Blowfish_decipher(&xd->edx_bks, (u_int32_t *)blk,
-		       (u_int32_t *)(blk+4));
+		       (u_int32_t *) (blk + 4));
 }
 
 static void
@@ -215,8 +215,8 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     struct esp_xform *txform;
     struct esp_hash *thash;
     caddr_t buffer = NULL;
-    int blocklen, i;
     u_int32_t rk[14];
+    int blocklen, i;
 
     if (m->m_len < ENCAP_MSG_FIXED_LEN)
     {
@@ -242,7 +242,7 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     m_copydata(m, EMT_SETSPI_FLEN, ESP_NEW_XENCAP_LEN, (caddr_t) &txd);
 
     /* Check whether the encryption algorithm is supported */
-    for (i=sizeof(esp_new_xform)/sizeof(struct esp_xform)-1; i >= 0; i--) 
+    for (i = sizeof(esp_new_xform) / sizeof(struct esp_xform) - 1; i >= 0; i--) 
 	if (txd.edx_enc_algorithm == esp_new_xform[i].type)
 	      break;
     if (i < 0) 
@@ -262,7 +262,8 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     /* Check whether the authentication algorithm is supported */
     if (txd.edx_flags & ESP_NEW_FLAG_AUTH) 
     {
-        for (i=sizeof(esp_new_hash)/sizeof(struct esp_hash)-1; i >= 0; i--) 
+        for (i = sizeof(esp_new_hash) / sizeof(struct esp_hash) - 1; i >= 0;
+	     i--) 
 	    if (txd.edx_hash_algorithm == esp_new_hash[i].type)
 	      break;
 	if (i < 0) 
@@ -293,7 +294,7 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     if (((txd.edx_ivlen == 0) && !(txform->ivmask&1)) ||
 	((txd.edx_ivlen != 0) && (
 	     !(txd.edx_ivlen & txform->ivmask) ||
-	     (txd.edx_ivlen & (txd.edx_ivlen-1)))))
+	     (txd.edx_ivlen & (txd.edx_ivlen - 1)))))
     {
 	if (encdebug)
 	  log(LOG_WARNING, "esp_new_init(): unsupported IV length %d\n",
@@ -453,23 +454,23 @@ esp_new_zeroize(struct tdb *tdbp)
 struct mbuf *
 esp_new_input(struct mbuf *m, struct tdb *tdb)
 {
-    struct esp_new_xdata *xd;
-    struct ip *ip, ipo;
     u_char iv[ESP_MAX_IVS], niv[ESP_MAX_IVS], blk[ESP_MAX_BLKS], opts[40];
+    int ohlen, oplen, plen, alen, ilen, olen, i, blks;
+    struct esp_new_xdata *xd;
+    int count, off, errc;
+    struct mbuf *mi, *mo;
     u_char *idat, *odat;
     struct esp_new *esp;
     struct ifnet *rcvif;
-    int ohlen, oplen, plen, alen, ilen, olen, i, blks;
-    int count, off, errc;
+    struct ip *ip, ipo;
     u_int32_t btsx;
-    struct mbuf *mi, *mo;
     union {
 	 MD5_CTX md5ctx;
 	 SHA1_CTX sha1ctx;
     } ctx;
     u_char buf[AH_ALEN_MAX], buf2[AH_ALEN_MAX];
 
-    xd = (struct esp_new_xdata *)tdb->tdb_xdata;
+    xd = (struct esp_new_xdata *) tdb->tdb_xdata;
 
     blks = xd->edx_xform->blocksize;
 
@@ -552,8 +553,8 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	}
     }
 
-    /* Skip the IP header, IP options, SPI, SN and IV and minus Auth Data*/
-    plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof (u_int32_t) - 
+    /* Skip the IP header, IP options, SPI, SN and IV and minus Auth Data */
+    plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - 
 	   xd->edx_ivlen - alen;
     if (plen & (blks - 1))
     {
