@@ -816,6 +816,13 @@
 ./usr/libdata/perl5/Net/servent.pm
 ./usr/libdata/perl5/OpenBSD
 ./usr/libdata/perl5/OpenBSD/Logger.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis
+./usr/libdata/perl5/OpenBSD/Makewhatis.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Check.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Find.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Formated.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Unformated.pm
+./usr/libdata/perl5/OpenBSD/Makewhatis/Whatis.pm
 ./usr/libdata/perl5/OpenBSD/PackageInfo.pm
 ./usr/libdata/perl5/OpenBSD/PackageLocator.pm
 ./usr/libdata/perl5/OpenBSD/PackageName.pm
