@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.11 2003/05/11 05:45:48 pjanzen Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.12 2003/05/12 07:39:31 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -605,7 +605,6 @@ void	messagef(boolean, const char *, ...)
 #endif
 		;
 void	mix_colors(void);
-void	mix_colors(void);
 void	mix_random_rooms(void);
 int	mon_can_go(object *, short, short);
 int	mon_damage(object *, short);
@@ -634,7 +633,6 @@ short	party_objects(int);
 void	place_at(object *, short, short);
 void	plant_gold(short, short, boolean);
 void	play_level(void);
-void	player_init(void);
 void	player_init(void);
 void	potion_heal(int);
 int	pr_com_id(int);
@@ -689,7 +687,6 @@ void	show_traps(void);
 void	single_inv(short);
 void	special_hit(object *);
 void	srrandom(int);
-void	start_window(void);
 void	start_window(void);
 void	steal_gold(object *);
 void	steal_item(object *);
