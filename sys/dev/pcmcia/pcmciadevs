@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.117 2004/09/30 14:24:05 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.118 2004/10/11 15:16:37 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -424,6 +424,7 @@ product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL }
  */
 product PLANEX FNW3600T		-1
 product PLANEX FNW3700T		-1
+product PLANEX GWNS11H		{ "PLANEX", "GW-NS11H&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL }
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL }
 product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL }
