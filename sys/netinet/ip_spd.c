@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.44 2002/02/18 04:46:29 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.45 2002/05/31 02:42:22 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -25,6 +25,8 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/kernel.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -238,6 +240,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		SENT_IPSP)) {
 		RTFREE(re->re_rt);
 		*error = EHOSTUNREACH;
+		DPRINTF(("ip_spd_lookup: no gateway in SPD entry!"));
 		return NULL;
 	}
 
@@ -245,6 +248,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	RTFREE(re->re_rt);
 	if (ipo == NULL) {
 		*error = EHOSTUNREACH;
+		DPRINTF(("ip_spd_lookup: no policy attached to SPD entry!"));
 		return NULL;
 	}
 
@@ -343,29 +347,13 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipo->ipo_tdb->tdb_dst.sa.sa_len))
 				goto nomatchout;
 
-			/* Match source ID. */
-			if (ipo->ipo_srcid) {
-				if (ipo->ipo_tdb->tdb_srcid == NULL ||
-				    !ipsp_ref_match(ipo->ipo_srcid,
-					ipo->ipo_tdb->tdb_srcid))
-					goto nomatchout;
-			}
-
-			/* Match destination ID. */
-			if (ipo->ipo_dstid) {
-				if (ipo->ipo_tdb->tdb_dstid == NULL ||
-				    !ipsp_ref_match(ipo->ipo_dstid,
-					ipo->ipo_tdb->tdb_dstid))
-					goto nomatchout;
-			}
-
-			/* Match local credentials used. */
-			if (ipo->ipo_local_cred) {
-				if (ipo->ipo_tdb->tdb_local_cred == NULL ||
-				    !ipsp_ref_match(ipo->ipo_local_cred, 
-					ipo->ipo_tdb->tdb_local_cred))
-					goto nomatchout;
-			}
+			if (!ipsp_aux_match(ipo->ipo_tdb->tdb_srcid,
+			    ipo->ipo_srcid, ipo->ipo_tdb->tdb_dstid,
+			    ipo->ipo_dstid, ipo->ipo_tdb->tdb_local_cred,
+			    ipo->ipo_local_cred, NULL, NULL,
+			    &ipo->ipo_tdb->tdb_filter, &ipo->ipo_addr,
+			    &ipo->ipo_tdb->tdb_filtermask, &ipo->ipo_mask))
+				goto nomatchout;
 
 			/* Cached entry is good. */
 			*error = 0;
@@ -397,7 +385,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
 			    gettdbbyaddr(dignore ? &sdst : &ipo->ipo_dst,
-				ipo, m, af);
+				ipo->ipo_sproto, ipo->ipo_srcid,
+				ipo->ipo_dstid, ipo->ipo_local_cred, m, af,
+				&ipo->ipo_addr, &ipo->ipo_mask);
 			if (ipo->ipo_tdb) {
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
@@ -508,7 +498,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			ipo->ipo_tdb =
 			    gettdbbysrc(dignore ? &ssrc : &ipo->ipo_dst,
-				ipo, m, af);
+				ipo->ipo_sproto, ipo->ipo_srcid,
+				ipo->ipo_dstid, m, af, &ipo->ipo_addr,
+				&ipo->ipo_mask);
 			if (ipo->ipo_tdb)
 				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
@@ -569,6 +561,9 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	struct ipsec_acquire *ipa;
 	int err = 0;
 
+	if (--ipo->ipo_ref_count > 0)
+		return 0;
+
 	/* Delete from SPD. */
 	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
 		err = rtrequest(RTM_DELETE, (struct sockaddr *) &ipo->ipo_addr,
@@ -592,24 +587,22 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	if (ipo->ipo_local_cred)
 		ipsp_reffree(ipo->ipo_local_cred);
 	if (ipo->ipo_local_auth)
-		ipsp_reffree(ipo->ipo_local_cred);
+		ipsp_reffree(ipo->ipo_local_auth);
 
 	pool_put(&ipsec_policy_pool, ipo);
 
-	ipsec_in_use--;
+	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
+		ipsec_in_use--;
 
 	return err;
 }
 
-#ifdef notyet
 /*
  * Add a policy to the SPD.
  */
 struct ipsec_policy *
-ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
-    union sockaddr_union *sdst, int type, int sproto)
+ipsec_add_policy(struct inpcb *inp, int af, int direction)
 {
-	struct sockaddr_encap encapgw;
 	struct ipsec_policy *ipon;
 
 	if (ipsec_policy_pool_initialized == 0) {
@@ -623,35 +616,88 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 		return NULL;
 
 	bzero(ipon, sizeof(struct ipsec_policy));
-	bzero((caddr_t) &encapgw, sizeof(struct sockaddr_encap));
 
-	encapgw.sen_len = SENT_LEN;
-	encapgw.sen_family = PF_KEY;
-	encapgw.sen_type = SENT_IPSP;
-	encapgw.sen_ipsp = ipon;
+	ipon->ipo_ref_count = 1;
+	ipon->ipo_flags |= IPSP_POLICY_SOCKET;
 
-	if (rtrequest(RTM_ADD, (struct sockaddr *) dst,
-	    (struct sockaddr *) &encapgw, (struct sockaddr *) mask,
-	    RTF_UP | RTF_GATEWAY | RTF_STATIC, (struct rtentry **) 0) != 0) {
-		DPRINTF(("ipsec_add_policy: failed to add policy\n"));
-		pool_put(&ipsec_policy_pool, ipon);
-		return NULL;
-	}
+	ipon->ipo_type = IPSP_IPSEC_REQUIRE; /* XXX */
 
-	ipsec_in_use++;
-
-	bcopy(dst, &ipon->ipo_addr, sizeof(struct sockaddr_encap));
-	bcopy(mask, &ipon->ipo_mask, sizeof(struct sockaddr_encap));
-	bcopy(sdst, &ipon->ipo_dst, sizeof(union sockaddr_union));
-	ipon->ipo_sproto = sproto;
-	ipon->ipo_type = type;
+	/* XXX
+	 * We should actually be creating a linked list of
+	 * policies (for tunnel/transport and ESP/AH), as needed.
+	 */
+	ipon->ipo_sproto = IPPROTO_ESP;
 
 	TAILQ_INIT(&ipon->ipo_acquires);
 	TAILQ_INSERT_HEAD(&ipsec_policy_head, ipon, ipo_list);
 
+	ipsec_update_policy(inp, ipon, af, direction);
+
 	return ipon;
 }
-#endif
+
+/*
+ * Update a PCB-attached policy.
+ */
+void
+ipsec_update_policy(struct inpcb *inp, struct ipsec_policy *ipon, int af,
+    int direction)
+{
+	ipon->ipo_addr.sen_len = ipon->ipo_mask.sen_len = SENT_LEN;
+	ipon->ipo_addr.sen_family = ipon->ipo_mask.sen_family = PF_KEY;
+	ipon->ipo_src.sa.sa_family = ipon->ipo_dst.sa.sa_family = af;
+
+	switch (af) {
+	case AF_INET:
+#ifdef INET
+		ipon->ipo_addr.sen_type = ipon->ipo_mask.sen_type = SENT_IP4;
+		ipon->ipo_addr.sen_ip_src = inp->inp_laddr;
+		ipon->ipo_addr.sen_ip_dst = inp->inp_faddr;
+		ipon->ipo_addr.sen_sport = inp->inp_lport;
+		ipon->ipo_addr.sen_dport = inp->inp_fport;
+		ipon->ipo_addr.sen_proto =
+		    inp->inp_socket->so_proto->pr_protocol;
+		ipon->ipo_addr.sen_direction = direction;
+
+		ipon->ipo_mask.sen_ip_src.s_addr = 0xffffffff;
+		ipon->ipo_mask.sen_ip_dst.s_addr = 0xffffffff;
+		ipon->ipo_mask.sen_sport = ipon->ipo_mask.sen_dport = 0xffff;
+		ipon->ipo_mask.sen_proto = 0xff;
+		ipon->ipo_mask.sen_direction = direction;
+
+		ipon->ipo_src.sa.sa_len = sizeof(struct sockaddr_in);
+		ipon->ipo_dst.sa.sa_len = sizeof(struct sockaddr_in);
+		ipon->ipo_src.sin.sin_addr = inp->inp_laddr;
+		ipon->ipo_dst.sin.sin_addr = inp->inp_faddr;
+#endif /* INET */
+		break;
+
+	case AF_INET6:
+#ifdef INET6
+		ipon->ipo_addr.sen_type = ipon->ipo_mask.sen_type = SENT_IP6;
+		ipon->ipo_addr.sen_ip6_src = inp->inp_laddr6;
+		ipon->ipo_addr.sen_ip6_dst = inp->inp_faddr6;
+		ipon->ipo_addr.sen_ip6_sport = inp->inp_lport;
+		ipon->ipo_addr.sen_ip6_dport = inp->inp_fport;
+		ipon->ipo_addr.sen_ip6_proto =
+		    inp->inp_socket->so_proto->pr_protocol;
+		ipon->ipo_addr.sen_ip6_direction = direction;
+
+		ipon->ipo_mask.sen_ip6_src = in6mask128;
+		ipon->ipo_mask.sen_ip6_dst = in6mask128;
+		ipon->ipo_mask.sen_ip6_sport = 0xffff;
+		ipon->ipo_mask.sen_ip6_dport = 0xffff;
+		ipon->ipo_mask.sen_ip6_proto = 0xff;
+		ipon->ipo_mask.sen_ip6_direction = direction;
+
+		ipon->ipo_src.sa.sa_len = sizeof(struct sockaddr_in6);
+		ipon->ipo_dst.sa.sa_len = sizeof(struct sockaddr_in6);
+		ipon->ipo_src.sin6.sin6_addr = inp->inp_laddr6;
+		ipon->ipo_dst.sin6.sin6_addr = inp->inp_faddr6;
+#endif /* INET6 */
+		break;
+	}
+}
 
 /*
  * Delete a pending IPsec acquire record.
@@ -687,17 +733,26 @@ ipsp_pending_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw)
 }
 
 /*
- * Signal key management that we need an SA. If we're given an mbuf, store
- * it and retransmit the packet if/when we have an SA in place.
+ * Signal key management that we need an SA.
+ * XXX For outgoing policies, we could try to hold on to the mbuf.
  */
 int
 ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
     union sockaddr_union *laddr, struct sockaddr_encap *ddst, struct mbuf *m)
 {
 	struct ipsec_acquire *ipa;
-#ifdef INET6
-	int i;
-#endif
+
+	/*
+	 * If this is a socket policy, it has to have authentication
+	 * information accompanying it --- can't tell key mgmt. to
+	 * "find" it for us. This avoids abusing key mgmt. to authenticate
+	 * on an application's behalf, even if the application doesn't
+	 * have/know (and shouldn't) the appropriate authentication
+	 * material (passphrase, private key, etc.)
+	 */
+	if (ipo->ipo_flags & IPSP_POLICY_SOCKET &&
+	    ipo->ipo_local_auth == NULL)
+		return EINVAL;
 
 	/* Check whether request has been made already. */
 	if ((ipa = ipsp_pending_acquire(ipo, gw)) != NULL)
@@ -775,8 +830,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		    IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src) ||
 		    ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
-			for (i = 0; i < 16; i++)
-				ipa->ipa_mask.sen_ip6_src.s6_addr8[i] = 0xff;
+			ipa->ipa_mask.sen_ip6_src = in6mask128;
 		} else {
 			ipa->ipa_info.sen_ip6_src = ipo->ipo_addr.sen_ip6_src;
 			ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
@@ -786,8 +840,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		    IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst) ||
 		    ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
-			for (i = 0; i < 16; i++)
-				ipa->ipa_mask.sen_ip6_dst.s6_addr8[i] = 0xff;
+			ipa->ipa_mask.sen_ip6_dst = in6mask128;
 		} else {
 			ipa->ipa_info.sen_ip6_dst = ipo->ipo_addr.sen_ip6_dst;
 			ipa->ipa_mask.sen_ip6_dst = ipo->ipo_mask.sen_ip6_dst;
@@ -831,7 +884,273 @@ struct tdb *
 ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
     struct tdb *tdbp, struct inpcb *inp, struct ipsec_policy *ipo)
 {
-	/* XXX */
+	struct ipsec_policy sipon;
+	struct tdb_ident *tdbi;
+	struct m_tag *mtag;
+	struct tdb *tdb = NULL;
+
+	/* Sanity check. */
+	if (inp == NULL)
+		goto justreturn;
+
+	/* Verify that we need to check for socket policy. */
+	if ((inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS ||
+	    inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_NONE) &&
+	    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS ||
+	    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_NONE) &&
+	    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS ||
+	    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_NONE))
+		goto justreturn;
+
+	switch (direction) {
+	case IPSP_DIRECTION_IN:
+		/*
+		 * Some further checking: if the socket has specified
+		 * that it will accept unencrypted traffic, don't
+		 * bother checking any further -- just accept the packet.
+		 */
+		if ((inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_AVAIL ||
+		    inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_USE) &&
+		    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_AVAIL ||
+		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_USE) &&
+		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_AVAIL ||
+		    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_USE))
+			goto justreturn;
+
+		/* Initialize socket policy if unset. */
+		if (inp->inp_ipo == NULL) {
+			inp->inp_ipo = ipsec_add_policy(inp, af,
+			    IPSP_DIRECTION_OUT);
+			if (inp->inp_ipo == NULL) {
+				*error = ENOBUFS;
+				return NULL;
+			}
+		}
+
+		/*
+		 * So we *must* have protected traffic. Let's see what
+		 * we have received then.
+		 */
+		if (inp->inp_tdb_in != NULL) {
+			if (inp->inp_tdb_in == tdbp)
+				goto justreturn; /* We received packet under a
+						  * previously-accepted TDB. */
+
+			/*
+			 * We should be receiving protected traffic, and
+			 * have an SA in place, but packet was received
+			 * unprotected. Simply discard.
+			 */
+			if (tdbp == NULL) {
+				*error = -EINVAL;
+				return NULL;
+			}
+
+			/* Update, since we may need all the relevant info. */
+			ipsec_update_policy(inp, inp->inp_ipo, af,
+			    IPSP_DIRECTION_OUT);
+
+			/*
+			 * Check that the TDB the packet was received under
+			 * is acceptable under the socket policy. If so,
+			 * accept the packet; otherwise, discard.
+			 */
+			if (tdbp->tdb_sproto == inp->inp_ipo->ipo_sproto &&
+			    !bcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
+				SA_LEN(&tdbp->tdb_src.sa)) &&
+			    ipsp_aux_match(tdbp->tdb_srcid,
+				inp->inp_ipo->ipo_srcid, tdbp->tdb_dstid,
+				inp->inp_ipo->ipo_dstid, NULL, NULL,
+				NULL, NULL, &tdbp->tdb_filter,
+				&inp->inp_ipo->ipo_addr,
+				&tdbp->tdb_filtermask,
+				&inp->inp_ipo->ipo_mask))
+				goto justreturn;
+			else {
+				*error = -EINVAL;
+				return NULL;
+			}
+		} else {
+			/* Update, since we may need all the relevant info. */
+			ipsec_update_policy(inp, inp->inp_ipo, af,
+			    IPSP_DIRECTION_OUT);
+
+			/*
+			 * If the packet was received under an SA, see if
+			 * it's acceptable under socket policy. If it is,
+			 * accept the packet.
+			 */
+			if (tdbp != NULL &&
+			    tdbp->tdb_sproto == inp->inp_ipo->ipo_sproto &&
+			    !bcmp(&tdbp->tdb_src, &inp->inp_ipo->ipo_dst,
+				SA_LEN(&tdbp->tdb_src.sa)) &&
+			    ipsp_aux_match(tdbp->tdb_srcid,
+				inp->inp_ipo->ipo_srcid, tdbp->tdb_dstid,
+				inp->inp_ipo->ipo_dstid, NULL, NULL,
+				NULL, NULL, &tdbp->tdb_filter,
+				&inp->inp_ipo->ipo_addr, &tdbp->tdb_filtermask,
+				&inp->inp_ipo->ipo_mask))
+				goto justreturn;
+
+			/*
+			 * If the packet was not received under an SA, or
+			 * if the SA it was received under is not acceptable,
+			 * see if we already have an acceptable SA
+			 * established. If we do, discard packet.
+			 */
+			if (inp->inp_ipo->ipo_last_searched <=
+			    ipsec_last_added) {
+				inp->inp_ipo->ipo_last_searched = time.tv_sec;
+
+				/* Do we have an SA already established ? */
+				if (gettdbbysrc(&inp->inp_ipo->ipo_dst,
+				    inp->inp_ipo->ipo_sproto,
+				    inp->inp_ipo->ipo_srcid,
+				    inp->inp_ipo->ipo_dstid, m, af,
+				    &inp->inp_ipo->ipo_addr,
+				    &inp->inp_ipo->ipo_mask) != NULL) {
+					*error = -EINVAL;
+					return NULL;
+				}
+				/* Fall through */
+			}
+
+			/*
+			 * If we don't have an appropriate SA, acquire one
+			 * and discard the packet.
+			 */
+			ipsp_acquire_sa(inp->inp_ipo, &inp->inp_ipo->ipo_dst,
+			    &inp->inp_ipo->ipo_src, &inp->inp_ipo->ipo_addr, m);
+			*error = -EINVAL;
+			return NULL;
+		}
+
+		break;
+
+	case IPSP_DIRECTION_OUT:
+		/* Do we have a cached entry ? */
+		if (inp->inp_tdb_out != NULL) {
+			/*
+			 * If we also have to apply a different TDB as
+			 * a result of a system-wide policy, add a tag
+			 * to the packet.
+			 */
+			if (ipo != NULL && m != NULL &&
+			    ipo->ipo_tdb != NULL &&
+			    ipo->ipo_tdb != inp->inp_tdb_out) {
+				tdb = inp->inp_tdb_out;
+				goto tagandreturn;
+			} else
+				return inp->inp_tdb_out;
+		}
+
+		/*
+		 * We need to either find an SA with the appropriate
+		 * characteristics and link it to the PCB, or acquire
+		 * one.
+		 */
+		/* XXX Only support one policy/protocol for now. */
+		if (inp->inp_ipo != NULL) {
+			if (inp->inp_ipo->ipo_last_searched <=
+			    ipsec_last_added) {
+				inp->inp_ipo->ipo_last_searched = time.tv_sec;
+
+				/* Update, just in case. */
+				ipsec_update_policy(inp, inp->inp_ipo, af,
+				    IPSP_DIRECTION_OUT);
+
+				tdb = gettdbbyaddr(&inp->inp_ipo->ipo_dst,
+				    inp->inp_ipo->ipo_sproto,
+				    inp->inp_ipo->ipo_srcid,
+				    inp->inp_ipo->ipo_dstid,
+				    inp->inp_ipo->ipo_local_cred, m, af,
+				    &inp->inp_ipo->ipo_addr,
+				    &inp->inp_ipo->ipo_mask);
+			}
+		} else {
+			/*
+			 * Construct a pseudo-policy, with just the necessary
+			 * fields.
+			 */
+			ipsec_update_policy(inp, &sipon, af,
+			    IPSP_DIRECTION_OUT);
+
+			tdb = gettdbbyaddr(&sipon.ipo_dst, IPPROTO_ESP, NULL,
+			    NULL, NULL, m, af, &sipon.ipo_addr,
+			    &sipon.ipo_mask);
+		}
+
+		/* If we found an appropriate SA... */
+		if (tdb != NULL) {
+			tdb_add_inp(tdb, inp, 0); /* Latch onto PCB. */
+
+			if (ipo != NULL && ipo->ipo_tdb != NULL &&
+			    ipo->ipo_tdb != inp->inp_tdb_out && m != NULL)
+				goto tagandreturn;
+			else
+				return tdb;
+		} else {
+			/* Do we need to acquire one ? */
+			switch (inp->inp_seclevel[SL_ESP_TRANS]) {
+			case IPSEC_LEVEL_BYPASS:
+			case IPSEC_LEVEL_AVAIL:
+				/* No need to do anything. */
+				goto justreturn;
+			case IPSEC_LEVEL_USE:
+			case IPSEC_LEVEL_REQUIRE:
+			case IPSEC_LEVEL_UNIQUE:
+				/* Initialize socket policy if unset. */
+				if (inp->inp_ipo == NULL) {
+					inp->inp_ipo = ipsec_add_policy(inp, af, IPSP_DIRECTION_OUT);
+					if (inp->inp_ipo == NULL) {
+						*error = ENOBUFS;
+						return NULL;
+					}
+				}
+
+				/* Acquire a new SA. */
+				if ((*error = ipsp_acquire_sa(inp->inp_ipo,
+				    &inp->inp_ipo->ipo_dst,
+				    &inp->inp_ipo->ipo_src,
+				    &inp->inp_ipo->ipo_addr, m)) == 0)
+					*error = -EINVAL;
+
+				return NULL;
+			default:
+				DPRINTF(("ipsp_spd_inp: unknown sock security"
+				    " level %d",
+				    inp->inp_seclevel[SL_ESP_TRANS]));
+				*error = -EINVAL;
+				return NULL;
+			}
+		}
+		break;
+
+	default:  /* Should never happen. */
+		*error = -EINVAL;
+		return NULL;
+	}
+
+ tagandreturn:
+	if (tdb == NULL)
+		goto justreturn;
+
+	mtag = m_tag_get(PACKET_TAG_IPSEC_PENDING_TDB,
+	    sizeof (struct tdb_ident), M_NOWAIT);
+	if (mtag == NULL) {
+		*error = ENOMEM;
+		return NULL;
+	}
+
+	tdbi = (struct tdb_ident *)(mtag + 1);
+	tdbi->spi = ipo->ipo_tdb->tdb_spi;
+	tdbi->proto = ipo->ipo_tdb->tdb_sproto;
+	bcopy(&ipo->ipo_tdb->tdb_dst, &tdbi->dst,
+	    ipo->ipo_tdb->tdb_dst.sa.sa_len);
+	m_tag_prepend(m, mtag);
+	return tdb;
+
+ justreturn:
 	if (ipo != NULL)
 		return ipo->ipo_tdb;
 	else
