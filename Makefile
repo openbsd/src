@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 1996/06/02 10:44:55 tholo Exp $
+#	$OpenBSD: Makefile,v 1.13 1996/12/13 15:45:58 deraadt Exp $
 #	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
 .include <bsd.own.mk>	# for NOMAN, if it's there.
@@ -46,6 +46,9 @@ build:
 	${MAKE} cleandir
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+.if (${MACHINE_ARCH} == "mips")
+	ldconfig		# Fuck.
+.endif
 .if defined(KERBEROS)
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
 .endif
