@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.14 1996/11/28 23:27:43 niklas Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.15 1997/01/15 05:50:38 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.17 1996/10/21 22:34:04 thorpej Exp $	*/
 
 /*
@@ -651,6 +651,10 @@ ahc_attach(ahc)
 	ahc->sc_link.fordriver = 0;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	ahc->sc_link.adapter_target = ahc->our_id;
+#ifdef __OpenBSD__
+	if(ahc->type & AHC_WIDE)
+		ahc->sc_link.adapter_buswidth = 16;
+#endif
 #ifndef __OpenBSD__
 	ahc->sc_link.channel = 0;
 #endif
@@ -674,6 +678,10 @@ ahc_attach(ahc)
 		ahc->sc_link_b.fordriver = (void *)SELBUSB;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 		ahc->sc_link_b.adapter_target = ahc->our_id_b;
+#ifdef __OpenBSD__
+		if(ahc->type & AHC_WIDE)
+			ahc->sc_link.adapter_buswidth = 16;
+#endif
 #ifndef __OpenBSD__
 		ahc->sc_link_b.channel = 1;
 #endif

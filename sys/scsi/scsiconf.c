@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.19 1996/11/28 13:20:37 niklas Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.20 1997/01/15 05:50:27 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -122,10 +122,28 @@ scsibusattach(parent, self, aux)
 {
 	struct scsibus_softc *sb = (struct scsibus_softc *)self;
 	struct scsi_link *sc_link_proto = aux;
+	int nbytes, i;
 
 	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
-	printf("\n");
+	if (sb->adapter_link->adapter_buswidth == 0)
+		sb->adapter_link->adapter_buswidth = 8;
+	sb->sc_buswidth = sb->adapter_link->adapter_buswidth;
+
+	printf(": %d targets\n", sb->sc_buswidth);
+
+	nbytes = sb->sc_buswidth * sizeof(struct scsi_link **);
+	sb->sc_link = (struct scsi_link ***)malloc(nbytes, M_DEVBUF, M_NOWAIT);
+	if (sb->sc_link == NULL)
+		panic("scsibusattach: can't allocate target links");
+	nbytes = 8 * sizeof(struct scsi_link *);
+	for (i = 0; i <= sb->sc_buswidth; i++) {
+		sb->sc_link[i] = (struct scsi_link **)malloc(nbytes,
+		    M_DEVBUF, M_NOWAIT);
+		if (sb->sc_link[i] == NULL)
+			panic("scsibusattach: can't allocate lun links");
+		bzero(sb->sc_link[i], nbytes);
+	}
 
 #if defined(SCSI_DELAY) && SCSI_DELAY > 2
 	printf("%s: waiting for scsi devices to settle\n",
@@ -196,10 +214,11 @@ scsi_probe_bus(bus, target, lun)
 	scsi_addr = scsi->adapter_link->adapter_target;
 
 	if (target == -1) {
-		maxtarget = 7;
+		maxtarget = scsi->adapter_link->adapter_buswidth - 1;
 		mintarget = 0;
 	} else {
-		if (target < 0 || target > 7)
+		if (target < 0 ||
+		    target >= scsi->adapter_link->adapter_buswidth)
 			return EINVAL;
 		maxtarget = mintarget = target;
 	}

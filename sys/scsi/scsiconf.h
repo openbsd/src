@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.8 1996/10/31 01:09:25 niklas Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.9 1997/01/15 05:50:29 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.29 1996/03/19 03:07:50 mycroft Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ struct scsi_link {
 	u_int8_t target;		/* targ of this dev */
 	u_int8_t lun;			/* lun of this dev */
 	u_int8_t adapter_target;	/* what are we on the scsi bus */
+	u_int8_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
 	u_int8_t openings;		/* available operations */
 	u_int8_t active;		/* operations in progress */
 	u_int16_t flags;		/* flags that all devices have */
@@ -184,8 +185,9 @@ struct scsi_inquiry_pattern {
 struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
-	struct scsi_link *sc_link[8][8];
+	struct scsi_link ***sc_link;
 	u_int8_t moreluns;
+	u_int8_t sc_buswidth;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.22 1996/11/30 23:04:38 downsj Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.23 1997/01/15 05:50:44 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $	*/
 
 /**************************************************************************
@@ -3640,6 +3640,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	np->sc_link.adapter_softc = np;
 	np->sc_link.adapter_target = np->myaddr;
+	np->sc_link.adapter_buswidth = MAX_TARGET;
 	np->sc_link.openings = 1;
 #ifndef __OpenBSD__
 	np->sc_link.channel      = SCSI_CHANNEL_ONLY_ONE;
