@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/26 05:32:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/07/27 11:32:03 deraadt Exp $
 
 MAGIC=		/etc/magic
-MAGICOWN=	bin
+MAGICOWN=	root
 MAGICGRP=	bin
 MAGICMODE=	444
 
