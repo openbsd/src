@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.2 2000/07/05 22:50:11 mickey Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.11 1999/12/06 18:52:23 drochner Exp $ */
 
 /*
@@ -186,7 +186,7 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
 	psignal(sd->s_proc, sd->s_relsig);
-	timeout_set(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
+	timeout_add(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
 
 	return (EAGAIN);
 }
