@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.2 2003/10/16 18:38:40 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.3 2004/01/12 14:10:53 grange Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -246,8 +246,6 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pcireg_t iobase, control;
 	int i;
-	extern int nsensors;
-	extern struct sensors_head sensors;
 
 	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x70);
 	control = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x74);
@@ -266,8 +264,7 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	for (i = 0; i < VIANUMSENSORS; ++i) {
 		strlcpy(sc->sc_data[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_data[i].device));
-		sc->sc_data[i].num = nsensors++;
-		SLIST_INSERT_HEAD(&sensors, &sc->sc_data[i], list);
+		SENSOR_ADD(&sc->sc_data[i]);
 	}
 
 	for (i = 0; i <= 2; i++) {

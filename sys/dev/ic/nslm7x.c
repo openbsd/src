@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.3 2003/08/05 13:42:36 couderc Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.4 2004/01/12 14:10:53 grange Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -151,8 +151,6 @@ void
 lm_attach(struct lm_softc *lmsc)
 {
 	u_int i;
-	extern int nsensors;
-	extern struct sensors_head sensors;
 
 	/* Install default bank selection routine, if none given. */
 	if (lmsc->lm_banksel == NULL)
@@ -169,8 +167,7 @@ lm_attach(struct lm_softc *lmsc)
 	for (i = 0; i < lmsc->numsensors; ++i) {
 		strlcpy(lmsc->sensors[i].device, lmsc->sc_dev.dv_xname,
 		    sizeof(lmsc->sensors[i].device));
-		lmsc->sensors[i].num = nsensors++;
-		SLIST_INSERT_HEAD(&sensors, &lmsc->sensors[i], list);
+		SENSOR_ADD(&lmsc->sensors[i]);
 	}
 
 	/* Refresh sensors data every 1.5 seconds */

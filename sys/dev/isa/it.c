@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.4 2003/11/05 20:57:10 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.5 2004/01/12 14:10:53 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -122,8 +122,6 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	struct isa_attach_args *ia = aux;
 	int i;
 	u_int8_t cr;
-	extern int nsensors;
-	extern struct sensors_head sensors;
 
         iobase = ia->ipa_io[0].base;
 	iot = sc->it_iot = ia->ia_iot;
@@ -161,8 +159,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->numsensors; ++i) {
 		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensors[i].device));
-		sc->sensors[i].num = nsensors++;
-		SLIST_INSERT_HEAD(&sensors, &sc->sensors[i], list);
+		SENSOR_ADD(&sc->sensors[i]);
 	}
 
 	timeout_set(&it_timeout, it_refresh, sc);

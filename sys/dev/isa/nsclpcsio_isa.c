@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.1 2004/01/05 17:27:29 markus Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.2 2004/01/12 14:10:53 grange Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -226,9 +226,6 @@ nsclpcsio_isa_attach(parent, self, aux)
 	int iobase;
 	int i;
 
-	extern int nsensors;
-	extern struct sensors_head sensors;
-
 	iobase = ia->ipa_io[0].base;
 	sc->sc_iot = iot = ia->ia_iot;
 	if (bus_space_map(ia->ia_iot, iobase, 2, 0, &sc->sc_ioh)) {
@@ -250,8 +247,7 @@ nsclpcsio_isa_attach(parent, self, aux)
 			continue;
 		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensors[i].device));
-		sc->sensors[i].num = nsensors++;
-		SLIST_INSERT_HEAD(&sensors, &sc->sensors[i], list);
+		SENSOR_ADD(&sc->sensors[i]);
 	}
 	if (sc->sc_tms || sc->sc_vlm) {
 		timeout_set(&nsclpcsio_timeout, nsclpcsio_refresh, sc);
