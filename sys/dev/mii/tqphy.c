@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.1 1999/12/07 22:01:33 jason Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.2 2000/05/15 06:11:53 niklas Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.4 1999/11/12 18:13:01 thorpej Exp $	*/
 
 /*
@@ -91,9 +91,10 @@
 
 int	tqphymatch __P((struct device *, void *, void *));
 void	tqphyattach __P((struct device *, struct device *, void *));
+int	tqphydetach __P((struct device *, int));
 
 struct cfattach tqphy_ca = {
-	sizeof(struct mii_softc), tqphymatch, tqphyattach
+	sizeof(struct mii_softc), tqphymatch, tqphyattach, tqphydetach
 };
 
 struct cfdriver tqphy_cd = {
@@ -147,12 +148,16 @@ tqphyattach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_add_media(sc);
-	printf("\n");
+}
+
+int
+tqphydetach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	return (0);
 }
 
 int
