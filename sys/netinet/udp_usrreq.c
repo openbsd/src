@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.91 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.92 2003/11/04 21:43:16 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -483,14 +483,12 @@ udp_input(struct mbuf *m, ...)
 		++udpstat.udps_pcbhashmiss;
 #ifdef INET6
 		if (ip6) {
-			inp = in_pcblookup(&udbtable,
-			    (struct in_addr *)&(ip6->ip6_src),
-			    uh->uh_sport, (struct in_addr *)&(ip6->ip6_dst),
-			    uh->uh_dport, INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+			inp = in6_pcblookup_listen(&udbtable,
+			    &ip6->ip6_dst, uh->uh_dport);
 		} else
 #endif /* INET6 */
-		inp = in_pcblookup(&udbtable, &ip->ip_src, uh->uh_sport,
-		    &ip->ip_dst, uh->uh_dport, INPLOOKUP_WILDCARD);
+		inp = in_pcblookup_listen(&udbtable,
+		    ip->ip_dst, uh->uh_dport);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -665,7 +663,6 @@ udp6_ctlinput(cmd, sa, d)
 	int off;
 	void *cmdarg;
 	struct ip6ctlparam *ip6cp = NULL;
-	struct in6_addr finaldst;
 	struct udp_portonly {
 		u_int16_t uh_sport;
 		u_int16_t uh_dport;
@@ -770,12 +767,8 @@ udp6_ctlinput(cmd, sa, d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcbhashlookup(&udbtable, &finaldst,
+			if (in6_pcbhashlookup(&udbtable, &sa6.sin6_addr,
 			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport))
-				valid = 1;
-			else if (in_pcblookup(&udbtable, &sa6.sin6_addr,
-			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport,
-			    INPLOOKUP_IPV6))
 				valid = 1;
 #if 0
 			/*
@@ -785,9 +778,8 @@ udp6_ctlinput(cmd, sa, d)
 			 * We should at least check if the local address (= s)
 			 * is really ours.
 			 */
-			else if (in_pcblookup(&udbtable, &sa6.sin6_addr,
-			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport,
-			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6))
+			else if (in6_pcblookup_listen(&udbtable,
+			    &sa6_src.sin6_addr, uh.uh_sport))
 				valid = 1;
 #endif
 

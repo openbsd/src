@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.398 2003/11/03 07:50:00 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.399 2003/11/04 21:43:15 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2003,8 +2003,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
 	case AF_INET:
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
-			inp = in_pcblookup(tb, &saddr->v4, sport, &daddr->v4,
-			    dport, INPLOOKUP_WILDCARD);
+			inp = in_pcblookup_listen(tb, daddr->v4, dport);
 			if (inp == NULL)
 				return (0);
 		}
@@ -2014,8 +2013,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, sa_family_t af,
 		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport);
 		if (inp == NULL) {
-			inp = in_pcblookup(tb, &saddr->v6, sport, &daddr->v6,
-			    dport, INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+			inp = in6_pcblookup_listen(tb, &daddr->v6, dport);
 			if (inp == NULL)
 				return (0);
 		}

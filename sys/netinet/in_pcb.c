@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.68 2003/10/25 12:15:24 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.69 2003/11/04 21:43:16 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -955,6 +955,15 @@ in_pcbrehash(inp)
 int	in_pcbnotifymiss = 0;
 #endif
 
+/*
+ * The in(6)_pcbhashlookup functions are used to locate connected sockets
+ * quickly:
+ * 		faddr.fport <-> laddr.lport
+ * No wildcard matching is done so that listening sockets are not found.
+ * If the functions return NULL in(6)_pcblookup_listen can be used to
+ * find a listening/bound socket that may accept the connection.
+ * After those two lookups no other are necessary.
+ */
 struct inpcb *
 in_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	struct inpcbtable *table;
@@ -1029,7 +1038,7 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	}
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
-		printf("in6_pcblookup_connect: faddr=");
+		printf("in6_pcbhashlookup: faddr=");
 		printf(" fport=%d laddr=", ntohs(fport));
 		printf(" lport=%d\n", ntohs(lport));
 	}
@@ -1038,4 +1047,112 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 }
 #endif /* INET6 */
 
+/*
+ * The in(6)_pcblookup_listen functions are used to locate listening
+ * sockets quickly.  This are sockets with unspecified foreign address
+ * and port:
+ *		*.*     <-> laddr.lport
+ *		*.*     <->     *.lport
+ */
+struct inpcb *
+in_pcblookup_listen(table, laddr, lport_arg)
+	struct inpcbtable *table;
+	struct in_addr laddr;
+	u_int lport_arg;
+{
+	struct inpcbhead *head;
+	register struct inpcb *inp;
+	u_int16_t lport = lport_arg;
 
+	head = INPCBHASH(table, &zeroin_addr, 0, &laddr, lport);
+	LIST_FOREACH(inp, head, inp_hash) {
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			continue;	/*XXX*/
+#endif
+		if (inp->inp_lport == lport && inp->inp_fport == 0 &&
+		    inp->inp_laddr.s_addr == laddr.s_addr &&
+		    inp->inp_faddr.s_addr == INADDR_ANY)
+			break;
+	}
+	if (inp == NULL && laddr.s_addr != INADDR_ANY) {
+		head = INPCBHASH(table, &zeroin_addr, 0, &zeroin_addr, lport);
+		LIST_FOREACH(inp, head, inp_hash) {
+#ifdef INET6
+			if (inp->inp_flags & INP_IPV6)
+				continue;	/*XXX*/
+#endif
+			if (inp->inp_lport == lport && inp->inp_fport == 0 &&
+			    inp->inp_laddr.s_addr == INADDR_ANY &&
+			    inp->inp_faddr.s_addr == INADDR_ANY)
+				break;
+		}
+	}
+#ifdef DIAGNOSTIC
+	if (inp == NULL && in_pcbnotifymiss) {
+		printf("in_pcblookup_listen: laddr=%08x lport=%d\n",
+		    ntohl(laddr.s_addr), ntohs(lport));
+	}
+#endif
+	/*
+	 * Move this PCB to the head of hash chain so that
+	 * repeated accesses are quicker.  This is analogous to
+	 * the historic single-entry PCB cache.
+	 */
+	if (inp != NULL && inp != head->lh_first) {
+		LIST_REMOVE(inp, inp_hash);
+		LIST_INSERT_HEAD(head, inp, inp_hash);
+	}
+	return (inp);
+}
+
+#ifdef INET6
+struct inpcb *
+in6_pcblookup_listen(table, laddr, lport_arg)
+	struct inpcbtable *table;
+	struct in6_addr *laddr;
+	u_int lport_arg;
+{
+	struct inpcbhead *head;
+	register struct inpcb *inp;
+	u_int16_t lport = lport_arg;
+
+	head = IN6PCBHASH(table, &zeroin6_addr, 0, laddr, lport);
+	LIST_FOREACH(inp, head, inp_hash) {
+		if (!(inp->inp_flags & INP_IPV6))
+			continue;
+		if (inp->inp_lport == lport && inp->inp_fport == 0 &&
+		    IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr) &&
+		    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+			break;
+	}
+	if (inp == NULL && !IN6_IS_ADDR_UNSPECIFIED(laddr)) {
+		head = IN6PCBHASH(table, &zeroin6_addr, 0,
+		    &zeroin6_addr, lport);
+		LIST_FOREACH(inp, head, inp_hash) {
+			if (!(inp->inp_flags & INP_IPV6))
+				continue;
+			if (inp->inp_lport == lport && inp->inp_fport == 0 &&
+			    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
+			    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+				break;
+		}
+	}
+#ifdef DIAGNOSTIC
+	if (inp == NULL && in_pcbnotifymiss) {
+		printf("in6_pcblookup_listen: laddr= lport=%d\n",
+		    ntohs(lport));
+	}
+#endif
+	/*
+	 * Move this PCB to the head of hash chain so that
+	 * repeated accesses are quicker.  This is analogous to
+	 * the historic single-entry PCB cache.
+	 */
+	if (inp != NULL && inp != head->lh_first) {
+		LIST_REMOVE(inp, inp_hash);
+		LIST_INSERT_HEAD(head, inp, inp_hash);
+	}
+	return (inp);
+}
+#endif /* INET6 */

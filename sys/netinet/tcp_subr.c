@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.69 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.70 2003/11/04 21:43:16 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -839,10 +839,6 @@ tcp6_ctlinput(cmd, sa, d)
 			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
 			    th.th_sport))
 				valid++;
-			else if (in_pcblookup(&tcbtable, &sa6->sin6_addr,
-			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
-			    th.th_sport, INPLOOKUP_IPV6))
-				valid++;
 
 			/*
 			 * Depending on the value of "valid" and routing table
@@ -893,10 +889,12 @@ tcp_ctlinput(cmd, sa, v)
 		 * Verify that the packet in the icmp payload refers
 		 * to an existing TCP connection.
 		 */
-		if (in_pcblookup(&tcbtable,
-				 &ip->ip_dst, th->th_dport,
-				 &ip->ip_src, th->th_sport,
-				 INPLOOKUP_WILDCARD)) {
+		/*
+		 * XXX is it possible to get a valid PRC_MSGSIZE error for
+		 * a non-established connection?
+		 */
+		if (in_pcbhashlookup(&tcbtable,
+		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport)) {
 			struct icmp *icp;
 			icp = (struct icmp *)((caddr_t)ip -
 					      offsetof(struct icmp, icmp_ip));

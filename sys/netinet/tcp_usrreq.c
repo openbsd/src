@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.71 2003/06/09 07:40:25 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.72 2003/11/04 21:43:16 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -834,15 +834,13 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 		switch (tir.faddr.ss_family) {
 #ifdef INET6
 		case AF_INET6:
-			inp = in_pcblookup(&tcbtable, &f6,
-			    fin6->sin6_port, &l6, lin6->sin6_port,
-			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+			inp = in6_pcblookup_listen(&tcbtable,
+			    &l6, lin6->sin6_port);
 			break;
 #endif
 		case AF_INET:
-			inp = in_pcblookup(&tcbtable, &fin->sin_addr,
-			    fin->sin_port, &lin->sin_addr, lin->sin_port,
-			    INPLOOKUP_WILDCARD);
+			inp = in_pcblookup_listen(&tcbtable, 
+			    lin->sin_addr, lin->sin_port);
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.133 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.134 2003/11/04 21:43:16 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -670,14 +670,13 @@ findpcb:
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			inp = in_pcblookup(&tcbtable, &ip6->ip6_src,
-			    th->th_sport, &ip6->ip6_dst, th->th_dport,
-			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+			inp = in6_pcblookup_listen(&tcbtable,
+			    &ip6->ip6_dst, th->th_dport);
 			break;
 #endif /* INET6 */
 		case AF_INET:
-			inp = in_pcblookup(&tcbtable, &ip->ip_src, th->th_sport,
-			    &ip->ip_dst, th->th_dport, INPLOOKUP_WILDCARD);
+			inp = in_pcblookup_listen(&tcbtable,
+			    ip->ip_dst, th->th_dport);
 			break;
 		}
 		/*
