@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2000/06/08 22:25:17 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2000/11/08 11:44:00 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -91,7 +91,13 @@ cpu_fork(p1, p2, stack, stacksize)
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
-	savectx(curpcb);
+	if (p1 == curproc) {
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	*pcb = p1->p_addr->u_pcb;
 
 	/*
@@ -214,6 +220,8 @@ physaccess(vaddr, paddr, size, prot)
 	/* if cache not inhibited, set cacheable & copyback */
 	if (mmutype == MMU_68040 && (prot & PG_CI) == 0)
 		prot |= PG_CCB;
+	else if (cputype == CPU_68060 && (prot & PG_CI))
+                prot |= PG_CIN;
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
@@ -348,84 +356,74 @@ kvtop(addr)
 extern vm_map_t phys_map;
 
 /*
- * Map an IO request into kernel virtual address space.  Requests fall into
- * one of five catagories:
- *
- *	B_PHYS|B_UAREA:	User u-area swap.
- *			Address is relative to start of u-area (p_addr).
- *	B_PHYS|B_PAGET:	User page table swap.
- *			Address is a kernel VA in usrpt (Usrptmap).
- *	B_PHYS|B_DIRTY:	Dirty page push.
- *			Address is a VA in proc2's address space.
- *	B_PHYS|B_PGIN:	Kernel pagein of user pages.
- *			Address is VA in user's address space.
- *	B_PHYS:		User "raw" IO request.
- *			Address is VA in user's address space.
- *
- * All requests are (re)mapped into kernel VA space via the useriomap
- * (a name with only slightly more meaning than "kernelmap")
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
  */
-/*ARGSUSED*/
 void
-vmapbuf(bp, sz)
-	register struct buf *bp;
-	vm_size_t sz;
+vmapbuf(bp, len)
+     struct buf *bp;
+     vm_size_t len;
 {
-	register int npf;
-	register caddr_t addr;
-	register long flags = bp->b_flags;
-	struct proc *p;
-	int off;
-	vm_offset_t kva;
-	register vm_offset_t pa;
+	struct pmap *upmap, *kpmap;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa;	/* physical address */
+	vaddr_t off;
 
-	if ((flags & B_PHYS) == 0)
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_un.b_addr;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
+
+	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	len = m68k_round_page(off + len);
 #if defined(UVM)
-	kva = uvm_km_valloc_wait(phys_map, ctob(npf));
+	kva = uvm_km_valloc_wait(phys_map, len);
 #else
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
+	kva = kva = kmem_alloc_wait(phys_map, len);
 #endif
-	bp->b_un.b_addr = (caddr_t) (kva + off);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
-		if (pa == 0)
+	bp->b_data = (caddr_t)(kva + off);
+
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(phys_map);
+	do {
+		if ((pa = pmap_extract(upmap, uva)) == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
-		addr += PAGE_SIZE;
-		kva += PAGE_SIZE;
-	}
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
+			   TRUE, 0);
+                uva += PAGE_SIZE;
+                kva += PAGE_SIZE;
+                len -= PAGE_SIZE;
+        } while (len);
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
-/*ARGSUSED*/
 void
-vunmapbuf(bp, sz)
-	register struct buf *bp;
-	vm_size_t sz;
+vunmapbuf(bp, len)
+     struct buf *bp;
+     vm_size_t len;
 {
-	register int npf;
-	register caddr_t addr = bp->b_un.b_addr;
-	vm_offset_t kva;
+        vaddr_t kva;
+        vaddr_t off;
 
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vunmapbuf");
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+        if ((bp->b_flags & B_PHYS) == 0)
+                panic("vunmapbuf");
+
+        kva = m68k_trunc_page(bp->b_data);
+        off = (vaddr_t)bp->b_data - kva;
+        len = m68k_round_page(off + len);
+
+        /*
+         * pmap_remove() is unnecessary here, as kmem_free_wakeup()
+         * will do it for us.
+         */
 #if defined(UVM)
-	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
+        uvm_km_free_wakeup(phys_map, kva, len);
 #else
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+	kmem_free_wakeup(phys_map, kva, len);
 #endif
-	bp->b_un.b_addr = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+        bp->b_data = bp->b_saveaddr;
+        bp->b_saveaddr = 0;
 }
