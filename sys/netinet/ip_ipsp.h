@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.61 2000/02/28 23:13:07 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.62 2000/03/17 10:25:22 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -47,12 +47,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <netinet/in.h>
-#include <sys/md5k.h>
-#include <crypto/sha1.h>
-#include <crypto/rmd160.h>
-#include <crypto/blf.h>
-#include <crypto/cast.h>
-#include <crypto/skipjack.h>
 
 union sockaddr_union
 {
@@ -69,32 +63,9 @@ union sockaddr_union
 #define SHA1HMAC96_KEYSIZE      20
 #define RIPEMD160HMAC96_KEYSIZE 20
 
-/* IV lengths */
-#define ESP_DES_IVS		8
-#define ESP_3DES_IVS		8
-#define ESP_BLF_IVS             8
-#define ESP_CAST_IVS            8
-#define ESP_SKIPJACK_IVS	8
-#define ESP_MAX_IVS		8       /* Keep updated */
-
-/* Block sizes -- it is assumed that they're powers of 2 */
-#define ESP_DES_BLKS		8
-#define ESP_3DES_BLKS		8
-#define ESP_BLF_BLKS            8
-#define ESP_CAST_BLKS           8
-#define ESP_SKIPJACK_BLKS	8
-#define ESP_MAX_BLKS            8       /* Keep updated */
-
-#define HMAC_BLOCK_LEN		64
-
 #define AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
 #define AH_HMAC_RPLENGTH        4	/* 32 bits of replay counter */
 #define AH_HMAC_INITIAL_RPL	1	/* Replay counter initial value */
-
-/* HMAC definitions */
-#define HMAC_IPAD_VAL           0x36
-#define HMAC_OPAD_VAL           0x5C
-#define HMAC_BLOCK_LEN          64
 
 /* Authenticator lengths */
 #define AH_MD5_ALEN		16
@@ -298,7 +269,9 @@ struct tdb				/* tunnel descriptor block */
     u_int64_t         tdb_soft_first_use; /* Soft warning */
     u_int64_t         tdb_exp_first_use;  /* Expire if tdb_first_use +
 					   * tdb_exp_first_use <= curtime */
+    u_int64_t         tdb_cryptoid;     /* Crypto session ID */
 
+    u_int32_t         tdb_ref;		/* References */
     u_int32_t	      tdb_spi;    	/* SPI */
     u_int16_t         tdb_amxkeylen;    /* Raw authentication key length */
     u_int16_t         tdb_emxkeylen;    /* Raw encryption key length */
@@ -311,23 +284,10 @@ struct tdb				/* tunnel descriptor block */
     union sockaddr_union tdb_src;	/* Source address for this SA */
     union sockaddr_union tdb_proxy;
 
-    u_int8_t         *tdb_key;          /* Key material (schedules) */
-    u_int8_t         *tdb_ictx;         /* Authentication contexts */
-    u_int8_t         *tdb_octx;
     u_int8_t         *tdb_srcid;        /* Source ID for this SA */
     u_int8_t         *tdb_dstid;        /* Destination ID for this SA */
     u_int8_t         *tdb_amxkey;       /* Raw authentication key */
     u_int8_t         *tdb_emxkey;       /* Raw encryption key */
-
-    union
-    {
-	u_int8_t  Iv[ESP_3DES_IVS];     /* That's enough space */
-	u_int32_t Ivl;        	        /* Make sure this is 4 bytes */
-	u_int64_t Ivq; 		        /* Make sure this is 8 bytes! */
-    }IV;
-#define tdb_iv  IV.Iv
-#define tdb_ivl IV.Ivl
-#define tdb_ivq IV.Ivq
 
     u_int32_t         tdb_rpl;	        /* Replay counter */
     u_int32_t         tdb_bitmap;       /* Used for replay sliding window */
@@ -349,45 +309,10 @@ struct tdb				/* tunnel descriptor block */
     TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
 };
 
-union authctx_old {
-    MD5_CTX md5ctx;
-    SHA1_CTX sha1ctx;
-};
-
-union authctx {
-    MD5_CTX md5ctx;
-    SHA1_CTX sha1ctx;
-    RMD160_CTX rmd160ctx;
-};
-
 struct tdb_ident {
     u_int32_t spi;
     union sockaddr_union dst;
     u_int8_t proto;
-};
-
-struct auth_hash {
-    int type;
-    char *name;
-    u_int16_t keysize;
-    u_int16_t hashsize; 
-    u_int16_t authsize;
-    u_int16_t ctxsize;
-    void (*Init)(void *);
-    void (*Update)(void *, u_int8_t *, u_int16_t);
-    void (*Final)(u_int8_t *, void *);
-};
-
-struct enc_xform {
-    int type;
-    char *name;
-    u_int16_t blocksize, ivsize;
-    u_int16_t minkey, maxkey;
-    u_int32_t ivmask;           /* Or all possible modes, zero iv = 1 */ 
-    void (*encrypt)(struct tdb *, u_int8_t *);
-    void (*decrypt)(struct tdb *, u_int8_t *);
-    void (*setkey)(u_int8_t **, u_int8_t *, int len);
-    void (*zerokey)(u_int8_t **);
 };
 
 struct ipsecinit
@@ -408,7 +333,7 @@ struct xformsw
     int		(*xf_attach)(void);	/* called at config time */
     int		(*xf_init)(struct tdb *, struct xformsw *, struct ipsecinit *);
     int		(*xf_zeroize)(struct tdb *); /* termination */
-    struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *, int, int); /* input */
+    int         (*xf_input)(struct mbuf *, struct tdb *, int, int); /* input */
     int		(*xf_output)(struct mbuf *, struct tdb *, struct mbuf **, int, int);        /* output */
 };
 
@@ -463,8 +388,6 @@ extern int ipsec_keep_invalid;
 extern int ipsec_in_use;
 extern int ipsec_require_pfs;
 
-extern u_int8_t hmac_ipad_buffer[64];
-extern u_int8_t hmac_opad_buffer[64];
 extern int ipsec_soft_allocations;
 extern int ipsec_exp_allocations;
 extern int ipsec_soft_bytes;
@@ -488,6 +411,7 @@ extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
 extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
 extern TAILQ_HEAD(explist_head, tdb) explist;
+
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Check if a given tdb has encryption, authentication and/or tunneling */
@@ -571,34 +495,41 @@ extern void etherip_input __P((struct mbuf *, ...));
 extern int ah_attach(void);
 extern int ah_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_zeroize(struct tdb *);
-extern int ah_output(struct mbuf *, struct tdb *, struct mbuf **,
-			 int, int);
-extern struct mbuf *ah_input(struct mbuf *, struct tdb *, int, int);
+extern int ah_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
+extern int ah_output_cb(void *);
+extern int ah_input(struct mbuf *, struct tdb *, int, int);
+extern int ah_input_cb(void *);
 extern int ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+extern int ah_massage_headers(struct mbuf **, int, int, int, int);
 
 #ifdef INET
 extern void ah4_input __P((struct mbuf *, ...));
+extern int ah4_input_cb __P((struct mbuf *, ...));
 #endif /* INET */
 
 #ifdef INET6
-int     ah6_input __P((struct mbuf **, int *, int));
+extern int ah6_input __P((struct mbuf **, int *, int));
+extern int ah6_input_cb __P((struct mbuf *, int));
 #endif /* INET6 */
 
 /* XF_ESP */
 extern int esp_attach(void);
 extern int esp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_zeroize(struct tdb *);
-extern int esp_output(struct mbuf *, struct tdb *, struct mbuf **,
-		      int, int);
-extern struct mbuf *esp_input(struct mbuf *, struct tdb *, int, int);
+extern int esp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
+extern int esp_output_cb(void *);
+extern int esp_input(struct mbuf *, struct tdb *, int, int);
+extern int esp_input_cb(void *);
 extern int esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 #ifdef INET
 extern void esp4_input __P((struct mbuf *, ...));
+extern int esp4_input_cb __P((struct mbuf *, ...));
 #endif /* INET */
 
 #ifdef INET6
-int     esp6_input __P((struct mbuf **, int *, int));
+extern int esp6_input __P((struct mbuf **, int *, int));
+extern int esp6_input_cb __P((struct mbuf *, int));
 #endif /* INET6 */
 
 /* XF_TCPSIGNATURE */
@@ -606,7 +537,8 @@ extern int tcp_signature_tdb_attach __P((void));
 extern int tcp_signature_tdb_init __P((struct tdb *, struct xformsw *,
 				       struct ipsecinit *));
 extern int tcp_signature_tdb_zeroize __P((struct tdb *));
-extern struct mbuf *tcp_signature_tdb_input __P((struct mbuf *, struct tdb *, int, int));
+extern int tcp_signature_tdb_input __P((struct mbuf *, struct tdb *, int,
+					int));
 extern int tcp_signature_tdb_output __P((struct mbuf *, struct tdb *,
 					 struct mbuf **, int, int));
 
@@ -620,7 +552,8 @@ extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
 extern unsigned char ipseczeroes[];
 
 /* Packet processing */
-int ipsp_process_packet(struct mbuf *, struct mbuf **, struct tdb *,
-			int *, int);
+extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
+extern int ipsp_process_done(struct mbuf *, struct tdb *);
+extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

@@ -31,6 +31,9 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+#include <crypto/blf.h>
+#include <crypto/crypto.h>
+#include <crypto/xform.h>
 
 #define PFKEYV2_PROTOCOL 2
 #define GETSPI_TRIES 10
@@ -208,10 +211,56 @@ export_sa(void **p, struct tdb *tdb)
       sadb_sa->sadb_sa_state = SADB_SASTATE_LARVAL;
 
     if (tdb->tdb_authalgxform)
-      sadb_sa->sadb_sa_auth = tdb->tdb_authalgxform->type;
+    {
+	switch (tdb->tdb_authalgxform->type)
+	{
+	    case CRYPTO_MD5_HMAC96:
+		sadb_sa->sadb_sa_auth = SADB_AALG_MD5HMAC96;
+		break;
+
+	    case CRYPTO_SHA1_HMAC96:
+		sadb_sa->sadb_sa_auth = SADB_AALG_SHA1HMAC96;
+		break;
+
+	    case CRYPTO_RIPEMD160_HMAC96:
+		sadb_sa->sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
+		break;
+
+	    case CRYPTO_MD5_KPDK:
+		sadb_sa->sadb_sa_auth = SADB_X_AALG_MD5;
+		break;
+
+	    case CRYPTO_SHA1_KPDK:
+		sadb_sa->sadb_sa_auth = SADB_X_AALG_SHA1;
+		break;
+	}
+    }
 
     if (tdb->tdb_encalgxform)
-      sadb_sa->sadb_sa_encrypt = tdb->tdb_encalgxform->type;
+    {
+	switch (tdb->tdb_encalgxform->type)
+	{
+	    case CRYPTO_DES_CBC:
+		sadb_sa->sadb_sa_encrypt = SADB_EALG_DESCBC;
+		break;
+
+	    case CRYPTO_3DES_CBC:
+		sadb_sa->sadb_sa_encrypt = SADB_EALG_3DESCBC;
+		break;
+
+	    case CRYPTO_CAST_CBC:
+		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_BLF;
+		break;
+
+	    case CRYPTO_BLF_CBC:
+		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_CAST;
+		break;
+
+	    case CRYPTO_SKIPJACK_CBC:
+		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_SKIPJACK;
+		break;
+	}
+    }
 
     if (tdb->tdb_flags & TDBF_PFS)
       sadb_sa->sadb_sa_flags |= SADB_SAFLAGS_PFS;
@@ -2042,7 +2091,29 @@ pfkeyv2_acquire(struct tdb *tdb, int rekey)
 
 	if (tdb->tdb_authalgxform)
 	{
-	    sadb_comb->sadb_comb_auth = tdb->tdb_authalgxform->type;
+	    switch (tdb->tdb_authalgxform->type)
+	    {
+		case CRYPTO_MD5_HMAC96:
+		    sadb_comb->sadb_comb_auth = SADB_AALG_MD5HMAC96;
+		    break;
+
+		case CRYPTO_SHA1_HMAC96:
+		    sadb_comb->sadb_comb_auth = SADB_AALG_SHA1HMAC96;
+		    break;
+
+		case CRYPTO_RIPEMD160_HMAC96:
+		    sadb_comb->sadb_comb_auth = SADB_X_AALG_RIPEMD160HMAC96;
+		    break;
+
+		case CRYPTO_MD5_KPDK:
+		    sadb_comb->sadb_comb_auth = SADB_X_AALG_MD5;
+		    break;
+
+		case CRYPTO_SHA1_KPDK:
+		    sadb_comb->sadb_comb_auth = SADB_X_AALG_SHA1;
+		    break;
+	    }
+
 	    sadb_comb->sadb_comb_auth_minbits =
 					   tdb->tdb_authalgxform->keysize * 8;
 	    sadb_comb->sadb_comb_auth_maxbits =
@@ -2057,7 +2128,29 @@ pfkeyv2_acquire(struct tdb *tdb, int rekey)
 
 	if (tdb->tdb_encalgxform)
 	{
-	    sadb_comb->sadb_comb_encrypt = tdb->tdb_encalgxform->type;
+	    switch (tdb->tdb_encalgxform->type)
+	    {
+		case CRYPTO_DES_CBC:
+		    sadb_comb->sadb_comb_encrypt = SADB_EALG_DESCBC;
+		    break;
+
+		case CRYPTO_3DES_CBC:
+		    sadb_comb->sadb_comb_encrypt = SADB_EALG_3DESCBC;
+		    break;
+
+		case CRYPTO_CAST_CBC:
+		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;
+		    break;
+
+		case CRYPTO_BLF_CBC:
+		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_CAST;
+		    break;
+
+		case CRYPTO_SKIPJACK_CBC:
+		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_SKIPJACK;
+		    break;
+	    }
+
 	    sadb_comb->sadb_comb_encrypt_minbits =
 					     tdb->tdb_encalgxform->minkey * 8;
 	    sadb_comb->sadb_comb_encrypt_maxbits =

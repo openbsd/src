@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.64 2000/01/11 03:10:04 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.65 2000/03/17 10:25:22 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -130,20 +130,13 @@ ip_output(m0, va_alist)
 	va_list ap;
 #ifdef IPSEC
 	union sockaddr_union sunion;
-	struct mbuf *mp;
-	struct udphdr *udp;
-	struct tcphdr *tcp;
 	struct inpcb *inp;
 
 	struct route_enc re0, *re = &re0;
 	struct sockaddr_encap *ddst, *gw;
 	u_int8_t sa_require, sa_have = 0;
-	int s, protoflag = AF_INET;
+	int s;
 	struct tdb *tdb, tdb2;
-
-#ifdef INET6
-	struct ip6_hdr *ip6;
-#endif /* INET6 */
 #endif /* IPSEC */
 
 	va_start(ap, m0);
@@ -385,12 +378,19 @@ sendit:
 			goto have_tdb;
 		}
 
+		/*
+		 * If there are no flows in place, there's no point
+		 * continuing with the SPD lookup.
+		 */
 		if (!ipsec_in_use) {
 			splx(s);
 			goto no_encap;
 		}
 
-		/* Do an SPD lookup */
+		/*
+		 * Do an SPD lookup -- this code should probably be moved
+		 * to a separate function.
+		 */
 		ddst = (struct sockaddr_encap *) &re->re_dst;
 		ddst->sen_family = PF_KEY;
 		ddst->sen_len = SENT_IP4_LEN;
@@ -399,36 +399,27 @@ sendit:
 		ddst->sen_ip_dst = ip->ip_dst;
 		ddst->sen_proto = ip->ip_p;
 
+		/* If TCP/UDP, extract the port numbers to use in the lookup */
 		switch (ip->ip_p) {
 		case IPPROTO_UDP:
-			if (m->m_len < hlen + 2 * sizeof(u_int16_t)) {
-				if ((m = m_pullup(m, hlen + 2 *
-				    sizeof(u_int16_t))) == 0)
-					return ENOBUFS;
-				ip = mtod(m, struct ip *);
-			}
-			udp = (struct udphdr *) (mtod(m, u_char *) + hlen);
-			ddst->sen_sport = udp->uh_sport;
-			ddst->sen_dport = udp->uh_dport;
-			break;
-
 		case IPPROTO_TCP:
-			if (m->m_len < hlen + 2 * sizeof(u_int16_t)) {
-				if ((m = m_pullup(m, hlen + 2 *
-				    sizeof(u_int16_t))) == 0)
-					return ENOBUFS;
-				ip = mtod(m, struct ip *);
-			}
-			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
-			ddst->sen_sport = tcp->th_sport;
-			ddst->sen_dport = tcp->th_dport;
-			break;
+		    /*
+		     * Luckily, the offset of the src/dst ports in both the UDP
+		     * and TCP headers is the same (first two 16-bit values
+		     * in the respective headers), so we can just copy them.
+		     */
+		    m_copydata(m, hlen, sizeof(u_int16_t),
+			       (caddr_t) &ddst->sen_sport);
+		    m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			       (caddr_t) &ddst->sen_dport);
+		    break;
 
 		default:
 			ddst->sen_sport = 0;
 			ddst->sen_dport = 0;
 		}
 
+		/* Actual SPD lookup */
 		rtalloc((struct route *) re);
 		if (re->re_rt == NULL) {
 			splx(s);
@@ -496,6 +487,7 @@ sendit:
 		}
 #endif /* INET6 */
 
+		/* Lookup in the TDB table */
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
 					    gw->sen_ipsp_sproto);
 
@@ -524,7 +516,7 @@ sendit:
 			  sa_require |= NOTIFY_SATYPE_TUNNEL;
 		    }
 
-		    /* Check for PFS */
+		    /* Check whether Perfect Forward Secrect is required */
 		    if (ipsec_require_pfs)
 		      tdb->tdb_flags |= TDBF_PFS;
 		    else
@@ -637,21 +629,6 @@ sendit:
 
 	     have_tdb:
 
-		ip->ip_len = htons((u_short) ip->ip_len);
-		ip->ip_off = htons((u_short) ip->ip_off);
-		ip->ip_sum = 0;
-
-		/*
-		 * Now we check if this tdb has all the transforms which
-		 * are requried by the socket or our default policy.
-		 */
-		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
-
-		if (sa_require & ~sa_have) {
-		        splx(s);
-			goto no_encap;
-		}
-
 		if (tdb == NULL) {
 			splx(s);
 			if (gw->sen_type == SENT_IPSP)
@@ -662,63 +639,40 @@ sendit:
 			        DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi), gw->sen_ipsp6_sproto));
 #endif /* INET6 */	  
 
-			if (re->re_rt)
-                        	RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto done;
 		}
 
-		error = ipsp_process_packet(m, &mp, tdb, &protoflag, 0);
-		if ((mp == NULL) && (!error))
-		        error = ENOBUFS;
-		if (error) {
-			if (re->re_rt)
-                        	RTFREE(re->re_rt);
-			if (mp)
-			        m_freem(mp);
-			goto done;
-		}
-
-		m = mp;
-		mp = NULL;
-
-		splx(s);
-
-		/*
-		 * At this point, m is pointing to an mbuf chain with the
-		 * processed packet. Call ourselves recursively, but
-		 * bypass the encap code.
-		 */
+		/* We don't need this anymore */
 		if (re->re_rt)
 			RTFREE(re->re_rt);
 
-		if (protoflag == AF_INET) {
-		    ip = mtod(m, struct ip *);
-		    NTOHS(ip->ip_len);
-		    NTOHS(ip->ip_off);
+		/* Massage the IP header for use by the IPsec code */
+		ip->ip_len = htons((u_short) ip->ip_len);
+		ip->ip_off = htons((u_short) ip->ip_off);
+		ip->ip_sum = 0;
 
-		    return ip_output(m, NULL, NULL,
-				     IP_ENCAPSULATED | IP_RAWOUTPUT,
-				     NULL, NULL);
+		/*
+		 * Now we check if this tdb has all the transforms which
+		 * are required by the socket or our default policy.
+		 */
+		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
+		if (sa_require & ~sa_have) {
+		        splx(s);
+			goto no_encap;
 		}
 
-#ifdef INET6
-		if (protoflag == AF_INET6) {
-		    ip6 = mtod(m, struct ip6_hdr *);
-		    NTOHS(ip6->ip6_plen);
-
-		    /* Naturally, ip6_output() has to honor those two flags */
-		    return ip6_output(m, NULL, NULL,
-				     IP_ENCAPSULATED | IP_RAWOUTPUT,
-				     NULL, NULL);
-		}
-#endif /* INET6 */
+		/* Callee frees mbuf */
+		error = ipsp_process_packet(m, tdb, AF_INET, 0);
+		splx(s);
+		return error;  /* Nothing more to be done */
 
 no_encap:
 		/* This is for possible future use, don't move or delete */
 		if (re->re_rt)
 			RTFREE(re->re_rt);
+
 		/* No IPSec processing though it was required, drop packet */
 		if (sa_require) {
 			error = EHOSTUNREACH;

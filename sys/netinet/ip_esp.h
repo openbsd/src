@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.31 2000/01/27 08:09:10 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.32 2000/03/17 10:25:22 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -42,7 +42,7 @@
 
 struct espstat
 {
-    u_int32_t	esps_hdrops;	/* packet shorter than header shows */
+    u_int32_t	esps_hdrops;	/* Packet shorter than header shows */
     u_int32_t	esps_nopf;	/* Protocol family not supported */
     u_int32_t	esps_notdb;
     u_int32_t	esps_badkcr;
@@ -55,11 +55,12 @@ struct espstat
     u_int32_t   esps_replay;	/* Possible packet replay detected */
     u_int32_t	esps_input;	/* Input ESP packets */
     u_int32_t 	esps_output;	/* Output ESP packets */
-    u_int32_t	esps_invalid;   /* Trying to use an invalid TDB */
-    u_int64_t	esps_ibytes;	/* input bytes */
-    u_int64_t   esps_obytes;	/* output bytes */
-    u_int32_t	esps_toobig;	/* packet got larger than IP_MAXPACKET */
-    u_int32_t	esps_pdrops;	/* packet blocked due to policy */
+    u_int32_t	esps_invalid;	/* Trying to use an invalid TDB */
+    u_int64_t	esps_ibytes;	/* Input bytes */
+    u_int64_t	esps_obytes;	/* Output bytes */
+    u_int32_t	esps_toobig;	/* Packet got larger than IP_MAXPACKET */
+    u_int32_t	esps_pdrops;	/* Packet blocked due to policy */
+    u_int32_t	esps_crypto;	/* Crypto processing failure */
 };
 
 /*

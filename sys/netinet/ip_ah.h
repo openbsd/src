@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.24 2000/01/27 08:09:08 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.25 2000/03/17 10:25:22 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -40,23 +40,24 @@
 
 struct ahstat
 {
-    u_int32_t	ahs_hdrops;	/* packet shorter than header shows */
-    u_int32_t   ahs_nopf;      /* Protocol family not supported */
+    u_int32_t	ahs_hdrops;	/* Packet shorter than header shows */
+    u_int32_t	ahs_nopf;	/* Protocol family not supported */
     u_int32_t	ahs_notdb;
     u_int32_t	ahs_badkcr;
     u_int32_t	ahs_badauth;
     u_int32_t	ahs_noxform;
     u_int32_t	ahs_qfull;
-    u_int32_t   ahs_wrap;
-    u_int32_t   ahs_replay;
-    u_int32_t	ahs_badauthl;	/* bad authenticator length */
+    u_int32_t	ahs_wrap;
+    u_int32_t	ahs_replay;
+    u_int32_t	ahs_badauthl;	/* Bad authenticator length */
     u_int32_t	ahs_input;	/* Input AH packets */
     u_int32_t	ahs_output;	/* Output AH packets */
-    u_int32_t   ahs_invalid;    /* Trying to use an invalid TDB */
-    u_int64_t	ahs_ibytes;	/* input bytes */
-    u_int64_t   ahs_obytes;	/* output bytes */
-    u_int32_t	ahs_toobig;	/* packet got larger than IP_MAXPACKET */
-    u_int32_t	ahs_pdrops;	/* packet blocked due to policy */
+    u_int32_t	ahs_invalid;	/* Trying to use an invalid TDB */
+    u_int64_t	ahs_ibytes;	/* Input bytes */
+    u_int64_t	ahs_obytes;	/* Output bytes */
+    u_int32_t	ahs_toobig;	/* Packet got larger than IP_MAXPACKET */
+    u_int32_t	ahs_pdrops;	/* Packet blocked due to policy */
+    u_int32_t	ahs_crypto;	/* Crypto processing failure */
 };
 
 struct ah

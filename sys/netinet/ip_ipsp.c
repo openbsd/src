@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.79 2000/02/09 04:19:19 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.80 2000/03/17 10:25:22 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -60,6 +60,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 #endif /* INET */
 
 #ifdef INET6
@@ -73,6 +74,9 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+
+#include <crypto/crypto.h>
+#include <crypto/xform.h>
 
 #include <dev/rndvar.h>
 
@@ -112,26 +116,6 @@ struct expclusterlist_head expclusterlist =
     TAILQ_HEAD_INITIALIZER(expclusterlist);
 struct explist_head explist = TAILQ_HEAD_INITIALIZER(explist);
 
-u_int8_t hmac_ipad_buffer[64] = {
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36 };
-
-u_int8_t hmac_opad_buffer[64] = {
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C,
-    0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C, 0x5C };
-
 /*
  * This is the proper place to define the various encapsulation transforms.
  */
@@ -139,7 +123,7 @@ u_int8_t hmac_opad_buffer[64] = {
 struct xformsw xformsw[] = {
     { XF_IP4,	         0,               "IPv4 Simple Encapsulation",
       ipe4_attach,       ipe4_init,       ipe4_zeroize,
-      (struct mbuf * (*)(struct mbuf *, struct tdb *, int, int))ipe4_input, 
+      (int (*)(struct mbuf *, struct tdb *, int, int))ipe4_input, 
       ipip_output, },
     { XF_AH,	 XFT_AUTH,	    "IPsec AH",
       ah_attach,	ah_init,   ah_zeroize,
@@ -1121,6 +1105,7 @@ puttdb(struct tdb *tdbp)
     }
     tdbp->tdb_hnext = tdbh[hashval];
     tdbh[hashval] = tdbp;
+    tdbp->tdb_ref++;
     tdb_count++;
     splx(s);
 }
@@ -1181,7 +1166,7 @@ delete_flow(struct flow *flow, struct tdb *tdb, int ingress)
 void
 tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 {
-    struct tdb *tdbpp;
+    struct tdb *tdbpp, *tdbpn;
     struct inpcb *inp;
     u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
     int s;
@@ -1211,12 +1196,15 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 	{
 	    tdbpp->tdb_hnext = tdbp->tdb_hnext;
 	    tdbpp = tdbp;
+	    break;
 	}
+
+    tdbp->tdb_hnext = NULL;
 
  skip_hash:
     /*
      * If there was something before us in the chain pointing to us,
-     * make it point nowhere
+     * make it point nowhere.
      */
     if ((tdbp->tdb_inext) &&
 	(tdbp->tdb_inext->tdb_onext == tdbp))
@@ -1224,16 +1212,20 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 
     /* 
      * If there was something after us in the chain pointing to us,
-     * make it point nowhere
+     * make it point nowhere.
      */
     if ((tdbp->tdb_onext) &&
 	(tdbp->tdb_onext->tdb_inext == tdbp))
       tdbp->tdb_onext->tdb_inext = NULL;
     
-    tdbpp = tdbp->tdb_onext;
-    
+    tdbpn = tdbp->tdb_onext;
+    tdbp->tdb_inext = tdbp->tdb_onext = NULL;
+
     if (tdbp->tdb_xform)
-      (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
+    {
+      	(*(tdbp->tdb_xform->xf_zeroize))(tdbp);
+	tdbp->tdb_xform = NULL;
+    }
 
     while (tdbp->tdb_access)
       delete_flow(tdbp->tdb_access, tdbp, FLOW_INGRESS);
@@ -1326,6 +1318,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
         TAILQ_REMOVE(&tdbpp->tdb_bind_in, tdbpp, tdb_bind_in_next);
 	tdbpp->tdb_bind_out = NULL;
     }
+
     /* Cleanup inp references */
     for (inp = TAILQ_FIRST(&tdbp->tdb_inp); inp;
 	 inp = TAILQ_FIRST(&tdbp->tdb_inp))
@@ -1346,20 +1339,32 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     }
 
     if (tdbp->tdb_srcid)
-      FREE(tdbp->tdb_srcid, M_XDATA);
+    {
+      	FREE(tdbp->tdb_srcid, M_XDATA);
+	tdbp->tdb_srcid = NULL;
+    }
 
     if (tdbp->tdb_dstid)
-      FREE(tdbp->tdb_dstid, M_XDATA);
+    {
+      	FREE(tdbp->tdb_dstid, M_XDATA);
+	tdbp->tdb_dstid = NULL;
+    }
 
     /* If we're deleting the bypass tdb, reset the variable. */
     if (tdbp == tdb_bypass)
       tdb_bypass = NULL;
 
-    FREE(tdbp, M_TDB);
-    tdb_count--;
+    /* Don't always delete TDBs as they may be referenced by something else */
+    if (--tdbp->tdb_ref <= 0)
+    {
+      	FREE(tdbp, M_TDB);
+    	tdb_count--;
+    }
+    else
+      tdbp->tdb_flags |= TDBF_INVALID;
 
-    if (delchain && tdbpp)
-      tdb_delete(tdbpp, delchain, expflags);
+    if (delchain && tdbpn)
+      tdb_delete(tdbpn, delchain, expflags);
     splx(s);
 }
 
@@ -1519,6 +1524,11 @@ ipsp_kern(int off, char **bufp, int len)
 
 		  l += sprintf(buffer + l, ">\n");
 	      }
+
+	      l += sprintf(buffer + l, "\tCrypto ID: %qu\n", tdb->tdb_cryptoid);
+
+	      l += sprintf(buffer + l, "\tCurrently referenced %d time%s\n",
+			   tdb->tdb_ref, tdb->tdb_ref == 1 ? "" : "s");
 
 	      if (tdb->tdb_xform)
 		l += sprintf(buffer + l, "\txform = <%s>\n", 
@@ -1714,12 +1724,214 @@ ipsp_address(union sockaddr_union sa)
  * place.
  */
 int
-ipsp_process_packet(struct mbuf *m, struct mbuf **mp, struct tdb *tdb, int *af,
-		    int tunalready)
+ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 {
-    int i, error, off;
-    struct tdb *t;
+    int i, off, error;
+    struct mbuf *mp;
 
+#ifdef INET
+    struct ip *ip;
+#endif /* INET */
+#ifdef INET6
+    struct ip6_hdr *ip6;
+#endif /* INET6 */
+
+    /* Check that the transform is allowed by the administrator */
+    if ((tdb->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
+	(tdb->tdb_sproto == IPPROTO_AH && !ah_enable))
+    {
+	DPRINTF(("ipsp_process_packet(): IPSec outbound packet dropped due to policy\n"));
+	m_freem(m);
+	return EHOSTUNREACH;
+    }
+
+    /* Sanity check */
+    if (!tdb->tdb_xform)
+    {
+	DPRINTF(("ipsp_process_packet(): uninitialized TDB\n"));
+	m_freem(m);
+	return EHOSTUNREACH;
+    }
+
+    /* Check if the SPI is invalid */
+    if (tdb->tdb_flags & TDBF_INVALID)
+    {
+	DPRINTF(("ipsp_process_packet(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
+	m_freem(m);
+	return ENXIO;
+    }
+
+    /* Check that the network protocol is supported */
+    switch (tdb->tdb_dst.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    break;
+#endif /* INET6 */
+
+	default:
+	    DPRINTF(("ipsp_process_packet(): attempt to use SA %s/%08x/%u for protocol family %d\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
+	    m_freem(m);
+	    return ENXIO;
+    }
+
+    /* Register first use if applicable, setup relevant expiration timer */
+    if (tdb->tdb_first_use == 0)
+    {
+	tdb->tdb_first_use = time.tv_sec;
+	tdb_expiration(tdb, TDBEXP_TIMEOUT);
+    }
+
+    /*
+     * Check for tunneling if we don't have the first header in place.
+     * When doing Ethernet-over-IP, we are handed an already-encapsulated
+     * frame, so we don't need to re-encapsulate.
+     */
+    if (tunalready == 0)
+    {
+	/*
+	 * If the target protocol family is different, we know we'll be
+	 * doing tunneling.
+	 */
+	if (af == tdb->tdb_dst.sa.sa_family)
+	{
+#ifdef INET
+	    if (af == AF_INET)
+	      i = sizeof(struct ip);
+#endif /* INET */
+
+#ifdef INET6
+	    if (af == AF_INET6)
+	      i = sizeof(struct ip6_hdr);
+#endif /* INET6 */
+
+	    /* Bring the network header in the first mbuf */
+	    if (m->m_len < i)
+	    {
+		if ((m = m_pullup(m, i)) == 0)
+		  return ENOBUFS;
+	    }
+
+#ifdef INET
+	    ip = mtod(m, struct ip *);
+#endif /* INET */
+
+#ifdef INET6
+	    ip6 = mtod(m, struct ip6_hdr *);
+#endif /* INET6 */
+	}
+
+	/* Do the appropriate encapsulation, if necessary */
+	if ((tdb->tdb_dst.sa.sa_family != af) || /* PF mismatch */
+	    (tdb->tdb_flags & TDBF_TUNNELING) || /* Tunneling requested */
+	    (tdb->tdb_xform->xf_type == XF_IP4) || /* ditto */
+#ifdef INET
+	    ((tdb->tdb_dst.sa.sa_family == AF_INET) &&
+	     (tdb->tdb_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
+	     (tdb->tdb_dst.sin.sin_addr.s_addr != ip->ip_dst.s_addr)) ||
+#endif /* INET */
+#ifdef INET6
+	    ((tdb->tdb_dst.sa.sa_family == AF_INET6) &&
+	     (!IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr)) &&
+	     (!IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
+				  &ip6->ip6_dst))) ||
+#endif /* INET6 */
+	    0)
+	{
+#ifdef INET
+	    /* Fix IPv4 header checksum and length */
+	    if (af == AF_INET)
+	    {
+		if ((m = m_pullup(m, sizeof(struct ip))) == 0)
+		  return ENOBUFS;
+
+		ip = mtod(m, struct ip *);
+		ip->ip_len = htons(m->m_pkthdr.len);
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+	    }
+#endif /* INET */
+
+#ifdef INET6
+	    /* Fix IPv6 header payload length */
+	    if (af == AF_INET6)
+	    {
+		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
+		  return ENOBUFS;
+
+		ip6 = mtod(m, struct ip6_hdr *);
+		ip6->ip6_plen = htons(m->m_pkthdr.len);
+	    }
+#endif /* INET6 */
+
+	    /* Encapsulate -- the last two arguments are unused */
+	    error = ipip_output(m, tdb, &mp, 0, 0);
+	    if ((mp == NULL) && (!error))
+	      error = EFAULT;
+	    if (error)
+	    {
+		if (mp)
+		{
+		    m_freem(mp);
+		    mp = NULL;
+		}
+
+		return error;
+	    }
+
+	    m = mp;
+	    mp = NULL;
+	}
+
+	/* We may be done with this TDB */
+	if (tdb->tdb_xform->xf_type == XF_IP4)
+	  return ipsp_process_done(m, tdb);
+    }
+    else
+    {
+	/*
+	 * If this is just an IP-IP TDB and we're told there's already an
+	 * encapsulation header, move on.
+	 */
+	if (tdb->tdb_xform->xf_type == XF_IP4)
+	  return ipsp_process_done(m, tdb);
+    }
+
+    /* Extract some information off the headers */
+    switch (tdb->tdb_dst.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    ip = mtod(m, struct ip *);
+	    i = ip->ip_hl << 2;
+	    off = offsetof(struct ip, ip_p);
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    ip6 = mtod(m, struct ip6_hdr *);
+	    i = sizeof(struct ip6_hdr);
+	    off = offsetof(struct ip6_hdr, ip6_nxt);
+	    break;
+#endif /* INET6 */
+    }
+
+    /* Invoke the IPsec transform */
+    return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, i, off);
+}
+
+/*
+ * Called by the IPsec output transform callbacks, to transmit the packet
+ * or do further processing, as necessary.
+ */
+int
+ipsp_process_done(struct mbuf *m, struct tdb *tdb)
+{
 #ifdef INET
     struct ip *ip;
 #endif /* INET */
@@ -1728,207 +1940,69 @@ ipsp_process_packet(struct mbuf *m, struct mbuf **mp, struct tdb *tdb, int *af,
     struct ip6_hdr *ip6;
 #endif /* INET6 */
 
-    for (t = tdb; t != NULL; t = t->tdb_onext)
-      if ((t->tdb_sproto == IPPROTO_ESP && !esp_enable) ||
-	  (t->tdb_sproto == IPPROTO_AH && !ah_enable))
-      {
-	  DPRINTF(("ipsp_process_packet(): IPSec outbound packet dropped due to policy\n"));
-	  m_freem(m);
-	  return EHOSTUNREACH;
-      }
-
-    while (tdb && tdb->tdb_xform)
+    switch (tdb->tdb_dst.sa.sa_family)
     {
-	/* Check if the SPI is invalid */
-	if (tdb->tdb_flags & TDBF_INVALID)
-	{
-	    DPRINTF(("ipsp_process_packet(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
-	    m_freem(m);
-	    return ENXIO;
-	}
-
-#ifndef INET6
-	/* Sanity check */
-	if (tdb->tdb_dst.sa.sa_family != AF_INET)
-	{
-	    DPRINTF(("ipsp_process_packet(): attempt to use SA %s/%08x/%u for protocol family %d\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
-	    m_freem(m);
-	    return ENXIO;
-	}
-#endif /* INET6 */
-
-#ifndef INET
-	/* Sanity check */
-	if (tdb->tdb_dst.sa.sa_family != AF_INET6)
-	{
-	    DPRINTF(("ipsp_process_packet(): attempt to use SA %s/%08x/%u for protocol family %d\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto, tdb->tdb_dst.sa.sa_family));
-	    m_freem(m);
-	    return ENXIO;
-	}
-#endif /* INET */
-
-	/* Register first use, setup expiration timer */
-	if (tdb->tdb_first_use == 0)
-	{
-	    tdb->tdb_first_use = time.tv_sec;
-	    tdb_expiration(tdb, TDBEXP_TIMEOUT);
-	}
-
-	/* Check for tunneling if we don't have the first header in place */
-	if (tunalready == 0)
-	{
-	    if ((*af) == tdb->tdb_dst.sa.sa_family)
+#ifdef INET
+	case AF_INET:
+	    /* Fix the header length, for AH processing */
+	    if (tdb->tdb_dst.sa.sa_family == AF_INET)
 	    {
-#ifdef INET
-		if ((*af) == AF_INET)
-		  i = sizeof(struct ip);
-#endif /* INET */
-
-#ifdef INET6
-		if ((*af) == AF_INET6)
-		  i = sizeof(struct ip6_hdr);
-#endif /* INET6 */
-
-		if (m->m_len < i)
-		{
-		    if ((m = m_pullup(m, i)) == 0)
-		      return ENOBUFS;
-		}
-
-#ifdef INET
 		ip = mtod(m, struct ip *);
-#endif /* INET */
-
-#ifdef INET6
-		ip6 = mtod(m, struct ip6_hdr *);
-#endif /* INET6 */
-	    }
-
-	    if ((tdb->tdb_dst.sa.sa_family != (*af)) ||
-		((tdb->tdb_flags & TDBF_TUNNELING) &&
-		 (tdb->tdb_xform->xf_type != XF_IP4)) ||
-#ifdef INET
-		((tdb->tdb_dst.sa.sa_family == AF_INET) &&
-		 (tdb->tdb_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
-		 (tdb->tdb_dst.sin.sin_addr.s_addr != ip->ip_dst.s_addr)) ||
-#endif /* INET */
-#ifdef INET6
-		((tdb->tdb_dst.sa.sa_family == AF_INET6) &&
-		 (!IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr)) &&
-		 (!IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
-				      &ip6->ip6_dst))) ||
-#endif /* INET6 */
-		0)
-	    {
-#ifdef INET
-		/* Fix IPv4 header checksum and length */
-		if ((*af) == AF_INET)
-		{
-		    ip->ip_len = htons(m->m_pkthdr.len);
-		    ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-		}
-#endif /* INET */
-
-#ifdef INET6
-		/* Fix IPv6 header payload length */
-		if ((*af) == AF_INET6)
-		  ip6->ip6_plen = htons(m->m_pkthdr.len);
-#endif /* INET6 */
-
-		/* Encapsulate -- the last two arguments are unused */
-		error = ipip_output(m, tdb, mp, 0, 0);
-		if (((*mp) == NULL) && (!error))
-		  error = EFAULT;
-		if (error)
-		{
-		    if (*mp)
-		    {
-		      	m_freem(*mp);
-			*mp = NULL;
-		    }
-		    return error;
-		}
-
-		*af = tdb->tdb_dst.sa.sa_family;
-		m = *mp;
-		*mp = NULL;
-	    }
-	}
-	else
-	{
-	    tunalready = 0;
-
-	    if (tdb->tdb_xform->xf_type == XF_IP4)
-	      continue;
-	}
-    
-#ifdef INET
-	if (tdb->tdb_dst.sa.sa_family == AF_INET)
-	{
-	    ip = mtod(m, struct ip *);
-	    i = ip->ip_hl << 2;
-	    off = offsetof(struct ip, ip_p);
-
-	    if (tdb->tdb_xform->xf_type == XF_IP4)
-	    {
 		ip->ip_len = htons(m->m_pkthdr.len);
-		ip->ip_sum = in_cksum(m, i);
 	    }
-	}
+	    break;
 #endif /* INET */
 
 #ifdef INET6
-	if (tdb->tdb_dst.sa.sa_family == AF_INET6)
-	{
-	    ip6 = mtod(m, struct ip6_hdr *);
-	    i = sizeof(struct ip6_hdr);
-	    off = offsetof(struct ip6_hdr, ip6_nxt);
-	    ip6->ip6_plen = htons(m->m_pkthdr.len);
-	}
+	case AF_INET6:
+	    /* Fix the header length, for AH processing */
+	    if (tdb->tdb_dst.sa.sa_family == AF_INET6)
+	    {
+		ip6 = mtod(m, struct ip6_hdr *);
+		ip6->ip6_plen = htons(m->m_pkthdr.len);
+	    }
+	    break;
 #endif /* INET6 */
-    
-	error = (*(tdb->tdb_xform->xf_output))(m, tdb, mp, i, off);
-	if ((*mp) == NULL)
-	  error = EFAULT;
-	if (error)
-	{
-	    if (*mp)
-	      m_freem(*mp);
-	    return error;
-	}
 
-	m = *mp;
-	*mp = NULL;
-	tdb = tdb->tdb_onext;
-
-#ifdef INET
-	/* Fix the header length, for AH processing */
-	if ((*af) == AF_INET)
-	{
-	    ip = mtod(m, struct ip *);
-	    ip->ip_len = htons(m->m_pkthdr.len);
-	}
-#endif /* INET */
-
-#ifdef INET6
-	/* Fix the header length, for AH processing */
-	if ((*af) == AF_INET6)
-	{
-	    ip6 = mtod(m, struct ip6_hdr *);
-	    ip6->ip6_plen = htons(m->m_pkthdr.len);
-	}
-#endif /* INET6 */
+	default:
+	    m_freem(m);
+	    DPRINTF(("ipsp_process_done(): unknown protocol family (%d)\n",
+		     tdb->tdb_dst.sa.sa_family));
+	    return ENXIO;
     }
 
-#ifdef INET
-    /* Fix checksum */
-    if ((*af) == AF_INET)
+    /* If there's another TDB to apply, do so. */
+    if (tdb->tdb_onext)
+      return ipsp_process_packet(m, tdb->tdb_onext,
+				 tdb->tdb_onext->tdb_dst.sa.sa_family, 0);
+
+    /*
+     * If we're done with IPsec processing, transmit the packet using the
+     * appropriate network protocol (IP or IPv6).
+     */
+    switch (tdb->tdb_dst.sa.sa_family)
     {
-	ip = mtod(m, struct ip *);
-	ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-    }
+#ifdef INET
+	case AF_INET:
+	    NTOHS(ip->ip_len);
+	    NTOHS(ip->ip_off);
+	    ip->ip_sum = in_cksum(m, ip->ip_hl << 2); /* Fix checksum */
+
+	    return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
+			     NULL, NULL);
 #endif /* INET */
 
-    *mp = m;
-    return 0;
+#ifdef INET6
+	case AF_INET6:
+	    ip6 = mtod(m, struct ip6_hdr *);
+	    NTOHS(ip6->ip6_plen);
+
+	    /* XXX ip6_output() has to honor those two flags... */
+	    return ip6_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
+			      NULL, NULL);
+#endif /* INET6 */
+    }
+
+    /* Not reached */
+    return EINVAL;
 }

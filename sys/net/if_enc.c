@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.20 2000/02/07 06:09:08 itojun Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.21 2000/03/17 10:25:21 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -263,32 +263,7 @@ struct ifnet *ifp;
 	protoflag = tdb->tdb_dst.sa.sa_family;
 
 	/* IPsec packet processing -- skip encapsulation */
-	err = ipsp_process_packet(m, &mp, tdb, &protoflag, 1);
-	if ((mp == NULL) || err)
-	{
-            IF_DROP(&ifp->if_snd);
-	    if (mp)
-	      m_freem(mp);
-	    continue;
-	}
-	else
-	{
-	    m = mp;
-	    mp = NULL;
-	}
-
-#ifdef INET
-	/* Send the packet on its way, no point checking for errors here */
-	if (protoflag == AF_INET)
-	  ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT, NULL, NULL);
-#endif /* INET */
-
-#ifdef INET6
-	/* Send the packet on its way, no point checking for errors here */
-	if (protoflag == AF_INET6)
-	  ip6_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
-		     NULL, NULL);
-#endif /* INET6 */
+	ipsp_process_packet(m, tdb, protoflag, 1);
 
 	/* XXX Should find a way to avoid bridging-loops, some mbuf flag ? */
     }
