@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.58 2004/09/15 21:32:43 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.59 2004/09/16 00:05:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1064,12 +1064,12 @@ mbattach(parent, self, aux)
 	case HPPA_BOARD_HP780_J282:
 	case HPPA_BOARD_HP782_J2240:
 #endif
-	case HPPA_BOARD_HP785_C160:
-	case HPPA_BOARD_HP785_C180P:
-	case HPPA_BOARD_HP785_C180XP:
-	case HPPA_BOARD_HP785_C200:
-	case HPPA_BOARD_HP785_C230:
-	case HPPA_BOARD_HP785_C240:
+	case HPPA_BOARD_HP780_C160:
+	case HPPA_BOARD_HP780_C180P:
+	case HPPA_BOARD_HP780_C180XP:
+	case HPPA_BOARD_HP780_C200:
+	case HPPA_BOARD_HP780_C230:
+	case HPPA_BOARD_HP780_C240:
 	case HPPA_BOARD_HP785_C360:
 		pdc_scanbus(self, &nca, MAXMODBUS, FP_ADDR);
 	break;
