@@ -1,6 +1,8 @@
+/*	$OpenBSD: mouse.h,v 1.2 1996/10/13 00:55:50 downsj Exp $	*/
 /*	$NetBSD: mouse.h,v 1.4 1994/10/27 04:16:10 cgd Exp $	*/
 
 /*-
+ * Copyright (c) 1996, Jason Downs.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *
@@ -45,5 +47,7 @@ struct mouseinfo {
 
 #define MOUSEIOC        ('M'<<8)
 #define MOUSEIOCREAD	(MOUSEIOC|60)
+#define MOUSEIOCSRAW	(MOUSEIOC|61)
+#define MOUSEIOCSCOOKED	(MOUSEIOC|62)
 
 #endif /* !_I386_MOUSE_H_ */
