@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.321 2000/09/19 08:37:30 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.322 2000/09/22 15:09:38 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -528,6 +528,7 @@
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
+#define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
@@ -1530,7 +1531,7 @@
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire */
 #define	PCI_PRODUCT_SONY_CXD3222	0x8039		/* CXD3222 FireWire */
-#define	PCI_PRODUCT_SONY_MEMSTICK_SLOT	0x808a		/* Memory Stick Media Slot */
+#define	PCI_PRODUCT_SONY_MEMSTICK_SLOT	0x808a		/* Memory Stick Slot */
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
