@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_join.c,v 1.2 1999/01/06 05:29:24 d Exp $
+ * $OpenBSD: uthread_join.c,v 1.3 1999/01/17 23:57:27 d Exp $
  */
 #include <errno.h>
 #ifdef _THREAD_SAFE
@@ -42,15 +42,21 @@ pthread_join(pthread_t pthread, void **thread_return)
 	int ret = 0;
 	pthread_t pthread1 = NULL;
 
+	_thread_enter_cancellation_point();
+
 	/* Check if the caller has specified an invalid thread: */
-	if (pthread == NULL || pthread->magic != PTHREAD_MAGIC)
+	if (pthread == NULL || pthread->magic != PTHREAD_MAGIC) {
 		/* Invalid thread: */
+		_thread_leave_cancellation_point();
 		return(EINVAL);
+	}
 
 	/* Check if the caller has specified itself: */
-	if (pthread == _thread_run)
+	if (pthread == _thread_run) {
 		/* Avoid a deadlock condition: */
+		_thread_leave_cancellation_point();
 		return(EDEADLK);
+	}
 
 	/*
 	 * Find the thread in the list of active threads or in the
@@ -92,6 +98,8 @@ pthread_join(pthread_t pthread, void **thread_return)
 	} else if (thread_return != NULL)
 		/* Return the thread's return value: */
 		*thread_return = pthread->ret;
+
+	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
 	return (ret);

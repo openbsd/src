@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_cond.c,v 1.4 1999/01/06 05:29:22 d Exp $
+ * $OpenBSD: uthread_cond.c,v 1.5 1999/01/17 23:57:27 d Exp $
  */
 #include <stdlib.h>
 #include <errno.h>
@@ -137,6 +137,8 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 	 */
 	else if (*cond != NULL ||
 	    (rval = pthread_cond_init(cond,NULL)) == 0) {
+		_thread_enter_cancellation_point();
+
 		/* Lock the condition variable structure: */
 		_SPINLOCK(&(*cond)->lock);
 
@@ -185,6 +187,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 			break;
 		}
 
+		_thread_leave_cancellation_point();
 	}
 
 	/* Return the completion status: */
@@ -206,6 +209,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 	 */
 	else if (*cond != NULL ||
 	    (rval = pthread_cond_init(cond,NULL)) == 0) {
+		_thread_enter_cancellation_point();
 		/* Lock the condition variable structure: */
 		_SPINLOCK(&(*cond)->lock);
 
@@ -263,7 +267,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 			rval = EINVAL;
 			break;
 		}
-
+		_thread_leave_cancellation_point();
 	}
 
 	/* Return the completion status: */

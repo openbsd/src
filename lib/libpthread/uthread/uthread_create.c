@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_create.c,v 1.5 1999/01/06 05:29:22 d Exp $
+ * $OpenBSD: uthread_create.c,v 1.6 1999/01/17 23:57:27 d Exp $
  */
 #include <errno.h>
 #include <stdlib.h>
@@ -93,6 +93,9 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			timerclear(&new_thread->ru_stime);
 			_SPINUNLOCK(&new_thread->lock);
 
+			new_thread->cancelstate = PTHREAD_CANCEL_ENABLE;
+			new_thread->canceltype = PTHREAD_CANCEL_DEFERRED;
+
 			/*
 			 * Write a magic value to the thread structure
 			 * to help identify valid ones:
@@ -109,7 +112,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->sigmask = _thread_run->sigmask;
 
 			/* Initialise the jump buffer: */
-			setjmp(new_thread->saved_jmp_buf);
+			_thread_machdep_setjmp(new_thread->saved_jmp_buf);
 
 			/*
 			 * Set up new stack frame so that it looks like it

@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_write.c,v 1.10 1998/09/07 21:55:01 alex Exp $
- * $OpenBSD: uthread_write.c,v 1.2 1998/12/23 22:49:47 d Exp $
+ * $OpenBSD: uthread_write.c,v 1.3 1999/01/17 23:57:28 d Exp $
  *
  */
 #include <sys/types.h>
@@ -51,9 +51,13 @@ write(int fd, const void *buf, size_t nbytes)
 	ssize_t num = 0;
 	ssize_t	ret;
 
+	_thread_enter_cancellation_point();
+
 	/* POSIX says to do just this: */
-	if (nbytes == 0)
+	if (nbytes == 0) {
+		_thread_leave_cancellation_point();
 		return (0);
+	}
 
 	/* Lock the file descriptor for write: */
 	if ((ret = _FD_LOCK(fd, FD_WRITE, NULL)) == 0) {
@@ -65,6 +69,7 @@ write(int fd, const void *buf, size_t nbytes)
 			/* File is not open for write: */
 			errno = EBADF;
 			_FD_UNLOCK(fd, FD_WRITE);
+			_thread_leave_cancellation_point();
 			return (-1);
 		}
 
@@ -130,6 +135,7 @@ write(int fd, const void *buf, size_t nbytes)
 		}
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
+	_thread_leave_cancellation_point();
 	return (ret);
 }
 #endif

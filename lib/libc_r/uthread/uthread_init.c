@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_init.c,v 1.7 1999/01/10 23:11:33 d Exp $
+ * $OpenBSD: uthread_init.c,v 1.8 1999/01/17 23:57:27 d Exp $
  */
 
 #include <errno.h>
@@ -224,6 +224,8 @@ _thread_init(void)
 		_thread_initial->nxt = NULL;
 		_thread_initial->flags = 0;
 		_thread_initial->error = 0;
+		_thread_initial->cancelstate = PTHREAD_CANCEL_ENABLE;
+		_thread_initial->canceltype = PTHREAD_CANCEL_DEFERRED;
 		_thread_initial->magic = PTHREAD_MAGIC;
 		pthread_set_name_np(_thread_initial, "init");
 		_SPINUNLOCK(&_thread_initial->lock);

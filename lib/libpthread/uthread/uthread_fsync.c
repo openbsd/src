@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_fsync.c,v 1.2 1999/01/06 05:29:24 d Exp $
+ * $OpenBSD: uthread_fsync.c,v 1.3 1999/01/17 23:57:27 d Exp $
  */
 #include <unistd.h>
 #ifdef _THREAD_SAFE
@@ -41,10 +41,12 @@ fsync(int fd)
 {
 	int             ret;
 
+	_thread_enter_cancellation_point();
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		ret = _thread_sys_fsync(fd);
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
+	_thread_leave_cancellation_point();
 	return (ret);
 }
 #endif

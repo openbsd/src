@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_sigwait.c,v 1.3 1999/01/06 05:29:28 d Exp $
+ * $OpenBSD: uthread_sigwait.c,v 1.4 1999/01/17 23:57:27 d Exp $
  */
 #include <signal.h>
 #include <errno.h>
@@ -45,6 +45,7 @@ sigwait(const sigset_t * set, int *sig)
 	sigset_t	tempset;
 	struct sigaction act;
 	
+	_thread_enter_cancellation_point();
 	/*
 	 * Specify the thread kernel signal handler.
 	 */
@@ -75,6 +76,7 @@ sigwait(const sigset_t * set, int *sig)
 		/* Return the signal number to the caller: */
 		*sig = i;
 
+		_thread_leave_cancellation_point();
 		return (0);
 	}
 
@@ -126,6 +128,8 @@ sigwait(const sigset_t * set, int *sig)
 				ret = -1;
 		}
 	}
+
+	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
 	return (ret);

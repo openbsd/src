@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_fcntl.c,v 1.3 1999/01/06 05:29:23 d Exp $
+ * $OpenBSD: uthread_fcntl.c,v 1.4 1999/01/17 23:57:27 d Exp $
  */
 #include <stdarg.h>
 #include <unistd.h>
@@ -46,6 +46,8 @@ fcntl(int fd, int cmd,...)
 	int             oldfd;
 	int             ret;
 	va_list         ap;
+
+	_thread_enter_cancellation_point();
 
 	/* Lock the file descriptor: */
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
@@ -135,6 +137,7 @@ fcntl(int fd, int cmd,...)
 		/* Unlock the file descriptor: */
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
+	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
 	return (ret);

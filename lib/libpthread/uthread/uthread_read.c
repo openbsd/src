@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_read.c,v 1.6 1998/06/10 22:28:43 jb Exp $
- * $OpenBSD: uthread_read.c,v 1.2 1998/12/23 22:49:46 d Exp $
+ * $OpenBSD: uthread_read.c,v 1.3 1999/01/17 23:57:27 d Exp $
  *
  */
 #include <sys/types.h>
@@ -48,9 +48,13 @@ read(int fd, void *buf, size_t nbytes)
 	int	ret;
 	int	type;
 
+	_thread_enter_cancellation_point();
+
 	/* POSIX says to do just this: */
-	if (nbytes == 0)
+	if (nbytes == 0) {
+		_thread_leave_cancellation_point();
 		return (0);
+	}
 
 	/* Lock the file descriptor for read: */
 	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
@@ -62,6 +66,7 @@ read(int fd, void *buf, size_t nbytes)
 			/* File is not open for read: */
 			errno = EBADF;
 			_FD_UNLOCK(fd, FD_READ);
+			_thread_leave_cancellation_point();
 			return (-1);
 		}
 
@@ -93,6 +98,7 @@ read(int fd, void *buf, size_t nbytes)
 		}
 		_FD_UNLOCK(fd, FD_READ);
 	}
+	_thread_leave_cancellation_point();
 	return (ret);
 }
 #endif
