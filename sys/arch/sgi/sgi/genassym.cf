@@ -1,0 +1,54 @@
+#	$OpenBSD: genassym.cf,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+#
+# Copyright (c) 1997 Per Fogelstrom / Opsycon AB
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+
+include <sys/param.h>
+include <sys/buf.h>
+include <sys/proc.h>
+include <sys/mbuf.h>
+include <sys/user.h>
+
+export	SONPROC
+
+define	P_FORW		offsetof(struct proc, p_forw)
+define	P_BACK		offsetof(struct proc, p_back)
+define	P_PRIORITY	offsetof(struct proc, p_priority)
+define	P_STAT		offsetof(struct proc, p_stat)
+define	P_ADDR		offsetof(struct proc, p_addr)
+#define	P_UPTE		offsetof(struct proc, p_md.md_upte)
+define	P_PC_CTRL	offsetof(struct proc, p_md.md_pc_ctrl)
+define	P_PC_COUNT	offsetof(struct proc, p_md.md_pc_count)
+define	P_WATCH_1	offsetof(struct proc, p_md.md_watch_1)
+define	P_WATCH_2	offsetof(struct proc, p_md.md_watch_2)
+define	P_WATCH_M	offsetof(struct proc, p_md.md_watch_m)
+define	U_PCB_REGS	offsetof(struct user, u_pcb.pcb_regs.zero)
+define	U_PCB_FPREGS	offsetof(struct user, u_pcb.pcb_regs.f0)
+define	U_PCB_CONTEXT	offsetof(struct user, u_pcb.pcb_context)
+define	U_PCB_ONFAULT	offsetof(struct user, u_pcb.pcb_onfault)
+define	U_PCB_SEGTAB	offsetof(struct user, u_pcb.pcb_segtab)
+
+define	VM_MIN_KERNEL_ADDRESS VM_MIN_KERNEL_ADDRESS
+define	SIGFPE SIGFPE

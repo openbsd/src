@@ -1,0 +1,120 @@
+#	$OpenBSD: files.sgi,v 1.1 2004/08/06 21:12:18 pefo Exp $
+#
+# maxpartitions must be first item in files.${ARCH}
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+#	Required files
+
+file	arch/sgi/sgi/autoconf.c
+file	arch/sgi/sgi/conf.c
+file	arch/sgi/sgi/machdep.c
+file	arch/sgi/dev/wscons_machdep.c	wsdisplay
+
+#
+# Media Indepedent Interface (mii)
+#
+include "dev/mii/files.mii"
+
+#
+#	Machine-independent ATAPI drivers 
+#
+
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
+
+#
+#	System BUS types
+#
+define	mainbus {}
+device	mainbus
+attach	mainbus at root
+
+#	Our CPU configurator
+device	cpu
+attach	cpu at mainbus
+
+#
+#	MACE localbus autoconfiguration devices
+#
+define	macebus { [sys = - 1], [base = -1 ], [irq = -1] }
+device	macebus
+attach	macebus at mainbus
+file	arch/sgi/localbus/macebus.c		macebus
+file	arch/sgi/localbus/macectrl.S		macebus
+
+#
+#	PCI Bus bridges
+#
+device	macepcibr {} : pcibus
+attach	macepcibr at macebus
+file	arch/sgi/pci/macepcibridge.c		macepcibr needs-flag
+file	arch/sgi/pci/macepcimap.c		macepcibr
+
+#	Use machine independent SCSI driver routines
+include	"scsi/files.scsi"
+major	{sd = 0}
+major	{cd = 3}
+
+include "dev/i2o/files.i2o"
+
+include "dev/pci/files.pci"
+
+# Clock device
+device	clock
+attach	clock at macebus
+file	arch/sgi/sgi/clock_md.c			clock
+
+# 16[45]50-based "com" ports on localbus
+attach	com at macebus with com_localbus
+file	arch/sgi/localbus/com_lbus.c		com_localbus
+
+# PC parallel ports (XXX what chip?)
+attach	lpt at macebus with lpt_localbus
+file	arch/sgi/dev/lpt_lbus.c			lpt_localbus
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+#
+#  wscons console
+#
+include "dev/wscons/files.wscons"
+
+#
+#	PCI Bus support
+#
+
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"
+
+#
+# Machine-independent IEEE1394 drivers
+#
+include "dev/ieee1394/files.ieee1394"
+
+#
+# Specials.
+#
+# RAM disk for boot
+major {rd = 8}
+
+#
+#	Common files
+#
+
+file	dev/cons.c
+file	dev/cninit.c
+file	netinet/in_cksum.c
+file	netns/ns_cksum.c			ns
+
+#
+# mips o32 ABI compat.
+#
+#include "compat/mipso32/files.mipso32"
+
