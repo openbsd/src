@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.12 2004/09/15 18:54:17 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.13 2004/09/18 09:22:14 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -223,6 +223,12 @@ Satisfy LIB_DEPENDS,
 run
 .Xr ldconfig 8
 as needed.
+.It Cm @shell Ar filename
+Specialized version of
+.Cm @file , 
+to handle shells.
+See
+.Xr shells 5 .
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
 .It Cm @cwd Ar pathname
@@ -300,6 +306,12 @@ group ownership.
 Imbed a comment in the packing list.
 Useful in trying to document some particularly hairy sequence that
 may trip someone up later.
+Can also be used to comment out elements that update-plist
+.Po
+see
+.Xr bsd.port.mk 5
+.Pc
+will insist in inserting in a packing-list.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
 copy it anywhere), as it's used for some special purpose.
@@ -396,6 +408,21 @@ If
 .Ar filename
 ends with a slash,
 it refers to a configuration directory instead.
+.It Cm @conflict Ar pkgspec
+Declare a conflict with packages matching
+.Ar pkgspec
+.Po
+See
+.Xr packages-specs 7 
+.Pc .
+The
+.Ar pkgname
+package can
+.Em not
+be installed if a package
+matching
+.Ar pkgspec
+has been installed because they install the same files and thus conflict.
 .It Cm @display Ar name
 Declare
 .Pa name
@@ -430,6 +457,9 @@ package gets installed because they install the same files and thus conflict.
 may use
 .Xr fnmatch 3
 wildcards.
+Deprecated, use
+.Cm @conflict
+instead.
 .It Cm @option Ar name
 Effects vary depending on
 .Ar name .
