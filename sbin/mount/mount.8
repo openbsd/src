@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.24 2000/09/17 21:56:44 pjanzen Exp $
+.\"	$OpenBSD: mount.8,v 1.25 2000/11/09 17:52:58 aaron Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -90,10 +90,8 @@ see
 .Xr sysctl 8
 .Pc .
 .Pp
-The options to
-.Nm
-are as follows:
-.Bl -tag -width indent
+The options are as follows:
+.Bl -tag -width Ds
 .It Fl A
 Causes
 .Nm
@@ -132,8 +130,8 @@ opened files with write access.
 Options are specified with a
 .Fl o
 flag followed by a comma separated string of options.
-The options are as follows:
-.Bl -tag -width indent
+Available options are as follows:
+.Bl -tag -width Ds
 .It async
 All
 .Tn I/O
