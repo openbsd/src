@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.92 2005/02/08 17:39:33 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.93 2005/02/08 17:42:49 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -748,8 +748,9 @@ This means that in the following statement,
 is evaluated if and only if the file
 .Pa foo
 exists and is readable:
-.Pp
-.Dl [[ -r foo && $(\*(Lt foo) = b*r ]]
+.Bd -literal -offset indent
+$ [[ -r foo && $(\*(Lt foo) = b*r ]]
+.Ed
 .El
 .El
 .Ss Quoting
