@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.1.1.1 1996/12/21 20:53:48 rahnds Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.2 1999/01/28 05:01:15 rahnds Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -48,16 +48,10 @@
  */
 #include <stdlib.h>
 
-/* XXX hack */
-__asm__("
-.section	.ctors,\"aw\"
-	.long	 -1
-.section	.dtors,\"aw\"
-	.long	 -1
-");
-
-void (*__CTOR_LIST__[0]) __P((void));
-void (*__DTOR_LIST__[0]) __P((void));
+void (*__CTOR_LIST__[0]) __P((void))
+    __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
+void (*__DTOR_LIST__[0]) __P((void))
+    __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
 static void	__dtors __P((void));
 static void	__ctors __P((void));

@@ -69,9 +69,6 @@ call_main:
 	
 	bl main
 	.extern exit
-	mr 13, 3
-	bl __fini
-	mr 3, 13
 	bl exit
 
 eprol:
