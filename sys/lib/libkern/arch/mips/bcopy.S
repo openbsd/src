@@ -38,6 +38,7 @@ forward:
 
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
+/*XXX FIXME Endian dependent */
 	lwr	v1, 0(a0)		# get next 4 bytes (unaligned)
 	lwl	v1, 3(a0)
 	addu	a0, a0, a3
@@ -49,6 +50,7 @@ forward:
 	move	a2, v1
 	addu	a3, a3, a0		# compute ending address
 2:
+/*XXX FIXME Endian dependent */
 	lwr	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
 	lwl	v1, 3(a0)
 	addu	a0, a0, 4
@@ -85,7 +87,7 @@ smallcpy:
 	sb	v1, 0(a1)
 	addu	a1, a1, 1
 	bne	a0, a3, 1b
-	nop				# MMU BUG ? (cant do -1(a1) !!
+	nop			# MMU BUG ? can't do -1(a1) at 0x80000000!!
 2:
 	j	ra
 	 nop
