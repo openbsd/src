@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 1999/02/26 10:26:57 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 1999/02/26 10:37:51 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -59,6 +59,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/gdt.h>
@@ -128,7 +132,11 @@ cpu_fork(p1, p2)
 		union descriptor *new_ldt;
 
 		len = pcb->pcb_ldt_len * sizeof(union descriptor);
+#if defined(UVM)
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
+#else
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
+#endif
 		bcopy(pcb->pcb_ldt, new_ldt, len);
 		pcb->pcb_ldt = new_ldt;
 		ldt_alloc(pcb, new_ldt, len);
@@ -207,10 +215,16 @@ cpu_exit(p)
 #endif
 
 	vm = p->p_vmspace;
+#if !defined(UVM)
 	if (vm->vm_refcnt == 1)
 		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
+#endif
 
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 }
 
@@ -362,7 +376,11 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
+#if defined(UVM)
+	taddr= uvm_km_valloc_wait(phys_map, len);
+#else
 	taddr = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -392,7 +410,11 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, addr, len);
+#else
 	kmem_free_wakeup(phys_map, addr, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
