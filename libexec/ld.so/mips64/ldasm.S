@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2004/09/21 08:40:45 pefo Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2004/09/21 09:54:08 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -49,21 +49,28 @@ LEAF(_dl_start, FRAMESZ)		/* Not really LEAF, but we simplify */
 	LA	s1, 1f
 	bgezal	zero, 1f
 1:
+	PTR_SUBU s0, ra, s1		# This is the load offset
+	LA	t0, _fdata
+	PTR_SRL	t0, 20			# check if distance is > 2**16.
+	beqz	t0, 2f
+	li	t0, 0x10000
+
+	li	t0, 0x100000
+2:
 
 	# This is a hack to change protection of .rodata so it
 	# can be relocated. A better way to find the location
 	# of .rodata should probably be used.
-	# We know that .rodata is aligned on 0x100000 and is at
-	# most 64 k in size.
+	# We know that .rodata is aligned on 0x100000 or 0x10000
+	# and is at most 64 k in size.
 	li	v0, SYS_mprotect
 	or	a0, ra, 0xfff
 	xor	a0, 0xfff
-	PTR_ADDU a0, 0x10000
+	PTR_ADDU a0, t0
 	li	a1, 0x10000
 	li	a2, 7 /* (PROT_READ|PROT_WRITE|PROT_EXEC) */
 	syscall
 
-	PTR_SUBU s0, ra, s1		# This is the load offset
 	PTR_ADDU a0, sp, FRAMESZ	# Where stack info is.
 	PTR_ADDU a1, sp, 0		# Where fast AUX info will be.
 	LA	t9, _dl_boot_bind
