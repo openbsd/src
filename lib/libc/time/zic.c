@@ -1,14 +1,14 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zic.c	7.93";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.7 1998/01/18 23:25:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.8 1999/01/28 23:44:37 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
-#ifdef unix
+#ifdef __unix__
 #include "sys/stat.h"			/* for umask manifest constants */
-#endif /* defined unix */
+#endif /* defined __unix__ */
 
 /*
 ** On some ancient hosts, predicates like `isspace(C)' are defined
