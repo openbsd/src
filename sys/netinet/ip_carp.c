@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.98 2005/02/07 08:58:37 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.99 2005/02/08 13:42:27 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -75,6 +75,7 @@
 #include <netinet/ip_ipsp.h>
 
 #include <net/if_enc.h>
+#include <net/if_dl.h>
 #endif
 
 #ifdef INET6
@@ -82,7 +83,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
-#include <net/if_dl.h>
 #endif
 
 #include "bpfilter.h"
@@ -1400,7 +1400,9 @@ void
 carp_multicast_cleanup(struct carp_softc *sc)
 {
 	struct ip_moptions *imo = &sc->sc_imo;
+#ifdef INET6
 	struct ip6_moptions *im6o = &sc->sc_im6o;
+#endif
 	u_int16_t n = imo->imo_num_memberships;
 
 	/* Clean up our own multicast memberships */
@@ -1413,6 +1415,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 	imo->imo_num_memberships = 0;
 	imo->imo_multicast_ifp = NULL;
 
+#ifdef INET6
 	while (!LIST_EMPTY(&im6o->im6o_memberships)) {
 		struct in6_multi_mship *imm =
 		    LIST_FIRST(&im6o->im6o_memberships);
@@ -1421,6 +1424,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 		in6_leavegroup(imm);
 	}
 	im6o->im6o_multicast_ifp = NULL;
+#endif
 
 	/* And any other multicast memberships */
 	carp_ether_purgemulti(sc);
@@ -1474,6 +1478,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			return (error);
 		}
 
+#ifdef INET6
 		if (sc->sc_naddrs6 < 0 &&
 		    (error = carp_join_multicast6(sc)) != 0) {
 			if (ncif != NULL)
@@ -1481,6 +1486,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 			carp_multicast_cleanup(sc);
 			return (error);
 		}
+#endif
 
 		/* attach carp interface to physical interface */
 		if (ncif != NULL)
