@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.1 2003/07/21 18:41:30 jason Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.2 2004/03/23 20:02:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,7 +130,8 @@ __fpu_xtof(fp, i)
 	 * fpu_norm()'s handling of `supernormals'; see fpu_subr.c.
 	 */
 	fp->fp_exp = FP_LG2;
-	*((int64_t*)fp->fp_mant) = (int64_t)i < 0 ? -i : i;
+	fp->fp_mant[0] = (i >> 32) & 0xffffffff;
+	fp->fp_mant[1] = (i >> 0)  & 0xffffffff;
 	fp->fp_mant[2] = 0;
 	fp->fp_mant[3] = 0;
 	__fpu_norm(fp);
