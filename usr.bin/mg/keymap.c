@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.8 2001/05/23 21:59:45 art Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.9 2001/05/23 22:10:43 art Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific 
@@ -614,6 +614,8 @@ MAPS map_table[] = {
 
 #define NMAPS	(sizeof map_table/sizeof(MAPS))
 int	 nmaps = NMAPS;		/* for use by rebind in extend.c */
+
+KEYMAP *fundamental_map = (KEYMAP *)&fundmap;
 
 char *
 map_name(map)

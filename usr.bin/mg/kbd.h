@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.8 2001/05/23 21:59:45 art Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.9 2001/05/23 22:10:43 art Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
@@ -41,6 +41,7 @@ typedef struct MAPS_S {
 } MAPS;
 
 extern MAPS     map_table[];
+extern KEYMAP	*fundamental_map;
 
 typedef struct {
 	PF              n_funct;
