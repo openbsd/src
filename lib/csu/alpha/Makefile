@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1995/02/10 17:53:00 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/12/12 01:53:50 cgd Exp $
 
-CFLAGS=		-DLIBC_SCCS
+CFLAGS+=	-DLIBC_SCCS
 OBJS=		crt0.o gcrt0.o
 CLEANFILES+=	core a.out
 
