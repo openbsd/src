@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.341 2000/11/07 20:54:11 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.342 2000/11/07 23:06:14 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1462,10 +1462,10 @@
 
 /* Promise products */
 #define	PCI_PRODUCT_PROMISE_DC5030	0x5300		/* DC5030 */
-#define	PCI_PRODUCT_PROMISE_ULTRA33	0x4d33		/* Ultra33/ATA IDE */
-#define	PCI_PRODUCT_PROMISE_ULTRA66	0x4d38		/* Ultra66/ATA IDE */
-#define	PCI_PRODUCT_PROMISE_ULTRA100	0x4d30		/* Ultra100/ATA IDE */
-#define	PCI_PRODUCT_PROMISE_ULTRA100_2	0x0d30		/* Ultra100/ATA IDE(2) */
+#define	PCI_PRODUCT_PROMISE_PDC20246	0x4d33		/* PDC20246 */
+#define	PCI_PRODUCT_PROMISE_PDC20262	0x4d38		/* PDC20262 */
+#define	PCI_PRODUCT_PROMISE_PDC20265	0x0d30		/* PDC20265 */
+#define	PCI_PRODUCT_PROMISE_PDC20267	0x4d30		/* PDC20267 */
 
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */

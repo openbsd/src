@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.341 2000/11/07 20:54:11 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.342 2000/11/07 23:06:14 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4035,28 +4035,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "DC5030",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA33,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20246,
 	    0,
 	    "Promise",
-	    "Ultra33/ATA IDE",
+	    "PDC20246",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA66,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20262,
 	    0,
 	    "Promise",
-	    "Ultra66/ATA IDE",
+	    "PDC20262",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
 	    0,
 	    "Promise",
-	    "Ultra100/ATA IDE",
+	    "PDC20265",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100_2,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267,
 	    0,
 	    "Promise",
-	    "Ultra100/ATA IDE(2)",
+	    "PDC20267",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
