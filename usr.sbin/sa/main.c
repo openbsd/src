@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2002/05/30 18:43:40 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2002/05/30 18:47:44 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,11 +30,11 @@
  */
 
 #ifndef LINT
-static char copright[] = 
+static char copright[] =
 "@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n";
 
-static char rcsid[] = "$Id: main.c,v 1.8 2002/05/30 18:43:40 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.9 2002/05/30 18:47:44 deraadt Exp $";
 #endif
 
 /*
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr,   
+			(void)fprintf(stderr,
 			    "usage: %s [-abcdDfijkKlmnqrstu] [-v cutoff]"
 			    " [file ...]\n", __progname);
 			exit(1);
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 				unmask = 0;
 				error = 1;
 			}
-			if (unmask && 
+			if (unmask &&
 			    (sigprocmask(SIG_BLOCK, &nmask, &omask) == -1)) {
 				warn("couldn't set signal mask ");
 				unmask = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdb.c,v 1.5 2002/05/30 18:43:40 deraadt Exp $	*/
+/*	$OpenBSD: pdb.c,v 1.6 2002/05/30 18:47:44 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: pdb.c,v 1.5 2002/05/30 18:43:40 deraadt Exp $";
+static char rcsid[] = "$Id: pdb.c,v 1.6 2002/05/30 18:47:44 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -137,10 +137,10 @@ pacct_add(const struct cmdinfo *ci)
 		memset(&newci, 0, sizeof(newci));
 		memcpy(newci.ci_comm, key.data, key.size);
 	}
-	
+
 	add_ci(ci, &newci);
 
-	data.data = &newci; 
+	data.data = &newci;
 	data.size = sizeof(newci);
 	rv = DB_PUT(pacct_db, &key, &data, 0);
 	if (rv < 0) {
