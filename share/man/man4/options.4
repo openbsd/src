@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.6 1998/03/16 01:26:00 gene Exp $
+.\"	$OpenBSD: options.4,v 1.7 1998/03/16 03:57:51 millert Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
@@ -226,7 +226,7 @@ for
 and similar file systems. See
 .Xr mount_mfs 8
 for details.
-.It Cd option NFS
+.It Cd option NFSCLIENT
 Include the client side of the
 .Em NFS
 (Network File System) remote file sharing protocol.
@@ -333,6 +333,11 @@ for details.
 .El
 .Ss File System Options
 .Bl -ohang
+.It Cd option FFS_SOFTUPDATES
+Enables a scheme that uses partial ordering of buffer cache operations
+to allow metadata updates in FFS to happen asynchronously.  See
+.Xr ffs_softupdates 4
+for details.
 .It Cd option NFSSERVER
 Include the server side of the
 .Em NFS
