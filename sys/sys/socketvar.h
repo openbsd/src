@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.14 1999/02/15 19:30:49 millert Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.15 1999/02/18 22:56:57 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -113,7 +113,6 @@ struct socket {
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
-#define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_PRIV			0x080	/* privileged for broadcast, raw... */
 #define	SS_NBIO			0x100	/* non-blocking ops */
