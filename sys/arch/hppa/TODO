@@ -12,22 +12,11 @@ read, and decide what can you do to make your "snakes" happy!
 
 hardware and installation notes (distrib/notes/hppa/*):	fries@
 * wip, will flesh out as development progresses
-* For now have rbootd running on the server, boot.lif from hppa.lucifier.net,
-    and then:
-         <esc> on bootup, a to get to BOOT_ADMIN prompt, and finally,
-         BOOT_ADMIN> boot lan isl
-
-hardware manuals (man4.hppa/*):				mickey@
-* ie manual
-* siop manual
-* hil manual
-* add more to lasi and asp (also wax when studied enough)
 
 boots (sys/arch/hppa/stand/*):				mickey@ miod@
 * almost could be considered working/done, fixes and such (;
-# booting from disklabeled drive
-# booting from cdrom
-# booting from tape
+* booting from cdrom
+* booting from tape
 
 kernel (sys/arch/hppa/*):				mickey@
 * clkf_intr() is not accurate, but we can mark any
@@ -44,17 +33,15 @@ kernel (sys/arch/hppa/*):				mickey@
 
 ramdisk development edition (distrib/hppa/*):		mickey@
 * basic environment done (not in the repo)
-* requires libc and kernel-user support
 
 userland (*):						mickey@
-* libc_r done (not verified)
-* libkvm (awaits her kernel counterpart)
+* libpthread done (not verified)
 * shared libs support
 
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.26 2002/12/20 17:17:28 mickey Exp $
+$OpenBSD: TODO,v 1.27 2003/01/25 07:53:45 mickey Exp $
 
 --
 	paranoic mickey
