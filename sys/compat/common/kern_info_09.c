@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_info_09.c,v 1.3 1995/10/07 06:26:23 mycroft Exp $	*/
+/*	$OpenBSD: kern_info_09.c,v 1.2 1996/02/26 23:26:51 niklas Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.4 1996/02/04 02:02:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -63,7 +64,7 @@ compat_09_sys_getdomainname(p, v, retval)
 
 	name = KERN_DOMAINNAME;
 	return (kern_sysctl(&name, 1, SCARG(uap, domainname),
-	    &SCARG(uap, len), 0, 0));
+			    &SCARG(uap, len), 0, 0, p));
 }
 
 
@@ -81,11 +82,11 @@ compat_09_sys_setdomainname(p, v, retval)
 	int name;
 	int error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	name = KERN_DOMAINNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
-	    SCARG(uap, len)));
+			    SCARG(uap, len), p));
 }
 
 struct outsname {
@@ -126,5 +127,5 @@ compat_09_sys_uname(p, v, retval)
 	*dp = '\0';
 	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
 	return (copyout((caddr_t)&outsname, (caddr_t)SCARG(uap, name),
-	    sizeof(struct outsname)));
+			sizeof(struct outsname)));
 }

@@ -1,6 +1,7 @@
-/*	$Id: kern_info_43.c,v 1.3 1996/02/02 23:25:15 etheisen Exp $ */
+/*	$Id: kern_info_43.c,v 1.4 1996/02/26 23:26:52 niklas Exp $ */
 
-/*	$NetBSD: kern_info_43.c,v 1.3 1995/10/07 06:26:24 mycroft Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.4 1996/02/26 23:26:52 niklas Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.4 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -99,7 +100,7 @@ compat_43_sys_gethostname(p, v, retval)
 
 	name = KERN_HOSTNAME;
 	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &SCARG(uap, len),
-	    0, 0));
+			    0, 0, p));
 }
 
 #define	KINFO_PROC		(0<<8)
@@ -314,7 +315,7 @@ compat_43_sys_sethostid(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	hostid = SCARG(uap, hostid);
 	return (0);
@@ -332,9 +333,9 @@ compat_43_sys_sethostname(p, v, retval)
 	int name;
 	int error;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	name = KERN_HOSTNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, hostname),
-	    SCARG(uap, len)));
+			    SCARG(uap, len), p));
 }
