@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.57 2004/06/22 03:04:24 ho Exp $
+#	$OpenBSD: services,v 1.58 2004/12/27 11:02:31 jmc Exp $
 #
 # Network services, Internet style
 #
@@ -224,8 +224,8 @@ daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
 krb524		4444/tcp			# Kerberos 5->4
 krb524		4444/udp			# Kerberos 5->4
-ipsec-nat-t	4500/tcp	ipsec-msft	# Kerberos 5->4
-ipsec-nat-t	4500/udp	ipsec-msft	# Kerberos 5->4
+ipsec-nat-t	4500/tcp	ipsec-msft	# IPsec NAT-Traversal
+ipsec-nat-t	4500/udp	ipsec-msft	# IPsec NAT-Traversal
 rfe		5002/tcp			# Radio Free Ethernet
 rfe		5002/udp			# Actually uses UDP only
 sip		5060/tcp			# SIP
