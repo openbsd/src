@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.5 1997/03/22 02:51:06 kstailey Exp $ */
+/*	$OpenBSD: newfs_msdos.c,v 1.6 1997/03/29 20:01:26 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Joerg Wunsch
@@ -180,8 +180,7 @@ setup_boot_sector_from_template(bs, dp)
 	bs->bsec.variable_part.extended.extboot = dp->ext_extboot;
 
 	/* assign a "serial number" :) */
-	srandom((unsigned) time((time_t) 0));
-	l_to_little_l(bs->bsec.variable_part.extended.serial, random());
+	l_to_little_l(bs->bsec.variable_part.extended.serial, arc4random());
 
 	memcpy((void *) bs->bsec.variable_part.extended.label,
 	    (void *) dp->ext_label, 11);
