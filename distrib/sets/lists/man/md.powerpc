@@ -14,12 +14,5 @@
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat4/i386/ncr.0
-./usr/share/man/cat8/dumplfs.0
 ./usr/share/man/cat8/fdisk.0
-./usr/share/man/cat8/lfs_cleanerd.0
-./usr/share/man/cat8/mount_lfs.0
-./usr/share/man/cat8/newlfs.0
-./usr/share/man/cat8/x68k
-./usr/share/man/man3f
-./usr/share/man/man8/x68k
 ./usr/share/info/cpio.info
