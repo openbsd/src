@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.19 1999/06/03 14:37:58 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.20 1999/06/28 16:28:41 espie Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -172,15 +172,6 @@ LINKS+= ${LIBDIR}/libm_pic.a ${LIBDIR}/libm_i387_pic.a
 .endif
 .endif
 
-.if (${MACHINE_ARCH} == "m68k")
-.for _I in e_lgamma_r e_lgammaf_r k_tan k_tanf s_atanf
-${_I}.so: ${_I}.c
-	@echo "${COMPILE.c} ${PICFLAGS} -O1 -DPIC ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${PICFLAGS} -O1 -DPIC ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
-.endfor
-.endif
 #e_acos.o: 
 #	cpp  -D__LIBM_PRIVATE -D_USE_WRITE -D_MULTI_LIBM -D_POSIX_MODE \
 #	/usr/src/lib/libm/arch/mc68881/e_acos.S |  as -o e_acos.o
