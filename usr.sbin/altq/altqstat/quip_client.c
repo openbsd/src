@@ -1,4 +1,4 @@
-/*	$OpenBSD: quip_client.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$OpenBSD: quip_client.c,v 1.3 2001/08/20 08:40:14 kjc Exp $	*/
 /*	$KAME: quip_client.c,v 1.4 2001/08/16 07:43:15 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -99,6 +99,8 @@
  *		GET handle-to-name?fxp0::0x1000000a QUIP/1.0<cr>
  */
 
+#define	MAXLINESIZE	1024
+
 enum nametype { INTERFACE, CLASS, FILTER, CONDITIONER };
 
 static FILE *server = NULL;
@@ -152,8 +154,8 @@ quip_sendrequest(FILE *fp, const char *request)
 		if (cp == NULL || n > REQ_MAXSIZE - 10)
 			return;
 		strncpy(buf, request, n);
-		n += snprintf(buf + n, REQ_MAXSIZE - n, " QUIP/1.0");
-		strlcpy(buf + n, cp, REQ_MAXSIZE - n);
+		snprintf(buf + n, REQ_MAXSIZE - n, " QUIP/1.0");
+		strlcat(buf, cp, REQ_MAXSIZE);
 	}
 	else
 		strlcpy(buf, request, REQ_MAXSIZE);
@@ -175,14 +177,15 @@ quip_sendrequest(FILE *fp, const char *request)
 int
 quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 {
-	char buf[QUIPMSG_MAXSIZE], version[64];
-	int code, resid;
+	char buf[MAXLINESIZE], version[MAXLINESIZE];
+	int code, resid, len, buflen;
 	int end_of_header = 0;
 
 	if (blen != NULL)
 		*blen = 0;
 	code = 0;
 	resid = 0;
+	buflen = RES_MAXSIZE;
 	while (fgets(buf, sizeof(buf), fp) != 0) {
 		if (quip_echo) {
 			fputs(">  ", stdout);
@@ -191,8 +194,16 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 
 		if (!end_of_header) {
 			/* process message header */
-			if (header != NULL)
-				header += snprintf(header, RES_MAXSIZE, "%s", buf);
+			if (header != NULL) {
+				len = strlcpy(header, buf, buflen);
+				if (len >= buflen) {
+					/* header too long */
+					fpurge(fp);
+					return (-1);
+				}
+				header += len;
+				buflen -= len;
+			}
 
 			if (code == 0) {
 				/* status line expected */
@@ -213,6 +224,7 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 				if (buf[0] == '\n') {
 					/* end of header */
 					end_of_header = 1;
+					buflen = BODY_MAXSIZE;
 					if (resid == 0)
 						/* no message body */
 						return (code);
@@ -232,11 +244,15 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 		}
 		else {
 			/* process message body */
-			int len;
-			
 			if (body != NULL) {
-				len = snprintf(body, BODY_MAXSIZE, "%s", buf);
+				len = strlcpy(body, buf, buflen);
+				if (len >= buflen) {
+					/* body too long */
+					fpurge(fp);
+					return (-1);
+				}
 				body += len;
+				buflen -= len;
 			}
 			else
 				len = strlen(buf);
@@ -251,7 +267,7 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 void
 quip_rawmode(void)
 {
-	char line[1024];
+	char line[MAXLINESIZE];
 	int result_code;
 
 	printf(">>>Entering the raw interactive mode to the server:\n\n");
@@ -263,7 +279,7 @@ quip_rawmode(void)
 	while (1) {
 		printf("%% "); fflush(stdout);
 		/* read a line from stdin */
-		if (fgets(line, 1024, stdin) == NULL)
+		if (fgets(line, sizeof(line), stdin) == NULL)
 			break;
 
 		if (line[0] == '\n') {
@@ -287,7 +303,7 @@ quip_rawmode(void)
 char *
 quip_selectinterface(char *ifname)
 {
-	char buf[8192], *cp;
+	char buf[BODY_MAXSIZE], *cp;
 	int result_code, len;
 	u_int if_index;
 	static char interface[64];
@@ -311,9 +327,8 @@ quip_selectinterface(char *ifname)
 			return (interface);
 		}
 		if (strcmp(ifname, interface) == 0)
-				/* found the matching entry */
-		
-	return (interface);
+			/* found the matching entry */
+			return (interface);
 		if ((cp = strchr(cp+1, '\n')) == NULL)
 			break;
 	}
@@ -443,7 +458,7 @@ extract_ifname(const char *name)
 void 
 quip_printconfig(void)
 {
-	char buf[8192], name[256], *cp, *p, *flname;
+	char buf[BODY_MAXSIZE], name[256], *cp, *p, *flname;
 	int result_code, len;
 	enum nametype type;
 	u_long handle;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quip_server.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$OpenBSD: quip_server.c,v 1.3 2001/08/20 08:40:14 kjc Exp $	*/
 /*	$KAME: quip_server.c,v 1.5 2001/08/16 07:43:17 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -201,8 +201,8 @@ expand_filtername(struct fltrinfo *fltrinfo, char *name, size_t maxname)
 	int len;
 
 	len = expand_classname(fltrinfo->clinfo, name, maxname);
-	len += snprintf(name + len, maxname - len, ":%s", fltrinfo->flname);
-	return (len);
+	snprintf(name + len, maxname - len, ":%s", fltrinfo->flname);
+	return (strlen(name));
 }
 
 static int
@@ -213,7 +213,7 @@ query_handle2name(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 	struct fltrinfo *fltrinfo;
 	char *ifname, *class_field, *fltr_field, buf[256], *cp;
 	u_long handle;
-	int len, size;
+	int len;
 
 	strlcpy(buf, arg, sizeof(buf));
 	cp = buf;
@@ -240,23 +240,22 @@ query_handle2name(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 
 		len = expand_classname(clinfo, msg, maxmsg);
 	}
-	size = len + snprintf(msg + len, maxmsg - len, "\n");
-	return (size);
+	strlcat(msg, "\n", maxmsg);
+	return (strlen(msg));
 }
 
 static int
 query_qdisc(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 {
 	struct ifinfo *ifinfo;
-	int size;
 
 	if ((ifinfo = ifname2ifinfo(arg)) == NULL)
 		return (-1);
 
-	size = snprintf(msg, maxmsg, "%s\nbandwidth:%.2fMbps\nstatus:%s\n",
-			ifinfo->qdisc->qname, (double)ifinfo->bandwidth/1000000,
+	snprintf(msg, maxmsg, "%s\nbandwidth:%.2fMbps\nstatus:%s\n",
+		 ifinfo->qdisc->qname, (double)ifinfo->bandwidth/1000000,
 			(ifinfo->enabled ? "enabled" : "disabled"));
-	return (size);
+	return (strlen(msg));
 }
 
 static int
@@ -267,7 +266,6 @@ query_filterspec(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 	struct flow_filter *filt;
 	char *ifname, *class_field, *fltr_field, buf[256], *cp;
 	u_long handle;
-	int size;
 
 	strlcpy(buf, arg, sizeof(buf));
 	cp = buf;
@@ -321,12 +319,12 @@ query_filterspec(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 				 filt->ff_flow.fi_tos,
 				 filt->ff_mask.mask_tos);
 
-		size = snprintf(msg, maxmsg, "inet %s%s %d %s%s %d %d%s\n",
-				dst, dmask,
-				ntoh16(filt->ff_flow.fi_dport),
-				src, smask,
-				ntoh16(filt->ff_flow.fi_sport),
-				filt->ff_flow.fi_proto, tos);
+		snprintf(msg, maxmsg, "inet %s%s %d %s%s %d %d%s\n",
+			 dst, dmask,
+			 ntoh16(filt->ff_flow.fi_dport),
+			 src, smask,
+			 ntoh16(filt->ff_flow.fi_sport),
+			 filt->ff_flow.fi_proto, tos);
 	}
 #ifdef INET6
 	else if (filt->ff_flow.fi_family == AF_INET6) {
@@ -378,16 +376,16 @@ query_filterspec(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 				 filt6->ff_flow6.fi6_tclass,
 				 filt6->ff_mask6.mask6_tclass);
 
-		size = snprintf(msg, maxmsg, "inet6 %s%s %d %s%s %d %d%s\n",
-				dst6, dmask6,
-				ntoh16(filt6->ff_flow6.fi6_dport),
-				src6, smask6,
-				ntoh16(filt6->ff_flow6.fi6_sport),
-				filt6->ff_flow6.fi6_proto, tclass6);
+		snprintf(msg, maxmsg, "inet6 %s%s %d %s%s %d %d%s\n",
+			 dst6, dmask6,
+			 ntoh16(filt6->ff_flow6.fi6_dport),
+			 src6, smask6,
+			 ntoh16(filt6->ff_flow6.fi6_sport),
+			 filt6->ff_flow6.fi6_proto, tclass6);
 	}
 #endif /* INET6 */
 
-	return (size);
+	return (strlen(msg));
 }
 
 
@@ -438,7 +436,7 @@ query_list(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 	struct ifinfo *ifinfo;
 	struct classinfo *clinfo;
 	struct fltrinfo *fltrinfo;
-	int print_if, print_class, print_fltr, size = 0;
+	int print_if, print_class, print_fltr, len;
 
 	if (arg == NULL) {
 		/* no arg, print all */
@@ -458,9 +456,13 @@ query_list(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 	LIST_FOREACH(ifinfo, &qop_iflist, next) {
 		if (print_if) {
 			strlcpy(tmp, ifinfo->ifname, sizeof(tmp));
-			if (arg == NULL || string_match(arg, tmp))
-				cp += snprintf(cp, ep - cp, "%#010x\t%s\n",
+			if (arg == NULL || string_match(arg, tmp)) {
+				len = snprintf(cp, ep - cp, "%#010x\t%s\n",
 					       ifinfo->ifindex, tmp);
+				if (len < 0 || len >= ep - cp)
+					break;
+				cp += len;
+			}
 		}
 		if (!print_class && !print_fltr)
 			continue;
@@ -468,22 +470,29 @@ query_list(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 			  clinfo != NULL; clinfo = get_nextclass(clinfo)) {
 			if (print_class) {
 				expand_classname(clinfo, tmp, sizeof(tmp));
-				if (arg == NULL || string_match(arg, tmp))
-					cp += snprintf(cp, ep - cp,
+				if (arg == NULL || string_match(arg, tmp)) {
+					len = snprintf(cp, ep - cp,
 						       "%#010lx\t%s\n",
 						       clinfo->handle, tmp);
+					if (len < 0 || len >= ep - cp)
+						break;
+					cp += len;
+				}
 			}
 			if (!print_fltr)
 				continue;
 			LIST_FOREACH(fltrinfo, &clinfo->fltrlist, next) {
 				expand_filtername(fltrinfo, tmp, sizeof(tmp));
-				if (arg == NULL || string_match(arg, tmp))
-					cp += snprintf(cp, ep - cp, "%#010lx\t%s\n",
-						      fltrinfo->handle, tmp);
+				if (arg == NULL || string_match(arg, tmp)) {
+					len = snprintf(cp, ep - cp, "%#010lx\t%s\n",
+						       fltrinfo->handle, tmp);
+					if (len < 0 || len >= ep - cp)
+						break;
+					cp += len;
+				}
 			}
 		}
 	}
-	size = cp - msg;
-	return (size);
+	return (strlen(msg));
 }
 
