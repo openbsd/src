@@ -8,7 +8,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.16.6
+./usr/lib/libc.so.17.0
 ./usr/lib/libcurses.so.3.1
 ./usr/lib/libdes.so.5.0
 ./usr/lib/libedit.so.0.0
@@ -26,7 +26,7 @@
 ./usr/lib/libpanel.so.0.0
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
-./usr/lib/libskey.so.0.4
+./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtelnet.so.1.0
