@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.10 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.11 2002/03/21 03:09:33 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -400,9 +400,9 @@ zskbd_attach(parent, self, aux)
 		zs_modem(zst, 0);
 
 		splx(s);
-	}
-
-	printf("\n");
+		printf("\n");
+	} else
+		printf("\n");
 
 	a.console = console;
 	a.keymap = &sunkbd_keymapdata;
