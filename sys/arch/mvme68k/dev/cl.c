@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.38 2004/07/30 22:29:44 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.39 2004/07/31 22:28:58 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -156,10 +156,7 @@ const struct {
 };
 
 /* prototypes */
-int clcnprobe(struct consdev *cp);
-int clcninit(struct consdev *cp);
-int clcngetc(dev_t dev);
-void clcnputc(dev_t dev, u_char c);
+cons_decl(cl);
 u_char cl_clkdiv(int speed);
 u_char cl_clknum(int speed);
 u_char cl_clkrxtimeout(int speed);
@@ -337,8 +334,6 @@ clattach(parent, self, aux)
 #endif
 		cl_initchannel(sc, i);
 	}
-        /* allow chip to settle before continuing */
-        delay(50);
 
 	/* enable interrupts */
 	sc->sc_ih_e.ih_fn = cl_rxintr;
@@ -391,14 +386,16 @@ cl_initchannel(sc, channel)
 {
 	int s;
 	struct clreg *cl_reg = sc->cl_reg;
+
 	/* set up option registers */
 	sc->sc_cl[channel].tty = NULL;
 	s = splhigh();
+
 	cl_reg->cl_car	= (u_char) channel;
 	cl_reg->cl_livr	= PCC2_VECBASE + 0xc;/* set vector base at 5C */
-	/* if the port is not the console, should be init for all ports??*/
 	cl_reg->cl_ier	= 0x00;
-	if (sc->sc_cl[channel].cl_consio != 1) {
+
+	if (sc->sc_cl[channel].cl_consio == 0) {
 		cl_reg->cl_cmr	= 0x02; 
 		cl_reg->cl_cor1	= 0x17;
 		cl_reg->cl_cor2	= 0x00;
@@ -423,9 +420,10 @@ cl_initchannel(sc, channel)
 		cl_reg->cl_msvr_dtr	= 0x00;
 		cl_reg->cl_rtprl	= CL_RX_TIMEOUT;
 		cl_reg->cl_rtprh	= 0x00;
-	}
-	sc->cl_reg->cl_ccr = 0x20;
-	while (sc->cl_reg->cl_ccr != 0) {
+
+		sc->cl_reg->cl_ccr = 0x20;
+		while (sc->cl_reg->cl_ccr != 0)
+			;
 	}
 
 	splx(s);
@@ -567,7 +565,7 @@ clopen(dev, flag, mode, p)
 			tp->t_lflag = TTYDEF_LFLAG;
 			tp->t_ispeed = tp->t_ospeed = cldefaultrate;
 
-			if(sc->sc_cl[channel].cl_consio == 1) {
+			if(sc->sc_cl[channel].cl_consio != 0) {
 				/* console is 8N1 */
 				tp->t_cflag = (CREAD | CS8 | HUPCL);
 			} else {
@@ -922,13 +920,20 @@ clstop(tp, flag)
 	return 0;
 }
 
-int
+void
 clcnprobe(cp)
 	struct consdev *cp;
 {
-	/* always there ? */
-	/* serial major */
 	int maj;
+
+	switch (cputyp) {
+	case CPU_167:
+	case CPU_177:
+		break;
+	default:
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -936,34 +941,25 @@ clcnprobe(cp)
 			break;
 	cp->cn_dev = makedev (maj, 0);
 	cp->cn_pri = CN_NORMAL;
-
-	return 1;
 }
 
-int
+void
 clcninit(cp)
-struct consdev *cp;
+	struct consdev *cp;
 {
-#ifdef MAP_DOES_WORK
-	int size = (0x1ff + PGOFSET) & ~PGOFSET;
-	int pcc2_size = (0x3C + PGOFSET) & ~PGOFSET;
-#endif
 	struct clreg *cl_reg;
 	
 	cl_cons.cl_paddr = (void *)0xfff45000;
-#ifdef MAP_DOES_WORK
-	cl_cons.cl_vaddr = mapiodev(cl_cons.cl_paddr,size);
-	cd_pcc2_base = mapiodev(0xfff42000,pcc2_size);
-#else
 	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
 	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
-#endif
 	cl_reg = cl_cons.cl_vaddr;
+
 	/* reset the chip? */
 #ifdef CLCD_DO_RESET
 #endif
+
+#if 1
 	/* set up globals */
-#ifdef NOT_ALREADY_SETUP
 	cl_reg->cl_tftc  = 0x10;
 	cl_reg->cl_tpr   = CL_TIMEOUT; /* is this correct?? */
 	cl_reg->cl_rpilr = 0x03;
@@ -988,7 +984,6 @@ struct consdev *cp;
 	cl_reg->cl_lnxt  = 0x00;
 	cl_reg->cl_cpsr  = 0x00;
 #endif
-	return 0;
 }
 
 int
@@ -1275,13 +1270,10 @@ clccparam(sc, par, channel)
 		}
 	}
 
-	if (sc->sc_cl[channel].cl_consio == 0
-		&& (par->c_cflag & CREAD) == 0 )
-	{
+	if (sc->sc_cl[channel].cl_consio == 0 && (par->c_cflag & CREAD) == 0)
 		sc->cl_reg->cl_ccr = 0x08;
-	} else {
+	else
 		sc->cl_reg->cl_ccr = 0x0a;
-	}
 	while (sc->cl_reg->cl_ccr != 0) {
 	}
 	ints = 0;
@@ -1645,8 +1637,10 @@ cl_rxintr(arg)
 		reoir = 0x08;
 	} else
 	if (risrl & 0x01) {
+#ifdef DDB
 		if (sc->sc_cl[channel].cl_consio)
-			wantddb = 1;
+			wantddb = db_console;
+#endif
 		cl_break(sc, channel);
 		reoir = 0x08;
 	}
@@ -1772,7 +1766,7 @@ channel, nbuf, cnt, status);
 		sc->cl_reg->cl_reoir = reoir;
 	}
 #ifdef DDB
-	if (wantddb && db_console)
+	if (wantddb != 0)
 		Debugger();
 #endif
 	return 1;
