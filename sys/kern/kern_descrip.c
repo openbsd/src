@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.6 1996/08/27 14:46:59 shawn Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.7 1996/09/04 22:33:48 niklas Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -58,12 +58,12 @@
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
-#include <sys/pipe.h>
-
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+
+#include <sys/pipe.h>
 
 /*
  * Descriptor management.
