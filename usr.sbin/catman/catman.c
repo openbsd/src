@@ -1,3 +1,4 @@
+/*	$OpenBSD: catman.c,v 1.5 2002/06/01 20:15:43 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -29,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.4 2002/05/29 09:47:20 deraadt Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.5 2002/06/01 20:15:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,9 +65,7 @@ void makewhatis(const char *);
 void dosystem(const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int c;
 
@@ -118,9 +117,7 @@ main(argc, argv)
 
 
 void
-catman(path, section)
-	const char *path;
-	char *section;
+catman(const char *path, char *section)
 {
 	char mandir[PATH_MAX];
 	char catdir[PATH_MAX];
@@ -232,8 +229,7 @@ catman(path, section)
 }
 
 void
-makewhatis(path)
-	const char *path;
+makewhatis(const char *path)
 {
 	char sysbuf[1024];
 
@@ -245,8 +241,7 @@ makewhatis(path)
 }
 
 void
-dosystem(cmd)
-	const char *cmd;
+dosystem(const char *cmd)
 {
 	int status;
 
@@ -260,14 +255,16 @@ dosystem(cmd)
 	if (WIFSTOPPED(status))
 		errx(1, "child was stopped. aborting");
 	if (f_ignerr == 0)
-		errx(1,"*** Exited %d");
-	warnx("*** Exited %d (continuing)");
+		errx(1,"*** Exited %d", status);
+	warnx("*** Exited %d (continuing)", status);
 }
 
 void
 usage()
 {
+	extern char *__progname;
+
 	(void)fprintf(stderr,
-	    "usage: catman [-knpsw] [-M manpath] [sections]\n");
+	    "usage: %s [-knpsw] [-M manpath] [sections]\n", __progname);
 	exit(1);
 }
