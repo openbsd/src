@@ -1,6 +1,6 @@
 		 Miscellaneous NAT Configuration Tips
 
-Don't forget to add "option GATEWAY" to the kernel config file or NAT will
+Don't forget to add "net.inet.ip.forwarding=1" to /etc/sysctl.conf or NAT will
 not work.  NAT requires IP packet forwarding.
 
 Don't forget to add "option IPFILTER" (and maybe "option IPFILTER_LOG"
