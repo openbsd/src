@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.317 2003/02/09 16:21:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.318 2003/02/12 03:02:23 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -185,14 +185,18 @@ struct pf_rule		*pf_get_translation(int, struct ifnet *, u_int8_t,
 			    struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t *, sa_family_t);
-int			 pf_test_tcp(struct pf_rule **, int, struct ifnet *,
-			    struct mbuf *, int, int, void *, struct pf_pdesc *);
-int			 pf_test_udp(struct pf_rule **, int, struct ifnet *,
-			    struct mbuf *, int, int, void *, struct pf_pdesc *);
-int			 pf_test_icmp(struct pf_rule **, int, struct ifnet *,
-			    struct mbuf *, int, int, void *, struct pf_pdesc *);
-int			 pf_test_other(struct pf_rule **, int, struct ifnet *,
-			    struct mbuf *, void *, struct pf_pdesc *);
+int			 pf_test_tcp(struct pf_rule **, struct pf_state **, int,
+			    struct ifnet *, struct mbuf *, int, int, void *,
+			    struct pf_pdesc *);
+int			 pf_test_udp(struct pf_rule **, struct pf_state **, int,
+			    struct ifnet *, struct mbuf *, int, int, void *,
+			    struct pf_pdesc *);
+int			 pf_test_icmp(struct pf_rule **, struct pf_state **,
+			    int, struct ifnet *, struct mbuf *, int, int,
+			    void *, struct pf_pdesc *);
+int			 pf_test_other(struct pf_rule **, struct pf_state **,
+			    int, struct ifnet *, struct mbuf *, void *,
+			    struct pf_pdesc *);
 int			 pf_test_fragment(struct pf_rule **, int,
 			    struct ifnet *, struct mbuf *, void *,
 			    struct pf_pdesc *);
@@ -1872,8 +1876,9 @@ pf_get_wscale(struct mbuf *m, int off, u_int16_t th_off, sa_family_t af)
 }
 
 int
-pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
+pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
+    struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
+    struct pf_pdesc *pd)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
@@ -2108,7 +2113,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
-		}
+		} else
+			*sm = s;
 	}
 
 	/* copy back packet headers if we performed NAT operations */
@@ -2119,8 +2125,9 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 }
 
 int
-pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
+pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
+    struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
+    struct pf_pdesc *pd)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
@@ -2327,7 +2334,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
-		}
+		} else
+			*sm = s;
 	}
 
 	/* copy back packet headers if we performed NAT operations */
@@ -2338,8 +2346,9 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 }
 
 int
-pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
+pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
+    struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
+    struct pf_pdesc *pd)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
@@ -2560,7 +2569,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
-		}
+		} else
+			*sm = s;
 	}
 
 #ifdef INET6
@@ -2574,8 +2584,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 }
 
 int
-pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
-    struct mbuf *m, void *h, struct pf_pdesc *pd)
+pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
+    struct ifnet *ifp, struct mbuf *m, void *h, struct pf_pdesc *pd)
 {
 	struct pf_rule		*nat = NULL, *rdr = NULL;
 	struct pf_rule		*r, *rs = NULL, *anchorrule = NULL;
@@ -2747,7 +2757,8 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				    rs);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
-		}
+		} else
+			*sm = s;
 	}
 
 	return (PF_PASS);
@@ -3838,6 +3849,14 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		panic("pf_route: invalid parameters");
 
 	if (r->rt == PF_DUPTO) {
+		m0 = *m;
+		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+		if (mtag == NULL) {
+			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+			if (mtag == NULL)
+				goto bad;
+			m_tag_prepend(m0, mtag);
+		}
 		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
 		if (m0 == NULL)
 			return;
@@ -3900,14 +3919,14 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (oifp != ifp) {
 		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
 		if (mtag == NULL) {
-			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
-				goto bad;
-			else if (m0 == NULL)
-				goto done;
 			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
 			if (mtag == NULL)
 				goto bad;
 			m_tag_prepend(m0, mtag);
+			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
+				goto bad;
+			else if (m0 == NULL)
+				goto done;
 			if (m0->m_len < sizeof(struct ip))
 				panic("pf_route: m0->m_len < "
 				    "sizeof(struct ip)");
@@ -4001,6 +4020,14 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		panic("pf_route6: invalid parameters");
 
 	if (r->rt == PF_DUPTO) {
+		m0 = *m;
+		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
+		if (mtag == NULL) {
+			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+			if (mtag == NULL)
+				goto bad;
+			m_tag_prepend(m0, mtag);
+		}
 		m0 = m_copym2(*m, 0, M_COPYALL, M_NOWAIT);
 		if (m0 == NULL)
 			return;
@@ -4059,14 +4086,14 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (oifp != ifp) {
 		mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
 		if (mtag == NULL) {
-			if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
-				goto bad;
-			else if (m0 == NULL)
-				goto done;
 			mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
 			if (mtag == NULL)
 				goto bad;
 			m_tag_prepend(m0, mtag);
+			if (pf_test6(PF_OUT, ifp, &m0) != PF_PASS)
+				goto bad;
+			else if (m0 == NULL)
+				goto done;
 		}
 	}
 
@@ -4268,7 +4295,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_tcp(&r, dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_tcp(&r, &s, dir, ifp,
+			    m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4291,7 +4319,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_udp(&r, dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_udp(&r, &s, dir, ifp,
+			    m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4318,7 +4347,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			}
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_icmp(&r, dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_icmp(&r, &s, dir, ifp,
+			    m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4328,7 +4358,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_other(&r, dir, ifp, m, h, &pd);
+			action = pf_test_other(&r, &s, dir, ifp, m, h, &pd);
 		break;
 	}
 
@@ -4500,7 +4530,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_tcp(&r, dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_tcp(&r, &s, dir, ifp,
+			    m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4523,7 +4554,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule.ptr;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_udp(&r, dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_udp(&r, &s, dir, ifp,
+			    m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4541,7 +4573,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			action = PF_DROP;
 			goto done;
 		}
-		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &pd);
+		action = pf_test_state_icmp(&s, dir, ifp,
+		    m, 0, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			if (r != NULL) {
@@ -4550,12 +4583,13 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			}
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_icmp(&r, dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_icmp(&r, &s, dir, ifp,
+			    m, 0, off, h, &pd);
 		break;
 	}
 
 	default:
-		action = pf_test_other(&r, dir, ifp, m, h, &pd);
+		action = pf_test_other(&r, &s, dir, ifp, m, h, &pd);
 		break;
 	}
 
