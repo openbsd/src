@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.26 1998/10/15 21:24:53 art Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1998/11/19 08:18:57 dugsong Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -285,10 +285,21 @@ pty*)
 	3) offset=48 name=s;;
 # Note that telnetd, rlogind, and xterm (at least) only look at p-s.
 	4) offset=64 name=t;;
+	5) offset=80 name=u;;
+	6) offset=96 name=v;;
+	7) offset=112 name=w;;
+	8) offset=128 name=x;;
+	9) offset=144 name=y;;
+	10) offset=160 name=z;;
+	11) offset=176 name=P;;
+	12) offset=192 name=Q;;
+	13) offset=208 name=R;;
+	14) offset=224 name=S;;
+	15) offset=240 name=T;;
 	*) echo bad unit for pty in: $i;;
 	esac
 	case $class in
-	0|1|2|3|4)
+	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
 		umask 0
 		n=0
 		while [ $n -lt 16 ]
