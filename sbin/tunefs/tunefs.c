@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.4 1997/09/04 00:51:56 mickey Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.5 1997/10/06 15:33:59 csapuntz Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.4 1997/09/04 00:51:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.5 1997/10/06 15:33:59 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *cp, *special, *name;
+	char *cp, *special, *name, *action;
 	struct stat st;
 	int i;
 	int Aflag = 0;
@@ -190,6 +190,25 @@ again:
 					warnx(OPTWARN, "space", "<", MINFREE);
 				continue;
 
+ 			case 'n':
+ 				name = "soft updates";
+ 				if (argc < 1)
+ 					errx(10, "-s: missing %s", name);
+ 				argc--, argv++;
+ 				if (strcmp(*argv, "enable") == 0) {
+ 					sblock.fs_flags |= FS_DOSOFTDEP;
+ 					action = "set";
+ 				} else if (strcmp(*argv, "disable") == 0) {
+ 					sblock.fs_flags &= ~FS_DOSOFTDEP;
+ 					action = "cleared";
+ 				} else {
+ 					errx(10, "bad %s (options are %s)",
+ 					    name, "`enable' or `disable'");
+ 				}
+ 				warnx("%s %s", name, action);
+ 				continue;
+ 
+
 			case 'o':
 				name = "optimization preference";
 				if (argc < 1)
@@ -245,6 +264,7 @@ usage()
 		"\t-d rotational delay between contiguous blocks\n"
 		"\t-e maximum blocks per file in a cylinder group\n"
 		"\t-m minimum percentage of free space\n"
+		"\t-n soft updates ('enable' or 'disable')\n"
 		"\t-o optimization preference (`space' or `time')\n"
 		"\t-p no change - just prints current tuneable settings\n",
 		__progname);
@@ -270,6 +290,8 @@ getsb(fs, file)
 void
 printfs()
 {
+	warnx("soft updates: (-n)                                 %s",
+	      (sblock.fs_flags & FS_DOSOFTDEP) ? "yes" : "no");
 	warnx("maximum contiguous block count: (-a)               %d",
 	      sblock.fs_maxcontig);
 	warnx("rotational delay between contiguous blocks: (-d)   %d ms",

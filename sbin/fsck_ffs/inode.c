@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.10 1997/06/25 18:12:13 kstailey Exp $	*/
+/*	$OpenBSD: inode.c,v 1.11 1997/10/06 15:33:33 csapuntz Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.10 1997/06/25 18:12:13 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.11 1997/10/06 15:33:33 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
@@ -573,6 +573,8 @@ allocino(request, type)
 {
 	register ino_t ino;
 	register struct dinode *dp;
+	struct cg *cgp = &cgrp;
+	int cg;
 	time_t t;
 
 	if (request == 0)
@@ -584,9 +586,17 @@ allocino(request, type)
 			break;
 	if (ino == maxino)
 		return (0);
+	cg = ino_to_cg(&sblock, ino);
+	getblk(&cgblk, cgtod(&sblock, cg), sblock.fs_cgsize);
+	if (!cg_chkmagic(cgp))
+		pfatal("CG %d: BAD MAGIC NUMBER\n", cg);
+	setbit(cg_inosused(cgp), ino % sblock.fs_ipg);
+	cgp->cg_cs.cs_nifree--;
+
 	switch (type & IFMT) {
 	case IFDIR:
 		statemap[ino] = DSTATE;
+		cgp->cg_cs.cs_ndir++;
 		break;
 	case IFREG:
 	case IFLNK:
@@ -595,6 +605,7 @@ allocino(request, type)
 	default:
 		return (0);
 	}
+	cgdirty();
 	dp = ginode(ino);
 	dp->di_db[0] = allocblk((long)1);
 	if (dp->di_db[0] == 0) {
@@ -602,6 +613,7 @@ allocino(request, type)
 		return (0);
 	}
 	dp->di_mode = type;
+	dp->di_flags = 0;
 	(void)time(&t);
 	dp->di_atime = t;
 	dp->di_mtime = dp->di_ctime = dp->di_atime;

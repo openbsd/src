@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 1997/10/01 21:53:36 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.16 1997/10/06 15:25:34 csapuntz Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 
 #ifndef _LOCORE
 #include <sys/types.h>
+#include <sys/simplelock.h>
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.24 1997/07/28 09:13:17 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.25 1997/10/06 15:12:12 csapuntz Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -335,17 +335,16 @@ main(framep)
 	schedcpu(NULL);
 
 	/* Mount the root file system. */
-	if ((*mountroot)())
+	if (vfs_mountroot())
 		panic("cannot mount root");
 	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
-	mountlist.cqh_first->mnt_op->vfs_refcount++;
 
 	/* Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to reference it. */
 	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
 		panic("cannot find root vnode");
 	filedesc0.fd_fd.fd_cdir = rootvnode;
 	VREF(filedesc0.fd_fd.fd_cdir);
-	VOP_UNLOCK(rootvnode);
+	VOP_UNLOCK(rootvnode, 0, p);
 	filedesc0.fd_fd.fd_rdir = NULL;
 	swapinit();
 
@@ -584,6 +583,6 @@ start_update(p)
 	 */
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	bcopy("update", curproc->p_comm, sizeof ("update"));
-	vn_update();
+	sched_sync(p);
 	/* NOTREACHED */
 }

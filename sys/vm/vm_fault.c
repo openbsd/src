@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_fault.c,v 1.10 1997/07/30 23:32:24 niklas Exp $	*/
+/*	$OpenBSD: vm_fault.c,v 1.11 1997/10/06 15:28:52 csapuntz Exp $	*/
 /*	$NetBSD: vm_fault.c,v 1.20 1997/02/18 13:39:33 mrg Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_fault.c	8.4 (Berkeley) 1/12/94
+ *	@(#)vm_fault.c	8.5 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

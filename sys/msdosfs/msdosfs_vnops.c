@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.10 1997/10/04 19:08:13 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.11 1997/10/06 15:22:40 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
 
 /*-
@@ -949,6 +949,7 @@ msdosfs_rename(v)
 	register struct vnode *fdvp = ap->a_fdvp;
 	register struct componentname *tcnp = ap->a_tcnp;
 	register struct componentname *fcnp = ap->a_fcnp;
+	struct proc *p = curproc; /* XXX */
 	register struct denode *ip, *xp, *dp, *zp;
 	u_char toname[11], oldname[11];
 	u_long from_diroffset, to_diroffset;
@@ -989,7 +990,7 @@ abortit:
 	}
 
 	/* */
-	if ((error = VOP_LOCK(fvp)) != 0)
+	if ((error = vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
 		goto abortit;
 	dp = VTODE(fdvp);
 	ip = VTODE(fvp);
@@ -1009,7 +1010,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->de_flag & DE_RENAME)) {
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0, p);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -1040,7 +1041,7 @@ abortit:
 	 * call to doscheckpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
-	VOP_UNLOCK(fvp);
+	VOP_UNLOCK(fvp, 0, p);
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
 	vrele(fdvp);
@@ -1106,7 +1107,7 @@ abortit:
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("msdosfs_rename: lost from startdir");
 	if (!newparent)
-		VOP_UNLOCK(tdvp);
+		VOP_UNLOCK(tdvp, 0, p);
 	(void) relookup(fdvp, &fvp, fcnp);
 	if (fvp == NULL) {
 		/*
@@ -1116,7 +1117,7 @@ abortit:
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
 		if (newparent)
-			VOP_UNLOCK(tdvp);
+			VOP_UNLOCK(tdvp, 0, p);
 		vrele(tdvp);
 		return 0;
 	}
@@ -1136,9 +1137,9 @@ abortit:
 		if (doingdirectory)
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
-		VOP_UNLOCK(fvp);
+		VOP_UNLOCK(fvp, 0, p);
 		if (newparent)
-			VOP_UNLOCK(fdvp);
+			VOP_UNLOCK(fdvp, 0, p);
 		xp = NULL;
 	} else {
 		vrele(fvp);
@@ -1160,8 +1161,8 @@ abortit:
 		if (error) {
 			bcopy(oldname, ip->de_Name, 11);
 			if (newparent)
-				VOP_UNLOCK(fdvp);
-			VOP_UNLOCK(fvp);
+				VOP_UNLOCK(fdvp, 0, p);
+			VOP_UNLOCK(fvp, 0, p);
 			goto bad;
 		}
 		ip->de_refcnt++;
@@ -1169,8 +1170,8 @@ abortit:
 		if ((error = removede(zp, ip)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			if (newparent)
-				VOP_UNLOCK(fdvp);
-			VOP_UNLOCK(fvp);
+				VOP_UNLOCK(fdvp, 0, p);
+			VOP_UNLOCK(fvp, 0, p);
 			goto bad;
 		}
 		if (!doingdirectory) {
@@ -1179,8 +1180,8 @@ abortit:
 			if (error) {
 				/* XXX should really panic here, fs is corrupt */
 				if (newparent)
-					VOP_UNLOCK(fdvp);
-				VOP_UNLOCK(fvp);
+					VOP_UNLOCK(fdvp, 0, p);
+				VOP_UNLOCK(fvp, 0, p);
 				goto bad;
 			}
 			if (ip->de_dirclust != MSDOSFSROOT)
@@ -1188,7 +1189,7 @@ abortit:
 		}
 		reinsert(ip);
 		if (newparent)
-			VOP_UNLOCK(fdvp);
+			VOP_UNLOCK(fdvp, 0, p);
 	}
 
 	/*
@@ -1207,19 +1208,19 @@ abortit:
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp);
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0, p);
 			goto bad;
 		}
 		dotdotp = (struct direntry *)bp->b_data + 1;
 		putushort(dotdotp->deStartCluster, dp->de_StartCluster);
 		if ((error = bwrite(bp)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
-			VOP_UNLOCK(fvp);
+			VOP_UNLOCK(fvp, 0, p);
 			goto bad;
 		}
 	}
 
-	VOP_UNLOCK(fvp);
+	VOP_UNLOCK(fvp, 0, p);
 bad:
 	if (xp)
 		vput(tvp);
@@ -1463,8 +1464,8 @@ msdosfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
-		int a_ncookies;
+		u_long **a_cookies;
+		int *a_ncookies;
 	} */ *ap = v;
 	int error = 0;
 	int diff;
@@ -1483,8 +1484,8 @@ msdosfs_readdir(v)
 	struct direntry *dentp;
 	struct dirent dirbuf;
 	struct uio *uio = ap->a_uio;
-	u_long *cookies;
-	int ncookies;
+	u_long *cookies = NULL;
+	int ncookies = 0;
 	off_t offset;
 	int chksum = -1;
 
@@ -1520,8 +1521,13 @@ msdosfs_readdir(v)
 	lost = uio->uio_resid - count;
 	uio->uio_resid = count;
 
-	cookies = ap->a_cookies;
-	ncookies = ap->a_ncookies;
+	if (ap->a_ncookies) {
+		ncookies = uio->uio_resid / sizeof(struct direntry) + 3;
+		MALLOC(cookies, u_long *, ncookies * sizeof(u_long), M_TEMP,
+		       M_WAITOK);
+		*ap->a_cookies = cookies;
+		*ap->a_ncookies = ncookies;
+	}
 
 	/*
 	 * If they are reading from the root directory then, we simulate
@@ -1681,6 +1687,10 @@ msdosfs_readdir(v)
 	}
 
 out:
+	/* Subtract unused cookies */
+	if (ap->a_ncookies)
+		*ap->a_ncookies -= ncookies;
+
 	uio->uio_offset = offset;
 	uio->uio_resid += lost;
 	if (dep->de_FileSize - (offset - bias) <= 0)

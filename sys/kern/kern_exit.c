@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.9 1997/09/15 05:46:12 millert Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.10 1997/10/06 15:12:17 csapuntz Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ exit1(p, rv)
 				 * if we blocked.
 				 */
 				if (sp->s_ttyvp)
-					vgoneall(sp->s_ttyvp);
+					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
 			}
 			if (sp->s_ttyvp)
 				vrele(sp->s_ttyvp);

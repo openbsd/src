@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_unix.c,v 1.5 1997/09/17 17:26:15 weingart Exp $	*/
+/*	$OpenBSD: vm_unix.c,v 1.6 1997/10/06 15:28:58 csapuntz Exp $	*/
 /*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  *
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
  *
- *	@(#)vm_unix.c	8.1 (Berkeley) 6/11/93
+ *	@(#)vm_unix.c	8.2 (Berkeley) 1/9/95
  */
 
 /*

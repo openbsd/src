@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.3 1997/02/16 14:39:38 mickey Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.4 1997/10/06 15:14:59 csapuntz Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -51,6 +51,8 @@ struct netexport { int x; };
 struct proc;
 struct statfs;
 struct ucred;
+struct vfsconf;
+
 #include <isofs/cd9660/iso.h>
 /* These once were in iso.h, but got deleted??? */
 extern __inline int

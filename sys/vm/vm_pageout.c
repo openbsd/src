@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pageout.c,v 1.5 1997/04/17 01:25:22 niklas Exp $	*/
+/*	$OpenBSD: vm_pageout.c,v 1.6 1997/10/06 15:28:56 csapuntz Exp $	*/
 /*	$NetBSD: vm_pageout.c,v 1.23 1996/02/05 01:54:07 christos Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pageout.c	8.5 (Berkeley) 2/14/94
+ *	@(#)vm_pageout.c	8.7 (Berkeley) 6/19/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.5 1997/10/04 19:08:12 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.6 1997/10/06 15:22:38 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.22 1996/10/13 04:16:31 christos Exp $	*/
 
 /*-
@@ -76,10 +76,13 @@ static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
 static void msdosfs_hashrem __P((struct denode *));
 
-void
-msdosfs_init()
+/*ARGSUSED*/
+int
+msdosfs_init(vfsp)
+	struct vfsconf *vfsp;
 {
 	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, &dehash);
+	return (0);
 }
 
 static struct denode *
@@ -89,7 +92,8 @@ msdosfs_hashget(dev, dirclust, diroff)
 	u_long diroff;
 {
 	struct denode *dep;
-	
+	struct proc *p = curproc; /* XXX */
+
 	for (;;)
 		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)];;
 		     dep = dep->de_next) {
@@ -104,7 +108,7 @@ msdosfs_hashget(dev, dirclust, diroff)
 					sleep(dep, PINOD);
 					break;
 				}
-				if (!vget(DETOV(dep), 1))
+				if (!vget(DETOV(dep), LK_EXCLUSIVE, p))
 					return (dep);
 				break;
 			}
@@ -166,6 +170,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct denode *ldep;
 	struct vnode *nvp;
 	struct buf *bp;
+	struct proc *p = curproc; /* XXX */
 
 #ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
@@ -218,7 +223,7 @@ deget(pmp, dirclust, diroffset, depp)
 	 * can't be accessed until we've read it in and have done what we
 	 * need to it.
 	 */
-	VOP_LOCK(nvp);
+	vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY, p);
 	msdosfs_hashins(ldep);
 
 	/*
@@ -562,9 +567,11 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
+	struct proc *p = ap->a_p;
 	int error;
 	extern int prtactive;
 	
@@ -608,7 +615,7 @@ msdosfs_inactive(v)
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	deupdat(dep, 0);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	/*
 	 * If we are done with the denode, reclaim it
 	 * so that it can be reused immediately.

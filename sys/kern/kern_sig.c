@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.19 1997/09/15 05:46:13 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.20 1997/10/06 15:12:21 csapuntz Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1213,7 +1213,7 @@ coredump(p)
 		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	}
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	error1 = vn_close(vp, FWRITE, cred, p);
 	crfree(cred);
 	if (error == 0)

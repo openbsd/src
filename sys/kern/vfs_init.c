@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.4 1997/02/24 14:20:02 niklas Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.5 1997/10/06 15:12:39 csapuntz Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -243,7 +243,8 @@ struct vattr va_null;
 void
 vfsinit()
 {
-	struct vfsops **vfsp;
+	struct vfsconf *vfsp;
+	int  i, maxtypenum;
 
 	/*
 	 * Initialize the vnode table
@@ -262,9 +263,15 @@ vfsinit()
 	 * Initialize each file system type.
 	 */
 	vattr_null(&va_null);
-	for (vfsp = &vfssw[0]; vfsp < &vfssw[nvfssw]; vfsp++) {
-		if (*vfsp == NULL)
-			continue;
-		(*(*vfsp)->vfs_init)();
-	}
+	maxtypenum = 0;
+
+	for (vfsp = vfsconf, i = 1; i <= maxvfsconf; i++, vfsp++) {
+		if (i < maxvfsconf)
+			vfsp->vfc_next = vfsp + 1;
+		if (maxtypenum <= vfsp->vfc_typenum)
+			maxtypenum = vfsp->vfc_typenum + 1;
+		(*vfsp->vfc_vfsops->vfs_init)(vfsp);
+ 	}
+	/* next vfc_typenum to be used */
+	maxvfsconf = maxtypenum;
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.63 1997/08/20 17:09:41 angelos Exp $
+#	$OpenBSD: files,v 1.64 1997/10/06 15:07:17 csapuntz Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -149,6 +149,7 @@ file kern/kern_exit.c
 file kern/kern_fork.c
 file kern/kern_ktrace.c			ktrace
 file kern/kern_lkm.c			lkm
+file kern/kern_lock.c
 file kern/kern_ntptime.c
 file kern/kern_malloc.c
 file kern/kern_physio.c
@@ -371,7 +372,7 @@ file netns/ns_proto.c			ns
 file netns/spp_debug.c			ns
 file netns/spp_usrreq.c			ns
 file netipx/ipx.c			ipx
-file netipx/ipx_error.c			ipx
+file netipx/ipx_error.c			ipxf
 file netipx/ipx_input.c			ipx
 file netipx/ipx_ip.c			ipx
 file netipx/ipx_outputfl.c		ipx
@@ -393,12 +394,29 @@ file nfs/nfs_subs.c			nfsserver | nfsclient
 file nfs/nfs_syscalls.c			nfsserver | nfsclient
 file nfs/nfs_vfsops.c			nfsclient
 file nfs/nfs_vnops.c			nfsclient
+
+file ufs/bffs/bffs_vfsops.c		bffs
+file ufs/bffs/bffs_vnops.c              bffs
+
+file ufs/cffs/cffs_alloc.c		cffs
+file ufs/cffs/cffs_balloc.c		cffs
+file ufs/cffs/cffs_dir.c                cffs
+file ufs/cffs/cffs_group.c              cffs
+file ufs/cffs/cffs_hash.c		cffs
+file ufs/cffs/cffs_inode.c		cffs
+file ufs/cffs/cffs_lookup.c             cffs
+file ufs/cffs/cffs_subr.c		cffs
+file ufs/cffs/cffs_vfsops.c		cffs
+file ufs/cffs/cffs_vnops.c		cffs
+file ufs/cffs/iloctbl.c                 cffs
+
 file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
 file ufs/ffs/ffs_inode.c		ffs | mfs
 file ufs/ffs/ffs_subr.c			ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs
 file ufs/ffs/ffs_vfsops.c		ffs | mfs
+file ufs/ffs/ffs_softdep.c              ffs
 file ufs/ffs/ffs_vnops.c		ffs | mfs
 file ufs/mfs/mfs_vfsops.c		mfs
 file ufs/mfs/mfs_vnops.c		mfs
@@ -419,7 +437,6 @@ file ufs/ext2fs/ext2fs_subr.c		ext2fs
 file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
 file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file vm/device_pager.c			devpager
-file vm/kern_lock.c
 file vm/swap_pager.c			swappager
 file vm/vm_fault.c
 file vm/vm_glue.c
