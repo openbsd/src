@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.18 1997/07/30 11:12:22 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.19 1997/09/16 17:47:03 flipk Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -231,7 +231,8 @@ epconfig(sc, chipset)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf("address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("%s: address %s, ", sc->sc_dev.dv_xname,
+		ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
@@ -262,9 +263,8 @@ epconfig(sc, chipset)
 		break;
 
 	default:
-		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. "
-		    "Interface disabled\n",
-		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
+		printf("wrote %d to TX_AVAIL_THRESH, read back %d. "
+		    "Interface disabled\n", EP_THRESH_DISABLE, (int) i);
 		return;
 	}
 
