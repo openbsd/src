@@ -1,7 +1,7 @@
 TODOs for KAME/OpenBSD
 Jun-ichiro Hagino, KAME project
 KAME Id: TODO,v 1.32 1999/12/08 05:49:27 itojun Exp
-$OpenBSD: TODO,v 1.3 1999/12/20 09:29:22 itojun Exp $
+$OpenBSD: TODO,v 1.4 1999/12/21 01:34:16 itojun Exp $
 
 
 Please refrain from making too much changes to sys/netinet6 tree (even if
@@ -18,9 +18,8 @@ Things we can do with the current code:
 - tcp6 socket input/output (both daemon and client)
 - udp6 socket input/output (need more testing)
 - "options IPSEC" compiles (enabled by default in sys/conf/files), but
-  it means OpenBSD IPsec for IPv4 only.  KAME IPsec is not available
-  (and will never be available as OpenBSD group will not be switching
-  IPsec code).  Because of this IPv6 IPsec is not available.
+  it means OpenBSD IPsec for IPv4 only.  Efforts are ongoing to support IPv6
+  with OpenBSD IPsec.
 - hoplimit control advapi works fine.
 - works just fine on i386 and sparc.
 
