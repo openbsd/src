@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.4 1996/08/11 23:26:08 deraadt Exp $	*/
+/*	$OpenBSD: uk.c,v 1.5 1996/10/04 17:58:45 niklas Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -37,8 +37,10 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 
 #include <scsi/scsi_all.h>
@@ -113,8 +115,10 @@ ukattach(parent, self, aux)
  * open the device.
  */
 int
-ukopen(dev)
+ukopen(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
 	int unit;
 	struct uk_softc *uk;
@@ -151,8 +155,10 @@ ukopen(dev)
  * occurence of an open device
  */
 int
-ukclose(dev)
+ukclose(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
