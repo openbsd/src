@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sfreg.h,v 1.5 2002/04/08 06:06:10 deraadt Exp $	*/
+/*	$OpenBSD: if_sfreg.h,v 1.6 2003/06/29 17:19:17 avsm Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1038,7 +1038,6 @@ struct sf_softc {
 	void			*sf_intrhand;	/* interrupt handler cookie */
 	struct sf_type		*sf_info;	/* Starfire adapter info */
 	struct sf_type		*sf_pinfo;
-	u_int8_t		sf_unit;	/* interface number */
 	u_int8_t		sf_type;
 	u_int8_t		sf_phy_addr;
 	u_int8_t		sf_want_auto;

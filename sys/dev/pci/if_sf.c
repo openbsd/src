@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.20 2003/06/29 13:23:12 avsm Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.21 2003/06/29 17:19:17 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -568,7 +568,7 @@ void sf_reset(sc)
 	}
 
 	if (i == SF_TIMEOUT)
-		printf("sf%d: reset never completed!\n", sc->sf_unit);
+		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -615,7 +615,6 @@ void sf_attach(parent, self, aux)
 	bus_size_t		iosize;
 
 	s = splimp();
-	sc->sf_unit = sc->sc_dev.dv_unit;
 
 	/*
 	 * Handle power management nonsense.
@@ -633,8 +632,8 @@ void sf_attach(parent, self, aux)
 			irq = pci_conf_read(pc, pa->pa_tag, SF_PCI_INTLINE);
 
 			/* Reset the power state. */
-			printf("sf%d: chip is in D%d power mode "
-			"-- setting to D0\n", sc->sf_unit, command & SF_PSTATE_MASK);
+			printf("%s: chip is in D%d power mode -- setting to D0\n",
+				sc->sc_dev.dv_xname, command & SF_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, SF_PCI_PWRMGMTCTRL, command);
 
@@ -717,7 +716,7 @@ void sf_attach(parent, self, aux)
 	sc->sf_ldata_ptr = malloc(sizeof(struct sf_list_data) + 8,
 				M_DEVBUF, M_NOWAIT);
 	if (sc->sf_ldata_ptr == NULL) {
-		printf("sf%d: no memory for list buffers!\n", sc->sf_unit);
+		printf("%s: no memory for list buffers!\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -821,15 +820,15 @@ int sf_newbuf(sc, c, m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("sf%d: no memory for rx list -- "
-			    "packet dropped!\n", sc->sf_unit);
+			printf("%s: no memory for rx list -- "
+			    "packet dropped!\n", sc->sc_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("sf%d: no memory for rx list -- "
-			    "packet dropped!\n", sc->sf_unit);
+			printf("%s: no memory for rx list -- "
+			    "packet dropped!\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -1061,8 +1060,8 @@ void sf_init(xsc)
 	sf_setperf(sc, 0, (caddr_t)&sc->arpcom.ac_enaddr);
 
 	if (sf_init_rx_ring(sc) == ENOBUFS) {
-		printf("sf%d: initialization failed: no "
-		    "memory for rx buffers\n", sc->sf_unit);
+		printf("%s: initialization failed: no "
+		    "memory for rx buffers\n", sc->sc_dev.dv_xname);
 		splx(s);
 		return;
 	}
@@ -1172,7 +1171,7 @@ int sf_encap(sc, c, m_head)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("sf%d: no memory for tx list", sc->sf_unit);
+			printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
 			return(1);
 		}
 
@@ -1180,8 +1179,8 @@ int sf_encap(sc, c, m_head)
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
-				printf("sf%d: no memory for tx list",
-				    sc->sf_unit);
+				printf("%s: no memory for tx list",
+				    sc->sc_dev.dv_xname);
 				return(1);
 			}
 		}
@@ -1366,7 +1365,7 @@ void sf_watchdog(ifp)
 	sc = ifp->if_softc;
 
 	ifp->if_oerrors++;
-	printf("sf%d: watchdog timeout\n", sc->sf_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	sf_stop(sc);
 	sf_reset(sc);
