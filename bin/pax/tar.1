@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.13 1997/05/29 15:47:19 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.14 1998/03/03 05:11:34 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -77,7 +77,10 @@ Extract files from archive.  If any files are named on the
 command line, only those files will be extracted from the
 archive.  If more than one copy of a file exists in the
 archive, later copies will overwrite earlier copies during
-extration.
+extraction.  The user id, group id, file mode, and modification
+time are preserved if possible.  The file mode is subject to
+modification by the
+.Xr umask 2 .
 .El
 .Pp
 In addition to the flags mentioned above, any of the following
@@ -110,10 +113,12 @@ This implies the
 .Fl O
 flag.
 .It Fl p
-Preserve user id, group id, file mode, access and modification
-times if possible.  The user id and group id will only be set
-if the user is the superuser (unless these values correspond
-to the user's user and group ids).
+Preserve file mode regardless of the current
+.Xr umask 2 .
+The setuid and setgid bits are only preserved if the user is
+the superuser.  Only meaningful in conjunction with the
+.Fl x
+flag.
 .It Fl s Ar replstr
 Modify the file or archive member names specified by the
 .Ar pattern
@@ -207,7 +212,7 @@ will exit with one of the following values:
 .It 0
 All files were processed successfully.
 .It 1
-An error occured.
+An error occurred.
 .El
 .Pp
 Whenever
