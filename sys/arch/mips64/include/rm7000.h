@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm7000.h,v 1.2 2004/08/10 18:52:58 deraadt Exp $ */
+/*	$OpenBSD: rm7000.h,v 1.1 2005/01/18 15:03:38 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef _MACHINE_RM7000_H
-#define _MACHINE_RM7000_H
+#ifndef _MIPS64_RM7000_H_
+#define _MIPS64_RM7000_H_
 
 /*
  *  QED RM7000 specific defines.
@@ -96,4 +96,4 @@ int	cp0_getperfcount __P((void));
 __END_DECLS
 #endif /* _KERNEL */
 
-#endif /* _MACHINE_RM7000_H */
+#endif /* _MIPS64_RM7000_H_ */

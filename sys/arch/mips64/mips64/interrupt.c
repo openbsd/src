@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.9 2004/10/08 07:14:57 grange Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.10 2005/01/18 15:03:38 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,7 +47,7 @@
 #include <machine/frame.h>
 #include <machine/regnum.h>
 
-#include <machine/rm7000.h>
+#include <mips64/rm7000.h>
 
 #include <mips64/archtype.h>
 
