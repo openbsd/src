@@ -61,6 +61,7 @@
 #include <unistd.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <poll.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -78,7 +79,7 @@ int nodaemon = FALSE;
 int background = FALSE;
 int identify = ID_NONE;
 char *pidfile = "/var/run/moused.pid";
-static jmp_buf env;
+static sigjmp_buf env;
 
 /*
  * Most of the structures are from the Xfree Project
@@ -403,6 +404,8 @@ mouse_fill_mousemode(void)
 static void
 freedev(int sig)
 { 
+  int save_errno = errno;
+
   /* 
    *  close the device, when a USR1 signal is received.
    *  Tipically used by an X server so it can open the device for it's 
@@ -410,12 +413,13 @@ freedev(int sig)
    */
   close(mouse.mfd);
   sigpause(0);
+  errno = save_errno;
 }
 
 static void
 opendev(int sig)
 {
-    longjmp(env, 1);
+    siglongjmp(env, 1);
 }
 
 static void 
@@ -550,22 +554,17 @@ void SetMouseSpeed(int old, int new, unsigned int cflag)
 int
 FlushInput(int fd)
 {
-	fd_set fds;
-	struct timeval timeout;
+	struct pollfd pfd[1];
 	char c[4];
 
 	if (tcflush(fd, TCIFLUSH) == 0)
 		return 0;
 
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
-	while (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) > 0) {
+	pfd[0].fd = fd;
+	pfd[0].events = POLLIN;
+
+	while (poll(pfd, 1, 0) > 0)
 		read(fd, &c, sizeof(c));
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
-	}
 	return 0;
 }
 
@@ -590,9 +589,12 @@ static int
 pnpgets(int mouse_fd, char *buf)
 {
     struct timeval timeout;
-    fd_set fds;
+    struct pollfd pfd[1];
     int i;
     char c;
+
+    pfd[0].fd = mouse_fd;
+    pfd[0].events = POLLIN;
 
 #if 0
     /* 
@@ -625,11 +627,7 @@ pnpgets(int mouse_fd, char *buf)
     ioctl(mouse_fd, TIOCMBIS, &i);
 
     /* try to read something */
-    FD_ZERO(&fds);
-    FD_SET(mouse_fd, &fds);
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 200000;
-    if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) <= 0) {
+    if (poll(pfd, 1, 200000/1000) <= 0) {
 
 	/* port setup, 2nd phase (2.1.5) */
         i = TIOCM_DTR | TIOCM_RTS;	/* DTR = 0, RTS = 0 */
@@ -642,11 +640,7 @@ pnpgets(int mouse_fd, char *buf)
         ioctl(mouse_fd, TIOCMBIS, &i);
 
         /* try to read something */
-        FD_ZERO(&fds);
-        FD_SET(mouse_fd, &fds);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 200000;
-        if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) <= 0)
+        if (poll(pfd, 1, 200000/1000) <= 0)
 	    goto connect_idle;
     }
 #else
@@ -668,11 +662,7 @@ pnpgets(int mouse_fd, char *buf)
     ioctl(mouse_fd, TIOCMBIS, &i);
 
     /* try to read something */
-    FD_ZERO(&fds);
-    FD_SET(mouse_fd, &fds);
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 200000;
-    if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) <= 0)
+    if (poll(pfd, 1, 200000/1000) <= 0)
         goto connect_idle;
 #endif
 
@@ -693,11 +683,7 @@ pnpgets(int mouse_fd, char *buf)
 
     ++c;			/* make it `End ID' */
     for (;;) {
-        FD_ZERO(&fds);
-        FD_SET(mouse_fd, &fds);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 200000;
-        if (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) <= 0)
+        if (poll(pfd, 1, 200000/1000) <= 0)
 	    break;
 
 	read(mouse_fd, &buf[i], 1);
@@ -912,10 +898,13 @@ mouse_if(int iftype)
 static void
 mouse_init(void)
 {
-    fd_set fds;
+    struct pollfd pfd[1];
     char *s;
     char c;
     int i;
+
+    pfd[0].fd = mouse.mfd;
+    pfd[0].events = POLLIN;
 
     /**
      ** This comment is a little out of context here, but it contains 
@@ -1042,9 +1031,8 @@ mouse_init(void)
 	/* send the command to initialize the beast */
 	for (s = "E5E5"; *s; ++s) {
 	    write(mouse.mfd, s, 1);
-	    FD_ZERO(&fds);
-	    FD_SET(mouse.mfd, &fds);
-	    if (select(FD_SETSIZE, &fds, NULL, NULL, NULL) <= 0)
+
+	    if (poll(pfd, 1, -1) <= 0)
 		break;
 	    read(mouse.mfd, &c, 1);
 	    debug("%c", c);
@@ -1746,7 +1734,7 @@ moused(void)
     mouse_info_t mouse_infos;
     mousestatus_t action;		/* original mouse action */
     mousestatus_t action2;		/* mapped action */
-    fd_set fds;
+    struct pollfd pfd[1];
     u_char b;
     FILE *fp;
     char moused_flag;
@@ -1780,13 +1768,13 @@ moused(void)
     bzero(&buttonstate, sizeof(buttonstate));
     bzero(&mouse_infos, sizeof(mouse));
 
+    pfd[0].fd = mouse.mfd;
+    pfd[0].events = POLLIN;
+
     /* process mouse data */
     for (;;) {
 
-	FD_ZERO(&fds);
-	FD_SET(mouse.mfd, &fds);
-
-	if (select(FD_SETSIZE, &fds, NULL, NULL, NULL) <= 0)
+	if (poll(pfd, 1, -1) <= 0)
 	    logwarn("failed to read from mouse");
 
 	/*  mouse event  */
@@ -2038,7 +2026,7 @@ main(int argc, char **argv)
 	}
 	
 	for (;;) {
-		if (setjmp(env) == 0) {
+		if (sigsetjmp(env, 1) == 0) {
 			signal(SIGUSR1, freedev);
 			signal(SIGUSR2, opendev);
 			signal(SIGINT , cleanup);
@@ -2046,10 +2034,11 @@ main(int argc, char **argv)
 			signal(SIGTERM, cleanup);
 			signal(SIGKILL, cleanup);
 			if ((mouse.mfd = open(mouse.portname, 
-					      O_RDWR | O_NONBLOCK, 0)) == -1) 
+			    O_RDWR | O_NONBLOCK, 0)) == -1) 
 				logerr(1, "unable to open %s", mouse.portname);
 			if (mouse_identify() == P_UNKNOWN) {
-				logwarn("cannot determine mouse type on %s", mouse.portname);
+				logwarn("cannot determine mouse type on %s",
+				    mouse.portname);
 				close(mouse.mfd);
 				mouse.mfd = -1;
 			}
@@ -2058,10 +2047,10 @@ main(int argc, char **argv)
 			if (identify != ID_NONE) {
 				if (identify == ID_ALL)
 					printf("%s %s %s %s\n", 
-					mouse.portname,
-					mouse_if(mouse.hw.iftype),
-					mouse_name(mouse.proto), 
-					mouse_model(mouse.hw.model));
+					    mouse.portname,
+					    mouse_if(mouse.hw.iftype),
+					    mouse_name(mouse.proto), 
+					    mouse_model(mouse.hw.model));
 				else if (identify & ID_PORT)
 					printf("%s\n", mouse.portname);
 				else if (identify & ID_IF)
