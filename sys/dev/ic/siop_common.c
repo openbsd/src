@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.4 2001/03/06 16:29:32 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.5 2001/03/10 05:04:06 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ siop_common_reset(sc)
 		stest3 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST3);
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST1,
 		    STEST1_DBLEN);
-		if (sc->features & SF_CHIP_QUAD) {
+		if ((sc->features & (SF_CHIP_QUAD | SF_CHIP_C10)) == SF_CHIP_QUAD) {
 			/* wait for PPL to lock */
 			while ((bus_space_read_1(sc->sc_rt, sc->sc_rh,
 			    SIOP_STEST4) & STEST4_LOCK) == 0)
@@ -297,7 +297,8 @@ siop_sdtr_neg(siop_cmd)
 				/* ok, found it. we now are sync. */
 				sc->targets[target]->id |= scf_period[i].scf
 				    << (24 + SCNTL3_SCF_SHIFT);
-				if (sync < 25) /* Ultra */
+				if ((sync < 25)
+				    && ((sc->features & SF_CHIP_C10) == 0))
 					sc->targets[target]->id |=
 					    SCNTL3_ULTRA << 24;
 				sc->targets[target]->id |=
@@ -335,7 +336,8 @@ reject:
 				/* ok, found it. we now are sync. */
 				sc->targets[target]->id |= scf_period[i].scf
 				    << (24 + SCNTL3_SCF_SHIFT);
-				if (sync < 25) /* Ultra */
+				if ((sync < 25)
+				    && ((sc->features & SF_CHIP_C10) == 0))
 					sc->targets[target]->id |=
 					    SCNTL3_ULTRA << 24;
 				sc->targets[target]->id |=
@@ -432,26 +434,32 @@ siop_sdp(siop_cmd)
 	dbc = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DBC) & 0x00ffffff;
 	if (siop_cmd->xs->flags & SCSI_DATA_OUT) {
 		/* need to account for stale data in FIFO */
-		int dfifo = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_DFIFO);
-		if (sc->features & SF_CHIP_FIFO) {
-			dfifo |= (bus_space_read_1(sc->sc_rt, sc->sc_rh,
-			    SIOP_CTEST5) & CTEST5_BOMASK) << 8;
-			dbc += (dfifo - (dbc & 0x3ff)) & 0x3ff;
-		} else {
-			dbc += (dfifo - (dbc & 0x7f)) & 0x7f;
+		if (sc->features & SF_CHIP_C10)
+			dbc += bus_space_read_2(sc->sc_rt, sc->sc_rh, SIOP_DFBC);
+		else {
+			int dfifo = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_DFIFO);
+			if (sc->features & SF_CHIP_FIFO) {
+				dfifo |= (bus_space_read_1(sc->sc_rt, sc->sc_rh,
+					      SIOP_CTEST5) & CTEST5_BOMASK) << 8;
+				dbc += (dfifo - (dbc & 0x3ff)) & 0x3ff;
+			} else {
+				dbc += (dfifo - (dbc & 0x7f)) & 0x7f;
+			}
 		}
 		sstat = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SSTAT0);
 		if (sstat & SSTAT0_OLF)
 			dbc++;
-		if (sstat & SSTAT0_ORF)
-			dbc++;
+		if ((sc->features & SF_CHIP_C10) == 0)
+			if (sstat & SSTAT0_ORF)
+				dbc++;
 		if (siop_cmd->siop_target->flags & TARF_ISWIDE) {
 			sstat = bus_space_read_1(sc->sc_rt, sc->sc_rh,
 			    SIOP_SSTAT2);
 			if (sstat & SSTAT2_OLF1)
 				dbc++;
-			if (sstat & SSTAT2_ORF1)
-				dbc++;
+			if ((sc->features & SF_CHIP_C10) == 0)
+				if (sstat & SSTAT2_ORF1)
+					dbc++;
 		}
 		/* clear the FIFO */
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3,
@@ -514,10 +522,16 @@ siop_modechange(sc)
 		stest2 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2);
 		switch(stest4) {
 		case STEST4_MODE_DIF:
-			printf("%s: switching to differential mode\n",
-			    sc->sc_dev.dv_xname);
-			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
-			    stest2 | STEST2_DIF);
+			if (sc->features & SF_CHIP_C10) {
+				printf("%s: invalid SCSI mode 0x%x\n",
+				    sc->sc_dev.dv_xname, stest4);
+				return 0;
+			} else {
+				printf("%s: switching to differential mode\n",
+				    sc->sc_dev.dv_xname);
+				bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
+				    stest2 | STEST2_DIF);
+			}
 			break;
 		case STEST4_MODE_SE:
 			printf("%s: switching to single-ended mode\n",

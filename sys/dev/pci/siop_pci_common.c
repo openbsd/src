@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.3 2001/03/01 17:14:28 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.4 2001/03/10 05:04:06 krw Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
 
 /*
@@ -132,6 +132,14 @@ const struct siop_product_desc siop_products[] = {
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
 	7, 31, 7, 62, 4096
 	},
+	{ PCI_PRODUCT_SYMBIOS_895A,
+	0x00,
+	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
+	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
+	SF_CHIP_LS | SF_CHIP_10REGS |
+	SF_BUS_ULTRA2 | SF_BUS_WIDE,
+	7, 31, 7, 62, 8192
+	},
 	{ PCI_PRODUCT_SYMBIOS_896,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
@@ -140,13 +148,13 @@ const struct siop_product_desc siop_products[] = {
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
 	7, 31, 7, 62, 8192
 	},
-	{ PCI_PRODUCT_SYMBIOS_895A,
+	{ PCI_PRODUCT_SYMBIOS_1010,
 	0x00,
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
-	SF_CHIP_LS | SF_CHIP_10REGS |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_C10 |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
-	7, 31, 7, 62, 8192
+	7, 31, 0, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
 	0x00,
@@ -317,7 +325,7 @@ siop_pci_reset(sc)
 		ctest5 &= ~CTEST5_BBCK;
 		ctest5 |= (sc->maxburst - 1) & CTEST5_BBCK;
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST5, ctest5);
-	} else {
+	} else if ((sc->features & SF_CHIP_C10) == 0) {
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST4,
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST4) |
 		    CTEST4_BDIS);

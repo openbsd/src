@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopreg.h,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siopreg.h,v 1.2 2001/03/10 05:04:06 krw Exp $ */
 /*	$NetBSD: siopreg.h,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
 
 /*
@@ -375,3 +375,5 @@ static const struct scf_period scf_period[] __attribute__((__unused__)) = {
 #define SIOP_SCRATCHI	0x78 /* Scratch register I, R/W, 875-only */
 
 #define SIOP_SCRATCHJ	0x7c /* Scratch register J, R/W, 875-only */
+
+#define SIOP_DFBC	0xf0 /* DMA FIFO byte count, RO, C10-only */
