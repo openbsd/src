@@ -160,6 +160,9 @@ SRCS+=	p12_mutl.c p12_sbag.c p12_utl.c pk12err.c p12_npas.c
 CFLAGS+= -I${LCRYPTO_SRC}/engine
 SRCS+= engine_err.c engine_lib.c engine_list.c engine_openssl.c
 SRCS+= hw_ncipher.c hw_atalla.c hw_cswift.c
+CFLAGS+= -I${LCRYPTO_SRC}/dso
+SRCS+= dso_dl.c dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
+SRCS+= dso_openssl.c dso_win32.c dso_vms.c
 
 
 #HDRS= asn1.h dh.h md5.h rc4.h stack.h asn1_mac.h dsa.h mdc2.h rc5.h	\
@@ -238,7 +241,8 @@ x509v3.h
 	${LCRYPTO_SRC}/evp ${LCRYPTO_SRC}/pem ${LCRYPTO_SRC}/asn1  ${LCRYPTO_SRC}/asn1 \
 	${LCRYPTO_SRC}/x509 ${LCRYPTO_SRC}/conf txt_db/txt_db.c ${LCRYPTO_SRC}/pkcs7 \
 	${LCRYPTO_SRC}/x509v3 ${LCRYPTO_SRC}/pkcs12 ${LCRYPTO_SRC}/comp \
-	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 ${LCRYPTO_SRC}/engine ${LCRYPTO_SRC}
+	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 ${LCRYPTO_SRC}/engine \
+	${LCRYPTO_SRC}/dso ${LCRYPTO_SRC}
 
 includes:
 	@test -d ${DESTDIR}/usr/include/ssl || mkdir ${DESTDIR}/usr/include/ssl
