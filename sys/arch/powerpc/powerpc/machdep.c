@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2000/01/14 05:42:17 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2000/01/22 03:51:56 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1059,7 +1059,7 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 		/* if bus has base of 0 fail. */
 		return 1;
 	}
-	bpa += POWERPC_BUS_TAG_BASE(t);
+	bpa |= POWERPC_BUS_TAG_BASE(t);
 	if ((error = extent_alloc_region(devio_ex, bpa, size, EX_NOWAIT |
 		(ppc_malloc_ok ? EX_MALLOCOK : 0))))
 	{
