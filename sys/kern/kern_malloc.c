@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.17 1999/09/10 22:14:39 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.18 1999/11/25 13:41:30 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ malloc(size, type, flags)
 		 * bucket, don't assume the list is still empty.
 		 */
 		savedlist = kbp->kb_next;
-		kbp->kb_next = cp = va + (npg * NBPG) - allocsize;
+		kbp->kb_next = cp = va + (npg * PAGE_SIZE) - allocsize;
 		for (;;) {
 			freep = (struct freelist *)cp;
 #ifdef DIAGNOSTIC
@@ -328,8 +328,8 @@ free(addr, type)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (size > NBPG * CLSIZE)
-		alloc = addrmask[BUCKETINDX(NBPG * CLSIZE)];
+	if (size > PAGE_SIZE * CLSIZE)
+		alloc = addrmask[BUCKETINDX(PAGE_SIZE * CLSIZE)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
@@ -433,18 +433,18 @@ kmeminit()
 		panic("kmeminit: minbucket too small/struct freelist too big");
 #endif
 
-	npg = VM_KMEM_SIZE/ NBPG;
+	npg = VM_KMEM_SIZE / PAGE_SIZE;
 #if defined(UVM)
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 		(vsize_t)(npg * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(npg * NBPG), 
+		(vaddr_t *)&kmemlimit, (vsize_t)(npg * PAGE_SIZE), 
 			FALSE, FALSE, &kmem_map_store);
 #else
 	kmemusage = (struct kmemusage *) kmem_alloc(kernel_map,
 		(vsize_t)(npg * sizeof(struct kmemusage)));
 	kmem_map = kmem_suballoc(kernel_map, (vaddr_t *)&kmembase,
-		(vaddr_t *)&kmemlimit, (vsize_t)(npg * NBPG), FALSE);
+		(vaddr_t *)&kmemlimit, (vsize_t)(npg * PAGE_SIZE), FALSE);
 #endif
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
@@ -455,6 +455,6 @@ kmeminit()
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = npg * NBPG * 6 / 10;
+		kmemstats[indx].ks_limit = npg * PAGE_SIZE * 6 / 10;
 #endif
 }

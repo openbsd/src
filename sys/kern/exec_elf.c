@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.27 1999/08/12 20:37:16 niklas Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.28 1999/11/25 13:41:30 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -643,7 +643,7 @@ exec_elf_makecmds(p, epp)
 	/* Dell SVR4 maps page zero, yeuch! */
 	if (p->p_os == OOS_DELL)
 #endif
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, NBPG, 0,
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
 		    epp->ep_vp, 0, VM_PROT_READ);
 #endif
 
@@ -716,7 +716,7 @@ exec_elf_fixup(p, epp)
 		a++;
 
 		a->au_id = AUX_pagesz;
-		a->au_v = NBPG;
+		a->au_v = PAGE_SIZE;
 		a++;
 
 		a->au_id = AUX_base;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.13 1999/07/08 05:05:23 weingart Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.14 1999/11/25 13:41:30 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ shminit()
 {
 	int i;
 
-	shminfo.shmmax *= NBPG;
+	shminfo.shmmax *= PAGE_SIZE;
 
 	for (i = 0; i < shminfo.shmmni; i++) {
 		shmsegs[i].shm_perm.mode = SHMSEG_FREE;
