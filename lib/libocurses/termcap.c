@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.5 2000/08/02 04:10:46 millert Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.6 2000/10/09 22:01:26 millert Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: termcap.c,v 1.5 2000/08/02 04:10:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.6 2000/10/09 22:01:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ tgetent(bp, name)
 	pvec = pathvec;
 	tbuf = bp;
 
-	cp = getenv("TERMCAP");
+	cp = issetugid() ? NULL : getenv("TERMCAP");
 	/*
 	 * TERMCAP can have one of two things in it. It can be the name
 	 * of a file to use instead of /usr/share/misc/termcap. In this
@@ -103,9 +103,9 @@ tgetent(bp, name)
 	 * The path is found in the TERMPATH variable, or becomes
 	 * "$HOME/.termcap /usr/share/misc/termcap" if no TERMPATH exists.
 	 */
-	if (issetugid()) {
+	if (cp == NULL) {
 		strlcpy(pathbuf, _PATH_TERMCAP, sizeof(pathbuf));
-	} else if (!cp || *cp != '/') { /* no TERMCAP or it holds an entry */
+	} else if (!cp || *cp != '/') { /* TERMCAP holds an entry */
 		if ((termpath = getenv("TERMPATH")) != NULL)
 			strlcpy(pathbuf, termpath, sizeof(pathbuf));
 		else {
