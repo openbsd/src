@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.33 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.34 2002/07/31 03:10:50 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -399,8 +399,6 @@ typedef struct {
 	} d_un;
 } Elf32_Dyn;
 
-extern Elf32_Dyn	_DYNAMIC[];	/* XXX not 64-bit clean */
-
 typedef struct {
 	Elf64_Xword	d_tag;		/* controls meaning of d_val */
 	union {
@@ -569,6 +567,10 @@ struct elf_args {
 #define ELF_ST_INFO	ELF64_ST_INFO
 
 #define AuxInfo		Aux64Info
+#endif
+
+#ifndef _KERNEL
+extern Elf_Dyn		_DYNAMIC[];
 #endif
 
 #ifdef	_KERNEL
