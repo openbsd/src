@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.13 1999/11/06 14:34:42 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.14 1999/11/10 14:11:49 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.13 1999/11/06 14:34:42 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.14 1999/11/10 14:11:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,6 +200,8 @@ static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
 						ClientData),
 			    ClientData));
 static int VarPrintVar __P((ClientData, ClientData));
+static Boolean VarUppercase __P((char *word, Boolean addSpace, Buffer buf, ClientData dummy));
+static Boolean VarLowercase __P((char *word, Boolean addSpace, Buffer buf, ClientData dummy));
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1999/01/09 16:45:02 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1999/11/10 14:11:49 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/01/09 16:45:02 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 1999/11/10 14:11:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,6 +140,7 @@ static void		MainParseArgs __P((int, char **));
 char *			chdir_verify_path __P((char *, char *));
 static int		ReadMakefile __P((ClientData, ClientData));
 static void		usage __P((void));
+int 			main __P((int, char **));
 
 static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */

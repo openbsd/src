@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.12 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.13 1999/11/10 14:11:49 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.12 1998/12/05 00:06:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.13 1999/11/10 14:11:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ static GNode	    *ENDNode;
 static void CompatInterrupt __P((int));
 static int CompatRunCommand __P((ClientData, ClientData));
 static int CompatMake __P((ClientData, ClientData));
+static int shellneed __P((char **av));
 
 /*-
  *-----------------------------------------------------------------------

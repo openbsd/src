@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.21 1999/11/06 14:43:57 espie Exp $
+.\"	$OpenBSD: make.1,v 1.22 1999/11/10 14:11:49 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1198,9 +1198,6 @@ For loops are expanded before tests, so a fragment such as:
 won't work, and should be rewritten the other way around.
 .Pp
 Syntax errors in for loops yield erroneous line numbers.
-.Pp
-End of file handling is not consistent. Some missing newlines are reported
-as weird errors, others are ignored silently.
 .Pp
 Command-line expansion as in
 .Bd -literal
