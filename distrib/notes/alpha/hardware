@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.45 2004/10/02 04:33:31 brad Exp $
+dnl	$OpenBSD: hardware,v 1.46 2004/12/08 12:31:55 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -164,7 +164,9 @@ Supported Peripherals:
 	PCI IDE Controllers (pciide)
 		Acer Labs M5229
 		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
+B
 		Contaq Microsystems/Cypress CY82C693
+A
 		Any other PCI IDE-compliant controller should work, but are
 		  untested at this point
 	SCSI Host Adapters
@@ -192,6 +194,8 @@ Supported Peripherals:
 		  host adapters (including generic/no name cards, old ASUS
 		  cards, the DTC-3130 series, Diamond Fireport series, etc.)
 		  (siop)
+		AMD Am53c974 PCscsi-PCI host adapters including the Tekram
+		  DC-390 (pcscp)
 	CD-ROM and DVD-ROM Drives [*]
 		Most SCSI CD-ROM, CD-R, CD-RW, and DVD drives
 		Most ATAPI CD-ROM, CD-R, CD-RW, and DVD drives
