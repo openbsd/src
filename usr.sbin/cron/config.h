@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.6 2001/02/18 19:48:31 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.7 2001/02/18 20:14:01 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -84,6 +84,8 @@
 			 * places.
 			 */
 #define SYSLOG	 			/*-*/
+
+#define CAPITALIZE_FOR_PS	 	/*-*/
 
 			/* if your OS supports a BSD-style login.conf file */
 #define LOGIN_CAP			/*-*/
