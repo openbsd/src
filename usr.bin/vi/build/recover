@@ -1,8 +1,10 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.4 2000/03/09 21:24:02 millert Exp $
+# $OpenBSD: recover,v 1.5 2000/04/20 15:24:24 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
+# NOTE: Assumes we are running *before* users may start processes.
+#       If that is not the case then the chown and chmod below are not safe.
 #
 
 use Fcntl;
@@ -20,10 +22,15 @@ if (!lstat($recoverdir)) {
 # Sanity check the vi recovery dir
 if (-l _) {
 	die "Warning! $recoverdir is a symbolic link! (ignoring)\n";
-} elsif (! -O _) {
-	die "Warning! $recoverdir is not owned by root! (ignoring)\n";
 } elsif (! -d _) {
 	die "Warning! $recoverdir is not a directory! (ignoring)\n";
+} elsif (! -O _) {
+	warn "Warning! $recoverdir is not owned by root! (fixing)\n";
+	chown 0, 0, $recoverdir;
+}
+if (((stat(_))[2] & 07777) != 01777) {
+	warn "Warning! $recoverdir is not mode 01777! (fixing)\n";
+	chmod(01777, $recoverdir);
 }
 chdir($recoverdir) || die "$0: can't chdir to $recoverdir: $!\n";
 
