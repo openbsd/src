@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.21 1998/01/02 18:22:07 provos Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.22 1998/06/09 13:29:58 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -105,6 +105,9 @@ struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
 	/* NEC 273 */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "NEC                 CD-ROM DRIVE:273", "4.21", AQUIRK_NOTUR},
+	/* NEC 4CD changer CDR-C251 */
+	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
+	 "NEC                 CD-ROM DRIVE:251", "4.14", AQUIRK_NOCAPACITY},
 	/* Sanyo 4x */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "SANYO CRD-254P", "1.02", AQUIRK_NOCAPACITY},
@@ -354,6 +357,9 @@ atapi_exec_cmd(ad_link, cmd, cmd_size, databuf, datalen, rw, flags)
 		if ((flags & A_POLLED) != 0)
 			atapi_free_pkt(pkt);
 	}
+
+	if ((pkt->status & ERROR) && (pkt->error))
+	     status |= pkt->error << 8;
 
 	return status;
 }

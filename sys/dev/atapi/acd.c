@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.29 1997/10/18 10:37:06 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.30 1998/06/09 13:29:57 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -1101,6 +1101,7 @@ acd_size(acd, flags)
 {
 	struct atapi_read_cd_capacity_data rdcap;
 	struct atapi_read_cd_capacity cmd;
+	int result;
 
 	if (acd->ad_link->quirks & AQUIRK_NOCAPACITY) {
 		/*
@@ -1125,8 +1126,15 @@ acd_size(acd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if (atapi_exec_cmd(acd->ad_link, &cmd, sizeof(cmd),
-	    &rdcap, sizeof(rdcap), B_READ, 0) != 0) {
+	result = atapi_exec_cmd(acd->ad_link, &cmd, sizeof(cmd),
+				&rdcap, sizeof(rdcap), B_READ, 0);
+	if (result != 0) {
+		u_int8_t error = result >> 8;
+		/* Get the sense key and check for an illegal request */
+		if ((error >> 4) == ATAPI_SK_ILLEGAL_REQUEST) {
+			acd->ad_link->quirks |= AQUIRK_NOCAPACITY;
+			return acd_size(acd, flags);
+		}
 		ATAPI_DEBUG_PRINT(("ATAPI_READ_CD_CAPACITY failed\n"));
 		return 0;
 	}
