@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.149 2004/04/25 22:31:03 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.150 2004/04/25 23:36:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1660,8 +1660,11 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 
 	len = dlen;
 	while (len > 0) {
-		if (len < 2)
+		if (len < 2) {
+			log_peer_warnx(&peer->conf, "parse_capabilities: "
+			    "expect len >= 2, len is %u", len);
 			return (-1);
+		}
 		memcpy(&capa_code, d, sizeof(capa_code));
 		d += sizeof(capa_code);
 		len -= sizeof(capa_code);
@@ -1669,8 +1672,13 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 		d += sizeof(capa_len);
 		len -= sizeof(capa_len);
 		if (capa_len > 0) {
-			if (len < capa_len)
+			if (len < capa_len) {
+				log_peer_warnx(&peer->conf,
+				    "parse_capabilities: "
+				    "len %u smaller than capa_len %u",
+				    len, capa_len);
 				return (-1);
+			}
 			capa_val = d;
 			d += capa_len;
 			len -= capa_len;
@@ -1679,19 +1687,31 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 
 		switch (capa_code) {
 		case CAPA_MP:			/* RFC 2858 */
-			if (capa_len != 4)
+			if (capa_len != 4) {
+				log_peer_warnx(&peer->conf,
+				    "parse_capabilities: "
+				    "expect len 4, len is %u", capa_len);
 				return (-1);
+			}
 			memcpy(&mp_afi, capa_val, sizeof(mp_afi));
 			memcpy(&mp_safi, capa_val + 3, sizeof(mp_safi));
 			switch (mp_afi) {
 			case AFI_IPv4:
-				if (mp_safi < 1 || mp_safi > 3)
+				if (mp_safi < 1 || mp_safi > 3) {
+					log_peer_warnx(&peer->conf,
+					    "parse_capabilities: AFI IPv4, "
+					    "mp_safi %u illegal", mp_safi);
 					return (-1);
+				}
 				peer->capa.mp_v4 = mp_safi;
 				break;
 			case AFI_IPv6:
-				if (mp_safi < 1 || mp_safi > 3)
+				if (mp_safi < 1 || mp_safi > 3) {
+					log_peer_warnx(&peer->conf,
+					    "parse_capabilities: AFI IPv6, "
+					    "mp_safi %u illegal", mp_safi);
 					return (-1);
+				}
 				peer->capa.mp_v6 = mp_safi;
 				break;
 			default:			/* ignore */
