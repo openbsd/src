@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.10 1997/09/09 22:41:43 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.11 1997/09/09 22:55:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -95,8 +95,8 @@ ggbusmatch(parent, match, aux)
 	 * Check manufacturer and product id.
 	 */
 	if (zap->manid == 2150 && zap->prodid == 1)
-		return(1);
-	return(0);
+		return (1);
+	return (0);
 }
 
 void
@@ -149,8 +149,8 @@ ggbusprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp == NULL)
-		return(QUIET);
-	return(UNCONF);
+		return (QUIET);
+	return (UNCONF);
 }
 
 int
@@ -163,7 +163,7 @@ ggbus_io_map(bst, addr, sz, cacheable, handle)
 {
 	*handle = (bus_space_handle_t)
 	    ((struct ggbus_softc *)bst->bs_data)->sc_zargs.va + 2 * addr + 1;
-	return 0;
+	return (0);
 }
 
 int
@@ -177,7 +177,7 @@ ggbus_mem_map(bst, addr, sz, cacheable, handle)
 	*handle = (bus_space_handle_t)
 	    ((struct ggbus_softc *)bst->bs_data)->sc_zargs.va + 2 * addr +
 	    GG2_MEMORY_OFFSET;
-	return 0;
+	return (0);
 }
 
 int
@@ -192,7 +192,7 @@ ggbus_cannot_mem_map(bst, addr, sz, cacheable, handle)
 
 	if (!have_warned++)
 		printf("The Golden Gate 1 cannot map ISA memory.\n");
-	return -1;
+	return (1);
 }
 
 int
@@ -201,7 +201,7 @@ ggbus_unmap(bst, handle, sz)
 	bus_space_handle_t handle;
 	bus_size_t sz;
 {
-	return 0;
+	return (0);
 }
 
 static ggbus_int_map[] = {
@@ -217,11 +217,11 @@ ggbusintr(v)
 	int handled;
 
 	if (!(*ih->ih_status & ih->ih_mask))
-		return 0;
+		return (0);
 	for (handled = 0; ih; ih = ih->ih_next)
 		if ((*ih->ih_fun)(ih->ih_arg))
 			handled = 1;
-	return handled;
+	return (handled);
 }
 
 void
@@ -291,7 +291,7 @@ ggbus_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	*p = ih;
 
 	add_isr(&ih->ih_isr);
-	return ih;
+	return (ih);
 }
 
 void

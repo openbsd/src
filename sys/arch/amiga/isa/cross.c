@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.10 1997/09/09 22:41:43 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.11 1997/09/09 22:55:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -182,8 +182,8 @@ crossprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp == NULL)
-		return(QUIET);
-	return(UNCONF);
+		return (QUIET);
+	return (UNCONF);
 }
 
 
@@ -197,7 +197,7 @@ cross_io_map(bst, addr, sz, cacheable, handle)
 {
 	*handle = (bus_space_handle_t)
 	    ((struct cross_softc *)bst->bs_data)->sc_zargs.va + 2 * addr;
-	return 0;
+	return (0);
 }
 
 int
@@ -250,14 +250,14 @@ cross_mem_map(bst, addr, sz, cacheable, handle)
 
 	/* Tell caller where to find his data.  */
 	*handle = (bus_space_handle_t)(kva + (addr << 1) - banked_start);
-	return 0;
+	return (0);
 
 fail_insert:
 	kmem_free(kernel_map, kva, banked_size);
 fail_alloc:
 	vm_object_deallocate(object);
 fail_obj:
-	return -1;
+	return (1);
 }
 
 int
@@ -266,7 +266,7 @@ cross_io_unmap(bst, handle, sz)
 	bus_space_handle_t handle;
 	bus_size_t sz;
 {
-	return 0;
+	return (0);
 }
 
 int
@@ -280,7 +280,7 @@ cross_mem_unmap(bst, handle, sz)
 #endif
 
 	/* Remove the object handling this mapping.  */
-	return 0;
+	return (0);
 }
 
 static cross_int_map[] = {
@@ -297,11 +297,11 @@ crossintr(v)
 	int handled;
 
 	if (!(*ih->ih_status & ih->ih_mask))
-		return 0;
+		return (0);
 	for (handled = 0; ih; ih = ih->ih_next)
 		if ((*ih->ih_fun)(ih->ih_arg))
 			handled = 1;
-	return handled;
+	return (handled);
 }
 
 void
@@ -376,7 +376,7 @@ cross_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	sc->sc_imask |= 1 << cross_int_map[irq + 1];
 	CROSS_ENABLE_INTS(sc->sc_zargs.va, sc->sc_imask);
 
-	return ih;
+	return (ih);
 }
 
 void
@@ -446,5 +446,5 @@ cross_pager_get_pages(pager, mlist, npages, sync)
 		vm_page_unlock_queues();
 		mlist++;
 	}
-	return VM_PAGER_OK;
+	return (VM_PAGER_OK);
 }
