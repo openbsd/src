@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1997/02/03 15:05:02 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1997/04/14 17:49:58 michaels Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ unknown_cputype:
 		goto unknown_cputype;
 	if (cpu_fn_switch->option == NULL) {
 		printf("\n");
-		printf("NetBSD does not currently support system type %d\n",
+		printf("OpenBSD does not currently support system type %d\n",
 		    cputype);
 		printf("(%s family).\n", cpu_fn_switch->family);
 		printf("\n");
