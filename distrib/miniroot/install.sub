@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.277 2002/11/28 03:06:30 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.278 2002/11/29 00:24:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1678,12 +1678,15 @@ get_resolv_fqdn () {
 		-e '${g;p;}' $1`
 }
 
-# Find FQDN in resolv.conf. If we aren't updating a hosts file, ask
-# user to confirm the domain name. Else just fix hosts file
+# Get Fully Qualified Domain Name and update hosts file appropriately.
+#
 # $1 = resolv.conf file to search for FQDN
 # $2 = hosts file to add FQDN information to
 get_fqdn() {
 	get_resolv_fqdn $1
+
+	ask "DNS domain name? (e.g. 'bar.com')" "$FQDN"
+	FQDN=$resp
 
 	if [ -f "$2" -a -n "$FQDN" ]; then
 		# Add FQDN to hosts file entries created by addhostent, changing
@@ -1693,9 +1696,6 @@ get_fqdn() {
 		#    1.2.3.4 hostname.$FQDN hostname
 		sed "s/\\(.*\\)[[:space:]]\\(.*\\)\$/\\1 \\2.$FQDN \\2/" $2 > $2.new
 		mv $2.new $2
-	else
-		ask "DNS domain name? (e.g. 'bar.com')" "$FQDN"
-		FQDN=$resp
 	fi
 }
 
@@ -1723,15 +1723,6 @@ donetconfig() {
 	# a nameserver during installation.
 	rm -f /tmp/resolv.conf.shadow
 
-	cat << __EOT
-
-If any interface will be configured by DHCP, you should not enter
-information that will be supplied via DHCP, e.g. the DNS domain name.
-
-__EOT
-
-	get_fqdn /tmp/resolv.conf
-
 	configure_all_interfaces
 
 	# As dhclient will populate /etc/resolv.conf, a symbolic link to
@@ -1743,10 +1734,7 @@ __EOT
 		mv /tmp/resolv.conf.shadow /tmp/resolv.conf
 	fi
 
-	# Get any DHCP supplied FQDN, and in any case apply FQDN to
-	# the host names in /tmp/hosts, all without asking for any more
-	# user confirmation. This means DHCP supplied information will
-	# override a user supplied (or previous DHCP supplied) FQDN.
+	# Get/Confirm FQDN, and apply it to the hosts file.
 	get_fqdn /tmp/resolv.conf /tmp/hosts
 
 	hostname $HOSTNAME.$FQDN
