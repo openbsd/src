@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.21 2003/03/10 15:13:33 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.22 2003/03/10 15:18:25 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.21 2003/03/10 15:13:33 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.22 2003/03/10 15:18:25 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -251,7 +251,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 
 		Debug(DPARS, ("load_entry()...got %s\n",username))
 		if (ch == EOF || ch == '\n' || ch == '*') {
-			ecode = e_username;
+			ecode = e_cmd;
 			goto eof;
 		}
 
