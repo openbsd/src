@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipmon.c,v 1.8 1997/06/09 09:52:33 niklas Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.9 1997/06/23 16:53:59 kstailey Exp $";
 #endif
 
 #include "ip_fil_compat.h"
@@ -487,7 +487,8 @@ int	blen;
 		dumphex(log, buf, sizeof(struct ipl_ci));
 	if (opts & OPT_HEXBODY)
 		dumphex(log, ip, lp->plen + lp->hlen);
-	fflush(log);
+	if (!(opts & OPT_SYSLOG))
+		fflush(log);
 }
 
 int main(argc, argv)
