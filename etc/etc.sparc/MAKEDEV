@@ -262,8 +262,8 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("mknod tty%s%x c 20 %d; \
-					mknod pty%s%x c 21 %d; ", \
+				printf("mknod tty%s%x c 20 %d;" \
+					"mknod pty%s%x c 21 %d; ", \
 					n, i, b+i, n, i, b+i); }'`
 		umask 77
 		if [ $unit = 1 ]; then

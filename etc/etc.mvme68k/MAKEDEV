@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.7 1996/07/15 14:59:14 mickey Exp $
+#	$Id: MAKEDEV,v 1.8 1996/07/23 06:15:17 etheisen Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -289,8 +289,8 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("mknod tty%s%x c 4 %d; \
-					mknod pty%s%x c 5 %d; ", \
+				printf("mknod tty%s%x c 4 %d;" \
+					"mknod pty%s%x c 5 %d; ", \
 					n, i, b+i, n, i, b+i); }'`
 		umask 77
 		;;

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.6 1996/07/15 14:59:05 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 1996/07/23 06:15:13 etheisen Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -173,8 +173,8 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d; \
-				    rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
+				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d;" \
+				    "rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
 				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		if [ $class = 1 ]; then

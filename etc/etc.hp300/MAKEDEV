@@ -313,9 +313,9 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x pty%s%x; \
-					mknod tty%s%x c 4 %d; \
-					mknod pty%s%x c 5 %d; ", \
+				printf("rm -f tty%s%x pty%s%x;" \
+					"mknod tty%s%x c 4 %d;" \
+					"mknod pty%s%x c 5 %d; ", \
 					n, i, n, i, n, i, b+i, n, i, b+i); }'`
 		umask 77
 		if [ $class = 1 ]; then
