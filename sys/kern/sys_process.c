@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.18 2002/03/11 14:20:35 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.19 2002/03/11 15:39:27 art Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -163,12 +163,8 @@ sys_ptrace(p, v, retval)
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
-#ifdef PT_GETREGS
 	case  PT_GETREGS:
-#endif
-#ifdef PT_SETREGS
 	case  PT_SETREGS:
-#endif
 #ifdef PT_GETFPREGS
 	case  PT_GETFPREGS:
 #endif
@@ -380,15 +376,10 @@ sys_ptrace(p, v, retval)
 		SCARG(uap, data) = SIGSTOP;
 		goto sendsig;
 
-#ifdef PT_SETREGS
 	case  PT_SETREGS:
 		write = 1;
-#endif
-#ifdef PT_GETREGS
 	case  PT_GETREGS:
 		/* write = 0 done above. */
-#endif
-#if defined(PT_SETREGS) || defined(PT_GETREGS)
 		if (!procfs_validregs(t, NULL))
 			return (EINVAL);
 		else {
@@ -403,8 +394,6 @@ sys_ptrace(p, v, retval)
 			uio.uio_procp = p;
 			return (procfs_doregs(p, t, NULL, &uio));
 		}
-#endif
-
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 		write = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.22 2002/01/30 20:29:44 nordin Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.23 2002/03/11 15:39:27 art Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -639,11 +639,9 @@ procfs_getattr(v)
 				    procp->p_vmspace->vm_ssize);
 		break;
 
-#if defined(PT_GETREGS) || defined(PT_SETREGS)
 	case Pregs:
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
 		break;
-#endif
 
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 	case Pfpregs:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.4 2002/03/11 14:20:35 art Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.5 2002/03/11 15:39:27 art Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -66,9 +66,15 @@ struct ptrace_io_desc {
 
 #ifdef _KERNEL
 
-#if defined(PT_GETREGS) || defined(PT_SETREGS)
-struct reg;
+/*
+ * There is a bunch of PT_ requests that are machine dependent, but not
+ * optional. Check if they were defined by MD code here.
+ */
+#if !defined(PT_GETREGS) || !defined(PT_SETREGS)
+#error Machine dependent ptrace not complete.
 #endif
+
+struct reg;
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 struct fpreg;
 #endif
@@ -77,17 +83,13 @@ void	proc_reparent __P((struct proc *child, struct proc *newparent));
 #ifdef PT_GETFPREGS
 int	process_read_fpregs __P((struct proc *p, struct fpreg *regs));
 #endif
-#ifdef PT_GETREGS
 int	process_read_regs __P((struct proc *p, struct reg *regs));
-#endif
 int	process_set_pc __P((struct proc *p, caddr_t addr));
 int	process_sstep __P((struct proc *p, int sstep));
 #ifdef PT_SETFPREGS
 int	process_write_fpregs __P((struct proc *p, struct fpreg *regs));
 #endif
-#ifdef PT_SETREGS
 int	process_write_regs __P((struct proc *p, struct reg *regs));
-#endif
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
