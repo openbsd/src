@@ -1,5 +1,32 @@
-/*	$OpenBSD: for.c,v 1.5 1999/11/11 11:42:19 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.6 1999/12/06 22:18:56 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
+
+/*
+ * Copyright (c) 1999 Marc Espie.
+ *
+ * Extensive code modifications for the OpenBSD project.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+ * PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -38,7 +65,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.5 1999/11/11 11:42:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.6 1999/12/06 22:18:56 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +116,28 @@ typedef struct _For {
 } For;
 
 static int ForExec	__P((ClientData, ClientData));
+static void build_words_list __P((Lst, const char *));
 
+/* Cut a string into words, stuff that into list.  */
+static void
+build_words_list(lst, s)
+    Lst lst;
+    const char *s;
+{
+    const char *wrd;
 
+    for (;;) {
+	for (; *s != '\0' && isspace(*s); s++)
+	    continue;
+	if (*s == '\0')
+	    break;
+	for (wrd = s; *s != '\0' && !isspace(*s); s++)
+	    continue;
+	    /* note that we fill the list backward, since 
+	     * Parse_FromString stacks strings.  */
+	Lst_AtFront(lst, (ClientData)interval_dup(wrd, s));
+    }
+}
 
 
 /*-
@@ -114,98 +161,64 @@ int
 For_Eval (line)
     char    	    *line;    /* Line to parse */
 {
-    char	    *ptr = line, *sub, *wrd;
+    char	    *ptr = line;
     int	    	    level;  	/* Level at which to report errors. */
 
     level = PARSE_FATAL;
 
 
     if (forLevel == 0) {
-	Buffer	    buf;
-	int	    varlen;
+	char	    *endVar;
+	char 	    *sub;
+	char	    *wrd;
 
 	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
 	    continue;
-	/*
-	 * If we are not in a for loop quickly determine if the statement is
-	 * a for.
-	 */
+	/* If we are not in a for loop quickly determine if the statement is
+	 * a for.  */
 	if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
 	    !isspace((unsigned char) ptr[3]))
 	    return FALSE;
 	ptr += 3;
 
-	/*
-	 * we found a for loop, and now we are going to parse it.
-	 */
+	/* We found a for loop, and now we are going to parse it.  */
 	while (*ptr && isspace((unsigned char) *ptr))
 	    ptr++;
 
-	/*
-	 * Grab the variable
-	 */
-	buf = Buf_Init(0);
+	/* Grab the variable.  */
 	for (wrd = ptr; *ptr && !isspace((unsigned char) *ptr); ptr++)
 	    continue;
-	Buf_AddBytes(buf, ptr - wrd, (Byte *) wrd);
 
-	forVar = (char *) Buf_GetAll(buf, &varlen);
-	if (varlen == 0) {
-	    Parse_Error (level, "missing variable in for");
+	if (ptr - wrd == 0) {
+	    Parse_Error(level, "missing variable in for");
 	    return 0;
 	}
-	Buf_Destroy(buf, FALSE);
+	endVar = ptr++;
 
 	while (*ptr && isspace((unsigned char) *ptr))
 	    ptr++;
 
-	/*
-	 * Grab the `in'
-	 */
+	/* Grab the `in'.  */
 	if (ptr[0] != 'i' || ptr[1] != 'n' ||
 	    !isspace((unsigned char) ptr[2])) {
-	    Parse_Error (level, "missing `in' in for");
+	    Parse_Error(level, "missing `in' in for");
 	    printf("%s\n", ptr);
 	    return 0;
 	}
 	ptr += 3;
 
-	while (*ptr && isspace((unsigned char) *ptr))
-	    ptr++;
+	/* .for loop is go, collate what we need.  */
+	forVar = interval_dup(wrd, endVar);
 
-	/*
-	 * Make a list with the remaining words
-	 */
-	forLst = Lst_Init(FALSE);
-	forLineno = Parse_Getlineno();
-	buf = Buf_Init(0);
+	/* Make a list with the remaining words.  */
 	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
-
-#define ADDWORD() \
-	Buf_AddBytes(buf, ptr - wrd, (Byte *) wrd), \
-	Buf_AddByte(buf, (Byte) '\0'), \
-	Lst_AtFront(forLst, (ClientData) Buf_GetAll(buf, &varlen)), \
-	Buf_Destroy(buf, FALSE)
-
-	for (ptr = sub; *ptr && isspace((unsigned char) *ptr); ptr++)
-	    continue;
-
-	for (wrd = ptr; *ptr; ptr++)
-	    if (isspace((unsigned char) *ptr)) {
-		ADDWORD();
-		buf = Buf_Init(0);
-		while (*ptr && isspace((unsigned char) *ptr))
-		    ptr++;
-		wrd = ptr--;
-	    }
 	if (DEBUG(FOR))
-	    (void) fprintf(stderr, "For: Iterator %s List %s\n", forVar, sub);
-	if (ptr - wrd > 0)
-	    ADDWORD();
-	else
-	    Buf_Destroy(buf, TRUE);
-	free((Address) sub);
+	    (void)fprintf(stderr, "For: Iterator %s List %s\n", forVar, sub);
 
+	forLst = Lst_Init(FALSE);
+	build_words_list(forLst, sub);
+	free(sub);
+	forLineno = Parse_Getlineno();
 	forBuf = Buf_Init(0);
 	forLevel++;
 	return 1;
@@ -220,7 +233,7 @@ For_Eval (line)
 	    if (DEBUG(FOR))
 		(void) fprintf(stderr, "For: end for %d\n", forLevel);
 	    if (--forLevel < 0) {
-		Parse_Error (level, "for-less endfor");
+		Parse_Error(level, "for-less endfor");
 		return 0;
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 1999/11/11 11:47:27 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 1999/12/06 22:18:56 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -112,6 +112,7 @@ char **brk_string __P((char *, int *, Boolean, char **));
 int Str_Match __P((char *, char *));
 char *Str_SYSVMatch __P((char *, char *, int *len));
 void Str_SYSVSubst __P((Buffer, char *, char *, int));
+char *interval_dup __P((const char *begin, const char *end));
 
 /* suff.c */
 void Suff_ClearSuffixes __P((void));

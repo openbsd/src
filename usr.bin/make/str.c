@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.8 1999/11/11 11:35:17 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.9 1999/12/06 22:18:56 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.8 1999/11/11 11:35:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.9 1999/12/06 22:18:56 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -422,4 +422,17 @@ Str_SYSVSubst(buf, pat, src, len)
 
     /* append the rest */
     Buf_AddBytes(buf, strlen(pat), (Byte *) pat);
+}
+
+char *
+interval_dup(begin, end)
+    const char *begin;
+    const char *end;
+{
+    char *s;
+
+    s = emalloc(end - begin + 1);
+    memcpy(s, begin, end - begin);
+    s[end-begin] = '\0';
+    return s;
 }
