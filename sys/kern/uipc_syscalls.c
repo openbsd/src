@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.58 2004/04/01 23:56:05 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.59 2004/04/12 23:58:10 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ sys_bind(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	error = sockargs(&nam, (caddr_t)SCARG(uap, name), SCARG(uap, namelen),
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 			 MT_SONAME);
 	if (error == 0) {
 		error = sobind((struct socket *)fp->f_data, nam);
@@ -284,7 +284,7 @@ sys_connect(p, v, retval)
 		FRELE(fp);
 		return (EALREADY);
 	}
-	error = sockargs(&nam, (caddr_t)SCARG(uap, name), SCARG(uap, namelen),
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 			 MT_SONAME);
 	if (error)
 		goto bad;
@@ -1091,11 +1091,7 @@ bad:
 }
 
 int
-sockargs(mp, buf, buflen, type)
-	struct mbuf **mp;
-	caddr_t buf;
-	socklen_t buflen;
-	int type;
+sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 {
 	struct sockaddr *sa;
 	struct mbuf *m;
@@ -1103,11 +1099,10 @@ sockargs(mp, buf, buflen, type)
 
 	/*
 	 * We can't allow socket names > UCHAR_MAX in length, since that
-	 * will overflow sa_len.
+	 * will overflow sa_len. Also, control data more than MCLBYTES in
+	 * length is just too much.
 	 */
-	if (type == MT_SONAME && (u_int)buflen > UCHAR_MAX)
-		return (EINVAL);
-	if ((u_int)buflen > MCLBYTES)
+	if (buflen > (type == MT_SONAME ? UCHAR_MAX : MCLBYTES))
 		return (EINVAL);
 
 	/* Allocate an mbuf to hold the arguments. */
@@ -1128,7 +1123,6 @@ sockargs(mp, buf, buflen, type)
 	*mp = m;
 	if (type == MT_SONAME) {
 		sa = mtod(m, struct sockaddr *);
-
 #if defined(COMPAT_OLDSOCK) && BYTE_ORDER != BIG_ENDIAN
 		if (sa->sa_family == 0 && sa->sa_len < AF_MAX)
 			sa->sa_family = sa->sa_len;
