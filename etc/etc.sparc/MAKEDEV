@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.7 2002/02/09 16:59:50 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.26 2002/02/10 21:52:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.27 2002/02/14 04:37:15 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.80 2002/02/10 21:53:03 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.81 2002/02/14 04:39:56 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -131,6 +131,7 @@ unt()
 
 dodisk()
 {
+	[ "$DEBUG" ] && set -x
 	n=$(($((${5}*${7:-16}))+${6})) count=0
 	RMlist="$RMlist $1$2? r$1$2?"
 	[ 0$7 -ne 8 ] && l="i j k l m n o p"

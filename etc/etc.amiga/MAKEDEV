@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.amiga/MAKEDEV.md,v 1.4 2002/02/09 16:59:50 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.26 2002/02/10 21:52:30 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.28 2002/02/14 04:41:32 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.52 2002/02/13 20:07:38 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.54 2002/02/14 04:43:08 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -456,9 +456,9 @@ all)
 	R ttye6 tty00 tty01 tty02 tty03 ttyA0 ttyA1 pf altq tun0 tun1
 	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3 rd0 ccd0 ccd1 ccd2 ccd3 vnd0
-	R vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0 st1 pty0 pty1 fd sd0 sd1
-	R sd2 sd3 sd4 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 sd5 sd6 sd7 sd8
-	R sd9
+	R vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0 st1 pty0 pty1 pty2 fd sd0
+	R sd1 sd2 sd3 sd4 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 sd5 sd6 sd7
+	R sd8 sd9
 	;;
 
 wd*|sd*|ccd*)
