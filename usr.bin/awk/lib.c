@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.9 2001/11/05 09:58:13 deraadt Exp $	*/
+/*	$OpenBSD: lib.c,v 1.10 2002/07/04 02:38:58 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -66,6 +66,8 @@ void recinit(unsigned int n)
 		FATAL("out of space for $0 and fields");
 
 	fldtab[0] = (Cell *) malloc(sizeof (Cell));
+	if (fldtab[0] == NULL)
+		FATAL("out of space for fields");
 	*fldtab[0] = dollar0;
 	fldtab[0]->sval = record;
 	fldtab[0]->nval = tostring("0");

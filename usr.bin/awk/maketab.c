@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.4 2001/09/08 00:12:40 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.5 2002/07/04 02:38:58 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -126,21 +126,25 @@ int main(int argc, char *argv[])
 		names[i] = "";
 
 	if ((fp = fopen("ytab.h", "r")) == NULL) {
-		fprintf(stderr, "maketab can't open ytab.h!\n");
+		fprintf(stderr, "maketab: can't open ytab.h!\n");
 		exit(1);
 	}
 	printf("static char *printname[%d] = {\n", SIZE);
 	i = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
 		n = sscanf(buf, "%1c %s %s %d", &c, def, name, &tok);
-		if (c != '#' || (n != 4 && strcmp(def,"define") != 0))	/* not a valid #define */
-			continue;
+		if (c != '#' || (n != 4 && strcmp(def,"define") != 0))
+			continue;	/* not a valid #define */
 		if (tok < FIRSTTOKEN || tok > LASTTOKEN) {
-			fprintf(stderr, "maketab funny token %d %s ignored\n", tok, buf);
+			fprintf(stderr, "maketab: funny token %d %s ignored\n",
+			    tok, buf);
 			continue;
 		}
-		names[tok-FIRSTTOKEN] = (char *) malloc(strlen(name)+1);
-		strcpy(names[tok-FIRSTTOKEN], name);
+		names[tok-FIRSTTOKEN] = (char *) strdup(name);
+		if (names[tok-FIRSTTOKEN] == NULL) {
+			fprintf(stderr, "maketab: out of memory\n");
+			exit(1);
+		}
 		printf("\t(char *) \"%s\",\t/* %d */\n", name, tok);
 		i++;
 	}
