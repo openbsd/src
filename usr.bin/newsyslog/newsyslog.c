@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.25 1999/11/07 03:59:12 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.26 1999/11/07 05:16:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.25 1999/11/07 03:59:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.26 1999/11/07 05:16:28 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -99,10 +99,11 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.25 1999/11/07 03:59:12 millert 
 #include <unistd.h>
 #include <err.h>
 
-#define CE_COMPACT	0x01		/* Compact the achived log files */
-#define CE_BINARY	0x02		/* Logfile is in binary, don't add */
+#define CE_ROTATED	0x01		/* Log file has been rotated */
+#define CE_COMPACT	0x02		/* Compact the achived log files */
+#define CE_BINARY	0x04		/* Logfile is in binary, don't add */
 					/* status messages */
-#define CE_MONITOR	0x04		/* Monitory for changes */
+#define CE_MONITOR	0x08		/* Monitory for changes */
 #define NONE -1
         
 struct conf_entry {
@@ -135,7 +136,7 @@ void PRS __P((int, char **));
 void usage __P((void));
 struct conf_entry *parse_file __P((void));
 char *missing_field __P((char *, char *));
-void dotrim __P((char *, int, int, int, uid_t, gid_t, pid_t));
+void dotrim __P((char *, int, int, int, uid_t, gid_t));
 int log_trim __P((char *));
 void compress_log __P((char *));
 int sizefile __P((char *));
@@ -147,6 +148,7 @@ void domonitor __P((char *, char *));
 FILE *openmail __P((void));
 void closemail __P((FILE *));
 void child_killer __P((int));
+void send_hup __P((char *));
 
 int
 main(argc, argv)
@@ -161,11 +163,29 @@ main(argc, argv)
 		errx(1, "You must be root.");
         p = q = parse_file();
 	signal(SIGCHLD, child_killer);
+
+	/* Step 1, rotate all log files */
+        while (q) {
+                do_entry(q);
+                q = q->next;
+        }
+
+	/* Step 2, send a HUP to relevant processes */
+	/* XXX - should avoid HUP'ing the same process multiple times */
+	q = p;
+        while (q) {
+		if (q->flags & CE_ROTATED)
+			send_hup(q->pidfile);
+                q = q->next;
+        }
+
+	/* Step 3, compress the log.0 file if configured to do so and free */
         while (p) {
-                do_entry(p);
+		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED))
+			compress_log(p->log);
+		q = p;
                 p = p->next;
                 free(q);
-                q = p;
         }
 
 	/* Wait for children to finish, then exit */
@@ -180,19 +200,7 @@ do_entry(ent)
         
 {
 	int	modtime, size;
-	pid_t	pid;
-        char    line[BUFSIZ];
-        FILE    *f;
 
-        /* First find the pid to HUP */
-        pid = (pid_t)-1;
-        if ((f = fopen(ent->pidfile, "r")) != NULL) {
-        	if (fgets(line, sizeof(line), f))
-                	pid = atoi(line);
-		(void)fclose(f);
-	} else
-		warn("can't open %s", ent->pidfile);
-        
 	if (verbose)
 		printf("%s <%d%s>: ", ent->log, ent->numlogs,
 			(ent->flags & CE_COMPACT) ? "Z" : "");
@@ -217,10 +225,39 @@ do_entry(ent)
 				printf("%s <%d%s>: ", ent->log, ent->numlogs,
 					(ent->flags & CE_COMPACT) ? "Z" : "");
                         dotrim(ent->log, ent->numlogs, ent->flags,
-                               ent->permissions, ent->uid, ent->gid, pid);
+                               ent->permissions, ent->uid, ent->gid);
+			ent->flags |= CE_ROTATED;
                 } else if (verbose)
 			printf("--> skipping\n");
         }
+}
+
+/* Send a HUP to the pid specified by pidfile */
+void
+send_hup(pidfile)
+	char	*pidfile;
+{
+	FILE	*f;
+        char    line[BUFSIZ];
+	pid_t	pid = 0;
+
+        if ((f = fopen(pidfile, "r")) == NULL) {
+		warn("can't open %s", pidfile);
+		return;
+	}
+
+	if (fgets(line, sizeof(line), f))
+		pid = atoi(line);
+	(void)fclose(f);
+
+        if (noaction)
+                (void)printf("kill -HUP %d\n", pid);
+	else if (pid == 0)
+		warnx("empty pid file: %s", pidfile);
+	else if (pid < MIN_PID)
+		warnx("preposterous process number: %d", pid);
+	else if (kill(pid, SIGHUP))
+		warnx("warning - could not HUP daemon");
 }
 
 void
@@ -438,14 +475,13 @@ missing_field(p, errline)
 }
 
 void
-dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
+dotrim(log, numdays, flags, perm, owner_uid, group_gid)
         char    *log;
         int     numdays;
         int     flags;
         int     perm;
         uid_t   owner_uid;
         gid_t   group_gid;
-	pid_t	daemon_pid;
 {
         char    file1[MAXPATHLEN], file2[MAXPATHLEN];
         char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
@@ -458,8 +494,7 @@ dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
         (void)strcpy(zfile1, file1);
         (void)strcat(zfile1, COMPRESS_POSTFIX);
         if (noaction) {
-                printf("rm -f %s\n", file1);
-                printf("rm -f %s\n", zfile1);
+                printf("rm -f %s %s\n", file1, zfile1);
         } else {
                 (void)unlink(file1);
                 (void)unlink(zfile1);
@@ -494,6 +529,22 @@ dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
         if (!noaction && !(flags & CE_BINARY))
                 (void)log_trim(log);  /* Report the trimming to the old log */
 
+	(void)snprintf(file2, sizeof(file2), "%s.XXXXXXXXXX", log);
+        if (noaction)  {
+                printf("Create new log file...\n");
+        } else {
+                if ((fd = mkstemp(file2)) < 0)
+			err(1, "can't start '%s' log", file2);
+                if (fchown(fd, owner_uid, group_gid))
+			err(1, "can't chown '%s' log file", file2);
+                if (fchmod(fd, perm))
+			err(1, "can't chmod '%s' log file", file2);
+                (void)close(fd);
+		/* Add status message */
+                if (!(flags & CE_BINARY) && log_trim(file2))
+			err(1, "can't add status message to log '%s'", file2);
+        }
+
 	if (days == 0) {
 		if (noaction)
 			printf("rm %s\n", log);
@@ -506,35 +557,11 @@ dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
 			warn("can't to mv %s to %s", log, file1);
 	}
 
-        if (noaction)  {
-                printf("Start new log...");
-        } else {
-                fd = open(log, O_WRONLY|O_TRUNC|O_CREAT, perm);
-                if (fd < 0)
-			err(1, "can't start '%s' log", log);
-                if (fchown(fd, owner_uid, group_gid))
-			err(1, "can't chown '%s' log file", log);
-                if (fchmod(fd, perm))
-			err(1, "can't chmod '%s' log file", log);
-                (void)close(fd);
-		/* Add status message */
-                if (!(flags & CE_BINARY) && log_trim(log))
-			err(1, "can't add status message to log '%s'", log);
-        }
-        if (noaction)
-                (void)printf("kill -HUP %d\n", daemon_pid);
-	else if (daemon_pid != (pid_t)-1) {
-		if (daemon_pid < MIN_PID)
-			warnx("preposterous process number: %d", daemon_pid);
-		else if (kill(daemon_pid, SIGHUP))
-			warnx("warning - could not HUP daemon");
-	}
-	if (flags & CE_COMPACT) {
-		if (noaction)
-			(void)printf("Compress %s.0\n", log);
-		else
-			compress_log(log);
-	}
+	/* Now move the new log file into place */
+	if (noaction)
+		printf("mv %s to %s\n", file2, log);
+	else if (rename(file2, log))
+		warn("can't to mv %s to %s", file2, log);
 }
 
 /* Log the fact that the logs were turned over */
