@@ -1,4 +1,4 @@
-/*	$OpenBSD: header.h,v 1.8 1999/03/27 03:45:49 pjanzen Exp $	*/
+/*	$OpenBSD: header.h,v 1.9 1999/05/30 02:23:16 pjanzen Exp $	*/
 /* $NetBSD: header.h,v 1.12 1997/10/25 01:40:48 thorpej Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
@@ -335,7 +335,7 @@ extern u_char  *class[], course[];
 extern char     diagfile[], helpfile[], ckpfile[], larnlevels[],
 		playerids[], optsfile[], psname[], savefilename[1024],
 		scorefile[];
-extern u_char  *inbuffer, is_alpha[], is_digit[];
+extern u_char  *inbuffer;
 extern u_char   item[MAXX][MAXY], iven[], know[MAXX][MAXY];
 extern char    *levelname[], logfile[], loginname[], logname[],
                 lastmonst[];
@@ -352,7 +352,7 @@ extern u_char   predostuff, restorflag, scprob[];
 extern u_char   screen[MAXX][MAXY], sex;
 extern char    *speldescript[], *scrollhide[], *scrollname[];
 extern u_char   spelknow[];
-extern u_char   splev[], stealth[MAXX][MAXY], to_lower[], to_upper[], wizard;
+extern u_char   splev[], stealth[MAXX][MAXY], wizard;
 extern short    diroffx[], diroffy[], hitflag, hit2flag, hit3flag, hitp[MAXX][MAXY];
 extern short    iarg[MAXX][MAXY], ivenarg[], lasthx, lasthy, lastnum, lastpx,
                 lastpy;
@@ -437,10 +437,4 @@ extern unsigned long randx;
 /* macros for miscellaneous data conversion */
 #define min(x,y) (((x)>(y))?(y):(x))
 #define max(x,y) (((x)>(y))?(x):(y))
-#define isalpha(x) (is_alpha[x])
-#define isdigit(x) (is_digit[x])
-#define tolower(x) (to_lower[x])
-#define toupper(x) (to_upper[x])
-#define lcc(x) (to_lower[x])
-#define ucc(x) (to_upper[x])
 #endif	/* NODEFS */

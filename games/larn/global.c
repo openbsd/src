@@ -1,4 +1,4 @@
-/*	$OpenBSD: global.c,v 1.4 1999/03/27 03:45:49 pjanzen Exp $	*/
+/*	$OpenBSD: global.c,v 1.5 1999/05/30 02:23:16 pjanzen Exp $	*/
 /*	$NetBSD: global.c,v 1.6 1997/10/18 20:03:20 christos Exp $	*/
 
 /*
@@ -23,9 +23,10 @@
  * quit()		subroutine to ask if the player really wants to quit
  */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: global.c,v 1.4 1999/03/27 03:45:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: global.c,v 1.5 1999/05/30 02:23:16 pjanzen Exp $";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "header.h"

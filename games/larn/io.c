@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 1999/03/27 03:45:49 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 1999/05/30 02:23:16 pjanzen Exp $	*/
 /*	$NetBSD: io.c,v 1.7 1997/10/18 20:03:26 christos Exp $	*/
 
 /*
@@ -61,11 +61,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: io.c,v 1.5 1999/03/27 03:45:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.6 1999/05/30 02:23:16 pjanzen Exp $";
 #endif /* not lint */
 
 #include "header.h"
 #include "extern.h"
+#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -783,6 +784,7 @@ init_term()
 	char	termbuf[1024];
 	char	*capptr = cap + 10;
 	char	*term;
+	int	co, li;
 
 	switch (tgetent(termbuf, term = getenv("TERM"))) {
 	case -1:
@@ -805,6 +807,8 @@ init_term()
 	SO = tgetstr("so", &capptr);	/* Begin standout mode */
 	SE = tgetstr("se", &capptr);	/* End standout mode */
 	CD = tgetstr("cd", &capptr);	/* Clear to end of display */
+	co = tgetnum("co");	/* columns */
+	li = tgetnum("li");	/* lines */
 
 	if (!CM) {		/* can't find cursor motion entry */
 		write(2, "Sorry, for a ", 13);
@@ -822,6 +826,10 @@ init_term()
 		write(2, "Sorry, for a ", 13);
 		write(2, term, strlen(term));
 		write(2, ", I can't find the clear entire screen entry in termcap\n", 56);
+		exit(1);
+	}
+	if (co < 80 || li < 25) {
+		write(2, "Sorry, screen too small (80x25 min)\n", 36);
 		exit(1);
 	}
 	if ((outbuf = malloc(BUFBIG + 16)) == 0) {	/* get memory for
