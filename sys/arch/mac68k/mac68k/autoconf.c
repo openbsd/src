@@ -1,14 +1,18 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1996/05/26 18:36:13 briggs Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.29 1996/05/15 02:51:00 briggs Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1996/06/23 15:59:42 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1996/06/19 03:21:03 scottr Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,53 +41,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
-/*-
- * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
- *			Michael L. Finch, Bradley A. Grantham, and
- *			Lawrence A. Kesteloot
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the Alice Group.
- * 4. The names of the Alice Group or any of its members may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE ALICE GROUP ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE ALICE GROUP BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-/*
- * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
- *
- *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- */
-
-/*
-   ALICE 
-      05/23/92 BG
-      I've started to re-write this procedure to use our devices and strip 
-      out all the useless HP stuff, but I only got to line 120 or so 
-      before I had a really bad attack of kompernelphobia and blacked out.
-*/
 
 /*
  * Setup the system to run on the current machine.
@@ -94,96 +54,71 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkstat.h>
-#include <sys/conf.h>
-#include <sys/dmap.h>
-#include <sys/reboot.h>
-
 #include <sys/disklabel.h>
+#include <sys/conf.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
 #include <sys/disk.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
+#include <dev/cons.h>
 
-#include <machine/adbsys.h>
 #include <machine/autoconf.h>
-#include <machine/vmparam.h>
-#include <machine/param.h>
-#include <machine/cpu.h>
-#include <machine/pte.h>
+#include <machine/adbsys.h>
 #include <machine/viareg.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-/*
- * The following several variables are related to
- * the configuration process, and are used in initializing
- * the machine.
- */
-int	cold;		    /* if 1 (locore.s), still working on cold-start */
 
-#ifdef DEBUG
-int	acdebug = 0;
-#endif
+struct device	*booted_device;
+int		booted_partition;
 
-static void	findbootdev __P((void));
-static int	mainbus_match __P((struct device *, void *, void *));
-static void	mainbus_attach __P((struct device *parent,
-					struct device *self, void *aux));
-static void	setroot __P((void));
-static void	swapconf __P((void));
+struct device *parsedisk __P((char *, int, int, dev_t *));
+static struct device *getdisk __P((char *, int, int, dev_t *));
+static int findblkmajor __P((struct device *));
+static int getstr __P((char *, int));
+static void findbootdev __P((void));
+static int target_to_unit __P((u_long, u_long, u_long));
+
+void	setroot __P((void));
+void	swapconf __P((void));
 
 /*
- * Determine mass storage and memory configuration for a machine.
+ * configure:
+ * called at boot time, configure all devices on the system
  */
 void
-configure(void)
+configure()
 {
-	VIA_initialize();
+	extern int	cold;
 
+	VIA_initialize();	/* Init VIA hardware */
 	mrg_init();		/* Init Mac ROM Glue */
-
 	startrtclock();		/* start before adb_init() */
-	
 	adb_init();		/* ADB device subsystem & driver */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
-		panic("No main device!");
+		panic("No mainbus found!");
 
-#if GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
+	findbootdev();
 	setroot();
-#endif
-
-	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
-	 */
 	swapconf();
-	dumpconf();
 	cold = 0;
 }
 
 /*
  * Configure swap space and related parameters.
  */
-static void
-swapconf(void)
+void
+swapconf()
 {
-	register struct swdevt *swp;
-	register int nblks;
+	struct swdevt *swp;
+	int nblks, maj;
 
 	for (swp = swdevt; swp->sw_dev != NODEV ; swp++) {
-		int maj = major(swp->sw_dev);
-
+		maj = major(swp->sw_dev);
 		if (maj > nblkdev)
 			break;
 		if (bdevsw[maj].d_psize) {
@@ -194,13 +129,382 @@ swapconf(void)
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 	}
+	dumpconf();
 }
 
-u_long	bootdev;		/* should be dev_t, but not until 32 bits */
-struct	device *bootdv = NULL;
+struct nam2blk {
+	char *name;
+	int maj;
+} nam2blk[] = {
+	{ "sd",         4 },
+	{ "cd",         6 },
+};
 
-#define	PARTITIONMASK	0x7
-#define	UNITSHIFT	3
+static int
+findblkmajor(dv)
+	struct device *dv;
+{
+	char *name = dv->dv_xname;
+	register int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
+		if (!strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)))
+			return (nam2blk[i].maj);
+	return (-1);
+}
+
+static struct device *
+getdisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
+{
+	register struct device *dv;
+
+	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
+		printf("use one of:");
+		for (dv = alldevs.tqh_first; dv != NULL;
+		    dv = dv->dv_list.tqe_next) {
+			if (dv->dv_class == DV_DISK)
+				printf(" %s[a-h]", dv->dv_xname);
+#ifdef NFSCLIENT
+			if (dv->dv_class == DV_IFNET)
+				printf(" %s", dv->dv_xname);
+#endif
+		}
+		printf("\n");
+	}
+	return (dv);
+}
+
+struct device *
+parsedisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
+{
+	register struct device *dv;
+	register char *cp, c;
+	int majdev, part;
+
+	if (len == 0)
+		return (NULL);
+	cp = str + len - 1;
+	c = *cp;
+	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
+		part = c - 'a';
+		*cp = '\0';
+	} else
+		part = defpart;
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_class == DV_DISK &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			majdev = findblkmajor(dv);
+			if (majdev < 0)
+				panic("parsedisk");
+			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
+			break;
+		}
+#ifdef NFSCLIENT
+		if (dv->dv_class == DV_IFNET &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			*devp = NODEV;
+			break;
+		}
+#endif
+	}
+
+	*cp = c;
+	return (dv);
+}
+
+/*
+ * Attempt to find the device from which we were booted.
+ * If we can do so, and not instructed not to do so,
+ * change rootdev to correspond to the load device.
+ *
+ * XXX Actually, swap and root must be on the same type of device,
+ * (ie. DV_DISK or DV_IFNET) because of how (*mountroot) is written.
+ * That should be fixed.
+ */
+void
+setroot(void)
+{
+	register struct swdevt *swp;
+	register struct device *dv;
+	register int len;
+	dev_t nrootdev, nswapdev = NODEV;
+	char buf[128];
+	extern int (*mountroot) __P((void *));
+	dev_t temp;
+	struct device *bootdv, *rootdv, *swapdv;
+	int bootpartition;
+#if defined(NFSCLIENT)
+	extern char *nfsbootdevname;
+	extern int nfs_mountroot __P((void *));
+#endif
+#if defined(FFS)
+	extern int ffs_mountroot __P((void *));
+#endif
+
+	bootdv = booted_device;
+	bootpartition = booted_partition;
+
+#ifdef DEBUG
+	printf("boot device: %s\n",
+		(bootdv) ? bootdv->dv_xname : "<unknown>");
+#endif
+	/*
+	 * If `swap generic' and we couldn't determine boot device,
+	 * ask the user.
+	 */
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
+
+	if (boothowto & RB_ASKNAME) {
+		for (;;) {
+			printf("root device");
+			if (bootdv != NULL)
+				printf(" (default %s%c)", bootdv->dv_xname,
+				    bootdv->dv_class == DV_DISK ? 'a' : ' ');
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0 && bootdv != NULL) {
+				strcpy(buf, bootdv->dv_xname);
+				len = strlen(buf);
+			}
+			if (len == 4 && !strcmp(buf, "halt"))
+				boot(RB_HALT);
+			if (len > 0 && buf[len - 1] == '*') {
+				buf[--len] = '\0';
+				dv = getdisk(buf, len, 1, &nrootdev);
+				if (dv != NULL) {
+					rootdv = dv;
+					nswapdev = nrootdev;
+					goto gotswap;
+				}
+			}
+			dv = getdisk(buf, len, bootpartition, &nrootdev);
+			if (dv != NULL) {
+				rootdv = dv;
+				break;
+			}
+		}
+
+		/*
+		 * because swap must be on same device as root, for
+		 * network devices this is easy.
+		 */
+		if (rootdv->dv_class == DV_IFNET) {
+			swapdv = NULL;
+			goto gotswap;
+		}
+		for (;;) {
+			printf("swap device");
+			if (rootdv != NULL)
+				printf(" (default %s%c)", rootdv->dv_xname,
+				    rootdv->dv_class == DV_DISK ? 'b' : ' ');
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0) {
+				switch (rootdv->dv_class) {
+				case DV_IFNET:
+					nswapdev = NODEV;
+					break;
+				case DV_DISK:
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(minor(nrootdev)), 1);
+					break;
+				case DV_TAPE:
+				case DV_TTY:
+				case DV_DULL:
+				case DV_CPU:
+					break;
+				}
+				swapdv = rootdv;
+				break;
+			}
+			if (len == 4 && !strcmp(buf, "halt"))
+				boot(RB_HALT);
+			dv = getdisk(buf, len, 1, &nswapdev);
+			if (dv) {
+				if (dv->dv_class == DV_IFNET)
+					nswapdev = NODEV;
+				swapdv = dv;
+				break;
+			}
+		}
+gotswap:
+		rootdev = nrootdev;
+		dumpdev = nswapdev;
+		swdevt[0].sw_dev = nswapdev;
+		swdevt[1].sw_dev = NODEV;
+
+	} else if (mountroot == NULL) {
+		int majdev;
+
+		/*
+		 * "swap generic"
+		 */
+		majdev = findblkmajor(bootdv);
+		if (majdev >= 0) {
+			/*
+			 * Root and swap are on a disk.
+			 */
+			rootdv = swapdv = bootdv;
+			rootdev =
+			    MAKEDISKDEV(majdev, bootdv->dv_unit, bootpartition);
+			nswapdev = dumpdev =
+			    MAKEDISKDEV(majdev, bootdv->dv_unit, 1);
+		} else {
+			/*
+			 * Root and swap are on a net.
+			 */
+			rootdv = swapdv = bootdv;
+			nswapdev = dumpdev = NODEV;
+		}
+		swdevt[0].sw_dev = nswapdev;
+		swdevt[1].sw_dev = NODEV;
+
+	} else {
+
+		/*
+		 * `root DEV swap DEV': honour rootdev/swdevt.
+		 * rootdev/swdevt/mountroot already properly set.
+		 */
+		return;
+	}
+
+	switch (rootdv->dv_class) {
+#if defined(NFSCLIENT)
+	case DV_IFNET:
+		mountroot = nfs_mountroot;
+		nfsbootdevname = rootdv->dv_xname;
+		return;
+#endif
+#if defined(FFS)
+	case DV_DISK:
+		mountroot = ffs_mountroot;
+		printf("root on %s%c", rootdv->dv_xname,
+		    DISKPART(rootdev) + 'a');
+		if (nswapdev != NODEV)
+			printf(" swap on %s%c", swapdv->dv_xname,
+			    DISKPART(nswapdev) + 'a');
+		printf("\n");
+		break;
+#endif
+	default:
+		printf("can't figure root, hope your kernel is right\n");
+		return;
+	}
+
+	/*
+	 * Make the swap partition on the root drive the primary swap.
+	 */
+	temp = NODEV;
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		if (major(rootdev) == major(swp->sw_dev) &&
+		    DISKUNIT(rootdev) == DISKUNIT(minor(swp->sw_dev))) {
+			temp = swdevt[0].sw_dev;
+			swdevt[0].sw_dev = swp->sw_dev;
+			swp->sw_dev = temp;
+			break;
+		}
+	}
+	if (swp->sw_dev == NODEV)
+		return;
+
+	/*
+	 * If dumpdev was the same as the old primary swap device, move
+	 * it to the new primary swap device.
+	 */
+	if (temp == dumpdev)
+		dumpdev = swdevt[0].sw_dev;
+}
+
+static int
+getstr(cp, size)
+	register char *cp;
+	register int size;
+{
+	register char *lp;
+	register int c;
+	register int len;
+
+	lp = cp;
+	len = 0;
+	for (;;) {
+		c = cngetc();
+		switch (c) {
+		case '\n':
+		case '\r':
+			printf("\n");
+			*lp++ = '\0';
+			return (len);
+		case '\b':
+		case '\177':
+		case '#':
+			if (len) {
+				--len;
+				--lp;
+				printf("\b \b");
+			}
+			continue;
+		case '@':
+		case 'u'&037:
+			len = 0;
+			lp = cp;
+			printf("\n");
+			continue;
+		default:
+			if (len + 1 >= size || c < ' ') {
+				printf("\007");
+				continue;
+			}
+			printf("%c", c);
+			++len;
+			*lp++ = c;
+		}
+	}
+}
+
+
+u_long		bootdev;	/* should be dev_t, but not until 32 bits */
+
+/*
+ * Yanked from i386/i386/autoconf.c (and tweaked a bit)
+ */
+static void
+findbootdev()
+{
+	struct device *dv;
+	int major, unit;
+
+	booted_device = NULL;
+	booted_partition = 0;	/* Assume root is on partition a */
+
+	major = B_TYPE(bootdev);
+	if (major < 0 || major >= nblkdev)
+		return;
+
+	unit = B_UNIT(bootdev);
+
+	bootdev &= ~(B_UNITMASK << B_UNITSHIFT);
+	unit = target_to_unit(-1, unit, 0);
+	bootdev |= (unit << B_UNITSHIFT);
+
+	if (disk_count <= 0)
+		return;
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_class == DV_DISK && major == findblkmajor(dv) &&
+		    unit == dv->dv_unit) {
+			booted_device = dv;
+			return;
+		}
+	}
+}
 
 /*
  * Map a SCSI bus, target, lun to a device number.
@@ -208,7 +512,8 @@ struct	device *bootdv = NULL;
  * assumes DISK.  It would be nice to allow CD, too...
  */
 static int
-target_to_unit(u_long bus, u_long target, u_long lun)
+target_to_unit(bus, target, lun)
+	u_long bus, target, lun;
 {
 	struct scsibus_softc	*scsi;
 	struct scsi_link	*sc_link;
@@ -250,319 +555,3 @@ extern	struct cfdriver		scsibus_cd;
 	}
 	return -1;
 }
-
-/* swiped from sparc/sparc/autoconf.c */
-static int
-findblkmajor(register struct disk *dv)
-{
-	register int	i;
-
-	for (i=0 ; i<nblkdev ; i++) {
-		if ((void (*)(struct buf *))bdevsw[i].d_strategy ==
-		    dv->dk_driver->d_strategy)
-			return i;
-	}
-	return -1;
-}
-
-/*
- * Yanked from i386/i386/autoconf.c
- */
-static void
-findbootdev(void)
-{
-	register struct device *dv;
-	register struct disk *diskp;
-	register int unit;
-	int major;
-
-	major = B_TYPE(bootdev);
-	if (major < 0 || major >= nblkdev)
-		return;
-
-	unit = B_UNIT(bootdev);
-
-	bootdev &= ~(B_UNITMASK << B_UNITSHIFT);
-	unit = target_to_unit(-1, unit, 0);
-	bootdev |= (unit << B_UNITSHIFT);
-
-	if (disk_count <= 0)
-		return;
-
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if ((dv->dv_class == DV_DISK) && (unit == dv->dv_unit)) {
-			/*
-			 * Find the disk corresponding to the current
-			 * device.
-			 */
-			if ((diskp = disk_find(dv->dv_xname)) == NULL)
-				continue;
-
-			if (major == findblkmajor(diskp)) {
-				bootdv = dv;
-				return;
-			}
-		}
-	}
-}
-
-/*
- * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
- */
-static void
-setroot(void)
-{
-	register struct swdevt	*swp;
-	register int		majdev, mindev, part;
-	dev_t			nrootdev, temp;
-
-	if (boothowto & RB_DFLTROOT)
-		return;
-	findbootdev();
-	if (bootdv == NULL) {
-		printf("ARGH!!  No boot device????");
-		delay(10000000);
-/*		panic("ARGH!!  No boot device????"); */
-	}
-	nrootdev = 0;
-	switch (bootdv->dv_class) {
-		case DV_DISK:
-			nrootdev = makedev(B_TYPE(bootdev),
-					   (B_UNIT(bootdev) << UNITSHIFT)
-					   + B_PARTITION(bootdev));
-			break;
-		default:
-			printf("Only supports DISK device for booting.\n");
-			break;
-	}
-
-	if (rootdev == nrootdev)
-		return;
-
-	majdev = major(nrootdev);
-	mindev = minor(nrootdev);
-	part = mindev & PARTITIONMASK;
-	mindev -= part;
-
-	rootdev = nrootdev;
-	printf("Changing root device to %s%c.\n", bootdv->dv_xname, part+'a');
-
-	temp = NODEV;
-	for (swp = swdevt ; swp->sw_dev != NODEV ; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-}
-
-/*
- * Generic "bus" support functions.  From NetBSD/sun3.
- *
- * bus_scan:
- * This function is passed to config_search() by the attach function
- * for each of the "bus" drivers (obio, nubus).
- * The purpose of this function is to copy the "locators" into our
- * confargs structure, so child drivers may use the confargs both
- * as match parameters and as temporary storage for the defaulted
- * locator values determined in the child_match and preserved for
- * the child_attach function.  If the bus attach functions just
- * used config_found, then we would not have an opportunity to
- * setup the confargs for each child match and attach call.
- *
- * bus_print:
- * Just prints out the final (non-default) locators.
- */
-int
-bus_scan(parent, child, aux)
-	struct device *parent;
-	void *child, *aux;
-{
-	struct cfdata *cf = child;
-	struct confargs *ca = aux;
-	cfmatch_t mf;
-
-#ifdef	DIAGNOSTIC
-	if (parent->dv_cfdata->cf_driver->cd_indirect)
-		panic("bus_scan: indirect?");
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("bus_scan: FSTATE_STAR");
-#endif
-
-	/* ca->ca_bustype set by parent */
-
-	/*
-	 * Note that this allows the match function to save
-	 * defaulted locators in the confargs that will be
-	 * preserved for the related attach call.
-	 */
-	mf = cf->cf_attach->ca_match;
-	if ((*mf)(parent, cf, ca) > 0) {
-		config_attach(parent, cf, ca, bus_print);
-	}
-	return (0);
-}
-
-/*
- * From NetBSD/sun3.
- * Print out the confargs.  The parent name is non-NULL
- * when there was no match found by config_found().
- */
-int
-bus_print(args, name)
-	void *args;
-	char *name;
-{
-/*	struct confargs *ca = args; */
-
-	if (name)
-		printf("%s:", name);
-
-	return(UNCONF);
-}
-
-vm_offset_t tmp_vpages[1];
-
-/*
- * Read addr with size len (1,2,4) into val.
- * If this generates a bus error, return -1
- *
- *	Create a temporary mapping,
- *	Try the access using peek_*
- *	Clean up temp. mapping
- */
-int
-bus_peek(bustype, paddr, sz)
-	int bustype;
-	vm_offset_t paddr;
-	int sz;
-{
-	int off, pte, rv;
-	vm_offset_t pgva;
-	caddr_t va;
-
-	if (bustype != BUS_NUBUS)
-		return -1;
-
-	off = paddr & PGOFSET;
-	paddr -= off;
-	pte = (paddr & PG_FRAME) | (PG_V | PG_W | PG_CI);
-
-	pgva = tmp_vpages[0];
-	va = (caddr_t)pgva + off;
-
-	mac68k_set_pte(pgva, pte);
-	TBIS(pgva);
-
-	/*
-	 * OK, try the access using one of the assembly routines
-	 * that will set pcb_onfault and catch any bus errors.
-	 */
-	rv = -1;
-	switch (sz) {
-	case 1:
-		if (!badbaddr(va))
-			rv = *((u_char *) va);
-		break;
-	case 2:
-		if (!badwaddr(va))
-			rv = *((u_int16_t *) va);
-		break;
-	case 4:
-		if (!badladdr(va))
-			rv = *((u_int32_t *) va);
-		break;
-	default:
-		printf("bus_peek: invalid size=%d\n", sz);
-		rv = -1;
-	}
-
-	mac68k_set_pte(pgva, PG_NV);
-	TBIS(pgva);
-
-	return rv;
-}
-
-char *
-bus_mapin(bustype, paddr, sz)
-	int bustype, paddr, sz;
-{
-	int off, pa, pmt;
-	vm_offset_t va, retval;
-
-	if (bustype != BUS_NUBUS)
-		return (NULL);
-
-	off = paddr & PGOFSET;
-	pa = paddr - off;
-	sz += off;
-	sz = mac68k_round_page(sz);
-
-	/* Get some kernel virtual address space. */
-	va = kmem_alloc_wait(kernel_map, sz);
-	if (va == 0)
-		panic("bus_mapin");
-	retval = va + off;
-
-	/* Map it to the specified bus. */
-#if 0	/* XXX */
-	/* This has a problem with wrap-around... */
-	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
-#else
-	do {
-		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
-		va += NBPG;
-		pa += NBPG;
-	} while ((sz -= NBPG) > 0);
-#endif
-
-	return ((char*)retval);
-}	
-
-static int
-mainbus_match(parent, match, aux)
-	struct device	*parent;
-	void		*match, *aux;
-{
-	return 1;
-}
-
-static int bus_order[] = {
-	BUS_OBIO,	/* For On-board I/O */
-	BUS_NUBUS
-};
-#define BUS_ORDER_SZ (sizeof(bus_order)/sizeof(bus_order[0]))
-
-static void
-mainbus_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
-{
-	struct confargs	ca;
-	int	i;
-
-	printf("\n");
-
-	for (i = 0; i < BUS_ORDER_SZ; i++) {
-		ca.ca_bustype = bus_order[i];
-		(void) config_found(self, &ca, NULL);
-	}
-}
-
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
-};
