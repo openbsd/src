@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.3 1995/11/09 20:01:10 deraadt Exp $
+#	$Id: 4.4BSD.dist,v 1.4 1995/12/15 02:32:09 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -19,7 +19,7 @@ bin
 dev
 
 # ./dev/fd
-fd
+fd		gname=bin uname=bin mode=0555
 # ./dev/fd
 ..
 
@@ -112,18 +112,18 @@ hide            gname=games uname=games mode=0700
 ..
 
 # ./usr/include
-include
+include		gname=bin uname=bin mode=0555
 
 # ./usr/include/arpa
-arpa
+arpa		gname=bin uname=bin mode=0555
 # ./usr/include/arpa
 ..
 
 # ./usr/include/g++
-g++
+g++		gname=bin uname=bin mode=0555
 
 # ./usr/include/g++/gen
-gen
+gen		gname=bin uname=bin mode=0555
 # ./usr/include/g++/gen
 ..
 
@@ -131,22 +131,22 @@ gen
 ..
 
 # ./usr/include/kerberosIV
-kerberosIV
+kerberosIV		gname=bin uname=bin mode=0555
 # ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
-protocols
+protocols		gname=bin uname=bin mode=0555
 # ./usr/include/protocols
 ..
 
 # ./usr/include/rpc
-rpc
+rpc		gname=bin uname=bin mode=0555
 # ./usr/include/rpc
 ..
 
 # ./usr/include/rpcsvc
-rpcsvc
+rpcsvc		gname=bin uname=bin mode=0555
 # ./usr/include/rpcsvc
 ..
 
@@ -251,6 +251,11 @@ cat8
 # ./usr/local/man/cat8
 ..
 
+# ./usr/local/man/cat9
+cat9
+# ./usr/local/man/cat9
+..
+
 # ./usr/local/man/man1
 man1
 # ./usr/local/man/man1
@@ -289,6 +294,11 @@ man7
 # ./usr/local/man/man8
 man8
 # ./usr/local/man/man8
+..
+
+# ./usr/local/man/man9
+man9
+# ./usr/local/man/man9
 ..
 
 # ./usr/local/man
@@ -831,20 +841,20 @@ generate
 ..
 
 # ./usr/share/lkm
-lkm
+lkm		gname=bin uname=bin
 
 # ./usr/share/lkm/misc
-misc
+misc		gname=bin uname=bin
 # ./usr/share/lkm/misc
 ..
 
 # ./usr/share/lkm/syscall
-syscall
+syscall		gname=bin uname=bin
 # ./usr/share/lkm/syscall
 ..
 
 # ./usr/share/lkm/vfs
-vfs
+vfs		gname=bin uname=bin
 # ./usr/share/lkm/vfs
 ..
 
@@ -1006,6 +1016,11 @@ vax
 # ./usr/share/man/cat8
 ..
 
+# ./usr/share/man/cat9
+cat9
+# ./usr/share/man/cat9
+..
+
 # ./usr/share/man/man1
 man1
 # ./usr/share/man/man1
@@ -1153,6 +1168,11 @@ vax
 # ./usr/share/man/man8
 ..
 
+# ./usr/share/man/man9
+man9
+# ./usr/share/man/man9
+..
+
 # ./usr/share/man
 ..
 
@@ -1203,40 +1223,40 @@ mm
 ..
 
 # ./usr/share/zoneinfo
-zoneinfo         mode=0555
+zoneinfo         gname=bin uname=bin mode=0555
 
 # ./usr/share/zoneinfo/Australia
-Australia        mode=0555
+Australia        gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Australia
 ..
 
 # ./usr/share/zoneinfo/Brazil
-Brazil           mode=0555
+Brazil           gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Brazil
 ..
 
 # ./usr/share/zoneinfo/Canada
-Canada           mode=0555
+Canada           gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Canada
 ..
 
 # ./usr/share/zoneinfo/Chile
-Chile            mode=0555
+Chile            gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Chile
 ..
 
 # ./usr/share/zoneinfo/Mexico
-Mexico           mode=0555
+Mexico           gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Mexico
 ..
 
 # ./usr/share/zoneinfo/SystemV
-SystemV          mode=0555
+SystemV          gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/SystemV
 ..
 
 # ./usr/share/zoneinfo/US
-US               mode=0555
+US               gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/US
 ..
 
