@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.95 2001/05/27 11:50:37 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.96 2001/05/28 05:30:54 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -264,11 +264,6 @@ ip_output(m0, va_alist)
 
 #ifdef IPSEC
  skip_routing:
-
-	/* Disallow nested IPsec for now */
-	if (flags & IP_ENCAPSULATED)
-	  goto done_spd;
-
 	/*
 	 * splnet is chosen over spltdb because we are not allowed to
 	 * lower the level, and udp_output calls us in splnet().
