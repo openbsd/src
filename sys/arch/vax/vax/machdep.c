@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.28 2001/01/28 02:24:24 hugh Exp $ */
+/* $OpenBSD: machdep.c,v 1.29 2001/02/11 12:59:40 bjc Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -445,8 +445,12 @@ printf("sendsig: signal %x  catcher %x\n", sig, catcher);
 	trampf = (struct trampframe *) ((unsigned)sigctx -
 	    sizeof(struct trampframe));
 
-	 /* Place for pointer to arg list in sigreturn */
-	cursp = (unsigned)sigctx - 8;
+	/*
+	 * Place sp at the beginning of trampf; this ensures that possible
+	 * further calls to sendsig won't overwrite this struct
+	 * trampframe/struct sigcontext pair with their own.
+	 */
+	cursp = (unsigned) trampf;
 
 	gtrampf.arg = (int) sigctx;
 	gtrampf.pc = (unsigned) catcher;
@@ -472,7 +476,7 @@ printf("sendsig: signal %x  catcher %x\n", sig, catcher);
 
 	syscf->pc = (unsigned) (((char *) PS_STRINGS) - (esigcode - sigcode));
 	syscf->psl = PSL_U | PSL_PREVU;
-	syscf->ap = cursp;
+	syscf->ap = (unsigned) sigctx-8;
 	syscf->sp = cursp;
 
 	if (onstack)
@@ -686,7 +690,7 @@ process_sstep(p, sstep)
  * allocated from the kernel map instead.
  *
  * It is known that the first page in the iospace area is unused; it may
- * be use by console device drivers (before the map system is inited).
+ * be use by console device drivers (before the map system is inied).
  */
 vaddr_t
 vax_map_physmem(phys, size)
