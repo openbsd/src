@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.183 2003/02/13 09:39:14 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.184 2003/02/13 10:19:44 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -400,11 +400,11 @@ For example:
 By default
 .Xr pfctl 8
 enforces an ordering of the statement types in the ruleset to:
-.Em options,
-.Ar scrub ,
-.Ar queue ,
+.Em options ,
+.Em normalization ,
+.Em queueing ,
 .Em translation ,
-.Em filter .
+.Em filtering .
 Setting this option to
 .Ar no
 disables this enforcement.
