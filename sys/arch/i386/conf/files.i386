@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.87 2001/06/25 23:06:54 niklas Exp $
+#	$OpenBSD: files.i386,v 1.88 2001/06/27 07:18:34 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -30,8 +30,7 @@ file	arch/i386/i386/i686_mem.c	mtrr
 file	arch/i386/i386/k6_mem.c		mtrr
 file	arch/i386/i386/microtime.s
 file	arch/i386/i386/ns_cksum.c	ns
-file	arch/i386/i386/pmap.c		!pmap_old & uvm
-file	arch/i386/i386/pmap.old.c	pmap_old | !uvm
+file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/random.s
