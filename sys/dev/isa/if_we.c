@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.7 1998/12/23 07:58:26 aaron Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.8 2000/04/03 07:43:53 deraadt Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -329,7 +329,7 @@ we_probe(parent, match, aux)
 		    hwr & ~WE790_HWR_SWH);
 
 		if (ia->ia_irq != IRQUNK && ia->ia_irq != we_790_irq[i])
-			printf("%s%d: overriding IRQ %d to %d\n",
+			printf("%s%d: changing IRQ %d to %d\n",
 			    we_cd.cd_name, cf->cf_unit, ia->ia_irq,
 			    we_790_irq[i]);
 		ia->ia_irq = we_790_irq[i];
@@ -340,7 +340,7 @@ we_probe(parent, match, aux)
 		      (WE_IRR_IR0 | WE_IRR_IR1)) >> 5);
 
 		if (ia->ia_irq != IRQUNK && ia->ia_irq != we_584_irq[i])
-			printf("%s%d: overriding IRQ %d to %d\n",
+			printf("%s%d: changing IRQ %d to %d\n",
 			    we_cd.cd_name, cf->cf_unit, ia->ia_irq,
 			    we_584_irq[i]);
 		ia->ia_irq = we_584_irq[i];
