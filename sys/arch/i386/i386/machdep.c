@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.81 1998/02/22 21:35:27 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.82 1998/02/26 20:53:24 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -183,10 +183,10 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
+extern int	boothowto;
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
-int	boothowto;
 int	cpu_class;
 
 struct	msgbuf *msgbufp;
