@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.34 2004/04/28 15:18:57 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.35 2004/08/08 19:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.34 2004/04/28 15:18:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.35 2004/08/08 19:32:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -446,7 +446,7 @@ validate_access(char *filename, int mode)
 		}
 	}
 	if (options[OPT_TSIZE].o_request) {
-		if (mode == RRQ) 
+		if (mode == RRQ)
 			options[OPT_TSIZE].o_reply = stbuf.st_size;
 		else
 			/* XXX Allows writes of all sizes. */
@@ -622,14 +622,14 @@ send_ack:
 	ap->th_block = htons((u_short)(block));
 	(void) send(peer, ackbuf, 4, 0);
 
-	signal(SIGALRM, justquit);      /* just quit on timeout */
+	signal(SIGALRM, justquit);		/* just quit on timeout */
 	alarm(rexmtval);
 	n = recv(peer, buf, sizeof (buf), 0); /* normally times out and quits */
 	alarm(0);
 	if (n >= 4 &&			/* if read some data */
 	    dp->th_opcode == DATA &&    /* and got a data block */
 	    block == dp->th_block) {	/* then my last ack was lost */
-		(void) send(peer, ackbuf, 4, 0);     /* resend final ack */
+		(void) send(peer, ackbuf, 4, 0);	/* resend final ack */
 	}
 abort:
 	return (1);
@@ -698,7 +698,7 @@ oack(void)
 	for (i = 0; options[i].o_type != NULL; i++) {
 		if (options[i].o_request) {
 			n = snprintf(bp, size, "%s%c%d", options[i].o_type,
-				     0, options[i].o_reply);
+			    0, options[i].o_reply);
 			bp += n+1;
 			size -= n+1;
 			if (size < 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.38 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.39 2004/08/08 19:32:45 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -190,7 +190,7 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "In function parse(), from %s to %s",
-		       gethost4_addr(faddr), gethost4_addr(laddr));
+		    gethost4_addr(faddr), gethost4_addr(laddr));
 
 	faddr2 = *faddr;
 	laddr2 = *laddr;
@@ -386,7 +386,7 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "In function parse6(), from %s to %s",
-		       gethost6(faddr), gethost6(laddr));
+		    gethost6(faddr), gethost6(laddr));
 
 	faddr2 = *faddr;
 	laddr2 = *laddr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.37 2004/04/07 14:09:35 aaron Exp $	*/
+/*	$OpenBSD: identd.c,v 1.38 2004/08/08 19:32:45 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -37,19 +37,19 @@
 
 extern char *__progname;
 
-int     verbose_flag;
-int     debug_flag;
-int     syslog_flag;
-int     multi_flag;
-int     unknown_flag;
-int     number_flag;
-int     noident_flag;
+int	verbose_flag;
+int	debug_flag;
+int	syslog_flag;
+int	multi_flag;
+int	unknown_flag;
+int	number_flag;
+int	noident_flag;
 int	userident_flag;
 int	token_flag;
 int	no_user_token_flag;
 
-int     lport;
-int     fport;
+int	lport;
+int	fport;
 
 const  char *opsys_name = "UNIX";
 const  char *charset_sep = "";
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 	struct in6_addr laddr6, faddr6;
 	struct passwd *pwd;
 	struct group *grp;
-	int     background_flag = 0, timeout = 0, ch;
+	int	background_flag = 0, timeout = 0, ch;
 	char   *portno = "auth";
 	char   *bind_address = NULL;
 	uid_t   set_uid = 0;
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 	if (background_flag == 1) {
 		struct sockaddr_in addr;
 		struct servent *sp;
-		int     fd;
+		int	fd;
 
 		if (fork())
 			exit(0);
@@ -341,7 +341,7 @@ main(int argc, char *argv[])
 	 * Do some special handling if the "-b" or "-w" flags are used
 	 */
 	if (background_flag) {
-		int     nfds, fd;
+		int	nfds, fd;
 		struct	pollfd pfd[1];
 
 		/*

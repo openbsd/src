@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.15 2004/07/04 22:46:47 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.16 2004/08/08 19:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -465,13 +465,13 @@ greywatcher(void)
 	if ((i = open(PATH_SPAMD_DB, O_RDWR, 0)) == -1 && errno == ENOENT) {
 		i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
 		if (i == -1) {
-			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)", 
+			syslog_r(LOG_ERR, &sdata, "create %s failed (%m)",
 			    PATH_SPAMD_DB);
 			exit(1);
 		}
 		/* if we are dropping privs, chown to that user */
 		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1)) {
-			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)", 
+			syslog_r(LOG_ERR, &sdata, "chown %s failed (%m)",
 			    PATH_SPAMD_DB);
 			exit(1);
 		}
@@ -494,7 +494,7 @@ greywatcher(void)
 	db_pid = fork();
 	switch(db_pid) {
 	case -1:
-		syslog_r(LOG_ERR, &sdata, "fork failed (%m)"); 
+		syslog_r(LOG_ERR, &sdata, "fork failed (%m)");
 		exit(1);
 	case 0:
 		/*

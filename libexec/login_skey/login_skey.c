@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.13 2004/08/05 13:37:06 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.14 2004/08/08 19:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "reopening back channel: %m");
 		exit(1);
 	}
-	
+
 	/*
 	 * Note: our skeychallenge2() will always fill in the challenge,
 	 *       even if it has to create a fake one.
