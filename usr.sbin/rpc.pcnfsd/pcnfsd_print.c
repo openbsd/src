@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_print.c,v 1.15 2003/02/16 01:53:28 deraadt Exp $	*/
+/*	$OpenBSD: pcnfsd_print.c,v 1.16 2003/04/04 22:37:47 avsm Exp $	*/
 /*	$NetBSD: pcnfsd_print.c,v 1.3 1995/08/14 19:45:18 gwr Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ pr_start2(system, pr, user, fname, opts, id)
 	req_id[0] = '\0';
 
 	if (stat(pathname, &statbuf)) {
-		(void)strcat(pathname, ".spl");
+		(void)strlcat(pathname, ".spl", sizeof(pathname));
 	   	if (stat(pathname, &statbuf))
 			return (PS_RES_NO_FILE);
 		return (PS_RES_ALREADY);
@@ -888,7 +888,7 @@ static char expansion[512];
 int i;
 	for (i = 0; i < num_aliases; i++){
 		if (!strcmp(printer, alias[i].a_printer)) {
-			strcpy(expansion, alias[i].a_command);
+			strlcpy(expansion, alias[i].a_command, sizeof(expansion));
 			substitute(expansion, "$FILE", file);
 			substitute(expansion, "$USER", user);
 			substitute(expansion, "$HOST", host);

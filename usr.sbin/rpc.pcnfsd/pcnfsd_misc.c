@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_misc.c,v 1.8 2003/02/16 01:53:28 deraadt Exp $	*/
+/*	$OpenBSD: pcnfsd_misc.c,v 1.9 2003/04/04 22:37:47 avsm Exp $	*/
 /*	$NetBSD: pcnfsd_misc.c,v 1.2 1995/07/25 22:20:42 gwr Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ wlogin(name, req)
 		host = inet_ntoa(who->sin_addr);
 	}
 
-	(void)strcpy(ut.ut_line, "PC-NFS");
+	(void)strncpy(ut.ut_line, "PC-NFS", UT_LINESIZE);
 	(void)strncpy(ut.ut_name, name, sizeof(ut.ut_name));
 	(void)strncpy(ut.ut_host, host, sizeof(ut.ut_host));
 	(void)time(&ut.ut_time);
@@ -267,7 +267,7 @@ su_popen(user, cmd, maxtime)
 		if (pw) {
 			cached_uid = pw->pw_uid;
 			cached_gid = pw->pw_gid;
-			strcpy(cached_user, user);
+			strlcpy(cached_user, user, sizeof(cached_user));
 		} else {
 			cached_uid = (uid_t) (-2);
 			cached_gid = (gid_t) (-2);
