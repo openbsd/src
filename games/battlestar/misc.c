@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1997/06/30 19:56:37 kstailey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1997/08/24 21:55:10 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/03/21 15:07:37 cgd Exp $	*/
 
 /*
@@ -42,8 +42,9 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.3 1995/03/21 15:07:37 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+int
 card(array, size)		/* for beenthere, injuries */
 	register char *array;
 	int size;
@@ -57,6 +58,7 @@ card(array, size)		/* for beenthere, injuries */
 	return (i);
 }
 
+int
 ucard(array)
 	register unsigned *array;
 {

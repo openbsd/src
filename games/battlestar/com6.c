@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.4 1997/06/30 19:56:32 kstailey Exp $	*/
+/*	$OpenBSD: com6.c,v 1.5 1997/08/24 21:55:04 deraadt Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -42,9 +42,11 @@ static char rcsid[] = "$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include <time.h>
+#include "extern.h"
 #include "pathnames.h"
 
+int
 launch()
 {
 	if (testbit(location[position].objects,VIPER) && !notes[CANTLAUNCH]){
@@ -52,7 +54,7 @@ launch()
 			clearbit(location[position].objects,VIPER);
 			position = location[position].up;
 			notes[LAUNCHED] = 1;
-			time++;
+			btime++;
 			fuel -= 4;
 			puts("You climb into the viper and prepare for launch.");
 			puts("With a touch of your thumb the turbo engines ignite, thrusting you back into\nyour seat.");
@@ -66,6 +68,7 @@ launch()
 	 return(0);
 }
 
+int
 land()
 {
 	if (notes[LAUNCHED] && testbit(location[position].objects,LAND) && location[position].down){
@@ -73,7 +76,7 @@ land()
 		position = location[position].down;
 		setbit(location[position].objects,VIPER);
 		fuel -= 2;
-		time++;
+		btime++;
 		puts("You are down.");
 		return(1);
 	}
@@ -82,6 +85,7 @@ land()
 	return(0);
 }
 
+void
 die() 		/* endgame */
 {
 	printf("bye.\nYour rating was %s.\n", rate());
@@ -89,6 +93,7 @@ die() 		/* endgame */
 	exit(0);
 }
 
+void
 live()
 {
 	puts("\nYou win!");
@@ -104,18 +109,19 @@ open_score_file()
 		perror(_PATH_SCORE);
 }
 
+void
 post(ch)
 char ch;
 {
-	struct timeval tv;
-	char *date, *ctime();
+	time_t tv;
+	char *date;
 	sigset_t sigset, osigset;
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
-	gettimeofday(&tv, (struct timezone *)0);	/* can't call time */
-	date = ctime(&tv.tv_sec);
+	tv = time(NULL);
+	date = ctime(&tv);
 	date[24] = '\0';
 
 	fprintf(score_fp, "%s  %8s  %c%20s", date, uname, ch, rate());
@@ -166,6 +172,7 @@ rate()
 	}
 }
 
+int
 drive()
 {
 	if (testbit(location[position].objects,CAR)){
@@ -174,7 +181,7 @@ drive()
 		clearbit(location[position].objects,CAR);
 		setbit(location[position].objects,CRASH);
 		injuries[5] = injuries[6] = injuries[7] = injuries[8] = 1;
-		time += 15;
+		btime += 15;
 		zzz();
 		return(0);
 	}
@@ -183,6 +190,7 @@ drive()
 	return(-1);
 }
 
+int
 ride()
 {
 	if (testbit(location[position].objects,HORSE)){
@@ -205,11 +213,12 @@ ride()
 	return(-1);
 }
 
+void
 light()		/* synonyms = {strike, smoke} */
 {		/* for matches, cigars */
 	if (testbit(inven,MATCHES) && matchcount){
 		puts("Your match splutters to life.");
-		time++;
+		btime++;
 		matchlight = 1;
 		matchcount--;
 		if (position == 217){

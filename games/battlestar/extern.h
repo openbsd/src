@@ -1,5 +1,5 @@
-/*	$OpenBSD: externs.h,v 1.5 1997/06/30 19:56:35 kstailey Exp $	*/
-/*	$NetBSD: externs.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
+/*	$OpenBSD: extern.h,v 1.1 1997/08/24 21:55:07 deraadt Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)externs.h	8.1 (Berkeley) 5/31/93
+ *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
 /* 
@@ -48,6 +48,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define BITS (8 * sizeof (int))
 
@@ -239,16 +240,16 @@ struct room {
 	char *desc;
 	unsigned int objects[NUMOFWORDS];
 };
-struct room dayfile[];
-struct room nightfile[];
+extern struct room dayfile[];
+extern struct room nightfile[];
 struct room *location;
 
 	/* object characteristics */
-char *objdes[NUMOFOBJECTS];
-char *objsht[NUMOFOBJECTS];
-char *ouch[NUMOFINJURIES];
-int objwt[NUMOFOBJECTS];
-int objcumber[NUMOFOBJECTS];
+extern char *objdes[NUMOFOBJECTS];
+extern char *objsht[NUMOFOBJECTS];
+extern char *ouch[NUMOFINJURIES];
+extern int objwt[NUMOFOBJECTS];
+extern int objcumber[NUMOFOBJECTS];
 
 	/* current input line */
 #define NWORD	20			/* words per line */
@@ -257,32 +258,83 @@ int wordvalue[NWORD];
 int wordtype[NWORD];
 int wordcount, wordnumber;
 
-char *truedirec(), *rate();
-char *getcom(), *getword();
+void bury __P((void));
+int card __P((char *, int));
+void chime __P((void));
+void crash __P((void));
+int cypher __P((void));
+void die __P((void));
+void dig __P((void));
+int draw __P((void));
+void drink __P((void));
+int drive __P((void));
+int drop __P((char *));
+int eat __P((void));
+int fight __P((int, int));
+int follow __P((void));
+char *getcom __P((char *, int, char *, char *));
+char *getword __P((char *, char *, int));
+int give __P((void));
+void initialize __P((char));
+int jump __P((void));
+void kiss __P((void));
+int land __P((void));
+int launch __P((void));
+void light __P((void));
+void live __P((void));
+void love __P((void));
+int move __P((int, int));
+void murder __P((void));
+void news __P((void));
+void newway __P((int));
+void parse __P((void));
+void post __P((char));
+void printobjs __P((void));
+int put __P((void));
+int puton __P((void));
+char *rate __P((void));
+void ravage __P((void));
+void restore __P((void));
+int ride __P((void));
+void save __P((void));
+int shoot __P((void));
+int take __P((unsigned int[]));
+int takeoff __P((void));
+int throw __P((char *));
+char *truedirec __P((int, char));
+int ucard __P((unsigned int *));
+int use __P((void));
+int visual __P((void));
+int wearit __P((void));
+void whichway __P((struct room));
+void wordinit __P((void));
+void writedes __P((void));
+int zzz __P((void));
 
 	/* state of the game */
-int time;
+int btime;
 int position;
 int direction;
 int left, right, ahead, back;
-int clock, fuel, torps;
+int bclock, fuel, torps;
 int carrying, encumber;
 int rythmn;
-int followfight;
+extern int followfight;
 int ate;
 int snooze;
 int meetgirl;
-int followgod;
+extern int followgod;
 int godready;
-int win;
+extern int win;
 int wintime;
 int wiz;
 int tempwiz;
-int matchlight, matchcount;
+int matchlight;
+extern int matchcount;
 int loved;
 int pleasure, power, ego;
-int WEIGHT;
-int CUMBER;
+extern int WEIGHT;
+extern int CUMBER;
 int notes[NUMOFNOTES];
 unsigned int inven[NUMOFWORDS];
 unsigned int wear[NUMOFWORDS];
@@ -300,13 +352,13 @@ struct wlist {
 #define HASHMUL		81
 #define HASHMASK	(HASHSIZE - 1)
 struct wlist *hashtab[HASHSIZE];
-struct wlist wlist[];
+extern struct wlist wlist[];
 
 struct objs {
 	short room;
 	short obj;
 };
-struct objs dayobjs[];
-struct objs nightobjs[];
+extern struct objs dayobjs[];
+extern struct objs nightobjs[];
 
 gid_t	egid;

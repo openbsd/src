@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.2 1997/06/30 19:56:36 kstailey Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.3 1997/08/24 21:55:08 deraadt Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -44,6 +44,7 @@ static char rcsid[] = "$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $";
 
 #include <stdio.h>
 #include <ctype.h>
+#include "extern.h"
 
 char *
 getcom(buf, size, prompt, error)
@@ -75,7 +76,7 @@ getcom(buf, size, prompt, error)
 char *
 getword(buf1, buf2, flag)
 	register char *buf1, *buf2;
-	register flag;
+	register int flag;
 {
 	while (isspace(*buf1))
 		buf1++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.2 1997/06/30 19:56:32 kstailey Exp $	*/
+/*	$OpenBSD: com7.c,v 1.3 1997/08/24 21:55:04 deraadt Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -42,8 +42,9 @@ static char rcsid[] = "$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+int
 fight(enemy,strength)
 int enemy,strength;
 {
@@ -55,15 +56,15 @@ int enemy,strength;
 	int exhaustion;
 
 fighton:
-	time++;
+	btime++;
 	snooze -= 5;
-	if (snooze > time)
-		exhaustion = CYCLE/(snooze - time);
+	if (snooze > btime)
+		exhaustion = CYCLE/(snooze - btime);
 	else {
 		puts("You collapse exhausted, and he pulverizes your skull.");
 		die();
 	}
-	if (snooze - time < 20)
+	if (snooze - btime < 20)
 		puts("You look tired! I hope you're able to fight.");
 	next = getcom(auxbuf, LINELENGTH, "<fight!>-: ", 0);
 	for (i=0; next && i < 10; i++)
@@ -193,7 +194,7 @@ fighton:
 					puts("he flees down the dark caverns.");
 					clearbit(location[position].objects,DARK);
 					injuries[SKULL] = 1;
-					followfight = time;
+					followfight = btime;
 					return (0);
 				}
 				else{
@@ -238,7 +239,7 @@ fighton:
 		case DROP:
 		case DRAW:
 			cypher();
-			time--;
+			btime--;
 			break;
 		
 		default:

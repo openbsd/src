@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.2 1997/06/30 19:56:31 kstailey Exp $	*/
+/*	$OpenBSD: com5.c,v 1.3 1997/08/24 21:55:03 deraadt Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -42,8 +42,9 @@ static char rcsid[] = "$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+void
 kiss()
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
@@ -83,6 +84,7 @@ kiss()
 	else	puts("I'd prefer not to.");
 }
 
+void
 love()
 {
 	register int n;
@@ -107,7 +109,7 @@ love()
 				if (!loved)
 					setbit(location[position].objects,MEDALION);
 				loved = 1;
-				time += 10;
+				btime += 10;
 				zzz();
 			}
 			else {
@@ -119,7 +121,7 @@ love()
 			power++;
 			pleasure += 5;
 			printf("Girl:\n");
-			time += 10;
+			btime += 10;
 			zzz();
 		}
 		printf("Loved.\n");
@@ -127,21 +129,22 @@ love()
 	else puts("I't doesn't seem to work.");
 }
 
+int
 zzz()
 {
 	int oldtime;
 	register int n;
 
-	oldtime = time;
-	if ((snooze - time) < (0.75 * CYCLE)){
-		time += 0.75 * CYCLE - (snooze - time);
+	oldtime = btime;
+	if ((snooze - btime) < (0.75 * CYCLE)){
+		btime += 0.75 * CYCLE - (snooze - btime);
 		printf("<zzz>");
-		for (n = 0; n < time - oldtime; n++)
+		for (n = 0; n < btime - oldtime; n++)
 			printf(".");
 		printf("\n");
-		snooze += 3 * (time - oldtime);
+		snooze += 3 * (btime - oldtime);
 		if (notes[LAUNCHED]){
-			fuel -= (time - oldtime);
+			fuel -= (btime - oldtime);
 			if (location[position].down){
 				position = location[position].down;
 				crash();
@@ -182,10 +185,11 @@ zzz()
 	return(1);
 }
 
+void
 chime()
 {
-	if ((time / CYCLE + 1) % 2 && OUTSIDE)
-		switch((time % CYCLE)/(CYCLE / 7)){
+	if ((btime / CYCLE + 1) % 2 && OUTSIDE)
+		switch((btime % CYCLE)/(CYCLE / 7)){
 			case 0:
 				puts("It is just after sunrise.");
 				break;
@@ -209,7 +213,7 @@ chime()
 				break;
 		}
 	else if (OUTSIDE)
-		switch((time % CYCLE)/(CYCLE / 7)){
+		switch((btime % CYCLE)/(CYCLE / 7)){
 			case 0:
 				puts("It is just after sunset.");
 				break;
@@ -236,10 +240,12 @@ chime()
 		puts("I can't tell the time in here.");
 }
 
+int
 give()
 {
 	int obj = -1, result = -1, person = 0, firstnumber, last1, last2;
 
+	last1 = last2 = wordcount + 2;
 	firstnumber = wordnumber;
 	while (wordtype[++wordnumber] != OBJECT  && wordvalue[wordnumber] != AMULET && wordvalue[wordnumber] != MEDALION && wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount);
 	if (wordnumber <= wordcount){
@@ -266,7 +272,7 @@ give()
 	}
 	if (result != -1 && (testbit(location[position].objects,obj) || obj == AMULET || obj == MEDALION || obj == TALISMAN)){
 		clearbit(location[position].objects,obj);
-		time++;
+		btime++;
 		ego++;
 		switch(person){
 			case NATIVE:
@@ -295,7 +301,7 @@ give()
 						puts("after having been out drinking with the girls, she kicks the throne particulary");
 						puts("hard and wakes you up.  (If you want to win this game, you're going to have to\nshoot her!)");
 						clearbit(location[position].objects,MEDALION);
-						wintime = time;
+						wintime = btime;
 					}
 				}
 				break;

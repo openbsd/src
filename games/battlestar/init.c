@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.2 1997/06/30 19:56:37 kstailey Exp $	*/
+/*	$OpenBSD: init.c,v 1.3 1997/08/24 21:55:09 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -42,15 +42,20 @@ static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $";
 #endif
 #endif /* not lint */
 
+#include <unistd.h>
 #include <sys/types.h>
-#include "externs.h"
+#include "extern.h"
 #include <pwd.h>
 
+int checkout __P((char *));
+void getutmp __P((char *));
+int wizard __P((char *));
+
+void
 initialize(startup)
 	char startup;
 {
 	register struct objs *p;
-	void die();
 
 	puts("Version 4.2, fall 1984.");
 	puts("First Adventure game written by His Lordship, the honorable");
@@ -61,7 +66,7 @@ initialize(startup)
 	if (startup) {
 		location = dayfile;
 		direction = NORTH;
-		time = 0;
+		btime = 0;
 		snooze = CYCLE * 1.5;
 		position = 22;
 		setbit(wear, PAJAMAS);
@@ -75,6 +80,7 @@ initialize(startup)
 	signal(SIGINT, die);
 }
 
+void
 getutmp(uname)
 	char *uname;
 {
@@ -102,6 +108,7 @@ char *badguys[] = {
 	0
 };
 
+int
 wizard(uname)
 	char *uname;
 {
@@ -112,6 +119,7 @@ wizard(uname)
 	return flag;
 }
 
+int
 checkout(uname)
 	register char *uname;
 {
@@ -126,7 +134,7 @@ checkout(uname)
 				uname);
 			CUMBER = 3;
 			WEIGHT = 9;	/* that'll get him! */
-			clock = 10;
+			bclock = 10;
 			setbit(location[7].objects, WOODSMAN);	/* viper room */
 			setbit(location[20].objects, WOODSMAN);	/* laser " */
 			setbit(location[13].objects, DARK);	/* amulet " */

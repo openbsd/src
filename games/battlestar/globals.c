@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.2 1997/06/30 19:56:36 kstailey Exp $	*/
+/*	$OpenBSD: globals.c,v 1.3 1997/08/24 21:55:09 deraadt Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char rcsid[] = "$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 int WEIGHT = MAXWEIGHT;
 int CUMBER = MAXCUMBER;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayfile.c,v 1.2 1997/06/30 19:56:34 kstailey Exp $	*/
+/*	$OpenBSD: dayfile.c,v 1.3 1997/08/24 21:55:06 deraadt Exp $	*/
 /*	$NetBSD: dayfile.c,v 1.3 1995/03/21 15:07:18 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char rcsid[] = "$NetBSD: dayfile.c,v 1.3 1995/03/21 15:07:18 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
 struct room dayfile[] = {
 	{ 0 },
@@ -187,7 +187,7 @@ face downward on the carpet clutching his chest.*\n\
 The hallway leads -.**\n" },
 	{ "You are in the dining hall.",
 	0, 30, 31, 23, 0, 0, 0, 0,
-"This was the seen of a mass suicide. Hundreds of ambassadors and assorted\n\
+"This was the scene of a mass suicide. Hundreds of ambassadors and assorted\n\
 dignitaries sit slumped over their breakfast cereal. I suppose the news\n\
 of the cylon attack killed them. There is a strange chill in this room.  I\n\
 would not linger here. * The kitchen is +. Entrances + and +.\n" },
@@ -452,7 +452,7 @@ outcroppings of lava to land. There is a nicer beach ***+.\n" },
 	{ "You are lost in a sea of fog.",
 	97, 104, 97, 97, 97, 1, 0, 1,
 "What have you gotten us into?\n\
-I cant see a thing! ****\n" },
+I can't see a thing! ****\n" },
 	{ "You are on a gravel wash.",
 	125, 126, 127, 128, 84, 0, 0, 0,
 "The sound of cascading water is the background for a diluted chorus of \n\
@@ -537,7 +537,7 @@ impossible to climb down to a small cave entrance below.  Only at rare\n\
 minus tides would it be possible to enter.***  The beach is better +.\n" },
 	{ "You are on the coast road.",
 	158, 161, 162, 91, 79, 0, 0, 0,
-"The road is beginning to turn inland.* I can here the surf +. The road\n\
+"The road is beginning to turn inland.* I can hear the surf +. The road\n\
 continues +.*\n" },
 	{ "The road winds deeper into the trees.",
 	163, 142, 91, 164, 79, 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.2 1997/06/30 19:56:41 kstailey Exp $	*/
+/*	$OpenBSD: room.c,v 1.3 1997/08/24 21:55:13 deraadt Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -42,8 +42,9 @@ static char rcsid[] = "$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+void
 writedes()
 {
 	int compass;
@@ -64,6 +65,7 @@ writedes()
 	}
 }
 
+void
 printobjs()
 {
 	register unsigned int *p = location[position].objects;
@@ -75,6 +77,7 @@ printobjs()
 			puts(objdes[n]);
 }
 
+void
 whichway(here)
 struct room here;
 {
@@ -172,6 +175,7 @@ char option;
       }
 }
 
+void
 newway(thisway)
 int thisway;
 {

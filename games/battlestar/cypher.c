@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.2 1997/06/30 19:56:33 kstailey Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.3 1997/08/24 21:55:05 deraadt Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -42,8 +42,9 @@ static char rcsid[] = "$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+int
 cypher()
 {
 	register int n;
@@ -102,7 +103,7 @@ cypher()
 			 case SHOOT:
 				if (wordnumber < wordcount && wordvalue[wordnumber+1] == EVERYTHING){
 					for (n=0; n < NUMOFOBJECTS; n++)
-						if (testbit(location[position].objects,n) && *objsht[n]){
+						if (testbit(location[position].objects,n) && objsht[n]){
 							wordvalue[wordnumber+1] = n;
 							wordnumber = shoot();
 						}
@@ -116,8 +117,11 @@ cypher()
 			 case TAKE:
 				if (wordnumber < wordcount && wordvalue[wordnumber+1] == EVERYTHING){
 					for (n=0; n < NUMOFOBJECTS; n++)
-						if (testbit(location[position].objects,n) && *objsht[n]){
+						if (testbit(location[position].objects,n) && objsht[n]){
 							wordvalue[wordnumber+1] = n;
+							wordtype[wordnumber+1] = OBJECT;
+							if ((n == AMULET) || (n == MEDALION) || (n == TALISMAN) || (n == MAN) || (n == TIMER) || (n == NATIVE))
+								wordtype[wordnumber+1] = NOUNS;
 							wordnumber = take(location[position].objects);
 						}
 				wordnumber++;
@@ -148,7 +152,7 @@ cypher()
 				if (wordnumber < wordcount && wordvalue[wordnumber+1] == EVERYTHING){
 					for (n=0; n < NUMOFOBJECTS; n++)
 						if (testbit(inven,n) ||
-						  testbit(location[position].objects, n) && *objsht[n]){
+						  testbit(location[position].objects, n) && objsht[n]){
 							wordvalue[wordnumber+1] = n;
 							wordnumber = throw(wordvalue[wordnumber] == KICK ? "Kicked" : "Thrown");
 						}
@@ -190,7 +194,7 @@ cypher()
 
 				if (wordnumber < wordcount && wordvalue[wordnumber+1] == EVERYTHING){
 					for (n=0; n < NUMOFOBJECTS; n++)
-						if (testbit(location[position].objects,n) && *objsht[n]){
+						if (testbit(location[position].objects,n) && objsht[n]){
 							wordvalue[wordnumber+1] = n;
 							wordnumber = puton();
 						}
@@ -290,10 +294,10 @@ cypher()
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
 					sscanf(buffer,"%d", &position);
-				printf("Time (was %d) = ",time);
+				printf("Time (was %d) = ",btime);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
-					sscanf(buffer,"%d", &time);
+					sscanf(buffer,"%d", &btime);
 				printf("Fuel (was %d) = ",fuel);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
@@ -310,10 +314,10 @@ cypher()
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
 					sscanf(buffer,"%d",&WEIGHT);
-				printf("Clock (was %d) = ",clock);
+				printf("Clock (was %d) = ",bclock);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n')
-					sscanf(buffer,"%d",&clock);
+					sscanf(buffer,"%d",&bclock);
 				printf("Wizard (was %d, %d) = ",wiz, tempwiz);
 				fgets(buffer,10,stdin);
 				if (*buffer != '\n'){
@@ -331,7 +335,7 @@ cypher()
 			 case SCORE:
 				printf("\tPLEASURE\tPOWER\t\tEGO\n");
 				printf("\t%3d\t\t%3d\t\t%3d\n\n",pleasure,power,ego);
-				printf("This gives you the rating of %s in %d turns.\n",rate(),time);
+				printf("This gives you the rating of %s in %d turns.\n",rate(),btime);
 				printf("You have visited %d out of %d rooms this run (%d%%).\n",card(beenthere,NUMOFROOMS),NUMOFROOMS,card(beenthere,NUMOFROOMS)*100/NUMOFROOMS);
 				break;
 
