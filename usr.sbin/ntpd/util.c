@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2004/07/05 07:46:16 henning Exp $ */
+/*	$OpenBSD: util.c,v 1.4 2004/07/05 19:53:21 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -36,7 +36,7 @@ void
 d_to_tv(double d, struct timeval *tv)
 {
 	tv->tv_sec = (long)d;
-	tv->tv_usec = (d - tv->tv_sec) * 1000;
+	tv->tv_usec = (d - tv->tv_sec) * 1000000;
 }
 
 double
