@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.2 1996/06/23 14:32:42 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.3 1996/09/02 12:19:31 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.2 1996/06/23 14:32:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.3 1996/09/02 12:19:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,11 @@ loop()
 
 static jmp_buf alarmbuf;
 
+static char *restricted_environ[] = {
+	"PATH=" _PATH_STDPATH,
+	NULL
+};
+
 void
 timewarn(timeleft)
 	int timeleft;
@@ -283,6 +288,7 @@ timewarn(timeleft)
 
 	/* undoc -n option to wall suppresses normal wall banner */
 	(void)snprintf(wcmd, sizeof(wcmd), "%s -n", _PATH_WALL);
+	environ = restricted_environ;
 	if (!(pf = popen(wcmd, "w"))) {
 		syslog(LOG_ERR, "shutdown: can't find %s: %m", _PATH_WALL);
 		return;
