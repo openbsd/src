@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.26 2000/11/16 19:00:15 aaron Exp $
+$OpenBSD: usbdevs,v 1.27 2000/11/20 07:34:51 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.127 2000/11/15 14:36:09 augustss Exp $ */
 
 /*
@@ -510,6 +510,7 @@ product INSYSTEM USBCABLE	0x081a	USB cable
 
 /* Intel products */
 product INTEL TESTBOARD		0x9890	82930 test board
+product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
 
 /* I/O DATA products */
 product IODATA USBETTX		0x0904	USB ETTX

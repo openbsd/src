@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.52 2000/04/18 05:53:17 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.53 2000/11/20 07:34:51 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ scsi_probe_bus(bus, target, lun)
 	}
 
 	if (lun == -1) {
-		maxlun = 7;
+		maxlun = scsi->adapter_link->maxlun;
 		minlun = 0;
 	} else {
 		if (lun < 0 || lun > 7)
@@ -810,6 +810,7 @@ scsi_probedev(scsi, target, lun)
 	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
 	sc_link->scsi_version = inqbuf.version;
+	sc_link->maxlun = 7;
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		scsi->moreluns |= (1 << target);
