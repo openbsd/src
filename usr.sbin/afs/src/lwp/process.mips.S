@@ -28,7 +28,7 @@
 #ifdef HAVE_PIC
 	.option	pic2
 
-#if defined(HAVE_MACHINE_REGDEF_H)
+#if defined(HAVE_MACHINE_REGDEF_H) || defined(__OpenBSD__)
 #include <machine/regdef.h>
 #elif defined(HAVE_REGDEF_H)
 #include <regdef.h>
