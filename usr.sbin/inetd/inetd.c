@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.71 2000/11/21 07:23:24 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.72 2001/01/12 16:34:03 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.71 2000/11/21 07:23:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.72 2001/01/12 16:34:03 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -175,15 +175,18 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.71 2000/11/21 07:23:24 deraadt Exp 
 
 #define	SIGBLOCK	(sigmask(SIGCHLD)|sigmask(SIGHUP)|sigmask(SIGALRM))
 
-
 void	config __P((int));
-void	reapchild __P((int));
+void	doconfig __P((void));
+void	reap __P((int));
+void	doreap __P((void));
 void	retry __P((int));
+void	doretry __P((void));
 void	goaway __P((int));
 
 int	debug = 0;
 int	nsock, maxsock;
-fd_set	allsock;
+fd_set	*allsockp;
+int	allsockn;
 int	toomany = TOOMANY;
 int	options;
 int	timingout;
@@ -282,6 +285,10 @@ struct biltin {
 	{ 0 }
 };
 
+volatile int wantretry;
+volatile int wantconfig;
+volatile int wantreap;
+
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
 char	**Argv;
@@ -289,6 +296,26 @@ char 	*LastArg;
 char	*progname;
 
 void logpid __P((void));
+
+void
+fd_grow(fd_set **fdsp, int *bytes, int fd)
+{
+	caddr_t new;
+	int newbytes;
+
+	newbytes = howmany(fd+1, NFDBITS) * sizeof(fd_mask);
+	if (newbytes > *bytes) {
+		newbytes *= 2;			/* optimism */
+		new = realloc(*fdsp, newbytes);
+		if (new == NULL) {
+			syslog(LOG_ERR, "Out of memory.");
+			exit(-1);
+		}
+		memset(new + *bytes, 0, newbytes - *bytes);
+		*fdsp = (fd_set *)new;
+		*bytes = newbytes;
+	}
+}
 
 int
 main(argc, argv, envp)
@@ -305,6 +332,8 @@ main(argc, argv, envp)
 	int ch, dofork;
 	pid_t pid;
 	char buf[50];
+	fd_set *readablep = NULL;
+	int readablen = 0;
 
 	Argv = argv;
 	if (envp == 0 || *envp == 0)
@@ -389,10 +418,10 @@ main(argc, argv, envp)
 	sigaddset(&sa.sa_mask, SIGHUP);
 	sa.sa_handler = retry;
 	sigaction(SIGALRM, &sa, NULL);
-	config(SIGHUP);
+	doconfig();
 	sa.sa_handler = config;
 	sigaction(SIGHUP, &sa, NULL);
-	sa.sa_handler = reapchild;
+	sa.sa_handler = reap;
 	sigaction(SIGCHLD, &sa, NULL);
 	sa.sa_handler = goaway;
 	sigaction(SIGTERM, &sa, NULL);
@@ -414,7 +443,6 @@ main(argc, argv, envp)
 
 	for (;;) {
 	    int n, ctrl = -1;
-	    fd_set readable;
 
 	    if (nsock == 0) {
 		(void) sigblock(SIGBLOCK);
@@ -422,16 +450,40 @@ main(argc, argv, envp)
 		    sigpause(0L);
 		(void) sigsetmask(0L);
 	    }
-	    readable = allsock;
-	    if ((n = select(maxsock + 1, &readable, NULL, NULL, NULL)) <= 0) {
+	    
+	    if (readablen != allsockn) {
+		if (readablep)
+		    free(readablep);
+		readablep = (fd_set *)calloc(allsockn, 1);
+		if (readablep == NULL) {
+		    syslog(LOG_ERR, "Out of memory.");
+		    exit(-1);
+		}
+		readablen = allsockn;
+	    }
+	    bcopy(allsockp, readablep, allsockn);
+
+	    if ((n = select(maxsock + 1, readablep, NULL, NULL, NULL)) <= 0) {
 		    if (n < 0 && errno != EINTR) {
 			syslog(LOG_WARNING, "select: %m");
 			sleep(1);
 		    }
+		    if (wantretry) {
+			doretry();
+			wantretry = 0;
+		    }
+		    if (wantconfig) {
+			doconfig();
+			wantconfig = 0;
+		    }
+		    if (wantreap) {
+			doreap();
+			wantreap = 0;
+		    }
 		    continue;
 	    }
 	    for (sep = servtab; n && sep; sep = sep->se_next)
-	    if (sep->se_fd != -1 && FD_ISSET(sep->se_fd, &readable)) {
+	    if (sep->se_fd != -1 && FD_ISSET(sep->se_fd, readablep)) {
 		n--;
 		if (debug)
 			fprintf(stderr, "someone wants %s\n", sep->se_service);
@@ -500,7 +552,7 @@ main(argc, argv, envp)
 					if (!sep->se_wait &&
 					    sep->se_socktype == SOCK_STREAM)
 						close(ctrl);
-					FD_CLR(sep->se_fd, &allsock);
+					FD_CLR(sep->se_fd, allsockp);
 					(void) close(sep->se_fd);
 					sep->se_fd = -1;
 					sep->se_count = 0;
@@ -525,7 +577,7 @@ main(argc, argv, envp)
 		}
 		if (pid && sep->se_wait) {
 			sep->se_wait = pid;
-			FD_CLR(sep->se_fd, &allsock);
+			FD_CLR(sep->se_fd, allsockp);
 			nsock--;
 		}
 		sigsetmask(0L);
@@ -655,12 +707,20 @@ bad:
 }
 
 void
-reapchild(sig)
-	int sig;
+reap(int sig)
+{
+	wantreap = 1;
+}
+
+void
+doreap(void)
 {
 	pid_t pid;
 	int save_errno = errno, status;
 	register struct servtab *sep;
+
+	if (debug)
+		fprintf(stderr, "reaping asked for\n");
 
 	for (;;) {
 		pid = wait3(&status, WNOHANG, NULL);
@@ -679,7 +739,8 @@ reapchild(sig)
 					    "%s: exit signal 0x%x",
 					    sep->se_server, WTERMSIG(status));
 				sep->se_wait = 1;
-				FD_SET(sep->se_fd, &allsock);
+				fd_grow(&allsockp, &allsockn, sep->se_fd);
+				FD_SET(sep->se_fd, allsockp);
 				nsock++;
 				if (debug)
 					fprintf(stderr, "restored %s, fd %d\n",
@@ -702,8 +763,13 @@ struct servtab *enter __P((struct servtab *));
 int matchconf __P((struct servtab *, struct servtab *));
 
 void
-config(sig)
-	int sig;
+config(int sig)
+{
+	wantconfig = 1;
+}
+
+void
+doconfig(void)
 {
 	register struct servtab *sep, *cp, **sepp;
 	int omask;
@@ -817,7 +883,7 @@ config(sig)
 				if (port != sep->se_ctrladdr_in.sin_port) {
 					sep->se_ctrladdr_in.sin_port = port;
 					if (sep->se_fd != -1) {
-						FD_CLR(sep->se_fd, &allsock);
+						FD_CLR(sep->se_fd, allsockp);
 						nsock--;
 						(void) close(sep->se_fd);
 					}
@@ -872,7 +938,7 @@ config(sig)
 				if (port != sep->se_ctrladdr_in6.sin6_port) {
 					sep->se_ctrladdr_in6.sin6_port = port;
 					if (sep->se_fd != -1) {
-						FD_CLR(sep->se_fd, &allsock);
+						FD_CLR(sep->se_fd, allsockp);
 						nsock--;
 						(void) close(sep->se_fd);
 					}
@@ -909,7 +975,7 @@ config(sig)
 		}
 		*sepp = sep->se_next;
 		if (sep->se_fd != -1) {
-			FD_CLR(sep->se_fd, &allsock);
+			FD_CLR(sep->se_fd, allsockp);
 			nsock--;
 			(void) close(sep->se_fd);
 		}
@@ -926,8 +992,13 @@ config(sig)
 }
 
 void
-retry(sig)
-	int sig;
+retry(int sig)
+{
+	wantretry = 1;
+}
+
+void
+doretry(void)
 {
 	register struct servtab *sep;
 
@@ -1039,7 +1110,8 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (sep->se_socktype == SOCK_STREAM)
 		listen(sep->se_fd, 10);
 
-	FD_SET(sep->se_fd, &allsock);
+	fd_grow(&allsockp, &allsockn, sep->se_fd);
+	FD_SET(sep->se_fd, allsockp);
 	nsock++;
 	if (sep->se_fd > maxsock) {
 		maxsock = sep->se_fd;
