@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.4 1996/08/10 21:37:43 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.5 1996/09/21 03:47:13 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.13 1996/08/04 06:03:52 scottr Exp $	*/
 
 /*
@@ -44,8 +44,10 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
-#include <machine/grfioctl.h>
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/grfioctl.h>
+#include <machine/viareg.h>
 
 #include "nubus.h"
 #include "grfvar.h"
@@ -61,6 +63,8 @@ static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
 static int	grfiv_match __P((struct device *, void *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
+static void	grfiv_q700intr __P((void *client_data, int slot));
+
 struct cfdriver intvid_cd = {
 	NULL, "intvid", DV_DULL
 };
@@ -69,15 +73,36 @@ struct cfattach intvid_ca = {
 	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
 };
 
+static void
+grfiv_q700intr(client_data, slot)
+	void *client_data;
+	int slot;
+{
+	long	*addr;
+
+	addr = (long *) ((char *) client_data + 0x10c);
+	*addr = 0;
+}
+
 static int
 grfiv_match(pdp, match, auxp)
 	struct device	*pdp;
 	void	*match, *auxp;
 {
+	char		*addr = NULL;
 	static int	internal_video_found = 0;
 
 	if (internal_video_found || (mac68k_vidlog == 0)) {
 		return 0;
+	}
+
+	switch (mac68k_machine.machineid) {
+	case MACH_MACQ700:
+		addr = bus_mapin(BUS_NUBUS, 0xf9800000, 0x1000);
+		add_nubus_intr(15, grfiv_q700intr, addr);
+		break;
+	default:
+		break;
 	}
 
 	return 1;
