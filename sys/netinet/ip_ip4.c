@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.15 1997/11/04 09:11:14 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.16 1998/03/18 10:51:36 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -65,7 +65,6 @@
 #include <dev/rndvar.h>
 #include <sys/syslog.h>
 
-void	ip4_input __P((struct mbuf *, int));
 
 /*
  * ip4_input gets called when we receive an encapsulated packet,
@@ -75,11 +74,23 @@ void	ip4_input __P((struct mbuf *, int));
  */
 
 void
-ip4_input(register struct mbuf *m, int iphlen)
+#if __STDC__
+ip4_input(struct mbuf *m, ...)
+#else
+ip4_input(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
+    int iphlen;
     struct ip *ipo, *ipi;
     struct ifqueue *ifq = NULL;
     int s;
+    va_list ap;
+
+    va_start(ap, m);
+    iphlen = va_arg(ap, int);
+    va_end(ap);
 
     ip4stat.ip4s_ipackets++;
 
