@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 1997/05/14 15:41:12 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 1997/07/06 19:42:39 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@
 # Terminal multiplexors:
 #	dca*	HP200/300 single port serial interface
 #	dcm*	HP200/300 4 port serial mux interface
+#	apci*	HP400 4 port serial mux interface
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -75,7 +76,7 @@ case $i in
 all)
 	sh MAKEDEV std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 hd0 hd1 hd2
 	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0 vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
+	sh MAKEDEV hil grf0 apci0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2 tun3 lkm random
 	sh MAKEDEV local
 	;;
@@ -83,7 +84,7 @@ all)
 raminst)
 	sh MAKEDEV std fd ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 rd0 rd1 pty0
-	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1
+	sh MAKEDEV hil grf0 apci0 ite0 dca0 dcm0 dcm1
 	sh MAKEDEV bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
@@ -307,6 +308,21 @@ dcm*)
 	;;
 	*)
 		echo bad unit for dcm in: $i
+		;;
+	esac
+	;;
+
+apci*)
+	# There exists only one Frodo ASIC per HP9000/400 SPU.
+	unit=`expr $i : 'apci\(.*\)'`
+	case $unit in
+	0)
+		for i in 0 1 2 3; do
+			rm -f ttya${i}; mknod ttya${i} c 35 ${i};
+		done
+		;;
+	*)
+		echo bad unit for apci in: $i
 		;;
 	esac
 	;;
