@@ -175,7 +175,7 @@ struct cdevsw xfs_dev = {
     xfs_devioctl,
     (dev_type_stop((*))) enodev,
     0,
-    xfs_devselect,
+    xfs_devpoll,
     (dev_type_mmap((*))) enodev,
     0
 };
