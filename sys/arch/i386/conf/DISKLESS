@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.9 1996/06/16 11:11:06 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.10 1996/06/24 17:07:30 deraadt Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -77,7 +77,6 @@ options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 
 config		bsd	root on nfs swap on nfs
-#options	GENERIC
 
 mainbus0 at root
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.13 1996/05/27 08:04:52 deraadt Exp $
+#	$OpenBSD: Makefile.i386,v 1.14 1996/06/24 17:07:34 deraadt Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -129,7 +129,7 @@ clean::
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
 	    ${I386}/i386/Locore.c ${CFILES} ${I386}/i386/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'

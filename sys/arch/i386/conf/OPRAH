@@ -69,7 +69,6 @@ options		UNION		# union file system
 options		INET		# IP + ICMP + TCP + UDP
 
 config		bsd	swap generic
-options		GENERIC
 
 mainbus0	at root
 isa0	at mainbus0

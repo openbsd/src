@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 1996/06/23 19:59:41 maja Exp $
+#	$OpenBSD: GENERIC,v 1.24 1996/06/24 17:07:32 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -28,7 +28,7 @@ options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options		COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
-#options	BOOT_CONFIG	# add support for boot -c
+options		BOOT_CONFIG	# add support for boot -c
 
 maxusers	32		# estimated number of users
 
