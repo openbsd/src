@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.51 2002/07/05 13:45:21 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.52 2002/10/20 16:46:27 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1637,6 +1637,7 @@ void dc_attach(sc)
 		break;
 	case DC_TYPE_DM9102:
 	case DC_TYPE_21143:
+	case DC_TYPE_21145:
 	case DC_TYPE_ASIX:
 		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr,	
 		    DC_EE_NODEADDR, 3, 0);
@@ -1759,6 +1760,8 @@ hasmac:
 		error = ENXIO;
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else if (sc->dc_type == DC_TYPE_21145) {
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.26 2002/06/11 18:28:30 aaron Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.27 2002/10/20 16:46:27 henning Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -84,6 +84,7 @@
 #define DC_TYPE_PNIC		0xA	/* 82c168/82c169 PNIC I */
 #define DC_TYPE_XIRCOM		0xB	/* Xircom X3201 */
 #define DC_TYPE_CONEXANT	0xC	/* Conexant LANfinity RS7112 */
+#define DC_TYPE_21145		0xD	/* Intel 21145 */
 
 #define DC_IS_MACRONIX(x)			\
 	(x->dc_type == DC_TYPE_98713 ||		\
@@ -94,7 +95,10 @@
 	(x->dc_type == DC_TYPE_AL981 ||		\
 	 x->dc_type == DC_TYPE_AN983)
 
-#define DC_IS_INTEL(x)		(x->dc_type == DC_TYPE_21143)
+#define DC_IS_INTEL(x)				\
+	(x->dc_type == DC_TYPE_21143 ||		\
+	 x->dc_type == DC_TYPE_21145)
+
 #define DC_IS_ASIX(x)		(x->dc_type == DC_TYPE_ASIX)
 #define DC_IS_COMET(x)		(x->dc_type == DC_TYPE_AL981)
 #define DC_IS_CENTAUR(x)	(x->dc_type == DC_TYPE_AN983)

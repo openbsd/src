@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.33 2002/06/09 05:49:35 art Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.34 2002/10/20 16:46:28 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -100,6 +100,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN1217 },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242 },
 	{ PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_RS7112 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21145 },
 	{ 0, 0 }
 };
 
@@ -299,6 +300,15 @@ void dc_pci_attach(parent, self, aux)
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		break;
+	case PCI_VENDOR_INTEL:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_21145) {
+			found = 1;
+			sc->dc_type = DC_TYPE_21145;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_REDUCED_MII_POLL;
+			dc_eeprom_width(sc);
+			dc_read_srom(sc, sc->dc_romwidth);
+		}
 	case PCI_VENDOR_DAVICOM:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9100 ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102) {
