@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailer.conf.5,v 1.2 2000/03/19 17:57:07 aaron Exp $
+.\"	$OpenBSD: mailer.conf.5,v 1.3 2000/06/11 21:03:40 millert Exp $
 .\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
@@ -48,7 +48,7 @@ The first member of each pair is the name of a program invoking
 which is typically a symbolic link to
 .Pa /usr/sbin/sendmail .
 (On a typical system,
-.Xr newaliases 1
+.Xr newaliases 8
 and
 .Xr mailq 1
 would be set up this way.)
@@ -82,8 +82,8 @@ newaliases	/usr/local/libexec/postfix/sendmail
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 1 ,
-.Xr newaliases 1 ,
 .Xr mailwrapper 8 ,
+.Xr newaliases 8 ,
 .Xr sendmail 8
 .Sh AUTHORS
 Perry E. Metzger <perry@piermont.com>
