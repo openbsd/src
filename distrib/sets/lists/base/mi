@@ -1859,7 +1859,6 @@
 ./usr/share/sendmail/feature/local_procmail.m4
 ./usr/share/sendmail/feature/loose_relay_check.m4
 ./usr/share/sendmail/feature/mailertable.m4
-./usr/share/sendmail/feature/mailnametable.m4
 ./usr/share/sendmail/feature/masquerade_entire_domain.m4
 ./usr/share/sendmail/feature/masquerade_envelope.m4
 ./usr/share/sendmail/feature/no_default_msa.m4
