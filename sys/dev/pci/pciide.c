@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.41 2001/01/18 22:09:12 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.42 2001/01/22 23:09:05 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -184,6 +184,7 @@ struct pciide_softc {
 		int		hw_ok;		/* hardware mapped & OK? */
 		int		compat;		/* is it compat? */
 		void		*ih;		/* compat or pci handle */
+		bus_space_handle_t ctl_baseioh;	/* ctrl regs blk, native mode */
 		/* DMA tables and DMA map for xfer, for each drive */
 		struct pciide_dma_maps {
 			bus_dmamap_t    dmamap_table;
@@ -684,10 +685,23 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &wdc_cp->ctl_iot, &wdc_cp->ctl_ioh, NULL, ctlsizep) != 0) {
+	    &wdc_cp->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep) != 0) {
 		printf("%s: couldn't map %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
+		return 0;
+	}
+	/*
+	 * In native mode, 4 bytes of I/O space are mapped for the control
+	 * register, the control register is at offset 2. Pass the generic
+	 * code a handle for only one byte at the right offset.
+	 */
+	if (bus_space_subregion(wdc_cp->ctl_iot, cp->ctl_baseioh, 2, 1,
+	    &wdc_cp->ctl_ioh) != 0) {
+		printf("%s: unable to subregion %s channel ctl regs\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
+		bus_space_unmap(wdc_cp->cmd_iot, cp->ctl_baseioh, *ctlsizep);
 		return 0;
 	}
 	return (1);
