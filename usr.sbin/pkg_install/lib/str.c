@@ -1,7 +1,7 @@
-/*	$OpenBSD: str.c,v 1.8 2003/04/05 10:42:19 avsm Exp $	*/
+/*	$OpenBSD: str.c,v 1.9 2003/04/05 16:06:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: str.c,v 1.8 2003/04/05 10:42:19 avsm Exp $";
+static const char *rcsid = "$OpenBSD: str.c,v 1.9 2003/04/05 16:06:01 avsm Exp $";
 #endif
 
 /*
@@ -66,10 +66,9 @@ strconcat(char *s1, char *s2)
 {
     static char tmp[FILENAME_MAX];
 
-    tmp[0] = '\0';
-    strncpy(tmp, s1 ? s1 : s2, FILENAME_MAX);
+    strlcpy(tmp, s1 ? s1 : s2, sizeof(tmp));
     if (s1 && s2)
-	strncat(tmp, s2, FILENAME_MAX - strlen(tmp));
+	strlcat(tmp, s2, sizeof(tmp));
     return tmp;
 }
 
