@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.2 1996/06/11 12:53:53 deraadt Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.3 1996/10/26 05:11:05 millert Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.7 1996/06/08 19:48:44 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: v7.local.c,v 1.2 1996/06/11 12:53:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: v7.local.c,v 1.3 1996/10/26 05:11:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,8 @@ username()
 	uid_t uid;
 
 	if ((np = getenv("USER")) != NOSTR)
+		return np;
+	if ((np = getenv("LOGNAME")) != NOSTR)
 		return np;
 	if ((np = getname(uid = getuid())) != NOSTR)
 		return np;
