@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.2 2004/03/06 03:59:29 krw Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -106,33 +106,24 @@ static const struct mpt_pci_product {
 	pci_vendor_id_t		mpp_vendor;
 	pci_product_id_t	mpp_product;
 	int			mpp_flags;
-	const char		*mpp_name;
 } mpt_pci_products[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1030,
-	  MPP_F_DUAL,
-	  "LSI Logic 53c1030 Ultra320 SCSI" },
+	  MPP_F_DUAL },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC909,
-	  MPP_F_FC,
-	  "LSI Logic FC909 FC Adapter" },
+	  MPP_F_FC },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC909A,
-	  MPP_F_FC,
-	  "LSI Logic FC909A FC Adapter" },
+	  MPP_F_FC },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC929,
-	  MPP_F_FC | MPP_F_DUAL,
-	  "LSI Logic FC929 FC Adapter" },
+	  MPP_F_FC | MPP_F_DUAL },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC929_1,
-	  MPP_F_FC | MPP_F_DUAL,
-	  "LSI Logic FC929 FC Adapter" },
+	  MPP_F_FC | MPP_F_DUAL },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919,
-	  MPP_F_FC,
-	  "LSI Logic FC919 FC Adapter" },
+	  MPP_F_FC },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919_1,
-	  MPP_F_FC,
-	  "LSI Logic FC919 FC Adapter" },
+	  MPP_F_FC },
 
 	{ 0,			0,
-	  0,
-	  NULL },
+	  0 },
 };
 
 static const struct mpt_pci_product *
@@ -140,7 +131,7 @@ mpt_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct mpt_pci_product *mpp;
 
-	for (mpp = mpt_pci_products; mpp->mpp_name != NULL; mpp++) {
+	for (mpp = mpt_pci_products; mpp->mpp_vendor != 0; mpp++) {
 		if (PCI_VENDOR(pa->pa_id) == mpp->mpp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == mpp->mpp_product)
 			return (mpp);
@@ -179,13 +170,6 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		panic("mpt_pci_attach");
 	}
-
-	if (mpp->mpp_flags & MPP_F_FC) {
-		mpt->is_fc = 1;
-		printf(": Fibre Channel controller\n");
-	} else
-		printf(": SCSI controller\n");
-	printf(": %s\n", mpp->mpp_name);
 
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_tag = pa->pa_tag;
@@ -246,15 +230,13 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, mpt_intr, mpt,
 	    mpt->mpt_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    mpt->mpt_dev.dv_xname);
+		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", mpt->mpt_dev.dv_xname,
-	    intrstr);
+	printf(": %s\n", intrstr ? intrstr : "?");
 
 	/* Disable interrupts on the part. */
 	mpt_disable_ints(mpt);
