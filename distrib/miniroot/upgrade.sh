@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.60 2005/03/26 05:08:26 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.61 2005/04/02 14:27:08 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -61,7 +61,7 @@ done
 ROOTDEV=$resp
 
 echo -n "Checking root filesystem (fsck -fp /dev/${ROOTDEV}) ... "
-if ! fsck -fp /dev/$ROOTDEV > /dev/null 2>&1; then
+if ! fsck -fp /dev/$ROOTDEV >/dev/null 2>&1; then
 	echo	"FAILED.\nYou must fsck ${ROOTDEV} manually."
 	exit
 fi
@@ -82,7 +82,7 @@ for _file in fstab hosts myname; do
 	fi
 	cp /mnt/etc/$_file /tmp/$_file
 done
-hostname $(< /tmp/myname)
+hostname $(</tmp/myname)
 
 ask_yn "Enable network using configuration stored on root filesystem?" yes
 [[ $resp == y ]] && enable_network
@@ -91,11 +91,11 @@ ask_yn "Enable network using configuration stored on root filesystem?" yes
 # configuration by hand.
 manual_net_cfg
 
-cat << __EOT
+cat <<__EOT
 
 The fstab is configured as follows:
 
-$(< /tmp/fstab)
+$(</tmp/fstab)
 
 For the $MODE, filesystems in the fstab will be automatically mounted if the
 'noauto' option is absent, and /sbin/mount_<fstype> is found, and the fstype is
