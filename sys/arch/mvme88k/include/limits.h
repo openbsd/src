@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.7 1999/02/09 06:36:26 smurph Exp $ */
+/*	$OpenBSD: limits.h,v 1.8 2000/07/31 20:06:03 millert Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	8.3 (Berkeley) 1/4/94
- *      $Id: limits.h,v 1.7 1999/02/09 06:36:26 smurph Exp $
+ *      $Id: limits.h,v 1.8 2000/07/31 20:06:03 millert Exp $
  */
 
 #ifndef _MACHINE_LIMITS_H_
@@ -84,6 +84,9 @@
 					/* max value for a quad_t */
 #define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
+#define ULLONG_MAX	(UQUAD_MAX)	/* max value for unsigned long long */
+#define LLONG_MAX	(QUAD_MAX)	/* max value for a signed long long */
+#define LLONG_MIN	(QUAD_MIN)	/* min value for a signed long long */
 
 #endif /* !_POSIX_SOURCE */
 #endif /* !_ANSI_SOURCE */
