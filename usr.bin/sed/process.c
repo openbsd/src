@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.4 1998/04/30 06:21:16 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.5 1999/06/06 15:42:24 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: process.c,v 1.4 1998/04/30 06:21:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: process.c,v 1.5 1999/06/06 15:42:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,6 +146,8 @@ redirect:
 				cspace(&PS, hs, hsl, REPLACE);
 				break;
 			case 'G':
+				if (hs == NULL)
+					cspace(&HS, "\n", 1, REPLACE);
 				cspace(&PS, hs, hsl, 0);
 				break;
 			case 'h':
