@@ -1001,7 +1001,8 @@ region_free(pm, smeg)
 int
 mmu_pagein(pm, va, prot)
 	register struct pmap *pm;
-	register int va, prot;
+	register int va;
+	vm_prot_t prot;
 {
 	register int *pte;
 	register struct mmuentry *me;
