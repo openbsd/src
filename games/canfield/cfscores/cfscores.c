@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.5 2000/07/23 21:49:07 pjanzen Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.6 2001/02/13 12:17:23 pjanzen Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cfscores.c,v 1.5 2000/07/23 21:49:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cfscores.c,v 1.6 2001/02/13 12:17:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,11 +146,29 @@ printuser(pw, printfail)
 			printf("%s has never played canfield.\n", pw->pw_name);
 		return;
 	}
+	i = strlen(pw->pw_name);
 	printf("*----------------------*\n");
-	if (total.worth >= 0)
-		printf("* Winnings for %-8s*\n", pw->pw_name);
-	else
-		printf("* Losses for %-10s*\n", pw->pw_name);
+	if (total.worth >= 0) {
+		if (i <= 8)
+			printf("* Winnings for %-8s*\n", pw->pw_name);
+		else {
+			printf("*     Winnings for     *\n");
+			if (i <= 20)
+				printf("* %20s *\n", pw->pw_name);
+			else
+				printf("%s\n", pw->pw_name);
+		}
+	} else {
+		if (i <= 10)
+			printf("* Losses for %-10s*\n", pw->pw_name);
+		else {
+			printf("*      Losses for      *\n");
+			if (i <= 20)
+				printf("* %20s *\n", pw->pw_name);
+			else
+				printf("%s\n", pw->pw_name);
+		}
+	}
 	printf("*======================*\n");
 	printf("|Costs           Total |\n");
 	printf("| Hands       %8ld |\n", total.hand);
