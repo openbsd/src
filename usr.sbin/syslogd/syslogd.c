@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.35 2000/08/17 22:00:32 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.36 2000/09/13 23:10:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.35 2000/08/17 22:00:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.36 2000/09/13 23:10:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ static char rcsid[] = "$OpenBSD: syslogd.c,v 1.35 2000/08/17 22:00:32 deraadt Ex
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -102,7 +103,7 @@ static char rcsid[] = "$OpenBSD: syslogd.c,v 1.35 2000/08/17 22:00:32 deraadt Ex
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
-#include <paths.h>
+#include <vis.h>
 
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
@@ -440,7 +441,7 @@ printline(hname, msg)
 	char *hname;
 	char *msg;
 {
-	int c, pri;
+	int pri;
 	char *p, *q, line[MAXLINE + 1];
 
 	/* test for special codes */
@@ -460,21 +461,12 @@ printline(hname, msg)
 	if (LOG_FAC(pri) == LOG_KERN)
 		pri = LOG_MAKEPRI(LOG_USER, LOG_PRI(pri));
 
-	q = line;
-
-	while ((c = *p++ & 0177) != '\0' &&
-	    q < &line[sizeof(line) - 1])
-		if (iscntrl(c))
-			if (c == '\n')
-				*q++ = ' ';
-			else if (c == '\t')
-				*q++ = '\t';
-			else {
-				*q++ = '^';
-				*q++ = c ^ 0100;
-			}
+	for (q = line; *p && q < &line[sizeof(line) - 4]; p++) {
+		if (*p == '\n')
+			*q++ = ' ';
 		else
-			*q++ = c;
+			q = vis(q, *p, 0, 0);
+	}
 	*q = '\0';
 
 	logmsg(pri, line, hname, 0);
@@ -508,11 +500,11 @@ printsys(msg)
 		}
 		if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 			pri = DEFSPRI;
+
 		q = lp;
-		while (*p != '\0' && (c = *p++) != '\n' &&
-		    q < &line[MAXLINE])
-			*q++ = c;
-		*q = '\0';
+		while (*p && (c = *p++) != '\n' && q < &line[sizeof(line) - 4])
+			q = vis(q, c, 0, 0);
+
 		logmsg(pri, line, LocalHostName, flags);
 	}
 }
