@@ -1,9 +1,10 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.3 1997/04/19 21:26:21 millert Exp $
+#	$Id: Makefile,v 1.4 1998/05/15 04:28:25 art Exp $
 
 PROG=	rshd
 SRCS=	rshd.c
 MAN=	rshd.8
+CFLAGS+= -Wall -Wno-unused
 
 .include <bsd.own.mk>
 

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.21 1998/02/03 23:39:32 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.22 1998/05/15 04:28:26 art Exp $";
 #endif /* not lint */
 
 /*
@@ -94,7 +94,13 @@ void	 usage __P((void));
 char	authbuf[sizeof(AUTH_DAT)];
 char	tickbuf[sizeof(KTEXT_ST)];
 int	doencrypt, use_kerberos, vacuous;
-Key_schedule	schedule;
+des_key_schedule schedule;
+#ifdef CRYPT
+int des_read __P((int, char *, int));
+int des_write __P((int, char *, int));
+void desrw_clear_key __P(());
+void desrw_set_key __P((des_cblock *, des_key_schedule *));
+#endif
 #else
 #define	OPTIONS	"alnL"
 #endif
@@ -179,6 +185,7 @@ main(argc, argv)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
 	doit(&from);
 	/* NOTREACHED */
+	return 0;
 }
 
 char	username[20] = "USER=";
@@ -214,8 +221,10 @@ doit(fromp)
 	struct		sockaddr_in	fromaddr;
 	int		rc;
 	long		authopts;
+#ifdef CRYPT
 	int		pv1[2], pv2[2];
 	fd_set		wready, writeto;
+#endif
 
 	fromaddr = *fromp;
 #endif
@@ -400,7 +409,7 @@ doit(fromp)
 				"rcmd", instance, &fromaddr,
 				&local_addr, kdata, "", schedule,
 				version);
-			desrw_set_key(kdata->session, schedule);
+			desrw_set_key(&kdata->session, &schedule);
 		} else
 #endif
 			rc = krb_recvauth(authopts, 0, ticket, "rcmd",
@@ -410,7 +419,7 @@ doit(fromp)
 				version);
 		if (rc != KSUCCESS) {
 			error("Kerberos authentication failure: %s\n",
-				  krb_err_txt[rc]);
+				  krb_get_err_text(rc));
 			exit(1);
 		}
 	} else
@@ -459,9 +468,9 @@ doit(fromp)
 	} else
 #endif
 	if (errorstr ||
-	    pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
+	    (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
 	    iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
-	    remuser, locuser) < 0) {
+	    remuser, locuser) < 0)) {
 		if (__rcmd_errstr)
 			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
