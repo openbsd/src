@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.67 2003/08/01 05:29:36 millert Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.68 2003/08/21 19:13:23 frantzen Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -611,6 +611,11 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		}
 	}
 
+	if (pfctl_load_fingerprints(dev, 0)) {
+		syslog(LOG_ERR, "unable to load kernel's OS fingerprints");
+		goto error;
+	}
+
 	memset(&pf, 0, sizeof(pf));
 	for (i = 0; i < PF_RULESET_MAX; ++i) {
 		memset(&pr[i], 0, sizeof(pr[i]));
@@ -863,3 +868,4 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	fprintf(stderr, "load anchor not supported from authpf\n");
 	return (1);
 }
+
