@@ -35,7 +35,7 @@
 .Dt GREP 1
 .Os
 .Sh NAME
-.Nm grep, egrep, fgrep. zgrep
+.Nm grep, egrep, fgrep, zgrep, zegrep, zfgrep
 .Nd file pattern searcher
 .Sh SYNOPSIS
 .Nm grep
@@ -73,8 +73,16 @@ utility is quick but can handle only fixed patterns consisting of one
 or more lines, allowing any of the pattern lines to match a portion of
 the input.
 The
-.Nm zgrep 
-utility acts like grep, but accepts input files compressed with the
+.Nm zgrep ,
+.Nm zegrep ,
+and
+.Nm zfgrep
+utilities acts like
+.Nm grep ,
+.Nm egrep ,
+and
+.Nm fgrep
+respectively but accepts input files compressed with the
 .Xr compress 1
 or
 .Xr gzip 1
@@ -84,36 +92,36 @@ The following options are available:
 .Pp
 .Bl -tag -width indent
 .It Fl A Ar num
-Print 
+Print
 .Ar num
 lines of trailing context after each match.
 .It Fl B Ar num
-Print 
-.Ar num 
+Print
+.Ar num
 lines of leading context before each match.
 .It Fl C
-Equivalent to 
+Equivalent to
 .Fl A
 .Ar 2
 .Fl B
 .Ar 2 .
 .It Fl E
-Force 
-.Nm grep 
-to behave as 
-.Nm egrep.
+Force
+.Nm grep
+to behave as
+.Nm egrep .
 .It Fl F
-Force 
+Force
 .Nm grep
-to behave as 
-.Nm fgrep.
+to behave as
+.Nm fgrep .
 .It Fl G
-Force 
+Force
 .Nm grep
-to behave as 
-.Nm grep.
+to behave as
+.Nm grep .
 .It Fl H
-If 
+If
 .Fl R
 is specified, follow symbolic links only if they were explictly listed
 on the command line.
@@ -125,13 +133,13 @@ If the standard input is searched, the pathname
 .Sq Fl
 is written.
 .It Fl P
-If 
+If
 .Fl R
 is specified, no symbolic links are followed.
 .It Fl R
 Recursively search subdirectories listed.
 .It Fl S
-If 
+If
 .Fl R
 is specified, all symbolic links are followed.
 .It Fl V
@@ -148,14 +156,15 @@ The block number on the disk in which a matched pattern is located is
 displayed in front of the respective matched line.
 .It Fl c
 Only a count of selected lines is written to standard output.
-.It Fl e Ar expression 
-Specify a pattern used during the search of the input. Multiple
+.It Fl e Ar expression
+Specify a pattern used during the search of the input.
+Multiple
 .Fl e
 options can be used to specify multiple patterns; an input line is
 selected if it matches any of the specified patterns.
-.It Fl f Ar pattern_file 
-The pattern is read from the specified file. Trailing newlines in the
-pattern file are ignored.
+.It Fl f Ar pattern_file
+The pattern is read from the specified file.
+Trailing newlines in the pattern file are ignored.
 .Pf ( Nm Egrep
 and
 .Nm fgrep
@@ -166,8 +175,9 @@ Never print filename headers with output lines.
 Perform case insensitive matching.
 .It Fl l
 Only the names of files containing selected lines are written to
-standard output. Pathnames are listed once per file searched. If the
-standard input is searched, the pathname
+standard output.
+Pathnames are listed once per file searched.
+If the standard input is searched, the pathname
 .Sq -
 is written.
 .It Fl n
@@ -186,7 +196,8 @@ Always print filename headers with output lines.
 .It Fl q
 Suppress normal output.
 .It Fl s
-Silent mode.  Nonexistent and unreadable files are ignored.
+Silent mode.
+Nonexistent and unreadable files are ignored.
 .It Fl v
 Selected lines are those
 .Em not
@@ -202,7 +213,7 @@ expression are considered to be matching lines.
 .Pp
 .El
 If no file arguments are specified, the standard input is used.
-.Pp
+.Sh RETURN VALUES
 The
 .Nm grep
 utility exits with one of the following values:
@@ -251,7 +262,7 @@ at the beginning of a line:
 .Pp
 .Dl grep '^\e.Pp'
 .Pp
-The apostrophes assure the entire expression is evaluated by
+The apostrophes ensure the entire expression is evaluated by
 .Nm grep
 instead of by the
 user's shell.
@@ -274,9 +285,9 @@ or 25.
 .Xr ed 1 ,
 .Xr ex 1 ,
 .Xr sed 1 ,
-.Xr re_format 7 ,
 .Xr regex 3 ,
-.Xr regexp 3
+.Xr regexp 3 ,
+.Xr re_format 7
 .Sh HISTORY
 The
 .Nm grep
