@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.20 2004/12/08 06:59:45 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.21 2005/01/11 21:07:19 martin Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -464,7 +464,7 @@ rbv_slot_ignore(void *client_data)
 }
 
 void
-via_shutdown()
+via_powerdown()
 {
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */

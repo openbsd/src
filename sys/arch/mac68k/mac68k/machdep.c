@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2004/12/02 22:00:31 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2005/01/11 21:07:19 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -554,7 +554,6 @@ initcpu()
 
 void doboot(void)
 	__attribute__((__noreturn__));
-void via_shutdown(void);
 
 /*
  * Set registers on exec.
@@ -670,7 +669,7 @@ haltsys:
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN) {
 			printf("\nAttempting to power down...\n");
-			via_shutdown();
+			via_powerdown();
 #ifndef MRG_ADB
 			/*
 			 * adb_poweroff() is available only when
