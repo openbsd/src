@@ -1,7 +1,6 @@
-#	$OpenBSD: CARTMAN,v 1.1 1998/03/18 01:05:03 angelos Exp $
-#	$NetBSD: ALPHA,v 1.30 1996/12/03 17:25:27 cgd Exp $
+#	$OpenBSD: CARTMAN,v 1.2 1998/03/18 01:33:28 angelos Exp $
 #
-# Alpha kernel with all the options you'd want, and more.
+# Sample configuration for PC164(SX) machines.
 
 machine	alpha
 option		SWAPPAGER, DEVPAGER
@@ -59,16 +58,11 @@ options		SYSVSEM
 
 # System V-like shared memory
 options		SYSVSHM
-#options	SHMMAXPGS=1024		# 1024 pages is the default
 
 # Loadable Kernel Modules
 options		LKM
 
-# Disable kernel security.
-#options	INSECURE
-
 # Misc. options
-options		EISAVERBOSE		# recognize "unknown" EISA devices
 #options	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 options		PCIVERBOSE		# recognize "unknown" PCI devices
@@ -89,18 +83,12 @@ cia*	at	mainbus?
 pci*	at	cia?
 
 # PCI devices
-#ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
-#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
-#le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
-#pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
 vga*	at	pci? dev ? function ?		# PCI VGA graphics
 #ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
-#tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 
 # ISA/EISA bus support
 isa*	at	sio?
