@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.49 1998/09/25 11:11:59 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.50 1998/09/28 06:16:30 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -95,6 +95,7 @@ fi
 # SunOS shell support functions
 if [ "$os" = "SunOS" ]
 then
+PATH=$PATH:/usr/etc # SunOS has chown in /usr/etc
 	add ()
 	{
 		expr $1 + $2
@@ -252,34 +253,42 @@ fd)
 	;;
 
 bwtwo*)
+	rm -f bwtwo$unit
 	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
 	;;
 
 cgtwo*)
+	rm -f bwtwo$unit
 	mknod cgtwo$unit	c 31 $unit; chmod 666 cgtwo$unit
 	;;
 
 cgthree*)
+	rm -f bwtwo$unit
 	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
 
 cgfour[0-9]*)
+	rm -f cgfour$unit
 	mknod cgfour$unit	c 39 $unit; chmod 666 cgfour$unit
 	;;
 
 cgsix*)
+	rm -f cgsix$unit
 	mknod cgsix$unit	c 67 $unit; chmod 666 cgsix$unit
 	;;
 
 cgeight*)
+	rm -f cgeight$unit
 	mknod cgeight$unit	c 64 $unit; chmod 666 cgeight$unit
 	;;
 
 cgfourteen*)
+	rm -f cgfourteen$unit
 	mknod cgfourteen$unit	c 99 $unit; chmod 666 cgfourteen$unit
 	;;
 
 tcx*)
+	rm -f cgfourteen$unit
 	mknod tcx$unit		c 109 $unit; chmod 666 tcx$unit
 	;;
 
@@ -473,6 +482,7 @@ vnd*)
 
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	rm -f rd${unit}*
 	mknod rd${unit}a b 17 `expr $unit '*' 16 + 0`
 	mknod rd${unit}c b 17 `expr $unit '*' 16 + 2`
 	mknod rrd${unit}a c 106 `expr $unit '*' 16 + 0`
