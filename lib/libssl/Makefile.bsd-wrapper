@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.14 2000/03/29 09:28:31 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.15 2000/03/29 15:44:34 millert Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -179,14 +179,14 @@ MANALL=
 .PATH: ${.CURDIR}/src/doc/crypto ${.CURDIR}/src/doc/ssl ${.CURDIR}/src/doc/apps
 .SUFFIXES: .pod
 .pod.cat3:
-	pod2man --section=3 --official --center='OpenBSD Reference Manual' \
-	    --release="OpenBSD `uname -r`" ${.ALLSRC} | \
-	    nroff -Tascii -man > ${.TARGET}
+	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
+	  --center='OpenBSD Reference Manual' --release="OpenBSD `uname -r`" \
+	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
 
 .pod.cat1:
-	pod2man --section=1 --official --center='OpenBSD Reference Manual' \
-	    --release="OpenBSD `uname -r`" ${.ALLSRC} | \
-	    nroff -Tascii -man > ${.TARGET}
+	( cd `dirname ${.ALLSRC}` && pod2man --section=1 --official \
+	  --center='OpenBSD Reference Manual' --release="OpenBSD `uname -r`" \
+	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
 
 
 .if exists(src-patent)
