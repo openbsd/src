@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshreg.h,v 1.1 2001/03/07 01:57:56 miod Exp $	*/
+/*	$OpenBSD: sshreg.h,v 1.2 2001/03/07 23:57:47 miod Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -293,7 +293,7 @@ typedef volatile ssh_regmap_t *ssh_regmap_p;
 #define	SSH_ISTAT_SIP		0x02	/* SCSI Interrupt pending */
 #define	SSH_ISTAT_DIP		0x01	/* DMA Interrupt pending */
 
-/* Chip test register 8 (ctest8)
+/* Chip test register 8 (ctest8) */
 
 #define	SSH_CTEST8_V		0xf0	/* Chip revision level */
 #define	SSH_CTEST8_FLF		0x08	/* Flush DMA FIFO */
