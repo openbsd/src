@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.18 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.19 2001/12/10 06:10:53 jason Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -293,7 +293,8 @@ route_output(m, va_alist)
 			genmask = rt->rt_genmask;
 			if (rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) {
 				if ((ifp = rt->rt_ifp) != NULL) {
-					ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
+					ifpaddr =
+					    TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
 					ifaaddr = rt->rt_ifa->ifa_addr;
 					if (ifp->if_flags & IFF_POINTOPOINT)
 						brdaddr = rt->rt_ifa->ifa_dstaddr;
@@ -728,7 +729,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 			int ncmd = cmd == RTM_ADD ? RTM_NEWADDR : RTM_DELADDR;
 
 			ifaaddr = sa = ifa->ifa_addr;
-			ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
+			ifpaddr = TAILQ_FIRST(&ifp->if_addrlist)->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
 			if ((m = rt_msg1(ncmd, &info)) == NULL)
@@ -782,7 +783,7 @@ sysctl_dumpentry(rn, v)
 	netmask = rt_mask(rt);
 	genmask = rt->rt_genmask;
 	if (rt->rt_ifp) {
-		ifpaddr = rt->rt_ifp->if_addrlist.tqh_first->ifa_addr;
+		ifpaddr = TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 		ifaaddr = rt->rt_ifa->ifa_addr;
 		if (rt->rt_ifp->if_flags & IFF_POINTOPOINT)
 			brdaddr = rt->rt_ifa->ifa_dstaddr;
@@ -816,10 +817,10 @@ sysctl_iflist(af, w)
 	int	len, error = 0;
 
 	bzero((caddr_t)&info, sizeof(info));
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		ifa = ifp->if_addrlist.tqh_first;
+		ifa = TAILQ_FIRST(&ifp->if_addrlist);
 		ifpaddr = ifa->ifa_addr;
 		len = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w);
 		ifpaddr = 0;
@@ -836,7 +837,8 @@ sysctl_iflist(af, w)
 				return (error);
 			w->w_where += len;
 		}
-		while ((ifa = ifa->ifa_list.tqe_next) != NULL) {
+		while ((ifa = TAILQ_NEXT(ifa, ifa_list)) !=
+		    TAILQ_END(&ifp->if_addrlist)) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			ifaaddr = ifa->ifa_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.26 2001/11/30 07:59:17 itojun Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.27 2001/12/10 06:10:53 jason Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -671,10 +671,9 @@ fddi_ifattach(ifp)
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 #else
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
 #endif
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
@@ -684,4 +683,5 @@ fddi_ifattach(ifp)
 			      LLADDR(sdl), ifp->if_addrlen);
 			break;
 		}
+	}
 }

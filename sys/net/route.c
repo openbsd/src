@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.25 2001/07/20 18:46:50 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.26 2001/12/10 06:10:53 jason Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ static int okaytoclone __P((u_int, int));
 static struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
-	return encif.if_addrlist.tqh_first;
+	return TAILQ_FIRST(&encif.if_addrlist);
 }
 
 #endif
@@ -250,7 +250,7 @@ rtalloc1(dst, report)
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			if (rt->rt_ifp != NULL) {
 				info.rti_info[RTAX_IFP] = 
-				    rt->rt_ifp->if_addrlist.tqh_first->ifa_addr;
+				    TAILQ_FIRST(&rt->rt_ifp->if_addrlist)->ifa_addr;
 				info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 			}
 			rt_missmsg(RTM_ADD, &info, rt->rt_flags, 0);
