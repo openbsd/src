@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.14 2003/07/25 06:18:44 jmc Exp $
+.\" $OpenBSD: gcc-local.1,v 1.15 2003/08/26 02:19:13 tedu Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -164,6 +164,11 @@ and
 used in the
 .Ox
 kernel.
+.It
+.Nm gcc
+does not store its version string in objects.
+This behavior can be restored with
+.Fl fident .
 .El
 .Sh ATTRIBUTES
 The
