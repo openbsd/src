@@ -1,7 +1,7 @@
-/*	$OpenBSD: skeyaudit.c,v 1.16 2003/04/28 20:58:35 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.17 2003/05/02 20:10:46 millert Exp $	*/
 
 /*
- * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
 #include <sys/param.h>
@@ -32,6 +36,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <login_cap.h>
 #include <paths.h>
@@ -54,7 +59,7 @@ main(int argc, char **argv)
 	char *name;
 	int ch, left, aflag, iflag, limit;
 
-	left = aflag = iflag = 0;
+	aflag = iflag = 0;
 	limit = 12;
 	while ((ch = getopt(argc, argv, "ail:")) != -1)
 		switch(ch) {
@@ -79,12 +84,27 @@ main(int argc, char **argv)
 			usage();
 	}
 
+	/*
+	 * Make sure STDIN_FILENO, STDOUT_FILENO, and STDERR_FILENO are open.
+	 * If not, open /dev/null in their place or bail.
+	 * If we are in interactive mode, STDOUT_FILENO *must* be open.
+	 */
+	for (ch = STDIN_FILENO; ch <= STDERR_FILENO; ch++) {
+		if (fcntl(ch, F_GETFL, &left) == -1 && errno == EBADF) {
+			if (ch == STDOUT_FILENO && iflag)
+				exit(1);	/* need stdout for -i */
+			if (open(_PATH_DEVNULL, O_RDWR, 0644) == -1)
+				exit(1);	/* just bail */
+		}
+	}
+
 	if (argc - optind > 0)
 		usage();
 
 	/* Need key.keyfile zero'd at the very least */
 	(void)memset(&key, 0, sizeof(key));
 
+	left = 0;
 	if (aflag) {
 		while ((ch = skeygetnext(&key)) == 0) {
 			left = key.n - 1;
@@ -92,6 +112,8 @@ main(int argc, char **argv)
 				continue;
 			if (left >= limit)
 				continue;
+			(void)fclose(key.keyfile);
+			key.keyfile = NULL;
 			notify(pw, left, iflag);
 		}
 		if (ch == -1)
@@ -160,9 +182,10 @@ pw->pw_name, hostname);
 	(void)fprintf(out,
 "Type \"skeyinit -s\" to reinitialize your sequence number.\n\n");
 
-	(void)fclose(out);
-	if (!interactive)
+	if (!interactive) {
+		(void)fclose(out);
 		(void)waitpid(pid, NULL, 0);
+	}
 }
 
 FILE *
