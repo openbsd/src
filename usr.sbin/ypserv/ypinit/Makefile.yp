@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.8 1997/04/20 10:00:22 maja Exp $
+#	$OpenBSD: Makefile.yp,v 1.9 1997/07/26 22:23:45 maja Exp $
 
 YPDBDIR=/var/yp
 DIR=/etc
@@ -7,12 +7,16 @@ NOPUSH=""
 #
 AWK=/usr/bin/awk
 CAT=/bin/cat
+CP=/bin/cp
+RM=/bin/rm
 CUT=/usr/bin/cut
 ECHO=/bin/echo
 MAKEDBM=/usr/sbin/makedbm
 SED=/usr/bin/sed
+SENDMAIL=/usr/sbin/sendmail
 STDHOSTS=/usr/sbin/stdhosts
 STDETHERS=/usr/sbin/stdethers
+MKALIAS=/usr/sbin/mkalias
 MKNETID=/usr/sbin/mknetid
 REVNETGROUP=/usr/sbin/revnetgroup
 TOUCH=/usr/bin/touch
@@ -26,7 +30,7 @@ YPPUSH=/usr/sbin/yppush
 MAKEDBM-S=$(MAKEDBM) -s
 UNSECURE="True"
 
-all: passwd group hosts ethers networks rpc services protocols netid netgroup amd.home
+all: passwd group hosts ethers networks rpc services protocols netid netgroup amd.home aliases
 
 passwd.time: $(DIR)/master.passwd
 	-@if [ -f $(>) ]; then \
@@ -271,6 +275,28 @@ amd.home.time: $(AMDDIR)/amd.home
 	fi
 
 
+aliases.time: $(DIR)/aliases
+	-@if [ -f $(>) ]; then \
+		$(CP) -p $(>) $(DOMAIN)-aliases; \
+		$(SENDMAIL) -bi -oA$(PWD)/$(DOMAIN)-aliases; \
+		$(MAKEDBM) -U $(DOMAIN)-aliases | $(MAKEDBM) - mail.aliases; \
+		$(MKALIAS) mail.aliases mail.byaddr; \
+		$(TOUCH) $(@); \
+		$(RM) $(DOMAIN)-aliases.db $(DOMAIN)-aliases; \
+		$(ECHO) "updated aliases"; \
+		if [ ! $(NOPUSH) ]; then \
+			$(YPPUSH) -d $(DOMAIN) mail.aliases; \
+			$(YPPUSH) -d $(DOMAIN) mail.byaddr; \
+			$(ECHO) "pushed aliases"; \
+		else \
+			: ; \
+		fi \
+	else \
+		$(ECHO) "couldn't find $(>)"; \
+	fi
+
+
+
 passwd: passwd.time
 group: group.time
 hosts: hosts.time
@@ -282,6 +308,7 @@ protocols: protocols.time
 netid: netid.time
 netgroup: netgroup.time
 amd.home: amd.home.time
+aliases: aliases.time
 $(DIR)/passwd:
 $(DIR)/group:
 $(DIR)/hosts:
@@ -293,4 +320,5 @@ $(DIR)/protocols:
 $(DIR)/netid:
 $(DIR)/master.passwd:
 $(DIR)/netgroup:
+$(DIR)/aliases:
 $(AMDDIR)/amd.home:
