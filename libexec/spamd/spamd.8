@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.2 2002/12/21 18:18:38 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.3 2002/12/23 01:34:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -81,21 +81,21 @@ fight spam.
 .Bl -enum -offset indent
 .It
 Block (or slowly block) This works well, the spammers are blocked, and cannot
-access your hosts services.  Unfortunately this does little to combat the
+access your host's services.  Unfortunately this does little to combat the
 problem of spam in general, allowing the spammer to continue to spam others.
 .It
 Accept & drop via a
 .Xr sendmail 8
 addon.  This works well for many sites also.  All the mail that is recieved
 by your host is processed by a set of rules, and the spam is either deleted
-or flagged for further action.  Unfortunately this method can sonsume a
+or flagged for further action.  Unfortunately this method can consume a
 considerable amount of your systems resources.
 .El
 .Pp
 What
 .Nm
-does, is to defer the spammers connections.  It does this in a manner
-designed to use as few local resources  as possible, while consuming as much
+does, is defer the spammers connections.  It does this in a manner
+designed to use as few local resources as possible, while consuming as much
 of the spammers resources as possible.
 .Nm
 replies to the spammers mail with error codes which cause will cause mail
@@ -103,11 +103,11 @@ to be stored in remote mail queues, taking up disk
 space, and to be resent multiple times, using network resources.
 .Pp
 .Nm
-does not follow the pollicy of playing nice with your neighbor.  Clients
+does not follow the policy of playing nice with your neighbor.  Clients
 which reach
 .Nm
 have already been flagged as being spammers.  The only way to combat spam is
-to remove the senders ability to deliver it.  In this case, that means force
+to remove the sender's ability to deliver it.  In this case, that means force
 the delivery of spam to have a very high overhead for the remote relay.
 .Pp
 .Nm
