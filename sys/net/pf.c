@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.258 2002/10/29 19:51:04 mickey Exp $ */
+/*	$OpenBSD: pf.c,v 1.259 2002/11/22 09:54:35 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -181,9 +181,10 @@ void			 pf_change_icmp(struct pf_addr *, u_int16_t *,
 			    u_int16_t *, u_int16_t *, u_int16_t *,
 			    u_int16_t *, u_int8_t, sa_family_t);
 void			 pf_send_reset(int, struct tcphdr *,
-			    struct pf_pdesc *, sa_family_t, u_int8_t);
+			    struct pf_pdesc *, sa_family_t, u_int8_t,
+			    struct pf_rule *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
-			    sa_family_t);
+			    sa_family_t, struct pf_rule *);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t,
 			    struct pf_addr *, u_int16_t,
@@ -933,7 +934,7 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 
 void
 pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, sa_family_t af,
-    u_int8_t return_ttl)
+    u_int8_t return_ttl, struct pf_rule *r)
 {
 	struct mbuf *m;
 	struct m_tag *mtag;
@@ -1023,6 +1024,22 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, sa_family_t af,
 	}
 	th2->th_off = sizeof(*th2) >> 2;
 
+#ifdef ALTQ
+	if (r != NULL && r->qid) {
+		struct altq_tag *atag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = af;
+			atag->hdr = mtod(m, struct ip *);
+			m_tag_prepend(m, mtag);
+		}
+	}
+#endif
+
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -1059,7 +1076,8 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, sa_family_t af,
 }
 
 void
-pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af)
+pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
+    struct pf_rule *r)
 {
 	struct m_tag *mtag;
 	struct mbuf *m0;
@@ -1073,6 +1091,23 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af)
 		return;
 	}
 	m_tag_prepend(m0, mtag);
+
+#ifdef ALTQ
+	if (r != NULL && r->qid) {
+		struct altq_tag *atag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = af;
+			atag->hdr = mtod(m0, struct ip *);
+			m_tag_prepend(m0, mtag);
+		}
+	}
+#endif
+
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -1623,13 +1658,13 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			if (((*rm)->rule_flag & PFRULE_RETURNRST) ||
 			    ((*rm)->rule_flag & PFRULE_RETURN))
 				pf_send_reset(off, th, pd, af,
-				    (*rm)->return_ttl);
+				    (*rm)->return_ttl, *rm);
 			else if ((af == AF_INET) && (*rm)->return_icmp)
 				pf_send_icmp(m, (*rm)->return_icmp >> 8,
-				    (*rm)->return_icmp & 255, af);
+				    (*rm)->return_icmp & 255, af, *rm);
 			else if ((af == AF_INET6) && (*rm)->return_icmp6)
 				pf_send_icmp(m, (*rm)->return_icmp6 >> 8,
-				    (*rm)->return_icmp6 & 255, af);
+				    (*rm)->return_icmp6 & 255, af, *rm);
 		}
 
 		if ((*rm)->action == PF_DROP) 
@@ -1889,10 +1924,10 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			}
 			if ((af == AF_INET) && (*rm)->return_icmp)
 				pf_send_icmp(m, (*rm)->return_icmp >> 8,
-				    (*rm)->return_icmp & 255, af);
+				    (*rm)->return_icmp & 255, af, *rm);
 			else if ((af == AF_INET6) && (*rm)->return_icmp6)
 				pf_send_icmp(m, (*rm)->return_icmp6 >> 8,
-				    (*rm)->return_icmp6 & 255, af);
+				    (*rm)->return_icmp6 & 255, af, *rm);
 		}
 
 		if ((*rm)->action == PF_DROP) 
@@ -3875,7 +3910,7 @@ done:
 	}
 
 #ifdef ALTQ
-	if (action != PF_DROP && r && r->qid) {
+	if (action != PF_DROP && r != NULL && r->qid) {
 		struct m_tag *mtag;
 		struct altq_tag *atag;
 
