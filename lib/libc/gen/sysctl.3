@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.35 2000/01/07 21:36:39 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.36 2000/01/09 22:29:39 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -477,31 +477,9 @@ privileges may change the value.
 .It Dv PF_ROUTE No "	routing messages	no"
 .It Dv PF_INET No "	IPv4 values	yes"
 .It Dv PF_INET6 No "	IPv6 values	yes"
-.It Dv PF_ENCAP No "	IPsec values	yes"
 .El
 .Pp
 .Bl -tag -width "123456"
-.It Dv PF_ENCAP
-Get or set various global information about the
-.Tn IP
-security protocols.
-The third level name is the protocol.
-The fourth level name is the variable name.
-The currently defined protocols and names are:
-.Bl -column "Protocol name" "Variable name" "integer" -offset indent
-.It Sy Protocol name	Variable name	Type	Changeable
-.It encap	encdebug	integer	yes
-.El
-.Pp
-The variables are as follows:
-.Bl -tag -width "123456"
-.It Li encap.encdebug
-Returns 1 when error message reporting is enabled for the host.
-If the kernel has been compiled with the
-.Dv ENCDEBUG
-option,
-then debugging information will also be reported when this variable is set.
-.El
 .It Dv PF_ROUTE
 Return the entire routing table or a subset of it.
 The data is returned as a sequence of routing messages (see
@@ -530,6 +508,7 @@ The currently defined protocols and names are:
 .It ip	forwarding	integer	yes
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
+.It ip	encdebug	integer	yes
 .It ip4	allow	integer	yes
 .It gre	allow	integer	yes
 .It mobileip	allow	integer	yes
@@ -569,6 +548,27 @@ packet sourced by
 the system.
 This value applies to normal transport protocols, not to
 .Tn ICMP .
+.It Li ip.encdebug
+Returns 1 when error message reporting is enabled for the host.
+If the kernel has been compiled with the
+.Dv ENCDEBUG
+option,
+then debugging information will also be reported when this variable is set.
+.It Li ip.ipsec-acl
+If set to 1, incoming IPsec packets that are successfully
+decrypted/authenticated are further validated against a list of acceptable
+packet classes per Security Association.
+When using automated key management, such as
+.Xr isakmpd 8
+or
+.Xr photurisd 8 ,
+the acceptable packet classes should be set up automatically.
+When using manual keying, the appropriate entries have to be configured on a
+per-SA basis via
+.Xr ipsecadm 8 .
+If this value is set to 1 and no access control is configured, IPsec packets
+will be dropped.
+If set to 0, no testing of ingress packets will occur.
 .It Li ip4.allow
 If set to 0, incoming IPv4-in-IPv4 packets will not be processed.
 If set to any other value, processing will occur.
