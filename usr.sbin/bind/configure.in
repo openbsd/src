@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-AC_REVISION($Revision: 1.5 $)
+AC_REVISION($Revision: 1.6 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -1791,9 +1791,6 @@ AC_OUTPUT(
 	lib/lwres/unix/Makefile
 	lib/lwres/unix/include/Makefile
 	lib/lwres/unix/include/lwres/Makefile
-	lib/lwres/win32/Makefile
-	lib/lwres/win32/include/Makefile
-	lib/lwres/win32/include/lwres/Makefile
 	lib/tests/Makefile
 	lib/tests/include/Makefile
 	lib/tests/include/tests/Makefile
