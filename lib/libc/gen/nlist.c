@@ -270,14 +270,14 @@ __elf_fdnlist(fd, list)
 static struct nlist_handlers {
 	int	(*fn) __P((int fd, struct nlist *list));
 } nlist_fn[] = {
+#ifdef DO_AOUT
+	{ __aout_fdnlist },
+#endif
 #ifdef DO_ELF
 	{ __elf_fdnlist },
 #endif
 #ifdef DO_ECOFF
 	{ __ecoff_fdnlist },
-#endif
-#ifdef DO_AOUT
-	{ __aout_fdnlist },
 #endif
 };
 
