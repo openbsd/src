@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.21 1997/07/28 01:47:43 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.22 1997/11/09 16:33:09 provos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.21 1997/07/28 01:47:43 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.22 1997/11/09 16:33:09 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -280,6 +280,7 @@ udp_stats(off, name)
 	if (delivered || sflag <= 1)
 		printf("\t%lu delivered\n", delivered);
 	p(udps_opackets, "\t%lu datagram%s output\n");
+	p(udps_pcbhashmiss, "\t%lu missed PCB cache\n");
 #undef p
 }
 
