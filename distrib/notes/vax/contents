@@ -1,0 +1,24 @@
+TopPart
+
+		bsd			A stock GENERIC vax kernel.
+
+		miniroot.fs	A bootable kernel used in installation; see below.
+
+		boot.mop	MOP-bootable image (for network installs); 
+				see below.
+
+OpenBSDdistsets
+
+DistributionDescription
+
+OpenBSDbase
+
+OpenBSDcomp
+
+OpenBSDetc
+
+OpenBSDgame
+
+OpenBSDman
+
+OpenBSDmisc

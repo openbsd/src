@@ -1,0 +1,24 @@
+OpenBSD/MACHINE OSREV runs on the following classes of machines
+(machines in parentheses have been tested):
+	- KA410-based 	(VAXstation/MicroVAX 2000)
+ 	- KA42(0)-based (VAXstation 3100/{30,40})
+	- some KA670 vaxen 	(VAX 4000/300)
+	- some KA640 vaxen	(MicroVAX 3300/3400)
+
+Ethernet devices:
+	- on-board MicroVAX or VAXstation LANCE 
+	- DEC SGEC 
+
+SCSI:
+	- on-board NCR 5380 (VS3100)
+	
+Serial ports:
+	- DZ*11 qbus lines (also DZ*11 compatible lines on VAXstations)
+
+The lowest amount of memory tested is 6M; however, more is recommeded.
+At the moment, the only supported console is a serial console; this will
+change soon.
+
+Currently, your only storage options for using OpenBSD/MACHINE are SCSI 
+disks or tapes on the VAXstation 3100's NCR5380 controller, which is 
+supported, or a NFS root and swap.  Please see below for details.

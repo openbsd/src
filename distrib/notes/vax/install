@@ -1,0 +1,69 @@
+OpenBSDInstallPrelude
+
+At the moment, the only way to install OpenBSD/vax is via diskless 
+booting over an Ethernet network.  You will need both the "boot.mop" 
+image and the "bsd" kernel to boot.  You will also need a machine 
+configured as a rarp, MOP, bootparam, and NFS server.  
+
+This document will give a few examples on how to set up each of these 
+services on an OpenBSD machine; if this is not enough information, 
+check out the OpenBSD manpages for rarpd(8), mopd(8), rpc.bootparamd(8), 
+bootparams(5), nfsd(8), mountd(8), and diskless(8).  Also, Brian Chase 
+<bdc@world.std.com> has written a guide for booting a VAX off of a 
+network; this was written for NetBSD/vax, but the procedure is virtually 
+identical for OpenBSD/vax, and the document covers the use of several 
+different platforms as servers.
+The guide is available at:
+http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO
+
+Configuring the Server:
+---------------------
+
+When you turn on your VAX, it will run a set of self-diagnostic ROM routines.
+Depending on the model of VAX you have, it may take quite a while.  When 
+it is done, you will see a >>> prompt (also called the chevron prompt) on the
+console.  Typing "show dev" or "show ethernet" to get the VAX ethernet 
+device's MAC address usually works; also try "TEST 50" on MicroVAXen 2000
+and 3100.
+
+You will need to create an /etc/ethers file.  This file is used by rarpd to 
+answer rarp (ethernet address->IP address) requests.  The format of this file 
+is the ethernet address followed by the machine name or address.  Here is an 
+example:
+
+08:00:2b:24:72:00		quickvax
+
+Then start rarpd (or configure /etc/rc.conf to always start rarpd).
+
+Copy boot.mop into /tftpboot/mop/AABBCCDDEEFF.SYS, where "AABBCCDDEEFF"
+represents the six octets of your ethernet address.  For example, the 
+filename for the machine described above would be "08002b247200.SYS".
+Start mopd by typing "mopd -a".
+
+rpc.bootparamd's configuration file is /etc/bootparams.  The format for this
+file is described in the diskless(8) and bootparams(5) manpages.  Enable
+rpc.bootparamd in /etc/rc.conf by changing the value of "bootparamd_flags". 
+Also, make sure "portmap" is "YES"; you will need portmap running.  
+
+nfsd and mountd configuration are described in their respective manual pages.
+Make a separate directory for your VAX's /, make sure it is exported via NFS, 
+and place "miniroot.fs" there.
+
+Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the 
+chevron prompt should then load the OpenBSD booter.  A countdown should begin;
+type any key on the console and type "boot miniroot.fs".  
+
+OpenBSDBootMsgs
+
+OpenBSDInstallPart2
+
+OpenBSDFTPInstall
+
+OpenBSDNFSInstall
+
+OpenBSDCommonFS
+
+OpenBSDCommonURL
+
+OpenBSDCongratulations
+ 
