@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtc.4,v 1.2 2003/03/06 22:57:29 jason Exp $
+.\"	$OpenBSD: mtc.4,v 1.3 2003/03/07 11:28:10 hugh Exp $
 .\"	$NetBSD: mtc.4,v 1.4 2001/04/11 19:23:01 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1987, 1991 Regents of the University of California.
@@ -40,7 +40,7 @@
 .Sh NAME
 .Nm mtc
 .Nd
-.Tn Unibus
+.Tn UNIBUS
 MSCP tape controller driver
 .Sh SYNOPSIS
 .Cd "mtc0 at uba? csr 0174500"
@@ -48,11 +48,11 @@ MSCP tape controller driver
 .Sh DESCRIPTION
 The
 .Nm
-driver is for Unibus
+driver is for UNIBUS
 tape controllers that use MSCP. Among these controllers are:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It DEC KLESI-U Unibus ctlr
+.It DEC KLESI-U UNIBUS ctlr
 .It DEC TK50 Q22 bus ctlr
 .El
 .Pp
