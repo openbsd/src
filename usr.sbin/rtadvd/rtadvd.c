@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.20 2002/06/07 00:42:14 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.21 2002/06/09 00:56:09 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ die()
 	const int retrans = MAX_FINAL_RTR_ADVERTISEMENTS;
 
 	if (dflag > 1) {
-		syslog(LOG_DEBUG, "<%s> cease to be an advertising router\n",
+		syslog(LOG_DEBUG, "<%s> cease to be an advertising router",
 		    __FUNCTION__);
 	}
 

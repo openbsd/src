@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.12 2002/05/21 23:29:46 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.13 2002/06/09 00:56:09 deraadt Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -536,9 +536,9 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 		if (ifm->ifm_type == RTM_IFINFO) {
 			(*ifmlist_p)[ifm->ifm_index] = ifm;
 		} else {
-			syslog(LOG_ERR, "out of sync parsing NET_RT_IFLIST\n"
-			       "expected %d, got %d\n msglen = %d\n"
-			       "buf:%p, ifm:%p, lim:%p\n",
+			syslog(LOG_ERR, "out of sync parsing NET_RT_IFLIST,"
+			       "expected %d, got %d, msglen = %d,"
+			       "buf:%p, ifm:%p, lim:%p",
 			       RTM_IFINFO, ifm->ifm_type, ifm->ifm_msglen,
 			       buf, ifm, lim);
 			exit (1);
