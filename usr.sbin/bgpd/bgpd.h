@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.131 2004/06/23 00:11:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.132 2004/06/25 20:08:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -594,20 +594,22 @@ void	 imsg_free(struct imsg *);
 int	 imsg_get_fd(struct imsgbuf *);
 
 /* kroute.c */
-int		kr_init(int);
-int		kr_change(struct kroute *);
-int		kr_delete(struct kroute *);
-void		kr_shutdown(void);
-void		kr_fib_couple(void);
-void		kr_fib_decouple(void);
-int		kr_dispatch_msg(void);
-int		kr_nexthop_add(struct bgpd_addr *);
-void		kr_nexthop_delete(struct bgpd_addr *);
-void		kr_show_route(struct imsg *);
-in_addr_t	prefixlen2mask(u_int8_t);
-int		prefix_equal(const struct bgpd_addr *, const struct bgpd_addr *,
+int		 kr_init(int);
+int		 kr_change(struct kroute *);
+int		 kr_delete(struct kroute *);
+void		 kr_shutdown(void);
+void		 kr_fib_couple(void);
+void		 kr_fib_decouple(void);
+int		 kr_dispatch_msg(void);
+int		 kr_nexthop_add(struct bgpd_addr *);
+void		 kr_nexthop_delete(struct bgpd_addr *);
+void		 kr_show_route(struct imsg *);
+in_addr_t	 prefixlen2mask(u_int8_t);
+struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
+int		 prefix_equal(const struct bgpd_addr *,
+		    const struct bgpd_addr *, int);
+void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
-void		inet6applymask(struct in6_addr *, const struct in6_addr *, int);
 
 
 /* control.c */

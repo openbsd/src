@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.99 2004/06/25 18:48:18 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.100 2004/06/25 20:08:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,6 +104,7 @@ void			 kroute_detach_nexthop(struct knexthop_node *);
 int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
+u_int8_t	mask2prefixlen6(struct in6_addr *);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
@@ -839,10 +840,41 @@ mask2prefixlen(in_addr_t ina)
 		return (33 - ffs(ntohl(ina)));
 }
 
+u_int8_t
+mask2prefixlen6(struct in6_addr *in6a)
+{
+	u_int8_t	 l, i;
+
+	l = 0;
+	for (i = 0; i < 16; i ++)
+		if (in6a->s6_addr[i] == 0)
+			return (l);
+		else
+			l += 9 - ffs(in6a->s6_addr[i]);
+
+	return (l);
+} 
+
 in_addr_t
 prefixlen2mask(u_int8_t prefixlen)
 {
 	return (0xffffffff << (32 - prefixlen));
+}
+
+struct in6_addr *
+prefixlen2mask6(u_int8_t prefixlen)
+{
+	static struct in6_addr	mask;
+	int			i;
+
+	bzero(&mask, sizeof(mask));
+	for (i = 0; i < prefixlen / 8; i++)
+		mask.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	return (&mask);
 }
 
 int
