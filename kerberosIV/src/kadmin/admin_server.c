@@ -262,7 +262,6 @@ listen on the admin servers port for a request
 static int
 kadm_listen(void)
 {
-    int found;
     int admin_fd;
     int peer_fd;
     struct pollfd pfd[1];
@@ -296,7 +295,6 @@ kadm_listen(void)
 
     pfd[0].fd = admin_fd;
     pfd[0].events = POLLIN;
-    pfd[0].revents = 0;
 
     for (;;) {				/* loop nearly forever */
 	if (exit_now) {
@@ -304,11 +302,9 @@ kadm_listen(void)
 	    kill_children();
 	    return(0);
 	}
-	if ((found = poll(pfd, 1, -1)) == 0)
-	    continue;			/* no things read */
-	if (found < 0) {
+	if (poll(pfd, 1, -1) < 0) {
 	    if (errno != EINTR)
-		krb_log("select: %s",error_message(errno));
+		krb_log("poll: %s",error_message(errno));
 	    continue;
 	}
 	if (pfd[0].revents & POLLIN) {
