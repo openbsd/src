@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.22 2002/06/19 22:44:04 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.23 2002/06/20 18:26:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.22 2002/06/19 22:44:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.23 2002/06/20 18:26:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -245,14 +245,14 @@ notify(utp, offset)
 		    (int)sizeof(utp->ut_name), utp->ut_name, tty);
 		return;
 	}
-	dsyslog(LOG_DEBUG, "notify %s on %s", utp->ut_name, tty);
+	dsyslog(LOG_DEBUG, "notify %.*s on %s", (int)sizeof(utp->ut_name),
+	    utp->ut_name, tty);
 	if (fork())
 		return;
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)alarm((u_int)30);
 	if ((tp = fopen(tty, "w")) == NULL) {
-		dsyslog(LOG_ERR, "%.*s: %s", (int)sizeof(utp->ut_name),
-		    tty, strerror(errno));
+		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
 		_exit(1);
 	}
 	(void)tcgetattr(fileno(tp), &ttybuf);
