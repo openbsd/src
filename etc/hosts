@@ -1,4 +1,4 @@
-#	$OpenBSD: hosts,v 1.5 1998/11/23 21:50:40 deraadt Exp $
+#	$OpenBSD: hosts,v 1.6 2000/02/05 18:14:55 itojun Exp $
 #
 # Host Database
 # This file should contain the addresses and aliases
@@ -13,4 +13,5 @@
 # 192.168.0.0   192.168.255.255
 #
 127.0.0.1	localhost localhost.my.domain
+::1		localhost localhost.my.domain
 192.168.254.254	noname
