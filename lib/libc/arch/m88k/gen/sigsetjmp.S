@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: sigsetjmp.S,v 1.8 2003/12/24 19:14:01 miod Exp $"
+	.string "$OpenBSD: sigsetjmp.S,v 1.9 2004/07/28 08:49:03 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -115,7 +115,7 @@ ENTRY(siglongjmp)
 	cmp	r4,r4,SIGSETJMP_SIG	/* should be SIGSETJMP_SIG */
 	bb1	ne,r4,3f	/* if != SIGSETJMP_SIG, abort. */
 	
-	subu	r31,r31,32	/* get a temporary stack */
+	subu	r31,r31,16	/* get a temporary stack */
 	ld	r14,r2,8	/* restore registers from the environment buffer */
 	ld	r15,r2,12
 	ld	r16,r2,16
@@ -137,12 +137,10 @@ ENTRY(siglongjmp)
 	cmp	r4,r4,r0	/* if r2 == 0 then skip signal stuff */
 	bb1	eq,r4,1f
 
-	st	r2,r31,24	/* save r2 on stack (environment) */
-	st	r3,r31,28	/* save r3 on stack (return val) */
+	st.d	r2,r31,0	/* save r2 and r3 on stack (env + return val) */
 	bsr.n	_C_LABEL(sigsetmask) /* restore the signal set */
 	 ld	r2,r2,4
-	ld	r2,r31,24	/* restore r2 from stack */
-	ld	r3,r31,28	/* restore r3 from stack */
+	ld.d	r2,r31,0	/* restore r2 and r3 from stack */
 1:	ld	r30,r2,72	/* restore r30 */
 	ld	r31,r2,76	/* restore r31 (sp)*/
 	ld	r1,r2,0		/* restore r1 */
@@ -151,11 +149,10 @@ ENTRY(siglongjmp)
 	or	r2,r0,1		/* never return zero! */
 3:	jmp	r1
 
-2:	subu	r31,r31,32	/* get a temporary stack */
-	st	r1,r31,20	/* save r1 on stack (return address) */
+2:	subu	r31,r31,16	/* get a temporary stack */
+	st	r1,r31,0	/* save r1 on stack (return address) */
 	bsr	_C_LABEL(longjmperror)
 	bsr	_C_LABEL(abort)	/* NO RETURN */
-	ld	r1,r31,20	/* restore r1 from stack */
-	addu	r31,r31,32	/* restore the stack */
-	jmp	r1	/* this should not happen but we are prepared */
-
+	ld	r1,r31,0	/* restore r1 from stack */
+	jmp.n	r1	/* this should not happen but we are prepared */
+	 addu	r31,r31,16	/* restore the stack */

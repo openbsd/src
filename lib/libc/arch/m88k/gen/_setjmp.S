@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: _setjmp.S,v 1.6 2003/08/01 07:41:35 miod Exp $"
+	.string "$OpenBSD: _setjmp.S,v 1.7 2004/07/28 08:49:03 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -125,11 +125,11 @@ ENTRY(_longjmp)
 	or	r2,r0,1		/* never return zero! */
 1:	jmp	r1
 
-2:	subu	r31,r31,32	/* get a temporary stack */
-	st	r1,r31,20	/* save r1 on stack (return address) */
+2:	subu	r31,r31,16	/* get a temporary stack */
+	st	r1,r31,0	/* save r1 on stack (return address) */
 	bsr	_C_LABEL(longjmperror)
 	bsr	_C_LABEL(abort)	/* NO RETURN */
-	ld	r1,r31,20	/* restore r1 from stack */
-	addu	r31,r31,32	/* restore the stack */
-	jmp	r1	/* this should not happen but we are prepared */
+	ld	r1,r31,0	/* restore r1 from stack */
+	jmp.n	r1	/* this should not happen but we are prepared */
+	 addu	r31,r31,16	/* restore the stack */
 
