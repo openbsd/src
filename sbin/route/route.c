@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.51 2002/10/17 20:38:03 jason Exp $	*/
+/*	$OpenBSD: route.c,v 1.52 2002/10/18 00:27:41 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.51 2002/10/17 20:38:03 jason Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.52 2002/10/18 00:27:41 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -737,7 +737,7 @@ newroute(argc, argv)
 			case K_PREFIXLEN:
 				if (!--argc)
 					usage(1+*argv);
-				prefixlen(*++argv);
+				ishost = prefixlen(*++argv);
 				break;
 			case K_MTU:
 			case K_HOPCOUNT:
@@ -1182,7 +1182,7 @@ prefixlen(s)
 		break;
 #endif
 	}
-	return(len);
+	return (len == max);
 }
 
 int
