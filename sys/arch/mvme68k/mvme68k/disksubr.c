@@ -86,7 +86,7 @@ readdisklabel(dev, strat, lp, clp)
 
 	if (biowait(bp)) {
 		msg = "cpu_disklabel read error\n";
-	}else {
+	} else {
 		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
 	}
 
