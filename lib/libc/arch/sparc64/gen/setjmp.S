@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.1 2001/08/29 01:45:24 art Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.2 2001/09/07 23:50:20 art Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.4 2000/08/28 00:45:59 eeh Exp $	*/
 
 /*
@@ -58,26 +58,12 @@
 #define STACK_T_SZ
 ENTRY(setjmp)
 	/*
-	 * We use the part of the sigcontext structure, the sp, pc, and npc fields,
-	 * for the sigstack call so we don't need to get our own stackframe.  It 
-	 * won't be filled out till later anyway.
+	 * We use the part of the sigcontext structure, the sp, pc, and npc
+	 * fields, for the sigstack call so we don't need to get our own
+	 * stackframe. It won't be filled out till later anyway.
 	 */
 	mov	%o0, %o3		/* Save our jmp_buf in %o3 */
-	mov	%o0, %o2		/* build sigcontext in [%o2] */
-	mov	1, %o0			/* SIG_BLOCK */
-	mov	SYS_sigprocmask, %g1
-	clr	%o1			/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL, (sigset_t *)a) */
-	t	ST_SYSCALL
-	
-	st	%o0, [%o3 + 0x04]	/* sc.sc_mask = current mask; */
-	mov	SYS_sigaltstack, %g1
-	clr	%o0			/* sigstack(NULL, &foo) */
-	add	%o3, 0x38, %o1		/* (foo being the sigcontext14 sc_mask) */
-	t	ST_SYSCALL
-	
-	lduw	[%o3 + 0x38+0x10], %o0	/* foo.ss_flags */
-	and	%o0, 1, %o1		/* onstack = foo.ss_flags & 1; */
-	st	%o0, [%o3 + 0x00]	/* sc.sc_onstack = current onstack; */
+
 	stx	%sp, [%o3 + 0x08]	/* sc.sc_sp = sp (both ours and caller's) */
 	add	%o7, 8, %o0
 	stx	%o0, [%o3 + 0x10]	/* sc.sc_pc = return_pc */
@@ -86,6 +72,23 @@ ENTRY(setjmp)
 	stx	%g0, [%o3 + 0x20]	/* sc.sc_psr = (clean psr) */
 	stx	%fp, [%o3 + 0x28]	/* sc.sc_g1 = %fp (misuse, but what the heck) */
 					/* sc.sc_o0 = random(), set in longjmp */
+
+	mov	1, %o0			/* SIG_BLOCK */
+	mov	SYS_sigprocmask, %g1
+	clr	%o1			/* sigprocmask(SIG_BLOCK, 0) */
+	t	ST_SYSCALL
+
+	st	%o0, [%o3 + 0x38]	/* sc.sc_mask = current mask; */
+
+	mov	SYS_sigaltstack, %g1
+	clr	%o0			/* sigaltstack(NULL, &foo) */
+	add	%o3, 0x40, %o1		/* (foo being the sigcontext sc_mask) */
+	t	ST_SYSCALL
+	
+	lduw	[%o3 + 0x40+0xc], %o0	/* foo.ss_flags */
+	and	%o0, 1, %o1		/* onstack = foo.ss_flags & 1; */
+	st	%o1, [%o3 + 0x00]	/* sc.sc_onstack = current onstack; */
+
 	retl				/* return 0 */
 	 clr	%o0
 
@@ -102,8 +105,9 @@ ENTRY(longjmp)
 	ldx	[%i0 + 0x28], %o3
 	orcc	%o2, %o3, %g0
 	bz,pn	%xcc, Lbotch
-	 movrz	%i1, 1, %i1		/* if (v == 0) v = 1; */
-	st	%i1, [%i0 + 0x30]	/* sc.sc_o0 = v; */
+	 nop
+	movrz	%i1, 1, %i1		/* if (v == 0) v = 1; */
+	st	%i1, [%i0 + 0x34]	/* sc.sc_o0 = v; */
 	mov	SYS_sigreturn, %g1
 	mov	%i0, %o0
 	t	ST_SYSCALL		/* sigreturn(scp); */
