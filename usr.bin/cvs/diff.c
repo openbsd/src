@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.2 2004/07/14 03:59:36 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -247,7 +247,8 @@ static int aflag, bflag, dflag, iflag, tflag, Tflag, wflag;
 static int context, status;
 static int format = D_NORMAL;
 static struct stat stb1, stb2;
-static char *ifdefname, *diffargs, *ignore_pats, *diff_file;
+static char *ifdefname, *ignore_pats, diffargs[128];
+static const char *diff_file;
 regex_t ignore_re;
 
 static int  *J;			/* will be overlaid on class */
@@ -354,6 +355,7 @@ cvs_diff(int argc, char **argv)
 	char dir[MAXPATHLEN], file[MAXPATHLEN], *d1, *d2, *r1, *r2;
 
 	context = CVS_DIFF_DEFCTX;
+	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
 	d1 = d2 = NULL;
 	r1 = r2 = NULL;
@@ -362,6 +364,7 @@ cvs_diff(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "cD:lir:u")) != -1) {
 		switch (ch) {
 		case 'c':
+			strlcat(diffargs, " -c", sizeof(diffargs));
 			format = D_CONTEXT;
 			break;
 		case 'D':
@@ -376,9 +379,11 @@ cvs_diff(int argc, char **argv)
 			}
 			break;
 		case 'l':
+			strlcat(diffargs, " -l", sizeof(diffargs));
 			recurse = 0;
 			break;
 		case 'i':
+			strlcat(diffargs, " -i", sizeof(diffargs));
 			iflag = 1;
 			break;
 		case 'r':
@@ -394,6 +399,7 @@ cvs_diff(int argc, char **argv)
 			}
 			break;
 		case 'u':
+			strlcat(diffargs, " -u", sizeof(diffargs));
 			format = D_UNIFIED;
 			break;
 		default:
@@ -577,7 +583,11 @@ cvs_diff_file(const char *path, const char *rev1, const char *rev2)
 			b2 = cvs_buf_load(path, BUF_AUTOEXT);
 		}
 
-		printf("%s\n", diffargs);
+		printf("%s", diffargs);
+		printf(" -r%s", buf);
+		if (rev2 != NULL)
+			printf(" -r%s", rev2);
+		printf(" %s\n", path);
 		cvs_buf_write(b1, "/tmp/diff1", 0600);
 		cvs_buf_write(b2, "/tmp/diff2", 0600);
 		cvs_diffreg("/tmp/diff1", "/tmp/diff2");
