@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2000/05/15 18:27:27 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2001/06/18 21:20:17 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.24 2000/05/15 18:27:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.25 2001/06/18 21:20:17 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -138,12 +138,19 @@ setpeer(argc, argv)
 		/*
 		 * Set up defaults for FTP.
 		 */
-		(void)strcpy(typename, "ascii"), type = TYPE_A;
-		curtype = TYPE_A;
 		(void)strcpy(formname, "non-print"), form = FORM_N;
 		(void)strcpy(modename, "stream"), mode = MODE_S;
 		(void)strcpy(structname, "file"), stru = STRU_F;
 		(void)strcpy(bytename, "8"), bytesize = 8;
+		/*
+		 * Set type to 0 (not specified by user),
+		 * meaning binary by default, but don't bother
+		 * telling server.  We can use binary
+		 * for text files unless changed by the user.
+		 */
+		(void)strcpy(typename, "binary");
+		curtype = TYPE_A;
+		type = 0;
 		if (autologin)
 			(void)login(argv[1], NULL, NULL);
 
@@ -177,14 +184,6 @@ setpeer(argc, argv)
 				unix_proxy = 1;
 			else
 				unix_server = 1;
-			/*
-			 * Set type to 0 (not specified by user),
-			 * meaning binary by default, but don't bother
-			 * telling server.  We can use binary
-			 * for text files unless changed by the user.
-			 */
-			type = 0;
-			(void)strcpy(typename, "binary");
 			if (overbose)
 				fprintf(ttyout, "Using %s mode to transfer files.\n",
 				    typename);
