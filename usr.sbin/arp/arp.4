@@ -108,13 +108,18 @@ mapping requests for its own Internet address with a different Ethernet
 address, generally indicating that two hosts are attempting to use the
 same Internet address.
 .Pp
-.Em "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x."
+.Em "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x on %x."
 An existing route has been overwritten with a new Ethernet address, for
 example when the other host has changed Ethernet cards.  If the route
 previously was static/non-expiring, the new route will expire normally.
 .Pp
-.Em "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x."
+.Em "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x on %x."
 As above, but the existing route had been manually setup as permanent.
+The routing information is not modified.
+.Pp
+.Em "arp: attempt to overwrite entry for %x!! on %x by %x:%x:%x:%x:%x:%x on %x."
+ARP has noticed an attempt to overwrite a host's routing entry on one
+interface with a routing entry for a different interface.
 The routing information is not modified.
 .Sh SEE ALSO
 .Xr inet 4 ,
