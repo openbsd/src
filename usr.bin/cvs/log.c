@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2004/08/05 13:32:08 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2004/08/05 13:39:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,8 @@ static char *cvs_log_levels[] = {
 	"warning",
 	"error",
 	"alert",
-	"error"
+	"error",
+	"abort",
 };
 #endif
 
@@ -59,6 +60,7 @@ static int cvs_slpriomap[] = {
 	LOG_WARNING,
 	LOG_ERR,
 	LOG_ALERT,
+	LOG_ERR,
 	LOG_ERR,
 };
 
@@ -211,24 +213,28 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	char prefix[64], buf[1024], ebuf[32];
 	FILE *out;
 
-	ecp = 0;
-
-	if (level > LP_MAX) {
+	if (level > LP_MAX)
 		return (-1);
-	}
+
 
 	/* apply any filters */
-	if (cvs_log_filters[level] == 1)
+	if (cvs_log_filters[level] != 0)
 		return (0);
 
 	if (level == LP_ERRNO)
 		ecp = errno;
+	else
+		ecp = 0;
 
 #ifdef CVS
 	/* The cvs program appends the command name to the program name */
 	if (cvs_command != NULL) {
-		snprintf(prefix, sizeof(prefix), "%s %s", __progname,
-		    cvs_command);
+		if (level == LP_ABORT)
+			snprintf(prefix, sizeof(prefix), "%s [%s aborted]",
+			    __progname, cvs_command);
+		else
+			snprintf(prefix, sizeof(prefix), "%s %s", __progname,
+			    cvs_command);
 	}
 	else /* just use the standard strlcpy */
 #endif
