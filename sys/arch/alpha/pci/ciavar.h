@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciavar.h,v 1.7 1998/06/28 02:39:25 angelos Exp $	*/
+/*	$OpenBSD: ciavar.h,v 1.8 1998/06/28 02:43:23 angelos Exp $	*/
 /*	$NetBSD: ciavar.h,v 1.6 1996/11/25 03:49:11 cgd Exp $	*/
 
 /*
@@ -45,9 +45,6 @@ struct cia_config {
 
 	u_int32_t cc_hae_mem;
 	u_int32_t cc_hae_io;
-
-        u_int32_t cc_hae_mem;
-        u_int32_t cc_hae_io;
 
         u_int32_t cc_rev;
         u_int32_t cc_cnfg;
