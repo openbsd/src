@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -55,7 +55,7 @@ static struct systypes {
 } sys_types[] = {
     { NULL,		"PICA-61",			ACER_PICA_61 },
     { NULL,		"NEC-R94",			ACER_PICA_61 },
-    { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE }, 
+    { NULL,		"DESKTECH-TYNE",		DESKSTATION_TYNE },
     { NULL,		"DESKTECH-ARCStation I",	DESKSTATION_RPC44 },
     { NULL,		"Microsoft-Jazz",		MAGNUM },
     { NULL,		"RM200PCI",			SNI_RM200 },
@@ -80,7 +80,7 @@ __asm__("\n"			\
 "	.ent	" #Name "\n"	\
 "	.align	3\n"		\
 "	.set	noreorder\n"	\
-"	.globl	" #Name "\n" 	\
+"	.globl	" #Name "\n"	\
 #Name":\n"			\
 "	lw	$2, 0x80001020\n"\
 "	lw	$2," #Offset "($2)\n"\

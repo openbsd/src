@@ -1,8 +1,8 @@
-/*	$OpenBSD: clock.c,v 1.4 2004/08/10 13:45:40 pefo Exp $ */
+/*	$OpenBSD: clock.c,v 1.5 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -184,7 +184,7 @@ clock_int5( intrmask_t mask, struct trap_frame *tf)
 }
 
 /*
- * Wait "n" microseconds. 
+ * Wait "n" microseconds.
  */
 void
 delay(int n)
@@ -318,7 +318,7 @@ inittodr(time_t base)
 	 * Read RTC chip registers NOTE: Read routines are responsible
 	 * for sanity checking clock. Dates after 19991231 should be
 	 * returned as year >= 100.
-	 */ 
+	 */
 	if (sc->sc_clock.clk_get) {
 		(*sc->sc_clock.clk_get)(sc, base, &c);
 	} else {

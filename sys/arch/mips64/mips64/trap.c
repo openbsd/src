@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 2004/08/08 14:21:27 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -457,7 +457,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
-				callp += code; 
+				callp += code;
 			i = callp->sy_argsize / sizeof(int);
 			if (i > 2 && p->p_md.md_flags & MDP_O32) {
 					int32_t p[6];
@@ -600,9 +600,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		 * Restore original instruction and clear BP
 		 */
 		iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
-		iov.iov_len = sizeof(int); 
+		iov.iov_len = sizeof(int);
 		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1; 
+		uio.uio_iovcnt = 1;
 		uio.uio_offset = (off_t)(int)va;
 		uio.uio_resid = sizeof(int);
 		uio.uio_segflg = UIO_SYSSPACE;
@@ -831,7 +831,7 @@ child_return(arg)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
-#endif 
+#endif
 }
 
 #if defined(DDB) || defined(DEBUG)
@@ -1048,9 +1048,9 @@ cpu_singlestep(p)
 	 * Fetch what's at the current location.
 	 */
 	iov.iov_base = (caddr_t)&curinstr;
-	iov.iov_len = sizeof(int); 
+	iov.iov_len = sizeof(int);
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1; 
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)locr0->pc;
 	uio.uio_resid = sizeof(int);
 	uio.uio_segflg = UIO_SYSSPACE;
@@ -1075,9 +1075,9 @@ cpu_singlestep(p)
 	 * Fetch what's at the current location.
 	 */
 	iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
-	iov.iov_len = sizeof(int); 
+	iov.iov_len = sizeof(int);
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1; 
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)va;
 	uio.uio_resid = sizeof(int);
 	uio.uio_segflg = UIO_SYSSPACE;
@@ -1089,9 +1089,9 @@ cpu_singlestep(p)
 	 * Store breakpoint instruction at the "next" location now.
 	 */
 	iov.iov_base = (caddr_t)&bpinstr;
-	iov.iov_len = sizeof(int); 
+	iov.iov_len = sizeof(int);
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1; 
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)va;
 	uio.uio_resid = sizeof(int);
 	uio.uio_segflg = UIO_SYSSPACE;
@@ -1231,7 +1231,7 @@ loop:
 	more = 3;
 	mask = 0;
 	for (va = subr; more; va += sizeof(int),
-	     		      more = (more == 3) ? 3 : more - 1) {
+	    more = (more == 3) ? 3 : more - 1) {
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;

@@ -1,8 +1,8 @@
-/*	$OpenBSD: pmap.c,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -200,7 +200,7 @@ pmap_bootstrap()
 
 	/*
 	 * The R4?00 stores only one copy of the Global bit in the
-	 * translation lookaside buffer for each 2 page entry. 
+	 * translation lookaside buffer for each 2 page entry.
 	 * Thus invalid entrys must have the Global bit set so
 	 * when Entry LO and Entry HI G bits are anded together
 	 * they will produce a global bit to store in the tlb.
@@ -231,7 +231,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	va = 0;
 
 	for(i = 0; i < vm_nphysseg && va == 0; i++) {
-		if(vm_physmem[i].avail_start != vm_physmem[i].start || 
+		if(vm_physmem[i].avail_start != vm_physmem[i].start ||
                     vm_physmem[i].avail_start >= vm_physmem[i].avail_end) {
 			continue;
 		}
@@ -250,7 +250,7 @@ pmap_steal_memory(size, vstartp, vendp)
 			}
 
 			vm_nphysseg--;
-			for(j = i; j < vm_nphysseg; x++) { 
+			for(j = i; j < vm_nphysseg; x++) {
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
@@ -292,7 +292,7 @@ pmap_init()
 		s = vm_physmem[bank].end - vm_physmem[bank].start;
 		vm_physmem[bank].pmseg.pvent = pv;
 		pv += s;
-	} 
+	}
 
 #if 0 /* too early */
 	pool_setlowat(&pmap_pv_pool, pmap_pv_lowat);
@@ -618,7 +618,7 @@ void
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
-{ 
+{
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	vaddr_t va;
@@ -1066,7 +1066,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 	else {
 		npte |= vad_to_pfn(pa);
 	}
-	if (pmapdebug & PDB_ENTER) { 
+	if (pmapdebug & PDB_ENTER) {
 		printf("pmap_enter: new pte %x", npte);
 		if (pmap->pm_tlbgen == tlbpid_gen)
 			printf(" tlbpid %d", pmap->pm_tlbpid);

@@ -1,8 +1,8 @@
-/*	$OpenBSD: cache_r5k.S,v 1.3 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -179,7 +179,7 @@ LEAF(Mips5k_ConfigCache)
 	and	t2, v0, 0x20
 	srl	t2, t2, 1			# Get I cache line size.
 	addu	t2, t2, 16
-	sw	t2, CpuPrimaryInstCacheLSize	
+	sw	t2, CpuPrimaryInstCacheLSize
 
 	srl	t1, v0, 6			# Get D cache size.
 	and	t1, 3
@@ -196,8 +196,8 @@ LEAF(Mips5k_ConfigCache)
 
 	and	v1, 0xff00			# Recognize CPU's with
 	li	t1, (MIPS_R4600 << 8)		# N way L1 caches only.
-	beq	v1, t1, ConfResult		# R4K 2 way, no L2 control	
-	li	t1, (MIPS_R4700 << 8)	
+	beq	v1, t1, ConfResult		# R4K 2 way, no L2 control
+	li	t1, (MIPS_R4700 << 8)
 	beq	v1, t1, ConfResult		# R4K 2 way, No L2 control
 	li	t1, (MIPS_R5000 << 8)
 	beq	v1, t1, Conf5K			# R5K 2 way, check L2
@@ -266,7 +266,7 @@ Conf52K:					# R5200 type, check for L2 cache
 	li	t1, ~CF_52_SE			# Clear SE in conf
 	and	v0, t1				# Update config register
 	b	ConfResult
-	li	t6, 0				# L2 cache disabled 
+	li	t6, 0				# L2 cache disabled
 
 
 #---- RM7K -----------------------------
@@ -289,7 +289,7 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	and	v0, ~CF_7_TE			# Clear TE in conf
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 	NOP10
-	li	t7, 0				# L3 cache disabled 
+	li	t7, 0				# L3 cache disabled
 
 Conf7KL2:
 	and	t1, v0, CF_7_SC			# check for L2 cache
@@ -303,7 +303,7 @@ Conf7KL2:
 
 /* Sync on chip L2 */
 
-	li	a0, 0x80000000 
+	li	a0, 0x80000000
 	li	a1, 0x80040000
 10:
 	cache	IndexWBInvalidate_S, 0(a0)
@@ -591,7 +591,7 @@ END(Mips5k_InvalidateICache)
  *
  *	Sync the L1 data cache page for address addr.
  *	The address is reduced to a KSEG0 index to avoid TLB faults.
- *	
+ *
  * Results:
  *	None.
  *
@@ -667,7 +667,7 @@ END(Mips5k_SyncDCachePage)
  *
  *	Note: Use the CpuNWayCache flag to select 16 or 32 byte linesize.
  *	      All Nway cpu's now available have a fixed 32byte linesize.
- *	
+ *
  * Results:
  *	None.
  *
@@ -877,7 +877,7 @@ END(Mips5k_HitInvalidateSCache)
  *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
  *
  *	In case of the existence of an external cache we invalidate pages
- *	which are in the given range ONLY if transfer direction is READ. 
+ *	which are in the given range ONLY if transfer direction is READ.
  *	The assumption here is a 'write through' external cache which is
  *	true for all now supported processors.
  *
@@ -916,7 +916,7 @@ NON_LEAF(Mips5k_IOSyncDCache, FRAMESZ(CF_SZ), ra)
 
 	b	Mips5k_HitSyncSCache		# Do internal L2 cache
 	nop					# L1 done in parallel
-	
+
 SyncRD:
 	and	t0, a0, 31			# check if invalidate possible
 	bnez	t0, SyncRDWB			# both address and size must

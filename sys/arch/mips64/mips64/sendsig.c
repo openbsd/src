@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
  */
 /*
  * Copyright (c) 2001 Opsycon AB  (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -131,7 +131,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs->sp - fsize);
-	if ((long)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+	if ((long)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)uvm_grow(p, (long)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -187,7 +187,7 @@ bail:
 		psignal(p, SIGILL);
 		return;
 	}
-	/* 
+	/*
 	 * Build the argument list for the signal handler.
 	 */
 	regs->a0 = sig;

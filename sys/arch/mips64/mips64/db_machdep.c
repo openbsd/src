@@ -1,8 +1,8 @@
-/*	$OpenBSD: db_machdep.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -118,7 +118,7 @@ kdb_trap(type, fp)
 	switch(type) {
 	case T_BREAK:		/* breakpoint */
 		if(db_get_value((fp)->pc, sizeof(int), FALSE) == BREAK_SOVER) {
-                	(fp)->pc += BKPT_SIZE;        
+			(fp)->pc += BKPT_SIZE;
 		}
 		break;
 	case -1:
@@ -306,7 +306,7 @@ loop:
 	more = 3;
 	mask = 0;
 	for (va = subr; more; va += sizeof(int),
-	     		      more = (more == 3) ? 3 : more - 1) {
+	    more = (more == 3) ? 3 : more - 1) {
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;
@@ -382,7 +382,7 @@ loop:
 		case OP_ADDI:
 		case OP_ADDIU:
 		case OP_DADDI:
-		case OP_DADDIU: 
+		case OP_DADDIU:
 			/* look for stack pointer adjustment */
 			if (i.IType.rs != 29 || i.IType.rt != 29)
 				break;
@@ -529,7 +529,7 @@ db_inst_type(ins)
 	case OP_SB:
 	case OP_SH:
 	case OP_SW:
-	case OP_SD:  
+	case OP_SD:
 	case OP_SWC1:
 		ityp = IT_STORE;
 		break;
@@ -637,7 +637,7 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 struct db_command mips_db_command_table[] = {
 	{ "tlb",	db_dump_tlb_cmd,	0,	NULL },
 	{ "trap",	db_trap_trace_cmd,	0,	NULL },
-	{ NULL, 	NULL,			0,	NULL }
+	{ NULL,		NULL,			0,	NULL }
 };
 
 void

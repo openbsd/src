@@ -1,8 +1,8 @@
-/*	$OpenBSD: exception.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: exception.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -163,7 +163,7 @@ exception:
 	and	k1, k1, CR_EXC_CODE
 
 	LA	k0, u_exception_table
-	PTR_ADDU k0, k0, k1	
+	PTR_ADDU k0, k0, k1
 #if (_MIPS_SZPTR == 64)
 	PTR_ADDU k0, k0, k1		# yes, twice...
 #endif
@@ -173,7 +173,7 @@ exception:
 
 k_exception:
 	LA	k0, k_exception_table
-	PTR_ADDU k0, k0, k1	
+	PTR_ADDU k0, k0, k1
 #if (_MIPS_SZPTR == 64)
 	PTR_ADDU k0, k0, k1		# yes, twice...
 #endif
@@ -246,7 +246,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	SAVE_REG(v1, IC, k0, 0)
 #endif
 	PTR_ADDU sp, k0, USPACE-FRAMESZ(CF_SZ)
-	LA	gp, _gp	
+	LA	gp, _gp
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
@@ -256,7 +256,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
 	lw	v0, astpending		# any pending interrupts?
-	beq	v0, zero, 4f	
+	beq	v0, zero, 4f
 	nop
 
 	PTR_L	t0, curprocpaddr
@@ -416,7 +416,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 #endif
 	SAVE_CPU_SREG(k0, 0)
 	PTR_ADDU sp, k0, USPACE-FRAMESZ(CF_SZ)
-	LA	gp, _gp	
+	LA	gp, _gp
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG

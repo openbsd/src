@@ -1,8 +1,8 @@
-/*	$OpenBSD: cpu.c,v 1.3 2004/08/09 21:00:54 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -109,10 +109,9 @@ cpuattach(parent, dev, aux)
 	case MIPS_RM7000:
 		if(sys_config.cpu[cpuno].vers_maj < 2) {
 			printf("PMC-Sierra RM7000 CPU");
-		}	
-		else {
+		} else {
 			printf("PMC-Sierra RM7000A CPU");
-		}	
+		}
 		cpu_is_rm7k++;
 		break;
 	case MIPS_RM9000:
@@ -179,7 +178,7 @@ cpuattach(parent, dev, aux)
 	case 4:
 		printf("4 way");
 		break;
-	default:	
+	default:
 		printf("1 way");
 		break;
 	}

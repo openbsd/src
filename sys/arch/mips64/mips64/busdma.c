@@ -1,8 +1,8 @@
-/*	$OpenBSD: busdma.c,v 1.3 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: busdma.c,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -357,7 +357,7 @@ _dmamap_sync(t, map, addr, size, op)
 	while (size && nsegs) {
 		bus_addr_t vaddr;
 		bus_size_t ssize;
-		
+
 		ssize = map->dm_segs[curseg].ds_len;
 		vaddr = map->dm_segs[curseg].ds_vaddr;
 

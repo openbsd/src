@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.1 2004/08/06 20:56:03 pefo Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.2 2004/08/10 20:15:47 deraadt Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.1 2004/08/06 20:56:03 pefo Exp $
+ *      $Id: db_disasm.c,v 1.2 2004/08/10 20:15:47 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -128,16 +128,15 @@ db_addr_t
 db_disasm(loc, altfmt)
 	db_addr_t loc;
 	boolean_t altfmt;
-
 {
         if (md_printins(kdbpeek((void *)loc), loc)) {
 		loc += 4;
 		printf("\t\t");
-        	md_printins(kdbpeek((void *)loc), loc);
+		md_printins(kdbpeek((void *)loc), loc);
 	}
 	loc += 4;
         return loc;
-} 
+}
 
 /* ARGSUSED */
 static int
@@ -397,7 +396,7 @@ md_printins(int ins, int mdbdot)
 	case OP_ADDIU:
 	case OP_DADDIU:
 		if (i.IType.rs == 0) {
- 			db_printf("li\t%s,%d",
+			db_printf("li\t%s,%d",
 				reg_name[i.IType.rt],
 				(short)i.IType.imm);
 			break;

@@ -1,8 +1,8 @@
-/*	$OpenBSD: interrupt.c,v 1.3 2004/08/10 08:07:35 mickey Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -289,7 +289,7 @@ static int fakeintr(void *a) {return 0;}
  *  interrupt was serviced.
  *  Interrupts are numbered from 1 and up where 1 maps to HW int 0.
  */
-void *   
+void *
 generic_intr_establish(icp, irq, type, level, ih_fun, ih_arg, ih_what)
 	void *icp;
         u_long irq;	/* XXX pci_intr_handle_t compatible XXX */
@@ -453,7 +453,7 @@ static volatile int processing;
 
 	/* Don't recurse... */
 	if (processing)
-		return;	
+		return;
 	processing = 1;
 
 /* XXX interrupt vulnerable when changing ipending */

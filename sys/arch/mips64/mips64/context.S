@@ -1,8 +1,8 @@
-/*	$OpenBSD: context.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: context.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

@@ -1,8 +1,8 @@
-/*	$OpenBSD: tlbhandler.S,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -66,7 +66,7 @@ tlb_miss:
 	dmfc0	k0, COP_0_BAD_VADDR
 	PTR_S	zero, 2*REGSZ(k1)
 	PTR_S	zero, 3*REGSZ(k1)
-	bltz	k0, 1f			# kernel address 
+	bltz	k0, 1f			# kernel address
 	PTR_S	k0, REGSZ(k1)
 
 	PTR_L	k1, curprocpaddr
@@ -133,7 +133,7 @@ tlb_load:
 
 /*---------------------------------------------------------------- xtlb_miss
  *	Low level XTLB exception handler.
- * XXX!	This handler should be changed to handle larger segtabs. 
+ * XXX!	This handler should be changed to handle larger segtabs.
  */
 	.globl	xtlb_miss	/* 0xffffffff80000080 */
 	.set	noat
@@ -161,7 +161,7 @@ _inv_seg:
 _k_miss:
 	j	k_tlb_miss		# kernel tlbmiss.
 	dmfc0	k0, COP_0_BAD_VADDR	# must reload.
-	
+
 	.globl	e_tlb_miss
 e_tlb_miss:
 	.set	at
