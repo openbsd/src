@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.23 2002/01/28 03:23:52 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.24 2002/01/29 00:14:23 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1359,12 +1359,12 @@ pool_printit(struct pool *pp, const char *modif, int (*pr)(const char *, ...))
 
 	s = splvm();
 	if (simple_lock_try(&pp->pr_slock) == 0) {
-		printf("pool %s is locked; try again later\n",
+		pr("pool %s is locked; try again later\n",
 		    pp->pr_wchan);
 		splx(s);
 		return;
 	}
-	pool_print1(pp, modif, printf);
+	pool_print1(pp, modif, pr);
 	simple_unlock(&pp->pr_slock);
 	splx(s);
 }
