@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2000/08/15 20:21:49 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 2001/03/22 23:40:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -196,10 +196,10 @@ pid_t sigpid = 0;
 /*
  * Whatever CPU types we support
  */
-extern u_int itlb_x[], dtlb_x[], tlbd_x[];
-extern u_int itlb_s[], dtlb_s[], tlbd_s[];
-extern u_int itlb_t[], dtlb_t[], tlbd_t[];
-extern u_int itlb_l[], dtlb_l[], tlbd_l[];
+extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
+extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
+extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
+extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
 int iibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
     vsize_t sz, u_int prot));
 int idbtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
@@ -224,7 +224,7 @@ const struct hppa_cpu_typed {
 	int  arch;
 	int  features;
 	int (*desidhash) __P((void));
-	u_int *itlbh, *dtlbh, *tlbdh;
+	const u_int *itlbh, *dtlbh, *dtlbnah, *tlbdh;
 	int (*dbtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 	    vsize_t sz, u_int prot));
 	int (*ibtlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
@@ -234,37 +234,51 @@ const struct hppa_cpu_typed {
 } cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PCX",   hpcx,  0x10, 0,
-	    desidhash_x, itlb_x, dtlb_x, tlbd_x, ibtlb_g, NULL, pbtlb_g},
+	  desidhash_x, itlb_x, dtlb_x, dtlbna_x, tlbd_x,
+	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7100_CPU
 	{ "PCXS",  hpcxs, 0x11, HPPA_FTRS_BTLBS,
-	    desidhash_s, itlb_s, dtlb_s, tlbd_s, ibtlb_g, NULL, pbtlb_g},
+	  desidhash_s, itlb_s, dtlb_s, dtlbna_s, tlbd_s,
+	  ibtlb_g, NULL, pbtlb_g},
 #endif
 #ifdef HP7200_CPU
 	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
-	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, NULL, pbtlb_g},
+	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
+	  ibtlb_g, NULL, pbtlb_g},
 /* HOW?	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
-	    desidhash_t, itlb_t, dtlb_t, tlbd_t, ibtlb_g, NULL, pbtlb_g}, */
+	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
+	  ibtlb_g, NULL, pbtlb_g}, */
 #endif
 #ifdef HP7100LC_CPU
 	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g},
+	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP7300LC_CPU
 /* HOW?	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_l, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8000_CPU
 	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g},
+	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  ibtlb_g, NULL, pbtlb_g, hpti_g},
 #endif
 #ifdef HP8200_CPU
 /* HOW?	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 #ifdef HP8500_CPU
 /* HOW?	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
-	    desidhash_g, itlb_l, dtlb_l, tlbd_l, ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
+#endif
+#ifdef HP8600_CPU
+/* HOW?	{ "PCXW+", hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
+	  ibtlb_g, NULL, pbtlb_g, hpti_g}, */
 #endif
 	{ "", 0 }
 };
@@ -357,7 +371,8 @@ hppa_init(start)
 	resvmem = ((vaddr_t)&kernel_text) / NBPG;
 
 	/* calculate HPT size */
-	for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2);
+	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
+hptsize=256;	/* XXX one page for now */
 	hptsize *= 16;	/* sizeof(hpt_entry) */
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
@@ -394,10 +409,10 @@ hppa_init(start)
 			 * from locore.S
 			 */
 			extern u_int trap_ep_T_TLB_DIRTY[];
-			extern u_int trap_ep_T_ITLBMISS[];
 			extern u_int trap_ep_T_DTLBMISS[];
-			extern u_int trap_ep_T_ITLBMISSNA[];
 			extern u_int trap_ep_T_DTLBMISSNA[];
+			extern u_int trap_ep_T_ITLBMISS[];
+			extern u_int trap_ep_T_ITLBMISSNA[];
 
 			cpu_type      = p->type;
 			cpu_typename  = p->name;
@@ -408,10 +423,10 @@ hppa_init(start)
 
 #define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
 			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
-			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
 			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
+			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbnah);
+			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
 			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbh);
-			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbh);
 #undef LDILDO
 		}
 	}
@@ -1180,6 +1195,8 @@ sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	struct proc *p = curproc;
+	struct trapframe sf, *tf = p->p_md.md_regs;
+	register_t sp = tf->tf_sp;
 
 #ifdef DEBUG
 	if ((sigdebug | SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1187,7 +1204,11 @@ sendsig(catcher, sig, mask, code, type, val)
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 
+	sf = *tf;
 	/* TODO send signal */
+
+	if (copyout(&sf, (void *)sp, sizeof(sf)))
+		sigexit(p, SIGILL);
 }
 
 int

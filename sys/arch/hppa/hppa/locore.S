@@ -1,7 +1,7 @@
-/*	$OpenBSD: locore.S,v 1.39 2001/02/26 22:19:17 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.40 2001/03/22 23:40:52 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2000 Michael Shalayeff
+ * Copyright (c) 1998-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@
 	.subspa $BSS$
 	.export	pdc_stack, data
 pdc_stack
-	.block	3*NBPG
+	.block	4*NBPG
 kernelmapped			/* set when kernel is mapped */
 	.block	4
 	.export fpu_csw, data
@@ -543,7 +543,7 @@ $syscall
 	mtctl	r1, eiem
 
 	/*
-	 * we beleive that any calee-save registers
+	 * we believe that any callee-save registers
 	 * will be saved accordingly in either syscall()
 	 * or deeper called functions
 	 */
@@ -551,26 +551,26 @@ $syscall
 	stw	r3 , TF_R3 -TF_SIZE(sr1, t3)
 #ifdef DDB
 	/* save callee-save registers */
-	stw	r4,   1*4(sr1, t3)
-	stw	r5,   2*4(sr1, t3)
-	stw	r6,   3*4(sr1, t3)
-	stw	r7,   4*4(sr1, t3)
-	stw	r8,   5*4(sr1, t3)
-	stw	r9,   6*4(sr1, t3)
-	stw	r10,  7*4(sr1, t3)
-	stw	r11,  8*4(sr1, t3)
-	stw	r12,  9*4(sr1, t3)
-	stw	r13, 10*4(sr1, t3)
-	stw	r14, 11*4(sr1, t3)
-	stw	r15, 12*4(sr1, t3)
-	stw	r16, 13*4(sr1, t3)
-	stw	r17, 14*4(sr1, t3)
-	stw	r18, 15*4(sr1, t3)
+	stw	r4 , TF_R4 -TF_SIZE(sr1, t3)
+	stw	r5 , TF_R5 -TF_SIZE(sr1, t3)
+	stw	r6 , TF_R6 -TF_SIZE(sr1, t3)
+	stw	r7 , TF_R7 -TF_SIZE(sr1, t3)
+	stw	r8 , TF_R8 -TF_SIZE(sr1, t3)
+	stw	r9 , TF_R9 -TF_SIZE(sr1, t3)
+	stw	r10, TF_R10-TF_SIZE(sr1, t3)
+	stw	r11, TF_R11-TF_SIZE(sr1, t3)
+	stw	r12, TF_R12-TF_SIZE(sr1, t3)
+	stw	r13, TF_R13-TF_SIZE(sr1, t3)
+	stw	r14, TF_R14-TF_SIZE(sr1, t3)
+	stw	r15, TF_R15-TF_SIZE(sr1, t3)
+	stw	r16, TF_R16-TF_SIZE(sr1, t3)
+	stw	r17, TF_R17-TF_SIZE(sr1, t3)
+	stw	r18, TF_R18-TF_SIZE(sr1, t3)
+#endif
 	stw	r0, 0(sr1, t3)	/* terminate frame */
 	copy	r0 , r3
 	stw	r0, HPPA_FRAME_PSP(sr1, sp)
 	stw	r0, HPPA_FRAME_CRP(sr1, sp)
-#endif
 
 	/*
 	 * Copy Arguments
@@ -877,24 +877,28 @@ $syscall_end
 #ifdef HP7000_CPU
 LDILDO(itlb_x)
 LDILDO(dtlb_x)
+LDILDO(dtlbna_x)
 LDILDO(tlbd_x)
 #endif
 
 #ifdef HP7100_CPU
 LDILDO(itlb_s)
 LDILDO(dtlb_s)
+LDILDO(dtlbna_s)
 LDILDO(tlbd_s)
 #endif
 
 #ifdef HP7200_CPU
 LDILDO(itlb_t)
 LDILDO(dtlb_t)
+LDILDO(dtlbna_t)
 LDILDO(tlbd_t)
 #endif
 
 #ifdef HP7100LC_CPU
 LDILDO(itlb_l)
 LDILDO(dtlb_l)
+LDILDO(dtlbna_l)
 LDILDO(tlbd_l)
 #endif
 
@@ -1265,6 +1269,7 @@ EXIT(desidhash_t)
 $tlbd_x
 $tlbd_s
 $tlbd_t
+#if 1
 	HPTENT
 	mtctl	r24, cr28
 
@@ -1287,6 +1292,17 @@ $hash_loop_tlbd_t
 	ldw	pv_tlbprot(r24), r25
 	b	$tlb_inshpt_t
 	depi	1, TLB_DIRTY_POS, 1, r25
+#else
+
+	mfsp	%sr1, %r25
+	mtsp	%r8, %sr1
+	lpa	%r0(%sr1, %r9), %r17
+	mfctl	%cr29, %r16
+	mtsp	%r25, %sr1
+	extru	%r17, 20, 21, %r24
+	sh3add	%r24, %r16, %r16
+	
+#endif
 
 $itlb_x
 $itlb_s
@@ -1294,8 +1310,11 @@ $itlb_t
 	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
 
 $dtlb_x
+$dtlbna_x
 $dtlb_s
+$dtlbna_s
 $dtlb_t
+$dtlbna_t
 	/*
 	 * r1 is the trap type
 	 * r8 is the space of the address that had the TLB miss
@@ -1399,17 +1418,12 @@ ENTRY(pbtlb_l)
 	mtsm	t4
 EXIT(pbtlb_l)
 
-ENTRY(hpti_l)
-	bv,n	r0(rp)
-	nop
-EXIT(hpti_l)
-
 /*
  * int desidhash_l(void)
  */
 ENTRY(desidhash_l)
 	MFCPU_C(DR_CPUCFG,t1)
-	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* 2 is 4 DR0_PCXL_L2DHASH_EN */
+	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
 	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
@@ -1447,21 +1461,13 @@ $hash_loop_tlbd_l
 
 	.align	8
 $itlb_l
-	HPTENT
-#ifdef DDB
-	mtctl	r24, cr28
-#endif
-	b	$tlbmiss_l
 	depi	1, TFF_ITLB_POS, 1, r1	/* mark for ITLB insert */
-
-	.align	8
-$dtlb_l
-	/*mfctl	cr28, r24*/
-	HPTENT	/* weird, but sometimes dtlbmissna does not set cr28 */
-#ifdef DDB
+$dtlbna_l
+	HPTENT
 	mtctl	r24, cr28
-#endif
-$tlbmiss_l
+
+$dtlb_l
+	mfctl	cr28, r24
 	/*
 	 * r1 is the trap type
 	 * r8 is the space of the address that had the TLB miss
@@ -1473,19 +1479,19 @@ $tlbmiss_l
 	 * Chase the list of entries for this hash bucket until we find
 	 * the correct mapping or NULL.
 	 */
-	ldw	hpt_entry(r24),r16
+	ldw	hpt_entry(r24), r16
 $hash_loop_l
 	comb,=,n r0, r16, $tlbiflpa
-	ldw	pv_va(r16),r25
-	ldw	pv_space(r16),r17
-	comb,<>,n r9,r25,$hash_loop_l
-	ldw	pv_hash(r16),r16
-	comb,<>,n r8,r17,$hash_loop_l
-	ldw	pv_hash(r16),r16
+	ldw	pv_va(r16), r25
+	ldw	pv_space(r16), r17
+	comb,<>,n r9, r25, $hash_loop_l
+	ldw	pv_hash(r16), r16
+	comb,<>,n r8, r17, $hash_loop_l
+	ldw	pv_hash(r16), r16
 
 	/* Now set things up to enter the real mapping that we want */
-	ldw	pv_tlbpage(r16),r17
-	ldw	pv_tlbprot(r16),r25
+	ldw	pv_tlbpage(r16), r17
+	ldw	pv_tlbprot(r16), r25
 	depi	1, TLB_REF_POS, 1, r25
 
 	/*
@@ -1571,68 +1577,6 @@ $tlbiflpa_zr
 	.export	$tlb_missend, entry
 $tlb_missend
 
-	.align	32
-	.export	TLABEL(ibrk), entry
-TLABEL(ibrk)
-	mtctl	t1, tr2
-	mtctl	t2, tr3
-
-	/* If called by a user process then always pass it to trap() */
-	mfctl	pcoq, t1
-	extru,=	t1, 31, 2, r0
-	b,n	$ibrk_bad
-
-	/* don't accept breaks from data segments */
-	.import etext
-	ldil	L%etext, t2
-	ldo	R%etext(t2), t2
-	comb,>>=,n t1, t2, $ibrk_bad
-
-	mfctl	iir, t1
-	extru	t1, 31, 5, t2
-	comib,<>,n HPPA_BREAK_KERNEL, t2, $ibrk_bad
-
-	/* now process all those `break' calls we make */
-	extru	t1, 18, 13, t2
-	comib,=,n HPPA_BREAK_GET_PSW, t2, $ibrk_getpsw
-	comib,=,n HPPA_BREAK_SET_PSW, t2, $ibrk_setpsw
-
-$ibrk_bad
-	/* illegal (unimplemented) break entry point */
-	mfctl	tr3, t2
-	b	TLABEL(all)
-	mfctl	tr2, t1
-
-$ibrk_getpsw
-	b	$ibrk_exit
-	mfctl	ipsw, ret0
-
-$ibrk_setpsw
-	mfctl	ipsw, ret0
-	b	$ibrk_exit
-	mtctl	arg0, ipsw
-
-$ibrk_setpsw_tovirt
-
-	b	$ibrk_exit
-	ldw	HPPA_FRAME_PSP(sp), sp
-
-	/* insert other fast breaks here */
-	nop ! nop
-
-$ibrk_exit
-	/* skip the break */
-	mtctl	r0, pcoq
-	mfctl	pcoq, t1
-	mtctl	t1, pcoq
-	ldo	4(t1), t1
-	mtctl	t1, pcoq
-	mfctl	tr3, t2
-	mfctl	tr2, t1
-	mfctl	tr7, r1
-	rfi
-	nop
-
 	.align	64
 	.export	TLABEL(all), entry
 TLABEL(all)
@@ -1648,37 +1592,13 @@ TLABEL(all)
 	 */
 
 	/* do not overwrite tr4(cr28) */
-	mtctl	t1, tr2
-	mtctl	t2, tr3
-	mtctl	t3, tr5
+	mtctl	t3, tr2
 
-	mfctl	pcoq, t2
-	bb,>=	t2, 31, $trap_from_kernel
-	nop
-
-	/* if trapped from user space load proc's ksp pa */
-	mfctl	cr30, t1
-	depi	1, T_USER_POS, 1, r1
-	depi	1, TFF_LAST_POS, 1, r1
-	ldw	u_pcb+pcb_uva(t1), t3
-	b	$trap_make_frame
-	ldo	NBPG(t3), t3
-
-$trap_from_kernel
-	/* align stack */
-	ldo	TF_PHYS-1(sp), t3
-	dep	r0, 31, 6, t3
-
-$trap_make_frame
-	/* t3 is va, t1 is pa of (struct trapframe *) */
-	mfctl	tr3, t2
-	mtctl	t3, tr3
-	ldil	$trap_tmp_save, t3	/* we know it's in the low mem XXX */
-	mfctl	tr2, t1
-	stw	t1, TF_R22(t3)
+	ldil	$trap_tmp_save, t3
+	stw	t1, TF_R22(t3)		/* use ,bc */
 	stw	t2, TF_R21(t3)
 
-	mfctl	tr5, t1
+	mfctl	tr2, t1
 	stw	sp, TF_R30(t3)	/* sp */
 	stw	t1, TF_R20(t3)	/* t3 */
 
@@ -1688,38 +1608,15 @@ $trap_make_frame
 	 * interrupt information.
 	 */
 
-	mfctl	pcsq, t1
-	mtctl	r0, pcsq
-	mfctl	pcsq, t2
-	stw	t1, TF_IISQH(t3)
-	stw	t2, TF_IISQT(t3)
-	mtctl	r0, pcsq
-
-	mfctl	pcoq, t1
-	mtctl	r0, pcoq
-	mfctl	pcoq, t2
-	stw	t1, TF_IIOQH(t3)
-	stw	t2, TF_IIOQT(t3)
-
 	mfctl	eiem, t1
 	mfctl	ipsw, t2
-	stw	t1, TF_CR15(t3)
+	stw	t1, TF_CR15(t3)		/* use ,bc */
 	stw	t2, TF_CR22(t3)
 
 	mfsp	sr3, t1
 	mfctl	pidr1, t2
 	stw	t1, TF_SR3(t3)
 	stw	t2, TF_CR8(t3)
-
-	mfctl	isr, t1
-	mfctl	ior, t2
-	stw	t1, TF_CR20(t3)
-	stw	t2, TF_CR21(t3)
-
-	mfctl	iir, t2
-	stw	t2, TF_CR19(t3)
-	stw	r1, TF_FLAGS(t3)
-	mfctl	tr7, r1
 
 	/*
 	 * Setup kernel context
@@ -1729,42 +1626,57 @@ $trap_make_frame
 	mtctl	t1, pidr1
 	mtsp	r0, sr3
 
-	/* load the space queue */
-	mtctl	r0, pcsq
-	mtctl	r0, pcsq
-
 	/* this will enable interrupts after `cold' */
 	ldil	L%kpsw, t1
 	ldw	R%kpsw(t1), t2
 	mtctl	r0, eiem
 	mtctl	t2, ipsw
 
-	/* load in the address to "return" to with the rfir instruction */
-	ldil	L%$trapnowvirt, t1
-	ldo	R%$trapnowvirt(t1), t1
+	mfctl	pcsq, t1
+	mtctl	r0, pcsq
+	mfctl	pcsq, t2
+	stw	t1, TF_IISQH(t3)	/* use ,bc */
+	stw	t2, TF_IISQT(t3)
+	mtctl	r0, pcsq
 
-	/*
-	 * load the offset queue, space queue was loaded as a side effect of
-	 * saving the space queue above
-	 */
-	mtctl	t1, pcoq
-	ldo	4(t1), t1
-	mtctl	t1, pcoq
+	mfctl	pcoq, t1
+	ldo	TF_PHYS-1(sp), sp
+	bb,>=	t1, 31, $trap_from_kernel
+	dep	r0, 31, 6, sp
 
-	/*
-	 * Must do rfir not rfi since we may be called from tlbmiss routine
-	 * (to handle page fault) and it uses the shadowed registers.
-	 *
-	 * Also translate the t3 (trapframe) back into va
-	 */
-	mfctl	tr3, t3
-	ldo	HPPA_FRAME_SIZE+TF_SIZE(t3), sp
+	mfctl	cr30, t2
+	depi	1, T_USER_POS, 1, r1
+	depi	1, TFF_LAST_POS, 1, r1
+	ldw	u_pcb+pcb_uva(t2), sp
+	ldo	NBPG(sp), sp
+
+$trap_from_kernel
+	ldil	L%$trapnowvirt, t2
+	ldo	R%$trapnowvirt(t2), t2
+	mtctl	t2, pcoq
+	stw	t1, TF_IIOQH(t3)
+	ldo	4(t2), t2
+	mfctl	pcoq, t1
+	stw	t1, TF_IIOQT(t3)
+	mtctl	t2, pcoq
+
+	mfctl	isr, t1
+	mfctl	ior, t2
+	stw	t1, TF_CR20(t3)		/* use ,bc */
+	stw	t2, TF_CR21(t3)
+
+	mfctl	iir, t2
+	stw	t2, TF_CR19(t3)
+	stw	r1, TF_FLAGS(t3)
+	mfctl	tr7, r1
+
+	copy	sp, t3
+	ldo	HPPA_FRAME_SIZE+TF_SIZE(sp), sp
 	rfir
 	nop
-
 $trapnowvirt
 	/*
-	 * t3 contains the physical address of the trapframe
+	 * t3 contains the virtual address of the trapframe
 	 * sp is loaded w/ the right VA (we did not need it being physical)
 	 */
 
@@ -1812,15 +1724,31 @@ $trapnowvirt
 	stw	r0, -HPPA_FRAME_SIZE(sp)
 #endif
 	stw	t3, -HPPA_FRAME_SIZE+4(sp)
-	/*
-	 * hmm, we don't need to save all the regs, only caller-save
-	 * (except when DDB)
-	 */
-	mfctl	sar, t1
+
+	mfctl	sar, t1			/* use ,bc each cache line */
 	stw	t1, TF_CR11(t3)
 	stw	r1, TF_R1(t3)
 	stw	r2, TF_R2(t3)
 	stw	r3, TF_R3(t3)
+
+	/*
+	 * Copy partially saved state from the store into the frame
+	 */
+	ldil	$trap_tmp_save, t2
+	/* use ,bc each line */
+	ldw  0(t2), r1 ! ldw  4(t2), t1 ! stw r1,  0(t3) ! stw t1,  4(t3)
+	ldw  8(t2), r1 ! ldw 12(t2), t1 ! stw r1,  8(t3) ! stw t1, 12(t3)
+	ldw 16(t2), r1 ! ldw 20(t2), t1 ! stw r1, 16(t3) ! stw t1, 20(t3)
+	ldw 24(t2), r1 ! ldw 28(t2), t1 ! stw r1, 24(t3) ! stw t1, 28(t3)
+	ldw 32(t2), r1 ! ldw 36(t2), t1 ! stw r1, 32(t3) ! stw t1, 36(t3)
+	ldw 40(t2), r1 ! ldw 44(t2), t1 ! stw r1, 40(t3) ! stw t1, 44(t3)
+	ldw 48(t2), r1 ! ldw 52(t2), t1 ! stw r1, 48(t3) ! stw t1, 52(t3)
+	ldw 56(t2), r1 ! ldw 60(t2), t1 ! stw r1, 56(t3) ! stw t1, 60(t3)
+
+	/*
+	 * hmm, we don't need to save all the regs, only caller-save
+	 * (except when DDB)
+	 */
 #ifdef DDB
 	stw	r4, TF_R4(t3)
 	stw	r5, TF_R5(t3)
@@ -1839,9 +1767,6 @@ $trapnowvirt
 	stw	r18, TF_R18(t3)
 #endif
 	stw	t4, TF_R19(t3)
-	/*	r20 already saved (t3)
-	 *	r21 already saved (t2)
-	 *	r22 already saved (t1) */
 	stw	r23,TF_R23(t3)
 	stw	r24,TF_R24(t3)
 	stw	r25,TF_R25(t3)
@@ -1849,20 +1774,7 @@ $trapnowvirt
 	stw	r27,TF_R27(t3)
 	stw	r28,TF_R28(t3)
 	stw	r29,TF_R29(t3)
-	/*	r30 already saved (sp) */
 	stw	r31,TF_R31(t3)
-
-	/*
-	 * Copy partially saved state from the store into the frame
-	 * N.B. we are not doing any bundleing since it's only 16 words
-	 */
-	ldil	$trap_tmp_save, arg0
-	copy	t3, arg1
-	ldi	TF_PHYS, arg2
-$trap_copy_loop
-	ldwm	4(arg0), t1
-	addib,>= -4, arg2, $trap_copy_loop
-	stwm	t1, 4(arg1)
 
 	/*
 	 * Save the necessary control registers that have not already saved.
@@ -1933,6 +1845,69 @@ $trap_copy_loop
 
 	.export	$trap$all$end, entry
 $trap$all$end
+
+	.align	32
+	.export	TLABEL(ibrk), entry
+TLABEL(ibrk)
+	mtctl	t1, tr2
+	mtctl	t2, tr3
+
+	/* If called by a user process then always pass it to trap() */
+	mfctl	pcoq, t1
+	extru,=	t1, 31, 2, r0
+	b,n	$ibrk_bad
+
+	/* don't accept breaks from data segments */
+	.import etext
+	ldil	L%etext, t2
+	ldo	R%etext(t2), t2
+	comb,>>=,n t1, t2, $ibrk_bad
+
+	mfctl	iir, t1
+	extru	t1, 31, 5, t2
+	comib,<>,n HPPA_BREAK_KERNEL, t2, $ibrk_bad
+
+	/* now process all those `break' calls we make */
+	extru	t1, 18, 13, t2
+	comib,=,n HPPA_BREAK_GET_PSW, t2, $ibrk_getpsw
+	comib,=,n HPPA_BREAK_SET_PSW, t2, $ibrk_setpsw
+
+$ibrk_bad
+	/* illegal (unimplemented) break entry point */
+	mfctl	tr3, t2
+	b	TLABEL(all)
+	mfctl	tr2, t1
+
+$ibrk_getpsw
+	b	$ibrk_exit
+	mfctl	ipsw, ret0
+
+$ibrk_setpsw
+	mfctl	ipsw, ret0
+	b	$ibrk_exit
+	mtctl	arg0, ipsw
+
+$ibrk_setpsw_tovirt
+
+	b	$ibrk_exit
+	ldw	HPPA_FRAME_PSP(sp), sp
+
+	/* insert other fast breaks here */
+	nop ! nop
+
+$ibrk_exit
+	/* skip the break */
+	mtctl	r0, pcoq
+	mfctl	pcoq, t1
+	mtctl	t1, pcoq
+	ldo	4(t1), t1
+	mtctl	t1, pcoq
+	mfctl	tr3, t2
+	mfctl	tr2, t1
+	mfctl	tr7, r1
+	rfi
+	nop
+
 
 	.import	dcache_stride, data
 ENTRY(fdcache)
@@ -2387,7 +2362,7 @@ ENTRY(cpu_switch)
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), arg2
 	stw	r0, R%curproc(t1)
-	/* remain on the old (curproc)'s stack until we have better choice */
+	/* remain on the old (curproc)'s stack until we have a better choice */
 
 	/*
 	 * arg3: spl
@@ -2530,6 +2505,8 @@ switch_exited
 	ldw	HPPA_FRAME_PSP(sp), t2
 	stw	t3, TF_R30(t1)
 	fdc	r0(t1)
+	ldw	HPPA_FRAME_ARG(1)(sp), t3 /* in case we're in trampoline */
+	ldw	HPPA_FRAME_ARG(2)(sp), arg0
 	ldw	 0*4(t2), r3
 	ldw	 1*4(t2), r4
 	ldw	 2*4(t2), r5
@@ -2592,11 +2569,9 @@ ENTRY(switch_exit)
 EXIT(switch_exit)
 
 ENTRY(switch_trampoline)
-	ldw	HPPA_FRAME_ARG(1)(sp), t1
-	ldw	HPPA_FRAME_ARG(2)(sp), arg0
 	.call
-	blr	%r0, rp
-	bv,n	%r0(t1)
+	blr	r0, rp
+	bv,n	r0(t3)
 	nop
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
