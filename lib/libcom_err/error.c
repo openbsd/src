@@ -43,7 +43,7 @@ RCSID("$KTH: error.c,v 1.13 1998/02/17 21:19:44 bg Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <com_right.h>
+#include <com_err.h>
 
 const char *
 com_right(struct et_list *list, long code)
