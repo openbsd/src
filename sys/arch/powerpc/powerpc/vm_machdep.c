@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.31 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.32 2002/03/14 23:51:47 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -68,8 +68,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
 	
-#ifdef PPC_VECTOR_SUPPORTED
-	/* ALTIVEC */
+#ifdef ALTIVEC
 	if (p1->p_addr->u_pcb.pcb_vr != NULL) {
 		if (p1 == ppc_vecproc)
 			save_vec(p1);
@@ -78,7 +77,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	} else {
 		pcb->pcb_vr = NULL;
 	}
-#endif /* PPC_VECTOR_SUPPORTED */
+#endif /* ALTIVEC */
 
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 
@@ -173,8 +172,19 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
+#ifdef ALTIVEC
+	struct pcb *pcb = &p->p_addr->u_pcb;
+#endif /* ALTIVEC */
+	
 	if (p == fpuproc)	/* release the fpu */
 		fpuproc = 0;
+
+#ifdef ALTIVEC
+	if (p == ppc_vecproc)
+		ppc_vecproc = NULL; 	/* release the Altivec Unit */
+	if (pcb->pcb_vr != NULL)
+		pool_put(&ppc_vecpl, pcb->pcb_vr);
+#endif /* ALTIVEC */
 	
 	(void)splhigh();
 	switchexit(p);
