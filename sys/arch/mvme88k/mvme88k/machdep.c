@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.120 2003/11/09 00:32:03 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.121 2003/12/11 18:12:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -258,7 +258,7 @@ vaddr_t last_addr;
 vaddr_t avail_start, avail_end;
 vaddr_t virtual_avail, virtual_end;
 
-pcb_t    curpcb;
+extern struct pcb *curpcb;
 extern struct user *proc0paddr;
 
 /*
