@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.6 2002/08/21 22:07:43 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/12/05 04:30:21 kjc Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2002, Miodrag Vallat.
@@ -162,7 +162,6 @@ _DEV(tun, 23)
 _DEV(pf, 39)
 _DEV(lkm, 24)
 _DEV(rnd, 40)
-_DEV(altq, 52)
 _DEV(xfs, 51)
 _DEV(sram, 7)
 _DEV(nvram, 10)

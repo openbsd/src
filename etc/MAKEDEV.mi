@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.52 2002/10/16 15:48:31 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.53 2002/12/05 04:30:21 kjc Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -151,7 +151,6 @@ twrget(all, aflo, fd, 0, 1, 2, 3)dnl
 target(all, systrace)dnl
 target(all, pctr)dnl
 target(all, pctr0)dnl
-target(all, altq)dnl
 target(all, pf)dnl
 twrget(all, cry, crypto)dnl
 target(all, apm)dnl
@@ -589,12 +588,6 @@ _mkdev(pf, {-pf*-}, {-M pf c major_pf_c 0 600-})dnl
 __devitem(bpf, bpf*, Berkeley Packet Filter)dnl
 _mkdev(bpf, {-bpf*-}, {-M bpf$U c major_bpf_c $U 600-}, 600)dnl
 _mkdev(tun, {-tun*-}, {-M tun$U c major_tun_c $U 600-}, 600)dnl
-__devitem(altq, altq/, ALTQ control interface)dnl
-_mkdev(altq, altq, {-RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c major_altq_c $U 644
-		U=Add($U, 1)
-	done-})dnl
 __devitem(speak, speaker, pc speaker)dnl
 _mkdev(speak, speaker, {-M speaker c major_speak_c 0 600-})dnl
 __devitem(kbd, kbd, keyboard (provides events, for X11))dnl

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV.md,v 1.8 2002/10/16 15:48:31 todd Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.9 2002/12/05 04:30:21 kjc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,7 +65,6 @@ _DEV(bpf)
 _DEV(tun)
 _DEV(lkm)
 _DEV(rnd)
-_DEV(altq)
 _DEV(pf, 39)
 _DEV(systrace, 50)
 _DEV(usbs)
