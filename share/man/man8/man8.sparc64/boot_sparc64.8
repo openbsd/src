@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.1 2001/10/05 07:52:20 miod Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.2 2001/10/14 21:02:25 miod Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,9 +52,7 @@ and unless this fails, the system will resume multi-user operations.
 System boot blocks are installed near the start of the boot disk
 using the procedure described in
 .Xr installboot 8 .
-The boot program attempts to load
-.Pa bsd
-from partition
+The boot program attempts to load the kernel from partition
 .Dq a
 of the boot device,
 which must currently be an
@@ -70,9 +68,15 @@ The
 .Fl a
 flag instructs the system to prompt for the location of the root filesystem
 and the primary swap partition.
+The
+.Fl c
+flag instructs the system to enter the
+.Dq User Kernel Config
+mode upon startup (see
+.Xr boot_config 8 ).
 Other flags are currently ignored.
 .Pp
-The ULTRAsparc OpenFirmware will normally load the kernel from the device and
+The UltraSPARC OpenFirmware will normally load the kernel from the device and
 filename as instructed by the
 .Dq boot-device
 and
@@ -83,12 +87,13 @@ If the
 variable is empty, the
 .Ox
 bootloader will look for a kernel named
-.Dq bsd .
+.Dq bsd ,
+unless a different filename has been specified in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
 .Em \	ok
 set-default boot-file
-.Pp
+.Ss Accessing the PROM during runtime
 If the
 .Xr sysctl 8
 variable
@@ -111,6 +116,7 @@ system code
 system bootstrap
 .El
 .Sh SEE ALSO
+.Xr boot_config 8 ,
 .Xr crash 8 ,
 .Xr disklabel 8 ,
 .Xr fsck 8 ,
