@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uucpd.8,v 1.7 2000/04/12 21:48:05 aaron Exp $
+.\"	$OpenBSD: uucpd.8,v 1.8 2003/03/12 19:37:56 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -38,19 +38,31 @@
 The
 .Nm
 daemon reads a username and password, and then executes
-.Xr uucico 8 ,
+.Xr uucico ,
 the UUCP file transfer daemon, if the
 username and password match a valid account and
 the account's shell is
-.Dq /usr/libexec/uucp/uucico .
+.Dq /usr/local/libexec/uucp/uucico .
+.Pp
 .Nm
 is started by
-.Xr inetd 8 ,
-.Xr uucico 8
+.Xr inetd 8
+and
+.Xr uucico .
+.Pp
+.Sy Note:
+.Xr uucico
+is not part of the base
+.Ox
+system.
+It comes as part of the uucp suite, and can be installed via
+.Xr ports 7
+or
+.Xr packages 7 .
 .Sh HISTORY
 The
 .Nm
 program was first made available in
 .Bx 4.2 .
 .Sh SEE ALSO
-.Xr inetd 8 .
+.Xr inetd 8

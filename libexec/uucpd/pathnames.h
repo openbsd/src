@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 2001/01/28 19:34:35 niklas Exp $*/
+/*	$OpenBSD: pathnames.h,v 1.3 2003/03/12 19:37:56 jmc Exp $*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,4 +37,4 @@
 
 #include <paths.h>
 
-#define	_PATH_UUCICO	"/usr/libexec/uucp/uucico"
+#define	_PATH_UUCICO	"/usr/local/libexec/uucp/uucico"
