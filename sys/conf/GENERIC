@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 2004/05/28 08:16:23 grange Exp $
+#	$OpenBSD: GENERIC,v 1.108 2004/07/15 12:11:36 henning Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -70,8 +70,6 @@ option		IPSEC		# IPsec
 #option		NSIP		# XNS tunneling over IP
 #option		IPX		# IPX+SPX
 #option		IPXIP		# IPX tunneling over IP
-#option		ISO,TPIP	# OSI
-#option		EON		# OSI tunneling over IP
 #option		NETATALK	# AppleTalk
 #option		CCITT,LLC,HDLC	# X.25
 option		PPP_BSDCOMP	# PPP BSD compression
