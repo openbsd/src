@@ -1,3 +1,5 @@
+.\"	$OpenBSD: chown.8,v 1.2 1997/01/26 05:54:28 downsj Exp $
+.\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,11 +32,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$Id: chown.8,v 1.1.1.1 1995/10/18 08:47:29 deraadt Exp $
 .\"
-.Dd March 31, 1994
+.Dd January 25, 1997
 .Dt CHOWN 8
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm chown
 .Nd change file owner and group
@@ -45,6 +46,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f
+.Op Fl h
 .Ar owner Op Ar :group
 .Ar file ...
 .Nm chown
@@ -53,6 +55,7 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl f
+.Op Fl h
 .Ar :group
 .Ar file ...
 .Sh DESCRIPTION
@@ -80,15 +83,14 @@ in the files instead of just the files themselves.
 .It Fl f
 Don't report any failure to change file owner or group, nor modify
 the exit status to reflect such failures.
+.It Fl h
+Change the user ID and/or the group ID on symbolic links.  The
+.Fl R
+and
+.Fl h
+options are mutually exclusive.
 .El
 .Pp
-Symbolic links don't have owners, so unless the
-.Fl H
-or 
-.Fl L 
-option is set,
-.Nm chown
-on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
 .Fl L
@@ -132,12 +134,6 @@ Previous versions of the
 utility used the dot (``.'') character to distinguish the group name.
 This has been changed to be a colon (``:'') character so that user and
 group names may contain the dot character.
-.Pp
-Previous versions of the
-.Nm chown
-utility changed the owner of symbolic links specified on the command
-line.
-In this system, symbolic links do not have owners.
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr find 1 ,
