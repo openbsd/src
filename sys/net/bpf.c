@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.49 2004/06/21 23:05:10 markus Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.50 2004/06/22 04:04:19 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -826,6 +826,14 @@ bpfioctl(dev, cmd, addr, flag, p)
 		d->bd_locked = 1;
 		break;
 
+	case BIOCGFILDROP:	/* get "filter-drop" flag */
+		*(u_int *)addr = d->bd_fildrop;
+		break;
+
+	case BIOCSFILDROP:	/* set "filter-drop" flag */
+		d->bd_fildrop = *(u_int *)addr ? 1 : 0;
+		break;
+
 	case FIONBIO:		/* Non-blocking I/O */
 		if (*(int *)addr)
 			d->bd_rtout = -1;
@@ -1087,7 +1095,7 @@ filt_bpfread(struct knote *kn, long hint)
  * by each process' filter, and if accepted, stashed into the corresponding
  * buffer.
  */
-void
+int
 bpf_tap(arg, pkt, pktlen)
 	caddr_t arg;
 	u_char *pkt;
@@ -1096,6 +1104,8 @@ bpf_tap(arg, pkt, pktlen)
 	struct bpf_if *bp;
 	struct bpf_d *d;
 	size_t slen;
+	int match = 0;
+
 	/*
 	 * Note that the ipl does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
@@ -1105,9 +1115,13 @@ bpf_tap(arg, pkt, pktlen)
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
 		slen = bpf_filter(d->bd_rfilter, pkt, pktlen, pktlen);
-		if (slen != 0)
+		if (slen != 0) {
 			bpf_catchpacket(d, pkt, pktlen, slen, bcopy);
+			match ++;
+		}
 	}
+
+	return (d->bd_fildrop && match);
 }
 
 /*
@@ -1140,7 +1154,7 @@ bpf_mcopy(src_arg, dst_arg, len)
 /*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
-void
+int
 bpf_mtap(arg, m)
 	caddr_t arg;
 	struct mbuf *m;
@@ -1149,9 +1163,10 @@ bpf_mtap(arg, m)
 	struct bpf_d *d;
 	size_t pktlen, slen;
 	struct mbuf *m0;
+	int match = 0;
 
 	if (m == NULL)
-		return;
+		return (0);
 
 	pktlen = 0;
 	for (m0 = m; m0 != 0; m0 = m0->m_next)
@@ -1160,9 +1175,13 @@ bpf_mtap(arg, m)
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
 		slen = bpf_filter(d->bd_rfilter, (u_char *)m, pktlen, 0);
-		if (slen != 0)
+		if (slen != 0) {
 			bpf_catchpacket(d, (u_char *)m, pktlen, slen, bpf_mcopy);
+			match++;
+		}
 	}
+
+	return (d->bd_fildrop && match);
 }
 
 /*
