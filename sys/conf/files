@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.216 2001/07/17 20:34:49 provos Exp $
+#	$OpenBSD: files,v 1.217 2001/07/18 12:24:20 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -461,6 +461,7 @@ file kern/subr_autoconf.c
 file kern/subr_disk.c
 file kern/subr_extent.c
 file kern/subr_log.c
+file kern/subr_pool.c
 file kern/subr_prf.c
 file kern/subr_prof.c
 file kern/subr_rmap.c
@@ -469,7 +470,6 @@ file kern/subr_xxx.c
 file kern/sys_generic.c
 file kern/sys_pipe.c
 file kern/sys_process.c
-file kern/subr_pool.c
 file kern/sys_socket.c
 file kern/syscalls.c			syscall_debug
 file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
