@@ -1,4 +1,4 @@
-/*	$OpenBSD: unifdef.c,v 1.8 2003/01/18 23:42:51 deraadt Exp $	*/
+/*	$OpenBSD: unifdef.c,v 1.9 2003/01/22 18:26:15 deraadt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.8 2003/01/18 23:42:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.9 2003/01/22 18:26:15 deraadt Exp $";
 #endif
 
 /*
@@ -56,6 +56,9 @@ static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.8 2003/01/18 23:42:51 deraa
  *        #else's and #endif's to see that they match their
  *        corresponding #ifdef or #ifndef
  *      generate #line directives in place of deleted code
+ *
+ *   The first two items above require better buffer handling, which would
+ *     also make it possible to handle all "dodgy" directives correctly.
  */
 
 #include <ctype.h>
@@ -69,7 +72,6 @@ static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.8 2003/01/18 23:42:51 deraa
 
 /* types of input lines: */
 typedef enum {
-	LT_PLAIN,		/* ordinary line */
 	LT_TRUEI,		/* a true #if with ignore flag */
 	LT_FALSEI,		/* a false #if with ignore flag */
 	LT_IF,			/* an unknown #if */
@@ -80,13 +82,21 @@ typedef enum {
 	LT_ELFALSE,		/* a false #elif */
 	LT_ELSE,		/* #else */
 	LT_ENDIF,		/* #endif */
+	LT_DODGY,		/* flag: directive is not on one line */
+	LT_DODGY_LAST = LT_DODGY + LT_ENDIF,
+	LT_PLAIN,		/* ordinary line */
 	LT_EOF,			/* end of file */
 	LT_COUNT
 } Linetype;
 
 static char const * const linetype_name[] = {
-	"PLAIN", "TRUEI", "FALSEI", "IF", "TRUE", "FALSE",
-	"ELIF", "ELTRUE", "ELFALSE", "ELSE", "ENDIF", "EOF"
+	"TRUEI", "FALSEI", "IF", "TRUE", "FALSE",
+	"ELIF", "ELTRUE", "ELFALSE", "ELSE", "ENDIF",
+	"DODGY TRUEI", "DODGY FALSEI",
+	"DODGY IF", "DODGY TRUE", "DODGY FALSE",
+	"DODGY ELIF", "DODGY ELTRUE", "DODGY ELFALSE",
+	"DODGY ELSE", "DODGY ENDIF",
+	"PLAIN", "EOF"
 };
 
 /* state of #if processing */
@@ -143,11 +153,18 @@ static char const * const linestate_name[] = {
 #define	MAXSYMS         4096			/* maximum number of symbols */
 
 /*
+ * Sometimes when editing a keyword the replacement text is longer, so
+ * we leave some space at the end of the tline buffer to accommodate this.
+ */
+#define	EDITSLOP        10
+
+/*
  * Globals.
  */
 
 static bool             complement;		/* -c: do the complement */
 static bool             debugging;		/* -d: debugging reports */
+static bool             iocccok;		/* -e: fewer IOCCC errors */
 static bool             killconsts;		/* -k: eval constant #ifs */
 static bool             lnblank;		/* -l: blank deleted lines */
 static bool             symlist;		/* -s: output symbol list */
@@ -162,9 +179,7 @@ static FILE            *input;			/* input file pointer */
 static const char      *filename;		/* input file name */
 static int              linenum;		/* current line number */
 
-static char             tline[MAXLINE + 10];	/* input buffer plus space */
-static const char      *endtline = &tline[MAXLINE + 9]; /* tline ends here */
-
+static char             tline[MAXLINE+EDITSLOP];/* input buffer plus space */
 static char            *keyword;		/* used for editing #elif's */
 
 static Comment_state    incomment;		/* comment parser state */
@@ -184,13 +199,15 @@ static int              findsym(const char *);
 static void             flushline(bool);
 static Linetype         getline(void);
 static Linetype         ifeval(const char **);
+static void             ignoreoff(void);
+static void             ignoreon(void);
+static void             keywordedit(const char *);
 static void             nest(void);
 static void             process(void);
 static const char      *skipcomment(const char *);
 static const char      *skipsym(const char *);
 static void             state(Ifstate);
 static int              strlcmp(const char *, const char *, size_t);
-static void             unignore(void);
 static void             usage(void);
 
 #define endsym(c) (!isalpha((unsigned char)c) && !isdigit((unsigned char)c) && c != '_')
@@ -203,7 +220,7 @@ main(int argc, char *argv[])
 {
 	int opt;
 
-	while ((opt = getopt(argc, argv, "i:D:U:I:cdklst")) != -1)
+	while ((opt = getopt(argc, argv, "i:D:U:cdeklst")) != -1)
 		switch (opt) {
 		case 'i': /* treat stuff controlled by these symbols as text */
 			/*
@@ -225,14 +242,14 @@ main(int argc, char *argv[])
 		case 'U': /* undef a symbol */
 			addsym(false, false, optarg);
 			break;
-		case 'I':
-			/* no-op for compatibility with cpp */
-			break;
 		case 'c': /* treat -D as -U and vice versa */
 			complement = true;
 			break;
 		case 'd':
 			debugging = true;
+			break;
+		case 'e': /* fewer errors from dodgy lines */
+			iocccok = true;
 			break;
 		case 'k': /* process constant #ifs */
 			killconsts = true;
@@ -276,8 +293,8 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: unifdef [-cdklst] [[-Dsym[=val]]"
-	    " [-Usym] [-iDsym[=val]] [-iUsym]] ... [file]\n");
+	fprintf(stderr, "usage: unifdef [-cdeklst]"
+	    " [-Dsym[=val]] [-Usym] [-iDsym[=val]] [-iUsym] ... [file]\n");
 	exit(2);
 }
 
@@ -285,22 +302,31 @@ usage(void)
  * A state transition function alters the global #if processing state
  * in a particular way. The table below is indexed by the current
  * processing state and the type of the current line. A NULL entry
- * indicate that processing is complete.
+ * indicates that processing is complete.
  *
  * Nesting is handled by keeping a stack of states; some transition
- * functions increase or decrease the depth. They also maintin the
+ * functions increase or decrease the depth. They also maintain the
  * ignore state on a stack. In some complicated cases they have to
  * alter the preprocessor directive, as follows.
  *
  * When we have processed a group that starts off with a known-false
  * #if/#elif sequence (which has therefore been deleted) followed by a
- * #elif that we don't understand and therefore must keep, we turn the
+ * #elif that we don't understand and therefore must keep, we edit the
  * latter into a #if to keep the nesting correct.
  *
  * When we find a true #elif in a group, the following block will
  * always be kept and the rest of the sequence after the next #elif or
- * #else will be discarded. We change the #elif to #else and the
+ * #else will be discarded. We edit the #elif into a #else and the
  * following directive to #endif since this has the desired behaviour.
+ *
+ * "Dodgy" directives are split across multiple lines, the most common
+ * example being a multi-line comment hanging off the right of the
+ * directive. We can handle them correctly only if there is no change
+ * from printing to dropping (or vice versa) caused by that directive.
+ * If the directive is the first of a group we have a choice between
+ * failing with an error, or passing it through unchanged instead of
+ * evaluating it. The latter is not the default to avoid questions from
+ * users about unifdef unexpectedly leaving behind preprocessor directives.
  */
 typedef void state_fn(void);
 
@@ -353,7 +379,7 @@ static void
 Strue(void)
 {
 	drop();
-	unignore();
+	ignoreoff();
 	state(IS_TRUE_PREFIX);
 }
 
@@ -361,7 +387,7 @@ static void
 Sfalse(void)
 {
 	drop();
-	unignore();
+	ignoreoff();
 	state(IS_FALSE_PREFIX);
 }
 
@@ -377,7 +403,7 @@ static void
 Pelif(void)
 {
 	print();
-	unignore();
+	ignoreoff();
 	state(IS_PASS_MIDDLE);
 }
 
@@ -400,7 +426,7 @@ static void
 Dfalse(void)
 {
 	drop();
-	unignore();
+	ignoreoff();
 	state(IS_FALSE_TRAILER);
 }
 
@@ -408,7 +434,7 @@ static void
 Delif(void)
 {
 	drop();
-	unignore();
+	ignoreoff();
 	state(IS_FALSE_MIDDLE);
 }
 
@@ -455,28 +481,58 @@ Ffalse(void)
 	Sfalse();
 }
 
+/* variable pedantry for obfuscated lines */
+static void
+Oiffy(void)
+{
+	if (iocccok)
+		Fpass();
+	else
+		Eioccc();
+	ignoreon();
+}
+
+static void
+Oif(void)
+{
+	if (iocccok)
+		Fpass();
+	else
+		Eioccc();
+}
+
+static void
+Oelif(void)
+{
+	if (iocccok)
+		Pelif();
+	else
+		Eioccc();
+}
+
 /* ignore comments in this block */
 static void
 Idrop(void)
 {
 	Fdrop();
-	ignore[depth] = true;
+	ignoreon();
 }
 
 static void
-Itrue(void) {
+Itrue(void)
+{
 	Ftrue();
-	ignore[depth] = true;
+	ignoreon();
 }
 
 static void
 Ifalse(void)
 {
 	Ffalse();
-	ignore[depth] = true;
+	ignoreon();
 }
 
-/* modify this line */
+/* edit this line */
 static void
 Mpass (void)
 {
@@ -487,54 +543,92 @@ Mpass (void)
 static void
 Mtrue (void)
 {
-	strlcpy(keyword, "else\n", endtline - keyword);
-	print();
+	keywordedit("else\n");
 	state(IS_TRUE_MIDDLE);
 }
 
 static void
 Melif (void)
 {
-	strlcpy(keyword, "endif\n", endtline - keyword);
-	print();
+	keywordedit("endif\n");
 	state(IS_FALSE_TRAILER);
 }
 
 static void
 Melse (void)
 {
-	strlcpy(keyword, "endif\n", endtline - keyword);
-	print();
+	keywordedit("endif\n");
 	state(IS_FALSE_ELSE);
 }
 
 static state_fn * const trans_table[IS_COUNT][LT_COUNT] = {
 /* IS_OUTSIDE */
-{print,Itrue,Ifalse,Fpass,Ftrue,Ffalse,Eelif, Eelif, Eelif, Eelse,Eendif,NULL},
+{ Itrue, Ifalse,Fpass, Ftrue, Ffalse,Eelif, Eelif, Eelif, Eelse, Eendif,
+  Oiffy, Oiffy, Fpass, Oif,   Oif,   Eelif, Eelif, Eelif, Eelse, Eendif,
+  print, NULL },
 /* IS_FALSE_PREFIX */
-{drop, Idrop,Idrop, Fdrop,Fdrop,Fdrop, Mpass, Strue, Sfalse,Selse,Dendif,Eeof},
+{ Idrop, Idrop, Fdrop, Fdrop, Fdrop, Mpass, Strue, Sfalse,Selse, Dendif,
+  Idrop, Idrop, Fdrop, Fdrop, Fdrop, Mpass, Eioccc,Eioccc,Eioccc,Eioccc,
+  drop,  Eeof },
 /* IS_TRUE_PREFIX */
-{print,Itrue,Ifalse,Fpass,Ftrue,Ffalse,Dfalse,Dfalse,Dfalse,Delse,Dendif,Eeof},
+{ Itrue, Ifalse,Fpass, Ftrue, Ffalse,Dfalse,Dfalse,Dfalse,Delse, Dendif,
+  Oiffy, Oiffy, Fpass, Oif,   Oif,   Eioccc,Eioccc,Eioccc,Eioccc,Eioccc,
+  print, Eeof },
 /* IS_PASS_MIDDLE */
-{print,Itrue,Ifalse,Fpass,Ftrue,Ffalse,Pelif, Mtrue, Delif, Pelse,Pendif,Eeof},
+{ Itrue, Ifalse,Fpass, Ftrue, Ffalse,Pelif, Mtrue, Delif, Pelse, Pendif,
+  Oiffy, Oiffy, Fpass, Oif,   Oif,   Pelif, Oelif, Oelif, Pelse, Pendif,
+  print, Eeof },
 /* IS_FALSE_MIDDLE */
-{drop, Idrop,Idrop, Fdrop,Fdrop,Fdrop, Pelif, Mtrue, Delif, Pelse,Pendif,Eeof},
+{ Idrop, Idrop, Fdrop, Fdrop, Fdrop, Pelif, Mtrue, Delif, Pelse, Pendif,
+  Idrop, Idrop, Fdrop, Fdrop, Fdrop, Eioccc,Eioccc,Eioccc,Eioccc,Eioccc,
+  drop,  Eeof },
 /* IS_TRUE_MIDDLE */
-{print,Itrue,Ifalse,Fpass,Ftrue,Ffalse,Melif, Melif, Melif, Melse,Pendif,Eeof},
+{ Itrue, Ifalse,Fpass, Ftrue, Ffalse,Melif, Melif, Melif, Melse, Pendif,
+  Oiffy, Oiffy, Fpass, Oif,   Oif,   Eioccc,Eioccc,Eioccc,Eioccc,Pendif,
+  print, Eeof },
 /* IS_PASS_ELSE */
-{print,Itrue,Ifalse,Fpass,Ftrue,Ffalse,Eelif, Eelif, Eelif, Eelse,Pendif,Eeof},
+{ Itrue, Ifalse,Fpass, Ftrue, Ffalse,Eelif, Eelif, Eelif, Eelse, Pendif,
+  Oiffy, Oiffy, Fpass, Oif,   Oif,   Eelif, Eelif, Eelif, Eelse, Pendif,
+  print, Eeof },
 /* IS_FALSE_ELSE */
-{drop, Idrop,Idrop, Fdrop,Fdrop,Fdrop, Eelif, Eelif, Eelif, Eelse,Dendif,Eeof},
+{ Idrop, Idrop, Fdrop, Fdrop, Fdrop, Eelif, Eelif, Eelif, Eelse, Dendif,
+  Idrop, Idrop, Fdrop, Fdrop, Fdrop, Eelif, Eelif, Eelif, Eelse, Eioccc,
+  drop,  Eeof },
 /* IS_TRUE_ELSE */
-{print,Itrue,Ifalse,Fpass,Ftrue,Ffalse,Eelif, Eelif, Eelif, Eelse,Dendif,Eeof},
+{ Itrue, Ifalse,Fpass, Ftrue, Ffalse,Eelif, Eelif, Eelif, Eelse, Dendif,
+  Oiffy, Oiffy, Fpass, Oif,   Oif,   Eelif, Eelif, Eelif, Eelse, Eioccc,
+  print, Eeof },
 /* IS_FALSE_TRAILER */
-{drop, Idrop,Idrop, Fdrop,Fdrop,Fdrop, Dfalse,Dfalse,Dfalse,Delse,Dendif,Eeof}
-/*PLAIN TRUEI FALSEI IF   TRUE  FALSE  ELIF  ELTRUE ELFALSE ELSE  ENDIF  EOF*/
+{ Idrop, Idrop, Fdrop, Fdrop, Fdrop, Dfalse,Dfalse,Dfalse,Delse, Dendif,
+  Idrop, Idrop, Fdrop, Fdrop, Fdrop, Dfalse,Dfalse,Dfalse,Delse, Eioccc,
+  drop,  Eeof }
+/*TRUEI  FALSEI IF     TRUE   FALSE  ELIF   ELTRUE ELFALSE ELSE  ENDIF
+  TRUEI  FALSEI IF     TRUE   FALSE  ELIF   ELTRUE ELFALSE ELSE  ENDIF (DODGY)
+  PLAIN  EOF */
 };
 
 /*
  * State machine utility functions
  */
+static void
+ignoreoff(void)
+{
+	ignoring[depth] = ignoring[depth-1];
+}
+
+static void
+ignoreon(void)
+{
+	ignoring[depth] = true;
+}
+
+static void
+keywordedit(const char *replacement)
+{
+	strlcpy(keyword, replacement, tline + sizeof(tline) - keyword);
+	print();
+}
+
 static void
 nest(void)
 {
@@ -548,12 +642,6 @@ static void
 state(Ifstate is)
 {
 	ifstate[depth] = is;
-}
-
-static void
-unignore(void)
-{
-	ignore[depth] = ignore[depth-1];
 }
 
 /*
@@ -626,6 +714,7 @@ getline(void)
 		keyword = tline + (cp - tline);
 		cp = skipsym(cp);
 		kwlen = cp - keyword;
+		/* no way can we deal with a continuation inside a keyword */
 		if (strncmp(cp, "\\\n", 2) == 0)
 			Eioccc();
 		if (strlcmp("ifdef", keyword, kwlen) == 0 ||
@@ -665,8 +754,12 @@ getline(void)
 			if (retval == LT_ELTRUE || retval == LT_ELFALSE)
 				retval = LT_ELIF;
 		}
-		if (retval != LT_PLAIN && (wascomment || incomment))
-			Eioccc();
+		if (retval != LT_PLAIN && (wascomment || incomment)) {
+			retval += LT_DODGY;
+			if (incomment)
+				linestate = LS_DIRTY;
+		}
+		/* skipcomment should have changed the state */
 		if (linestate == LS_HASH)
 			abort(); /* bug */
 	}
@@ -680,7 +773,9 @@ getline(void)
 }
 
 /*
- * These are the operators that are supported by the expression evaluator.
+ * These are the operators that are supported by the expression
+ * evaluator. Note that if support for division is added then we also
+ * need short-circuiting booleans because of divide-by-zero.
  */
 static int
 op_lt(int a, int b)
@@ -1070,8 +1165,9 @@ static void
 error(const char *msg)
 {
 	if (depth == 0)
-		errx(2, "%s: %d: %s", filename, linenum, msg);
+		warnx("%s: %d: %s", filename, linenum, msg);
 	else
-		errx(2, "%s: %d: %s (#if line %d depth %d)",
+		warnx("%s: %d: %s (#if line %d depth %d)",
 		    filename, linenum, msg, stifline[depth], depth);
+	errx(2, "output may be truncated");
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unifdef.1,v 1.10 2002/12/02 07:18:50 deraadt Exp $
+.\"	$OpenBSD: unifdef.1,v 1.11 2003/01/22 18:26:15 deraadt Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -45,7 +45,7 @@
 .Nd remove preprocessor conditionals from code
 .Sh SYNOPSIS
 .Nm
-.Op Fl cklst
+.Op Fl ceklst
 .Oo
 .Fl I Ns Ar path
 .Fl D Ns Ar sym
@@ -111,13 +111,9 @@ utility also understands just enough about C
 to know when one of the directives is inactive
 because it is inside
 a comment,
-or a single or double quote.
-Parsing for quotes is very simplistic:
-when it finds an open quote,
-it ignores everything (except escaped quotes)
-until it finds a close quote, and
-it will not complain if it gets
-to the end of a line and finds no backslash for continuation.
+or affected by a backslash-continued line.
+It spots unusually-formatted preprocessor directives
+and knows when the layout is too odd to handle.
 .Pp
 Available options:
 .Bl -tag -width indent -compact
@@ -145,6 +141,24 @@ then the operation of
 is complemented,
 i.e., the lines that would have been removed or blanked
 are retained and vice versa.
+.Pp
+.It Fl e
+Because
+.Nm
+processes its input one line at a time,
+it cannot remove preprocessor directives that span more than one line.
+The most common example of this is a directive with a multi-line
+comment hanging off its right hand end.
+By default,
+if
+.Nm
+has to process such a directive,
+it will complain that the line is too obfuscated.
+The
+.Fl e
+option changes the behavior so that,
+where possible,
+such lines are left unprocessed instead of reporting an error.
 .Pp
 .It Fl k
 Process
@@ -179,7 +193,9 @@ for creating
 command lines.
 .Pp
 .It Fl t
-Disables parsing for C comments and quotes, which is useful
+Disables parsing for C comments
+and line continuations,
+which is useful
 for plain text.
 .Pp
 .It Fl iD Ns Ar sym
@@ -195,7 +211,7 @@ or code which is under construction,
 then you must tell
 .Nm
 which symbols are used for that purpose so that it will not try to parse
-for quotes and comments
+comments and line continuations
 inside those
 .Ic #ifdef Ns s .
 One specifies ignored symbols with
@@ -233,12 +249,23 @@ option of
 .Sh DIAGNOSTICS
 .Bl -item
 .It
-Inappropriate elif, else or endif.
+Too many levels of nesting.
+.It
+Inappropriate
+.Ic #elif ,
+.Ic #else
+or
+.Ic #endif .
+.It
+Obfuscated preprocessor control line.
 .It
 Premature
 .Tn EOF
-with line numbers of the unterminated
-.Ic #ifdef Ns s .
+(with the line number of the most recent unterminated
+.Ic #if ) .
+.It
+.Tn EOF
+in comment.
 .El
 .Pp
 The
@@ -248,7 +275,18 @@ utility exits 0 if the output is an exact copy of the input,
 .Sh BUGS
 Expression evaluation is very limited.
 .Pp
-Does not work correctly if input contains nul characters.
+Preprocessor control lines split across more than one physical line
+(because of comments or backslash-newline)
+cannot be handled in every situation.
+.Pp
+Trigraphs are not recognized.
+.Pp
+There is no support for symbols with different definitions at
+different points in the source file.
+.Pp
+The text-mode and ignore functionality doesn't correspond to modern
+.Xr cpp 1
+behaviour.
 .Sh HISTORY
 The
 .Nm
