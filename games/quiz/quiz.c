@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.14 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.15 2003/07/06 02:04:03 avsm Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.14 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: quiz.c,v 1.15 2003/07/06 02:04:03 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,7 @@ get_file(file)
 			qp = qp->q_next;
 			if ((qp->q_text = malloc(len + 1)) == NULL)
 				errx(1, "malloc");
+			/* lp may not be zero-terminated; cannot use strlcpy */
 			strncpy(qp->q_text, lp, len);
 			qp->q_text[len] = '\0';
 			qp->q_asked = qp->q_answered = FALSE;
