@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: bbstart.s,v 1.1 1997/01/16 09:26:28 niklas Exp $
+ * $OpenBSD: bbstart.s,v 1.2 1997/05/13 16:17:46 niklas Exp $
  * $NetBSD: bbstart.s,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -90,11 +90,7 @@ Lautoload:
 	movl	sp@+,a1			|IORequest
 	movl	sp@+,a6			|SysBase
 	orl	d0,d0
-	jne	Lgotmem
-	movql	#1,d0
-	rts
-
-Lgotmem:
+	jeq	Lerr
 	movl	d0,sp@-			|Address
 	movl	a1@(IOoff),sp@-		|Old offset
 	movl	a1,sp@-
@@ -179,7 +175,7 @@ Lendtab:
 	bsr	_pain
 
 Lerr:
-	movq	#1,d0
+	movql	#1,d0
 	rts
 
 	.comm _SysBase,4
