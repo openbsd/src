@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.107 2004/02/12 11:03:45 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.108 2004/02/17 08:48:29 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -38,6 +38,7 @@
 .Op Fl D Ar macro=value
 .Op Fl F Ar modifier
 .Op Fl f Ar file
+.Op Fl i Ar interface
 .Op Fl k Ar host
 .Op Fl p Ar device
 .Op Fl s Ar modifier
@@ -189,6 +190,9 @@ order.
 Include output helpful for debugging.
 .It Fl h
 Help.
+.It Fl i Ar interface
+Restrict the operation to the given
+.Ar interface .
 .It Fl k Ar host
 Kill all of the state entries originating from the specified
 .Ar host .
@@ -297,6 +301,8 @@ Show the list of interfaces and interface drivers available to PF.
 When used together with a double
 .Fl v ,
 interface statistics are also shown.
+.Fl i
+can be used to select an interface or a group of interfaces.
 .It Fl s Ar all
 Show all of the above.
 .El

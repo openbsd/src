@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.204 2004/02/12 11:03:45 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.205 2004/02/17 08:48:29 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -86,6 +86,7 @@ const char	*showopt;
 const char	*debugopt;
 char		*anchoropt;
 char		*pf_device = "/dev/pf";
+char		*ifaceopt;
 char		*tableopt;
 const char	*tblcmdopt;
 int		 state_killers;
@@ -191,10 +192,10 @@ usage(void)
 	fprintf(stderr, "usage: %s [-AdeghNnOqRrvz] ", __progname);
 	fprintf(stderr, "[-a anchor[:ruleset]] [-D macro=value]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-F modifier] [-f file] [-k host] [-p device] \n");
+	fprintf(stderr, "[-F modifier] [-f file] [-i interface] ");
+	fprintf(stderr, "[-k host] [-p device]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-s modifier] [-T command [address ...]]\n");
-	fprintf(stderr, "             ");
+	fprintf(stderr, "[-s modifier] [-T command [address ...]] ");
 	fprintf(stderr, "[-t table] [-x level]\n");
 	exit(1);
 }
@@ -1450,8 +1451,8 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:AdD:eqf:F:ghk:nNOp:rRs:t:T:vx:z")) !=
-		-1) {
+	while ((ch = getopt(argc, argv,
+	    "a:AdD:eqf:F:ghi:k:nNOp:rRs:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -1479,6 +1480,9 @@ main(int argc, char *argv[])
 				usage();
 			}
 			mode = O_RDWR;
+			break;
+		case 'i':
+			ifaceopt = optarg;
 			break;
 		case 'k':
 			if (state_killers >= 2) {
@@ -1677,7 +1681,7 @@ main(int argc, char *argv[])
 			pfctl_show_limits(dev, opts);
 			pfctl_show_tables(anchorname, rulesetname, opts);
 			pfctl_show_fingerprints(opts);
-			pfctl_show_ifaces(opts);
+			pfctl_show_ifaces(ifaceopt, opts);
 			break;
 		case 'T':
 			pfctl_show_tables(anchorname, rulesetname, opts);
@@ -1687,7 +1691,7 @@ main(int argc, char *argv[])
 			pfctl_show_fingerprints(opts);
 			break;
 		case 'I':
-			pfctl_show_ifaces(opts);
+			pfctl_show_ifaces(ifaceopt, opts);
 			break;
 		}
 	}

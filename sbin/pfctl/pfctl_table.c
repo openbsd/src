@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.55 2004/02/10 22:26:56 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.56 2004/02/17 08:48:29 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -537,7 +537,7 @@ xprintf(int opts, const char *fmt, ...)
 /* interface stuff */
 
 int
-pfctl_show_ifaces(int opts)
+pfctl_show_ifaces(const char *filter, int opts)
 {
 	struct pfr_buffer	 b;
 	struct pfi_if		*p;
@@ -548,7 +548,7 @@ pfctl_show_ifaces(int opts)
 	for (;;) {
 		pfr_buf_grow(&b, b.pfrb_size);
 		b.pfrb_size = b.pfrb_msize;
-		if (pfi_get_ifaces(NULL, b.pfrb_caddr, &b.pfrb_size,
+		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size,
 		    PFI_FLAG_GROUP|PFI_FLAG_INSTANCE)) {
 			radix_perror();
 			return (1);
