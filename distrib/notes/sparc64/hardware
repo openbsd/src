@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2002/06/09 05:53:55 todd Exp $
+dnl	$OpenBSD: hardware,v 1.30 2002/06/22 22:40:01 fgsch Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -66,6 +66,52 @@ Supported devices {:-include-:}:
 		PCI GEM Ethernet (gem)
 		PCI Davicom DM9102 Ethernet (dc)
 
+	Wireless Ethernet Adapters: (wi)
+		Cisco 340/350 802.11DS PCMCIA and PCI
+		3Com AirConnect 3CRWE737A PCMCIA
+		Addtron AWP-100 PCMCIA
+		ACTIONTEC HWC01170 PCMCIA
+		Agere Orinoco PCMCIA
+		BUFFALO AirStation PCMCIA
+		BUFFALO AirStation PCMCIA
+		Cabletron RoamAbout PCMCIA
+		Compaq Agency NC5004 PCMCIA
+		Contec FLEXLAN/FX-DS110-PCC PCMCIA
+		Corega PCC-11 PCMCIA
+		Corega PCCA-11 PCMCIA
+		Corega PCCB-11 PCMCIA
+		Corega CGWLPCIA11 PCMCIA
+		ELSA XI300 PCMCIA
+		ELSA XI800 PCMCIA
+		EMTAC A2424i PCMCIA
+		Ericsson Wireless LAN CARD C11 PCMCIA
+		Gemtek WL-311 PCMCIA
+		Hawking Technology WE110P PCMCIA
+		I-O DATA WN-B11/PCM PCMCIA
+		Intel PRO/Wireless 2011 PCMCIA
+		Intersil Prism II PCMCIA
+		Intersil Mini-PCI
+		Linksys Instant Wireless WPC11 PCMCIA
+		Linksys Instant Wireless WPC11 2.5 PCMCIA
+		Lucent WaveLAN PCMCIA
+		NANOSPEED ROOT-RZ2000 PCMCIA
+		NDC/Sohoware NCP130 PCMCIA
+		NEC CMZ-RT-WP PCMCIA
+		Netgear MA401 Wireless LAN PCMCIA
+		NTT-ME 11Mbps Wireless LAN PCMCIA
+		Samsung MagicLAN SWL-2000N PCMCIA
+		Symbol Spectrum24 PCMCIA
+		SMC 2632 EZ Connect PCMCIA
+		TDK LAK-CD011WL PCMCIA
+		3Com AirConnect 3CRWE777A PCI
+		Belkin F5D6000 PCI (a rebadged WL11000P)
+		Eumitcom WL11000P PCI
+		Global Sun Technology GL24110P PCI (untested)
+		Global Sun Technology GL24110P02 PCI
+		LinkSys WDT11 PCI (a rebadged GL24110P02)
+		Netgear MA301 PCI
+		US Robotics 2415 PCI (rebadged WL11000P)
+
 	Serial ports:
 		onboard SBUS Zilog 8530 (zs)
 		onboard EBUS Infineon (Siemens) 82532 (sab)
@@ -103,6 +149,12 @@ Supported devices {:-include-:}:
 			ATI Rage (vgafb) (8 bit color, unaccelerated)
 			  (24bit color, accelerated on some machines)
 		UPA Creator/Creator3D/Elite3D (24 bit color, unaccelerated)
+
+	PC Cards (PCMCIA):
+		PCMCIA Controller:
+			SBus pcmcia bridge (stp)
+		Wireless ethernet adapters:
+			See above.
 
 	Miscellaneous devices:
 		EBus beeper (beeper)
