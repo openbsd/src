@@ -1635,8 +1635,8 @@ install-target: $(INSTALL_TARGET_MODULES)
 ### other supporting targets
 
 MAKEDIRS= \
-	$(prefix) \
-	$(exec_prefix)
+	$(DESTDIR)$(prefix) \
+	$(DESTDIR)$(exec_prefix)
 .PHONY: installdirs
 installdirs: mkinstalldirs
 	$(SHELL) $(srcdir)/mkinstalldirs $(MAKEDIRS)
