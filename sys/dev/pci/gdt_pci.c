@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.7 2000/08/05 18:49:30 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.8 2000/09/19 08:43:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -151,8 +151,8 @@ struct cfattach gdt_pci_ca = {
 int
 gdt_pci_probe(parent, match, aux)
         struct device *parent;
-        void *match, *aux; 
-{       
+        void *match, *aux;
+{
         struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX &&
@@ -161,7 +161,7 @@ gdt_pci_probe(parent, match, aux)
 	return (0);
 }
 
-void    
+void
 gdt_pci_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
@@ -324,7 +324,7 @@ gdt_pci_attach(parent, self, aux)
 
 		ha->type = GDT_PCI;
 		ha->ic_all_size = sizeof(dp6_ptr->u);
-        
+
 		/* special command to controller BIOS */
 		gdth_writel(0x00, &dp6_ptr->u.ic.S_Info[0]);
 		gdth_writel(0x00, &dp6_ptr->u.ic.S_Info[1]);
@@ -369,7 +369,7 @@ gdt_pci_attach(parent, self, aux)
 		/* disable board interrupts, deinit services */
 		outb(0x00,PTR2USHORT(&ha->plx->control1));
 		outb(0xff,PTR2USHORT(&ha->plx->edoor_reg));
-        
+
 		gdth_writeb(0x00, &dp6c_ptr->u.ic.S_Status);
 		gdth_writeb(0x00, &dp6c_ptr->u.ic.Cmd_Index);
 
@@ -405,7 +405,7 @@ gdt_pci_attach(parent, self, aux)
 		gdth_writel(0x01, &dp6c_ptr->u.ic.S_Info[2]);
 		gdth_writel(0x00, &dp6c_ptr->u.ic.S_Info[3]);
 		gdth_writeb(0xfe, &dp6c_ptr->u.ic.S_Cmd_Indx);
-        
+
 		outb(1,PTR2USHORT(&ha->plx->ldoor_reg));
 
 		retries = INIT_RETRIES;

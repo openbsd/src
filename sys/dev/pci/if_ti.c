@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.12 2000/04/26 19:05:28 chris Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.13 2000/09/19 08:44:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -38,7 +38,7 @@
  * Alteon Networks Tigon PCI gigabit ethernet driver for FreeBSD.
  * Manuals, sample driver and firmware source kits are available
  * from http://www.alteon.com/support/openkits.
- * 
+ *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
  * Electrical Engineering Department
  * Columbia University, New York City
@@ -600,7 +600,7 @@ int ti_alloc_jumbo_mem(sc)
 		sc->ti_cdata.ti_jslots[i].ti_buf = ptr;
 		sc->ti_cdata.ti_jslots[i].ti_inuse = 0;
 		ptr += TI_JLEN;
-		entry = malloc(sizeof(struct ti_jpool_entry), 
+		entry = malloc(sizeof(struct ti_jpool_entry),
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
 			bus_dmamap_unload(sc->sc_dmatag, dmamap);
@@ -626,9 +626,9 @@ void *ti_jalloc(sc)
 	struct ti_softc		*sc;
 {
 	struct ti_jpool_entry   *entry;
-	
+
 	entry = LIST_FIRST(&sc->ti_jfree_listhead);
-	
+
 	if (entry == NULL) {
 		printf("%s: no free jumbo buffers\n", sc->sc_dv.dv_xname);
 		return(NULL);
@@ -712,7 +712,7 @@ ti_jfree(m)
 				panic("ti_jfree: buffer not in use!");
 			entry->slot = i;
 			LIST_REMOVE(entry, jpool_entries);
-			LIST_INSERT_HEAD(&sc->ti_jfree_listhead, 
+			LIST_INSERT_HEAD(&sc->ti_jfree_listhead,
 					  entry, jpool_entries);
 		}
 	}
@@ -1258,9 +1258,9 @@ int ti_chipinit(sc)
 	/*
 	 * From the Alteon sample driver:
 	 * Must insure that we do not cross an 8K (bytes) boundary
-	 * for DMA reads.  Our highest limit is 1K bytes.  This is a 
-	 * restriction on some ALPHA platforms with early revision 
-	 * 21174 PCI chipsets, such as the AlphaPC 164lx 
+	 * for DMA reads.  Our highest limit is 1K bytes.  This is a
+	 * restriction on some ALPHA platforms with early revision
+	 * 21174 PCI chipsets, such as the AlphaPC 164lx
 	 */
 	TI_SETBIT(sc, TI_PCI_STATE, pci_writemax|TI_PCI_READMAX_1024);
 #else
@@ -2283,7 +2283,7 @@ void ti_ifmedia_sts(ifp, ifmr)
 		if (media & TI_LNK_HALF_DUPLEX)
 			ifmr->ifm_active |= IFM_HDX;
 	}
-	
+
 	return;
 }
 
