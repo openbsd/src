@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.664 2003/08/12 19:36:30 grange Exp 
+ *		OpenBSD: pcidevs,v 1.665 2003/08/20 06:37:04 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3919,8 +3919,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AcceleRAID",
 	},
 	{
+	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD800,
+	    "MTD800 10/100",
+	},
+	{
 	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803,
-	    "MTD803",
+	    "MTD803 10/100",
+	},
+	{
+	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD891,
+	    "MTD891 10/100/1000",
 	},
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,

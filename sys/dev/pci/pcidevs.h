@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.664 2003/08/12 19:36:30 grange Exp 
+ *		OpenBSD: pcidevs,v 1.665 2003/08/20 06:37:04 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1475,7 +1475,9 @@
 #define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID */
 
 /* Myson Century products */
-#define	PCI_PRODUCT_MYSON_MTD803	0x0803		/* MTD803 */
+#define	PCI_PRODUCT_MYSON_MTD800	0x0800		/* MTD800 10/100 */
+#define	PCI_PRODUCT_MYSON_MTD803	0x0803		/* MTD803 10/100 */
+#define	PCI_PRODUCT_MYSON_MTD891	0x0891		/* MTD891 10/100/1000 */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
