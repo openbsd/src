@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 1997/02/03 23:22:38 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 1997/02/06 20:00:43 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -206,22 +206,37 @@ allocsys(v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
+#ifndef BUFCACHEPERCENT
+#define BUFCACHEPERCENT 5
+#endif
 	/*
-	 * Determine how many buffers to allocate. We allocate
+	 * Determine how many buffers to allocate. By default we allocate
 	 * the BSD standard of use 10% of memory for the first 2 Meg,
-	 * 5% of remaining. Insure a minimum of 16 buffers.
+	 * 5% of remaining.  But this might cause systems with large 
+	 * core (32MB) to fail to boot due to small KVM space.  Reduce
+	 * BUFCACHEPERCENT in this case.
+	 * Insure a minimum of 16 buffers.
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0) {
 		/* We always have more than 2MB of memory. */
-		bufpages = ((btoc(2 * 1024 * 1024) + physmem) /
-		            (20 * CLSIZE));
+		bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+			((100/BUFCACHEPERCENT) * CLSIZE);
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+	/* Restrict to at most 70% filled kvm */
+	if (nbuf * MAXBSIZE >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+			MAXBSIZE * 7 / 10;
+	
+	/* More buffer pages than fits into the buffers is senseless.  */
+	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
+		bufpages = nbuf * MAXBSIZE / CLBYTES;
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -628,6 +643,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		kfp->sf_sip = &fp->sf_si;
 		initsiginfo(&kfp->sf_si, sig, code, type, val);
 	}
+	/* XXX do not copy out siginfo if not needed */
 	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
