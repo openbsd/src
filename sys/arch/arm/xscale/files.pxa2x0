@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.pxa2x0,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+#	$OpenBSD: files.pxa2x0,v 1.3 2005/01/03 12:05:24 miod Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
