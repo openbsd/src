@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxpreg.h,v 1.3 1997/07/31 01:15:00 downsj Exp $	*/
+/*	$OpenBSD: if_fxpreg.h,v 1.4 1998/03/10 21:37:45 deraadt Exp $	*/
 /*	$NetBSD: if_fxpreg.h,v 1.2 1997/06/05 02:01:57 thorpej Exp $	*/
 
 /*
@@ -304,6 +304,7 @@ struct fxp_stats {
 #define FXP_PHY_80C24		6
 #define FXP_PHY_82555		7
 #define FXP_PHY_DP83840A	10
+#define FXP_PHY_82555B		11
 
 /*
  * PHY BMCR Basic Mode Control Register

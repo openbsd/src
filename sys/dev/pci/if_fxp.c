@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.10 1998/01/11 13:43:03 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.11 1998/03/10 21:37:44 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1321,6 +1321,9 @@ fxp_init(xsc)
 	switch (sc->phy_primary_device) {
 	case FXP_PHY_DP83840:
 	case FXP_PHY_DP83840A:
+	case FXP_PHY_82553A:
+	case FXP_PHY_82553C:
+	case FXP_PHY_82555B:
 		fxp_mdi_write(sc, sc->phy_primary_addr, FXP_DP83840_PCR,
 		    fxp_mdi_read(sc, sc->phy_primary_addr, FXP_DP83840_PCR) |
 		    FXP_DP83840_PCR_LED4_MODE |	/* LED4 always indicates duplex */
