@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.6 1999/06/02 18:45:39 deraadt Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.7 2001/01/15 20:03:32 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.6 1999/06/02 18:45:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.7 2001/01/15 20:03:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ int useless;
 	}
 
 	/* terminate gracefully */
-	exit(0);
+	_exit(0);
 }
 
 
