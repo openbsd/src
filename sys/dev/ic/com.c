@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.17 1996/06/10 19:29:59 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.18 1996/06/22 23:12:14 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -154,6 +154,15 @@ struct cfattach com_isa_ca = {
 
 #if NCOM_COMMULTI
 struct cfattach com_commulti_ca = {
+	sizeof(struct com_softc), comprobe, comattach
+};
+#endif
+
+#if NCOM_PICA
+#undef  CONADDR         /* This is stupid but using devs before config .. */
+#define CONADDR 0xe0006000
+
+struct cfattach com_pica_ca = {
 	sizeof(struct com_softc), comprobe, comattach
 };
 #endif
@@ -525,6 +534,10 @@ comprobe(parent, match, aux)
 #define IS_ISA(parent) \
 	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa")
 #endif
+#if NCOM_PICA
+#define IS_PICA(parent) \
+	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pica")
+#endif
 	/*
 	 * XXX should be broken out into functions for isa probe and
 	 * XXX for commulti probe, with a helper function that contains
@@ -536,6 +549,16 @@ comprobe(parent, match, aux)
 
 		bc = ia->ia_bc;
 		iobase = ia->ia_iobase;
+		needioh = 1;
+	} else
+#endif
+#if NCOM_PICA
+	if(IS_PICA(parent)) {
+		struct confargs *ca = aux;
+		if(!BUS_MATCHNAME(ca, "com"))
+			return(0);
+		iobase = (long)BUS_CVTADDR(ca);
+		bc = 0;
 		needioh = 1;
 	} else
 #endif
@@ -623,6 +646,15 @@ comattach(parent, self, aux)
 		irq = ia->ia_irq;
 	} else
 #endif
+#if NCOM_PICA
+	if(IS_PICA(parent)) {
+		struct confargs *ca = aux;
+		iobase = (long)BUS_CVTADDR(ca);
+		bc = 0;
+		irq = 0;
+		ioh = iobase;
+	} else
+#endif
 #if NCOM_COMMULTI
 	if (1) {
 		struct commulti_attach_args *ca = aux;
@@ -708,6 +740,12 @@ comattach(parent, self, aux)
 			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
 			    IST_EDGE, IPL_TTY, comintr, sc,
 			    sc->sc_dev.dv_xname);
+		} else
+#endif
+#if NCOM_PICA
+		if (IS_PICA(parent)) {
+			struct confargs *ca = aux;
+			BUS_INTR_ESTABLISH(ca, comintr, (void *)(long)sc);
 		} else
 #endif
 			panic("comattach: IRQ but can't have one");
@@ -1618,10 +1656,14 @@ comcnprobe(cp)
 	bus_io_handle_t ioh;
 	int found;
 
+#if 0
 	if (bus_io_map(bc, CONADDR, COM_NPORTS, &ioh)) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
+#else
+	ioh = CONADDR;
+#endif
 	found = comprobe1(bc, ioh, CONADDR);
 	bus_io_unmap(bc, ioh, COM_NPORTS);
 	if (!found) {

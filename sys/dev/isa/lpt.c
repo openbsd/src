@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.11 1996/05/26 00:27:24 deraadt Exp $ */
+/*	$OpenBSD: lpt.c,v 1.12 1996/06/22 23:13:36 pefo Exp $ */
 /*	$NetBSD: lpt.c,v 1.39 1996/05/12 23:53:06 mycroft Exp $	*/
 
 /*
@@ -72,6 +72,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/lptreg.h>
 
+#include <lpt.h>
+
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
 
@@ -112,13 +114,23 @@ struct lpt_softc {
 /* XXX does not belong here */
 cdev_decl(lpt);
 
-int lptprobe __P((struct device *, void *, void *));
-void lptattach __P((struct device *, struct device *, void *));
 int lptintr __P((void *));
 
+#if NLPT_ISA
+int lpt_isa_probe __P((struct device *, void *, void *));
+void lpt_isa_attach __P((struct device *, struct device *, void *));
 struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptprobe, lptattach
+	sizeof(struct lpt_softc), lpt_isa_probe, lpt_isa_attach
 };
+#endif
+
+#if NLPT_PICA
+int lpt_pica_probe __P((struct device *, void *, void *));
+void lpt_pica_attach __P((struct device *, struct device *, void *));
+struct cfattach lpt_pica_ca = {
+	sizeof(struct lpt_softc), lpt_pica_probe, lpt_pica_attach
+};
+#endif
 
 struct cfdriver lpt_cd = {
 	NULL, "lpt", DV_TTY
@@ -186,8 +198,9 @@ lpt_port_test(bc, ioh, base, off, data, mask)
  *
  *	3) Set the data and control ports to a value of 0
  */
+#if NLPT_ISA
 int
-lptprobe(parent, match, aux)
+lpt_isa_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -245,9 +258,67 @@ out:
 	bus_io_unmap(bc, ioh, LPT_NPORTS);
 	return rv;
 }
+#endif
 
+#if NLPT_PICA
+int
+lpt_pica_probe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct confargs *ca = aux;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	u_long base;
+	u_char mask, data;
+	int i;
+
+#ifdef DEBUG
+#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
+		    return 0;} while (0)
+#else
+#define	ABORT	return 0
+#endif
+
+	if(!BUS_MATCHNAME(ca, "lpt"))
+		 return(0);
+
+	bc = 0;
+	base = (int)BUS_CVTADDR(ca);
+	ioh = base;
+
+	mask = 0xff;
+
+	data = 0x55;				/* Alternating zeros */
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
+		ABORT;
+
+	data = 0xaa;				/* Alternating ones */
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
+		ABORT;
+
+	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
+		data = ~(1 << i);
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
+			ABORT;
+	}
+
+	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
+		data = (1 << i);
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
+			ABORT;
+	}
+
+	bus_io_write_1(bc, ioh, lpt_data, 0);
+	bus_io_write_1(bc, ioh, lpt_control, 0);
+
+	return 1;
+}
+#endif
+
+#if NLPT_ISA
 void
-lptattach(parent, self, aux)
+lpt_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -276,6 +347,33 @@ lptattach(parent, self, aux)
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 		    IPL_TTY, lptintr, sc, sc->sc_dev.dv_xname);
 }
+#endif
+
+#if NLPT_PICA
+void
+lpt_pica_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct lpt_softc *sc = (void *)self;
+	struct confargs *ca = aux;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+
+	printf("\n");
+
+	sc->sc_iobase = (int)BUS_CVTADDR(ca);
+	sc->sc_irq = 0;
+	sc->sc_state = 0;
+
+	bc = sc->sc_bc = 0;
+	sc->sc_ioh = sc->sc_iobase;
+
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
+
+	BUS_INTR_ESTABLISH(ca, lptintr, sc);
+}
+#endif
 
 /*
  * Reset the printer, then wait until it's selected and not busy.
