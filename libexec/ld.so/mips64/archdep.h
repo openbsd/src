@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.8 2004/08/09 13:44:19 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.1 2004/08/11 17:11:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.

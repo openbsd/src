@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.81 2004/05/27 21:59:07 mickey Exp $ */
+/*	$OpenBSD: loader.c,v 1.82 2004/08/11 17:11:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -203,6 +203,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	else
 		_dl_pagesz = 4096;
 
+#ifndef __mips__
 	/*
 	 * now that GOT and PLT has been relocated, and we know
 	 * page size, protect it from modification
@@ -228,6 +229,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		    PROT_READ|PROT_EXEC);
 #endif
 	}
+#endif
 
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
