@@ -1,10 +1,6 @@
-#	$OpenBSD: hosts,v 1.8 2001/06/01 18:17:32 deraadt Exp $
+#	$OpenBSD: hosts,v 1.9 2001/12/05 09:58:37 deraadt Exp $
 #
 # Host Database
-# This file should contain the addresses and aliases
-# for local hosts that share this file.
-# It is used only for "ifconfig" and other operations
-# before the nameserver is started.
 #
 # RFC 1918 specifies that these networks are "internal".
 # 10.0.0.0      10.255.255.255
