@@ -1,7 +1,8 @@
-/* $OpenBSD: siginfo.c,v 1.3 2002/10/07 22:49:42 marc Exp $ */
+/* $OpenBSD: siginfo.c,v 1.4 2002/10/09 03:02:33 marc Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
-/* test SA_SIGINFO support */
+/* test SA_SIGINFO support.   Also check that SA_RESETHAND does the right
+   thing.  */
 
 #include <assert.h>
 #include <signal.h>
@@ -12,6 +13,10 @@
 void
 act_handler(int signal, siginfo_t *siginfo, void *context)
 {
+	struct sigaction sa;
+
+	CHECKe(sigaction(SIGSEGV, NULL, &sa));
+	ASSERT(sa.sa_handler == SIG_DFL);
 	ASSERT(siginfo != NULL);
  	ASSERT(siginfo->si_addr == (char *) 0x987234 &&
 	       siginfo->si_code == 1 && siginfo->si_trapno == 2);
