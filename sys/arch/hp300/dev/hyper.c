@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyper.c,v 1.7 2005/01/21 16:24:12 miod Exp $	*/
+/*	$OpenBSD: hyper.c,v 1.8 2005/01/22 22:26:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -197,7 +197,7 @@ hyper_reset(struct diofb *fb, int scode, struct diofbreg *fbr)
 	/*
 	 * Enable display.
 	 */
-	hy->nblank = 0x05;
+	hy->nblank = DISP_VIDEO_ENABLE | DISP_SYNC_ENABLE;
 
 	return (0);
 }
@@ -241,9 +241,12 @@ hyper_burner(void *v, u_int on, u_int flags)
 	volatile struct hyboxfb *hy = (struct hyboxfb *)fb->regkva;
 
 	if (on) {
-		hy->nblank = 0x05;
+		hy->nblank = DISP_VIDEO_ENABLE | DISP_SYNC_ENABLE;
 	} else {
-		hy->nblank = 0x00;
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			hy->nblank = 0;
+		else
+			hy->nblank = DISP_SYNC_ENABLE;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyperreg.h,v 1.1 2005/01/14 22:39:25 miod Exp $	*/
+/*	$OpenBSD: hyperreg.h,v 1.2 2005/01/22 22:26:47 miod Exp $	*/
 /*	$NetBSD: grf_hyreg.h,v 1.2 1994/10/26 07:23:57 cgd Exp $	*/
 
 /*
@@ -75,3 +75,6 @@ struct hyboxfb {
 	u_int8_t nblank;		/* display enable planes      0x4000 */
 };
 
+/* Values for nblank */
+#define	DISP_SYNC_ENABLE	0x01
+#define	DISP_VIDEO_ENABLE	0x04
