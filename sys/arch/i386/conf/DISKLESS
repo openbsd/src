@@ -70,7 +70,7 @@ options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 
-config		netbsd	root on nfs swap on nfs
+config		bsd	root on nfs swap on nfs
 #options	GENERIC
 
 isa0	at root

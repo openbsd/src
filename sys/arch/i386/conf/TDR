@@ -68,7 +68,7 @@ options		INET		# IP + ICMP + TCP + UDP
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
 
-config		netbsd	root on sd0 swap on sd0 and sd1 and wd0
+config		bsd	root on sd0 swap on sd0 and sd1 and wd0
 #options	GENERIC
 
 isa0	at root

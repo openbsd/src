@@ -53,7 +53,7 @@ options		FIFO		# FIFOs; RECOMMENDED
 
 options		INET		# IP + ICMP + TCP + UDP
 
-config		netbsd	swap generic
+config		bsd	swap generic
 options		GENERIC
 
 isa0	at root

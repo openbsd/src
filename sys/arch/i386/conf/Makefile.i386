@@ -1,8 +1,5 @@
 #	$NetBSD: Makefile.i386,v 1.59 1995/10/10 05:58:00 mycroft Exp $
-# 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#
-# Makefile for NetBSD
-#
+
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
@@ -108,7 +105,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} -c vers.c
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] *.o locore.i \
+	rm -f eddep bsd bsd.gdb tags vnode_if.[ch] *.o locore.i \
 		[a-z]*.s [Ee]rrs linterrs makelinks genassym
 
 lint: /tmp param.c
