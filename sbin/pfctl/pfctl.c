@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.77 2002/06/11 08:22:15 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.78 2002/06/11 17:43:46 kjell Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -806,7 +806,7 @@ pfctl_gettimeout(int dev, const char *opt)
 	}
 
 	if (ioctl(dev, DIOCGETTIMEOUT, &pt))
-		err(1, "DIOCSETTIMEOUT");
+		err(1, "DIOCGETTIMEOUT");
 	if ((opts & PF_OPT_QUIET) == 0)
 		printf("%s timeout %ds\n", pf_timeouts[i].name,
 		    pt.seconds);
