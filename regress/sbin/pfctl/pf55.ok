@@ -14,6 +14,7 @@ set timeout icmp.error 34
 set timeout other.first 455
 set timeout other.single 54
 set timeout other.multiple 324
+set timeout src.track 3600
 set limit states 4522
 set limit frags 43556
 set loginterface none
