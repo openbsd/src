@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.11 2002/04/21 06:49:33 deraadt Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.12 2002/04/23 23:32:13 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -149,6 +149,7 @@ Corega PCC-11:Prism-II:PCMCIA
 Corega PCCA-11:Prism-II:PCMCIA
 Corega PCCB-11:Prism-II:PCMCIA
 Corega CGWLPCIA11:Prism-II:PCI
+Dlink DWL520:Prism-2.5:PCI
 ELSA XI300:Prism-II:PCMCIA
 ELSA XI800:Prism-II:CF
 EMTAC A2424i:Prism-II:PCMCIA
