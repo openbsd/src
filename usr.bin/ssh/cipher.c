@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.67 2004/01/23 17:06:03 hshoexer Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.68 2004/01/23 19:26:33 hshoexer Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -85,7 +85,7 @@ struct Cipher {
 	{ "aes128-ctr", 	SSH_CIPHER_SSH2, 16, 16, evp_aes_128_ctr },
 	{ "aes192-ctr", 	SSH_CIPHER_SSH2, 16, 24, evp_aes_128_ctr },
 	{ "aes256-ctr", 	SSH_CIPHER_SSH2, 16, 32, evp_aes_128_ctr },
-	{ "acss@openbsd.org",	SSH_CIPHER_SSH2, 16, 5, EVP_acss },
+	{ "acss@openssh.org",	SSH_CIPHER_SSH2, 16, 5, EVP_acss },
 
 	{ NULL,			SSH_CIPHER_ILLEGAL, 0, 0, NULL }
 };
