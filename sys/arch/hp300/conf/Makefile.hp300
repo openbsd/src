@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hp300,v 1.13 1997/03/26 08:32:38 downsj Exp $
+#	$OpenBSD: Makefile.hp300,v 1.14 1997/03/29 05:18:05 downsj Exp $
 #	$NetBSD: Makefile.hp300,v 1.45 1996/12/01 06:12:30 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -103,14 +103,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${HOSTCC} -o $@ genassym.o
-
-genassym.o: ${HP300}/hp300/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${HP300}/hp300/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${HP300}/hp300/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -129,7 +125,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -157,9 +153,6 @@ depend:: .depend
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${HP300}/hp300/genassym.c
-
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -168,10 +161,10 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
-dma.o genassym.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+dma.o hpux_machdep.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
 
 
 locore.o: ${HP300}/hp300/locore.s assym.h
