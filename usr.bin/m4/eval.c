@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.40 2001/10/10 11:17:10 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.41 2001/10/10 23:25:31 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.40 2001/10/10 11:17:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.41 2001/10/10 23:25:31 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -534,22 +534,26 @@ expand_macro(argv, argc)
 					pbstr(argv[argno + 1]);
 				break;
 			case '*':
-				for (n = argc - 1; n > 2; n--) {
-					pbstr(argv[n]);
-					putback(COMMA);
-				}
-				pbstr(argv[2]);
+				if (argc > 2) {
+					for (n = argc - 1; n > 2; n--) {
+						pbstr(argv[n]);
+						putback(COMMA);
+					}
+					pbstr(argv[2]);
+			    	}
 				break;
                         case '@':
-                                for (n = argc - 1; n > 2; n--) {
-                                        pbstr(rquote);
-                                        pbstr(argv[n]);
-                                        pbstr(lquote);
-					putback(COMMA);
-                                }
-				pbstr(rquote);
-                                pbstr(argv[2]);
-				pbstr(lquote);
+				if (argc > 2) {
+					for (n = argc - 1; n > 2; n--) {
+						pbstr(rquote);
+						pbstr(argv[n]);
+						pbstr(lquote);
+						putback(COMMA);
+					}
+					pbstr(rquote);
+					pbstr(argv[2]);
+					pbstr(lquote);
+				}
                                 break;
 			default:
 				PUTBACK(*p);
