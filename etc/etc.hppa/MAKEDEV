@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 2001/09/06 19:24:46 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 2001/09/06 19:40:21 mickey Exp $
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
@@ -104,7 +104,7 @@ case $i in
 all)
 	sh MAKEDEV std fd st0 st1 ccd0 ccd1 ccd2
 	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0 vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV hil tty00 tty01 tty02 tty03 
+	sh MAKEDEV tty00 tty01 tty02 tty03 
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV pf tun0 tun1 tun2 tun3 lkm random xfs0 altq
 	sh MAKEDEV local
@@ -150,8 +150,8 @@ st*)
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
-	mknod n$name$uni	b $blk $(($unit * 16 + 1))
-	mknod e$name$uni	b $blk $(($unit * 16 + 2))
+	mknod n$name$unit	b $blk $(($unit * 16 + 1))
+	mknod e$name$unit	b $blk $(($unit * 16 + 2))
 	mknod en$name$unit	b $blk $(($unit * 16 + 3))
 	mknod r$name$unit	c $chr $(($unit * 16 + 0))
 	mknod nr$name$unit	c $chr $(($unit * 16 + 1))
@@ -203,7 +203,7 @@ rd*|cd*)
 	rd*) name=cd; blk=3; chr=9;;
 	cd*) name=cd; blk=6; chr=12;;
 	esac
-	rm -f $name$unit? r$name$unit?
+	rm -f $name${unit}? r$name${unit}?
 	mknod ${name}${unit}a  b $blk $(($unit * 16 + 0))
 	mknod ${name}${unit}c  b $blk $(($unit * 16 + 2))
 	mknod r${name}${unit}a c $chr $(($unit * 16 + 0))
