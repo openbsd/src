@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2004/04/26 19:11:01 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.86 2004/04/26 20:07:43 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -552,18 +552,31 @@ peeropts	: REMOTEAS asnumber	{
 			unsigned	i;
 			char		s[3];
 			u_int32_t	auth_alg;
+			u_int8_t	keylen;
 
-			if (strlen($7) / 2 >
-			    sizeof(curpeer->conf.ipsec.auth_key_in)) {
-				yyerror("auth key too long");
+			if (!strcmp($6, "sha1")) {
+				auth_alg = SADB_AALG_SHA1HMAC;
+				keylen = 20;
+			} else if (!strcmp($6, "md5")) {
+				auth_alg = SADB_AALG_MD5HMAC;
+				keylen = 16;
+			} else {
+				yyerror("unknown auth algorithm \"%s\"", $6);
 				free($7);
 				free($6);
 				YYERROR;
 			}
+			free($6);
 
 			if (strlen($7) % 2) {
 				yyerror("auth key must be of even length");
-				free($6);
+				free($7);
+				YYERROR;
+			}
+
+			if (strlen($7) / 2 != keylen) {
+				yyerror("auth key len: must be %u bytes, "
+				    "is %u bytes", keylen, strlen($7) / 2);
 				free($7);
 				YYERROR;
 			}
@@ -584,18 +597,7 @@ peeropts	: REMOTEAS asnumber	{
 					curpeer->conf.ipsec.auth_key_out[i] =
 					    strtoul(s, NULL, 16);
 			}
-
-			if (!strcmp($6, "sha1"))
-				auth_alg = SADB_AALG_SHA1HMAC;
-			else if (!strcmp($6, "md5"))
-				auth_alg = SADB_AALG_MD5HMAC;
-			else {
-				yyerror("unknown auth algorithm \"%s\"", $6);
-				free($7);
-				free($6);
-				YYERROR;
-			}
-			free($6);
+			free($7);
 
 			if ($3 == 1) {
 				curpeer->conf.ipsec.spi_in = $5;
@@ -606,8 +608,7 @@ peeropts	: REMOTEAS asnumber	{
 				    sizeof(curpeer->conf.ipsec.enc_key_in));
 				curpeer->conf.ipsec.enc_keylen_in =
 				    $8.enc_key_len;
-				curpeer->conf.ipsec.auth_keylen_in =
-				    strlen($7) / 2;
+				curpeer->conf.ipsec.auth_keylen_in = keylen;
 			} else {
 				curpeer->conf.ipsec.spi_out = $5;
 				curpeer->conf.ipsec.auth_alg_out = auth_alg;
@@ -617,10 +618,8 @@ peeropts	: REMOTEAS asnumber	{
 				    sizeof(curpeer->conf.ipsec.enc_key_out));
 				curpeer->conf.ipsec.enc_keylen_out =
 				    $8.enc_key_len;
-				curpeer->conf.ipsec.auth_keylen_out =
-				    strlen($7) / 2;
+				curpeer->conf.ipsec.auth_keylen_out = keylen;
 			}
-			free($7);
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.capabilities = $3;
@@ -644,12 +643,14 @@ encspec		: /* nada */	{
 			char		s[3];
 
 			bzero(&$$, sizeof($$));
-			if (!strcmp($1, "3des") || !strcmp($1, "3des-cbc"))
+			if (!strcmp($1, "3des") || !strcmp($1, "3des-cbc")) {
 				$$.enc_alg = SADB_EALG_3DESCBC;
-			else if (!strcmp($1, "aes") ||
-			    !strcmp($1, "aes-128-cbc"))
+				$$.enc_key_len = 21; /* XXX verify */
+			} else if (!strcmp($1, "aes") ||
+			    !strcmp($1, "aes-128-cbc")) {
 				$$.enc_alg = SADB_X_EALG_AES;
-			else {
+				$$.enc_key_len = 16;
+			} else {
 				yyerror("unknown enc algorithm \"%s\"", $1);
 				free($1);
 				free($2);
@@ -657,20 +658,19 @@ encspec		: /* nada */	{
 			}
 			free($1);
 
-			if (strlen($2) / 2 >
-			    sizeof(curpeer->conf.ipsec.enc_key_in)) {
-				yyerror("enc key too long");
-				free($2);
-				YYERROR;
-			}
-
 			if (strlen($2) % 2) {
 				yyerror("key must be of even length");
 				free($2);
 				YYERROR;
 			}
 
-			$$.enc_key_len = strlen($2) / 2;
+			if (strlen($2) / 2 != $$.enc_key_len) {
+				yyerror("enc key lenght wrong: should be %u "
+				    "bytes, is %u bytes",
+				    $$.enc_key_len * 2, strlen($2));
+				free($2);
+				YYERROR;
+			}
 
 			for (i = 0; i < strlen($2) / 2; i++) {
 				s[0] = $2[2*i];
