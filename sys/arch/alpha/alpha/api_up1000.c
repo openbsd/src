@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.6 2002/06/25 21:33:19 miod Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.7 2004/07/18 02:29:11 deraadt Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -82,7 +82,7 @@ void
 api_up1000_init()
 {
 
-	platform.family = "Alpha Processor, Inc. UP1000";
+	platform.family = "API UP1000";
 
 	if ((platform.model = alpha_dsr_sysname()) == NULL) {
 		/* XXX Don't know the system variations, yet. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2003/06/02 23:27:43 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2004/07/18 02:29:11 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -136,13 +136,28 @@ struct nam2blk {
 	char *name;
 	int maj;
 } nam2blk[] = {
+#include "st.h"
+#if NST > 0
 	{ "st",		2 },
+#endif
+#include "cd.h"
+#if NCD > 0
 	{ "cd",		3 },
+#endif
+#include "fd.h"
+#if NFD > 0
 	{ "fd",		4 },
+#endif
+#include "rd.h"
+#if NRD > 0
 	{ "rd",		6 },
+#endif
 	{ "sd",		8 },
 	{ "wd",		0 },
+#include "raid.h"
+#if NRAID > 0
 	{ "raid",	16 },
+#endif
 };
 
 #ifdef RAMDISK_HOOKS
@@ -369,10 +384,7 @@ setroot()
 					nswapdev = MAKEDISKDEV(major(nrootdev),
 					    DISKUNIT(nrootdev), 1);
 					break;
-				case DV_TAPE:
-				case DV_TTY:
-				case DV_DULL:
-				case DV_CPU:
+				default:
 					break;
 				}
 				swapdv = rootdv;
