@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.3 1996/07/20 06:12:45 deraadt Exp $	*/
+/*	$OpenBSD: svc_tcp.c,v 1.4 1996/08/05 00:34:28 deraadt Exp $	*/
 /*	$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.3 1996/07/20 06:12:45 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.4 1996/08/05 00:34:28 deraadt Exp $";
 #endif
 
 /*
@@ -245,6 +245,14 @@ rendezvous_request(xprt)
 		if (errno == EINTR)
 			goto again;
 	       return (FALSE);
+	}
+	/*
+	 * XXX careful for ftp bounce attacks. If discovered, close the
+	 * socket and look for another connection.
+	 */
+	if (addr.sin_port == htons(20)) {
+		close(sock);
+		goto again;
 	}
 	/*
 	 * make a new transporter (re-uses xprt)

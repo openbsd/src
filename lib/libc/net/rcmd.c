@@ -153,6 +153,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			(void)close(s2);
 			goto bad;
 		}
+again:
 		FD_ZERO(&reads);
 		FD_SET(s, &reads);
 		FD_SET(s2, &reads);
@@ -170,6 +171,14 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		}
 		s3 = accept(s2, (struct sockaddr *)&from, &len);
+		/*
+		 * XXX careful for ftp bounce attacks. If discovered, shut them
+		 * down and check for the real auxiliary channel to connect.
+		 */
+		if (from.sin_family == AF_INET && from.sin_port == htons(20)) {
+			close(s3);
+			goto again;
+		}
 		(void)close(s2);
 		if (s3 < 0) {
 			(void)fprintf(stderr,
