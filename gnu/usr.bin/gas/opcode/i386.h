@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    
-/* $Id: i386.h,v 1.1.1.1 1995/10/18 08:39:09 deraadt Exp $ */
+/* $Id: i386.h,v 1.2 1996/06/17 00:22:45 deraadt Exp $ */
 
 static const template i386_optab[] = {
 
@@ -27,7 +27,7 @@ static const template i386_optab[] = {
 { "mov", 2, 0x88, _, DW|Modrm, Reg, Reg|Mem, 0 },
 { "mov", 2, 0xb0, _, ShortFormW, Imm, Reg, 0 },
 { "mov", 2, 0xc6, _,  W|Modrm,  Imm, Reg|Mem, 0 },
-{ "mov", 2, 0x8c, _, D|Modrm,  SReg3|SReg2, Reg16|Mem16, 0 },
+{ "mov", 2, 0x8c, _, D|Modrm,  SReg3|SReg2, WordReg|WordMem, 0 },
 /* move to/from control debug registers */
 { "mov", 2, 0x0f20, _, D|Modrm, Control, Reg32, 0},
 { "mov", 2, 0x0f21, _, D|Modrm, Debug, Reg32, 0},
