@@ -1,0 +1,196 @@
+.\" $OpenBSD: bgpd.conf.5,v 1.1 2003/12/23 17:06:32 henning Exp $
+.\"
+.\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd December 23, 2003
+.Dt BGPD.CONF 5
+.Os
+.Sh NAME
+.Nm bgpd.conf
+.Nd Border Gateway Protocol daemon configuration file
+.Sh DESCRIPTION
+The
+.Ar bgpd
+daemon implements the Border Gateway Protocol version 4 as described
+in RFC 1771.
+.Sh SECTIONS
+The
+.Nm
+config file is devided into three main sections.
+.Bl -tag -width xxxx
+.It Cm Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Cm Global configuration
+Global settings for the bgpd daemon.
+.It Cm Neighbors and Groups
+.Ar bgpd
+establishes sessions with
+.Ar neighbors .
+The neighbor definition and properties are set in this section, as well as
+grouping neighbors for the ease of configuration.
+.El
+.Pp
+With the exception of
+.Cm macros
+the sections should be grouped and appear in
+.Nm
+in the order shown above.
+.Sh MACROS
+Much like
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (for example
+.Ar AS ,
+.Ar neighbor ,
+.Ar group ) .
+Macros are not expanded inside quotes.
+.Pp
+For example,
+.Bd -literal -offset indent
+c7206="1.2.3.4"
+neighbor $c7206 {
+	remote-as 65001
+}
+.Ed
+.Sh GLOBAL CONFIGURATION
+There are quite a few settings that affect the operation of the
+.Ar bgpd
+daemon globally.
+.Bl -tag -width xxxxxxxx
+.It Ar AS
+Set the local Autonomous System number.
+The AS numbers are assigned by local RIRs, such as
+.Bl -tag -width xxxxx -compact
+.It Ar RIPE
+for Europe,
+.It Ar ARIN
+for America and
+.It Ar APNIC
+for the Asian-Pacific region.
+.El
+.Pp
+For example,
+.Bd -literal -offset indent
+AS 65001
+.Ed
+.Pp
+sets the local
+.Ar AS
+to 65001.
+.It Ar bgpid
+Set the bgp id to the given IP address which must be local to the
+machine.
+.Bd -literal -offset indent
+bgpid 10.0.0.1
+.Ed
+.Pp
+If not given the bgp id is determined as the biggest IP address assigned
+to the local machine.
+.It Ar holdtime
+Sets the holdtime in seconds.
+The holdtime is reset to its initial value every time either a
+.Em KEEPALIVE
+or an
+.Em UPDATE
+message is received from the neighbor.
+If the holdtime expires the session is dropped.
+The default is 90 seconds.
+Neighboring systems negotiate the holdtime used when the connection is
+established in the
+.Em OPEN
+messages.
+Each neighbor announces its configured holdtime, the smaller one is
+then agreed on.
+.It Ar holdtime min
+The minimal accepted holdtime in seconds.
+Must be greater or equal to 3.
+.It Ar listen on
+Specify the local IP address the
+.Ar bgpd
+daemon should listen on.
+.Bd -literal -offset indent
+listen on 127.0.0.1
+.Ed
+.El
+.Sh NEIGHBORS AND GROUPS
+.Ar bgpd
+estables tcp connections to other bgp speakers, called neighbors.
+Each neighbor is specified by a neighbor section, specifying properties for
+that neighbor:
+.Bd -literal -offset indent
+neighbor 10.0.0.2 {
+	remote-as 65002
+	descr "a neighbor"
+}
+.Ed
+.Pp
+Multiple neighbors can be grouped together by a group section.
+Each neighbor statement within the group section inherits all properties
+from the group section.
+.Bd -literal -offset indent
+group "peering AS65002" {
+	remote-as 65002
+	neighbor 10.0.0.2 {
+		descr "AS65002-p1"
+	}
+	neighbor 10.0.0.3 {
+		descr "AS65002-p2"
+	}
+}
+.Ed
+.Pp
+There are several neighbor properties:
+.Bl -tag -width xxxxxxxx
+.It Ar remote-as
+Set the AS number of the remote system.
+.It Ar descr
+Add a description.
+The description is used when logging neighbor events and in status
+reports etc and has no further meaning to
+.Ar bgpd .
+.It Ar local-addr
+When
+.Ar bgpd
+initiates the tcp connection to the neighbor system, it normaly does not
+bind to a specific IP address.
+If a local-addr is given it binds
+to this address before.
+.It Ar multihop
+Normally neighbors that are not in the same AS as the local
+.Ar bgpd
+have to be directly connected to the local machine.
+If this is not the case the
+.Em multihop
+statement defines the maximum hops the neighbor is away.
+.El
+.Sh SEE ALSO
+.Xr bgpd 8
+.Sh FILES
+.Bl -tag -width "/etc/bgpd.conf" -compact
+.It Pa /etc/bgpd.conf
+.Nm
+configuration file.
+.El
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 3.5 .
