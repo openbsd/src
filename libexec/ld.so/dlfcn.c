@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.10 2001/09/29 03:18:59 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.11 2001/11/06 15:32:11 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -299,8 +299,9 @@ _dl_show_objects()
 			break;
 		}
 		_dl_printf("\t%X %X %s  %d  %s\n", object->load_addr,
-				object->load_size, objtypename,
-				object->refcount, object->load_name);
+				object->load_addr + object->load_size,
+				objtypename, object->refcount,
+				object->load_name);
 		object = object->next;
 	}
 }
