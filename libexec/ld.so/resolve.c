@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.23 2004/05/25 18:07:20 mickey Exp $ */
+/*	$OpenBSD: resolve.c,v 1.24 2004/07/05 00:47:40 kjell Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -76,7 +76,6 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 	_dl_printf("objname [%s], dynp %p, dl_data %p, objtype %x laddr %lx, loff %lx\n",
 	    objname, dynp, dl_data, objtype, laddr, loff);
 #endif
-
 	object = _dl_malloc(sizeof(elf_object_t));
 	object->prev = object->next = NULL;
 
@@ -144,6 +143,10 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 	object->refcount = 1;
 	object->first_child = NULL;
 	object->last_child = NULL;
+	/* default dev, inode for dlopen-able objects. */
+	object->dev = 0;
+	object->inode = 0;
+
 	return(object);
 }
 

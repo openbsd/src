@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.33 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.34 2004/07/05 00:47:40 kjell Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -362,6 +362,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	Elf_Dyn *dynp = 0;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
+	struct stat sb;
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
@@ -376,6 +377,19 @@ _dl_tryload_shlib(const char *libname, int type)
 	if (libfile < 0) {
 		_dl_errno = DL_CANT_OPEN;
 		return(0);
+	}
+
+	if ( _dl_fstat(libfile, &sb) < 0) {
+		_dl_errno = DL_CANT_OPEN;
+		return(0);
+	}
+
+	for (object = _dl_objects; object != NULL; object = object->next) {
+		if (object->dev == sb.st_dev &&
+		    object->inode == sb.st_ino) {
+			_dl_close(libfile);
+			return(object);
+		}
 	}
 
 	_dl_read(libfile, hbuf, sizeof(hbuf));
@@ -491,7 +505,11 @@ _dl_tryload_shlib(const char *libname, int type)
 	if (object) {
 		object->load_size = maxva - minva;	/*XXX*/
 		object->load_list = load_list;
+		/* set inode, dev from stat info */
+		object->dev = sb.st_dev;
+		object->inode = sb.st_ino;
 	} else {
+		/* XXX not possible. object cannot come back NULL */
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);
 	}

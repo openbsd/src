@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.30 2004/05/25 18:07:20 mickey Exp $ */
+/*	$OpenBSD: resolve.h,v 1.31 2004/07/05 00:47:40 kjell Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -122,6 +122,10 @@ typedef struct elf_object {
 
 	struct dep_node *first_child;
 	struct dep_node *last_child;
+
+	/* for object confirmation */
+	dev_t	dev;
+	ino_t inode;
 } elf_object_t;
 
 struct dep_node {

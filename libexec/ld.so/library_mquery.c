@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.13 2003/09/02 15:17:51 drahn Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.14 2004/07/05 00:47:40 kjell Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -368,7 +368,8 @@ _dl_tryload_shlib(const char *libname, int type)
 	int off;
 	int size;
 	Elf_Addr load_end = 0;
-
+	struct stat sb;
+	
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
 
@@ -384,6 +385,19 @@ _dl_tryload_shlib(const char *libname, int type)
 		return(0);
 	}
 
+	if ( _dl_fstat(libfile, &sb) < 0) {
+		_dl_errno = DL_CANT_OPEN;
+		return(0);
+	}
+
+	for (object = _dl_objects; object != NULL; object = object->next) {
+		if (object->dev == sb.st_dev &&
+		    object->inode == sb.st_ino) {
+			_dl_close(libfile);
+			return(object);
+		}
+	}
+	
 	_dl_read(libfile, hbuf, sizeof(hbuf));
 	ehdr = (Elf_Ehdr *)hbuf;
 	if (ehdr->e_ident[0] != ELFMAG0  || ehdr->e_ident[1] != ELFMAG1 ||
@@ -530,7 +544,11 @@ retry:
 	if (object) {
 		object->load_size = (Elf_Addr)load_end - (Elf_Addr)lowld->start;
 		object->load_list = lowld;
+		/* set inode, dev from stat info */
+		object->dev = sb.st_dev;
+		object->inode = sb.st_ino;
 	} else {
+		/* XXX no point. object is never returned NULL */
 		_dl_load_list_free(lowld);
 	}
 	return(object);
