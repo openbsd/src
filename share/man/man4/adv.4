@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adv.4,v 1.13 2001/03/06 19:56:50 brad Exp $
+.\"	$OpenBSD: adv.4,v 1.14 2001/03/07 15:31:06 krw Exp $
 .\"
 .\" Copyright (c) 1998, Jason Downs.  All rights reserved.
 .\"
@@ -71,8 +71,8 @@ The
 driver will log some host adapter errors with general messages such as
 .Pp
 .Bd -literal -offset indent
-iha0:0:0: host adapter error 0x12. See adw(4).
-iha0:0:0: host adapter error 0x12, resetting bus. See adw(4).
+adw0:0:0: host adapter error 0x12. See adw(4).
+adw0:0:0: host adapter error 0x12, resetting bus. See adw(4).
 .Ed
 .Pp
 Some further information on the meaning of such errors can be obtained
