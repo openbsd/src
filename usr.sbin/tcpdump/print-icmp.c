@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.10 2001/09/02 12:01:35 jakob Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.11 2001/09/02 12:05:13 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.10 2001/09/02 12:01:35 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.11 2001/09/02 12:05:13 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -196,11 +196,8 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 				       (dp->icmp_type == ICMP_ECHO)?
 				       "request": "reply",
 				       dp->icmp_id, dp->icmp_seq);
-		} else {
-			fmt = tok2str(icmp2str, "type-#%d", dp->icmp_type);
-			(void)snprintf(buf, sizeof buf, fmt,
-			    ipaddr_string(&dp->icmp_ip.ip_dst));
-		}
+		} else
+			buf = tok2str(icmp2str, "type-#%d", dp->icmp_type);
 		break;
 
 	case ICMP_UNREACH:
