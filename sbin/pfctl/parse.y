@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.116 2002/07/09 11:50:58 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.117 2002/07/13 18:36:02 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -128,9 +128,10 @@ struct peer {
 int	rule_consistent(struct pf_rule *);
 int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
-void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_host *,
-    struct node_host *);
-void	expand_nat(struct pf_nat *, struct node_host *, struct node_port *,
+void	expand_rdr(struct pf_rdr *, struct node_if *, struct node_proto *,
+    struct node_host *, struct node_host *);
+void	expand_nat(struct pf_nat *, struct node_if *, struct node_proto *, 
+    struct node_host *, struct node_port *,
     struct node_host *, struct node_port *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, struct node_port *);
@@ -1231,17 +1232,7 @@ natrule		: no NAT interface af proto fromto redirection
 			memset(&nat, 0, sizeof(nat));
 
 			nat.no = $1;
-			if ($3 != NULL) {
-				memcpy(nat.ifname, $3->ifname,
-				    sizeof(nat.ifname));
-				nat.ifnot = $3->not;
-				free($3);
-			}
 			nat.af = $4;
-			if ($5 != NULL) {
-				nat.proto = $5->proto;
-				free($5);
-			}
 			if (nat.no) {
 				if ($7 != NULL) {
 					yyerror("'no nat' rule does not need "
@@ -1276,7 +1267,7 @@ natrule		: no NAT interface af proto fromto redirection
 				free($7);
 			}
 
-			expand_nat(&nat, $6.src.host, $6.src.port,
+			expand_nat(&nat, $3, $5, $6.src.host, $6.src.port,
 			    $6.dst.host, $6.dst.port);
 		}
 		;
@@ -1402,16 +1393,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 			memset(&rdr, 0, sizeof(rdr));
 
 			rdr.no = $1;
-			if ($3 != NULL) {
-				memcpy(rdr.ifname, $3->ifname,
-				    sizeof(rdr.ifname));
-				rdr.ifnot = $3->not;
-			}
 			rdr.af = $4;
-			if ($5 != NULL) {
-				rdr.proto = $5->proto;
-				free($5);
-			}
 			if ($7 != NULL) {
 				memcpy(&rdr.saddr, &$7->addr,
 				    sizeof(rdr.saddr));
@@ -1464,7 +1446,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				YYERROR;
 			}
 
-			expand_rdr(&rdr, $3, $7, $9);
+			expand_rdr(&rdr, $3, $5, $7, $9);
 		}
 		;
 
@@ -1926,37 +1908,60 @@ expand_rule(struct pf_rule *r,
 }
 
 void
-expand_nat(struct pf_nat *n, struct node_host *src_hosts,
-    struct node_port *src_ports, struct node_host *dst_hosts,
-    struct node_port *dst_ports)
+expand_nat(struct pf_nat *n,
+    struct node_if *interfaces, struct node_proto *protos,
+    struct node_host *src_hosts, struct node_port *src_ports,
+    struct node_host *dst_hosts, struct node_port *dst_ports)
 {
+	char ifname[IF_NAMESIZE];
 	int af = n->af, added = 0;
 
+	CHECK_ROOT(struct node_if, interfaces);
+	CHECK_ROOT(struct node_proto, protos);
 	CHECK_ROOT(struct node_host, src_hosts);
 	CHECK_ROOT(struct node_port, src_ports);
 	CHECK_ROOT(struct node_host, dst_hosts);
 	CHECK_ROOT(struct node_port, dst_ports);
 
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+	LOOP_THROUGH(struct node_proto, proto, protos,
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
 	LOOP_THROUGH(struct node_port, src_port, src_ports,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
 	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
 
 		n->af = af;
+		/* for link-local IPv6 address, interface must match up */
 		if ((n->af && src_host->af && n->af != src_host->af) ||
 		    (n->af && dst_host->af && n->af != dst_host->af) ||
 		    (src_host->af && dst_host->af &&
-		    src_host->af != dst_host->af))
+		    src_host->af != dst_host->af) ||
+		    (src_host->ifindex && dst_host->ifindex &&
+		    src_host->ifindex != dst_host->ifindex) ||
+		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
+		    src_host->ifindex != if_nametoindex(interface->ifname)) ||
+		    (dst_host->ifindex && if_nametoindex(interface->ifname) &&
+		    dst_host->ifindex != if_nametoindex(interface->ifname)))
 			continue;
 		if (!n->af && src_host->af)
 			n->af = src_host->af;
 		else if (!n->af && dst_host->af)
 			n->af = dst_host->af;
+
+		if (if_indextoname(src_host->ifindex, ifname))
+			memcpy(n->ifname, ifname, sizeof(n->ifname));
+		else if (if_indextoname(dst_host->ifindex, ifname))
+			memcpy(n->ifname, ifname, sizeof(n->ifname));
+		else
+			memcpy(n->ifname, interface->ifname, sizeof(n->ifname));
+
 		if (!n->af && n->raddr.addr_dyn != NULL) {
 			yyerror("address family (inet/inet6) undefined");
 			continue;
 		}
 
+		n->ifnot = interface->not;
+		n->proto = proto->proto;
 		n->src.addr = src_host->addr;
 		n->src.mask = src_host->mask;
 		n->src.noroute = src_host->noroute;
@@ -1975,8 +1980,10 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 		pfctl_add_nat(pf, n);
 		added++;
 
-	))));
+	))))));
 
+	FREE_LIST(struct node_if, interfaces);
+	FREE_LIST(struct node_proto, protos);
 	FREE_LIST(struct node_host, src_hosts);
 	FREE_LIST(struct node_port, src_ports);
 	FREE_LIST(struct node_host, dst_hosts);
@@ -1988,17 +1995,19 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 
 void
 expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
-    struct node_host *src_hosts,
+    struct node_proto *protos, struct node_host *src_hosts,
     struct node_host *dst_hosts)
 {
 	int af = r->af, added = 0;
 	char ifname[IF_NAMESIZE];
 
 	CHECK_ROOT(struct node_if, interfaces);
+	CHECK_ROOT(struct node_proto, protos);
 	CHECK_ROOT(struct node_host, src_hosts);
 	CHECK_ROOT(struct node_host, dst_hosts);
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
+	LOOP_THROUGH(struct node_proto, proto, protos,
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
 
@@ -2032,6 +2041,8 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		else
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 
+		r->proto = proto->proto;
+		r->ifnot = interface->not;
 		r->saddr = src_host->addr;
 		r->smask = src_host->mask;
 		r->daddr = dst_host->addr;
@@ -2039,9 +2050,10 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 
 		pfctl_add_rdr(pf, r);
 		added++;
-	)));
+	))));
 
 	FREE_LIST(struct node_if, interfaces);
+	FREE_LIST(struct node_proto, protos);
 	FREE_LIST(struct node_host, src_hosts);
 	FREE_LIST(struct node_host, dst_hosts);
 
