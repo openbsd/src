@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.12 2001/12/16 21:48:48 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.13 2001/12/16 23:06:04 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -529,10 +529,13 @@ pmap_init()
 			pte = pmap_pte(pmap_kernel(), addr2);
 			*pte = (*pte | PG_CI) & ~PG_CCB;
 			TBIS(addr2);
-			DCIS();
 		}
 #endif
 	} while (addr != addr2);
+#ifdef M68060
+	if (mmutype == MMU_68060)
+		DCIS();
+#endif
 
 	PMAP_DPRINTF(PDB_INIT, ("pmap_init: KPT: %ld pages from %lx to %lx\n",
 	    atop(s), addr, addr + s));
@@ -1881,11 +1884,11 @@ ok:
 		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
 			pmapdebug = opmapdebug;
 
-		if (*ste != SG_NV)
+		if (!(*ste & SG_V))
 			printf("collect: kernel STE at %p still valid (%x)\n",
 			       ste, *ste);
 		ste = &Sysptmap[ste - pmap_ste(pmap_kernel(), 0)];
-		if (*ste != SG_NV)
+		if (!(*ste & SG_V))
 			printf("collect: kernel PTmap at %p still valid (%x)\n",
 			       ste, *ste);
 #endif
@@ -2152,7 +2155,7 @@ pmap_mapmulti(pmap, va)
 #endif
 	bste = pmap_ste(pmap, HPMMBASEADDR(va));
 	ste = pmap_ste(pmap, va);
-	if (*ste == SG_NV && (*bste & SG_V)) {
+	if (!(*ste & SG_V) && (*bste & SG_V)) {
 		*ste = *bste;
 		TBIAU();
 		return (0);
