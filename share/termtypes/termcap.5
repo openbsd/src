@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.11 2003/06/02 23:30:16 millert Exp $
+.\"	$OpenBSD: termcap.5,v 1.12 2003/06/06 21:08:13 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -297,7 +297,7 @@ version 2 only).
 .It "nw	str	(P)	Newline (behaves like"
 .Sy \&cr
 followed by
-.Sy \&do Ns ).
+.Sy \&do ) .
 .It "OP	bool	(o)	Odd parity."
 .It "os	bool		Terminal overstrikes."
 .It "pb	num		Lowest baud where delays are required."
@@ -321,7 +321,7 @@ bytes.
 .It "po	str		Turn on the printer."
 .It "ps	str		Print contents of the screen."
 .It "pt	bool	(o)	Has hardware tabs (may need to be set with"
-.Sy \&is ).
+.Sy \&is ) .
 .It "px	str		Program function key"
 .Em n
 to transmit string
@@ -410,7 +410,7 @@ char (Teleray 1061).
 .Ss A Sample Entry
 The following entry, which describes the Concept\-100, is among the more
 complex entries in the
-.Nm 
+.Nm
 file as of this writing.
 .Pp
 .Bd -literal
@@ -867,7 +867,6 @@ These are primarily useful if the terminal does not have
 .Sy \&cm ,
 such as the Tektronix 4025.
 .Ss Cursor Motions
-.Pp
 If the terminal has a fast way to home the cursor
 (to the very upper left corner of the screen), this can be given as
 .Sy \&ho .
@@ -1096,7 +1095,7 @@ to enter and exit delete mode
 (which is any mode the terminal needs to be placed in for
 .Sy \&dc
 to work).
-.Ss Highlighting, Underlining, and Visible  Bells
+.Ss Highlighting, Underlining, and Visible Bells
 If your terminal has one or more kinds of display attributes,
 these can be represented in a number of different ways.
 You should choose one display form as
@@ -1383,7 +1382,7 @@ and
 the name of a file containing long initialization strings.
 These strings are expected to set the terminal into modes
 consistent with the rest of the
-.Nm 
+.Nm
 description.
 They are normally sent to the terminal by the
 .Xr tset
@@ -1813,6 +1812,11 @@ Hash database file containing terminal descriptions (see
 .Xr printf 3 ,
 .Xr termcap 3 ,
 .Xr term 7
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Bx 3 .
 .Sh CAVEATS AND BUGS
 The
 .Em Note :
@@ -1841,8 +1845,3 @@ The total length of a single entry (excluding only escaped newlines)
 may not exceed 1024.
 .Pp
 Not all programs support all entries.
-.Sh HISTORY
-The
-.Nm
-file format appeared in
-.Bx 3 .
