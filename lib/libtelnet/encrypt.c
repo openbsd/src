@@ -1,4 +1,4 @@
-/*     $OpenBSD: encrypt.c,v 1.5 2001/05/25 10:23:06 hin Exp $     */
+/*     $OpenBSD: encrypt.c,v 1.6 2001/09/18 00:48:58 jcs Exp $     */
 /* $KTH: encrypt.c,v 1.19 1997/11/02 03:58:03 assar Exp $ */
 
 /*-
@@ -507,9 +507,6 @@ encrypt_not(void)
 {
     if (encrypt_verbose)
   	printf("[ Connection is NOT encrypted ]\r\n");
-    else
-  	printf("\r\n*** Connection not encrypted! "
-	       "Communication may be eavesdropped. ***\r\n");
 }
 
 /*
