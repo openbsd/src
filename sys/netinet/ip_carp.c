@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.75 2004/12/08 07:05:18 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.76 2004/12/08 08:16:44 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -731,26 +731,10 @@ carp_clone_create(ifc, unit)
 int
 carp_clone_destroy(struct ifnet *ifp)
 {
-	struct carp_softc *sc = ifp->if_softc;
-	struct carp_if *cif;
-
-	timeout_del(&sc->sc_ad_tmo);
-	timeout_del(&sc->sc_md_tmo);
-	timeout_del(&sc->sc_md6_tmo);
-
-	if (sc->sc_carpdev != NULL) {
-		cif = (struct carp_if *)sc->sc_carpdev->if_carp;
-		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
-		if (!--cif->vhif_nvrs) {
-			ifpromisc(sc->sc_carpdev, 0);
-			sc->sc_carpdev->if_carp = NULL;
-			FREE(cif, M_IFADDR);
-		}
-	}
-
+	carpdetach(ifp->if_softc);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	free(sc, M_DEVBUF);
+	free(ifp->if_softc, M_DEVBUF);
 
 	return (0);
 }
