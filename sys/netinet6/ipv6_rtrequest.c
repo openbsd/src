@@ -436,13 +436,14 @@ ipv6_setrtifa(rt)
 #endif /* __FreeBSD__ */
 	    if (ifa->ifa_addr->sa_family == AF_INET6 &&
                 !IS_DEPRECATED((struct in6_ifaddr *)ifa) &&
-		!IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr))
+		!IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr)) {
 	      if (IN6_IS_ADDR_V4COMPAT(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr))
 		ifa_compat = ifa;
 	      else if (IN6_IS_ADDR_SITELOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr))
 		ifa_site = ifa;
 	      else /* globally routable address */
 		break;
+		}
 	  if (!ifa)
 	    ifa = ifa_compat ? ifa_compat : ifa_site;
 	}
