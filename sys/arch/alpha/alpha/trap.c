@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.29 2001/11/28 16:13:27 art Exp $ */
+/* $OpenBSD: trap.c,v 1.30 2002/03/12 11:58:14 art Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -105,6 +105,7 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -384,6 +385,10 @@ trap(a0, a1, a2, entry, framep)
 			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
+			if (p->p_md.md_flags & (MDP_STEP1|MDP_STEP2)) {
+				process_sstep(p, 0);
+				p->p_md.md_tf->tf_regs[FRAME_PC] -= 4;
+			}
 			ucode = a0;		/* trap type */
 			i = SIGTRAP;
 			break;
