@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1998/03/07 19:14:30 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1998/03/08 21:09:24 millert Exp $
 
 LIBIO=		io
 LIBIOSTREAM=	iostream
@@ -69,14 +69,18 @@ clean:
 includes:
 	install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++
 	@-cd $(.CURDIR); for i in $(FILES); do \
-		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
-	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-		 $$i $(DESTDIR)/usr/include/g++/$$i; \
+		if [ -e $$i ]; then \
+			cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
+			install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+			    $$i $(DESTDIR)/usr/include/g++/$$i; \
+		fi \
 	done
 	@-for i in $(FILES); do \
-		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
-	install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-		 $$i $(DESTDIR)/usr/include/g++/$$i; \
+		if [ -e $$i ]; then \
+			cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
+			install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+			    $$i $(DESTDIR)/usr/include/g++/$$i; \
+		fi \
 	done
 
 install:
