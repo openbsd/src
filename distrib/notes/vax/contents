@@ -15,20 +15,20 @@ OpenBSDfloppydesc(single,The)
 
 DistributionDescription(nine)
 
-OpenBSDbase(50.7,112.0)
+OpenBSDbase(51.3,114.0)
 
-OpenBSDcomp(13.2,37.5)
+OpenBSDcomp(13.6,39.3)
 
-OpenBSDetc(1.2,3.9)
+OpenBSDetc(1.5,5.5)
 
 OpenBSDgame(6.1,12.2)
 
-OpenBSDman(5.6,19.9)
+OpenBSDman(5.6,20.0)
 
 OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(64.1,106.1)
+OpenBSDxbase(63.7,104.0)
 
 OpenBSDxfont(32.3,35.9)
 
-OpenBSDxshare(1.9,9.4)
+OpenBSDxshare(1.6,7.7)

@@ -24,20 +24,20 @@ Useful Media" for more information.
 
 DistributionDescription(nine)
 
-OpenBSDbase(25.8,67.9,shared)
+OpenBSDbase(22.9,69.5,shared)
 
-OpenBSDcomp(21.4,46.0,shared)
+OpenBSDcomp(16.0,49.7,shared)
 
-OpenBSDetc(1.2,3.9)
+OpenBSDetc(1.5,5.5)
 
 OpenBSDgame(2.8,6.6)
 
-OpenBSDman(5.8,19.9)
+OpenBSDman(5.6,20.0)
 
 OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(8.6,18.6)
+OpenBSDxbase(7.0,20.3)
 
 OpenBSDxfont(32.3,35.9)
 
-OpenBSDxshare(1.9,9.4)
+OpenBSDxshare(1.6,7.7)

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.26 2002/04/14 02:33:19 miod Exp $
+dnl	$OpenBSD: contents,v 1.27 2002/10/07 19:32:00 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -18,15 +18,15 @@ OpenBSDrd
 
 DistributionDescription(ten)
 
-OpenBSDbase(22.3,67.9,shared)
+OpenBSDbase(22.9,69.5,shared)
 
-OpenBSDcomp(15.4,46.0,shared)
+OpenBSDcomp(16.0,47.9,shared)
 
-OpenBSDetc(1.2,3.9)
+OpenBSDetc(1.5,5.5)
 
 OpenBSDgame(2.8,6.6)
 
-OpenBSDman(5.5,19.9)
+OpenBSDman(5.6,20.0)
 
 OpenBSDmisc(1.7,5.6)
 

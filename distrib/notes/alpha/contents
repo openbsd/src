@@ -29,22 +29,22 @@ OpenBSDfloppydesc(two,Each,s)
 
 DistributionDescription(ten)
 
-OpenBSDbase(30.6,91.3,shared)
+OpenBSDbase(30.5,90.5,shared)
 
-OpenBSDcomp(27.8,116.7,shared)
+OpenBSDcomp(24.9,99.4,shared)
 
-OpenBSDetc(1.2,3.9)
+OpenBSDetc(1.5,5.5)
 
 OpenBSDgame(3.0,6.9)
 
-OpenBSDman(5.8,20.7)
+OpenBSDman(5.8,20.8)
 
 OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(11.4,37.8)
+OpenBSDxbase(11.4,38.8)
 
 OpenBSDxfont(31.4,34.6)
 
-OpenBSDxserv(3.2,9.5)
+OpenBSDxserv(6.4,22.2)
 
-OpenBSDxshare(1.9,9.4)
+OpenBSDxshare(1.6,7.7)

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.35 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: contents,v 1.36 2002/10/07 19:32:00 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -21,25 +21,25 @@ OpenBSDdistsets
 
 DistributionDescription(ten)
 
-OpenBSDbase(22.3,67.6,shared)
+OpenBSDbase(22.9,69.5,shared)
 
-OpenBSDcomp(15.4,46.0,shared)
+OpenBSDcomp(16.0,47.9,shared)
 
-OpenBSDetc(1.2,3.9)
+OpenBSDetc(1.5,5.5)
 
 OpenBSDgame(2.8,6.6)
 
-OpenBSDman(5.5,19.9)
+OpenBSDman(5.6,20.0)
 
 OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(6.2,16.8)
+OpenBSDxbase(7.0,20.3)
 
-OpenBSDxfont(32.4,35.9)
+OpenBSDxfont(32.3,35.9)
 
-OpenBSDxserv(0.5,1.2)
+OpenBSDxserv(0.5,1.1)
 
-OpenBSDxshare(1.9,9.4)
+OpenBSDxshare(1.6,7.7)
 
 The directory '../OSREV/MACHINE/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files are
