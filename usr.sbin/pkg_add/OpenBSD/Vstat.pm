@@ -1,4 +1,4 @@
-# $OpenBSD: Vstat.pm,v 1.2 2003/12/24 02:31:28 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.3 2003/12/26 16:34:05 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -39,17 +39,44 @@ use Symbol;
 my $dirinfo = {};
 my $virtual = {};
 my $virtual_dir = {};
+my $mnts = [];
+my $blocksize = 512;
+
+sub create_mntpoint($)
+{
+	my $mntpoint = shift;
+	my $n = $dirinfo->{"$mntpoint"};
+	if (!defined $n) {
+		$n = { mnt => $mntpoint, used => 0 };
+		bless $n, "OpenBSD::Vstat::MountPoint";
+		$dirinfo->{"$mntpoint"} = $n;
+		push(@$mnts, $n);
+	}
+	return $n;
+}
 
 sub init_dirinfo()
 {
+    delete $ENV{'BLOCKSIZE'};
+    open(my $cmd2, "/bin/df|") or print STDERR "Can't run df\n";
+    while (<$cmd2>) {
+	    chomp;
+	    if (m/^Filesystem\s+(\d+)\-blocks/) {
+		    $blocksize = $1;
+	    } elsif (m/^.*?\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+(.*?)$/) {
+	    	my ($mntpoint, $avail) = ($2, $1);
+		my $i = create_mntpoint($mntpoint);
+		$i->{avail} = $avail;
+	    }
+    }
+
+    close($cmd2) or print STDERR "Error running df: $!\n";
     open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
     while (<$cmd1>) {
 	    chomp;
 	    if (m/^.*?\s+on\s+(.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
 		my ($mntpoint, $opts) = ($1, $2);
-		$dirinfo->{"$mntpoint"} = { mnt => $mntpoint } 
-		    unless defined $dirinfo->{"$mntpoint"};
-		my $i = $dirinfo->{"$mntpoint"};
+		my $i = create_mntpoint($mntpoint);
 		next unless defined $opts;
 		for my $o (split /,\s*/, $opts) {
 		    if ($o eq 'read-only') {
@@ -64,25 +91,7 @@ sub init_dirinfo()
 		print STDERR "Can't parse mount line: $_\n";
 	    }
     }
-    close($cmd1);
-
-    delete $ENV{'BLOCKSIZE'};
-    open(my $cmd2, "/bin/df|") or print STDERR "Can't run df\n";
-    my $bs;
-    while (<$cmd2>) {
-	    chomp;
-	    if (m/^Filesystem\s+(\d+)\-blocks/) {
-		    $bs = $1;
-	    } elsif (m/^.*?\s+\d+\s+\d+\s+(\d+)\s+\d+\%\s+(.*?)$/) {
-	    	my ($mntpoint, $avail) = ($2, $1);
-		$dirinfo->{"$mntpoint"} = { mnt => $mntpoint } 
-		    unless defined $dirinfo->{"$mntpoint"};
-		my $i = $dirinfo->{"$mntpoint"};
-		$i->{blocksize} = $bs;
-		$i->{avail} = $avail;
-	    }
-    }
-    close($cmd2);
+    close($cmd1) or print STDERR "Error running mount: $!\n";
 }
 
 init_dirinfo();
@@ -141,6 +150,14 @@ sub vreaddir($)
 	return keys(%l);
 }
 
+sub account_for($$)
+{
+	my ($name, $size) = @_;
+	my $e = filestat($name);
+	$e->{used} += $size;
+	return $e;
+}
+
 sub add($$)
 {
 	my ($name, $size) = @_;
@@ -148,14 +165,7 @@ sub add($$)
 	my $d = dirname($name);
 	$virtual_dir->{$d} = [] unless defined $virtual_dir->{$d};
 	push(@{$virtual_dir->{$d}}, $name);
-	if (defined $size) {
-	    my $e = filestat($name);
-	    if (defined $e->{avail} && defined $e->{blocksize}) {
-		$e->{avail} -= $size / $e->{blocksize};
-		return $e;
-	    }
-	}
-	return undef;
+	return defined($size) ? account_for($name, $size) : undef;
 }
 
 sub remove($$)
@@ -165,13 +175,24 @@ sub remove($$)
 	my $d = dirname($name);
 	$virtual_dir->{$d} = [] unless defined $virtual_dir->{$d};
 	push(@{$virtual_dir->{$d}}, $name);
-	if (defined $size) {
-	    my $e = filestat($name);
-	    $e->{avail} += $size / $e->{blocksize};
-	    return $e;
-	} else {
-		return undef;
+	return defined($size) ? account_for($name, -$size) : undef;
+}
+
+sub tally()
+{
+	for my $mntpoint (@$mnts) {
+		if ($mntpoint->{used} != 0) {
+			print $mntpoint->{mnt}, ": ", $mntpoint->{used}, " bytes\n";
+		}
 	}
+}
+
+package OpenBSD::Vstat::MountPoint;
+sub avail
+{
+	my $self = $_[0];
+
+	return $self->{avail} - $self->{used}/$blocksize;
 }
 
 1;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.19 2003/12/21 18:41:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.20 2003/12/26 16:34:05 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -325,7 +325,7 @@ sub really_add($)
 			print "Error: ", $s->{mnt}, " is read-only ($fname)\n";
 			$problems++;
 		}
-		if ($s->{avail} < 0) {
+		if ($s->avail() < 0) {
 			print "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
 			$problems++;
 		}
@@ -441,4 +441,7 @@ while (my $pkg = shift @todo) {
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
 
+if ($opt_n or $opt_v) {
+	OpenBSD::Vstat::tally();
+}
 exit(1) if $errors;
