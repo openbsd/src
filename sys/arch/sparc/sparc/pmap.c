@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 1999/11/24 16:07:15 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 1999/12/07 15:32:30 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -75,6 +75,7 @@
 
 #if defined(UVM)
 #include <uvm/uvm.h>
+#include <sys/pool.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -175,6 +176,10 @@ static __inline int *pt23_alloc __P((void));
 static __inline void pt1_free __P((int *));
 static __inline void pt23_free __P((int *));
 
+#if defined(SUN4M)
+static u_int	VA2PA __P((caddr_t));
+#endif
+
 /*
  * Given a page number, return the head of its pvlist.
  */
@@ -209,6 +214,88 @@ pvfree(pv)
 	free(pv, M_VMPVENT);
 }
 
+#if defined(SUN4M)
+#if defined(UVM)	/* We can only use pool with uvm */
+/*
+ * Memory pools and back-end supplier for SRMMU page tables.
+ * Share a pool between the level 2 and level 3 page tables,
+ * since these are equal in size.
+ */
+static struct pool L1_pool;
+static struct pool L23_pool;
+void *pgt_page_alloc __P((unsigned long, int, int));
+void  pgt_page_free __P((void *, unsigned long, int));
+
+void    pcache_flush __P((caddr_t, caddr_t, int));
+void
+pcache_flush(va, pa, n)
+        caddr_t va, pa;
+        int     n;
+{
+        void (*f)__P((int,int)) = cpuinfo.pcache_flush_line;
+
+        while ((n -= 4) >= 0)
+                (*f)((u_int)va+n, (u_int)pa+n);
+}
+
+/*
+ * Page table pool back-end.
+ */
+void *
+pgt_page_alloc(sz, flags, mtype)
+        unsigned long sz;
+        int flags;
+        int mtype;
+{
+        caddr_t p;
+
+        p = (caddr_t)uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
+                                      (vsize_t)sz, UVM_KMF_NOWAIT);
+
+        if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
+                pcache_flush(p, (caddr_t)VA2PA(p), sz);
+                kvm_uncache(p, sz/NBPG);
+        }
+        return (p);
+}       
+   
+void
+pgt_page_free(v, sz, mtype)
+        void *v;
+        unsigned long sz;
+        int mtype;
+{
+        uvm_km_free(kernel_map, (vaddr_t)v, sz);
+}
+
+static __inline int *
+pt1_alloc()
+{
+	return pool_get(&L1_pool, PR_WAITOK);
+}
+
+static __inline void
+pt1_free(pt)
+	int *pt;
+{
+	pool_put(&L1_pool, pt);
+}
+
+static __inline int *
+pt23_alloc()
+{
+	return pool_get(&L23_pool, PR_WAITOK);
+}
+
+static __inline void
+pt23_free(pt)
+	int *pt;
+{
+	pool_put(&L23_pool, pt);
+}
+
+#else
+
 static __inline int *
 pt1_alloc()
 {
@@ -234,6 +321,9 @@ pt23_free(pt)
 {
 	free(pt, M_VMPMAP);
 }
+
+#endif /* !UVM */
+#endif /* SUN4M */
 
 /*
  * XXX - horrible kludge to let us use "managed" pages to map the pv lists.
@@ -354,7 +444,6 @@ char	*ctxbusyvector;		/* [4m] tells what contexts are busy (XXX)*/
 #endif
 
 caddr_t	vpage[2];		/* two reserved MD virtual pages */
-caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
 
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
 
@@ -549,8 +638,6 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
 #define tlb_flush_context()   sta(ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
 #define tlb_flush_all()	      sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
 
-static u_int	VA2PA __P((caddr_t));
-
 /*
  * VA2PA(addr) -- converts a virtual address to a physical address using
  * the MMU's currently-installed page tables. As a side effect, the address
@@ -560,7 +647,7 @@ static u_int	VA2PA __P((caddr_t));
  * This routine should work with any level of mapping, as it is used
  * during bootup to interact with the ROM's initial L1 mapping of the kernel.
  */
-static __inline u_int
+static u_int
 VA2PA(addr)
 	caddr_t addr;
 {
@@ -632,7 +719,7 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	swap(ptep, pte);
-#if 1
+#if 0
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
 #endif
@@ -2662,6 +2749,14 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		}
 	}
 
+#if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#else
+	cnt.v_page_size = NBPG;
+	vm_set_page_size();
+#endif
+
 #if defined(SUN4)
 	/*
 	 * set up the segfixmask to mask off invalid bits
@@ -3380,7 +3475,30 @@ pmap_init()
 			sizeof(struct pvlist);
 	}
 
+	/*
+	 * We can set it here since it's only used in pmap_enter to see
+	 * if pv lists have been mapped.
+	 */
 	pmap_initialized = 1;
+
+#if defined(SUN4M) && defined(UVM)
+        if (CPU_ISSUN4M) {
+                /*
+                 * The SRMMU only ever needs chunks in one of two sizes:
+                 * 1024 (for region level tables) and 256 (for segment
+                 * and page level tables).
+                 */
+                int n;
+
+                n = SRMMU_L1SIZE * sizeof(int);
+                pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable", 0,
+                          pgt_page_alloc, pgt_page_free, 0);
+
+                n = SRMMU_L2SIZE * sizeof(int);
+                pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable", 0,
+                          pgt_page_alloc, pgt_page_free, 0);
+        }
+#endif
 }
 
 
@@ -5965,7 +6083,8 @@ pmap_zero_page4_4c(pa)
 	struct pvlist *pv;
 
 	pv = pvhead(atop(pa));
-	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && pv) {
+	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && pv &&
+	    pmap_initialized) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
@@ -6039,7 +6158,8 @@ pmap_zero_page4m(pa)
 
 	pv = pvhead(atop(pa));
 	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && pv &&
-		CACHEINFO.c_vactype != VAC_NONE)
+	    CACHEINFO.c_vactype != VAC_NONE &&
+	    pmap_initialized)
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
