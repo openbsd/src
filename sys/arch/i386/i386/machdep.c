@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.202 2002/03/23 13:28:34 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.203 2002/03/24 00:21:23 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -933,6 +933,31 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"686 class"		/* Default */
 			},
 			NULL
+		} }
+	},
+	{
+		"Geode by NSC",
+		CPUVENDOR_NS,
+		"National Semiconductor",
+		/* Family 4, not available from National Semiconductor */
+		{ {
+			CPUCLASS_486,
+			{
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"486 class"	/* Default */
+			},
+			NULL
+		},
+		/* Family 5 */
+		{
+			CPUCLASS_586,
+			{
+				0, 0, 0, 0, "Geode GX1", 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0,
+				"M1 class"	/* Default */
+			},
+			cyrix6x86_cpu_setup
 		} }
 	}
 };
