@@ -330,7 +330,6 @@
 ./usr/share/man/cat1/kdump.0
 ./usr/share/man/cat1/kerberos.0
 ./usr/share/man/cat1/keynote.0
-./usr/share/man/cat1/kf.0
 ./usr/share/man/cat1/kill.0
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
@@ -1733,7 +1732,6 @@
 ./usr/share/man/cat8/kdb_util.0
 ./usr/share/man/cat8/kdc.0
 ./usr/share/man/cat8/kerberos.0
-./usr/share/man/cat8/kfd.0
 ./usr/share/man/cat8/kgmon.0
 ./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/kprop.0
@@ -1769,6 +1767,7 @@
 ./usr/share/man/cat8/macppc/MAKEDEV.0
 ./usr/share/man/cat8/macppc/apm.0
 ./usr/share/man/cat8/macppc/apmd.0
+./usr/share/man/cat8/macppc/boot_macppc.0
 ./usr/share/man/cat8/macppc/fdisk.0
 ./usr/share/man/cat8/macppc/kbd.0
 ./usr/share/man/cat8/macppc/pdisk.0

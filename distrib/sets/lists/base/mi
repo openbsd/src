@@ -279,7 +279,6 @@
 ./usr/bin/kdestroy
 ./usr/bin/kdump
 ./usr/bin/keynote
-./usr/bin/kf
 ./usr/bin/kinit
 ./usr/bin/klist
 ./usr/bin/ktrace
@@ -1161,7 +1160,6 @@
 ./usr/libexec/kauthd
 ./usr/libexec/kdc
 ./usr/libexec/kerberos
-./usr/libexec/kfd
 ./usr/libexec/kpasswdd
 ./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
