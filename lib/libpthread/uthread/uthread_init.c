@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.19 2001/12/31 18:23:15 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.20 2002/01/17 23:12:09 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -141,7 +141,7 @@ _thread_init(void)
 		PANIC("Cannot get kernel write pipe flags");
 	}
 	/* Allocate and initialize the ready queue: */
-	else if (_pq_alloc(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_MAX_PRIORITY) != 0) {
+	else if (_pq_alloc(&_readyq, PTHREAD_MIN_PRIORITY, PTHREAD_LAST_PRIORITY) != 0) {
 		/* Abort this application: */
 		PANIC("Cannot allocate priority ready queue.");
 	}
