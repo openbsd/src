@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.95 2004/07/11 15:54:21 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.96 2004/07/17 00:17:27 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1382,7 +1382,7 @@ pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
 					src->scrub->pfss_tsval0 = ntohl(tsval);
 					src->scrub->pfss_tsval = ntohl(tsval);
 					src->scrub->pfss_tsecr = ntohl(tsecr);
-					microuptime(&src->scrub->pfss_last);
+					getmicrouptime(&src->scrub->pfss_last);
 				}
 				/* FALLTHROUGH */
 			default:
@@ -1412,6 +1412,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
     u_short *reason, struct tcphdr *th, struct pf_state *state,
     struct pf_state_peer *src, struct pf_state_peer *dst, int *writeback)
 {
+	struct timeval uptime;
 	u_int32_t tsval, tsecr;
 	u_int tsval_from_last;
 	u_int8_t hdr[60];
@@ -1538,8 +1539,10 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	 */
 #define TS_MAX_IDLE	(24*24*60*60)
 #define TS_MAX_CONN	(12*24*60*60)	/* XXX remove when better tsecr check */
+
+	getmicrouptime(&uptime);
 	if (src->scrub && (src->scrub->pfss_flags & PFSS_PAWS) &&
-	    (time_uptime - src->scrub->pfss_last.tv_sec > TS_MAX_IDLE ||
+	    (uptime.tv_sec - src->scrub->pfss_last.tv_sec > TS_MAX_IDLE ||
 	    time_second - state->creation > TS_MAX_CONN))  {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			DPFPRINTF(("src idled out of PAWS\n"));
@@ -1550,7 +1553,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		    | PFSS_PAWS_IDLED;
 	}
 	if (dst->scrub && (dst->scrub->pfss_flags & PFSS_PAWS) &&
-	    time_uptime - dst->scrub->pfss_last.tv_sec > TS_MAX_IDLE) {
+	    uptime.tv_sec - dst->scrub->pfss_last.tv_sec > TS_MAX_IDLE) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			DPFPRINTF(("dst idled out of PAWS\n"));
 			pf_print_state(state);
@@ -1624,7 +1627,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		 * connection limit until we can come up with a better
 		 * lowerbound to the TS echo check.
 		 */
-		struct timeval delta_ts, mtv;
+		struct timeval delta_ts;
 		int ts_fudge;
 
 
@@ -1641,8 +1644,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		/* Calculate max ticks since the last timestamp */
 #define TS_MAXFREQ	1100		/* RFC max TS freq of 1Khz + 10% skew */
 #define TS_MICROSECS	1000000		/* microseconds per second */
-		microuptime(&mtv);
-		timersub(&mtv, &src->scrub->pfss_last, &delta_ts);
+		timersub(&uptime, &src->scrub->pfss_last, &delta_ts);
 		tsval_from_last = (delta_ts.tv_sec + ts_fudge) * TS_MAXFREQ;
 		tsval_from_last += delta_ts.tv_usec / (TS_MICROSECS/TS_MAXFREQ);
 
@@ -1769,7 +1771,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 	 */
 	if (got_ts && src->scrub && PFSS_TIMESTAMP == (src->scrub->pfss_flags &
 	    (PFSS_PAWS_IDLED|PFSS_TIMESTAMP))) {
-		microuptime(&src->scrub->pfss_last);
+		getmicrouptime(&src->scrub->pfss_last);
 		if (SEQ_GEQ(tsval, src->scrub->pfss_tsval) ||
 		    (src->scrub->pfss_flags & PFSS_PAWS) == 0)
 			src->scrub->pfss_tsval = tsval;
