@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.28 2005/03/28 17:39:20 deraadt Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.29 2005/04/02 18:05:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.28 2005/03/28 17:39:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.29 2005/04/02 18:05:04 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -1190,7 +1190,7 @@ bexp(void)
 		negate(p);
 		scale = bmachine.scale;
 	} else {
-		/* Posix bc says min(a.scale *b, max(a.scale, scale) */
+		/* Posix bc says min(a.scale * b, max(a.scale, scale) */
 		u_long	b;
 		u_int	m;
 
@@ -1231,12 +1231,13 @@ bexp(void)
 			BN_one(one);
 			ctx = BN_CTX_new();
 			bn_checkp(ctx);
-			r->scale = scale;
-			scale_number(one, r->scale);
+			scale_number(one, r->scale + scale);
+			normalize(r, scale);
 			bn_check(BN_div(r->number, NULL, one, r->number, ctx));
 			BN_free(one);
 			BN_CTX_free(ctx);
-		}
+		} else
+			normalize(r, scale);
 	}
 	push_number(r);
 	free_number(a);
