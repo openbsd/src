@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.25 2001/08/19 04:14:03 beck Exp $
+#	$OpenBSD: Makefile,v 1.26 2001/09/26 19:04:45 art Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,9 @@ SUBDIR+=login_passwd login_skey login_krb4 login_krb4-or-pwd login_reject \
 .if (${YP:L} == "yes")
 SUBDIR+=rpc.yppasswdd
 .endif
-.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "alpha")
+
+.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "sparc64")
 SUBDIR+=ld.so
 .endif
 
