@@ -109,3 +109,8 @@
 ./etc/sysctl.conf
 ./etc/dhcpd.conf
 ./etc/dhcpd.interfaces
+./etc/afs
+./etc/afs/CellServDB
+./etc/afs/README
+./etc/afs/ThisCell
+./etc/afs/afsd.conf

@@ -44,6 +44,7 @@
 ./dev/MAKEDEV
 ./dev/fd
 ./etc
+./etc/dhclient-script
 ./etc/disklabels
 ./etc/kerberosIV
 ./etc/mtree
@@ -177,7 +178,6 @@
 ./usr/bin/cvs
 ./usr/bin/cvsbug
 ./usr/bin/dc
-./usr/bin/dhclient-script
 ./usr/bin/diff
 ./usr/bin/diff3
 ./usr/bin/dirname
@@ -214,6 +214,7 @@
 ./usr/bin/gzexe
 ./usr/bin/gzip
 ./usr/bin/head
+./usr/bin/help
 ./usr/bin/hexdump
 ./usr/bin/hoststat
 ./usr/bin/id
@@ -2172,3 +2173,8 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/bin/afslog
+./usr/libexec/afsd
+./usr/sbin/fs
+./usr/sbin/pts
+./usr/sbin/vos
