@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.33 1998/04/01 20:22:48 millert Exp $
+#	$OpenBSD: install.md,v 1.34 1998/04/11 09:47:09 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -85,6 +85,22 @@ md_installboot() {
 	cp /usr/mdec/boot /mnt/boot
 	sync; sync; sync
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
+
+	echo
+	echo -n "Do you expect to run any accelerated X servers on this machine? [n] "
+	getresp "n"
+	case "$resp" in
+		y*|Y*)
+			echo "Enabling machdep.allowaperture. Read xf86(4) for more information."
+			echo '1,$s/^#machdep\.allowaperture=1/machdep\.allowaperture=1	/
+w
+q' | ed /mnt/etc/sysctl.conf 2> /dev/null
+
+			;;
+		*)
+			;;
+	esac
+
 }
 
 md_native_fstype() {
