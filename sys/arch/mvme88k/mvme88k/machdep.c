@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.139 2004/04/15 21:35:07 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.140 2004/04/16 23:35:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1371,23 +1371,24 @@ slave_main()
  * This should really only be used by VME devices.
  */
 int
-intr_findvec(start, end)
-	int start, end;
+intr_findvec(int start, int end, int skip)
 {
 	int vec;
 
 #ifdef DEBUG
-	/* Sanity check! */
 	if (start < 0 || end > 255 || start > end)
 		panic("intr_findvec(%d,%d): bad parameters", start, end);
 #endif
 
-	for (vec = start; vec < end; vec++){
+	for (vec = start; vec <= end; vec++) {
+		if (vec == skip)
+			continue;
 		if (intr_handlers[vec] == NULL)
 			return (vec);
 	}
 #ifdef DIAGNOSTIC
-	printf("intr_findvec(%d,%d): no vector available\n", start, end);
+	printf("intr_findvec(%d,%d,%d): no vector available\n",
+	    start, end, skip);
 #endif
 	return (-1);
 }

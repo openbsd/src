@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.32 2004/04/16 06:20:24 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.33 2004/04/16 23:35:50 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -29,21 +29,15 @@
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/fcntl.h>
 #include <sys/device.h>
-#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/locore.h>
-#include <machine/pmap.h>
 
 #include "pcctwo.h"
 #include "syscon.h"
@@ -234,10 +228,10 @@ vmeprint(args, bus)
 	struct confargs *ca = args;
 
 	printf(" addr 0x%x", ca->ca_offset);
-	if (ca->ca_vec > 0)
-		printf(" vec 0x%x", ca->ca_vec);
 	if (ca->ca_ipl > 0)
 		printf(" ipl %d", ca->ca_ipl);
+	if (ca->ca_vec > 0)
+		printf(" vec 0x%x", ca->ca_vec);
 	return (UNCONF);
 }
 
@@ -259,7 +253,7 @@ vmescan(parent, child, args, bustype)
 	oca.ca_vec = cf->cf_loc[2];
 	oca.ca_ipl = cf->cf_loc[3];
 	if (oca.ca_ipl > 0 && oca.ca_vec == -1)
-		oca.ca_vec = vme_findvec();
+		oca.ca_vec = vme_findvec(-1);
 	if (oca.ca_len == -1)
 		oca.ca_len = PAGE_SIZE;
 	len = oca.ca_len;
@@ -349,9 +343,9 @@ vmeattach(parent, self, args)
 
 /* find a VME vector based on what is in NVRAM settings. */
 int
-vme_findvec(void)
+vme_findvec(int skip)
 {
-	return(intr_findvec(vmevecbase, 0xFF));
+	return intr_findvec(vmevecbase, 0xff, skip);
 }
 
 /*
@@ -515,7 +509,7 @@ vmesyscon_init(sc)
  * the VME2 chip.
  * XXX VME address must be between 2G and 4G
  * XXX We only support D32 at the moment..
- * XXX smurph - This is bogus, get rid of it! Should check vme/syson for offsets.
+ * XXX smurph - This is bogus, get rid of it! Should check vme/syscon for offsets.
  */
 u_long
 vme2chip_map(base, len, dwidth)

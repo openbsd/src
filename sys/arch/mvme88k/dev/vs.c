@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.29 2004/01/29 21:39:05 deraadt Exp $ */
+/*	$OpenBSD: vs.c,v 1.30 2004/04/16 23:35:50 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -55,8 +55,8 @@
 
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
-#include <mvme88k/dev/vme.h>		/* vme_findvec() */
-#include <machine/cmmu.h>		/* DMA_CACHE_SYNC, etc... */
+#include <mvme88k/dev/vme.h>
+#include <machine/cmmu.h>
 
 int	vsmatch(struct device *, void *, void *);
 void	vsattach(struct device *, struct device *, void *);
@@ -117,21 +117,33 @@ vsmatch(pdp, vcf, args)
 }
 
 void
-vsattach(parent, self, auxp)
+vsattach(parent, self, args)
 	struct device *parent, *self;
-	void *auxp;
+	void *args;
 {
 	struct vs_softc *sc = (struct vs_softc *)self;
-	struct confargs *ca = auxp;
-	struct vsreg * rp;
+	struct confargs *ca = args;
+	struct vsreg *rp;
+	int evec;
 	int tmp;
+
+	/* get the next available vector for the error interrupt */
+	evec = vme_findvec(ca->ca_vec);
+
+	if (ca->ca_vec < 0 || evec < 0) {
+		printf(": no more interrupts!\n");
+		return;
+	}
+	if (ca->ca_ipl < 0)
+		ca->ca_ipl = IPL_BIO;
+
+	printf(" vec 0x%x", evec);
 
 	sc->sc_vsreg = rp = ca->ca_vaddr;
 
 	sc->sc_ipl = ca->ca_ipl;
 	sc->sc_nvec = ca->ca_vec;
-	/* get the next available vector for the error interrupt func. */
-	sc->sc_evec = vme_findvec();
+	sc->sc_evec = evec;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &vs_scsiswitch;

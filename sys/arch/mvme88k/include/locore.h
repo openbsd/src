@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.21 2004/01/23 17:26:05 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.22 2004/04/16 23:35:52 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -52,7 +52,7 @@ void _doboot(void);
 vaddr_t get_slave_stack(void);
 void slave_pre_main(void);
 int slave_main(void);
-int intr_findvec(int start, int end);
+int intr_findvec(int, int, int);
 void bugsyscall(void);
 void myetheraddr(u_char *cp);
 void dosoftint(void);
