@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1999/06/22 12:54:45 art Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/06/22 14:40:50 art Exp $
 #	$NetBSD: Makefile,v 1.11 1996/03/18 22:33:07 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -27,6 +27,6 @@ MLINKS+=kvm_dump.3 kvm_dump_inval.3
 
 .include <bsd.lib.mk>
 
-.if defined(UVM)
+.if (${UVM} == "yes")
 CFLAGS+=-DUVM
 .endif
