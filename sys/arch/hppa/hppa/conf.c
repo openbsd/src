@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.28 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.29 2003/12/09 04:25:56 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -111,6 +111,11 @@ cdev_decl(com);
 
 #include "systrace.h"
 
+#ifdef USER_PCICONF
+#include "pci.h"
+cdev_decl(pci);
+#endif
+
 struct cdevsw   cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/*  0: virtual console */
@@ -145,8 +150,11 @@ struct cdevsw   cdevsw[] =
 	cdev_mouse_init(NWSKBD,wskbd),	/* 28: keyboards */
 	cdev_mouse_init(NWSMOUSE,wsmouse), /* 29: mice */
 	cdev_mouse_init(NWSMUX,wsmux),	/* 30: mux */
-	cdev_notdef(),			/* 31 */
-
+#ifdef USER_PCICONF
+	cdev_pci_init(NPCI,pci),	/* 31: PCI user */
+#else
+	cdev_notdef(),
+#endif
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 32: xfs communication device */
 #else

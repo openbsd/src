@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2003/10/05 16:36:22 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.41 2003/12/09 04:25:55 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -16,6 +16,7 @@ option		HP7200_CPU,HP7250_CPU		# PCXT'
 
 option		FPEMUL
 option		USELEDS		# blink 'em
+option		USER_PCICONF	# user-space PCI configuration
 
 # Need to set locally
 maxusers	32
