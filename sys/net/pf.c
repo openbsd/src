@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.400 2003/11/09 11:25:01 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.401 2003/11/16 23:23:16 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4921,6 +4921,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		    &reason);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
+			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, &s, dir, ifp,
@@ -5185,6 +5186,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		    &reason);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
+			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, &s, dir, ifp,
@@ -5209,6 +5211,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
+			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, &s, dir, ifp,
@@ -5236,6 +5239,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule.ptr;
 			r->packets++;
 			r->bytes += h->ip6_plen;
+			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(&r, &s, dir, ifp,
@@ -5244,8 +5248,14 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 	default:
-		action = pf_test_other(&r, &s, dir, ifp, m, off, h,
-		    &pd, &a, &ruleset);
+		action = pf_test_state_other(&s, dir, ifp, &pd);
+		if (action == PF_PASS) {
+			r = s->rule.ptr;
+			a = s->anchor.ptr;
+			log = s->log;
+		} else if (s == NULL)
+			action = pf_test_other(&r, &s, dir, ifp, m, off, h,
+			    &pd, &a, &ruleset);
 		break;
 	}
 
