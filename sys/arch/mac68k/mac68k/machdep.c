@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2002/04/27 01:52:13 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 2002/04/29 23:43:03 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ int	safepri = PSL_LOWIPL;
  * Q700/900/950 where the interrupt controller may be reprogrammed to
  * interrupt on different levels as listed in locore.s
  */
-unsigned short  mac68k_ttyipl = PSL_S | PSL_IPL1;
+unsigned short  mac68k_ttyipl = PSL_S | PSL_IPL2;
 unsigned short  mac68k_bioipl = PSL_S | PSL_IPL2;
 unsigned short  mac68k_netipl = PSL_S | PSL_IPL2;
 unsigned short  mac68k_impipl = PSL_S | PSL_IPL2;
