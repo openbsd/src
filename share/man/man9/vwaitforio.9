@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vwaitforio.9,v 1.9 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vwaitforio.9,v 1.10 2004/04/17 20:30:41 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -38,29 +38,34 @@
 The
 .Fn vwaitforio
 call sleeps until all asynchronous writes associated with the vnode
-.Nm vp
+.Fa vp
 finish.
 This is used by functions that need to make sure
 that the writes they initiated have completed.
 .Pp
 The
 .Fn vwaitforio
-call sleeps at PRIBIO + 1.
+call sleeps at priority
+.Dv PRIBIO
++ 1 .
 The
-.Nm slpflag ,
-.Nm wmesg
+.Fa slpflag ,
+.Fa wmesg ,
 and
-.Nm slptimeo
-flags indicate flags to be passed to
+.Fa slptimeo
+arguments indicate flags to be passed to
 .Xr tsleep 9 .
 .Pp
-This function must be called at splbio().
+This function must be called at
+.Xr splbio 9 .
 .Pp
 It may be important to ensure that no other process submits asynchronous
 writes while a process is waiting for I/O on this vnode.
-Otherwise, vwaitforio may never return.
-.Pp
-(Vnode interlock??)
+Otherwise,
+.Fn vwaitforio
+may never return.
+.\" .Pp
+.\" (Vnode interlock??)
 .Sh RETURN VALUES
 The
 .Fn vwaitforio

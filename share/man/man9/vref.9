@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vref.9,v 1.3 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vref.9,v 1.4 2004/04/17 20:30:41 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -42,19 +42,16 @@
 .Fn vref "struct vnode *vp"
 .Sh DESCRIPTION
 Increment the
-.Dv v_usecount
-field of a vnode.
-.Bl -tag -width 2n
-.It Ar vp
-the vnode to increment
-.El
+.Va v_usecount
+field of the vnode specified by
+.Fa vp .
 .Pp
 Each vnode maintains a reference count of how many parts of the system
 are using the vnode.
 This allows the system to detect when a vnode is
 no longer being used and can be safely recycled for a different file.
 .Pp
-Any code in the system which is using a vnode (e.g. during the
+Any code in the system which uses a vnode (e.g. during the
 operation of some algorithm or to store in a data structure) should
 call
 .Fn vref .

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vclean.9,v 1.5 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vclean.9,v 1.6 2004/04/17 20:30:41 jmc Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -43,10 +43,11 @@
 .Sh DESCRIPTION
 The
 .Fn vclean
-function clears any VM and buffer data associated with a vnode
+function clears any VM and buffer data associated with the vnode
 .Fa vp
 and reclaims it from the underlying file system.
-The arguments are:
+.Pp
+Its arguments are:
 .Bl -tag -width ".Fa flags"
 .It Fa vp
 The vnode to be cleaned.
@@ -63,12 +64,14 @@ If the vnode is active, it will be closed and inactivated in the
 underlying file system.
 .El
 .It Fa p
-The process associated with this operation.
+The process responsible for this call.
 .El
 .Pp
 The vnode interlock is held on entry.
-On exit the v_tag field of the vnode will be set to
-.Dv VT_NON
+On exit, the
+.Va v_tag
+field of the vnode will be set to
+.Dv VT_NON ,
 and if the vnode was active, it will be placed on the vnode free list.
 .Sh SEE ALSO
 .Xr vinvalbuf 9 ,

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vget.9,v 1.5 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vget.9,v 1.6 2004/04/17 20:30:41 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -42,11 +42,15 @@
 .Fn vget "struct vnode *vp" "int flags" "struct proc *p"
 .Sh DESCRIPTION
 Get a vnode from the free list and increment its reference count.
+.Pp
+Its arguments are:
 .Bl -tag -width flags
-.It Ar vp
-the vnode to remove from the free list
-.It Ar flags
-if non-zero, the vnode will also be locked
+.It Fa vp
+The vnode to remove from the free list.
+.It Fa flags
+If non-zero, the vnode will also be locked.
+.It Fa p
+The process responsible for this call.
 .El
 .Pp
 When not in use, vnodes are kept on a free list.

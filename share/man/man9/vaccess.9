@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vaccess.9,v 1.4 2003/04/20 20:38:28 jmc Exp $
+.\"     $OpenBSD: vaccess.9,v 1.5 2004/04/17 20:30:41 jmc Exp $
 .\"-
 .\" Copyright (c) 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Dt VACCESS 9
 .Sh NAME
 .Nm vaccess
-.Nd check access permissions based vnode parameters
+.Nd check access permissions based on vnode parameters
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
 .Fd #include <sys/vnode.h>
@@ -66,13 +66,13 @@ and
 .Fa gid
 arguments are the user id and group id representing the owner of the file.
 .Fa acc_mode
-describes the operation wanted to be performed.
+describes the operation desired.
 It should be one of
 .Dv VREAD ,
-.Dv VWRITE
+.Dv VWRITE ,
 or
 .Dv VEXEC
-representing read, write and execute respectively.
+representing read, write, and execute, respectively.
 .Sh RETURN VALUES
 .Fn vaccess
 will return 0 on success, or a non-zero error value on failure.

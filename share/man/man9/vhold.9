@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vhold.9,v 1.3 2003/03/08 23:17:18 jmc Exp $
+.\"     $OpenBSD: vhold.9,v 1.4 2004/04/17 20:30:41 jmc Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm vhold
-.Nd "acquire a hold on a vnode"
+.Nd acquire a hold on a vnode
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
 .Fd #include <sys/vnode.h>
@@ -44,9 +44,14 @@ The
 function increments the
 .Va v_holdcnt
 of the given vnode.
-If the vnode has already been added to the free list and its v_holdcnt and
-v_usecount are both zero, it will be removed from the free list and
+If the vnode has already been added to the free list and its
+.Va v_holdcnt
+and
+.Va v_usecount
+are both zero, it will be removed from the free list and
 added to the vnode hold list.
+.Sh SEE ALSO
+.Xr vnode 9
 .Sh AUTHORS
 This man page was orignally written by
 .An Chad David Aq davidc@acns.ab.ca

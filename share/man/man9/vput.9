@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vput.9,v 1.3 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vput.9,v 1.4 2004/04/17 20:30:41 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -34,7 +34,7 @@
 .Dt VPUT 9
 .Sh NAME
 .Nm vput
-.Nd "decrement the use count for a vnode and unlock it"
+.Nd "decrement the reference count for a vnode and unlock it"
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
 .Fd #include <sys/vnode.h>
@@ -42,18 +42,17 @@
 .Fn vput "struct vnode *vp"
 .Sh DESCRIPTION
 Decrement the
-.Dv v_usecount
-field of a vnode and unlock the vnode
-.Bl -tag -width 2n
-.It Ar vp
-the vnode to decrement
-.El
+.Va v_usecount
+field of the vnode
+.Fa vp
+and unlock the vnode.
 .Pp
 This operation is functionally equivalent to calling
 .Fn VOP_UNLOCK
 followed by
 .Xr vrele 9 .
 .Sh SEE ALSO
+.Xr VOP_UNLOCK 9 ,
 .Xr vnode 9 ,
 .Xr vref 9 ,
 .Xr vrele 9

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrele.9,v 1.3 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vrele.9,v 1.4 2004/04/17 20:30:41 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -42,19 +42,16 @@
 .Fn vrele "struct vnode *vp"
 .Sh DESCRIPTION
 Decrement the
-.Dv v_usecount
-field of a vnode.
-.Bl -tag -width 2n
-.It Ar vp
-the vnode to decrement
-.El
+.Fa v_usecount
+field of the vnode specified by
+.Fa vp .
 .Pp
-Any code in the system which is using a vnode should call
+Any code in the system which uses a vnode should call
 .Fn vrele
 when it is finished with the vnode.
 If the
-.Dv v_usecount
-field of the vnode reaches zero, then it will be placed on the free list.
+.Va v_usecount
+field of the vnode reaches zero, the vnode will be placed on the free list.
 .Sh SEE ALSO
 .Xr vget 9 ,
 .Xr vnode 9 ,

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vinvalbuf.9,v 1.5 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vinvalbuf.9,v 1.6 2004/04/17 20:30:41 jmc Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -32,12 +32,13 @@
 .Os
 .Sh NAME
 .Nm vinvalbuf
-.Nd "flushes and invalidates all buffers associated with a vnode"
+.Nd flush and invalidate all buffers associated with a vnode
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
 .Fd #include <sys/vnode.h>
 .Ft int
-.Fn vinvalbuf "struct vnode *vp" "int flags" "struct ucred *cred" "struct proc *p" "int slpflag" "int slptimeo"
+.Fn vinvalbuf "struct vnode *vp" "int flags" "struct ucred *cred" \
+    "struct proc *p" "int slpflag" "int slptimeo"
 .Sh DESCRIPTION
 The
 .Fn vinvalbuf
@@ -52,7 +53,7 @@ If the
 flag is set, indirect blocks will not be flushed.
 .Pp
 Its arguments are:
-.Bl -tag -width ".Fa spltimeo"
+.Bl -tag -width ".Fa slptimeo"
 .It Fa vp
 A pointer to the vnode whose buffers will be invalidated.
 .It Fa flags
@@ -63,7 +64,7 @@ and
 .Dv V_SAVE
 indicates that dirty buffers should be synced with the disk.
 .Dv V_SAVEMETA
-indicates the indirect blocks should not be flushed.
+indicates that indirect blocks should not be flushed.
 .It Fa cred
 The user credentials that are used to
 .Xr VOP_FSYNC 9
@@ -81,7 +82,7 @@ The timeout for any sleeps in the function.
 The vnode is assumed to be locked prior to the call and remains locked upon
 return.
 .Sh RETURN VALUES
-A 0 value is returned on success.
+A value of 0 is returned on success.
 .Sh PSEUDOCODE
 .Bd -literal -offset indent
 vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -118,7 +119,8 @@ set in
 .Fa slpflag )
 .El
 .Sh SEE ALSO
-.Xr tsleep 9
+.Xr tsleep 9 ,
+.Xr vnode 9
 .Sh AUTHORS
 This man page was originally written by
 .An Chad David Aq davidc@acns.ab.ca

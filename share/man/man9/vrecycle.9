@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrecycle.9,v 1.5 2003/06/06 20:56:32 jmc Exp $
+.\"     $OpenBSD: vrecycle.9,v 1.6 2004/04/17 20:30:41 jmc Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Dt VRECYCLE 9
 .Sh NAME
 .Nm vrecycle
-.Nd recycle a vnode if its usecount is zero
+.Nd recycle a vnode if its reference count is zero
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
 .Fd #include <sys/vnode.h>
@@ -43,20 +43,26 @@
 .Sh DESCRIPTION
 The
 .Fn vrecycle
-function places a vnode
+function places the vnode
 .Fa vp
 on the free list using
 .Xr vgonel 9
-if its v_usecount field is zero.
-If the usecount is not zero it simply returns.
-If its usecount is zero and an interlock
+if its
+.Va v_usecount
+field is zero.
+If
+.Va v_usecount
+is non-zero, it simply returns.
+If
+.Va v_usecount
+is zero and an interlock
 .Fa inter_lkp
-was passed, this will be unlocked before calling
+was passed, this interlock will be unlocked before calling
 .Xr vgonel 9 .
 .Sh RETURN VALUES
 .Fn vrecycle
 will return 1 if the vnode was placed on the free list.
-It will return 0 if the usecount was not zero, and any lock passed in
+It will return 0 if the reference count was non-zero, and any lock passed in
 .Fa inter_lkp
 will still be locked.
 .Sh SEE ALSO

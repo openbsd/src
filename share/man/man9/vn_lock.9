@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vn_lock.9,v 1.6 2003/04/20 20:38:28 jmc Exp $
+.\"     $OpenBSD: vn_lock.9,v 1.7 2004/04/17 20:30:41 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -54,7 +54,7 @@ function should be used.
 .Pp
 The
 .Fa flags
-fields may contain the following flags:
+argument may contain the following flags:
 .Bl -column LK_INTERLOCK -offset indent
 .It Dv LK_RETRY Ta
 Return the vnode even if it has been reclaimed.
@@ -63,7 +63,8 @@ Must be set if the caller owns the vnode interlock.
 .It Dv LK_NOWAIT Ta
 Don't wait if the vnode lock is held by someone else (may still
 wait on reclamation lock on or interlock).
-Must not be used with LK_RETRY.
+Must not be used with
+.Dv LK_RETRY .
 .It Dv LK_EXCLUSIVE Ta
 Acquire an exclusive lock.
 .It Dv LK_SHARED Ta
@@ -83,9 +84,15 @@ Otherwise, one of the following errors is returned.
 .Bl -tag -width Er
 .It Bq Er ENOENT
 The vnode has been reclaimed and is dead.
-This error is only returned if the LK_RETRY flag is not passed.
+This error is only returned if the
+.Dv LK_RETRY
+flag is not passed.
 .It Bq Er EBUSY
-The LK_NOWAIT flag was set and the vn_lock would have slept.
+The
+.Dv LK_NOWAIT
+flag was set and
+.Fn vn_lock
+would have slept.
 .El
 .Sh SEE ALSO
 .Xr vnode 9
@@ -97,7 +104,7 @@ Discussions with Kirk McKusick indicate that locking
 discipline evolved out of the pre-VFS way of doing inode locking.
 In addition, the current locking discipline may actually save
 lines of code, esp. if the number of file systems is fewer
-then the number of call sites.
+than the number of call sites.
 However, the VFS interface would
 require less wizardry if the locking discipline were simpler.
 .Pp
@@ -112,6 +119,8 @@ The security checks can be moved into the individual file systems.
 Each file system can have the responsibility of ensuring that vnode
 operations are suitably atomic.
 .Pp
-The LK_NOWAIT flag does prevent the caller from sleeping.
+The
+.Dv LK_NOWAIT
+flag does prevent the caller from sleeping.
 .Pp
 The locking discipline as it relates to shared locks has yet to be defined.
