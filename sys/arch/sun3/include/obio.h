@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.h,v 1.6 1997/01/16 04:04:09 kstailey Exp $	*/
+/*	$OpenBSD: obio.h,v 1.7 2000/08/28 22:04:22 miod Exp $	*/
 /*	$NetBSD: obio.h,v 1.16 1996/11/20 18:57:14 gwr Exp $	*/
 
 /*-
@@ -68,10 +68,8 @@
 #define OBIO_CLOCK_SIZE		0x00020
 #define OBIO_MEMERR_SIZE	0x00008			
 #define OBIO_INTERREG_SIZE	0x00001			
-#define OBIO_INTEL_ETHER_SIZE	0x00001			
 #define OBIO_COLOR_MAP_SIZE	0x00400			
 #define OBIO_EPROM_SIZE		0x10000		
-#define OBIO_AMD_ETHER_SIZE	0x00004			
 #define OBIO_NCR_SCSI_SIZE	0x00020			
 #define OBIO_IO_BUS_SIZE      0x1000000			
 #define OBIO_DES_SIZE		0x00004		
