@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.76 2004/12/02 02:28:35 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.77 2004/12/17 02:26:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2410,10 +2410,11 @@ dc_tick(xsc)
 		} else {
 			r = CSR_READ_4(sc, DC_ISR);
 			if ((r & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT &&
-			    sc->dc_cdata.dc_tx_cnt == 0 && !DC_IS_ASIX(sc))
+			    sc->dc_cdata.dc_tx_cnt == 0) {
 				mii_tick(mii);
-			if (!(mii->mii_media_status & IFM_ACTIVE))
-				sc->dc_link = 0;
+				if (!(mii->mii_media_status & IFM_ACTIVE))
+					sc->dc_link = 0;
+			}
 		}
 	} else
 		mii_tick(mii);
