@@ -48,6 +48,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_changer.h>
 #include <scsi/scsiconf.h>
+#include <scsi/scsi_conf.h>
 
 #define	CHRETRIES	2
 
@@ -72,8 +73,12 @@ struct ch_softc {
 	u_char  stor;			/* posible Storage locations */
 };
 
-int chmatch __P((struct device *, void *, void *));
-void chattach __P((struct device *, struct device *, void *));
+int	chmatch __P((struct device *, void *, void *));
+void	chattach __P((struct device *, struct device *, void *));
+int	ch_getelem __P((struct ch_softc *, short *, int, int , char *, int));
+int	ch_move __P((struct ch_softc *, short *, int, int , int , int ));
+int	ch_position __P((struct ch_softc *, short *, int, int , int ));
+int	ch_mode_sense __P((struct ch_softc *, int));
 
 struct cfdriver chcd = {
 	NULL, "ch", chmatch, chattach, DV_DULL, sizeof(struct ch_softc)
@@ -99,7 +104,6 @@ chmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct scsibus_attach_args *sa = aux;
 	int priority;
 
@@ -148,11 +152,14 @@ chattach(parent, self, aux)
  *    open the device.
  */
 int 
-chopen(dev)
+chopen(dev, flags, mode, p)
 	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 	int error = 0;
-	int unit, mode;
+	int unit;
 	struct ch_softc *ch;
 	struct scsi_link *sc_link;
 
@@ -163,7 +170,6 @@ chopen(dev)
 	if (!ch)
 		return ENXIO;
 
-	mode = CHMODE(dev);
 	sc_link = ch->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
@@ -180,7 +186,8 @@ chopen(dev)
 	/*
 	 * Catch any unit attention errors.
 	 */
-	if (error = scsi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE))
+	error = scsi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE);
+	if (error)
 		goto bad;
 
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
@@ -188,7 +195,7 @@ chopen(dev)
 	/*
 	 * Make sure data is loaded
 	 */
-	if (error = ch_mode_sense(ch, 0)) {
+	if ((error = ch_mode_sense(ch, 0)) != 0) {
 		printf("%s: offline\n", ch->sc_dev.dv_xname);
 		goto bad;
 	}
@@ -206,8 +213,11 @@ bad:
  * occurence of an open device
  */
 int 
-chclose(dev)
+chclose(dev, flags, mode, p)
 	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
 	struct ch_softc *ch = chcd.cd_devs[CHUNIT(dev)];
 
@@ -231,7 +241,6 @@ chioctl(dev, cmd, arg, mode, p)
 {
 	struct ch_softc *ch = chcd.cd_devs[CHUNIT(dev)];
 	struct scsi_link *sc_link = ch->sc_link;
-	int number;
 	int flags;
 
 	/*
@@ -269,7 +278,7 @@ chioctl(dev, cmd, arg, mode, p)
 			return ch_getelem(ch, &chop->result,
 			    chop->u.get_elem_stat.type,
 			    chop->u.get_elem_stat.from,
-			    &chop->u.get_elem_stat.elem_data, flags);
+			    (char *) &chop->u.get_elem_stat.elem_data, flags);
 		default:
 			return EINVAL;
 		}
@@ -402,9 +411,11 @@ ch_mode_sense(ch, flags)
 	/*
 	 * Read in the pages
 	 */
-	if (error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) &scsi_sense, sizeof(scsi_sense),
-	    CHRETRIES, 5000, NULL, flags | SCSI_DATA_IN)) {
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
+			      sizeof(scsi_cmd), (u_char *) &scsi_sense,
+			      sizeof(scsi_sense), CHRETRIES, 5000, NULL,
+			      flags | SCSI_DATA_IN);
+	if (error) {
 		printf("%s: could not mode sense\n", ch->sc_dev.dv_xname);
 		return error;
 	}
