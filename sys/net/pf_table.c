@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.27 2003/02/28 11:04:05 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.28 2003/03/05 12:13:03 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -228,7 +228,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		if (copyin(addr+i, &ad, sizeof(ad)))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
-			senderr(EFAULT);
+			senderr(EINVAL);
 		p = pfr_lookup_addr(kt, &ad, 1);
 		q = pfr_lookup_addr(tmpkt, &ad, 1);
 		if (flags & PFR_FLAG_FEEDBACK) {
@@ -834,7 +834,7 @@ pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 		sa->sin.sin_addr.s_addr = htonl(-1 << (32-net));
 	} else {
 		sa->sin6.sin6_len = sizeof(sa->sin6);
-		sa->sin6.sin6_family = AF_INET;
+		sa->sin6.sin6_family = AF_INET6;
 		for (i = 0; i < 4; i++) {
 			if (net <= 32) {
 				sa->sin6.sin6_addr.s6_addr32[i] =
@@ -1166,7 +1166,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	int			 i, s, xzero = 0;
 	long			 tzero = time.tv_sec;
 
-	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_CLSTATS+PFR_FLAG_ADDRSTOO);
+	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_ADDRSTOO);
 	SLIST_INIT(&workq);
 	for (i = 0; i < size; i++) {
 		if (copyin(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t)))
@@ -1299,14 +1299,16 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	} else if (!(kt->pfrkt_flags & PFR_TFLAG_INACTIVE))
 		xadd++;
 	shadow = pfr_create_ktable(tbl, 0);
-	if (shadow == NULL)
+	if (shadow == NULL) {
+		pfr_destroy_ktables(&tableq, 0);
 		return (ENOMEM);
+	}
 	SLIST_INIT(&addrq);
 	for (i = 0; i < size; i++) {
 		if (copyin(addr+i, &ad, sizeof(ad)))
 			senderr(EFAULT);
 		if (pfr_validate_addr(&ad))
-			senderr(EFAULT);
+			senderr(EINVAL);
 		if (pfr_lookup_addr(shadow, &ad, 1) != NULL)
 			continue;
 		p = pfr_create_kentry(&ad);
@@ -1603,12 +1605,6 @@ pfr_lookup_table(struct pfr_table *tbl)
 	return RB_FIND(pfr_ktablehead, &pfr_ktables, (struct pfr_ktable *)tbl);
 }
 
-
-/*
- * Return 1 if the addresses a and b match (with mask m), otherwise return 0.
- * If n is 0, they match if they are equal. If n is != 0, they match if they
- * are different.
- */
 int
 pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 {
