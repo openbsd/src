@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.9 1998/06/02 06:15:45 deraadt Exp $	*/
+/*	$OpenBSD: queue.h,v 1.10 1998/07/15 22:11:48 deraadt Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
  * linked to save space, so only elements can only be removed from the
  * head of the list. New elements can be added to the list before or after
  * an existing element, at the head of the list, or at the end of the
- * list. A simple queue may only be traversed in the forward direection.
+ * list. A simple queue may only be traversed in the forward direction.
  *
  * A tail queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
