@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.4 1997/11/26 02:32:23 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.5 2001/05/11 14:06:15 art Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ main(argc,argv)
 				   PROT_READ | PROT_WRITE,
 				   MAP_SHARED,
 				   fd, data_off);
-	if ((long)dataseg == -1) {
+	if (dataseg == MAP_FAILED) {
 		printf("%s: can not map data seg\n", file);
 		perror(file);
 		exit(1);

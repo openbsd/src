@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchide.c,v 1.12 2000/03/01 22:10:03 todd Exp $	*/
+/*	$OpenBSD: crunchide.c,v 1.13 2001/05/11 14:08:19 art Exp $	*/
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -258,7 +258,7 @@ void hide_syms(char *filename)
     }
 
     if((buf = mmap(NULL, infstat.st_size, PROT_READ|PROT_WRITE,
-		   MAP_FILE|MAP_SHARED, inf, 0)) == (char *)-1) {
+		   MAP_FILE|MAP_SHARED, inf, 0)) == MAP_FAILED) {
 	fprintf(stderr, "%s: cannot map\n", filename);
 	close(inf);
 	return;
