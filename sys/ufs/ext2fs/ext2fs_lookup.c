@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.7 2000/04/26 23:24:41 jasoni Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.8 2001/03/25 03:53:35 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.1 1997/06/11 09:33:59 bouyer Exp $	*/
 
 /* 
@@ -219,7 +219,7 @@ err_exit:
 	FREE(dirbuf, M_TEMP);
 
 	if (error && cookies) {
-		FREE(ap->a_cookies, M_TEMP);
+		FREE(cookies, M_TEMP);
 		*ap->a_cookies = 0;
 		*ap->a_ncookies = 0;
 	}
