@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.14 2000/06/19 00:50:11 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.15 2000/06/21 16:46:10 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -315,8 +315,10 @@ ssh2_try_pubkey(char *filename,
 		success = load_private_key(filename, passphrase, k, NULL);
 		memset(passphrase, 0, strlen(passphrase));
 		xfree(passphrase);
-		if (!success)
+		if (!success) {
+			key_free(k);
 			return 0;
+		}
 	}
 	dsa_make_key_blob(k, &blob, &bloblen);
 
@@ -347,7 +349,6 @@ ssh2_try_pubkey(char *filename,
 	buffer_dump(&b);
 #endif
 	if (datafellows & SSH_BUG_PUBKEYAUTH) {
-		/* e.g. ssh-2.0.13: data-to-be-signed != data-on-the-wire */
 		buffer_clear(&b);
 		buffer_append(&b, session_id2, session_id2_len);
 		buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
