@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.2 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.3 2002/09/23 18:13:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -106,11 +106,6 @@ struct vigra_softc {
 
 struct wsscreen_descr vigra_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *vigra_scrlist[] = {
@@ -249,6 +244,7 @@ vigraattach(parent, self, args)
 	fbwscons_init(&sc->sc_sunfb,
 	    isconsole && (sc->sc_sunfb.sf_width != 800));
 
+	vigra_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	vigra_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	vigra_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	vigra_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

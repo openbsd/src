@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.15 2002/09/09 22:15:15 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.16 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -94,11 +94,6 @@ struct cgeight_softc {
 
 struct wsscreen_descr cgeight_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgeight_scrlist[] = {
@@ -239,6 +234,7 @@ cgeightattach(parent, self, args)
 	    PFOUR_COLOR_OFF_OVERLAY, round_page(sc->sc_sunfb.sf_fbsize));
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	cgeight_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgeight_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgeight_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgeight_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

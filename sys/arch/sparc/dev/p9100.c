@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.9 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.10 2002/09/23 18:13:38 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -84,11 +84,6 @@ struct p9100_softc {
 
 struct wsscreen_descr p9100_stdscreen = {
 	"std",
-	0, 0,   /* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *p9100_scrlist[] = {
@@ -290,6 +285,7 @@ p9100attach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	p9100_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	p9100_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	p9100_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	p9100_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

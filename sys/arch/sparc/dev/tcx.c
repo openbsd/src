@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.9 2002/09/20 11:17:56 fgsch Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.10 2002/09/23 18:13:39 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -110,11 +110,6 @@ struct tcx_softc {
 
 struct wsscreen_descr tcx_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *tcx_scrlist[] = {
@@ -279,6 +274,7 @@ tcxattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	tcx_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	tcx_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	tcx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	tcx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.15 2002/09/20 11:17:56 fgsch Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.16 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -136,11 +136,6 @@ struct cgfourteen_softc {
 
 struct wsscreen_descr cgfourteen_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgfourteen_scrlist[] = {
@@ -331,6 +326,7 @@ cgfourteenattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	cgfourteen_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgfourteen_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgfourteen_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgfourteen_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

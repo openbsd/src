@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.3 2002/09/20 11:17:56 fgsch Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.4 2002/09/23 18:13:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -92,37 +92,15 @@ struct cgtwelve_softc {
 
 struct wsscreen_descr cgtwelve_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
-};
-
-struct wsscreen_descr cgtwelve_monoscreen = {
-	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *cgtwelve_scrlist[] = {
 	&cgtwelve_stdscreen,
 };
 
-const struct wsscreen_descr *cgtwelve_monoscrlist[] = {
-	&cgtwelve_monoscreen,
-};
-
 struct wsscreen_list cgtwelve_screenlist = {
 	sizeof(cgtwelve_scrlist) / sizeof(struct wsscreen_descr *),
 	    cgtwelve_scrlist
-};
-
-struct wsscreen_list cgtwelve_monoscreenlist = {
-	sizeof(cgtwelve_monoscrlist) / sizeof(struct wsscreen_descr *),
-	    cgtwelve_monoscrlist
 };
 
 int cgtwelve_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -274,6 +252,7 @@ cgtwelveattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	cgtwelve_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgtwelve_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgtwelve_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgtwelve_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
@@ -302,10 +281,7 @@ cgtwelveattach(parent, self, args)
 	printf("\n");
 
 	waa.console = isconsole;
-	if (sc->sc_sunfb.sf_depth == 1)
-		waa.scrdata = &cgtwelve_monoscreenlist;
-	else
-		waa.scrdata = &cgtwelve_screenlist;
+	waa.scrdata = &cgtwelve_screenlist;
 	waa.accessops = &cgtwelve_accessops;
 	waa.accesscookie = sc;
 	config_found(self, &waa, wsemuldisplaydevprint);

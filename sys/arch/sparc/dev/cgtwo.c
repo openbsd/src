@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.23 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.24 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -119,11 +119,6 @@ struct cgtwo_softc {
 
 struct wsscreen_descr cgtwo_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgtwo_scrlist[] = {
@@ -270,6 +265,7 @@ cgtwoattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	cgtwo_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgtwo_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgtwo_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgtwo_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.15 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.16 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -98,11 +98,6 @@ struct cgfour_softc {
 
 struct wsscreen_descr cgfour_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgfour_scrlist[] = {
@@ -252,6 +247,7 @@ cgfourattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	cgfour_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgfour_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgfour_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgfour_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

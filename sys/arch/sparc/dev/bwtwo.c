@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.23 2002/09/09 22:15:15 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.24 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -99,10 +99,6 @@ struct bwtwo_softc {
 
 struct wsscreen_descr bwtwo_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *bwtwo_scrlist[] = {
@@ -316,6 +312,7 @@ obp_name:
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	bwtwo_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	bwtwo_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	bwtwo_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	bwtwo_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

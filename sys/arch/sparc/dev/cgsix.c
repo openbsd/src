@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.20 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.21 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -135,11 +135,6 @@ struct cgsix_softc {
 
 struct wsscreen_descr cgsix_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgsix_scrlist[] = {
@@ -367,6 +362,7 @@ cgsixattach(parent, self, args)
 		cgsix_ras_init(sc);
 	}
 
+	cgsix_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgsix_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgsix_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgsix_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;

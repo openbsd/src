@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.16 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.17 2002/09/23 18:13:38 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -126,11 +126,6 @@ struct cgthree_softc {
 
 struct wsscreen_descr cgthree_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
-	0,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *cgthree_scrlist[] = {
@@ -325,6 +320,7 @@ cgthreeattach(parent, self, args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
+	cgthree_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgthree_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	cgthree_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	cgthree_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
