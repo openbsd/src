@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.2 2003/01/26 21:14:57 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.3 2003/01/26 21:25:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -912,7 +912,7 @@ harmony_get_props(void *vsc)
 
 int
 harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *intrarg, struct audio_params *param)
 {
 	struct harmony_softc *sc = vsc;
 	struct harmony_channel *c = &sc->sc_playback;
@@ -926,6 +926,9 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 		    sc->sc_dv.dv_xname, start);
 		return (EINVAL);
 	}
+
+	c->c_intr = intr;
+	c->c_intrarg = intrarg;
 
 	n = (caddr_t)end - (caddr_t)start;
 
