@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrace.8,v 1.6 2001/05/22 15:18:18 ho Exp $
+.\"	$OpenBSD: mtrace.8,v 1.7 2001/05/22 16:51:12 ho Exp $
 .\"	$NetBSD: mtrace.8,v 1.4 1995/12/10 10:57:11 mycroft Exp $
 .\"
 .\" Copyright (c) 1995 by the University of Southern California
@@ -124,7 +124,7 @@ back toward the
 The default is 32 hops (infinity for the DVMRP routing protocol).
 .It Fl n
 Print hop addresses numerically rather than symbolically and numerically
-(saves a nameserver address-to-name lo okup for each router found on the
+(saves a nameserver address-to-name lookup for each router found on the
 path).
 .It Fl q Ar n
 Set the maximum number of query attempts for any hop to
@@ -290,7 +290,7 @@ request (as used by the
 program) to see what kind of router it is.
 .Sh EXAMPLES
 The output of
-.Nm mtrace
+.Nm
 is in two sections.  The first section is a short listing of the hops
 in the order they are queried, that is, in the reverse of the order
 from the
@@ -307,7 +307,7 @@ section ends with a line showing the round-trip time which measures
 the interval from when the query is issued until the response is
 received, both derived from the local system clock.  A sample use and
 output might be:
-.PP
+.Pp
 .Bd -literal
 oak.isi.edu 80# mtrace -l caraway.lcs.mit.edu 224.2.0.3
 Mtrace from 18.26.0.170 to 128.9.160.100 via group 224.2.0.3
