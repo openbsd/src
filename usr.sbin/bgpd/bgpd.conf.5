@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.40 2004/11/11 10:35:15 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.41 2004/11/19 10:06:33 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -630,7 +630,7 @@ where
 is an AS number and
 .Ar local
 is a locally significant number between zero and
-.Li 0xffff .
+.Li 65535 .
 Both
 .Ar as-number
 and
@@ -642,8 +642,9 @@ Alternatively, well-known communities may be given by name instead and
 include
 .Ic NO_EXPORT ,
 .Ic NO_ADVERTISE ,
+.Ic NO_EXPORT_SUBCONFED ,
 and
-.Ic NO_EXPORT_SUBCONFED .
+.Ic NO_PEER .
 .Pp
 .It Xo
 .Pq Ic from Ns \&| Ns Ic to
