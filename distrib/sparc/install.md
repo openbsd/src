@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 1999/09/03 18:55:36 deraadt Exp $
+#	$OpenBSD: install.md,v 1.30 1999/10/13 02:47:42 jason Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -44,10 +44,7 @@
 # Machine-dependent install sets
 MSGBUF=/kern/msgbuf
 HOSTNAME=/kern/hostname
-MDSETS="xbin xman xinc xcon"
-if [ ! -f /bsd ]; then
-	MDSETS="kernel ${MDSETS}"
-fi
+MDSETS="kernel xbin xman xinc xcon"
 
 # an alias for hostname(1)
 hostname() {
