@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.20 2003/07/19 11:48:58 sturm Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.21 2003/08/23 20:01:57 fgsch Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -93,6 +93,7 @@ struct emulation {
 
 static struct emulation emulations[] = {
 	{ "native",	syscallnames,		SYS_MAXSYSCALL },
+	{ "aout",	syscallnames,		SYS_MAXSYSCALL },
 	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
 	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
