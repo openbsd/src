@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.11 1997/06/28 07:05:34 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.12 1997/07/15 00:38:15 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.11 1997/06/28 07:05:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.12 1997/07/15 00:38:15 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,8 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.11 1997/06/28 07:05:34 deraadt Exp 
 #include <netipx/spx_var.h>
 #include <ddb/db_var.h>
 #include <dev/rndvar.h>
+#include <net/encap.h>
+#include <netinet/ip_ipsp.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -133,6 +135,7 @@ void parse __P((	char *string, int flags));
 void listall __P((char *prefix, 	struct list *lp));
 int findname __P((char *string, 	char *level, char **bufp, struct list *namelist));
 int sysctl_inet __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
+int sysctl_ipsec __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
 int sysctl_ipx __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
 int sysctl_fs __P((char *string, char **bufpp, 	int mib[], int flags, int *typep));
 
@@ -351,6 +354,12 @@ parse(string, flags)
 		}
 		if (mib[1] == PF_IPX) {
 			len = sysctl_ipx(string, &bufp, mib, flags, &type);
+			if (len >= 0)
+				break;
+			return;
+		}
+		if (mib[1] == PF_ENCAP) {
+			len = sysctl_ipsec(string, &bufp, mib, flags, &type);
 			if (len >= 0)
 				break;
 			return;
@@ -578,6 +587,54 @@ sysctl_fs(string, bufpp, mib, flags, typep)
 	return (3);
 }
 
+struct ctlname encapname[] = ENCAPCTL_NAMES;
+struct ctlname ipsecname[] = CTL_IPSEC_NAMES;
+struct list ipseclist = { ipsecname, IPSECCTL_MAXID };
+struct list ipsecvars[] = {
+        { encapname, ENCAPCTL_MAXID }, 
+};
+
+/*
+ * handle ipsec requests
+ */
+int
+sysctl_ipsec(string, bufpp, mib, flags, typep)
+	char *string;
+        char **bufpp;
+        int mib[];
+        int flags;
+        int *typep;
+{
+        struct list *lp;
+        int indx;
+
+        if (*bufpp == NULL) {
+                listall(string, &ipseclist);
+                return (-1);
+        }
+        if ((indx = findname(string, "third", bufpp, &ipseclist)) == -1)
+                return (-1);
+        mib[2] = indx;
+	if (indx <= IPSECCTL_MAXID && ipsecvars[indx].list != NULL)
+	 	lp = &ipsecvars[indx];
+	else if (!flags)
+		return (-1);
+	else {
+		fprintf(stderr, "%s: no variables defined for this protocol\n",
+		    string);
+		return (-1);
+	}
+        if (*bufpp == NULL) {
+                listall(string, lp);
+                return (-1);
+        }
+        if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+                return (-1);
+        mib[3] = indx;
+        *typep = lp->list[indx].ctl_type;
+        return (4);
+}
+
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
@@ -585,24 +642,24 @@ struct ctlname tcpname[] = TCPCTL_NAMES;
 struct ctlname udpname[] = UDPCTL_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
-	{ ipname, IPCTL_MAXID },	/* ip */
-	{ icmpname, ICMPCTL_MAXID },	/* icmp */
-	{ 0, 0 },			/* igmp */
-	{ 0, 0 },			/* ggmp */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ tcpname, TCPCTL_MAXID },	/* tcp */
-	{ 0, 0 },
-	{ 0, 0 },			/* egp */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },			/* pup */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ udpname, UDPCTL_MAXID },	/* udp */
+        { ipname, IPCTL_MAXID },        /* ip */
+        { icmpname, ICMPCTL_MAXID },    /* icmp */
+        { 0, 0 },                       /* igmp */
+        { 0, 0 },                       /* ggmp */
+        { 0, 0 },
+        { 0, 0 },
+        { tcpname, TCPCTL_MAXID },      /* tcp */
+        { 0, 0 },
+        { 0, 0 },                       /* egp */
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },                       /* pup */
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { udpname, UDPCTL_MAXID },      /* udp */
 };
 
 /*
