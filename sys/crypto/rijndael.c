@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.16 2004/12/14 17:01:08 hshoexer Exp $ */
+/*	$OpenBSD: rijndael.c,v 1.17 2004/12/20 20:31:18 hshoexer Exp $ */
 
 /**
  * rijndael-alg-fst.c
@@ -1220,20 +1220,37 @@ rijndaelDecrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 ct[16],
 }
 
 /* setup key context for encryption only */
-void
+int
 rijndael_set_key_enc_only(rijndael_ctx *ctx, u_char *key, int bits)
 {
-	ctx->Nr = rijndaelKeySetupEnc(ctx->ek, key, bits);
+	int rounds;
+
+	rounds = rijndaelKeySetupEnc(ctx->ek, key, bits);
+	if (rounds == 0)
+		return -1;
+
+	ctx->Nr = rounds;
 	ctx->enc_only = 1;
+
+	return 0;
 }
 
 /* setup key context for both encryption and decryption */
-void
+int
 rijndael_set_key(rijndael_ctx *ctx, u_char *key, int bits)
 {
-	ctx->Nr = rijndaelKeySetupEnc(ctx->ek, key, bits);
-	rijndaelKeySetupDec(ctx->dk, key, bits);
+	int rounds;
+
+	rounds = rijndaelKeySetupEnc(ctx->ek, key, bits);
+	if (rounds == 0)
+		return -1;
+	if (rijndaelKeySetupDec(ctx->dk, key, bits) != rounds)
+		return -1;
+
+	ctx->Nr = rounds;
 	ctx->enc_only = 0;
+
+	return 0;
 }
 
 void

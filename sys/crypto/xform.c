@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.27 2004/12/15 17:49:14 hshoexer Exp $	*/
+/*	$OpenBSD: xform.c,v 1.28 2004/12/20 20:31:18 hshoexer Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -60,13 +60,13 @@
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 
-void des_set_key(caddr_t, caddr_t);
-void des1_setkey(u_int8_t **, u_int8_t *, int);
-void des3_setkey(u_int8_t **, u_int8_t *, int);
-void blf_setkey(u_int8_t **, u_int8_t *, int);
-void cast5_setkey(u_int8_t **, u_int8_t *, int);
-void skipjack_setkey(u_int8_t **, u_int8_t *, int);
-void rijndael128_setkey(u_int8_t **, u_int8_t *, int);
+int  des_set_key(caddr_t, caddr_t);
+int  des1_setkey(u_int8_t **, u_int8_t *, int);
+int  des3_setkey(u_int8_t **, u_int8_t *, int);
+int  blf_setkey(u_int8_t **, u_int8_t *, int);
+int  cast5_setkey(u_int8_t **, u_int8_t *, int);
+int  skipjack_setkey(u_int8_t **, u_int8_t *, int);
+int  rijndael128_setkey(u_int8_t **, u_int8_t *, int);
 void des1_encrypt(caddr_t, u_int8_t *);
 void des3_encrypt(caddr_t, u_int8_t *);
 void blf_encrypt(caddr_t, u_int8_t *);
@@ -87,7 +87,7 @@ void skipjack_zerokey(u_int8_t **);
 void rijndael128_zerokey(u_int8_t **);
 void null_encrypt(caddr_t, u_int8_t *);
 void null_zerokey(u_int8_t **);
-void null_setkey(u_int8_t **, u_int8_t *, int);
+int  null_setkey(u_int8_t **, u_int8_t *, int);
 void null_decrypt(caddr_t, u_int8_t *);
 
 int MD5Update_int(void *, u_int8_t *, u_int16_t);
@@ -273,12 +273,18 @@ des1_decrypt(caddr_t key, u_int8_t *blk)
 	des_ecb_encrypt(blk, blk, key, 0);
 }
 
-void
+int
 des1_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	MALLOC(*sched, u_int8_t *, 128, M_CRYPTO_DATA, M_WAITOK);
 	bzero(*sched, 128);
-	des_set_key(key, *sched);
+
+	if (des_set_key(key, *sched) < 0) {
+		des1_zerokey(sched);
+		return -1;
+	}
+
+	return 0;
 }
 
 void
@@ -301,14 +307,19 @@ des3_decrypt(caddr_t key, u_int8_t *blk)
 	des_ecb3_encrypt(blk, blk, key + 256, key + 128, key, 0);
 }
 
-void
+int
 des3_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	MALLOC(*sched, u_int8_t *, 384, M_CRYPTO_DATA, M_WAITOK);
 	bzero(*sched, 384);
-	des_set_key(key, *sched);
-	des_set_key(key + 8, *sched + 128);
-	des_set_key(key + 16, *sched + 256);
+
+	if (des_set_key(key, *sched) < 0 || des_set_key(key + 8, *sched + 128)
+	    < 0 || des_set_key(key + 16, *sched + 256) < 0) {
+		des3_zerokey(sched);
+		return -1;
+	}
+
+	return 0;
 }
 
 void
@@ -331,12 +342,14 @@ blf_decrypt(caddr_t key, u_int8_t *blk)
 	blf_ecb_decrypt((blf_ctx *) key, blk, 8);
 }
 
-void
+int
 blf_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	MALLOC(*sched, u_int8_t *, sizeof(blf_ctx), M_CRYPTO_DATA, M_WAITOK);
 	bzero(*sched, sizeof(blf_ctx));
 	blf_key((blf_ctx *)*sched, key, len);
+
+	return 0;
 }
 
 void
@@ -347,9 +360,10 @@ blf_zerokey(u_int8_t **sched)
 	*sched = NULL;
 }
 
-void
+int
 null_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
+	return 0;
 }
 
 void
@@ -379,12 +393,14 @@ cast5_decrypt(caddr_t key, u_int8_t *blk)
 	cast_decrypt((cast_key *) key, blk, blk);
 }
 
-void
+int
 cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	MALLOC(*sched, u_int8_t *, sizeof(cast_key), M_CRYPTO_DATA, M_WAITOK);
 	bzero(*sched, sizeof(cast_key));
 	cast_setkey((cast_key *)*sched, key, len);
+
+	return 0;
 }
 
 void
@@ -407,13 +423,15 @@ skipjack_decrypt(caddr_t key, u_int8_t *blk)
 	skipjack_backwards(blk, blk, (u_int8_t **) key);
 }
 
-void
+int
 skipjack_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	MALLOC(*sched, u_int8_t *, 10 * sizeof(u_int8_t *), M_CRYPTO_DATA,
 	    M_WAITOK);
 	bzero(*sched, 10 * sizeof(u_int8_t *));
 	subkey_table_gen(key, (u_int8_t **) *sched);
+
+	return 0;
 }
 
 void
@@ -444,13 +462,20 @@ rijndael128_decrypt(caddr_t key, u_int8_t *blk)
 	rijndael_decrypt((rijndael_ctx *) key, (u_char *) blk, (u_char *) blk);
 }
 
-void
+int
 rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
 	MALLOC(*sched, u_int8_t *, sizeof(rijndael_ctx), M_CRYPTO_DATA,
 	    M_WAITOK);
 	bzero(*sched, sizeof(rijndael_ctx));
-	rijndael_set_key((rijndael_ctx *) *sched, (u_char *) key, len * 8);
+
+	if (rijndael_set_key((rijndael_ctx *)*sched, (u_char *)key, len * 8)
+	    < 0) {
+		rijndael128_zerokey(sched);
+		return -1;
+	}
+
+	return 0;
 }
 
 void
