@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.h,v 1.1 1996/05/26 19:02:11 briggs Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.2 1996/09/02 15:50:35 briggs Exp $	*/
 /*	$NetBSD: z8530sc.h,v 1.1 1996/05/18 18:54:30 briggs Exp $	*/
 
 /*
@@ -87,10 +87,13 @@ struct zs_chanstate {
 	void *cs_private;	/* sub-driver data pointer */
 	struct zsops *cs_ops;
 
-	int	cs_defspeed;		/* default baud rate (from PROM) */
-	int cs_pclk_div16;		/* PCLK / 16 used only by kbd & ms kids */
 	int	cs_clock_count;		/* how many signal sources available */
 	struct zsclksrc cs_clocks[4];	/* info on available signal sources */
+	int	cs_defspeed;		/* default baud rate (from PROM) */
+	int cs_pclk_div16;		/* PCLK / 16 used by zs children w/o multiple
+					 * baud support - some ports have only
+					 * one clock source, and some children (kbd & ms)
+					 * are fixed baud rate */
 
 	/*
 	 * We must keep a copy of the write registers as they are
@@ -118,8 +121,19 @@ struct zs_chanstate {
 
 	char	cs_softreq;		/* need soft interrupt call */
 	char	cs_chip;		/* type of chip */
-	char	cs__spare; 
+	char	cs_flags;		/* misc. flags */
 };
+#define ZS_INTERRUPT_CNT		10
+#define ZS_FLAGS_INTERRUPT_OVERRUN	0x01
+#define ZS_FLAGS_DEBUG1			0x10
+	/* The interrupt service routine will now look to see if more interrupts
+	 * come in while servicing an interrupt. If so, it keeps servicing
+	 * them either to exhaustion or until it's tried ZS_INTERRUPT_CNT times.
+	 * If it tries too many times, it flags a ZS_FLAGS_INTERRUPT_OVERRUN.
+	 * It shouldn't, but w/o a counter of sorts, we could get hung in an
+	 * infinite loop because of sick hardware, or because there's a data
+	 * clock fed on one of the inputs. The DEBUG flag is for testing and has
+	 * no permanant definition. */
 #define	ZS_ENHANCED_REG	8
 	/* cs_Xreg which is used to hold WR7' data; reg 8 is an alias to the
 	 * data port, so we won't miss its loss. */

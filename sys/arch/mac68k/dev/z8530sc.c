@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530sc.c,v 1.2 1996/09/01 18:50:02 briggs Exp $	*/
-/*	$NetBSD: z8530sc.c,v 1.2 1996/08/26 14:09:19 scottr Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.3 1996/09/02 15:50:34 briggs Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.1 1996/05/18 18:54:28 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -297,6 +297,10 @@ zsc_intr_hard(arg)
 	register struct zs_chanstate *cs_b;
 	register int rval;
 	register u_char rr3, rr3a;
+#if DIAGNOSTIC
+	register int loopcount;
+	loopcount = ZS_INTERRUPT_CNT;
+#endif
 
 	cs_a = &zsc->zsc_cs[0];
 	cs_b = &zsc->zsc_cs[1];
@@ -304,27 +308,42 @@ zsc_intr_hard(arg)
 	rr3a = 0;
 
 	/* Note: only channel A has an RR3 */
-	while ((rr3 = zs_read_reg(cs_a, 3))) {
+	rr3 = zs_read_reg(cs_a, 3);
+
+	while ((rr3 = zs_read_reg(cs_a, ZSRR_IPEND))
+#if DIAGNOSTIC
+		 && --loopcount
+#endif
+		) {
+
 		/* Handle receive interrupts first. */
 		if (rr3 & ZSRR3_IP_A_RX)
 			(*cs_a->cs_ops->zsop_rxint)(cs_a);
 		if (rr3 & ZSRR3_IP_B_RX)
 			(*cs_b->cs_ops->zsop_rxint)(cs_b);
-
+	
 		/* Handle status interrupts (i.e. flow control). */
 		if (rr3 & ZSRR3_IP_A_STAT)
 			(*cs_a->cs_ops->zsop_stint)(cs_a);
 		if (rr3 & ZSRR3_IP_B_STAT)
 			(*cs_b->cs_ops->zsop_stint)(cs_b);
-
+	
 		/* Handle transmit done interrupts. */
 		if (rr3 & ZSRR3_IP_A_TX)
 			(*cs_a->cs_ops->zsop_txint)(cs_a);
 		if (rr3 & ZSRR3_IP_B_TX)
 			(*cs_b->cs_ops->zsop_txint)(cs_b);
-
+	
 		rr3a |= rr3;
 	}
+#if DIAGNOSTIC
+	if (loopcount == 0) {
+		if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT))
+			cs_a->cs_flags |= ZS_FLAGS_INTERRUPT_OVERRUN;
+		if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT))
+			cs_b->cs_flags |= ZS_FLAGS_INTERRUPT_OVERRUN;
+	}
+#endif
 
 	/* Clear interrupt. */
 	if (rr3a & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {

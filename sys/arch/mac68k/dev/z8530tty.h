@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.h,v 1.1 1996/05/26 19:02:13 briggs Exp $	*/
+/*	$OpenBSD: z8530tty.h,v 1.2 1996/09/02 15:50:36 briggs Exp $	*/
 /*	$NetBSD: z8530tty.h,v 1.1 1996/05/18 18:54:35 briggs Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ struct zstty_softc {
 	 */
 	long	zst_rotime;		/* time of last ring overrun */
 	long	zst_fotime;		/* time of last fifo overrun */
+	long	zst_intotime;		/* time of last interrupt overrun */
 
 	/*
 	 * The receive ring buffer.

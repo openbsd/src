@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.2 1996/06/08 16:21:13 briggs Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.3 1996/09/02 15:50:35 briggs Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.3 1996/06/01 00:13:41 scottr Exp $	*/
 
 /*
@@ -1320,6 +1320,12 @@ zstty_softint(cs)
 	if (zst->zst_rx_overrun) {
 		zst->zst_rx_overrun = 0;
 		zsoverrun(zst, &zst->zst_rotime, "ring");
+	}
+	if (cs->cs_flags & ZS_FLAGS_INTERRUPT_OVERRUN) {
+		(void) splzs();
+		cs->cs_flags &= ~ZS_FLAGS_INTERRUPT_OVERRUN;
+		(void) spltty();
+		zsoverrun(zst, &zst->zst_intotime, "interrupt");
 	}
 
 	/*
