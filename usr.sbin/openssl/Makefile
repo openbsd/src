@@ -6,7 +6,7 @@ BINGRP= bin
 BINMODE= 555
 BINDIR= /usr/sbin
 LDADD=	-lssl -lcrypto
-NOMAN= not yet kiddies
+MAN1=	openssl.1
 
 SSLEAYDIST= lib/libssl/src
 
