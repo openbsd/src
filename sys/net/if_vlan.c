@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.19 2001/06/23 04:01:19 aaron Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.20 2001/06/23 23:01:26 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -305,16 +305,40 @@ vlan_input_tag(struct ether_header *eh, struct mbuf *m, u_int16_t t)
 			break;
 	}
 
-	if (i >= NVLAN || (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
+	if (i >= NVLAN) {
+		struct ether_header neh;
+		u_int16_t ntype, *np;
+
+		/*
+		 * Reinsert tag and pass it up to ether_input().
+		 * This allows bridging to continue to work with
+		 * cards that do automatic vlan tagging.  NOTE:
+		 * we're very careful to not disturb possibly
+		 * overlapping memory.
+		 */
+		bcopy(eh, &neh, sizeof(neh));
+		ntype = neh.ether_type;
+		neh.ether_type = htons(ETHERTYPE_8021Q);
+		M_PREPEND(m, EVL_ENCAPLEN, M_DONTWAIT);
+		if (m == NULL)
+			return (-1);
+		np = mtod(m, u_int16_t *);
+		np[0] = htons(t);
+		np[1] = ntype;
+		ether_input(m->m_pkthdr.rcvif, &neh, m);
+		return (-1);
+	}
+
+	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
-		return -1;	/* so the parent can take note */
+		return (-1);
 	}
 
 	/*
 	 * Having found a valid vlan interface corresponding to
 	 * the given source interface and vlan tag, run the
-	 * the real packet through ethert_input().
+	 * the real packet through ether_input().
 	 */
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 
