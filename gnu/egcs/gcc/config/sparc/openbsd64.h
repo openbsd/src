@@ -33,7 +33,7 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (sparc64 OpenBSD ELF)")
 
-/* A 64 but v9 complier in a Medium/Mid code model.  */
+/* A 64 bit v9 complier in a Medium/Mid code model.  */
 
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
