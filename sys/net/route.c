@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.21 2000/12/09 03:15:25 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.22 2000/12/11 07:52:06 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -834,15 +834,15 @@ rt_timer_remove_all(rt)
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		if (r->rtt_queue->rtq_count > 0)
+			r->rtt_queue->rtq_count--;
+		else
+			printf("rt_timer_remove_all: rtq_count reached 0\n");
 #if 0
 		pool_put(&rttimer_pool, r);
 #else
 		free(r, M_RTABLE);
 #endif
-		if (r->rtt_queue->rtq_count > 0)
-			r->rtt_queue->rtq_count--;
-		else
-			printf("rt_timer_remove_all: rtq_count reached 0\n");
 	}
 }
 
@@ -869,15 +869,15 @@ rt_timer_add(rt, func, queue)
 		if (r->rtt_func == func) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+			if (r->rtt_queue->rtq_count > 0)
+				r->rtt_queue->rtq_count--;
+			else
+				printf("rt_timer_add: rtq_count reached 0\n");
 #if 0
 			pool_put(&rttimer_pool, r);
 #else
 			free(r, M_RTABLE);
 #endif
-			if (r->rtt_queue->rtq_count > 0)
-				r->rtt_queue->rtq_count--;
-			else
-				printf("rt_timer_add: rtq_count reached 0\n");
 			break;  /* only one per list, so we can quit... */
 		}
 	}
