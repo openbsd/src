@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.37 2004/03/02 22:55:55 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.38 2004/03/03 07:46:58 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -664,11 +664,6 @@ ENTRY_NOPROFILE(addrerr4060)
 
 #if defined(M68060)
 ENTRY_NOPROFILE(buserr60)
-	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	Lbuserr60		| no, handle as usual
-	movl	_C_LABEL(nofault),sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-Lbuserr60:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
@@ -696,17 +691,17 @@ Lberr3:
 	movl	d1,sp@-
 	movl	d0,sp@-			| code is FSLW now.
 	andw	#0x1f80,d0 
+	jeq	Lbuserr60		| no, handle as usual
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+Lbuserr60:
+	tstl	_C_LABEL(nofault)	| device probe?
 	jeq	Lisberr			| Bus Error?
-	jra	Lismerr			| no, MMU fault.
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
 #endif
 #if defined(M68040)
 ENTRY_NOPROFILE(buserr40)
-	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	Lbuserr40		| no, handle as usual
-	movl	_C_LABEL(nofault),sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-	/* NOTREACHED */
-Lbuserr40:        
         clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
@@ -722,9 +717,15 @@ Lbe1stpg:
 	movl	d1,sp@-			| pass fault address.
 	movl	d0,sp@-			| pass SSW as code
 	btst	#10,d0			| test ATC
-	jeq	Lisberr			| it is a bus error
+	jeq	Lbuserr40		| no, handle as usual
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+Lbuserr40:        
+	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lisberr			| it is a bus error
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
 #endif
 
 ENTRY_NOPROFILE(busaddrerr2030)
