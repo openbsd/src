@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.6 1995/08/22 19:36:00 jtc Exp $
+.\"	$NetBSD: mt.1,v 1.7 1996/03/05 20:39:42 scottr Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,6 +56,15 @@ Note
 that
 .Ar tapename
 must reference a raw (not block) tape device.
+If
+.Ar tapename
+is of the form
+.Dq host:tapename ,
+or
+.Dq user@host:tapename ,
+.Nm mt
+writes to the named tape device on the remote host using
+.Xr rmt 8 .
 .Pp
 The available commands are listed below.  Only as many
 characters as are required to uniquely identify a command
