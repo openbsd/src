@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.30 2002/01/18 08:38:26 kjell Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.31 2002/01/24 04:40:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -57,7 +57,7 @@ Xreinit(cmd, disk, mbr, tt, offset)
 
 	/* Copy template MBR */
 	MBR_make(tt, buf);
-	MBR_parse(disk, buf, 0, 0, mbr);
+	MBR_parse(disk, buf, mbr->offset, mbr->reloffset, mbr);
 
 	MBR_init(disk, mbr);
 
