@@ -1,4 +1,4 @@
-/*	$OpenBSD: unimpl_emul.s,v 1.4 2001/03/22 11:24:52 bjc Exp $	*/
+/*	$OpenBSD: unimpl_emul.s,v 1.5 2001/04/17 03:17:48 bjc Exp $	*/
 /*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
 
 /*
@@ -652,7 +652,9 @@ emodd:	bsbw	touser
 	 * shift them away.
 	 */
 	cmpl $0x80, r9
-	bgtr 8f		/* if we are less than 1.0, we can avoid this */
+	blss 7f		/* if we are less than 1.0, we can avoid this */
+	brw 8f
+7:		
 	subl3 $0x80, r9, r8
 
 	movq TMPFRACTGT, TMPFRAC1
