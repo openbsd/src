@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.245 2003/05/17 07:10:34 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.246 2003/05/17 07:50:46 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1358,10 +1358,11 @@ For example:
 pass in proto tcp to port 25 queue mail
 pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 .Ed
-.It Ar tag <string> 
+.It Ar tag <string>
 A tag will be assigned to packets matching this rule.
-This tag can be later used to filter packets with that tag,
-even on another interface.
+Subsequent rules can match on that tag using the
+.Ar tagged
+keyword, even on another interface.
 The tag is set on every matching rule, not just the last one.
 There is one tag per packet, subsequent matches replace it.
 .It Ar tagged <string>
