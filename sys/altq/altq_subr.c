@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.16 2004/01/14 08:42:23 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.17 2004/04/27 02:56:20 kjc Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -69,8 +69,6 @@ static void	tbr_timeout(void *);
 int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
-
-int pfaltq_running;	/* keep track of running state */
 
 /*
  * alternate queueing support routines
@@ -380,9 +378,7 @@ tbr_get(ifq, profile)
 int
 altq_pfattach(struct pf_altq *a)
 {
-	struct ifnet *ifp;
-	struct tb_profile tb;
-	int s, error = 0;
+	int error = 0;
 
 	switch (a->scheduler) {
 	case ALTQT_NONE:
@@ -404,23 +400,6 @@ altq_pfattach(struct pf_altq *a)
 #endif
 	default:
 		error = ENXIO;
-	}
-
-	ifp = ifunit(a->ifname);
-
-	/* if the state is running, enable altq */
-	if (error == 0 && pfaltq_running &&
-	    ifp != NULL && ifp->if_snd.altq_type != ALTQT_NONE &&
-	    !ALTQ_IS_ENABLED(&ifp->if_snd))
-			error = altq_enable(&ifp->if_snd);
-
-	/* if altq is already enabled, reset set tokenbucket regulator */
-	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
-		tb.rate = a->ifbandwidth;
-		tb.depth = a->tbrsize;
-		s = splimp();
-		error = tbr_set(&ifp->if_snd, &tb);
-		splx(s);
 	}
 
 	return (error);
