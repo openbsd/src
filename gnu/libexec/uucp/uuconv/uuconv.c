@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char uuconv_rcsid[] = "$Id: uuconv.c,v 1.1.1.1 1995/10/18 08:38:42 deraadt Exp $";
+const char uuconv_rcsid[] = "$Id: uuconv.c,v 1.2 2000/07/07 20:52:27 deraadt Exp $";
 #endif
 
 #include "getopt.h"
@@ -684,7 +684,7 @@ uvwrite_chat_script (e, pzarg)
     {
       if ((*pz)[0] != '-' && pz != pzarg)
 	fprintf (e, " ");
-      fprintf (e, *pz);
+      fprintf (e, "%s", *pz);
     }
 }
 

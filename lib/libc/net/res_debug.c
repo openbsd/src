@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.9 1998/03/19 00:30:06 millert Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.10 2000/07/07 20:59:47 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.9 1998/03/19 00:30:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.10 2000/07/07 20:59:47 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -204,7 +204,7 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	if ((n = ntohs(cnt))) {
 		if ((!_res.pfcode) ||
 		    ((sflag) && (_res.pfcode & RES_PRF_HEAD1)))
-			fprintf(file, hs);
+			fprintf(file, "%s", hs);
 		while (--n >= 0) {
 			if ((!_res.pfcode) || sflag) {
 				cp = p_rr(cp, msg, file);
