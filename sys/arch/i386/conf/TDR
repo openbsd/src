@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.8 1996/05/06 11:49:26 deraadt Exp $
+#	$OpenBSD: TDR,v 1.9 1996/05/14 18:38:17 mickey Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -63,7 +63,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 #options	NULLFS		# loopback file system
-#options	PORTAL		# ?
+#options	PORTAL		# create sockets with open(2)
 #options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system

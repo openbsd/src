@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 1996/05/10 12:44:24 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.14 1996/05/14 18:38:13 mickey Exp $
 #	$NetBSD: GENERIC,v 1.45 1996/05/07 00:59:53 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -69,7 +69,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PORTAL		# ?
+options		PORTAL		# create sockets with open(2)
 options		PROCFS		# /proc
 options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system

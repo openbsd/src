@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICADP,v 1.12 1996/05/10 12:44:25 deraadt Exp $
+#	$OpenBSD: GENERICADP,v 1.13 1996/05/14 18:38:14 mickey Exp $
 #	$NetBSD: GENERICADP,v 1.21 1996/05/07 00:59:59 thorpej Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
@@ -70,7 +70,7 @@ options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
 options		NULLFS		# loopback file system
-options		PORTAL		# ?
+options		PORTAL		# create sockets with open(2)
 options		PROCFS		# /proc
 options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
