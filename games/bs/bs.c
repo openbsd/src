@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.17 2002/08/09 09:54:30 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.18 2002/12/06 21:48:51 millert Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bs.c,v 1.17 2002/08/09 09:54:30 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: bs.c,v 1.18 2002/12/06 21:48:51 millert Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
@@ -219,7 +219,7 @@ static void intro(void)
 {
     char *tmpname;
 
-    srandom((unsigned)(time(0L)+getpid()));	/* Kick the random number generator */
+    srandomdev();	/* Kick the random number generator */
 
     (void) signal(SIGINT,uninitgame);
     (void) signal(SIGINT,uninitgame);

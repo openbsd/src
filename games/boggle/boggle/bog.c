@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.10 2002/05/31 04:21:29 pjanzen Exp $	*/
+/*	$OpenBSD: bog.c,v 1.11 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.10 2002/05/31 04:21:29 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.11 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,13 +129,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	time_t seed;
-	int ch, done, i, sflag;
-	char *bspec, *p;
+	int ch, done, i;
+	char *bspec, *p, *seed;
 
-	seed = 0;
-	batch = debug = reuse = selfuse = sflag = 0;
-	bspec = NULL;
+	batch = debug = reuse = selfuse;
+	bspec = seed = NULL;
 	minlength = 3;
 	tlimit = 180;		/* 3 minutes is standard */
 
@@ -148,8 +146,7 @@ main(argc, argv)
 			debug = 1;
 			break;
 		case 's':
-			sflag = 1;
-			seed = atol(optarg);
+			seed = optarg;
 			break;
 		case 't':
 			if ((tlimit = atoi(optarg)) < 1)
@@ -205,7 +202,7 @@ main(argc, argv)
 			(void) printf("%s\n", p);
 		exit (0);
 	}
-	setup(sflag, seed);
+	setup(seed);
 	prompt("Loading the dictionary...");
 	if ((dictfp = opendict(DICT)) == NULL) {
 		warn("%s", DICT);

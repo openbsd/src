@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.11 2002/05/31 03:40:01 pjanzen Exp $	*/
+/*	$OpenBSD: rain.c,v 1.12 2002/12/06 21:48:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rain.c,v 1.11 2002/05/31 03:40:01 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rain.c,v 1.12 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	srandom(time((time_t *)NULL));
+	srandomdev();
 	initscr();
 	tcols = COLS - 4;
 	tlines = LINES - 4;

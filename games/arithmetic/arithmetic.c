@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.12 2002/06/11 05:22:40 jsyn Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.13 2002/12/06 21:48:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.12 2002/06/11 05:22:40 jsyn Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.13 2002/12/06 21:48:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ main(argc, argv)
 		usage();
 
 	/* Seed the random-number generator. */
-	srandom((int)time((time_t *)NULL));
+	srandomdev();
 
 	(void)signal(SIGINT, intr);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2002/05/31 05:11:37 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2002/05/31 05:11:37 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ main(ac, av)
 		stdscr = newwin(Y_SIZE, X_SIZE, 0, 0);
 	}
 
-	srandom(getpid());
+	srandomdev();
 	do {
 		init_field();
 		for (Level = Start_level; !Dead; Level++) {

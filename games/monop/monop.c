@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.5 2002/07/28 08:44:14 pjanzen Exp $	*/
+/*	$OpenBSD: monop.c,v 1.6 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: monop.c,v 1.5 2002/07/28 08:44:14 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: monop.c,v 1.6 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ main(ac, av)
 	int	ac;
 	char	*av[];
 {
-	srandom(getpid());
+	srandomdev();
 	num_luck = sizeof lucky_mes / sizeof (char *);
 	init_decks();
 		init_monops();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.10 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.11 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: strfile.c,v 1.10 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: strfile.c,v 1.11 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -451,7 +451,7 @@ randomize()
 	int32_t	tmp;
 	int32_t	*sp;
 
-	srandom((int)(time((time_t *) NULL) + getpid()));
+	srandomdev();
 
 	Tbl.str_flags |= STR_RANDOM;
 	cnt = Tbl.str_numstr;

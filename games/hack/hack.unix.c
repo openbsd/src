@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.unix.c,v 1.8 2001/08/06 22:59:13 pjanzen Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.9 2002/12/06 21:48:51 millert Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.8 2001/08/06 22:59:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.9 2002/12/06 21:48:51 millert Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -36,7 +36,7 @@ extern time_t time();
 
 setrandom()
 {
- 	(void) srandom((int) time ((time_t *) 0));
+ 	(void) srandomdev();
 }
 
 struct tm *

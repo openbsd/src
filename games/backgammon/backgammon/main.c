@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2002/12/06 21:48:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 2002/12/06 21:48:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,6 @@ main (argc,argv)
 {
 	int     i,l;		/* non-descript indices */
 	char    c;		/* non-descript character storage */
-	long	   t;		/* time for random num generator */
 
 	signal(SIGINT, getout);	/* trap interrupts */
 	initcurses();
@@ -120,8 +119,7 @@ main (argc,argv)
 
 	/* use whole screen for text */
 	begscr = 0;
-	t = time(NULL);
-	srandom(t);		/* 'random' seed */
+	srandomdev();		/* seed random number generator */
 
 	getarg(argc, argv);
 	args[acnt] = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.12 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.11 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.12 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(argc, argv)
 			usage();
 		}
 
-	srandom(time((time_t *)NULL));
+	srandomdev();
 	instructions();
 	init();
 

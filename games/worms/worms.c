@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.13 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: worms.c,v 1.14 2002/12/06 21:48:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.13 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.14 2002/12/06 21:48:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	srandom(time((time_t *)NULL));
+	srandomdev();
 	if (!(worm = malloc((size_t)number * sizeof(struct worm))))
 		nomem();
 	initscr();

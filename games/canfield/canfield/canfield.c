@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.7 2002/02/18 06:45:27 deraadt Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.8 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: canfield.c,v 1.7 2002/02/18 06:45:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: canfield.c,v 1.8 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1676,7 +1676,7 @@ initall()
 {
 	int i;
 
-	srandom(getpid());
+	srandomdev();
 	time(&acctstart);
 	initdeck(deck);
 	uid = getuid();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/17 19:42:20 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/04/24 12:22:37 cgd Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ void	 prtable(char *[],
 void	 putstr(char *);
 void	 redraw(void);
 void	 results(void);
-int	 setup(int, time_t);
+int	 setup(char *);
 void	 showboard(char *);
 void	 showstr(char *, int);
 void	 showword(int);

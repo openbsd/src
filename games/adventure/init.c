@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 1998/08/31 02:29:39 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2002/12/06 21:48:50 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.6 1998/08/31 02:29:39 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.7 2002/12/06 21:48:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,8 +227,7 @@ void
 startup()
 {
 	demo = Start();
-	srandom((unsigned int)(time((time_t *)NULL)));	/* random seed */
-	/* srand(371); */			/* non-random seed */
+	srandomdev();
 	hinted[3] = yes(65, 1, 0);
 	newloc = 1;
 	delhit = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.14 2002/07/26 21:33:28 mickey Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.15 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ main(argc, argv)
 	scr_init();
 	setup_board();
 
-	srandom(getpid());
+	srandomdev();
 	scr_set();
 
 	pos = A_FIRST*B_COLS + (B_COLS/2)-1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.3 2001/01/28 23:41:47 niklas Exp $	*/
+/*	$OpenBSD: convert.c,v 1.4 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: convert.c,v 1.2 1995/03/24 03:58:34 cgd Exp $	*/
 
 /*
@@ -27,7 +27,7 @@ char	Newpfile[] = DEST/newcharacs";		/* new format file */
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: time(), exit(), fread(), fopen(), srandom(), floor(), 
+/ MODULES CALLED: time(), exit(), fread(), fopen(), srandomdev(), floor(), 
 /	random(), strcmp(), fwrite(), strcpy(), fclose(), fprintf()
 /
 / GLOBAL INPUTS: _iob[], Oldplayer, Newplayer
@@ -59,7 +59,7 @@ FILE	*oldcharac, *newcharac;		/* to open old and new files */
 	exit(1);
 	}
 
-    srandom((unsigned) time(NULL));	/* prime random numbers */
+    srandomdev();	/* prime random numbers */
 
     while (fread((char *) &Oldplayer, sizeof(struct oldplayer), 1, oldcharac) == 1)
 	/* read and convert old structures into new */

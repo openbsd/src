@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2002/05/31 05:11:37 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -385,7 +385,7 @@ initialstate()
 		error(_PATH_VOID);
 	/* NOTREACHED */
 
-	srandom((unsigned) time(NULL));	/* prime random numbers */
+	srandomdev();	/* prime random numbers */
 }
 /**/
 /************************************************************************

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.12 2002/05/31 05:11:37 pjanzen Exp $	*/
+/*	$OpenBSD: mille.c,v 1.13 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: mille.c,v 1.12 2002/05/31 05:11:37 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mille.c,v 1.13 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,11 +95,7 @@ main(ac, av)
 	leaveok(Score, TRUE);
 	leaveok(Miles, TRUE);
 	clearok(curscr, TRUE);
-# ifndef PROF
-	srandom(getpid());
-# else
-	srandom(0);
-# endif
+	srandomdev();
 	cbreak();
 	noecho();
 	signal(SIGINT, rub);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boggle.6,v 1.10 2001/11/17 05:35:00 pjanzen Exp $
+.\"	$OpenBSD: boggle.6,v 1.11 2002/12/06 21:48:51 millert Exp $
 .\"	$NetBSD: boggle.6,v 1.2 1995/03/21 12:14:35 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -111,9 +111,10 @@ is printed to stdout.
 .It Fl d
 Enable debugging output.
 .It Fl s Ar seed
-Specify a
+Prime the random number generator with
 .Ar seed
-other than the time of day.
+instead of data from
+.Pa /dev/arandom .
 .It Fl t Ar time
 Change the time limit for each game from the default 3 minutes to
 .Ar time

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1999/09/01 00:27:08 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2002/12/06 21:48:50 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1999/09/01 00:27:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 2002/12/06 21:48:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,11 +68,10 @@ main(ac, av)
 	int	ac;
 	char	*av[];
 {
-	int			seed;
 	int			f_usage = 0, f_list = 0, f_showscore = 0;
 	int			f_printpath = 0;
 	const char		*file = NULL;
-	char			*name, *ptr;
+	char			*name, *ptr, *seed;
 	struct sigaction	sa;
 #ifdef BSD
 	struct itimerval	itv;
@@ -84,8 +83,9 @@ main(ac, av)
 	setegid(getgid());
 	setgid(getgid());
 
-	start_time = seed = time(0);
+	start_time = time(0);
 	makenoise = 1;
+	seed = NULL;
 
 	name = *av++;
 	while (*av) {
@@ -116,7 +116,7 @@ main(ac, av)
 				makenoise = 0;
 				break;
 			case 'r':
-				seed = atoi(*av);
+				seed = *av;
 				av++;
 				break;
 			case 'f':
@@ -132,7 +132,10 @@ main(ac, av)
 			ptr++;
 		}
 	}
-	srandom(seed);
+	if (seed != NULL)
+		srandom(atol(seed));
+	else
+		srandomdev();
 
 	if (f_usage)
 		fprintf(stderr, 

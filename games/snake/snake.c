@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.6 2002/06/23 03:01:13 deraadt Exp $	*/
+/*	$OpenBSD: snake.c,v 1.7 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.6 2002/06/23 03:01:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.7 2002/12/06 21:48:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,6 @@ main(argc, argv)
 {
 	int	ch, i;
 	char	*p, **av;
-	time_t	tv;
 	struct sigaction sa;
 
 	/* don't create the score file if it doesn't exist. */
@@ -167,8 +166,6 @@ main(argc, argv)
 	/* revoke privs */
 	setegid(getgid());
 	setgid(getgid());
-
-	(void)time(&tv);
 
 	/* check to see if we were called as snscore */
 	av = argv;
@@ -182,11 +179,6 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "hl:stw:")) != -1)
 		switch ((char)ch) {
-#if 0
-		case 'd':
-			tv = atol(optarg);  /* set seed */
-			break;
-#endif
 		case 'w':	/* width */
 			ccnt = atoi(optarg);
 			break;
@@ -208,7 +200,7 @@ main(argc, argv)
 			exit(1);
 		}
 
-	srandom((int)tv);
+	srandomdev();
 	penalty = loot = 0;
 	initscr();
 #ifdef KEY_LEFT

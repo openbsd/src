@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.8 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.9 2002/12/06 21:48:51 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.7 1997/10/18 20:03:26 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: io.c,v 1.8 2002/02/19 19:39:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.9 2002/12/06 21:48:51 millert Exp $";
 #endif /* not lint */
 
 #include "header.h"
@@ -210,7 +210,7 @@ newgame()
 
 	for (p = c, pe = c + 100; p < pe; *p++ = 0);
 	time(&initialtime);
-	srandom(initialtime);
+	srandomdev();
 	lcreat((char *) 0);	/* open buffering for output to terminal */
 }
 
