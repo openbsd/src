@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.16 1996/09/12 14:43:30 pefo Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.17 1996/09/12 18:52:17 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -320,6 +320,8 @@ elf_load_file(p, path, epp, ap, last)
 		error = EACCES;
 		goto bad;
 	}
+	if ((error = VOP_ACCESS(vp, VREAD, p->p_ucred, p)) != 0)
+		goto bad1;
 	if ((error = elf_read_from(p, nd.ni_vp, 0,
 				    (caddr_t) &eh, sizeof(eh))) != 0)
 		goto bad1;
