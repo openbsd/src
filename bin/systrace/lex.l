@@ -1,3 +1,5 @@
+/*	$OpenBSD: lex.l,v 1.5 2002/06/05 17:22:38 mickey Exp $	*/
+
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
