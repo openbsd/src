@@ -1,0 +1,47 @@
+.\"     $OpenBSD: ie.4,v 1.1 1998/03/19 21:18:12 johns Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project 
+.\" All rights reserved.
+.\"
+.Dd March 9, 1998
+.Dt IE 4 sparc
+.Os
+.Sh NAME
+.Nm ie
+.Nd SPARC Intel 82586 ethernet interface
+.Sh SYNOPSIS
+.Cd "ie0 at obio0 addr 0xf6000000 level 6          " Pq "sun4/200 on-board"
+.Cd "ie0 at obio0 addr 0x06000000 level 6          " Pq "sun4/100 on-board"
+.Cd "ie1 at vmes0 addr 0xffe88000 level 5 vect 0x75" Pq "VME"
+.Cd "ie2 at vmes0 addr 0xff31ff02 level 5 vect 0x76" Pq "VME"
+.Cd "ie3 at vmes0 addr 0xff35ff02 level 5 vect 0x77" Pq "VME"
+.Cd "ie4 at vmes0 addr 0xff2dff02 level 5 vect 0x7c" Pq "VME"
+.Sh DESCRIPTION
+The 
+.Nm
+interface provides access to the 10 Mb/s Ethernet network via the
+.Tn Intel
+82586
+Ethernet chip set.  The 
+.Nm 
+is found as an on-board interface on Sun 4/100, and 4/200 workstations.  
+The 
+.Nm
+also exists as a VME card.
+.Pp
+Each of the host's network addresses
+is specified at boot time with an
+.Dv SIOCSIFADDR
+.Xr ioctl 2 .
+The
+.Nm
+interface employs the address resolution protocol described in
+.Xr arp 4
+to dynamically map between Internet and Ethernet addresses on the local
+network.
+.Pp
+.Sh SEE ALSO
+.Xr le 4 ,
+.Xr intro 4 ,
+.Xr inet 4 ,
+.Xr arp 4
