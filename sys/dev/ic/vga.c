@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.1 1997/07/09 02:58:35 deraadt Exp $	*/
+/*	$OpenBSD: vga.c,v 1.2 1997/07/09 03:07:39 deraadt Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <machine/bus.h>
 
 #include <alpha/wscons/wsconsvar.h>
-#include <alpha/common/vgavar.h>
+#include <alpha/dev/vgavar.h>
 
 #define	VGA_IO_D_6845_ADDR	0x4
 #define	VGA_IO_D_6845_DATA	0x5
