@@ -1,5 +1,11 @@
 A=bad
+# Value should be kept until after loop
+I=to keep
 a:
 .for B in $A
 	@echo $B
 .endfor
+.for I in "check quotes" work
+	@echo $I
+.endfor
+	@echo $I
