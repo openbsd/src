@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.112 2004/05/21 15:36:40 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.113 2004/06/06 17:38:10 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,7 @@ static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static struct filter_head	*filter_l;
+static struct listen_addrs	*listen_addrs;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
@@ -226,20 +227,37 @@ conf_main	: AS asnumber		{
 			conf->min_holdtime = $3;
 		}
 		| LISTEN ON address	{
+			struct listen_addr	*la;
+			struct sockaddr_in	*in;
+			struct sockaddr_in6	*in6;
+
+			if ((la = calloc(1, sizeof(struct listen_addr))) ==
+			    NULL)
+				fatal("parse conf_main listen on calloc");
+
+			la->fd = -1;
+			la->sa.ss_family = $3.af;
 			switch ($3.af) {
 			case AF_INET:
-				conf->listen_addr.sin_addr.s_addr =
-				    $3.v4.s_addr;
+				la->sa.ss_len = sizeof(struct sockaddr_in);
+				in = (struct sockaddr_in *)&la->sa;
+				in->sin_addr.s_addr = $3.v4.s_addr;
+				in->sin_port = htons(BGP_PORT);
 				break;
 			case AF_INET6:
-				memcpy(&conf->listen6_addr.sin6_addr, &$3.v6,
-				    sizeof(conf->listen6_addr.sin6_addr));
+				la->sa.ss_len = sizeof(struct sockaddr_in6);
+				in6 = (struct sockaddr_in6 *)&la->sa;
+				memcpy(&in6->sin6_addr, &$3.v6,
+				    sizeof(in6->sin6_addr));
+				in6->sin6_port = htons(BGP_PORT);
 				break;
 			default:
 				yyerror("king bula does not like family %u",
 				    $3.af);
 				YYERROR;
 			}
+
+			TAILQ_INSERT_TAIL(listen_addrs, la, entry);
 		}
 		| FIBUPDATE yesno		{
 			if ($2 == 0)
@@ -1279,9 +1297,12 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		fatal(NULL);
 	if ((mrtconf = calloc(1, sizeof(struct mrt_head))) == NULL)
 		fatal(NULL);
+	if ((listen_addrs = calloc(1, sizeof(struct listen_addrs))) == NULL)
+		fatal(NULL);
 	LIST_INIT(mrtconf);
 	netconf = nc;
 	TAILQ_INIT(netconf);
+	TAILQ_INIT(listen_addrs);
 
 	peer_l = NULL;
 	peer_l_old = *xpeers;
@@ -1292,16 +1313,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	id = 1;
 	filter_l = xfilter_l;
 	TAILQ_INIT(filter_l);
-
-	conf->listen_addr.sin_len = sizeof(conf->listen_addr);
-	conf->listen_addr.sin_family = AF_INET;
-	conf->listen_addr.sin_addr.s_addr = INADDR_ANY;
-	conf->listen_addr.sin_port = htons(BGP_PORT);
-
-	bzero(&conf->listen6_addr, sizeof(conf->listen6_addr));
-	conf->listen6_addr.sin6_len = sizeof(conf->listen6_addr);
-	conf->listen6_addr.sin6_family = AF_INET6;
-	conf->listen6_addr.sin6_port = htons(BGP_PORT);
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);
@@ -1336,7 +1347,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		}
 	}
 
-	errors += merge_config(xconf, conf, peer_l);
+	errors += merge_config(xconf, conf, peer_l, listen_addrs);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
 	*xpeers = peer_l;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.172 2004/05/28 18:39:09 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.173 2004/06/06 17:38:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,15 +44,13 @@
 #include "mrt.h"
 #include "session.h"
 
-#define	PFD_LISTEN	0
-#define	PFD_LISTEN6	1
-#define PFD_PIPE_MAIN	2
-#define PFD_PIPE_ROUTE	3
-#define	PFD_SOCK_CTL	4
-#define PFD_PEERS_START	5
+#define PFD_PIPE_MAIN		0
+#define PFD_PIPE_ROUTE		1
+#define	PFD_SOCK_CTL		2
+#define PFD_LISTENERS_START	3
 
 void	session_sighdlr(int);
-int	setup_listener(struct sockaddr *);
+int	setup_listeners(void);
 void	init_conf(struct bgpd_config *);
 void	init_peer(struct peer *);
 int	timer_due(time_t);
@@ -81,6 +79,7 @@ void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
 
+int			 la_cmp(struct listen_addr *, struct listen_addr *);
 struct peer		*getpeerbyip(struct sockaddr *);
 int			 session_match_mask(struct peer *, struct sockaddr *);
 struct peer		*getpeerbyid(u_int32_t);
@@ -91,8 +90,6 @@ struct bgpd_sysdep	 sysdep;
 struct peer		*npeers;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
-int			 sock = -1;
-int			 sock6 = -1;
 int			 csock = -1;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
@@ -111,41 +108,77 @@ session_sighdlr(int sig)
 }
 
 int
-setup_listener(struct sockaddr *sa)
+setup_listeners(void)
 {
-	int	fd, opt;
+	int			 opt;
+	struct listen_addr	*la;
 
-	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
-		fatal("king bula sez: unknown address family");
+	if (TAILQ_EMPTY(conf->listen_addrs)) {
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->fd = -1;
+		la->flags = DEFAULT_LISTENER;
+		la->sa.ss_len = sizeof(struct sockaddr_in);
+		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
+		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
+		    htonl(INADDR_ANY);
+		((struct sockaddr_in *)&la->sa)->sin_port = htons(BGP_PORT);
+		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 
-	if ((fd = socket(sa->sa_family, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-		log_warn("error setting up %s listener",
-		    sa->sa_family == AF_INET ? "IPv4" : "IPv6");
-		return (fd);
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->fd = -1;
+		la->flags = DEFAULT_LISTENER;
+		la->sa.ss_len = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
+		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
+		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 	}
 
-	opt = 1;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt, sizeof(opt)) == -1) {
-		if (errno == ENOPROTOOPT) {	/* system w/o md5sig support */
-			log_warnx("md5 signatures not available, disabling");
-			sysdep.no_md5sig = 1;
-		} else
-			fatal("setsockopt TCP_MD5SIG");
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+		la->reconf = RECONF_NONE;
+
+		if (la->fd != -1)
+			continue;
+
+		if ((la->fd = socket(la->sa.ss_family, SOCK_STREAM,
+		    IPPROTO_TCP)) == -1)
+			fatal("socket");
+
+		opt = 1;
+		if (setsockopt(la->fd, IPPROTO_TCP, TCP_MD5SIG,
+		    &opt, sizeof(opt)) == -1) {
+			if (errno == ENOPROTOOPT) {	/* system w/o md5sig */
+				log_warnx("md5sig not available, disabling");
+				sysdep.no_md5sig = 1;
+			} else
+				fatal("setsockopt TCP_MD5SIG");
+		}
+
+		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
+		    -1) {
+			if (errno == EACCES) {
+				log_warnx("can't establish listener on %s",
+				    log_sockaddr((struct sockaddr *)&la->sa));
+				close(la->fd);
+				la->fd = -1;
+				return (-1);
+			} else
+				fatal("bind");
+		}
+
+		session_socket_blockmode(la->fd, BM_NONBLOCK);
+
+		if (listen(la->fd, MAX_BACKLOG)) {
+			close(la->fd);
+			fatal("listen");
+		}
+
+		log_info("listening on %s",
+		    log_sockaddr((struct sockaddr *)&la->sa));
 	}
 
-	if (bind(fd, sa, sa->sa_len)) {
-		close(fd);
-		fatal("bind");
-	}
-
-	session_socket_blockmode(fd, BM_NONBLOCK);
-
-	if (listen(fd, MAX_BACKLOG)) {
-		close(fd);
-		fatal("listen");
-	}
-
-	return (fd);
+	return (0);
 }
 
 int
@@ -153,7 +186,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
     struct network_head *net_l, struct filter_head *rules,
     struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2])
 {
-	int			 nfds, i, j, timeout, idx_peers;
+	int			 nfds, i, j, timeout, idx_peers, idx_listeners;
 	pid_t			 pid;
 	time_t			 nextaction;
 	struct passwd		*pw;
@@ -164,6 +197,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	struct filter_rule	*r;
 	struct pollfd		 pfd[OPEN_MAX];
 	struct ctl_conn		*ctl_conn;
+	struct listen_addr	*la;
 	short			 events;
 
 	conf = config;
@@ -193,8 +227,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	sock = setup_listener((struct sockaddr *)&conf->listen_addr);
-	sock6 = setup_listener((struct sockaddr *)&conf->listen6_addr);
+	setup_listeners();
 
 	if (pfkey_init(&sysdep) == -1)
 		fatalx("pfkey setup failed");
@@ -240,10 +273,6 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 	while (session_quit == 0) {
 		bzero(&pfd, sizeof(pfd));
-		pfd[PFD_LISTEN].fd = sock;
-		pfd[PFD_LISTEN].events = POLLIN;
-		pfd[PFD_LISTEN6].fd = sock6;
-		pfd[PFD_LISTEN6].events = POLLIN;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main.w.queued > 0)
@@ -256,7 +285,15 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		pfd[PFD_SOCK_CTL].events = POLLIN;
 
 		nextaction = time(NULL) + 240;	/* loop every 240s at least */
-		i = PFD_PEERS_START;
+		i = PFD_LISTENERS_START;
+
+		TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+			pfd[i].fd = la->fd;
+			pfd[i].events = POLLIN;
+			i++;
+		}
+
+		idx_listeners = i;
 
 		last = NULL;
 		for (p = peers; p != NULL; p = next) {
@@ -353,16 +390,6 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			if (errno != EINTR)
 				fatal("poll error");
 
-		if (nfds > 0 && pfd[PFD_LISTEN].revents & POLLIN) {
-			nfds--;
-			session_accept(sock);
-		}
-
-		if (nfds > 0 && pfd[PFD_LISTEN6].revents & POLLIN) {
-			nfds--;
-			session_accept(sock6);
-		}
-
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_main.w) < 0)
 				fatal("pipe write error");
@@ -386,7 +413,14 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			control_accept(csock);
 		}
 
-		for (j = PFD_PEERS_START; nfds > 0 && j < idx_peers; j++)
+		for (j = PFD_LISTENERS_START; nfds > 0 && j < idx_listeners;
+		    j++)
+			if (pfd[j].revents & POLLIN) {
+				nfds--;
+				session_accept(pfd[j].fd);
+			}
+
+		for (; nfds > 0 && j < idx_peers; j++)
 			nfds -= session_dispatch_msg(&pfd[j], peer_l[j]);
 
 		for (; nfds > 0 && j < i; j++)
@@ -404,6 +438,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		LIST_REMOVE(mrt, list);
 		free(mrt);
 	}
+
+	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
+		TAILQ_REMOVE(conf->listen_addrs, la, entry);
+		free(la);
+	}
+	free(conf->listen_addrs);
 
 	msgbuf_write(&ibuf_rde.w);
 	msgbuf_clear(&ibuf_rde.w);
@@ -1914,6 +1954,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	struct mrt_config	*mrt;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
+	struct listen_addr	*la, *nla;
 	u_char			*data;
 	enum reconf_action	 reconf;
 	int			 n;
@@ -1940,6 +1981,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			    NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
+			if ((nconf->listen_addrs = calloc(1,
+			    sizeof(struct listen_addrs))) == NULL)
+				fatal(NULL);
+			TAILQ_INIT(nconf->listen_addrs);
 			npeers = NULL;
 			init_conf(nconf);
 			pending_reconf = 1;
@@ -1963,6 +2008,29 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			memcpy(&p->conf, pconf, sizeof(struct peer_config));
 			p->conf.reconf_action = reconf;
 			break;
+		case IMSG_RECONF_LISTENER:
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("reconf request not from parent");
+			nla = imsg.data;
+			TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+				if (!la_cmp(la, nla))
+					break;
+			}
+
+			if (la == NULL) {
+				la = calloc(1, sizeof(struct listen_addr));
+				if (la == NULL)
+					fatal(NULL);
+				memcpy(&la->sa, &nla->sa, sizeof(la->sa));
+				la->fd = nla->fd;
+				la->flags = nla->flags;
+				la->reconf = RECONF_REINIT;
+				TAILQ_INSERT_TAIL(nconf->listen_addrs, la,
+				    entry);
+			} else {
+				la->reconf = RECONF_KEEP;
+			}
+			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
@@ -1972,17 +2040,50 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			conf->holdtime = nconf->holdtime;
 			conf->bgpid = nconf->bgpid;
 			conf->min_holdtime = nconf->min_holdtime;
+
 			/* add new peers */
 			for (p = npeers; p != NULL; p = next) {
 				next = p->next;
 				p->next = peers;
 				peers = p;
 			}
-			/* find peers to be deleted */
+			/* find ones to be deleted */
 			for (p = peers; p != NULL; p = p->next)
 				if (p->conf.reconf_action == RECONF_NONE &&
 				    !p->conf.cloned)
 					p->conf.reconf_action = RECONF_DELETE;
+
+			/* if there are no new listeners, keep default ones */
+			if (TAILQ_EMPTY(nconf->listen_addrs))
+				TAILQ_FOREACH(la, conf->listen_addrs, entry)
+					if (la->flags & DEFAULT_LISTENER)
+						la->reconf = RECONF_KEEP;
+
+			/* delete old listeners */
+			for (la = TAILQ_FIRST(conf->listen_addrs); la != NULL;
+			    la = nla) {
+				nla = TAILQ_NEXT(la, entry);
+				if (la->reconf == RECONF_NONE) {
+					log_info("not listening on %s any more",
+					    log_sockaddr(
+					    (struct sockaddr *)&la->sa));
+					TAILQ_REMOVE(conf->listen_addrs, la,
+					    entry);
+					close(la->fd);
+					free(la);
+				}
+			}
+
+			/* add new listeners */
+			while ((la = TAILQ_FIRST(nconf->listen_addrs)) !=
+			    NULL) {
+				TAILQ_REMOVE(nconf->listen_addrs, la, entry);
+				TAILQ_INSERT_TAIL(conf->listen_addrs, la,
+				    entry);
+			}
+
+			setup_listeners();
+			free(nconf->listen_addrs);
 			free(nconf);
 			nconf = NULL;
 			pending_reconf = 0;
@@ -2066,6 +2167,41 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		}
 		imsg_free(&imsg);
 	}
+}
+
+int
+la_cmp(struct listen_addr *a, struct listen_addr *b)
+{
+	struct sockaddr_in	*in_a, *in_b;
+	struct sockaddr_in6	*in6_a, *in6_b;
+
+	if (a->sa.ss_family != b->sa.ss_family)
+		return (1);
+
+	switch (a->sa.ss_family) {
+	case AF_INET:
+		in_a = (struct sockaddr_in *)&a->sa;
+		in_b = (struct sockaddr_in *)&b->sa;
+		if (in_a->sin_addr.s_addr != in_b->sin_addr.s_addr)
+			return (1);
+		if (in_a->sin_port != in_b->sin_port)
+			return (1);
+		break;
+	case AF_INET6:
+		in6_a = (struct sockaddr_in6 *)&a->sa;
+		in6_b = (struct sockaddr_in6 *)&b->sa;
+		if (bcmp(&in6_a->sin6_addr, &in6_b->sin6_addr,
+		    sizeof(struct in6_addr)))
+			return (1);
+		if (in6_a->sin6_port != in6_b->sin6_port)
+			return (1);
+		break;
+	default:
+		fatal("king bula sez: unknown address family");
+		/* not reached */
+	}
+
+	return (0);
 }
 
 struct peer *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.115 2004/05/21 15:36:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.116 2004/06/06 17:38:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,11 +104,12 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
     struct filter_head *rules, struct mrt_head *mrt_l,
     int pipe_m2r[2], int pipe_s2r[2])
 {
-	pid_t		 pid;
-	struct passwd	*pw;
-	struct mrt	*m;
-	struct pollfd	 pfd[2];
-	int		 nfds;
+	pid_t			 pid;
+	struct passwd		*pw;
+	struct mrt		*m;
+	struct listen_addr	*la;
+	struct pollfd		 pfd[2];
+	int			 nfds;
 
 	switch (pid = fork()) {
 	case -1:
@@ -150,11 +151,16 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 	imsg_init(&ibuf_se, pipe_s2r[1]);
 	imsg_init(&ibuf_main, pipe_m2r[1]);
 
-	/* main mrt list is not used in the SE */
+	/* main mrt list and listener list are not used in the SE */
 	while ((m = LIST_FIRST(mrt_l)) != NULL) {
 		LIST_REMOVE(m, list);
 		free(m);
 	}
+	while ((la = TAILQ_FIRST(config->listen_addrs)) != NULL) {
+		TAILQ_REMOVE(config->listen_addrs, la, entry);
+		free(la);
+	}
+	free(config->listen_addrs);
 
 	pt_init();
 	path_init(pathhashsize);

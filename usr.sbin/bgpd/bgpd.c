@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.94 2004/05/21 11:48:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.95 2004/06/06 17:38:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -100,6 +100,7 @@ main(int argc, char *argv[])
 	struct network		*net;
 	struct filter_rule	*r;
 	struct mrt		*(mrt[POLL_MAX]), *m;
+	struct listen_addr	*la;
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
@@ -226,6 +227,11 @@ main(int argc, char *argv[])
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		TAILQ_REMOVE(rules_l, r, entries);
 		free(r);
+	}
+
+	while ((la = TAILQ_FIRST(conf.listen_addrs)) != NULL) {
+		TAILQ_REMOVE(conf.listen_addrs, la, entry);
+		free(la);
 	}
 
 	while (quit == 0) {
@@ -368,6 +374,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	struct network		*n;
 	struct peer		*p;
 	struct filter_rule	*r;
+	struct listen_addr	*la;
 
 	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, rules_l)) {
 		log_warnx("config file %s has errors, not reloading",
@@ -399,6 +406,16 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		TAILQ_REMOVE(rules_l, r, entries);
 		free(r);
 	}
+	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
+		if (imsg_compose(&ibuf_se, IMSG_RECONF_LISTENER, 0,
+		    la, sizeof(struct listen_addr)) == -1)
+			return (-1);
+		TAILQ_REMOVE(conf->listen_addrs, la, entry);
+		free(la);
+	}
+	free(conf->listen_addrs);
+	conf->listen_addrs = NULL;
+
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0) == -1 ||
 	    imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)
 		return (-1);

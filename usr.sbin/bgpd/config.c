@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.37 2004/05/21 15:36:40 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.38 2004/06/06 17:38:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,10 +37,11 @@ int		host_v6(const char *, struct bgpd_addr *);
 
 int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
-    struct peer *peer_l)
+    struct peer *peer_l, struct listen_addrs *listen_addrs)
 {
-	struct peer	*p;
-	int		 errs = 0;
+	struct peer				*p;
+	struct listen_addr			*la;
+	int					 errs = 0;
 
 	/* preserve cmd line opts */
 	conf->opts = xconf->opts;
@@ -75,7 +76,17 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		}
 	}
 
+	if (xconf->listen_addrs != NULL) {
+		while ((la = TAILQ_FIRST(xconf->listen_addrs)) != NULL) {
+			TAILQ_REMOVE(xconf->listen_addrs, la, entry);
+			free(la);
+		}
+		free(xconf->listen_addrs);
+	}
+
 	memcpy(xconf, conf, sizeof(struct bgpd_config));
+
+	xconf->listen_addrs = listen_addrs;
 
 	return (errs);
 }
