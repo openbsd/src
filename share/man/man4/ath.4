@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.17 2005/03/12 10:32:40 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.18 2005/04/06 09:14:53 reyk Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -395,6 +395,9 @@ The Hardware Access Layer was unable to reset the hardware
 as requested.
 The status code is explained in the HAL include file
 .Pa /sys/dev/ic/ar5xxx.h .
+This should not happen.
+.It "ath%d: unable to initialize the key cache"
+The driver was unable to initialize the hardware key cache.
 This should not happen.
 .It "ath%d: unable to start recv logic"
 The driver was unable to restart frame reception.

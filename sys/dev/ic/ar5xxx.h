@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.15 2005/03/20 04:21:55 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.16 2005/04/06 09:14:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -309,11 +309,14 @@ typedef enum {
 	HAL_CIPHER_CKIP,
 } HAL_CIPHER;
 
-#define AR5K_MAX_KEYS	16
+#define AR5K_KEYVAL_LENGTH_40	5
+#define AR5K_KEYVAL_LENGTH_104	13
+#define AR5K_KEYVAL_LENGTH_128	16
+#define AR5K_KEYVAL_LENGTH_MAX	AR5K_KEYVAL_LENGTH_128
 
 typedef struct {
 	int		wk_len;
-	u_int8_t	wk_key[AR5K_MAX_KEYS];
+	u_int8_t	wk_key[AR5K_KEYVAL_LENGTH_MAX];
 } HAL_KEYVAL;
 
 #define AR5K_ASSERT_ENTRY(_e, _s) do {					\

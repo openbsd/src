@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.7 2005/03/23 16:23:18 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.8 2005/04/06 09:14:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1997,13 +1997,13 @@ ar5k_ar5211_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 	bzero(&key_v, sizeof(key_v));
 
 	switch (keyval->wk_len) {
-	case 5:
+	case AR5K_KEYVAL_LENGTH_40:
 		bcopy(keyval->wk_key, &key_v[0], 4);
 		bcopy(keyval->wk_key + 4, &key_v[1], 1);
 		key_v[5] = AR5K_AR5211_KEYTABLE_TYPE_40;
 		break;
 
-	case 13:
+	case AR5K_KEYVAL_LENGTH_104:
 		bcopy(keyval->wk_key, &key_v[0], 4);
 		bcopy(keyval->wk_key + 4, &key_v[1], 2);
 		bcopy(keyval->wk_key + 6, &key_v[2], 4);
@@ -2012,7 +2012,7 @@ ar5k_ar5211_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 		key_v[5] = AR5K_AR5211_KEYTABLE_TYPE_104;
 		break;
 
-	case 16:
+	case AR5K_KEYVAL_LENGTH_128:
 		bcopy(keyval->wk_key, &key_v[0], 4);
 		bcopy(keyval->wk_key + 4, &key_v[1], 2);
 		bcopy(keyval->wk_key + 6, &key_v[2], 4);

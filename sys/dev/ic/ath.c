@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.20 2005/04/06 00:42:59 kevlo Exp $  */
+/*      $OpenBSD: ath.c,v 1.21 2005/04/06 09:14:53 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ void	ath_fatal_proc(void *, int);
 void	ath_rxorn_proc(void *, int);
 void	ath_bmiss_proc(void *, int);
 u_int   ath_chan2flags(struct ieee80211com *, struct ieee80211_channel *);
-void	ath_initkeytable(struct ath_softc *);
+int	ath_initkeytable(struct ath_softc *);
 void    ath_mcastfilter_accum(caddr_t, u_int32_t (*)[2]);
 void    ath_mcastfilter_compute(struct ath_softc *, u_int32_t (*)[2]);
 u_int32_t ath_calcrxfilter(struct ath_softc *);
@@ -722,8 +722,12 @@ ath_init1(struct ath_softc *sc)
 	 * in the frame output path; there's nothing to do
 	 * here except setup the interrupt mask.
 	 */
-	if (ic->ic_flags & IEEE80211_F_WEPON)
-		ath_initkeytable(sc);
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		if ((error = ath_initkeytable(sc)) != 0) {
+			if_printf(ifp, "unable to initialize the key cache\n");
+			goto done;
+		}
+	}
 	if ((error = ath_startrecv(sc)) != 0) {
 		if_printf(ifp, "unable to start recv logic\n");
 		goto done;
@@ -1112,7 +1116,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /*
  * Fill the hardware key cache with key entries.
  */
-void
+int
 ath_initkeytable(struct ath_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1128,12 +1132,30 @@ ath_initkeytable(struct ath_softc *sc)
 			HAL_KEYVAL hk;
 
 			bzero(&hk, sizeof(hk));
-			hk.wk_len = k->wk_len;
 			bcopy(k->wk_key, hk.wk_key, k->wk_len);
-			/* XXX return value */
-			ath_hal_keyset(ah, i, &hk);
+
+			/*
+			 * Pad the key to a supported key length. It
+			 * is always a good idea to use full-length
+			 * keys without padded zeros but this seems
+			 * to be the default behaviour used by many
+			 * implementations.
+			 */
+			if (k->wk_len <= AR5K_KEYVAL_LENGTH_40)
+				hk.wk_len = AR5K_KEYVAL_LENGTH_40;
+			else if (k->wk_len <= AR5K_KEYVAL_LENGTH_104)
+				hk.wk_len = AR5K_KEYVAL_LENGTH_104;
+			else if (k->wk_len <= AR5K_KEYVAL_LENGTH_128)
+				hk.wk_len = AR5K_KEYVAL_LENGTH_128;
+			else
+				return (EINVAL);
+			
+			if (ath_hal_keyset(ah, i, &hk) != AH_TRUE)
+				return (EINVAL);
 		}
 	}
+
+	return (0);
 }
 
 void
