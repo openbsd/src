@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.14 2003/11/03 00:55:57 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.15 2003/11/03 03:19:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -864,7 +864,7 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 					if (index == 0 &&
 					    ((vh->sc_ac.ac_if.if_flags &
 					    (IFF_UP|IFF_RUNNING)) ==
-			    		    (IFF_UP|IFF_RUNNING))) {
+					    (IFF_UP|IFF_RUNNING))) {
 						*enaddr = vh->sc_ac.ac_enaddr;
 						return (1);
 					}
@@ -898,7 +898,7 @@ carp_iamatch6(void *v, struct in6_addr *taddr)
 		TAILQ_FOREACH(ifa, &vh->sc_ac.ac_if.if_addrlist, ifa_list) {
 			if (IN6_ARE_ADDR_EQUAL(taddr,
 			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
- 			    ((vh->sc_ac.ac_if.if_flags &
+			    ((vh->sc_ac.ac_if.if_flags &
 			    (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)))
 				return (ifa);
 		}
@@ -920,7 +920,7 @@ carp_macmatch6(void *v, struct mbuf *m, struct in6_addr *taddr)
 		TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 			if (IN6_ARE_ADDR_EQUAL(taddr,
 			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
- 			    ((sc->sc_ac.ac_if.if_flags &
+			    ((sc->sc_ac.ac_if.if_flags &
 			    (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING))) {
 				mtag = m_tag_get(PACKET_TAG_CARP,
 				    sizeof(struct carp_softc *), M_NOWAIT);
