@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.26 2001/11/29 01:59:19 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.27 2001/11/29 02:08:22 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -758,9 +758,9 @@ nfs_getpages(v)
 	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL|B_ASYNC : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = NULL;
-	bgetvp(vp, mbp);
 	mbp->b_proc = NULL;		/* XXXUBC */
 	LIST_INIT(&mbp->b_dep);
+	bgetvp(vp, mbp);
 
 	/*
 	 * if EOF is in the middle of the last page, zero the part past EOF.
@@ -1052,9 +1052,9 @@ nfs_putpages(v)
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = NULL;
-	bgetvp(vp, mbp);
 	mbp->b_proc = NULL;		/* XXXUBC */
 	LIST_INIT(&mbp->b_dep);
+	bgetvp(vp, mbp);
 
 	for (offset = origoffset;
 	     bytes > 0;

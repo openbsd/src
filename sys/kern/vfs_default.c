@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.9 2001/11/29 01:58:57 art Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.10 2001/11/29 02:08:21 art Exp $  */
 
 /*
  *    Portions of this code are:
@@ -530,8 +530,8 @@ genfs_getpages(v)
 	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = NULL;
-	bgetvp(vp, mbp);
 	LIST_INIT(&mbp->b_dep);
+	bgetvp(vp, mbp);
 
 	/*
 	 * if EOF is in the middle of the range, zero the part past EOF.
@@ -892,8 +892,8 @@ genfs_putpages(v)
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = NULL;
-	bgetvp(vp, mbp);
 	LIST_INIT(&mbp->b_dep);
+	bgetvp(vp, mbp);
 
 	bp = NULL;
 	for (offset = startoffset;
