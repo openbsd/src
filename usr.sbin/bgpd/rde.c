@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.80 2004/02/18 16:36:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.81 2004/02/18 23:18:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -386,6 +386,14 @@ rde_update_dispatch(struct imsg *imsg)
 			    NULL, 0);
 			return (-1);
 		}
+		if (prefixlen > 32) {
+			log_peer_warnx(&peer->conf, "bad prefix %s/%u",
+			    inet_ntoa(prefix.v4), prefixlen);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    NULL, 0);
+			return (-1);
+		}
+
 		p += pos;
 		withdrawn_len -= pos;
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
@@ -408,7 +416,7 @@ rde_update_dispatch(struct imsg *imsg)
 	attr_init(&attrs);
 	while (attrpath_len > 0) {
 		if ((pos = attr_parse(p, attrpath_len, &attrs,
-		    peer->conf.ebgp, conf->as)) < 0) {
+		    peer->conf.ebgp)) < 0) {
 			emsg = attr_error(p, attrpath_len, &attrs,
 			    &subtype, &size);
 			rde_update_err(peer, ERR_UPDATE, subtype, emsg, size);
@@ -428,6 +436,17 @@ rde_update_dispatch(struct imsg *imsg)
 		return (-1);
 	}
 
+	/* aspath needs to be loop free nota bene this is not a hard error */
+	if (peer->conf.ebgp && !aspath_loopfree(attrs.aspath, conf->as)) {
+		char *s;
+		aspath_asprint(&s, attrs.aspath->data, attrs.aspath->hdr.len);
+		log_peer_warnx(&peer->conf, "AS path loop: %s", s);
+		free(s);
+		aspath_destroy(attrs.aspath);
+		attr_optfree(&attrs);
+		return (0);
+	}
+	
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
@@ -437,6 +456,14 @@ rde_update_dispatch(struct imsg *imsg)
 			attr_optfree(&attrs);
 			return (-1);
 		}
+		if (prefixlen > 32) {
+			log_peer_warnx(&peer->conf, "bad prefix %s/%u",
+			    inet_ntoa(prefix.v4), prefixlen);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    NULL, 0);
+			return (-1);
+		}
+
 		p += pos;
 		nlri_len -= pos;
 		rde_update_log("update", peer, &attrs, &prefix, prefixlen);

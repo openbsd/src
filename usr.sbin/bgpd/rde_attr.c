@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.8 2004/02/18 16:36:09 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.9 2004/02/18 23:18:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -59,8 +59,7 @@ attr_init(struct attr_flags *a)
 }
 
 int
-attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
-    u_int16_t as)
+attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp)
 {
 	u_int32_t	 tmp32;
 	u_int16_t	 attr_len;
@@ -68,7 +67,6 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	u_int8_t	 flags;
 	u_int8_t	 type;
 	u_int8_t	 tmp8;
-	int		 r; /* XXX */
 
 	if (len < 3)
 		return (-1);
@@ -105,14 +103,8 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
 			return (-1);
-		if ((r = aspath_verify(p, attr_len, as)) != 0) {
-			/* XXX could also be a aspath loop but this
-			 * check should be moved to the filtering. */
-			/* XXX loop detection should be done afterwards
-			 * because this is not an error */
-			log_warnx("XXX aspath_verify failed: error %i", r);
+		if (aspath_verify(p, attr_len) != 0)
 			return (-1);
-		}
 		WFLAG(a->wflags, F_ATTR_ASPATH);
 		a->aspath = aspath_create(p, attr_len);
 		/* XXX enforce remote-as == left most AS if not disabled */
@@ -475,7 +467,6 @@ attr_optfree(struct attr_flags *attr)
 /* aspath specific functions */
 
 /* TODO
- * aspath loop detection (partially done I think),
  * aspath regexp search,
  * aspath to string converter
  */
@@ -502,12 +493,11 @@ aspath_extract(void *seg, int pos)
 }
 
 int
-aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
+aspath_verify(void *data, u_int16_t len)
 {
 	u_int8_t	*seg = data;
-	int		 error = 0;
 	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_len, seg_type;
+	u_int8_t	 seg_len, seg_type;
 
 	if (len & 1)
 		/* odd lenght aspath are invalid */
@@ -527,14 +517,8 @@ aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
 		if (seg_size == 0)
 			/* empty aspath segment are not allowed */
 			return AS_ERR_BAD;
-
-		/* XXX not needed */
-		for (i = 0; i < seg_len; i++) {
-			if (myAS == aspath_extract(seg, i))
-				error = AS_ERR_LOOP;
-		}
 	}
-	return (error);	/* aspath is valid but probably not loop free */
+	return 0;	/* aspath is valid but probably not loop free */
 }
 
 struct aspath *
@@ -695,6 +679,33 @@ aspath_neighbour(struct aspath *aspath)
 	return aspath_extract(aspath->data, 0);
 }
 
+int
+aspath_loopfree(struct aspath *aspath, u_int16_t myAS)
+{
+	u_int8_t	*seg;
+	u_int16_t	 len, seg_size;
+	u_int8_t	 i, seg_len, seg_type;
+
+	if (len & 1)
+		/* odd lenght aspath are invalid */
+		return AS_ERR_BAD;
+
+	seg = aspath->data;
+	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
+		seg_type = seg[0];
+		seg_len = seg[1];
+		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
+		seg_size = 2 + 2 * seg_len;
+
+		ENSURE(seg_size <= len);
+		for (i = 0; i < seg_len; i++) {
+			if (myAS == aspath_extract(seg, i))
+				return 0;
+		}
+	}
+	return 1;
+}
+
 #define AS_HASH_INITIAL 8271
 
 u_int32_t
@@ -792,6 +803,21 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 	}
 	return total_size;
 #undef UPDATE
+}
+
+int
+aspath_asprint(char **ret, void *data, u_int16_t len)
+{
+	size_t	slen, plen;
+
+	slen = aspath_strlen(data, len) + 1;
+	*ret = malloc(slen);
+	if (*ret == NULL)
+		return (-1);
+	plen = aspath_snprint(*ret, slen, data, len);
+	ENSURE(plen < slen);
+
+	return (plen);
 }
 
 size_t

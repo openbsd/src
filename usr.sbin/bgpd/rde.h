@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.27 2004/02/18 16:36:09 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.28 2004/02/18 23:18:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -214,8 +214,7 @@ u_int16_t	 rde_local_as(void);
 
 /* rde_attr.c */
 void		 attr_init(struct attr_flags *);
-int		 attr_parse(u_char *, u_int16_t, struct attr_flags *, int,
-		     u_int16_t);
+int		 attr_parse(u_char *, u_int16_t, struct attr_flags *, int);
 u_char		*attr_error(u_char *, u_int16_t, struct attr_flags *,
 		     u_int8_t *, u_int16_t *);
 u_int8_t	 attr_missing(struct attr_flags *, int);
@@ -227,11 +226,10 @@ int		 attr_optadd(struct attr_flags *, u_int8_t, u_int8_t,
 		     u_char *, u_int16_t);
 void		 attr_optfree(struct attr_flags *);
 
-int		 aspath_verify(void *, u_int16_t, u_int16_t);
-#define		 AS_ERR_LOOP	-1
-#define		 AS_ERR_LEN	-2
-#define		 AS_ERR_TYPE	-3
-#define		 AS_ERR_BAD	-4
+int		 aspath_verify(void *, u_int16_t);
+#define		 AS_ERR_LEN	-1
+#define		 AS_ERR_TYPE	-2
+#define		 AS_ERR_BAD	-3
 struct aspath	*aspath_create(void *, u_int16_t);
 void		 aspath_destroy(struct aspath *);
 int		 aspath_write(void *, u_int16_t, struct aspath *, u_int16_t,
@@ -241,8 +239,10 @@ u_int16_t	 aspath_length(struct aspath *);
 u_int16_t	 aspath_count(struct aspath *);
 u_int16_t	 aspath_neighbour(struct aspath *);
 u_int32_t	 aspath_hash(struct aspath *);
+int		 aspath_loopfree(struct aspath *, u_int16_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
+int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
 int		 aspath_match(struct aspath *, enum as_spec, u_int16_t);
 
