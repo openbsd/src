@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.216 2000/12/17 21:35:04 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.217 2001/01/11 18:52:53 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -342,7 +342,7 @@ eso*	at pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
 cmpci*	at pci? dev ? function ?		# C-Media CMI8338/8738
-ich*	at pci? dev ? function ?		# i82801 ICH AC'97 audio
+auich*	at pci? dev ? function ?		# i82801 ICH AC'97 audio
 clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
 fms*	at pci? dev ? function ?		# Forte Media FM801
 auvia*	at pci? dev ? function ?		# VIA VT82C686A
@@ -410,5 +410,6 @@ pseudo-device	sequencer	1
 # for IPv6
 pseudo-device	gif		4
 #pseudo-device	faith		1
+pseudo-device	crypto		1
 
 #option DEBUG_ISAPNP

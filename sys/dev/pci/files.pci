@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.87 2000/12/17 21:35:02 mickey Exp $
+#	$OpenBSD: files.pci,v 1.88 2001/01/11 18:52:52 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -80,10 +80,10 @@ file	dev/pci/eso.c			eso
 attach	opl at eso with opl_eso
 file	dev/pci/opl_eso.c		opl_eso
 
-# Intel 810/820/440MX ICH AC'97
-device	ich: audio, auconv, mulaw, ac97
-attach	ich at pci
-file	dev/pci/ich.c			ich
+# Intel 810/820/440MX ICH audio with AC'97
+device	auich: audio, auconv, mulaw, ac97
+attach	auich at pci
+file	dev/pci/auich.c			auich
 
 # CS4280 CrystalClear Audio
 device	clcs: audio, auconv, mulaw, ac97
