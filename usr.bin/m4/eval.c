@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.41 2001/10/10 23:25:31 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.42 2001/12/28 13:03:05 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.41 2001/10/10 23:25:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.42 2001/12/28 13:03:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,6 +147,7 @@ expand_builtin(argv, argc, td)
 	printf("argc = %d\n", argc);
 	for (n = 0; n < argc; n++)
 		printf("argv[%d] = %s\n", n, argv[n]);
+	fflush(stdout);
 #endif
 
  /*
@@ -395,12 +396,15 @@ expand_builtin(argv, argc, td)
 	 * characters in the "to" string.
 	 */
 		if (argc > 3) {
-			char temp[STRSPMAX+1];
+			char *temp;
+
+			temp = xalloc(strlen(argv[2])+1);
 			if (argc > 4)
 				map(temp, argv[2], argv[3], argv[4]);
 			else
 				map(temp, argv[2], argv[3], null);
 			pbstr(temp);
+			free(temp);
 		} else if (argc > 2)
 			pbstr(argv[2]);
 		break;
