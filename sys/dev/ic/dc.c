@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.13 2000/09/28 18:32:59 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.14 2000/10/11 17:01:24 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -327,15 +327,7 @@ void dc_eeprom_putbyte(sc, addr)
 {
 	register int		d, i;
 
-	/*
-	 * The AN983 has a 93C66 EEPROM on it instead of
-	 * a 93C46. It uses a different bit sequence for
-	 * specifying the "read" opcode.
-	 */
-	if (DC_IS_CENTAUR(sc))
-		d = DC_EECMD_READ >> 4;
-	else
-		d = DC_EECMD_READ >> 6;
+	d = DC_EECMD_READ >> 6;
 
 	for (i = 3; i--; ) {
 		if (d & (1 << i))
