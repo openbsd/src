@@ -245,8 +245,8 @@
 ./usr/include/dev/ic/mk48txxreg.h
 ./usr/include/dev/ic/monitors.h
 ./usr/include/dev/ic/mpuvar.h
-./usr/include/dev/ic/mtd803reg.h
-./usr/include/dev/ic/mtd803var.h
+./usr/include/dev/ic/mtd8xxreg.h
+./usr/include/dev/ic/mtd8xxvar.h
 ./usr/include/dev/ic/ncr5380reg.h
 ./usr/include/dev/ic/ncr5380var.h
 ./usr/include/dev/ic/ncr53c9xreg.h

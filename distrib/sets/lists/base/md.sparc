@@ -288,8 +288,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mk48txxreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/monitors.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mpuvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mtd803reg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mtd803var.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mtd8xxreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/mtd8xxvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ncr5380reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ncr5380var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ncr53c9xreg.ph
