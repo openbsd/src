@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.69 2003/04/15 10:20:19 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.70 2003/04/15 10:56:21 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -1178,7 +1178,7 @@ void
 print_hfsc_sc(char *scname, u_int m1, u_int d, u_int m2)
 {
 			if (d != 0)
-				printf(" %s(%s %ums %s)", scname,
+				printf(" %s(%s %u %s)", scname,
 				    rate2str((double)m1), d,
 				    rate2str((double)m2));
 			else
