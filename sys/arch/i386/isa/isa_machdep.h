@@ -110,9 +110,6 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
  * DMA_BOUNCE is the number of pages of low-addressed physical memory
  * to acquire for ISA bounce buffers. If physical memory below 16 MB
  * then DMA_BOUNCE_LOW will be used.
- *
- * isaphysmem is the address of this physical contiguous low memory.
- * isaphysmempgs is the number of pages allocated.
  */
 
 #ifndef DMA_BOUNCE
@@ -122,10 +119,6 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
 #ifndef DMA_BOUNCE_LOW
 #define	DMA_BOUNCE_LOW  16		/* number of pages if memory <= 16M */
 #endif
-
-extern vm_offset_t isaphysmem;
-extern int isaphysmempgs;
-
 
 /*
  * Variables and macros to deal with the ISA I/O hole.
@@ -152,5 +145,6 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
  * Miscellanous functions.
  */
 void sysbeep __P((int, int));		/* beep with the system speaker */
+void isadma_init __P((void));
 
 #endif /* _I386_ISA_MACHDEP_H_ XXX */

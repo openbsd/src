@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.18 1997/08/17 17:31:37 grr Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.19 1997/09/22 21:03:54 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -283,20 +283,6 @@ pmap_bootstrap(virtual_start)
 	 * Reserve pmap space for mapping physical pages during dump.
 	 */
 	virtual_avail = reserve_dumppages(virtual_avail);
-
-	/*
-	 * reserve special hunk of memory for use by bus dma as a bounce
-	 * buffer (contiguous virtual *and* physical memory).  XXX
-	 */
-#if NISA > 0 && NISADMA > 0
-	if (ctob(physmem) >= 0x1000000) {
-		isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
-		isaphysmempgs = DMA_BOUNCE;
-	} else {
-		isaphysmem = pmap_steal_memory(DMA_BOUNCE_LOW * NBPG);
-		isaphysmempgs = DMA_BOUNCE_LOW;
-	}
-#endif
 
 	/* flawed, no mappings?? */
 	if (ctob(physmem) > 31*1024*1024 && MAXKPDE != NKPDE) {
