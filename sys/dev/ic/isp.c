@@ -118,8 +118,7 @@ isp_reset(isp)
 		(void) isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] == MBOX_COMMAND_COMPLETE) {
 			clock = mbs.param[1];
-			printf("using board clock 0x%x ",
-				isp->isp_name, clock);
+			printf("board-clock 0x%x ", clock);
 		} else {
 			clock = 0;
 		}
@@ -290,7 +289,7 @@ isp_reset(isp)
 		printf("ABOUT FIRMWARE command failed\n");
 		return;
 	}
-	printf("F/W Revision %d.%d\n", mbs.param[1], mbs.param[2]);
+	printf("F/W rev %d.%d ", mbs.param[1], mbs.param[2]);
 	isp->isp_state = ISP_RESETSTATE;
 }
 
