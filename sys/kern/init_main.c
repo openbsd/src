@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.70 2001/06/27 07:02:45 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.71 2001/06/27 07:16:28 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -139,10 +139,6 @@ void	start_pagedaemon __P((void *));
 void	start_update __P((void *));
 void	start_reaper __P((void *));
 void    start_crypto __P((void *));
-
-#ifdef cpu_set_init_frame
-void *initframep;				/* XXX should go away */
-#endif
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -407,18 +403,7 @@ main(framep)
 	/* Create process 1 (init(8)). */
 	if (fork1(p, SIGCHLD, FORK_FORK, NULL, 0, rval))
 		panic("fork init");
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	if (rval[1]) {
-		/*
-		 * Now in process 1.
-		 */
-		initframep = framep;
-		start_init(curproc);
-		return (0);
-	}
-#else
 	cpu_set_kpc(pfind(rval[0]), start_init, pfind(rval[0]));
-#endif
 
 	/* Create process 2, the pageout daemon kernel thread. */
 	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
@@ -505,17 +490,6 @@ start_init(arg)
 	 * Now in process 1.
 	 */
 	initproc = p;
-
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	/*
-	 * We need to set the system call frame as if we were entered through
-	 * a syscall() so that when we call sys_execve() below, it will be able
-	 * to set the entry point (see setregs) when it tries to exec.  The
-	 * startup code in "locore.s" has allocated space for the frame and
-	 * passed a pointer to that space as main's argument.
-	 */
-	cpu_set_init_frame(p, initframep);
-#endif
 
 	check_console(p);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.12 2001/06/27 04:49:42 art Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.13 2001/06/27 07:16:28 art Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -88,22 +88,10 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 	if (error)
 		return (error);
 
-#ifdef cpu_set_init_frame			/* XXX should go away */
-	if (rv[1]) {
-		/*
-		 * Now in child.
-		 */
-		func(arg);
-		return (0);
-	}
-#endif
-
 	p2 = pfind(rv[0]);
 
-#ifndef cpu_set_init_frame			/* XXX should go away */
 	/* Arrange for it to start at the specified function. */
 	cpu_set_kpc(p2, func, arg);
-#endif
 
 	/*
 	 * Mark it as a system process and not a candidate for
