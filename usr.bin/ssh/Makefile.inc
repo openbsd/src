@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2001/01/29 01:58:14 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2001/06/23 15:12:17 itojun Exp $
 
 CFLAGS+=	-I${.CURDIR}/..
 
 CFLAGS+=	-Wall
+CFLAGS+=		-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-uninitialized
 
 .include <bsd.obj.mk>
 

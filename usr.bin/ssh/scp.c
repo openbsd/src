@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.75 2001/06/23 00:16:16 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.76 2001/06/23 15:12:19 itojun Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -196,6 +196,7 @@ int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
+int main(int, char *[]);
 int response(void);
 void rsource(char *, struct stat *);
 void sink(int, char *[]);
@@ -1021,7 +1022,7 @@ lostconn(signo)
 }
 
 
-void
+static void
 alarmtimer(int wait)
 {
 	struct itimerval itv;
@@ -1032,7 +1033,7 @@ alarmtimer(int wait)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-void
+static void
 updateprogressmeter(int ignore)
 {
 	int save_errno = errno;
@@ -1041,7 +1042,7 @@ updateprogressmeter(int ignore)
 	errno = save_errno;
 }
 
-int
+static int
 foregroundproc(void)
 {
 	static pid_t pgrp = -1;

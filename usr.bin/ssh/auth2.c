@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.65 2001/06/23 03:04:43 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.66 2001/06/23 15:12:17 itojun Exp $");
 
 #include <openssl/evp.h>
 
@@ -70,26 +70,23 @@ struct Authmethod {
 
 /* protocol */
 
-void	input_service_request(int type, int plen, void *ctxt);
-void	input_userauth_request(int type, int plen, void *ctxt);
-void	protocol_error(int type, int plen, void *ctxt);
+static void input_service_request(int, int, void *);
+static void input_userauth_request(int, int, void *);
+static void protocol_error(int, int, void *);
 
 /* helper */
-Authmethod	*authmethod_lookup(const char *name);
-char	*authmethods_get(void);
-int	user_key_allowed(struct passwd *pw, Key *key);
-int
-hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
-    Key *key);
+static Authmethod *authmethod_lookup(const char *);
+char *authmethods_get(void);
+static int user_key_allowed(struct passwd *, Key *);
+static int hostbased_key_allowed(struct passwd *, const char *, char *, Key *);
 
 /* auth */
-void	userauth_banner(void);
-void	userauth_reply(Authctxt *authctxt, int authenticated);
-int	userauth_none(Authctxt *authctxt);
-int	userauth_passwd(Authctxt *authctxt);
-int	userauth_pubkey(Authctxt *authctxt);
-int	userauth_hostbased(Authctxt *authctxt);
-int	userauth_kbdint(Authctxt *authctxt);
+static void userauth_banner(void);
+static int userauth_none(Authctxt *);
+static int userauth_passwd(Authctxt *);
+static int userauth_pubkey(Authctxt *);
+static int userauth_hostbased(Authctxt *);
+static int userauth_kbdint(Authctxt *);
 
 Authmethod authmethods[] = {
 	{"none",
@@ -131,7 +128,7 @@ do_authentication2()
 	do_authenticated(authctxt);
 }
 
-void
+static void
 protocol_error(int type, int plen, void *ctxt)
 {
 	log("auth: protocol error: type %d plen %d", type, plen);
@@ -141,7 +138,7 @@ protocol_error(int type, int plen, void *ctxt)
 	packet_write_wait();
 }
 
-void
+static void
 input_service_request(int type, int plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -174,7 +171,7 @@ input_service_request(int type, int plen, void *ctxt)
 	xfree(service);
 }
 
-void
+static void
 input_userauth_request(int type, int plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
@@ -280,7 +277,7 @@ userauth_finish(Authctxt *authctxt, int authenticated, char *method)
 	}
 }
 
-void
+static void
 userauth_banner(void)
 {
 	struct stat st;
@@ -311,7 +308,7 @@ done:
 	return;
 }
 
-int
+static int
 userauth_none(Authctxt *authctxt)
 {
 	/* disable method "none", only allowed one time */
@@ -323,7 +320,7 @@ userauth_none(Authctxt *authctxt)
 	return authctxt->valid ? auth_password(authctxt, "") : 0;
 }
 
-int
+static int
 userauth_passwd(Authctxt *authctxt)
 {
 	char *password;
@@ -343,7 +340,7 @@ userauth_passwd(Authctxt *authctxt)
 	return authenticated;
 }
 
-int
+static int
 userauth_kbdint(Authctxt *authctxt)
 {
 	int authenticated = 0;
@@ -363,7 +360,7 @@ userauth_kbdint(Authctxt *authctxt)
 	return authenticated;
 }
 
-int
+static int
 userauth_pubkey(Authctxt *authctxt)
 {
 	Buffer b;
@@ -465,7 +462,7 @@ userauth_pubkey(Authctxt *authctxt)
 	return authenticated;
 }
 
-int
+static int
 userauth_hostbased(Authctxt *authctxt)
 {
 	Buffer b;
@@ -582,7 +579,7 @@ authmethods_get(void)
 	return list;
 }
 
-Authmethod *
+static Authmethod *
 authmethod_lookup(const char *name)
 {
 	Authmethod *method = NULL;
@@ -597,7 +594,7 @@ authmethod_lookup(const char *name)
 }
 
 /* return 1 if user allows given key */
-int
+static int
 user_key_allowed2(struct passwd *pw, Key *key, char *file)
 {
 	char line[8192];
@@ -685,7 +682,7 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 }
 
 /* check whether given key is in .ssh/authorized_keys* */
-int
+static int
 user_key_allowed(struct passwd *pw, Key *key)
 {
 	int success;
@@ -705,7 +702,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 }
 
 /* return 1 if given hostkey is allowed */
-int
+static int
 hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
     Key *key)
 {
