@@ -24,7 +24,7 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.19 2002/03/21 16:54:53 markus Exp $");
+RCSID("$OpenBSD: scard.c,v 1.20 2002/03/21 16:57:15 markus Exp $");
 
 #include <openssl/engine.h>
 #include <openssl/evp.h>
@@ -189,7 +189,7 @@ err:
 /* private key operations */
 
 static int
-sc_private_decrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
+sc_private_decrypt(int flen, u_char *from, u_char *to, RSA *rsa,
     int padding)
 {
 	u_char *padded = NULL;
@@ -233,7 +233,7 @@ err:
 }
 
 static int
-sc_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
+sc_private_encrypt(int flen, u_char *from, u_char *to, RSA *rsa,
     int padding)
 {
 	u_char *padded = NULL;
