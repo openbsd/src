@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.4 2001/07/27 15:29:54 art Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.5 2001/07/27 17:02:49 art Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ struct audio_hw_if cs4281_hw_if = {
 	cs4281_malloc,
 	cs4281_free,
 	cs4281_round_buffersize,
-	cs4281_mappage,
+	NULL, /* cs4281_mappage, */
 	cs4281_get_props,
 	cs4281_trigger_output,
 	cs4281_trigger_input,
@@ -1448,7 +1448,9 @@ cs4281_get_props(void *addr)
 	int retval;
 
 	retval = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+#ifdef MMAP_READY
 	retval |= AUDIO_PROP_MMAP;
+#endif
 	return (retval);
 }
 
