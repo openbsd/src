@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 1997/07/09 09:08:03 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 1997/07/09 10:26:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -110,52 +110,41 @@ static struct opcode {
 };
 
 struct opinstr {
-	char *nam;
-	u_int id;
+	char	*nam;
+	u_char	opc;
+	u_char	func;
 } opinstr[] = {
-	{ "addl", 0x1000 },	{ "subl", 0x1009 },	{ "cmpeq", 0x102d },
-	{ "addl/v", 0x1040 },	{ "subl/v", 0x1049 },	{ "cmplt", 0x104d },
-	{ "addq", 0x1020 }, 	{ "subq", 0x1029 },	{ "cmple", 0x106d },
-	{ "addq/v", 0x1060 },	{ "subq/v", 0x1069 },	{ "cmpult", 0x101d },
-	{ "cmpule", 0x103d },
-	{ "cmpbge", 0x100f },
+	{ "addl",0x10,0x00 },	{ "subl",0x10,0x09 },	{ "cmpeq",0x10,0x2d },
+	{ "addl/v",0x10,0x40 },	{ "subl/v",0x10,0x49 },	{ "cmplt",0x10,0x4d },
+	{ "addq",0x10,0x20 },	{ "subq",0x10,0x29 },	{ "cmple",0x10,0x6d },
+	{ "addq/v",0x10,0x60 },	{ "subq/v",0x10,0x69 },	{ "cmpult",0x10,0x1d },
+	{ "cmpule",0x10,0x3d },
+	{ "cmpbge",0x10,0x0f },
 
-	{ "s4addl", 0x1002 },	{ "s4subl", 0x100b },	{ "s8addl", 0x1012 },
-	    { "s8subl", 0x101b },
-	{ "s4addq", 0x1022 },	{ "s4subq", 0x102b },	{ "s8addq", 0x1032 },
-	    { "s8subq", 0x103b },
+	{ "s4addl",0x10,0x02 },	{ "s4subl",0x10,0x0b },	{ "s8addl",0x10,0x12 },
+	    { "s8subl",0x10,0x1b },
+	{ "s4addq",0x10,0x22 },	{ "s4subq",0x10,0x2b },	{ "s8addq",0x10,0x32 },
+	    { "s8subq",0x10,0x3b },
 
-	{ "and", 0x1100 },	{ "bis", 0x1120 },	{ "xor", 0x1140 },
-	{ "bic", 0x1108 },	{ "ornot", 0x1128 },	{ "eqv", 0x1148 },	
-	{ "cmovq", 0x1124 },	{ "cmovlt", 0x1144 },	{ "cmovle", 0x1164 },	
-	{ "cmovne", 0x1126 },	{ "cmovge", 0x1146 },	{ "cmovgt", 0x1166 },	
-	{ "cmovbs", 0x1114 },	{ "cmovbc", 0x1116 },
+	{ "and",0x11,0x00 },	{ "bis",0x11,0x20 },	{ "xor",0x11,0x40 },
+	{ "bic",0x11,0x08 },	{ "ornot",0x11,0x28 },	{ "eqv",0x11,0x48 },	
+	{ "cmovq",0x11,0x24 },	{ "cmovlt",0x11,0x44 },	{ "cmovle",0x11,0x64 },	
+	{ "cmovne",0x11,0x26 },	{ "cmovge",0x11,0x46 },	{ "cmovgt",0x11,0x66 },	
+	{ "cmovbs",0x11,0x14 },	{ "cmovbc",0x11,0x16 },
 
-	{ "sll", 0x1239 },	{ "sra", 0x123c },	{ "srl", 0x1234 },
-	{ "extbl", 0x1206 },	{ "insbl", 0x120b },	{ "mskbl", 0x1202 },
-	{ "extwl", 0x1216 },	{ "inswl", 0x121b },	{ "mskwl", 0x1212 },
-	{ "extll", 0x1226 },	{ "insll", 0x122b },	{ "mskll", 0x1222 },
-	{ "extql", 0x1236 },	{ "insql", 0x123b },	{ "mskql", 0x1232 },
-	{ "extwh", 0x125a },	{ "inswh", 0x1257 },	{ "mskwh", 0x1252 },
-	{ "extlh", 0x126a },	{ "inslh", 0x1267 },	{ "msklh", 0x1262 },
-	{ "extqh", 0x127a },	{ "insqh", 0x1277 },	{ "mskqh", 0x1272 },
-							{ "zap", 0x1230 },
-							{ "zapnot", 0x1231 },
+	{ "sll",0x12,0x39 },	{ "sra",0x12,0x3c },	{ "srl",0x12,0x34 },
+	{ "extbl",0x12,0x06 },	{ "insbl",0x12,0x0b },	{ "mskbl",0x12,0x02 },
+	{ "extwl",0x12,0x16 },	{ "inswl",0x12,0x1b },	{ "mskwl",0x12,0x12 },
+	{ "extll",0x12,0x26 },	{ "insll",0x12,0x2b },	{ "mskll",0x12,0x22 },
+	{ "extql",0x12,0x36 },	{ "insql",0x12,0x3b },	{ "mskql",0x12,0x32 },
+	{ "extwh",0x12,0x5a },	{ "inswh",0x12,0x57 },	{ "mskwh",0x12,0x52 },
+	{ "extlh",0x12,0x6a },	{ "inslh",0x12,0x67 },	{ "msklh",0x12,0x62 },
+	{ "extqh",0x12,0x7a },	{ "insqh",0x12,0x77 },	{ "mskqh",0x12,0x72 },
+							{ "zap",0x12,0x30 },
+							{ "zapnot",0x12,0x31 },
 
-	{ "mull", 0x1300 },	{ "mull/v", 0x1340 },	{ "mulq", 0x1320 },
-	{ "mulq/v", 0x1360 },	{ "umulh", 0x1330 },
-
-#if 0
-	{ "cpys", 0x020 },	{ "cpysn", 0x021 },	{ "cpyse", 0x022 },
-	{ "mf_fpcr", 0x025 },	{ "mt_fpcr", 0x024 },	{ "cvtql/sv", 0x530 },
-	{ "cvtlq", 0x010 },	{ "cvtql", 0x030 },	{ "cvtql/v", 0x130 },
-	{ "fcmoveq", 0x02a },	{ "fcmovlt", 0x02c },	{ "fcmovle", 0x02e },
-	{ "fcmovne", 0x02b },	{ "fcmovge", 0x02d },	{ "fcmovgt", 0x02f },
-
-	....
-
-#endif
-
+	{ "mull",0x13,0x00 },	{ "mull/v",0x13,0x40 },	{ "mulq",0x13,0x20 },
+	{ "mulq/v",0x13,0x60 },	{ "umulh",0x13,0x30 },
 };
 
 char *jsrnam[] = {
@@ -183,11 +172,11 @@ db_disasm(loc, flag)
 	vm_offset_t loc;
 	boolean_t flag;
 {
+	char rnam[8];
 	u_int32_t ins = *(u_int32_t *)loc;
 	int opc = ins >> 26;
 	int arg = ins & 0x3ffffff;
-	int ra, rb, rc, disp, func;
-	u_int opcfunc;
+	int ra, rb, rc, disp, func, imm;
 	int i;
 
 	if (opcode[opc].opc_print)
@@ -205,7 +194,7 @@ db_disasm(loc, flag)
 			db_printf("imb");
 			break;
 		default:
-			db_printf("%08x", ins);
+			db_printf("0x%08x", ins);
 			break;
 		}
 		break;
@@ -242,7 +231,7 @@ db_disasm(loc, flag)
 				db_printf("rs\t%s", regnam(ra));
 				break;
 			default:
-				db_printf("%08x", ins);
+				db_printf("0x%08x", ins);
 			        break;
 			}
 			break;
@@ -259,29 +248,41 @@ db_disasm(loc, flag)
 	case OPC_OP:
 		ra = arg >> 21;
 		rb = (arg >> 16) & 0x1f;
-		func = (arg >> 5) & 0x7ff;
+		func = (arg >> 5) & 0x7f;
+		imm = (arg >> 5) & 0x80;
 		rc = arg & 0x1f;
-		opcfunc = (opc << 8) | func;
 
 		switch (opc) {
-		case 0x10:
 		case 0x11:
+			if (func == 0x20 && imm == 0 && ra == 31 &&
+			    rb == 31 && rc == 31) {
+				db_printf("nop");
+				break;
+			}
+			/*FALLTHROUGH*/
+		case 0x10:
 		case 0x12:
 		case 0x13:
-			for (i = 0; i < sizeof opinstr/sizeof(opinstr[0]); i++)
-				if (opinstr[i].id == opcfunc)
-					break;
-			if (i == sizeof opinstr/sizeof(opinstr[0]))
-				db_printf("%s\t\t%03x,%s,%s,%s",
-				    opcode[opc].opc_name, func,
-				    regnam(ra), regnam(rb), regnam(rc), opcfunc);
+			if (imm)	/* literal */
+				sprintf(rnam, "0x%x", (arg >> 12) & 0xff);
 			else
+				sprintf(rnam, "%s", regnam(rb));
+
+			for (i = 0; i < sizeof opinstr/sizeof(opinstr[0]); i++)
+				if (opinstr[i].opc == opc &&
+				    opinstr[i].func == func)
+					break;
+			if (i != sizeof opinstr/sizeof(opinstr[0]))
 				db_printf("%s\t\t%s,%s,%s",
-				    opinstr[i].nam, regnam(ra), regnam(rb),
+				    opinstr[i].nam, regnam(ra), rnam,
 				    regnam(rc));
+			else 
+				db_printf("%s\t\t0x%03x,%s,%s,%s",
+				    opcode[opc].opc_name, func,
+				    regnam(ra), rnam, regnam(rc));
 			break;
 		default:
-			db_printf("%03x,%s,%s,%s", func, regnam(ra),
+			db_printf("0x%03x,%s,%s,%s", func, regnam(ra),
 			    regnam(rb), regnam(rc));
 			break;
 		}
