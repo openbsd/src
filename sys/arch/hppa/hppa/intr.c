@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.18 2004/05/04 23:53:07 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.19 2004/06/30 15:24:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -220,6 +220,40 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	return (iv);
 }
 
+int
+fls(u_int mask)
+{
+	int bit;
+
+	bit = 32;
+	if (!(mask & 0xffff0000)) {
+		bit -= 16;
+		mask <<= 16;
+	}
+
+	if (!(mask & 0xff000000)) {
+		bit -= 8;
+		mask <<= 8;
+	}
+
+	if (!(mask & 0xf0000000)) {
+		bit -= 4;
+		mask <<= 4;
+	}
+
+	if (!(mask & 0xc0000000)) {
+		bit -= 2;
+		mask <<= 2;
+	}
+
+	if (!(mask & 0x80000000)) {
+		bit -= 1;
+		mask <<= 1;
+	}
+
+	return mask? bit : 0;
+}
+
 void
 cpu_intr(void *v)
 {
@@ -231,7 +265,7 @@ cpu_intr(void *v)
 		frame->tf_flags |= TFF_INTR;
 
 	while ((mask = ipending & ~imask[s])) {
-		int r, bit = ffs(mask) - 1;
+		int r, bit = fls(mask) - 1;
 		struct hppa_iv *iv = &intr_table[bit];
 
 		ipending &= ~(1L << bit);
