@@ -1,4 +1,4 @@
-/*	$OpenBSD: ataio.h,v 1.1 1999/07/18 21:25:20 csapuntz Exp $	*/
+/*	$OpenBSD: ataio.h,v 1.2 2002/01/30 00:44:51 csapuntz Exp $	*/
 /*	$NetBSD: ataio.h,v 1.2 1998/11/23 22:58:23 kenh Exp $	*/
 
 #ifndef _SYS_ATAIO_H_
@@ -35,5 +35,14 @@ typedef struct	atareq {
 #define ATACMD_DF	0x03
 
 #define ATAIOCCOMMAND	_IOWR('Q', 8, atareq_t)
+
+struct atagettrace {
+        unsigned int     buf_size;
+        void   *buf;
+        unsigned int     bytes_copied;
+	unsigned int     bytes_left;
+};
+
+#define ATAIOGETTRACE   _IOWR('Q', 27, struct atagettrace)
 
 #endif /* _SYS_ATAIO_H_ */
