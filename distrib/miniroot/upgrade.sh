@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.39 2002/07/18 00:36:44 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.40 2002/07/27 04:05:09 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -143,8 +143,10 @@ change the order in which the filesystems are mounted.
 NOTE:	1) the edited fstab will be used only during the upgrade. It will not
            be copied back into the root filesystem.
 
-	2) Filesystems with a 'noauto' option or for which no /sbin/mount_XXX
-           can be found will not be mounted.
+	2) A filesystem will not be mounted if
+		a) the 'noauto' option is present,
+		b) /sbin/mount_<fstype> is not found,
+		c) the fstype is nfs.
 
 	3) Non-ffs filesystems will be mounted read-only.
 

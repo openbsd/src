@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.249 2002/07/22 00:13:01 krw Exp $
+#	$OpenBSD: install.sub,v 1.250 2002/07/27 04:05:08 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -96,11 +96,18 @@ set_term() {
 welcome_banner() {
 	cat << __EOT
 
-Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
+As with anything that modifies your disk's contents, this program can
+cause SIGNIFICANT data loss, and you are advised to make sure your
+data is backed up before beginning the installation process.
 
-This program will help you ${MODE} OpenBSD in a simple and rational way.
+Default answers are displayed in brackets after the questions. You can
+hit Control-C at any time to quit, but if you do so at a prompt, you
+may have to hit return. Also, quitting in the middle of an ${MODE} may
+leave your system in an inconsistent state.
+
+If you hit Control-C and restart the ${MODE}, the ${MODE} program will
+remember many of your old answers.
 __EOT
-
 	if [ "$MODE" = "upgrade" ]; then
 		cat << __EOT
 
@@ -117,24 +124,6 @@ have your disk's hardware manual, the installation notes, and a
 calculator handy.
 __EOT
 	fi
-
-	cat << __EOT
-
-As with anything that modifies your disk's contents, this program can
-cause SIGNIFICANT data loss, and you are advised to make sure your
-data is backed up before beginning the installation process.
-
-Default answers are displayed in brackets after the questions. You can
-hit Control-C at any time to quit, but if you do so at a prompt, you
-may have to hit return. Also, quitting in the middle of an ${MODE} may
-leave your system in an inconsistent state.
-
-If you hit Control-C and restart the ${MODE}, the ${MODE} program will
-remember many of your old answers.
-
-At any prompt except password prompts you can run a shell command by
-typing '!foo', or escape to a shell by typing '!'.
-__EOT
 }
 
 get_dkdevs() {
@@ -1644,13 +1633,18 @@ munge_fstab() {
 
 		# Skip noauto filesystems.
 		case $_opt in
-		*noauto*)
-			continue ;;
+		*noauto*) continue ;;
 		esac
 
 		# Skip filesystems we can't mount.
 		[ -f "/sbin/mount_${_fstype}" ] || continue
 
+		# Skip nfs filesystems because all name
+		# resolutions (e.g. yp) are not available
+		# and success is not guaranteed. The user
+		# will have to mount nfs filesystems manually.
+		[ "$_fstype" != "nfs" ] || continue
+		
 		# Remove any softdep options, as soft updates are not
 		# available in the ramdisk kernels.
 		_opt="$(echo ${_opt} | \
@@ -2026,8 +2020,25 @@ fi
 trap 'cleanup_on_exit' EXIT
 trap 'exit 2' HUP INT QUIT TERM
 
+
+# Introduce ourselves.
+cat << __EOT
+
+Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
+
+This program will help you ${MODE} OpenBSD in a simple and rational way.
+
+At any prompt except password prompts you can run a shell command by
+typing '!foo', or escape to a shell by typing '!'.
+
+__EOT
+
+# Deal with terminal issues now, so 'less' can print meaningfull prompt if
+# messages are >1 page long.
+set_term
+
 # Good {morning,afternoon,evening,night}.
-welcome_banner | more
+welcome_banner | less -XE
 
 if [ -f /etc/fstab -a "$MODE" = "install" ]; then
 	cat << __EOT
@@ -2054,6 +2065,3 @@ __EOT
 	exit
 	;;
 esac
-
-# Deal with terminal issues
-set_term
