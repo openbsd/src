@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.8 2004/11/23 21:28:22 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.9 2004/11/24 20:44:10 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -808,7 +808,7 @@ iwi_intr(void *arg)
 	struct iwi_softc *sc = arg;
 	u_int32_t r;
 
-	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0)
+	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0 || r == 0xffffffff)
 		return 0;
 
 	/* Disable interrupts */
@@ -850,7 +850,7 @@ iwi_intr(void *arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, IWI_INTR_MASK);
 
-	return 0;
+	return 1;
 }
 
 int
