@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.33 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.34 2003/05/06 21:43:26 deraadt Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -710,7 +710,8 @@ fdesc_readdir(v)
 				if (fd_getfile(fdp, i - 2) == NULL)
 					continue;
 				d.d_fileno = i - 2 + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", i - 2);
+				d.d_namlen = snprintf(d.d_name, sizeof d.d_name,
+				    "%d", i - 2);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}

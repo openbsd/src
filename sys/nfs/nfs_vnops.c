@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.53 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.54 2003/05/06 21:43:26 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2481,7 +2481,8 @@ nfs_sillyrename(dvp, vp, cnp)
 	}
 
 	/* Fudge together a funny name */
-	sp->s_namlen = sprintf(sp->s_name, ".nfsA%05x4.4", cnp->cn_proc->p_pid);
+	sp->s_namlen = snprintf(sp->s_name, sizeof sp->s_name,
+	    ".nfsA%05x4.4", cnp->cn_proc->p_pid);
 
 	/* Try lookitups until we get one that isn't there */
 	while (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
