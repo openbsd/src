@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.19 2003/06/02 23:32:08 millert Exp $
+.\"	$OpenBSD: mt.1,v 1.20 2003/07/30 16:57:03 tedu Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -67,6 +67,14 @@ or
 .Nm
 writes to the named tape device on the remote host using
 .Xr rmt 8 .
+.Nm eject
+is simply an alias for
+.Nm mt ,
+with the
+.Cm offline
+command specified.
+.Nm eject
+may also be used to eject other types of removable media.
 .Pp
 The options are as follows:
 .Pp
@@ -135,15 +143,6 @@ Set the tape density code to
 as specified in the SCSI2 specification.
 .El
 .Pp
-.Nm eject
-is simply an alias for
-.Nm mt ,
-with the
-.Cm offline
-command specified.
-.Nm eject
-may also be used to eject other types of removable media.
-.Pp
 If a tape name is not specified, and the environment variable
 .Ev TAPE
 does not exist,
@@ -180,6 +179,11 @@ raw magnetic tape interface
 .It Pa /usr/src/sys/scsi/scsi_tape.h
 list of SCSI2 density codes
 .El
+.Sh EXAMLES
+.Dl $ eject /dev/rcd0c
+.Pp
+Eject the first CD device.
+This will work even if there is no CD in the drive.
 .Sh SEE ALSO
 .Xr dd 1 ,
 .\" .Xr tap 1 ,
