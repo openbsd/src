@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.3 1996/05/22 12:13:01 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.4 1996/06/30 17:54:01 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.3 1996/05/22 12:13:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.4 1996/06/30 17:54:01 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ char **argv;
 
 	bzero(&sin, sizeof sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(0x7f000001);
+	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
 	while( (c=getopt(argc, argv, "h:d:")) != -1)
 		switch(c) {
