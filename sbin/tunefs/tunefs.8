@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.20 2003/06/02 20:06:17 millert Exp $
+.\"	$OpenBSD: tunefs.8,v 1.21 2003/10/17 09:35:30 jmc Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -70,8 +70,8 @@ This specifies the maximum number of contiguous blocks that will
 be laid out before forcing a rotational delay (see
 .Fl d
 below).
-The default value depends on the block size (8 for 8KB blocks and
-16 for 4KB blocks).
+The default value depends on the block size
+(4 for 16KB blocks, 8 for 8KB blocks and 16 for 4KB blocks).
 Most device drivers can chain several buffers together in a single transfer.
 For optimal performance, the value of
 .Ar maxcontig

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.35 2003/06/26 07:07:49 tedu Exp $
+.\"	$OpenBSD: newfs.8,v 1.36 2003/10/17 09:35:30 jmc Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -158,16 +158,17 @@ This specifies the maximum number of contiguous blocks that will be
 laid out before forcing a rotational delay (see the
 .Fl d
 option).
-The default value depends on the block size (8 for 8KB blocks and
-16 for 4KB blocks).
+The default value depends on the block size
+(4 for 16KB blocks, 8 for 8KB blocks, and 16 for 4KB blocks).
 See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
+The default is 16KB.
 .It Fl c Ar #cylinders/group
 The number of cylinders per cylinder group in a file system.
-The default value is 16.
+The default is to use as many as fit with the other parameters given.
 .It Fl d Ar rotdelay
 This specifies the expected time (in milliseconds) to service a transfer
 completion interrupt and initiate a new transfer on the same disk.
@@ -185,6 +186,7 @@ See
 for more details on how to set this option.
 .It Fl f Ar frag-size
 The fragment size of the file system in bytes.
+The default is 2048.
 .It Fl g Ar avgfilesize
 The expected average file size for the file system in bytes.
 .It Fl h Ar avgfpdir
