@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.7 1996/10/20 15:27:53 dm Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.8 1997/05/30 07:51:12 downsj Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -26,6 +26,11 @@ pctrval pctr_idlcnt;  /* Gets incremented in locore.s */
 static int usetsc;
 static int usep5ctr;
 static int usep6ctr;
+
+void pctrattach __P((int));
+int pctropen __P((dev_t, int, int, struct proc *));
+int pctrclose __P((dev_t, int, int, struct proc *));
+int pctrioctl __P((dev_t, int, caddr_t, int, struct proc *));
 
 void
 pctrattach (int num)
