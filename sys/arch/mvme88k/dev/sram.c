@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.12 2004/01/01 01:51:32 miod Exp $ */
+/*	$OpenBSD: sram.c,v 1.13 2004/01/01 19:59:22 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -38,6 +38,8 @@
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 
+#include <mvme88k/dev/memdevs.h>
+
 #include <uvm/uvm_extern.h>
 
 struct sramsoftc {
@@ -63,9 +65,7 @@ srammatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-	int ret;
 
 	if (brdtyp != BRD_187)	/* The only one... */
 		return (0);
@@ -73,7 +73,7 @@ srammatch(parent, vcf, args)
 	ca->ca_paddr = (void *)0xffe00000;
 	ca->ca_vaddr = (void *)0xffe00000;
 
-	return (!badvaddr(ca->ca_vaddr, 1))
+	return (!badvaddr((vaddr_t)ca->ca_vaddr, 1));
 }
 
 void
@@ -83,8 +83,6 @@ sramattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct sramsoftc *sc = (struct sramsoftc *)self;
-	struct mcreg *mc;
-	int i;
 
 	switch (brdtyp) {
 #ifdef MVME187
