@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.8 1997/11/06 05:58:40 csapuntz Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.9 1997/12/27 04:49:14 csapuntz Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -382,6 +382,8 @@ int
 null_inactive(v)
 	void *v;
 {
+	struct vop_inactive_args *ap = v;
+
 	/*
 	 * Do nothing (and _don't_ bypass).
 	 * Wait to vrele lowervp until reclaim,
@@ -394,6 +396,8 @@ null_inactive(v)
 	 * like they do in the name lookup cache code.
 	 * That's too much work for now.
 	 */
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+
 	return (0);
 }
 
