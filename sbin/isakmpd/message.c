@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.31 2000/06/19 02:25:44 niklas Exp $	*/
-/*	$EOM: message.c,v 1.145 2000/06/13 16:25:10 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.32 2000/08/03 07:23:10 niklas Exp $	*/
+/*	$EOM: message.c,v 1.146 2000/08/02 22:37:43 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1005,6 +1005,13 @@ message_recv (struct message *msg)
 
   if (flags & ISAKMP_FLAGS_ENC)
     {
+      if (msg->isakmp_sa == NULL) 
+	{
+	  LOG_DBG ((LOG_MISC, 10,
+		    "message_recv: no isakmp_sa for encrypted message"));
+	  return -1;
+	}
+
       /* Decrypt rest of message using a DOI-specified IV.  */
       ks = msg->isakmp_sa->doi->get_keystate (msg);
       if (!ks)
