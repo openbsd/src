@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.5 1996/03/05 02:29:37 dm Exp $	*/
+/*	$OpenBSD: if.c,v 1.6 1996/03/14 08:35:35 tholo Exp $	*/
 /*	$NetBSD: if.c,v 1.24 1996/02/13 22:00:09 christos Exp $	*/
 
 /*
@@ -180,7 +180,8 @@ ifa_ifwithdstaddr(addr)
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 	    if (ifp->if_flags & IFF_POINTOPOINT)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-			if (ifa->ifa_addr->sa_family != addr->sa_family)
+			if (ifa->ifa_addr->sa_family != addr->sa_family ||
+			    ifa->ifa_dstaddr == NULL)
 				continue;
 			if (equal(addr, ifa->ifa_dstaddr))
 				return (ifa);
