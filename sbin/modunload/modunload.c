@@ -1,4 +1,4 @@
-/*	$OpenBSD: modunload.c,v 1.10 2002/01/09 22:22:56 ericj Exp $	*/
+/*	$OpenBSD: modunload.c,v 1.11 2002/12/11 16:58:39 deraadt Exp $	*/
 /*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 static int devfd;
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -61,15 +61,13 @@ usage()
 }
 
 void
-cleanup()
+cleanup(void)
 {
 	(void)close(devfd);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	long modnum = -1;
