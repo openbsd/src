@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.38 2004/01/27 21:56:47 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.39 2004/01/27 22:11:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -255,17 +255,19 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 {
 	struct peer		*p;
 	struct sockaddr_in	*sa_in;
+	struct in_addr		 ina;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
+		ina.s_addr = p->remote_bgpid;
 		printf("BGP neighbor is %s, remote AS %u\n",
 		    log_addr(&p->conf.remote_addr),
 		    p->conf.remote_as);
 		if (p->conf.descr[0])
 			printf(" Description: %s\n", p->conf.descr);
 		printf("  BGP version 4, remote router-id %s\n",
-		    log_ntoa(p->remote_bgpid));
+		    inet_ntoa(ina));
 		printf("  BGP state = %s", statenames[p->state]);
 		if (p->stats.last_updown != 0)
 			printf(", %s for %s",
