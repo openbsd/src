@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.196 2004/02/07 23:26:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.197 2004/02/10 23:07:37 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -20,7 +20,7 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	phones printcap protocols rbootd.conf rc rc.conf rc.local \
 	rc.securelevel rc.shutdown remote rpc security services \
 	shells spamd.conf syslog.conf weekly etc.${MACHINE}/disktab \
-	dhclient.conf mailer.conf bgpd.conf
+	dhclient.conf mailer.conf
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || ${MACHINE} == "macppc" || \
@@ -79,6 +79,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
 	${INSTALL} -c -o root -g wheel -m 644 moduli ${DESTDIR}/etc
+	${INSTALL} -c -o root -g wheel -m 600 bgpd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 644 pf.os ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 644 sensorsd.conf ${DESTDIR}/etc
@@ -368,7 +369,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.196 2004/02/07 23:26:56 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.197 2004/02/10 23:07:37 henning Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
