@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.3 2004/11/01 19:14:26 espie Exp $
+# $OpenBSD: Delete.pm,v 1.4 2004/11/06 12:22:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -236,6 +236,9 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $name = $self->fullname();
+	if (defined $self->{tempname}) {
+		$name = $self->{tempname};
+	}
 	my $realname = $state->{destdir}.$name;
 	if (-l $realname) {
 		if ($state->{beverbose}) {

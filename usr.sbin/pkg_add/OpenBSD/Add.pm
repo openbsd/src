@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.7 2004/11/06 12:20:02 espie Exp $
+# $OpenBSD: Add.pm,v 1.8 2004/11/06 12:22:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -169,7 +169,8 @@ sub install
 		} elsif (defined $self->{symlink}) {
 			symlink($self->{symlink}, $destdir.$fullname);
 		} else {
-			rename($self->{tempname}, $destdir.$fullname);
+			rename($self->{tempname}, $destdir.$fullname) or 
+			    Fatal "Can't move file to $fullname: $!";
 			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{very_verbose};
 			undef $self->{tempname};
 		}
