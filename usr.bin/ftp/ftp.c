@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.45 2002/05/30 06:51:46 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.46 2002/06/01 20:21:49 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.45 2002/05/30 06:51:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.46 2002/06/01 20:21:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1883,7 +1883,7 @@ abort_remote(din)
 	 * send IAC in urgent mode instead of DM because 4.3BSD places oob mark
 	 * after urgent byte rather than before as is protocol now
 	 */
-	sprintf(buf, "%c%c%c", IAC, IP, IAC);
+	snprintf(buf, sizeof buf, "%c%c%c", IAC, IP, IAC);
 	if (send(fileno(cout), buf, 3, MSG_OOB) != 3)
 		warn("abort");
 	fprintf(cout, "%cABOR\r\n", DM);
