@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2000/11/02 00:54:32 brian Exp $
+#	$OpenBSD: Makefile,v 1.20 2000/11/28 22:59:52 brian Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
@@ -8,8 +8,8 @@ SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
 	hdlc.c iface.c ip.c ipcp.c iplist.c lcp.c link.c log.c lqr.c \
 	main.c mbuf.c mp.c mppe.c nat_cmd.c pap.c physical.c pred.c probe.c \
 	prompt.c proto.c radius.c radlib.c route.c server.c sig.c \
-	slcompress.c systems.c sync.c tcp.c throughput.c timer.c tty.c tun.c \
-	udp.c vjcomp.c
+	slcompress.c systems.c sync.c tcp.c tcpmss.c throughput.c timer.c \
+	tty.c tun.c udp.c vjcomp.c
 CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH -DNOI4B -DNONETGRAPH
 CFLAGS+=-DLOCALNAT -DLOCALRAD
 LDADD+= -lcrypto -ldes -lutil -lz

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.53 2000/11/02 00:54:33 brian Exp $
+ * $OpenBSD: command.c,v 1.54 2000/11/28 22:59:53 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -2531,12 +2531,14 @@ static struct cmdtab const NegotiateCommands[] = {
   "disable|enable", (const void *)OPT_PROXYALL},
   {"sroutes", NULL, OptSet, LOCAL_AUTH, "Use sticky routes",
   "disable|enable", (const void *)OPT_SROUTES},
+  {"tcpmssfixup", "mssfixup", OptSet, LOCAL_AUTH, "Modify MSS options",
+  "disable|enable", (const void *)OPT_TCPMSSFIXUP},
   {"throughput", NULL, OptSet, LOCAL_AUTH, "Rolling throughput",
   "disable|enable", (const void *)OPT_THROUGHPUT},
   {"utmp", NULL, OptSet, LOCAL_AUTH, "Log connections in utmp",
   "disable|enable", (const void *)OPT_UTMP},
 
-#define OPT_MAX 10	/* accept/deny allowed below and not above */
+#define OPT_MAX 11	/* accept/deny allowed below and not above */
 
   {"acfcomp", NULL, NegotiateSet, LOCAL_AUTH | LOCAL_CX,
   "Address & Control field compression", "accept|deny|disable|enable",

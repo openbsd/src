@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.99 2000/11/22 02:13:09 brian Exp $
+.\" $OpenBSD: ppp.8,v 1.100 2000/11/28 22:59:53 brian Exp $
 .Dd 20 September 1995
 .Dt PPP 8
 .Os
@@ -3007,6 +3007,14 @@ Disabling this option will prevent the re-application of sticky routes,
 although the
 .Sq stick route
 list will still be maintained.
+.It Op tcp Ns Xo
+.No mssfixup
+.Xc
+Default: Enabled.
+This option tells
+.Nm
+to adjust outgoing TCP SYN packets so that the maximum receive segment
+size is not greater than the amount allowed by the interface MTU.
 .It throughput
 Default: Enabled.
 This option tells
