@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.5 1997/11/11 22:42:27 gene Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.6 1997/11/30 06:12:19 gene Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.5 1996/05/05 14:34:07 briggs Exp $	*/
 
 /*-
@@ -34,8 +34,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_ADBSYS_H_
-#define _MACHINE_ADBSYS_H_
+#ifndef _MAC68K_ADBSYS_H_
+#define _MAC68K_ADBSYS_H_
 
 #include <sys/time.h>
 #include <sys/ioctl.h>
@@ -126,4 +126,4 @@ typedef struct adb_listencmd_s {
 
 void	adb_init __P((void));
 
-#endif /* _MACHINE_ADBSYS_H_ */
+#endif /* _MAC68K_ADBSYS_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 1996/05/26 18:36:01 briggs Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 1997/11/30 06:12:34 gene Exp $	*/
 /*	$NetBSD: pte.h,v 1.9 1996/05/05 06:17:58 briggs Exp $	*/
 
 /*
@@ -77,8 +77,8 @@
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
  */
 
-#ifndef _PTE_MACHINE_
-#define _PTE_MACHINE_
+#ifndef _MAC68K_PTE_H_
+#define _MAC68K_PTE_H_
 
 /*
  * Mac hardware segment/page table entries
@@ -153,4 +153,4 @@ typedef int	pt_entry_t;	/* Mach page table entry */
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
-#endif /* _PTE_MACHINE_ */
+#endif /* _MAC68K_PTE_H_ */

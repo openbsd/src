@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.5 1996/12/23 02:42:30 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.6 1997/11/30 06:12:25 gene Exp $	*/
 /*	$NetBSD: exec.h,v 1.8 1996/05/05 06:17:40 briggs Exp $	*/
 
 /*-
@@ -34,8 +34,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef _EXEC_MACHINE_
-#define _EXEC_MACHINE_
+#ifndef _MAC68K_EXEC_H_
+#define _MAC68K_EXEC_H_
 
 #define __LDPGSZ	8192
 
@@ -67,4 +67,4 @@ struct relocation_info_mac68k {
 #define _KERN_DO_ELF
 #endif
 
-#endif /* _EXEC_MACHINE_ */
+#endif /* _MAC68K_EXEC_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus.h,v 1.3 1997/04/07 03:23:37 briggs Exp $ */
+/*      $OpenBSD: bus.h,v 1.4 1997/11/30 06:12:20 gene Exp $ */
 /*	$NetBSD: bus.h,v 1.6 1997/02/24 05:55:14 scottr Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ typedef u_long bus_size_t;
 typedef int	bus_space_tag_t;
 typedef u_long	bus_space_handle_t;
 
+#ifdef _KERNEL
 /* in machdep.c */
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
@@ -66,6 +67,7 @@ int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_space_handle_t *bshp));
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
+#endif /* _KERNEL */
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

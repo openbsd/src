@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 1997/03/30 21:53:23 briggs Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 1997/11/30 06:12:24 gene Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -41,8 +41,9 @@
 
 /*
  *	Copyright (c) 1992, 1993 BCDL Labs.  All rights reserved.
- *	Allen Briggs, Chris Caputo, Michael Finch, Brad Grantham, Lawrence Kesteloot
-
+ *	Allen Briggs, Chris Caputo, Michael Finch, Brad Grantham,
+ *	Lawrence Kesteloot
+ *
  *	Redistribution of this source code or any part thereof is permitted,
  *	 provided that the following conditions are met:
  *	1) Utilized source contains the copyright message above, this list
@@ -62,16 +63,8 @@
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
  */
 
-/*
-   ALICE
-	BG -- Sat May 23 23:58:23 EDT 1992
-	Exported defines and stuff unique to mac68k.
-   A lot of this stuff is really specific to the m68k, not just the macs,
-   but there isn't time to do anything about that right now...
- */
-
-#ifndef _CPU_MACHINE_
-#define _CPU_MACHINE_
+#ifndef _MAC68K_CPU_H_
+#define _MAC68K_CPU_H_
 
 #include <machine/pcb.h>
 
@@ -214,4 +207,4 @@ void	physaccess __P((caddr_t, caddr_t, register int, register int));
 
 __END_DECLS
 
-#endif	/* _CPU_MACHINE_ */
+#endif	/* _MAC68K_CPU_H_ */

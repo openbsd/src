@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 1997/03/08 16:17:01 briggs Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 1997/11/30 06:12:32 gene Exp $	*/
 /*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
 
 /*
@@ -75,8 +75,8 @@
 /* 
  *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
  */
-#ifndef	_PMAP_MACHINE_
-#define	_PMAP_MACHINE_
+#ifndef	_MAC68K_PMAP_H_
+#define	_MAC68K_PMAP_H_
 
 #include <machine/pcb.h>
 #include <machine/pte.h>
@@ -215,4 +215,4 @@ __END_DECLS
 
 #endif	/* _KERNEL */
 
-#endif	/* _PMAP_MACHINE_ */
+#endif	/* _MAC68K_PMAP_H_ */

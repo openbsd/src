@@ -1,4 +1,4 @@
-/*	$OpenBSD: iteioctl.h,v 1.4 1997/11/11 22:46:26 gene Exp $	*/
+/*	$OpenBSD: iteioctl.h,v 1.5 1997/11/30 06:12:28 gene Exp $	*/
 /*	$NetBSD: iteioctl.h,v 1.1 1994/12/03 23:34:31 briggs Exp $	*/
 
 /*-
@@ -32,13 +32,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: iteioctl.h,v 1.4 1997/11/11 22:46:26 gene Exp $
- *
  */
 
-#ifndef _MACHINE_ITEIOCTL_H_
-#define _MACHINE_ITEIOCTL_H_
+#ifndef _MAC68K_ITEIOCTL_H_
+#define _MAC68K_ITEIOCTL_H_
 
 #include <sys/ioctl.h>
 
@@ -53,4 +50,4 @@ struct bellparams {
 #define ITEIOC_SETBELL            _IOW('I', 129, struct bellparams)
 #define ITEIOC_RINGBELL            _IO('I', 130)
 
-#endif	/* _MACHINE_ITEIOCTL_H_ */
+#endif	/* _MACH68K_ITEIOCTL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macinfo.h,v 1.2 1996/10/28 15:00:49 briggs Exp $	*/
+/*	$OpenBSD: macinfo.h,v 1.3 1997/11/30 06:12:30 gene Exp $	*/
 /*	$NetBSD: scsi96reg.h,v 1.5 1996/05/05 06:18:02 briggs Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACINFO_MACHINE_
-#define _MACINFO_MACHINE_
+#ifndef _MAC68K_MACINFO_H_
+#define _MAC68K_MACINFO_H_
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */
@@ -138,7 +138,7 @@ struct mac68k_machine_S {
 	int			sccClkConst;	/* "Constant" for SCC bps */
 };
 
-	/* What kind of model is this */
+/* What kind of model is this */
 struct cpu_model_info {
 	int	machineid;	/* MacOS Gestalt value. */
 	char	*model_major;	/* Make this distinction to save a few */
@@ -156,4 +156,4 @@ extern  struct mac68k_machine_S	mac68k_machine;
 extern	unsigned long		load_addr;
 #endif /* _KERNEL */
 
-#endif
+#endif /* _MAC68K_MACINFO_H_ */

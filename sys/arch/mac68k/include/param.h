@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 1997/03/08 16:17:00 briggs Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1997/11/30 06:12:31 gene Exp $	*/
 /*	$NetBSD: param.h,v 1.28 1997/03/01 06:57:45 scottr Exp $	*/
 
 /*
@@ -77,8 +77,8 @@
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
 
-#ifndef _PARAM_MACHINE_
-#define _PARAM_MACHINE_
+#ifndef _MAC68K_PARAM_H_
+#define _MAC68K_PARAM_H_
 
 #ifndef PSL_IPL
 #include <machine/psl.h>
@@ -198,4 +198,4 @@ void	delay		__P((unsigned));
 #define DELAY(ms)	delay(ms)
 #endif	/* _KERNEL && !_LOCORE */
 
-#endif /* _PARAM_MACHINE_ */
+#endif /* _MAC68K_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi96reg.h,v 1.4 1996/10/23 04:52:03 briggs Exp $	*/
+/*	$OpenBSD: scsi96reg.h,v 1.5 1997/11/30 06:12:35 gene Exp $	*/
 /*	$NetBSD: scsi96reg.h,v 1.5 1996/05/05 06:18:02 briggs Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SCSI96REG_MACHINE_
-#define _SCSI96REG_MACHINE_
+#ifndef _MAC68K_SCSI96REG_H_
+#define _MAC68K_SCSI96REG_H_
 
 typedef volatile unsigned char	v_uchar;
 
@@ -172,4 +172,4 @@ struct ncr53c96regs {
 
 #define NCR96_DALREG	0xF	/* Data alignment register.	W   */
 
-#endif /* _SCSI96REG_MACHINE_ */
+#endif /* _MAC68K_SCSI96REG_H_ */
