@@ -38,8 +38,8 @@ Boston, MA 02111-1307, USA.  */
 
 #undef MULTILIB_DEFAULTS
 
-/* ARM6 family default cpu.  */
-#define SUBTARGET_CPU_DEFAULT TARGET_CPU_arm6
+/* strongarm family default cpu.  */
+#define SUBTARGET_CPU_DEFAULT TARGET_CPU_strongarm
 
 /* Default is to use APCS-32 mode.  */
 
@@ -75,6 +75,19 @@ Boston, MA 02111-1307, USA.  */
 #define OBSD_LINK_SPEC \
   "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e %(openbsd_entry_point)}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 #endif
+
+#undef SUBTARGET_EXTRA_ASM_SPEC
+#define SUBTARGET_EXTRA_ASM_SPEC	\
+  "-matpcs %{fpic:-k} %{fPIC:-k}"
+
+/* Default floating point model is soft-VFP.
+   FIXME: -mhard-float currently implies FPA.  */
+#undef SUBTARGET_ASM_FLOAT_SPEC
+#define SUBTARGET_ASM_FLOAT_SPEC	\
+  "%{mhard-float:-mfpu=fpa} \
+   %{msoft-float:-mfpu=softvfp} \
+   %{!mhard-float: \
+     %{!msoft-float:-mfpu=softvfp}}"
 
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS				\
