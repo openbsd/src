@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_blf.c,v 1.1 1997/11/04 09:11:03 provos Exp $ */
+/* $OpenBSD: ip_blf.c,v 1.2 1998/03/02 15:24:21 provos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -51,35 +51,14 @@
 #define inline
 #endif				/* !__GNUC__ */
 
-static inline u_int32_t F __P((blf_ctx * bc, u_int32_t x));
-
 /* Function for Feistel Networks */
 
-static inline u_int32_t
-F(bc, x)
-	blf_ctx *bc;
-	u_int32_t x;
-{
-	u_int8_t a;
-	u_int8_t b;
-	u_int8_t c;
-	u_int8_t d;
-	u_int32_t y;
+#define F(bc, x) ((((bc)->S[0][((x) & 0xFF000000) >> 24] \
+		    + (bc)->S[1][((x) &0xFF0000 ) >> 16]) \
+		   ^ (bc)->S[2][((x) & 0xFF00) >> 8]) \
+		  + (bc)->S[3][(x) & 0x00FF])
 
-	d = (u_int8_t) (x & 0xFF);
-	x >>= 8;
-	c = (u_int8_t) (x & 0xFF);
-	x >>= 8;
-	b = (u_int8_t) (x & 0xFF);
-	x >>= 8;
-	a = (u_int8_t) (x & 0xFF);
-
-	y = bc->S[0][a] + bc->S[1][b];
-	y = y ^ bc->S[2][c];
-	y = y + bc->S[3][d];
-
-	return y;
-}
+#define BLFRND(bc,i,j,n) (i ^= F(bc,j) ^ (bc)->P[n])
 
 void
 Blowfish_encipher(c, xl, xr)
@@ -89,33 +68,22 @@ Blowfish_encipher(c, xl, xr)
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
-	u_int32_t temp;
-	u_int16_t i;
 
 	Xl = *xl;
 	Xr = *xr;
 
-	for (i = 0; i < BLF_N; i++) {
-		/* One round of a Feistel network */
-		Xl = Xl ^ c->P[i];
-		Xr = F(c, Xl) ^ Xr;
+	Xl ^= c->P[0];
+	BLFRND(c, Xr, Xl, 1); BLFRND(c, Xl, Xr, 2);
+	BLFRND(c, Xr, Xl, 3); BLFRND(c, Xl, Xr, 4);
+	BLFRND(c, Xr, Xl, 5); BLFRND(c, Xl, Xr, 6);
+	BLFRND(c, Xr, Xl, 7); BLFRND(c, Xl, Xr, 8);
+	BLFRND(c, Xr, Xl, 9); BLFRND(c, Xl, Xr, 10);
+	BLFRND(c, Xr, Xl, 11); BLFRND(c, Xl, Xr, 12);
+	BLFRND(c, Xr, Xl, 13); BLFRND(c, Xl, Xr, 14);
+	BLFRND(c, Xr, Xl, 15); BLFRND(c, Xl, Xr, 16);
 
-		/* Swap Xl and Xr */
-		temp = Xl;
-		Xl = Xr;
-		Xr = temp;
-	}
-
-	/* End of Feistel Network, swap again */
-	temp = Xl;
-	Xl = Xr;
-	Xr = temp;
-
-	Xr = Xr ^ c->P[BLF_N];
-	Xl = Xl ^ c->P[BLF_N + 1];
-
-	*xl = Xl;
-	*xr = Xr;
+	*xl = Xr ^ c->P[17];
+	*xr = Xl;
 }
 
 void
@@ -126,33 +94,22 @@ Blowfish_decipher(c, xl, xr)
 {
 	u_int32_t Xl;
 	u_int32_t Xr;
-	u_int32_t temp;
-	u_int16_t i;
 
 	Xl = *xl;
 	Xr = *xr;
 
-	for (i = BLF_N + 1; i > 1; i--) {
-		/* One round of a Feistel network */
-		Xl = Xl ^ c->P[i];
-		Xr = F(c, Xl) ^ Xr;
+	Xl ^= c->P[17];
+	BLFRND(c, Xr, Xl, 16); BLFRND(c, Xl, Xr, 15);
+	BLFRND(c, Xr, Xl, 14); BLFRND(c, Xl, Xr, 13);
+	BLFRND(c, Xr, Xl, 12); BLFRND(c, Xl, Xr, 11);
+	BLFRND(c, Xr, Xl, 10); BLFRND(c, Xl, Xr, 9);
+	BLFRND(c, Xr, Xl, 8); BLFRND(c, Xl, Xr, 7);
+	BLFRND(c, Xr, Xl, 6); BLFRND(c, Xl, Xr, 5);
+	BLFRND(c, Xr, Xl, 4); BLFRND(c, Xl, Xr, 3);
+	BLFRND(c, Xr, Xl, 2); BLFRND(c, Xl, Xr, 1);
 
-		/* Swap Xl and Xr */
-		temp = Xl;
-		Xl = Xr;
-		Xr = temp;
-	}
-
-	/* End of Feistel Network, swap again */
-	temp = Xl;
-	Xl = Xr;
-	Xr = temp;
-
-	Xr = Xr ^ c->P[1];
-	Xl = Xl ^ c->P[0];
-
-	*xr = Xr;
-	*xl = Xl;
+	*xl = Xr ^ c->P[0];
+	*xr = Xl;
 }
 
 void
