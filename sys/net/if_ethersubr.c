@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.74 2004/01/09 10:44:32 markus Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.75 2004/02/15 02:52:41 avsm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -931,7 +931,7 @@ ether_sprintf(ap)
 	u_char *ap;
 {
 	int i;
-	static char etherbuf[18];
+	static char etherbuf[ETHER_ADDR_LEN * 3];
 	char *cp = etherbuf;
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
