@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.104 2004/11/11 12:17:25 espie Exp $
+# $OpenBSD: pkg_add,v 1.105 2004/11/11 12:29:20 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -538,6 +538,8 @@ $state->{do_faked} = 0;
 $state->{replace} = $opt_r;
 $state->{localbase} = $opt_L;
 $state->{arch} = $opt_A;
+$state->{forced} = \%forced;
+
 if (defined $opt_Q and defined $opt_B) {
 	Fatal "-Q and -B are incompatible options";
 }

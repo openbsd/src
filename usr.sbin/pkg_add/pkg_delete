@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.73 2004/11/11 11:36:26 espie Exp $
+# $OpenBSD: pkg_delete,v 1.74 2004/11/11 12:29:20 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -69,6 +69,7 @@ $state->{very_verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
+$state->{forced} = \%forced;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
 if ($opt_x && $state->{beverbose}) {
