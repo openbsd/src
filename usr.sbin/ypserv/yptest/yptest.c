@@ -1,4 +1,4 @@
-/*	$OpenBSD: yptest.c,v 1.9 2002/01/20 23:37:27 deraadt Exp $ */
+/*	$OpenBSD: yptest.c,v 1.10 2002/02/13 23:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yptest.c,v 1.9 2002/01/20 23:37:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yptest.c,v 1.10 2002/02/13 23:10:46 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -58,6 +58,7 @@ char *key, *val, *data;
 	return 0;
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -141,4 +142,5 @@ printf("dom %d\n", Domain[0]);
 	Status = yp_all(Domain, Map, &Callback);
 	if (Status)
 		printf("yp error: %s\n", yperr_string(Status));
+	return 0;
 }

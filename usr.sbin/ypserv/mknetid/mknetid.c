@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.6 2001/01/11 23:37:22 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.7 2002/02/13 23:10:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mknetid.c,v 1.6 2001/01/11 23:37:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mknetid.c,v 1.7 2002/02/13 23:10:46 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -43,7 +43,10 @@ static char rcsid[] = "$OpenBSD: mknetid.c,v 1.6 2001/01/11 23:37:22 deraadt Exp
 #include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
+#include <err.h>
 #include <netdb.h>
+
+#include <rpcsvc/ypclnt.h>
 
 struct user {
 	char	*usr_name;		/* user name */
@@ -414,7 +417,7 @@ print_hosts(pfile, fname, domain)
 {
 	char  line[1024];
 	int   line_no = 0;
-	int   len, colon;
+	int   len;
 	char  *p, *k, *u;
 
 	while (read_line(pfile, line, sizeof(line))) {
@@ -469,7 +472,7 @@ char *fname;
 {
 	char  line[1024];
 	int   line_no = 0;
-	int   len, colon;
+	int   len;
 	char  *p, *k, *u;
 
 	while (read_line(mfile, line, sizeof(line))) {
