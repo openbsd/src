@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 1998/12/13 07:08:38 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 1998/12/29 22:20:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -264,11 +264,11 @@ bus_space_write_multi_8(bus_space_tag_t t, bus_space_handle_t h,
 #define	bus_space_copy_8
 #endif
 
-#define	bus_space_barrier(t, h, o, l, f) \
-	((void)(t), (void)(h), (void)(o), (void)(o), (void)(l), (void)(f))
+#define	BUS_SPACE_BARRIER_READ	0
+#define	BUS_SPACE_BARRIER_WRITE	1
 
-#define	BUS_SPACE_BARRIER_READ	1
-#define	BUS_SPACE_BARRIER_WRITE	2
+void bus_space_barrier __P((bus_space_tag_t tag, bus_space_handle_t h,
+	bus_addr_t off, bus_size_t len, int op));
 
 #define	BUS_DMA_WAITOK		0x00
 #define	BUS_DMA_NOWAIT		0x01
