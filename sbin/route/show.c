@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.21 2002/02/16 21:27:37 millert Exp $	*/
+/*	$OpenBSD: show.c,v 1.22 2003/03/13 09:09:27 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.21 2002/02/16 21:27:37 millert Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.22 2003/03/13 09:09:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,6 +305,7 @@ p_sockaddr(sa, flags, width)
 {
 	char workbuf[128], *cplim;
 	char *cp = workbuf;
+	int len = sizeof workbuf;
 
 	switch(sa->sa_family) {
 
@@ -314,25 +315,32 @@ p_sockaddr(sa, flags, width)
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
-			(void) sprintf(workbuf, "link#%d", sdl->sdl_index);
-		else switch (sdl->sdl_type) {
-		case IFT_ETHER:
-		    {
-			int i;
-			u_char *lla = (u_char *)sdl->sdl_data +
-			    sdl->sdl_nlen;
+			(void) snprintf(workbuf, sizeof workbuf,
+			    "link#%d", sdl->sdl_index);
+		else {
+			switch (sdl->sdl_type) {
+			case IFT_ETHER:
+			    {
+				int i;
+				u_char *lla = (u_char *)sdl->sdl_data +
+				    sdl->sdl_nlen;
 
-			cplim = "";
-			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
-				cp += sprintf(cp, "%s%x", cplim, *lla);
-				cplim = ":";
+				cplim = "";
+				for (i = 0; i < sdl->sdl_alen; i++, lla++) {
+					snprintf(cp, len, "%s%x", cplim, *lla);
+					len -= strlen(cp);
+					cp += strlen(cp);
+					if (len <= 0)
+						break;	/* overflow */
+					cplim = ":";
+				}
+				cp = workbuf;
+				break;
+			    }
+			default:
+				cp = link_ntoa(sdl);
+				break;
 			}
-			cp = workbuf;
-			break;
-		    }
-		default:
-			cp = link_ntoa(sdl);
-			break;
 		}
 		break;
 	    }
@@ -373,11 +381,26 @@ p_sockaddr(sa, flags, width)
 
 		slim =  sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
-		cp += sprintf(cp, "(%d)", sa->sa_family);
+		snprintf(cp, len, "(%d)", sa->sa_family);
+		len -= strlen(cp);
+		cp += strlen(cp);
+		if (len <= 0) {
+			cp = workbuf;
+			break;		/* overflow */
+		}
 		while (s < slim && cp < cplim) {
-			cp += sprintf(cp, " %02x", *s++);
-			if (s < slim)
-				cp += sprintf(cp, "%02x", *s++);
+			snprintf(cp, len, " %02x", *s++);
+			len -= strlen(cp);
+			cp += strlen(cp);
+			if (len <= 0)
+				break;		/* overflow */
+			if (s < slim) {
+				snprintf(cp, len, "%02x", *s++);
+				len -= strlen(cp);
+				cp += strlen(cp);
+				if (len <= 0)
+					break;		/* overflow */
+			}
 		}
 		cp = workbuf;
 	    }

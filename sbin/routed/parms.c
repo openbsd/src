@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.7 2002/08/08 14:00:24 aaron Exp $	*/
+/*	$OpenBSD: parms.c,v 1.8 2003/03/13 09:09:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -386,13 +386,14 @@ parse_parms(char *line)
 			    || tok[3] == '\0'
 			    || strlen(tok) > IFNAMSIZ+3)
 				break;
-			strcpy(parm.parm_name, tok+3);
+			strlcpy(parm.parm_name, tok+3, sizeof parm.parm_name);
 
 		} else if (PARSE("passwd")) {
 			if (tok[7] == '\0'
 			    || strlen(tok) > RIP_AUTH_PW_LEN+7)
 				break;
-			strcpy(parm.parm_passwd, tok+7);
+			strlcpy(parm.parm_passwd, tok+7,
+			    sizeof parm.parm_passwd);
 
 		} else if (PARS("no_ag")) {
 			parm.parm_int_state |= (IS_NO_AG | IS_NO_SUPER_AG);

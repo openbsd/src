@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: readfile.c,v 1.7 2002/12/06 02:17:42 deraadt Exp $";
+static char rcsid[] = "$Id: readfile.c,v 1.8 2003/03/13 09:09:45 deraadt Exp $";
 #endif
 
 
@@ -1223,14 +1223,15 @@ get_shared_string(src)
 	char retstring[MAXSTRINGLEN];
 	struct shared_string *s;
 	unsigned int length;
+	int len;
 
 	length = sizeof(retstring);
 	(void) get_string(src, retstring, &length);
 
-	s = (struct shared_string *) smalloc(sizeof(struct shared_string)
-										 + length);
+	len = sizeof(struct shared_string) + length;
+	s = (struct shared_string *) smalloc(len);
 	s->linkcount = 1;
-	strcpy(s->string, retstring);
+	strlcpy(s->string, retstring, len);
 
 	return s;
 }

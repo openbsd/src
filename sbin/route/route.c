@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.55 2003/03/11 02:32:31 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.56 2003/03/13 09:09:27 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.55 2003/03/11 02:32:31 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.56 2003/03/13 09:09:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1200,7 +1200,7 @@ ns_print(struct sockaddr_ns *sns)
 	if (ns_nullhost(work) && net.long_e == 0) {
 		if (!port)
 			return ("*.*");
-		(void) sprintf(mybuf, "*.0x%x", port);
+		(void) snprintf(mybuf, sizeof mybuf, "*.0x%x", port);
 		return (mybuf);
 	}
 
@@ -1210,12 +1210,12 @@ ns_print(struct sockaddr_ns *sns)
 		host = "*";
 	else {
 		q = work.x_host.c_host;
-		(void) sprintf(chost, "0x%02x%02x%02x%02x%02x%02x",
+		(void) snprintf(chost, sizeof chost, "0x%02x%02x%02x%02x%02x%02x",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
 		host = chost;
 	}
 	if (port)
-		(void) sprintf(cport, ".0x%x", htons(port));
+		(void) snprintf(cport, sizeof cport, ".0x%x", htons(port));
 	else
 		*cport = '\0';
 
@@ -1245,7 +1245,7 @@ ipx_print(struct sockaddr_ipx *sipx)
 	if (ipx_nullhost(work) && net.long_e == 0) {
 		if (!port)
 			return ("*.*");
-		(void) sprintf(mybuf, "*.0x%XH", port);
+		(void) snprintf(mybuf, sizeof mybuf, "*.0x%XH", port);
 		return (mybuf);
 	}
 
@@ -1255,14 +1255,14 @@ ipx_print(struct sockaddr_ipx *sipx)
 		host = "*";
 	else {
 		q = work.ipx_host.c_host;
-		(void) sprintf(chost, "%02X%02X%02X%02X%02X%02XH",
+		(void) snprintf(chost, sizeof chost, "%02X%02X%02X%02X%02X%02XH",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
 			/* void */;
 		host = p;
 	}
 	if (port)
-		(void) sprintf(cport, ".%XH", htons(port));
+		(void) snprintf(cport, sizeof cport, ".%XH", htons(port));
 	else
 		*cport = 0;
 

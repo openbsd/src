@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.15 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.16 2003/03/13 09:09:25 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.15 2002/02/17 19:42:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.16 2003/03/13 09:09:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -673,7 +673,7 @@ readDosDirSection(f, boot, fat, dir)
 				dirent.head |= (p[20] << 16) | (p[21] << 24);
 			dirent.size = p[28] | (p[29] << 8) | (p[30] << 16) | (p[31] << 24);
 			if (vallfn) {
-				strcpy(dirent.lname, longName);
+				strlcpy(dirent.lname, longName, sizeof dirent.lname);
 				longName[0] = '\0';
 				shortSum = -1;
 			}

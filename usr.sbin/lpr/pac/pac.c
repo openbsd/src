@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.15 2002/06/14 21:35:01 todd Exp $ */
+/*	$OpenBSD: pac.c,v 1.16 2003/03/13 09:09:48 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: pac.c,v 1.15 2002/06/14 21:35:01 todd Exp $";
+static const char rcsid[] = "$OpenBSD: pac.c,v 1.16 2003/03/13 09:09:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -444,6 +444,7 @@ static int
 chkprinter(const char *s)
 {
 	int stat;
+	int len;
 
 	if ((stat = cgetent(&bp, printcapdb, s)) == -2) {
 		printf("pac: can't open printer description file\n");
@@ -459,11 +460,12 @@ chkprinter(const char *s)
 	}
 	if (!pflag && (cgetnum(bp, "pc", &price100) == 0))
 		price = price100/10000.0;
-	sumfile = (char *) malloc(strlen(acctfile) + 5);
+	len = strlen(acctfile) + 5;
+	sumfile = (char *) malloc(len);
 	if (sumfile == NULL)
 		err(1, "pac");
-	strcpy(sumfile, acctfile);	/* safe */
-	strcat(sumfile, "_sum");	/* safe */
+	strlcpy(sumfile, acctfile, len);
+	strlcat(sumfile, "_sum", len);
 	return(1);
 }
 

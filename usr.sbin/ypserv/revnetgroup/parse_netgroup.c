@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.6 2002/12/09 00:45:38 millert Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.7 2003/03/13 09:09:51 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.6 2002/12/09 00:45:38 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.7 2003/03/13 09:09:51 deraadt Exp $";
 #endif
 
 /*
@@ -298,7 +298,7 @@ read_for_group(char *group)
 	char *data = NULL;
 
 	data = lookup (gtable, group);
-	sprintf(line, "%s %s", group, data);
+	snprintf(line, sizeof line, "%s %s", group, data);
 	pos = (char *)&line;
 #ifdef CANT_HAPPEN
 	if (*pos == '#')

@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.15 2002/08/09 02:12:15 itojun Exp $";
+    "@(#) $Id: mtrace.c,v 1.16 2003/03/13 09:09:49 deraadt Exp $";
 #endif
 
 #include <netdb.h>
@@ -232,7 +232,7 @@ proto_type(type)
       case PROTO_CBT:
 	return ("CBT");
       default:
-	(void) sprintf(buf, "Unknown protocol code %d", type);
+	(void) snprintf(buf, sizeof buf, "Unknown protocol code %d", type);
 	return (buf);
     }
 }
@@ -264,7 +264,7 @@ flag_type(type)
       case TR_NO_SPACE:
 	return ("No space in packet");
       default:
-	(void) sprintf(buf, "Unknown error code %d", type);
+	(void) snprintf(buf, sizeof buf, "Unknown error code %d", type);
 	return (buf);
     }
 }    
@@ -910,14 +910,14 @@ stat_line(r, s, have_next, rst)
 	if (v_out) v_pct = (v_lost * 100 + (v_out >> 1)) / v_out;
 	else v_pct = 0;
 	if (-100 < v_pct && v_pct < 101 && v_out > 10)
-	  sprintf(v_str, "%3d", v_pct);
+	  snprintf(v_str, sizeof v_str, "%3d", v_pct);
 	else memcpy(v_str, " --", 4);
 
 	g_lost = g_out - (ntohl(s->tr_pktcnt) - ntohl(r->tr_pktcnt));
 	if (g_out) g_pct = (g_lost * 100 + (g_out >> 1))/ g_out;
 	else g_pct = 0;
 	if (-100 < g_pct && g_pct < 101 && g_out > 10)
-	  sprintf(g_str, "%3d", g_pct);
+	  snprintf(g_str, sizeof g_str, "%3d", g_pct);
 	else memcpy(g_str, " --", 4);
 
 	printf("%6d/%-5d=%s%%%4d pps",

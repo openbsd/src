@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.37 2003/01/18 23:30:20 deraadt Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.38 2003/03/13 09:09:26 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -152,14 +152,15 @@ static int
 verify_entry(const char *entry, char *filename)
 {
 	struct	nlist	names[2];
-	int n;
+	int n, len;
 	char *s;
 
 	memset(names, 0, sizeof(names));
-	s = malloc(strlen(entry) + 2);
+	len = strlen(entry) + 2;
+	s = malloc(len);
 	if (s == NULL)
 		err(1, "malloc");
-	sprintf(s, "_%s", entry);	/* safe */
+	snprintf(s, len, "_%s", entry);
 #ifdef	_AOUT_INCLUDE_
 	names[0].n_un.n_name = s;
 #else
@@ -315,14 +316,17 @@ main(int argc, char *argv[])
 		 * Try <modobj>_init if entry is DFLT_ENTRY.
 		 */
 		if (strcmp(entry, DFLT_ENTRY) == 0) {
+			int len;
+
 			if ((p = strrchr(modout, '/')))
 				p++;
 			else
 				p = modout;
-			entry = malloc(strlen(p) + strlen(DFLT_ENTRYEXT) + 1);
+			len = strlen(p) + strlen(DFLT_ENTRYEXT) + 1;
+			entry = malloc(len);
 			if (entry == NULL)
 				err(1, "malloc");
-			sprintf(entry, "%s%s", p, DFLT_ENTRYEXT); /* safe */
+			snprintf(entry, len, "%s%s", p, DFLT_ENTRYEXT);
 			if (verify_entry(entry, modobj))
 				errx(1, "entry point _%s not found in %s",
 				    entry, modobj);

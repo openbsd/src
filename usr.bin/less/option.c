@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: option.c,v 1.4 2003/03/13 09:09:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -408,7 +408,7 @@ propt(c)
 {
 	static char buf[8];
 
-	sprintf(buf, "-%s", prchar(c));
+	snprintf(buf, sizeof buf, "-%s", prchar(c));
 	return (buf);
 }
 

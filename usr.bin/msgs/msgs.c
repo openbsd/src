@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.23 2002/08/08 11:55:07 ho Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.24 2003/03/13 09:09:33 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.23 2002/08/08 11:55:07 ho Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.24 2003/03/13 09:09:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ void prmesg(int);
 void onintr(int);
 void onsusp(int);
 int linecnt(FILE *);
-int next(char *);
+int next(char *, int);
 void ask(char *);
 void gfrsub(FILE *);
 char *nxtfld(char *);
@@ -590,7 +590,7 @@ cmnd:
 					break;
 				}
 				if (isdigit(*in)) {
-					msg = next(in);
+					msg = next(in, sizeof inbuf);
 					sep = in;
 					break;
 				}
@@ -742,12 +742,13 @@ linecnt(f)
 }
 
 int
-next(buf)
+next(buf, len)
 	char *buf;
+	int len;
 {
 	int i;
 	sscanf(buf, "%d", &i);
-	sprintf(buf, "Goto %d", i);
+	snprintf(buf, len, "Goto %d", i);
 	return(--i);
 }
 

@@ -39,8 +39,9 @@ getether(ifname, eap)
 	int rc = -1;
 	int fd;
 	struct ifdevea phys;
+
 	bzero(&phys, sizeof(phys));
-	strcpy(phys.ifr_name, ifname);
+	strlcpy(phys.ifr_name, ifname, sizeof phys.ifr_name);
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		report(LOG_ERR, "getether: socket(INET,DGRAM) failed");
 		return -1;
@@ -335,8 +336,9 @@ getether(ifname, eap)
 	int rc = -1;
 	int fd;
 	struct ifreq phys;
+
 	bzero(&phys, sizeof(phys));
-	strcpy(phys.ifr_name, ifname);
+	strlcpy(phys.ifr_name, ifname, sizeof phys.ifr_name);
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		report(LOG_ERR, "getether: socket(INET,DGRAM) failed");
 		return -1;

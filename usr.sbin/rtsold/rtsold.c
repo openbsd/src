@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.26 2002/10/26 20:23:20 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.27 2003/03/13 09:09:50 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
 
 /*
@@ -789,7 +789,7 @@ autoifprobe()
 	static char **argv = NULL;
 	static int n = 0;
 	char **a;
-	int i, found;
+	int i, found, len;
 	struct ifaddrs *ifap, *ifa, *target;
 
 	/* initialize */
@@ -837,10 +837,11 @@ autoifprobe()
 		if (a == NULL)
 			err(1, "realloc");
 		argv = a;
-		argv[n] = (char *)malloc(1 + strlen(ifa->ifa_name));
+		len = 1 + strlen(ifa->ifa_name);
+		argv[n] = (char *)malloc(len);
 		if (!argv[n])
 			err(1, "malloc");
-		strcpy(argv[n], ifa->ifa_name);
+		strlcpy(argv[n], ifa->ifa_name, len);
 		n++;
 	}
 

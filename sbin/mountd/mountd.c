@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.54 2003/03/09 00:30:24 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.55 2003/03/13 09:09:26 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -833,13 +833,15 @@ get_exportlist(void)
 				     */
 				    ep = ex_search(&fsb.f_fsid);
 				    if (ep == NULL) {
+					int len;
+
 					ep = get_exp();
 					ep->ex_fs = fsb.f_fsid;
-					ep->ex_fsdir = (char *)
-					    malloc(strlen(fsb.f_mntonname) + 1);
+					len = strlen(fsb.f_mntonname) + 1;
+					ep->ex_fsdir = (char *)malloc(len);
 					if (ep->ex_fsdir)
-					    strcpy(ep->ex_fsdir,
-						fsb.f_mntonname);
+					    strlcpy(ep->ex_fsdir,
+					        fsb.f_mntonname, len);
 					else
 					    out_of_mem();
 					if (debug)
@@ -1093,14 +1095,14 @@ add_expdir(struct dirlist **dpp, char *cp, int len)
 {
 	struct dirlist *dp;
 
-	dp = (struct dirlist *)malloc(sizeof (struct dirlist) + len);
+	dp = (struct dirlist *)malloc(sizeof (struct dirlist) + len + 1);
 	if (dp == NULL)
 		out_of_mem();
 	dp->dp_left = *dpp;
 	dp->dp_right = NULL;
 	dp->dp_flag = 0;
 	dp->dp_hosts = NULL;
-	strcpy(dp->dp_dirp, cp);
+	strlcpy(dp->dp_dirp, cp, len);	/* might be 1 byte extra */
 	*dpp = dp;
 	return (dp->dp_dirp);
 }
@@ -1692,14 +1694,17 @@ get_net(char *cp, struct netmsk *net, int maskflg)
 	if (maskflg)
 		net->nt_mask = inetaddr.s_addr;
 	else {
+		int len;
+
 		if (np)
 			name = np->n_name;
 		else
 			name = inet_ntoa(inetaddr);
-		net->nt_name = (char *)malloc(strlen(name) + 1);
+		len = strlen(name) + 1;
+		net->nt_name = (char *)malloc(len);
 		if (net->nt_name == NULL)
 			out_of_mem();
-		strcpy(net->nt_name, name);
+		strlcpy(net->nt_name, name, len);
 		net->nt_net = inetaddr.s_addr;
 	}
 	return (0);

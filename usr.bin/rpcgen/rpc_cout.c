@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.13 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.14 2003/03/13 09:09:34 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -354,17 +354,19 @@ emit_union(def)
 			continue;
 		cs = &cl->case_decl;
 		if (!streq(cs->type, "void")) {
-			object = alloc(strlen(def->def_name) + strlen(format) +
-			    strlen(cs->name) + 1);
+			int len = strlen(def->def_name) + strlen(format) +
+			    strlen(cs->name) + 1;
+
+			object = alloc(len);
 			if (object == NULL) {
 				fprintf(stderr, "Fatal error : no memory\n");
 				crash();
 			}
 			if (isvectordef(cs->type, cs->rel)) {
-				sprintf(object, vecformat, def->def_name,
+				snprintf(object, len, vecformat, def->def_name,
 				    cs->name);
 			} else {
-				sprintf(object, format, def->def_name,
+				snprintf(object, len, format, def->def_name,
 				    cs->name);
 			}
 			print_ifstat(2, cs->prefix, cs->type, cs->rel, cs->array_max,
@@ -376,18 +378,20 @@ emit_union(def)
 	dflt = def->def.un.default_decl;
 	if (dflt != NULL) {
 		if (!streq(dflt->type, "void")) {
+			int len = strlen(def->def_name) + strlen(format) +
+			    strlen(dflt->name) + 1;
+
 			fprintf(fout, "\tdefault:\n");
-			object = alloc(strlen(def->def_name) + strlen(format) +
-			    strlen(dflt->name) + 1);
+			object = alloc(len);
 			if (object == NULL) {
 				fprintf(stderr, "Fatal error : no memory\n");
 				crash();
 			}
 			if (isvectordef(dflt->type, dflt->rel)) {
-				sprintf(object, vecformat, def->def_name,
+				snprintf(object, len, vecformat, def->def_name,
 				    dflt->name);
 			} else {
-				sprintf(object, format, def->def_name,
+				snprintf(object, len, format, def->def_name,
 				    dflt->name);
 			}
 

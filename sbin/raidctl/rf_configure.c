@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.10 2002/12/16 07:01:33 tdeval Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.11 2003/03/13 09:09:27 deraadt Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -538,8 +538,8 @@ rf_ReadSpareTable(req, fname)
   if (buf[strlen(buf)-1] == '\n')
     buf[strlen(buf)-1] = '\0';
 
-  sprintf(targString, "fdisk %d\n", req->fcol);
-	sprintf(errString,
+	snprintf(targString, sizeof targString, "fdisk %d\n", req->fcol);
+	snprintf(errString, sizeof errString,
 	    "Invalid sparemap file:  can't find \"fdisk %d\" line\n",
 	    req->fcol);
   while (1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2003/03/13 09:09:35 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2002/02/16 21:27:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/03/13 09:09:35 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -172,7 +172,7 @@ main(argc, argv)
 	s_in.sin_family = AF_INET;
 	if (bind(f, (struct sockaddr *)&s_in, sizeof (s_in)) < 0)
 		err(1, "tftp: bind");
-	strcpy(mode, "netascii");
+	strlcpy(mode, "netascii", sizeof mode);
 	signal(SIGINT, intr);
 	if (argc > 1) {
 		if (setjmp(toplevel) != 0)
@@ -195,7 +195,7 @@ setpeer(argc, argv)
 	struct hostent *host;
 
 	if (argc < 2) {
-		strcpy(line, "Connect ");
+		strlcpy(line, "Connect ", sizeof line);
 		printf("(to) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		if (makeargv())
@@ -220,7 +220,7 @@ setpeer(argc, argv)
 		}
 		peeraddr.sin_family = host->h_addrtype;
 		bcopy(host->h_addr, &peeraddr.sin_addr, host->h_length);
-		(void) strcpy(hostname, host->h_name);
+		(void) strlcpy(hostname, host->h_name, sizeof hostname);
 	}
 	port = sp->s_port;
 	if (argc == 3) {
@@ -305,7 +305,7 @@ static void
 settftpmode(newmode)
 	char *newmode;
 {
-	strcpy(mode, newmode);
+	strlcpy(mode, newmode, sizeof mode);
 	if (verbose)
 		printf("mode set to %s\n", mode);
 }
@@ -324,7 +324,7 @@ put(argc, argv)
 	char *cp, *targ;
 
 	if (argc < 2) {
-		strcpy(line, "send ");
+		strlcpy(line, "send ", sizeof line);
 		printf("(file) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		if (makeargv())
@@ -357,7 +357,7 @@ put(argc, argv)
 		bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr, hp->h_length);
 		peeraddr.sin_family = hp->h_addrtype;
 		connected = 1;
-		strcpy(hostname, hp->h_name);
+		strlcpy(hostname, hp->h_name, sizeof hostname);
 	}
 	if (!connected) {
 		printf("No target machine specified.\n");
@@ -418,7 +418,7 @@ get(argc, argv)
 	char *src;
 
 	if (argc < 2) {
-		strcpy(line, "get ");
+		strlcpy(line, "get ", sizeof line);
 		printf("(files) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		if (makeargv())
@@ -454,7 +454,7 @@ get(argc, argv)
 			    hp->h_length);
 			peeraddr.sin_family = hp->h_addrtype;
 			connected = 1;
-			strcpy(hostname, hp->h_name);
+			strlcpy(hostname, hp->h_name, sizeof hostname);
 		}
 		if (argc < 4) {
 			cp = argc == 3 ? argv[2] : tail(src);
@@ -502,7 +502,7 @@ setrexmt(argc, argv)
 	int t;
 
 	if (argc < 2) {
-		strcpy(line, "Rexmt-timeout ");
+		strlcpy(line, "Rexmt-timeout ", sizeof line);
 		printf("(value) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		if (makeargv())
@@ -531,7 +531,7 @@ settimeout(argc, argv)
 	int t;
 
 	if (argc < 2) {
-		strcpy(line, "Maximum-timeout ");
+		strlcpy(line, "Maximum-timeout ", sizeof line);
 		printf("(value) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		if (makeargv())

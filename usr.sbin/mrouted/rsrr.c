@@ -94,7 +94,7 @@ rsrr_init()
     unlink(RSRR_SERV_PATH);
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sun_family = AF_UNIX;
-    strcpy(serv_addr.sun_path, RSRR_SERV_PATH);
+    strlcpy(serv_addr.sun_path, RSRR_SERV_PATH, sizeof serv_addr.sun_path);
 #if (defined(BSD) && (BSD >= 199103))
     servlen = offsetof(struct sockaddr_un, sun_path) +
 		strlen(serv_addr.sun_path);
@@ -444,7 +444,8 @@ rsrr_cache(gt,route_query)
     rc->route_query.source_addr.s_addr = route_query->source_addr.s_addr;
     rc->route_query.dest_addr.s_addr = route_query->dest_addr.s_addr;
     rc->route_query.query_id = route_query->query_id;
-    strcpy(rc->client_addr.sun_path, client_addr.sun_path);
+    strlcpy(rc->client_addr.sun_path, client_addr.sun_path,
+	sizeof rc->client_addr.sun_path);
     rc->client_length = client_length;
     rc->next = gt->gt_rsrr_cache;
     gt->gt_rsrr_cache = rc;

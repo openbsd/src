@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.22 2002/09/08 01:20:15 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.23 2003/03/13 09:09:46 deraadt Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -259,22 +259,29 @@ daemon_main(int argc, char **argv)
 		usage();
 		/*NOTREACHED*/
 	default:
+	    {
+		int len;
+
 		serverargc = argc - NUMARG;
 		if (serverargc >= MAXARGV)
 			exit_stderr("too many arguments");
 
-		serverpath = malloc(strlen(argv[NUMPRG]) + 1);
+		len = strlen(argv[NUMPRG]) + 1;
+		serverpath = malloc(len);
 		if (!serverpath)
 			exit_stderr("not enough core");
-		strcpy(serverpath, argv[NUMPRG]);
+		strlcpy(serverpath, argv[NUMPRG], len);
 		for (i = 0; i < serverargc; i++) {
-			serverarg[i] = malloc(strlen(argv[i + NUMARG]) + 1);
+			int len = strlen(argv[i + NUMARG]) + 1;
+
+			serverarg[i] = malloc(len);
 			if (!serverarg[i])
 				exit_stderr("not enough core");
-			strcpy(serverarg[i], argv[i + NUMARG]);
+			strlcpy(serverarg[i], argv[i + NUMARG], len);
 		}
 		serverarg[i] = NULL;
 		/* fall throuth */
+	    }
 	case 1:	/* no local service */
 		service = argv[NUMPRT];
 		break;

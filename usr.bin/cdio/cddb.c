@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.5 2002/12/14 21:28:08 espie Exp $ */
+/* $OpenBSD: cddb.c,v 1.6 2003/03/13 09:09:29 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -79,7 +79,7 @@ send_hello(FILE *cout)
 	char hostname[MAXHOSTNAMELEN];
 
 	if (gethostname(hostname, sizeof(hostname)) == -1)
-		strcpy(hostname, "unknown");
+		strlcpy(hostname, "unknown", sizeof hostname);
 	fprintf(cout, "CDDB HELLO %s %s cdio " VERSION "\r\n",
 	    getlogin(), hostname);
 	fflush(cout);
@@ -106,11 +106,11 @@ safe_copy(char **p, const char *title)
 	if (*p == NULL)
 		*p = strdup(copy_buffer);
 	else {
-		char *n = malloc(strlen(*p) + strlen(copy_buffer) + 1);
+		int len = strlen(*p) + strlen(copy_buffer) + 1;
+		char *n = malloc(len);
 		if (n == NULL)
 			return;
-		strcpy(n, *p);
-		strcat(n, copy_buffer);
+		snprintf(n, len, "%s%s", *p, copy_buffer);
 		free(*p);
 		*p = n;
 	}

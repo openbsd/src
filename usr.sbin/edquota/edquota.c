@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.35 2002/09/06 21:49:21 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.36 2003/03/13 09:09:46 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -365,14 +365,15 @@ editit(tmpfile)
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 	sigset_t mask, omask;
-	int stat;
+	int stat, len;
 
 	if ((ed = getenv("EDITOR")) == (char *)0)
 		ed = _PATH_VI;
-	p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfile) + 1);
+	len = strlen(ed) + 1 + strlen(tmpfile) + 1;
+	p = (char *)malloc(len);
 	if (!p)
 		return(0);
-	(void)sprintf(p, "%s %s", ed, tmpfile);
+	(void)snprintf(p, len, "%s %s", ed, tmpfile);
 	argp[2] = p;
 
 	sigemptyset(&mask);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.9 2003/03/13 06:10:49 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.10 2003/03/13 09:09:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1088,7 +1088,8 @@ read_rt(void)
 			continue;
 		}
 
-		strcpy(str, rtm_type_name(m.r.rtm.rtm_type));
+		strlcpy(str, rtm_type_name(m.r.rtm.rtm_type),
+		    sizeof str);
 		strp = &str[strlen(str)];
 		if (m.r.rtm.rtm_type <= RTM_CHANGE)
 			strp += sprintf(strp," from pid %ld", (long)m.r.rtm.rtm_pid);

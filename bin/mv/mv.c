@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.24 2002/07/04 04:26:40 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.25 2003/03/13 09:09:24 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.24 2002/07/04 04:26:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.25 2003/03/13 09:09:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 	/* It's a directory, move each file into it. */
 	if (strlen(argv[argc - 1]) > sizeof path - 1)
 		errx(1, "%s: destination pathname too long", *argv);
-	(void)strcpy(path, argv[argc - 1]);
+	(void)strlcpy(path, argv[argc - 1], sizeof path);
 	baselen = strlen(path);
 	endp = &path[baselen];
 	if (*(endp - 1) != '/') {

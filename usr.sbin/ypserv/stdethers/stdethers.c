@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdethers.c,v 1.6 2002/07/19 20:59:40 deraadt Exp $ */
+/*	$OpenBSD: stdethers.c,v 1.7 2003/03/13 09:09:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdethers.c,v 1.6 2002/07/19 20:59:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdethers.c,v 1.7 2003/03/13 09:09:51 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ working_ntoa(u_char *e)
 {
 	static char a[] = "xx:xx:xx:xx:xx:xx";
 
-	sprintf(a, "%x:%x:%x:%x:%x:%x",
+	snprintf(a, sizeof a, "%x:%x:%x:%x:%x:%x",
 	    e[0], e[1], e[2], e[3], e[4], e[5]);
 	return a;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.18 2002/06/09 08:13:09 todd Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.19 2003/03/13 09:09:27 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1244,8 +1244,10 @@ get_all_devices(diskarray, genericname)
 	fp = disks;
 	while ((p = strsep(&fp, ",")) != NULL) {
 		if (strstr((const char*)p, genericname) != NULL) {
-			(*diskarray)[i] = (char*) malloc(strlen(p) + 6);
-			sprintf((*diskarray)[i++], "/dev/%s%c", p,
+			int len = strlen(p) + 6;
+
+			(*diskarray)[i] = (char*) malloc(len);
+			snprintf((*diskarray)[i++], len, "/dev/%s%c", p,
 				'a' + getrawpartition());
 		}
 	}

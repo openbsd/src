@@ -1,4 +1,4 @@
-/*	$OpenBSD: os.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: os.c,v 1.5 2003/03/13 09:09:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
@@ -162,7 +162,7 @@ strerror(err)
   
 	if (err < sys_nerr)
 		return sys_errlist[err];
-	sprintf(buf, "Error %d", err);
+	snprintf(buf, sizeof buf, "Error %d", err);
 	return buf;
 #else
 	return ("cannot open");
@@ -179,14 +179,16 @@ errno_message(filename)
 {
 	char *p;
 	char *m;
+	int len;
 #if HAVE_ERRNO
 	extern int errno;
 	p = strerror(errno);
 #else
 	p = "cannot open";
 #endif
-	m = (char *) ecalloc(strlen(filename) + strlen(p) + 3, sizeof(char));
-	sprintf(m, "%s: %s", filename, p);
+	len = strlen(filename) + strlen(p) + 3;
+	m = (char *) ecalloc(len, sizeof(char));
+	snprintf(m, len, "%s: %s", filename, p);
 	return (m);
 }
 

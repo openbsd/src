@@ -1,4 +1,5 @@
-/* $OpenBSD: memconfig.c,v 1.6 2002/10/14 21:01:01 matthieu Exp $ */
+/* $OpenBSD: memconfig.c,v 1.7 2003/03/13 09:09:48 deraadt Exp $ */
+
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -211,7 +212,7 @@ setfunc(memfd, argc, argv)
 	mrd.mr_base = 0;
 	mrd.mr_len = 0;
 	mrd.mr_flags = 0;
-	strcpy(mrd.mr_owner, "user");
+	strlcpy(mrd.mr_owner, "user", sizeof mrd.mr_owner);
 	while ((ch = getopt(argc, argv, "b:l:o:")) != -1)
 		switch(ch) {
 		case 'b':
@@ -228,7 +229,7 @@ setfunc(memfd, argc, argv)
 			if (*optarg == 0 ||
 			    strlen(optarg) > sizeof(mrd.mr_owner)-1)
 				help("set");
-			strcpy(mrd.mr_owner, optarg);
+			strlcpy(mrd.mr_owner, optarg, sizeof mrd.mr_owner);
 			break;
 
 		case '?':

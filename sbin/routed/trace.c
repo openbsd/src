@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.9 2001/09/05 22:32:38 deraadt Exp $	*/
+/*	$OpenBSD: trace.c,v 1.10 2003/03/13 09:09:27 deraadt Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.9 2001/09/05 22:32:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.10 2003/03/13 09:09:27 deraadt Exp $";
 #endif
 
 #define	RIPCMDS
@@ -74,13 +74,13 @@ naddr_ntoa(naddr a)
 	static struct {
 	    char    str[16];		/* xxx.xxx.xxx.xxx\0 */
 	} bufs[NUM_BUFS];
-	char *s;
 	struct in_addr addr;
 
 	addr.s_addr = a;
-	s = strcpy(bufs[bufno].str, inet_ntoa(addr));
+	strlcpy(bufs[bufno].str, inet_ntoa(addr),
+	    sizeof bufs[bufno].str);
 	bufno = (bufno+1) % NUM_BUFS;
-	return s;
+	return bufs[bufno].str;
 #undef NUM_BUFS
 }
 
@@ -344,8 +344,10 @@ addrname(naddr	addr,			/* in network byte order */
 	naddr dmask;
 	int i;
 
-	s = strcpy(bufs[bufno].str, naddr_ntoa(addr));
+	strlcpy(bufs[bufno].str, naddr_ntoa(addr),
+	    sizeof bufs[bufno].str);
 	bufno = (bufno+1) % NUM_BUFS;
+	s = bufs[bufno].str;
 
 	if (force == 1 || (force == 0 && mask != std_mask(addr))) {
 		sp = &s[strlen(s)];
@@ -485,8 +487,10 @@ trace_pair(naddr dst,
 			+3*4+3+1];	/* "xxx.xxx.xxx.xxx" */
 	int i;
 
-	i = sprintf(buf, "%-16s-->", addrname(dst, mask, 0));
-	(void)sprintf(&buf[i], "%-*s", 15+20-MAX(20,i), gate);
+	i = snprintf(buf, sizeof buf, "%-16s-->", addrname(dst, mask, 0));
+	if (i >= sizeof buf)
+		return buf;
+	(void)snprintf(&buf[i], sizeof buf - i, "%-*s", 15+20-MAX(20,i), gate);
 	return buf;
 }
 

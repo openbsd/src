@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.25 2003/02/01 01:51:31 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.26 2003/03/13 09:09:33 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.25 2003/02/01 01:51:31 deraadt Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.26 2003/03/13 09:09:33 deraadt Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -1044,21 +1044,27 @@ inet6print(struct in6_addr *in6, int port, char *proto)
 	struct servent *sp = 0;
 	char line[80], *cp;
 	int width;
+	int len = sizeof line;
 
 	width = Aflag ? 12 : 16;
 	if (vflag && width < strlen(inet6name(in6)))
 		width = strlen(inet6name(in6));
-	snprintf(line, sizeof line, "%.*s.", width, inet6name(in6));
-	cp = strchr(line, '\0');
+	snprintf(line, len, "%.*s.", width, inet6name(in6));
+	len -= strlen(line);
+	if (len <= 0)
+		goto bail;
+
+	cp += len;
 	if (!nflag && port)
 		GETSERVBYPORT6(port, proto, sp);
 	if (sp || port == 0)
-		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
+		snprintf(cp, len, "%.8s", sp ? sp->s_name : "*");
 	else
-		sprintf(cp, "%d", ntohs((u_short)port));
+		snprintf(cp, len, "%d", ntohs((u_short)port));
 	width = Aflag ? 18 : 22;
 	if (vflag && width < strlen(line))
 		width = strlen(line);
+bail:
 	printf(" %-*.*s", width, width, line);
 }
 
