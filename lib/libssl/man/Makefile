@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2003/03/05 20:59:15 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2003/07/02 02:15:51 deraadt Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -877,5 +877,5 @@ CLEANFILES+=\
 	des_random_key.pm \
 	MD5.pm \
 
-clean:
+clean cleandir:
 	rm -f ${CLEANFILES}
