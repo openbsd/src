@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.28 2000/06/26 16:21:27 art Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.29 2000/07/17 05:43:10 art Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -785,6 +785,7 @@ linux_sys_alarm(p, v, retval)
 	} */ *uap = v;
 	int s;
 	struct itimerval *itp, it;
+	int timo;
 
 	itp = &p->p_realtimer;
 	s = splclock();
@@ -825,8 +826,11 @@ linux_sys_alarm(p, v, retval)
 	}
 
 	if (timerisset(&it.it_value)) {
+		timo = hzto(&it.it_value);
+		if (timo < 0)
+			timo = 1;
 		timeradd(&it.it_value, &time, &it.it_value);
-		timeout_add(&p->p_realit_to, hzto(&it.it_value));
+		timeout_add(&p->p_realit_to, timo);
 	}
 	p->p_realtimer = it;
 	splx(s);
