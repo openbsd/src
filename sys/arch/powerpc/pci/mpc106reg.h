@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpc106reg.h,v 1.5 2000/01/22 03:55:40 rahnds Exp $ */
+/*	$OpenBSD: mpc106reg.h,v 1.6 2000/03/20 07:10:50 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -72,25 +72,19 @@
 #define	MPC106_PCI_PMGMT		0x70
 
 void
-mpc_cfg_write_1( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
-	bus_space_handle_t ioh_cfc, u_int32_t reg, u_int8_t val);
+mpc_cfg_write_1( struct pcibr_config *cp, u_int32_t reg, u_int8_t val);
 void
-mpc_cfg_write_2( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
-	bus_space_handle_t ioh_cfc, u_int32_t reg, u_int16_t val);
+mpc_cfg_write_2( struct pcibr_config *cp, u_int32_t reg, u_int16_t val);
 void
-mpc_cfg_write_4( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
-	bus_space_handle_t ioh_cfc, u_int32_t reg, u_int32_t val);
+mpc_cfg_write_4( struct pcibr_config *cp, u_int32_t reg, u_int32_t val);
 
 u_int8_t
-mpc_cfg_read_1( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
-	bus_space_handle_t ioh_cfc, u_int32_t reg);
+mpc_cfg_read_1( struct pcibr_config *cp, u_int32_t reg);
 
 u_int16_t
-mpc_cfg_read_2( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
-	bus_space_handle_t ioh_cfc, u_int32_t reg);
+mpc_cfg_read_2( struct pcibr_config *cp, u_int32_t reg);
 
 u_int32_t
-mpc_cfg_read_4( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
-	bus_space_handle_t ioh_cfc, u_int32_t reg);
+mpc_cfg_read_4( struct pcibr_config *cp, u_int32_t reg);
 
 #endif /* _MACHINE_MPC106REG_H_ */

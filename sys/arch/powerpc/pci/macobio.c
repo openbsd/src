@@ -78,6 +78,7 @@ obio_match(parent, cf, aux)
 		case 0x07:	/* ohare */
 		case 0x10:	/* mac-io "Heathrow" */
 		case 0x17:	/* mac-io "Paddington" */
+		case 0x22:	/* mac-io "Keylargo" */
 			return 1;
 		}
 
@@ -86,15 +87,6 @@ obio_match(parent, cf, aux)
 
 #define HEATHROW_FCR_OFFSET 0x38
 u_int32_t *heathrow_FCR = NULL;
-
-void prog_switch (void *arg)
-{
-#ifdef DDB
-	Debugger();
-#else
-	printf("programmer button pressed, debugger not available\n");
-#endif
-}
 
 /*
  * Attach all the sub-devices we can find
@@ -139,7 +131,12 @@ obio_attach(parent, self, aux)
 			printf("heathrow fcr, %x\n", heathrow_FCR);
 		}
 		break;
+	case 0x22:	/* keylargo */
+		node = OF_finddevice("mac-io");
+		if (node == -1)
+			node = OF_finddevice("/pci/mac-io");
 
+		break;
 	default:
 		printf("obio_attach: unknown obio controller\n");
 		return;
@@ -148,25 +145,10 @@ obio_attach(parent, self, aux)
 
 	if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) < 12)
 		return;
+
 	ca.ca_baseaddr = reg[2];
 
 	sc->sc_membus_space.bus_base = ca.ca_baseaddr;
-	{
-		extern u_int32_t *interrupt_reg;
-		/* OK THIS IS AN UGLY HACK */
-		void mac_do_pending_int();
-		void mac_ext_intr();
-		typedef void  (void_f) (void);
-		extern void_f *pending_int_f;
-
-		interrupt_reg = (void*)ca.ca_baseaddr;
-
-		install_extint(mac_ext_intr);
-		pending_int_f = mac_do_pending_int;
-
-		mac_intr_establish(0x14, IST_LEVEL, IPL_HIGH,
-			prog_switch, 0x14);
-	}
 
 	sc->sc_membus_space.bus_reverse = 1;
 
@@ -213,4 +195,56 @@ obio_print(aux, obio)
 		printf(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
+}
+
+typedef int mac_intr_handle_t;
+
+typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
+            int, int, int (*func)(void *), void *, char *));
+typedef void     (intr_disestablish_t) __P((void *, void *));
+
+
+void *
+undef_mac_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
+	void * lcv;
+	int irq;
+	int type;
+	int level;
+	int (*ih_fun) __P((void *));
+	void *ih_arg;
+	char *name;
+{
+	printf("mac_intr_establish called, not yet inited\n");
+	return 0;
+}
+void
+mac_intr_disestab(lcp, arg)
+	void *lcp;
+	void *arg;
+{
+	printf("mac_intr_disestablish called, not yet inited\n");
+}
+
+intr_establish_t *mac_intr_establish_func = undef_mac_establish;
+intr_disestablish_t *mac_intr_disestablish_func = mac_intr_disestab;
+
+void *
+mac_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
+	void * lcv;
+	int irq;
+	int type;
+	int level;
+	int (*ih_fun) __P((void *));
+	void *ih_arg;
+	char *name;
+{
+	return (*mac_intr_establish_func)(lcv, irq, type, level, ih_fun,
+		ih_arg, name);
+}
+void
+mac_intr_disestablish(lcp, arg)
+	void *lcp;
+	void *arg;
+{
+	(*mac_intr_disestablish_func)(lcp, arg);
 }
