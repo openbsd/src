@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.55 1998/07/24 17:54:39 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.56 1998/09/16 22:43:15 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -27,6 +27,11 @@ fd		mode=0555
 
 # ./etc
 etc
+
+# ./etc/afs
+afs
+# ./etc/afs
+..
 
 # ./etc/amd
 amd
