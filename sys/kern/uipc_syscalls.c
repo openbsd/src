@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.41 2001/09/17 19:37:59 jason Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.42 2001/09/20 17:02:31 mpech Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ sys_accept(p, v, retval)
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof (*SCARG(uap, anamelen)));
 	}
-	/* if an error occured, free the file descriptor */
+	/* if an error occurred, free the file descriptor */
 	if (error) {
 		fdremove(p->p_fd, tmpfd);
 		ffree(fp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.13 2001/08/31 01:06:26 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.14 2001/09/20 17:02:31 mpech Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -329,7 +329,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		}
 	}
 
-	if (s->fpecr & 255) { /* floating point error occured */
+	if (s->fpecr & 255) { /* floating point error occurred */
 		db_printf("fpecr: 0x%08x fpsr: 0x%08x fpcr: 0x%08x\n",
 		    s->fpecr, s->fpsr, s->fpcr);
 		db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",

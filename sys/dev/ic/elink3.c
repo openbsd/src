@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.53 2001/07/08 23:38:05 fgsch Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.54 2001/09/20 17:02:31 mpech Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ epinit(sc)
 	    S_CARD_FAILURE | S_RX_COMPLETE | S_TX_COMPLETE | S_TX_AVAIL);
 
 	/*
-	 * Attempt to get rid of any stray interrupts that occured during
+	 * Attempt to get rid of any stray interrupts that occurred during
 	 * configuration.  On the i386 this isn't possible because one may
 	 * already be queued.  However, a single stray interrupt is
 	 * unimportant.

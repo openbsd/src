@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.5 2000/01/11 18:02:21 peter Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.6 2001/09/20 17:02:31 mpech Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.9 2000/01/08 22:57:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
  *   If a node fails, the dag either rolls forward to the completion or     *
  *   rolls back, undoing previously-completed nodes and fails atomically.   *
  *   The direction of recovery is determined by the location of the failed  *
- *   node in the graph.  If the failure occured before the commit node in   *
+ *   node in the graph.  If the failure occurred before the commit node in   *
  *   the graph, backward recovery is used.  Otherwise, forward recovery is  *
  *   used.                                                                  *
  *                                                                          *

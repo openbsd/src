@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.18 2001/08/18 16:50:03 aaron Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.19 2001/09/20 17:02:31 mpech Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -702,7 +702,7 @@ dp8390_intr(arg)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occured while not
+			 * be zero if a transmitter interrupt occurred while not
 			 * actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.

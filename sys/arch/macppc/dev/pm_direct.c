@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.3 2001/09/20 17:02:30 mpech Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -1051,7 +1051,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 	PM_VIA_INTR_ENABLE();
 
-	/* wait until the PM interrupt is occured */
+	/* wait until the PM interrupt is occurred */
 	ndelay = 0x80000;
 	while (adbWaiting == 1) {
 		if (read_via_reg(VIA1, vIFR) & 0x14)

@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.30 2001/08/31 02:52:19 krw Exp $
+ * $OpenBSD: aic7xxx.c,v 1.31 2001/09/20 17:02:31 mpech Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -5264,7 +5264,7 @@ ahc_abort_scbs(ahc, target, channel, lun, tag, role, status)
 	 * Go through the pending CCB list and look for
 	 * commands for this target that are still active.
 	 * These are other tagged commands that were
-	 * disconnected when the reset occured.
+	 * disconnected when the reset occurred.
 	 */
 	{
 		struct scb *scb;

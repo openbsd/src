@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.3 2001/06/17 22:06:05 pvalchev Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.4 2001/09/20 17:02:31 mpech Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -61,7 +61,7 @@
 #define BRGPHY_BMSR_EXTSTS	0x0100	/* Extended status present */
 #define BRGPHY_BMSR_PRESUB	0x0040	/* Preamble surpression */
 #define BRGPHY_BMSR_ACOMP	0x0020	/* Autoneg complete */
-#define BRGPHY_BMSR_RFAULT	0x0010	/* Remote fault condition occured */
+#define BRGPHY_BMSR_RFAULT	0x0010	/* Remote fault condition occurred */
 #define BRGPHY_BMSR_ANEG	0x0008	/* Autoneg capable */
 #define BRGPHY_BMSR_LINK	0x0004	/* Link status */
 #define BRGPHY_BMSR_JABBER	0x0002	/* Jabber detected */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.13 2001/08/26 00:15:36 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.14 2001/09/20 17:02:30 mpech Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1027,7 +1027,7 @@ hderror(unit)
 		return(1);
 
 	/*
-	 * First conjure up the block number at which the error occured.
+	 * First conjure up the block number at which the error occurred.
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
  	 */
@@ -1045,7 +1045,7 @@ hderror(unit)
 	 * Now output a generic message suitable for badsect.
 	 * Note that we don't use harderr cuz it just prints
 	 * out b_blkno which is just the beginning block number
-	 * of the transfer, not necessary where the error occured.
+	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
 	    'a'+hdpart(bp->b_dev), pbn);

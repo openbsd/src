@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_cksum.c,v 1.3 1999/02/23 21:55:29 mickey Exp $	*/
+/*	$OpenBSD: ns_cksum.c,v 1.4 2001/09/20 17:02:32 mpech Exp $	*/
 /*	$NetBSD: ns_cksum.c,v 1.3 1995/03/08 02:14:53 cgd Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ ns_cksum(m, len)
 		 * 32 bit arithmetic registers for adding,
 		 * with carries from the low added
 		 * into the high (by normal carry-chaining)
-		 * so long as we fold back before 16 carries have occured.
+		 * so long as we fold back before 16 carries have occurred.
 		 */
 		if (1 & (long) w)
 			goto uuuuglyy;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.13 1998/08/27 05:00:34 deraadt Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.14 2001/09/20 17:02:30 mpech Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ ENTRY(microtime)
 	# timer chip doesn't let us atomically read the current counter
 	# value and the output state (i.e., overflow state).  We have
 	# to read the ICU interrupt request register (IRR) to see if the
-	# overflow has occured.  Because we lack atomicity, we use
+	# overflow has occurred.  Because we lack atomicity, we use
 	# the (very accurate) heuristic that we do not check for
 	# overflow if the value read is close to 0.
 	# E.g., if we just checked the IRR, we might read a non-overflowing

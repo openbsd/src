@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.5 2001/08/26 02:37:07 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.6 2001/09/20 17:02:31 mpech Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1305,7 +1305,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 #endif
 		/*
 		 * If we were trying to start a command when the reselect
-		 * occured, need to put it at the head of the ready list,
+		 * occurred, need to put it at the head of the ready list,
 		 * mark target/lun unbusy and decrement sc_active count.
 		 */
 		if (sc->sc_nexus) {

@@ -1,4 +1,4 @@
-$OpenBSD: HPMMU.notes,v 1.2 1997/01/12 15:12:09 downsj Exp $
+$OpenBSD: HPMMU.notes,v 1.3 2001/09/20 17:02:29 mpech Exp $
 $NetBSD: HPMMU.notes,v 1.2 1994/10/26 07:22:51 cgd Exp $
 
 Overview:
@@ -78,14 +78,14 @@ Hardware registers:
 		TLB.  More info below.
 	5F400C:	MMU command/status register.  Defined as follows:
 
-		bit 15:	If 1, indicates a page table fault occured
-		bit 14:	If 1, indicates a page fault occured
+		bit 15:	If 1, indicates a page table fault occurred
+		bit 14:	If 1, indicates a page fault occurred
 		bit 13: If 1, indicates a protection fault (write to RO page)
 		bit 6:	MC68881 enable.  Tied to chip enable line.
 			(set this bit to enable)
 		bit 5:	MC68020 instruction cache enable.  Tied to Insruction
 			cache disable line.  (set this bit to enable)
-		bit 3:	If 1, indicates an MMU related bus error occured.
+		bit 3:	If 1, indicates an MMU related bus error occurred.
 			Bits 13-15 are now valid.
 		bit 2:	External cache enable.  (set this bit to enable)
 		bit 1:	Supervisor mapping enable.  Enables translation of

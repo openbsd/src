@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.27 2001/09/17 16:24:49 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.28 2001/09/20 17:02:31 mpech Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -906,7 +906,7 @@ fxp_stats_update(arg)
 	    sp->rx_rnr_errors +
 	    sp->rx_overrun_errors;
 	/*
-	 * If any transmit underruns occured, bump up the transmit
+	 * If any transmit underruns occurred, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {

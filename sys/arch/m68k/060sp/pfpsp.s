@@ -1,5 +1,5 @@
 #
-# $OpenBSD: pfpsp.s,v 1.2 1996/05/30 22:15:10 niklas Exp $
+# $OpenBSD: pfpsp.s,v 1.3 2001/09/20 17:02:30 mpech Exp $
 # $NetBSD: pfpsp.s,v 1.2 1996/05/15 19:49:12 is Exp $
 #
 
@@ -13494,7 +13494,7 @@ no_exc:
 #		in INEX2.						#
 #									#
 #	A10.	Or in INEX.						#
-#		If INEX is set, round error occured.  This is		#
+#		If INEX is set, round error occurred.  This is		#
 #		compensated for by 'or-ing' in the INEX2 flag to	#
 #		the lsb of Y.						#
 #									#
@@ -13960,7 +13960,7 @@ A9_con:
 	fmul.x		%fp1,%fp0	# calculate X * SCALE -> Y to fp0
 
 # A10. Or in INEX.
-#      If INEX is set, round error occured.  This is compensated
+#      If INEX is set, round error occurred.  This is compensated
 #      for by 'or-ing' in the INEX2 flag to the lsb of Y.
 #
 # Register usage:

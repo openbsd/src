@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2001/09/20 17:02:30 mpech Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -1193,7 +1193,7 @@ parityerrorfind()
 #endif
 	/*
 	 * If looking is true we are searching for a known parity error
-	 * and it has just occured.  All we do is return to the higher
+	 * and it has just occurred.  All we do is return to the higher
 	 * level invocation.
 	 */
 	if (looking)
@@ -1201,7 +1201,7 @@ parityerrorfind()
 	s = splhigh();
 	/*
 	 * If setjmp returns true, the parity error we were searching
-	 * for has just occured (longjmp above) at the current pg+o
+	 * for has just occurred (longjmp above) at the current pg+o
 	 */
 	if (setjmp(&parcatch)) {
 		printf("Parity error at 0x%x\n", ctob(pg)|o);
@@ -1209,7 +1209,7 @@ parityerrorfind()
 		goto done;
 	}
 	/*
-	 * If we get here, a parity error has occured for the first time
+	 * If we get here, a parity error has occurred for the first time
 	 * and we need to find it.  We turn off any external caches and
 	 * loop thru memory, testing every longword til a fault occurs and
 	 * we regain control at setjmp above.  Note that because of the

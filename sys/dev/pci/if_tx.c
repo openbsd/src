@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.19 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.20 2001/09/20 17:02:31 mpech Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -1040,7 +1040,7 @@ epic_intr(arg)
 		      INTSTAT_APE|INTSTAT_DPE|INTSTAT_TXU|INTSTAT_RXE) ){
     	    if( status & (INTSTAT_FATAL|INTSTAT_PMA|INTSTAT_PTA|
 			  INTSTAT_APE|INTSTAT_DPE) ){
-		printf(EPIC_FORMAT ": PCI fatal error occured (%s%s%s%s)\n",
+		printf(EPIC_FORMAT ": PCI fatal error occurred (%s%s%s%s)\n",
     		    EPIC_ARGS(sc),
 		    (status&INTSTAT_PMA)?"PMA":"",
 		    (status&INTSTAT_PTA)?" PTA":"",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.8 2001/06/25 19:31:48 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.9 2001/09/20 17:02:31 mpech Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct ata_drive_datas {
 	/* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
 	u_int8_t atapi_cap;
 
-	/* Keeps track of the number of resets that have occured in a row
+	/* Keeps track of the number of resets that have occurred in a row
 	   without a succesful command completion. */
 	u_int8_t n_resets;
 	u_int8_t n_dmaerrs;

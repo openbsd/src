@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_cksum.c,v 1.2 1996/10/26 09:34:49 mickey Exp $	*/
+/*	$OpenBSD: ipx_cksum.c,v 1.3 2001/09/20 17:02:32 mpech Exp $	*/
 
 /*-
  *
@@ -103,7 +103,7 @@ ipx_cksum(m, len)
 		 * 32 bit arithmetic registers for adding,
 		 * with carries from the low added
 		 * into the high (by normal carry-chaining)
-		 * so long as we fold back before 16 carries have occured.
+		 * so long as we fold back before 16 carries have occurred.
 		 */
 		if (1 & (int) w)
 			goto uuuuglyy;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.16 2001/07/09 22:41:14 fgsch Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.17 2001/09/20 17:02:30 mpech Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -648,7 +648,7 @@ aeintr(arg, slot)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occured while not
+			 * be zero if a transmitter interrupt occurred while not
 			 * actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.

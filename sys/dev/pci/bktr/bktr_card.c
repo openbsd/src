@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.1 2001/03/28 03:27:09 fgsch Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.2 2001/09/20 17:02:31 mpech Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -1091,7 +1091,7 @@ checkTuner:
 	} /* end switch(card) */
 
 
-        /* At this point, a goto checkDBX has not occured */
+        /* At this point, a goto checkDBX has not occurred */
         /* We have not been able to select a Tuner */
         /* Some cards make use of the tuner address to */
         /* identify the make/model of tuner */

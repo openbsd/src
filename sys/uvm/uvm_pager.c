@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.15 2001/09/19 20:50:59 mickey Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.16 2001/09/20 17:02:32 mpech Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.30 2000/05/20 03:36:06 thorpej Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ ReTry:
 	}
 
 	/*
-	 * a pager error occured.
+	 * a pager error occurred.
 	 * for transient errors, drop to a cluster of 1 page ("pg")
 	 * and try again.  for hard errors, don't bother retrying.
 	 */
@@ -566,7 +566,7 @@ ReTry:
 	}
 
 	/*
-	 * a pager error occured (even after dropping the cluster, if there
+	 * a pager error occurred (even after dropping the cluster, if there
 	 * was one).    give up!   the caller only has one page ("pg")
 	 * to worry about.
 	 */

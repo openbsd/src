@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.15 2001/08/24 22:53:14 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.16 2001/09/20 17:02:31 mpech Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1121,7 +1121,7 @@ ASGLOBAL(use_SR3_pcb)
    * FLAGS: CPU status flags                                       *
    ***************************************************             *
    * immediate goal:                                               *
-   *   An exception occured while enabling the FPU. Since r31      *
+   *   An exception occurred while enabling the FPU. Since r31      *
    *   is the user's r31 while enabling the FPU, we had put        *
    *   our pcb pointer into SR3, so make room from                 *
    *   there for our stack pointer.                                *
@@ -2654,7 +2654,7 @@ ASGLOBAL(m197_use_SR3_pcb)
    * FLAGS: CPU status flags                                       *
    ***************************************************             *
    * immediate goal:                                               *
-   *   An exception occured while enabling the FPU. Since r31      *
+   *   An exception occurred while enabling the FPU. Since r31      *
    *   is the user's r31 while enabling the FPU, we had put        *
    *   our pcb pointer into SR3, so make room from                 *
    *   there for our stack pointer.                                *

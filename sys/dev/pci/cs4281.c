@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.6 2001/08/25 10:13:29 art Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.7 2001/09/20 17:02:31 mpech Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1130,7 +1130,7 @@ cs4281_init(sc)
 		0x00 <<  0;    /* PLSS[4:0] Left  PCM Playback */
 	BA0WRITE4(sc, CS4281_SRCSA, dat32);
 	
-	/* Set interrupt to occured at Half and Full terminal
+	/* Set interrupt to occurred at Half and Full terminal
 	 * count interrupt enable for DMA channel 0 and 1.
 	 * To keep DMA stop, set MSK.
 	 */
