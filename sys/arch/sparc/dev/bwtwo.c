@@ -72,6 +72,7 @@
 #include <sparc/dev/bwtworeg.h>
 #include <sparc/dev/pfourreg.h>
 #include <sparc/dev/sbusvar.h>
+#include "pfour.h"
 
 /* per-display variables */
 struct bwtwo_softc {
@@ -124,7 +125,7 @@ bwtwomatch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
-#ifdef SUN4
+#if NPFOUR > 0
 	if (ca->ca_bustype == BUS_PFOUR &&
 	    PFOUR_ID(ra->ra_pfour) == PFOUR_ID_BW)
 		return (1);
@@ -154,6 +155,7 @@ bwtwoattach(parent, self, args)
 	sc->sc_bustype = ca->ca_bustype;
 	switch (ca->ca_bustype) {
 #if defined(SUN4)
+#if NPFOUR > 0
 	case BUS_PFOUR:
 		node = 0;
 		pfour_reset();
@@ -163,6 +165,7 @@ bwtwoattach(parent, self, args)
 		sc->sc_fb.fb_linebytes = sc->sc_fb.fb_type.fb_width / 8;
 		nam = "bwtwo";
 		break;  
+#endif
 	case BUS_OBIO:
 		node = 0;
 		nam = "bwtwo";
@@ -330,15 +333,17 @@ int
 bwtwostatus(sc)
 	struct bwtwo_softc *sc;
 {
-	int on;
-
 #ifdef SUN4
-	if (cputyp == CPU_SUN4 && sc->sc_bustype == BUS_OBIO)
-		on = lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO;
-	else
+#if NPFOUR > 0
+	if (sc->sc_bustype == BUS_PFOUR)
+		return pfourstatus();
 #endif
-		on = sc->sc_reg->bw_ctl & CTL_VE;
-	return (on);
+	if (sc->sc_bustype == BUS_OBIO)
+		return (lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO);
+#endif
+#if defined(SUN4C) || defined(SUN4M)
+	return (sc->sc_reg->bw_ctl & CTL_VE);
+#endif
 }
 
 void
@@ -346,21 +351,29 @@ bwtwoenable(sc, on)
 	struct bwtwo_softc *sc;
 	int on;
 {
+#if NPFOUR > 0
+		if (sc->sc_bustype == BUS_PFOUR) {
+			pfourenable(on);
+			return;
+		}
+#endif
 	if (on) {
 #ifdef SUN4
-		if (cputyp == CPU_SUN4 && sc->sc_bustype == BUS_OBIO)
+		if (sc->sc_bustype == BUS_OBIO) {
 			stba(AC_SYSENABLE, ASI_CONTROL,
 			    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);
-		else
+			return;
+		}
 #endif
-			sc->sc_reg->bw_ctl |= CTL_VE;
+		sc->sc_reg->bw_ctl |= CTL_VE;
 	} else {
 #ifdef SUN4
-		if (cputyp == CPU_SUN4 && sc->sc_bustype == BUS_OBIO)
+		if (sc->sc_bustype == BUS_OBIO) {
 			stba(AC_SYSENABLE, ASI_CONTROL,
 			    lduba(AC_SYSENABLE, ASI_CONTROL) & ~SYSEN_VIDEO);
-		else
+			return;
+		}
 #endif
-			sc->sc_reg->bw_ctl &= ~CTL_VE;
+		sc->sc_reg->bw_ctl &= ~CTL_VE;
 	}
 }

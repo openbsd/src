@@ -50,10 +50,9 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/dev/pfourreg.h>
 
-volatile int *pfour_vaddr;		/* pfour register */
-
 struct pfour_softc {
 	struct	device sc_dev;		/* base device */
+	volatile u_long *sc_vaddr;	/* pfour register */
 	int	nothing;
 };
 
@@ -106,7 +105,7 @@ pfourattach(parent, self, args)
 		return;
 	}
 
-	pfour_vaddr = mapiodev((caddr_t)(ca->ca_ra.ra_paddr + PFOUR_REG),
+	sc->sc_vaddr = mapiodev((caddr_t)(ca->ca_ra.ra_paddr + PFOUR_REG),
 	    NBPG, ca->ca_bustype);
 
 	printf(": cardtype 0x%02x\n", PFOUR_FBTYPE(val));
@@ -140,8 +139,11 @@ pfourattach(parent, self, args)
 void
 pfour_reset()
 {
-	*pfour_vaddr = PFOUR_REG_VIDEO | PFOUR_REG_RESET;
-	*pfour_vaddr = PFOUR_REG_VIDEO;
+	struct pfour_softc *sc = pfourcd.cd_devs[0];
+
+	*sc->sc_vaddr = PFOUR_REG_VIDEO | PFOUR_REG_RESET;
+	delay(1);
+	*sc->sc_vaddr = PFOUR_REG_VIDEO;
 }
 
 int
@@ -186,4 +188,24 @@ pfour_videosize(reg, xp, yp)
 		return (-1);
 	}
 	return (0);
+}
+
+void
+pfourenable(on)
+	int on;
+{
+	struct pfour_softc *sc = pfourcd.cd_devs[0];
+
+	if (on)
+		*sc->sc_vaddr |= PFOUR_REG_VIDEO;
+	else
+		*sc->sc_vaddr &= ~PFOUR_REG_VIDEO;
+}
+
+int
+pfourstatus()
+{
+	struct pfour_softc *sc = pfourcd.cd_devs[0];
+
+	return (*sc->sc_vaddr & PFOUR_REG_VIDEO);
 }
