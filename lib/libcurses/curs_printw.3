@@ -1,0 +1,47 @@
+.TH curs_printw 3X ""
+.SH NAME
+\fBprintw\fR, \fBwprintw\fR, \fBmvprintw\fR,
+\fBmvwprintw\fR, \fBvwprintw\fR - print formatted output in
+\fBcurses\fR windows
+.SH SYNOPSIS
+\fB#include <curses.h>\fR
+
+\fBint printw(char *fmt\fR [\fB, arg\fR] \fB...);\fR
+.br
+\fBint wprintw(WINDOW *win, char *fmt\fR [\fB, arg\fR] \fB...);\fR
+.br
+\fBint mvprintw(int y, int x, char *fmt\fR [\fB, arg\fR] \fB...);\fR
+.br
+\fBint mvwprintw(WINDOW *win, int y, int x,
+      \fBchar *fmt\fR [\fB, arg]\fR ...);
+
+\fB#include <varargs.h>\fR
+.br
+\fBint vwprintw(WINDOW *win, char *fmt, varglist);\fR
+.br
+.SH DESCRIPTION
+The \fBprintw\fR, \fBwprintw\fR, \fBmvprintw\fR and \fBmvwprintw\fR
+routines are analogous to \fBprintf\fR [see \fBprintf\fR(3S)].  In
+effect, the string that would be output by \fBprintf\fR is output
+instead as though \fBwaddstr\fR were used on the given window.
+
+The \fBvwprintw\fR routine is analogous to \fBvprintf\fR [see
+\fBprintf\fR(3S)] and performs a \fBwprintw\fR using a variable
+argument list.  The third argument is a \fBva_list\fR, a pointer to a
+list of arguments, as defined in \fB<varargs.h>\fR.
+.SH RETURN VALUE
+Routines that return an integer return \fBERR\fR upon failure and \fBOK\fR
+(SVr4 onlyspecifies "an integer value other than \fBERR\fR") upon successful
+completion.
+.SH PORTABILITY
+The XSI Curses standard, Issue 4 describes these functions.  The function
+\fBvwprintw\fR is marked TO BE WITHDRAWN, and is to be replaced by a function
+\fBvw_printw\fR using the \fB<stdarg.h>\fR interface.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBprintf\fR(3S), \fBvprintf(3S)\fR
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

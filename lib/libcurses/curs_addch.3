@@ -1,0 +1,146 @@
+'\" t
+.TH curs_addch 3X ""
+.SH NAME
+\fBaddch\fR, \fBwaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR,
+\fBechochar\fR, \fBwechochar\fR - add a character (with attributes) to a
+\fBcurses\fR window, then advance the cursor
+.SH SYNOPSIS
+\fB#include <curses.h>\fR
+
+\fBint addch(chtype ch);\fR
+.br
+\fBint waddch(WINDOW *win, chtype ch);\fR
+.br
+\fBint mvaddch(int y, int x, chtype ch);\fR
+.br
+\fBint mvwaddch(WINDOW *win, int y, int x, chtype ch);\fR
+.br
+\fBint echochar(chtype ch);\fR
+.br
+\fBint wechochar(WINDOW *win, chtype ch);\fR
+.br
+.SH DESCRIPTION
+The \fBaddch\fR, \fBwaddch\fR, \fBmvaddch\fR and \fBmvwaddch\fR routines put
+the character \fIch\fR into the given window at its current window position,
+which is then advanced.  They are analogous to \fBputchar\fR in \fBstdio\fR(3).
+If the advance is at the right margin, the cursor automatically wraps to the
+beginning of the next line.  At the bottom of the current scrolling region, if
+\fBscrollok\fR is enabled, the scrolling region is scrolled up one line.
+
+If \fIch\fR is a tab, newline, or backspace, the cursor is moved appropriately
+within the window.  Backspace moves the cursor one character left; at the left
+edge of a window it does nothing.  Newline does a \fBclrtoeol\fR, then moves
+the cursor to the window left margin on the next line, scrolling the window if
+on the last line).  Tabs are considered to be at every eighth column.
+
+If \fIch\fR is any control character other than tab, newline, or backspace, it
+is drawn in \fB^\fR\fIX\fR notation.  Calling \fBwinch\fR after adding a
+control character does not return the character itself, but instead returns
+the ^-representation of the control character.  (To emit control characters
+literally, use \fBechochar\fR.)
+
+Video attributes can be combined with a character argument passed to
+\fBaddch\fR or related functions by logical-ORing them into the character.
+(Thus, text, including attributes, can be copied from one place to another
+using \fBinch\fR and \fBaddch\fR.).  See the \fBcurs_attr\fR(3X) page for
+values of predefined video attribute constants that can be usefully ORed
+into characters.
+
+The \fBechochar\fR and \fBwechochar\fR routines are equivalent to a call to
+\fBaddch\fR followed by a call to \fBrefresh\fR, or a call to \fBwaddch\fR
+followed by a call to \fBwrefresh\fR.  The knowledge that only a single
+character is being output is used and, for non-control characters, a
+considerable performance gain may be seen by using these routines instead of
+their equivalents.
+.SS Line Graphics
+The following variables may be used to add line drawing characters to the
+screen with routines of the \fBaddch\fR family.  The default character listed
+below is used if the \fBacsc\fR capability doesn't define a terminal-specific
+replacement for it (but see the EXTENSIONS section below).  The names are
+taken from VT100 nomenclature.
+
+.TS
+l l l
+_ _ _
+l l l.
+\fIName\fR	\fIDefault\fR	\fIDescription\fR
+ACS_ULCORNER	+	upper left-hand corner
+ACS_LLCORNER	+	lower left-hand corner
+ACS_URCORNER	+	upper right-hand corner
+ACS_LRCORNER	+	lower right-hand corner
+ACS_RTEE	+	right tee
+ACS_LTEE	+	left tee
+ACS_BTEE	+	bottom tee
+ACS_TTEE	+	top tee
+ACS_HLINE	-	horizontal line
+ACS_VLINE	|	vertical line
+ACS_PLUS	+	plus
+ACS_S1  	-	scan line 1
+ACS_S9  	\&_	scan line 9
+ACS_DIAMOND	+	diamond
+ACS_CKBOARD	:	checker board (stipple)
+ACS_DEGREE	'	degree symbol
+ACS_PLMINUS	#	plus/minus
+ACS_BULLET	o	bullet
+ACS_LARROW	<	arrow pointing left
+ACS_RARROW	>	arrow pointing right
+ACS_DARROW	v	arrow pointing down
+ACS_UARROW	^	arrow pointing up
+ACS_BOARD	#	board of squares
+ACS_LANTERN	#	lantern symbol
+ACS_BLOCK	#	solid square block
+ACS_S3   	-	scan line 3
+ACS_S7  	-	scan line 7
+ACS_LEQUAL	<	less-than-or-equal-to
+ACS_GEQUAL	>	greater-than-or-equal-to
+ACS_PI  	*	greek pi
+ACS_NEQUAL	!	not-equal
+ACS_STERLING	f	pound-sterling symbol
+.TE
+
+.SH RETURN VALUE
+All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success
+(the SVr4 manuals specify only "an integer value other than \fBERR\fR") upon
+successful completion, unless otherwise noted in the preceding routine
+descriptions.
+.SH NOTES
+Note that \fBaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR, and
+\fBechochar\fR may be macros.
+.SH EXTENSIONS
+The following extended \fBcurses\fR features are available only on PC-clone
+consoles and compatible terminals obeying the ANSI.SYS de-facto standard for
+terminal control sequences.  They are not part of XSI curses.
+
+The attribute A_ALTCHARSET actually forces literal display of PC ROM characters
+including the high-half graphics.  Your console driver may still capture or
+translate a few (such as ESC) but this feature should give you access to the
+card-suit characters, up and down-arrow, and most others in the range 0-32.
+(In a terminfo entry designed for use with \fBncurses\fR, the high-half 
+characters are obtained using this attribute with an \fBacsc\fR string in
+which the second of each pair is a high-half character.)
+
+Giving \fBwechochar\fR an argument with its high bit set will produce the
+corresponding high-half ASCII graphic (SVr4 curses also has this feature but
+does not document it).  A control-character argument, however, will not
+typically produce the corresponding graphic; characters such as CR, NL, FF and
+TAB are typically interpreted by the console driver itself, and ESC will be
+interpreted as the leader of a control sequence.
+.SH PORTABILITY
+All these functions are described in the XSI Curses standard, Issue 4.
+The defaults specified for forms-drawing characters apply in the POSIX locale.
+
+The seven ACS symbols starting with \fBACS_S3\fR were not documented in
+any publicly released System V.  However, many publicly available terminfos
+include \fBacsc\fR strings in which their key characters (pryz{|}) are 
+embedded, and a second-hand list of their character descriptions has come
+to light.  The ACS-prefixed names for them were invented for \fBncurses\fR(3X).
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBcurs_attr\fR(3X), \fBcurs_clear\fR(3X),
+\fBcurs_inch\fR(3X), \fBcurs_outopts\fR(3X), \fBcurs_refresh\fR(3X),
+\fBputc\fR(3S).
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

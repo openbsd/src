@@ -1,0 +1,34 @@
+.TH curs_beep 3X ""
+.SH NAME
+\fBbeep\fR, \fBflash\fR - \fBcurses\fR bell and screen flash routines
+.SH SYNOPSIS
+\fB#include <curses.h>\fR
+
+\fBint beep(void);\fR
+.br
+\fBint flash(void);\fR
+.br
+.SH DESCRIPTION
+The \fBbeep\fR and \fBflash\fR routines are used to alert the terminal user.
+The routine \fBbeep\fR sounds an audible alarm on the terminal, if possible;
+otherwise it flashes the screen (visible bell).  The routine \fBflash\fR
+flashes the screen, and if that is not possible, sounds the alert.  If neither
+alert is possible, nothing happens.  Nearly all terminals have an audible alert
+(bell or beep), but only some can flash the screen.
+.SH RETURN VALUE
+These routines return \fBOK\fR if they succeed in beeping or flashing, 
+\fBERR\fR otherwise.
+.SH EXTENSIONS
+SVr4's beep and flash routines always returned \fBOK\fR, so it was not
+possible to tell when the beep or flash failed.
+.SH PORTABILITY
+These functions are defined in the XSI Curses standard, Issue 4.  Like SVr4, it
+specifies that they always return \fBOK\fR.
+.SH SEE ALSO
+\fBcurses\fR(3X)
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

@@ -1,0 +1,39 @@
+.TH curs_delch 3X ""
+.SH NAME
+\fBdelch\fR, \fBwdelch\fR, \fBmvdelch\fR, \fBmvwdelch\fR -
+delete character under the cursor in a \fBcurses\fR window
+.SH SYNOPSIS
+\fB#include <curses.h>\fR
+
+\fBint delch(void);\fR
+.br
+\fBint wdelch(WINDOW *win);\fR
+.br
+\fBint mvdelch(int y, int x);\fR
+.br
+\fBint mvwdelch(WINDOW *win, int y, int x);\fR
+.br
+.SH DESCRIPTION
+These routines delete the character under the cursor; all characters to the
+right of the cursor on the same line are moved to the left one position and the
+last character on the line is filled with a blank.  The cursor position does
+not change (after moving to \fIy\fR, \fIx\fR, if specified).  (This does not
+imply use of the hardware delete character feature.)
+.SH RETURN VALUE
+All routines return the integer \fBERR\fR upon failure and an \fBOK\fR (SVr4
+specifies only "an integer value other than \fBERR\fR") upon successful
+completion.
+.SH NOTES
+Note that \fBdelch\fR, \fBmvdelch\fR, and \fBmvwdelch\fR may be macros.
+.SH PORTABILITY
+These functions are described in the XSI Curses standard, Issue 4.  The
+standard specifies that they return \fBERR\fR on failure, but specifies no
+error conditions.
+.SH SEE ALSO
+\fBcurses\fR(3X)
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:
