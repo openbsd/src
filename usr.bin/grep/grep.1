@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.17 2003/08/11 18:49:09 tedu Exp $
+.\"	$OpenBSD: grep.1,v 1.18 2003/08/20 20:34:53 millert Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -261,13 +261,15 @@ Match 1 or less sequential repetitions of the pattern.
 Match 1 or more sequential repetitions of the pattern.
 .It Cm \&*
 Match 0 or more sequential repetitions of the pattern.
+.It Cm \&{}
+Match specified number of sequential repetitions of the pattern.
 .It Cm \&[]
 Match any single character or range of characters
 enclosed in the brackets.
 .It Cm \&\e
 Escape special characters which have meaning to
 .Nm egrep ,
-the set of {$,.,^,[,],|,?,+,*,(,)}.
+the set of {$,.,^,[,],|,?,+,*,{,},(,)}.
 .El
 .Sh EXAMPLES
 To find all occurrences of the word patricia in a file:
