@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.7 1999/11/29 06:42:20 millert Exp $	*/
+/*	$OpenBSD: crib.c,v 1.8 2001/08/10 23:50:22 pjanzen Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: crib.c,v 1.7 1999/11/29 06:42:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: crib.c,v 1.8 2001/08/10 23:50:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,10 +78,13 @@ main(argc, argv)
 	setgid(getgid());
 #endif
 
-	while ((ch = getopt(argc, argv, "eqr")) != -1)
+	while ((ch = getopt(argc, argv, "emqr")) != -1)
 		switch (ch) {
 		case 'e':
 			explain = TRUE;
+			break;
+		case 'm':
+			muggins = TRUE;
 			break;
 		case 'q':
 			quiet = TRUE;
@@ -91,7 +94,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			(void) fprintf(stderr, "usage: cribbage [-eqr]\n");
+			(void) fprintf(stderr, "usage: cribbage [-emqr]\n");
 			exit(1);
 		}
 
@@ -218,9 +221,20 @@ game()
 		flag = TRUE;
 		do {
 			if (!rflag) {			/* player cuts deck */
-				msg(quiet ? "Cut for crib? " :
-			    "Cut to see whose crib it is -- low card wins? ");
-				getline();
+				char *foo;
+
+				/* This is silly, but we should parse user input
+				 * even if we're not actually going to use it.
+				 */
+				do {
+					msg(quiet ? "Cut for crib? " :
+				    "Cut to see whose crib it is -- low card wins? ");
+					foo = getline();
+					if (*foo != '\0' && ((i = atoi(foo)) < 4 || i > 48))
+						msg("Invalid cut");
+					else
+						*foo = '\0';
+				} while (*foo != '\0');
 			}
 			i = (rand() >> 4) % CARDS;	/* random cut */
 			do {	/* comp cuts deck */
@@ -394,9 +408,20 @@ cut(mycrib, pos)
 	win = FALSE;
 	if (mycrib) {
 		if (!rflag) {	/* random cut */
-			msg(quiet ? "Cut the deck? " :
-		    "How many cards down do you wish to cut the deck? ");
-			getline();
+			char *foo;
+
+			/* This is silly, but we should parse user input,
+			 * even if we're not actually going to use it.
+			 */
+			do {
+				msg(quiet ? "Cut the deck? " :
+				    "How many cards down do you wish to cut the deck? ");
+				foo = getline();
+				if (*foo != '\0' && ((i = atoi(foo)) < 4 || i > 36))
+					msg("Invalid cut");
+				else
+					*foo = '\0';
+			} while (*foo != '\0');
 		}
 		i = (rand() >> 4) % (CARDS - pos);
 		turnover = deck[i + pos];
@@ -484,7 +509,7 @@ peg(mycrib)
 		prhand(ph, pnum, Playwin, FALSE);
 		prhand(ch, cnum, Compwin, TRUE);
 		prtable(sum);
-		if (myturn) {	/* my tyrn to play */
+		if (myturn) {
 			if (!anymove(ch, cnum, sum)) {	/* if no card to play */
 				if (!mego && cnum) {	/* go for comp? */
 					msg("GO");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.4 1999/11/29 06:42:20 millert Exp $	*/
+/*	$OpenBSD: support.c,v 1.5 2001/08/10 23:50:22 pjanzen Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: support.c,v 1.4 1999/11/29 06:42:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: support.c,v 1.5 2001/08/10 23:50:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,12 +144,18 @@ plyrhand(hand, s)
 	if (i != j) {
 		if (i < j) {
 			win = chkscr(&pscore, i);
-			msg("It's really only %d points; I get %d", i, 2);
-			if (!win)
+			if (!win) {
+				msg("It's really only %d points; I get %d", i, 2);
 				win = chkscr(&cscore, 2);
+			} else
+				msg("It's really only %d points.", i);
 		} else {
 			win = chkscr(&pscore, j);
 			msg("You should have taken %d, not %d!", i, j);
+			if (!win && muggins) {
+				msg("Muggins!  I score %d", i - j);
+				win = chkscr(&cscore, i - j);
+			}
 		}
 		if (explain)
 			msg("Explanation: %s", expl);

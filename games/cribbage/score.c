@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.3 1999/11/29 06:42:20 millert Exp $	*/
+/*	$OpenBSD: score.c,v 1.4 2001/08/10 23:50:22 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.3 1999/11/29 06:42:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.4 2001/08/10 23:50:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ scorehand(hand, starter, n, crb, do_explain)
 	k = hand[0].suit;
 	for (i = 0; i < n; i++) {	/* check for flush */
 		flag = (flag && (hand[i].suit == k));
-		if (hand[i].rank == JACK)	/* check for his nibs */
+		if (hand[i].rank == JACK)	/* check for his nobs */
 			if (hand[i].suit == starter.suit) {
 				score++;
 				if (do_explain)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.c,v 1.3 1999/11/29 06:42:20 millert Exp $	*/
+/*	$OpenBSD: extern.c,v 1.4 2001/08/10 23:50:22 pjanzen Exp $	*/
 /*	$NetBSD: extern.c,v 1.3 1995/03/21 15:08:50 cgd Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@ static char rcsid[] = "$NetBSD: extern.c,v 1.3 1995/03/21 15:08:50 cgd Exp $";
 
 bool	explain		= FALSE;	/* player mistakes explained */
 bool	iwon		= FALSE;	/* if comp won last game */
+bool	muggins		= FALSE;	/* player mistakes exploited */
 bool	quiet		= FALSE;	/* if suppress random mess */
 bool	rflag		= FALSE;	/* if all cuts random */
 

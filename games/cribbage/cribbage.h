@@ -1,4 +1,4 @@
-/*	$OpenBSD: cribbage.h,v 1.2 1999/11/29 06:42:20 millert Exp $	*/
+/*	$OpenBSD: cribbage.h,v 1.3 2001/08/10 23:50:22 pjanzen Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ extern	int		Lastscore[2];		/* previous score for each */
 
 extern  bool		iwon;			/* if comp won last */
 extern  bool		explain;		/* player mistakes explained */
+extern  bool		muggins;		/* player mistakes exploited */
 extern  bool		rflag;			/* if all cuts random */
 extern  bool		quiet;			/* if suppress random mess */
 extern	bool		playing;		/* currently playing game */

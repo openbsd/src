@@ -10,8 +10,8 @@ six.  That is virtually the only change from Suckling's directions.
 
 Players:
 
-	Two.  There are variants for three and four players, described
-	later.
+	Two.  There are variants for three and four players [not described
+	here].
 
 Cards:
 
@@ -22,19 +22,18 @@ index value.
 
 Cribbage Board:
 
-	Indispensable to scoring (unless you have a computer!, ed.) is
+	Indispensable to scoring [unless you have a computer!, ed.] is
 the device known as the cribbage board.  This is a rectangular panel, long
-and narrow, in which are four rows of 30 holes each.  (See illustration.)
-At one end, or in the center, are two or four additional holes, called
-game holes.  The board is placed between the two players, and each keeps
-his own score on the two rows of holes nearest himself.  Each is supplied
-with two pegs.  Before the first hand, the pegs are placed in the game
-holes.  On making his first score, the player advances one peg an
-appropriate number of holes (one per point) away from the game end of the
-board.  The second score is recorded by placing the second peg an
-appropriate distance ahead of the first.  For each subsequent score, the
-rear peg is jumped ahead of the other, the distance between the two pegs
-always showing the amount of this last score.
+and narrow, in which are four rows of 30 holes each.  At one end, or in the
+center, are two or four additional holes, called game holes.  The board is
+placed between the two players, and each keeps his own score on the two
+rows of holes nearest himself.  Each is supplied with two pegs.  Before the
+first hand, the pegs are placed in the game holes.  On making his first
+score, the player advances one peg an appropriate number of holes (one per
+point) away from the game end of the board.  The second score is recorded
+by placing the second peg an appropriate distance ahead of the first.  For
+each subsequent score, the rear peg is jumped ahead of the other, the
+distance between the two pegs always showing the amount of this last score.
 
 	The traditional mode of scoring is down (away from the game end)
 the outer row, and up the inner row.  "Once around" is a game of 61 points.
@@ -64,7 +63,7 @@ The Starter:
 	After both hands have laid away, nondealer lifts off a packet from
 the top of the stock (the rest of the pack).  Again, each packet must
 contain at least four cards.  Dealer turns up the top card of the lower
-packer, which is then placed on top of the stock when the packets are
+packet, which is then placed on top of the stock when the packets are
 reunited.  The card thus turned up is called 1 the starter.  If it is a
 jack, dealer immediately pegs 2, called 2 for his heels.
 
