@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.10 2001/01/26 22:27:36 mickey Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.11 2001/01/27 01:19:10 deraadt Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -201,13 +201,16 @@ const struct pci_class pci_class[] = {
 /*
  * Descriptions of of known vendors and devices ("products").
  */
-struct pci_knowndev {
+struct pci_known_vendor {
+	pci_vendor_id_t		vendor;
+	const char		*vendorname;
+};
+
+struct pci_known_product {
 	pci_vendor_id_t		vendor;
 	pci_product_id_t	product;
-	int			flags;
-	const char		*vendorname, *productname;
+	const char		*productname;
 };
-#define	PCI_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/pci/pcidevs_data.h>
 #endif /* PCIVERBOSE */
@@ -224,10 +227,11 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	pci_subclass_t subclass;
 	pci_interface_t interface;
 	pci_revision_t revision;
-	const char *vendor_namep, *product_namep;
+	const char *vendor_namep = NULL, *product_namep = NULL;
 	const struct pci_class *classp, *subclassp;
 #ifdef PCIVERBOSE
-	const struct pci_knowndev *kdp;
+	const struct pci_known_vendor *pkv;
+	const struct pci_known_product *pkp;
 	const char *unmatched = "unknown ";
 #else
 	const char *unmatched = "";
@@ -242,22 +246,24 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	revision = PCI_REVISION(class_reg);
 
 #ifdef PCIVERBOSE
-	kdp = pci_knowndevs;
-        while (kdp->vendorname != NULL) {	/* all have vendor name */
-                if (kdp->vendor == vendor && (kdp->product == product ||
-		    (kdp->flags & PCI_KNOWNDEV_NOPROD) != 0))
-                        break;
-		kdp++;
+	pkv = pci_known_vendors;
+	while (pkv->vendorname != NULL) {	/* all have vendor name */
+		if (pkv->vendor == vendor) {
+			vendor_namep = pkv->vendorname;
+			break;
+		}
+		pkv++;
 	}
-        if (kdp->vendorname == NULL)
-		vendor_namep = product_namep = NULL;
-	else {
-		vendor_namep = kdp->vendorname;
-		product_namep = (kdp->flags & PCI_KNOWNDEV_NOPROD) == 0 ?
-		    kdp->productname : NULL;
-        }
-#else /* PCIVERBOSE */
-	vendor_namep = product_namep = NULL;
+	if (vendor_namep) {
+		pkp = pci_known_products;
+		while (pkp->productname != NULL) {	/* all have product name */
+			if (pkp->vendor == vendor && pkp->product == product) {
+				product_namep = pkp->productname;
+				break;
+			}
+			pkp++;
+		}
+	}
 #endif /* PCIVERBOSE */
 
 	classp = pci_class;
