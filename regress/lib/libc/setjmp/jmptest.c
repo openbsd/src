@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmptest.c,v 1.4 2001/01/29 02:05:45 niklas Exp $	*/
+/*	$OpenBSD: jmptest.c,v 1.5 2001/11/11 23:26:35 deraadt Exp $	*/
 /*	$NetBSD: jmptest.c,v 1.2 1995/01/01 20:55:35 jtc Exp $	*/
 
 /*
@@ -70,9 +70,11 @@ aborthandler(signo)
 {
 
 	if (expectsignal)
-		exit(0);
-	else
-		errx(1, "kill(SIGABRT) succeeded");
+		_exit(0);
+	else {
+		warnx("kill(SIGABRT) succeeded");
+		_exit(1);
+	}
 }
 
 int

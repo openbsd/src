@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.c,v 1.1.1.1 2001/08/15 14:37:13 fgsch Exp $	*/
+/*	$OpenBSD: sigsuspend.c,v 1.2 2001/11/11 23:26:35 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Daniel M. Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -93,6 +93,8 @@ sigsuspender (void *arg)
 static void
 sighandler (int signo)
 {
+	int save_errno = errno;
+	char buf[8192];
 	sigset_t set;
 	pthread_t self;
 
@@ -107,14 +109,19 @@ sighandler (int signo)
 	if (self == suspender_tid) {
 		sigfifo[fifo_depth] = signo;
 		fifo_depth++;
-		printf ("  -> Suspender thread signal handler caught "
+		snprintf(buf, sizeof buf,
+		    "  -> Suspender thread signal handler caught "
 			"signal %d (%s)\n", signo, strsignal(signo));
+		write(STDOUT_FILENO, buf, strlen(buf));
 		sigprocmask (SIG_SETMASK, NULL, &set);
 		ASSERT(set == suspender_mask);
-	}
-	else
-		printf ("  -> Main thread signal handler caught "
+	} else {
+		snprintf(buf, sizeof buf,
+		    "  -> Main thread signal handler caught "
 			"signal %d (%s)\n", signo, strsignal(signo));
+		write(STDOUT_FILENO, buf, strlen(buf));
+	}
+	errno = save_errno;
 }
 
 

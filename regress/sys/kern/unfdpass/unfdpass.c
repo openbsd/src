@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.2 2001/01/29 02:05:57 niklas Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.3 2001/11/11 23:26:35 deraadt Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -240,9 +240,11 @@ void
 catch_sigchld(sig)
 	int sig;
 {
+	int save_errno = errno;
 	int status;
 
 	(void) wait(&status);
+	errno = save_errno;
 }
 
 void

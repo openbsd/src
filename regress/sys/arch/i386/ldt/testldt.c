@@ -1,4 +1,4 @@
-/*	$OpenBSD: testldt.c,v 1.4 2001/05/11 15:51:59 art Exp $	*/
+/*	$OpenBSD: testldt.c,v 1.5 2001/11/11 23:26:35 deraadt Exp $	*/
 /*	$NetBSD: testldt.c,v 1.4 1995/04/20 22:42:38 cgd Exp $	*/
 
 #include <stdio.h>
@@ -137,7 +137,7 @@ print_ldt(union descriptor *dp)
 static void busfault(int signal, int code, struct sigcontext *sc)
 {
 	fprintf(stderr, "\nbus fault - investigate.\n");
-	exit(1);
+	_exit(1);
 }
 
 static void usage(int status)
