@@ -16,7 +16,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- * $Id: sys_pipe.c,v 1.1 1996/08/27 14:47:00 shawn Exp $
+ * $Id: sys_pipe.c,v 1.2 1996/09/04 22:23:28 niklas Exp $
  */
 
 #ifndef OLD_PIPE
@@ -69,6 +69,9 @@
 #include <sys/kernel.h>
 #if defined(__FreeBSD__)
 #include <sys/sysproto.h>
+#else /* defined(__NetBSD__) || defined(__OpenBSD__) */
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 #endif
 #include <sys/pipe.h>
 
@@ -95,16 +98,14 @@
 /*
  * interfaces to the outside world
  */
-static int pipe_read __P((struct file *fp, struct uio *uio, 
-		struct ucred *cred));
-static int pipe_write __P((struct file *fp, struct uio *uio, 
-		struct ucred *cred));
-static int pipe_close __P((struct file *fp, struct proc *p));
-static int pipe_select __P((struct file *fp, int which, struct proc *p));
+int	pipe_read __P((struct file *, struct uio *, struct ucred *));
+int	pipe_write __P((struct file *, struct uio *, struct ucred *));
+int	pipe_close __P((struct file *, struct proc *));
+int	pipe_select __P((struct file *, int which, struct proc *));
 #if defined(__FreeBSD__)
-static int pipe_ioctl __P((struct file *fp, int cmd, caddr_t data, struct proc *p));
-#else /* (__NetBSD__) || (__OpenBSD__) */
-static int pipe_ioctl __P((struct file *fp, u_long cmd, caddr_t data, struct proc *p));
+int	pipe_ioctl __P((struct file *, int, caddr_t, struct proc *));
+#else /* defined(__NetBSD__) || defined(__OpenBSD__) */
+int	pipe_ioctl __P((struct file *, u_long, caddr_t, struct proc *));
 #endif
 
 static struct fileops pipeops =
@@ -140,18 +141,19 @@ int nbigpipe;
 
 static int amountpipekva;
 
-static void pipeclose __P((struct pipe *cpipe));
-static void pipeinit __P((struct pipe *cpipe));
-static __inline int pipelock __P((struct pipe *cpipe, int catch));
-static __inline void pipeunlock __P((struct pipe *cpipe));
-static __inline void pipeselwakeup __P((struct pipe *cpipe));
+void	pipeclose __P((struct pipe *));
+void	pipeinit __P((struct pipe *));
+int	pipe_stat __P((struct pipe *, struct stat *));
+static __inline int pipelock __P((struct pipe *, int));
+static __inline void pipeunlock __P((struct pipe *));
+static __inline void pipeselwakeup __P((struct pipe *));
 #ifndef PIPE_NODIRECT
-static int pipe_build_write_buffer __P((struct pipe *wpipe, struct uio *uio));
-static void pipe_destroy_write_buffer __P((struct pipe *wpipe));
-static int pipe_direct_write __P((struct pipe *wpipe, struct uio *uio));
-static void pipe_clone_write_buffer __P((struct pipe *wpipe));
+int	pipe_build_write_buffer __P((struct pipe *, struct uio *));
+void	pipe_destroy_write_buffer __P((struct pipe *));
+int	pipe_direct_write __P((struct pipe *, struct uio *));
+void	pipe_clone_write_buffer __P((struct pipe *));
 #endif
-static void pipespace __P((struct pipe *cpipe));
+void	pipespace __P((struct pipe *));
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -162,12 +164,10 @@ int
 #if defined(__FreeBSD__)
 pipe(p, uap, retval)
 #else /* (__NetBSD__) || (__OpenBSD__) */
-sys_pipe(p, uap, retval)
+sys_pipe(p, v, retval)
 #endif
 	struct proc *p;
-	struct pipe_args /* {
-		int	dummy;
-	} */ *uap;
+	void *v;
 	int retval[];
 {
 	register struct filedesc *fdp = p->p_fd;
@@ -215,7 +215,7 @@ free2:
 /*
  * Allocate kva for pipe circular buffer, the space is pageable
  */
-static void
+void
 pipespace(cpipe)
 	struct pipe *cpipe;
 {
@@ -258,7 +258,7 @@ pipespace(cpipe)
 /*
  * initialize and allocate VM and memory for pipe
  */
-static void
+void
 pipeinit(cpipe)
 	struct pipe *cpipe;
 {
@@ -308,10 +308,10 @@ pipelock(cpipe, catch)
 	int error;
 	while (cpipe->pipe_state & PIPE_LOCK) {
 		cpipe->pipe_state |= PIPE_LWANT;
-		if (error = tsleep( cpipe,
-			catch?(PRIBIO|PCATCH):PRIBIO, "pipelk", 0)) {
+		error = tsleep(cpipe, catch ? PRIBIO|PCATCH : PRIBIO,
+		    "pipelk", 0);
+		if (error)
 			return error;
-		}
 	}
 	cpipe->pipe_state |= PIPE_LOCK;
 	return 0;
@@ -342,7 +342,7 @@ pipeselwakeup(cpipe)
 }
 
 /* ARGSUSED */
-static int
+int
 pipe_read(fp, uio, cred)
 	struct file *fp;
 	struct uio *uio;
@@ -360,7 +360,8 @@ pipe_read(fp, uio, cred)
 		 * normal pipe buffer receive
 		 */
 		if (rpipe->pipe_buffer.cnt > 0) {
-			int size = rpipe->pipe_buffer.size - rpipe->pipe_buffer.out;
+			size = rpipe->pipe_buffer.size -
+			    rpipe->pipe_buffer.out;
 			if (size > rpipe->pipe_buffer.cnt)
 				size = rpipe->pipe_buffer.cnt;
 			if (size > uio->uio_resid)
@@ -448,9 +449,9 @@ pipe_read(fp, uio, cred)
 			}
 
 			rpipe->pipe_state |= PIPE_WANTR;
-			if (error = tsleep(rpipe, PRIBIO|PCATCH, "piperd", 0)) {
+			error = tsleep(rpipe, PRIBIO|PCATCH, "piperd", 0);
+			if (error)
 				break;
-			}
 		}
 	}
 
@@ -498,7 +499,7 @@ pipe_read(fp, uio, cred)
  * Map the sending processes' buffer into kernel space and wire it.
  * This is similar to a physical write operation.
  */
-static int
+int
 pipe_build_write_buffer(wpipe, uio)
 	struct pipe *wpipe;
 	struct uio *uio;
@@ -570,7 +571,7 @@ pipe_build_write_buffer(wpipe, uio)
 /*
  * unmap and unwire the process buffer
  */
-static void
+void
 pipe_destroy_write_buffer(wpipe)
 struct pipe *wpipe;
 {
@@ -595,7 +596,7 @@ struct pipe *wpipe;
  * code copies the data into the circular buffer so that the source
  * pages can be freed without loss of data.
  */
-static void
+void
 pipe_clone_write_buffer(wpipe)
 struct pipe *wpipe;
 {
@@ -623,7 +624,7 @@ struct pipe *wpipe;
  * be deferred until the receiving process grabs all of the bytes from
  * the pipe buffer.  Then the direct mapping write is set-up.
  */
-static int
+int
 pipe_direct_write(wpipe, uio)
 	struct pipe *wpipe;
 	struct uio *uio;
@@ -709,7 +710,7 @@ error1:
 }
 #endif
 	
-static int
+int
 pipe_write(fp, uio, cred)
 	struct file *fp;
 	struct uio *uio;
@@ -891,12 +892,13 @@ pipe_write(fp, uio, cred)
 			pipeselwakeup(wpipe);
 
 			wpipe->pipe_state |= PIPE_WANTW;
-			if (error = tsleep(wpipe, (PRIBIO+1)|PCATCH, "pipewr", 0)) {
+			error = tsleep(wpipe, (PRIBIO + 1)|PCATCH,
+			    "pipewr", 0);
+			if (error)
 				break;
-			}
 			/*
-			 * If read side wants to go away, we just issue a signal
-			 * to ourselves.
+			 * If read side wants to go away, we just issue a
+			 * signal to ourselves.
 			 */
 			if (wpipe->pipe_state & PIPE_EOF) {
 				error = EPIPE;
@@ -1061,7 +1063,7 @@ pipe_stat(pipe, ub)
 }
 
 /* ARGSUSED */
-static int
+int
 pipe_close(fp, p)
 	struct file *fp;
 	struct proc *p;
@@ -1076,7 +1078,7 @@ pipe_close(fp, p)
 /*
  * shutdown the pipe
  */
-static void
+void
 pipeclose(cpipe)
 	struct pipe *cpipe;
 {
@@ -1098,7 +1100,7 @@ pipeclose(cpipe)
 		/*
 		 * Disconnect from peer
 		 */
-		if (ppipe = cpipe->pipe_peer) {
+		if ((ppipe = cpipe->pipe_peer) != NULL) {
 			pipeselwakeup(ppipe);
 
 			ppipe->pipe_state |= PIPE_EOF;
