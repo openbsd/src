@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.3 2004/08/10 12:32:14 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -119,11 +119,9 @@ vm_map_t exec_map;
 vm_map_t mb_map;
 vm_map_t phys_map;
 
-#if 0
-register_t tlbtrcptr;
-#endif
-
 int	msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t	msgbufbase;
+
 int	physmem;		/* max supported memory, changes to actual */
 int	rsvdmem;		/* reserved memory not usable */
 int	ncpu = 1;		/* At least one cpu in the system */
@@ -132,7 +130,6 @@ struct	user *curprocpaddr;
 int	console_ok;		/* set when console initialized */
 
 int32_t *environment;
-char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
 struct sys_rec sys_config;
 
 
@@ -150,9 +147,7 @@ void dumpconf(void);
 caddr_t allocsys(caddr_t);
 
 static void dobootopts(char *cp);
-static void get_eth_hw_addr(char *, char *);
-static int atoi(char *, int);
-char gt_ethaddr[6];
+static int atoi(const char *, int, const char **);
 
 #if BYTE_ORDER == BIG_ENDIAN
 int	my_endian = 1;
@@ -238,25 +233,12 @@ mips_init(int argc, int32_t *argv)
 		while(1);
 	}
 
-#if 0
-#if defined(DDB) || defined(DEBUG)
-	physmem = atop(1024 * 1024 * 256);
-#if defined(_LP64)
-	tlbtrcptr = 0xffffffff90000000;
-	memset((void *)0xffffffff90000000, 0, 1024*1024);
-#else
-	tlbtrcptr = 0x90000000;
-	memset((void *)0x90000000, 0, 1024*1024);
-#endif
-#endif
-#endif
-
 	/*
 	 *  Use cpufrequency from bios to start with.
 	 */
 	cp = Bios_GetEnvironmentVariable("cpufreq");
 	if (cp) {
-		i = atoi(cp, 10);
+		i = atoi(cp, 10, NULL);
 		if (i > 100)
 			sys_config.cpu[0].clock = i * 1000000;
 	}
@@ -306,7 +288,6 @@ mips_init(int argc, int32_t *argv)
 	boothowto = RB_SINGLE | RB_ASKNAME;
 #endif /* RAMDISK_HOOKS */
 
-	get_eth_hw_addr(Bios_GetEnvironmentVariable("ethaddr"), eth_hw_addr);
 	dobootopts(Bios_GetEnvironmentVariable("osloadoptions"));
 
 	/*  Check any extra arguments which override.  */
@@ -318,7 +299,7 @@ mips_init(int argc, int32_t *argv)
 
 	/* Check l3cache size and disable (hard) if non present. */
 	if(Bios_GetEnvironmentVariable("l3cache") != 0) {
-		i = atoi(Bios_GetEnvironmentVariable("l3cache"), 10);
+		i = atoi(Bios_GetEnvironmentVariable("l3cache"), 10, NULL);
 		CpuTertiaryCacheSize = 1024 * 1024 * i;
 	} else {
 		CpuTertiaryCacheSize = 0;
@@ -353,6 +334,7 @@ mips_init(int argc, int32_t *argv)
 	tlb_flush(sys_config.cpu[0].tlbsize);
 	tlb_set_wired(sys_config.cpu[0].tlbwired);
 	
+/* XXX Save the following as an example on how to optimize I/O mapping */
 	/*
 	 *  Set up some fixed mappings. These are so frequently
 	 *  used so faulting them in will waste to many cycles.
@@ -379,12 +361,19 @@ mips_init(int argc, int32_t *argv)
 			tlb_write_indexed(3, &tlb);
 		}
 	}
+/* XXX */
 
 	/*
 	 *  Get a console, very early but after initial mapping setup.
 	 */
 	bios_putstring("Initial setup done, switching console.\n\n");
 	consinit();
+
+	/*
+	 * Init message buffer.
+	 */
+	msgbufbase = (caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL,NULL);
+	initmsgbuf(msgbufbase, MSGBUFSIZE);
 
 	/*
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
@@ -434,11 +423,6 @@ mips_init(int argc, int32_t *argv)
 	 * Clear out the I and D caches.
 	 */
 	Mips_SyncCache();
-
-	/*
-	 * Initialize error message buffer.
-	 */
-	initmsgbuf((caddr_t)0xffffffff80002000, MSGBUFSIZE);
 
 	/*
 	 *  Return new stack pointer.
@@ -906,14 +890,16 @@ initcpu()
 /*
  * Convert "xx:xx:xx:xx:xx:xx" string to ethernet hardware address.
  */
-static void
-get_eth_hw_addr(char *s, char *a)
+void
+enaddr_aton(const char *s, u_int8_t *a)
 {
 	int i;
+
 	if(s != NULL) {
 		for(i = 0; i < 6; i++) {
-			a[i] = atoi(s, 16);
-			s += 3;		/* Don't get to fancy here :-) */
+			a[i] = atoi(s, 16, &s);
+			if (*s == ':')
+				s++;
 		}
 	}
 }
@@ -922,20 +908,22 @@ get_eth_hw_addr(char *s, char *a)
  * Convert an ASCII string into an integer.
  */
 static int
-atoi(s, b)
-	char *s;
-	int   b;
+atoi(const char *s, int b, const char **o)
 {
 	int c;
 	unsigned base = b, d;
 	int neg = 0, val = 0;
 
-	if (s == 0 || (c = *s++) == 0)
-		goto out;
+	if (s == NULL || *s == 0) {
+		if (o != NULL)
+			*o = s;
+		return 0;
+	}
 
 	/* skip spaces if any */
-	while (c == ' ' || c == '\t')
+	do {
 		c = *s++;
+	} while (c == ' ' || c == '\t');
 
 	/* parse sign, allow more than one (compat) */
 	while (c == '-') {
@@ -978,7 +966,8 @@ atoi(s, b)
 	}
 	if (neg)
 		val = -val;
-out:
+	if (o != NULL)
+		*o = s - 1;
 	return val;	
 }
 
