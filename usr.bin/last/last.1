@@ -1,4 +1,4 @@
-.\"	$OpenBSD: last.1,v 1.13 2000/03/08 03:11:30 aaron Exp $
+.\"	$OpenBSD: last.1,v 1.14 2000/03/23 21:39:53 aaron Exp $
 .\"	$NetBSD: last.1,v 1.3 1994/12/21 22:41:23 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -51,7 +51,7 @@
 .Op Ar user ...
 .Sh DESCRIPTION
 The
-.Nm last
+.Nm
 utility will either (1) list the sessions of specified
 .Ar users ,
 .Ar ttys ,
@@ -66,7 +66,7 @@ hostname, the start and stop times for the session, and the duration
 of the session.
 If the session is still continuing or was cut short by
 a crash or shutdown,
-.Nm last
+.Nm
 will so indicate.
 .Pp
 The options are as follows:
@@ -74,7 +74,7 @@ The options are as follows:
 .It Fl c
 Calculates the total time displayed and prints it after the output.
 .It Fl f Ar file
-.Nm last
+.Nm
 reads the file
 .Ar file
 instead of the default,
@@ -161,9 +161,9 @@ arguments is printed, e.g.,
 .Ic last root -t console
 would list all of
 .Li root Ns 's
-sessions as well as all sessions on the console terminal. If no
-users, hostnames, or terminals are specified,
-.Nm last
+sessions as well as all sessions on the console terminal.
+If no users, hostnames, or terminals are specified,
+.Nm
 prints a record of
 all logins and logouts.
 .Pp
@@ -174,11 +174,11 @@ logs in at reboots of the system; thus
 will give an indication of mean time between reboot.
 .Pp
 If
-.Nm last
+.Nm
 is interrupted, it indicates to what date the search has
 progressed.
 If interrupted with a quit signal
-.Nm last
+.Nm
 indicates how
 far the search has progressed and then continues.
 .Sh FILES
@@ -192,6 +192,6 @@ login data base
 .Xr ac 8
 .Sh HISTORY
 The
-.Nm last
+.Nm
 command appeared in
 .Bx 3.0 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.12 2000/03/08 03:11:31 aaron Exp $
+.\"	$OpenBSD: locate.1,v 1.13 2000/03/23 21:39:54 aaron Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.12 2000/03/08 03:11:31 aaron Exp $
+.\"	$Id: locate.1,v 1.13 2000/03/23 21:39:54 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -111,8 +111,8 @@ option adds the specified database to the list
 of databases to be searched.
 .Pp
 .Ar database
-may be a colon-separated list of databases. A single colon is a reference
-to the default database.
+may be a colon-separated list of databases.
+A single colon is a reference to the default database.
 .Pp
 $ locate -d $HOME/lib/mydb: foo
 .Pp
@@ -171,7 +171,9 @@ Use
 .Xr mmap 2
 instead of the
 .Xr stdio 3
-library. This is the default behavior. Usually faster in most cases.
+library.
+This is the default behavior.
+Usually faster in most cases.
 .It Fl s
 Use the
 .Xr stdio 3
@@ -238,7 +240,8 @@ appear in the database.
 .Pp
 The
 .Nm
-database is not byte order independent. It is not possible
+database is not byte order independent.
+It is not possible
 to share the databases between machines with different byte order.
 The current
 .Nm

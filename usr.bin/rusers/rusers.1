@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rusers.1,v 1.6 2000/03/10 20:17:51 aaron Exp $
+.\"	$OpenBSD: rusers.1,v 1.7 2000/03/23 21:39:54 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -48,10 +48,11 @@ The
 .Nm
 command produces output similar to
 .Xr who 1 ,
-but for the list of hosts or all machines on the local
-network. For each host responding to the rusers query,
+but for the list of hosts or all machines on the local network.
+For each host responding to the rusers query,
 the hostname with the names of the users currently logged
-on is printed on each line. The
+on is printed on each line.
+The
 .Nm
 command will wait for
 one minute to catch late responders.
@@ -61,7 +62,8 @@ The options are as follows:
 .It Fl a
 Print all machines responding even if no one is currently logged in.
 .It Fl l
-Print a long format listing. This includes the user name, host name,
+Print a long format listing.
+This includes the user name, host name,
 tty that the user is logged in to, the date and time the user
 logged in, the amount of time since the user typed on the keyboard,
 and the remote host they logged in from (if applicable).

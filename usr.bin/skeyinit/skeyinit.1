@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.16 2000/03/23 21:10:19 aaron Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.17 2000/03/23 21:39:55 aaron Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -22,7 +22,8 @@
 .Nm
 initializes the system so you can use S/Key one-time passwords to login.
 The program will ask you to enter a secret pass phrase;
-enter a phrase of several words in response. After the S/Key database
+enter a phrase of several words in response.
+After the S/Key database
 has been updated you can login using either your regular password
 or using S/Key one-time passwords.
 .Pp
@@ -91,8 +92,8 @@ Selects SHA (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
 .It Fl rmd160
 Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 .It Ar user
-The username to be changed/added. By default the current user is
-operated on.
+The username to be changed/added.
+By default the current user is operated on.
 .Sh ERRORS
 .Bl -tag -width "skey disabled"
 .It skey disabled

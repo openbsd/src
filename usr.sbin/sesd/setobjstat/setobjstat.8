@@ -1,5 +1,5 @@
 .\"	$NetBSD: $
-.\"	$OpenBSD: setobjstat.8,v 1.1 2000/02/21 08:45:15 mjacob Exp $
+.\"	$OpenBSD: setobjstat.8,v 1.2 2000/03/23 21:39:57 aaron Exp $
 .\"	$FreeBSD: $
 .\"
 .\" Copyright (c) 2000 Matthew Jacob
@@ -50,9 +50,9 @@ argument may be determined by running
 .Xr getencstat 8 .
 .Pp
 The status fields are partially common (first byte only, which must
-have a value of 0x80 contained in it), but otherwise quite device
-specific. A complete discussion of the possible values is impractical
-here. Please refer to the ANSI SCSI specification (available on
+have a value of 0x80 contained in it), but otherwise quite device specific.
+A complete discussion of the possible values is impractical here.
+Please refer to the ANSI SCSI specification (available on
 the FTP site ftp.t10.org).
 .Pp
 Note that devices may simply and silently ignore the setting of these values.

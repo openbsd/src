@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.39 2000/03/18 22:55:57 aaron Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.40 2000/03/23 21:39:56 aaron Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -119,7 +119,8 @@ count out long strings of digits in network byte order.
 (LLAP) addresses are specified as nn.na (Network Number.Node Address).
 Node addresses are divided into 2 classes: User Node IDs and Server
 Node IDs. 1-127($01-$7F) are for User Node IDs while 128-254($80-$FE)
-are used for Server Node IDs. Node 0($00) is not allowed (unknown)
+are used for Server Node IDs.
+Node 0($00) is not allowed (unknown)
 while Node 255($FF) is reserved for the AppleTalk broadcast Hardware
 address (broadcast ID).
 .It Ar address_family

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.17 2000/03/19 17:57:16 aaron Exp $
+.\"	$OpenBSD: traceroute.8,v 1.18 2000/03/23 21:39:57 aaron Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -111,7 +111,8 @@ Change the protocol being used from
 .Tn UDP
 to a numeric protocol or a name as specified in
 .Pa /etc/protocols .
-This will not work reliably for most protocols. If set to 1 (ICMP), then
+This will not work reliably for most protocols.
+If set to 1 (ICMP), then
 ICMP Echo Request messages will be used (same as
 .Xr ping 8
 ).
@@ -140,9 +141,8 @@ If something is
 listening on a port in the default range, this option can be used
 to pick an unused port range.
 .It Fl c
-Do not increment the destination port number in successive UDP
-packets. Rather, all UDP packets will have the same destination port,
-as set via the
+Do not increment the destination port number in successive UDP packets.
+Rather, all UDP packets will have the same destination port, as set via the
 .Fl p
 flag (or 33434 if none is specified).
 .It Fl q Ar nqueries

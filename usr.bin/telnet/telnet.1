@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.22 2000/03/11 21:40:04 aaron Exp $
+.\"	$OpenBSD: telnet.1,v 1.23 2000/03/23 21:39:55 aaron Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -311,7 +311,8 @@ When in command mode, the normal terminal editing conventions are available.
 Note that the escape character will return to the command mode of the initial
 invocation of
 .Nm
-that has the controlling terminal. Use the
+that has the controlling terminal.
+Use the
 .Cm send escape
 command to switch to command mode in subsequent
 .Nm
@@ -1147,7 +1148,8 @@ commands.
 .It Ic skey Ar sequence challenge
 The
 .Ic skey
-command computes a response to the S/Key challenge. See
+command computes a response to the S/Key challenge.
+See
 .Xr skey 1
 for more information on the S/Key system.
 .It Ic slc Ar state

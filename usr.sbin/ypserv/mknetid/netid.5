@@ -1,4 +1,5 @@
-.\"	$OpenBSD: netid.5,v 1.6 1999/06/05 22:18:25 aaron Exp $
+.\"	$OpenBSD: netid.5,v 1.7 2000/03/23 21:39:57 aaron Exp $
+.\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -39,12 +40,14 @@ network credential file
 .Sh DESCRIPTION
 Files in
 .Xr netid 5
-format are rare. One lives in the
+format are rare.
+One lives in the
 .Nm YP
 map
 .Dq netid.byname .
-The format is rather simple. Each row consists of two
-items, a key and a value. When created by
+The format is rather simple.
+Each row consists of two items: a key and a value.
+When created by
 .Xr mknetid 8
 there are three types of records.
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.4 2000/02/11 10:22:08 niklas Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.5 2000/03/23 21:39:56 aaron Exp $
 .\" $EOM: isakmpd.policy.5,v 1.11 2000/02/10 16:25:01 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
@@ -49,42 +49,50 @@ The
 .Xr isakmpd 1
 daemon (also known as IKE, for Internet Key Exchange) is used when two
 systems need to automatically setup a pair of Security Associations
-(SAs) for securely communicating using IPsec. IKE operates in two
-stages:
+(SAs) for securely communicating using IPsec.
+IKE operates in two stages:
 .Pp
 In the first stage (Main or Identity Protection Mode), the two IKE
 daemons establish a secure link between themselves, fully
 authenticating each other and establishing key material for
-encrypting/authenticating future communications between them. This
-step is typically only performed once for every pair of IKE daemons.
+encrypting/authenticating future communications between them.
+This step is typically only performed once for every pair of IKE daemons.
 .Pp
 In the second stage (also called Quick Mode), the two IKE daemon
 create the pair of SAs for the parties that wish to communicate using
-IPsec. These parties may be the hosts the IKE daemons run on, a host
+IPsec.
+These parties may be the hosts the IKE daemons run on, a host
 and a network behind a firewall, or two networks behind their
-respective firewalls. At this stage, the exact parameters of the SAs
+respective firewalls.
+At this stage, the exact parameters of the SAs
 (e.g., algorithms to use, encapsulation mode, lifetime) and the
 identities of the communicating parties (hosts, networks, etc.) are
-specified. The reason of existance of Quick Mode is to allow for fast
+specified.
+The reason of existance of Quick Mode is to allow for fast
 SA setup, once the more heavy-weight Main Mode has been completed.
 Generally, Quick Mode uses the key material derived from Main Mode to
-provide keys to the IPsec transforms to be used. Alternatively, a new
+provide keys to the IPsec transforms to be used.
+Alternatively, a new
 Diffie-Hellman computation may be performed (significantly slowing
 down the exchange, but at the same time providing Perfect Forward
-Secrecy (PFS)). Briefly, this means that even should an attacker
+Secrecy (PFS)).
+Briefly, this means that even should an attacker
 manage to break long-term keys used in other sessions (or,
 specifically, if an attacker breaks the Diffie-Hellman exchange
 performed during Main Mode), they will not be able to decrypt this
-traffic. Normally, no PFS is provided (the key material used by the
+traffic.
+Normally, no PFS is provided (the key material used by the
 IPsec SAs established as a result of this exchange will be derived
 from the key material of the Main Mode exchange), allowing for a
 faster Quick Mode exchange (no public key computations).
 .Pp
 IKE proposals are "suggestions" by the initiator of an exchange to the
 responder as to what protocols and attributes should be used on a
-class of packets. For example, a given exchange may ask for ESP with
+class of packets.
+For example, a given exchange may ask for ESP with
 3DES and MD5 and AH with SHA1 (applied successively on the same
-packet), or just ESP with Blowfish and RIPEMD-160. The responder
+packet), or just ESP with Blowfish and RIPEMD-160.
+The responder
 examines the proposals and determines which of them are acceptable,
 according to policy and any credentials.
 .Pp
@@ -95,7 +103,8 @@ and
 man pages.
 .Pp
 In the KeyNote policy model for IPsec, no distinction is currently
-made based on the ordering of AH and ESP in the packet. Should this
+made based on the ordering of AH and ESP in the packet.
+Should this
 change in the future, an appropriate attribute (see below) will be
 added.
 .Pp
@@ -106,7 +115,8 @@ file), credentials provided during the IKE exchanges (or obtained
 through other means), the SA attributes proposed during the exchange,
 and perhaps other (side-channel) information, whether a pair of SAs
 should be installed in the system (in fact, whether both the IPsec SAs
-and the flows should be installed). For each proposal suggested by or
+and the flows should be installed).
+For each proposal suggested by or
 to the remote IKE daemon, the KeyNote system is consulted as to
 whether the proposal is acceptable based on local policy (contained in
 .Nm isakmpd.policy ,
@@ -173,8 +183,9 @@ prefix is necessary).
 KeyNote credentials have the same format as policy assertions, with
 one difference: the Authorizer field always contains a public key, and
 the assertion is signed (and thus its integrity can be
-cryptographically verified). Credentials are used to build chains of
-delegation of authority. They can be exchanged during an IKE exchange,
+cryptographically verified).
+Credentials are used to build chains of delegation of authority.
+They can be exchanged during an IKE exchange,
 or can be retrieved through some out-of-band mechanism (no such
 mechanism is currently supported in this implementation however).
 .Pp
@@ -184,7 +195,8 @@ string "passphrase:", followed by the passphrase itself
 .Pp
 When X509-based authentication is performed in Main Mode, any X509
 certificates received from the remote IKE daemon are converted to very
-simple KeyNote credentials. The conversion is straightforward: the
+simple KeyNote credentials.
+The conversion is straightforward: the
 issuer of the X509 certificate becomes the Authorizer of the KeyNote
 credential, the subject becomes the only Licensees entry, while the
 Conditions field simply asserts that the credential is only valid for
@@ -193,7 +205,8 @@ Conditions field simply asserts that the credential is only valid for
 Similarly, any X509 CA certificates present in the directory pointed
 to by the appropriate
 .Xr isakmpd.conf 5
-entry, are converted to such pseudo-credentials. This allows one to
+entry, are converted to such pseudo-credentials.
+This allows one to
 write KeyNote policies that delegate specific authority to CAs (and
 the keys those CAs certify, recursively).
 .Pp
@@ -202,12 +215,14 @@ For more details on KeyNote assertion format, see
 .Pp
 Information about the proposals, the identity of the remote IKE
 daemon, the packet classes to be protected, etc. are encoded in what
-is called an action set. The action set is composed of name-value
-attribute, similar in some way to a shell environment variables. These
-values are initialized by
+is called an action set.
+The action set is composed of name-value
+attribute, similar in some way to a shell environment variables.
+These values are initialized by
 .Nm isakmpd
 before each query to the KeyNote system, and can be tested against in
-the Conditions field of assertions. See
+the Conditions field of assertions.
+See
 .Xr keynote 4
 and
 .Xr keynote 5
@@ -216,20 +231,23 @@ for more details on the format and semantics of the Conditions field.
 Note that assertions and credentials can make reference to
 non-existant attributes without catastrophic failures (access may be
 denied, depending on the overall structure, but will not be
-accidentally granted). One reason for credentials referencing
+accidentally granted).
+One reason for credentials referencing
 non-existant attributes is that they were defined within a specific
 implementation or network only.
 .Pp
 In the following attribute set, IPv4 addresses are encoded as ASCII
-strings in the usual dotted-quad format. However, all quads are
-three digits long. For example, the IPv4 address
+strings in the usual dotted-quad format.
+However, all quads are three digits long.
+For example, the IPv4 address
 .Va 10.128.1.12
 would be encoded as
 .Va 010.128.001.012 .
 Similarly, IPv6 addresses are encoded in the standard x:x:x:x:x:x:x:x
 format, where the 'x's are the hexadecimal values of the eight 16-bit
-pieces of the address. All 'x's are four digits long. For example, the
-address
+pieces of the address.
+All 'x's are four digits long.
+For example, the address
 .Va 1080:0:12:0:8:800:200C:417A
 would be encoded as
 .Va 1080:0000:0012:0000:0008:0800:200C:417A .
@@ -266,8 +284,8 @@ One of
 .Va sha ,
 or
 .Va des ,
-based on the hash algorithm specified in the AH proposal. This
-attribute describes the generic transform to be used in the AH
+based on the hash algorithm specified in the AH proposal.
+This attribute describes the generic transform to be used in the AH
 authentication.
 .It esp_enc_alg
 One of
@@ -311,12 +329,14 @@ or
 based on the authentication method specified in the ESP proposal.
 .It ah_life_seconds, esp_life_seconds, comp_life_seconds
 Set to the lifetime of the AH, ESP, and compression proposal, in
-seconds. If no lifetime was proposed for the corresponding protocol
+seconds.
+If no lifetime was proposed for the corresponding protocol
 (e.g., there was no proposal for AH), the corresponding attribute will
 be set to zero.
 .It ah_life_kbytes, esp_life_kbytes, comp_life_kbytes
 Set to the lifetime of the AH, ESP, and compression proposal, in
-kbytes of traffic. If no lifetime was proposed for the corresponding
+kbytes of traffic.
+If no lifetime was proposed for the corresponding
 protocol (e.g., there was no proposal for AH), the corresponding
 attribute will be set to zero.
 .It ah_encapsulation, esp_encapsulation, comp_encapsulation
@@ -340,7 +360,8 @@ respectively (for variable round algorithms).
 .It ah_group_desc, esp_group_desc, comp_group_desc
 The Diffie-Hellman group identifier from the AH, ESP, and compression
 proposal, used for PFS during Quick Mode (see the pfs attribute
-above). If more than one of these attributes are set to a value other
+above).
+If more than one of these attributes are set to a value other
 than zero, they should have the same value (in valid IKE proposals).
 .It remote_filter_type, local_filter_type, remote_id_type
 Set to
@@ -363,11 +384,13 @@ When the corresponding filter_type is
 .Va IPv4 address
 or
 .Va IPv6 address ,
-these contain the respective address. For
+these contain the respective address.
+For
 .Va IPv4 range
 or
 .Va IPv6 range ,
-they contain the upper end of the address range. For
+they contain the upper end of the address range.
+For
 .Va IPv4 subnet
 or
 .Va IPv6 subnet ,
@@ -377,11 +400,13 @@ When the corresponding filter_type is
 .Va IPv4 address
 or
 .Va IPv6 address ,
-these contain the respective address. For
+these contain the respective address.
+For
 .Va IPv4 range
 or
 .Va IPv6 range ,
-these contain the lower end of the address range. For
+these contain the lower end of the address range.
+For
 .Va IPv4 subnet
 or
 .Va IPv6 subnet ,
@@ -390,8 +415,8 @@ these contain the lowest address in the specified subnet.
 When the corresponding filter_type specifies an address (or range, or
 subnet), theseares set to the upper and lower part of the address
 space separated by a dash ('-') character (if the type specifies a
-single address, both parts are set to the same address). For FQDN and
-User FQDN types, these are set to the respective string.
+single address, both parts are set to the same address).
+For FQDN and User FQDN types, these are set to the respective string.
 .It remote_filter_port, local_filter_port, remote_id_port
 Set to the transport protocol port.
 .It remote_filter_proto, local_filter_proto, remote_id_proto

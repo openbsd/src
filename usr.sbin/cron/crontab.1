@@ -15,7 +15,7 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: crontab.1,v 1.6 2000/03/19 17:57:03 aaron Exp $
+.\" $Id: crontab.1,v 1.7 2000/03/23 21:39:57 aaron Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -39,7 +39,8 @@
 is the program used to install, deinstall, or list the tables
 used to drive the
 .Xr cron 8
-daemon in Vixie Cron. Each user can have their own
+daemon in Vixie Cron.
+Each user can have their own
 .Xr crontab 5 ,
 and though these are files in
 .Pa /var/cron/tabs ,
@@ -72,7 +73,8 @@ option is given,
 specifies the name of the user whose
 .Xr crontab 5
 is to be
-tweaked. If this option is not given,
+tweaked.
+If this option is not given,
 .Nm
 examines
 .Dq your
@@ -109,8 +111,8 @@ the
 .Ev VISUAL
 or
 .Ev EDITOR
-environment variables. After you exit
-from the editor, the modified
+environment variables.
+After you exit from the editor, the modified
 .Xr crontab 5
 will be installed automatically.
 .Sh FILES
