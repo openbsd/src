@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 1996/05/04 13:45:17 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.9 1996/05/07 09:36:07 niklas Exp $
 #	$NetBSD: GENERIC,v 1.56 1996/04/30 17:40:34 is Exp $
 
 #
@@ -51,7 +51,7 @@ options		NFSCLIENT	# Network File System client side code
 
 options		ADOSFS		# AmigaDOS file system
 options		CD9660		# ISO 9660 + Rock Ridge file system
-#options	MSDOSFS		# MS-DOS file system [does not work]
+options		MSDOSFS		# MS-DOS file system [does not work]
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
@@ -226,6 +226,7 @@ sd*	at scsibus? target ? lun ?	# scsi disks
 
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
+ss*	at scsibus? target ? lun ?	# scsi scanners
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	1		# slip
