@@ -19,7 +19,7 @@
 ./usr/lib/libkafs.so.4.0
 ./usr/lib/libkdb.so.4.0
 ./usr/lib/libkrb.so.4.1
-./usr/lib/libkvm.so.4.1
+./usr/lib/libkvm.so.5.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.0.0
 ./usr/lib/libocurses.so.2.1
@@ -314,6 +314,8 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/ansi.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/asm.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/autoconf.ph
+./usr/lib/perl5/sparc-openbsd/5.003/machine/ioctl_fd.ph
+./usr/lib/perl5/sparc-openbsd/5.003/machine/kcore.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/bsd_audioio.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/bsd_openprom.ph
 ./usr/lib/perl5/sparc-openbsd/5.003/machine/cdefs.ph
@@ -564,8 +566,10 @@
 ./usr/lib/perl5/sparc-openbsd/5.003/zlib.ph
 ./usr/libexec/ld.so
 ./usr/mdec/binstall
+./usr/mdec/zboot
 ./usr/mdec/boot
 ./usr/mdec/bootxx
 ./usr/sbin/eeprom
 ./usr/sbin/installboot
+./usr/sbin/fdformat
 ./usr/sbin/screenblank

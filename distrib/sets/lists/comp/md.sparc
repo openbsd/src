@@ -2,6 +2,8 @@
 ./usr/bin/gdb
 ./usr/include/dlfcn.h
 ./usr/include/link.h
+./usr/include/machine/kcore.h
+./usr/include/machine/ioctl_fd.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/autoconf.h
