@@ -34,7 +34,7 @@ SUN3=	$S/arch/sun3
 
 # Override CPP defaults entirely, so cross-compilation works.
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
+XDEFS=		-undef -D__OpenBSD__ -Dm68k -Dmc68000
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dsun3 ${XDEFS}
 CWARNFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
