@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.9 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.10 2000/10/19 16:31:42 jason Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.9 2000/10/03 14:31:57 ho Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.10 2000/10/19 16:31:42 jason Exp $";
 #endif
 
 #include <sys/param.h>
@@ -131,6 +131,11 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 			return (ret);
 	}
 
+	if (llc.ssap == LLCSAP_8021D && llc.dsap == LLCSAP_8021D) {
+		stp_print(p, length);
+		return (1);
+	}
+
 	if ((llc.ssap & ~LLC_GSAP) == llc.dsap) {
 		if (eflag)
 			(void)printf("%s ", llcsap_string(llc.dsap));
@@ -210,8 +215,5 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		caplen -= 4;
 	}
 	(void)printf(" len=%d", length);
-	if (caplen > 0) {
-		default_print_unaligned(p, caplen);
-	}
 	return(1);
 }
