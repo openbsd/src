@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.49 1998/04/27 02:26:06 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.50 1998/04/27 03:01:30 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1367,7 +1367,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NKK, PCI_PRODUCT_NKK_NDR4600,
 	    0,
-	    "NKK Corporation",
+	    "NKK",
 	    "NDR4600 Host-PCI Bridge",
 	},
 	{
@@ -1740,7 +1740,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    0,
 	    "Standard Microsystems",
-	    "83C170 (\"EPIC/100\") Fast Ethernet",
+	    "83C170 (EPIC/100) Fast Ethernet",
 	},
 	{
 	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
@@ -2255,7 +2255,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_MARTINMARIETTA, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Martin-Marietta Corporation",
+	    "Martin-Marietta",
 	    NULL,
 	},
 	{
@@ -2939,7 +2939,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_CYRIX, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Cyrix Corporation",
+	    "Cyrix",
 	    NULL,
 	},
 	{
@@ -2999,7 +2999,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_EFA, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "EFA Corporation of America",
+	    "EFA",
 	    NULL,
 	},
 	{
@@ -3041,7 +3041,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DG, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Data General Corporation",
+	    "Data General",
 	    NULL,
 	},
 	{
@@ -3545,7 +3545,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NVIDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Nvidia Corporation",
+	    "Nvidia",
 	    NULL,
 	},
 	{
@@ -3569,7 +3569,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_APTIX, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Aptix Corporation",
+	    "Aptix",
 	    NULL,
 	},
 	{
@@ -3683,7 +3683,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NKK, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "NKK Corporation",
+	    "NKK",
 	    NULL,
 	},
 	{
@@ -4313,7 +4313,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SYNEMA, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Synema Corporation",
+	    "Synema",
 	    NULL,
 	},
 	{
@@ -4691,13 +4691,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SCITEX, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Scitex Corporation",
+	    "Scitex",
 	    NULL,
 	},
 	{
 	    PCI_VENDOR_PROLOG, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Pro-Log Corporation",
+	    "Pro-Log",
 	    NULL,
 	},
 	{
@@ -4853,7 +4853,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ZORAN, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Zoran Corporation",
+	    "Zoran",
 	    NULL,
 	},
 	{
