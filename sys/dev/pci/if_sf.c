@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.24 2004/05/30 02:01:31 mcbride Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.25 2004/06/01 02:43:28 tedu Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -160,6 +160,7 @@ void sf_miibus_statchg(struct device *);
 
 u_int32_t csr_read_4(struct sf_softc *, int);
 void csr_write_4(struct sf_softc *, int, u_int32_t);
+void sf_txthresh_adjust(struct sf_softc *);
 
 #define SF_SETBIT(sc, reg, x)	\
 	csr_write_4(sc, reg, csr_read_4(sc, reg) | x)
@@ -928,18 +929,22 @@ void sf_txeof(sc)
 	while (cmpconsidx != cmpprodidx) {
 		cur_cmp = &sc->sf_ldata->sf_tx_clist[cmpconsidx];
 		cur_tx = &sc->sf_ldata->sf_tx_dlist[cur_cmp->sf_index >> 7];
-		SF_INC(cmpconsidx, SF_TX_CLIST_CNT);
 
 		if (cur_cmp->sf_txstat & SF_TXSTAT_TX_OK)
 			ifp->if_opackets++;
-		else
+		else {
+			if (cur_cmp->sf_txstat & SF_TXSTAT_TX_UNDERRUN)
+				sf_txthresh_adjust(sc);
 			ifp->if_oerrors++;
+		}
 
 		sc->sf_tx_cnt--;
 		if (cur_tx->sf_mbuf != NULL) {
 			m_freem(cur_tx->sf_mbuf);
 			cur_tx->sf_mbuf = NULL;
-		}
+		} else
+			break;
+		SF_INC(cmpconsidx, SF_TX_CLIST_CNT);
 	}
 
 	ifp->if_timer = 0;
@@ -948,6 +953,29 @@ void sf_txeof(sc)
 	csr_write_4(sc, SF_CQ_CONSIDX,
 	    (txcons & ~SF_CQ_CONSIDX_TXQ) |
 	    ((cmpconsidx << 16) & 0xFFFF0000));
+
+	return;
+}
+
+void
+sf_txthresh_adjust(sc)
+	struct sf_softc *sc;
+{
+	u_int32_t txfctl;
+	u_int8_t txthresh;
+
+	txfctl = csr_read_4(sc, SF_TX_FRAMCTL);
+	txthresh = txfctl & SF_TXFRMCTL_TXTHRESH;
+	if (txthresh < 0xFF) {
+		txthresh++;
+		txfctl &= ~SF_TXFRMCTL_TXTHRESH;
+		txfctl |= txthresh;
+#ifdef DIAGNOSTIC
+		printf("%s: tx underrun, increasing tx threshold to %d bytes\n",
+		    sc->sc_dev.dv_xname, txthresh * 4);
+#endif
+		csr_write_4(sc, SF_TX_FRAMCTL, txfctl);
+	}
 
 	return;
 }
@@ -982,8 +1010,14 @@ int sf_intr(arg)
 		if (status & SF_ISR_RXDQ1_DMADONE)
 			sf_rxeof(sc);
 
-		if (status & SF_ISR_TX_TXDONE)
+		if (status & SF_ISR_TX_TXDONE ||
+		    status & SF_ISR_TX_DMADONE ||
+		    status & SF_ISR_TX_QUEUEDONE ||
+		    status & SF_ISR_TX_LOFIFO)
 			sf_txeof(sc);
+
+		if (status & SF_ISR_TX_LOFIFO)
+			sf_txthresh_adjust(sc);
 
 		if (status & SF_ISR_ABNORMALINTR) {
 			if (status & SF_ISR_STATSOFLOW) {
@@ -1145,7 +1179,8 @@ int sf_encap(sc, c, m_head)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
+			printf("%s: no memory for tx list\n",
+			    sc->sc_dev.dv_xname);
 			return(1);
 		}
 
@@ -1153,7 +1188,7 @@ int sf_encap(sc, c, m_head)
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
-				printf("%s: no memory for tx list",
+				printf("%s: no memory for tx list\n",
 				    sc->sc_dev.dv_xname);
 				return(1);
 			}
@@ -1189,7 +1224,7 @@ void sf_start(ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->sf_link)
+	if (!sc->sf_link && ifp->if_snd.ifq_len < 10)
 		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -1198,7 +1233,19 @@ void sf_start(ifp)
 	txprod = csr_read_4(sc, SF_TXDQ_PRODIDX);
 	i = SF_IDX_HI(txprod) >> 4;
 
+	if (sc->sf_ldata->sf_tx_dlist[i].sf_mbuf != NULL) {
+		printf("%s: TX ring full, resetting\n", sc->sc_dev.dv_xname);
+		sf_init(sc);
+		txprod = csr_read_4(sc, SF_TXDQ_PRODIDX);
+		i = SF_IDX_HI(txprod) >> 4;
+	}
+
 	while(sc->sf_ldata->sf_tx_dlist[i].sf_mbuf == NULL) {
+		if (sc->sf_tx_cnt >= (SF_TX_DLIST_CNT - 5)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			cur_tx = NULL;
+			break;
+		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
@@ -1220,7 +1267,10 @@ void sf_start(ifp)
 
 		SF_INC(i, SF_TX_DLIST_CNT);
 		sc->sf_tx_cnt++;
-		if (sc->sf_tx_cnt == (SF_TX_DLIST_CNT - 2))
+		/*
+		 * Don't let the TX DMA queue get too full.
+		 */
+		if (sc->sf_tx_cnt > 64)
 			break;
 	}
 
