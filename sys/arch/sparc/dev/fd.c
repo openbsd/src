@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.29 2002/05/29 08:28:36 art Exp $	*/
+/*	$OpenBSD: fd.c,v 1.30 2002/11/24 02:00:36 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -262,10 +262,10 @@ static void fdconf(struct fdc_softc *);
 	if (CPU_ISSUN4M)		\
 		raise(0, IPL_FDSOFT);	\
 	else				\
-		ienab_bis(IE_L4);	\
+		ienab_bis(IE_FDSOFT);	\
 } while(0)
 #else
-#define AUDIO_SET_SWINTR ienab_bis(IE_FDSOFT)
+#define FD_SET_SWINTR ienab_bis(IE_FDSOFT)
 #endif /* defined(SUN4M) */
 #endif /* FDC_C_HANDLER */
 
