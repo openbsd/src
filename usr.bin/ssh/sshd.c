@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.15 1999/09/30 21:45:47 aaron Exp $");
+RCSID("$Id: sshd.c,v 1.16 1999/10/03 04:21:08 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -917,6 +917,7 @@ void do_connection(int privileged_port)
   RSA_free(sensitive_data.private_key);
   RSA_free(sensitive_data.host_key);
 
+  setproctitle("%s", user);
   /* Do the authentication. */
   do_authentication(user, privileged_port);
 }
@@ -1564,6 +1565,8 @@ void do_exec_no_pty(const char *command, struct passwd *pw,
 		      strerror(errno));
 #endif /* USE_PIPES */
   
+  setproctitle("%s@notty", pw->pw_name);
+
   /* Fork the child. */
   if ((pid = fork()) == 0)
     {
@@ -1687,6 +1690,8 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
      the hostname the last login was from. */
   last_login_time = get_last_login_time(pw->pw_uid, pw->pw_name,
 					buf, sizeof(buf));
+
+  setproctitle("%s@%s", pw->pw_name, strrchr(ttyname, '/') + 1);
 
   /* Fork the child. */
   if ((pid = fork()) == 0)
