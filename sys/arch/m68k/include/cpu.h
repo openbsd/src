@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 1997/10/07 13:53:25 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2001/08/20 20:24:07 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -196,6 +196,10 @@ int	mappedcopyin __P((void *fromp, void *top, size_t count));
 int	mappedcopyout __P((void *fromp, void *top, size_t count));
 extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
+
+/* locore.s */
+u_long getdfc __P((void));
+u_long getsfc __P((void));
 
 /* copy.s */
 int	fusword __P((caddr_t));
