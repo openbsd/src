@@ -1109,8 +1109,10 @@ set_loginclass(pw)
     }
 
     lc = login_getclass(login_class);
-    if (!lc || !lc->lc_class || strcmp(lc->lc_class, login_class) != 0)
+    if (!lc || !lc->lc_class || strcmp(lc->lc_class, login_class) != 0) {
 	log_error(errflags, "unknown login class: %s", login_class);
+	lc = login_getclass(NULL);	/* Fall back on default login class */
+    }
 }
 #else
 static void
