@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.84 2004/02/07 01:28:13 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.85 2004/02/07 01:41:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1000,12 +1000,12 @@ fetchtable(void)
 			kr->r.prefix.s_addr =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-			if (kr->r.prefix.s_addr == 0)	/* default route */
-				kr->r.prefixlen = 0;
-			else if (sa_in != NULL)
+			if (sa_in != NULL) {
+				if (sa_in->sin_len == 0)
+					break;
 				kr->r.prefixlen =
 				    mask2prefixlen(sa_in->sin_addr.s_addr);
-			else if (rtm->rtm_flags & RTF_HOST)
+			} else if (rtm->rtm_flags & RTF_HOST)
 				kr->r.prefixlen = 32;
 			else
 				kr->r.prefixlen =
