@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.13 2002/02/28 23:31:12 dhartmei Exp $
+.\"	$OpenBSD: pflogd.8,v 1.14 2002/03/23 01:38:17 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -120,25 +120,37 @@ operation of pflogd):
 # tcpdump -n -e -ttt -i pflog0
 .Ed
 .Pp
-The ethernet protocol layer of packets logged by pflogd consists
-of an object of type struct pfloghdr (defined in net/if_pflog.h),
-which allows to use the following tcpdump expressions to filter on
-pf specific criteria:
-.Bl -tag -width "ether[99:9]=0xFFFFFFFF " -compact
-.It ether[0:4]=4
-Address family equals IPv4 (4) or IPv6 (24).
-.It ether[4:4]=0x6b756530
-Interface name equals "kue0" (0x6b756530).
-.It ether[20:2]=10
+Tcpdump has been extended to to be able to filter on the pfloghdr
+structure defined in net/if_pflog.h.  Tcpdump can restrict the output
+to packets logged on a specified interface, a rule number, a reason,
+a direction, an ip family or an action.
+.Bl -tag -width "reason match " -compact
+.It ip
+Address family equals IPv4.
+.It ip6
+Address family equals IPv6.
+.It ifname kue0
+Interface name equals "kue0"
+.It on kue0
+Interface name equals "kue0"
+.It rulenum 10
 Rule number equals 10.
-.It ether[22:2]=0
-Reason equals match (0), bad offset (1), fragment (2), short (3),
-normalization (4) or memory (5).
-.It ether[24:2]=0
-Action equals pass (0) or block (1).
-.It ether[26:2]=0
-Direction equals in (0) or out (1).
+.It reason match
+Reason equals match.  Also accepts "bad-offset", "fragment", "short",
+"normalize" and "memory".
+.It action pass
+Action equals pass.  Also accepts "block".
+.It inbound
+The direction was inbound.
+.It outbound
+The direction was outbound.
 .El
+.Pp
+Display the logs in real time of inbound packets that were blocked on
+the wi0 interface:
+.Bd -literal -offset indent
+# tcpdump -n -e -ttt -i pflog0 inbound and block and on wi0
+.Ed
 .Sh FILES
 .Bl -tag -width /var/run/pflogd.pid -compact
 .It Pa /var/run/pflogd.pid
