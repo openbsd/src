@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2001/06/30 12:14:43 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2001/07/05 07:20:45 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -1765,7 +1765,6 @@ pmap_reference(pmap_t p)
  *	free
  *	invalidate_pte
  *	flush_atc_entry
- *	vm_page_set_modified
  *	PHYS_TO_VM_PAGE
  *
  * Special Assumptions:
@@ -1778,10 +1777,9 @@ pmap_reference(pmap_t p)
  * nothing need be done.
  *
  *  If the PTE is valid, the routine must invalidated the entry. The
- * 'modified' bit, if on, is referenced to the VM through the
- * 'vm_page_set_modified' macro, and into the appropriate entry in the
- * pmap_modify_list. Next, the function must find the PV list entry
- * associated with this pmap/va (if it doesn't exist - the function
+ * 'modified' bit, if on, is referenced to the VM, and into the appropriate
+ * entry in the pmap_modify_list. Next, the function must find the PV list
+ * entry associated with this pmap/va (if it doesn't exist - the function
  * panics). The PV list entry is unlinked from the list, and returned to
  * its zone.
  */
@@ -1914,9 +1912,11 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 		flush_atc_entry(users, tva, kflush);
 
 		if (opte.pte.modified) {
-			if (IS_VM_PHYSADDR(pa)) {
-				vm_page_set_modified(
-				    PHYS_TO_VM_PAGE(opte.bits & ~PAGE_MASK));
+			if (vm_physseg_find(atop(pa), NULL) != -1) {
+				struct vm_page *pg;
+
+				pg = PHYS_TO_VM_PAGE(opte.bits & ~PAGE_MASK);
+				pg->flags &= ~PG_CLEAN;
 			}
 			/* keep track ourselves too */
 			if (PMAP_MANAGED(pa))
@@ -2001,7 +2001,6 @@ pmap_remove(pmap_t map, vm_offset_t s, vm_offset_t e)
  *	simple_lock
  *	PDT_VALID
  *	pmap_pte
- *	vm_page_set_modified
  *	PHYS_TO_VM_PAGE
  *	free
  *
@@ -2105,7 +2104,10 @@ remove_all_Retry:
 		flush_atc_entry(users, va, kflush);
 
 		if (opte.pte.modified) {
-			vm_page_set_modified((vm_page_t)PHYS_TO_VM_PAGE(phys));
+			struct vm_page *pg;
+
+			pg = PHYS_TO_VM_PAGE(phys);
+			pg->flags &= ~PG_CLEAN;
 			/* keep track ourselves too */
 			SET_ATTRIB(phys, 1);
 		}
