@@ -1,7 +1,9 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2002/11/01 00:05:45 mickey Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2003/01/16 19:16:02 mickey Exp $	*/
 /*	Michael Shalayeff <mickey@openbsd.org>. Public Domain. */
 
 #include <machine/asm.h>
+#define	_LOCORE
+#include <machine/frame.h>
 
 #define	FRAMESIZE	0x60
 
