@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.7 2001/07/01 06:03:34 angelos Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.8 2001/08/16 07:04:28 jakob Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -33,9 +33,13 @@
 #include <stdlib.h>
 
 #include <openssl/rsa.h>
-#include <dns/keyvalues.h>
-#include <lwres/lwres.h>
+
+#ifdef LWRES
 #include <lwres/netdb.h>
+#include <dns/keyvalues.h>
+#else
+#include <netdb.h>
+#endif
 
 #include "sysdep.h"
 
@@ -96,13 +100,13 @@ dns_get_key (int type, struct message *msg, int *keylen)
     {
     case AF_INET:
       hostent =
-	lwres_gethostbyaddr ((char *)&((struct sockaddr_in *)dst)->sin_addr,
-			     sizeof (struct in_addr), PF_INET);
+	gethostbyaddr ((char *)&((struct sockaddr_in *)dst)->sin_addr,
+		       sizeof (struct in_addr), PF_INET);
       break;
     case AF_INET6:
       hostent =
-	lwres_gethostbyaddr ((char *)&((struct sockaddr_in6 *)dst)->sin6_addr,
-			     sizeof (struct in6_addr), PF_INET6);
+	gethostbyaddr ((char *)&((struct sockaddr_in6 *)dst)->sin6_addr,
+		       sizeof (struct in6_addr), PF_INET6);
       break;
     default:
       log_print ("dns_get_key: unsupported protocol family %d",
@@ -119,8 +123,8 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	dst_str = 0;
 
       LOG_DBG ((LOG_MISC, 30, 
-		"dns_get_key: lwres_gethostbyaddr (%s) failed: %s", 
-		dst_str ? dst_str : "<???>", lwres_hstrerror (lwres_h_errno)));
+		"dns_get_key: gethostbyaddr (%s) failed: %s", 
+		dst_str ? dst_str : "<???>", hstrerror (h_errno)));
 
       if (dst_str)
 	free (dst_str);
@@ -131,7 +135,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
   /* Try host official name */
   LOG_DBG ((LOG_MISC, 50, "dns_get_key: trying KEY RR for %s", 
 	    hostent->h_name));
-  ret = lwres_getrrsetbyname (hostent->h_name, C_IN, T_KEY, 0, &rr);
+  ret = getrrsetbyname (hostent->h_name, C_IN, T_KEY, 0, &rr);
   if (ret)
     {
       /* Try host aliases */
@@ -140,7 +144,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	{
 	  LOG_DBG ((LOG_MISC, 50, "dns_get_key: trying KEY RR for alias %s", 
 		    hostent->h_aliases[i]));
-	  ret = lwres_getrrsetbyname (hostent->h_aliases[i], C_IN, T_KEY, 0,
+	  ret = getrrsetbyname (hostent->h_aliases[i], C_IN, T_KEY, 0,
 				      &rr);
 	  i++;
 	}
@@ -162,7 +166,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
   if (!(rr->rri_flags & RRSET_VALIDATED))
     {
       LOG_DBG ((LOG_MISC, 10, "dns_get_key: got unvalidated response"));
-      lwres_freerrset (rr);
+      freerrset (rr);
       return 0;
     }
   
@@ -170,7 +174,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
   if (rr->rri_nrdatas == 0 || rr->rri_rdtype != T_KEY)
     {
       LOG_DBG ((LOG_MISC, 30, "dns_get_key: no KEY RRs recieved"));
-      lwres_freerrset (rr);
+      freerrset (rr);
       return 0;
     } 
 
@@ -211,14 +215,14 @@ dns_get_key (int type, struct message *msg, int *keylen)
       if (!key_rr.data)
 	{
 	  log_error ("dns_get_key: malloc (%d) failed", key_rr.datalen);
-	  lwres_freerrset (rr);
+	  freerrset (rr);
 	  return 0;
 	}
       memcpy (key_rr.data, rr->rri_rdatas[i].rdi_data + 4, key_rr.datalen);
       *keylen = key_rr.datalen;
     }
 
-  lwres_freerrset (rr);
+  freerrset (rr);
 
   if (key_rr.datalen)
     return key_rr.data;
