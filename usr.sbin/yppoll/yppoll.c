@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.8 2003/07/18 22:58:56 david Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.9 2003/09/06 04:05:26 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.8 2003/07/18 22:58:56 david Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.9 2003/09/06 04:05:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 
 	yp_get_default_domain(&domainname);
 
-	while ((c=getopt(argc, argv, "h:d:?")) != -1)
+	while ((c=getopt(argc, argv, "h:d:")) != -1)
 		switch (c) {
 		case 'd':
 			domainname = optarg;
