@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2005/03/01 21:47:19 espie Exp $
+# $OpenBSD: Makefile,v 1.23 2005/03/07 21:46:59 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,7 @@ _quick3p=
 MANALL+= $p.cat3p
 MANSRCALL += $p.3p
 MANSRC_COOKIE=stamp-mansrc.build
-_quick3p+=${.CURDIR}/pod/$p.pod $p
+_quick3p+=$p.pod ${.OBJDIR}/$p.3p
 .    ifdef MANPS
 PSALL+= $p.ps3p
 .    endif
@@ -68,7 +68,7 @@ MANSRC_COOKIE=
 .  endif
 
 $p.3p: pod/$p.pod
-	${POD2MAN} --section=3p --official ${.ALLSRC} $@
+	${POD2MAN} --section=3p --official --name=$p ${.ALLSRC} $@
 .endfor
 .ifndef NOMAN
 MANALL+=${MAN:S/.1$/.cat1/}
@@ -79,7 +79,7 @@ PSALL+= ${MAN:S/.1$/.ps1/}
 
 mansrc.build:
 .if !empty(_quick3p)
-	cd ${.OBJDIR} && ${POD2MAN} --section=3p --official ${_quick3p}
+	cd ${.CURDIR}/pod && ${POD2MAN} --section=3p --official ${_quick3p}
 .endif
 
 # Nothing to build
