@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.13 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.14 2004/01/20 09:00:41 otto Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.13 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.14 2004/01/20 09:00:41 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -111,6 +111,7 @@ progstr(prog)
 
 	if (lastprog != 0 && prog == lastprog)
 		return (buf);
+	lastprog = prog;
 	rp = getrpcbynumber(prog);
 	if (rp == NULL)
 		snprintf(buf, sizeof(buf), "#%u", prog);
