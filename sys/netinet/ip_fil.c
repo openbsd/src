@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.44 2001/05/08 19:58:01 fgsch Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.45 2001/05/08 20:02:59 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -1349,8 +1349,13 @@ frdest_t *fdp;
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
 		dst->sin_addr = ip->ip_dst;
-	} else if (fdp)
-		dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
+	} else if (fdp) {
+		if (fdp->fd_ip.s_addr) {
+			dst->sin_addr = fdp->fd_ip;
+			ip->ip_dst = fdp->fd_ip;
+		} else
+			dst->sin_addr = ip->ip_dst; 
+	}
 
 # if BSD >= 199306
 	dst->sin_len = sizeof(*dst);
