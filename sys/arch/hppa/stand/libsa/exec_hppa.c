@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_hppa.c,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: exec_hppa.c,v 1.2 1998/07/13 03:35:59 mickey Exp $	*/
 /*	$NOWHERE: exec_hppa.c,v 2.2 1998/06/22 19:34:46 mickey Exp $	*/
 
 /*
@@ -41,16 +41,18 @@
 #include <stand/boot/bootarg.h>
 #include <sys/disklabel.h>
 #include "libsa.h"
+#include <lib/libsa/exec.h>
 
 #define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
 
-typedef void (*startfuncp) __P((int, int, int, caddr_t))
+typedef void (*startfuncp) __P((int, int, caddr_t))
     __attribute__ ((noreturn));
 
 void
-machdep_start(startaddr, howto, loadaddr, ssym, esym)
-	char *startaddr, *loadaddr, *ssym, *esym;
+machdep_exec(xp, howto, loadaddr)
+	struct x_param *xp;
 	int howto;
+	void *loadaddr;
 {
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
@@ -59,6 +61,6 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	fcacheall();
 
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)startaddr)(BOOTARG_APIVER, round_to_size(esym), ac, av);
+	(*(startfuncp)(loadaddr + xp->xp_entry)) (BOOTARG_APIVER, ac, av);
 	/* not reached */
 }

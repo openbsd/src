@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.2 1998/07/08 19:31:13 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.3 1998/07/13 03:36:01 mickey Exp $	*/
 /*	$NOWHERE: libsa.h,v 2.2 1998/06/22 19:34:47 mickey Exp $	*/
 
 /*
@@ -32,6 +32,10 @@
  */
 
 #include <lib/libsa/stand.h>
+
+#define	EXEC_ELF
+/* #define	EXEC_ECOFF */
+/* #define	EXEC_SOM */
 
 #define	DEFAULT_KERNEL_ADDRESS	0x12000
 

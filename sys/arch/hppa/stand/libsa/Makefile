@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 1998/07/13 03:35:57 mickey Exp $
 #	$NOWHERE: Makefile,v 2.1 1998/06/22 19:34:45 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
@@ -17,13 +17,13 @@ NOPIC=nopic
 #AS+=	-a
 
 # hppa stuff
-SRCS=	machdep.c pdc.c itecons.c dk.c dev_hppa.c exec_hppa.c time.c \
+SRCS=	alloca.S machdep.c pdc.c itecons.c dk.c dev_hppa.c exec_hppa.c time.c \
 	ct.c dk.c cache_s.s cache_c.c
 
 # stand routines
-SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
+SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c \
-	strtol.c ctime.c
+	strtol.c ctime.c exec.new.c exec_elf.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1.1.1 1998/06/23 18:46:41 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 1998/07/13 03:35:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -38,10 +38,16 @@
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/netif.h>
 #endif
+#include <lib/libsa/exec.h>
 #include <dev/cons.h>
 
 const char version[] = "0.01";
 int	debug;
+
+struct x_sw execsw[] = {
+	{ "elf",	elf_probe,	elf_load },
+	{ ""   ,	NULL,		NULL },
+};
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,

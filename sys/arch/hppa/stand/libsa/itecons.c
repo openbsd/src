@@ -1,4 +1,4 @@
-/*	$OpenBSD: itecons.c,v 1.2 1998/07/08 21:34:35 mickey Exp $	*/
+/*	$OpenBSD: itecons.c,v 1.3 1998/07/13 03:36:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -169,20 +169,17 @@ ite_getc(dev)
 		return(0x100);
 
 	if (stash) {
-		if (dev & 0x80)
-			return stash;
-		else {
-			c = stash;
+		c = stash;
+		if (!(dev & 0x80))
 			stash = 0;
-			return stash;
-		}
+		return c;
 	}
 
 	do {
 		err = (*kyiodc)(KY_HPA, IODC_IO_CONSIN, KY_SPA, KY_LAYER,
 				pdcbuf, 0, cnbuf, 1, 0);
 		l = pdcbuf[0];
-		stash = c = cnbuf[0];
+		c = cnbuf[0];
 #ifdef DEBUG
 		if (debug && err < 0)
 			printf("KBD input error: %d", err);
@@ -206,8 +203,8 @@ ite_getc(dev)
 	if (debug > 3)
 		printf("kbd: \'%c\' (0x%x)\n", c, c);
 #endif
-	if (!(dev & 0x80))
-		stash = 0;
+	if (dev & 0x80)
+		stash = c;
 
 	return (c);
 }
