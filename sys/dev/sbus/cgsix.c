@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.48 2005/03/03 01:41:11 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.49 2005/03/03 01:52:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -180,8 +180,8 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 
 	if ((sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri,
 	    IPL_TTY, 0, cgsix_intr, sc, self->dv_xname)) == NULL) {
-		printf(": couldn't establish interrupt, pri %d\n", sa->sa_pri);
-		goto fail_intr;
+		printf(": couldn't establish interrupt, pri %d\n%s",
+		    sa->sa_pri, self->dv_xname);
 	}
 
 	/* if prom didn't initialize us, do it the hard way */
@@ -249,8 +249,6 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail_intr:
-	bus_space_unmap(sa->sa_bustag, sc->sc_fbc_regs, CGSIX_FBC_SIZE);
 fail_fbc:
 	bus_space_unmap(sa->sa_bustag, sc->sc_tec_regs, CGSIX_TEC_SIZE);
 fail_tec:
@@ -313,7 +311,11 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		error = cg6_bt_putcmap(&sc->sc_cmap, cm);
 		if (error)
 			return (error);
-		cgsix_loadcmap_deferred(sc, cm->index, cm->count);
+		/* if we can handle interrupts, defer the update */
+		if (sc->sc_ih != NULL)
+			cgsix_loadcmap_deferred(sc, cm->index, cm->count);
+		else
+			cgsix_loadcmap_immediate(sc, cm->index, cm->count);
 		break;
 	case WSDISPLAYIO_SCURSOR:
 		curs = (struct wsdisplay_cursor *)data;

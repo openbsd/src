@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.3 2005/01/05 23:04:25 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.4 2005/03/03 01:52:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -315,7 +315,6 @@ vigraattach(struct device *parent, struct device *self, void *args)
 	    IPL_TTY, 0, vigra_intr, sc, self->dv_xname)) == NULL) {
 		printf("\n%s: couldn't establish interrupt, pri %d\n",
 		    sa->sa_pri);
-		return;
 	}
 
 	/*
@@ -393,7 +392,11 @@ vigra_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		error = vigra_putcmap(&sc->sc_cmap, cm, sc->sc_g300);
 		if (error)
 			return (error);
-		vigra_loadcmap_deferred(sc, cm->index, cm->count);
+		/* if we can handle interrupts, defer the update */
+		if (sc->sc_ih != NULL)
+			vigra_loadcmap_deferred(sc, cm->index, cm->count);
+		else
+			vigra_loadcmap_immediate(sc, cm->index, cm->count);
 		break;
 
 	case WSDISPLAYIO_SVIDEO:
