@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: login.c,v 1.15 2000/09/07 20:27:52 deraadt Exp $");
+RCSID("$OpenBSD: login.c,v 1.16 2000/12/19 23:17:57 markus Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -56,9 +56,9 @@ RCSID("$OpenBSD: login.c,v 1.15 2000/09/07 20:27:52 deraadt Exp $");
  * is found).  The name of the host used last time is returned in buf.
  */
 
-unsigned long
+u_long
 get_last_login_time(uid_t uid, const char *logname,
-		    char *buf, unsigned int bufsize)
+		    char *buf, u_int bufsize)
 {
 	struct lastlog ll;
 	char *lastlog;

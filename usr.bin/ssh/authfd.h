@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: authfd.h,v 1.14 2000/11/12 19:50:37 markus Exp $"); */
+/* RCSID("$OpenBSD: authfd.h,v 1.15 2000/12/19 23:17:55 markus Exp $"); */
 
 #ifndef AUTHFD_H
 #define AUTHFD_H
@@ -101,16 +101,16 @@ Key	*ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int v
 int
 ssh_decrypt_challenge(AuthenticationConnection *auth,
     Key *key, BIGNUM * challenge,
-    unsigned char session_id[16],
-    unsigned int response_type,
-    unsigned char response[16]);
+    u_char session_id[16],
+    u_int response_type,
+    u_char response[16]);
 
 /* Requests the agent to sign data using key */
 int
 ssh_agent_sign(AuthenticationConnection *auth,
     Key *key,
-    unsigned char **sigp, int *lenp,
-    unsigned char *data, int datalen);
+    u_char **sigp, int *lenp,
+    u_char *data, int datalen);
 
 /*
  * Adds an identity to the authentication server.  This call is not meant to

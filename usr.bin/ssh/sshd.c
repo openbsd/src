@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.139 2000/12/15 17:30:14 provos Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.140 2000/12/19 23:17:59 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -153,14 +153,14 @@ int key_used = 0;
 int received_sighup = 0;
 
 /* session identifier, used by RSA-auth */
-unsigned char session_id[16];
+u_char session_id[16];
 
 /* same for ssh2 */
-unsigned char *session_id2 = NULL;
+u_char *session_id2 = NULL;
 int session_id2_len = 0;
 
 /* record remote hostname or ip */
-unsigned int utmp_len = MAXHOSTNAMELEN;
+u_int utmp_len = MAXHOSTNAMELEN;
 
 /* Prototypes for various functions defined later in this file. */
 void do_ssh1_kex();
@@ -864,7 +864,7 @@ main(int ac, char **av)
 			 */
 			f = fopen(options.pid_file, "w");
 			if (f) {
-				fprintf(f, "%u\n", (unsigned int) getpid());
+				fprintf(f, "%u\n", (u_int) getpid());
 				fclose(f);
 			}
 		}
@@ -1153,9 +1153,9 @@ do_ssh1_kex()
 	int i, len;
 	int plen, slen;
 	BIGNUM *session_key_int;
-	unsigned char session_key[SSH_SESSION_KEY_LENGTH];
-	unsigned char cookie[8];
-	unsigned int cipher_type, auth_mask, protocol_flags;
+	u_char session_key[SSH_SESSION_KEY_LENGTH];
+	u_char cookie[8];
+	u_int cipher_type, auth_mask, protocol_flags;
 	u_int32_t rand = 0;
 
 	/*
@@ -1412,12 +1412,12 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 #endif
 	int payload_len, dlen;
 	int slen;
-	unsigned char *signature = NULL;
-	unsigned char *server_host_key_blob = NULL;
-	unsigned int sbloblen;
-	unsigned int klen, kout;
-	unsigned char *kbuf;
-	unsigned char *hash;
+	u_char *signature = NULL;
+	u_char *server_host_key_blob = NULL;
+	u_int sbloblen;
+	u_int klen, kout;
+	u_char *kbuf;
+	u_char *hash;
 	BIGNUM *shared_secret = 0;
 	DH *dh;
 	BIGNUM *dh_client_pub = 0;
@@ -1541,12 +1541,12 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 #endif
 	int payload_len, dlen;
 	int slen, nbits;
-	unsigned char *signature = NULL;
-	unsigned char *server_host_key_blob = NULL;
-	unsigned int sbloblen;
-	unsigned int klen, kout;
-	unsigned char *kbuf;
-	unsigned char *hash;
+	u_char *signature = NULL;
+	u_char *server_host_key_blob = NULL;
+	u_int sbloblen;
+	u_int klen, kout;
+	u_char *kbuf;
+	u_char *hash;
 	BIGNUM *shared_secret = 0;
 	DH *dh;
 	BIGNUM *dh_client_pub = 0;

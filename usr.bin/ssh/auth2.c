@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.22 2000/12/03 11:15:02 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.23 2000/12/19 23:17:55 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -52,7 +52,7 @@ RCSID("$OpenBSD: auth2.c,v 1.22 2000/12/03 11:15:02 markus Exp $");
 
 /* import */
 extern ServerOptions options;
-extern unsigned char *session_id2;
+extern u_char *session_id2;
 extern int session_id2_len;
 
 static Authctxt	*x_authctxt = NULL;
@@ -138,7 +138,7 @@ void
 input_service_request(int type, int plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
-	unsigned int len;
+	u_int len;
 	int accept = 0;
 	char *service = packet_get_string(&len);
 	packet_done();
@@ -315,7 +315,7 @@ userauth_passwd(Authctxt *authctxt)
 	char *password;
 	int authenticated = 0;
 	int change;
-	unsigned int len;
+	u_int len;
 	change = packet_get_char();
 	if (change)
 		log("password change not supported");
@@ -357,7 +357,7 @@ userauth_pubkey(Authctxt *authctxt)
 	Buffer b;
 	Key *key;
 	char *pkalg, *pkblob, *sig;
-	unsigned int alen, blen, slen;
+	u_int alen, blen, slen;
 	int have_sig, pktype;
 	int authenticated = 0;
 
@@ -467,7 +467,7 @@ char *
 authmethods_get(void)
 {
 	Authmethod *method = NULL;
-	unsigned int size = 0;
+	u_int size = 0;
 	char *list;
 
 	for (method = authmethods; method->name != NULL; method++) {
@@ -516,7 +516,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 	char line[8192], file[1024];
 	int found_key = 0;
 	FILE *f;
-	unsigned long linenum = 0;
+	u_long linenum = 0;
 	struct stat st;
 	Key *found;
 

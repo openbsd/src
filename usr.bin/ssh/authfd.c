@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.30 2000/11/12 19:50:37 markus Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.31 2000/12/19 23:17:55 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -268,9 +268,9 @@ ssh_get_first_identity(AuthenticationConnection *auth, char **comment, int versi
 Key *
 ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int version)
 {
-	unsigned int bits;
-	unsigned char *blob;
-	unsigned int blen;
+	u_int bits;
+	u_char *blob;
+	u_int blen;
 	Key *key = NULL;
 
 	/* Return failure if no more entries. */
@@ -318,9 +318,9 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
 int
 ssh_decrypt_challenge(AuthenticationConnection *auth,
     Key* key, BIGNUM *challenge,
-    unsigned char session_id[16],
-    unsigned int response_type,
-    unsigned char response[16])
+    u_char session_id[16],
+    u_int response_type,
+    u_char response[16])
 {
 	Buffer buffer;
 	int success = 0;
@@ -369,13 +369,13 @@ ssh_decrypt_challenge(AuthenticationConnection *auth,
 int
 ssh_agent_sign(AuthenticationConnection *auth,
     Key *key,
-    unsigned char **sigp, int *lenp,
-    unsigned char *data, int datalen)
+    u_char **sigp, int *lenp,
+    u_char *data, int datalen)
 {
 	extern int datafellows;
 	Buffer msg;
-	unsigned char *blob;
-	unsigned int blen;
+	u_char *blob;
+	u_int blen;
 	int type, flags = 0;
 	int ret = -1;
 
@@ -498,8 +498,8 @@ ssh_remove_identity(AuthenticationConnection *auth, Key *key)
 {
 	Buffer msg;
 	int type;
-	unsigned char *blob;
-	unsigned int blen;
+	u_char *blob;
+	u_int blen;
 
 	buffer_init(&msg);
 
