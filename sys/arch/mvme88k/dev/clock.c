@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: clock.c,v 1.13 2001/12/14 02:11:43 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -97,6 +97,7 @@
 #include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/mmu.h>	/* DMA_CACHE_SYNC, etc... */
+#include <machine/cmmu.h>
 #include "pcctwo.h"
 #if NPCCTWO > 0 
 #include <mvme88k/dev/pcctwofunc.h>
