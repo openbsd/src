@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.2 1997/04/05 18:56:24 mickey Exp $	*/
+/*	$OpenBSD: debug.c,v 1.3 1997/04/09 08:39:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,6 +39,7 @@ const char *reg_names[] = { REG_NAMES };
 const int nreg = NENTS(reg_names);
 struct reg reg;
 const u_int32_t *reg_values[] = { REG_VALUES(reg) };
+const char *trap_names[] = { TRAP_NAMES };
 
 int
 debug_init()
@@ -52,7 +53,7 @@ dump_regs(trapno)
 {
 	int i;
 
-	printf("trap: %u\n", trapno);
+	printf("trap: %s\n", trap_names[trapno]);
 	for (i = 0; i < nreg; putchar((++i % 4)?' ':'\n'))
 		printf ("%s=0x%x", reg_names[i], *reg_values[i]);
 	if (i % 4)

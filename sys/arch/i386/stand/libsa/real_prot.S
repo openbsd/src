@@ -1,4 +1,4 @@
-/*	$OpenBSD: real_prot.S,v 1.4 1997/04/05 18:56:28 mickey Exp $	*/
+/*	$OpenBSD: real_prot.S,v 1.5 1997/04/09 08:39:42 mickey Exp $	*/
 
 /*
  * Mach Operating System
@@ -77,6 +77,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ENTRY(real_to_prot)
 	/* guarantee that interrupts are disabled when in prot mode */
 	cli
+	addr32
+	data32
+	movl	%eax, 2f
 
 	/* load the gdtr */
 	addr32
@@ -104,11 +107,12 @@ ENTRY(real_to_prot)
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
 
-	/* load idtr so we can debug */
+	/* load idtr for debugger and BIOS iface */
 	lidt	_Idtr_prot
+	# movl	Leax, %eax
+	.byte	0xb8
+2:	.long	0	/* eax */
 	ret
 
 /*
@@ -120,8 +124,9 @@ ENTRY(real_to_prot)
 
 ENTRY(prot_to_real)
 
+	movl	%eax, 4f
 	movl 	_codeseg, %eax
-	# movw	%ax, 2f
+	movw	%ax, 2f
 
 	/* Change to use16 mode. */
 	ljmp	$0x18, $1f
@@ -143,12 +148,17 @@ ENTRY(prot_to_real)
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
-	/* load idtr so we can debug */
+
+	/* load idtr for BIOS operations */
 	addr32
 	data32
 	lidt	_Idtr_real
+
+	addr32
+	data32
+	# movl	Leax, %eax
+	.byte	0xb8
+4:	.long	0	/* %eax */
 
 	sti
 	data32

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.2 1997/04/07 01:21:54 weingart Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.3 1997/04/09 08:39:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,10 +35,13 @@
 #include <machine/psl.h>
 #define _LOCORE
 #include <machine/segments.h>
+#include <machine/specialreg.h>
 #include <machine/trap.h>
 #include <debug_md.h>
 #undef _LOCORE
 
+#define addr32  .byte 0x67
+#define data32  .byte 0x66
 
 	.data
 	.globl	_Gdtr
@@ -52,7 +55,7 @@ gdt:
 	.word	0xFFFF			# lolimit
 	.word	0			# lobase
 	.byte	0			# midbase
-	.byte	SDT_MEMERA | 0 | 0x80	# RWXA, dpl = 0, present
+	.byte	SDT_MEMERAC | 0 | 0x80	# RXAC, dpl = 0, present
 	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
 	.byte	0			# hibase
 		/* 0x10 : flat data */
@@ -66,8 +69,8 @@ gdt:
 	.word	0xFFFF			# lolimit
 	.word	0			# lobase
 	.byte	0			# midbase
-	.byte	SDT_MEMERA | 0 | 0x80	# RWXA, dpl = 0, present
-	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
+	.byte	SDT_MEMERA | 0 | 0x80	# RXAC, dpl = 0, present
+	.byte	0x0 | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	0			# hibase
 _Gdtr:	.word	. - gdt - 1
 	.long	gdt
@@ -127,28 +130,36 @@ idt:	/*
 	IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx)
 	IDTENTRY(xx)
 			/*	Maskable interrupts(32-255) */
+			/*	BIOS entry points (32-63) */
+#define IBIOS(n)	IPROC(bios/**/n)
+#define IDTBIOS(n)	IDTENTRY(bios/**/n)
+	IDTBIOS(0);  IDTBIOS(1);  IDTBIOS(2);  IDTBIOS(3);  IDTBIOS(4)
+	IDTBIOS(5);  IDTBIOS(6);  IDTBIOS(7);  IDTBIOS(8);  IDTBIOS(9)
+	IDTBIOS(10); IDTBIOS(11); IDTBIOS(12); IDTBIOS(13); IDTBIOS(14)
+	IDTBIOS(15); IDTBIOS(16); IDTBIOS(17); IDTBIOS(18); IDTBIOS(19)
+	IDTBIOS(20); IDTBIOS(21); IDTBIOS(22); IDTBIOS(23)
+			/*	DOS entry points */
 
 _Idtr_prot:
-	.word	. - idt
+	.word	. - idt - 1
 	.long	idt
 
 	.text
-	.globl	alltraps
 
 #define IENTRY(name,type) \
 IPROC(name): \
 	pushl	$type ; \
-	jmp	alltraps
+	jmp	1f
 #define IENTRY_ERR(name,err,type) \
 IPROC(name): \
 	pushl	$err ; \
 	pushl	$type ; \
-	jmp	alltraps
+	jmp	1f
 
 IPROC(xx):
 	pushl	$1
 	pushl	$256
-	jmp	alltraps
+	jmp	1f
 
 IENTRY_ERR(de,0,T_DIVIDE)
 IENTRY_ERR(db,0,T_TRCTRAP)
@@ -168,4 +179,51 @@ IENTRY(pf,T_PAGEFLT)
 IENTRY_ERR(mf,0,T_ARITHTRAP)
 IENTRY(ac,T_ALIGNFLT)
 IENTRY(mc,T_MACHK)
+
+	.globl	alltraps
+1:	/* save on jumps */
+	jmp	alltraps
+
+#define	IBIOSENT(n)	IBIOS(n): pushl %eax; movb $n, %al ; jmp 1f
+
+IBIOSENT(0);  IBIOSENT(1);  IBIOSENT(2);  IBIOSENT(3)
+IBIOSENT(4);  IBIOSENT(5);  IBIOSENT(6);  IBIOSENT(7)
+IBIOSENT(8);  IBIOSENT(9);  IBIOSENT(10); IBIOSENT(11)
+IBIOSENT(12); IBIOSENT(13); IBIOSENT(14); IBIOSENT(15)
+IBIOSENT(16); IBIOSENT(17); IBIOSENT(18); IBIOSENT(19)
+IBIOSENT(20); IBIOSENT(21); IBIOSENT(22); IBIOSENT(23)
+
+	.text
+	.globl	_real_to_prot, _prot_to_real
+1:
+	movb	%al, intno
+	popl	%eax
+	pushal
+	pushl	%ds
+	pushl	%es
+
+	call	_prot_to_real
+
+	movl	%di, %es
+
+	int	$0
+intno = . - 1
+
+	movb	%ah, %bh
+	lahf
+	xchgb	%ah, %bh
+
+	data32
+	call	_real_to_prot
+
+	/* pass BIOS return values back to caller */
+	movl	%eax, 0x9*4(%esp)
+	movl	%ecx, 0x8*4(%esp)
+	movl	%edx, 0x7*4(%esp)
+	movb	%bh , 0xc*4(%esp)
+
+	popl	%es
+	popl	%ds
+	popal
+	iret
 

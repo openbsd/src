@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_md.h,v 1.2 1997/04/04 04:47:47 mickey Exp $	*/
+/*	$OpenBSD: debug_md.h,v 1.3 1997/04/09 08:39:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,6 +40,15 @@
 	&(r).r_ebp, &(r).r_esi, &(r).r_edi, &(r).r_eip, &(r).r_eflags, \
 	&(r).r_cs , &(r).r_ss,  &(r).r_ds,  &(r).r_es,  &(r).r_fs, \
 	&(r).r_gs
+#define TRAP_NAMES	\
+	"privileged instruction", "breakpoint trap", "arithmetic trap", \
+	"asynchronous system trap", "protection fault", "trace trap", \
+	"page fault", "alignment fault", "integer divide fault", \
+	"non-maskable interrupt", "overflow trap", "bounds check fault", \
+	"device not available fault", "double fault", \
+	"fp coprocessor operand fetch fault (![P]Pro)", "invalid tss fault", \
+	"segment not present fault", "stack fault", "machine check ([P]Pro)", \
+	"reserved fault base"
 
 #ifdef	_LOCORE
 	.globl	_reg

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.4 1997/04/08 22:48:27 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.5 1997/04/09 08:39:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -214,7 +214,7 @@ biosopen(struct open_file *f, ...)
 }
 
 /* BIOS disk errors translation table */
-static const struct bd_error {
+const struct bd_error {
 	u_int8_t bd_id;
 	int	unix_id;
 	char	*msg;

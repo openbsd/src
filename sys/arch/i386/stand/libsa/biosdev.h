@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.3 1997/03/31 23:06:27 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.4 1997/04/09 08:39:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -36,6 +36,11 @@
 #define	BIOSNHEADS(d)	(((d)>>8)+1)
 #define	BIOSNSECTS(d)	((d)&0xff)	/* sectors are 1-based */
 
+#ifdef _LOCORE
+#define	BIOSINT(n)	int	$0x20+(n)
+#else
+#define	BIOSINT(n)	__asm ((int $0x20+(n)))
+
 /* biosdev.c */
 extern const char *biosdevs[];
 int biosstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
@@ -44,7 +49,7 @@ int biosclose __P((struct open_file *));
 int biosioctl __P((struct open_file *, u_long, void *));
 
 /* biosdisk.S */
-u_int	biosdinfo __P((int dev));
+u_int16_t biosdinfo __P((int dev));
 int     biosread  __P((int dev, int cyl, int hd, int sect, int nsect, void *));
 int     bioswrite __P((int dev, int cyl, int hd, int sect, int nsect, void *));
 
@@ -61,7 +66,8 @@ int	com_getc __P((void));
 int	com_ischar __P((void));
 
 /* biosmem.S */
-u_int	biosmem __P((int));
+u_int	biosmem __P((void));
 
 /* biostime.S */
 void	usleep __P((u_long));
+#endif

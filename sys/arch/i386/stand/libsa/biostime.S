@@ -1,4 +1,4 @@
-/*	$OpenBSD: biostime.S,v 1.2 1997/03/31 03:12:12 weingart Exp $	*/
+/*	$OpenBSD: biostime.S,v 1.3 1997/04/09 08:39:27 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -52,8 +52,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <machine/asm.h>
-#define addr32	.byte 0x67
-#define data32	.byte 0x66
+#define	_LOCORE
+#include "biosdev.h"
+#undef	_LOCORE
 
 /*
 # BIOS call "INT 15H Function 86H" to sleep for a set number of microseconds
@@ -67,28 +68,19 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #			CF  = clear
 */
 ENTRY(usleep)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
 
-	movw	8(%ebp), %dx
-	movw	10(%ebp), %cx
-
-	call	_C_LABEL(prot_to_real)
+	movw	12(%esp), %dx
+	movw	14(%esp), %cx
 
 	movb	$0x86, %ah
-	int	$0x15
-	setnc	%ah
+	BIOSINT(0x15)
+	setnc	%al
+	movzbl	%al, %eax
 
-	movb	%ah, %bl	# real_to_prot uses %eax
-
-	data32
-	call	_C_LABEL(real_to_prot)
-
-	movzbl	%bl, %eax
-
-	popl	%ebx
-	popl	%ebp
+	popl	%edx
+	popl	%ecx
 	ret
 
 /*

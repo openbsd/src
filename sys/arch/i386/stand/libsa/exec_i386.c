@@ -1,5 +1,5 @@
 
-/* $OpenBSD: exec_i386.c,v 1.4 1997/04/04 17:23:29 weingart Exp $ */
+/* $OpenBSD: exec_i386.c,v 1.5 1997/04/09 08:39:36 mickey Exp $ */
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -58,8 +58,8 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	argv[4] = (int)esym;
 	argv[5] = (int)startaddr;
 	argv[6] = 0;
-	argv[7] = biosmem(0);
-	argv[8] = biosmem(1);
+	argv[7] = cnvmem;
+	argv[8] = extmem;
 
 #ifdef DEBUG
 	{ int i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.3 1997/04/05 18:56:25 mickey Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.4 1997/04/09 08:39:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -49,7 +49,10 @@ alltraps:
 	pushl	%es
 #ifdef	DEBUG
 	movl	$0xb8280, %edi
-	movl	$0x47314730, (%edi)
+	movl	0x0a*4(%esp), %eax	# trapno
+	addb	$'0', %al
+	movb	$0x47, %ah
+	movl	%eax, (%edi)
 #endif
 	call	_check_regs
 1:
@@ -74,20 +77,20 @@ ENTRY(check_regs)
 	movl	%ax, %ds
 	movl	$_reg, %edi
 	cld
-	movl	0x0a(%esp,4), %eax; stosl # %eax
-	movl	0x09(%esp,4), %eax; stosl # %ecx
-	movl	0x08(%esp,4), %eax; stosl # %edx
-	movl	0x07(%esp,4), %eax; stosl # %ebx
-	movl	0x06(%esp,4), %eax; stosl # %esp
-	movl	0x05(%esp,4), %eax; stosl # %ebp
-	movl	0x04(%esp,4), %eax; stosl # %esi
-	movl	0x03(%esp,4), %eax; stosl # %edi
-	movl	0x0d(%esp,4), %eax; stosl # %eip
-	movl	0x0f(%esp,4), %eax; stosl # %eflags
-	movl	0x0e(%esp,4), %eax; stosl # %cs
+	movl	0x0a*4(%esp), %eax; stosl # %eax
+	movl	0x09*4(%esp), %eax; stosl # %ecx
+	movl	0x08*4(%esp), %eax; stosl # %edx
+	movl	0x07*4(%esp), %eax; stosl # %ebx
+	movl	0x06*4(%esp), %eax; stosl # %esp
+	movl	0x05*4(%esp), %eax; stosl # %ebp
+	movl	0x04*4(%esp), %eax; stosl # %esi
+	movl	0x03*4(%esp), %eax; stosl # %edi
+	movl	0x0d*4(%esp), %eax; stosl # %eip
+	movl	0x0f*4(%esp), %eax; stosl # %eflags
+	movl	0x0e*4(%esp), %eax; stosl # %cs
 	movl		%ss,  %eax; stosl # %ss
-	movl	0x02(%esp,4), %eax; stosl # %ds
-	movl	0x01(%esp,4), %eax; stosl # %es
+	movl	0x02*4(%esp), %eax; stosl # %ds
+	movl	0x01*4(%esp), %eax; stosl # %es
 	movl		%fs,  %eax; stosl # %fs
 	movl		%gs,  %eax; stosl # %gs
 
@@ -95,7 +98,7 @@ ENTRY(check_regs)
 	movl	$0xb8288, %edi
 	movl	$0x47354734, (%edi)
 #endif
-	movl	0x0b(%esp,4), %eax	# trapno
+	movl	0x0b*4(%esp), %eax	# trapno
 	pushl	%eax
 	call	_C_LABEL(dump_regs)
 	popl	%eax

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioskbd.S,v 1.3 1997/03/31 23:06:28 mickey Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.4 1997/04/09 08:39:23 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -52,8 +52,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <machine/asm.h>
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
+#define	_LOCORE
+#include "biosdev.h"
+#undef	_LOCORE
 
 /* 
  * int	kbd_probe();
@@ -141,26 +142,15 @@ gotack:
 #			%bl = foreground color
 */
 ENTRY(kbd_putc)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushal
+	pushl	%ebx
 
-	movb	8(%ebp), %cl
-
-	call	_C_LABEL(prot_to_real)
-
-	movb	%cl, %al
-
+	movb	8(%esp), %al
 	movb	$0x0e, %ah
-	xorl	%bx, %bx
-	incl	%bx
-	int	$0x10		# display a byte
+	xorl	%ebx, %ebx
+	incl	%ebx
+	BIOSINT(0x10)		# display a byte
 
-	data32
-	call	_C_LABEL(real_to_prot)
-
-	popal
-	popl	%ebp
+	popl	%ebx
 	ret
 
 
@@ -171,28 +161,9 @@ ENTRY(kbd_putc)
 #			%al = ASCII character
 */
 ENTRY(kbd_getc)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-
-	call	_C_LABEL(prot_to_real)
-
 	xorl	%eax, %eax
-	int	$0x16
-
-	movb	%al, %bl	# real_to_prot uses %eax
-
-	data32
-	call	_C_LABEL(real_to_prot)
-
-	movzbl	%bl, %eax
-
-	popl	%edi
-	popl	%esi
-	popl	%ebx
-	popl	%ebp
+	BIOSINT(0x16)
+	movzbl	%al, %eax
 	ret
 
 
@@ -208,24 +179,9 @@ ENTRY(kbd_getc)
 #			ZF  = set
 */
 ENTRY(kbd_ischar)
-	pushal
-
-	call	_C_LABEL(prot_to_real)
-
 	movb	$0x01, %ah
-	int	$0x16
-	setnz	%ah
-
-	movb	%ah, %bl	# real_to_prot uses %eax
-
-	data32
-	call	_C_LABEL(real_to_prot)
-
-	movzbl	%bl, %eax
-	movl	%eax, 1f
-
-	popal
-	movl	1f, %eax
+	BIOSINT(0x16)
+	setnz	%al
+	movzbl	%al, %eax
 	ret
-1:	.long	0
 

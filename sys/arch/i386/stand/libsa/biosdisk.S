@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.4 1997/04/05 23:49:07 mickey Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.5 1997/04/09 08:39:20 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -52,8 +52,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <machine/asm.h>
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
+#define	_LOCORE
+#include "debug_md.h"
+#include "biosdev.h"
+#undef	_LOCORE
 
 /*
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
@@ -70,7 +72,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushal
+	pushl	%ecx
+	pushl	%ebx
+	pushl	%edi
+	pushl	%es
 
 	movb	8(%ebp), %dl	# device
 	movw	12(%ebp), %cx
@@ -82,32 +87,24 @@ ENTRY(biosread)
 	incb	%cl		# sector; sec starts from 1, not 0
 	movb	$0x2, %ah	# subfunction
 	movb	24(%ebp), %al	# number of sectors
-	movl	%eax, %esi	# save this against mode switch
 	movl	28(%ebp), %ebx	# offset
 	movl	%ebx, %edi	# spilt off for seg:off pair
-	shrl	$4, %edi
 	andl	$0xf, %ebx	# atomic read for up to 64k
+	shrl	$4, %edi
 
-	call	_C_LABEL(prot_to_real)	# enter real mode
-
-	movl	%di, %es
-	movl	%si, %ax
-	int	$0x13
-	movb	$0, %cl
+	BIOSINT(0x13)
+	movb	$0, %al
 	jnc	1f
-	movb	%ah, %cl
+	movb	%ah, %al
 1:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	movzbl	%al, %eax	# return value in %ax
 
-	movzbl	%cl, %eax	# return value in %ax
-	movl	%eax, 1f
-
-	popal
-	movl	1f, %eax
+	popl	%es
+	popl	%edi
+	popl	%ebx
+	popl	%ecx
 	popl	%ebp
 	ret
-1:	.long	0
 
 ENTRY(bioswrite)
 
@@ -126,43 +123,19 @@ ENTRY(biosdinfo)
 	movl	%esp, %ebp
 	pushl	%ebx
 	pushl	%ecx
-	pushl	%edx
 
 	movb	8(%ebp), %dl		# diskinfo(drive #)
-
-	call	_C_LABEL(prot_to_real)	# enter real mode
-
 	movb	$0x08, %ah		# ask for disk info
-	int	$0x13
-	jnc	ok
-
-	/*
-	 * Urk.  Call failed.  It is not supported for floppies by old BIOS's.
-	 * Guess it's a 15-sector floppy.  Initialize all the registers for
-	 * documentation, although we only need head and sector counts.
-	 */
-	xorl	%bx, %bx		# %bh = 0
-	incl %bx; incl %bx		# %bl bits 0-3 = drive type, 2 = 1.2M
-	movb	$79, %ch		# max track
-	movb	$15, %cl		# max sector
-	xorl	%dx, %dx
-	incl	%dx			# floppy drives installed
-	movb	%dl, %dh		# max head
-	# es:di = parameter table
-	# carry = 0
-
-ok:
-	data32
-	call	_C_LABEL(real_to_prot)	# back to protected mode
-
-	xorl	%eax, %eax
+	BIOSINT(0x13)
+	movb	$1, %ah		# max head
+	movb	$18, %al	# max sector
+	jc	1f
 
 	/* form a longword representing all this gunk */
 	movb	%dh, %ah		# max head
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
-
-	popl	%edx
+1:
 	popl	%ecx
 	popl	%ebx
 	popl	%ebp
