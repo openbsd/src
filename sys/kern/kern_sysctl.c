@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.105 2004/04/15 00:22:42 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.106 2004/04/19 22:52:33 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -89,6 +89,8 @@ extern int nselcoll, fscale;
 extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern  long numvnodes;
+
+extern void nmbclust_update(void);
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
@@ -495,6 +497,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_EMUL:
 		return (sysctl_emul(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+	case KERN_MAXCLUSTERS:
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &nmbclust);
+		if (!error)
+			nmbclust_update();
+		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}

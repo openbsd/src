@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.35 2004/02/23 06:19:32 drahn Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.36 2004/04/19 22:52:33 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -144,6 +144,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <uvm/uvm.h>
 
@@ -914,4 +915,128 @@ uvm_km_free_poolpage1(map, addr)
 	uvm_km_free(map, addr, PAGE_SIZE);
 	splx(s);
 #endif /* PMAP_UNMAP_POOLPAGE */
+}
+
+int uvm_km_pages_lowat;
+int uvm_km_pages_free;
+struct km_page {
+	struct km_page *next;
+} *uvm_km_pages_head;
+
+void uvm_km_createthread(void *);
+void uvm_km_thread(void *);
+
+void
+uvm_km_page_init(void)
+{
+	struct km_page *head, *page;
+	int i;
+
+
+	head = NULL;
+	for (i = 0; i < uvm_km_pages_lowat * 4; i++) {
+#if defined(PMAP_MAP_POOLPAGE)
+		struct vm_page *pg;
+		vaddr_t va;
+
+		pg = uvm_pagealloc(NULL, 0, NULL, 0);
+		if (__predict_false(pg == NULL))
+			break;
+
+		va = PMAP_MAP_POOLPAGE(pg);
+		if (__predict_false(va == 0)) {
+			uvm_pagefree(pg);
+			break;
+		}
+		page = (void *)va;
+#else
+		page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
+#endif
+		page->next = head;
+		head = page;
+	}
+	uvm_km_pages_head = head;
+	uvm_km_pages_free = i;
+
+	kthread_create_deferred(uvm_km_createthread, NULL);
+}
+
+void
+uvm_km_createthread(void *arg)
+{
+	kthread_create(uvm_km_thread, NULL, NULL, "kmthread");
+}
+
+void
+uvm_km_thread(void *arg)
+{
+	struct km_page *head, *tail, *page;
+	int i, s, want;
+
+	for (;;) {
+		if (uvm_km_pages_free >= uvm_km_pages_lowat)
+			tsleep(&uvm_km_pages_head, PVM, "kmalloc", 0);
+		want = uvm_km_pages_lowat - uvm_km_pages_free;
+		if (want < 16)
+			want = 16;
+		for (i = 0; i < want; i++) {
+#if defined(PMAP_MAP_POOLPAGE)
+			struct vm_page *pg;
+			vaddr_t va;
+	
+			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+			if (__predict_false(pg == NULL))
+				break;
+			va = PMAP_MAP_POOLPAGE(pg);
+			if (__predict_false(va == 0)) {
+				uvm_pagefree(pg);
+				break;
+			}
+			page = (void *)va;
+#else
+			page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
+#endif
+			if (i == 0)
+				head = tail = page;
+			page->next = head;
+			head = page;
+		}
+		s = splvm();
+		tail->next = uvm_km_pages_head;
+		uvm_km_pages_head = head;
+		uvm_km_pages_free += i;
+		splx(s);
+	}
+}
+
+
+void *
+uvm_km_getpage(void)
+{
+	struct km_page *page;
+	int s;
+
+	s = splvm();
+	page = uvm_km_pages_head;
+	if (page) {
+		uvm_km_pages_head = page->next;
+		uvm_km_pages_free--;
+	}
+	splx(s);
+	if (uvm_km_pages_free < uvm_km_pages_lowat)
+		wakeup(&uvm_km_pages_head);
+	return (page);
+}
+
+void
+uvm_km_putpage(void *v)
+{
+	struct km_page *page = v;
+	int s;
+
+	s = splvm();
+	page->next = uvm_km_pages_head;
+	uvm_km_pages_head = page;
+	uvm_km_pages_free++;
+	splx(s);
 }

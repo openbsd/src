@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.76 2004/02/27 21:46:44 grange Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.77 2004/04/19 22:52:33 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -179,7 +179,8 @@ struct ctlname {
 #define	KERN_WATCHDOG		64	/* node: watchdog */
 #define	KERN_EMUL		65	/* node: emuls */
 #define	KERN_PROC2		66	/* struct: process entries */
-#define	KERN_MAXID		67	/* number of valid kern ids */
+#define	KERN_MAXCLUSTERS	67	/* number of mclusters */
+#define	KERN_MAXID		68	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -249,6 +250,7 @@ struct ctlname {
  	{ "watchdog", CTLTYPE_NODE }, \
  	{ "emul", CTLTYPE_NODE }, \
  	{ "proc2", CTLTYPE_STRUCT }, \
+ 	{ "maxclusters", CTLTYPE_INT }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.66 2004/04/17 10:18:12 mcbride Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.67 2004/04/19 22:52:33 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -102,9 +102,11 @@ int max_datalen;		/* MHLEN - max_hdr */
 void	*mclpool_alloc(struct pool *, int);
 void	mclpool_release(struct pool *, void *);
 struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
+void	nmbclust_update(void);
+
 
 const char *mclpool_warnmsg =
-    "WARNING: mclpool limit reached; increase NMBCLUSTERS";
+    "WARNING: mclpool limit reached; increase kern.maxclusters";
 
 struct pool_allocator mclpool_allocator = {
 	mclpool_alloc, mclpool_release, 0,
@@ -116,24 +118,13 @@ struct pool_allocator mclpool_allocator = {
 void
 mbinit()
 {
-	vaddr_t minaddr, maxaddr;
-
-	minaddr = vm_map_min(kernel_map);
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclust*(MCLBYTES), VM_MAP_INTRSAFE, FALSE, NULL);
-
-	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
+	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", &mclpool_allocator);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", &mclpool_allocator);
 
 	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
 	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
 
-	/*
-	 * Set the hard limit on the mclpool to the number of
-	 * mbuf clusters the kernel is to support.  Log the limit
-	 * reached message max once a minute.
-	 */
-	(void)pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
+	nmbclust_update();
 
 	/*
 	 * Set a low water mark for both mbufs and clusters.  This should
@@ -145,20 +136,29 @@ mbinit()
 	pool_setlowat(&mclpool, mcllowat);
 }
 
+void
+nmbclust_update(void)
+{
+	/*
+	 * Set the hard limit on the mclpool to the number of
+	 * mbuf clusters the kernel is to support.  Log the limit
+	 * reached message max once a minute.
+	 */
+	(void)pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
+}
+
+
 
 void *
 mclpool_alloc(struct pool *pp, int flags)
 {
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
-
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
-	    waitok));
+	return uvm_km_getpage();
 }
 
 void
 mclpool_release(struct pool *pp, void *v)
 {
-	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
+	uvm_km_putpage(v);
 }
 
 void
