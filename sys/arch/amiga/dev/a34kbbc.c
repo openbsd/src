@@ -1,4 +1,4 @@
-/*	$OpenBSD: a34kbbc.c,v 1.1 1997/09/18 13:39:42 niklas Exp $	*/
+/*	$OpenBSD: a34kbbc.c,v 1.2 2000/01/24 16:02:04 espie Exp $	*/
 /*	$NetBSD: a34kbbc.c,v 1.1 1997/07/19 00:01:42 is Exp $	*/
 
 /*
@@ -138,6 +138,10 @@ a3gettod()
 	/* let it run again.. */
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
 
+	/* year too low: must be >= 2000 */
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
+
 	if ((dt.dt_hour > 23) ||
 	    (dt.dt_wday > 6) || 
 	    (dt.dt_day  > 31) || 
@@ -166,7 +170,6 @@ a3settod(secs)
 		return (0);
 
 	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
 
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;
 	rt->second1 = dt.dt_sec / 10;
@@ -180,9 +183,14 @@ a3settod(secs)
 	rt->day2    = dt.dt_day % 10;
 	rt->month1  = dt.dt_mon / 10;
 	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
+	/* Store two digit year */
+	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
 	rt->control1 = A3CONTROL1_FREE_CLOCK;
+
+	rt->control1 = A3CONTROL1_HOLD_CLOCK | 1; 	/* mode 1 registers */
+	rt->leapyear = dt.dt_year; 			/* XXX implicit % 4 */
+	rt->control1 = A3CONTROL1_FREE_CLOCK;		/* implied mode 1   */
 
 	return (1);
 }

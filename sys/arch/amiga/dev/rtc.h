@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.h,v 1.3 1997/09/18 13:39:59 niklas Exp $	*/
+/*	$OpenBSD: rtc.h,v 1.4 2000/01/24 16:02:04 espie Exp $	*/
 /*	$NetBSD: rtc.h,v 1.5 1997/07/17 23:29:28 is Exp $	*/
 
 /*
@@ -92,6 +92,9 @@ struct rtclock3000 {
 
 #define A3CONTROL1_HOLD_CLOCK	0
 #define A3CONTROL1_FREE_CLOCK	9
+
+/* mode1 registers we use */
+#define leapyear year2
 
 #define A3BBC_SET_REG 	0xe0
 #define A3BBC_WRITE_REG	0xc2

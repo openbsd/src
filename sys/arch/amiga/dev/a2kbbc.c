@@ -1,4 +1,4 @@
-/*	$OpenBSD: a2kbbc.c,v 1.1 1997/09/18 13:39:41 niklas Exp $	*/
+/*	$OpenBSD: a2kbbc.c,v 1.2 2000/01/24 16:02:04 espie Exp $	*/
 /*	$NetBSD: a2kbbc.c,v 1.3 1997/07/23 10:19:44 is Exp $	*/
 
 /*
@@ -175,6 +175,9 @@ a2gettod()
 	rt->control1 &= ~A2CONTROL1_HOLD;
 
 	dt.dt_year += CLOCK_BASE_YEAR;
+	/* Ancient year: must be >=2000 */
+	if (dt.dt_year < STARTOFTIME)
+		dt.dt_year += 100;
 
 	if ((dt.dt_hour > 23) ||
 	    (dt.dt_day  > 31) || 
@@ -203,7 +206,6 @@ a2settod(secs)
 		return (0);
 
 	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
 
 	/*
 	 * hold clock
@@ -235,7 +237,8 @@ a2settod(secs)
 	rt->day2    = dt.dt_day % 10;
 	rt->month1  = dt.dt_mon / 10;
 	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
+	/* Store two digit year */
+	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
 	rt->weekday = dt.dt_wday;
 
