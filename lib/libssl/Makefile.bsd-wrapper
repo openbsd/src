@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.38 2001/07/31 21:22:12 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.39 2001/09/18 17:18:28 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -9,26 +9,8 @@ LNDIR=	/usr/bin/lndir
 # needs to be tested on all architectures.
 
 OPENSSLDIR=	/etc/ssl
+SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-${MACHINE_ARCH}
 
-.if ${MACHINE_ARCH} == "alpha"
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-alpha
-.elif ${MACHINE_ARCH} == "m68k"
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-m68k
-.elif ${MACHINE_ARCH} == "i386"
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-x86
-.elif ${MACHINE_ARCH} == "mips"
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-mips
-.elif ${MACHINE_ARCH} == "vax"
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-vax
-.else
-.if ${MACHINE_ARCH} == "m88k" || \
-${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc"
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD
-.else
-##UNTESTED!	
-SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD
-.endif
-.endif
 MUNGEDFILES= \
 	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h \
 	${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h \

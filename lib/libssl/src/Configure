@@ -428,12 +428,16 @@ my %table=(
 ##"ultrix","cc:-O2 -DNOPROTO -DNOCONST -DL_ENDIAN::(unknown)::::::",
 
 # Some OpenBSD from Bob Beck <beck@obtuse.com>
-"OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-vax",  "gcc:-DL_ENDIAN -DTERMIOS -O2 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL:::",
-"OpenBSD-x86",  "gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-m68k",      "gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::RC2_CHAR RC4_INDEX DES_UNROLL:::",
-"OpenBSD",      "gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"OpenBSD-mips","gcc:-O2 -DL_ENDIAN::(unknown):BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD",      	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-alpha",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::SIXTY_FOUR_BIT_LONG DES_INT DES_PTR DES_RISC2::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-i386",		"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -m486::(unknown)::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-m68k",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::RC2_CHAR RC4_INDEX DES_UNROLL:::",
+"OpenBSD-m88k",		"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-mips",		"gcc:-O2 -DL_ENDIAN::(unknown):BN_LLONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC2 DES_PTR BF_PTR:::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-powerpc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"OpenBSD-sparc64",	"gcc:-mcpu=ultrasparc -O2 -fomit-frame-pointer -Wall -DB_ENDIAN -DTERMIOS -DULTRASPARC::(unknown)::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:asm/sparcv8plus.o:::",
+"OpenBSD-vax",		"gcc:-DL_ENDIAN -DTERMIOS -O2 -fomit-frame-pointer::(unknown)::BN_LLONG RC2_CHAR RC4_INDEX DES_UNROLL:::",
 
 ##### MacOS X (a.k.a. Rhapsody) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown)::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
