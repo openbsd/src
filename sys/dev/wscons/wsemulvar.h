@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.3 2001/03/14 02:49:23 mickey Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.4 2001/12/01 18:41:33 deraadt Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -54,7 +54,7 @@ struct wsemul_ops {
 	void    (*reset) __P((void *, enum wsemul_resetops));
 };
 
-#ifndef WSEMUL_NO_DUMB
+#ifdef WSEMUL_DUMB
 extern const struct wsemul_ops wsemul_dumb_ops;
 #endif
 #ifdef WSEMUL_SUN
