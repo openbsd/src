@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.30 2003/07/28 19:15:34 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.31 2003/07/29 20:10:17 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.30 2003/07/28 19:15:34 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.31 2003/07/29 20:10:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ static const char rcsid[] = "$OpenBSD: patch.c,v 1.30 2003/07/28 19:15:34 deraad
 #include "pch.h"
 #include "inp.h"
 #include "backupfile.h"
+#include "pathnames.h"
 
 int		filemode = 0644;
 
@@ -143,42 +144,44 @@ static char		end_defined[128];
 int
 main(int argc, char *argv[])
 {
-	int	error = 0, hunk, failed, patch_seen = 0, i;
+	int	error = 0, hunk, failed, patch_seen = 0, i, fd;
 	LINENUM	where, newwhere, fuzz, mymaxfuzz;
-	char	*tmpdir, *v;
+	const	char *tmpdir;
+	char	*v;
 
 	setbuf(stderr, serrbuf);
 	for (i = 0; i < MAXFILEC; i++)
 		filearg[i] = NULL;
 
 	/* Cons up the names of the temporary files.  */
-	tmpdir = getenv("TMPDIR");
-	if (tmpdir == NULL) {
-		tmpdir = "/tmp";
-	}
-	if (asprintf(&TMPOUTNAME, "%s/patchoXXXXXXXXXX", tmpdir) == -1)
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
+		tmpdir = _PATH_TMP;
+	for (i = strlen(tmpdir) - 1; i > 0 && tmpdir[i] == '/'; i--)
+		;
+	i++;
+	if (asprintf(&TMPOUTNAME, "%.*s/patchoXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((i = mkstemp(TMPOUTNAME)) < 0)
+	if ((fd = mkstemp(TMPOUTNAME)) < 0)
 		pfatal("can't create %s", TMPOUTNAME);
-	close(i);
+	close(fd);
 
-	if (asprintf(&TMPINNAME, "%s/patchiXXXXXXXXXX", tmpdir) == -1)
+	if (asprintf(&TMPINNAME, "%.*s/patchiXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((i = mkstemp(TMPINNAME)) < 0)
+	if ((fd = mkstemp(TMPINNAME)) < 0)
 		pfatal("can't create %s", TMPINNAME);
-	close(i);
+	close(fd);
 
-	if (asprintf(&TMPREJNAME, "%s/patchrXXXXXXXXXX", tmpdir) == -1)
+	if (asprintf(&TMPREJNAME, "%.*s/patchrXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((i = mkstemp(TMPREJNAME)) < 0)
+	if ((fd = mkstemp(TMPREJNAME)) < 0)
 		pfatal("can't create %s", TMPREJNAME);
-	close(i);
+	close(fd);
 
-	if (asprintf(&TMPPATNAME, "%s/patchpXXXXXXXXXX", tmpdir) == -1)
+	if (asprintf(&TMPPATNAME, "%.*s/patchpXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((i = mkstemp(TMPPATNAME)) < 0)
+	if ((fd = mkstemp(TMPPATNAME)) < 0)
 		pfatal("can't create %s", TMPPATNAME);
-	close(i);
+	close(fd);
 
 	v = getenv("SIMPLE_BACKUP_SUFFIX");
 	if (v)

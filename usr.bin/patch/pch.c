@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.26 2003/07/28 19:15:34 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.27 2003/07/29 20:10:17 millert Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.26 2003/07/28 19:15:34 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.27 2003/07/29 20:10:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -17,6 +17,7 @@ static const char rcsid[] = "$OpenBSD: pch.c,v 1.26 2003/07/28 19:15:34 deraadt 
 #include "common.h"
 #include "util.h"
 #include "pch.h"
+#include "pathnames.h"
 
 /* Patch (diff listing) abstract type. */
 
@@ -1320,10 +1321,8 @@ do_ed_script(void)
 			unlink(TMPOUTNAME);
 			fatal("can't create temp file %s", TMPOUTNAME);
 		}
-		if (verbose)
-			snprintf(buf, sizeof buf, "/bin/ed %s", TMPOUTNAME);
-		else
-			snprintf(buf, sizeof buf, "/bin/ed - %s", TMPOUTNAME);
+		snprintf(buf, sizeof buf, "%s%s%s", _PATH_ED,
+		    verbose ? " " : " -s ", TMPOUTNAME);
 		pipefp = popen(buf, "w");
 	}
 	for (;;) {

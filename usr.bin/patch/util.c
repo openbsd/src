@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.21 2003/07/28 19:05:26 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2003/07/29 20:10:17 millert Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.21 2003/07/28 19:05:26 millert Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.22 2003/07/29 20:10:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -21,6 +21,7 @@ static const char     rcsid[] = "$OpenBSD: util.c,v 1.21 2003/07/28 19:05:26 mil
 #include "common.h"
 #include "util.h"
 #include "backupfile.h"
+#include "pathnames.h"
 
 
 /* Rename a file, copying it if necessary. */
@@ -307,8 +308,8 @@ makedirs(const char *filename, bool striplast)
 			return;	/* nothing to be done */
 		*s = '\0';
 	}
-	strlcpy(buf, "/bin/mkdir -p ", sizeof buf);
-	if (strlcat(buf, tmpbuf, sizeof(buf)) >= sizeof(buf))
+	if (snprintf(buf, sizeof(buf), "%s -p %s", _PATH_MKDIR, tmpbuf)
+	    >= sizeof(buf))
 		fatal("buffer too small to hold %.20s...\n", tmpbuf);
 
 	if (system(buf))
@@ -332,8 +333,9 @@ fetchname(const char *at, int strip_leading, int assume_exists)
 	if (debug & 128)
 		say("fetchname %s %d %d\n", at, strip_leading, assume_exists);
 #endif
-	if (strnEQ(at, "/dev/null", 9))	/* so files can be created by diffing */
-		return NULL;	/* against /dev/null. */
+	/* So files can be created by diffing against /dev/null.  */
+	if (strnEQ(at, _PATH_DEVNULL, sizeof(_PATH_DEVNULL) - 1))
+		return NULL;
 	name = fullname = t = savestr(at);
 
 	/* Strip off up to `strip_leading' path components and NUL terminate. */
