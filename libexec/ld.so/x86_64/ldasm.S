@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2004/02/10 14:18:14 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.2 2004/02/10 16:59:08 drahn Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -58,9 +58,10 @@ _dl_start:
 
 	addq	$DL_DATA_SIZE,%rsp	# return dl_data
 
-	popq	%rbx			# %rbx = ps_strings - XXXDSR
-	popq	%rdx			# %rdx = cleanup - XXXDSR
-	popq	%rcx			# %rcx = obj_main - XXXDSR
+#	popq	%rbx			# %rbx = ps_strings - XXXDSR
+#	popq	%rdx			# %rdx = cleanup - XXXDSR
+#	popq	%rcx			# %rcx = obj_main - XXXDSR
+	movq	%r12, %rsp
 	jmp	*%rax
 
 	.section	".text"
