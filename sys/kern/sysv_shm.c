@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.39 2003/10/12 23:44:39 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.40 2003/12/22 00:35:57 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -619,8 +619,6 @@ sysctl_sysvshm(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		bzero(newseqs + shminfo.shmmni,
 		    (val - shminfo.shmmni) * sizeof(unsigned short));
 		free(shmsegs, M_SHM);
-		free(shmseqs, M_SHM);
-		shmsegs = newsegs;
 		shmseqs = newseqs;
 		shminfo.shmmni = val;
 		return (0);
