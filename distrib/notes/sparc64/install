@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.34 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: install,v 1.35 2005/01/15 21:25:30 krw Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -16,15 +16,6 @@ use afterwards.  (See ``Installing using a diskless setup'' below.)
 It is also possible to install OpenBSD "manually" from a running Solaris
 system, using the system tools, as well as gunzip; see ``Installing from
 Solaris'' below.
-
-On Blade100 systems you must use a serial console if you want to install or
-upgrade using the network. There is currently a problem that causes the
-system to crash if you attempt an FTP or HTTP install while the keyboard
-and monitor are attached. Simply unplug the keyboard, connect the serial
-port to the system you will use as the console, and reboot. There is no
-problem with normal operation over the network once the install or upgrade
-is complete. 
-
 
 Booting from the Installation Media:
 
