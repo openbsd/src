@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$OpenBSD: kvm_powerpc.c,v 1.4 2005/01/14 15:18:00 kevlo Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
