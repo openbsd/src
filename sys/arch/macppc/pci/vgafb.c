@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.2 2001/09/13 13:38:45 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.3 2001/09/17 15:10:36 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 #endif
 	/* memsize  should only be visable region for console */
 	memsize = cons_height * cons_linebytes;
-        if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
+        if (bus_space_map(vc->vc_memt, membase, memsize, 1, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
 	cons_display_mem_h = vc->vc_memh;
 	vc->vc_ofh = cons_display_ofh;
