@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.68 2002/06/22 22:11:46 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.69 2002/06/22 22:15:08 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -136,10 +136,6 @@ be*		at qec?
 
 hme*		at sbus? slot ? offset ?
 
-# Wireless network cards
-wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
-wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
-
 # Magma serial/parallel port devices
 magma*		at sbus? slot ? offset ?
 mtty*		at magma?
@@ -213,6 +209,8 @@ lpt*		at apio?
 stp*		at sbus? slot ? offset ?	# STP4020
 pcmcia*		at stp? socket ?
 #com*		at pcmcia? function ?		# PCMCIA modems/serial ports
+wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
+wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
 
 creator*	at mainbus0
 creator*	at upa0
