@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.75 1998/03/01 00:37:53 niklas Exp $
+#	$OpenBSD: files,v 1.76 1998/03/15 03:53:48 millert Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -415,10 +415,11 @@ file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
 file ufs/ffs/ffs_inode.c		ffs | mfs
 file ufs/ffs/ffs_subr.c			ffs | mfs
-file ufs/ffs/ffs_softdep.c              ffs | mfs
+file ufs/ffs/ffs_softdep_stub.c		ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs
 file ufs/ffs/ffs_vfsops.c		ffs | mfs
 file ufs/ffs/ffs_vnops.c		ffs | mfs
+file ufs/ffs/ffs_softdep.c		ffs_softupdates
 file ufs/mfs/mfs_vfsops.c		mfs
 file ufs/mfs/mfs_vnops.c		mfs
 file ufs/ufs/ufs_bmap.c			ffs | mfs | ext2fs
