@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.5 2004/03/12 18:25:15 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.6 2004/04/11 18:05:22 millert Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -343,19 +343,22 @@ _mkdev(wsmouse, wsmouse*, {-M wsmouse$U c major_wsmouse_c $U 600-})dnl
 __devtitle(pty, Pseudo terminals)dnl
 __devitem(ptm, ptm, pty master device)dnl
 _mkdev(ptm, ptm, {-M ptm c major_ptm_c 0 666-})dnl
-__devitem(tty, tty*, Set of 16 slave pseudo terminals)dnl
-__devitem(pty, pty*, Set of 16 master pseudo terminals)dnl
+__devitem(pty, pty*, Set of 62 pseudo terminals)dnl
 _mkdev(pty, pty*, {-if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
 		continue
 	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
+	set -A letters p q r s t u v w x y z P Q R S T
+	set -A suffixes 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q \
+	    r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X \
+	    Y Z
+
+	name=${letters[$U]}
 	n=0
-	while [ $n -lt 16 ]
+	while [ $n -lt 62 ]
 	do
-		nam=$name$(hex $n)
-		off=Mult($U, 16)
+		nam=$name${suffixes[$n]}
+		off=Mult($U, 62)
 		M tty$nam c major_tty_c Add($off, $n)
 		M pty$nam c major_pty_c Add($off, $n)
 		n=Add($n, 1)
