@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.33 2004/10/19 12:42:28 pedro Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.34 2005/04/01 20:16:01 pedro Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -354,10 +354,11 @@ procfs_inactive(v)
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct pfsnode *pfs = VTOPFS(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct pfsnode *pfs = VTOPFS(vp);
 
-	if (pfind(pfs->pfs_pid) == 0)
-		vgone(ap->a_vp);
+	if (pfind(pfs->pfs_pid) == NULL && !(vp->v_flag & VXLOCK))
+		vgone(vp);
 
 	return (0);
 }
