@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.1 2004/12/21 18:15:55 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.2 2005/01/31 16:49:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -28,9 +28,11 @@
 #include <sys/types.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -114,9 +116,13 @@ int
 cvs_remove_file(CVSFILE *cf, void *arg)
 {
 	int ret;
+	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
+	CVSENTRIES *entfile;
+	struct cvs_ent *ent;
 
 	ret = 0;
+	ent = NULL;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
@@ -131,14 +137,28 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 		return (ret);
 	}
 
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	entfile = cvs_ent_open(dirname(fpath), O_RDWR);
+	if (entfile == NULL) {
+		cvs_log(LP_ERR, "failed to remove `%s'", fpath);
+		return (-1);
+	}
+
+	ent = cvs_ent_get(entfile, CVS_FILE_NAME(cf));
+
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		ret = cvs_sendreq(root, CVS_REQ_REMOVE, CVS_FILE_NAME(cf));
+		if (ent != NULL)
+			ret = cvs_sendentry(root, ent);
 	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for removal",
 		    CVS_FILE_NAME(cf));
-		cvs_log(LP_INFO, "use `%s commit' to remove this file permanently",
+		cvs_log(LP_INFO,
+		    "use `%s commit' to remove this file permanently",
 		    __progname);
 	}
+
+	cvs_ent_close(entfile);
 
 	return (ret);
 }
