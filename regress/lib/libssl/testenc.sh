@@ -2,7 +2,7 @@
 
 testsrc=$2/ssleay.cnf
 test=$1/p
-cmd=/usr/sbin/ssleay
+cmd=/usr/sbin/openssl
 
 cd $1
 
