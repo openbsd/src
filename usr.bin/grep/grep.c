@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.12 2003/06/23 07:52:18 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.13 2003/06/23 22:05:23 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -49,6 +49,7 @@ int	 matchall;	/* shortcut */
 int	 patterns, pattern_sz;
 char   **pattern;
 regex_t	*r_pattern;
+fastgrep_t *fg_pattern;
 
 /* For regex errors  */
 char	 re_error[RE_ERROR_BUF + 1];
@@ -93,6 +94,8 @@ enum {
 int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
 int	 lead;		/* number of lines in leading context queue */
+int	 boleol;	/* At least one pattern has a bol or eol */
+int	 maxPatternLen;	/* Longest length of all patterns */
 
 extern char *__progname;
 
@@ -163,13 +166,16 @@ add_pattern(char *pat, size_t len)
 	}
 	if (patterns == pattern_sz) {
 		pattern_sz *= 2;
-		pattern = grep_realloc(pattern, ++pattern_sz);
+		pattern = grep_realloc(pattern, ++pattern_sz * sizeof(int));
 	}
 	if (pat[len - 1] == '\n')
 		--len;
 	pattern[patterns] = grep_malloc(len + 1);
 	strlcpy(pattern[patterns], pat, len + 1);
 	++patterns;
+
+	if (len > maxPatternLen)
+		maxPatternLen = len;
 }
 
 static void
@@ -198,6 +204,24 @@ read_patterns(char *fn)
 	if (ferror(f))
 		err(1, "%s", fn);
 	fclose(f);
+}
+
+static void
+free_patterns(void)
+{
+	int i;
+
+	for (i = 0; i < patterns; i++) {
+		if (fg_pattern[i].pattern)
+			free(fg_pattern[i].pattern);
+		else
+			regfree(&r_pattern[i]);
+		free(pattern[i]);
+	}
+
+	free(fg_pattern);
+	free(r_pattern);
+	free(pattern);
 }
 
 int
@@ -293,6 +317,7 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 		case 'y':
+			iflag = 1;
 			cflags |= REG_ICASE;
 			break;
 		case 'l':
@@ -382,11 +407,17 @@ main(int argc, char *argv[])
 	}
 
 	cflags |= Eflag ? REG_EXTENDED : REG_BASIC;
+	fg_pattern = grep_malloc(patterns * sizeof(*fg_pattern));
 	r_pattern = grep_malloc(patterns * sizeof(regex_t));
 	for (i = 0; i < patterns; ++i) {
-		if ((c = regcomp(&r_pattern[i], pattern[i], cflags))) {
-			regerror(c, &r_pattern[i], re_error, RE_ERROR_BUF);
-			errx(1, "%s", re_error);
+		/* Check if cheating is allowed */
+		if (fastcomp(&fg_pattern[i], pattern[i])) {
+			/* Fall back to full regex library */
+			if ((c = regcomp(&r_pattern[i], pattern[i], cflags))) {
+				regerror(c, &r_pattern[i], re_error,
+				    RE_ERROR_BUF);
+				errx(1, "%s", re_error);
+			}
 		}
 	}
 
@@ -401,6 +432,8 @@ main(int argc, char *argv[])
 	else
 		for (c = 0; argc--; ++argv)
 			c += procfile(*argv);
+
+	free_patterns();
 
 	exit(!c);
 }

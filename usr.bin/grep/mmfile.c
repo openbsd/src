@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.4 2003/06/23 07:52:18 deraadt Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.5 2003/06/23 22:05:23 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -38,6 +38,7 @@
 #include "grep.h"
 
 #define MAX_MAP_LEN 1048576
+#define BLOCKSIZE 32768
 
 mmf_t *
 mmopen(char *fn, char *mode)
@@ -88,9 +89,23 @@ mmfgetln(mmf_t *mmf, size_t *l)
 
 	if (mmf->ptr >= mmf->end)
 		return NULL;
-	for (p = mmf->ptr; mmf->ptr < mmf->end; ++mmf->ptr)
-		if (*mmf->ptr == '\n')
-			break;
+	if ((lflag || qflag) &! boleol) {
+		/* Find starting point to search. */
+		if (mmf->ptr == mmf->base)
+			p = mmf->ptr;
+		else
+			p = mmf->ptr - maxPatternLen;
+		/* Move the start pointer ahead for next iteration */
+		if (mmf->end - mmf->ptr > BLOCKSIZE)
+			mmf->ptr += BLOCKSIZE;
+		else
+			mmf->ptr = mmf->end;
+	} else {
+		for (p = mmf->ptr; mmf->ptr < mmf->end; ++mmf->ptr)
+			if (*mmf->ptr == '\n')
+				break;
+	}
+
 	*l = mmf->ptr - p;
 	++mmf->ptr;
 	return p;

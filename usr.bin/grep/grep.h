@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.3 2003/06/23 00:55:09 tedu Exp $	*/
+/*	$OpenBSD: grep.h,v 1.4 2003/06/23 22:05:23 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -27,6 +27,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/limits.h>
 
 #include <regex.h>
 #include <stdio.h>
@@ -47,17 +48,28 @@ typedef struct {
 	char		*dat;
 } str_t;
 
+typedef struct {
+	unsigned char	*pattern;
+	int		 patternLen;
+	int		 qsBc[UCHAR_MAX + 1];
+	/* flags */
+	int		 bol;
+	int		 eol;
+	int		 reversedSearch;
+} fastgrep_t;
+
 /* Flags passed to regcomp() and regexec() */
 extern int	 cflags, eflags;
 
 /* Command line flags */
 extern int	 Aflag, Bflag, Hflag, Lflag, Pflag, Sflag, Rflag, Zflag,
-		 bflag, cflag, hflag, lflag, nflag, qflag, sflag,
+		 bflag, cflag, hflag, iflag, lflag, nflag, qflag, sflag,
 		 vflag, wflag, xflag;
-extern int	 binbehave;
+extern int	 binbehave, boleol, maxPatternLen;
 
 extern int	 first, lead, matchall, patterns, tail;
 extern char    **pattern;
+extern fastgrep_t *fg_pattern;
 extern regex_t	*r_pattern;
 
 /* For regex errors  */
@@ -69,7 +81,9 @@ int		 procfile(char *fn);
 int		 grep_tree(char **argv);
 void		*grep_malloc(size_t size);
 void		*grep_realloc(void *ptr, size_t size);
+unsigned char	*grep_strdup(const char *);
 void		 printline(str_t *line, int sep);
+int		 fastcomp(fastgrep_t *, const char *);
 
 /* queue.c */
 void		 initqueue();
