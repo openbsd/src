@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.2 1997/05/13 14:29:38 graichen Exp $
+#	$OpenBSD: install.sub,v 1.3 1997/05/14 07:58:55 graichen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,11 +40,14 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=21
+VERSION=
 export VERSION
 
 ALLSETS="base etc misc comp text man game"	# default install sets
 UPGRSETS="base misc comp text man game"		# default upgrade sets
+SNAPSETS="bin dev etc games man misc sbin text \
+	  usr.bin usr.binutils usr.games usr.include \
+	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
@@ -86,6 +89,8 @@ getresp() {
 
 isin() {
 # test the first argument against the remaining ones, return succes on a match
+	local	_a
+
 	_a=$1; shift
 	while [ $# != 0 ]; do
 		if [ "$_a" = "$1" ]; then return 0; fi
@@ -173,11 +178,11 @@ dir_has_sets() {
 	_dir=$1; shift
 	for _file in $*
 	do
-		if [ -f $_dir/${_file}.tar.gz ]; then
+		if [ -f $_dir/${_file}${VERSION}.tar.gz ]; then
 			return 0
 		fi
 		# Try for stupid msdos convention
-		if [ -f $_dir/${_file}.tgz ]; then
+		if [ -f $_dir/${_file}${VERSION}.tgz ]; then
 			return 0
 		fi
 		# Special check for kernel
@@ -527,11 +532,11 @@ enable_network() {
 	echo	""
 
 	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
-		netstat -r
+		route show
 		echo	""
 		echo	"Resolver enabled."
 	else
-		netstat -rn
+		route -n show
 		echo	""
 		echo	"Resolver not enabled."
 	fi
@@ -753,7 +758,7 @@ install_from_mounted_fs() {
 		fi
 
 		# Extract file
-		if [ $_f = $_kernel ]; then
+		if [ X$_f = X$_kernel ]; then
 			cp $_filename /mnt/$_f
 		else
 			if [ "X${SIMPLEROOT}" != X"simpleroot" ]; then
