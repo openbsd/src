@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/05/03 22:20:57 niklas Exp $
+#	$OpenBSD: Makefile,v 1.12 1997/05/06 17:10:32 niklas Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -22,6 +22,7 @@ IMAGE?=		miniroot${REV}.fs
 IMAGESIZE?=	10240 # 5Mb in 512 byte blocks
 NEWFSOPTS?=
 NEWFS_WILL_FAIL?=false
+CRUNCHGENOPTS?=
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
@@ -67,7 +68,8 @@ ${CBIN}.conf: ${LISTS}
 	awk -f ${.CURDIR}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	crunchgen ${CRUNCHGENOPTS} -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib \
+	    ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
