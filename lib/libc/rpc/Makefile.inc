@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1998/03/13 00:48:33 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1998/03/18 12:26:09 deraadt Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
@@ -45,7 +45,7 @@ MLINKS+=	getrpcent.3 getrpcbyname.3 \
 		rpc.3 pmap_rmtcall.3 \
 		rpc.3 pmap_set.3 \
 		rpc.3 pmap_unset.3 \
-		rpc.3 regsterrpc.3 \
+		rpc.3 registerrpc.3 \
 		rpc.3 rpc_createerr.3 \
 		rpc.3 svc_destroy.3 \
 		rpc.3 svc_fds.3 \
