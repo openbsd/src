@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_es.c,v 1.4 1996/05/02 06:44:05 niklas Exp $	*/
-/*	$NetBSD: if_es.c,v 1.11 1996/04/21 21:11:46 veego Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.5 1996/05/04 14:04:04 niklas Exp $	*/
+/*	$NetBSD: if_es.c,v 1.12 1996/05/01 15:55:28 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -74,7 +74,6 @@
 
 #define SWAP(x) (((x & 0xff) << 8) | ((x >> 8) & 0xff))
 
-#define ESDEBUG
 #define	USEPKTBUF
 
 /*
@@ -88,13 +87,13 @@ struct	es_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
 	struct	arpcom sc_arpcom;	/* common Ethernet structures */
-	void	*sc_base;	/* base address of board */
+	void	*sc_base;		/* base address of board */
 	short	sc_iflags;
 	unsigned short sc_intctl;
 #ifdef ESDEBUG
 	int	sc_debug;
-	short	sc_intbusy;
-	short	sc_smcbusy;
+	short	sc_intbusy;		/* counter for interrupt rentered */
+	short	sc_smcbusy;		/* counter for other rentry checks */
 #endif
 };
 
@@ -165,15 +164,6 @@ esattach(parent, self, aux)
 	unsigned long ser;
 
 	sc->sc_base = zap->va;
-#ifdef ESDEBUG
-	/* MLHDEBUG
-	 * MLHDEBUG remove first 4 and last 3 pages of the A4066 memory
-	 * MLHDEBUG and use the 5th page to access the SMC
-	 */
-	sc->sc_base = zap->va + 0x8000;		/* MLHDEBUG */
-	physunaccess(zap->va, 0x8000);		/* MLHDEBUG */
-	physunaccess(zap->va + 0xa000, 0x6000);	/* MLHDEBUG */
-#endif
 
 	/*
 	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
@@ -225,7 +215,7 @@ es_dump_smcregs(where, smc)
 	char *where;
 	union smcregs *smc;
 {
-	u_short cur_bank = smc->b0.bsr & 0x0300;
+	u_short cur_bank = smc->b0.bsr & BSR_MASK;
 
 	printf("SMC registers %p from %s bank %04x\n", smc, where,
 	    smc->b0.bsr);
@@ -316,7 +306,7 @@ esintr(arg)
 
 	smc = sc->sc_base;
 #ifdef ESDEBUG
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2 &&
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2 &&
 	    sc->sc_arpcom.ac_if.if_flags & IFF_RUNNING) {
 		printf("%s: intr BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
@@ -337,6 +327,9 @@ esintr(arg)
 		printf("%s: esintr re-entered\n", sc->sc_dev.dv_xname);
 		panic("esintr re-entered");
 	}
+	if (sc->sc_smcbusy)
+		printf("%s: esintr interrupted busy %d\n", sc->sc_dev.dv_xname,
+		    sc->sc_smcbusy);
 #endif
 	smc->b2.msk = 0;
 #ifdef ESDEBUG
@@ -372,7 +365,7 @@ esintr(arg)
 #endif
 	}
 #ifdef ESDEBUG
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: intr+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
@@ -382,7 +375,7 @@ esintr(arg)
 		esrint(sc);
 	}
 #ifdef ESDEBUG
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: intr++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
@@ -441,7 +434,9 @@ esintr(arg)
 		++estxint3;			/* count # IST_TX */
 #endif
 zzzz:
+#ifdef ESDEBUG
 		++estxint4;			/* count # ~TEMPTY */
+#endif
 		smc->b0.bsr = BSR_BANK0;
 		ephsr = smc->b0.ephsr;		/* get EPHSR */
 		tcr = smc->b0.tcr;		/* and TCR */
@@ -510,7 +505,7 @@ zzzz:
 	/* output packets */
 	estint(sc);
 #ifdef ESDEBUG
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: intr+++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
@@ -532,7 +527,6 @@ esrint(sc)
 	struct es_softc *sc;
 {
 	union smcregs *smc = sc->sc_base;
-	int i;
 	u_short len;
 	short cnt;
 	u_short pktctlw, pktlen, *buf;
@@ -547,6 +541,9 @@ esrint(sc)
 #ifdef USEPKTBUF
 	u_char *b, pktbuf[1530];
 #endif
+#ifdef ESDEBUG
+	int i;
+#endif
 
 #ifdef ESDEBUG
 	if (esdebug)
@@ -556,7 +553,7 @@ esrint(sc)
 		printf("%s: esrint re-entered\n", sc->sc_dev.dv_xname);
 		panic("esrint re-entered");
 	}
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: rint BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
@@ -588,7 +585,7 @@ esrint(sc)
 		    sc->sc_dev.dv_xname, pktctlw, pktlen, len, smc->b2.bsr);
 		/* XXX ignore packet, or just truncate? */
 #if defined(ESDEBUG) && defined(DDB)
-		if ((smc->b2.bsr & 0x0300) != BSR_BANK2)
+		if ((smc->b2.bsr & BSR_MASK) != BSR_BANK2)
 			Debugger();
 #endif
 		smc->b2.bsr = BSR_BANK2;
@@ -787,14 +784,16 @@ esstart(ifp)
 		printf("%s: esstart re-entered\n", sc->sc_dev.dv_xname);
 		panic("esstart re-entred");
 	}
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: esstart BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 	}
 #endif
 	for (;;) {
-int xxx;
+#ifdef ESDEBUG
+		u_short start_ptr, end_ptr;
+#endif
 		/*
 		 * Sneak a peek at the next packet to get the length
 		 * and see if the SMC 91C90 can accept it.
@@ -803,9 +802,9 @@ int xxx;
 		if (!m)
 			break;
 #ifdef ESDEBUG
-if (esdebug && (m->m_next || m->m_len & 1))
-  printf("%s: esstart m_next %p m_len %d\n", sc->sc_dev.dv_xname,
-    m->m_next, m->m_len);
+		if (esdebug && (m->m_next || m->m_len & 1))
+			printf("%s: esstart m_next %p m_len %d\n",
+			    sc->sc_dev.dv_xname, m->m_next, m->m_len);
 #endif
 		for (m0 = m, pktlen = 0; m0; m0 = m0->m_next)
 			pktlen += m0->m_len;
@@ -827,21 +826,20 @@ if (esdebug && (m->m_next || m->m_len & 1))
 		active_pnr = smc->b2.pnr = smc->b2.arr;
 
 #ifdef ESDEBUG
-		while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 			printf("%s: esstart+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;
 		}
 #endif
 		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-xxx = splhigh();
 		smc->b2.ptr = PTR_AUTOINCR;
 		(void) smc->b2.mmucr;
 		data = (u_short *)&smc->b2.data;
 		*data = SWAP(pktctlw);
 		*data = SWAP(pktlen);
 #ifdef ESDEBUG
-		while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 			printf("%s: esstart++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
 			smc->b2.bsr = BSR_BANK2;
@@ -860,7 +858,7 @@ xxx = splhigh();
 			pktbuf[i/2] = 0;
 		pktlen -= 4;
 #ifdef ESDEBUG
-		if (pktlen > sizeof(pktbuf))
+		if (pktlen > sizeof(pktbuf) && i > (sizeof(pktbuf) * 2))
 			printf("%s: esstart packet longer than pktbuf\n",
 			    sc->sc_dev.dv_xname);
 #endif
@@ -875,10 +873,21 @@ xxx = splhigh();
 			*data = *buf;
 		}
 #else
+#ifdef ESDEBUG
+		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
+			printf("%s: esstart++2 BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			    smc->b2.bsr);
+			smc->b2.bsr = BSR_BANK2;
+		}
+		start_ptr = SWAP(smc->b2.ptr);	/* save PTR before copy */
+#endif
 		buf = pktbuf;
 		cnt = pktlen / 2;
 		while (cnt--)
 			*data = *buf++;
+#ifdef ESDEBUG
+		end_ptr = SWAP(smc->b2.ptr);	/* save PTR after copy */
+#endif
 #endif
 #else	/* USEPKTBUF */
 		pktctlw = 0;
@@ -900,14 +909,30 @@ xxx = splhigh();
 		}
 		*data = pktctlw;
 #endif	/* USEPKTBUF */
-splx(xxx);
-#ifdef ESDEBUG
-		while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
-			printf("%s: esstart+++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
-			    smc->b2.bsr);
-			smc->b2.bsr = BSR_BANK2;
-		}
+		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
+			/*
+			 * The bank select register has changed.  This seems
+			 * to happen with my A2000/Zeus once in a while.  It
+			 * appears that the Ethernet chip resets while
+			 * copying the transmit buffer.  Requeue the current
+			 * transmit buffer and reinitialize the interface.
+			 * The initialize routine will take care of
+			 * retransmitting the buffer.  mhitch
+			 */
+#ifdef DIAGNOSTIC
+			printf("%s: esstart+++ BSR not 2: %04x\n",
+			    sc->sc_dev.dv_xname, smc->b2.bsr);
 #endif
+			smc->b2.bsr = BSR_BANK2;
+#ifdef ESDEBUG
+			printf("start_ptr %04x end_ptr %04x cur ptr %04x\n",
+			    start_ptr, end_ptr, SWAP(smc->b2.ptr));
+			--sc->sc_smcbusy;
+#endif
+			IF_PREPEND(&sc->sc_arpcom.ac_if.if_snd, m0);
+			esinit(sc);	/* It's really hosed - reset */
+			return;
+		}
 		smc->b2.mmucr = MMUCR_ENQ_TX;
 		if (smc->b2.pnr != active_pnr)
 			printf("%s: esstart - PNR changed %x->%x\n",
@@ -922,7 +947,7 @@ splx(xxx);
 	}
 	smc->b2.msk = sc->sc_intctl;
 #ifdef ESDEBUG
-	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+	while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 		printf("%s: esstart++++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 		    smc->b2.bsr);
 		smc->b2.bsr = BSR_BANK2;

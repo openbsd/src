@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esreg.h,v 1.3 1995/08/18 15:27:58 chopps Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.4 1996/05/01 15:51:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -166,6 +166,7 @@ union smcregs {
 #define	MSK_RX		0x01		/* RX complete */
 
 /* Bank Select Register */
+#define	BSR_MASK	0x0300
 #define	BSR_BANK0	0x0000		/* Select bank 0 */
 #define	BSR_BANK1	0x0100		/* Select bank 1 */
 #define	BSR_BANK2	0x0200		/* Select bank 2 */
