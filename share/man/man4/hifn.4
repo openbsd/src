@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.33 2003/02/24 20:40:01 jason Exp $
+.\"	$OpenBSD: hifn.4,v 1.34 2003/03/13 19:53:52 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -37,9 +37,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports various cards containing the Hifn 7751, Hifn 7951, or
-Hifn 7811
-chipsets, such as
+driver supports various cards containing the Hifn 7751, Hifn 7951, Hifn 7811,
+or Hifn 9751 chipsets, such as
 .Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
 No longer being made.
@@ -63,6 +62,9 @@ Supports the most IPsec sessions, with 1MB SRAM.
 See
 .Pa http://www.soekris.com/ .
 Contains a 7951 and supports symmetric and random number operations.
+.It Hifn 9751
+Reference board with 512KB SRAM.
+This is really a Hifn 7751 which only supports compression.
 .El
 .Pp
 The
@@ -71,7 +73,8 @@ driver registers itself to accelerate DES, Triple-DES, ARC4, MD5,
 MD5-HMAC, SHA1, SHA1-HMAC, and LZS operations for
 .Xr ipsec 4
 and
-.Xr crypto 4 .
+.Xr crypto 4 ,
+except for the Hifn 9751 which only registers to support LZS.
 .Pp
 The
 .Tn Hifn 7951
@@ -94,10 +97,6 @@ to the driver, but all vendors currently just use the obvious ID which is
 .Xr ipsec 4 ,
 .Xr random 4 ,
 .Xr crypto 9
-.Sh CAVEATS
-The Hifn 9751 shares the same PCI id.
-This chip is basically a 7751, but with the cryptographic functions missing.
-Instead, the 9751 is only capable of doing compression.
 .Sh HISTORY
 The
 .Nm
