@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.4 1998/08/31 18:58:36 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.5 1998/09/10 18:38:09 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)list.c	5.23 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: list.c,v 8.9 1996/11/26 10:11:26 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.4 1998/08/31 18:58:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.5 1998/09/10 18:38:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ ListHosts(string, putToFile)
 	 *  Parse the command line. It maybe of the form "ls domain",
 	 *  "ls -X domain".
 	 */
-	snprintf(get, sizeof get, " ls -t %%%ds %%%ds", sizeof option-1,
+	snprintf(get, sizeof get, " ls %%%ds %%%ds", sizeof option-1,
 	    sizeof name-1);
 	i = sscanf(string, get, option, name);
 	if (putToFile && i == 2 && name[0] == '>') {
