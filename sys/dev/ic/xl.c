@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.39 2002/06/15 19:35:29 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.40 2002/07/09 05:49:53 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -767,7 +767,7 @@ void xl_setcfg(sc)
 		icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
 
 	CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
-	CSR_WRITE_4(sc, XL_COMMAND, XL_CMD_COAX_STOP);
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
 }
 
 void xl_setmode(sc, media)
