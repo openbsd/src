@@ -1,0 +1,45 @@
+/* 	$OpenBSD: ld.script,v 1.1 1998/10/30 19:44:09 mickey Exp $	*/
+
+OUTPUT_FORMAT("elf32-hppa")
+OUTPUT_ARCH(hppa)
+ENTRY(__start)
+SECTIONS
+{
+	/* Read-only sections, merged into text segment: */
+	. = 0x12000;
+	.text	:
+	{
+		kernel_text = . ;
+		*(.text)
+		*($CODE$)
+		*(.rodata)
+		*(.rodata1)
+		*(.reginfo)
+		*(.init)
+		*(.stub)
+		/* .gnu.warning sections are handled specially by elf32.em.  */
+		*(.gnu.warning)
+	} = 0
+	etext = .;
+
+	.data	:
+	{
+		kernel_data = . ;
+		*(.data)
+		CONSTRUCTORS
+	}
+	.ctors	: { *(.ctors)   }
+	.dtors	: { *(.dtors)   }
+	edata = .;
+
+	__bss_start = .;
+	.sbss	: { *(.sbss) *(.scommon) }
+	.bss	:
+	{
+		*(.dynbss)
+		*(.bss)
+		*(COMMON)
+		*($COMMON$)
+	}
+	end = .;
+}
