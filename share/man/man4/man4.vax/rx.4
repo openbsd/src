@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rx.4,v 1.9 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: rx.4,v 1.10 2003/11/09 16:06:07 jmc Exp $
 .\"	$NetBSD: rx.4,v 1.3 1996/03/03 17:14:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -79,7 +79,6 @@ operating system
 .Tn RT-11 .
 .Pp
 The minor device number is interpreted as follows:
-.Pp
 .Bl -column Otherx -offset indent
 .Sy Bit	Description
 0	Sector interleaving  (1 disables interleaving)
@@ -116,7 +115,6 @@ through
 .Ql d .
 Thus, unit 0, drive 0 is
 called by one of the following names:
-.Pp
 .Bl -column interleavedxx "Device namexx" "Starting Track" -offset indent
 .Sy Mapping	Device name	Starting track
 interleaved	/dev/rrx0a	0

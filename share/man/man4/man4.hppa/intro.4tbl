@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.14 2003/08/20 21:17:08 mickey Exp $
+.\" $OpenBSD: intro.4tbl,v 1.15 2003/11/09 16:06:07 jmc Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -197,7 +197,6 @@ C160L:160:7300LC:64/64(+1024):1 GSC/PCI, 1 GSC/PCI/EISA,
 The devices listed below are supported in this incarnation of
 the system.  Devices are indicated by their functional interface.
 Not all supported devices are listed.
-.Pp
 .Bl -tag -width le/lebuffer
 .It Xr asp 4
 The ASP I/O controller; found in most of the older machines which

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: uperf.4,v 1.10 2003/06/06 10:29:42 jmc Exp $
+.\"     $OpenBSD: uperf.4,v 1.11 2003/11/09 16:06:07 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -73,7 +73,6 @@ fields specify the source for the counter.
 Not all counters support monitoring all sources and specifying an invalid
 source for a counter to monitor will result in an error.
 The sources are specified below:
-.Pp
 .Bl -column "XXXXXXXXXXXXXX" "description" -offset indent
 .It Em UPERFSRC_SYSCK Ta "system clock ticks"
 .It Em UPERFSRC_PRALL Ta "all p-requests"
@@ -141,7 +140,6 @@ device responds to the following
 .Xr ioctl 2
 calls, which are defined in
 .Aq Pa dev/sun/uperfio.h .
-.Pp
 .Bl -tag -width UPIO_GCNTSRC
 .It Dv UPIO_GCNTSRC
 .Pq Li "struct uperf_io"

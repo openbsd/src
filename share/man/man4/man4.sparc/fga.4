@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fga.4,v 1.9 2003/09/04 22:14:42 jmc Exp $
+.\"     $OpenBSD: fga.4,v 1.10 2003/11/09 16:06:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -54,7 +54,6 @@ VME devices are attached to the
 pseudo-devices, which provide an interface for drivers to establish
 VME level/vectored interrupts and map address ranges.
 By default the following address ranges are established:
-.Pp
 .Bl -column "256MBXXX" "SBus Slot" "SBus Offset" "VME Space" "VME Offset" -offset indent
 .It Sy Size	SBus Slot	SBus Offset	VME Space	VME Offset
 .It Dv "256MB" No "	1" No "	0x0000000" No "	A32/D32	0xf0000000"
