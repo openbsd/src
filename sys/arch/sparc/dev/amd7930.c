@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.4 1995/07/19 19:50:16 brezak Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.2 1995/05/04 19:43:27 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -83,7 +83,7 @@ struct amd7930_softc {
 
         /* sc_au is special in that the hardware interrupt handler uses it */
         struct  auio sc_au;		/* recv and xmit buffers, etc */
-#define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
+#define sc_intrcnt sc_au.au_intrcnt
 };
 
 /* interrupt interfaces */
@@ -914,6 +914,7 @@ amd7930hwintr(au0)
 		}
 	}
 
+	*(au->au_intrcnt)++;
 	return (1);
 }
 #endif /* AUDIO_C_HANDLER */
