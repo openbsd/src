@@ -579,10 +579,9 @@ void nak_lease (packet, cip)
 	memcpy (hto.haddr, packet -> raw -> chaddr, hto.hlen);
 
 	/* Set up the common stuff... */
+	memset (&to, 0, sizeof to);
 	to.sin_family = AF_INET;
 	to.sin_len = sizeof to;
-
-	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
 	from = packet -> interface -> primary_address;
 
@@ -1289,11 +1288,11 @@ void dhcp_reply (lease)
 	hto.hlen = lease -> hardware_addr.hlen;
 	memcpy (hto.haddr, lease -> hardware_addr.haddr, hto.hlen);
 
+	memset (&to, 0, sizeof to);
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
-	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
 #ifdef DEBUG_PACKET
 	dump_raw ((unsigned char *)&raw, packet_length);

@@ -329,11 +329,11 @@ void bootp (packet)
 	      : packet -> interface -> name);
 
 	/* Set up the parts of the address that are in common. */
+	memset (&to, 0, sizeof to);
 	to.sin_family = AF_INET;
 #ifdef HAVE_SA_LEN
 	to.sin_len = sizeof to;
 #endif
-	memset (to.sin_zero, 0, sizeof to.sin_zero);
 
 	/* If this was gatewayed, send it back to the gateway... */
 	if (raw.giaddr.s_addr) {

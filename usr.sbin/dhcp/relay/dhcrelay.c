@@ -186,6 +186,7 @@ int main (argc, argv, envp)
 
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp -> next) {
+		memset(&sp->to, 0, sizeof(sp->to));
 		sp -> to.sin_port = local_port;
 		sp -> to.sin_family = AF_INET;
 		sp -> to.sin_len = sizeof sp -> to;
@@ -262,6 +263,7 @@ void relay (ip, packet, length, from_port, from, hfrom)
 
 	/* If it's a bootreply, forward it to the client. */
 	if (packet -> op == BOOTREPLY) {
+		memset(&to, 0, sizeof(to));
 		if (!(packet -> flags & htons (BOOTP_BROADCAST)) &&
 		    can_unicast_without_arp ()) {
 			to.sin_addr = packet -> yiaddr;

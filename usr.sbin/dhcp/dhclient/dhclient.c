@@ -207,6 +207,7 @@ int main (argc, argv, envp)
 	/* Get the current time... */
 	GET_TIME(&cur_time);
 
+	memset(&sockaddr_broadcast, 0, sizeof(sockaddr_broadcast));
 	sockaddr_broadcast.sin_family = AF_INET;
 	sockaddr_broadcast.sin_port = remote_port;
 	sockaddr_broadcast.sin_addr.s_addr = INADDR_BROADCAST;
@@ -1329,6 +1330,7 @@ void send_request (ipp)
 
 	/* If the lease T2 time has elapsed, or if we're not yet bound,
 	   broadcast the DHCPREQUEST rather than unicasting. */
+	memset(&destination, 0, sizeof(destination));
 	if (ip->client->state == S_REQUESTING ||
 	    ip->client->state == S_REBOOTING ||
 	    cur_time > ip->client->active->rebind)
