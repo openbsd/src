@@ -1,5 +1,5 @@
-/*	$OpenBSD: adosfs.h,v 1.4 1996/04/21 22:14:36 deraadt Exp $	*/
-/*	$NetBSD: adosfs.h,v 1.10 1996/04/05 05:06:08 mhitch Exp $	*/
+/*	$OpenBSD: adosfs.h,v 1.5 1996/06/10 07:25:18 deraadt Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.10.4.2 1996/05/27 10:21:26 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,9 +36,9 @@
  * Amigados datestamp. (from 1/1/1978 00:00:00 local)
  */
 struct datestamp {
-	u_long days;
-	u_long mins;
-	u_long ticks;		/* 20000 * (ticks % 50) = useconds */
+	u_int32_t days;
+	u_int32_t mins;
+	u_int32_t ticks;	/* 20000 * (ticks % 50) = useconds */
 				/* ticks / 50 = seconds */
 };
 
@@ -93,7 +93,7 @@ struct anode {
 struct adosfsmount {
 	LIST_HEAD(anodechain, anode) anodetab[ANODEHASHSZ];
 	struct mount *mp;	/* owner mount */
-	u_long dostype;		/* type of volume */
+	u_int32_t dostype;	/* type of volume */
 	u_long rootb;		/* root block number */
 	u_long secsperblk;	/* sectors per block */
 	u_long bsize;		/* size of blocks */
@@ -119,16 +119,16 @@ struct adosfsmount {
  */
 #define BBOFF		(0)
 
-#define BPT_SHORT	(2)
-#define BPT_DATA	(8)
-#define BPT_LIST	(16)
+#define BPT_SHORT	((u_int32_t)2)
+#define BPT_DATA	((u_int32_t)8)
+#define BPT_LIST	((u_int32_t)16)
 
-#define BST_RDIR	(1)
-#define BST_UDIR	(2)
-#define BST_SLINK	(3)
-#define BST_LDIR	(4)
-#define BST_FILE	(-3L)
-#define BST_LFILE	(-4L)
+#define BST_RDIR	((u_int32_t)1)
+#define BST_UDIR	((u_int32_t)2)
+#define BST_SLINK	((u_int32_t)3)
+#define BST_LDIR	((u_int32_t)4)
+#define BST_FILE	((u_int32_t)-3)
+#define BST_LFILE	((u_int32_t)-4)
 
 #define	OFS_DATA_OFFSET	(24)
 
@@ -136,12 +136,13 @@ struct adosfsmount {
  * utility protos
  */
 #ifndef m68k
-long adoswordn __P((struct buf *, int));
+u_int32_t adoswordn __P((struct buf *, int));
 #else
-#define adoswordn(bp,wn) (*((long *)(bp)->b_data + (wn)))
+#define adoswordn(bp,wn) (*((u_int32_t *)(bp)->b_data + (wn)))
 #endif
 
-long adoscksum __P((struct buf *, long));
+u_int32_t adoscksum __P((struct buf *, int));
+int adoscaseequ __P((const u_char *, const u_char *, int, int));
 int adoshash __P((const u_char *, int, int, int));
 int adunixprot __P((int));
 int adosfs_getblktype __P((struct adosfsmount *, struct buf *));

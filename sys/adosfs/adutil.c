@@ -1,5 +1,5 @@
-/*	$OpenBSD: adutil.c,v 1.5 1996/05/02 13:05:14 deraadt Exp $	*/
-/*	$NetBSD: adutil.c,v 1.10 1996/04/23 05:18:29 veego Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.6 1996/06/10 07:25:19 deraadt Exp $	*/
+/*	$NetBSD: adutil.c,v 1.10.4.2 1996/05/27 10:21:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -160,19 +160,32 @@ CapitalChar(ch, inter)
 	return(ch);
 }
 
-long
+u_int32_t
 adoscksum(bp, n)
 	struct buf *bp;
-	long n;
+	int n;
 {
-	long sum, *lp;
+	u_int32_t sum, *lp;
 	
-	lp = (long *)bp->b_data;
+	lp = (u_int32_t *)bp->b_data;
 	sum = 0;
 
 	while (n--)
-		sum += *lp++;
+		sum += ntohl(*lp++);
 	return(sum);
+}
+
+int
+adoscaseequ(name1, name2, len, inter)
+	const u_char *name1, *name2;
+	int len;
+{
+	while (len-- > 0) 
+		if (CapitalChar(*name1++, inter) != 
+		    CapitalChar(*name2++, inter))
+			return 0;
+	
+	return 1;
 }
 
 int
@@ -211,7 +224,7 @@ tvtods(tvp, dsp)
 #endif
 
 #ifndef m68k
-long
+u_int32_t
 adoswordn(bp, wn)
 	struct buf *bp;
 	int wn;
@@ -219,6 +232,6 @@ adoswordn(bp, wn)
 	/*
 	 * ados stored in network (big endian) order
 	 */
-	return(ntohl(*((long *)bp->b_data + wn)));
+	return(ntohl(*((u_int32_t *)bp->b_data + wn)));
 }
 #endif

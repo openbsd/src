@@ -1,5 +1,5 @@
-/*	$OpenBSD: advfsops.c,v 1.6 1996/05/02 13:05:16 deraadt Exp $	*/
-/*	$NetBSD: advfsops.c,v 1.19 1996/04/28 06:18:12 mhitch Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.7 1996/06/10 07:25:19 deraadt Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.19.4.1 1996/05/27 10:21:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -449,7 +449,7 @@ adosfs_vget(mp, an, vpp)
 	/*
 	 * copy in name (from original block)
 	 */
-	nam = bp->b_data + (ap->nwords - 20) * sizeof(long);
+	nam = bp->b_data + (ap->nwords - 20) * sizeof(u_int32_t);
 	namlen = *(u_char *)nam++;
 	if (namlen > 30) {
 #ifdef DIAGNOSTIC
@@ -581,8 +581,8 @@ adosfs_loadbitmap(amp)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
-			printf("adosfs: loadbitmap - cksum of blk %ld failed\n",
-			    adoswordn(bp, blkix));
+			printf("adosfs: loadbitmap - cksum of blk %d failed\n",
+				adoswordn(bp, blkix));
 #endif
 			/* XXX Force read-only?  Set free space 0? */
 			break;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: adlookup.c,v 1.4 1996/04/21 22:14:33 deraadt Exp $	*/
-/*	$NetBSD: adlookup.c,v 1.13 1996/04/05 05:06:07 mhitch Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.5 1996/06/10 07:25:18 deraadt Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.13.4.1 1996/05/27 09:53:50 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,11 +41,11 @@
 #include <adosfs/adosfs.h>
 
 #ifdef ADOSFS_EXACTMATCH
-#define strmatch(s1, l1, s2, l2) \
+#define strmatch(s1, l1, s2, l2, i) \
     ((l1) == (l2) && bcmp((s1), (s2), (l1)) == 0)
 #else
-#define strmatch(s1, l1, s2, l2) \
-    ((l1) == (l2) && strncasecmp((s1), (s2), (l1)) == 0)
+#define strmatch(s1, l1, s2, l2, i) \
+    ((l1) == (l2) && adoscaseequ((s1), (s2), (l1), (i)))
 #endif
 
 /*
@@ -214,7 +214,8 @@ adosfs_lookup(v)
 				adp->tabi[hval] = -adp->tabi[hval];
 			}
 		}
-		if (strmatch(pelt, plen, ap->name, strlen(ap->name)))
+		if (strmatch(pelt, plen, ap->name, strlen(ap->name), 
+		    IS_INTER(adp->amp)))
 			goto found;
 		bn = ap->hashf;
 		vput(*vpp);
