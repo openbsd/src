@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.18 2002/06/19 08:45:52 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.19 2002/06/28 22:40:53 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -86,12 +86,16 @@ static void deref_kptr(void *, void *, size_t);
 struct _disk	cur, last;
 
 /* Kernel pointers: nlistf and memf defined in calling program. */
+#if !defined(NOKVM)
 static kvm_t	*kd = NULL;
+#endif
 extern char	*nlistf;
 extern char	*memf;
 
+#if !defined(NOKVM)
 /* Pointer to list of disks. */
 static struct disk	*dk_drivehead = NULL;
+#endif
 
 /* Backward compatibility references. */
 int	  	dk_ndrive = 0;
@@ -152,7 +156,9 @@ dkswap()
 void
 dkreadstats()
 {
+#if !defined(NOKVM)
 	struct disk	cur_disk, *p;
+#endif
 	int		i, mib[3];
 	size_t		size;
 	struct diskstats *q;
@@ -227,9 +233,11 @@ int
 dkinit(select)
 int	select;
 {
+#if !defined(NOKVM)
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
         char		errbuf[_POSIX2_LINE_MAX];
+#endif
 	static int	once = 0;
 	extern int	hz;
 	int		i, mib[2];
