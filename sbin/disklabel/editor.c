@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.10 1997/10/07 04:26:08 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.11 1997/10/15 19:39:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.10 1997/10/07 04:26:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.11 1997/10/15 19:39:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,6 +66,7 @@ int	has_overlap __P((struct disklabel *, u_int32_t *, int));
 void	make_contiguous __P((struct disklabel *));
 u_int32_t next_offset __P((struct disklabel *));
 int	partition_cmp __P((const void *, const void *));
+struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
 
 /* from disklabel.c */
 int	checklabel __P((struct disklabel *));
@@ -733,33 +734,8 @@ next_offset(lp)
 	u_int32_t new_offset = 0;
 	int i;
 
-	/* How many "real" partitions do we have? */
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    lp->d_partitions[i].p_size != 0)
-			npartitions++;
-	}
-
-	/* Create an array of pointers to the partition data */
-	if ((spp = malloc(sizeof(struct partition *) * npartitions)) == NULL)
-		errx(4, "out of memory");
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    lp->d_partitions[i].p_size != 0)
-			spp[npartitions++] = &lp->d_partitions[i];
-	}
-
-	/*
-	 * Sort the partitions based on starting offset.
-	 * This is safe because we guarantee no overlap.
-	 */
-	if (npartitions > 1)
-		if (heapsort((void *)spp, npartitions, sizeof(spp[0]),
-		    partition_cmp))
-			err(4, "failed to sort partition table");
-
+	/* Get a sorted list of the partitions */
+	spp = sort_partitions(lp, &npartitions);
 
 	for (i = 0; i < npartitions; i++ ) {
 		/*
@@ -854,35 +830,12 @@ make_contiguous(lp)
 	u_int16_t npartitions;
 	int i;
 
-	/* How many "real" partitions do we have? */
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    lp->d_partitions[i].p_size != 0)
-			npartitions++;
-	}
-
-	if (npartitions < 2)
-		return;			/* nothing to do */
-
-	/* Create an array of pointers to the partition data */
-	if ((spp = malloc(sizeof(struct partition *) * npartitions)) == NULL)
-		errx(4, "out of memory");
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    lp->d_partitions[i].p_size != 0)
-			spp[npartitions++] = &lp->d_partitions[i];
-	}
+	/* Get a sorted list of the partitions */
+	spp = sort_partitions(lp, &npartitions);
 
 	/*
-	 * Sort the partitions based on starting offset.
-	 * This is safe because we guarantee no overlap.
+	 * Make everything contiguous but don't muck with start of the first one
 	 */
-	if (heapsort((void *)spp, npartitions, sizeof(spp[0]), partition_cmp))
-		err(4, "failed to sort partition table");
-
-	/* Now make everything contiguous but don't muck with start of 'a' */
 	for (i = 1; i < npartitions; i++)
 		spp[i]->p_offset = spp[i - 1]->p_offset + spp[i - 1]->p_size;
 
@@ -1076,33 +1029,13 @@ has_overlap(lp, freep, resolve)
 	u_int16_t npartitions;
 	int c, i, j, rval = 0;
 
-	/* How many "real" partitions do we have? (skip 'c') */
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (i != 2 && lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    lp->d_partitions[i].p_size != 0)
-			npartitions++;
-	}
+	/* Get a sorted list of the partitions */
+	spp = sort_partitions(lp, &npartitions);
 
-	if (npartitions < 2)
+	if (npartitions < 2) {
+		(void)free(spp);
 		return(0);			/* nothing to do */
-
-	/* Create an array of pointers to the partition data */
-	if ((spp = malloc(sizeof(struct partition *) * npartitions)) == NULL)
-		errx(4, "out of memory");
-
-	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (i != 2 && lp->d_partitions[i].p_fstype != FS_UNUSED &&
-		    lp->d_partitions[i].p_fstype != FS_BOOT &&
-		    lp->d_partitions[i].p_size != 0)
-			spp[npartitions++] = &lp->d_partitions[i];
 	}
-
-	/*
-	 * Sort the partitions based on starting offset.
-	 */
-	if (heapsort((void *)spp, npartitions, sizeof(spp[0]), partition_cmp))
-		err(4, "failed to sort partition table");
 
 	/* Now that we have things sorted by starting sector check overlap */
 	for (i = 0; i < npartitions; i++) {
@@ -1238,7 +1171,7 @@ edit_parms(lp, freep)
 	/* rpm */
 	for (;;) {
 		ui = getuint(lp, 0, "rpm",
-		  "The rotational speed of the disk in revoltuions per minute.",
+		  "The rotational speed of the disk in revolutions per minute.",
 		  lp->d_rpm, lp->d_rpm, 0);
 		if (ui == UINT_MAX)
 			fputs("Invalid entry\n", stderr);
@@ -1246,4 +1179,44 @@ edit_parms(lp, freep)
 			break;
 	}
 	lp->d_rpm = ui;
+}
+
+struct partition **
+sort_partitions(lp, npart)
+	struct disklabel *lp;
+	u_int16_t *npart;
+{
+	u_int16_t npartitions;
+	struct partition **spp;
+	int i;
+
+	/* How many "real" partitions do we have? */
+	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
+		    lp->d_partitions[i].p_size != 0)
+			npartitions++;
+	}
+
+	/* Create an array of pointers to the partition data */
+	if ((spp = malloc(sizeof(struct partition *) * npartitions)) == NULL)
+		errx(4, "out of memory");
+	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		    lp->d_partitions[i].p_fstype != FS_BOOT &&
+		    lp->d_partitions[i].p_size != 0)
+			spp[npartitions++] = &lp->d_partitions[i];
+	}
+
+	/*
+	 * Sort the partitions based on starting offset.
+	 * This is safe because we guarantee no overlap.
+	 */
+	if (npartitions > 1)
+		if (heapsort((void *)spp, npartitions, sizeof(spp[0]),
+		    partition_cmp))
+			err(4, "failed to sort partition table");
+
+	*npart = npartitions;
+	return(spp);
 }
