@@ -1,5 +1,5 @@
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.1 1996/09/29 16:15:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: sha1.c,v 1.2 1996/09/29 17:18:17 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -320,11 +320,19 @@ void main()
     sha1Init( &sha1Info );
     sha1Update( &sha1Info, ( BYTE * ) "abc", 3 );
     sha1Final( &sha1Info );
+#ifdef NEW_SHA1
+    if(	sha1Info.digest[ 0 ] != 0xA9993E36L ||
+	sha1Info.digest[ 1 ] != 0x4706816AL ||
+	sha1Info.digest[ 2 ] != 0xBA3E2571L ||
+	sha1Info.digest[ 3 ] != 0x7850C26CL ||
+	sha1Info.digest[ 4 ] != 0x9CD0D89DL )
+#else
     if( sha1Info.digest[ 0 ] != 0x0164B8A9L ||
 	sha1Info.digest[ 1 ] != 0x14CD2A5EL ||
 	sha1Info.digest[ 2 ] != 0x74C4F7FFL ||
 	sha1Info.digest[ 3 ] != 0x082C4D97L ||
 	sha1Info.digest[ 4 ] != 0xF1EDF880L )
+#endif
 	{
 	puts( "Error in SHA1 implementation" );
 	exit( -1 );
