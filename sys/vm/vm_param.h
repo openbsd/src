@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.14 1998/03/01 00:38:25 niklas Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.15 1999/08/23 07:57:17 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -107,7 +107,7 @@ typedef	int	boolean_t;
 #endif
 
 #if defined(_KERNEL) && !defined(UVM)
-extern vm_size_t	page_mask;
+extern vsize_t		page_mask;
 extern int		page_shift;
 #endif
 
@@ -170,30 +170,26 @@ struct _ps_strings {
  */
 #ifdef _KERNEL
 #define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
-#define	ptoa(x)		((vm_offset_t)((x) << PAGE_SHIFT))
+#define	ptoa(x)		((vaddr_t)((x) << PAGE_SHIFT))
 
 /*
  * Round off or truncate to the nearest page.  These will work
  * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
 #define	round_page(x) \
-	((vm_offset_t)((((vm_offset_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
+	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
 #define	trunc_page(x) \
-	((vm_offset_t)(((vm_offset_t)(x)) & ~PAGE_MASK))
+	((vaddr_t)(((vaddr_t)(x)) & ~PAGE_MASK))
 #define	num_pages(x) \
-	((vm_offset_t)((((vm_offset_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
-
-extern vm_size_t	mem_size;	/* size of physical memory (bytes) */
-extern vm_offset_t	first_addr;	/* first physical page */
-extern vm_offset_t	last_addr;	/* last physical page */
+	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
 #define	round_page(x) \
-	((((vm_offset_t)(x) + (vm_page_size - 1)) / vm_page_size) * \
+	((((vaddr_t)(x) + (vm_page_size - 1)) / vm_page_size) * \
 	    vm_page_size)
 #define	trunc_page(x) \
-	((((vm_offset_t)(x)) / vm_page_size) * vm_page_size)
+	((((vaddr_t)(x)) / vm_page_size) * vm_page_size)
 
 #endif /* _KERNEL */
 #endif /* ASSEMBLER */
