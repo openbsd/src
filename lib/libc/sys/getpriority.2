@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpriority.2,v 1.7 2000/10/18 05:12:09 aaron Exp $
+.\"	$OpenBSD: getpriority.2,v 1.8 2003/05/19 19:37:28 millert Exp $
 .\"	$NetBSD: getpriority.2,v 1.4 1995/02/27 12:33:15 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -80,8 +80,7 @@ A zero value of
 denotes the current process, process group, or user.
 .Fa prio
 is a value in the range \-20 to 20.
-The default priority is 0;
-lower priorities cause more favorable scheduling.
+The default priority is 0; lower priorities cause more favorable scheduling.
 .Pp
 The
 .Fn getpriority
@@ -91,6 +90,8 @@ The
 .Fn setpriority
 call sets the priorities of all of the specified processes
 to the specified value.
+Priority values outside the range \-20 to 20 are truncated to the
+appropriate limit.
 Only the superuser may lower priorities.
 .Sh RETURN VALUES
 Since
