@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.12 1999/07/08 21:46:53 aaron Exp $
+.\"	$OpenBSD: adduser.8,v 1.13 1999/07/08 22:07:39 aaron Exp $
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
 .\"
@@ -33,10 +33,13 @@
 .Nd add and delete users from the system
 .Sh SYNOPSIS
 .Nm adduser
-.Oo Fl batch Ar username No [ Ns Ar group
-.Ns Op Ns , Ns Ar group
-.Ar ... Oc
-.Op Ar fullname Op Ar password
+.Oo Fl batch Ar username
+.Oo Ar group Ns Op , Ns Ar group
+.Ar ...
+.Oc
+.Op Ar fullname
+.Op Ar password
+.Oc
 .Op Fl check_only
 .Op Fl config_create
 .Op Fl dotdir Ar directory
@@ -200,17 +203,22 @@ The
 format is explained within that file and is quite straightforward.
 .Sh OPTIONS
 .Bl -tag -width Ds
-.It Sy -batch username [group[,group]...] [fullname] [password]
+.It Xo Fl batch Ar username
+.Oo Ar group Ns Op , Ns Ar group
+.Ar ... Oc
+.Op Ar fullname
+.Op Ar password
+.Xc
 Enter batch mode in which multiple users are specified on the command-line
 in a compact format.
 By default the password is assumed to already be properly encrypted.
-.It Sy -check_only
+.It Fl check_only
 Check the passwd, group, and shells databases for consistency and problems
 then exit without performing any other operation.
-.It Sy -config_create
+.It Fl config_create
 Create or edit default configuration information and message file before
 proceeding with the normal interactive adduser procedure.
-.It Sy -dotdir Ar directory
+.It Fl dotdir Ar directory
 Copy files from
 .Ar directory
 into the HOME directory of new users.  Files named in the fashion of
@@ -222,21 +230,24 @@ their owner.
 .\" don't allow group or world to write files and allow only owner
 .\" to read/execute/write .rhost, .Xauthority, .kermrc, .netrc, Mail,
 .\" prv, iscreen, term.
-.It Sy -encrypt,-e Ar method
+.It Fl encrypt Ns No , Fl e Ar method
 Encrypt local passwords using
 .Ar method
 of encryption as described in
 .Xr passwd.conf 5 .
-.It Sy -group Ar login_group
+.It Fl group Ar login_group
 Specify the default login group.  A value of
 .Ar USER
 means that the username is to be used as the login group.
-.It Sy -help,-h,-?
+.It Xo
+.Fl help Ns No ,
+.Fl h Ns No , Fl ?
+.Xc
 Print a summary of options and exit.
-.It Sy -home Ar partition
+.It Fl home Ar partition
 Specify the default home partition where all users' home directories
 are to be located.
-.It Sy -message Ar file
+.It Fl message Ar file
 Send new users a welcome message from
 .Ar file .
 Specifying a value of
@@ -244,23 +255,26 @@ Specifying a value of
 for
 .Ar file
 causes no message to be sent to new users.
-.It Sy -noconfig
+.It Fl noconfig
 Do not read the default configuration file.
-.It Sy -shell Ar shell
+.It Fl shell Ar shell
 Specify the default shell for new users.
-.It Sy -silent,-s,-quiet,-q
+.It Xo
+.Fl silent Ns No , Fl s Ns No ,
+.Fl quiet Ns No , Fl q
+.Xc
 Causes the program to print fewer warnings, questions, and bug reports.
-.It Sy -uid Ar uid
+.It Fl uid Ar uid
 Use UIDs from
 .Ar uid
 up when automatically generating UIDs.
-.It Sy -unencrypted
+.It Fl unencrypted
 Causes the program to assume that the password given in batch mode is
 unencrypted. The password will be encrypted before it's added to the
 password file.
 Use of this option will leave username and cleartext password displayable
 for any user.
-.It Sy -verbose,-v
+.It Fl verbose Ns No , Fl v
 Causes the program to print many warnings and questions.
 This option is recommended for novice users.
 .El
@@ -278,13 +292,13 @@ This option is recommended for novice users.
 .\" details.
 .\" .El
 .Sh EXAMPLES
-$ adduser
+# adduser
 .Pp
 Start
 .Nm
 in interactive mode.
 .Pp
-$ adduser -batch falken guest,staff,beer 'Prof. Falken' joshua
+# adduser -batch falken guest,staff,beer 'Prof. Falken' joshua
 .Pp
 Create user
 .Dq falken
@@ -307,7 +321,7 @@ Password is
 Send user falken
 a welcome message.
 .Pp
-$ adduser -uid_start 5000 -group guest -message no -batch vehlefanz
+# adduser -uid_start 5000 -group guest -message no -batch vehlefanz
 .Pp
 Create user
 .Dq vehlefanz
