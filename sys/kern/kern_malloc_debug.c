@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.17 2002/06/11 04:34:30 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.18 2002/07/01 23:04:09 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -139,7 +139,7 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 	debug_malloc_allocs++;
 	splx(s);
 
-	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_ALL);
+	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	md->md_size = size;
