@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.21 2002/07/24 04:11:10 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.22 2002/08/08 17:17:12 art Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -361,6 +361,9 @@ _dl_tryload_shlib(const char *libname, int type)
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
 
+#define ROUND_PG(x) (((x) + align) & ~(align))
+#define TRUNC_PG(x) ((x) & ~(align))
+
 	object = _dl_lookup_object(libname);
 	if (object) {
 		object->refcount++;
@@ -402,15 +405,19 @@ _dl_tryload_shlib(const char *libname, int type)
 			break;
 		}
 	}
-	minva &= ~align;
-	maxva = (maxva + align) & ~(align);
+	minva = TRUNC_PG(minva);
+	maxva = ROUND_PG(maxva);
 
 	/*
-	 *  We map the entire area to see that we can get the VM
-	 *  space required. Map it unaccessible to start with.
+	 * We map the entire area to see that we can get the VM
+	 * space required. Map it unaccessible to start with.
+	 *
+	 * We must map the file we'll map later otherwise the VM
+	 * system won't be able to align the mapping properly
+	 * on VAC architectures.
 	 */
 	libaddr = (Elf_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
-	    MAP_PRIVATE|MAP_ANON, -1, 0);
+	    MAP_PRIVATE|MAP_FILE, libfile, 0);
 	if (_dl_check_error(libaddr)) {
 		_dl_printf("%s: rtld mmap failed mapping %s.\n",
 		    _dl_progname, libname);
@@ -424,13 +431,15 @@ _dl_tryload_shlib(const char *libname, int type)
 
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_LOAD) {
-			char *start = (char *)(phdp->p_vaddr & ~align) + loff;
-			int size = (phdp->p_vaddr & align) + phdp->p_filesz;
+			char *start = (char *)(TRUNC_PG(phdp->p_vaddr)) + loff;
+			int off = (phdp->p_vaddr & align);
+			int size = off + phdp->p_filesz;
 			void *res;
 
-			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
+			res = _dl_mmap(start, ROUND_PG(size),
+			    PFLAGS(phdp->p_flags),
 			    MAP_FIXED|MAP_PRIVATE, libfile,
-			    phdp->p_offset & ~align);
+			    TRUNC_PG(phdp->p_offset));
 			next_load = _dl_malloc(sizeof(struct load_list));
 			next_load->next = load_list;
 			load_list = next_load;
@@ -447,12 +456,16 @@ _dl_tryload_shlib(const char *libname, int type)
 				return(0);
 			}
 			if (phdp->p_flags & PF_W) {
-				if (size & align)
+				/* Zero out everything past the EOF */
+				if ((size & align) != 0)
 					_dl_memset(start + size, 0,
 					    _dl_pagesz - (size & align));
-				start = start + ((size + align) & ~align);
-				size = size - (phdp->p_vaddr & align);
-				size = phdp->p_memsz - size;
+				if (ROUND_PG(size) ==
+				    ROUND_PG(off + phdp->p_memsz))
+					continue;
+				start = start + ROUND_PG(size);
+				size = ROUND_PG(off + phdp->p_memsz) -
+				    ROUND_PG(size);
 				res = _dl_mmap(start, size,
 				    PFLAGS(phdp->p_flags),
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
