@@ -37,9 +37,9 @@ static char sccsid[] = "@(#)strtoq.c	5.1 (Berkeley) 6/26/92";
 
 #include <sys/types.h>
 
-#include <limits.h>
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 /*
@@ -55,9 +55,8 @@ strtoq(nptr, endptr, base)
 	register int base;
 {
 	register const char *s;
-	register u_quad_t acc;
+	register quad_t acc, cutoff;
 	register int c;
-	register u_quad_t qbase, cutoff;
 	register int neg, any, cutlim;
 
 	/*
@@ -104,10 +103,16 @@ strtoq(nptr, endptr, base)
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	qbase = (unsigned)base;
-	cutoff = neg ? -(u_quad_t)QUAD_MIN : QUAD_MAX;
-	cutlim = cutoff % qbase;
-	cutoff /= qbase;
+	cutoff = neg ? QUAD_MIN : QUAD_MAX;
+	cutlim = cutoff % base;
+	cutoff /= base;
+	if (neg) {
+		if (cutlim > 0) {
+			cutlim -= base;
+			cutoff += 1;
+		}
+		cutlim = -cutlim;
+	}
 	for (acc = 0, any = 0;; c = *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -117,19 +122,30 @@ strtoq(nptr, endptr, base)
 			break;
 		if (c >= base)
 			break;
-		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
-			any = -1;
-		else {
-			any = 1;
-			acc *= qbase;
-			acc += c;
+		if (any < 0)
+			continue;
+		if (neg) {
+			if (acc < cutoff || acc == cutoff && c > cutlim) {
+				any = -1;
+				acc = QUAD_MIN;
+				errno = ERANGE;
+			} else {
+				any = 1;
+				acc *= base;
+				acc -= c;
+			}
+		} else {
+			if (acc > cutoff || acc == cutoff && c > cutlim) {
+				any = -1;
+				acc = QUAD_MAX;
+				errno = ERANGE;
+			} else {
+				any = 1;
+				acc *= base;
+				acc += c;
+			}
 		}
 	}
-	if (any < 0) {
-		acc = neg ? QUAD_MIN : QUAD_MAX;
-		errno = ERANGE;
-	} else if (neg)
-		acc = -acc;
 	if (endptr != 0)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);

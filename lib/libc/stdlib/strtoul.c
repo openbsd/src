@@ -33,12 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: strtoul.c,v 1.1.1.1 1995/10/18 08:42:20 deraadt Exp $";
+static char *rcsid = "$Id: strtoul.c,v 1.2 1995/12/21 14:58:38 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 /*
@@ -53,23 +53,26 @@ strtoul(nptr, endptr, base)
 	char **endptr;
 	register int base;
 {
-	register const char *s = nptr;
-	register unsigned long acc;
+	register const char *s;
+	register unsigned long acc, cutoff;
 	register int c;
-	register unsigned long cutoff;
-	register int neg = 0, any, cutlim;
+	register int neg, any, cutlim;
 
 	/*
 	 * See strtol for comments as to the logic used.
 	 */
+	s = nptr;
 	do {
 		c = *s++;
 	} while (isspace(c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
-	} else if (c == '+')
-		c = *s++;
+	} else {
+		neg = 0;
+		if (c == '+')
+			c = *s++;
+	}
 	if ((base == 0 || base == 16) &&
 	    c == '0' && (*s == 'x' || *s == 'X')) {
 		c = s[1];
@@ -78,8 +81,9 @@ strtoul(nptr, endptr, base)
 	}
 	if (base == 0)
 		base = c == '0' ? 8 : 10;
-	cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
-	cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
+
+	cutoff = ULONG_MAX / (unsigned long)base;
+	cutlim = ULONG_MAX % (unsigned long)base;
 	for (acc = 0, any = 0;; c = *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -89,18 +93,19 @@ strtoul(nptr, endptr, base)
 			break;
 		if (c >= base)
 			break;
-		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
+		if (any < 0)
+			continue;
+		if (acc > cutoff || acc == cutoff && c > cutlim) {
 			any = -1;
-		else {
+			acc = ULONG_MAX;
+			errno = ERANGE;
+		} else {
 			any = 1;
-			acc *= base;
+			acc *= (unsigned long)base;
 			acc += c;
 		}
 	}
-	if (any < 0) {
-		acc = ULONG_MAX;
-		errno = ERANGE;
-	} else if (neg)
+	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
 		*endptr = (char *) (any ? s - 1 : nptr);
