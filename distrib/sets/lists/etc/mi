@@ -41,6 +41,8 @@
 ./etc/motd
 ./etc/mrouted.conf
 ./etc/mtree/4.4BSD.dist
+./etc/mtree/BSD.local.dist
+./etc/mtree/BSD.x11.dist
 ./etc/mtree/special
 ./etc/myname
 ./etc/namedb/localhost.rev
