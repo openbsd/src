@@ -1,4 +1,4 @@
-#	$Id: list,v 1.7 1996/09/22 20:20:47 tholo Exp $
+#	$Id: list,v 1.8 1996/09/27 03:24:01 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -22,7 +22,9 @@ LINK	instbin			bin/tar
 LINK	instbin			bin/test
 LINK	instbin			bin/[
 LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fdisk
 LINK	instbin			sbin/fsck
+LINK	instbin			sbin/fsck_ffs
 LINK	instbin			sbin/halt
 LINK	instbin			sbin/ifconfig
 LINK	instbin			sbin/init

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 1996/07/01 18:09:17 deraadt Exp $
+#	$OpenBSD: list,v 1.6 1996/09/27 03:24:03 deraadt Exp $
 
 # copy the kernel
 COPY	${OBJDIR}/bsd	bsd
@@ -11,8 +11,9 @@ LINK	kcbin		bin/sh
 LINK	kcbin		bin/test
 LINK	kcbin		bin/[
 LINK	kcbin		sbin/disklabel
-LINK	kcbin		sbin/fsck_ffs
+LINK	kcbin		sbin/fdisk
 LINK	kcbin		sbin/fsck
+LINK	kcbin		sbin/fsck_ffs
 LINK	kcbin		sbin/halt
 LINK	kcbin		sbin/init
 LINK	kcbin		sbin/mount
