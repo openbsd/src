@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.6 2003/10/17 12:51:06 jmc Exp $
+.\"	$OpenBSD: ld.so.1,v 1.7 2004/08/30 20:36:40 espie Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -176,6 +176,10 @@ When set, do not include a set of built-in standard directory paths for
 searching.
 This might be useful when running on a system with a completely
 non-standard filesystem layout.
+.It Ev LD_DEBUG
+When set, be verbose about what
+.Nm
+does.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact
