@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.182 1999/09/22 21:57:08 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.183 1999/09/25 04:04:56 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2695,6 +2695,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "SonicVibes",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_GE,
+	    0,
+	    "Schneider & Koch",
+	    "984x GE",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,

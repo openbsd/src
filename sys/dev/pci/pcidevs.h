@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.182 1999/09/22 21:57:08 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.183 1999/09/25 04:04:56 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1187,6 +1187,9 @@
 #define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE MX */
 #define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE MXP */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
+
+/* Schneider & Koch (SysKonnect) */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_GE	0x4300		/* 984x GE */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon */
