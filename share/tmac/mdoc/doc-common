@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.28 2002/07/07 09:02:30 jufi Exp $
+.\"	$OpenBSD: doc-common,v 1.29 2002/09/10 21:36:57 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -200,7 +200,7 @@
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
-.	ds oS OpenBSD 3.1
+.	ds oS OpenBSD 3.2
 .\}
 .if "\\$2"" \{\
 .	ds aa Non-Null
@@ -266,6 +266,7 @@
 .	if "\\$2"2.9"  .as oS \02.9
 .	if "\\$2"3.0"  .as oS \03.0
 .	if "\\$2"3.1"  .as oS \03.1
+.	if "\\$2"3.2"  .as oS \03.2
 .\}
 .if "\\*(oS"Null" .ds oS \0\\$1
 .if "\\*(aa"Non-Null" .as oS \0\\$2
