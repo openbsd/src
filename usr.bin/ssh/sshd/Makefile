@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 2002/06/11 04:14:26 markus Exp $
+#	$OpenBSD: Makefile,v 1.51 2002/06/20 19:56:07 stevesk Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -6,7 +6,7 @@ PROG=	sshd
 BINOWN=	root
 BINMODE=555
 BINDIR=	/usr/sbin
-MAN=	sshd.8
+MAN=	sshd.8 sshd_config.5
 CFLAGS+=-DHAVE_LOGIN_CAP -DBSD_AUTH
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
