@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.36 2001/06/29 22:01:27 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.37 2001/06/29 22:43:40 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -450,7 +450,6 @@ udp_create (char *name)
 	}
     }
 
-  log_print ("udp_create: addr_str = [%s]", addr_str);
   if (text2sockaddr (addr_str, port_str, &addr))
     {
       log_print ("udp_create: address \"%s\" not understood", addr_str);
