@@ -1,4 +1,5 @@
-/*	$OpenBSD: gencat.c,v 1.5 1997/09/21 10:34:00 jdm Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.6 2000/09/27 23:53:29 danh Exp $	*/
+/*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +27,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -35,6 +36,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+static char rcsid[] =
+    "$OpenBSD: gencat.c,v 1.6 2000/09/27 23:53:29 danh Exp $";
+#endif /* not lint */
 
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.
@@ -71,23 +78,18 @@ up-to-date.  Many thanks.
 #define _NLS_PRIVATE
 
 /* ensure 8-bit cleanliness */
-#define ISSPACE(c) (isascii(c) && isspace(c))
+#define ISSPACE(c) \
+    (isascii((unsigned char)c) && isspace((unsigned char)c))
 
 #include <sys/queue.h>
 #include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
+#include <nl_types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <nl_types.h>
-
-extern void MCAddSet __P((int setId));
-extern void MCDelSet __P((int setId));
-extern void MCAddMsg __P((int msgId, const char *msg));
-extern void MCDelMsg __P((int msgId));
-extern void MCParse __P((int fd));
-extern void MCWriteCat __P((int fd));
 
 struct _msgT {
 	long    msgId;
@@ -107,10 +109,33 @@ static struct _setT *curSet;
 static char *curline = NULL;
 static long lineno = 0;
 
+extern	char	*__progname;		/* from crt0.o */
+
+static	char   *cskip __P((char *));
+static	void	error __P((char *, char *));
+static	void	nomem __P((void));
+static	char   *getline __P((int));
+static	char   *getmsg __P((int, char *, char));
+static	void	warning __P((char *, char *));
+static	char   *wskip __P((char *));
+static	char   *xstrdup __P((const char *));
+static	void   *xmalloc __P((size_t));
+static	void   *xrealloc __P((void *, size_t));
+
+void	MCParse __P((int fd));
+void	MCWriteCat __P((int fd));
+void	MCDelMsg __P((int msgId));
+void	MCAddMsg __P((int msgId, const char *msg));
+void	MCAddSet __P((int setId));
+void	MCDelSet __P((int setId));
+int	main __P((int, char **));
+void	usage __P((void));
+
+
 void
 usage()
 {
-	fprintf(stderr, "Use: gencat catfile msgfile ...\n");
+	fprintf(stderr, "Usage: %s catfile msgfile ...\n", __progname);
 	exit(1);
 }
 
@@ -141,19 +166,14 @@ main(argc, argv)
 	catfile = *argv++;
 
 	for (; *argv; argv++) {
-		if ((ifd = open(*argv, O_RDONLY)) < 0) {
-			fprintf(stderr, "gencat: Unable to read %s\n", *argv);
-			exit(1);
-		}
+		if ((ifd = open(*argv, O_RDONLY)) < 0)
+			err(1, "Unable to read %s", *argv);
 		MCParse(ifd);
 		close(ifd);
 	}
 
-	if ((ofd = open(catfile, O_WRONLY | O_TRUNC | O_CREAT, 0666)) < 0) {
-		fprintf(stderr, "gencat: Unable to create a new %s.\n",
-		    catfile);
-		exit(1);
-	}
+	if ((ofd = open(catfile, O_WRONLY | O_TRUNC | O_CREAT, 0666)) < 0)
+		err(1, "Unable to create a new %s", catfile);
 	MCWriteCat(ofd);
 	exit(0);
 }
@@ -163,7 +183,7 @@ warning(cptr, msg)
 	char   *cptr;
 	char   *msg;
 {
-	fprintf(stderr, "gencat: %s on line %ld\n", msg, lineno);
+	fprintf(stderr, "%s: %s on line %ld\n", __progname, msg, lineno);
 	fprintf(stderr, "%s\n", curline);
 	if (cptr) {
 		char   *tptr;
@@ -211,11 +231,13 @@ xrealloc(ptr, size)
 
 static char *
 xstrdup(str)
-	char   *str;
+	const char   *str;
 {
-	if ((str = strdup(str)) == NULL)
+	char *nstr;
+
+	if ((nstr = strdup(str)) == NULL)
 		nomem();
-	return (str);
+	return (nstr);
 }
 
 static char *
@@ -301,7 +323,7 @@ getmsg(fd, cptr, quote)
 
 	if (quote && *cptr == quote) {
 		++cptr;
-	};
+	} 
 
 	clen = strlen(cptr) + 1;
 	if (clen > msglen) {
@@ -364,24 +386,27 @@ getmsg(fd, cptr, quote)
 					*tptr++ = '\\';
 					++cptr;
 					break;
-				case '"': 
+				case '"':
+					/* FALLTHROUGH */
 				case '\'':
-					/* 
+					/*
 					 * While it isn't necessary to
 					 * escape ' and ", let's accept
 					 * them escaped and not complain.
 					 * (XPG4 states that '\' should be
-					 * ignored when not used in a
+					 * ignored when not used in a 
 					 * valid escape sequence)
 					 */
 					*tptr++ = '"';
 					++cptr;
 					break;
 				default:
-					if (isdigit(*cptr)) {
+					if (quote && *cptr == quote) {
+						*tptr++ = *cptr++;
+					} else if (isdigit((unsigned char) *cptr)) {
 						*tptr = 0;
 						for (i = 0; i < 3; ++i) {
-							if (!isdigit(*cptr))
+							if (!isdigit((unsigned char) *cptr))
 								break;
 							if (*cptr > '7')
 								warning(cptr, "octal number greater than 7?!");
@@ -390,8 +415,9 @@ getmsg(fd, cptr, quote)
 							++cptr;
 						}
 					} else {
-						warning(cptr, "unrecognized escape sequence; ignoring escape character");
+						warning(cptr, "unrecognized escape sequence; ignoring esacpe character");
 					}
+					break;
 				}
 			} else {
 				*tptr++ = *cptr++;
@@ -446,15 +472,32 @@ MCParse(fd)
 				}
 			}
 		} else {
-			if (isdigit(*cptr)) {
+			/*
+			 * First check for (and eat) empty lines....
+			 */
+			if (!*cptr)
+				continue;
+			/*
+			 * We have a digit? Start of a message. Else,
+			 * syntax error.
+			 */
+			if (isdigit((unsigned char) *cptr)) {
 				msgid = atoi(cptr);
 				cptr = cskip(cptr);
 				cptr = wskip(cptr);
 				/* if (*cptr) ++cptr; */
+			} else {
+				warning(cptr, "neither blank line nor start of a message id");
+				continue;
 			}
-			if (!*cptr)
+			/*
+			 * If we have a message ID, but no message,
+			 * then this means "delete this message id
+			 * from the catalog".
+			 */
+			if (!*cptr) {
 				MCDelMsg(msgid);
-			else {
+			} else {
 				str = getmsg(fd, cptr, quote);
 				MCAddMsg(msgid, str);
 			}
