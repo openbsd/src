@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.22 1999/06/08 15:47:39 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.23 1999/06/08 16:05:23 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -656,7 +656,8 @@ linux_sys_pipe(p, v, retval)
 #ifdef __i386__
 		retval[1] = reg_edx;
 #endif /* __i386__ */
-		/* XXX leaks descriptors */
+		fdrelease(p, retval[0]);
+		fdrelease(p, retval[1]);
 		return error;
 	}
 

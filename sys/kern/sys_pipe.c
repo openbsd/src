@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.14 1999/06/07 20:46:09 deraadt Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.15 1999/06/08 16:05:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -150,34 +150,6 @@ void	pipespace __P((struct pipe *));
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
  */
-
-int
-sys_pipe(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct filedesc *fdp = p->p_fd;
-	register struct sys_pipe_args /* {
-		syscallarg(int *) fdp;
-	} */ *uap = v;
-	int error;
-
-	if ((error = sys_opipe(p, v, retval)) == -1)
-		return (error);
-	
-	error = copyout((caddr_t)retval, (caddr_t)SCARG(uap, fdp),
-	    2 * sizeof (int));
-	if (error) {
-		pipeclose((struct pipe *)(fdp->fd_ofiles[retval[0]]->f_data));
-		ffree(fdp->fd_ofiles[retval[0]]);
-		fdp->fd_ofiles[retval[0]] = NULL;
-		pipeclose((struct pipe *)(fdp->fd_ofiles[retval[1]]->f_data));
-		ffree(fdp->fd_ofiles[retval[1]]);
-		fdp->fd_ofiles[retval[1]] = NULL;
-	}
-	return (error);
-}
 
 /* ARGSUSED */
 int
