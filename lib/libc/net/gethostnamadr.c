@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.17 1997/04/03 05:53:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.18 1997/04/03 07:54:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -579,6 +579,7 @@ gethostbyname2(name, af)
 			break;
 		}
 	}
+	/* XXX h_errno not correct in all cases... */
 	return (hp);
 }
 
@@ -672,7 +673,7 @@ gethostbyaddr(addr, len, af)
 				break;
 			}
 			if (!(hp = getanswer(&buf, n, qbuf, T_PTR)))
-				return (NULL);	/* h_errno was set by getanswer() */
+				break;
 			hp->h_addrtype = af;
 			hp->h_length = len;
 			bcopy(addr, host_addr, len);
@@ -691,6 +692,7 @@ gethostbyaddr(addr, len, af)
 			break;
 		}
 	}
+	/* XXX h_errno not correct in all cases... */
 	return (hp);
 }
 
