@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 1997/09/23 07:09:55 downsj Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 1999/05/04 19:57:25 millert Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ struct isr {
 	register int _spl_r;						\
 									\
 	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-	    "&=d" (_spl_r) : "di" (s));					\
+	    "=&d" (_spl_r) : "di" (s));					\
 	_spl_r;								\
 })
 
@@ -112,7 +112,7 @@ struct isr {
 		jle	1f					;	\
 		movw	%1,sr					;	\
 	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
+		    "=&d" (_spl_r)				:	\
 		    "di" (s)					:	\
 		    "d0", "d1");					\
 	_spl_r;								\
