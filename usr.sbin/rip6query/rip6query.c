@@ -1,5 +1,5 @@
-/*	$OpenBSD: rip6query.c,v 1.7 2002/06/02 06:42:29 deraadt Exp $	*/
-/*	$KAME: rip6query.c,v 1.15 2001/11/16 07:01:21 itojun Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.8 2002/09/08 01:36:37 itojun Exp $	*/
+/*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,7 +76,8 @@ main(argc, argv)
 {
 	struct netinfo6 *np;
 	struct sockaddr_in6 fsock;
-	int i, n, len, flen;
+	int i, n, len;
+	socklen_t flen;
 	int c;
 	int ifidx = -1;
 	int error;
@@ -173,7 +174,7 @@ main(argc, argv)
 			printf("\t%s/%d [%d]", inet6_n2a(&np->rip6_dest),
 			    np->rip6_plen, np->rip6_metric);
 			if (np->rip6_tag)
-			    printf(" tag=0x%x", ntohs(np->rip6_tag));
+				printf(" tag=0x%x", ntohs(np->rip6_tag));
 			printf("\n");
 		}
 	}
