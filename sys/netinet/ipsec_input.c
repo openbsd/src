@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.23 2000/03/29 10:15:22 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.24 2000/06/18 00:24:11 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -33,14 +33,6 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
- */
-
-/*
- * Authentication Header Processing
- * Per RFC1826 (Atkinson, 1995)
- *
- * Encapsulation Security Payload Processing
- * Per RFC1827 (Atkinson, 1995)
  */
 
 #include <sys/param.h>
