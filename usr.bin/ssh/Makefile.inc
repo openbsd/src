@@ -1,5 +1,7 @@
 CFLAGS+=	-I${.OBJDIR} -I${.CURDIR}/..
 
+CLEANFILES=	gen_minfd minfd.h
+
 .include <bsd.own.mk> # for KERBEROS and AFS
 
 .if (${KERBEROS} == "yes")
