@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.11 2004/02/10 01:31:20 millert Exp $
+.\"	$OpenBSD: pty.4,v 1.12 2004/02/22 08:27:33 deraadt Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -222,7 +222,9 @@ is required.
 .Pp
 The standard way to allocate
 .Nm
-devices is through the
+devices is through
+.Xr openpty 3 ,
+a function which internally uses a
 .Dv PTMGET
 .Xr ioctl 2
 call on the
