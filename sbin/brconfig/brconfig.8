@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.35 2002/06/09 08:13:05 todd Exp $
+.\"	$OpenBSD: brconfig.8,v 1.36 2002/06/15 02:27:03 angelos Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -184,6 +184,29 @@ being forwarded by the bridge.
 .It Cm -link1
 Clear the
 .Cm link1
+flag on the bridge interface.
+.It Cm link2
+Setting this flag causes all packets to be passed on to
+.Xr ipsec 4
+for processing, based on the policies established by the administrator
+using the
+.Xr ipsecadm 8
+command.
+If appropriate security associations (SAs) exist, they will be used to
+encrypt or decrypt the packets.
+Otherwise, any key management daemons such as
+.Xr isakmpd 8
+or
+.Xr photurisd 8
+that are running on the bridge will be invoked to establish the
+necessary SAs.
+These daemons have to be configured as if they were running on the
+host whose traffic they are protecting (i.e., they need to have the
+appropriate authentication and authorization material, such as keys
+and certificates, to impersonate the protected host(s).
+.It Cm -link2
+Clear the
+.Cm link2
 flag on the bridge interface.
 .It Cm rule Op Ar rulespec
 Add a filtering rule to an interface.
@@ -389,7 +412,9 @@ commands are used to add and delete span ports to and from a bridge.
 .Xr ipsec 4 ,
 .Xr bridgename.if 5 ,
 .Xr ifconfig 8 ,
-.Xr ipsecadm 8
+.Xr ipsecadm 8 ,
+.Xr isakmpd 8 ,
+.Xr photurisd 8
 .Sh AUTHORS
 The
 .Xr brconfig 8

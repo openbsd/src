@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.41 2002/05/28 17:50:04 jasoni Exp $
+.\"	$OpenBSD: bridge.4,v 1.42 2002/06/15 02:26:44 angelos Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -545,6 +545,26 @@ have different mtu's or when IP fragments are reassembled by
 .Xr pf 4 . 
 Non-IP packets which are too large for the outgoing interface will be
 dropped.
+.Pp
+If the LINK2 flag is set on the
+.Xr bridge 4
+interface, the bridge will also perform transparent
+.Xr ipsec 4
+processing on the packets (encrypt or decrypt them), according to the
+policies set with the
+.Xr ipsecadm 8
+command by the administrator.
+If appropriate security associations (SAs) do not exist, any key
+management daemons such as
+.Xr isakmpd 8
+or
+.Xr photurisd 8
+that are running on the bridge will be invoked to establish the
+necessary SAs.
+These daemons have to be configured as if they were running on the
+host whose traffic they are protecting (i.e., they need to have the
+appropriate authentication and authorization material, such as keys
+and certificates, to impersonate the protected host(s).
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr ioctl 2 ,
@@ -552,10 +572,14 @@ dropped.
 .Xr gif 4 ,
 .Xr ip 4 ,
 .Xr ip6 4 ,
+.Xr ipsec 4 ,
 .Xr netintro 4 ,
 .Xr pf 4 ,
 .Xr bridgename.if 5 ,
-.Xr brconfig 8
+.Xr brconfig 8 ,
+.Xr ipsecadm 8 ,
+.Xr isakmpd 8 ,
+.Xr photurisd 8,
 .Sh AUTHORS
 The
 .Xr brconfig 8
