@@ -68,10 +68,6 @@ Booting from Floppy Disk installation media:
 
 This will cause the kernel contained in the floppy to be booted.
 
-After the initial device probe messages you'll asked to start the
-install or upgrade procedure. Proceed to the section ``Running the
-installation scripts'' below.
-
 
 Booting from CD-ROM installation media:
 
@@ -90,10 +86,6 @@ Not all MACHINE systems support bootable CDROMS and the current
 boot image is only known to work on sun4c and sun4m architectures.
 If it does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.
-
-After the initial device probe messages you'll asked to start the
-install or upgrade procedure. Proceed to the section ``Running the
-installation scripts'' below.
 
 
 Booting from SCSI disk (miniroot or floppy image):
@@ -119,11 +111,6 @@ drive vs. scsi-id shuffling and partition a=0, b=1...
 
 (*) for sun4 this is scsi-target*8+scsi-lun (usually 0) expressed in hex...
 
-This will cause the kernel contained in the miniroot to be booted.
-After the initial device probe messages you'll asked to start the
-install or upgrade procedure. Proceed to the section ``Running the
-installation scripts'' below.
-
 
 Booting from SCSI tape:
 
@@ -147,10 +134,6 @@ accordingly:
 					# OpenBOOT ROM that won't take
 					# tape:n syntax
 	
-This will cause the kernel contained in the miniroot to be booted.
-After the initial device probe messages you'll be asked to start the
-install or upgrade procedure. Proceed to the section ``Running the
-installation scripts'' below.
 
 
 Installing using a diskless setup:
@@ -298,7 +281,7 @@ OpenBSDCDROMInstall
 		
 OpenBSDNFSInstall
 
-OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
+OpenBSDDISKInstall(,{:-only -:})
 
 OpenBSDCommonFS
 		
@@ -342,12 +325,8 @@ In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
 
-If you are unfamiliar with UN*X-like system administration, 
-it's recommended that you buy a book that discusses it.
 
-
-
-Installing from SunOS.
+Installing from SunOS:
 
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:

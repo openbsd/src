@@ -29,8 +29,9 @@ be it a SunOS or OpenBSD tape is good insurance if you want to be able to
 After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
 prompt.
-	
-Booting from SCSI tape
+
+
+Booting from SCSI tape:
 
 Boot the miniroot by typing the appropriate command at the PROM:
 
@@ -43,9 +44,6 @@ accordingly:
 	> b st(,28,)
 	
 This will cause the kernel contained in the miniroot to be booted.
-After the initial device probe messages you'll be asked to start the
-install or upgrade procedure. Proceed to the section ``Running the
-installation scripts'' below.
 
 
 Installing using a diskless setup:
@@ -57,18 +55,12 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
 the Sun System/Networks administrators guide constitute a good start).
 
-
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the ethernet chip in your
 machine, this command takes one of the following forms:
 
 	> b le()bsd.rd		# for sun pizza boxes (3/50, 3/60)
 	> b ie()bsd.rd		# for other MACHINE
-
-This will cause the kernel provided by the diskless setup to be booted.
-After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section ``Running the installation
-scripts'' below.
 
 In order to have a MACHINE machine boot diskless by default, you need to
 do some nvram wizardry:
@@ -99,6 +91,7 @@ instead of "q 18".
 Remember that the prom having a limited number of write cycles, you
 shouldn't abuse this feature.
 
+Installing using the Tape or netboot procedure:
 
 OpenBSDInstallPart2
 
@@ -176,7 +169,7 @@ OpenBSDBootMsgs
 	the network card is to use.  This is driver dependent, but for the
 	MACHINE le(4) driver, the flags usually carry meaning:
 
-		-link0 -link1	Use existing setting (only setup by netboot)
+		-link0 -link1	Use existing setting (default)
 		link0 -link1	Use UTP (twisted pair) port
 		-link0 link1 	Use AUI port
 
@@ -206,6 +199,8 @@ OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
 
+OpenBSDCDROMInstall
+
 OpenBSDTAPEInstall
 
 OpenBSDNFSInstall
@@ -226,12 +221,9 @@ In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
 
-If you are unfamiliar with UN*X-like system administration, 
-it's recommended that you buy a book that discusses it.
 
 
-
-Installing from SunOS.
+Installing from SunOS:
 
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:

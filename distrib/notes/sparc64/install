@@ -42,11 +42,6 @@ dnl        ok boot floppy bsd
 dnl
 dnl This will cause the kernel contained in the floppy to be booted.
 dnl
-dnl After the initial device probe messages you'll asked to start the
-dnl install or upgrade procedure. Proceed to the section ``Running the
-dnl installation scripts'' below.
-dnl 
-dnl
 dnl
 dnl XXX no cdrom release yet
 dnl Booting From CD-ROM installation media:
@@ -58,11 +53,6 @@ dnl executable sizes and then the Kernel copyright and device probe
 dnl messages.  Boot failure modes are typically a lot of CD-ROM drive
 dnl activity, but no messages or complaints about magic numbers,
 dnl checksums or formats.
-dnl
-dnl After the initial device probe messages you'll asked to start the
-dnl install or upgrade procedure. Proceed to the section ``Running the
-dnl installation scripts'' below.
-dnl
 dnl
 dnl
 dnl XXX no miniroot filesystem yet
@@ -79,11 +69,6 @@ dnl
 dnl	ok boot disk1:b bsd     # example - scsi target 1 or
 dnl				# second ide drive
 dnl
-dnl This will cause the kernel contained in the miniroot to be booted.
-dnl After the initial device probe messages you'll asked to start the
-dnl install or upgrade procedure. Proceed to the section ``Running the
-dnl installation scripts'' below.
-dnl
 
 Installing using a diskless setup:
 
@@ -99,11 +84,6 @@ Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt:
 
 	ok boot net bsd.rd
-
-This will cause the kernel provided by the diskless setup to be booted.
-After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section ``Running the installation
-scripts'' below.
 
 
 dnl XXX Update title when installation media becomes available.
@@ -266,9 +246,6 @@ as appropriate.
 In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
-
-If you are unfamiliar with UN*X-like system administration, 
-it's recommended that you buy a book that discusses it.
 
 
 
