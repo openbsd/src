@@ -674,8 +674,9 @@ bt_collect_mbo(sc)
 	struct bt_softc *sc;
 {
 	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
+#ifdef BTDIAG
 	struct bt_ccb *ccb;
-
+#endif
 	wmbo = wmbx->cmbo;
 
 	while (sc->sc_mbofull > 0) {
@@ -826,7 +827,6 @@ bt_find(ia, sc)
 	u_char sts;
 	struct bt_extended_inquire inquire;
 	struct bt_config config;
-	struct bt_revision revision;
 	struct bt_digit digit;
 	int irq, drq;
 

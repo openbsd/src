@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.20 1996/10/05 00:08:39 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.21 1996/10/16 12:34:36 deraadt Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
 
 /*
@@ -891,7 +891,7 @@ ed_find_3Com(sc, cf, ia)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	bus_mem_handle_t memh;
-	int i, rv, mapped_mem = 0;
+	int i;
 	u_int memsize, memfail;
 	u_char isa16bit, x;
 	int ptr, asicbase, nicbase;
