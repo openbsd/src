@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.26 1996/10/28 00:06:20 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.27 1996/10/28 00:36:18 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -95,7 +95,8 @@ struct fd_type fd_types[] = {
         {  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS, "720KB"    }, /* 3.5" 720kB diskette */
         {  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS, "720KB/x"  }, /* 720kB in 1.2MB drive */
         {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS, "360KB/x"  }, /* 360kB in 720kB drive */
-	{ 36,2,72,2,0xff,0xaf,0x1b,0x54,80,5760,1,FDC_500KBPS,"2.88MB"    }  /* 2.88MB diskette */
+	{ 36,2,72,2,0xff,0xaf,0x1b,0x54,80,5760,1,FDC_500KBPS,"2.88MB"    },  /* 2.88MB diskette */
+	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS,"1.2MB/[1024bytes/sector]" }	/* 1.2 MB japanese format */
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -243,6 +244,9 @@ fdattach(parent, self, aux)
 		case 5: /* 360K */
 			type = &fd_types[3];
 			break;
+		case 6:	/* 1.2 MB japanese format */
+			type = &fd_types[8];
+			break;
 		}
 	}
 
@@ -322,10 +326,13 @@ fdstrategy(bp)
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
 	int sz;
  	int s;
+	int fd_bsize = 128 << fd->sc_type->secsize;
+	int bf = fd_bsize / DEV_BSIZE;
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
-	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
+	    (((bp->b_blkno % bf) != 0 ||
+	      (bp->b_bcount % fd_bsize) != 0) &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
 		goto bad;
@@ -335,10 +342,10 @@ fdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
-	sz = howmany(bp->b_bcount, FDC_BSIZE);
+	sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	if (bp->b_blkno + sz > fd->sc_type->size) {
-		sz = fd->sc_type->size - bp->b_blkno;
+	if (bp->b_blkno + sz > fd->sc_type->size * bf) {
+		sz = fd->sc_type->size * bf - bp->b_blkno;
 		if (sz == 0)
 			/* If exactly at end of disk, return EOF. */
 			goto done;
@@ -351,7 +358,7 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
+ 	bp->b_cylin = bp->b_blkno / (fd_bsize / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
@@ -586,6 +593,7 @@ fdintr(fdc)
 	int read, head, sec, i, nblks;
 	struct fd_type *type;
 	struct fd_formb *finfo = NULL;
+	int fd_bsize, bf;
 
 loop:
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
@@ -594,6 +602,8 @@ loop:
 		fdc->sc_state = DEVIDLE;
 		return 1;
 	}
+	fd_bsize = 128 << fd->sc_type->secsize;
+	bf = fd_bsize / FDC_BSIZE;
 
 	bp = fd->sc_q.b_actf;
 	if (bp == NULL) {
@@ -611,7 +621,7 @@ loop:
 		fdc->sc_errors = 0;
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
-		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
+		fd->sc_blkno = bp->b_blkno / (fd_bsize / DEV_BSIZE);
 		untimeout(fd_motor_off, fd);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
@@ -666,10 +676,10 @@ loop:
 			(char *)finfo;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = min(nblks, fd->sc_bcount / fd_bsize);
+		nblks = min(nblks, FDC_MAXIOSIZE / fd_bsize);
 		fd->sc_nblks = nblks;
-		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
+		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * fd_bsize;
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
@@ -794,7 +804,7 @@ loop:
 #endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
-			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
+			    fd->sc_skip / fd_bsize, (struct disklabel *)NULL);
 			printf("\n");
 			fdc->sc_errors = 0;
 		}
@@ -919,7 +929,8 @@ fdretry(fd)
 	default:
 	fail:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
-		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
+		    fd->sc_skip / (128 << fd->sc_type->secsize),
+		    (struct disklabel *)NULL);
 		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
@@ -955,7 +966,7 @@ fdioctl(dev, cmd, addr, flag, p)
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
-		buffer.d_secsize = FDC_BSIZE;
+		buffer.d_secsize = 128 << fd->sc_type->secsize;
 
 		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
@@ -1021,6 +1032,7 @@ fdformat(dev, finfo, p)
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
         struct buf *bp;
+	int fd_bsize = 128 << fd->sc_type->secsize;
 
         /* set up a buffer header for fdstrategy() */
         bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
@@ -1036,7 +1048,7 @@ fdformat(dev, finfo, p)
          * seek to the requested cylinder
          */
         bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
-                + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
+                + finfo->head * type->sectrac) * fd_bsize / DEV_BSIZE;
 
         bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
         bp->b_data = (caddr_t)finfo;
