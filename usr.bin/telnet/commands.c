@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)commands.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: commands.c,v 1.1.1.1 1995/10/18 08:46:14 deraadt Exp $";
+static char *rcsid = "$Id: commands.c,v 1.2 1996/01/05 16:41:21 deraadt Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -2099,7 +2099,7 @@ tn(argc, argv)
     cmd = *argv;
     --argc; ++argv;
     while (argc) {
-	if (isprefix(*argv, "help") || isprefix(*argv, "?"))
+	if (isprefix(*argv, "?"))
 	    goto usage;
 	if (strcmp(*argv, "-l") == 0) {
 	    --argc; ++argv;
