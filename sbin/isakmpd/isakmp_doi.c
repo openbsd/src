@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.16 2003/08/08 08:46:59 ho Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.17 2003/10/14 14:29:15 ho Exp $	*/
 /*	$EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	*/
 
 /*
@@ -228,7 +228,6 @@ static int
 isakmp_responder (struct message *msg)
 {
   struct payload *p;
-  char *tag;
 
   switch (msg->exchange->type)
     {
@@ -236,11 +235,10 @@ isakmp_responder (struct message *msg)
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
 	   p = TAILQ_NEXT (p, link))
 	{
-	  tag = constant_lookup (isakmp_notify_cst,
-				 GET_ISAKMP_NOTIFY_MSG_TYPE (p->p));
 	  LOG_DBG ((LOG_EXCHANGE, 10,
 		    "isakmp_responder: got NOTIFY of type %s, ignoring",
-		    tag ? tag : "<unknown>"));
+		    constant_name (isakmp_notify_cst,
+				   GET_ISAKMP_NOTIFY_MSG_TYPE (p->p))));
 	  p->flags |= PL_MARK;
 	}
 

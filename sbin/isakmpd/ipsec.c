@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.80 2003/09/02 18:15:55 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.81 2003/10/14 14:29:15 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -414,7 +414,6 @@ static int
 ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 {
   int id;
-  char *v;
 
   /* Set source address/mask.  */
   id = GET_ISAKMP_ID_TYPE (src_id);
@@ -468,9 +467,8 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     case IPSEC_ID_DER_ASN1_GN:
     case IPSEC_ID_KEY_ID:
     default:
-      v = constant_lookup (ipsec_id_cst, id);
       log_print ("ipsec_set_network: ID type %d (%s) not supported",
-		 id, v ? v : "<unknown>");
+		 id, constant_name (ipsec_id_cst, id));
       return -1;
     }
 
@@ -1056,7 +1054,6 @@ ipsec_responder (struct message *msg)
   struct exchange *exchange = msg->exchange;
   int (**script) (struct message *) = 0;
   struct payload *p;
-  char *tag;
   u_int16_t type;
 
   /* Check that a new exchange is coherent with the IKE rules.  */
@@ -1096,10 +1093,9 @@ ipsec_responder (struct message *msg)
 	   p = TAILQ_NEXT (p, link))
 	{
 	  type = GET_ISAKMP_NOTIFY_MSG_TYPE (p->p);
-	  tag = constant_lookup (isakmp_notify_cst, type);
 	  LOG_DBG ((LOG_EXCHANGE, 10,
 		    "ipsec_responder: got NOTIFY of type %s",
-		    tag ? tag : "<unknown>"));
+		    constant_name (isakmp_notify_cst, type)));
 
 	  if (type == ISAKMP_NOTIFY_INVALID_SPI)
 	    ipsec_invalid_spi (msg, p);
