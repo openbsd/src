@@ -818,7 +818,7 @@ rzgetinfo(dev)
 	msg = readdisklabel(dev, rzstrategy, lp, &cd);
 	if (msg == NULL)
 		return;
-	printf("rz%d: WARNING: %s\n", unit, msg);
+	/*printf("rz%d: WARNING: %s\n", unit, msg);*/
 
 #ifdef	COMPAT_ULTRIX
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.27 1997/10/15 09:35:00 provos Exp $	*/
+/*	$OpenBSD: cd.c,v 1.28 1997/10/18 10:37:16 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1086,7 +1086,7 @@ cdgetdisklabel(dev, cd)
 	errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp,
 	    cd->sc_dk.dk_cpulabel);
 	if (errstring) {
-		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
+		/*printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
 		return;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.21 1997/09/29 12:01:27 mickey Exp $ */
+/*	$OpenBSD: mcd.c,v 1.22 1997/10/18 10:37:12 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -722,7 +722,7 @@ mcdgetdisklabel(dev, sc)
 	errstring = readdisklabel(MCDLABELDEV(dev), mcdstrategy, lp,
 	    sc->sc_dk.dk_cpulabel);
 	if (errstring) {
-		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 		return;
 	}
 }

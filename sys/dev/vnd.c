@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.18 1997/10/06 20:19:40 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.19 1997/10/18 10:37:04 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ vndgetdisklabel(dev, sc)
 	errstring = readdisklabel(VNDLABELDEV(dev), vndstrategy, lp,
 	    sc->sc_dk.dk_cpulabel);
 	if (errstring) {
-		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 		return;
 	}
 }

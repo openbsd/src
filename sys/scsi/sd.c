@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.25 1997/08/08 21:47:06 niklas Exp $	*/
+/*	$OpenBSD: sd.c,v 1.26 1997/10/18 10:37:19 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -838,7 +838,7 @@ sdgetdisklabel(dev, sd)
 	errstring = readdisklabel(SDLABELDEV(dev), sdstrategy, lp,
 	    sd->sc_dk.dk_cpulabel);
 	if (errstring) {
-		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
+		/*printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);*/
 		return;
 	}
 }
