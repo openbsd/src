@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.8 2003/05/10 18:30:21 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.9 2004/05/10 05:35:14 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -87,16 +87,16 @@
 #include <dev/wsfont/omron12x20.h>
 #endif
 
-#ifdef FONT_BOLD8x16_ISO1
+#ifdef FONT_BOLD8x16
 #define HAVE_FONT 1
-#include <dev/wsfont/bold8x16-iso1.h>
+#include <dev/wsfont/bold8x16.h>
 #endif
 
 #ifdef FONT_GALLANT12x22
 #define HAVE_FONT 1
 #endif
 
-#ifdef FONT_BOLD8x16
+#ifdef FONT_BOLD8x16_ISO1
 #define HAVE_FONT 1
 #endif
 
@@ -107,10 +107,10 @@
 #if defined(__sparc64__)
 #define FONT_GALLANT12x22
 #else
-#define FONT_BOLD8x16 1
+#define FONT_BOLD8x16_ISO1 1
 #endif
 #else	/* SMALL_KERNEL */
-#define FONT_BOLD8x16 1
+#define FONT_BOLD8x16_ISO1 1
 /* Add the gallant 12x22 font for high screen resolutions */
 #if !defined(FONT_GALLANT12x22)
 #define FONT_GALLANT12x22
@@ -118,8 +118,8 @@
 #endif	/* SMALL_KERNEL */
 #endif	/* HAVE_FONT */
 
-#ifdef FONT_BOLD8x16
-#include <dev/wsfont/bold8x16.h>
+#ifdef FONT_BOLD8x16_ISO1
+#include <dev/wsfont/bold8x16-iso1.h>
 #endif
 
 #ifdef FONT_GALLANT12x22
