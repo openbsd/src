@@ -233,19 +233,8 @@ setdisklabel(olp, nlp, openmask, clp)
 		npp = &nlp->d_partitions[i];
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
 			return (EBUSY);
-		/*
-		* Copy internally-set partition information
-		* if new label doesn't include it.             XXX
-		*/
-		if (npp->p_fstype == FS_UNUSED && opp->p_fstype != FS_UNUSED) {
-			npp->p_fstype = opp->p_fstype;
-			npp->p_fsize = opp->p_fsize;
-			npp->p_frag = opp->p_frag;
-			npp->p_cpg = opp->p_cpg;
 		}
-	}
-	nlp->d_checksum = 0;
-	nlp->d_checksum = dkcksum(nlp);
+
 	*olp = *nlp;    
 	return (0);     
 }
@@ -391,7 +380,8 @@ disklabel_sun_to_bsd(cp, lp)
 		return("SunOS disk label, bad checksum");
 
 	/* Format conversion. */
-	lp->d_magic = 0;/* denote as pseudo */
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
 	lp->d_secsize = 512;
@@ -418,10 +408,24 @@ disklabel_sun_to_bsd(cp, lp)
 		npp = &lp->d_partitions[i];
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
-		if (npp->p_size)
+		if (npp->p_size == 0) {
+			npp->p_fstype = FS_UNUSED;
+		} else {
 			npp->p_fstype = sun_fstypes[i];
+			if (npp->p_fstype == FS_BSDFFS) {
+				/*
+				 * The sun label does not store the FFS fields,
+				 * so just set them with default values here.
+				 */
+				npp->p_fsize = 1024;
+				npp->p_frag = 8;
+				npp->p_cpg = 16;
+			}
+		}
 	}
 
+	lp->d_checksum = 0;
+	lp->d_checksum = dkcksum(lp);
 	return (NULL);
 }
 
@@ -441,6 +445,9 @@ disklabel_bsd_to_sun(lp, cp)
 	struct sun_dkpart *spp;
 	int i, secpercyl;
 	u_short cksum, *sp1, *sp2;
+
+	if (lp->d_secsize != 512)
+		return (EINVAL);
 
 	sl = (struct sun_disklabel *)cp;
 
