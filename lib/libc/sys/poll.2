@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.14 2003/04/25 22:14:19 tedu Exp $
+.\"	$OpenBSD: poll.2,v 1.15 2003/08/19 22:16:39 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -60,6 +60,15 @@ struct pollfd {
 The
 .Pa fd
 member is an open file descriptor.
+If
+.Pa fd
+is -1,
+the
+.Nm pollfd
+structure is considered unused, and
+.Pa revents
+will be cleared.
+.Pp
 The
 .Pa events
 and
