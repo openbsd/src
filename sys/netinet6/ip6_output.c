@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.12 2000/06/20 01:27:24 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.13 2000/06/20 20:51:26 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.112 2000/06/18 01:50:39 itojun Exp $	*/
 
 /*
@@ -291,13 +291,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		/* if we have any extension header, we cannot perform IPsec */
 		if (exthdrs.ip6e_hbh || exthdrs.ip6e_dest1 ||
 		    exthdrs.ip6e_rthdr || exthdrs.ip6e_dest2) {
-			error = EHOSTUNREACH;
-			goto freehdrs;
-		}
-
-		/* scoped address is not supported */
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) || 
-		    IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
 			error = EHOSTUNREACH;
 			goto freehdrs;
 		}
