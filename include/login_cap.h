@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.1 2000/08/20 18:37:20 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.2 2000/11/19 20:12:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -99,22 +99,4 @@ int	secure_path __P((char *));
 int	setclasscontext __P((char *, u_int));
 int	setusercontext __P((login_cap_t *, struct passwd *, uid_t, u_int));
 
-/*
- * Routines for authentication
- * Most of these will be deprecated in a future release
- */
-int	auth_approve __P((login_cap_t *, char *, char *));
-int	auth_cat __P((char *));
-int	auth_check __P((char *, char *, char *, char *, int *));
-void	auth_checknologin __P((login_cap_t *));
-void	auth_env __P((void));
-char	*auth_mkvalue __P((char *));
-int	auth_response __P((char *, char *, char *, char *, int *, char *, char *));
-void	auth_rmfiles __P((void));
-int	auth_scan __P((int));
-int	auth_script __P((char *, ...));
-int	auth_script_data __P((char *, int, char *, ...));
-char	*auth_value __P((char *));
-int	auth_setopt __P((char *, char *));
-void	auth_clropts __P((void));
 __END_DECLS
