@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.4 2004/06/01 16:27:09 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.5 2004/06/01 21:58:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -178,6 +178,22 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf)
 	}
 
 	TAILQ_FOREACH(la, &conf->listen_addrs, entry) {
+		switch (la->sa.ss_family) {
+		case AF_INET:
+			if (((struct sockaddr_in *)&la->sa)->sin_port == 0)
+				((struct sockaddr_in *)&la->sa)->sin_port =
+				    se->s_port;
+			break;
+		case AF_INET6:
+			if (((struct sockaddr_in6 *)&la->sa)->sin6_port == 0)
+				((struct sockaddr_in6 *)&la->sa)->sin6_port =
+				    se->s_port;
+			break;
+		default:
+			fatalx("king bula sez: af borked");
+
+		}
+
 		if ((la->fd = socket(la->sa.ss_family, SOCK_DGRAM, 0)) == -1)
 			fatal("socket");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.2 2004/06/01 16:27:09 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.3 2004/06/01 21:58:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,6 +28,9 @@
 
 #define	READ_BUF_SIZE	65535
 
+#define	NTPD_OPT_VERBOSE		0x0001
+#define	NTPD_OPT_VERBOSE2		0x0002
+
 struct listen_addr {
 	TAILQ_ENTRY(listen_addr)	 entry;
 	struct sockaddr_storage		 sa;
@@ -36,6 +39,7 @@ struct listen_addr {
 
 struct ntpd_conf {
 	TAILQ_HEAD(listen_addrs, listen_addr)	listen_addrs;
+	u_int8_t				opts;
 };
 
 struct buf {
@@ -120,3 +124,11 @@ void	 imsg_free(struct imsg *);
 
 /* ntp.c */
 pid_t	 ntp_main(int[2], struct ntpd_conf *);
+
+/* parse.y */
+int	 parse_config(char *, struct ntpd_conf *);
+int	 cmdline_symset(char *);
+
+/* config.c */
+int	 check_file_secrecy(int, const char *);
+int	 host(const char *, struct sockaddr *, u_int8_t *);

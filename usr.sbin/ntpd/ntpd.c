@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.3 2004/06/01 16:27:09 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.4 2004/06/01 21:58:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,6 +107,9 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+
+	if (parse_config(conffile, &conf))
+		exit(1);
 
 	if (geteuid())
 		errx(1, "need root privileges");
