@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.24 1997/02/24 20:14:40 jkatz Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.25 1997/02/27 06:19:21 tholo Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -439,6 +439,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 2600      ", "01.7"}, SDEV_NOSYNCWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, SDEV_NOSYNCWIDE},
+
+	{{T_SCANNER, T_FIXED,
+	 "ULTIMA  ", "AT3     1.60    ", ""},     SDEV_NOLUNS},
 };
 
 /*
