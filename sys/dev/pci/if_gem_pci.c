@@ -165,6 +165,7 @@ gem_attach_pci(parent, self, aux)
 
 	sc->sc_burst = 16;	/* XXX */
 
+	printf("\n");
 	/*
 	 * call the main configure
 	 */
