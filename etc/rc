@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.106 1999/08/19 13:58:07 kstailey Exp $
+#	$OpenBSD: rc,v 1.107 1999/08/31 03:47:16 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -222,8 +222,8 @@ fi
 
 if [ X${amd} = X"YES" -a -d ${amd_dir} -a -e ${amd_master} ]; then
 	echo -n ' amd'
-	amd -l syslog -x error,noinfo,nostats -p \
-	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
+	(cd /etc/amd; amd -l syslog -x error,noinfo,nostats -p \
+	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
 fi
 
 # $timed_flags is imported from /etc/rc.conf;
