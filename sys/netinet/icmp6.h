@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.h,v 1.14 2001/01/22 04:31:21 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.32 2001/01/22 02:26:00 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.15 2001/02/07 11:43:52 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -537,6 +537,12 @@ struct icmp6stat {
 #define icp6s_oredirect icp6s_outerrhist.icp6errs_redirect
 #define icp6s_ounknown icp6s_outerrhist.icp6errs_unknown
 	u_quad_t icp6s_pmtuchg;		/* path MTU changes */
+	u_quad_t icp6s_nd_badopt;	/* bad ND options */
+	u_quad_t icp6s_badns;		/* bad neighbor solicitation */
+	u_quad_t icp6s_badna;		/* bad neighbor advertisement */
+	u_quad_t icp6s_badrs;		/* bad router advertisement */
+	u_quad_t icp6s_badra;		/* bad router advertisement */
+	u_quad_t icp6s_badredirect;	/* bad redirect message */
 };
 
 /*
@@ -559,7 +565,8 @@ struct icmp6stat {
 #define ICMPV6CTL_ND6_MAXNUDHINT	15
 #define ICMPV6CTL_MTUDISC_HIWAT	16
 #define ICMPV6CTL_MTUDISC_LOWAT	17
-#define ICMPV6CTL_MAXID		18
+#define ICMPV6CTL_ND6_DEBUG	18
+#define ICMPV6CTL_MAXID		19
 
 #define ICMPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -580,6 +587,7 @@ struct icmp6stat {
 	{ "nd6_maxnudhint", CTLTYPE_INT }, \
 	{ "mtudisc_hiwat", CTLTYPE_INT }, \
 	{ "mtudisc_lowat", CTLTYPE_INT }, \
+	{ "nd6_debug", CTLTYPE_INT }, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1

@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.h,v 1.9 2001/01/19 06:37:38 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.10 2001/02/07 11:43:54 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.42 2001/02/06 09:14:39 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -236,6 +236,9 @@ extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_ifinfo *nd_ifinfo;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
+extern int nd6_debug;
+
+#define nd6log(x)	do { if (nd6_debug) log x; } while (0)
 
 /* nd6_rtr.c */
 extern struct ifnet *nd6_defifp;  /* XXXYYY */
@@ -302,6 +305,7 @@ void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
 			struct in6_addr *, struct llinfo_nd6 *, int));
 caddr_t nd6_ifptomac __P((struct ifnet *));
 void nd6_dad_start __P((struct ifaddr *, int *));
+void nd6_dad_stop __P((struct ifaddr *));
 void nd6_dad_duplicated __P((struct ifaddr *));
 
 /* nd6_rtr.c */

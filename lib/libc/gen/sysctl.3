@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.61 2001/01/04 07:53:43 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.62 2001/02/07 11:43:48 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -886,6 +886,7 @@ The currently defined protocols and names are:
 .It icmp6	nd6_maxnudhint	integer	yes
 .It icmp6	mtudisc_hiwat	integer	yes
 .It icmp6	mtudisc_lowat	integer	yes
+.It icmp6	nd6_debug	integer	yes
 .El
 .Pp
 The variables are as follows:
@@ -1022,6 +1023,11 @@ is used when we have verified ICMPv6 too big messages.
 .Li icmp6.mtudisc_lowat
 is used when we have unverified ICMPv6 too big messages.
 Verification is performed by using address/port pairs kept in connected pcbs.
+.It Li icmp6.nd6_debug
+If set to non-zero, kernel IPv6 neighbor discovery code will generate
+debugging messages.
+The debug outputs are useful to diagnose IPv6 interoperability issues.
+The flag must be set to 0 for normal operation.
 .El
 .Pp
 We reuse

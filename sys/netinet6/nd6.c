@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.21 2001/02/06 00:22:23 mickey Exp $	*/
-/*	$KAME: nd6.c,v 1.75 2000/10/15 15:23:11 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.22 2001/02/07 11:43:54 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.110 2001/02/06 09:14:38 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -88,6 +88,12 @@ int	nd6_useloopback = 1;	/* use loopback interface for local traffic */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
 
 int nd6_maxnudhint = 0;	/* max # of subsequent upper layer hints */
+
+#ifdef ND6_DEBUG
+int nd6_debug = 1;
+#else
+int nd6_debug = 0;
+#endif
 
 /* for debugging? */
 static int nd6_inuse, nd6_allocated;
@@ -307,6 +313,7 @@ nd6_options(ndopts)
 			 * Message validation requires that all included
 			 * options have a length that is greater than zero.
 			 */
+			icmp6stat.icp6s_nd_badopt++;
 			bzero(ndopts, sizeof(*ndopts));
 			return -1;
 		}
@@ -341,16 +348,16 @@ nd6_options(ndopts)
 			 * Unknown options must be silently ignored,
 			 * to accomodate future extension to the protocol.
 			 */
-			log(LOG_DEBUG,
+			nd6log((LOG_DEBUG,
 			    "nd6_options: unsupported option %d - "
-			    "option ignored\n", nd_opt->nd_opt_type);
+			    "option ignored\n", nd_opt->nd_opt_type));
 		}
 
 skip1:
 		i++;
 		if (i > nd6_maxndopt) {
 			icmp6stat.icp6s_nd_toomanyopt++;
-			printf("too many loop in nd opt\n");
+			nd6log((LOG_INFO, "too many loop in nd opt\n"));
 			break;
 		}
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.7 2000/06/13 04:12:40 itojun Exp $	*/
-/*	$KAME: nd6_rtr.c,v 1.40 2000/06/13 03:02:29 jinmei Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.8 2001/02/07 11:43:55 itojun Exp $	*/
+/*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -120,9 +120,11 @@ nd6_rs_input(m, off, icmp6len)
 
 	/* Sanity checks */
 	if (ip6->ip6_hlim != 255) {
-		log(LOG_ERR,
-		    "nd6_rs_input: invalid hlim %d\n", ip6->ip6_hlim);
-		goto freeit;
+		nd6log((LOG_ERR,
+		    "nd6_rs_input: invalid hlim (%d) from %s to %s on %s\n",
+		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
+		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		goto bad;
 	}
 
 	/*
@@ -146,7 +148,9 @@ nd6_rs_input(m, off, icmp6len)
 	icmp6len -= sizeof(*nd_rs);
 	nd6_option_init(nd_rs + 1, icmp6len, &ndopts);
 	if (nd6_options(&ndopts) < 0) {
-		log(LOG_INFO, "nd6_rs_input: invalid ND option, ignored\n");
+		nd6log((LOG_INFO,
+		    "nd6_rs_input: invalid ND option, ignored\n"));
+		/* nd6_options have incremented stats */
 		goto freeit;
 	}
 
@@ -156,15 +160,21 @@ nd6_rs_input(m, off, icmp6len)
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		log(LOG_INFO,
+		nd6log((LOG_INFO,
 		    "nd6_rs_input: lladdrlen mismatch for %s "
 		    "(if %d, RS packet %d)\n",
-			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2);
+			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2));
+		goto bad;
 	}
 
 	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT, 0);
 
  freeit:
+	m_freem(m);
+	return;
+
+ bad:
+	icmp6stat.icp6s_badrs++;
 	m_freem(m);
 }
 
@@ -198,16 +208,18 @@ nd6_ra_input(m, off, icmp6len)
 		goto freeit;
 
 	if (ip6->ip6_hlim != 255) {
-		log(LOG_ERR,
-		    "nd6_ra_input: invalid hlim %d\n", ip6->ip6_hlim);
-		goto freeit;
+		nd6log((LOG_ERR,
+		    "nd6_ra_input: invalid hlim (%d) from %s to %s on %s\n",
+		    ip6->ip6_hlim, ip6_sprintf(&ip6->ip6_src),
+		    ip6_sprintf(&ip6->ip6_dst), if_name(ifp)));
+		goto bad;
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&saddr6)) {
-		log(LOG_ERR,
+		nd6log((LOG_ERR,
 		    "nd6_ra_input: src %s is not link-local\n",
-		    ip6_sprintf(&saddr6));
-		goto freeit;
+		    ip6_sprintf(&saddr6)));
+		goto bad;
 	}
 
 #ifndef PULLDOWN_TEST
@@ -224,7 +236,9 @@ nd6_ra_input(m, off, icmp6len)
 	icmp6len -= sizeof(*nd_ra);
 	nd6_option_init(nd_ra + 1, icmp6len, &ndopts);
 	if (nd6_options(&ndopts) < 0) {
-		log(LOG_INFO, "nd6_ra_input: invalid ND option, ignored\n");
+		nd6log((LOG_INFO,
+		    "nd6_ra_input: invalid ND option, ignored\n"));
+		/* nd6_options have incremented stats */
 		goto freeit;
 	}
 
@@ -377,10 +391,11 @@ nd6_ra_input(m, off, icmp6len)
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
-		log(LOG_INFO,
+		nd6log((LOG_INFO,
 		    "nd6_ra_input: lladdrlen mismatch for %s "
 		    "(if %d, RA packet %d)\n",
-			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2);
+			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2));
+		goto bad;
 	}
 
 	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_ADVERT, 0);
@@ -393,7 +408,12 @@ nd6_ra_input(m, off, icmp6len)
 	pfxlist_onlink_check();
     }
 
-freeit:
+ freeit:
+	m_freem(m);
+	return;
+
+ bad:
+	icmp6stat.icp6s_badra++;
 	m_freem(m);
 }
 
@@ -611,13 +631,17 @@ defrouter_select()
 				/*
 				 * Install a route to the default interface
 				 * as default route.
+				 * XXX: we enable this for host only, because
+				 * this may override a default route installed
+				 * a user process (e.g. routing daemon) in a
+				 * router case.
 				 */
 				defrouter_addifreq(nd6_defifp);
-			}
-			else	/* noisy log? */
-				log(LOG_INFO, "defrouter_select: "
+			} else {
+				nd6log((LOG_INFO, "defrouter_select: "
 				    "there's no default router and no default"
-				    " interface\n");
+				    " interface\n"));
+			}
 		}
 	}
 
