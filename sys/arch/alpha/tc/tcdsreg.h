@@ -1,10 +1,10 @@
-/*	$NetBSD: tcds.h,v 1.2 1995/03/03 01:38:59 cgd Exp $	*/
+/*	$NetBSD: tcdsreg.h,v 1.1 1995/12/20 00:40:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
- * Author: Keith Bostic
+ * Authors: Keith Bostic, Chris G. Demetriou
  * 
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
@@ -26,6 +26,12 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+/*
+ * Offsets to the SCSI chips
+ */
+#define	TCDS_SCSI0_OFFSET	0x080000
+#define	TCDS_SCSI1_OFFSET	0x080100
 
 /*
  * TCDS register offsets, bit masks.
@@ -83,26 +89,8 @@
 #define	TCDS_IMER		  0x040004	/* IMER offset */
 
 #define	TCDS_SCSI0_DMA_ADDR	  0x041000	/* DMA address */
-
-#define	TCDS_DIC_ADDRMASK	      0x03	/* DMA address bits <1:0> */
-#define	TCDS_DIC_READ_PREFETCH	      0x40	/* DMA read prefetch enable */
-#define	TCDS_DIC_WRITE		      0x80	/* DMA write */
 #define	TCDS_SCSI0_DMA_INTR	  0x041004	/* DMA interrupt control */
-
-#define	TCDS_SCSI0_DUD0_VALID01	0x00000001	/* byte 01 valid mask */
-#define	TCDS_SCSI0_DUD0_VALID10	0x00000002	/* byte 10 valid mask */
-#define	TCDS_SCSI0_DUD0_VALID11	0x00000004	/* byte 11 valid mask */
-#define	TCDS_SCSI0_DUD0_BYTE01	0x0000ff00	/* byte 01 mask */
-#define	TCDS_SCSI0_DUD0_BYTE10	0x00ff0000	/* byte 10 mask */
-#define	TCDS_SCSI0_DUD0_BYTE11	0xff000000	/* byte 11 mask */
 #define	TCDS_SCSI0_DMA_DUD0	  0x041008	/* DMA unaligned data[0] */
-
-#define	TCDS_SCSI0_DUD1_VALID00	0x01000000	/* byte 00 valid mask */
-#define	TCDS_SCSI0_DUD1_VALID01	0x02000000	/* byte 01 valid mask */
-#define	TCDS_SCSI0_DUD1_VALID10	0x04000000	/* byte 10 valid mask */
-#define	TCDS_SCSI0_DUD1_BYTE00	0x000000ff	/* byte 00 mask */
-#define	TCDS_SCSI0_DUD1_BYTE01	0x0000ff00	/* byte 01 mask */
-#define	TCDS_SCSI0_DUD1_BYTE10	0x00ff0000	/* byte 10 mask */
 #define	TCDS_SCSI0_DMA_DUD1	  0x04100c	/* DMA unaligned data[1] */
 
 #define	TCDS_SCSI1_DMA_ADDR	  0x041100	/* DMA address */
@@ -110,9 +98,28 @@
 #define	TCDS_SCSI1_DMA_DUD0	  0x041108	/* DMA unaligned data[0] */
 #define	TCDS_SCSI1_DMA_DUD1	  0x04110c	/* DMA unaligned data[1] */
 
-#define	TCDS_REG(base, off)						\
-    (volatile u_int32_t *)TC_DENSE_TO_SPARSE((base) + (off))
+#define	TCDS_DIC_ADDRMASK	      0x03	/* DMA address bits <1:0> */
+#define	TCDS_DIC_READ_PREFETCH	      0x40	/* DMA read prefetch enable */
+#define	TCDS_DIC_WRITE		      0x80	/* DMA write */
 
+#define	TCDS_DUD0_VALID00	0x00000001	/* byte 00 valid mask (zero) */
+#define	TCDS_DUD0_VALID01	0x00000002	/* byte 01 valid mask */
+#define	TCDS_DUD0_VALID10	0x00000004	/* byte 10 valid mask */
+#define	TCDS_DUD0_VALID11	0x00000008	/* byte 11 valid mask */
+#define	TCDS_DUD0_VALIDBITS	0x0000000f	/* bits that show valid bytes */
+
+#define	TCDS_DUD1_VALID00	0x01000000	/* byte 00 valid mask */
+#define	TCDS_DUD1_VALID01	0x02000000	/* byte 01 valid mask */
+#define	TCDS_DUD1_VALID10	0x04000000	/* byte 10 valid mask */
+#define	TCDS_DUD1_VALID11	0x08000000	/* byte 11 valid mask (zero) */
+#define	TCDS_DUD1_VALIDBITS	0x0f000000	/* bits that show valid bytes */
+
+#define	TCDS_DUD_BYTE00		0x000000ff	/* byte 00 mask */
+#define	TCDS_DUD_BYTE01		0x0000ff00	/* byte 01 mask */
+#define	TCDS_DUD_BYTE10		0x00ff0000	/* byte 10 mask */
+#define	TCDS_DUD_BYTE11		0xff000000	/* byte 11 mask */
+
+#if 0
 int  tcds_scsi_iserr __P((struct dma_softc *));
 int  tcds_scsi_isintr __P((int, int));
 void tcds_dma_disable __P((int));
@@ -203,3 +210,5 @@ void tcds_scsi_reset __P((int));
 
 #define	SCSI_CIR	phystok0seg(KN15AA_REG_SCSI_CIR)
 #define	SCSI_IMER	phystok0seg(KN15AA_REG_SCSI_IMER)
+
+#endif

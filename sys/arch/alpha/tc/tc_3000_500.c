@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.2 1995/08/03 00:52:36 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.3 1995/12/20 00:43:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,133 +33,141 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
-#include <alpha/tc/tc.h>
+#include <dev/tc/tcvar.h>
+#include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_500.h>
 
-/* XXX ESTABLISH, DISESTABLISH */
 void	tc_3000_500_intr_setup __P((void));
-void	tc_3000_500_intr_establish
-	    __P((struct confargs *, intr_handler_t, void *));
-void	tc_3000_500_intr_disestablish __P((struct confargs *));
+void	tc_3000_500_intr_establish __P((struct device *, void *,
+	    tc_intrlevel_t, int (*)(void *), void *));
+void	tc_3000_500_intr_disestablish __P((struct device *, void *));
 void	tc_3000_500_iointr __P((void *, int));
-int	tc_3000_500_getdev __P((struct confargs *));
 
-#define	KV(x)	((caddr_t)phystok0seg(x))
-#define	TC_3000_500_NSLOTS	8
-#define	TC_3000_500_MAXDEVS	9
+int	tc_3000_500_intrnull __P((void *));
 
-static struct tc_slot_desc dec_3000_500_slots[TC_3000_500_NSLOTS] = {
-	{ KV(0x100000000), },		/* slot 0 - TC option slot 0 */
-	{ KV(0x120000000), },		/* slot 1 - TC option slot 1 */
-	{ KV(0x140000000), },		/* slot 2 - TC option slot 2 */
-	{ KV(0x160000000), },		/* slot 3 - TC option slot 3 */
-	{ KV(0x180000000), },		/* slot 4 - TC option slot 4 */
-	{ KV(0x1a0000000), },		/* slot 5 - TC option slot 5 */
-	{ KV(0x1c0000000), },		/* slot 6 - TCDS ASIC on cpu board */
-	{ KV(0x1e0000000), },		/* slot 7 - IOCTL ASIC on cpu board */
+#define C(x)	((void *)(u_long)x)
+#define	KV(x)	(phystok0seg(x))
+
+struct tc_slotdesc tc_3000_500_slots[] = {
+	{ KV(0x100000000), C(TC_3000_500_DEV_OPT0), },	/* 0 - opt slot 0 */
+	{ KV(0x120000000), C(TC_3000_500_DEV_OPT1), },	/* 1 - opt slot 1 */
+	{ KV(0x140000000), C(TC_3000_500_DEV_OPT2), },	/* 2 - opt slot 2 */
+	{ KV(0x160000000), C(TC_3000_500_DEV_OPT3), },	/* 3 - opt slot 3 */
+	{ KV(0x180000000), C(TC_3000_500_DEV_OPT4), },	/* 4 - opt slot 4 */
+	{ KV(0x1a0000000), C(TC_3000_500_DEV_OPT5), },	/* 5 - opt slot 5 */
+	{ KV(0x1c0000000), C(TC_3000_500_DEV_BOGUS), },	/* 6 - TCDS ASIC */
+	{ KV(0x1e0000000), C(TC_3000_500_DEV_BOGUS), },	/* 7 - IOCTL ASIC */
+};
+int tc_3000_500_nslots =
+    sizeof(tc_3000_500_slots) / sizeof(tc_3000_500_slots[0]);
+
+struct tc_builtin tc_3000_500_builtins[] = {
+	{ "FLAMG-IO",	7, 0x00000000, C(TC_3000_500_DEV_IOASIC),	},
+	{ "PMAGB-BA",	7, 0x02000000, C(TC_3000_500_DEV_CXTURBO),	},
+	{ "PMAZ-DS ",	6, 0x00000000, C(TC_3000_500_DEV_TCDS),		},
+};
+int tc_3000_500_nbuiltins =
+    sizeof(tc_3000_500_builtins) / sizeof(tc_3000_500_builtins[0]);
+
+u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
+	TC_3000_500_IR_OPT0,
+	TC_3000_500_IR_OPT1,
+	TC_3000_500_IR_OPT2,
+	TC_3000_500_IR_OPT3,
+	TC_3000_500_IR_OPT4,
+	TC_3000_500_IR_OPT5,
+	TC_3000_500_IR_TCDS,
+	TC_3000_500_IR_IOASIC,
+	TC_3000_500_IR_CXTURBO,
 };
 
-static struct confargs dec_3000_500_devs[TC_3000_500_MAXDEVS] = {
-	{ "IOCTL   ",	7, 0x00000000,	},
-	{ "PMAGB-BA",	7, 0x02000000,	},
-	{ "PMAZ-DS ",	6, 0x00000000,	},
-	{ NULL,		5, 0x0,		},
-	{ NULL,		4, 0x0,		},
-	{ NULL,		3, 0x0,		},
-	{ NULL,		2, 0x0,		},
-	{ NULL,		1, 0x0,		},
-	{ NULL,		0, 0x0,		},
-};
-
-/* Indices into the struct confargs array. */
-#define	TC_3000_500_DEV_IOCTL	0
-#define	TC_3000_500_DEV_CXTURBO	1
-#define	TC_3000_500_DEV_TCDS	2
-#define	TC_3000_500_DEV_OPT5	3
-#define	TC_3000_500_DEV_OPT4	4
-#define	TC_3000_500_DEV_OPT3	5
-#define	TC_3000_500_DEV_OPT2	6
-#define	TC_3000_500_DEV_OPT1	7
-#define	TC_3000_500_DEV_OPT0	8
-
-struct tc_cpu_desc dec_3000_500_cpu = {
-	dec_3000_500_slots, TC_3000_500_NSLOTS,
-	dec_3000_500_devs, TC_3000_500_MAXDEVS,
-	tc_3000_500_intr_setup,
-	tc_3000_500_intr_establish,
-	tc_3000_500_intr_disestablish,
-	tc_3000_500_iointr,
-};
-
-intr_handler_t	tc_3000_500_intrhand[TC_3000_500_MAXDEVS];
-void		*tc_3000_500_intrval[TC_3000_500_MAXDEVS];
+struct tcintr {
+	int	(*tci_func) __P((void *));
+	void	*tci_arg;
+} tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
 void
 tc_3000_500_intr_setup()
 {
-	int i;
-
-        /* Set up interrupt handlers. */
-        for (i = 0; i < TC_3000_500_MAXDEVS; i++) {
-                tc_3000_500_intrhand[i] = tc_intrnull;
-                tc_3000_500_intrval[i] = (void *)(long)i;
-        }
+	u_long i;
+	u_int32_t imr;
 
 	/*
-	 * XXX
-	 * The System Programmer's Manual (3-15) says IMR entries for option
-	 * slots are initialized to 0.  I think this is wrong, and that they
-	 * are initialized to 1, i.e. the option slots are disabled.  Enable
-	 * them.
-	 *
-	 * XXX
-	 * The MACH code appears to enable them by setting them to 1.  !?!?!
+	 * Disable all slot interrupts.
 	 */
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = 0;
-	wbflush();
+	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
+	for (i = 0; i < TC_3000_500_NCOOKIES; i++)
+		imr |= tc_3000_500_intrbits[i];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_mb();
+
+        /*
+	 * Set up interrupt handlers.
+	 */
+        for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
+		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
+		tc_3000_500_intr[i].tci_arg = (void *)i;
+        }
 }
 
 void
-tc_3000_500_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler) __P((void *));
-	void *val;
+tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
+	struct device *tcadev;
+	void *cookie, *arg;
+	tc_intrlevel_t level;
+	int (*func) __P((void *));
 {
-	int dev = tc_3000_500_getdev(ca);
+	u_long dev = (u_long)cookie;
+	u_int32_t imr;
 
 #ifdef DIAGNOSTIC
-	if (dev == -1)
-		panic("tc_3000_500_intr_establish: dev == -1");
+	/* XXX bounds-check cookie. */
 #endif
 
-	if (tc_3000_500_intrhand[dev] != tc_intrnull)
-		panic("tc_3000_500_intr_establish: dev %d twice", dev);
+	if (tc_3000_500_intr[dev].tci_func != tc_3000_500_intrnull)
+		panic("tc_3000_500_intr_establish: cookie %d twice", dev);
 
-	tc_3000_500_intrhand[dev] = handler;
-	tc_3000_500_intrval[dev] = val;
+	tc_3000_500_intr[dev].tci_func = func;
+	tc_3000_500_intr[dev].tci_arg = arg;
 
-	/* XXX ENABLE INTERRUPT MASK FOR DEV */
+	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
+	imr &= ~tc_3000_500_intrbits[dev];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_mb();
 }
 
 void
-tc_3000_500_intr_disestablish(ca)
-	struct confargs *ca;
+tc_3000_500_intr_disestablish(tcadev, cookie)
+	struct device *tcadev;
+	void *cookie;
 {
-	int dev = tc_3000_500_getdev(ca);
+	u_long dev = (u_long)cookie;
+	u_int32_t imr;
 
 #ifdef DIAGNOSTIC
-	if (dev == -1)
-		panic("tc_3000_500_intr_disestablish: somebody goofed");
+	/* XXX bounds-check cookie. */
 #endif
 
-	if (tc_3000_500_intrhand[dev] == tc_intrnull)
-		panic("tc_3000_500_intr_disestablish: dev %d missing intr",
+	if (tc_3000_500_intr[dev].tci_func == tc_3000_500_intrnull)
+		panic("tc_3000_500_intr_disestablish: cookie %d bad intr",
 		    dev);
 
-	tc_3000_500_intrhand[dev] = tc_intrnull;
-	tc_3000_500_intrval[dev] = (void *)(long)dev;
+	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
+	imr |= tc_3000_500_intrbits[dev];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_mb();
 
-	/* XXX DISABLE INTERRUPT MASK FOR DEV */
+	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
+	tc_3000_500_intr[dev].tci_arg = (void *)dev;
+}
+
+int
+tc_3000_500_intrnull(val)
+	void *val;
+{
+
+	panic("tc_3000_500_intrnull: uncaught TC intr for cookie %ld\n",
+	    (u_long)val);
 }
 
 void
@@ -181,28 +189,26 @@ tc_3000_500_iointr(framep, vec)
 #endif
 
 	do {
-		MAGIC_READ;
-		wbflush();
+		tc_syncbus();
 		ir = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
-		wbflush();
 
 		ifound = 0;
-#define	CHECKINTR(slot, bits)						\
-		if (ir & bits) {					\
+#define	CHECKINTR(slot)							\
+		if (ir & tc_3000_500_intrbits[slot]) {			\
 			ifound = 1;					\
-			(*tc_3000_500_intrhand[slot])			\
-			    (tc_3000_500_intrval[slot]);		\
+			(*tc_3000_500_intr[slot].tci_func)		\
+			    (tc_3000_500_intr[slot].tci_arg);		\
 		}
 		/* Do them in order of priority; highest slot # first. */
-		CHECKINTR(TC_3000_500_DEV_CXTURBO, TC_3000_500_IR_CXTURBO);
-		CHECKINTR(TC_3000_500_DEV_IOCTL, TC_3000_500_IR_IOCTL);
-		CHECKINTR(TC_3000_500_DEV_TCDS, TC_3000_500_IR_TCDS);
-		CHECKINTR(TC_3000_500_DEV_OPT5, TC_3000_500_IR_OPT5);
-		CHECKINTR(TC_3000_500_DEV_OPT4, TC_3000_500_IR_OPT4);
-		CHECKINTR(TC_3000_500_DEV_OPT3, TC_3000_500_IR_OPT3);
-		CHECKINTR(TC_3000_500_DEV_OPT2, TC_3000_500_IR_OPT2);
-		CHECKINTR(TC_3000_500_DEV_OPT1, TC_3000_500_IR_OPT1);
-		CHECKINTR(TC_3000_500_DEV_OPT0, TC_3000_500_IR_OPT0);
+		CHECKINTR(TC_3000_500_DEV_CXTURBO);
+		CHECKINTR(TC_3000_500_DEV_IOASIC);
+		CHECKINTR(TC_3000_500_DEV_TCDS);
+		CHECKINTR(TC_3000_500_DEV_OPT5);
+		CHECKINTR(TC_3000_500_DEV_OPT4);
+		CHECKINTR(TC_3000_500_DEV_OPT3);
+		CHECKINTR(TC_3000_500_DEV_OPT2);
+		CHECKINTR(TC_3000_500_DEV_OPT1);
+		CHECKINTR(TC_3000_500_DEV_OPT0);
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
@@ -228,21 +234,6 @@ tc_3000_500_iointr(framep, vec)
 	} while (ifound);
 }
 
-int
-tc_3000_500_getdev(ca)
-	struct confargs *ca;
-{
-	int i;
-
-	for (i = 0; i < TC_3000_500_MAXDEVS; i++)
-		if (ca->ca_slot == dec_3000_500_devs[i].ca_slot &&
-		    ca->ca_offset == dec_3000_500_devs[i].ca_offset &&
-		    !strncmp(ca->ca_name, dec_3000_500_devs[i].ca_name))
-			return (i);
-
-	return (-1);
-}
-
 /*
  * tc_3000_500_ioslot --
  *	Set the PBS bits for devices on the TC.
@@ -265,6 +256,6 @@ tc_3000_500_ioslot(slot, flags, set)
 		ios &= ~flags;
 	s = splhigh();
 	*iosp = ios;
-	wbflush();
+	tc_mb();
 	splx(s);
 }

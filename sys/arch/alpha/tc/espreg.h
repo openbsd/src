@@ -1,4 +1,4 @@
-/*	$NetBSD: espreg.h,v 1.1 1995/02/13 23:08:57 cgd Exp $	*/
+/*	$NetBSD: espreg.h,v 1.2 1995/12/20 00:40:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -29,77 +29,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 1
-#define SPARSE
-#endif
-
-#ifdef SPARSE
-#define	PAD(p)	u_int32_t p;
-#else
-#define	PAD(p)
-#endif
-
-typedef struct {
-	volatile u_int esp_tcl;		/* RW - Transfer Count Low	*/
-	PAD(pad0)
-	volatile u_int esp_tcm;		/* RW - Transfer Count Mid	*/
-	PAD(pad1)
-	volatile u_int esp_fifo;	/* RW - FIFO data		*/
-	PAD(pad2)
-	volatile u_int esp_cmd;		/* RW - Command			*/
-	PAD(pad3)
-	volatile u_int esp_stat;	/* RO - Status			*/
-#define	esp_id		esp_stat	/* WO - Destination ID		*/
-#define	esp_selid	esp_stat	/* WO - Select/Reselect Bus ID	*/
-	PAD(pad4)
-	volatile u_int esp_intr;	/* RO - Interrupt		*/
-#define	esp_timeout	esp_intr	/* WO - Select/Reselect Timeout	*/
-	PAD(pad5)
-	volatile u_int esp_step;	/* RO - Sequence Step		*/
-#define	esp_synctp	esp_step	/* WO - Synch Transfer Period	*/
-	PAD(pad6)
-	volatile u_int esp_fflag;	/* RO - FIFO Flags		*/
-#define	esp_syncoff	esp_fflag	/* WO - Synch Offset		*/
-	PAD(pad7)
-	volatile u_int esp_cfg1;	/* RW - Configuration #1	*/
-	PAD(pad8)
-	volatile u_int esp_ccf;		/* WO -	Clock Conversion Factor	*/
-	PAD(pad9)
-	volatile u_int esp_test;	/* WO - Test (Chip Test Only)	*/
-	PAD(pad10)
-	volatile u_int esp_cfg2;	/* RW - Configuration #2	*/
-	PAD(pad11)
-	volatile u_int esp_cfg3;	/* RW - Configuration #3	*/
-	PAD(pad12)
-	volatile u_int esp_cfg4;	/* RW - Configuration #4	*/
-	PAD(pad13)
-	volatile u_int esp_tch;		/* RW - Transfer Count High	*/
-	PAD(pad14)
-	volatile u_int esp_fbottom;	/* WO - Fifo Bottom */
-} espreg_t;
-
-/*
- * Only bits <7:0> of the addressed longword are valid; other bits are
- * unpredictable during read, ignored during write.
- */
-#define	RR(reg)		((reg) & 0xff)
-
 /*
  * Register addresses, relative to some base address
  */
 
-#define ESP_TCL		0x00		/* RW - Transfer Count Low	*/
-#define	ESP_TCM		0x04		/* RW - Transfer Count Mid	*/
-#define	ESP_TCH		0x38		/* RW - Transfer Count High	*/
+#define	ESP_TCL		0x00		/* RW - Transfer Count Low	*/
+#define	ESP_TCM		0x01		/* RW - Transfer Count Mid	*/
+#define	ESP_TCH		0x0e		/* RW - Transfer Count High	*/
 					/*	NOT on 53C90		*/
 
-#define	ESP_FIFO	0x08		/* RW - FIFO data		*/
+#define	ESP_FIFO	0x02		/* RW - FIFO data		*/
 
-#define	ESP_FFLAG	0x1c		/* RO - FIFO Flags		*/
-#define  ESPFIFO_SS	0xe0		/*	Sequence Step (Dup)	*/
-#define  ESPFIFO_FF	0x1f		/*	Bytes in FIFO		*/
-
-#define	ESP_CMD	0x0c			/* RW - Command (2 deep)	*/
+#define	ESP_CMD		0x03		/* RW - Command (2 deep)	*/
 #define  ESPCMD_DMA	0x80		/*	DMA Bit			*/
 #define  ESPCMD_NOP	0x00		/*	No Operation		*/
 #define  ESPCMD_FLUSH	0x01		/*	Flush FIFO		*/
@@ -132,7 +73,7 @@ typedef struct {
 #define  ESPCMD_SETATN	0x1a		/*	Set ATN			*/
 #define  ESPCMD_RSTATN	0x1b		/*	Reset ATN		*/
 
-#define	ESP_STAT	0x10		/* RO - Status			*/
+#define	ESP_STAT	0x04		/* RO - Status			*/
 #define  ESPSTAT_INT	0x80		/*	Interrupt		*/
 #define  ESPSTAT_GE	0x40		/*	Gross Error		*/
 #define  ESPSTAT_PE	0x20		/*	Parity Error		*/
@@ -140,9 +81,9 @@ typedef struct {
 #define  ESPSTAT_VGC	0x08		/*	Valid Group Code	*/
 #define  ESPSTAT_PHASE	0x07		/*	Phase bits		*/
 
-#define	ESP_ID		0x10		/* WO - Destination ID		*/
+#define	ESP_SELID	0x04		/* WO - Select/Reselect Bus ID	*/
 
-#define	ESP_INTR	0x14		/* RO - Interrupt		*/
+#define	ESP_INTR	0x05		/* RO - Interrupt		*/
 #define  ESPINTR_SBR	0x80		/*	SCSI Bus Reset		*/
 #define  ESPINTR_ILL	0x40		/*	Illegal Command		*/
 #define  ESPINTR_DIS	0x20		/*	Disconnect		*/
@@ -152,21 +93,24 @@ typedef struct {
 #define  ESPINTR_SELATN	0x02		/*	Select with ATN		*/
 #define  ESPINTR_SEL	0x01		/*	Selected		*/
 
-#define	ESP_SELID	0x10		/* WO - Select/Reselect Bus ID	*/
-#define	ESP_TIMEOUT	0x14		/* WO - Select/Reselect Timeout */
+#define	ESP_TIMEOUT	0x05		/* WO - Select/Reselect Timeout */
 
-#define	ESP_STEP	0x18		/* RO - Sequence Step		*/
+#define	ESP_STEP	0x06		/* RO - Sequence Step		*/
 #define  ESPSTEP_MASK	0x07		/*	the last 3 bits		*/
 #define  ESPSTEP_DONE	0x04		/*	command went out	*/
 
-
-#define	ESP_SYNCTP	0x18		/* WO - Synch Transfer Period	*/
+#define	ESP_SYNCTP	0x06		/* WO - Synch Transfer Period	*/
 					/*	Default 5 (53C9X)	*/
-#define	ESP_SYNCOFF	0x1c		/* WO - Synch Offset		*/
+
+#define	ESP_FFLAG	0x07		/* RO - FIFO Flags		*/
+#define  ESPFIFO_SS	0xe0		/*	Sequence Step (Dup)	*/
+#define  ESPFIFO_FF	0x1f		/*	Bytes in FIFO		*/
+
+#define	ESP_SYNCOFF	0x07		/* WO - Synch Offset		*/
 					/*	0 = ASYNC		*/
 					/*	1 - 15 = SYNC bytes	*/
 
-#define	ESP_CFG1	0x20		/* RW - Configuration #1	*/
+#define	ESP_CFG1	0x08		/* RW - Configuration #1	*/
 #define  ESPCFG1_SLOW	0x80		/*	Slow Cable Mode		*/
 #define  ESPCFG1_SRR	0x40		/*	SCSI Reset Rep Int Dis	*/
 #define  ESPCFG1_PTEST	0x20		/*	Parity Test Mod		*/
@@ -174,24 +118,7 @@ typedef struct {
 #define  ESPCFG1_CTEST	0x08		/*	Enable Chip Test	*/
 #define  ESPCFG1_BUSID	0x07		/*	Bus ID			*/
 
-#define	ESP_CFG2	0x2c		/* RW - Configuration #2	*/
-#define	 ESPCFG2_RSVD	0xe0		/*	reserved		*/
-#define  ESPCFG2_FE	0x40		/* 	Features Enable		*/
-#define  ESPCFG2_DREQ	0x10		/* 	DREQ High Impedance	*/
-#define  ESPCFG2_SCSI2	0x08		/* 	SCSI-2 Enable		*/
-#define  ESPCFG2_BPA	0x04		/* 	Target Bad Parity Abort	*/
-#define  ESPCFG2_RPE	0x02		/* 	Register Parity Error	*/
-#define  ESPCFG2_DPE	0x01		/* 	DMA Parity Error	*/
-
-/* Config #3 only on 53C9X */
-#define	ESP_CFG3	0x30		/* RW - Configuration #3	*/
-#define  ESPCFG3_IDM	0x10		/*	ID Message Res Check	*/
-#define  ESPCFG3_QTE	0x08		/*	Queue Tag Enable	*/
-#define  ESPCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
-#define  ESPCFG3_FSCSI	0x02		/*	Fast SCSI		*/
-#define  ESPCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
-
-#define	ESP_CCF	0x24			/* WO -	Clock Conversion Factor	*/
+#define	ESP_CCF		0x09		/* WO -	Clock Conversion Factor	*/
 					/*	0 = 35.01 - 40Mhz	*/
 					/*	NEVER SET TO 1		*/
 					/*	2 = 10Mhz		*/
@@ -201,4 +128,26 @@ typedef struct {
 					/*	6 = 25.01 - 30Mhz	*/
 					/*	7 = 30.01 - 35Mhz	*/
 
-#define	ESP_TEST	0x28		/* WO - Test (Chip Test Only)	*/
+#define	ESP_TEST	0x0a		/* WO - Test (Chip Test Only)	*/
+
+#define	ESP_CFG2	0x0b		/* RW - Configuration #2	*/
+#if 0
+#define  ESPCFG2_RSVD	0xa0		/*	reserved		*/
+#define  ESPCFG2_FE	0x40		/* 	Features Enable		*/
+#endif
+#define  ESPCFG2_DREQ	0x10		/* 	DREQ High Impedance	*/
+#define  ESPCFG2_SCSI2	0x08		/* 	SCSI-2 Enable		*/
+#define  ESPCFG2_BPA	0x04		/* 	Target Bad Parity Abort	*/
+#define  ESPCFG2_RPE	0x02		/* 	Register Parity Error	*/
+#define  ESPCFG2_DPE	0x01		/* 	DMA Parity Error	*/
+
+/* Config #3 only on 53C9X */
+#define	ESP_CFG3	0x0c		/* RW - Configuration #3	*/
+#if 0
+#define	 ESPCFG3_RSVD	0xe0		/*	reserved		*/
+#define  ESPCFG3_IDM	0x10		/*	ID Message Res Check	*/
+#define  ESPCFG3_QTE	0x08		/*	Queue Tag Enable	*/
+#define  ESPCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
+#define  ESPCFG3_FSCSI	0x02		/*	Fast SCSI		*/
+#define  ESPCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.10 1995/11/23 02:41:29 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.11 1995/12/20 00:43:24 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -100,11 +100,11 @@
 #include <pmax/dev/fbreg.h>
 #endif
 
-#include <machine/autoconf.h>
 #include <machine/rpb.h>
 
-#include <alpha/tc/asic.h>
-#include <alpha/tc/tc.h>
+#include <dev/tc/tcvar.h>
+#include <alpha/tc/ioasicreg.h>
+#include <dev/tc/ioasicvar.h>
 
 extern void ttrstrt	__P((void *));
 
@@ -205,13 +205,13 @@ sccmatch(parent, cfdata, aux)
 	void *aux;
 {
 	struct cfdata *cf = cfdata;
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
 	/* XXX BUS TYPE? */
 
 	/* Make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "scc"))
+	if (strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN))
 		return (0);
 
 	/* XXX MATCH CFLOC */
@@ -219,9 +219,9 @@ sccmatch(parent, cfdata, aux)
 		return (0);
 
 	/* Get the address, and check it for validity. */
-	sccaddr = BUS_CVTADDR(ca);
+	sccaddr = (void *)d->iada_addr;
 #ifdef SPARSE
-	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
+	sccaddr = (void *)TC_DENSE_TO_SPARSE((tc_addr_t)sccaddr);
 #endif
 	if (badaddr(sccaddr, 2))
 		return (0);
@@ -234,20 +234,20 @@ scc_alphaintr(onoff)
 	int onoff;
 {
 	if (onoff) {
-		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |=
-		    ASIC_INTR_SCC_1 | ASIC_INTR_SCC_0;
+		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) |=
+		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
 #if !defined(DEC_3000_300) && defined(SCC_DMA)
-		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
-		    ASIC_CSR_DMAEN_T1 | ASIC_CSR_DMAEN_R1 |
-		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2;
+		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) |=
+		    IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
+		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2;
 #endif
 	} else {
-		*(volatile u_int *)ASIC_REG_IMSK(asic_base) &=
-		    ~(ASIC_INTR_SCC_1 | ASIC_INTR_SCC_0);
+		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) &=
+		    ~(IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0);
 #if !defined(DEC_3000_300) && defined(SCC_DMA)
-		*(volatile u_int *)ASIC_REG_CSR(asic_base) &=
-		    ~(ASIC_CSR_DMAEN_T1 | ASIC_CSR_DMAEN_R1 |
-		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2);
+		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) &=
+		    ~(IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
+		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
 #endif
 	}
 	wbflush();
@@ -260,7 +260,7 @@ sccattach(parent, self, aux)
         void *aux;
 {
 	struct scc_softc *sc = (struct scc_softc *)self;
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 	struct pdma *pdp;
 	struct tty *tp;
 	void *sccaddr;
@@ -271,13 +271,14 @@ sccattach(parent, self, aux)
 	extern int cputype;
 
 	/* Get the address, and check it for validity. */
-	sccaddr = BUS_CVTADDR(ca);
+	sccaddr = (void *)d->iada_addr;
 #ifdef SPARSE
-	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
+	sccaddr = (void *)TC_DENSE_TO_SPARSE((tc_addr_t)sccaddr);
 #endif
 
 	/* Register the interrupt handler. */
-	BUS_INTR_ESTABLISH(ca, sccintr, (void *)(long)sc->sc_dv.dv_unit);
+	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
+	    sccintr, (void *)(long)sc->sc_dv.dv_unit);
 
 	/*
 	 * For a remote console, wait a while for previous output to
@@ -765,7 +766,7 @@ sccparam(tp, t)
 	SCC_WRITE_REG(regs, line, SCC_WR9, value);
 	SCC_WRITE_REG(regs, line, SCC_WR1, sc->scc_wreg[line].wr1);
 
-	scc_alphaintr(1);
+	scc_alphaintr(1);			/* XXX XXX XXX */
 
 	return (0);
 }

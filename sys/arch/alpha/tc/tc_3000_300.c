@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.3 1995/08/03 00:52:29 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.4 1995/12/20 00:43:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,109 +33,139 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
-#include <alpha/tc/tc.h>
+#include <dev/tc/tcvar.h>
+#include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_300.h>
 
-/* XXX ESTABLISH, DISESTABLISH */
 void	tc_3000_300_intr_setup __P((void));
-void	tc_3000_300_intr_establish
-	    __P((struct confargs *, intr_handler_t, void *));
-void	tc_3000_300_intr_disestablish __P((struct confargs *));
+void	tc_3000_300_intr_establish __P((struct device *, void *,
+	    tc_intrlevel_t, int (*)(void *), void *));
+void	tc_3000_300_intr_disestablish __P((struct device *, void *));
 void	tc_3000_300_iointr __P((void *, int));
-int	tc_3000_300_getdev __P((struct confargs *));
 
-#define	KV(x)	((caddr_t)phystok0seg(x))
-#define	TC_3000_300_NSLOTS	5
-#define	TC_3000_300_MAXDEVS	5
+int	tc_3000_300_intrnull __P((void *));
 
-static struct tc_slot_desc dec_3000_300_slots[TC_3000_300_NSLOTS] = {
-	{ KV(0x100000000), },		/* slot 0 - TC option slot 0 */
-	{ KV(0x120000000), },		/* slot 1 - TC option slot 1 */
-	{ KV(0x180000000), },		/* slot 2 - TCDS ASIC on cpu board */
-	{ KV(0x1a0000000), },		/* slot 3 - IOCTL ASIC on cpu board */
-	{ KV(0x1c0000000), },		/* slot 4 - CXTurbo on cpu board */
+#define	C(x)	((void *)(u_long)x)
+#define	KV(x)	(phystok0seg(x))
+
+struct tc_slotdesc tc_3000_300_slots[] = {
+	{ KV(0x100000000), C(TC_3000_300_DEV_OPT0), },	/* 0 - opt slot 0 */
+	{ KV(0x120000000), C(TC_3000_300_DEV_OPT1), },	/* 1 - opt slot 1 */
+	{ KV(0x180000000), C(TC_3000_300_DEV_BOGUS), },	/* 2 - TCDS ASIC */
+	{ KV(0x1a0000000), C(TC_3000_300_DEV_BOGUS), },	/* 3 - IOCTL ASIC */
+	{ KV(0x1c0000000), C(TC_3000_300_DEV_CXTURBO), }, /* 4 - CXTurbo */
 };
+int tc_3000_300_nslots =
+    sizeof(tc_3000_300_slots) / sizeof(tc_3000_300_slots[0]);
 
-static struct confargs dec_3000_300_devs[TC_3000_300_MAXDEVS] = {
-	{ "PMAGB-BA",	4, 0x02000000,	},
-	{ "IOCTL   ",	3, 0x00000000,	},
-	{ "PMAZ-DS ",	2, 0x00000000,	},
-	{ NULL,		1, 0x0,		},
-	{ NULL,		0, 0x0,		},
+struct tc_builtin tc_3000_300_builtins[] = {
+	{ "PMAGB-BA",	4, 0x02000000, C(TC_3000_300_DEV_CXTURBO),	},
+	{ "FLAMG-IO",	3, 0x00000000, C(TC_3000_300_DEV_IOASIC),	},
+	{ "PMAZ-DS ",	2, 0x00000000, C(TC_3000_300_DEV_TCDS),		},
 };
+int tc_3000_300_nbuiltins =
+    sizeof(tc_3000_300_builtins) / sizeof(tc_3000_300_builtins[0]);
 
-/* Indices into the struct confargs array. */
-#define	TC_3000_300_DEV_CXTURBO	0
-#define	TC_3000_300_DEV_IOCTL	1
-#define	TC_3000_300_DEV_TCDS	2
-#define	TC_3000_300_DEV_OPT1	3
-#define	TC_3000_300_DEV_OPT0	4
+struct tcintr {
+	int	(*tci_func) __P((void *));
+	void	*tci_arg;
+} tc_3000_300_intr[TC_3000_300_NCOOKIES];
 
-struct tc_cpu_desc dec_3000_300_cpu = {
-	dec_3000_300_slots, TC_3000_300_NSLOTS,
-	dec_3000_300_devs, TC_3000_300_MAXDEVS,
-	tc_3000_300_intr_setup,
-	tc_3000_300_intr_establish,
-	tc_3000_300_intr_disestablish,
-	tc_3000_300_iointr,
-};
-
-intr_handler_t	tc_3000_300_intrhand[TC_3000_300_MAXDEVS];
-void		*tc_3000_300_intrval[TC_3000_300_MAXDEVS];
+/* XXX */
+void	ioasic_intr_300_opt0_enable __P((int));
+void	ioasic_intr_300_opt1_enable __P((int));
+void	ioasic_300_opts_isintr __P((int *, int *));
 
 void
 tc_3000_300_intr_setup()
 {
-	int i;
+	u_long i;
 
-	/* Set up interrupt handlers. */
-	for (i = 0; i < TC_3000_300_MAXDEVS; i++) {
-		tc_3000_300_intrhand[i] = tc_intrnull;
-		tc_3000_300_intrval[i] = (void *)(long)i;
+	/*
+	 * Sisable all interrupts that we can (can't disable builtins).
+	 */
+	ioasic_intr_300_opt0_enable(0);
+	ioasic_intr_300_opt1_enable(0);
+
+	/*
+	 * Set up interrupt handlers.
+	 */
+	for (i = 0; i < TC_3000_300_NCOOKIES; i++) {
+                tc_3000_300_intr[i].tci_func = tc_3000_300_intrnull;
+                tc_3000_300_intr[i].tci_arg = (void *)i;
 	}
 }
 
 void
-tc_3000_300_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler) __P((void *));
-	void *val;
+tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
+	struct device *tcadev;
+	void *cookie, *arg;
+	tc_intrlevel_t level;
+	int (*func) __P((void *));
 {
-	int dev = tc_3000_300_getdev(ca);
+	u_long dev = (u_long)cookie;
 
 #ifdef DIAGNOSTIC
-	if (dev == -1)
-		panic("tc_3000_300_intr_establish: dev == -1");
+	/* XXX bounds-check cookie. */
 #endif
 
-	if (tc_3000_300_intrhand[dev] != tc_intrnull)
-		panic("tc_3000_300_intr_establish: dev %d twice", dev);
+	if (tc_3000_300_intr[dev].tci_func != tc_3000_300_intrnull)
+		panic("tc_3000_300_intr_establish: cookie %d twice", dev);
 
-	tc_3000_300_intrhand[dev] = handler;
-	tc_3000_300_intrval[dev] = val;
+	tc_3000_300_intr[dev].tci_func = func;
+	tc_3000_300_intr[dev].tci_arg = arg;
 
-	/* XXX ENABLE INTERRUPT MASK FOR DEV */
+	switch (dev) {
+	case TC_3000_300_DEV_OPT0:
+		ioasic_intr_300_opt0_enable(1);
+		break;
+	case TC_3000_300_DEV_OPT1:
+		ioasic_intr_300_opt1_enable(1);
+		break;
+	default:
+		/* interrupts for builtins always enabled */
+		break;
+	}
 }
 
 void
-tc_3000_300_intr_disestablish(ca)
-	struct confargs *ca;
+tc_3000_300_intr_disestablish(tcadev, cookie)
+	struct device *tcadev;
+	void *cookie;
 {
-	int dev = tc_3000_300_getdev(ca);
+	u_long dev = (u_long)cookie;
 
 #ifdef DIAGNOSTIC
-	if (dev == -1)
-		panic("tc_3000_300_intr_disestablish: somebody goofed");
+	/* XXX bounds-check cookie. */
 #endif
 
-	if (tc_3000_300_intrhand[dev] == tc_intrnull)
-		panic("tc_3000_300_intr_disestablish: dev %d missing intr",
+	if (tc_3000_300_intr[dev].tci_func == tc_3000_300_intrnull)
+		panic("tc_3000_300_intr_disestablish: cookie %d bad intr",
 		    dev);
 
-	tc_3000_300_intrhand[dev] = tc_intrnull;
-	tc_3000_300_intrval[dev] = (void *)(long)dev;
+	switch (dev) {
+	case TC_3000_300_DEV_OPT0:
+		ioasic_intr_300_opt0_enable(0);
+		break;
+	case TC_3000_300_DEV_OPT1:
+		ioasic_intr_300_opt1_enable(0);
+		break;
+	default:
+		/* interrupts for builtins always enabled */
+		break;
+	}
 
-	/* XXX DISABLE INTERRUPT MASK FOR DEV */
+	tc_3000_300_intr[dev].tci_func = tc_3000_300_intrnull;
+	tc_3000_300_intr[dev].tci_arg = (void *)dev;
+}
+
+int
+tc_3000_300_intrnull(val)
+	void *val;
+{
+
+	panic("tc_3000_300_intrnull: uncaught TC intr for cookie %ld\n",
+	    (u_long)val);
 }
 
 void
@@ -144,7 +174,7 @@ tc_3000_300_iointr(framep, vec)
 	int vec;
 {
 	u_int32_t ir;
-	int ifound;
+	int opt0intr, opt1intr, ifound;
 
 #ifdef DIAGNOSTIC
 	int s;
@@ -157,37 +187,32 @@ tc_3000_300_iointr(framep, vec)
 #endif
 
 	do {
-		MAGIC_READ;
-		wbflush();
+		tc_syncbus();
 
 		/* find out what interrupts/errors occurred */
 		ir = *(volatile u_int32_t *)TC_3000_300_IR;
-		wbflush();
+		ioasic_300_opts_isintr(&opt0intr, &opt1intr);
+		tc_mb();
 
 		/* clear the interrupts/errors we found. */
 		*(volatile u_int32_t *)TC_3000_300_IR = ir;
-		wbflush();
+		/* XXX can't clear TC option slot interrupts here? */
+		tc_wmb();
 
 		ifound = 0;
-#define	CHECKINTR(slot, bits)						\
-		if (ir & bits) {					\
+#define	CHECKINTR(slot, flag)						\
+		if (flag) {					\
 			ifound = 1;					\
-			(*tc_3000_300_intrhand[slot])			\
-			    (tc_3000_300_intrval[slot]);		\
+			(*tc_3000_300_intr[slot].tci_func)		\
+			    (tc_3000_300_intr[slot].tci_arg);		\
 		}
 		/* Do them in order of priority; highest slot # first. */
-		CHECKINTR(TC_3000_300_DEV_CXTURBO, TC_3000_300_IR_CXTURBO);
-		CHECKINTR(TC_3000_300_DEV_IOCTL, TC_3000_300_IR_IOCTL);
-		CHECKINTR(TC_3000_300_DEV_TCDS, TC_3000_300_IR_TCDS);
-#if 0
-		CHECKINTR(TC_3000_300_DEV_OPT1, TC_3000_300_IR_OPT1);
-		CHECKINTR(TC_3000_300_DEV_OPT0, TC_3000_300_IR_OPT0);
-#else
-		/* XXX XXX XXX CHECK OPTION SLOT INTERRUPTS!!! */
-		/* XXX XXX XXX THEIR BITS LIVE IN ANOTHER REG. */
-#endif
+		CHECKINTR(TC_3000_300_DEV_CXTURBO, ir & TC_3000_300_IR_CXTURBO);
+		CHECKINTR(TC_3000_300_DEV_IOASIC, ir & TC_3000_300_IR_IOASIC);
+		CHECKINTR(TC_3000_300_DEV_TCDS, ir & TC_3000_300_IR_TCDS);
+		CHECKINTR(TC_3000_300_DEV_OPT1, opt1intr);
+		CHECKINTR(TC_3000_300_DEV_OPT0, opt0intr);
 #undef CHECKINTR
-
 
 #ifdef DIAGNOSTIC
 #define PRINTINTR(msg, bits)						\
@@ -203,19 +228,4 @@ tc_3000_300_iointr(framep, vec)
 #undef PRINTINTR
 #endif
 	} while (ifound);
-}
-
-int
-tc_3000_300_getdev(ca)
-	struct confargs *ca;
-{
-	int i;
-
-	for (i = 0; i < TC_3000_300_MAXDEVS; i++)
-		if (ca->ca_slot == dec_3000_300_devs[i].ca_slot &&
-		    ca->ca_offset == dec_3000_300_devs[i].ca_offset &&
-		    !strncmp(ca->ca_name, dec_3000_300_devs[i].ca_name))
-			return (i);
-
-	return (-1);
 }

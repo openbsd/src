@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.5 1995/08/03 00:52:39 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.6 1995/12/20 00:40:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,18 +32,23 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
 
-#include <alpha/tc/tc.h>
-#include <alpha/tc/tcds_dmavar.h>
-#include <alpha/tc/tcds.h>
+#include <dev/tc/tcreg.h>
+#include <dev/tc/tcvar.h>
+#include <alpha/tc/tcdsreg.h>
+#include <alpha/tc/tcdsvar.h>
 
 struct tcds_softc {
 	struct	device sc_dv;
-	struct	abus sc_bus;
-	caddr_t	sc_base;
+	tc_addr_t sc_base;
+	void	*sc_cookie;
+
+	volatile u_int32_t *sc_cir;
+	volatile u_int32_t *sc_imer;
+
+	struct tcds_slotconfig sc_slots[2];
 };
 
 /* Definition of the driver for autoconfig. */
@@ -53,43 +58,26 @@ int     tcdsprint(void *, char *);
 struct cfdriver tcdscd =
     { NULL, "tcds", tcdsmatch, tcdsattach, DV_DULL, sizeof(struct tcds_softc) };
 
-void    tcds_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void    tcds_intr_disestablish __P((struct confargs *));
-caddr_t tcds_cvtaddr __P((struct confargs *));
-int     tcds_matchname __P((struct confargs *, char *));
-
-int	tcds_intr __P((void *));
-int	tcds_intrnull __P((void *));
-
-#define	TCDS_SLOT_SCSI0	0
-#define	TCDS_SLOT_SCSI1	1
-
-struct tcds_slot {
-	struct confargs	ts_ca;
-	intr_handler_t	ts_handler;
-	void		*ts_val;
-} tcds_slots[] = {
-	{ { "esp",	0, 0x0, },
-	    tcds_intrnull, (void *)(long)TCDS_SLOT_SCSI0, },
-	{ { "esp",	1, 0x0, },
-	    tcds_intrnull, (void *)(long)TCDS_SLOT_SCSI1, },
-};
+/*static*/ int	tcds_intr __P((void *));
+/*static*/ int	tcds_intrnull __P((void *));
 
 int
-tcdsmatch(parent, vcf, aux)
+tcdsmatch(parent, cfdata, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	void *cfdata;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
-	struct confargs *ca = aux;
-
-	/* It can only occur on the turbochannel, anyway. */
-	if (ca->ca_bus->ab_type != BUS_TC)
-		return (0);
+	struct tcdev_attach_args *tcdev = aux;
+	extern int cputype;
 
 	/* Make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAZ-DS "))
+	if (strncmp("PMAZ-DS ", tcdev->tcda_modname, TC_ROM_LLEN))
 		return (0);
+	/* PMAZ-FS? */
+
+	/* Check that it can actually exist. */
+	if ((cputype != ST_DEC_3000_500) && (cputype != ST_DEC_3000_300))
+		panic("tcdsmatch: how did we get here?");
 
 	return (1);
 }
@@ -100,44 +88,106 @@ tcdsattach(parent, self, aux)
 	void *aux;
 {
 	struct tcds_softc *sc = (struct tcds_softc *)self;
-	struct confargs *ca = aux;
-	struct confargs *nca;
-	volatile u_int32_t *cir, *imer;
+	struct tcdev_attach_args *tcdev = aux;
+	struct tcdsdev_attach_args tcdsdev;
+	struct tcds_slotconfig *slotc;
 	int i;
 	extern int cputype;
 
 	printf("\n");
 
-	sc->sc_base = BUS_CVTADDR(ca);
+	sc->sc_base = tcdev->tcda_addr;
+	sc->sc_cookie = tcdev->tcda_cookie;
 
-	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_TCDS;
-	sc->sc_bus.ab_intr_establish = tcds_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = tcds_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = tcds_cvtaddr;
-	sc->sc_bus.ab_matchname = tcds_matchname;
+	sc->sc_cir = TCDS_REG(sc->sc_base, TCDS_CIR);
+	sc->sc_imer = TCDS_REG(sc->sc_base, TCDS_IMER);
 
-	BUS_INTR_ESTABLISH(ca, tcds_intr, sc);
+	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO, tcds_intr, sc);
 
 	/*
 	 * XXX
 	 * IMER apparently has some random (or, not so random, but still
 	 * not useful) bits set in it when the system boots.  Clear it.
 	 */
-	imer = TCDS_REG(sc->sc_base, TCDS_IMER);
-	*imer = 0;
+	*sc->sc_imer = 0;
 	wbflush();
 
+	/* XXX Initial contents of CIR? */
+
+	/*
+	 * Set up the per-slot defintions for later use.
+	 */
+
+	/* fill in common information first */
+	for (i = 0; i < 2; i++) {
+		slotc = &sc->sc_slots[i];
+
+		bzero(slotc, sizeof *slotc);	/* clear everything */
+
+		slotc->sc_slot = i;
+		slotc->sc_tcds = sc;
+		slotc->sc_esp = NULL;
+		slotc->sc_intrhand = tcds_intrnull;
+		slotc->sc_intrarg = (void *)(long)i;
+	}
+
+	/* information for slot 0 */
+	slotc = &sc->sc_slots[0];
+	slotc->sc_resetbits = TCDS_CIR_SCSI0_RESET;
+	slotc->sc_intrmaskbits =
+	    TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB;
+	slotc->sc_intrbits = TCDS_CIR_SCSI0_INT;
+	slotc->sc_dmabits = TCDS_CIR_SCSI0_DMAENA;
+	slotc->sc_errorbits = 0;				/* XXX */
+	slotc->sc_sda = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_ADDR);
+	slotc->sc_dic = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_INTR);
+	slotc->sc_dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD0);
+	slotc->sc_dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD1);
+
+	/* information for slot 1 */
+	slotc = &sc->sc_slots[1];
+	slotc->sc_resetbits = TCDS_CIR_SCSI1_RESET;
+	slotc->sc_intrmaskbits =
+	    TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB;
+	slotc->sc_intrbits = TCDS_CIR_SCSI1_INT;
+	slotc->sc_dmabits = TCDS_CIR_SCSI1_DMAENA;
+	slotc->sc_errorbits = 0;				/* XXX */
+	slotc->sc_sda = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_ADDR);
+	slotc->sc_dic = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_INTR);
+	slotc->sc_dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD0);
+	slotc->sc_dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD1);
+
 	/* find the hardware attached to the TCDS ASIC */
-	nca = &tcds_slots[TCDS_SLOT_SCSI0].ts_ca;
-	nca->ca_bus = &sc->sc_bus;
-	config_found(self, nca, tcdsprint);
+	strncpy(tcdsdev.tcdsda_modname, "PMAZ-AA ", TC_ROM_LLEN);
+	tcdsdev.tcdsda_slot = 0;
+	tcdsdev.tcdsda_offset = 0;
+	tcdsdev.tcdsda_addr = (tc_addr_t)
+	    TC_DENSE_TO_SPARSE(sc->sc_base + TCDS_SCSI0_OFFSET);
+	tcdsdev.tcdsda_cookie = (void *)(long)0;
+	tcdsdev.tcdsda_sc = &sc->sc_slots[0];
+	tcdsdev.tcdsda_id = 7;				/* XXX */
+	tcdsdev.tcdsda_freq = 25000000;			/* XXX */
+
+	tcds_scsi_reset(tcdsdev.tcdsda_sc);
+
+	config_found(self, &tcdsdev, tcdsprint);
 
 	/* the second SCSI chip isn't present on the 3000/300 series. */
 	if (cputype != ST_DEC_3000_300) {
-		nca = &tcds_slots[TCDS_SLOT_SCSI1].ts_ca;
-		nca->ca_bus = &sc->sc_bus;
-		config_found(self, nca, tcdsprint);
+		strncpy(tcdsdev.tcdsda_modname, "PMAZ-AA ",
+		    TC_ROM_LLEN);
+		tcdsdev.tcdsda_slot = 1;
+		tcdsdev.tcdsda_offset = 0;
+		tcdsdev.tcdsda_addr = (tc_addr_t)
+		    TC_DENSE_TO_SPARSE(sc->sc_base + TCDS_SCSI1_OFFSET);
+		tcdsdev.tcdsda_cookie = (void *)(long)1;
+		tcdsdev.tcdsda_sc = &sc->sc_slots[1];
+		tcdsdev.tcdsda_id = 7;			/* XXX */
+		tcdsdev.tcdsda_freq = 25000000;		/* XXX */
+
+		tcds_scsi_reset(tcdsdev.tcdsda_sc);
+
+		config_found(self, &tcdsdev, tcdsprint);
 	}
 }
 
@@ -146,87 +196,59 @@ tcdsprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-	struct confargs *ca = aux;
+	struct tcdev_attach_args *tcdev = aux;
 
 	if (pnp)
-		printf("%s at %s", ca->ca_name, pnp);
-	printf(" slot 0x%lx", ca->ca_slot);
+		printf("%s at %s", tcdev->tcda_modname, pnp);
+	printf(" slot 0x%lx", tcdev->tcda_slot);
 	return (UNCONF);
 }
 
 void
-tcds_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler) __P((void *));
-	void *val;
+tcds_intr_establish(tcds, cookie, level, func, arg)
+	struct device *tcds;
+	void *cookie, *arg;
+	tc_intrlevel_t level;
+	int (*func) __P((void *));
 {
-	if (tcds_slots[ca->ca_slot].ts_handler != tcds_intrnull)
-		panic("tcds_intr_establish: slot %d twice", ca->ca_slot);
+	struct tcds_softc *sc = (struct tcds_softc *)tcds;
+	u_long slot;
 
-	tcds_slots[ca->ca_slot].ts_handler = handler;
-	tcds_slots[ca->ca_slot].ts_val = val;
+	slot = (u_long)cookie;
+#ifdef DIAGNOSTIC
+	/* XXX check cookie. */
+#endif
 
-	switch (ca->ca_slot) {
-	case TCDS_SLOT_SCSI0:
-		tcds_scsi_reset(0);
-		break;
+	if (sc->sc_slots[slot].sc_intrhand != tcds_intrnull)
+		panic("tcds_intr_establish: cookie %d twice", slot);
 
-	case TCDS_SLOT_SCSI1:
-		tcds_scsi_reset(1);
-		break;
-
-	default:
-		panic("tcds_intr_establish: unknown slot number %d",
-		    ca->ca_slot);
-		/* NOTREACHED */
-	}
+	sc->sc_slots[slot].sc_intrhand = func;
+	sc->sc_slots[slot].sc_intrarg = arg;
+	tcds_scsi_reset(&sc->sc_slots[slot]);
 }
 
 void
-tcds_intr_disestablish(ca)
-	struct confargs *ca;
+tcds_intr_disestablish(tcds, cookie)
+	struct device *tcds;
+	void *cookie;
 {
-	if (tcds_slots[ca->ca_slot].ts_handler == tcds_intrnull)
-		panic("tcds_intr_disestablish: slot %d missing intr",
-		    ca->ca_slot);
+	struct tcds_softc *sc = (struct tcds_softc *)tcds;
+	u_long slot;
 
-	tcds_slots[ca->ca_slot].ts_handler = tcds_intrnull;
-	tcds_slots[ca->ca_slot].ts_val = (void *)(long)ca->ca_slot;
+	slot = (u_long)cookie;
+#ifdef DIAGNOSTIC
+	/* XXX check cookie. */
+#endif
 
-	switch (ca->ca_slot) {
-	case TCDS_SLOT_SCSI0:
-		tcds_dma_disable(0);
-		tcds_scsi_disable(0);
-		break;
+	if (sc->sc_slots[slot].sc_intrhand == tcds_intrnull)
+		panic("tcds_intr_disestablish: cookie %d missing intr",
+		    slot);
 
-	case TCDS_SLOT_SCSI1:
-		tcds_dma_disable(1);
-		tcds_scsi_disable(1);
-		break;
+	sc->sc_slots[slot].sc_intrhand = tcds_intrnull;
+	sc->sc_slots[slot].sc_intrarg = (void *)slot;
 
-	default:
-		panic("tcds_intr_disestablish: unknown slot number %d",
-		    ca->ca_slot);
-		/* NOTREACHED */
-	}
-}
-
-caddr_t
-tcds_cvtaddr(ca)
-	struct confargs *ca;
-{
-
-	return
-	    (((struct tcds_softc *)ca->ca_bus->ab_dv)->sc_base + ca->ca_offset);
-}
-
-int
-tcds_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
-{
-
-	return (strcmp(name, ca->ca_name) == 0);
+	tcds_dma_enable(&sc->sc_slots[slot], 0);
+	tcds_scsi_enable(&sc->sc_slots[slot], 0);
 }
 
 int
@@ -234,254 +256,84 @@ tcds_intrnull(val)
 	void *val;
 {
 
-	panic("uncaught TCDS ASIC intr for slot %ld\n", (long)val);
+	panic("tcds_intrnull: uncaught TCDS intr for cookie %ld\n",
+	    (u_long)val);
 }
 
 void
-tcds_scsi_reset(unit)
-	int unit;
+tcds_scsi_reset(sc)
+	struct tcds_slotconfig *sc;
 {
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *cir;
 
-	tcds_dma_disable(unit);
-	tcds_scsi_disable(unit);
+	tcds_dma_enable(sc, 0);
+	tcds_scsi_enable(sc, 0);
 
-	/* XXX: Clear/set IOSLOT/PBS bits. */
-	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
-	switch (unit) {
-	case 0:
-		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_RESET);
-		wbflush();
-		DELAY(1);			/* XXX */
-		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_RESET);
-		wbflush();
-		break;
+	TCDS_CIR_CLR(*sc->sc_tcds->sc_cir, sc->sc_resetbits);
+	wbflush();
+	DELAY(1);
+	TCDS_CIR_SET(*sc->sc_tcds->sc_cir, sc->sc_resetbits);
+	wbflush();
 
-	case 1:
-		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_RESET);
-		wbflush();
-		DELAY(1);			/* XXX */
-		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_RESET);
-		wbflush();
-		break;
-
-	default:
-		panic("tcds_scsi_disable: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
-
-	tcds_scsi_enable(unit);
-	tcds_dma_enable(unit);
+	tcds_scsi_enable(sc, 1);
+	tcds_dma_enable(sc, 1);
 }
 
 void
-tcds_scsi_enable(unit)
-	int unit;
+tcds_scsi_enable(sc, on)
+	struct tcds_slotconfig *sc;
+	int on;
 {
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *imer;
 
-	imer = TCDS_REG(sc->sc_base, TCDS_IMER);
-
-	/*
-	 * XXX
-	 * Should we be setting all the "interrupt bits" in the IMER?
-	 * Do we need to set a bit in the mask so that SCSI DMA errors
-	 * cause interrupts?
-	 */
-	switch (unit) {
-	case 0:
-		*imer |= TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB;
-		wbflush();
-		break;
-
-	case 1:
-		*imer |= TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB;
-		wbflush();
-		break;
-
-	default:
-		panic("tcds_scsi_enable: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
+	if (on) 
+		*sc->sc_tcds->sc_imer |= sc->sc_intrmaskbits;
+	else
+		*sc->sc_tcds->sc_imer &= ~sc->sc_intrmaskbits;
+	wbflush();
 }
 
 void
-tcds_scsi_disable(unit)
-	int unit;
+tcds_dma_enable(sc, on)
+	struct tcds_slotconfig *sc;
+	int on;
 {
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *imer;
-
-	imer = TCDS_REG(sc->sc_base, TCDS_IMER);
-
-	switch (unit) {
-	case 0:
-		*imer &= ~(TCDS_IMER_SCSI0_MASK | TCDS_IMER_SCSI0_ENB);
-		wbflush();
-		break;
-
-	case 1:
-		*imer &= ~(TCDS_IMER_SCSI1_MASK | TCDS_IMER_SCSI1_ENB);
-		wbflush();
-		break;
-
-	default:
-		panic("tcds_scsi_disable: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
-}
-
-void
-tcds_dma_init(dsc, unit)
-	struct dma_softc *dsc;
-	int unit;
-{
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-
-	switch (unit) {
-	case 0:
-		dsc->sda = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_ADDR);
-		dsc->dic = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_INTR);
-		dsc->dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD0);
-		dsc->dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI0_DMA_DUD1);
-		break;
-
-	case 1:
-		dsc->sda = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_ADDR);
-		dsc->dic = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_INTR);
-		dsc->dud0 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD0);
-		dsc->dud1 = TCDS_REG(sc->sc_base, TCDS_SCSI1_DMA_DUD1);
-		break;
-
-	default:
-		panic("tcds_dma_init: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
-}
-
-void
-tcds_dma_enable(unit)
-	int unit;
-{
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *cir;
-
-	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
 
 	/* XXX Clear/set IOSLOT/PBS bits. */
-	switch (unit) {
-	case 0:
-		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI0_DMAENA);
-		wbflush();
-		break;
-
-	case 1:
-		TCDS_CIR_SET(*cir, TCDS_CIR_SCSI1_DMAENA);
-		wbflush();
-		break;
-
-	default:
-		panic("tcds_dma_enable: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
-}
-
-void
-tcds_dma_disable(unit)
-	int unit;
-{
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *cir;
-
-	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
-
-	/* XXX Clear/set IOSLOT/PBS bits. */
-	switch (unit) {
-	case 0:
-		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_DMAENA);
-		wbflush();
-		break;
-
-	case 1:
-		TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_DMAENA);
-		wbflush();
-		break;
-
-	default:
-		panic("tcds_dma_disable: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
+	if (on) 
+		TCDS_CIR_SET(*sc->sc_tcds->sc_cir, sc->sc_dmabits);
+	else
+		TCDS_CIR_CLR(*sc->sc_tcds->sc_cir, sc->sc_dmabits);
+	wbflush();
 }
 
 int
-tcds_scsi_isintr(unit, clear)
-	int unit, clear;
+tcds_scsi_isintr(sc, clear)
+	struct tcds_slotconfig *sc;
+	int clear;
 {
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *cir, ir;
 
-	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
-	ir = *cir;
-	wbflush();
-
-	switch (unit) {
-	case 0:
-		if (ir & TCDS_CIR_SCSI0_INT) {
-			if (clear) {
-				TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI0_INT);
-				wbflush();
-			}
-			return (1);
+	if ((*sc->sc_tcds->sc_cir & sc->sc_intrbits) != 0) {
+		if (clear) {
+			TCDS_CIR_CLR(*sc->sc_tcds->sc_cir, sc->sc_intrbits);
+			wbflush();
 		}
-		break;
-
-	case 1:
-		if (ir & TCDS_CIR_SCSI1_INT) {
-			if (clear) {
-				TCDS_CIR_CLR(*cir, TCDS_CIR_SCSI1_INT);
-				wbflush();
-			}
-			return (1);
-		}
-		break;
-
-	default:
-		panic("tcds_scsi_isintr: unknown unit number\n", unit);
-		/* NOTREACHED */
-	}
-	return (0);
-}
-
-int
-tcds_scsi_iserr(dsc)
-	struct dma_softc *dsc;
-{
-	struct tcds_softc *sc = tcdscd.cd_devs[0];
-	volatile u_int32_t *cir, ir;
-
-	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
-	ir = *cir;
-	wbflush();
-
-	if (ir & SCSI_CIR_ERROR) {
-		printf("%s: error <CIR = %x>\n", dsc->sc_dev.dv_xname, ir);
 		return (1);
-	}
-	return (0);
+	} else
+		return (0);
 }
 
-/*
- * tcds_intr --
- *	TCDS ASIC interrupt handler.
- */
+int
+tcds_scsi_iserr(sc)
+	struct tcds_slotconfig *sc;
+{
+
+	return ((*sc->sc_tcds->sc_cir & sc->sc_errorbits) != 0);
+}
+
 int
 tcds_intr(val)
 	void *val;
 {
 	struct tcds_softc *sc;
-	volatile u_int32_t *cir;
 	u_int32_t ir;
 
 	sc = val;
@@ -490,21 +342,20 @@ tcds_intr(val)
 	 * XXX
 	 * Copy and clear (gag!) the interrupts.
 	 */
-	cir = TCDS_REG(sc->sc_base, TCDS_CIR);
-	ir = *cir;
+	ir = *sc->sc_cir;
 	wbflush();
-	TCDS_CIR_CLR(*cir, TCDS_CIR_ALLINTR);
+	TCDS_CIR_CLR(*sc->sc_cir, TCDS_CIR_ALLINTR);
 	wbflush();
-	MAGIC_READ;
+	tc_syncbus();
 	wbflush();
 
-#define	CHECKINTR(slot, bits)						\
-	if (ir & bits) {						\
-		(void)(*tcds_slots[slot].ts_handler)			\
-		    (tcds_slots[slot].ts_val);				\
+#define	CHECKINTR(slot)							\
+	if (ir & sc->sc_slots[slot].sc_intrbits) {			\
+		(void)(*sc->sc_slots[slot].sc_intrhand)			\
+		    (sc->sc_slots[slot].sc_intrarg);			\
 	}
-	CHECKINTR(TCDS_SLOT_SCSI0, TCDS_CIR_SCSI0_INT);
-	CHECKINTR(TCDS_SLOT_SCSI1, TCDS_CIR_SCSI1_INT);
+	CHECKINTR(0);
+	CHECKINTR(1);
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC

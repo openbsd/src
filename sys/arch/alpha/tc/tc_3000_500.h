@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.h,v 1.1 1995/02/13 23:09:09 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.h,v 1.2 1995/12/20 00:43:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,7 +57,7 @@
 #define	TC_3000_500_IR_OPT4		0x00000010	/* TC Option 4 */
 #define	TC_3000_500_IR_OPT5		0x00000020	/* TC Option 5 */
 #define	TC_3000_500_IR_TCDS		0x00000040	/* TC Dual SCSI */
-#define	TC_3000_500_IR_IOCTL		0x00000080	/* TC IOCTL */
+#define	TC_3000_500_IR_IOASIC		0x00000080	/* TC IOASIC */
 #define	TC_3000_500_IR_CXTURBO		0x00000100	/* TC CXTURBO */
 #define	TC_3000_500_IR_ERR2		0x00080000	/* Second error */
 #define	TC_3000_500_IR_DMABE		0x00100000	/* DMA buffer error */
@@ -86,5 +86,20 @@
 #define	TC_IOSLOT_OPT4		4	/* Option 4 PBS offset. */
 #define	TC_IOSLOT_OPT5		5	/* Option 5 PBS offset. */
 #define	TC_IOSLOT_SCSI		6	/* Option SCSI PBS offset. */
-#define	TC_IOSLOT_IOCTL		7	/* Option IOCTL PBS offset. */
+#define	TC_IOSLOT_IOASIC	7	/* Option IOASIC PBS offset. */
 #define	TC_IOSLOT_CXTURBO	8	/* Option CXTURBO PBS offset. */
+
+/* Device number "cookies." */
+#define	TC_3000_500_DEV_OPT0	0
+#define	TC_3000_500_DEV_OPT1	1
+#define	TC_3000_500_DEV_OPT2	2
+#define	TC_3000_500_DEV_OPT3	3
+#define	TC_3000_500_DEV_OPT4	4
+#define	TC_3000_500_DEV_OPT5	5
+#define	TC_3000_500_DEV_TCDS	6
+#define	TC_3000_500_DEV_IOASIC	7
+#define	TC_3000_500_DEV_CXTURBO	8
+
+#define TC_3000_500_DEV_BOGUS	-1
+
+#define TC_3000_500_NCOOKIES	9

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.h,v 1.1 1995/03/08 00:39:07 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.h,v 1.2 1995/12/20 00:43:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,9 +42,20 @@
 /* Interrupt bits. */
 #define	TC_3000_300_IR_CXTURBO		0x00000004	/* TC CXTURBO */
 #define	TC_3000_300_IR_TCDS		0x00000008	/* TC Dual SCSI */
-#define	TC_3000_300_IR_IOCTL		0x00000010	/* TC IOCTL */
+#define	TC_3000_300_IR_IOASIC		0x00000010	/* TC IOASIC */
 #define	TC_3000_300_IR_BCTAGPARITY	0x08000000	/* BC tag par. err. */
 #define	TC_3000_300_IR_TCOVERRUN	0x10000000	/* TC overrun */
 #define	TC_3000_300_IR_TCTIMEOUT	0x20000000	/* TC timeout on I/O */
 #define	TC_3000_300_IR_BCACHEPARITY	0x40000000	/* Bcache par. err. */
 #define	TC_3000_300_IR_MEMPARITY	0x80000000	/* Memory par. err. */
+
+/* Device number "cookies." */
+#define	TC_3000_300_DEV_OPT0	0
+#define	TC_3000_300_DEV_OPT1	1
+#define	TC_3000_300_DEV_TCDS	2
+#define	TC_3000_300_DEV_IOASIC	3
+#define	TC_3000_300_DEV_CXTURBO	4
+
+#define TC_3000_300_DEV_BOGUS	-1
+
+#define	TC_3000_300_NCOOKIES	5

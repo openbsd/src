@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.5 1995/09/05 15:07:05 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.6 1995/12/20 00:40:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -41,138 +41,120 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <alpha/autoconf.h>
-#include <alpha/cpu.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#include <alpha/tc/tcds_dmavar.h>
+#include <dev/tc/tcvar.h>
+#include <alpha/tc/tcdsreg.h>
+#include <alpha/tc/tcdsvar.h>
 #include <alpha/tc/espreg.h>
 #include <alpha/tc/espvar.h>
-#include <alpha/tc/tcds.h>
-
-int dmaprint		__P((void *, char *));
-void dmaattach		__P((struct device *, struct device *, void *));
-int dmamatch		__P((struct device *, struct cfdata *, void *));
-void dma_reset		__P((struct dma_softc *));
-void dma_start		__P((struct dma_softc *, caddr_t *, size_t *, int));
-int dmaintr		__P((struct dma_softc *));
-
-/*
- * dma_init --
- *	Initialize AXP DMA for ESP.
- */
-void
-dma_init(sc)
-	struct dma_softc *sc;
-{
-	/* TCDS register address initialization. */
-	tcds_dma_init(sc, sc->sc_dev.dv_unit);
-
-	/* Indirect functions. */
-	sc->reset = dma_reset;
-	sc->enintr = NULL;
-	sc->start = dma_start;
-	sc->isintr = NULL;
-	sc->intr = dmaintr;
-}
 
 void
-dma_reset(sc)
-	struct dma_softc *sc;
+tcds_dma_reset(sc)
+	struct tcds_slotconfig *sc;
 {
 	/* TCDS SCSI disable/reset/enable. */
-	tcds_scsi_reset(sc->sc_dev.dv_unit);
+	tcds_scsi_reset(sc);			/* XXX */
 
 	sc->sc_active = 0;			/* and of course we aren't */
 }
 
-/*
- * SPARC:
- *	The rules say we cannot transfer more than the limit of this
- *	DMA chip (64k for old and 16Mb for new), and we cannot cross
- *	a 16Mb boundary.
- * AXP:
- *	We're doing physical DMA.  Since pages on the AXP are 8K, we
- *	don't transfer more than that, or cross an 8K boundary, in a
- *	single transfer.
- */
-#define ESPMAX								\
-	((sc->sc_esp->sc_rev == ESP200) ? (16 * 1024 * 1024) :		\
-	(sc->sc_esp->sc_rev == NCR53C94) ? (8 * 1024) : (64 * 1024))
-#define DMAMAX(a)							\
-	(sc->sc_esp->sc_rev == NCR53C94) ? 0x2000 - ((a) & 0x1fff) :	\
-	(0x01000000 - ((a) & 0x00ffffff))
+
+void
+tcds_dma_enintr(sc)
+	struct tcds_slotconfig *sc;
+{
+
+	/* XXX */
+}
+
+int
+tcds_dma_isintr(sc)
+	struct tcds_slotconfig *sc;
+{
+	int x;
+
+	x = tcds_scsi_isintr(sc, 0);
+
+	/* Clear the TCDS interrupt bit. */
+	(void)tcds_scsi_isintr(sc, 1);
+
+	/* XXX */
+	return x;
+}
+
+#define ESPMAX		(64 * 1024)
+#define DMAMAX(a)	(0x02000 - ((a) & 0x1fff))
 
 /*
  * start a dma transfer or keep it going
  */
 void
-dma_start(sc, addr, len, datain)
-	struct dma_softc *sc;
-	char **addr;
+tcds_dma_start(sc, addr, len, datain)
+	struct tcds_slotconfig *sc;
+	caddr_t *addr;
 	size_t *len;
-	int datain;
+	int datain;				/* DMA into main memory */
 {
-	/* we do the loading of the transfer counter */
-	volatile espreg_t *esp = sc->sc_esp->sc_reg;
 	u_int32_t dic;
-	int size;
+	size_t size;
 
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
+	sc->sc_iswrite = datain;
 
-#ifdef DMA_DEBUG
-	printf("%s: dma_start %d bytes %s 0x%08x\n",
-	    sc->sc_dev.dv_xname, *len, datain ? "to" : "from", *addr);
-#endif
-	size = min(*len, ESPMAX);
-	size = min(size, DMAMAX((size_t)*addr));
+	ESP_DMA(("tcds_dma %d: start %d@0x%lx,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
+
+	/*
+	 * the rules say we cannot transfer more than the limit
+	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
+	 */
+	size = min(*sc->sc_dmalen, ESPMAX);
+	size = min(size, DMAMAX((size_t) *sc->sc_dmaaddr));
 	sc->sc_dmasize = size;
 
-#ifdef DMA_DEBUG
-	printf("dma_start: transfer = %d\n", sc->sc_dmasize);
-#endif
-
-#ifdef TK_NOT_NECESSARY
-	tcds_dma_disable(sc->sc_dev.dv_unit);			wbflush();
-	tcds_scsi_disable(sc->sc_dev.dv_unit);			wbflush();
-#endif
-
-	/* Load the count in. */
-	esp->esp_tcl = size & 0xff;				wbflush();
-	esp->esp_tcm = (size >> 8) & 0xff;			wbflush();
-	if (sc->sc_esp->sc_rev == ESP200) {
-		esp->esp_tch = (size >> 16) & 0xff;		wbflush();
-	}
-	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
+	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */
 	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
-		*sc->sda = vatopa((u_long)*addr) >> 2;		wbflush();
+		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
 	} else {
-		*sc->sda = k0segtophys((u_long)*addr) >> 2;	wbflush();
+		*sc->sc_sda = k0segtophys((u_long)*addr) >> 2;
 	}
-	dic = *sc->dic;
+	wbflush();
+	dic = *sc->sc_dic;
 	dic &= ~TCDS_DIC_ADDRMASK;
 	dic |= (vm_offset_t)*addr & TCDS_DIC_ADDRMASK;
 	if (datain)
 		dic |= TCDS_DIC_WRITE;
 	else
 		dic &= ~TCDS_DIC_WRITE;
-	*sc->dic = dic;						wbflush();
+	*sc->sc_dic = dic;
+	wbflush();
 
-#ifdef TK_NOT_NECESSARY
-	tcds_scsi_enable(sc->sc_dev.dv_unit);			wbflush();
-	tcds_dma_enable(sc->sc_dev.dv_unit);			wbflush();
-#endif
+	/* Program the SCSI counter */
+	ESP_WRITE_REG(sc->sc_esp, ESP_TCL, size);
+	ESP_WRITE_REG(sc->sc_esp, ESP_TCM, size >> 8);
+	if (sc->sc_esp->sc_rev == ESP200) {
+		ESP_WRITE_REG(sc->sc_esp, ESP_TCH, size >> 16);
+	}
+	/* load the count in */
+	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
 
-	/* and kick the SCSI */
-	ESPCMD(sc->sc_esp, ESPCMD_TRANS|ESPCMD_DMA);
+	/*
+	 * Note that if `size' is 0, we've already transceived all
+	 * the bytes we want but we're still in the DATA PHASE.
+	 * Apparently, the device needs padding. Also, a transfer
+	 * size of 0 means "maximum" to the chip DMA logic.
+	 */
+	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
 
 	sc->sc_active = 1;
+
+	/* Start DMA */
+	tcds_dma_enable(sc, 1);
 }
 
 /*
@@ -183,100 +165,124 @@ dma_start(sc, addr, len, datain)
  * return 1 if it was a DMA continue.
  */
 int
-dmaintr(sc)
-	struct dma_softc *sc;
+tcds_dma_intr(sc)
+	struct tcds_slotconfig *sc;
 {
-	volatile espreg_t *esp = sc->sc_esp->sc_reg;
 	u_int32_t dud;
-	int resid, trans;
-	char *addr;
+	int trans = 0, resid = 0;
+	u_int32_t *addr, dudmask;
+	u_char tcl, tcm, tch;
 
-#ifdef DMA_DEBUG
-	printf("%s: dmaintr\n", sc->sc_dev.dv_xname);
-#endif
-
-#ifdef DIAGNOSTIC
-	if (sc->sc_active == 0)
-		panic("dmaintr: %s: DMA inactive", sc->sc_dev.dv_xname);
-#endif
+	ESP_DMA(("tcds_dma %d: intr", sc->sc_slot));
 
 	if (tcds_scsi_iserr(sc))
 		return (0);
 
-#ifdef TK_NOT_NECESSARY
-	tcds_dma_disable(sc->sc_dev.dv_unit);			wbflush();
-	tcds_scsi_disable(sc->sc_dev.dv_unit);			wbflush();
-#endif
+	/* This is an "assertion" :) */
+	if (sc->sc_active == 0)
+		panic("dmaintr: DMA wasn't active");
+
+	/* DMA has stopped */
+	tcds_dma_enable(sc, 0);
 	sc->sc_active = 0;
 
-	resid = RR(esp->esp_fflag) & ESPFIFO_FF;		wbflush();
-	if (!(*sc->dic & TCDS_DIC_WRITE) && resid != 0) {	wbflush();
-		printf("%s: empty FIFO of %d ", sc->sc_dev.dv_xname, resid);
+	if (sc->sc_dmasize == 0) {
+		/* A "Transfer Pad" operation completed */
+		tcl = ESP_READ_REG(sc->sc_esp, ESP_TCL);
+		tcm = ESP_READ_REG(sc->sc_esp, ESP_TCM);
+		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		    tcl | (tcm << 8), tcl, tcm));
+		return 0;
+	}
+
+	if (!sc->sc_iswrite &&
+	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
+		printf("empty FIFO of %d ", resid);
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
 		DELAY(1);
 	}
 
-	resid += RR(esp->esp_tcl);				wbflush();
-	resid += RR(esp->esp_tcm) << 8;				wbflush();
+	resid += (tcl = ESP_READ_REG(sc->sc_esp, ESP_TCL));
+	resid += (tcm = ESP_READ_REG(sc->sc_esp, ESP_TCM)) << 8;
 	if (sc->sc_esp->sc_rev == ESP200)
-		resid += RR(esp->esp_tch) << 16;		wbflush();
+		resid += (tch = ESP_READ_REG(sc->sc_esp, ESP_TCH)) << 16;
+	else
+		tch = 0;
+
+	if (resid == 0 && (sc->sc_esp->sc_rev <= ESP100A) &&
+	    (sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0)
+		resid = 65536;
+
 	trans = sc->sc_dmasize - resid;
-	if (trans < 0) {			/* transferred < 0? */
-		printf("%s: xfer (%d) > req (%d)\n",
-		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
+	if (trans < 0) {			/* transferred < 0 ? */
+		printf("tcds_dma %d: xfer (%d) > req (%d)\n",
+		    sc->sc_slot, trans, sc->sc_dmasize);
 		trans = sc->sc_dmasize;
 	}
 
-	/* Handle unaligned starting address, length. */
-	dud = *sc->dud0;					wbflush();
-	if (dud & (TCDS_SCSI0_DUD0_VALID01 |
-	    TCDS_SCSI0_DUD0_VALID10 | TCDS_SCSI0_DUD0_VALID11)) {
-		addr = (char *)((vm_offset_t)*sc->sc_dmaaddr & ~0x03);
-		if (dud & TCDS_SCSI0_DUD0_VALID01)
-			addr[1] = dud & TCDS_SCSI0_DUD0_BYTE01;
-		if (dud & TCDS_SCSI0_DUD0_VALID10)
-			addr[2] = dud & TCDS_SCSI0_DUD0_BYTE10;
-		if (dud & TCDS_SCSI0_DUD0_VALID11)
-			addr[3] = dud & TCDS_SCSI0_DUD0_BYTE11;
-	}
-	dud = *sc->dud1;					wbflush();
-	if (dud & (TCDS_SCSI0_DUD1_VALID00 |
-	    TCDS_SCSI0_DUD1_VALID01 | TCDS_SCSI0_DUD1_VALID10)) {
-		addr = (char *)((vm_offset_t)(*sc->sc_dmaaddr + trans) & ~0x03);
-		if (dud & TCDS_SCSI0_DUD1_VALID00)
-			addr[0] = dud & TCDS_SCSI0_DUD1_BYTE00;
-		if (dud & TCDS_SCSI0_DUD1_VALID01)
-			addr[1] = dud & TCDS_SCSI0_DUD1_BYTE01;
-		if (dud & TCDS_SCSI0_DUD1_VALID10)
-			addr[2] = dud & TCDS_SCSI0_DUD1_BYTE10;
+	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+	    tcl, tcm, tch, trans, resid));
+
+	/*
+	 * Clean up unaligned DMAs into main memory.
+	 */
+	if (sc->sc_iswrite) {
+		/* Handle unaligned starting address, length. */
+		dud = *sc->sc_dud0;
+		if ((dud & TCDS_DUD0_VALIDBITS) != 0) {
+			addr = (u_int32_t *)
+			    ((vm_offset_t)sc->sc_dmaaddr & ~0x3);
+			dudmask = 0;
+			if (dud & TCDS_DUD0_VALID00)
+				panic("tcds_dma: dud0 byte 0 valid");
+			if (dud & TCDS_DUD0_VALID01)
+				dudmask |= TCDS_DUD_BYTE01;
+			if (dud & TCDS_DUD0_VALID10)
+				dudmask |= TCDS_DUD_BYTE10;
+#ifdef DIAGNOSTIC
+			if (dud & TCDS_DUD0_VALID11)
+				dudmask |= TCDS_DUD_BYTE11;
+#endif
+			ESP_DMA(("dud0 at 0x%lx dudmask 0x%x\n",
+			    addr, dudmask));
+			addr = (u_int32_t *)phystok0seg(addr);
+			*addr = (*addr & ~dudmask) | (dud & dudmask);
+		}
+		dud = *sc->sc_dud1;
+		if ((dud & TCDS_DUD1_VALIDBITS) != 0) {
+	
+			addr = (u_int32_t *)
+			    ((vm_offset_t)*sc->sc_sda << 2);
+			dudmask = 0;
+			if (dud & TCDS_DUD1_VALID00)
+				dudmask |= TCDS_DUD_BYTE00;
+			if (dud & TCDS_DUD1_VALID01)
+				dudmask |= TCDS_DUD_BYTE01;
+			if (dud & TCDS_DUD1_VALID10)
+				dudmask |= TCDS_DUD_BYTE10;
+#ifdef DIAGNOSTIC
+			if (dud & TCDS_DUD1_VALID11)
+				panic("tcds_dma: dud1 byte 3 valid");
+#endif
+			ESP_DMA(("dud1 at 0x%lx dudmask 0x%x\n",
+			    addr, dudmask));
+			addr = (u_int32_t *)phystok0seg(addr);
+			*addr = (*addr & ~dudmask) | (dud & dudmask);
+		}
+		/* XXX deal with saved residual byte? */
 	}
 
-#ifdef DMA_DEBUG
-	{ u_int32_t tcl, tcm, tch;
-	tcl = RR(esp->esp_tcl);					wbflush();
-	tcm = RR(esp->esp_tcm);					wbflush();
-	tch = sc->sc_esp->sc_rev == ESP200 ? RR(esp->esp_tch) : 0;
-								wbflush();
-	printf("dmaintr: tcl=%d, tcm=%d, tch=%d, resid=%d, trans=%d\n",
-	    tcl, tcm, tch, resid, trans);
-	}
-#endif
-#ifdef SPARC_DRIVER
-	if (DMACSR(sc) & D_WRITE)
-		cache_flush(*sc->sc_dmaaddr, trans);
-#endif
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
 
-	if (!*sc->sc_dmalen ||
-	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase) {
-#ifdef TK_NOT_NECESSARY
-		tcds_scsi_enable(sc->sc_dev.dv_unit);		wbflush();
-#endif
+#if 0 /* this is not normal operation just yet */
+	if (*sc->sc_dmalen == 0 ||
+	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
 		return 0;
-	}
 
 	/* and again */
-	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, *sc->dic & TCDS_DIC_WRITE);
+	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, sc->sc_iswrite);
 	return 1;
+#endif
+	return 0;
 }
