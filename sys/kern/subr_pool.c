@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.10 2001/06/27 04:49:46 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.11 2001/07/15 11:03:05 assar Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 #define SIMPLELOCK_INITIALIZER { SLOCK_UNLOCKED }
 #ifdef LOCKDEBUG
 #define simple_lock_freecheck(a, s) do { /* nothing */ } while (0)
+#define simple_lock_only_held(lkp, str) do { /* nothing */ } while (0)
 #endif
 #define LOCK_ASSERT(x) /* nothing */
 
