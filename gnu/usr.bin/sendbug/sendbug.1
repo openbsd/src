@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendbug.1,v 1.10 2004/03/30 17:12:22 jmc Exp $
+.\"	$OpenBSD: sendbug.1,v 1.11 2004/12/30 01:13:03 jmc Exp $
 .\"
 .\" -*- nroff -*-
 .\" ---------------------------------------------------------------------------
@@ -53,14 +53,20 @@ according to its category.
 An automatic reply will be sent with an acknowledgement, citing the category
 and the PR number.
 .Pp
+The bugs database can be queried using the online bug tracking system
+available at
+.Pa http://www.openbsd.org/query-pr.html .
+This allows users to search for PRs based on either their PR number
+or content.
+.Pp
 To ensure that a PR is handled promptly, it should specify one of the
 available
 .Em categories
 to identify the problem area.
-(Use
-.Nm sendbug
+Use
+.Nm
 .Fl L
-to see a list of categories.)
+to see a list of categories.
 .Pp
 The more precise your problem description and the more complete your
 information, the faster the
@@ -108,7 +114,7 @@ Used as the file name of the template for your problem-report editing session.
 You can use this to start with a partially completed form (for example,
 a form with the identification fields already completed).
 .El
-.Sh "HOW TO FILL OUT A PROBLEM REPORT"
+.Sh HOW TO FILL OUT A PROBLEM REPORT
 Problem reports have to be in a particular form so that a program can
 easily manage them.
 Please remember the following guidelines:
@@ -131,7 +137,7 @@ mailing list.
 Sensitive, security-related issues should be sent via email to
 .Aq security@OpenBSD.org .
 .El
-.Sh "HOW TO SUBMIT TEST CASES, CODE, ETC."
+.Sh HOW TO SUBMIT TEST CASES, CODE, ETC.
 Submit small code samples with the PR.
 Contact
 .Aq bugs@OpenBSD.org
