@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pnreg.h,v 1.1 1999/01/11 04:28:25 jason Exp $	*/
+/*	$OpenBSD: if_pnreg.h,v 1.2 1999/02/27 18:44:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_pnreg.h,v 1.4 1999/01/05 00:59:08 wpaul Exp $
+ *	$FreeBSD: if_pnreg.h,v 1.5 1999/02/26 07:50:53 wpaul Exp $
  */
 
 /*
@@ -488,6 +488,7 @@ struct pn_softc {
  * Lite-On PNIC PCI device ID.
  */
 #define	PN_DEVICEID_PNIC	0x0002
+#define PN_DEVICEID_PNIC_II	0xc115
 
 /*
  * Texas Instruments PHY identifiers

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pn.c,v 1.2 1999/02/26 17:05:54 jason Exp $	*/
+/*	$OpenBSD: if_pn.c,v 1.3 1999/02/27 18:44:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_pn.c,v 1.6 1999/01/05 00:59:08 wpaul Exp $
+ *	$FreeBSD: if_pn.c,v 1.8 1999/02/26 07:50:53 wpaul Exp $
  */
 
 /*
@@ -132,7 +132,7 @@
 
 #if !defined(lint) && defined(__FreeBSD__)
 static const char rcsid[] =
-	"$Id: if_pn.c,v 1.2 1999/02/26 17:05:54 jason Exp $";
+	"$FreeBSD: if_pn.c,v 1.8 1999/02/26 07:50:53 wpaul Exp $";
 #endif
 
 #if defined(__FreeBSD__)
@@ -142,6 +142,8 @@ static const char rcsid[] =
 static struct pn_type pn_devs[] = {
 	{ PN_VENDORID, PN_DEVICEID_PNIC,
 		"82c168/82c169 PNIC 10/100BaseTX" },
+	{ PN_VENDORID, PN_DEVICEID_PNIC_II,
+		"82c115 PNIC II 10/100BaseTX" },
 	{ 0, 0, NULL }
 };
 #endif
@@ -999,6 +1001,7 @@ pn_attach(config_id, unit)
 	ifp->if_watchdog = pn_watchdog;
 	ifp->if_init = pn_init;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = PN_TX_LIST_CNT - 1;
 
 	if (bootverbose)
 		printf("pn%d: probing for a PHY\n", sc->pn_unit);
@@ -2106,6 +2109,7 @@ pn_probe(parent, match, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_LITEON) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_LITEON_PNIC:
+		case PCI_PRODUCT_LITEON_PNICII:
 			return (1);
 		}
 	}
@@ -2226,6 +2230,7 @@ pn_attach(parent, self, aux)
 	ifp->if_start = pn_start;
 	ifp->if_watchdog = pn_watchdog;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = PN_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	for (i = PN_PHYADDR_MIN; i < PN_PHYADDR_MAX + 1; i++) {
