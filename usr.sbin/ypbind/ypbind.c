@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.22 1997/03/26 05:23:57 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.23 1997/03/29 06:13:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.22 1997/03/26 05:23:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.23 1997/03/29 06:13:21 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -514,17 +514,18 @@ main(argc, argv)
 
 	checkwork();
 
-	width = svc_maxfd;
-	if (rpcsock > width)
-		width = rpcsock;
-	if (pingsock > width)
-		width = pingsock;
-	width++;
-
 	while (1) {
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
 		FD_SET(pingsock, &fdsr);
+
+		width = svc_maxfd;
+		if (rpcsock > width)
+			width = rpcsock;
+		if (pingsock > width)
+			width = pingsock;
+		width++;
+
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
