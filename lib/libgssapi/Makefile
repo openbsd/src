@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2003/06/02 18:45:41 jakob Exp $
+# $OpenBSD: Makefile,v 1.5 2003/06/03 09:34:00 hin Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -21,6 +21,7 @@ includes:
 SRCS=	8003.c			\
 	accept_sec_context.c	\
 	acquire_cred.c		\
+	add_cred.c		\
 	add_oid_set_member.c	\
 	canonicalize_name.c	\
 	compare_name.c		\
@@ -47,10 +48,14 @@ SRCS=	8003.c			\
 	init_sec_context.c	\
 	inquire_context.c	\
 	inquire_cred.c		\
+	inquire_cred_by_mech.c	\
+	inquire_mechs_for_name.c \
+	inquire_names_for_mech.c \
 	release_buffer.c	\
 	release_cred.c		\
 	release_name.c		\
 	release_oid_set.c	\
+	process_context_token.c \
 	test_oid_set_member.c	\
 	unwrap.c		\
 	v1.c			\
