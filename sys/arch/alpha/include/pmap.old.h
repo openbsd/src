@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.h,v 1.2 1997/01/24 19:57:16 niklas Exp $	*/
+/*	$OpenBSD: pmap.old.h,v 1.3 1997/07/20 07:03:40 niklas Exp $	*/
 /*	$NetBSD: pmap.old.h,v 1.6 1996/11/13 21:13:19 cgd Exp $	*/
 
 /* 
@@ -75,7 +75,8 @@ extern struct pmap	kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
-	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
+	((pm) == pmap_kernel() || \
+	     (curproc && (pm) == curproc->p_vmspace->vm_map.pmap))
 
 /*
  * Macros for speed
