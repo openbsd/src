@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.6 2003/04/09 00:47:54 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.7 2003/04/09 02:30:32 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -122,16 +122,15 @@ int osiop_reset_delay = 250;	/* delay after reset, in milleseconds */
 
 /* #define OSIOP_DEBUG */
 #ifdef OSIOP_DEBUG
-#define DEBUG_DMA	0x01
-#define DEBUG_INT	0x02
-#define DEBUG_PHASE	0x04
-#define DEBUG_UNEXCEPT	0x08
-#define DEBUG_DISC	0x10
-#define DEBUG_CMD	0x20
-#define DEBUG_ALL	0xff
+#define DEBUG_DMA	0x0001
+#define DEBUG_INT	0x0002
+#define DEBUG_PHASE	0x0004
+#define DEBUG_DISC	0x0008
+#define DEBUG_CMD	0x0010
+#define DEBUG_SYNC	0x0020
+#define DEBUG_SCHED	0x0040
+#define DEBUG_ALL	0xffff
 int osiop_debug = 0; /*DEBUG_ALL;*/
-int osiopsync_debug = 0;
-int osiopdma_hits = 1;
 int osiopstarts = 0;
 int osiopints = 0;
 int osiopphmm = 0;
@@ -152,7 +151,7 @@ void osiop_dump(struct osiop_softc *);
 #define OSIOP_TRACE(a,b,c,d)
 #endif
 
-#ifdef OSIOP_DEBUG_SYNC
+#ifdef OSIOP_DEBUG
 /*
  * sync period transfer lookup - only valid for 66MHz clock
  */
@@ -552,7 +551,7 @@ osiop_sched(sc)
 
 	if ((sc->sc_nexus != NULL) || TAILQ_EMPTY(&sc->ready_list)) {
 #ifdef OSIOP_DEBUG
-		if (osiop_debug)
+		if (osiop_debug & DEBUG_SCHED)
 			printf("%s: osiop_sched- nexus %p/%d ready %p/%d\n",
 			    sc->sc_dev.dv_xname, sc->sc_nexus,
 			    sc->sc_nexus->xs->sc_link->target,
@@ -574,7 +573,7 @@ osiop_sched(sc)
 
 	if (acb == NULL) {
 #ifdef OSIOP_DEBUG
-		if (osiop_debug)
+		if (osiop_debug & DEBUG_SCHED)
 			printf("%s: osiop_sched didn't find ready command\n",
 			    sc->sc_dev.dv_xname);
 #endif
@@ -1014,7 +1013,7 @@ osiop_start(sc)
 			ti->offset = 0;
 			osiop_update_xfer_mode(sc, target);
 #ifdef OSIOP_DEBUG
-			if (osiopsync_debug)
+			if (osiop_debug & DEBUG_SYNC)
 				printf("Forcing target %d asynchronous\n",
 				    target);
 #endif
@@ -1028,7 +1027,7 @@ osiop_start(sc)
 			ds->id.count = MSG_EXT_SDTR_LEN + 3;
 			ti->state = NEG_WAITS;
 #ifdef OSIOP_DEBUG
-			if (osiopsync_debug)
+			if (osiop_debug & DEBUG_SYNC)
 				printf("Sending sync request to target %d\n",
 				    target);
 #endif
@@ -1208,7 +1207,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		    ds->msgbuf[3] == MSG_EXT_SDTR) {
 			struct osiop_tinfo *ti = &sc->sc_tinfo[target];
 #ifdef OSIOP_DEBUG
-			if (osiopsync_debug)
+			if (osiop_debug & DEBUG_SYNC)
 				printf("sync msg in: "
 				    "%02x %02x %02x %02x %02x %02x\n",
 				    ds->msgbuf[0], ds->msgbuf[1],
@@ -1883,25 +1882,27 @@ scsi_period_to_osiop(sc, target)
 	int target;
 {
 	int period, offset, sxfer, sbcl;
-#ifdef DEBUG_SYNC
+#ifdef OSIOP_DEBUG
 	int i;
 #endif
 
 	period = sc->sc_tinfo[target].period;
 	offset = sc->sc_tinfo[target].offset;
-#ifdef DEBUG_SYNC
-	sxfer = 0;
-	if (offset <= OSIOP_MAX_OFFSET)
-		sxfer = offset;
-	for (i = 0; i < sizeof(sync_tab) / sizeof(sync_tab[0]); i++) {
-		if (period <= sync_tab[i].p) {
-			sxfer |= sync_tab[i].r & 0x70;
-			sbcl = sync_tab[i].r & 0x03;
-			break;
+#ifdef OSIOP_DEBUG
+	if (osiop_debug & DEBUG_SYNC) {
+		sxfer = 0;
+		if (offset <= OSIOP_MAX_OFFSET)
+			sxfer = offset;
+		for (i = 0; i < sizeof(sync_tab) / sizeof(sync_tab[0]); i++) {
+			if (period <= sync_tab[i].p) {
+				sxfer |= sync_tab[i].r & 0x70;
+				sbcl = sync_tab[i].r & 0x03;
+				break;
+			}
 		}
+		printf("osiop sync old: osiop_sxfr %02x, osiop_sbcl %02x\n",
+		    sxfer, sbcl);
 	}
-	printf("osiop sync old: osiop_sxfr %02x, osiop_sbcl %02x\n",
-	    sxfer, sbcl);
 #endif
 	for (sbcl = 1; sbcl < 4; sbcl++) {
 		sxfer = (period * 4 - 1) / sc->sc_tcp[sbcl] - 3;
@@ -1918,17 +1919,21 @@ scsi_period_to_osiop(sc, target)
 	} else {
 		sxfer = (sxfer << 4) | ((offset <= OSIOP_MAX_OFFSET) ?
 		    offset : OSIOP_MAX_OFFSET);
-#ifdef DEBUG_SYNC
-		printf("osiop sync: params for period %dns: sxfer %x sbcl %x",
-		    period * 4, sxfer, sbcl);
-		printf(" actual period %dns\n",
-		    sc->sc_tcp[sbcl] * ((sxfer >> 4) + 4));
+#ifdef OSIOP_DEBUG
+		if (osiop_debug & DEBUG_SYNC) {
+			printf("osiop sync: params for period %dns: sxfer %x sbcl %x",
+			    period * 4, sxfer, sbcl);
+			printf(" actual period %dns\n",
+			    sc->sc_tcp[sbcl] * ((sxfer >> 4) + 4));
+		}
 #endif
 	}
 	sc->sc_tinfo[target].sxfer = sxfer;
 	sc->sc_tinfo[target].sbcl = sbcl;
-#ifdef DEBUG_SYNC
-	printf("osiop sync: osiop_sxfr %02x, osiop_sbcl %02x\n", sxfer, sbcl);
+#ifdef OSIOP_DEBUG
+	if (osiop_debug & DEBUG_SYNC)
+		printf("osiop sync: osiop_sxfr %02x, osiop_sbcl %02x\n",
+		    sxfer, sbcl);
 #endif
 }
 
