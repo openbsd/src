@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.5 2000/06/13 10:12:01 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.6 2000/06/18 04:49:32 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.23 2000/06/12 08:15:27 itojun Exp $	*/
 
 /*
@@ -353,14 +353,14 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 		 * KAME assumption: link id == interface id
 		 */
 
-		if (in6p->inp_outputopts6 &&
+		if (in6p && in6p->inp_outputopts6 &&
 		    (pi = in6p->inp_outputopts6->ip6po_pktinfo) &&
 		    pi->ipi6_ifindex) {
 			ifp = ifindex2ifnet[pi->ipi6_ifindex];
 			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
-		} else if (IN6_IS_ADDR_MULTICAST(in6)
-			&& in6p->inp_moptions6
-			&& in6p->inp_moptions6->im6o_multicast_ifp) {
+		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
+			   in6p->inp_moptions6 &&
+			   in6p->inp_moptions6->im6o_multicast_ifp) {
 			ifp = in6p->inp_moptions6->im6o_multicast_ifp;
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
